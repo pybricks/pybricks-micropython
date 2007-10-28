@@ -1,9 +1,9 @@
-#include "at91sam7s256.h"
-#include "interrupts.h"
-#include "aic.h"
-#include "avr.h"
-#include "lcd.h"
-#include "systick.h"
+#include "base/at91sam7s256.h"
+#include "base/interrupts.h"
+#include "base/drivers/aic.h"
+#include "base/drivers/avr.h"
+#include "base/drivers/lcd.h"
+#include "base/drivers/systick.h"
 
 
 /* The main clock is at 48MHz, and the PIT divides that by 16 to get

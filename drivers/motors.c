@@ -7,15 +7,15 @@
  * motors, or running them for a certain time or rotation angle only.
  */
 
-#include "at91sam7s256.h"
+#include "base/at91sam7s256.h"
 
-#include "mytypes.h"
-#include "nxt.h"
-#include "interrupts.h"
-#include "systick.h"
-#include "aic.h"
-#include "avr.h"
-#include "motors.h"
+#include "base/mytypes.h"
+#include "base/nxt.h"
+#include "base/interrupts.h"
+#include "base/drivers/systick.h"
+#include "base/drivers/aic.h"
+#include "base/drivers/avr.h"
+#include "base/drivers/motors.h"
 
 /* The following are easier mnemonics for the pins used by the
  * tachymeter. Each motor has a tach-pulse pin whose value flips at

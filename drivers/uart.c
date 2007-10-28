@@ -1,9 +1,9 @@
-#include "at91sam7s256.h"
+#include "base/at91sam7s256.h"
 
-#include "nxt.h"
-#include "aic.h"
+#include "base/nxt.h"
+#include "base/drivers/aic.h"
 
-#include "uart.h"
+#include "base/drivers/uart.h"
 
 /* see AT91C_US_MR register */
 #define UART_MODE_NORMAL    0x0 /* << 0 ;  normal */

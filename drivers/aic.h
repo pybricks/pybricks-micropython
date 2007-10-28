@@ -1,7 +1,7 @@
 #ifndef __NXOS_AIC_H__
 #define __NXOS_AIC_H__
 
-#include "mytypes.h"
+#include "base/mytypes.h"
 
 typedef U32 aic_vector_t;
 

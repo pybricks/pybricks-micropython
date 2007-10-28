@@ -1,7 +1,7 @@
 #ifndef __NXOS_UART_H__
 #define __NXOS_UART_H__
 
-#include "mytypes.h"
+#include "base/mytypes.h"
 
 typedef enum usart_char_length
   {

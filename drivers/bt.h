@@ -1,9 +1,9 @@
 #ifndef __NXOS_BT_H__
 #define __NXOS_BT_H__
 
-#include "mytypes.h"
+#include "base/mytypes.h"
 
-#include "uart.h"
+#include "base/drivers/uart.h"
 
 /*
  * It will only initialize the communication with the bluetooth

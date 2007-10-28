@@ -1,7 +1,7 @@
 #ifndef __NXOS_TWI_H__
 #define __NXOS_TWI_H__
 
-#include "mytypes.h"
+#include "base/mytypes.h"
 
 void twi_init();
 void twi_write_async(U32 dev_addr, U8 *data, U32 nBytes);

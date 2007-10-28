@@ -1,7 +1,7 @@
 #ifndef __NXOS_USB_H__
 #define __NXOS_USB_H__
 
-#include "mytypes.h"
+#include "base/mytypes.h"
 
 /******
  * The NXT can only work as a device, not as host.

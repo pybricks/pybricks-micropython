@@ -16,14 +16,14 @@
  * introduce a little delay in the places where we really need it.
  */
 
-#include "at91sam7s256.h"
+#include "base/at91sam7s256.h"
 
-#include "mytypes.h"
-#include "lock.h"
-#include "interrupts.h"
-#include "systick.h"
-#include "aic.h"
-#include "lcd.h"
+#include "base/mytypes.h"
+#include "base/lock.h"
+#include "base/interrupts.h"
+#include "base/drivers/systick.h"
+#include "base/drivers/aic.h"
+#include "base/drivers/lcd.h"
 
 /* Internal command bytes implementing part of the basic commandset of
  * the UC1601.

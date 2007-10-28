@@ -1,9 +1,9 @@
-#include "mytypes.h"
-#include "nxt.h"
-#include "systick.h"
-#include "twi.h"
-#include "avr.h"
-#include "util.h"
+#include "base/mytypes.h"
+#include "base/nxt.h"
+#include "base/drivers/systick.h"
+#include "base/drivers/twi.h"
+#include "base/drivers/avr.h"
+#include "base/util.h"
 
 #define AVR_ADDRESS 1
 #define AVR_MAX_FAILED_CHECKSUMS 3

@@ -6,15 +6,15 @@
  * to register logic for each sensor port.
  */
 
-#include "at91sam7s256.h"
+#include "base/at91sam7s256.h"
 
-#include "mytypes.h"
-#include "nxt.h"
-#include "interrupts.h"
-#include "systick.h"
-#include "aic.h"
-#include "avr.h"
-#include "sensors.h"
+#include "base/mytypes.h"
+#include "base/nxt.h"
+#include "base/interrupts.h"
+#include "base/drivers/systick.h"
+#include "base/drivers/aic.h"
+#include "base/drivers/avr.h"
+#include "base/drivers/sensors.h"
 
 
 static volatile struct {
