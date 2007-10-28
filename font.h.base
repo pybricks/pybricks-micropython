@@ -1,0 +1,32 @@
+/**
+ * Font file template
+ */
+
+#ifndef __FONT_@@FONT_SIZE@@_H__
+#define __FLASH_@@FONT_SIZE@@_H__
+
+#include "mytypes.h"
+
+/* The offset of the first character in the font table. All characters
+ * before that one are unprintable.
+ */
+#define FONT_START 0x20
+#define FONT_END 0x80
+
+/* The width in pixels of the font codepoints, of a character cell
+ * (includes space between chars), and the resulting length of a line
+ * in character cells.
+ */
+#define FONT_WIDTH @@FONT_WIDTH@@
+#define CELL_WIDTH (FONT_WIDTH + 1)
+#define DISPLAY_WIDTH_CELLS (LCD_WIDTH / CELL_WIDTH)
+#define DISPLAY_HEIGHT_CELLS LCD_HEIGHT
+
+/*
+ * An array containing all the bits of the flash routine bytecode.
+ */
+static const U8 font[][FONT_WIDTH] = {
+  @@FONT_DATA@@
+};
+
+#endif /* __FONT_@@FONT_SIZE@@_H__ */
