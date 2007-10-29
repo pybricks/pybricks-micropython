@@ -194,11 +194,11 @@ static void avr_unpack_from_avr() {
   if (word > 1023)
     from_avr.buttons = BUTTON_OK;
   else if (word > 720)
-    from_avr.buttons = BUTTON_LEFT;
+    from_avr.buttons = BUTTON_CANCEL;
   else if (word > 270)
     from_avr.buttons = BUTTON_RIGHT;
   else if (word > 60)
-    from_avr.buttons = BUTTON_CANCEL;
+    from_avr.buttons = BUTTON_LEFT;
   else
     from_avr.buttons = BUTTON_NONE;
 

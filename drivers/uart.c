@@ -10,14 +10,23 @@
 #define UART_MODE_CLOCK     0x0 /* << 4 ;  MCK */
 #define UART_MODE_ASYNC     0x0 /* << 8 ;  ASYNC */
 #define UART_MODE_CHMOD     0x0 /* << 14 ; normal mode */
-#define UART_MODE_MSBF      0x0 /* << 16 ; Least Significant Bit is sent/received first */
-#define UART_MODE_MODE9     0x0 /* << 17 ; CHRL defines character length. (1 == 9 bits length) */
-#define UART_MODE_CLK0      0x0 /* << 18 ; The USART does not drive the SCK pin. */
+#define UART_MODE_MSBF      0x0 /* << 16 ; Least Significant Bit is
+                                 *         sent/received first */
+#define UART_MODE_MODE9     0x0 /* << 17 ; CHRL defines character length. (1 ==
+                                 *         9 bits length) */
+#define UART_MODE_CLK0      0x0 /* << 18 ; The USART does not drive the SCK pin.
+                                 */
 #define UART_MODE_OVER      0x0 /* << 19 ; 16x Oversampling. */
-#define UART_MODE_INACK     0x0 /* << 20 ; Won't inhibit : The NACK is generated. */
-#define UART_MODE_DSNACK    0x0 /* << 21 ; NACK is sent on the ISO line as soon as a parity error occurs in the received character (unless INACK is set). */
-#define UART_MODE_MAX_ITER  0x0 /* << 24 ; Only used in mode ISO << not used here */
-#define UART_MODE_FILTER    0x0 /* << 28 ; The USART does not filter the receive line. */
+#define UART_MODE_INACK     0x0 /* << 20 ; Won't inhibit : The NACK is
+                                 *         generated. */
+#define UART_MODE_DSNACK    0x0 /* << 21 ; NACK is sent on the ISO line as soon
+                                 *         as a parity error occurs in the
+                                 *         received character (unless INACK
+                                 *         is set). */
+#define UART_MODE_MAX_ITER  0x0 /* << 24 ; Only used in mode ISO << not used
+                                 *         here */
+#define UART_MODE_FILTER    0x0 /* << 28 ; The USART does not filter the receive
+                                 *         line. */
 
 #define UART_BRGR_FP        0x0 /* << 16 ; fractionnal part : disabled */
 
@@ -182,7 +191,7 @@ bool uart_init(U8 uart_number, U32 baud_rate,
 
   /* we re-enable the interruptions */
   uart->regs->US_IER =
-      AT91C_US_ENDRX   /* end of receive        */
+    AT91C_US_ENDRX   /* end of receive        */
     | AT91C_US_RXBRK   /* receiver break        */
     | AT91C_US_ENDTX   /* end of transmit       */
     | AT91C_US_OVRE    /* overrun error         */

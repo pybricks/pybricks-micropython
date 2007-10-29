@@ -436,7 +436,7 @@ static U32 usb_manage_setup_packet() {
     if (usb_state.new_device_address == 0) {
       *AT91C_UDP_FADDR = AT91C_UDP_FEN;
       *AT91C_UDP_GLBSTATE = 0;
-      }
+    }
     break;
 
   case USB_BREQUEST_GET_DESCRIPTOR:
@@ -483,33 +483,33 @@ static U32 usb_manage_setup_packet() {
     }
     break;
 
-    case USB_BREQUEST_GET_CONFIG:
-      /* The host wants to know the ID of the current configuration. */
-      usb_send_data(0, (U8 *)&(usb_state.current_config), 1);
-      break;
+  case USB_BREQUEST_GET_CONFIG:
+    /* The host wants to know the ID of the current configuration. */
+    usb_send_data(0, (U8 *)&(usb_state.current_config), 1);
+    break;
 
-    case USB_BREQUEST_SET_CONFIG:
-      /* The host selected a new configuration. */
-      usb_state.current_config = packet.value;
+  case USB_BREQUEST_SET_CONFIG:
+    /* The host selected a new configuration. */
+    usb_state.current_config = packet.value;
 
-      /* we ack */
-      usb_send_null();
+    /* we ack */
+    usb_send_null();
 
-      /* we set the register in configured mode */
-      *AT91C_UDP_GLBSTATE = packet.value > 0 ?
-	(AT91C_UDP_CONFG | AT91C_UDP_FADDEN)
-	:AT91C_UDP_FADDEN;
+    /* we set the register in configured mode */
+    *AT91C_UDP_GLBSTATE = packet.value > 0 ?
+      (AT91C_UDP_CONFG | AT91C_UDP_FADDEN)
+      :AT91C_UDP_FADDEN;
 
-      /* TODO: Make this a little nicer. Not quite sure how. */
-      AT91C_UDP_CSR[1] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
-      while (AT91C_UDP_CSR[1] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT));
-      AT91C_UDP_CSR[2] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN;
-      while (AT91C_UDP_CSR[2] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN));
-      AT91C_UDP_CSR[3] = 0;
-      while (AT91C_UDP_CSR[3] != 0);
+    /* TODO: Make this a little nicer. Not quite sure how. */
+    AT91C_UDP_CSR[1] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
+    while (AT91C_UDP_CSR[1] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT));
+    AT91C_UDP_CSR[2] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN;
+    while (AT91C_UDP_CSR[2] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN));
+    AT91C_UDP_CSR[3] = 0;
+    while (AT91C_UDP_CSR[3] != 0);
 
-      usb_state.status = USB_READY;
-      break;
+    usb_state.status = USB_READY;
+    break;
 
   case USB_BREQUEST_GET_INTERFACE: /* TODO: This should respond, not stall. */
   case USB_BREQUEST_SET_DESCRIPTOR:
