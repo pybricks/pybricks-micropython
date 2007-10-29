@@ -17,6 +17,15 @@
 #endif
 
 
+static const U8 bt_start_heart[] = {
+  0x03, /* length */
+  0x0C, /* start heart */
+  0x00,
+  0x00
+};
+
+
+
 static void bt_uart_callback(U8 *buffer)
 {
   USB_SEND("bt_uart_callback()");
@@ -27,7 +36,9 @@ static void bt_uart_callback(U8 *buffer)
 
 void bt_init()
 {
-  USB_SEND("uart_init()");
-  uart_init(bt_uart_callback);
-  USB_SEND("uart_init() finished");
+  USB_SEND("bt_init()");
+  uart_init(bt_uart_callback,
+            NULL, 0,
+            NULL, 0);
+  USB_SEND("bt_init() finished");
 }

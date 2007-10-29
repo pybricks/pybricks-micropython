@@ -26,14 +26,18 @@ typedef void (*uart_read_callback_t)(U8 *buffer);
  * callback will be called by the interruption function of the uart
  * driver, so it must do its work as fast as possible.
  */
-void uart_init(uart_read_callback_t callback);
+void uart_init(uart_read_callback_t callback,
+               void *buf_a, U16 buf_a_size,
+               void *buf_b, U16 buf_b_size);
 
 /*
  * Will send the data asap.
  * If the two slot in the pdc are used, this function will be blocking.
  */
-void uart_send(void *data, U16 lng);
+void uart_write(void *data, U16 lng);
 
 bool uart_can_write();
+
+U32 uart_nmb_interrupt();
 
 #endif
