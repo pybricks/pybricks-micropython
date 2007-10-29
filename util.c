@@ -21,8 +21,8 @@ void memset(void *dest, const U8 val, U32 len) {
 }
 
 
-U32 strlen(char *str) {
-  U32 i = 0;
+U16 strlen(char *str) {
+  U16 i = 0;
 
   while (*str++)
     i++;
