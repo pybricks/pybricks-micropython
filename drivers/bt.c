@@ -3,9 +3,10 @@
 #include "base/drivers/uart.h"
 #include "base/drivers/bt.h"
 
+
 #ifdef UART_DEBUG
-#include "usb.h"
-#include "util.h"
+#include "base/drivers/usb.h"
+#include "base/util.h"
 
 #define USB_SEND(txt) usb_send((U8*)txt, strlen(txt))
 
