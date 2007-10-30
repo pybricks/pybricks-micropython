@@ -38,6 +38,7 @@ void uart_write(void *data, U16 lng);
 
 bool uart_can_write();
 
+U32 uart_writing();
 U32 uart_nmb_interrupt();
 
 #endif
