@@ -146,8 +146,9 @@ void uart_init(uart_read_callback_t callback,
 #define UART_BAUD_RATE 460800
 #define UART_CLOCK_DIVISOR(mck, baudrate) (mck / 8 / baudrate)
 
-  *AT91C_US1_BRGR = UART_CLOCK_DIVISOR(NXT_CLOCK_FREQ, UART_BAUD_RATE)
-    | ( (((NXT_CLOCK_FREQ/8) - (UART_CLOCK_DIVISOR(NXT_CLOCK_FREQ, UART_BAUD_RATE) * UART_BAUD_RATE)) / ((UART_BAUD_RATE + 4)/8)) << 16);
+  /*  *AT91C_US1_BRGR = UART_CLOCK_DIVISOR(NXT_CLOCK_FREQ, UART_BAUD_RATE)
+      | ( (((NXT_CLOCK_FREQ/8) - (UART_CLOCK_DIVISOR(NXT_CLOCK_FREQ, UART_BAUD_RATE) * UART_BAUD_RATE)) / ((UART_BAUD_RATE + 4)/8)) << 16); */
+  *AT91C_US1_BRGR = UART_CLOCK_DIVISOR(NXT_CLOCK_FREQ, UART_BAUD_RATE);
 
 #undef UART_CLOCK_DIVISOR
 
@@ -206,15 +207,6 @@ void uart_write(void *data, U16 lng)
     *AT91C_US1_TNCR = (U32)lng;
 
   }
-
-  systick_wait_ms(1000);
-
-  display_clear();
-
-  display_hex(*AT91C_US1_CSR);
-
-
-  systick_wait_ms(2000);
 }
 
 bool uart_can_write()
