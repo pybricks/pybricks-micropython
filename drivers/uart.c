@@ -11,43 +11,41 @@
 #include "base/drivers/systick.h"
 #include "base/display.h"
 
+#define UART_BUFSIZE 128
+
 
 static volatile struct {
 
   uart_read_callback_t callback;
   U32 nmb_int;
 
+  U8 packet_size;
+
   /* read buffers */
-  void *buf_a_ptr;
-  U16 buf_a_size;
-  void *buf_b_ptr;
-  U16 buf_b_size;
-  bool current_buf;
+  U8 buf[UART_BUFSIZE];
+
+  U32 state;
+
+  /* to remove */
+  U32 last_csr;
 
 } uart_state = {
   0
 };
 
 
-/*** I/O (uart 1) */
-/* SCK1 => PA23 (periph A)
+/*** I/O (uart 1)
+ * RXD1 => PA21 (periph A)
  * TXD1 => PA22 (periph A)
- * RI1  => PA29 (periph A)
- * DSR1 => PA28 (periph A)
- * DCD1 => PA26 (periph A)
- * DTR1 => PA27 (periph A)
  * CTS1 => PA25 (periph A)
  * RTS1 => PA24 (periph A)
  */
 #define UART_PIOA_PINS \
-  (AT91C_PA23_SCK1 \
+   (AT91C_PA21_RXD1  \
    | AT91C_PA22_TXD1 \
-   | AT91C_PA29_RI1 \
-   | AT91C_PA28_DSR1 \
-   | AT91C_PA26_DCD1 \
-   | AT91C_PA27_DTR1 \
    | AT91C_PA25_CTS1 \
-   | AT91C_PA24_RTS1)
+   | AT91C_PA24_RTS1 \
+   | AT91C_PA23_SCK1)
 
 
 
@@ -55,35 +53,58 @@ static void uart_isr()
 {
   U32 csr;
 
+  uart_state.nmb_int++;
+
+
   csr = *AT91C_US1_CSR;
 
-  if (csr & AT91C_US_ENDRX) {
+  uart_state.last_csr = csr;
 
-    if (!uart_state.current_buf) {
-      *AT91C_US1_RNPR = (U32)uart_state.buf_a_ptr;
-      *AT91C_US1_RNCR = uart_state.buf_a_size;
-    } else {
-      *AT91C_US1_RNPR = (U32)uart_state.buf_b_ptr;
-      *AT91C_US1_RNCR = uart_state.buf_b_size;
-    }
+  if (csr & AT91C_US_RXRDY) {
 
-    uart_state.current_buf = !uart_state.current_buf;
+    /* we've just read the first byte:
+     * it's the packet size */
+    /* now we will use the PDC to read the whole packet */
+
+    *AT91C_US1_IDR = AT91C_US_RXRDY;
+    while(*AT91C_US1_IMR & AT91C_US_RXRDY);
+
+    uart_state.packet_size = *AT91C_US1_RHR;
+    *AT91C_US1_RCR = uart_state.packet_size;
+
+    /* we reenable the receiving with the PDC */
+
+    *AT91C_US1_IER = AT91C_US_ENDRX;
+    *AT91C_US1_PTCR = AT91C_PDC_RXTEN;
+
   }
 
-  uart_state.nmb_int++;
+
+  if (csr & AT91C_US_ENDRX) {
+    *AT91C_US1_PTCR = AT91C_PDC_RXTDIS;
+
+    uart_state.callback((U8*)&(uart_state.buf), uart_state.packet_size);
+
+    /* We must put a size != 0 in the RCR register (even if the PDC is disabled for the receiving) */
+    /* else when we try to read manually a value on US1_RHR thanks to the RXRDY interruption
+     * the RXRDY of the CSR seems to never be set to 1 (no value read on the UART ?) */
+    /* TODO : figure this out */
+    *AT91C_US1_RPR = (U32)(&uart_state.buf);
+    *AT91C_US1_RCR = UART_BUFSIZE; /* default size */
+
+    /* we've read a packet, so now we will do a manual reading
+     * to have the next packet size and adapt the PDC RCR register value */
+    *AT91C_US1_IER = AT91C_US_RXRDY;
+  }
+
 }
 
 
 
-void uart_init(uart_read_callback_t callback,
-               void *buf_a, U16 buf_a_size,
-               void *buf_b, U16 buf_b_size)
+
+void uart_init(uart_read_callback_t callback)
 {
   uart_state.callback = callback;
-  uart_state.buf_a_ptr = buf_a;
-  uart_state.buf_b_ptr = buf_b;
-  uart_state.buf_a_size = buf_a_size;
-  uart_state.buf_b_size = buf_b_size;
 
   interrupts_disable();
 
@@ -111,14 +132,22 @@ void uart_init(uart_read_callback_t callback,
 
   *AT91C_US1_IDR = ~0;
 
+  /* Reset everything in the control register */
+
+  *AT91C_US1_CR = AT91C_US_RSTRX | AT91C_US_RSTTX | AT91C_US_RSTSTA | AT91C_US_RSTNACK;
+
   /* configure/reset the PDC */
 
-  *AT91C_US1_RPR = (U32)buf_a;
-  *AT91C_US1_RCR = buf_a_size;
+  /* We must put a size != 0 in the RCR register (even if the PDC is disabled for the receiving) */
+  /* else when we try to read manually a value on US1_RHR thanks to the RXRDY interruption
+   * the RXRDY of the CSR seems to never be set to 1 (no value read on the UART ?) */
+  /* TODO : figure this out */
+  *AT91C_US1_RPR = (U32)(&uart_state.buf);
+  *AT91C_US1_RCR = UART_BUFSIZE;
   *AT91C_US1_TPR = NULL;
   *AT91C_US1_TCR = 0;
-  *AT91C_US1_RNPR = (U32)buf_b;
-  *AT91C_US1_RNCR = buf_b_size;
+  *AT91C_US1_RNPR = NULL;
+  *AT91C_US1_RNCR = 0;
   *AT91C_US1_TNPR = NULL;
   *AT91C_US1_TNCR = 0;
 
@@ -146,25 +175,19 @@ void uart_init(uart_read_callback_t callback,
 #define UART_BAUD_RATE 460800
 #define UART_CLOCK_DIVISOR(mck, baudrate) (mck / 8 / baudrate)
 
-  /*  *AT91C_US1_BRGR = UART_CLOCK_DIVISOR(NXT_CLOCK_FREQ, UART_BAUD_RATE)
-      | ( (((NXT_CLOCK_FREQ/8) - (UART_CLOCK_DIVISOR(NXT_CLOCK_FREQ, UART_BAUD_RATE) * UART_BAUD_RATE)) / ((UART_BAUD_RATE + 4)/8)) << 16); */
-  *AT91C_US1_BRGR = UART_CLOCK_DIVISOR(NXT_CLOCK_FREQ, UART_BAUD_RATE);
+  *AT91C_US1_BRGR = UART_CLOCK_DIVISOR(NXT_CLOCK_FREQ, UART_BAUD_RATE)
+    | ( (((NXT_CLOCK_FREQ/8) - (UART_CLOCK_DIVISOR(NXT_CLOCK_FREQ, UART_BAUD_RATE) * UART_BAUD_RATE)) / ((UART_BAUD_RATE + 4)/8)) << 16);
+  //*AT91C_US1_BRGR = UART_CLOCK_DIVISOR(NXT_CLOCK_FREQ, UART_BAUD_RATE);
 
 #undef UART_CLOCK_DIVISOR
 
-  /* Reset everything in the control register */
 
-  *AT91C_US1_CR = AT91C_US_RSTRX | AT91C_US_RSTTX | AT91C_US_RSTSTA | AT91C_US_RSTNACK;
+  *AT91C_US1_CR = AT91C_US_STTTO;
 
 
   /* specify the interruptions that this driver needs */
 
-  *AT91C_US1_IER = AT91C_US_ENDRX;
-
-  /* reenable pio */
-
-  *AT91C_PIOA_PER = UART_PIOA_PINS;
-  *AT91C_PIOA_OER = UART_PIOA_PINS;
+  *AT91C_US1_IER = AT91C_US_RXRDY;
 
   /*** Interruptions : AIC */
   /* not in edge sensitive mode => level */
@@ -174,13 +197,13 @@ void uart_init(uart_read_callback_t callback,
 
 
    /* and then reenable the transmitter and the receiver thanks to the
-   * TXEN bit and the RXEN bit in US_CR */
+    * TXEN bit and the RXEN bit in US_CR */
 
   *AT91C_US1_CR = AT91C_US_TXEN | AT91C_US_RXEN;
 
-  /* enable the pdc transmitter / receiver */
+  /* enable the pdc transmitter */
 
-  *AT91C_US1_PTCR = AT91C_PDC_TXTEN | AT91C_PDC_RXTEN;
+  *AT91C_US1_PTCR = AT91C_PDC_TXTEN;
 
   /* reactivate the interruptions */
   interrupts_enable();
@@ -189,29 +212,15 @@ void uart_init(uart_read_callback_t callback,
 
 void uart_write(void *data, U16 lng)
 {
-  if (*AT91C_US1_TCR == 0) {
+  while (*AT91C_US1_TNCR != 0);
 
-    *AT91C_US1_TPR = (U32)data;
-    *AT91C_US1_TCR = (U32)lng;
-
-  } else if (*AT91C_US1_TNCR == 0) {
-
-    *AT91C_US1_TNPR = (U32)data;
-    *AT91C_US1_TNCR = (U32)lng;
-
-  } else {
-
-    while (*AT91C_US1_TNCR != 0);
-
-    *AT91C_US1_TNPR = (U32)data;
-    *AT91C_US1_TNCR = (U32)lng;
-
-  }
+  *AT91C_US1_TNPR = (U32)data;
+  *AT91C_US1_TNCR = (U32)lng;
 }
 
 bool uart_can_write()
 {
-  return ((*AT91C_US1_TCR == 0) || (*AT91C_US1_TNCR == 0));
+  return (*AT91C_US1_TNCR == 0);
 }
 
 
@@ -226,4 +235,19 @@ U32 uart_writing()
 U32 uart_nmb_interrupt()
 {
   return uart_state.nmb_int;
+}
+
+U32 uart_get_last_csr()
+{
+  return uart_state.last_csr;
+}
+
+U32 uart_get_csr()
+{
+  return *AT91C_US1_CSR;
+}
+
+U32 uart_get_state()
+{
+  return uart_state.packet_size;
 }

@@ -18,7 +18,7 @@
  * called back each time something has been readed.
  * The buffer where the read stuffs are is given in parameter.
  */
-typedef void (*uart_read_callback_t)(U8 *buffer);
+typedef void (*uart_read_callback_t)(U8 *buffer, U8 packet_size);
 
 
 /*
@@ -26,9 +26,7 @@ typedef void (*uart_read_callback_t)(U8 *buffer);
  * callback will be called by the interruption function of the uart
  * driver, so it must do its work as fast as possible.
  */
-void uart_init(uart_read_callback_t callback,
-               void *buf_a, U16 buf_a_size,
-               void *buf_b, U16 buf_b_size);
+void uart_init(uart_read_callback_t callback);
 
 /*
  * Will send the data asap.
@@ -38,7 +36,13 @@ void uart_write(void *data, U16 lng);
 
 bool uart_can_write();
 
+
+/* TO REMOVE: */
+
 U32 uart_writing();
 U32 uart_nmb_interrupt();
+U32 uart_get_csr();
+U32 uart_get_last_csr();
+U32 uart_get_state();
 
 #endif

@@ -11,4 +11,7 @@
  */
 void bt_init();
 
+
+void bt_debug();
+
 #endif
