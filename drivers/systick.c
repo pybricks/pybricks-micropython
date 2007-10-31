@@ -1,4 +1,5 @@
 #include "base/at91sam7s256.h"
+#include "base/mytypes.h"
 #include "base/interrupts.h"
 #include "base/drivers/aic.h"
 #include "base/drivers/avr.h"
@@ -36,6 +37,11 @@
  */
 static volatile U32 systick_time;
 
+/* The scheduler callback. Application kernels can set this to their own
+ * callback function, to do scheduling in the high priority systick
+ * interrupt.
+ */
+static closure_t scheduler_cb = NULL;
 
 /* Low priority handler, called 1000 times a second by the high
  * priority handler.
@@ -68,6 +74,10 @@ static void systick_isr() {
    * As a result, this handler must be *very* fast.
    */
   avr_fast_update();
+
+  /* If the application kernel set a scheduling callback, call it. */
+  if (scheduler_cb)
+    scheduler_cb();
 
   /* Manually trigger the low-priority 1000Hz interrupt handler
    * asynchronously.
@@ -120,5 +130,11 @@ void systick_init() {
   *AT91C_PITC_PIMR = (((PIT_BASE_FREQUENCY / SYSIRQ_FREQ) - 1) |
                       AT91C_PITC_PITEN | AT91C_PITC_PITIEN);
 
+  interrupts_enable();
+}
+
+void systick_install_scheduler(closure_t sched_cb) {
+  interrupts_disable();
+  scheduler_cb = sched_cb;
   interrupts_enable();
 }
