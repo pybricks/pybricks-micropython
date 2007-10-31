@@ -223,14 +223,14 @@ bool uart_can_write()
   return (*AT91C_US1_TNCR == 0);
 }
 
+bool uart_is_writing()
+{
+  return (*AT91C_US1_TCR + *AT91C_US1_TNCR) > 0;
+}
 
 
 /****** TO REMOVE : ****/
 
-U32 uart_writing()
-{
-  return (*AT91C_US1_TCR + *AT91C_US1_TNCR);
-}
 
 U32 uart_nmb_interrupt()
 {

@@ -11,7 +11,13 @@
  */
 void bt_init();
 
+/*
+ * Max 16 car. !
+ */
+void bt_set_friendly_name(char *name);
+void bt_set_discoverable(bool d);
 
+/* to remove */
 void bt_debug();
 
 #endif

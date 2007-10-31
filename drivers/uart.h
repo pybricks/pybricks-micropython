@@ -35,11 +35,10 @@ void uart_init(uart_read_callback_t callback);
 void uart_write(void *data, U16 lng);
 
 bool uart_can_write();
-
+bool uart_is_writing();
 
 /* TO REMOVE: */
 
-U32 uart_writing();
 U32 uart_nmb_interrupt();
 U32 uart_get_csr();
 U32 uart_get_last_csr();
