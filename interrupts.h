@@ -28,7 +28,6 @@ void spurious_irq();
 struct task_state {
   U32 cpsr;
   U32 pc;
-  U32 spsr;
   U32 r0;
   U32 r1;
   U32 r2;
