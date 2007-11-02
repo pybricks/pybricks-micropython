@@ -106,6 +106,7 @@ irq_handler:
 	ldmfd sp!, {r0}
 	cmp r0, #0
 	msrne cpsr_c, #(MODE_SYS | IRQ_FIQ_MASK)
+	ldrne r0, =__irq_stack__
 	ldmnefd sp!, {r1,r2}
 	stmnedb r0, {r1,r2}
 	ldmfd sp!, {r0-r12,lr}
