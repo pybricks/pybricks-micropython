@@ -1,7 +1,7 @@
 #ifndef __NXOS_MOTORS_H__
 #define __NXOS_MOTORS_H__
 
-#include "base/mytypes.h"
+#include "base/types.h"
 
 void nx_motors_init();
 

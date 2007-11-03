@@ -4,18 +4,18 @@
  * uses the low-level LCD driver to do actual output.
  */
 
-#include "mytypes.h"
+#include "types.h"
 #include "interrupts.h"
 #include "drivers/systick.h"
 #include "drivers/aic.h"
 #include "drivers/lcd.h"
 #include "util.h"
-#include "display.h"
+#include "_display.h"
 
 /* A simple 8x5 font. This is in a separate file because the embedded
  * font is converted from a .png at compile time.
  */
-#include "font.h"
+#include "_font.h"
 
 static struct {
   /* The display buffer, which is mirrored to the LCD controller's RAM. */

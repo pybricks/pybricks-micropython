@@ -1,7 +1,7 @@
 #ifndef __NXOS_AVR_H__
 #define __NXOS_AVR_H__
 
-#include "base/mytypes.h"
+#include "base/types.h"
 
 typedef enum {
   BUTTON_NONE = 0,

@@ -1,16 +1,10 @@
 #ifndef __NXOS_INTERRUPTS_H__
 #define __NXOS_INTERRUPTS_H__
 
+#include "base/types.h"
+
 void nx_interrupts_disable();
 void nx_interrupts_enable();
-
-/* Default handlers for the three general kinds of interrupts that the
- * ARM core has to handle. These are defined in irq.s, and just freeze
- * the board in an infinite loop.
- */
-void nx_default_irq();
-void nx_default_fiq();
-void nx_spurious_irq();
 
 /* The following structure describes the order in which registers are
  * pushed on the system stack when the IRQ handler interrupts a

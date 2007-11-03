@@ -5,7 +5,7 @@
 #ifndef __FONT_@@FONT_SIZE@@_H__
 #define __FLASH_@@FONT_SIZE@@_H__
 
-#include "mytypes.h"
+#include "base/types.h"
 
 /* The offset of the first character in the font table. All characters
  * before that one are unprintable.

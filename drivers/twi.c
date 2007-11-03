@@ -1,5 +1,5 @@
 
-#include "base/mytypes.h"
+#include "base/types.h"
 #include "base/drivers/twi.h"
 #include "base/interrupts.h"
 #include "base/at91sam7s256.h"

@@ -1,7 +1,7 @@
 #ifndef __NXOS_UTIL_H__
 #define __NXOS_UTIL_H__
 
-#include "mytypes.h"
+#include "base/types.h"
 
 #define MIN(x, y) ((x) < (y) ? (x): (y))
 #define MAX(x, y) ((x) > (y) ? (x): (y))

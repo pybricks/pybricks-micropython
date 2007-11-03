@@ -1,7 +1,7 @@
 #ifndef __NXOS_SYSTICK_H__
 #define __NXOS_SYSTICK_H__
 
-#include "base/mytypes.h"
+#include "base/types.h"
 
 void nx_systick_init();
 U32 nx_systick_get_ms();

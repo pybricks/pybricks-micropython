@@ -1,4 +1,4 @@
-#include "base/mytypes.h"
+#include "base/types.h"
 #include "base/nxt.h"
 #include "base/drivers/systick.h"
 #include "base/drivers/twi.h"

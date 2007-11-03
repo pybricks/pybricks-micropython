@@ -1,9 +1,7 @@
 #ifndef __NXOS_DISPLAY_H__
 #define __NXOS_DISPLAY_H__
 
-#include "mytypes.h"
-
-void nx_display_init();
+#include "base/types.h"
 
 void nx_display_clear();
 void nx_display_auto_refresh(bool auto_refresh);

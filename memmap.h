@@ -1,7 +1,7 @@
 #ifndef __NXOS_MEMMAP_H__
 #define __NXOS_MEMMAP_H__
 
-#include "mytypes.h"
+#include "base/types.h"
 
 /* The following constants are defined by GNU ld at the linking
  * phase. They describe the memory map of the NXT in terms of

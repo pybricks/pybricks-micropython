@@ -20,7 +20,7 @@
 #ifndef __NXOS_TLSF_H__
 #define __NXOS_TLSF_H__
 
-#include "mytypes.h"
+#include "base/types.h"
 
 extern size_t nx_mem_init(size_t, void *);
 extern size_t nx_mem_used(void *);

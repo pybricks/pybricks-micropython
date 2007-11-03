@@ -1,15 +1,15 @@
 
 #include "at91sam7s256.h"
 
-#include "mytypes.h"
-#include "interrupts.h"
+#include "base/types.h"
+#include "base/interrupts.h"
 #include "drivers/aic.h"
 #include "drivers/systick.h"
 #include "drivers/sound.h"
 #include "drivers/avr.h"
 #include "drivers/motors.h"
 #include "drivers/lcd.h"
-#include "display.h"
+#include "base/_display.h"
 #include "drivers/sensors.h"
 #include "drivers/usb.h"
 

@@ -4,7 +4,7 @@
  * the libc in is quite a big hit on kernel size in some cases.
  */
 
-#include "mytypes.h"
+#include "base/types.h"
 
 void memcpy(void *dest, const U8 *src, U32 len) {
   U8 *dst = (U8*)dest;

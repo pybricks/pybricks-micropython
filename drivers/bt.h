@@ -1,7 +1,7 @@
 #ifndef __NXOS_BT_H__
 #define __NXOS_BT_H__
 
-#include "base/mytypes.h"
+#include "base/types.h"
 
 #include "base/drivers/uart.h"
 

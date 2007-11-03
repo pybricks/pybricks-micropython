@@ -1,7 +1,7 @@
 #ifndef __NXOS_SENSORS_H__
 #define __NXOS_SENSORS_H__
 
-#include "base/mytypes.h"
+#include "base/types.h"
 
 #define NXT_N_SENSORS 4
 
