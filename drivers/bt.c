@@ -6,6 +6,8 @@
 #include "base/drivers/uart.h"
 #include "base/drivers/bt.h"
 
+#define BT_ACK_TIMEOUT 3000
+
 
 /* to remove : */
 #ifdef UART_DEBUG
@@ -24,6 +26,7 @@
 #define BT_ARM_CMD_PIN AT91C_PIO_PA27
 /* BT_BC4_CMD is connected to the channel 4 of the Analog to Digital converter */
 #define BT_CS_PIN   AT91C_PIO_PA31
+
 
 
 typedef enum {
@@ -126,24 +129,17 @@ static const U8 bt_set_discoverable_false[] = {
 
 
 
-typedef enum {
-  BT_STATE_WAITING = 0,
-  BT_STATE_INQUIRING,
-} bt_state_t;
-
-
 static volatile struct {
-  bt_state_t state; /* not used atm */
-
   /* see systick_get_ms() */
   U32 last_heartbeat;
 
   /* used for inquiring */
-
-  /* TODO : Figure why there is this InquiryStopped to ignore */
-  bool first_stop;
   U8 bt_remote_id;
   bt_device_t bt_remote_device;
+
+
+  U8 last_msg;
+  int nmb_checksum_errors;
 
 #ifdef UART_DEBUG
   /* to remove: */
@@ -188,16 +184,15 @@ static U16 bt_get_checksum(U8 *msg, U8 len, bool count_len)
 static void bt_set_checksum(U8 *msg, U8 len) {
   U16 checksum = bt_get_checksum(msg, len, FALSE);
 
-  msg[len] = ((checksum >> 8) & 0xFF);
-  msg[len+1] = checksum & 0xFF;
+  msg[len-2] = ((checksum >> 8) & 0xFF);
+  msg[len-1] = checksum & 0xFF;
 }
 
 
 /* len => length excepted, but checksum included */
 static bool bt_check_checksum(U8 *msg, U8 len) {
 
-  /* Strangess: Must include the packet length in the checksum ?! */
-  /* TODO : Figure this out */
+  /* Strangeness: Must include the packet length in the checksum ?! */
   U16 checksum = bt_get_checksum(msg, len, TRUE);
   U8 hi, lo;
 
@@ -208,12 +203,22 @@ static bool bt_check_checksum(U8 *msg, U8 len) {
 }
 
 
+static bool bt_wait_msg(U8 msg)
+{
+  U32 start = systick_get_ms();
+
+  while(bt_state.last_msg != msg && start+BT_ACK_TIMEOUT > systick_get_ms());
+
+  return bt_state.last_msg == msg;
+}
+
+
 static void bt_begin_inquiry(U8 max_devices,
                              U8 timeout,
                              U8 bt_remote_class[4])
 {
   int i;
-  U8 packet[10];
+  U8 packet[11];
 
   packet[0] = 10;      /* length */
   packet[1] = BT_MSG_BEGIN_INQUIRY; /* begin inquiry */
@@ -226,17 +231,14 @@ static void bt_begin_inquiry(U8 max_devices,
 
   bt_set_checksum(packet+1, 10);
 
-  uart_write(packet, 19);
-
-  while(uart_is_writing()); /* to avoid some stack issues */
-
-  bt_state.state = BT_STATE_INQUIRING;
+  do {
+    uart_write(packet, 11);
+  } while(!bt_wait_msg(BT_MSG_INQUIRY_RUNNING));
 }
 
 static void bt_reseted()
 {
-  bt_state.first_stop = FALSE;
-  bt_state.state = BT_STATE_WAITING;
+  uart_write(&bt_msg_start_heart, sizeof(bt_msg_start_heart));
 }
 
 
@@ -246,12 +248,16 @@ static void bt_uart_callback(U8 *msg, U8 len)
   int i;
 
   /* if it's a break from the nxt */
-  if (msg == NULL || len == 0)
+  if (msg == NULL || len == 0) {
+    bt_state.nmb_checksum_errors++;
     return;
+  }
 
   /* we check first the checksum and ignore the message if the checksum is invalid */
-  if (len < 1 || !bt_check_checksum(msg, len))
+  if (len < 1 || !bt_check_checksum(msg, len)) {
+    bt_state.nmb_checksum_errors++;
     return;
+  }
 
 #ifdef UART_DEBUG
   if (bt_state.cmds_pos < CMDS_BUFSIZE) {
@@ -260,14 +266,11 @@ static void bt_uart_callback(U8 *msg, U8 len)
   }
 #endif
 
+  bt_state.last_msg = msg[0];
+
 
   if (msg[0] == BT_MSG_HEARTBEAT) {
     bt_state.last_heartbeat = systick_get_ms();
-    return;
-  }
-
-  if (msg[0] == BT_MSG_INQUIRY_RUNNING) {
-    bt_state.state = BT_STATE_INQUIRING;
     return;
   }
 
@@ -293,17 +296,7 @@ static void bt_uart_callback(U8 *msg, U8 len)
     return;
   }
 
-  if (msg[0] == BT_MSG_INQUIRY_STOPPED) {
-    if (!bt_state.first_stop)
-      bt_state.first_stop = TRUE;
-    else
-      bt_reseted();
-    return;
-  }
-
 }
-
-
 
 
 void bt_init()
@@ -318,14 +311,18 @@ void bt_init()
   *AT91C_PIOA_CODR = BT_RST_PIN;
   *AT91C_PIOA_OER = BT_RST_PIN | BT_ARM_CMD_PIN;
 
+  systick_wait_ms(100);
+
   uart_init(bt_uart_callback);
 
   /* we release the reset pin => 1 */
   *AT91C_PIOA_SODR = BT_RST_PIN;
 
-  systick_wait_ms(1000);
+  bt_wait_msg(BT_MSG_RESET_INDICATION);
 
-  uart_write(&bt_msg_start_heart, sizeof(bt_msg_start_heart));
+  bt_reseted();
+
+  bt_wait_msg(BT_MSG_HEARTBEAT);
 
   USB_SEND("bt_init() finished");
 }
@@ -343,20 +340,25 @@ void bt_set_friendly_name(char *name)
   for (i = 0 ; i < 16 && name[i] != '\0' ; i++)
     packet[i+2] = name[i];
 
+  for (; i < 16 ; i++)
+    packet[i+2] = '\0';
+
   bt_set_checksum(packet+1, 19);
 
-  uart_write(packet, 19);
-
-  while(uart_is_writing()); /* to avoid some stack issues */
+  do {
+    uart_write(packet, 20);
+  } while(!bt_wait_msg(BT_MSG_SET_FRIENDLY_NAME_ACK));
 }
 
 
 void bt_set_discoverable(bool d)
 {
-  if (d)
-    uart_write(&bt_set_discoverable_true, sizeof(bt_set_discoverable_true));
-  else
-    uart_write(&bt_set_discoverable_false, sizeof(bt_set_discoverable_false));
+  do {
+    if (d)
+      uart_write(&bt_set_discoverable_true, sizeof(bt_set_discoverable_true));
+    else
+      uart_write(&bt_set_discoverable_false, sizeof(bt_set_discoverable_false));
+  } while(!bt_wait_msg(BT_MSG_SET_DISCOVERABLE_ACK));
 }
 
 
@@ -377,7 +379,7 @@ void bt_inquiry(bt_inquiry_callback_t callback,
 
   start_time = systick_get_ms();
 
-  while(bt_state.state == BT_STATE_INQUIRING)
+  while(bt_state.last_msg != BT_MSG_INQUIRY_STOPPED)
     {
       if (last_id != bt_state.bt_remote_id)
         {
@@ -386,10 +388,16 @@ void bt_inquiry(bt_inquiry_callback_t callback,
         }
 
       if (start_time + (2*timeout*1000) < systick_get_ms()) {
-        /* argh, sometimes went wrong */
+        /* argh, something went wrong */
         break;
       }
     }
+}
+
+
+int bt_checksum_errors()
+{
+  return bt_state.nmb_checksum_errors;
 }
 
 

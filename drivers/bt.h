@@ -37,7 +37,10 @@ void bt_inquiry(bt_inquiry_callback_t callback,
                 U8 timeout,
                 U8 bt_remote_class[4]);
 
+int bt_checksum_errors();
+
 /* to remove */
 void bt_debug();
+
 
 #endif
