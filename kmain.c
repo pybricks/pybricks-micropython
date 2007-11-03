@@ -34,6 +34,31 @@ static void core_init() {
   systick_wait_ms(100);
 }
 
+/* Checks whether the system rebooted due to some kind of external
+ * failure, and report if so.
+ *
+ * Currently detects brownout and watchdog resets.
+ */
+static void check_boot_errors() {
+  int reset_status = *AT91C_RSTC_RSR;
+  reset_status &= AT91C_RSTC_RSTTYP;
+
+  /* A watchdog reset should never happen, given that we disable it
+   * immediately at bootup. This is just a bug guard.
+   */
+  if (reset_status == AT91C_RSTC_RSTTYP_WATCHDOG) {
+    display_string("**************\n");
+    display_string("Watchdog fault\n");
+    display_string("**************\n");
+    while (1);
+  } else if (reset_status == AT91C_RSTC_RSTTYP_BROWNOUT) {
+    display_string("**************\n");
+    display_string("Brownout fault\n");
+    display_string("**************\n");
+    while (1);
+  }
+}
+
 static void core_shutdown() {
   lcd_shutdown();
   usb_disable();
@@ -42,6 +67,7 @@ static void core_shutdown() {
 
 void kernel_main() {
   core_init();
+  check_boot_errors();
   main();
   core_shutdown();
 }

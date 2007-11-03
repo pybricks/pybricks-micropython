@@ -37,8 +37,7 @@ irq_handler:
 	/* Save the return address and return processor mode registers
 	 * on the IRQ stack. This is needed to allow nested interrupts,
 	 * where a higher-priority interrupt halts execution of a lower
-	 * priority interrupt. Also save r0, as we're going to need a
-	 * scratch register.
+	 * priority interrupt.
 	 */
 	sub lr, lr, #4
 	stmfd sp!, {lr}
@@ -107,6 +106,7 @@ irq_handler:
 	ldmfd sp!, {r0}
 	cmp r0, #0
 	msrne cpsr_c, #(MODE_SYS | IRQ_FIQ_MASK)
+	ldrne r0, =__irq_stack__
 	ldmnefd sp!, {r1,r2}
 	stmnedb r0, {r1,r2}
 	ldmfd sp!, {r0-r12,lr}
