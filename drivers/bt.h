@@ -16,6 +16,12 @@ typedef struct bt_device {
 } bt_device_t;
 
 
+typedef enum {
+  BT_STATE_WAITING = 0x0,
+  BT_STATE_INQUIRING,
+} bt_state_t;
+
+
 /*
  * It will only initialize the communication with the bluetooth
  * coprocessor.
@@ -29,14 +35,21 @@ void bt_set_friendly_name(char *name);
 void bt_set_discoverable(bool d);
 
 
-typedef void (*bt_inquiry_callback_t)(bt_device_t *remote);
+bt_state_t bt_get_state();
+
 
 /* timeout unit: 1.28s ; min : 0x01 (1.28s) ; max: 0x30 (61.44s) */
-void bt_inquiry(bt_inquiry_callback_t callback,
-                U8 max_devices,
-                U8 timeout,
-                U8 bt_remote_class[4]);
+void bt_begin_inquiry(U8 max_devices,
+                      U8 timeout,
+                      U8 bt_remote_class[4]);
+bool bt_has_found_device();
+bt_device_t *bt_get_discovered_device();
+void bt_cancel_inquiry();
 
+/**
+ * return the number of messages from the BC4
+ * with a wring checksum. Should be 0.
+ */
 int bt_checksum_errors();
 
 /* to remove */

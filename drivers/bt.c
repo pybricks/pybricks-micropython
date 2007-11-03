@@ -28,6 +28,7 @@
 #define BT_CS_PIN   AT91C_PIO_PA31
 
 
+/*** MESSAGES CODES ***/
 
 typedef enum {
   /* AMR7 -> BC4 */
@@ -95,6 +96,10 @@ typedef enum {
 } bt_msg_t;
 
 
+
+/*** Predefined messages ***/
+
+
 static const U8 bt_msg_start_heart[] = {
   0x03, /* length */
   BT_MSG_START_HEART,
@@ -111,7 +116,7 @@ static const U8 bt_msg_get_version[] = {
 };
 
 
-static const U8 bt_set_discoverable_true[] = {
+static const U8 bt_msg_set_discoverable_true[] = {
   0x04, /* length */
   BT_MSG_SET_DISCOVERABLE,
   0x01, /* => true */
@@ -119,7 +124,7 @@ static const U8 bt_set_discoverable_true[] = {
   0xE3
 };
 
-static const U8 bt_set_discoverable_false[] = {
+static const U8 bt_msg_set_discoverable_false[] = {
   0x04, /* length */
   BT_MSG_SET_DISCOVERABLE, /* set discoverable */
   0x00, /* => true */
@@ -127,15 +132,23 @@ static const U8 bt_set_discoverable_false[] = {
   0xE4
 };
 
+static const U8 bt_msg_cancel_inquiry[] = {
+  0x03, /* length */
+  BT_MSG_CANCEL_INQUIRY,
+  0xFF,
+  0xFF
+};
 
 
 static volatile struct {
+  bt_state_t state;
+
   /* see systick_get_ms() */
   U32 last_heartbeat;
 
   /* used for inquiring */
-  U8 bt_remote_id;
-  bt_device_t bt_remote_device;
+  U8 last_checked_id, remote_id; /* used to know when a new device is found */
+  bt_device_t remote_device;
 
 
   U8 last_msg;
@@ -213,31 +226,9 @@ static bool bt_wait_msg(U8 msg)
 }
 
 
-static void bt_begin_inquiry(U8 max_devices,
-                             U8 timeout,
-                             U8 bt_remote_class[4])
-{
-  int i;
-  U8 packet[11];
-
-  packet[0] = 10;      /* length */
-  packet[1] = BT_MSG_BEGIN_INQUIRY; /* begin inquiry */
-  packet[2] = max_devices;
-  packet[3] = 0;       /* timeout (hi) */
-  packet[4] = timeout; /* timeout (lo) */
-
-  for (i = 0 ; i < 4 ; i++)
-    packet[5+i] = bt_remote_class[i];
-
-  bt_set_checksum(packet+1, 10);
-
-  do {
-    uart_write(packet, 11);
-  } while(!bt_wait_msg(BT_MSG_INQUIRY_RUNNING));
-}
-
 static void bt_reseted()
 {
+  bt_state.state = BT_STATE_WAITING;
   uart_write(&bt_msg_start_heart, sizeof(bt_msg_start_heart));
 }
 
@@ -274,21 +265,27 @@ static void bt_uart_callback(U8 *msg, U8 len)
     return;
   }
 
+
   if (msg[0] == BT_MSG_INQUIRY_RESULT) {
     /* we've found a device => we extract the fields */
 
     for (i = 0 ; i < BT_ADDR_SIZE ; i++)
-      bt_state.bt_remote_device.addr[i] = msg[1+i];
+      bt_state.remote_device.addr[i] = msg[1+i];
 
     for (i = 0 ; i < BT_NAME_MAX_LNG ; i++)
-      bt_state.bt_remote_device.name[i] = msg[1+7+i];
-    bt_state.bt_remote_device.name[BT_NAME_MAX_LNG+1] = '\0';
+      bt_state.remote_device.name[i] = msg[1+7+i];
+    bt_state.remote_device.name[BT_NAME_MAX_LNG+1] = '\0';
 
     for (i = 0 ; i < BT_CLASS_SIZE ; i++)
-      bt_state.bt_remote_device.class[i] = msg[1+7+16+i];
+      bt_state.remote_device.class[i] = msg[1+7+16+i];
 
-    bt_state.bt_remote_id++;
+    bt_state.remote_id++;
     return;
+  }
+
+  if (msg[0] == BT_MSG_INQUIRY_STOPPED) {
+    if (bt_state.state == BT_STATE_INQUIRING)
+      bt_state.state = BT_STATE_WAITING;
   }
 
   if (msg[0] == BT_MSG_RESET_INDICATION) {
@@ -304,24 +301,19 @@ void bt_init()
   USB_SEND("bt_init()");
 
   /* we put the ARM CMD pin to 0 => command mode */
-  /* and we put the RST PIN to 0 => Reseting */
+  /* and we put the RST PIN to 1 => Will release the reset on the bluecore */
   *AT91C_PIOA_PER = BT_RST_PIN | BT_ARM_CMD_PIN;
   *AT91C_PIOA_PPUDR = BT_ARM_CMD_PIN;
   *AT91C_PIOA_CODR = BT_ARM_CMD_PIN;
-  *AT91C_PIOA_CODR = BT_RST_PIN;
+  *AT91C_PIOA_SODR = BT_RST_PIN;
   *AT91C_PIOA_OER = BT_RST_PIN | BT_ARM_CMD_PIN;
 
   systick_wait_ms(100);
 
   uart_init(bt_uart_callback);
 
-  /* we release the reset pin => 1 */
-  *AT91C_PIOA_SODR = BT_RST_PIN;
-
   bt_wait_msg(BT_MSG_RESET_INDICATION);
-
-  bt_reseted();
-
+  /* the function bt_uart_callback() should start the heart after receiving the RESET_INDICATION */
   bt_wait_msg(BT_MSG_HEARTBEAT);
 
   USB_SEND("bt_init() finished");
@@ -355,44 +347,65 @@ void bt_set_discoverable(bool d)
 {
   do {
     if (d)
-      uart_write(&bt_set_discoverable_true, sizeof(bt_set_discoverable_true));
+      uart_write(&bt_msg_set_discoverable_true, sizeof(bt_msg_set_discoverable_true));
     else
-      uart_write(&bt_set_discoverable_false, sizeof(bt_set_discoverable_false));
+      uart_write(&bt_msg_set_discoverable_false, sizeof(bt_msg_set_discoverable_false));
   } while(!bt_wait_msg(BT_MSG_SET_DISCOVERABLE_ACK));
 }
 
 
-
-
-void bt_inquiry(bt_inquiry_callback_t callback,
-                U8 max_devices,
-                U8 timeout,
-                U8 bt_remote_class[4])
-{
-  U8 last_id = 0;
-  U32 start_time;
-
-  if (timeout < 1 || timeout > 0x30)
-    return;
-
-  bt_begin_inquiry(max_devices, timeout, bt_remote_class);
-
-  start_time = systick_get_ms();
-
-  while(bt_state.last_msg != BT_MSG_INQUIRY_STOPPED)
-    {
-      if (last_id != bt_state.bt_remote_id)
-        {
-          last_id = bt_state.bt_remote_id;
-          callback((bt_device_t *)&bt_state.bt_remote_device);
-        }
-
-      if (start_time + (2*timeout*1000) < systick_get_ms()) {
-        /* argh, something went wrong */
-        break;
-      }
-    }
+bt_state_t bt_get_state() {
+  return bt_state.state;
 }
+
+
+
+void bt_begin_inquiry(U8 max_devices,
+                      U8 timeout,
+                      U8 bt_remote_class[4])
+{
+  int i;
+  U8 packet[11];
+
+  packet[0] = 10;      /* length */
+  packet[1] = BT_MSG_BEGIN_INQUIRY; /* begin inquiry */
+  packet[2] = max_devices;
+  packet[3] = 0;       /* timeout (hi) */
+  packet[4] = timeout; /* timeout (lo) */
+
+  for (i = 0 ; i < 4 ; i++)
+    packet[5+i] = bt_remote_class[i];
+
+  bt_set_checksum(packet+1, 10);
+
+  do {
+    uart_write(packet, 11);
+  } while(!bt_wait_msg(BT_MSG_INQUIRY_RUNNING));
+
+  bt_state.last_checked_id = 0;
+  bt_state.state = BT_STATE_INQUIRING;
+}
+
+bool bt_has_found_device() {
+  return (bt_state.last_checked_id != bt_state.remote_id);
+}
+
+
+bt_device_t *bt_get_discovered_device() {
+  if (bt_has_found_device()) {
+    bt_state.last_checked_id = bt_state.remote_id;
+    return (bt_device_t *)&(bt_state.remote_device);
+  }
+
+  return NULL;
+}
+
+
+void bt_cancel_inquiry() {
+  uart_write(&bt_msg_cancel_inquiry, sizeof(bt_msg_cancel_inquiry));
+  bt_wait_msg(BT_MSG_INQUIRY_STOPPED);
+}
+
 
 
 int bt_checksum_errors()
