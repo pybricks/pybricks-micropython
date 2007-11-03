@@ -51,7 +51,7 @@ sound_isr()
 
 /* Initialise the Synchronous Serial Controller. */
 void
-nx_sound_init()
+nx__sound_init()
 {
   nx_interrupts_disable();
 

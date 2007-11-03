@@ -26,7 +26,6 @@ typedef enum {
 
 typedef void (*aic_isr_t)();
 
-void nx_aic_init();
 void nx_aic_install_isr(aic_vector_t vector, aic_priority_t prio,
                      aic_trigger_mode_t trig_mode, aic_isr_t isr);
 void nx_aic_enable(aic_vector_t vector);

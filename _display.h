@@ -4,6 +4,6 @@
 #include "base/types.h"
 #include "display.h"
 
-void nx_display_init();
+void nx__display_init();
 
 #endif

@@ -8,7 +8,7 @@
 #include "interrupts.h"
 #include "drivers/systick.h"
 #include "drivers/aic.h"
-#include "drivers/lcd.h"
+#include "drivers/_lcd.h"
 #include "util.h"
 #include "_display.h"
 
@@ -40,7 +40,7 @@ static struct {
 
 static inline void dirty_display() {
   if (display.auto_refresh)
-    nx_lcd_dirty_display();
+    nx__lcd_dirty_display();
 }
 
 
@@ -63,7 +63,7 @@ void nx_display_auto_refresh(bool auto_refresh) {
  * auto-refresh is disabled.
  */
 inline void nx_display_refresh() {
-  nx_lcd_dirty_display();
+  nx__lcd_dirty_display();
 }
 
 
@@ -180,13 +180,13 @@ void nx_display_uint(U32 val) {
 /*
  * Display initialization.
  */
-void nx_display_init() {
+void nx__display_init() {
   display.auto_refresh = FALSE;
   nx_display_clear();
   display.cursor.x = 0;
   display.cursor.y = 0;
   display.cursor.ignore_lf = FALSE;
-  nx_lcd_set_display(&display.buffer[0][0]);
+  nx__lcd_set_display(&display.buffer[0][0]);
   display.auto_refresh = TRUE;
   dirty_display();
 }

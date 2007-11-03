@@ -17,7 +17,7 @@
  * Note that this function leaves interrupts disabled in the ARM core
  * when it returns.
  */
-void nx_aic_init() {
+void nx__aic_init() {
   int i;
 
   /* Prevent the ARM core from being interrupted while we set up the

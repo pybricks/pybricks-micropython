@@ -1,6 +1,6 @@
 
 #include "base/types.h"
-#include "base/drivers/twi.h"
+#include "base/drivers/_twi.h"
 #include "base/interrupts.h"
 #include "base/at91sam7s256.h"
 
@@ -73,11 +73,11 @@ twi_isr()
 }
 
 
-int nx_twi_ready() {
+int nx__twi_ready() {
   return twi_state == TWI_READY;
 }
 
-void nx_twi_init()
+void nx__twi_init()
 {
   U32 clocks = 9;
 
@@ -120,7 +120,7 @@ void nx_twi_init()
 
 
 
-void nx_twi_read_async(U32 dev_addr, U8 *data, U32 nBytes)
+void nx__twi_read_async(U32 dev_addr, U8 *data, U32 nBytes)
 {
   U32 mode = ((dev_addr & 0x7f) << 16) | AT91C_TWI_IADRSZ_NO | AT91C_TWI_MREAD;
   U32 dummy;
@@ -142,7 +142,7 @@ void nx_twi_read_async(U32 dev_addr, U8 *data, U32 nBytes)
   *AT91C_TWI_IER = AT91C_TWI_RXRDY;
 }
 
-void nx_twi_write_async(U32 dev_addr, U8 *data, U32 nBytes)
+void nx__twi_write_async(U32 dev_addr, U8 *data, U32 nBytes)
 {
   U32 mode = ((dev_addr & 0x7f) << 16) | AT91C_TWI_IADRSZ_NO;
 

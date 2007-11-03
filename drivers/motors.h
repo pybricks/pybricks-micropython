@@ -3,8 +3,6 @@
 
 #include "base/types.h"
 
-void nx_motors_init();
-
 /*
  * motor : A == 0, B == 1, C == 2
  * brake : if == 1 brake when stoping

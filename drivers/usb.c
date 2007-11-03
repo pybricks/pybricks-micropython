@@ -13,7 +13,7 @@
 #include "base/drivers/systick.h"
 #include "base/drivers/aic.h"
 #include "base/util.h"
-#include "base/drivers/usb.h"
+#include "base/drivers/_usb.h"
 
 /* The USB controller supports up to 4 endpoints. */
 #define N_ENDPOINTS 4
@@ -664,7 +664,7 @@ static void usb_isr() {
 }
 
 
-void nx_usb_disable() {
+void nx__usb_disable() {
   nx_aic_disable(AT91C_ID_UDP);
 
   *AT91C_PIOA_PER = (1 << 16);
@@ -686,9 +686,9 @@ static inline void usb_enable() {
 }
 
 
-void nx_usb_init() {
+void nx__usb_init() {
 
-  nx_usb_disable();
+  nx__usb_disable();
 
   nx_interrupts_disable();
 

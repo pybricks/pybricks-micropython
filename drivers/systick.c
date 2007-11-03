@@ -2,8 +2,8 @@
 #include "base/types.h"
 #include "base/interrupts.h"
 #include "base/drivers/aic.h"
-#include "base/drivers/avr.h"
-#include "base/drivers/lcd.h"
+#include "base/drivers/_avr.h"
+#include "base/drivers/_lcd.h"
 #include "base/drivers/systick.h"
 
 
@@ -74,12 +74,12 @@ static void systick_isr() {
    *
    * As a result, this handler must be *very* fast.
    */
-  nx_avr_fast_update();
+  nx__avr_fast_update();
 
   /* The LCD dirty display routine can be done here too, since it is
    * very short.
    */
-  nx_lcd_fast_update();
+  nx__lcd_fast_update();
 
   /* If the application kernel set a scheduling callback, trigger the
    * lower priority IRQ in which the scheduler runs.
@@ -115,7 +115,7 @@ void nx_systick_wait_ns(U32 ns) {
 
 
 /* Initialize the system timer facility. */
-void nx_systick_init() {
+void nx__systick_init() {
   nx_interrupts_disable();
 
   /* Install both the low and high priority interrupt handlers, ready

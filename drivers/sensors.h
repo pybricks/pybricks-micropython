@@ -10,8 +10,6 @@ typedef enum {
   DIGI1 = 1,
 } sensor_data_pin;
 
-void nx_sensors_init();
-
 void nx_sensors_analog_enable(U8 sensor);
 void nx_sensors_analog_digi_set(U8 sensor, sensor_data_pin pin);
 void nx_sensors_analog_digi_clear(U8 sensor, sensor_data_pin pin);

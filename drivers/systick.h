@@ -3,7 +3,6 @@
 
 #include "base/types.h"
 
-void nx_systick_init();
 U32 nx_systick_get_ms();
 void nx_systick_wait_ms(U32 ms);
 void nx_systick_wait_ns(U32 ns);

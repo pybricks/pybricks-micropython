@@ -1,7 +1,7 @@
 #include "base/types.h"
 #include "base/nxt.h"
 #include "base/drivers/systick.h"
-#include "base/drivers/twi.h"
+#include "base/drivers/_twi.h"
 #include "base/drivers/avr.h"
 #include "base/util.h"
 
@@ -231,7 +231,7 @@ static void avr_unpack_from_avr() {
  * It is called directly in the main system timer interrupt, and so
  * must return as fast as possible.
  */
-void nx_avr_fast_update() {
+void nx__avr_fast_update() {
   /* The action taken depends on the state of the AVR
    * communication.
    */
@@ -253,7 +253,7 @@ void nx_avr_fast_update() {
      * the brick powered down after a few minutes by an AVR that
      * doesn't see us coming up.
      */
-    nx_twi_write_async(AVR_ADDRESS, (U8*)avr_init_handshake,
+    nx__twi_write_async(AVR_ADDRESS, (U8*)avr_init_handshake,
                     sizeof(avr_init_handshake)-1);
     avr_state.failed_consecutive_checksums = 0;
     avr_state.mode = AVR_INIT;
@@ -264,7 +264,7 @@ void nx_avr_fast_update() {
      * millisecond wait, which is accomplished by the use of two
      * intermediate state machine states.
      */
-    if (nx_twi_ready())
+    if (nx__twi_ready())
       avr_state.mode = AVR_WAIT_2MS;
     break;
 
@@ -286,10 +286,10 @@ void nx_avr_fast_update() {
     /* If the transmission is complete, switch to receive mode and
      * read the status structure from the AVR.
      */
-    if (nx_twi_ready()) {
+    if (nx__twi_ready()) {
       avr_state.mode = AVR_RECV;
       memset(raw_from_avr, 0, sizeof(raw_from_avr));
-      nx_twi_read_async(AVR_ADDRESS, raw_from_avr,
+      nx__twi_read_async(AVR_ADDRESS, raw_from_avr,
                      sizeof(raw_from_avr));
     }
 
@@ -298,7 +298,7 @@ void nx_avr_fast_update() {
      * from_avr struct, pack the data in the to_avr struct into a raw
      * buffer, and shovel that over the i2c bus to the AVR.
      */
-    if (nx_twi_ready()) {
+    if (nx__twi_ready()) {
       avr_unpack_from_avr();
       /* If the number of failed consecutive checksums is over the
        * restart threshold, consider the link down and reboot the
@@ -308,7 +308,7 @@ void nx_avr_fast_update() {
       } else {
         avr_state.mode = AVR_SEND;
         avr_pack_to_avr();
-        nx_twi_write_async(AVR_ADDRESS, raw_to_avr, sizeof(raw_to_avr));
+        nx__twi_write_async(AVR_ADDRESS, raw_to_avr, sizeof(raw_to_avr));
       }
     }
     break;
@@ -317,17 +317,17 @@ void nx_avr_fast_update() {
 
 
 /* Initialize the NXT-AVR communication. */
-void nx_avr_init() {
+void nx__avr_init() {
   /* Set up the TWI driver to turn on the i2c bus, and kickstart the
    * state machine to start transmitting.
    */
-  nx_twi_init();
+  nx__twi_init();
   avr_state.mode = AVR_LINK_DOWN;
 }
 
 
 /* Tell the AVR to power down the brick. This function never returns. */
-void nx_avr_power_down() {
+void nx__avr_power_down() {
   while (1)
     to_avr.power_mode = AVR_POWER_OFF;
 }
@@ -336,7 +336,7 @@ void nx_avr_power_down() {
 /* Tell the AVR to overwrite flash with the SAM-BA bootloader and
  * reboot the NXT into it.
  */
-void nx_avr_firmware_update_mode() {
+void nx__avr_firmware_update_mode() {
   while (1)
     to_avr.power_mode = AVR_RESET_MODE;
 }
@@ -364,7 +364,7 @@ bool nx_avr_battery_is_aa() {
 
 
 /* Return the analog reading for the given sensor. */
-U32 nx_avr_get_sensor_value(U32 n) {
+U32 nx__avr_get_sensor_value(U32 n) {
   if (n < NXT_N_SENSORS)
     return from_avr.adc_value[n];
   else
@@ -384,7 +384,7 @@ void nx_avr_get_version(U8 *major, U8 *minor) {
 
 
 /* Set the speed and brake/coast setting for the given motor. */
-void nx_avr_set_motor(U32 motor, int power_percent, bool brake) {
+void nx__avr_set_motor(U32 motor, int power_percent, bool brake) {
   if (motor < NXT_N_MOTORS) {
     to_avr.motor_speed[motor] = power_percent;
     if (brake)

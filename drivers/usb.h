@@ -36,8 +36,6 @@
 
 #define NX_USB_BUFFER_SIZE 64 /* usb packet size */
 
-void nx_usb_init();
-void nx_usb_disable();
 bool nx_usb_is_connected();
 
 /*

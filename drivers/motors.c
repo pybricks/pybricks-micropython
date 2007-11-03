@@ -14,7 +14,7 @@
 #include "base/interrupts.h"
 #include "base/drivers/systick.h"
 #include "base/drivers/aic.h"
-#include "base/drivers/avr.h"
+#include "base/drivers/_avr.h"
 #include "base/drivers/motors.h"
 
 /* The following are easier mnemonics for the pins used by the
@@ -129,7 +129,7 @@ static void motors_isr() {
 /* Initialize the tachymeters, ready to drive the motors with the
  * high-level API.
  */
-void nx_motors_init()
+void nx__motors_init()
 {
   nx_interrupts_disable();
 
@@ -168,7 +168,7 @@ void nx_motors_stop(U8 motor, bool brake) {
     return;
 
   motors_state[motor].mode = MOTOR_STOP;
-  nx_avr_set_motor(motor, 0, brake);
+  nx__avr_set_motor(motor, 0, brake);
 }
 
 
@@ -191,7 +191,7 @@ void nx_motors_rotate(U8 motor, S8 speed) {
    * mode and fire up the motor.
    */
   motors_state[motor].mode = MOTOR_ON_CONTINUOUS;
-  nx_avr_set_motor(motor, speed, FALSE);
+  nx__avr_set_motor(motor, speed, FALSE);
 }
 
 
@@ -237,7 +237,7 @@ void nx_motors_rotate_angle(U8 motor, S8 speed, U32 angle, bool brake) {
    */
   motors_state[motor].brake = brake;
   motors_state[motor].mode = MOTOR_ON_ANGLE;
-  nx_avr_set_motor(motor, speed, FALSE);
+  nx__avr_set_motor(motor, speed, FALSE);
 }
 
 
@@ -277,7 +277,7 @@ void nx_motors_rotate_time(U8 motor, S8 speed, U32 ms, bool brake) {
    */
   motors_state[motor].brake = brake;
   motors_state[motor].mode = MOTOR_ON_TIME;
-  nx_avr_set_motor(motor, speed, FALSE);
+  nx__avr_set_motor(motor, speed, FALSE);
 }
 
 

@@ -13,7 +13,7 @@
 #include "base/interrupts.h"
 #include "base/drivers/systick.h"
 #include "base/drivers/aic.h"
-#include "base/drivers/avr.h"
+#include "base/drivers/_avr.h"
 #include "base/drivers/sensors.h"
 
 
@@ -48,7 +48,7 @@ static volatile struct {
 };
 
 
-void nx_sensors_init() {
+void nx__sensors_init() {
   U32 sensor_sda_mask = 0;
   U32 sensor_scl_mask = 0;
   int i;
@@ -96,7 +96,7 @@ U32 nx_sensors_analog_get(U8 sensor) {
   if (sensor >= NXT_N_SENSORS || sensors_state[sensor].mode != ANALOG)
     return 0;
 
-  return nx_avr_get_sensor_value(sensor);
+  return nx__avr_get_sensor_value(sensor);
 }
 
 void nx_sensors_analog_enable(U8 sensor) {

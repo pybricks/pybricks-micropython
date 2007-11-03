@@ -23,7 +23,7 @@
 #include "base/interrupts.h"
 #include "base/drivers/systick.h"
 #include "base/drivers/aic.h"
-#include "base/drivers/lcd.h"
+#include "base/drivers/_lcd.h"
 
 /* Internal command bytes implementing part of the basic commandset of
  * the UC1601.
@@ -232,7 +232,7 @@ static void spi_init() {
 
 
 /* Initialize the LCD controller. */
-void nx_lcd_init() {
+void nx__lcd_init() {
   int i;
   /* This is the command byte sequence that should be sent to the LCD
    * after a reset.
@@ -306,18 +306,18 @@ void nx_lcd_init() {
 /* Mirror the given display buffer to the LCD controller. The given
  * buffer must be exactly 100x64 bytes, one full screen of pixels.
  */
-void nx_lcd_set_display(U8 *display) {
+void nx__lcd_set_display(U8 *display) {
   spi_state.screen = display;
   *AT91C_SPI_IER = AT91C_SPI_ENDTX;
 }
 
 
-inline void nx_lcd_dirty_display() {
+inline void nx__lcd_dirty_display() {
   spi_state.screen_dirty = TRUE;
 }
 
 
-void nx_lcd_fast_update() {
+void nx__lcd_fast_update() {
   if (spi_state.screen_dirty) {
     *AT91C_SPI_IER = AT91C_SPI_ENDTX;
   }
@@ -325,7 +325,7 @@ void nx_lcd_fast_update() {
 
 
 /* Shutdown the LCD controller. */
-void nx_lcd_shutdown() {
+void nx__lcd_shutdown() {
   /* When power to the controller goes out, there is the risk that
    * some capacitors mounted around the controller might damage it
    * when discharging in an uncontrolled fashion. To avoid this, the

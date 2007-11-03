@@ -3,15 +3,15 @@
 
 #include "base/types.h"
 #include "base/interrupts.h"
-#include "drivers/aic.h"
-#include "drivers/systick.h"
-#include "drivers/sound.h"
-#include "drivers/avr.h"
-#include "drivers/motors.h"
-#include "drivers/lcd.h"
+#include "drivers/_aic.h"
+#include "drivers/_systick.h"
+#include "drivers/_sound.h"
+#include "drivers/_avr.h"
+#include "drivers/_motors.h"
+#include "drivers/_lcd.h"
 #include "base/_display.h"
-#include "drivers/sensors.h"
-#include "drivers/usb.h"
+#include "drivers/_sensors.h"
+#include "drivers/_usb.h"
 
 /* main() is the entry point into the custom payload, not included in
  * the NxOS core.
@@ -19,16 +19,16 @@
 extern void main();
 
 static void core_init() {
-  nx_aic_init();
+  nx__aic_init();
   nx_interrupts_enable();
-  nx_systick_init();
-  nx_sound_init();
-  nx_avr_init();
-  nx_motors_init();
-  nx_lcd_init();
-  nx_display_init();
-  nx_sensors_init();
-  nx_usb_init();
+  nx__systick_init();
+  nx__sound_init();
+  nx__avr_init();
+  nx__motors_init();
+  nx__lcd_init();
+  nx__display_init();
+  nx__sensors_init();
+  nx__usb_init();
 
   /* Delay a little post-init, to let all the drivers settle down. */
   nx_systick_wait_ms(100);
@@ -60,9 +60,9 @@ static void check_boot_errors() {
 }
 
 static void core_shutdown() {
-  nx_lcd_shutdown();
-  nx_usb_disable();
-  nx_avr_power_down();
+  nx__lcd_shutdown();
+  nx__usb_disable();
+  nx__avr_power_down();
 }
 
 void nx_kernel_main() {
