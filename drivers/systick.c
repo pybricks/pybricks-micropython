@@ -29,7 +29,7 @@
  * interrupt. The PWM controller is unused on the NXT, so this is no
  * problem.
  */
-#define LOW_PRIORITY_SYSIRQ AT91C_ID_PWMC
+#define SCHEDULER_SYSIRQ AT91C_ID_PWMC
 
 
 /* The system timer. Counts the number of milliseconds elapsed since
@@ -46,12 +46,13 @@ static closure_t scheduler_cb = NULL;
 /* Low priority handler, called 1000 times a second by the high
  * priority handler.
  */
-static void systick_low_priority() {
+static void systick_sched() {
   /* Acknowledge the interrupt. */
-  aic_clear(LOW_PRIORITY_SYSIRQ);
+  aic_clear(SCHEDULER_SYSIRQ);
 
-  /* Run the driver's periodic update routines. */
-  lcd_1kHz_update();
+  /* Call into the scheduler. */
+  if (scheduler_cb)
+    scheduler_cb();
 }
 
 
@@ -75,14 +76,16 @@ static void systick_isr() {
    */
   avr_fast_update();
 
-  /* If the application kernel set a scheduling callback, call it. */
-  if (scheduler_cb)
-    scheduler_cb();
-
-  /* Manually trigger the low-priority 1000Hz interrupt handler
-   * asynchronously.
+  /* The LCD dirty display routine can be done here too, since it is
+   * very short.
    */
-  aic_set(LOW_PRIORITY_SYSIRQ);
+  lcd_fast_update();
+
+  /* If the application kernel set a scheduling callback, trigger the
+   * lower priority IRQ in which the scheduler runs.
+   */
+  if (scheduler_cb)
+    aic_set(SCHEDULER_SYSIRQ);
 }
 
 
@@ -118,8 +121,8 @@ void systick_init() {
   /* Install both the low and high priority interrupt handlers, ready
    * to handle periodic updates.
    */
-  aic_install_isr(LOW_PRIORITY_SYSIRQ, AIC_PRIO_LOW,
-                  AIC_TRIG_EDGE, systick_low_priority);
+  aic_install_isr(SCHEDULER_SYSIRQ, AIC_PRIO_SCHED,
+                  AIC_TRIG_EDGE, systick_sched);
   aic_install_isr(AT91C_ID_SYS, AIC_PRIO_TICK,
                   AIC_TRIG_EDGE, systick_isr);
 

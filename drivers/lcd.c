@@ -317,7 +317,7 @@ inline void lcd_dirty_display() {
 }
 
 
-void lcd_1kHz_update() {
+void lcd_fast_update() {
   if (spi_state.screen_dirty) {
     *AT91C_SPI_IER = AT91C_SPI_ENDTX;
   }

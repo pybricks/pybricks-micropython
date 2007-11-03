@@ -6,7 +6,7 @@
 #define LCD_HEIGHT 8 /* bytes, so 64 pixels. */
 
 void lcd_init();
-void lcd_1kHz_update();
+void lcd_fast_update();
 void lcd_set_display(U8 *display_buffer);
 inline void lcd_dirty_display();
 void lcd_shutdown();

@@ -9,7 +9,11 @@ typedef U32 aic_vector_t;
 typedef enum {
   AIC_PRIO_LOW = 1,     /* User and soft real time tasks. */
   AIC_PRIO_DRIVER = 3,  /* Most drivers go in here. */
-  AIC_PRIO_SOFTMAC = 5, /* Drivers that have no hardware controller. */
+  AIC_PRIO_SOFTMAC = 4, /* Drivers that have no hardware controller. */
+  AIC_PRIO_SCHED = 5,   /* The scheduler. It mustn't displace
+			 * maintaining the AVR link, but can preempt
+			 * everything else.
+			 */
   AIC_PRIO_RT = 6,      /* Hard real time tasks that musn't displace
                          * timekeeping. */
   AIC_PRIO_TICK = 7,    /* Hard real time tasks (system time, AVR link). */
