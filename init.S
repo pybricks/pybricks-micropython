@@ -10,7 +10,7 @@
 #define MC_RCR 0xFFFFFF00 /* Remap Control Register */
 #define MC_FMR 0xFFFFFF60 /* Flash Mode Register */
 
-#define WDTC_WDCR 0xFFFFFD40 /* Watchdog Control Register */
+#define WDTC_WDMR 0xFFFFFD44 /* Watchdog Control Register */
 
 #define PMC_SR 0xFFFFFC68   /* PMC Status Register */
 #define PMC_MOR 0xFFFFFC20  /* Main Oscillator Register */
@@ -39,14 +39,14 @@
 	bl mem_init_func
 	.endm
 
-	.global start
-	.extern kernel_main
+	.global nx_start
+	.extern nx_kernel_main
 
 
 /**********************************************************
  * Execution starts here after a reset.
  */
-start:
+nx_start:
 	/* Disable interrupts. They will be enabled if we are
 	 * rebooting, or being booted from SAM-BA. */
 	msr cpsr_c, #(MODE_SVC | IRQ_FIQ_MASK)
@@ -84,10 +84,17 @@ continue_boot:
 	ldr r1, =((50 << 16) | (0 << 8))
 	str r1, [r0]
 
-	/* Disable the watchdog. */
-	ldr r0, =WDTC_WDCR
-	ldr r1, =0x00008000
-	str r1, [r0]
+	/* Disable the watchdog. The watchdog is a sensitive beast:
+	 * its mode register is write-once, so we first check to see
+	 * if it has already been disabled, and only touch it if it
+	 * hasn't, assuming that this is a cold boot.
+	 */
+	ldr r0, =WDTC_WDMR
+	ldr r1, [r0]
+	ldr r2, =(1 << 15)
+	orr r2, r2, r1
+	cmp r1, r2
+	strne r2, [r0]
 
 	/* Remember this address, we're going to use it a lot. */
 	ldr r2, =PMC_SR
@@ -206,7 +213,7 @@ wait_mclk_3:
 	mov r7, #0
 
 	/* Start the main kernel code using an interworking branch. */
-	ldr r5, =kernel_main
+	ldr r5, =nx_kernel_main
 	mov lr, pc
 	bx  r5
 

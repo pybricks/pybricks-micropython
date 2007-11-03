@@ -1,6 +1,6 @@
 #include "base/at91sam7s256.h"
 
-#include "base/mytypes.h"
+#include "base/types.h"
 
 #include "base/drivers/systick.h"
 #include "base/drivers/uart.h"
@@ -15,7 +15,7 @@
 #include "base/drivers/usb.h"
 #include "base/util.h"
 #define CMDS_BUFSIZE 128
-#define USB_SEND(txt) usb_send((U8*)txt, strlen(txt))
+#define USB_SEND(txt) nx_usb_send((U8*)txt, strlen(txt))
 #else
 #define CMDS_BUFSIZE 0
 #define USB_SEND(txt)
@@ -143,7 +143,7 @@ static const U8 bt_msg_cancel_inquiry[] = {
 static volatile struct {
   bt_state_t state;
 
-  /* see systick_get_ms() */
+  /* see nx_systick_get_ms() */
   U32 last_heartbeat;
 
   /* used for inquiring */
@@ -218,9 +218,9 @@ static bool bt_check_checksum(U8 *msg, U8 len) {
 
 static bool bt_wait_msg(U8 msg)
 {
-  U32 start = systick_get_ms();
+  U32 start = nx_systick_get_ms();
 
-  while(bt_state.last_msg != msg && start+BT_ACK_TIMEOUT > systick_get_ms());
+  while(bt_state.last_msg != msg && start+BT_ACK_TIMEOUT > nx_systick_get_ms());
 
   return bt_state.last_msg == msg;
 }
@@ -229,7 +229,7 @@ static bool bt_wait_msg(U8 msg)
 static void bt_reseted()
 {
   bt_state.state = BT_STATE_WAITING;
-  uart_write(&bt_msg_start_heart, sizeof(bt_msg_start_heart));
+  nx_uart_write(&bt_msg_start_heart, sizeof(bt_msg_start_heart));
 }
 
 
@@ -261,7 +261,7 @@ static void bt_uart_callback(U8 *msg, U8 len)
 
 
   if (msg[0] == BT_MSG_HEARTBEAT) {
-    bt_state.last_heartbeat = systick_get_ms();
+    bt_state.last_heartbeat = nx_systick_get_ms();
     return;
   }
 
@@ -296,9 +296,9 @@ static void bt_uart_callback(U8 *msg, U8 len)
 }
 
 
-void bt_init()
+void nx_bt_init()
 {
-  USB_SEND("bt_init()");
+  USB_SEND("nx_bt_init()");
 
   /* we put the ARM CMD pin to 0 => command mode */
   /* and we put the RST PIN to 1 => Will release the reset on the bluecore */
@@ -308,9 +308,9 @@ void bt_init()
   *AT91C_PIOA_SODR = BT_RST_PIN;
   *AT91C_PIOA_OER = BT_RST_PIN | BT_ARM_CMD_PIN;
 
-  systick_wait_ms(100);
+  nx_systick_wait_ms(100);
 
-  uart_init(bt_uart_callback);
+  nx_uart_init(bt_uart_callback);
 
   bt_wait_msg(BT_MSG_RESET_INDICATION);
   /* the function bt_uart_callback() should start the heart after receiving the reset indication */
@@ -321,7 +321,7 @@ void bt_init()
 
 
 
-void bt_set_friendly_name(char *name)
+void nx_bt_set_friendly_name(char *name)
 {
   int i;
   U8 packet[20] = { 0 };
@@ -338,31 +338,31 @@ void bt_set_friendly_name(char *name)
   bt_set_checksum(packet+1, 19);
 
   do {
-    uart_write(packet, 20);
+    nx_uart_write(packet, 20);
   } while(!bt_wait_msg(BT_MSG_SET_FRIENDLY_NAME_ACK));
 }
 
 
-void bt_set_discoverable(bool d)
+void nx_bt_set_discoverable(bool d)
 {
   do {
     if (d)
-      uart_write(&bt_msg_set_discoverable_true, sizeof(bt_msg_set_discoverable_true));
+      nx_uart_write(&bt_msg_set_discoverable_true, sizeof(bt_msg_set_discoverable_true));
     else
-      uart_write(&bt_msg_set_discoverable_false, sizeof(bt_msg_set_discoverable_false));
+      nx_uart_write(&bt_msg_set_discoverable_false, sizeof(bt_msg_set_discoverable_false));
   } while(!bt_wait_msg(BT_MSG_SET_DISCOVERABLE_ACK));
 }
 
 
-bt_state_t bt_get_state() {
+bt_state_t nx_bt_get_state() {
   return bt_state.state;
 }
 
 
 
-void bt_begin_inquiry(U8 max_devices,
-                      U8 timeout,
-                      U8 bt_remote_class[4])
+void nx_bt_begin_inquiry(U8 max_devices,
+			 U8 timeout,
+			 U8 bt_remote_class[4])
 {
   int i;
   U8 packet[11];
@@ -379,14 +379,14 @@ void bt_begin_inquiry(U8 max_devices,
   bt_set_checksum(packet+1, 10);
 
   do {
-    uart_write(packet, 11);
+    nx_uart_write(packet, 11);
   } while(!bt_wait_msg(BT_MSG_INQUIRY_RUNNING));
 
   bt_state.last_checked_id = 0;
   bt_state.state = BT_STATE_INQUIRING;
 }
 
-bool bt_has_found_device()
+bool nx_bt_has_found_device()
 {
   if (bt_state.state == BT_STATE_INQUIRING)
     return (bt_state.last_checked_id != bt_state.remote_id);
@@ -394,9 +394,9 @@ bool bt_has_found_device()
 }
 
 
-bt_device_t *bt_get_discovered_device()
+bt_device_t *nx_bt_get_discovered_device()
 {
-  if (bt_has_found_device()) {
+  if (nx_bt_has_found_device()) {
     bt_state.last_checked_id = bt_state.remote_id;
     return (bt_device_t *)&(bt_state.remote_device);
   }
@@ -405,28 +405,28 @@ bt_device_t *bt_get_discovered_device()
 }
 
 
-void bt_cancel_inquiry()
+void nx_bt_cancel_inquiry()
 {
-  uart_write(&bt_msg_cancel_inquiry, sizeof(bt_msg_cancel_inquiry));
+  nx_uart_write(&bt_msg_cancel_inquiry, sizeof(bt_msg_cancel_inquiry));
   bt_wait_msg(BT_MSG_INQUIRY_STOPPED);
 }
 
 
-void bt_begin_known_devices_dumping()
+void nx_bt_begin_known_devices_dumping()
 {
   /* TODO */
 }
 
-bool bt_has_known_device()
+bool nx_bt_has_known_device()
 {
   if (bt_state.state == BT_STATE_KNOWN_DEVICES_DUMPING)
     return (bt_state.last_checked_id != bt_state.remote_id);
   return FALSE;
 }
 
-bt_device_t *bt_get_known_device()
+bt_device_t *nx_bt_get_known_device()
 {
-  if (bt_has_known_device()) {
+  if (nx_bt_has_known_device()) {
     bt_state.last_checked_id = bt_state.remote_id;
     return (bt_device_t *)&(bt_state.remote_device);
   }
@@ -434,20 +434,20 @@ bt_device_t *bt_get_known_device()
   return NULL;
 }
 
-void bt_add_known_device(bt_device_t *dev)
+void nx_bt_add_known_device(bt_device_t *dev)
 {
   /* TODO */
 }
 
 
-void bt_remove_device(bt_device_t *dev)
+void nx_bt_remove_device(bt_device_t *dev)
 {
   /* TODO */
 }
 
 
 
-int bt_checksum_errors()
+int nx_bt_checksum_errors()
 {
   return bt_state.nmb_checksum_errors;
 }
@@ -455,10 +455,10 @@ int bt_checksum_errors()
 
 
 /* to remove: */
-void bt_debug()
+void nx_bt_debug()
 {
-  display_uint(bt_state.last_heartbeat);
-  display_end_line();
+  nx_display_uint(bt_state.last_heartbeat);
+  nx_display_end_line();
   USB_SEND((char *)bt_state.cmds);
 }
 

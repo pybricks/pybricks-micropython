@@ -9,12 +9,12 @@
 
 #include "base/at91sam7s256.h"
 
-#include "base/mytypes.h"
+#include "base/types.h"
 #include "base/nxt.h"
 #include "base/interrupts.h"
 #include "base/drivers/systick.h"
 #include "base/drivers/aic.h"
-#include "base/drivers/avr.h"
+#include "base/drivers/_avr.h"
 #include "base/drivers/motors.h"
 
 /* The following are easier mnemonics for the pins used by the
@@ -80,7 +80,7 @@ static volatile struct {
 /* Tachymeter interrupt handler, triggered by a change of value of a
  * tachymeter pin.
  */
-void motors_isr() {
+static void motors_isr() {
   int i;
   U32 changes;
   U32 pins;
@@ -93,7 +93,7 @@ void motors_isr() {
   /* Grab the time, as we're going to use it to check for timed
    * rotation end.
    */
-  time = systick_get_ms();
+  time = nx_systick_get_ms();
 
   /* Check each motor's tachymeter. */
   for (i=0; i<NXT_N_MOTORS; i++) {
@@ -120,7 +120,7 @@ void motors_isr() {
            motors_state[i].current_count == motors_state[i].target) ||
           (motors_state[i].mode == MOTOR_ON_TIME &&
            time >= motors_state[i].target))
-        motors_stop(i, motors_state[i].brake);
+        nx_motors_stop(i, motors_state[i].brake);
     }
   }
 }
@@ -129,9 +129,9 @@ void motors_isr() {
 /* Initialize the tachymeters, ready to drive the motors with the
  * high-level API.
  */
-void motors_init()
+void nx__motors_init()
 {
-  interrupts_disable();
+  nx_interrupts_disable();
 
   /* Enable the PIO controller. */
   *AT91C_PMC_PCER = (1 << AT91C_ID_PIOA);
@@ -151,24 +151,24 @@ void motors_init()
   *AT91C_PIOA_ODR = MOTORS_ALL;
 
   /* Register the tachymeter interrupt handler. */
-  aic_install_isr(AT91C_ID_PIOA, AIC_PRIO_SOFTMAC,
+  nx_aic_install_isr(AT91C_ID_PIOA, AIC_PRIO_SOFTMAC,
                   AIC_TRIG_LEVEL, motors_isr);
 
   /* Trigger interrupts on changes to the state of the tachy pins. */
   *AT91C_PIOA_IER = MOTORS_TACH;
 
-  interrupts_enable();
+  nx_interrupts_enable();
 }
 
 
 /* Immediately stop the given motor, either braking or coasting. */
-void motors_stop(U8 motor, bool brake) {
+void nx_motors_stop(U8 motor, bool brake) {
   /* Cannot rotate imaginary motors. */
   if (motor > 2)
     return;
 
   motors_state[motor].mode = MOTOR_STOP;
-  avr_set_motor(motor, 0, brake);
+  nx__avr_set_motor(motor, 0, brake);
 }
 
 
@@ -176,7 +176,7 @@ void motors_stop(U8 motor, bool brake) {
  * will continue to rotate until another motor command is issued to
  * it.
  */
-void motors_rotate(U8 motor, S8 speed) {
+void nx_motors_rotate(U8 motor, S8 speed) {
   /* Cannot rotate imaginary motors. */
   if (motor > 2)
     return;
@@ -191,19 +191,19 @@ void motors_rotate(U8 motor, S8 speed) {
    * mode and fire up the motor.
    */
   motors_state[motor].mode = MOTOR_ON_CONTINUOUS;
-  avr_set_motor(motor, speed, FALSE);
+  nx__avr_set_motor(motor, speed, FALSE);
 }
 
 
 /* Start rotating the motor at the given speed, and stop it (with the
  * given braking mode) after rotating the given number of degrees.
  */
-void motors_rotate_angle(U8 motor, S8 speed, U32 angle, bool brake) {
+void nx_motors_rotate_angle(U8 motor, S8 speed, U32 angle, bool brake) {
   /* If we're not moving, we can never reach the target. Take a
    * shortcut.
    */
   if (speed == 0) {
-    motors_stop(motor, brake);
+    nx_motors_stop(motor, brake);
     return;
   }
 
@@ -237,19 +237,19 @@ void motors_rotate_angle(U8 motor, S8 speed, U32 angle, bool brake) {
    */
   motors_state[motor].brake = brake;
   motors_state[motor].mode = MOTOR_ON_ANGLE;
-  avr_set_motor(motor, speed, FALSE);
+  nx__avr_set_motor(motor, speed, FALSE);
 }
 
 
 /* Start rotating the motor at the given speed, and stop it (with the
  * given braking mode) after given number of milliseconds.
  */
-void motors_rotate_time(U8 motor, S8 speed, U32 ms, bool brake) {
+void nx_motors_rotate_time(U8 motor, S8 speed, U32 ms, bool brake) {
   /* If we're not moving, we can never reach the target. Take a
    * shortcut.
    */
   if (speed == 0) {
-    motors_stop(motor, brake);
+    nx_motors_stop(motor, brake);
     return;
   }
 
@@ -270,14 +270,14 @@ void motors_rotate_time(U8 motor, S8 speed, U32 ms, bool brake) {
   motors_state[motor].mode = MOTOR_CONFIGURING;
 
   /* Set the target system time. */
-  motors_state[motor].target = systick_get_ms() + ms;
+  motors_state[motor].target = nx_systick_get_ms() + ms;
 
   /* Remember the brake setting, change to angle target mode and fire
    * up the motor.
    */
   motors_state[motor].brake = brake;
   motors_state[motor].mode = MOTOR_ON_TIME;
-  avr_set_motor(motor, speed, FALSE);
+  nx__avr_set_motor(motor, speed, FALSE);
 }
 
 
@@ -285,7 +285,7 @@ void motors_rotate_time(U8 motor, S8 speed, U32 ms, bool brake) {
  * motor. This value is of no real use outside of the tachymeter
  * driver, but is useful for displaying motor activity.
  */
-U32 motors_get_tach_count(U8 motor) {
+U32 nx_motors_get_tach_count(U8 motor) {
   /* Cannot query imaginary motors. */
   if (motor > 2)
     return 0;

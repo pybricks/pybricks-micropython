@@ -1,6 +1,6 @@
 #include "base/at91sam7s256.h"
 
-#include "base/mytypes.h"
+#include "base/types.h"
 
 #include "base/nxt.h"
 #include "base/interrupts.h"
@@ -108,11 +108,11 @@ static void uart_isr()
 
 
 
-void uart_init(uart_read_callback_t callback)
+void nx_uart_init(uart_read_callback_t callback)
 {
   uart_state.callback = callback;
 
-  interrupts_disable();
+  nx_interrupts_disable();
 
   /* pio : we disable pio management
    * and then switch to the periph A (uart) */
@@ -160,7 +160,6 @@ void uart_init(uart_read_callback_t callback)
 
   /* then configure: */
 
-
   /* configure the mode register */
   *AT91C_US1_MR =
     AT91C_US_USMODE_HWHSH /* hardware handshaking */
@@ -187,7 +186,6 @@ void uart_init(uart_read_callback_t callback)
 
 #undef UART_CLOCK_DIVISOR
 
-
   *AT91C_US1_CR = AT91C_US_STTTO;
 
 
@@ -198,8 +196,8 @@ void uart_init(uart_read_callback_t callback)
   /*** Interruptions : AIC */
   /* not in edge sensitive mode => level */
 
-  aic_install_isr(AT91C_ID_US1, AIC_PRIO_DRIVER,
-                  AIC_TRIG_LEVEL, uart_isr);
+  nx_aic_install_isr(AT91C_ID_US1, AIC_PRIO_DRIVER,
+		     AIC_TRIG_LEVEL, uart_isr);
 
 
    /* and then reenable the transmitter and the receiver thanks to the
@@ -212,11 +210,11 @@ void uart_init(uart_read_callback_t callback)
   *AT91C_US1_PTCR = AT91C_PDC_TXTEN;
 
   /* reactivate the interruptions */
-  interrupts_enable();
+  nx_interrupts_enable();
 
 }
 
-void uart_write(void *data, U16 lng)
+void nx_uart_write(void *data, U16 lng)
 {
   while (*AT91C_US1_TNCR != 0);
 
@@ -224,12 +222,12 @@ void uart_write(void *data, U16 lng)
   *AT91C_US1_TNCR = (U32)lng;
 }
 
-bool uart_can_write()
+bool nx_uart_can_write()
 {
   return (*AT91C_US1_TNCR == 0);
 }
 
-bool uart_is_writing()
+bool nx_uart_is_writing()
 {
   return (*AT91C_US1_TCR + *AT91C_US1_TNCR) > 0;
 }
@@ -238,22 +236,22 @@ bool uart_is_writing()
 /****** TO REMOVE : ****/
 
 
-U32 uart_nmb_interrupt()
+U32 nx_uart_nmb_interrupt()
 {
   return uart_state.nmb_int;
 }
 
-U32 uart_get_last_csr()
+U32 nx_uart_get_last_csr()
 {
   return uart_state.last_csr;
 }
 
-U32 uart_get_csr()
+U32 nx_uart_get_csr()
 {
   return *AT91C_US1_CSR;
 }
 
-U32 uart_get_state()
+U32 nx_uart_get_state()
 {
   return uart_state.packet_size;
 }

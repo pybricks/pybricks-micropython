@@ -8,12 +8,12 @@
 
 #include "base/at91sam7s256.h"
 
-#include "base/mytypes.h"
+#include "base/types.h"
 #include "base/interrupts.h"
 #include "base/drivers/systick.h"
 #include "base/drivers/aic.h"
 #include "base/util.h"
-#include "base/drivers/usb.h"
+#include "base/drivers/_usb.h"
 
 /* The USB controller supports up to 4 endpoints. */
 #define N_ENDPOINTS 4
@@ -227,7 +227,7 @@ static volatile struct {
    * gain access to the other buffer.
    */
   U8   rx_current_user_buffer_idx; /* 0 or 1 */
-  U8   rx_buffer[2][USB_BUFFER_SIZE];
+  U8   rx_buffer[2][NX_USB_BUFFER_SIZE];
   U16  rx_buffer_size[2]; /* data size waiting in the buffer */
   bool rx_overflow;
 
@@ -664,17 +664,13 @@ static void usb_isr() {
 }
 
 
-
-
-
-
-void usb_disable() {
-  aic_disable(AT91C_ID_UDP);
+void nx__usb_disable() {
+  nx_aic_disable(AT91C_ID_UDP);
 
   *AT91C_PIOA_PER = (1 << 16);
   *AT91C_PIOA_OER = (1 << 16);
   *AT91C_PIOA_SODR = (1 << 16);
-  systick_wait_ms(200);
+  nx_systick_wait_ms(200);
 }
 
 
@@ -686,17 +682,15 @@ static inline void usb_enable() {
   *AT91C_PIOA_PER = (1 << 16);
   *AT91C_PIOA_OER = (1 << 16);
   *AT91C_PIOA_CODR = (1 << 16);
-  systick_wait_ms(200);
+  nx_systick_wait_ms(200);
 }
 
 
-void usb_init() {
+void nx__usb_init() {
 
-  usb_disable();
+  nx__usb_disable();
 
-  interrupts_disable();
-
-
+  nx_interrupts_disable();
 
   /* usb pll was already set in init.S */
 
@@ -721,22 +715,22 @@ void usb_init() {
    * this interruption is always emit (can't be disable with UDP_IER)
    */
   /* other interruptions will be enabled when needed */
-  aic_install_isr(AT91C_ID_UDP, AIC_PRIO_DRIVER,
-		  AIC_TRIG_LEVEL, usb_isr);
+  nx_aic_install_isr(AT91C_ID_UDP, AIC_PRIO_DRIVER,
+		     AIC_TRIG_LEVEL, usb_isr);
 
 
-  interrupts_enable();
+  nx_interrupts_enable();
 
   usb_enable();
 }
 
 
-bool usb_can_send() {
+bool nx_usb_can_send() {
   return (usb_state.status == USB_READY);
 }
 
 
-void usb_send(U8 *data, U32 length) {
+void nx_usb_send(U8 *data, U32 length) {
   if (usb_state.status == USB_UNINITIALIZED
       || usb_state.status == USB_SUSPENDED)
     return;
@@ -747,26 +741,26 @@ void usb_send(U8 *data, U32 length) {
   usb_send_data(2, data, length);
 }
 
-bool usb_is_connected() {
+bool nx_usb_is_connected() {
   return (usb_state.status != USB_UNINITIALIZED);
 }
 
 
-U16 usb_has_data() {
+U16 nx_usb_has_data() {
   return usb_state.rx_buffer_size[usb_state.rx_current_user_buffer_idx];
 }
 
 
-volatile void *usb_get_buffer() {
+volatile void *nx_usb_get_buffer() {
   return (usb_state.rx_buffer[usb_state.rx_current_user_buffer_idx]);
 }
 
 
-bool usb_overloaded() {
+bool nx_usb_overloaded() {
   return usb_state.rx_overflow;
 }
 
-void usb_flush_buffer() {
+void nx_usb_flush_buffer() {
   usb_state.rx_overflow = FALSE;
 
   usb_state.rx_buffer_size[usb_state.rx_current_user_buffer_idx] = 0;

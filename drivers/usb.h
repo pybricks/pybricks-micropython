@@ -1,7 +1,7 @@
 #ifndef __NXOS_USB_H__
 #define __NXOS_USB_H__
 
-#include "base/mytypes.h"
+#include "base/types.h"
 
 /******
  * The NXT can only work as a device, not as host.
@@ -34,35 +34,33 @@
  *  - Data were lost since the last flush
  ******/
 
-#define USB_BUFFER_SIZE 64 /* usb packet size */
+#define NX_USB_BUFFER_SIZE 64 /* usb packet size */
 
-void usb_init();
-void usb_disable();
-bool usb_is_connected();
+bool nx_usb_is_connected();
 
 /*
  * If you need to know when your data has been sent, you can
  * use also this function
  */
-bool usb_can_send();
+bool nx_usb_can_send();
 
 /*
  * send the specified data.
  * take care to not modify these data until usb_can_send() return true again
  */
-void usb_send(U8 *data, U32 length);
+void nx_usb_send(U8 *data, U32 length);
 
 /*
  * return the number of bytes waiting in the input buffer
  */
-U16 usb_has_data();
+U16 nx_usb_has_data();
 
 /*
  * return a pointer to the user buffer
  * this buffer is always the same, so you can call this
  * function only once.
  */
-volatile void *usb_get_buffer();
+volatile void *nx_usb_get_buffer();
 
 /*
  * erase the user buffer with the content of the driver buffer
@@ -70,13 +68,13 @@ volatile void *usb_get_buffer();
  *          and don't need it anymore, you must call this function,
  *          else, there will be a buffer overload.
  */
-void usb_flush_buffer();
+void nx_usb_flush_buffer();
 
 /*
  * return true if the buffers were overloaded : It means your program wasn't
  * fast enought for reading data coming on the usb, and a packet has been lost.
  */
-bool usb_overloaded();
+bool nx_usb_overloaded();
 
 
 #endif

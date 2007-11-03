@@ -1,8 +1,9 @@
 #include "base/at91sam7s256.h"
+#include "base/types.h"
 #include "base/interrupts.h"
 #include "base/drivers/aic.h"
-#include "base/drivers/avr.h"
-#include "base/drivers/lcd.h"
+#include "base/drivers/_avr.h"
+#include "base/drivers/_lcd.h"
 #include "base/drivers/systick.h"
 
 
@@ -28,7 +29,7 @@
  * interrupt. The PWM controller is unused on the NXT, so this is no
  * problem.
  */
-#define LOW_PRIORITY_SYSIRQ AT91C_ID_PWMC
+#define SCHEDULER_SYSIRQ AT91C_ID_PWMC
 
 
 /* The system timer. Counts the number of milliseconds elapsed since
@@ -36,16 +37,22 @@
  */
 static volatile U32 systick_time;
 
+/* The scheduler callback. Application kernels can set this to their own
+ * callback function, to do scheduling in the high priority systick
+ * interrupt.
+ */
+static nx_closure_t scheduler_cb = NULL;
 
 /* Low priority handler, called 1000 times a second by the high
  * priority handler.
  */
-static void systick_low_priority() {
+static void systick_sched() {
   /* Acknowledge the interrupt. */
-  aic_clear(LOW_PRIORITY_SYSIRQ);
+  nx_aic_clear(SCHEDULER_SYSIRQ);
 
-  /* Run the driver's periodic update routines. */
-  lcd_1kHz_update();
+  /* Call into the scheduler. */
+  if (scheduler_cb)
+    scheduler_cb();
 }
 
 
@@ -67,23 +74,29 @@ static void systick_isr() {
    *
    * As a result, this handler must be *very* fast.
    */
-  avr_fast_update();
+  nx__avr_fast_update();
 
-  /* Manually trigger the low-priority 1000Hz interrupt handler
-   * asynchronously.
+  /* The LCD dirty display routine can be done here too, since it is
+   * very short.
    */
-  aic_set(LOW_PRIORITY_SYSIRQ);
+  nx__lcd_fast_update();
+
+  /* If the application kernel set a scheduling callback, trigger the
+   * lower priority IRQ in which the scheduler runs.
+   */
+  if (scheduler_cb)
+    nx_aic_set(SCHEDULER_SYSIRQ);
 }
 
 
 /* Return the absolute system time. */
-U32 systick_get_ms() {
+U32 nx_systick_get_ms() {
   return systick_time;
 }
 
 
 /* Enter a busy wait loop for the given number of milliseconds. */
-void systick_wait_ms(U32 ms) {
+void nx_systick_wait_ms(U32 ms) {
   U32 final = systick_time + ms;
 
   while (systick_time < final);
@@ -94,7 +107,7 @@ void systick_wait_ms(U32 ms) {
  * routine relies entirely on instruction timing within the CPU, and
  * is calibrated for 48MHz.
  */
-void systick_wait_ns(U32 ns) {
+void nx_systick_wait_ns(U32 ns) {
   volatile U32 x = (ns >> 7) + 1;
 
   while (x--);
@@ -102,16 +115,16 @@ void systick_wait_ns(U32 ns) {
 
 
 /* Initialize the system timer facility. */
-void systick_init() {
-  interrupts_disable();
+void nx__systick_init() {
+  nx_interrupts_disable();
 
   /* Install both the low and high priority interrupt handlers, ready
    * to handle periodic updates.
    */
-  aic_install_isr(LOW_PRIORITY_SYSIRQ, AIC_PRIO_LOW,
-                  AIC_TRIG_EDGE, systick_low_priority);
-  aic_install_isr(AT91C_ID_SYS, AIC_PRIO_TICK,
-                  AIC_TRIG_EDGE, systick_isr);
+  nx_aic_install_isr(SCHEDULER_SYSIRQ, AIC_PRIO_SCHED,
+		     AIC_TRIG_EDGE, systick_sched);
+  nx_aic_install_isr(AT91C_ID_SYS, AIC_PRIO_TICK,
+		     AIC_TRIG_EDGE, systick_isr);
 
   /* Configure and enable the Periodic Interval Timer. The counter
    * value is 1/16th of the master clock (base frequency), divided by
@@ -120,5 +133,11 @@ void systick_init() {
   *AT91C_PITC_PIMR = (((PIT_BASE_FREQUENCY / SYSIRQ_FREQ) - 1) |
                       AT91C_PITC_PITEN | AT91C_PITC_PITIEN);
 
-  interrupts_enable();
+  nx_interrupts_enable();
+}
+
+void nx_systick_install_scheduler(nx_closure_t sched_cb) {
+  nx_interrupts_disable();
+  scheduler_cb = sched_cb;
+  nx_interrupts_enable();
 }
