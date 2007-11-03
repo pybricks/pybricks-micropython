@@ -216,7 +216,7 @@ static void bt_begin_inquiry(U8 max_devices,
   U8 packet[10];
 
   packet[0] = 10;      /* length */
-  packet[1] = BT_MSG_BEGIN_INQUIRY;    /* begin inquiry */
+  packet[1] = BT_MSG_BEGIN_INQUIRY; /* begin inquiry */
   packet[2] = max_devices;
   packet[3] = 0;       /* timeout (hi) */
   packet[4] = timeout; /* timeout (lo) */
@@ -244,6 +244,10 @@ static void bt_reseted()
 static void bt_uart_callback(U8 *msg, U8 len)
 {
   int i;
+
+  /* if it's a break from the nxt */
+  if (msg == NULL || len == 0)
+    return;
 
   /* we check first the checksum and ignore the message if the checksum is invalid */
   if (len < 1 || !bt_check_checksum(msg, len))

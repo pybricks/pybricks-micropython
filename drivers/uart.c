@@ -60,6 +60,12 @@ static void uart_isr()
 
   uart_state.last_csr = csr;
 
+  if (csr & AT91C_US_RXBRK) {
+    uart_state.callback(NULL, 0);
+    *AT91C_US1_CR = AT91C_US_RSTSTA;
+  }
+
+
   if (csr & AT91C_US_RXRDY) {
 
     /* we've just read the first byte:
@@ -69,7 +75,7 @@ static void uart_isr()
     *AT91C_US1_IDR = AT91C_US_RXRDY;
     while(*AT91C_US1_IMR & AT91C_US_RXRDY);
 
-    uart_state.packet_size = *AT91C_US1_RHR;
+    uart_state.packet_size = *AT91C_US1_RHR & 0xFF;
     *AT91C_US1_RCR = uart_state.packet_size;
 
     /* we reenable the receiving with the PDC */
@@ -187,7 +193,7 @@ void uart_init(uart_read_callback_t callback)
 
   /* specify the interruptions that this driver needs */
 
-  *AT91C_US1_IER = AT91C_US_RXRDY;
+  *AT91C_US1_IER = AT91C_US_RXRDY | AT91C_US_RXBRK;
 
   /*** Interruptions : AIC */
   /* not in edge sensitive mode => level */
