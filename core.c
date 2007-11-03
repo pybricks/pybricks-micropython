@@ -59,15 +59,18 @@ static void check_boot_errors() {
   }
 }
 
-static void core_shutdown() {
+void nx_core_halt() {
   nx__lcd_shutdown();
   nx__usb_disable();
   nx__avr_power_down();
 }
 
+/* This function is not part of the public API, but is invoked from
+ * init.S.
+ */
 void nx_kernel_main() {
   core_init();
   check_boot_errors();
   main();
-  core_shutdown();
+  nx_core_halt();
 }
