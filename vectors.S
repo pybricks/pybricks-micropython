@@ -18,6 +18,6 @@
 	ldr   pc,v1 /* IRQ */
 	ldr   pc,v2 /* FIQ */
 
-v0:	.long start
-v1:	.long irq_handler
-v2:	.long unhandled_exception
+v0:	.long nx_start
+v1:	.long nx_irq_handler
+v2:	.long nx_unhandled_exception

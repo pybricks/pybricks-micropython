@@ -40,20 +40,20 @@ static struct {
 
 static inline void dirty_display() {
   if (display.auto_refresh)
-    lcd_dirty_display();
+    nx_lcd_dirty_display();
 }
 
 
 /* Clear the display. */
-void display_clear() {
+void nx_display_clear() {
   memset(&display.buffer[0][0], 0, sizeof(display.buffer));
-  display_cursor_set_pos(0, 0);
+  nx_display_cursor_set_pos(0, 0);
   dirty_display();
 }
 
 
 /* Enable or disable auto-refresh. */
-void display_auto_refresh(bool auto_refresh) {
+void nx_display_auto_refresh(bool auto_refresh) {
   display.auto_refresh = auto_refresh;
   dirty_display();
 }
@@ -62,8 +62,8 @@ void display_auto_refresh(bool auto_refresh) {
 /* Explicitely refresh the display. You only need to use this when
  * auto-refresh is disabled.
  */
-inline void display_refresh() {
-  lcd_dirty_display();
+inline void nx_display_refresh() {
+  nx_lcd_dirty_display();
 }
 
 
@@ -106,18 +106,18 @@ static inline void update_cursor(bool inc_y) {
     display.cursor.y = 0;
 }
 
-void display_cursor_set_pos(U8 x, U8 y) {
+void nx_display_cursor_set_pos(U8 x, U8 y) {
   if (is_on_screen(x, y)) {
     display.cursor.x = x;
     display.cursor.y = y;
   }
 }
 
-inline void display_end_line() {
+inline void nx_display_end_line() {
   update_cursor(TRUE);
 }
 
-void display_string(const char *str) {
+void nx_display_string(const char *str) {
   while (*str != '\0') {
     if (*str == '\n')
       update_cursor(TRUE);
@@ -131,7 +131,7 @@ void display_string(const char *str) {
   dirty_display();
 }
 
-void display_hex(U32 val) {
+void nx_display_hex(U32 val) {
   const char hex[16] = "0123456789ABCDEF";
   char buf[9];
   char *ptr = &buf[8];
@@ -149,11 +149,11 @@ void display_hex(U32 val) {
 
   buf[8] = '\0';
 
-  display_string(ptr);
+  nx_display_string(ptr);
   dirty_display();
 }
 
-void display_uint(U32 val) {
+void nx_display_uint(U32 val) {
   char buf[11];
   char *ptr = &buf[10];
 
@@ -172,7 +172,7 @@ void display_uint(U32 val) {
 
   buf[10] = '\0';
 
-  display_string(ptr);
+  nx_display_string(ptr);
   dirty_display();
 }
 
@@ -180,13 +180,13 @@ void display_uint(U32 val) {
 /*
  * Display initialization.
  */
-void display_init() {
+void nx_display_init() {
   display.auto_refresh = FALSE;
-  display_clear();
+  nx_display_clear();
   display.cursor.x = 0;
   display.cursor.y = 0;
   display.cursor.ignore_lf = FALSE;
-  lcd_set_display(&display.buffer[0][0]);
+  nx_lcd_set_display(&display.buffer[0][0]);
   display.auto_refresh = TRUE;
   dirty_display();
 }

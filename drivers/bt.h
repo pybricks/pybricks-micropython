@@ -9,6 +9,6 @@
  * It will only initialize the communication with the bluetooth
  * coprocessor.
  */
-void bt_init();
+void nx_bt_init();
 
 #endif

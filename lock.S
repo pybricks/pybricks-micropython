@@ -18,7 +18,7 @@ atomic_cas8:
 
 
 	.global spinlock_acquire_from_ref
-spinlock_acquire_from_ref:
+nx_spinlock_acquire_from_ref:
 	mov r1, #1
 spinlock_loop:
 	swpb r1, r1, [r0]
@@ -28,7 +28,7 @@ spinlock_loop:
 
 
 	.global spinlock_try_acquire_from_ref
-spinlock_try_acquire_from_ref:
+nx_spinlock_try_acquire_from_ref:
 	mov r1, #1
 	swpb r1, r1, [r0]
 	cmp r1, #0

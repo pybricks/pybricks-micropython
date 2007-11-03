@@ -124,7 +124,7 @@ static void spi_write_command_byte(U8 command) {
 
 
 /* Interrupt routine for handling DMA screen refreshing. */
-void spi_isr() {
+static void spi_isr() {
   /* If we are in the initial state, determine whether we need to do a
    * refresh cycle.
    */
@@ -181,7 +181,7 @@ void spi_isr() {
 
 
 static void spi_init() {
-  interrupts_disable();
+  nx_interrupts_disable();
 
   /* Enable power to the SPI and PIO controllers. */
   *AT91C_PMC_PCER = (1 << AT91C_ID_SPI) | (1 << AT91C_ID_PIOA);
@@ -224,15 +224,15 @@ static void spi_init() {
    * DMA transfers for SPI data. All SPI-related interrupt sources are
    * inhibited, so it won't bother us until we're ready.
    */
-  aic_install_isr(AT91C_ID_SPI, AIC_PRIO_DRIVER, AIC_TRIG_LEVEL, spi_isr);
+  nx_aic_install_isr(AT91C_ID_SPI, AIC_PRIO_DRIVER, AIC_TRIG_LEVEL, spi_isr);
   *AT91C_SPI_PTCR = AT91C_PDC_TXTEN;
 
-  interrupts_enable();
+  nx_interrupts_enable();
 }
 
 
 /* Initialize the LCD controller. */
-void lcd_init() {
+void nx_lcd_init() {
   int i;
   /* This is the command byte sequence that should be sent to the LCD
    * after a reset.
@@ -289,14 +289,14 @@ void lcd_init() {
    * a little bit for the UC1601 to register the new SPI bus state.
    */
   spi_init();
-  systick_wait_ms(20);
+  nx_systick_wait_ms(20);
 
   /* Issue a reset command, and wait. Normally here we'd check the
    * UC1601 status register, but as noted at the start of the file, we
    * can't read from the LCD controller due to the board setup.
    */
   spi_write_command_byte(RESET());
-  systick_wait_ms(20);
+  nx_systick_wait_ms(20);
 
   for (i=0; i<sizeof(lcd_init_sequence); i++)
     spi_write_command_byte(lcd_init_sequence[i]);
@@ -306,18 +306,18 @@ void lcd_init() {
 /* Mirror the given display buffer to the LCD controller. The given
  * buffer must be exactly 100x64 bytes, one full screen of pixels.
  */
-void lcd_set_display(U8 *display) {
+void nx_lcd_set_display(U8 *display) {
   spi_state.screen = display;
   *AT91C_SPI_IER = AT91C_SPI_ENDTX;
 }
 
 
-inline void lcd_dirty_display() {
+inline void nx_lcd_dirty_display() {
   spi_state.screen_dirty = TRUE;
 }
 
 
-void lcd_fast_update() {
+void nx_lcd_fast_update() {
   if (spi_state.screen_dirty) {
     *AT91C_SPI_IER = AT91C_SPI_ENDTX;
   }
@@ -325,7 +325,7 @@ void lcd_fast_update() {
 
 
 /* Shutdown the LCD controller. */
-void lcd_shutdown() {
+void nx_lcd_shutdown() {
   /* When power to the controller goes out, there is the risk that
    * some capacitors mounted around the controller might damage it
    * when discharging in an uncontrolled fashion. To avoid this, the
@@ -336,5 +336,5 @@ void lcd_shutdown() {
   *AT91C_SPI_IDR = ~0;
   *AT91C_SPI_PTCR = AT91C_PDC_TXTDIS;
   spi_write_command_byte(RESET());
-  systick_wait_ms(20);
+  nx_systick_wait_ms(20);
 }

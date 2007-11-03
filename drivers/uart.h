@@ -43,7 +43,7 @@ typedef void (*usart_read_callback_t)();
  * must configure itself the PIO
  * uart_number : 0 or 1
  */
-bool uart_init(U8 uart_number, U32 baud_rate,
+bool nx_uart_init(U8 uart_number, U32 baud_rate,
 	       usart_char_length_t char_length,
 	       usart_parity_t parity,
 	       usart_stop_bits_t stop_bits,
@@ -53,11 +53,11 @@ bool uart_init(U8 uart_number, U32 baud_rate,
  * Will send the data asap.
  * If the two slot in the pdc are used, this function will be blocking.
  */
-bool uart_write(U8 uart_number,
+bool nx_uart_write(U8 uart_number,
 		void *data,
 		U16 lng);
 
-bool uart_can_write(U8 uart_number);
+bool nx_uart_can_write(U8 uart_number);
 
 /*
  * Will start filling in the specified buffer with the data coming from the uart.
@@ -65,16 +65,16 @@ bool uart_can_write(U8 uart_number);
  * two time with two different buffers when you start.
  * Return false if you try to use more than 2 buffers
  */
-bool uart_read_start(U8 uart_number,
+bool nx_uart_read_start(U8 uart_number,
 		     void *buffer,
 		     U16 lng);
 
 /* Indicates if the buffer can be read by the user application:
  */
-bool uart_read_is_filled(U8 uart_number, void *buffer, U16 lng);
+bool nx_uart_read_is_filled(U8 uart_number, void *buffer, U16 lng);
 
 /* The user application tell the driver that the buffer has been handled */
 /* Note: in the current implementation, this function does nothing */
-void uart_read_ack(U8 uart_number, void *buffer);
+void nx_uart_read_ack(U8 uart_number, void *buffer);
 
 #endif

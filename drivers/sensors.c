@@ -48,7 +48,7 @@ static volatile struct {
 };
 
 
-void sensors_init() {
+void nx_sensors_init() {
   U32 sensor_sda_mask = 0;
   U32 sensor_scl_mask = 0;
   int i;
@@ -68,7 +68,7 @@ void sensors_init() {
 }
 
 
-void sensors_analog_digi_set(U8 sensor, sensor_data_pin pin) {
+void nx_sensors_analog_digi_set(U8 sensor, sensor_data_pin pin) {
   /* The DIGI pins can be manually controlled only when in analog
    * mode.
    */
@@ -80,7 +80,7 @@ void sensors_analog_digi_set(U8 sensor, sensor_data_pin pin) {
 }
 
 
-void sensors_analog_digi_clear(U8 sensor, sensor_data_pin pin) {
+void nx_sensors_analog_digi_clear(U8 sensor, sensor_data_pin pin) {
   /* The DIGI pins can be manually controlled only when in analog
    * mode.
    */
@@ -92,19 +92,19 @@ void sensors_analog_digi_clear(U8 sensor, sensor_data_pin pin) {
 }
 
 
-U32 sensors_analog_get(U8 sensor) {
+U32 nx_sensors_analog_get(U8 sensor) {
   if (sensor >= NXT_N_SENSORS || sensors_state[sensor].mode != ANALOG)
     return 0;
 
-  return avr_get_sensor_value(sensor);
+  return nx_avr_get_sensor_value(sensor);
 }
 
-void sensors_analog_enable(U8 sensor) {
+void nx_sensors_analog_enable(U8 sensor) {
   if (sensor >= NXT_N_SENSORS)
     return;
 
   if (sensors_state[sensor].mode != OFF)
-    sensors_disable(sensor);
+    nx_sensors_disable(sensor);
 
   sensors_state[sensor].mode = ANALOG;
 
@@ -116,7 +116,7 @@ void sensors_analog_enable(U8 sensor) {
 }
 
 
-void sensors_disable(U8 sensor) {
+void nx_sensors_disable(U8 sensor) {
   if (sensor >= NXT_N_SENSORS)
     return;
 

@@ -8,5 +8,6 @@
 
 void memcpy(void *dest, const void *src, U32 len);
 void memset(void *dest, const U8 val, U32 len);
+U32 strlen(char *str);
 
 #endif

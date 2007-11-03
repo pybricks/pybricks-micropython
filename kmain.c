@@ -19,19 +19,19 @@
 extern void main();
 
 static void core_init() {
-  aic_init();
-  interrupts_enable();
-  systick_init();
-  sound_init();
-  avr_init();
-  motors_init();
-  lcd_init();
-  display_init();
-  sensors_init();
-  usb_init();
+  nx_aic_init();
+  nx_interrupts_enable();
+  nx_systick_init();
+  nx_sound_init();
+  nx_avr_init();
+  nx_motors_init();
+  nx_lcd_init();
+  nx_display_init();
+  nx_sensors_init();
+  nx_usb_init();
 
   /* Delay a little post-init, to let all the drivers settle down. */
-  systick_wait_ms(100);
+  nx_systick_wait_ms(100);
 }
 
 /* Checks whether the system rebooted due to some kind of external
@@ -47,25 +47,25 @@ static void check_boot_errors() {
    * immediately at bootup. This is just a bug guard.
    */
   if (reset_status == AT91C_RSTC_RSTTYP_WATCHDOG) {
-    display_string("**************\n");
-    display_string("Watchdog fault\n");
-    display_string("**************\n");
+    nx_display_string("**************\n");
+    nx_display_string("Watchdog fault\n");
+    nx_display_string("**************\n");
     while (1);
   } else if (reset_status == AT91C_RSTC_RSTTYP_BROWNOUT) {
-    display_string("**************\n");
-    display_string("Brownout fault\n");
-    display_string("**************\n");
+    nx_display_string("**************\n");
+    nx_display_string("Brownout fault\n");
+    nx_display_string("**************\n");
     while (1);
   }
 }
 
 static void core_shutdown() {
-  lcd_shutdown();
-  usb_disable();
-  avr_power_down();
+  nx_lcd_shutdown();
+  nx_usb_disable();
+  nx_avr_power_down();
 }
 
-void kernel_main() {
+void nx_kernel_main() {
   core_init();
   check_boot_errors();
   main();

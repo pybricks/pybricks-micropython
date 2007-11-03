@@ -22,7 +22,7 @@ static volatile struct {
 } twi_request = { 0, NULL };
 
 
-void
+static void
 twi_isr()
 {
   U32 status = *AT91C_TWI_SR;
@@ -73,17 +73,15 @@ twi_isr()
 }
 
 
-int
-twi_ready() {
+int nx_twi_ready() {
   return twi_state == TWI_READY;
 }
 
-void
-twi_init()
+void nx_twi_init()
 {
   U32 clocks = 9;
 
-  interrupts_disable();
+  nx_interrupts_disable();
 
   *AT91C_PMC_PCER = ((1 << AT91C_ID_PIOA) |  /* Need PIO too */
                      (1 << AT91C_ID_TWI));   /* TWI clock domain */
@@ -98,9 +96,9 @@ twi_init()
 
   while (clocks > 0 && !(*AT91C_PIOA_PDSR & (1 << 3))) {
     *AT91C_PIOA_CODR = (1 << 4);
-    systick_wait_ns(1500);
+    nx_systick_wait_ns(1500);
     *AT91C_PIOA_SODR = (1 << 4);
-    systick_wait_ns(1500);
+    nx_systick_wait_ns(1500);
     clocks--;
   }
 
@@ -114,16 +112,15 @@ twi_init()
 
   twi_state = TWI_READY;
 
-  aic_install_isr(AT91C_ID_TWI, AIC_PRIO_RT,
-                  AIC_TRIG_LEVEL, twi_isr);
+  nx_aic_install_isr(AT91C_ID_TWI, AIC_PRIO_RT,
+		     AIC_TRIG_LEVEL, twi_isr);
 
-  interrupts_enable();
+  nx_interrupts_enable();
 }
 
 
 
-void
-twi_read_async(U32 dev_addr, U8 *data, U32 nBytes)
+void nx_twi_read_async(U32 dev_addr, U8 *data, U32 nBytes)
 {
   U32 mode = ((dev_addr & 0x7f) << 16) | AT91C_TWI_IADRSZ_NO | AT91C_TWI_MREAD;
   U32 dummy;
@@ -145,8 +142,7 @@ twi_read_async(U32 dev_addr, U8 *data, U32 nBytes)
   *AT91C_TWI_IER = AT91C_TWI_RXRDY;
 }
 
-void
-twi_write_async(U32 dev_addr, U8 *data, U32 nBytes)
+void nx_twi_write_async(U32 dev_addr, U8 *data, U32 nBytes)
 {
   U32 mode = ((dev_addr & 0x7f) << 16) | AT91C_TWI_IADRSZ_NO;
 

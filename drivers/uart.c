@@ -106,7 +106,7 @@ static void uart_isr1()
 }
 
 
-bool uart_init(U8 uart_number, U32 baud_rate,
+bool nx_uart_init(U8 uart_number, U32 baud_rate,
 	       usart_char_length_t char_length,
 	       usart_parity_t parity,
 	       usart_stop_bits_t stop_bits,
@@ -184,10 +184,10 @@ bool uart_init(U8 uart_number, U32 baud_rate,
   uart->regs->US_TNCR = 0;
 
   /* we install the interruption routine */
-  aic_install_isr(uart_number == 0 ? AT91C_ID_US0 : AT91C_ID_US1,
-		  AIC_PRIO_DRIVER,
-		  AIC_TRIG_LEVEL,
-		  uart_number == 0 ? uart_isr0 : uart_isr1);
+  nx_aic_install_isr(uart_number == 0 ? AT91C_ID_US0 : AT91C_ID_US1,
+		     AIC_PRIO_DRIVER,
+		     AIC_TRIG_LEVEL,
+		     uart_number == 0 ? uart_isr0 : uart_isr1);
 
   /* we re-enable the interruptions */
   uart->regs->US_IER =
@@ -214,7 +214,7 @@ bool uart_init(U8 uart_number, U32 baud_rate,
 }
 
 
-bool uart_write(U8 uart_number,
+bool nx_uart_write(U8 uart_number,
 		void *data,
 		U16 lng)
 {
@@ -239,7 +239,7 @@ bool uart_write(U8 uart_number,
 }
 
 
-bool uart_can_write(U8 uart_number)
+bool nx_uart_can_write(U8 uart_number)
 {
   uart_status_t *uart;
 
@@ -252,7 +252,7 @@ bool uart_can_write(U8 uart_number)
 }
 
 
-bool uart_start_reading(U8 uart_number,
+bool nx_uart_start_reading(U8 uart_number,
 			void *buffer,
 			U16 lng)
 {
@@ -281,7 +281,7 @@ bool uart_start_reading(U8 uart_number,
 }
 
 
-bool uart_read_is_filled(U8 uart_number, void *buffer, U16 lng)
+bool nx_uart_read_is_filled(U8 uart_number, void *buffer, U16 lng)
 {
   uart_status_t *uart;
 
@@ -309,7 +309,7 @@ bool uart_read_is_filled(U8 uart_number, void *buffer, U16 lng)
 
 
 
-void uart_read_ack(U8 uart_number, void *buffer)
+void nx_uart_read_ack(U8 uart_number, void *buffer)
 {
   /* empty */
 }

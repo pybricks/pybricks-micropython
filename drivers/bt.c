@@ -3,7 +3,7 @@
 #include "base/drivers/uart.h"
 #include "base/drivers/bt.h"
 
-void bt_init()
+void nx_bt_init()
 {
 
 }

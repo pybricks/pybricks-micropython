@@ -3,18 +3,16 @@
 
 #include "mytypes.h"
 
-void display_init();
+void nx_display_init();
 
-void display_clear();
-void display_auto_refresh(bool auto_refresh);
-inline void display_refresh();
+void nx_display_clear();
+void nx_display_auto_refresh(bool auto_refresh);
+inline void nx_display_refresh();
 
-void display_cursor_set_pos(U8 x, U8 y);
-inline void display_end_line();
-void display_string(const char *str);
-void display_hex(U32 val);
-void display_uint(U32 val);
-
-void display_test();
+void nx_display_cursor_set_pos(U8 x, U8 y);
+inline void nx_display_end_line();
+void nx_display_string(const char *str);
+void nx_display_hex(U32 val);
+void nx_display_uint(U32 val);
 
 #endif
