@@ -313,7 +313,7 @@ void bt_init()
   uart_init(bt_uart_callback);
 
   bt_wait_msg(BT_MSG_RESET_INDICATION);
-  /* the function bt_uart_callback() should start the heart after receiving the RESET_INDICATION */
+  /* the function bt_uart_callback() should start the heart after receiving the reset indication */
   bt_wait_msg(BT_MSG_HEARTBEAT);
 
   USB_SEND("bt_init() finished");
@@ -386,12 +386,16 @@ void bt_begin_inquiry(U8 max_devices,
   bt_state.state = BT_STATE_INQUIRING;
 }
 
-bool bt_has_found_device() {
-  return (bt_state.last_checked_id != bt_state.remote_id);
+bool bt_has_found_device()
+{
+  if (bt_state.state == BT_STATE_INQUIRING)
+    return (bt_state.last_checked_id != bt_state.remote_id);
+  return FALSE;
 }
 
 
-bt_device_t *bt_get_discovered_device() {
+bt_device_t *bt_get_discovered_device()
+{
   if (bt_has_found_device()) {
     bt_state.last_checked_id = bt_state.remote_id;
     return (bt_device_t *)&(bt_state.remote_device);
@@ -401,9 +405,44 @@ bt_device_t *bt_get_discovered_device() {
 }
 
 
-void bt_cancel_inquiry() {
+void bt_cancel_inquiry()
+{
   uart_write(&bt_msg_cancel_inquiry, sizeof(bt_msg_cancel_inquiry));
   bt_wait_msg(BT_MSG_INQUIRY_STOPPED);
+}
+
+
+void bt_begin_known_devices_dumping()
+{
+  /* TODO */
+}
+
+bool bt_has_known_device()
+{
+  if (bt_state.state == BT_STATE_KNOWN_DEVICES_DUMPING)
+    return (bt_state.last_checked_id != bt_state.remote_id);
+  return FALSE;
+}
+
+bt_device_t *bt_get_known_device()
+{
+  if (bt_has_known_device()) {
+    bt_state.last_checked_id = bt_state.remote_id;
+    return (bt_device_t *)&(bt_state.remote_device);
+  }
+
+  return NULL;
+}
+
+void bt_add_known_device(bt_device_t *dev)
+{
+  /* TODO */
+}
+
+
+void bt_remove_device(bt_device_t *dev)
+{
+  /* TODO */
 }
 
 
