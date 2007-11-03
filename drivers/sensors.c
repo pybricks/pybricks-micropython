@@ -26,25 +26,13 @@ static volatile struct {
     DIGITAL, /* NXT sensor in digital (i2c) mode. */
   } mode;
 
-  /* Each sensor port has two DIGI pins, whose use varies from sensor
-   * to sensor. We remember which two pins each sensor has here.
-   */
-  struct {
-    U32 scl; /* DIGI0, i2c clock. */
-    U32 sda; /* DIGI1, i2c data. */
-  } pins;
-
-  /* A port in digital mode requires the storage of additional state
-   * for the i2c driver.
-   */
-  struct {
-    /* TODO: Make digital ports work. */
-  } i2c;
+  /* Pins wired to this sensor. */
+  sensor_pins pins;
 } sensors_state[NXT_N_SENSORS] = {
-  { OFF, { AT91C_PIO_PA23, AT91C_PIO_PA18 }, {} },
-  { OFF, { AT91C_PIO_PA28, AT91C_PIO_PA19 }, {} },
-  { OFF, { AT91C_PIO_PA29, AT91C_PIO_PA20 }, {} },
-  { OFF, { AT91C_PIO_PA30, AT91C_PIO_PA2  }, {} },
+  { OFF, { AT91C_PIO_PA23, AT91C_PIO_PA18 }},
+  { OFF, { AT91C_PIO_PA28, AT91C_PIO_PA19 }},
+  { OFF, { AT91C_PIO_PA29, AT91C_PIO_PA20 }},
+  { OFF, { AT91C_PIO_PA30, AT91C_PIO_PA2  }},
 };
 
 
@@ -67,6 +55,15 @@ void nx__sensors_init() {
   *AT91C_PIOA_ODR = sensor_sda_mask | sensor_scl_mask;
 }
 
+/** Returns a pointer to this sensor's pins info structure. */
+sensor_pins nx_sensors_get_pins(U8 sensor) {
+  if (sensor >= NXT_N_SENSORS) {
+    sensor_pins empty = { 0, 0 };
+    return empty;
+  }
+
+  return sensors_state[sensor].pins;
+}
 
 void nx_sensors_analog_digi_set(U8 sensor, sensor_data_pin pin) {
   /* The DIGI pins can be manually controlled only when in analog
@@ -115,6 +112,28 @@ void nx_sensors_analog_enable(U8 sensor) {
                       sensors_state[sensor].pins.scl);
 }
 
+/** Enables the given sensor in digital, I2C mode. */
+void nx_sensors_i2c_enable(U8 sensor) {
+  U32 pinmask;
+
+  if (sensor >= NXT_N_SENSORS)
+    return;
+
+  if (sensors_state[sensor].mode != OFF)
+    nx_sensors_disable(sensor);
+
+  sensors_state[sensor].mode = DIGITAL;
+
+  /* In digital mode, the DIGI outputs (SDA and SCL) are left up, and
+   * enabled in multi-drive mode.
+   */
+  pinmask = sensors_state[sensor].pins.sda |
+    sensors_state[sensor].pins.scl;
+
+  *AT91C_PIOA_OER = pinmask;
+  *AT91C_PIOA_SODR = pinmask;
+  *AT91C_PIOA_MDER = pinmask;
+}
 
 void nx_sensors_disable(U8 sensor) {
   if (sensor >= NXT_N_SENSORS)
@@ -125,13 +144,14 @@ void nx_sensors_disable(U8 sensor) {
   case LEGACY:
     break;
   case ANALOG:
+  case DIGITAL:
     /* Disable output on the DIGI pins to return to the idle state. */
     *AT91C_PIOA_SODR = (sensors_state[sensor].pins.sda |
                         sensors_state[sensor].pins.scl);
     *AT91C_PIOA_ODR = (sensors_state[sensor].pins.sda |
                        sensors_state[sensor].pins.scl);
-  case DIGITAL:
-    /* TODO: Implement digital sensor support. */
     break;
   }
+
+  sensors_state[sensor].mode = OFF;
 }
