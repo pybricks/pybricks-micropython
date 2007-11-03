@@ -3,7 +3,7 @@
 
 #include "base/mytypes.h"
 
-#include "base/drivers/uart.h"
+#include "base/drivers/_uart.h"
 
 #define BT_ADDR_SIZE  7
 #define BT_CLASS_SIZE 4
