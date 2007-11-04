@@ -16,7 +16,7 @@
 #include "base/drivers/bt.h"
 
 #define BT_ACK_TIMEOUT 3000
-
+#define BT_ARGS_BUFSIZE (BT_NAME_MAX_LNG+1)
 
 /* to remove : */
 #ifdef UART_DEBUG
@@ -158,6 +158,15 @@ static const U8 bt_msg_dump_list[] = {
 };
 
 
+static const U8 bt_msg_get_friendly_name[] = {
+  0x03,
+  BT_MSG_GET_FRIENDLY_NAME,
+  0xFF,
+  0xD7
+};
+
+
+
 static volatile struct {
   bt_state_t state;
 
@@ -170,6 +179,10 @@ static volatile struct {
 
 
   U8 last_msg;
+
+  /* use to return various return value (version, etc) */
+  U8 args[BT_ARGS_BUFSIZE];
+
   int nmb_checksum_errors;
 
 #ifdef UART_DEBUG
@@ -252,6 +265,7 @@ static void bt_reseted()
 
 
 
+
 static void bt_uart_callback(U8 *msg, U32 len)
 {
   int i;
@@ -277,6 +291,15 @@ static void bt_uart_callback(U8 *msg, U32 len)
 
   bt_state.last_msg = msg[0];
 
+  /* we copy the arguments */
+  for (i = 0 ; i < len-3 && i < BT_ARGS_BUFSIZE; i++) {
+    bt_state.args[i] = msg[i+1];
+  }
+
+  for (; i < BT_ARGS_BUFSIZE ; i++) {
+    bt_state.args[i] = 0;
+  }
+
 
   if (msg[0] == BT_MSG_HEARTBEAT) {
     bt_state.last_heartbeat = nx_systick_get_ms();
@@ -285,25 +308,56 @@ static void bt_uart_callback(U8 *msg, U32 len)
 
 
   if (msg[0] == BT_MSG_INQUIRY_RESULT) {
+    if (bt_state.state != BT_STATE_INQUIRING)
+      return;
+
     /* we've found a device => we extract the fields */
 
     for (i = 0 ; i < BT_ADDR_SIZE ; i++)
       bt_state.remote_device.addr[i] = msg[1+i];
 
     for (i = 0 ; i < BT_NAME_MAX_LNG ; i++)
-      bt_state.remote_device.name[i] = msg[1+7+i];
+      bt_state.remote_device.name[i] = msg[1+BT_ADDR_SIZE+i];
     bt_state.remote_device.name[BT_NAME_MAX_LNG+1] = '\0';
 
     for (i = 0 ; i < BT_CLASS_SIZE ; i++)
-      bt_state.remote_device.class[i] = msg[1+7+16+i];
+      bt_state.remote_device.class[i] = msg[1+BT_ADDR_SIZE+BT_NAME_MAX_LNG+i];
 
     bt_state.remote_id++;
     return;
   }
 
+
+  if (msg[0] == BT_MSG_LIST_ITEM) {
+    if (bt_state.state != BT_STATE_KNOWN_DEVICES_DUMPING)
+      return;
+
+    for (i = 0 ; i < BT_ADDR_SIZE ; i++)
+      bt_state.remote_device.addr[i] = msg[1+i];
+
+    for (i = 0 ; i < BT_NAME_MAX_LNG ; i++)
+      bt_state.remote_device.name[i] = msg[1+BT_ADDR_SIZE+i];
+    bt_state.remote_device.name[BT_NAME_MAX_LNG+1] = '\0';
+
+    for (i = 0 ; i < BT_CLASS_SIZE ; i++)
+      bt_state.remote_device.class[i] = msg[1+BT_ADDR_SIZE+BT_NAME_MAX_LNG+i];
+
+    bt_state.remote_id++;
+
+    return;
+  }
+
+
   if (msg[0] == BT_MSG_INQUIRY_STOPPED) {
     if (bt_state.state == BT_STATE_INQUIRING)
       bt_state.state = BT_STATE_WAITING;
+    return;
+  }
+
+  if (msg[0] == BT_MSG_LIST_DUMP_STOPPED) {
+    if (bt_state.state == BT_STATE_KNOWN_DEVICES_DUMPING)
+      bt_state.state = BT_STATE_WAITING;
+    return;
   }
 
   if (msg[0] == BT_MSG_RESET_INDICATION) {
@@ -433,6 +487,7 @@ void nx_bt_cancel_inquiry()
 void nx_bt_begin_known_devices_dumping()
 {
   nx_uart_write(&bt_msg_dump_list, sizeof(bt_msg_dump_list));
+  bt_state.state = BT_STATE_KNOWN_DEVICES_DUMPING;
 }
 
 bool nx_bt_has_known_device()
@@ -452,17 +507,104 @@ bt_device_t *nx_bt_get_known_device()
   return NULL;
 }
 
-void nx_bt_add_known_device(bt_device_t *dev)
+
+bt_return_value_t nx_bt_add_known_device(bt_device_t *dev)
 {
-  /* TODO */
+  int i;
+  U8 packet[31];
+
+  packet[0] = 30; /* length */
+  packet[1] = BT_MSG_ADD_DEVICE;
+
+  for (i = 0 ; i < BT_ADDR_SIZE ; i++)
+    packet[2+i] = dev->addr[i];
+
+  for (i = 0 ; i < BT_NAME_MAX_LNG && dev->name != '\0' ; i++)
+    packet[2+BT_ADDR_SIZE+i] = dev->name[i];
+
+  for ( ; i < BT_NAME_MAX_LNG ; i++)
+    packet[2+BT_ADDR_SIZE+i] = '\0';
+
+  for (i = 0 ; i < BT_CLASS_SIZE ; i++)
+    packet[2+BT_ADDR_SIZE+BT_NAME_MAX_LNG+i] = dev->class[i];
+
+  bt_set_checksum(packet+1, 30);
+
+  nx_uart_write(&packet, 31);
+
+  bt_wait_msg(BT_MSG_LIST_RESULT);
+
+  if (bt_state.last_msg == BT_MSG_LIST_RESULT)
+    return bt_state.args[0];
+
+  return 0;
 }
 
 
-void nx_bt_remove_device(bt_device_t *dev)
+bt_return_value_t nx_bt_remove_known_device(U8 dev_addr[BT_ADDR_SIZE])
 {
-  /* TODO */
+  int i;
+  U8 packet[11];
+
+  packet[0] = 10; /* length */
+  packet[1] = BT_MSG_REMOVE_DEVICE;
+
+  for (i = 0; i < BT_ADDR_SIZE; i++) {
+    packet[2+i] = dev_addr[i];
+  }
+
+  bt_set_checksum(packet+1, 10);
+
+  nx_uart_write(&packet, 11);
+
+  bt_wait_msg(BT_MSG_LIST_RESULT);
+
+  if (bt_state.last_msg == BT_MSG_LIST_RESULT)
+    return bt_state.args[0];
+
+  return 0;
 }
 
+
+bt_version_t nx_bt_get_version()
+{
+  bt_version_t ver = { 0 };
+
+  nx_uart_write(&bt_msg_get_version, sizeof(bt_msg_get_version));
+
+  if (bt_wait_msg(BT_MSG_GET_VERSION_RESULT)) {
+    ver.major = bt_state.args[0];
+    ver.minor = bt_state.args[1];
+  }
+
+  return ver;
+}
+
+
+int nx_bt_get_friendly_name(char *name)
+{
+  int i;
+
+  nx_uart_write(&bt_msg_get_friendly_name, sizeof(bt_msg_get_get_friendly_name));
+
+  if (bt_wait_msg(BT_MSG_GET_FRIENDLY_NAME_RESULT)) {
+
+    for (i = 0 ;
+         i < BT_ARGS_BUFSIZE && i < BT_NAME_MAX_LEN && bt_state.args[i] != '\0' ;
+         i++)
+      name[i] = bt_state.args[i];
+
+    name[i] = '\0';
+
+    return i;
+
+  } else {
+
+    name[0] = '\0';
+    return 0;
+
+  }
+}
 
 
 int nx_bt_checksum_errors()

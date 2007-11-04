@@ -24,7 +24,7 @@
 
 typedef struct bt_device {
   U8 addr[BT_ADDR_SIZE];
-  char name[17];
+  char name[BT_NAME_MAX_LNG+1];
   U8 class[BT_CLASS_SIZE];
 } bt_device_t;
 
@@ -34,6 +34,22 @@ typedef enum {
   BT_STATE_INQUIRING,
   BT_STATE_KNOWN_DEVICES_DUMPING,
 } bt_state_t;
+
+typedef enum {
+  BT_NOTHING = 0x0, /* can mean no answer */
+  BT_LR_SUCCESS = 0x50,
+  BT_LR_COULD_NOT_SAVE,
+  BT_LR_STORE_IS_FULL,
+  BT_LR_ENTRY_REMOVED,
+  BT_LR_UNKNOWN_ADDR
+} bt_return_value_t;
+
+
+typedef struct bt_version {
+  U8 major;
+  U8 minor;
+} bt_version_t;
+
 
 
 /**
@@ -57,7 +73,7 @@ void nx_bt_set_discoverable(bool d);
  */
 void nx_bt_begin_inquiry(U8 max_devices,
 			 U8 timeout,
-			 U8 bt_remote_class[4]);
+			 U8 bt_remote_class[BT_CLASS_SIZE]);
 bool nx_bt_has_found_device();
 bt_device_t *nx_bt_get_discovered_device();
 void nx_bt_cancel_inquiry();
@@ -67,9 +83,24 @@ void nx_bt_begin_known_devices_dumping();
 bool nx_bt_has_known_device();
 bt_device_t *nx_bt_get_known_device();
 
-void nx_bt_add_known_device(bt_device_t *dev);
-void nx_bt_remove_device(bt_device_t *dev);
+/**
+ * @param dev need to be fully filled in
+ */
+bt_return_value_t nx_bt_add_known_device(bt_device_t *dev);
+bt_return_value_t nx_bt_remove_known_device(U8 dev_addr[BT_ADDR_SIZE]);
 
+
+/**
+ * @return the firmware version
+ */
+bt_version_t nx_bt_get_version();
+
+/**
+ * @param[out] name will be filled in with the friendly name. An '\0' will be appended,
+ *             so this area must have at least a size of (BT_NAME_MAX_LNG+1).
+ * @return name length, 0 if failure
+ */
+int nx_bt_get_friendly_name(char *name);
 
 
 /**
