@@ -1,5 +1,18 @@
-#ifndef __NXOS_BT_H__
-#define __NXOS_BT_H__
+/** @file bt.h
+ *  @brief Manage the communication with the bluecore.
+ */
+
+/* Copyright (C) 2007 the NxOS developers
+ *
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
+ */
+
+
+#ifndef __NXOS_BASE_DRIVERS_BT_H__
+#define __NXOS_BASE_DRIVERS_BT_H__
 
 #include "base/types.h"
 
@@ -23,7 +36,7 @@ typedef enum {
 } bt_state_t;
 
 
-/*
+/**
  * It will only initialize the communication with the bluetooth
  * coprocessor.
  */
@@ -32,14 +45,16 @@ void nx_bt_init();
 bt_state_t nx_bt_get_state();
 
 
-/*
- * Max 16 car. !
+/**
+ * @param name Max 16 car. !
  */
 void nx_bt_set_friendly_name(char *name);
 void nx_bt_set_discoverable(bool d);
 
 
-/* timeout unit: 1.28s ; min : 0x01 (1.28s) ; max: 0x30 (61.44s) */
+/**
+ * @param timeout unit: 1.28s ; min : 0x01 (1.28s) ; max: 0x30 (61.44s)
+ */
 void nx_bt_begin_inquiry(U8 max_devices,
 			 U8 timeout,
 			 U8 bt_remote_class[4]);

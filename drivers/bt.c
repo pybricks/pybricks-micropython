@@ -1,9 +1,18 @@
+/* Copyright (C) 2007 the NxOS developers
+ *
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
+ */
+
 #include "base/at91sam7s256.h"
 
 #include "base/types.h"
 
 #include "base/drivers/systick.h"
 #include "base/drivers/_uart.h"
+
 #include "base/drivers/bt.h"
 
 #define BT_ACK_TIMEOUT 3000
@@ -140,6 +149,15 @@ static const U8 bt_msg_cancel_inquiry[] = {
 };
 
 
+/* dump list of known devices */
+static const U8 bt_msg_dump_list[] = {
+  0x03,
+  BT_MSG_DUMP_LIST,
+  0xFF,
+  0xF9
+};
+
+
 static volatile struct {
   bt_state_t state;
 
@@ -147,7 +165,7 @@ static volatile struct {
   U32 last_heartbeat;
 
   /* used for inquiring */
-  U8 last_checked_id, remote_id; /* used to know when a new device is found */
+  U32 last_checked_id, remote_id; /* used to know when a new device is found */
   bt_device_t remote_device;
 
 
@@ -157,7 +175,7 @@ static volatile struct {
 #ifdef UART_DEBUG
   /* to remove: */
   U8 cmds[CMDS_BUFSIZE];
-  U8 cmds_pos;
+  U32 cmds_pos;
 #endif
 
 } bt_state = {
@@ -169,10 +187,10 @@ static volatile struct {
 
 /* len => checksum included
  */
-static U16 bt_get_checksum(U8 *msg, U8 len, bool count_len)
+static U32 bt_get_checksum(U8 *msg, U32 len, bool count_len)
 {
-  U8 i;
-  U16 checksum;
+  int i;
+  U32 checksum;
 
   checksum = 0;
 
@@ -194,8 +212,8 @@ static U16 bt_get_checksum(U8 *msg, U8 len, bool count_len)
 /* len => length excepted, but checksum included
  * two last bytes will be set
  */
-static void bt_set_checksum(U8 *msg, U8 len) {
-  U16 checksum = bt_get_checksum(msg, len, FALSE);
+static void bt_set_checksum(U8 *msg, U32 len) {
+  U32 checksum = bt_get_checksum(msg, len, FALSE);
 
   msg[len-2] = ((checksum >> 8) & 0xFF);
   msg[len-1] = checksum & 0xFF;
@@ -203,11 +221,11 @@ static void bt_set_checksum(U8 *msg, U8 len) {
 
 
 /* len => length excepted, but checksum included */
-static bool bt_check_checksum(U8 *msg, U8 len) {
+static bool bt_check_checksum(U8 *msg, U32 len) {
 
   /* Strangeness: Must include the packet length in the checksum ?! */
-  U16 checksum = bt_get_checksum(msg, len, TRUE);
-  U8 hi, lo;
+  U32 checksum = bt_get_checksum(msg, len, TRUE);
+  U32 hi, lo;
 
   hi = ((checksum >> 8) & 0xFF);
   lo = checksum & 0xFF;
@@ -234,7 +252,7 @@ static void bt_reseted()
 
 
 
-static void bt_uart_callback(U8 *msg, U8 len)
+static void bt_uart_callback(U8 *msg, U32 len)
 {
   int i;
 
@@ -316,7 +334,7 @@ void nx_bt_init()
   /* the function bt_uart_callback() should start the heart after receiving the reset indication */
   bt_wait_msg(BT_MSG_HEARTBEAT);
 
-  USB_SEND("bt_init() finished");
+  USB_SEND("nx_bt_init() finished");
 }
 
 
@@ -414,7 +432,7 @@ void nx_bt_cancel_inquiry()
 
 void nx_bt_begin_known_devices_dumping()
 {
-  /* TODO */
+  nx_uart_write(&bt_msg_dump_list, sizeof(bt_msg_dump_list));
 }
 
 bool nx_bt_has_known_device()

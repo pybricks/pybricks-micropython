@@ -1,3 +1,11 @@
+/* Copyright (C) 2007 the NxOS developers
+ *
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
+ */
+
 #include "base/at91sam7s256.h"
 
 #include "base/types.h"
@@ -6,10 +14,9 @@
 #include "base/interrupts.h"
 #include "base/drivers/aic.h"
 
-#include "base/drivers/_uart.h"
-
 #include "base/drivers/systick.h"
-#include "base/display.h"
+
+#include "base/drivers/_uart.h"
 
 #define UART_BUFSIZE 128
 
@@ -19,7 +26,7 @@ static volatile struct {
   uart_read_callback_t callback;
   U32 nmb_int;
 
-  U8 packet_size;
+  U32 packet_size;
 
   /* read buffers */
   U8 buf[UART_BUFSIZE];
@@ -34,7 +41,7 @@ static volatile struct {
 };
 
 
-/*** I/O (uart 1)
+/* I/O (uart 1)
  * RXD1 => PA21 (periph A)
  * TXD1 => PA22 (periph A)
  * CTS1 => PA25 (periph A)
@@ -214,12 +221,12 @@ void nx_uart_init(uart_read_callback_t callback)
 
 }
 
-void nx_uart_write(void *data, U16 lng)
+void nx_uart_write(void *data, U32 lng)
 {
   while (*AT91C_US1_TNCR != 0);
 
   *AT91C_US1_TNPR = (U32)data;
-  *AT91C_US1_TNCR = (U32)lng;
+  *AT91C_US1_TNCR = lng;
 }
 
 bool nx_uart_can_write()
