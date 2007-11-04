@@ -75,16 +75,20 @@ void nx_bt_begin_inquiry(U8 max_devices,
 			 U8 timeout,
 			 U8 bt_remote_class[BT_CLASS_SIZE]);
 bool nx_bt_has_found_device();
-bt_device_t *nx_bt_get_discovered_device();
+
+/**
+ * @param[out] dev will fill in the structure
+ */
+bool nx_bt_get_discovered_device(bt_device_t *dev);
 void nx_bt_cancel_inquiry();
 
 
 void nx_bt_begin_known_devices_dumping();
 bool nx_bt_has_known_device();
-bt_device_t *nx_bt_get_known_device();
+bool nx_bt_get_known_device(bt_device_t *dev);
 
 /**
- * @param dev need to be fully filled in
+ * @param[in] dev need to be fully filled in
  */
 bt_return_value_t nx_bt_add_known_device(bt_device_t *dev);
 bt_return_value_t nx_bt_remove_known_device(U8 dev_addr[BT_ADDR_SIZE]);

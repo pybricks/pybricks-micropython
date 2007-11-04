@@ -9,6 +9,7 @@
 #include "base/at91sam7s256.h"
 
 #include "base/types.h"
+#include "base/util.h"
 
 #include "base/drivers/systick.h"
 #include "base/drivers/_uart.h"
@@ -311,6 +312,12 @@ static void bt_uart_callback(U8 *msg, U32 len)
     if (bt_state.state != BT_STATE_INQUIRING)
       return;
 
+    /* if the last device written wasn't fetched in the user
+     * space, we don't erase it to avoid corrupted structures */
+    if (bt_state.last_checked_id != bt_state.remote_id) {
+      return;
+    }
+
     /* we've found a device => we extract the fields */
 
     for (i = 0 ; i < BT_ADDR_SIZE ; i++)
@@ -331,6 +338,12 @@ static void bt_uart_callback(U8 *msg, U32 len)
   if (msg[0] == BT_MSG_LIST_ITEM) {
     if (bt_state.state != BT_STATE_KNOWN_DEVICES_DUMPING)
       return;
+
+    /* if the last device written wasn't fetched in the user
+     * space, we don't erase it to avoid corrupted structures */
+    if (bt_state.last_checked_id != bt_state.remote_id) {
+      return;
+    }
 
     for (i = 0 ; i < BT_ADDR_SIZE ; i++)
       bt_state.remote_device.addr[i] = msg[1+i];
@@ -466,14 +479,17 @@ bool nx_bt_has_found_device()
 }
 
 
-bt_device_t *nx_bt_get_discovered_device()
+bool nx_bt_get_discovered_device(bt_device_t *dev)
 {
   if (nx_bt_has_found_device()) {
+
+    memcpy(dev, (bt_device_t *)&(bt_state.remote_device), sizeof(bt_device_t));
     bt_state.last_checked_id = bt_state.remote_id;
-    return (bt_device_t *)&(bt_state.remote_device);
+
+    return TRUE;
   }
 
-  return NULL;
+  return FALSE;
 }
 
 
@@ -497,14 +513,17 @@ bool nx_bt_has_known_device()
   return FALSE;
 }
 
-bt_device_t *nx_bt_get_known_device()
+bool nx_bt_get_known_device(bt_device_t *dev)
 {
   if (nx_bt_has_known_device()) {
+
+    memcpy(dev, (bt_device_t *)&(bt_state.remote_device), sizeof(bt_device_t));
     bt_state.last_checked_id = bt_state.remote_id;
-    return (bt_device_t *)&(bt_state.remote_device);
+
+    return TRUE;
   }
 
-  return NULL;
+  return FALSE;
 }
 
 
@@ -585,12 +604,12 @@ int nx_bt_get_friendly_name(char *name)
 {
   int i;
 
-  nx_uart_write(&bt_msg_get_friendly_name, sizeof(bt_msg_get_get_friendly_name));
+  nx_uart_write(&bt_msg_get_friendly_name, sizeof(bt_msg_get_friendly_name));
 
   if (bt_wait_msg(BT_MSG_GET_FRIENDLY_NAME_RESULT)) {
 
     for (i = 0 ;
-         i < BT_ARGS_BUFSIZE && i < BT_NAME_MAX_LEN && bt_state.args[i] != '\0' ;
+         i < BT_ARGS_BUFSIZE && i < BT_NAME_MAX_LNG && bt_state.args[i] != '\0' ;
          i++)
       name[i] = bt_state.args[i];
 
