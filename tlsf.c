@@ -71,6 +71,12 @@
 /* The  debug functions  only can  be used  when _DEBUG_TLSF_  is set. */
 #define _DEBUG_TLSF_	(0)
 
+/* Internal function references. */
+void *malloc_ex(size_t, void *);
+void free_ex(void *, void *);
+void *realloc_ex(void *, size_t, void *);
+void *calloc_ex(size_t, size_t, void *);
+
 /*************************************************************************/
 /* Definition of the structures used by TLSF */
 
@@ -294,7 +300,7 @@ static __inline__ bhdr_t *FIND_SUITABLE_BLOCK(tlsf_t * _tlsf, int *_fl,
 static char *mp = NULL; // Default memory pool.
 
 /******************************************************************/
-size_t init_memory_pool(size_t mem_pool_size, void *mem_pool) {
+size_t nx_mem_init(size_t mem_pool_size, void *mem_pool) {
 /******************************************************************/
     tlsf_t *tlsf;
     bhdr_t *b, *lb;
@@ -349,7 +355,7 @@ size_t init_memory_pool(size_t mem_pool_size, void *mem_pool) {
 }
 
 /******************************************************************/
-size_t get_used_size(void *mem_pool) {
+size_t nx_mem_used(void *mem_pool) {
 /******************************************************************/
     tlsf_t *tlsf = (tlsf_t *) mem_pool;
 
@@ -358,7 +364,7 @@ size_t get_used_size(void *mem_pool) {
 
 
 /******************************************************************/
-void destroy_memory_pool(void *mem_pool) {
+void nx_mem_destroy(void *mem_pool) {
 /******************************************************************/
     tlsf_t *tlsf = (tlsf_t *) mem_pool;
 
@@ -370,7 +376,7 @@ void destroy_memory_pool(void *mem_pool) {
 
 
 /******************************************************************/
-void *rtl_malloc(size_t size) {
+void *malloc(size_t size) {
 /******************************************************************/
     void *ret;
 #if TLSF_USE_LOCKS
@@ -386,7 +392,7 @@ void *rtl_malloc(size_t size) {
 }
 
 /******************************************************************/
-void rtl_free(void *ptr) {
+void free(void *ptr) {
 /******************************************************************/
 #if TLSF_USE_LOCKS
     tlsf_t *tlsf = (tlsf_t *) mp;
@@ -400,7 +406,7 @@ void rtl_free(void *ptr) {
 }
 
 /******************************************************************/
-void *rtl_realloc(void *ptr, size_t size) {
+void *realloc(void *ptr, size_t size) {
 /******************************************************************/   
     void *ret;
 #if TLSF_USE_LOCKS
@@ -416,7 +422,7 @@ void *rtl_realloc(void *ptr, size_t size) {
 }
 
 /******************************************************************/
-void *rtl_calloc(size_t nelem, size_t elem_size) {
+void *calloc(size_t nelem, size_t elem_size) {
 /******************************************************************/   
     void *ret;
 #if TLSF_USE_LOCKS

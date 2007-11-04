@@ -6,7 +6,7 @@
 
 #include "base/at91sam7s256.h"
 
-#include "base/mytypes.h"
+#include "base/types.h"
 #include "base/interrupts.h"
 #include "base/drivers/aic.h"
 #include "base/drivers/systick.h"
@@ -51,9 +51,9 @@ sound_isr()
 
 /* Initialise the Synchronous Serial Controller. */
 void
-sound_init()
+nx__sound_init()
 {
-  interrupts_disable();
+  nx_interrupts_disable();
 
   /* Start by inhibiting all sound output. Then enable power to the
    * SSC peripheral and do a software reset. The combination of these
@@ -91,10 +91,10 @@ sound_init()
   /* Install the interrupt routine that will feed data to the DMA
    * controller when we are outputting data.
    */
-  aic_install_isr(AT91C_ID_SSC, AIC_PRIO_DRIVER,
-                  AIC_TRIG_LEVEL, sound_isr); // Level or edge?
+  nx_aic_install_isr(AT91C_ID_SSC, AIC_PRIO_DRIVER,
+		     AIC_TRIG_LEVEL, sound_isr); // Level or edge?
 
-  interrupts_enable();
+  nx_interrupts_enable();
 }
 
 
@@ -103,7 +103,7 @@ sound_init()
  * This function schedules the tone to be output and returns
  * immediately.
  */
-void sound_freq_async(U32 freq, U32 ms)
+void nx_sound_freq_async(U32 freq, U32 ms)
 {
   /* Set the master clock divider to output the correct frequency.
    *
@@ -129,8 +129,8 @@ void sound_freq_async(U32 freq, U32 ms)
  * This function blocks for the duration of the tone. If you do not
  * want this, use sound_freq_async instead.
  */
-void sound_freq(U32 freq, U32 ms)
+void nx_sound_freq(U32 freq, U32 ms)
 {
-  sound_freq_async(freq, ms);
-  systick_wait_ms(ms);
+  nx_sound_freq_async(freq, ms);
+  nx_systick_wait_ms(ms);
 }

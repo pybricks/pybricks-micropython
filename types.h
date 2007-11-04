@@ -18,6 +18,6 @@ typedef U8 bool;
 #define NULL 0
 #endif
 
-typedef void (*callback_t)(void);
+typedef void (*nx_closure_t)(void);
 
 #endif

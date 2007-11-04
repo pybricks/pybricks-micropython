@@ -1,7 +1,7 @@
 #ifndef __NXOS_UART_H__
 #define __NXOS_UART_H__
 
-#include "base/mytypes.h"
+#include "base/types.h"
 
 
 /***
@@ -26,22 +26,22 @@ typedef void (*uart_read_callback_t)(U8 *buffer, U8 packet_size);
  * callback will be called by the interruption function of the uart
  * driver, so it must do its work as fast as possible.
  */
-void uart_init(uart_read_callback_t callback);
+void nx_uart_init(uart_read_callback_t callback);
 
 /*
  * Will send the data asap.
  * If the two slot in the pdc are used, this function will be blocking.
  */
-void uart_write(void *data, U16 lng);
+void nx_uart_write(void *data, U16 lng);
 
-bool uart_can_write();
-bool uart_is_writing();
+bool nx_uart_can_write();
+bool nx_uart_is_writing();
 
 /* TO REMOVE: */
 
-U32 uart_nmb_interrupt();
-U32 uart_get_csr();
-U32 uart_get_last_csr();
-U32 uart_get_state();
+U32 nx_uart_nmb_interrupt();
+U32 nx_uart_get_csr();
+U32 nx_uart_get_last_csr();
+U32 nx_uart_get_state();
 
 #endif

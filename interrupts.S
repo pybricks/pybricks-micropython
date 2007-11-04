@@ -14,15 +14,15 @@
  * Default handlers for unknown IRQ and FIQ interrupts, and
  * the spurious IRQ handler and unknown exception handler.
  */
-	.global default_irq
-	.global default_fiq
-	.global spurious_irq
-	.global unhandled_exception
-default_irq:
-default_fiq:
-spurious_irq:
-unhandled_exception:
-	b unhandled_exception
+	.global nx_default_irq
+	.global nx_default_fiq
+	.global nx_spurious_irq
+	.global nx_unhandled_exception
+nx_default_irq:
+nx_default_fiq:
+nx_spurious_irq:
+nx_unhandled_exception:
+	b nx_unhandled_exception
 
 
 /**********************************************************
@@ -32,8 +32,8 @@ unhandled_exception:
  * routing that was registered with the AIC for the given
  * IRQ.
  */
-	.global irq_handler
-irq_handler:
+	.global nx_irq_handler
+nx_irq_handler:
 	/* Save the return address and return processor mode registers
 	 * on the IRQ stack. This is needed to allow nested interrupts,
 	 * where a higher-priority interrupt halts execution of a lower
@@ -137,9 +137,9 @@ irq_handler:
  * interrupts disabled with 1 level of nesting (ie. calling
  * interrupts_enable once will enable interrupts).
  */
-	.global interrupts_disable
-	.global interrupts_enable
-interrupts_disable:
+	.global nx_interrupts_disable
+	.global nx_interrupts_enable
+nx_interrupts_disable:
 	mrs r0, cpsr
 	orr r0, r0, #IRQ_FIQ_MASK
 	msr cpsr_c, r0
@@ -151,7 +151,7 @@ interrupts_disable:
 
 	bx lr
 
-interrupts_enable:
+nx_interrupts_enable:
 	ldr r0, =interrupts_count
 	ldr r1, [r0]
 	subs r1, r1, #1

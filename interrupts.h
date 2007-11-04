@@ -1,16 +1,10 @@
 #ifndef __NXOS_INTERRUPTS_H__
 #define __NXOS_INTERRUPTS_H__
 
-void interrupts_disable();
-void interrupts_enable();
+#include "base/types.h"
 
-/* Default handlers for the three general kinds of interrupts that the
- * ARM core has to handle. These are defined in irq.s, and just freeze
- * the board in an infinite loop.
- */
-void default_irq();
-void default_fiq();
-void spurious_irq();
+void nx_interrupts_disable();
+void nx_interrupts_enable();
 
 /* The following structure describes the order in which registers are
  * pushed on the system stack when the IRQ handler interrupts a
@@ -25,7 +19,7 @@ void spurious_irq();
  * This is not used in the base code, but is very useful if you want to
  * implement a scheduler that pokes around in task states.
  */
-struct task_state {
+typedef struct {
   U32 cpsr;
   U32 pc;
   U32 r0;
@@ -42,6 +36,6 @@ struct task_state {
   U32 r11;
   U32 r12;
   U32 lr;
-};
+} nx_task_stack_t;
 
 #endif

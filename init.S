@@ -39,14 +39,14 @@
 	bl mem_init_func
 	.endm
 
-	.global start
-	.extern kernel_main
+	.global nx_start
+	.extern nx_kernel_main
 
 
 /**********************************************************
  * Execution starts here after a reset.
  */
-start:
+nx_start:
 	/* Disable interrupts. They will be enabled if we are
 	 * rebooting, or being booted from SAM-BA. */
 	msr cpsr_c, #(MODE_SVC | IRQ_FIQ_MASK)
@@ -213,7 +213,7 @@ wait_mclk_3:
 	mov r7, #0
 
 	/* Start the main kernel code using an interworking branch. */
-	ldr r5, =kernel_main
+	ldr r5, =nx_kernel_main
 	mov lr, pc
 	bx  r5
 
