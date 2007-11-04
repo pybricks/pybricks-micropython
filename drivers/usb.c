@@ -1,9 +1,9 @@
-/* Driver for the NXT's USB port.
+/* Copyright (C) 2007 the NxOS developers
  *
- * This driver drives the onboard USB controller to make the NXT into
- * a functional USB 2.0 peripheral. Note that given the limitations of
- * the controller hardware, the brick cannot function as a host, only
- * as a peripheral.
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
  */
 
 #include "base/at91sam7s256.h"
@@ -13,6 +13,7 @@
 #include "base/drivers/systick.h"
 #include "base/drivers/aic.h"
 #include "base/util.h"
+
 #include "base/drivers/_usb.h"
 
 /* The USB controller supports up to 4 endpoints. */
