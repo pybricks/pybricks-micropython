@@ -16,6 +16,7 @@
 #include "base/types.h"
 
 /** @defgroup libc Libc utility functions
+ *
  * As NxOS does not link with a libc implementation, we provide our own
  * implementations of these generally rather useful functions.
  */
