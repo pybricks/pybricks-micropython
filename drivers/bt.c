@@ -3,7 +3,7 @@
 #include "base/types.h"
 
 #include "base/drivers/systick.h"
-#include "base/drivers/uart.h"
+#include "base/drivers/_uart.h"
 #include "base/drivers/bt.h"
 
 #define BT_ACK_TIMEOUT 3000
