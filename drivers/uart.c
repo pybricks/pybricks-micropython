@@ -150,11 +150,11 @@ void nx_uart_init(uart_read_callback_t callback)
   /* TODO : figure this out */
   *AT91C_US1_RPR = (U32)(&uart_state.buf);
   *AT91C_US1_RCR = UART_BUFSIZE;
-  *AT91C_US1_TPR = NULL;
+  *AT91C_US1_TPR = 0;
   *AT91C_US1_TCR = 0;
-  *AT91C_US1_RNPR = NULL;
+  *AT91C_US1_RNPR = 0;
   *AT91C_US1_RNCR = 0;
-  *AT91C_US1_TNPR = NULL;
+  *AT91C_US1_TNPR = 0;
   *AT91C_US1_TNCR = 0;
 
 
