@@ -1,3 +1,17 @@
+/** @file i2c.h
+ *  @brief I2C SoftMAC driver.
+ *
+ * I2C communication protocol implementation.
+ */
+
+/* Copyright (C) 2007 the NxOS developers
+ *
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
+ */
+
 #ifndef __NXOS_I2C_H__
 #define __NXOS_I2C_H__
 
@@ -49,13 +63,14 @@ typedef enum {
 } i2c_control;
 
 void nx_i2c_init();
-void nx_i2c_register(U8 sensor, U8 address, bool lego_compat);
+void nx_i2c_register(U32 sensor, U8 address, bool lego_compat);
+void nx_i2c_unregister(U32 sensor);
 
-i2c_txn_err nx_i2c_start_transaction(U8 sensor, i2c_txn_mode mode,
-                                  U8 *data, U8 data_size,
-                                  U8 *recv_buf, U8 recv_size);
+i2c_txn_err nx_i2c_start_transaction(U32 sensor, i2c_txn_mode mode,
+                                     U8 *data, U32 data_size,
+                                     U8 *recv_buf, U32 recv_size);
 
-i2c_txn_status nx_i2c_get_txn_status(U8 sensor);
-bool nx_i2c_busy(U8 sensor);
+i2c_txn_status nx_i2c_get_txn_status(U32 sensor);
+bool nx_i2c_busy(U32 sensor);
 
 #endif

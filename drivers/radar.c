@@ -1,12 +1,11 @@
 /* Driver for the NXT ultrasonic radar.
  *
- * This driver provides a high level interface to the NXT ultrasonic
- * radar. The radar is the first digital sensor for the NXT, and thus
- * makes use of the I2C communication protocol over the two wire
- * interface of DIGIxI0 + DIGIxI1. See drivers/i2c.{c,h}.
- *
  * Among the functionnalities provided by this sensor, this driver
  * supports the following features:
+ *
+ *  - Continuous measurements 0-7
+ *  - Measurement interval management
+ *  - Warm reset to factory defaults
  */
 
 #include "base/at91sam7s256.h"
@@ -22,37 +21,6 @@
 
 /* LEGO's Radar factory sensor type. */
 #define RADAR_LEGO_SENSOR_TYPE "Sonar"
-
-/** Radar's internal memory addresses.
- *
- * This enum contains the radar's internal memory addresses of the
- * radar parameters and readings.
- */
-typedef enum {
-  RADAR_VERSION,
-  RADAR_PRODUCT_ID,
-  RADAR_SENSOR_TYPE,
-  RADAR_FACTORY_ZERO,
-  RADAR_FACTORY_SCALE_FACTOR,
-  RADAR_FACTORY_SCALE_DIVISOR,
-  RADAR_MEASUREMENT_UNITS,
-
-  RADAR_INTERVAL,
-  RADAR_OP_MODE,
-  RADAR_R0,
-  RADAR_R1,
-  RADAR_R2,
-  RADAR_R3,
-  RADAR_R4,
-  RADAR_R5,
-  RADAR_R6,
-  RADAR_R7,
-  RADAR_CURRENT_ZERO,
-  RADAR_CURRENT_SCALE_FACTOR,
-  RADAR_CURRENT_SCALE_DIVISOR,
-  
-  RADAR_N_COMMANDS,
-} radar_memory_slot;
 
 /** Radar commands.
  *
@@ -85,12 +53,12 @@ static struct radar_cmd_info {
 };
 
 /** Initializes the radar sensor in LEGO compatibility mode. */
-void nx_radar_init(U8 sensor) {
+void nx_radar_init(U32 sensor) {
   nx_i2c_memory_init(sensor, RADAR_I2C_ADDRESS, TRUE);
 }
 
 /** Reads a value from the radar's memory slot into the provided buffer. */
-static bool radar_read(U8 sensor, radar_memory_slot slot, U8 *val) {
+bool nx_radar_read(U32 sensor, radar_memory_slot slot, U8 *val) {
   struct radar_cmd_info *cmd = &radar_cmds[slot];
   return nx_i2c_memory_read(sensor, cmd->addr, val, cmd->len) == I2C_ERR_OK;
 }
@@ -99,13 +67,13 @@ static bool radar_read(U8 sensor, radar_memory_slot slot, U8 *val) {
  *
  * Defaults to 0xFF if the read failed.
  */
-static U8 radar_read_value(U8 sensor, radar_memory_slot slot) {
+U8 nx_radar_read_value(U32 sensor, radar_memory_slot slot) {
   U8 value;
-  return radar_read(sensor, slot, &value) ? value : 0xFF;
+  return nx_radar_read(sensor, slot, &value) ? value : 0xFF;
 }
 
 /** Writes the given buffer into the radar's memory slot. */
-static bool radar_write(U8 sensor, radar_memory_slot slot, U8 *val) {
+bool nx_radar_write(U32 sensor, radar_memory_slot slot, U8 *val) {
   struct radar_cmd_info *cmd = &radar_cmds[slot];
   return nx_i2c_memory_write(sensor, cmd->addr, val, cmd->len) == I2C_ERR_OK;
 }
@@ -118,10 +86,10 @@ static bool radar_write(U8 sensor, radar_memory_slot slot, U8 *val) {
  *
  * Returns TRUE if a compatible radar was found.
  */
-bool nx_radar_detect(U8 sensor) {
+bool nx_radar_detect(U32 sensor) {
   U8 type[8] = { 0x0 };
   
-  return radar_read(sensor, RADAR_SENSOR_TYPE, type)
+  return nx_radar_read(sensor, RADAR_SENSOR_TYPE, type)
     && strcmp((char *)type, RADAR_LEGO_SENSOR_TYPE) == 0;
 }  
 
@@ -132,65 +100,26 @@ bool nx_radar_detect(U8 sensor) {
  * Requests a warm radar reset, and reset all parameters to factory
  * defaults.
  */
-void nx_radar_reset(U8 sensor) {
+void nx_radar_reset(U32 sensor) {
   U8 reset = RADAR_OP_RESET;
   U8 val = 0x0;
 
   /* Do a warm reset and wait a little bit. */
-  radar_write(sensor, RADAR_OP_MODE, &reset);
+  nx_radar_write(sensor, RADAR_OP_MODE, &reset);
   nx_systick_wait_ms(100);
   
   /* Reset zero, scale factor and scale divisor to factory values. */
-  if (radar_read(sensor, RADAR_FACTORY_ZERO, &val)) {
-    radar_write(sensor, RADAR_CURRENT_ZERO, &val);
+  if (nx_radar_read(sensor, RADAR_FACTORY_ZERO, &val)) {
+    nx_radar_write(sensor, RADAR_CURRENT_ZERO, &val);
   }
   
-  if (radar_read(sensor, RADAR_FACTORY_SCALE_FACTOR, &val)) {
-    radar_write(sensor, RADAR_CURRENT_SCALE_FACTOR, &val);
+  if (nx_radar_read(sensor, RADAR_FACTORY_SCALE_FACTOR, &val)) {
+    nx_radar_write(sensor, RADAR_CURRENT_SCALE_FACTOR, &val);
   }
 
-  if (radar_read(sensor, RADAR_FACTORY_SCALE_DIVISOR, &val)) {
-    radar_write(sensor, RADAR_CURRENT_SCALE_DIVISOR, &val);
+  if (nx_radar_read(sensor, RADAR_FACTORY_SCALE_DIVISOR, &val)) {
+    nx_radar_write(sensor, RADAR_CURRENT_SCALE_DIVISOR, &val);
   }
-}
-
-
-/** Radar getters. */
-
-bool nx_radar_get_version(U8 sensor, U8 *version) {
-  return radar_read(sensor, RADAR_VERSION, version);
-}
-
-bool nx_radar_get_product_id(U8 sensor, U8 *product_id) {
-  return radar_read(sensor, RADAR_PRODUCT_ID, product_id);
-}
-
-bool nx_radar_get_sensor_type(U8 sensor, U8 *sensor_type) {
-  return radar_read(sensor, RADAR_SENSOR_TYPE, sensor_type);
-}
-
-U8 nx_radar_get_factory_zero(U8 sensor) {
-  return radar_read_value(sensor, RADAR_FACTORY_ZERO);
-}
-
-U8 nx_radar_get_factory_scale_factor(U8 sensor) {
-  return radar_read_value(sensor, RADAR_FACTORY_SCALE_FACTOR);
-}
-
-U8 nx_radar_get_factory_scale_divisor(U8 sensor) {
-  return radar_read_value(sensor, RADAR_FACTORY_SCALE_DIVISOR);
-}
-
-bool nx_radar_get_measurement_units(U8 sensor, U8 *units) {
-  return radar_read(sensor, RADAR_MEASUREMENT_UNITS, units);
-}
-
-U8 nx_radar_get_interval(U8 sensor) {
-  return radar_read_value(sensor, RADAR_INTERVAL);
-}
-
-U8 nx_radar_get_op_mode(U8 sensor) {
-  return radar_read_value(sensor, RADAR_OP_MODE);
 }
 
 /** Returns radar's measurement #object from the given sensor number.
@@ -202,8 +131,8 @@ U8 nx_radar_get_op_mode(U8 sensor) {
  * Note: a return value of 0x00 means that no object was detected. A value
  * of 0xFF means that the read failed.
  */
-U8 nx_radar_read_distance(U8 sensor, S8 object) {
-  return radar_read_value(sensor, RADAR_R0+object);
+U8 nx_radar_read_distance(U32 sensor, U32 object) {
+  return nx_radar_read_value(sensor, RADAR_R0+object);
 }
 
 /** Read all radar's measurements at once.
@@ -213,7 +142,7 @@ U8 nx_radar_read_distance(U8 sensor, S8 object) {
  *
  * Note: DOES NOT WORK (is it even possible to read as many bytes we want?)
  */
-bool nx_radar_read_all(U8 sensor, U8 *buf) {
+bool nx_radar_read_all(U32 sensor, U8 *buf) {
   /* We use the low-level i2c_memory_read function here to try to read
    * all measurements at once.
    */
@@ -221,76 +150,48 @@ bool nx_radar_read_all(U8 sensor, U8 *buf) {
 			    buf, 8) == I2C_ERR_OK;
 }
 
-U8 nx_radar_get_current_zero(U8 sensor) {
-  return radar_read_value(sensor, RADAR_CURRENT_ZERO);
-}
-
-U8 nx_radar_get_current_scale_factor(U8 sensor) {
-  return radar_read_value(sensor, RADAR_CURRENT_SCALE_FACTOR);
-}
-
-U8 nx_radar_get_current_scale_divisor(U8 sensor) {
-  return radar_read_value(sensor, RADAR_CURRENT_SCALE_DIVISOR);
-}
-
-
-/** Radar setters. */
-
-bool nx_radar_set_interval(U8 sensor, U8 interval) {
-  return radar_write(sensor, RADAR_INTERVAL, &interval);
+/** Sets the radar continuous measurement interval. */
+bool nx_radar_set_interval(U32 sensor, U8 interval) {
+  return nx_radar_write(sensor, RADAR_INTERVAL, &interval);
 }
 
 /** Sets the radar operation mode. See radar.h for available modes. */
-bool nx_radar_set_op_mode(U8 sensor, U8 mode) {
-  return radar_write(sensor, RADAR_OP_MODE, &mode);
+bool nx_radar_set_op_mode(U32 sensor, U8 mode) {
+  return nx_radar_write(sensor, RADAR_OP_MODE, &mode);
 }
-
-bool nx_radar_set_current_zero(U8 sensor, U8 zero) {
-  return radar_write(sensor, RADAR_CURRENT_ZERO, &zero);
-}
-
-bool nx_radar_set_current_scale_factor(U8 sensor, U8 factor) {
-  return radar_write(sensor, RADAR_CURRENT_SCALE_FACTOR, &factor);
-}
-
-bool nx_radar_set_current_scale_divisor(U8 sensor, U8 divisor) {
-  return radar_write(sensor, RADAR_CURRENT_SCALE_DIVISOR, &divisor);
-}
-
-
 
 /** Display connected radar's information. */
-void nx_radar_info(U8 sensor) {
+void nx_radar_info(U32 sensor) {
   U8 buf[8];
 
   // Product ID (LEGO)
   memset(buf, 0, 8);
-  nx_radar_get_product_id(sensor, buf);
+  nx_radar_read(sensor, RADAR_PRODUCT_ID, buf);
   nx_display_string((char *)buf);
   nx_display_string(" ");
 
   // Sensor Type (Sonar)
   memset(buf, 0, 8);
-  nx_radar_get_sensor_type(sensor, buf);
+  nx_radar_read(sensor, RADAR_SENSOR_TYPE, buf);
   nx_display_string((char *)buf);
   nx_display_string(" ");
   
   // Version (V1.0)
   memset(buf, 0, 8);
-  nx_radar_get_version(sensor, buf);
+  nx_radar_read(sensor, RADAR_VERSION, buf);
   nx_display_string((char *)buf);
   nx_display_end_line();
 
   // Measurement units
   nx_display_string("Units: ");
   memset(buf, 0, 8);
-  nx_radar_get_measurement_units(sensor, buf);
+  nx_radar_read(sensor, RADAR_MEASUREMENT_UNITS, buf);
   nx_display_string((char *)buf);
   nx_display_end_line();
   
   // Measurement interval
   nx_display_string("Interval: ");
-  nx_display_uint(nx_radar_get_interval(sensor));
+  nx_display_uint(nx_radar_read_value(sensor, RADAR_INTERVAL));
   nx_display_string(" ms?\n");
 }
 

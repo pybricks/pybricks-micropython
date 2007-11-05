@@ -1,3 +1,17 @@
+/** @file radar.h
+ *  @brief Ultrasonic radar driver.
+ *
+ * Driver for NXT Ultrasonic radars acting as remote I2C memory units.
+ */
+
+/* Copyright (C) 2007 the NxOS developers
+ *
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
+ */
+ 
 #ifndef __NXOS_RADAR_H__
 #define __NXOS_RADAR_H__
 
@@ -8,6 +22,38 @@
  */
 #define RADAR_I2C_ADDRESS  0x01
 
+/** Radar's internal memory addresses.
+ *
+ * This enum contains the radar's internal memory addresses of the
+ * radar parameters and readings.
+ */
+typedef enum {
+  RADAR_VERSION,
+  RADAR_PRODUCT_ID,
+  RADAR_SENSOR_TYPE,
+  RADAR_FACTORY_ZERO,
+  RADAR_FACTORY_SCALE_FACTOR,
+  RADAR_FACTORY_SCALE_DIVISOR,
+  RADAR_MEASUREMENT_UNITS,
+
+  RADAR_INTERVAL,
+  RADAR_OP_MODE,
+  RADAR_R0,
+  RADAR_R1,
+  RADAR_R2,
+  RADAR_R3,
+  RADAR_R4,
+  RADAR_R5,
+  RADAR_R6,
+  RADAR_R7,
+  RADAR_CURRENT_ZERO,
+  RADAR_CURRENT_SCALE_FACTOR,
+  RADAR_CURRENT_SCALE_DIVISOR,
+  
+  RADAR_N_COMMANDS,
+} radar_memory_slot;
+
+/* Radar default continuous measurement interval value. */
 #define RADAR_DEFAULT_INTERVAL 1
 
 /* Radar operation modes: these are values that can be set at the
@@ -19,34 +65,18 @@
 #define RADAR_OP_EVENT     0x03
 #define RADAR_OP_RESET     0x04
 
-void nx_radar_init(U8 sensor);
-bool nx_radar_detect(U8 sensor);
-void nx_radar_reset(U8 sensor);
-void nx_radar_info(U8 sensor);
+void nx_radar_init(U32 sensor);
+bool nx_radar_detect(U32 sensor);
+void nx_radar_reset(U32 sensor);
+void nx_radar_info(U32 sensor);
 
-/** Getters for static values. */
-bool nx_radar_get_version(U8 sensor, U8 *version);
-bool nx_radar_get_product_id(U8 sensor, U8 *product_id);
-bool nx_radar_get_sensor_type(U8 sensor, U8 *sensor_type);
-U8 nx_radar_get_factory_zero(U8 sensor);
-U8 nx_radar_get_factory_scale_factor(U8 sensor);
-U8 nx_radar_get_factory_scale_divisor(U8 sensor);
-bool nx_radar_get_measurement_units(U8 sensor, U8 *units);
+bool nx_radar_read(U32 sensor, radar_memory_slot slot, U8 *buf);
+bool nx_radar_write(U32 sensor, radar_memory_slot slot, U8 *val);
+U8 nx_radar_read_value(U32 sensor, radar_memory_slot slot);
 
-/** Getters for dynamic values and measurements */
-U8 nx_radar_get_interval(U8 sensor);
-U8 nx_radar_get_op_mode(U8 sensor);
-U8 nx_radar_read_distance(U8 sensor, S8 object);
-bool nx_radar_read_all(U8 sensor, U8 *buf);
-U8 nx_radar_get_current_zero(U8 sensor);
-U8 nx_radar_get_current_scale_factor(U8 sensor);
-U8 nx_radar_get_current_scale_divisor(U8 sensor);
+U8 nx_radar_read_distance(U32 sensor, U32 object);
+bool nx_radar_read_all(U32 sensor, U8 *buf);
+bool nx_radar_set_interval(U32 sensor, U8 interval);
+bool nx_radar_set_op_mode(U32 sensor, U8 mode);
 
-/** Setters to configure the radar. */
-bool nx_radar_set_interval(U8 sensor, U8 interval);
-bool nx_radar_set_op_mode(U8 sensor, U8 mode);
-bool nx_radar_set_current_zero(U8 sensor, U8 zero);
-bool nx_radar_set_current_scale_factor(U8 sensor, U8 factor);
-bool nx_radar_set_current_scale_divisor(U8 sensor, U8 divisor);
-
-#endif
+#endif /* __NXOS_RADAR_H__ */

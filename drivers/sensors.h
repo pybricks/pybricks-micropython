@@ -19,14 +19,14 @@ typedef struct {
   U32 sda; /* DIGI1 - I2C data. */
 } sensor_pins;
 
-void nx_sensors_analog_enable(U8 sensor);
-void nx_sensors_i2c_enable(U8 sensor);
+void nx_sensors_analog_enable(U32 sensor);
+void nx_sensors_i2c_enable(U32 sensor);
 
-sensor_pins nx_sensors_get_pins(U8 sensor);
-U32 nx_sensors_analog_get(U8 sensor);
-void nx_sensors_analog_digi_set(U8 sensor, sensor_data_pin pin);
-void nx_sensors_analog_digi_clear(U8 sensor, sensor_data_pin pin);
+sensor_pins nx_sensors_get_pins(U32 sensor);
+U32 nx_sensors_analog_get(U32 sensor);
+void nx_sensors_analog_digi_set(U32 sensor, sensor_data_pin pin);
+void nx_sensors_analog_digi_clear(U32 sensor, sensor_data_pin pin);
 
-void nx_sensors_disable(U8 sensor);
+void nx_sensors_disable(U32 sensor);
 
 #endif

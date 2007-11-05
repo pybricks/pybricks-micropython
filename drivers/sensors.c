@@ -56,7 +56,7 @@ void nx__sensors_init() {
 }
 
 /** Returns a pointer to this sensor's pins info structure. */
-sensor_pins nx_sensors_get_pins(U8 sensor) {
+sensor_pins nx_sensors_get_pins(U32 sensor) {
   if (sensor >= NXT_N_SENSORS) {
     sensor_pins empty = { 0, 0 };
     return empty;
@@ -65,7 +65,7 @@ sensor_pins nx_sensors_get_pins(U8 sensor) {
   return sensors_state[sensor].pins;
 }
 
-void nx_sensors_analog_digi_set(U8 sensor, sensor_data_pin pin) {
+void nx_sensors_analog_digi_set(U32 sensor, sensor_data_pin pin) {
   /* The DIGI pins can be manually controlled only when in analog
    * mode.
    */
@@ -77,7 +77,7 @@ void nx_sensors_analog_digi_set(U8 sensor, sensor_data_pin pin) {
 }
 
 
-void nx_sensors_analog_digi_clear(U8 sensor, sensor_data_pin pin) {
+void nx_sensors_analog_digi_clear(U32 sensor, sensor_data_pin pin) {
   /* The DIGI pins can be manually controlled only when in analog
    * mode.
    */
@@ -89,14 +89,14 @@ void nx_sensors_analog_digi_clear(U8 sensor, sensor_data_pin pin) {
 }
 
 
-U32 nx_sensors_analog_get(U8 sensor) {
+U32 nx_sensors_analog_get(U32 sensor) {
   if (sensor >= NXT_N_SENSORS || sensors_state[sensor].mode != ANALOG)
     return 0;
 
   return nx__avr_get_sensor_value(sensor);
 }
 
-void nx_sensors_analog_enable(U8 sensor) {
+void nx_sensors_analog_enable(U32 sensor) {
   if (sensor >= NXT_N_SENSORS)
     return;
 
@@ -113,7 +113,7 @@ void nx_sensors_analog_enable(U8 sensor) {
 }
 
 /** Enables the given sensor in digital, I2C mode. */
-void nx_sensors_i2c_enable(U8 sensor) {
+void nx_sensors_i2c_enable(U32 sensor) {
   U32 pinmask;
 
   if (sensor >= NXT_N_SENSORS)
@@ -135,7 +135,7 @@ void nx_sensors_i2c_enable(U8 sensor) {
   *AT91C_PIOA_MDER = pinmask;
 }
 
-void nx_sensors_disable(U8 sensor) {
+void nx_sensors_disable(U32 sensor) {
   if (sensor >= NXT_N_SENSORS)
     return;
 
