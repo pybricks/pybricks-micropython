@@ -90,7 +90,8 @@ bool nx_radar_detect(U32 sensor) {
   U8 type[8] = { 0x0 };
   
   return nx_radar_read(sensor, RADAR_SENSOR_TYPE, type)
-    && strcmp((char *)type, RADAR_LEGO_SENSOR_TYPE) == 0;
+    && strncmp((char *)type, RADAR_LEGO_SENSOR_TYPE,
+               strlen(RADAR_LEGO_SENSOR_TYPE)) == 0;
 }  
 
 /** High-level radar control interface. */
