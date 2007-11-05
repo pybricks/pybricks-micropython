@@ -1,5 +1,9 @@
-/* Additional abstraction level for I2C sensors acting as I2C remote
- * memory units.
+/* Copyright (C) 2007 the NxOS developers
+ *
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
  */
 
 #include "base/at91sam7s256.h"

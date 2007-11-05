@@ -26,6 +26,7 @@
 /* Length of the I2C pauses (in 4th of BUS_SPEED) */
 #define I2C_PAUSE_LEN 3
 
+U32 i2c_device_count = 0;
 
 struct i2c_txn_info
 {
@@ -94,8 +95,8 @@ static volatile struct i2c_port {
 
   /** I2C transactions and current transaction number. */
   struct i2c_txn_info txns[I2C_MAX_TXN];
-  S8 current_txn;
-  S8 n_txns;
+  U8 current_txn;
+  U8 n_txns;
 
   /* Data flow tracking values : currently processed bytes, the
    * currently transmitted byte, and the position of the bit currently
@@ -109,7 +110,7 @@ static volatile struct i2c_port {
    * Ultrasonic radar): number of interrupts to let pass, and bus
    * state to reach after the pause.
    */
-  S8 p_ticks;
+  U8 p_ticks;
   U8 p_next;
 
 } i2c_state[NXT_N_SENSORS] = {
@@ -160,7 +161,6 @@ void nx_i2c_init() {
   /* Allow the timer to trigger interrupts and register our interrupt
    * handler.
    */
-  *AT91C_TC0_IER = AT91C_TC_CPCS;
   nx_aic_install_isr(AT91C_ID_TC0, AIC_PRIO_SOFTMAC, AIC_TRIG_EDGE, i2c_isr);
 
   /* Softare trigger, to get the counter going. */
@@ -182,7 +182,7 @@ static void i2c_log_uint(U32 val)
 }
 
 /** Register a remote device (by its address) on the given sensor. */
-void nx_i2c_register(U8 sensor, U8 address, bool lego_compat) {
+void nx_i2c_register(U32 sensor, U8 address, bool lego_compat) {
   volatile struct i2c_port *p;
 
   if (sensor >= NXT_N_SENSORS || address <= 0)
@@ -208,6 +208,26 @@ void nx_i2c_register(U8 sensor, U8 address, bool lego_compat) {
   //  I2C_MAX_TXN*sizeof(struct i2c_txn_info));
   i2c_state[sensor].current_txn = 0;
   i2c_state[sensor].n_txns = 0;
+  
+  /* Finally, enable the I2C clock interrupt if required. */
+  if (i2c_device_count == 0)
+    *AT91C_TC0_IER = AT91C_TC_CPCS;
+
+  i2c_device_count++;
+}
+
+/** Unregister the device on the given sensor port. */
+void nx_i2c_unregister(U32 sensor) {
+  nx_sensors_disable(sensor);
+  
+  /* Decrement the I2C device count. */
+  i2c_device_count--;
+
+  /* If no I2C device is connected anymore, deactivate the
+   * I2C clock interrupt.
+   */
+  if (i2c_device_count == 0)
+    *AT91C_TC0_IDR = AT91C_TC_CPCS;
 }
 
 /** Add a I2C sub transaction.
@@ -216,7 +236,7 @@ void nx_i2c_register(U8 sensor, U8 address, bool lego_compat) {
  * size) will be writen or read from the bus. Additionnal pre control and
  * post control can be performed (see enum i2c_control).
  */
-static i2c_txn_err i2c_add_txn(U8 sensor, i2c_txn_mode mode,
+static i2c_txn_err i2c_add_txn(U32 sensor, i2c_txn_mode mode,
 			       U8 *data, int size,
 			       i2c_control pre_control, i2c_control post_control)
 {
@@ -246,7 +266,7 @@ static i2c_txn_err i2c_add_txn(U8 sensor, i2c_txn_mode mode,
  *
  * Returns I2C_ERR_NOT_READY if the bus is busy.
  */
-static i2c_txn_err i2c_trigger(U8 sensor) {
+static i2c_txn_err i2c_trigger(U32 sensor) {
   i2c_state[sensor].txn_state = TXN_WAITING;
   i2c_state[sensor].bus_state = I2C_IDLE;
   
@@ -270,9 +290,9 @@ static i2c_txn_err i2c_trigger(U8 sensor) {
  *
  * Returns an i2c_txn_err error code.
  */
-i2c_txn_err nx_i2c_start_transaction(U8 sensor, i2c_txn_mode mode,
-				     U8 *data, U8 data_size,
-				     U8 *recv_buf, U8 recv_size)
+i2c_txn_err nx_i2c_start_transaction(U32 sensor, i2c_txn_mode mode,
+				     U8 *data, U32 data_size,
+				     U8 *recv_buf, U32 recv_size)
 {
   volatile struct i2c_txn_info *t;
   
@@ -294,7 +314,7 @@ i2c_txn_err nx_i2c_start_transaction(U8 sensor, i2c_txn_mode mode,
   t = i2c_state[sensor].txns;
   i2c_state[sensor].current_txn = 0;
   i2c_state[sensor].n_txns = 0;
-  // memset((U8 *)t, 0, I2C_MAX_TXN*sizeof(struct i2c_txn_info));
+  memset((U8 *)t, 0, I2C_MAX_TXN*sizeof(struct i2c_txn_info));
 
   /* In any case, write the device address and the given data
    * (can be an internal address, or an internal address followed
@@ -328,7 +348,7 @@ i2c_txn_err nx_i2c_start_transaction(U8 sensor, i2c_txn_mode mode,
 
 /** Retrieve the transaction status for the given sensor.
  */
-i2c_txn_status nx_i2c_get_txn_status(U8 sensor)
+i2c_txn_status nx_i2c_get_txn_status(U32 sensor)
 {
   volatile struct i2c_port *p;
 
@@ -356,7 +376,7 @@ i2c_txn_status nx_i2c_get_txn_status(U8 sensor)
   return p->txns[p->current_txn].result;
 }
 
-bool nx_i2c_busy(U8 sensor)
+bool nx_i2c_busy(U32 sensor)
 {
   if (sensor >= NXT_N_SENSORS)
     return FALSE;
@@ -374,7 +394,7 @@ bool nx_i2c_busy(U8 sensor)
  * Note: only use this function to change the I2C bus state when a pause
  * is required in compat mode.
  */
-static void i2c_set_bus_state(U8 sensor, U8 next_state) {
+static void i2c_set_bus_state(U32 sensor, U32 next_state) {
   volatile struct i2c_port *p;
 
   if (sensor >= NXT_N_SENSORS)

@@ -355,18 +355,18 @@ size_t nx_mem_init(size_t mem_pool_size, void *mem_pool) {
 }
 
 /******************************************************************/
-size_t nx_mem_used(void *mem_pool) {
+size_t nx_mem_used() {
 /******************************************************************/
-    tlsf_t *tlsf = (tlsf_t *) mem_pool;
+    tlsf_t *tlsf = (tlsf_t *)mp;
 
     return tlsf->used_size;
 }
 
 
 /******************************************************************/
-void nx_mem_destroy(void *mem_pool) {
+void nx_mem_destroy() {
 /******************************************************************/
-    tlsf_t *tlsf = (tlsf_t *) mem_pool;
+    tlsf_t *tlsf = (tlsf_t *) mp;
 
     tlsf->tlsf_signature = 0;
 #if TLSF_USE_LOCKS

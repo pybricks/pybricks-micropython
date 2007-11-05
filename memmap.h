@@ -71,7 +71,7 @@ extern U8 __boot_from_samba__;
 #define NX_USERSPACE_END SYMADDR(__userspace_end__)
 #define NX_USERSPACE_SIZE SECSIZE(NX_USERSPACE_START, NX_USERSPACE_END)
 
-#define NX_BOOT_FROM_SAMBA ((U32)SYMADDR(__boot_from_samba__) != NULL ? TRUE : \
+#define NX_BOOT_FROM_SAMBA ((U32)SYMADDR(__boot_from_samba__) != 0 ? TRUE : \
                                                                      FALSE)
 #define NX_BOOT_FROM_ROM (!BOOT_FROM_SAMBA)
 
