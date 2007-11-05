@@ -269,7 +269,7 @@ static i2c_txn_err i2c_add_txn(U32 sensor, i2c_txn_mode mode,
 static i2c_txn_err i2c_trigger(U32 sensor) {
   i2c_state[sensor].txn_state = TXN_WAITING;
   i2c_state[sensor].bus_state = I2C_IDLE;
-  
+
   return I2C_ERR_OK;
 }
 
@@ -430,7 +430,7 @@ static void i2c_isr()
    * interrupt handler to be called again.
    */
   dummy = *AT91C_TC0_SR;
-
+  
   for (sensor=0; sensor<NXT_N_SENSORS; sensor++) {
     volatile sensor_pins pins = nx_sensors_get_pins(sensor);
     p = &i2c_state[sensor];
@@ -597,7 +597,6 @@ static void i2c_isr()
 
         i2c_set_bus_state(sensor, I2C_SCL_LOW);
         p->txn_state = TXN_TRANSMIT_BYTE;
-
         break;
 
       case I2C_SCL_LOW:
