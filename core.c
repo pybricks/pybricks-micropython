@@ -12,6 +12,7 @@
 #include "base/_display.h"
 #include "drivers/_sensors.h"
 #include "drivers/_usb.h"
+#include "drivers/i2c.h"
 
 /* main() is the entry point into the custom payload, not included in
  * the NxOS core.
@@ -29,6 +30,7 @@ static void core_init() {
   nx__display_init();
   nx__sensors_init();
   nx__usb_init();
+  nx_i2c_init(); // TODO: should be nx__i2c_init().
 
   /* Delay a little post-init, to let all the drivers settle down. */
   nx_systick_wait_ms(100);
