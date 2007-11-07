@@ -36,27 +36,27 @@
 /** Initialize the TWI driver. */
 void nx__twi_init();
 
-/** Write @a nBytes starting at @a data to I2C slave @a dev_addr.
+/** Write @a len starting at @a data to I2C slave @a dev_addr.
  *
  * @param dev_addr The I2C bus address of the slave.
  * @param data Pointer to the data to write.
- * @param nBytes The amount of data to write.
+ * @param len The amount of data to write.
  *
  * @note This function returns immediately after setting up the write
  * sequence. It does not wait until the write is effectively complete.
  */
-void nx__twi_write_async(U32 dev_addr, U8 *data, U32 nBytes);
+void nx__twi_write_async(U32 dev_addr, U8 *data, U32 len);
 
-/** Read @a nBytes from I2C slave @a dev_addr into @a data.
+/** Read @a len bytes from I2C slave @a dev_addr into @a data.
  *
  * @param dev_addr The I2C bus address of the slave.
  * @param data Pointer to the receiving buffer.
- * @param nBytes The amount of data to read.
+ * @param len The amount of data to read.
  *
  * @note This function returns immediately after setting up the read
  * sequence. It does not wait until the read is effectively complete.
  */
-void nx__twi_read_async(U32 dev_addr, U8 *data, U32 nBytes);
+void nx__twi_read_async(U32 dev_addr, U8 *data, U32 len);
 
 /** Check the readiness of the TWI driver.
  *
