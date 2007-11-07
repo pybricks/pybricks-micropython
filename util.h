@@ -15,10 +15,12 @@
 
 #include "base/types.h"
 
-/** @defgroup libc Libc utility functions
+/** @defgroup typesAndUtils Types and utilities
  *
- * As NxOS does not link with a libc implementation, we provide our own
- * implementations of these generally rather useful functions.
+ * This component contains fundamental type definitions and utility
+ * functions that are used all over NxOS. These are basically things
+ * that a libc implementation might provide, but that we provide
+ * ourselves, since we don't link with a libc.
  */
 /*@{*/
 

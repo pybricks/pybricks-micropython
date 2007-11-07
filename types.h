@@ -13,6 +13,9 @@
 #ifndef __NXOS_BASE_TYPES_H__
 #define __NXOS_BASE_TYPES_H__
 
+/** @addtogroup typesAndUtils */
+/*@{*/
+
 typedef unsigned char U8; /**< Unsigned 8-bit integer. */
 typedef signed char S8; /**< Signed 8-bit integer. */
 typedef unsigned short U16; /**< Unsigned 16-bit integer. */
@@ -33,5 +36,7 @@ typedef U8 bool; /**< Boolean data type. */
 
 /** A function that takes no arguments and returns nothing. */
 typedef void (*nx_closure_t)(void);
+
+/*@}*/
 
 #endif
