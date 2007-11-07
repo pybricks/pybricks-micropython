@@ -73,8 +73,8 @@ twi_isr()
 }
 
 
-int nx__twi_ready() {
-  return twi_state == TWI_READY;
+bool nx__twi_ready() {
+  return (twi_state == TWI_READY) ? TRUE : FALSE;
 }
 
 void nx__twi_init()
@@ -117,8 +117,6 @@ void nx__twi_init()
 
   nx_interrupts_enable();
 }
-
-
 
 void nx__twi_read_async(U32 dev_addr, U8 *data, U32 nBytes)
 {
