@@ -15,13 +15,7 @@
 
 #include "base/types.h"
 
-/** @defgroup typesAndUtils Types and utilities
- *
- * This component contains fundamental type definitions and utility
- * functions that are used all over NxOS. These are basically things
- * that a libc implementation might provide, but that we provide
- * ourselves, since we don't link with a libc.
- */
+/** @addtogroup typesAndUtils */
 /*@{*/
 
 /** Return the numeric minimum of two parameters.
