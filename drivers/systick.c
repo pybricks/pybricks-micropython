@@ -1,16 +1,26 @@
+/* Copyright (C) 2007 the NxOS developers
+ *
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
+ */
+
 #include "base/at91sam7s256.h"
+
+#include "base/nxt.h"
 #include "base/types.h"
 #include "base/interrupts.h"
 #include "base/drivers/aic.h"
 #include "base/drivers/_avr.h"
 #include "base/drivers/_lcd.h"
-#include "base/drivers/systick.h"
 
+#include "base/drivers/systick.h"
 
 /* The main clock is at 48MHz, and the PIT divides that by 16 to get
  * its base timer frequency.
  */
-#define PIT_BASE_FREQUENCY (48000000/16)
+#define PIT_BASE_FREQUENCY (NXT_CLOCK_FREQ/16)
 
 /* We want a timer interrupt 1000 times per second. */
 #define SYSIRQ_FREQ 1000
@@ -31,7 +41,6 @@
  */
 #define SCHEDULER_SYSIRQ AT91C_ID_PWMC
 
-
 /* The system timer. Counts the number of milliseconds elapsed since
  * the system's initialization.
  */
@@ -44,7 +53,7 @@ static volatile U32 systick_time;
 static nx_closure_t scheduler_cb = NULL;
 
 /* Low priority handler, called 1000 times a second by the high
- * priority handler.
+ * priority handler if a scheduler callback is registered.
  */
 static void systick_sched() {
   /* Acknowledge the interrupt. */
@@ -54,7 +63,6 @@ static void systick_sched() {
   if (scheduler_cb)
     scheduler_cb();
 }
-
 
 /* High priority handler, called 1000 times a second */
 static void systick_isr() {
@@ -88,33 +96,6 @@ static void systick_isr() {
     nx_aic_set(SCHEDULER_SYSIRQ);
 }
 
-
-/* Return the absolute system time. */
-U32 nx_systick_get_ms() {
-  return systick_time;
-}
-
-
-/* Enter a busy wait loop for the given number of milliseconds. */
-void nx_systick_wait_ms(U32 ms) {
-  U32 final = systick_time + ms;
-
-  while (systick_time < final);
-}
-
-
-/* Enter a busy wait loop for the given number of nanoseconds. This
- * routine relies entirely on instruction timing within the CPU, and
- * is calibrated for 48MHz.
- */
-void nx_systick_wait_ns(U32 ns) {
-  volatile U32 x = (ns >> 7) + 1;
-
-  while (x--);
-}
-
-
-/* Initialize the system timer facility. */
 void nx__systick_init() {
   nx_interrupts_disable();
 
@@ -134,6 +115,22 @@ void nx__systick_init() {
                       AT91C_PITC_PITEN | AT91C_PITC_PITIEN);
 
   nx_interrupts_enable();
+}
+
+U32 nx_systick_get_ms() {
+  return systick_time;
+}
+
+void nx_systick_wait_ms(U32 ms) {
+  U32 final = systick_time + ms;
+
+  while (systick_time < final);
+}
+
+void nx_systick_wait_ns(U32 ns) {
+  volatile U32 x = (ns >> 7) + 1;
+
+  while (x--);
 }
 
 void nx_systick_install_scheduler(nx_closure_t sched_cb) {
