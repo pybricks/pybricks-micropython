@@ -14,15 +14,15 @@
  * Default handlers for unknown IRQ and FIQ interrupts, and
  * the spurious IRQ handler and unknown exception handler.
  */
-	.global nx_default_irq
-	.global nx_default_fiq
-	.global nx_spurious_irq
-	.global nx_unhandled_exception
-nx_default_irq:
-nx_default_fiq:
-nx_spurious_irq:
-nx_unhandled_exception:
-	b nx_unhandled_exception
+	.global nx__default_irq
+	.global nx__default_fiq
+	.global nx__spurious_irq
+	.global nx__unhandled_exception
+nx__default_irq:
+nx__default_fiq:
+nx__spurious_irq:
+nx__unhandled_exception:
+	b nx__unhandled_exception
 
 
 /**********************************************************
@@ -32,8 +32,8 @@ nx_unhandled_exception:
  * routing that was registered with the AIC for the given
  * IRQ.
  */
-	.global nx_irq_handler
-nx_irq_handler:
+	.global nx__irq_handler
+nx__irq_handler:
 	/* Save the return address and return processor mode registers
 	 * on the IRQ stack. This is needed to allow nested interrupts,
 	 * where a higher-priority interrupt halts execution of a lower

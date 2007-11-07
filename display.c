@@ -78,10 +78,10 @@ static inline bool is_on_screen(U8 x, U8 y) {
 }
 
 static inline const U8 *char_to_font(const char c) {
-  if (c >= FONT_START)
-    return font[c - FONT_START];
+  if (c >= NX__FONT_START)
+    return nx__font_data[c - NX__FONT_START];
   else
-    return font[0]; /* Unprintable characters become spaces. */
+    return nx__font_data[0]; /* Unprintable characters become spaces. */
 }
 
 static inline void update_cursor(bool inc_y) {
@@ -122,8 +122,9 @@ void nx_display_string(const char *str) {
     if (*str == '\n')
       update_cursor(TRUE);
     else {
-      memcpy(&display.buffer[display.cursor.y][display.cursor.x * CELL_WIDTH],
-             char_to_font(*str), FONT_WIDTH);
+      int x_offset = display.cursor.x * NX__CELL_WIDTH;
+      memcpy(&display.buffer[display.cursor.y][x_offset],
+             char_to_font(*str), NX__FONT_WIDTH);
       update_cursor(FALSE);
     }
     str++;

@@ -26,6 +26,9 @@
 
 #include "base/types.h"
 
+/** @addtogroup kernel */
+/*@{*/
+
 /** @defgroup memAllocator Memory allocation
  *
  * The NxOS baseplate optionally provides the TLSF memory allocator for
@@ -43,7 +46,7 @@
  */
 /*@{*/
 
-/** @defgroup memAllocControl Controlling the allocator */
+/** @name Controlling the allocator */
 /*@{*/
 
 /** Initialize a memory pool for the allocator.
@@ -80,7 +83,7 @@ void nx_mem_destroy();
 /*@}*/
 
 
-/** @defgroup memAllocUser Allocating memory */
+/** @name Allocating memory */
 /*@{*/
 
 /** Allocate and return a pointer to a block of @a size bytes.
@@ -121,6 +124,7 @@ void *realloc(void *ptr, size_t size);
  */
 void free(void *ptr);
 
+/*@}*/
 /*@}*/
 /*@}*/
 

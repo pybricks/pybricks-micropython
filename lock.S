@@ -32,6 +32,6 @@ nx_spinlock_try_acquire_from_ref:
 	mov r1, #1
 	swpb r1, r1, [r0]
 	cmp r1, #0
-	mvneq r0, #0
+	mvneq r0, #1
 	movne r0, #0
 	bx lr
