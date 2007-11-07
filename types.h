@@ -26,7 +26,7 @@ typedef signed long S32; /**< Signed 32-bit integer. */
 typedef U32 size_t; /**< Abstract size type, needed by the memory allocator. */
 
 typedef U8 bool; /**< Boolean data type. */
-#define FALSE 0 /**< False boolean value. */
+#define FALSE (0) /**< False boolean value. */
 #define TRUE (!FALSE) /**< True boolean value. */
 
 #ifndef NULL
