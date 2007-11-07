@@ -1,7 +1,9 @@
-/* Driver for the NXT's I2S sound controller.
+/* Copyright (C) 2007 the NxOS developers
  *
- * The sound controller is connected to the main board via the SSC
- * (Synchronous Serial Controller).
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
  */
 
 #include "base/at91sam7s256.h"
@@ -10,32 +12,29 @@
 #include "base/interrupts.h"
 #include "base/drivers/aic.h"
 #include "base/drivers/systick.h"
-#include "base/drivers/sound.h"
+
+#include "base/drivers/_sound.h"
 
 /* Statically defined digitized sine wave, used for tone
  * generation.
  */
-static const U32 tone_pattern[16] =
-  {
-    0xF0F0F0F0,0xF0F0F0F0,
-    0xFCFCFCFC,0xFCFCFCFC,
-    0xFFFFFFFF,0xFFFFFFFF,
-    0xFCFCFCFC,0xFCFCFCFC,
-    0xF0F0F0F0,0xF0F0F0F0,
-    0xC0C0C0C0,0xC0C08080,
-    0x00000000,0x00000000,
-    0x8080C0C0,0xC0C0C0C0
-  };
+static const U32 tone_pattern[16] = {
+  0xF0F0F0F0,0xF0F0F0F0,
+  0xFCFCFCFC,0xFCFCFCFC,
+  0xFFFFFFFF,0xFFFFFFFF,
+  0xFCFCFCFC,0xFCFCFCFC,
+  0xF0F0F0F0,0xF0F0F0F0,
+  0xC0C0C0C0,0xC0C08080,
+  0x00000000,0x00000000,
+  0x8080C0C0,0xC0C0C0C0
+};
 
 /* When a tone is playing, this value contains the number of times the
  * previous digitized sine wave is to be played.
  */
 static volatile U32 tone_cycles;
 
-
-static void
-sound_isr()
-{
+static void sound_isr() {
   if (tone_cycles--) {
     /* Tell the DMA controller to stream the static sine wave, 16
      * words of data.
@@ -48,11 +47,7 @@ sound_isr()
   }
 }
 
-
-/* Initialise the Synchronous Serial Controller. */
-void
-nx__sound_init()
-{
+void nx__sound_init() {
   nx_interrupts_disable();
 
   /* Start by inhibiting all sound output. Then enable power to the
@@ -97,14 +92,7 @@ nx__sound_init()
   nx_interrupts_enable();
 }
 
-
-/* Emit a tone at a given frequency (in Hz) for a given duration.
- *
- * This function schedules the tone to be output and returns
- * immediately.
- */
-void nx_sound_freq_async(U32 freq, U32 ms)
-{
+void nx_sound_freq_async(U32 freq, U32 ms) {
   /* Set the master clock divider to output the correct frequency.
    *
    * The values are currently magic borrowed from Lejos.
@@ -123,14 +111,7 @@ void nx_sound_freq_async(U32 freq, U32 ms)
   *AT91C_SSC_PTCR = AT91C_PDC_TXTEN;
 }
 
-
-/* Emit a tone at a given frequency (in Hz) for a given duration.
- *
- * This function blocks for the duration of the tone. If you do not
- * want this, use sound_freq_async instead.
- */
-void nx_sound_freq(U32 freq, U32 ms)
-{
+void nx_sound_freq(U32 freq, U32 ms) {
   nx_sound_freq_async(freq, ms);
   nx_systick_wait_ms(ms);
 }
