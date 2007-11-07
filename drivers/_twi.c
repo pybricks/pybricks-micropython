@@ -1,11 +1,19 @@
+/* Copyright (C) 2007 the NxOS developers
+ *
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
+ */
 
-#include "base/types.h"
-#include "base/drivers/_twi.h"
-#include "base/interrupts.h"
 #include "base/at91sam7s256.h"
 
-#include "base/drivers/systick.h"
+#include "base/types.h"
+#include "base/interrupts.h"
 #include "base/drivers/aic.h"
+#include "base/drivers/systick.h"
+
+#include "base/drivers/_twi.h"
 
 enum twi_mode {
     TWI_UNINITIALIZED = 0,
@@ -87,10 +95,6 @@ static void twi_isr()
     twi_state.mode = TWI_FAILED;
     /* TODO: This should be an assertion failed, ie. a hard crash. */
   }
-}
-
-bool nx__twi_ready() {
-  return (twi_state.mode == TWI_READY) ? TRUE : FALSE;
 }
 
 void nx__twi_init()
@@ -177,4 +181,8 @@ void nx__twi_write_async(U32 dev_addr, U8 *data, U32 len)
   *AT91C_TWI_MMR = mode;
   *AT91C_TWI_CR = AT91C_TWI_START | AT91C_TWI_MSEN;
   *AT91C_TWI_IER = AT91C_TWI_TXRDY;
+}
+
+bool nx__twi_ready() {
+  return (twi_state.mode == TWI_READY) ? TRUE : FALSE;
 }
