@@ -13,4 +13,4 @@ for source in glob('*.[cS]')+glob('drivers/*.[cS]'):
     if source == 'display.c':
         env.Depends(obj, font)
 
-# env.Doxygen('Doxyfile')
+env.Doxygen('Doxyfile')
