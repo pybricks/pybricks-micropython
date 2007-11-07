@@ -17,7 +17,7 @@
 #include "base/drivers/sensors.h"
 
 
-static volatile struct {
+static struct {
   /* The mode of the sensor port. */
   enum {
     OFF = 0, /* Unused. */
@@ -27,7 +27,7 @@ static volatile struct {
   } mode;
 
   /* Pins wired to this sensor. */
-  sensor_pins pins;
+  nx_sensors_pins pins;
 } sensors_state[NXT_N_SENSORS] = {
   { OFF, { AT91C_PIO_PA23, AT91C_PIO_PA18 }},
   { OFF, { AT91C_PIO_PA28, AT91C_PIO_PA19 }},
@@ -56,16 +56,14 @@ void nx__sensors_init() {
 }
 
 /** Returns a pointer to this sensor's pins info structure. */
-sensor_pins nx_sensors_get_pins(U32 sensor) {
-  if (sensor >= NXT_N_SENSORS) {
-    sensor_pins empty = { 0, 0 };
-    return empty;
-  }
+nx_sensors_pins *nx_sensors_get_pins(U32 sensor) {
+  if (sensor >= NXT_N_SENSORS)
+    return NULL;
 
-  return sensors_state[sensor].pins;
+  return &sensors_state[sensor].pins;
 }
 
-void nx_sensors_analog_digi_set(U32 sensor, sensor_data_pin pin) {
+void nx_sensors_analog_digi_set(U32 sensor, nx_sensors_data_pin pin) {
   /* The DIGI pins can be manually controlled only when in analog
    * mode.
    */
@@ -77,7 +75,7 @@ void nx_sensors_analog_digi_set(U32 sensor, sensor_data_pin pin) {
 }
 
 
-void nx_sensors_analog_digi_clear(U32 sensor, sensor_data_pin pin) {
+void nx_sensors_analog_digi_clear(U32 sensor, nx_sensors_data_pin pin) {
   /* The DIGI pins can be manually controlled only when in analog
    * mode.
    */

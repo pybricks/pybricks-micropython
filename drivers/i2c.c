@@ -432,7 +432,7 @@ static void i2c_isr()
   dummy = *AT91C_TC0_SR;
   
   for (sensor=0; sensor<NXT_N_SENSORS; sensor++) {
-    volatile sensor_pins pins = nx_sensors_get_pins(sensor);
+    volatile nx_sensors_pins *pins = nx_sensors_get_pins(sensor);
     p = &i2c_state[sensor];
     t = &(p->txns[p->current_txn]);
 
@@ -445,7 +445,7 @@ static void i2c_isr()
 
       case I2C_RECLOCK0:
         /* First step of reclocking: pull SCL low. */
-        codr |= pins.scl;
+        codr |= pins->scl;
         p->bus_state = I2C_RECLOCK1;
         break;
 
@@ -453,25 +453,25 @@ static void i2c_isr()
         /* Second and last step of reclocking: set SCL high again, and
          * retry transaction.
          */
-        sodr |= pins.scl;
+        sodr |= pins->scl;
         p->bus_state = I2C_SEND_START_BIT0;
         break;
 
       case I2C_READ_ACK0:
         /* Issue a clock pulse by releasing SCL. */
-        sodr |= pins.scl;
+        sodr |= pins->scl;
         p->bus_state = I2C_READ_ACK1;
         break;
 
       case I2C_READ_ACK1:
         /* Wait for SCL to go up and let it stabilize. */
-        if (lines & pins.scl) {
+        if (lines & pins->scl) {
           p->bus_state = I2C_READ_ACK2;
         }
         break;
 
       case I2C_READ_ACK2:
-        if (lines & pins.sda) {
+        if (lines & pins->sda) {
           /* SDA is still high, this is a ACK fault. Setting
            * transaction status to TXN_STAT_FAILED and sending stop
            * bit.
@@ -505,7 +505,7 @@ static void i2c_isr()
           /* Pull SCL low to complete the clock pulse. SDA should be
            * released by the slave after that.
            */
-          codr |= pins.scl;
+          codr |= pins->scl;
 
           i2c_log(" r-ack.\n");
         }
@@ -514,19 +514,19 @@ static void i2c_isr()
 
       case I2C_WRITE_ACK0:
         /* Release SCL to do a clock pulse. */
-        sodr |= pins.scl;
+        sodr |= pins->scl;
         p->bus_state = I2C_WRITE_ACK1;
         break;
 
       case I2C_WRITE_ACK1:
         /* Pull SCL low again to complete the clock pulse. */
-        codr |= pins.scl;
+        codr |= pins->scl;
         p->bus_state = I2C_WRITE_ACK2;
         break;
 
       case I2C_WRITE_ACK2:
         /* Release SDA for the slave to regain control of it. */
-        sodr |= pins.sda;
+        sodr |= pins->sda;
         p->bus_state = I2C_SCL_LOW;
         p->txn_state = TXN_TRANSMIT_BYTE;
 
@@ -543,7 +543,7 @@ static void i2c_isr()
             /* Before issuing a START bit, set both pins high, just to be
              * sure, and proceed to SEND_START_BIT.
              */
-            sodr |= pins.sda | pins.scl;
+            sodr |= pins->sda | pins->scl;
             
             if (t->pre_control == I2C_CONTROL_RESTART && p->lego_compat) {
               /* In LEGO compatibility mode, issue a reclock before the
@@ -577,9 +577,9 @@ static void i2c_isr()
         break;
 
       case I2C_SEND_START_BIT0:
-        if (lines & pins.sda) {
+        if (lines & pins->sda) {
           /* Pull SDA low. */
-          codr |= pins.sda;
+          codr |= pins->sda;
 
           i2c_set_bus_state(sensor, I2C_SEND_START_BIT1);
         } else {
@@ -593,7 +593,7 @@ static void i2c_isr()
 
       case I2C_SEND_START_BIT1:
         /* Pull SCL low. */
-        codr |= pins.scl;
+        codr |= pins->scl;
 
         i2c_set_bus_state(sensor, I2C_SCL_LOW);
         p->txn_state = TXN_TRANSMIT_BYTE;
@@ -610,10 +610,10 @@ static void i2c_isr()
            */
           if (t->mode == TXN_MODE_WRITE) {
             if ((p->current_byte & (1 << p->current_pos))) {
-              sodr |= pins.sda;
+              sodr |= pins->sda;
               i2c_log_uint(1);
             } else {
-              codr |= pins.sda;
+              codr |= pins->sda;
               i2c_log_uint(0);
             }
 
@@ -624,11 +624,11 @@ static void i2c_isr()
           break;
 
         case TXN_WRITE_ACK:
-          if (lines & pins.sda) {
+          if (lines & pins->sda) {
             /* SDA is high: the slave has released SDA. Pull it low
              * and reclock.
              */
-            codr |= pins.sda;
+            codr |= pins->sda;
             p->bus_state = I2C_WRITE_ACK0;
           }
 
@@ -639,8 +639,8 @@ static void i2c_isr()
           /* Release SDA and pull SCL low to prepare for the clock
            * pulse.
            */
-          sodr |= pins.sda;
-          codr |= pins.scl;
+          sodr |= pins->sda;
+          codr |= pins->scl;
           p->bus_state = I2C_READ_ACK0;
           break;
 
@@ -648,7 +648,7 @@ static void i2c_isr()
           /* Pull SDA low, to be able to release it up after SCL went
            * up.
            */
-          codr |= pins.sda;
+          codr |= pins->sda;
           i2c_set_bus_state(sensor, I2C_SEND_STOP_BIT0);
           break;
 
@@ -660,7 +660,7 @@ static void i2c_isr()
 
       case I2C_SAMPLE0:
         /* Start sampling, rising SCL. */
-        sodr |= pins.scl;
+        sodr |= pins->scl;
         p->bus_state = I2C_SAMPLE1;
         break;
 
@@ -670,7 +670,7 @@ static void i2c_isr()
          * value and store it.
          */
         if (t->mode == TXN_MODE_READ) {
-          U8 value = (lines & pins.sda) ? 1 : 0;
+          U8 value = (lines & pins->sda) ? 1 : 0;
           t->data[p->processed] |= (value << p->current_pos);
           p->current_pos--;
           i2c_log_uint(value);
@@ -681,7 +681,7 @@ static void i2c_isr()
 
       case I2C_SAMPLE2:
         /* Finally, pull SCL low. */
-        codr |= pins.scl;
+        codr |= pins->scl;
 
         if (p->current_pos < 0) {
           p->processed++;
@@ -722,14 +722,14 @@ static void i2c_isr()
 
       case I2C_SEND_STOP_BIT0:
         /* First, rise SCL. */
-        sodr |= pins.scl;
+        sodr |= pins->scl;
 
         i2c_set_bus_state(sensor, I2C_SEND_STOP_BIT1);
         break;
 
       case I2C_SEND_STOP_BIT1:
         /* Finally, release SDA. */
-        sodr |= pins.sda;
+        sodr |= pins->sda;
 
         i2c_set_bus_state(sensor, I2C_IDLE);
         p->txn_state = TXN_WAITING;
