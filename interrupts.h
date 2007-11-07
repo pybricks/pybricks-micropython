@@ -1,23 +1,72 @@
+/** @file interrupts.h
+ *  @brief Interrupts and task information.
+ */
+
+/* Copyright (C) 2007 the NxOS developers
+ *
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
+ */
+
 #ifndef __NXOS_INTERRUPTS_H__
 #define __NXOS_INTERRUPTS_H__
 
 #include "base/types.h"
 
+/** @addtogroup kernel */
+/*@{*/
+
+/** @defgroup interrupt Interrupts and task information
+ *
+ * The Baseplate provides facilities for enabling and disabling
+ * interrupts, and for obtaining information about an interrupted user
+ * task.
+ *
+ * The Baseplate itself provides no scheduler, but its interrupt
+ * dispatch routine is tailored so that, when it interrupts code running
+ * in User/System mode, all the state is saved to the User/System mode
+ * stack. This makes the User/System mode task entirely self-contained
+ * within its stack pointer, which can be exchanged trivially for
+ * another to implement simple task switching.
+ */
+/*@{*/
+
+/** Globally disable interrupt handling.
+ *
+ * This function call can be nested. Internally, a counter counts the
+ * number of disables, and will require the same number of calls to
+ * nx_interrupts_enable() to reenable interrupt handling.
+ *
+ * @note Application kernels enter the main() function with interrupts
+ * already enabled.
+ *
+ * @warning The NXT cannot function for more than about a millisecond
+ * with interrupts disabled. Disabling them for too long will cause the
+ * coprocessor link to fail, which will bring the whole system crashing
+ * down. Use sparingly, for small critical sections.
+ *
+ * @sa nx_interrupts_enable
+ */
 void nx_interrupts_disable();
+
+/** Enable interrupt handling.
+ *
+ * Interrupt handling will only be reenabled if this function has been
+ * called the same number of times as nx_interrupts_disable().
+ */
 void nx_interrupts_enable();
 
-/* The following structure describes the order in which registers are
- * pushed on the system stack when the IRQ handler interrupts a
- * user/system mode task. If you map a pointer to this structure on the
- * stack pointer during an interrupt, you will get all the registers
- * mapped properly in the struct.
+/** @brief The mapping of a user task's registers in the User/System stack.
  *
- * Yes, the structure is messy and disorganized, but the order is a
- * direct result of the order in which the IRQ handler has to push
- * things.
+ * This structure should be used in an interrupt handler: cast the
+ * User/System stack pointer to a pointer to this structure, and
+ * dereference the fields to access the values of registers.
  *
- * This is not used in the base code, but is very useful if you want to
- * implement a scheduler that pokes around in task states.
+ * @note This structure only works for user tasks. It does not
+ * accurately describe the content of any stack when there is no user
+ * mode task running.
  */
 typedef struct {
   U32 cpsr;
@@ -37,5 +86,8 @@ typedef struct {
   U32 r12;
   U32 lr;
 } nx_task_stack_t;
+
+/*@}*/
+/*@}*/
 
 #endif

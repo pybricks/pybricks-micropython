@@ -47,10 +47,10 @@ void nx__aic_init() {
   /* Set default handlers for all interrupt lines. */
   for (i = 0; i < 32; i++) {
     AT91C_AIC_SMR[i] = 0;
-    AT91C_AIC_SVR[i] = (U32) nx_default_irq;
+    AT91C_AIC_SVR[i] = (U32) nx__default_irq;
   }
-  AT91C_AIC_SVR[AT91C_ID_FIQ] = (U32) nx_default_fiq;
-  *AT91C_AIC_SPU = (U32) nx_spurious_irq;
+  AT91C_AIC_SVR[AT91C_ID_FIQ] = (U32) nx__default_fiq;
+  *AT91C_AIC_SPU = (U32) nx__spurious_irq;
 
   nx_interrupts_enable();
 }
