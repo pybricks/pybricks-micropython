@@ -63,7 +63,7 @@ void nx_sensors_i2c_enable(U32 sensor);
  *
  * @param sensor The sensor port.
  */
-nx_sensors_pins *nx_sensors_get_pins(U32 sensor);
+const nx_sensors_pins *nx_sensors_get_pins(U32 sensor);
 
 /** Get an analog reading from @a sensor.
  *
