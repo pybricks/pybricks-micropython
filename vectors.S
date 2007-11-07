@@ -19,5 +19,5 @@
 	ldr   pc,v2 /* FIQ */
 
 v0:	.long nx_start
-v1:	.long nx_irq_handler
-v2:	.long nx_unhandled_exception
+v1:	.long nx__irq_handler
+v2:	.long nx__unhandled_exception
