@@ -19,6 +19,9 @@
  */
 extern void main();
 
+/* Application kernels can register a shutdown handler, which we keep here. */
+static nx_closure_t shutdown_handler = NULL;
+
 static void core_init() {
   nx__aic_init();
   nx_interrupts_enable();
@@ -62,9 +65,15 @@ static void check_boot_errors() {
 }
 
 void nx_core_halt() {
+  if (shutdown_handler)
+    shutdown_handler();
   nx__lcd_shutdown();
   nx__usb_disable();
   nx__avr_power_down();
+}
+
+void nx_core_register_shutdown_handler(nx_closure_t handler) {
+  shutdown_handler = handler;
 }
 
 /* This function is not part of the public API, but is invoked from
