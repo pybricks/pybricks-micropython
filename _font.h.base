@@ -2,31 +2,58 @@
  * Font file template
  */
 
-#ifndef __FONT_@@FONT_SIZE@@_H__
-#define __FLASH_@@FONT_SIZE@@_H__
+#ifndef __NXOS_BASE__FONT_H__
+#define __NXOS_BASE__FONT_H__
 
 #include "base/types.h"
+#include "base/drivers/_lcd.h"
 
-/* The offset of the first character in the font table. All characters
- * before that one are unprintable.
- */
-#define FONT_START 0x20
-#define FONT_END 0x80
+/** @addtogroup kernelinternal */
+/*@{*/
 
-/* The width in pixels of the font codepoints, of a character cell
- * (includes space between chars), and the resulting length of a line
- * in character cells.
+/** @name Font data
+ *
+ * A basic font is embedded into the baseplate, for use by the display
+ * driver.
+ *
+ * @note This data is automatically generated from a "font grid" image
+ * at compile time. This makes it easy to tweak the looks of the font by
+ * editing an image, and have it nicely embedded in the Baseplate.
  */
-#define FONT_WIDTH @@FONT_WIDTH@@
-#define CELL_WIDTH (FONT_WIDTH + 1)
-#define DISPLAY_WIDTH_CELLS (LCD_WIDTH / CELL_WIDTH)
-#define DISPLAY_HEIGHT_CELLS LCD_HEIGHT
+/*@{*/
 
-/*
- * An array containing all the bits of the flash routine bytecode.
+/** The ASCII offset of the first character in the font table.
+ *
+ * All characters before that one are unprintable.
  */
-static const U8 font[][FONT_WIDTH] = {
+#define NX__FONT_START 0x20
+
+/** The ASCII offset of the last character in the font table.
+ *
+ * All characters after that one are unprintable.
+ */
+#define NX__FONT_END 0x80
+
+/** The width of a font character in pixels. */
+#define NX__FONT_WIDTH @@FONT_WIDTH@@
+/** The width of a font cell, which includes a 1-pixel spacer. */
+#define NX__CELL_WIDTH (NX__FONT_WIDTH + 1)
+/** The number of font cells per line. */
+#define NX__DISPLAY_WIDTH_CELLS (LCD_WIDTH / NX__CELL_WIDTH)
+/** The number of fond lines on the display. */
+#define NX__DISPLAY_HEIGHT_CELLS LCD_HEIGHT
+
+/** The font character data.
+ *
+ * Each entry in the font array is a subarray of length @b
+ * FONT_WIDTH. Each element in that array gives the bitmask for one
+ * vertical slice of the character in question.
+ */
+static const U8 nx__font_data[][NX__FONT_WIDTH] = {
   @@FONT_DATA@@
 };
 
-#endif /* __FONT_@@FONT_SIZE@@_H__ */
+/*@}*/
+/*@}*/
+
+#endif /* __NXOS_BASE__FONT_H__ */
