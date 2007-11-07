@@ -16,6 +16,9 @@
 #ifndef __NXOS_BASE_DOC_H__
 #define __NXOS_BASE_DOC_H__
 
+/** @defgroup kernel Kernel */
+/*@{*/
+
 /** @defgroup typesAndUtils Types and utilities
  *
  * This component contains fundamental type definitions and utility
@@ -23,5 +26,14 @@
  * that a libc implementation might provide, but that we provide
  * ourselves, since we don't link with a libc.
  */
+
+/** @defgroup kernelinternal Internals
+ *
+ * This component documents kernel APIs that are internal to the
+ * baseplate. Application kernels may not refer to these, only kernel
+ * and baseplate device driver code.
+ */
+
+/*@}*/
 
 #endif /* __NXOS_BASE_DOC_H__ */
