@@ -36,4 +36,19 @@
 
 /*@}*/
 
+/** @defgroup driver Device drivers */
+/*@{*/
+
+/** @defgroup driverinternal Internal device drivers
+ *
+ * This component documents device drivers which are internal to the
+ * Baseplate. Application kernels may not refer to these.
+ *
+ * This component also documents the internal APIs of drivers that are
+ * public.
+ */
+
+/*@}*/
+
+
 #endif /* __NXOS_BASE_DOC_H__ */
