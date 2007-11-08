@@ -747,7 +747,7 @@ bool nx_usb_is_connected() {
 }
 
 
-U16 nx_usb_has_data() {
+U32 nx_usb_has_data() {
   return usb_state.rx_buffer_size[usb_state.rx_current_user_buffer_idx];
 }
 
