@@ -69,22 +69,22 @@ void nx_interrupts_enable();
  * mode task running.
  */
 typedef struct {
-  U32 cpsr;
-  U32 pc;
-  U32 r0;
-  U32 r1;
-  U32 r2;
-  U32 r3;
-  U32 r4;
-  U32 r5;
-  U32 r6;
-  U32 r7;
-  U32 r8;
-  U32 r9;
-  U32 r10;
-  U32 r11;
-  U32 r12;
-  U32 lr;
+  U32 cpsr; /**< CPU status register. */
+  U32 pc; /**< Program Counter register. */
+  U32 r0; /**< General Purpose Register 0. */
+  U32 r1; /**< General Purpose Register 1. */
+  U32 r2; /**< General Purpose Register 2. */
+  U32 r3; /**< General Purpose Register 3. */
+  U32 r4; /**< General Purpose Register 4. */
+  U32 r5; /**< General Purpose Register 5. */
+  U32 r6; /**< General Purpose Register 6. */
+  U32 r7; /**< General Purpose Register 7. */
+  U32 r8; /**< General Purpose Register 8. */
+  U32 r9; /**< General Purpose Register 9. */
+  U32 r10; /**< General Purpose Register 10. */
+  U32 r11; /**< General Purpose Register 11. */
+  U32 r12; /**< General Purpose Register 12. */
+  U32 lr; /**< Link Register. */
 } nx_task_stack_t;
 
 /*@}*/
