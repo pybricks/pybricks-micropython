@@ -1,19 +1,9 @@
-/* Driver for the NXT's LCD display.
+/* Copyright (C) 2007 the NxOS developers
  *
- * This driver contains a basic SPI driver to talk to the UltraChip
- * 1601 LCD controller, as well as a higher level API implementing the
- * UC1601's commandset.
+ * See AUTHORS for a full list of the developers.
  *
- * Note that the SPI driver is not suitable as a general-purpose SPI
- * driver: the MISO pin (Master-In Slave-Out) is instead wired to the
- * UC1601's CD input (used to select whether the transferred data is
- * control commands or display data). Thus, the SPI driver here takes
- * manual control of the MISO pin, and drives it depending on the type
- * of data being transferred.
- *
- * This also means that you can only write to the UC1601, not read
- * back from it. This is not too much of a problem, as we can just
- * introduce a little delay in the places where we really need it.
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
  */
 
 #include "base/at91sam7s256.h"
@@ -23,6 +13,7 @@
 #include "base/interrupts.h"
 #include "base/drivers/systick.h"
 #include "base/drivers/aic.h"
+
 #include "base/drivers/_lcd.h"
 
 /* Internal command bytes implementing part of the basic commandset of
@@ -44,7 +35,6 @@
 #define SET_MAP_CONTROL(mx, my) (0xC0 | (mx << 1) | (my << 2))
 #define RESET() (0xE2)
 #define SET_BIAS_RATIO(bias) (0xE8 | (bias & 3))
-
 
 /*
  * SPI controller driver.
@@ -84,7 +74,6 @@ static volatile struct {
   FALSE    /* And about to send display data */
 };
 
-
 /*
  * Set the data transmission mode.
  */
@@ -108,7 +97,6 @@ static void spi_set_tx_mode(spi_mode mode) {
   }
 }
 
-
 /*
  * Send a command byte to the LCD controller.
  */
@@ -121,7 +109,6 @@ static void spi_write_command_byte(U8 command) {
   /* Send the command byte and wait for a reply. */
   *AT91C_SPI_TDR = command;
 }
-
 
 /* Interrupt routine for handling DMA screen refreshing. */
 static void spi_isr() {
@@ -179,7 +166,6 @@ static void spi_isr() {
   }
 }
 
-
 static void spi_init() {
   nx_interrupts_disable();
 
@@ -229,7 +215,6 @@ static void spi_init() {
 
   nx_interrupts_enable();
 }
-
 
 /* Initialize the LCD controller. */
 void nx__lcd_init() {
@@ -302,6 +287,11 @@ void nx__lcd_init() {
     spi_write_command_byte(lcd_init_sequence[i]);
 }
 
+void nx__lcd_fast_update() {
+  if (spi_state.screen_dirty) {
+    *AT91C_SPI_IER = AT91C_SPI_ENDTX;
+  }
+}
 
 /* Mirror the given display buffer to the LCD controller. The given
  * buffer must be exactly 100x64 bytes, one full screen of pixels.
@@ -311,18 +301,9 @@ void nx__lcd_set_display(U8 *display) {
   *AT91C_SPI_IER = AT91C_SPI_ENDTX;
 }
 
-
-inline void nx__lcd_dirty_display() {
+void nx__lcd_dirty_display() {
   spi_state.screen_dirty = TRUE;
 }
-
-
-void nx__lcd_fast_update() {
-  if (spi_state.screen_dirty) {
-    *AT91C_SPI_IER = AT91C_SPI_ENDTX;
-  }
-}
-
 
 /* Shutdown the LCD controller. */
 void nx__lcd_shutdown() {

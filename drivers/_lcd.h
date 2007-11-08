@@ -20,8 +20,20 @@
 
 /** @defgroup lcdinternal LCD controller
  *
- * The LCD controller drives the UC1601 display chip, which in turn
- * drives the refresh cycle of the LCD display.
+ * This driver contains a basic SPI driver to talk to the UltraChip
+ * 1601 LCD controller, as well as a higher level API implementing the
+ * UC1601's commandset.
+ *
+ * Note that the SPI driver is not suitable as a general-purpose SPI
+ * driver: the MISO pin (Master-In Slave-Out) is instead wired to the
+ * UC1601's CD input (used to select whether the transferred data is
+ * control commands or display data). Thus, the SPI driver here takes
+ * manual control of the MISO pin, and drives it depending on the type
+ * of data being transferred.
+ *
+ * This also means that you can only write to the UC1601, not read
+ * back from it. This is not too much of a problem, as we can just
+ * introduce a little delay in the places where we really need it.
  */
 /*@{*/
 
