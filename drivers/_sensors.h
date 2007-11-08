@@ -22,6 +22,17 @@
 /** @defgroup sensorsinternal Sensor interface */
 /*@{*/
 
+/** Mapping of PIO ports to I2C busses.
+ *
+ * Each sensor port has two DIGI pins, whose use varies from sensor to
+ * sensor. We remember which two pins each sensor has using the
+ * sensor_pins structure.
+ */
+typedef struct {
+  U32 scl; /**< DIGI0 - I2C clock. */
+  U32 sda; /**< DIGI1 - I2C data. */
+} nx__sensors_pins;
+
 /** Initialize the sensors driver. */
 void nx__sensors_init();
 
@@ -35,7 +46,7 @@ void nx__sensors_i2c_enable(U32 sensor);
  *
  * @param sensor The sensor port.
  */
-const nx_sensors_pins *nx__sensors_get_pins(U32 sensor);
+const nx__sensors_pins *nx__sensors_get_pins(U32 sensor);
 
 /** Disable the sensor port @a sensor.
  *

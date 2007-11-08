@@ -15,9 +15,9 @@
 #include "base/drivers/aic.h"
 #include "base/drivers/_avr.h"
 
-#include "base/drivers/sensors.h"
+#include "base/drivers/_sensors.h"
 
-static const nx_sensors_pins sensors_pinmap[NXT_N_SENSORS] = {
+static const nx__sensors_pins sensors_pinmap[NXT_N_SENSORS] = {
   { AT91C_PIO_PA23, AT91C_PIO_PA18 },
   { AT91C_PIO_PA28, AT91C_PIO_PA19 },
   { AT91C_PIO_PA29, AT91C_PIO_PA20 },
@@ -75,7 +75,7 @@ void nx__sensors_i2c_enable(U32 sensor) {
   *AT91C_PIOA_MDER = pinmask;
 }
 
-const nx_sensors_pins *nx__sensors_get_pins(U32 sensor) {
+const nx__sensors_pins *nx__sensors_get_pins(U32 sensor) {
   /* TODO: assert. */
   if (sensor >= NXT_N_SENSORS)
     return NULL;

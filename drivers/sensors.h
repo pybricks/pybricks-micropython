@@ -36,17 +36,6 @@ typedef enum {
   DIGI1,
 } nx_sensors_data_pin;
 
-/** Mapping of PIO ports to I2C busses.
- *
- * Each sensor port has two DIGI pins, whose use varies from sensor to
- * sensor. We remember which two pins each sensor has using the
- * sensor_pins structure.
- */
-typedef struct {
-  U32 scl; /**< DIGI0 - I2C clock. */
-  U32 sda; /**< DIGI1 - I2C data. */
-} nx_sensors_pins;
-
 /** Enable @a sensor in analog mode.
  *
  * @param sensor The sensor port.

@@ -432,7 +432,7 @@ static void i2c_isr()
   dummy = *AT91C_TC0_SR;
   
   for (sensor=0; sensor<NXT_N_SENSORS; sensor++) {
-    const nx_sensors_pins *pins = nx__sensors_get_pins(sensor);
+    const nx__sensors_pins *pins = nx__sensors_get_pins(sensor);
     p = &i2c_state[sensor];
     t = &(p->txns[p->current_txn]);
 
