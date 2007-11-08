@@ -53,18 +53,6 @@ typedef struct {
  */
 void nx_sensors_analog_enable(U32 sensor);
 
-/** Enable @a sensor in I2C mode.
- *
- * @param sensor The sensor port.
- */
-void nx_sensors_i2c_enable(U32 sensor);
-
-/** Get and return the port mapping for @a sensor.
- *
- * @param sensor The sensor port.
- */
-const nx_sensors_pins *nx_sensors_get_pins(U32 sensor);
-
 /** Get an analog reading from @a sensor.
  *
  * @param sensor The sensor port.
@@ -89,11 +77,11 @@ void nx_sensors_analog_digi_set(U32 sensor, nx_sensors_data_pin pin);
  */
 void nx_sensors_analog_digi_clear(U32 sensor, nx_sensors_data_pin pin);
 
-/** Disable the sensor on port @a sensor.
+/** Disable the analog sensor on port @a sensor.
  *
  * @param sensor The sensor port.
  */
-void nx_sensors_disable(U32 sensor);
+void nx_sensors_analog_disable(U32 sensor);
 
 /*@}*/
 /*@}*/

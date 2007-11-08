@@ -51,30 +51,16 @@ void nx__sensors_init() {
   *AT91C_PIOA_ODR = pinmask;
 }
 
-void nx_sensors_analog_enable(U32 sensor) {
-  if (sensor >= NXT_N_SENSORS)
-    return;
-
-  if (sensors_mode[sensor] != OFF)
-    nx_sensors_disable(sensor);
-
-  sensors_mode[sensor] = ANALOG;
-
-  /* In analog mode, the DIGI outputs are driven low. */
-  *AT91C_PIOA_OER = (sensors_pinmap[sensor].sda |
-                     sensors_pinmap[sensor].scl);
-  *AT91C_PIOA_CODR = (sensors_pinmap[sensor].sda |
-                      sensors_pinmap[sensor].scl);
-}
-
-void nx_sensors_i2c_enable(U32 sensor) {
+void nx__sensors_i2c_enable(U32 sensor) {
   U32 pinmask;
 
+  /* TODO: assert. */
   if (sensor >= NXT_N_SENSORS)
     return;
 
+  /* TODO: assert(sensor isn't off) */
   if (sensors_mode[sensor] != OFF)
-    nx_sensors_disable(sensor);
+    return;
 
   sensors_mode[sensor] = DIGITAL;
 
@@ -89,14 +75,56 @@ void nx_sensors_i2c_enable(U32 sensor) {
   *AT91C_PIOA_MDER = pinmask;
 }
 
-const nx_sensors_pins *nx_sensors_get_pins(U32 sensor) {
+const nx_sensors_pins *nx__sensors_get_pins(U32 sensor) {
+  /* TODO: assert. */
   if (sensor >= NXT_N_SENSORS)
     return NULL;
 
   return &sensors_pinmap[sensor];
 }
 
+void nx__sensors_disable(U32 sensor) {
+  /* TODO: assert */
+  if (sensor >= NXT_N_SENSORS)
+    return;
+
+  switch (sensors_mode[sensor]) {
+  case OFF:
+  case LEGACY:
+    break;
+  case ANALOG:
+  case DIGITAL:
+    /* Disable output on the DIGI pins to return to the idle state. */
+    *AT91C_PIOA_SODR = (sensors_pinmap[sensor].sda |
+                        sensors_pinmap[sensor].scl);
+    *AT91C_PIOA_ODR = (sensors_pinmap[sensor].sda |
+                       sensors_pinmap[sensor].scl);
+    break;
+  }
+
+  sensors_mode[sensor] = OFF;
+}
+
+void nx_sensors_analog_enable(U32 sensor) {
+  /* TODO: assert */
+  if (sensor >= NXT_N_SENSORS)
+    return;
+
+  /* TODO: assert(sensor is off) */
+  if (sensors_mode[sensor] != OFF)
+    return;
+
+  sensors_mode[sensor] = ANALOG;
+
+  /* In analog mode, the DIGI outputs are driven low. */
+  *AT91C_PIOA_OER = (sensors_pinmap[sensor].sda |
+                     sensors_pinmap[sensor].scl);
+  *AT91C_PIOA_CODR = (sensors_pinmap[sensor].sda |
+                      sensors_pinmap[sensor].scl);
+}
+
 U32 nx_sensors_analog_get(U32 sensor) {
+  /* TODO: assert */
   if (sensor >= NXT_N_SENSORS || sensors_mode[sensor] != ANALOG)
     return 0;
 
@@ -125,23 +153,14 @@ void nx_sensors_analog_digi_clear(U32 sensor, nx_sensors_data_pin pin) {
                       sensors_pinmap[sensor].scl);
 }
 
-void nx_sensors_disable(U32 sensor) {
+void nx_sensors_analog_disable(U32 sensor) {
+  /* TODO: Assert. */
   if (sensor >= NXT_N_SENSORS)
     return;
 
-  switch (sensors_mode[sensor]) {
-  case OFF:
-  case LEGACY:
-    break;
-  case ANALOG:
-  case DIGITAL:
-    /* Disable output on the DIGI pins to return to the idle state. */
-    *AT91C_PIOA_SODR = (sensors_pinmap[sensor].sda |
-                        sensors_pinmap[sensor].scl);
-    *AT91C_PIOA_ODR = (sensors_pinmap[sensor].sda |
-                       sensors_pinmap[sensor].scl);
-    break;
-  }
+  /* TODO: assert(is an analog sensor) */
+  if (sensors_mode[sensor] != ANALOG)
+    return;
 
-  sensors_mode[sensor] = OFF;
+  nx__sensors_disable(sensor);
 }

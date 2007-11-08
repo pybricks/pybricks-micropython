@@ -13,7 +13,7 @@
 #include "base/drivers/systick.h"
 #include "base/util.h"
 #include "base/drivers/aic.h"
-#include "base/drivers/sensors.h"
+#include "base/drivers/_sensors.h"
 #include "base/display.h"
 #include "base/drivers/i2c.h"
 
@@ -191,7 +191,7 @@ void nx_i2c_register(U32 sensor, U8 address, bool lego_compat) {
   /* First, make sure the sensor port is configured for multi-driver
    * I2C devices.
    */
-  nx_sensors_i2c_enable(sensor);
+  nx__sensors_i2c_enable(sensor);
 
   p = &i2c_state[sensor];
 
@@ -218,8 +218,8 @@ void nx_i2c_register(U32 sensor, U8 address, bool lego_compat) {
 
 /** Unregister the device on the given sensor port. */
 void nx_i2c_unregister(U32 sensor) {
-  nx_sensors_disable(sensor);
-  
+  nx__sensors_disable(sensor);
+
   /* Decrement the I2C device count. */
   i2c_device_count--;
 
@@ -432,7 +432,7 @@ static void i2c_isr()
   dummy = *AT91C_TC0_SR;
   
   for (sensor=0; sensor<NXT_N_SENSORS; sensor++) {
-    const nx_sensors_pins *pins = nx_sensors_get_pins(sensor);
+    const nx_sensors_pins *pins = nx__sensors_get_pins(sensor);
     p = &i2c_state[sensor];
     t = &(p->txns[p->current_txn]);
 
