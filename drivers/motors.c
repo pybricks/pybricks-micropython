@@ -1,10 +1,9 @@
-/* Driver for the NXT's motors.
+/* Copyright (C) 2007 the NxOS developers
  *
- * This driver provides a high level interface to the NXT's motor
- * ports. It takes care of controlling the motors (using the AVR
- * driver), of counting the tachymeter pulses sent by rotating motors
- * to get a rotation count, and provides APIs for starting/stopping
- * motors, or running them for a certain time or rotation angle only.
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
  */
 
 #include "base/at91sam7s256.h"
@@ -15,7 +14,8 @@
 #include "base/drivers/systick.h"
 #include "base/drivers/aic.h"
 #include "base/drivers/_avr.h"
-#include "base/drivers/motors.h"
+
+#include "base/drivers/_motors.h"
 
 /* The following are easier mnemonics for the pins used by the
  * tachymeter. Each motor has a tach-pulse pin whose value flips at
@@ -36,15 +36,18 @@
 #define MOTORS_DIR (MOTOR_A_DIR | MOTOR_B_DIR | MOTOR_C_DIR)
 #define MOTORS_ALL (MOTORS_TACH | MOTORS_DIR)
 
+/* The pin mapping for the motor tacho inputs. */
+static const struct {
+  U32 tach;
+  U32 dir;
+} motors_pinmap[NXT_N_MOTORS] = {
+  { MOTOR_A_TACH, MOTOR_A_DIR },
+  { MOTOR_B_TACH, MOTOR_B_DIR },
+  { MOTOR_C_TACH, MOTOR_C_DIR },
+};
 
 /* Definitions of the state of each motor. */
 static volatile struct {
-  /* The pins that this motor's tachymeter uses. */
-  struct {
-    U32 tach;
-    U32 dir;
-  } pins;
-
   /* The mode this motor is currently in. */
   enum {
     MOTOR_STOP = 0,      /* No rotation. */
@@ -71,9 +74,9 @@ static volatile struct {
    */
   U32 target;
 } motors_state[NXT_N_MOTORS] = {
-  { { MOTOR_A_TACH, MOTOR_A_DIR }, MOTOR_STOP, TRUE, 0, 0 },
-  { { MOTOR_B_TACH, MOTOR_B_DIR }, MOTOR_STOP, TRUE, 0, 0 },
-  { { MOTOR_C_TACH, MOTOR_C_DIR }, MOTOR_STOP, TRUE, 0, 0 },
+  { MOTOR_STOP, TRUE, 0, 0 },
+  { MOTOR_STOP, TRUE, 0, 0 },
+  { MOTOR_STOP, TRUE, 0, 0 },
 };
 
 
@@ -97,9 +100,9 @@ static void motors_isr() {
 
   /* Check each motor's tachymeter. */
   for (i=0; i<NXT_N_MOTORS; i++) {
-    if (changes & motors_state[i].pins.tach) {
-      U32 tach = pins & motors_state[i].pins.tach;
-      U32 dir = pins & motors_state[i].pins.dir;
+    if (changes & motors_pinmap[i].tach) {
+      U32 tach = pins & motors_pinmap[i].tach;
+      U32 dir = pins & motors_pinmap[i].dir;
 
       /* If the tachymeter pin value is the opposite the direction pin
        * value, then the motor is rotating 'forwards' (positive speed
