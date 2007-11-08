@@ -1,5 +1,5 @@
 /** @file _uart.h
- *  @brief Manage the UART 1 used by the bluetooth driver to communicate with the Bluecore.
+ *  @brief UART driver for bluetooth communications.
  *
  * This driver only support the uart where the bluetooth chip is
  * connected => Only used by bt.(c|h)
@@ -18,40 +18,50 @@
 
 #include "base/types.h"
 
+/** @addtogroup driverinternal */
+/*@{*/
 
-/* To remove:
- * this macro is just here to see clearly where the debug code is
+/** @defgroup uart UART driver
+ *
+ * The UART controller manages the link with the BlueCore Bluetooth
+ * chip. It is for use exclusively by the Bluetooth driver.
  */
-#define UART_DEBUG
+/*@{*/
 
-/**
- * called back each time something has been readed.
- * The buffer where the read stuffs are is given in parameter.
+/** Prototype for the UART read callback.
+ *
+ * The UART driver fires the callback with a @a buffer of length @a
+ * packet_size of data to process.
  */
-typedef void (*uart_read_callback_t)(U8 *buffer, U32 packet_size);
+typedef void (*nx__uart_read_callback_t)(U8 *buffer, U32 packet_size);
 
-
-/**
- * the driver using an uart port must configure itself the PIO. The
- * callback will be called by the interruption function of the uart
- * driver, so it must do its work as fast as possible.
+/** Initialize the UART driver.
+ *
+ * @param callback The callback to fire when the UART receives data.
  */
-void nx_uart_init(uart_read_callback_t callback);
+void nx__uart_init(nx__uart_read_callback_t callback);
 
-/**
- * Will send the data asap.
- * If the two slot in the pdc are used, this function will be blocking.
+/** Write @a lng bytes from @a data over the UART bus.
+ *
+ * @param data A pointer to the data to write.
+ * @param lng The number of bytes to write.
  */
-void nx_uart_write(void *data, U32 lng);
+void nx__uart_write(const U8 *data, U32 lng);
 
-bool nx_uart_can_write();
-bool nx_uart_is_writing();
+/** Check if the UART can be written to.
+ *
+ * @return TRUE if the UART is idle and can be written to, else
+ * FALSE.
+ */
+bool nx__uart_can_write();
 
-/* TO REMOVE: */
+/** Check if the UART is currently writing data.
+ *
+ * @return TRUE if the UART is busy writing, else FALSE.
+ */
+bool nx__uart_is_writing();
 
-U32 nx_uart_nmb_interrupt();
-U32 nx_uart_get_csr();
-U32 nx_uart_get_last_csr();
-U32 nx_uart_get_state();
+/*@}*/
+/*@}*/
 
 #endif

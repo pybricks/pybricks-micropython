@@ -113,5 +113,6 @@ bool nx_spinlock_try_acquire_from_ref(spinlock *lock);
 
 /*@}*/
 /*@}*/
+/*@}*/
 
 #endif /* __NXOS_LOCK_H__ */

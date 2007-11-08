@@ -10,7 +10,7 @@
 
 #include "base/types.h"
 #include "base/util.h"
-
+#include "base/display.h"
 #include "base/drivers/systick.h"
 #include "base/drivers/_uart.h"
 
@@ -261,7 +261,7 @@ static bool bt_wait_msg(U8 msg)
 static void bt_reseted()
 {
   bt_state.state = BT_STATE_WAITING;
-  nx_uart_write(&bt_msg_start_heart, sizeof(bt_msg_start_heart));
+  nx__uart_write(bt_msg_start_heart, sizeof(bt_msg_start_heart));
 }
 
 
@@ -395,7 +395,7 @@ void nx_bt_init()
 
   nx_systick_wait_ms(100);
 
-  nx_uart_init(bt_uart_callback);
+  nx__uart_init(bt_uart_callback);
 
   bt_wait_msg(BT_MSG_RESET_INDICATION);
   /* the function bt_uart_callback() should start the heart after receiving the reset indication */
@@ -423,7 +423,7 @@ void nx_bt_set_friendly_name(char *name)
   bt_set_checksum(packet+1, 19);
 
   do {
-    nx_uart_write(packet, 20);
+    nx__uart_write(packet, 20);
   } while(!bt_wait_msg(BT_MSG_SET_FRIENDLY_NAME_ACK));
 }
 
@@ -432,9 +432,9 @@ void nx_bt_set_discoverable(bool d)
 {
   do {
     if (d)
-      nx_uart_write(&bt_msg_set_discoverable_true, sizeof(bt_msg_set_discoverable_true));
+      nx__uart_write(bt_msg_set_discoverable_true, sizeof(bt_msg_set_discoverable_true));
     else
-      nx_uart_write(&bt_msg_set_discoverable_false, sizeof(bt_msg_set_discoverable_false));
+      nx__uart_write(bt_msg_set_discoverable_false, sizeof(bt_msg_set_discoverable_false));
   } while(!bt_wait_msg(BT_MSG_SET_DISCOVERABLE_ACK));
 }
 
@@ -464,7 +464,7 @@ void nx_bt_begin_inquiry(U8 max_devices,
   bt_set_checksum(packet+1, 10);
 
   do {
-    nx_uart_write(packet, 11);
+    nx__uart_write(packet, 11);
   } while(!bt_wait_msg(BT_MSG_INQUIRY_RUNNING));
 
   bt_state.last_checked_id = 0;
@@ -495,14 +495,14 @@ bool nx_bt_get_discovered_device(bt_device_t *dev)
 
 void nx_bt_cancel_inquiry()
 {
-  nx_uart_write(&bt_msg_cancel_inquiry, sizeof(bt_msg_cancel_inquiry));
+  nx__uart_write(bt_msg_cancel_inquiry, sizeof(bt_msg_cancel_inquiry));
   bt_wait_msg(BT_MSG_INQUIRY_STOPPED);
 }
 
 
 void nx_bt_begin_known_devices_dumping()
 {
-  nx_uart_write(&bt_msg_dump_list, sizeof(bt_msg_dump_list));
+  nx__uart_write(bt_msg_dump_list, sizeof(bt_msg_dump_list));
   bt_state.state = BT_STATE_KNOWN_DEVICES_DUMPING;
 }
 
@@ -549,7 +549,7 @@ bt_return_value_t nx_bt_add_known_device(bt_device_t *dev)
 
   bt_set_checksum(packet+1, 30);
 
-  nx_uart_write(&packet, 31);
+  nx__uart_write(packet, 31);
 
   bt_wait_msg(BT_MSG_LIST_RESULT);
 
@@ -574,7 +574,7 @@ bt_return_value_t nx_bt_remove_known_device(U8 dev_addr[BT_ADDR_SIZE])
 
   bt_set_checksum(packet+1, 10);
 
-  nx_uart_write(&packet, 11);
+  nx__uart_write(packet, 11);
 
   bt_wait_msg(BT_MSG_LIST_RESULT);
 
@@ -589,7 +589,7 @@ bt_version_t nx_bt_get_version()
 {
   bt_version_t ver = { 0 };
 
-  nx_uart_write(&bt_msg_get_version, sizeof(bt_msg_get_version));
+  nx__uart_write(bt_msg_get_version, sizeof(bt_msg_get_version));
 
   if (bt_wait_msg(BT_MSG_GET_VERSION_RESULT)) {
     ver.major = bt_state.args[0];
@@ -604,7 +604,7 @@ int nx_bt_get_friendly_name(char *name)
 {
   int i;
 
-  nx_uart_write(&bt_msg_get_friendly_name, sizeof(bt_msg_get_friendly_name));
+  nx__uart_write(bt_msg_get_friendly_name, sizeof(bt_msg_get_friendly_name));
 
   if (bt_wait_msg(BT_MSG_GET_FRIENDLY_NAME_RESULT)) {
 

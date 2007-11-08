@@ -41,7 +41,7 @@ void nx_core_halt();
  * starts shutting down the baseplate. This is a good place to take care
  * of any unfinished business.
  *
- * @param shutdown_handler The function to call on shutdown.
+ * @param handler The function to call on shutdown.
  *
  * @note Only one shutdown handler may be registered. Reregistering a
  * handler will replace the previously registered handler. Application
