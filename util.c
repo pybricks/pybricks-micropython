@@ -8,6 +8,7 @@
 
 #include "base/types.h"
 #include "base/util.h"
+#include "base/assert.h"
 
 void memcpy(void *dest, const void *source, U32 len) {
   U8 *dst = (U8*)dest;
@@ -27,6 +28,8 @@ void memset(void *dest, const U8 val, U32 len) {
 U32 strlen(const char *str) {
   U32 i = 0;
 
+  NX_ASSERT(str != NULL);
+
   while (*str++)
     i++;
 
@@ -35,6 +38,8 @@ U32 strlen(const char *str) {
 
 U32 strncmp(const char *a, const char *b, U32 n) {
   U32 i;
+
+  NX_ASSERT(a != NULL && b != NULL);
 
   for (i=0 ; i<n ; i++) {
     if (a[i] < b[i]) {
@@ -52,8 +57,7 @@ U32 strcmp(const char *a, const char *b) {
 }
 
 char *strchr(const char *s, const char c) {
-  if (s == NULL)
-    return NULL;
+  NX_ASSERT(s != NULL);
 
   while (*s) {
     if (*s == c)
@@ -67,8 +71,7 @@ char *strchr(const char *s, const char c) {
 char *strrchr(const char *s, const char c) {
   const char *ptr = NULL;
 
-  if (s == NULL)
-    return NULL;
+  NX_ASSERT(s != NULL);
 
   while (*s) {
     if (*s == c)
