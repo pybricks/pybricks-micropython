@@ -44,7 +44,7 @@ struct i2c_txn_info
   /* Data to be sent or to buffer for reception. */
   U8 *data;
   U8 data_size;
-  
+
   /* Sub transaction result. */
   i2c_txn_status result;
 };
@@ -77,11 +77,11 @@ static volatile struct i2c_port {
 
   U8 device_addr;           /* The connected device address on the bus... */
   U8 addr[TXN_MODE_COUNT];  /* ... and the read/write ORed addresses. */
-  
+
   /* Toggles the use of degraded I2C mode for LEGO Radar
    * compatibility (use STOP/START instead of RESTART, etc).
    */
-  bool lego_compat; 
+  bool lego_compat;
 
   enum {
     TXN_NONE = 0,
@@ -199,7 +199,7 @@ void nx_i2c_register(U32 sensor, U8 address, bool lego_compat) {
   p->txn_state = TXN_NONE;
   p->device_addr = address;
   p->lego_compat = lego_compat;
-  
+
   p->addr[TXN_MODE_WRITE] = (address << 1) | TXN_MODE_WRITE;
   p->addr[TXN_MODE_READ] = (address << 1) | TXN_MODE_READ;
 
@@ -208,7 +208,7 @@ void nx_i2c_register(U32 sensor, U8 address, bool lego_compat) {
   //  I2C_MAX_TXN*sizeof(struct i2c_txn_info));
   i2c_state[sensor].current_txn = 0;
   i2c_state[sensor].n_txns = 0;
-  
+
   /* Finally, enable the I2C clock interrupt if required. */
   if (i2c_device_count == 0)
     *AT91C_TC0_IER = AT91C_TC_CPCS;
@@ -241,10 +241,10 @@ static i2c_txn_err i2c_add_txn(U32 sensor, i2c_txn_mode mode,
 			       i2c_control pre_control, i2c_control post_control)
 {
   volatile struct i2c_txn_info *t;
-  
+
   if (sensor >= NXT_N_SENSORS)
     return I2C_ERR_UNKNOWN_SENSOR;
-  
+
   if (i2c_state[sensor].n_txns == I2C_MAX_TXN)
     return I2C_ERR_TXN_FULL;
 
@@ -257,7 +257,7 @@ static i2c_txn_err i2c_add_txn(U32 sensor, i2c_txn_mode mode,
   t->mode = mode;
   t->data = data;
   t->data_size = size;
-  
+
   i2c_state[sensor].n_txns++;
   return I2C_ERR_OK;
 }
@@ -295,7 +295,7 @@ i2c_txn_err nx_i2c_start_transaction(U32 sensor, i2c_txn_mode mode,
 				     U8 *recv_buf, U32 recv_size)
 {
   volatile struct i2c_txn_info *t;
-  
+
   if (sensor >= NXT_N_SENSORS)
     return I2C_ERR_UNKNOWN_SENSOR;
 
@@ -305,7 +305,7 @@ i2c_txn_err nx_i2c_start_transaction(U32 sensor, i2c_txn_mode mode,
   /* In any case, data must be initialized, and with a known data size. */
   if (!data || !data_size)
     return I2C_ERR_DATA;
-  
+
   if (mode == TXN_MODE_READ && (!recv_buf || !recv_size))
     return I2C_ERR_DATA;
 
@@ -430,7 +430,7 @@ static void i2c_isr()
    * interrupt handler to be called again.
    */
   dummy = *AT91C_TC0_SR;
-  
+
   for (sensor=0; sensor<NXT_N_SENSORS; sensor++) {
     const nx__sensors_pins *pins = nx__sensors_get_pins(sensor);
     p = &i2c_state[sensor];
@@ -479,11 +479,11 @@ static void i2c_isr()
           i2c_log(" no-ack!\n");
 
           t->result = TXN_STAT_FAILED;
-          
+
           /* Always issue a STOP bit after a ACK fault. */
           p->bus_state = I2C_SEND_STOP_BIT0;
           p->txn_state = TXN_STOP;
-          
+
           /* Bypass remaining sub transactions. */
           p->current_txn = p->n_txns;
         } else {
@@ -544,7 +544,7 @@ static void i2c_isr()
              * sure, and proceed to SEND_START_BIT.
              */
             sodr |= pins->sda | pins->scl;
-            
+
             if (t->pre_control == I2C_CONTROL_RESTART && p->lego_compat) {
               /* In LEGO compatibility mode, issue a reclock before the
                * restart (which is just a new START bit).
@@ -553,16 +553,16 @@ static void i2c_isr()
             } else {
               p->bus_state = I2C_SEND_START_BIT0;
             }
-            
+
             p->txn_state = TXN_START;
           }
-          
+
           /* Prepare the first bit to be sent. */
           p->processed = 0;
           p->current_byte = t->data[p->processed];
           p->current_pos = 7;
         }
-        
+
         if (p->current_txn == p->n_txns) {
           p->txn_state = TXN_NONE;
         }
@@ -695,7 +695,7 @@ static void i2c_isr()
             if (p->processed < t->data_size) {
               p->current_byte = t->data[p->processed];
             }
-            
+
             p->txn_state = TXN_READ_ACK;
           } else {
             /* In read mode, we need to give ACK to the slave so it can
@@ -710,7 +710,7 @@ static void i2c_isr()
                 p->bus_state = I2C_IDLE;
                 p->txn_state = TXN_WAITING;
               }
-            
+
               t->result = TXN_STAT_SUCCESS;
               p->current_txn++;
             }

@@ -11,7 +11,7 @@
  * Redistribution of this file is permitted under
  * the terms of the GNU Public License (GPL) version 2.
  */
- 
+
 #ifndef __NXOS_RADAR_H__
 #define __NXOS_RADAR_H__
 
@@ -62,7 +62,7 @@ typedef enum {
   RADAR_CURRENT_ZERO,
   RADAR_CURRENT_SCALE_FACTOR,
   RADAR_CURRENT_SCALE_DIVISOR,
-  
+
   RADAR_N_COMMANDS,
 } radar_memory_slot;
 

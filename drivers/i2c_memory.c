@@ -60,7 +60,7 @@ i2c_txn_err nx_i2c_memory_write(U32 sensor, U8 internal_address,
 
   if (!data || !size || size >= I2C_MAX_DATA_SIZE)
     return I2C_ERR_DATA;
-  
+
   err = nx_i2c_start_transaction(sensor, TXN_MODE_WRITE,
 				 &internal_address, 1, data, size);
 

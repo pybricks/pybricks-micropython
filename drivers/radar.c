@@ -39,10 +39,10 @@ static struct radar_cmd_info {
   { 0x12, 1 }, // RADAR_FACTORY_SCALE_FACTOR: 0x01
   { 0x13, 1 }, // RADAR_FACTORY_SCALE_DIVISOR: 0x0E
   { 0x14, 7 }, // RADAR_MEASUREMENT_UNITS: 10E-2m
-  
+
   { 0x40, 1 }, // RADAR_INTERVAL: Interval
   { 0x41, 1 }, // RADAR_OP_MODE: See radar_mode
-  
+
   // RADAR_R0 ... RADAR_R7: Radar readings
   { 0x42, 1 }, { 0x43, 1 }, { 0x44, 1 }, { 0x45, 1 },
   { 0x46, 1 }, { 0x47, 1 }, { 0x48, 1 }, { 0x49, 1 },
@@ -88,11 +88,11 @@ bool nx_radar_write(U32 sensor, radar_memory_slot slot, U8 *val) {
  */
 bool nx_radar_detect(U32 sensor) {
   U8 type[8] = { 0x0 };
-  
+
   return nx_radar_read(sensor, RADAR_SENSOR_TYPE, type)
     && strncmp((char *)type, RADAR_LEGO_SENSOR_TYPE,
                strlen(RADAR_LEGO_SENSOR_TYPE)) == 0;
-}  
+}
 
 /** High-level radar control interface. */
 
@@ -108,12 +108,12 @@ void nx_radar_reset(U32 sensor) {
   /* Do a warm reset and wait a little bit. */
   nx_radar_write(sensor, RADAR_OP_MODE, &reset);
   nx_systick_wait_ms(100);
-  
+
   /* Reset zero, scale factor and scale divisor to factory values. */
   if (nx_radar_read(sensor, RADAR_FACTORY_ZERO, &val)) {
     nx_radar_write(sensor, RADAR_CURRENT_ZERO, &val);
   }
-  
+
   if (nx_radar_read(sensor, RADAR_FACTORY_SCALE_FACTOR, &val)) {
     nx_radar_write(sensor, RADAR_CURRENT_SCALE_FACTOR, &val);
   }
@@ -180,7 +180,7 @@ void nx_radar_info(U32 sensor) {
   nx_radar_read(sensor, RADAR_SENSOR_TYPE, buf);
   nx_display_string((char *)buf);
   nx_display_string(" ");
-  
+
   // Version (V1.0)
   memset(buf, 0, 8);
   nx_radar_read(sensor, RADAR_VERSION, buf);
@@ -193,10 +193,9 @@ void nx_radar_info(U32 sensor) {
   nx_radar_read(sensor, RADAR_MEASUREMENT_UNITS, buf);
   nx_display_string((char *)buf);
   nx_display_end_line();
-  
+
   // Measurement interval
   nx_display_string("Interval: ");
   nx_display_uint(nx_radar_read_value(sensor, RADAR_INTERVAL));
   nx_display_string(" ms?\n");
 }
-
