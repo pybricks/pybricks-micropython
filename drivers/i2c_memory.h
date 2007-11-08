@@ -79,4 +79,7 @@ i2c_txn_err nx_i2c_memory_read(U32 sensor, U8 internal_address,
 i2c_txn_err nx_i2c_memory_write(U32 sensor, U8 internal_address,
 				U8 *data, U32 size);
 
+/*@}*/
+/*@}*/
+
 #endif /* __NXOS_I2C_MEMORY_H__ */
