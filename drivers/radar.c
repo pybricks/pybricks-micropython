@@ -41,7 +41,7 @@ static struct radar_cmd_info {
   { 0x14, 7 }, // RADAR_MEASUREMENT_UNITS: 10E-2m
   
   { 0x40, 1 }, // RADAR_INTERVAL: Interval
-  { 0x41, 1 }, // RADAR_OP_MODE: { 0x00, 0x01, 0x02, 0x03, 0x04 }
+  { 0x41, 1 }, // RADAR_OP_MODE: See radar_mode
   
   // RADAR_R0 ... RADAR_R7: Radar readings
   { 0x42, 1 }, { 0x43, 1 }, { 0x44, 1 }, { 0x45, 1 },
@@ -102,7 +102,7 @@ bool nx_radar_detect(U32 sensor) {
  * defaults.
  */
 void nx_radar_reset(U32 sensor) {
-  U8 reset = RADAR_OP_RESET;
+  U8 reset = RADAR_MODE_RESET;
   U8 val = 0x0;
 
   /* Do a warm reset and wait a little bit. */
@@ -133,6 +133,9 @@ void nx_radar_reset(U32 sensor) {
  * of 0xFF means that the read failed.
  */
 U8 nx_radar_read_distance(U32 sensor, U32 object) {
+  if (object > RADAR_MAX_OBJECT_NUMBER-1)
+    return 0xFF;
+
   return nx_radar_read_value(sensor, RADAR_R0+object);
 }
 
@@ -157,8 +160,9 @@ bool nx_radar_set_interval(U32 sensor, U8 interval) {
 }
 
 /** Sets the radar operation mode. See radar.h for available modes. */
-bool nx_radar_set_op_mode(U32 sensor, U8 mode) {
-  return nx_radar_write(sensor, RADAR_OP_MODE, &mode);
+bool nx_radar_set_op_mode(U32 sensor, radar_op_mode mode) {
+  U8 val = mode;
+  return nx_radar_write(sensor, RADAR_OP_MODE, &val);
 }
 
 /** Display connected radar's information. */
