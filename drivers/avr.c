@@ -61,7 +61,7 @@ static volatile struct {
 
   /* The state of the NXT's buttons. Given the way that the buttons
    * are handled in hardware, only one button is reported pressed at a
-   * time. See the avr_button_t enumeration for values to test for.
+   * time. See the nx_avr_button_t enumeration for values to test for.
    */
   U8 buttons;
 
@@ -343,8 +343,8 @@ void nx__avr_firmware_update_mode() {
 
 
 /* Return the button state, which is one of the values defined in
- * avr_button_t. */
-avr_button_t nx_avr_get_button() {
+ * nx_avr_button_t. */
+nx_avr_button_t nx_avr_get_button() {
   return from_avr.buttons;
 }
 
