@@ -9,37 +9,29 @@
 #include "base/at91sam7s256.h"
 
 #include "base/types.h"
-
 #include "base/nxt.h"
 #include "base/interrupts.h"
 #include "base/drivers/aic.h"
-
 #include "base/drivers/systick.h"
 
 #include "base/drivers/_uart.h"
 
 #define UART_BUFSIZE 128
 
-
 static volatile struct {
-
   uart_read_callback_t callback;
-  U32 nmb_int;
-
   U32 packet_size;
 
   /* read buffers */
   U8 buf[UART_BUFSIZE];
-
   U32 state;
 
   /* to remove */
   U32 last_csr;
-
+  U32 nmb_int;
 } uart_state = {
   0
 };
-
 
 /* I/O (uart 1)
  * RXD1 => PA21 (periph A)
@@ -48,16 +40,13 @@ static volatile struct {
  * RTS1 => PA24 (periph A)
  */
 #define UART_PIOA_PINS \
-   (AT91C_PA21_RXD1  \
-   | AT91C_PA22_TXD1 \
-   | AT91C_PA25_CTS1 \
-   | AT91C_PA24_RTS1 \
-   | AT91C_PA23_SCK1)
+   (AT91C_PA21_RXD1 |  \
+    AT91C_PA22_TXD1 |  \
+    AT91C_PA25_CTS1 |  \
+    AT91C_PA24_RTS1 |  \
+    AT91C_PA23_SCK1)
 
-
-
-static void uart_isr()
-{
+static void uart_isr() {
   U32 csr;
 
   uart_state.nmb_int++;
@@ -71,7 +60,6 @@ static void uart_isr()
     uart_state.callback(NULL, 0);
     *AT91C_US1_CR = AT91C_US_RSTSTA;
   }
-
 
   if (csr & AT91C_US_RXRDY) {
 
@@ -89,9 +77,7 @@ static void uart_isr()
 
     *AT91C_US1_IER = AT91C_US_ENDRX;
     *AT91C_US1_PTCR = AT91C_PDC_RXTEN;
-
   }
-
 
   if (csr & AT91C_US_ENDRX) {
     *AT91C_US1_PTCR = AT91C_PDC_RXTDIS;
@@ -109,14 +95,9 @@ static void uart_isr()
      * to have the next packet size and adapt the PDC RCR register value */
     *AT91C_US1_IER = AT91C_US_RXRDY;
   }
-
 }
 
-
-
-
-void nx_uart_init(uart_read_callback_t callback)
-{
+void nx_uart_init(uart_read_callback_t callback) {
   uart_state.callback = callback;
 
   nx_interrupts_disable();
@@ -125,7 +106,6 @@ void nx_uart_init(uart_read_callback_t callback)
    * and then switch to the periph A (uart) */
   *AT91C_PIOA_PDR = UART_PIOA_PINS;
   *AT91C_PIOA_ASR = UART_PIOA_PINS;
-
 
   /*** clock & power : PMC */
   /* must enable the USART clock (USART 1)*/
@@ -221,27 +201,22 @@ void nx_uart_init(uart_read_callback_t callback)
 
 }
 
-void nx_uart_write(void *data, U32 lng)
-{
+void nx_uart_write(void *data, U32 lng) {
   while (*AT91C_US1_TNCR != 0);
 
   *AT91C_US1_TNPR = (U32)data;
   *AT91C_US1_TNCR = lng;
 }
 
-bool nx_uart_can_write()
-{
+bool nx_uart_can_write() {
   return (*AT91C_US1_TNCR == 0);
 }
 
-bool nx_uart_is_writing()
-{
+bool nx_uart_is_writing() {
   return (*AT91C_US1_TCR + *AT91C_US1_TNCR) > 0;
 }
 
-
 /****** TO REMOVE : ****/
-
 
 U32 nx_uart_nmb_interrupt()
 {
