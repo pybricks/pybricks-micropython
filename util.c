@@ -50,3 +50,31 @@ U32 strncmp(const char *a, const char *b, U32 n) {
 U32 strcmp(const char *a, const char *b) {
   return strncmp(a, b, MIN(strlen(a), strlen(b)+1));
 }
+
+char *strchr(const char *s, const char c) {
+  if (s == NULL)
+    return NULL;
+
+  while (*s) {
+    if (*s == c)
+      return (char*)s;
+    s++;
+  }
+
+  return NULL;
+}
+
+char *strrchr(const char *s, const char c) {
+  const char *ptr = NULL;
+
+  if (s == NULL)
+    return NULL;
+
+  while (*s) {
+    if (*s == c)
+      ptr = s;
+    s++;
+  }
+
+  return (char*)ptr;
+}
