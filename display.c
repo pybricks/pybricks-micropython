@@ -4,13 +4,15 @@
  * uses the low-level LCD driver to do actual output.
  */
 
-#include "types.h"
-#include "interrupts.h"
-#include "drivers/systick.h"
-#include "drivers/aic.h"
-#include "drivers/_lcd.h"
-#include "util.h"
-#include "_display.h"
+#include "base/types.h"
+#include "base/interrupts.h"
+#include "base/util.h"
+#include "base/assert.h"
+#include "base/drivers/systick.h"
+#include "base/drivers/aic.h"
+#include "base/drivers/_lcd.h"
+
+#include "base/_display.h"
 
 /* A simple 8x5 font. This is in a separate file because the embedded
  * font is converted from a .png at compile time.
@@ -71,7 +73,8 @@ inline void nx_display_refresh() {
  * Text display functions.
  */
 static inline bool is_on_screen(U8 x, U8 y) {
-  if (display.cursor.x < LCD_WIDTH && display.cursor.y < LCD_HEIGHT)
+  if (x < NX__DISPLAY_WIDTH_CELLS &&
+      y < NX__DISPLAY_HEIGHT_CELLS)
     return TRUE;
   else
     return FALSE;
@@ -107,10 +110,9 @@ static inline void update_cursor(bool inc_y) {
 }
 
 void nx_display_cursor_set_pos(U8 x, U8 y) {
-  if (is_on_screen(x, y)) {
-    display.cursor.x = x;
-    display.cursor.y = y;
-  }
+  NX_ASSERT(is_on_screen(x, y));
+  display.cursor.x = x;
+  display.cursor.y = y;
 }
 
 inline void nx_display_end_line() {
