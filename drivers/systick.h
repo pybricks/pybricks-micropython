@@ -41,7 +41,7 @@ void nx_systick_wait_ms(U32 ms);
 
 /** Sleep for approximately @a ns nanoseconds.
  *
- * @param ms The number of nanoseconds to sleep.
+ * @param ns The number of nanoseconds to sleep.
  *
  * @note This sleep routine is a busy loop whose accuracy is based
  * entirely on the instruction timings and pipeline delays in the ARM7
