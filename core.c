@@ -1,3 +1,10 @@
+/* Copyright (C) 2007 the NxOS developers
+ *
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
+ */
 
 #include "at91sam7s256.h"
 
