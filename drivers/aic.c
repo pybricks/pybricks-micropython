@@ -1,15 +1,16 @@
-/* Driver for the AT91SAM7's Advanced Interrupt Controller (AIC).
+/* Copyright (C) 2007 the NxOS developers
  *
- * The AIC is responsible for queuing interrupts from other
- * peripherals on the board. It then hands them one by one to the ARM
- * CPU core for handling, according to each peripheral's configured
- * priority.
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
  */
 
 #include "base/at91sam7s256.h"
 
 #include "base/types.h"
 #include "base/_interrupts.h"
+
 #include "base/drivers/aic.h"
 
 /* Initialise the Advanced Interrupt Controller.
@@ -55,7 +56,6 @@ void nx__aic_init() {
   nx_interrupts_enable();
 }
 
-
 /* Register an interrupt service routine for an interrupt line.
  *
  * Note that while this function registers the routine in the AIC, it
@@ -69,8 +69,8 @@ void nx__aic_init() {
  *         for a list of defined values.
  *   isr: A pointer to the interrupt service routine function.
  */
-void nx_aic_install_isr(aic_vector_t vector, aic_priority_t prio,
-                     aic_trigger_mode_t trig_mode, aic_isr_t isr) {
+void nx_aic_install_isr(nx_aic_vector_t vector, nx_aic_priority_t prio,
+                     nx_aic_trigger_mode_t trig_mode, nx_closure_t isr) {
   /* Disable the interrupt we're installing. Getting interrupted while
    * we are tweaking it could be bad.
    */
@@ -89,7 +89,7 @@ void nx_aic_install_isr(aic_vector_t vector, aic_priority_t prio,
  * Args:
  *   vector: The peripheral ID of the interrupt line to enable.
  */
-void nx_aic_enable(aic_vector_t vector) {
+void nx_aic_enable(nx_aic_vector_t vector) {
   *AT91C_AIC_IECR = (1 << vector);
 }
 
@@ -99,7 +99,7 @@ void nx_aic_enable(aic_vector_t vector) {
  * Args:
  *   vector: The peripheral ID of the interrupt line to disable.
  */
-void nx_aic_disable(aic_vector_t vector) {
+void nx_aic_disable(nx_aic_vector_t vector) {
   *AT91C_AIC_IDCR = (1 << vector);
 }
 
@@ -109,7 +109,7 @@ void nx_aic_disable(aic_vector_t vector) {
  * Args:
  *   vector: The peripheral ID of the interrupt line to set.
  */
-void nx_aic_set(aic_vector_t vector) {
+void nx_aic_set(nx_aic_vector_t vector) {
   *AT91C_AIC_ISCR = (1 << vector);
 }
 
@@ -119,6 +119,6 @@ void nx_aic_set(aic_vector_t vector) {
  * Args:
  *   vector: The peripheral ID of the interrupt line to clear.
  */
-void nx_aic_clear(aic_vector_t vector) {
+void nx_aic_clear(nx_aic_vector_t vector) {
   *AT91C_AIC_ICCR = (1 << vector);
 }
