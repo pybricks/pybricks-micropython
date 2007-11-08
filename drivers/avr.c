@@ -1,9 +1,18 @@
-#include "base/types.h"
+/* Copyright (C) 2007 the NxOS developers
+ *
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
+ */
+
 #include "base/nxt.h"
+#include "base/types.h"
+#include "base/util.h"
 #include "base/drivers/systick.h"
 #include "base/drivers/_twi.h"
-#include "base/drivers/avr.h"
-#include "base/util.h"
+
+#include "base/drivers/_avr.h"
 
 #define AVR_ADDRESS 1
 #define AVR_MAX_FAILED_CHECKSUMS 3
@@ -101,7 +110,6 @@ static U8 raw_to_avr[1 + /* Power mode    */
                      1 + /* Input modes (sensor power) */
                      1]; /* Checksum */
 
-
 /* Serialize the to_avr data structure into raw_to_avr, ready for
  * sending to the AVR.
  */
@@ -148,7 +156,6 @@ static void avr_pack_to_avr() {
     checksum += raw_to_avr[i];
   raw_to_avr[sizeof(raw_to_avr)-1] = ~checksum;
 }
-
 
 /* Small helper to convert two bytes into an U16. */
 static inline U16 unpack_word(U8 *word) {
@@ -224,6 +231,14 @@ static void avr_unpack_from_avr() {
   from_avr.battery.charge = voltage;
 }
 
+/* Initialize the NXT-AVR communication. */
+void nx__avr_init() {
+  /* Set up the TWI driver to turn on the i2c bus, and kickstart the
+   * state machine to start transmitting.
+   */
+  nx__twi_init();
+  avr_state.mode = AVR_LINK_DOWN;
+}
 
 /* The main AVR driver state machine. This routine gets called
  * periodically every millisecond by the system timer code.
@@ -315,54 +330,6 @@ void nx__avr_fast_update() {
   }
 }
 
-
-/* Initialize the NXT-AVR communication. */
-void nx__avr_init() {
-  /* Set up the TWI driver to turn on the i2c bus, and kickstart the
-   * state machine to start transmitting.
-   */
-  nx__twi_init();
-  avr_state.mode = AVR_LINK_DOWN;
-}
-
-
-/* Tell the AVR to power down the brick. This function never returns. */
-void nx__avr_power_down() {
-  while (1)
-    to_avr.power_mode = AVR_POWER_OFF;
-}
-
-
-/* Tell the AVR to overwrite flash with the SAM-BA bootloader and
- * reboot the NXT into it.
- */
-void nx__avr_firmware_update_mode() {
-  while (1)
-    to_avr.power_mode = AVR_RESET_MODE;
-}
-
-
-/* Return the button state, which is one of the values defined in
- * nx_avr_button_t. */
-nx_avr_button_t nx_avr_get_button() {
-  return from_avr.buttons;
-}
-
-
-/* Return the current battery charge. */
-U32 nx_avr_get_battery_voltage() {
-  return from_avr.battery.charge;
-}
-
-
-/* Return TRUE if power is supplied by AA batteries, FALSE if the
- * supply is by a power pack.
- */
-bool nx_avr_battery_is_aa() {
-  return from_avr.battery.is_aa;
-}
-
-
 /* Return the analog reading for the given sensor. */
 U32 nx__avr_get_sensor_value(U32 n) {
   if (n < NXT_N_SENSORS)
@@ -370,18 +337,6 @@ U32 nx__avr_get_sensor_value(U32 n) {
   else
     return 0;
 }
-
-
-/* Set *major and *minor to the version number reported by the AVR
- * firmware.
- */
-void nx_avr_get_version(U8 *major, U8 *minor) {
-  if (major)
-    *major = from_avr.version.major;
-  if (minor)
-    *minor = from_avr.version.minor;
-}
-
 
 /* Set the speed and brake/coast setting for the given motor. */
 void nx__avr_set_motor(U32 motor, int power_percent, bool brake) {
@@ -392,4 +347,46 @@ void nx__avr_set_motor(U32 motor, int power_percent, bool brake) {
     else
       to_avr.motor_brake &= ~(1 << motor);
   }
+}
+
+/* Tell the AVR to power down the brick. This function never returns. */
+void nx__avr_power_down() {
+  while (1)
+    to_avr.power_mode = AVR_POWER_OFF;
+}
+
+/* Tell the AVR to overwrite flash with the SAM-BA bootloader and
+ * reboot the NXT into it.
+ */
+void nx__avr_firmware_update_mode() {
+  while (1)
+    to_avr.power_mode = AVR_RESET_MODE;
+}
+
+/* Return the button state, which is one of the values defined in
+ * nx_avr_button_t. */
+nx_avr_button_t nx_avr_get_button() {
+  return from_avr.buttons;
+}
+
+/* Return the current battery charge. */
+U32 nx_avr_get_battery_voltage() {
+  return from_avr.battery.charge;
+}
+
+/* Return TRUE if power is supplied by AA batteries, FALSE if the
+ * supply is by a power pack.
+ */
+bool nx_avr_battery_is_aa() {
+  return from_avr.battery.is_aa;
+}
+
+/* Set *major and *minor to the version number reported by the AVR
+ * firmware.
+ */
+void nx_avr_get_version(U8 *major, U8 *minor) {
+  if (major)
+    *major = from_avr.version.major;
+  if (minor)
+    *minor = from_avr.version.minor;
 }
