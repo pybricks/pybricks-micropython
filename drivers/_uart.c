@@ -10,6 +10,7 @@
 
 #include "base/types.h"
 #include "base/nxt.h"
+#include "base/assert.h"
 #include "base/interrupts.h"
 #include "base/drivers/aic.h"
 #include "base/drivers/systick.h"
@@ -164,6 +165,9 @@ void nx__uart_init(nx__uart_read_callback_t callback) {
 }
 
 void nx__uart_write(const U8 *data, U32 lng) {
+  NX_ASSERT(data != NULL);
+  NX_ASSERT(lng > 0);
+
   while (*AT91C_US1_TNCR != 0);
 
   *AT91C_US1_TNPR = (U32)data;
