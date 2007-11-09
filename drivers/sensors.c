@@ -11,6 +11,7 @@
 #include "base/types.h"
 #include "base/nxt.h"
 #include "base/interrupts.h"
+#include "base/assert.h"
 #include "base/drivers/systick.h"
 #include "base/drivers/aic.h"
 #include "base/drivers/_avr.h"
@@ -54,13 +55,8 @@ void nx__sensors_init() {
 void nx__sensors_i2c_enable(U32 sensor) {
   U32 pinmask;
 
-  /* TODO: assert. */
-  if (sensor >= NXT_N_SENSORS)
-    return;
-
-  /* TODO: assert(sensor isn't off) */
-  if (sensors_mode[sensor] != OFF)
-    return;
+  NX_ASSERT(sensor < NXT_N_SENSORS);
+  NX_ASSERT(sensors_mode[sensor] == OFF);
 
   sensors_mode[sensor] = DIGITAL;
 
@@ -76,15 +72,13 @@ void nx__sensors_i2c_enable(U32 sensor) {
 }
 
 const nx__sensors_pins *nx__sensors_get_pins(U32 sensor) {
-  /* TODO: assert. */
-  if (sensor >= NXT_N_SENSORS)
-    return NULL;
+  NX_ASSERT(sensor < NXT_N_SENSORS);
 
   return &sensors_pinmap[sensor];
 }
 
 void nx__sensors_disable(U32 sensor) {
-  /* TODO: assert */
+  NX_ASSERT(sensor < NXT_N_SENSORS);
   if (sensor >= NXT_N_SENSORS)
     return;
 
@@ -106,13 +100,8 @@ void nx__sensors_disable(U32 sensor) {
 }
 
 void nx_sensors_analog_enable(U32 sensor) {
-  /* TODO: assert */
-  if (sensor >= NXT_N_SENSORS)
-    return;
-
-  /* TODO: assert(sensor is off) */
-  if (sensors_mode[sensor] != OFF)
-    return;
+  NX_ASSERT(sensor < NXT_N_SENSORS);
+  NX_ASSERT(sensors_mode[sensor] == OFF);
 
   sensors_mode[sensor] = ANALOG;
 
@@ -124,43 +113,31 @@ void nx_sensors_analog_enable(U32 sensor) {
 }
 
 U32 nx_sensors_analog_get(U32 sensor) {
-  /* TODO: assert */
-  if (sensor >= NXT_N_SENSORS || sensors_mode[sensor] != ANALOG)
-    return 0;
+  NX_ASSERT(sensor < NXT_N_SENSORS);
+  NX_ASSERT(sensors_mode[sensor] == ANALOG);
 
   return nx__avr_get_sensor_value(sensor);
 }
 
 void nx_sensors_analog_digi_set(U32 sensor, nx_sensors_data_pin pin) {
-  /* The DIGI pins can be manually controlled only when in analog
-   * mode.
-   */
-  if (sensor >= NXT_N_SENSORS || sensors_mode[sensor] != ANALOG)
-    return;
+  NX_ASSERT(sensor < NXT_N_SENSORS);
+  NX_ASSERT(sensors_mode[sensor] == ANALOG);
 
   *AT91C_PIOA_SODR = (pin == DIGI1 ? sensors_pinmap[sensor].sda :
                       sensors_pinmap[sensor].scl);
 }
 
 void nx_sensors_analog_digi_clear(U32 sensor, nx_sensors_data_pin pin) {
-  /* The DIGI pins can be manually controlled only when in analog
-   * mode.
-   */
-  if (sensor >= NXT_N_SENSORS || sensors_mode[sensor] != ANALOG)
-    return;
+  NX_ASSERT(sensor < NXT_N_SENSORS);
+  NX_ASSERT(sensors_mode[sensor] == ANALOG);
 
   *AT91C_PIOA_CODR = (pin == DIGI1 ? sensors_pinmap[sensor].sda :
                       sensors_pinmap[sensor].scl);
 }
 
 void nx_sensors_analog_disable(U32 sensor) {
-  /* TODO: Assert. */
-  if (sensor >= NXT_N_SENSORS)
-    return;
-
-  /* TODO: assert(is an analog sensor) */
-  if (sensors_mode[sensor] != ANALOG)
-    return;
+  NX_ASSERT(sensor < NXT_N_SENSORS);
+  NX_ASSERT(sensors_mode[sensor] == ANALOG);
 
   nx__sensors_disable(sensor);
 }
