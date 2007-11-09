@@ -63,7 +63,7 @@ static void check_boot_errors() {
     NX_FAIL("**************\n"
 	    "Watchdog fault\n"
 	    "**************\n");
-  } else if (reset_status != AT91C_RSTC_RSTTYP_BROWNOUT) {
+  } else if (reset_status == AT91C_RSTC_RSTTYP_BROWNOUT) {
     NX_FAIL("**************\n"
 	    "Brownout fault\n"
 	    "**************\n");
