@@ -10,6 +10,7 @@
 
 #include "base/types.h"
 #include "base/interrupts.h"
+#include "base/assert.h"
 #include "base/drivers/systick.h"
 #include "base/drivers/aic.h"
 #include "base/util.h"
@@ -732,10 +733,14 @@ bool nx_usb_can_send() {
 
 
 void nx_usb_send(U8 *data, U32 length) {
-  if (usb_state.status == USB_UNINITIALIZED
-      || usb_state.status == USB_SUSPENDED)
-    return;
+  NX_ASSERT_MSG(usb_state.status != USB_UNINITIALIZED,
+		"USB not init");
+  NX_ASSERT_MSG(usb_state.status != USB_SUSPENDED,
+		"USB asleep");
+  NX_ASSERT(data != NULL);
+  NX_ASSERT(length > 0);
 
+  /* TODO: Make call asynchronous */
   while (usb_state.status != USB_READY);
 
   /* start sending the data */
