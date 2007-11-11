@@ -185,6 +185,8 @@ static volatile struct {
   U32 last_checked_id, remote_id; /* used to know when a new device is found */
   bt_device_t remote_device;
 
+  /* all bytes to 0 if no device is waiting a pin code */
+  U8 dev_waiting_for_pin[BT_ADDR_SIZE];
 
   U8 last_msg;
 
@@ -192,8 +194,6 @@ static volatile struct {
   U8 args[BT_ARGS_BUFSIZE];
 
   int nmb_checksum_errors;
-
-  char pin_code[BT_PIN_MAX_LNG];
 
 #ifdef UART_DEBUG
   /* to remove: */
@@ -387,6 +387,11 @@ static void bt_uart_callback(U8 *msg, U32 len)
     return;
   }
 
+  if (msg[0] == BT_MSG_REQUEST_PIN_CODE) {
+    for (i = 0 ; i < BT_ADDR_SIZE ; i++) {
+      bt_state.dev_waiting_for_pin[i] = bt_state.args[i];
+    }
+  }
 }
 
 
@@ -640,17 +645,6 @@ int nx_bt_checksum_errors()
 }
 
 
-void nx_bt_define_pin_code(char *pin)
-{
-  int i;
-
-  for (i = 0 ; i < BT_PIN_MAX_LNG && pin[i] != '\0' ; i++)
-    bt_state.pin_code[i] = pin[i];
-  for (; i < BT_PIN_MAX_LNG ; i++)
-    bt_state.pin_code[i] = '\0';
-}
-
-
 int nx_bt_open_port()
 {
   nx__uart_write(bt_msg_open_port, sizeof(bt_msg_open_port));
@@ -683,6 +677,49 @@ bool nx_bt_close_port(int handle)
 
   return (bt_state.args[0] >= 1); /* status byte */
 }
+
+
+
+bool nx_has_dev_waiting_for_pin()
+{
+  int i;
+
+  for (i = 0 ; i < BT_ADDR_SIZE ; i++)
+    if (bt_state.dev_waiting_for_pin[i] != 0)
+      return TRUE;
+
+  return FALSE;
+}
+
+
+void nx_send_pin(char *code)
+{
+  int i;
+  U8 packet[27];
+
+  if (!nx_has_dev_waiting_for_pin())
+    return;
+
+  packet[0] = 26;
+  packet[1] = BT_MSG_PIN_CODE;
+
+  for (i = 0 ; i < BT_ADDR_SIZE ; i++)
+    packet[2+i] = bt_state.dev_waiting_for_pin[i];
+
+  for (i = 0 ; i < BT_PIN_MAX_LNG && code[i] != '\0' ; i++)
+    packet[2+BT_ADDR_SIZE+i] = code[i];
+
+  for (; i < BT_PIN_MAX_LNG ; i++)
+    packet[2+BT_ADDR_SIZE+i] = '\0';
+
+  bt_set_checksum(packet+1, 26);
+
+  nx__uart_write(packet, 27);
+
+  bt_wait_msg(BT_MSG_PIN_CODE_ACK);
+
+}
+
 
 
 /* to remove: */

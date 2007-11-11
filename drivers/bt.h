@@ -133,9 +133,15 @@ int nx_bt_checksum_errors();
 
 
 /**
- * @param pin must finish by '\0' && max 16 chars ('\0' excluded)
+ * Indicates if a device is waiting for a pin code
  */
-void nx_bt_define_pin_code(char *pin);
+bool nx_has_dev_waiting_for_pin();
+
+/**
+ * will only send the pin code if nx_has_dev_waiting_for_pin() returning true
+ * @param code must finished with a '\0' && max 16 chars ('\0' excluded)
+ */
+void nx_send_pin(char *code);
 
 
 /**
