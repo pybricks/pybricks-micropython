@@ -16,6 +16,16 @@
 #ifndef __NXOS_BASE_DOC_H__
 #define __NXOS_BASE_DOC_H__
 
+/** @mainpage NxOS Baseplate API documentation
+ *
+ * Welcome to the Baseplate API docs. Not much in the way of directions
+ * for now, but the APIs are structured into modules that are
+ * individually quite well documented, so you should be able to find
+ * your way around and see what the Baseplate has to offer.
+ *
+ * Select the "Modules" tab above to start.
+ */
+
 /** @defgroup kernel Kernel */
 /*@{*/
 
