@@ -167,6 +167,13 @@ static const U8 bt_msg_get_friendly_name[] = {
 };
 
 
+static const U8 bt_msg_open_port[] = {
+  0x03,
+  BT_MSG_OPEN_PORT,
+  0xFF,
+  0xFD
+};
+
 
 static volatile struct {
   bt_state_t state;
@@ -186,8 +193,7 @@ static volatile struct {
 
   int nmb_checksum_errors;
 
-  char target_pin_code[BT_PIN_MAX_LNG];
-  char nxt_pin_code[BT_PIN_MAX_LNG];
+  char pin_code[BT_PIN_MAX_LNG];
 
 #ifdef UART_DEBUG
   /* to remove: */
@@ -402,7 +408,6 @@ void nx_bt_init()
 
   bt_wait_msg(BT_MSG_RESET_INDICATION);
   /* the function bt_uart_callback() should start the heart after receiving the reset indication */
-  bt_wait_msg(BT_MSG_HEARTBEAT);
 
   USB_SEND("nx_bt_init() finished");
 }
@@ -635,26 +640,49 @@ int nx_bt_checksum_errors()
 }
 
 
-void nx_bt_define_target_pin_code(char *pin)
+void nx_bt_define_pin_code(char *pin)
 {
   int i;
 
   for (i = 0 ; i < BT_PIN_MAX_LNG && pin[i] != '\0' ; i++)
-    bt_state.target_pin_code[i] = pin[i];
+    bt_state.pin_code[i] = pin[i];
   for (; i < BT_PIN_MAX_LNG ; i++)
-    bt_state.target_pin_code[i] = '\0';
+    bt_state.pin_code[i] = '\0';
 }
 
-void nx_bt_define_nxt_pin_code(char *pin)
+
+int nx_bt_open_port()
 {
-  int i;
+  nx__uart_write(bt_msg_open_port, sizeof(bt_msg_open_port));
 
-  for (i = 0 ; i < BT_PIN_MAX_LNG && pin[i] != '\0' ; i++)
-    bt_state.target_pin_code[i] = pin[i];
-  for (; i < BT_PIN_MAX_LNG ; i++)
-    bt_state.target_pin_code[i] = '\0';
+  if (!bt_wait_msg(BT_MSG_PORT_OPEN_RESULT))
+    return -1;
+
+  if (bt_state.args[0] == 0) /* status = failed */
+    return -1;
+
+  return bt_state.args[1]; /* handle */
 }
 
+bool nx_bt_close_port(int handle)
+{
+  U8 packet[5];
+
+  packet[0] = 4; /* length */
+  packet[1] = BT_MSG_CLOSE_PORT;
+  packet[2] = (U8)handle;
+
+  bt_set_checksum(packet+1, 4);
+
+  nx__uart_write(packet, 5);
+
+  do {
+    if (!bt_wait_msg(BT_MSG_CLOSE_PORT_RESULT))
+      return FALSE;
+  } while (bt_state.args[1] != handle); /* second byte is the handle */
+
+  return (bt_state.args[0] >= 1); /* status byte */
+}
 
 
 /* to remove: */

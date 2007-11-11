@@ -135,12 +135,14 @@ int nx_bt_checksum_errors();
 /**
  * @param pin must finish by '\0' && max 16 chars ('\0' excluded)
  */
-void nx_bt_define_target_pin_code(char *pin);
+void nx_bt_define_pin_code(char *pin);
+
 
 /**
- * @param pin must finish by '\0' && max 16 chars ('\0' excluded)
+ * @return port handle or -1 if failure
  */
-void nx_bt_define_nxt_pin_code(char *pin);
+int nx_bt_open_port();
+bool nx_bt_close_port(int handle);
 
 
 /* to remove */
