@@ -175,6 +175,24 @@ static const U8 bt_msg_open_port[] = {
 };
 
 
+static const U8 bt_msg_accept_connection[] = {
+  0x04,
+  BT_MSG_ACCEPT_CONNECTION,
+  0x01,
+  0xFF,
+  0xF6
+};
+
+static const U8 bt_msg_refuse_connection[] = {
+  0x04,
+  BT_MSG_ACCEPT_CONNECTION,
+  0x00,
+  0xFF,
+  0xF7
+};
+
+
+
 static volatile struct {
   bt_state_t state;
 
@@ -187,6 +205,10 @@ static volatile struct {
 
   /* all bytes to 0 if no device is waiting a pin code */
   U8 dev_waiting_for_pin[BT_ADDR_SIZE];
+  /* all bytes to 0 if no device is waiting to connect */
+  U8 dev_waiting_for_connection[BT_ADDR_SIZE];
+  /* set when a new connection has been established. */
+  int new_handle;
 
   U8 last_msg;
 
@@ -391,6 +413,22 @@ static void bt_uart_callback(U8 *msg, U32 len)
     for (i = 0 ; i < BT_ADDR_SIZE ; i++) {
       bt_state.dev_waiting_for_pin[i] = bt_state.args[i];
     }
+
+    return;
+  }
+
+  if (msg[0] == BT_MSG_REQUEST_CONNECTION) {
+    for (i = 0 ; i < BT_ADDR_SIZE ; i++) {
+      bt_state.dev_waiting_for_connection[i] = bt_state.args[i];
+    }
+
+    return;
+  }
+
+  if (msg[0] == BT_MSG_CONNECTION_RESULT) {
+    if (args[0] >= 1)
+      bt_state.new_handle = args[1];
+    return;
   }
 }
 
@@ -398,6 +436,8 @@ static void bt_uart_callback(U8 *msg, U32 len)
 void nx_bt_init()
 {
   USB_SEND("nx_bt_init()");
+
+  bt_state.new_handle = -1;
 
   /* we put the ARM CMD pin to 0 => command mode */
   /* and we put the RST PIN to 1 => Will release the reset on the bluecore */
@@ -680,7 +720,7 @@ bool nx_bt_close_port(int handle)
 
 
 
-bool nx_has_dev_waiting_for_pin()
+bool nx_bt_has_dev_waiting_for_pin()
 {
   int i;
 
@@ -692,12 +732,12 @@ bool nx_has_dev_waiting_for_pin()
 }
 
 
-void nx_send_pin(char *code)
+void nx_bt_send_pin(char *code)
 {
   int i;
   U8 packet[27];
 
-  if (!nx_has_dev_waiting_for_pin())
+  if (!nx_bt_has_dev_waiting_for_pin())
     return;
 
   packet[0] = 26;
@@ -718,6 +758,48 @@ void nx_send_pin(char *code)
 
   bt_wait_msg(BT_MSG_PIN_CODE_ACK);
 
+  for (i = 0 ; i < BT_ADDR_SIZE ; i++)
+    bt_state.dev_waiting_for_pin[i] = 0;
+}
+
+
+bool nx_bt_connection_pending()
+{
+  int i;
+
+  for (i = 0 ; i < BT_ADDR_SIZE ; i++)
+    if (bt_state.dev_waiting_for_connection[i] != 0)
+      return TRUE;
+
+  return FALSE;
+}
+
+
+void nx_bt_accept_connection(bool accept)
+{
+  if (!nx_bt_connection_pending())
+    return;
+
+  if (accept)
+    uart_write(bt_msg_accept_connection, sizeof(bt_msg_accept_connection));
+  else
+    uart_write(bt_msg_refuse_connection, sizeof(bt_msg_refuse_connection));
+
+  for (i = 0 ; i < BT_ADDR_SIZE ; i++)
+    bt_state.dev_waiting_for_connection[i] = 0;
+}
+
+
+int nx_bt_connection_established()
+{
+  int handle;
+
+  handle = bt_state.new_handle;
+
+  if (handle >= 0)
+    bt_state.new_handle = -1;
+
+  return handle;
 }
 
 

@@ -135,13 +135,13 @@ int nx_bt_checksum_errors();
 /**
  * Indicates if a device is waiting for a pin code
  */
-bool nx_has_dev_waiting_for_pin();
+bool nx_bt_has_dev_waiting_for_pin();
 
 /**
  * will only send the pin code if nx_has_dev_waiting_for_pin() returning true
  * @param code must finished with a '\0' && max 16 chars ('\0' excluded)
  */
-void nx_send_pin(char *code);
+void nx_bt_send_pin(char *code);
 
 
 /**
@@ -149,6 +149,25 @@ void nx_send_pin(char *code);
  */
 int nx_bt_open_port();
 bool nx_bt_close_port(int handle);
+
+/**
+ * @return true if an host want to connect to us
+ */
+bool nx_bt_connection_pending();
+
+/**
+ * Only valid if nx_connection_pending() return true.
+ * If you accept the connection, a pin code may be required.
+ * @param accept specify if we accept the connection of not
+ */
+void nx_bt_accept_connection(bool accept);
+
+
+/**
+ * @return -1 if no new connexion has been established, else it
+ * returns the corresponding handle (only returned once !)
+ */
+int nx_bt_connection_established();
 
 
 /* to remove */
