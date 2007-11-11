@@ -34,7 +34,7 @@
 
 #define BT_RST_PIN AT91C_PIO_PA11
 #define BT_ARM_CMD_PIN AT91C_PIO_PA27
-/* BT_BC4_CMD is connected to the channel 4 of the Analog to Digital converter */
+/* BT_BC4_CMD is connected to the channel 4 (counting from 0) of the Analog to Digital converter */
 #define BT_CS_PIN   AT91C_PIO_PA31
 
 
@@ -185,6 +185,9 @@ static volatile struct {
   U8 args[BT_ARGS_BUFSIZE];
 
   int nmb_checksum_errors;
+
+  char target_pin_code[BT_PIN_MAX_LNG];
+  char nxt_pin_code[BT_PIN_MAX_LNG];
 
 #ifdef UART_DEBUG
   /* to remove: */
@@ -629,6 +632,27 @@ int nx_bt_get_friendly_name(char *name)
 int nx_bt_checksum_errors()
 {
   return bt_state.nmb_checksum_errors;
+}
+
+
+void nx_bt_define_target_pin_code(char *pin)
+{
+  int i;
+
+  for (i = 0 ; i < BT_PIN_MAX_LNG && pin[i] != '\0' ; i++)
+    bt_state.target_pin_code[i] = pin[i];
+  for (; i < BT_PIN_MAX_LNG ; i++)
+    bt_state.target_pin_code[i] = '\0';
+}
+
+void nx_bt_define_nxt_pin_code(char *pin)
+{
+  int i;
+
+  for (i = 0 ; i < BT_PIN_MAX_LNG && pin[i] != '\0' ; i++)
+    bt_state.target_pin_code[i] = pin[i];
+  for (; i < BT_PIN_MAX_LNG ; i++)
+    bt_state.target_pin_code[i] = '\0';
 }
 
 

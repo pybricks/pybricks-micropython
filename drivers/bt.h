@@ -18,9 +18,27 @@
 
 #include "base/drivers/_uart.h"
 
+/**
+ * Size of a bluetooth address (in bytes)
+ */
 #define BT_ADDR_SIZE  7
+
+/**
+ * Size of a bluetooth class (in bytes)
+ */
 #define BT_CLASS_SIZE 4
+
+/**
+ * Maximum length of bluetooth friendly name (in bytes)
+ */
 #define BT_NAME_MAX_LNG 16
+
+/**
+ * Maximum length of bluetooth pin code (in bytes)
+ */
+#define BT_PIN_MAX_LNG  16
+
+
 
 typedef struct bt_device {
   U8 addr[BT_ADDR_SIZE];
@@ -33,10 +51,11 @@ typedef enum {
   BT_STATE_WAITING = 0x0,
   BT_STATE_INQUIRING,
   BT_STATE_KNOWN_DEVICES_DUMPING,
+  BT_STATE_STREAMING
 } bt_state_t;
 
 typedef enum {
-  BT_NOTHING = 0x0, /* can mean no answer */
+  BT_NOTHING = 0x0, /* can mean no answer from the bluecore */
   BT_LR_SUCCESS = 0x50,
   BT_LR_COULD_NOT_SAVE,
   BT_LR_STORE_IS_FULL,
@@ -53,8 +72,7 @@ typedef struct bt_version {
 
 
 /**
- * It will only initialize the communication with the bluetooth
- * coprocessor.
+ * It will only initialize the communication with the bluecore
  */
 void nx_bt_init();
 
@@ -62,7 +80,7 @@ bt_state_t nx_bt_get_state();
 
 
 /**
- * @param name Max 16 car. !
+ * @param[in] name Max 16 car. !
  */
 void nx_bt_set_friendly_name(char *name);
 void nx_bt_set_discoverable(bool d);
@@ -112,6 +130,18 @@ int nx_bt_get_friendly_name(char *name);
  * with a wring checksum. Should be 0.
  */
 int nx_bt_checksum_errors();
+
+
+/**
+ * @param pin must finish by '\0' && max 16 chars ('\0' excluded)
+ */
+void nx_bt_define_target_pin_code(char *pin);
+
+/**
+ * @param pin must finish by '\0' && max 16 chars ('\0' excluded)
+ */
+void nx_bt_define_nxt_pin_code(char *pin);
+
 
 /* to remove */
 void nx_bt_debug();
