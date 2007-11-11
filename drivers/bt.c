@@ -425,9 +425,9 @@ static void bt_uart_callback(U8 *msg, U32 len)
     return;
   }
 
-  if (msg[0] == BT_MSG_CONNECTION_RESULT) {
-    if (args[0] >= 1)
-      bt_state.new_handle = args[1];
+  if (msg[0] == BT_MSG_CONNECT_RESULT) {
+    if (bt_state.args[0] >= 1)
+      bt_state.new_handle = bt_state.args[1];
     return;
   }
 }
@@ -777,13 +777,15 @@ bool nx_bt_connection_pending()
 
 void nx_bt_accept_connection(bool accept)
 {
+  int i;
+
   if (!nx_bt_connection_pending())
     return;
 
   if (accept)
-    uart_write(bt_msg_accept_connection, sizeof(bt_msg_accept_connection));
+    nx__uart_write(bt_msg_accept_connection, sizeof(bt_msg_accept_connection));
   else
-    uart_write(bt_msg_refuse_connection, sizeof(bt_msg_refuse_connection));
+    nx__uart_write(bt_msg_refuse_connection, sizeof(bt_msg_refuse_connection));
 
   for (i = 0 ; i < BT_ADDR_SIZE ; i++)
     bt_state.dev_waiting_for_connection[i] = 0;
