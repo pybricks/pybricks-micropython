@@ -105,9 +105,8 @@ void nx_radar_reset(U32 sensor) {
   U8 reset = RADAR_MODE_RESET;
   U8 val = 0x0;
 
-  /* Do a warm reset and wait a little bit. */
+  /* Do a warm reset. */
   nx_radar_write(sensor, RADAR_OP_MODE, &reset);
-  nx_systick_wait_ms(100);
 
   /* Reset zero, scale factor and scale divisor to factory values. */
   if (nx_radar_read(sensor, RADAR_FACTORY_ZERO, &val)) {
