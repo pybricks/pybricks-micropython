@@ -170,6 +170,71 @@ void nx_bt_accept_connection(bool accept);
 int nx_bt_connection_established();
 
 
+
+/**
+ * Only one data stream can be opened at the same time.
+ * @note As long as the stream is opened, don't use any other function
+ * than nx_bt_stream_write() or nx_bt_stream_has_data() or nx_bt_stream_get_buffer()
+ */
+void nx_bt_stream_open(int handle);
+
+/**
+ * Only valid if a stream has been opened
+ * @note : Don't free/erase the data pointed by data until nx_bt_stream_writing_finished() return TRUE
+ */
+void nx_bt_stream_write(U8 *data, U32 length);
+
+/**
+ * Indicates when the data have been transmitted to
+ * the BlueCore and can be freed/erased from the memory.
+ */
+bool nx_bt_stream_data_written();
+
+
+/**
+ * Only valid if a stream is opened.
+ * Indicates how many bytes from a data stream are waiting in the buffer
+ */
+U32 nx_bt_stream_has_data();
+
+/**
+ * Return a pointer to the buffer containing the data
+ * from the stream
+ */
+const void *nx_bt_stream_get_buffer();
+
+/**
+ * Only valid if a stream is opened.
+ * Release the content of the buffer.
+ *
+ * This signals the driver that it can receive more data. Call it as
+ * soon as you have finished processing input.
+ */
+void nx_bt_stream_flush_buffer();
+
+/**
+ * Only valid if a stream is opened.
+ * Check if the BT driver overflowed on reading input.
+ * A call to nx_bt_flush_buffer() reset this value to FALSE.
+ * @return TRUE if too much data was received without
+ * nx_bt_flush_buffer() being called, FALSE otherwhise
+ */
+bool nx_bt_stream_overloaded();
+
+/**
+ * Only valid if a stream is (or was) opened.
+ * @return FALSE if the remote device or the bluecore
+ *         has shuted down the stream (you don't need to
+ *         close the stream in this case)
+ */
+bool nx_bt_stream_opened();
+
+/**
+ * Close a currently opened stream.
+ */
+void nx_bt_stream_close();
+
+
 /* to remove */
 void nx_bt_debug();
 

@@ -18,6 +18,7 @@
 
 #define BT_ACK_TIMEOUT 3000
 #define BT_ARGS_BUFSIZE (BT_NAME_MAX_LNG+1)
+#define BT_STREAM_BUFISZE 64
 
 /* to remove : */
 #ifdef UART_DEBUG
@@ -802,6 +803,76 @@ int nx_bt_connection_established()
     bt_state.new_handle = -1;
 
   return handle;
+}
+
+
+void nx_bt_stream_open(int handle)
+{
+  U8 packet[5];
+
+  /* send open stream message */
+
+  packet[0] = 4; /* length */
+  packet[1] = BT_MSG_OPEN_STREAM;
+  packet[2] = (U8)handle;
+
+  bt_set_checksum(packet+1, 4);
+
+  nx__uart_write(packet, 5);
+
+  while(nx__uart_is_writing());
+
+  /* set ARM_CMD to high to go in stream mode */
+  *AT91C_PIOA_SODR = BT_ARM_CMD_PIN;
+
+  bt_state.state = BT_STATE_STREAMING;
+}
+
+void nx_bt_stream_write(U8 *data, U32 length)
+{
+  nx__uart_write(data, length);
+}
+
+bool nx_bt_stream_opened()
+{
+  return bt_state.state == BT_STATE_STREAMING;
+}
+
+
+bool nx_bt_stream_data_written()
+{
+  return !(nx__uart_is_writing());
+}
+
+
+U32 nx_bt_stream_has_data()
+{
+
+  return 0;
+}
+
+const void *nx_bt_stream_get_buffer()
+{
+
+  return NULL;
+}
+
+
+void nx_bt_stream_flush_buffer()
+{
+
+}
+
+bool nx_bt_stream_overloaded()
+{
+  return FALSE;
+}
+
+void nx_bt_stream_close()
+{
+  /* return in command mode by lowering the ARM_CMD pin */
+  *AT91C_PIOA_CODR = BT_ARM_CMD_PIN;
+  bt_state.state = BT_STATE_WAITING;
 }
 
 

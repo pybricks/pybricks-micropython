@@ -626,9 +626,6 @@ static void usb_isr() {
 
     if (csr & AT91C_UDP_TXCOMP) {
 
-      /* then it means that we sent a data and the host has acknowledged it */
-      usb_state.status = USB_READY; /* TODO: check for race with
-                                       usb_send_data further down. */
       /* so first we will reset this flag */
       usb_csr_clear_flag(endpoint, AT91C_UDP_TXCOMP);
 
@@ -650,6 +647,9 @@ static void usb_isr() {
 	  && usb_state.tx_data[endpoint] != NULL) {
 	usb_send_data(endpoint, usb_state.tx_data[endpoint],
 		      usb_state.tx_len[endpoint]);
+      } else {
+        /* then it means that we sent all the data and the host has acknowledged it */
+        usb_state.status = USB_READY;
       }
       return;
     }
@@ -741,6 +741,11 @@ void nx_usb_send(U8 *data, U32 length) {
   /* start sending the data */
   usb_send_data(2, data, length);
 }
+
+bool nx_usb_data_sent() {
+  return (usb_state.tx_len[2] == 0);
+}
+
 
 bool nx_usb_is_connected() {
   return (usb_state.status != USB_UNINITIALIZED);

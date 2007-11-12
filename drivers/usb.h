@@ -58,6 +58,14 @@ bool nx_usb_can_send();
  */
 void nx_usb_send(U8 *data, U32 length);
 
+/**
+ * Return TRUE when all the data has been sent to
+ * the USB controller and that these data can be
+ * freed/erased from the memory.
+ */
+bool nx_usb_data_sent();
+
+
 /** Return the amount of data available in the input buffer.
  *
  * @return The amount of data available, in bytes.
