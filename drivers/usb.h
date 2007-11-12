@@ -32,8 +32,11 @@
  */
 /*@{*/
 
-/** The size of an USB packet. */
-#define NX_USB_BUFFER_SIZE 64
+/**
+ * The size of an USB packet.
+ * @note recommanded size to provide to nx_usb_read()
+ */
+#define NX_USB_PACKET_SIZE 64
 
 /** Check if the NXT is connected and configured on a USB bus.
  *
@@ -46,7 +49,7 @@ bool nx_usb_is_connected();
  * @return TRUE if data can be sent, FALSE if the driver buffers are
  * saturated.
  */
-bool nx_usb_can_send();
+bool nx_usb_can_write();
 
 /** Send @a length bytes of @a data to the USB host.
  *
@@ -56,44 +59,28 @@ bool nx_usb_can_send();
  * @param data The data to send.
  * @param length The amount of data to send.
  */
-void nx_usb_send(U8 *data, U32 length);
+void nx_usb_write(U8 *data, U32 length);
 
 /**
  * Return TRUE when all the data has been sent to
  * the USB controller and that these data can be
  * freed/erased from the memory.
  */
-bool nx_usb_data_sent();
+bool nx_usb_data_written();
 
-
-/** Return the amount of data available in the input buffer.
- *
- * @return The amount of data available, in bytes.
+/**
+ * Specify where the next read data must be put
+ * @note if a packet has a size smaller than the provided one, then all the area won't be used
  */
-U32 nx_usb_has_data();
+void nx_usb_read(U8 *data, U32 length);
 
-/** Return a pointer to the USB input buffer.
- *
- * @return A pointer to the input buffer.
- *
- * @note Despite the current prototype, this pointer is in fact
- * constant. You don't need to call this function multiple times.
+/**
+ * Indicates when the data have been read.
+ * @note initial value = 0 ;  reset to 0 after each call to nx_usb_read()
+ * @return the packet size read
  */
-volatile void *nx_usb_get_buffer();
+U32 nx_usb_data_read();
 
-/** Release the contents of the USB input buffer.
- *
- * This signals the driver that it can receive more data. Call it as
- * soon as you have finished processing input.
- */
-void nx_usb_flush_buffer();
-
-/** Check if the USB driver overflowed on reading input.
- *
- * @return TRUE if too much data was received without
- * nx_usb_flush_buffer() being called, FALSE otherwise.
- */
-bool nx_usb_overloaded();
 
 /*@}*/
 /*@}*/

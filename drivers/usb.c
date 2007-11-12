@@ -217,20 +217,24 @@ static volatile struct {
   U8 current_config;
 
   /* Holds the state of the data transmissions on both EP0 and
-   * EP1. This only gets used if the transmission needed to be split
+   * EP2. This only gets used if the transmission needed to be split
    * into several USB packets.
+   *  0 = EP0
+   *  1 = EP2
    */
-  U8 *tx_data[N_ENDPOINTS]; /* TODO: Switch to 2, memory waste. */
-  U32 tx_len[N_ENDPOINTS];
+  U8 *tx_data[2];
+  U32 tx_len[2];
 
-  /* Holds received data shifted from the controller. Receiving is
-   * double-buffered, and the reader must flush the current buffer to
-   * gain access to the other buffer.
+  /* Used to write the data from the EP1
    */
-  U8   rx_current_user_buffer_idx; /* 0 or 1 */
-  U8   rx_buffer[2][NX_USB_BUFFER_SIZE];
-  U16  rx_buffer_size[2]; /* data size waiting in the buffer */
-  bool rx_overflow;
+  U8 *rx_data;
+
+  /* size of the rx data buffer */
+  U32 rx_size;
+
+  /* length of the read packet (0 if none) */
+  U32 rx_len;
+
 
   /* The USB controller has two hardware input buffers. This remembers
    * the one currently in use.
@@ -265,8 +269,14 @@ static inline void usb_csr_set_flag(U8 endpoint, U32 flags) {
  * single USB packet, the data is split and scheduled to be sent in
  * several packets.
  */
-static void usb_send_data(int endpoint, const U8 *ptr, U32 length) {
+static void usb_write_data(int endpoint, const U8 *ptr, U32 length) {
   U32 packet_size;
+  int tx;
+
+  if (endpoint != 0 && endpoint != 2)
+    return;
+
+  tx = endpoint / 2;
 
   /* The bus is now busy. */
   usb_state.status = USB_BUSY;
@@ -281,11 +291,11 @@ static void usb_send_data(int endpoint, const U8 *ptr, U32 length) {
    */
   if (length > packet_size) {
     length -= packet_size;
-    usb_state.tx_data[endpoint] = (U8*)(ptr + packet_size);
-    usb_state.tx_len[endpoint] = length;
+    usb_state.tx_data[tx] = (U8*)(ptr + packet_size);
+    usb_state.tx_len[tx] = length;
   } else {
-    usb_state.tx_data[endpoint] = NULL;
-    usb_state.tx_len[endpoint] = 0;
+    usb_state.tx_data[tx] = NULL;
+    usb_state.tx_len[tx] = 0;
   }
 
   /* Push a packet into the USB FIFO, and tell the controller to send. */
@@ -298,64 +308,68 @@ static void usb_send_data(int endpoint, const U8 *ptr, U32 length) {
 }
 
 
-/* Read one data packet from the USB controller. */
+/* Read one data packet from the USB controller.
+ * Assume that usb_state.rx_data and usb_state.rx_len are set.
+ */
 static void usb_read_data(int endpoint) {
-  U8 buf;
   U16 i;
   U16 total;
 
   /* Given our configuration, we should only be getting packets on
    * endpoint 1. Ignore data on any other endpoint.
+   * (note: data from EP0 are managed by usb_manage_setup())
    */
   if (endpoint != 1) {
     usb_csr_clear_flag(endpoint, AT91C_UDP_RX_DATA_BK0 | AT91C_UDP_RX_DATA_BK1);
     return;
   }
 
+  /* must not happen ! */
+  if (usb_state.rx_len > 0)
+    return;
+
   total = (AT91C_UDP_CSR[endpoint] & AT91C_UDP_RXBYTECNT) >> 16;
 
-  /* if the buffer currently used by the user program is empty, then
-   * we will write in this one, else we will write in the other one */
+  /* we start reading */
+  /* all the bytes will be put in rx_data */
+  for (i = 0 ;
+       i < total && i < usb_state.rx_size ;
+       i++)
+    usb_state.rx_data[i] = AT91C_UDP_FDR[1];
 
-  if (usb_state.rx_buffer_size[usb_state.rx_current_user_buffer_idx] == 0) {
-    buf = usb_state.rx_current_user_buffer_idx;
-  } else {
-    buf = (usb_state.rx_current_user_buffer_idx == 0 ? 1 : 0);
+  usb_state.rx_len = i;
+
+
+  /* if we have read all the byte ... */
+  if (i == total) {
+    /* Acknowledge reading the current RX bank, and switch to the other. */
+    usb_csr_clear_flag(1, usb_state.current_rx_bank);
+    if (usb_state.current_rx_bank == AT91C_UDP_RX_DATA_BK0)
+      usb_state.current_rx_bank = AT91C_UDP_RX_DATA_BK1;
+    else
+      usb_state.current_rx_bank = AT91C_UDP_RX_DATA_BK0;
   }
-
-  /* if we are writing in a buffer containing something,
-   * it means we are overloaded */
-  if (usb_state.rx_buffer_size[buf] > 0) {
-    usb_state.rx_overflow = TRUE;
-  }
-
-  usb_state.rx_buffer_size[buf] = total;
-  for (i = 0 ; i < total; i++)
-    usb_state.rx_buffer[buf][i] = AT91C_UDP_FDR[1];
-
-
-  /* Acknowledge reading the current RX bank, and switch to the other. */
-  usb_csr_clear_flag(1, usb_state.current_rx_bank);
-  if (usb_state.current_rx_bank == AT91C_UDP_RX_DATA_BK0)
-    usb_state.current_rx_bank = AT91C_UDP_RX_DATA_BK1;
-  else
-    usb_state.current_rx_bank = AT91C_UDP_RX_DATA_BK0;
+  /* else we let the interruption running :
+   * after this function, the interruption should be disabled until
+   * a new buffer to read is provided */
 }
 
 
-/* A stall is USB's way of sending back an error (either "not
- * understood" or "not handled by this device").
- * The connexion will be reinitialized by the host.
+/* On the endpoint 0: A stall is USB's way of sending
+ * back an error (either "not understood" or "not handled
+ * by this device"). The connexion will be reinitialized
+ * by the host.
+ * On the other endpoint : Indicates to the host that the endpoint is halted
  */
-static void usb_send_stall() {
+static void usb_send_stall(int endpoint) {
   usb_state.status = USB_UNINITIALIZED;
-  usb_csr_set_flag(0, AT91C_UDP_FORCESTALL);
+  usb_csr_set_flag(endpoint, AT91C_UDP_FORCESTALL);
 }
 
 
 /* During setup, we need to send packets with null data. */
 static void usb_send_null() {
-  usb_send_data(0, NULL, 0);
+  usb_write_data(0, NULL, 0);
 }
 
 
@@ -408,7 +422,7 @@ static U32 usb_manage_setup_packet() {
     else
       response = 0;
 
-    usb_send_data(0, (U8*)&response, 2);
+    usb_write_data(0, (U8*)&response, 2);
     break;
 
   case USB_BREQUEST_CLEAR_FEATURE:
@@ -447,12 +461,12 @@ static U32 usb_manage_setup_packet() {
     switch ((packet.value & USB_WVALUE_TYPE) >> 8) {
     case USB_DESC_TYPE_DEVICE: /* Device descriptor */
       size = usb_device_descriptor[0];
-      usb_send_data(0, usb_device_descriptor,
+      usb_write_data(0, usb_device_descriptor,
                     MIN(size, packet.length));
       break;
 
     case USB_DESC_TYPE_CONFIG: /* Configuration descriptor */
-      usb_send_data(0, usb_nxos_full_config,
+      usb_write_data(0, usb_nxos_full_config,
                     MIN(usb_nxos_full_config[2], packet.length));
 
       /* TODO: Why? This is not specified in the USB specs. */
@@ -462,12 +476,12 @@ static U32 usb_manage_setup_packet() {
 
     case USB_DESC_TYPE_STR: /* String or language info. */
       if ((packet.value & USB_WVALUE_INDEX) == 0) {
-        usb_send_data(0, usb_string_desc,
+        usb_write_data(0, usb_string_desc,
                       MIN(usb_string_desc[0], packet.length));
       } else {
         /* The host wants a specific string. */
         /* TODO: This should check if the requested string exists. */
-        usb_send_data(0, usb_strings[index-1],
+        usb_write_data(0, usb_strings[index-1],
                       MIN(usb_strings[index-1][0],
                           packet.length));
       }
@@ -475,18 +489,18 @@ static U32 usb_manage_setup_packet() {
 
     case USB_DESC_TYPE_DEVICE_QUALIFIER: /* Device qualifier descriptor. */
       size = usb_dev_qualifier_desc[0];
-      usb_send_data(0, usb_dev_qualifier_desc,
+      usb_write_data(0, usb_dev_qualifier_desc,
                     MIN(size, packet.length));
       break;
 
     default: /* Unknown descriptor, tell the host by stalling. */
-      usb_send_stall();
+      usb_send_stall(0);
     }
     break;
 
   case USB_BREQUEST_GET_CONFIG:
     /* The host wants to know the ID of the current configuration. */
-    usb_send_data(0, (U8 *)&(usb_state.current_config), 1);
+    usb_write_data(0, (U8 *)&(usb_state.current_config), 1);
     break;
 
   case USB_BREQUEST_SET_CONFIG:
@@ -502,8 +516,8 @@ static U32 usb_manage_setup_packet() {
       :AT91C_UDP_FADDEN;
 
     /* TODO: Make this a little nicer. Not quite sure how. */
-    AT91C_UDP_CSR[1] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
-    while (AT91C_UDP_CSR[1] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT));
+    //AT91C_UDP_CSR[1] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
+    //while (AT91C_UDP_CSR[1] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT));
     AT91C_UDP_CSR[2] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN;
     while (AT91C_UDP_CSR[2] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN));
     AT91C_UDP_CSR[3] = 0;
@@ -515,7 +529,7 @@ static U32 usb_manage_setup_packet() {
   case USB_BREQUEST_GET_INTERFACE: /* TODO: This should respond, not stall. */
   case USB_BREQUEST_SET_DESCRIPTOR:
   default:
-    usb_send_stall();
+    usb_send_stall(0);
     break;
   }
 
@@ -620,7 +634,14 @@ static void usb_isr() {
 
     if (csr & AT91C_UDP_RX_DATA_BK0
 	|| csr & AT91C_UDP_RX_DATA_BK1) {
+
+      if (endpoint == 1) {
+        AT91C_UDP_CSR[1] &= ~AT91C_UDP_EPEDS;
+        while (AT91C_UDP_CSR[1] & AT91C_UDP_EPEDS);
+      }
+
       usb_read_data(endpoint);
+
       return;
     }
 
@@ -645,7 +666,7 @@ static void usb_isr() {
       /* and we will send the following data */
       if (usb_state.tx_len[endpoint] > 0
 	  && usb_state.tx_data[endpoint] != NULL) {
-	usb_send_data(endpoint, usb_state.tx_data[endpoint],
+	usb_write_data(endpoint, usb_state.tx_data[endpoint],
 		      usb_state.tx_len[endpoint]);
       } else {
         /* then it means that we sent all the data and the host has acknowledged it */
@@ -726,12 +747,12 @@ void nx__usb_init() {
 }
 
 
-bool nx_usb_can_send() {
+bool nx_usb_can_write() {
   return (usb_state.status == USB_READY);
 }
 
 
-void nx_usb_send(U8 *data, U32 length) {
+void nx_usb_write(U8 *data, U32 length) {
   if (usb_state.status == USB_UNINITIALIZED
       || usb_state.status == USB_SUSPENDED)
     return;
@@ -739,10 +760,10 @@ void nx_usb_send(U8 *data, U32 length) {
   while (usb_state.status != USB_READY);
 
   /* start sending the data */
-  usb_send_data(2, data, length);
+  usb_write_data(2, data, length);
 }
 
-bool nx_usb_data_sent() {
+bool nx_usb_data_written() {
   return (usb_state.tx_len[2] == 0);
 }
 
@@ -752,28 +773,20 @@ bool nx_usb_is_connected() {
 }
 
 
-U32 nx_usb_has_data() {
-  return usb_state.rx_buffer_size[usb_state.rx_current_user_buffer_idx];
+void nx_usb_read(U8 *data, U32 length)
+{
+  usb_state.rx_data = data;
+  usb_state.rx_size = length;
+  usb_state.rx_len  = 0;
+
+  if (usb_state.status >= USB_UNINITIALIZED
+      && usb_state.status != USB_SUSPENDED) {
+    AT91C_UDP_CSR[1] |= AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
+  }
 }
 
 
-volatile void *nx_usb_get_buffer() {
-  return (usb_state.rx_buffer[usb_state.rx_current_user_buffer_idx]);
+U32 nx_usb_data_read()
+{
+  return usb_state.rx_len;
 }
-
-
-bool nx_usb_overloaded() {
-  return usb_state.rx_overflow;
-}
-
-void nx_usb_flush_buffer() {
-  usb_state.rx_overflow = FALSE;
-
-  usb_state.rx_buffer_size[usb_state.rx_current_user_buffer_idx] = 0;
-
-  usb_state.rx_current_user_buffer_idx =
-    (usb_state.rx_current_user_buffer_idx == 0) ? 1 : 0;
-}
-
-
-
