@@ -18,9 +18,27 @@
 
 #include "base/drivers/_uart.h"
 
+/**
+ * Size of a bluetooth address (in bytes)
+ */
 #define BT_ADDR_SIZE  7
+
+/**
+ * Size of a bluetooth class (in bytes)
+ */
 #define BT_CLASS_SIZE 4
+
+/**
+ * Maximum length of bluetooth friendly name (in bytes)
+ */
 #define BT_NAME_MAX_LNG 16
+
+/**
+ * Maximum length of bluetooth pin code (in bytes)
+ */
+#define BT_PIN_MAX_LNG  16
+
+
 
 typedef struct bt_device {
   U8 addr[BT_ADDR_SIZE];
@@ -33,10 +51,11 @@ typedef enum {
   BT_STATE_WAITING = 0x0,
   BT_STATE_INQUIRING,
   BT_STATE_KNOWN_DEVICES_DUMPING,
+  BT_STATE_STREAMING
 } bt_state_t;
 
 typedef enum {
-  BT_NOTHING = 0x0, /* can mean no answer */
+  BT_NOTHING = 0x0, /* can mean no answer from the bluecore */
   BT_LR_SUCCESS = 0x50,
   BT_LR_COULD_NOT_SAVE,
   BT_LR_STORE_IS_FULL,
@@ -53,8 +72,7 @@ typedef struct bt_version {
 
 
 /**
- * It will only initialize the communication with the bluetooth
- * coprocessor.
+ * It will only initialize the communication with the bluecore
  */
 void nx_bt_init();
 
@@ -62,7 +80,7 @@ bt_state_t nx_bt_get_state();
 
 
 /**
- * @param name Max 16 car. !
+ * @param[in] name Max 16 car. !
  */
 void nx_bt_set_friendly_name(char *name);
 void nx_bt_set_discoverable(bool d);
@@ -112,6 +130,110 @@ int nx_bt_get_friendly_name(char *name);
  * with a wring checksum. Should be 0.
  */
 int nx_bt_checksum_errors();
+
+
+/**
+ * Indicates if a device is waiting for a pin code
+ */
+bool nx_bt_has_dev_waiting_for_pin();
+
+/**
+ * will only send the pin code if nx_has_dev_waiting_for_pin() returning true
+ * @param code must finished with a '\0' && max 16 chars ('\0' excluded)
+ */
+void nx_bt_send_pin(char *code);
+
+
+/**
+ * @return port handle or -1 if failure
+ */
+int nx_bt_open_port();
+bool nx_bt_close_port(int handle);
+
+/**
+ * @return true if an host want to connect to us
+ */
+bool nx_bt_connection_pending();
+
+/**
+ * Only valid if nx_connection_pending() return true.
+ * If you accept the connection, a pin code may be required.
+ * @param accept specify if we accept the connection of not
+ */
+void nx_bt_accept_connection(bool accept);
+
+
+/**
+ * @return -1 if no new connexion has been established, else it
+ * returns the corresponding handle (only returned once !)
+ */
+int nx_bt_connection_established();
+
+
+
+/**
+ * Only one data stream can be opened at the same time.
+ * @note As long as the stream is opened, don't use any other function
+ * than nx_bt_stream_write() or nx_bt_stream_has_data() or nx_bt_stream_get_buffer()
+ */
+void nx_bt_stream_open(int handle);
+
+/**
+ * Only valid if a stream has been opened
+ * @note : Don't free/erase the data pointed by data until nx_bt_stream_writing_finished() return TRUE
+ */
+void nx_bt_stream_write(U8 *data, U32 length);
+
+/**
+ * Indicates when the data have been transmitted to
+ * the BlueCore and can be freed/erased from the memory.
+ */
+bool nx_bt_stream_data_written();
+
+
+/**
+ * Only valid if a stream is opened.
+ * Indicates how many bytes from a data stream are waiting in the buffer
+ */
+U32 nx_bt_stream_has_data();
+
+/**
+ * Return a pointer to the buffer containing the data
+ * from the stream
+ */
+const void *nx_bt_stream_get_buffer();
+
+/**
+ * Only valid if a stream is opened.
+ * Release the content of the buffer.
+ *
+ * This signals the driver that it can receive more data. Call it as
+ * soon as you have finished processing input.
+ */
+void nx_bt_stream_flush_buffer();
+
+/**
+ * Only valid if a stream is opened.
+ * Check if the BT driver overflowed on reading input.
+ * A call to nx_bt_flush_buffer() reset this value to FALSE.
+ * @return TRUE if too much data was received without
+ * nx_bt_flush_buffer() being called, FALSE otherwhise
+ */
+bool nx_bt_stream_overloaded();
+
+/**
+ * Only valid if a stream is (or was) opened.
+ * @return FALSE if the remote device or the bluecore
+ *         has shuted down the stream (you don't need to
+ *         close the stream in this case)
+ */
+bool nx_bt_stream_opened();
+
+/**
+ * Close a currently opened stream.
+ */
+void nx_bt_stream_close();
+
 
 /* to remove */
 void nx_bt_debug();
