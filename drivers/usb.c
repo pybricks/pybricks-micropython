@@ -758,7 +758,7 @@ bool nx_usb_can_write() {
 }
 
 
-void nx_usb_send(U8 *data, U32 length) {
+void nx_usb_write(U8 *data, U32 length) {
   NX_ASSERT_MSG(usb_state.status != USB_UNINITIALIZED,
 		"USB not init");
   NX_ASSERT_MSG(usb_state.status != USB_SUSPENDED,
