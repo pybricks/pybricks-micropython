@@ -516,8 +516,13 @@ static U32 usb_manage_setup_packet() {
       :AT91C_UDP_FADDEN;
 
     /* TODO: Make this a little nicer. Not quite sure how. */
-    //AT91C_UDP_CSR[1] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
-    //while (AT91C_UDP_CSR[1] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT));
+
+    /* we can only active the EP1 if we have a buffer to get the data */
+    if (usb_state.rx_len == 0 && usb_state.rx_size >= 0) {
+      AT91C_UDP_CSR[1] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
+      while (AT91C_UDP_CSR[1] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT));
+    }
+
     AT91C_UDP_CSR[2] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN;
     while (AT91C_UDP_CSR[2] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_IN));
     AT91C_UDP_CSR[3] = 0;
@@ -779,7 +784,7 @@ void nx_usb_read(U8 *data, U32 length)
   usb_state.rx_size = length;
   usb_state.rx_len  = 0;
 
-  if (usb_state.status >= USB_UNINITIALIZED
+  if (usb_state.status > USB_UNINITIALIZED
       && usb_state.status != USB_SUSPENDED) {
     AT91C_UDP_CSR[1] |= AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
   }
