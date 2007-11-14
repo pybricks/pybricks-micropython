@@ -190,37 +190,6 @@ void nx_bt_stream_write(U8 *data, U32 length);
  */
 bool nx_bt_stream_data_written();
 
-
-/**
- * Only valid if a stream is opened.
- * Indicates how many bytes from a data stream are waiting in the buffer
- */
-U32 nx_bt_stream_has_data();
-
-/**
- * Return a pointer to the buffer containing the data
- * from the stream
- */
-const void *nx_bt_stream_get_buffer();
-
-/**
- * Only valid if a stream is opened.
- * Release the content of the buffer.
- *
- * This signals the driver that it can receive more data. Call it as
- * soon as you have finished processing input.
- */
-void nx_bt_stream_flush_buffer();
-
-/**
- * Only valid if a stream is opened.
- * Check if the BT driver overflowed on reading input.
- * A call to nx_bt_flush_buffer() reset this value to FALSE.
- * @return TRUE if too much data was received without
- * nx_bt_flush_buffer() being called, FALSE otherwhise
- */
-bool nx_bt_stream_overloaded();
-
 /**
  * Only valid if a stream is (or was) opened.
  * @return FALSE if the remote device or the bluecore
@@ -228,6 +197,20 @@ bool nx_bt_stream_overloaded();
  *         close the stream in this case)
  */
 bool nx_bt_stream_opened();
+
+/**
+ * Specify a memory area where to put the data
+ * read from the stream
+ * @note reading is only possible if in stream mode
+ */
+void nx_bt_stream_read(U8 *data, U32 length);
+
+/**
+ * Indicates when some data have been read.
+ * @note initial value = 0 ; reset to 0 after each call to nx_bt_stream_read()
+ * @return number of bytes read
+ */
+U32 nx_bt_stream_data_read();
 
 /**
  * Close a currently opened stream.

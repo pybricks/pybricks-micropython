@@ -17,9 +17,6 @@
 
 #include "base/drivers/_uart.h"
 
-/* Buffer size for UART messages. */
-#define UART_BUFSIZE 128
-
 /* Pinmask for all the UART pins. */
 #define UART_PIOA_PINS \
    (AT91C_PA21_RXD1 |  \
@@ -42,6 +39,10 @@ static volatile struct {
 
   U32 packet_size;
   U8 buf[UART_BUFSIZE];
+
+  /* for manual reading from the bluetooth driver : */
+  U32 to_read;
+
 } uart_state = {
   NULL, 0, {0}
 };
@@ -180,4 +181,46 @@ bool nx__uart_can_write() {
 
 bool nx__uart_is_writing() {
   return (*AT91C_US1_TCR + *AT91C_US1_TNCR) > 0;
+}
+
+
+void nx__uart_set_callback(nx__uart_read_callback_t callback) {
+  if (callback == NULL) {
+
+    *AT91C_US1_IDR = AT91C_US_RXRDY | AT91C_US_RXBRK;
+    /* we disable the PDC */
+    *AT91C_US1_PTCR = AT91C_PDC_RXTDIS;
+    uart_state.callback = callback;
+
+    /* we must have a value > 0 in US1_RCR
+     * even for manual reading */
+    *AT91C_US1_RPR = (U32)(&uart_state.buf);
+    *AT91C_US1_RCR = UART_BUFSIZE;
+
+  } else {
+    *AT91C_US1_RPR = (U32)(&uart_state.buf);
+    *AT91C_US1_RCR = UART_BUFSIZE;
+
+    /* we reenable it */
+    uart_state.callback = callback;
+    *AT91C_US1_PTCR = AT91C_PDC_RXTEN;
+
+    *AT91C_US1_IER = AT91C_US_RXRDY | AT91C_US_RXBRK;
+  }
+
+}
+
+void nx__uart_read(U8 *buf, U32 length) {
+  uart_state.to_read = length;
+
+  *AT91C_US1_RPR = (U32)(&buf);
+  *AT91C_US1_RCR = length;
+
+  *AT91C_US1_PTCR = AT91C_PDC_RXTEN;
+
+  *AT91C_US1_IER = AT91C_US_RXRDY | AT91C_US_RXBRK;
+}
+
+U32 nx__uart_data_read() {
+  return uart_state.to_read - (*AT91C_US1_RCR);
 }

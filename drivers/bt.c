@@ -18,14 +18,12 @@
 
 #define BT_ACK_TIMEOUT 3000
 #define BT_ARGS_BUFSIZE (BT_NAME_MAX_LNG+1)
-#define BT_STREAM_BUFISZE 64
 
 /* to remove : */
 #ifdef UART_DEBUG
 #include "base/display.h"
 #include "base/drivers/usb.h"
 #include "base/util.h"
-#define CMDS_BUFSIZE 128
 #define USB_SEND(txt) nx_usb_send((U8*)txt, strlen(txt))
 #else
 #define CMDS_BUFSIZE 0
@@ -299,7 +297,7 @@ static void bt_reseted()
 
 
 
-static void bt_uart_callback(U8 *msg, U32 len)
+static void bt_uart_command_callback(U8 *msg, U32 len)
 {
   int i;
 
@@ -450,7 +448,7 @@ void nx_bt_init()
 
   nx_systick_wait_ms(100);
 
-  nx__uart_init(bt_uart_callback);
+  nx__uart_init(bt_uart_command_callback);
 
   bt_wait_msg(BT_MSG_RESET_INDICATION);
   /* the function bt_uart_callback() should start the heart after receiving the reset indication */
@@ -810,6 +808,10 @@ void nx_bt_stream_open(int handle)
 {
   U8 packet[5];
 
+  /* we make sure that the callback won't be called anymore */
+
+  nx__uart_set_callback(NULL);
+
   /* send open stream message */
 
   packet[0] = 4; /* length */
@@ -844,35 +846,26 @@ bool nx_bt_stream_data_written()
   return !(nx__uart_is_writing());
 }
 
-
-U32 nx_bt_stream_has_data()
+void nx_bt_stream_read(U8 *buf, U32 length)
 {
-
-  return 0;
+  nx__uart_read(buf, length);
 }
 
-const void *nx_bt_stream_get_buffer()
+U32 nx_bt_stream_data_read()
 {
-
-  return NULL;
+  return nx__uart_data_read();
 }
 
 
-void nx_bt_stream_flush_buffer()
-{
-
-}
-
-bool nx_bt_stream_overloaded()
-{
-  return FALSE;
-}
 
 void nx_bt_stream_close()
 {
   /* return in command mode by lowering the ARM_CMD pin */
   *AT91C_PIOA_CODR = BT_ARM_CMD_PIN;
   bt_state.state = BT_STATE_WAITING;
+
+  /* we put back the callback in place: */
+  nx__uart_set_callback(bt_uart_command_callback);
 }
 
 
