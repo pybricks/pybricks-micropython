@@ -9,6 +9,7 @@
 #include "base/nxt.h"
 #include "base/types.h"
 #include "base/util.h"
+#include "base/assert.h"
 #include "base/drivers/systick.h"
 #include "base/drivers/_twi.h"
 
@@ -330,60 +331,44 @@ void nx__avr_fast_update() {
   }
 }
 
-/* Return the analog reading for the given sensor. */
 U32 nx__avr_get_sensor_value(U32 n) {
-  if (n < NXT_N_SENSORS)
-    return from_avr.adc_value[n];
-  else
-    return 0;
+  NX_ASSERT(n < NXT_N_SENSORS);
+
+  return from_avr.adc_value[n];
 }
 
-/* Set the speed and brake/coast setting for the given motor. */
 void nx__avr_set_motor(U32 motor, int power_percent, bool brake) {
-  if (motor < NXT_N_MOTORS) {
-    to_avr.motor_speed[motor] = power_percent;
-    if (brake)
-      to_avr.motor_brake |= (1 << motor);
-    else
-      to_avr.motor_brake &= ~(1 << motor);
-  }
+  NX_ASSERT(motor < NXT_N_MOTORS);
+
+  to_avr.motor_speed[motor] = power_percent;
+  if (brake)
+    to_avr.motor_brake |= (1 << motor);
+  else
+    to_avr.motor_brake &= ~(1 << motor);
 }
 
-/* Tell the AVR to power down the brick. This function never returns. */
 void nx__avr_power_down() {
   while (1)
     to_avr.power_mode = AVR_POWER_OFF;
 }
 
-/* Tell the AVR to overwrite flash with the SAM-BA bootloader and
- * reboot the NXT into it.
- */
 void nx__avr_firmware_update_mode() {
   while (1)
     to_avr.power_mode = AVR_RESET_MODE;
 }
 
-/* Return the button state, which is one of the values defined in
- * nx_avr_button_t. */
 nx_avr_button_t nx_avr_get_button() {
   return from_avr.buttons;
 }
 
-/* Return the current battery charge. */
 U32 nx_avr_get_battery_voltage() {
   return from_avr.battery.charge;
 }
 
-/* Return TRUE if power is supplied by AA batteries, FALSE if the
- * supply is by a power pack.
- */
 bool nx_avr_battery_is_aa() {
   return from_avr.battery.is_aa;
 }
 
-/* Set *major and *minor to the version number reported by the AVR
- * firmware.
- */
 void nx_avr_get_version(U8 *major, U8 *minor) {
   if (major)
     *major = from_avr.version.major;

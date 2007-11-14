@@ -10,6 +10,7 @@
 
 #include "base/types.h"
 #include "base/interrupts.h"
+#include "base/assert.h"
 #include "base/drivers/aic.h"
 #include "base/drivers/systick.h"
 
@@ -93,6 +94,11 @@ void nx__sound_init() {
 }
 
 void nx_sound_freq_async(U32 freq, U32 ms) {
+  /* Due to a bug in the sound driver, too short a beep will crash
+   * it. So, we check.
+   */
+  NX_ASSERT_MSG(ms >= 100, "Due to driver bug\nms must be\n<= 100 ms");
+
   /* Set the master clock divider to output the correct frequency.
    *
    * The values are currently magic borrowed from Lejos.
