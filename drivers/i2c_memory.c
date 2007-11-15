@@ -42,6 +42,7 @@ i2c_txn_err nx_i2c_memory_read(U32 sensor, U8 internal_address,
 				 &internal_address, 1, buf, size);
 
   while (nx_i2c_busy(sensor));
+//    nx_systick_wait_ms(50);
 
   /* TODO: add transaction result check. */
 
@@ -62,6 +63,7 @@ i2c_txn_err nx_i2c_memory_write(U32 sensor, U8 internal_address,
 				 &internal_address, 1, data, size);
 
   while (nx_i2c_busy(sensor));
+//    nx_systick_wait_ms(50);
 
   /* TODO: add transaction result check. */
 

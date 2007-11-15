@@ -405,7 +405,7 @@ static void i2c_set_bus_state(U32 sensor, U32 next_state) {
   if (p->lego_compat) {
     p->bus_state = I2C_PAUSE;
     p->p_ticks = next_state == I2C_IDLE
-      ? 10 * I2C_PAUSE_LEN
+      ? 200 * I2C_PAUSE_LEN
       : I2C_PAUSE_LEN;
     p->p_next = next_state;
     return;
