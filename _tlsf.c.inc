@@ -42,25 +42,27 @@
  * - Implemented realloc clever support.
  * - Added some test code in the example directory.
  *        
-*
+ *
  * (Oct 23 2006) Adam Scislowicz: 
  *
  * - Support for ARMv5 implemented
  *
  */
 
-#include "util.h"
+/* Excluded for NxOS
+#include <stdio.h>
+#include <string.h>
+*/
 
 #ifndef TLSF_USE_LOCKS
 #define	TLSF_USE_LOCKS 	(0)
 #endif
 
 #if TLSF_USE_LOCKS
-#error Cannot build TLSF with locks in NxOS!
-//#include "target.h"
+#include "target.h"
 #endif
 
-#include "tlsf.h"
+#include "_tlsf.h"
 
 #if !defined(__GNUC__)
 #ifndef __inline__
@@ -70,12 +72,6 @@
 
 /* The  debug functions  only can  be used  when _DEBUG_TLSF_  is set. */
 #define _DEBUG_TLSF_	(0)
-
-/* Internal function references. */
-void *malloc_ex(size_t, void *);
-void free_ex(void *, void *);
-void *realloc_ex(void *, size_t, void *);
-void *calloc_ex(size_t, size_t, void *);
 
 /*************************************************************************/
 /* Definition of the structures used by TLSF */
@@ -114,8 +110,8 @@ void *calloc_ex(size_t, size_t, void *);
 #define PREV_FREE	(0x2)
 #define PREV_USED	(0x0)
 
-#define PRINT_MSG(fmt, args...) //printf(fmt, ## args)
-#define ERROR_MSG(fmt, args...) //printf(fmt, ## args)
+#define PRINT_MSG(fmt, args...) printf(fmt, ## args)
+#define ERROR_MSG(fmt, args...) printf(fmt, ## args)
 
 typedef unsigned int u32_t;
 typedef unsigned char u8_t;
@@ -300,7 +296,7 @@ static __inline__ bhdr_t *FIND_SUITABLE_BLOCK(tlsf_t * _tlsf, int *_fl,
 static char *mp = NULL; // Default memory pool.
 
 /******************************************************************/
-size_t nx_mem_init(size_t mem_pool_size, void *mem_pool) {
+size_t init_memory_pool(size_t mem_pool_size, void *mem_pool) {
 /******************************************************************/
     tlsf_t *tlsf;
     bhdr_t *b, *lb;
@@ -355,18 +351,18 @@ size_t nx_mem_init(size_t mem_pool_size, void *mem_pool) {
 }
 
 /******************************************************************/
-size_t nx_mem_used() {
+size_t get_used_size(void *mem_pool) {
 /******************************************************************/
-    tlsf_t *tlsf = (tlsf_t *)mp;
+    tlsf_t *tlsf = (tlsf_t *) mem_pool;
 
     return tlsf->used_size;
 }
 
 
 /******************************************************************/
-void nx_mem_destroy() {
+void destroy_memory_pool(void *mem_pool) {
 /******************************************************************/
-    tlsf_t *tlsf = (tlsf_t *) mp;
+    tlsf_t *tlsf = (tlsf_t *) mem_pool;
 
     tlsf->tlsf_signature = 0;
 #if TLSF_USE_LOCKS
@@ -376,7 +372,7 @@ void nx_mem_destroy() {
 
 
 /******************************************************************/
-void *malloc(size_t size) {
+void *rtl_malloc(size_t size) {
 /******************************************************************/
     void *ret;
 #if TLSF_USE_LOCKS
@@ -392,7 +388,7 @@ void *malloc(size_t size) {
 }
 
 /******************************************************************/
-void free(void *ptr) {
+void rtl_free(void *ptr) {
 /******************************************************************/
 #if TLSF_USE_LOCKS
     tlsf_t *tlsf = (tlsf_t *) mp;
@@ -406,7 +402,7 @@ void free(void *ptr) {
 }
 
 /******************************************************************/
-void *realloc(void *ptr, size_t size) {
+void *rtl_realloc(void *ptr, size_t size) {
 /******************************************************************/   
     void *ret;
 #if TLSF_USE_LOCKS
@@ -422,7 +418,7 @@ void *realloc(void *ptr, size_t size) {
 }
 
 /******************************************************************/
-void *calloc(size_t nelem, size_t elem_size) {
+void *rtl_calloc(size_t nelem, size_t elem_size) {
 /******************************************************************/   
     void *ret;
 #if TLSF_USE_LOCKS
