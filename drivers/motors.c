@@ -11,6 +11,7 @@
 #include "base/types.h"
 #include "base/nxt.h"
 #include "base/interrupts.h"
+#include "base/assert.h"
 #include "base/drivers/systick.h"
 #include "base/drivers/aic.h"
 #include "base/drivers/_avr.h"
@@ -79,7 +80,6 @@ static volatile struct {
   { MOTOR_STOP, TRUE, 0, 0 },
 };
 
-
 /* Tachymeter interrupt handler, triggered by a change of value of a
  * tachymeter pin.
  */
@@ -128,10 +128,6 @@ static void motors_isr() {
   }
 }
 
-
-/* Initialize the tachymeters, ready to drive the motors with the
- * high-level API.
- */
 void nx__motors_init()
 {
   nx_interrupts_disable();
@@ -163,26 +159,15 @@ void nx__motors_init()
   nx_interrupts_enable();
 }
 
-
-/* Immediately stop the given motor, either braking or coasting. */
 void nx_motors_stop(U8 motor, bool brake) {
-  /* Cannot rotate imaginary motors. */
-  if (motor > 2)
-    return;
+  NX_ASSERT(motor < NXT_N_MOTORS);
 
   motors_state[motor].mode = MOTOR_STOP;
   nx__avr_set_motor(motor, 0, brake);
 }
 
-
-/* Start rotating the given motor continuously at the given speed. It
- * will continue to rotate until another motor command is issued to
- * it.
- */
 void nx_motors_rotate(U8 motor, S8 speed) {
-  /* Cannot rotate imaginary motors. */
-  if (motor > 2)
-    return;
+  NX_ASSERT(motor < NXT_N_MOTORS);
 
   /* Cap the given motor speed. */
   if (speed > 0 && speed > 100)
@@ -197,11 +182,11 @@ void nx_motors_rotate(U8 motor, S8 speed) {
   nx__avr_set_motor(motor, speed, FALSE);
 }
 
-
-/* Start rotating the motor at the given speed, and stop it (with the
- * given braking mode) after rotating the given number of degrees.
- */
 void nx_motors_rotate_angle(U8 motor, S8 speed, U32 angle, bool brake) {
+  NX_ASSERT(motor < NXT_N_MOTORS);
+  NX_ASSERT(speed <= 100);
+  NX_ASSERT(speed >= -100);
+
   /* If we're not moving, we can never reach the target. Take a
    * shortcut.
    */
@@ -209,16 +194,6 @@ void nx_motors_rotate_angle(U8 motor, S8 speed, U32 angle, bool brake) {
     nx_motors_stop(motor, brake);
     return;
   }
-
-  /* Cannot rotate imaginary motors. */
-  if (motor > 2)
-    return;
-
-  /* Cap the given motor speed. */
-  if (speed > 0 && speed > 100)
-    speed = 100;
-  else if (speed < 0 && speed < -100)
-    speed = -100;
 
   /* Set the motor to configuration mode. This way, if we are
    * overriding another intelligent mode, the tachymeter interrupt
@@ -243,11 +218,11 @@ void nx_motors_rotate_angle(U8 motor, S8 speed, U32 angle, bool brake) {
   nx__avr_set_motor(motor, speed, FALSE);
 }
 
-
-/* Start rotating the motor at the given speed, and stop it (with the
- * given braking mode) after given number of milliseconds.
- */
 void nx_motors_rotate_time(U8 motor, S8 speed, U32 ms, bool brake) {
+  NX_ASSERT(motor < NXT_N_MOTORS);
+  NX_ASSERT(speed <= 100);
+  NX_ASSERT(speed >= -100);
+
   /* If we're not moving, we can never reach the target. Take a
    * shortcut.
    */
@@ -255,16 +230,6 @@ void nx_motors_rotate_time(U8 motor, S8 speed, U32 ms, bool brake) {
     nx_motors_stop(motor, brake);
     return;
   }
-
-  /* Cannot rotate imaginary motors. */
-  if (motor > 2)
-    return;
-
-  /* Cap the given motor speed. */
-  if (speed > 0 && speed > 100)
-    speed = 100;
-  else if (speed < 0 && speed < -100)
-    speed = -100;
 
   /* Set the motor to configuration mode. This way, if we are
    * overriding another intelligent mode, the tachymeter interrupt
@@ -283,15 +248,8 @@ void nx_motors_rotate_time(U8 motor, S8 speed, U32 ms, bool brake) {
   nx__avr_set_motor(motor, speed, FALSE);
 }
 
-
-/* Get the current value of the tachymeter counter for the given
- * motor. This value is of no real use outside of the tachymeter
- * driver, but is useful for displaying motor activity.
- */
 U32 nx_motors_get_tach_count(U8 motor) {
-  /* Cannot query imaginary motors. */
-  if (motor > 2)
-    return 0;
+  NX_ASSERT(motor < NXT_N_MOTORS);
 
   return motors_state[motor].current_count;
 }

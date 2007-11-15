@@ -76,6 +76,24 @@ U32 strncmp(const char *a, const char *b, U32 n);
  */
 U32 strcmp(const char *a, const char *b);
 
+/** Locate leftmost instance of character @a c in string @a s.
+ *
+ * @param s The string to search.
+ * @param c The character to find.
+ * @return A pointer to the first occurence of @a c in @a s, or NULL if
+ * there is none.
+ */
+char *strchr(const char *s, const char c);
+
+/** Locate rightmost instance of character @a c in string @a s.
+ *
+ * @param s The string to search.
+ * @param c The character to find.
+ * @return A pointer to the last occurence of @a c in @a s, or NULL if
+ * there is none.
+ */
+char *strrchr(const char *s, const char c);
+
 /*@}*/
 
 #endif /* __NXOS_BASE_UTIL_H__ */

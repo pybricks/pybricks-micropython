@@ -10,6 +10,7 @@
 
 #include "base/types.h"
 #include "base/interrupts.h"
+#include "base/assert.h"
 #include "base/drivers/aic.h"
 #include "base/drivers/systick.h"
 
@@ -157,6 +158,11 @@ void nx__twi_read_async(U32 dev_addr, U8 *data, U32 len)
 {
   U32 mode = ((dev_addr & 0x7f) << 16) | AT91C_TWI_IADRSZ_NO | AT91C_TWI_MREAD;
 
+  NX_ASSERT(dev_addr == 1);
+  NX_ASSERT(data != NULL);
+  NX_ASSERT(len > 0);
+  NX_ASSERT(nx__twi_ready());
+
   /* TODO: assert(nx__twi_ready()) */
 
   twi_state.mode = TWI_RX_BUSY;
@@ -172,7 +178,10 @@ void nx__twi_write_async(U32 dev_addr, U8 *data, U32 len)
 {
   U32 mode = ((dev_addr & 0x7f) << 16) | AT91C_TWI_IADRSZ_NO;
 
-  /* TODO: assert(nx__twi_ready()) */
+  NX_ASSERT(dev_addr == 1);
+  NX_ASSERT(data != NULL);
+  NX_ASSERT(len > 0);
+  NX_ASSERT(nx__twi_ready());
 
   twi_state.mode = TWI_TX_BUSY;
   twi_state.ptr = data;

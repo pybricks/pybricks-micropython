@@ -1,15 +1,23 @@
+/* Copyright (C) 2007 the NxOS developers
+ *
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
+ */
 
 #include "at91sam7s256.h"
 
 #include "base/types.h"
 #include "base/interrupts.h"
+#include "base/_display.h"
+#include "base/assert.h"
 #include "drivers/_aic.h"
 #include "drivers/_systick.h"
 #include "drivers/_sound.h"
 #include "drivers/_avr.h"
 #include "drivers/_motors.h"
 #include "drivers/_lcd.h"
-#include "base/_display.h"
 #include "drivers/_sensors.h"
 #include "drivers/_usb.h"
 #include "drivers/i2c.h"
@@ -52,15 +60,13 @@ static void check_boot_errors() {
    * immediately at bootup. This is just a bug guard.
    */
   if (reset_status == AT91C_RSTC_RSTTYP_WATCHDOG) {
-    nx_display_string("**************\n");
-    nx_display_string("Watchdog fault\n");
-    nx_display_string("**************\n");
-    while (1);
+    NX_FAIL("**************\n"
+	    "Watchdog fault\n"
+	    "**************\n");
   } else if (reset_status == AT91C_RSTC_RSTTYP_BROWNOUT) {
-    nx_display_string("**************\n");
-    nx_display_string("Brownout fault\n");
-    nx_display_string("**************\n");
-    while (1);
+    NX_FAIL("**************\n"
+	    "Brownout fault\n"
+	    "**************\n");
   }
 }
 

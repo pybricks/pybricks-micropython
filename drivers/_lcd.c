@@ -293,9 +293,6 @@ void nx__lcd_fast_update() {
   }
 }
 
-/* Mirror the given display buffer to the LCD controller. The given
- * buffer must be exactly 100x64 bytes, one full screen of pixels.
- */
 void nx__lcd_set_display(U8 *display) {
   spi_state.screen = display;
   *AT91C_SPI_IER = AT91C_SPI_ENDTX;
@@ -305,7 +302,6 @@ void nx__lcd_dirty_display() {
   spi_state.screen_dirty = TRUE;
 }
 
-/* Shutdown the LCD controller. */
 void nx__lcd_shutdown() {
   /* When power to the controller goes out, there is the risk that
    * some capacitors mounted around the controller might damage it

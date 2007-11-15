@@ -13,11 +13,6 @@
 
 #include "base/drivers/aic.h"
 
-/* Initialise the Advanced Interrupt Controller.
- *
- * Note that this function leaves interrupts disabled in the ARM core
- * when it returns.
- */
 void nx__aic_init() {
   int i;
 
@@ -56,19 +51,6 @@ void nx__aic_init() {
   nx_interrupts_enable();
 }
 
-/* Register an interrupt service routine for an interrupt line.
- *
- * Note that while this function registers the routine in the AIC, it
- * does not enable or disable the interrupt line for that vector. Use
- * aic_mask_on and aic_mask_off to control actual activation of the
- * interrupt line.
- *
- * Args:
- *   vector: The peripheral ID to claim (see AT91SAM7.h for peripheral IDs)
- *   mode: The priority of this interrupt in relation to others. See aic.h
- *         for a list of defined values.
- *   isr: A pointer to the interrupt service routine function.
- */
 void nx_aic_install_isr(nx_aic_vector_t vector, nx_aic_priority_t prio,
                      nx_aic_trigger_mode_t trig_mode, nx_closure_t isr) {
   /* Disable the interrupt we're installing. Getting interrupted while
@@ -83,42 +65,18 @@ void nx_aic_install_isr(nx_aic_vector_t vector, nx_aic_priority_t prio,
   nx_aic_enable(vector);
 }
 
-
-/* Enable handling of an interrupt line in the AIC.
- *
- * Args:
- *   vector: The peripheral ID of the interrupt line to enable.
- */
 void nx_aic_enable(nx_aic_vector_t vector) {
   *AT91C_AIC_IECR = (1 << vector);
 }
 
-
-/* Disable handling of an interrupt line in the AIC.
- *
- * Args:
- *   vector: The peripheral ID of the interrupt line to disable.
- */
 void nx_aic_disable(nx_aic_vector_t vector) {
   *AT91C_AIC_IDCR = (1 << vector);
 }
 
-
-/* Set an interrupt line in the AIC.
- *
- * Args:
- *   vector: The peripheral ID of the interrupt line to set.
- */
 void nx_aic_set(nx_aic_vector_t vector) {
   *AT91C_AIC_ISCR = (1 << vector);
 }
 
-
-/* Clear an interrupt line in the AIC.
- *
- * Args:
- *   vector: The peripheral ID of the interrupt line to clear.
- */
 void nx_aic_clear(nx_aic_vector_t vector) {
   *AT91C_AIC_ICCR = (1 << vector);
 }

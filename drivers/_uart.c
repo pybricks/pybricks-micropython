@@ -9,71 +9,55 @@
 #include "base/at91sam7s256.h"
 
 #include "base/types.h"
-
 #include "base/nxt.h"
+#include "base/assert.h"
 #include "base/interrupts.h"
 #include "base/drivers/aic.h"
-
 #include "base/drivers/systick.h"
 
 #include "base/drivers/_uart.h"
 
+/* Buffer size for UART messages. */
 #define UART_BUFSIZE 128
 
+/* Pinmask for all the UART pins. */
+#define UART_PIOA_PINS \
+   (AT91C_PA21_RXD1 |  \
+    AT91C_PA22_TXD1 |  \
+    AT91C_PA25_CTS1 |  \
+    AT91C_PA24_RTS1 |  \
+    AT91C_PA23_SCK1)
+
+/* UART baud rate: 460.8kBaud */
+#define UART_BAUD_RATE 460800
+
+/* Value of the UART Clock Divisor to get as close as possible to that
+ * value. This divisor actually programs for 461.5kBaud, for 0.15%
+ * error.
+ */
+#define UART_CLOCK_DIVISOR (NXT_CLOCK_FREQ / 8 / UART_BAUD_RATE)
 
 static volatile struct {
-
-  uart_read_callback_t callback;
-  U32 nmb_int;
+  nx__uart_read_callback_t callback;
 
   U32 packet_size;
-
-  /* read buffers */
   U8 buf[UART_BUFSIZE];
-
-  U32 state;
-
-  /* to remove */
-  U32 last_csr;
-
 } uart_state = {
-  0
+  NULL, 0, {0}
 };
 
+static void uart_isr() {
+  U32 status = *AT91C_US1_CSR;
 
-/* I/O (uart 1)
- * RXD1 => PA21 (periph A)
- * TXD1 => PA22 (periph A)
- * CTS1 => PA25 (periph A)
- * RTS1 => PA24 (periph A)
- */
-#define UART_PIOA_PINS \
-   (AT91C_PA21_RXD1  \
-   | AT91C_PA22_TXD1 \
-   | AT91C_PA25_CTS1 \
-   | AT91C_PA24_RTS1 \
-   | AT91C_PA23_SCK1)
-
-
-
-static void uart_isr()
-{
-  U32 csr;
-
-  uart_state.nmb_int++;
-
-
-  csr = *AT91C_US1_CSR;
-
-  uart_state.last_csr = csr;
-
-  if (csr & AT91C_US_RXBRK) {
+  /* If we receive a break condition from the Bluecore, send up a NULL
+   * packet and reset the controller status.
+   */
+  if (status & AT91C_US_RXBRK) {
     uart_state.callback(NULL, 0);
     *AT91C_US1_CR = AT91C_US_RSTSTA;
   }
 
-
-  if (csr & AT91C_US_RXRDY) {
+  if (status & AT91C_US_RXRDY) {
 
     /* we've just read the first byte:
      * it's the packet size */
@@ -89,11 +73,9 @@ static void uart_isr()
 
     *AT91C_US1_IER = AT91C_US_ENDRX;
     *AT91C_US1_PTCR = AT91C_PDC_RXTEN;
-
   }
 
-
-  if (csr & AT91C_US_ENDRX) {
+  if (status & AT91C_US_ENDRX) {
     *AT91C_US1_PTCR = AT91C_PDC_RXTDIS;
 
     uart_state.callback((U8*)&(uart_state.buf), uart_state.packet_size);
@@ -109,52 +91,37 @@ static void uart_isr()
      * to have the next packet size and adapt the PDC RCR register value */
     *AT91C_US1_IER = AT91C_US_RXRDY;
   }
-
 }
 
-
-
-
-void nx_uart_init(uart_read_callback_t callback)
-{
+void nx__uart_init(nx__uart_read_callback_t callback) {
   uart_state.callback = callback;
 
   nx_interrupts_disable();
 
-  /* pio : we disable pio management
-   * and then switch to the periph A (uart) */
+  /* Power up the USART. */
+  *AT91C_PMC_PCER = (1 << AT91C_ID_US1);
+
+  /* Hand the USART I/O pins over to the controller. */
   *AT91C_PIOA_PDR = UART_PIOA_PINS;
   *AT91C_PIOA_ASR = UART_PIOA_PINS;
 
-
-  /*** clock & power : PMC */
-  /* must enable the USART clock (USART 1)*/
-
-  *AT91C_PMC_PCER = (1 << AT91C_ID_US1);
-
-  /*** configuration : USART registers */
-
-  /* first of all : disable the transmitter and the receiver
-   * thanks to the TXDIS and RXDIS in US_CR */
-
+  /* Disable both receiver and transmitter, inhibit USART interrupts,
+   * and reset all of the controller's components.
+   */
   *AT91C_US1_CR = AT91C_US_TXDIS | AT91C_US_RXDIS;
-
-  /**  then reset everything */
-
-  /* disable all the interruptions */
-
   *AT91C_US1_IDR = ~0;
-
-  /* Reset everything in the control register */
-
-  *AT91C_US1_CR = AT91C_US_RSTRX | AT91C_US_RSTTX | AT91C_US_RSTSTA | AT91C_US_RSTNACK;
+  *AT91C_US1_CR = (AT91C_US_RSTRX | AT91C_US_RSTTX |
+		   AT91C_US_RSTSTA | AT91C_US_RSTNACK);
 
   /* configure/reset the PDC */
 
-  /* We must put a size != 0 in the RCR register (even if the PDC is disabled for the receiving) */
-  /* else when we try to read manually a value on US1_RHR thanks to the RXRDY interruption
-   * the RXRDY of the CSR seems to never be set to 1 (no value read on the UART ?) */
-  /* TODO : figure this out */
+  /* We must put a size != 0 in the RCR register (even if the PDC is
+   * disabled for the receiving) else when we try to read manually a
+   * value on US1_RHR thanks to the RXRDY interruption the RXRDY of the
+   * CSR seems to never be set to 1 (no value read on the UART ?)
+   *
+   * TODO : figure this out
+   */
   *AT91C_US1_RPR = (U32)(&uart_state.buf);
   *AT91C_US1_RCR = UART_BUFSIZE;
   *AT91C_US1_TPR = 0;
@@ -164,101 +131,53 @@ void nx_uart_init(uart_read_callback_t callback)
   *AT91C_US1_TNPR = 0;
   *AT91C_US1_TNCR = 0;
 
+  /* Configure the USART for:
+   *  - Hardware handshaking
+   *  - Master clock as the clock source
+   *  - 8-bit characters, 1 stop bit, no parity bit
+   *  - Asynchronous communication
+   *  - No receive timeout
+   */
+  *AT91C_US1_MR = (AT91C_US_USMODE_HWHSH | AT91C_US_CLKS_CLOCK |
+		   AT91C_US_CHRL_8_BITS | AT91C_US_NBSTOP_1_BIT |
+		   AT91C_US_PAR_NONE | AT91C_US_CHMODE_NORMAL |
+		   AT91C_US_OVER);
+  *AT91C_US1_BRGR = UART_CLOCK_DIVISOR;
+  *AT91C_US1_RTOR = 0;
 
-  /* then configure: */
-
-  /* configure the mode register */
-  *AT91C_US1_MR =
-    AT91C_US_USMODE_HWHSH /* hardware handshaking */
-    |AT91C_US_CLKS_CLOCK /* MCK */
-    |AT91C_US_CHRL_8_BITS
-    /* no sync */
-    |AT91C_US_NBSTOP_1_BIT
-    |AT91C_US_PAR_NONE
-    |AT91C_US_CHMODE_NORMAL /* normal mode (no test mode) */
-    |AT91C_US_OVER; /* oversampling : 8x */
-
-
-  /* and then the baud rate generator: */
-  /*   we want to transmit at 460.8Kbauds */
-  /*   we selected the master clock, with an oversampling of 8x */
-  /*   => So Baud rate = MCK / (Clock Divisor * 8) */
-  /*   => Clock Divisor = MCK / 8 / Baud rate  */
-#define UART_BAUD_RATE 460800
-#define UART_CLOCK_DIVISOR(mck, baudrate) (mck / 8 / baudrate)
-
-  *AT91C_US1_BRGR = UART_CLOCK_DIVISOR(NXT_CLOCK_FREQ, UART_BAUD_RATE)
-    | ( (((NXT_CLOCK_FREQ/8) - (UART_CLOCK_DIVISOR(NXT_CLOCK_FREQ, UART_BAUD_RATE) * UART_BAUD_RATE)) / ((UART_BAUD_RATE + 4)/8)) << 16);
-  //*AT91C_US1_BRGR = UART_CLOCK_DIVISOR(NXT_CLOCK_FREQ, UART_BAUD_RATE);
-
-#undef UART_CLOCK_DIVISOR
-
+  /* Start listening for a character to receive. Since we programmed no
+   * timeout, this will just start listening until something happens.
+   */
   *AT91C_US1_CR = AT91C_US_STTTO;
 
-
-  /* specify the interruptions that this driver needs */
-
-  *AT91C_US1_IER = AT91C_US_RXRDY | AT91C_US_RXBRK;
-
-  /*** Interruptions : AIC */
-  /* not in edge sensitive mode => level */
-
+  /* Install an interrupt handler and start listening on interesting
+   * interrupt sources.
+   */
   nx_aic_install_isr(AT91C_ID_US1, AIC_PRIO_DRIVER,
 		     AIC_TRIG_LEVEL, uart_isr);
+  *AT91C_US1_IER = AT91C_US_RXRDY | AT91C_US_RXBRK;
 
-
-   /* and then reenable the transmitter and the receiver thanks to the
-    * TXEN bit and the RXEN bit in US_CR */
-
+  /* Activate the USART and its associated DMA controller. */
   *AT91C_US1_CR = AT91C_US_TXEN | AT91C_US_RXEN;
-
-  /* enable the pdc transmitter */
-
   *AT91C_US1_PTCR = AT91C_PDC_TXTEN;
 
-  /* reactivate the interruptions */
   nx_interrupts_enable();
-
 }
 
-void nx_uart_write(void *data, U32 lng)
-{
+void nx__uart_write(const U8 *data, U32 lng) {
+  NX_ASSERT(data != NULL);
+  NX_ASSERT(lng > 0);
+
   while (*AT91C_US1_TNCR != 0);
 
   *AT91C_US1_TNPR = (U32)data;
   *AT91C_US1_TNCR = lng;
 }
 
-bool nx_uart_can_write()
-{
+bool nx__uart_can_write() {
   return (*AT91C_US1_TNCR == 0);
 }
 
-bool nx_uart_is_writing()
-{
+bool nx__uart_is_writing() {
   return (*AT91C_US1_TCR + *AT91C_US1_TNCR) > 0;
-}
-
-
-/****** TO REMOVE : ****/
-
-
-U32 nx_uart_nmb_interrupt()
-{
-  return uart_state.nmb_int;
-}
-
-U32 nx_uart_get_last_csr()
-{
-  return uart_state.last_csr;
-}
-
-U32 nx_uart_get_csr()
-{
-  return *AT91C_US1_CSR;
-}
-
-U32 nx_uart_get_state()
-{
-  return uart_state.packet_size;
 }
