@@ -1,5 +1,5 @@
 /** @file dump.h
- *  @brief Data dumping utility.
+ *  @brief In-memory data dumping utility
  *
  * Data dumping utility for the NXT baseplate and application kernels.
  */
@@ -20,7 +20,7 @@
 /** @addtogroup kernel */
 /*@{*/
 
-/** @defgroup dump Data dumping utility.
+/** @defgroup dump In-memory data dumping
  */
 /*@{*/
 
