@@ -120,6 +120,9 @@ void nx_radar_reset(U32 sensor) {
   if (nx_radar_read(sensor, RADAR_FACTORY_SCALE_DIVISOR, &val)) {
     nx_radar_write(sensor, RADAR_CURRENT_SCALE_DIVISOR, &val);
   }
+
+  val = RADAR_DEFAULT_INTERVAL;
+  nx_radar_write(sensor, RADAR_INTERVAL, &val);
 }
 
 /** Returns radar's measurement #object from the given sensor number.
