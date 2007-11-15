@@ -40,13 +40,13 @@ i2c_txn_err nx_i2c_memory_read(U32 sensor, U8 internal_address,
 
   err = nx_i2c_start_transaction(sensor, TXN_MODE_READ,
 				 &internal_address, 1, buf, size);
+  if (err != I2C_ERR_OK)
+    return err;
 
-  while (nx_i2c_busy(sensor));
-//    nx_systick_wait_ms(50);
+  while (nx_i2c_busy(sensor))
+    nx_systick_wait_ms(5);
 
-  /* TODO: add transaction result check. */
-
-  return err;
+  return nx_i2c_get_txn_status(sensor);
 }
 
 /** Writes the given data of the given size at 'internal_address' on the
@@ -61,11 +61,11 @@ i2c_txn_err nx_i2c_memory_write(U32 sensor, U8 internal_address,
 
   err = nx_i2c_start_transaction(sensor, TXN_MODE_WRITE,
 				 &internal_address, 1, data, size);
+  if (err != I2C_ERR_OK)
+    return err;
 
-  while (nx_i2c_busy(sensor));
-//    nx_systick_wait_ms(50);
+  while (nx_i2c_busy(sensor))
+    nx_systick_wait_ms(5);
 
-  /* TODO: add transaction result check. */
-
-  return err;
+  return nx_i2c_get_txn_status(sensor);
 }
