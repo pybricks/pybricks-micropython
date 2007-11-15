@@ -52,8 +52,9 @@ void nx_systick_wait_ns(U32 ns);
 /** Install @a scheduler_cb as the scheduler callback.
  *
  * The scheduler callback will be invoked every millisecond once it is
- * installed. The scheduler callback runs in a low priority interrupt
- * handler (lower than all the device drivers).
+ * installed. The scheduler callback runs in a medium priority interrupt
+ * handler (higher than all the device drivers expect for the AVR link
+ * and system timer).
  *
  * @param scheduler_cb The scheduler callback to install.
  *
