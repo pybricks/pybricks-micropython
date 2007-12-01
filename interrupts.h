@@ -10,8 +10,8 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#ifndef __NXOS_INTERRUPTS_H__
-#define __NXOS_INTERRUPTS_H__
+#ifndef __NXOS_BASE_INTERRUPTS_H__
+#define __NXOS_BASE_INTERRUPTS_H__
 
 #include "base/types.h"
 
@@ -90,4 +90,4 @@ typedef struct {
 /*@}*/
 /*@}*/
 
-#endif
+#endif /* __NXOS_BASE_INTERRUPTS_H__ */
