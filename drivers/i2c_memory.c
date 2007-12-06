@@ -15,6 +15,9 @@
 #include "base/display.h"
 #include "base/drivers/i2c.h"
 
+/** Active waiting time before I2C transactions, in milliseconds. */
+#define NX_I2C_TXN_WAIT 10
+
 /** Initializes a remote memory unit of address 'address' on the given
  * sensor port.
  *
@@ -44,7 +47,7 @@ i2c_txn_err nx_i2c_memory_read(U32 sensor, U8 internal_address,
     return err;
 
   while (nx_i2c_busy(sensor))
-    nx_systick_wait_ms(5);
+    nx_systick_wait_ms(NX_I2C_TXN_WAIT);
 
   return nx_i2c_get_txn_status(sensor);
 }
@@ -65,7 +68,7 @@ i2c_txn_err nx_i2c_memory_write(U32 sensor, U8 internal_address,
     return err;
 
   while (nx_i2c_busy(sensor))
-    nx_systick_wait_ms(5);
+    nx_systick_wait_ms(NX_I2C_TXN_WAIT);
 
   return nx_i2c_get_txn_status(sensor);
 }

@@ -17,16 +17,17 @@
 #include "base/display.h"
 #include "base/drivers/i2c.h"
 
-/* The base clock frequency of the sensor I2C bus in Hz. */
+/** The base clock frequency of the sensor I2C bus in Hz. */
 #define I2C_BUS_SPEED 9600
 
-/* A classic I2C exchange includes up to 4 partial transactions. */
+/** A classic I2C exchange includes up to 4 partial transactions. */
 #define I2C_MAX_TXN 4
 
-/* Length of the I2C pauses (in 4th of BUS_SPEED) */
+/** Length of the I2C pauses (in 4th of BUS_SPEED) */
 #define I2C_PAUSE_LEN 3
 
-U32 i2c_device_count = 0;
+/** Number of currently processed I2C transactions. */
+U32 i2c_txn_count = 0;
 
 struct i2c_txn_info
 {
@@ -208,26 +209,11 @@ void nx_i2c_register(U32 sensor, U8 address, bool lego_compat) {
   //  I2C_MAX_TXN*sizeof(struct i2c_txn_info));
   i2c_state[sensor].current_txn = 0;
   i2c_state[sensor].n_txns = 0;
-
-  /* Finally, enable the I2C clock interrupt if required. */
-  if (i2c_device_count == 0)
-    *AT91C_TC0_IER = AT91C_TC_CPCS;
-
-  i2c_device_count++;
 }
 
 /** Unregister the device on the given sensor port. */
 void nx_i2c_unregister(U32 sensor) {
   nx__sensors_disable(sensor);
-
-  /* Decrement the I2C device count. */
-  i2c_device_count--;
-
-  /* If no I2C device is connected anymore, deactivate the
-   * I2C clock interrupt.
-   */
-  if (i2c_device_count == 0)
-    *AT91C_TC0_IDR = AT91C_TC_CPCS;
 }
 
 /** Add a I2C sub transaction.
@@ -259,6 +245,10 @@ static i2c_txn_err i2c_add_txn(U32 sensor, i2c_txn_mode mode,
   t->data_size = size;
 
   i2c_state[sensor].n_txns++;
+  
+  /* TODO: find how to make this a critical code section. */
+  i2c_txn_count++;
+
   return I2C_ERR_OK;
 }
 
@@ -341,6 +331,9 @@ i2c_txn_err nx_i2c_start_transaction(U32 sensor, i2c_txn_mode mode,
     i2c_add_txn(sensor, TXN_MODE_READ, recv_buf, recv_size, I2C_CONTROL_NONE,
                 I2C_CONTROL_STOP);
   }
+
+  /* Enable the I2C interrupt inconditonnaly. */
+  *AT91C_TC0_IER = AT91C_TC_CPCS;
 
   i2c_trigger(sensor);
   return I2C_ERR_OK;
@@ -733,6 +726,16 @@ static void i2c_isr()
 
         i2c_set_bus_state(sensor, I2C_IDLE);
         p->txn_state = TXN_WAITING;
+ 
+        /* When the sub-transaction is done, decrement i2c_txn_count.
+         * If it reaches 0, disable the I2C interrupt.
+         *
+         * TODO: find how to make this a critical code section.
+         */
+        i2c_txn_count--;
+        if (i2c_txn_count == 0)
+          *AT91C_TC0_IDR = AT91C_TC_CPCS;
+
         break;
       }
 
