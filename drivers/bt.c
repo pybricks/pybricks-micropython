@@ -20,11 +20,13 @@
 #define BT_ARGS_BUFSIZE (BT_NAME_MAX_LNG+1)
 
 /* to remove : */
+#define UART_DEBUG
 #ifdef UART_DEBUG
 #include "base/display.h"
 #include "base/drivers/usb.h"
 #include "base/util.h"
-#define USB_SEND(txt) nx_usb_send((U8*)txt, strlen(txt))
+#define CMDS_BUFSIZE 128
+#define USB_SEND(txt) nx_usb_write((U8*)txt, strlen(txt))
 #else
 #define CMDS_BUFSIZE 0
 #define USB_SEND(txt)
@@ -291,7 +293,7 @@ static bool bt_wait_msg(U8 msg)
 static void bt_reseted()
 {
   bt_state.state = BT_STATE_WAITING;
-  nx__uart_write(bt_msg_start_heart, sizeof(bt_msg_start_heart));
+  //nx__uart_write(bt_msg_start_heart, sizeof(bt_msg_start_heart));
 }
 
 
@@ -463,6 +465,8 @@ void nx_bt_set_friendly_name(char *name)
   int i;
   U8 packet[20] = { 0 };
 
+  USB_SEND("set_friendly_name()");
+
   packet[0] = 19; /* length */
   packet[1] = BT_MSG_SET_FRIENDLY_NAME;
 
@@ -482,6 +486,8 @@ void nx_bt_set_friendly_name(char *name)
 
 void nx_bt_set_discoverable(bool d)
 {
+  USB_SEND("set_discoverable()");
+
   do {
     if (d)
       nx__uart_write(bt_msg_set_discoverable_true, sizeof(bt_msg_set_discoverable_true));
@@ -686,6 +692,8 @@ int nx_bt_checksum_errors()
 
 int nx_bt_open_port()
 {
+  USB_SEND("open_port()");
+
   nx__uart_write(bt_msg_open_port, sizeof(bt_msg_open_port));
 
   if (!bt_wait_msg(BT_MSG_PORT_OPEN_RESULT))
@@ -700,6 +708,8 @@ int nx_bt_open_port()
 bool nx_bt_close_port(int handle)
 {
   U8 packet[5];
+
+  USB_SEND("close_port()");
 
   packet[0] = 4; /* length */
   packet[1] = BT_MSG_CLOSE_PORT;
@@ -724,8 +734,10 @@ bool nx_bt_has_dev_waiting_for_pin()
   int i;
 
   for (i = 0 ; i < BT_ADDR_SIZE ; i++)
-    if (bt_state.dev_waiting_for_pin[i] != 0)
+    if (bt_state.dev_waiting_for_pin[i] != 0) {
+      USB_SEND("has_dev_waiting_for_pin() => TRUE");
       return TRUE;
+    }
 
   return FALSE;
 }
@@ -738,6 +750,8 @@ void nx_bt_send_pin(char *code)
 
   if (!nx_bt_has_dev_waiting_for_pin())
     return;
+
+  USB_SEND("send_pin()");
 
   packet[0] = 26;
   packet[1] = BT_MSG_PIN_CODE;
@@ -767,8 +781,10 @@ bool nx_bt_connection_pending()
   int i;
 
   for (i = 0 ; i < BT_ADDR_SIZE ; i++)
-    if (bt_state.dev_waiting_for_connection[i] != 0)
+    if (bt_state.dev_waiting_for_connection[i] != 0) {
+      USB_SEND("connection_pending => TRUE");
       return TRUE;
+    }
 
   return FALSE;
 }
@@ -781,6 +797,8 @@ void nx_bt_accept_connection(bool accept)
   if (!nx_bt_connection_pending())
     return;
 
+  USB_SEND("accept_connection()");
+
   if (accept)
     nx__uart_write(bt_msg_accept_connection, sizeof(bt_msg_accept_connection));
   else
@@ -788,6 +806,8 @@ void nx_bt_accept_connection(bool accept)
 
   for (i = 0 ; i < BT_ADDR_SIZE ; i++)
     bt_state.dev_waiting_for_connection[i] = 0;
+
+  while(nx__uart_is_writing());
 }
 
 
@@ -797,8 +817,10 @@ int nx_bt_connection_established()
 
   handle = bt_state.new_handle;
 
-  if (handle >= 0)
+  if (handle >= 0) {
+    USB_SEND("connection_established() => TRUE");
     bt_state.new_handle = -1;
+  }
 
   return handle;
 }
@@ -808,9 +830,9 @@ void nx_bt_stream_open(int handle)
 {
   U8 packet[5];
 
-  /* we make sure that the callback won't be called anymore */
+  USB_SEND("stream_open()");
 
-  nx__uart_set_callback(NULL);
+  /* we make sure that the callback won't be called anymore */
 
   /* send open stream message */
 
@@ -824,6 +846,8 @@ void nx_bt_stream_open(int handle)
 
   while(nx__uart_is_writing());
 
+  nx__uart_set_callback(NULL);
+
   /* set ARM_CMD to high to go in stream mode */
   *AT91C_PIOA_SODR = BT_ARM_CMD_PIN;
 
@@ -832,6 +856,7 @@ void nx_bt_stream_open(int handle)
 
 void nx_bt_stream_write(U8 *data, U32 length)
 {
+  USB_SEND("stream_write()");
   nx__uart_write(data, length);
 }
 
@@ -848,6 +873,7 @@ bool nx_bt_stream_data_written()
 
 void nx_bt_stream_read(U8 *buf, U32 length)
 {
+  USB_SEND("stream_read()");
   nx__uart_read(buf, length);
 }
 
@@ -860,12 +886,14 @@ U32 nx_bt_stream_data_read()
 
 void nx_bt_stream_close()
 {
-  /* return in command mode by lowering the ARM_CMD pin */
-  *AT91C_PIOA_CODR = BT_ARM_CMD_PIN;
-  bt_state.state = BT_STATE_WAITING;
+  USB_SEND("stream_close()");
 
   /* we put back the callback in place: */
   nx__uart_set_callback(bt_uart_command_callback);
+
+  /* return in command mode by lowering the ARM_CMD pin */
+  *AT91C_PIOA_CODR = BT_ARM_CMD_PIN;
+  bt_state.state = BT_STATE_WAITING;
 }
 
 
@@ -873,8 +901,8 @@ void nx_bt_stream_close()
 /* to remove: */
 void nx_bt_debug()
 {
-  nx_display_uint(bt_state.last_heartbeat);
-  nx_display_end_line();
+  //nx_display_uint(bt_state.last_heartbeat);
+  //nx_display_end_line();
   USB_SEND((char *)bt_state.cmds);
 }
 

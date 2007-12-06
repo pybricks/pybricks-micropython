@@ -187,24 +187,25 @@ bool nx__uart_is_writing() {
 void nx__uart_set_callback(nx__uart_read_callback_t callback) {
   if (callback == NULL) {
 
-    *AT91C_US1_IDR = AT91C_US_RXRDY | AT91C_US_RXBRK;
+    *AT91C_US1_IDR = AT91C_US_RXRDY | AT91C_US_RXBRK | AT91C_US_ENDRX;
     /* we disable the PDC */
     *AT91C_US1_PTCR = AT91C_PDC_RXTDIS;
     uart_state.callback = callback;
 
-    /* we must have a value > 0 in US1_RCR
-     * even for manual reading */
-    *AT91C_US1_RPR = (U32)(&uart_state.buf);
-    *AT91C_US1_RCR = UART_BUFSIZE;
+    *AT91C_US1_RCR = 0;
+    *AT91C_US1_RPR = (U32)NULL;
 
   } else {
-    *AT91C_US1_RPR = (U32)(&uart_state.buf);
+    *AT91C_US1_IDR = AT91C_US_RXRDY | AT91C_US_RXBRK | AT91C_US_ENDRX;
+
+    *AT91C_US1_PTCR = AT91C_PDC_RXTDIS;
+
     *AT91C_US1_RCR = UART_BUFSIZE;
+    *AT91C_US1_RPR = (U32)(&uart_state.buf);
 
-    /* we reenable it */
     uart_state.callback = callback;
-    *AT91C_US1_PTCR = AT91C_PDC_RXTEN;
 
+    /* we reenable the reading of the first char (ie the packet size) */
     *AT91C_US1_IER = AT91C_US_RXRDY | AT91C_US_RXBRK;
   }
 
@@ -213,12 +214,14 @@ void nx__uart_set_callback(nx__uart_read_callback_t callback) {
 void nx__uart_read(U8 *buf, U32 length) {
   uart_state.to_read = length;
 
-  *AT91C_US1_RPR = (U32)(&buf);
+  *AT91C_US1_RPR = (U32)buf;
   *AT91C_US1_RCR = length;
 
-  *AT91C_US1_PTCR = AT91C_PDC_RXTEN;
-
-  *AT91C_US1_IER = AT91C_US_RXRDY | AT91C_US_RXBRK;
+  if (buf != NULL && length > 0) {
+    *AT91C_US1_PTCR = AT91C_PDC_RXTEN;
+  } else {
+    *AT91C_US1_PTCR = AT91C_PDC_RXTDIS;
+  }
 }
 
 U32 nx__uart_data_read() {
