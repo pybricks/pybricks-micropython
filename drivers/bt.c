@@ -20,7 +20,7 @@
 #define BT_ARGS_BUFSIZE (BT_NAME_MAX_LNG+1)
 
 /* to remove : */
-#define UART_DEBUG
+/*#define UART_DEBUG*/
 #ifdef UART_DEBUG
 #include "base/display.h"
 #include "base/drivers/usb.h"
