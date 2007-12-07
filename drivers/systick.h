@@ -63,6 +63,16 @@ void nx_systick_wait_ns(U32 ns);
  */
 void nx_systick_install_scheduler(nx_closure_t scheduler_cb);
 
+/** Trigger a call to the installed scheduler callback.
+ *
+ * The callback will be run in a low priority interrupt handler, as if
+ * it had been called by the system timer.
+ *
+ * @note If no scheduler callback has been installed (by
+ * ns_systick_install_scheduler()), the call has no effect.
+ */
+void nx_systick_call_scheduler();
+
 /*@}*/
 /*@}*/
 
