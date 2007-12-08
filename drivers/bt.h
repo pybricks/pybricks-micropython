@@ -63,6 +63,13 @@ typedef enum {
   BT_LR_UNKNOWN_ADDR
 } bt_return_value_t;
 
+typedef enum {
+  BT_DISCONNECTION_SUCCESS,
+  BT_DISCONNECTION_LINK_LOSS,
+  BT_DISCONNECTION_NO_SLC, /* Service Level Connection */
+  BT_DISCONNECTION_TIMEOUT,
+  BT_DISCONNECTION_ERROR
+} bt_disconnection_status_t;
 
 typedef struct bt_version {
   U8 major;
@@ -169,7 +176,10 @@ void nx_bt_accept_connection(bool accept);
  */
 int nx_bt_connection_established();
 
-
+/**
+ * Close the specified connexion
+ */
+bt_disconnection_status_t nx_bt_close_connection(int handle);
 
 /**
  * Only one data stream can be opened at the same time.

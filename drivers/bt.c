@@ -825,6 +825,32 @@ int nx_bt_connection_established()
   return handle;
 }
 
+bt_disconnection_status_t nx_bt_close_connection(int handle)
+{
+  U8 packet[5];
+  int ret_handle = 0;
+
+  USB_SEND("close_connection()");
+
+  packet[0] = 4;
+  packet[1] = BT_MSG_CLOSE_CONNECTION;
+  packet[2] = (U8)handle;
+
+  bt_set_checksum(packet+1, 4);
+
+  nx__uart_write(packet+1, 5);
+
+  while(nx__uart_is_writing());
+
+  while (ret_handle != handle) {
+    if (!bt_wait_msg(BT_MSG_CLOSE_CONNECTION_RESULT))
+      return FALSE;
+    ret_handle = bt_state.args[1];
+  }
+
+  return bt_state.args[0];
+}
+
 
 void nx_bt_stream_open(int handle)
 {
