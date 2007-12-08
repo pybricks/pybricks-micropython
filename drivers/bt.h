@@ -176,6 +176,8 @@ void nx_bt_accept_connection(bool accept);
  */
 int nx_bt_connection_established();
 
+U8 nx_bt_get_link_quality(int handle);
+
 /**
  * Close the specified connexion
  */
