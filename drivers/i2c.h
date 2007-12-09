@@ -66,11 +66,11 @@ typedef enum
  */
 typedef enum {
   I2C_CONTROL_NONE = 0,
-  
+
   /* Pre control bits. */
   I2C_CONTROL_START,
   I2C_CONTROL_RESTART,
-  
+
   /* Post control bits. */
   I2C_CONTROL_STOP,
 } i2c_control;
