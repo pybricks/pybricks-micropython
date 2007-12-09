@@ -52,6 +52,11 @@ static volatile U32 systick_time;
  */
 static nx_closure_t scheduler_cb = NULL;
 
+/* The scheduler mask. If TRUE, the scheduler callback will not be
+ * invoked from the high priority interrupt handler.
+ */
+static bool scheduler_inhibit = FALSE;
+
 /* Low priority handler, called 1000 times a second by the high
  * priority handler if a scheduler callback is registered.
  */
@@ -89,11 +94,8 @@ static void systick_isr() {
    */
   nx__lcd_fast_update();
 
-  /* If the application kernel set a scheduling callback, trigger the
-   * lower priority IRQ in which the scheduler runs.
-   */
-  if (scheduler_cb)
-    nx_aic_set(SCHEDULER_SYSIRQ);
+  if (!scheduler_inhibit)
+    nx_systick_call_scheduler();
 }
 
 void nx__systick_init() {
@@ -137,4 +139,20 @@ void nx_systick_install_scheduler(nx_closure_t sched_cb) {
   nx_interrupts_disable();
   scheduler_cb = sched_cb;
   nx_interrupts_enable();
+}
+
+inline void nx_systick_call_scheduler() {
+  /* If the application kernel set a scheduling callback, trigger the
+   * lower priority IRQ in which the scheduler runs.
+   */
+  if (scheduler_cb)
+    nx_aic_set(SCHEDULER_SYSIRQ);
+}
+
+void nx_systick_mask_scheduler() {
+  scheduler_inhibit = TRUE;
+}
+
+void nx_systick_unmask_scheduler() {
+  scheduler_inhibit = FALSE;
 }
