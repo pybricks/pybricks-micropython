@@ -70,6 +70,13 @@ void nx__lcd_dirty_display(void);
  */
 void nx__lcd_shutdown(void);
 
+/** Display an abort message.
+ *
+ * This will take the kernel offline (the technical term for "crash")
+ * after displaying an abort message.
+ */
+void nx__lcd_sync_refresh(void);
+
 /*@}*/
 /*@}*/
 

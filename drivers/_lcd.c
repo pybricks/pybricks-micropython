@@ -315,3 +315,24 @@ void nx__lcd_shutdown(void) {
   spi_write_command_byte(RESET());
   nx_systick_wait_ms(20);
 }
+
+void nx__lcd_sync_refresh() {
+  int i, j;
+
+  /* Start the data transfer. */
+  for (i=0; i<8; i++) {
+    spi_set_tx_mode(COMMAND);
+    spi_write_command_byte(SET_COLUMN_ADDR0(0));
+    spi_write_command_byte(SET_COLUMN_ADDR1(0));
+    spi_write_command_byte(SET_PAGE_ADDR(i));
+    spi_set_tx_mode(DATA);
+
+    for (j=0; j<100; j++) {
+      /* Wait for the transmit register to empty. */
+      while (!(*AT91C_SPI_SR & AT91C_SPI_TDRE));
+
+      /* Send the command byte and wait for a reply. */
+      *AT91C_SPI_TDR = spi_state.screen[i*100 + j];
+    }
+  }
+}
