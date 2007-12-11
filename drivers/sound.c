@@ -35,7 +35,7 @@ static const U32 tone_pattern[16] = {
  */
 static volatile U32 tone_cycles;
 
-static void sound_isr() {
+static void sound_isr(void) {
   if (tone_cycles--) {
     /* Tell the DMA controller to stream the static sine wave, 16
      * words of data.
@@ -48,7 +48,7 @@ static void sound_isr() {
   }
 }
 
-void nx__sound_init() {
+void nx__sound_init(void) {
   nx_interrupts_disable();
 
   /* Start by inhibiting all sound output. Then enable power to the

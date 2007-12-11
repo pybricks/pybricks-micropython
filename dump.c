@@ -79,7 +79,7 @@ bool nx_dump_u8(U8 val) {
  *
  * First sends the dump size (a 4 bytes U32), then sends the data.
  */
-void nx_dump_send_usb() {
+void nx_dump_send_usb(void) {
   nx_usb_write((U8 *)&_dump_size, 4);
   nx_usb_write(_dump_ptr, _dump_size);
 }

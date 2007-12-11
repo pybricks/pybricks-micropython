@@ -47,7 +47,7 @@ static volatile struct {
   NULL, 0, {0}, 0
 };
 
-static void uart_isr() {
+static void uart_isr(void) {
   U32 status = *AT91C_US1_CSR;
 
   /* If we receive a break condition from the Bluecore, send up a NULL
@@ -175,11 +175,11 @@ void nx__uart_write(const U8 *data, U32 lng) {
   *AT91C_US1_TNCR = lng;
 }
 
-bool nx__uart_can_write() {
+bool nx__uart_can_write(void) {
   return (*AT91C_US1_TNCR == 0);
 }
 
-bool nx__uart_is_writing() {
+bool nx__uart_is_writing(void) {
   return (*AT91C_US1_TCR + *AT91C_US1_TNCR) > 0;
 }
 
@@ -224,6 +224,6 @@ void nx__uart_read(U8 *buf, U32 length) {
   }
 }
 
-U32 nx__uart_data_read() {
+U32 nx__uart_data_read(void) {
   return uart_state.to_read - (*AT91C_US1_RCR);
 }

@@ -60,7 +60,7 @@ static bool scheduler_inhibit = FALSE;
 /* Low priority handler, called 1000 times a second by the high
  * priority handler if a scheduler callback is registered.
  */
-static void systick_sched() {
+static void systick_sched(void) {
   /* Acknowledge the interrupt. */
   nx_aic_clear(SCHEDULER_SYSIRQ);
 
@@ -70,7 +70,7 @@ static void systick_sched() {
 }
 
 /* High priority handler, called 1000 times a second */
-static void systick_isr() {
+static void systick_isr(void) {
   U32 status;
   /* The PIT's value register must be read to acknowledge the
    * interrupt.
@@ -98,7 +98,7 @@ static void systick_isr() {
     nx_systick_call_scheduler();
 }
 
-void nx__systick_init() {
+void nx__systick_init(void) {
   nx_interrupts_disable();
 
   /* Install both the low and high priority interrupt handlers, ready
@@ -119,7 +119,7 @@ void nx__systick_init() {
   nx_interrupts_enable();
 }
 
-U32 nx_systick_get_ms() {
+U32 nx_systick_get_ms(void) {
   return systick_time;
 }
 
@@ -141,7 +141,7 @@ void nx_systick_install_scheduler(nx_closure_t sched_cb) {
   nx_interrupts_enable();
 }
 
-inline void nx_systick_call_scheduler() {
+inline void nx_systick_call_scheduler(void) {
   /* If the application kernel set a scheduling callback, trigger the
    * lower priority IRQ in which the scheduler runs.
    */
@@ -149,10 +149,10 @@ inline void nx_systick_call_scheduler() {
     nx_aic_set(SCHEDULER_SYSIRQ);
 }
 
-void nx_systick_mask_scheduler() {
+void nx_systick_mask_scheduler(void) {
   scheduler_inhibit = TRUE;
 }
 
-void nx_systick_unmask_scheduler() {
+void nx_systick_unmask_scheduler(void) {
   scheduler_inhibit = FALSE;
 }

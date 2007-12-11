@@ -22,7 +22,7 @@
 #define printf(fmt, ...) /* Nothing, we don't printf. */
 #include "base/_tlsf.c.inc"
 
-void nx_memalloc_init() {
+void nx_memalloc_init(void) {
   nx_memalloc_init_full(NX_USERSPACE_START, NX_USERSPACE_SIZE);
 }
 
@@ -31,11 +31,11 @@ void nx_memalloc_init_full(void *mem_pool, U32 mem_pool_size) {
   NX_ASSERT_MSG(size > 0, "Failed to init\nmemory allocator");
 }
 
-U32 nx_memalloc_used() {
+U32 nx_memalloc_used(void) {
   return get_used_size(mp);
 }
 
-void nx_memalloc_destroy() {
+void nx_memalloc_destroy(void) {
   destroy_memory_pool(mp);
 }
 

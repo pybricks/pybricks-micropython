@@ -40,14 +40,14 @@ static struct {
 } display;
 
 
-static inline void dirty_display() {
+static inline void dirty_display(void) {
   if (display.auto_refresh)
     nx__lcd_dirty_display();
 }
 
 
 /* Clear the display. */
-void nx_display_clear() {
+void nx_display_clear(void) {
   memset(&display.buffer[0][0], 0, sizeof(display.buffer));
   nx_display_cursor_set_pos(0, 0);
   dirty_display();
@@ -64,7 +64,7 @@ void nx_display_auto_refresh(bool auto_refresh) {
 /* Explicitely refresh the display. You only need to use this when
  * auto-refresh is disabled.
  */
-inline void nx_display_refresh() {
+inline void nx_display_refresh(void) {
   nx__lcd_dirty_display();
 }
 
@@ -115,7 +115,7 @@ void nx_display_cursor_set_pos(U8 x, U8 y) {
   display.cursor.y = y;
 }
 
-inline void nx_display_end_line() {
+inline void nx_display_end_line(void) {
   update_cursor(TRUE);
 }
 
@@ -183,7 +183,7 @@ void nx_display_uint(U32 val) {
 /*
  * Display initialization.
  */
-void nx__display_init() {
+void nx__display_init(void) {
   display.auto_refresh = FALSE;
   nx_display_clear();
   display.cursor.x = 0;

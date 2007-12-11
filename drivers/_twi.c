@@ -37,7 +37,7 @@ static volatile struct {
   0,                 /* And zero length, obviously. */
 };
 
-static void twi_isr()
+static void twi_isr(void)
 {
   /* Read the status register once to acknowledge all TWI interrupts. */
   U32 status = *AT91C_TWI_SR;
@@ -98,7 +98,7 @@ static void twi_isr()
   }
 }
 
-void nx__twi_init()
+void nx__twi_init(void)
 {
   U32 clocks = 9;
 
@@ -192,6 +192,6 @@ void nx__twi_write_async(U32 dev_addr, U8 *data, U32 len)
   *AT91C_TWI_IER = AT91C_TWI_TXRDY;
 }
 
-bool nx__twi_ready() {
+bool nx__twi_ready(void) {
   return (twi_state.mode == TWI_READY) ? TRUE : FALSE;
 }

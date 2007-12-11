@@ -83,7 +83,7 @@ static volatile struct {
 /* Tachymeter interrupt handler, triggered by a change of value of a
  * tachymeter pin.
  */
-static void motors_isr() {
+static void motors_isr(void) {
   int i;
   U32 changes;
   U32 pins;
@@ -128,7 +128,7 @@ static void motors_isr() {
   }
 }
 
-void nx__motors_init()
+void nx__motors_init(void)
 {
   nx_interrupts_disable();
 

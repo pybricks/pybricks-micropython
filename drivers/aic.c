@@ -13,7 +13,7 @@
 
 #include "base/drivers/aic.h"
 
-void nx__aic_init() {
+void nx__aic_init(void) {
   int i;
 
   /* Prevent the ARM core from being interrupted while we set up the

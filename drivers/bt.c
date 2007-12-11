@@ -288,7 +288,7 @@ static bool bt_wait_msg(U8 msg)
 }
 
 
-static void bt_reseted()
+static void bt_reseted(void)
 {
   bt_state.state = BT_STATE_WAITING;
   //nx__uart_write(bt_msg_start_heart, sizeof(bt_msg_start_heart));
@@ -432,7 +432,7 @@ static void bt_uart_command_callback(U8 *msg, U32 len)
 }
 
 
-void nx_bt_init()
+void nx_bt_init(void)
 {
   memset((void*)&bt_state, 0, sizeof(bt_state));
   USB_SEND("nx_bt_init()");
@@ -496,7 +496,7 @@ void nx_bt_set_discoverable(bool d)
 }
 
 
-bt_state_t nx_bt_get_state() {
+bt_state_t nx_bt_get_state(void) {
   return bt_state.state;
 }
 
@@ -528,7 +528,7 @@ void nx_bt_begin_inquiry(U8 max_devices,
   bt_state.state = BT_STATE_INQUIRING;
 }
 
-bool nx_bt_has_found_device()
+bool nx_bt_has_found_device(void)
 {
   if (bt_state.state == BT_STATE_INQUIRING)
     return (bt_state.last_checked_id != bt_state.remote_id);
@@ -550,20 +550,20 @@ bool nx_bt_get_discovered_device(bt_device_t *dev)
 }
 
 
-void nx_bt_cancel_inquiry()
+void nx_bt_cancel_inquiry(void)
 {
   nx__uart_write(bt_msg_cancel_inquiry, sizeof(bt_msg_cancel_inquiry));
   bt_wait_msg(BT_MSG_INQUIRY_STOPPED);
 }
 
 
-void nx_bt_begin_known_devices_dumping()
+void nx_bt_begin_known_devices_dumping(void)
 {
   nx__uart_write(bt_msg_dump_list, sizeof(bt_msg_dump_list));
   bt_state.state = BT_STATE_KNOWN_DEVICES_DUMPING;
 }
 
-bool nx_bt_has_known_device()
+bool nx_bt_has_known_device(void)
 {
   if (bt_state.state == BT_STATE_KNOWN_DEVICES_DUMPING)
     return (bt_state.last_checked_id != bt_state.remote_id);
@@ -642,7 +642,7 @@ bt_return_value_t nx_bt_remove_known_device(U8 dev_addr[BT_ADDR_SIZE])
 }
 
 
-bt_version_t nx_bt_get_version()
+bt_version_t nx_bt_get_version(void)
 {
   bt_version_t ver = { 0, 0 };
 
@@ -683,13 +683,13 @@ int nx_bt_get_friendly_name(char *name)
 }
 
 
-int nx_bt_checksum_errors()
+int nx_bt_checksum_errors(void)
 {
   return bt_state.nmb_checksum_errors;
 }
 
 
-int nx_bt_open_port()
+int nx_bt_open_port(void)
 {
   USB_SEND("open_port()");
 
@@ -728,7 +728,7 @@ bool nx_bt_close_port(int handle)
 
 
 
-bool nx_bt_has_dev_waiting_for_pin()
+bool nx_bt_has_dev_waiting_for_pin(void)
 {
   int i;
 
@@ -775,7 +775,7 @@ void nx_bt_send_pin(char *code)
 }
 
 
-bool nx_bt_connection_pending()
+bool nx_bt_connection_pending(void)
 {
   int i;
 
@@ -810,7 +810,7 @@ void nx_bt_accept_connection(bool accept)
 }
 
 
-int nx_bt_connection_established()
+int nx_bt_connection_established(void)
 {
   int handle;
 
@@ -903,13 +903,13 @@ void nx_bt_stream_write(U8 *data, U32 length)
   nx__uart_write(data, length);
 }
 
-bool nx_bt_stream_opened()
+bool nx_bt_stream_opened(void)
 {
   return bt_state.state == BT_STATE_STREAMING;
 }
 
 
-bool nx_bt_stream_data_written()
+bool nx_bt_stream_data_written(void)
 {
   return !(nx__uart_is_writing());
 }
@@ -920,14 +920,14 @@ void nx_bt_stream_read(U8 *buf, U32 length)
   nx__uart_read(buf, length);
 }
 
-U32 nx_bt_stream_data_read()
+U32 nx_bt_stream_data_read(void)
 {
   return nx__uart_data_read();
 }
 
 
 
-void nx_bt_stream_close()
+void nx_bt_stream_close(void)
 {
   USB_SEND("stream_close()");
 
@@ -942,7 +942,7 @@ void nx_bt_stream_close()
 
 
 /* to remove: */
-void nx_bt_debug()
+void nx_bt_debug(void)
 {
   //nx_display_uint(bt_state.last_heartbeat);
   //nx_display_end_line();
