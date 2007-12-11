@@ -48,7 +48,7 @@
 	.endm
 
 	.global nx_start
-	.extern nx_kernel_main
+	.extern nx__kernel_main
 
 
 /**********************************************************
@@ -221,7 +221,7 @@ wait_mclk_3:
 	mov r7, #0
 
 	/* Start the main kernel code using an interworking branch. */
-	ldr r5, =nx_kernel_main
+	ldr r5, =nx__kernel_main
 	mov lr, pc
 	bx  r5
 

@@ -15,6 +15,8 @@
 #include "base/display.h"
 #include "base/drivers/i2c.h"
 
+#include "base/drivers/i2c_memory.h"
+
 /** Active waiting time before I2C transactions, in milliseconds. */
 #define NX_I2C_TXN_WAIT 10
 

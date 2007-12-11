@@ -11,7 +11,7 @@
 #include "base/types.h"
 #include "base/_interrupts.h"
 
-#include "base/drivers/aic.h"
+#include "base/drivers/_aic.h"
 
 void nx__aic_init(void) {
   int i;

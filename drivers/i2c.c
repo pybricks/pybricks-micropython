@@ -117,7 +117,7 @@ static volatile struct i2c_port {
 } i2c_state[NXT_N_SENSORS];
 
 /* Forward declarations. */
-static void i2c_isr();
+static void i2c_isr(void);
 static void i2c_log(const char *s);
 static void i2c_log_uint(U32 val);
 
@@ -405,8 +405,7 @@ static void i2c_set_bus_state(U32 sensor, U32 next_state) {
 
 
 /** Interrupt handler. */
-static void i2c_isr(void)
-{
+static void i2c_isr(void) {
   volatile struct i2c_port *p;
   volatile struct i2c_txn_info *t;
   U32 dummy;

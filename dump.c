@@ -15,6 +15,8 @@
 #include "base/util.h"
 #include "base/drivers/usb.h"
 
+#include "base/dump.h"
+
 /** Dumping area start pointer. */
 static U8 *_dump_ptr = NULL;
 

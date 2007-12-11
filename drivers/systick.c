@@ -15,7 +15,7 @@
 #include "base/drivers/_avr.h"
 #include "base/drivers/_lcd.h"
 
-#include "base/drivers/systick.h"
+#include "base/drivers/_systick.h"
 
 /* The main clock is at 48MHz, and the PIT divides that by 16 to get
  * its base timer frequency.
