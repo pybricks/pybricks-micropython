@@ -58,7 +58,7 @@ void nx__uart_read(U8 *buf, U32 length);
 /**
  * Indicates how many bytes the PDC has already read from the UART
  */
-U32 nx__uart_data_read();
+U32 nx__uart_data_read(void);
 
 /** Write @a lng bytes from @a data over the UART bus.
  *
@@ -72,13 +72,13 @@ void nx__uart_write(const U8 *data, U32 lng);
  * @return TRUE if the UART is idle and can be written to, else
  * FALSE.
  */
-bool nx__uart_can_write();
+bool nx__uart_can_write(void);
 
 /** Check if the UART is currently writing data.
  *
  * @return TRUE if the UART is busy writing, else FALSE.
  */
-bool nx__uart_is_writing();
+bool nx__uart_is_writing(void);
 
 /*@}*/
 /*@}*/

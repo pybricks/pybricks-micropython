@@ -22,14 +22,14 @@
 /*@{*/
 
 /** Initialize the USB driver. */
-void nx__usb_init();
+void nx__usb_init(void);
 
 /** Perform an orderly shutdown of the USB driver.
  *
  * If the brick is connected to a USB bus, it will be properly
  * unregistered.
  */
-void nx__usb_disable();
+void nx__usb_disable(void);
 
 /*@}*/
 /*@}*/

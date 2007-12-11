@@ -77,7 +77,7 @@ typedef enum {
 
 /** Initialize the NXT to allow I2C communication.
  */
-void nx_i2c_init();
+void nx_i2c_init(void);
 
 /** Register an I2C device of address @a address on port @a sensor.
  *

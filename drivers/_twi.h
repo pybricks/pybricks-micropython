@@ -34,7 +34,7 @@
 /*@{*/
 
 /** Initialize the TWI driver. */
-void nx__twi_init();
+void nx__twi_init(void);
 
 /** Write @a len starting at @a data to I2C slave @a dev_addr.
  *
@@ -63,7 +63,7 @@ void nx__twi_read_async(U32 dev_addr, U8 *data, U32 len);
  * @return TRUE if the device is idle and ready to receive commands,
  * FALSE otherwise.
  */
-bool nx__twi_ready();
+bool nx__twi_ready(void);
 
 /*@}*/
 /*@}*/

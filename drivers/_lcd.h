@@ -43,14 +43,14 @@
 #define LCD_HEIGHT 8 /* == 64 pixels. */
 
 /** Initialize the LCD driver. */
-void nx__lcd_init();
+void nx__lcd_init(void);
 
 /** Periodic update function, called once every millisecond.
  *
  * @warning This is called by the systick driver, and shouldn't be
  * invoked directly unless you really know what you are doing.
  */
-void nx__lcd_fast_update();
+void nx__lcd_fast_update(void);
 
 /** Set the virtual display to mirror to the screen.
  *
@@ -59,7 +59,7 @@ void nx__lcd_fast_update();
 void nx__lcd_set_display(U8 *display_buffer);
 
 /** Mark the display as requiring a refresh cycle. */
-void nx__lcd_dirty_display();
+void nx__lcd_dirty_display(void);
 
 /** Safely power off the LCD controller.
  *
@@ -68,7 +68,7 @@ void nx__lcd_dirty_display();
  * damage the LCD display (although in practice the screen seems to
  * take hard poweroffs fairly happily).
  */
-void nx__lcd_shutdown();
+void nx__lcd_shutdown(void);
 
 /*@}*/
 /*@}*/

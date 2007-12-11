@@ -22,7 +22,7 @@
 /*@{*/
 
 /** Initialize the system timer driver. */
-void nx__systick_init();
+void nx__systick_init(void);
 
 /*@}*/
 /*@}*/

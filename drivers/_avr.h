@@ -31,7 +31,7 @@
 /*@{*/
 
 /** Initialize the AVR driver. */
-void nx__avr_init();
+void nx__avr_init(void);
 
 /** Update the AVR state machine.
  *
@@ -40,7 +40,7 @@ void nx__avr_init();
  * @warning Called by the systick driver when appropriate. Do @b not
  * call directly!
  */
-void nx__avr_fast_update();
+void nx__avr_fast_update(void);
 
 /** Return the raw sensor value for @a sensor.
  *
@@ -76,7 +76,7 @@ void nx__avr_set_motor(U32 motor, int power_percent, bool brake);
  * nx_core_halt() will take care of safely shutting down sensitive
  * drivers before powering down the brick.
  */
-void nx__avr_power_down();
+void nx__avr_power_down(void);
 
 /** Order the AVR to put the brick in firmware update mode.
  *
@@ -86,7 +86,7 @@ void nx__avr_power_down();
  * @note Does not work right now. The command is ignored by the
  * coprocessor, resulting in the brick locking up.
  */
-void nx__avr_firmware_update_mode();
+void nx__avr_firmware_update_mode(void);
 
 /*@}*/
 /*@}*/

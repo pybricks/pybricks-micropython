@@ -49,14 +49,14 @@
  *
  * @sa nx_interrupts_enable
  */
-void nx_interrupts_disable();
+void nx_interrupts_disable(void);
 
 /** Enable interrupt handling.
  *
  * Interrupt handling will only be reenabled if this function has been
  * called the same number of times as nx_interrupts_disable().
  */
-void nx_interrupts_enable();
+void nx_interrupts_enable(void);
 
 /** @brief The mapping of a user task's registers in the User/System stack.
  *

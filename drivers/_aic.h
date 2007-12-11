@@ -22,7 +22,7 @@
 /*@{*/
 
 /** Initialize the interrupt controller. */
-void nx__aic_init();
+void nx__aic_init(void);
 
 /*@}*/
 /*@}*/

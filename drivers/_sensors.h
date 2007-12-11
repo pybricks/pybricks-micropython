@@ -34,7 +34,7 @@ typedef struct {
 } nx__sensors_pins;
 
 /** Initialize the sensors driver. */
-void nx__sensors_init();
+void nx__sensors_init(void);
 
 /** Enable @a sensor in I2C mode.
  *
