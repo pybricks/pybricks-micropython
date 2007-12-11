@@ -224,9 +224,7 @@ static volatile struct {
   U32 cmds_pos;
 #endif
 
-} bt_state = {
-  0
-};
+} bt_state;
 
 
 
@@ -235,7 +233,7 @@ static volatile struct {
  */
 static U32 bt_get_checksum(U8 *msg, U32 len, bool count_len)
 {
-  int i;
+  U32 i;
   U32 checksum;
 
   checksum = 0;
@@ -301,7 +299,7 @@ static void bt_reseted()
 
 static void bt_uart_command_callback(U8 *msg, U32 len)
 {
-  int i;
+  U32 i;
 
   /* if it's a break from the nxt */
   if (msg == NULL || len == 0) {
@@ -436,6 +434,7 @@ static void bt_uart_command_callback(U8 *msg, U32 len)
 
 void nx_bt_init()
 {
+  memset((void*)&bt_state, 0, sizeof(bt_state));
   USB_SEND("nx_bt_init()");
 
   bt_state.new_handle = -1;
@@ -645,7 +644,7 @@ bt_return_value_t nx_bt_remove_known_device(U8 dev_addr[BT_ADDR_SIZE])
 
 bt_version_t nx_bt_get_version()
 {
-  bt_version_t ver = { 0 };
+  bt_version_t ver = { 0, 0 };
 
   nx__uart_write(bt_msg_get_version, sizeof(bt_msg_get_version));
 

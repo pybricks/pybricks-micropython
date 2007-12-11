@@ -115,7 +115,7 @@ static U8 raw_to_avr[1 + /* Power mode    */
  * sending to the AVR.
  */
 static void avr_pack_to_avr() {
-  int i;
+  U32 i;
   U8 checksum = 0;
 
   memset(raw_to_avr, 0, sizeof(raw_to_avr));
@@ -170,7 +170,7 @@ static void avr_unpack_from_avr() {
   U8 checksum = 0;
   U16 word;
   U32 voltage;
-  int i;
+  U32 i;
   U8 *p = raw_from_avr;
 
   /* Compute the checksum of the received data. This is done by doing

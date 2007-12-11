@@ -44,7 +44,7 @@ static volatile struct {
   U32 to_read;
 
 } uart_state = {
-  NULL, 0, {0}
+  NULL, 0, {0}, 0
 };
 
 static void uart_isr() {

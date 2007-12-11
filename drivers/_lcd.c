@@ -218,7 +218,7 @@ static void spi_init() {
 
 /* Initialize the LCD controller. */
 void nx__lcd_init() {
-  int i;
+  U32 i;
   /* This is the command byte sequence that should be sent to the LCD
    * after a reset.
    */

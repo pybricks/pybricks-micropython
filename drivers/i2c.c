@@ -114,12 +114,7 @@ static volatile struct i2c_port {
   U8 p_ticks;
   U8 p_next;
 
-} i2c_state[NXT_N_SENSORS] = {
-  { I2C_OFF, 0, { 0 }, FALSE, TXN_NONE, {{ 0 }}, 0, 0, 0, 0, 0, 0, I2C_IDLE },
-  { I2C_OFF, 0, { 0 }, FALSE, TXN_NONE, {{ 0 }}, 0, 0, 0, 0, 0, 0, I2C_IDLE },
-  { I2C_OFF, 0, { 0 }, FALSE, TXN_NONE, {{ 0 }}, 0, 0, 0, 0, 0, 0, I2C_IDLE },
-  { I2C_OFF, 0, { 0 }, FALSE, TXN_NONE, {{ 0 }}, 0, 0, 0, 0, 0, 0, I2C_IDLE },
-};
+} i2c_state[NXT_N_SENSORS];
 
 /* Forward declarations. */
 static void i2c_isr();
@@ -130,6 +125,7 @@ static void i2c_log_uint(U32 val);
  * and set the interrupt handler.
  */
 void nx_i2c_init() {
+  memset((void*)i2c_state, 0, sizeof(i2c_state));
   nx_interrupts_disable();
 
   /* We need power for both the PIO controller and the first TC (Timer

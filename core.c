@@ -22,6 +22,8 @@
 #include "drivers/_usb.h"
 #include "drivers/i2c.h"
 
+#include "base/core.h"
+
 /* main() is the entry point into the custom payload, not included in
  * the NxOS core.
  */

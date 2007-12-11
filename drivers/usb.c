@@ -241,9 +241,7 @@ static volatile struct {
    * the one currently in use.
    */
   U8 current_rx_bank;
-} usb_state = {
-  0
-};
+} usb_state;
 
 
 /* The flags in the UDP_CSR register are a little strange: writing to
@@ -519,7 +517,13 @@ static U32 usb_manage_setup_packet() {
     /* TODO: Make this a little nicer. Not quite sure how. */
 
     /* we can only active the EP1 if we have a buffer to get the data */
-    if (usb_state.rx_len == 0 && usb_state.rx_size >= 0) {
+    /* TODO: This was:
+     *
+     * if (usb_state.rx_len == 0 && usb_state.rx_size >= 0) {
+     *
+     * The second part always evaluates to TRUE.
+     */
+    if (usb_state.rx_len == 0) {
       AT91C_UDP_CSR[1] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
       while (AT91C_UDP_CSR[1] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT));
     }
@@ -715,8 +719,8 @@ static inline void usb_enable() {
 
 
 void nx__usb_init() {
-
   nx__usb_disable();
+  memset((void*)&usb_state, 0, sizeof(usb_state));
 
   nx_interrupts_disable();
 
