@@ -209,11 +209,15 @@ wait_mclk_3:
 	ldr sp, =__irq_stack__
 	bic sp, sp, #7
 
+	/* Set up the abort mode stack. */
+	msr cpsr_c, #(MODE_ABT | IRQ_FIQ_MASK)
+	ldr sp, =__userspace_end__
+	bic sp, sp, #7
+
 	/* Set up the supervisor mode stack. */
 	msr cpsr_c, #(MODE_SVC | IRQ_FIQ_MASK)
 	ldr sp, =__supervisor_stack__
 	bic sp, sp, #7
-
 
 	/* Set up initial frame pointers for C code in both Arm
 	 * and Thumb modes. */
