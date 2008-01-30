@@ -42,14 +42,14 @@
  *
  * @return TRUE if the NXT is connected and configured, else FALSE.
  */
-bool nx_usb_is_connected();
+bool nx_usb_is_connected(void);
 
 /** Check if a call to nx_usb_send() will block.
  *
  * @return TRUE if data can be sent, FALSE if the driver buffers are
  * saturated.
  */
-bool nx_usb_can_write();
+bool nx_usb_can_write(void);
 
 /** Send @a length bytes of @a data to the USB host.
  *
@@ -66,7 +66,7 @@ void nx_usb_write(U8 *data, U32 length);
  * the USB controller and that these data can be
  * freed/erased from the memory.
  */
-bool nx_usb_data_written();
+bool nx_usb_data_written(void);
 
 /**
  * Specify where the next read data must be put
@@ -79,7 +79,7 @@ void nx_usb_read(U8 *data, U32 length);
  * @note initial value = 0 ;  reset to 0 after each call to nx_usb_read()
  * @return the packet size read
  */
-U32 nx_usb_data_read();
+U32 nx_usb_data_read(void);
 
 
 /*@}*/

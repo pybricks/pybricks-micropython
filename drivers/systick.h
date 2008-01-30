@@ -28,7 +28,7 @@
 /*@{*/
 
 /** Return the number of milliseconds elapsed since bootup. */
-U32 nx_systick_get_ms();
+U32 nx_systick_get_ms(void);
 
 /** Sleep for @a ms milliseconds.
  *
@@ -63,6 +63,31 @@ void nx_systick_wait_ns(U32 ns);
  * a periodic callback.
  */
 void nx_systick_install_scheduler(nx_closure_t scheduler_cb);
+
+/** Trigger a call to the installed scheduler callback.
+ *
+ * The callback will be run in a low priority interrupt handler, as if
+ * it had been called by the system timer.
+ *
+ * @note If no scheduler callback has been installed (by
+ * ns_systick_install_scheduler()), the call has no effect.
+ */
+inline void nx_systick_call_scheduler(void);
+
+/** Inhibit the scheduler callback temporarily.
+ *
+ * This will simply prevent the systick driver from calling the
+ * scheduler. It may still be invoked manually with
+ * nx_systick_call_scheduler().
+ */
+void nx_systick_mask_scheduler(void);
+
+/** Uninhibit the scheduler callback.
+ *
+ * Use this to reenable calling the scheduler interrupt after
+ * deactivating it with nx_systick_mask_scheduler().
+ */
+void nx_systick_unmask_scheduler(void);
 
 /*@}*/
 /*@}*/

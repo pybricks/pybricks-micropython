@@ -22,15 +22,17 @@
 #include "drivers/_usb.h"
 #include "drivers/i2c.h"
 
+#include "base/_core.h"
+
 /* main() is the entry point into the custom payload, not included in
  * the NxOS core.
  */
-extern void main();
+extern void main(void);
 
 /* Application kernels can register a shutdown handler, which we keep here. */
 static nx_closure_t shutdown_handler = NULL;
 
-static void core_init() {
+static void core_init(void) {
   nx__aic_init();
   nx_interrupts_enable();
   nx__systick_init();
@@ -52,7 +54,7 @@ static void core_init() {
  *
  * Currently detects brownout and watchdog resets.
  */
-static void check_boot_errors() {
+static void check_boot_errors(void) {
   int reset_status = *AT91C_RSTC_RSR;
   reset_status &= AT91C_RSTC_RSTTYP;
 
@@ -70,7 +72,7 @@ static void check_boot_errors() {
   }
 }
 
-void nx_core_halt() {
+void nx_core_halt(void) {
   if (shutdown_handler)
     shutdown_handler();
   nx__lcd_shutdown();
@@ -85,7 +87,7 @@ void nx_core_register_shutdown_handler(nx_closure_t handler) {
 /* This function is not part of the public API, but is invoked from
  * init.S.
  */
-void nx_kernel_main() {
+void nx__kernel_main(void) {
   core_init();
   check_boot_errors();
   main();

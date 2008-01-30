@@ -241,9 +241,7 @@ static volatile struct {
    * the one currently in use.
    */
   U8 current_rx_bank;
-} usb_state = {
-  0
-};
+} usb_state;
 
 
 /* The flags in the UDP_CSR register are a little strange: writing to
@@ -369,13 +367,13 @@ static void usb_send_stall(int endpoint) {
 
 
 /* During setup, we need to send packets with null data. */
-static void usb_send_null() {
+static void usb_send_null(void) {
   usb_write_data(0, NULL, 0);
 }
 
 
 /* Handle receiving and responding to setup packets on EP0. */
-static U32 usb_manage_setup_packet() {
+static U32 usb_manage_setup_packet(void) {
   /* The structure of a USB setup packet. */
   struct {
     U8 request_attrs; /* Request characteristics. */
@@ -519,7 +517,13 @@ static U32 usb_manage_setup_packet() {
     /* TODO: Make this a little nicer. Not quite sure how. */
 
     /* we can only active the EP1 if we have a buffer to get the data */
-    if (usb_state.rx_len == 0 && usb_state.rx_size >= 0) {
+    /* TODO: This was:
+     *
+     * if (usb_state.rx_len == 0 && usb_state.rx_size >= 0) {
+     *
+     * The second part always evaluates to TRUE.
+     */
+    if (usb_state.rx_len == 0) {
       AT91C_UDP_CSR[1] = AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT;
       while (AT91C_UDP_CSR[1] != (AT91C_UDP_EPEDS | AT91C_UDP_EPTYPE_BULK_OUT));
     }
@@ -544,7 +548,7 @@ static U32 usb_manage_setup_packet() {
 
 
 /* The main USB interrupt handler. */
-static void usb_isr() {
+static void usb_isr(void) {
   U8 endpoint = 127;
   U32 csr, isr;
 
@@ -692,7 +696,7 @@ static void usb_isr() {
 }
 
 
-void nx__usb_disable() {
+void nx__usb_disable(void) {
   nx_aic_disable(AT91C_ID_UDP);
 
   *AT91C_PIOA_PER = (1 << 16);
@@ -702,7 +706,7 @@ void nx__usb_disable() {
 }
 
 
-static inline void usb_enable() {
+static inline void usb_enable(void) {
   /* Enable the UDP pull up by outputting a zero on PA.16 */
   /* Enabling the pull up will tell to the host (the computer) that
    * we are ready for a communication
@@ -714,9 +718,9 @@ static inline void usb_enable() {
 }
 
 
-void nx__usb_init() {
-
+void nx__usb_init(void) {
   nx__usb_disable();
+  memset((void*)&usb_state, 0, sizeof(usb_state));
 
   nx_interrupts_disable();
 
@@ -753,7 +757,7 @@ void nx__usb_init() {
 }
 
 
-bool nx_usb_can_write() {
+bool nx_usb_can_write(void) {
   return (usb_state.status == USB_READY);
 }
 
@@ -773,12 +777,12 @@ void nx_usb_write(U8 *data, U32 length) {
   usb_write_data(2, data, length);
 }
 
-bool nx_usb_data_written() {
+bool nx_usb_data_written(void) {
   return (usb_state.tx_len[2] == 0);
 }
 
 
-bool nx_usb_is_connected() {
+bool nx_usb_is_connected(void) {
   return (usb_state.status != USB_UNINITIALIZED);
 }
 
@@ -796,7 +800,7 @@ void nx_usb_read(U8 *data, U32 length)
 }
 
 
-U32 nx_usb_data_read()
+U32 nx_usb_data_read(void)
 {
   return usb_state.rx_len;
 }

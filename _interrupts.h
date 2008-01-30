@@ -25,9 +25,9 @@
  * the board in an infinite loop.
  */
 /*@{*/
-void nx__default_irq();
-void nx__default_fiq();
-void nx__spurious_irq();
+void nx__default_irq(void);
+void nx__default_fiq(void);
+void nx__spurious_irq(void);
 /*@}*/
 
 /*@}*/

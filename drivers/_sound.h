@@ -22,7 +22,7 @@
 /*@{*/
 
 /** Initialize the sound driver. */
-void nx__sound_init();
+void nx__sound_init(void);
 
 /*@}*/
 /*@}*/

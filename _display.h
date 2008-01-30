@@ -26,7 +26,7 @@
 /*@{*/
 
 /** Initialize the display driver. */
-void nx__display_init();
+void nx__display_init(void);
 
 /*@}*/
 /*@}*/

@@ -28,6 +28,9 @@
  */
 /*@{*/
 
+/* Buffer size for UART messages. */
+#define UART_BUFSIZE 128
+
 /** Prototype for the UART read callback.
  *
  * The UART driver fires the callback with a @a buffer of length @a
@@ -41,6 +44,22 @@ typedef void (*nx__uart_read_callback_t)(U8 *buffer, U32 packet_size);
  */
 void nx__uart_init(nx__uart_read_callback_t callback);
 
+/**
+ * @param callback new callback to use
+ * @note if callback is null, interruptions are disabled and PDC is disabled
+ */
+void nx__uart_set_callback(nx__uart_read_callback_t callback);
+
+/**
+ * Set manually the PDC
+ */
+void nx__uart_read(U8 *buf, U32 length);
+
+/**
+ * Indicates how many bytes the PDC has already read from the UART
+ */
+U32 nx__uart_data_read(void);
+
 /** Write @a lng bytes from @a data over the UART bus.
  *
  * @param data A pointer to the data to write.
@@ -53,13 +72,13 @@ void nx__uart_write(const U8 *data, U32 lng);
  * @return TRUE if the UART is idle and can be written to, else
  * FALSE.
  */
-bool nx__uart_can_write();
+bool nx__uart_can_write(void);
 
 /** Check if the UART is currently writing data.
  *
  * @return TRUE if the UART is busy writing, else FALSE.
  */
-bool nx__uart_is_writing();
+bool nx__uart_is_writing(void);
 
 /*@}*/
 /*@}*/

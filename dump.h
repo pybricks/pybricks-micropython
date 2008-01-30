@@ -63,7 +63,7 @@ bool nx_dump_u8(U8 val);
 
 /** Send the stored data via USB.
  */
-void nx_dump_send_usb();
+void nx_dump_send_usb(void);
 
 /*}@*/
 /*}@*/

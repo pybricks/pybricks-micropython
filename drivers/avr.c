@@ -114,8 +114,8 @@ static U8 raw_to_avr[1 + /* Power mode    */
 /* Serialize the to_avr data structure into raw_to_avr, ready for
  * sending to the AVR.
  */
-static void avr_pack_to_avr() {
-  int i;
+static void avr_pack_to_avr(void) {
+  U32 i;
   U8 checksum = 0;
 
   memset(raw_to_avr, 0, sizeof(raw_to_avr));
@@ -166,11 +166,11 @@ static inline U16 unpack_word(U8 *word) {
 /* Deserialize the AVR data structure in raw_from_avr into the
  * from_avr status structure.
  */
-static void avr_unpack_from_avr() {
+static void avr_unpack_from_avr(void) {
   U8 checksum = 0;
   U16 word;
   U32 voltage;
-  int i;
+  U32 i;
   U8 *p = raw_from_avr;
 
   /* Compute the checksum of the received data. This is done by doing
@@ -233,7 +233,7 @@ static void avr_unpack_from_avr() {
 }
 
 /* Initialize the NXT-AVR communication. */
-void nx__avr_init() {
+void nx__avr_init(void) {
   /* Set up the TWI driver to turn on the i2c bus, and kickstart the
    * state machine to start transmitting.
    */
@@ -247,7 +247,7 @@ void nx__avr_init() {
  * It is called directly in the main system timer interrupt, and so
  * must return as fast as possible.
  */
-void nx__avr_fast_update() {
+void nx__avr_fast_update(void) {
   /* The action taken depends on the state of the AVR
    * communication.
    */
@@ -347,25 +347,25 @@ void nx__avr_set_motor(U32 motor, int power_percent, bool brake) {
     to_avr.motor_brake &= ~(1 << motor);
 }
 
-void nx__avr_power_down() {
+void nx__avr_power_down(void) {
   while (1)
     to_avr.power_mode = AVR_POWER_OFF;
 }
 
-void nx__avr_firmware_update_mode() {
+void nx__avr_firmware_update_mode(void) {
   while (1)
     to_avr.power_mode = AVR_RESET_MODE;
 }
 
-nx_avr_button_t nx_avr_get_button() {
+nx_avr_button_t nx_avr_get_button(void) {
   return from_avr.buttons;
 }
 
-U32 nx_avr_get_battery_voltage() {
+U32 nx_avr_get_battery_voltage(void) {
   return from_avr.battery.charge;
 }
 
-bool nx_avr_battery_is_aa() {
+bool nx_avr_battery_is_aa(void) {
   return from_avr.battery.is_aa;
 }
 

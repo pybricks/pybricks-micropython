@@ -22,7 +22,7 @@
 /*@{*/
 
 /** Initialize the motor control driver. */
-void nx__motors_init();
+void nx__motors_init(void);
 
 /*@}*/
 /*@}*/

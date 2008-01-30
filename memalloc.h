@@ -47,7 +47,7 @@
  *
  * @sa nx_memalloc_init_full()
  */
-void nx_memalloc_init();
+void nx_memalloc_init(void);
 
 /** Initialize a custom memory pool for the allocator.
  *
@@ -68,7 +68,7 @@ void nx_memalloc_init_full(void *mem_pool, U32 mem_pool_size);
  * @note The amount return includes both user-usable allocated memory
  * and TLSF overhead.
  */
-U32 nx_memalloc_used();
+U32 nx_memalloc_used(void);
 
 /** Release control over the memory pool.
  *
@@ -76,7 +76,7 @@ U32 nx_memalloc_used();
  * is free to do what he wants with the memory region originally handed
  * over to the allocator.
  */
-void nx_memalloc_destroy();
+void nx_memalloc_destroy(void);
 
 /*@}*/
 

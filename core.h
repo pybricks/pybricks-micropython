@@ -33,7 +33,7 @@
  * placing the LCD display in a safe state and cleanly unregistering
  * from a USB chain, if the brick was plugged in.
  */
-void nx_core_halt();
+void nx_core_halt(void);
 
 /** Register a shutdown handler function.
  *

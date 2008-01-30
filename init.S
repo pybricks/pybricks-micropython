@@ -48,7 +48,7 @@
 	.endm
 
 	.global nx_start
-	.extern nx_kernel_main
+	.extern nx__kernel_main
 
 
 /**********************************************************
@@ -209,11 +209,15 @@ wait_mclk_3:
 	ldr sp, =__irq_stack__
 	bic sp, sp, #7
 
+	/* Set up the abort mode stack. */
+	msr cpsr_c, #(MODE_ABT | IRQ_FIQ_MASK)
+	ldr sp, =__userspace_end__
+	bic sp, sp, #7
+
 	/* Set up the supervisor mode stack. */
 	msr cpsr_c, #(MODE_SVC | IRQ_FIQ_MASK)
 	ldr sp, =__supervisor_stack__
 	bic sp, sp, #7
-
 
 	/* Set up initial frame pointers for C code in both Arm
 	 * and Thumb modes. */
@@ -221,7 +225,7 @@ wait_mclk_3:
 	mov r7, #0
 
 	/* Start the main kernel code using an interworking branch. */
-	ldr r5, =nx_kernel_main
+	ldr r5, =nx__kernel_main
 	mov lr, pc
 	bx  r5
 

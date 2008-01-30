@@ -15,6 +15,8 @@
 #include "base/util.h"
 #include "base/drivers/usb.h"
 
+#include "base/dump.h"
+
 /** Dumping area start pointer. */
 static U8 *_dump_ptr = NULL;
 
@@ -32,7 +34,7 @@ static U32 _dump_size = 0;
 void nx_dump_init(U8 *ptr) {
   if (ptr == NULL)
     ptr = NX_USERSPACE_START;
-  
+
   _dump_ptr = ptr;
   _dump_cur = ptr;
   _dump_size = 0;
@@ -46,7 +48,7 @@ bool nx_dump_data(U8 *data, U32 size) {
     return FALSE;
 
   memcpy(_dump_cur, data, size);
-  
+
   _dump_cur += size;
   _dump_size += size;
   return TRUE;
@@ -63,14 +65,14 @@ bool nx_dump_u8(U8 val) {
     if (!nx_dump_data(&temp, 1))
       return FALSE;
   }
-  
+
   temp = (val - val/100) / 10;
   if (temp > 0) {
     temp += 48;
     if (!nx_dump_data(&temp, 1))
       return FALSE;
   }
-  
+
   temp = val % 10 + 48;
   return nx_dump_data(&temp, 1);
 }
@@ -79,7 +81,7 @@ bool nx_dump_u8(U8 val) {
  *
  * First sends the dump size (a 4 bytes U32), then sends the data.
  */
-void nx_dump_send_usb() {
+void nx_dump_send_usb(void) {
   nx_usb_write((U8 *)&_dump_size, 4);
   nx_usb_write(_dump_ptr, _dump_size);
 }

@@ -111,7 +111,7 @@ static void spi_write_command_byte(U8 command) {
 }
 
 /* Interrupt routine for handling DMA screen refreshing. */
-static void spi_isr() {
+static void spi_isr(void) {
   /* If we are in the initial state, determine whether we need to do a
    * refresh cycle.
    */
@@ -166,7 +166,7 @@ static void spi_isr() {
   }
 }
 
-static void spi_init() {
+static void spi_init(void) {
   nx_interrupts_disable();
 
   /* Enable power to the SPI and PIO controllers. */
@@ -217,8 +217,8 @@ static void spi_init() {
 }
 
 /* Initialize the LCD controller. */
-void nx__lcd_init() {
-  int i;
+void nx__lcd_init(void) {
+  U32 i;
   /* This is the command byte sequence that should be sent to the LCD
    * after a reset.
    */
@@ -287,7 +287,7 @@ void nx__lcd_init() {
     spi_write_command_byte(lcd_init_sequence[i]);
 }
 
-void nx__lcd_fast_update() {
+void nx__lcd_fast_update(void) {
   if (spi_state.screen_dirty) {
     *AT91C_SPI_IER = AT91C_SPI_ENDTX;
   }
@@ -298,11 +298,11 @@ void nx__lcd_set_display(U8 *display) {
   *AT91C_SPI_IER = AT91C_SPI_ENDTX;
 }
 
-void nx__lcd_dirty_display() {
+void nx__lcd_dirty_display(void) {
   spi_state.screen_dirty = TRUE;
 }
 
-void nx__lcd_shutdown() {
+void nx__lcd_shutdown(void) {
   /* When power to the controller goes out, there is the risk that
    * some capacitors mounted around the controller might damage it
    * when discharging in an uncontrolled fashion. To avoid this, the
@@ -314,4 +314,25 @@ void nx__lcd_shutdown() {
   *AT91C_SPI_PTCR = AT91C_PDC_TXTDIS;
   spi_write_command_byte(RESET());
   nx_systick_wait_ms(20);
+}
+
+void nx__lcd_sync_refresh() {
+  int i, j;
+
+  /* Start the data transfer. */
+  for (i=0; i<8; i++) {
+    spi_set_tx_mode(COMMAND);
+    spi_write_command_byte(SET_COLUMN_ADDR0(0));
+    spi_write_command_byte(SET_COLUMN_ADDR1(0));
+    spi_write_command_byte(SET_PAGE_ADDR(i));
+    spi_set_tx_mode(DATA);
+
+    for (j=0; j<100; j++) {
+      /* Wait for the transmit register to empty. */
+      while (!(*AT91C_SPI_SR & AT91C_SPI_TDRE));
+
+      /* Send the command byte and wait for a reply. */
+      *AT91C_SPI_TDR = spi_state.screen[i*100 + j];
+    }
+  }
 }

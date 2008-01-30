@@ -135,6 +135,27 @@ nx__irq_handler:
 
 
 /**********************************************************
+ * Abort entry points. These get run when the CPU enters
+ * prefetch or data abort modes. These handlers just set
+ * up the necessary arguments and invoke nx__abort().
+ */
+	.extern nx__abort
+	.global nx__prefetch_abort_handler
+nx__prefetch_abort_handler:
+	sub r1, lr, #4
+	mov r0, #0
+	mrs r2, spsr
+	b nx__abort
+
+	.global nx__data_abort_handler
+nx__data_abort_handler:
+	sub r1, lr, #8
+	mov r0, #1
+	mrs r2, spsr
+	b nx__abort
+
+
+/**********************************************************
  * Nested interrupt disable/enable routines. The
  * interrupts_disable routine disables IRQ/FIQ handling,
  * and increments a nesting counter. The interrupts_enable

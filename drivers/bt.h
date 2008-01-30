@@ -63,6 +63,13 @@ typedef enum {
   BT_LR_UNKNOWN_ADDR
 } bt_return_value_t;
 
+typedef enum {
+  BT_DISCONNECTION_SUCCESS,
+  BT_DISCONNECTION_LINK_LOSS,
+  BT_DISCONNECTION_NO_SLC, /* Service Level Connection */
+  BT_DISCONNECTION_TIMEOUT,
+  BT_DISCONNECTION_ERROR
+} bt_disconnection_status_t;
 
 typedef struct bt_version {
   U8 major;
@@ -74,9 +81,9 @@ typedef struct bt_version {
 /**
  * It will only initialize the communication with the bluecore
  */
-void nx_bt_init();
+void nx_bt_init(void);
 
-bt_state_t nx_bt_get_state();
+bt_state_t nx_bt_get_state(void);
 
 
 /**
@@ -92,17 +99,17 @@ void nx_bt_set_discoverable(bool d);
 void nx_bt_begin_inquiry(U8 max_devices,
 			 U8 timeout,
 			 U8 bt_remote_class[BT_CLASS_SIZE]);
-bool nx_bt_has_found_device();
+bool nx_bt_has_found_device(void);
 
 /**
  * @param[out] dev will fill in the structure
  */
 bool nx_bt_get_discovered_device(bt_device_t *dev);
-void nx_bt_cancel_inquiry();
+void nx_bt_cancel_inquiry(void);
 
 
-void nx_bt_begin_known_devices_dumping();
-bool nx_bt_has_known_device();
+void nx_bt_begin_known_devices_dumping(void);
+bool nx_bt_has_known_device(void);
 bool nx_bt_get_known_device(bt_device_t *dev);
 
 /**
@@ -115,7 +122,7 @@ bt_return_value_t nx_bt_remove_known_device(U8 dev_addr[BT_ADDR_SIZE]);
 /**
  * @return the firmware version
  */
-bt_version_t nx_bt_get_version();
+bt_version_t nx_bt_get_version(void);
 
 /**
  * @param[out] name will be filled in with the friendly name. An '\0' will be appended,
@@ -129,13 +136,13 @@ int nx_bt_get_friendly_name(char *name);
  * return the number of messages from the BC4
  * with a wring checksum. Should be 0.
  */
-int nx_bt_checksum_errors();
+int nx_bt_checksum_errors(void);
 
 
 /**
  * Indicates if a device is waiting for a pin code
  */
-bool nx_bt_has_dev_waiting_for_pin();
+bool nx_bt_has_dev_waiting_for_pin(void);
 
 /**
  * will only send the pin code if nx_has_dev_waiting_for_pin() returning true
@@ -147,13 +154,13 @@ void nx_bt_send_pin(char *code);
 /**
  * @return port handle or -1 if failure
  */
-int nx_bt_open_port();
+int nx_bt_open_port(void);
 bool nx_bt_close_port(int handle);
 
 /**
  * @return true if an host want to connect to us
  */
-bool nx_bt_connection_pending();
+bool nx_bt_connection_pending(void);
 
 /**
  * Only valid if nx_connection_pending() return true.
@@ -167,9 +174,14 @@ void nx_bt_accept_connection(bool accept);
  * @return -1 if no new connexion has been established, else it
  * returns the corresponding handle (only returned once !)
  */
-int nx_bt_connection_established();
+int nx_bt_connection_established(void);
 
+U8 nx_bt_get_link_quality(int handle);
 
+/**
+ * Close the specified connexion
+ */
+bt_disconnection_status_t nx_bt_close_connection(int handle);
 
 /**
  * Only one data stream can be opened at the same time.
@@ -188,38 +200,7 @@ void nx_bt_stream_write(U8 *data, U32 length);
  * Indicates when the data have been transmitted to
  * the BlueCore and can be freed/erased from the memory.
  */
-bool nx_bt_stream_data_written();
-
-
-/**
- * Only valid if a stream is opened.
- * Indicates how many bytes from a data stream are waiting in the buffer
- */
-U32 nx_bt_stream_has_data();
-
-/**
- * Return a pointer to the buffer containing the data
- * from the stream
- */
-const void *nx_bt_stream_get_buffer();
-
-/**
- * Only valid if a stream is opened.
- * Release the content of the buffer.
- *
- * This signals the driver that it can receive more data. Call it as
- * soon as you have finished processing input.
- */
-void nx_bt_stream_flush_buffer();
-
-/**
- * Only valid if a stream is opened.
- * Check if the BT driver overflowed on reading input.
- * A call to nx_bt_flush_buffer() reset this value to FALSE.
- * @return TRUE if too much data was received without
- * nx_bt_flush_buffer() being called, FALSE otherwhise
- */
-bool nx_bt_stream_overloaded();
+bool nx_bt_stream_data_written(void);
 
 /**
  * Only valid if a stream is (or was) opened.
@@ -227,16 +208,30 @@ bool nx_bt_stream_overloaded();
  *         has shuted down the stream (you don't need to
  *         close the stream in this case)
  */
-bool nx_bt_stream_opened();
+bool nx_bt_stream_opened(void);
+
+/**
+ * Specify a memory area where to put the data
+ * read from the stream
+ * @note reading is only possible if in stream mode
+ */
+void nx_bt_stream_read(U8 *data, U32 length);
+
+/**
+ * Indicates when some data have been read.
+ * @note initial value = 0 ; reset to 0 after each call to nx_bt_stream_read()
+ * @return number of bytes read
+ */
+U32 nx_bt_stream_data_read(void);
 
 /**
  * Close a currently opened stream.
  */
-void nx_bt_stream_close();
+void nx_bt_stream_close(void);
 
 
 /* to remove */
-void nx_bt_debug();
+void nx_bt_debug(void);
 
 
 #endif

@@ -45,20 +45,20 @@ typedef enum {
  * depressed at once. Thus only one button is reported as being
  * pressed at once.
  */
-nx_avr_button_t nx_avr_get_button();
+nx_avr_button_t nx_avr_get_button(void);
 
 /** Return the measured battery voltage in millivolts.
  *
  * @return The measured voltage, in millivolts.
  */
-U32 nx_avr_get_battery_voltage();
+U32 nx_avr_get_battery_voltage(void);
 
 /** Detect the kind of power supply connected to the NXT.
  *
  * @return TRUE if the power supply is AA batteries, FALSE if it is a
  * Lego power pack (possibly with AC supply).
  */
-bool nx_avr_battery_is_aa();
+bool nx_avr_battery_is_aa(void);
 
 /** Populate @a major, @a minor with the version of the AVR firmware.
  *

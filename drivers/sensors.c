@@ -35,7 +35,7 @@ static enum {
   OFF, OFF, OFF, OFF
 };
 
-void nx__sensors_init() {
+void nx__sensors_init(void) {
   U32 pinmask = 0;
   int i;
 
