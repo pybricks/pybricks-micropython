@@ -90,6 +90,12 @@ typedef enum {
  */
 void nx_radar_init(U32 sensor);
 
+/** Close the link with the radar and disable the sensor.
+ *
+ * @param sensor The sensor port number.
+ */
+void nx_radar_close(U32 sensor);
+
 /** Check the presence of a compatible radar on port @a sensor.
  *
  * @param sensor The sensor port number.

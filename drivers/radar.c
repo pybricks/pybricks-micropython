@@ -14,7 +14,6 @@
 #include "base/nxt.h"
 #include "base/interrupts.h"
 #include "base/display.h"
-#include "base/drivers/systick.h"
 #include "base/util.h"
 #include "base/drivers/i2c_memory.h"
 #include "base/drivers/radar.h"
@@ -55,6 +54,11 @@ static struct radar_cmd_info {
 /** Initializes the radar sensor in LEGO compatibility mode. */
 void nx_radar_init(U32 sensor) {
   nx_i2c_memory_init(sensor, RADAR_I2C_ADDRESS, TRUE);
+}
+
+/** Close the radar and disable the sensor port. */
+void nx_radar_close(U32 sensor) {
+  nx_i2c_memory_close(sensor);
 }
 
 /** Reads a value from the radar's memory slot into the provided buffer. */
