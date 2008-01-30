@@ -10,11 +10,10 @@
 #include "base/types.h"
 #include "base/nxt.h"
 #include "base/interrupts.h"
-#include "base/drivers/systick.h"
 #include "base/util.h"
+#include "base/display.h"
 #include "base/drivers/aic.h"
 #include "base/drivers/_sensors.h"
-#include "base/display.h"
 #include "base/drivers/i2c.h"
 
 /** The base clock frequency of the sensor I2C bus in Hz. */
@@ -245,7 +244,7 @@ static i2c_txn_err i2c_add_txn(U32 sensor, i2c_txn_mode mode,
   t->data_size = size;
 
   i2c_state[sensor].n_txns++;
-  
+
   /* TODO: find how to make this a critical code section. */
   i2c_txn_count++;
 
