@@ -46,6 +46,13 @@
  */
 void nx_i2c_memory_init(U32 sensor, U8 address, bool lego_compat);
 
+/** Disables the remote memory unit connected on the given sensor
+ * port.
+ *
+ * @param sensor The sensor port number.
+ */
+void nx_i2c_memory_close(U32 sensor);
+
 /** Read from the memory unit connected on port @a sensor.
  *
  * @param sensor The sensor port number.
@@ -62,7 +69,7 @@ void nx_i2c_memory_init(U32 sensor, U8 address, bool lego_compat);
  * @return Returns the transaction status.
  */
 i2c_txn_err nx_i2c_memory_read(U32 sensor, U8 internal_address,
-			       U8 *buf, U32 size);
+                               U8 *buf, U32 size);
 
 /** Write to the memory unit connected on port @a sensor.
  *
@@ -77,7 +84,7 @@ i2c_txn_err nx_i2c_memory_read(U32 sensor, U8 internal_address,
  * @return Returns the transaction status.
  */
 i2c_txn_err nx_i2c_memory_write(U32 sensor, U8 internal_address,
-				U8 *data, U32 size);
+                                U8 *data, U32 size);
 
 /*@}*/
 /*@}*/

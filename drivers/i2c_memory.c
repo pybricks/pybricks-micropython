@@ -10,9 +10,9 @@
 
 #include "base/types.h"
 #include "base/nxt.h"
+#include "base/display.h"
 #include "base/drivers/sensors.h"
 #include "base/drivers/systick.h"
-#include "base/display.h"
 #include "base/drivers/i2c.h"
 
 /** Active waiting time before I2C transactions, in milliseconds. */
@@ -27,6 +27,12 @@
  */
 void nx_i2c_memory_init(U32 sensor, U8 address, bool lego_compat) {
   nx_i2c_register(sensor, address, lego_compat);
+}
+
+/** Disables the remote memory unit connected on the given sensor port.
+ */
+void nx_i2c_memory_close(U32 sensor) {
+  nx_i2c_unregister(sensor);
 }
 
 /** Reads a value at 'internal_address' in the memory unit on the
