@@ -56,7 +56,7 @@ typedef enum
   TXN_STAT_FAILED,
 } i2c_txn_status;
 
-/* I2C bus control parameters.
+/** I2C bus control parameters.
  *
  * Note that in practice, on the bus, a RESTART is the same as a new
  * START bit (when running in normal bus mode).
