@@ -60,5 +60,15 @@
 
 /*@}*/
 
+/** @defgroup lib Libraries
+ *
+ * This component documents software libraries that NxOS application
+ * kernel developers may find of some interest to implement or extend
+ * their application.
+ */
+
+/**@{*/
+
+/**@}*/
 
 #endif /* __NXOS_BASE_DOC_H__ */
