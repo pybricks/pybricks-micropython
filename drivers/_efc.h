@@ -55,6 +55,9 @@ typedef enum {
 /** Initialize the flash subsystem. */
 void nx__efc_init(void);
 
+/** Write a page to the flash. */
+bool nx__efc_write_page(U32 *page, int page);
+
 /*@}*/
 /*@}*/
 
