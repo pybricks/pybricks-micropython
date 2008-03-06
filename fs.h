@@ -16,6 +16,7 @@
 #define __NXOS_FS_H__
 
 #include "base/types.h"
+#include "base/drivers/_efc.h"
 
 /** @addtogroup kernel */
 /*@{*/
@@ -29,12 +30,18 @@
 /** Maximum allowed filename length. */
 #define FS_FILENAME_LENGTH 64
 
+/** File I/O operations buffer size. */
+#define FS_BUF_SIZE (EFC_PAGE_WORDS * sizeof(U32))
+
+/** File system errors. */
 typedef enum {
   FS_ERR_NO_ERROR = 0,
+  FS_ERR_NOT_FORMATTED,
   FS_ERR_FILE_NOT_FOUND,
   FS_ERR_TOO_MANY_OPENED_FILES,
 } fs_err_t;
 
+/** File permissions. */
 typedef enum {
   FS_PERM_READONLY,
   FS_PERM_READWRITE,
@@ -48,9 +55,12 @@ typedef struct fs_file {
   char name[FS_FILENAME_LENGTH+1];
   size_t size;
   fs_perm_t perms;
+
+  char write[FS_BUF_SIZE];
+  char read[FS_BUF_SIZE];
 } fs_file_t;
 
-bool nx_fs_init(void);
+fs_err_t nx_fs_init(void);
 
 /** Open a file.
  *

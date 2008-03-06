@@ -54,6 +54,8 @@ typedef enum {
 /** Base address of the flash in the virtual address space. */
 #define FLASH_BASE 0x00100000
 
+#define FLASH_BASE_PTR ((volatile U32 *)FLASH_BASE)
+
 /** Initialize the flash subsystem. */
 void nx__efc_init(void);
 

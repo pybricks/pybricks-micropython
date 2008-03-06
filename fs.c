@@ -11,19 +11,20 @@
 #include "base/types.h"
 #include "base/nxt.h"
 #include "base/interrupts.h"
+#include "base/assert.h"
+#include "base/util.h"
 #include "base/fs.h"
-
+#include "base/drivers/_efc.h"
 
 /* File descriptors set, limited to FS_MAX_OPENED_FILES. Each file
  * descriptor (U32) is linked to its fs_file_t structured through
  * this array of opened files. */
 static fs_file_t fdset[FS_MAX_OPENED_FILES];
 
-
 /* Initialize the file system, most importantly check for file system
  * integrity. */
-bool nx_fs_init(void) {
-  return TRUE;
+fs_err_t nx_fs_init(void) {
+  return FS_ERR_NO_ERROR;
 }
 
 /* Open a file by its name and return the file descriptor of the opened
@@ -31,7 +32,7 @@ bool nx_fs_init(void) {
  * file not found, etc).
  */
 fs_err_t nx_fs_open(char *name, U32 *fd) {
-  U32 i, file = -1;
+  U32 i, file = FS_MAX_OPENED_FILES;
   U32 name_len;
 
   name_len = strlen(name);
@@ -44,7 +45,7 @@ fs_err_t nx_fs_open(char *name, U32 *fd) {
       /* If the file is already opened, return its file descriptor. */
       if (strcmp(name, fdset[i].name) == 0)
         return i;
-    } else if (file == -1) {
+    } else if (file == FS_MAX_OPENED_FILES) {
       /* Otherwise find the first available slot in the fdset. */
       file = i;
     }
@@ -52,7 +53,7 @@ fs_err_t nx_fs_open(char *name, U32 *fd) {
 
   /* If no available slot was found, return -1 to note the too many
    * open files error. */
-  if (file < 0)
+  if (file >= FS_MAX_OPENED_FILES)
     return FS_ERR_TOO_MANY_OPENED_FILES;
 
   /* Check that the file exists. */
