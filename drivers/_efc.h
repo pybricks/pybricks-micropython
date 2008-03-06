@@ -30,8 +30,8 @@
 /** Number of pages in the memory pane. */
 #define EFC_PAGES 1024
 
-/** Size in bytes of one page. */
-#define EFC_PAGE_SIZE 256
+/** Number of 32-bytes words per page (one page is 256 bytes long). */
+#define EFC_PAGE_WORDS 64
 
 /** Number of lock regions. */
 #define EFC_LOCK_REGIONS 16
@@ -51,12 +51,18 @@ typedef enum {
     EFC_CMD_SSB = 0x0F,
 } efc_cmd;
 
+/** Base address of the flash in the virtual address space. */
+#define FLASH_BASE 0x00100000
 
 /** Initialize the flash subsystem. */
 void nx__efc_init(void);
 
-/** Write a page to the flash. */
-bool nx__efc_write_page(U32 *page, int page);
+/** Write a page to the flash.
+ *
+ * @param data A pointer to the 64 U32s of the page.
+ * @param page The page number in the flash memory.
+ */
+bool nx__efc_write_page(U32 *data, U32 page);
 
 /*@}*/
 /*@}*/
