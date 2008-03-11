@@ -27,7 +27,10 @@
  */
 /*@{*/
 
-/** Number of pages in the memory pane. */
+/** Number of pages in the memory pane. WARNING: we must take into
+ * consideration the fact that the kernel uses a couple of pages at
+ * the bottom of the flash.
+ */
 #define EFC_PAGES 1024
 
 /** Number of 32-bytes words per page (one page is 256 bytes long). */

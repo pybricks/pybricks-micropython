@@ -19,7 +19,7 @@ bool nx__efc_write_page(U32 *data, U32 page) {
 
   /* Write the page data to the flash in-memory mapping. */
   for (i=0 ; i<EFC_PAGE_WORDS ; i++) {
-      FLASH_BASE_PTR[i+page*64] = data[i];
+      FLASH_BASE_PTR[i+page*EFC_PAGE_WORDS] = data[i];
   }
 
   /* Trigger the flash write command. */
