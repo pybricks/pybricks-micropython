@@ -24,8 +24,11 @@
 /** @defgroup fs Flash file system */
 /*@{*/
 
-/** Maximum number of files that can be opened in the same time. */
-#define FS_MAX_OPENED_FILES 32
+/** Maximum number of files that can be stored by the filesystem.
+ * The lack of dynamic memory allocator makes this a hardcoded
+ * limitation.
+ */
+#define FS_MAX_OPENED_FILES 8
 
 /** Maximum allowed filename length. */
 #define FS_FILENAME_LENGTH 64
@@ -49,28 +52,54 @@ typedef enum {
 } fs_perm_t;
 
 /** File description structure. */
-typedef struct fs_file {
-  bool _used;
-
+typedef struct fs_entry {
   char name[FS_FILENAME_LENGTH+1];
   size_t size;
   fs_perm_t perms;
 
-  char write[FS_BUF_SIZE];
-  char read[FS_BUF_SIZE];
+  bool opened;
+} fs_entry_t;
+
+typedef struct fs_file {
+  fs_entry_t entry;
+
+  int *rpos;
+
+  int wbuf[FS_BUF_SIZE];
+  U16 wpos;
 } fs_file_t;
+
+typedef U8 fs_fd_t;
 
 fs_err_t nx_fs_init(void);
 
 /** Open a file.
  *
  * @param name The name of the file to open.
- * @param fd A pointer to a U32 where the file descriptor will be stored.
+ * @param fd A pointer to the file descriptor to use.
  */
-fs_err_t nx_fs_open(char *name, U32 *fd);
+fs_err_t nx_fs_open(char *name, fs_fd_t *fd);
+
+/** Read one byte from a file.
+ *
+ * @param fd The descriptor for the file to read from.
+ * @return The byte read, -1 for end of file (EOF).
+ */
+int nx_fs_read(fs_fd_t fd);
+
+/** Write one byte to a file.
+ *
+ * @param fd The descriptor for the file to write to.
+ * @param byte The byte to write to the file.
+ * @return An fs_err_t describing the outcome of the operation.
+ */
+fs_err_t nx_fs_write(fs_fd_t fd, int byte);
+
+/** Flush a file's write buffer. */
+fs_err_t nx_fs_flush(fs_fd_t fd);
 
 /** Close a file. */
-void nx_fs_close(U32 fd);
+fs_err_t nx_fs_close(fs_fd_t fd);
 
 /*@}*/
 /*@}*/
