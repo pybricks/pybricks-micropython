@@ -138,7 +138,7 @@ TOC_EXPAND             = NO
 DISABLE_INDEX          = NO
 ENUM_VALUES_PER_LINE   = 1 
 GENERATE_TREEVIEW      = YES
-TREEVIEW_WIDTH         = 250
+TREEVIEW_WIDTH         = 280
 #---------------------------------------------------------------------------
 # configuration options related to the LaTeX output
 #---------------------------------------------------------------------------
