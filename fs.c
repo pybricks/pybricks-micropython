@@ -18,6 +18,16 @@
 
 static volatile fs_file_t fdset[FS_MAX_OPENED_FILES];
 
+static volatile fs_file_t *nx_fs_get_file(fs_fd_t fd) {
+  NX_ASSERT(fd > 0);
+
+  if (fd >= FS_MAX_OPENED_FILES || !fdset[fd]._used) {
+    return NULL;
+  }
+
+  return &(fdset[fd]);
+}
+
 /* Initialize the file system, most importantly check for file system
  * integrity. */
 fs_err_t nx_fs_init(void) {
@@ -37,24 +47,38 @@ fs_err_t nx_fs_open(char *name, fs_fd_t *fd) {
   return FS_ERR_FILE_NOT_FOUND;
 }
 
-static volatile fs_file_t *nx_fs_get_file(fs_fd_t fd) {
-  NX_ASSERT(fd > 0);
-  NX_ASSERT(fd < FS_MAX_OPENED_FILES);
+/* Get the file size */
+size_t nx_fs_get_filesize(fs_fd_t fd) {
+  volatile fs_file_t *file = nx_fs_get_file(fd);
 
-  return &(fdset[fd]);
+  if (!file) {
+    return -1;
+  }
+  
+  return file->size;
 }
 
 /* Read one byte from the given file. */
-int nx_fs_read(fs_fd_t fd) {
+fs_err_t nx_fs_read(fs_fd_t fd, U32 *byte) {
   volatile fs_file_t *file = nx_fs_get_file(fd);
 
+  if (!file) {
+    return FS_ERR_INVALID_FD;
+  }
+
   /* Compute the next file->rpos and return what's there. */
-  return *(file->rpos);
+  *byte = *(file->rpos);
+
+  return FS_ERR_NO_ERROR;
 }
 
 /* Write one byte to the given file. */
-fs_err_t nx_fs_write(fs_fd_t fd, int byte) {
+fs_err_t nx_fs_write(fs_fd_t fd, U32 byte) {
   volatile fs_file_t *file = nx_fs_get_file(fd);
+
+  if (!file) {
+    return FS_ERR_INVALID_FD;
+  }
 
   if (file->wpos == FS_BUF_SIZE-1) {
     fs_err_t err = nx_fs_flush(fd);
@@ -69,6 +93,10 @@ fs_err_t nx_fs_write(fs_fd_t fd, int byte) {
 /* Flush the write buffer of the given file. */
 fs_err_t nx_fs_flush(fs_fd_t fd) {
   volatile fs_file_t *file = nx_fs_get_file(fd);
+  
+  if (!file) {
+    return FS_ERR_INVALID_FD;
+  }
   
   if (file->wpos > 0) {
     /* All the logic for writing the page at the correct
@@ -87,12 +115,16 @@ fs_err_t nx_fs_close(fs_fd_t fd) {
   fs_err_t err;
   
   file = nx_fs_get_file(fd);
+  if (!file) {
+    return FS_ERR_INVALID_FD;
+  }
+
   err = nx_fs_flush(fd);
-
-  if (err != FS_ERR_NO_ERROR)
+  if (err != FS_ERR_NO_ERROR) {
     return err;
+  }
 
-  file->entry.opened = FALSE;
+  file->_used = FALSE;
   return FS_ERR_NO_ERROR;
 }
 

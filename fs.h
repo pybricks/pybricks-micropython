@@ -42,6 +42,7 @@ typedef enum {
   FS_ERR_NOT_FORMATTED,
   FS_ERR_FILE_NOT_FOUND,
   FS_ERR_TOO_MANY_OPENED_FILES,
+  FS_ERR_INVALID_FD,
 } fs_err_t;
 
 /** File permissions. */
@@ -52,20 +53,15 @@ typedef enum {
 } fs_perm_t;
 
 /** File description structure. */
-typedef struct fs_entry {
+typedef struct {
   char name[FS_FILENAME_LENGTH+1];
   size_t size;
   fs_perm_t perms;
-
-  bool opened;
-} fs_entry_t;
-
-typedef struct fs_file {
-  fs_entry_t entry;
+  bool _used;
 
   int *rpos;
 
-  int wbuf[FS_BUF_SIZE];
+  U32 wbuf[FS_BUF_SIZE];
   U16 wpos;
 } fs_file_t;
 
@@ -80,12 +76,19 @@ fs_err_t nx_fs_init(void);
  */
 fs_err_t nx_fs_open(char *name, fs_fd_t *fd);
 
+/** Get the file size.
+ *
+ * @param fs The file descriptor.
+ * @return The file size as a @a size_t.
+ */
+size_t nx_fs_get_filesize(fs_fd_t fd);
+
 /** Read one byte from a file.
  *
  * @param fd The descriptor for the file to read from.
- * @return The byte read, -1 for end of file (EOF).
+ * @param byte A pointer to a U32 to write the read byte from.
  */
-int nx_fs_read(fs_fd_t fd);
+fs_err_t nx_fs_read(fs_fd_t fd, U32 *byte);
 
 /** Write one byte to a file.
  *
@@ -93,7 +96,7 @@ int nx_fs_read(fs_fd_t fd);
  * @param byte The byte to write to the file.
  * @return An fs_err_t describing the outcome of the operation.
  */
-fs_err_t nx_fs_write(fs_fd_t fd, int byte);
+fs_err_t nx_fs_write(fs_fd_t fd, U32 byte);
 
 /** Flush a file's write buffer. */
 fs_err_t nx_fs_flush(fs_fd_t fd);
