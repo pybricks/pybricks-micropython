@@ -57,6 +57,7 @@ typedef enum {
 /** Base address of the flash in the virtual address space. */
 #define FLASH_BASE 0x00100000
 
+/** A usable pointer to the base address of the flash. */
 #define FLASH_BASE_PTR ((volatile U32 *)FLASH_BASE)
 
 /** Initialize the flash subsystem. */

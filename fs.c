@@ -67,7 +67,7 @@ fs_err_t nx_fs_read(fs_fd_t fd, U32 *byte) {
   }
 
   /* Compute the next file->rpos and return what's there. */
-  *byte = *(file->rpos);
+  *byte = *(file->rbuf);
 
   return FS_ERR_NO_ERROR;
 }

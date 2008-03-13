@@ -54,19 +54,35 @@ typedef enum {
 
 /** File description structure. */
 typedef struct {
-  char name[FS_FILENAME_LENGTH+1];
-  size_t size;
-  fs_perm_t perms;
+  /** Internal flag for the fdset. */
   bool _used;
 
-  int *rpos;
+  /** The file name. */
+  char name[FS_FILENAME_LENGTH+1];
+ 
+  /** The file size (at load time). */
+  size_t size;
 
+  /** File permissions. */
+  fs_perm_t perms;
+  
+  /** Read pointer. */
+  U32 *rbuf;
+
+  /** Write buffer. */
   U32 wbuf[FS_BUF_SIZE];
+
+  /** Current position in the write buffer. */
   U16 wpos;
 } fs_file_t;
 
+/** File descriptor type. */
 typedef U8 fs_fd_t;
 
+/** Initializes the file system.
+ *
+ * @return An @a fs_err_t error describing the outcome of the operation.
+ */
 fs_err_t nx_fs_init(void);
 
 /** Open a file.
@@ -78,7 +94,7 @@ fs_err_t nx_fs_open(char *name, fs_fd_t *fd);
 
 /** Get the file size.
  *
- * @param fs The file descriptor.
+ * @param fd The file descriptor.
  * @return The file size as a @a size_t.
  */
 size_t nx_fs_get_filesize(fs_fd_t fd);
