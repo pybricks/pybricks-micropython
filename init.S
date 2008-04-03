@@ -87,9 +87,10 @@ nx_start:
 
 continue_boot:
 	/* Configure the flash controller with the correct values for
-	 * writing. */
+	 * writing: FMCN is set to 72 (48 MHz * 1.5 us), the FWS is set
+   * to 1 and the NEBP bit is cleared. */
 	ldr r0, =MC_FMR
-	ldr r1, =((50 << 16) | (0 << 8))
+	ldr r1, =((72 << 16) | (1 << 8))
 	str r1, [r0]
 
 	/* Disable the watchdog. The watchdog is a sensitive beast:

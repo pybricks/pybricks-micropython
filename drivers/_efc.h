@@ -70,6 +70,15 @@ void nx__efc_init(void);
  */
 bool nx__efc_write_page(U32 *data, U32 page);
 
+/** Read a page from the flash.
+ *
+ * Actually, just retrieve a pointer to the data.
+ *
+ * @param page The page number in the flash memory.
+ * @param data A pointer to a 64 U32s long array for the page data.
+ */
+void nx__efc_read_page(U32 page, U32 *data);
+
 /*@}*/
 /*@}*/
 
