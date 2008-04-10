@@ -27,13 +27,31 @@
  */
 /*@{*/
 
+/** Wait time in milliseconds before next event polling. */
+#define GUI_EVENT_THROTTLE 350
+
+struct gui_text_menu {
+  char *title;
+  char **entries;
+  U8 count;
+  
+  U8 default_entry;
+  char *active_mark;
+};
+typedef struct gui_text_menu gui_text_menu_t;
+
 /** Initialize the GUI library. */
 void nx_gui_init(void);
 
 // Functions for defining GUI controls should go here.
 
-/** Run the interface main event loop. */
-void nx_gui_mainloop(void);
+/** Display the text menu described by @a menu.
+ *
+ * @param menu A @a gui_text_menu_t structure describing the menu.
+ * @return The choosen entry number.
+ */
+U8 nx_gui_text_menu(gui_text_menu_t menu);
+
 
 /*@}*/
 /*@}*/

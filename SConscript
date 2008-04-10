@@ -7,7 +7,7 @@ font = env.Command('_font.h', ['_font.h.base', 'font.8x5.png'],
                    './scripts/generate_fonts.py base/font.8x5.png '
                    'base/_font.h.base base/_font.h')
 
-for source in glob('*.[cS]')+glob('drivers/*.[cS]'):
+for source in glob('*.[cS]')+glob('drivers/*.[cS]')+glob('lib/*/*.[cS]'):
     obj = env.Object(source.split('.')[0], source)
     env.Append(NXOS_BASEPLATE=obj)
     if source == 'display.c':
