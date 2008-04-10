@@ -28,22 +28,23 @@
 /*@{*/
 
 /** Wait time in milliseconds before next event polling. */
-#define GUI_EVENT_THROTTLE 350
+#define GUI_EVENT_THROTTLE 450
+#define GUI_EVENT_AVOID_REPEAT 300
 
-struct gui_text_menu {
+/** GUI menu description structure. */
+typedef struct gui_text_menu {
+  /** Menu title. */
   char *title;
+
+  /** Menu entries, NULL terminated array. */
   char **entries;
-  U8 count;
-  
+
+  /** Number of the default entry. */
   U8 default_entry;
+
+  /** A string replacing '. ' for the currently active entry. */
   char *active_mark;
-};
-typedef struct gui_text_menu gui_text_menu_t;
-
-/** Initialize the GUI library. */
-void nx_gui_init(void);
-
-// Functions for defining GUI controls should go here.
+} gui_text_menu_t;
 
 /** Display the text menu described by @a menu.
  *

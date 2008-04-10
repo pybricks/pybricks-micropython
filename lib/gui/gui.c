@@ -9,19 +9,17 @@
 #include "base/drivers/systick.h"
 #include "base/lib/gui/gui.h"
 
-
-void nx_gui_init(void) {
-  
-}
-
 U8 nx_gui_text_menu(gui_text_menu_t menu) {
-  U8 current, i;
+  U8 current = 0, count = 0, i;
   bool done = FALSE;
 
-  NX_ASSERT(menu.count > 0);
   NX_ASSERT(strlen(menu.title) > 0);
+  
+  for (i=0; menu.entries[i]; count++, i++);
+  NX_ASSERT(count > 0);
 
-  current = menu.default_entry >= menu.count ? 0 : menu.default_entry;
+  if (menu.default_entry < count)
+    current = menu.default_entry;
 
   do {
     nx_avr_button_t button;
@@ -31,16 +29,15 @@ U8 nx_gui_text_menu(gui_text_menu_t menu) {
     nx_display_end_line();
     nx_display_end_line();
 
-    for (i=0; i<menu.count; i++) {
+    for (i=0; i<count; i++) {
       nx_display_string(" ");
       nx_display_uint(i+1);
 
       if (current == i)
         nx_display_string(menu.active_mark);
       else
-        nx_display_string(".");
+        nx_display_string(". ");
 
-      nx_display_string(" ");
       nx_display_string(menu.entries[i]); 
       nx_display_end_line();
     }
@@ -54,7 +51,7 @@ U8 nx_gui_text_menu(gui_text_menu_t menu) {
           current--;
         break;
       case BUTTON_RIGHT:
-        if (current < menu.count-1)
+        if (current < count-1)
           current++;
         break;
       case BUTTON_OK:
@@ -65,6 +62,8 @@ U8 nx_gui_text_menu(gui_text_menu_t menu) {
     }
   } while (!done); 
 
+
+  nx_systick_wait_ms(GUI_EVENT_AVOID_REPEAT);
   return current;
 }
 
