@@ -29,6 +29,7 @@
 
 /** Wait time in milliseconds before next event polling. */
 #define GUI_EVENT_THROTTLE 450
+
 #define GUI_EVENT_AVOID_REPEAT 300
 
 /** GUI menu description structure. */

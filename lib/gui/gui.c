@@ -9,6 +9,10 @@
 #include "base/drivers/systick.h"
 #include "base/lib/gui/gui.h"
 
+#define LCD_LINES 8
+#define MENU_MAX_HEIGHT (LCD_LINES - 3)
+#define SCROLL_MARKER "    ..."
+
 U8 nx_gui_text_menu(gui_text_menu_t menu) {
   U8 current = 0, count = 0, i;
   bool done = FALSE;
@@ -23,13 +27,28 @@ U8 nx_gui_text_menu(gui_text_menu_t menu) {
 
   do {
     nx_avr_button_t button;
+    U8 start = 0, end = count;
 
     nx_display_clear();
     nx_display_string(menu.title);
     nx_display_end_line();
+
+    /* Handle menu scrolling. */
+    if (count > MENU_MAX_HEIGHT) {
+      end = MENU_MAX_HEIGHT;
+      if (current >= MENU_MAX_HEIGHT) {
+        start = current - MENU_MAX_HEIGHT + 1;
+        end = current + 1;
+      }
+    }
+
+    /* Display the top scroll marker if needed. */
+    if (start > 0)
+      nx_display_string(SCROLL_MARKER);
     nx_display_end_line();
 
-    for (i=0; i<count; i++) {
+    /* Print out menu entries. */
+    for (i=start; i<end; i++) {
       nx_display_string(" ");
       nx_display_uint(i+1);
 
@@ -41,6 +60,11 @@ U8 nx_gui_text_menu(gui_text_menu_t menu) {
       nx_display_string(menu.entries[i]); 
       nx_display_end_line();
     }
+
+    /* Bottom scroll marker. */
+    if (end < count)
+      nx_display_string(SCROLL_MARKER);
+    nx_display_end_line();
 
     nx_systick_wait_ms(GUI_EVENT_THROTTLE);
     while ((button = nx_avr_get_button()) == BUTTON_NONE);
