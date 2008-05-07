@@ -12,8 +12,8 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#ifndef __NXOS_FS_H__
-#define __NXOS_FS_H__
+#ifndef __NXOS_BASE_FS_H__
+#define __NXOS_BASE_FS_H__
 
 #include "base/types.h"
 #include "base/drivers/_efc.h"
@@ -28,13 +28,19 @@
  * The lack of dynamic memory allocator makes this a hardcoded
  * limitation.
  */
-#define FS_MAX_OPENED_FILES 8
+#define FS_MAX_OPENED_FILES 16
 
 /** Maximum allowed filename length. */
-#define FS_FILENAME_LENGTH 64
+#define FS_FILENAME_LENGTH 32
+
+/** File metadata size, in bytes. */
+#define FS_FILE_METADATA_SIZE 64
 
 /** File I/O operations buffer size. */
 #define FS_BUF_SIZE (EFC_PAGE_WORDS * sizeof(U32))
+
+/** Magic marker. */
+#define FS_FILE_ORIGIN_MARKER 0x42
 
 /** File system errors. */
 typedef enum {
@@ -43,31 +49,45 @@ typedef enum {
   FS_ERR_FILE_NOT_FOUND,
   FS_ERR_TOO_MANY_OPENED_FILES,
   FS_ERR_INVALID_FD,
+  FS_ERR_END_OF_FILE,
+  FS_ERR_UNSUPPORTED_MODE,
+  FS_ERR_CORRUPTED_FILE,
 } fs_err_t;
 
-/** File permissions. */
+/** File permission modes. */
 typedef enum {
   FS_PERM_READONLY,
   FS_PERM_READWRITE,
   FS_PERM_EXECUTABLE,
 } fs_perm_t;
 
-/** File description structure. */
+/** File opening modes. */
+typedef enum {
+  FS_FILE_MODE_OPEN,
+  FS_FILE_MODE_APPEND,
+  FS_FILE_MODE_CREATE,
+} fs_file_mode_t;
+
+/** File description structure, read from the file's metadata
+ * (FS_FILE_METADATA_SIZE bytes). */
 typedef struct {
-  /** Internal flag for the fdset. */
-  bool _used;
+  /** Denotes fd usage. */
+  bool used;
 
   /** The file name. */
   char name[FS_FILENAME_LENGTH+1];
  
-  /** The file size (at load time). */
+  /** File origin page on the flash */
+  U16 origin;
+ 
+  /** The file size. */
   size_t size;
 
   /** File permissions. */
   fs_perm_t perms;
   
   /** Read pointer. */
-  U32 *rbuf;
+  volatile U32 *rpos;
 
   /** Write buffer. */
   U32 wbuf[FS_BUF_SIZE];
@@ -88,9 +108,10 @@ fs_err_t nx_fs_init(void);
 /** Open a file.
  *
  * @param name The name of the file to open.
+ * @param mode The requested file mode.
  * @param fd A pointer to the file descriptor to use.
  */
-fs_err_t nx_fs_open(char *name, fs_fd_t *fd);
+fs_err_t nx_fs_open(char *name, fs_file_mode_t mode, fs_fd_t *fd);
 
 /** Get the file size.
  *
@@ -120,7 +141,23 @@ fs_err_t nx_fs_flush(fs_fd_t fd);
 /** Close a file. */
 fs_err_t nx_fs_close(fs_fd_t fd);
 
+/** Get file permissions.
+ *
+ * @return The current file permissions.
+ */
+fs_perm_t nx_fs_get_perms(fs_fd_t fd);
+
+/** Set file permissions.
+ *
+ * @param fd The file descpriptor.
+ * @param perms The new file permissions.
+ */
+fs_err_t nx_fs_set_perms(fs_fd_t fd, fs_perm_t perms);
+
+/** Remove a file. */
+fs_err_t nx_fs_unlink(fs_fd_t fd);
+
 /*@}*/
 /*@}*/
 
-#endif /* __NXOS_FS_H__ */
+#endif /* __NXOS_BASE_FS_H__ */
