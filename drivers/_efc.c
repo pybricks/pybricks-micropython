@@ -21,6 +21,8 @@ bool nx__efc_write_page(U32 *data, U32 page) {
   U32 ret;
   U8 i;
 
+  NX_ASSERT(page < EFC_PAGES);
+
   /* Wait for the flash to be ready. */
   while (!(*AT91C_MC_FSR & AT91C_MC_FRDY));
 

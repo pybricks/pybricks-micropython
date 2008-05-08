@@ -36,6 +36,9 @@
 /** Number of 32-bytes words per page (one page is 256 bytes long). */
 #define EFC_PAGE_WORDS 64
 
+/** Size of one flash page, in bytes. */
+#define EFC_PAGE_BYTES (EFC_PAGE_WORDS * sizeof(U32))
+
 /** Number of lock regions. */
 #define EFC_LOCK_REGIONS 16
 

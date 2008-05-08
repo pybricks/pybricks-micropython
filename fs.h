@@ -28,19 +28,16 @@
  * The lack of dynamic memory allocator makes this a hardcoded
  * limitation.
  */
-#define FS_MAX_OPENED_FILES 16
+#define FS_MAX_OPENED_FILES 8
 
-/** Maximum allowed filename length. */
-#define FS_FILENAME_LENGTH 32
+/** Filename length, in U32s. */
+#define FS_FILENAME_SIZE 8
 
-/** File metadata size, in bytes. */
-#define FS_FILE_METADATA_SIZE 64
+/** Maximum allowed filename length (in bytes). */
+#define FS_FILENAME_LENGTH (FS_FILENAME_SIZE * sizeof(U32))
 
 /** File I/O operations buffer size. */
 #define FS_BUF_SIZE (EFC_PAGE_WORDS * sizeof(U32))
-
-/** Magic marker. */
-#define FS_FILE_ORIGIN_MARKER 0x42
 
 /** File system errors. */
 typedef enum {
@@ -52,6 +49,8 @@ typedef enum {
   FS_ERR_END_OF_FILE,
   FS_ERR_UNSUPPORTED_MODE,
   FS_ERR_CORRUPTED_FILE,
+  FS_ERR_FLASH_ERROR,
+  FS_ERR_NO_SPACE_LEFT_ON_DEVICE,
 } fs_err_t;
 
 /** File permission modes. */
@@ -68,6 +67,15 @@ typedef enum {
   FS_FILE_MODE_CREATE,
 } fs_file_mode_t;
 
+typedef struct {
+  union {
+    U32 raw[EFC_PAGE_WORDS];
+    U8 bytes[FS_BUF_SIZE];
+  } data;
+  U16 page;
+  U8 pos;
+} fs_buffer_t;
+
 /** File description structure, read from the file's metadata
  * (FS_FILE_METADATA_SIZE bytes). */
 typedef struct {
@@ -75,7 +83,7 @@ typedef struct {
   bool used;
 
   /** The file name. */
-  char name[FS_FILENAME_LENGTH+1];
+  char name[FS_FILENAME_LENGTH];
  
   /** File origin page on the flash */
   U16 origin;
@@ -86,14 +94,11 @@ typedef struct {
   /** File permissions. */
   fs_perm_t perms;
   
-  /** Read pointer. */
-  volatile U32 *rpos;
+  /** Read buffer. */
+  fs_buffer_t rbuf;
 
   /** Write buffer. */
-  U32 wbuf[FS_BUF_SIZE];
-
-  /** Current position in the write buffer. */
-  U16 wpos;
+  fs_buffer_t wbuf;
 } fs_file_t;
 
 /** File descriptor type. */
