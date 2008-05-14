@@ -51,6 +51,7 @@ typedef enum {
   FS_ERR_CORRUPTED_FILE,
   FS_ERR_FLASH_ERROR,
   FS_ERR_NO_SPACE_LEFT_ON_DEVICE,
+  FS_ERR_INCORRECT_POS,
 } fs_err_t;
 
 /** File permission modes. */
@@ -87,6 +88,9 @@ typedef struct {
  
   /** File origin page on the flash */
   U16 origin;
+  
+  /** Last page of the file */
+  //U16 last_page;
  
   /** The file size. */
   size_t size;

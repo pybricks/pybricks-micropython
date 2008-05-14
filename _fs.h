@@ -70,6 +70,13 @@ volatile fs_file_t *nx_fs_get_file(fs_fd_t fd);
  */
 inline bool nx_fs_page_has_magic(U32 page);
 
+/** Find the page where the buffer pointer is located.
+*
+* @param pos An U8 pointer from the file buffer.
+* @return the page where the pointer is located.
+*/
+fs_err_t seek_page_from_position(U32 *origin, U8 pos);
+
 /** Find a file's origin on the file system by its name.
  *
  * @param name The file name.

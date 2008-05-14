@@ -214,8 +214,11 @@ fs_err_t nx_fs_write(fs_fd_t fd, U8 byte) {
 
   file->wbuf.data.bytes[file->wpos++] = byte;
   
-  // BLEH
-  file->size++;
+  //BLEH
+  /* Increment the size of the file if necessary */
+  if(file->wpos > (file->size + FS_FILE_METADATA_BYTES)) {
+	file->size++;
+  }
 
   return FS_ERR_NO_ERROR;
 }

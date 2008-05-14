@@ -39,6 +39,33 @@ inline bool nx_fs_page_has_magic(U32 page) {
   return ((FLASH_BASE_PTR[page*EFC_PAGE_WORDS] & FS_FILE_ORIGIN_MASK) >> 24) == FS_FILE_ORIGIN_MARKER;
 }
 
+/*
+ */
+fs_err_t seek_page_from_position(U8 pos, fs_fd_t fd) {
+	U16 page;
+	volatile fs_file_t *file;
+  
+	file = nx_fs_get_file(fd);
+	if(!file) {
+		return FS_ERR_INVALID_FD;
+	}
+	
+	if(pos > file->size) {
+		return FS_ERR_INCORRECT_POS;
+	}
+	
+	page = (pos + FS_FILE_METADATA_BYTES) / EFC_PAGE_BYTES;
+	
+	if(file->rbuf.page != page) {
+		nx__efc_read_page(page, file->rbuf.data.raw);
+		file->rbuf.page = page;
+	}
+	
+	file->rbuf.pos = pos;
+	
+	return FS_ERR_NO_ERROR;
+}
+
 /* Find a file's origin on the file system by its name.
  */
 fs_err_t nx__fs_find_file_origin(char *name, U32 *origin) {
