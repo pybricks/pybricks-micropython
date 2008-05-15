@@ -17,7 +17,7 @@
 #include "base/_fs.h"
 #include "base/drivers/_efc.h"
 
-extern volatile fs_file_t fdset[FS_MAX_OPENED_FILES];
+extern fs_file_t fdset[FS_MAX_OPENED_FILES];
 
 /* Initialize the file system, most importantly check for file system
  * integrity?. */
@@ -29,17 +29,19 @@ fs_err_t nx_fs_init(void) {
  */
 static fs_err_t nx_fs_init_fd(U32 origin, fs_fd_t fd) {
   volatile U32 *metadata = &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS]);
-  volatile fs_file_t *file;
+  fs_file_t *file;
   
-  file = nx_fs_get_file(fd);
+  file = nx__fs_get_file(fd);
   NX_ASSERT(file != NULL);
   
   file->origin = origin;
   file->size = nx__fs_get_file_size_from_metadata(metadata);
   file->perms = nx__fs_get_file_perms_from_metadata(metadata);
   
-  memset(file->rbuf, 0, sizeof(fs_buffer_t));
-  memset(file->wbuf, 0, sizeof(fs_buffer_t));
+  file->rbuf.page = file->rbuf.pos = 0;
+  file->wbuf.page = file->wbuf.pos = 0;
+  memset(file->rbuf.data.bytes, 0, EFC_PAGE_BYTES);
+  memset(file->wbuf.data.bytes, 0, EFC_PAGE_BYTES);
 
   return FS_ERR_NO_ERROR;
 }
@@ -92,9 +94,9 @@ static fs_err_t nx_fs_create_by_name(char *name, fs_fd_t fd) {
  * is returned via the fd pointer argument.
  */
 fs_err_t nx_fs_open(char *name, fs_file_mode_t mode, fs_fd_t *fd) {
-  volatile fs_file_t *file;
-  U8 slot = 0;
+  fs_file_t *file;
   fs_err_t err;
+  U8 slot = 0;
 
   NX_ASSERT(strlen(name) > 0);
   NX_ASSERT(strlen(name) < FS_FILENAME_LENGTH);
@@ -119,8 +121,8 @@ fs_err_t nx_fs_open(char *name, fs_file_mode_t mode, fs_fd_t *fd) {
       nx__efc_read_page(file->origin, file->wbuf.data.raw);
       file->wbuf.pos = FS_FILE_METADATA_SIZE;
       file->wbuf.page = file->origin;
-            
-      memcpy((void *)file->rbuf, (void *)file->wbuf, sizeof(fs_buffer_t));
+      
+      file->rbuf = file->wbuf;
       break;
     case FS_FILE_MODE_OPEN:
       err = nx_fs_open_by_name(name, slot);
@@ -129,7 +131,7 @@ fs_err_t nx_fs_open(char *name, fs_file_mode_t mode, fs_fd_t *fd) {
       file->wbuf.pos = FS_FILE_METADATA_SIZE;
       file->wbuf.page = file->origin;
 
-      memcpy((void *)file->rbuf, (void *)file->wbuf, sizeof(fs_buffer_t));
+      file->rbuf = file->wbuf;
       break;
     case FS_FILE_MODE_APPEND:
       err = nx_fs_open_by_name(name, slot);
@@ -140,9 +142,10 @@ fs_err_t nx_fs_open(char *name, fs_file_mode_t mode, fs_fd_t *fd) {
       nx__efc_read_page(file->wbuf.page, file->wbuf.data.raw);
       file->wbuf.pos = (FS_FILE_METADATA_BYTES + file->size) % EFC_PAGE_BYTES;
       
-      nx__efc_read_page(file->origin, file->rbuf.data.raw);      
-      file->rbuf.pos = FS_FILE_METADATA_SIZE;
       file->rbuf.page = file->origin;
+      nx__efc_read_page(file->rbuf.page, file->rbuf.data.raw);      
+      file->rbuf.pos = FS_FILE_METADATA_SIZE;
+
       break;
     default:
       err = FS_ERR_UNSUPPORTED_MODE;
@@ -161,8 +164,9 @@ fs_err_t nx_fs_open(char *name, fs_file_mode_t mode, fs_fd_t *fd) {
 
 /* Get the file size, in bytes. */
 size_t nx_fs_get_filesize(fs_fd_t fd) {
-  volatile fs_file_t *file = nx_fs_get_file(fd);
+  fs_file_t *file;
 
+  file = nx__fs_get_file(fd);
   if (!file) {
     return -1;
   }
@@ -172,8 +176,9 @@ size_t nx_fs_get_filesize(fs_fd_t fd) {
 
 /* Read one byte from the given file. */
 fs_err_t nx_fs_read(fs_fd_t fd, U8 *byte) {
-  volatile fs_file_t *file = nx_fs_get_file(fd);
+  fs_file_t *file;
 
+  file = nx__fs_get_file(fd);
   if (!file) {
     return FS_ERR_INVALID_FD;
   }
@@ -185,7 +190,7 @@ fs_err_t nx_fs_read(fs_fd_t fd, U8 *byte) {
   }
 
   /* If needed, update buffer. */
-  if (file->rbuf.pos == FS_BUF_SIZE) {
+  if (file->rbuf.pos == EFC_PAGE_BYTES) {
     file->rbuf.page++;
     file->rbuf.pos = 0;
     nx__efc_read_page(file->rbuf.page, file->rbuf.data.raw);
@@ -197,13 +202,17 @@ fs_err_t nx_fs_read(fs_fd_t fd, U8 *byte) {
 
 /* Write one byte to the given file. */
 fs_err_t nx_fs_write(fs_fd_t fd, U8 byte) {
-  volatile fs_file_t *file = nx_fs_get_file(fd);
+  fs_file_t *file;
+  U32 pages;
 
+  file = nx__fs_get_file(fd);
   if (!file) {
     return FS_ERR_INVALID_FD;
   }
 
-  if (file->wbuf.pos == FS_BUF_SIZE) {
+  /* TODO: add EOF check around here. */
+
+  if (file->wbuf.pos == EFC_PAGE_BYTES) {
     fs_err_t err = nx_fs_flush(fd);
     if (err != FS_ERR_NO_ERROR)
       return err;
@@ -212,12 +221,15 @@ fs_err_t nx_fs_write(fs_fd_t fd, U8 byte) {
     file->wbuf.pos = 0;
   }
 
-  file->wbuf.data.bytes[file->wpos++] = byte;
+  file->wbuf.data.bytes[file->wbuf.pos++] = byte;
   
-  //BLEH
   /* Increment the size of the file if necessary */
-  if(file->wpos > (file->size + FS_FILE_METADATA_BYTES)) {
-	file->size++;
+  pages = nx__fs_get_file_page_count(file->size) - 1;
+  if (file->wbuf.page == file->origin + pages) {
+    if (file->wbuf.pos > file->size + FS_FILE_METADATA_BYTES
+      - (pages * EFC_PAGE_BYTES)) {
+      file->size++;
+    }
   }
 
   return FS_ERR_NO_ERROR;
@@ -225,42 +237,32 @@ fs_err_t nx_fs_write(fs_fd_t fd, U8 byte) {
 
 /* Flush the write buffer of the given file. */
 fs_err_t nx_fs_flush(fs_fd_t fd) {
-  volatile fs_file_t *file = nx_fs_get_file(fd);
-  U32 firstpage[EFC_PAGE_WORDS];
-  U16 page;
+  fs_file_t *file;
   
+  file = nx__fs_get_file(fd);
   if (!file) {
     return FS_ERR_INVALID_FD;
   }
 
-  // BLEH
-  page = file->origin
-    + (FS_FILE_METADATA_BYTES + file->size) / EFC_PAGE_BYTES - 1;
-  if (nx__fs_page_has_magic()) {}
 
-  /* Update file metadata on flash. */
-  firstpage = nx__efc_read_page(file->origin, firstpage);
-  nx__fs_create_metadata(file->perms, file->name, file->size, firstpage);
-  nx__efc_write_page(file->origin, firstpage);
+  /* Write the page. */
+  
 
   if (file->wbuf.pos == 0) {
     return FS_ERR_NO_ERROR;
   }
 
-
-
   /* Write page data. */
-  
 
   return FS_ERR_NO_ERROR;
 }
 
 /* Close a file. */
 fs_err_t nx_fs_close(fs_fd_t fd) {
-  volatile fs_file_t *file;
+  fs_file_t *file;
   fs_err_t err;
   
-  file = nx_fs_get_file(fd);
+  file = nx__fs_get_file(fd);
   if (!file) {
     return FS_ERR_INVALID_FD;
   }
@@ -270,14 +272,16 @@ fs_err_t nx_fs_close(fs_fd_t fd) {
   if (err != FS_ERR_NO_ERROR) {
     return err;
   }
+  
+  /* TODO: add file metadata update here. */
 
   return FS_ERR_NO_ERROR;
 }
 
 fs_perm_t nx_fs_get_perms(fs_fd_t fd) {
-  volatile fs_file_t *file;
+  fs_file_t *file;
   
-  file = nx_fs_get_file(fd);
+  file = nx__fs_get_file(fd);
   if (!file) {
     return FS_ERR_INVALID_FD;
   }
@@ -286,9 +290,9 @@ fs_perm_t nx_fs_get_perms(fs_fd_t fd) {
 }
 
 fs_err_t nx_fs_set_perms(fs_fd_t fd, fs_perm_t perms) {
-  volatile fs_file_t *file;
+  fs_file_t *file;
   
-  file = nx_fs_get_file(fd);
+  file = nx__fs_get_file(fd);
   if (!file) {
     return FS_ERR_INVALID_FD;
   }
@@ -301,10 +305,10 @@ fs_err_t nx_fs_set_perms(fs_fd_t fd, fs_perm_t perms) {
 }
 
 fs_err_t nx_fs_unlink(fs_fd_t fd) {
-  volatile fs_file_t *file;
+  fs_file_t *file;
   U32 page, end;
   
-  file = nx_fs_get_file(fd);
+  file = nx__fs_get_file(fd);
   if (!file) {
     return FS_ERR_INVALID_FD;
   }
@@ -312,7 +316,7 @@ fs_err_t nx_fs_unlink(fs_fd_t fd) {
   /* Remove file marker and potential in-file marker-alike. */
   end = file->origin + nx__fs_get_file_page_count(file->size);
   for (page = file->origin; page < end; page++) {
-    if (nx_fs_page_has_magic(page)) {
+    if (nx__fs_page_has_magic(page)) {
       /* Erase marker. */
     }
   }
@@ -321,3 +325,49 @@ fs_err_t nx_fs_unlink(fs_fd_t fd) {
   return FS_ERR_NO_ERROR;
 }
 
+/* Seek to the given position in the file.
+ */
+fs_err_t nx_fs_seek(fs_fd_t fd, size_t position) {
+	fs_file_t *file;
+ 	U32 page;
+  U32 pos;
+
+	file = nx__fs_get_file(fd);
+	if (!file) {
+		return FS_ERR_INVALID_FD;
+	}
+	
+	if (position > file->size) {
+		return FS_ERR_INCORRECT_SEEK;
+	}
+	
+  position += FS_FILE_METADATA_BYTES;
+
+  page = file->origin + position / EFC_PAGE_BYTES;
+  pos = position % EFC_PAGE_BYTES;
+
+  if (page != file->rbuf.page) {
+    nx__efc_read_page(page, file->rbuf.data.raw);
+    file->rbuf.page = page;
+  }
+
+  file->rbuf.pos = pos;
+
+  /* Same for wbuf ? */
+  return FS_ERR_NO_ERROR;
+}
+
+void nx_fs_get_occupation(U16 *files, U32 *used, U32 *free_pages,
+                          U32 *wasted) {
+  if (files) {
+  }
+  
+  if (used) {
+  }
+  
+  if (free_pages) {
+  }
+  
+  if (wasted) {
+  }
+}

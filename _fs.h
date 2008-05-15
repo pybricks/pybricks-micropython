@@ -53,7 +53,7 @@ union U32tochar {
 };
 
 /** FD-set. */
-volatile fs_file_t fdset[FS_MAX_OPENED_FILES];
+fs_file_t fdset[FS_MAX_OPENED_FILES];
 
 /** Returns a file info structure given its file descriptor.
  *
@@ -62,20 +62,13 @@ volatile fs_file_t fdset[FS_MAX_OPENED_FILES];
  * @return The file info structure if the @a fd is valid, or NULL
  * if it refers to a no longer opened or inexistant file.
  */
-volatile fs_file_t *nx_fs_get_file(fs_fd_t fd);
+fs_file_t *nx__fs_get_file(fs_fd_t fd);
 
 /** Determines if the given page contains a file origin marker.
  *
  * @param page The page number.
  */
-inline bool nx_fs_page_has_magic(U32 page);
-
-/** Find the page where the buffer pointer is located.
-*
-* @param pos An U8 pointer from the file buffer.
-* @return the page where the pointer is located.
-*/
-fs_err_t seek_page_from_position(U32 *origin, U8 pos);
+inline bool nx__fs_page_has_magic(U32 page);
 
 /** Find a file's origin on the file system by its name.
  *
@@ -85,28 +78,40 @@ fs_err_t seek_page_from_position(U32 *origin, U8 pos);
  */
 fs_err_t nx__fs_find_file_origin(char *name, U32 *origin);
 
+/** Finds the last file origin on the flash.
+ *
+ * @param origin A pointer to an U32 where the result will be stored.
+ * @return An appropriate @a fs_err_t error code.
+ */
 fs_err_t nx__fs_find_last_origin(U32 *origin);
 
+/** Compute the number of pages used by a file.
+ *
+ * @param size The file size, in bytes.
+ * @return The page count.
+ */
 U32 nx__fs_get_file_page_count(size_t size);
 
 /** Extract the file size (in bytes) from the file's metadata.
  *
- * @param metadata A pointer to the metadata (should be a 10 U32 array).
+ * @param metadata A pointer to the metadata (should be an U32 array).
  * @return The file size, in bytes.
  */
 size_t nx__fs_get_file_size_from_metadata(volatile U32 *metadata);
 
+/** Extract the file permissions from the file's metadata.
+ *
+ * @param metadata A pointer to the metadata (should be an U32 array).
+ * @return The file permissions, defaulting to read-only.
+ */
 fs_perm_t nx__fs_get_file_perms_from_metadata(volatile U32 *metadata);
-
-void nx__fs_compute_occupation(U16 *files, U32 *used, U32 *free_pages,
-                               U32 *wasted);
 
 /** Serialize a file's metadata into a storable form. The @a metadata
  * pointer must be pre-allocated, and its first @a FS_FILE_METADATA_SIZE
  * U32s will be overwritten by the metadata.
  *
  * @param perms The file permissions.
- * @param name The file name (no more than 31 characters long, \0 excluded).
+ * @param name The file name (no more than 31 characters long, NUL excluded).
  * @param size The file size, in bytes.
  * @param metadata A pointer to U32 memory where the metadata will be stored.
  */

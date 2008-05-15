@@ -18,12 +18,12 @@
 
 #include "base/display.h"
 
-extern volatile fs_file_t fdset[FS_MAX_OPENED_FILES];
+extern fs_file_t fdset[FS_MAX_OPENED_FILES];
 
 /* Returns a file info structure given its file descriptor,
  * or NULL if the fd is invalid.
  */
-volatile fs_file_t *nx_fs_get_file(fs_fd_t fd) {
+fs_file_t *nx__fs_get_file(fs_fd_t fd) {
   NX_ASSERT(fd < FS_MAX_OPENED_FILES);
   
   if (!fdset[fd].used) {
@@ -35,44 +35,17 @@ volatile fs_file_t *nx_fs_get_file(fs_fd_t fd) {
 
 /* Determines if the given page contains a file origin marker.
  */
-inline bool nx_fs_page_has_magic(U32 page) {
+inline bool nx__fs_page_has_magic(U32 page) {
   return ((FLASH_BASE_PTR[page*EFC_PAGE_WORDS] & FS_FILE_ORIGIN_MASK) >> 24) == FS_FILE_ORIGIN_MARKER;
-}
-
-/*
- */
-fs_err_t seek_page_from_position(U8 pos, fs_fd_t fd) {
-	U16 page;
-	volatile fs_file_t *file;
-  
-	file = nx_fs_get_file(fd);
-	if(!file) {
-		return FS_ERR_INVALID_FD;
-	}
-	
-	if(pos > file->size) {
-		return FS_ERR_INCORRECT_POS;
-	}
-	
-	page = (pos + FS_FILE_METADATA_BYTES) / EFC_PAGE_BYTES;
-	
-	if(file->rbuf.page != page) {
-		nx__efc_read_page(page, file->rbuf.data.raw);
-		file->rbuf.page = page;
-	}
-	
-	file->rbuf.pos = pos;
-	
-	return FS_ERR_NO_ERROR;
 }
 
 /* Find a file's origin on the file system by its name.
  */
 fs_err_t nx__fs_find_file_origin(char *name, U32 *origin) {
-  U16 i;
+  U32 i;
   
   for (i=FS_PAGE_START; i<FS_PAGE_END; i++) {
-    if (nx_fs_page_has_magic(i)) {
+    if (nx__fs_page_has_magic(i)) {
       volatile U32 *metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
       union U32tochar nameconv;
       
@@ -96,12 +69,13 @@ fs_err_t nx__fs_find_file_origin(char *name, U32 *origin) {
   return FS_ERR_FILE_NOT_FOUND;
 }
 
+/* Finds the last file origin on the flash.
+ */
 fs_err_t nx__fs_find_last_origin(U32 *origin) {
-  U32 candidate = 0;
-  U16 i;
+  U32 candidate = 0, i;
   
   for (i=FS_PAGE_START; i<FS_PAGE_END; i++) {
-    if (nx_fs_page_has_magic(i)) {
+    if (nx__fs_page_has_magic(i)) {
       volatile U32 *metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
 
       candidate = i;
@@ -118,6 +92,8 @@ fs_err_t nx__fs_find_last_origin(U32 *origin) {
   return FS_ERR_FILE_NOT_FOUND;
 }
 
+/* Returns the number of pages used by a file, given its size.
+ */
 U32 nx__fs_get_file_page_count(size_t size) {
   U32 pages;
   
@@ -147,21 +123,9 @@ fs_perm_t nx__fs_get_file_perms_from_metadata(volatile U32 *metadata) {
   return FS_PERM_READONLY;
 }
 
-void nx__fs_compute_occupation(U16 *files, U32 *used, U32 *free_pages,
-                               U32 *wasted) {
-  if (files) {
-  }
-  
-  if (used) {
-  }
-  
-  if (free_pages) {
-  }
-  
-  if (wasted) {
-  }
-}
-
+/* Serialize a file's metadata using the provided values and returns
+ * the resulting U32s, ready to be stored on flash.
+ */
 void nx__fs_create_metadata(fs_perm_t perms, char *name, size_t size,
                             U32 *metadata) {
   union U32tochar nameconv;
