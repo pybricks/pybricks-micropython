@@ -91,3 +91,16 @@ U8 nx_gui_text_menu(gui_text_menu_t menu) {
   return current;
 }
 
+bool nx_gui_text_menu_yesno(char *title) {
+  gui_text_menu_t menu;
+  char *entries[] = {"Yes", "No", NULL};
+  U8 res;
+
+  menu.entries = entries;
+  menu.title = title;
+  menu.active_mark = GUI_DEFAULT_TEXT_MARK;
+
+  res = nx_gui_text_menu(menu);
+  return res == 0;
+}
+

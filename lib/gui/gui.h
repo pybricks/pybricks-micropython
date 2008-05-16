@@ -28,23 +28,23 @@
 /*@{*/
 
 /** Wait time in milliseconds before next event polling. */
-#define GUI_EVENT_THROTTLE 450
+#define GUI_EVENT_THROTTLE 350
 
+/** Wait time in milliseconds after a menu entry was selected
+ * to avoid stroke repeat.
+ */
 #define GUI_EVENT_AVOID_REPEAT 300
+
+/** Default menu marker for active entry. */
+#define GUI_DEFAULT_TEXT_MARK "> "
 
 /** GUI menu description structure. */
 typedef struct gui_text_menu {
-  /** Menu title. */
-  char *title;
-
-  /** Menu entries, NULL terminated array. */
-  char **entries;
-
-  /** Number of the default entry. */
-  U8 default_entry;
-
-  /** A string replacing '. ' for the currently active entry. */
-  char *active_mark;
+  char *title;       /**< Menu title. */
+  char **entries;    /**< Menu entries, NULL terminated array. */
+  U8 default_entry;  /** Number of the default entry. */
+  char *active_mark; /**< A string replacing '. ' for the
+                      * currently active entry. */
 } gui_text_menu_t;
 
 /** Display the text menu described by @a menu.
@@ -54,6 +54,12 @@ typedef struct gui_text_menu {
  */
 U8 nx_gui_text_menu(gui_text_menu_t menu);
 
+/** Display a yes/no text menu.
+ *
+ * @param title The menu title.
+ * @return True for 'yes', false for 'no'.
+ */
+bool nx_gui_text_menu_yesno(char *title);
 
 /*@}*/
 /*@}*/
