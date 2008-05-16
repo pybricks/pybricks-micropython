@@ -41,6 +41,7 @@ typedef enum {
   FS_ERR_NO_ERROR = 0,
   FS_ERR_NOT_FORMATTED,
   FS_ERR_FILE_NOT_FOUND,
+  FS_ERR_FILE_ALREADY_EXISTS,
   FS_ERR_TOO_MANY_OPENED_FILES,
   FS_ERR_INVALID_FD,
   FS_ERR_END_OF_FILE,
@@ -134,7 +135,12 @@ fs_err_t nx_fs_write(fs_fd_t fd, U8 byte);
 /** Flush a file's write buffer. */
 fs_err_t nx_fs_flush(fs_fd_t fd);
 
-/** Close a file. */
+/** Close the file, flushing any data left to be written and sync
+ * its metadata.
+ *
+ * @param fd The file descpriptor.
+ * @return An @a fs_err_t describing the outcome of the operation.
+ */
 fs_err_t nx_fs_close(fs_fd_t fd);
 
 /** Get file permissions.
@@ -147,10 +153,15 @@ fs_perm_t nx_fs_get_perms(fs_fd_t fd);
  *
  * @param fd The file descpriptor.
  * @param perms The new file permissions.
+ * @return An @a fs_err_t describing the outcome of the operation.
  */
 fs_err_t nx_fs_set_perms(fs_fd_t fd, fs_perm_t perms);
 
-/** Remove a file. */
+/** Delete and close the file.
+ *
+ * @param fd The file descpriptor.
+ * @return An @a fs_err_t describing the outcome of the operation.
+ */
 fs_err_t nx_fs_unlink(fs_fd_t fd);
 
 /** Seek to a given position in a file.

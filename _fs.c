@@ -43,7 +43,7 @@ inline bool nx__fs_page_has_magic(U32 page) {
  */
 fs_err_t nx__fs_find_file_origin(char *name, U32 *origin) {
   U32 i;
-  
+
   for (i=FS_PAGE_START; i<FS_PAGE_END; i++) {
     if (nx__fs_page_has_magic(i)) {
       volatile U32 *metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
@@ -51,8 +51,8 @@ fs_err_t nx__fs_find_file_origin(char *name, U32 *origin) {
       
       memcpy(nameconv.integers,
              (void *)(metadata + FS_FILENAME_OFFSET),
-             FS_FILENAME_SIZE);
-      
+             FS_FILENAME_LENGTH);
+
       if (strcmp(nameconv.chars, name) == 0) {
         *origin = i;
         return FS_ERR_NO_ERROR;
@@ -98,7 +98,8 @@ U32 nx__fs_get_file_page_count(size_t size) {
   U32 pages;
   
   /* Compute page occupation. */
-  pages = (FS_FILE_METADATA_BYTES + size) / EFC_PAGE_BYTES;
+  size += FS_FILE_METADATA_BYTES;
+  pages = size / EFC_PAGE_BYTES;
   if (size % EFC_PAGE_BYTES) {
     pages++;
   }
@@ -135,7 +136,10 @@ void nx__fs_create_metadata(fs_perm_t perms, char *name, size_t size,
   memset(nameconv.chars, 0, 32);
   memcpy(nameconv.chars, name, MIN(strlen(name), 31));
 
+  /* Magic marker. */
   metadata[0] = (FS_FILE_ORIGIN_MARKER << 24);
+
+  /* File permissions. */
   switch (perms) {
     case FS_PERM_READWRITE:
       metadata[0] += (FS_FILE_PERM_MASK_READWRITE << 20);
@@ -146,10 +150,13 @@ void nx__fs_create_metadata(fs_perm_t perms, char *name, size_t size,
     default:
       break;
   }
-  
+ 
+  /* File size. */
   metadata[0] += (size & FS_FILE_SIZE_MASK);
-  
+
   /* Insert here in metadata[1] what would be relevant (future). */
-  
-  memcpy(metadata + FS_FILENAME_OFFSET, nameconv.integers, 8);
+ 
+  /* File name. */
+  memcpy(metadata + FS_FILENAME_OFFSET, nameconv.integers, FS_FILENAME_LENGTH);
 }
+

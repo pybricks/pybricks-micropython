@@ -17,6 +17,8 @@
 #include "base/_fs.h"
 #include "base/drivers/_efc.h"
 
+#include "base/display.h"
+
 extern fs_file_t fdset[FS_MAX_OPENED_FILES];
 
 /* Initialize the file system, most importantly check for file system
@@ -63,6 +65,13 @@ static fs_err_t nx_fs_open_by_name(char *name, fs_fd_t fd) {
 static fs_err_t nx_fs_create_by_name(char *name, fs_fd_t fd) {
   U32 metadata[EFC_PAGE_WORDS] = {0};
   U32 origin;
+  fs_err_t err;
+
+  /* Check that a file by that name does not already exists. */
+  err = nx__fs_find_file_origin(name, &origin);
+  if (err != FS_ERR_FILE_NOT_FOUND) {
+    return FS_ERR_FILE_ALREADY_EXISTS;
+  }
 
   /* Find an origin page. */
   if (nx__fs_find_last_origin(&origin) == FS_ERR_NO_ERROR) {
@@ -117,24 +126,33 @@ fs_err_t nx_fs_open(char *name, fs_file_mode_t mode, fs_fd_t *fd) {
   switch (mode) {
     case FS_FILE_MODE_CREATE:
       err = nx_fs_create_by_name(name, slot);
-      
+      if (err != FS_ERR_NO_ERROR) {
+        break;
+      }
+
       nx__efc_read_page(file->origin, file->wbuf.data.raw);
-      file->wbuf.pos = FS_FILE_METADATA_SIZE;
+      file->wbuf.pos = FS_FILE_METADATA_BYTES;
       file->wbuf.page = file->origin;
       
       file->rbuf = file->wbuf;
       break;
     case FS_FILE_MODE_OPEN:
       err = nx_fs_open_by_name(name, slot);
+      if (err != FS_ERR_NO_ERROR) {
+        break;
+      }
 
       nx__efc_read_page(file->origin, file->wbuf.data.raw);      
-      file->wbuf.pos = FS_FILE_METADATA_SIZE;
+      file->wbuf.pos = FS_FILE_METADATA_BYTES;
       file->wbuf.page = file->origin;
 
       file->rbuf = file->wbuf;
       break;
     case FS_FILE_MODE_APPEND:
       err = nx_fs_open_by_name(name, slot);
+      if (err != FS_ERR_NO_ERROR) {
+        break; 
+      }
       
       /* Put writing position at the end of the file. */
       file->wbuf.page = file->origin
@@ -144,7 +162,7 @@ fs_err_t nx_fs_open(char *name, fs_file_mode_t mode, fs_fd_t *fd) {
       
       file->rbuf.page = file->origin;
       nx__efc_read_page(file->rbuf.page, file->rbuf.data.raw);      
-      file->rbuf.pos = FS_FILE_METADATA_SIZE;
+      file->rbuf.pos = FS_FILE_METADATA_BYTES;
 
       break;
     default:
@@ -184,7 +202,7 @@ fs_err_t nx_fs_read(fs_fd_t fd, U8 *byte) {
   }
 
   /* Detect end of file. */
-  if (file->rbuf.page * EFC_PAGE_BYTES
+  if ((file->rbuf.page - file->origin) * EFC_PAGE_BYTES
       + file->rbuf.pos > FS_FILE_METADATA_BYTES + file->size) {
     return FS_ERR_END_OF_FILE;
   }
@@ -193,6 +211,8 @@ fs_err_t nx_fs_read(fs_fd_t fd, U8 *byte) {
   if (file->rbuf.pos == EFC_PAGE_BYTES) {
     file->rbuf.page++;
     file->rbuf.pos = 0;
+    memset(file->rbuf.data.bytes, 0, EFC_PAGE_BYTES);
+
     nx__efc_read_page(file->rbuf.page, file->rbuf.data.raw);
   }
 
@@ -210,8 +230,20 @@ fs_err_t nx_fs_write(fs_fd_t fd, U8 byte) {
     return FS_ERR_INVALID_FD;
   }
 
-  /* TODO: add EOF check around here. */
+  pages = nx__fs_get_file_page_count(file->size) - 1;
 
+  /* Check that the page we will be writing to is available,
+   * aka its either "inside" the file itself, either after but
+   * free.
+   */
+  if (file->wbuf.pos == 0 &&
+    file->wbuf.page > file->origin + pages &&
+    nx__fs_page_has_magic(file->wbuf.page)) {
+    /* TODO: when relocation is implemented, branch it here. */
+    return FS_ERR_NO_SPACE_LEFT_ON_DEVICE;
+  }
+
+  /* If needed, flush the write buffer to the flash and reinit it. */
   if (file->wbuf.pos == EFC_PAGE_BYTES) {
     fs_err_t err = nx_fs_flush(fd);
     if (err != FS_ERR_NO_ERROR)
@@ -219,12 +251,15 @@ fs_err_t nx_fs_write(fs_fd_t fd, U8 byte) {
     
     file->wbuf.page++;
     file->wbuf.pos = 0;
+    memset(file->wbuf.data.bytes, 0, EFC_PAGE_BYTES);
+
+    /* We now have one more page for this file (value used below). */
+    pages++;
   }
 
   file->wbuf.data.bytes[file->wbuf.pos++] = byte;
   
   /* Increment the size of the file if necessary */
-  pages = nx__fs_get_file_page_count(file->size) - 1;
   if (file->wbuf.page == file->origin + pages) {
     if (file->wbuf.pos > file->size + FS_FILE_METADATA_BYTES
       - (pages * EFC_PAGE_BYTES)) {
@@ -244,9 +279,10 @@ fs_err_t nx_fs_flush(fs_fd_t fd) {
     return FS_ERR_INVALID_FD;
   }
 
-
   /* Write the page. */
-  
+  if (!nx__efc_write_page(file->wbuf.data.raw, file->wbuf.page)) {
+    return FS_ERR_FLASH_ERROR;
+  }
 
   if (file->wbuf.pos == 0) {
     return FS_ERR_NO_ERROR;
@@ -259,6 +295,7 @@ fs_err_t nx_fs_flush(fs_fd_t fd) {
 
 /* Close a file. */
 fs_err_t nx_fs_close(fs_fd_t fd) {
+  U32 firstpage[EFC_PAGE_WORDS];
   fs_file_t *file;
   fs_err_t err;
   
@@ -267,14 +304,19 @@ fs_err_t nx_fs_close(fs_fd_t fd) {
     return FS_ERR_INVALID_FD;
   }
   
-  file->used = FALSE;
   err = nx_fs_flush(fd);
   if (err != FS_ERR_NO_ERROR) {
     return err;
   }
-  
-  /* TODO: add file metadata update here. */
 
+  /* Update the file's metadata. */
+  nx__efc_read_page(file->origin, firstpage);
+  nx__fs_create_metadata(file->perms, file->name, file->size, firstpage);
+  if (!nx__efc_write_page(firstpage, file->origin)) {
+    return FS_ERR_FLASH_ERROR;
+  }
+
+  file->used = FALSE;
   return FS_ERR_NO_ERROR;
 }
 
@@ -299,14 +341,14 @@ fs_err_t nx_fs_set_perms(fs_fd_t fd, fs_perm_t perms) {
   
   file->perms = perms;
   
-  /* TODO: sync metadata. */
-  
   return FS_ERR_NO_ERROR;
 }
 
+/* Delete and close the given file. */
 fs_err_t nx_fs_unlink(fs_fd_t fd) {
   fs_file_t *file;
   U32 page, end;
+  U32 erase[EFC_PAGE_WORDS] = {0};
   
   file = nx__fs_get_file(fd);
   if (!file) {
@@ -318,6 +360,9 @@ fs_err_t nx_fs_unlink(fs_fd_t fd) {
   for (page = file->origin; page < end; page++) {
     if (nx__fs_page_has_magic(page)) {
       /* Erase marker. */
+      if (!nx__efc_write_page(erase, page)) {
+        return FS_ERR_FLASH_ERROR;
+      }
     }
   }
   
