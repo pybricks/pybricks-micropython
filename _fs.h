@@ -85,6 +85,8 @@ fs_err_t nx__fs_find_file_origin(char *name, U32 *origin);
  */
 fs_err_t nx__fs_find_last_origin(U32 *origin);
 
+fs_err_t nx__fs_find_next_origin(U32 start, U32 *origin);
+
 /** Compute the number of pages used by a file.
  *
  * @param size The file size, in bytes.
@@ -117,6 +119,11 @@ fs_perm_t nx__fs_get_file_perms_from_metadata(volatile U32 *metadata);
  */
 void nx__fs_create_metadata(fs_perm_t perms, char *name, size_t size,
                             U32 *metadata);
+							
+fs_err_t nx__fs_relocate_to_page(fs_file_t *file, U32 origin);
+
+fs_err_t nx__fs_relocate(fs_file_t *file);
+
 /*@}*/
 /*@}*/
 

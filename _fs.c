@@ -92,6 +92,19 @@ fs_err_t nx__fs_find_last_origin(U32 *origin) {
   return FS_ERR_FILE_NOT_FOUND;
 }
 
+fs_err_t nx__fs_find_next_origin(U32 start, U32 *origin) {
+  U32 i;
+  
+  for (i=start; i<FS_PAGE_END; i++) {
+    if (nx__fs_page_has_magic(i)) {
+      *origin = i;
+      return FS_ERR_NO_ERROR;
+    }
+  }
+   
+  return FS_ERR_FILE_NOT_FOUND;
+}
+
 /* Returns the number of pages used by a file, given its size.
  */
 U32 nx__fs_get_file_page_count(size_t size) {
@@ -159,4 +172,62 @@ void nx__fs_create_metadata(fs_perm_t perms, char *name, size_t size,
   /* File name. */
   memcpy(metadata + FS_FILENAME_OFFSET, nameconv.integers, FS_FILENAME_LENGTH);
 }
+
+fs_err_t nx__fs_relocate_to_page(fs_file_t *file, U32 origin) {
+  U32 page_data[EFC_PAGE_WORDS], null_data[EFC_PAGE_WORDS] = {0};
+  U32 diff, i;
+  size_t size;
+  
+  diff = origin - file->origin;
+
+  /* Move the file's data. */
+  size = nx__fs_get_file_page_count(file->size);
+  
+  for (i=file->origin; i<size; i++) {
+    nx__efc_read_page(i, page_data);
+	/* TODO: figure out if we want to erase the source page now or later. */
+	if (!nx__efc_write_page(page_data, i + diff)
+	  || !nx__efc_write_page(null_data, i)) {
+	  return FS_ERR_FLASH_ERROR;
+	}
+  }
+  
+  file->origin = origin;
+  file->rbuf.page += diff;
+  file->wbuf.page += diff;
+  
+  return FS_ERR_NO_ERROR;
+}
+
+fs_err_t nx__fs_relocate(fs_file_t *file) {
+  U32 origin, start;
+  size_t size;
+  
+  size = nx__fs_get_file_page_count(file->size);
+  
+  /* First, look at the end of the flash for free space. */
+  if (nx__fs_find_last_origin(&origin) == FS_ERR_NO_ERROR) {
+    origin += nx__fs_get_file_page_count(
+                nx__fs_get_file_size_from_metadata(
+                  &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS])));
+	
+	if (size < FS_PAGE_END - origin) {
+	  return nx__fs_relocate_to_page(file, origin);
+	}
+  }
+  
+  start = FS_PAGE_START;
+  while (nx__fs_find_next_origin(start, &origin) != FS_ERR_FILE_NOT_FOUND) {
+	if (size < origin - start || (origin == file->origin && file->origin - start > 0)) {
+	  return nx__fs_relocate_to_page(file, origin);
+	}
+	
+	start = origin + nx__fs_get_file_page_count(
+                nx__fs_get_file_size_from_metadata(
+                  &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS])));
+  }
+  
+  return FS_ERR_NO_SPACE_LEFT_ON_DEVICE;
+}
+
 

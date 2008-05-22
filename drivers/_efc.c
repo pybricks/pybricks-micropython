@@ -7,9 +7,11 @@
 #include "base/nxt.h"
 #include "base/interrupts.h"
 #include "base/assert.h"
+#include "base/drivers/systick.h"
 #include "base/drivers/_efc.h"
 
 #define EFC_WRITE ((EFC_WRITE_KEY << 24) + EFC_CMD_WP)
+#define EFC_THROTTLE_TIMER 2
 
 void nx__efc_init(void) {
 }
@@ -26,6 +28,8 @@ bool nx__efc_write_page(U32 *data, U32 page) {
   /* Wait for the flash to be ready. */
   while (!(*AT91C_MC_FSR & AT91C_MC_FRDY));
 
+  nx_systick_wait_ms(EFC_THROTTLE_TIMER);
+  
   /* Write the page data to the flash in-memory mapping. */
   for (i=0 ; i<EFC_PAGE_WORDS ; i++) {
       FLASH_BASE_PTR[i+page*EFC_PAGE_WORDS] = data[i];
@@ -56,6 +60,8 @@ void nx__efc_read_page(U32 page, U32 *data) {
   U8 i;
 
   NX_ASSERT(page < EFC_PAGES);
+
+  nx_systick_wait_ms(EFC_THROTTLE_TIMER);
 
   for (i=0; i<EFC_PAGE_WORDS; i++) {
     data[i] = FLASH_BASE_PTR[page*EFC_PAGE_WORDS+i];

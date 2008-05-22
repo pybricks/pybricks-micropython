@@ -239,8 +239,10 @@ fs_err_t nx_fs_write(fs_fd_t fd, U8 byte) {
   if (file->wbuf.pos == 0 &&
     file->wbuf.page > file->origin + pages &&
     nx__fs_page_has_magic(file->wbuf.page)) {
-    /* TODO: when relocation is implemented, branch it here. */
-    return FS_ERR_NO_SPACE_LEFT_ON_DEVICE;
+    /* If the page we want to use is not available relocate the file. */
+	if (nx__fs_relocate(file) != FS_ERR_NO_ERROR) {
+	  return FS_ERR_NO_SPACE_LEFT_ON_DEVICE;
+	}
   }
 
   /* If needed, flush the write buffer to the flash and reinit it. */
