@@ -185,11 +185,11 @@ fs_err_t nx__fs_relocate_to_page(fs_file_t *file, U32 origin) {
   
   for (i=file->origin; i<size; i++) {
     nx__efc_read_page(i, page_data);
-	/* TODO: figure out if we want to erase the source page now or later. */
-	if (!nx__efc_write_page(page_data, i + diff)
-	  || !nx__efc_write_page(null_data, i)) {
-	  return FS_ERR_FLASH_ERROR;
-	}
+    /* TODO: figure out if we want to erase the source page now or later. */
+    if (!nx__efc_write_page(page_data, i + diff)
+      || !nx__efc_write_page(null_data, i)) {
+      return FS_ERR_FLASH_ERROR;
+    }
   }
   
   file->origin = origin;
@@ -211,18 +211,18 @@ fs_err_t nx__fs_relocate(fs_file_t *file) {
                 nx__fs_get_file_size_from_metadata(
                   &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS])));
 	
-	if (size < FS_PAGE_END - origin) {
-	  return nx__fs_relocate_to_page(file, origin);
-	}
+    if (size < FS_PAGE_END - origin) {
+      return nx__fs_relocate_to_page(file, origin);
+    }
   }
   
   start = FS_PAGE_START;
   while (nx__fs_find_next_origin(start, &origin) != FS_ERR_FILE_NOT_FOUND) {
-	if (size < origin - start || (origin == file->origin && file->origin - start > 0)) {
-	  return nx__fs_relocate_to_page(file, origin);
-	}
+    if (size < origin - start || (origin == file->origin && file->origin - start > 0)) {
+      return nx__fs_relocate_to_page(file, origin);
+	  }
 	
-	start = origin + nx__fs_get_file_page_count(
+	  start = origin + nx__fs_get_file_page_count(
                 nx__fs_get_file_size_from_metadata(
                   &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS])));
   }

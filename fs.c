@@ -241,15 +241,15 @@ fs_err_t nx_fs_write(fs_fd_t fd, U8 byte) {
     file->wbuf.page > file->origin + pages &&
     nx__fs_page_has_magic(file->wbuf.page)) {
     /* If the page we want to use is not available relocate the file. */
-	err = nx__fs_relocate(file);
-	if (err != FS_ERR_NO_ERROR) {
-	  return err;
-	}
+    err = nx__fs_relocate(file);
+    if (err != FS_ERR_NO_ERROR) {
+      return err;
+    }
   }
 
   /* If needed, flush the write buffer to the flash and reinit it. */
   if (file->wbuf.pos == EFC_PAGE_BYTES) {
-    fs_err_t err = nx_fs_flush(fd);
+    err = nx_fs_flush(fd);
     if (err != FS_ERR_NO_ERROR)
       return err;
     
