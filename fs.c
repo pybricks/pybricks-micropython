@@ -223,6 +223,7 @@ fs_err_t nx_fs_read(fs_fd_t fd, U8 *byte) {
 /* Write one byte to the given file. */
 fs_err_t nx_fs_write(fs_fd_t fd, U8 byte) {
   fs_file_t *file;
+  fs_err_t err;
   U32 pages;
 
   file = nx__fs_get_file(fd);
@@ -240,8 +241,9 @@ fs_err_t nx_fs_write(fs_fd_t fd, U8 byte) {
     file->wbuf.page > file->origin + pages &&
     nx__fs_page_has_magic(file->wbuf.page)) {
     /* If the page we want to use is not available relocate the file. */
-	if (nx__fs_relocate(file) != FS_ERR_NO_ERROR) {
-	  return FS_ERR_NO_SPACE_LEFT_ON_DEVICE;
+	err = nx__fs_relocate(file);
+	if (err != FS_ERR_NO_ERROR) {
+	  return err;
 	}
   }
 
