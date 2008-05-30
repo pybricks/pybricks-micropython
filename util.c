@@ -81,3 +81,34 @@ char *strrchr(const char *s, const char c) {
 
   return (char*)ptr;
 }
+
+int atoi(const char *s) {
+  U32 len, start = 0, i = 1;
+  int res = 0;
+  bool negative = FALSE;
+  
+  len = strlen(s);
+  
+  if (len == 0) {
+    return res;
+  }
+
+  if (s[start] == '-') {
+    negative = TRUE;
+    start++;
+  }
+  
+  for (; len>start; len--) {
+    char c = s[len-1];
+    
+    /* If one character is invalid, fail by returning 0. */
+    if (c < '0' && c > '9') {
+      return 0;
+    }
+    
+    res += (c - '0') * i;
+    i *= 10;
+  }
+  
+  return res;
+}

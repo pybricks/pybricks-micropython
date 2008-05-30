@@ -94,6 +94,13 @@ char *strchr(const char *s, const char c);
  */
 char *strrchr(const char *s, const char c);
 
+/** Convert a string to the integer it represents, if possible.
+ *
+ * @param s The string to convert.
+ * @return The converted integer, or 0 by default.
+ */
+int atoi(const char *s);
+
 /*@}*/
 
 #endif /* __NXOS_BASE_UTIL_H__ */
