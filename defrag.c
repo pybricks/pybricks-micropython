@@ -68,7 +68,7 @@ defrag_err_t nx_defrag_for_file_by_name(char *name) {
 }
 
 defrag_err_t nx_defrag_for_file_by_origin(U32 origin) {
-  origin = origin; // TBR, no-op
+  nx_defrag_move_region(origin, 1, 1); // TBR
  
   return DEFRAG_ERR_NO_ERROR;
 }
