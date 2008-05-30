@@ -20,10 +20,27 @@
 
 /** @defgroup rcmd Remote robot command library
  *
- * ...
+ * The remote robot command library provides a small command parsing and
+ * execution context to command a robot based on the NXT brick running NxOS.
+ * Given the name of a file on the file system, or directly commands one
+ * after an other, it will interpret these commands to control the bot.
  */
 /*@{*/
 
+/** Maximum command token length. */
+#define RCMD_MAX_CMD_LENGTH 8
+#define RCMD_MAX_TOKEN_LENGTH 32
+
+/** Maximum length of one line. */
+#define RCMD_BUF_LEN 256
+
+/** Token separator character. */
+#define RCMD_TOKEN_SEPARATOR ' '
+
+/** Commented line mark character. */
+#define RCMD_COMMENT_CHAR '#'
+
+/** Recognized commands. */
 typedef enum {
   RCMD_MOVE,
   RCMD_PRINT,
@@ -32,15 +49,29 @@ typedef enum {
   RCMD_EXEC,
 } rcmd_command;
 
+/** Error codes. */
 typedef enum {
   RCMD_ERR_NO_ERROR,
   RCMD_ERR_INVALID_ARGC,
   RCMD_ERR_INVALID_PARAMETER,
   RCMD_ERR_READ_ERROR,
+  RCMD_ERR_END_OF_FILE,
+  RCMD_ERR_COMMAND_NOT_FOUND,
   RCMD_ERR_N_ERRS,
 } rcmd_err_t;
 
-bool nx_rcmd_parse(char *file);
+/** Execute the given line.
+ *
+ * @param line The line to execute.
+ * @return An appropriate @a rcmd_err_t error code.
+ */
+rcmd_err_t nx_rcmd_do(char *line);
+
+/** Parse the given file and execute each line.
+ *
+ * @param file The name of the file to parse and execute.
+ */
+void nx_rcmd_parse(char *file);
 
 /*@}*/
 /*@}*/

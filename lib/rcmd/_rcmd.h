@@ -22,24 +22,12 @@
 
 /** @defgroup rcmdinternal Remote robot command library
  *
- * ...
+ * Internal helper functions and actuators for the remote robot control
+ * library.
  */
 /*@{*/
 
-#define RCMD_MAX_CMD_LENGTH 8
-
-#define RCMD_MAX_ARGS 4
-#define RCMD_MAX_TOKEN_LENGTH 32
-
-#define RCMD_BUF_LEN 256
-#define RCMD_TOKEN_SEPARATOR ' '
-
-rcmd_err_t nx__rcmd_move(const char *line);
-rcmd_err_t nx__rcmd_print(const char *line);
-rcmd_err_t nx__rcmd_clear(const char *line);
-rcmd_err_t nx__rcmd_play(const char *line);
-rcmd_err_t nx__rcmd_exec(const char *line);
-
+/** Command definition. */
 typedef struct {
   char *name;
   int argc;
@@ -47,11 +35,42 @@ typedef struct {
   rcmd_err_t (* actuator)(const char*);
 } rcmd_command_def;
 
-extern rcmd_command_def rcmd_commands[];
+/** Finds the appropriate command from the commands definition array
+ * by matching on the command name.
+ *
+ * @param line The line to parse.
+ * @param command A pointer to return the found command, if any.
+ * @return An appropriate @a rcmd_err_t error code.
+ */
+rcmd_err_t nx__rcmd_find_command(const char *line, rcmd_command_def *command);
 
+rcmd_err_t nx__rcmd_move(const char *line);
+rcmd_err_t nx__rcmd_print(const char *line);
+rcmd_err_t nx__rcmd_clear(const char *line);
+rcmd_err_t nx__rcmd_play(const char *line);
+rcmd_err_t nx__rcmd_exec(const char *line);
+
+/** Read one line from the given file.
+ *
+ * @param fd The file descriptor of the file to read from.
+ * @param line A pointer to a pre-allocated buffer where the data will be
+ * stored.
+ * @return An appropriate @a rcmd_err_t error code.
+ */
 rcmd_err_t nx__rcmd_readline(fs_fd_t fd, char *line);
+
 void nx__rcmd_tokenize(const char *line, char sep, int *argc,
                        char argv[][RCMD_MAX_TOKEN_LENGTH]);
+
+/** Display an error from its error code.
+ *
+ * Prints a comprehensive message when an error happens parsing @a filename.
+ *
+ * @param err The error code to display.
+ * @param filename The name of the file this error happened into.
+ * @param line The number of the line containing the error.
+ */
+void nx__rcmd_error(rcmd_err_t err, char *filename, int line);
 
 /*@}*/
 /*@}*/

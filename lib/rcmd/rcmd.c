@@ -14,56 +14,50 @@
 #include "base/lib/rcmd/rcmd.h"
 #include "base/lib/rcmd/_rcmd.h"
 
-static char *rcmd_err_str[RCMD_ERR_N_ERRS] = {
-  "No error.",
-  "Invalid parameter count.",
-  "Invalid parameter.",
-  "File I/O error.",
-};
-
-bool nx_rcmd_parse(char *file) {
-  fs_fd_t fd;
-  fs_err_t err;
+rcmd_err_t nx_rcmd_do(char *line) {
+  rcmd_command_def command;
+  rcmd_err_t err;
   
-  char line[RCMD_BUF_LEN];
-  int i = 0, n = 0;
-
-  err = nx_fs_open(file, FS_FILE_MODE_OPEN, &fd);
-  if (err != FS_ERR_NO_ERROR) {
-    nx_display_string(rcmd_err_str[RCMD_ERR_READ_ERROR]);
-    return FALSE;
+  if (strlen(line) == 0 || line[0] == RCMD_COMMENT_CHAR) {
+    return RCMD_ERR_NO_ERROR;
   }
   
-  while (nx__rcmd_readline(fd, line) != RCMD_ERR_NO_ERROR) {
-    rcmd_err_t rcmd_err;
-    
-    nx_display_string(line);
-    
+  err = nx__rcmd_find_command(line, &command);
+  if (err != RCMD_ERR_NO_ERROR) {
+    return err;
+  }
+
+  return command.actuator(line);
+}
+
+void nx_rcmd_parse(char *file) {
+  rcmd_err_t err, result;
+  fs_fd_t fd;
+  int n = 0;
+
+  if (nx_fs_open(file, FS_FILE_MODE_OPEN, &fd) != FS_ERR_NO_ERROR) {
+    nx__rcmd_error(RCMD_ERR_READ_ERROR, file, 0);
+    return;
+  }
+  
+  do {
+    char line[RCMD_BUF_LEN] = {0};
+    err = nx__rcmd_readline(fd, line);
+    if (err == RCMD_ERR_READ_ERROR) {
+      break;
+    }
+
     /* Increment the line number. */
     n++;
-    
-    /* Tokenize the command line and fire the corresponding actuator. */
-    while (rcmd_commands[i].name) {
-      if (strncmp(line, rcmd_commands[i].name,
-                  strlen(rcmd_commands[i].name)) == 0) {
-        rcmd_err = rcmd_commands[i].actuator(line);
-        
-        if (rcmd_err != RCMD_ERR_NO_ERROR) {
-          nx_display_string("Error at:\n");
-          nx_display_string(file);
-          nx_display_string(":");
-          nx_display_uint(n);
-          nx_display_end_line();
-          
-          nx_fs_close(fd);
-          return FALSE;
-        }
-      }
-      
-      i++;
+
+    /* Fire the corresponding actuator. */
+    result = nx_rcmd_do(line);    
+    if (result != RCMD_ERR_NO_ERROR) {
+      nx__rcmd_error(result, file, n);
+      break;
     }
-  }
+  } while (err == RCMD_ERR_NO_ERROR);
   
   nx_fs_close(fd);
-  return TRUE;
+  return;
 }

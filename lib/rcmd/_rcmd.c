@@ -14,7 +14,7 @@
 #include "base/drivers/sound.h"
 #include "base/lib/rcmd/_rcmd.h"
 
-rcmd_command_def rcmd_commands[] = {
+static rcmd_command_def rcmd_commands[] = {
   { "move",  4, nx__rcmd_move },
   { "print", 2, nx__rcmd_print },
   { "clear", 1, nx__rcmd_clear },
@@ -23,29 +23,51 @@ rcmd_command_def rcmd_commands[] = {
   { NULL, 0, NULL },
 };
 
-rcmd_err_t nx__rcmd_move(const char *line) {
-/*
-  if (argc != rcmd_commands[RCMD_MOVE].argc) {
-    return RCMD_ERR_INVALID_ARGC;
-  }
-*/
-  
-  nx_display_string(line);
+static char *rcmd_err_str[RCMD_ERR_N_ERRS] = {
+  "No error.",
+  "Invalid parameter count.",
+  "Invalid parameter.",
+  "File I/O error.",
+  "Parser reached end of file.",
+  "Command not found.",
+};
 
+rcmd_err_t nx__rcmd_find_command(const char *line, rcmd_command_def *command) {
+  U32 i = 0;
+
+  while (rcmd_commands[i].name) {
+    if (strncmp(line, rcmd_commands[i].name,
+                strlen(rcmd_commands[i].name)) == 0) {
+      *command = rcmd_commands[i];
+      return RCMD_ERR_NO_ERROR;
+    }
+      
+    i++;
+  }
+
+  return RCMD_ERR_COMMAND_NOT_FOUND;
+}
+
+rcmd_err_t nx__rcmd_move(const char *line) {
+  char *token;
+  token = strchr(line, RCMD_TOKEN_SEPARATOR);
+  
   return RCMD_ERR_NO_ERROR;
 }
 
 rcmd_err_t nx__rcmd_print(const char *line) {  
-  nx_display_string(line);
+  char *token;
+  token = strchr(line, RCMD_TOKEN_SEPARATOR);
+
+  if (token) {
+    nx_display_string(token+1);
+  }
   
+  nx_display_end_line();
   return RCMD_ERR_NO_ERROR;
 }
 
 rcmd_err_t nx__rcmd_clear(const char *line) {
-/*  if (argc != rcmd_commands[RCMD_CLEAR].argc) {
-    return RCMD_ERR_INVALID_ARGC;
-  }
-*/  
   /* No-op. */
   char c;
   c = line[0];
@@ -55,25 +77,30 @@ rcmd_err_t nx__rcmd_clear(const char *line) {
 }
 
 rcmd_err_t nx__rcmd_play(const char *line) {
-/*  if (argc != rcmd_commands[RCMD_PLAY].argc) {
+  char *token1, *token2;
+  
+  /* Change to use a tokenizer! */
+  token1 = strchr(line, RCMD_TOKEN_SEPARATOR);
+  if (!token1) {
     return RCMD_ERR_INVALID_ARGC;
   }
-*/
   
-  nx_display_string(line);
-  
-//  nx_sound_freq_async(atoi(argv[1]), atoi(argv[2]));
+  token2 = strchr(token1+1, RCMD_TOKEN_SEPARATOR);
+  if (!token2) {
+    return RCMD_ERR_INVALID_ARGC;
+  }
+
+  *token2 = 0;
+
+  nx_sound_freq_async(atoi(token1+1), atoi(token2+1));
   return RCMD_ERR_NO_ERROR;
 }
 
 rcmd_err_t nx__rcmd_exec(const char *line) {
-/*  if (argc != rcmd_commands[RCMD_EXEC].argc) {
-    return RCMD_ERR_INVALID_ARGC;
-  }
-*/
+  char *token;
+  token = strchr(line, RCMD_TOKEN_SEPARATOR);
   
   /* Open the requested file and branch execution. */
-  nx_display_string(line);
   
   return RCMD_ERR_NO_ERROR;
 }
@@ -83,15 +110,12 @@ rcmd_err_t nx__rcmd_readline(fs_fd_t fd, char *line) {
   U32 i = 0;
   U8 *buf = (U8 *)line;
   
-  nx_display_string("readline\n");
-  
-  while (i < RCMD_BUF_LEN - 1) {
+  while (i < RCMD_BUF_LEN - 2) {
     err = nx_fs_read(fd, &(buf[i]));
     
     if (err == FS_ERR_END_OF_FILE) {
       buf[i] = 0;
-      nx_display_string("EOF\n");
-      return RCMD_ERR_NO_ERROR;
+      return RCMD_ERR_END_OF_FILE;
     } else if (err != FS_ERR_NO_ERROR) {
       nx_display_uint(err);
       nx_display_end_line();
@@ -99,13 +123,13 @@ rcmd_err_t nx__rcmd_readline(fs_fd_t fd, char *line) {
     }
     
     if (buf[i] == '\n') {
-      buf[i+1] = 0;
       break;
     }
     
     i++;
   }
   
+  buf[i] = 0;
   return RCMD_ERR_NO_ERROR;
 }
 
@@ -147,3 +171,16 @@ void nx__rcmd_tokenize(const char *line, char sep, int *argc,
   *argc = current;
 }
 
+void nx__rcmd_error(rcmd_err_t err, char *filename, int line) {
+  nx_display_clear();
+  
+  nx_display_string("Error in file:\n");
+  nx_display_string(filename);
+  nx_display_end_line();
+  
+  nx_display_string("At line ");
+  nx_display_uint(line);
+  nx_display_end_line();
+  
+  nx_display_string(rcmd_err_str[err]);
+}
