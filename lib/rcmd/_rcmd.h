@@ -17,14 +17,10 @@
 #include "base/fs.h"
 #include "base/lib/rcmd/rcmd.h"
 
-/** @addtogroup libinternal */
+/** @addtogroup lib */
 /*@{*/
 
-/** @defgroup rcmdinternal Remote robot command library
- *
- * Internal helper functions and actuators for the remote robot control
- * library.
- */
+/** @addtogroup rcmd */
 /*@{*/
 
 /** Command definition. */
