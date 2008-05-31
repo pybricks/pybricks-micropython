@@ -57,11 +57,8 @@ typedef enum {
     EFC_CMD_SSB = 0x0F,
 } efc_cmd;
 
-/** Base address of the flash in the virtual address space. */
-#define FLASH_BASE 0x00100000
-
 /** A usable pointer to the base address of the flash. */
-#define FLASH_BASE_PTR ((volatile U32 *)FLASH_BASE)
+#define FLASH_BASE_PTR ((volatile U32 *)AT91C_IFLASH)
 
 /** Initialize the flash subsystem. */
 void nx__efc_init(void);

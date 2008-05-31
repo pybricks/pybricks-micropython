@@ -131,7 +131,7 @@ rcmd_err_t nx__rcmd_print(char *line) {
   for (i=1; i<ntokens; i++) {
     nx_display_string(line + indices[i]);
     if (i < ntokens-1)
-      nx_display_string(RCMD_TOKEN_SEPARATOR);
+      nx_display_string(" ");
   }
 
   nx_display_end_line();
