@@ -9,14 +9,14 @@
 #include "base/types.h"
 #include "base/util.h"
 #include "base/assert.h"
-#include "base/display.h"
 #include "base/fs.h"
 #include "base/lib/rcmd/rcmd.h"
 #include "base/lib/rcmd/_rcmd.h"
 
-rcmd_err_t nx_rcmd_do(char *line) {
+rcmd_err_t nx_rcmd_do(const char *line) {
   rcmd_command_def command;
   rcmd_err_t err;
+  char cmdline[RCMD_BUF_LEN] = {0};
   
   if (strlen(line) == 0 || line[0] == RCMD_COMMENT_CHAR) {
     return RCMD_ERR_NO_ERROR;
@@ -27,7 +27,11 @@ rcmd_err_t nx_rcmd_do(char *line) {
     return err;
   }
 
-  return command.actuator(line);
+  /* Call the command actuator on a copy of the command line so
+   * it can mess around with it if it wants to.
+   */
+  memcpy(cmdline, line, strlen(line));
+  return command.actuator(cmdline);
 }
 
 void nx_rcmd_parse(char *file) {

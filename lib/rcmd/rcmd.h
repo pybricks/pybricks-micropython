@@ -27,8 +27,10 @@
  */
 /*@{*/
 
-/** Maximum command token length. */
-#define RCMD_MAX_CMD_LENGTH 8
+/** Maximum command tokens. */
+#define RCMD_MAX_TOKENS 4
+
+/** Maximum length of a token (command argument). */
 #define RCMD_MAX_TOKEN_LENGTH 32
 
 /** Maximum length of one line. */
@@ -42,17 +44,18 @@
 
 /** Recognized commands. */
 typedef enum {
-  RCMD_MOVE,
-  RCMD_PRINT,
-  RCMD_CLEAR,
-  RCMD_PLAY,
-  RCMD_EXEC,
+  RCMD_CMD_MOVE,
+  RCMD_CMD_PRINT,
+  RCMD_CMD_CLEAR,
+  RCMD_CMD_PLAY,
+  RCMD_CMD_EXEC,
+  RCMD_CMD_WAIT,
 } rcmd_command;
 
 /** Error codes. */
 typedef enum {
   RCMD_ERR_NO_ERROR,
-  RCMD_ERR_INVALID_ARGC,
+  RCMD_ERR_INCORRECT_ARGC,
   RCMD_ERR_INVALID_PARAMETER,
   RCMD_ERR_READ_ERROR,
   RCMD_ERR_END_OF_FILE,
@@ -65,7 +68,7 @@ typedef enum {
  * @param line The line to execute.
  * @return An appropriate @a rcmd_err_t error code.
  */
-rcmd_err_t nx_rcmd_do(char *line);
+rcmd_err_t nx_rcmd_do(const char *line);
 
 /** Parse the given file and execute each line.
  *

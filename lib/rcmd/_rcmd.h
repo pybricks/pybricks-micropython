@@ -25,10 +25,11 @@
 
 /** Command definition. */
 typedef struct {
-  char *name;
-  int argc;
+  char *name;  /**< Command name. */
+  int argc;    /**< Number of arguments expected by this command. */
   
-  rcmd_err_t (* actuator)(const char*);
+  /** Command actuator. */
+  rcmd_err_t (* actuator)(char*);
 } rcmd_command_def;
 
 /** Finds the appropriate command from the commands definition array
@@ -40,11 +41,12 @@ typedef struct {
  */
 rcmd_err_t nx__rcmd_find_command(const char *line, rcmd_command_def *command);
 
-rcmd_err_t nx__rcmd_move(const char *line);
-rcmd_err_t nx__rcmd_print(const char *line);
-rcmd_err_t nx__rcmd_clear(const char *line);
-rcmd_err_t nx__rcmd_play(const char *line);
-rcmd_err_t nx__rcmd_exec(const char *line);
+rcmd_err_t nx__rcmd_move(char *line);
+rcmd_err_t nx__rcmd_print(char *line);
+rcmd_err_t nx__rcmd_clear(char *line);
+rcmd_err_t nx__rcmd_play(char *line);
+rcmd_err_t nx__rcmd_exec(char *line);
+rcmd_err_t nx__rcmd_wait(char *line);
 
 /** Read one line from the given file.
  *
@@ -55,8 +57,7 @@ rcmd_err_t nx__rcmd_exec(const char *line);
  */
 rcmd_err_t nx__rcmd_readline(fs_fd_t fd, char *line);
 
-void nx__rcmd_tokenize(const char *line, char sep, int *argc,
-                       char argv[][RCMD_MAX_TOKEN_LENGTH]);
+void nx__rcmd_tokenize(char *line, char sep, int *ntokens, int *indices);
 
 /** Display an error from its error code.
  *
