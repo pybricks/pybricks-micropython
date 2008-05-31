@@ -94,12 +94,19 @@ char *strchr(const char *s, const char c);
  */
 char *strrchr(const char *s, const char c);
 
-/** Convert a string to the integer it represents, if possible.
+/** Convert a string to the unsigned integer it represents, if possible.
  *
  * @param s The string to convert.
  * @return The converted integer, or 0 by default.
  */
-int atoi(const char *s);
+U32 atou32(const char *s);
+
+/** Convert a string to the signed integer it represents, if possible.
+ *
+ * @param s The string to convert.
+ * @return The converted integer, or 0 by default.
+ */
+S32 atos32(const char *s);
 
 /*@}*/
 

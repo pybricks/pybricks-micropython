@@ -82,18 +82,40 @@ char *strrchr(const char *s, const char c) {
   return (char*)ptr;
 }
 
-int atoi(const char *s) {
-  U32 len, start = 0, i = 1;
-  int res = 0;
+U32 atou32(const char *s) {
+  U32 len, res = 0, i = 1;
+  
+  len = strlen(s);
+  if (len == 0 || len > 10) {
+    return 0;
+  }
+
+  for (; len>0; len--) {
+    char c = s[len-1];
+    
+    /* If one character is invalid, fail by returning 0. */
+    if (c < '0' && c > '9') {
+      return 0;
+    }
+    
+    res += (c - '0') * i;
+    i *= 10;
+  }
+
+  return res;
+}
+
+S32 atos32(const char *s) {
+  U32 len, i = 1, start = 0;
+  S32 res = 0;
   bool negative = FALSE;
   
   len = strlen(s);
-  
-  if (len == 0) {
-    return res;
+  if (len == 0 || len > 11) {
+    return 0;
   }
 
-  if (s[start] == '-') {
+  if (s[0] == '-') {
     negative = TRUE;
     start++;
   }
@@ -109,6 +131,6 @@ int atoi(const char *s) {
     res += (c - '0') * i;
     i *= 10;
   }
-  
-  return res;
+
+  return negative ? - res : res;
 }
