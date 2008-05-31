@@ -65,8 +65,8 @@ void nx__sound_init(void) {
    * when there is no data), and set transmissions to start as soon as
    * there is data available to send.
    */
-  *AT91C_SSC_TCMR = (AT91C_SSC_CKS_DIV
-                     AT91C_SSC_CKO_CONTINOUS
+  *AT91C_SSC_TCMR = (AT91C_SSC_CKS_DIV |
+                     AT91C_SSC_CKO_CONTINOUS |
                      AT91C_SSC_START_CONTINOUS);
 
   /* Configure the framing mode for transmission: 32-bit data words, 8
@@ -74,7 +74,7 @@ void nx__sound_init(void) {
    * driven value (when there is no data being streamed) to 1.
    */
   *AT91C_SSC_TFMR =
-    31 + AT91C_SSC_DATDEF + AT91C_SSC_MSBF + (7 << 8);
+    31 | AT91C_SSC_DATDEF | AT91C_SSC_MSBF | (7 << 8);
 
   /* Idle the output data pin of the SSC. The value on the pin will
    * now be whatever the SSC pumps out.
