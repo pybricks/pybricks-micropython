@@ -13,6 +13,10 @@
 void memcpy(void *dest, const void *source, U32 len) {
   U8 *dst = (U8*)dest;
   U8 *src = (U8*)source;
+
+  NX_ASSERT(dst != NULL);
+  NX_ASSERT(src != NULL);
+
   while (len--) {
     *dst++ = *src++;
   }
@@ -20,6 +24,9 @@ void memcpy(void *dest, const void *source, U32 len) {
 
 void memset(void *dest, const U8 val, U32 len) {
   U8 *dst = (U8*)dest;
+
+  NX_ASSERT(dst != NULL);
+
   while (len--) {
     *dst++ = val;
   }
