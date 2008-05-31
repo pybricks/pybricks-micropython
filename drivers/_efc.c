@@ -29,7 +29,7 @@ bool nx__efc_write_page(U32 *data, U32 page) {
   while (!(*AT91C_MC_FSR & AT91C_MC_FRDY));
 
   nx_systick_wait_ms(EFC_THROTTLE_TIMER);
-  
+
   /* Write the page data to the flash in-memory mapping. */
   for (i=0 ; i<EFC_PAGE_WORDS ; i++) {
       FLASH_BASE_PTR[i+page*EFC_PAGE_WORDS] = data[i];
@@ -42,7 +42,7 @@ bool nx__efc_write_page(U32 *data, U32 page) {
   do {
     ret = *AT91C_MC_FSR;
   } while (!(ret & AT91C_MC_FRDY));
-  
+
   /* Check the command result by reading the status register
    * only once to avoid the bits being cleared.
    */

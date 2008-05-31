@@ -83,12 +83,12 @@ typedef struct {
 typedef struct {
   bool used;                     /**< Denotes fd usage. */
   char name[FS_FILENAME_LENGTH]; /**< The file name. */
-  
+
   U32 origin;                    /**< File origin page on the flash */
   size_t size;                   /**< The file size. */
-  
+
   fs_perm_t perms;               /**< File permissions. */
-  
+
   fs_buffer_t rbuf;              /**< Read buffer. */
   fs_buffer_t wbuf;              /**< Write buffer. */
 } fs_file_t;

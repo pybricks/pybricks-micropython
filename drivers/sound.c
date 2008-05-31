@@ -65,8 +65,8 @@ void nx__sound_init(void) {
    * when there is no data), and set transmissions to start as soon as
    * there is data available to send.
    */
-  *AT91C_SSC_TCMR = (AT91C_SSC_CKS_DIV +
-                     AT91C_SSC_CKO_CONTINOUS +
+  *AT91C_SSC_TCMR = (AT91C_SSC_CKS_DIV
+                     AT91C_SSC_CKO_CONTINOUS
                      AT91C_SSC_START_CONTINOUS);
 
   /* Configure the framing mode for transmission: 32-bit data words, 8

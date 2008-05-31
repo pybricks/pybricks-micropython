@@ -9,7 +9,7 @@
  * Redistribution of this file is permitted under
  * the terms of the GNU Public License (GPL) version 2.
  */
- 
+
 #ifndef __NXOS_BASE_LIB__RCMD_H__
 #define __NXOS_BASE_LIB__RCMD_H__
 
@@ -27,7 +27,7 @@
 typedef struct {
   char *name;  /**< Command name. */
   int argc;    /**< Number of arguments expected by this command. */
-  
+
   /** Command actuator. */
   rcmd_err_t (* actuator)(char*);
 } rcmd_command_def;

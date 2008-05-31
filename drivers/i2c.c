@@ -720,7 +720,7 @@ static void i2c_isr(void) {
 
         i2c_set_bus_state(sensor, I2C_IDLE);
         p->txn_state = TXN_WAITING;
- 
+
         /* When the sub-transaction is done, decrement i2c_txn_count.
          * If it reaches 0, disable the I2C interrupt.
          *

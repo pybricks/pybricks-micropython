@@ -17,11 +17,11 @@ rcmd_err_t nx_rcmd_do(const char *line) {
   rcmd_command_def command;
   rcmd_err_t err;
   char cmdline[RCMD_BUF_LEN] = {0};
-  
+
   if (strlen(line) == 0 || line[0] == RCMD_COMMENT_CHAR) {
     return RCMD_ERR_NO_ERROR;
   }
-  
+
   err = nx__rcmd_find_command(line, &command);
   if (err != RCMD_ERR_NO_ERROR) {
     return err;
@@ -43,7 +43,7 @@ void nx_rcmd_parse(char *file) {
     nx__rcmd_error(RCMD_ERR_READ_ERROR, file, 0);
     return;
   }
-  
+
   do {
     char line[RCMD_BUF_LEN] = {0};
     err = nx__rcmd_readline(fd, line);
@@ -55,13 +55,13 @@ void nx_rcmd_parse(char *file) {
     n++;
 
     /* Fire the corresponding actuator. */
-    result = nx_rcmd_do(line);    
+    result = nx_rcmd_do(line);
     if (result != RCMD_ERR_NO_ERROR) {
       nx__rcmd_error(result, file, n);
       break;
     }
   } while (err == RCMD_ERR_NO_ERROR);
-  
+
   nx_fs_close(fd);
   return;
 }

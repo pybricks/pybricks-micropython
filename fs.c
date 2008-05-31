@@ -32,14 +32,14 @@ fs_err_t nx_fs_init(void) {
 static fs_err_t nx_fs_init_fd(U32 origin, fs_fd_t fd) {
   volatile U32 *metadata = &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS]);
   fs_file_t *file;
-  
+
   file = nx__fs_get_file(fd);
   NX_ASSERT(file != NULL);
-  
+
   file->origin = origin;
   file->size = nx__fs_get_file_size_from_metadata(metadata);
   file->perms = nx__fs_get_file_perms_from_metadata(metadata);
-  
+
   file->rbuf.page = file->rbuf.pos = 0;
   file->wbuf.page = file->wbuf.pos = 0;
   memset(file->rbuf.data.bytes, 0, EFC_PAGE_BYTES);
@@ -52,12 +52,12 @@ static fs_err_t nx_fs_init_fd(U32 origin, fs_fd_t fd) {
 static fs_err_t nx_fs_open_by_name(char *name, fs_fd_t fd) {
   U32 origin;
   fs_err_t err;
-  
+
   err = nx__fs_find_file_origin(name, &origin);
   if (err != FS_ERR_NO_ERROR) {
     return err;
   }
-  
+
   return nx_fs_init_fd(origin, fd);
 }
 
@@ -84,10 +84,10 @@ static fs_err_t nx_fs_create_by_name(char *name, fs_fd_t fd) {
 
   if (origin >= EFC_PAGES) {
     /* TODO: search for an available page on the flash. */
-    
+
     return FS_ERR_NO_SPACE_LEFT_ON_DEVICE;
   }
-  
+
   /* Bootstrap the metadata to the flash page. */
   nx__fs_create_metadata(FS_PERM_READWRITE, name, 0, metadata);
 
@@ -95,7 +95,7 @@ static fs_err_t nx_fs_create_by_name(char *name, fs_fd_t fd) {
   if (!nx__efc_write_page(metadata, origin)) {
     return FS_ERR_FLASH_ERROR;
   }
-  
+
   return nx_fs_init_fd(origin, fd);
 }
 
@@ -122,7 +122,7 @@ fs_err_t nx_fs_open(char *name, fs_file_mode_t mode, fs_fd_t *fd) {
   /* Reserve it. */
   file = &(fdset[slot]);
   file->used = TRUE;
-  
+
   switch (mode) {
     case FS_FILE_MODE_CREATE:
       err = nx_fs_create_by_name(name, slot);
@@ -133,7 +133,7 @@ fs_err_t nx_fs_open(char *name, fs_file_mode_t mode, fs_fd_t *fd) {
       nx__efc_read_page(file->origin, file->wbuf.data.raw);
       file->wbuf.pos = FS_FILE_METADATA_BYTES;
       file->wbuf.page = file->origin;
-      
+
       file->rbuf = file->wbuf;
       break;
     case FS_FILE_MODE_OPEN:
@@ -142,7 +142,7 @@ fs_err_t nx_fs_open(char *name, fs_file_mode_t mode, fs_fd_t *fd) {
         break;
       }
 
-      nx__efc_read_page(file->origin, file->wbuf.data.raw);      
+      nx__efc_read_page(file->origin, file->wbuf.data.raw);
       file->wbuf.pos = FS_FILE_METADATA_BYTES;
       file->wbuf.page = file->origin;
 
@@ -151,17 +151,17 @@ fs_err_t nx_fs_open(char *name, fs_file_mode_t mode, fs_fd_t *fd) {
     case FS_FILE_MODE_APPEND:
       err = nx_fs_open_by_name(name, slot);
       if (err != FS_ERR_NO_ERROR) {
-        break; 
+        break;
       }
-      
+
       /* Put writing position at the end of the file. */
       file->wbuf.page = file->origin
         + nx__fs_get_file_page_count(file->size) - 1;
       nx__efc_read_page(file->wbuf.page, file->wbuf.data.raw);
       file->wbuf.pos = (FS_FILE_METADATA_BYTES + file->size) % EFC_PAGE_BYTES;
-      
+
       file->rbuf.page = file->origin;
-      nx__efc_read_page(file->rbuf.page, file->rbuf.data.raw);      
+      nx__efc_read_page(file->rbuf.page, file->rbuf.data.raw);
       file->rbuf.pos = FS_FILE_METADATA_BYTES;
 
       break;
@@ -169,14 +169,14 @@ fs_err_t nx_fs_open(char *name, fs_file_mode_t mode, fs_fd_t *fd) {
       err = FS_ERR_UNSUPPORTED_MODE;
       break;
   }
-  
+
   if (err == FS_ERR_NO_ERROR) {
     *fd = slot;
   } else {
     /* Otherwise release the slot that was reserved. */
     file->used = FALSE;
   }
-  
+
   return err;
 }
 
@@ -188,7 +188,7 @@ size_t nx_fs_get_filesize(fs_fd_t fd) {
   if (!file) {
     return -1;
   }
-  
+
   return file->size;
 }
 
@@ -252,7 +252,7 @@ fs_err_t nx_fs_write(fs_fd_t fd, U8 byte) {
     err = nx_fs_flush(fd);
     if (err != FS_ERR_NO_ERROR)
       return err;
-    
+
     file->wbuf.page++;
     file->wbuf.pos = 0;
     memset(file->wbuf.data.bytes, 0, EFC_PAGE_BYTES);
@@ -262,7 +262,7 @@ fs_err_t nx_fs_write(fs_fd_t fd, U8 byte) {
   }
 
   file->wbuf.data.bytes[file->wbuf.pos++] = byte;
-  
+
   /* Increment the size of the file if necessary */
   if (file->wbuf.page == file->origin + pages) {
     if (file->wbuf.pos > file->size + FS_FILE_METADATA_BYTES
@@ -277,7 +277,7 @@ fs_err_t nx_fs_write(fs_fd_t fd, U8 byte) {
 /* Flush the write buffer of the given file. */
 fs_err_t nx_fs_flush(fs_fd_t fd) {
   fs_file_t *file;
-  
+
   file = nx__fs_get_file(fd);
   if (!file) {
     return FS_ERR_INVALID_FD;
@@ -302,12 +302,12 @@ fs_err_t nx_fs_close(fs_fd_t fd) {
   U32 firstpage[EFC_PAGE_WORDS];
   fs_file_t *file;
   fs_err_t err;
-  
+
   file = nx__fs_get_file(fd);
   if (!file) {
     return FS_ERR_INVALID_FD;
   }
-  
+
   err = nx_fs_flush(fd);
   if (err != FS_ERR_NO_ERROR) {
     return err;
@@ -326,7 +326,7 @@ fs_err_t nx_fs_close(fs_fd_t fd) {
 
 fs_perm_t nx_fs_get_perms(fs_fd_t fd) {
   fs_file_t *file;
-  
+
   file = nx__fs_get_file(fd);
   if (!file) {
     return FS_ERR_INVALID_FD;
@@ -337,14 +337,14 @@ fs_perm_t nx_fs_get_perms(fs_fd_t fd) {
 
 fs_err_t nx_fs_set_perms(fs_fd_t fd, fs_perm_t perms) {
   fs_file_t *file;
-  
+
   file = nx__fs_get_file(fd);
   if (!file) {
     return FS_ERR_INVALID_FD;
   }
-  
+
   file->perms = perms;
-  
+
   return FS_ERR_NO_ERROR;
 }
 
@@ -353,12 +353,12 @@ fs_err_t nx_fs_unlink(fs_fd_t fd) {
   fs_file_t *file;
   U32 page, end;
   U32 erase[EFC_PAGE_WORDS] = {0};
-  
+
   file = nx__fs_get_file(fd);
   if (!file) {
     return FS_ERR_INVALID_FD;
   }
-  
+
   /* Remove file marker and potential in-file marker-alike. */
   end = file->origin + nx__fs_get_file_page_count(file->size);
   for (page = file->origin; page < end; page++) {
@@ -369,7 +369,7 @@ fs_err_t nx_fs_unlink(fs_fd_t fd) {
       }
     }
   }
-  
+
   file->used = FALSE;
   return FS_ERR_NO_ERROR;
 }
@@ -410,13 +410,13 @@ void nx_fs_get_occupation(U16 *files, U32 *used, U32 *free_pages,
                           U32 *wasted) {
   if (files) {
   }
-  
+
   if (used) {
   }
-  
+
   if (free_pages) {
   }
-  
+
   if (wasted) {
   }
 }

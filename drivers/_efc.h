@@ -22,7 +22,7 @@
 
 /** @defgroup efcinternal Embedded Flash Controller driver
  *
- * The flash driver provides a software interface to the on-board 
+ * The flash driver provides a software interface to the on-board
  * flash memory through the embedded flash controller.
  */
 /*@{*/

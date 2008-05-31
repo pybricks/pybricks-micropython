@@ -36,17 +36,17 @@ static defrag_err_t nx_defrag_move_region(U32 source, U32 dest, U32 len) {
   NX_ASSERT(dest < EFC_PAGES);
   NX_ASSERT(len < EFC_PAGES);
   NX_ASSERT(dest - source <= len);
-  
+
   while (len--) {
     data = FLASH_BASE_PTR[source*EFC_PAGE_WORDS];
     if (!nx__efc_write_page(&data, dest)) {
       return DEFRAG_ERR_FLASH_ERROR;
     }
-    
+
     source++;
     dest++;
   }
-  
+
   return DEFRAG_ERR_NO_ERROR;
 }
 
@@ -57,19 +57,19 @@ defrag_err_t nx_defrag_simple(void) {
 defrag_err_t nx_defrag_for_file_by_name(char *name) {
   U32 origin;
   fs_err_t err;
-  
+
   err = nx__fs_find_file_origin(name, &origin);
   if (err == FS_ERR_NO_ERROR) {
     return nx_defrag_for_file_by_origin(origin);
   }
-  
+
   /* Fall back to simple defrag. */
   return nx_defrag_simple();
 }
 
 defrag_err_t nx_defrag_for_file_by_origin(U32 origin) {
   nx_defrag_move_region(origin, 1, 1); // TBR
- 
+
   return DEFRAG_ERR_NO_ERROR;
 }
 

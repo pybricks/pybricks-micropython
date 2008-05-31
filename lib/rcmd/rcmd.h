@@ -9,7 +9,7 @@
  * Redistribution of this file is permitted under
  * the terms of the GNU Public License (GPL) version 2.
  */
- 
+
 #ifndef __NXOS_BASE_LIB_RCMD_H__
 #define __NXOS_BASE_LIB_RCMD_H__
 

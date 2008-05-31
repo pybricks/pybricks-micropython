@@ -18,7 +18,7 @@ U8 nx_gui_text_menu(gui_text_menu_t menu) {
   bool done = FALSE;
 
   NX_ASSERT(strlen(menu.title) > 0);
-  
+
   for (i=0; menu.entries[i]; count++, i++);
   NX_ASSERT(count > 0);
 
@@ -57,7 +57,7 @@ U8 nx_gui_text_menu(gui_text_menu_t menu) {
       else
         nx_display_string(". ");
 
-      nx_display_string(menu.entries[i]); 
+      nx_display_string(menu.entries[i]);
       nx_display_end_line();
     }
 
@@ -84,7 +84,7 @@ U8 nx_gui_text_menu(gui_text_menu_t menu) {
       default:
         break;
     }
-  } while (!done); 
+  } while (!done);
 
 
   nx_systick_wait_ms(GUI_EVENT_AVOID_REPEAT);
