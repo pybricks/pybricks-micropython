@@ -1,8 +1,8 @@
 /** @file lock.h
- *  @brief Locking primitives
+ *  @brief Locking primitives.
  */
 
-/* Copyright (C) 2007 the NxOS developers
+/* Copyright (c) 2007,2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -64,10 +64,10 @@ U8 nx_atomic_cas8(U8 *dest, U8 val);
  * preemption (since there is no scheduler), but loops forever until the
  * spinlock can be acquired.
  *
- * @note This means that a spinlock is only useful when you need to
- * synchronize between the main execution context and an interrupt
- * handler, or some other form of preemption that can break free of the
- * spinlock's infinite loop.
+ * @note These semantics mean that a spinlock is only useful when you
+ * need to synchronize between the main execution context and an
+ * interrupt handler, or some other form of preemption that can break
+ * free of the spinlock's infinite loop.
  */
 /*@{*/
 
@@ -80,36 +80,35 @@ typedef volatile U8 spinlock;
 /** Initial value for a locked spinlock. */
 #define SPINLOCK_INIT_LOCKED 1
 
-/** @cond DOXYGEN_SKIP */
-void nx_spinlock_acquire_from_ref(spinlock *lock);
-bool nx_spinlock_try_acquire_from_ref(spinlock *lock);
-/** @endcond */
-
 /** Acquire @a lock and return.
  *
  * Will loop indefinitely until the spinlock can be acquired.
  *
- * @param lock The spinlock to acquire.
+ * @param lock Pointer to the spinlock to acquire.
  */
-#define nx_spinlock_acquire(lock) spinlock_acquire_from_ref(&(lock))
+void nx_spinlock_acquire(spinlock *lock);
 
 /** Attempt to acquire @a lock and return the result.
  *
  * Unlike nx_spinlock_acquire(), this function does not block, but may
  * fail to acquire the spinlock.
  *
- * @param lock The spinlock to acquire.
+ * @param lock Pointer to the spinlock to acquire.
  * @return 1 if the spinlock was acquired, 0 if it was already locked.
  */
-#define nx_spinlock_try_acquire(lock) spinlock_try_acquire_from_ref(&(lock))
+void nx_spinlock_try_acquire(spinlock *lock);
 
 /** Release @a lock.
  *
  * Does not block.
  *
- * @param lock The spinlock to release.
+ * @param lock Pointer to the spinlock to release.
  */
-#define nx_spinlock_release(lock) { lock = 0; }
+void nx_spinlock_release(spinlock *lock);
+
+inline void nx_spinlock_release(spinlock *lock) {
+  *lock = 0;
+}
 
 /*@}*/
 /*@}*/
