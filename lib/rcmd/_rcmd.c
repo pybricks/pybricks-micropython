@@ -39,8 +39,7 @@ rcmd_err_t nx__rcmd_find_command(const char *line, rcmd_command_def *command) {
   U32 i = 0;
 
   while (rcmd_commands[i].name) {
-    if (strncmp(line, rcmd_commands[i].name,
-                strlen(rcmd_commands[i].name)) == 0) {
+    if (streq(line, rcmd_commands[i].name)) {
       *command = rcmd_commands[i];
       return RCMD_ERR_NO_ERROR;
     }
@@ -164,7 +163,7 @@ rcmd_err_t nx__rcmd_play(char *line) {
     return RCMD_ERR_INVALID_PARAMETER;
   }
 
-  if (ntokens == 4 && strncmp(line + indices[3], "sync", 4) == 0) {
+  if (ntokens == 4 && streq(line + indices[3], "sync") == 0) {
     nx_sound_freq(freq, duration);
   } else {
     nx_sound_freq_async(freq, duration);

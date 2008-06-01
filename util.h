@@ -57,24 +57,27 @@ void memset(void *dest, const U8 val, U32 len);
  */
 U32 strlen(const char *str);
 
-/** Order two strings based on a limited amount of input.
+/** Compare two string prefixes for equality.
  *
  * @param a First string to compare.
  * @param b Second string to compare.
  * @param n Number of bytes to compare.
- * @return -1 if @a a sorts before @a b, 1 if @a b sorts before @a a, 0
- *         if both are equivalent up to @a n bytes.
- */
-U32 strncmp(const char *a, const char *b, U32 n);
-
-/** Order two strings.
+ * @return TRUE if the first @a n bytes of @a a are equal to @a b,
+ * FALSE otherwise.
  *
- * This is equivalent to @a strncmp, with the maximum length being the
+ * @note This function will halt on the first NULL byte it finds in
+ * either string.
+ */
+bool streqn(const char *a, const char *b, U32 n);
+
+/** compare two strings for equality.
+ *
+ * This is equivalent to @a strneq, with the maximum length being the
  * length of the shortest input string.
  *
- * @see strncmp
+ * @see strneq
  */
-U32 strcmp(const char *a, const char *b);
+bool streq(const char *a, const char *b);
 
 /** Locate leftmost instance of character @a c in string @a s.
  *

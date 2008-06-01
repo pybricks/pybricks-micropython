@@ -43,24 +43,28 @@ U32 strlen(const char *str) {
   return i;
 }
 
-U32 strncmp(const char *a, const char *b, U32 n) {
-  U32 i;
-
+bool streqn(const char *a, const char *b, U32 n) {
   NX_ASSERT(a != NULL && b != NULL);
 
-  for (i=0 ; i<n ; i++) {
-    if (a[i] < b[i]) {
-      return -1;
-    } else if (a[i] > b[i]) {
-      return 1;
-    }
+  while (n--) {
+    if (*a != *b++)
+      return FALSE;
+    if (*a++ == '\0')
+      break;
   }
 
-  return 0;
+  return TRUE;
 }
 
-U32 strcmp(const char *a, const char *b) {
-  return strncmp(a, b, MIN(strlen(a), strlen(b)+1));
+bool streq(const char *a, const char *b) {
+  NX_ASSERT(a != NULL && b != NULL);
+
+  while (*a != '\0' && *b != '\0') {
+    if (*a++ != *b++)
+      return FALSE;
+  }
+
+  return *a == *b ? TRUE : FALSE;
 }
 
 char *strchr(const char *s, const char c) {

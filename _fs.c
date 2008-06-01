@@ -53,7 +53,7 @@ fs_err_t nx__fs_find_file_origin(char *name, U32 *origin) {
              (void *)(metadata + FS_FILENAME_OFFSET),
              FS_FILENAME_LENGTH);
 
-      if (strcmp(nameconv.chars, name) == 0) {
+      if (streq(nameconv.chars, name)) {
         *origin = i;
         return FS_ERR_NO_ERROR;
       }
