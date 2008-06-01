@@ -3,10 +3,11 @@
  *
  * Kernels often need to know where things are in RAM and how they
  * started up, if only to know where the code expects the stack to be,
- * or where there is free space that can be
+ * or where there is free space that can be used for user
+ * applications.
  */
 
-/* Copyright (C) 2007 the NxOS developers
+/* Copyright (c) 2007,2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
