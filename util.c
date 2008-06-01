@@ -105,7 +105,7 @@ U32 atou32(const char *s) {
     char c = s[len-1];
 
     /* If one character is invalid, fail by returning 0. */
-    if (c < '0' && c > '9') {
+    if (c < '0' || c > '9') {
       return 0;
     }
 
@@ -135,7 +135,7 @@ S32 atos32(const char *s) {
     char c = s[len-1];
 
     /* If one character is invalid, fail by returning 0. */
-    if (c < '0' && c > '9') {
+    if (c < '0' || c > '9') {
       return 0;
     }
 
