@@ -1,4 +1,4 @@
-/* Copyright (C) 2007 the NxOS developers
+/* Copyright (c) 2007,2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -22,13 +22,13 @@
 #define printf(fmt, ...) /* Nothing, we don't printf. */
 #include "base/_tlsf.c.inc"
 
-void nx_memalloc_init(void) {
-  nx_memalloc_init_full(NX_USERSPACE_START, NX_USERSPACE_SIZE);
-}
-
-void nx_memalloc_init_full(void *mem_pool, U32 mem_pool_size) {
+inline void nx_memalloc_init_full(void *mem_pool, U32 mem_pool_size) {
   size_t size = init_memory_pool(mem_pool_size, mem_pool);
   NX_ASSERT_MSG(size > 0, "Failed to init\nmemory allocator");
+}
+
+void nx_memalloc_init(void) {
+  nx_memalloc_init_full(NX_USERSPACE_START, NX_USERSPACE_SIZE);
 }
 
 U32 nx_memalloc_used(void) {

@@ -2,7 +2,7 @@
  *  @brief Memory allocator.
  */
 
-/* Copyright (C) 2007 the NxOS developers
+/* Copyright (c) 2007,2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -33,17 +33,24 @@
  * initialize it by calling nx_mem_init() or nx_mem_init_full(). All the
  * other functions of the allocator assume that the allocator is
  * initialized.
+ *
+ * @warning The memory allocator is @b not safe for concurrent
+ * access. You must provide your own locking around it if you are
+ * going to use it from concurrent contexts. Also be aware that this
+ * means you cannot use the allocator from within interrupt handlers
+ * (accessing already allocated memory is fine).
  */
 /*@{*/
 
 /** @name Controlling the allocator */
 /*@{*/
 
-/* Initialize the allocator's memory pool.
+/** Initialize the allocator's memory pool.
  *
- * After this call, the memory defined in memmap.h as userspace
- * (NX_USERSPACE_START through NX_USERSPACE_END) should no longer be
- * used directly, since it is under the control of the memory allocator.
+ * After this call, the memory defined in memmap.h as userspace (@a
+ * NX_USERSPACE_START through @a NX_USERSPACE_END) should no longer be
+ * used directly, since it is under the control of the memory
+ * allocator.
  *
  * @sa nx_memalloc_init_full()
  */
