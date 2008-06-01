@@ -100,16 +100,28 @@ char *strrchr(const char *s, const char c);
 /** Convert a string to the unsigned integer it represents, if possible.
  *
  * @param s The string to convert.
- * @return The converted integer, or 0 by default.
+ * @param result A pointer to the integer that will contain the parsed
+ * result, if the conversion was successful.
+ * @return TRUE with *result set correctly if the conversion was
+ * successful, FALSE if the conversion failed.
+ *
+ * @note If the conversion fails, the value of @a *result will still
+ * be clobbered, but won't contain the true value.
  */
-U32 atou32(const char *s);
+bool atou32(const char *s, U32* result);
 
 /** Convert a string to the signed integer it represents, if possible.
  *
  * @param s The string to convert.
- * @return The converted integer, or 0 by default.
+ * @param result A pointer to the integer that will contain the parsed
+ * result, if the conversion was successful.
+ * @return TRUE with *result set correctly if the conversion was
+ * successful, FALSE if the conversion failed.
+ *
+ * @note If the conversion fails, the value of @a *result will still
+ * be clobbered, but won't contain the true value.
  */
-S32 atos32(const char *s);
+bool atos32(const char *s, S32* result);
 
 /*@}*/
 

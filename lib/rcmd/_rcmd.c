@@ -57,6 +57,7 @@ rcmd_err_t nx__rcmd_move(char *line) {
   bool active[NXT_N_MOTORS] = {FALSE};
   S32 speeds[NXT_N_MOTORS];
   U32 durations[NXT_N_MOTORS];
+  bool success;
 
   nx__rcmd_tokenize(line, RCMD_TOKEN_SEPARATOR, &ntokens, indices);
 
@@ -81,12 +82,12 @@ rcmd_err_t nx__rcmd_move(char *line) {
   nx__rcmd_tokenize(spec, ',', &ntokens, subind);
   for (i=0; i<NXT_N_MOTORS; i++) {
     if (ntokens <= i) {
-      speeds[i] = atos32(spec + subind[ntokens-1]);
+      success = atos32(spec + subind[ntokens-1], &speeds[i]);
     } else {
-      speeds[i] = atos32(spec + subind[i]);
+      success = atos32(spec + subind[i], &speeds[i]);
     }
 
-    if (speeds[i] > 100 || speeds[i] < -100) {
+    if (!success || speeds[i] > 100 || speeds[i] < -100) {
       return RCMD_ERR_INVALID_PARAMETER;
     }
   }
@@ -96,12 +97,12 @@ rcmd_err_t nx__rcmd_move(char *line) {
   nx__rcmd_tokenize(spec, ',', &ntokens, subind);
   for (i=0; i<NXT_N_MOTORS; i++) {
     if (ntokens <= i) {
-      durations[i] = atou32(spec + subind[ntokens-1]);
+      success = atou32(spec + subind[ntokens-1], &durations[i]);
     } else {
-      durations[i] = atou32(spec + subind[i]);
+      success = atou32(spec + subind[i], &durations[i]);
     }
 
-    if (speeds[i] != 0 && durations[i] == 0) {
+    if (!success || (speeds[i] != 0 && durations[i] == 0)) {
       return RCMD_ERR_INVALID_PARAMETER;
     }
   }
@@ -156,10 +157,8 @@ rcmd_err_t nx__rcmd_play(char *line) {
     return RCMD_ERR_INCORRECT_ARGC;
   }
 
-  freq = atou32(line + indices[1]);
-  duration = atou32(line + indices[2]);
-
-  if (freq == 0 || duration == 0) {
+  if (!atou32(line + indices[1], &freq) || freq < 200 ||
+      !atou32(line + indices[2], &duration) || duration < 100) {
     return RCMD_ERR_INVALID_PARAMETER;
   }
 
@@ -202,8 +201,7 @@ rcmd_err_t nx__rcmd_wait(char *line) {
     return RCMD_ERR_INCORRECT_ARGC;
   }
 
-  wait = atou32(line + indices[1]);
-  if (wait == 0) {
+  if (!atou32(line + indices[1], &wait) || wait == 0) {
     return RCMD_ERR_INVALID_PARAMETER;
   }
 

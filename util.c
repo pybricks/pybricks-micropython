@@ -93,55 +93,68 @@ char *strrchr(const char *s, const char c) {
   return (char*)ptr;
 }
 
-U32 atou32(const char *s) {
-  U32 len, res = 0, i = 1;
+bool atou32(const char *s, U32* result) {
+  U32 prev = 0;
 
-  len = strlen(s);
-  if (len == 0 || len > 10) {
-    return 0;
+  NX_ASSERT(s != NULL && result != NULL);
+
+  *result = 0;
+
+  // Skip leading zeros
+  while (*s && *s == '0')
+    s++;
+
+  for (; *s; s++) {
+    // Return 0 on invalid characters.
+    if (*s < '0' || *s > '9')
+      return FALSE;
+
+    *result = (10 * *result) + (*s - '0');
+    // Naive overflow check. We could do better in pure asm by
+    // checking the ALU flags.
+    if (*result < prev)
+      return FALSE;
+
+    prev = *result;
   }
 
-  for (; len>0; len--) {
-    char c = s[len-1];
-
-    /* If one character is invalid, fail by returning 0. */
-    if (c < '0' || c > '9') {
-      return 0;
-    }
-
-    res += (c - '0') * i;
-    i *= 10;
-  }
-
-  return res;
+  return TRUE;
 }
 
-S32 atos32(const char *s) {
-  U32 len, i = 1, start = 0;
-  S32 res = 0;
+bool atos32(const char *s, S32 *result) {
+  S32 prev = 0;
   bool negative = FALSE;
 
-  len = strlen(s);
-  if (len == 0 || len > 11) {
-    return 0;
-  }
+  NX_ASSERT(s != NULL && result != NULL);
 
-  if (s[0] == '-') {
+  *result = 0;
+
+  if (*s == '-') {
     negative = TRUE;
-    start++;
+    s++;
   }
 
-  for (; len>start; len--) {
-    char c = s[len-1];
+  // Skip leading zeros
+  while (*s && *s == '0')
+    s++;
 
-    /* If one character is invalid, fail by returning 0. */
-    if (c < '0' || c > '9') {
-      return 0;
-    }
+  for (; *s; s++) {
+    // Return 0 on invalid characters.
+    if (*s < '0' || *s > '9')
+      return FALSE;
 
-    res += (c - '0') * i;
-    i *= 10;
+    *result = (10 * *result) + (*s - '0');
+
+    // Naive overflow check. We could do better in pure asm by
+    // checking the ALU flags.
+    if (*result < prev)
+      return FALSE;
+
+    prev = *result;
   }
 
-  return negative ? - res : res;
+  if (negative)
+    *result = -(*result);
+
+  return TRUE;
 }
