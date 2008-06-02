@@ -2,7 +2,7 @@
  *  @brief Internal interrupt handling APIs.
  */
 
-/* Copyright (C) 2007 the NxOS developers
+/* Copyright (c) 2007,2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -18,6 +18,13 @@
 /** @addtogroup kernelinternal */
 /*@{*/
 
+/** @defgroup interruptinternal Interrupts and task information
+ *
+ * This module just contains internal handlers related to exception
+ * handling.
+ */
+/*@{*/
+
 /** @name Default interrupt handlers.
  *
  * Default handlers for the three general kinds of interrupts that the
@@ -30,6 +37,7 @@ void nx__default_fiq(void);
 void nx__spurious_irq(void);
 /*@}*/
 
+/*@}*/
 /*@}*/
 
 #endif /* __NXOS_BASE__INTERRUPTS_H__ */
