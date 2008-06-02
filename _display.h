@@ -2,7 +2,7 @@
  *  @brief Internal display APIs.
  */
 
-/* Copyright (C) 2007 the NxOS developers
+/* Copyright (c) 2007,2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -18,7 +18,7 @@
 /** @addtogroup kernelinternal */
 /*@{*/
 
-/** @name Display internals.
+/** @defgroup displayinternal Display internals
  *
  * The display's initialization function is private, since the baseplate
  * is the only one that should be able to initialize it.

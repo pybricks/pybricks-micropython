@@ -7,7 +7,7 @@
  * exists.
  */
 
-/* Copyright (C) 2007 the NxOS developers
+/* Copyright (c) 2007,2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -23,7 +23,7 @@
 /** @addtogroup kernelinternal */
 /*@{*/
 
-/** @defgroup core Core startup and shutdown
+/** @defgroup coreinternal Core startup and shutdown
  *
  * The baseplate's main() is private.
  */

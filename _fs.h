@@ -4,7 +4,7 @@
  * A flash-friendly file system for the NXT on-board flash memory.
  */
 
-/* Copyright (C) 2008 the NxOS developers
+/* Copyright (c) 2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -21,7 +21,7 @@
 /** @addtogroup kernelinternal */
 /*@{*/
 
-/** @name File system internals.
+/** @defgroup fsinternal File system internals
  *
  */
 /*@{*/

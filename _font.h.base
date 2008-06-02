@@ -1,5 +1,13 @@
-/**
- * Font file template
+/** @file _font.h
+ *  @brief Embedded font data.
+ */
+
+/* Copyright (c) 2008 the NxOS developers
+ *
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
  */
 
 #ifndef __NXOS_BASE__FONT_H__
@@ -11,7 +19,7 @@
 /** @addtogroup kernelinternal */
 /*@{*/
 
-/** @name Font data
+/** @defgroup fontinternal Font data
  *
  * A basic font is embedded into the baseplate, for use by the display
  * driver.
