@@ -4,7 +4,7 @@
  * Data dumping utility for the NXT baseplate and application kernels.
  */
 
-/* Copyright (C) 2007 the NxOS developers
+/* Copyright (c) 2007-2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -65,7 +65,7 @@ bool nx_dump_u8(U8 val);
  */
 void nx_dump_send_usb(void);
 
-/*}@*/
-/*}@*/
+/*@}*/
+/*@}*/
 
 #endif /* __NXOS_DUMP_H__ */
