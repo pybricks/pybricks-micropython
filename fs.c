@@ -16,13 +16,13 @@
 #include "base/fs.h"
 #include "base/drivers/_efc.h"
 
-/** Magic marker. */
+/* Magic marker. */
 #define FS_FILE_ORIGIN_MARKER 0x42
 
-/** File metadata size, in U32s. */
+/* File metadata size, in U32s. */
 #define FS_FILE_METADATA_SIZE 10
 
-/** File metadata size, in bytes. */
+/* File metadata size, in bytes. */
 #define FS_FILE_METADATA_BYTES (FS_FILE_METADATA_SIZE * sizeof(U32))
 
 #define FS_FILE_ORIGIN_MASK 0xFF000000
@@ -34,13 +34,13 @@
 
 #define FS_FILENAME_OFFSET 2
 
-/** U32 <-> char conversion union for filenames. */
+/* U32 <-> char conversion union for filenames. */
 union U32tochar {
   char chars[FS_FILENAME_LENGTH];
   U32 integers[FS_FILENAME_SIZE];
 };
 
-/** FD-set. */
+/* FD-set. */
 static fs_file_t fdset[FS_MAX_OPENED_FILES];
 
 /* Returns a file info structure given its file descriptor,
@@ -692,7 +692,7 @@ void nx_fs_get_occupation(U16 *files, U32 *used, U32 *free_pages,
   }
 }
 
-/** Defrag functions. */
+/* Defrag functions. */
 
 fs_err_t nx_fs_defrag_simple(void) {
   return FS_ERR_NO_ERROR;
