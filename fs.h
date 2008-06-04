@@ -21,7 +21,19 @@
 /** @addtogroup kernel */
 /*@{*/
 
-/** @defgroup fs Flash file system */
+/** @defgroup fs Flash file system
+ *
+ * A flash-friendly file system for the NXT on-board flash memory. This is a very simple
+ * file system implementation, allowing most of the basic features expected from a file
+ * system: open(), read(), write(), seek(), flush() and close(). Note that reading and
+ * writing use two different pointers. A seek() will move both of them.
+ *
+ * The file system also tries to minimize stress on the flash by progressively moving files
+ * needing more space towards the end of the flash medium. This relocation process happens
+ * automatically and may make one write operation rather costly (in terms of time).
+ *
+ * For more information, refer to the file system design document.
+ */
 /*@{*/
 
 /** File-system first page number. */
