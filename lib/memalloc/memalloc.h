@@ -15,19 +15,16 @@
 
 #include "base/types.h"
 
-/** @addtogroup kernel */
+/** @addtogroup lib */
 /*@{*/
 
-/** @defgroup memalloc Memory allocation
+/** @defgroup memalloc Memory allocator library
  *
- * The NxOS baseplate optionally provides the TLSF memory allocator for
- * use by application kernels. The TLSF allocator performs all
- * allocation functions in constant (O(1)) time, and is optimized to
- * minimize fragmentation, making it ideal for low resource embedded
+ * This optional library provides the TLSF memory allocator to
+ * application kernels. The TLSF allocator performs all allocation
+ * functions in constant (O(1)) time and is optimized to minimize
+ * memory fragmentation, making it ideal for low resource embedded
  * systems such as the NXT.
- *
- * No parts of the baseplate uses the allocator, so if you do not want
- * or need it, it will not be compiled into your application kernel.
  *
  * @note If you do want to use the allocator, you will first need to
  * initialize it by calling nx_mem_init() or nx_mem_init_full(). All the
