@@ -4,7 +4,7 @@
  * A GUI library for NxOS.
  */
 
-/* Copyright (C) 2008 the NxOS developers
+/* Copyright (c) 2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -20,7 +20,7 @@
 /** @addtogroup lib */
 /*@{*/
 
-/** @defgroup gui Graphical user interface library
+/** @defgroup gui Graphical user interface
  *
  * This GUI library provides an easy-to-use interface for creating
  * and using a GUI displayed to the user.

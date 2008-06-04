@@ -18,7 +18,7 @@
 /** @addtogroup lib */
 /*@{*/
 
-/** @defgroup memalloc Memory allocator library
+/** @defgroup memalloc Memory allocator
  *
  * This optional library provides the TLSF memory allocator to
  * application kernels. The TLSF allocator performs all allocation
