@@ -1,4 +1,4 @@
-/* Copyright (C) 2007 the NxOS developers
+/* Copyright (c) 2007-2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -35,18 +35,26 @@ static char *rcmd_err_str[RCMD_ERR_N_ERRS] = {
   "Command not found.",
 };
 
-rcmd_err_t nx__rcmd_find_command(const char *line, rcmd_command_def *command) {
+rcmd_err_t nx__rcmd_find_command(char *line, rcmd_command_def *command) {
   U32 i = 0;
+  char *sep;
+
+  sep = strchr(line, RCMD_TOKEN_SEPARATOR);
+  if (sep) {
+    *sep = '\0';
+  }
 
   while (rcmd_commands[i].name) {
     if (streq(line, rcmd_commands[i].name)) {
       *command = rcmd_commands[i];
+      *sep = RCMD_TOKEN_SEPARATOR;
       return RCMD_ERR_NO_ERROR;
     }
 
     i++;
   }
 
+  *sep = RCMD_TOKEN_SEPARATOR;
   return RCMD_ERR_COMMAND_NOT_FOUND;
 }
 

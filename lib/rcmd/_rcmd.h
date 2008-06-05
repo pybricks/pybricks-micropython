@@ -2,7 +2,7 @@
  *  @brief Remote robot command library private header.
  */
 
-/* Copyright (C) 2007 the NxOS developers
+/* Copyright (c) 2007-2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -39,7 +39,7 @@ typedef struct {
  * @param command A pointer to return the found command, if any.
  * @return An appropriate @a rcmd_err_t error code.
  */
-rcmd_err_t nx__rcmd_find_command(const char *line, rcmd_command_def *command);
+rcmd_err_t nx__rcmd_find_command(char *line, rcmd_command_def *command);
 
 rcmd_err_t nx__rcmd_move(char *line);
 rcmd_err_t nx__rcmd_print(char *line);

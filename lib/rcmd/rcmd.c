@@ -1,4 +1,4 @@
-/* Copyright (C) 2007 the NxOS developers
+/* Copyright (c) 2007-2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -10,6 +10,7 @@
 #include "base/util.h"
 #include "base/assert.h"
 #include "base/fs.h"
+#include "base/display.h"
 #include "base/lib/rcmd/rcmd.h"
 #include "base/lib/rcmd/_rcmd.h"
 
@@ -22,24 +23,29 @@ rcmd_err_t nx_rcmd_do(const char *line) {
     return RCMD_ERR_NO_ERROR;
   }
 
-  err = nx__rcmd_find_command(line, &command);
-  if (err != RCMD_ERR_NO_ERROR) {
-    return err;
-  }
-
   /* Call the command actuator on a copy of the command line so
    * it can mess around with it if it wants to.
    */
   memcpy(cmdline, line, strlen(line));
+
+  err = nx__rcmd_find_command(cmdline, &command);
+  if (err != RCMD_ERR_NO_ERROR) {
+    return err;
+  }
+
   return command.actuator(cmdline);
 }
 
 void nx_rcmd_parse(char *file) {
   rcmd_err_t err, result;
+  fs_err_t fserr;
   fs_fd_t fd;
   int n = 0;
 
-  if (nx_fs_open(file, FS_FILE_MODE_OPEN, &fd) != FS_ERR_NO_ERROR) {
+  fserr = nx_fs_open(file, FS_FILE_MODE_OPEN, &fd);
+  if (fserr != FS_ERR_NO_ERROR) {
+    nx_display_uint(fserr);
+    nx_display_end_line();
     nx__rcmd_error(RCMD_ERR_READ_ERROR, file, 0);
     return;
   }
