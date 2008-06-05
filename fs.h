@@ -198,7 +198,7 @@ fs_err_t nx_fs_seek(fs_fd_t fd, size_t position);
  * @param free_pages The number of available pages.
  * @param wasted The bytes lost by files page aligment.
  */
-void nx_fs_get_occupation(U16 *files, U32 *used, U32 *free_pages,
+void nx_fs_get_occupation(U32 *files, U32 *used, U32 *free_pages,
                           U32 *wasted);
 
 /** Perform a simple defragmentation of the flash filesystem.

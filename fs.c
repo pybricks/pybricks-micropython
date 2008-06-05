@@ -22,17 +22,23 @@
 /** File metadata size, in U32s. */
 #define FS_FILE_METADATA_SIZE 10
 
+/** Filename offset (in U32s) in the metadata. */
+#define FS_FILENAME_OFFSET 2
+
 /** File metadata size, in bytes. */
 #define FS_FILE_METADATA_BYTES (FS_FILE_METADATA_SIZE * sizeof(U32))
 
+/** Mask to use on the first metadata U32 to get the file origin marker value. */
 #define FS_FILE_ORIGIN_MASK 0xFF000000
+
+/** Mask to use on the first metadata U32 to get the file permissions. */
 #define FS_FILE_PERMS_MASK 0x00F00000
+
+/** Mask to use on the first metadata U32 to get the file size. */
 #define FS_FILE_SIZE_MASK 0x000FFFFF
 
 #define FS_FILE_PERM_MASK_READWRITE (1 << 0)
 #define FS_FILE_PERM_MASK_EXECUTABLE (1 << 1)
-
-#define FS_FILENAME_OFFSET 2
 
 /** U32 <-> char conversion union for filenames. */
 union U32tochar {
@@ -302,12 +308,18 @@ fs_err_t nx_fs_init(void) {
  */
 static fs_err_t nx_fs_init_fd(U32 origin, fs_fd_t fd) {
   volatile U32 *metadata = &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS]);
+  union U32tochar nameconv;
   fs_file_t *file;
 
   file = nx_fs_get_file(fd);
   NX_ASSERT(file != NULL);
 
+  memcpy(nameconv.integers,
+         (void *)(metadata + FS_FILENAME_OFFSET),
+         FS_FILENAME_LENGTH);
+
   file->origin = origin;
+  memcpy(file->name, nameconv.chars, MIN(strlen(nameconv.chars), 31));
   file->size = nx_fs_get_file_size_from_metadata(metadata);
   file->perms = nx_fs_get_file_perms_from_metadata(metadata);
 
@@ -677,18 +689,44 @@ fs_err_t nx_fs_seek(fs_fd_t fd, size_t position) {
   return FS_ERR_NO_ERROR;
 }
 
-void nx_fs_get_occupation(U16 *files, U32 *used, U32 *free_pages,
+void nx_fs_get_occupation(U32 *files, U32 *used, U32 *free_pages,
                           U32 *wasted) {
+  U32 _files = 0, _used = 0, _free_pages = 0, _wasted = 0;
+  U32 i;
+
+  for (i=FS_PAGE_START; i<FS_PAGE_END; i++) {
+    if (nx_fs_page_has_magic(i)) {
+      volatile U32 *metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
+      size_t size;
+      U32 pages;
+
+      size = nx_fs_get_file_size_from_metadata(metadata);
+      pages = nx_fs_get_file_page_count(size);
+
+      _files++;
+      _used += size;
+      _wasted += pages * EFC_PAGE_BYTES - size - FS_FILE_METADATA_BYTES;
+
+      i += pages - 1;
+    } else {
+      _free_pages++;
+    }
+  }
+
   if (files) {
+    *files = _files;
   }
 
   if (used) {
+    *used = _used;
   }
 
   if (free_pages) {
+    *free_pages = _free_pages;
   }
 
   if (wasted) {
+    *wasted = _wasted;
   }
 }
 
