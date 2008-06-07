@@ -13,8 +13,9 @@
 #include "base/interrupts.h"
 #include "base/assert.h"
 #include "base/util.h"
-#include "base/fs.h"
 #include "base/drivers/_efc.h"
+
+#include "base/lib/fs/fs.h"
 
 /* Magic marker. */
 #define FS_FILE_ORIGIN_MARKER 0x42

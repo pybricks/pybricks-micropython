@@ -2,7 +2,7 @@
  *  @brief Remote robot command library private header.
  */
 
-/* Copyright (c) 2007-2008 the NxOS developers
+/* Copyright (c) 2007,2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -14,7 +14,7 @@
 #define __NXOS_BASE_LIB__RCMD_H__
 
 #include "base/types.h"
-#include "base/fs.h"
+#include "base/lib/fs/fs.h"
 #include "base/lib/rcmd/rcmd.h"
 
 /** @addtogroup lib */

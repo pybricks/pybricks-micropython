@@ -1,4 +1,4 @@
-/* Copyright (C) 2007 the NxOS developers
+/* Copyright (c) 2007,2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -84,9 +84,6 @@ void nx_core_register_shutdown_handler(nx_closure_t handler) {
   shutdown_handler = handler;
 }
 
-/* This function is not part of the public API, but is invoked from
- * init.S.
- */
 void nx__kernel_main(void) {
   core_init();
   check_boot_errors();

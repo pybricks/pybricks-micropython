@@ -12,13 +12,13 @@
  * the terms of the GNU Public License (GPL) version 2.
  */
 
-#ifndef __NXOS_BASE_FS_H__
-#define __NXOS_BASE_FS_H__
+#ifndef __NXOS_BASE_LIB_FS_H__
+#define __NXOS_BASE_LIB_FS_H__
 
 #include "base/types.h"
 #include "base/drivers/_efc.h"
 
-/** @addtogroup kernel */
+/** @addtogroup lib */
 /*@{*/
 
 /** @defgroup fs Flash file system

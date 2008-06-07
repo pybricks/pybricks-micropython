@@ -1,4 +1,4 @@
-/* Copyright (c) 2007-2008 the NxOS developers
+/* Copyright (c) 2007,2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -9,11 +9,11 @@
 #include "base/types.h"
 #include "base/util.h"
 #include "base/display.h"
-#include "base/fs.h"
 #include "base/nxt.h"
 #include "base/drivers/motors.h"
 #include "base/drivers/sound.h"
 #include "base/drivers/systick.h"
+#include "base/lib/fs/fs.h"
 #include "base/lib/rcmd/_rcmd.h"
 
 static rcmd_command_def rcmd_commands[] = {
