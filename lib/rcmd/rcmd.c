@@ -1,4 +1,4 @@
-/* Copyright (C) 2007 the NxOS developers
+/* Copyright (c) 2007,2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -9,7 +9,7 @@
 #include "base/types.h"
 #include "base/util.h"
 #include "base/assert.h"
-#include "base/fs.h"
+#include "base/lib/fs/fs.h"
 #include "base/lib/rcmd/rcmd.h"
 #include "base/lib/rcmd/_rcmd.h"
 
