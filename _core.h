@@ -30,7 +30,6 @@
 /*@{*/
 
 /** Initialize the baseplate and run the application payload.
- *
  */
 void nx__kernel_main(void);
 
