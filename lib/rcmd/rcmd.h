@@ -2,7 +2,7 @@
  *  @brief Remote robot command library.
  */
 
-/* Copyright (c) 2007-2008 the NxOS developers
+/* Copyright (c) 2007,2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -18,7 +18,7 @@
 /** @addtogroup lib */
 /*@{*/
 
-/** @defgroup rcmd Remote robot command library
+/** @defgroup rcmd Robot remote control
  *
  * The remote robot command library provides a small command parsing and
  * execution context to command a robot based on the NXT brick running NxOS.

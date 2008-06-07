@@ -11,16 +11,16 @@
 #include "base/assert.h"
 #include "base/util.h"
 
-#include "base/memalloc.h"
+#include "base/lib/memalloc/memalloc.h"
 
 /* This is really ugly and I should be taken out and shot for even doing
  * it. But as far as I can tell, GNU ld doesn't do link-time inlining,
  * so I do this nasty piece of work to "encourage" gcc towards inlining
  * the calls to TLSF.
  */
-#include "base/_tlsf.h"
+#include "base/lib/memalloc/_tlsf.h"
 #define printf(fmt, ...) /* Nothing, we don't printf. */
-#include "base/_tlsf.c.inc"
+#include "base/lib/memalloc/_tlsf.c.inc"
 
 inline void nx_memalloc_init_full(void *mem_pool, U32 mem_pool_size) {
   size_t size = init_memory_pool(mem_pool_size, mem_pool);

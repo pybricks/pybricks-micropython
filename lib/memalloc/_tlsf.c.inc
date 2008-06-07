@@ -1,4 +1,4 @@
-/* 
+/*
  * Two Levels Segregate Fit memory allocator (TLSF)
  * Version 2.3.2
  *
@@ -23,27 +23,27 @@
  *
  * - Add 64 bit support. It now runs on x86_64 and solaris64.
  * - I also tested this on vxworks/32and solaris/32 and i386/32 processors.
- * - Remove assembly code. I could not measure any performance difference 
+ * - Remove assembly code. I could not measure any performance difference
  *   on my core2 processor. This also makes the code more portable.
  * - Moved defines/typedefs from tlsf.h to tlsf.c
- * - Changed MIN_BLOCK_SIZE to sizeof (free_ptr_t) and BHDR_OVERHEAD to 
- *   (sizeof (bhdr_t) - MIN_BLOCK_SIZE). This does not change the fact 
- *    that the minumum size is still sizeof 
+ * - Changed MIN_BLOCK_SIZE to sizeof (free_ptr_t) and BHDR_OVERHEAD to
+ *   (sizeof (bhdr_t) - MIN_BLOCK_SIZE). This does not change the fact
+ *    that the minumum size is still sizeof
  *   (bhdr_t).
  * - Changed all C++ comment style to C style. (// -> /.* ... *./)
- * - Used ls_bit instead of ffs and ms_bit instead of fls. I did this to 
- *   avoid confusion with the standard ffs function which returns 
+ * - Used ls_bit instead of ffs and ms_bit instead of fls. I did this to
+ *   avoid confusion with the standard ffs function which returns
  *   different values.
- * - Created set_bit/clear_bit fuctions because they are not present 
+ * - Created set_bit/clear_bit fuctions because they are not present
  *   on x86_64.
  * - Added locking support + extra file target.h to show how to use it.
  * - Added get_used_size function
  * - Added rtl_realloc and rtl_calloc function
  * - Implemented realloc clever support.
  * - Added some test code in the example directory.
- *        
  *
- * (Oct 23 2006) Adam Scislowicz: 
+ *
+ * (Oct 23 2006) Adam Scislowicz:
  *
  * - Support for ARMv5 implemented
  *
@@ -62,7 +62,7 @@
 #include "target.h"
 #endif
 
-#include "_tlsf.h"
+#include "base/lib/memalloc/_tlsf.h"
 
 #if !defined(__GNUC__)
 #ifndef __inline__
@@ -403,7 +403,7 @@ void rtl_free(void *ptr) {
 
 /******************************************************************/
 void *rtl_realloc(void *ptr, size_t size) {
-/******************************************************************/   
+/******************************************************************/
     void *ret;
 #if TLSF_USE_LOCKS
     tlsf_t *tlsf = (tlsf_t *) mp;
@@ -419,7 +419,7 @@ void *rtl_realloc(void *ptr, size_t size) {
 
 /******************************************************************/
 void *rtl_calloc(size_t nelem, size_t elem_size) {
-/******************************************************************/   
+/******************************************************************/
     void *ret;
 #if TLSF_USE_LOCKS
     tlsf_t *tlsf = (tlsf_t *) mp;

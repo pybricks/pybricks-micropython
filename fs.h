@@ -1,5 +1,5 @@
 /** @file fs.h
- *  @brief Flash file system
+ *  @brief Flash file system.
  *
  * A flash-friendly file system for the NXT on-board flash memory.
  */
