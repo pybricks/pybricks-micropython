@@ -43,8 +43,6 @@ void nx_rcmd_parse(char *file) {
 
   fserr = nx_fs_open(file, FS_FILE_MODE_OPEN, &fd);
   if (fserr != FS_ERR_NO_ERROR) {
-    nx_display_uint(fserr);
-    nx_display_end_line();
     nx__rcmd_error(RCMD_ERR_READ_ERROR, file, 0);
     return;
   }
