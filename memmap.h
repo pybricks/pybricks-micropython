@@ -59,6 +59,8 @@ extern U8 __bss_end__;
 extern U8 __stack_start__;
 extern U8 __stack_end__;
 
+extern U8 __rom_end__;
+
 extern U8 __boot_from_samba__;
 
 /* Helper macro that converts a symbol value into a regular
@@ -153,6 +155,21 @@ extern U8 __boot_from_samba__;
 #define NX_USERSPACE_START SYMADDR(__userspace_start__)
 #define NX_USERSPACE_END SYMADDR(__userspace_end__)
 #define NX_USERSPACE_SIZE SECSIZE(NX_USERSPACE_START, NX_USERSPACE_END)
+/*@}*/
+
+/** @name ROM userspace section.
+ *
+ * The ROM userspace section is the portion of ROM that is not used by
+ * the kernel. Application kernels are free to do whatever they want
+ * with this area, and it will not affect the Baseplate in any way.
+ *
+ * @note One possible use of this free ROM is to use the filesystem
+ * library to store files in the free space.
+ */
+/*@{*/
+#define NX_ROM_USERSPACE_START SYMADDR(__rom_userspace_start__)
+#define NX_ROM_USERSPACE_END ((U8*)0x140000)
+#define NX_ROM_USERSPACE_SIZE SECSIZE(NX_ROM_USERSPACE_START, NX_ROM_USERSPACE_END)
 /*@}*/
 
 /** @name Boot method
