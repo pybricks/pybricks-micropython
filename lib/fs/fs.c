@@ -13,6 +13,7 @@
 #include "base/interrupts.h"
 #include "base/assert.h"
 #include "base/util.h"
+#include "base/display.h"
 #include "base/drivers/_efc.h"
 
 #include "base/lib/fs/fs.h"
@@ -731,6 +732,22 @@ void nx_fs_get_occupation(U32 *files, U32 *used, U32 *free_pages,
   }
 }
 
+static fs_err_t nx_fs_find_next_hole(U32 start, U32 *origin) {
+  U32 i;
+
+    i = start;
+    while (i < FS_PAGE_END) {
+      if (nx_fs_page_has_magic(i)) {
+        volatile U32 *metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
+        i += nx_fs_get_file_page_count(nx_fs_get_file_size_from_metadata(metadata));
+      } else {
+        *origin = i;
+        return FS_ERR_NO_ERROR;
+      }
+  }
+  return FS_ERR_FILE_NOT_FOUND;
+}
+
 /* Defrag functions. */
 
 fs_err_t nx_fs_defrag_simple(void) {
@@ -757,6 +774,43 @@ fs_err_t nx_fs_defrag_for_file_by_origin(U32 origin) {
 }
 
 fs_err_t nx_fs_defrag_best_overall(void) {
+  U32 hole_start = 0, next_hole=0, freeblock_size=0, next_origin=0;
+  U32 files, used, free_pages, wasted;
+  U32 mean_space_per_file = 0;
+  U32 size = 0;
+  U32 current_location = FS_PAGE_START;
+  /* Get the number of files and freepages. */
+  nx_fs_get_occupation(&files, &used, &free_pages, &wasted);
+  /* Nothing to do here, move on */
+  if (files==0){
+    return FS_ERR_NO_ERROR;
+  }
+
+  mean_space_per_file = free_pages / files;
+  if (mean_space_per_file < 1) {
+    /*Fallback to simple defrag*/
+    nx_fs_defrag_simple();
+  } else {
+    while (current_location < FS_PAGE_END) {
+      if (nx_fs_page_has_magic(current_location)) {
+        /* calculate free space after file */
+        volatile U32 *metadata = &(FLASH_BASE_PTR[current_location*EFC_PAGE_WORDS]);
+        hole_start = current_location + nx_fs_get_file_page_count(nx_fs_get_file_size_from_metadata(metadata));
+        nx_fs_find_next_origin(hole_start, &next_origin);
+        freeblock_size = next_origin - hole_start;
+
+        /* frag operations*/
+        if (freeblock_size > mean_space_per_file) {
+          size = nx_fs_get_file_size_from_metadata(metadata);
+          nx_fs_move_region(current_location , hole_start + mean_space_per_file, nx_fs_get_file_page_count(size));
+        } else if (freeblock_size < mean_space_per_file) {
+          nx_fs_find_next_hole(next_origin, & next_hole);
+          /* TODO: fix overlapping on move */
+          nx_fs_move_region(next_origin, hole_start + mean_space_per_file, next_hole -1);
+        }
+      }
+    }
+  }
   return FS_ERR_NO_ERROR;
 }
 
