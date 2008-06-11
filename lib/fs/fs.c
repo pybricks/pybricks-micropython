@@ -735,15 +735,15 @@ void nx_fs_get_occupation(U32 *files, U32 *used, U32 *free_pages,
 static fs_err_t nx_fs_find_next_hole(U32 start, U32 *origin) {
   U32 i;
 
-    i = start;
-    while (i < FS_PAGE_END) {
-      if (nx_fs_page_has_magic(i)) {
-        volatile U32 *metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
-        i += nx_fs_get_file_page_count(nx_fs_get_file_size_from_metadata(metadata));
-      } else {
-        *origin = i;
-        return FS_ERR_NO_ERROR;
-      }
+  i = start;
+  while (i < FS_PAGE_END) {
+    if (nx_fs_page_has_magic(i)) {
+      volatile U32 *metadata = &(FLASH_BASE_PTR[i*EFC_PAGE_WORDS]);
+      i += nx_fs_get_file_page_count(nx_fs_get_file_size_from_metadata(metadata));
+    } else {
+      *origin = i;
+      return FS_ERR_NO_ERROR;
+    }
   }
   return FS_ERR_FILE_NOT_FOUND;
 }
@@ -751,6 +751,87 @@ static fs_err_t nx_fs_find_next_hole(U32 start, U32 *origin) {
 /* Defrag functions. */
 
 fs_err_t nx_fs_defrag_simple(void) {
+  U32 i = FS_PAGE_START;
+  U32 next_hole, next_file, first_next_file, hole_length = 0, end_of_block;
+  U32 best_block_origin =0, best_block_size=0, block_size = 0;
+  fs_err_t err = FS_ERR_NO_ERROR;
+
+  while (i < FS_PAGE_END) {
+    err = nx_fs_find_next_hole(i, &next_hole);
+    if (err != FS_ERR_NO_ERROR) {
+      /* No free blocks left on flash : nothing else to do */
+      return FS_ERR_NO_ERROR;
+    }
+
+    nx_fs_find_next_origin(next_hole, &next_file);
+    if (err != FS_ERR_NO_ERROR) {
+      /* No files found after : nothing else to do */
+      return FS_ERR_NO_ERROR;
+    }
+
+    first_next_file = next_file;
+    hole_length = next_file - next_hole;
+    NX_ASSERT(hole_length <= 0);
+
+    /* Search for the best block to move. */
+    do {
+      err = nx_fs_find_next_hole(next_file, &end_of_block);
+      if (err != FS_ERR_NO_ERROR) {
+        /* No free space after */
+        break;
+      }
+
+      block_size = end_of_block - next_file;
+      if (block_size < hole_length && block_size > best_block_size) {
+        best_block_size = block_size;
+        best_block_origin = next_file;
+      }
+      next_file = end_of_block;
+    } while (next_file < FS_PAGE_END && block_size != hole_length);
+
+    /* Move the block to fill the hole and move the search start
+     * position after the block.
+     */
+
+    /* First case: the block found exactly matches the hole. */
+    if (block_size == hole_length) {
+      err = nx_fs_move_region(next_file, next_hole, block_size);
+      if (err != FS_ERR_NO_ERROR) {
+        return err;
+      }
+
+      i = next_hole + block_size;
+    }
+
+    /* Else, if a best match has been found, move it. */
+    else if (best_block_origin != 0) {
+      err = nx_fs_move_region(best_block_origin, next_hole, best_block_size);
+      if (err != FS_ERR_NO_ERROR) {
+        return err;
+      }
+
+      i = next_hole + best_block_size;
+    }
+
+    /* Otherwise, if no matching block was found, pull the next block
+     * backwards to fill the hole.
+     */
+    else {
+      err = nx_fs_find_next_hole(first_next_file, &end_of_block);
+      if (err != FS_ERR_NO_ERROR) {
+        end_of_block = FS_PAGE_END;
+      }
+
+      err = nx_fs_move_region(first_next_file, next_hole,
+                              end_of_block - first_next_file);
+      if (err != FS_ERR_NO_ERROR) {
+        return err;
+      }
+
+      i = next_hole + end_of_block - first_next_file;
+    }
+  }
+
   return FS_ERR_NO_ERROR;
 }
 
@@ -774,7 +855,7 @@ fs_err_t nx_fs_defrag_for_file_by_origin(U32 origin) {
 }
 
 fs_err_t nx_fs_defrag_best_overall(void) {
-  U32 hole_start = 0, next_hole=0, freeblock_size=0, next_origin=0;
+  U32 hole_start = 0, next_hole = 0, freeblock_size = 0, next_origin = 0;
   U32 files, used, free_pages, wasted;
   U32 mean_space_per_file = 0;
   U32 size = 0;
@@ -782,7 +863,7 @@ fs_err_t nx_fs_defrag_best_overall(void) {
   /* Get the number of files and freepages. */
   nx_fs_get_occupation(&files, &used, &free_pages, &wasted);
   /* Nothing to do here, move on */
-  if (files==0){
+  if (files == 0) {
     return FS_ERR_NO_ERROR;
   }
 
