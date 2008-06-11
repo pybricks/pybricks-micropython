@@ -23,6 +23,7 @@ static rcmd_err_t nx_rcmd_clear(char *line);
 static rcmd_err_t nx_rcmd_play(char *line);
 static rcmd_err_t nx_rcmd_exec(char *line);
 static rcmd_err_t nx_rcmd_wait(char *line);
+static rcmd_err_t nx_rcmd_nop(char *line);
 
 static rcmd_command_def rcmd_commands[] = {
   { "move",  4, nx_rcmd_move },
@@ -31,6 +32,8 @@ static rcmd_command_def rcmd_commands[] = {
   { "play",  3, nx_rcmd_play },
   { "exec",  2, nx_rcmd_exec },
   { "wait",  2, nx_rcmd_wait },
+  { "end",   1, nx_rcmd_nop },
+  { "nop",   1, nx_rcmd_nop },
   { NULL, 0, NULL },
 };
 
@@ -183,7 +186,7 @@ static rcmd_err_t nx_rcmd_play(char *line) {
     return RCMD_ERR_INVALID_PARAMETER;
   }
 
-  if (ntokens == 4 && streq(line + indices[3], "sync") == 0) {
+  if (ntokens == 4 && streq(line + indices[3], "sync")) {
     nx_sound_freq(freq, duration);
   } else {
     nx_sound_freq_async(freq, duration);
@@ -227,6 +230,14 @@ static rcmd_err_t nx_rcmd_wait(char *line) {
   }
 
   nx_systick_wait_ms(wait);
+  return RCMD_ERR_NO_ERROR;
+}
+
+static rcmd_err_t nx_rcmd_nop(char *line) {
+  /* No-op. */
+  char c;
+  c = line[0];
+
   return RCMD_ERR_NO_ERROR;
 }
 
