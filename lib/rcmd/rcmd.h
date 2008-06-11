@@ -63,6 +63,15 @@ typedef enum {
   RCMD_ERR_N_ERRS,
 } rcmd_err_t;
 
+/** Command definition. */
+typedef struct {
+  char *name;  /**< Command name. */
+  int argc;    /**< Number of arguments expected by this command. */
+
+  /** Command actuator. */
+  rcmd_err_t (* actuator)(char*);
+} rcmd_command_def;
+
 /** Execute the given line.
  *
  * @param line The line to execute.
