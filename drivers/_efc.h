@@ -4,7 +4,7 @@
  * NXT on-board flash controller driver.
  */
 
-/* Copyright (C) 2008 the NxOS developers
+/* Copyright (c) 2008 the NxOS developers
  *
  * See AUTHORS for a full list of the developers.
  *
@@ -78,6 +78,14 @@ bool nx__efc_write_page(U32 *data, U32 page);
  * @param data A pointer to a 64 U32s long array for the page data.
  */
 void nx__efc_read_page(U32 page, U32 *data);
+
+/** Erase a page to the given value.
+ *
+ * @param page The page number in tho flash memory.
+ * @param value The value to set on the page (repeated EFC_PAGE_WORDS
+ * times).
+ */
+bool nx__efc_erase_page(U32 page, U32 value);
 
 /*@}*/
 /*@}*/

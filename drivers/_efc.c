@@ -1,3 +1,11 @@
+/* Copyright (c) 2008 the NxOS developers
+ *
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
+ */
+
 /* Driver for the NXT Embedded Flash Controller.
  */
 
@@ -66,6 +74,11 @@ void nx__efc_read_page(U32 page, U32 *data) {
   for (i=0; i<EFC_PAGE_WORDS; i++) {
     data[i] = FLASH_BASE_PTR[page*EFC_PAGE_WORDS+i];
   }
+}
+
+bool nx__efc_erase_page(U32 page, U32 value) {
+  U32 data[EFC_PAGE_WORDS] = {value};
+  return nx__efc_write_page(data, page);
 }
 
 /* TODO: implement other flash operations? */
