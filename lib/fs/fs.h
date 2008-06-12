@@ -201,6 +201,10 @@ fs_err_t nx_fs_seek(fs_fd_t fd, size_t position);
 void nx_fs_get_occupation(U32 *files, U32 *used, U32 *free_pages,
                           U32 *wasted);
 
+/** Dumps the index of the filesystem as <page>:<filename>.
+ */
+void nx_fs_dump(void);
+
 /** Perform a simple defragmentation of the flash filesystem.
  *
  * This type of defragmentation only tries to collate files towards
