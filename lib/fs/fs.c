@@ -205,27 +205,8 @@ static void nx_fs_create_metadata(fs_perm_t perms, char *name, size_t size,
   memcpy(metadata + FS_FILENAME_OFFSET, nameconv.integers, FS_FILENAME_LENGTH);
 }
 
-/* Move a @a len long flash region starting at page @a source to @a dest.
- * Since pages are moved one after another, regions may overlap if the
- * destination is lower in the flash than the source, but not the other
- * way around. Note that this is asserted anyway to avoid data loss.
- * It is the responsibility of the caller to clean up the remaining
- * source region of any data he doesn't want to leave there (file origin
- * markers for example).
- *
- * @param source The source page number.
- * @param dest The destination page number.
- * @param len The region length.
- */
-static fs_err_t nx_fs_move_region(U32 source, U32 dest, U32 len) {
+static fs_err_t nx_fs_move_region_backwards(U32 source, U32 dest, U32 len) {
   U32 data[EFC_PAGE_WORDS];
-
-  NX_ASSERT(source < EFC_PAGES);
-  NX_ASSERT(dest < EFC_PAGES);
-  NX_ASSERT(len < EFC_PAGES);
-
-  /* TODO: allow forward moves ? */
-  NX_ASSERT(dest < source || (dest > source && dest > source + len));
 
   while (len--) {
     memcpy((void *) data,
@@ -244,6 +225,51 @@ static fs_err_t nx_fs_move_region(U32 source, U32 dest, U32 len) {
   }
 
   return FS_ERR_NO_ERROR;
+}
+
+static fs_err_t nx_fs_move_region_forwards(U32 source, U32 dest, U32 len) {
+  U32 data[EFC_PAGE_WORDS];
+
+  while (len--) {
+    memcpy((void *) data,
+           (void *) &(FLASH_BASE_PTR[(source+len-1)*EFC_PAGE_WORDS]),
+           EFC_PAGE_BYTES);
+    if (!nx__efc_write_page(data, dest+len-1)) {
+      return FS_ERR_FLASH_ERROR;
+    }
+
+    if (!nx__efc_erase_page(source, 0)) {
+      return FS_ERR_FLASH_ERROR;
+    }
+  }
+
+  return FS_ERR_NO_ERROR;
+}
+
+/* Move a @a len long flash region starting at page @a source to @a dest.
+ * Since pages are moved one after another, regions may overlap if the
+ * destination is lower in the flash than the source, but not the other
+ * way around. Note that this is asserted anyway to avoid data loss.
+ * It is the responsibility of the caller to clean up the remaining
+ * source region of any data he doesn't want to leave there (file origin
+ * markers for example).
+ *
+ * @param source The source page number.
+ * @param dest The destination page number.
+ * @param len The region length.
+ */
+static fs_err_t nx_fs_move_region(U32 source, U32 dest, U32 len) {
+  NX_ASSERT(source < EFC_PAGES);
+  NX_ASSERT(dest < EFC_PAGES);
+  NX_ASSERT(len < EFC_PAGES);
+
+  if (source == dest) {
+    return FS_ERR_NO_ERROR;
+  } else if (dest < source) {
+    return nx_fs_move_region_backwards(source, dest, len);
+  } else {
+    return nx_fs_move_region_forwards(source, dest, len);
+  }
 }
 
 /* Relocate the given file to @a origin.
@@ -895,42 +921,47 @@ fs_err_t nx_fs_defrag_for_file_by_origin(U32 origin) {
 
 fs_err_t nx_fs_defrag_best_overall(void) {
   U32 hole_start = 0, next_hole = 0, freeblock_size = 0, next_origin = 0;
-  U32 files, used, free_pages, wasted;
-  U32 mean_space_per_file = 0;
-  U32 size = 0;
-  U32 current_location = FS_PAGE_START;
+  U32 files, used, free_pages, wasted, mean_space_per_file = 0;
+  U32 i;
+
   /* Get the number of files and freepages. */
   nx_fs_get_occupation(&files, &used, &free_pages, &wasted);
+
   /* Nothing to do here, move on */
-  if (files == 0) {
+  if (!files) {
     return FS_ERR_NO_ERROR;
   }
 
   mean_space_per_file = free_pages / files;
-  if (mean_space_per_file < 1) {
-    /*Fallback to simple defrag*/
-    nx_fs_defrag_simple();
-  } else {
-    while (current_location < FS_PAGE_END) {
-      if (nx_fs_page_has_magic(current_location)) {
-        /* calculate free space after file */
-        volatile U32 *metadata = &(FLASH_BASE_PTR[current_location*EFC_PAGE_WORDS]);
-        hole_start = current_location + nx_fs_get_file_page_count(nx_fs_get_file_size_from_metadata(metadata));
-        nx_fs_find_next_origin(hole_start, &next_origin);
-        freeblock_size = next_origin - hole_start;
 
-        /* frag operations*/
-        if (freeblock_size > mean_space_per_file) {
-          size = nx_fs_get_file_size_from_metadata(metadata);
-          nx_fs_move_region(current_location , hole_start + mean_space_per_file, nx_fs_get_file_page_count(size));
-        } else if (freeblock_size < mean_space_per_file) {
-          nx_fs_find_next_hole(next_origin, & next_hole);
-          /* TODO: fix overlapping on move */
-          nx_fs_move_region(next_origin, hole_start + mean_space_per_file, next_hole -1);
-        }
+  /* If we have less than one page per file, it's no use doing a best
+   * overall defrag. Fall back to simple mode.
+   */
+  if (mean_space_per_file < 1) {
+    return nx_fs_defrag_simple();
+  }
+
+  i = FS_PAGE_START;
+  while (i < FS_PAGE_END) {
+    if (nx_fs_page_has_magic(i)) {
+      /* Calculate free space after file */
+      nx_fs_find_next_hole(i, &hole_start);
+      nx_fs_find_next_origin(hole_start, &next_origin);
+      freeblock_size = next_origin - hole_start;
+
+      /* frag operations */
+      if (freeblock_size > mean_space_per_file) {
+        size_t size = nx_fs_get_file_size_from_metadata(metadata);
+        nx_fs_move_region(i, hole_start + mean_space_per_file,
+                          nx_fs_get_file_page_count(size));
+      } else if (freeblock_size < mean_space_per_file) {
+        nx_fs_find_next_hole(next_origin, &next_hole);
+        nx_fs_move_region(next_origin, hole_start + mean_space_per_file,
+                          next_hole - next_origin);
       }
     }
   }
+
   return FS_ERR_NO_ERROR;
 }
 
