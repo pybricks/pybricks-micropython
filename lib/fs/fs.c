@@ -920,7 +920,7 @@ fs_err_t nx_fs_defrag_for_file_by_origin(U32 origin) {
 }
 
 fs_err_t nx_fs_defrag_best_overall(void) {
-  U32 hole_start = 0, next_hole = 0, freeblock_size = 0, next_origin = 0;
+  U32 hole_start = 0, next_hole = 0, next_origin = 0;
   U32 files, used, free_pages, wasted, mean_space_per_file = 0;
   U32 i;
 
@@ -942,20 +942,47 @@ fs_err_t nx_fs_defrag_best_overall(void) {
   }
 
   i = FS_PAGE_START;
+
+  /* First, pull the first block at the beginning of the flash. */
+  if (nx_fs_find_next_origin(i, &next_origin) != FS_ERR_NO_ERROR) {
+    return FS_ERR_NO_ERROR;
+  }
+
+  if (nx_fs_find_next_hole(next_origin, &hole_start) != FS_ERR_NO_ERROR) {
+    hole_start = FS_PAGE_END-1;
+  }
+
+  nx_fs_move_region(next_origin, i, hole_start - next_origin);
+
   while (i < FS_PAGE_END) {
     if (nx_fs_page_has_magic(i)) {
-      /* Calculate free space after file */
+      size_t hole_size;
+
+      /* Calculate the size of the hole directly after this block. */
       nx_fs_find_next_hole(i, &hole_start);
       nx_fs_find_next_origin(hole_start, &next_origin);
-      freeblock_size = next_origin - hole_start;
+      hole_size = next_origin - hole_start;
 
-      /* frag operations */
-      if (freeblock_size > mean_space_per_file) {
+      /* When the size of the hole following this file is greater than
+       * what we want to put after it, move the rest of the current
+       * block a bit forward to make room after this file.
+       */
+      if (hole_size > mean_space_per_file) {
+        // TODO
         size_t size = nx_fs_get_file_size_from_metadata(metadata);
-        nx_fs_move_region(i, hole_start + mean_space_per_file,
-                          nx_fs_get_file_page_count(size));
-      } else if (freeblock_size < mean_space_per_file) {
-        nx_fs_find_next_hole(next_origin, &next_hole);
+        nx_fs_move_region(i + size, mean_space_per_file,
+                          hole_start - i);
+      }
+
+      /* Otherwise, if the hole is smaller than what we want, move the
+       * following block a bit forward, when possible.
+       */
+      else if (hole_size < mean_space_per_file) {
+        if (nx_fs_find_next_hole(next_origin, &next_hole) != FS_ERR_NO_ERROR) {
+          /* We can't move the next block :/ */
+          return FS_ERR_NO_SPACE_LEFT_ON_DEVICE; /* TODO: ?? */
+        }
+
         nx_fs_move_region(next_origin, hole_start + mean_space_per_file,
                           next_hole - next_origin);
       }
