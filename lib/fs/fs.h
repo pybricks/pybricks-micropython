@@ -182,6 +182,10 @@ fs_err_t nx_fs_set_perms(fs_fd_t fd, fs_perm_t perms);
  */
 fs_err_t nx_fs_unlink(fs_fd_t fd);
 
+/** Soft format the flash by wiping all present files.
+ */
+fs_err_t nx_fs_soft_format(void);
+
 /** Seek to a given position in a file.
  *
  * @param fd The file descpriptor.
