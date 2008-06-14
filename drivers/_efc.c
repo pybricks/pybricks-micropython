@@ -19,7 +19,7 @@
 #include "base/drivers/_efc.h"
 
 #define EFC_WRITE ((EFC_WRITE_KEY << 24) + EFC_CMD_WP)
-#define EFC_THROTTLE_TIMER 1
+#define EFC_THROTTLE_TIMER 2
 
 void nx__efc_init(void) {
 }

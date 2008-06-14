@@ -209,6 +209,15 @@ void nx_fs_get_occupation(U32 *files, U32 *used, U32 *free_pages,
  */
 void nx_fs_dump(void);
 
+/** Perform a simple defragmentation of the flash filesystem on the
+ * given zone of the flash.
+ *
+ * @param zone_start Beginning of the zone to defragment.
+ * @param zone_end End of the zone.
+ * @return A @a fs_err_t describing the outcome of the operation.
+ */
+fs_err_t nx_fs_defrag_simple_zone(U32 zone_start, U32 zone_end);
+
 /** Perform a simple defragmentation of the flash filesystem.
  *
  * This type of defragmentation only tries to collate files towards
@@ -217,7 +226,7 @@ void nx_fs_dump(void);
  *
  * @return A @a fs_err_t describing the outcome of the operation.
  */
-fs_err_t nx_fs_defrag_simple(void);
+inline fs_err_t nx_fs_defrag_simple(void);
 
 /** Perform a simple, file oriented defragmentation of the flash.
  *

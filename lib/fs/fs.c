@@ -209,9 +209,8 @@ static fs_err_t nx_fs_move_region_backwards(U32 source, U32 dest, U32 len) {
   U32 data[EFC_PAGE_WORDS];
 
   while (len--) {
-    memcpy((void *) data,
-           (void *) &(FLASH_BASE_PTR[source*EFC_PAGE_WORDS]),
-           EFC_PAGE_BYTES);
+    nx__efc_read_page(source, data);
+
     if (!nx__efc_write_page(data, dest)) {
       return FS_ERR_FLASH_ERROR;
     }
@@ -231,9 +230,8 @@ static fs_err_t nx_fs_move_region_forwards(U32 source, U32 dest, U32 len) {
   U32 data[EFC_PAGE_WORDS];
 
   while (len--) {
-    memcpy((void *) data,
-           (void *) &(FLASH_BASE_PTR[(source + len)*EFC_PAGE_WORDS]),
-           EFC_PAGE_BYTES);
+    nx__efc_read_page(source + len, data);
+
     if (!nx__efc_write_page(data, dest + len)) {
       return FS_ERR_FLASH_ERROR;
     }
@@ -305,8 +303,8 @@ static fs_err_t nx_fs_relocate(fs_file_t *file) {
   /* First, look at the end of the flash for free space. */
   if (nx_fs_find_last_origin(&origin) == FS_ERR_NO_ERROR) {
     origin += nx_fs_get_file_page_count(
-                nx_fs_get_file_size_from_metadata(
-                  &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS])));
+        nx_fs_get_file_size_from_metadata(
+          &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS])));
 
     if (size < FS_PAGE_END - origin) {
       return nx_fs_relocate_to_page(file, origin);
@@ -320,8 +318,8 @@ static fs_err_t nx_fs_relocate(fs_file_t *file) {
     }
 
     start = origin + nx_fs_get_file_page_count(
-                nx_fs_get_file_size_from_metadata(
-                  &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS])));
+        nx_fs_get_file_size_from_metadata(
+          &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS])));
   }
 
   return FS_ERR_NO_SPACE_LEFT_ON_DEVICE;
@@ -388,10 +386,10 @@ static fs_err_t nx_fs_create_by_name(char *name, fs_fd_t fd) {
   /* Find an origin page. */
   if (nx_fs_find_last_origin(&origin) == FS_ERR_NO_ERROR) {
     origin += nx_fs_get_file_page_count(
-                nx_fs_get_file_size_from_metadata(
-                  &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS])));
+        nx_fs_get_file_size_from_metadata(
+          &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS])));
   } else {
-     origin = FS_PAGE_START;
+    origin = FS_PAGE_START;
   }
 
   if (origin >= EFC_PAGES) {
@@ -424,7 +422,7 @@ fs_err_t nx_fs_open(char *name, fs_file_mode_t mode, fs_fd_t *fd) {
 
   /* First, make sure we have an avaliable slot for this file. */
   while (slot < FS_MAX_OPENED_FILES && fdset[slot].used) {
-   slot++;
+    slot++;
   }
 
   if (slot == FS_MAX_OPENED_FILES) {
@@ -550,8 +548,8 @@ fs_err_t nx_fs_write(fs_fd_t fd, U8 byte) {
    * free.
    */
   if (file->wbuf.pos == 0 &&
-    file->wbuf.page > file->origin + pages &&
-    nx_fs_page_has_magic(file->wbuf.page)) {
+      file->wbuf.page > file->origin + pages &&
+      nx_fs_page_has_magic(file->wbuf.page)) {
     /* If the page we want to use is not available relocate the file. */
     err = nx_fs_relocate(file);
     if (err != FS_ERR_NO_ERROR) {
@@ -578,7 +576,7 @@ fs_err_t nx_fs_write(fs_fd_t fd, U8 byte) {
   /* Increment the size of the file if necessary */
   if (file->wbuf.page == file->origin + pages) {
     if (file->wbuf.pos > file->size + FS_FILE_METADATA_BYTES
-      - (pages * EFC_PAGE_BYTES)) {
+        - (pages * EFC_PAGE_BYTES)) {
       file->size++;
     }
   }
@@ -747,7 +745,7 @@ fs_err_t nx_fs_seek(fs_fd_t fd, size_t position) {
 }
 
 void nx_fs_get_occupation(U32 *files, U32 *used, U32 *free_pages,
-                          U32 *wasted) {
+    U32 *wasted) {
   U32 _files = 0, _used = 0, _free_pages = 0, _wasted = 0;
   U32 i;
 
@@ -839,15 +837,23 @@ void nx_fs_dump(void) {
  * found, pull backwards the next block to fill the hole, if block there
  * is.
  */
-fs_err_t nx_fs_defrag_simple(void) {
-  U32 i = FS_PAGE_START;
+fs_err_t nx_fs_defrag_simple_zone(U32 zone_start, U32 zone_end) {
   U32 next_hole, next_file, first_next_file, hole_length = 0, end_of_block;
   U32 best_block_origin =0, best_block_size=0, block_size = 0;
+  U32 i;
   fs_err_t err = FS_ERR_NO_ERROR;
 
-  while (i < FS_PAGE_END) {
-    /* Find the next hole, and its size. */
+  NX_ASSERT(zone_start >= FS_PAGE_START);
+  NX_ASSERT(zone_end <= FS_PAGE_END);
+  NX_ASSERT(zone_start <= zone_end);
 
+  i = zone_start;
+  nx_display_string("<<  ");
+  nx_display_uint(i);
+  nx_display_end_line();
+
+  while (i < zone_end) {
+    /* Find the next hole, and its size. */
     err = nx_fs_find_next_hole(i, &next_hole);
     if (err != FS_ERR_NO_ERROR) {
       /* No free blocks left on flash : nothing else to do */
@@ -879,10 +885,10 @@ fs_err_t nx_fs_defrag_simple(void) {
       }
 
       if (block_size != hole_length &&
-        nx_fs_find_next_origin(end_of_block, &next_file) != FS_ERR_NO_ERROR) {
+          nx_fs_find_next_origin(end_of_block, &next_file) != FS_ERR_NO_ERROR) {
         break;
       }
-    } while (next_file < FS_PAGE_END && block_size != hole_length);
+    } while (next_file < zone_end && block_size != hole_length);
 
     /* Move the block to fill the hole and move the search start
      * position after the block.
@@ -900,12 +906,24 @@ fs_err_t nx_fs_defrag_simple(void) {
 
     /* Else, if a best match has been found, move it. */
     else if (best_block_origin != 0) {
+      nx_display_string("bmatch\n");
+      nx_display_uint(best_block_origin);
+      nx_display_string(">");
+      nx_display_uint(next_hole);
+      nx_display_string(" ");
+      nx_display_uint(best_block_size);
+      nx_display_end_line();
+
       err = nx_fs_move_region(best_block_origin, next_hole, best_block_size);
       if (err != FS_ERR_NO_ERROR) {
         return err;
       }
 
       i = next_hole + best_block_size;
+      nx_display_string("after ");
+      nx_display_uint(i);
+      nx_display_end_line();
+      return FS_ERR_NO_ERROR;
     }
 
     /* Otherwise, if no matching block was found, pull the next block
@@ -914,8 +932,10 @@ fs_err_t nx_fs_defrag_simple(void) {
     else {
       err = nx_fs_find_next_hole(first_next_file, &end_of_block);
       if (err != FS_ERR_NO_ERROR) {
-        end_of_block = FS_PAGE_END;
+        end_of_block = zone_end;
       }
+
+      nx_display_string("pull\n");
 
       err = nx_fs_move_region(first_next_file, next_hole,
                               end_of_block - first_next_file);
@@ -930,6 +950,11 @@ fs_err_t nx_fs_defrag_simple(void) {
   return FS_ERR_NO_ERROR;
 }
 
+/* Simple defragmentation of the whole flash. */
+inline fs_err_t nx_fs_defrag_simple(void) {
+  return nx_fs_defrag_simple_zone(FS_PAGE_START, FS_PAGE_END);
+}
+
 fs_err_t nx_fs_defrag_for_file_by_name(char *name) {
   U32 origin;
   fs_err_t err;
@@ -939,14 +964,119 @@ fs_err_t nx_fs_defrag_for_file_by_name(char *name) {
     return nx_fs_defrag_for_file_by_origin(origin);
   }
 
-  /* Fall back to simple defrag. */
-  return nx_fs_defrag_simple();
+  return FS_ERR_FILE_NOT_FOUND;
+}
+
+static fs_err_t nx_fs_swap_regions(U32 start1, U32 dest1, U32 len1,
+                                   U32 start2, U32 len2) {
+  U32 data[EFC_PAGE_WORDS] = {0};
+  fs_err_t err;
+  U32 i, j;
+
+  NX_ASSERT(len2 <= len1);
+
+  nx_display_string("swap\n");
+  nx_display_uint(start1);
+  nx_display_string("-");
+  nx_display_uint(dest1);
+  nx_display_string("-");
+  nx_display_uint(len1);
+  nx_display_end_line();
+
+  nx_display_uint(start2);
+  nx_display_string("-");
+  nx_display_uint(len2);
+  nx_display_end_line();
+
+  for (i=0, j=0; i<len1; i++, j++) {
+    if (j < len2) {
+      nx__efc_read_page(start2 + j, data);
+      nx__efc_erase_page(start2 + j, 0);
+    }
+
+    err = nx_fs_move_region(start1 + i, dest1 + i, 1);
+    if (err != FS_ERR_NO_ERROR) {
+      return err;
+    }
+
+    if (j < len2 && !nx__efc_write_page(data, start1 + j)) {
+      return FS_ERR_FLASH_ERROR;
+    }
+  }
+
+  return FS_ERR_NO_ERROR;
 }
 
 fs_err_t nx_fs_defrag_for_file_by_origin(U32 origin) {
-  nx_fs_move_region(origin, 1, 1); // TBR
+  U32 next_origin, next_hole, last_origin, last_npages, npages;
+  volatile U32 *metadata;
+  fs_err_t err;
 
-  return FS_ERR_NO_ERROR;
+  /* First, trivial case: the file is already at the end of the flash.
+   * If it still has free space after him, job's done. Otherwise, launch
+   * a defrag simple.
+   */
+  err = nx_fs_find_last_origin(&last_origin);
+  if (err != FS_ERR_NO_ERROR) {
+    return err;
+  }
+
+  metadata = &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS]);
+  npages = nx_fs_get_file_page_count(
+    nx_fs_get_file_size_from_metadata(metadata));
+
+  metadata = &(FLASH_BASE_PTR[last_origin*EFC_PAGE_WORDS]);
+  last_npages = nx_fs_get_file_page_count(
+    nx_fs_get_file_size_from_metadata(metadata));
+
+  if (origin == last_origin) {
+    nx_display_string("case1\n");
+    return nx_fs_defrag_simple();
+  }
+
+  /* Second case: we can move our file to the end of the flash. If this
+   * is possible, move the file and call nx_fs_defrag_simple().
+   */
+  if (FS_PAGE_END - (last_origin + last_npages) > npages) {
+    nx_display_string("case2\n");
+
+    err = nx_fs_move_region(origin, last_origin + last_npages, npages);
+    if (err != FS_ERR_NO_ERROR) {
+      return err;
+    }
+
+    return nx_fs_defrag_simple();
+  }
+
+  /* Third case, trickier: if we can *swap* the file with the last one
+   * of the flash, do it and we're back into case 2).
+   */
+  do {
+    if (nx_fs_find_next_hole(origin, &next_hole) != FS_ERR_NO_ERROR) {
+      break;
+    }
+
+    if (nx_fs_find_next_origin(next_hole, &next_origin) !=
+      FS_ERR_NO_ERROR) {
+      break;
+    }
+  } while (next_origin != last_origin);
+
+  if (next_origin == last_origin && npages <= FS_PAGE_END - next_hole &&
+    last_npages <= npages) {
+    nx_display_string("case3\n");
+
+    /* Swap our file with the last one, if they fit. */
+    err = nx_fs_swap_regions(origin, next_hole, npages,
+                             last_origin, last_npages);
+    if (err != FS_ERR_NO_ERROR) {
+      return err;
+    }
+
+    return nx_fs_defrag_simple();
+  }
+
+  return FS_ERR_NO_SPACE_LEFT_ON_DEVICE;
 }
 
 static fs_err_t nx_fs_defrag_pull_file_to(U32 origin, U32 dest) {
@@ -1014,17 +1144,7 @@ fs_err_t nx_fs_defrag_best_overall(void) {
       }
 
       hole_size = next_origin - (i + npages);
-
-      nx_display_uint(i);
-      nx_display_string(" ");
-      nx_display_uint(npages);
-      nx_display_string(" ");
-      nx_display_uint(hole_size);
-      nx_display_string(">");
-
       i += npages + mean_space_per_file;
-      nx_display_uint(i);
-      nx_display_end_line();
 
       /* First, trivial case: the hole size equals mean_space_per_file.
        * We then have nothing to do and can proceed to the next file.
