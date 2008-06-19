@@ -142,8 +142,6 @@ static rcmd_err_t nx_rcmd_move(char *line) {
     }
   }
 
-  nx_display_string("moving?\n");
-
   return RCMD_ERR_NO_ERROR;
 }
 

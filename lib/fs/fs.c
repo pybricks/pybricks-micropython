@@ -808,6 +808,8 @@ void nx_fs_dump(void) {
 
   while (nx_fs_find_next_origin(i, &origin) == FS_ERR_NO_ERROR) {
     volatile U32 *metadata = &(FLASH_BASE_PTR[origin*EFC_PAGE_WORDS]);
+    size_t npages = nx_fs_get_file_page_count(
+      nx_fs_get_file_size_from_metadata(metadata));
 
     memcpy(nameconv.integers,
            (void *)(metadata + FS_FILENAME_OFFSET),
@@ -816,9 +818,11 @@ void nx_fs_dump(void) {
     nx_display_uint(origin);
     nx_display_string(":");
     nx_display_string(nameconv.chars);
+    nx_display_string(":");
+    nx_display_uint(npages);
     nx_display_end_line();
 
-    i = origin + nx_fs_get_file_page_count(nx_fs_get_file_size_from_metadata(metadata));
+    i = origin + npages;
   }
 
   nx_display_string("--");
@@ -1125,6 +1129,7 @@ fs_err_t nx_fs_defrag_best_overall(void) {
     return err;
   }
 
+  nx_display_string("\nMSPF: ");
   nx_display_uint(mean_space_per_file);
   nx_display_end_line();
 
