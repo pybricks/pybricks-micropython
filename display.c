@@ -1,7 +1,9 @@
-/* Driver for the NXT's display.
+/* Copyright (c) 2008 the NxOS developers
  *
- * This driver provides a high level interface for displaying data. It
- * uses the low-level LCD driver to do actual output.
+ * See AUTHORS for a full list of the developers.
+ *
+ * Redistribution of this file is permitted under
+ * the terms of the GNU Public License (GPL) version 2.
  */
 
 #include "base/types.h"
@@ -91,7 +93,7 @@ static inline void update_cursor(bool inc_y) {
   if (!inc_y) {
     display.cursor.x++;
 
-    if (display.cursor.x >= LCD_WIDTH) {
+    if (display.cursor.x >= LCD_WIDTH / NX__CELL_WIDTH) {
       display.cursor.x = 0;
       display.cursor.y++;
       display.cursor.ignore_lf = TRUE;
