@@ -25,6 +25,15 @@ static rcmd_err_t nx_rcmd_exec(char *line);
 static rcmd_err_t nx_rcmd_wait(char *line);
 static rcmd_err_t nx_rcmd_nop(char *line);
 
+/* Command definition. */
+typedef struct {
+  char *name; /* Command name. */
+  int argc; /* Number of arguments expected by this command. */
+
+  /* Command actuator. */
+  rcmd_err_t (* actuator)(char*);
+} rcmd_command_def;
+
 static rcmd_command_def rcmd_commands[] = {
   { "move",  4, nx_rcmd_move },
   { "print", 2, nx_rcmd_print },
