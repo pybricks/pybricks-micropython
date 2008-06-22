@@ -24,24 +24,10 @@
 void nx__efc_init(void) {
 }
 
-/* Write one page at the given page number in the flash.
- * Use interrupt-driven flash programming ?
- */
-bool nx__efc_write_page(U32 *data, U32 page) {
+static bool nx__efc_do_write(U32 page) {
   U32 ret;
-  U8 i;
 
   NX_ASSERT(page < EFC_PAGES);
-
-  /* Wait for the flash to be ready. */
-  while (!(*AT91C_MC_FSR & AT91C_MC_FRDY));
-
-  nx_systick_wait_ms(EFC_THROTTLE_TIMER);
-
-  /* Write the page data to the flash in-memory mapping. */
-  for (i=0 ; i<EFC_PAGE_WORDS ; i++) {
-      FLASH_BASE_PTR[i+page*EFC_PAGE_WORDS] = data[i];
-  }
 
   /* Trigger the flash write command. */
   *AT91C_MC_FCR = EFC_WRITE + ((page & 0x000003FF) << 8);
@@ -58,6 +44,30 @@ bool nx__efc_write_page(U32 *data, U32 page) {
     return FALSE;
 
   return TRUE;
+}
+
+static inline void nx__efc_wait_for_flash(void) {
+  while (!(*AT91C_MC_FSR & AT91C_MC_FRDY));
+}
+
+/* Write one page at the given page number in the flash.
+ * Use interrupt-driven flash programming ?
+ */
+bool nx__efc_write_page(U32 *data, U32 page) {
+  U8 i;
+
+  NX_ASSERT(page < EFC_PAGES);
+
+  /* Wait for the flash to be ready. */
+  nx__efc_wait_for_flash();
+  nx_systick_wait_ms(EFC_THROTTLE_TIMER);
+
+  /* Write the page data to the flash in-memory mapping. */
+  for (i=0 ; i<EFC_PAGE_WORDS ; i++) {
+      FLASH_BASE_PTR[i+page*EFC_PAGE_WORDS] = data[i];
+  }
+
+  return nx__efc_do_write(page);
 }
 
 /* TODO: figure out if its faster or not to retrieve the
@@ -77,8 +87,20 @@ void nx__efc_read_page(U32 page, U32 *data) {
 }
 
 bool nx__efc_erase_page(U32 page, U32 value) {
-  U32 data[EFC_PAGE_WORDS] = {value};
-  return nx__efc_write_page(data, page);
+  U8 i;
+
+  NX_ASSERT(page < EFC_PAGES);
+
+  /* Wait for the flash to be ready. */
+  nx__efc_wait_for_flash();
+  nx_systick_wait_ms(EFC_THROTTLE_TIMER);
+
+  /* Write the page data to the flash in-memory mapping. */
+  for (i=0 ; i<EFC_PAGE_WORDS ; i++) {
+      FLASH_BASE_PTR[i+page*EFC_PAGE_WORDS] = value;
+  }
+
+  return nx__efc_do_write(page);
 }
 
 /* TODO: implement other flash operations? */
