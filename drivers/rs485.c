@@ -178,11 +178,8 @@ void nx_rs485_init(void) {
   rs485_state.status = RS485_IDLE;
 }
 
-bool nx_rs485_stop(void) {
-  NX_ASSERT(rs485_state.status != RS485_UNINITIALIZED);
-  if (rs485_state.status != RS485_IDLE) {
-    return FALSE;
-  }
+void nx_rs485_shutdown(void) {
+  NX_ASSERT(rs485_state.status == RS485_IDLE);
 
   *AT91C_US0_CR = AT91C_US_RSTTX  |      /* Transmitter reset */
                   AT91C_US_RSTRX  |      /* Receiver reset */
@@ -192,7 +189,6 @@ bool nx_rs485_stop(void) {
   *AT91C_PMC_PCDR = (1 << AT91C_ID_US0);
 
   rs485_state.status = RS485_UNINITIALIZED;
-  return TRUE;
 }
 
 bool nx_rs485_send(U8 *buffer, U32 buflen, nx_closure_t callback) {

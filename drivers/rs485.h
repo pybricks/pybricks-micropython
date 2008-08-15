@@ -47,8 +47,11 @@ void nx_rs485_init(void);
  *
  * @note Once the RS485 interface is shut down, port 4 may be used as a
  * normal sensor port again.
+ *
+ * @warning The RS485 driver should only be shutdown after all
+ * in-progress transmissions have completed.
  */
-bool nx_rs485_stop(void);
+void nx_rs485_shutdown(void);
 
 /** Asynchronously transmit data on the RS485 bus.
  *
