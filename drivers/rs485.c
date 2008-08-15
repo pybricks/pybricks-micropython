@@ -21,8 +21,6 @@ static inline U16 build_baud_rate(nx_rs485_baudrate_t br) {
 }
 
 static volatile struct {
-  U8 *buffer;           /* Pointer to the buffer */
-  U32 buflen;           /* Buffer total length */
   enum {
     RS485_UNINITIALIZED = 0,
     RS485_IDLE,
@@ -82,56 +80,29 @@ static const U32 usart_to_rs485_lines = AT91C_PIO_PA5 |
                                         AT91C_PIO_PA6 |
                                         AT91C_PIO_PA7;
 
-static inline void isr_finish(void) {
-  rs485_state.buffer++;
-  rs485_state.buflen--;
-  if (rs485_state.buflen <= 0) {
-    *AT91C_US0_IDR = AT91C_US_RXRDY | AT91C_US_TXRDY;
-    *AT91C_US0_CR = AT91C_US_RXDIS | AT91C_US_TXDIS;
-    rs485_state.status = RS485_IDLE;
-    if (rs485_state.callback) {
-      rs485_state.callback();
-    }
-  }
-}
-
 static void nx_rs485_isr(void) {
   const U32 csr = *AT91C_US0_CSR;
 
-  /* Discern between interrupt types, without cleaning the CSR */
-  if (csr & AT91C_US_TIMEOUT) {
-    /* TODO manage timeouts */
+  /* Successful transfer completion first, then error cases. */
+  if ((rs485_state.status == RS485_RECEIVING && (csr & AT91C_US_ENDRX)) ||
+      (rs485_state.status == RS485_TRANSMITTING && (csr & AT91C_US_ENDTX))) {
+    *AT91C_US0_IDR = AT91C_US_ENDRX | AT91C_US_ENDTX;
+    *AT91C_US0_CR = AT91C_US_RXDIS | AT91C_US_TXDIS;
+    rs485_state.status = RS485_IDLE;
+
+    if (rs485_state.callback)
+      rs485_state.callback();
+  } else if (csr & AT91C_US_TIMEOUT) {
+    /* TODO: handle timeouts */
   } else if (csr & AT91C_US_OVRE) {
-    /* Overrun error, TODO signal it */
-    *AT91C_US0_CR = AT91C_US_RSTSTA;
-  } else if (csr & AT91C_US_RXRDY && rs485_state.status == RS485_RECEIVING) {
-    if (csr & AT91C_US_FRAME) {
-      /* Framing error, TODO signal it */
-      return;
-    }
-    *rs485_state.buffer = *AT91C_US0_RHR;
-    isr_finish();
-  } else if (csr & AT91C_US_TXRDY && rs485_state.status == RS485_TRANSMITTING) {
-    *AT91C_US0_THR = *rs485_state.buffer;
-    isr_finish();
+    /* TODO: handle overruns */
+  } else if (csr & AT91C_US_FRAME) {
+    /* TODO: handle framing errors */
   }
 }
 
-static inline void datainit(U8 *buffer, U32 buflen, nx_closure_t callback) {
-  rs485_state.buffer = buffer;
-  rs485_state.buflen = buflen;
-  rs485_state.callback = callback;
-}
-
 void nx_rs485_init(void) {
-  /* Avoid double initialization */
   NX_ASSERT(rs485_state.status == RS485_UNINITIALIZED);
-
-  /* Install isr */
-  /* FIXME: move isr installation at the end of init function */
-  nx_interrupts_disable();
-  nx_aic_install_isr(AT91C_ID_US0, AIC_PRIO_DRIVER, AIC_TRIG_LEVEL,
-                     nx_rs485_isr);
 
   /* Enable the peripheral clock */
   *AT91C_PMC_PCER = (1 << AT91C_ID_US0);
@@ -142,12 +113,9 @@ void nx_rs485_init(void) {
   *AT91C_PIOA_ASR   = usart_to_rs485_lines;
 
   /* Reset and disable to avoid funny jokes: */
-  /* FIXME: try to remove RXDIS and TXDIS */
   *AT91C_US0_CR = AT91C_US_RSTRX  |  /* Transmitter reset */
                   AT91C_US_RSTTX  |  /* Receiver reset */
-                  AT91C_US_RSTSTA |  /* Status bits */
-                  AT91C_US_TXDIS  |  /* Transmitter disable */
-                  AT91C_US_RXDIS;    /* Receiver disable */
+                  AT91C_US_RSTSTA;   /* Status bits */
 
   /* Placing the Usart settings in the appropriate register, time guard,
    * receiver timeout and baud rate */
@@ -156,24 +124,20 @@ void nx_rs485_init(void) {
   *AT91C_US0_RTOR = nx_rs485_settings.timeout;
   *AT91C_US0_BRGR = build_baud_rate(nx_rs485_settings.baud_rate);
 
-  /* Enable USART interrupts (keeping transmitter and receiver disabled,
-   * since they will be enabled on the specific operation
+  /* Enable USART interrupts for error conditions. Normal transmission
+   * conditions are enabled only when transfers are initiated.
    */
-  *AT91C_US0_IER = AT91C_US_OVRE    |  /* Overrun error (overwritten data) */
-                   AT91C_US_FRAME   |  /* Framing error (temporization) */
-                   AT91C_US_TXEMPTY;   /* All data transmitted. */
-                   /* TODO: check interrupt triggering here */
-
-  *AT91C_US0_IDR = AT91C_US_RXRDY   |  /* Receiver ready */
-                   AT91C_US_TXRDY;     /* Transmitter ready */
+  *AT91C_US0_IDR = ~0;
+  *AT91C_US0_IER = AT91C_US_OVRE  | /* Overrun error (overwritten data) */
+                   AT91C_US_FRAME;  /* Framing error */
 
   if (nx_rs485_settings.timeout > 0) {
     *AT91C_US0_IER = AT91C_US_TIMEOUT; /* Timeout */
-    /* TODO: signal it */
   }
 
-  /* Install interrupt service routine and reenable interrupt handling */
-  nx_interrupts_enable();
+  /* Install the rs485 ISR. */
+  nx_aic_install_isr(AT91C_ID_US0, AIC_PRIO_DRIVER, AIC_TRIG_LEVEL,
+                     nx_rs485_isr);
 
   rs485_state.status = RS485_IDLE;
 }
@@ -196,11 +160,15 @@ bool nx_rs485_send(U8 *buffer, U32 buflen, nx_closure_t callback) {
   NX_ASSERT(rs485_state.status != RS485_UNINITIALIZED);
   if (rs485_state.status != RS485_IDLE)
     return FALSE;
-  rs485_state.status = RS485_TRANSMITTING;
-  datainit(buffer, buflen, callback);
 
-  /* Enable the transmitter */
-  *AT91C_US0_IER = AT91C_US_TXRDY;
+  rs485_state.status = RS485_TRANSMITTING;
+  rs485_state.callback = callback;
+
+  /* Set up a DMA write and start transferring asynchronously. */
+  *AT91C_US0_TPR = (U32)buffer;
+  *AT91C_US0_TCR = buflen;
+  *AT91C_US0_IER = AT91C_US_ENDTX;
+  *AT91C_US0_PTCR = AT91C_PDC_TXTEN;
   *AT91C_US0_CR = AT91C_US_TXEN;
 
   return TRUE;
@@ -211,13 +179,23 @@ bool nx_rs485_recv(U8 *buffer, U32 buflen, nx_closure_t callback) {
   NX_ASSERT(rs485_state.status != RS485_UNINITIALIZED);
   if (rs485_state.status != RS485_IDLE)
     return FALSE;
-  rs485_state.status = RS485_RECEIVING;
-  datainit(buffer, buflen, callback);
 
-  /* Enable the receiver */
-  *AT91C_US0_IER = AT91C_US_RXRDY;
+  rs485_state.status = RS485_RECEIVING;
+  rs485_state.callback = callback;
+
+  /* Set up a DMA read and start transferring asynchronously. */
+  *AT91C_US0_RPR = (U32)buffer;
+  *AT91C_US0_RCR = buflen;
+  *AT91C_US0_IER = AT91C_US_ENDRX;
+  *AT91C_US0_PTCR = AT91C_PDC_RXTEN;
+
+  /* Due to (apparently) the wiring of the RS485 bus, both the
+   * transmitter and the receiver have to be enabled, otherwise the
+   * receiver does not receive any data.
+   *
+   * TODO: Figure out the exact reason and document it.
+   */
   *AT91C_US0_CR = AT91C_US_RXEN | AT91C_US_TXEN;
 
   return TRUE;
 }
-
