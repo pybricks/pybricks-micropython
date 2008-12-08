@@ -355,7 +355,7 @@ static void bt_uart_command_callback(U8 *msg, U32 len)
 
     for (i = 0 ; i < BT_NAME_MAX_LNG ; i++)
       bt_state.remote_device.name[i] = msg[1+BT_ADDR_SIZE+i];
-    bt_state.remote_device.name[BT_NAME_MAX_LNG+1] = '\0';
+    bt_state.remote_device.name[BT_NAME_MAX_LNG] = '\0';
 
     for (i = 0 ; i < BT_CLASS_SIZE ; i++)
       bt_state.remote_device.class[i] = msg[1+BT_ADDR_SIZE+BT_NAME_MAX_LNG+i];
@@ -380,7 +380,7 @@ static void bt_uart_command_callback(U8 *msg, U32 len)
 
     for (i = 0 ; i < BT_NAME_MAX_LNG ; i++)
       bt_state.remote_device.name[i] = msg[1+BT_ADDR_SIZE+i];
-    bt_state.remote_device.name[BT_NAME_MAX_LNG+1] = '\0';
+    bt_state.remote_device.name[BT_NAME_MAX_LNG] = '\0';
 
     for (i = 0 ; i < BT_CLASS_SIZE ; i++)
       bt_state.remote_device.class[i] = msg[1+BT_ADDR_SIZE+BT_NAME_MAX_LNG+i];

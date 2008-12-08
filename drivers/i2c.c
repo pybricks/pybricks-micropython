@@ -308,7 +308,7 @@ i2c_txn_err nx_i2c_start_transaction(U32 sensor, i2c_txn_mode mode,
    * is only a write transaction.
    */
   i2c_add_txn(sensor, TXN_MODE_WRITE,
-              &(i2c_state[sensor].addr[TXN_MODE_WRITE]), 1,
+              (U8*)&(i2c_state[sensor].addr[TXN_MODE_WRITE]), 1,
               I2C_CONTROL_START, I2C_CONTROL_NONE);
   i2c_add_txn(sensor, TXN_MODE_WRITE, data, data_size, I2C_CONTROL_NONE,
               i2c_state[sensor].lego_compat || mode == TXN_MODE_WRITE
@@ -321,7 +321,7 @@ i2c_txn_err nx_i2c_start_transaction(U32 sensor, i2c_txn_mode mode,
    */
   if (mode == TXN_MODE_READ) {
     i2c_add_txn(sensor, TXN_MODE_WRITE,
-                &(i2c_state[sensor].addr[TXN_MODE_READ]), 1,
+                (U8*)&(i2c_state[sensor].addr[TXN_MODE_READ]), 1,
                 I2C_CONTROL_RESTART, I2C_CONTROL_NONE);
     i2c_add_txn(sensor, TXN_MODE_READ, recv_buf, recv_size, I2C_CONTROL_NONE,
                 I2C_CONTROL_STOP);
