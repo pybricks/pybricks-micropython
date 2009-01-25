@@ -26,49 +26,13 @@ static volatile struct {
     RS485_IDLE,
     RS485_TRANSMITTING,
     RS485_RECEIVING
-  } status;             /* Status of the device driver */
-  nx_closure_t callback;   /* End of operation callback */
+  } status; /* Status of the device driver */
+  void (*callback)(nx_rs485_error_t); /* End of operation callback */
 } rs485_state;
-
-/* This constant will be placed in the "management structure" as default
- * values for usart US_MR register.
- *
- * Default settings (in order) are:
- * - Clock = MCK
- * - 8-bit Data
- * - No Parity
- * - Oversampling
- * - 1 Stop Bit
- * - Most significative bit first
- */
-#define DEFAULT_USART_MODEREG AT91C_US_USMODE_RS485 | \
-                              AT91C_US_CLKS_CLOCK   | \
-                              AT91C_US_CHRL_8_BITS  | \
-                              AT91C_US_PAR_NONE     | \
-                              AT91C_US_OVER         | \
-                              AT91C_US_NBSTOP_1_BIT | \
-                              AT91C_US_MSBF
 
 static inline U32 build_usart_modreg (U32 x) {
   return AT91C_US_USMODE_RS485 | x;
 }
-
-/* Setting management structure.
- *
- * Contains settings for the device driver, and gets applied to startup.
- * TODO: place a configuration primitive to overwrite default settings.
- */
-static struct {
-  nx_rs485_baudrate_t baud_rate;    /* Transmission baud rate */
-  U16                 timeout;      /* Reciever timeout */
-  bool                timeguard;    /* Transmitter timeguard */
-  U32                 US_MR;        /* Usart Mode register */
-} nx_rs485_settings = {
-  RS485_BR_9600,
-  0,
-  FALSE,
-  DEFAULT_USART_MODEREG
-};
 
 /* This constant represents the set of communication channel to be used for
  * rs485 transmission/reception
@@ -80,6 +44,15 @@ static const U32 usart_to_rs485_lines = AT91C_PIO_PA5 |
                                         AT91C_PIO_PA6 |
                                         AT91C_PIO_PA7;
 
+static inline void fire_callback(nx_rs485_error_t status, bool reset) {
+  if (reset) {
+    *AT91C_US0_CR = AT91C_US_RSTSTA;
+  }
+  if (rs485_state.callback) {
+    rs485_state.callback(status);
+  }
+}
+
 static void nx_rs485_isr(void) {
   const U32 csr = *AT91C_US0_CSR;
 
@@ -89,19 +62,23 @@ static void nx_rs485_isr(void) {
     *AT91C_US0_IDR = AT91C_US_ENDRX | AT91C_US_ENDTX;
     *AT91C_US0_CR = AT91C_US_RXDIS | AT91C_US_TXDIS;
     rs485_state.status = RS485_IDLE;
-
-    if (rs485_state.callback)
-      rs485_state.callback();
+    fire_callback(RS485_SUCCESS, FALSE);
   } else if (csr & AT91C_US_TIMEOUT) {
-    /* TODO: handle timeouts */
+    *AT91C_US0_CR = AT91C_US_STTTO;
+    fire_callback(RS485_TIMEOUT, FALSE);
   } else if (csr & AT91C_US_OVRE) {
-    /* TODO: handle overruns */
+    fire_callback(RS485_OVERRUN, TRUE);
   } else if (csr & AT91C_US_FRAME) {
-    /* TODO: handle framing errors */
+    fire_callback(RS485_FRAMING, TRUE);
+  } else if (csr & AT91C_US_PARE) {
+    fire_callback(RS485_PARITY, TRUE);
   }
 }
 
-void nx_rs485_init(void) {
+void nx_rs485_init(nx_rs485_baudrate_t baud_rate,
+                   U32 uart_mr,
+                   U16 timeout,
+                   bool timeguard) {
   NX_ASSERT(rs485_state.status == RS485_UNINITIALIZED);
 
   /* Enable the peripheral clock */
@@ -113,26 +90,29 @@ void nx_rs485_init(void) {
   *AT91C_PIOA_ASR   = usart_to_rs485_lines;
 
   /* Reset and disable to avoid funny jokes: */
-  *AT91C_US0_CR = AT91C_US_RSTRX  |  /* Transmitter reset */
-                  AT91C_US_RSTTX  |  /* Receiver reset */
-                  AT91C_US_RSTSTA;   /* Status bits */
+  *AT91C_US0_CR = AT91C_US_RSTRX | /* Transmitter reset */
+                  AT91C_US_RSTTX | /* Receiver reset */
+                  AT91C_US_RSTSTA; /* Status bits */
 
   /* Placing the Usart settings in the appropriate register, time guard,
    * receiver timeout and baud rate */
-  *AT91C_US0_MR = nx_rs485_settings.US_MR;
-  *AT91C_US0_TTGR = nx_rs485_settings.timeguard;
-  *AT91C_US0_RTOR = nx_rs485_settings.timeout;
-  *AT91C_US0_BRGR = build_baud_rate(nx_rs485_settings.baud_rate);
+  *AT91C_US0_MR = uart_mr == 0 ? build_usart_modreg(DEFAULT_USART_MODEREG)
+                               : build_usart_modreg(uart_mr);
+  *AT91C_US0_TTGR = timeguard;
+  *AT91C_US0_RTOR = timeout;
+  *AT91C_US0_BRGR = build_baud_rate(baud_rate);
 
   /* Enable USART interrupts for error conditions. Normal transmission
    * conditions are enabled only when transfers are initiated.
    */
   *AT91C_US0_IDR = ~0;
-  *AT91C_US0_IER = AT91C_US_OVRE  | /* Overrun error (overwritten data) */
-                   AT91C_US_FRAME;  /* Framing error */
-
-  if (nx_rs485_settings.timeout > 0) {
+  *AT91C_US0_IER = AT91C_US_OVRE | /* Overrun error (overwritten data) */
+                   AT91C_US_FRAME; /* Framing error */
+  if (timeout > 0) {
     *AT91C_US0_IER = AT91C_US_TIMEOUT; /* Timeout */
+  }
+  if ((uart_mr & AT91C_US_PAR) != AT91C_US_PAR_NONE) {
+    *AT91C_US0_IER = AT91C_US_PARE; /* Parity error */
   }
 
   /* Install the rs485 ISR. */
@@ -142,12 +122,20 @@ void nx_rs485_init(void) {
   rs485_state.status = RS485_IDLE;
 }
 
+bool nx_rs485_set_fixed_baudrate(U16 baud_rate) {
+  if (rs485_state.status == RS485_IDLE) {
+    *AT91C_US0_BRGR = baud_rate;
+    return TRUE;
+  }
+  return FALSE;
+}
+
 void nx_rs485_shutdown(void) {
   NX_ASSERT(rs485_state.status == RS485_IDLE);
 
-  *AT91C_US0_CR = AT91C_US_RSTTX  |      /* Transmitter reset */
-                  AT91C_US_RSTRX  |      /* Receiver reset */
-                  AT91C_US_RSTSTA;       /* Status reset */
+  *AT91C_US0_CR = AT91C_US_RSTTX | /* Transmitter reset */
+                  AT91C_US_RSTRX | /* Receiver reset */
+                  AT91C_US_RSTSTA; /* Status reset */
 
   /* Disable usart clock */
   *AT91C_PMC_PCDR = (1 << AT91C_ID_US0);
@@ -155,7 +143,7 @@ void nx_rs485_shutdown(void) {
   rs485_state.status = RS485_UNINITIALIZED;
 }
 
-bool nx_rs485_send(U8 *buffer, U32 buflen, nx_closure_t callback) {
+bool nx_rs485_send(U8 *buffer, U32 buflen, void (*callback)(nx_rs485_error_t)) {
   NX_ASSERT(buflen > 0);
   NX_ASSERT(rs485_state.status != RS485_UNINITIALIZED);
   if (rs485_state.status != RS485_IDLE)
@@ -174,7 +162,7 @@ bool nx_rs485_send(U8 *buffer, U32 buflen, nx_closure_t callback) {
   return TRUE;
 }
 
-bool nx_rs485_recv(U8 *buffer, U32 buflen, nx_closure_t callback) {
+bool nx_rs485_recv(U8 *buffer, U32 buflen, void (*callback)(nx_rs485_error_t)) {
   NX_ASSERT(buflen > 0);
   NX_ASSERT(rs485_state.status != RS485_UNINITIALIZED);
   if (rs485_state.status != RS485_IDLE)
@@ -199,3 +187,15 @@ bool nx_rs485_recv(U8 *buffer, U32 buflen, nx_closure_t callback) {
 
   return TRUE;
 }
+
+void nx_rs485_abort(void) {
+  NX_ASSERT(rs485_state.status != RS485_UNINITIALIZED);
+  if (rs485_state.status == RS485_IDLE)
+    return;
+
+  /* Stop the communication and reset */
+  *AT91C_US0_CR = AT91C_US_RSTRX | AT91C_US_RSTTX;
+  rs485_state.status = RS485_IDLE;
+  fire_callback(RS485_ABORT, TRUE);
+}
+
