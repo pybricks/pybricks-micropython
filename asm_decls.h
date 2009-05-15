@@ -48,6 +48,19 @@
 #define MODE_SYS 0x1F /**< System mode. */
 
 /*@}*/
+
+/** @name Memory locations
+ *
+ * The following defines symbolic names for "important" points in
+ * memory.
+ */
+/*@{*/
+
+#define MEM_START 0x0 /**< The first address of memory. */
+#define ROM_START 0x100000 /**< The first address of flash. */
+#define RAM_START 0x200000 /**< The first address of RAM. */
+
+/*@}*/
 /*@}*/
 /*@}*/
 
