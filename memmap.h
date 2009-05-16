@@ -41,8 +41,8 @@
  * phase. They describe the memory map of the NXT in terms of
  * symbols.
  */
-extern U8 __userspace_start__;
-extern U8 __userspace_end__;
+extern U8 __ram_userspace_start__;
+extern U8 __ram_userspace_end__;
 
 extern U8 __ramtext_ram_start__;
 extern U8 __ramtext_ram_end__;
@@ -152,8 +152,8 @@ extern U8 __boot_from_samba__;
  * this area, and it will not affect the Baseplate in any way.
  */
 /*@{*/
-#define NX_USERSPACE_START SYMADDR(__userspace_start__)
-#define NX_USERSPACE_END SYMADDR(__userspace_end__)
+#define NX_USERSPACE_START SYMADDR(__ram_userspace_start__)
+#define NX_USERSPACE_END SYMADDR(__ram_userspace_end__)
 #define NX_USERSPACE_SIZE SECSIZE(NX_USERSPACE_START, NX_USERSPACE_END)
 /*@}*/
 

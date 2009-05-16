@@ -209,7 +209,7 @@ wait_mclk_3:
 
 	/* Set up the abort mode stack. */
 	msr cpsr_c, #(MODE_ABT | IRQ_FIQ_MASK)
-	ldr sp, =__userspace_end__
+	ldr sp, =__ram_userspace_end__
 	bic sp, sp, #7
 
 	/* Set up the supervisor mode stack. */
