@@ -14,7 +14,7 @@
 #define SAMBA_END 0x202000
 
         .global nx__samba_start
-        .extern __kernel_in_ram_size__
+        .extern __kernel_ram_load_size__
 
 //
 // Execution starts here after a SAM-BA boot.
@@ -27,7 +27,7 @@ nx__samba_start:
         // Copy the entire kernel binary down in RAM, squashing
         // SAM-BA.
         ldr r0, =SAMBA_END
-        ldr r1, =__kernel_in_ram_size__
+        ldr r1, =__kernel_ram_load_size__
         add r1, r1, r0
         mov r2, #RAM_START
 
