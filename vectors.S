@@ -17,17 +17,17 @@
  * LDR is used instead of plain branching because LDR jumps can be
  * relocated.
  */
-	ldr   pc,v0 /* Reset */
+        ldr   pc,v0 /* Reset */
         ldr   pc,v4 /* Illegal instruction */
         ldr   pc,v4 /* Software interrupt */
         ldr   pc,v2 /* Prefetch abort */
         ldr   pc,v3 /* Data abort */
         ldr   pc,v4 /* (reserved) */
-	ldr   pc,v1 /* IRQ */
-	ldr   pc,v4 /* FIQ */
+        ldr   pc,v1 /* IRQ */
+        ldr   pc,v4 /* FIQ */
 
-v0:	.long nx_start
-v1:	.long nx__irq_handler
-v2:	.long nx__prefetch_abort_handler
-v3:	.long nx__data_abort_handler
-v4:	.long nx__unhandled_exception
+v0:     .long nx_start
+v1:     .long nx__irq_handler
+v2:     .long nx__prefetch_abort_handler
+v3:     .long nx__data_abort_handler
+v4:     .long nx__unhandled_exception
