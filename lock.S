@@ -25,8 +25,8 @@ nx_atomic_cas8:
         bx lr
 
 
-        .global nx_spinlock_acquire_from_ref
-nx_spinlock_acquire_from_ref:
+        .global nx_spinlock_acquire
+nx_spinlock_acquire:
         mov r1, #1
 spinlock_loop:
         swpb r1, r1, [r0]
@@ -35,8 +35,8 @@ spinlock_loop:
         b spinlock_loop
 
 
-        .global nx_spinlock_try_acquire_from_ref
-nx_spinlock_try_acquire_from_ref:
+        .global nx_spinlock_try_acquire
+nx_spinlock_try_acquire:
         mov r1, #1
         swpb r1, r1, [r0]
         cmp r1, #0

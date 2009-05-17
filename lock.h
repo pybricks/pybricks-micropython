@@ -104,9 +104,9 @@ void nx_spinlock_try_acquire(spinlock *lock);
  *
  * @param lock Pointer to the spinlock to release.
  */
-void nx_spinlock_release(spinlock *lock);
+static void nx_spinlock_release(spinlock *lock);
 
-inline void nx_spinlock_release(spinlock *lock) {
+static inline void nx_spinlock_release(spinlock *lock) {
   *lock = 0;
 }
 
