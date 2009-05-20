@@ -141,7 +141,7 @@ void nx_systick_install_scheduler(nx_closure_t sched_cb) {
   nx_interrupts_enable();
 }
 
-inline void nx_systick_call_scheduler(void) {
+void nx_systick_call_scheduler(void) {
   /* If the application kernel set a scheduling callback, trigger the
    * lower priority IRQ in which the scheduler runs.
    */

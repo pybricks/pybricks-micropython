@@ -56,7 +56,7 @@ void nx_display_auto_refresh(bool auto_refresh);
  * display is being refreshed anyway, you probably won't notice a
  * difference.
  */
-inline void nx_display_refresh(void);
+void nx_display_refresh(void);
 
 /** Move the cursor to line @a x and column @a y.
  *
@@ -69,7 +69,7 @@ inline void nx_display_refresh(void);
 void nx_display_cursor_set_pos(U8 x, U8 y);
 
 /** Print a single line feed. */
-inline void nx_display_end_line(void);
+void nx_display_end_line(void);
 
 /** Display @a str at the current cursor position.
  *

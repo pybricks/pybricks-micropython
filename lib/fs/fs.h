@@ -226,7 +226,7 @@ fs_err_t nx_fs_defrag_simple_zone(U32 zone_start, U32 zone_end);
  *
  * @return A @a fs_err_t describing the outcome of the operation.
  */
-inline fs_err_t nx_fs_defrag_simple(void);
+fs_err_t nx_fs_defrag_simple(void);
 
 /** Perform a simple, file oriented defragmentation of the flash.
  *

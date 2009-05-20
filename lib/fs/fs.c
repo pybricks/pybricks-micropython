@@ -955,7 +955,7 @@ fs_err_t nx_fs_defrag_simple_zone(U32 zone_start, U32 zone_end) {
 }
 
 /* Simple defragmentation of the whole flash. */
-inline fs_err_t nx_fs_defrag_simple(void) {
+fs_err_t nx_fs_defrag_simple(void) {
   return nx_fs_defrag_simple_zone(FS_PAGE_START, FS_PAGE_END);
 }
 

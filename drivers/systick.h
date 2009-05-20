@@ -72,7 +72,7 @@ void nx_systick_install_scheduler(nx_closure_t scheduler_cb);
  * @note If no scheduler callback has been installed (by
  * ns_systick_install_scheduler()), the call has no effect.
  */
-inline void nx_systick_call_scheduler(void);
+void nx_systick_call_scheduler(void);
 
 /** Inhibit the scheduler callback temporarily.
  *
