@@ -122,7 +122,7 @@ void nx_i2c_unregister(U32 sensor);
  * error codes are returned (see i2c_txn_err).
  */
 i2c_txn_err nx_i2c_start_transaction(U32 sensor, i2c_txn_mode mode,
-                                     U8 *data, U32 data_size,
+                                     const U8 *data, U32 data_size,
                                      U8 *recv_buf, U32 recv_size);
 
 /** Get the current transaction status on port @a sensor.

@@ -276,7 +276,7 @@ static i2c_txn_err i2c_trigger(U32 sensor) {
  * Returns an i2c_txn_err error code.
  */
 i2c_txn_err nx_i2c_start_transaction(U32 sensor, i2c_txn_mode mode,
-				     U8 *data, U32 data_size,
+				     const U8 *data, U32 data_size,
 				     U8 *recv_buf, U32 recv_size)
 {
   volatile struct i2c_txn_info *t;
@@ -310,8 +310,8 @@ i2c_txn_err nx_i2c_start_transaction(U32 sensor, i2c_txn_mode mode,
   i2c_add_txn(sensor, TXN_MODE_WRITE,
               (U8*)&(i2c_state[sensor].addr[TXN_MODE_WRITE]), 1,
               I2C_CONTROL_START, I2C_CONTROL_NONE);
-  i2c_add_txn(sensor, TXN_MODE_WRITE, data, data_size, I2C_CONTROL_NONE,
-              i2c_state[sensor].lego_compat || mode == TXN_MODE_WRITE
+  i2c_add_txn(sensor, TXN_MODE_WRITE, (U8*)data, data_size, I2C_CONTROL_NONE,
+              (i2c_state[sensor].lego_compat || mode == TXN_MODE_WRITE)
                 ? I2C_CONTROL_STOP
                 : I2C_CONTROL_NONE);
 
@@ -475,6 +475,7 @@ static void i2c_isr(void) {
           p->current_txn = p->n_txns;
         } else {
           if (p->processed < t->data_size) {
+            p->bus_state = I2C_SCL_LOW;
             p->txn_state = TXN_TRANSMIT_BYTE;
           } else {
             t->result = TXN_STAT_SUCCESS;
@@ -603,8 +604,6 @@ static void i2c_isr(void) {
               codr |= pins->sda;
               i2c_log_uint(0);
             }
-
-            p->current_pos--;
           }
 
           p->bus_state = I2C_SAMPLE0;
@@ -659,7 +658,6 @@ static void i2c_isr(void) {
         if (t->mode == TXN_MODE_READ) {
           U8 value = (lines & pins->sda) ? 1 : 0;
           t->data[p->processed] |= (value << p->current_pos);
-          p->current_pos--;
           i2c_log_uint(value);
         }
 
@@ -670,6 +668,7 @@ static void i2c_isr(void) {
         /* Finally, pull SCL low. */
         codr |= pins->scl;
 
+        --p->current_pos;
         if (p->current_pos < 0) {
           p->processed++;
           p->current_pos = 7;
