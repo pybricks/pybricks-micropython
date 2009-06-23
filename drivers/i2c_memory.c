@@ -10,6 +10,7 @@
 
 #include "base/types.h"
 #include "base/nxt.h"
+#include "base/util.h"
 #include "base/display.h"
 #include "base/drivers/sensors.h"
 #include "base/drivers/systick.h"
@@ -64,14 +65,18 @@ i2c_txn_err nx_i2c_memory_read(U32 sensor, U8 internal_address,
  * remote memory unit.
  */
 i2c_txn_err nx_i2c_memory_write(U32 sensor, U8 internal_address,
-				U8 *data, U32 size) {
+				const U8 *data, U32 size) {
+  U8 buf[I2C_MAX_DATA_SIZE];
   i2c_txn_err err;
 
   if (!data || !size || size >= I2C_MAX_DATA_SIZE)
     return I2C_ERR_DATA;
 
+  buf[0] = internal_address;
+  memcpy(buf+1, data, size);
+
   err = nx_i2c_start_transaction(sensor, TXN_MODE_WRITE,
-				 &internal_address, 1, data, size);
+				 buf, size+1, 0, 0);
   if (err != I2C_ERR_OK)
     return err;
 

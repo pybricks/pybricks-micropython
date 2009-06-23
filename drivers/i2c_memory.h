@@ -84,7 +84,7 @@ i2c_txn_err nx_i2c_memory_read(U32 sensor, U8 internal_address,
  * @return Returns the transaction status.
  */
 i2c_txn_err nx_i2c_memory_write(U32 sensor, U8 internal_address,
-                                U8 *data, U32 size);
+                                const U8 *data, U32 size);
 
 /*@}*/
 /*@}*/
