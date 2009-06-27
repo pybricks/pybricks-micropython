@@ -181,6 +181,13 @@ void nx_display_uint(U32 val) {
   dirty_display();
 }
 
+void nx_display_int(S32 val) {
+  if( val < 0 ) {
+    nx_display_string("-");
+    val = -val;
+  }
+  nx_display_uint(val);
+}
 
 /*
  * Display initialization.

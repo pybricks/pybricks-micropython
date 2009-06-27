@@ -86,11 +86,17 @@ void nx_display_string(const char *str);
  */
 void nx_display_hex(U32 val);
 
-/** Display @a val as a decimal number.
+/** Display @a val as a (unsigned) decimal number.
  *
  * @param val The number to display.
  */
 void nx_display_uint(U32 val);
+
+/** Display @a val as a (signed) decimal number.
+ *
+ * @param val The number to display.
+ */
+void nx_display_int(S32 val);
 
 /*@}*/
 /*@}*/
