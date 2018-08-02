@@ -8,6 +8,7 @@
 #include "py/gc.h"
 #include "py/mperrno.h"
 #include "lib/utils/pyexec.h"
+#include "uartadr.h"
 
 #if MICROPY_ENABLE_COMPILER
 void do_str(const char *src, mp_parse_input_kind_t input_kind) {
@@ -107,7 +108,7 @@ extern uint32_t _estack, _sidata, _sdata, _edata, _sbss, _ebss;
 void Reset_Handler(void) __attribute__((naked));
 void Reset_Handler(void) {
     // set stack pointer
-    __asm volatile ("ldr sp, =_estack");
+    //__asm volatile ("ldr sp, =_estack");
     // copy .data section from flash to RAM
     for (uint32_t *src = &_sidata, *dest = &_sdata; dest < &_edata;) {
         *dest++ = *src++;
@@ -149,7 +150,7 @@ void _start(void) {
     // when we get here: stack is initialised, bss is clear, data is copied
 
     // SCB->CCR: enable 8-byte stack alignment for IRQ handlers, in accord with EABI
-    *((volatile uint32_t*)0xe000ed14) |= 1 << 9;
+    // *((volatile uint32_t*)0xe000ed14) |= 1 << 9;
 
     // initialise the cpu and peripherals
     #if MICROPY_MIN_USE_STM32_MCU
@@ -173,16 +174,16 @@ void _start(void) {
 
 typedef struct {
     volatile uint32_t CR;
-    volatile uint32_t PLLCFGR;
+//    volatile uint32_t PLLCFGR;
     volatile uint32_t CFGR;
     volatile uint32_t CIR;
-    uint32_t _1[8];
+    uint32_t _1[2];
     volatile uint32_t AHB1ENR;
-    volatile uint32_t AHB2ENR;
-    volatile uint32_t AHB3ENR;
-    uint32_t _2;
-    volatile uint32_t APB1ENR;
+//    volatile uint32_t AHB2ENR;
+//    volatile uint32_t AHB3ENR;
+ //   uint32_t _2;
     volatile uint32_t APB2ENR;
+    volatile uint32_t APB1ENR;
 } periph_rcc_t;
 
 typedef struct {
@@ -199,16 +200,22 @@ typedef struct {
 } periph_gpio_t;
 
 typedef struct {
-    volatile uint32_t SR;
-    volatile uint32_t DR;
-    volatile uint32_t BRR;
     volatile uint32_t CR1;
+    uint32_t d[2];
+    volatile uint32_t BRR;
+    uint32_t e[3];
+    volatile uint32_t USART_ISR;
+    uint32_t f[1];
+    volatile uint32_t RDR;
+    volatile uint32_t TDR;
 } periph_uart_t;
 
-#define USART1 ((periph_uart_t*) 0x40011000)
-#define GPIOA  ((periph_gpio_t*) 0x40020000)
-#define GPIOB  ((periph_gpio_t*) 0x40020400)
-#define RCC    ((periph_rcc_t*)  0x40023800)
+#define GPIOA  ((periph_gpio_t*) 0x48000000)
+#define GPIOB  ((periph_gpio_t*) 0x48000400)
+#define GPIOC  ((periph_gpio_t*) 0x48000800)
+#define GPIOD  ((periph_gpio_t*) 0x48000C00)
+#define GPIOF  ((periph_gpio_t*) 0x48001000)
+#define RCC    ((periph_rcc_t*)  0x40021000)
 
 // simple GPIO interface
 #define GPIO_MODE_IN (0)
@@ -234,25 +241,127 @@ void stm32_init(void) {
     RCC->CR |= (uint32_t)0x00000001; // set HSION
     RCC->CFGR = 0x00000000; // reset all
     RCC->CR &= (uint32_t)0xfef6ffff; // reset HSEON, CSSON, PLLON
-    RCC->PLLCFGR = 0x24003010; // reset PLLCFGR
+    // RCC->PLLCFGR = 0x24003010; // reset PLLCFGR
     RCC->CR &= (uint32_t)0xfffbffff; // reset HSEBYP
     RCC->CIR = 0x00000000; // disable IRQs
 
     // leave the clock as-is (internal 16MHz)
 
     // enable GPIO clocks
-    RCC->AHB1ENR |= 0x00000003; // GPIOAEN, GPIOBEN
+    RCC->AHB1ENR |= 0x00020000; // GPIOAEN
+    RCC->AHB1ENR |= 0x00040000; // GPIOBEN
+    RCC->AHB1ENR |= 0x00080000; // GPIOCEN
+    RCC->AHB1ENR |= 0x00100000; // GPIODEN
+    RCC->AHB1ENR |= 0x00100000; // GPIOFEN
+    RCC->AHB1ENR |= 0x00400000; // GPIOFEN
 
-    // turn on an LED! (on pyboard it's the red one)
-    gpio_init(GPIOA, 13, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
-    gpio_high(GPIOA, 13);
+    // enable UART at 115200 baud on BOOST OUT C, pin 5 and 6
+    gpio_init(GPIOC, 10, GPIO_MODE_ALT, GPIO_PULL_NONE, 0); // USART4_TX | 0 // WORKING! Gives output on BOOST PORT C!
+    gpio_init(GPIOC, 11, GPIO_MODE_ALT, GPIO_PULL_NONE, 0); // USART4_RX | 0 // WORKING! GIVES input on BOOST port C
 
-    // enable UART1 at 9600 baud (TX=B6, RX=B7)
-    gpio_init(GPIOB, 6, GPIO_MODE_ALT, GPIO_PULL_NONE, 7);
-    gpio_init(GPIOB, 7, GPIO_MODE_ALT, GPIO_PULL_NONE, 7);
-    RCC->APB2ENR |= 0x00000010; // USART1EN
-    USART1->BRR = (104 << 4) | 3; // 16MHz/(16*104.1875) = 9598 baud
-    USART1->CR1 = 0x0000200c; // USART enable, tx enable, rx enable
+    // gpio_init(GPIOC, 10, GPIO_MODE_ALT, GPIO_PULL_NONE, 1); // USART3_TX | 1 // WORKING! Gives output on BOOST PORT C!
+    // gpio_init(GPIOC, 11, GPIO_MODE_ALT, GPIO_PULL_NONE, 1); // USART3_RX | 1 // WORKING! GIVES input on BOOST port C    
+
+    RCC->APB1ENR |= (1<<17); // USART2EN
+    RCC->APB1ENR |= (1<<18); // USART3EN
+    RCC->APB1ENR |= (1<<19); // USART4EN
+    RCC->APB1ENR |= (1<<20); // USART5EN
+
+    USART_REPL->BRR = 69;//69;
+    USART_REPL->CR1 = 0x0000000D; // USART enable, tx enable, rx enable    
 }
 
 #endif
+
+
+///////////////////////////////////
+// The following is based on the tutorial at: http://micropython-dev-docs.readthedocs.io/en/latest/adding-module.html
+// But I have skipped this step so far:
+// The second file you will need to add to is xxxxx.ld, which is the map of memory used by the compiler. You have to add it to the list of files to be put in the .irom0.text section, so that your code goes into the instruction read-only memory (iROM). If you fail to do that, the compiler will try to put it in the instruction random-access memory (iRAM), which is a very scarce resource, and which can get overflown if you try to put too much there.
+
+
+#include "py/nlr.h"
+#include "py/obj.h"
+#include "py/runtime.h"
+#include "py/binary.h"
+#include <stdio.h>
+
+STATIC mp_obj_t mymodule_gpios(mp_obj_t value) {
+    mp_uint_t action = (mp_obj_get_int(value) & 0xF00) >> 8;
+    mp_uint_t port = (mp_obj_get_int(value) & 0x0F0) >> 4;
+    mp_uint_t pin = (mp_obj_get_int(value) & 0x00F);
+    mp_uint_t retval = 2;
+
+    periph_gpio_t *gpio;
+
+    switch(port){
+        case 0: 
+            gpio = GPIOA;
+            // printf("PORT: A\n");
+            break;
+        case 1:
+            gpio = GPIOB;
+            // printf("PORT: B\n");
+            break;
+        case 2:
+            gpio = GPIOC;
+            // printf("PORT: C\n");
+            break;
+        case 3:
+            gpio = GPIOD;
+            // printf("PORT: D\n");
+            break;
+        case 5:
+            gpio = GPIOF;
+            // printf("PORT: F\n");
+            break;                        
+        default:
+            printf("Unknown port\n");
+            return mp_obj_new_int_from_uint(3);
+    }
+
+    switch(action){
+        case 0: // Init IN
+            gpio_init(gpio, pin, GPIO_MODE_IN, GPIO_PULL_NONE, 0);
+            printf("Init PIN %d as INput\n", pin);
+            break;
+        case 1: // Init OUT
+            gpio_init(gpio, pin, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
+            printf("Init PIN %d as OUTput\n", pin);     
+            break;        
+        case 2: // Read
+            retval = gpio_get(gpio, pin); 
+            // printf("Read PIN %d\n", pin);
+            break;        
+        case 3: // SET LOW
+            gpio_low(gpio, pin); 
+            printf("Set PIN %d low\n", pin);        
+            break;     
+        case 4: // SET HIGH
+            gpio_high(gpio, pin); 
+            printf("Make PIN %d high\n", pin);        
+            break;                    
+        default:
+            printf("Unknown Action \n");        
+            return mp_obj_new_int_from_uint(4);   
+    }
+    return mp_obj_new_int_from_uint(retval);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mymodule_gpios_obj, mymodule_gpios);
+
+STATIC const mp_map_elem_t mymodule_globals_table[] = {
+    { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_mymodule) },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&mymodule_gpios_obj },
+};
+
+STATIC MP_DEFINE_CONST_DICT (
+    mp_module_mymodule_globals,
+    mymodule_globals_table
+);
+
+const mp_obj_module_t mp_module_mymodule = {
+    .base = { &mp_type_module },
+    .globals = (mp_obj_dict_t*)&mp_module_mymodule_globals,
+};
+
+///////////////////////////////////

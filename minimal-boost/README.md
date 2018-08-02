@@ -1,23 +1,18 @@
-# The minimal port adapted to LEGO BOOST
+# The minimal port: adapted to LEGO BOOST
 - Clone the MicroPython repository and its submodules
 - Build mpy-cross and st-flash as per the instructions in micropython/ports/stm32
 - Clone this repository
-- Make a symlink in the micropython/ports/ folder to the BOOST folder of this repository:
+- Copy the minimal-boost folder to micropython/ports/
+- Go into cd /path/to/micropython/ports/minimal-boost
+- Then follow the original README below, which still applies for the remainder.
 
-```
-cd /path/to/micropython/ports/
-ln -s /path/to/firmware/BOOST/ minimal-boost
-cd minimal-boost
-```
+__I'm committing this just as a proof of concept. See [issue #1](https://github.com/laurensvalk/firmware/issues/1) for a discussion on how to start organizing the folder structure properly__
 
-The original README below still applies for the remainder.
-
-Don't forget to run mpy-cross when modifying frozen bytecode. The combined command for compiling and flashing the firmware is:
+Don't forget to run mpy-cross when modifying frozen bytecode. The combined command for compiling and flashing the firmware is (initiated from micropython/ports/minimal-boost):
 
 ```
 ../../mpy-cross/mpy-cross frozentest.py && make CROSS=1 && st-flash write build/firmware.bin 0x08000000
 ```
-
 
 # The minimal port
 
