@@ -6,7 +6,7 @@
 - Go into cd /path/to/micropython/ports/minimal-boost
 - Then follow the original README below, which still applies for the remainder.
 
-__I'm committing this just as a proof of concept. See [issue #1](https://github.com/laurensvalk/firmware/issues/1) for a discussion on how to start organizing the folder structure properly__
+__I'm committing this just as a proof of concept. See [this issue](https://github.com/laurensvalk/roadmap/issues/3) for a discussion on how to start organizing the folder structure properly__
 
 Don't forget to run mpy-cross when modifying frozen bytecode. The combined command for compiling and flashing the firmware is (initiated from micropython/ports/minimal-boost):
 
