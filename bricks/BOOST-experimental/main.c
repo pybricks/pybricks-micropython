@@ -271,21 +271,23 @@ void stm32_init(void) {
     // gpio_init(GPIOB, 8, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
     // gpio_high(GPIOB, 8);       
 
-    // AUX
-    gpio_init(GPIOC, 13, GPIO_MODE_IN, GPIO_PULL_UP, 0);
-    gpio_init(GPIOA, 15, GPIO_MODE_IN, GPIO_PULL_UP, 0);
 
-    // enable UART at 115200 baud on BOOST OUT C, pin 5 and 6
-    gpio_init(GPIOC, 10, GPIO_MODE_ALT, GPIO_PULL_NONE, 0); // USART4_TX | 0 // WORKING! Gives output on BOOST PORT C!
-    gpio_init(GPIOC, 11, GPIO_MODE_ALT, GPIO_PULL_NONE, 0); // USART4_RX | 0 // WORKING! GIVES input on BOOST port C
+    // enable UART at 115200 baud on BOOST OUT C and D, pin 5 and 6
 
-    // gpio_init(GPIOC, 10, GPIO_MODE_ALT, GPIO_PULL_NONE, 1); // USART3_TX | 1 // WORKING! Gives output on BOOST PORT C!
-    // gpio_init(GPIOC, 11, GPIO_MODE_ALT, GPIO_PULL_NONE, 1); // USART3_RX | 1 // WORKING! GIVES input on BOOST port C    
+    // USART 3, BOOST i/o D
+    gpio_init(GPIOB, 0, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
+    gpio_low(GPIOB, 0);     
+    gpio_init(GPIOC, 4, GPIO_MODE_ALT, GPIO_PULL_NONE, 1); // USART3_TX
+    gpio_init(GPIOC, 5, GPIO_MODE_ALT, GPIO_PULL_NONE, 1); // USART3_RX  
 
-    RCC->APB1ENR |= (1<<17); // USART2EN
+    // USART 4, BOOST i/o C
+    gpio_init(GPIOB, 4, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
+    gpio_low(GPIOB, 4);        
+    gpio_init(GPIOC, 10, GPIO_MODE_ALT, GPIO_PULL_NONE, 0); // USART4_TX
+    gpio_init(GPIOC, 11, GPIO_MODE_ALT, GPIO_PULL_NONE, 0); // USART4_RX
+
     RCC->APB1ENR |= (1<<18); // USART3EN
     RCC->APB1ENR |= (1<<19); // USART4EN
-    RCC->APB1ENR |= (1<<20); // USART5EN
 
     USART_REPL->BRR = 69;//69;
     USART_REPL->CR1 = 0x0000000D; // USART enable, tx enable, rx enable    
@@ -341,9 +343,9 @@ STATIC mp_obj_t mymodule_gpios(mp_obj_t value) {
     }
 
     switch(action){
-        case 0: // Init IN
-            gpio_init(gpio, pin, GPIO_MODE_IN, GPIO_PULL_NONE, 0);
-            printf("Init PIN %d as INput\n", pin);
+        case 0: // Init IN UP
+            gpio_init(gpio, pin, GPIO_MODE_IN, GPIO_PULL_UP, 0);
+            printf("Init PIN %d as INput pull up\n", pin);
             break;
         case 1: // Init OUT
             gpio_init(gpio, pin, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
@@ -361,6 +363,10 @@ STATIC mp_obj_t mymodule_gpios(mp_obj_t value) {
             gpio_high(gpio, pin); 
             printf("Make PIN %d high\n", pin);        
             break;                    
+        case 5: // Init IN DOWN
+            gpio_init(gpio, pin, GPIO_MODE_IN, GPIO_PULL_DOWN, 0);
+            printf("Init PIN %d as INput pull down\n", pin);
+            break;            
         default:
             printf("Unknown Action \n");        
             return mp_obj_new_int_from_uint(4);   

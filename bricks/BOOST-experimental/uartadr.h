@@ -5,4 +5,4 @@
 #define USART5 ((periph_uart_t*) 0x40005000)
 // #define USART_REPL USART2 // NUCLEO
 #define USART_REPL USART4 // BOOST OUTC
-// #define USART_REPL USART3 // BOOST OUTC
+// #define USART_REPL USART3 // BOOST OUTD
