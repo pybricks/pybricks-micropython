@@ -21,3 +21,6 @@ def all_in(port):
 
 def read_all(port):
     return [gpio_read(port, pin) for pin in range(16)]
+
+def off():
+    gpio_low('B',11)

@@ -252,8 +252,28 @@ void stm32_init(void) {
     RCC->AHB1ENR |= 0x00040000; // GPIOBEN
     RCC->AHB1ENR |= 0x00080000; // GPIOCEN
     RCC->AHB1ENR |= 0x00100000; // GPIODEN
-    RCC->AHB1ENR |= 0x00100000; // GPIOFEN
     RCC->AHB1ENR |= 0x00400000; // GPIOFEN
+
+
+    // Keep BOOST alive
+    gpio_init(GPIOB, 11, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
+    gpio_high(GPIOB, 11);
+
+    // // Turn on BLUE LED
+    // gpio_init(GPIOB, 15, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
+    // gpio_high(GPIOB, 15);   
+
+    // Turn on GREEN LED
+    gpio_init(GPIOB, 14, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
+    gpio_high(GPIOB, 14);     
+
+    // // Turn on RED LED
+    // gpio_init(GPIOB, 8, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
+    // gpio_high(GPIOB, 8);       
+
+    // AUX
+    gpio_init(GPIOC, 13, GPIO_MODE_IN, GPIO_PULL_UP, 0);
+    gpio_init(GPIOA, 15, GPIO_MODE_IN, GPIO_PULL_UP, 0);
 
     // enable UART at 115200 baud on BOOST OUT C, pin 5 and 6
     gpio_init(GPIOC, 10, GPIO_MODE_ALT, GPIO_PULL_NONE, 0); // USART4_TX | 0 // WORKING! Gives output on BOOST PORT C!

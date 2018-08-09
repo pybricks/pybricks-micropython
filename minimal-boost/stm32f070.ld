@@ -5,7 +5,8 @@
 /* Specify the memory areas */
 MEMORY
 {
-    FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 0x020000 /* entire flash */
+    /*FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 0x020000*/ /* entire flash */
+    FLASH (rx)      : ORIGIN = 0x08005000, LENGTH = 0x01A800 /* entire flash */
     /*CCMRAM (xrw)    : ORIGIN = 0x10000000, LENGTH = 0x010000*/ /* 64 KiB */
     RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 0x004000 /* 16 KiB */
 }
