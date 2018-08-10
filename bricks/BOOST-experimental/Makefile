@@ -22,7 +22,7 @@ PYDFU = $(TOP)/tools/pydfu.py
 # CFLAGS_CORTEX_M0 = -mthumb -mtune=cortex-m0 -mabi=aapcs-linux -mcpu=cortex-m0 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fsingle-precision-constant -Wdouble-promotion
 CFLAGS_CORTEX_M0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
 CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib $(CFLAGS_CORTEX_M0) $(COPT)
-LDFLAGS = -nostdlib -T stm32f070.ld -Map=$@.map --cref --gc-sections
+LDFLAGS = -nostdlib -T stm32f070.ld -Map=$@.map --cref --gc-sections --defsym=CALC_CHECKSUM=0 #0xeac22dd1
 else
 LD = gcc
 CFLAGS = -m32 $(INC) -Wall -Werror -std=c99 $(COPT)

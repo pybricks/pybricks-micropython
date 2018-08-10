@@ -271,6 +271,20 @@ void stm32_init(void) {
     // gpio_init(GPIOB, 8, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
     // gpio_high(GPIOB, 8);       
 
+    // // Motor pins for A/B
+    // gpio_init(GPIOA, 8, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
+    // gpio_init(GPIOA, 9, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
+    // gpio_init(GPIOA, 10, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
+    // gpio_init(GPIOA, 11, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
+
+    // // Motor pins for C
+    // gpio_init(GPIOC, 6, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
+    // gpio_init(GPIOC, 8, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
+
+    // // Motor pins for D
+    // gpio_init(GPIOC, 7, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
+    // gpio_init(GPIOC, 9, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);    
+
 
     // enable UART at 115200 baud on BOOST OUT C and D, pin 5 and 6
 
