@@ -43,6 +43,6 @@ user.props
 ######################
 genrst/
 
-# Generated rst files
-######################
-bricks/EV3/build-armel/
+# Micropython executable
+###################
+bricks/EV3/micropython
