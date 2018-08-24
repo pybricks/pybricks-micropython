@@ -34,19 +34,3 @@ docker build \
     "${script_dir}/"
 
 docker rm --force ${container_name} >/dev/null 2>&1 || true
-# docker run \
-#     --volume "$(readlink -f ${build_dir}):/build" \
-#     --volume "$(pwd):/src" \
-#     --workdir /build \
-#     --name ${container_name} \
-#     --env "TERM=${TERM}" \
-#     --env "DESTDIR=/build/dist" \
-#     --tty \
-#     --detach \
-#     ${image_name} tail
-
-# docker exec --tty ${container_name} cmake /src \
-#     -DCMAKE_BUILD_TYPE=Debug \
-#     -DCMAKE_TOOLCHAIN_FILE=/home/compiler/toolchain-${arch}.cmake
-
-# echo "Done. You can now compile by running 'docker exec --tty ${container_name} make'"
