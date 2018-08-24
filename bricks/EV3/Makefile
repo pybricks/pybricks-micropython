@@ -280,8 +280,6 @@ libffi:
 	../configure $(CROSS_COMPILE_HOST) --prefix=$$PWD/out --disable-structs CC="$(CC)" CXX="$(CXX)" LD="$(LD)" CFLAGS="-Os -fomit-frame-pointer -fstrict-aliasing -ffast-math -fno-exceptions"; \
 	$(MAKE) install-exec-recursive; $(MAKE) -C include install-data-am
 
-
-$(info $$CC is [${CC}])
 axtls: $(BUILD)/libaxtls.a
 
 $(BUILD)/libaxtls.a: $(TOP)/lib/axtls/README | $(OBJ_DIRS)
