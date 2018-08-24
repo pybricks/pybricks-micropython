@@ -42,3 +42,7 @@ user.props
 # Generated rst files
 ######################
 genrst/
+
+# Generated rst files
+######################
+bricks/EV3/build-armel/
