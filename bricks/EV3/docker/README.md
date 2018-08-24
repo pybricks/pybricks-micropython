@@ -1,4 +1,4 @@
-Adapted from [docker for lms2012](https://github.com/ev3dev/lms2012-compat/blob/ev3dev-stretch/docker/README.md)
+Adapted from [docker for lms2012](https://github.com/ev3dev/lms2012-compat/blob/ev3dev-stretch/docker/README.md).
 
 
 Using Docker to Cross-Compile the MicroPython unix port
@@ -13,26 +13,16 @@ source code directory.
 
         ./docker/setup.sh armel
 
-2.  Then build the code.
+2.  Get an interactive shell with the working directory in bricks/EV3
 
-        docker exec -t lms2012_armel make
-        docker exec -t lms2012_armel make install
+        docker run --rm -it -v /abs/path/to/micropython:/micropython -w /micropython/ports/pybricks/bricks/EV3 pybricks-ev3-armel
 
-### Tips
+3. Cross compile micropython
 
-* To get an interactive shell to the container, run 
+        make CROSS_COMPILE=arm-linux-gnueabi-
 
-        docker exec -it lms2012_armel bash
+4. Exit when ready
 
-* When you are done building, you can stop the container.
+        exit
 
-        docker stop --time 0 lms2012_armel
-
-    `docker exec ...` will not work until you start the container again.
-
-        docker start lms2012_armel
-
-    And the container can be deleted when you don't need it anymore (don't
-    forget to stop it first).
-
-        docker rm lms2012_armel
+5. Transfer the generated MicroPython application (from the EV3 folder) to the EV3 brick and run it.
