@@ -17,12 +17,16 @@ source code directory.
 
         docker run --rm -it -v /abs/path/to/micropython:/micropython -w /micropython/ports/pybricks/bricks/EV3 pybricks-ev3-armel
 
-3. Cross compile micropython
+3. Cross compile `axtls`
+
+        make axtls CROSS_COMPILE=arm-linux-gnueabi- HOSTCC=arm-linux-gnueabi-gcc
+
+4. Cross compile MicroPython
 
         make CROSS_COMPILE=arm-linux-gnueabi-
 
-4. Exit when ready
+5. Exit when ready
 
         exit
 
-5. Transfer the generated MicroPython application (from the EV3 folder) to the EV3 brick and run it.
+6. Transfer the generated MicroPython application (from the EV3 folder) to the EV3 brick and run it.
