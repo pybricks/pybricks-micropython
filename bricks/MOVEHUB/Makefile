@@ -1,33 +1,23 @@
 include ../../../../py/mkenv.mk
 
-CROSS = 0
-
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = qstrdefsport.h
 
 # include py core make definitions
 include $(TOP)/py/py.mk
 
-ifeq ($(CROSS), 1)
 CROSS_COMPILE = arm-none-eabi-
-endif
 
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(BUILD)
 
-ifeq ($(CROSS), 1)
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
 # CFLAGS_CORTEX_M0 = -mthumb -mtune=cortex-m0 -mabi=aapcs-linux -mcpu=cortex-m0 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fsingle-precision-constant -Wdouble-promotion
 CFLAGS_CORTEX_M0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
 CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib $(CFLAGS_CORTEX_M0) $(COPT)
 LDFLAGS = -nostdlib -T stm32f070.ld -Map=$@.map --cref --gc-sections
-else
-LD = gcc
-CFLAGS = -m32 $(INC) -Wall -Werror -std=c99 $(COPT)
-LDFLAGS = -m32 -Wl,-Map=$@.map,--cref -Wl,--gc-sections
-endif
 
 # Tune for Debugging or Optimization
 ifeq ($(DEBUG), 1)
@@ -85,11 +75,7 @@ OBJ = $(PY_CORE_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 
 
-ifeq ($(CROSS), 1)
 all: $(BUILD)/firmware.dfu
-else
-all: $(BUILD)/firmware.elf
-endif
 
 $(BUILD)/_frozen_mpy.c: frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
 	$(ECHO) "MISC freezing bytecode"

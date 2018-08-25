@@ -7,7 +7,7 @@
 Don't forget to run mpy-cross when modifying frozen bytecode. The combined command for compiling and flashing the firmware is (initiated from micropython/ports/pybricks/bricks/BOOST-experimental):
 
 ```
-../../../../mpy-cross/mpy-cross frozentest.py && make CROSS=1 && st-flash write build/firmware.bin 0x08005000
+../../../../mpy-cross/mpy-cross frozentest.py && make && st-flash write build/firmware.bin 0x08005000
 ```
 
 __This experimental build will eventually be replaced by [BOOST](../BOOST)__
@@ -33,7 +33,7 @@ The Makefile has the ability to build for a Cortex-M CPU, and by default
 includes some start-up code for an STM32F4xx MCU and also enables a UART
 for communication.  To build:
 
-    $ make CROSS=1
+    $ make
 
 If you previously built the Linux version, you will need to first run
 `make clean` to get rid of incompatible object files.
@@ -41,7 +41,7 @@ If you previously built the Linux version, you will need to first run
 Building will produce the build/firmware.dfu file which can be programmed
 to an MCU using:
 
-    $ make CROSS=1 deploy
+    $ make deploy
 
 This version of the build will work out-of-the-box on a pyboard (and
 anything similar), and will give you a MicroPython REPL on UART1 at 9600
