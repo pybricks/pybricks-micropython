@@ -218,7 +218,7 @@ extern const struct _mp_obj_module_t mp_module_jni;
 #endif
 
 
-extern const struct _mp_obj_module_t mp_module_mymodule;    
+extern const struct _mp_obj_module_t mp_module_motor;    
 
 #define MICROPY_PORT_BUILTIN_MODULES \
     MICROPY_PY_FFI_DEF \
@@ -229,7 +229,7 @@ extern const struct _mp_obj_module_t mp_module_mymodule;
     MICROPY_PY_UOS_DEF \
     MICROPY_PY_USELECT_DEF \
     MICROPY_PY_TERMIOS_DEF \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_mymodule), (mp_obj_t)&mp_module_mymodule }, \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_motor), (mp_obj_t)&mp_module_motor }, \
 
 // type definitions for the specific machine
 
