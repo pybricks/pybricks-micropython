@@ -149,6 +149,8 @@ SRC_C = \
 	alloc.c \
 	coverage.c \
 	fatfs_port.c \
+	bgrtask.c \
+	../../drivers/control.c \
 	$(SRC_MOD)
 
 LIB_SRC_C = $(addprefix lib/,\

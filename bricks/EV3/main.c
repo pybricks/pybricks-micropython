@@ -50,6 +50,7 @@
 #include "extmod/vfs_posix.h"
 #include "genhdr/mpversion.h"
 #include "input.h"
+#include "bgrtask.h"
 
 // Command line options, with their defaults
 STATIC bool compile_only = false;
@@ -406,6 +407,8 @@ STATIC void set_sys_argv(char *argv[], int argc, int start_arg) {
 MP_NOINLINE int main_(int argc, char **argv);
 
 int main(int argc, char **argv) {
+    // Start Pybricks background control tasks
+    start_background_tasks();
     #if MICROPY_PY_THREAD
     mp_thread_init();
     #endif
