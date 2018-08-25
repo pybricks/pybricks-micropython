@@ -102,69 +102,6 @@ void MP_WEAK __assert_func(const char *file, int line, const char *func, const c
 }
 #endif
 
-// this is a minimal IRQ and reset framework for any Cortex-M CPU
-
-extern uint32_t _estack, _sidata, _sdata, _edata, _sbss, _ebss;
-
-void Reset_Handler(void) __attribute__((naked));
-void Reset_Handler(void) {
-    // set stack pointer
-    //__asm volatile ("ldr sp, =_estack");
-    // copy .data section from flash to RAM
-    for (uint32_t *src = &_sidata, *dest = &_sdata; dest < &_edata;) {
-        *dest++ = *src++;
-    }
-    // zero out .bss section
-    for (uint32_t *dest = &_sbss; dest < &_ebss;) {
-        *dest++ = 0;
-    }
-    // jump to board initialisation
-    void _start(void);
-    _start();
-}
-
-void Default_Handler(void) {
-    for (;;) {
-    }
-}
-
-const uint32_t isr_vector[] __attribute__((section(".isr_vector"))) = {
-    (uint32_t)&_estack,
-    (uint32_t)&Reset_Handler,
-    (uint32_t)&Default_Handler, // NMI_Handler
-    (uint32_t)&Default_Handler, // HardFault_Handler
-    (uint32_t)&Default_Handler, // MemManage_Handler
-    (uint32_t)&Default_Handler, // BusFault_Handler
-    (uint32_t)&Default_Handler, // UsageFault_Handler
-    0,
-    0,
-    0,
-    0,
-    (uint32_t)&Default_Handler, // SVC_Handler
-    (uint32_t)&Default_Handler, // DebugMon_Handler
-    0,
-    (uint32_t)&Default_Handler, // PendSV_Handler
-    (uint32_t)&Default_Handler, // SysTick_Handler
-};
-
-void _start(void) {
-    // when we get here: stack is initialised, bss is clear, data is copied
-
-    // SCB->CCR: enable 8-byte stack alignment for IRQ handlers, in accord with EABI
-    // *((volatile uint32_t*)0xe000ed14) |= 1 << 9;
-
-    // initialise the cpu and peripherals
-    void stm32_init(void);
-    stm32_init();
-
-    // now that we have a basic system up and running we can call main
-    main(0, NULL);
-
-    // we must not return
-    for (;;) {
-    }
-}
-
 // this is minimal set-up code for an STM32 MCU
 
 // simple GPIO interface
@@ -186,7 +123,8 @@ void gpio_init(GPIO_TypeDef *gpio, int pin, int mode, int pull, int alt) {
 #define gpio_low(gpio, pin) do { gpio->BRR = (1 << (pin)); } while (0)
 #define gpio_high(gpio, pin) do { gpio->BSRR = (1 << (pin)); } while (0)
 
-void stm32_init(void) {
+// Called from assembly code in startup routine
+void SystemInit(void) {
     // basic MCU config
     RCC->CR |= RCC_CR_HSION;
     RCC->CFGR = 0x00000000; // reset all

@@ -43,6 +43,8 @@ SRC_C = \
 	lib/mp-readline/readline.c \
 	$(BUILD)/_frozen_mpy.c \
 
+SRC_S = \
+	ports/stm32/boards/startup_stm32f0.s \
 
 SRC_LIBM = $(addprefix lib/libm/,\
 	math.c \
@@ -74,7 +76,7 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	)
 
 
-OBJ = $(PY_CORE_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
+OBJ = $(PY_CORE_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 
 
