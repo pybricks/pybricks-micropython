@@ -10,6 +10,8 @@ CROSS_COMPILE = arm-none-eabi-
 
 INC += -I.
 INC += -I$(TOP)
+INC += -I$(TOP)/lib/cmsis/inc
+INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32F0xx/Include
 INC += -I$(BUILD)
 
 DFU = $(TOP)/tools/dfu.py
