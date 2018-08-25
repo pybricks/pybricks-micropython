@@ -77,9 +77,17 @@ STATIC mp_obj_t hub_gpios(mp_obj_t value) {
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_gpios_obj, hub_gpios);
 
+STATIC mp_obj_t hub_power_off(void) {
+    // setting PB11 low cuts the power
+    GPIOB->BRR = GPIO_BRR_BR_11;
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_power_off_obj, hub_power_off);
+
 STATIC const mp_map_elem_t hub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_hub) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&hub_gpios_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_power_off), (mp_obj_t)&hub_power_off_obj },
 };
 
 STATIC MP_DEFINE_CONST_DICT (
