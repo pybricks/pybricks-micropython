@@ -9,6 +9,10 @@
 
 #include "gpio.h"
 
+// Bootloader reads this address to know if firmware loader should run
+#define HUB_BOOTLOADER_MAGIC_ADDR   (*(uint32_t *)0x20000100)
+#define HUB_BOOTLOADER_MAGIC_VALUE  0xAAAAAAAA
+
 STATIC mp_obj_t hub_gpios(mp_obj_t value) {
     mp_uint_t action = (mp_obj_get_int(value) & 0xF00) >> 8;
     mp_uint_t port = (mp_obj_get_int(value) & 0x0F0) >> 4;
@@ -84,10 +88,21 @@ STATIC mp_obj_t hub_power_off(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_power_off_obj, hub_power_off);
 
+STATIC mp_obj_t hub_reboot(mp_obj_t bootloader) {
+    if (mp_obj_is_true(bootloader)) {
+        HUB_BOOTLOADER_MAGIC_ADDR = HUB_BOOTLOADER_MAGIC_VALUE;
+    }
+    // this function never returns
+    NVIC_SystemReset();
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_reboot_obj, hub_reboot);
+
 STATIC const mp_map_elem_t hub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_hub) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&hub_gpios_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_power_off), (mp_obj_t)&hub_power_off_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_reboot), (mp_obj_t)&hub_reboot_obj },
 };
 
 STATIC MP_DEFINE_CONST_DICT (
