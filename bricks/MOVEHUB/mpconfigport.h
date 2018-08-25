@@ -84,8 +84,8 @@ extern const struct _mp_obj_module_t mp_module_hub;
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>
 
-#define MICROPY_HW_BOARD_NAME "minimal BOOST"
-#define MICROPY_HW_MCU_NAME "stm32f070rb"
+#define MICROPY_HW_BOARD_NAME "BOOST Move Hub"
+#define MICROPY_HW_MCU_NAME "STM32F070RB"
 
 #define MP_STATE_PORT MP_STATE_VM
 
