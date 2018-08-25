@@ -157,8 +157,10 @@ LIB_SRC_C = $(addprefix lib/,\
 	timeutils/timeutils.c \
 	)
 
+# Pybricks drivers and modules
 PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/drivers/,\
 	control.c \
+	modmotor.c \
 	)	
 
 # FatFS VFS support
