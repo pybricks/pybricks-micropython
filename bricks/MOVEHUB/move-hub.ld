@@ -25,6 +25,7 @@ SECTIONS
         *(.text*)          /* .text* sections (code) */
         *(.rodata)         /* .rodata sections (constants, strings, etc.) */
         *(.rodata*)        /* .rodata* sections (constants, strings, etc.) */
+        LONG(CHECKSUM)
 
         . = ALIGN(4);
         _etext = .;        /* define a global symbol at end of code */
