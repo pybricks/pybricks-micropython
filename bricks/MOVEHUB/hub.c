@@ -9,7 +9,7 @@
 
 #include "gpio.h"
 
-STATIC mp_obj_t mymodule_gpios(mp_obj_t value) {
+STATIC mp_obj_t hub_gpios(mp_obj_t value) {
     mp_uint_t action = (mp_obj_get_int(value) & 0xF00) >> 8;
     mp_uint_t port = (mp_obj_get_int(value) & 0x0F0) >> 4;
     mp_uint_t pin = (mp_obj_get_int(value) & 0x00F);
@@ -75,19 +75,19 @@ STATIC mp_obj_t mymodule_gpios(mp_obj_t value) {
     return mp_obj_new_int_from_uint(retval);
 }
 
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mymodule_gpios_obj, mymodule_gpios);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_gpios_obj, hub_gpios);
 
-STATIC const mp_map_elem_t mymodule_globals_table[] = {
-    { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_mymodule) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&mymodule_gpios_obj },
+STATIC const mp_map_elem_t hub_globals_table[] = {
+    { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_hub) },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&hub_gpios_obj },
 };
 
 STATIC MP_DEFINE_CONST_DICT (
-    mp_module_mymodule_globals,
-    mymodule_globals_table
+    mp_module_hub_globals,
+    hub_globals_table
 );
 
-const mp_obj_module_t mp_module_mymodule = {
+const mp_obj_module_t mp_module_hub = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_mymodule_globals,
+    .globals = (mp_obj_dict_t*)&mp_module_hub_globals,
 };
