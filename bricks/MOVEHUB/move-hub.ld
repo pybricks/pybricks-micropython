@@ -1,14 +1,13 @@
 /*
-    GNU linker script for STM32F070RB6
+    GNU linker script for LEGO BOOST Move Hub
 */
 
 /* Specify the memory areas */
 MEMORY
 {
-    /*FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 0x020000*/ /* entire flash */
-    FLASH (rx)      : ORIGIN = 0x08005000, LENGTH = 0x01A800 /* entire flash */
-    /*CCMRAM (xrw)    : ORIGIN = 0x10000000, LENGTH = 0x010000*/ /* 64 KiB */
-    RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 0x004000 /* 16 KiB */
+    /* Flash size is 128K, bootloader resides in first 20K, last 2K seems to be reserved */
+    FLASH (rx)      : ORIGIN = 0x08005000, LENGTH = 106K
+    RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 16K
 }
 
 /* top end of the stack */
@@ -29,7 +28,7 @@ SECTIONS
 
         . = ALIGN(4);
         _etext = .;        /* define a global symbol at end of code */
-        _sidata = _etext;  /* This is used by the startup in order to initialize the .data secion */
+        _sidata = _etext;  /* This is used by the startup in order to initialize the .data section */
     } >FLASH
 
     /* This is the initialized data section
