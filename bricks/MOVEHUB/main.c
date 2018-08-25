@@ -11,6 +11,7 @@
 
 #include "stm32f030xc.h"
 
+#include "gpio.h"
 #include "uartadr.h"
 
 #if MICROPY_ENABLE_COMPILER
@@ -102,27 +103,6 @@ void MP_WEAK __assert_func(const char *file, int line, const char *func, const c
 }
 #endif
 
-// this is minimal set-up code for an STM32 MCU
-
-// simple GPIO interface
-#define GPIO_MODE_IN (0)
-#define GPIO_MODE_OUT (1)
-#define GPIO_MODE_ALT (2)
-#define GPIO_PULL_NONE (0)
-#define GPIO_PULL_UP (0)
-#define GPIO_PULL_DOWN (1)
-void gpio_init(GPIO_TypeDef *gpio, int pin, int mode, int pull, int alt) {
-    gpio->MODER = (gpio->MODER & ~(3 << (2 * pin))) | (mode << (2 * pin));
-    // OTYPER is left as default push-pull
-    // OSPEEDR is left as default low speed
-    gpio->PUPDR = (gpio->PUPDR & ~(3 << (2 * pin))) | (pull << (2 * pin));
-    gpio->AFR[pin >> 3] = (gpio->AFR[pin >> 3] & ~(15 << (4 * (pin & 7)))) | (alt << (4 * (pin & 7)));
-}
-#define gpio_get(gpio, pin) ((gpio->IDR >> (pin)) & 1)
-#define gpio_set(gpio, pin, value) do { gpio->ODR = (gpio->ODR & ~(1 << (pin))) | (value << pin); } while (0)
-#define gpio_low(gpio, pin) do { gpio->BRR = (1 << (pin)); } while (0)
-#define gpio_high(gpio, pin) do { gpio->BSRR = (1 << (pin)); } while (0)
-
 // Called from assembly code in startup routine
 void SystemInit(void) {
     // basic MCU config
@@ -180,107 +160,3 @@ void SystemInit(void) {
     USART_REPL->BRR = 69;
     USART_REPL->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;
 }
-
-
-///////////////////////////////////
-// The following is based on the tutorial at: http://micropython-dev-docs.readthedocs.io/en/latest/adding-module.html
-// But I have skipped this step so far:
-// The second file you will need to add to is xxxxx.ld, which is the map of
-// memory used by the compiler. You have to add it to the list of files to be
-// put in the .irom0.text section, so that your code goes into the instruction
-// read-only memory (iROM). If you fail to do that, the compiler will try to
-// put it in the instruction random-access memory (iRAM), which is a very
-// scarce resource, and which can get overflown if you try to put too much
-// there.
-
-
-#include "py/nlr.h"
-#include "py/obj.h"
-#include "py/runtime.h"
-#include "py/binary.h"
-#include <stdio.h>
-
-STATIC mp_obj_t mymodule_gpios(mp_obj_t value) {
-    mp_uint_t action = (mp_obj_get_int(value) & 0xF00) >> 8;
-    mp_uint_t port = (mp_obj_get_int(value) & 0x0F0) >> 4;
-    mp_uint_t pin = (mp_obj_get_int(value) & 0x00F);
-    mp_uint_t retval = 2;
-
-    GPIO_TypeDef *gpio;
-
-    switch(port){
-        case 0:
-            gpio = GPIOA;
-            // printf("PORT: A\n");
-            break;
-        case 1:
-            gpio = GPIOB;
-            // printf("PORT: B\n");
-            break;
-        case 2:
-            gpio = GPIOC;
-            // printf("PORT: C\n");
-            break;
-        case 3:
-            gpio = GPIOD;
-            // printf("PORT: D\n");
-            break;
-        case 5:
-            gpio = GPIOF;
-            // printf("PORT: F\n");
-            break;
-        default:
-            printf("Unknown port\n");
-            return mp_obj_new_int_from_uint(3);
-    }
-
-    switch(action){
-        case 0: // Init IN UP
-            gpio_init(gpio, pin, GPIO_MODE_IN, GPIO_PULL_UP, 0);
-            printf("Init PIN %d as INput pull up\n", pin);
-            break;
-        case 1: // Init OUT
-            gpio_init(gpio, pin, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
-            printf("Init PIN %d as OUTput\n", pin);
-            break;
-        case 2: // Read
-            retval = gpio_get(gpio, pin);
-            // printf("Read PIN %d\n", pin);
-            break;
-        case 3: // SET LOW
-            gpio_low(gpio, pin);
-            printf("Set PIN %d low\n", pin);
-            break;
-        case 4: // SET HIGH
-            gpio_high(gpio, pin);
-            printf("Make PIN %d high\n", pin);
-            break;
-        case 5: // Init IN DOWN
-            gpio_init(gpio, pin, GPIO_MODE_IN, GPIO_PULL_DOWN, 0);
-            printf("Init PIN %d as INput pull down\n", pin);
-            break;
-        default:
-            printf("Unknown Action \n");
-            return mp_obj_new_int_from_uint(4);
-    }
-    return mp_obj_new_int_from_uint(retval);
-}
-
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mymodule_gpios_obj, mymodule_gpios);
-
-STATIC const mp_map_elem_t mymodule_globals_table[] = {
-    { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_mymodule) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&mymodule_gpios_obj },
-};
-
-STATIC MP_DEFINE_CONST_DICT (
-    mp_module_mymodule_globals,
-    mymodule_globals_table
-);
-
-const mp_obj_module_t mp_module_mymodule = {
-    .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_mymodule_globals,
-};
-
-///////////////////////////////////
