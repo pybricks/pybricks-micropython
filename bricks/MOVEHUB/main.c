@@ -12,6 +12,7 @@
 #include "stm32f030xc.h"
 
 #include "gpio.h"
+#include "led.h"
 #include "uartadr.h"
 
 #if MICROPY_ENABLE_COMPILER
@@ -147,30 +148,19 @@ void SystemInit(void) {
         // Wait for SYSCLK source to change
     }
 
-    // enable GPIO clocks
-    RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
-    RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
-    RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
-    RCC->AHBENR |= RCC_AHBENR_GPIODEN;
-    RCC->AHBENR |= RCC_AHBENR_GPIOFEN;
+    // Enable all of the hardware modules we are using
+
+    RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOCEN
+                |  RCC_AHBENR_GPIODEN | RCC_AHBENR_GPIOFEN;
+    RCC->APB2ENR |= RCC_APB2ENR_TIM16EN | RCC_APB2ENR_TIM15EN;
+    RCC->APB1ENR |= RCC_APB1ENR_USART4EN | RCC_APB1ENR_USART3EN;
 
 
     // Keep BOOST alive
     gpio_init(GPIOB, 11, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
     gpio_high(GPIOB, 11);
 
-    // // Turn on BLUE LED
-    // gpio_init(GPIOB, 15, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
-    // gpio_high(GPIOB, 15);
-
-    // Turn on GREEN LED
-    gpio_init(GPIOB, 14, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
-    gpio_high(GPIOB, 14);
-
-    // // Turn on RED LED
-    // gpio_init(GPIOB, 8, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
-    // gpio_high(GPIOB, 8);
-
+    led_init();
 
     // enable UART at 115200 baud on BOOST OUT C and D, pin 5 and 6
 
@@ -185,9 +175,6 @@ void SystemInit(void) {
     gpio_low(GPIOB, 4);
     gpio_init(GPIOC, 10, GPIO_MODE_ALT, GPIO_PULL_NONE, 0); // USART4_TX
     gpio_init(GPIOC, 11, GPIO_MODE_ALT, GPIO_PULL_NONE, 0); // USART4_RX
-
-    RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
-    RCC->APB1ENR |= RCC_APB1ENR_USART4EN;
 
     USART_REPL->BRR = 48000000 / 115200;
     USART_REPL->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;
