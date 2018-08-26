@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "stm32f030xc.h"
+#include "stm32f070xb.h"
 
 #include "py/nlr.h"
 #include "py/obj.h"

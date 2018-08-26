@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include "py/mpconfig.h"
 
-#include "stm32f030xc.h"
+#include "stm32f070xb.h"
 
 #include "uartadr.h"
 

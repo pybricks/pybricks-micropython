@@ -9,7 +9,7 @@
 #include "py/mperrno.h"
 #include "lib/utils/pyexec.h"
 
-#include "stm32f030xc.h"
+#include "stm32f070xb.h"
 
 #include "gpio.h"
 #include "led.h"
@@ -104,10 +104,7 @@ void MP_WEAK __assert_func(const char *file, int line, const char *func, const c
 }
 #endif
 
-// these seem to be missing from the header file
-#ifndef RCC_CFGR3_USBSW
-#define RCC_CFGR3_USBSW (1 << 7)
-#endif
+// this seem to be missing from the header file
 #ifndef RCC_CFGR3_ADCSW
 #define RCC_CFGR3_ADCSW (1 << 8)
 #endif

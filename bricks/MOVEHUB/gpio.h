@@ -2,7 +2,7 @@
 #ifndef _PYBRICKS_MOVEHUB_GPIO_H_
 #define _PYBRICKS_MOVEHUB_GPIO_H_
 
-#include "stm32f030xc.h"
+#include "stm32f070xb.h"
 
 // simple GPIO interface
 #define GPIO_MODE_IN (0)
