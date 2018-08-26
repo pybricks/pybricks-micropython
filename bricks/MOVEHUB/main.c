@@ -103,17 +103,49 @@ void MP_WEAK __assert_func(const char *file, int line, const char *func, const c
 }
 #endif
 
+// these seem to be missing from the header file
+#ifndef RCC_CFGR3_USBSW
+#define RCC_CFGR3_USBSW (1 << 7)
+#endif
+#ifndef RCC_CFGR3_ADCSW
+#define RCC_CFGR3_ADCSW (1 << 8)
+#endif
+
 // Called from assembly code in startup routine
 void SystemInit(void) {
-    // basic MCU config
+    // setup the system clock
+    // this section mostly copied from ports/stm32/system_stm32f0.c and
+    // confirmed with LEGO firmware
     RCC->CR |= RCC_CR_HSION;
-    RCC->CFGR = 0x00000000; // reset all
-    RCC->CR &= (uint32_t)0xfef6ffff; // reset HSEON, CSSON, PLLON
-    // RCC->PLLCFGR = 0x24003010; // reset PLLCFGR
-    RCC->CR &= (uint32_t)0xfffbffff; // reset HSEBYP
-    RCC->CIR = 0x00000000; // disable IRQs
+    RCC->CFGR = 0; // reset all
+    RCC->CR &= ~(RCC_CR_HSEON | RCC_CR_CSSON | RCC_CR_PLLON);
+    RCC->CR &= ~RCC_CR_HSEBYP;
+    RCC->CFGR2 &= ~RCC_CFGR2_PREDIV;
+    RCC->CFGR3 &= ~(RCC_CFGR3_USART1SW | RCC_CFGR3_I2C1SW | RCC_CFGR3_USBSW | RCC_CFGR3_ADCSW);
 
-    // leave the clock as-is (internal 16MHz)
+    // Reset HSI14 bit
+    RCC->CR2 &= ~RCC_CR2_HSI14ON;
+
+    // Disable all interrupts
+    RCC->CIR = 0;
+
+    // dpgeorge: enable 8-byte stack alignment for IRQ handlers, in accord with EABI
+    SCB->CCR |= SCB_CCR_STKALIGN_Msk;
+
+    // Set flash latency to 1 because SYSCLK > 24MHz
+    FLASH->ACR = (FLASH->ACR & ~0x7) | FLASH_ACR_PRFTBE | 0x1; // TODO: FLASH_ACR_LATENCY_Msk is wrong
+
+    // using PLL as system clock
+    RCC->CFGR |= RCC_CFGR_PLLMUL12;
+    RCC->CR |= RCC_CR_PLLON;
+    while (!(RCC->CR & RCC_CR_PLLRDY)) {
+        // wait for PLL to lock
+    }
+
+    RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW_Msk) | (2 << RCC_CFGR_SW_Pos);
+    while (((RCC->CFGR >> RCC_CFGR_SWS_Pos) & 0x3) != 2) {
+        // Wait for SYSCLK source to change
+    }
 
     // enable GPIO clocks
     RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
@@ -157,6 +189,6 @@ void SystemInit(void) {
     RCC->APB1ENR |= RCC_APB1ENR_USART3EN;
     RCC->APB1ENR |= RCC_APB1ENR_USART4EN;
 
-    USART_REPL->BRR = 69;
+    USART_REPL->BRR = 48000000 / 115200;
     USART_REPL->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;
 }
