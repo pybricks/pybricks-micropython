@@ -173,10 +173,6 @@ void SystemInit(void) {
 
     // not sure what the rest of these pins do
 
-    // set PB6 as output, high
-    GPIOB->BSRR = GPIO_BSRR_BS_6;
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
-
     // PB6 output, high
     GPIOB->BSRR = GPIO_BSRR_BS_6;
     GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
