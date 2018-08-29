@@ -41,6 +41,8 @@ int main(int argc, char **argv) {
     int stack_dummy;
     stack_top = (char*)&stack_dummy;
 
+    led_init();
+
     #if MICROPY_ENABLE_GC
     gc_init(heap, heap + sizeof(heap));
     #endif
@@ -63,6 +65,15 @@ int main(int argc, char **argv) {
     pyexec_frozen_module("frozentest.py");
     #endif
     mp_deinit();
+
+    led_deinit();
+
+    // TODO: the usual micropython behavior seems to be to reboot on CTR+D
+
+    // turn the power off
+    GPIOB->BRR = GPIO_BSRR_BS_11;
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
+
     return 0;
 }
 
@@ -154,10 +165,42 @@ void SystemInit(void) {
 
 
     // Keep BOOST alive
-    gpio_init(GPIOB, 11, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
-    gpio_high(GPIOB, 11);
+    GPIOB->BSRR = GPIO_BSRR_BS_11;
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
 
-    led_init();
+    // not sure what the rest of these pins do
+
+    // set PB6 as output, high
+    GPIOB->BSRR = GPIO_BSRR_BS_6;
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
+
+    // PB6 output, high
+    GPIOB->BSRR = GPIO_BSRR_BS_6;
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
+
+    // PF0 output, high
+    GPIOF->BSRR = GPIO_BSRR_BS_0;
+    GPIOF->MODER = (GPIOF->MODER & ~GPIO_MODER_MODER0_Msk) | (1 << GPIO_MODER_MODER0_Pos);
+
+    // PA15 output, high
+    GPIOA->BSRR = GPIO_BSRR_BS_15;
+    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER15_Msk) | (1 << GPIO_MODER_MODER15_Pos);
+
+    // PB5 output, high
+    GPIOB->BSRR = GPIO_BSRR_BS_5;
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER5_Msk) | (1 << GPIO_MODER_MODER5_Pos);
+
+    // PC12 output, high
+    GPIOC->BSRR = GPIO_BSRR_BS_12;
+    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER12_Msk) | (1 << GPIO_MODER_MODER12_Pos);
+
+    // PD2 output, high
+    GPIOD->BSRR = GPIO_BSRR_BS_2;
+    GPIOD->MODER = (GPIOD->MODER & ~GPIO_MODER_MODER2_Msk) | (1 << GPIO_MODER_MODER2_Pos);
+
+    // PF1 output, high
+    GPIOF->BSRR = GPIO_BSRR_BS_1;
+    GPIOF->MODER = (GPIOF->MODER & ~GPIO_MODER_MODER1_Msk) | (1 << GPIO_MODER_MODER1_Pos);
 
     // enable UART at 115200 baud on BOOST OUT C and D, pin 5 and 6
 
