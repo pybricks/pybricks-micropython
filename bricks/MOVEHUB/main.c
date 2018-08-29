@@ -11,6 +11,7 @@
 
 #include "stm32f070xb.h"
 
+#include "button.h"
 #include "gpio.h"
 #include "led.h"
 #include "uartadr.h"
@@ -41,6 +42,7 @@ int main(int argc, char **argv) {
     int stack_dummy;
     stack_top = (char*)&stack_dummy;
 
+    button_init();
     led_init();
 
     #if MICROPY_ENABLE_GC
@@ -67,6 +69,7 @@ int main(int argc, char **argv) {
     mp_deinit();
 
     led_deinit();
+    button_deinit();
 
     // TODO: the usual micropython behavior seems to be to reboot on CTR+D
 

@@ -1,4 +1,5 @@
 // qstrs specific to this port
+Q(get_button)
 Q(gpios)
 Q(power_off)
 Q(reboot)
