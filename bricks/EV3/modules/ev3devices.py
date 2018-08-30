@@ -40,7 +40,7 @@ class MediumMotor(EncodedMotor):
 
 
 class AnalogSensor():
-    """Generic class for LEGO MINDSTORMS NXT Analog Sensors. Serves as base class for several LEGO MINDSTORMS EV3 Sensors."""
+    """Generic class for LEGO MINDSTORMS EV3 Analog Sensors. Serves as base class for several LEGO MINDSTORMS EV3 Sensors."""
 
     pass
 
@@ -59,7 +59,21 @@ class TouchSensor():
     Pybricks for LEGO MINDSTORMS EV3
     """
 
-    pass
+    def __init__(self, port):
+        """Initialize the Touch Sensor.
+
+        Arguments:
+            port {const} -- Port to which the device is connected: PORT_1, PORT_2, etc.
+        """
+
+    def pressed():
+        """Check if the sensor is pressed.
+
+        Returns:
+            bool -- Return True if sensor is pressed and False otherwise
+
+        """
+        pass
 
 
 class ColorSensor():
