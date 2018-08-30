@@ -11,6 +11,7 @@
 
 #include "stm32f070xb.h"
 
+#include "adc.h"
 #include "button.h"
 #include "gpio.h"
 #include "led.h"
@@ -44,6 +45,7 @@ int main(int argc, char **argv) {
 
     button_init();
     led_init();
+    adc_init();
 
     #if MICROPY_ENABLE_GC
     gc_init(heap, heap + sizeof(heap));
@@ -68,6 +70,7 @@ int main(int argc, char **argv) {
     #endif
     mp_deinit();
 
+    adc_deinit();
     led_deinit();
     button_deinit();
 

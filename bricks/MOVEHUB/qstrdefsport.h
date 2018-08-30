@@ -2,6 +2,7 @@
 Q(get_button)
 Q(gpios)
 Q(power_off)
+Q(read_adc)
 Q(reboot)
 Q(set_light)
 Q(red)

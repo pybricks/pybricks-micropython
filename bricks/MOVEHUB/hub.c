@@ -7,6 +7,7 @@
 #include "py/runtime.h"
 #include "py/binary.h"
 
+#include "adc.h"
 #include "button.h"
 #include "gpio.h"
 #include "led.h"
@@ -97,6 +98,11 @@ STATIC mp_obj_t hub_power_off(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_power_off_obj, hub_power_off);
 
+STATIC mp_obj_t hub_read_adc(mp_obj_t ch) {
+    return mp_obj_new_int(adc_read_ch(mp_obj_get_int(ch)));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_read_adc_obj, hub_read_adc);
+
 STATIC mp_obj_t hub_reboot(mp_obj_t bootloader) {
     if (mp_obj_is_true(bootloader)) {
         HUB_BOOTLOADER_MAGIC_ADDR = HUB_BOOTLOADER_MAGIC_VALUE;
@@ -171,6 +177,7 @@ STATIC const mp_map_elem_t hub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_get_button), (mp_obj_t)&hub_get_button_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&hub_gpios_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_power_off), (mp_obj_t)&hub_power_off_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_read_adc), (mp_obj_t)&hub_read_adc_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_reboot), (mp_obj_t)&hub_reboot_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_set_light), (mp_obj_t)&hub_set_light_obj },
 };
