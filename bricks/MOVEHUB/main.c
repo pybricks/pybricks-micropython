@@ -8,6 +8,12 @@
 #include "py/gc.h"
 #include "py/mperrno.h"
 #include "lib/utils/pyexec.h"
+
+#include "stm32f070xb.h"
+
+#include "button.h"
+#include "gpio.h"
+#include "led.h"
 #include "uartadr.h"
 
 #if MICROPY_ENABLE_COMPILER
@@ -36,6 +42,9 @@ int main(int argc, char **argv) {
     int stack_dummy;
     stack_top = (char*)&stack_dummy;
 
+    button_init();
+    led_init();
+
     #if MICROPY_ENABLE_GC
     gc_init(heap, heap + sizeof(heap));
     #endif
@@ -58,6 +67,16 @@ int main(int argc, char **argv) {
     pyexec_frozen_module("frozentest.py");
     #endif
     mp_deinit();
+
+    led_deinit();
+    button_deinit();
+
+    // TODO: the usual micropython behavior seems to be to reboot on CTR+D
+
+    // turn the power off
+    GPIOB->BRR = GPIO_BSRR_BS_11;
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
+
     return 0;
 }
 
@@ -99,295 +118,103 @@ void MP_WEAK __assert_func(const char *file, int line, const char *func, const c
 }
 #endif
 
-#if MICROPY_MIN_USE_CORTEX_CPU
-
-// this is a minimal IRQ and reset framework for any Cortex-M CPU
-
-extern uint32_t _estack, _sidata, _sdata, _edata, _sbss, _ebss;
-
-void Reset_Handler(void) __attribute__((naked));
-void Reset_Handler(void) {
-    // set stack pointer
-    //__asm volatile ("ldr sp, =_estack");
-    // copy .data section from flash to RAM
-    for (uint32_t *src = &_sidata, *dest = &_sdata; dest < &_edata;) {
-        *dest++ = *src++;
-    }
-    // zero out .bss section
-    for (uint32_t *dest = &_sbss; dest < &_ebss;) {
-        *dest++ = 0;
-    }
-    // jump to board initialisation
-    void _start(void);
-    _start();
-}
-
-void Default_Handler(void) {
-    for (;;) {
-    }
-}
-
-const uint32_t isr_vector[] __attribute__((section(".isr_vector"))) = {
-    (uint32_t)&_estack,
-    (uint32_t)&Reset_Handler,
-    (uint32_t)&Default_Handler, // NMI_Handler
-    (uint32_t)&Default_Handler, // HardFault_Handler
-    (uint32_t)&Default_Handler, // MemManage_Handler
-    (uint32_t)&Default_Handler, // BusFault_Handler
-    (uint32_t)&Default_Handler, // UsageFault_Handler
-    0,
-    0,
-    0,
-    0,
-    (uint32_t)&Default_Handler, // SVC_Handler
-    (uint32_t)&Default_Handler, // DebugMon_Handler
-    0,
-    (uint32_t)&Default_Handler, // PendSV_Handler
-    (uint32_t)&Default_Handler, // SysTick_Handler
-};
-
-void _start(void) {
-    // when we get here: stack is initialised, bss is clear, data is copied
-
-    // SCB->CCR: enable 8-byte stack alignment for IRQ handlers, in accord with EABI
-    // *((volatile uint32_t*)0xe000ed14) |= 1 << 9;
-
-    // initialise the cpu and peripherals
-    #if MICROPY_MIN_USE_STM32_MCU
-    void stm32_init(void);
-    stm32_init();
-    #endif
-
-    // now that we have a basic system up and running we can call main
-    main(0, NULL);
-
-    // we must not return
-    for (;;) {
-    }
-}
-
+// this seem to be missing from the header file
+#ifndef RCC_CFGR3_ADCSW
+#define RCC_CFGR3_ADCSW (1 << 8)
 #endif
 
-#if MICROPY_MIN_USE_STM32_MCU
+// Called from assembly code in startup routine
+void SystemInit(void) {
+    // setup the system clock
+    // this section mostly copied from ports/stm32/system_stm32f0.c and
+    // confirmed with LEGO firmware
+    RCC->CR |= RCC_CR_HSION;
+    RCC->CFGR = 0; // reset all
+    RCC->CR &= ~(RCC_CR_HSEON | RCC_CR_CSSON | RCC_CR_PLLON);
+    RCC->CR &= ~RCC_CR_HSEBYP;
+    RCC->CFGR2 &= ~RCC_CFGR2_PREDIV;
+    RCC->CFGR3 &= ~(RCC_CFGR3_USART1SW | RCC_CFGR3_I2C1SW | RCC_CFGR3_USBSW | RCC_CFGR3_ADCSW);
 
-// this is minimal set-up code for an STM32 MCU
+    // Reset HSI14 bit
+    RCC->CR2 &= ~RCC_CR2_HSI14ON;
 
-typedef struct {
-    volatile uint32_t CR;
-//    volatile uint32_t PLLCFGR;
-    volatile uint32_t CFGR;
-    volatile uint32_t CIR;
-    uint32_t _1[2];
-    volatile uint32_t AHB1ENR;
-//    volatile uint32_t AHB2ENR;
-//    volatile uint32_t AHB3ENR;
- //   uint32_t _2;
-    volatile uint32_t APB2ENR;
-    volatile uint32_t APB1ENR;
-} periph_rcc_t;
+    // Disable all interrupts
+    RCC->CIR = 0;
 
-typedef struct {
-    volatile uint32_t MODER;
-    volatile uint32_t OTYPER;
-    volatile uint32_t OSPEEDR;
-    volatile uint32_t PUPDR;
-    volatile uint32_t IDR;
-    volatile uint32_t ODR;
-    volatile uint16_t BSRRL;
-    volatile uint16_t BSRRH;
-    volatile uint32_t LCKR;
-    volatile uint32_t AFR[2];
-} periph_gpio_t;
+    // dpgeorge: enable 8-byte stack alignment for IRQ handlers, in accord with EABI
+    SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 
-typedef struct {
-    volatile uint32_t CR1;
-    uint32_t d[2];
-    volatile uint32_t BRR;
-    uint32_t e[3];
-    volatile uint32_t USART_ISR;
-    uint32_t f[1];
-    volatile uint32_t RDR;
-    volatile uint32_t TDR;
-} periph_uart_t;
+    // Set flash latency to 1 because SYSCLK > 24MHz
+    FLASH->ACR = (FLASH->ACR & ~0x7) | FLASH_ACR_PRFTBE | 0x1; // TODO: FLASH_ACR_LATENCY_Msk is wrong
 
-#define GPIOA  ((periph_gpio_t*) 0x48000000)
-#define GPIOB  ((periph_gpio_t*) 0x48000400)
-#define GPIOC  ((periph_gpio_t*) 0x48000800)
-#define GPIOD  ((periph_gpio_t*) 0x48000C00)
-#define GPIOF  ((periph_gpio_t*) 0x48001000)
-#define RCC    ((periph_rcc_t*)  0x40021000)
+    // using PLL as system clock
+    RCC->CFGR |= RCC_CFGR_PLLMUL12;
+    RCC->CR |= RCC_CR_PLLON;
+    while (!(RCC->CR & RCC_CR_PLLRDY)) {
+        // wait for PLL to lock
+    }
 
-// simple GPIO interface
-#define GPIO_MODE_IN (0)
-#define GPIO_MODE_OUT (1)
-#define GPIO_MODE_ALT (2)
-#define GPIO_PULL_NONE (0)
-#define GPIO_PULL_UP (0)
-#define GPIO_PULL_DOWN (1)
-void gpio_init(periph_gpio_t *gpio, int pin, int mode, int pull, int alt) {
-    gpio->MODER = (gpio->MODER & ~(3 << (2 * pin))) | (mode << (2 * pin));
-    // OTYPER is left as default push-pull
-    // OSPEEDR is left as default low speed
-    gpio->PUPDR = (gpio->PUPDR & ~(3 << (2 * pin))) | (pull << (2 * pin));
-    gpio->AFR[pin >> 3] = (gpio->AFR[pin >> 3] & ~(15 << (4 * (pin & 7)))) | (alt << (4 * (pin & 7)));
-}
-#define gpio_get(gpio, pin) ((gpio->IDR >> (pin)) & 1)
-#define gpio_set(gpio, pin, value) do { gpio->ODR = (gpio->ODR & ~(1 << (pin))) | (value << pin); } while (0)
-#define gpio_low(gpio, pin) do { gpio->BSRRH = (1 << (pin)); } while (0)
-#define gpio_high(gpio, pin) do { gpio->BSRRL = (1 << (pin)); } while (0)
+    RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW_Msk) | (2 << RCC_CFGR_SW_Pos);
+    while (((RCC->CFGR >> RCC_CFGR_SWS_Pos) & 0x3) != 2) {
+        // Wait for SYSCLK source to change
+    }
 
-void stm32_init(void) {
-    // basic MCU config
-    RCC->CR |= (uint32_t)0x00000001; // set HSION
-    RCC->CFGR = 0x00000000; // reset all
-    RCC->CR &= (uint32_t)0xfef6ffff; // reset HSEON, CSSON, PLLON
-    // RCC->PLLCFGR = 0x24003010; // reset PLLCFGR
-    RCC->CR &= (uint32_t)0xfffbffff; // reset HSEBYP
-    RCC->CIR = 0x00000000; // disable IRQs
+    // Enable all of the hardware modules we are using
 
-    // leave the clock as-is (internal 16MHz)
-
-    // enable GPIO clocks
-    RCC->AHB1ENR |= 0x00020000; // GPIOAEN
-    RCC->AHB1ENR |= 0x00040000; // GPIOBEN
-    RCC->AHB1ENR |= 0x00080000; // GPIOCEN
-    RCC->AHB1ENR |= 0x00100000; // GPIODEN
-    RCC->AHB1ENR |= 0x00400000; // GPIOFEN
+    RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOCEN
+                |  RCC_AHBENR_GPIODEN | RCC_AHBENR_GPIOFEN;
+    RCC->APB2ENR |= RCC_APB2ENR_TIM16EN | RCC_APB2ENR_TIM15EN;
+    RCC->APB1ENR |= RCC_APB1ENR_USART4EN | RCC_APB1ENR_USART3EN;
 
 
     // Keep BOOST alive
-    gpio_init(GPIOB, 11, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
-    gpio_high(GPIOB, 11);
+    GPIOB->BSRR = GPIO_BSRR_BS_11;
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
 
-    // // Turn on BLUE LED
-    // gpio_init(GPIOB, 15, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
-    // gpio_high(GPIOB, 15);   
+    // not sure what the rest of these pins do
 
-    // Turn on GREEN LED
-    gpio_init(GPIOB, 14, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
-    gpio_high(GPIOB, 14);     
+    // PB6 output, high
+    GPIOB->BSRR = GPIO_BSRR_BS_6;
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
 
-    // // Turn on RED LED
-    // gpio_init(GPIOB, 8, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
-    // gpio_high(GPIOB, 8);       
+    // PF0 output, high
+    GPIOF->BSRR = GPIO_BSRR_BS_0;
+    GPIOF->MODER = (GPIOF->MODER & ~GPIO_MODER_MODER0_Msk) | (1 << GPIO_MODER_MODER0_Pos);
 
+    // PA15 output, high
+    GPIOA->BSRR = GPIO_BSRR_BS_15;
+    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER15_Msk) | (1 << GPIO_MODER_MODER15_Pos);
+
+    // PB5 output, high
+    GPIOB->BSRR = GPIO_BSRR_BS_5;
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER5_Msk) | (1 << GPIO_MODER_MODER5_Pos);
+
+    // PC12 output, high
+    GPIOC->BSRR = GPIO_BSRR_BS_12;
+    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER12_Msk) | (1 << GPIO_MODER_MODER12_Pos);
+
+    // PD2 output, high
+    GPIOD->BSRR = GPIO_BSRR_BS_2;
+    GPIOD->MODER = (GPIOD->MODER & ~GPIO_MODER_MODER2_Msk) | (1 << GPIO_MODER_MODER2_Pos);
+
+    // PF1 output, high
+    GPIOF->BSRR = GPIO_BSRR_BS_1;
+    GPIOF->MODER = (GPIOF->MODER & ~GPIO_MODER_MODER1_Msk) | (1 << GPIO_MODER_MODER1_Pos);
 
     // enable UART at 115200 baud on BOOST OUT C and D, pin 5 and 6
 
     // USART 3, BOOST i/o D
     gpio_init(GPIOB, 0, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
-    gpio_low(GPIOB, 0);     
+    gpio_low(GPIOB, 0);
     gpio_init(GPIOC, 4, GPIO_MODE_ALT, GPIO_PULL_NONE, 1); // USART3_TX
-    gpio_init(GPIOC, 5, GPIO_MODE_ALT, GPIO_PULL_NONE, 1); // USART3_RX  
+    gpio_init(GPIOC, 5, GPIO_MODE_ALT, GPIO_PULL_NONE, 1); // USART3_RX
 
     // USART 4, BOOST i/o C
     gpio_init(GPIOB, 4, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
-    gpio_low(GPIOB, 4);        
+    gpio_low(GPIOB, 4);
     gpio_init(GPIOC, 10, GPIO_MODE_ALT, GPIO_PULL_NONE, 0); // USART4_TX
     gpio_init(GPIOC, 11, GPIO_MODE_ALT, GPIO_PULL_NONE, 0); // USART4_RX
 
-    RCC->APB1ENR |= (1<<18); // USART3EN
-    RCC->APB1ENR |= (1<<19); // USART4EN
-
-    USART_REPL->BRR = 69;//69;
-    USART_REPL->CR1 = 0x0000000D; // USART enable, tx enable, rx enable    
+    USART_REPL->BRR = 48000000 / 115200;
+    USART_REPL->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;
 }
-
-#endif
-
-
-///////////////////////////////////
-// The following is based on the tutorial at: http://micropython-dev-docs.readthedocs.io/en/latest/adding-module.html
-// But I have skipped this step so far:
-// The second file you will need to add to is xxxxx.ld, which is the map of memory used by the compiler. You have to add it to the list of files to be put in the .irom0.text section, so that your code goes into the instruction read-only memory (iROM). If you fail to do that, the compiler will try to put it in the instruction random-access memory (iRAM), which is a very scarce resource, and which can get overflown if you try to put too much there.
-
-
-#include "py/nlr.h"
-#include "py/obj.h"
-#include "py/runtime.h"
-#include "py/binary.h"
-#include <stdio.h>
-
-STATIC mp_obj_t mymodule_gpios(mp_obj_t value) {
-    mp_uint_t action = (mp_obj_get_int(value) & 0xF00) >> 8;
-    mp_uint_t port = (mp_obj_get_int(value) & 0x0F0) >> 4;
-    mp_uint_t pin = (mp_obj_get_int(value) & 0x00F);
-    mp_uint_t retval = 2;
-
-    periph_gpio_t *gpio;
-
-    switch(port){
-        case 0: 
-            gpio = GPIOA;
-            // printf("PORT: A\n");
-            break;
-        case 1:
-            gpio = GPIOB;
-            // printf("PORT: B\n");
-            break;
-        case 2:
-            gpio = GPIOC;
-            // printf("PORT: C\n");
-            break;
-        case 3:
-            gpio = GPIOD;
-            // printf("PORT: D\n");
-            break;
-        case 5:
-            gpio = GPIOF;
-            // printf("PORT: F\n");
-            break;                        
-        default:
-            printf("Unknown port\n");
-            return mp_obj_new_int_from_uint(3);
-    }
-
-    switch(action){
-        case 0: // Init IN UP
-            gpio_init(gpio, pin, GPIO_MODE_IN, GPIO_PULL_UP, 0);
-            printf("Init PIN %d as INput pull up\n", pin);
-            break;
-        case 1: // Init OUT
-            gpio_init(gpio, pin, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
-            printf("Init PIN %d as OUTput\n", pin);     
-            break;        
-        case 2: // Read
-            retval = gpio_get(gpio, pin); 
-            // printf("Read PIN %d\n", pin);
-            break;        
-        case 3: // SET LOW
-            gpio_low(gpio, pin); 
-            printf("Set PIN %d low\n", pin);        
-            break;     
-        case 4: // SET HIGH
-            gpio_high(gpio, pin); 
-            printf("Make PIN %d high\n", pin);        
-            break;                    
-        case 5: // Init IN DOWN
-            gpio_init(gpio, pin, GPIO_MODE_IN, GPIO_PULL_DOWN, 0);
-            printf("Init PIN %d as INput pull down\n", pin);
-            break;            
-        default:
-            printf("Unknown Action \n");        
-            return mp_obj_new_int_from_uint(4);   
-    }
-    return mp_obj_new_int_from_uint(retval);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mymodule_gpios_obj, mymodule_gpios);
-
-STATIC const mp_map_elem_t mymodule_globals_table[] = {
-    { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_mymodule) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&mymodule_gpios_obj },
-};
-
-STATIC MP_DEFINE_CONST_DICT (
-    mp_module_mymodule_globals,
-    mymodule_globals_table
-);
-
-const mp_obj_module_t mp_module_mymodule = {
-    .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_mymodule_globals,
-};
-
-///////////////////////////////////

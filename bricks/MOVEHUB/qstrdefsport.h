@@ -1,2 +1,13 @@
 // qstrs specific to this port
+Q(get_button)
 Q(gpios)
+Q(power_off)
+Q(reboot)
+Q(set_light)
+Q(red)
+Q(green)
+Q(blue)
+Q(cyan)
+Q(magenta)
+Q(yellow)
+Q(white)

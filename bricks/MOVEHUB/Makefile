@@ -1,33 +1,26 @@
 include ../../../../py/mkenv.mk
 
-CROSS = 0
-
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = qstrdefsport.h
 
 # include py core make definitions
 include $(TOP)/py/py.mk
 
-ifeq ($(CROSS), 1)
 CROSS_COMPILE = arm-none-eabi-
-endif
 
 INC += -I.
 INC += -I$(TOP)
+INC += -I$(TOP)/lib/cmsis/inc
+INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32F0xx/Include
 INC += -I$(BUILD)
 
-ifeq ($(CROSS), 1)
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
-# CFLAGS_CORTEX_M0 = -mthumb -mtune=cortex-m0 -mabi=aapcs-linux -mcpu=cortex-m0 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fsingle-precision-constant -Wdouble-promotion
+CHECKSUM = $(TOP)/ports/pybricks/tools/checksum.py
+
 CFLAGS_CORTEX_M0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
 CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib $(CFLAGS_CORTEX_M0) $(COPT)
-LDFLAGS = -nostdlib -T stm32f070.ld -Map=$@.map --cref --gc-sections
-else
-LD = gcc
-CFLAGS = -m32 $(INC) -Wall -Werror -std=c99 $(COPT)
-LDFLAGS = -m32 -Wl,-Map=$@.map,--cref -Wl,--gc-sections
-endif
+LDFLAGS = -nostdlib -T move-hub.ld -Map=$@.map --cref --gc-sections
 
 # Tune for Debugging or Optimization
 ifeq ($(DEBUG), 1)
@@ -41,8 +34,10 @@ LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
 SRC_C = \
 	main.c \
+	hub.c \
+	button.c \
+	led.c \
 	uart_core.c \
-	mymodule.c \
 	lib/utils/printf.c \
 	lib/utils/stdout_helpers.c \
 	lib/utils/pyexec.c \
@@ -50,6 +45,8 @@ SRC_C = \
 	lib/mp-readline/readline.c \
 	$(BUILD)/_frozen_mpy.c \
 
+SRC_S = \
+	ports/stm32/boards/startup_stm32f0.s \
 
 SRC_LIBM = $(addprefix lib/libm/,\
 	math.c \
@@ -81,27 +78,29 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	)
 
 
-OBJ = $(PY_CORE_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
+OBJ = $(PY_CORE_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 
 
-ifeq ($(CROSS), 1)
 all: $(BUILD)/firmware.dfu
-else
-all: $(BUILD)/firmware.elf
-endif
 
 $(BUILD)/_frozen_mpy.c: frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
 	$(ECHO) "MISC freezing bytecode"
 	$(Q)$(TOP)/tools/mpy-tool.py -f -q $(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $< > $@
 
-$(BUILD)/firmware.elf: $(OBJ)
+$(BUILD)/firmware-no-checksum.elf: $(OBJ)
+	$(Q)$(LD) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $^ $(LIBS)
+
+$(BUILD)/firmware-no-checksum.bin: $(BUILD)/firmware-no-checksum.elf
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $@
+
+$(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(Q)$(LD) --defsym=CHECKSUM=`$(CHECKSUM) $<` $(LDFLAGS) -o $@ $(filter-out $<,$^) $(LIBS)
 	$(Q)$(SIZE) $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $(BUILD)/firmware.bin
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $@
 
 $(BUILD)/firmware.dfu: $(BUILD)/firmware.bin
 	$(ECHO) "Create $@"

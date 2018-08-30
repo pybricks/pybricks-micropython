@@ -1,1 +1,0 @@
-// At the moment, this test code is actually still placed at the end of main.c (because the GPIO stuff isn't yet in a proper, separate file)

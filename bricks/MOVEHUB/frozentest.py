@@ -1,4 +1,4 @@
-from mymodule import gpios
+from hub import gpios
 
 def gpio_init_in_up(port, pins):
     for pin in pins:
@@ -24,4 +24,4 @@ def gpio_init_in_down(port, pins):
         gpios(256*5+(ord(port)-65)*16+pin)   
 
 def off():
-    gpio_low('B',11)
+    gpio_low('B', (11,))

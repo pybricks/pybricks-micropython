@@ -76,25 +76,16 @@ typedef long mp_off_t;
 #define MICROPY_PORT_BUILTINS \
     { MP_ROM_QSTR(MP_QSTR_open), MP_ROM_PTR(&mp_builtin_open_obj) },
 
-extern const struct _mp_obj_module_t mp_module_mymodule;
+extern const struct _mp_obj_module_t mp_module_hub;
 
 #define MICROPY_PORT_BUILTIN_MODULES \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_mymodule), (mp_obj_t)&mp_module_mymodule },  \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_hub), (mp_obj_t)&mp_module_hub },  \
 
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>
 
-#define MICROPY_HW_BOARD_NAME "minimal BOOST"
-#define MICROPY_HW_MCU_NAME "stm32f070rb"
-
-#ifdef __linux__
-#define MICROPY_MIN_USE_STDOUT (1)
-#endif
-
-#ifdef __thumb__
-#define MICROPY_MIN_USE_CORTEX_CPU (1)
-#define MICROPY_MIN_USE_STM32_MCU (1)
-#endif
+#define MICROPY_HW_BOARD_NAME "BOOST Move Hub"
+#define MICROPY_HW_MCU_NAME "STM32F070RB"
 
 #define MP_STATE_PORT MP_STATE_VM
 
