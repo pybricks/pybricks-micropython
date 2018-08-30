@@ -1,7 +1,7 @@
 """API usage example for LEGO MINDSTORMS EV3."""
 
 # Import basic stuff. We could perhaps import brick and all relevant ports by default like on the pyboard
-import brick
+import ev3brick
 from port import PORT_B, PORT_C, PORT_1
 
 # Import the devices we want to use
@@ -24,4 +24,4 @@ while not bumper.pressed():
 base.stop()
 
 # Play a sound on the brick
-brick.beep()
+ev3brick.beep()
