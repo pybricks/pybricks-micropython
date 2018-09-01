@@ -24,3 +24,5 @@
  * THE SOFTWARE.
  */
 Q(run_target)
+Q(EncoderlessMotor)
+Q(inc)
