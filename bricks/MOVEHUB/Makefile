@@ -35,6 +35,7 @@ LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 SRC_C = \
 	main.c \
 	hub.c \
+	accel.c \
 	adc.c \
 	button.c \
 	led.c \
