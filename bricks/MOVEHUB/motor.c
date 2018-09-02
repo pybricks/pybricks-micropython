@@ -24,8 +24,8 @@ void motor_init(void) {
 
     // TIM1 provides PWM for ports A/B
     RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
-    TIM1->PSC = 3;
-    TIM1->ARR = 10000;
+    TIM1->PSC = 3;      // divide by 4 (= 3 + 1), so ticks are 12MHz
+    TIM1->ARR = 10000;  // 12MHz divided by 10k makes 1.2kHz PWM
     TIM1->BDTR |= TIM_BDTR_MOE;
 
     // port A
@@ -82,14 +82,14 @@ void motor_init(void) {
 
     // TIM7 is used for clock in speed measurement
     RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
-    TIM7->PSC = 480; // 10 microsecond ticks? main clock is 48MHz
+    TIM7->PSC = 479;    // divide 48MHz by 480 (= 479 + 1) to get 100kHz clock.
     TIM7->CR1 = TIM_CR1_CEN;
     TIM7->DIER = TIM_DIER_UIE;
 
     // TIM3 is used for port C PWM
     RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
-    TIM3->PSC = 3;
-    TIM3->ARR = 10000;
+    TIM3->PSC = 3;      // divide by 4 (= 3 + 1), so ticks are 12MHz
+    TIM3->ARR = 10000;  // 12MHz divided by 10k makes 1.2kHz PWM
     TIM3->BDTR |= TIM_BDTR_MOE;
 
     // port C
