@@ -1,10 +1,13 @@
 // qstrs specific to this port
 Q(get_button)
+Q(get_motor_pos)
 Q(gpios)
 Q(power_off)
 Q(read_adc)
 Q(reboot)
+Q(run_motor)
 Q(set_light)
+Q(stop_motor)
 Q(red)
 Q(green)
 Q(blue)

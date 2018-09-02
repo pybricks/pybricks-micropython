@@ -39,6 +39,7 @@ SRC_C = \
 	adc.c \
 	button.c \
 	led.c \
+	motor.c \
 	uart_core.c \
 	lib/utils/printf.c \
 	lib/utils/stdout_helpers.c \

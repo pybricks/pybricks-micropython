@@ -16,6 +16,7 @@
 #include "button.h"
 #include "gpio.h"
 #include "led.h"
+#include "motor.h"
 #include "uartadr.h"
 
 #if MICROPY_ENABLE_COMPILER
@@ -48,6 +49,7 @@ int main(int argc, char **argv) {
     led_init();
     adc_init();
     accel_init();
+    motor_init();
 
     #if MICROPY_ENABLE_GC
     gc_init(heap, heap + sizeof(heap));
@@ -72,6 +74,7 @@ int main(int argc, char **argv) {
     #endif
     mp_deinit();
 
+    motor_deinit();
     accel_deinit();
     adc_deinit();
     led_deinit();

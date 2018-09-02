@@ -11,6 +11,7 @@
 #include "button.h"
 #include "gpio.h"
 #include "led.h"
+#include "motor.h"
 
 // Bootloader reads this address to know if firmware loader should run
 uint32_t hub_bootloader_magic_addr __attribute__((section (".magic")));
@@ -20,6 +21,48 @@ STATIC mp_obj_t hub_get_button(void) {
     return mp_obj_new_bool(button_get_state());
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_get_button_obj, hub_get_button);
+
+STATIC mp_obj_t hub_get_motor_pos(mp_obj_t port) {
+    int ret, pos;
+
+    ret = motor_get_position(mp_obj_get_int(port), &pos);
+    if (ret < 0) {
+        mp_raise_ValueError("Invalid port");
+    }
+
+    return mp_obj_new_int(pos);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_get_motor_pos_obj, hub_get_motor_pos);
+
+STATIC mp_obj_t hub_run_motor(mp_obj_t port, mp_obj_t duty_cycle) {
+    int ret;
+
+    ret = motor_run(mp_obj_get_int(port), mp_obj_get_int(duty_cycle));
+    if (ret == -1) {
+        mp_raise_ValueError("Invalid port");
+    }
+    if (ret == -2) {
+        mp_raise_ValueError("Invalid duty cycle");
+    }
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(hub_run_motor_obj, hub_run_motor);
+
+STATIC mp_obj_t hub_stop_motor(mp_obj_t port, mp_obj_t stop_action) {
+    int ret;
+
+    ret = motor_stop(mp_obj_get_int(port), mp_obj_get_int(stop_action));
+    if (ret == -1) {
+        mp_raise_ValueError("Invalid port");
+    }
+    if (ret == -2) {
+        mp_raise_ValueError("Invalid stop action");
+    }
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(hub_stop_motor_obj, hub_stop_motor);
 
 STATIC mp_obj_t hub_gpios(mp_obj_t value) {
     mp_uint_t action = (mp_obj_get_int(value) & 0xF00) >> 8;
@@ -175,11 +218,14 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_set_light_obj, hub_set_light);
 STATIC const mp_map_elem_t hub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_hub) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_get_button), (mp_obj_t)&hub_get_button_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_get_motor_pos), (mp_obj_t)&hub_get_motor_pos_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&hub_gpios_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_power_off), (mp_obj_t)&hub_power_off_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_read_adc), (mp_obj_t)&hub_read_adc_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_reboot), (mp_obj_t)&hub_reboot_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_run_motor), (mp_obj_t)&hub_run_motor_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_set_light), (mp_obj_t)&hub_set_light_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_stop_motor), (mp_obj_t)&hub_stop_motor_obj },
 };
 
 STATIC MP_DEFINE_CONST_DICT (
