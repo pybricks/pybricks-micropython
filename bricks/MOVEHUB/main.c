@@ -129,6 +129,10 @@ void MP_WEAK __assert_func(const char *file, int line, const char *func, const c
 #define RCC_CFGR3_ADCSW (1 << 8)
 #endif
 
+// special memory addresses defined in linker script
+extern uint32_t _fw_isr_vector_src[47];
+extern uint32_t _fw_isr_vector_dst[47];
+
 // Called from assembly code in startup routine
 void SystemInit(void) {
     // setup the system clock
@@ -169,7 +173,7 @@ void SystemInit(void) {
 
     RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOCEN
                 |  RCC_AHBENR_GPIODEN | RCC_AHBENR_GPIOFEN;
-    RCC->APB2ENR |= RCC_APB2ENR_TIM16EN | RCC_APB2ENR_TIM15EN;
+    RCC->APB2ENR |= RCC_APB2ENR_TIM16EN | RCC_APB2ENR_TIM15EN | RCC_APB2ENR_SYSCFGCOMPEN;
     RCC->APB1ENR |= RCC_APB1ENR_USART4EN | RCC_APB1ENR_USART3EN;
 
 
@@ -206,6 +210,14 @@ void SystemInit(void) {
     // PF1 output, high
     GPIOF->BSRR = GPIO_BSRR_BS_1;
     GPIOF->MODER = (GPIOF->MODER & ~GPIO_MODER_MODER1_Msk) | (1 << GPIO_MODER_MODER1_Pos);
+
+    // since the firmware starts at 0x08005000, we need to relocate the
+    // interrupt vector table to a place where the CPU knows about it.
+    // The space at the start of SRAM is reserved in via the linker script.
+    memcpy(_fw_isr_vector_dst, _fw_isr_vector_src, sizeof(_fw_isr_vector_dst));
+
+    // this maps SRAM to 0x00000000
+    SYSCFG->CFGR1 = (SYSCFG->CFGR1 & ~SYSCFG_CFGR1_MEM_MODE_Msk) | (3 << SYSCFG_CFGR1_MEM_MODE_Pos);
 
     // enable UART at 115200 baud on BOOST OUT C and D, pin 5 and 6
 

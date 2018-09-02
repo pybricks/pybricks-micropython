@@ -20,6 +20,8 @@ SECTIONS
     .text :
     {
         . = ALIGN(4);
+        _fw_isr_vector_src = .;   /* The isr vector table must be copied to SRAM since the
+                                     firmware doesn't start at the beginning of the flash memory */
         KEEP(*(.isr_vector)) /* isr vector table */
         *(.text)           /* .text sections (code) */
         *(.text*)          /* .text* sections (code) */
@@ -31,6 +33,16 @@ SECTIONS
         _etext = .;        /* define a global symbol at end of code */
         _sidata = _etext;  /* This is used by the startup in order to initialize the .data section */
     } >FLASH
+
+    /* This section is for special needs of the Move Hub firmware - must be first section in SRAM! */
+    .magic :
+    {
+        _fw_isr_vector_dst = .;     /* The firmware will copy isr_vector here (0x20000000) */
+        . = ALIGN(4);
+        . = 0x100;                  /* offset of bootloader magic value (0x20000100), also has the effect of
+                                       reserving more than enough space for the isr vector table copy */
+        *(.magic)                   /* used for passing magic value from firmware to bootloader */
+    } >RAM
 
     /* This is the initialized data section
     The program executes knowing that the data is in the RAM

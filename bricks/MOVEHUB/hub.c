@@ -13,7 +13,7 @@
 #include "led.h"
 
 // Bootloader reads this address to know if firmware loader should run
-#define HUB_BOOTLOADER_MAGIC_ADDR   (*(uint32_t *)0x20000100)
+uint32_t hub_bootloader_magic_addr __attribute__((section (".magic")));
 #define HUB_BOOTLOADER_MAGIC_VALUE  0xAAAAAAAA
 
 STATIC mp_obj_t hub_get_button(void) {
@@ -105,7 +105,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_read_adc_obj, hub_read_adc);
 
 STATIC mp_obj_t hub_reboot(mp_obj_t bootloader) {
     if (mp_obj_is_true(bootloader)) {
-        HUB_BOOTLOADER_MAGIC_ADDR = HUB_BOOTLOADER_MAGIC_VALUE;
+        hub_bootloader_magic_addr = HUB_BOOTLOADER_MAGIC_VALUE;
     }
     // this function never returns
     NVIC_SystemReset();
