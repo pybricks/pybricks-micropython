@@ -4,17 +4,17 @@
 
 #include "stm32f070xb.h"
 
-#include "motor.h"
+#include <pbio/motor.h>
 
 typedef struct {
-    int32_t pos;
+    int32_t count;
     uint16_t prev_timestamp;
-} motor_tacho_data_t;
+} pbio_motor_tacho_data_t;
 
 // only for ports A/B
-static motor_tacho_data_t motor_tacho_data[2];
+static pbio_motor_tacho_data_t pbio_motor_tacho_data[2];
 
-void motor_init(void) {
+void pbio_motor_init(void) {
     // it isn't clear what PB2 does yet, but tacho doesn't work without setting it high.
     // maybe it switches power to the IR LEDs? plus more?
 
@@ -127,13 +127,15 @@ void motor_init(void) {
     TIM3->EGR |= TIM_EGR_UG;
 }
 
-static void motor_tacho_update_pos(motor_port_t port, bool int_pin_state, bool dir_pin_state, uint16_t timestamp) {
+static void pbio_motor_tacho_update_count(pbio_port_t port, bool int_pin_state, bool dir_pin_state, uint16_t timestamp) {
+    int index = port - PBIO_PORT_A;
+
     // TODO: log timestamp for speed calculation
     if (dir_pin_state ^ int_pin_state) {
-        motor_tacho_data[port].pos--;
+        pbio_motor_tacho_data[index].count--;
     }
     else {
-       motor_tacho_data[port].pos++;
+       pbio_motor_tacho_data[index].count++;
     }
 }
 
@@ -158,7 +160,7 @@ void EXTI0_1_IRQHandler(void) {
         gpio_idr = GPIOB->IDR;
         int_pin_state = !!(gpio_idr & GPIO_IDR_1);
         dir_pin_state = !!(gpio_idr & GPIO_IDR_9);
-        motor_tacho_update_pos(MOTOR_PORT_A, int_pin_state, dir_pin_state, timestamp);
+        pbio_motor_tacho_update_count(PBIO_PORT_A, int_pin_state, dir_pin_state, timestamp);
     }
 
     // port B
@@ -166,42 +168,85 @@ void EXTI0_1_IRQHandler(void) {
         gpio_idr = GPIOA->IDR;
         int_pin_state = !!(gpio_idr & GPIO_IDR_0);
         dir_pin_state = !!(gpio_idr & GPIO_IDR_1);
-        motor_tacho_update_pos(MOTOR_PORT_B, int_pin_state, dir_pin_state, timestamp);
+        pbio_motor_tacho_update_count(PBIO_PORT_B, int_pin_state, dir_pin_state, timestamp);
     }
 }
 
-int motor_get_position(motor_port_t port, int *pos) {
-    if (port < MOTOR_PORT_A || port > MOTOR_PORT_B) {
-        return -1;
+pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
+    int index = port - PBIO_PORT_A;
+
+    if (port < PBIO_PORT_A || port > PBIO_PORT_B) {
+        return PBIO_ERROR_INVALID_PORT;
     }
 
-    *pos = motor_tacho_data[port].pos;
+    // TODO: get port C/D motor position from UART data if motor is attached
+    // or return PBIO_ERROR_NO_DEV if motor is not attached
 
-    return 0;
+    *count = pbio_motor_tacho_data[index].count;
+
+    return PBIO_SUCCESS;
 }
 
-static void motor_brake(motor_port_t port) {
+pbio_error_t pbio_motor_coast(pbio_port_t port) {
+    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
+        return PBIO_ERROR_INVALID_PORT;
+    }
+
+    // TODO: return PBIO_ERROR_NO_DEV for ports C/D if no motor is attached
+
+    // set both port pins 1 and 2 to output low
+    switch (port) {
+    case PBIO_PORT_A:
+        GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
+        GPIOA->BRR = GPIO_BRR_BR_8;
+        GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10_Msk) | (1 << GPIO_MODER_MODER10_Pos);
+        GPIOA->BRR = GPIO_BRR_BR_10;
+        break;
+    case PBIO_PORT_B:
+        GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
+        GPIOA->BRR = GPIO_BRR_BR_9;
+        GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
+        GPIOA->BRR = GPIO_BRR_BR_11;
+        break;
+    case PBIO_PORT_C:
+        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
+        GPIOC->BRR = GPIO_BRR_BR_6;
+        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
+        GPIOC->BRR = GPIO_BRR_BR_8;
+        break;
+    case PBIO_PORT_D:
+        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
+        GPIOC->BRR = GPIO_BRR_BR_7;
+        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
+        GPIOC->BRR = GPIO_BRR_BR_9;
+        break;
+    }
+
+    return PBIO_SUCCESS;
+}
+
+static void pbio_motor_brake(pbio_port_t port) {
     // set both port pins 1 and 2 to output high
     switch (port) {
-    case MOTOR_PORT_A:
+    case PBIO_PORT_A:
         GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
         GPIOA->BSRR = GPIO_BSRR_BS_8;
         GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10_Msk) | (1 << GPIO_MODER_MODER10_Pos);
         GPIOA->BSRR = GPIO_BSRR_BS_10;
         break;
-    case MOTOR_PORT_B:
+    case PBIO_PORT_B:
         GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
         GPIOA->BSRR = GPIO_BSRR_BS_9;
         GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
         GPIOA->BSRR = GPIO_BSRR_BS_11;
         break;
-    case MOTOR_PORT_C:
+    case PBIO_PORT_C:
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
         GPIOC->BSRR = GPIO_BSRR_BS_6;
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
         GPIOC->BSRR = GPIO_BSRR_BS_8;
         break;
-    case MOTOR_PORT_D:
+    case PBIO_PORT_D:
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
         GPIOC->BSRR = GPIO_BSRR_BS_7;
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
@@ -210,58 +255,28 @@ static void motor_brake(motor_port_t port) {
     }
 }
 
-static void motor_coast(motor_port_t port) {
-    // set both port pins 1 and 2 to output low
-    switch (port) {
-    case MOTOR_PORT_A:
-        GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
-        GPIOA->BRR = GPIO_BRR_BR_8;
-        GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10_Msk) | (1 << GPIO_MODER_MODER10_Pos);
-        GPIOA->BRR = GPIO_BRR_BR_10;
-        break;
-    case MOTOR_PORT_B:
-        GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
-        GPIOA->BRR = GPIO_BRR_BR_9;
-        GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
-        GPIOA->BRR = GPIO_BRR_BR_11;
-        break;
-    case MOTOR_PORT_C:
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
-        GPIOC->BRR = GPIO_BRR_BR_6;
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
-        GPIOC->BRR = GPIO_BRR_BR_8;
-        break;
-    case MOTOR_PORT_D:
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
-        GPIOC->BRR = GPIO_BRR_BR_7;
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
-        GPIOC->BRR = GPIO_BRR_BR_9;
-        break;
-    }
-}
-
-static void motor_run_fwd(motor_port_t port, int duty_cycle) {
+static void pbio_motor_run_fwd(pbio_port_t port, int16_t duty_cycle) {
     // one pin as out, high and the other as PWM
     switch (port) {
-    case MOTOR_PORT_A:
+    case PBIO_PORT_A:
         GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
         GPIOA->BSRR = GPIO_BSRR_BS_8;
         TIM1->CCR3 = 10000 - duty_cycle;
         GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10_Msk) | (2 << GPIO_MODER_MODER10_Pos);
         break;
-    case MOTOR_PORT_B:
+    case PBIO_PORT_B:
         GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
         GPIOA->BSRR = GPIO_BSRR_BS_11;
         TIM1->CCR2 = 10000 - duty_cycle;
         GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER9_Msk) | (2 << GPIO_MODER_MODER9_Pos);
         break;
-    case MOTOR_PORT_C:
+    case PBIO_PORT_C:
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
         GPIOC->BSRR = GPIO_BSRR_BS_6;
         TIM3->CCR3 = 10000 - duty_cycle;
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (2 << GPIO_MODER_MODER8_Pos);
         break;
-    case MOTOR_PORT_D:
+    case PBIO_PORT_D:
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
         GPIOC->BSRR = GPIO_BSRR_BS_9;
         TIM3->CCR2 = 10000 - duty_cycle;
@@ -270,28 +285,28 @@ static void motor_run_fwd(motor_port_t port, int duty_cycle) {
     }
 }
 
-static void motor_run_rev(motor_port_t port, int duty_cycle) {
+static void pbio_motor_run_rev(pbio_port_t port, int16_t duty_cycle) {
     // one pin as out, high and the other as PWM
     switch (port) {
-    case MOTOR_PORT_A:
+    case PBIO_PORT_A:
         GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10_Msk) | (1 << GPIO_MODER_MODER10_Pos);
         GPIOA->BSRR = GPIO_BSRR_BS_10;
         TIM1->CCR1 = 10000 + duty_cycle;
         GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER8_Msk) | (2 << GPIO_MODER_MODER8_Pos);
         break;
-    case MOTOR_PORT_B:
+    case PBIO_PORT_B:
         GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
         GPIOA->BSRR = GPIO_BSRR_BS_9;
         TIM1->CCR4 = 10000 + duty_cycle;
         GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER11_Msk) | (2 << GPIO_MODER_MODER11_Pos);
         break;
-    case MOTOR_PORT_C:
+    case PBIO_PORT_C:
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
         GPIOC->BSRR = GPIO_BSRR_BS_8;
         TIM3->CCR1 = 10000 + duty_cycle;
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (2 << GPIO_MODER_MODER6_Pos);
         break;
-    case MOTOR_PORT_D:
+    case PBIO_PORT_D:
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
         GPIOC->BSRR = GPIO_BSRR_BS_7;
         TIM3->CCR4 = 10000 + duty_cycle;
@@ -300,46 +315,29 @@ static void motor_run_rev(motor_port_t port, int duty_cycle) {
     }
 }
 
-int motor_run(motor_port_t port, int duty_cycle) {
-    if (port < MOTOR_PORT_A || port > MOTOR_PORT_D) {
-        return -1;
+pbio_error_t pbio_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
+    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
+        return PBIO_ERROR_INVALID_PORT;
     }
 
+    // TODO: return PBIO_ERROR_NO_DEV for ports C/D if no motor is attached
+
     if (duty_cycle < -10000 || duty_cycle > 10000) {
-        return -2;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     if (duty_cycle > 0) {
-        motor_run_fwd(port, duty_cycle);
+        pbio_motor_run_fwd(port, duty_cycle);
     } else if (duty_cycle < 0) {
-        motor_run_rev(port, duty_cycle);
+        pbio_motor_run_rev(port, duty_cycle);
     } else {
-        motor_brake(port);
+        pbio_motor_brake(port);
     }
 
-    return 0;
+    return PBIO_SUCCESS;
 }
 
-int motor_stop(motor_port_t port, motor_stop_t stop_action) {
-    if (port < MOTOR_PORT_A || port > MOTOR_PORT_D) {
-        return -1;
-    }
-
-    switch (stop_action) {
-    case MOTOR_STOP_COAST:
-        motor_coast(port);
-        break;
-    case MOTOR_STOP_BRAKE:
-        motor_brake(port);
-        break;
-    default:
-        return -2;
-    }
-
-    return 0;
-}
-
-void motor_deinit(void) {
+void pbio_motor_deinit(void) {
     // disable the PWM timers
     TIM1->CR1 &= TIM_CR1_CEN;
     TIM3->CR1 &= TIM_CR1_CEN;

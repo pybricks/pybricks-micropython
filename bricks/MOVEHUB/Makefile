@@ -12,6 +12,8 @@ INC += -I.
 INC += -I$(TOP)
 INC += -I$(TOP)/lib/cmsis/inc
 INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32F0xx/Include
+INC += -I$(TOP)/ports/pybricks/lib/pbio/config/move_hub
+INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 INC += -I$(BUILD)
 
 DFU = $(TOP)/tools/dfu.py
@@ -39,13 +41,13 @@ SRC_C = \
 	adc.c \
 	button.c \
 	led.c \
-	motor.c \
 	uart_core.c \
 	lib/utils/printf.c \
 	lib/utils/stdout_helpers.c \
 	lib/utils/pyexec.c \
 	lib/libc/string0.c \
 	lib/mp-readline/readline.c \
+	ports/pybricks/lib/pbio/src/move_hub/motor.c \
 	$(BUILD)/_frozen_mpy.c \
 
 SRC_S = \
