@@ -158,7 +158,8 @@ LIB_SRC_C = $(addprefix lib/,\
 	)
 
 # Pybricks drivers and modules
-PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/drivers/,\
+PYBRICKS_DRIVERS_SRC_C = motorio.c \
+	$(addprefix ports/pybricks/drivers/,\
 	control.c \
 	modmotor.c \
 	)	

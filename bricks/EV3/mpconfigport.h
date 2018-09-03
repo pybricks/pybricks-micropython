@@ -217,7 +217,7 @@ extern const struct _mp_obj_module_t mp_module_jni;
 #define MICROPY_PY_USELECT_DEF
 #endif
 
-
+#define EV3
 extern const struct _mp_obj_module_t mp_module_motor;    
 
 #define MICROPY_PORT_BUILTIN_MODULES \
