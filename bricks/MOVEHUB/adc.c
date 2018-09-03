@@ -54,13 +54,10 @@ int adc_read_ch(int ch) {
 }
 
 void adc_deinit() {
-    if (ADC1->CR & ADC_CR_ADSTART) {
-        ADC1->CR |= ADC_CR_ADSTP;
-    }
-
-    while (!(ADC1->CR & ADC_CR_ADSTP)) { }
+    // TODO: do we need timeouts here?
+    ADC1->CR |= ADC_CR_ADSTP;
+    while (ADC1->CR & ADC_CR_ADSTP) { }
 
     ADC1->CR |= ADC_CR_ADDIS;
-
     while (ADC1->CR & ADC_CR_ADEN) { }
 }
