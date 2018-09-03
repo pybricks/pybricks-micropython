@@ -89,13 +89,35 @@ int main(int argc, char **argv) {
     return 0;
 }
 
+// defined in linker script
+extern uint32_t _estack;
+// defined in ports/stm32/gchelper_m0.s
+uintptr_t gc_helper_get_regs_and_sp(uintptr_t *regs);
+
 void gc_collect(void) {
-    // WARNING: This gc_collect implementation doesn't try to get root
-    // pointers from CPU registers, and thus may function incorrectly.
-    void *dummy;
+    // start the GC
     gc_collect_start();
-    gc_collect_root(&dummy, ((mp_uint_t)stack_top - (mp_uint_t)&dummy) / sizeof(mp_uint_t));
+
+    // get the registers and the sp
+    uintptr_t regs[10];
+    uintptr_t sp = gc_helper_get_regs_and_sp(regs);
+
+    // trace the stack, including the registers (since they live on the stack in this function)
+    #if MICROPY_PY_THREAD
+    gc_collect_root((void**)sp, ((uint32_t)MP_STATE_THREAD(stack_top) - sp) / sizeof(uint32_t));
+    #else
+    gc_collect_root((void**)sp, ((uint32_t)&_estack - sp) / sizeof(uint32_t));
+    #endif
+
+    // trace root pointers from any threads
+    #if MICROPY_PY_THREAD
+    mp_thread_gc_others();
+    #endif
+
+    // end the GC
     gc_collect_end();
+
+    // for debug during development
     gc_dump_info();
 }
 

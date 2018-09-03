@@ -50,6 +50,7 @@ SRC_C = \
 
 SRC_S = \
 	ports/stm32/boards/startup_stm32f0.s \
+	ports/stm32/gchelper_m0.s \
 
 SRC_LIBM = $(addprefix lib/libm/,\
 	math.c \
