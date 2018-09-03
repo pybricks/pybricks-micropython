@@ -33,7 +33,7 @@ void led_init(void) {
     TIM15->CR1 |= TIM_CR1_CEN;
     TIM15->EGR |= TIM_EGR_UG;
     TIM16->CCR1 = 0;
-    TIM15->CCR1 = 51;
+    TIM15->CCR1 = 0;
     TIM15->CCR2 = 0;
 }
 

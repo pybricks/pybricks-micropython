@@ -19,23 +19,6 @@
 #include "motor.h"
 #include "uartadr.h"
 
-#if MICROPY_ENABLE_COMPILER
-void do_str(const char *src, mp_parse_input_kind_t input_kind) {
-    nlr_buf_t nlr;
-    if (nlr_push(&nlr) == 0) {
-        mp_lexer_t *lex = mp_lexer_new_from_str_len(MP_QSTR__lt_stdin_gt_, src, strlen(src), 0);
-        qstr source_name = lex->source_name;
-        mp_parse_tree_t parse_tree = mp_parse(lex, input_kind);
-        mp_obj_t module_fun = mp_compile(&parse_tree, source_name, MP_EMIT_OPT_NONE, true);
-        mp_call_function_0(module_fun);
-        nlr_pop();
-    } else {
-        // uncaught exception
-        mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
-    }
-}
-#endif
-
 static char *stack_top;
 #if MICROPY_ENABLE_GC
 static char heap[8 * 1024];
@@ -54,6 +37,10 @@ int main(int argc, char **argv) {
     #if MICROPY_ENABLE_GC
     gc_init(heap, heap + sizeof(heap));
     #endif
+
+soft_reset:
+    led_set_rgb(0, 255, 0);
+
     mp_init();
     #if MICROPY_ENABLE_COMPILER
     #if MICROPY_REPL_EVENT_DRIVEN
@@ -67,24 +54,24 @@ int main(int argc, char **argv) {
     #else
     pyexec_friendly_repl();
     #endif
-    //do_str("print('hello world!', list(x+1 for x in range(10)), end='eol\\n')", MP_PARSE_SINGLE_INPUT);
-    //do_str("for i in range(10):\r\n  print(i)", MP_PARSE_FILE_INPUT);
     #else
     pyexec_frozen_module("frozentest.py");
     #endif
     mp_deinit();
+
+    for (int p = MOTOR_PORT_A; p <= MOTOR_PORT_D; p++) {
+        motor_stop(p, MOTOR_STOP_COAST);
+    }
+    
+    goto soft_reset;
+
+    // TODO: do we really need to deinit hardware on hard reset or power off?
 
     motor_deinit();
     accel_deinit();
     adc_deinit();
     led_deinit();
     button_deinit();
-
-    // TODO: the usual micropython behavior seems to be to reboot on CTR+D
-
-    // turn the power off
-    GPIOB->BRR = GPIO_BSRR_BS_11;
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
 
     return 0;
 }
