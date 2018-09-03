@@ -44,6 +44,26 @@ STATIC mp_obj_t hub_get_motor_pos(mp_obj_t port) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_get_motor_pos_obj, hub_get_motor_pos);
 
+STATIC mp_obj_t hub_get_motor_speed(mp_obj_t port) {
+    int32_t rate;
+    pbio_error_t err;
+
+    if (MP_OBJ_IS_STR(port)) {
+        port = mp_call_function_1((mp_obj_t *)&mp_builtin_ord_obj, port);
+    }
+
+    err = pbio_motor_get_encoder_rate(mp_obj_get_int(port), &rate);
+    if (err == PBIO_ERROR_INVALID_PORT) {
+        mp_raise_ValueError("Invalid port");
+    }
+    if (err != PBIO_SUCCESS) {
+        mp_raise_msg(&mp_type_RuntimeError, "Unknown error");
+    }
+
+    return mp_obj_new_int(rate);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_get_motor_speed_obj, hub_get_motor_speed);
+
 STATIC mp_obj_t hub_run_motor(mp_obj_t port, mp_obj_t duty_cycle) {
     pbio_error_t err;
 
@@ -254,6 +274,7 @@ STATIC const mp_map_elem_t hub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_hub) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_get_button), (mp_obj_t)&hub_get_button_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_get_motor_pos), (mp_obj_t)&hub_get_motor_pos_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_get_motor_speed), (mp_obj_t)&hub_get_motor_speed_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&hub_gpios_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_power_off), (mp_obj_t)&hub_power_off_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_read_adc), (mp_obj_t)&hub_read_adc_obj },

@@ -31,4 +31,12 @@
 #define PBIO_CONFIG_HAS_PORT_4 (0)
 #endif
 
+#ifndef PBIO_MOTOR_COUNT_PER_ROT
+/**
+ * The number of motor tacho counts per one rotation. Use this value to convert
+ * counts to degrees or rate to RPM, for example.
+ */
+#define PBIO_MOTOR_COUNT_PER_ROT 360
+#endif
+
 #endif // _PBIO_CONFIG_H_

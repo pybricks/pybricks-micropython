@@ -6,9 +6,14 @@
 
 #include <pbio/motor.h>
 
+#define PBIO_MOTOR_BUF_SIZE 32 // must be power of 2!
+
 typedef struct {
+    int32_t counts[PBIO_MOTOR_BUF_SIZE];
+    uint16_t timestamps[PBIO_MOTOR_BUF_SIZE];
     int32_t count;
     uint16_t prev_timestamp;
+    uint8_t head;
 } pbio_motor_tacho_data_t;
 
 // only for ports A/B
@@ -128,14 +133,29 @@ void pbio_motor_init(void) {
 }
 
 static void pbio_motor_tacho_update_count(pbio_port_t port, bool int_pin_state, bool dir_pin_state, uint16_t timestamp) {
-    int index = port - PBIO_PORT_A;
+    pbio_motor_tacho_data_t *data;
+    uint16_t elapsed;
 
-    // TODO: log timestamp for speed calculation
-    if (dir_pin_state ^ int_pin_state) {
-        pbio_motor_tacho_data[index].count--;
+    data = &pbio_motor_tacho_data[port - PBIO_PORT_A];
+
+    if (int_pin_state ^ dir_pin_state) {
+        data->count--;
     }
     else {
-       pbio_motor_tacho_data[index].count++;
+        data->count++;
+    }
+    
+    elapsed = timestamp - data->prev_timestamp;
+
+    // if there was a rising edge or if nothing happend for 50ms
+    if (int_pin_state || elapsed > 50 * 100) {
+        uint8_t new_head = (data->head + 1) & (PBIO_MOTOR_BUF_SIZE - 1);
+
+        data->prev_timestamp = timestamp;
+
+        data->counts[new_head] = data->count;
+        data->timestamps[new_head] = timestamp;
+        data->head = new_head;
     }
 }
 
@@ -184,6 +204,57 @@ pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
 
     *count = pbio_motor_tacho_data[index].count;
 
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
+    pbio_motor_tacho_data_t *data;
+    uint32_t head_count, tail_count = 0;
+    uint16_t head_time, tail_time = 0;
+    uint8_t head, tail, x = 0;
+
+    if (port < PBIO_PORT_A || port > PBIO_PORT_B) {
+        return PBIO_ERROR_INVALID_PORT;
+    }
+
+    // TODO: get port C/D motor speed from UART data if motor is attached
+    // or return PBIO_ERROR_NO_DEV if motor is not attached
+
+    data = &pbio_motor_tacho_data[port - PBIO_PORT_A];
+    // head can be updated in interrupt, so only read it once
+    head = data->head;
+    head_count = data->counts[head];
+    head_time = data->timestamps[head];
+
+     while (x++ < PBIO_MOTOR_BUF_SIZE) {
+        tail = (head - x) & (PBIO_MOTOR_BUF_SIZE - 1);
+
+        tail_count = data->counts[tail];
+        tail_time = data->timestamps[tail];
+
+        // if count hasn't changed, then we are not moving
+        if (head_count == tail_count) {
+            *rate = 0;
+            return PBIO_SUCCESS;
+        }
+
+        /*
+         * we need delta_t to be >= 20ms to be reasonably accurate.
+         * timer is 10us, thus * 100 to get ms.
+         */
+        if (head_time - tail_time >= 20 * 100) {
+            break;
+        }
+    }
+
+    /* avoid divide by 0 - motor probably hasn't moved yet */
+    if (head_time == tail_time) {
+        *rate = 0;
+        return PBIO_SUCCESS;
+    }
+
+    /* timer is 100000kHz */
+    *rate = (head_count - tail_count) * 100000 / (head_time - tail_time);
     return PBIO_SUCCESS;
 }
 

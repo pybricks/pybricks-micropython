@@ -1,6 +1,7 @@
 // qstrs specific to this port
 Q(get_button)
 Q(get_motor_pos)
+Q(get_motor_speed)
 Q(gpios)
 Q(power_off)
 Q(read_adc)
