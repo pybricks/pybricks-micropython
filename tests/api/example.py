@@ -1,4 +1,4 @@
-"""API usage example for LEGO MINDSTORMS EV3."""
+"""API usage example for LEGO MINDSTORMS EV3. (NOT YET IMPLEMENTED)"""
 
 # Import basic stuff. We could perhaps import brick and all relevant ports by default like on the pyboard
 import ev3brick
