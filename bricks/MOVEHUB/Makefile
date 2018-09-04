@@ -42,6 +42,7 @@ SRC_C = \
 	button.c \
 	led.c \
 	uart_core.c \
+	lib/utils/interrupt_char.c \
 	lib/utils/printf.c \
 	lib/utils/stdout_helpers.c \
 	lib/utils/pyexec.c \
