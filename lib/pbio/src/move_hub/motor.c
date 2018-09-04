@@ -8,6 +8,9 @@
 
 #define PBIO_MOTOR_BUF_SIZE 32 // must be power of 2!
 
+#define PBIO_MOTOR_ADJUST_FOR_DIRECTION(p, v) \
+    (pbio_motor_invert_dir[(p) - PBIO_PORT_A] ? -(v) : (v))
+
 typedef struct {
     int32_t counts[PBIO_MOTOR_BUF_SIZE];
     uint16_t timestamps[PBIO_MOTOR_BUF_SIZE];
@@ -18,6 +21,8 @@ typedef struct {
 
 // only for ports A/B
 static pbio_motor_tacho_data_t pbio_motor_tacho_data[2];
+
+bool pbio_motor_invert_dir[4];
 
 void pbio_motor_init(void) {
     // it isn't clear what PB2 does yet, but tacho doesn't work without setting it high.
@@ -198,11 +203,12 @@ pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_B) {
         return PBIO_ERROR_INVALID_PORT;
     }
+    
 
     // TODO: get port C/D motor position from UART data if motor is attached
     // or return PBIO_ERROR_NO_DEV if motor is not attached
 
-    *count = pbio_motor_tacho_data[index].count;
+    *count = PBIO_MOTOR_ADJUST_FOR_DIRECTION(port, pbio_motor_tacho_data[index].count);
 
     return PBIO_SUCCESS;
 }
@@ -254,7 +260,7 @@ pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     }
 
     /* timer is 100000kHz */
-    *rate = (head_count - tail_count) * 100000 / (head_time - tail_time);
+    *rate = PBIO_MOTOR_ADJUST_FOR_DIRECTION(port, (head_count - tail_count) * 100000 / (head_time - tail_time));
     return PBIO_SUCCESS;
 }
 
@@ -391,6 +397,8 @@ pbio_error_t pbio_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
+    duty_cycle = PBIO_MOTOR_ADJUST_FOR_DIRECTION(port, duty_cycle);
+
     // TODO: return PBIO_ERROR_NO_DEV for ports C/D if no motor is attached
 
     if (duty_cycle < -10000 || duty_cycle > 10000) {
@@ -404,6 +412,20 @@ pbio_error_t pbio_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
     } else {
         pbio_motor_brake(port);
     }
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_motor_set_direction(pbio_port_t port, pbio_motor_dir_t direction) {
+    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
+        return PBIO_ERROR_INVALID_PORT;
+    }
+
+    if (direction < PBIO_MOTOR_DIR_NORMAL || direction > PBIO_MOTOR_DIR_INVERTED) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    pbio_motor_invert_dir[port - PBIO_PORT_A] = direction != PBIO_MOTOR_DIR_NORMAL;
 
     return PBIO_SUCCESS;
 }
