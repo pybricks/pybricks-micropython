@@ -15,7 +15,6 @@ typedef struct {
     int32_t counts[PBIO_MOTOR_BUF_SIZE];
     uint16_t timestamps[PBIO_MOTOR_BUF_SIZE];
     int32_t count;
-    uint16_t prev_timestamp;
     uint8_t head;
 } pbio_motor_tacho_data_t;
 
@@ -95,6 +94,8 @@ void pbio_motor_init(void) {
     TIM7->PSC = 479;    // divide 48MHz by 480 (= 479 + 1) to get 100kHz clock.
     TIM7->CR1 = TIM_CR1_CEN;
     TIM7->DIER = TIM_DIER_UIE;
+    NVIC_EnableIRQ(TIM7_IRQn);
+    NVIC_SetPriority(TIM7_IRQn, 128);
 
     // TIM3 is used for port C PWM
     RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
@@ -139,7 +140,6 @@ void pbio_motor_init(void) {
 
 static void pbio_motor_tacho_update_count(pbio_port_t port, bool int_pin_state, bool dir_pin_state, uint16_t timestamp) {
     pbio_motor_tacho_data_t *data;
-    uint16_t elapsed;
 
     data = &pbio_motor_tacho_data[port - PBIO_PORT_A];
 
@@ -149,14 +149,10 @@ static void pbio_motor_tacho_update_count(pbio_port_t port, bool int_pin_state, 
     else {
         data->count++;
     }
-    
-    elapsed = timestamp - data->prev_timestamp;
 
-    // if there was a rising edge or if nothing happend for 50ms
-    if (int_pin_state || elapsed > 50 * 100) {
+    // log timestamp on rising edge for rate calculation
+    if (int_pin_state) {
         uint8_t new_head = (data->head + 1) & (PBIO_MOTOR_BUF_SIZE - 1);
-
-        data->prev_timestamp = timestamp;
 
         data->counts[new_head] = data->count;
         data->timestamps[new_head] = timestamp;
@@ -197,13 +193,33 @@ void EXTI0_1_IRQHandler(void) {
     }
 }
 
+void TIM7_IRQHandler(void) {
+    pbio_motor_tacho_data_t *data;
+    uint16_t timestamp;
+    uint8_t i, new_head;
+
+    TIM7->SR &= ~TIM_SR_UIF; // clear interrupt
+
+    timestamp = TIM7->CNT;
+
+    // log a new timestamp when the timer recycles to avoid rate calculation
+    // problems when the motor is not moving
+    for (i = 0; i < 2; i++) {
+        data = &pbio_motor_tacho_data[i];
+        new_head = (data->head + 1) & (PBIO_MOTOR_BUF_SIZE - 1);
+        data->counts[new_head] = data->count;
+        data->timestamps[new_head] = timestamp;
+        data->head = new_head;
+    }
+}
+
 pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
     int index = port - PBIO_PORT_A;
 
     if (port < PBIO_PORT_A || port > PBIO_PORT_B) {
         return PBIO_ERROR_INVALID_PORT;
     }
-    
+
 
     // TODO: get port C/D motor position from UART data if motor is attached
     // or return PBIO_ERROR_NO_DEV if motor is not attached
@@ -216,7 +232,7 @@ pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
 pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     pbio_motor_tacho_data_t *data;
     int32_t head_count, tail_count = 0;
-    uint16_t head_time, tail_time = 0;
+    uint16_t now, head_time, tail_time = 0;
     uint8_t head, tail, x = 0;
 
     if (port < PBIO_PORT_A || port > PBIO_PORT_B) {
@@ -231,6 +247,14 @@ pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     head = data->head;
     head_count = data->counts[head];
     head_time = data->timestamps[head];
+
+    now = TIM7->CNT;
+
+    // if it has been more than 50ms since last timestamp, we are not moving.
+    if (now - head_time > 50 * 100) {
+        *rate = 0;
+        return PBIO_SUCCESS;
+    }
 
      while (x++ < PBIO_MOTOR_BUF_SIZE) {
         tail = (head - x) & (PBIO_MOTOR_BUF_SIZE - 1);
