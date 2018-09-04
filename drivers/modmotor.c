@@ -87,29 +87,26 @@ const mp_obj_type_t motor_DcMotor_type = {
 //
 
 mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
-    // check the number of argument
-    mp_arg_check_num(n_args, n_kw, 1, 2, false);
-    // create a new C-struct type object
+    mp_arg_check_num(n_args, n_kw, 1, 3, false);
     motor_EncodedMotor_obj_t *self = m_new_obj(motor_EncodedMotor_obj_t);
-    // give it a type
     self->base.type = &motor_EncodedMotor_type;
-    // set the member number with the first argument of the constructor
-    self->port = mp_obj_get_int(args[0]); // TODO: Check valid range using mp_arg_parse_all
-    // set the inverted member if given
-    self->inverted = (n_args == 2) ? mp_obj_is_true(args[1]) : false;
-    // Apply settings to the motor
+    // Set the port
+    self->port = mp_obj_get_int(args[0]);
+    // Set the inverted member if given
+    self->inverted = (n_args >= 2) ? mp_obj_is_true(args[1]) : false;
     pbio_motor_set_direction(self->port, self->inverted);
+    // Set the gear ratio
+    self->gear_ratio = (n_args >= 3) ? mp_obj_get_float(args[2]): 1.0;
     return MP_OBJ_FROM_PTR(self);
 }
 
 STATIC void motor_EncodedMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind){
     // get a pointer to self
-    motor_DcMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    // print the DC attributes
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // print the DcMotor attributes
     motor_DcMotor_print(print, self_in, kind);
     // Print other attributes
-    printf("\nOther stuff\n");
-    printf("Port: %c", self->port);
+    printf("\nGear ratio: %f", self->gear_ratio);
 }
 
 //
@@ -126,11 +123,11 @@ STATIC MP_DEFINE_CONST_DICT(motor_EncodedMotor_locals_dict, motor_EncodedMotor_l
 
 const mp_obj_type_t motor_EncodedMotor_type = {
     { &mp_type_type },
+    // { &motor_DcMotor_type }, // or this?
     .name = MP_QSTR_EncodedMotor,
     .print = motor_EncodedMotor_print,
     .make_new = motor_EncodedMotor_make_new,
-     //Inherit from DcMotor
-    .parent = &motor_DcMotor_type,
+     .parent = &motor_DcMotor_type, //Inherit from DcMotor (?)
     .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
 };
 

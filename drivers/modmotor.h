@@ -19,6 +19,7 @@ typedef struct _motor_EncodedMotor_obj_t {
     mp_obj_base_t base;
     uint8_t port;
     pbio_motor_dir_t inverted;
+    float_t gear_ratio;
 } motor_EncodedMotor_obj_t;
 
 extern const mp_obj_type_t motor_DcMotor_type;
