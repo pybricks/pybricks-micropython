@@ -1,6 +1,6 @@
 """Classes for LEGO MINDSTORMS EV3 Devices."""
 
-from motor import EncodedMotor
+from _motor import EncodedMotor
 
 
 class LargeMotor(EncodedMotor):

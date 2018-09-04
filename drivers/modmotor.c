@@ -189,7 +189,7 @@ const mp_obj_type_t motor_EncodedMotor_type = {
 //
 
 STATIC const mp_map_elem_t motor_globals_table[] = {
-    { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_motor) },
+    { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR__motor) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_DcMotor), (mp_obj_t)&motor_DcMotor_type},
     { MP_OBJ_NEW_QSTR(MP_QSTR_EncodedMotor), (mp_obj_t)&motor_EncodedMotor_type},
 };

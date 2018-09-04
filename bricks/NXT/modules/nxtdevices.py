@@ -1,6 +1,6 @@
 """Classes for LEGO MINDSTORMS NXT Devices."""
 
-from motor import EncodedMotor
+from _motor import EncodedMotor
 
 
 class Motor(EncodedMotor):
