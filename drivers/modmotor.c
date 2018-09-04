@@ -4,7 +4,6 @@
 // DcMotor class methods
 //
 
-
 mp_obj_t motor_DcMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     // check the number of argument
     mp_arg_check_num(n_args, n_kw, 1, 2, false);
@@ -40,8 +39,7 @@ STATIC mp_obj_t motor_DcMotor_coast(mp_obj_t self_in) {
     pbio_motor_coast(self->port);
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_1(motor_DcMotor_coast_obj,
-                          motor_DcMotor_coast);
+MP_DEFINE_CONST_FUN_OBJ_1(motor_DcMotor_coast_obj, motor_DcMotor_coast);
 
 STATIC mp_obj_t motor_DcMotor_brake(mp_obj_t self_in) {
     motor_DcMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
@@ -50,14 +48,12 @@ STATIC mp_obj_t motor_DcMotor_brake(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_DcMotor_brake_obj, motor_DcMotor_brake);
 
-
 STATIC mp_obj_t motor_DcMotor_duty(mp_obj_t self_in, mp_obj_t duty) {
     motor_DcMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_motor_set_duty_cycle(self->port, (int) mp_obj_get_float(duty));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(motor_DcMotor_duty_obj, motor_DcMotor_duty);
-
 
 //
 // DcMotor class tables
@@ -85,7 +81,6 @@ const mp_obj_type_t motor_DcMotor_type = {
      // class member table
     .locals_dict = (mp_obj_dict_t*)&motor_DcMotor_locals_dict,
 };
-
 
 //
 // EncodedMotor class methods
@@ -155,5 +150,3 @@ const mp_obj_module_t mp_module_motor = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t*)&mp_module_motor_globals,
 };
-
-
