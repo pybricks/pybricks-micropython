@@ -1,7 +1,10 @@
 #include <stdio.h>
 
+#include <pbio/motor.h>
+
 #include "stm32f070xb.h"
 
+#include "py/builtin.h"
 #include "py/nlr.h"
 #include "py/obj.h"
 #include "py/runtime.h"
@@ -11,7 +14,6 @@
 #include "button.h"
 #include "gpio.h"
 #include "led.h"
-#include "motor.h"
 
 // Bootloader reads this address to know if firmware loader should run
 uint32_t hub_bootloader_magic_addr __attribute__((section (".magic")));
@@ -23,41 +25,116 @@ STATIC mp_obj_t hub_get_button(void) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_get_button_obj, hub_get_button);
 
 STATIC mp_obj_t hub_get_motor_pos(mp_obj_t port) {
-    int ret, pos;
+    int32_t pos;
+    pbio_error_t err;
 
-    ret = motor_get_position(mp_obj_get_int(port), &pos);
-    if (ret < 0) {
+    if (MP_OBJ_IS_STR(port)) {
+        port = mp_call_function_1((mp_obj_t *)&mp_builtin_ord_obj, port);
+    }
+
+    err = pbio_motor_get_encoder_count(mp_obj_get_int(port), &pos);
+    if (err == PBIO_ERROR_INVALID_PORT) {
         mp_raise_ValueError("Invalid port");
+    }
+    if (err != PBIO_SUCCESS) {
+        mp_raise_msg(&mp_type_RuntimeError, "Unknown error");
     }
 
     return mp_obj_new_int(pos);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_get_motor_pos_obj, hub_get_motor_pos);
 
-STATIC mp_obj_t hub_run_motor(mp_obj_t port, mp_obj_t duty_cycle) {
-    int ret;
+STATIC mp_obj_t hub_get_motor_speed(mp_obj_t port) {
+    int32_t rate;
+    pbio_error_t err;
 
-    ret = motor_run(mp_obj_get_int(port), mp_obj_get_int(duty_cycle));
-    if (ret == -1) {
+    if (MP_OBJ_IS_STR(port)) {
+        port = mp_call_function_1((mp_obj_t *)&mp_builtin_ord_obj, port);
+    }
+
+    err = pbio_motor_get_encoder_rate(mp_obj_get_int(port), &rate);
+    if (err == PBIO_ERROR_INVALID_PORT) {
         mp_raise_ValueError("Invalid port");
     }
-    if (ret == -2) {
-        mp_raise_ValueError("Invalid duty cycle");
+    if (err != PBIO_SUCCESS) {
+        mp_raise_msg(&mp_type_RuntimeError, "Unknown error");
+    }
+
+    return mp_obj_new_int(rate);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_get_motor_speed_obj, hub_get_motor_speed);
+
+STATIC mp_obj_t hub_run_motor(mp_obj_t port, mp_obj_t duty_cycle) {
+    pbio_error_t err;
+
+    if (MP_OBJ_IS_STR(port)) {
+        port = mp_call_function_1((mp_obj_t *)&mp_builtin_ord_obj, port);
+    }
+
+    err = pbio_motor_set_duty_cycle(mp_obj_get_int(port), mp_obj_get_int(duty_cycle));
+    if (err == PBIO_ERROR_INVALID_PORT) {
+        mp_raise_ValueError("Invalid port");
+    }
+    if (err == PBIO_ERROR_INVALID_ARG) {
+        mp_raise_ValueError("Duty cycle out of range");
+    }
+    if (err != PBIO_SUCCESS) {
+        mp_raise_msg(&mp_type_RuntimeError, "Unknown error");
     }
 
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(hub_run_motor_obj, hub_run_motor);
 
-STATIC mp_obj_t hub_stop_motor(mp_obj_t port, mp_obj_t stop_action) {
-    int ret;
+STATIC mp_obj_t hub_set_motor_dir(mp_obj_t port, mp_obj_t direction) {
+    pbio_error_t err;
 
-    ret = motor_stop(mp_obj_get_int(port), mp_obj_get_int(stop_action));
-    if (ret == -1) {
+    if (MP_OBJ_IS_STR(port)) {
+        port = mp_call_function_1((mp_obj_t *)&mp_builtin_ord_obj, port);
+    }
+
+    err = pbio_motor_set_direction(mp_obj_get_int(port), mp_obj_get_int(direction));
+    if (err == PBIO_ERROR_INVALID_PORT) {
         mp_raise_ValueError("Invalid port");
     }
-    if (ret == -2) {
+    if (err == PBIO_ERROR_INVALID_ARG) {
+        mp_raise_ValueError("Invalid direction");
+    }
+    if (err != PBIO_SUCCESS) {
+        mp_raise_msg(&mp_type_RuntimeError, "Unknown error");
+    }
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(hub_set_motor_dir_obj, hub_set_motor_dir);
+
+STATIC mp_obj_t hub_stop_motor(mp_obj_t port, mp_obj_t stop_action) {
+    pbio_error_t err;
+    mp_int_t p, sa;
+
+    if (MP_OBJ_IS_STR(port)) {
+        port = mp_call_function_1((mp_obj_t *)&mp_builtin_ord_obj, port);
+    }
+
+    p = mp_obj_get_int(port);
+    sa = mp_obj_get_int(stop_action);
+
+    switch (sa) {
+    case 0:
+        err = pbio_motor_coast(p);
+        break;
+    case 1:
+        err = pbio_motor_set_duty_cycle(p, 0);
+        break;
+    default:
         mp_raise_ValueError("Invalid stop action");
+    }
+
+    if (err == PBIO_ERROR_INVALID_PORT) {
+        mp_raise_ValueError("Invalid port");
+    }
+    if (err != PBIO_SUCCESS) {
+        mp_raise_msg(&mp_type_RuntimeError, "Unknown error");
     }
 
     return mp_const_none;
@@ -219,11 +296,13 @@ STATIC const mp_map_elem_t hub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_hub) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_get_button), (mp_obj_t)&hub_get_button_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_get_motor_pos), (mp_obj_t)&hub_get_motor_pos_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_get_motor_speed), (mp_obj_t)&hub_get_motor_speed_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&hub_gpios_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_power_off), (mp_obj_t)&hub_power_off_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_read_adc), (mp_obj_t)&hub_read_adc_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_reboot), (mp_obj_t)&hub_reboot_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_run_motor), (mp_obj_t)&hub_run_motor_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_set_motor_dir), (mp_obj_t)&hub_set_motor_dir_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_set_light), (mp_obj_t)&hub_set_light_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_stop_motor), (mp_obj_t)&hub_stop_motor_obj },
 };

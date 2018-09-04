@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <pbio/motor.h>
+
 #include "py/compile.h"
 #include "py/runtime.h"
 #include "py/repl.h"
@@ -16,7 +18,6 @@
 #include "button.h"
 #include "gpio.h"
 #include "led.h"
-#include "motor.h"
 #include "uartadr.h"
 
 static char *stack_top;
@@ -32,7 +33,7 @@ int main(int argc, char **argv) {
     led_init();
     adc_init();
     accel_init();
-    motor_init();
+    pbio_motor_init();
 
     #if MICROPY_ENABLE_GC
     gc_init(heap, heap + sizeof(heap));
@@ -59,15 +60,15 @@ soft_reset:
     #endif
     mp_deinit();
 
-    for (int p = MOTOR_PORT_A; p <= MOTOR_PORT_D; p++) {
-        motor_stop(p, MOTOR_STOP_COAST);
+    for (int p = PBIO_PORT_A; p <= PBIO_PORT_D; p++) {
+        pbio_motor_coast(p);
     }
     
     goto soft_reset;
 
     // TODO: do we really need to deinit hardware on hard reset or power off?
 
-    motor_deinit();
+    pbio_motor_deinit();
     accel_deinit();
     adc_deinit();
     led_deinit();
