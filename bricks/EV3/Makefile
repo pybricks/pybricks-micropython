@@ -19,6 +19,8 @@ include $(TOP)/py/py.mk
 INC +=  -I.
 INC +=  -I$(TOP)
 INC += -I$(BUILD)
+INC += -I$(TOP)/ports/pybricks/lib/pbio/config/ev3dev_stretch
+INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 
 # compiler settings
 CWARN = -Wall -Werror
@@ -158,10 +160,10 @@ LIB_SRC_C = $(addprefix lib/,\
 	)
 
 # Pybricks drivers and modules
-PYBRICKS_DRIVERS_SRC_C = motorio.c \
-	$(addprefix ports/pybricks/drivers/,\
-	control.c \
-	modmotor.c \
+PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
+	drivers/control.c \
+	drivers/modmotor.c \
+	lib/pbio/src/ev3dev_stretch/motor.c	\
 	)	
 
 # FatFS VFS support

@@ -51,7 +51,8 @@
 #include "genhdr/mpversion.h"
 #include "input.h"
 #include "bgrtask.h"
-#include "motorio.h"
+#include <pbio/motor.h>
+
 
 // Command line options, with their defaults
 STATIC bool compile_only = false;
@@ -409,7 +410,7 @@ MP_NOINLINE int main_(int argc, char **argv);
 
 int main(int argc, char **argv) {
     // Start Pybricks background control tasks
-    motor_init();
+    pbio_motor_init();
     start_background_tasks();
     #if MICROPY_PY_THREAD
     mp_thread_init();
@@ -655,7 +656,7 @@ MP_NOINLINE int main_(int argc, char **argv) {
     #if defined(MICROPY_UNIX_COVERAGE)
     gc_sweep_all();
     #endif
-    motor_deinit();
+    pbio_motor_deinit();
     mp_deinit();
 
 #if MICROPY_ENABLE_GC && !defined(NDEBUG)
