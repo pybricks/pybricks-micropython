@@ -215,7 +215,7 @@ pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
 
 pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     pbio_motor_tacho_data_t *data;
-    uint32_t head_count, tail_count = 0;
+    int32_t head_count, tail_count = 0;
     uint16_t head_time, tail_time = 0;
     uint8_t head, tail, x = 0;
 
