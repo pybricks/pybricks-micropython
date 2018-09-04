@@ -47,7 +47,7 @@ mp_obj_t motor_DcMotor_make_new( const mp_obj_type_t *type,
     // set the clockwise_positive member if given
     self->DcMotor_clockwise_positive = (n_args == 2) ? mp_obj_is_true(args[1]) : true;
     // Apply settings to the motor
-    set_positive_direction(self->DcMotor_port, self->DcMotor_clockwise_positive);
+    pbio_motor_set_direction(self->DcMotor_port, self->DcMotor_clockwise_positive);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -57,7 +57,7 @@ mp_obj_t motor_DcMotor_make_new( const mp_obj_type_t *type,
 
 STATIC mp_obj_t motor_DcMotor_coast(mp_obj_t self_in) {
     motor_DcMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
-    set_coast(self->DcMotor_port);
+    pbio_motor_coast(self->DcMotor_port);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_DcMotor_coast_obj,
@@ -65,7 +65,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(motor_DcMotor_coast_obj,
 
 STATIC mp_obj_t motor_DcMotor_brake(mp_obj_t self_in) {
     motor_DcMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
-    set_duty(self->DcMotor_port, 0);
+    pbio_motor_set_duty_cycle(self->DcMotor_port, 0);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_DcMotor_brake_obj,
@@ -74,7 +74,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(motor_DcMotor_brake_obj,
 
 STATIC mp_obj_t motor_DcMotor_duty(mp_obj_t self_in, mp_obj_t duty) {
     motor_DcMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    set_duty(self->DcMotor_port, (int) mp_obj_get_float(duty));
+    pbio_motor_set_duty_cycle(self->DcMotor_port, (int) mp_obj_get_float(duty));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(motor_DcMotor_duty_obj,
@@ -142,7 +142,7 @@ mp_obj_t motor_EncodedMotor_make_new( const mp_obj_type_t *type,
     // set the clockwise_positive member if given
     self->EncodedMotor_clockwise_positive = (n_args == 2) ? mp_obj_is_true(args[1]) : true;
     // Apply settings to the motor
-    set_positive_direction(self->EncodedMotor_port, self->EncodedMotor_clockwise_positive);
+    pbio_motor_set_direction(self->EncodedMotor_port, self->EncodedMotor_clockwise_positive);
     return MP_OBJ_FROM_PTR(self);
 }
 
