@@ -23,7 +23,4 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-Q(run_target)
-Q(EncoderlessMotor)
-Q(coast)
-Q(duty)
+

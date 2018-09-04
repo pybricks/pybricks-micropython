@@ -8,3 +8,6 @@
 #if defined EV3
     #include "../bricks/EV3/motorio.h"
 #endif
+
+extern const mp_obj_type_t motor_DcMotor_type;
+extern const mp_obj_type_t motor_EncodedMotor_type;

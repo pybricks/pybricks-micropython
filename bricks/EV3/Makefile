@@ -8,7 +8,7 @@ FROZEN_MPY_DIR = modules
 PROG = micropython
 
 # qstr definitions (must come before including py.mk)
-QSTR_DEFS = qstrdefsport.h
+QSTR_DEFS = qstrdefsport.h ../../drivers/qstrdefsmotor.h
 
 # OS name, for simple autoconfig
 UNAME_S := $(shell uname -s)
