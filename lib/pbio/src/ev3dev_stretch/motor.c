@@ -28,7 +28,7 @@ motorfile_t motorfiles[pindex(PBIO_PORT_D)+1] = {[pindex(PBIO_PORT_A) ... pindex
 void slow_write(pbio_port_t port, const char* filename, const char* content) {
     // Open the file in the directory corresponding to the specified port
     char filepath[MAX_PATH_LENGTH];
-    sprintf(filepath, "/sys/class/tacho-motor/motor%d/%s", motorfiles[pindex(port)].dir_number, filename);
+    snprintf(filepath, MAX_PATH_LENGTH, "/sys/class/tacho-motor/motor%d/%s", motorfiles[pindex(port)].dir_number, filename);
     FILE* file = fopen(filepath, "w"); 
     // Write the contents to the file
     fprintf(file, content);  
@@ -50,7 +50,7 @@ void pbio_motor_init(void) {
             sscanf(ep->d_name, "%*5c%d",&dir_number);
             // Open the address file in this folder
             char ppath[MAX_PATH_LENGTH];
-            sprintf(ppath, "/sys/class/tacho-motor/motor%d/address", dir_number);
+            snprintf(ppath, MAX_PATH_LENGTH, "/sys/class/tacho-motor/motor%d/address", dir_number);
             FILE* addr = fopen(ppath, "r");
             // Extract the port (14th) character, convert to numeric, and close address file
             fseek(addr, 13, SEEK_SET);
@@ -77,13 +77,13 @@ void pbio_motor_init(void) {
             // File path character array to the relevant speed, position files, etc.
             char filepath[MAX_PATH_LENGTH];
             // Open the position file
-            sprintf(filepath, "/sys/class/tacho-motor/motor%d/position", motorfiles[port_index].dir_number);
+            snprintf(filepath, MAX_PATH_LENGTH, "/sys/class/tacho-motor/motor%d/position", motorfiles[port_index].dir_number);
             motorfiles[port_index].f_encoder_count = fopen(filepath, "r");
             // Open the speed file
-            sprintf(filepath, "/sys/class/tacho-motor/motor%d/speed", motorfiles[port_index].dir_number);
+            snprintf(filepath, MAX_PATH_LENGTH, "/sys/class/tacho-motor/motor%d/speed", motorfiles[port_index].dir_number);
             motorfiles[port_index].f_encoder_rate = fopen(filepath, "r");            
             // Open the duty file
-            sprintf(filepath, "/sys/class/tacho-motor/motor%d/duty_cycle_sp", motorfiles[port_index].dir_number);
+            snprintf(filepath, MAX_PATH_LENGTH, "/sys/class/tacho-motor/motor%d/duty_cycle_sp", motorfiles[port_index].dir_number);
             motorfiles[port_index].f_duty = fopen(filepath, "w");
         }
     }    
