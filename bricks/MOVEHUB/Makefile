@@ -51,7 +51,7 @@ SRC_C = \
 	$(BUILD)/_frozen_mpy.c \
 
 SRC_S = \
-	ports/stm32/boards/startup_stm32f0.s \
+	startup_stm32f070xb.s \
 	ports/stm32/gchelper_m0.s \
 
 SRC_LIBM = $(addprefix lib/libm/,\
