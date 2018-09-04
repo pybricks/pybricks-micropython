@@ -161,9 +161,9 @@ LIB_SRC_C = $(addprefix lib/,\
 
 # Pybricks drivers and modules
 PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
-	drivers/control.c \
 	drivers/modmotor.c \
 	lib/pbio/src/ev3dev_stretch/motor.c	\
+	lib/pbio/src/generic/motorcontrol.c	\
 	)	
 
 # FatFS VFS support

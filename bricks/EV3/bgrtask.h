@@ -5,6 +5,6 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/timerfd.h>
-#include "../../drivers/control.h"
+#include <pbio/motorcontrol.h>
 
 void start_background_tasks();

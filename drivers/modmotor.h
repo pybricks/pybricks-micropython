@@ -4,7 +4,7 @@
 #include "py/binary.h"
 #include "py/builtin.h"
 #include <stdio.h>
-#include "control.h"
+#include <pbio/motorcontrol.h>
 #include <pbio/motor.h>
 
 extern const mp_obj_type_t motor_DcMotor_type;

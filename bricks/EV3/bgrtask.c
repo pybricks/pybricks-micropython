@@ -50,7 +50,7 @@ static void *task_caller(void *arg)
 
 	configure_timer_thread(10, &info);
 	while (1) {
-        handler();
+        motorcontroller();
 		wait_period(&info);
 	}
 	return NULL;
