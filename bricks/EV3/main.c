@@ -50,8 +50,7 @@
 #include "extmod/vfs_posix.h"
 #include "genhdr/mpversion.h"
 #include "input.h"
-#include "bgrtask.h"
-#include <pbio/motor.h>
+#include "pybricks.h"
 
 
 // Command line options, with their defaults
@@ -409,9 +408,7 @@ STATIC void set_sys_argv(char *argv[], int argc, int start_arg) {
 MP_NOINLINE int main_(int argc, char **argv);
 
 int main(int argc, char **argv) {
-    // Start Pybricks background control tasks
-    pbio_motor_init();
-    start_background_tasks();
+    pybricks_init();
     #if MICROPY_PY_THREAD
     mp_thread_init();
     #endif
@@ -656,7 +653,7 @@ MP_NOINLINE int main_(int argc, char **argv) {
     #if defined(MICROPY_UNIX_COVERAGE)
     gc_sweep_all();
     #endif
-    pbio_motor_deinit();
+    pybricks_deinit();
     mp_deinit();
 
 #if MICROPY_ENABLE_GC && !defined(NDEBUG)

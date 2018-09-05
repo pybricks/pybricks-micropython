@@ -7,4 +7,13 @@
 #include <sys/timerfd.h>
 #include <pbio/motorcontrol.h>
 
-void start_background_tasks();
+#define PERIOD_MS 10
+
+struct periodic_info {
+	int timer_fd;
+	unsigned long long wakeups_missed;
+};
+
+void pybricks_init();
+
+void pybricks_deinit();
