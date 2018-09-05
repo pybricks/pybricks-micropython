@@ -31,15 +31,20 @@ static void wait_period(struct periodic_info *info)
 	info->wakeups_missed += missed;
 }
 
+// Flag that indicates whether we are busy stopping the thread
+volatile bool stopping_thread = false;
+
 // The background thread that keeps firing the task handler
 static void *task_caller(void *arg)
 {
 	struct periodic_info info;
 	configure_timer_thread(PERIOD_MS, &info);
-	while (true) {
+	while (!stopping_thread) {
         motorcontroller();
 		wait_period(&info);
 	}
+    // Signal that shutdown is complete
+    stopping_thread = false;
 	return NULL;
 }
 
@@ -54,5 +59,9 @@ void pybricks_init(){
 
 // Pybricks deinitialization tasks
 void pybricks_deinit(){
+    // Signal motor thread to stop and wait for it to do so.
+    stopping_thread = true;
+    while (stopping_thread);
+    // Stop and reset the motors
     pbio_motor_deinit();
 }
