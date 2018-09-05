@@ -89,7 +89,7 @@ OBJ = $(PY_CORE_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 
 
-all: $(BUILD)/firmware.dfu
+all: $(BUILD)/firmware.bin
 
 $(BUILD)/_frozen_mpy.c: frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
 	$(ECHO) "MISC freezing bytecode"
@@ -107,26 +107,9 @@ $(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 	$(Q)$(SIZE) $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
+	$(ECHO) "BIN creating firmware file"
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $@
+	$(ECHO) "`stat --printf='%s\n' $@` bytes"
 
-$(BUILD)/firmware.dfu: $(BUILD)/firmware.bin
-	$(ECHO) "Create $@"
-	$(Q)$(PYTHON) $(DFU) -b 0x08000000:$(BUILD)/firmware.bin $@
-
-deploy: $(BUILD)/firmware.dfu
-	$(ECHO) "Writing $< to the board"
-	$(Q)$(PYTHON) $(PYDFU) -u $<
-
-# Run emulation build on a POSIX system with suitable terminal settings
-run:
-	stty raw opost -echo
-	build/firmware.elf
-	@echo Resetting terminal...
-# This sleep is useful to spot segfaults
-	sleep 1
-	reset
-
-test: $(BUILD)/firmware.elf
-	$(Q)/bin/echo -e "print('hello world!', list(x+1 for x in range(10)), end='eol\\\\n')\\r\\n\\x04" | $(BUILD)/firmware.elf | tail -n2 | grep "^hello world! \\[1, 2, 3, 4, 5, 6, 7, 8, 9, 10\\]eol"
 
 include $(TOP)/py/mkrules.mk
