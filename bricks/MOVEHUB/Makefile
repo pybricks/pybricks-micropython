@@ -41,7 +41,6 @@ SRC_C = \
 	accel.c \
 	adc.c \
 	button.c \
-	led.c \
 	systick.c \
 	uart_core.c \
 	lib/utils/interrupt_char.c \
@@ -50,6 +49,7 @@ SRC_C = \
 	lib/utils/pyexec.c \
 	lib/libc/string0.c \
 	lib/mp-readline/readline.c \
+	ports/pybricks/lib/pbio/src/move_hub/light.c \
 	ports/pybricks/lib/pbio/src/move_hub/motor.c \
 
 SRC_S = \

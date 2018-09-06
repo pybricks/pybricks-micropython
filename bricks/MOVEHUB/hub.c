@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include <pbio/light.h>
 #include <pbio/motor.h>
 
 #include "stm32f070xb.h"
@@ -13,7 +14,6 @@
 #include "adc.h"
 #include "button.h"
 #include "gpio.h"
-#include "led.h"
 
 // Bootloader reads this address to know if firmware loader should run
 uint32_t hub_bootloader_magic_addr __attribute__((section (".magic")));
@@ -210,7 +210,7 @@ STATIC mp_obj_t hub_gpios(mp_obj_t value) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_gpios_obj, hub_gpios);
 
 STATIC mp_obj_t hub_power_off(void) {
-    led_deinit();
+    pbio_light_deinit();
 
     // setting PB11 low cuts the power
     GPIOB->BRR = GPIO_BRR_BR_11;
@@ -235,9 +235,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_reboot_obj, hub_reboot);
 
 STATIC mp_obj_t hub_set_light(mp_obj_t state) {
     mp_obj_t len;
+    pbio_error_t err;
 
     if (MP_OBJ_IS_TYPE(state, &mp_type_NoneType)) {
-        led_set_rgb(0, 0, 0);
+        pbio_light_set_pattern(PBIO_PORT_SELF, PBIO_LIGHT_PATTERN_OFF);
         return mp_const_none;
     }
     
@@ -247,29 +248,31 @@ STATIC mp_obj_t hub_set_light(mp_obj_t state) {
         // TODO: adjust the colors so they look right
         switch (color) {
         case MP_QSTR_red:
-            led_set_rgb(255, 0, 0);
+            pbio_light_set_color(PBIO_PORT_SELF, 255, 0, 0);
             break;
         case MP_QSTR_green:
-            led_set_rgb(0, 255, 0);
+            pbio_light_set_color(PBIO_PORT_SELF, 0, 255, 0);
             break;
         case MP_QSTR_blue:
-            led_set_rgb(0, 0, 255);
+            pbio_light_set_color(PBIO_PORT_SELF, 0, 0, 255);
             break;
         case MP_QSTR_cyan:
-            led_set_rgb(0, 255, 255);
+            pbio_light_set_color(PBIO_PORT_SELF, 0, 255, 255);
             break;
         case MP_QSTR_magenta:
-            led_set_rgb(255, 0, 255);
+            pbio_light_set_color(PBIO_PORT_SELF, 255, 0, 255);
             break;
         case MP_QSTR_yellow:
-            led_set_rgb(255, 255, 0);
+            pbio_light_set_color(PBIO_PORT_SELF, 255, 255, 0);
             break;
         case MP_QSTR_white:
-            led_set_rgb(255, 255, 255);
+            pbio_light_set_color(PBIO_PORT_SELF, 255, 255, 255);
             break;
         default:
             mp_raise_ValueError("Unknown color");
         }
+
+        pbio_light_set_pattern(PBIO_PORT_SELF, PBIO_LIGHT_PATTERN_ON);
 
         return mp_const_none;
     }
@@ -283,7 +286,11 @@ STATIC mp_obj_t hub_set_light(mp_obj_t state) {
         g = mp_obj_get_int(mp_obj_subscr(state, MP_OBJ_NEW_SMALL_INT(1), MP_OBJ_SENTINEL));
         b = mp_obj_get_int(mp_obj_subscr(state, MP_OBJ_NEW_SMALL_INT(2), MP_OBJ_SENTINEL));
 
-        led_set_rgb(r, g, b);
+        err = pbio_light_set_color(PBIO_PORT_SELF, r, g, b);
+        if (err == PBIO_ERROR_INVALID_ARG) {
+            mp_raise_ValueError("Bad color value");
+        }
+        pbio_light_set_pattern(PBIO_PORT_SELF, PBIO_LIGHT_PATTERN_ON);
 
         return mp_const_none;
     }

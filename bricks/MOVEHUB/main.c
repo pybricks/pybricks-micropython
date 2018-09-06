@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <pbio/light.h>
 #include <pbio/motor.h>
 
 #include "py/compile.h"
@@ -17,7 +18,6 @@
 #include "adc.h"
 #include "button.h"
 #include "gpio.h"
-#include "led.h"
 #include "uartadr.h"
 
 static char *stack_top;
@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
     stack_top = (char*)&stack_dummy;
 
     button_init();
-    led_init();
+    pbio_light_init();
     adc_init();
     accel_init();
     pbio_motor_init();
@@ -40,7 +40,8 @@ int main(int argc, char **argv) {
     #endif
 
 soft_reset:
-    led_set_rgb(0, 255, 0);
+    pbio_light_set_color(PBIO_PORT_SELF, 0, 255, 0);
+    pbio_light_set_pattern(PBIO_PORT_SELF, PBIO_LIGHT_PATTERN_ON);
 
     mp_init();
     #if MICROPY_ENABLE_COMPILER
@@ -71,7 +72,7 @@ soft_reset:
     pbio_motor_deinit();
     accel_deinit();
     adc_deinit();
-    led_deinit();
+    pbio_light_deinit();
     button_deinit();
 
     return 0;

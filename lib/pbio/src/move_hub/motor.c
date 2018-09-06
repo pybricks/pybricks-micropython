@@ -289,11 +289,10 @@ pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
 }
 
 pbio_error_t pbio_motor_coast(pbio_port_t port) {
-    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
-        return PBIO_ERROR_INVALID_PORT;
+    if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
+        // TODO: return PBIO_ERROR_NO_DEV for ports C/D if no motor is attached
+        return PBIO_ERROR_NO_DEV;
     }
-
-    // TODO: return PBIO_ERROR_NO_DEV for ports C/D if no motor is attached
 
     // set both port pins 1 and 2 to output low
     switch (port) {
@@ -321,6 +320,8 @@ pbio_error_t pbio_motor_coast(pbio_port_t port) {
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
         GPIOC->BRR = GPIO_BRR_BR_9;
         break;
+    default:
+        return PBIO_ERROR_INVALID_PORT;
     }
 
     return PBIO_SUCCESS;
@@ -353,6 +354,8 @@ static void pbio_motor_brake(pbio_port_t port) {
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
         GPIOC->BSRR = GPIO_BSRR_BS_9;
         break;
+    default:
+        break;
     }
 }
 
@@ -383,6 +386,8 @@ static void pbio_motor_run_fwd(pbio_port_t port, int16_t duty_cycle) {
         TIM3->CCR2 = 10000 - duty_cycle;
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (2 << GPIO_MODER_MODER7_Pos);
         break;
+    default:
+        break;
     }
 }
 
@@ -412,6 +417,8 @@ static void pbio_motor_run_rev(pbio_port_t port, int16_t duty_cycle) {
         GPIOC->BSRR = GPIO_BSRR_BS_7;
         TIM3->CCR4 = 10000 + duty_cycle;
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (2 << GPIO_MODER_MODER9_Pos);
+        break;
+    default:
         break;
     }
 }
