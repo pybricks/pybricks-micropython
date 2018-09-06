@@ -43,8 +43,7 @@ int mp_hal_stdin_rx_chr(void) {
 
     // wait for rx interrupt
     while (rx_buf_head == rx_buf_tail) {
-        mp_handle_pending();
-        __WFI();
+        MICROPY_EVENT_POLL_HOOK
     }
 
     rx_buf_tail = (rx_buf_tail + 1) & (RX_BUF_SIZE - 1);

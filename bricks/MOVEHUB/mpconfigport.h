@@ -1,5 +1,16 @@
 #include <stdint.h>
 
+#include "stm32f070xb.h"
+
+// machine-specific info
+
+#define MICROPY_HW_BOARD_NAME "BOOST Move Hub"
+#define MICROPY_HW_MCU_NAME "STM32F070RB"
+
+// hard-coding for pybricks since we don't expect a different value
+#define PYBRICKS_SYS_CLOCK_FREQ 48000000
+
+
 // options to control how MicroPython is built
 
 // You can disable the built-in MicroPython compiler by setting the following
@@ -51,7 +62,9 @@
 #define MICROPY_PY_IO               (0)
 #define MICROPY_PY_STRUCT           (0)
 #define MICROPY_PY_SYS              (0)
+#define MICROPY_PY_UTIME_MP_HAL     (1)
 #define MICROPY_MODULE_FROZEN_MPY   (1)
+#define MICROPY_MODULE_WEAK_LINKS   (1)
 #define MICROPY_CPYTHON_COMPAT      (0)
 #define MICROPY_LONGINT_IMPL        (MICROPY_LONGINT_IMPL_NONE)
 #define MICROPY_FLOAT_IMPL          (MICROPY_FLOAT_IMPL_FLOAT)
@@ -81,15 +94,69 @@ typedef long mp_off_t;
     { MP_ROM_QSTR(MP_QSTR_open), MP_ROM_PTR(&mp_builtin_open_obj) },
 
 extern const struct _mp_obj_module_t mp_module_hub;
+extern const struct _mp_obj_module_t mp_module_utime;
 
 #define MICROPY_PORT_BUILTIN_MODULES \
     { MP_OBJ_NEW_QSTR(MP_QSTR_hub), (mp_obj_t)&mp_module_hub },  \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_utime), (mp_obj_t)&mp_module_utime },  \
+
+#define MICROPY_PORT_BUILTIN_MODULE_WEAK_LINKS \
+    { MP_ROM_QSTR(MP_QSTR_time), MP_ROM_PTR(&mp_module_utime) }, \
+
+// TODO: not sure if we will have a use for this
+#define SOCKET_POLL
+
+// We have inlined IRQ functions for efficiency (they are generally
+// 1 machine instruction).
+//
+// Note on IRQ state: you should not need to know the specific
+// value of the state variable, but rather just pass the return
+// value from disable_irq back to enable_irq.  If you really need
+// to know the machine-specific values, see irq.h.
+
+static inline void enable_irq(mp_uint_t state) {
+    __set_PRIMASK(state);
+}
+
+static inline mp_uint_t disable_irq(void) {
+    mp_uint_t state = __get_PRIMASK();
+    __disable_irq();
+    return state;
+}
+
+#define MICROPY_BEGIN_ATOMIC_SECTION()     disable_irq()
+#define MICROPY_END_ATOMIC_SECTION(state)  enable_irq(state)
+
+#if MICROPY_PY_THREAD
+#define MICROPY_EVENT_POLL_HOOK \
+    do { \
+        extern void mp_handle_pending(void); \
+        mp_handle_pending(); \
+        SOCKET_POLL \
+        if (pyb_thread_enabled) { \
+            MP_THREAD_GIL_EXIT(); \
+            pyb_thread_yield(); \
+            MP_THREAD_GIL_ENTER(); \
+        } else { \
+            __WFI(); \
+        } \
+    } while (0);
+
+#define MICROPY_THREAD_YIELD() pyb_thread_yield()
+#else
+#define MICROPY_EVENT_POLL_HOOK \
+    do { \
+        extern void mp_handle_pending(void); \
+        mp_handle_pending(); \
+        SOCKET_POLL \
+        __WFI(); \
+    } while (0);
+
+#define MICROPY_THREAD_YIELD()
+#endif
 
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>
-
-#define MICROPY_HW_BOARD_NAME "BOOST Move Hub"
-#define MICROPY_HW_MCU_NAME "STM32F070RB"
 
 #define MP_STATE_PORT MP_STATE_VM
 

@@ -37,10 +37,12 @@ LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 SRC_C = \
 	main.c \
 	hub.c \
+	modutime.c \
 	accel.c \
 	adc.c \
 	button.c \
 	led.c \
+	systick.c \
 	uart_core.c \
 	lib/utils/interrupt_char.c \
 	lib/utils/printf.c \
@@ -49,7 +51,6 @@ SRC_C = \
 	lib/libc/string0.c \
 	lib/mp-readline/readline.c \
 	ports/pybricks/lib/pbio/src/move_hub/motor.c \
-	$(BUILD)/_frozen_mpy.c \
 
 SRC_S = \
 	startup_stm32f070xb.s \
@@ -84,10 +85,17 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	ef_sqrt.c \
 	)
 
+# TODO: it looks like micropython has built-in makefiles for handling frozen files
+FROZEN_C = \
+	$(BUILD)/_frozen_mpy.c \
 
-OBJ = $(PY_CORE_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
+OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o) $(FROZEN_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 
+# List of sources for qstr extraction
+SRC_QSTR += $(SRC_C)
+# Append any auto-generated sources that are needed by sources listed in SRC_QSTR
+SRC_QSTR_AUTO_DEPS +=
 
 all: $(BUILD)/firmware.bin
 
