@@ -8,7 +8,7 @@ FROZEN_MPY_DIR = modules
 PROG = micropython
 
 # qstr definitions (must come before including py.mk)
-QSTR_DEFS = qstrdefsport.h ../../drivers/qstrdefsmotor.h
+QSTR_DEFS = qstrdefsport.h ../../drivers/qstrdefsmotor.h ../../drivers/qstrdefsconstants.h
 
 # OS name, for simple autoconfig
 UNAME_S := $(shell uname -s)
@@ -162,6 +162,7 @@ LIB_SRC_C = $(addprefix lib/,\
 # Pybricks drivers and modules
 PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	drivers/modmotor.c \
+	drivers/modconstants.c \
 	lib/pbio/src/ev3dev_stretch/motor.c	\
 	lib/pbio/src/generic/motorcontrol.c	\
 	)	

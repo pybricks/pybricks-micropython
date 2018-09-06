@@ -218,7 +218,8 @@ extern const struct _mp_obj_module_t mp_module_jni;
 #endif
 
 #define EV3
-extern const struct _mp_obj_module_t mp_module_motor;    
+extern const struct _mp_obj_module_t mp_module_motor;
+extern const struct _mp_obj_module_t mp_module_constants;
 
 #define MICROPY_PORT_BUILTIN_MODULES \
     MICROPY_PY_FFI_DEF \
@@ -230,6 +231,7 @@ extern const struct _mp_obj_module_t mp_module_motor;
     MICROPY_PY_USELECT_DEF \
     MICROPY_PY_TERMIOS_DEF \
     { MP_OBJ_NEW_QSTR(MP_QSTR__motor), (mp_obj_t)&mp_module_motor }, \
+    { MP_OBJ_NEW_QSTR(MP_QSTR__constants), (mp_obj_t)&mp_module_constants }, \
 
 // type definitions for the specific machine
 

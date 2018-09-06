@@ -1,0 +1,5 @@
+// Ports
+Q(PORT_A)
+Q(PORT_B)
+Q(PORT_C)
+Q(PORT_D)
