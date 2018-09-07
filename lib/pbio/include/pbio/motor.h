@@ -35,7 +35,7 @@ typedef struct _pbio_motor_settings_t {
     int16_t max_stall_duty;     /**< Upper limit on duty cycle, which corresponds to a maximum torque while stalled. */
 } pbio_motor_settings_t;
 
-pbio_motor_settings_t motor_settings[PBIO_CONFIG_MAX_MOTORS];
+pbio_motor_settings_t motor_settings[PBIO_CONFIG_NUM_MOTOR_CONTROLLER];
 
 /**
  * Initializes the low level motor driver. This should be called only once and

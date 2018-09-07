@@ -15,7 +15,7 @@ typedef struct _pbio_motor_control_settings_t {
     int16_t pid_kd;                 /**< Derivative position control constant (and proportional speed control constant) */
 } pbio_motor_control_settings_t;
 
-pbio_motor_control_settings_t motor_control_settings[PBIO_CONFIG_MAX_MOTORS];
+pbio_motor_control_settings_t motor_control_settings[PBIO_CONFIG_NUM_MOTOR_CONTROLLER];
 
 pbio_error_t pbio_motor_control_set_constant_settings(pbio_port_t port, int16_t counts_per_unit, float_t gear_ratio){
     pbio_error_t status = pbio_motor_status(port);
