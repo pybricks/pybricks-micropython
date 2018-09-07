@@ -112,10 +112,17 @@ void pbio_motor_deinit(void) {
     }
 }
 
-pbio_error_t pbio_motor_set_settings(pbio_port_t port, pbio_motor_dir_t direction, int16_t max_duty){
+pbio_error_t pbio_motor_set_constant_settings(pbio_port_t port, pbio_motor_dir_t direction){
     pbio_error_t status = pbio_motor_status(port);
     if (status == PBIO_SUCCESS) {
         motor_settings[motorindex(port)].direction = direction;
+    }
+    return status;
+}
+
+pbio_error_t pbio_motor_set_variable_settings(pbio_port_t port, int16_t max_duty){
+    pbio_error_t status = pbio_motor_status(port);
+    if (status == PBIO_SUCCESS) {
         motor_settings[motorindex(port)].max_duty = max_duty;
     }
     return status;
@@ -185,12 +192,9 @@ pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
     fseek(motorfiles[motorindex(port)].f_encoder_count, 0, SEEK_SET);
     fscanf(motorfiles[motorindex(port)].f_encoder_count, "%d", count);
     fflush(motorfiles[motorindex(port)].f_encoder_count);
-
-    // Flip sign if motor is inverted
-    if (motor_settings[motorindex(port)].direction == PBIO_MOTOR_DIR_INVERTED){
-        count = -count;
+    if (motor_settings[motorindex(port)].direction == PBIO_MOTOR_DIR_INVERTED) {
+        *count = -*count;
     }    
-
     return PBIO_SUCCESS;    
 }
 
@@ -204,6 +208,8 @@ pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     fseek(motorfiles[motorindex(port)].f_encoder_rate, 0, SEEK_SET);
     fscanf(motorfiles[motorindex(port)].f_encoder_rate, "%d", rate);
     fflush(motorfiles[motorindex(port)].f_encoder_rate);
-
+    if (motor_settings[motorindex(port)].direction == PBIO_MOTOR_DIR_INVERTED) {
+        *rate = -*rate;
+    }
     return PBIO_SUCCESS;    
 }

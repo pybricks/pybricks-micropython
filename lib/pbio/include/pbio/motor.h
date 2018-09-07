@@ -49,16 +49,26 @@ void pbio_motor_init(void);
 void pbio_motor_deinit(void);
 
 /**
- * Configure motor settings
+ * Configure motor settings that should not be changed during runtime
  * @param [in]  port      ::The motor port
  * @param [in]  direction ::Whether or not polarity of duty cycle and encoder counter is inversed
+ * @return                ::PBIO_SUCCESS if the call was successful,
+ *                        ::PBIO_ERROR_INVALID_PORT if port is not a valid port
+ *                        ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
+ *                        ::PBIO_ERROR_IO if there was an I/O error
+ */
+pbio_error_t pbio_motor_set_constant_settings(pbio_port_t port, pbio_motor_dir_t direction);
+
+/**
+ * Configure motor settings that should not be changed during runtime
+ * @param [in]  port      ::The motor port
  * @param [in]  max_duty  ::Soft limit on duty cycle
  * @return                ::PBIO_SUCCESS if the call was successful,
  *                        ::PBIO_ERROR_INVALID_PORT if port is not a valid port
  *                        ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                        ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbio_motor_set_settings(pbio_port_t port, pbio_motor_dir_t direction, int16_t max_duty);
+pbio_error_t pbio_motor_set_variable_settings(pbio_port_t port, int16_t max_duty);
 
 /**
  * Check whether the motor is connected

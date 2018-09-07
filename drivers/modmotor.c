@@ -16,7 +16,7 @@ mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t
     // set the direction member if given
     self->direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     // Apply settings to the motor
-    pbio_motor_set_settings(self->port, self->direction, MAX_DUTY_HARD);
+    pbio_motor_set_constant_settings(self->port, self->direction);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -95,7 +95,7 @@ mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_t *type, size_t n_args, s
     // Set the direction member if given
     self->direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     // Apply settings to the motor
-    pbio_motor_set_settings(self->port, self->direction, MAX_DUTY_HARD);    
+    pbio_motor_set_constant_settings(self->port, self->direction);    
     // Set the gear ratio
     self->gear_ratio = (n_args >= 3) ? mp_obj_get_float(args[2]): 1.0;
     return MP_OBJ_FROM_PTR(self);
