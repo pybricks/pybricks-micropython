@@ -93,7 +93,7 @@ STATIC mp_obj_t hub_set_motor_dir(mp_obj_t port, mp_obj_t direction) {
         port = mp_call_function_1((mp_obj_t *)&mp_builtin_ord_obj, port);
     }
 
-    err = pbio_motor_set_direction(mp_obj_get_int(port), mp_obj_get_int(direction));
+    err = pbio_motor_set_constant_settings(mp_obj_get_int(port), mp_obj_get_int(direction));
     if (err == PBIO_ERROR_INVALID_PORT) {
         mp_raise_ValueError("Invalid port");
     }

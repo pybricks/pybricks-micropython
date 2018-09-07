@@ -447,7 +447,7 @@ pbio_error_t pbio_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_set_direction(pbio_port_t port, pbio_motor_dir_t direction) {
+pbio_error_t pbio_motor_set_constant_settings(pbio_port_t port, pbio_motor_dir_t direction) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }
