@@ -51,7 +51,7 @@ typedef enum {
  * @param [in]  port    The motor port
  * @return              Zero based numeric index of the port
  */
-#define motorindex(port)  (port-PBIO_PORT_A)
+#define motorindex(port)  ((port) - PBDRV_CONFIG_FIRST_MOTOR_PORT)
 
 /** @}*/
 

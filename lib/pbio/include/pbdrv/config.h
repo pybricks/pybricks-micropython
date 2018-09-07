@@ -49,6 +49,17 @@
 // the number of built-in motor controllers in the programmable brick
 #ifndef PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
 #define PBDRV_CONFIG_NUM_MOTOR_CONTROLLER (0)
+#elif PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
+
+// the pbio_port_t enum value of the first motor port
+#ifndef PBDRV_CONFIG_FIRST_MOTOR_PORT
+#error PBDRV_CONFIG_NUM_MOTOR_CONTROLLER requires that PBDRV_CONFIG_FIRST_MOTOR_PORT is defined
+#endif
+
+// the pbio_port_t enum value of the last motor port
+#ifndef PBDRV_CONFIG_LAST_MOTOR_PORT
+#error PBDRV_CONFIG_NUM_MOTOR_CONTROLLER requires that PBDRV_CONFIG_LAST_MOTOR_PORT is defined
+#endif
 #endif
 
 
