@@ -1,6 +1,8 @@
 #include <pbdrv/motor.h>
 #include <pbio/motor.h>
 
+#define PORT_TO_IDX(p) ((p) - PBDRV_CONFIG_FIRST_MOTOR_PORT)
+
 /**
  * Control settings for an encoded motor
  */
@@ -21,7 +23,7 @@ pbio_motor_control_settings_t motor_control_settings[PBDRV_CONFIG_NUM_MOTOR_CONT
 pbio_error_t pbio_motor_control_set_constant_settings(pbio_port_t port, int16_t counts_per_unit, float_t gear_ratio){
     pbio_error_t status = pbdrv_motor_status(port);
     if (status == PBIO_SUCCESS) {
-        motor_control_settings[motorindex(port)].counts_per_output_unit = gear_ratio * counts_per_unit;
+        motor_control_settings[PORT_TO_IDX(port)].counts_per_output_unit = gear_ratio * counts_per_unit;
     }
     return status;
 }
@@ -39,7 +41,7 @@ pbio_error_t pbio_motor_control_set_variable_settings(
     ){
     pbio_error_t status = pbdrv_motor_status(port);
     if (status == PBIO_SUCCESS) {
-        int8_t port_index = motorindex(port);
+        int8_t port_index = PORT_TO_IDX(port);
         motor_control_settings[port_index].max_speed = max_speed;
         motor_control_settings[port_index].tolerance = tolerance;
         motor_control_settings[port_index].acceleration_start = acceleration_start;

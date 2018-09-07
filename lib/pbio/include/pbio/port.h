@@ -46,13 +46,6 @@ typedef enum {
 #endif
 } pbio_port_t;
 
-/**
- * Gets the zero based index of a pbio_port_t motor port.
- * @param [in]  port    The motor port
- * @return              Zero based numeric index of the port
- */
-#define motorindex(port)  ((port) - PBDRV_CONFIG_FIRST_MOTOR_PORT)
-
 /** @}*/
 
 #endif // _PBIO_PORT_H_
