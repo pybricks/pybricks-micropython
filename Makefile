@@ -11,7 +11,7 @@ doc-pbio:
 	$(MAKE) -C doc/pbio
 
 EV3:
-	$(MAKE) -C bricks/MOVEHUB
+	$(MAKE) -C bricks/EV3
 
 MOVEHUB:
 	$(MAKE) -C bricks/MOVEHUB
