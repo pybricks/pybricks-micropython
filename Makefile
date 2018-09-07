@@ -2,6 +2,8 @@
 help:
 	@echo "Use 'make <BRICK>' to build a brick or 'make doc[-pbio]' to build some docs"
 
+.PHONY: doc
+
 doc:
 	@$(MAKE) -C doc html
 
