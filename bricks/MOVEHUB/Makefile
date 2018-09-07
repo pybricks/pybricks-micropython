@@ -12,7 +12,7 @@ INC += -I.
 INC += -I$(TOP)
 INC += -I$(TOP)/lib/cmsis/inc
 INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32F0xx/Include
-INC += -I$(TOP)/ports/pybricks/lib/pbio/config/move_hub
+INC += -I$(TOP)/ports/pybricks/lib/pbio/drv/move_hub
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 INC += -I$(BUILD)
 
@@ -49,8 +49,8 @@ SRC_C = \
 	lib/utils/pyexec.c \
 	lib/libc/string0.c \
 	lib/mp-readline/readline.c \
-	ports/pybricks/lib/pbio/src/move_hub/light.c \
-	ports/pybricks/lib/pbio/src/move_hub/motor.c \
+	ports/pybricks/lib/pbio/drv/move_hub/light.c \
+	ports/pybricks/lib/pbio/drv/move_hub/motor.c \
 
 SRC_S = \
 	startup_stm32f070xb.s \

@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <pbio/light.h>
+#include <pbdrv/light.h>
+#include <pbdrv/motor.h>
 #include <pbio/motor.h>
 
 #include "py/compile.h"
@@ -30,18 +31,18 @@ int main(int argc, char **argv) {
     stack_top = (char*)&stack_dummy;
 
     button_init();
-    pbio_light_init();
+    pbdrv_light_init();
     adc_init();
     accel_init();
-    pbio_motor_init();
+    pbdrv_motor_init();
 
     #if MICROPY_ENABLE_GC
     gc_init(heap, heap + sizeof(heap));
     #endif
 
 soft_reset:
-    pbio_light_set_color(PBIO_PORT_SELF, 0, 255, 0);
-    pbio_light_set_pattern(PBIO_PORT_SELF, PBIO_LIGHT_PATTERN_ON);
+    pbdrv_light_set_color(PBIO_PORT_SELF, 0, 255, 0);
+    pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_ON);
 
     mp_init();
     #if MICROPY_ENABLE_COMPILER
@@ -62,17 +63,17 @@ soft_reset:
     mp_deinit();
 
     for (int p = PBIO_PORT_A; p <= PBIO_PORT_D; p++) {
-        pbio_motor_coast(p);
+        pbdrv_motor_coast(p);
     }
     
     goto soft_reset;
 
     // TODO: do we really need to deinit hardware on hard reset or power off?
 
-    pbio_motor_deinit();
+    pbdrv_motor_deinit();
     accel_deinit();
     adc_deinit();
-    pbio_light_deinit();
+    pbdrv_light_deinit();
     button_deinit();
 
     return 0;

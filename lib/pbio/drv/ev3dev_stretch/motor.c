@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <dirent.h>
 #include <string.h>
-#include <pbio/motor.h>
+#include <pbdrv/motor.h>
 
 
 #define MAX_PATH_LENGTH 50
@@ -25,7 +25,7 @@ motor_file_t motor_files[] = {
     }
 };
 
-pbio_motor_settings_t motor_settings[] = {
+pbdrv_motor_settings_t motor_settings[] = {
     [motorindex(PBIO_PORT_A) ... motorindex(PBIO_PORT_D)]{
         .direction = PBIO_MOTOR_DIR_NORMAL,
         .max_stall_duty = PBIO_MAX_DUTY
@@ -39,12 +39,12 @@ void slow_write(pbio_port_t port, const char* filename, const char* content) {
     snprintf(filepath, MAX_PATH_LENGTH, "/sys/class/tacho-motor/motor%d/%s", motor_files[motorindex(port)].dir_number, filename);
     FILE* file = fopen(filepath, "w"); 
     // Write the contents to the file
-    fprintf(file, content);  
+    fprintf(file, "%s", content);  
     // Close the file
     fclose(file);            
 }
 
-void pbio_motor_init(void) {
+void pbdrv_motor_init(void) {
     // Open tacho-motor directory
     DIR *dp;
     struct dirent *ep;
@@ -81,7 +81,7 @@ void pbio_motor_init(void) {
             // Reset the motor and let stop default to coast
             slow_write(port, "command", "reset");
             slow_write(port, "stop_action", "coast");
-            pbio_motor_coast(port);
+            pbdrv_motor_coast(port);
             // File path character array to the relevant speed, position files, etc.
             char filepath[MAX_PATH_LENGTH];
             // Open the position file
@@ -97,7 +97,7 @@ void pbio_motor_init(void) {
     }    
 }
 
-void pbio_motor_deinit(void) {
+void pbdrv_motor_deinit(void) {
     // Close the relevant files
     for(pbio_port_t port = PBIO_PORT_A; port < PBIO_PORT_D; port++) {
         int port_index = motorindex(port);
@@ -112,16 +112,16 @@ void pbio_motor_deinit(void) {
     }
 }
 
-pbio_error_t pbio_motor_set_constant_settings(pbio_port_t port, pbio_motor_dir_t direction){
-    pbio_error_t status = pbio_motor_status(port);
+pbio_error_t pbdrv_motor_set_constant_settings(pbio_port_t port, pbio_motor_dir_t direction){
+    pbio_error_t status = pbdrv_motor_status(port);
     if (status == PBIO_SUCCESS) {
         motor_settings[motorindex(port)].direction = direction;
     }
     return status;
 }
 
-pbio_error_t pbio_motor_set_variable_settings(pbio_port_t port, int16_t max_stall_duty){
-    pbio_error_t status = pbio_motor_status(port);
+pbio_error_t pbdrv_motor_set_variable_settings(pbio_port_t port, int16_t max_stall_duty){
+    pbio_error_t status = pbdrv_motor_status(port);
     if (max_stall_duty < 0 || max_stall_duty > PBIO_MAX_DUTY) {
         status = PBIO_ERROR_INVALID_ARG;
     }
@@ -131,7 +131,7 @@ pbio_error_t pbio_motor_set_variable_settings(pbio_port_t port, int16_t max_stal
     return status;
 }
 
-pbio_error_t pbio_motor_status(pbio_port_t port) {
+pbio_error_t pbdrv_motor_status(pbio_port_t port) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -141,7 +141,7 @@ pbio_error_t pbio_motor_status(pbio_port_t port) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_coast(pbio_port_t port) {
+pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -154,7 +154,7 @@ pbio_error_t pbio_motor_coast(pbio_port_t port) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
+pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -185,7 +185,7 @@ pbio_error_t pbio_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
+pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -201,7 +201,7 @@ pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
     return PBIO_SUCCESS;    
 }
 
-pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
+pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }

@@ -4,26 +4,26 @@
 
 #include "stm32f070xb.h"
 
-#include <pbio/motor.h>
+#include <pbdrv/motor.h>
 
 #define PBIO_MOTOR_BUF_SIZE 32 // must be power of 2!
 
 #define PBIO_MOTOR_ADJUST_FOR_DIRECTION(p, v) \
-    (pbio_motor_invert_dir[(p) - PBIO_PORT_A] ? -(v) : (v))
+    (pbdrv_motor_invert_dir[(p) - PBIO_PORT_A] ? -(v) : (v))
 
 typedef struct {
     int32_t counts[PBIO_MOTOR_BUF_SIZE];
     uint16_t timestamps[PBIO_MOTOR_BUF_SIZE];
     int32_t count;
     uint8_t head;
-} pbio_motor_tacho_data_t;
+} pbdrv_motor_tacho_data_t;
 
 // only for ports A/B
-static pbio_motor_tacho_data_t pbio_motor_tacho_data[2];
+static pbdrv_motor_tacho_data_t pbdrv_motor_tacho_data[2];
 
-bool pbio_motor_invert_dir[4];
+bool pbdrv_motor_invert_dir[4];
 
-void pbio_motor_init(void) {
+void pbdrv_motor_init(void) {
     // it isn't clear what PB2 does yet, but tacho doesn't work without setting it high.
     // maybe it switches power to the IR LEDs? plus more?
 
@@ -138,10 +138,10 @@ void pbio_motor_init(void) {
     TIM3->EGR |= TIM_EGR_UG;
 }
 
-static void pbio_motor_tacho_update_count(pbio_port_t port, bool int_pin_state, bool dir_pin_state, uint16_t timestamp) {
-    pbio_motor_tacho_data_t *data;
+static void pbdrv_motor_tacho_update_count(pbio_port_t port, bool int_pin_state, bool dir_pin_state, uint16_t timestamp) {
+    pbdrv_motor_tacho_data_t *data;
 
-    data = &pbio_motor_tacho_data[port - PBIO_PORT_A];
+    data = &pbdrv_motor_tacho_data[port - PBIO_PORT_A];
 
     if (int_pin_state ^ dir_pin_state) {
         data->count--;
@@ -181,7 +181,7 @@ void EXTI0_1_IRQHandler(void) {
         gpio_idr = GPIOB->IDR;
         int_pin_state = !!(gpio_idr & GPIO_IDR_1);
         dir_pin_state = !!(gpio_idr & GPIO_IDR_9);
-        pbio_motor_tacho_update_count(PBIO_PORT_A, int_pin_state, dir_pin_state, timestamp);
+        pbdrv_motor_tacho_update_count(PBIO_PORT_A, int_pin_state, dir_pin_state, timestamp);
     }
 
     // port B
@@ -189,12 +189,12 @@ void EXTI0_1_IRQHandler(void) {
         gpio_idr = GPIOA->IDR;
         int_pin_state = !!(gpio_idr & GPIO_IDR_0);
         dir_pin_state = !!(gpio_idr & GPIO_IDR_1);
-        pbio_motor_tacho_update_count(PBIO_PORT_B, int_pin_state, dir_pin_state, timestamp);
+        pbdrv_motor_tacho_update_count(PBIO_PORT_B, int_pin_state, dir_pin_state, timestamp);
     }
 }
 
 void TIM7_IRQHandler(void) {
-    pbio_motor_tacho_data_t *data;
+    pbdrv_motor_tacho_data_t *data;
     uint16_t timestamp;
     uint8_t i, new_head;
 
@@ -205,7 +205,7 @@ void TIM7_IRQHandler(void) {
     // log a new timestamp when the timer recycles to avoid rate calculation
     // problems when the motor is not moving
     for (i = 0; i < 2; i++) {
-        data = &pbio_motor_tacho_data[i];
+        data = &pbdrv_motor_tacho_data[i];
         new_head = (data->head + 1) & (PBIO_MOTOR_BUF_SIZE - 1);
         data->counts[new_head] = data->count;
         data->timestamps[new_head] = timestamp;
@@ -213,7 +213,7 @@ void TIM7_IRQHandler(void) {
     }
 }
 
-pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
+pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
     int index = port - PBIO_PORT_A;
 
     if (port < PBIO_PORT_A || port > PBIO_PORT_B) {
@@ -224,13 +224,13 @@ pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
     // TODO: get port C/D motor position from UART data if motor is attached
     // or return PBIO_ERROR_NO_DEV if motor is not attached
 
-    *count = PBIO_MOTOR_ADJUST_FOR_DIRECTION(port, pbio_motor_tacho_data[index].count);
+    *count = PBIO_MOTOR_ADJUST_FOR_DIRECTION(port, pbdrv_motor_tacho_data[index].count);
 
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
-    pbio_motor_tacho_data_t *data;
+pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
+    pbdrv_motor_tacho_data_t *data;
     int32_t head_count, tail_count = 0;
     uint16_t now, head_time, tail_time = 0;
     uint8_t head, tail, x = 0;
@@ -242,7 +242,7 @@ pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     // TODO: get port C/D motor speed from UART data if motor is attached
     // or return PBIO_ERROR_NO_DEV if motor is not attached
 
-    data = &pbio_motor_tacho_data[port - PBIO_PORT_A];
+    data = &pbdrv_motor_tacho_data[port - PBIO_PORT_A];
     // head can be updated in interrupt, so only read it once
     head = data->head;
     head_count = data->counts[head];
@@ -288,7 +288,7 @@ pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_coast(pbio_port_t port) {
+pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
     if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
         // TODO: return PBIO_ERROR_NO_DEV for ports C/D if no motor is attached
         return PBIO_ERROR_NO_DEV;
@@ -327,7 +327,7 @@ pbio_error_t pbio_motor_coast(pbio_port_t port) {
     return PBIO_SUCCESS;
 }
 
-static void pbio_motor_brake(pbio_port_t port) {
+static void pbdrv_motor_brake(pbio_port_t port) {
     // set both port pins 1 and 2 to output high
     switch (port) {
     case PBIO_PORT_A:
@@ -359,7 +359,7 @@ static void pbio_motor_brake(pbio_port_t port) {
     }
 }
 
-static void pbio_motor_run_fwd(pbio_port_t port, int16_t duty_cycle) {
+static void pbdrv_motor_run_fwd(pbio_port_t port, int16_t duty_cycle) {
     // one pin as out, high and the other as PWM
     switch (port) {
     case PBIO_PORT_A:
@@ -391,7 +391,7 @@ static void pbio_motor_run_fwd(pbio_port_t port, int16_t duty_cycle) {
     }
 }
 
-static void pbio_motor_run_rev(pbio_port_t port, int16_t duty_cycle) {
+static void pbdrv_motor_run_rev(pbio_port_t port, int16_t duty_cycle) {
     // one pin as out, high and the other as PWM
     switch (port) {
     case PBIO_PORT_A:
@@ -423,7 +423,7 @@ static void pbio_motor_run_rev(pbio_port_t port, int16_t duty_cycle) {
     }
 }
 
-pbio_error_t pbio_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
+pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -437,17 +437,17 @@ pbio_error_t pbio_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
     }
 
     if (duty_cycle > 0) {
-        pbio_motor_run_fwd(port, duty_cycle);
+        pbdrv_motor_run_fwd(port, duty_cycle);
     } else if (duty_cycle < 0) {
-        pbio_motor_run_rev(port, duty_cycle);
+        pbdrv_motor_run_rev(port, duty_cycle);
     } else {
-        pbio_motor_brake(port);
+        pbdrv_motor_brake(port);
     }
 
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_set_constant_settings(pbio_port_t port, pbio_motor_dir_t direction) {
+pbio_error_t pbdrv_motor_set_constant_settings(pbio_port_t port, pbio_motor_dir_t direction) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -456,12 +456,12 @@ pbio_error_t pbio_motor_set_constant_settings(pbio_port_t port, pbio_motor_dir_t
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    pbio_motor_invert_dir[port - PBIO_PORT_A] = direction != PBIO_MOTOR_DIR_NORMAL;
+    pbdrv_motor_invert_dir[port - PBIO_PORT_A] = direction != PBIO_MOTOR_DIR_NORMAL;
 
     return PBIO_SUCCESS;
 }
 
-void pbio_motor_deinit(void) {
+void pbdrv_motor_deinit(void) {
     // disable the PWM timers
     TIM1->CR1 &= TIM_CR1_CEN;
     TIM3->CR1 &= TIM_CR1_CEN;

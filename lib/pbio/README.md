@@ -1,20 +1,22 @@
-Pybricks IO Library
-===================
+Pybricks I/O Library
+====================
 
-The Pybricks IO library is a low-level C library that provides a hardware
-abstraction layer for Pybricks devices.
+The Pybricks IO library is a C library that provides a cooperative-multitasking
+hardware abstraction layer for Pybricks devices.
 
 Currently, this library powers Pybricks MicroPython. In the future, this library
-could be made into a stand-alone project to be used as the base for other
-higher level libraries.
+could be made into a stand-alone project.
 
 Directory Structure
 -------------------
 
-The `config` directory contains platform-specific configuration files.
-
-The `include` directory contains the common API that is implemented on all
-platforms.
-
-The `src` directory contains subdirectories with platform-specific
+The `drv` directory contains subdirectories with platform-specific
 implementations of the common API.
+
+The `include/pbiodrv` directory contains the common I/O driver API that must be
+implemented for each platform. These header files are not intended to be used
+outside of this library.
+
+The `include/pbio` directory contains the public header files for the library.
+
+The `src` directory contains the main library source code.

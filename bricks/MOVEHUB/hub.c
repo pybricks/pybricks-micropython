@@ -1,7 +1,7 @@
 #include <stdio.h>
 
-#include <pbio/light.h>
-#include <pbio/motor.h>
+#include <pbdrv/light.h>
+#include <pbdrv/motor.h>
 
 #include "stm32f070xb.h"
 
@@ -32,7 +32,7 @@ STATIC mp_obj_t hub_get_motor_pos(mp_obj_t port) {
         port = mp_call_function_1((mp_obj_t *)&mp_builtin_ord_obj, port);
     }
 
-    err = pbio_motor_get_encoder_count(mp_obj_get_int(port), &pos);
+    err = pbdrv_motor_get_encoder_count(mp_obj_get_int(port), &pos);
     if (err == PBIO_ERROR_INVALID_PORT) {
         mp_raise_ValueError("Invalid port");
     }
@@ -52,7 +52,7 @@ STATIC mp_obj_t hub_get_motor_speed(mp_obj_t port) {
         port = mp_call_function_1((mp_obj_t *)&mp_builtin_ord_obj, port);
     }
 
-    err = pbio_motor_get_encoder_rate(mp_obj_get_int(port), &rate);
+    err = pbdrv_motor_get_encoder_rate(mp_obj_get_int(port), &rate);
     if (err == PBIO_ERROR_INVALID_PORT) {
         mp_raise_ValueError("Invalid port");
     }
@@ -71,7 +71,7 @@ STATIC mp_obj_t hub_run_motor(mp_obj_t port, mp_obj_t duty_cycle) {
         port = mp_call_function_1((mp_obj_t *)&mp_builtin_ord_obj, port);
     }
 
-    err = pbio_motor_set_duty_cycle(mp_obj_get_int(port), mp_obj_get_int(duty_cycle));
+    err = pbdrv_motor_set_duty_cycle(mp_obj_get_int(port), mp_obj_get_int(duty_cycle));
     if (err == PBIO_ERROR_INVALID_PORT) {
         mp_raise_ValueError("Invalid port");
     }
@@ -93,7 +93,7 @@ STATIC mp_obj_t hub_set_motor_dir(mp_obj_t port, mp_obj_t direction) {
         port = mp_call_function_1((mp_obj_t *)&mp_builtin_ord_obj, port);
     }
 
-    err = pbio_motor_set_constant_settings(mp_obj_get_int(port), mp_obj_get_int(direction));
+    err = pbdrv_motor_set_constant_settings(mp_obj_get_int(port), mp_obj_get_int(direction));
     if (err == PBIO_ERROR_INVALID_PORT) {
         mp_raise_ValueError("Invalid port");
     }
@@ -121,10 +121,10 @@ STATIC mp_obj_t hub_stop_motor(mp_obj_t port, mp_obj_t stop_action) {
 
     switch (sa) {
     case 0:
-        err = pbio_motor_coast(p);
+        err = pbdrv_motor_coast(p);
         break;
     case 1:
-        err = pbio_motor_set_duty_cycle(p, 0);
+        err = pbdrv_motor_set_duty_cycle(p, 0);
         break;
     default:
         mp_raise_ValueError("Invalid stop action");
@@ -210,7 +210,7 @@ STATIC mp_obj_t hub_gpios(mp_obj_t value) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_gpios_obj, hub_gpios);
 
 STATIC mp_obj_t hub_power_off(void) {
-    pbio_light_deinit();
+    pbdrv_light_deinit();
 
     // setting PB11 low cuts the power
     GPIOB->BRR = GPIO_BRR_BR_11;
@@ -238,7 +238,7 @@ STATIC mp_obj_t hub_set_light(mp_obj_t state) {
     pbio_error_t err;
 
     if (MP_OBJ_IS_TYPE(state, &mp_type_NoneType)) {
-        pbio_light_set_pattern(PBIO_PORT_SELF, PBIO_LIGHT_PATTERN_OFF);
+        pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_OFF);
         return mp_const_none;
     }
     
@@ -248,31 +248,31 @@ STATIC mp_obj_t hub_set_light(mp_obj_t state) {
         // TODO: adjust the colors so they look right
         switch (color) {
         case MP_QSTR_red:
-            pbio_light_set_color(PBIO_PORT_SELF, 255, 0, 0);
+            pbdrv_light_set_color(PBIO_PORT_SELF, 255, 0, 0);
             break;
         case MP_QSTR_green:
-            pbio_light_set_color(PBIO_PORT_SELF, 0, 255, 0);
+            pbdrv_light_set_color(PBIO_PORT_SELF, 0, 255, 0);
             break;
         case MP_QSTR_blue:
-            pbio_light_set_color(PBIO_PORT_SELF, 0, 0, 255);
+            pbdrv_light_set_color(PBIO_PORT_SELF, 0, 0, 255);
             break;
         case MP_QSTR_cyan:
-            pbio_light_set_color(PBIO_PORT_SELF, 0, 255, 255);
+            pbdrv_light_set_color(PBIO_PORT_SELF, 0, 255, 255);
             break;
         case MP_QSTR_magenta:
-            pbio_light_set_color(PBIO_PORT_SELF, 255, 0, 255);
+            pbdrv_light_set_color(PBIO_PORT_SELF, 255, 0, 255);
             break;
         case MP_QSTR_yellow:
-            pbio_light_set_color(PBIO_PORT_SELF, 255, 255, 0);
+            pbdrv_light_set_color(PBIO_PORT_SELF, 255, 255, 0);
             break;
         case MP_QSTR_white:
-            pbio_light_set_color(PBIO_PORT_SELF, 255, 255, 255);
+            pbdrv_light_set_color(PBIO_PORT_SELF, 255, 255, 255);
             break;
         default:
             mp_raise_ValueError("Unknown color");
         }
 
-        pbio_light_set_pattern(PBIO_PORT_SELF, PBIO_LIGHT_PATTERN_ON);
+        pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_ON);
 
         return mp_const_none;
     }
@@ -286,11 +286,11 @@ STATIC mp_obj_t hub_set_light(mp_obj_t state) {
         g = mp_obj_get_int(mp_obj_subscr(state, MP_OBJ_NEW_SMALL_INT(1), MP_OBJ_SENTINEL));
         b = mp_obj_get_int(mp_obj_subscr(state, MP_OBJ_NEW_SMALL_INT(2), MP_OBJ_SENTINEL));
 
-        err = pbio_light_set_color(PBIO_PORT_SELF, r, g, b);
+        err = pbdrv_light_set_color(PBIO_PORT_SELF, r, g, b);
         if (err == PBIO_ERROR_INVALID_ARG) {
             mp_raise_ValueError("Bad color value");
         }
-        pbio_light_set_pattern(PBIO_PORT_SELF, PBIO_LIGHT_PATTERN_ON);
+        pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_ON);
 
         return mp_const_none;
     }

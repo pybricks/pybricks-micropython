@@ -1,3 +1,6 @@
+#include <pbdrv/motor.h>
+#include <pbio/motor.h>
+
 #include "modmotor.h"
 
 //
@@ -16,7 +19,7 @@ mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t
     // set the direction member if given
     self->direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     // Apply settings to the motor
-    pbio_motor_set_constant_settings(self->port, self->direction);
+    pbdrv_motor_set_constant_settings(self->port, self->direction);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -35,28 +38,28 @@ STATIC void motor_DCMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_p
 }
 STATIC mp_obj_t motor_DCMotor_settings(mp_obj_t self_in, mp_obj_t stall_torque_limit) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
-    pbio_motor_set_variable_settings(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(stall_torque_limit)));
+    pbdrv_motor_set_variable_settings(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(stall_torque_limit)));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(motor_DCMotor_settings_obj, motor_DCMotor_settings);
 
 STATIC mp_obj_t motor_DCMotor_coast(mp_obj_t self_in) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
-    pbio_motor_coast(self->port);
+    pbdrv_motor_coast(self->port);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_DCMotor_coast_obj, motor_DCMotor_coast);
 
 STATIC mp_obj_t motor_DCMotor_brake(mp_obj_t self_in) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
-    pbio_motor_set_duty_cycle(self->port, 0);
+    pbdrv_motor_set_duty_cycle(self->port, 0);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_DCMotor_brake_obj, motor_DCMotor_brake);
 
 STATIC mp_obj_t motor_DCMotor_duty(mp_obj_t self_in, mp_obj_t duty_cycle) {    
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_motor_set_duty_cycle(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(duty_cycle)));
+    pbdrv_motor_set_duty_cycle(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(duty_cycle)));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(motor_DCMotor_duty_obj, motor_DCMotor_duty);
@@ -102,7 +105,7 @@ mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_t *type, size_t n_args, s
     // Set the direction member if given
     self->direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     // Apply settings to the motor
-    pbio_motor_set_constant_settings(self->port, self->direction);    
+    pbdrv_motor_set_constant_settings(self->port, self->direction);    
     // Set the gear ratio
     self->gear_ratio = (n_args >= 3) ? mp_obj_get_float(args[2]): 1.0;
     return MP_OBJ_FROM_PTR(self);

@@ -4,7 +4,6 @@
 #include "py/binary.h"
 #include "py/builtin.h"
 #include <stdio.h>
-#include <pbio/motorcontrol.h>
 #include <pbio/motor.h>
 
 // Class structure for DC Motors

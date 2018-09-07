@@ -1,4 +1,5 @@
-#include <pbio/motorcontrol.h>
+#include <pbdrv/motor.h>
+#include <pbio/motor.h>
 
 /**
  * Control settings for an encoded motor
@@ -15,10 +16,10 @@ typedef struct _pbio_motor_control_settings_t {
     int16_t pid_kd;                 /**< Derivative position control constant (and proportional speed control constant) */
 } pbio_motor_control_settings_t;
 
-pbio_motor_control_settings_t motor_control_settings[PBIO_CONFIG_NUM_MOTOR_CONTROLLER];
+pbio_motor_control_settings_t motor_control_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 pbio_error_t pbio_motor_control_set_constant_settings(pbio_port_t port, int16_t counts_per_unit, float_t gear_ratio){
-    pbio_error_t status = pbio_motor_status(port);
+    pbio_error_t status = pbdrv_motor_status(port);
     if (status == PBIO_SUCCESS) {
         motor_control_settings[motorindex(port)].counts_per_output_unit = gear_ratio * counts_per_unit;
     }
@@ -36,7 +37,7 @@ pbio_error_t pbio_motor_control_set_variable_settings(
         int16_t pid_ki,
         int16_t pid_kd
     ){
-    pbio_error_t status = pbio_motor_status(port);
+    pbio_error_t status = pbdrv_motor_status(port);
     if (status == PBIO_SUCCESS) {
         int8_t port_index = motorindex(port);
         motor_control_settings[port_index].max_speed = max_speed;

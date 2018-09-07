@@ -3,8 +3,6 @@
 #ifndef _PBIO_ERROR_H_
 #define _PBIO_ERROR_H_
 
-#include <pbio/config.h>
-
 /**
  * \addtogroup Error Error handling
  * @{

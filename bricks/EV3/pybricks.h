@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/timerfd.h>
-#include <pbio/motorcontrol.h>
 
 #define PERIOD_MS 10
 

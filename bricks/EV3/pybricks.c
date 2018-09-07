@@ -1,3 +1,7 @@
+
+#include <pbdrv/motor.h>
+#include <pbio/motor.h>
+
 #include "pybricks.h"
 
 // Configure timer at specified interval
@@ -51,7 +55,7 @@ static void *task_caller(void *arg)
 // Pybricks initialization tasks
 void pybricks_init(){
     // Initialize the motors
-    pbio_motor_init();
+    pbdrv_motor_init();
     // Start the background thread
 	pthread_t task_caller_thread;
 	pthread_create(&task_caller_thread, NULL, task_caller, NULL);
@@ -63,5 +67,5 @@ void pybricks_deinit(){
     stopping_thread = true;
     while (stopping_thread);
     // Stop and reset the motors
-    pbio_motor_deinit();
+    pbdrv_motor_deinit();
 }
