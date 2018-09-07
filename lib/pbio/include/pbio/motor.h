@@ -16,8 +16,8 @@
 /**
  * Motor constants across devices
  */
-#define PBIO_MAX_DUTY_HARD 10000
-#define PBIO_DUTY_PCT_TO_ABS (PBIO_MAX_DUTY_HARD/100)
+#define PBIO_MAX_DUTY 10000
+#define PBIO_DUTY_PCT_TO_ABS (PBIO_MAX_DUTY/100)
 
 /**
  * Motor direction convention.
@@ -32,7 +32,7 @@ typedef enum {
  */
 typedef struct _pbio_motor_settings_t {
     pbio_motor_dir_t direction; /**< Whether or not polarity of duty cycle and encoder counter is inversed */
-    int16_t max_duty;           /**< Soft limit on duty cycle */
+    int16_t max_stall_duty;     /**< Upper limit on duty cycle, which corresponds to a maximum torque while stalled. */
 } pbio_motor_settings_t;
 
 pbio_motor_settings_t motor_settings[PBIO_CONFIG_MAX_MOTORS];
@@ -63,13 +63,13 @@ pbio_error_t pbio_motor_set_constant_settings(pbio_port_t port, pbio_motor_dir_t
 /**
  * Configure motor settings that should not be changed during runtime
  * @param [in]  port      ::The motor port
- * @param [in]  max_duty  ::Soft limit on duty cycle
+ * @param [in]  max_stall_duty  ::Soft limit on duty cycle
  * @return                ::PBIO_SUCCESS if the call was successful,
  *                        ::PBIO_ERROR_INVALID_PORT if port is not a valid port
  *                        ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                        ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbio_motor_set_variable_settings(pbio_port_t port, int16_t max_duty);
+pbio_error_t pbio_motor_set_variable_settings(pbio_port_t port, int16_t max_stall_duty);
 
 /**
  * Check whether the motor is connected

@@ -33,9 +33,9 @@ STATIC void motor_DCMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_p
         mp_printf(print, "Inverted");
     }
 }
-STATIC mp_obj_t motor_DCMotor_settings(mp_obj_t self_in, mp_obj_t max_duty_cycle) {
+STATIC mp_obj_t motor_DCMotor_settings(mp_obj_t self_in, mp_obj_t stall_torque_limit) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
-    pbio_motor_set_variable_settings(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(max_duty_cycle)));
+    pbio_motor_set_variable_settings(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(stall_torque_limit)));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(motor_DCMotor_settings_obj, motor_DCMotor_settings);
