@@ -23,14 +23,14 @@ mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t
 STATIC void motor_DCMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind ) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     // Print port
-    printf("Port: %c\n", self->port);
+    mp_printf(print, "Port: %c\n", self->port);
     // Print direction
-    printf("Direction: ");
+    mp_printf(print, "Direction: ");
     if (self->direction == PBIO_MOTOR_DIR_NORMAL) {
-        printf("Normal");
+        mp_printf(print, "Normal");
     }
     else {
-        printf("Inverted");
+        mp_printf(print, "Inverted");
     }
 }
 STATIC mp_obj_t motor_DCMotor_settings(mp_obj_t self_in, mp_obj_t max_duty_cycle) {
@@ -114,7 +114,7 @@ STATIC void motor_EncodedMotor_print(const mp_print_t *print,  mp_obj_t self_in,
     // print the DCMotor attributes
     motor_DCMotor_print(print, self_in, kind);
     // Print other attributes
-    printf("\nGear ratio: %f", self->gear_ratio);
+    mp_printf(print, "\nGear ratio: %f", self->gear_ratio);
 }
 
 //
