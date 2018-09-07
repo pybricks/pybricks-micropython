@@ -31,7 +31,7 @@ typedef enum {
  * Settings for a Motor
  */
 typedef struct _pbio_motor_settings_t {
-    pbio_motor_dir_t direction; /**< Whether or not polarity of duty cycle and encoder counter is inversed */
+    pbio_motor_dir_t direction; /**< Whether or not polarity of duty cycle and encoder counter is inverted */
     int16_t max_stall_duty;     /**< Upper limit on duty cycle, which corresponds to a maximum torque while stalled. */
 } pbio_motor_settings_t;
 
@@ -52,7 +52,7 @@ void pbio_motor_deinit(void);
 /**
  * Configure motor settings that should not be changed during runtime
  * @param [in]  port      ::The motor port
- * @param [in]  direction ::Whether or not polarity of duty cycle and encoder counter is inversed
+ * @param [in]  direction ::Whether or not polarity of duty cycle and encoder counter is inverted
  * @return                ::PBIO_SUCCESS if the call was successful,
  *                        ::PBIO_ERROR_INVALID_PORT if port is not a valid port
  *                        ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
