@@ -10,6 +10,9 @@ could be made into a stand-alone project.
 Directory Structure
 -------------------
 
+The `doc` directory contains the doxygen build configuration. TODO: post doc
+build output online somewhere.
+
 The `drv` directory contains subdirectories with platform-specific
 implementations of the common API.
 
