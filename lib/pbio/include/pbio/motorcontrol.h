@@ -36,7 +36,7 @@ typedef enum {
 /**
  * Control settings for an encoded motor
  */
-typedef struct _motor_control_settings_t {
+typedef struct _pbio_motor_control_settings_t {
     int16_t counts_per_output_unit; /**< Encoder counts per output unit, including optional gear train (counts per degree for rotational motors, counts per cm for a linear motor) */
     int16_t max_speed;              /**< Soft limit on the reference speed in all run commands */
     int16_t tolerance;              /**< Allowed deviation (deg) from target before motion is considered complete */
@@ -46,9 +46,9 @@ typedef struct _motor_control_settings_t {
     int16_t pid_kp;                 /**< Proportional position control constant (and integral speed control constant) */
     int16_t pid_ki;                 /**< Integral position control constant */
     int16_t pid_kd;                 /**< Derivative position control constant (and proportional speed control constant) */
-} motor_control_settings_t;
+} pbio_motor_control_settings_t;
 
-motor_control_settings_t motor_control_settings[PBIO_CONFIG_MAX_MOTORS];
+pbio_motor_control_settings_t motor_control_settings[PBIO_CONFIG_MAX_MOTORS];
 
 pbio_error_t pbio_motor_control_set_constant_settings(pbio_port_t port, int16_t counts_per_unit, float_t gear_ratio);
 

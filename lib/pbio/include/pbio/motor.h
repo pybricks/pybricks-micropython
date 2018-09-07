@@ -30,12 +30,12 @@ typedef enum {
 /**
  * Settings for a Motor
  */
-typedef struct _motor_settings_t {
+typedef struct _pbio_motor_settings_t {
     pbio_motor_dir_t direction; /**< Whether or not polarity of duty cycle and encoder counter is inversed */
     int16_t max_duty;           /**< Soft limit on duty cycle */
-} motor_settings_t;
+} pbio_motor_settings_t;
 
-motor_settings_t motor_settings[PBIO_CONFIG_MAX_MOTORS];
+pbio_motor_settings_t motor_settings[PBIO_CONFIG_MAX_MOTORS];
 
 /**
  * Initializes the low level motor driver. This should be called only once and
