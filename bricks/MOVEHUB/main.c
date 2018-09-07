@@ -144,8 +144,8 @@ void MP_WEAK __assert_func(const char *file, int line, const char *func, const c
 #endif
 
 // special memory addresses defined in linker script
-extern uint32_t _fw_isr_vector_src[47];
-extern uint32_t _fw_isr_vector_dst[47];
+extern uint32_t _fw_isr_vector_src[48];
+extern uint32_t _fw_isr_vector_dst[48];
 
 // Called from assembly code in startup routine
 void SystemInit(void) {
