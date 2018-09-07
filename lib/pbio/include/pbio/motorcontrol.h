@@ -8,6 +8,11 @@
 #include <pbio/port.h>
 #include <pbio/motor.h>
 
+/**
+ * \addtogroup Motorcontrol High-level motor control
+ * @{
+ */
+
 typedef float float_t;
 
 /**
@@ -42,5 +47,7 @@ pbio_error_t pbio_motor_run_target(pbio_port_t port, float_t gear_ratio, float_t
 pbio_error_t pbio_motor_track_target(pbio_port_t port, float_t gear_ratio, float_t target, pbio_motor_stop_t stop, pbio_motor_wait_t wait);
 
 void motorcontroller();
+
+/** @}*/
 
 #endif // _PBIO_MOTORCONTROL_H_

@@ -8,6 +8,11 @@
 #include <pbio/error.h>
 #include <pbio/port.h>
 
+/**
+ * \addtogroup Light Low-level light I/O
+ * @{
+ */
+
 typedef enum {
     PBIO_LIGHT_PATTERN_OFF,     /**< The light is off */
     PBIO_LIGHT_PATTERN_ON,      /**< The light is on (solid) */
@@ -36,7 +41,7 @@ void pbio_light_deinit(void);
  * @param [in]  r       The red component
  * @param [in]  g       The green component
  * @param [in]  b       The blue component
- * @return              ::PB_SUCCESS if the call was successful,
+ * @return              ::PBIO_SUCCESS if the call was successful,
  *                      ::PBIO_ERROR_INVALID_PORT if port is not a valid port
  *                      ::PBIO_ERROR_NO_DEV if port is valid but light is not connected
  *                      ::PBIO_ERROR_IO if there was an I/O error
@@ -47,12 +52,14 @@ pbio_error_t pbio_light_set_color(pbio_port_t port, uint8_t r, uint8_t g, uint8_
  * Sets the blink pattern of the light.
  * @param [in]  port    The light port
  * @param [in]  pattern The pattern
- * @return              ::PB_SUCCESS if the call was successful,
+ * @return              ::PBIO_SUCCESS if the call was successful,
  *                      ::PBIO_ERROR_INVALID_PORT if port is not a valid port
  *                      ::PBIO_ERROR_INVALID_ARG if the pattern is not valid
  *                      ::PBIO_ERROR_NO_DEV if port is valid but light is not connected
  *                      ::PBIO_ERROR_IO if there was an I/O error
  */
 pbio_error_t pbio_light_set_pattern(pbio_port_t port, pbio_light_pattern_t pattern);
+
+/** @}*/
 
 #endif // _PBIO_LIGHT_H_

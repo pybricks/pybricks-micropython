@@ -10,6 +10,11 @@
 #include <pbio/error.h>
 
 /**
+ * \addtogroup Port I/O ports
+ * @{
+ */
+
+/**
  * I/O port identifier. The meaning and availability of a port is device-specific.
  */
 typedef enum {
@@ -40,5 +45,7 @@ typedef enum {
     PBIO_PORT_4 = '4', /**< I/O port labeled as "4" */
 #endif
 } pbio_port_t;
+
+/** @}*/
 
 #endif // _PBIO_PORT_H_

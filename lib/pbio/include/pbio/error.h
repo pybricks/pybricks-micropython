@@ -6,6 +6,11 @@
 #include <pbio/config.h>
 
 /**
+ * \addtogroup Error Error handling
+ * @{
+ */
+
+/**
  * Error code.
  */
 typedef enum {
@@ -16,5 +21,7 @@ typedef enum {
     PBIO_ERROR_IO,              /**< General I/O error */
     PBIO_ERROR_NO_DEV,          /**< Device is not connected */
 } pbio_error_t;
+
+/** @}*/
 
 #endif // _PBIO_ERROR_H_
