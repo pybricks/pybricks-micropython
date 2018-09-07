@@ -28,7 +28,7 @@ motorfile_t motorfiles[] = {
 motor_settings_t motor_settings[] = {
     [motorindex(PBIO_PORT_A) ... motorindex(PBIO_PORT_D)]{
         .direction = PBIO_MOTOR_DIR_NORMAL,
-        .max_duty = MAX_DUTY_HARD
+        .max_duty = PBIO_MAX_DUTY_HARD
     }
 };
 
@@ -122,7 +122,10 @@ pbio_error_t pbio_motor_set_constant_settings(pbio_port_t port, pbio_motor_dir_t
 
 pbio_error_t pbio_motor_set_variable_settings(pbio_port_t port, int16_t max_duty){
     pbio_error_t status = pbio_motor_status(port);
-    if (status == PBIO_SUCCESS) {
+    if (max_duty < 0 || max_duty > PBIO_MAX_DUTY_HARD) {
+        status = PBIO_ERROR_INVALID_ARG;
+    }
+    if (status == PBIO_SUCCESS) { 
         motor_settings[motorindex(port)].max_duty = max_duty;
     }
     return status;

@@ -16,7 +16,8 @@
 /**
  * Motor constants across devices
  */
-#define MAX_DUTY_HARD 10000
+#define PBIO_MAX_DUTY_HARD 10000
+#define PBIO_DUTY_PCT_TO_ABS (PBIO_MAX_DUTY_HARD/100)
 
 /**
  * Motor direction convention.

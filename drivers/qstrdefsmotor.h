@@ -1,5 +1,6 @@
 // Class for DC motors
 Q(DCMotor)
+Q(settings)
 Q(coast)
 Q(brake)
 Q(duty)

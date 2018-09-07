@@ -33,6 +33,12 @@ STATIC void motor_DCMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_p
         printf("Inverted");
     }
 }
+STATIC mp_obj_t motor_DCMotor_settings(mp_obj_t self_in, mp_obj_t max_duty_cycle) {
+    motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
+    pbio_motor_set_variable_settings(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(max_duty_cycle)));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_2(motor_DCMotor_settings_obj, motor_DCMotor_settings);
 
 STATIC mp_obj_t motor_DCMotor_coast(mp_obj_t self_in) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
@@ -48,9 +54,9 @@ STATIC mp_obj_t motor_DCMotor_brake(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_DCMotor_brake_obj, motor_DCMotor_brake);
 
-STATIC mp_obj_t motor_DCMotor_duty(mp_obj_t self_in, mp_obj_t duty) {    
+STATIC mp_obj_t motor_DCMotor_duty(mp_obj_t self_in, mp_obj_t duty_cycle) {    
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_motor_set_duty_cycle(self->port, (int) mp_obj_get_float(duty));
+    pbio_motor_set_duty_cycle(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(duty_cycle)));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(motor_DCMotor_duty_obj, motor_DCMotor_duty);
@@ -61,6 +67,7 @@ MP_DEFINE_CONST_FUN_OBJ_2(motor_DCMotor_duty_obj, motor_DCMotor_duty);
 
 // creating the table of members
 STATIC const mp_rom_map_elem_t motor_DCMotor_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_settings), MP_ROM_PTR(&motor_DCMotor_settings_obj) },    
     { MP_ROM_QSTR(MP_QSTR_coast), MP_ROM_PTR(&motor_DCMotor_coast_obj) },
     { MP_ROM_QSTR(MP_QSTR_brake), MP_ROM_PTR(&motor_DCMotor_brake_obj) },
     { MP_ROM_QSTR(MP_QSTR_duty), MP_ROM_PTR(&motor_DCMotor_duty_obj) },
