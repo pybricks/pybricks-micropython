@@ -12,11 +12,11 @@ mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t
     // give it a type
     self->base.type = &motor_DCMotor_type;
     // set the member number with the first argument of the constructor
-    self->port = mp_obj_get_int(args[0]); // TODO: Check valid range using mp_arg_parse_all
-    // set the inverted member if given
-    self->inverted = (n_args == 2) ? mp_obj_is_true(args[1]) : false;
+    self->port = mp_obj_get_int(args[0]);
+    // set the direction member if given
+    self->direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     // Apply settings to the motor
-    pbio_motor_set_direction(self->port, self->inverted);
+    pbio_motor_set_settings(self->port, self->direction, MAX_DUTY_HARD);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -24,13 +24,13 @@ STATIC void motor_DCMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_p
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     // Print port
     printf("Port: %c\n", self->port);
-    // Print inverted (yes or no)
-    printf("Inverted: ");
-    if (self->inverted) {
-        printf("yes");
+    // Print direction
+    printf("Direction: ");
+    if (self->direction == PBIO_MOTOR_DIR_NORMAL) {
+        printf("Normal");
     }
     else {
-        printf("no");
+        printf("Inverted");
     }
 }
 
@@ -48,7 +48,7 @@ STATIC mp_obj_t motor_DCMotor_brake(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_DCMotor_brake_obj, motor_DCMotor_brake);
 
-STATIC mp_obj_t motor_DCMotor_duty(mp_obj_t self_in, mp_obj_t duty) {
+STATIC mp_obj_t motor_DCMotor_duty(mp_obj_t self_in, mp_obj_t duty) {    
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_motor_set_duty_cycle(self->port, (int) mp_obj_get_float(duty));
     return mp_const_none;
@@ -92,9 +92,10 @@ mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_t *type, size_t n_args, s
     self->base.type = &motor_EncodedMotor_type;
     // Set the port
     self->port = mp_obj_get_int(args[0]);
-    // Set the inverted member if given
-    self->inverted = (n_args >= 2) ? mp_obj_is_true(args[1]) : false;
-    pbio_motor_set_direction(self->port, self->inverted);
+    // Set the direction member if given
+    self->direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
+    // Apply settings to the motor
+    pbio_motor_set_settings(self->port, self->direction, MAX_DUTY_HARD);    
     // Set the gear ratio
     self->gear_ratio = (n_args >= 3) ? mp_obj_get_float(args[2]): 1.0;
     return MP_OBJ_FROM_PTR(self);
@@ -127,7 +128,7 @@ const mp_obj_type_t motor_EncodedMotor_type = {
     .name = MP_QSTR_EncodedMotor,
     .print = motor_EncodedMotor_print,
     .make_new = motor_EncodedMotor_make_new,
-     .parent = &motor_DCMotor_type, //Inherit from DCMotor (?)
+    .parent = &motor_DCMotor_type, //Inherit from DCMotor (?)
     .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
 };
 

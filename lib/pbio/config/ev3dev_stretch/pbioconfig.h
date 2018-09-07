@@ -13,5 +13,6 @@
 #define PBIO_CONFIG_HAS_PORT_2 (1)
 #define PBIO_CONFIG_HAS_PORT_3 (1)
 #define PBIO_CONFIG_HAS_PORT_4 (1)
+#define PBIO_CONFIG_MAX_MOTORS (4)
 
 #endif // _PBIOCONFIG_H_

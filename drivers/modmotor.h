@@ -11,14 +11,14 @@
 typedef struct _motor_DCMotor_obj_t {
     mp_obj_base_t base;
     pbio_port_t port;
-    pbio_motor_dir_t inverted;
+    pbio_motor_dir_t direction;
 } motor_DCMotor_obj_t;
 
 // Class structure for Encoded Motors
 typedef struct _motor_EncodedMotor_obj_t {
     mp_obj_base_t base;
     uint8_t port;
-    pbio_motor_dir_t inverted;
+    pbio_motor_dir_t direction;
     float_t gear_ratio;
 } motor_EncodedMotor_obj_t;
 

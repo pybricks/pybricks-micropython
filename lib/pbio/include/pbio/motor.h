@@ -14,12 +14,27 @@
  */
 
 /**
+ * Motor constants across devices
+ */
+#define MAX_DUTY_HARD 10000
+
+/**
  * Motor direction convention.
  */
 typedef enum {
     PBIO_MOTOR_DIR_NORMAL,      /**< Use the normal motor-specific convention for the positive direction */
     PBIO_MOTOR_DIR_INVERTED,    /**< Swap positive and negative for both the encoder value and the duty cycle */
 } pbio_motor_dir_t;
+
+/**
+ * Settings for a Motor
+ */
+typedef struct _motor_settings_t {
+    pbio_motor_dir_t direction; /**< Whether or not polarity of duty cycle and encoder counter is inversed */
+    int16_t max_duty;           /**< Soft limit on duty cycle */
+} motor_settings_t;
+
+motor_settings_t motor_settings[PBIO_CONFIG_MAX_MOTORS];
 
 /**
  * Initializes the low level motor driver. This should be called only once and
@@ -32,6 +47,38 @@ void pbio_motor_init(void);
  * calling this function.
  */
 void pbio_motor_deinit(void);
+
+/**
+ * Configure motor settings
+ * @param [in]  port      ::The motor port
+ * @param [in]  direction ::Whether or not polarity of duty cycle and encoder counter is inversed
+ * @param [in]  max_duty  ::Soft limit on duty cycle
+ * @return                ::PBIO_SUCCESS if the call was successful,
+ *                        ::PBIO_ERROR_INVALID_PORT if port is not a valid port
+ *                        ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
+ *                        ::PBIO_ERROR_IO if there was an I/O error
+ */
+pbio_error_t pbio_motor_set_settings(pbio_port_t port, pbio_motor_dir_t direction, int16_t max_duty);
+
+/**
+ * Check whether the motor is connected
+ * @param [in]  port    The motor port
+ * @return              ::PBIO_SUCCESS if the call was successful,
+ *                      ::PBIO_ERROR_INVALID_PORT if port is not a valid port
+ *                      ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
+ *                      ::PBIO_ERROR_IO if there was an I/O error
+ */
+pbio_error_t pbio_motor_status(pbio_port_t port);
+
+/**
+ * Check whether the motor is connected
+ * @param [in]  port    The motor port
+ * @return              ::PBIO_SUCCESS if the call was successful,
+ *                      ::PBIO_ERROR_INVALID_PORT if port is not a valid port
+ *                      ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
+ *                      ::PBIO_ERROR_IO if there was an I/O error
+ */
+pbio_error_t pbio_motor_status(pbio_port_t port);
 
 /**
  * Gets the tachometer encoder count.
@@ -76,18 +123,6 @@ pbio_error_t pbio_motor_coast(pbio_port_t port);
  *                          ::PBIO_ERROR_IO if there was an I/O error
  */
 pbio_error_t pbio_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle);
-
-/**
- * Sets the direction of the motor. See ::pbio_motor_dir_t for more information.
- * @param [in]  port        The motor port
- * @param [in]  direction   The direction
- * @return                  ::PBIO_SUCCESS if the call was successful,
- *                          ::PBIO_ERROR_INVALID_PORT if port is not a valid port
- *                          ::PBIO_ERROR_INVALID_ARG if direction is not valid
- *                          ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
- *                          ::PBIO_ERROR_IO if there was an I/O error
- */
-pbio_error_t pbio_motor_set_direction(pbio_port_t port, pbio_motor_dir_t direction);
 
 /** @}*/
 

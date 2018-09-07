@@ -7,10 +7,7 @@
 
 
 #define MAX_PATH_LENGTH 50
-#define MAX_DUTY_HARD 100
 
-// Index of a pbio_port_t type
-#define pindex(port)  (port-PBIO_PORT_A)
 
 // Motor file structure for each motor
 typedef struct _motorfile_t {
@@ -22,13 +19,24 @@ typedef struct _motorfile_t {
     FILE *f_duty;
 } motorfile_t;
 
-motorfile_t motorfiles[pindex(PBIO_PORT_D)+1] = {[pindex(PBIO_PORT_A) ... pindex(PBIO_PORT_D)].connected=false};
+motorfile_t motorfiles[] = {
+    [motorindex(PBIO_PORT_A) ... motorindex(PBIO_PORT_D)]{
+        .connected=false
+    }
+};
+
+motor_settings_t motor_settings[] = {
+    [motorindex(PBIO_PORT_A) ... motorindex(PBIO_PORT_D)]{
+        .direction = PBIO_MOTOR_DIR_NORMAL,
+        .max_duty = MAX_DUTY_HARD
+    }
+};
 
 // Open file, write contents, and close it
 void slow_write(pbio_port_t port, const char* filename, const char* content) {
     // Open the file in the directory corresponding to the specified port
     char filepath[MAX_PATH_LENGTH];
-    snprintf(filepath, MAX_PATH_LENGTH, "/sys/class/tacho-motor/motor%d/%s", motorfiles[pindex(port)].dir_number, filename);
+    snprintf(filepath, MAX_PATH_LENGTH, "/sys/class/tacho-motor/motor%d/%s", motorfiles[motorindex(port)].dir_number, filename);
     FILE* file = fopen(filepath, "w"); 
     // Write the contents to the file
     fprintf(file, content);  
@@ -66,7 +74,7 @@ void pbio_motor_init(void) {
 
     // Now that we know which motors are present, open the relevant files for reading and writing
     for(pbio_port_t port = PBIO_PORT_A; port < PBIO_PORT_D; port++) {
-        int port_index = pindex(port);
+        int port_index = motorindex(port);
         if (motorfiles[port_index].connected) {
             //Debug message. Should replace with debug print
             printf("Detected motor%d on port %c.\n", motorfiles[port_index].dir_number, port_index+65);
@@ -92,7 +100,7 @@ void pbio_motor_init(void) {
 void pbio_motor_deinit(void) {
     // Close the relevant files
     for(pbio_port_t port = PBIO_PORT_A; port < PBIO_PORT_D; port++) {
-        int port_index = pindex(port);
+        int port_index = motorindex(port);
         if (motorfiles[port_index].connected) {
             // Only close files for motors that are attached
             fclose(motorfiles[port_index].f_encoder_count);
@@ -104,15 +112,34 @@ void pbio_motor_deinit(void) {
     }
 }
 
+pbio_error_t pbio_motor_set_settings(pbio_port_t port, pbio_motor_dir_t direction, int16_t max_duty){
+    pbio_error_t status = pbio_motor_status(port);
+    if (status == PBIO_SUCCESS) {
+        motor_settings[motorindex(port)].direction = direction;
+        motor_settings[motorindex(port)].max_duty = max_duty;
+    }
+    return status;
+}
+
+pbio_error_t pbio_motor_status(pbio_port_t port) {
+    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
+        return PBIO_ERROR_INVALID_PORT;
+    }
+    if (!motorfiles[motorindex(port)].connected) {
+        return PBIO_ERROR_NO_DEV;
+    }
+    return PBIO_SUCCESS;
+}
+
 pbio_error_t pbio_motor_coast(pbio_port_t port) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }
-    if (!motorfiles[pindex(port)].connected) {
+    if (!motorfiles[motorindex(port)].connected) {
         return PBIO_ERROR_NO_DEV;
     }
     slow_write(port, "command", "stop");
-    motorfiles[pindex(port)].coasting = true;    
+    motorfiles[motorindex(port)].coasting = true;    
 
     return PBIO_SUCCESS;
 }
@@ -121,42 +148,29 @@ pbio_error_t pbio_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }
-    if (!motorfiles[pindex(port)].connected) {
+    if (!motorfiles[motorindex(port)].connected) {
         return PBIO_ERROR_NO_DEV;
     }
     // If the motor is currently in coast mode, set it back to run-direct mode
-    if (motorfiles[pindex(port)].coasting) {
+    if (motorfiles[motorindex(port)].coasting) {
         slow_write(port, "command", "run-direct");
-        motorfiles[pindex(port)].coasting = false;
+        motorfiles[motorindex(port)].coasting = false;
     }
     // Limit the duty cycle value
-    if (duty_cycle > MAX_DUTY_HARD) {
-        duty_cycle = MAX_DUTY_HARD;
+    int16_t limit = motor_settings[motorindex(port)].max_duty;
+    if (duty_cycle > limit) {
+        duty_cycle = limit;
     }
-    if (duty_cycle < -MAX_DUTY_HARD) {
-        duty_cycle = -MAX_DUTY_HARD;
-    }    
-    // Set the duty cycle value, limited by the hard constraint of the device
-    fseek(motorfiles[pindex(port)].f_duty, 0, SEEK_SET);
-    fprintf(motorfiles[pindex(port)].f_duty, "%d", duty_cycle);
-    fflush(motorfiles[pindex(port)].f_duty); 
-
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_motor_set_direction(pbio_port_t port, pbio_motor_dir_t direction) {
-    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
-        return PBIO_ERROR_INVALID_PORT;
+    if (duty_cycle < -limit) {
+        duty_cycle = -limit;
     }
-    if (!motorfiles[pindex(port)].connected) {
-        return PBIO_ERROR_NO_DEV;
+    // Flip sign if motor is inverted
+    if (motor_settings[motorindex(port)].direction == PBIO_MOTOR_DIR_INVERTED){
+        duty_cycle = -duty_cycle;
     }
-    if (direction == PBIO_MOTOR_DIR_INVERTED) {
-        slow_write(port, "polarity", "inversed");
-    }
-    else{
-        slow_write(port, "polarity", "normal");
-    }
+    fseek(motorfiles[motorindex(port)].f_duty, 0, SEEK_SET);
+    fprintf(motorfiles[motorindex(port)].f_duty, "%d", duty_cycle/100);
+    fflush(motorfiles[motorindex(port)].f_duty); 
 
     return PBIO_SUCCESS;
 }
@@ -165,12 +179,17 @@ pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }
-    if (!motorfiles[pindex(port)].connected) {
+    if (!motorfiles[motorindex(port)].connected) {
         return PBIO_ERROR_NO_DEV;
     }
-    fseek(motorfiles[pindex(port)].f_encoder_count, 0, SEEK_SET);
-    fscanf(motorfiles[pindex(port)].f_encoder_count, "%d", count);
-    fflush(motorfiles[pindex(port)].f_encoder_count);
+    fseek(motorfiles[motorindex(port)].f_encoder_count, 0, SEEK_SET);
+    fscanf(motorfiles[motorindex(port)].f_encoder_count, "%d", count);
+    fflush(motorfiles[motorindex(port)].f_encoder_count);
+
+    // Flip sign if motor is inverted
+    if (motor_settings[motorindex(port)].direction == PBIO_MOTOR_DIR_INVERTED){
+        count = -count;
+    }    
 
     return PBIO_SUCCESS;    
 }
@@ -179,12 +198,12 @@ pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }
-    if (!motorfiles[pindex(port)].connected) {
+    if (!motorfiles[motorindex(port)].connected) {
         return PBIO_ERROR_NO_DEV;
     }
-    fseek(motorfiles[pindex(port)].f_encoder_rate, 0, SEEK_SET);
-    fscanf(motorfiles[pindex(port)].f_encoder_rate, "%d", rate);
-    fflush(motorfiles[pindex(port)].f_encoder_rate);
+    fseek(motorfiles[motorindex(port)].f_encoder_rate, 0, SEEK_SET);
+    fscanf(motorfiles[motorindex(port)].f_encoder_rate, "%d", rate);
+    fflush(motorfiles[motorindex(port)].f_encoder_rate);
 
     return PBIO_SUCCESS;    
 }
