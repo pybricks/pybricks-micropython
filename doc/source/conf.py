@@ -18,8 +18,8 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import sys
+sys.path.insert(0, os.path.abspath('../../lib/fake-pybricks'))
 
 # on_rtd is whether we are on readthedocs.org, this line of code grabbed from docs.readthedocs.org
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
@@ -33,9 +33,12 @@ on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc',
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'sphinx.ext.todo',
-    'sphinx.ext.mathjax']
+    'sphinx.ext.mathjax',
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -80,6 +83,12 @@ pygments_style = 'sphinx'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+
+# -- Autodoc options ------------------------------------------------------
+
+autodoc_member_order = 'bysource'
+autodoc_default_flags = ['members', 'undoc-members']
 
 
 # -- Options for HTML output ----------------------------------------------
@@ -189,6 +198,3 @@ texinfo_documents = [
      author, 'Pybricks', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-

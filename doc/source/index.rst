@@ -23,6 +23,7 @@ Welcome to Pybricks's documentation!
    :maxdepth: 2
    :caption: Common modules:
 
+   modpblight
    modutime
 
 
