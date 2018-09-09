@@ -28,7 +28,7 @@ pbio_error_t pbio_motor_set_constant_settings(pbio_port_t port, int16_t counts_p
     return status;
 }
 
-pbio_error_t pbio_motor_control_set_variable_settings(
+pbio_error_t pbio_motor_set_variable_settings(
         pbio_port_t port,
         int16_t max_speed,
         int16_t tolerance,
@@ -54,6 +54,25 @@ pbio_error_t pbio_motor_control_set_variable_settings(
     return status;
 };
 
+// TODO: make consistent with how regular motor settings are printed
+pbio_error_t pbio_motor_print_settings(pbio_port_t port, char *settings_string){
+    pbio_error_t status = pbdrv_motor_status(port);
+    if (status == PBIO_SUCCESS) {
+        int8_t port_index = PORT_TO_IDX(port);
+        snprintf(settings_string, MAX_SETTINGS_LENGTH,
+            "\nmax_speed: %d\ntolerance: %d\naccel start: %d\naccel end: %d\ntight_loop: %f\nkp: %f\nki: %f\nkd: %f\n ",
+            motor_control_settings[port_index].max_speed,
+            motor_control_settings[port_index].tolerance,
+            motor_control_settings[port_index].acceleration_start,
+            motor_control_settings[port_index].acceleration_end,
+            motor_control_settings[port_index].tight_loop_time_ms / MS_PER_SECOND,
+            motor_control_settings[port_index].pid_kp / PID_PRESCALE,
+            motor_control_settings[port_index].pid_ki / PID_PRESCALE,
+            motor_control_settings[port_index].pid_kd / PID_PRESCALE     
+        );
+    }
+    return status;
+}
 
 pbio_error_t pbio_motor_run(pbio_port_t port, float_t speed){
     // TODO

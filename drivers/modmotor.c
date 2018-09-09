@@ -134,6 +134,7 @@ EncodedMotor
         Arguments:
             port {const} -- Port to which the device is connected: PORT_A, PORT_B, etc.
             direction {const} -- DIR_NORMAL or DIR_INVERTED (default: {DIR_NORMAL})
+            gear_ratio {float} -- Absolute slow down factor of a gear train (default: {1.0})
         """
 */
 mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
@@ -157,7 +158,42 @@ STATIC void motor_EncodedMotor_print(const mp_print_t *print,  mp_obj_t self_in,
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     motor_DCMotor_print(print, self_in, kind);
     mp_printf(print, "\nGear ratio: %f", self->gear_ratio);
+    char settings_string[MAX_SETTINGS_LENGTH];
+    pbio_motor_print_settings(self->port, settings_string);
+    mp_printf(print, "%s", settings_string);
 }
+
+/*
+EncodedMotor
+    def settings(self, relative_torque_limit, max_speed, tolerance, acceleration_start, acceleration_end, tight_loop_time_ms, pid_kp, pid_ki, pid_kd):
+        """Update the motor settings.
+        Arguments:
+        [1] relative_torque_limit {float}   -- Percentage (-100.0 to 100.0) of the maximum stationary torque that the motor is allowed to produce.
+        [2] max_speed {float}               -- Soft limit on the reference speed in all run commands
+        [3] tolerance {float}               -- Allowed deviation (deg) from target before motion is considered complete
+        [4] acceleration_start {float}      -- Acceleration when beginning to move. Positive value in degrees per second per second
+        [5] acceleration_end {float}        -- Deceleration when stopping. Positive value in degrees per second per second
+        [6] tight_loop_time {float}         -- When a run function is called twice in this interval (seconds), assume that the user is doing their own speed control.
+        [7] pid_kp {float}                  -- Proportional position control constant (and integral speed control constant)
+        [8] pid_ki {float}                  -- Integral position control constant
+        [9] pid_kd {float}                  -- Derivative position control constant (and proportional speed control constant)
+*/
+STATIC mp_obj_t motor_EncodedMotor_settings(size_t n_args, const mp_obj_t *args){
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
+    pbdrv_motor_set_variable_settings(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(args[1])));
+    pbio_motor_set_variable_settings(self->port, 
+                                     (int16_t) mp_obj_get_float(args[2]),
+                                     (int16_t) mp_obj_get_float(args[3]),
+                                     (int16_t) mp_obj_get_float(args[4]),
+                                     (int16_t) mp_obj_get_float(args[5]),
+                                     (int16_t) (mp_obj_get_float(args[6]) * MS_PER_SECOND),
+                                     (int16_t) (mp_obj_get_float(args[7]) * PID_PRESCALE),
+                                     (int16_t) (mp_obj_get_float(args[8]) * PID_PRESCALE),
+                                     (int16_t) (mp_obj_get_float(args[9]) * PID_PRESCALE)
+                                     );
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_settings_obj, 10, 10, motor_EncodedMotor_settings);
 
 /*
 EncodedMotor Class tables
@@ -167,6 +203,7 @@ STATIC const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_coast), MP_ROM_PTR(&motor_DCMotor_coast_obj) },
     { MP_ROM_QSTR(MP_QSTR_brake), MP_ROM_PTR(&motor_DCMotor_brake_obj) },
     { MP_ROM_QSTR(MP_QSTR_duty), MP_ROM_PTR(&motor_DCMotor_duty_obj) },
+    { MP_ROM_QSTR(MP_QSTR_settings), MP_ROM_PTR(&motor_EncodedMotor_settings_obj) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(motor_EncodedMotor_locals_dict, motor_EncodedMotor_locals_dict_table);
