@@ -144,6 +144,7 @@ mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_t *type, size_t n_args, s
     self->direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     self->gear_ratio = (n_args >= 3) ? mp_obj_get_float(args[2]): 1.0;
     pbdrv_motor_set_constant_settings(self->port, self->direction);
+    pbio_motor_set_constant_settings(self->port, 1, self->gear_ratio);  // TODO: device specific counts_per_unit instead of 1  
     return MP_OBJ_FROM_PTR(self);
 }
 
