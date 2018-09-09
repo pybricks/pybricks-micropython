@@ -25,7 +25,7 @@ mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t
     self->port = mp_obj_get_int(args[0]);
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     pbdrv_motor_set_constant_settings(self->port, direction);
-    pbdrv_motor_set_variable_settings(self->port, PBIO_MAX_DUTY/PBIO_DUTY_PCT_TO_ABS);
+    pbdrv_motor_set_variable_settings(self->port, PBIO_MAX_DUTY);
     return MP_OBJ_FROM_PTR(self);
 }
 
