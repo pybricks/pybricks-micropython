@@ -43,7 +43,8 @@ typedef enum {
 } pbio_motor_wait_t;
 
 #define PID_PRESCALE (1000.0)
-#define MAX_SETTINGS_LENGTH (200)
+#define MAX_PBDRV_SETTINGS_LENGTH (200)
+#define MAX_PBIO_SETTINGS_LENGTH (200)
 #define MS_PER_SECOND (1000.0)
 
 pbio_error_t pbio_motor_set_constant_settings(pbio_port_t port, int16_t counts_per_unit, float_t gear_ratio);
@@ -51,6 +52,7 @@ pbio_error_t pbio_motor_set_constant_settings(pbio_port_t port, int16_t counts_p
 pbio_error_t pbio_motor_set_variable_settings(pbio_port_t port, int16_t max_speed, int16_t tolerance, int16_t acceleration_start, int16_t acceleration_end, int16_t tight_loop_time_ms, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd);
 
 pbio_error_t pbio_motor_print_settings(pbio_port_t port, char *settings_string);
+pbio_error_t pbdrv_motor_print_settings(pbio_port_t port, char *settings_string);
 
 pbio_error_t pbio_motor_run(pbio_port_t port, float_t speed);
 

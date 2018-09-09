@@ -156,11 +156,11 @@ EncodedMotor
 */
 STATIC void motor_EncodedMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    motor_DCMotor_print(print, self_in, kind);
-    mp_printf(print, "\nGear ratio: %f", self->gear_ratio);
-    char settings_string[MAX_SETTINGS_LENGTH];
-    pbio_motor_print_settings(self->port, settings_string);
-    mp_printf(print, "%s", settings_string);
+    char pbdrv_settings_string[MAX_PBDRV_SETTINGS_LENGTH];
+    pbdrv_motor_print_settings(self->port, pbdrv_settings_string);
+    char pbio_settings_string[MAX_PBIO_SETTINGS_LENGTH];
+    pbio_motor_print_settings(self->port, pbio_settings_string);
+    mp_printf(print, "%s\n%s", pbdrv_settings_string, pbio_settings_string);
 }
 
 /*

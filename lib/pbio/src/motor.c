@@ -7,7 +7,8 @@
  * Control settings for an encoded motor
  */
 typedef struct _pbio_motor_control_settings_t {
-    int16_t counts_per_output_unit; /**< Encoder counts per output unit, including optional gear train (counts per degree for rotational motors, counts per cm for a linear motor) */
+    int16_t counts_per_unit; /**< Encoder counts per output unit, including optional gear train (counts per degree for rotational motors, counts per cm for a linear motor) */
+    float_t gear_ratio;             /**< Absolute slow down factor of an external gear train*/
     int16_t max_speed;              /**< Soft limit on the reference speed in all run commands */
     int16_t tolerance;              /**< Allowed deviation (deg) from target before motion is considered complete */
     int16_t acceleration_start;     /**< Acceleration when beginning to move. Positive value in degrees per second per second */
@@ -23,7 +24,8 @@ pbio_motor_control_settings_t motor_control_settings[PBDRV_CONFIG_NUM_MOTOR_CONT
 pbio_error_t pbio_motor_set_constant_settings(pbio_port_t port, int16_t counts_per_unit, float_t gear_ratio){
     pbio_error_t status = pbdrv_motor_status(port);
     if (status == PBIO_SUCCESS) {
-        motor_control_settings[PORT_TO_IDX(port)].counts_per_output_unit = gear_ratio * counts_per_unit;
+        motor_control_settings[PORT_TO_IDX(port)].counts_per_unit = counts_per_unit;
+        motor_control_settings[PORT_TO_IDX(port)].gear_ratio = gear_ratio;
     }
     return status;
 }
@@ -54,13 +56,30 @@ pbio_error_t pbio_motor_set_variable_settings(
     return status;
 };
 
-// TODO: make consistent with how regular motor settings are printed
+// TODO: Move to pbdrv? But then every implementation would need a copy of this.
+pbio_error_t pbdrv_motor_print_settings(pbio_port_t port, char *settings_string){
+    pbio_error_t status = pbdrv_motor_status(port);
+    if (status == PBIO_SUCCESS) {
+        int8_t port_index = PORT_TO_IDX(port);
+        char format_string [] = "Port: %c\nDirection: %s\nTorque limit: %f";
+        if (motor_settings[port_index].direction == PBIO_MOTOR_DIR_NORMAL) {
+            snprintf(settings_string, MAX_PBDRV_SETTINGS_LENGTH, format_string, port, "normal", motor_settings[port_index].max_stall_duty / PBIO_DUTY_PCT_TO_ABS);
+        }
+        else{
+            snprintf(settings_string, MAX_PBDRV_SETTINGS_LENGTH, format_string, port, "inverted", motor_settings[port_index].max_stall_duty / PBIO_DUTY_PCT_TO_ABS);
+        }        
+    }
+    return status;
+}
+
 pbio_error_t pbio_motor_print_settings(pbio_port_t port, char *settings_string){
     pbio_error_t status = pbdrv_motor_status(port);
     if (status == PBIO_SUCCESS) {
         int8_t port_index = PORT_TO_IDX(port);
-        snprintf(settings_string, MAX_SETTINGS_LENGTH,
-            "\nmax_speed: %d\ntolerance: %d\naccel start: %d\naccel end: %d\ntight_loop: %f\nkp: %f\nki: %f\nkd: %f\n ",
+        snprintf(settings_string, MAX_PBIO_SETTINGS_LENGTH,
+            "Counts per unit: %d\nGear ratio: %f\nMax speed: %d\nTolerance: %d\nAcceleration: %d\nDeceleration: %d\nTight Loop: %f\nkp: %f\nki: %f\nkd: %f",
+            motor_control_settings[port_index].counts_per_unit,
+            motor_control_settings[port_index].gear_ratio,            
             motor_control_settings[port_index].max_speed,
             motor_control_settings[port_index].tolerance,
             motor_control_settings[port_index].acceleration_start,
