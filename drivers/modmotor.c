@@ -23,8 +23,9 @@ mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t
     motor_DCMotor_obj_t *self = m_new_obj(motor_DCMotor_obj_t);
     self->base.type = &motor_DCMotor_type;
     self->port = mp_obj_get_int(args[0]);
-    self->direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
-    pbdrv_motor_set_constant_settings(self->port, self->direction);
+    int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
+    pbdrv_motor_set_constant_settings(self->port, direction);
+    pbdrv_motor_set_variable_settings(self->port, PBIO_MAX_DUTY/PBIO_DUTY_PCT_TO_ABS);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -35,14 +36,9 @@ DCMotor
 */
 STATIC void motor_DCMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind ) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, "Port: %c\n", self->port);
-    mp_printf(print, "Direction: ");
-    if (self->direction == PBIO_MOTOR_DIR_NORMAL) {
-        mp_printf(print, "Normal");
-    }
-    else {
-        mp_printf(print, "Inverted");
-    }
+    char pbdrv_settings_string[MAX_PBDRV_SETTINGS_LENGTH];
+    pbdrv_motor_print_settings(self->port, pbdrv_settings_string);
+    mp_printf(print, "%s", pbdrv_settings_string);
 }
 
 /*
@@ -142,10 +138,13 @@ mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_t *type, size_t n_args, s
     motor_EncodedMotor_obj_t *self = m_new_obj(motor_EncodedMotor_obj_t);
     self->base.type = &motor_EncodedMotor_type;
     self->port = mp_obj_get_int(args[0]);
-    self->direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
-    self->gear_ratio = (n_args >= 3) ? mp_obj_get_float(args[2]): 1.0;
-    pbdrv_motor_set_constant_settings(self->port, self->direction);
-    pbio_motor_set_constant_settings(self->port, 1, self->gear_ratio);  // TODO: device specific counts_per_unit instead of 1  
+    int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
+    float_t gear_ratio = (n_args >= 3) ? mp_obj_get_float(args[2]): 1.0;
+    pbdrv_motor_set_constant_settings(self->port, direction);
+    pbdrv_motor_set_variable_settings(self->port, PBIO_MAX_DUTY);
+    // Set default settings for an encoded motor. Inherited classes can provide device specific parameters
+    pbio_motor_set_constant_settings(self->port, 1, gear_ratio);
+    pbio_motor_set_variable_settings(self->port, 1000, 1, 1000, 1000, 100, 5000, 5000, 50);
     return MP_OBJ_FROM_PTR(self);
 }
 
