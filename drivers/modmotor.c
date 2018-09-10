@@ -22,7 +22,7 @@ mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t
     self->port = mp_obj_get_int(args[0]);
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     pbio_dcmotor_set_constant_settings(self->port, direction);
-    pbio_dcmotor_set_variable_settings(self->port, PBIO_MAX_DUTY);
+    pbio_dcmotor_set_variable_settings(self->port, PBIO_MAX_DUTY_PCT);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -47,7 +47,7 @@ DCMotor
 */
 STATIC mp_obj_t motor_DCMotor_settings(mp_obj_t self_in, mp_obj_t stall_torque_limit) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
-    pbio_dcmotor_set_variable_settings(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(stall_torque_limit)));
+    pbio_dcmotor_set_variable_settings(self->port, mp_obj_get_float(stall_torque_limit));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(motor_DCMotor_settings_obj, motor_DCMotor_settings);
@@ -61,7 +61,7 @@ DCMotor
 */
 STATIC mp_obj_t motor_DCMotor_duty(mp_obj_t self_in, mp_obj_t duty_cycle) {    
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_dcmotor_set_duty_cycle(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(duty_cycle)));
+    pbio_dcmotor_set_duty_cycle(self->port, mp_obj_get_float(duty_cycle));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(motor_DCMotor_duty_obj, motor_DCMotor_duty);
@@ -73,7 +73,7 @@ DCMotor
 */
 STATIC mp_obj_t motor_DCMotor_brake(mp_obj_t self_in) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
-    pbio_dcmotor_set_duty_cycle(self->port, 0);
+    pbio_dcmotor_brake(self->port);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_DCMotor_brake_obj, motor_DCMotor_brake);
@@ -176,7 +176,7 @@ EncodedMotor
 */
 STATIC mp_obj_t motor_EncodedMotor_settings(size_t n_args, const mp_obj_t *args){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
-    pbio_dcmotor_set_variable_settings(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(args[1])));
+    pbio_dcmotor_set_variable_settings(self->port, mp_obj_get_float(args[1]));
     pbio_encmotor_set_variable_settings(self->port, 
                                      (int16_t) mp_obj_get_float(args[2]),
                                      (int16_t) mp_obj_get_float(args[3]),

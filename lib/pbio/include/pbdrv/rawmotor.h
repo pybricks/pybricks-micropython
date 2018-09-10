@@ -16,8 +16,9 @@
 /**
  * Motor constants across devices
  */
-#define PBIO_MAX_DUTY 10000
-#define PBIO_DUTY_PCT_TO_ABS (PBIO_MAX_DUTY/100.0)
+#define PBIO_MAX_DUTY (10000)
+#define PBIO_MAX_DUTY_PCT (100.0)
+#define PBIO_DUTY_PCT_TO_ABS (PBIO_MAX_DUTY/PBIO_MAX_DUTY_PCT)
 
 /**
  * Initializes the low level motor driver. This should be called only once and

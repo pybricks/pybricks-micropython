@@ -53,7 +53,7 @@ pbio_error_t pbio_dcmotor_set_constant_settings(pbio_port_t port, pbio_motor_dir
  *                        ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                        ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbio_dcmotor_set_variable_settings(pbio_port_t port, int16_t max_stall_duty);
+pbio_error_t pbio_dcmotor_set_variable_settings(pbio_port_t port, float_t stall_torque_limit);
 
 pbio_error_t pbio_dcmotor_print_settings(pbio_port_t port, char *settings_string);
 
@@ -61,6 +61,8 @@ pbio_error_t pbio_dcmotor_coast(pbio_port_t port);
 
 pbio_error_t pbio_dcmotor_brake(pbio_port_t port);
 
-pbio_error_t pbio_dcmotor_set_duty_cycle(pbio_port_t port, int16_t);
+pbio_error_t pbio_dcmotor_set_duty_cycle_int(pbio_port_t port, int16_t duty_cycle_int);
+
+pbio_error_t pbio_dcmotor_set_duty_cycle(pbio_port_t port, float_t duty_cycle);
 
 #endif // _PBIO_DCMOTOR_H_
