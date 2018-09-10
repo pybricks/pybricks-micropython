@@ -222,7 +222,6 @@ STATIC mp_obj_t motor_EncodedMotor_reset_angle(size_t n_args, const mp_obj_t *ar
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_reset_angle_obj, 1, 2, motor_EncodedMotor_reset_angle);
 
-
 /*
 EncodedMotor
     def speed(self):
