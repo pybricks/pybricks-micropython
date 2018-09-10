@@ -51,7 +51,7 @@ pbio_error_t pbdrv_motor_status(pbio_port_t port);
  *                      ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                      ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbdrv_motor_get_encoder_count_raw(pbio_port_t port, int32_t *count_raw);
+pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count);
 
 /**
  * Gets the tachometer encoder rate in counts per second.
@@ -62,7 +62,7 @@ pbio_error_t pbdrv_motor_get_encoder_count_raw(pbio_port_t port, int32_t *count_
  *                      ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                      ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbdrv_motor_get_encoder_rate_raw(pbio_port_t port, int32_t *rate_raw);
+pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate);
 
 /**
  * Instructs the motor to coast freely.
@@ -72,7 +72,7 @@ pbio_error_t pbdrv_motor_get_encoder_rate_raw(pbio_port_t port, int32_t *rate_ra
  *                      ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                      ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbdrv_motor_coast_raw(pbio_port_t port);
+pbio_error_t pbdrv_motor_coast(pbio_port_t port);
 
 /**
  * Sets the PWM duty cycle for the motor. Setting a duty cycle of 0 will "brake" the motor.
@@ -84,7 +84,7 @@ pbio_error_t pbdrv_motor_coast_raw(pbio_port_t port);
  *                          ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                          ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbdrv_motor_set_duty_cycle_raw(pbio_port_t port, int16_t duty_cycle_raw);
+pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle);
 
 /** @}*/
 

@@ -80,7 +80,7 @@ pbio_error_t pbio_encmotor_print_settings(pbio_port_t port, char *settings_strin
 }
 
 pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
-    pbio_error_t status = pbdrv_motor_get_encoder_count_raw(port, count);
+    pbio_error_t status = pbdrv_motor_get_encoder_count(port, count);
     if (dcmotor_settings[PORT_TO_IDX(port)].direction == PBIO_MOTOR_DIR_INVERTED) {
         *count = -*count;
     }    
@@ -113,7 +113,7 @@ pbio_error_t pbio_motor_reset_angle(pbio_port_t port, float_t reset_angle) {
 }
 
 pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
-    pbio_error_t status = pbdrv_motor_get_encoder_rate_raw(port, rate);
+    pbio_error_t status = pbdrv_motor_get_encoder_rate(port, rate);
     if (dcmotor_settings[PORT_TO_IDX(port)].direction == PBIO_MOTOR_DIR_INVERTED) {
         *rate = -*rate;
     }    

@@ -43,11 +43,11 @@ pbio_error_t pbio_dcmotor_print_settings(pbio_port_t port, char *settings_string
 }
 
 pbio_error_t pbio_dcmotor_coast(pbio_port_t port){
-    return pbdrv_motor_coast_raw(port);
+    return pbdrv_motor_coast(port);
 }
 
 pbio_error_t pbio_dcmotor_brake(pbio_port_t port){
-    return pbdrv_motor_set_duty_cycle_raw(port, 0);
+    return pbdrv_motor_set_duty_cycle(port, 0);
 }
 
 pbio_error_t pbio_dcmotor_set_duty_cycle_int(pbio_port_t port, int16_t duty_cycle_int) {
@@ -63,7 +63,7 @@ pbio_error_t pbio_dcmotor_set_duty_cycle_int(pbio_port_t port, int16_t duty_cycl
     if (dcmotor_settings[PORT_TO_IDX(port)].direction == PBIO_MOTOR_DIR_INVERTED){
         duty_cycle_int = -duty_cycle_int;
     }
-    return pbdrv_motor_set_duty_cycle_raw(port, duty_cycle_int);
+    return pbdrv_motor_set_duty_cycle(port, duty_cycle_int);
 }
 
 pbio_error_t pbio_dcmotor_set_duty_cycle(pbio_port_t port, float_t duty_cycle) {
