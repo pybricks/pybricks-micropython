@@ -50,7 +50,7 @@ SRC_C = \
 	lib/libc/string0.c \
 	lib/mp-readline/readline.c \
 	ports/pybricks/lib/pbio/drv/move_hub/light.c \
-	ports/pybricks/lib/pbio/drv/move_hub/motor.c \
+	ports/pybricks/lib/pbio/drv/move_hub/rawmotor.c \
 
 SRC_S = \
 	startup_stm32f070xb.s \

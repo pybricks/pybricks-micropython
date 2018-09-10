@@ -4,7 +4,8 @@
 
 #include "stm32f070xb.h"
 
-#include <pbdrv/motor.h>
+#include <pbdrv/rawmotor.h>
+#include <pbio/dcmotor.h>
 
 #define PBIO_MOTOR_BUF_SIZE 32 // must be power of 2!
 
@@ -447,7 +448,7 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_motor_set_constant_settings(pbio_port_t port, pbio_motor_dir_t direction) {
+pbio_error_t pbio_dcmotor_set_constant_settings(pbio_port_t port, pbio_motor_dir_t direction) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }

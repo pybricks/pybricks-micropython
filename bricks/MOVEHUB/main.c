@@ -3,8 +3,9 @@
 #include <string.h>
 
 #include <pbdrv/light.h>
-#include <pbdrv/motor.h>
-#include <pbio/motor.h>
+#include <pbdrv/rawmotor.h>
+#include <pbio/dcmotor.h>
+#include <pbio/encmotor.h>
 
 #include "py/compile.h"
 #include "py/runtime.h"
