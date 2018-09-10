@@ -1,6 +1,3 @@
-#include <pbdrv/motor.h>
-#include <pbio/motor.h>
-
 #include "modmotor.h"
 
 /*
@@ -24,8 +21,8 @@ mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t
     self->base.type = &motor_DCMotor_type;
     self->port = mp_obj_get_int(args[0]);
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
-    pbdrv_motor_set_constant_settings(self->port, direction);
-    pbdrv_motor_set_variable_settings(self->port, PBIO_MAX_DUTY);
+    pbio_dcmotor_set_constant_settings(self->port, direction);
+    pbio_dcmotor_set_variable_settings(self->port, PBIO_MAX_DUTY);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -36,9 +33,9 @@ DCMotor
 */
 STATIC void motor_DCMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind ) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    char pbdrv_settings_string[MAX_PBDRV_SETTINGS_LENGTH];
-    pbdrv_motor_print_settings(self->port, pbdrv_settings_string);
-    mp_printf(print, "%s", pbdrv_settings_string);
+    char dcmotor_settings_string[MAX_DCMOTOR_SETTINGS_STR_LENGTH];
+    pbio_dcmotor_print_settings(self->port, dcmotor_settings_string);
+    mp_printf(print, "%s", dcmotor_settings_string);
 }
 
 /*
@@ -50,7 +47,7 @@ DCMotor
 */
 STATIC mp_obj_t motor_DCMotor_settings(mp_obj_t self_in, mp_obj_t stall_torque_limit) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
-    pbdrv_motor_set_variable_settings(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(stall_torque_limit)));
+    pbio_dcmotor_set_variable_settings(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(stall_torque_limit)));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(motor_DCMotor_settings_obj, motor_DCMotor_settings);
@@ -64,7 +61,7 @@ DCMotor
 */
 STATIC mp_obj_t motor_DCMotor_duty(mp_obj_t self_in, mp_obj_t duty_cycle) {    
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbdrv_motor_set_duty_cycle(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(duty_cycle)));
+    pbio_dcmotor_set_duty_cycle(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(duty_cycle)));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(motor_DCMotor_duty_obj, motor_DCMotor_duty);
@@ -76,7 +73,7 @@ DCMotor
 */
 STATIC mp_obj_t motor_DCMotor_brake(mp_obj_t self_in) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
-    pbdrv_motor_set_duty_cycle(self->port, 0);
+    pbio_dcmotor_set_duty_cycle(self->port, 0);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_DCMotor_brake_obj, motor_DCMotor_brake);
@@ -88,7 +85,7 @@ DCMotor
 */
 STATIC mp_obj_t motor_DCMotor_coast(mp_obj_t self_in) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
-    pbdrv_motor_coast(self->port);
+    pbio_dcmotor_coast(self->port);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_DCMotor_coast_obj, motor_DCMotor_coast);
@@ -140,11 +137,11 @@ mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_t *type, size_t n_args, s
     self->port = mp_obj_get_int(args[0]);
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     float_t gear_ratio = (n_args >= 3) ? mp_obj_get_float(args[2]): 1.0;
-    pbdrv_motor_set_constant_settings(self->port, direction);
-    pbdrv_motor_set_variable_settings(self->port, PBIO_MAX_DUTY);
+    pbio_dcmotor_set_constant_settings(self->port, direction);
+    pbio_dcmotor_set_variable_settings(self->port, PBIO_MAX_DUTY);
     // Set default settings for an encoded motor. Inherited classes can provide device specific parameters
-    pbio_motor_set_constant_settings(self->port, 1, gear_ratio);
-    pbio_motor_set_variable_settings(self->port, 1000, 1, 1000, 1000, 100, 5000, 5000, 50);
+    pbio_encmotor_set_constant_settings(self->port, 1, gear_ratio);
+    pbio_encmotor_set_variable_settings(self->port, 1000, 1, 1000, 1000, 100, 5000, 5000, 50);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -155,11 +152,11 @@ EncodedMotor
 */
 STATIC void motor_EncodedMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    char pbdrv_settings_string[MAX_PBDRV_SETTINGS_LENGTH];
-    pbdrv_motor_print_settings(self->port, pbdrv_settings_string);
-    char pbio_settings_string[MAX_PBIO_SETTINGS_LENGTH];
-    pbio_motor_print_settings(self->port, pbio_settings_string);
-    mp_printf(print, "%s\n%s", pbdrv_settings_string, pbio_settings_string);
+    char dcmotor_settings_string[MAX_DCMOTOR_SETTINGS_STR_LENGTH];
+    pbio_dcmotor_print_settings(self->port, dcmotor_settings_string);
+    char encmotor_settings_string[MAX_ENCMOTOR_SETTINGS_STR_LENGTH];
+    pbio_encmotor_print_settings(self->port, encmotor_settings_string);
+    mp_printf(print, "%s\n%s", dcmotor_settings_string, encmotor_settings_string);
 }
 
 /*
@@ -179,8 +176,8 @@ EncodedMotor
 */
 STATIC mp_obj_t motor_EncodedMotor_settings(size_t n_args, const mp_obj_t *args){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
-    pbdrv_motor_set_variable_settings(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(args[1])));
-    pbio_motor_set_variable_settings(self->port, 
+    pbio_dcmotor_set_variable_settings(self->port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * mp_obj_get_float(args[1])));
+    pbio_encmotor_set_variable_settings(self->port, 
                                      (int16_t) mp_obj_get_float(args[2]),
                                      (int16_t) mp_obj_get_float(args[3]),
                                      (int16_t) mp_obj_get_float(args[4]),

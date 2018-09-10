@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <dirent.h>
 #include <string.h>
-#include <pbdrv/motor.h>
+#include <pbdrv/rawmotor.h>
 
 
 #define MAX_PATH_LENGTH 50
@@ -26,12 +26,6 @@ motor_file_t motor_files[] = {
     }
 };
 
-pbdrv_motor_settings_t motor_settings[] = {
-    [PORT_TO_IDX(PBIO_PORT_A) ... PORT_TO_IDX(PBIO_PORT_D)]{
-        .direction = PBIO_MOTOR_DIR_NORMAL,
-        .max_stall_duty = PBIO_MAX_DUTY
-    }
-};
 
 // Open file, write contents, and close it
 void slow_write(pbio_port_t port, const char* filename, const char* content) {
@@ -82,7 +76,7 @@ void pbdrv_motor_init(void) {
             // Reset the motor and let stop default to coast
             slow_write(port, "command", "reset");
             slow_write(port, "stop_action", "coast");
-            pbdrv_motor_coast(port);
+            pbdrv_motor_coast_raw(port);
             // File path character array to the relevant speed, position files, etc.
             char filepath[MAX_PATH_LENGTH];
             // Open the position file
@@ -113,25 +107,6 @@ void pbdrv_motor_deinit(void) {
     }
 }
 
-pbio_error_t pbdrv_motor_set_constant_settings(pbio_port_t port, pbio_motor_dir_t direction){
-    pbio_error_t status = pbdrv_motor_status(port);
-    if (status == PBIO_SUCCESS) {
-        motor_settings[PORT_TO_IDX(port)].direction = direction;
-    }
-    return status;
-}
-
-pbio_error_t pbdrv_motor_set_variable_settings(pbio_port_t port, int16_t max_stall_duty){
-    pbio_error_t status = pbdrv_motor_status(port);
-    if (max_stall_duty < 0 || max_stall_duty > PBIO_MAX_DUTY) {
-        status = PBIO_ERROR_INVALID_ARG;
-    }
-    if (status == PBIO_SUCCESS) { 
-        motor_settings[PORT_TO_IDX(port)].max_stall_duty = max_stall_duty;
-    }
-    return status;
-}
-
 pbio_error_t pbdrv_motor_status(pbio_port_t port) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
@@ -142,7 +117,7 @@ pbio_error_t pbdrv_motor_status(pbio_port_t port) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
+pbio_error_t pbdrv_motor_coast_raw(pbio_port_t port) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -155,7 +130,7 @@ pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
+pbio_error_t pbdrv_motor_set_duty_cycle_raw(pbio_port_t port, int16_t duty_cycle_raw) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -167,26 +142,14 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
         slow_write(port, "command", "run-direct");
         motor_files[PORT_TO_IDX(port)].coasting = false;
     }
-    // Limit the duty cycle value
-    int16_t limit = motor_settings[PORT_TO_IDX(port)].max_stall_duty;
-    if (duty_cycle > limit) {
-        duty_cycle = limit;
-    }
-    if (duty_cycle < -limit) {
-        duty_cycle = -limit;
-    }
-    // Flip sign if motor is inverted
-    if (motor_settings[PORT_TO_IDX(port)].direction == PBIO_MOTOR_DIR_INVERTED){
-        duty_cycle = -duty_cycle;
-    }
     fseek(motor_files[PORT_TO_IDX(port)].f_duty, 0, SEEK_SET);
-    fprintf(motor_files[PORT_TO_IDX(port)].f_duty, "%d", duty_cycle/100);
+    fprintf(motor_files[PORT_TO_IDX(port)].f_duty, "%d", duty_cycle_raw/100);
     fflush(motor_files[PORT_TO_IDX(port)].f_duty); 
 
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
+pbio_error_t pbdrv_motor_get_encoder_count_raw(pbio_port_t port, int32_t *count_raw) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -194,15 +157,12 @@ pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
         return PBIO_ERROR_NO_DEV;
     }
     fseek(motor_files[PORT_TO_IDX(port)].f_encoder_count, 0, SEEK_SET);
-    fscanf(motor_files[PORT_TO_IDX(port)].f_encoder_count, "%d", count);
+    fscanf(motor_files[PORT_TO_IDX(port)].f_encoder_count, "%d", count_raw);
     fflush(motor_files[PORT_TO_IDX(port)].f_encoder_count);
-    if (motor_settings[PORT_TO_IDX(port)].direction == PBIO_MOTOR_DIR_INVERTED) {
-        *count = -*count;
-    }    
     return PBIO_SUCCESS;    
 }
 
-pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
+pbio_error_t pbdrv_motor_get_encoder_rate_raw(pbio_port_t port, int32_t *rate_raw) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -210,10 +170,7 @@ pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
         return PBIO_ERROR_NO_DEV;
     }
     fseek(motor_files[PORT_TO_IDX(port)].f_encoder_rate, 0, SEEK_SET);
-    fscanf(motor_files[PORT_TO_IDX(port)].f_encoder_rate, "%d", rate);
+    fscanf(motor_files[PORT_TO_IDX(port)].f_encoder_rate, "%d", rate_raw);
     fflush(motor_files[PORT_TO_IDX(port)].f_encoder_rate);
-    if (motor_settings[PORT_TO_IDX(port)].direction == PBIO_MOTOR_DIR_INVERTED) {
-        *rate = -*rate;
-    }
     return PBIO_SUCCESS;    
 }

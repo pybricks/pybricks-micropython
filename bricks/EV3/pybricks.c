@@ -1,6 +1,5 @@
 
-#include <pbdrv/motor.h>
-#include <pbio/motor.h>
+#include <pbio/encmotor.h>
 
 #include "pybricks.h"
 

@@ -25,6 +25,7 @@ INC +=  -I$(TOP)
 INC += -I$(BUILD)
 INC += -I$(TOP)/ports/pybricks/lib/pbio/drv/ev3dev_stretch
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
+INC += -I$(TOP)/ports/pybricks/lib/pbdrv/include
 
 # compiler settings
 CWARN = -Wall -Werror
@@ -167,8 +168,9 @@ LIB_SRC_C = $(addprefix lib/,\
 PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	drivers/modmotor.c \
 	drivers/modconstants.c \
-	lib/pbio/drv/ev3dev_stretch/motor.c \
-	lib/pbio/src/motor.c \
+	lib/pbio/drv/ev3dev_stretch/rawmotor.c \
+	lib/pbio/src/dcmotor.c \
+	lib/pbio/src/encmotor.c \
 	)	
 
 # FatFS VFS support

@@ -4,7 +4,8 @@
 #include "py/binary.h"
 #include "py/builtin.h"
 #include <stdio.h>
-#include <pbio/motor.h>
+#include <pbio/dcmotor.h>
+#include <pbio/encmotor.h>
 
 // Class structure for DC Motors
 typedef struct _motor_DCMotor_obj_t {

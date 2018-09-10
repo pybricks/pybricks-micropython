@@ -65,7 +65,7 @@
 
 // TODO: this doesn't really belong here. If the tacho is not built-in to the
 // programmable brick, it could be a different value. We should probably pass
-// this as a parameter to pbio_motor_set_constant_settings() instead.
+// this as a parameter to pbio_encmotor_set_constant_settings() instead.
 #ifndef PBDRV_MOTOR_COUNT_PER_ROT
 /**
  * The number of motor tacho counts per one rotation. Use this value to convert

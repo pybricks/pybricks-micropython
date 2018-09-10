@@ -6,7 +6,6 @@
 
 #include <pbdrv/config.h>
 #include <pbio/error.h>
-#include <pbio/motor.h>
 #include <pbio/port.h>
 
 /**
@@ -21,16 +20,6 @@
 #define PBIO_DUTY_PCT_TO_ABS (PBIO_MAX_DUTY/100.0)
 
 /**
- * Settings for a Motor
- */
-typedef struct _pbdrv_motor_settings_t {
-    pbio_motor_dir_t direction; /**< Whether or not polarity of duty cycle and encoder counter is inverted */
-    int16_t max_stall_duty;     /**< Upper limit on duty cycle, which corresponds to a maximum torque while stalled. */
-} pbdrv_motor_settings_t;
-
-pbdrv_motor_settings_t motor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-
-/**
  * Initializes the low level motor driver. This should be called only once and
  * must be called before using any other motor functions.
  */
@@ -41,28 +30,6 @@ void pbdrv_motor_init(void);
  * calling this function.
  */
 void pbdrv_motor_deinit(void);
-
-/**
- * Configure motor settings that should not be changed during runtime
- * @param [in]  port      ::The motor port
- * @param [in]  direction ::Whether or not polarity of duty cycle and encoder counter is inverted
- * @return                ::PBIO_SUCCESS if the call was successful,
- *                        ::PBIO_ERROR_INVALID_PORT if port is not a valid port
- *                        ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
- *                        ::PBIO_ERROR_IO if there was an I/O error
- */
-pbio_error_t pbdrv_motor_set_constant_settings(pbio_port_t port, pbio_motor_dir_t direction);
-
-/**
- * Configure motor settings that should not be changed during runtime
- * @param [in]  port      ::The motor port
- * @param [in]  max_stall_duty  ::Soft limit on duty cycle
- * @return                ::PBIO_SUCCESS if the call was successful,
- *                        ::PBIO_ERROR_INVALID_PORT if port is not a valid port
- *                        ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
- *                        ::PBIO_ERROR_IO if there was an I/O error
- */
-pbio_error_t pbdrv_motor_set_variable_settings(pbio_port_t port, int16_t max_stall_duty);
 
 /**
  * Check whether the motor is connected
@@ -83,7 +50,7 @@ pbio_error_t pbdrv_motor_status(pbio_port_t port);
  *                      ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                      ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count);
+pbio_error_t pbdrv_motor_get_encoder_count_raw(pbio_port_t port, int32_t *count_raw);
 
 /**
  * Gets the tachometer encoder rate in counts per second.
@@ -94,7 +61,7 @@ pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count);
  *                      ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                      ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate);
+pbio_error_t pbdrv_motor_get_encoder_rate_raw(pbio_port_t port, int32_t *rate_raw);
 
 /**
  * Instructs the motor to coast freely.
@@ -104,7 +71,7 @@ pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate);
  *                      ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                      ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbdrv_motor_coast(pbio_port_t port);
+pbio_error_t pbdrv_motor_coast_raw(pbio_port_t port);
 
 /**
  * Sets the PWM duty cycle for the motor. Setting a duty cycle of 0 will "brake" the motor.
@@ -116,7 +83,7 @@ pbio_error_t pbdrv_motor_coast(pbio_port_t port);
  *                          ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                          ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle);
+pbio_error_t pbdrv_motor_set_duty_cycle_raw(pbio_port_t port, int16_t duty_cycle_raw);
 
 /** @}*/
 
