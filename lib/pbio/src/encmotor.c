@@ -27,6 +27,7 @@ pbio_error_t pbio_encmotor_set_constant_settings(pbio_port_t port, int16_t count
         encmotor_settings[PORT_TO_IDX(port)].counts_per_unit = counts_per_unit;
         encmotor_settings[PORT_TO_IDX(port)].gear_ratio = gear_ratio;
         encmotor_settings[PORT_TO_IDX(port)].offset = 0;
+        status = pbio_motor_reset_encoder_count(port, 0);
     }
     return status;
 }
