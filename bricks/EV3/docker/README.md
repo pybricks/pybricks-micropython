@@ -19,11 +19,11 @@ source code directory.
 
 3. Cross compile `axtls`
 
-        make axtls CROSS_COMPILE=arm-linux-gnueabi- HOSTCC=arm-linux-gnueabi-gcc
+        make axtls HOSTCC=arm-linux-gnueabi-gcc
 
 4. Cross compile MicroPython
 
-        make CROSS_COMPILE=arm-linux-gnueabi-
+        make
 
 5. Exit when ready
 
