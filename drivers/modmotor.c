@@ -192,6 +192,54 @@ STATIC mp_obj_t motor_EncodedMotor_settings(size_t n_args, const mp_obj_t *args)
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_settings_obj, 10, 10, motor_EncodedMotor_settings);
 
 /*
+EncodedMotor
+    def angle(self):
+        """Return the angle of the motor/mechanism (degrees).
+        Returns:
+            float -- Position of the motor/mechanism (degrees).
+        """
+*/
+STATIC mp_obj_t motor_EncodedMotor_angle(mp_obj_t self_in) {
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
+    float_t angle;
+    pbio_motor_get_angle(self->port, &angle);
+    return mp_obj_new_float(angle);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(motor_EncodedMotor_angle_obj, motor_EncodedMotor_angle);
+
+/*
+EncodedMotor
+    def reset_angle(self, reset_angle):
+        """Reset the angle of the motor/mechanism (degrees).
+        Arguments:
+            reset_angle {const} -- Value to which the rotation sensor angle should be reset (default: {0})        
+*/
+STATIC mp_obj_t motor_EncodedMotor_reset_angle(size_t n_args, const mp_obj_t *args){
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
+    float_t reset_angle = n_args > 1 ? mp_obj_get_float(args[1]) : 0.0;
+    pbio_motor_reset_angle(self->port, reset_angle);
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_reset_angle_obj, 1, 2, motor_EncodedMotor_reset_angle);
+
+
+/*
+EncodedMotor
+    def speed(self):
+        """Return the angular speed of the motor/mechanism (degrees per second).
+        Returns:
+            float -- Angular speed of the motor/mechanism (degrees per second).
+        """
+*/
+STATIC mp_obj_t motor_EncodedMotor_speed(mp_obj_t self_in) {
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
+    float_t speed;
+    pbio_motor_get_angular_rate(self->port, &speed);
+    return mp_obj_new_float(speed);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(motor_EncodedMotor_speed_obj, motor_EncodedMotor_speed);
+
+/*
 EncodedMotor Class tables
 */
 
@@ -199,6 +247,9 @@ STATIC const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_coast), MP_ROM_PTR(&motor_DCMotor_coast_obj) },
     { MP_ROM_QSTR(MP_QSTR_brake), MP_ROM_PTR(&motor_DCMotor_brake_obj) },
     { MP_ROM_QSTR(MP_QSTR_duty), MP_ROM_PTR(&motor_DCMotor_duty_obj) },
+    { MP_ROM_QSTR(MP_QSTR_angle), MP_ROM_PTR(&motor_EncodedMotor_angle_obj) },
+    { MP_ROM_QSTR(MP_QSTR_speed), MP_ROM_PTR(&motor_EncodedMotor_speed_obj) },
+    { MP_ROM_QSTR(MP_QSTR_reset_angle), MP_ROM_PTR(&motor_EncodedMotor_reset_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_settings), MP_ROM_PTR(&motor_EncodedMotor_settings_obj) },
 };
 

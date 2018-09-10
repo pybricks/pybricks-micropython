@@ -53,6 +53,10 @@ pbio_error_t pbio_encmotor_print_settings(pbio_port_t port, char *settings_strin
  *                      ::PBIO_ERROR_IO if there was an I/O error
  */
 pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count);
+pbio_error_t pbio_motor_reset_encoder_count(pbio_port_t port, int32_t reset_count);
+
+pbio_error_t pbio_motor_get_angle(pbio_port_t port, float_t *angle);
+pbio_error_t pbio_motor_reset_angle(pbio_port_t port, float_t reset_angle);
 
 /**
  * Gets the tachometer encoder rate in counts per second.
@@ -63,7 +67,8 @@ pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count);
  *                      ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                      ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate);
+pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *encoder_rate);
+pbio_error_t pbio_motor_get_angular_rate(pbio_port_t port, float_t *angular_rate);
 
 pbio_error_t pbio_motor_run(pbio_port_t port, float_t speed);
 

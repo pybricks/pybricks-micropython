@@ -6,4 +6,7 @@ Q(brake)
 Q(duty)
 // Class for DC motors with encoders
 Q(EncodedMotor)
+Q(angle)
+Q(speed)
+Q(reset_angle)
 Q(run_target)

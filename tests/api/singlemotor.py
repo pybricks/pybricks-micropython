@@ -6,7 +6,12 @@ from time import sleep
 from _constants import *
 
 # Configure a large EV3 motor, set duty to 30, and turn it off
-mtr = LargeMotor(PORT_A)
+mtr = LargeMotor(PORT_A, DIR_INVERTED)
 mtr.duty(30)
 sleep(2)
+print("speed: ", mtr.speed())
+print("angle: ", mtr.angle())
+mtr.reset_angle(-90)
 mtr.coast()
+print("angle: ", mtr.angle())
+
