@@ -23,7 +23,7 @@ typedef enum {
     PBIO_MOTOR_STOP_COAST,      /**< Coast the motor */
     PBIO_MOTOR_STOP_BRAKE,      /**< Brake the motor */
     PBIO_MOTOR_STOP_HOLD,       /**< Actively hold the motor in place */
-} pbio_motor_stop_t;
+} pbio_motor_after_stop_t;
 
 /**
  * Busy wait (or not) for a run command to complete
@@ -75,15 +75,15 @@ pbio_error_t pbio_motor_get_angular_rate(pbio_port_t port, float_t *angular_rate
 
 pbio_error_t pbio_motor_run(pbio_port_t port, float_t speed);
 
-pbio_error_t pbio_motor_stop(pbio_port_t port, pbio_motor_stop_t stop, pbio_motor_wait_t wait);
+pbio_error_t pbio_motor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
 
-pbio_error_t pbio_motor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_stop_t stop, pbio_motor_wait_t wait);
+pbio_error_t pbio_motor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
 
-pbio_error_t pbio_motor_run_stalled(pbio_port_t port, float_t speed, float_t *stallpoint, pbio_motor_stop_t stop, pbio_motor_wait_t wait);
+pbio_error_t pbio_motor_run_stalled(pbio_port_t port, float_t speed, float_t *stallpoint, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
 
-pbio_error_t pbio_motor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_stop_t stop, pbio_motor_wait_t wait);
+pbio_error_t pbio_motor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
 
-pbio_error_t pbio_motor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_stop_t stop, pbio_motor_wait_t wait);
+pbio_error_t pbio_motor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
 
 pbio_error_t pbio_motor_track_target(pbio_port_t port, float_t target);
 

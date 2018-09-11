@@ -129,21 +129,21 @@ pbio_error_t pbio_motor_run(pbio_port_t port, float_t speed){
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_stop(pbio_port_t port, pbio_motor_stop_t stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_motor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
     // TODO
-    printf("stop(%c, stop=%d, wait=%d)\n", port, stop, wait);
+    printf("stop(%c, after_stop=%d, wait=%d)\n", port, after_stop, wait);
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_stop_t stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_motor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
     // TODO
-    printf("run_time(port=%c, speed=%f, duration=%f, stop=%d, wait=%d)\n", port, speed, duration, stop, wait);
+    printf("run_time(port=%c, speed=%f, duration=%f, after_stop=%d, wait=%d)\n", port, speed, duration, after_stop, wait);
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_run_stalled(pbio_port_t port, float_t speed, float_t *stallpoint, pbio_motor_stop_t stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_motor_run_stalled(pbio_port_t port, float_t speed, float_t *stallpoint, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
     // TODO
-    printf("run_stalled(port=%c, speed=%f, stop=%d, wait=%d)\n", port, speed, stop, wait);
+    printf("run_stalled(port=%c, speed=%f, after_stop=%d, wait=%d)\n", port, speed, after_stop, wait);
     if (wait) {
         *stallpoint = 0.0;
         printf("stallpoint=%f\n", *stallpoint);
@@ -151,15 +151,15 @@ pbio_error_t pbio_motor_run_stalled(pbio_port_t port, float_t speed, float_t *st
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_stop_t stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_motor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
     // TODO
-    printf("run_angle(port=%c, speed=%f, angle=%f, stop=%d, wait=%d)\n", port, speed, angle, stop, wait);
+    printf("run_angle(port=%c, speed=%f, angle=%f, after_stop=%d, wait=%d)\n", port, speed, angle, after_stop, wait);
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_stop_t stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_motor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
     // TODO
-    printf("run_target(port=%c, speed=%f, target=%f, stop=%d, wait=%d)\n", port, speed, target, stop, wait);
+    printf("run_target(port=%c, speed=%f, target=%f, after_stop=%d, wait=%d)\n", port, speed, target, after_stop, wait);
     return PBIO_SUCCESS;
 }
 
