@@ -163,16 +163,16 @@ STATIC void motor_EncodedMotor_print(const mp_print_t *print,  mp_obj_t self_in,
 EncodedMotor
     def settings(self, relative_torque_limit, max_speed, tolerance, acceleration_start, acceleration_end, tight_loop_time_ms, pid_kp, pid_ki, pid_kd):
         """Update the motor settings.
-        Arguments:
+        Keyword Arguments (TODO):
         [1] relative_torque_limit {float}   -- Percentage (-100.0 to 100.0) of the maximum stationary torque that the motor is allowed to produce.
         [2] max_speed {float}               -- Soft limit on the reference speed in all run commands
         [3] tolerance {float}               -- Allowed deviation (deg) from target before motion is considered complete
         [4] acceleration_start {float}      -- Acceleration when beginning to move. Positive value in degrees per second per second
         [5] acceleration_end {float}        -- Deceleration when stopping. Positive value in degrees per second per second
         [6] tight_loop_time {float}         -- When a run function is called twice in this interval (seconds), assume that the user is doing their own speed control.
-        [7] pid_kp {float}                  -- Proportional position control constant (and integral speed control constant)
-        [8] pid_ki {float}                  -- Integral position control constant
-        [9] pid_kd {float}                  -- Derivative position control constant (and proportional speed control constant)
+        [7] pid_kp {float}                  -- Proportional angle control constant (and integral speed control constant)
+        [8] pid_ki {float}                  -- Integral angle control constant
+        [9] pid_kd {float}                  -- Derivative angle control constant (and proportional speed control constant)
 */
 STATIC mp_obj_t motor_EncodedMotor_settings(size_t n_args, const mp_obj_t *args){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
@@ -237,6 +237,88 @@ STATIC mp_obj_t motor_EncodedMotor_speed(mp_obj_t self_in) {
     return mp_obj_new_float(speed);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_EncodedMotor_speed_obj, motor_EncodedMotor_speed);
+
+/*
+EncodedMotor
+    def run(self, speed):
+        """Start and keep running the motor/mechanism at the given speed (degrees per second).
+        Arguments:
+            speed {float} -- Target speed (degrees per second)
+        """
+*/
+
+/*
+EncodedMotor
+    def stop(self, after_stop=COAST, wait=True):
+        """Stop a motor/mechanism.
+        Keyword Arguments (TODO):
+            after_stop {const} -- What to do after the motor stops: BRAKE, COAST, or HOLD. (default: {COAST})
+            wait {bool} -- Wait for complete stop (True) or decelerate in the background (False). (default: {True})
+        """
+*/
+
+/*
+EncodedMotor
+    def run_time(self, speed, duration, after_stop=COAST, wait=True):
+        """Run a motor/mechanism at the given speed for a given duration. Then stop.
+        Arguments:
+            speed {float} -- Target speed (degrees per second)
+            duration {float} -- Total duration, including start and stop (seconds)
+        Keyword Arguments (TODO):
+            after_stop {const} -- What to do after the motor stops: BRAKE, COAST, or HOLD. (default: {COAST})
+            wait {bool} -- Wait for motion to be complete (True) or run task in the background (False). (default: {True})
+        """
+*/
+
+/*
+EncodedMotor
+    def run_until_stalled(self, speed, after_stop=COAST, wait=True):
+        """Run a motor/mechanism at the given speed until it stalls. Then stop.
+        Arguments:
+            speed {float} -- Target speed (degrees per second)
+        Keyword Arguments (TODO):
+            after_stop {const} -- What to do after the motor stops: BRAKE, COAST, or HOLD. (default: {COAST})
+            wait {bool} -- Wait for motion to be complete (True) or run task in the background (False). (default: {True})
+        Returns:
+            float -- If wait is True, then return the angle (degrees) at the time of stalling
+        """
+*/
+
+/*
+EncodedMotor
+    def run_angle(self, speed, angle, after_stop=COAST, wait=True):
+        """Rotate a motor by the given angle at a given speed.
+        Arguments:
+            speed {float} -- Absolute target speed (degrees per second). Run direction is automatically determined based on angle.
+            target {float} -- Angle that the motor/mechanism should rotate by (degrees).
+        Keyword Arguments (TODO):
+            after_stop {const} -- What to do after the motor stops at the target: BRAKE, COAST, or HOLD. (default: {COAST})
+            wait {bool} -- Wait for motion to be complete (True) or run task in the background (False). (default: {True})
+        """
+*/
+
+/*
+EncodedMotor
+    def run_target(self, speed, target, after_stop=COAST, wait=True):
+        """Run a motor at a given speed and stop precisely at given target.
+        Arguments:
+            speed {float} -- Absolute target speed (degrees per second). Run direction (sign) is automatically determined based on target.
+            target {float} -- Target for the motor/mechanism (degrees)
+        Keyword Arguments (TODO):
+            after_stop {const} -- What to do after the motor stops at the target: BRAKE, COAST, or HOLD. (default: {COAST})
+            wait {bool} -- Wait for motion to be complete (True) or run task in the background (False). (default: {True})
+        """
+
+*/
+
+/*
+EncodedMotor
+    def track_target(self, target):
+        """Position tracking for use in a control loop.
+        Arguments:
+            target {float} -- Target for the motor/mechanism (degrees)
+        """
+*/
 
 /*
 EncodedMotor Class tables

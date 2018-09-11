@@ -29,8 +29,8 @@ typedef enum {
  * Busy wait (or not) for a run command to complete
  */
 typedef enum {
-    PBIO_MOTOR_WAIT_COMPLETION, /**< Wait for the run command to complete */
-    PBIO_MOTOR_WAIT_NONE,       /**< Execute run command in the background and proceed with user program */
+    PBIO_MOTOR_WAIT_COMPLETION = true, /**< Wait for the run command to complete */
+    PBIO_MOTOR_WAIT_NONE = false,       /**< Execute run command in the background and proceed with user program */
 } pbio_motor_wait_t;
 
 #define PID_PRESCALE (1000.0)
