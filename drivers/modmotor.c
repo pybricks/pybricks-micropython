@@ -31,7 +31,7 @@ DCMotor
     def __str__(self):
         """String representation of DCMotor object."""
 */
-STATIC void motor_DCMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind ) {
+void motor_DCMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind ) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     char dcmotor_settings_string[MAX_DCMOTOR_SETTINGS_STR_LENGTH];
     pbio_dcmotor_print_settings(self->port, dcmotor_settings_string);
@@ -148,7 +148,7 @@ EncodedMotor
     def __str__(self):
         """String representation of DCMotor object."""
 */
-STATIC void motor_EncodedMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind){
+void motor_EncodedMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     char dcmotor_settings_string[MAX_DCMOTOR_SETTINGS_STR_LENGTH];
     pbio_dcmotor_print_settings(self->port, dcmotor_settings_string);
