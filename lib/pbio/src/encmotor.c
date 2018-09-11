@@ -21,8 +21,22 @@ typedef struct _pbio_encmotor_settings_t {
 
 pbio_encmotor_settings_t encmotor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-pbio_error_t pbio_encmotor_set_constant_settings(pbio_port_t port, int16_t counts_per_unit, float_t gear_ratio){
-    pbio_error_t status = pbdrv_motor_coast(port);
+pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction, float_t gear_ratio){
+
+    // Verify device ID and configure DC Motor
+    pbio_error_t status = pbio_dcmotor_setup(port, device_id, direction);
+
+    //
+    // TODO: Verify that device_id is indeed an Encoded motor
+    //
+
+    //
+    // TODO: Use the device_id to retrieve the default settings defined in our lib. For now just hardcode something below.
+    //
+    int16_t counts_per_unit = 1;
+    pbio_encmotor_set_settings(port, 100.0, 1000, 1, 1000, 1000, 100, 5000, 5000, 50);
+
+    // If all checks have passed, continue with setup of encoded motor
     if (status == PBIO_SUCCESS) {
         encmotor_settings[PORT_TO_IDX(port)].counts_per_unit = counts_per_unit;
         encmotor_settings[PORT_TO_IDX(port)].gear_ratio = gear_ratio;
@@ -32,8 +46,9 @@ pbio_error_t pbio_encmotor_set_constant_settings(pbio_port_t port, int16_t count
     return status;
 }
 
-pbio_error_t pbio_encmotor_set_variable_settings(
+pbio_error_t pbio_encmotor_set_settings(
         pbio_port_t port,
+        float_t stall_torque_limit,
         int16_t max_speed,
         int16_t tolerance,
         int16_t acceleration_start,
@@ -43,7 +58,7 @@ pbio_error_t pbio_encmotor_set_variable_settings(
         int16_t pid_ki,
         int16_t pid_kd
     ){
-    pbio_error_t status = pbdrv_motor_coast(port);
+    pbio_error_t status = pbio_dcmotor_set_settings(port, stall_torque_limit);
     if (status == PBIO_SUCCESS) {
         int8_t port_index = PORT_TO_IDX(port);
         encmotor_settings[port_index].max_speed = max_speed;

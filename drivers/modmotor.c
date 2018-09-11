@@ -21,8 +21,7 @@ mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t
     self->base.type = &motor_DCMotor_type;
     self->port = mp_obj_get_int(args[0]);
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
-    pbio_dcmotor_set_constant_settings(self->port, direction);
-    pbio_dcmotor_set_variable_settings(self->port, PBIO_MAX_DUTY_PCT);
+    pbio_dcmotor_setup(self->port, PBIO_ID_EV3_LARGE_MOTOR, direction);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -47,7 +46,7 @@ DCMotor
 */
 STATIC mp_obj_t motor_DCMotor_settings(mp_obj_t self_in, mp_obj_t stall_torque_limit) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
-    pbio_dcmotor_set_variable_settings(self->port, mp_obj_get_float(stall_torque_limit));
+    pbio_dcmotor_set_settings(self->port, mp_obj_get_float(stall_torque_limit));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(motor_DCMotor_settings_obj, motor_DCMotor_settings);
@@ -137,11 +136,7 @@ mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_t *type, size_t n_args, s
     self->port = mp_obj_get_int(args[0]);
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     float_t gear_ratio = (n_args >= 3) ? mp_obj_get_float(args[2]): 1.0;
-    pbio_dcmotor_set_constant_settings(self->port, direction);
-    pbio_dcmotor_set_variable_settings(self->port, PBIO_MAX_DUTY);
-    // Set default settings for an encoded motor. Inherited classes can provide device specific parameters
-    pbio_encmotor_set_constant_settings(self->port, 1, gear_ratio);
-    pbio_encmotor_set_variable_settings(self->port, 1000, 1, 1000, 1000, 100, 5000, 5000, 50);
+    pbio_encmotor_setup(self->port, PBIO_ID_EV3_LARGE_MOTOR, direction, gear_ratio);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -176,8 +171,8 @@ EncodedMotor
 */
 STATIC mp_obj_t motor_EncodedMotor_settings(size_t n_args, const mp_obj_t *args){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
-    pbio_dcmotor_set_variable_settings(self->port, mp_obj_get_float(args[1]));
-    pbio_encmotor_set_variable_settings(self->port, 
+    pbio_encmotor_set_settings(self->port, 
+                                     mp_obj_get_float(args[1]),
                                      (int16_t) mp_obj_get_float(args[2]),
                                      (int16_t) mp_obj_get_float(args[3]),
                                      (int16_t) mp_obj_get_float(args[4]),

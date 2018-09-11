@@ -7,15 +7,29 @@ pbio_dcmotor_settings_t dcmotor_settings[] = {
     }
 };
 
-pbio_error_t pbio_dcmotor_set_constant_settings(pbio_port_t port, pbio_motor_dir_t direction){
+pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction){   
+    //
+    // TODO: Verify that device_id matches device attached to port, else return appropriate erorr
+    //
+
+    //
+    // TODO: Verify that device_id is indeed a DC motor or inherited thereof (i.e. lpu_TrainMotor or ev3_LargeMotor etc), else return appropriate erorr
+    //
+
     pbio_error_t status = pbdrv_motor_coast(port);
     if (status == PBIO_SUCCESS) {
         dcmotor_settings[PORT_TO_IDX(port)].direction = direction;
     }
+
+    //
+    // TODO: Use the device_id to set the default settings defined in our lib. For now just hardcode something below.
+    //
+    pbio_dcmotor_set_settings(port, 100.0);
+
     return status;
 }
 
-pbio_error_t pbio_dcmotor_set_variable_settings(pbio_port_t port, float_t stall_torque_limit){
+pbio_error_t pbio_dcmotor_set_settings(pbio_port_t port, float_t stall_torque_limit){
     pbio_error_t status = pbdrv_motor_coast(port);
     int16_t max_stall_duty = (int16_t) (PBIO_DUTY_PCT_TO_ABS * stall_torque_limit);
     if (max_stall_duty < 0 || max_stall_duty > PBIO_MAX_DUTY) {
