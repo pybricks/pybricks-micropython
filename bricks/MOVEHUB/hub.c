@@ -130,9 +130,9 @@ STATIC MP_DEFINE_CONST_DICT(motor_MovehubMotor_locals_dict, motor_MovehubMotor_l
 const mp_obj_type_t motor_MovehubMotor_type = {
     { &mp_type_type },
     .name = MP_QSTR_MovehubMotor,
-    .print = motor_EncodedMotor_print,
-    .make_new = motor_EncodedMotor_make_new,
-    .parent = &motor_EncodedMotor_type,
+    .print = motor_DCMotor_print,
+    .make_new = motor_DCMotor_make_new,
+    .parent = &motor_DCMotor_type,
     .locals_dict = (mp_obj_dict_t*)&motor_MovehubMotor_locals_dict,
 };
 
