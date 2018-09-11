@@ -122,6 +122,20 @@ STATIC mp_obj_t hub_stop_motor(mp_obj_t port, mp_obj_t stop_action) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(hub_stop_motor_obj, hub_stop_motor);
 
+STATIC const mp_rom_map_elem_t motor_MovehubMotor_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_device_id), MP_OBJ_NEW_SMALL_INT(PBIO_ID_PUP_MOVEHUB_MOTOR) },
+};
+STATIC MP_DEFINE_CONST_DICT(motor_MovehubMotor_locals_dict, motor_MovehubMotor_locals_dict_table);
+
+const mp_obj_type_t motor_MovehubMotor_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_MovehubMotor,
+    .print = motor_EncodedMotor_print,
+    .make_new = motor_EncodedMotor_make_new,
+    .parent = &motor_EncodedMotor_type,
+    .locals_dict = (mp_obj_dict_t*)&motor_MovehubMotor_locals_dict,
+};
+
 STATIC mp_obj_t hub_gpios(mp_obj_t value) {
     mp_uint_t action = (mp_obj_get_int(value) & 0xF00) >> 8;
     mp_uint_t port = (mp_obj_get_int(value) & 0x0F0) >> 4;
@@ -292,6 +306,7 @@ STATIC const mp_map_elem_t hub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_run_motor), (mp_obj_t)&hub_run_motor_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_set_light), (mp_obj_t)&hub_set_light_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_stop_motor), (mp_obj_t)&hub_stop_motor_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_MovehubMotor), (mp_obj_t)&motor_MovehubMotor_type},  
 };
 
 STATIC MP_DEFINE_CONST_DICT (
