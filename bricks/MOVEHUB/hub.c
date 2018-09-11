@@ -88,28 +88,6 @@ STATIC mp_obj_t hub_run_motor(mp_obj_t port, mp_obj_t duty_cycle) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(hub_run_motor_obj, hub_run_motor);
 
-STATIC mp_obj_t hub_set_motor_dir(mp_obj_t port, mp_obj_t direction) {
-    pbio_error_t err;
-
-    if (MP_OBJ_IS_STR(port)) {
-        port = mp_call_function_1((mp_obj_t *)&mp_builtin_ord_obj, port);
-    }
-
-    err = pbio_dcmotor_set_constant_settings(mp_obj_get_int(port), mp_obj_get_int(direction));
-    if (err == PBIO_ERROR_INVALID_PORT) {
-        mp_raise_ValueError("Invalid port");
-    }
-    if (err == PBIO_ERROR_INVALID_ARG) {
-        mp_raise_ValueError("Invalid direction");
-    }
-    if (err != PBIO_SUCCESS) {
-        mp_raise_msg(&mp_type_RuntimeError, "Unknown error");
-    }
-
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(hub_set_motor_dir_obj, hub_set_motor_dir);
-
 STATIC mp_obj_t hub_stop_motor(mp_obj_t port, mp_obj_t stop_action) {
     pbio_error_t err;
     mp_int_t p, sa;
@@ -311,7 +289,6 @@ STATIC const mp_map_elem_t hub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_read_adc), (mp_obj_t)&hub_read_adc_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_reboot), (mp_obj_t)&hub_reboot_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_run_motor), (mp_obj_t)&hub_run_motor_obj },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_set_motor_dir), (mp_obj_t)&hub_set_motor_dir_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_set_light), (mp_obj_t)&hub_set_light_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_stop_motor), (mp_obj_t)&hub_stop_motor_obj },
 };
