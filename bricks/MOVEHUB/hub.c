@@ -4,6 +4,7 @@
 #include <pbdrv/rawmotor.h>
 #include <pbio/dcmotor.h>
 #include <pbio/encmotor.h>
+#include <modmotor.h>
 
 #include "stm32f070xb.h"
 
