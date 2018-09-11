@@ -22,7 +22,7 @@ typedef struct _pbio_encmotor_settings_t {
 pbio_encmotor_settings_t encmotor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 pbio_error_t pbio_encmotor_set_constant_settings(pbio_port_t port, int16_t counts_per_unit, float_t gear_ratio){
-    pbio_error_t status = pbdrv_motor_status(port);
+    pbio_error_t status = pbdrv_motor_coast(port);
     if (status == PBIO_SUCCESS) {
         encmotor_settings[PORT_TO_IDX(port)].counts_per_unit = counts_per_unit;
         encmotor_settings[PORT_TO_IDX(port)].gear_ratio = gear_ratio;
@@ -43,7 +43,7 @@ pbio_error_t pbio_encmotor_set_variable_settings(
         int16_t pid_ki,
         int16_t pid_kd
     ){
-    pbio_error_t status = pbdrv_motor_status(port);
+    pbio_error_t status = pbdrv_motor_coast(port);
     if (status == PBIO_SUCCESS) {
         int8_t port_index = PORT_TO_IDX(port);
         encmotor_settings[port_index].max_speed = max_speed;
@@ -58,25 +58,21 @@ pbio_error_t pbio_encmotor_set_variable_settings(
     return status;
 };
 
-pbio_error_t pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
-    pbio_error_t status = pbdrv_motor_status(port);
-    if (status == PBIO_SUCCESS) {
-        int8_t port_index = PORT_TO_IDX(port);
-        snprintf(settings_string, MAX_ENCMOTOR_SETTINGS_STR_LENGTH,
-            "Counts per unit: %d\nGear ratio: %f\nMax speed: %d\nTolerance: %d\nAcceleration: %d\nDeceleration: %d\nTight Loop: %f\nkp: %f\nki: %f\nkd: %f",
-            encmotor_settings[port_index].counts_per_unit,
-            encmotor_settings[port_index].gear_ratio,            
-            encmotor_settings[port_index].max_speed,
-            encmotor_settings[port_index].tolerance,
-            encmotor_settings[port_index].acceleration_start,
-            encmotor_settings[port_index].acceleration_end,
-            encmotor_settings[port_index].tight_loop_time_ms / MS_PER_SECOND,
-            encmotor_settings[port_index].pid_kp / PID_PRESCALE,
-            encmotor_settings[port_index].pid_ki / PID_PRESCALE,
-            encmotor_settings[port_index].pid_kd / PID_PRESCALE     
-        );
-    }
-    return status;
+void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
+    int8_t port_index = PORT_TO_IDX(port);
+    snprintf(settings_string, MAX_ENCMOTOR_SETTINGS_STR_LENGTH,
+        "Counts per unit: %d\nGear ratio: %f\nMax speed: %d\nTolerance: %d\nAcceleration: %d\nDeceleration: %d\nTight Loop: %f\nkp: %f\nki: %f\nkd: %f",
+        encmotor_settings[port_index].counts_per_unit,
+        encmotor_settings[port_index].gear_ratio,            
+        encmotor_settings[port_index].max_speed,
+        encmotor_settings[port_index].tolerance,
+        encmotor_settings[port_index].acceleration_start,
+        encmotor_settings[port_index].acceleration_end,
+        encmotor_settings[port_index].tight_loop_time_ms / MS_PER_SECOND,
+        encmotor_settings[port_index].pid_kp / PID_PRESCALE,
+        encmotor_settings[port_index].pid_ki / PID_PRESCALE,
+        encmotor_settings[port_index].pid_kd / PID_PRESCALE     
+    );
 }
 
 pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {

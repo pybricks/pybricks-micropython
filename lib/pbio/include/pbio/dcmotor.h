@@ -55,7 +55,7 @@ pbio_error_t pbio_dcmotor_set_constant_settings(pbio_port_t port, pbio_motor_dir
  */
 pbio_error_t pbio_dcmotor_set_variable_settings(pbio_port_t port, float_t stall_torque_limit);
 
-pbio_error_t pbio_dcmotor_print_settings(pbio_port_t port, char *settings_string);
+void pbio_dcmotor_print_settings(pbio_port_t port, char *settings_string);
 
 pbio_error_t pbio_dcmotor_coast(pbio_port_t port);
 

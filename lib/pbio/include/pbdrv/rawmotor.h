@@ -33,16 +33,6 @@ void pbdrv_motor_init(void);
 void pbdrv_motor_deinit(void);
 
 /**
- * Check whether the motor is connected
- * @param [in]  port    The motor port
- * @return              ::PBIO_SUCCESS if the call was successful,
- *                      ::PBIO_ERROR_INVALID_PORT if port is not a valid port
- *                      ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
- *                      ::PBIO_ERROR_IO if there was an I/O error
- */
-pbio_error_t pbdrv_motor_status(pbio_port_t port);
-
-/**
  * Gets the tachometer encoder count.
  * @param [in]  port    The motor port
  * @param [out] count   The count

@@ -41,7 +41,7 @@ pbio_error_t pbio_encmotor_set_constant_settings(pbio_port_t port, int16_t count
 
 pbio_error_t pbio_encmotor_set_variable_settings(pbio_port_t port, int16_t max_speed, int16_t tolerance, int16_t acceleration_start, int16_t acceleration_end, int16_t tight_loop_time_ms, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd);
 
-pbio_error_t pbio_encmotor_print_settings(pbio_port_t port, char *settings_string);
+void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string);
 
 /**
  * Gets the tachometer encoder count.

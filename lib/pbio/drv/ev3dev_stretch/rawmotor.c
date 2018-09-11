@@ -107,16 +107,6 @@ void pbdrv_motor_deinit(void) {
     }
 }
 
-pbio_error_t pbdrv_motor_status(pbio_port_t port) {
-    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
-    if (!motor_files[PORT_TO_IDX(port)].connected) {
-        return PBIO_ERROR_NO_DEV;
-    }
-    return PBIO_SUCCESS;
-}
-
 pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
