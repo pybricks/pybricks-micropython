@@ -146,7 +146,6 @@ pbio_error_t pbio_motor_run_stalled(pbio_port_t port, float_t speed, float_t *st
     printf("run_stalled(port=%c, speed=%f, after_stop=%d, wait=%d)\n", port, speed, after_stop, wait);
     if (wait) {
         *stallpoint = 0.0;
-        printf("stallpoint=%f\n", *stallpoint);
     }
     return PBIO_SUCCESS;
 }

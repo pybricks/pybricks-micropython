@@ -246,6 +246,12 @@ EncodedMotor
             speed {float} -- Target speed (degrees per second)
         """
 */
+STATIC mp_obj_t motor_EncodedMotor_run(mp_obj_t self_in, mp_obj_t speed) {
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
+    pbio_motor_run(self->port, mp_obj_get_float(speed));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_2(motor_EncodedMotor_run_obj, motor_EncodedMotor_run);
 
 /*
 EncodedMotor
@@ -256,6 +262,12 @@ EncodedMotor
             wait {bool} -- Wait for complete stop (True) or decelerate in the background (False). (default: {True})
         """
 */
+STATIC mp_obj_t motor_EncodedMotor_stop(mp_obj_t self_in, mp_obj_t after_stop, mp_obj_t wait) {
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
+    pbio_motor_stop(self->port, mp_obj_get_int(after_stop), mp_obj_get_int(wait));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_3(motor_EncodedMotor_stop_obj, motor_EncodedMotor_stop);
 
 /*
 EncodedMotor
@@ -269,10 +281,16 @@ EncodedMotor
             wait {bool} -- Wait for motion to be complete (True) or run task in the background (False). (default: {True})
         """
 */
+STATIC mp_obj_t motor_EncodedMotor_run_time(size_t n_args, const mp_obj_t *args){
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
+    pbio_motor_run_time(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]), mp_obj_get_int(args[4]));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_run_time_obj, 5, 5, motor_EncodedMotor_run_time);
 
 /*
 EncodedMotor
-    def run_until_stalled(self, speed, after_stop=COAST, wait=True):
+    def run_stalled(self, speed, after_stop=COAST, wait=True):
         """Run a motor/mechanism at the given speed until it stalls. Then stop.
         Arguments:
             speed {float} -- Target speed (degrees per second)
@@ -280,9 +298,22 @@ EncodedMotor
             after_stop {const} -- What to do after the motor stops: BRAKE, COAST, or HOLD. (default: {COAST})
             wait {bool} -- Wait for motion to be complete (True) or run task in the background (False). (default: {True})
         Returns:
-            float -- If wait is True, then return the angle (degrees) at the time of stalling
+            float -- If wait is True, then return the angle (degrees) at the time of stalling, otherwise return None
         """
 */
+STATIC mp_obj_t motor_EncodedMotor_run_stalled(size_t n_args, const mp_obj_t *args){
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
+    float_t stall_point;
+    pbio_motor_wait_t wait = mp_obj_get_int(args[3]);
+    pbio_motor_run_stalled(self->port, mp_obj_get_float(args[1]), &stall_point, mp_obj_get_int(args[2]), wait);
+    if (wait == PBIO_MOTOR_WAIT_COMPLETION) {
+        return mp_obj_new_float(stall_point);
+    }
+    else{
+        return mp_const_none;
+    }
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_run_stalled_obj, 4, 4, motor_EncodedMotor_run_stalled);
 
 /*
 EncodedMotor
@@ -296,6 +327,12 @@ EncodedMotor
             wait {bool} -- Wait for motion to be complete (True) or run task in the background (False). (default: {True})
         """
 */
+STATIC mp_obj_t motor_EncodedMotor_run_angle(size_t n_args, const mp_obj_t *args){
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
+    pbio_motor_run_angle(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]), mp_obj_get_int(args[4]));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_run_angle_obj, 5, 5, motor_EncodedMotor_run_angle);
 
 /*
 EncodedMotor
@@ -310,6 +347,12 @@ EncodedMotor
         """
 
 */
+STATIC mp_obj_t motor_EncodedMotor_run_target(size_t n_args, const mp_obj_t *args){
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
+    pbio_motor_run_target(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]), mp_obj_get_int(args[4]));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_run_target_obj, 5, 5, motor_EncodedMotor_run_target);
 
 /*
 EncodedMotor
@@ -319,6 +362,13 @@ EncodedMotor
             target {float} -- Target for the motor/mechanism (degrees)
         """
 */
+STATIC mp_obj_t motor_EncodedMotor_track_target(mp_obj_t self_in, mp_obj_t target) {
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pbio_motor_track_target(self->port, mp_obj_get_float(target));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_2(motor_EncodedMotor_track_target_obj, motor_EncodedMotor_track_target);
+
 
 /*
 EncodedMotor Class tables
@@ -331,6 +381,13 @@ STATIC const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_angle), MP_ROM_PTR(&motor_EncodedMotor_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_speed), MP_ROM_PTR(&motor_EncodedMotor_speed_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_angle), MP_ROM_PTR(&motor_EncodedMotor_reset_angle_obj) },
+    { MP_ROM_QSTR(MP_QSTR_run), MP_ROM_PTR(&motor_EncodedMotor_run_obj) },
+    { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_EncodedMotor_stop_obj) },
+    { MP_ROM_QSTR(MP_QSTR_run_time), MP_ROM_PTR(&motor_EncodedMotor_run_time_obj) },
+    { MP_ROM_QSTR(MP_QSTR_run_stalled), MP_ROM_PTR(&motor_EncodedMotor_run_stalled_obj) },
+    { MP_ROM_QSTR(MP_QSTR_run_angle), MP_ROM_PTR(&motor_EncodedMotor_run_angle_obj) },
+    { MP_ROM_QSTR(MP_QSTR_run_target), MP_ROM_PTR(&motor_EncodedMotor_run_target_obj) },
+    { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&motor_EncodedMotor_track_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_settings), MP_ROM_PTR(&motor_EncodedMotor_settings_obj) },
 };
 
