@@ -18,10 +18,11 @@ DCMotor
 mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     mp_arg_check_num(n_args, n_kw, 1, 2, false);
     motor_DCMotor_obj_t *self = m_new_obj(motor_DCMotor_obj_t);
-    self->base.type = &motor_DCMotor_type;
+    self->base.type = type;
     self->port = mp_obj_get_int(args[0]);
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
-    pbio_dcmotor_setup(self->port, PBIO_ID_EV3_LARGE_MOTOR, direction);
+    pbio_id_t device_class_id = mp_obj_get_int(mp_load_attr(self, MP_QSTR_device_id));
+    pbio_dcmotor_setup(self->port, device_class_id, direction);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -96,6 +97,7 @@ DCMotor Class tables
 
 // creating the table of members
 STATIC const mp_rom_map_elem_t motor_DCMotor_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_device_id), MP_OBJ_NEW_SMALL_INT(PBIO_ID_UNKNOWN_DCMOTOR) },
     { MP_ROM_QSTR(MP_QSTR_settings), MP_ROM_PTR(&motor_DCMotor_settings_obj) },    
     { MP_ROM_QSTR(MP_QSTR_coast), MP_ROM_PTR(&motor_DCMotor_coast_obj) },
     { MP_ROM_QSTR(MP_QSTR_brake), MP_ROM_PTR(&motor_DCMotor_brake_obj) },
@@ -132,11 +134,12 @@ EncodedMotor
 mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
     mp_arg_check_num(n_args, n_kw, 1, 3, false);
     motor_EncodedMotor_obj_t *self = m_new_obj(motor_EncodedMotor_obj_t);
-    self->base.type = &motor_EncodedMotor_type;
-    self->port = mp_obj_get_int(args[0]);
+    self->base.type = type;
+    self->port = mp_obj_get_int(args[0]);    
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     float_t gear_ratio = (n_args >= 3) ? mp_obj_get_float(args[2]): 1.0;
-    pbio_encmotor_setup(self->port, PBIO_ID_EV3_LARGE_MOTOR, direction, gear_ratio);
+    pbio_id_t device_class_id = mp_obj_get_int(mp_load_attr(self, MP_QSTR_device_id));
+    pbio_encmotor_setup(self->port, device_class_id, direction, gear_ratio);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -370,9 +373,7 @@ EncodedMotor Class tables
 */
 
 STATIC const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_coast), MP_ROM_PTR(&motor_DCMotor_coast_obj) },
-    { MP_ROM_QSTR(MP_QSTR_brake), MP_ROM_PTR(&motor_DCMotor_brake_obj) },
-    { MP_ROM_QSTR(MP_QSTR_duty), MP_ROM_PTR(&motor_DCMotor_duty_obj) },
+    { MP_ROM_QSTR(MP_QSTR_device_id), MP_OBJ_NEW_SMALL_INT(PBIO_ID_UNKNOWN_ENCMOTOR) },
     { MP_ROM_QSTR(MP_QSTR_angle), MP_ROM_PTR(&motor_EncodedMotor_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_speed), MP_ROM_PTR(&motor_EncodedMotor_speed_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_angle), MP_ROM_PTR(&motor_EncodedMotor_reset_angle_obj) },
@@ -390,11 +391,10 @@ STATIC MP_DEFINE_CONST_DICT(motor_EncodedMotor_locals_dict, motor_EncodedMotor_l
 
 const mp_obj_type_t motor_EncodedMotor_type = {
     { &mp_type_type },
-    // { &motor_DCMotor_type }, // or this?
     .name = MP_QSTR_EncodedMotor,
     .print = motor_EncodedMotor_print,
     .make_new = motor_EncodedMotor_make_new,
-    .parent = &motor_DCMotor_type, //Inherit from DCMotor (?)
+    .parent = &motor_DCMotor_type,
     .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
 };
 

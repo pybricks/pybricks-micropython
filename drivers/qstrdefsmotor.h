@@ -1,3 +1,5 @@
+// Generic class attributes
+Q(device_id)
 // Class for DC motors
 Q(DCMotor)
 Q(settings)
