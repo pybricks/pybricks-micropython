@@ -16,7 +16,7 @@
 // You can disable the built-in MicroPython compiler by setting the following
 // config option to 0.  If you do this then you won't get a REPL prompt, but you
 // will still be able to execute pre-compiled scripts, compiled with mpy-cross.
-#define MICROPY_ENABLE_COMPILER     (1)
+#define MICROPY_ENABLE_COMPILER     (0)
 
 #define MICROPY_QSTR_BYTES_IN_HASH  (1)
 #define MICROPY_QSTR_EXTRA_POOL     mp_qstr_frozen_const_pool
@@ -91,10 +91,12 @@ typedef long mp_off_t;
 
 extern const struct _mp_obj_module_t mp_module_hub;
 extern const struct _mp_obj_module_t mp_module_utime;
+extern const struct _mp_obj_module_t mp_module_constants;
 
 #define MICROPY_PORT_BUILTIN_MODULES \
     { MP_OBJ_NEW_QSTR(MP_QSTR_hub), (mp_obj_t)&mp_module_hub },  \
     { MP_OBJ_NEW_QSTR(MP_QSTR_utime), (mp_obj_t)&mp_module_utime },  \
+    { MP_OBJ_NEW_QSTR(MP_QSTR__constants), (mp_obj_t)&mp_module_constants },  
 
 #define MICROPY_PORT_BUILTIN_MODULE_WEAK_LINKS \
     { MP_ROM_QSTR(MP_QSTR_time), MP_ROM_PTR(&mp_module_utime) }, \
