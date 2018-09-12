@@ -20,6 +20,7 @@ typedef float float_t;
  * Device ID
  */
 typedef enum {
+    PBIO_ID_UNKNOWN,
     PBIO_ID_UNKNOWN_DCMOTOR,
     PBIO_ID_UNKNOWN_ENCMOTOR,
     PBIO_ID_PUP_MOVEHUB_MOTOR,

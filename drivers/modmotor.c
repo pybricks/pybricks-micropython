@@ -15,13 +15,15 @@ DCMotor
             direction {const} -- DIR_NORMAL or DIR_INVERTED (default: {DIR_NORMAL})
         """
 */
-mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+pbio_id_t get_id_from_type(const mp_obj_type_t *type);
+
+STATIC mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     mp_arg_check_num(n_args, n_kw, 1, 2, false);
     motor_DCMotor_obj_t *self = m_new_obj(motor_DCMotor_obj_t);
     self->base.type = type;
     self->port = mp_obj_get_int(args[0]);
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
-    pbio_id_t device_class_id = mp_obj_get_int(mp_load_attr(self, MP_QSTR_device_id));
+    pbio_id_t device_class_id = get_id_from_type(type);
     pbio_dcmotor_setup(self->port, device_class_id, direction);
     return MP_OBJ_FROM_PTR(self);
 }
@@ -31,7 +33,7 @@ DCMotor
     def __str__(self):
         """String representation of DCMotor object."""
 */
-void motor_DCMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind ) {
+STATIC void motor_DCMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind ) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     char dcmotor_settings_string[MAX_DCMOTOR_SETTINGS_STR_LENGTH];
     pbio_dcmotor_print_settings(self->port, dcmotor_settings_string);
@@ -131,14 +133,14 @@ EncodedMotor
             gear_ratio {float} -- Absolute slow down factor of a gear train (default: {1.0})
         """
 */
-mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
+STATIC mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
     mp_arg_check_num(n_args, n_kw, 1, 3, false);
     motor_EncodedMotor_obj_t *self = m_new_obj(motor_EncodedMotor_obj_t);
     self->base.type = type;
     self->port = mp_obj_get_int(args[0]);    
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     float_t gear_ratio = (n_args >= 3) ? mp_obj_get_float(args[2]): 1.0;
-    pbio_id_t device_class_id = mp_obj_get_int(mp_load_attr(self, MP_QSTR_device_id));
+    pbio_id_t device_class_id = get_id_from_type(type);
     pbio_encmotor_setup(self->port, device_class_id, direction, gear_ratio);
     return MP_OBJ_FROM_PTR(self);
 }
@@ -148,7 +150,7 @@ EncodedMotor
     def __str__(self):
         """String representation of DCMotor object."""
 */
-void motor_EncodedMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind){
+STATIC void motor_EncodedMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     char dcmotor_settings_string[MAX_DCMOTOR_SETTINGS_STR_LENGTH];
     pbio_dcmotor_print_settings(self->port, dcmotor_settings_string);
@@ -372,8 +374,11 @@ MP_DEFINE_CONST_FUN_OBJ_2(motor_EncodedMotor_track_target_obj, motor_EncodedMoto
 EncodedMotor Class tables
 */
 
-STATIC const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
+const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_device_id), MP_OBJ_NEW_SMALL_INT(PBIO_ID_UNKNOWN_ENCMOTOR) },
+    { MP_ROM_QSTR(MP_QSTR_coast), MP_ROM_PTR(&motor_DCMotor_coast_obj) },
+    { MP_ROM_QSTR(MP_QSTR_brake), MP_ROM_PTR(&motor_DCMotor_brake_obj) },
+    { MP_ROM_QSTR(MP_QSTR_duty), MP_ROM_PTR(&motor_DCMotor_duty_obj) },    
     { MP_ROM_QSTR(MP_QSTR_angle), MP_ROM_PTR(&motor_EncodedMotor_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_speed), MP_ROM_PTR(&motor_EncodedMotor_speed_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_angle), MP_ROM_PTR(&motor_EncodedMotor_reset_angle_obj) },
@@ -397,6 +402,35 @@ const mp_obj_type_t motor_EncodedMotor_type = {
     .parent = &motor_DCMotor_type,
     .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
 };
+
+const mp_obj_type_t motor_MovehubMotor_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_MovehubMotor,
+    .print = motor_EncodedMotor_print,
+    .make_new = motor_EncodedMotor_make_new,
+    .parent = &motor_EncodedMotor_type,
+    .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
+};
+
+typedef struct _motor_id_table_elem_t {
+    const mp_obj_type_t *type;
+    pbio_id_t device_id;
+} motor_id_table_elem_t;
+
+const motor_id_table_elem_t motor_id_table[] = {
+    {&motor_DCMotor_type, PBIO_ID_UNKNOWN_DCMOTOR},
+    {&motor_EncodedMotor_type, PBIO_ID_UNKNOWN_ENCMOTOR},
+    {&motor_MovehubMotor_type, PBIO_ID_PUP_MOVEHUB_MOTOR},
+};
+
+pbio_id_t get_id_from_type(const mp_obj_type_t *type){
+    for (int i = 0; i < sizeof(motor_id_table); i++) {
+        if (motor_id_table[i].type == type){
+            return motor_id_table[i].device_id;
+        }
+    }
+    return PBIO_ID_UNKNOWN_DCMOTOR;
+}
 
 /*
 Motor module tables
