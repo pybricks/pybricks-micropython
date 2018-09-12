@@ -292,7 +292,7 @@ STATIC const mp_map_elem_t hub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_run_motor), (mp_obj_t)&hub_run_motor_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_set_light), (mp_obj_t)&hub_set_light_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_stop_motor), (mp_obj_t)&hub_stop_motor_obj },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_MovehubMotor), (mp_obj_t)&motor_MovehubMotor_type},
+    // { MP_OBJ_NEW_QSTR(MP_QSTR_MovehubMotor), (mp_obj_t)&motor_MovehubMotor_type},
 };
 
 STATIC MP_DEFINE_CONST_DICT (
