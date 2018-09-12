@@ -299,7 +299,7 @@ axtls: $(BUILD)/libaxtls.a
 
 $(BUILD)/libaxtls.a: $(TOP)/lib/axtls/README | $(OBJ_DIRS)
 	cd $(TOP)/lib/axtls; cp config/upyconfig config/.config
-	cd $(TOP)/lib/axtls; $(MAKE) oldconfig -B
+	cd $(TOP)/lib/axtls; $(MAKE) oldconfig -B  HOSTCC="$(CC)"
 	cd $(TOP)/lib/axtls; $(MAKE) clean
 	cd $(TOP)/lib/axtls; $(MAKE) all CC="$(CC)" LD="$(LD)"
 	cp $(TOP)/lib/axtls/_stage/libaxtls.a $@
