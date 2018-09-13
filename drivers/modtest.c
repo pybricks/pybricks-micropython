@@ -8,6 +8,7 @@
 STATIC const mp_map_elem_t test_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_test) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_MovehubMotor), (mp_obj_t)&motor_MovehubMotor_type},
+    { MP_OBJ_NEW_QSTR(MP_QSTR_External), (mp_obj_t)&motor_External_type},
 };
 
 STATIC MP_DEFINE_CONST_DICT (mp_module_test_globals, test_globals_table);
