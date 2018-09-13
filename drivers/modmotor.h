@@ -7,17 +7,13 @@
 #include <pbio/dcmotor.h>
 #include <pbio/encmotor.h>
 
-// Class structure for DC Motors
-typedef struct _motor_DCMotor_obj_t {
-    mp_obj_base_t base;
-    pbio_port_t port;
-} motor_DCMotor_obj_t;
-
-// Class structure for Encoded Motors
-typedef struct _motor_EncodedMotor_obj_t {
-    mp_obj_base_t base;
-    uint8_t port;
-} motor_EncodedMotor_obj_t;
+#define PB_DEFINE_ID_ATTR(motor_attr_handler, device_id) \
+void motor_attr_handler(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {\
+    if (dest[0] == MP_OBJ_NULL && attr == MP_QSTR_device_id) {\
+        mp_obj_t val = MP_OBJ_NEW_SMALL_INT(device_id);\
+        dest[0] = val;\
+    }\
+}
 
 // Allow other modules to import this motor
 extern const mp_obj_type_t motor_MovehubMotor_type;
