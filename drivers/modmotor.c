@@ -15,7 +15,6 @@ DCMotor
             direction {const} -- DIR_NORMAL or DIR_INVERTED (default: {DIR_NORMAL})
         """
 */
-pbio_id_t get_id_from_type(const mp_obj_type_t *type);
 
 STATIC mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     mp_arg_check_num(n_args, n_kw, 1, 2, false);
@@ -23,7 +22,7 @@ STATIC mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args,
     self->base.type = type;
     self->port = mp_obj_get_int(args[0]);
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
-    pbio_id_t device_class_id = get_id_from_type(type);
+    pbio_id_t device_class_id = 0;
     pbio_dcmotor_setup(self->port, device_class_id, direction);
     return MP_OBJ_FROM_PTR(self);
 }
@@ -140,7 +139,7 @@ STATIC mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_t *type, size_t n_
     self->port = mp_obj_get_int(args[0]);    
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     float_t gear_ratio = (n_args >= 3) ? mp_obj_get_float(args[2]): 1.0;
-    pbio_id_t device_class_id = get_id_from_type(type);
+    pbio_id_t device_class_id = 0;
     pbio_encmotor_setup(self->port, device_class_id, direction, gear_ratio);
     return MP_OBJ_FROM_PTR(self);
 }
@@ -411,26 +410,6 @@ const mp_obj_type_t motor_MovehubMotor_type = {
     .parent = &motor_DCMotor_type,
     .locals_dict = (mp_obj_dict_t*)&motor_DCMotor_locals_dict,
 };
-
-typedef struct _motor_id_table_elem_t {
-    const mp_obj_type_t *type;
-    pbio_id_t device_id;
-} motor_id_table_elem_t;
-
-const motor_id_table_elem_t motor_id_table[] = {
-    {&motor_DCMotor_type, PBIO_ID_UNKNOWN_DCMOTOR},
-    // {&motor_EncodedMotor_type, PBIO_ID_UNKNOWN_ENCMOTOR},
-    {&motor_MovehubMotor_type, PBIO_ID_PUP_MOVEHUB_MOTOR},
-};
-
-pbio_id_t get_id_from_type(const mp_obj_type_t *type){
-    for (int i = 0; i < sizeof(motor_id_table); i++) {
-        if (motor_id_table[i].type == type){
-            return motor_id_table[i].device_id;
-        }
-    }
-    return PBIO_ID_UNKNOWN_DCMOTOR;
-}
 
 /*
 Motor module tables
