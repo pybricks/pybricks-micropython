@@ -165,6 +165,7 @@ LIB_SRC_C = $(addprefix lib/,\
 PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	drivers/modmotor.c \
 	drivers/modconstants.c \
+	drivers/modtest.c \
 	drivers/motordevices.c \
 	lib/pbio/drv/ev3dev_stretch/rawmotor.c \
 	lib/pbio/src/dcmotor.c \
