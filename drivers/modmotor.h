@@ -15,6 +15,7 @@ struct _mp_obj_type_id_t {
     uint16_t flags;
     uint16_t name;
     mp_print_fun_t print;
+    mp_make_new_fun_id_t make_new; // Modified type compared to MicroPython
     mp_call_fun_t call;
     mp_unary_op_fun_t unary_op;
     mp_binary_op_fun_t binary_op;
@@ -26,7 +27,6 @@ struct _mp_obj_type_id_t {
     const void *protocol;
     const void *parent;
     struct _mp_obj_dict_t *locals_dict;
-    // The following two are modified/added
-    mp_make_new_fun_id_t make_new;
+    // The following was added
     pbio_id_t device_id;
 };
