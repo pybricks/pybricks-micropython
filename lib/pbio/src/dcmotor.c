@@ -11,6 +11,7 @@ pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_moto
     //
     // TODO: Verify that device_id matches device attached to port, else return appropriate erorr
     //
+    printf("Class ID:%d\n", device_id);
 
     //
     // TODO: Verify that device_id is indeed a DC motor or inherited thereof (i.e. lpu_TrainMotor or ev3_LargeMotor etc), else return appropriate erorr

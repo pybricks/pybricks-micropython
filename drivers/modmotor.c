@@ -6,6 +6,12 @@ class DCMotor():
     """Class for motors without encoders."""
 */
 
+// Class structure for DC Motors
+typedef struct _motor_DCMotor_obj_t {
+    mp_obj_base_t base;
+    pbio_port_t port;
+} motor_DCMotor_obj_t;
+
 /*
 DCMotor
     def __init__(self, port, direction):
@@ -16,14 +22,13 @@ DCMotor
         """
 */
 
-STATIC mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+STATIC mp_obj_t motor_DCMotor_make_new(const mp_obj_type_id_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     mp_arg_check_num(n_args, n_kw, 1, 2, false);
     motor_DCMotor_obj_t *self = m_new_obj(motor_DCMotor_obj_t);
-    self->base.type = type;
+    self->base.type = (mp_obj_type_t*) type;
     self->port = mp_obj_get_int(args[0]);
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
-    pbio_id_t device_class_id = 0;
-    pbio_dcmotor_setup(self->port, device_class_id, direction);
+    pbio_dcmotor_setup(self->port, type->device_id, direction);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -108,12 +113,13 @@ STATIC const mp_rom_map_elem_t motor_DCMotor_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(motor_DCMotor_locals_dict, motor_DCMotor_locals_dict_table);
 
 // create the class-object itself
-const mp_obj_type_t motor_DCMotor_type = {
+const mp_obj_type_id_t motor_DCMotor_type = {
     { &mp_type_type },
     .name = MP_QSTR_DCMotor,
     .print = motor_DCMotor_print,
     .make_new = motor_DCMotor_make_new,
     .locals_dict = (mp_obj_dict_t*)&motor_DCMotor_locals_dict,
+    .device_id = PBIO_ID_UNKNOWN_DCMOTOR,
 };
 
 /*
@@ -121,6 +127,14 @@ EncodedMotor
 class EncodedMotor(DCMotor):
     """Class for motors with encoders."""
 */
+
+
+// Class structure for Encoded Motors
+typedef struct _motor_EncodedMotor_obj_t {
+    mp_obj_base_t base;
+    uint8_t port;
+} motor_EncodedMotor_obj_t;
+
 
 /*
 EncodedMotor
@@ -132,15 +146,14 @@ EncodedMotor
             gear_ratio {float} -- Absolute slow down factor of a gear train (default: {1.0})
         """
 */
-STATIC mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
+STATIC mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_id_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
     mp_arg_check_num(n_args, n_kw, 1, 3, false);
     motor_EncodedMotor_obj_t *self = m_new_obj(motor_EncodedMotor_obj_t);
-    self->base.type = type;
+    self->base.type = (mp_obj_type_t*) type;
     self->port = mp_obj_get_int(args[0]);    
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     float_t gear_ratio = (n_args >= 3) ? mp_obj_get_float(args[2]): 1.0;
-    pbio_id_t device_class_id = 0;
-    pbio_encmotor_setup(self->port, device_class_id, direction, gear_ratio);
+    pbio_encmotor_setup(self->port, type->device_id, direction, gear_ratio);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -393,22 +406,24 @@ const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
 
 STATIC MP_DEFINE_CONST_DICT(motor_EncodedMotor_locals_dict, motor_EncodedMotor_locals_dict_table);
 
-const mp_obj_type_t motor_EncodedMotor_type = {
+const mp_obj_type_id_t motor_EncodedMotor_type = {
     { &mp_type_type },
     .name = MP_QSTR_EncodedMotor,
     .print = motor_EncodedMotor_print,
     .make_new = motor_EncodedMotor_make_new,
     .parent = &motor_DCMotor_type,
     .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
+    .device_id = PBIO_ID_UNKNOWN_ENCMOTOR,
 };
 
-const mp_obj_type_t motor_MovehubMotor_type = {
+const mp_obj_type_id_t motor_MovehubMotor_type = {
     { &mp_type_type },
     .name = MP_QSTR_MovehubMotor,
     .print = motor_DCMotor_print,
     .make_new = motor_DCMotor_make_new,
     .parent = &motor_DCMotor_type,
     .locals_dict = (mp_obj_dict_t*)&motor_DCMotor_locals_dict,
+    .device_id = PBIO_ID_PUP_MOVEHUB_MOTOR,
 };
 
 /*
@@ -418,7 +433,7 @@ Motor module tables
 STATIC const mp_map_elem_t motor_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR__motor) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_DCMotor), (mp_obj_t)&motor_DCMotor_type},
-    // { MP_OBJ_NEW_QSTR(MP_QSTR_EncodedMotor), (mp_obj_t)&motor_EncodedMotor_type},
+    { MP_OBJ_NEW_QSTR(MP_QSTR_EncodedMotor), (mp_obj_t)&motor_EncodedMotor_type},
 };
 
 STATIC MP_DEFINE_CONST_DICT (mp_module_motor_globals, motor_globals_table);

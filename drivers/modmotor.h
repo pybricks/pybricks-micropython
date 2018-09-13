@@ -7,17 +7,26 @@
 #include <pbio/dcmotor.h>
 #include <pbio/encmotor.h>
 
-// Class structure for DC Motors
-typedef struct _motor_DCMotor_obj_t {
+// Extend _mp_obj_type_t with a device_id field.
+typedef struct _mp_obj_type_id_t mp_obj_type_id_t;
+typedef mp_obj_t (*mp_make_new_fun_id_t)(const mp_obj_type_id_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args);
+struct _mp_obj_type_id_t {
     mp_obj_base_t base;
-    pbio_port_t port;
-} motor_DCMotor_obj_t;
-
-// Class structure for Encoded Motors
-typedef struct _motor_EncodedMotor_obj_t {
-    mp_obj_base_t base;
-    uint8_t port;
-} motor_EncodedMotor_obj_t;
-
-// Allow other modules to import this motor
-extern const mp_obj_type_t motor_MovehubMotor_type;
+    uint16_t flags;
+    uint16_t name;
+    mp_print_fun_t print;
+    mp_call_fun_t call;
+    mp_unary_op_fun_t unary_op;
+    mp_binary_op_fun_t binary_op;
+    mp_attr_fun_t attr;
+    mp_subscr_fun_t subscr;
+    mp_getiter_fun_t getiter;
+    mp_fun_1_t iternext;
+    mp_buffer_p_t buffer_p;
+    const void *protocol;
+    const void *parent;
+    struct _mp_obj_dict_t *locals_dict;
+    // The following two are modified/added
+    mp_make_new_fun_id_t make_new;
+    pbio_id_t device_id;
+};
