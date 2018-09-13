@@ -22,7 +22,7 @@ DCMotor
         """
 */
 
-STATIC mp_obj_t motor_DCMotor_make_new(const mp_obj_type_id_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+mp_obj_t motor_DCMotor_make_new(const mp_obj_type_id_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     mp_arg_check_num(n_args, n_kw, 1, 2, false);
     motor_DCMotor_obj_t *self = m_new_obj(motor_DCMotor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
@@ -37,7 +37,7 @@ DCMotor
     def __str__(self):
         """String representation of DCMotor object."""
 */
-STATIC void motor_DCMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind ) {
+void motor_DCMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind ) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     char dcmotor_settings_string[MAX_DCMOTOR_SETTINGS_STR_LENGTH];
     pbio_dcmotor_print_settings(self->port, dcmotor_settings_string);
@@ -146,7 +146,7 @@ EncodedMotor
             gear_ratio {float} -- Absolute slow down factor of a gear train (default: {1.0})
         """
 */
-STATIC mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_id_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
+mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_id_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
     mp_arg_check_num(n_args, n_kw, 1, 3, false);
     motor_EncodedMotor_obj_t *self = m_new_obj(motor_EncodedMotor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
@@ -162,7 +162,7 @@ EncodedMotor
     def __str__(self):
         """String representation of DCMotor object."""
 */
-STATIC void motor_EncodedMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind){
+void motor_EncodedMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     char dcmotor_settings_string[MAX_DCMOTOR_SETTINGS_STR_LENGTH];
     pbio_dcmotor_print_settings(self->port, dcmotor_settings_string);
@@ -434,6 +434,7 @@ STATIC const mp_map_elem_t motor_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR__motor) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_DCMotor), (mp_obj_t)&motor_DCMotor_type},
     { MP_OBJ_NEW_QSTR(MP_QSTR_EncodedMotor), (mp_obj_t)&motor_EncodedMotor_type},
+    { MP_OBJ_NEW_QSTR(MP_QSTR_MovehubMotor), (mp_obj_t)&motor_MovehubMotor_type},    
 };
 
 STATIC MP_DEFINE_CONST_DICT (mp_module_motor_globals, motor_globals_table);
