@@ -196,14 +196,14 @@ STATIC mp_obj_t motor_EncodedMotor_settings(size_t n_args, const mp_obj_t *args)
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
     pbio_error_t err = pbio_encmotor_set_settings(self->port, 
                                      mp_obj_get_float(args[1]),
-                                     (int16_t) mp_obj_get_float(args[2]),
-                                     (int16_t) mp_obj_get_float(args[3]),
-                                     (int16_t) mp_obj_get_float(args[4]),
-                                     (int16_t) mp_obj_get_float(args[5]),
-                                     (int16_t) (mp_obj_get_float(args[6]) * MS_PER_SECOND),
-                                     (int16_t) (mp_obj_get_float(args[7]) * PID_PRESCALE),
-                                     (int16_t) (mp_obj_get_float(args[8]) * PID_PRESCALE),
-                                     (int16_t) (mp_obj_get_float(args[9]) * PID_PRESCALE)
+                                     mp_obj_get_float(args[2]),
+                                     mp_obj_get_float(args[3]),
+                                     mp_obj_get_float(args[4]),
+                                     mp_obj_get_float(args[5]),
+                                     mp_obj_get_float(args[6]),
+                                     mp_obj_get_float(args[7]),
+                                     mp_obj_get_float(args[8]),
+                                     mp_obj_get_float(args[9])
                                      );
     pb_raise_pbio_error(err);
     return mp_const_none;

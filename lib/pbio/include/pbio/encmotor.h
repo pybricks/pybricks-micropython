@@ -16,16 +16,16 @@
  * @{
  */
 
-#define PID_PRESCALE (1000.0)
+#define PID_PRESCALE (1000)
 #define MAX_ENCMOTOR_SETTINGS_STR_LENGTH (200)
-#define MS_PER_SECOND (1000.0)
+#define MS_PER_SECOND (1000)
 
 /**
  * Settings for an encoded motor
  */
 typedef struct _pbio_encmotor_settings_t {
-    int16_t counts_per_unit; /**< Encoder counts per output unit, including optional gear train (counts per degree for rotational motors, counts per cm for a linear motor) */
-    float_t gear_ratio;             /**< Absolute slow down factor of an external gear train*/
+    float_t counts_per_unit;        /**< Encoder counts per output unit. Counts per degree for rotational motors, counts per cm for a linear motor. */
+    float_t counts_per_output_unit; /**< Encoder counts per output unit, including optional gear train. Equals counts_per_unit*gear_ratio. */
     int16_t max_speed;              /**< Soft limit on the reference speed in all run commands */
     int16_t tolerance;              /**< Allowed deviation (deg) from target before motion is considered complete */
     int16_t acceleration_start;     /**< Acceleration when beginning to move. Positive value in degrees per second per second */
@@ -41,7 +41,7 @@ pbio_encmotor_settings_t encmotor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction, float_t gear_ratio);
 
-pbio_error_t pbio_encmotor_set_settings(pbio_port_t port, float_t stall_torque_limit, int16_t max_speed, int16_t tolerance, int16_t acceleration_start, int16_t acceleration_end, int16_t tight_loop_time_ms, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd);
+pbio_error_t pbio_encmotor_set_settings(pbio_port_t port, float_t stall_torque_limit, float_t max_speed, float_t tolerance, float_t acceleration_start, float_t acceleration_end, float_t tight_loop_time, float_t pid_kp, float_t pid_ki, float_t pid_kd);
 
 void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string);
 
