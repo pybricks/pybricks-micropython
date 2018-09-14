@@ -40,8 +40,3 @@ const mp_obj_type_id_t motor_EncodedMotor_type;
 static const mp_obj_dict_t motor_EncodedMotor_locals_dict;
 mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_id_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args);
 void motor_EncodedMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind);
-
-/**** The code below should actually be in motordevices.h, but then it doesn't work. Putting it here until we figure it out. ****/
-
-const mp_obj_type_id_t motor_MovehubMotor_type;
-const mp_obj_type_id_t motor_External_type;
