@@ -1,8 +1,7 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 #include "py/builtin.h"
-#include <pbio/dcmotor.h>
-#include <pbio/encmotor.h>
+#include <pbio/motorcontrol.h>
 
 
 STATIC const mp_map_elem_t constants_globals_table[] = {

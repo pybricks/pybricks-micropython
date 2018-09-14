@@ -1,5 +1,5 @@
 
-#include <pbio/encmotor.h>
+#include <pbio/motorcontrol.h>
 
 #include "pybricks.h"
 
@@ -43,7 +43,7 @@ static void *task_caller(void *arg)
 	struct periodic_info info;
 	configure_timer_thread(PERIOD_MS, &info);
 	while (!stopping_thread) {
-        motorcontroller();
+        motor_control_update();
 		wait_period(&info);
 	}
     // Signal that shutdown is complete

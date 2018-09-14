@@ -170,6 +170,7 @@ PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	lib/pbio/drv/ev3dev_stretch/rawmotor.c \
 	lib/pbio/src/dcmotor.c \
 	lib/pbio/src/encmotor.c \
+	lib/pbio/src/motorcontrol.c \
 	)	
 
 # FatFS VFS support

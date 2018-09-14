@@ -50,12 +50,17 @@ SRC_C = \
 	lib/utils/pyexec.c \
 	lib/libc/string0.c \
 	lib/mp-readline/readline.c \
-	ports/pybricks/lib/pbio/drv/move_hub/light.c \
-	ports/pybricks/lib/pbio/drv/move_hub/rawmotor.c \
-	ports/pybricks/lib/pbio/src/dcmotor.c \
-	ports/pybricks/lib/pbio/src/encmotor.c \
-	ports/pybricks/drivers/modmotor.c \
-	ports/pybricks/drivers/modconstants.c \
+
+# Pybricks drivers and modules
+PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
+	drivers/modmotor.c \
+	drivers/modconstants.c \
+	lib/pbio/drv/move_hub/light.c \
+	lib/pbio/drv/move_hub/rawmotor.c \
+	lib/pbio/src/dcmotor.c \
+	lib/pbio/src/encmotor.c \
+	lib/pbio/src/motorcontrol.c \
+	)	
 
 SRC_S = \
 	startup_stm32f070xb.s \
@@ -96,9 +101,10 @@ FROZEN_C = \
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o) $(FROZEN_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_DRIVERS_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C)
+SRC_QSTR += $(SRC_C) $(PYBRICKS_DRIVERS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
 

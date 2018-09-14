@@ -2,25 +2,6 @@
 #include <pbio/dcmotor.h>
 #include <pbio/encmotor.h>
 
-/**
- * Control settings for an encoded motor
- */
-typedef struct _pbio_encmotor_settings_t {
-    int16_t counts_per_unit; /**< Encoder counts per output unit, including optional gear train (counts per degree for rotational motors, counts per cm for a linear motor) */
-    float_t gear_ratio;             /**< Absolute slow down factor of an external gear train*/
-    int16_t max_speed;              /**< Soft limit on the reference speed in all run commands */
-    int16_t tolerance;              /**< Allowed deviation (deg) from target before motion is considered complete */
-    int16_t acceleration_start;     /**< Acceleration when beginning to move. Positive value in degrees per second per second */
-    int16_t acceleration_end;       /**< Deceleration when stopping. Positive value in degrees per second per second */
-    int16_t tight_loop_time_ms;     /**< When a run function is called twice in this interval, assume that the user is doing their own speed control.  */
-    int32_t offset;                 /**< Virtual zero point of the encoder */
-    int16_t pid_kp;                 /**< Proportional position control constant (and integral speed control constant) */
-    int16_t pid_ki;                 /**< Integral position control constant */
-    int16_t pid_kd;                 /**< Derivative position control constant (and proportional speed control constant) */
-} pbio_encmotor_settings_t;
-
-pbio_encmotor_settings_t encmotor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-
 pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction, float_t gear_ratio){
 
     // Verify device ID and configure DC Motor
@@ -136,56 +117,4 @@ pbio_error_t pbio_motor_get_angular_rate(pbio_port_t port, float_t *angular_rate
     pbio_error_t status = pbio_motor_get_encoder_rate(port, &encoder_rate);
     *angular_rate = encoder_rate / (encmotor_settings[PORT_TO_IDX(port)].counts_per_unit * encmotor_settings[PORT_TO_IDX(port)].gear_ratio);
     return status;    
-}
-
-pbio_error_t pbio_motor_run(pbio_port_t port, float_t speed){
-    // TODO
-    printf("run(port=%c, speed=%f)\n", port, speed);
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_motor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    // TODO
-    printf("stop(%c, after_stop=%d, wait=%d)\n", port, after_stop, wait);
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_motor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    // TODO
-    printf("run_time(port=%c, speed=%f, duration=%f, after_stop=%d, wait=%d)\n", port, speed, duration, after_stop, wait);
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_motor_run_stalled(pbio_port_t port, float_t speed, float_t *stallpoint, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    // TODO
-    printf("run_stalled(port=%c, speed=%f, after_stop=%d, wait=%d)\n", port, speed, after_stop, wait);
-    if (wait) {
-        *stallpoint = 0.0;
-    }
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_motor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    // TODO
-    printf("run_angle(port=%c, speed=%f, angle=%f, after_stop=%d, wait=%d)\n", port, speed, angle, after_stop, wait);
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_motor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    // TODO
-    printf("run_target(port=%c, speed=%f, target=%f, after_stop=%d, wait=%d)\n", port, speed, target, after_stop, wait);
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_motor_track_target(pbio_port_t port, float_t target){
-    // TODO
-    printf("track_target(port=%c, target=%f)\n", port, target);
-    return PBIO_SUCCESS;
-}
-
-void motorcontroller(){
-    // TODO:
-    // This will be the control task that is to be fired at approximately fixed intervals. 
-    // This function does the hard work; the functions above just set/get values that
-    // this control task uses to control the motors.
 }

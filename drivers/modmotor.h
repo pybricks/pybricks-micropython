@@ -4,8 +4,7 @@
 #include "py/binary.h"
 #include "py/builtin.h"
 #include <stdio.h>
-#include <pbio/dcmotor.h>
-#include <pbio/encmotor.h>
+#include <pbio/motorcontrol.h>
 
 // Extend _mp_obj_type_t with a device_id field.
 typedef struct _mp_obj_type_id_t mp_obj_type_id_t;

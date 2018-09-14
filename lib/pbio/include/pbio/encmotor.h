@@ -16,26 +16,28 @@
  * @{
  */
 
-/**
- * Motor action executed after completing a run command.
- */
-typedef enum {
-    PBIO_MOTOR_STOP_COAST,      /**< Coast the motor */
-    PBIO_MOTOR_STOP_BRAKE,      /**< Brake the motor */
-    PBIO_MOTOR_STOP_HOLD,       /**< Actively hold the motor in place */
-} pbio_motor_after_stop_t;
-
-/**
- * Busy wait (or not) for a run command to complete
- */
-typedef enum {
-    PBIO_MOTOR_WAIT_COMPLETION = true, /**< Wait for the run command to complete */
-    PBIO_MOTOR_WAIT_NONE = false,       /**< Execute run command in the background and proceed with user program */
-} pbio_motor_wait_t;
-
 #define PID_PRESCALE (1000.0)
 #define MAX_ENCMOTOR_SETTINGS_STR_LENGTH (200)
 #define MS_PER_SECOND (1000.0)
+
+/**
+ * Settings for an encoded motor
+ */
+typedef struct _pbio_encmotor_settings_t {
+    int16_t counts_per_unit; /**< Encoder counts per output unit, including optional gear train (counts per degree for rotational motors, counts per cm for a linear motor) */
+    float_t gear_ratio;             /**< Absolute slow down factor of an external gear train*/
+    int16_t max_speed;              /**< Soft limit on the reference speed in all run commands */
+    int16_t tolerance;              /**< Allowed deviation (deg) from target before motion is considered complete */
+    int16_t acceleration_start;     /**< Acceleration when beginning to move. Positive value in degrees per second per second */
+    int16_t acceleration_end;       /**< Deceleration when stopping. Positive value in degrees per second per second */
+    int16_t tight_loop_time_ms;     /**< When a run function is called twice in this interval, assume that the user is doing their own speed control.  */
+    int32_t offset;                 /**< Virtual zero point of the encoder */
+    int16_t pid_kp;                 /**< Proportional position control constant (and integral speed control constant) */
+    int16_t pid_ki;                 /**< Integral position control constant */
+    int16_t pid_kd;                 /**< Derivative position control constant (and proportional speed control constant) */
+} pbio_encmotor_settings_t;
+
+pbio_encmotor_settings_t encmotor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction, float_t gear_ratio);
 
@@ -54,22 +56,6 @@ pbio_error_t pbio_motor_reset_angle(pbio_port_t port, float_t reset_angle);
 pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *encoder_rate);
 
 pbio_error_t pbio_motor_get_angular_rate(pbio_port_t port, float_t *angular_rate);
-
-pbio_error_t pbio_motor_run(pbio_port_t port, float_t speed);
-
-pbio_error_t pbio_motor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
-
-pbio_error_t pbio_motor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
-
-pbio_error_t pbio_motor_run_stalled(pbio_port_t port, float_t speed, float_t *stallpoint, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
-
-pbio_error_t pbio_motor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
-
-pbio_error_t pbio_motor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
-
-pbio_error_t pbio_motor_track_target(pbio_port_t port, float_t target);
-
-void motorcontroller();
 
 /** @}*/
 

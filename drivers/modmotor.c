@@ -1,4 +1,4 @@
-#include "modmotor.h"
+#include <modmotor.h>
 
 /*
 DCMotor
