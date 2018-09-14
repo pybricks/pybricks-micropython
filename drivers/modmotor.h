@@ -32,11 +32,11 @@ struct _mp_obj_type_id_t {
 };
 
 const mp_obj_type_id_t motor_DCMotor_type;
-static const mp_obj_dict_t motor_DCMotor_locals_dict;
+const mp_obj_dict_t motor_DCMotor_locals_dict;
 mp_obj_t motor_DCMotor_make_new(const mp_obj_type_id_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args);
 void motor_DCMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind);
 
 const mp_obj_type_id_t motor_EncodedMotor_type;
-static const mp_obj_dict_t motor_EncodedMotor_locals_dict;
+const mp_obj_dict_t motor_EncodedMotor_locals_dict;
 mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_id_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args);
 void motor_EncodedMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind);

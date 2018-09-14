@@ -110,7 +110,7 @@ STATIC const mp_rom_map_elem_t motor_DCMotor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_duty), MP_ROM_PTR(&motor_DCMotor_duty_obj) },
 };
 
-STATIC MP_DEFINE_CONST_DICT(motor_DCMotor_locals_dict, motor_DCMotor_locals_dict_table);
+MP_DEFINE_CONST_DICT(motor_DCMotor_locals_dict, motor_DCMotor_locals_dict_table);
 
 // create the class-object itself
 const mp_obj_type_id_t motor_DCMotor_type = {
@@ -404,7 +404,7 @@ const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_settings), MP_ROM_PTR(&motor_EncodedMotor_settings_obj) },
 };
 
-STATIC MP_DEFINE_CONST_DICT(motor_EncodedMotor_locals_dict, motor_EncodedMotor_locals_dict_table);
+MP_DEFINE_CONST_DICT(motor_EncodedMotor_locals_dict, motor_EncodedMotor_locals_dict_table);
 
 const mp_obj_type_id_t motor_EncodedMotor_type = {
     { &mp_type_type },
