@@ -15,7 +15,7 @@ typedef float float_t;
 #define PORT_TO_IDX(p) ((p) - PBDRV_CONFIG_FIRST_MOTOR_PORT)
 #define MAX_DCMOTOR_SETTINGS_STR_LENGTH (200)
 
-// This should go elsewhere in the lib
+// This should go elsewhere in the lib. The items below should get the actual IDs
 /**
  * Device ID
  */
@@ -24,6 +24,7 @@ typedef enum {
     PBIO_ID_UNKNOWN_DCMOTOR,
     PBIO_ID_UNKNOWN_ENCMOTOR,
     PBIO_ID_PUP_MOVEHUB_MOTOR,
+    PBIO_ID_EV3_MEDIUM_MOTOR, // = ....
     PBIO_ID_EV3_LARGE_MOTOR,
 } pbio_id_t;
 

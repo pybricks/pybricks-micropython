@@ -1,43 +1,32 @@
 """Classes for LEGO MINDSTORMS EV3 Devices."""
 
-from _motor import EncodedMotor
+# LEGO MINDSTORMS EV3 Large Motor.
+#
+# Contained in set:
+# 31313: LEGO MINDSTORMS EV3 (2013)
+# 45544: LEGO MINDSTORMS Education EV3 Core Set (2013)
+# 45502: Separate part (2013)
+#
+# LEGO ID: 95658/6148278
+#
+# Compatible with:
+# Pybricks for LEGO MINDSTORMS NXT
+# Pybricks for LEGO MINDSTORMS EV3
+from ev3devices_c import LargeMotor
 
-
-class LargeMotor(EncodedMotor):
-    """LEGO MINDSTORMS EV3 Large Motor.
-
-    Contained in set:
-    31313: LEGO MINDSTORMS EV3 (2013)
-    45544: LEGO MINDSTORMS Education EV3 Core Set (2013)
-    45502: Separate part (2013)
-
-    LEGO ID: 95658/6148278
-
-    Compatible with:
-    Pybricks for LEGO MINDSTORMS NXT
-    Pybricks for LEGO MINDSTORMS EV3
-    """
-
-    pass
-
-
-class MediumMotor(EncodedMotor):
-    """LEGO MINDSTORMS EV3 Medium Motor.
-
-    Contained in set:
-    31313: LEGO MINDSTORMS EV3 (2013)
-    45544: LEGO MINDSTORMS Education EV3 Core Set (2013)
-    45502: Separate part (2013)
-
-    LEGO ID: 99455/6148292
-
-    Compatible with:
-    Pybricks for LEGO MINDSTORMS NXT
-    Pybricks for LEGO MINDSTORMS EV3
-    """
-
-    pass
-
+# LEGO MINDSTORMS EV3 Medium Motor.
+#
+# Contained in set:
+# 31313: LEGO MINDSTORMS EV3 (2013)
+# 45544: LEGO MINDSTORMS Education EV3 Core Set (2013)
+# 45502: Separate part (2013)
+#
+# LEGO ID: 99455/6148292
+#
+# Compatible with:
+# Pybricks for LEGO MINDSTORMS NXT
+# Pybricks for LEGO MINDSTORMS EV3
+from ev3devices_c import MediumMotor
 
 class AnalogSensor():
     """Generic class for LEGO MINDSTORMS EV3 Analog Sensors. Serves as base class for several LEGO MINDSTORMS EV3 Sensors."""

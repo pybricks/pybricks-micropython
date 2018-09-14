@@ -23,6 +23,7 @@ INC += -I$(BUILD)
 INC += -I$(TOP)/ports/pybricks/lib/pbio/drv/ev3dev_stretch
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 INC += -I$(TOP)/ports/pybricks/lib/pbdrv/include
+INC += -I$(TOP)/ports/pybricks/drivers
 
 # compiler settings
 CWARN = -Wall -Werror
@@ -154,6 +155,7 @@ SRC_C = \
 	coverage.c \
 	fatfs_port.c \
 	pybricks.c \
+	modev3devices.c \
 	$(SRC_MOD)
 
 LIB_SRC_C = $(addprefix lib/,\
