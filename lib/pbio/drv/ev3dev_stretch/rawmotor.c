@@ -8,7 +8,7 @@
 
 #define MAX_PATH_LENGTH 50
 
-#define PORT_TO_IDX(p) ((p) - PBIO_PORT_A)
+#define PORT_TO_IDX(p) ((p) - PBDRV_CONFIG_FIRST_MOTOR_PORT)
 
 // Motor file structure for each motor
 typedef struct _motor_file_t {
@@ -21,22 +21,35 @@ typedef struct _motor_file_t {
 } motor_file_t;
 
 motor_file_t motor_files[] = {
-    [PORT_TO_IDX(PBIO_PORT_A) ... PORT_TO_IDX(PBIO_PORT_D)]{
+    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
         .connected=false
     }
 };
 
 
 // Open file, write contents, and close it
-void slow_write(pbio_port_t port, const char* filename, const char* content) {
+pbio_error_t slow_write(pbio_port_t port, const char* filename, const char* content) {
+    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
+        return PBIO_ERROR_INVALID_PORT;
+    }
+    if (!motor_files[PORT_TO_IDX(port)].connected) {
+        return PBIO_ERROR_NO_DEV;
+    }
     // Open the file in the directory corresponding to the specified port
     char filepath[MAX_PATH_LENGTH];
     snprintf(filepath, MAX_PATH_LENGTH, "/sys/class/tacho-motor/motor%d/%s", motor_files[PORT_TO_IDX(port)].dir_number, filename);
     FILE* file = fopen(filepath, "w"); 
-    // Write the contents to the file
-    fprintf(file, "%s", content);  
-    // Close the file
-    fclose(file);            
+    if (file != NULL) {
+        // Write the contents to the file
+        fprintf(file, "%s", content);  
+        // Close the file
+        fclose(file); 
+        return PBIO_SUCCESS;
+    }
+    else{
+        return PBIO_ERROR_IO;
+    }
+          
 }
 
 void pbdrv_motor_init(void) {
@@ -68,7 +81,7 @@ void pbdrv_motor_init(void) {
     closedir (dp);
 
     // Now that we know which motors are present, open the relevant files for reading and writing
-    for(pbio_port_t port = PBIO_PORT_A; port < PBIO_PORT_D; port++) {
+    for(pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port < PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
         int port_index = PORT_TO_IDX(port);
         if (motor_files[port_index].connected) {
             //Debug message. Should replace with debug print
@@ -94,7 +107,7 @@ void pbdrv_motor_init(void) {
 
 void pbdrv_motor_deinit(void) {
     // Close the relevant files
-    for(pbio_port_t port = PBIO_PORT_A; port < PBIO_PORT_D; port++) {
+    for(pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port < PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
         int port_index = PORT_TO_IDX(port);
         if (motor_files[port_index].connected) {
             // Only close files for motors that are attached
@@ -108,20 +121,18 @@ void pbdrv_motor_deinit(void) {
 }
 
 pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
-    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
+    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
         return PBIO_ERROR_INVALID_PORT;
     }
     if (!motor_files[PORT_TO_IDX(port)].connected) {
         return PBIO_ERROR_NO_DEV;
     }
-    slow_write(port, "command", "stop");
-    motor_files[PORT_TO_IDX(port)].coasting = true;    
-
-    return PBIO_SUCCESS;
+    motor_files[PORT_TO_IDX(port)].coasting = true;
+    return slow_write(port, "command", "stop");
 }
 
 pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
-    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
+    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
         return PBIO_ERROR_INVALID_PORT;
     }
     if (!motor_files[PORT_TO_IDX(port)].connected) {
@@ -134,26 +145,36 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
     }
     fseek(motor_files[PORT_TO_IDX(port)].f_duty, 0, SEEK_SET);
     fprintf(motor_files[PORT_TO_IDX(port)].f_duty, "%d", duty_cycle/100);
-    fflush(motor_files[PORT_TO_IDX(port)].f_duty); 
-
-    return PBIO_SUCCESS;
+    int err = fflush(motor_files[PORT_TO_IDX(port)].f_duty); 
+    if (err == EOF) {
+        return PBIO_ERROR_IO;
+    }
+    else{
+        return PBIO_SUCCESS;
+    }
 }
 
 pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
-    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
+    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
         return PBIO_ERROR_INVALID_PORT;
     }
     if (!motor_files[PORT_TO_IDX(port)].connected) {
         return PBIO_ERROR_NO_DEV;
     }
+    
     fseek(motor_files[PORT_TO_IDX(port)].f_encoder_count, 0, SEEK_SET);
-    fscanf(motor_files[PORT_TO_IDX(port)].f_encoder_count, "%d", count);
+    int err = fscanf(motor_files[PORT_TO_IDX(port)].f_encoder_count, "%d", count);
     fflush(motor_files[PORT_TO_IDX(port)].f_encoder_count);
-    return PBIO_SUCCESS;    
+    if (err == EOF) {
+        return PBIO_ERROR_IO;
+    }
+    else{
+        return PBIO_SUCCESS;
+    }
 }
 
 pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
-    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
+    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
         return PBIO_ERROR_INVALID_PORT;
     }
     if (!motor_files[PORT_TO_IDX(port)].connected) {
