@@ -55,7 +55,6 @@ SRC_C = \
 	ports/pybricks/lib/pbio/src/dcmotor.c \
 	ports/pybricks/lib/pbio/src/encmotor.c \
 	ports/pybricks/drivers/modmotor.c \
-	ports/pybricks/drivers/motordevices.c \
 	ports/pybricks/drivers/modconstants.c \
 
 SRC_S = \

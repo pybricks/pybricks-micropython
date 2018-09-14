@@ -233,7 +233,6 @@ extern const struct _mp_obj_module_t mp_module_test;
     MICROPY_PY_TERMIOS_DEF \
     { MP_OBJ_NEW_QSTR(MP_QSTR__motor), (mp_obj_t)&mp_module_motor }, \
     { MP_OBJ_NEW_QSTR(MP_QSTR__constants), (mp_obj_t)&mp_module_constants }, \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_test), (mp_obj_t)&mp_module_test }, \
 
 // type definitions for the specific machine
 

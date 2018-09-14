@@ -4,7 +4,7 @@
 #include <pbdrv/rawmotor.h>
 #include <pbio/dcmotor.h>
 #include <pbio/encmotor.h>
-#include <motordevices.h>
+#include <modmotor.h>
 
 #include "stm32f070xb.h"
 
@@ -21,6 +21,16 @@
 // Bootloader reads this address to know if firmware loader should run
 uint32_t hub_bootloader_magic_addr __attribute__((section (".magic")));
 #define HUB_BOOTLOADER_MAGIC_VALUE  0xAAAAAAAA
+
+const mp_obj_type_id_t motor_MovehubMotor_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_MovehubMotor,
+    .print = motor_DCMotor_print,
+    .make_new = motor_DCMotor_make_new,
+    .parent = &motor_DCMotor_type,
+    .locals_dict = (mp_obj_dict_t*)&motor_DCMotor_locals_dict,
+    .device_id = PBIO_ID_PUP_MOVEHUB_MOTOR,
+};
 
 STATIC mp_obj_t hub_get_button(void) {
     return mp_obj_new_bool(button_get_state());
