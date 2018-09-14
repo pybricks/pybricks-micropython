@@ -1,6 +1,15 @@
 #include <pbio/motorcontrol.h>
 
+pbio_error_t pbio_motor_status(pbio_port_t port){
+    int32_t dummy;
+    return pbio_motor_get_encoder_count(port, &dummy);
+}
+
 pbio_error_t pbio_motor_run(pbio_port_t port, float_t speed){
+    pbio_error_t status = pbio_motor_status(port);
+    if (status != PBIO_SUCCESS) {
+        return status;
+    }
     // TODO
     printf("run(port=%c, speed=%f)\n", port, speed);
     return PBIO_SUCCESS;

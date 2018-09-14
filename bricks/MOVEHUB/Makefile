@@ -55,6 +55,7 @@ SRC_C = \
 PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	drivers/modmotor.c \
 	drivers/modconstants.c \
+	drivers/pberror.c \
 	lib/pbio/drv/move_hub/light.c \
 	lib/pbio/drv/move_hub/rawmotor.c \
 	lib/pbio/src/dcmotor.c \
