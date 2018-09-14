@@ -15,7 +15,7 @@ pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_mot
     // TODO: Use the device_id to retrieve the default settings defined in our lib. For now just hardcode something below.
     //
     float_t counts_per_unit = 1;
-    pbio_encmotor_set_settings(port, 100.0, 1000, 1, 1000, 1000, 100, 5000, 5000, 50);
+    pbio_encmotor_set_settings(port, 100.0, 1000, 1, 1000, 1000, 100, 5, 5, 0.05);
 
     // If all checks have passed, continue with setup of encoded motor
     if (status == PBIO_SUCCESS) {
