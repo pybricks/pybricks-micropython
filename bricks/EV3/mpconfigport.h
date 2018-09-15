@@ -24,6 +24,9 @@
  * THE SOFTWARE.
  */
 
+// Pybricks brick specific definitions
+#include "mpconfigbrick.h"
+
 // options to control how MicroPython is built
 
 #define MICROPY_ALLOC_PATH_MAX      (PATH_MAX)
@@ -217,11 +220,8 @@ extern const struct _mp_obj_module_t mp_module_jni;
 #define MICROPY_PY_USELECT_DEF
 #endif
 
-extern const struct _mp_obj_module_t mp_module_motor;
-extern const struct _mp_obj_module_t mp_module_constants;
-extern const struct _mp_obj_module_t mp_module_ev3devices;
-
 #define MICROPY_PORT_BUILTIN_MODULES \
+    PYBRICKS_PORT_BUILTIN_MODULES \
     MICROPY_PY_FFI_DEF \
     MICROPY_PY_JNI_DEF \
     MICROPY_PY_UTIME_DEF \
@@ -230,8 +230,6 @@ extern const struct _mp_obj_module_t mp_module_ev3devices;
     MICROPY_PY_UOS_DEF \
     MICROPY_PY_USELECT_DEF \
     MICROPY_PY_TERMIOS_DEF \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_ev3devices_c), (mp_obj_t)&mp_module_ev3devices }, \
-    { MP_OBJ_NEW_QSTR(MP_QSTR__constants), (mp_obj_t)&mp_module_constants }, \
 
 // type definitions for the specific machine
 
