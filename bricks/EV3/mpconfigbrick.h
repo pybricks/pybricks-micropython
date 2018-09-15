@@ -1,4 +1,4 @@
-#include "pybricks.h"
+#include "pbinit.h"
 
 #define PYBRICKS_BRICK_EV3
 #define PYBRICKS_BRICK_NAME             "LEGO MINDSTORMS EV3 Intelligent Brick"

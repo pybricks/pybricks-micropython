@@ -155,7 +155,7 @@ SRC_C = \
 	alloc.c \
 	coverage.c \
 	fatfs_port.c \
-	pybricks.c \
+	pbinit.c \
 	modev3devices.c \
 	$(SRC_MOD)
 
