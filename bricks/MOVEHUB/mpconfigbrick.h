@@ -1,7 +1,10 @@
 #define PYBRICKS_BRICK_MOVEHUB
 #define PYBRICKS_BRICK_NAME             "BOOST Move Hub"
 
+// Set to (1) to enable basic motor functionality such as setting the duty cycle, braking, and coasting.
 #define PYBRICKS_HW_ENABLE_MOTORS       (1)
+
+// Set to (1) to enable motor encoder functionality and speed control. Has an effect only if PYBRICKS_HW_ENABLE_MOTORS is enabled.
 #define PYBRICKS_HW_ENABLE_ENCODERS     (0)
 
 extern const struct _mp_obj_module_t mp_module_hub;
