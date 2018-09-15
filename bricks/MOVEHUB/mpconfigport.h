@@ -1,10 +1,11 @@
 #include <stdint.h>
 
 #include "stm32f070xb.h"
+#include "mpconfigbrick.h"
 
 // machine-specific info
 
-#define MICROPY_HW_BOARD_NAME "BOOST Move Hub"
+#define MICROPY_HW_BOARD_NAME PYBRICKS_BRICK_NAME
 #define MICROPY_HW_MCU_NAME "STM32F070RB"
 
 // hard-coding for pybricks since we don't expect a different value
@@ -89,14 +90,11 @@ typedef long mp_off_t;
 
 #define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn_cooked(str, len)
 
-extern const struct _mp_obj_module_t mp_module_hub;
 extern const struct _mp_obj_module_t mp_module_utime;
-extern const struct _mp_obj_module_t mp_module_constants;
 
 #define MICROPY_PORT_BUILTIN_MODULES \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_hub), (mp_obj_t)&mp_module_hub },  \
+    PYBRICKS_PORT_BUILTIN_MODULES \
     { MP_OBJ_NEW_QSTR(MP_QSTR_utime), (mp_obj_t)&mp_module_utime },  \
-    { MP_OBJ_NEW_QSTR(MP_QSTR__constants), (mp_obj_t)&mp_module_constants },  
 
 #define MICROPY_PORT_BUILTIN_MODULE_WEAK_LINKS \
     { MP_ROM_QSTR(MP_QSTR_time), MP_ROM_PTR(&mp_module_utime) }, \

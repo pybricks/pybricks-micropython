@@ -108,6 +108,7 @@ OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_DRIVERS_SRC_C:.c=.o))
 SRC_QSTR += $(SRC_C) $(PYBRICKS_DRIVERS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
+QSTR_GLOBAL_DEPENDENCIES = mpconfigbrick.h
 
 all: $(BUILD)/firmware.bin
 
