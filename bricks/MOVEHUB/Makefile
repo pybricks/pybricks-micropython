@@ -1,7 +1,7 @@
 include ../../../../py/mkenv.mk
 
 # qstr definitions (must come before including py.mk)
-QSTR_DEFS = qstrdefsport.h
+QSTR_GLOBAL_DEPENDENCIES = mpconfigbrick.h
 
 # include py core make definitions
 include $(TOP)/py/py.mk
@@ -108,7 +108,6 @@ OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_DRIVERS_SRC_C:.c=.o))
 SRC_QSTR += $(SRC_C) $(PYBRICKS_DRIVERS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
-QSTR_GLOBAL_DEPENDENCIES = mpconfigbrick.h
 
 all: $(BUILD)/firmware.bin
 

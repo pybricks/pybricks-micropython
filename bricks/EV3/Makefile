@@ -7,6 +7,7 @@ include ../../../../py/mkenv.mk
 
 FROZEN_DIR = scripts
 FROZEN_MPY_DIR = modules
+QSTR_GLOBAL_DEPENDENCIES = mpconfigbrick.h
 
 # define main target
 PROG = micropython
@@ -190,7 +191,6 @@ SRC_QSTR += $(SRC_C) $(LIB_SRC_C) $(PYBRICKS_DRIVERS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in
 # SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
-QSTR_GLOBAL_DEPENDENCIES = mpconfigbrick.h
 
 ifneq ($(FROZEN_MPY_DIR),)
 # To use frozen bytecode, put your .py files in a subdirectory (eg frozen/) and
