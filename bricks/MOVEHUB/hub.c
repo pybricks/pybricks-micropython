@@ -2,6 +2,7 @@
 
 #include <pbdrv/light.h>
 #include <modmotor.h>
+#include <mpconfigbrick.h>
 
 #include "stm32f070xb.h"
 
@@ -19,15 +20,24 @@
 uint32_t hub_bootloader_magic_addr __attribute__((section (".magic")));
 #define HUB_BOOTLOADER_MAGIC_VALUE  0xAAAAAAAA
 
+#if PYBRICKS_HW_ENABLE_MOTORS
 const mp_obj_type_id_t motor_MovehubMotor_type = {
     { &mp_type_type },
     .name = MP_QSTR_MovehubMotor,
+    .device_id = PBIO_ID_PUP_MOVEHUB_MOTOR,    
+#if PYBRICKS_HW_ENABLE_ENCODERS    
+    .print = motor_EncodedMotor_print,
+    .make_new = motor_EncodedMotor_make_new,
+    .parent = &motor_EncodedMotor_type,
+    .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
+#else
     .print = motor_DCMotor_print,
     .make_new = motor_DCMotor_make_new,
     .parent = &motor_DCMotor_type,
     .locals_dict = (mp_obj_dict_t*)&motor_DCMotor_locals_dict,
-    .device_id = PBIO_ID_PUP_MOVEHUB_MOTOR,
+#endif //PYBRICKS_ENABLE_ENCODERS
 };
+#endif //PYBRICKS_ENABLE_MOTORS
 
 STATIC mp_obj_t hub_get_button(void) {
     return mp_obj_new_bool(button_get_state());
@@ -200,7 +210,9 @@ STATIC const mp_map_elem_t hub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_read_adc), (mp_obj_t)&hub_read_adc_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_reboot), (mp_obj_t)&hub_reboot_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_set_light), (mp_obj_t)&hub_set_light_obj },
+#if PYBRICKS_HW_ENABLE_MOTORS    
     { MP_OBJ_NEW_QSTR(MP_QSTR_MovehubMotor), (mp_obj_t)&motor_MovehubMotor_type},
+#endif //PYBRICKS_HW_ENABLE_MOTORS
 };
 
 STATIC MP_DEFINE_CONST_DICT (

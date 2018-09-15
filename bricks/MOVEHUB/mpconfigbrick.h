@@ -1,6 +1,9 @@
 #define PYBRICKS_BRICK_MOVEHUB
 #define PYBRICKS_BRICK_NAME             "BOOST Move Hub"
 
+#define PYBRICKS_HW_ENABLE_MOTORS       (1)
+#define PYBRICKS_HW_ENABLE_ENCODERS     (0)
+
 extern const struct _mp_obj_module_t mp_module_hub;
 extern const struct _mp_obj_module_t mp_module_constants;
 
