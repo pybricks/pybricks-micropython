@@ -1,6 +1,10 @@
 #define PYBRICKS_BRICK_MOVEHUB
 #define PYBRICKS_BRICK_NAME             "BOOST Move Hub"
 
+
+// Set to (1) to enable the compiler and interactive micropython prompt. Requires about 19K (19568) of flash
+#define PYBRICKS_ENABLE_REPL            (1)
+
 // Set to (1) to enable basic motor functionality such as setting the duty cycle, braking, and coasting.
 #define PYBRICKS_HW_ENABLE_MOTORS       (1)
 
