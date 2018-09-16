@@ -20,15 +20,15 @@ typedef enum {
 /**
  * Motor control command type
  */
-typedef struct _pbio_motor_newcom_t {
+typedef struct _pbio_motor_command_t {
     pbio_motor_action_t action;
     int16_t speed;
     int32_t duration_or_target;
     pbio_motor_after_stop_t after_stop;
-} pbio_motor_newcom_t;
+} pbio_motor_command_t;
 
 // Initialize new command to idle
-pbio_motor_newcom_t newcom[] = {
+pbio_motor_command_t newcom[] = {
     [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
         .action = IDLE,
         .speed = 0,
@@ -38,7 +38,7 @@ pbio_motor_newcom_t newcom[] = {
 };
 
 // Initialize current command to idle
-pbio_motor_newcom_t curcom[] = {
+pbio_motor_command_t curcom[] = {
     [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
         .action = IDLE,
         .speed = 0,
