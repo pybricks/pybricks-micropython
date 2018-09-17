@@ -14,3 +14,8 @@ sleep(1)
 # And stop
 print("Stop.")
 motor.coast()
+
+# Print angle and debug run command (required encoders are enabled)
+print(motor.angle())
+motor.run(500)
+sleep(5)
