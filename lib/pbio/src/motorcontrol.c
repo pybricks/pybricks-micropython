@@ -49,10 +49,25 @@ pbio_motor_command_t command[] = {
     }
 };
 
+/**
+ * Unsigned integer type with units of microseconds
+ */
 typedef uint32_t time_t;
-typedef uint32_t count_t;
-typedef uint32_t rate_t;
-typedef uint32_t accl_t;
+
+/**
+ * Integer type with units of encoder counts
+ */
+typedef int32_t count_t;
+
+/**
+ * Integer type with units of encoder counts per second
+ */
+typedef int32_t rate_t;
+
+/**
+ * Integer type with units of encoder counts per second per second
+ */
+typedef int32_t accl_t;
 
 /**
  * Motor trajectory parameters
@@ -135,11 +150,19 @@ void debug_command(pbio_port_t port){
     );
 }
 
+// Calculate the characteristic time values, encoder values, rate values and accelerations that uniquely define the reference rate and count trajectories
+void get_trajectory_constants(pbio_port_t port, pbio_motor_action_t action, time_t time_start, count_t count_start, rate_t rate_start, rate_t rate_target, uint32_t endpoint){
+    // RUN, STOP, RUN_TIME, RUN_STALLED are all specific cases of a generic timed control loop
+    bool do_run_time = (action == RUN) || (action == STOP) || (action == RUN_TIME) || (action == RUN_STALLED);
 
+    // RUN_ANGLE, RUN_TARGET, TRACK_TARGET are all specific cases of a generic position based control loop
+    bool do_run_target = (action == RUN_ANGLE) || (action == RUN_TARGET) || (action == TRACK_TARGET);
 
+    // If the specified endpoint (angle or time) is equal to the corresponding starting value, return an empty maneuver.
+    if ((do_run_target && endpoint == count_start) || (do_run_time && endpoint == time_start)) {
 
-void compute_trajectory_constants(pbio_port_t port, pbio_motor_action_t action, time_t time_start, count_t count_start, rate_t rate_start, rate_t rate_target, uint32_t endpoint){
-    
+    }
+    return;
 }
 
 
@@ -168,7 +191,7 @@ void motor_control_update(){
             int32_t endpoint = 0; // Todo
 
             // Generate reference trajectory parameters for new command
-            compute_trajectory_constants(port, command[idx].action, time_now, encoder_now, rate_now, command[idx].speed, endpoint);
+            get_trajectory_constants(port, command[idx].action, time_now, encoder_now, rate_now, command[idx].speed, endpoint);
         }
         // Read current state of this motor: current time, speed, and position
 
