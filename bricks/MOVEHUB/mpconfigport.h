@@ -3,11 +3,6 @@
 #include "stm32f070xb.h"
 #include "mpconfigbrick.h"
 
-// machine-specific info
-
-#define MICROPY_HW_BOARD_NAME PYBRICKS_BRICK_NAME
-#define MICROPY_HW_MCU_NAME "STM32F070RB"
-
 // hard-coding for pybricks since we don't expect a different value
 #define PYBRICKS_SYS_CLOCK_FREQ 48000000
 

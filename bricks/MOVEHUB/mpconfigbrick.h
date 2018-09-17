@@ -1,6 +1,6 @@
 #define PYBRICKS_BRICK_MOVEHUB
-#define PYBRICKS_BRICK_NAME             "BOOST Move Hub"
-
+#define MICROPY_HW_BOARD_NAME           "BOOST Movehub"
+#define MICROPY_HW_MCU_NAME             "STM32F070RB"
 
 // You can disable the built-in MicroPython compiler by setting the following
 // config option to 0.  If you do this then you won't get a REPL prompt, but you
