@@ -81,7 +81,7 @@ void pbdrv_motor_init(void) {
     closedir (dp);
 
     // Now that we know which motors are present, open the relevant files for reading and writing
-    for(pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port < PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
+    for(pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
         int port_index = PORT_TO_IDX(port);
         if (motor_files[port_index].connected) {
             //Debug message. Should replace with debug print
