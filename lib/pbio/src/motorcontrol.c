@@ -90,29 +90,10 @@ pbio_motor_trajectory_t trajectories[] = {
     }
 };
 
-// Atomic flag, one for each motor, that is set when the command_new variable is currently being read or being written. It is clear when it is free.
-volatile atomic_flag busy[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-
-// Send a new command to the task handler
-pbio_error_t send_command(uint8_t port, pbio_motor_action_t action, int16_t speed, int32_t duration_or_target, pbio_motor_after_stop_t after_stop){
-    // Test if the motor is still available
-    int32_t dummy;
-    pbio_error_t error = pbio_encmotor_get_encoder_count(port, &dummy);
-    if (error != PBIO_SUCCESS) {
-        return error;
-    }
-    uint8_t idx = PORT_TO_IDX(port);
-    // Wait for the handler to free access to command variable, then claim it
-    while(atomic_flag_test_and_set(&busy[idx]));
-    // Set the new command
-    command_new[idx].action = action;
-    command_new[idx].speed = speed;
-    command_new[idx].duration_or_target = duration_or_target;
-    command_new[idx].after_stop = after_stop;
-    // Release command variable
-    atomic_flag_clear(&busy[idx]);
-    return PBIO_SUCCESS;
-}
+// Send a motor command to the task handler
+pbio_error_t send_command(uint8_t port, pbio_motor_action_t action, int16_t speed, int32_t duration_or_target, pbio_motor_after_stop_t after_stop);
+// Store the motor command if it changed, and return true if it has
+bool process_new_command(pbio_port_t port);
 
 pbio_error_t pbio_encmotor_run(pbio_port_t port, float_t speed){
     float_t counts_per_output_unit = encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit;
@@ -154,28 +135,7 @@ void debug_command(pbio_port_t port){
     );
 }
 
-bool process_new_command(pbio_port_t port){
-    uint8_t idx = PORT_TO_IDX(port);
-    bool haschanged = false;
-    // Look for new command only if there is read access (otherwise, we'll check again next time)
-    if (!atomic_flag_test_and_set(&busy[idx])) {
-        // If we have read access, see if the command has changed since last time
-        if (command[idx].action             != command_new[idx].action             ||
-            command[idx].speed              != command_new[idx].speed              ||
-            command[idx].duration_or_target != command_new[idx].duration_or_target ||
-            command[idx].after_stop         != command_new[idx].after_stop)
-        {
-            // If the command changed, store that new command for non-atomic reading
-            command[idx].action             = command_new[idx].action;
-            command[idx].speed              = command_new[idx].speed;
-            command[idx].duration_or_target = command_new[idx].duration_or_target;
-            command[idx].after_stop         = command_new[idx].after_stop;
-            haschanged = true;
-        }
-        atomic_flag_clear(&busy[idx]);
-    }
-    return haschanged;
-}
+
 
 
 void compute_trajectory_constants(pbio_port_t port, pbio_motor_action_t action, time_t time_start, count_t count_start, rate_t rate_start, rate_t rate_target, uint32_t endpoint){
@@ -216,4 +176,57 @@ void motor_control_update(){
         
         // Set the duty cycle
     }
+}
+
+/*
+
+    Only the code below has to change once we use MICROPY_EVENT_POLL_HOOK to call the task handler
+
+*/
+
+// Atomic flag, one for each motor, that is set when the command_new variable is currently being read or being written. It is clear when it is free.
+volatile atomic_flag busy[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+
+// Send a new command to the task handler
+pbio_error_t send_command(uint8_t port, pbio_motor_action_t action, int16_t speed, int32_t duration_or_target, pbio_motor_after_stop_t after_stop){
+    // Test if the motor is still available
+    int32_t dummy;
+    pbio_error_t error = pbio_encmotor_get_encoder_count(port, &dummy);
+    if (error != PBIO_SUCCESS) {
+        return error;
+    }
+    uint8_t idx = PORT_TO_IDX(port);
+    // Wait for the handler to free access to command variable, then claim it
+    while(atomic_flag_test_and_set(&busy[idx]));
+    // Set the new command
+    command_new[idx].action = action;
+    command_new[idx].speed = speed;
+    command_new[idx].duration_or_target = duration_or_target;
+    command_new[idx].after_stop = after_stop;
+    // Release command variable
+    atomic_flag_clear(&busy[idx]);
+    return PBIO_SUCCESS;
+}
+
+bool process_new_command(pbio_port_t port){
+    uint8_t idx = PORT_TO_IDX(port);
+    bool haschanged = false;
+    // Look for new command only if there is read access (otherwise, we'll check again next time)
+    if (!atomic_flag_test_and_set(&busy[idx])) {
+        // If we have read access, see if the command has changed since last time
+        if (command[idx].action             != command_new[idx].action             ||
+            command[idx].speed              != command_new[idx].speed              ||
+            command[idx].duration_or_target != command_new[idx].duration_or_target ||
+            command[idx].after_stop         != command_new[idx].after_stop)
+        {
+            // If the command changed, store that new command for non-atomic reading
+            command[idx].action             = command_new[idx].action;
+            command[idx].speed              = command_new[idx].speed;
+            command[idx].duration_or_target = command_new[idx].duration_or_target;
+            command[idx].after_stop         = command_new[idx].after_stop;
+            haschanged = true;
+        }
+        atomic_flag_clear(&busy[idx]);
+    }
+    return haschanged;
 }
