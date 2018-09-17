@@ -1,5 +1,6 @@
 #include <pbio/motorcontrol.h>
 #include <stdatomic.h>
+#include <pbdrv/time.h>
 
 #define NONE (0)
 
@@ -133,10 +134,14 @@ bool process_new_command(uint8_t idx){
 }
 
 void motor_control_update(){
+
+    uint32_t time_now;
+
     // Do the update for each motor
     for (uint8_t idx = 0; idx < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; idx++){
 
         // Read the current time
+        pbdrv_get_time_usec(&time_now);
 
         if (process_new_command(idx)){
             // Print out the newly set current command

@@ -171,6 +171,7 @@ PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	drivers/modconstants.c \
 	drivers/pberror.c \
 	lib/pbio/drv/ev3dev_stretch/motor.c \
+	lib/pbio/drv/ev3dev_stretch/time.c \
 	lib/pbio/src/dcmotor.c \
 	lib/pbio/src/encmotor.c \
 	lib/pbio/src/motorcontrol.c \
