@@ -1,4 +1,4 @@
-#include <pbdrv/rawmotor.h>
+#include <pbdrv/motor.h>
 #include <pbio/dcmotor.h>
 #include <pbio/encmotor.h>
 

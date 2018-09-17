@@ -4,7 +4,7 @@
 
 #include "stm32f070xb.h"
 
-#include <pbdrv/rawmotor.h>
+#include <pbdrv/motor.h>
 #include <pbio/dcmotor.h>
 
 #define PBIO_MOTOR_BUF_SIZE 32 // must be power of 2!

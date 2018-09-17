@@ -3,7 +3,7 @@
 #include <string.h>
 
 #include <pbdrv/light.h>
-#include <pbdrv/rawmotor.h>
+#include <pbdrv/motor.h>
 #include <pbio/dcmotor.h>
 #include <pbio/encmotor.h>
 

@@ -8,7 +8,7 @@
 
 #include <pbio/error.h>
 #include <pbio/port.h>
-#include <pbdrv/rawmotor.h>
+#include <pbdrv/motor.h>
 
 typedef float float_t;
 

@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <dirent.h>
 #include <string.h>
-#include <pbdrv/rawmotor.h>
+#include <pbdrv/motor.h>
 
 
 #define MAX_PATH_LENGTH 50
