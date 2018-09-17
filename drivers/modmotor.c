@@ -221,7 +221,7 @@ EncodedMotor
 STATIC mp_obj_t motor_EncodedMotor_angle(mp_obj_t self_in) {
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
     float_t angle;
-    pbio_error_t err = pbio_motor_get_angle(self->port, &angle);
+    pbio_error_t err = pbio_encmotor_get_angle(self->port, &angle);
     pb_raise_pbio_error(err);
     return mp_obj_new_float(angle);
 }
@@ -237,7 +237,7 @@ EncodedMotor
 STATIC mp_obj_t motor_EncodedMotor_reset_angle(size_t n_args, const mp_obj_t *args){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
     float_t reset_angle = n_args > 1 ? mp_obj_get_float(args[1]) : 0.0;
-    pbio_error_t err = pbio_motor_reset_angle(self->port, reset_angle);
+    pbio_error_t err = pbio_encmotor_reset_angle(self->port, reset_angle);
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
@@ -254,7 +254,7 @@ EncodedMotor
 STATIC mp_obj_t motor_EncodedMotor_speed(mp_obj_t self_in) {
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
     float_t speed;
-    pbio_error_t err = pbio_motor_get_angular_rate(self->port, &speed);
+    pbio_error_t err = pbio_encmotor_get_angular_rate(self->port, &speed);
     pb_raise_pbio_error(err);
     return mp_obj_new_float(speed);
 }
@@ -270,7 +270,7 @@ EncodedMotor
 */
 STATIC mp_obj_t motor_EncodedMotor_run(mp_obj_t self_in, mp_obj_t speed) {
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
-    pbio_error_t err = pbio_motor_run(self->port, mp_obj_get_float(speed));
+    pbio_error_t err = pbio_encmotor_run(self->port, mp_obj_get_float(speed));
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
@@ -287,7 +287,7 @@ EncodedMotor
 */
 STATIC mp_obj_t motor_EncodedMotor_stop(mp_obj_t self_in, mp_obj_t after_stop, mp_obj_t wait) {
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
-    pbio_error_t err = pbio_motor_stop(self->port, mp_obj_get_int(after_stop), mp_obj_get_int(wait));
+    pbio_error_t err = pbio_encmotor_stop(self->port, mp_obj_get_int(after_stop), mp_obj_get_int(wait));
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
@@ -307,7 +307,7 @@ EncodedMotor
 */
 STATIC mp_obj_t motor_EncodedMotor_run_time(size_t n_args, const mp_obj_t *args){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
-    pbio_error_t err = pbio_motor_run_time(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]), mp_obj_get_int(args[4]));
+    pbio_error_t err = pbio_encmotor_run_time(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]), mp_obj_get_int(args[4]));
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
@@ -330,7 +330,7 @@ STATIC mp_obj_t motor_EncodedMotor_run_stalled(size_t n_args, const mp_obj_t *ar
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
     float_t stall_point;
     pbio_motor_wait_t wait = mp_obj_get_int(args[3]);
-    pbio_error_t err = pbio_motor_run_stalled(self->port, mp_obj_get_float(args[1]), &stall_point, mp_obj_get_int(args[2]), wait);
+    pbio_error_t err = pbio_encmotor_run_stalled(self->port, mp_obj_get_float(args[1]), &stall_point, mp_obj_get_int(args[2]), wait);
     pb_raise_pbio_error(err);
     if (wait == PBIO_MOTOR_WAIT_COMPLETION) {
         return mp_obj_new_float(stall_point);
@@ -355,7 +355,7 @@ EncodedMotor
 */
 STATIC mp_obj_t motor_EncodedMotor_run_angle(size_t n_args, const mp_obj_t *args){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
-    pbio_error_t err = pbio_motor_run_angle(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]), mp_obj_get_int(args[4]));
+    pbio_error_t err = pbio_encmotor_run_angle(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]), mp_obj_get_int(args[4]));
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
@@ -376,7 +376,7 @@ EncodedMotor
 */
 STATIC mp_obj_t motor_EncodedMotor_run_target(size_t n_args, const mp_obj_t *args){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
-    pbio_error_t err = pbio_motor_run_target(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]), mp_obj_get_int(args[4]));
+    pbio_error_t err = pbio_encmotor_run_target(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]), mp_obj_get_int(args[4]));
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
@@ -392,7 +392,7 @@ EncodedMotor
 */
 STATIC mp_obj_t motor_EncodedMotor_track_target(mp_obj_t self_in, mp_obj_t target) {
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_error_t err = pbio_motor_track_target(self->port, mp_obj_get_float(target));
+    pbio_error_t err = pbio_encmotor_track_target(self->port, mp_obj_get_float(target));
     pb_raise_pbio_error(err);
     return mp_const_none;
 }

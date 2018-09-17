@@ -55,7 +55,7 @@ volatile atomic_flag busy[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 pbio_error_t send_command(uint8_t port, pbio_motor_action_t action, int16_t speed, int32_t duration_or_target, pbio_motor_after_stop_t after_stop){
     // Test if the motor is still available
     int32_t dummy;
-    pbio_error_t error = pbio_motor_get_encoder_count(port, &dummy);
+    pbio_error_t error = pbio_encmotor_get_encoder_count(port, &dummy);
     if (error != PBIO_SUCCESS) {
         return error;
     }
@@ -72,32 +72,32 @@ pbio_error_t send_command(uint8_t port, pbio_motor_action_t action, int16_t spee
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_run(pbio_port_t port, float_t speed){
+pbio_error_t pbio_encmotor_run(pbio_port_t port, float_t speed){
     float_t counts_per_output_unit = encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit;
     return send_command(port, RUN, (int16_t) (counts_per_output_unit * speed), NONE, NONE);
 }
 
-pbio_error_t pbio_motor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
     return send_command(port, STOP, NONE, NONE, NONE);
 }
 
-pbio_error_t pbio_motor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
     return send_command(port, IDLE, NONE, NONE, NONE); // TODO
 }
 
-pbio_error_t pbio_motor_run_stalled(pbio_port_t port, float_t speed, float_t *stallpoint, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, float_t speed, float_t *stallpoint, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
     return send_command(port, IDLE, NONE, NONE, NONE); // TODO
 }
 
-pbio_error_t pbio_motor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
     return send_command(port, IDLE, NONE, NONE, NONE); // TODO
 }
 
-pbio_error_t pbio_motor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
     return send_command(port, IDLE, NONE, NONE, NONE); // TODO
 }
 
-pbio_error_t pbio_motor_track_target(pbio_port_t port, float_t target){
+pbio_error_t pbio_encmotor_track_target(pbio_port_t port, float_t target){
     return send_command(port, IDLE, NONE, NONE, NONE); // TODO
 }
 

@@ -22,7 +22,7 @@ pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_mot
         encmotor_settings[PORT_TO_IDX(port)].counts_per_unit = counts_per_unit;
         encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit = counts_per_unit * gear_ratio;
         encmotor_settings[PORT_TO_IDX(port)].offset = 0;
-        status = pbio_motor_reset_encoder_count(port, 0);
+        status = pbio_encmotor_reset_encoder_count(port, 0);
     }
     return status;
 }
@@ -73,7 +73,7 @@ void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
     );
 }
 
-pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
+pbio_error_t pbio_encmotor_get_encoder_count(pbio_port_t port, int32_t *count) {
     pbio_error_t status = pbdrv_motor_get_encoder_count(port, count);
     if (dcmotor_settings[PORT_TO_IDX(port)].direction == PBIO_MOTOR_DIR_INVERTED) {
         *count = -*count;
@@ -82,10 +82,10 @@ pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
     return status;    
 }
 
-pbio_error_t pbio_motor_reset_encoder_count(pbio_port_t port, int32_t reset_count) {
+pbio_error_t pbio_encmotor_reset_encoder_count(pbio_port_t port, int32_t reset_count) {
     // First get the counter value without any offsets, but with the appropriate polarity/sign.
     int32_t count_no_offset;
-    pbio_error_t status = pbio_motor_get_encoder_count(port, &count_no_offset);
+    pbio_error_t status = pbio_encmotor_get_encoder_count(port, &count_no_offset);
     count_no_offset += encmotor_settings[PORT_TO_IDX(port)].offset;
 
     // Calculate the new offset
@@ -94,19 +94,19 @@ pbio_error_t pbio_motor_reset_encoder_count(pbio_port_t port, int32_t reset_coun
     return status;
 }
 
-pbio_error_t pbio_motor_get_angle(pbio_port_t port, float_t *angle) {
+pbio_error_t pbio_encmotor_get_angle(pbio_port_t port, float_t *angle) {
     int32_t encoder_count;
-    pbio_error_t status = pbio_motor_get_encoder_count(port, &encoder_count);
+    pbio_error_t status = pbio_encmotor_get_encoder_count(port, &encoder_count);
     *angle = encoder_count / (encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit);
     return status;    
 }
 
-pbio_error_t pbio_motor_reset_angle(pbio_port_t port, float_t reset_angle) {
+pbio_error_t pbio_encmotor_reset_angle(pbio_port_t port, float_t reset_angle) {
     // TODO: Abort any current maneuver
-    return pbio_motor_reset_encoder_count(port, (int32_t) (reset_angle* encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit));    
+    return pbio_encmotor_reset_encoder_count(port, (int32_t) (reset_angle* encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit));    
 }
 
-pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
+pbio_error_t pbio_encmotor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     pbio_error_t status = pbdrv_motor_get_encoder_rate(port, rate);
     if (dcmotor_settings[PORT_TO_IDX(port)].direction == PBIO_MOTOR_DIR_INVERTED) {
         *rate = -*rate;
@@ -114,9 +114,9 @@ pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     return status;    
 }
 
-pbio_error_t pbio_motor_get_angular_rate(pbio_port_t port, float_t *angular_rate) {
+pbio_error_t pbio_encmotor_get_angular_rate(pbio_port_t port, float_t *angular_rate) {
     int32_t encoder_rate;
-    pbio_error_t status = pbio_motor_get_encoder_rate(port, &encoder_rate);
+    pbio_error_t status = pbio_encmotor_get_encoder_rate(port, &encoder_rate);
     *angular_rate = encoder_rate / (encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit);
     return status;    
 }
