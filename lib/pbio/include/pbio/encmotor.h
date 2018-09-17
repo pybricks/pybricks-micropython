@@ -26,10 +26,10 @@
 typedef struct _pbio_encmotor_settings_t {
     float_t counts_per_unit;        /**< Encoder counts per output unit. Counts per degree for rotational motors, counts per cm for a linear motor. */
     float_t counts_per_output_unit; /**< Encoder counts per output unit, including optional gear train. Equals counts_per_unit*gear_ratio. */
-    int16_t max_speed;              /**< Soft limit on the reference speed in all run commands */
-    int16_t tolerance;              /**< Allowed deviation (deg) from target before motion is considered complete */
-    int16_t acceleration_start;     /**< Acceleration when beginning to move. Positive value in degrees per second per second */
-    int16_t acceleration_end;       /**< Deceleration when stopping. Positive value in degrees per second per second */
+    int32_t max_speed;              /**< Soft limit on the reference speed in all run commands */
+    int32_t tolerance;              /**< Allowed deviation (deg) from target before motion is considered complete */
+    int32_t acceleration_start;     /**< Acceleration when beginning to move. Positive value in degrees per second per second */
+    int32_t acceleration_end;       /**< Deceleration when stopping. Positive value in degrees per second per second */
     int16_t tight_loop_time_ms;     /**< When a run function is called twice in this interval, assume that the user is doing their own speed control.  */
     int32_t offset;                 /**< Virtual zero point of the encoder */
     int16_t pid_kp;                 /**< Proportional position control constant (and integral speed control constant) */
