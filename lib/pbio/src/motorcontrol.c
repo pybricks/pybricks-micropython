@@ -15,7 +15,6 @@ typedef enum {
     STOP,
     RUN_TIME,
     RUN_STALLED,
-    RUN_ANGLE,
     RUN_TARGET,
     TRACK_TARGET,
 } pbio_motor_action_t;
@@ -109,13 +108,13 @@ pbio_motor_trajectory_t trajectories[] = {
 };
 
 // Send a motor command to the task handler
-pbio_error_t send_command(uint8_t port, pbio_motor_action_t action, int16_t speed, int32_t duration_or_target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
+pbio_error_t send_command(pbio_port_t port, pbio_motor_action_t action, rate_t speed, int32_t duration_or_target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
 // Store the motor command if it changed, and return true if it has
 bool process_new_command(pbio_port_t port);
 
 pbio_error_t pbio_encmotor_run(pbio_port_t port, float_t speed){
     float_t counts_per_output_unit = encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit;
-    return send_command(port, RUN, (int16_t) (counts_per_output_unit * speed), NONE, NONE, NONE);
+    return send_command(port, RUN, (rate_t) (counts_per_output_unit * speed), NONE, NONE, NONE);
 }
 
 pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
@@ -123,19 +122,22 @@ pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_after_stop_t after_
 }
 
 pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    return send_command(port, IDLE, NONE, NONE, NONE, NONE); // TODO
+    return send_command(port, RUN_TIME, (rate_t) (counts_per_output_unit * speed), (int32_t) (duration * US_PER_SECOND), after_stop, wait);
 }
 
 pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, float_t speed, float_t *stallpoint, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    return send_command(port, IDLE, NONE, NONE, NONE, NONE); // TODO
+    return send_command(port, RUN_STALLED, (rate_t) (counts_per_output_unit * speed), NONE, after_stop, wait);
+    // Implement conditional waits... + conditional return
 }
 
 pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    return send_command(port, IDLE, NONE, NONE, NONE, NONE); // TODO
+    count_t count;
+    pbio_encmotor_get_encoder_count(port, &count);
+    return send_command(port, RUN_TARGET, (rate_t) (counts_per_output_unit * speed), count + ((count_t) (counts_per_output_unit * angle)), after_stop, wait);
 }
 
 pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    return send_command(port, IDLE, NONE, NONE, NONE, NONE); // TODO
+    return send_command(port, RUN_TARGET, (rate_t) (counts_per_output_unit * speed), (count_t) (counts_per_output_unit * target), after_stop, wait);
 }
 
 pbio_error_t pbio_encmotor_track_target(pbio_port_t port, float_t target){
@@ -153,14 +155,23 @@ void debug_command(pbio_port_t port){
     );
 }
 
+// Return max(-limit, min(value, limit)): Limit the magnitude of value to be equal to or less than provided limit
+int32_t limit(int32_t value, int32_t limit){
+    if (value > limit) {
+        return limit;
+    }
+    if (value < -limit) {
+        return -limit;
+    }
+    return value;
+}
+
 // Calculate the characteristic time values, encoder values, rate values and accelerations that uniquely define the rate and count trajectories
-void get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_motor_action_t action, time_t time_start, count_t count_start, rate_t rate_start, rate_t rate_target, uint32_t duration_or_target){
+pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_encmotor_settings_t *settings, pbio_motor_action_t action, time_t time_start, count_t count_start, rate_t rate_start, rate_t rate_target, int32_t duration_or_target){
 
     // Store characteristics that need no further computations
     traject->time_start = time_start;
     traject->count_start = count_start;
-    traject->rate_start = rate_start;
-    traject->rate_target = rate_target;
 
     // RUN and RUN_STALLED have no specific time or encoder based endpoint
     traject->forever = (action == RUN) || (action == RUN_STALLED);
@@ -169,13 +180,17 @@ void get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_motor_actio
     bool time_based = (action == RUN) || (action == RUN_TIME) || (action == RUN_STALLED);
 
     // RUN_ANGLE and RUN_TARGET are all specific cases of a generic position based control loop
-    bool count_based = (action == RUN_ANGLE) || (action == RUN_TARGET);
+    bool count_based = (action == RUN_TARGET);
 
     // Set the time endpoint for time based maneuvers if they are finite (corresponding count_end is computed from this)
     if (time_based) {
+        // Do not allow negative time
+        if (duration_or_target < 0) {
+            return PBIO_ERROR_INVALID_ARG;
+        }
         // For RUN_TIME, the end time is the current time plus the duration
         if (action == RUN_TIME) {
-            traject->time_end = time_start + duration_or_target;
+            traject->time_end = traject->time_start + ((time_t) duration_or_target);
         }
         // FOR RUN and RUN_STALLED, we specify no end time
         else {
@@ -185,18 +200,15 @@ void get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_motor_actio
 
     // For position based maneuvers, we specify instead the end count value  (corresponding time_end is computed from this)
     if (count_based) {
-        // For RUN_ANGLE, the absolute target is the current position plus the specified length
-        if (action == RUN_ANGLE) {
-            traject->count_end = count_start + duration_or_target;
-        }
-        // For RUN_TARGET, the absolute target is the specified value
-        else {
-            traject->count_end = duration_or_target;
+        traject->count_end = (count_t) duration_or_target;
+        // If the goal is to reach a position target, the speed cannot not be zero
+        if (rate_target == 0) {
+            return PBIO_ERROR_INVALID_ARG;
         }
     }
 
     // If the specified endpoint (angle or finite time) is equal to the corresponding starting value, return an empty maneuver.
-    if ((count_based && traject->count_end == count_start) || (action == RUN_TIME && traject->time_end == time_start)) {
+    if ((count_based && traject->count_end == traject->count_start) || (action == RUN_TIME && traject->time_end == traject->time_start)) {
         traject->time_in = time_start;
         traject->time_out = time_start;
         traject->time_end = time_start;
@@ -210,9 +222,33 @@ void get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_motor_actio
         return;
     }
 
+    // Limit reference rates
+    rate_start = limit(rate_start, settings->max_rate);
+    rate_target = limit(rate_target, settings->max_rate);
+
+    // Determine sign of reference rate in case of position target. The rate sign specified by the user is ignored
+    if (count_based) {
+        // If we are here, then it is guaranteed that we have traject->count_start != traject->count_end
+        if (traject->count_end > traject->count_start) {
+            // If the target is ahead of us, go forward
+            traject->rate_target = abs(rate_target);
+        }
+        else {
+            // Otherwise, go backward
+            traject->rate_target = -abs(rate_target);
+        }
+    }
+    
+    // To reduce complexity for now, we assume that the direction does not change during the acceleration phase.
+    // If a reversal is requested, this therefore means an immediate reveral, and then a smooth acceleration to the
+    // desired rate. This can be improved in future versions.
+    if ((traject->rate_target < 0 && traject->rate_start > 0) || (traject->rate_target > 0 && traject->rate_start < 0)){
+        traject->rate_start = 0;
+    }
+
     // Continue computations here...
 
-    return;
+    return PBIO_SUCCESS;
 }
 
 
@@ -241,7 +277,7 @@ void motor_control_update(){
             int32_t endpoint = 0; // Todo
 
             // Generate reference trajectory parameters for new command
-            get_trajectory_constants(&trajectories[idx], command[idx].action, time_now, encoder_now, rate_now, command[idx].speed, endpoint);
+            get_trajectory_constants(&trajectories[idx], &encmotor_settings[idx], command[idx].action, time_now, encoder_now, rate_now, command[idx].speed, endpoint);
         }
         // Read current state of this motor: current time, speed, and position
 
@@ -261,7 +297,7 @@ void motor_control_update(){
 volatile atomic_flag busy[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 // Send a new command to the task handler
-pbio_error_t send_command(uint8_t port, pbio_motor_action_t action, int16_t speed, int32_t duration_or_target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+pbio_error_t send_command(pbio_port_t port, pbio_motor_action_t action, rate_t speed, int32_t duration_or_target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
     // Test if the motor is still available
     int32_t dummy;
     pbio_error_t error = pbio_encmotor_get_encoder_count(port, &dummy);
