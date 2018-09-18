@@ -166,6 +166,23 @@ void debug_command(pbio_port_t port){
     );
 }
 
+void debug_trajectory(pbio_motor_trajectory_t *traject){
+    printf("\ntime_start : %u\ntime_in    : %u\ntime_out   : %u\ntime_end   : %u\ncount_start: %d\ncount_in   : %d\ncount_out  : %d\ncount_end  : %d\nrate_start : %d\nrate_target: %d\naccl_start : %d\naccl_end   : %d\n", 
+        traject->time_start,
+        traject->time_in,
+        traject->time_out,
+        traject->time_end,
+        traject->count_start,
+        traject->count_in,
+        traject->count_out,
+        traject->count_end,
+        traject->rate_start,
+        traject->rate_target,
+        traject->accl_start,
+        traject->accl_end
+    );
+}
+
 // Return max(-limit, min(value, limit)): Limit the magnitude of value to be equal to or less than provided limit
 int32_t limit(int32_t value, int32_t limit){
     if (value > limit) {
@@ -253,6 +270,11 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
         // If the target is ahead of us, go forward. Otherwise go backward.
         traject->rate_target = (traject->count_end > traject->count_start) ? abs(rate_target) : -abs(rate_target);
     }
+
+    // For time based control, the direction is taken into account as well
+    if (time_based) {
+        traject->rate_target = rate_target;
+    }
     
     // To reduce complexity for now, we assume that the direction does not change during the acceleration phase.
     // If a reversal is requested, this therefore means an immediate reveral, and then a smooth acceleration to the
@@ -309,7 +331,7 @@ void motor_control_update(){
     int32_t rate_now;
 
     // Do the update for each motor
-    for (pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port < PBDRV_CONFIG_LAST_MOTOR_PORT; port++){
+    for (pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++){
         // Port index
         uint8_t idx = PORT_TO_IDX(port);
 
@@ -324,10 +346,9 @@ void motor_control_update(){
             // Print out the newly set current command
             debug_command(port);
 
-            int32_t endpoint = 0; // Todo
-
             // Generate reference trajectory parameters for new command
-            get_trajectory_constants(&trajectories[idx], &encmotor_settings[idx], command[idx].action, time_now, encoder_now, rate_now, command[idx].rate, endpoint);
+            get_trajectory_constants(&trajectories[idx], &encmotor_settings[idx], command[idx].action, time_now, encoder_now, rate_now, command[idx].rate, command[idx].duration_or_target_count);
+            debug_trajectory(&trajectories[idx]);
         }
         // Read current state of this motor: current time, speed, and position
 
@@ -344,7 +365,11 @@ void motor_control_update(){
 */
 
 // Atomic flag, one for each motor, that is set when the command_new variable is currently being read or being written. It is clear when it is free.
-volatile atomic_flag busy[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+volatile atomic_flag busy[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
+    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
+        false
+    }
+};
 
 // Send a new command to the task handler
 pbio_error_t send_command(pbio_port_t port, pbio_motor_action_t action, rate_t speed, int32_t duration_or_target_count, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
