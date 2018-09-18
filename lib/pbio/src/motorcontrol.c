@@ -8,8 +8,8 @@
 #define NONE (0)
 
 // Units and prescalers to enable integer divisions
-#define NUM (10000)
-#define DEN (US_PER_SECOND / NUM)
+#define NUM_SCALE (10000)
+#define DEN_SCALE (US_PER_SECOND / NUM_SCALE)
 
 /**
  * Unsigned integer type with units of microseconds
@@ -177,6 +177,7 @@ int32_t limit(int32_t value, int32_t limit){
     return value;
 }
 
+// Return 'value' with the sign of 'signof'. Equivalent to: sgn(signof)*abs(value)
 int32_t signval(int32_t signof, int32_t value) {
     if (signof > 0) {
         return abs(value);
@@ -265,6 +266,33 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
     traject->accl_end = traject->rate_target > 0 ? -settings->abs_accl_end : settings->abs_accl_end;
 
     // Limit reference speeds if move is shorter than full in/out phase (time_based case)
+    if (time_based && 
+            // Time between start and end (prescaled)
+            (traject->time_end - traject->time_start)/DEN_SCALE 
+            // is less than time for full in/out acceleration phase
+            < (((traject->rate_target-traject->rate_start)*NUM_SCALE)/traject->accl_start - (traject->rate_target*NUM_SCALE)/traject->accl_end) 
+        ) 
+    {
+        // If we are here, there is not enough time to fully accelerate and decelerate as desired.
+        // If the initial rate is less than the target rate, we can reduce the target rate to account for this.
+        if (abs(traject->rate_start) < abs(traject->rate_target)) {
+            traject->rate_target = traject->accl_end *(((traject->time_end-traject->time_start)/MS_PER_SECOND*traject->accl_start)/US_PER_MS + traject->rate_start) / (traject->accl_end-traject->accl_start);
+        }
+        // Otherwise, disable the initial acceleration phase, and check if this gives enough time to decelerate
+        else {
+            // Set to maximum initial acceleration
+            traject->accl_start = signval(traject->accl_start, settings->abs_accl_start);
+
+            // If there is not even enough time for just the out-phase, reduce that phase too.
+            if ((traject->time_end - traject->time_start)<<10 < (-traject->rate_target << 10)/traject->accl_end) {
+                // Limit the target speed such that if we decellerate at the desired rate, we reach zero speed at the end time.
+                traject->rate_target = -(traject->accl_end*(traject->time_end-traject->time_start)/MS_PER_SECOND)/US_PER_MS;
+            }
+            // Limit the start rate by the reduced target rate
+            traject->rate_start = traject->rate_target;
+        }
+
+    }
 
     // Limit reference speeds if move is shorter than full in/out phase (count_based case)
 
