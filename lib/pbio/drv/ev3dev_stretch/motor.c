@@ -107,7 +107,7 @@ void pbdrv_motor_init(void) {
 
 void pbdrv_motor_deinit(void) {
     // Close the relevant files
-    for(pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port < PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
+    for(pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
         int port_index = PORT_TO_IDX(port);
         if (motor_files[port_index].connected) {
             // Only close files for motors that are attached
