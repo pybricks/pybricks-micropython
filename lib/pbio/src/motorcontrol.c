@@ -85,8 +85,8 @@ typedef struct _pbio_motor_trajectory_t {
     count_t count_end;      // Encoder count at end of maneuver
     rate_t rate_start;      // Encoder rate at start of maneuver
     rate_t rate_target;     // Encoder rate target when not accelerating
-    accl_t accl_in;         // Encoder acceleration during in-phase
-    accl_t accl_out;        // Encoder acceleration during out-phase
+    accl_t accl_start;      // Encoder acceleration during in-phase
+    accl_t accl_end;        // Encoder acceleration during out-phase
 } pbio_motor_trajectory_t;
 
 // Initialize current command to idle
@@ -102,8 +102,8 @@ pbio_motor_trajectory_t trajectories[] = {
         .count_end = 0,
         .rate_start = 0,
         .rate_target = 0,
-        .accl_in = 0,
-        .accl_out = 0
+        .accl_start = 0,
+        .accl_end = 0
     }
 };
 
@@ -217,8 +217,8 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
         traject->count_end = count_start;
         traject->rate_start = 0;
         traject->rate_target = 0;
-        traject->accl_in = 0;
-        traject->accl_out = 0;
+        traject->accl_start = 0;
+        traject->accl_end = 0;
         return;
     }
 
@@ -228,15 +228,8 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
 
     // Determine sign of reference rate in case of position target. The rate sign specified by the user is ignored
     if (count_based) {
-        // If we are here, then it is guaranteed that we have traject->count_start != traject->count_end
-        if (traject->count_end > traject->count_start) {
-            // If the target is ahead of us, go forward
-            traject->rate_target = abs(rate_target);
-        }
-        else {
-            // Otherwise, go backward
-            traject->rate_target = -abs(rate_target);
-        }
+        // If the target is ahead of us, go forward. Otherwise go backward.
+        traject->rate_target = (traject->count_end > traject->count_start) ? abs(rate_target) : -abs(rate_target);
     }
     
     // To reduce complexity for now, we assume that the direction does not change during the acceleration phase.
@@ -245,6 +238,10 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
     if ((traject->rate_target < 0 && traject->rate_start > 0) || (traject->rate_target > 0 && traject->rate_start < 0)){
         traject->rate_start = 0;
     }
+
+    // Accelerations with sign
+    traject->accl_start = (traject->rate_target > traject->rate_start) ? settings->abs_accl_start : -settings->abs_accl_start;
+    traject->accl_end = traject->rate_target > 0 ? -settings->abs_accl_end : settings->abs_accl_end;
 
     // Continue computations here...
 
@@ -323,16 +320,16 @@ bool process_new_command(pbio_port_t port){
     // Look for new command only if there is read access (otherwise, we'll check again next time)
     if (!atomic_flag_test_and_set(&busy[idx])) {
         // If we have read access, see if the command has changed since last time
-        if (command[idx].action             != command_new[idx].action             ||
-            command[idx].speed              != command_new[idx].speed              ||
+        if (command[idx].action                   != command_new[idx].action                   ||
+            command[idx].speed                    != command_new[idx].speed                    ||
             command[idx].duration_or_target_count != command_new[idx].duration_or_target_count ||
-            command[idx].after_stop         != command_new[idx].after_stop)
+            command[idx].after_stop               != command_new[idx].after_stop)
         {
             // If the command changed, store that new command for non-atomic reading
-            command[idx].action             = command_new[idx].action;
-            command[idx].speed              = command_new[idx].speed;
+            command[idx].action                   = command_new[idx].action;
+            command[idx].speed                    = command_new[idx].speed;
             command[idx].duration_or_target_count = command_new[idx].duration_or_target_count;
-            command[idx].after_stop         = command_new[idx].after_stop;
+            command[idx].after_stop               = command_new[idx].after_stop;
             haschanged = true;
         }
         atomic_flag_clear(&busy[idx]);
