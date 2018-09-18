@@ -43,10 +43,10 @@ pbio_error_t pbio_encmotor_set_settings(
     if (status == PBIO_SUCCESS) {
         int8_t port_index = PORT_TO_IDX(port);
         float_t counts_per_output_unit = encmotor_settings[port_index].counts_per_output_unit;
-        encmotor_settings[port_index].max_speed = (counts_per_output_unit * max_speed);
+        encmotor_settings[port_index].max_rate = (counts_per_output_unit * max_speed);
         encmotor_settings[port_index].tolerance = (counts_per_output_unit * tolerance);
-        encmotor_settings[port_index].acceleration_start = (counts_per_output_unit * acceleration_start);
-        encmotor_settings[port_index].acceleration_end = (counts_per_output_unit * acceleration_end);
+        encmotor_settings[port_index].abs_accl_start = (counts_per_output_unit * acceleration_start);
+        encmotor_settings[port_index].abs_accl_end = (counts_per_output_unit * acceleration_end);
         encmotor_settings[port_index].tight_loop_time_ms = (MS_PER_SECOND * tight_loop_time);
         encmotor_settings[port_index].pid_kp = (PID_PRESCALE * pid_kp);
         encmotor_settings[port_index].pid_ki = (PID_PRESCALE * pid_ki);
@@ -62,10 +62,10 @@ void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
         "Counts per unit: %f\nGear ratio: %f\nMax speed: %f\nTolerance: %f\nAcceleration: %f\nDeceleration: %f\nTight Loop: %f\nkp: %f\nki: %f\nkd: %f",
         encmotor_settings[port_index].counts_per_unit,
         counts_per_output_unit / encmotor_settings[port_index].counts_per_output_unit,            
-        encmotor_settings[port_index].max_speed / counts_per_output_unit,
+        encmotor_settings[port_index].max_rate / counts_per_output_unit,
         encmotor_settings[port_index].tolerance / counts_per_output_unit,
-        encmotor_settings[port_index].acceleration_start / counts_per_output_unit,
-        encmotor_settings[port_index].acceleration_end / counts_per_output_unit,
+        encmotor_settings[port_index].abs_accl_start / counts_per_output_unit,
+        encmotor_settings[port_index].abs_accl_end / counts_per_output_unit,
         ((float_t) encmotor_settings[port_index].tight_loop_time_ms) / MS_PER_SECOND,
         ((float_t) encmotor_settings[port_index].pid_kp) / PID_PRESCALE,
         ((float_t) encmotor_settings[port_index].pid_ki) / PID_PRESCALE,
