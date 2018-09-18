@@ -24,8 +24,8 @@ typedef enum {
  */
 typedef struct _pbio_motor_command_t {
     pbio_motor_action_t action;
-    int16_t speed;
-    int32_t duration_or_target;
+    rate_t rate;
+    int32_t duration_or_target_count;
     pbio_motor_after_stop_t after_stop;
     pbio_motor_wait_t wait;
 } pbio_motor_command_t;
@@ -35,7 +35,7 @@ pbio_motor_command_t command_new[] = {
     [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
         .action = IDLE,
         .speed = 0,
-        .duration_or_target = 0,
+        .duration_or_target_count = 0,
         .after_stop = PBIO_MOTOR_STOP_COAST
     }
 };
@@ -45,7 +45,7 @@ pbio_motor_command_t command[] = {
     [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
         .action = IDLE,
         .speed = 0,
-        .duration_or_target = 0,
+        .duration_or_target_count = 0,
         .after_stop = PBIO_MOTOR_STOP_COAST
     }
 };
@@ -108,7 +108,7 @@ pbio_motor_trajectory_t trajectories[] = {
 };
 
 // Send a motor command to the task handler
-pbio_error_t send_command(pbio_port_t port, pbio_motor_action_t action, rate_t speed, int32_t duration_or_target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
+pbio_error_t send_command(pbio_port_t port, pbio_motor_action_t action, rate_t speed, int32_t duration_or_target_count, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
 // Store the motor command if it changed, and return true if it has
 bool process_new_command(pbio_port_t port);
 
@@ -150,7 +150,7 @@ void debug_command(pbio_port_t port){
             idx + 'A',
             command[idx].action,
             command[idx].speed,
-            (int) command[idx].duration_or_target,
+            (int) command[idx].duration_or_target_count,
             command[idx].after_stop
     );
 }
@@ -167,7 +167,7 @@ int32_t limit(int32_t value, int32_t limit){
 }
 
 // Calculate the characteristic time values, encoder values, rate values and accelerations that uniquely define the rate and count trajectories
-pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_encmotor_settings_t *settings, pbio_motor_action_t action, time_t time_start, count_t count_start, rate_t rate_start, rate_t rate_target, int32_t duration_or_target){
+pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_encmotor_settings_t *settings, pbio_motor_action_t action, time_t time_start, count_t count_start, rate_t rate_start, rate_t rate_target, int32_t duration_or_target_count){
 
     // Store characteristics that need no further computations
     traject->time_start = time_start;
@@ -185,12 +185,12 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
     // Set the time endpoint for time based maneuvers if they are finite (corresponding count_end is computed from this)
     if (time_based) {
         // Do not allow negative time
-        if (duration_or_target < 0) {
+        if (duration_or_target_count < 0) {
             return PBIO_ERROR_INVALID_ARG;
         }
         // For RUN_TIME, the end time is the current time plus the duration
         if (action == RUN_TIME) {
-            traject->time_end = traject->time_start + ((time_t) duration_or_target);
+            traject->time_end = traject->time_start + ((time_t) duration_or_target_count);
         }
         // FOR RUN and RUN_STALLED, we specify no end time
         else {
@@ -200,7 +200,7 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
 
     // For position based maneuvers, we specify instead the end count value  (corresponding time_end is computed from this)
     if (count_based) {
-        traject->count_end = (count_t) duration_or_target;
+        traject->count_end = (count_t) duration_or_target_count;
         // If the goal is to reach a position target, the speed cannot not be zero
         if (rate_target == 0) {
             return PBIO_ERROR_INVALID_ARG;
@@ -297,7 +297,7 @@ void motor_control_update(){
 volatile atomic_flag busy[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 // Send a new command to the task handler
-pbio_error_t send_command(pbio_port_t port, pbio_motor_action_t action, rate_t speed, int32_t duration_or_target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+pbio_error_t send_command(pbio_port_t port, pbio_motor_action_t action, rate_t speed, int32_t duration_or_target_count, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
     // Test if the motor is still available
     int32_t dummy;
     pbio_error_t error = pbio_encmotor_get_encoder_count(port, &dummy);
@@ -310,7 +310,7 @@ pbio_error_t send_command(pbio_port_t port, pbio_motor_action_t action, rate_t s
     // Set the new command
     command_new[idx].action = action;
     command_new[idx].speed = speed;
-    command_new[idx].duration_or_target = duration_or_target;
+    command_new[idx].duration_or_target_count = duration_or_target_count;
     command_new[idx].after_stop = after_stop;
     // Release command variable
     atomic_flag_clear(&busy[idx]);
@@ -325,13 +325,13 @@ bool process_new_command(pbio_port_t port){
         // If we have read access, see if the command has changed since last time
         if (command[idx].action             != command_new[idx].action             ||
             command[idx].speed              != command_new[idx].speed              ||
-            command[idx].duration_or_target != command_new[idx].duration_or_target ||
+            command[idx].duration_or_target_count != command_new[idx].duration_or_target_count ||
             command[idx].after_stop         != command_new[idx].after_stop)
         {
             // If the command changed, store that new command for non-atomic reading
             command[idx].action             = command_new[idx].action;
             command[idx].speed              = command_new[idx].speed;
-            command[idx].duration_or_target = command_new[idx].duration_or_target;
+            command[idx].duration_or_target_count = command_new[idx].duration_or_target_count;
             command[idx].after_stop         = command_new[idx].after_stop;
             haschanged = true;
         }
