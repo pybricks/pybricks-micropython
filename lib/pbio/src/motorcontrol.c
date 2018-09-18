@@ -135,21 +135,21 @@ void debug_trajectory(pbio_port_t port){
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
     printf("\nPort       : %c\nAction     : %d\nAfter stop : %d\nWait       : %d\ntime_start : %u\ntime_in    : %u\ntime_out   : %u\ntime_end   : %u\ncount_start: %d\ncount_in   : %d\ncount_out  : %d\ncount_end  : %d\nrate_start : %d\nrate_target: %d\naccl_start : %d\naccl_end   : %d\n", 
         port,
-        traject->action,
-        traject->after_stop,
-        traject->wait,
-        traject->time_start,
-        traject->time_in-traject->time_start,
-        traject->time_out-traject->time_start,
-        traject->time_end-traject->time_start,
-        traject->count_start,
-        traject->count_in,
-        traject->count_out,
-        traject->count_end,
-        traject->rate_start,
-        traject->rate_target,
-        traject->accl_start,
-        traject->accl_end
+        (int)traject->action,
+        (int)traject->after_stop,
+        (int)traject->wait,
+        (unsigned int)traject->time_start,
+        (unsigned int)(traject->time_in-traject->time_start),
+        (unsigned int)(traject->time_out-traject->time_start),
+        (unsigned int)(traject->time_end-traject->time_start),
+        (int)traject->count_start,
+        (int)traject->count_in,
+        (int)traject->count_out,
+        (int)traject->count_end,
+        (int)traject->rate_start,
+        (int)traject->rate_target,
+        (int)traject->accl_start,
+        (int)traject->accl_end
     );
 }
 
