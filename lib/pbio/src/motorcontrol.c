@@ -184,7 +184,7 @@ void debug_trajectory(pbio_motor_trajectory_t *traject){
 }
 
 // Return max(-limit, min(value, limit)): Limit the magnitude of value to be equal to or less than provided limit
-int32_t limit(int32_t value, int32_t limit){
+float_t limit(float_t value, float_t limit){
     if (value > limit) {
         return limit;
     }
@@ -195,7 +195,7 @@ int32_t limit(int32_t value, int32_t limit){
 }
 
 // Return 'value' with the sign of 'signof'. Equivalent to: sgn(signof)*abs(value)
-int32_t signval(int32_t signof, int32_t value) {
+float_t signval(float_t signof, float_t value) {
     if (signof > 0) {
         return abs(value);
     }
@@ -208,9 +208,20 @@ int32_t signval(int32_t signof, int32_t value) {
 // Calculate the characteristic time values, encoder values, rate values and accelerations that uniquely define the rate and count trajectories
 pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_encmotor_settings_t *settings, pbio_motor_action_t action, ustime_t time_start, count_t count_start, rate_t rate_start, rate_t rate_target, int32_t duration_or_target_count){
 
-    // Store characteristics that need no further computations
-    traject->time_start = time_start;
-    traject->count_start = count_start;
+    // Work with floats for now (only in this function, which is called only once when a maneuver is called.)
+    float_t _time_start = ((float_t) time_start)/US_PER_SECOND;
+    float_t _time_in = 0;
+    float_t _time_out = 0;
+    float_t _time_end = 0;
+    float_t _count_start = count_start;
+    float_t _count_in = 0;
+    float_t _count_out = 0;
+    float_t _count_end = 0;
+    float_t _rate_start = rate_start;
+    float_t _rate_target = rate_target;
+    float_t _accl_start = 0;
+    float_t _accl_end = 0;
+    float_t _duration_or_target_count = duration_or_target_count;
 
     // RUN and RUN_STALLED have no specific time or encoder based endpoint
     traject->forever = (action == RUN) || (action == RUN_STALLED);
@@ -229,17 +240,17 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
         }
         // For RUN_TIME, the end time is the current time plus the duration
         if (action == RUN_TIME) {
-            traject->time_end = traject->time_start + ((ustime_t) duration_or_target_count);
+            _time_end = _time_start + _duration_or_target_count;
         }
         // FOR RUN and RUN_STALLED, we specify no end time
         else {
-            traject->time_end = NONE;
+            _time_end = NONE;
         }
     }
 
-    // For position based maneuvers, we specify instead the end count value  (corresponding time_end is computed from this)
+    // For position based maneuvers, we specify instead the end count value
     if (count_based) {
-        traject->count_end = (count_t) duration_or_target_count;
+        _count_end = _duration_or_target_count;
         // If the goal is to reach a position target, the speed cannot not be zero
         if (rate_target == 0) {
             return PBIO_ERROR_INVALID_ARG;
@@ -247,7 +258,7 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
     }
 
     // If the specified endpoint (angle or finite time) is equal to the corresponding starting value, return an empty maneuver.
-    if ((count_based && traject->count_end == traject->count_start) || (action == RUN_TIME && traject->time_end == traject->time_start)) {
+    if ((count_based && ((count_t) _count_end) == count_start) || (action == RUN_TIME && ((ustime_t) _time_end) <= time_start)) {
         traject->time_in = time_start;
         traject->time_out = time_start;
         traject->time_end = time_start;
@@ -262,56 +273,50 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
     }
 
     // Limit reference rates
-    rate_start = limit(rate_start, settings->max_rate);
-    rate_target = limit(rate_target, settings->max_rate);
+    _rate_start = limit(_rate_start, settings->max_rate);
+    _rate_target = limit(_rate_target, settings->max_rate);
 
     // Determine sign of reference rate in case of position target. The rate sign specified by the user is ignored
     if (count_based) {
         // If the target is ahead of us, go forward. Otherwise go backward.
-        traject->rate_target = (traject->count_end > traject->count_start) ? abs(rate_target) : -abs(rate_target);
+        _rate_target = (_count_end > _count_start) ? abs(_rate_target) : -abs(_rate_target);
     }
 
     // For time based control, the direction is taken into account as well
     if (time_based) {
-        traject->rate_target = rate_target;
+        _rate_target = _rate_target;
     }
     
     // To reduce complexity for now, we assume that the direction does not change during the acceleration phase.
     // If a reversal is requested, this therefore means an immediate reveral, and then a smooth acceleration to the
     // desired rate. This can be improved in future versions.
-    if ((traject->rate_target < 0 && traject->rate_start > 0) || (traject->rate_target > 0 && traject->rate_start < 0)){
-        traject->rate_start = 0;
+    if ((_rate_target < 0 && _rate_start > 0) || (_rate_target > 0 && _rate_start < 0)){
+        _rate_start = 0;
     }
 
     // Accelerations with sign
-    traject->accl_start = (traject->rate_target > traject->rate_start) ? settings->abs_accl_start : -settings->abs_accl_start;
-    traject->accl_end = traject->rate_target > 0 ? -settings->abs_accl_end : settings->abs_accl_end;
+    _accl_start = (_rate_target > _rate_start) ? settings->abs_accl_start : -settings->abs_accl_start;
+    _accl_end = _rate_target > 0 ? -settings->abs_accl_end : settings->abs_accl_end;
 
     // Limit reference speeds if move is shorter than full in/out phase (time_based case)
-    if (time_based && 
-            // Time between start and end (prescaled)
-            (traject->time_end - traject->time_start)/DEN_SCALE 
-            // is less than time for full in/out acceleration phase
-            < (((traject->rate_target-traject->rate_start)*NUM_SCALE)/traject->accl_start - (traject->rate_target*NUM_SCALE)/traject->accl_end) 
-        ) 
-    {
+    if (time_based && _time_end - _time_start < (_rate_target-_rate_start)/_accl_start - _rate_target/_accl_end) {
         // If we are here, there is not enough time to fully accelerate and decelerate as desired.
         // If the initial rate is less than the target rate, we can reduce the target rate to account for this.
-        if (abs(traject->rate_start) < abs(traject->rate_target)) {
-            traject->rate_target = traject->accl_end *(((traject->time_end-traject->time_start)/MS_PER_SECOND*traject->accl_start)/US_PER_MS + traject->rate_start) / (traject->accl_end-traject->accl_start);
+        if (abs(_rate_start) < abs(_rate_target)) {
+            _rate_target = _accl_end*_accl_start/(_accl_end-_accl_start)*(_time_end-_time_start + _rate_start/_accl_start);
         }
         // Otherwise, disable the initial acceleration phase, and check if this gives enough time to decelerate
         else {
             // Set to maximum initial acceleration
-            traject->accl_start = signval(traject->accl_start, settings->abs_accl_start);
+            _accl_start = signval(_accl_start, settings->abs_accl_start);
 
             // If there is not even enough time for just the out-phase, reduce that phase too.
-            if ((traject->time_end - traject->time_start)<<10 < (-traject->rate_target << 10)/traject->accl_end) {
+            if ( _time_end - _time_start < -_rate_target/_accl_end) {
                 // Limit the target speed such that if we decellerate at the desired rate, we reach zero speed at the end time.
-                traject->rate_target = -(traject->accl_end*(traject->time_end-traject->time_start)/MS_PER_SECOND)/US_PER_MS;
+                _rate_target = -_accl_end*(_time_end-_time_start);
             }
             // Limit the start rate by the reduced target rate
-            traject->rate_start = traject->rate_target;
+            _rate_start = _rate_target;
         }
 
     }
@@ -319,13 +324,13 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
     // TODO: Limit reference speeds if move is shorter than full in/out phase (count_based case)
 
     // Compute intermediate time and angle values just after initial acceleration
-    traject->time_in = traject->time_start + (((traject->rate_target-traject->rate_start)*US_PER_MS)/traject->accl_start)*MS_PER_SECOND;
-    traject->count_in = traject ->count_start + (((traject->rate_target^2)-(traject->rate_start^2))/traject->accl_start/2);
+    _time_in = _time_start + (_rate_target-_rate_start)/_accl_start;
+    _count_in = _count_start + ((_rate_target*_rate_target)-(_rate_start*_rate_start))/_accl_start/2;
 
     // Compute intermediate time and angle values just before deceleration and end time or end angle, depending on which is already given
     if (time_based && !traject->forever) {
-        traject->time_out = traject->time_end + ((traject->omega_star*US_PER_MS)/traject->accl_end)*MS_PER_SECOND;
-        traject->count_out = traject->count_in + (omega_star << 10)*((time_out-time_in) >> 10)
+        // time_out = time_end + omega_star/alpha_out
+        // theta_out = theta_in + omega_star*(time_out-time_in)
         // theta_end = theta_out - omega_star**2/(2*alpha_out)        
     }
     else if (count_based) {
@@ -334,12 +339,25 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
         // time_end = time_out - omega_star/alpha_out           
     }    
     else {
-        traject->time_out = NONE;
-        traject->time_end = NONE;
-        traject->count_out = NONE;
-        traject->count_end = NONE;        
+        _time_out = NONE;
+        _time_end = NONE;
+        _count_out = NONE;
+        _count_end = NONE;        
     }
 
+    // Convert temporary float results back to integers 
+    traject->time_start = _time_start * US_PER_SECOND;
+    traject->time_in = _time_in * US_PER_SECOND;
+    traject->time_out = _time_out * US_PER_SECOND;
+    traject->time_end = _time_end * US_PER_SECOND;
+    traject->count_start = _count_start;
+    traject->count_in = _count_in;
+    traject->count_out = _count_out;
+    traject->count_end = _count_end;
+    traject->rate_start = _rate_start;
+    traject->rate_target = _rate_target;
+    traject->accl_start = _accl_start;
+    traject->accl_end = _accl_end;
     return PBIO_SUCCESS;
 }
 
