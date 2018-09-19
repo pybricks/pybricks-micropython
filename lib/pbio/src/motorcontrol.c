@@ -101,8 +101,6 @@ pbio_error_t make_motor_command(pbio_port_t port,
                                 float_t duration_or_target_count,
                                 pbio_motor_after_stop_t after_stop,
                                 pbio_motor_wait_t wait);
-// Store the motor command if it changed, and return true if it has
-bool process_new_command(pbio_port_t port);
 
 pbio_error_t pbio_encmotor_run(pbio_port_t port, float_t speed){
     return make_motor_command(port, RUN, speed, NONE, NONE, NONE);
@@ -399,14 +397,14 @@ void motor_control_update(){
         uint8_t idx = PORT_TO_IDX(port);
 
         // If we have read access, process
-        if (!atomic_flag_test_and_set(&busy[idx])) {
+        if (!atomic_flag_test_and_set(&busy[idx])) { // Remove once we remove multithreading
             
             if (trajectories[idx].time_start != time_started[idx]){
                 // If we are here, then we have to start a new command  
                 time_started[idx] = trajectories[idx].time_start;
                 debug_trajectory(port);
             }
-            atomic_flag_clear(&busy[idx]);
+            atomic_flag_clear(&busy[idx]); // Remove once we remove multithreading
         }
         // Read current state of this motor: current time, speed, and position
 
