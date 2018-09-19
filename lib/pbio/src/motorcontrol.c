@@ -389,7 +389,41 @@ ustime_t time_started[] = {
     [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)] = 0
 };
 
+//TODO: Translate python snippets below, including workarounds for integers
+
+// Evaluate the reference speed and velocity at the (shifted) time
+void get_reference(ustime_t time_ref, pbio_motor_trajectory_t *traject, count_t *count_ref, rate_t *rate_ref){
+
+    // For RUN and RUN_STALLED, the end time is infinite, meaning that the reference signals do not have a deceleration phase
+    bool infinite = (traject->action == RUN) || (traject->action == RUN_STALLED);
+
+    if (time_ref < traject->time_in) {
+        // If we are here, then we are still in the acceleration phase
+        //         omega_ref = omega_0 + alpha_in*(time_ref-time_0)
+        //         theta_ref = theta_0 + omega_0*(time_ref-time_0) + alpha_in/2*(time_ref-time_0)**2
+    }
+    else if (!infinite && time_ref <= traject->time_out) {
+        // If we are here, then we are in the constant speed phase
+        //         omega_ref = omega_star
+        //         theta_ref = theta_in + omega_star*(time_ref-time_in)
+    }
+    else if (!infinite && time_ref <= traject->time_end) {
+        // If we are here, then we are in the deceleration phase
+        //         omega_ref = omega_star + alpha_out*(time_ref-time_out)
+        //         theta_ref = theta_out + omega_star*(time_ref-time_out) + alpha_out/2*(time_ref-time_out)**2        
+    }
+    else {
+        // If we are here, we are in the zero speed phase (relevant when holding position)
+        //         omega_ref = 0
+        //         theta_ref = theta_end  
+    } 
+}
+
 void motor_control_update(){
+
+    ustime_t time_now;
+    count_t count_now, count_ref;
+    rate_t rate_now, rate_ref; 
 
     // Do the update for each motor
     for (pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++){
@@ -407,6 +441,10 @@ void motor_control_update(){
             atomic_flag_clear(&busy[idx]); // Remove once we remove multithreading
         }
         // Read current state of this motor: current time, speed, and position
+        time_now = pbdrv_get_time_usec();
+        pbio_encmotor_get_encoder_count(port, &count_now);
+        pbio_encmotor_get_encoder_rate(port, &rate_now);   
+        get_reference(time_now, &trajectories[idx], &count_ref, &rate_ref);
 
         // Calculate control signal for current state and current command
         
