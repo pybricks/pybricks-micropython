@@ -2,10 +2,12 @@
 #include <stdatomic.h>
 #include <pbdrv/time.h>
 #include <stdlib.h>
+#include <math.h>
 
 // A "don't care" constant for readibility of the code, but which is never used after assignment
 // Typically used for parameters that have no effect for the selected maneuvers.
 #define NONE (0)
+#define max_abs_accl (1000000)
 
 // Units and prescalers to enable integer divisions
 #define NUM_SCALE (10000)
@@ -258,7 +260,7 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
     }
 
     // If the specified endpoint (angle or finite time) is equal to the corresponding starting value, return an empty maneuver.
-    if ((count_based && ((count_t) _count_end) == count_start) || (action == RUN_TIME && ((ustime_t) _time_end) <= time_start)) {
+    if ((count_based && ((count_t) _count_end) == count_start) || (action == RUN_TIME && ((ustime_t) (_time_end*US_PER_SECOND)) <= time_start)) {
         traject->time_in = time_start;
         traject->time_out = time_start;
         traject->time_end = time_start;
@@ -297,9 +299,9 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
     // Accelerations with sign
     _accl_start = (_rate_target > _rate_start) ? settings->abs_accl_start : -settings->abs_accl_start;
     _accl_end = _rate_target > 0 ? -settings->abs_accl_end : settings->abs_accl_end;
-
+    
     // Limit reference speeds if move is shorter than full in/out phase (time_based case)
-    if (time_based && _time_end - _time_start < (_rate_target-_rate_start)/_accl_start - _rate_target/_accl_end) {
+    if (time_based && !traject->forever && _time_end - _time_start < (_rate_target-_rate_start)/_accl_start - _rate_target/_accl_end) {
         // If we are here, there is not enough time to fully accelerate and decelerate as desired.
         // If the initial rate is less than the target rate, we can reduce the target rate to account for this.
         if (abs(_rate_start) < abs(_rate_target)) {
@@ -321,7 +323,24 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
 
     }
 
-    // TODO: Limit reference speeds if move is shorter than full in/out phase (count_based case)
+    // Limit reference speeds if move is shorter than full in/out phase (count_based case)
+    if (count_based && abs(_count_end-_count_start) < abs((_rate_target*_rate_target-_rate_start*_rate_start)/(2*_accl_start)) + abs(_rate_target*_rate_target/(2*_accl_end))) {
+        // There is not enough angle for the in and out phase
+        if (abs(_rate_start) < abs(_rate_target)) {
+            // Limit _rate_target to make in-and-out intersect because _rate_start is low enough
+            _rate_target = signval(_rate_target, sqrt(abs(_accl_start*_accl_end/(_accl_end-_accl_start)*(2*_count_end-2*_count_start+_rate_start*_rate_start/_accl_start))));
+        }
+        else {
+            // Let us disable the in-phase, and check if there is sufficient angle for out-phase
+            _accl_start = signval(_accl_start, max_abs_accl);
+            if (abs(_count_end-_count_start) < abs(_rate_target*_rate_target/_accl_end/2)) {
+                // Limit _rate_target as well to at least make the out-phase feasible
+                _rate_target = signval(_rate_target, sqrt(2*_accl_end*(_count_start-_count_end)));
+            }
+            // Limit the start rate by the reduced target rate
+            _rate_start = _rate_target;
+        }   
+    }
 
     // Compute intermediate time and angle values just after initial acceleration
     _time_in = _time_start + (_rate_target-_rate_start)/_accl_start;
@@ -329,14 +348,14 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
 
     // Compute intermediate time and angle values just before deceleration and end time or end angle, depending on which is already given
     if (time_based && !traject->forever) {
-        // time_out = time_end + omega_star/alpha_out
-        // theta_out = theta_in + omega_star*(time_out-time_in)
-        // theta_end = theta_out - omega_star**2/(2*alpha_out)        
+        _time_out = _time_end + _rate_target/_accl_end;
+        _count_out = _count_in + _rate_target*(_time_out-_time_in);
+        _count_end = _count_out - _rate_target*_rate_target/_accl_end/2;
     }
     else if (count_based) {
-        // time_out = time_in + (theta_end-theta_in)/omega_star + omega_star/(alpha_out*2)
-        // theta_out = theta_in + omega_star*(time_out-time_in)     
-        // time_end = time_out - omega_star/alpha_out           
+        _time_out = _time_in + (_count_end-_count_in)/_rate_target + _rate_target/_accl_end/2;
+        _count_out = _count_in + _rate_target*(_time_out-_time_in);
+        _time_end = _time_out - _rate_target/_accl_end;
     }    
     else {
         _time_out = NONE;
