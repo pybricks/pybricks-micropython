@@ -83,19 +83,19 @@ pbio_motor_command_t command[] = {
  * Motor trajectory parameters for an ideal maneuver without disturbances
  */
 typedef struct _pbio_motor_trajectory_t {
-    bool forever;        // True if the maneuver has no defined endpoint
-    ustime_t time_start;      // Time at start of maneuver
-    ustime_t time_in;         // Time after the acceleration in-phase
-    ustime_t time_out;        // Time at start of acceleration out-phase
-    ustime_t time_end;        // Time at end of maneuver
-    count_t count_start;    // Encoder count at start of maneuver
-    count_t count_in;       // Encoder count after the acceleration in-phase
-    count_t count_out;      // Encoder count at start of acceleration out-phase
-    count_t count_end;      // Encoder count at end of maneuver
-    rate_t rate_start;      // Encoder rate at start of maneuver
-    rate_t rate_target;     // Encoder rate target when not accelerating
-    accl_t accl_start;      // Encoder acceleration during in-phase
-    accl_t accl_end;        // Encoder acceleration during out-phase
+    pbio_motor_action_t action; // Motor action type
+    ustime_t time_start;        // Time at start of maneuver
+    ustime_t time_in;           // Time after the acceleration in-phase
+    ustime_t time_out;          // Time at start of acceleration out-phase
+    ustime_t time_end;          // Time at end of maneuver
+    count_t count_start;        // Encoder count at start of maneuver
+    count_t count_in;           // Encoder count after the acceleration in-phase
+    count_t count_out;          // Encoder count at start of acceleration out-phase
+    count_t count_end;          // Encoder count at end of maneuver
+    rate_t rate_start;          // Encoder rate at start of maneuver
+    rate_t rate_target;         // Encoder rate target when not accelerating
+    accl_t accl_start;          // Encoder acceleration during in-phase
+    accl_t accl_end;            // Encoder acceleration during out-phase
 } pbio_motor_trajectory_t;
 
 // Initialize current command to idle
@@ -171,9 +171,9 @@ void debug_command(pbio_port_t port){
 void debug_trajectory(pbio_motor_trajectory_t *traject){
     printf("\ntime_start : %u\ntime_in    : %u\ntime_out   : %u\ntime_end   : %u\ncount_start: %d\ncount_in   : %d\ncount_out  : %d\ncount_end  : %d\nrate_start : %d\nrate_target: %d\naccl_start : %d\naccl_end   : %d\n", 
         traject->time_start,
-        traject->time_in,
-        traject->time_out,
-        traject->time_end,
+        traject->time_in-traject->time_start,
+        traject->time_out-traject->time_start,
+        traject->time_end-traject->time_start,
         traject->count_start,
         traject->count_in,
         traject->count_out,
@@ -223,36 +223,26 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
     float_t _rate_target = rate_target;
     float_t _accl_start = 0;
     float_t _accl_end = 0;
-    float_t _duration_or_target_count = duration_or_target_count;
-
-    // RUN and RUN_STALLED have no specific time or encoder based endpoint
-    traject->forever = (action == RUN) || (action == RUN_STALLED);
-
-    // RUN, STOP, RUN_TIME, RUN_STALLED are all specific cases of a generic timed control loop
-    bool time_based = (action == RUN) || (action == RUN_TIME) || (action == RUN_STALLED);
-
-    // RUN_ANGLE and RUN_TARGET are all specific cases of a generic position based control loop
-    bool count_based = (action == RUN_TARGET);
 
     // Set the time endpoint for time based maneuvers if they are finite (corresponding count_end is computed from this)
-    if (time_based) {
+    if (action == RUN_TIME) {
         // Do not allow negative time
         if (duration_or_target_count < 0) {
             return PBIO_ERROR_INVALID_ARG;
         }
         // For RUN_TIME, the end time is the current time plus the duration
         if (action == RUN_TIME) {
-            _time_end = _time_start + _duration_or_target_count;
+            _time_end = _time_start + ((float_t) duration_or_target_count) / US_PER_SECOND;
         }
+    }
+    if (action == RUN || action == RUN_STALLED){
         // FOR RUN and RUN_STALLED, we specify no end time
-        else {
-            _time_end = NONE;
-        }
+        _time_end = NONE;
     }
 
     // For position based maneuvers, we specify instead the end count value
-    if (count_based) {
-        _count_end = _duration_or_target_count;
+    if (action == RUN_TARGET) {
+        _count_end = (float_t) duration_or_target_count;
         // If the goal is to reach a position target, the speed cannot not be zero
         if (rate_target == 0) {
             return PBIO_ERROR_INVALID_ARG;
@@ -260,7 +250,7 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
     }
 
     // If the specified endpoint (angle or finite time) is equal to the corresponding starting value, return an empty maneuver.
-    if ((count_based && ((count_t) _count_end) == count_start) || (action == RUN_TIME && ((ustime_t) (_time_end*US_PER_SECOND)) <= time_start)) {
+    if ((action == RUN_TARGET && ((count_t) _count_end) == count_start) || (action == RUN_TIME && ((ustime_t) (_time_end*US_PER_SECOND)) <= time_start)) {
         traject->time_in = time_start;
         traject->time_out = time_start;
         traject->time_end = time_start;
@@ -279,13 +269,13 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
     _rate_target = limit(_rate_target, settings->max_rate);
 
     // Determine sign of reference rate in case of position target. The rate sign specified by the user is ignored
-    if (count_based) {
+    if (action == RUN_TARGET) {
         // If the target is ahead of us, go forward. Otherwise go backward.
         _rate_target = (_count_end > _count_start) ? abs(_rate_target) : -abs(_rate_target);
     }
 
     // For time based control, the direction is taken into account as well
-    if (time_based) {
+    if (action == RUN || action == RUN_TIME || action == RUN_STALLED) {
         _rate_target = _rate_target;
     }
     
@@ -301,7 +291,7 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
     _accl_end = _rate_target > 0 ? -settings->abs_accl_end : settings->abs_accl_end;
     
     // Limit reference speeds if move is shorter than full in/out phase (time_based case)
-    if (time_based && !traject->forever && _time_end - _time_start < (_rate_target-_rate_start)/_accl_start - _rate_target/_accl_end) {
+    if (action == RUN_TIME && _time_end - _time_start < (_rate_target-_rate_start)/_accl_start - _rate_target/_accl_end) {
         // If we are here, there is not enough time to fully accelerate and decelerate as desired.
         // If the initial rate is less than the target rate, we can reduce the target rate to account for this.
         if (abs(_rate_start) < abs(_rate_target)) {
@@ -323,8 +313,8 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
 
     }
 
-    // Limit reference speeds if move is shorter than full in/out phase (count_based case)
-    if (count_based && abs(_count_end-_count_start) < abs((_rate_target*_rate_target-_rate_start*_rate_start)/(2*_accl_start)) + abs(_rate_target*_rate_target/(2*_accl_end))) {
+    // Limit reference speeds if move is shorter than full in/out phase (RUN_TARGET case)
+    if (action == RUN_TARGET && abs(_count_end-_count_start) < abs((_rate_target*_rate_target-_rate_start*_rate_start)/(2*_accl_start)) + abs(_rate_target*_rate_target/(2*_accl_end))) {
         // There is not enough angle for the in and out phase
         if (abs(_rate_start) < abs(_rate_target)) {
             // Limit _rate_target to make in-and-out intersect because _rate_start is low enough
@@ -347,12 +337,12 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
     _count_in = _count_start + ((_rate_target*_rate_target)-(_rate_start*_rate_start))/_accl_start/2;
 
     // Compute intermediate time and angle values just before deceleration and end time or end angle, depending on which is already given
-    if (time_based && !traject->forever) {
+    if (action == RUN_TIME) {
         _time_out = _time_end + _rate_target/_accl_end;
         _count_out = _count_in + _rate_target*(_time_out-_time_in);
         _count_end = _count_out - _rate_target*_rate_target/_accl_end/2;
     }
-    else if (count_based) {
+    else if (action == RUN_TARGET) {
         _time_out = _time_in + (_count_end-_count_in)/_rate_target + _rate_target/_accl_end/2;
         _count_out = _count_in + _rate_target*(_time_out-_time_in);
         _time_end = _time_out - _rate_target/_accl_end;
