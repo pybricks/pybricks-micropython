@@ -316,9 +316,29 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
 
     }
 
-    // Limit reference speeds if move is shorter than full in/out phase (count_based case)
+    // TODO: Limit reference speeds if move is shorter than full in/out phase (count_based case)
 
-    // Continue computations here...
+    // Compute intermediate time and angle values just after initial acceleration
+    traject->time_in = traject->time_start + (((traject->rate_target-traject->rate_start)*US_PER_MS)/traject->accl_start)*MS_PER_SECOND;
+    traject->count_in = traject ->count_start + (((traject->rate_target^2)-(traject->rate_start^2))/traject->accl_start/2);
+
+    // Compute intermediate time and angle values just before deceleration and end time or end angle, depending on which is already given
+    if (time_based && !traject->forever) {
+        traject->time_out = traject->time_end + ((traject->omega_star*US_PER_MS)/traject->accl_end)*MS_PER_SECOND;
+        traject->count_out = traject->count_in + (omega_star << 10)*((time_out-time_in) >> 10)
+        // theta_end = theta_out - omega_star**2/(2*alpha_out)        
+    }
+    else if (count_based) {
+        // time_out = time_in + (theta_end-theta_in)/omega_star + omega_star/(alpha_out*2)
+        // theta_out = theta_in + omega_star*(time_out-time_in)     
+        // time_end = time_out - omega_star/alpha_out           
+    }    
+    else {
+        traject->time_out = NONE;
+        traject->time_end = NONE;
+        traject->count_out = NONE;
+        traject->count_end = NONE;        
+    }
 
     return PBIO_SUCCESS;
 }
