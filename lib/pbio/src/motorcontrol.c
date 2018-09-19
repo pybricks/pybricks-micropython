@@ -42,41 +42,18 @@ typedef enum {
     STOP,
     RUN_TIME,
     RUN_STALLED,
+    RUN_ANGLE,
     RUN_TARGET,
     TRACK_TARGET,
 } pbio_motor_action_t;
 
-/**
- * Motor control command type
- */
-typedef struct _pbio_motor_command_t {
-    pbio_motor_action_t action;
-    rate_t rate;
-    int32_t duration_or_target_count;
-    pbio_motor_after_stop_t after_stop;
-    pbio_motor_wait_t wait;
-} pbio_motor_command_t;
 
-// Initialize new command to idle
-pbio_motor_command_t command_new[] = {
+// Atomic flag, one for each motor, that is set when the command_new variable is currently being read or being written. It is clear when it is free.
+volatile atomic_flag busy[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
     [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
-        .action = IDLE,
-        .rate = 0,
-        .duration_or_target_count = 0,
-        .after_stop = PBIO_MOTOR_STOP_COAST
+        false
     }
 };
-
-// Initialize current command to idle
-pbio_motor_command_t command[] = {
-    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
-        .action = IDLE,
-        .rate = 0,
-        .duration_or_target_count = 0,
-        .after_stop = PBIO_MOTOR_STOP_COAST
-    }
-};
-
 
 
 /**
@@ -84,6 +61,8 @@ pbio_motor_command_t command[] = {
  */
 typedef struct _pbio_motor_trajectory_t {
     pbio_motor_action_t action; // Motor action type
+    pbio_motor_after_stop_t after_stop; // BRAKE, COAST or HOLD after maneuver
+    pbio_motor_wait_t wait;     // Wait for maneuver to complete
     ustime_t time_start;        // Time at start of maneuver
     ustime_t time_in;           // Time after the acceleration in-phase
     ustime_t time_out;          // Time at start of acceleration out-phase
@@ -116,14 +95,17 @@ pbio_motor_trajectory_t trajectories[] = {
     }
 };
 
-// Send a motor command to the task handler
-pbio_error_t send_command(pbio_port_t port, pbio_motor_action_t action, rate_t speed, int32_t duration_or_target_count, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
+pbio_error_t make_motor_command(pbio_port_t port,
+                                pbio_motor_action_t action,
+                                float_t rate_target,
+                                float_t duration_or_target_count,
+                                pbio_motor_after_stop_t after_stop,
+                                pbio_motor_wait_t wait);
 // Store the motor command if it changed, and return true if it has
 bool process_new_command(pbio_port_t port);
 
 pbio_error_t pbio_encmotor_run(pbio_port_t port, float_t speed){
-    float_t counts_per_output_unit = encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit;
-    return send_command(port, RUN, (rate_t) (counts_per_output_unit * speed), NONE, NONE, NONE);
+    return make_motor_command(port, RUN, speed, NONE, NONE, NONE);
 }
 
 pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
@@ -131,45 +113,33 @@ pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_after_stop_t after_
 }
 
 pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    float_t counts_per_output_unit = encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit;
-    return send_command(port, RUN_TIME, (rate_t) (counts_per_output_unit * speed), (int32_t) (duration * US_PER_SECOND), after_stop, wait);
+    return make_motor_command(port, RUN_TIME, speed, duration, after_stop, wait);
 }
 
 pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, float_t speed, float_t *stallpoint, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    float_t counts_per_output_unit = encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit;
-    return send_command(port, RUN_STALLED, (rate_t) (counts_per_output_unit * speed), NONE, after_stop, wait);
+    return make_motor_command(port, RUN_STALLED, speed, NONE, after_stop, wait);
     // Implement conditional waits... + conditional return
 }
 
 pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    count_t count;
-    pbio_encmotor_get_encoder_count(port, &count);
-    float_t counts_per_output_unit = encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit;
-    return send_command(port, RUN_TARGET, (rate_t) (counts_per_output_unit * speed), count + ((count_t) (counts_per_output_unit * angle)), after_stop, wait);
+    return make_motor_command(port, RUN_ANGLE, speed, angle, after_stop, wait);
 }
 
 pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    float_t counts_per_output_unit = encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit;
-    return send_command(port, RUN_TARGET, (rate_t) (counts_per_output_unit * speed), (count_t) (counts_per_output_unit * target), after_stop, wait);
+    return make_motor_command(port, RUN_TARGET, speed, target, after_stop, wait);
 }
 
 pbio_error_t pbio_encmotor_track_target(pbio_port_t port, float_t target){
     return PBIO_ERROR_FAILED; // Not yet implemented in theory
 }
 
-void debug_command(pbio_port_t port){
-    uint8_t idx = PORT_TO_IDX(port);
-    printf("\nidx: %c\nact: %d\nspd: %d\nend: %d\nstp: %d\n", 
-            idx + 'A',
-            command[idx].action,
-            command[idx].rate,
-            (int) command[idx].duration_or_target_count,
-            command[idx].after_stop
-    );
-}
-
-void debug_trajectory(pbio_motor_trajectory_t *traject){
-    printf("\ntime_start : %u\ntime_in    : %u\ntime_out   : %u\ntime_end   : %u\ncount_start: %d\ncount_in   : %d\ncount_out  : %d\ncount_end  : %d\nrate_start : %d\nrate_target: %d\naccl_start : %d\naccl_end   : %d\n", 
+void debug_trajectory(pbio_port_t port){
+    pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
+    printf("\nPort       : %c\nAction     : %d\nAfter stop : %d\nWait       : %d\ntime_start : %u\ntime_in    : %u\ntime_out   : %u\ntime_end   : %u\ncount_start: %d\ncount_in   : %d\ncount_out  : %d\ncount_end  : %d\nrate_start : %d\nrate_target: %d\naccl_start : %d\naccl_end   : %d\n", 
+        port,
+        traject->action,
+        traject->after_stop,
+        traject->wait,
         traject->time_start,
         traject->time_in-traject->time_start,
         traject->time_out-traject->time_start,
@@ -208,7 +178,22 @@ float_t signval(float_t signof, float_t value) {
 }
 
 // Calculate the characteristic time values, encoder values, rate values and accelerations that uniquely define the rate and count trajectories
-pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_encmotor_settings_t *settings, pbio_motor_action_t action, ustime_t time_start, count_t count_start, rate_t rate_start, rate_t rate_target, int32_t duration_or_target_count){
+pbio_error_t make_motor_command(pbio_port_t port,
+                                pbio_motor_action_t action,
+                                float_t rate_target,
+                                float_t duration_or_target_count,
+                                pbio_motor_after_stop_t after_stop,
+                                pbio_motor_wait_t wait){    
+
+    // Read the current system state for this motor
+    ustime_t time_start = pbdrv_get_time_usec();
+    count_t count_start;
+    rate_t rate_start;
+    pbio_encmotor_get_encoder_count(port, &count_start);
+    pbio_encmotor_get_encoder_rate(port, &rate_start);
+    pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
+    pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
+
 
     // Work with floats for now (only in this function, which is called only once when a maneuver is called.)
     float_t _time_start = ((float_t) time_start)/US_PER_SECOND;
@@ -220,37 +205,59 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
     float_t _count_out = 0;
     float_t _count_end = 0;
     float_t _rate_start = rate_start;
-    float_t _rate_target = rate_target;
+    float_t _rate_target = rate_target * settings->counts_per_output_unit;
     float_t _accl_start = 0;
     float_t _accl_end = 0;
 
-    // Set the time endpoint for time based maneuvers if they are finite (corresponding count_end is computed from this)
-    if (action == RUN_TIME) {
-        // Do not allow negative time
-        if (duration_or_target_count < 0) {
-            return PBIO_ERROR_INVALID_ARG;
-        }
-        // For RUN_TIME, the end time is the current time plus the duration
-        if (action == RUN_TIME) {
-            _time_end = _time_start + ((float_t) duration_or_target_count) / US_PER_SECOND;
-        }
-    }
-    if (action == RUN || action == RUN_STALLED){
-        // FOR RUN and RUN_STALLED, we specify no end time
-        _time_end = NONE;
-    }
-
-    // For position based maneuvers, we specify instead the end count value
-    if (action == RUN_TARGET) {
-        _count_end = (float_t) duration_or_target_count;
-        // If the goal is to reach a position target, the speed cannot not be zero
-        if (rate_target == 0) {
-            return PBIO_ERROR_INVALID_ARG;
-        }
+    // Set endpoint (time or angle), depending on selected action
+    switch(action){
+        case IDLE:
+            // TODO
+            break;
+        case STOP:
+            // TODO
+            break;            
+        case RUN:
+            // FOR RUN and RUN_STALLED, we specify no end time
+            _time_end = NONE;        
+            break;
+        case RUN_TIME:
+            // Do not allow negative time
+            if (duration_or_target_count < 0) {
+                return PBIO_ERROR_INVALID_ARG;
+            }
+            // For RUN_TIME, the end time is the current time plus the duration
+            _time_end = _time_start + duration_or_target_count / US_PER_SECOND;
+            break;
+        case RUN_STALLED:
+            // FOR RUN and RUN_STALLED, we specify no end time
+            _time_end = NONE;        
+            break;
+        case RUN_ANGLE:
+            // For RUN_ANGLE, we specify instead the end count value as the current value plus the requested angle
+            _count_end = _count_start + duration_or_target_count * settings->counts_per_output_unit;
+            // If the goal is to reach a relative target, the speed cannot not be zero
+            if (rate_target == 0) {
+                return PBIO_ERROR_INVALID_ARG;
+            }
+            break;
+        case RUN_TARGET:
+            // For RUN_TARGET, we specify instead the end count value
+            _count_end = duration_or_target_count * settings->counts_per_output_unit;
+            // If the goal is to reach a position target, the speed cannot not be zero
+            if (rate_target == 0) {
+                return PBIO_ERROR_INVALID_ARG;
+            }        
+            break;
+        case TRACK_TARGET:
+            // TODO
+            break;
     }
 
     // If the specified endpoint (angle or finite time) is equal to the corresponding starting value, return an empty maneuver.
-    if ((action == RUN_TARGET && ((count_t) _count_end) == count_start) || (action == RUN_TIME && ((ustime_t) (_time_end*US_PER_SECOND)) <= time_start)) {
+    if ( ((action == RUN_TARGET  || action == RUN_ANGLE) && ((count_t) _count_end) == count_start) ||
+          (action == RUN_TIME  && ((ustime_t) (_time_end*US_PER_SECOND)) <= time_start)) {
+        while(atomic_flag_test_and_set(&busy[PORT_TO_IDX(port)])); // Remove once we remove multithreading
         traject->time_in = time_start;
         traject->time_out = time_start;
         traject->time_end = time_start;
@@ -261,6 +268,10 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
         traject->rate_target = 0;
         traject->accl_start = 0;
         traject->accl_end = 0;
+        traject->action = action;
+        traject->after_stop = after_stop;
+        traject->wait = wait;
+        atomic_flag_clear(&busy[PORT_TO_IDX(port)]);  // Remove once we remove multithreading
         return PBIO_SUCCESS;
     }
 
@@ -355,6 +366,7 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
     }
 
     // Convert temporary float results back to integers 
+    while(atomic_flag_test_and_set(&busy[PORT_TO_IDX(port)])); // Remove once we remove multithreading
     traject->time_start = _time_start * US_PER_SECOND;
     traject->time_in = _time_in * US_PER_SECOND;
     traject->time_out = _time_out * US_PER_SECOND;
@@ -367,35 +379,34 @@ pbio_error_t get_trajectory_constants(pbio_motor_trajectory_t *traject, pbio_enc
     traject->rate_target = _rate_target;
     traject->accl_start = _accl_start;
     traject->accl_end = _accl_end;
+    traject->action = action;
+    traject->after_stop = after_stop;
+    traject->wait = wait;
+    atomic_flag_clear(&busy[PORT_TO_IDX(port)]);  // Remove once we remove multithreading
     return PBIO_SUCCESS;
 }
 
+// Todo: init with actual time
+ustime_t time_started[] = {
+    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)] = 0
+};
 
 void motor_control_update(){
-
-    uint32_t time_now;
-    int32_t encoder_now;
-    int32_t rate_now;
 
     // Do the update for each motor
     for (pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++){
         // Port index
         uint8_t idx = PORT_TO_IDX(port);
 
-        // Read the current time
-        time_now = pbdrv_get_time_usec();
-
-        // Read current position and speed
-        pbio_encmotor_get_encoder_count(port, &encoder_now);
-        pbio_encmotor_get_encoder_rate(port, &rate_now);
-
-        if (process_new_command(port)){
-            // Print out the newly set current command
-            debug_command(port);
-
-            // Generate reference trajectory parameters for new command
-            get_trajectory_constants(&trajectories[idx], &encmotor_settings[idx], command[idx].action, time_now, encoder_now, rate_now, command[idx].rate, command[idx].duration_or_target_count);
-            debug_trajectory(&trajectories[idx]);
+        // If we have read access, process
+        if (!atomic_flag_test_and_set(&busy[idx])) {
+            
+            if (trajectories[idx].time_start != time_started[idx]){
+                // If we are here, then we have to start a new command  
+                time_started[idx] = trajectories[idx].time_start;
+                debug_trajectory(port);
+            }
+            atomic_flag_clear(&busy[idx]);
         }
         // Read current state of this motor: current time, speed, and position
 
@@ -403,61 +414,4 @@ void motor_control_update(){
         
         // Set the duty cycle
     }
-}
-
-/*
-
-    Only the code below has to change once we use MICROPY_EVENT_POLL_HOOK to call the task handler
-
-*/
-
-// Atomic flag, one for each motor, that is set when the command_new variable is currently being read or being written. It is clear when it is free.
-volatile atomic_flag busy[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
-    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
-        false
-    }
-};
-
-// Send a new command to the task handler
-pbio_error_t send_command(pbio_port_t port, pbio_motor_action_t action, rate_t speed, int32_t duration_or_target_count, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    // Test if the motor is still available
-    int32_t dummy;
-    pbio_error_t error = pbio_encmotor_get_encoder_count(port, &dummy);
-    if (error != PBIO_SUCCESS) {
-        return error;
-    }
-    uint8_t idx = PORT_TO_IDX(port);
-    // Wait for the handler to free access to command variable, then claim it
-    while(atomic_flag_test_and_set(&busy[idx]));
-    // Set the new command
-    command_new[idx].action = action;
-    command_new[idx].rate = speed;
-    command_new[idx].duration_or_target_count = duration_or_target_count;
-    command_new[idx].after_stop = after_stop;
-    // Release command variable
-    atomic_flag_clear(&busy[idx]);
-    return PBIO_SUCCESS;
-}
-
-bool process_new_command(pbio_port_t port){
-    uint8_t idx = PORT_TO_IDX(port);
-    bool haschanged = false;
-    // Look for new command only if there is read access (otherwise, we'll check again next time)
-    if (!atomic_flag_test_and_set(&busy[idx])) {
-        // If we have read access, see if the command has changed since last time
-        if (command[idx].action                   != command_new[idx].action                   ||
-            command[idx].rate                     != command_new[idx].rate                     ||
-            command[idx].duration_or_target_count != command_new[idx].duration_or_target_count ||
-            command[idx].after_stop               != command_new[idx].after_stop)
-        {
-            // If the command changed, store that new command for non-atomic reading
-            command[idx].action                   = command_new[idx].action;
-            command[idx].rate                     = command_new[idx].rate;
-            command[idx].duration_or_target_count = command_new[idx].duration_or_target_count;
-            command[idx].after_stop               = command_new[idx].after_stop;
-            haschanged = true;
-        }
-        atomic_flag_clear(&busy[idx]);
-    }
-    return haschanged;
 }
