@@ -9,7 +9,7 @@
 #define MICROPY_ENABLE_COMPILER         (1)
 
 // Set to (1) to enable basic motor functionality such as setting the duty cycle, braking, and coasting.
-#define PYBRICKS_HW_ENABLE_MOTORS       (1)
+#define PYBRICKS_HW_ENABLE_MOTORS       (0)
 
 // Set to (1) to enable motor encoder functionality and speed control. Has an effect only if PYBRICKS_HW_ENABLE_MOTORS is enabled.
 #define PYBRICKS_HW_ENABLE_ENCODERS     (0)
