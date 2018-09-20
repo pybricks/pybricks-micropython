@@ -37,7 +37,6 @@ typedef int32_t accl_t;
  * Motor control actions
  */
 typedef enum {
-    IDLE,
     RUN,
     STOP,
     RUN_TIME,
@@ -48,13 +47,19 @@ typedef enum {
 } pbio_motor_action_t;
 
 
-// Atomic flag, one for each motor, that is set when the command_new variable is currently being read or being written. It is clear when it is free.
-volatile atomic_flag busy[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
+// Atomic flag, one for each motor, that is set when the trajectory structure is currently being read or being written. It is clear when it is free.
+volatile atomic_flag claimed_trajectory[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
     [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
         false
     }
 };
 
+// Atomic flag that is set when the motor is currently busy with a run command
+volatile atomic_flag motor_busy[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
+    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
+        false
+    }
+};
 
 /**
  * Motor trajectory parameters for an ideal maneuver without disturbances
@@ -62,7 +67,6 @@ volatile atomic_flag busy[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
 typedef struct _pbio_motor_trajectory_t {
     pbio_motor_action_t action; // Motor action type
     pbio_motor_after_stop_t after_stop; // BRAKE, COAST or HOLD after maneuver
-    pbio_motor_wait_t wait;     // Wait for maneuver to complete
     ustime_t time_start;        // Time at start of maneuver
     ustime_t time_in;           // Time after the acceleration in-phase
     ustime_t time_out;          // Time at start of acceleration out-phase
@@ -95,15 +99,35 @@ pbio_motor_trajectory_t trajectories[] = {
     }
 };
 
+// Wait for completion if requested.
+void wait_for_completion(pbio_port_t port, pbio_motor_wait_t wait){
+    // Set the flag that the motor is running
+    while(!atomic_flag_test_and_set(&motor_busy[PORT_TO_IDX(port)]));
+    // Check if we want to pause until motion is complete
+    if (wait == PBIO_MOTOR_WAIT_COMPLETION) {
+        // Wait until the running flag is cleared by the control task
+        while(atomic_flag_test_and_set(&motor_busy[PORT_TO_IDX(port)])){
+            // Sleep to give the motor control task time and clear the flag when done
+            pbdrv_time_sleep_msec(1);
+        }
+        // In the process of reading above, the flag was set, so we need to clear it
+        atomic_flag_clear(&motor_busy[PORT_TO_IDX(port)]);
+    }
+}
+
 pbio_error_t make_motor_command(pbio_port_t port,
                                 pbio_motor_action_t action,
                                 float_t rate_target,
                                 float_t duration_or_target_count,
-                                pbio_motor_after_stop_t after_stop,
-                                pbio_motor_wait_t wait);
+                                pbio_motor_after_stop_t after_stop);
 
 pbio_error_t pbio_encmotor_run(pbio_port_t port, float_t speed){
-    return make_motor_command(port, RUN, speed, NONE, NONE, NONE);
+    pbio_error_t err = make_motor_command(port, RUN, speed, NONE, NONE);
+    if (err != PBIO_SUCCESS){
+        return err;
+    }
+    wait_for_completion(port, PBIO_MOTOR_WAIT_NONE);
+    return PBIO_SUCCESS;    
 }
 
 pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
@@ -111,20 +135,43 @@ pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_after_stop_t after_
 }
 
 pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    return make_motor_command(port, RUN_TIME, speed, duration, after_stop, wait);
+    pbio_error_t err = make_motor_command(port, RUN_TIME, speed, duration, after_stop);
+    if (err != PBIO_SUCCESS){
+        return err;
+    }
+    wait_for_completion(port, wait);
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, float_t speed, float_t *stallpoint, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    return make_motor_command(port, RUN_STALLED, speed, NONE, after_stop, wait);
     // Implement conditional waits... + conditional return
+    pbio_error_t err = make_motor_command(port, RUN_STALLED, speed, NONE, after_stop);
+    if (err != PBIO_SUCCESS){
+        return err;
+    }
+    wait_for_completion(port, wait);
+    if (wait == PBIO_MOTOR_WAIT_COMPLETION) { 
+        pbio_encmotor_get_angle(port, stallpoint);
+    };
+    return PBIO_SUCCESS;    
 }
 
 pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    return make_motor_command(port, RUN_ANGLE, speed, angle, after_stop, wait);
+    pbio_error_t err = make_motor_command(port, RUN_ANGLE, speed, angle, after_stop);
+    if (err != PBIO_SUCCESS){
+        return err;
+    }
+    wait_for_completion(port, wait);
+    return PBIO_SUCCESS;    
 }
 
 pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    return make_motor_command(port, RUN_TARGET, speed, target, after_stop, wait);
+    pbio_error_t err = make_motor_command(port, RUN_TARGET, speed, target, after_stop);
+    if (err != PBIO_SUCCESS){
+        return err;
+    }
+    wait_for_completion(port, wait);
+    return PBIO_SUCCESS;    
 }
 
 pbio_error_t pbio_encmotor_track_target(pbio_port_t port, float_t target){
@@ -133,11 +180,10 @@ pbio_error_t pbio_encmotor_track_target(pbio_port_t port, float_t target){
 
 void debug_trajectory(pbio_port_t port){
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
-    printf("\nPort       : %c\nAction     : %d\nAfter stop : %d\nWait       : %d\ntime_start : %u\ntime_in    : %u\ntime_out   : %u\ntime_end   : %u\ncount_start: %d\ncount_in   : %d\ncount_out  : %d\ncount_end  : %d\nrate_start : %d\nrate_target: %d\naccl_start : %d\naccl_end   : %d\n", 
+    printf("\nPort       : %c\nAction     : %d\nAfter stop : %d\ntime_start : %u\ntime_in    : %u\ntime_out   : %u\ntime_end   : %u\ncount_start: %d\ncount_in   : %d\ncount_out  : %d\ncount_end  : %d\nrate_start : %d\nrate_target: %d\naccl_start : %d\naccl_end   : %d\n", 
         port,
         (int)traject->action,
         (int)traject->after_stop,
-        (int)traject->wait,
         (unsigned int)traject->time_start,
         (unsigned int)(traject->time_in-traject->time_start),
         (unsigned int)(traject->time_out-traject->time_start),
@@ -180,8 +226,7 @@ pbio_error_t make_motor_command(pbio_port_t port,
                                 pbio_motor_action_t action,
                                 float_t rate_target,
                                 float_t duration_or_target_count,
-                                pbio_motor_after_stop_t after_stop,
-                                pbio_motor_wait_t wait){    
+                                pbio_motor_after_stop_t after_stop){    
 
     // Read the current system state for this motor
     ustime_t time_start = pbdrv_time_get_usec();
@@ -209,9 +254,6 @@ pbio_error_t make_motor_command(pbio_port_t port,
 
     // Set endpoint (time or angle), depending on selected action
     switch(action){
-        case IDLE:
-            // TODO
-            break;
         case STOP:
             // TODO
             break;            
@@ -255,7 +297,7 @@ pbio_error_t make_motor_command(pbio_port_t port,
     // If the specified endpoint (angle or finite time) is equal to the corresponding starting value, return an empty maneuver.
     if ( ((action == RUN_TARGET  || action == RUN_ANGLE) && ((count_t) _count_end) == count_start) ||
           (action == RUN_TIME  && ((ustime_t) (_time_end*US_PER_SECOND)) <= time_start)) {
-        while(atomic_flag_test_and_set(&busy[PORT_TO_IDX(port)])); // Remove once we remove multithreading
+        while(atomic_flag_test_and_set(&claimed_trajectory[PORT_TO_IDX(port)])); // Remove once we remove multithreading
         traject->time_in = time_start;
         traject->time_out = time_start;
         traject->time_end = time_start;
@@ -268,8 +310,7 @@ pbio_error_t make_motor_command(pbio_port_t port,
         traject->accl_end = 0;
         traject->action = action;
         traject->after_stop = after_stop;
-        traject->wait = wait;
-        atomic_flag_clear(&busy[PORT_TO_IDX(port)]);  // Remove once we remove multithreading
+        atomic_flag_clear(&claimed_trajectory[PORT_TO_IDX(port)]);  // Remove once we remove multithreading
         return PBIO_SUCCESS;
     }
 
@@ -364,7 +405,7 @@ pbio_error_t make_motor_command(pbio_port_t port,
     }
 
     // Convert temporary float results back to integers 
-    while(atomic_flag_test_and_set(&busy[PORT_TO_IDX(port)])); // Remove once we remove multithreading
+    while(atomic_flag_test_and_set(&claimed_trajectory[PORT_TO_IDX(port)])); // Remove once we remove multithreading
     traject->time_start = _time_start * US_PER_SECOND;
     traject->time_in = _time_in * US_PER_SECOND;
     traject->time_out = _time_out * US_PER_SECOND;
@@ -379,8 +420,7 @@ pbio_error_t make_motor_command(pbio_port_t port,
     traject->accl_end = _accl_end;
     traject->action = action;
     traject->after_stop = after_stop;
-    traject->wait = wait;
-    atomic_flag_clear(&busy[PORT_TO_IDX(port)]);  // Remove once we remove multithreading
+    atomic_flag_clear(&claimed_trajectory[PORT_TO_IDX(port)]);  // Remove once we remove multithreading
     return PBIO_SUCCESS;
 }
 
@@ -436,14 +476,14 @@ void motor_control_update(){
         uint8_t idx = PORT_TO_IDX(port);
 
         // If we have read access, process
-        if (!atomic_flag_test_and_set(&busy[idx])) { // Remove once we remove multithreading
+        if (!atomic_flag_test_and_set(&claimed_trajectory[idx])) { // Remove once we remove multithreading
             
             if (trajectories[idx].time_start != time_started[idx]){
                 // If we are here, then we have to start a new command  
                 time_started[idx] = trajectories[idx].time_start;
                 debug_trajectory(port);
             }
-            atomic_flag_clear(&busy[idx]); // Remove once we remove multithreading
+            atomic_flag_clear(&claimed_trajectory[idx]); // Remove once we remove multithreading
         }
         // Read current state of this motor: current time, speed, and position
         time_now = pbdrv_time_get_usec();
