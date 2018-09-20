@@ -184,7 +184,7 @@ pbio_error_t make_motor_command(pbio_port_t port,
                                 pbio_motor_wait_t wait){    
 
     // Read the current system state for this motor
-    ustime_t time_start = pbdrv_get_time_usec();
+    ustime_t time_start = pbdrv_time_get_usec();
     count_t count_start;
     rate_t rate_start;
     pbio_encmotor_get_encoder_count(port, &count_start);

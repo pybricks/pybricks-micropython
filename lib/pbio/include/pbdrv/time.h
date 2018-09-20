@@ -10,12 +10,20 @@
  */
 
 /**
- * Gets the time with units of microseconds. The time value has no specific starting point and should only be used to 
- * measure durations of processess less than 2^32 microseconds, or about an hour.
- * @param [in]  time    Pointer to time variable to be set
- * @return              ::Time with units of microseconds
+ * Gets the time with units of milliseconds. The time value has no specific
+ * starting point and should only be used to measure durations of less than
+ * 2^32 milliseconds, or about 7 weeks.
+ * @return  Current time with units of milliseconds
  */
-uint32_t pbdrv_get_time_usec();
+uint32_t pbdrv_time_get_msec();
+
+/**
+ * Gets the time with units of microseconds. The time value has no specific
+ * starting point and should only be used to measure durations of less than
+ * 2^32 microseconds, or about an hour.
+ * @return  Current time with units of microseconds
+ */
+uint32_t pbdrv_time_get_usec();
 
 /** @}*/
 
