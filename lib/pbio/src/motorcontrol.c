@@ -37,6 +37,7 @@ typedef int32_t accl_t;
  * Motor control actions
  */
 typedef enum {
+    IDLE,
     RUN,
     STOP,
     RUN_TIME,
@@ -84,18 +85,8 @@ typedef struct _pbio_motor_trajectory_t {
 // Initialize current command to idle
 pbio_motor_trajectory_t trajectories[] = {
     [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
-        .time_start = 0,
-        .time_in = 0,
-        .time_out = 0,
-        .time_end = 0,
-        .count_start = 0,
-        .count_in = 0,
-        .count_out = 0,
-        .count_end = 0,
-        .rate_start = 0,
-        .rate_target = 0,
-        .accl_start = 0,
-        .accl_end = 0
+        .action = IDLE,
+        .time_start = NONE,
     }
 };
 
@@ -253,6 +244,9 @@ pbio_error_t make_motor_command(pbio_port_t port,
 
     // Set endpoint (time or angle), depending on selected action
     switch(action){
+        case IDLE:
+            // TODO
+            break;           
         case STOP:
             // TODO
             break;            
@@ -423,10 +417,7 @@ pbio_error_t make_motor_command(pbio_port_t port,
     return PBIO_SUCCESS;
 }
 
-// Todo: init with actual time
-ustime_t time_started[] = {
-    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)] = 0
-};
+
 
 // Several of the formulas below contain expressions such as b*t, where b is a speed or acceleration, and t is a time interval.
 // Because our time values are expressed in microseconds, we actually have to evaluate b*t/1000000. To avoid both excessive
@@ -463,50 +454,138 @@ void get_reference(ustime_t time_ref, pbio_motor_trajectory_t *traject, count_t 
     } 
 }
 
+
+/**
+ * Status of the time at which we evaluate the count and rate reference signals
+ */
+typedef enum {
+    TIME_NOT_INITIALIZED,
+    TIME_PAUSED,
+    TIME_RUNNING
+} time_run_status_t;
+
+time_run_status_t time_run_status[] = {
+    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]
+        TIME_NOT_INITIALIZED
+};
+
+// Persistent PID related variables for each motor
+count_t count_err_integral[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+ustime_t maneuver_started[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+ustime_t time_paused[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+ustime_t time_stopped[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+
+void control_update(pbio_port_t port){
+    // Port index
+    uint8_t idx = PORT_TO_IDX(port);
+
+    // Trajectory and setting shortcuts for this motor
+    pbio_motor_trajectory_t *traject = &trajectories[idx];
+    pbio_encmotor_settings_t *settings = &encmotor_settings[idx];
+
+    // Return immediately if the action is idle; then there is nothing we need to do
+    if (traject->action == IDLE) {
+        return;
+    }
+
+    // The very first time this is called, we initialize a fictitious previous maneuver
+    if (time_run_status[idx] == TIME_NOT_INITIALIZED) {
+        maneuver_started[idx] = pbdrv_time_get_usec() - US_PER_SECOND;
+    }
+
+    // Check if the trajectory starting time equals the current maneuver start time
+    if (traject->time_start != maneuver_started[idx]) {
+        // If not, then we are starting a new maneuver, and we update its starting time
+        maneuver_started[idx] = traject->time_start;
+
+        // For this new maneuver, we reset PID variables and related persistent control settings
+        count_err_integral[idx] = 0;
+        time_paused[idx] = 0;
+        time_stopped[idx] = 0;
+        time_run_status[idx] = TIME_RUNNING;
+    }    
+
+    // Declare current time, positions, rates, and their reference value and error
+    ustime_t time_now, time_ref;
+    count_t count_now, count_ref, count_err;
+    rate_t rate_now, rate_ref, rate_err; 
+    int16_t duty;          
+
+    // Read current state of this motor: current time, speed, and position
+    time_now = pbdrv_time_get_usec();
+    pbio_encmotor_get_encoder_count(port, &count_now);
+    pbio_encmotor_get_encoder_rate(port, &rate_now);   
+
+    // Calculate control signal for current state for position based commands
+    if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
+        // Get the time at which we want to evaluate the reference position/velocities
+        // In nominal operation, take the current time, minus the amount of time we have stalled
+        if (time_run_status[idx] == TIME_RUNNING) {
+            time_ref = time_now - time_paused[idx];
+        }
+        else {
+        // When the motor stalls, we keep the time constant. This way, the position reference does
+        // not continue to grow unboundedly, thus preventing a form of wind-up
+            time_ref = time_stopped[idx] - time_paused[idx];
+        }
+        // Get reference signals
+        get_reference(time_ref, traject, &count_ref, &rate_ref);
+        // Position and speed error
+        count_err = count_ref - count_now;
+        rate_err = rate_ref - rate_now;
+
+        // TODO: translate anti-windup implementation in the position sense
+
+        // TODO: translate anti-windup implementation in the integrator sense
+
+        // TODO: translate stalled detection
+
+        // Calculate duty signal
+        duty = settings->pid_kp*count_err + settings->pid_ki*count_err_integral[idx] + settings->pid_kd*rate_err;
+
+        // TODO: translate integrate position error
+
+        // Check if we are at the target and standing still.
+        if (time_ref >= traject->time_end && count_ref - settings->tolerance <= count_now && count_now <= count_ref + settings->tolerance && rate_now == 0) {
+        // If so, we have reached our goal. We can keep running this loop in order to hold this position. 
+        // But if brake was specified instead, we trigger that. Also clear the running flag to stop waiting for completion.      
+            if (traject->after_stop == PBIO_MOTOR_STOP_COAST){
+                pbio_dcmotor_coast(port);
+                traject->action = IDLE;
+            }
+            else if (traject->after_stop == PBIO_MOTOR_STOP_BRAKE){
+                pbio_dcmotor_brake(port);
+                traject->action = IDLE;
+            }
+            else if (traject->after_stop == PBIO_MOTOR_STOP_HOLD) {
+                // Holding just means that we continue the position control loop without changes
+                pbio_dcmotor_set_duty_cycle_int(port, duty);
+            }
+            atomic_flag_clear(&motor_busy[PORT_TO_IDX(port)]);
+        }
+        // If we are not standing still at the target yet, actuate with the calculated signal
+        else {
+            pbio_dcmotor_set_duty_cycle_int(port, duty);
+        }      
+    }
+    // Calculate control signal for current state for time based commands
+    else if (traject->action == RUN || traject->action == RUN_TIME || traject->action == RUN_STALLED || traject->action == STOP){
+        // TODO
+        duty = 0;
+    }    
+}
+
+
+
 void motor_control_update(){
-
-    ustime_t time_now;
-    count_t count_now, count_ref;
-    rate_t rate_now, rate_ref; 
-    int16_t duty;
-    pbio_motor_trajectory_t *traject;
-
     // Do the update for each motor
     for (pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++){
-        // Port index
-        uint8_t idx = PORT_TO_IDX(port);
-        traject = &trajectories[idx];
-
-        // If we have read access, process
-        if (!atomic_flag_test_and_set(&claimed_trajectory[idx])) { // Remove once we remove multithreading
-            
-            if (traject->time_start != time_started[idx]){
-                // If we are here, then we have to start a new command  
-                time_started[idx] = traject->time_start;
-                debug_trajectory(port);
-            }
-            // Read current state of this motor: current time, speed, and position
-            time_now = pbdrv_time_get_usec();
-            pbio_encmotor_get_encoder_count(port, &count_now);
-            pbio_encmotor_get_encoder_rate(port, &rate_now);   
-            get_reference(time_now, traject, &count_ref, &rate_ref);
-
-            // Calculate control signal for current state for position based commands
-            if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
-                // TODO
-                duty = 0;
-            }
-            // Calculate control signal for current state for time based commands
-            else if (traject->action == RUN || traject->action == RUN_TIME || traject->action == RUN_STALLED || traject->action == STOP){
-                // TODO
-                duty = 0;
-            }            
-            // Set the duty cycle
-            pbio_dcmotor_set_duty_cycle_int(port, duty);
-
+        // If we have read access for this motor, do the update
+        if (!atomic_flag_test_and_set(&claimed_trajectory[PORT_TO_IDX(port)])) { // Remove once we remove multithreading
+            // Do the control update for this motor
+            control_update(port);
             // Release claim on control task
-            atomic_flag_clear(&claimed_trajectory[idx]); // Remove once we remove multithreading
+            atomic_flag_clear(&claimed_trajectory[PORT_TO_IDX(port)]); // Remove once we remove multithreading
         }
-
     }
 }
