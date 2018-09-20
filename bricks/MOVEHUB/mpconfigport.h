@@ -136,6 +136,8 @@ static inline mp_uint_t disable_irq(void) {
         extern void mp_handle_pending(void); \
         mp_handle_pending(); \
         SOCKET_POLL \
+        extern void pybricks_poll(void); \
+        pybricks_poll(); \
         __WFI(); \
     } while (0);
 

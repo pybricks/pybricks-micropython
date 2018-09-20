@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <pbdrv/ioport.h>
 #include <pbdrv/light.h>
 #include <pbdrv/motor.h>
 #include <pbio/dcmotor.h>
@@ -36,6 +37,7 @@ int main(int argc, char **argv) {
     adc_init();
     accel_init();
     pbdrv_motor_init();
+    pbdrv_ioport_init();
 
     #if MICROPY_ENABLE_GC
     gc_init(heap, heap + sizeof(heap));
@@ -78,6 +80,10 @@ soft_reset:
     button_deinit();
 
     return 0;
+}
+
+void pybricks_poll(void) {
+    pbdrv_ioport_poll();
 }
 
 // defined in linker script
