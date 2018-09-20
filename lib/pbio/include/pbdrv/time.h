@@ -25,6 +25,16 @@ uint32_t pbdrv_time_get_msec();
  */
 uint32_t pbdrv_time_get_usec();
 
+/**
+ * Sleep for the given amount of milliseconds.
+ */
+void pbdrv_time_sleep_msec(uint32_t duration);
+
+/**
+ * Sleep for the given amount of microseconds.
+ */
+void pbdrv_time_sleep_usec(uint32_t duration);
+
 /** @}*/
 
 #endif // _PBDRV_TIME_H_
