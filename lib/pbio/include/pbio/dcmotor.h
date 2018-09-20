@@ -56,7 +56,7 @@ pbio_error_t pbio_dcmotor_coast(pbio_port_t port);
 
 pbio_error_t pbio_dcmotor_brake(pbio_port_t port);
 
-pbio_error_t pbio_dcmotor_set_duty_cycle_int(pbio_port_t port, int16_t duty_cycle_int);
+pbio_error_t pbio_dcmotor_set_duty_cycle_int(pbio_port_t port, int32_t duty_cycle_int);
 
 pbio_error_t pbio_dcmotor_set_duty_cycle(pbio_port_t port, float_t duty_cycle);
 

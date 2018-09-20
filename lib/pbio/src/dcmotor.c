@@ -61,7 +61,7 @@ pbio_error_t pbio_dcmotor_brake(pbio_port_t port){
     return pbdrv_motor_set_duty_cycle(port, 0);
 }
 
-pbio_error_t pbio_dcmotor_set_duty_cycle_int(pbio_port_t port, int16_t duty_cycle_int) {
+pbio_error_t pbio_dcmotor_set_duty_cycle_int(pbio_port_t port, int32_t duty_cycle_int) {
     // Limit the duty cycle value
     int16_t limit = dcmotor_settings[PORT_TO_IDX(port)].max_stall_duty;
     if (duty_cycle_int > limit) {
@@ -78,5 +78,5 @@ pbio_error_t pbio_dcmotor_set_duty_cycle_int(pbio_port_t port, int16_t duty_cycl
 }
 
 pbio_error_t pbio_dcmotor_set_duty_cycle(pbio_port_t port, float_t duty_cycle) {
-    return pbio_dcmotor_set_duty_cycle_int(port, (int16_t) (PBIO_DUTY_PCT_TO_ABS * duty_cycle));
+    return pbio_dcmotor_set_duty_cycle_int(port, PBIO_DUTY_PCT_TO_ABS * duty_cycle);
 }
