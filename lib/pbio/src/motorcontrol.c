@@ -389,7 +389,12 @@ ustime_t time_started[] = {
     [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)] = 0
 };
 
-//TODO: Translate python snippets below, including workarounds for integers
+// Several of the formulas below contain expressions such as b*t, where b is a speed or acceleration, and t is a time interval.
+// Because our time values are expressed in microseconds, we actually have to evaluate b*t/1000000. To avoid both excessive
+// round-off errors as well as to avoid overflows, we perform this calculation as (b*(t/1000))/1000, with the following macro:
+#define timest(b, t) ((b * (t/US_PER_MS))/MS_PER_SECOND)
+// We use the same trick to evaluate formulas of the form 1/2*b*t^2
+#define timest2(b, t) ((timest(timest(b, t),t))/2)
 
 // Evaluate the reference speed and velocity at the (shifted) time
 void get_reference(ustime_t time_ref, pbio_motor_trajectory_t *traject, count_t *count_ref, rate_t *rate_ref){
@@ -398,24 +403,24 @@ void get_reference(ustime_t time_ref, pbio_motor_trajectory_t *traject, count_t 
     bool infinite = (traject->action == RUN) || (traject->action == RUN_STALLED);
 
     if (time_ref < traject->time_in) {
-        // If we are here, then we are still in the acceleration phase
-        //         omega_ref = omega_0 + alpha_in*(time_ref-time_0)
-        //         theta_ref = theta_0 + omega_0*(time_ref-time_0) + alpha_in/2*(time_ref-time_0)**2
+        // If we are here, then we are still in the acceleration phase. Includes conversion from microseconds to seconds, in two steps to avoid overflows and round off errors
+        *rate_ref = traject->rate_start   + timest(traject->accl_start, time_ref-traject->time_start);
+        *count_ref = traject->count_start + timest(traject->rate_start, time_ref-traject->time_start) + timest2(traject->accl_start, time_ref-traject->time_start);
     }
-    else if (!infinite && time_ref <= traject->time_out) {
+    else if (infinite || time_ref <= traject->time_out) {
         // If we are here, then we are in the constant speed phase
-        //         omega_ref = omega_star
-        //         theta_ref = theta_in + omega_star*(time_ref-time_in)
+        *rate_ref = traject->rate_target;
+        *count_ref = traject->count_in + timest(traject->rate_target, time_ref-traject->time_out);
     }
-    else if (!infinite && time_ref <= traject->time_end) {
+    else if (time_ref <= traject->time_end) {
         // If we are here, then we are in the deceleration phase
-        //         omega_ref = omega_star + alpha_out*(time_ref-time_out)
-        //         theta_ref = theta_out + omega_star*(time_ref-time_out) + alpha_out/2*(time_ref-time_out)**2        
+        *rate_ref = traject->rate_target + timest(traject->accl_end,    time_ref-traject->time_out);
+        *count_ref = traject->count_out  + timest(traject->rate_target, time_ref-traject->time_out) + timest2(traject->accl_end, time_ref-traject->time_out);       
     }
     else {
         // If we are here, we are in the zero speed phase (relevant when holding position)
-        //         omega_ref = 0
-        //         theta_ref = theta_end  
+        *rate_ref = 0;
+        *count_ref = traject->count_end;  
     } 
 }
 
