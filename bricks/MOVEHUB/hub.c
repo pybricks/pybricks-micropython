@@ -44,73 +44,60 @@ STATIC mp_obj_t hub_get_button(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_get_button_obj, hub_get_button);
 
-STATIC mp_obj_t hub_gpios(mp_obj_t value) {
-    mp_uint_t action = (mp_obj_get_int(value) & 0xF00) >> 8;
-    mp_uint_t port = (mp_obj_get_int(value) & 0x0F0) >> 4;
-    mp_uint_t pin = (mp_obj_get_int(value) & 0x00F);
-    mp_uint_t retval = 2;
-
+STATIC mp_obj_t hub_gpios(mp_obj_t bank, mp_obj_t pin, mp_obj_t action) {
     GPIO_TypeDef *gpio;
+    uint8_t pin_idx;
 
-    switch(port){
-        case 0:
+    switch(mp_obj_get_int(bank)) {
+        case 1:
             gpio = GPIOA;
             // printf("PORT: A\n");
             break;
-        case 1:
+        case 2:
             gpio = GPIOB;
             // printf("PORT: B\n");
             break;
-        case 2:
+        case 3:
             gpio = GPIOC;
             // printf("PORT: C\n");
             break;
-        case 3:
+        case 4:
             gpio = GPIOD;
             // printf("PORT: D\n");
             break;
-        case 5:
+        case 6:
             gpio = GPIOF;
             // printf("PORT: F\n");
             break;
         default:
-            printf("Unknown port\n");
-            return mp_obj_new_int_from_uint(3);
+            mp_raise_ValueError("Unknown bank");
     }
 
-    switch(action){
-        case 0: // Init IN UP
-            gpio_init(gpio, pin, GPIO_MODE_IN, GPIO_PULL_UP, 0);
-            printf("Init PIN %d as INput pull up\n", pin);
-            break;
-        case 1: // Init OUT
-            gpio_init(gpio, pin, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
-            printf("Init PIN %d as OUTput\n", pin);
-            break;
-        case 2: // Read
-            retval = gpio_get(gpio, pin);
-            // printf("Read PIN %d\n", pin);
-            break;
-        case 3: // SET LOW
-            gpio_low(gpio, pin);
-            printf("Set PIN %d low\n", pin);
-            break;
-        case 4: // SET HIGH
-            gpio_high(gpio, pin);
-            printf("Make PIN %d high\n", pin);
-            break;
-        case 5: // Init IN DOWN
-            gpio_init(gpio, pin, GPIO_MODE_IN, GPIO_PULL_DOWN, 0);
-            printf("Init PIN %d as INput pull down\n", pin);
-            break;
-        default:
-            printf("Unknown Action \n");
-            return mp_obj_new_int_from_uint(4);
+    pin_idx = mp_obj_get_int(pin);
+    if (pin_idx < 0 || pin_idx >= 16) {
+        mp_raise_ValueError("Pin out of range");
     }
-    return mp_obj_new_int_from_uint(retval);
+
+    switch(mp_obj_get_int(action)) {
+        case 0: // output, low
+            gpio_low(gpio, pin_idx);
+            break;
+        case 1: // output, high
+            gpio_high(gpio, pin_idx);
+            break;
+        case 2: // input
+            gpio_get(gpio, pin_idx);
+            break;
+        case 3: // read
+            return MP_OBJ_NEW_SMALL_INT(gpio_get(gpio, pin_idx));
+        default:
+            mp_raise_ValueError("Unknown Action");
+    }
+
+    return mp_const_none;
 }
 
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_gpios_obj, hub_gpios);
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(hub_gpios_obj, hub_gpios);
 
 STATIC mp_obj_t hub_power_off(void) {
     pbdrv_light_deinit();

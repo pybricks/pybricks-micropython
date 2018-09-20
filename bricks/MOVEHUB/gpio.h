@@ -12,7 +12,7 @@
 #define GPIO_PULL_UP (0)
 #define GPIO_PULL_DOWN (1)
 
-static void gpio_init(GPIO_TypeDef *gpio, int pin, int mode, int pull, int alt) {
+static inline void gpio_init(GPIO_TypeDef *gpio, int pin, int mode, int pull, int alt) {
     gpio->MODER = (gpio->MODER & ~(3 << (2 * pin))) | (mode << (2 * pin));
     // OTYPER is left as default push-pull
     // OSPEEDR is left as default low speed
@@ -20,9 +20,19 @@ static void gpio_init(GPIO_TypeDef *gpio, int pin, int mode, int pull, int alt) 
     gpio->AFR[pin >> 3] = (gpio->AFR[pin >> 3] & ~(15 << (4 * (pin & 7)))) | (alt << (4 * (pin & 7)));
 }
 
-#define gpio_get(gpio, pin) ((gpio->IDR >> (pin)) & 1)
-#define gpio_set(gpio, pin, value) do { gpio->ODR = (gpio->ODR & ~(1 << (pin))) | (value << pin); } while (0)
-#define gpio_low(gpio, pin) do { gpio->BRR = (1 << (pin)); } while (0)
-#define gpio_high(gpio, pin) do { gpio->BSRR = (1 << (pin)); } while (0)
+static inline uint8_t gpio_get(GPIO_TypeDef *gpio, uint8_t pin) {
+    gpio->MODER &= ~(3 << (2 * pin));
+    return (gpio->IDR >> pin) & 1;
+}
+
+static inline void gpio_low(GPIO_TypeDef *gpio, uint8_t pin) {
+    gpio->BRR = (1 << (pin));
+    gpio->MODER = (gpio->MODER & ~(3 << (2 * pin))) | (1 << (2 * pin));
+}
+
+static inline void gpio_high(GPIO_TypeDef *gpio, uint8_t pin) {
+    gpio->BSRR = (1 << (pin));
+    gpio->MODER = (gpio->MODER & ~(3 << (2 * pin))) | (1 << (2 * pin));
+}
 
 #endif /* _PYBRICKS_MOVEHUB_GPIO_H_ */
