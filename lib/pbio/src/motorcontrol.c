@@ -402,17 +402,17 @@ void get_reference(ustime_t time_ref, pbio_motor_trajectory_t *traject, count_t 
     // For RUN and RUN_STALLED, the end time is infinite, meaning that the reference signals do not have a deceleration phase
     bool infinite = (traject->action == RUN) || (traject->action == RUN_STALLED);
 
-    if (time_ref < traject->time_in) {
+    if (time_ref - traject->time_in < 0) {
         // If we are here, then we are still in the acceleration phase. Includes conversion from microseconds to seconds, in two steps to avoid overflows and round off errors
         *rate_ref = traject->rate_start   + timest(traject->accl_start, time_ref-traject->time_start);
         *count_ref = traject->count_start + timest(traject->rate_start, time_ref-traject->time_start) + timest2(traject->accl_start, time_ref-traject->time_start);
     }
-    else if (infinite || time_ref <= traject->time_out) {
+    else if (infinite || time_ref - traject->time_out <= 0) {
         // If we are here, then we are in the constant speed phase
         *rate_ref = traject->rate_target;
         *count_ref = traject->count_in + timest(traject->rate_target, time_ref-traject->time_out);
     }
-    else if (time_ref <= traject->time_end) {
+    else if (time_ref - traject->time_end <= 0) {
         // If we are here, then we are in the deceleration phase
         *rate_ref = traject->rate_target + timest(traject->accl_end,    time_ref-traject->time_out);
         *count_ref = traject->count_out  + timest(traject->rate_target, time_ref-traject->time_out) + timest2(traject->accl_end, time_ref-traject->time_out);       
