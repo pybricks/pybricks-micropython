@@ -144,7 +144,6 @@ pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t dur
 }
 
 pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, float_t speed, float_t *stallpoint, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    // Implement conditional waits... + conditional return
     pbio_error_t err = make_motor_command(port, RUN_STALLED, speed, NONE, after_stop);
     if (err != PBIO_SUCCESS){
         return err;
@@ -469,30 +468,45 @@ void motor_control_update(){
     ustime_t time_now;
     count_t count_now, count_ref;
     rate_t rate_now, rate_ref; 
+    int16_t duty;
+    pbio_motor_trajectory_t *traject;
 
     // Do the update for each motor
     for (pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++){
         // Port index
         uint8_t idx = PORT_TO_IDX(port);
+        traject = &trajectories[idx];
 
         // If we have read access, process
         if (!atomic_flag_test_and_set(&claimed_trajectory[idx])) { // Remove once we remove multithreading
             
-            if (trajectories[idx].time_start != time_started[idx]){
+            if (traject->time_start != time_started[idx]){
                 // If we are here, then we have to start a new command  
-                time_started[idx] = trajectories[idx].time_start;
+                time_started[idx] = traject->time_start;
                 debug_trajectory(port);
             }
+            // Read current state of this motor: current time, speed, and position
+            time_now = pbdrv_time_get_usec();
+            pbio_encmotor_get_encoder_count(port, &count_now);
+            pbio_encmotor_get_encoder_rate(port, &rate_now);   
+            get_reference(time_now, traject, &count_ref, &rate_ref);
+
+            // Calculate control signal for current state for position based commands
+            if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
+                // TODO
+                duty = 0;
+            }
+            // Calculate control signal for current state for time based commands
+            else if (traject->action == RUN || traject->action == RUN_TIME || traject->action == RUN_STALLED || traject->action == STOP){
+                // TODO
+                duty = 0;
+            }            
+            // Set the duty cycle
+            pbio_dcmotor_set_duty_cycle_int(port, duty);
+
+            // Release claim on control task
             atomic_flag_clear(&claimed_trajectory[idx]); // Remove once we remove multithreading
         }
-        // Read current state of this motor: current time, speed, and position
-        time_now = pbdrv_time_get_usec();
-        pbio_encmotor_get_encoder_count(port, &count_now);
-        pbio_encmotor_get_encoder_rate(port, &rate_now);   
-        get_reference(time_now, &trajectories[idx], &count_ref, &rate_ref);
 
-        // Calculate control signal for current state and current command
-        
-        // Set the duty cycle
     }
 }
