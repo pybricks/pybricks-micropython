@@ -446,7 +446,7 @@ void motor_control_update(){
             atomic_flag_clear(&busy[idx]); // Remove once we remove multithreading
         }
         // Read current state of this motor: current time, speed, and position
-        time_now = pbdrv_get_time_usec();
+        time_now = pbdrv_time_get_usec();
         pbio_encmotor_get_encoder_count(port, &count_now);
         pbio_encmotor_get_encoder_rate(port, &rate_now);   
         get_reference(time_now, &trajectories[idx], &count_ref, &rate_ref);
