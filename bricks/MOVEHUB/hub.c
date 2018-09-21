@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include <pbio/button.h>
 #include <pbdrv/light.h>
 #include <pbsys/sys.h>
 #include <modmotor.h>
@@ -14,7 +15,6 @@
 #include "py/binary.h"
 
 #include "adc.h"
-#include "button.h"
 #include "gpio.h"
 
 #if PYBRICKS_HW_ENABLE_MOTORS
@@ -37,7 +37,12 @@ const mp_obj_type_id_t motor_MovehubMotor_type = {
 #endif //PYBRICKS_ENABLE_MOTORS
 
 STATIC mp_obj_t hub_get_button(void) {
-    return mp_obj_new_bool(button_get_state());
+    pbio_button_flags_t btn;
+
+    // should always return success given these parameters
+    pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
+
+    return mp_obj_new_bool(btn & PBIO_BUTTON_CENTER);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_get_button_obj, hub_get_button);
 

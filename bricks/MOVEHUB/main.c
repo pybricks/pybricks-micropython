@@ -14,7 +14,6 @@
 
 #include "accel.h"
 #include "adc.h"
-#include "button.h"
 #include "uartadr.h"
 
 static char *stack_top;
@@ -28,7 +27,6 @@ int main(int argc, char **argv) {
 
     uart_init();
 
-    button_init();
     adc_init();
     accel_init();
     pbio_init();
@@ -64,7 +62,6 @@ soft_reset:
 
     accel_deinit();
     adc_deinit();
-    button_deinit();
     pbio_deinit();
 
     return 0;

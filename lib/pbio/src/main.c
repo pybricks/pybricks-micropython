@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 
+#include <pbdrv/button.h>
 #include <pbdrv/light.h>
 #include <pbdrv/ioport.h>
 #include <pbdrv/motor.h>
@@ -15,6 +16,7 @@
  * the library.
  */
 void pbio_init(void) {
+    pbdrv_button_init();
     pbdrv_light_init();
     pbdrv_ioport_init();
     pbdrv_motor_init();
@@ -37,6 +39,7 @@ void pbio_poll(void) {
 void pbio_deinit(void) {
     pbdrv_motor_deinit();
     pbdrv_light_deinit();
+    pbdrv_button_deinit();
 }
 #endif
 
