@@ -41,6 +41,7 @@ void pbdrv_light_init(void) {
     TIM15->CCR2 = 0;
 }
 
+#ifdef PBIO_CONFIG_ENABLE_DEINIT
 // turn off the light
 void pbdrv_light_deinit(void) {
     TIM15->CR1 &= ~TIM_CR1_CEN;
@@ -52,6 +53,7 @@ void pbdrv_light_deinit(void) {
     GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER14_Msk) | (1 << GPIO_MODER_MODER14_Pos);
     GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER15_Msk) | (1 << GPIO_MODER_MODER15_Pos);
 }
+#endif
 
 static uint8_t pbdrv_light_red;
 static uint8_t pbdrv_light_green;

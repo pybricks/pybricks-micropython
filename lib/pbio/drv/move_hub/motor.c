@@ -441,6 +441,7 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
     return PBIO_SUCCESS;
 }
 
+#ifdef PBIO_CONFIG_ENABLE_DEINIT
 void pbdrv_motor_deinit(void) {
     // disable the PWM timers
     TIM1->CR1 &= TIM_CR1_CEN;
@@ -468,3 +469,4 @@ void pbdrv_motor_deinit(void) {
     // disable tacho irq
     NVIC_DisableIRQ(EXTI0_1_IRQn);
 }
+#endif

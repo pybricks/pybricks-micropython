@@ -2,11 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <pbdrv/ioport.h>
-#include <pbdrv/light.h>
-#include <pbdrv/motor.h>
-#include <pbio/dcmotor.h>
-#include <pbio/encmotor.h>
+#include <pbio/main.h>
 
 #include "py/compile.h"
 #include "py/runtime.h"
@@ -33,19 +29,16 @@ int main(int argc, char **argv) {
     stack_top = (char*)&stack_dummy;
 
     button_init();
-    pbdrv_light_init();
     adc_init();
     accel_init();
-    pbdrv_motor_init();
-    pbdrv_ioport_init();
+    pbio_init();
 
     #if MICROPY_ENABLE_GC
     gc_init(heap, heap + sizeof(heap));
     #endif
 
 soft_reset:
-    pbdrv_light_set_color(PBIO_PORT_SELF, 0, 255, 0);
-    pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_ON);
+    pbio_reset();
 
     mp_init();
     #if MICROPY_ENABLE_COMPILER
@@ -65,25 +58,14 @@ soft_reset:
     #endif
     mp_deinit();
 
-    for (int p = PBIO_PORT_A; p <= PBIO_PORT_D; p++) {
-        pbdrv_motor_coast(p);
-    }
-    
     goto soft_reset;
 
-    // TODO: do we really need to deinit hardware on hard reset or power off?
-
-    pbdrv_motor_deinit();
     accel_deinit();
     adc_deinit();
-    pbdrv_light_deinit();
     button_deinit();
+    pbio_deinit();
 
     return 0;
-}
-
-void pybricks_poll(void) {
-    pbdrv_ioport_poll();
 }
 
 // defined in linker script

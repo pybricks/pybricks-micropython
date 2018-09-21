@@ -30,7 +30,11 @@ void pbdrv_motor_init(void);
  * Releases the low level motor driver. No motor functions can be called after
  * calling this function.
  */
+#ifdef PBIO_CONFIG_ENABLE_DEINIT
 void pbdrv_motor_deinit(void);
+#else
+static inline void pbdrv_motor_deinit(void) { }
+#endif
 
 /**
  * Gets the tachometer encoder count.

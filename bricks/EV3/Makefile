@@ -29,7 +29,7 @@ INC += -I$(TOP)/ports/pybricks/drivers
 # compiler settings
 CWARN = -Wall -Werror
 CWARN += -Wpointer-arith -Wuninitialized
-CFLAGS = $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA)
+CFLAGS = $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA) -DPBIO_CONFIG_ENABLE_DEINIT
 
 # Debugging/Optimization
 ifdef DEBUG

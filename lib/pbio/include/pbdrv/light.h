@@ -28,7 +28,11 @@ void pbdrv_light_init(void);
  * Releases the low level light driver. No light functions can be called after
  * calling this function.
  */
+#ifdef PBIO_CONFIG_ENABLE_DEINIT
 void pbdrv_light_deinit(void);
+#else
+static inline void pbdrv_light_deinit(void) { }
+#endif
 
 /**
  * Sets the color of the light. The light may not be capabile of displaying

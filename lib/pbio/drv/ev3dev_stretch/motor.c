@@ -105,6 +105,7 @@ void pbdrv_motor_init(void) {
     }    
 }
 
+#ifdef PBIO_CONFIG_ENABLE_DEINIT
 void pbdrv_motor_deinit(void) {
     // Close the relevant files
     for(pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
@@ -119,6 +120,7 @@ void pbdrv_motor_deinit(void) {
         }
     }
 }
+#endif
 
 pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
