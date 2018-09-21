@@ -514,7 +514,7 @@ void control_update(pbio_port_t port){
     ustime_t time_now, time_ref, time_loop;
     count_t count_now, count_ref, count_err;
     rate_t rate_now, rate_ref, rate_err; 
-    int32_t duty;          
+    int32_t duty, duty_due_to_integral;          
 
     // Read current state of this motor: current time, speed, and position
     time_now = pbdrv_time_get_usec();
@@ -539,9 +539,7 @@ void control_update(pbio_port_t port){
         count_err = count_ref - count_now;
         rate_err = rate_ref - rate_now;
 
-        // TODO: translate anti-windup implementation in the position sense
-
-        // TODO: translate anti-windup implementation in the integrator sense
+        // TODO: translate anti-windup implementation in the position sense    
 
         // TODO: translate stalled detection
 
@@ -553,8 +551,21 @@ void control_update(pbio_port_t port){
         count_err_prev[idx] = count_err;
         time_prev[idx] = time_now;
 
+        // Duty cycle component due to integral control 
+        duty_due_to_integral = ((settings->pid_ki*(count_err_integral[idx]/US_PER_MS))/MS_PER_SECOND)/(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS);
+
+        // Integrator anti windup (stalled in the sense of integrators)
+        if (duty_due_to_integral > PBIO_MAX_DUTY) {
+            duty_due_to_integral = PBIO_MAX_DUTY;
+            count_err_integral[idx] = ((US_PER_SECOND*(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS))/settings->pid_ki)*PBIO_MAX_DUTY;
+        }
+        else if (duty_due_to_integral < -PBIO_MAX_DUTY) {
+            duty_due_to_integral = -PBIO_MAX_DUTY;
+            count_err_integral[idx] = -((US_PER_SECOND*(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS))/settings->pid_ki)*PBIO_MAX_DUTY;
+        }
+
         // Calculate duty signal
-        duty = (settings->pid_kp*count_err + ((settings->pid_ki*(count_err_integral[idx]/US_PER_MS))/MS_PER_SECOND) + settings->pid_kd*rate_err)/(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS);
+        duty = (settings->pid_kp*count_err + settings->pid_kd*rate_err)/(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS) + duty_due_to_integral;
 
         // Check if we are at the target and standing still.
         if (time_ref >= traject->time_end && count_ref - settings->tolerance <= count_now && count_now <= count_ref + settings->tolerance && rate_now == 0) {
