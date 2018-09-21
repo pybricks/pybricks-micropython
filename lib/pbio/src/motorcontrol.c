@@ -505,7 +505,6 @@ void control_update(pbio_port_t port){
         time_paused[idx] = 0;
         time_stopped[idx] = 0;
         time_run_status[idx] = TIME_RUNNING;
-        debug_trajectory(port);
         time_prev[idx] = maneuver_started[idx];
         count_err_prev[idx] = 0;
     }    
@@ -514,7 +513,7 @@ void control_update(pbio_port_t port){
     ustime_t time_now, time_ref, time_loop;
     count_t count_now, count_ref, count_err;
     rate_t rate_now, rate_ref, rate_err; 
-    int32_t duty, duty_due_to_integral;          
+    int32_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative;          
 
     // Read current state of this motor: current time, speed, and position
     time_now = pbdrv_time_get_usec();
@@ -538,10 +537,33 @@ void control_update(pbio_port_t port){
         // Position and speed error
         count_err = count_ref - count_now;
         rate_err = rate_ref - rate_now;
+        // Corresponding PD control signal
+        duty_due_to_proportional = settings->pid_kp*count_err/(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS);
+        duty_due_to_derivative = settings->pid_kd*rate_err/(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS);
 
-        // TODO: translate anti-windup implementation in the position sense    
-
-        // TODO: translate stalled detection
+        // Position anti-windup
+        if ((duty_due_to_proportional >= PBIO_MAX_DUTY && rate_err > 0) || (duty_due_to_proportional <= -PBIO_MAX_DUTY && rate_err < 0)){
+            // We are at the limit and we should prevent further position error "integration". (Stalled in the sense of position)
+            // TODO: set stall flag
+            // So, we should stop the timer if it is running
+            if (time_run_status[idx] == TIME_RUNNING) {
+                // Then we must stop the time
+                time_run_status[idx] = TIME_PAUSED;
+                // We save the time value reached now, to continue later
+                time_stopped[idx] = time_now;
+            }
+        }
+        else{
+            // Otherwise, the timer should be running
+            // TODO: set stall flag
+            // So we should restart the time if it isn't already running
+            if (time_run_status[idx] == TIME_PAUSED) {
+                // Then we must restart the time
+                time_run_status[idx] = TIME_RUNNING;
+                // We begin counting again from the stopped point
+                time_paused[idx] += time_now - time_stopped[idx];
+            }
+        }
 
         // Integrate position error
         if (time_run_status[idx] == TIME_RUNNING) {
@@ -555,17 +577,20 @@ void control_update(pbio_port_t port){
         duty_due_to_integral = ((settings->pid_ki*(count_err_integral[idx]/US_PER_MS))/MS_PER_SECOND)/(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS);
 
         // Integrator anti windup (stalled in the sense of integrators)
+        // Limit the duty due to the integral, as well as the integral itself
         if (duty_due_to_integral > PBIO_MAX_DUTY) {
+            // TODO: set stall flag
             duty_due_to_integral = PBIO_MAX_DUTY;
             count_err_integral[idx] = ((US_PER_SECOND*(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS))/settings->pid_ki)*PBIO_MAX_DUTY;
         }
         else if (duty_due_to_integral < -PBIO_MAX_DUTY) {
+            // TODO: set stall flag
             duty_due_to_integral = -PBIO_MAX_DUTY;
             count_err_integral[idx] = -((US_PER_SECOND*(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS))/settings->pid_ki)*PBIO_MAX_DUTY;
         }
 
         // Calculate duty signal
-        duty = (settings->pid_kp*count_err + settings->pid_kd*rate_err)/(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS) + duty_due_to_integral;
+        duty = duty_due_to_proportional + duty_due_to_integral + duty_due_to_derivative;
 
         // Check if we are at the target and standing still.
         if (time_ref >= traject->time_end && count_ref - settings->tolerance <= count_now && count_now <= count_ref + settings->tolerance && rate_now == 0) {
