@@ -15,9 +15,9 @@
 
 // TODO: think harder about negative time differences
 /**
- * Unsigned integer type with units of microseconds
+ * Integer type with units of microseconds
  */
-typedef uint32_t ustime_t;
+typedef int32_t ustime_t;
 
 /**
  * Integer type with units of encoder counts
@@ -175,10 +175,10 @@ void debug_trajectory(pbio_port_t port){
         port,
         (int)traject->action,
         (int)traject->after_stop,
-        (unsigned int)traject->time_start,
-        (unsigned int)(traject->time_in-traject->time_start),
-        (unsigned int)(traject->time_out-traject->time_start),
-        (unsigned int)(traject->time_end-traject->time_start),
+        (int)traject->time_start,
+        (int)(traject->time_in-traject->time_start),
+        (int)(traject->time_out-traject->time_start),
+        (int)(traject->time_end-traject->time_start),
         (int)traject->count_start,
         (int)traject->count_in,
         (int)traject->count_out,
@@ -313,7 +313,7 @@ pbio_error_t make_motor_command(pbio_port_t port,
     _rate_target = limit(_rate_target, settings->max_rate);
 
     // Determine sign of reference rate in case of position target. The rate sign specified by the user is ignored
-    if (action == RUN_TARGET) {
+    if (action == RUN_TARGET || action == RUN_ANGLE) {
         // If the target is ahead of us, go forward. Otherwise go backward.
         _rate_target = (_count_end > _count_start) ? abs(_rate_target) : -abs(_rate_target);
     }
@@ -358,7 +358,7 @@ pbio_error_t make_motor_command(pbio_port_t port,
     }
 
     // Limit reference speeds if move is shorter than full in/out phase (RUN_TARGET case)
-    if (action == RUN_TARGET && abs(_count_end-_count_start) < abs((_rate_target*_rate_target-_rate_start*_rate_start)/(2*_accl_start)) + abs(_rate_target*_rate_target/(2*_accl_end))) {
+    if ((action == RUN_TARGET || action == RUN_ANGLE) && abs(_count_end-_count_start) < abs((_rate_target*_rate_target-_rate_start*_rate_start)/(2*_accl_start)) + abs(_rate_target*_rate_target/(2*_accl_end))) {
         // There is not enough angle for the in and out phase
         if (abs(_rate_start) < abs(_rate_target)) {
             // Limit _rate_target to make in-and-out intersect because _rate_start is low enough
@@ -386,7 +386,7 @@ pbio_error_t make_motor_command(pbio_port_t port,
         _count_out = _count_in + _rate_target*(_time_out-_time_in);
         _count_end = _count_out - _rate_target*_rate_target/_accl_end/2;
     }
-    else if (action == RUN_TARGET) {
+    else if (action == RUN_TARGET || action == RUN_ANGLE) {
         _time_out = _time_in + (_count_end-_count_in)/_rate_target + _rate_target/_accl_end/2;
         _count_out = _count_in + _rate_target*(_time_out-_time_in);
         _time_end = _time_out - _rate_target/_accl_end;
@@ -423,26 +423,26 @@ pbio_error_t make_motor_command(pbio_port_t port,
 // Several of the formulas below contain expressions such as b*t, where b is a speed or acceleration, and t is a time interval.
 // Because our time values are expressed in microseconds, we actually have to evaluate b*t/1000000. To avoid both excessive
 // round-off errors as well as to avoid overflows, we perform this calculation as (b*(t/1000))/1000, with the following macro:
-#define timest(b, t) ((b * (((int32_t) (t))/US_PER_MS))/MS_PER_SECOND)
+#define timest(b, t) ((b * ((t)/US_PER_MS))/MS_PER_SECOND)
 // We use the same trick to evaluate formulas of the form 1/2*b*t^2
-#define timest2(b, t) ((timest(timest(b, ((int32_t) (t))),((int32_t) (t))))/2)
+#define timest2(b, t) ((timest(timest(b, (t)),(t)))/2)
 
 // Evaluate the reference speed and velocity at the (shifted) time
 void get_reference(ustime_t time_ref, pbio_motor_trajectory_t *traject, count_t *count_ref, rate_t *rate_ref){
 
     // For RUN and RUN_STALLED, the end time is infinite, meaning that the reference signals do not have a deceleration phase
     bool infinite = (traject->action == RUN) || (traject->action == RUN_STALLED);
-    if ( (int32_t) (time_ref - traject->time_in) < 0) {
+    if (time_ref - traject->time_in < 0) {
         // If we are here, then we are still in the acceleration phase. Includes conversion from microseconds to seconds, in two steps to avoid overflows and round off errors
         *rate_ref = traject->rate_start   + timest(traject->accl_start, time_ref-traject->time_start);
         *count_ref = traject->count_start + timest(traject->rate_start, time_ref-traject->time_start) + timest2(traject->accl_start, time_ref-traject->time_start);
     }
-    else if (infinite || (int32_t) (time_ref - traject->time_out) <= 0) {
+    else if (infinite || time_ref - traject->time_out <= 0) {
         // If we are here, then we are in the constant speed phase
         *rate_ref = traject->rate_target;
         *count_ref = traject->count_in + timest(traject->rate_target, time_ref-traject->time_in);
     }
-    else if ( (int32_t) (time_ref - traject->time_end) <= 0) {
+    else if ( time_ref - traject->time_end <= 0) {
         // If we are here, then we are in the deceleration phase
         *rate_ref = traject->rate_target + timest(traject->accl_end,    time_ref-traject->time_out);
         *count_ref = traject->count_out  + timest(traject->rate_target, time_ref-traject->time_out) + timest2(traject->accl_end, time_ref-traject->time_out);
@@ -474,8 +474,6 @@ count_t count_err_integral[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 ustime_t maneuver_started[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 ustime_t time_paused[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 ustime_t time_stopped[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-
-uint32_t skip = 0;
 
 void control_update(pbio_port_t port){
     // Port index
@@ -545,7 +543,7 @@ void control_update(pbio_port_t port){
 
         // Calculate duty signal
         duty = ((settings->pid_kp*count_err + settings->pid_ki*count_err_integral[idx] + settings->pid_kd*rate_err)*PBIO_DUTY_PCT_TO_ABS)/PID_PRESCALE;       
-
+        
         // TODO: translate integrate position error
 
         // Check if we are at the target and standing still.
@@ -577,8 +575,6 @@ void control_update(pbio_port_t port){
         duty = 0;
     }    
 }
-
-
 
 void motor_control_update(){
     // Do the update for each motor
