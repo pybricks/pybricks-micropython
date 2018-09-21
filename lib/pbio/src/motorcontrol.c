@@ -13,6 +13,7 @@
 #define NUM_SCALE (10000)
 #define DEN_SCALE (US_PER_SECOND / NUM_SCALE)
 
+// TODO: think harder about negative time differences
 /**
  * Unsigned integer type with units of microseconds
  */
@@ -422,36 +423,35 @@ pbio_error_t make_motor_command(pbio_port_t port,
 // Several of the formulas below contain expressions such as b*t, where b is a speed or acceleration, and t is a time interval.
 // Because our time values are expressed in microseconds, we actually have to evaluate b*t/1000000. To avoid both excessive
 // round-off errors as well as to avoid overflows, we perform this calculation as (b*(t/1000))/1000, with the following macro:
-#define timest(b, t) ((b * (t/US_PER_MS))/MS_PER_SECOND)
+#define timest(b, t) ((b * (((int32_t) (t))/US_PER_MS))/MS_PER_SECOND)
 // We use the same trick to evaluate formulas of the form 1/2*b*t^2
-#define timest2(b, t) ((timest(timest(b, t),t))/2)
+#define timest2(b, t) ((timest(timest(b, ((int32_t) (t))),((int32_t) (t))))/2)
 
 // Evaluate the reference speed and velocity at the (shifted) time
 void get_reference(ustime_t time_ref, pbio_motor_trajectory_t *traject, count_t *count_ref, rate_t *rate_ref){
 
     // For RUN and RUN_STALLED, the end time is infinite, meaning that the reference signals do not have a deceleration phase
     bool infinite = (traject->action == RUN) || (traject->action == RUN_STALLED);
-
-    if (time_ref - traject->time_in < 0) {
+    if ( (int32_t) (time_ref - traject->time_in) < 0) {
         // If we are here, then we are still in the acceleration phase. Includes conversion from microseconds to seconds, in two steps to avoid overflows and round off errors
         *rate_ref = traject->rate_start   + timest(traject->accl_start, time_ref-traject->time_start);
         *count_ref = traject->count_start + timest(traject->rate_start, time_ref-traject->time_start) + timest2(traject->accl_start, time_ref-traject->time_start);
     }
-    else if (infinite || time_ref - traject->time_out <= 0) {
+    else if (infinite || (int32_t) (time_ref - traject->time_out) <= 0) {
         // If we are here, then we are in the constant speed phase
         *rate_ref = traject->rate_target;
-        *count_ref = traject->count_in + timest(traject->rate_target, time_ref-traject->time_out);
+        *count_ref = traject->count_in + timest(traject->rate_target, time_ref-traject->time_in);
     }
-    else if (time_ref - traject->time_end <= 0) {
+    else if ( (int32_t) (time_ref - traject->time_end) <= 0) {
         // If we are here, then we are in the deceleration phase
         *rate_ref = traject->rate_target + timest(traject->accl_end,    time_ref-traject->time_out);
-        *count_ref = traject->count_out  + timest(traject->rate_target, time_ref-traject->time_out) + timest2(traject->accl_end, time_ref-traject->time_out);       
+        *count_ref = traject->count_out  + timest(traject->rate_target, time_ref-traject->time_out) + timest2(traject->accl_end, time_ref-traject->time_out);
     }
     else {
         // If we are here, we are in the zero speed phase (relevant when holding position)
         *rate_ref = 0;
-        *count_ref = traject->count_end;  
-    } 
+        *count_ref = traject->count_end;
+    }
 }
 
 
@@ -475,6 +475,8 @@ ustime_t maneuver_started[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 ustime_t time_paused[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 ustime_t time_stopped[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
+uint32_t skip = 0;
+
 void control_update(pbio_port_t port){
     // Port index
     uint8_t idx = PORT_TO_IDX(port);
@@ -490,7 +492,7 @@ void control_update(pbio_port_t port){
 
     // The very first time this is called, we initialize a fictitious previous maneuver
     if (time_run_status[idx] == TIME_NOT_INITIALIZED) {
-        maneuver_started[idx] = pbdrv_time_get_usec() - US_PER_SECOND;
+        maneuver_started[idx] = traject->time_start - US_PER_SECOND;
     }
 
     // Check if the trajectory starting time equals the current maneuver start time
@@ -503,13 +505,14 @@ void control_update(pbio_port_t port){
         time_paused[idx] = 0;
         time_stopped[idx] = 0;
         time_run_status[idx] = TIME_RUNNING;
+        debug_trajectory(port);
     }    
 
     // Declare current time, positions, rates, and their reference value and error
     ustime_t time_now, time_ref;
     count_t count_now, count_ref, count_err;
     rate_t rate_now, rate_ref, rate_err; 
-    int16_t duty;          
+    int32_t duty;          
 
     // Read current state of this motor: current time, speed, and position
     time_now = pbdrv_time_get_usec();
@@ -541,7 +544,7 @@ void control_update(pbio_port_t port){
         // TODO: translate stalled detection
 
         // Calculate duty signal
-        duty = settings->pid_kp*count_err + settings->pid_ki*count_err_integral[idx] + settings->pid_kd*rate_err;
+        duty = ((settings->pid_kp*count_err + settings->pid_ki*count_err_integral[idx] + settings->pid_kd*rate_err)*PBIO_DUTY_PCT_TO_ABS)/PID_PRESCALE;       
 
         // TODO: translate integrate position error
 
