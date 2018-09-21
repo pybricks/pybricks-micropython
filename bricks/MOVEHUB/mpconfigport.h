@@ -138,6 +138,8 @@ static inline mp_uint_t disable_irq(void) {
         SOCKET_POLL \
         extern void pbio_poll(void); \
         pbio_poll(); \
+        extern void pbsys_poll(void); \
+        pbsys_poll(); \
         __WFI(); \
     } while (0);
 

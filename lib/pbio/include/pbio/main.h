@@ -4,7 +4,6 @@
 
 void pbio_init(void);
 void pbio_poll(void);
-void pbio_reset(void);
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
 void pbio_deinit(void);

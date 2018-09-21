@@ -17,11 +17,16 @@ static bool pbio_light_user_mode;
  */
 void pbio_light_set_user_mode(bool user_mode) {
     pbio_light_user_mode = user_mode;
-    if (!user_mode) {
+    if (user_mode) {
+        // TODO: This should be a nice breathe effect or something
+        pbdrv_light_set_color(PBIO_PORT_SELF, 0, 255, 0);
+        pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_ON);
+    }
+    else {
         // TODO: This needs to turn off all lights except for the brick status
         // light. The brick status light should be set to indicate the system
         // state.
-        pbdrv_light_set_color(PBIO_PORT_SELF, 0, 255, 0);
+        pbdrv_light_set_color(PBIO_PORT_SELF, 0, 0, 255);
         pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_ON);
     }
 }

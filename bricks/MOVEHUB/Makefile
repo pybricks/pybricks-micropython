@@ -21,8 +21,10 @@ DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
 CHECKSUM = $(TOP)/ports/pybricks/tools/checksum.py
 
+PBIO_OPT = -DPBIO_CONFIG_ENABLE_SYS
+
 CFLAGS_CORTEX_M0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
-CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib $(CFLAGS_CORTEX_M0) $(COPT)
+CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib $(CFLAGS_CORTEX_M0) $(COPT) $(PBIO_OPT)
 LDFLAGS = -nostdlib -T move-hub.ld -Map=$@.map --cref --gc-sections
 
 # Tune for Debugging or Optimization
@@ -64,10 +66,11 @@ PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	lib/pbio/src/encmotor.c \
 	lib/pbio/src/light.c \
 	lib/pbio/src/main.c \
+	lib/pbio/sys/move_hub/sys.c \
 	)	
 
 SRC_S = \
-	startup_stm32f070xb.s \
+	ports/pybricks/lib/pbio/sys/move_hub/startup_stm32f070xb.s \
 	ports/stm32/gchelper_m0.s \
 
 SRC_LIBM = $(addprefix lib/libm/,\

@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include <pbdrv/light.h>
+#include <pbsys/sys.h>
 #include <modmotor.h>
 #include <mpconfigbrick.h>
 
@@ -15,10 +16,6 @@
 #include "adc.h"
 #include "button.h"
 #include "gpio.h"
-
-// Bootloader reads this address to know if firmware loader should run
-uint32_t hub_bootloader_magic_addr __attribute__((section (".magic")));
-#define HUB_BOOTLOADER_MAGIC_VALUE  0xAAAAAAAA
 
 #if PYBRICKS_HW_ENABLE_MOTORS
 const mp_obj_type_id_t motor_MovehubMotor_type = {
@@ -100,10 +97,7 @@ STATIC mp_obj_t hub_gpios(mp_obj_t bank, mp_obj_t pin, mp_obj_t action) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(hub_gpios_obj, hub_gpios);
 
 STATIC mp_obj_t hub_power_off(void) {
-    pbdrv_light_deinit();
-
-    // setting PB11 low cuts the power
-    GPIOB->BRR = GPIO_BRR_BR_11;
+    pbsys_power_off();
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_power_off_obj, hub_power_off);
@@ -114,11 +108,7 @@ STATIC mp_obj_t hub_read_adc(mp_obj_t ch) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_read_adc_obj, hub_read_adc);
 
 STATIC mp_obj_t hub_reboot(mp_obj_t bootloader) {
-    if (mp_obj_is_true(bootloader)) {
-        hub_bootloader_magic_addr = HUB_BOOTLOADER_MAGIC_VALUE;
-    }
-    // this function never returns
-    NVIC_SystemReset();
+    pbsys_reboot(mp_obj_is_true(bootloader));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_reboot_obj, hub_reboot);
