@@ -29,14 +29,15 @@ void pbsys_prepare_user_program(void);
 void pbsys_unprepare_user_program(void);
 
 /**
- * Reboots the brick. This could also be considered a "hard" reset.
+ * Reboots the brick. This could also be considered a "hard" reset. This
+ * function never returns.
  * @param fw_update     If *true*, system will reboot into firmware update mode,
  *                      otherise it will reboot normally.
  */
 void pbsys_reboot(bool fw_update);
 
 /**
- * Powers off the brick.
+ * Powers off the brick. This function never returns.
  */
 void pbsys_power_off(void);
 

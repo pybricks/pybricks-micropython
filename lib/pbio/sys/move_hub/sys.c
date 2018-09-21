@@ -2,8 +2,11 @@
 #include <string.h>
 
 #include <pbdrv/config.h>
+#include <pbdrv/light.h>
 #include <pbdrv/motor.h>
+#include <pbdrv/time.h>
 
+#include <pbio/button.h>
 #include <pbio/light.h>
 
 #include "stm32f070xb.h"
@@ -11,6 +14,9 @@
 // Bootloader reads this address to know if firmware loader should run
 uint32_t bootloader_magic_addr __attribute__((section (".magic")));
 #define BOOTLOADER_MAGIC_VALUE  0xAAAAAAAA
+
+static bool button_pressed;
+static uint16_t button_press_start_time;
 
 void pbsys_prepare_user_program(void) {
     pbio_light_set_user_mode(true);
@@ -34,12 +40,42 @@ void pbsys_reboot(bool fw_update) {
 }
 
 void pbsys_power_off(void) {
-    // setting PB11 low cuts the power
-    GPIOB->BRR = GPIO_BRR_BR_11;
+    __disable_irq();
+    // TODO: do blink pattern like LEGO firmware
+    pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_OFF);
+
+    // need to loop because power will stay on as long as button is pressed
+    while (true) {
+        // setting PB11 low cuts the power
+        GPIOB->BRR = GPIO_BRR_BR_11;
+    }
 }
 
 void pbsys_poll(void) {
-    // TODO
+    uint16_t now;
+    pbio_button_flags_t btn;
+
+    now = pbdrv_time_get_msec();
+    pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
+
+    if (btn & PBIO_BUTTON_CENTER) {
+        if (button_pressed) {
+            // TODO: blink light like LEGO firmware
+
+            // if the button is held down for 5 seconds, power off
+            if (now - button_press_start_time > 5000) {
+                pbsys_power_off();
+            }
+        }
+        else {
+            button_press_start_time = now;
+            button_pressed = true;
+        }
+    }
+    else {
+        button_pressed = false;
+    }
+    // TODO monitor for low battery
 }
 
 // this seem to be missing from the header file
