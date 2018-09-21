@@ -471,7 +471,9 @@ time_run_status_t time_run_status[] = {
 
 // Persistent PID related variables for each motor
 count_t count_err_integral[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+count_t count_err_prev[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 ustime_t maneuver_started[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+ustime_t time_prev[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 ustime_t time_paused[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 ustime_t time_stopped[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
@@ -504,10 +506,12 @@ void control_update(pbio_port_t port){
         time_stopped[idx] = 0;
         time_run_status[idx] = TIME_RUNNING;
         debug_trajectory(port);
+        time_prev[idx] = maneuver_started[idx];
+        count_err_prev[idx] = 0;
     }    
 
     // Declare current time, positions, rates, and their reference value and error
-    ustime_t time_now, time_ref;
+    ustime_t time_now, time_ref, time_loop;
     count_t count_now, count_ref, count_err;
     rate_t rate_now, rate_ref, rate_err; 
     int32_t duty;          
@@ -541,10 +545,16 @@ void control_update(pbio_port_t port){
 
         // TODO: translate stalled detection
 
+        // Integrate position error
+        if (time_run_status[idx] == TIME_RUNNING) {
+            time_loop = time_now - time_prev[idx];
+            count_err_integral[idx] += count_err_prev[idx]*time_loop;
+        }
+        count_err_prev[idx] = count_err;
+        time_prev[idx] = time_now;
+
         // Calculate duty signal
-        duty = ((settings->pid_kp*count_err + settings->pid_ki*count_err_integral[idx] + settings->pid_kd*rate_err)*PBIO_DUTY_PCT_TO_ABS)/PID_PRESCALE;       
-        
-        // TODO: translate integrate position error
+        duty = (settings->pid_kp*count_err + ((settings->pid_ki*(count_err_integral[idx]/US_PER_MS))/MS_PER_SECOND) + settings->pid_kd*rate_err)/(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS);
 
         // Check if we are at the target and standing still.
         if (time_ref >= traject->time_end && count_ref - settings->tolerance <= count_now && count_now <= count_ref + settings->tolerance && rate_now == 0) {
