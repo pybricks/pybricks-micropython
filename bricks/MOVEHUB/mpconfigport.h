@@ -114,37 +114,22 @@ static inline mp_uint_t disable_irq(void) {
 #define MICROPY_BEGIN_ATOMIC_SECTION()     disable_irq()
 #define MICROPY_END_ATOMIC_SECTION(state)  enable_irq(state)
 
-#if MICROPY_PY_THREAD
-#define MICROPY_EVENT_POLL_HOOK \
+#define MICROPY_VM_HOOK_LOOP \
     do { \
-        extern void mp_handle_pending(void); \
-        mp_handle_pending(); \
-        SOCKET_POLL \
-        if (pyb_thread_enabled) { \
-            MP_THREAD_GIL_EXIT(); \
-            pyb_thread_yield(); \
-            MP_THREAD_GIL_ENTER(); \
-        } else { \
-            __WFI(); \
-        } \
-    } while (0);
-
-#define MICROPY_THREAD_YIELD() pyb_thread_yield()
-#else
-#define MICROPY_EVENT_POLL_HOOK \
-    do { \
-        extern void mp_handle_pending(void); \
-        mp_handle_pending(); \
-        SOCKET_POLL \
         extern void pbio_poll(void); \
         pbio_poll(); \
         extern void pbsys_poll(void); \
         pbsys_poll(); \
-        __WFI(); \
     } while (0);
 
-#define MICROPY_THREAD_YIELD()
-#endif
+#define MICROPY_EVENT_POLL_HOOK \
+    do { \
+        extern void mp_handle_pending(void); \
+        mp_handle_pending(); \
+        SOCKET_POLL \
+        MICROPY_VM_HOOK_LOOP \
+        __WFI(); \
+    } while (0);
 
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>
