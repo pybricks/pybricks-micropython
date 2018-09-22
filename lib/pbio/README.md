@@ -20,6 +20,12 @@ The `include/pbiodrv` directory contains the common I/O driver API that must be
 implemented for each platform. These header files are not intended to be used
 outside of this library.
 
-The `include/pbio` directory contains the public header files for the library.
+The `include/pbio` directory contains the public header files for the main library.
+
+The `include/pbsys` directory contains the public header files for the
+system-level library functions.
 
 The `src` directory contains the main library source code.
+
+The `sys` directory contains platform-specific code used when this library is
+used as the "operating system" for a programmable brick.
