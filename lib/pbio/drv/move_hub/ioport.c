@@ -69,7 +69,6 @@ typedef struct _ioport_pins_t {
 
 // Device connection manager state for each port
 typedef struct _dcm_data_t {
-    uint16_t prev_msec;
     dcm_state_t dcm_state;
     dev_id1_group_t dev_id1_group;
     dev_id_t dev_id;
@@ -151,19 +150,13 @@ void _pbdrv_ioport_init(void) {
 
 // This is the device connection manager (dcm). It monitors the ID1 and ID2 pins
 // on the port to see when devices are connected or disconnected.
+// It is expected for there to be a 2ms delay between calls to this function.
 static void poll_dcm(ioport_t port, uint16_t now) {
     // copying the data struct reduces the code size by a few hundred bytes,
     // but we need to rember to copy it back if we change anything
     dcm_data_t data = dcm_data[port];
     const ioport_pins_t pins = ioport_pins[port];
     uint8_t gpio_input;
-
-    // wait at least 2ms between steps
-    if ((uint16_t)(now - data.prev_msec) < 2) {
-        return;
-    }
-
-    data.prev_msec = now;
 
     switch (data.dcm_state) {
     case DCM_STATE_0:
