@@ -247,7 +247,7 @@ pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     now = TIM7->CNT;
 
     // if it has been more than 50ms since last timestamp, we are not moving.
-    if (now - head_time > 50 * 100) {
+    if ((uint16_t)(now - head_time) > 50 * 100) {
         *rate = 0;
         return PBIO_SUCCESS;
     }

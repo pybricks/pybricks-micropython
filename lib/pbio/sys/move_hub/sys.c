@@ -72,7 +72,7 @@ void _pbsys_poll(uint16_t now) {
             // TODO: blink light like LEGO firmware
 
             // if the button is held down for 5 seconds, power off
-            if (now - button_press_start_time > 5000) {
+            if ((uint16_t)(now - button_press_start_time) > 5000) {
                 // turn off light briefly like official LEGO firmware
                 pbdrv_light_set_rgb(PBIO_PORT_SELF, 0, 0, 0);
                 pbdrv_time_delay_usec(580000);

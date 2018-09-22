@@ -159,7 +159,7 @@ static void poll_dcm(ioport_t port, uint16_t now) {
     uint8_t gpio_input;
 
     // wait at least 2ms between steps
-    if (now - data.prev_msec < 2) {
+    if ((uint16_t)(now - data.prev_msec) < 2) {
         return;
     }
 

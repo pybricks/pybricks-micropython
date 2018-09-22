@@ -37,11 +37,11 @@ void pbio_poll(void) {
     // pbio_poll() can be called quite frequently (e.g. in a tight loop) so we
     // don't want to call all of the subroutines unless enough time has
     // actually elapsed to do something useful.
-    if (now - prev_fast_poll_time >= 2) {
+    if ((uint16_t)(now - prev_fast_poll_time) >= 2) {
         _pbdrv_ioport_poll(now);
         prev_fast_poll_time = now;
     }
-    if (now - prev_slow_poll_time >= 32) {
+    if ((uint16_t)(now - prev_slow_poll_time) >= 32) {
         _pbio_light_poll(now);
         _pbsys_poll(now);
         prev_slow_poll_time = now;
