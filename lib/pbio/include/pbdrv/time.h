@@ -31,9 +31,13 @@ uint32_t pbdrv_time_get_usec();
 void pbdrv_time_sleep_msec(uint32_t duration);
 
 /**
- * Sleep for the given amount of microseconds.
+ * Delay for the given amount of microseconds. On most platforms, this will
+ * busy-wait and block anything else from running, so it should only be used
+ * for very short durations. On Linux it will actually sleep (allow other
+ * processes/threads to run) and cannot be depended upon for accurate timing.
+ * @param [in] duration     number of microseconds to wait before returning
  */
-void pbdrv_time_sleep_usec(uint32_t duration);
+void pbdrv_time_delay_usec(uint32_t duration);
 
 /** @}*/
 

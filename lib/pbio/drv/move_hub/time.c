@@ -2,6 +2,8 @@
 // This file is based on the STM32 SysTick code from MicroPython
 // Copyright (c) 2013, 2014 Damien P. George 
 
+#include <pbdrv/config.h>
+
 #include "stm32f070xb.h"
 
 volatile uint32_t pbdrv_time_msec_ticks;
@@ -43,11 +45,27 @@ uint32_t pbdrv_time_get_usec(void) {
     return msec * 1000 + (counter * 1000) / (load + 1);
 }
 
+// delay for given number of microseconds
+void pbdrv_time_delay_usec(uint32_t usec) {
+    if (__get_PRIMASK() == 1) {
+        // IRQs enabled, so can use systick counter to do the delay
+        uint32_t start = pbdrv_time_get_usec();
+        while (pbdrv_time_get_usec() - start < usec) {
+        }
+    } else {
+        // IRQs disabled, so need to use a busy loop for the delay
+        // sys freq is always a multiple of 2MHz, so division here won't lose precision
+        const uint32_t ucount = PBDRV_CONFIG_SYS_CLOCK_RATE / 2000000 * usec / 2;
+        for (uint32_t count = 0; ++count <= ucount;) {
+        }
+    }
+}
+
 void SysTick_Handler(void) {
     pbdrv_time_msec_ticks++;
 
     // Read the systick control regster. This has the side effect of clearing
-    // the COUNTFLAG bit, which makes the logic in mp_hal_ticks_us
+    // the COUNTFLAG bit, which makes the logic in pbdrv_time_get_usec
     // work properly.
     SysTick->CTRL;
 }

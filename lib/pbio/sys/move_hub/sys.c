@@ -40,9 +40,19 @@ void pbsys_reboot(bool fw_update) {
 }
 
 void pbsys_power_off(void) {
+    int i;
+
+    // blink pattern like LEGO firmware
+    for (i = 0; i < 3; i++) {
+        pbdrv_light_set_color(PBIO_PORT_SELF, 255, 140, 60);
+        pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_ON);
+        pbdrv_time_delay_usec(50000);
+        pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_OFF);
+        pbdrv_time_delay_usec(30000);
+    }
+
+    // PWM doesn't work while IRQs are disabled? so this needs to be after
     __disable_irq();
-    // TODO: do blink pattern like LEGO firmware
-    pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_OFF);
 
     // need to loop because power will stay on as long as button is pressed
     while (true) {
@@ -64,6 +74,8 @@ void pbsys_poll(void) {
 
             // if the button is held down for 5 seconds, power off
             if (now - button_press_start_time > 5000) {
+                pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_OFF);
+                pbdrv_time_delay_usec(580000);
                 pbsys_power_off();
             }
         }

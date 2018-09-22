@@ -18,6 +18,7 @@ void pbdrv_time_sleep_msec(uint32_t duration){
     usleep(duration*1000);
 }
 
-void pbdrv_time_sleep_usec(uint32_t duration){
+void pbdrv_time_delay_usec(uint32_t duration){
+    // FIXME: is there a way to busy-wait on Linux? maybe call clock_gettime() in a loop?
     usleep(duration);
 }
