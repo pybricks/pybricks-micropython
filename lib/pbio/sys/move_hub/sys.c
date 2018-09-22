@@ -16,7 +16,7 @@ uint32_t bootloader_magic_addr __attribute__((section (".magic")));
 #define BOOTLOADER_MAGIC_VALUE  0xAAAAAAAA
 
 static bool button_pressed;
-static uint16_t button_press_start_time;
+static uint32_t button_press_start_time;
 
 void pbsys_prepare_user_program(void) {
     _pbio_light_set_user_mode(true);
@@ -62,7 +62,7 @@ void pbsys_power_off(void) {
     }
 }
 
-void _pbsys_poll(uint16_t now) {
+void _pbsys_poll(uint32_t now) {
     pbio_button_flags_t btn;
 
     pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
@@ -72,7 +72,7 @@ void _pbsys_poll(uint16_t now) {
             // TODO: blink light like LEGO firmware
 
             // if the button is held down for 5 seconds, power off
-            if ((uint16_t)(now - button_press_start_time) > 5000) {
+            if (now - button_press_start_time > 5000) {
                 // turn off light briefly like official LEGO firmware
                 pbdrv_light_set_rgb(PBIO_PORT_SELF, 0, 0, 0);
                 pbdrv_time_delay_usec(580000);

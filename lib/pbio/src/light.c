@@ -57,7 +57,7 @@ pbio_error_t _pbio_light_on(pbio_port_t port, pbio_light_color_t color, pbio_lig
     return PBIO_SUCCESS;
 }
 
-void _pbio_light_poll(uint16_t now) {
+void _pbio_light_poll(uint32_t now) {
     uint16_t scale;
     user_data_t data;
     uint8_t idx;

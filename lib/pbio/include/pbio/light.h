@@ -71,7 +71,7 @@ pbio_error_t pbio_light_off(pbio_port_t port);
 
 /** @cond INTERNAL */
 pbio_error_t _pbio_light_on(pbio_port_t port, pbio_light_color_t color, pbio_light_pattern_t pattern);
-void _pbio_light_poll(uint16_t now);
+void _pbio_light_poll(uint32_t now);
 void _pbio_light_set_user_mode(bool user_mode);
 /** @endcond */
 

@@ -12,8 +12,8 @@
 #include <pbdrv/time.h>
 #include <pbsys/sys.h>
 
-static uint16_t prev_fast_poll_time;
-static uint16_t prev_slow_poll_time;
+static uint32_t prev_fast_poll_time;
+static uint32_t prev_slow_poll_time;
 
 /**
  * Initialize the Pybricks I/O Library. This function must be called once,
@@ -32,16 +32,16 @@ void pbio_init(void) {
  * be called once every millisecond in an event loop.
  */
 void pbio_poll(void) {
-    uint16_t now = pbdrv_time_get_msec();
+    uint32_t now = pbdrv_time_get_msec();
 
     // pbio_poll() can be called quite frequently (e.g. in a tight loop) so we
     // don't want to call all of the subroutines unless enough time has
     // actually elapsed to do something useful.
-    if ((uint16_t)(now - prev_fast_poll_time) >= 2) {
+    if (now - prev_fast_poll_time >= 2) {
         _pbdrv_ioport_poll(now);
         prev_fast_poll_time = now;
     }
-    if ((uint16_t)(now - prev_slow_poll_time) >= 32) {
+    if (now - prev_slow_poll_time >= 32) {
         _pbio_light_poll(now);
         _pbsys_poll(now);
         prev_slow_poll_time = now;
