@@ -57,7 +57,7 @@ pbio_error_t _pbio_light_on(pbio_port_t port, pbio_light_color_t color, pbio_lig
     return PBIO_SUCCESS;
 }
 
-void _pbio_light_poll(void) {
+void _pbio_light_poll(uint16_t now) {
     uint16_t scale;
     user_data_t data;
     uint8_t idx;
@@ -73,7 +73,7 @@ void _pbio_light_poll(void) {
         break;
     case PBIO_LIGHT_PATTERN_BREATHE:
         // breathe pattern has 64 values over the course of two seconds (2048ms)
-        idx = (pbdrv_time_get_msec() >> 5) & (64 - 1);
+        idx = (now >> 5) & (64 - 1);
         scale = breathe_pattern_data[idx] + 1;
         data.r = data.r * scale / 256;
         data.g = data.g * scale / 256;
@@ -81,7 +81,7 @@ void _pbio_light_poll(void) {
         break;
     case PBIO_LIGHT_PATTERN_FLASH:
         // flash pattern has 8 value over the course of two seconds (2048ms)
-        idx = (pbdrv_time_get_msec() >> 8) & (8 - 1);
+        idx = (now >> 8) & (8 - 1);
         scale = flash_pattern_data[idx] + 1;
         data.r = data.r * scale / 256;
         data.g = data.g * scale / 256;

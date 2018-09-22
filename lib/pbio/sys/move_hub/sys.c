@@ -62,11 +62,9 @@ void pbsys_power_off(void) {
     }
 }
 
-void _pbsys_poll(void) {
-    uint16_t now;
+void _pbsys_poll(uint16_t now) {
     pbio_button_flags_t btn;
 
-    now = pbdrv_time_get_msec();
     pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
 
     if (btn & PBIO_BUTTON_CENTER) {

@@ -69,12 +69,13 @@ pbio_error_t pbio_light_on_with_pattern(pbio_port_t port, pbio_light_color_t col
  */
 pbio_error_t pbio_light_off(pbio_port_t port);
 
-/** @cond */
-// internal definitions
+/** @cond INTERNAL */
 pbio_error_t _pbio_light_on(pbio_port_t port, pbio_light_color_t color, pbio_light_pattern_t pattern);
-void _pbio_light_poll(void);
+void _pbio_light_poll(uint16_t now);
 void _pbio_light_set_user_mode(bool user_mode);
+/** @endcond */
 
+/** @cond */
 // using macros for reduced code size
 #define pbio_light_on(p, c) _pbio_light_on((p), (c), PBIO_LIGHT_PATTERN_NONE)
 #define pbio_light_on_with_pattern(p, c, t) _pbio_light_on((p), (c), (t))

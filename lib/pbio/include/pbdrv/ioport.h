@@ -17,8 +17,9 @@ void _pbdrv_ioport_init(void);
 
 /**
  * Do periodic background tasks. This should be called very 1ms.
+ * @param [in] now  the current time in millisecond ticks
  */
-void _pbdrv_ioport_poll(void);
+void _pbdrv_ioport_poll(uint16_t now);
 
 /** @endcond */
 

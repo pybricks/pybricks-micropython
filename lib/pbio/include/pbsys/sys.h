@@ -46,7 +46,7 @@ void pbsys_power_off(void);
 /**
  * Checks for pending system events, such as low battery.
  */
-void _pbsys_poll(void);
+void _pbsys_poll(uint16_t now);
 
 /** @endcond */
 

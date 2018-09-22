@@ -151,16 +151,14 @@ void _pbdrv_ioport_init(void) {
 
 // This is the device connection manager (dcm). It monitors the ID1 and ID2 pins
 // on the port to see when devices are connected or disconnected.
-static void poll_dcm(ioport_t port) {
+static void poll_dcm(ioport_t port, uint16_t now) {
     // copying the data struct reduces the code size by a few hundred bytes,
     // but we need to rember to copy it back if we change anything
     dcm_data_t data = dcm_data[port];
     const ioport_pins_t pins = ioport_pins[port];
-    uint16_t now;
     uint8_t gpio_input;
 
     // wait at least 2ms between steps
-    now = pbdrv_time_get_msec();
     if (now - data.prev_msec < 2) {
         return;
     }
@@ -383,12 +381,12 @@ static void poll_dcm(ioport_t port) {
     dcm_data[port] = data;
 }
 
-void _pbdrv_ioport_poll(void) {
+void _pbdrv_ioport_poll(uint16_t now) {
     // TODO: don't call ioport_poll_dcm() if UART sensor is connected
 
     // TODO: skipping port C for now to use for REPL
     //ioport_poll_one(IOPORT_C);
-    poll_dcm(IOPORT_D);
+    poll_dcm(IOPORT_D, now);
 
     if (connected_dev_id[IOPORT_D] != prev_dev_id[IOPORT_D]) {
         printf("new device %d\n", connected_dev_id[IOPORT_D]);
