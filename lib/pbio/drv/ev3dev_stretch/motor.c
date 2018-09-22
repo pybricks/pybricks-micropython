@@ -52,7 +52,7 @@ pbio_error_t slow_write(pbio_port_t port, const char* filename, const char* cont
           
 }
 
-void pbdrv_motor_init(void) {
+void _pbdrv_motor_init(void) {
     // Open tacho-motor directory
     DIR *dp;
     struct dirent *ep;
@@ -106,7 +106,7 @@ void pbdrv_motor_init(void) {
 }
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
-void pbdrv_motor_deinit(void) {
+void _pbdrv_motor_deinit(void) {
     // Close the relevant files
     for(pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
         int port_index = PORT_TO_IDX(port);

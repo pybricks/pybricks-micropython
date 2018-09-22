@@ -143,7 +143,7 @@ static void init_one(ioport_t port) {
     ioport_gpio_input(&pins.uart_rx);
 }
 
-void pbdrv_ioport_init(void) {
+void _pbdrv_ioport_init(void) {
     // TODO: skipping port C for now to use with REPL
     // ioport_init_one(IOPORT_C);
     init_one(IOPORT_D);
@@ -383,7 +383,7 @@ static void poll_dcm(ioport_t port) {
     dcm_data[port] = data;
 }
 
-void pbdrv_ioport_poll(void) {
+void _pbdrv_ioport_poll(void) {
     // TODO: don't call ioport_poll_dcm() if UART sensor is connected
 
     // TODO: skipping port C for now to use for REPL

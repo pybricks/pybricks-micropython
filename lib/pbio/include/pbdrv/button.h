@@ -13,11 +13,13 @@
 #include <pbio/error.h>
 #include <pbio/port.h>
 
+/** @cond INTERNAL */
+
 /**
  * Initializes the low level button driver. This should be called only
  * once and must be called before using any other button functions.
  */
-void pbdrv_button_init(void);
+void _pbdrv_button_init(void);
 
 
 /**
@@ -25,10 +27,12 @@ void pbdrv_button_init(void);
  * calling this function.
  */
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
-void pbdrv_button_deinit(void);
+void _pbdrv_button_deinit(void);
 #else
-static inline void pbdrv_button_deinit(void) { }
+static inline void _pbdrv_button_deinit(void) { }
 #endif
+
+/** @endcond */
 
 /**
  * Get bitmask indicating currently pressed buttons.

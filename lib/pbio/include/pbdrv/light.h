@@ -13,21 +13,25 @@
  * @{
  */
 
+/** @cond INTERNAL */
+
 /**
  * Initializes the low level light blinking engine. This should be called only
  * once and must be called before using any other light functions.
  */
-void pbdrv_light_init(void);
+void _pbdrv_light_init(void);
 
 /**
  * Releases the low level light driver. No light functions can be called after
  * calling this function.
  */
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
-void pbdrv_light_deinit(void);
+void _pbdrv_light_deinit(void);
 #else
-static inline void pbdrv_light_deinit(void) { }
+static inline void _pbdrv_light_deinit(void) { }
 #endif
+
+/** @endcond */
 
 /**
  * Sets the color of the light. The RGB values are "raw" values, meaning that

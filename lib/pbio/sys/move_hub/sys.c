@@ -62,7 +62,7 @@ void pbsys_power_off(void) {
     }
 }
 
-void pbsys_poll(void) {
+void _pbsys_poll(void) {
     uint16_t now;
     pbio_button_flags_t btn;
 

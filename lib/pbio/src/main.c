@@ -9,6 +9,7 @@
 #include <pbdrv/light.h>
 #include <pbdrv/ioport.h>
 #include <pbdrv/motor.h>
+#include <pbsys/sys.h>
 
 /**
  * Initialize the Pybricks I/O Library. This function must be called once,
@@ -16,10 +17,10 @@
  * the library.
  */
 void pbio_init(void) {
-    pbdrv_button_init();
-    pbdrv_light_init();
-    pbdrv_ioport_init();
-    pbdrv_motor_init();
+    _pbdrv_button_init();
+    _pbdrv_light_init();
+    _pbdrv_ioport_init();
+    _pbdrv_motor_init();
 }
 
 /**
@@ -28,8 +29,9 @@ void pbio_init(void) {
  */
 void pbio_poll(void) {
     // TODO: if it has been < 1ms since last call return early for efficiency
-    pbdrv_ioport_poll();
+    _pbdrv_ioport_poll();
     _pbio_light_poll();
+    _pbsys_poll();
 }
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
@@ -39,9 +41,9 @@ void pbio_poll(void) {
  * functions may be called after this.
  */
 void pbio_deinit(void) {
-    pbdrv_motor_deinit();
-    pbdrv_light_deinit();
-    pbdrv_button_deinit();
+    _pbdrv_motor_deinit();
+    _pbdrv_light_deinit();
+    _pbdrv_button_deinit();
 }
 #endif
 

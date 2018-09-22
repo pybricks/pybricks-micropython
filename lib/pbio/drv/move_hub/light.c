@@ -6,7 +6,7 @@
 #include "stm32f070xb.h"
 
 // setup LED PWMs and pins
-void pbdrv_light_init(void) {
+void _pbdrv_light_init(void) {
     RCC->APB2ENR |= RCC_APB2ENR_TIM16EN | RCC_APB2ENR_TIM15EN;
 
     // RGB values are 0-255, so multiplying by 5 here to limit brightness to
@@ -49,7 +49,7 @@ void pbdrv_light_init(void) {
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
 // turn off the light
-void pbdrv_light_deinit(void) {
+void _pbdrv_light_deinit(void) {
     TIM15->CR1 &= ~TIM_CR1_CEN;
     TIM16->CR1 &= ~TIM_CR1_CEN;
     GPIOB->BRR = GPIO_BRR_BR_8;

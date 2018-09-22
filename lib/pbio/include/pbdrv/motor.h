@@ -20,21 +20,25 @@
 #define PBIO_MAX_DUTY_PCT (100.0)
 #define PBIO_DUTY_PCT_TO_ABS (PBIO_MAX_DUTY/PBIO_MAX_DUTY_PCT)
 
+/** @cond INTERNAL */
+
 /**
  * Initializes the low level motor driver. This should be called only once and
  * must be called before using any other motor functions.
  */
-void pbdrv_motor_init(void);
+void _pbdrv_motor_init(void);
 
 /**
  * Releases the low level motor driver. No motor functions can be called after
  * calling this function.
  */
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
-void pbdrv_motor_deinit(void);
+void _pbdrv_motor_deinit(void);
 #else
-static inline void pbdrv_motor_deinit(void) { }
+static inline void _pbdrv_motor_deinit(void) { }
 #endif
+
+/** @endcond */
 
 /**
  * Gets the tachometer encoder count.

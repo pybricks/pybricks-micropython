@@ -118,8 +118,6 @@ static inline mp_uint_t disable_irq(void) {
     do { \
         extern void pbio_poll(void); \
         pbio_poll(); \
-        extern void pbsys_poll(void); \
-        pbsys_poll(); \
     } while (0);
 
 #define MICROPY_EVENT_POLL_HOOK \

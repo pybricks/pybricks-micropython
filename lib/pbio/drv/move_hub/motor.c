@@ -19,7 +19,7 @@ typedef struct {
 // only for ports A/B
 static pbdrv_motor_tacho_data_t pbdrv_motor_tacho_data[2];
 
-void pbdrv_motor_init(void) {
+void _pbdrv_motor_init(void) {
     // it isn't clear what PB2 does yet, but tacho doesn't work without setting it high.
     // maybe it switches power to the IR LEDs? plus more?
 
@@ -442,7 +442,7 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
 }
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
-void pbdrv_motor_deinit(void) {
+void _pbdrv_motor_deinit(void) {
     // disable the PWM timers
     TIM1->CR1 &= TIM_CR1_CEN;
     TIM3->CR1 &= TIM_CR1_CEN;

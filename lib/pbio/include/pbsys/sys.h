@@ -41,18 +41,21 @@ void pbsys_reboot(bool fw_update);
  */
 void pbsys_power_off(void);
 
+/** @cond INTERNAL */
+
 /**
- * Checks for pending system events, such as low battery. This should be called
- * immediately after ::pbio_poll().
+ * Checks for pending system events, such as low battery.
  */
-void pbsys_poll(void);
+void _pbsys_poll(void);
+
+/** @endcond */
 
 #else
 
 static inline void pbsys_reset(void) { }
 static inline void pbsys_reboot(bool) { }
 static inline void pbsys_power_off(void) { }
-static inline void pbsys_poll(void) { }
+static inline void _pbsys_poll(void) { }
 
 #endif
 

@@ -7,16 +7,20 @@
  * @{
  */
 
+/** @cond INTERNAL */
+
 /**
  * Initializes the low level I/O port driver. This should be called only
  * once and must be called before using any other I/O port functions.
  */
-void pbdrv_ioport_init(void);
+void _pbdrv_ioport_init(void);
 
 /**
  * Do periodic background tasks. This should be called very 1ms.
  */
-void pbdrv_ioport_poll(void);
+void _pbdrv_ioport_poll(void);
+
+/** @endcond */
 
 /** @}*/
 
