@@ -19,11 +19,13 @@ static bool button_pressed;
 static uint16_t button_press_start_time;
 
 void pbsys_prepare_user_program(void) {
-    pbio_light_set_user_mode(true);
+    _pbio_light_set_user_mode(true);
+    pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE);
 }
 
 void pbsys_unprepare_user_program(void) {
-    pbio_light_set_user_mode(false);
+    pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE);
+    _pbio_light_set_user_mode(false);
 
     // TODO: this should probably call the higher-level pbio_dcmotor_coast() function
     for (pbio_port_t p = PBDRV_CONFIG_FIRST_MOTOR_PORT; p <= PBDRV_CONFIG_LAST_MOTOR_PORT; p++) {
@@ -44,10 +46,9 @@ void pbsys_power_off(void) {
 
     // blink pattern like LEGO firmware
     for (i = 0; i < 3; i++) {
-        pbdrv_light_set_color(PBIO_PORT_SELF, 255, 140, 60);
-        pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_ON);
+        pbdrv_light_set_rgb(PBIO_PORT_SELF, 255, 140, 60); // white
         pbdrv_time_delay_usec(50000);
-        pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_OFF);
+        pbdrv_light_set_rgb(PBIO_PORT_SELF, 0, 0, 0);
         pbdrv_time_delay_usec(30000);
     }
 
@@ -74,8 +75,10 @@ void pbsys_poll(void) {
 
             // if the button is held down for 5 seconds, power off
             if (now - button_press_start_time > 5000) {
-                pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_OFF);
+                // turn off light briefly like official LEGO firmware
+                pbdrv_light_set_rgb(PBIO_PORT_SELF, 0, 0, 0);
                 pbdrv_time_delay_usec(580000);
+
                 pbsys_power_off();
             }
         }
@@ -139,7 +142,7 @@ void SystemInit(void) {
 
     RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOCEN
                 |  RCC_AHBENR_GPIODEN | RCC_AHBENR_GPIOFEN;
-    RCC->APB2ENR |= RCC_APB2ENR_TIM16EN | RCC_APB2ENR_TIM15EN | RCC_APB2ENR_SYSCFGCOMPEN;
+    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN;
 
 
     // Keep BOOST alive

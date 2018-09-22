@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include <pbio/button.h>
-#include <pbdrv/light.h>
+#include <pbio/light.h>
 #include <pbsys/sys.h>
 #include <modmotor.h>
 #include <mpconfigbrick.h>
@@ -119,68 +119,48 @@ STATIC mp_obj_t hub_reboot(mp_obj_t bootloader) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_reboot_obj, hub_reboot);
 
 STATIC mp_obj_t hub_set_light(mp_obj_t state) {
-    mp_obj_t len;
-    pbio_error_t err;
 
     if (MP_OBJ_IS_TYPE(state, &mp_type_NoneType)) {
-        pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_OFF);
+        pbio_light_off(PBIO_PORT_SELF);
         return mp_const_none;
     }
     
     if (MP_OBJ_IS_STR(state)) {
         qstr color = mp_obj_str_get_qstr(state);
 
-        // TODO: adjust the colors so they look right
         switch (color) {
+        case MP_QSTR_white:
+            pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_WHITE);
+            break;
         case MP_QSTR_red:
-            pbdrv_light_set_color(PBIO_PORT_SELF, 255, 0, 0);
+            pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_RED);
             break;
-        case MP_QSTR_green:
-            pbdrv_light_set_color(PBIO_PORT_SELF, 0, 255, 0);
-            break;
-        case MP_QSTR_blue:
-            pbdrv_light_set_color(PBIO_PORT_SELF, 0, 0, 255);
-            break;
-        case MP_QSTR_cyan:
-            pbdrv_light_set_color(PBIO_PORT_SELF, 0, 255, 255);
-            break;
-        case MP_QSTR_magenta:
-            pbdrv_light_set_color(PBIO_PORT_SELF, 255, 0, 255);
+        case MP_QSTR_orange:
+            pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_ORANGE);
             break;
         case MP_QSTR_yellow:
-            pbdrv_light_set_color(PBIO_PORT_SELF, 255, 255, 0);
+            pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_YELLOW);
             break;
-        case MP_QSTR_white:
-            pbdrv_light_set_color(PBIO_PORT_SELF, 255, 255, 255);
+        case MP_QSTR_green:
+            pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_GREEN);
+            break;
+        case MP_QSTR_blue:
+            pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE);
+            break;
+        case MP_QSTR_purple:
+            pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_PURPLE);
+            break;
+        case MP_QSTR_pink:
+            pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_PINK);
             break;
         default:
             mp_raise_ValueError("Unknown color");
         }
 
-        pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_ON);
-
         return mp_const_none;
     }
 
-    len = mp_obj_len_maybe(state);
-    if (len != MP_OBJ_NULL && mp_obj_get_int(len) >= 3) {
-        mp_int_t r, g, b;
-
-        // TODO: do we want to scale these so they look right too?
-        r = mp_obj_get_int(mp_obj_subscr(state, MP_OBJ_NEW_SMALL_INT(0), MP_OBJ_SENTINEL));
-        g = mp_obj_get_int(mp_obj_subscr(state, MP_OBJ_NEW_SMALL_INT(1), MP_OBJ_SENTINEL));
-        b = mp_obj_get_int(mp_obj_subscr(state, MP_OBJ_NEW_SMALL_INT(2), MP_OBJ_SENTINEL));
-
-        err = pbdrv_light_set_color(PBIO_PORT_SELF, r, g, b);
-        if (err == PBIO_ERROR_INVALID_ARG) {
-            mp_raise_ValueError("Bad color value");
-        }
-        pbdrv_light_set_pattern(PBIO_PORT_SELF, PBDRV_LIGHT_PATTERN_ON);
-
-        return mp_const_none;
-    }
-
-    mp_raise_TypeError("Must be string or RGB value");
+    mp_raise_TypeError("Must be string or None");
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_set_light_obj, hub_set_light);
 

@@ -27,7 +27,9 @@ void pbio_init(void) {
  * be called once every millisecond in an event loop.
  */
 void pbio_poll(void) {
+    // TODO: if it has been < 1ms since last call return early for efficiency
     pbdrv_ioport_poll();
+    _pbio_light_poll();
 }
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT

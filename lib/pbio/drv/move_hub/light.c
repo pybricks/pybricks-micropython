@@ -7,6 +7,8 @@
 
 // setup LED PWMs and pins
 void pbdrv_light_init(void) {
+    RCC->APB2ENR |= RCC_APB2ENR_TIM16EN | RCC_APB2ENR_TIM15EN;
+
     // RGB values are 0-255, so multiplying by 5 here to limit brightness to
     // 1/5 of max possible without having to do division later. It should also
     // give use smoother steps than the official LEGO firmware since we aren't
@@ -59,19 +61,7 @@ void pbdrv_light_deinit(void) {
 }
 #endif
 
-static uint8_t pbdrv_light_red;
-static uint8_t pbdrv_light_green;
-static uint8_t pbdrv_light_blue;
-static pbdrv_light_pattern_t pbdrv_light_pattern;
-
-static void pbdrv_light_poke_hw(uint8_t r, uint8_t g, uint8_t b)
-{
-    TIM16->CCR1 = r;
-    TIM15->CCR1 = g;
-    TIM15->CCR2 = b;
-}
-
-pbio_error_t pbdrv_light_set_color(pbio_port_t port, uint8_t r, uint8_t g, uint8_t b) {
+pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, uint8_t r, uint8_t g, uint8_t b) {
     if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
         // TODO: check for Powered UP Lights connected to ports C/D
         return PBIO_ERROR_NO_DEV;
@@ -81,16 +71,15 @@ pbio_error_t pbdrv_light_set_color(pbio_port_t port, uint8_t r, uint8_t g, uint8
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    pbdrv_light_red = r;
-    pbdrv_light_green = g;
-    pbdrv_light_blue = b;
-
-    pbdrv_light_set_pattern(port, pbdrv_light_pattern);
+    TIM16->CCR1 = r;
+    TIM15->CCR1 = g;
+    TIM15->CCR2 = b;
 
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_light_set_pattern(pbio_port_t port, pbdrv_light_pattern_t pattern) {
+pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t color,
+                                           uint8_t *r, uint8_t *g, uint8_t *b) {
     if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
         // TODO: check for Powered UP Lights connected to ports C/D
         return PBIO_ERROR_NO_DEV;
@@ -100,12 +89,51 @@ pbio_error_t pbdrv_light_set_pattern(pbio_port_t port, pbdrv_light_pattern_t pat
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    switch (pattern) {
-    case PBDRV_LIGHT_PATTERN_OFF:
-        pbdrv_light_poke_hw(0, 0, 0);
+    switch (color) {
+    case PBIO_LIGHT_COLOR_NONE:
+        *r = 0;
+        *g = 0;
+        *b = 0;
         break;
-    case PBDRV_LIGHT_PATTERN_ON:
-        pbdrv_light_poke_hw(pbdrv_light_red, pbdrv_light_green, pbdrv_light_blue);
+    case PBIO_LIGHT_COLOR_WHITE:
+        *r = 255;
+        *g = 140;
+        *b = 60;
+        break;
+    case PBIO_LIGHT_COLOR_RED:
+        *r = 255;
+        *g = 0;
+        *b = 0;
+        break;
+    case PBIO_LIGHT_COLOR_ORANGE:
+        *r = 255;
+        *g = 25;
+        *b = 0;
+        break;
+    case PBIO_LIGHT_COLOR_YELLOW:
+        *r = 255;
+        *g = 70;
+        *b = 0;
+        break;
+    case PBIO_LIGHT_COLOR_GREEN:
+        *r = 0;
+        *g = 200;
+        *b = 0;
+        break;
+    case PBIO_LIGHT_COLOR_BLUE:
+        *r = 0;
+        *g = 0;
+        *b = 255;
+        break;
+    case PBIO_LIGHT_COLOR_PURPLE:
+        *r = 220;
+        *g = 0;
+        *b = 120;
+        break;
+    case PBIO_LIGHT_COLOR_PINK:
+        *r = 255;
+        *g = 10;
+        *b = 15;
         break;
     default:
         return PBIO_ERROR_INVALID_ARG;
