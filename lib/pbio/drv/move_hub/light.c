@@ -7,11 +7,15 @@
 
 // setup LED PWMs and pins
 void pbdrv_light_init(void) {
+    // RGB values are 0-255, so multiplying by 5 here to limit brightness to
+    // 1/5 of max possible without having to do division later. It should also
+    // give use smoother steps than the official LEGO firmware since we aren't
+    // jumping by 5s.
     TIM15->PSC = 187;
-    TIM15->ARR = 255;
+    TIM15->ARR = 256 * 5;
     TIM15->BDTR |= TIM_BDTR_MOE;
     TIM16->PSC = 187;
-    TIM16->ARR = 255;
+    TIM16->ARR = 256 * 5;
     TIM16->BDTR |= TIM_BDTR_MOE;
     
     // red LED on PB8 using TIM16 CH1
@@ -62,10 +66,9 @@ static pbdrv_light_pattern_t pbdrv_light_pattern;
 
 static void pbdrv_light_poke_hw(uint8_t r, uint8_t g, uint8_t b)
 {
-    // div round up by 5 comes from LEGO firmware - probably to save battery?
-    TIM16->CCR1 = (r + 4) / 5;
-    TIM15->CCR1 = (g + 4) / 5;
-    TIM15->CCR2 = (b + 4) / 5;
+    TIM16->CCR1 = r;
+    TIM15->CCR1 = g;
+    TIM15->CCR2 = b;
 }
 
 pbio_error_t pbdrv_light_set_color(pbio_port_t port, uint8_t r, uint8_t g, uint8_t b) {
