@@ -122,7 +122,7 @@ pbio_error_t pbio_encmotor_run(pbio_port_t port, float_t speed){
         return err;
     }
     wait_for_completion(port, PBIO_MOTOR_WAIT_NONE);
-    return PBIO_SUCCESS;    
+    return PBIO_SUCCESS;
 }
 
 // TODO: no longer need this function once we remove multithreading
@@ -133,7 +133,7 @@ void idle(pbio_port_t port){
 }
 
 pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    // Get current rate to see if we're standing still already    
+    // Get current rate to see if we're standing still already
     float_t angle_now;
     rate_t rate_now;
     pbio_error_t err = pbio_encmotor_get_encoder_rate(port, &rate_now);
@@ -149,7 +149,7 @@ pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_
         wait_for_completion(port, wait);
         return PBIO_SUCCESS;
     }
-    else { 
+    else {
         // Stop immediately, with one of the stop actions
         switch (after_stop) {
             case PBIO_MOTOR_STOP_COAST:
@@ -161,7 +161,7 @@ pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_
                 // Stop by braking
                 idle(port);
                 err = pbio_dcmotor_brake(port);
-                break;                
+                break;
             case PBIO_MOTOR_STOP_HOLD:
                 // Force stop by holding the current position.
                 // First, read where this position is
@@ -174,10 +174,10 @@ pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_
                 // when the user requests an immediate stop.
                 make_motor_command(port, RUN_TARGET, NONZERO, angle_now, after_stop);
                 wait_for_completion(port, wait);
-                break;                
+                break;
         }
         return err;
-    } 
+    }
 }
 
 pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
@@ -195,10 +195,10 @@ pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, float_t speed, float_t 
         return err;
     }
     wait_for_completion(port, wait);
-    if (wait == PBIO_MOTOR_WAIT_COMPLETION) { 
+    if (wait == PBIO_MOTOR_WAIT_COMPLETION) {
         pbio_encmotor_get_angle(port, stallpoint);
     };
-    return PBIO_SUCCESS;    
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
@@ -207,7 +207,7 @@ pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, float_t speed, float_t an
         return err;
     }
     wait_for_completion(port, wait);
-    return PBIO_SUCCESS;    
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
@@ -216,7 +216,7 @@ pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t t
         return err;
     }
     wait_for_completion(port, wait);
-    return PBIO_SUCCESS;    
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_encmotor_track_target(pbio_port_t port, float_t target){
@@ -225,7 +225,7 @@ pbio_error_t pbio_encmotor_track_target(pbio_port_t port, float_t target){
 
 void debug_trajectory(pbio_port_t port){
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
-    printf("\nPort       : %c\nAction     : %d\nAfter stop : %d\ntime_start : %u\ntime_in    : %u\ntime_out   : %u\ntime_end   : %u\ncount_start: %d\ncount_in   : %d\ncount_out  : %d\ncount_end  : %d\nrate_start : %d\nrate_target: %d\naccl_start : %d\naccl_end   : %d\n", 
+    printf("\nPort       : %c\nAction     : %d\nAfter stop : %d\ntime_start : %u\ntime_in    : %u\ntime_out   : %u\ntime_end   : %u\ncount_start: %d\ncount_in   : %d\ncount_out  : %d\ncount_end  : %d\nrate_start : %d\nrate_target: %d\naccl_start : %d\naccl_end   : %d\n",
         port,
         (int)traject->action,
         (int)traject->after_stop,
@@ -271,7 +271,7 @@ pbio_error_t make_motor_command(pbio_port_t port,
                                 pbio_motor_action_t action,
                                 float_t rate_target,
                                 float_t duration_or_target_count,
-                                pbio_motor_after_stop_t after_stop){    
+                                pbio_motor_after_stop_t after_stop){
 
     // Read the current system state for this motor
     ustime_t time_start = pbdrv_time_get_usec();
@@ -299,19 +299,19 @@ pbio_error_t make_motor_command(pbio_port_t port,
 
     // Limit reference rates
     _rate_start = limit(_rate_start, settings->max_rate);
-    _rate_target = limit(_rate_target, settings->max_rate);    
+    _rate_target = limit(_rate_target, settings->max_rate);
 
     // Set endpoint (time or angle), depending on selected action
     switch(action){
         case IDLE:
-            break;          
+            break;
         case STOP:
             // For STOP, the end time is the current time plus the time needed for stopping
             _time_end = _time_start + abs(_rate_start)/((float_t) settings->abs_accl_end);
-            break;            
+            break;
         case RUN:
             // FOR RUN and RUN_STALLED, we specify no end time
-            _time_end = NONE;        
+            _time_end = NONE;
             break;
         case RUN_TIME:
             // Do not allow negative time
@@ -323,7 +323,7 @@ pbio_error_t make_motor_command(pbio_port_t port,
             break;
         case RUN_STALLED:
             // FOR RUN and RUN_STALLED, we specify no end time
-            _time_end = NONE;        
+            _time_end = NONE;
             break;
         case RUN_ANGLE:
             // For RUN_ANGLE, we specify instead the end count value as the current value plus the requested angle
@@ -339,7 +339,7 @@ pbio_error_t make_motor_command(pbio_port_t port,
             // If the goal is to reach a position target, the speed cannot not be zero
             if (rate_target == 0) {
                 return PBIO_ERROR_INVALID_ARG;
-            }        
+            }
             break;
         case TRACK_TARGET:
             // TODO
@@ -398,7 +398,7 @@ pbio_error_t make_motor_command(pbio_port_t port,
     // Accelerations with sign
     _accl_start = (_rate_target > _rate_start) ? settings->abs_accl_start : -settings->abs_accl_start;
     _accl_end = _rate_target > 0 ? -settings->abs_accl_end : settings->abs_accl_end;
-    
+
     // Limit reference speeds if move is shorter than full in/out phase (time_based case)
     if (action == RUN_TIME && _time_end - _time_start < (_rate_target-_rate_start)/_accl_start - _rate_target/_accl_end) {
         // If we are here, there is not enough time to fully accelerate and decelerate as desired.
@@ -438,7 +438,7 @@ pbio_error_t make_motor_command(pbio_port_t port,
             }
             // Limit the start rate by the reduced target rate
             _rate_start = _rate_target;
-        }   
+        }
     }
 
     // Compute intermediate time and angle values just after initial acceleration, except for the stop action, which has no initial phase
@@ -461,15 +461,15 @@ pbio_error_t make_motor_command(pbio_port_t port,
         _time_out = _time_in + (_count_end-_count_in)/_rate_target + _rate_target/_accl_end/2;
         _count_out = _count_in + _rate_target*(_time_out-_time_in);
         _time_end = _time_out - _rate_target/_accl_end;
-    }    
+    }
     else {
         _time_out = NONE;
         _time_end = NONE;
         _count_out = NONE;
-        _count_end = NONE;        
+        _count_end = NONE;
     }
 
-    // Convert temporary float results back to integers 
+    // Convert temporary float results back to integers
     while(atomic_flag_test_and_set(&claimed_trajectory[PORT_TO_IDX(port)])); // Remove once we remove multithreading
     traject->time_start = _time_start * US_PER_SECOND;
     traject->time_in = _time_in * US_PER_SECOND;
@@ -581,7 +581,7 @@ void control_update(pbio_port_t port){
     // Declare current time, positions, rates, and their reference value and error
     ustime_t time_now, time_ref, time_loop;
     count_t count_now, count_ref, count_err;
-    rate_t rate_now, rate_ref, rate_err; 
+    rate_t rate_now, rate_ref, rate_err;
     int32_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative;
 
     // Read current state of this motor: current time, speed, and position
@@ -601,14 +601,14 @@ void control_update(pbio_port_t port){
         err_integral[idx] = 0;
         time_paused[idx] = 0;
         time_stopped[idx] = 0;
-        
+
         time_prev[idx] = maneuver_started[idx];
         count_err_prev[idx] = 0;
         // Reset control status flags
         if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
             control_status[idx] = TIME_RUNNING;
         }
-        // else: RUN || RUN_TIME || RUN_STALLED || STOP        
+        // else: RUN || RUN_TIME || RUN_STALLED || STOP
         else {
             control_status[idx] = SPEED_INTEGRATOR_ACTIVE;
             integrator_start[idx] = count_now;
@@ -643,7 +643,7 @@ void control_update(pbio_port_t port){
         count_err = count_ref - count_now;
     }
     // else: RUN || RUN_TIME || RUN_STALLED || STOP
-    else { 
+    else {
         // For time based commands, we do not aim to drive to a specific position, but we use the
         // "proportional position control" as an exact way to implement "integral speed control".
         // The speed integral is simply the position, but the speed reference should stop integrating
@@ -702,7 +702,7 @@ void control_update(pbio_port_t port){
     else {
         if ((duty_due_to_proportional >= PBIO_MAX_DUTY && rate_err > 0) || (duty_due_to_proportional <= -PBIO_MAX_DUTY && rate_err < 0)){
             stalled |= STALLED_PROPORTIONAL;
-            // The integrator should NOT run. 
+            // The integrator should NOT run.
             if (control_status[idx] == SPEED_INTEGRATOR_ACTIVE) {
                 // If it is running, disable it
                 control_status[idx] = SPEED_INTEGRATOR_STOPPED;
@@ -712,7 +712,7 @@ void control_update(pbio_port_t port){
         }
         else {
             stalled &= ~STALLED_PROPORTIONAL;
-            // The integrator SHOULD RUN. 
+            // The integrator SHOULD RUN.
             if (control_status[idx] == SPEED_INTEGRATOR_STOPPED) {
                 // If it isn't running, enable it
                 control_status[idx] = SPEED_INTEGRATOR_ACTIVE;
@@ -722,7 +722,7 @@ void control_update(pbio_port_t port){
             }
         }
     }
-    
+
     // Duty cycle component due to integral position control (RUN_TARGET || RUN_ANGLE)
     if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
         duty_due_to_integral = ((settings->pid_ki*(err_integral[idx]/US_PER_MS))/MS_PER_SECOND)/(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS);
@@ -783,17 +783,17 @@ void control_update(pbio_port_t port){
             // We are past the total duration of the timed command
             (time_now >= traject->time_end && rate_now == 0)
         )
-        ||        
+        ||
         // Conditions for run_stalled commands
         (
         (traject->action == RUN_STALLED) &&
             // Whether the motor is stalled in either proportional or integral sense
             (stalled != STALLED_NONE)
-        )        
+        )
     )
     {
-    // If so, we have reached our goal. We can keep running this loop in order to hold this position. 
-    // But if brake or coast was specified as the afer_stop, we trigger that. Also clear the running flag to stop waiting for completion.      
+    // If so, we have reached our goal. We can keep running this loop in order to hold this position.
+    // But if brake or coast was specified as the afer_stop, we trigger that. Also clear the running flag to stop waiting for completion.
         if (traject->after_stop == PBIO_MOTOR_STOP_COAST){
             // Coast the motor
             pbio_dcmotor_coast(port);
