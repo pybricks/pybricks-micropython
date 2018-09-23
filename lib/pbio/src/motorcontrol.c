@@ -292,9 +292,11 @@ pbio_error_t make_motor_command(pbio_port_t port,
     if ( ((action == RUN_TARGET  || action == RUN_ANGLE) && ((count_t) _count_end) == count_start) ||
           (action == RUN_TIME  && ((ustime_t) (_time_end*US_PER_SECOND)) <= time_start)) {
         while(atomic_flag_test_and_set(&claimed_trajectory[PORT_TO_IDX(port)])); // Remove once we remove multithreading
+        traject->time_start = time_start;
         traject->time_in = time_start;
         traject->time_out = time_start;
         traject->time_end = time_start;
+        traject->count_start = count_start;
         traject->count_in = count_start;
         traject->count_out = count_start;
         traject->count_end = count_start;
@@ -645,7 +647,7 @@ void control_update(pbio_port_t port){
             // The integrator SHOULD RUN. 
             if (control_status[idx] == SPEED_INTEGRATOR_STOPPED) {
                 // If it isn't running, enable it
-                control_status[idx] = SPEED_INTEGRATOR_STOPPED;
+                control_status[idx] = SPEED_INTEGRATOR_ACTIVE;
                 // Begin integrating again from the current point
                 integrator_ref_start[idx] = count_ref;
                 integrator_start[idx] = count_now;
@@ -737,6 +739,7 @@ void control_update(pbio_port_t port){
             else {
                 // When ending a time based control maneuver with hold, we trigger a new position based maneuver with zero degrees
                 pbio_dcmotor_set_duty_cycle_int(port, 0);
+                atomic_flag_clear(&claimed_trajectory[PORT_TO_IDX(port)]);
                 make_motor_command(port, RUN_TARGET, 100, count_now, PBIO_MOTOR_STOP_HOLD);
             }
         }
