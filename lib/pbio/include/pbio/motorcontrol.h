@@ -36,7 +36,7 @@ typedef enum {
 
 pbio_error_t pbio_encmotor_run(pbio_port_t port, float_t speed);
 
-pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
+pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
 
 pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait);
 

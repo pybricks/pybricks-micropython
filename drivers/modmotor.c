@@ -278,20 +278,21 @@ MP_DEFINE_CONST_FUN_OBJ_2(motor_EncodedMotor_run_obj, motor_EncodedMotor_run);
 
 /*
 EncodedMotor
-    def stop(self, after_stop=COAST, wait=True):
+    def stop(self, smooth=True, after_stop=COAST, wait=True):
         """Stop a motor/mechanism.
         Keyword Arguments (TODO):
+            smooth {bool} -- Decelerate smoothly just like in the run commands (True) or stop immediately (False). (default: {True})
             after_stop {const} -- What to do after the motor stops: BRAKE, COAST, or HOLD. (default: {COAST})
             wait {bool} -- Wait for complete stop (True) or decelerate in the background (False). (default: {True})
         """
 */
-STATIC mp_obj_t motor_EncodedMotor_stop(mp_obj_t self_in, mp_obj_t after_stop, mp_obj_t wait) {
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
-    pbio_error_t err = pbio_encmotor_stop(self->port, mp_obj_get_int(after_stop), mp_obj_get_int(wait));
+STATIC mp_obj_t motor_EncodedMotor_stop(size_t n_args, const mp_obj_t *args){
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    pbio_error_t err = pbio_encmotor_stop(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]));
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_3(motor_EncodedMotor_stop_obj, motor_EncodedMotor_stop);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_stop_obj, 4, 4, motor_EncodedMotor_stop);
 
 /*
 EncodedMotor
