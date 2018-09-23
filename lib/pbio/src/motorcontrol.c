@@ -614,8 +614,7 @@ void control_update(pbio_port_t port){
             integrator_start[idx] = count_now;
             integrator_ref_start[idx] = traject->count_start;
         }
-        debug_trajectory(port);
-    }        
+    }
 
     // Get the time at which we want to evaluate the reference position/velocities, for position based commands
     if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){

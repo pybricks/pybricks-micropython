@@ -5,22 +5,24 @@ from time import sleep
 # this is a test with one flat module with constants
 from _constants import *
 
-# Configure a large EV3 motor, set duty to 30, and turn it off
-motor = LargeMotor(PORT_A, DIR_INVERTED)
-print("angle: ", motor.angle())
-motor.duty(30)
+# Configure large EV3 motors
+left = LargeMotor(PORT_A)
+right = LargeMotor(PORT_D)
+
+# A simple 180 maneuver
+left.run_target(500, 180, STOP_COAST, True)
+
+# An additional 90 degree maneuver
+left.run_angle(500, 90, STOP_BRAKE, True)
+
+# Back to the start
+left.run_target(500, 0, STOP_HOLD, True)
+
+# run both motors
+left.run_time(500, 3, STOP_BRAKE, False)
+right.run_time(500, 3, STOP_BRAKE, True)
+
+# Run then hard stop
+left.run(500)
 sleep(1)
-print("speed: ", motor.speed())
-print("angle: ", motor.angle())
-motor.reset_angle(-90)
-motor.coast()
-print("angle: ", motor.angle())
-
-motor.run(500)
-sleep(0.5)
-motor.stop(STOP_HOLD, True)
-motor.run_time(500, 3, STOP_HOLD, True)
-motor.run_angle(500, 90, STOP_HOLD, True)
-motor.run_target(500, -360, STOP_HOLD, True)
-motor.track_target(500)
-
+left.stop(False, STOP_HOLD, True)

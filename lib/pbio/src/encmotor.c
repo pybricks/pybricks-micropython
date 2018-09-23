@@ -24,7 +24,7 @@ pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_mot
         status = pbio_encmotor_reset_encoder_count(port, 0);
     }
     // TODO: Use the device_id to retrieve the default settings defined in our lib. For now just hardcode something below.
-    pbio_encmotor_set_settings(port, 100.0, 1000, 1, 1000, 1000, 100, 5, 5, 0.05);
+    pbio_encmotor_set_settings(port, 100, 1000, 2, 1000, 1000, 0.1, 4, 3, 0.05);
     return status;
 }
 
