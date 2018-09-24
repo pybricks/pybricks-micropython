@@ -24,7 +24,7 @@ pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_mot
         status = pbio_encmotor_reset_encoder_count(port, 0);
     }
     // TODO: Use the device_id to retrieve the default settings defined in our lib. For now just hardcode something below.
-    pbio_encmotor_set_settings(port, 100, 1, 1000, 2, 1000, 1000, 0.1, 4, 3, 0.05);
+    pbio_encmotor_set_settings(port, 100, 2, 5, 1000, 1, 1000, 1000, 0.1, 8, 8, 0.05);
     return status;
 }
 
@@ -32,6 +32,7 @@ pbio_error_t pbio_encmotor_set_settings(
         pbio_port_t port,
         float_t stall_torque_limit,
         float_t stall_speed_limit,
+        float_t min_speed,
         float_t max_speed,
         float_t tolerance,
         float_t acceleration_start,
@@ -48,6 +49,7 @@ pbio_error_t pbio_encmotor_set_settings(
     int8_t port_index = PORT_TO_IDX(port);
     float_t counts_per_output_unit = encmotor_settings[port_index].counts_per_output_unit;
     encmotor_settings[port_index].stall_speed_limit = (counts_per_output_unit * stall_speed_limit);
+    encmotor_settings[port_index].min_rate = (counts_per_output_unit * min_speed);
     encmotor_settings[port_index].max_rate = (counts_per_output_unit * max_speed);
     encmotor_settings[port_index].tolerance = (counts_per_output_unit * tolerance);
     encmotor_settings[port_index].abs_accl_start = (counts_per_output_unit * acceleration_start);
@@ -63,9 +65,11 @@ void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
     int8_t port_index = PORT_TO_IDX(port);
     float_t counts_per_output_unit = encmotor_settings[port_index].counts_per_output_unit;
     snprintf(settings_string, MAX_ENCMOTOR_SETTINGS_STR_LENGTH,
-        "Counts per unit: %f\nGear ratio: %f\nMax speed: %f\nTolerance: %f\nAcceleration: %f\nDeceleration: %f\nTight Loop: %f\nkp: %f\nki: %f\nkd: %f",
+        "Counts per unit: %f\nGear ratio: %f\nStall speed: %f\nMin speed: %f\nMax speed: %f\nTolerance: %f\nAcceleration: %f\nDeceleration: %f\nTight Loop: %f\nkp: %f\nki: %f\nkd: %f",
         encmotor_settings[port_index].counts_per_unit,
         counts_per_output_unit / encmotor_settings[port_index].counts_per_output_unit,            
+        encmotor_settings[port_index].stall_speed_limit / counts_per_output_unit,
+        encmotor_settings[port_index].min_rate / counts_per_output_unit,
         encmotor_settings[port_index].max_rate / counts_per_output_unit,
         encmotor_settings[port_index].tolerance / counts_per_output_unit,
         encmotor_settings[port_index].abs_accl_start / counts_per_output_unit,

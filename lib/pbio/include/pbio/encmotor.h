@@ -29,6 +29,7 @@ typedef struct _pbio_encmotor_settings_t {
     float_t counts_per_unit;        /**< Encoder counts per output unit. Counts per degree for rotational motors, counts per cm for a linear motor. */
     float_t counts_per_output_unit; /**< Encoder counts per output unit, including optional gear train. Equals counts_per_unit*gear_ratio. */
     float_t stall_speed_limit;      /**< If this speed cannnot be reached even with the maximum duty value (equal to stall_torque_limit), the motor is considered to be stalled*/
+    int32_t min_rate;               /**< If encoder rate is equal or less than this, consider the motor to be standing still */
     int32_t max_rate;               /**< Soft limit on the reference encoder rate in all run commands */
     int32_t tolerance;              /**< Allowed deviation (counts) from target before motion is considered complete */
     int32_t abs_accl_start;         /**< Encoder acceleration rate when beginning to move. Positive value in counts per second per second */
@@ -44,7 +45,7 @@ pbio_encmotor_settings_t encmotor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction, float_t gear_ratio);
 
-pbio_error_t pbio_encmotor_set_settings(pbio_port_t port, float_t stall_torque_limit, float_t stall_speed_limit, float_t max_speed, float_t tolerance, float_t acceleration_start, float_t acceleration_end, float_t tight_loop_time, float_t pid_kp, float_t pid_ki, float_t pid_kd);
+pbio_error_t pbio_encmotor_set_settings(pbio_port_t port, float_t stall_torque_limit, float_t stall_speed_limit, float_t min_speed, float_t max_speed,  float_t tolerance, float_t acceleration_start, float_t acceleration_end, float_t tight_loop_time, float_t pid_kp, float_t pid_ki, float_t pid_kd);
 
 void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string);
 

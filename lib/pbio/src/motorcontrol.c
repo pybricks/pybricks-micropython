@@ -12,11 +12,6 @@
 #define NONZERO (100)
 #define max_abs_accl (1000000)
 
-// Units and prescalers to enable integer divisions
-#define NUM_SCALE (10000)
-#define DEN_SCALE (US_PER_SECOND / NUM_SCALE)
-
-// TODO: think harder about negative time differences
 /**
  * Integer type with units of microseconds
  */
@@ -794,7 +789,7 @@ void control_update(pbio_port_t port){
                 // ... and the upper tolerated bound
                 count_now <= count_ref + settings->tolerance &&
                 // And the motor stands still.
-                rate_now == 0
+                abs(rate_now) < settings->min_rate
             )
         )
         ||
@@ -809,7 +804,7 @@ void control_update(pbio_port_t port){
         (
         (traject->action == STOP) &&
             // We are past the total duration of the timed command
-            (time_now >= traject->time_end && rate_now == 0)
+            (time_now >= traject->time_end && abs(rate_now) < settings->min_rate)
         )
         ||
         // Conditions for run_stalled commands
