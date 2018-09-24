@@ -220,7 +220,7 @@ pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t t
 }
 
 pbio_error_t pbio_encmotor_track_target(pbio_port_t port, float_t target){
-    return PBIO_ERROR_FAILED; // Not yet implemented in theory
+    return PBIO_ERROR_NOT_IMPLEMENTED;
 }
 
 void debug_trajectory(pbio_port_t port){

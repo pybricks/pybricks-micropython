@@ -19,6 +19,9 @@ void pb_raise_pbio_error(pbio_error_t error){
         case PBIO_ERROR_NO_DEV:
             mp_raise_ValueError("Device is not connected");
             break;
+        case PBIO_ERROR_NOT_IMPLEMENTED:
+            mp_raise_ValueError("Requested feature is not (yet) available for this device");
+            break;            
         default:
             mp_raise_msg(&mp_type_RuntimeError, "Unknown error");
             break;

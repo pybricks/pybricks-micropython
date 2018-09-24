@@ -18,6 +18,7 @@ typedef enum {
     PBIO_ERROR_INVALID_PORT,    /**< Invalid port identifier */
     PBIO_ERROR_IO,              /**< General I/O error */
     PBIO_ERROR_NO_DEV,          /**< Device is not connected */
+    PBIO_ERROR_NOT_IMPLEMENTED, /**< Requested feature is not (yet) available on this device */
 } pbio_error_t;
 
 /** @}*/
