@@ -539,7 +539,7 @@ typedef enum {
     TIME_RUNNING,
     SPEED_INTEGRATOR_ACTIVE,
     SPEED_INTEGRATOR_STOPPED,
-} control_status_t;
+} windup_status_t;
 
 typedef enum {
     STALLED_NONE = 0x00,
@@ -547,25 +547,26 @@ typedef enum {
     STALLED_INTEGRAL = 0x02,
 } stalled_status_t;
 
-control_status_t control_status[] = {
-    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]
-        TIME_NOT_INITIALIZED
+/**
+ * Motor PID control status
+ */
+typedef struct _pbio_motor_control_status_t {
+    windup_status_t windup_status;
+    count_t err_integral;
+    count_t count_err_prev;
+    ustime_t time_started;
+    ustime_t time_prev;
+    ustime_t time_paused;
+    ustime_t time_stopped;
+    count_t integrator_ref_start;
+    count_t integrator_start;
+} pbio_motor_control_status_t;
+
+pbio_motor_control_status_t motor_control_status[] = {
+    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
+        .windup_status = TIME_NOT_INITIALIZED
+    }
 };
-
-// Put these into a status struct. Put stalled status in it too.
-
-// Persistent PID related variables for each motor
-count_t err_integral[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-count_t count_err_prev[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-ustime_t maneuver_started[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-ustime_t time_prev[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-
-ustime_t time_paused[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-ustime_t time_stopped[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-
-// TODO: re-use the two variables above instead of introducing the following onces. To save space. (Think of a variable name that makes sense for both modes)
-count_t integrator_ref_start[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-count_t integrator_start[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 void stall_set_flag_if_slow(stalled_status_t *stalled, rate_t rate_now, rate_t rate_limit, stalled_status_t flag){
     if (abs(rate_now) <= rate_limit) {
@@ -584,13 +585,11 @@ void stall_clear_flag(stalled_status_t *stalled, stalled_status_t flag){
 }
 
 void control_update(pbio_port_t port){
-    // Port index
-    uint8_t idx = PORT_TO_IDX(port);
-
     // Trajectory and setting shortcuts for this motor
-    pbio_motor_trajectory_t *traject = &trajectories[idx];
-    pbio_encmotor_settings_t *settings = &encmotor_settings[idx];
-    duty_t max_duty = dcmotor_settings[idx].max_stall_duty;
+    pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
+    pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
+    pbio_motor_control_status_t *status = &motor_control_status[PORT_TO_IDX(port)];
+    duty_t max_duty = dcmotor_settings[PORT_TO_IDX(port)].max_stall_duty;
 
     // Return immediately if the action is idle; then there is nothing we need to do
     if (traject->action == IDLE) {
@@ -598,8 +597,8 @@ void control_update(pbio_port_t port){
     }
 
     // The very first time this is called, we initialize a fictitious previous maneuver
-    if (control_status[idx] == TIME_NOT_INITIALIZED) {
-        maneuver_started[idx] = traject->time_start - US_PER_SECOND;
+    if (status->windup_status == TIME_NOT_INITIALIZED) {
+        status->time_started = traject->time_start - US_PER_SECOND;
     }
 
     // Declare current time, positions, rates, and their reference value and error
@@ -617,39 +616,39 @@ void control_update(pbio_port_t port){
     stalled_status_t stalled = STALLED_NONE;
 
     // Check if the trajectory starting time equals the current maneuver start time
-    if (traject->time_start != maneuver_started[idx]) {
+    if (traject->time_start != status->time_started) {
         // If not, then we are starting a new maneuver, and we update its starting time
-        maneuver_started[idx] = traject->time_start;
+        status->time_started = traject->time_start;
 
         // For this new maneuver, we reset PID variables and related persistent control settings
-        err_integral[idx] = 0;
-        time_paused[idx] = 0;
-        time_stopped[idx] = 0;
+        status->err_integral = 0;
+        status->time_paused = 0;
+        status->time_stopped = 0;
 
-        time_prev[idx] = maneuver_started[idx];
-        count_err_prev[idx] = 0;
+        status->time_prev = status->time_started;
+        status->count_err_prev = 0;
         // Reset control status flags
         if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
-            control_status[idx] = TIME_RUNNING;
+            status->windup_status = TIME_RUNNING;
         }
         // else: RUN || RUN_TIME || RUN_STALLED || STOP
         else {
-            control_status[idx] = SPEED_INTEGRATOR_ACTIVE;
-            integrator_start[idx] = count_now;
-            integrator_ref_start[idx] = traject->count_start;
+            status->windup_status = SPEED_INTEGRATOR_ACTIVE;
+            status->integrator_start = count_now;
+            status->integrator_ref_start = traject->count_start;
         }
     }
 
     // Get the time at which we want to evaluate the reference position/velocities, for position based commands
     if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
         // In nominal operation, take the current time, minus the amount of time we have spent stalled
-        if (control_status[idx] == TIME_RUNNING) {
-            time_ref = time_now - time_paused[idx];
+        if (status->windup_status == TIME_RUNNING) {
+            time_ref = time_now - status->time_paused;
         }
         else {
         // When the motor stalls, we keep the time constant. This way, the position reference does
         // not continue to grow unboundedly, thus preventing a form of wind-up
-            time_ref = time_stopped[idx] - time_paused[idx];
+            time_ref = status->time_stopped - status->time_paused;
         }
     }
     // else: RUN || RUN_TIME || RUN_STALLED || STOP
@@ -672,13 +671,13 @@ void control_update(pbio_port_t port){
         // "proportional position control" as an exact way to implement "integral speed control".
         // The speed integral is simply the position, but the speed reference should stop integrating
         // while stalled, to prevent windup.
-        if (control_status[idx] == SPEED_INTEGRATOR_ACTIVE) {
+        if (status->windup_status == SPEED_INTEGRATOR_ACTIVE) {
             // If integrator is active, it is the previously accumulated sum, plus the integral since its last restart
-            count_err = err_integral[idx] + count_ref - integrator_ref_start[idx] - count_now + integrator_start[idx];
+            count_err = status->err_integral + count_ref - status->integrator_ref_start - count_now + status->integrator_start;
         }
         else {
             // Otherwise, it is just the previously accumulated sum and it doesn't integrate further
-            count_err = err_integral[idx];
+            count_err = status->err_integral;
         }
     }
 
@@ -696,32 +695,32 @@ void control_update(pbio_port_t port){
             // If we are additionally also running slower than the specified stall speed limit, set status to stalled
             stall_set_flag_if_slow(&stalled, rate_now, settings->stall_speed_limit, STALLED_PROPORTIONAL);
             // To prevent further integration, we should stop the timer if it is running
-            if (control_status[idx] == TIME_RUNNING) {
+            if (status->windup_status == TIME_RUNNING) {
                 // Then we must stop the time
-                control_status[idx] = TIME_PAUSED;
+                status->windup_status = TIME_PAUSED;
                 // We save the time value reached now, to continue later
-                time_stopped[idx] = time_now;
+                status->time_stopped = time_now;
             }
         }
         else{
             // Otherwise, the timer should be running, and we are not stalled
             stall_clear_flag(&stalled, STALLED_PROPORTIONAL);
             // So we should restart the time if it isn't already running
-            if (control_status[idx] == TIME_PAUSED) {
+            if (status->windup_status == TIME_PAUSED) {
                 // Then we must restart the time
-                control_status[idx] = TIME_RUNNING;
+                status->windup_status = TIME_RUNNING;
                 // We begin counting again from the stopped point
-                time_paused[idx] += time_now - time_stopped[idx];
+                status->time_paused += time_now - status->time_stopped;
             }
         }
 
         // Integrate position error
-        if (control_status[idx] == TIME_RUNNING) {
-            time_loop = time_now - time_prev[idx];
-            err_integral[idx] += count_err_prev[idx]*time_loop;
+        if (status->windup_status == TIME_RUNNING) {
+            time_loop = time_now - status->time_prev;
+            status->err_integral += status->count_err_prev*time_loop;
         }
-        count_err_prev[idx] = count_err;
-        time_prev[idx] = time_now;
+        status->count_err_prev = count_err;
+        status->time_prev = time_now;
     }
     // Position anti-windup (RUN || RUN_TIME || RUN_STALLED || STOP)
     else {
@@ -730,29 +729,29 @@ void control_update(pbio_port_t port){
             // If we are additionally also running slower than the specified stall speed limit, set status to stalled
             stall_set_flag_if_slow(&stalled, rate_now, settings->stall_speed_limit, STALLED_PROPORTIONAL);
             // The integrator should NOT run.
-            if (control_status[idx] == SPEED_INTEGRATOR_ACTIVE) {
+            if (status->windup_status == SPEED_INTEGRATOR_ACTIVE) {
                 // If it is running, disable it
-                control_status[idx] = SPEED_INTEGRATOR_STOPPED;
+                status->windup_status = SPEED_INTEGRATOR_STOPPED;
                 // Save the integrator state reached now, to continue when no longer stalled
-                err_integral[idx] += count_ref - integrator_ref_start[idx] - count_now + integrator_start[idx];
+                status->err_integral += count_ref - status->integrator_ref_start - count_now + status->integrator_start;
             }
         }
         else {
             stall_clear_flag(&stalled, STALLED_PROPORTIONAL);
             // The integrator SHOULD RUN.
-            if (control_status[idx] == SPEED_INTEGRATOR_STOPPED) {
+            if (status->windup_status == SPEED_INTEGRATOR_STOPPED) {
                 // If it isn't running, enable it
-                control_status[idx] = SPEED_INTEGRATOR_ACTIVE;
+                status->windup_status = SPEED_INTEGRATOR_ACTIVE;
                 // Begin integrating again from the current point
-                integrator_ref_start[idx] = count_ref;
-                integrator_start[idx] = count_now;
+                status->integrator_ref_start = count_ref;
+                status->integrator_start = count_now;
             }
         }
     }
 
     // Duty cycle component due to integral position control (RUN_TARGET || RUN_ANGLE)
     if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
-        duty_due_to_integral = ((settings->pid_ki*(err_integral[idx]/US_PER_MS))/MS_PER_SECOND)/(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS);
+        duty_due_to_integral = ((settings->pid_ki*(status->err_integral/US_PER_MS))/MS_PER_SECOND)/(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS);
 
         // Integrator anti windup (stalled in the sense of integrators)
         // Limit the duty due to the integral, as well as the integral itself
@@ -760,12 +759,12 @@ void control_update(pbio_port_t port){
             // If we are additionally also running slower than the specified stall speed limit, set status to stalled
             stall_set_flag_if_slow(&stalled, rate_now, settings->stall_speed_limit, STALLED_INTEGRAL);            
             duty_due_to_integral = max_duty;
-            err_integral[idx] = ((US_PER_SECOND*(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS))/settings->pid_ki)*max_duty;
+            status->err_integral = ((US_PER_SECOND*(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS))/settings->pid_ki)*max_duty;
         }
         else if (duty_due_to_integral < -max_duty) {
             stall_set_flag_if_slow(&stalled, rate_now, settings->stall_speed_limit, STALLED_INTEGRAL);
             duty_due_to_integral = -max_duty;
-            err_integral[idx] = -((US_PER_SECOND*(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS))/settings->pid_ki)*max_duty;
+            status->err_integral = -((US_PER_SECOND*(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS))/settings->pid_ki)*max_duty;
         }
         else {
             // Clear the integrator stall flag
