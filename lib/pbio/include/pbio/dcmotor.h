@@ -41,7 +41,7 @@ typedef enum {
  */
 typedef struct _pbio_dcmotor_settings_t {
     pbio_motor_dir_t direction; /**< Whether or not polarity of duty cycle and encoder counter is inverted */
-    int16_t max_stall_duty;     /**< Upper limit on duty cycle, which corresponds to a maximum torque while stalled. */
+    int32_t max_stall_duty;     /**< Upper limit on duty cycle, which corresponds to a maximum torque while stalled. */
 } pbio_dcmotor_settings_t;
 
 pbio_dcmotor_settings_t dcmotor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];

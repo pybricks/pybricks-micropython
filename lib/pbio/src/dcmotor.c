@@ -32,13 +32,10 @@ pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_moto
 
 pbio_error_t pbio_dcmotor_set_settings(pbio_port_t port, float_t stall_torque_limit){
     pbio_error_t status = pbdrv_motor_coast(port);
-    int16_t max_stall_duty = (int16_t) (PBIO_DUTY_PCT_TO_ABS * stall_torque_limit);
-    if (max_stall_duty < 0 || max_stall_duty > PBIO_MAX_DUTY) {
-        status = PBIO_ERROR_INVALID_ARG;
+    if (stall_torque_limit < 0 || stall_torque_limit > PBIO_MAX_DUTY_PCT) {
+        stall_torque_limit = PBIO_MAX_DUTY_PCT;
     }
-    if (status == PBIO_SUCCESS) { 
-        dcmotor_settings[PORT_TO_IDX(port)].max_stall_duty = max_stall_duty;
-    }
+    dcmotor_settings[PORT_TO_IDX(port)].max_stall_duty = PBIO_DUTY_PCT_TO_ABS * stall_torque_limit;
     return status;
 }
 
@@ -63,7 +60,7 @@ pbio_error_t pbio_dcmotor_brake(pbio_port_t port){
 
 pbio_error_t pbio_dcmotor_set_duty_cycle_int(pbio_port_t port, int32_t duty_cycle_int) {
     // Limit the duty cycle value
-    int16_t limit = dcmotor_settings[PORT_TO_IDX(port)].max_stall_duty;
+    int32_t limit = dcmotor_settings[PORT_TO_IDX(port)].max_stall_duty;
     if (duty_cycle_int > limit) {
         duty_cycle_int = limit;
     }
