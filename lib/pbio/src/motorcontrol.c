@@ -552,6 +552,7 @@ typedef enum {
  */
 typedef struct _pbio_motor_control_status_t {
     windup_status_t windup_status;
+    stalled_status_t stalled;    
     count_t err_integral;
     count_t count_err_prev;
     ustime_t time_started;
@@ -612,9 +613,6 @@ void control_update(pbio_port_t port){
     pbio_encmotor_get_encoder_count(port, &count_now);
     pbio_encmotor_get_encoder_rate(port, &rate_now);
 
-    // TODO: Making stalled status for each motor available to user, and clear it in new maneuver init section below.
-    stalled_status_t stalled = STALLED_NONE;
-
     // Check if the trajectory starting time equals the current maneuver start time
     if (traject->time_start != status->time_started) {
         // If not, then we are starting a new maneuver, and we update its starting time
@@ -624,6 +622,9 @@ void control_update(pbio_port_t port){
         status->err_integral = 0;
         status->time_paused = 0;
         status->time_stopped = 0;
+
+        // Clear stalled status
+        stall_clear_flag(&status->stalled, STALLED_PROPORTIONAL || STALLED_INTEGRAL);
 
         status->time_prev = status->time_started;
         status->count_err_prev = 0;
@@ -693,7 +694,7 @@ void control_update(pbio_port_t port){
         if ((duty_due_to_proportional >= max_duty && rate_err > 0) || (duty_due_to_proportional <= -max_duty && rate_err < 0)){
             // We are at the duty limit and we should prevent further position error "integration".
             // If we are additionally also running slower than the specified stall speed limit, set status to stalled
-            stall_set_flag_if_slow(&stalled, rate_now, settings->stall_speed_limit, STALLED_PROPORTIONAL);
+            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_speed_limit, STALLED_PROPORTIONAL);
             // To prevent further integration, we should stop the timer if it is running
             if (status->windup_status == TIME_RUNNING) {
                 // Then we must stop the time
@@ -704,7 +705,7 @@ void control_update(pbio_port_t port){
         }
         else{
             // Otherwise, the timer should be running, and we are not stalled
-            stall_clear_flag(&stalled, STALLED_PROPORTIONAL);
+            stall_clear_flag(&status->stalled, STALLED_PROPORTIONAL);
             // So we should restart the time if it isn't already running
             if (status->windup_status == TIME_PAUSED) {
                 // Then we must restart the time
@@ -727,7 +728,7 @@ void control_update(pbio_port_t port){
         // Check if proportional control exceeds the duty limit
         if ((duty_due_to_proportional >= max_duty && rate_err > 0) || (duty_due_to_proportional <= -max_duty && rate_err < 0)){
             // If we are additionally also running slower than the specified stall speed limit, set status to stalled
-            stall_set_flag_if_slow(&stalled, rate_now, settings->stall_speed_limit, STALLED_PROPORTIONAL);
+            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_speed_limit, STALLED_PROPORTIONAL);
             // The integrator should NOT run.
             if (status->windup_status == SPEED_INTEGRATOR_ACTIVE) {
                 // If it is running, disable it
@@ -737,7 +738,7 @@ void control_update(pbio_port_t port){
             }
         }
         else {
-            stall_clear_flag(&stalled, STALLED_PROPORTIONAL);
+            stall_clear_flag(&status->stalled, STALLED_PROPORTIONAL);
             // The integrator SHOULD RUN.
             if (status->windup_status == SPEED_INTEGRATOR_STOPPED) {
                 // If it isn't running, enable it
@@ -757,24 +758,24 @@ void control_update(pbio_port_t port){
         // Limit the duty due to the integral, as well as the integral itself
         if (duty_due_to_integral > max_duty) {
             // If we are additionally also running slower than the specified stall speed limit, set status to stalled
-            stall_set_flag_if_slow(&stalled, rate_now, settings->stall_speed_limit, STALLED_INTEGRAL);            
+            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_speed_limit, STALLED_INTEGRAL);            
             duty_due_to_integral = max_duty;
             status->err_integral = ((US_PER_SECOND*(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS))/settings->pid_ki)*max_duty;
         }
         else if (duty_due_to_integral < -max_duty) {
-            stall_set_flag_if_slow(&stalled, rate_now, settings->stall_speed_limit, STALLED_INTEGRAL);
+            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_speed_limit, STALLED_INTEGRAL);
             duty_due_to_integral = -max_duty;
             status->err_integral = -((US_PER_SECOND*(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS))/settings->pid_ki)*max_duty;
         }
         else {
             // Clear the integrator stall flag
-            stall_clear_flag(&stalled, STALLED_INTEGRAL);
+            stall_clear_flag(&status->stalled, STALLED_INTEGRAL);
         }
     }
     else {
         // RUN || RUN_TIME || RUN_STALLED || STOP have no position integral control
         duty_due_to_integral = 0;
-        stall_clear_flag(&stalled, STALLED_INTEGRAL);
+        stall_clear_flag(&status->stalled, STALLED_INTEGRAL);
     }
 
     // Calculate duty signal
@@ -815,7 +816,7 @@ void control_update(pbio_port_t port){
         (
         (traject->action == RUN_STALLED) &&
             // Whether the motor is stalled in either proportional or integral sense
-            (stalled != STALLED_NONE)
+            (status->stalled != STALLED_NONE)
         )
     )
     {
