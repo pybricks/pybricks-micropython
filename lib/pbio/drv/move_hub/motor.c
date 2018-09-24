@@ -268,7 +268,7 @@ pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
          * we need delta_t to be >= 20ms to be reasonably accurate.
          * timer is 10us, thus * 100 to get ms.
          */
-        if (head_time - tail_time >= 20 * 100) {
+        if ((uint16_t)(head_time - tail_time) >= 20 * 100) {
             break;
         }
     }
@@ -280,7 +280,7 @@ pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     }
 
     /* timer is 100000kHz */
-    *rate = (head_count - tail_count) * 100000 / (head_time - tail_time);
+    *rate = (head_count - tail_count) * 100000 / (uint16_t)(head_time - tail_time);
     return PBIO_SUCCESS;
 }
 
