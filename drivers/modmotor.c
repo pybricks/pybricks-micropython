@@ -195,20 +195,21 @@ EncodedMotor
 STATIC mp_obj_t motor_EncodedMotor_settings(size_t n_args, const mp_obj_t *args){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
     pbio_error_t err = pbio_encmotor_set_settings(self->port, 
-                                     mp_obj_get_float(args[1]),
-                                     mp_obj_get_float(args[2]),
-                                     mp_obj_get_float(args[3]),
-                                     mp_obj_get_float(args[4]),
-                                     mp_obj_get_float(args[5]),
-                                     mp_obj_get_float(args[6]),
-                                     mp_obj_get_float(args[7]),
-                                     mp_obj_get_float(args[8]),
-                                     mp_obj_get_float(args[9])
-                                     );
+                                                  mp_obj_get_float(args[1]),
+                                                  mp_obj_get_float(args[2]),
+                                                  mp_obj_get_float(args[3]),
+                                                  mp_obj_get_float(args[4]),
+                                                  mp_obj_get_float(args[5]),
+                                                  mp_obj_get_float(args[6]),
+                                                  mp_obj_get_float(args[7]),
+                                                  mp_obj_get_float(args[8]),
+                                                  mp_obj_get_float(args[9]),
+                                                  mp_obj_get_float(args[10])
+                                                 );
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_settings_obj, 10, 10, motor_EncodedMotor_settings);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_settings_obj, 11, 11, motor_EncodedMotor_settings);
 
 /*
 EncodedMotor
