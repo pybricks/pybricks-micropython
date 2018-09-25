@@ -1,10 +1,16 @@
 #include <pbio/dcmotor.h>
 
+// Initialize DC Motor settings
 pbio_dcmotor_settings_t dcmotor_settings[] = {
     [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
         .direction = PBIO_MOTOR_DIR_NORMAL,
         .max_stall_duty = PBIO_MAX_DUTY
     }
+};
+
+// Initialize motor control state as inactive
+pbio_motor_control_active_t motor_control_active[] = {
+    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)] PBIO_MOTOR_CONTROL_INACTIVE
 };
 
 pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction){   
@@ -17,21 +23,22 @@ pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_moto
     // TODO: Verify that device_id is indeed a DC motor or inherited thereof (i.e. lpu_TrainMotor or ev3_LargeMotor etc), else return appropriate erorr
     //
 
-    pbio_error_t status = pbdrv_motor_coast(port);
-    if (status == PBIO_SUCCESS) {
-        dcmotor_settings[PORT_TO_IDX(port)].direction = direction;
+    pbio_error_t status = pbio_dcmotor_coast(port);
+    if (status != PBIO_SUCCESS) {
+        return status;
     }
+    dcmotor_settings[PORT_TO_IDX(port)].direction = direction;
 
     //
     // TODO: Use the device_id to set the default settings defined in our lib. For now just hardcode something below.
     //
     pbio_dcmotor_set_settings(port, 100.0);
 
-    return status;
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_dcmotor_set_settings(pbio_port_t port, float_t stall_torque_limit){
-    pbio_error_t status = pbdrv_motor_coast(port);
+    pbio_error_t status = pbio_dcmotor_coast(port);
     if (stall_torque_limit < 0 || stall_torque_limit > PBIO_MAX_DUTY_PCT) {
         stall_torque_limit = PBIO_MAX_DUTY_PCT;
     }
@@ -51,10 +58,12 @@ void pbio_dcmotor_print_settings(pbio_port_t port, char *settings_string){
 }
 
 pbio_error_t pbio_dcmotor_coast(pbio_port_t port){
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_INACTIVE;
     return pbdrv_motor_coast(port);
 }
 
 pbio_error_t pbio_dcmotor_brake(pbio_port_t port){
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_INACTIVE;
     return pbdrv_motor_set_duty_cycle(port, 0);
 }
 
@@ -75,5 +84,6 @@ pbio_error_t pbio_dcmotor_set_duty_cycle_int(pbio_port_t port, int32_t duty_cycl
 }
 
 pbio_error_t pbio_dcmotor_set_duty_cycle(pbio_port_t port, float_t duty_cycle) {
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_INACTIVE;
     return pbio_dcmotor_set_duty_cycle_int(port, PBIO_DUTY_PCT_TO_ABS * duty_cycle);
 }

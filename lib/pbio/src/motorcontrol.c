@@ -42,7 +42,6 @@ typedef int32_t duty_t;
  * Motor control actions
  */
 typedef enum {
-    IDLE,
     RUN,
     STOP,
     RUN_TIME,
@@ -71,6 +70,8 @@ typedef struct _pbio_motor_trajectory_t {
     accl_t accl_start;                  /**<  Encoder acceleration during in-phase */
     accl_t accl_end;                    /**<  Encoder acceleration during out-phase */
 } pbio_motor_trajectory_t;
+
+pbio_motor_trajectory_t trajectories[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 /**
  * Status of the anti-windup integrators
@@ -115,14 +116,6 @@ typedef struct _pbio_motor_control_status_t {
     count_t integrator_start;      /**< Integrated reference speed value prior to enabling integrator */
 } pbio_motor_control_status_t;
 
-// Initialize current trajectory to idle
-pbio_motor_trajectory_t trajectories[] = {
-    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
-        .action = IDLE,
-        .time_start = NONE,
-    }
-};
-
 // Initialize the current control status to being uninitialized
 pbio_motor_control_status_t motor_control_status[] = {
     [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
@@ -163,25 +156,19 @@ void stall_clear_flag(stalled_status_t *stalled, stalled_status_t flag){
 
 // Wait for completion if requested.
 void wait_for_completion(pbio_port_t port, pbio_motor_wait_t wait){
-    // Set the flag that the motor is running
+    // Set the flags that the motor is running and that control is active
     while(!atomic_flag_test_and_set(&motor_busy[PORT_TO_IDX(port)]));
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_ACTIVE;
     // Check if we want to pause until motion is complete
     if (wait == PBIO_MOTOR_WAIT_COMPLETION) {
         // Wait until the running flag is cleared by the control task
-        while(atomic_flag_test_and_set(&motor_busy[PORT_TO_IDX(port)])){
+        while(atomic_flag_test_and_set(&motor_busy[PORT_TO_IDX(port)]) && motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_ACTIVE){
             // Sleep to give the motor control task time and clear the flag when done
             pbdrv_time_sleep_msec(1);
         }
         // In the process of reading above, the flag was set, so we need to clear it
         atomic_flag_clear(&motor_busy[PORT_TO_IDX(port)]);
-    }
 }
-
-// TODO: no longer need this function once we remove multithreading
-void idle(pbio_port_t port){
-    while(atomic_flag_test_and_set(&claimed_trajectory[PORT_TO_IDX(port)]));
-    trajectories[PORT_TO_IDX(port)].action = IDLE;
-    atomic_flag_clear(&claimed_trajectory[PORT_TO_IDX(port)]);
 }
 
 // Return max(-limit, min(value, limit)): Limit the magnitude of value to be equal to or less than provided limit
@@ -243,8 +230,6 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
 
     // Set endpoint (time or angle), depending on selected action
     switch(action){
-        case IDLE:
-            break;
         case STOP:
             // For STOP, the end time is the current time plus the time needed for stopping
             _time_end = _time_start + abs(_rate_start)/((float_t) settings->abs_accl_end);
@@ -461,8 +446,8 @@ void control_update(pbio_port_t port){
     pbio_motor_control_status_t *status = &motor_control_status[PORT_TO_IDX(port)];
     duty_t max_duty = dcmotor_settings[PORT_TO_IDX(port)].max_stall_duty;
 
-    // Return immediately if the action is idle; then there is nothing we need to do
-    if (traject->action == IDLE) {
+    // Return immediately if control is not active; then there is nothing we need to do
+    if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_INACTIVE) { // TODO: Should technically be atomic read, but atomics will be phased out...
         return;
     }
 
@@ -694,12 +679,10 @@ void control_update(pbio_port_t port){
         if (traject->after_stop == PBIO_MOTOR_STOP_COAST){
             // Coast the motor
             pbio_dcmotor_coast(port);
-            traject->action = IDLE;
         }
         else if (traject->after_stop == PBIO_MOTOR_STOP_BRAKE){
             // Brake the motor
             pbio_dcmotor_brake(port);
-            traject->action = IDLE;
         }
         else if (traject->after_stop == PBIO_MOTOR_STOP_HOLD) {
             // Hold the motor
@@ -770,12 +753,10 @@ pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_
         switch (after_stop) {
             case PBIO_MOTOR_STOP_COAST:
                 // Stop by coasting
-                idle(port);
                 err = pbio_dcmotor_coast(port);
                 break;
             case PBIO_MOTOR_STOP_BRAKE:
                 // Stop by braking
-                idle(port);
                 err = pbio_dcmotor_brake(port);
                 break;
             case PBIO_MOTOR_STOP_HOLD:

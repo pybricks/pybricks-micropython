@@ -29,7 +29,7 @@ typedef enum {
 } pbio_id_t;
 
 /**
- * Motor direction convention.
+ * Motor direction convention
  */
 typedef enum {
     PBIO_MOTOR_DIR_NORMAL,      /**< Use the normal motor-specific convention for the positive direction */
@@ -37,7 +37,18 @@ typedef enum {
 } pbio_motor_dir_t;
 
 /**
- * Settings for a Motor
+ * Motor control active state
+ */
+typedef enum {
+    PBIO_MOTOR_CONTROL_INACTIVE,/**< Motor is coasting, braking, or set to a duty value by the user */
+    PBIO_MOTOR_CONTROL_ACTIVE,  /**< Firmware repeatedly configures the duty cycle to control motor speed and position */
+} pbio_motor_control_active_t;
+
+// TODO: Technically this variable should be atomic but that will be phased out...
+pbio_motor_control_active_t motor_control_active[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+
+/**
+ * Settings for a DC Motor
  */
 typedef struct _pbio_dcmotor_settings_t {
     pbio_motor_dir_t direction; /**< Whether or not polarity of duty cycle and encoder counter is inverted */

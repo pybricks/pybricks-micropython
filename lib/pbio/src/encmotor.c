@@ -91,6 +91,9 @@ pbio_error_t pbio_encmotor_get_encoder_count(pbio_port_t port, int32_t *count) {
 }
 
 pbio_error_t pbio_encmotor_reset_encoder_count(pbio_port_t port, int32_t reset_count) {
+    // Set the motor to coast and stop any running maneuvers
+    pbio_dcmotor_coast(port);
+
     // First get the counter value without any offsets, but with the appropriate polarity/sign.
     int32_t count_no_offset;
     pbio_error_t status = pbio_encmotor_get_encoder_count(port, &count_no_offset);
@@ -110,8 +113,7 @@ pbio_error_t pbio_encmotor_get_angle(pbio_port_t port, float_t *angle) {
 }
 
 pbio_error_t pbio_encmotor_reset_angle(pbio_port_t port, float_t reset_angle) {
-    // TODO: Abort any current maneuver
-    return pbio_encmotor_reset_encoder_count(port, (int32_t) (reset_angle* encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit));    
+    return pbio_encmotor_reset_encoder_count(port, (int32_t) (reset_angle * encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit));    
 }
 
 pbio_error_t pbio_encmotor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
