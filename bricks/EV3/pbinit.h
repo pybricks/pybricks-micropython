@@ -13,8 +13,8 @@
 #define PERIOD_MS 10
 
 struct periodic_info {
-	int timer_fd;
-	unsigned long long wakeups_missed;
+    int timer_fd;
+    unsigned long long wakeups_missed;
 };
 
 void pybricks_init();
