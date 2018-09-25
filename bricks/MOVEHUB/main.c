@@ -13,7 +13,6 @@
 #include "lib/utils/pyexec.h"
 
 #include "accel.h"
-#include "adc.h"
 #include "uartadr.h"
 
 static char *stack_top;
@@ -27,7 +26,6 @@ int main(int argc, char **argv) {
 
     uart_init();
 
-    adc_init();
     accel_init();
     pbio_init();
 
@@ -61,7 +59,6 @@ soft_reset:
     goto soft_reset;
 
     accel_deinit();
-    adc_deinit();
     pbio_deinit();
 
     return 0;

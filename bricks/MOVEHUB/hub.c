@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include <pbdrv/adc.h>
 #include <pbio/button.h>
 #include <pbio/light.h>
 #include <pbsys/sys.h>
@@ -14,7 +15,6 @@
 #include "py/runtime.h"
 #include "py/binary.h"
 
-#include "adc.h"
 #include "gpio.h"
 
 #if PYBRICKS_HW_ENABLE_MOTORS
@@ -108,7 +108,15 @@ STATIC mp_obj_t hub_power_off(void) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_power_off_obj, hub_power_off);
 
 STATIC mp_obj_t hub_read_adc(mp_obj_t ch) {
-    return mp_obj_new_int(adc_read_ch(mp_obj_get_int(ch)));
+    uint16_t value;
+    pbio_error_t err;
+
+    err = pbdrv_adc_get_ch(mp_obj_get_int(ch), &value);
+    if (err != PBIO_SUCCESS) {
+        mp_raise_ValueError("Invalid channel");
+    }
+
+    return mp_obj_new_int(value);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_read_adc_obj, hub_read_adc);
 

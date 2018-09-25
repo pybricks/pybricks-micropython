@@ -42,7 +42,6 @@ SRC_C = \
 	hub.c \
 	modutime.c \
 	accel.c \
-	adc.c \
 	systick.c \
 	uart_core.c \
 	lib/utils/interrupt_char.c \
@@ -57,6 +56,7 @@ PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	drivers/modmotor.c \
 	drivers/modconstants.c \
 	drivers/pberror.c \
+	lib/pbio/drv/move_hub/adc.c \
 	lib/pbio/drv/move_hub/button.c \
 	lib/pbio/drv/move_hub/light.c \
 	lib/pbio/drv/move_hub/ioport.c \

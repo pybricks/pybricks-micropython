@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 
+#include <pbdrv/adc.h>
 #include <pbdrv/button.h>
 #include <pbdrv/light.h>
 #include <pbdrv/ioport.h>
@@ -21,6 +22,7 @@ static uint32_t prev_slow_poll_time;
  * the library.
  */
 void pbio_init(void) {
+    _pbdrv_adc_init();
     _pbdrv_button_init();
     _pbdrv_light_init();
     _pbdrv_ioport_init();
@@ -38,6 +40,7 @@ void pbio_poll(void) {
     // don't want to call all of the subroutines unless enough time has
     // actually elapsed to do something useful.
     if (now - prev_fast_poll_time >= 2) {
+        _pbdrv_adc_poll(now);
         _pbdrv_ioport_poll(now);
         prev_fast_poll_time = now;
     }
@@ -58,6 +61,7 @@ void pbio_deinit(void) {
     _pbdrv_motor_deinit();
     _pbdrv_light_deinit();
     _pbdrv_button_deinit();
+    _pbdrv_adc_deinit();
 }
 #endif
 
