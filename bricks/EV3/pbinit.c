@@ -1,7 +1,7 @@
 
 #include <pbio/motorcontrol.h>
-
 #include "pbinit.h"
+#include "py/mpthread.h"
 
 // Configure timer at specified interval
 static int configure_timer_thread(unsigned int period_ms, struct periodic_info *info)
@@ -37,13 +37,19 @@ static void wait_period(struct periodic_info *info)
 // Flag that indicates whether we are busy stopping the thread
 volatile bool stopping_thread = false;
 
+void fake_pbio_poll(){
+	printf("T\n");
+}
+
 // The background thread that keeps firing the task handler
 static void *task_caller(void *arg)
 {
 	struct periodic_info info;
 	configure_timer_thread(PERIOD_MS, &info);
 	while (!stopping_thread) {
-        motor_control_update();
+		MP_THREAD_GIL_ENTER();
+        fake_pbio_poll();
+		MP_THREAD_GIL_EXIT();
 		wait_period(&info);
 	}
     // Signal that shutdown is complete

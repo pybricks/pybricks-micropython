@@ -1,3 +1,6 @@
+#ifndef MICROPY_INCLUDED_PBINIT_H
+#define MICROPY_INCLUDED_PBINIT_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -17,3 +20,5 @@ struct periodic_info {
 void pybricks_init();
 
 void pybricks_deinit();
+
+#endif // MICROPY_INCLUDED_PBINIT_H
