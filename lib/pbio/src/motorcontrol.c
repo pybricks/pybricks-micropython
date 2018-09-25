@@ -4,36 +4,37 @@
 #include <stdlib.h>
 #include <math.h>
 
-// A "don't care" constant for readibility of the code, but which is never used after assignment
-// Typically used for parameters that have no effect for the selected maneuvers.
-#define NONE (0)
+#define NONE (0) // A "don't care" constant for readibility of the code, but which is never used after assignment
+#define NONZERO (100) // Arbitrary nonzero speed
+#define max_abs_accl (1000000) // "Infinite" acceleration, equivalent to reaching 1000 deg/s in just 1 milisecond.
 
-// Arbitrary nonzero speed
-#define NONZERO (100)
-#define max_abs_accl (1000000)
+// Macro to evaluate b*t/US_PER_SECOND in two steps to avoid excessive round-off errors and overflows.
+#define timest(b, t) ((b * ((t)/US_PER_MS))/MS_PER_SECOND)
+// Same trick to evaluate formulas of the form 1/2*b*t^2/US_PER_SECOND^2
+#define timest2(b, t) ((timest(timest(b, (t)),(t)))/2)
 
 /**
- * Integer type with units of microseconds
+ * Integer signal type with units of microseconds
  */
 typedef int32_t ustime_t;
 
 /**
- * Integer type with units of encoder counts
+ * Integer signal type with units of encoder counts
  */
 typedef int32_t count_t;
 
 /**
- * Integer type with units of encoder counts per second
+ * Integer signal type with units of encoder counts per second
  */
 typedef int32_t rate_t;
 
 /**
- * Integer type with units of encoder counts per second per second
+ * Integer signal type with units of encoder counts per second per second
  */
 typedef int32_t accl_t;
 
 /**
- * Integer type with units of duty (-10000, 10000)
+ * Integer signal type with units of duty (-10000, 10000)
  */
 typedef int32_t duty_t;
 
@@ -51,6 +52,83 @@ typedef enum {
     TRACK_TARGET,
 } pbio_motor_action_t;
 
+/**
+ * Motor trajectory parameters for an ideal maneuver without disturbances
+ */
+typedef struct _pbio_motor_trajectory_t {
+    pbio_motor_action_t action;         /**<  Motor action type */
+    pbio_motor_after_stop_t after_stop; /**<  BRAKE, COAST or HOLD after maneuver */
+    ustime_t time_start;                /**<  Time at start of maneuver */
+    ustime_t time_in;                   /**<  Time after the acceleration in-phase */
+    ustime_t time_out;                  /**<  Time at start of acceleration out-phase */
+    ustime_t time_end;                  /**<  Time at end of maneuver */
+    count_t count_start;                /**<  Encoder count at start of maneuver */
+    count_t count_in;                   /**<  Encoder count after the acceleration in-phase */
+    count_t count_out;                  /**<  Encoder count at start of acceleration out-phase */
+    count_t count_end;                  /**<  Encoder count at end of maneuver */
+    rate_t rate_start;                  /**<  Encoder rate at start of maneuver */
+    rate_t rate_target;                 /**<  Encoder rate target when not accelerating */
+    accl_t accl_start;                  /**<  Encoder acceleration during in-phase */
+    accl_t accl_end;                    /**<  Encoder acceleration during out-phase */
+} pbio_motor_trajectory_t;
+
+/**
+ * Status of the anti-windup integrators
+ */
+typedef enum {
+    /**< Initial status prior to initialization */
+    TIME_NOT_INITIALIZED,
+    /**< Anti-windup status for PID position control:
+         Pause the position and speed trajectory when
+         the motor is stalled by pausing time. */ 
+    TIME_PAUSED,
+    TIME_RUNNING,
+    /**< Anti-windup status for PI speed control:
+         Pause the integration of the
+         accumulated speed error when stalled. */
+    SPEED_INTEGRATOR_RUNNING,
+    SPEED_INTEGRATOR_PAUSED,
+} windup_status_t;
+
+typedef enum {
+    /**< Motor is not stalled */
+    STALLED_NONE = 0x00,
+    /**< The proportional duty control term is larger than the maximum and still the motor moves slower than specified limit */
+    STALLED_PROPORTIONAL = 0x01,
+    /**< The integral duty control term is larger than the maximum and still the motor moves slower than specified limit */
+    STALLED_INTEGRAL = 0x02,
+} stalled_status_t;
+
+/**
+ * Motor PID control status
+ */
+typedef struct _pbio_motor_control_status_t {
+    windup_status_t windup_status; /**< State of the anti-windup variables */
+    stalled_status_t stalled;      /**< Stalled state of the motor */
+    count_t err_integral;          /**< Integral of position error (RUN_ANGLE or RUN_TARGET) or state of the speed integrator (all other modes) */
+    count_t count_err_prev;        /**< Position error in the previous control iteration */
+    ustime_t time_prev;            /**< Time at the previous control iteration */
+    ustime_t time_started;         /**< Time that this maneuver/command/trajectory was started */
+    ustime_t time_paused;          /**< The amount of time the speed integrator has spent paused */
+    ustime_t time_stopped;         /**< Time at which the speed integrator last stopped */
+    count_t integrator_ref_start;  /**< Integrated speed value prior to enabling integrator */
+    count_t integrator_start;      /**< Integrated reference speed value prior to enabling integrator */
+} pbio_motor_control_status_t;
+
+// Initialize current trajectory to idle
+pbio_motor_trajectory_t trajectories[] = {
+    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
+        .action = IDLE,
+        .time_start = NONE,
+    }
+};
+
+// Initialize the current control status to being uninitialized
+pbio_motor_control_status_t motor_control_status[] = {
+    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
+        .windup_status = TIME_NOT_INITIALIZED
+    }
+};
 
 // Atomic flag, one for each motor, that is set when the trajectory structure is currently being read or being written. It is clear when it is free.
 volatile atomic_flag claimed_trajectory[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
@@ -66,33 +144,22 @@ volatile atomic_flag motor_busy[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
     }
 };
 
-/**
- * Motor trajectory parameters for an ideal maneuver without disturbances
- */
-typedef struct _pbio_motor_trajectory_t {
-    pbio_motor_action_t action; // Motor action type
-    pbio_motor_after_stop_t after_stop; // BRAKE, COAST or HOLD after maneuver
-    ustime_t time_start;        // Time at start of maneuver
-    ustime_t time_in;           // Time after the acceleration in-phase
-    ustime_t time_out;          // Time at start of acceleration out-phase
-    ustime_t time_end;          // Time at end of maneuver
-    count_t count_start;        // Encoder count at start of maneuver
-    count_t count_in;           // Encoder count after the acceleration in-phase
-    count_t count_out;          // Encoder count at start of acceleration out-phase
-    count_t count_end;          // Encoder count at end of maneuver
-    rate_t rate_start;          // Encoder rate at start of maneuver
-    rate_t rate_target;         // Encoder rate target when not accelerating
-    accl_t accl_start;          // Encoder acceleration during in-phase
-    accl_t accl_end;            // Encoder acceleration during out-phase
-} pbio_motor_trajectory_t;
-
-// Initialize current command to idle
-pbio_motor_trajectory_t trajectories[] = {
-    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
-        .action = IDLE,
-        .time_start = NONE,
+// If the controller reach the maximum duty cycle value, this shortcut sets the stalled flag when the speed is below the stall limit.
+void stall_set_flag_if_slow(stalled_status_t *stalled, rate_t rate_now, rate_t rate_limit, stalled_status_t flag){
+    if (abs(rate_now) <= rate_limit) {
+        // If the speed is less than the specified limit, set stalled flag.
+        *stalled |= flag;
     }
-};
+    else {
+        // Otherwise we are not yet stalled, so clear this flag.
+        *stalled &= ~flag;
+    }                 
+}
+
+// Clear the specified stall flag
+void stall_clear_flag(stalled_status_t *stalled, stalled_status_t flag){
+    *stalled &= ~flag;
+}
 
 // Wait for completion if requested.
 void wait_for_completion(pbio_port_t port, pbio_motor_wait_t wait){
@@ -110,138 +177,11 @@ void wait_for_completion(pbio_port_t port, pbio_motor_wait_t wait){
     }
 }
 
-pbio_error_t make_motor_command(pbio_port_t port,
-                                pbio_motor_action_t action,
-                                float_t rate_target,
-                                float_t duration_or_target_count,
-                                pbio_motor_after_stop_t after_stop);
-
-pbio_error_t pbio_encmotor_run(pbio_port_t port, float_t speed){
-    pbio_error_t err = make_motor_command(port, RUN, speed, NONE, NONE);
-    if (err != PBIO_SUCCESS){
-        return err;
-    }
-    wait_for_completion(port, PBIO_MOTOR_WAIT_NONE);
-    return PBIO_SUCCESS;
-}
-
 // TODO: no longer need this function once we remove multithreading
 void idle(pbio_port_t port){
     while(atomic_flag_test_and_set(&claimed_trajectory[PORT_TO_IDX(port)]));
     trajectories[PORT_TO_IDX(port)].action = IDLE;
     atomic_flag_clear(&claimed_trajectory[PORT_TO_IDX(port)]);
-}
-
-pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    // Get current rate to see if we're standing still already
-    float_t angle_now;
-    rate_t rate_now;
-    pbio_error_t err = pbio_encmotor_get_encoder_rate(port, &rate_now);
-    if (err != PBIO_SUCCESS){
-        return err;
-    }
-    if (smooth && rate_now != 0) {
-        // Make a smooth controlled stop, equivalent to the last part of a RUN_TIME maneuver
-        err = make_motor_command(port, STOP, NONE, NONE, after_stop);
-        if (err != PBIO_SUCCESS){
-            return err;
-        }
-        wait_for_completion(port, wait);
-        return PBIO_SUCCESS;
-    }
-    else {
-        // Stop immediately, with one of the stop actions
-        switch (after_stop) {
-            case PBIO_MOTOR_STOP_COAST:
-                // Stop by coasting
-                idle(port);
-                err = pbio_dcmotor_coast(port);
-                break;
-            case PBIO_MOTOR_STOP_BRAKE:
-                // Stop by braking
-                idle(port);
-                err = pbio_dcmotor_brake(port);
-                break;
-            case PBIO_MOTOR_STOP_HOLD:
-                // Force stop by holding the current position.
-                // First, read where this position is
-                err = pbio_encmotor_get_angle(port, &angle_now);
-                if (err != PBIO_SUCCESS){
-                    break;
-                }
-                // Holding is equivalent to driving to that position actively,
-                // which automatically corrects the overshoot that is inevitable
-                // when the user requests an immediate stop.
-                make_motor_command(port, RUN_TARGET, NONZERO, angle_now, after_stop);
-                wait_for_completion(port, wait);
-                break;
-        }
-        return err;
-    }
-}
-
-pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    pbio_error_t err = make_motor_command(port, RUN_TIME, speed, duration, after_stop);
-    if (err != PBIO_SUCCESS){
-        return err;
-    }
-    wait_for_completion(port, wait);
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, float_t speed, float_t *stallpoint, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    pbio_error_t err = make_motor_command(port, RUN_STALLED, speed, NONE, after_stop);
-    if (err != PBIO_SUCCESS){
-        return err;
-    }
-    wait_for_completion(port, wait);
-    if (wait == PBIO_MOTOR_WAIT_COMPLETION) {
-        pbio_encmotor_get_angle(port, stallpoint);
-    };
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    pbio_error_t err = make_motor_command(port, RUN_ANGLE, speed, angle, after_stop);
-    if (err != PBIO_SUCCESS){
-        return err;
-    }
-    wait_for_completion(port, wait);
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
-    pbio_error_t err = make_motor_command(port, RUN_TARGET, speed, target, after_stop);
-    if (err != PBIO_SUCCESS){
-        return err;
-    }
-    wait_for_completion(port, wait);
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_encmotor_track_target(pbio_port_t port, float_t target){
-    return PBIO_ERROR_NOT_IMPLEMENTED;
-}
-
-void debug_trajectory(pbio_port_t port){
-    pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
-    printf("\nPort       : %c\nAction     : %d\nAfter stop : %d\ntime_start : %u\ntime_in    : %u\ntime_out   : %u\ntime_end   : %u\ncount_start: %d\ncount_in   : %d\ncount_out  : %d\ncount_end  : %d\nrate_start : %d\nrate_target: %d\naccl_start : %d\naccl_end   : %d\n",
-        port,
-        (int)traject->action,
-        (int)traject->after_stop,
-        (int)traject->time_start,
-        (int)(traject->time_in-traject->time_start),
-        (int)(traject->time_out-traject->time_start),
-        (int)(traject->time_end-traject->time_start),
-        (int)traject->count_start,
-        (int)traject->count_in,
-        (int)traject->count_out,
-        (int)traject->count_end,
-        (int)traject->rate_start,
-        (int)traject->rate_target,
-        (int)traject->accl_start,
-        (int)traject->accl_end
-    );
 }
 
 // Return max(-limit, min(value, limit)): Limit the magnitude of value to be equal to or less than provided limit
@@ -267,11 +207,11 @@ float_t signval(float_t signof, float_t value) {
 }
 
 // Calculate the characteristic time values, encoder values, rate values and accelerations that uniquely define the rate and count trajectories
-pbio_error_t make_motor_command(pbio_port_t port,
-                                pbio_motor_action_t action,
-                                float_t rate_target,
-                                float_t duration_or_target_count,
-                                pbio_motor_after_stop_t after_stop){
+pbio_error_t make_motor_trajectory(pbio_port_t port,
+                                   pbio_motor_action_t action,
+                                   float_t rate_target,
+                                   float_t duration_or_target_count,
+                                   pbio_motor_after_stop_t after_stop){
 
     // Read the current system state for this motor
     ustime_t time_start = pbdrv_time_get_usec();
@@ -489,18 +429,8 @@ pbio_error_t make_motor_command(pbio_port_t port,
     return PBIO_SUCCESS;
 }
 
-
-
-// Several of the formulas below contain expressions such as b*t, where b is a speed or acceleration, and t is a time interval.
-// Because our time values are expressed in microseconds, we actually have to evaluate b*t/1000000. To avoid both excessive
-// round-off errors as well as to avoid overflows, we perform this calculation as (b*(t/1000))/1000, with the following macro:
-#define timest(b, t) ((b * ((t)/US_PER_MS))/MS_PER_SECOND)
-// We use the same trick to evaluate formulas of the form 1/2*b*t^2
-#define timest2(b, t) ((timest(timest(b, (t)),(t)))/2)
-
 // Evaluate the reference speed and velocity at the (shifted) time
 void get_reference(ustime_t time_ref, pbio_motor_trajectory_t *traject, count_t *count_ref, rate_t *rate_ref){
-
     // For RUN and RUN_STALLED, the end time is infinite, meaning that the reference signals do not have a deceleration phase
     if (traject->action != STOP && time_ref - traject->time_in < 0) {
         // If we are here, then we are still in the acceleration phase. Includes conversion from microseconds to seconds, in two steps to avoid overflows and round off errors
@@ -522,62 +452,6 @@ void get_reference(ustime_t time_ref, pbio_motor_trajectory_t *traject, count_t 
         *rate_ref = 0;
         *count_ref = traject->count_end;
     }
-}
-
-
-/**
- * Status of the time at which we evaluate the count and rate reference signals
- */
-typedef enum {
-    TIME_NOT_INITIALIZED,
-    TIME_PAUSED,
-    TIME_RUNNING,
-    SPEED_INTEGRATOR_ACTIVE,
-    SPEED_INTEGRATOR_STOPPED,
-} windup_status_t;
-
-typedef enum {
-    STALLED_NONE = 0x00,
-    STALLED_PROPORTIONAL = 0x01,
-    STALLED_INTEGRAL = 0x02,
-} stalled_status_t;
-
-/**
- * Motor PID control status
- */
-typedef struct _pbio_motor_control_status_t {
-    windup_status_t windup_status;
-    stalled_status_t stalled;    
-    count_t err_integral;
-    count_t count_err_prev;
-    ustime_t time_started;
-    ustime_t time_prev;
-    ustime_t time_paused;
-    ustime_t time_stopped;
-    count_t integrator_ref_start;
-    count_t integrator_start;
-} pbio_motor_control_status_t;
-
-pbio_motor_control_status_t motor_control_status[] = {
-    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
-        .windup_status = TIME_NOT_INITIALIZED
-    }
-};
-
-void stall_set_flag_if_slow(stalled_status_t *stalled, rate_t rate_now, rate_t rate_limit, stalled_status_t flag){
-    if (abs(rate_now) <= rate_limit) {
-        // If the speed is still less than the specified limit, set stalled flag.
-        *stalled |= flag;
-    }
-    else {
-        // Otherwise we are not yet stalled.
-        *stalled &= ~flag;
-    }                 
-}
-
-void stall_clear_flag(stalled_status_t *stalled, stalled_status_t flag){
-    // Clear the specified stall flag
-    *stalled &= ~flag;
 }
 
 void control_update(pbio_port_t port){
@@ -629,7 +503,7 @@ void control_update(pbio_port_t port){
         }
         // else: RUN || RUN_TIME || RUN_STALLED || STOP
         else {
-            status->windup_status = SPEED_INTEGRATOR_ACTIVE;
+            status->windup_status = SPEED_INTEGRATOR_RUNNING;
             status->integrator_start = count_now;
             status->integrator_ref_start = traject->count_start;
         }
@@ -667,7 +541,7 @@ void control_update(pbio_port_t port){
         // "proportional position control" as an exact way to implement "integral speed control".
         // The speed integral is simply the position, but the speed reference should stop integrating
         // while stalled, to prevent windup.
-        if (status->windup_status == SPEED_INTEGRATOR_ACTIVE) {
+        if (status->windup_status == SPEED_INTEGRATOR_RUNNING) {
             // If integrator is active, it is the previously accumulated sum, plus the integral since its last restart
             count_err = status->err_integral + count_ref - status->integrator_ref_start - count_now + status->integrator_start;
         }
@@ -725,9 +599,9 @@ void control_update(pbio_port_t port){
             // If we are additionally also running slower than the specified stall speed limit, set status to stalled
             stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_speed_limit, STALLED_PROPORTIONAL);
             // The integrator should NOT run.
-            if (status->windup_status == SPEED_INTEGRATOR_ACTIVE) {
+            if (status->windup_status == SPEED_INTEGRATOR_RUNNING) {
                 // If it is running, disable it
-                status->windup_status = SPEED_INTEGRATOR_STOPPED;
+                status->windup_status = SPEED_INTEGRATOR_PAUSED;
                 // Save the integrator state reached now, to continue when no longer stalled
                 status->err_integral += count_ref - status->integrator_ref_start - count_now + status->integrator_start;
             }
@@ -735,9 +609,9 @@ void control_update(pbio_port_t port){
         else {
             stall_clear_flag(&status->stalled, STALLED_PROPORTIONAL);
             // The integrator SHOULD RUN.
-            if (status->windup_status == SPEED_INTEGRATOR_STOPPED) {
+            if (status->windup_status == SPEED_INTEGRATOR_PAUSED) {
                 // If it isn't running, enable it
-                status->windup_status = SPEED_INTEGRATOR_ACTIVE;
+                status->windup_status = SPEED_INTEGRATOR_RUNNING;
                 // Begin integrating again from the current point
                 status->integrator_ref_start = count_ref;
                 status->integrator_start = count_now;
@@ -838,7 +712,7 @@ void control_update(pbio_port_t port){
                 // When ending a time based control maneuver with hold, we trigger a new position based maneuver with zero degrees
                 pbio_dcmotor_set_duty_cycle_int(port, 0);
                 atomic_flag_clear(&claimed_trajectory[PORT_TO_IDX(port)]);
-                make_motor_command(port, RUN_TARGET, NONZERO, count_now, PBIO_MOTOR_STOP_HOLD);
+                make_motor_trajectory(port, RUN_TARGET, NONZERO, count_now, PBIO_MOTOR_STOP_HOLD);
             }
         }
         atomic_flag_clear(&motor_busy[PORT_TO_IDX(port)]);
@@ -849,8 +723,7 @@ void control_update(pbio_port_t port){
     }
 }
 
-
-
+// Service all the motors by calling this function at approximately constant intervals.
 void motor_control_update(){
     // Do the update for each motor
     for (pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++){
@@ -862,4 +735,106 @@ void motor_control_update(){
             atomic_flag_clear(&claimed_trajectory[PORT_TO_IDX(port)]); // Remove once we remove multithreading
         }
     }
+}
+
+/* pbio user functions */
+
+pbio_error_t pbio_encmotor_run(pbio_port_t port, float_t speed){
+    pbio_error_t err = make_motor_trajectory(port, RUN, speed, NONE, NONE);
+    if (err != PBIO_SUCCESS){
+        return err;
+    }
+    wait_for_completion(port, PBIO_MOTOR_WAIT_NONE);
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+    // Get current rate to see if we're standing still already
+    float_t angle_now;
+    rate_t rate_now;
+    pbio_error_t err = pbio_encmotor_get_encoder_rate(port, &rate_now);
+    if (err != PBIO_SUCCESS){
+        return err;
+    }
+    if (smooth && rate_now != 0) {
+        // Make a smooth controlled stop, equivalent to the last part of a RUN_TIME maneuver
+        err = make_motor_trajectory(port, STOP, NONE, NONE, after_stop);
+        if (err != PBIO_SUCCESS){
+            return err;
+        }
+        wait_for_completion(port, wait);
+        return PBIO_SUCCESS;
+    }
+    else {
+        // Stop immediately, with one of the stop actions
+        switch (after_stop) {
+            case PBIO_MOTOR_STOP_COAST:
+                // Stop by coasting
+                idle(port);
+                err = pbio_dcmotor_coast(port);
+                break;
+            case PBIO_MOTOR_STOP_BRAKE:
+                // Stop by braking
+                idle(port);
+                err = pbio_dcmotor_brake(port);
+                break;
+            case PBIO_MOTOR_STOP_HOLD:
+                // Force stop by holding the current position.
+                // First, read where this position is
+                err = pbio_encmotor_get_angle(port, &angle_now);
+                if (err != PBIO_SUCCESS){
+                    break;
+                }
+                // Holding is equivalent to driving to that position actively,
+                // which automatically corrects the overshoot that is inevitable
+                // when the user requests an immediate stop.
+                make_motor_trajectory(port, RUN_TARGET, NONZERO, angle_now, after_stop);
+                wait_for_completion(port, wait);
+                break;
+        }
+        return err;
+    }
+}
+
+pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+    pbio_error_t err = make_motor_trajectory(port, RUN_TIME, speed, duration, after_stop);
+    if (err != PBIO_SUCCESS){
+        return err;
+    }
+    wait_for_completion(port, wait);
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, float_t speed, float_t *stallpoint, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+    pbio_error_t err = make_motor_trajectory(port, RUN_STALLED, speed, NONE, after_stop);
+    if (err != PBIO_SUCCESS){
+        return err;
+    }
+    wait_for_completion(port, wait);
+    if (wait == PBIO_MOTOR_WAIT_COMPLETION) {
+        pbio_encmotor_get_angle(port, stallpoint);
+    };
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+    pbio_error_t err = make_motor_trajectory(port, RUN_ANGLE, speed, angle, after_stop);
+    if (err != PBIO_SUCCESS){
+        return err;
+    }
+    wait_for_completion(port, wait);
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+    pbio_error_t err = make_motor_trajectory(port, RUN_TARGET, speed, target, after_stop);
+    if (err != PBIO_SUCCESS){
+        return err;
+    }
+    wait_for_completion(port, wait);
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_encmotor_track_target(pbio_port_t port, float_t target){
+    return PBIO_ERROR_NOT_IMPLEMENTED;
 }
