@@ -1,6 +1,7 @@
 
 #include <string.h>
 
+#include <pbdrv/battery.h>
 #include <pbdrv/config.h>
 #include <pbdrv/light.h>
 #include <pbdrv/motor.h>
@@ -11,12 +12,41 @@
 
 #include "stm32f070xb.h"
 
+typedef enum {
+    LED_STATUS_BUTTON_PRESSED   = 1 << 0,
+    LED_STATUS_BATTERY_LOW      = 1 << 1,
+} led_status_flags_t;
+
 // Bootloader reads this address to know if firmware loader should run
 uint32_t bootloader_magic_addr __attribute__((section (".magic")));
 #define BOOTLOADER_MAGIC_VALUE  0xAAAAAAAA
 
+// period over which the battery voltage is averaged (in milliseconds)
+#define BATTERY_PERIOD_MS       2500
+
+#define BATTERY_OK_MV           6000    // 1.0V per cell
+#define BATTERY_LOW_MV          5400    // 0.9V per cell
+#define BATTERY_CRITICAL_MV     4800    // 0.8V per cell
+
+// Bitmask of status indicators
+led_status_flags_t led_status_flags;
+
+// the previous timestamp from when _pbsys_poll() was called
+static uint32_t prev_poll_time;
+
+// values for keeping track of how long button has been pressed
 static bool button_pressed;
 static uint32_t button_press_start_time;
+
+// the battery voltage averaged over BATTERY_PERIOD_MS
+uint16_t avg_battery_voltage;
+
+void _pbsys_init(void) {
+    uint16_t battery_voltage;
+
+    pbdrv_battery_get_voltage_now(PBIO_PORT_SELF, &battery_voltage);
+    avg_battery_voltage = battery_voltage;
+}
 
 void pbsys_prepare_user_program(void) {
     _pbio_light_set_user_mode(true);
@@ -64,12 +94,16 @@ void pbsys_power_off(void) {
 
 void _pbsys_poll(uint32_t now) {
     pbio_button_flags_t btn;
+    uint32_t poll_interval;
+    uint16_t battery_voltage;
+
+    poll_interval = now - prev_poll_time;
+    prev_poll_time = now;
 
     pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
 
     if (btn & PBIO_BUTTON_CENTER) {
         if (button_pressed) {
-            // TODO: blink light like LEGO firmware
 
             // if the button is held down for 5 seconds, power off
             if (now - button_press_start_time > 5000) {
@@ -83,12 +117,30 @@ void _pbsys_poll(uint32_t now) {
         else {
             button_press_start_time = now;
             button_pressed = true;
+            led_status_flags |= LED_STATUS_BUTTON_PRESSED;
         }
     }
     else {
         button_pressed = false;
+        led_status_flags &= ~LED_STATUS_BUTTON_PRESSED;
     }
-    // TODO monitor for low battery
+
+    pbdrv_battery_get_voltage_now(PBIO_PORT_SELF, &battery_voltage);
+
+    avg_battery_voltage = (avg_battery_voltage * (BATTERY_PERIOD_MS - poll_interval)
+        + battery_voltage * poll_interval) / BATTERY_PERIOD_MS;
+
+    if (avg_battery_voltage <= BATTERY_CRITICAL_MV) {
+        // don't want to damage rechargeable batteries
+        pbsys_power_off();
+    }
+
+    if (avg_battery_voltage <= BATTERY_LOW_MV) {
+        led_status_flags |= LED_STATUS_BATTERY_LOW;
+    }
+    else if (avg_battery_voltage >= BATTERY_OK_MV) {
+        led_status_flags &= ~LED_STATUS_BATTERY_LOW;
+    }
 }
 
 // this seem to be missing from the header file

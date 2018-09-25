@@ -27,6 +27,7 @@ void pbio_init(void) {
     _pbdrv_light_init();
     _pbdrv_ioport_init();
     _pbdrv_motor_init();
+    _pbsys_init();
 }
 
 /**

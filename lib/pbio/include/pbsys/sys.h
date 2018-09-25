@@ -44,6 +44,11 @@ void pbsys_power_off(void);
 /** @cond INTERNAL */
 
 /**
+ * Initialize system.
+ */
+void _pbsys_init(void);
+
+/**
  * Checks for pending system events, such as low battery.
  */
 void _pbsys_poll(uint32_t now);
@@ -55,6 +60,7 @@ void _pbsys_poll(uint32_t now);
 static inline void pbsys_reset(void) { }
 static inline void pbsys_reboot(bool) { }
 static inline void pbsys_power_off(void) { }
+static inline void _pbsys_init(void) { }
 static inline void _pbsys_poll(void) { }
 
 #endif
