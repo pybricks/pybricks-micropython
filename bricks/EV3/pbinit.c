@@ -37,10 +37,6 @@ static void wait_period(struct periodic_info *info)
 // Flag that indicates whether we are busy stopping the thread
 volatile bool stopping_thread = false;
 
-void fake_pbio_poll(){
-    printf("T\n");
-}
-
 // The background thread that keeps firing the task handler
 static void *task_caller(void *arg)
 {
@@ -48,9 +44,9 @@ static void *task_caller(void *arg)
     configure_timer_thread(PERIOD_MS, &info);
     while (!stopping_thread) {
         MP_THREAD_GIL_ENTER();
-        fake_pbio_poll();
+        _pbio_motorcontrol_poll(); // TODO: use the actual pbio_poll instead
         MP_THREAD_GIL_EXIT();
-        wait_period(&info);
+        wait_period(&info); // TODO: use pbio_poll approach (early return if called too often) instead of waiting here
     }
     // Signal that shutdown is complete
     stopping_thread = false;

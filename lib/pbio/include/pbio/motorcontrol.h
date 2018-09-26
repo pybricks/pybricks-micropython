@@ -48,7 +48,7 @@ pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t t
 
 pbio_error_t pbio_encmotor_track_target(pbio_port_t port, float_t target);
 
-void motor_control_update();
+void _pbio_motorcontrol_poll();
 
 /** @}*/
 

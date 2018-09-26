@@ -40,11 +40,11 @@ typedef enum {
  * Motor control active state
  */
 typedef enum {
-    PBIO_MOTOR_CONTROL_INACTIVE,/**< Motor is coasting, braking, or set to a duty value by the user */
-    PBIO_MOTOR_CONTROL_ACTIVE,  /**< Firmware repeatedly configures the duty cycle to control motor speed and position */
+    PBIO_MOTOR_CONTROL_PASSIVE, /**< Motor is coasting, braking, or set to a duty value by the user. */
+    PBIO_MOTOR_CONTROL_RUNNING, /**< Motor busy executing command: Firmware repeatedly sets duty cycle to control motor speed and position for a desired trajectory*/
+    PBIO_MOTOR_CONTROL_HOLDING, /**< Motor is holding after completing meneuver: Firmware repeatedly sets duty cycle to keep constant position and zero speed */
 } pbio_motor_control_active_t;
 
-// TODO: Technically this variable should be atomic but that will be phased out...
 pbio_motor_control_active_t motor_control_active[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 /**
