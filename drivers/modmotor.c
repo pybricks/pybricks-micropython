@@ -1,4 +1,5 @@
 #include <modmotor.h>
+#include "mphalport.h"
 
 /*
 DCMotor
@@ -21,6 +22,15 @@ DCMotor
             direction {const} -- DIR_NORMAL or DIR_INVERTED (default: {DIR_NORMAL})
         """
 */
+
+// Wait for maneuver to complete
+void wait_for_completion(pbio_port_t port, pbio_error_t error, pbio_motor_wait_t wait){
+    if (wait == PBIO_MOTOR_WAIT_COMPLETION && error == PBIO_SUCCESS) {
+        while(motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_RUNNING) {
+            mp_hal_delay_ms(10);
+        }
+    };
+}
 
 mp_obj_t motor_DCMotor_make_new(const mp_obj_type_id_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     mp_arg_check_num(n_args, n_kw, 1, 2, false);
@@ -290,8 +300,9 @@ EncodedMotor
 */
 STATIC mp_obj_t motor_EncodedMotor_stop(size_t n_args, const mp_obj_t *args){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    pbio_error_t err = pbio_encmotor_stop(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]));
+    pbio_error_t err = pbio_encmotor_stop(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]));
     pb_raise_pbio_error(err);
+    wait_for_completion(self->port, err, mp_obj_get_int(args[3]));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_stop_obj, 4, 4, motor_EncodedMotor_stop);
@@ -310,8 +321,9 @@ EncodedMotor
 */
 STATIC mp_obj_t motor_EncodedMotor_run_time(size_t n_args, const mp_obj_t *args){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
-    pbio_error_t err = pbio_encmotor_run_time(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]), mp_obj_get_int(args[4]));
+    pbio_error_t err = pbio_encmotor_run_time(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]));
     pb_raise_pbio_error(err);
+    wait_for_completion(self->port, err, mp_obj_get_int(args[4]));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_run_time_obj, 5, 5, motor_EncodedMotor_run_time);
@@ -331,11 +343,13 @@ EncodedMotor
 */
 STATIC mp_obj_t motor_EncodedMotor_run_stalled(size_t n_args, const mp_obj_t *args){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
-    float_t stall_point;
     pbio_motor_wait_t wait = mp_obj_get_int(args[3]);
-    pbio_error_t err = pbio_encmotor_run_stalled(self->port, mp_obj_get_float(args[1]), &stall_point, mp_obj_get_int(args[2]), wait);
+    pbio_error_t err = pbio_encmotor_run_stalled(self->port, mp_obj_get_float(args[1]), mp_obj_get_int(args[2]));
     pb_raise_pbio_error(err);
+    wait_for_completion(self->port, err, wait);
     if (wait == PBIO_MOTOR_WAIT_COMPLETION) {
+        float_t stall_point;
+        pbio_encmotor_get_angle(self->port, &stall_point);
         return mp_obj_new_float(stall_point);
     }
     else{
@@ -358,7 +372,8 @@ EncodedMotor
 */
 STATIC mp_obj_t motor_EncodedMotor_run_angle(size_t n_args, const mp_obj_t *args){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
-    pbio_error_t err = pbio_encmotor_run_angle(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]), mp_obj_get_int(args[4]));
+    pbio_error_t err = pbio_encmotor_run_angle(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]));
+    wait_for_completion(self->port, err, mp_obj_get_int(args[4]));
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
@@ -379,7 +394,8 @@ EncodedMotor
 */
 STATIC mp_obj_t motor_EncodedMotor_run_target(size_t n_args, const mp_obj_t *args){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
-    pbio_error_t err = pbio_encmotor_run_target(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]), mp_obj_get_int(args[4]));
+    pbio_error_t err = pbio_encmotor_run_target(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]));
+    wait_for_completion(self->port, err, mp_obj_get_int(args[4]));
     pb_raise_pbio_error(err);
     return mp_const_none;
 }

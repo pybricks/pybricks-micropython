@@ -139,12 +139,6 @@ void stall_clear_flag(stalled_status_t *stalled, stalled_status_t flag){
     *stalled &= ~flag;
 }
 
-// Wait for completion if requested.
-void wait_for_completion(pbio_port_t port, pbio_motor_wait_t wait){
-    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
-    // TODO: busy waiting not implemented here.
-}
-
 // Return max(-limit, min(value, limit)): Limit the magnitude of value to be equal to or less than provided limit
 float_t limit(float_t value, float_t limit){
     if (value > limit) {
@@ -692,11 +686,11 @@ pbio_error_t pbio_encmotor_run(pbio_port_t port, float_t speed){
     if (err != PBIO_SUCCESS){
         return err;
     }
-    wait_for_completion(port, PBIO_MOTOR_WAIT_NONE);
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_stop_t after_stop){
     // Get current rate to see if we're standing still already
     float_t angle_now;
     rate_t rate_now;
@@ -710,7 +704,7 @@ pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_
         if (err != PBIO_SUCCESS){
             return err;
         }
-        wait_for_completion(port, wait);
+        motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
         return PBIO_SUCCESS;
     }
     else {
@@ -735,50 +729,46 @@ pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_
                 // which automatically corrects the overshoot that is inevitable
                 // when the user requests an immediate stop.
                 make_motor_trajectory(port, RUN_TARGET, NONZERO, angle_now, after_stop);
-                wait_for_completion(port, wait);
+                motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
                 break;
         }
         return err;
     }
 }
 
-pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop){
     pbio_error_t err = make_motor_trajectory(port, RUN_TIME, speed, duration, after_stop);
     if (err != PBIO_SUCCESS){
         return err;
     }
-    wait_for_completion(port, wait);
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, float_t speed, float_t *stallpoint, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, float_t speed, pbio_motor_after_stop_t after_stop){
     pbio_error_t err = make_motor_trajectory(port, RUN_STALLED, speed, NONE, after_stop);
     if (err != PBIO_SUCCESS){
         return err;
     }
-    // TODO: Do this at module level instead
-    wait_for_completion(port, wait);
-    if (wait == PBIO_MOTOR_WAIT_COMPLETION) {
-        pbio_encmotor_get_angle(port, stallpoint);
-    };
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop){
     pbio_error_t err = make_motor_trajectory(port, RUN_ANGLE, speed, angle, after_stop);
     if (err != PBIO_SUCCESS){
         return err;
     }
-    wait_for_completion(port, wait);
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop){
     pbio_error_t err = make_motor_trajectory(port, RUN_TARGET, speed, target, after_stop);
     if (err != PBIO_SUCCESS){
         return err;
     }
-    wait_for_completion(port, wait);
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
     return PBIO_SUCCESS;
 }
 
