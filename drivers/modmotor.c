@@ -408,16 +408,6 @@ const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
 
 MP_DEFINE_CONST_DICT(motor_EncodedMotor_locals_dict, motor_EncodedMotor_locals_dict_table);
 
-const mp_obj_type_id_t motor_EncodedMotor_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_EncodedMotor,
-    .print = motor_EncodedMotor_print,
-    .make_new = motor_EncodedMotor_make_new,
-    .parent = &motor_DCMotor_type,
-    .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
-    .device_id = PBIO_ID_UNKNOWN_ENCMOTOR,
-};
-
 /*
 DCMotor Class tables
 */
@@ -435,30 +425,4 @@ const mp_obj_dict_t motor_DCMotor_locals_dict = {
         .alloc = 4,
         .table = (mp_map_elem_t*)(mp_rom_map_elem_t*)motor_EncodedMotor_locals_dict_table,
     },
-};
-
-const mp_obj_type_id_t motor_DCMotor_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_DCMotor,
-    .print = motor_DCMotor_print,
-    .make_new = motor_DCMotor_make_new,
-    .locals_dict = (mp_obj_dict_t*)&motor_DCMotor_locals_dict,
-    .device_id = PBIO_ID_UNKNOWN_DCMOTOR,
-};
-
-/*
-Motor module tables
-*/
-
-STATIC const mp_map_elem_t motor_globals_table[] = {
-    { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR__motor) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_DCMotor), (mp_obj_t)&motor_DCMotor_type},
-    { MP_OBJ_NEW_QSTR(MP_QSTR_EncodedMotor), (mp_obj_t)&motor_EncodedMotor_type},
-};
-
-STATIC MP_DEFINE_CONST_DICT (mp_module_motor_globals, motor_globals_table);
-
-const mp_obj_module_t mp_module_motor = {
-    .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_motor_globals,
 };
