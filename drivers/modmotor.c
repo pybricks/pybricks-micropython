@@ -57,21 +57,6 @@ void motor_DCMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_ki
 
 /*
 DCMotor
-    def settings(self, relative_torque_limit=100):
-        """Update the motor settings.
-        Arguments:
-            relative_torque_limit {float} -- Percentage (-100.0 to 100.0) of the maximum stationary torque that the motor is allowed to produce.
-*/
-STATIC mp_obj_t motor_DCMotor_settings(mp_obj_t self_in, mp_obj_t stall_torque_limit) {
-    motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
-    pbio_error_t err = pbio_dcmotor_set_settings(self->port, mp_obj_get_float(stall_torque_limit));
-    pb_raise_pbio_error(err);
-    return mp_const_none;
-}
-MP_DEFINE_CONST_FUN_OBJ_2(motor_DCMotor_settings_obj, motor_DCMotor_settings);
-
-/*
-DCMotor
     def duty(self, duty):
         """Set motor duty cycle.
         Arguments:
@@ -111,31 +96,6 @@ STATIC mp_obj_t motor_DCMotor_coast(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_DCMotor_coast_obj, motor_DCMotor_coast);
 
-
-/*
-DCMotor Class tables
-*/
-
-// creating the table of members
-STATIC const mp_rom_map_elem_t motor_DCMotor_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_device_id), MP_OBJ_NEW_SMALL_INT(PBIO_ID_UNKNOWN_DCMOTOR) },
-    { MP_ROM_QSTR(MP_QSTR_settings), MP_ROM_PTR(&motor_DCMotor_settings_obj) },    
-    { MP_ROM_QSTR(MP_QSTR_coast), MP_ROM_PTR(&motor_DCMotor_coast_obj) },
-    { MP_ROM_QSTR(MP_QSTR_brake), MP_ROM_PTR(&motor_DCMotor_brake_obj) },
-    { MP_ROM_QSTR(MP_QSTR_duty), MP_ROM_PTR(&motor_DCMotor_duty_obj) },
-};
-
-MP_DEFINE_CONST_DICT(motor_DCMotor_locals_dict, motor_DCMotor_locals_dict_table);
-
-// create the class-object itself
-const mp_obj_type_id_t motor_DCMotor_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_DCMotor,
-    .print = motor_DCMotor_print,
-    .make_new = motor_DCMotor_make_new,
-    .locals_dict = (mp_obj_dict_t*)&motor_DCMotor_locals_dict,
-    .device_id = PBIO_ID_UNKNOWN_DCMOTOR,
-};
 
 /*
 EncodedMotor
@@ -202,8 +162,13 @@ EncodedMotor
         [8] pid_ki {float}                  -- Integral angle control constant
         [9] pid_kd {float}                  -- Derivative angle control constant (and proportional speed control constant)
 */
-STATIC mp_obj_t motor_EncodedMotor_settings(size_t n_args, const mp_obj_t *args){
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
+STATIC mp_obj_t motor_Motor_settings(size_t n_args, const mp_obj_t *args){
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]); 
+
+    // TODO: Keyword/optional arguments
+
+    // TODO: If device is a DC motor, return an error if the user tries to set EncodedMotor settings
+
     pbio_error_t err = pbio_encmotor_set_settings(self->port, 
                                                   mp_obj_get_float(args[1]),
                                                   mp_obj_get_float(args[2]),
@@ -220,7 +185,7 @@ STATIC mp_obj_t motor_EncodedMotor_settings(size_t n_args, const mp_obj_t *args)
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_settings_obj, 12, 12, motor_EncodedMotor_settings);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_settings_obj, 12, 12, motor_Motor_settings);
 
 /*
 EncodedMotor
@@ -423,10 +388,12 @@ EncodedMotor Class tables
 */
 
 const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_device_id), MP_OBJ_NEW_SMALL_INT(PBIO_ID_UNKNOWN_ENCMOTOR) },
+    // Methods and attributes common to DCMotor and EncodedMotor
+    { MP_ROM_QSTR(MP_QSTR_settings), MP_ROM_PTR(&motor_Motor_settings_obj) },
     { MP_ROM_QSTR(MP_QSTR_coast), MP_ROM_PTR(&motor_DCMotor_coast_obj) },
     { MP_ROM_QSTR(MP_QSTR_brake), MP_ROM_PTR(&motor_DCMotor_brake_obj) },
-    { MP_ROM_QSTR(MP_QSTR_duty), MP_ROM_PTR(&motor_DCMotor_duty_obj) },    
+    { MP_ROM_QSTR(MP_QSTR_duty), MP_ROM_PTR(&motor_DCMotor_duty_obj) },
+    // Methods specific to EncodedMotor
     { MP_ROM_QSTR(MP_QSTR_angle), MP_ROM_PTR(&motor_EncodedMotor_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_speed), MP_ROM_PTR(&motor_EncodedMotor_speed_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_angle), MP_ROM_PTR(&motor_EncodedMotor_reset_angle_obj) },
@@ -437,7 +404,6 @@ const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_run_angle), MP_ROM_PTR(&motor_EncodedMotor_run_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_run_target), MP_ROM_PTR(&motor_EncodedMotor_run_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&motor_EncodedMotor_track_target_obj) },
-    { MP_ROM_QSTR(MP_QSTR_settings), MP_ROM_PTR(&motor_EncodedMotor_settings_obj) },
 };
 
 MP_DEFINE_CONST_DICT(motor_EncodedMotor_locals_dict, motor_EncodedMotor_locals_dict_table);
@@ -450,6 +416,34 @@ const mp_obj_type_id_t motor_EncodedMotor_type = {
     .parent = &motor_DCMotor_type,
     .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
     .device_id = PBIO_ID_UNKNOWN_ENCMOTOR,
+};
+
+/*
+DCMotor Class tables
+*/
+
+// Instead of using the MP_DEFINE_CONST_DICT macro directly, we modify it
+// to use a shortened version of the EncodedMotor locals dict table
+const mp_obj_dict_t motor_DCMotor_locals_dict = {
+    .base = {&mp_type_dict},
+    .map = {
+        .all_keys_are_qstrs = 1,
+        .is_fixed = 1,
+        .is_ordered = 1,
+        // Use the first 4 items from the EncodedMotor table
+        .used = 4, 
+        .alloc = 4,
+        .table = (mp_map_elem_t*)(mp_rom_map_elem_t*)motor_EncodedMotor_locals_dict_table,
+    },
+};
+
+const mp_obj_type_id_t motor_DCMotor_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_DCMotor,
+    .print = motor_DCMotor_print,
+    .make_new = motor_DCMotor_make_new,
+    .locals_dict = (mp_obj_dict_t*)&motor_DCMotor_locals_dict,
+    .device_id = PBIO_ID_UNKNOWN_DCMOTOR,
 };
 
 /*
