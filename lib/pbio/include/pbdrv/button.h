@@ -9,9 +9,13 @@
 
 #include <stdint.h>
 
+#include <pbdrv/config.h>
+
 #include <pbio/button.h>
 #include <pbio/error.h>
 #include <pbio/port.h>
+
+#if PBDRV_CONFIG_BUTTON
 
 /** @cond INTERNAL */
 
@@ -44,6 +48,17 @@ static inline void _pbdrv_button_deinit(void) { }
  *                          ::PBIO_ERROR_IO if there was an I/O error
  */
 pbio_error_t pbdrv_button_is_pressed(pbio_port_t port, pbio_button_flags_t *pressed);
-/** @}*/
+
+#else
+
+static inline void _pbdrv_button_init(void) { }
+static inline void _pbdrv_button_deinit(void) { }
+static inline pbio_error_t pbdrv_button_is_pressed(pbio_port_t port, pbio_button_flags_t *pressed) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+#endif
 
 #endif // _PBDRV_BUTTON_H_
+
+/** @}*/

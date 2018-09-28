@@ -8,7 +8,11 @@
 
 #include <stdint.h>
 
+#include <pbdrv/config.h>
+
 #include <pbio/error.h>
+
+#if PBDRV_CONFIG_ADC
 
 /** @cond INTERNAL */
 void _pbdrv_adc_init(void);
@@ -29,6 +33,17 @@ static inline void _pbdrv_adc_deinit(void) { }
  *                      was an I/O error.
  */
 pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value);
+
+#else
+
+static inline void _pbdrv_adc_init(void) { }
+static inline void _pbdrv_adc_poll(uint32_t now) { }
+static inline void _pbdrv_adc_deinit(void) { }
+static inline pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+#endif
 
 #endif /* _PBDRV_ADC_H_ */
 

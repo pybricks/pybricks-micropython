@@ -62,4 +62,39 @@
 #endif
 #endif
 
+// enable the A/DC driver
+#ifndef PBDRV_CONFIG_ADC
+#define PBDRV_CONFIG_ADC (1)
+#endif
+
+// enable the battery driver
+#ifndef PBDRV_CONFIG_BATTERY
+#define PBDRV_CONFIG_BATTERY (1)
+#endif
+
+// enable the button driver
+#ifndef PBDRV_CONFIG_BUTTON
+#define PBDRV_CONFIG_BUTTON (1)
+#endif
+
+// enable the I/O port driver
+#ifndef PBDRV_CONFIG_IOPORT
+#define PBDRV_CONFIG_IOPORT (1)
+#endif
+
+// enable the light driver
+#ifndef PBDRV_CONFIG_LIGHT
+#define PBDRV_CONFIG_LIGHT (1)
+#endif
+
+// enable the motor driver
+#ifndef PBDRV_CONFIG_MOTOR
+#define PBDRV_CONFIG_MOTOR (1)
+#endif
+
+// enable the time driver
+#ifndef PBDRV_CONFIG_TIME
+#define PBDRV_CONFIG_TIME (1)
+#endif
+
 #endif // _PBDRV_CONFIG_H_

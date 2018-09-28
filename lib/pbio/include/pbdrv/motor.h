@@ -1,4 +1,9 @@
 
+/**
+ * \addtogroup MotorDriver Motor I/O driver
+ * @{
+ */
+
 #ifndef _PBDRV_MOTOR_H_
 #define _PBDRV_MOTOR_H_
 
@@ -9,16 +14,13 @@
 #include <pbio/port.h>
 
 /**
- * \addtogroup MotorDriver Motor I/O driver
- * @{
- */
-
-/**
  * Motor constants across devices
  */
 #define PBIO_MAX_DUTY (10000)
 #define PBIO_MAX_DUTY_PCT (100.0)
 #define PBIO_DUTY_PCT_TO_ABS (PBIO_MAX_DUTY/PBIO_MAX_DUTY_PCT)
+
+#if PBDRV_CONFIG_MOTOR
 
 /** @cond INTERNAL */
 
@@ -84,6 +86,25 @@ pbio_error_t pbdrv_motor_coast(pbio_port_t port);
  */
 pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle);
 
-/** @}*/
+#else
+
+static inline void _pbdrv_motor_init(void) { }
+static inline void _pbdrv_motor_deinit(void) { }
+static inline pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+static inline pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+static inline pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+static inline pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+#endif
 
 #endif // _PBDRV_MOTOR_H_
+
+/** @}*/

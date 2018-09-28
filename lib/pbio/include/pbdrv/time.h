@@ -4,10 +4,14 @@
 
 #include <stdint.h>
 
+#include <pbdrv/config.h>
+
 /**
  * \addtogroup TimeDriver Time I/O driver
  * @{
  */
+
+#if PBDRV_CONFIG_TIME
 
 /**
  * Gets the time with units of milliseconds. The time value has no specific
@@ -38,6 +42,15 @@ void pbdrv_time_sleep_msec(uint32_t duration);
  * @param [in] duration     number of microseconds to wait before returning
  */
 void pbdrv_time_delay_usec(uint32_t duration);
+
+#else
+
+static inline uint32_t pbdrv_time_get_msec() { return 0; }
+static inline uint32_t pbdrv_time_get_usec() { return 0; }
+static inline pbdrv_time_sleep_msec(uint32_t duration) { }
+static inline pbdrv_time_delay_usec(uint32_t duration) { }
+
+#endif
 
 /** @}*/
 

@@ -1,17 +1,21 @@
 
+/**
+ * \addtogroup LightDriver Light I/O driver
+ * @{
+ */
+
 #ifndef _PBDRV_LIGHT_H_
 #define _PBDRV_LIGHT_H_
 
 #include <stdint.h>
 
+#include <pbdrv/config.h>
+
 #include <pbio/error.h>
 #include <pbio/light.h>
 #include <pbio/port.h>
 
-/**
- * \addtogroup LightDriver Light I/O driver
- * @{
- */
+#if PBDRV_CONFIG_LIGHT
 
 /** @cond INTERNAL */
 
@@ -73,6 +77,20 @@ pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, uint8_t r, uint8_t g, uint8_t
 pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t color,
                                            uint8_t *r, uint8_t *g, uint8_t *b);
 
-/** @}*/
+#else
+
+static inline void _pbdrv_light_init(void) { }
+static inline void _pbdrv_light_deinit(void) { }
+static inline pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, uint8_t r, uint8_t g, uint8_t b) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+static inline pbio_error_t
+pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t color, uint8_t *r, uint8_t *g, uint8_t *b) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+#endif
 
 #endif // _PBDRV_LIGHT_H_
+
+/** @}*/
