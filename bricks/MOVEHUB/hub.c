@@ -21,18 +21,10 @@
 const mp_obj_type_id_t motor_MovehubMotor_type = {
     { &mp_type_type },
     .name = MP_QSTR_MovehubMotor,
-    .device_id = PBIO_ID_PUP_MOVEHUB_MOTOR,    
-#if PYBRICKS_HW_ENABLE_ENCODERS    
+    .device_id = PBIO_ID_PUP_MOVEHUB_MOTOR,     
     .print = motor_EncodedMotor_print,
     .make_new = motor_EncodedMotor_make_new,
-    .parent = &motor_EncodedMotor_type,
     .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
-#else
-    .print = motor_DCMotor_print,
-    .make_new = motor_DCMotor_make_new,
-    .parent = &motor_DCMotor_type,
-    .locals_dict = (mp_obj_dict_t*)&motor_DCMotor_locals_dict,
-#endif //PYBRICKS_ENABLE_ENCODERS
 };
 #endif //PYBRICKS_ENABLE_MOTORS
 
