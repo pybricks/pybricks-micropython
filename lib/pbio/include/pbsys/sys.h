@@ -15,6 +15,7 @@
 #define _PBSYS_SYS_H_
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef PBIO_CONFIG_ENABLE_SYS
 
