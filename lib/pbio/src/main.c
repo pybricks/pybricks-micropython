@@ -51,7 +51,7 @@ void pbio_poll(void) {
         _pbsys_poll(now);
         prev_slow_poll_time = now;
     }
-    _pbio_motorcontrol_poll();
+    // _pbio_motorcontrol_poll();
 }
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
