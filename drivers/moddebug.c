@@ -15,7 +15,6 @@ const mp_obj_type_id_t motor_FakeDCMotor_type = {
     .name = MP_QSTR_FakeMotor,
     .print = motor_DCMotor_print,
     .make_new = motor_DCMotor_make_new,
-    .parent = &motor_DCMotor_type,
     .locals_dict = (mp_obj_dict_t*)&motor_DCMotor_locals_dict,
     .device_id = PBIO_ID_UNKNOWN_DCMOTOR,
 };

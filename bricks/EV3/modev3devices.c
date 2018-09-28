@@ -10,7 +10,6 @@ const mp_obj_type_id_t motor_EV3MediumMotor_type = {
     .name = MP_QSTR_MediumMotor,
     .print = motor_EncodedMotor_print,
     .make_new = motor_EncodedMotor_make_new,
-    .parent = &motor_EncodedMotor_type,
     .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
     .device_id = PBIO_ID_EV3_MEDIUM_MOTOR,
 };
@@ -20,7 +19,6 @@ const mp_obj_type_id_t motor_EV3LargeMotor_type = {
     .name = MP_QSTR_LargeMotor,
     .print = motor_EncodedMotor_print,
     .make_new = motor_EncodedMotor_make_new,
-    .parent = &motor_EncodedMotor_type,
     .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
     .device_id = PBIO_ID_EV3_LARGE_MOTOR,
 };
