@@ -1,5 +1,6 @@
-#include <modmotor.h>
-#include "mphalport.h"
+#include "py/mphal.h"
+
+#include "modmotor.h"
 
 /*
 DCMotor
@@ -62,7 +63,7 @@ DCMotor
         Arguments:
             duty {float} -- Percentage from -100.0 to 100.0
 */
-STATIC mp_obj_t motor_DCMotor_duty(mp_obj_t self_in, mp_obj_t duty_cycle) {    
+STATIC mp_obj_t motor_DCMotor_duty(mp_obj_t self_in, mp_obj_t duty_cycle) {
     motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_error_t err = pbio_dcmotor_set_duty_cycle(self->port, mp_obj_get_float(duty_cycle));
     pb_raise_pbio_error(err);
@@ -76,7 +77,7 @@ DCMotor
         """Stop by setting duty cycle to 0."""
 */
 STATIC mp_obj_t motor_DCMotor_brake(mp_obj_t self_in) {
-    motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
+    motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_error_t err = pbio_dcmotor_brake(self->port);
     pb_raise_pbio_error(err);
     return mp_const_none;
@@ -89,7 +90,7 @@ DCMotor
         """Coast the motor."""
 */
 STATIC mp_obj_t motor_DCMotor_coast(mp_obj_t self_in) {
-    motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
+    motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_error_t err = pbio_dcmotor_coast(self->port);
     pb_raise_pbio_error(err);
     return mp_const_none;
@@ -125,7 +126,7 @@ mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_id_t *type, size_t n_args
     mp_arg_check_num(n_args, n_kw, 1, 3, false);
     motor_EncodedMotor_obj_t *self = m_new_obj(motor_EncodedMotor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
-    self->port = mp_obj_get_int(args[0]);    
+    self->port = mp_obj_get_int(args[0]);
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     float_t gear_ratio = (n_args >= 3) ? mp_obj_get_float(args[2]): 1.0;
     pbio_error_t err = pbio_encmotor_setup(self->port, type->device_id, direction, gear_ratio);
@@ -163,13 +164,13 @@ EncodedMotor
         [9] pid_kd {float}                  -- Derivative angle control constant (and proportional speed control constant)
 */
 STATIC mp_obj_t motor_Motor_settings(size_t n_args, const mp_obj_t *args){
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]); 
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
 
     // TODO: Keyword/optional arguments
 
     // TODO: If device is a DC motor, return an error if the user tries to set EncodedMotor settings
 
-    pbio_error_t err = pbio_encmotor_set_settings(self->port, 
+    pbio_error_t err = pbio_encmotor_set_settings(self->port,
                                                   mp_obj_get_float(args[1]),
                                                   mp_obj_get_float(args[2]),
                                                   mp_obj_get_float(args[3]),
@@ -196,7 +197,7 @@ EncodedMotor
         """
 */
 STATIC mp_obj_t motor_EncodedMotor_angle(mp_obj_t self_in) {
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     float_t angle;
     pbio_error_t err = pbio_encmotor_get_angle(self->port, &angle);
     pb_raise_pbio_error(err);
@@ -209,10 +210,10 @@ EncodedMotor
     def reset_angle(self, reset_angle):
         """Reset the angle of the motor/mechanism (degrees).
         Arguments:
-            reset_angle {const} -- Value to which the rotation sensor angle should be reset (default: {0})        
+            reset_angle {const} -- Value to which the rotation sensor angle should be reset (default: {0})
 */
 STATIC mp_obj_t motor_EncodedMotor_reset_angle(size_t n_args, const mp_obj_t *args){
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     float_t reset_angle = n_args > 1 ? mp_obj_get_float(args[1]) : 0.0;
     pbio_error_t err = pbio_encmotor_reset_angle(self->port, reset_angle);
     pb_raise_pbio_error(err);
@@ -229,7 +230,7 @@ EncodedMotor
         """
 */
 STATIC mp_obj_t motor_EncodedMotor_speed(mp_obj_t self_in) {
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     float_t speed;
     pbio_error_t err = pbio_encmotor_get_angular_rate(self->port, &speed);
     pb_raise_pbio_error(err);
@@ -246,7 +247,7 @@ EncodedMotor
         """
 */
 STATIC mp_obj_t motor_EncodedMotor_run(mp_obj_t self_in, mp_obj_t speed) {
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);    
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_error_t err = pbio_encmotor_run(self->port, mp_obj_get_float(speed));
     pb_raise_pbio_error(err);
     return mp_const_none;
@@ -285,7 +286,7 @@ EncodedMotor
         """
 */
 STATIC mp_obj_t motor_EncodedMotor_run_time(size_t n_args, const mp_obj_t *args){
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     pbio_error_t err = pbio_encmotor_run_time(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]));
     pb_raise_pbio_error(err);
     wait_for_completion(self->port, err, mp_obj_get_int(args[4]));
@@ -307,7 +308,7 @@ EncodedMotor
         """
 */
 STATIC mp_obj_t motor_EncodedMotor_run_stalled(size_t n_args, const mp_obj_t *args){
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     pbio_motor_wait_t wait = mp_obj_get_int(args[3]);
     pbio_error_t err = pbio_encmotor_run_stalled(self->port, mp_obj_get_float(args[1]), mp_obj_get_int(args[2]));
     pb_raise_pbio_error(err);
@@ -336,7 +337,7 @@ EncodedMotor
         """
 */
 STATIC mp_obj_t motor_EncodedMotor_run_angle(size_t n_args, const mp_obj_t *args){
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     pbio_error_t err = pbio_encmotor_run_angle(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]));
     wait_for_completion(self->port, err, mp_obj_get_int(args[4]));
     pb_raise_pbio_error(err);
@@ -358,7 +359,7 @@ EncodedMotor
 
 */
 STATIC mp_obj_t motor_EncodedMotor_run_target(size_t n_args, const mp_obj_t *args){
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);    
+    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     pbio_error_t err = pbio_encmotor_run_target(self->port, mp_obj_get_float(args[1]), mp_obj_get_float(args[2]), mp_obj_get_int(args[3]));
     wait_for_completion(self->port, err, mp_obj_get_int(args[4]));
     pb_raise_pbio_error(err);
@@ -395,7 +396,7 @@ const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_DIR_INVERTED), MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_DIR_INVERTED) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_STOP_COAST),   MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_COAST  ) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_STOP_BRAKE),   MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_BRAKE  ) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_STOP_HOLD),    MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_HOLD   ) },     
+    { MP_OBJ_NEW_QSTR(MP_QSTR_STOP_HOLD),    MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_HOLD   ) },
     //
     // Methods common to DCMotor and EncodedMotor
     //
@@ -433,7 +434,7 @@ const mp_obj_dict_t motor_DCMotor_locals_dict = {
         .is_fixed = 1,
         .is_ordered = 1,
         // Use the first 4 items from the EncodedMotor table
-        .used = 4, 
+        .used = 4,
         .alloc = 4,
         .table = (mp_map_elem_t*)(mp_rom_map_elem_t*)motor_EncodedMotor_locals_dict_table,
     },
