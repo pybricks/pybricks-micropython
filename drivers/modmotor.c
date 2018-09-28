@@ -25,7 +25,7 @@ DCMotor
 */
 
 // Wait for maneuver to complete
-void wait_for_completion(pbio_port_t port, pbio_error_t error, pbio_motor_wait_t wait){
+STATIC void wait_for_completion(pbio_port_t port, pbio_error_t error, pbio_motor_wait_t wait) {
     if (wait == PBIO_MOTOR_WAIT_COMPLETION && error == PBIO_SUCCESS) {
         while(motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_RUNNING) {
             mp_hal_delay_ms(10);
@@ -388,7 +388,7 @@ MP_DEFINE_CONST_FUN_OBJ_2(motor_EncodedMotor_track_target_obj, motor_EncodedMoto
 EncodedMotor Class tables
 */
 
-const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
+STATIC const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
     //
     // Attributes common to DCMotor and EncodedMotor
     //
