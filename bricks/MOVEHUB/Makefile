@@ -64,6 +64,7 @@ PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	lib/pbio/drv/move_hub/time.c \
 	lib/pbio/src/dcmotor.c \
 	lib/pbio/src/encmotor.c \
+	lib/pbio/src/motorcontrol.c \
 	lib/pbio/src/light.c \
 	lib/pbio/src/main.c \
 	lib/pbio/sys/move_hub/sys.c \

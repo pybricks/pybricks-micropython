@@ -12,6 +12,7 @@
 #include <pbdrv/motor.h>
 #include <pbdrv/time.h>
 #include <pbsys/sys.h>
+#include <pbio/motorcontrol.h>
 
 static uint32_t prev_fast_poll_time;
 static uint32_t prev_slow_poll_time;
@@ -50,6 +51,7 @@ void pbio_poll(void) {
         _pbsys_poll(now);
         prev_slow_poll_time = now;
     }
+    _pbio_motorcontrol_poll();
 }
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
