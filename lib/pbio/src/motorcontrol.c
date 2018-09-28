@@ -318,14 +318,14 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
         // There is not enough angle for the in and out phase
         if (abs(_rate_start) < abs(_rate_target)) {
             // Limit _rate_target to make in-and-out intersect because _rate_start is low enough
-            _rate_target = signval(_rate_target, sqrt(abs(_accl_start*_accl_end/(_accl_end-_accl_start)*(2*_count_end-2*_count_start+_rate_start*_rate_start/_accl_start))));
+            _rate_target = signval(_rate_target, sqrtf(abs(_accl_start*_accl_end/(_accl_end-_accl_start)*(2*_count_end-2*_count_start+_rate_start*_rate_start/_accl_start))));
         }
         else {
             // Let us disable the in-phase, and check if there is sufficient angle for out-phase
             _accl_start = signval(_accl_start, max_abs_accl);
             if (abs(_count_end-_count_start) < abs(_rate_target*_rate_target/_accl_end/2)) {
                 // Limit _rate_target as well to at least make the out-phase feasible
-                _rate_target = signval(_rate_target, sqrt(2*_accl_end*(_count_start-_count_end)));
+                _rate_target = signval(_rate_target, sqrtf(2*_accl_end*(_count_start-_count_end)));
             }
             // Limit the start rate by the reduced target rate
             _rate_start = _rate_target;
