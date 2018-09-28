@@ -1,11 +1,11 @@
 
 /**
  * \addtogroup Sys System-level Functions
- * 
+ *
  * This module provides platform-specific system-level functions for platforms
  * where the Pybricks I/O library also acts as the operating system for a
  * programmable brick.
- * 
+ *
  * These functions have no effect on systems with an independant operating
  * system, e.g. ev3dev on LEGO MINDSTORMS EV3.
  * @{
@@ -35,12 +35,12 @@ void pbsys_unprepare_user_program(void);
  * @param fw_update     If *true*, system will reboot into firmware update mode,
  *                      otherise it will reboot normally.
  */
-void pbsys_reboot(bool fw_update);
+void pbsys_reboot(bool fw_update) __attribute__((noreturn));
 
 /**
  * Powers off the brick. This function never returns.
  */
-void pbsys_power_off(void);
+void pbsys_power_off(void) __attribute__((noreturn));
 
 /** @cond INTERNAL */
 
