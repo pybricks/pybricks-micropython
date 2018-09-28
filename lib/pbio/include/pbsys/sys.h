@@ -59,10 +59,10 @@ void _pbsys_poll(uint32_t now);
 #else
 
 static inline void pbsys_reset(void) { }
-static inline void pbsys_reboot(bool) { }
+static inline void pbsys_reboot(bool fw_update) { }
 static inline void pbsys_power_off(void) { }
 static inline void _pbsys_init(void) { }
-static inline void _pbsys_poll(void) { }
+static inline void _pbsys_poll(uint32_t now) { }
 
 #endif
 
