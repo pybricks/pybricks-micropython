@@ -1,5 +1,4 @@
 #include <pbio/motorcontrol.h>
-#include <stdatomic.h>
 #include <pbdrv/time.h>
 #include <stdlib.h>
 #include <math.h>
@@ -123,20 +122,6 @@ pbio_motor_control_status_t motor_control_status[] = {
     }
 };
 
-// Atomic flag, one for each motor, that is set when the trajectory structure is currently being read or being written. It is clear when it is free.
-volatile atomic_flag claimed_trajectory[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
-    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
-        false
-    }
-};
-
-// Atomic flag that is set when the motor is currently busy with a run command
-volatile atomic_flag motor_busy[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
-    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
-        false
-    }
-};
-
 // If the controller reach the maximum duty cycle value, this shortcut sets the stalled flag when the speed is below the stall limit.
 void stall_set_flag_if_slow(stalled_status_t *stalled, rate_t rate_now, rate_t rate_limit, stalled_status_t flag){
     if (abs(rate_now) <= rate_limit) {
@@ -152,23 +137,6 @@ void stall_set_flag_if_slow(stalled_status_t *stalled, rate_t rate_now, rate_t r
 // Clear the specified stall flag
 void stall_clear_flag(stalled_status_t *stalled, stalled_status_t flag){
     *stalled &= ~flag;
-}
-
-// Wait for completion if requested.
-void wait_for_completion(pbio_port_t port, pbio_motor_wait_t wait){
-    // Set the flags that the motor is running and that control is active
-    while(!atomic_flag_test_and_set(&motor_busy[PORT_TO_IDX(port)]));
-    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_ACTIVE;
-    // Check if we want to pause until motion is complete
-    if (wait == PBIO_MOTOR_WAIT_COMPLETION) {
-        // Wait until the running flag is cleared by the control task
-        while(atomic_flag_test_and_set(&motor_busy[PORT_TO_IDX(port)]) && motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_ACTIVE){
-            // Sleep to give the motor control task time and clear the flag when done
-            pbdrv_time_sleep_msec(1);
-        }
-        // In the process of reading above, the flag was set, so we need to clear it
-        atomic_flag_clear(&motor_busy[PORT_TO_IDX(port)]);
-}
 }
 
 // Return max(-limit, min(value, limit)): Limit the magnitude of value to be equal to or less than provided limit
@@ -281,7 +249,6 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
         (action == STOP && rate_start == 0)
        )
     {
-        while(atomic_flag_test_and_set(&claimed_trajectory[PORT_TO_IDX(port)])); // Remove once we remove multithreading
         traject->time_start = time_start;
         traject->time_in = time_start;
         traject->time_out = time_start;
@@ -296,7 +263,6 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
         traject->accl_end = 0;
         traject->action = action;
         traject->after_stop = after_stop;
-        atomic_flag_clear(&claimed_trajectory[PORT_TO_IDX(port)]);  // Remove once we remove multithreading
         return PBIO_SUCCESS;
     }
 
@@ -395,7 +361,6 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
     }
 
     // Convert temporary float results back to integers
-    while(atomic_flag_test_and_set(&claimed_trajectory[PORT_TO_IDX(port)])); // Remove once we remove multithreading
     traject->time_start = _time_start * US_PER_SECOND;
     traject->time_in = _time_in * US_PER_SECOND;
     traject->time_out = _time_out * US_PER_SECOND;
@@ -410,7 +375,6 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
     traject->accl_end = _accl_end;
     traject->action = action;
     traject->after_stop = after_stop;
-    atomic_flag_clear(&claimed_trajectory[PORT_TO_IDX(port)]);  // Remove once we remove multithreading
     return PBIO_SUCCESS;
 }
 
@@ -447,7 +411,7 @@ void control_update(pbio_port_t port){
     duty_t max_duty = dcmotor_settings[PORT_TO_IDX(port)].max_stall_duty;
 
     // Return immediately if control is not active; then there is nothing we need to do
-    if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_INACTIVE) { // TODO: Should technically be atomic read, but atomics will be phased out...
+    if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_PASSIVE) {
         return;
     }
 
@@ -689,16 +653,17 @@ void control_update(pbio_port_t port){
             if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
                 // In position based control, holding just means that we continue the position control loop without changes
                 pbio_dcmotor_set_duty_cycle_int(port, duty);
+
+                // Altough we keep holding, the maneuver is completed
+                motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_HOLDING;
             }
             // RUN_TIME || RUN_STALLED || STOP
             else {
                 // When ending a time based control maneuver with hold, we trigger a new position based maneuver with zero degrees
                 pbio_dcmotor_set_duty_cycle_int(port, 0);
-                atomic_flag_clear(&claimed_trajectory[PORT_TO_IDX(port)]);
                 make_motor_trajectory(port, RUN_TARGET, NONZERO, count_now, PBIO_MOTOR_STOP_HOLD);
             }
         }
-        atomic_flag_clear(&motor_busy[PORT_TO_IDX(port)]);
     }
     // If we are not standing still at the target yet, actuate with the calculated signal
     else {
@@ -707,16 +672,10 @@ void control_update(pbio_port_t port){
 }
 
 // Service all the motors by calling this function at approximately constant intervals.
-void motor_control_update(){
+void _pbio_motorcontrol_poll(){
     // Do the update for each motor
     for (pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++){
-        // If we have read access for this motor, do the update
-        if (!atomic_flag_test_and_set(&claimed_trajectory[PORT_TO_IDX(port)])) { // Remove once we remove multithreading
-            // Do the control update for this motor
-            control_update(port);
-            // Release claim on control task
-            atomic_flag_clear(&claimed_trajectory[PORT_TO_IDX(port)]); // Remove once we remove multithreading
-        }
+        control_update(port);
     }
 }
 
@@ -727,11 +686,11 @@ pbio_error_t pbio_encmotor_run(pbio_port_t port, float_t speed){
     if (err != PBIO_SUCCESS){
         return err;
     }
-    wait_for_completion(port, PBIO_MOTOR_WAIT_NONE);
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_stop_t after_stop){
     // Get current rate to see if we're standing still already
     float_t angle_now;
     rate_t rate_now;
@@ -745,7 +704,7 @@ pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_
         if (err != PBIO_SUCCESS){
             return err;
         }
-        wait_for_completion(port, wait);
+        motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
         return PBIO_SUCCESS;
     }
     else {
@@ -770,49 +729,46 @@ pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_
                 // which automatically corrects the overshoot that is inevitable
                 // when the user requests an immediate stop.
                 make_motor_trajectory(port, RUN_TARGET, NONZERO, angle_now, after_stop);
-                wait_for_completion(port, wait);
+                motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
                 break;
         }
         return err;
     }
 }
 
-pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop){
     pbio_error_t err = make_motor_trajectory(port, RUN_TIME, speed, duration, after_stop);
     if (err != PBIO_SUCCESS){
         return err;
     }
-    wait_for_completion(port, wait);
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, float_t speed, float_t *stallpoint, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, float_t speed, pbio_motor_after_stop_t after_stop){
     pbio_error_t err = make_motor_trajectory(port, RUN_STALLED, speed, NONE, after_stop);
     if (err != PBIO_SUCCESS){
         return err;
     }
-    wait_for_completion(port, wait);
-    if (wait == PBIO_MOTOR_WAIT_COMPLETION) {
-        pbio_encmotor_get_angle(port, stallpoint);
-    };
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop){
     pbio_error_t err = make_motor_trajectory(port, RUN_ANGLE, speed, angle, after_stop);
     if (err != PBIO_SUCCESS){
         return err;
     }
-    wait_for_completion(port, wait);
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop, pbio_motor_wait_t wait){
+pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop){
     pbio_error_t err = make_motor_trajectory(port, RUN_TARGET, speed, target, after_stop);
     if (err != PBIO_SUCCESS){
         return err;
     }
-    wait_for_completion(port, wait);
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
     return PBIO_SUCCESS;
 }
 
