@@ -388,12 +388,24 @@ EncodedMotor Class tables
 */
 
 const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
-    // Methods and attributes common to DCMotor and EncodedMotor
+    //
+    // Attributes common to DCMotor and EncodedMotor
+    //
+    { MP_OBJ_NEW_QSTR(MP_QSTR_DIR_NORMAL),   MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_DIR_NORMAL  ) },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_DIR_INVERTED), MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_DIR_INVERTED) },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_STOP_COAST),   MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_COAST  ) },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_STOP_BRAKE),   MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_BRAKE  ) },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_STOP_HOLD),    MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_HOLD   ) },     
+    //
+    // Methods common to DCMotor and EncodedMotor
+    //
     { MP_ROM_QSTR(MP_QSTR_settings), MP_ROM_PTR(&motor_Motor_settings_obj) },
     { MP_ROM_QSTR(MP_QSTR_coast), MP_ROM_PTR(&motor_DCMotor_coast_obj) },
     { MP_ROM_QSTR(MP_QSTR_brake), MP_ROM_PTR(&motor_DCMotor_brake_obj) },
     { MP_ROM_QSTR(MP_QSTR_duty), MP_ROM_PTR(&motor_DCMotor_duty_obj) },
+    //
     // Methods specific to EncodedMotor
+    //
     { MP_ROM_QSTR(MP_QSTR_angle), MP_ROM_PTR(&motor_EncodedMotor_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_speed), MP_ROM_PTR(&motor_EncodedMotor_speed_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_angle), MP_ROM_PTR(&motor_EncodedMotor_reset_angle_obj) },
