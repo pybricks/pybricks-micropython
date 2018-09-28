@@ -51,28 +51,31 @@ SRC_C = \
 	lib/libc/string0.c \
 	lib/mp-readline/readline.c \
 
-# Pybricks drivers and modules
-PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
-	drivers/modmotor.c \
-	drivers/pberror.c \
-	lib/pbio/drv/move_hub/adc.c \
-	lib/pbio/drv/move_hub/battery.c \
-	lib/pbio/drv/move_hub/button.c \
-	lib/pbio/drv/move_hub/light.c \
-	lib/pbio/drv/move_hub/ioport.c \
-	lib/pbio/drv/move_hub/motor.c \
-	lib/pbio/drv/move_hub/time.c \
-	lib/pbio/src/dcmotor.c \
-	lib/pbio/src/encmotor.c \
-	lib/pbio/src/motorcontrol.c \
-	lib/pbio/src/light.c \
-	lib/pbio/src/main.c \
-	lib/pbio/sys/move_hub/sys.c \
-	)	
-
 SRC_S = \
 	ports/pybricks/lib/pbio/sys/move_hub/startup_stm32f070xb.s \
 	ports/stm32/gchelper_m0.s \
+
+# Pybricks modules
+PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
+	drivers/modmotor.c \
+	drivers/pberror.c \
+	)
+
+PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
+	drv/move_hub/adc.c \
+	drv/move_hub/battery.c \
+	drv/move_hub/button.c \
+	drv/move_hub/light.c \
+	drv/move_hub/ioport.c \
+	drv/move_hub/motor.c \
+	drv/move_hub/time.c \
+	src/dcmotor.c \
+	src/encmotor.c \
+	src/motorcontrol.c \
+	src/light.c \
+	src/main.c \
+	sys/move_hub/sys.c \
+	)
 
 SRC_LIBM = $(addprefix lib/libm/,\
 	math.c \
@@ -108,8 +111,9 @@ FROZEN_C = \
 	$(BUILD)/_frozen_mpy.c \
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o) $(FROZEN_C:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_DRIVERS_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 
 # List of sources for qstr extraction
 SRC_QSTR += $(SRC_C) $(PYBRICKS_DRIVERS_SRC_C)
