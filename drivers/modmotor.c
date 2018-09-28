@@ -27,7 +27,7 @@ DCMotor
 void wait_for_completion(pbio_port_t port, pbio_error_t error, pbio_motor_wait_t wait){
     if (wait == PBIO_MOTOR_WAIT_COMPLETION && error == PBIO_SUCCESS) {
         while(motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_RUNNING) {
-            mp_hal_delay_ms(10);
+            mp_hal_delay_us(10000);
         }
     };
 }
