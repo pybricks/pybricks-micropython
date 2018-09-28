@@ -9,7 +9,7 @@
 #define MICROPY_ENABLE_COMPILER         (0)
 
 // Set to (1) to enable motors
-#define PYBRICKS_HW_ENABLE_MOTORS       (0)
+#define PYBRICKS_HW_ENABLE_MOTORS       (1)
 
 extern const struct _mp_obj_module_t mp_module_hub;
 
