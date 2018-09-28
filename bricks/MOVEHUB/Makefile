@@ -3,6 +3,10 @@ include ../../../../py/mkenv.mk
 # qstr definitions (must come before including py.mk)
 QSTR_GLOBAL_DEPENDENCIES = mpconfigbrick.h
 
+# directory containing scripts to be frozen as bytecode
+FROZEN_MPY_DIR ?= modules
+FROZEN_MPY_TOOL_ARGS = -mlongint-impl=none
+
 # include py core make definitions
 include $(TOP)/py/py.mk
 
@@ -33,6 +37,13 @@ CFLAGS += -O0 -ggdb
 else
 CFLAGS += -Os -DNDEBUG
 CFLAGS += -fdata-sections -ffunction-sections
+endif
+
+ifneq ($(FROZEN_MPY_DIR),)
+# To use frozen bytecode, put your .py files in a subdirectory (eg frozen/) and
+# then invoke make with FROZEN_MPY_DIR=frozen (be sure to build from scratch).
+CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
+CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
 endif
 
 LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
@@ -106,11 +117,7 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	ef_sqrt.c \
 	)
 
-# TODO: it looks like micropython has built-in makefiles for handling frozen files
-FROZEN_C = \
-	$(BUILD)/_frozen_mpy.c \
-
-OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o) $(FROZEN_C:.c=.o))
+OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_DRIVERS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
@@ -121,10 +128,6 @@ SRC_QSTR += $(SRC_C) $(PYBRICKS_DRIVERS_SRC_C)
 SRC_QSTR_AUTO_DEPS +=
 
 all: $(BUILD)/firmware.bin
-
-$(BUILD)/_frozen_mpy.c: frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
-	$(ECHO) "MISC freezing bytecode"
-	$(Q)$(TOP)/tools/mpy-tool.py -f -q $(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $< > $@
 
 $(BUILD)/firmware-no-checksum.elf: $(OBJ)
 	$(Q)$(LD) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $^ $(LIBS)
