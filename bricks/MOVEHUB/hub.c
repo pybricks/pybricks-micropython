@@ -21,7 +21,7 @@
 const mp_obj_type_id_t motor_MovehubMotor_type = {
     { &mp_type_type },
     .name = MP_QSTR_MovehubMotor,
-    .device_id = PBIO_ID_PUP_MOVEHUB_MOTOR,     
+    .device_id = PBIO_ID_PUP_MOVEHUB_MOTOR,
     .print = motor_EncodedMotor_print,
     .make_new = motor_EncodedMotor_make_new,
     .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
@@ -37,6 +37,32 @@ STATIC mp_obj_t hub_get_button(void) {
     return mp_obj_new_bool(btn & PBIO_BUTTON_CENTER);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_get_button_obj, hub_get_button);
+
+mp_obj_t hub_wait_btn_press(void) {
+    pbio_button_flags_t btn;
+
+    for (;;) {
+        pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
+        if (btn & PBIO_BUTTON_CENTER) {
+            return mp_const_none;
+        }
+        MICROPY_EVENT_POLL_HOOK
+    }
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_wait_btn_press_obj, hub_wait_btn_press);
+
+mp_obj_t hub_wait_btn_release(void) {
+    pbio_button_flags_t btn;
+
+    for (;;) {
+        pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
+        if (!(btn & PBIO_BUTTON_CENTER)) {
+            return mp_const_none;
+        }
+        MICROPY_EVENT_POLL_HOOK
+    }
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_wait_btn_release_obj, hub_wait_btn_release);
 
 STATIC mp_obj_t hub_gpios(mp_obj_t bank, mp_obj_t pin, mp_obj_t action) {
     GPIO_TypeDef *gpio;
@@ -124,7 +150,7 @@ STATIC mp_obj_t hub_set_light(mp_obj_t state) {
         pbio_light_off(PBIO_PORT_SELF);
         return mp_const_none;
     }
-    
+
     if (MP_OBJ_IS_STR(state)) {
         qstr color = mp_obj_str_get_qstr(state);
 
@@ -171,12 +197,14 @@ STATIC const mp_map_elem_t hub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_PORT_C),   MP_OBJ_NEW_SMALL_INT(PBIO_PORT_C) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_PORT_D),   MP_OBJ_NEW_SMALL_INT(PBIO_PORT_D) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_get_button), (mp_obj_t)&hub_get_button_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_wait_btn_press), (mp_obj_t)&hub_wait_btn_press_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_wait_btn_release), (mp_obj_t)&hub_wait_btn_release_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&hub_gpios_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_power_off), (mp_obj_t)&hub_power_off_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_read_adc), (mp_obj_t)&hub_read_adc_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_reboot), (mp_obj_t)&hub_reboot_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_set_light), (mp_obj_t)&hub_set_light_obj },
-#if PYBRICKS_HW_ENABLE_MOTORS    
+#if PYBRICKS_HW_ENABLE_MOTORS
     { MP_OBJ_NEW_QSTR(MP_QSTR_MovehubMotor), (mp_obj_t)&motor_MovehubMotor_type},
 #endif //PYBRICKS_HW_ENABLE_MOTORS
 };
