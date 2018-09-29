@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <pbio/button.h>
 #include <pbio/main.h>
 #include <pbsys/sys.h>
 
@@ -56,6 +57,38 @@ void mp_reader_new_file(mp_reader_t *reader, const char *filename) {
 }
 #endif
 
+#if MICROPY_ENABLE_COMPILER
+// don't wait for button press when using REPL
+#define wait_for_button_press()
+#else
+static void wait_for_button_press(void) {
+    pbio_button_flags_t btn;
+
+    mp_print_str(&mp_plat_print, "\nPress green button to start...");
+
+    for (;;) {
+        pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
+        if (btn & PBIO_BUTTON_CENTER) {
+            break;
+        }
+        pbio_poll();
+        __WFI();
+    }
+
+    for (;;) {
+        pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
+        if (!(btn & PBIO_BUTTON_CENTER)) {
+            break;
+        }
+        pbio_poll();
+        __WFI();
+    }
+
+    // add some space so user knows where their output starts
+    mp_print_str(&mp_plat_print, "\n\n");
+}
+#endif
+
 int main(int argc, char **argv) {
     int stack_dummy;
     stack_top = (char*)&stack_dummy;
@@ -70,6 +103,7 @@ int main(int argc, char **argv) {
     #endif
 
 soft_reset:
+    wait_for_button_press();
     pbsys_prepare_user_program();
 
     mp_init();
