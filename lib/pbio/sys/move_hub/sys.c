@@ -43,9 +43,14 @@ uint16_t avg_battery_voltage;
 
 void _pbsys_init(void) {
     uint16_t battery_voltage;
+    uint8_t r, g, b;
 
     pbdrv_battery_get_voltage_now(PBIO_PORT_SELF, &battery_voltage);
     avg_battery_voltage = battery_voltage;
+
+    _pbio_light_set_user_mode(false);
+    pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE, &r, &g, &b);
+    pbdrv_light_set_rgb(PBIO_PORT_SELF, r, g, b);
 }
 
 void pbsys_prepare_user_program(void) {
@@ -54,8 +59,11 @@ void pbsys_prepare_user_program(void) {
 }
 
 void pbsys_unprepare_user_program(void) {
-    pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE);
+    uint8_t r, g, b;
+
     _pbio_light_set_user_mode(false);
+    pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE, &r, &g, &b);
+    pbdrv_light_set_rgb(PBIO_PORT_SELF, r, g, b);
 
     // TODO: this should probably call the higher-level pbio_dcmotor_coast() function
     for (pbio_port_t p = PBDRV_CONFIG_FIRST_MOTOR_PORT; p <= PBDRV_CONFIG_LAST_MOTOR_PORT; p++) {
