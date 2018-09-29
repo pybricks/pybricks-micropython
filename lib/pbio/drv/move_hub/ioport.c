@@ -99,18 +99,18 @@ static const ioport_pins_t ioport_pins[NUM_IOPORT] = {
 static const dev_id_t ioport_dev_id_lookup[3][3] = {
     [DEV_ID1_GROUP_GND] = {
         [0] = DEV_ID_LPF2_POWER,
-        [1] = DEV_ID_LPF2_LIGHT2,
-        [2] = DEV_ID_LPF2_TURN,
+        [1] = DEV_ID_LPF2_TURN,
+        [2] = DEV_ID_LPF2_LIGHT2,
     },
     [DEV_ID1_GROUP_VCC] = {
         [0] = DEV_ID_LPF2_TRAIN,
-        [1] = DEV_ID_LPF2_LIGHT1,
-        [2] = DEV_ID_LPF2_LMOTOR,
+        [1] = DEV_ID_LPF2_LMOTOR,
+        [2] = DEV_ID_LPF2_LIGHT1,
     },
     [DEV_ID1_GROUP_PULL_DOWN] = {
         [0] = DEV_ID_LPF2_MMOTOR,
-        [1] = DEV_ID_LPF2_LIGHT,
-        [2] = DEV_ID_LPF2_XMOTOR,
+        [1] = DEV_ID_LPF2_XMOTOR,
+        [2] = DEV_ID_LPF2_LIGHT,
     },
 };
 
@@ -134,7 +134,7 @@ static uint8_t ioport_gpio_input(const ioport_gpio_t *gpio) {
 
 static void init_one(ioport_t port) {
     const ioport_pins_t pins = ioport_pins[port];
-    
+
     ioport_gpio_input(&pins.id1);
     ioport_gpio_input(&pins.id2);
     ioport_gpio_input(&pins.uart_buf);
