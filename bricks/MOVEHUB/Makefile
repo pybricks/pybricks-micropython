@@ -3,7 +3,7 @@ include ../../../../py/mkenv.mk
 # qstr definitions (must come before including py.mk)
 QSTR_GLOBAL_DEPENDENCIES = mpconfigbrick.h
 
-#PYBRICKS_MPY_MAIN_MODULE ?= modules/frozentest.py
+#PYBRICKS_MPY_MAIN_MODULE ?= modules/main.py
 
 # directory containing scripts to be frozen as bytecode
 FROZEN_MPY_DIR ?= modules

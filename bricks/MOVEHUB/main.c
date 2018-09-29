@@ -89,7 +89,7 @@ soft_reset:
     #if MICROPY_PERSISTENT_CODE_LOAD
     run_user_program();
     #else
-    pyexec_frozen_module("frozentest.py");
+    pyexec_frozen_module("main.py");
     #endif
     #endif
     mp_deinit();
