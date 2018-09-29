@@ -61,6 +61,11 @@
 #define MICROPY_KBD_EXCEPTION       (1)
 #define MICROPY_ENABLE_SCHEDULER    (1)
 
+// PYBRICKS_MPY_MAIN_MODULE is optionally defined in the Makefile
+#ifdef PYBRICKS_MPY_MAIN_MODULE
+#define MICROPY_PERSISTENT_CODE_LOAD (1)
+#endif
+
 
 // type definitions for the specific machine
 

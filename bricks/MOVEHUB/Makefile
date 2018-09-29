@@ -3,6 +3,8 @@ include ../../../../py/mkenv.mk
 # qstr definitions (must come before including py.mk)
 QSTR_GLOBAL_DEPENDENCIES = mpconfigbrick.h
 
+#PYBRICKS_MPY_MAIN_MODULE ?= modules/frozentest.py
+
 # directory containing scripts to be frozen as bytecode
 FROZEN_MPY_DIR ?= modules
 FROZEN_MPY_TOOL_ARGS = -mlongint-impl=none
@@ -37,6 +39,10 @@ CFLAGS += -O0 -ggdb
 else
 CFLAGS += -Os -DNDEBUG
 CFLAGS += -fdata-sections -ffunction-sections
+endif
+
+ifneq ($(PYBRICKS_MPY_MAIN_MODULE),)
+CFLAGS += -DPYBRICKS_MPY_MAIN_MODULE=MP_STRINGIFY\($(basename $(notdir $(PYBRICKS_MPY_MAIN_MODULE)))\)
 endif
 
 ifneq ($(FROZEN_MPY_DIR),)
@@ -122,6 +128,19 @@ OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_DRIVERS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 
+# Optionally append .mpy file specified by PYBRICKS_MPY_MAIN_MODULE to 2K free space after 106K firmware
+ifneq ($(PYBRICKS_MPY_MAIN_MODULE),)
+OBJ += $(BUILD)/main_mpy.o
+
+$(BUILD)/main.mpy: $(PYBRICKS_MPY_MAIN_MODULE)
+	$(Q)$(MPY_CROSS) -o $@ $(MPY_CROSS_FLAGS) $^
+
+$(BUILD)/main_mpy.o: $(BUILD)/main.mpy
+	$(Q)$(OBJCOPY) -I binary -O elf32-littlearm -B arm --rename-section .data=.mpy,alloc,load,readonly,data,contents $^ $@
+
+FIRMWARE_EXTRA_ARGS = -j .user --gap-fill=0xff
+endif
+
 # List of sources for qstr extraction
 SRC_QSTR += $(SRC_C) $(PYBRICKS_DRIVERS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in SRC_QSTR
@@ -142,7 +161,7 @@ $(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(ECHO) "BIN creating firmware file"
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $@
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $(FIRMWARE_EXTRA_ARGS) $^ $@
 	$(ECHO) "`stat --printf='%s\n' $@` bytes"
 
 

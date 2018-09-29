@@ -7,6 +7,7 @@ MEMORY
 {
     /* Flash size is 128K, bootloader resides in first 20K, last 2K seems to be reserved */
     FLASH (rx)      : ORIGIN = 0x08005000, LENGTH = 106K
+    USER_FLASH (rx) : ORIGIN = 0x0801F800, LENGTH = 2K
     RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 16K
 }
 
@@ -35,6 +36,15 @@ SECTIONS
         _etext = .;        /* define a global symbol at end of code */
         _sidata = _etext;  /* This is used by the startup in order to initialize the .data section */
     } >FLASH
+
+    .user :
+    {
+        BYTE(0)             /* In official LEGO firmware, this is where brick name is stored.
+                               It needs to be zeroed so that when the official firmware is
+                               reloaded, it will use the default name */
+
+        KEEP(*(.mpy))       /* Compiled main.mpy file */
+    } >USER_FLASH
 
     /* This section is for special needs of the Move Hub firmware - must be first section in SRAM! */
     .magic :

@@ -20,6 +20,42 @@ static char *stack_top;
 static char heap[8 * 1024];
 #endif
 
+#if MICROPY_PERSISTENT_CODE_LOAD
+static void run_user_program() {
+    nlr_buf_t nlr;
+
+    if (nlr_push(&nlr) == 0) {
+        mp_call_function_0(mp_import_name(QSTR_FROM_STR_STATIC(PYBRICKS_MPY_MAIN_MODULE),
+            mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
+        nlr_pop();
+    } else {
+        // uncaught exception
+        mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
+    }
+}
+
+// _binary_build_main_mpy_start is defined by objcopy during make
+extern uint32_t _binary_build_main_mpy_start;
+#define main_mpy ((const uint8_t *)_binary_build_main_mpy_start)
+
+static uint32_t main_mpy_pos;
+
+static mp_uint_t main_mpy_readbyte(void *data) {
+    // TODO: do we need to handle end of file?
+    return main_mpy[main_mpy_pos];
+}
+
+static void main_mpy_close(void *data) {
+    main_mpy_pos = 0;
+}
+
+void mp_reader_new_file(mp_reader_t *reader, const char *filename) {
+    reader->data = NULL;
+    reader->readbyte = main_mpy_readbyte;
+    reader->close = main_mpy_close;
+}
+#endif
+
 int main(int argc, char **argv) {
     int stack_dummy;
     stack_top = (char*)&stack_dummy;
@@ -50,7 +86,11 @@ soft_reset:
     pyexec_friendly_repl();
     #endif
     #else
+    #if MICROPY_PERSISTENT_CODE_LOAD
+    run_user_program();
+    #else
     pyexec_frozen_module("frozentest.py");
+    #endif
     #endif
     mp_deinit();
 
@@ -92,6 +132,11 @@ mp_lexer_t *mp_lexer_new_from_file(const char *filename) {
 }
 
 mp_import_stat_t mp_import_stat(const char *path) {
+#if MICROPY_PERSISTENT_CODE_LOAD
+    if (strcmp(path, PYBRICKS_MPY_MAIN_MODULE ".mpy") == 0) {
+        return MP_IMPORT_STAT_FILE;
+    }
+#endif
     return MP_IMPORT_STAT_NO_EXIST;
 }
 
