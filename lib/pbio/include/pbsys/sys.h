@@ -17,12 +17,20 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+/**
+ * Callback function to handle stop button press during user program.
+ */
+typedef void (*pbsys_stop_callback_t)(void);
+
 #ifdef PBIO_CONFIG_ENABLE_SYS
 
 /**
  * Performs platform-specific preperation for running a user program.
+ * @param [in]  stop_func   Optional function that will be called if the stop
+ *                          button is pressed before ::pbsys_unprepare_user_program()
+ *                          is called.
  */
-void pbsys_prepare_user_program(void);
+void pbsys_prepare_user_program(pbsys_stop_callback_t stop_func);
 
 /**
  * Performs platform-specific cleanup/reset after running a user program.
@@ -58,6 +66,8 @@ void _pbsys_poll(uint32_t now);
 
 #else
 
+static void pbsys_prepare_user_program(pbsys_stop_callback_t stop_func) { }
+static void pbsys_unprepare_user_program(void) { }
 static inline void pbsys_reset(void) { }
 static inline void pbsys_reboot(bool fw_update) { }
 static inline void pbsys_power_off(void) { }

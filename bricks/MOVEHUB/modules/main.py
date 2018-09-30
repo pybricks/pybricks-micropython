@@ -11,3 +11,5 @@ motor.run_angle(500, 270, 2, False)
 sleep(3)
 
 motor.run_target(1000, 0, 0, False)
+
+sleep(3)

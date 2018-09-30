@@ -61,24 +61,33 @@ void mp_reader_new_file(mp_reader_t *reader, const char *filename) {
 // don't wait for button press when using REPL
 #define wait_for_button_press()
 #else
+typedef enum {
+    WAITING_FOR_RELEASE_1,
+    WAITING_FOR_PRESS,
+    WAITING_FOR_RELEASE_2
+} waiting_for_t;
+
 static void wait_for_button_press(void) {
     pbio_button_flags_t btn;
+    waiting_for_t wait_for = WAITING_FOR_RELEASE_1;
 
     mp_print_str(&mp_plat_print, "\nPress green button to start...");
 
+    // wait for button rising edge, then falling edge
     for (;;) {
         pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
         if (btn & PBIO_BUTTON_CENTER) {
-            break;
+            if (wait_for == WAITING_FOR_PRESS) {
+                wait_for = WAITING_FOR_RELEASE_2;
+            }
         }
-        pbio_poll();
-        __WFI();
-    }
-
-    for (;;) {
-        pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
-        if (!(btn & PBIO_BUTTON_CENTER)) {
-            break;
+        else {
+            if (wait_for == WAITING_FOR_RELEASE_1) {
+                wait_for = WAITING_FOR_PRESS;
+            }
+            else if (wait_for == WAITING_FOR_RELEASE_2) {
+                break;
+            }
         }
         pbio_poll();
         __WFI();
@@ -88,6 +97,11 @@ static void wait_for_button_press(void) {
     mp_print_str(&mp_plat_print, "\n\n");
 }
 #endif
+
+static void user_program_stop_func(void) {
+    pyexec_system_exit = PYEXEC_FORCED_EXIT;
+    nlr_raise(mp_obj_new_exception(&mp_type_SystemExit));
+}
 
 int main(int argc, char **argv) {
     int stack_dummy;
@@ -104,7 +118,7 @@ int main(int argc, char **argv) {
 
 soft_reset:
     wait_for_button_press();
-    pbsys_prepare_user_program();
+    pbsys_prepare_user_program(user_program_stop_func);
 
     mp_init();
     #if MICROPY_ENABLE_COMPILER

@@ -4,13 +4,18 @@
 #include <pbdrv/battery.h>
 #include <pbdrv/config.h>
 #include <pbdrv/light.h>
-#include <pbdrv/motor.h>
 #include <pbdrv/time.h>
 
 #include <pbio/button.h>
+#include <pbio/dcmotor.h>
 #include <pbio/light.h>
 
+#include <pbsys/sys.h>
+
 #include "stm32f070xb.h"
+
+// workaround upstream NVIC_SystemReset() not decorated with noreturn
+void NVIC_SystemReset(void) __attribute((noreturn));
 
 typedef enum {
     LED_STATUS_BUTTON_PRESSED   = 1 << 0,
@@ -29,7 +34,7 @@ uint32_t bootloader_magic_addr __attribute__((section (".magic")));
 #define BATTERY_CRITICAL_MV     4800    // 0.8V per cell
 
 // Bitmask of status indicators
-led_status_flags_t led_status_flags;
+static led_status_flags_t led_status_flags;
 
 // the previous timestamp from when _pbsys_poll() was called
 static uint32_t prev_poll_time;
@@ -39,7 +44,10 @@ static bool button_pressed;
 static uint32_t button_press_start_time;
 
 // the battery voltage averaged over BATTERY_PERIOD_MS
-uint16_t avg_battery_voltage;
+static uint16_t avg_battery_voltage;
+
+// user program stop function
+static pbsys_stop_callback_t pbsys_stop_func;
 
 void _pbsys_init(void) {
     uint16_t battery_voltage;
@@ -53,7 +61,8 @@ void _pbsys_init(void) {
     pbdrv_light_set_rgb(PBIO_PORT_SELF, r, g, b);
 }
 
-void pbsys_prepare_user_program(void) {
+void pbsys_prepare_user_program(pbsys_stop_callback_t stop_func) {
+    pbsys_stop_func = stop_func;
     _pbio_light_set_user_mode(true);
     pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE);
 }
@@ -61,13 +70,14 @@ void pbsys_prepare_user_program(void) {
 void pbsys_unprepare_user_program(void) {
     uint8_t r, g, b;
 
+    pbsys_stop_func = NULL;
     _pbio_light_set_user_mode(false);
     pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE, &r, &g, &b);
     pbdrv_light_set_rgb(PBIO_PORT_SELF, r, g, b);
 
-    // TODO: this should probably call the higher-level pbio_dcmotor_coast() function
+    // TODO: would be nice to have something like _pbio_light_set_user_mode() for motors
     for (pbio_port_t p = PBDRV_CONFIG_FIRST_MOTOR_PORT; p <= PBDRV_CONFIG_LAST_MOTOR_PORT; p++) {
-        pbdrv_motor_coast(p);
+        pbio_dcmotor_coast(p);
     }
 }
 
@@ -126,6 +136,9 @@ void _pbsys_poll(uint32_t now) {
             button_press_start_time = now;
             button_pressed = true;
             led_status_flags |= LED_STATUS_BUTTON_PRESSED;
+            if (pbsys_stop_func) {
+                pbsys_stop_func();
+            }
         }
     }
     else {
