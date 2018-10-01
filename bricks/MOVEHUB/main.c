@@ -55,12 +55,12 @@ void mp_reader_new_file(mp_reader_t *reader, const char *filename) {
     reader->readbyte = main_mpy_readbyte;
     reader->close = main_mpy_close;
 }
-#endif
+#endif // MICROPY_PERSISTENT_CODE_LOAD
 
 #if MICROPY_ENABLE_COMPILER
 // don't wait for button press when using REPL
 #define wait_for_button_press()
-#else
+#else // MICROPY_ENABLE_COMPILER
 typedef enum {
     WAITING_FOR_RELEASE_1,
     WAITING_FOR_PRESS,
@@ -96,7 +96,7 @@ static void wait_for_button_press(void) {
     // add some space so user knows where their output starts
     mp_print_str(&mp_plat_print, "\n\n");
 }
-#endif
+#endif // MICROPY_ENABLE_COMPILER
 
 static void user_program_stop_func(void) {
     pyexec_system_exit = PYEXEC_FORCED_EXIT;
@@ -130,16 +130,16 @@ soft_reset:
             break;
         }
     }
-    #else
+    #else // MICROPY_REPL_EVENT_DRIVEN
     pyexec_friendly_repl();
-    #endif
-    #else
+    #endif // MICROPY_REPL_EVENT_DRIVEN
+    #else // MICROPY_ENABLE_COMPILER
     #if MICROPY_PERSISTENT_CODE_LOAD
     run_user_program();
-    #else
+    #else // MICROPY_PERSISTENT_CODE_LOAD
     pyexec_frozen_module("main.py");
-    #endif
-    #endif
+    #endif // MICROPY_PERSISTENT_CODE_LOAD
+    #endif // MICROPY_ENABLE_COMPILER
     mp_deinit();
 
     pbsys_unprepare_user_program();
