@@ -44,6 +44,7 @@ void pbio_poll(void) {
     if (now - prev_fast_poll_time >= 2) {
         _pbdrv_adc_poll(now);
         _pbdrv_ioport_poll(now);
+        _pbio_motorcontrol_poll();
         prev_fast_poll_time = now;
     }
     if (now - prev_slow_poll_time >= 32) {
@@ -51,7 +52,6 @@ void pbio_poll(void) {
         _pbsys_poll(now);
         prev_slow_poll_time = now;
     }
-    _pbio_motorcontrol_poll();
 }
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
