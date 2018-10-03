@@ -20,7 +20,7 @@ INC += -I$(TOP)/lib/cmsis/inc
 INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32F0xx/Include
 INC += -I$(TOP)/ports/pybricks/lib/pbio/drv/move_hub
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
-INC += -I$(TOP)/ports/pybricks/drivers
+INC += -I$(TOP)/ports/pybricks/extmod
 INC += -I$(BUILD)
 
 DFU = $(TOP)/tools/dfu.py
@@ -74,8 +74,8 @@ SRC_S = \
 
 # Pybricks modules
 PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
-	drivers/modmotor.c \
-	drivers/pberror.c \
+	extmod/modmotor.c \
+	extmod/pberror.c \
 	)
 
 PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\

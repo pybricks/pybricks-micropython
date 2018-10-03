@@ -24,7 +24,7 @@ INC += -I$(BUILD)
 INC += -I$(TOP)/ports/pybricks/lib/pbio/drv/ev3dev_stretch
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 INC += -I$(TOP)/ports/pybricks/lib/pbdrv/include
-INC += -I$(TOP)/ports/pybricks/drivers
+INC += -I$(TOP)/ports/pybricks/extmod
 
 # compiler settings
 CWARN = -Wall -Werror
@@ -167,9 +167,9 @@ LIB_SRC_C = $(addprefix lib/,\
 
 # Pybricks drivers and modules
 PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
-	drivers/modmotor.c \
-	drivers/moddebug.c \
-	drivers/pberror.c \
+	extmod/modmotor.c \
+	extmod/moddebug.c \
+	extmod/pberror.c \
 	lib/pbio/drv/ev3dev_stretch/motor.c \
 	lib/pbio/drv/ev3dev_stretch/time.c \
 	lib/pbio/src/dcmotor.c \
