@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 
+#include <pbdrv/config.h>
 #include <pbdrv/time.h>
 #include <pbio/error.h>
 
@@ -144,7 +145,7 @@ static void init_one(ioport_t port) {
 
 void _pbdrv_ioport_init(void) {
     // TODO: skipping port C for now to use with REPL
-    // ioport_init_one(IOPORT_C);
+    // init_one(IOPORT_C);
     init_one(IOPORT_D);
 }
 
@@ -370,19 +371,38 @@ static void poll_dcm(ioport_t port) {
         break;
     }
 
-    // copy local copy of data back to global
+    // copy local variable back to global
     dcm_data[port] = data;
 }
 
 void _pbdrv_ioport_poll(uint32_t now) {
-    // TODO: don't call ioport_poll_dcm() if UART sensor is connected
+    // TODO: don't call poll_dcm() if UART sensor is connected
 
     // TODO: skipping port C for now to use for REPL
-    //ioport_poll_one(IOPORT_C);
-    poll_dcm(IOPORT_D);
+    //poll_dcm(IOPORT_C);
+    if (connected_dev_id[IOPORT_D] == DEV_ID_LPF2_UNKNOWN_UART) {
+        while (USART3->ISR & USART_ISR_RXNE) {
+            printf("%02x\n", USART3->RDR);
+        }
+    }
+    else {
+        poll_dcm(IOPORT_D);
+    }
 
     if (connected_dev_id[IOPORT_D] != prev_dev_id[IOPORT_D]) {
         printf("new device %d\n", connected_dev_id[IOPORT_D]);
         prev_dev_id[IOPORT_D] = connected_dev_id[IOPORT_D];
+        if (connected_dev_id[IOPORT_D] == DEV_ID_LPF2_UNKNOWN_UART) {
+            printf("going to UART mode\n");
+
+            USART3->BRR = PBDRV_CONFIG_SYS_CLOCK_RATE / 2400;
+            USART3->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;
+
+            GPIOC->MODER = (GPIOC->MODER & ~(GPIO_MODER_MODER4_Msk | GPIO_MODER_MODER5_Msk)) | (2 << GPIO_MODER_MODER4_Pos) | (2 << GPIO_MODER_MODER5_Pos);
+            GPIOC->AFR[0] = (GPIOC->AFR[0] & ~(GPIO_AFRL_AFSEL4_Msk | GPIO_AFRL_AFSEL5_Msk)) | (1 << GPIO_AFRL_AFSEL4_Pos) | (1 << GPIO_AFRL_AFSEL5_Pos);
+            // Buffer _should_ be enabled already.
+            GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER0_Msk) | (1 << GPIO_MODER_MODER0_Pos);
+            GPIOB->BSRR = GPIO_BSRR_BR_0;
+        }
     }
 }
