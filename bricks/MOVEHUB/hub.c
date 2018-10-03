@@ -17,7 +17,8 @@
 
 #include "gpio.h"
 
-#if PYBRICKS_HW_ENABLE_MOTORS
+// TODO: avoid #ifs here by handling it at driver level
+#if PBIO_CONFIG_ENABLE_MOTORS
 const mp_obj_type_id_t motor_MovehubMotor_type = {
     { &mp_type_type },
     .name = MP_QSTR_MovehubMotor,
@@ -26,7 +27,7 @@ const mp_obj_type_id_t motor_MovehubMotor_type = {
     .make_new = motor_EncodedMotor_make_new,
     .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
 };
-#endif //PYBRICKS_ENABLE_MOTORS
+#endif //PBIO_CONFIG_ENABLE_MOTORS
 
 STATIC mp_obj_t hub_get_button(void) {
     pbio_button_flags_t btn;
@@ -204,9 +205,9 @@ STATIC const mp_map_elem_t hub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_read_adc), (mp_obj_t)&hub_read_adc_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_reboot), (mp_obj_t)&hub_reboot_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_set_light), (mp_obj_t)&hub_set_light_obj },
-#if PYBRICKS_HW_ENABLE_MOTORS
+#if PBIO_CONFIG_ENABLE_MOTORS
     { MP_OBJ_NEW_QSTR(MP_QSTR_MovehubMotor), (mp_obj_t)&motor_MovehubMotor_type},
-#endif //PYBRICKS_HW_ENABLE_MOTORS
+#endif //PBIO_CONFIG_ENABLE_MOTORS
 };
 
 STATIC MP_DEFINE_CONST_DICT (

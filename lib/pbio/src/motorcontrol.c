@@ -671,13 +671,15 @@ void control_update(pbio_port_t port){
     }
 }
 
+#ifdef PBIO_CONFIG_ENABLE_MOTORS
 // Service all the motors by calling this function at approximately constant intervals.
-void _pbio_motorcontrol_poll(){
+void _pbio_motorcontrol_poll(void){
     // Do the update for each motor
     for (pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++){
         control_update(port);
     }
 }
+#endif // PBIO_CONFIG_ENABLE_MOTORS
 
 /* pbio user functions */
 

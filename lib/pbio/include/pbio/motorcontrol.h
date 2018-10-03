@@ -48,7 +48,11 @@ pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t t
 
 pbio_error_t pbio_encmotor_track_target(pbio_port_t port, float_t target);
 
-void _pbio_motorcontrol_poll();
+#ifdef PBIO_CONFIG_ENABLE_MOTORS
+void _pbio_motorcontrol_poll(void);
+#else
+static inline void _pbio_motorcontrol_poll(void) { }
+#endif // PBIO_CONFIG_ENABLE_MOTORS
 
 /** @}*/
 
