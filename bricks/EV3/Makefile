@@ -26,10 +26,13 @@ INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 INC += -I$(TOP)/ports/pybricks/lib/pbdrv/include
 INC += -I$(TOP)/ports/pybricks/extmod
 
+PBIO_OPT = -DPBIO_CONFIG_ENABLE_DEINIT
+PBIO_OPT += -DPBIO_CONFIG_ENABLE_MOTORS
+
 # compiler settings
 CWARN = -Wall -Werror
 CWARN += -Wpointer-arith -Wuninitialized
-CFLAGS = $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA) -DPBIO_CONFIG_ENABLE_DEINIT -DPBIO_CONFIG_ENABLE_MOTORS
+CFLAGS = $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA) $(PBIO_OPT)  
 
 # Debugging/Optimization
 ifdef DEBUG
