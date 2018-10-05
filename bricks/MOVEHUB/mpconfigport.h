@@ -57,9 +57,18 @@
 #define MICROPY_MODULE_WEAK_LINKS   (1)
 #define MICROPY_CPYTHON_COMPAT      (0)
 #define MICROPY_LONGINT_IMPL        (MICROPY_LONGINT_IMPL_NONE)
-#define MICROPY_FLOAT_IMPL          (MICROPY_FLOAT_IMPL_FLOAT)
 #define MICROPY_KBD_EXCEPTION       (1)
 #define MICROPY_ENABLE_SCHEDULER    (1)
+
+// Enable REPL unless explicitly disabled
+#ifndef MICROPY_ENABLE_COMPILER
+#define MICROPY_ENABLE_COMPILER     (1)
+#endif // MICROPY_ENABLE_COMPILER
+
+// Enable floating point support unless explicitly disabled
+#ifndef MICROPY_FLOAT_IMPL
+#define MICROPY_FLOAT_IMPL          (MICROPY_FLOAT_IMPL_FLOAT)
+#endif // MICROPY_FLOAT_IMPL
 
 // PYBRICKS_MPY_MAIN_MODULE is optionally defined in the Makefile
 #ifdef PYBRICKS_MPY_MAIN_MODULE

@@ -8,6 +8,11 @@
 // Requires about 19K (19568) of flash
 #define MICROPY_ENABLE_COMPILER         (1)
 
+// Set to MICROPY_FLOAT_IMPL_FLOAT to enable floating point support in user code or
+// set to MICROPY_FLOAT_IMPL_NONE to disable floating point support in user code
+// Requires about 20K (20928) of flash
+#define MICROPY_FLOAT_IMPL              (MICROPY_FLOAT_IMPL_FLOAT)
+
 extern const struct _mp_obj_module_t mp_module_hub;
 
 #define PYBRICKS_PORT_BUILTIN_MODULES \
