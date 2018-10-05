@@ -62,14 +62,15 @@ void mp_reader_new_file(mp_reader_t *reader, const char *filename) {
 #define wait_for_button_press()
 #else // MICROPY_ENABLE_COMPILER
 typedef enum {
-    WAITING_FOR_RELEASE_1,
+    WAITING_FOR_FIRST_RELEASE,
     WAITING_FOR_PRESS,
-    WAITING_FOR_RELEASE_2
+    WAITING_FOR_SECOND_RELEASE
 } waiting_for_t;
 
+// wait for button to be pressed/released before starting program
 static void wait_for_button_press(void) {
     pbio_button_flags_t btn;
-    waiting_for_t wait_for = WAITING_FOR_RELEASE_1;
+    waiting_for_t wait_for = WAITING_FOR_FIRST_RELEASE;
 
     mp_print_str(&mp_plat_print, "\nPress green button to start...");
 
@@ -77,15 +78,26 @@ static void wait_for_button_press(void) {
     for (;;) {
         pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
         if (btn & PBIO_BUTTON_CENTER) {
+            // step 2:
+            // once we are sure the button is released, we wait for it to be
+            // pressed (rising edge).
             if (wait_for == WAITING_FOR_PRESS) {
-                wait_for = WAITING_FOR_RELEASE_2;
+                wait_for = WAITING_FOR_SECOND_RELEASE;
             }
         }
         else {
-            if (wait_for == WAITING_FOR_RELEASE_1) {
+            // step 1:
+            // we have to make sure the button is released before waiting for
+            // it to be pressed, otherwise programs would be restarted as soon
+            // as they are stopped because the button is already pressed.
+            if (wait_for == WAITING_FOR_FIRST_RELEASE) {
                 wait_for = WAITING_FOR_PRESS;
             }
-            else if (wait_for == WAITING_FOR_RELEASE_2) {
+            // step 3:
+            // after the button has been pressed, we need to wait for it to be
+            // released (falling edge), otherwise programs would stop as soon
+            // as they were started because the button is already pressed.
+            else if (wait_for == WAITING_FOR_SECOND_RELEASE) {
                 break;
             }
         }
