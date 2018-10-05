@@ -75,9 +75,12 @@ SRC_S = \
 
 # Pybricks modules
 PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
-	extmod/modmotor.c \
 	extmod/pberror.c \
 	)
+
+ifneq (,$(findstring DPBIO_CONFIG_ENABLE_MOTORS,$(PBIO_OPT)))
+PYBRICKS_DRIVERS_SRC_C += $(addprefix ports/pybricks/extmod/modmotor.c)	
+endif
 
 PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	drv/move_hub/adc.c \
