@@ -10,7 +10,7 @@
 
 // Set to MICROPY_FLOAT_IMPL_FLOAT to enable floating point support in user code or
 // set to MICROPY_FLOAT_IMPL_NONE to disable floating point support in user code
-// Requires about 20K (20928) of flash
+// Requires about 20K (21312) of flash
 #define MICROPY_FLOAT_IMPL              (MICROPY_FLOAT_IMPL_NONE)
 
 extern const struct _mp_obj_module_t mp_module_hub;
