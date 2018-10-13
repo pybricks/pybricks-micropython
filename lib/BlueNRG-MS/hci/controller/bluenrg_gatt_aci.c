@@ -37,7 +37,7 @@ tBleStatus aci_gatt_init(void)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -79,7 +79,7 @@ tBleStatus aci_gatt_add_serv(uint8_t service_uuid_type, const uint8_t* service_u
   rq.rparam = &resp;
   rq.rlen = GATT_ADD_SERV_RP_SIZE;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   if (resp.status) {
@@ -134,7 +134,7 @@ tBleStatus aci_gatt_include_service(uint16_t service_handle, uint16_t included_s
   rq.rparam = &resp;
   rq.rlen = GATT_INCLUDE_SERV_RP_SIZE;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   if (resp.status) {
@@ -206,7 +206,7 @@ tBleStatus aci_gatt_add_char(uint16_t serviceHandle,
   rq.rparam = &resp;
   rq.rlen = GATT_ADD_CHAR_RP_SIZE;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   if (resp.status) {
@@ -294,7 +294,7 @@ tBleStatus aci_gatt_add_char_desc(uint16_t serviceHandle,
   rq.rparam = &resp;
   rq.rlen = GATT_ADD_CHAR_DESC_RP_SIZE;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   if (resp.status) {
@@ -345,7 +345,7 @@ tBleStatus aci_gatt_update_char_value(uint16_t servHandle,
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   if (status) {
@@ -371,7 +371,7 @@ tBleStatus aci_gatt_del_char(uint16_t servHandle, uint16_t charHandle)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -392,7 +392,7 @@ tBleStatus aci_gatt_del_service(uint16_t servHandle)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -414,7 +414,7 @@ tBleStatus aci_gatt_del_include_service(uint16_t servHandle, uint16_t includeSer
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -435,7 +435,7 @@ tBleStatus aci_gatt_set_event_mask(uint32_t event_mask)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -457,7 +457,7 @@ tBleStatus aci_gatt_exchange_configuration(uint16_t conn_handle)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -480,7 +480,7 @@ tBleStatus aci_att_find_information_req(uint16_t conn_handle, uint16_t start_han
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -510,7 +510,7 @@ tBleStatus aci_att_find_by_type_value_req(uint16_t conn_handle, uint16_t start_h
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -544,7 +544,7 @@ tBleStatus aci_att_read_by_type_req(uint16_t conn_handle, uint16_t start_handle,
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -578,7 +578,7 @@ tBleStatus aci_att_read_by_group_type_req(uint16_t conn_handle, uint16_t start_h
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -607,7 +607,7 @@ tBleStatus aci_att_prepare_write_req(uint16_t conn_handle, uint16_t attr_handle,
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -629,7 +629,7 @@ tBleStatus aci_att_execute_write_req(uint16_t conn_handle, uint8_t execute)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -651,7 +651,7 @@ tBleStatus aci_gatt_disc_all_prim_services(uint16_t conn_handle)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -683,7 +683,7 @@ tBleStatus aci_gatt_disc_prim_service_by_uuid(uint16_t conn_handle, uint8_t uuid
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -708,7 +708,7 @@ tBleStatus aci_gatt_find_included_services(uint16_t conn_handle, uint16_t start_
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -733,7 +733,7 @@ tBleStatus aci_gatt_disc_all_charac_of_serv(uint16_t conn_handle, uint16_t start
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -782,7 +782,7 @@ tBleStatus aci_gatt_disc_charac_by_uuid(uint16_t conn_handle, uint16_t start_han
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -807,7 +807,7 @@ tBleStatus aci_gatt_disc_all_charac_descriptors(uint16_t conn_handle, uint16_t c
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -830,7 +830,7 @@ tBleStatus aci_gatt_read_charac_val(uint16_t conn_handle, uint16_t attr_handle)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -864,7 +864,7 @@ tBleStatus aci_gatt_read_using_charac_uuid(uint16_t conn_handle, uint16_t start_
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -889,7 +889,7 @@ tBleStatus aci_gatt_read_long_charac_val(uint16_t conn_handle, uint16_t attr_han
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -917,7 +917,7 @@ tBleStatus aci_gatt_read_multiple_charac_val(uint16_t conn_handle, uint8_t num_h
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -958,7 +958,7 @@ tBleStatus aci_gatt_write_charac_value(uint16_t conn_handle, uint16_t attr_handl
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -988,7 +988,7 @@ tBleStatus aci_gatt_write_long_charac_val(uint16_t conn_handle, uint16_t attr_ha
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -1018,7 +1018,7 @@ tBleStatus aci_gatt_write_charac_reliable(uint16_t conn_handle, uint16_t attr_ha
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -1048,7 +1048,7 @@ tBleStatus aci_gatt_write_long_charac_desc(uint16_t conn_handle, uint16_t attr_h
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -1073,7 +1073,7 @@ tBleStatus aci_gatt_read_long_charac_desc(uint16_t conn_handle, uint16_t attr_ha
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -1112,7 +1112,7 @@ tBleStatus aci_gatt_write_charac_descriptor(uint16_t conn_handle, uint16_t attr_
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -1135,7 +1135,7 @@ tBleStatus aci_gatt_read_charac_desc(uint16_t conn_handle, uint16_t attr_handle)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -1163,7 +1163,7 @@ tBleStatus aci_gatt_write_without_response(uint16_t conn_handle, uint16_t attr_h
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -1191,7 +1191,7 @@ tBleStatus aci_gatt_signed_write_without_resp(uint16_t conn_handle, uint16_t att
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -1212,7 +1212,7 @@ tBleStatus aci_gatt_confirm_indication(uint16_t conn_handle)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -1260,7 +1260,7 @@ tBleStatus aci_gatt_write_response(uint16_t conn_handle,
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   if (status) {
@@ -1285,7 +1285,7 @@ tBleStatus aci_gatt_allow_read(uint16_t conn_handle)
     rq.rparam = &status;
     rq.rlen = 1;
 
-    if (hci_send_req(&rq, FALSE) < 0)
+    if (hci_send_req(&rq) < 0)
       return BLE_STATUS_TIMEOUT;
 
     return status;
@@ -1309,7 +1309,7 @@ tBleStatus aci_gatt_set_security_permission(uint16_t service_handle, uint16_t at
     rq.rparam = &status;
     rq.rlen = 1;
 
-    if (hci_send_req(&rq, FALSE) < 0)
+    if (hci_send_req(&rq) < 0)
       return BLE_STATUS_TIMEOUT;
 
     return status;
@@ -1358,7 +1358,7 @@ tBleStatus aci_gatt_set_desc_value(uint16_t servHandle,
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
@@ -1382,7 +1382,7 @@ tBleStatus aci_gatt_read_handle_value(uint16_t attr_handle, uint16_t data_len, u
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   if(rp.status)
@@ -1414,7 +1414,7 @@ tBleStatus aci_gatt_read_handle_value_offset_IDB05A1(uint16_t attr_handle, uint8
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   if(rp.status)
@@ -1454,7 +1454,7 @@ tBleStatus aci_gatt_update_char_value_ext_IDB05A1(uint16_t service_handle, uint1
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
