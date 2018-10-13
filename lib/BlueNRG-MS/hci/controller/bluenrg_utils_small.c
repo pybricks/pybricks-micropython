@@ -3,7 +3,6 @@
 #include "bluenrg_def.h"
 #include "bluenrg_aci.h"
 #include "bluenrg_utils.h"
-#include "hci.h"
 #include "hci_le.h"
 #include "string.h"
 
