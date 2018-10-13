@@ -13,6 +13,8 @@
 * INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
 *******************************************************************************/
 
+#include <string.h>
+
 #include "bluenrg_types.h"
 #include "bluenrg_def.h"
 #include "hci_const.h"
@@ -34,9 +36,9 @@ tBleStatus aci_gap_init_IDB05A1(uint8_t role, uint8_t privacy_enabled, uint8_t d
   cp.privacy_enabled = privacy_enabled;
   cp.device_name_char_len = device_name_char_len;
 
-  BLUENRG_memset(&resp, 0, sizeof(resp));
+  memset(&resp, 0, sizeof(resp));
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_INIT;
   rq.cparam = &cp;
@@ -66,9 +68,9 @@ tBleStatus aci_gap_init_IDB04A1(uint8_t role, uint16_t* service_handle, uint16_t
 
   cp.role = role;
 
-  BLUENRG_memset(&resp, 0, sizeof(resp));
+  memset(&resp, 0, sizeof(resp));
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_INIT;
   rq.cparam = &cp;
@@ -95,7 +97,7 @@ tBleStatus aci_gap_set_non_discoverable(void)
   struct hci_request rq;
   uint8_t status;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_SET_NON_DISCOVERABLE;
   rq.rparam = &status;
@@ -124,11 +126,11 @@ tBleStatus aci_gap_set_limited_discoverable(uint8_t AdvType, uint16_t AdvIntervM
   indx++;
 
   AdvIntervMin = htobs(AdvIntervMin);
-  BLUENRG_memcpy(buffer + indx, &AdvIntervMin, 2);
+  memcpy(buffer + indx, &AdvIntervMin, 2);
   indx +=  2;
 
   AdvIntervMax = htobs(AdvIntervMax);
-  BLUENRG_memcpy(buffer + indx, &AdvIntervMax, 2);
+  memcpy(buffer + indx, &AdvIntervMax, 2);
   indx +=  2;
 
   buffer[indx] = OwnAddrType;
@@ -140,22 +142,22 @@ tBleStatus aci_gap_set_limited_discoverable(uint8_t AdvType, uint16_t AdvIntervM
   buffer[indx] = LocalNameLen;
   indx++;
 
-  BLUENRG_memcpy(buffer + indx, LocalName, LocalNameLen);
+  memcpy(buffer + indx, LocalName, LocalNameLen);
   indx +=  LocalNameLen;
 
   buffer[indx] = ServiceUUIDLen;
   indx++;
 
-  BLUENRG_memcpy(buffer + indx, ServiceUUIDList, ServiceUUIDLen);
+  memcpy(buffer + indx, ServiceUUIDList, ServiceUUIDLen);
   indx +=  ServiceUUIDLen;
 
-  BLUENRG_memcpy(buffer + indx, &SlaveConnIntervMin, 2);
+  memcpy(buffer + indx, &SlaveConnIntervMin, 2);
   indx +=  2;
 
-  BLUENRG_memcpy(buffer + indx, &SlaveConnIntervMax, 2);
+  memcpy(buffer + indx, &SlaveConnIntervMax, 2);
   indx +=  2;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_SET_LIMITED_DISCOVERABLE;
   rq.cparam = (void *)buffer;
@@ -187,11 +189,11 @@ tBleStatus aci_gap_set_discoverable(uint8_t AdvType, uint16_t AdvIntervMin, uint
   indx++;
 
   AdvIntervMin = htobs(AdvIntervMin);
-  BLUENRG_memcpy(buffer + indx, &AdvIntervMin, 2);
+  memcpy(buffer + indx, &AdvIntervMin, 2);
   indx +=  2;
 
   AdvIntervMax = htobs(AdvIntervMax);
-  BLUENRG_memcpy(buffer + indx, &AdvIntervMax, 2);
+  memcpy(buffer + indx, &AdvIntervMax, 2);
   indx +=  2;
 
   buffer[indx] = OwnAddrType;
@@ -203,24 +205,24 @@ tBleStatus aci_gap_set_discoverable(uint8_t AdvType, uint16_t AdvIntervMin, uint
   buffer[indx] = LocalNameLen;
   indx++;
 
-  BLUENRG_memcpy(buffer + indx, LocalName, LocalNameLen);
+  memcpy(buffer + indx, LocalName, LocalNameLen);
   indx +=  LocalNameLen;
 
   buffer[indx] = ServiceUUIDLen;
   indx++;
 
-  BLUENRG_memcpy(buffer + indx, ServiceUUIDList, ServiceUUIDLen);
+  memcpy(buffer + indx, ServiceUUIDList, ServiceUUIDLen);
   indx +=  ServiceUUIDLen;
 
   SlaveConnIntervMin = htobs(SlaveConnIntervMin);
-  BLUENRG_memcpy(buffer + indx, &SlaveConnIntervMin, 2);
+  memcpy(buffer + indx, &SlaveConnIntervMin, 2);
   indx +=  2;
 
   SlaveConnIntervMax = htobs(SlaveConnIntervMax);
-  BLUENRG_memcpy(buffer + indx, &SlaveConnIntervMax, 2);
+  memcpy(buffer + indx, &SlaveConnIntervMax, 2);
   indx +=  2;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_SET_DISCOVERABLE;
   rq.cparam = (void *)buffer;
@@ -251,9 +253,9 @@ tBleStatus aci_gap_set_direct_connectable_IDB05A1(uint8_t own_addr_type, uint8_t
   cp.adv_interv_min = adv_interv_min;
   cp.adv_interv_max = adv_interv_max;
   cp.direct_bdaddr_type = initiator_addr_type;
-  BLUENRG_memcpy(cp.direct_bdaddr, initiator_addr, 6);
+  memcpy(cp.direct_bdaddr, initiator_addr, 6);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_SET_DIRECT_CONNECTABLE;
   rq.cparam = &cp;
@@ -275,9 +277,9 @@ tBleStatus aci_gap_set_direct_connectable_IDB04A1(uint8_t own_addr_type, uint8_t
 
   cp.own_bdaddr_type = own_addr_type;
   cp.direct_bdaddr_type = initiator_addr_type;
-  BLUENRG_memcpy(cp.direct_bdaddr, initiator_addr, 6);
+  memcpy(cp.direct_bdaddr, initiator_addr, 6);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_SET_DIRECT_CONNECTABLE;
   rq.cparam = &cp;
@@ -299,7 +301,7 @@ tBleStatus aci_gap_set_io_capability(uint8_t io_capability)
 
   cp.io_capability = io_capability;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_SET_IO_CAPABILITY;
   rq.cparam = &cp;
@@ -328,14 +330,14 @@ tBleStatus aci_gap_set_auth_requirement(uint8_t mitm_mode,
 
   cp.mitm_mode = mitm_mode;
   cp.oob_enable = oob_enable;
-  BLUENRG_memcpy(cp.oob_data, oob_data, 16);
+  memcpy(cp.oob_data, oob_data, 16);
   cp.min_encryption_key_size = min_encryption_key_size;
   cp.max_encryption_key_size = max_encryption_key_size;
   cp.use_fixed_pin = use_fixed_pin;
   cp.fixed_pin = htobl(fixed_pin);
   cp.bonding_mode = bonding_mode;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_SET_AUTH_REQUIREMENT;
   rq.cparam = &cp;
@@ -362,7 +364,7 @@ tBleStatus aci_gap_set_author_requirement(uint16_t conn_handle, uint8_t authoriz
   cp.conn_handle = htobs(conn_handle);
   cp.authorization_enable = authorization_enable;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_SET_AUTHOR_REQUIREMENT;
   rq.cparam = &cp;
@@ -385,7 +387,7 @@ tBleStatus aci_gap_pass_key_response(uint16_t conn_handle, uint32_t passkey)
   cp.conn_handle = htobs(conn_handle);
   cp.passkey = htobl(passkey);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_PASSKEY_RESPONSE;
   rq.cparam = &cp;
@@ -409,7 +411,7 @@ tBleStatus aci_gap_authorization_response(uint16_t conn_handle, uint8_t authoriz
   cp.conn_handle = htobs(conn_handle);
   cp.authorize = authorize;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_AUTHORIZATION_RESPONSE;
   rq.cparam = &cp;
@@ -432,7 +434,7 @@ tBleStatus aci_gap_set_non_connectable_IDB05A1(uint8_t adv_type, uint8_t own_add
   cp.advertising_event_type = adv_type;
   cp.own_address_type = own_address_type;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_SET_NON_CONNECTABLE;
   rq.cparam = &cp;
@@ -454,7 +456,7 @@ tBleStatus aci_gap_set_non_connectable_IDB04A1(uint8_t adv_type)
 
   cp.advertising_event_type = adv_type;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_SET_NON_CONNECTABLE;
   rq.cparam = &cp;
@@ -477,7 +479,7 @@ tBleStatus aci_gap_set_undirected_connectable(uint8_t own_addr_type, uint8_t adv
   cp.own_addr_type = own_addr_type;
   cp.adv_filter_policy = adv_filter_policy;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_SET_UNDIRECTED_CONNECTABLE;
   rq.cparam = &cp;
@@ -501,7 +503,7 @@ tBleStatus aci_gap_slave_security_request(uint16_t conn_handle, uint8_t bonding,
   cp.bonding = bonding;
   cp.mitm_protection = mitm_protection;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_SLAVE_SECURITY_REQUEST;
   rq.cparam = &cp;
@@ -530,10 +532,10 @@ tBleStatus aci_gap_update_adv_data(uint8_t AdvLen, const uint8_t *AdvData)
   buffer[indx] = AdvLen;
   indx++;
 
-  BLUENRG_memcpy(buffer + indx, AdvData, AdvLen);
+  memcpy(buffer + indx, AdvData, AdvLen);
   indx +=  AdvLen;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_UPDATE_ADV_DATA;
   rq.cparam = (void *)buffer;
@@ -555,7 +557,7 @@ tBleStatus aci_gap_delete_ad_type(uint8_t ad_type)
 
   cp.ad_type = ad_type;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_DELETE_AD_TYPE;
   rq.cparam = &cp;
@@ -575,9 +577,9 @@ tBleStatus aci_gap_get_security_level(uint8_t* mitm_protection, uint8_t* bonding
   struct hci_request rq;
   gap_get_security_level_rp resp;
 
-  BLUENRG_memset(&resp, 0, sizeof(resp));
+  memset(&resp, 0, sizeof(resp));
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_GET_SECURITY_LEVEL;
   rq.rparam = &resp;
@@ -603,7 +605,7 @@ tBleStatus aci_gap_configure_whitelist(void)
   struct hci_request rq;
   uint8_t status;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_CONFIGURE_WHITELIST;
   rq.rparam = &status;
@@ -624,7 +626,7 @@ tBleStatus aci_gap_terminate(uint16_t conn_handle, uint8_t reason)
   cp.handle = htobs(conn_handle);
   cp.reason = reason;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_TERMINATE;
   rq.cparam = &cp;
@@ -644,7 +646,7 @@ tBleStatus aci_gap_clear_security_database(void)
   struct hci_request rq;
   uint8_t status;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_CLEAR_SECURITY_DB;
   rq.rparam = &status;
@@ -664,7 +666,7 @@ tBleStatus aci_gap_allow_rebond_IDB05A1(uint16_t conn_handle)
 
   cp.conn_handle = conn_handle;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_ALLOW_REBOND_DB;
   rq.cparam = &cp;
@@ -683,7 +685,7 @@ tBleStatus aci_gap_allow_rebond_IDB04A1(void)
   struct hci_request rq;
   uint8_t status;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_ALLOW_REBOND_DB;
   rq.rparam = &status;
@@ -707,7 +709,7 @@ tBleStatus aci_gap_start_limited_discovery_proc(uint16_t scanInterval, uint16_t 
   cp.own_address_type = own_address_type;
   cp.filterDuplicates = filterDuplicates;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_START_LIMITED_DISCOVERY_PROC;
   rq.cparam = &cp;
@@ -734,7 +736,7 @@ tBleStatus aci_gap_start_general_discovery_proc(uint16_t scanInterval, uint16_t 
   cp.own_address_type = own_address_type;
   cp.filterDuplicates = filterDuplicates;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_START_GENERAL_DISCOVERY_PROC;
   rq.cparam = &cp;
@@ -764,7 +766,7 @@ tBleStatus aci_gap_start_name_discovery_proc(uint16_t scanInterval, uint16_t sca
   cp.scanInterval = htobs(scanInterval);
   cp.scanWindow = htobs(scanWindow);
   cp.peer_bdaddr_type = peer_bdaddr_type;
-  BLUENRG_memcpy(cp.peer_bdaddr, peer_bdaddr, 6);
+  memcpy(cp.peer_bdaddr, peer_bdaddr, 6);
   cp.own_bdaddr_type = own_bdaddr_type;
   cp.conn_min_interval = htobs(conn_min_interval);
   cp.conn_max_interval = htobs(conn_max_interval);
@@ -773,7 +775,7 @@ tBleStatus aci_gap_start_name_discovery_proc(uint16_t scanInterval, uint16_t sca
   cp.min_conn_length = htobs(min_conn_length);
   cp.max_conn_length = htobs(max_conn_length);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_START_NAME_DISCOVERY_PROC;
   rq.cparam = &cp;
@@ -805,47 +807,47 @@ tBleStatus aci_gap_start_auto_conn_establish_proc_IDB05A1(uint16_t scanInterval,
     return BLE_STATUS_INVALID_PARAMS;
 
   scanInterval = htobs(scanInterval);
-  BLUENRG_memcpy(buffer + indx, &scanInterval, 2);
+  memcpy(buffer + indx, &scanInterval, 2);
   indx += 2;
 
   scanWindow = htobs(scanWindow);
-  BLUENRG_memcpy(buffer + indx, &scanWindow, 2);
+  memcpy(buffer + indx, &scanWindow, 2);
   indx += 2;
 
   buffer[indx] = own_bdaddr_type;
   indx++;
 
   conn_min_interval = htobs(conn_min_interval);
-  BLUENRG_memcpy(buffer + indx, &conn_min_interval, 2);
+  memcpy(buffer + indx, &conn_min_interval, 2);
   indx +=  2;
 
   conn_max_interval = htobs(conn_max_interval);
-  BLUENRG_memcpy(buffer + indx, &conn_max_interval, 2);
+  memcpy(buffer + indx, &conn_max_interval, 2);
   indx +=  2;
 
   conn_latency = htobs(conn_latency);
-  BLUENRG_memcpy(buffer + indx, &conn_latency, 2);
+  memcpy(buffer + indx, &conn_latency, 2);
   indx +=  2;
 
   supervision_timeout = htobs(supervision_timeout);
-  BLUENRG_memcpy(buffer + indx, &supervision_timeout, 2);
+  memcpy(buffer + indx, &supervision_timeout, 2);
   indx +=  2;
 
   min_conn_length = htobs(min_conn_length);
-  BLUENRG_memcpy(buffer + indx, &min_conn_length, 2);
+  memcpy(buffer + indx, &min_conn_length, 2);
   indx +=  2;
 
   max_conn_length = htobs(max_conn_length);
-  BLUENRG_memcpy(buffer + indx, &max_conn_length, 2);
+  memcpy(buffer + indx, &max_conn_length, 2);
   indx +=  2;
 
   buffer[indx] = num_whitelist_entries;
   indx++;
 
-  BLUENRG_memcpy(buffer + indx, addr_array, (num_whitelist_entries*7));
+  memcpy(buffer + indx, addr_array, (num_whitelist_entries*7));
   indx +=  num_whitelist_entries * 7;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_START_AUTO_CONN_ESTABLISH_PROC;
   rq.cparam = (void *)buffer;
@@ -879,53 +881,53 @@ tBleStatus aci_gap_start_auto_conn_establish_proc_IDB04A1(uint16_t scanInterval,
     return BLE_STATUS_INVALID_PARAMS;
 
   scanInterval = htobs(scanInterval);
-  BLUENRG_memcpy(buffer + indx, &scanInterval, 2);
+  memcpy(buffer + indx, &scanInterval, 2);
   indx += 2;
 
   scanWindow = htobs(scanWindow);
-  BLUENRG_memcpy(buffer + indx, &scanWindow, 2);
+  memcpy(buffer + indx, &scanWindow, 2);
   indx += 2;
 
   buffer[indx] = own_bdaddr_type;
   indx++;
 
   conn_min_interval = htobs(conn_min_interval);
-  BLUENRG_memcpy(buffer + indx, &conn_min_interval, 2);
+  memcpy(buffer + indx, &conn_min_interval, 2);
   indx +=  2;
 
   conn_max_interval = htobs(conn_max_interval);
-  BLUENRG_memcpy(buffer + indx, &conn_max_interval, 2);
+  memcpy(buffer + indx, &conn_max_interval, 2);
   indx +=  2;
 
   conn_latency = htobs(conn_latency);
-  BLUENRG_memcpy(buffer + indx, &conn_latency, 2);
+  memcpy(buffer + indx, &conn_latency, 2);
   indx +=  2;
 
   supervision_timeout = htobs(supervision_timeout);
-  BLUENRG_memcpy(buffer + indx, &supervision_timeout, 2);
+  memcpy(buffer + indx, &supervision_timeout, 2);
   indx +=  2;
 
   min_conn_length = htobs(min_conn_length);
-  BLUENRG_memcpy(buffer + indx, &min_conn_length, 2);
+  memcpy(buffer + indx, &min_conn_length, 2);
   indx +=  2;
 
   max_conn_length = htobs(max_conn_length);
-  BLUENRG_memcpy(buffer + indx, &max_conn_length, 2);
+  memcpy(buffer + indx, &max_conn_length, 2);
   indx +=  2;
 
   buffer[indx] = use_reconn_addr;
   indx++;
 
-  BLUENRG_memcpy(buffer + indx, reconn_addr, 6);
+  memcpy(buffer + indx, reconn_addr, 6);
   indx += 6;
 
   buffer[indx] = num_whitelist_entries;
   indx++;
 
-  BLUENRG_memcpy(buffer + indx, addr_array, (num_whitelist_entries*7));
+  memcpy(buffer + indx, addr_array, (num_whitelist_entries*7));
   indx +=  num_whitelist_entries * 7;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_START_AUTO_CONN_ESTABLISH_PROC;
   rq.cparam = (void *)buffer;
@@ -953,7 +955,7 @@ tBleStatus aci_gap_start_general_conn_establish_proc_IDB05A1(uint8_t scan_type, 
   cp.own_address_type = own_address_type;
   cp.filter_duplicates = filter_duplicates;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_START_GENERAL_CONN_ESTABLISH_PROC;
   rq.cparam = &cp;
@@ -981,9 +983,9 @@ tBleStatus aci_gap_start_general_conn_establish_proc_IDB04A1(uint8_t scan_type, 
   cp.own_address_type = own_address_type;
   cp.filter_duplicates = filter_duplicates;
   cp.use_reconn_addr = use_reconn_addr;
-  BLUENRG_memcpy(cp.reconn_addr, reconn_addr, 6);
+  memcpy(cp.reconn_addr, reconn_addr, 6);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_START_GENERAL_CONN_ESTABLISH_PROC;
   rq.cparam = &cp;
@@ -1016,9 +1018,9 @@ tBleStatus aci_gap_start_selective_conn_establish_proc(uint8_t scan_type, uint16
   cp.filter_duplicates = filter_duplicates;
   cp.num_whitelist_entries = num_whitelist_entries;
 
-  BLUENRG_memcpy(cp.addr_array, addr_array, (num_whitelist_entries*7));
+  memcpy(cp.addr_array, addr_array, (num_whitelist_entries*7));
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_START_SELECTIVE_CONN_ESTABLISH_PROC;
   rq.cparam = &cp;
@@ -1047,7 +1049,7 @@ tBleStatus aci_gap_create_connection(uint16_t scanInterval, uint16_t scanWindow,
   cp.scanInterval = htobs(scanInterval);
   cp.scanWindow = htobs(scanWindow);
   cp.peer_bdaddr_type = peer_bdaddr_type;
-  BLUENRG_memcpy(cp.peer_bdaddr, peer_bdaddr, 6);
+  memcpy(cp.peer_bdaddr, peer_bdaddr, 6);
   cp.own_bdaddr_type = own_bdaddr_type;
   cp.conn_min_interval = htobs(conn_min_interval);
   cp.conn_max_interval = htobs(conn_max_interval);
@@ -1056,7 +1058,7 @@ tBleStatus aci_gap_create_connection(uint16_t scanInterval, uint16_t scanWindow,
   cp.min_conn_length = htobs(min_conn_length);
   cp.max_conn_length = htobs(max_conn_length);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_CREATE_CONNECTION;
   rq.cparam = &cp;
@@ -1076,7 +1078,7 @@ tBleStatus aci_gap_terminate_gap_procedure(uint8_t procedure_code)
   struct hci_request rq;
   uint8_t status;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_TERMINATE_GAP_PROCEDURE;
   rq.cparam = &procedure_code;
@@ -1108,7 +1110,7 @@ tBleStatus aci_gap_start_connection_update(uint16_t conn_handle, uint16_t conn_m
   cp.min_conn_length = htobs(min_conn_length);
   cp.max_conn_length = htobs(max_conn_length);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_START_CONNECTION_UPDATE;
   rq.cparam = &cp;
@@ -1132,7 +1134,7 @@ tBleStatus aci_gap_send_pairing_request(uint16_t conn_handle, uint8_t force_rebo
   cp.conn_handle = htobs(conn_handle);
   cp.force_rebond = force_rebond;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_SEND_PAIRING_REQUEST;
   rq.cparam = &cp;
@@ -1153,9 +1155,9 @@ tBleStatus aci_gap_resolve_private_address_IDB05A1(const tBDAddr private_address
   gap_resolve_private_address_cp cp;
   gap_resolve_private_address_rp rp;
 
-  BLUENRG_memcpy(cp.address, private_address, 6);
+  memcpy(cp.address, private_address, 6);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_RESOLVE_PRIVATE_ADDRESS;
   rq.cparam = &cp;
@@ -1169,7 +1171,7 @@ tBleStatus aci_gap_resolve_private_address_IDB05A1(const tBDAddr private_address
   if(rp.status)
     return rp.status;
 
-  BLUENRG_memcpy(actual_address, rp.address, 6);
+  memcpy(actual_address, rp.address, 6);
 
   return 0;
 }
@@ -1180,9 +1182,9 @@ tBleStatus aci_gap_resolve_private_address_IDB04A1(const tBDAddr address)
   gap_resolve_private_address_cp cp;
   uint8_t status;
 
-  BLUENRG_memcpy(cp.address, address, 6);
+  memcpy(cp.address, address, 6);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_RESOLVE_PRIVATE_ADDRESS;
   rq.cparam = &cp;
@@ -1216,13 +1218,13 @@ tBleStatus aci_gap_set_broadcast_mode(uint16_t adv_interv_min, uint16_t adv_inte
 
   cp.var_len_data[indx] = adv_data_length;
   indx++;
-  BLUENRG_memcpy(cp.var_len_data + indx, adv_data, adv_data_length);
+  memcpy(cp.var_len_data + indx, adv_data, adv_data_length);
   indx += adv_data_length;
   cp.var_len_data[indx] = num_whitelist_entries;
   indx ++;
-  BLUENRG_memcpy(cp.var_len_data + indx, addr_array, num_whitelist_entries*7);
+  memcpy(cp.var_len_data + indx, addr_array, num_whitelist_entries*7);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_SET_BROADCAST_MODE;
   rq.cparam = &cp;
@@ -1249,7 +1251,7 @@ tBleStatus aci_gap_start_observation_procedure(uint16_t scan_interval, uint16_t 
   cp.own_address_type = own_address_type;
   cp.filter_duplicates = filter_duplicates;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_START_OBSERVATION_PROC;
   rq.cparam = &cp;
@@ -1271,9 +1273,9 @@ tBleStatus aci_gap_is_device_bonded(uint8_t peer_address_type, const tBDAddr pee
   uint8_t status;
 
   cp.peer_address_type = peer_address_type;
-  BLUENRG_memcpy(cp.peer_address, peer_address, sizeof(cp.peer_address));
+  memcpy(cp.peer_address, peer_address, sizeof(cp.peer_address));
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_IS_DEVICE_BONDED;
   rq.cparam = &cp;
@@ -1292,7 +1294,7 @@ tBleStatus aci_gap_get_bonded_devices(uint8_t *num_devices, uint8_t *device_list
   struct hci_request rq;
   gap_get_bonded_devices_rp rp;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GAP_GET_BONDED_DEVICES;
   rq.rparam = &rp;
@@ -1307,7 +1309,7 @@ tBleStatus aci_gap_get_bonded_devices(uint8_t *num_devices, uint8_t *device_list
 
   *num_devices = rp.num_addr;
   if(device_list != NULL)
-    BLUENRG_memcpy(device_list, rp.dev_list, MIN(device_list_size,rp.num_addr*7));
+    memcpy(device_list, rp.dev_list, MIN(device_list_size,rp.num_addr*7));
 
   return 0;
 }

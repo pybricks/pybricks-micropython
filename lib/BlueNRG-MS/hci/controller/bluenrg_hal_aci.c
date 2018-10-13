@@ -13,6 +13,8 @@
 * INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
 *******************************************************************************/
 
+#include <string.h>
+
 #include "bluenrg_types.h"
 #include "bluenrg_def.h"
 #include "hci_const.h"
@@ -29,7 +31,7 @@ tBleStatus aci_hal_get_fw_build_number(uint16_t *build_number)
   struct hci_request rq;
   hal_get_fw_build_number_rp rp;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_HAL_GET_FW_BUILD_NUMBER;
   rq.rparam = &rp;
@@ -64,10 +66,10 @@ tBleStatus aci_hal_write_config_data(uint8_t offset,
   buffer[indx] = len;
   indx++;
 
-  BLUENRG_memcpy(buffer + indx, val, len);
+  memcpy(buffer + indx, val, len);
   indx +=  len;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_HAL_WRITE_CONFIG_DATA;
   rq.cparam = (void *)buffer;
@@ -89,7 +91,7 @@ tBleStatus aci_hal_read_config_data(uint8_t offset, uint16_t data_len, uint8_t *
 
   cp.offset = offset;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_HAL_READ_CONFIG_DATA;
   rq.cparam = &cp;
@@ -105,7 +107,7 @@ tBleStatus aci_hal_read_config_data(uint8_t offset, uint16_t data_len, uint8_t *
 
   *data_len_out_p = rq.rlen-1;
 
-  BLUENRG_memcpy(data, rp.data, MIN(data_len, *data_len_out_p));
+  memcpy(data, rp.data, MIN(data_len, *data_len_out_p));
 
   return 0;
 }
@@ -119,7 +121,7 @@ tBleStatus aci_hal_set_tx_power_level(uint8_t en_high_power, uint8_t pa_level)
   cp.en_high_power = en_high_power;
   cp.pa_level = pa_level;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_HAL_SET_TX_POWER_LEVEL;
   rq.cparam = &cp;
@@ -138,7 +140,7 @@ tBleStatus aci_hal_le_tx_test_packet_number(uint32_t *number_of_packets)
   struct hci_request rq;
   hal_le_tx_test_packet_number_rp resp;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_HAL_LE_TX_TEST_PACKET_NUMBER;
   rq.rparam = &resp;
@@ -161,7 +163,7 @@ tBleStatus aci_hal_device_standby(void)
   struct hci_request rq;
   uint8_t status;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_HAL_DEVICE_STANDBY;
   rq.rparam = &status;
@@ -181,7 +183,7 @@ tBleStatus aci_hal_tone_start(uint8_t rf_channel)
 
   cp.rf_channel = rf_channel;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_HAL_TONE_START;
   rq.cparam = &cp;
@@ -200,7 +202,7 @@ tBleStatus aci_hal_tone_stop(void)
   struct hci_request rq;
   uint8_t status;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_HAL_TONE_STOP;
   rq.rparam = &status;
@@ -217,7 +219,7 @@ tBleStatus aci_hal_get_link_status(uint8_t link_status[8], uint16_t conn_handle[
   struct hci_request rq;
   hal_get_link_status_rp rp;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_HAL_GET_LINK_STATUS;
   rq.rparam = &rp;
@@ -229,7 +231,7 @@ tBleStatus aci_hal_get_link_status(uint8_t link_status[8], uint16_t conn_handle[
   if(rp.status)
     return rp.status;
 
-  BLUENRG_memcpy(link_status,rp.link_status,8);
+  memcpy(link_status,rp.link_status,8);
   for(int i = 0; i < 8; i++)
     conn_handle[i] = btohs(rp.conn_handle[i]);
 
@@ -241,7 +243,7 @@ tBleStatus aci_hal_get_anchor_period(uint32_t *anchor_period, uint32_t *max_free
   struct hci_request rq;
   hal_get_anchor_period_rp rp;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_HAL_GET_ANCHOR_PERIOD;
   rq.rparam = &rp;

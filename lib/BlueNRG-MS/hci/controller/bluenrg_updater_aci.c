@@ -13,6 +13,8 @@
 * INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
 *******************************************************************************/
 
+#include <string.h>
+
 #include "bluenrg_def.h"
 #include "bluenrg_types.h"
 #include "hci_const.h"
@@ -27,7 +29,7 @@ tBleStatus aci_updater_start(void)
   struct hci_request rq;
   uint8_t status = 0;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_UPDATER_START;
   rq.rparam = &status;
@@ -43,7 +45,7 @@ tBleStatus aci_updater_reboot(void)
   struct hci_request rq;
   uint8_t status = 0;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_UPDATER_REBOOT;
   rq.rparam = &status;
@@ -59,9 +61,9 @@ tBleStatus aci_get_updater_version(uint8_t *version)
   struct hci_request rq;
   get_updater_version_rp resp;
 
-  BLUENRG_memset(&resp, 0, sizeof(resp));
+  memset(&resp, 0, sizeof(resp));
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GET_UPDATER_VERSION;
   rq.rparam = &resp;
@@ -80,9 +82,9 @@ tBleStatus aci_get_updater_buffer_size(uint8_t *buffer_size)
   struct hci_request rq;
   get_updater_bufsize_rp resp;
 
-  BLUENRG_memset(&resp, 0, sizeof(resp));
+  memset(&resp, 0, sizeof(resp));
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GET_UPDATER_BUFSIZE;
   rq.rparam = &resp;
@@ -101,7 +103,7 @@ tBleStatus aci_erase_blue_flag(void)
   struct hci_request rq;
   uint8_t status;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_UPDATER_ERASE_BLUE_FLAG;
   rq.rparam = &status;
@@ -118,7 +120,7 @@ tBleStatus aci_reset_blue_flag(void)
   struct hci_request rq;
   uint8_t status;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_UPDATER_RESET_BLUE_FLAG;
   rq.rparam = &status;
@@ -138,7 +140,7 @@ tBleStatus aci_updater_erase_sector(uint32_t address)
 
   cp.address = htobl(address);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_UPDATER_ERASE_SECTOR;
   rq.cparam = &cp;
@@ -165,9 +167,9 @@ tBleStatus aci_updater_program_data_block(uint32_t address,
 
   cp.address = htobl(address);
   cp.data_len = htobs(len);
-  BLUENRG_memcpy(cp.data, data, len);
+  memcpy(cp.data, data, len);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_UPDATER_PROG_DATA_BLOCK;
   rq.cparam = &cp;
@@ -195,7 +197,7 @@ tBleStatus aci_updater_read_data_block(uint32_t address,
   cp.address = htobl(address);
   cp.data_len = htobs(data_len);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_UPDATER_READ_DATA_BLOCK;
   rq.cparam = &cp;
@@ -207,7 +209,7 @@ tBleStatus aci_updater_read_data_block(uint32_t address,
     return BLE_STATUS_TIMEOUT;
 
   // First byte is status
-  BLUENRG_memcpy(data, buffer+1, data_len);
+  memcpy(data, buffer+1, data_len);
 
   return buffer[0];
 }
@@ -220,12 +222,12 @@ tBleStatus aci_updater_calc_crc(uint32_t address,
   updater_calc_crc_cp cp;
   updater_calc_crc_rp resp;
 
-  BLUENRG_memset(&resp, 0, sizeof(resp));
+  memset(&resp, 0, sizeof(resp));
 
   cp.address = htobl(address);
   cp.num_sectors = num_sectors;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_UPDATER_CALC_CRC;
   rq.cparam = &cp;
@@ -246,9 +248,9 @@ tBleStatus aci_updater_hw_version(uint8_t *version)
   struct hci_request rq;
   updater_hw_version_rp resp;
 
-  BLUENRG_memset(&resp, 0, sizeof(resp));
+  memset(&resp, 0, sizeof(resp));
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_UPDATER_HW_VERSION;
   rq.rparam = &resp;

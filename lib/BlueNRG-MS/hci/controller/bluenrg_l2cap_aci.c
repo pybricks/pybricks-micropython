@@ -13,6 +13,8 @@
 * INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
 *******************************************************************************/
 
+#include <string.h>
+
 #include "bluenrg_types.h"
 #include "bluenrg_def.h"
 #include "hci_const.h"
@@ -38,7 +40,7 @@ tBleStatus aci_l2cap_connection_parameter_update_request(uint16_t conn_handle, u
   cp.slave_latency = htobs(slave_latency);
   cp.timeout_multiplier = htobs(timeout_multiplier);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_L2CAP_CONN_PARAM_UPDATE_REQ;
   rq.cparam = &cp;
@@ -72,7 +74,7 @@ tBleStatus aci_l2cap_connection_parameter_update_response_IDB05A1(uint16_t conn_
   cp.id = id;
   cp.accept = accept;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_L2CAP_CONN_PARAM_UPDATE_RESP;
   rq.cparam = &cp;
@@ -102,7 +104,7 @@ tBleStatus aci_l2cap_connection_parameter_update_response_IDB04A1(uint16_t conn_
   cp.id = id;
   cp.accept = accept;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_L2CAP_CONN_PARAM_UPDATE_RESP;
   rq.cparam = &cp;

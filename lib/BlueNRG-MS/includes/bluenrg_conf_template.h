@@ -66,8 +66,8 @@ extern "C" {
 
 #define HCI_DEFAULT_TIMEOUT_MS                   1000
 
-#define BLUENRG_memcpy                           memcpy
-#define BLUENRG_memset                           memset
+#define memcpy                           memcpy
+#define memset                           memset
 
 #if (DEBUG == 1)
 #define PRINTF(...)                              printf(__VA_ARGS__)

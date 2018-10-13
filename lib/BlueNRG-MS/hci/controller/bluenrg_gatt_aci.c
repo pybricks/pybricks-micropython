@@ -13,6 +13,8 @@
 * INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
 *******************************************************************************/
 
+#include <string.h>
+
 #include "bluenrg_types.h"
 #include "bluenrg_def.h"
 #include "hci_const.h"
@@ -30,7 +32,7 @@ tBleStatus aci_gatt_init(void)
   struct hci_request rq;
   uint8_t status;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_INIT;
   rq.rparam = &status;
@@ -59,7 +61,7 @@ tBleStatus aci_gatt_add_serv(uint8_t service_uuid_type, const uint8_t* service_u
   else {
     uuid_len = 16;
   }
-  BLUENRG_memcpy(buffer + indx, service_uuid, uuid_len);
+  memcpy(buffer + indx, service_uuid, uuid_len);
   indx +=  uuid_len;
 
   buffer[indx] = service_type;
@@ -69,9 +71,9 @@ tBleStatus aci_gatt_add_serv(uint8_t service_uuid_type, const uint8_t* service_u
   indx++;
 
 
-  BLUENRG_memset(&resp, 0, sizeof(resp));
+  memset(&resp, 0, sizeof(resp));
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_ADD_SERV;
   rq.cparam = (void *)buffer;
@@ -102,15 +104,15 @@ tBleStatus aci_gatt_include_service(uint16_t service_handle, uint16_t included_s
   uint8_t indx = 0;
 
   service_handle = htobs(service_handle);
-  BLUENRG_memcpy(buffer, &service_handle, 2);
+  memcpy(buffer, &service_handle, 2);
   indx += 2;
 
   included_start_handle = htobs(included_start_handle);
-  BLUENRG_memcpy(buffer+indx, &included_start_handle, 2);
+  memcpy(buffer+indx, &included_start_handle, 2);
   indx += 2;
 
   included_end_handle = htobs(included_end_handle);
-  BLUENRG_memcpy(buffer+indx, &included_end_handle, 2);
+  memcpy(buffer+indx, &included_end_handle, 2);
   indx += 2;
 
   if(included_uuid_type == UUID_TYPE_16){
@@ -122,12 +124,12 @@ tBleStatus aci_gatt_include_service(uint16_t service_handle, uint16_t included_s
   buffer[indx] = included_uuid_type;
   indx++;
 
-  BLUENRG_memcpy(buffer + indx, included_uuid, uuid_len);
+  memcpy(buffer + indx, included_uuid, uuid_len);
   indx += uuid_len;
 
-  BLUENRG_memset(&resp, 0, sizeof(resp));
+  memset(&resp, 0, sizeof(resp));
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_INCLUDE_SERV;
   rq.cparam = (void *)buffer;
@@ -165,7 +167,7 @@ tBleStatus aci_gatt_add_char(uint16_t serviceHandle,
   uint8_t indx = 0;
 
   serviceHandle = htobs(serviceHandle);
-  BLUENRG_memcpy(buffer + indx, &serviceHandle, 2);
+  memcpy(buffer + indx, &serviceHandle, 2);
   indx += 2;
 
   buffer[indx] = charUuidType;
@@ -177,7 +179,7 @@ tBleStatus aci_gatt_add_char(uint16_t serviceHandle,
   else {
     uuid_len = 16;
   }
-  BLUENRG_memcpy(buffer + indx, charUuid, uuid_len);
+  memcpy(buffer + indx, charUuid, uuid_len);
   indx +=  uuid_len;
 
   buffer[indx] = charValueLen;
@@ -198,9 +200,9 @@ tBleStatus aci_gatt_add_char(uint16_t serviceHandle,
   buffer[indx] = isVariable;
   indx++;
 
-  BLUENRG_memset(&resp, 0, sizeof(resp));
+  memset(&resp, 0, sizeof(resp));
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_ADD_CHAR;
   rq.cparam = (void *)buffer;
@@ -241,11 +243,11 @@ tBleStatus aci_gatt_add_char_desc(uint16_t serviceHandle,
   uint8_t indx = 0;
 
   serviceHandle = htobs(serviceHandle);
-  BLUENRG_memcpy(buffer + indx, &serviceHandle, 2);
+  memcpy(buffer + indx, &serviceHandle, 2);
   indx += 2;
 
   charHandle = htobs(charHandle);
-  BLUENRG_memcpy(buffer + indx, &charHandle, 2);
+  memcpy(buffer + indx, &charHandle, 2);
   indx += 2;
 
   buffer[indx] = descUuidType;
@@ -257,7 +259,7 @@ tBleStatus aci_gatt_add_char_desc(uint16_t serviceHandle,
   else {
     uuid_len = 16;
   }
-  BLUENRG_memcpy(buffer + indx, uuid, uuid_len);
+  memcpy(buffer + indx, uuid, uuid_len);
   indx +=  uuid_len;
 
   buffer[indx] = descValueMaxLen;
@@ -269,7 +271,7 @@ tBleStatus aci_gatt_add_char_desc(uint16_t serviceHandle,
   if ((descValueLen+indx+5) > HCI_MAX_PAYLOAD_SIZE)
     return BLE_STATUS_INVALID_PARAMS;
 
-  BLUENRG_memcpy(buffer + indx, descValue, descValueLen);
+  memcpy(buffer + indx, descValue, descValueLen);
   indx += descValueLen;
 
   buffer[indx] = secPermissions;
@@ -287,9 +289,9 @@ tBleStatus aci_gatt_add_char_desc(uint16_t serviceHandle,
   buffer[indx] = isVariable;
   indx++;
 
-  BLUENRG_memset(&resp, 0, sizeof(resp));
+  memset(&resp, 0, sizeof(resp));
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_ADD_CHAR_DESC;
   rq.cparam = (void *)buffer;
@@ -325,11 +327,11 @@ tBleStatus aci_gatt_update_char_value(uint16_t servHandle,
     return BLE_STATUS_INVALID_PARAMS;
 
   servHandle = htobs(servHandle);
-  BLUENRG_memcpy(buffer + indx, &servHandle, 2);
+  memcpy(buffer + indx, &servHandle, 2);
   indx += 2;
 
   charHandle = htobs(charHandle);
-  BLUENRG_memcpy(buffer + indx, &charHandle, 2);
+  memcpy(buffer + indx, &charHandle, 2);
   indx += 2;
 
   buffer[indx] = charValOffset;
@@ -338,10 +340,10 @@ tBleStatus aci_gatt_update_char_value(uint16_t servHandle,
   buffer[indx] = charValueLen;
   indx++;
 
-  BLUENRG_memcpy(buffer + indx, charValue, charValueLen);
+  memcpy(buffer + indx, charValue, charValueLen);
   indx +=  charValueLen;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_UPD_CHAR_VAL;
   rq.cparam = (void *)buffer;
@@ -368,7 +370,7 @@ tBleStatus aci_gatt_del_char(uint16_t servHandle, uint16_t charHandle)
   cp.service_handle = htobs(servHandle);
   cp.char_handle = htobs(charHandle);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_DEL_CHAR;
   rq.cparam = &cp;
@@ -390,7 +392,7 @@ tBleStatus aci_gatt_del_service(uint16_t servHandle)
 
   cp.service_handle = htobs(servHandle);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_DEL_SERV;
   rq.cparam = &cp;
@@ -413,7 +415,7 @@ tBleStatus aci_gatt_del_include_service(uint16_t servHandle, uint16_t includeSer
   cp.service_handle = htobs(servHandle);
   cp.inc_serv_handle = htobs(includeServHandle);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_DEL_INC_SERV;
   rq.cparam = &cp;
@@ -435,7 +437,7 @@ tBleStatus aci_gatt_set_event_mask(uint32_t event_mask)
 
   cp.evt_mask = htobs(event_mask);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_SET_EVT_MASK;
   rq.cparam = &cp;
@@ -457,7 +459,7 @@ tBleStatus aci_gatt_exchange_configuration(uint16_t conn_handle)
 
   cp.conn_handle = htobs(conn_handle);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_EXCHANGE_CONFIG;
   rq.cparam = &cp;
@@ -482,7 +484,7 @@ tBleStatus aci_att_find_information_req(uint16_t conn_handle, uint16_t start_han
   cp.start_handle = htobs(start_handle);
   cp.end_handle = htobs(end_handle);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_ATT_FIND_INFO_REQ;
   rq.cparam = &cp;
@@ -509,11 +511,11 @@ tBleStatus aci_att_find_by_type_value_req(uint16_t conn_handle, uint16_t start_h
   cp.conn_handle = htobs(conn_handle);
   cp.start_handle = htobs(start_handle);
   cp.end_handle = htobs(end_handle);
-  BLUENRG_memcpy(cp.uuid, uuid, 2);
+  memcpy(cp.uuid, uuid, 2);
   cp.attr_val_len = attr_val_len;
-  BLUENRG_memcpy(cp.attr_val, attr_val, attr_val_len);
+  memcpy(cp.attr_val, attr_val, attr_val_len);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_ATT_FIND_BY_TYPE_VALUE_REQ;
   rq.cparam = &cp;
@@ -546,9 +548,9 @@ tBleStatus aci_att_read_by_type_req(uint16_t conn_handle, uint16_t start_handle,
   cp.start_handle = htobs(start_handle);
   cp.end_handle = htobs(end_handle);
   cp.uuid_type = uuid_type;
-  BLUENRG_memcpy(cp.uuid, uuid, uuid_len);
+  memcpy(cp.uuid, uuid, uuid_len);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_ATT_READ_BY_TYPE_REQ;
   rq.cparam = &cp;
@@ -581,9 +583,9 @@ tBleStatus aci_att_read_by_group_type_req(uint16_t conn_handle, uint16_t start_h
   cp.start_handle = htobs(start_handle);
   cp.end_handle = htobs(end_handle);
   cp.uuid_type = uuid_type;
-  BLUENRG_memcpy(cp.uuid, uuid, uuid_len);
+  memcpy(cp.uuid, uuid, uuid_len);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_ATT_READ_BY_GROUP_TYPE_REQ;
   rq.cparam = &cp;
@@ -611,9 +613,9 @@ tBleStatus aci_att_prepare_write_req(uint16_t conn_handle, uint16_t attr_handle,
   cp.attr_handle = htobs(attr_handle);
   cp.value_offset = htobs(value_offset);
   cp.attr_val_len = attr_val_len;
-  BLUENRG_memcpy(cp.attr_val, attr_val, attr_val_len);
+  memcpy(cp.attr_val, attr_val, attr_val_len);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_ATT_PREPARE_WRITE_REQ;
   rq.cparam = &cp;
@@ -636,7 +638,7 @@ tBleStatus aci_att_execute_write_req(uint16_t conn_handle, uint8_t execute)
   cp.conn_handle = htobs(conn_handle);
   cp.execute = execute;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_ATT_EXECUTE_WRITE_REQ;
   rq.cparam = &cp;
@@ -658,7 +660,7 @@ tBleStatus aci_gatt_disc_all_prim_services(uint16_t conn_handle)
 
   cp.conn_handle = htobs(conn_handle);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_DISC_ALL_PRIM_SERVICES;
   rq.cparam = &cp;
@@ -689,9 +691,9 @@ tBleStatus aci_gatt_disc_prim_service_by_uuid(uint16_t conn_handle, uint8_t uuid
 
   cp.conn_handle = htobs(conn_handle);
   cp.uuid_type = uuid_type;
-  BLUENRG_memcpy(cp.uuid, uuid, uuid_len);
+  memcpy(cp.uuid, uuid, uuid_len);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_DISC_PRIM_SERVICE_BY_UUID;
   rq.cparam = &cp;
@@ -717,7 +719,7 @@ tBleStatus aci_gatt_find_included_services(uint16_t conn_handle, uint16_t start_
   cp.start_handle = htobs(start_service_handle);
   cp.end_handle = htobs(end_service_handle);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_FIND_INCLUDED_SERVICES;
   rq.cparam = &cp;
@@ -743,7 +745,7 @@ tBleStatus aci_gatt_disc_all_charac_of_serv(uint16_t conn_handle, uint16_t start
   cp.start_attr_handle = htobs(start_attr_handle);
   cp.end_attr_handle = htobs(end_attr_handle);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_DISC_ALL_CHARAC_OF_SERV;
   rq.cparam = &cp;
@@ -770,15 +772,15 @@ tBleStatus aci_gatt_disc_charac_by_uuid(uint16_t conn_handle, uint16_t start_han
   uint8_t indx = 0;
 
   conn_handle = htobs(conn_handle);
-  BLUENRG_memcpy(buffer + indx, &conn_handle, 2);
+  memcpy(buffer + indx, &conn_handle, 2);
   indx += 2;
 
   start_handle = htobs(start_handle);
-  BLUENRG_memcpy(buffer + indx, &start_handle, 2);
+  memcpy(buffer + indx, &start_handle, 2);
   indx += 2;
 
   end_handle = htobs(end_handle);
-  BLUENRG_memcpy(buffer + indx, &end_handle, 2);
+  memcpy(buffer + indx, &end_handle, 2);
   indx += 2;
 
   buffer[indx] = charUuidType;
@@ -790,10 +792,10 @@ tBleStatus aci_gatt_disc_charac_by_uuid(uint16_t conn_handle, uint16_t start_han
   else {
     uuid_len = 16;
   }
-  BLUENRG_memcpy(buffer + indx, charUuid, uuid_len);
+  memcpy(buffer + indx, charUuid, uuid_len);
   indx +=  uuid_len;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_DISC_CHARAC_BY_UUID;
   rq.cparam = (void *)buffer;
@@ -819,7 +821,7 @@ tBleStatus aci_gatt_disc_all_charac_descriptors(uint16_t conn_handle, uint16_t c
   cp.char_val_handle = htobs(char_val_handle);
   cp.char_end_handle = htobs(char_end_handle);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_DISC_ALL_CHARAC_DESCRIPTORS;
   rq.cparam = &cp;
@@ -843,7 +845,7 @@ tBleStatus aci_gatt_read_charac_val(uint16_t conn_handle, uint16_t attr_handle)
   cp.conn_handle = htobs(conn_handle);
   cp.attr_handle = htobs(attr_handle);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_READ_CHARAC_VAL;
   rq.cparam = &cp;
@@ -877,9 +879,9 @@ tBleStatus aci_gatt_read_using_charac_uuid(uint16_t conn_handle, uint16_t start_
   cp.start_handle = htobs(start_handle);
   cp.end_handle = htobs(end_handle);
   cp.uuid_type = uuid_type;
-  BLUENRG_memcpy(cp.uuid, uuid, uuid_len);
+  memcpy(cp.uuid, uuid, uuid_len);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_READ_USING_CHARAC_UUID;
   rq.cparam = &cp;
@@ -904,7 +906,7 @@ tBleStatus aci_gatt_read_long_charac_val(uint16_t conn_handle, uint16_t attr_han
   cp.attr_handle = htobs(attr_handle);
   cp.val_offset = htobs(val_offset);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_READ_LONG_CHARAC_VAL;
   rq.cparam = &cp;
@@ -931,9 +933,9 @@ tBleStatus aci_gatt_read_multiple_charac_val(uint16_t conn_handle, uint8_t num_h
 
   cp.conn_handle = htobs(conn_handle);
   cp.num_handles = htobs(num_handles);
-  BLUENRG_memcpy(cp.set_of_handles, set_of_handles, 2*num_handles);
+  memcpy(cp.set_of_handles, set_of_handles, 2*num_handles);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_READ_MULTIPLE_CHARAC_VAL;
   rq.cparam = &cp;
@@ -962,20 +964,20 @@ tBleStatus aci_gatt_write_charac_value(uint16_t conn_handle, uint16_t attr_handl
     return BLE_STATUS_INVALID_PARAMS;
 
   conn_handle = htobs(conn_handle);
-  BLUENRG_memcpy(buffer + indx, &conn_handle, 2);
+  memcpy(buffer + indx, &conn_handle, 2);
   indx += 2;
 
   attr_handle = htobs(attr_handle);
-  BLUENRG_memcpy(buffer + indx, &attr_handle, 2);
+  memcpy(buffer + indx, &attr_handle, 2);
   indx += 2;
 
   buffer[indx] = value_len;
   indx++;
 
-  BLUENRG_memcpy(buffer + indx, attr_value, value_len);
+  memcpy(buffer + indx, attr_value, value_len);
   indx +=  value_len;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_WRITE_CHAR_VALUE;
   rq.cparam = (void *)buffer;
@@ -1004,9 +1006,9 @@ tBleStatus aci_gatt_write_long_charac_val(uint16_t conn_handle, uint16_t attr_ha
   cp.attr_handle = htobs(attr_handle);
   cp.val_offset = htobs(val_offset);
   cp.val_len = val_len;
-  BLUENRG_memcpy(cp.attr_val, attr_val, val_len);
+  memcpy(cp.attr_val, attr_val, val_len);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_WRITE_LONG_CHARAC_VAL;
   rq.cparam = &cp;
@@ -1035,9 +1037,9 @@ tBleStatus aci_gatt_write_charac_reliable(uint16_t conn_handle, uint16_t attr_ha
   cp.attr_handle = htobs(attr_handle);
   cp.val_offset = htobs(val_offset);
   cp.val_len = val_len;
-  BLUENRG_memcpy(cp.attr_val, attr_val, val_len);
+  memcpy(cp.attr_val, attr_val, val_len);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_WRITE_CHARAC_RELIABLE;
   rq.cparam = &cp;
@@ -1066,9 +1068,9 @@ tBleStatus aci_gatt_write_long_charac_desc(uint16_t conn_handle, uint16_t attr_h
   cp.attr_handle = htobs(attr_handle);
   cp.val_offset = htobs(val_offset);
   cp.val_len = val_len;
-  BLUENRG_memcpy(cp.attr_val, attr_val, val_len);
+  memcpy(cp.attr_val, attr_val, val_len);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_WRITE_LONG_CHARAC_DESC;
   rq.cparam = &cp;
@@ -1094,7 +1096,7 @@ tBleStatus aci_gatt_read_long_charac_desc(uint16_t conn_handle, uint16_t attr_ha
   cp.attr_handle = htobs(attr_handle);
   cp.val_offset = htobs(val_offset);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_READ_LONG_CHARAC_DESC;
   rq.cparam = &cp;
@@ -1121,20 +1123,20 @@ tBleStatus aci_gatt_write_charac_descriptor(uint16_t conn_handle, uint16_t attr_
     return BLE_STATUS_INVALID_PARAMS;
 
   conn_handle = htobs(conn_handle);
-  BLUENRG_memcpy(buffer + indx, &conn_handle, 2);
+  memcpy(buffer + indx, &conn_handle, 2);
   indx += 2;
 
   attr_handle = htobs(attr_handle);
-  BLUENRG_memcpy(buffer + indx, &attr_handle, 2);
+  memcpy(buffer + indx, &attr_handle, 2);
   indx += 2;
 
   buffer[indx] = value_len;
   indx++;
 
-  BLUENRG_memcpy(buffer + indx, attr_value, value_len);
+  memcpy(buffer + indx, attr_value, value_len);
   indx +=  value_len;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_WRITE_CHAR_DESCRIPTOR;
   rq.cparam = (void *)buffer;
@@ -1158,7 +1160,7 @@ tBleStatus aci_gatt_read_charac_desc(uint16_t conn_handle, uint16_t attr_handle)
   cp.conn_handle = htobs(conn_handle);
   cp.attr_handle = htobs(attr_handle);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_READ_CHAR_DESCRIPTOR;
   rq.cparam = &cp;
@@ -1186,9 +1188,9 @@ tBleStatus aci_gatt_write_without_response(uint16_t conn_handle, uint16_t attr_h
   cp.conn_handle = htobs(conn_handle);
   cp.attr_handle = htobs(attr_handle);
   cp.val_len = val_len;
-  BLUENRG_memcpy(cp.attr_val, attr_val, val_len);
+  memcpy(cp.attr_val, attr_val, val_len);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_WRITE_WITHOUT_RESPONSE;
   rq.cparam = &cp;
@@ -1215,9 +1217,9 @@ tBleStatus aci_gatt_signed_write_without_resp(uint16_t conn_handle, uint16_t att
   cp.conn_handle = htobs(conn_handle);
   cp.attr_handle = htobs(attr_handle);
   cp.val_len = val_len;
-  BLUENRG_memcpy(cp.attr_val, attr_val, val_len);
+  memcpy(cp.attr_val, attr_val, val_len);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_SIGNED_WRITE_WITHOUT_RESPONSE;
   rq.cparam = &cp;
@@ -1239,7 +1241,7 @@ tBleStatus aci_gatt_confirm_indication(uint16_t conn_handle)
 
   cp.conn_handle = htobs(conn_handle);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_CONFIRM_INDICATION;
   rq.cparam = &cp;
@@ -1269,11 +1271,11 @@ tBleStatus aci_gatt_write_response(uint16_t conn_handle,
     return BLE_STATUS_INVALID_PARAMS;
 
   conn_handle = htobs(conn_handle);
-  BLUENRG_memcpy(buffer + indx, &conn_handle, 2);
+  memcpy(buffer + indx, &conn_handle, 2);
   indx += 2;
 
   attr_handle = htobs(attr_handle);
-  BLUENRG_memcpy(buffer + indx, &attr_handle, 2);
+  memcpy(buffer + indx, &attr_handle, 2);
   indx += 2;
 
   buffer[indx] = write_status;
@@ -1285,10 +1287,10 @@ tBleStatus aci_gatt_write_response(uint16_t conn_handle,
   buffer[indx] = att_val_len;
   indx += 1;
 
-  BLUENRG_memcpy(buffer + indx, att_val, att_val_len);
+  memcpy(buffer + indx, att_val, att_val_len);
   indx += att_val_len;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_WRITE_RESPONSE;
   rq.cparam = (void *)buffer;
@@ -1314,7 +1316,7 @@ tBleStatus aci_gatt_allow_read(uint16_t conn_handle)
 
     cp.conn_handle = htobs(conn_handle);
 
-    BLUENRG_memset(&rq, 0, sizeof(rq));
+    memset(&rq, 0, sizeof(rq));
     rq.ogf = OGF_VENDOR_CMD;
     rq.ocf = OCF_GATT_ALLOW_READ;
     rq.cparam = &cp;
@@ -1339,7 +1341,7 @@ tBleStatus aci_gatt_set_security_permission(uint16_t service_handle, uint16_t at
     cp.attr_handle = htobs(attr_handle);
     cp.security_permission = security_permission;
 
-    BLUENRG_memset(&rq, 0, sizeof(rq));
+    memset(&rq, 0, sizeof(rq));
     rq.ogf = OGF_VENDOR_CMD;
     rq.ocf = OCF_GATT_SET_SECURITY_PERMISSION;
     rq.cparam = &cp;
@@ -1369,27 +1371,27 @@ tBleStatus aci_gatt_set_desc_value(uint16_t servHandle,
     return BLE_STATUS_INVALID_PARAMS;
 
   servHandle = htobs(servHandle);
-  BLUENRG_memcpy(buffer + indx, &servHandle, 2);
+  memcpy(buffer + indx, &servHandle, 2);
   indx += 2;
 
   charHandle = htobs(charHandle);
-  BLUENRG_memcpy(buffer + indx, &charHandle, 2);
+  memcpy(buffer + indx, &charHandle, 2);
   indx += 2;
 
   charDescHandle = htobs(charDescHandle);
-  BLUENRG_memcpy(buffer + indx, &charDescHandle, 2);
+  memcpy(buffer + indx, &charDescHandle, 2);
   indx += 2;
 
-  BLUENRG_memcpy(buffer + indx, &charDescValOffset, 2);
+  memcpy(buffer + indx, &charDescValOffset, 2);
   indx += 2;
 
   buffer[indx] = charDescValueLen;
   indx++;
 
-  BLUENRG_memcpy(buffer + indx, charDescValue, charDescValueLen);
+  memcpy(buffer + indx, charDescValue, charDescValueLen);
   indx +=  charDescValueLen;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_SET_DESC_VAL;
   rq.cparam = (void *)buffer;
@@ -1414,7 +1416,7 @@ tBleStatus aci_gatt_read_handle_value(uint16_t attr_handle, uint16_t data_len, u
 
   cp.attr_handle = htobs(attr_handle);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_READ_HANDLE_VALUE;
   rq.cparam = &cp;
@@ -1430,7 +1432,7 @@ tBleStatus aci_gatt_read_handle_value(uint16_t attr_handle, uint16_t data_len, u
 
   *data_len_out_p = btohs(rp.value_len);
 
-  BLUENRG_memcpy(data, rp.value, MIN(data_len, *data_len_out_p));
+  memcpy(data, rp.value, MIN(data_len, *data_len_out_p));
 
   return 0;
 }
@@ -1447,7 +1449,7 @@ tBleStatus aci_gatt_read_handle_value_offset_IDB05A1(uint16_t attr_handle, uint8
   cp.attr_handle = htobs(attr_handle);
   cp.offset = offset;
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_READ_HANDLE_VALUE_OFFSET;
   rq.cparam = &cp;
@@ -1463,7 +1465,7 @@ tBleStatus aci_gatt_read_handle_value_offset_IDB05A1(uint16_t attr_handle, uint8
 
   *data_len_out_p = rp.value_len;
 
-  BLUENRG_memcpy(data, rp.value, MIN(data_len, *data_len_out_p));
+  memcpy(data, rp.value, MIN(data_len, *data_len_out_p));
 
   return 0;
 }
@@ -1486,9 +1488,9 @@ tBleStatus aci_gatt_update_char_value_ext_IDB05A1(uint16_t service_handle, uint1
   cp.char_length = htobs(char_length);
   cp.value_offset = htobs(value_offset);
   cp.value_length = value_length;
-  BLUENRG_memcpy(cp.value, value, value_length);
+  memcpy(cp.value, value, value_length);
 
-  BLUENRG_memset(&rq, 0, sizeof(rq));
+  memset(&rq, 0, sizeof(rq));
   rq.ogf = OGF_VENDOR_CMD;
   rq.ocf = OCF_GATT_UPD_CHAR_VAL_EXT;
   rq.cparam = &cp;
