@@ -666,8 +666,8 @@ tBleStatus aci_gap_start_general_discovery_proc(uint16_t scanInterval, uint16_t 
 /**
  * @brief Start the name discovery procedure.
  * @note  A LE_Create_Connection call will be made to the controller by GAP with the initiator filter
- * 		  policy set to “ignore whitelist and process connectable advertising packets only for the
- * 		  specified device”. Once a connection is established, GATT procedure is started to read the
+ * 		  policy set to ï¿½ignore whitelist and process connectable advertising packets only for the
+ * 		  specified deviceï¿½. Once a connection is established, GATT procedure is started to read the
  * 		  device name characteristic. When the read is completed (successfully or unsuccessfully),
  * 		  a @ref EVT_BLUE_GAP_PROCEDURE_COMPLETE event is given to the upper layer. The event also
  * 		  contains the name of the device if the device name was read successfully.
@@ -717,7 +717,7 @@ tBleStatus aci_gap_start_name_discovery_proc(uint16_t scanInterval, uint16_t sca
  * @brief Start the auto connection establishment procedure.
  * @note The devices specified are added to the white list of the controller and a LE_Create_Connection
  * 		 call will be made to the controller by GAP with the initiator filter policy set to
- * 		 “use whitelist to determine which advertiser to connect to”. When a command is issued to
+ * 		 ï¿½use whitelist to determine which advertiser to connect toï¿½. When a command is issued to
  * 		 terminate the procedure by upper layer, a LE_Create_Connection_Cancel call will be made to the
  * 		 controller by GAP.
  * 		 The procedure is terminated when either a connection is successfully established with one of
@@ -791,7 +791,7 @@ tBleStatus aci_gap_start_auto_conn_establish_proc_IDB04A1(uint16_t scanInterval,
 /**
  * @brief Start a general connection establishment procedure.
  * @note  The host enables scanning in the controller with the scanner filter policy set
- *        to “accept all advertising packets” and from the scanning results all the devices
+ *        to ï¿½accept all advertising packetsï¿½ and from the scanning results all the devices
  *        are sent to the upper layer using the event @ref EVT_BLUE_GAP_DEVICE_FOUND (for IDB04A1) or @ref EVT_LE_ADVERTISING_REPORT (for IDB05A1).
  *        The upper layer then has to select one of the devices to which it wants to connect
  *        by issuing the command aci_gap_create_connection(). The procedure is terminated
@@ -829,8 +829,8 @@ tBleStatus aci_gap_start_general_conn_establish_proc_IDB04A1(uint8_t scan_type, 
 /**
  * @brief Start a selective connection establishment procedure.
  * @note  The GAP adds the specified device addresses into white list and enables scanning in
- * 		  the controller with the scanner filter policy set to “accept packets only from
- * 		  devices in whitelist”. All the devices found are sent to the upper layer by the
+ * 		  the controller with the scanner filter policy set to ï¿½accept packets only from
+ * 		  devices in whitelistï¿½. All the devices found are sent to the upper layer by the
  * 		  event @ref EVT_BLUE_GAP_DEVICE_FOUND (for IDB04A1) or @ref EVT_LE_ADVERTISING_REPORT (for IDB05A1). The upper layer then has to select one of the
  * 		  devices to which it wants to connect by issuing the command aci_gap_create_connection().
  * 		  On completion of the procedure a  @ref EVT_BLUE_GAP_PROCEDURE_COMPLETE event is generated
@@ -869,8 +869,8 @@ tBleStatus aci_gap_start_selective_conn_establish_proc(uint8_t scan_type, uint16
 /**
  * @brief Start the direct connection establishment procedure.
  * @note  A LE_Create_Connection call will be made to the controller by GAP with the initiator filter
- * 		  policy set to “ignore whitelist and process connectable advertising packets only for the
- * 		  specified device”. The procedure can be terminated explicitly by the upper layer by issuing
+ * 		  policy set to ï¿½ignore whitelist and process connectable advertising packets only for the
+ * 		  specified deviceï¿½. The procedure can be terminated explicitly by the upper layer by issuing
  * 		  the command aci_gap_terminate_gap_procedure(). When a command is issued to terminate the
  * 		  procedure by upper layer, a LE_Create_Connection_Cancel call will be made to the controller
  * 		  by GAP.
@@ -1120,7 +1120,7 @@ tBleStatus aci_gap_is_device_bonded(uint8_t peer_address_type, const tBDAddr pee
  *  so that the upper layer can decide to disconnect the link. See @ref _evt_gap_pairing_cmplt.
  */
 #define EVT_BLUE_GAP_PAIRING_CMPLT                (0x0401)
-typedef __packed struct _evt_gap_pairing_cmplt{
+typedef struct _evt_gap_pairing_cmplt{
   uint16_t conn_handle; /**< Connection handle on which the pairing procedure completed */
   /**
    * 0x00: Pairing Success. Pairing with a remote device was successful\n
@@ -1128,7 +1128,7 @@ typedef __packed struct _evt_gap_pairing_cmplt{
    * 0x02: Pairing Failed. The pairing failed with the remote device.
    */
   uint8_t  status;
-} PACKED evt_gap_pairing_cmplt;
+} evt_gap_pairing_cmplt;
 
 
 /**
@@ -1137,9 +1137,9 @@ typedef __packed struct _evt_gap_pairing_cmplt{
  * See @ref _evt_gap_pass_key_req.
  */
 #define EVT_BLUE_GAP_PASS_KEY_REQUEST             (0x0402)
-typedef __packed struct _evt_gap_pass_key_req{
+typedef struct _evt_gap_pass_key_req{
   uint16_t conn_handle; /**< Connection handle for which the passkey has been requested. */
-} PACKED evt_gap_pass_key_req;
+} evt_gap_pass_key_req;
 
 
 /**
@@ -1150,9 +1150,9 @@ typedef __packed struct _evt_gap_pass_key_req{
  * See @ref _evt_gap_author_req.
  */
 #define EVT_BLUE_GAP_AUTHORIZATION_REQUEST        (0x0403)
-typedef __packed struct _evt_gap_author_req{
+typedef struct _evt_gap_author_req{
   uint16_t conn_handle; /**< Connection handle for which authorization has been requested. */
-} PACKED evt_gap_author_req;
+} evt_gap_author_req;
 
 /**
  * This event is generated when the slave security request is successfully sent to the master.
@@ -1176,20 +1176,20 @@ typedef __packed struct _evt_gap_author_req{
  * as a consequence of one of the GAP procedures started by the upper layers. See @ref _evt_gap_device_found.
  */
 #define EVT_BLUE_GAP_DEVICE_FOUND                 (0x0406)
-typedef __packed struct _evt_gap_device_found{
+typedef struct _evt_gap_device_found{
   	uint8_t		evt_type;     /**< Type of event (@ref ADV_IND, @ref ADV_DIRECT_IND, @ref ADV_SCAN_IND, @ref ADV_NONCONN_IND, @ref SCAN_RSP) */
 	uint8_t		bdaddr_type;  /**< Type of the peer address (@ref PUBLIC_ADDR, @ref RANDOM_ADDR). */
 	tBDAddr	    bdaddr;       /**< Address of the peer device found during scanning. */
 	uint8_t		data_length;  /**< Length of advertising or scan response data. */
 	uint8_t		data_RSSI[VARIABLE_SIZE]; /**< Advertising or scan response data + RSSI. RSSI is last octect (signed integer). */
-} PACKED evt_gap_device_found;
+} evt_gap_device_found;
 
 /**
  * This event is sent by the GAP to the upper layers when a procedure previously started has been terminated
  * by the upper layer or has completed for any other reason. See @ref _evt_gap_procedure_complete.
  */
 #define EVT_BLUE_GAP_PROCEDURE_COMPLETE           (0x0407)
-typedef __packed struct _evt_gap_procedure_complete{
+typedef struct _evt_gap_procedure_complete{
   uint8_t procedure_code; /**< Terminated procedure. See @ref gap_procedure_codes "GAP procedure codes". */
   /**
    * @ref BLE_STATUS_SUCCESS, @ref BLE_STATUS_FAILED or @ref ERR_AUTH_FAILURE (procedure failed
@@ -1204,16 +1204,16 @@ typedef __packed struct _evt_gap_procedure_complete{
    * The reconnection address written to the peripheral device if the peripheral is privacy enabled
    */
   uint8_t data[VARIABLE_SIZE];
-} PACKED evt_gap_procedure_complete;
+} evt_gap_procedure_complete;
 
 /**
  * This event is sent only by a privacy enabled Peripheral. The event is sent to the upper layers when the peripheral
  * is not able to resolve the private address of the peer device after connecting to it.
  */
 #define EVT_BLUE_GAP_ADDR_NOT_RESOLVED_IDB05A1          (0x0408)
-typedef __packed struct _evt_gap_addr_not_resolved_IDB05A1{
+typedef struct _evt_gap_addr_not_resolved_IDB05A1{
   uint16_t conn_handle; /**< Connection handle for which the private address could not be resolved with any of the stored IRK's.  */
-} PACKED evt_gap_addr_not_resolved_IDB05A1;
+} evt_gap_addr_not_resolved_IDB05A1;
 
 /**
  * This event is raised when the reconnection address is generated during the general connection
@@ -1224,9 +1224,9 @@ typedef __packed struct _evt_gap_addr_not_resolved_IDB05A1{
  * and aci_gap_start_auto_conn_establish_proc().
  */
 #define EVT_BLUE_GAP_RECONNECTION_ADDRESS_IDB04A1       (0x0408)
-typedef __packed struct _evt_gap_reconnection_addr_IDB04A1{
+typedef struct _evt_gap_reconnection_addr_IDB04A1{
   uint8_t reconnection_address[6]; /**< 6 bytes of reconnection address that has been generated */
-} PACKED evt_gap_reconnection_addr_IDB04A1;
+} evt_gap_reconnection_addr_IDB04A1;
 
 /**
  * @}

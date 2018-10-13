@@ -161,9 +161,9 @@ tBleStatus aci_hal_get_anchor_period(uint32_t *anchor_period, uint32_t *max_free
 
 /** HCI vendor specific event, raised at BlueNRG power-up or reboot. */
 #define EVT_BLUE_HAL_INITIALIZED                 (0x0001)
-typedef __packed struct _evt_hal_initialized{
+typedef struct _evt_hal_initialized{
   uint8_t reason_code; /**< Reset reason. See @ref Reset_Reasons */
-} PACKED evt_hal_initialized;
+} evt_hal_initialized;
 
 /**
  * This event is generated when an overflow occurs in the event queue read by the external microcontroller.
@@ -176,9 +176,9 @@ typedef __packed struct _evt_hal_initialized{
  * application to recover situations where critical events are lost.
  */
 #define EVT_BLUE_HAL_EVENTS_LOST_IDB05A1                (0x0002)
-typedef __packed struct _evt_hal_events_lost{
+typedef struct _evt_hal_events_lost{
   uint8_t  lost_events[8]; /**< Bitmap of lost events. Each bit indicates one or more occurrences of the specific event. See @ref Lost_Events */
-} PACKED evt_hal_events_lost_IDB05A1;
+} evt_hal_events_lost_IDB05A1;
 
 
 /**
@@ -187,7 +187,7 @@ typedef __packed struct _evt_hal_events_lost{
  * Information reported are useful to understand the root cause of the crash.
  */
 #define EVT_BLUE_HAL_CRASH_INFO_IDB05A1                 (0x0003)
-typedef __packed struct _evt_hal_crash_info{
+typedef struct _evt_hal_crash_info{
   uint8_t  crash_type; /**< Type of crash: Assert failed (0), NMI Fault (1), Hard Fault (2)  */
   uint32_t sp; /**< SP register */
   uint32_t r0; /**< R0 register  */
@@ -200,7 +200,7 @@ typedef __packed struct _evt_hal_crash_info{
   uint32_t xpsr; /**< xPSR register  */
   uint8_t  debug_data_len; /**< length of debug_data field  */
   uint8_t  debug_data[VARIABLE_SIZE]; /**< Debug data */  
-} PACKED evt_hal_crash_info_IDB05A1;
+} evt_hal_crash_info_IDB05A1;
 
 
 /**

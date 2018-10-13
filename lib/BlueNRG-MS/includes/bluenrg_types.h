@@ -28,7 +28,7 @@
 #endif
 
 /* Change this define to 1 if zero-length arrays are not supported by your compiler. */
-#define VARIABLE_SIZE   
+#define VARIABLE_SIZE
 
 /* Byte order conversions */
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -47,20 +47,12 @@
 
 typedef uint8_t BOOL;
 
-#ifndef TRUE 
+#ifndef TRUE
 #define TRUE (1)
 #endif
 
 #ifndef FALSE
 #define FALSE (0)
-#endif
-
-#ifdef __GNUC__
-#undef __packed
-#define __packed
-#define PACKED __attribute__((packed))
-#else
-#define PACKED
 #endif
 
 #endif /* __BLUENRG_TYPES_H__ */

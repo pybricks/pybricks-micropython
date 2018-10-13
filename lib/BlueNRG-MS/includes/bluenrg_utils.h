@@ -38,7 +38,7 @@ typedef struct{
 /**
  * Structure inside IFR for configuration options. 
  */
-typedef __packed struct{
+typedef struct{
   uint8_t cold_ana_act_config_table[64];
   uint8_t hot_ana_config_table[64];
   uint8_t stack_mode;
@@ -59,7 +59,7 @@ typedef __packed struct{
   uint8_t month;
   uint8_t day;
   uint32_t unused[5];
-} PACKED IFR_config_TypeDef;
+} IFR_config_TypeDef;
 
 /* Exported constants --------------------------------------------------------*/
 extern const IFR_config_TypeDef IFR_config;
