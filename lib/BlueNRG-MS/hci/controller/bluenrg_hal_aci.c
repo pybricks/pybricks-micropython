@@ -47,12 +47,11 @@ tBleStatus aci_hal_get_fw_build_number(uint16_t *build_number)
   return 0;
 }
 
-tBleStatus aci_hal_write_config_data(uint8_t offset,
-                                    uint8_t len,
-                                    const uint8_t *val)
+tBleStatus aci_hal_write_config_data_begin(uint8_t offset,
+                                           uint8_t len,
+                                           const uint8_t *val)
 {
   struct hci_request rq;
-  uint8_t status;
   uint8_t buffer[HCI_MAX_PAYLOAD_SIZE];
   uint8_t indx = 0;
 
@@ -72,10 +71,22 @@ tBleStatus aci_hal_write_config_data(uint8_t offset,
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_HAL_WRITE_CONFIG_DATA);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
+
+  if (hci_send_req(&rq, FALSE) < 0)
+    return BLE_STATUS_TIMEOUT;
+
+  return 0;
+}
+
+tBleStatus aci_hal_write_config_data_end()
+{
+  struct hci_response rq;
+  uint8_t status;
+
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_recv_resp(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;

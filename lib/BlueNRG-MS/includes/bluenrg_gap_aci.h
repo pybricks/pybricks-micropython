@@ -16,11 +16,11 @@
 #ifndef __BLUENRG_GAP_ACI_H__
 #define __BLUENRG_GAP_ACI_H__
 
-/** 
+/**
  * @addtogroup HIGH_LEVEL_INTERFACE HIGH_LEVEL_INTERFACE
  * @{
  */
- 
+
 /**
  * @addtogroup ACI_GAP ACI_GAP
  * @brief API for GAP layer.
@@ -35,7 +35,7 @@
 
 /**
   * @brief  Initialize the GAP layer.
-  * @note   Register the GAP service with the GATT. 
+  * @note   Register the GAP service with the GATT.
   *         All the standard GAP characteristics will also be added:
   *         @li Device Name
   *         @li Appearance
@@ -48,13 +48,13 @@
               ret = aci_gap_init_IDB05A1(1, 0, 0x07, &service_handle, &dev_name_char_handle, &appearance_char_handle);
               if(ret){
                 PRINTF("GAP_Init failed.\n");
-                reboot();    
-              }  
-              const char *name = "BlueNRG";  
-              ret = aci_gatt_update_char_value(service_handle, dev_name_char_handle, 0, strlen(name), (uint8_t *)name);        
+                reboot();
+              }
+              const char *name = "BlueNRG";
+              ret = aci_gatt_update_char_value(service_handle, dev_name_char_handle, 0, strlen(name), (uint8_t *)name);
               if(ret){
                 PRINTF("aci_gatt_update_char_value failed.\n");
-              }  
+              }
   *         @endcode
   * @param       role     Bitmap of allowed roles: see @ref gap_roles "GAP roles".
   * @param       privacy_enabled     Enable (1) or disable (0) privacy.
@@ -64,11 +64,12 @@
   * @param[out]  appearance_char_handle Appearance Characteristic handle
   * @retval tBleStatus Value indicating success or error code.
   */
-tBleStatus aci_gap_init_IDB05A1(uint8_t role, uint8_t privacy_enabled,
-                        uint8_t device_name_char_len,
-                        uint16_t* service_handle,
-                        uint16_t* dev_name_char_handle,
-                        uint16_t* appearance_char_handle);
+tBleStatus aci_gap_init_IDB05A1_begin(uint8_t role, uint8_t privacy_enabled,
+                                      uint8_t device_name_char_len);
+
+tBleStatus aci_gap_init_IDB05A1_end(uint16_t* service_handle,
+                                    uint16_t* dev_name_char_handle,
+                                    uint16_t* appearance_char_handle);
 
 /**
   * @brief  Initialize the GAP layer.
@@ -87,13 +88,13 @@ tBleStatus aci_gap_init_IDB05A1(uint8_t role, uint8_t privacy_enabled,
               ret = aci_gap_init_IDB04A1(1, &service_handle, &dev_name_char_handle, &appearance_char_handle);
               if(ret){
                 PRINTF("GAP_Init failed.\n");
-                reboot();    
-              }  
-              const char *name = "BlueNRG";  
-              ret = aci_gatt_update_char_value(service_handle, dev_name_char_handle, 0, strlen(name), (uint8_t *)name);        
+                reboot();
+              }
+              const char *name = "BlueNRG";
+              ret = aci_gatt_update_char_value(service_handle, dev_name_char_handle, 0, strlen(name), (uint8_t *)name);
               if(ret){
                 PRINTF("aci_gatt_update_char_value failed.\n");
-              }  
+              }
   *         @endcode
   * @param       role     One of the allowed roles: @ref GAP_PERIPHERAL_ROLE or @ref GAP_CENTRAL_ROLE. See @ref gap_roles "GAP roles".
   * @param[out]  service_handle  Handle of the GAP service.
@@ -461,7 +462,7 @@ tBleStatus aci_gap_authorization_response(uint16_t conn_handle, uint8_t authoriz
  * @param own_address_type If Privacy is disabled, then the peripheral address can be
  * 			               @arg @ref PUBLIC_ADDR.
  * 			               @arg @ref STATIC_RANDOM_ADDR.
- *                         If Privacy is enabled, then the peripheral address can be 
+ *                         If Privacy is enabled, then the peripheral address can be
  *                         @arg @ref RESOLVABLE_PRIVATE_ADDR
  *                         @arg @ref NON_RESOLVABLE_PRIVATE_ADDR
  * @return Value indicating success or error code.
@@ -595,7 +596,7 @@ tBleStatus aci_gap_clear_security_database(void);
 /**
  * @brief Allows the security manager to complete the pairing procedure and re-bond with the master.
  * @note This command can be issued by the application if a @ref EVT_BLUE_GAP_BOND_LOST event is generated.
- * @param conn_handle 
+ * @param conn_handle
  * @return Value indicating success or error code.
  */
 tBleStatus aci_gap_allow_rebond_IDB05A1(uint16_t conn_handle);
@@ -707,10 +708,10 @@ tBleStatus aci_gap_start_general_discovery_proc(uint16_t scanInterval, uint16_t 
  * @return Value indicating success or error code.
  */
 tBleStatus aci_gap_start_name_discovery_proc(uint16_t scanInterval, uint16_t scanWindow,
-				     uint8_t peer_bdaddr_type, tBDAddr peer_bdaddr,	
-				     uint8_t own_bdaddr_type, uint16_t conn_min_interval,	
-				     uint16_t conn_max_interval, uint16_t conn_latency,	
-				     uint16_t supervision_timeout, uint16_t min_conn_length, 
+				     uint8_t peer_bdaddr_type, tBDAddr peer_bdaddr,
+				     uint8_t own_bdaddr_type, uint16_t conn_min_interval,
+				     uint16_t conn_max_interval, uint16_t conn_latency,
+				     uint16_t supervision_timeout, uint16_t min_conn_length,
 				     uint16_t max_conn_length);
 
 /**
@@ -772,17 +773,17 @@ tBleStatus aci_gap_start_name_discovery_proc(uint16_t scanInterval, uint16_t sca
  * @return Value indicating success or error code.
  */
 tBleStatus aci_gap_start_auto_conn_establish_proc_IDB05A1(uint16_t scanInterval, uint16_t scanWindow,
-						 uint8_t own_bdaddr_type, uint16_t conn_min_interval,	
-						 uint16_t conn_max_interval, uint16_t conn_latency,	
-						 uint16_t supervision_timeout, uint16_t min_conn_length, 
+						 uint8_t own_bdaddr_type, uint16_t conn_min_interval,
+						 uint16_t conn_max_interval, uint16_t conn_latency,
+						 uint16_t supervision_timeout, uint16_t min_conn_length,
 						 uint16_t max_conn_length,
                          uint8_t num_whitelist_entries,
                          const uint8_t *addr_array);
 
 tBleStatus aci_gap_start_auto_conn_establish_proc_IDB04A1(uint16_t scanInterval, uint16_t scanWindow,
-						 uint8_t own_bdaddr_type, uint16_t conn_min_interval,	
-						 uint16_t conn_max_interval, uint16_t conn_latency,	
-						 uint16_t supervision_timeout, uint16_t min_conn_length, 
+						 uint8_t own_bdaddr_type, uint16_t conn_min_interval,
+						 uint16_t conn_max_interval, uint16_t conn_latency,
+						 uint16_t supervision_timeout, uint16_t min_conn_length,
 						 uint16_t max_conn_length,
                                                  uint8_t use_reconn_addr,
                                                  const tBDAddr reconn_addr,
@@ -913,10 +914,10 @@ tBleStatus aci_gap_start_selective_conn_establish_proc(uint8_t scan_type, uint16
  * @return Value indicating success or error code.
  */
 tBleStatus aci_gap_create_connection(uint16_t scanInterval, uint16_t scanWindow,
-				     uint8_t peer_bdaddr_type, tBDAddr peer_bdaddr,	
-				     uint8_t own_bdaddr_type, uint16_t conn_min_interval,	
-				     uint16_t conn_max_interval, uint16_t conn_latency,	
-				     uint16_t supervision_timeout, uint16_t min_conn_length, 
+				     uint8_t peer_bdaddr_type, tBDAddr peer_bdaddr,
+				     uint8_t own_bdaddr_type, uint16_t conn_min_interval,
+				     uint16_t conn_max_interval, uint16_t conn_latency,
+				     uint16_t supervision_timeout, uint16_t min_conn_length,
 				     uint16_t max_conn_length);
 
 /**
@@ -958,9 +959,9 @@ tBleStatus aci_gap_terminate_gap_procedure(uint8_t procedure_code);
  * 						  Time = N x 0.625 msec.
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gap_start_connection_update(uint16_t conn_handle, uint16_t conn_min_interval,	
-                                           uint16_t conn_max_interval, uint16_t conn_latency,	
-                                           uint16_t supervision_timeout, uint16_t min_conn_length, 
+tBleStatus aci_gap_start_connection_update(uint16_t conn_handle, uint16_t conn_min_interval,
+                                           uint16_t conn_max_interval, uint16_t conn_latency,
+                                           uint16_t supervision_timeout, uint16_t min_conn_length,
                                            uint16_t max_conn_length);
 
 /**

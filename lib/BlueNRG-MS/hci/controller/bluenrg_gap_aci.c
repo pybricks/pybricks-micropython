@@ -26,26 +26,35 @@
 #define MIN(a,b)            ((a) < (b) )? (a) : (b)
 #define MAX(a,b)            ((a) > (b) )? (a) : (b)
 
-tBleStatus aci_gap_init_IDB05A1(uint8_t role, uint8_t privacy_enabled, uint8_t device_name_char_len, uint16_t* service_handle, uint16_t* dev_name_char_handle, uint16_t* appearance_char_handle)
+tBleStatus aci_gap_init_IDB05A1_begin(uint8_t role, uint8_t privacy_enabled, uint8_t device_name_char_len)
 {
   struct hci_request rq;
   gap_init_cp_IDB05A1 cp;
-  gap_init_rp resp;
 
   cp.role = role;
   cp.privacy_enabled = privacy_enabled;
   cp.device_name_char_len = device_name_char_len;
 
-  memset(&resp, 0, sizeof(resp));
-
   memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_INIT);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
+
+  if (hci_send_req(&rq, FALSE) < 0)
+    return BLE_STATUS_TIMEOUT;
+
+  return 0;
+}
+
+tBleStatus aci_gap_init_IDB05A1_end(uint16_t* service_handle, uint16_t* dev_name_char_handle, uint16_t* appearance_char_handle)
+{
+  struct hci_response rq;
+  gap_init_rp resp = {};
+
   rq.rparam = &resp;
   rq.rlen = GAP_INIT_RP_SIZE;
 
-  if (hci_send_req(&rq, FALSE) < 0)
+  if (hci_recv_resp(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   if (resp.status) {
