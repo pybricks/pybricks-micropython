@@ -41,8 +41,7 @@ tBleStatus aci_l2cap_connection_parameter_update_request(uint16_t conn_handle, u
   cp.timeout_multiplier = htobs(timeout_multiplier);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_L2CAP_CONN_PARAM_UPDATE_REQ;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_L2CAP_CONN_PARAM_UPDATE_REQ);
   rq.cparam = &cp;
   rq.clen = L2CAP_CONN_PARAM_UPDATE_REQ_CP_SIZE;
   rq.event = EVT_CMD_STATUS;
@@ -75,8 +74,7 @@ tBleStatus aci_l2cap_connection_parameter_update_response_IDB05A1(uint16_t conn_
   cp.accept = accept;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_L2CAP_CONN_PARAM_UPDATE_RESP;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_L2CAP_CONN_PARAM_UPDATE_RESP);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
   rq.rparam = &status;
@@ -105,8 +103,7 @@ tBleStatus aci_l2cap_connection_parameter_update_response_IDB04A1(uint16_t conn_
   cp.accept = accept;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_L2CAP_CONN_PARAM_UPDATE_RESP;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_L2CAP_CONN_PARAM_UPDATE_RESP);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
   rq.rparam = &status;

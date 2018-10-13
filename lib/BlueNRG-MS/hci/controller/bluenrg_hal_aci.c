@@ -32,8 +32,7 @@ tBleStatus aci_hal_get_fw_build_number(uint16_t *build_number)
   hal_get_fw_build_number_rp rp;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_HAL_GET_FW_BUILD_NUMBER;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_HAL_GET_FW_BUILD_NUMBER);
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
@@ -70,8 +69,7 @@ tBleStatus aci_hal_write_config_data(uint8_t offset,
   indx +=  len;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_HAL_WRITE_CONFIG_DATA;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_HAL_WRITE_CONFIG_DATA);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
   rq.rparam = &status;
@@ -92,8 +90,7 @@ tBleStatus aci_hal_read_config_data(uint8_t offset, uint16_t data_len, uint8_t *
   cp.offset = offset;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_HAL_READ_CONFIG_DATA;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_HAL_READ_CONFIG_DATA);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
   rq.rparam = &rp;
@@ -122,8 +119,7 @@ tBleStatus aci_hal_set_tx_power_level(uint8_t en_high_power, uint8_t pa_level)
   cp.pa_level = pa_level;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_HAL_SET_TX_POWER_LEVEL;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_HAL_SET_TX_POWER_LEVEL);
   rq.cparam = &cp;
   rq.clen = HAL_SET_TX_POWER_LEVEL_CP_SIZE;
   rq.rparam = &status;
@@ -141,8 +137,7 @@ tBleStatus aci_hal_le_tx_test_packet_number(uint32_t *number_of_packets)
   hal_le_tx_test_packet_number_rp resp;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_HAL_LE_TX_TEST_PACKET_NUMBER;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_HAL_LE_TX_TEST_PACKET_NUMBER);
   rq.rparam = &resp;
   rq.rlen = sizeof(resp);
 
@@ -164,8 +159,7 @@ tBleStatus aci_hal_device_standby(void)
   uint8_t status;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_HAL_DEVICE_STANDBY;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_HAL_DEVICE_STANDBY);
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -184,8 +178,7 @@ tBleStatus aci_hal_tone_start(uint8_t rf_channel)
   cp.rf_channel = rf_channel;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_HAL_TONE_START;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_HAL_TONE_START);
   rq.cparam = &cp;
   rq.clen = HAL_TONE_START_CP_SIZE;
   rq.rparam = &status;
@@ -203,8 +196,7 @@ tBleStatus aci_hal_tone_stop(void)
   uint8_t status;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_HAL_TONE_STOP;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_HAL_TONE_STOP);
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -220,8 +212,7 @@ tBleStatus aci_hal_get_link_status(uint8_t link_status[8], uint16_t conn_handle[
   hal_get_link_status_rp rp;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_HAL_GET_LINK_STATUS;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_HAL_GET_LINK_STATUS);
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
@@ -244,8 +235,7 @@ tBleStatus aci_hal_get_anchor_period(uint32_t *anchor_period, uint32_t *max_free
   hal_get_anchor_period_rp rp;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_HAL_GET_ANCHOR_PERIOD;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_HAL_GET_ANCHOR_PERIOD);
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 

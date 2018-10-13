@@ -33,8 +33,7 @@ tBleStatus aci_gatt_init(void)
   uint8_t status;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_INIT;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_INIT);
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -74,8 +73,7 @@ tBleStatus aci_gatt_add_serv(uint8_t service_uuid_type, const uint8_t* service_u
   memset(&resp, 0, sizeof(resp));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_ADD_SERV;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_ADD_SERV);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
   rq.rparam = &resp;
@@ -130,8 +128,7 @@ tBleStatus aci_gatt_include_service(uint16_t service_handle, uint16_t included_s
   memset(&resp, 0, sizeof(resp));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_INCLUDE_SERV;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_INCLUDE_SERV);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
   rq.rparam = &resp;
@@ -203,8 +200,7 @@ tBleStatus aci_gatt_add_char(uint16_t serviceHandle,
   memset(&resp, 0, sizeof(resp));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_ADD_CHAR;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_ADD_CHAR);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
   rq.rparam = &resp;
@@ -292,8 +288,7 @@ tBleStatus aci_gatt_add_char_desc(uint16_t serviceHandle,
   memset(&resp, 0, sizeof(resp));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_ADD_CHAR_DESC;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_ADD_CHAR_DESC);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
   rq.rparam = &resp;
@@ -344,8 +339,7 @@ tBleStatus aci_gatt_update_char_value(uint16_t servHandle,
   indx +=  charValueLen;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_UPD_CHAR_VAL;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_UPD_CHAR_VAL);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
   rq.rparam = &status;
@@ -371,8 +365,7 @@ tBleStatus aci_gatt_del_char(uint16_t servHandle, uint16_t charHandle)
   cp.char_handle = htobs(charHandle);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_DEL_CHAR;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_DEL_CHAR);
   rq.cparam = &cp;
   rq.clen = GATT_DEL_CHAR_CP_SIZE;
   rq.rparam = &status;
@@ -393,8 +386,7 @@ tBleStatus aci_gatt_del_service(uint16_t servHandle)
   cp.service_handle = htobs(servHandle);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_DEL_SERV;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_DEL_SERV);
   rq.cparam = &cp;
   rq.clen = GATT_DEL_SERV_CP_SIZE;
   rq.rparam = &status;
@@ -416,8 +408,7 @@ tBleStatus aci_gatt_del_include_service(uint16_t servHandle, uint16_t includeSer
   cp.inc_serv_handle = htobs(includeServHandle);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_DEL_INC_SERV;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_DEL_INC_SERV);
   rq.cparam = &cp;
   rq.clen = GATT_DEL_INC_SERV_CP_SIZE;
   rq.rparam = &status;
@@ -438,8 +429,7 @@ tBleStatus aci_gatt_set_event_mask(uint32_t event_mask)
   cp.evt_mask = htobs(event_mask);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_SET_EVT_MASK;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_SET_EVT_MASK);
   rq.cparam = &cp;
   rq.clen = GATT_SET_EVT_MASK_CP_SIZE;
   rq.rparam = &status;
@@ -460,8 +450,7 @@ tBleStatus aci_gatt_exchange_configuration(uint16_t conn_handle)
   cp.conn_handle = htobs(conn_handle);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_EXCHANGE_CONFIG;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_EXCHANGE_CONFIG);
   rq.cparam = &cp;
   rq.clen = GATT_EXCHANGE_CONFIG_CP_SIZE;
   rq.event = EVT_CMD_STATUS;
@@ -485,8 +474,7 @@ tBleStatus aci_att_find_information_req(uint16_t conn_handle, uint16_t start_han
   cp.end_handle = htobs(end_handle);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_ATT_FIND_INFO_REQ;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_ATT_FIND_INFO_REQ);
   rq.cparam = &cp;
   rq.clen = ATT_FIND_INFO_REQ_CP_SIZE;
   rq.rparam = &status;
@@ -516,8 +504,7 @@ tBleStatus aci_att_find_by_type_value_req(uint16_t conn_handle, uint16_t start_h
   memcpy(cp.attr_val, attr_val, attr_val_len);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_ATT_FIND_BY_TYPE_VALUE_REQ;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_ATT_FIND_BY_TYPE_VALUE_REQ);
   rq.cparam = &cp;
   rq.clen = ATT_FIND_BY_TYPE_VALUE_REQ_CP_SIZE + attr_val_len;
   rq.rparam = &status;
@@ -551,8 +538,7 @@ tBleStatus aci_att_read_by_type_req(uint16_t conn_handle, uint16_t start_handle,
   memcpy(cp.uuid, uuid, uuid_len);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_ATT_READ_BY_TYPE_REQ;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_ATT_READ_BY_TYPE_REQ);
   rq.cparam = &cp;
   rq.clen = ATT_READ_BY_TYPE_REQ_CP_SIZE + uuid_len;
   rq.rparam = &status;
@@ -586,8 +572,7 @@ tBleStatus aci_att_read_by_group_type_req(uint16_t conn_handle, uint16_t start_h
   memcpy(cp.uuid, uuid, uuid_len);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_ATT_READ_BY_GROUP_TYPE_REQ;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_ATT_READ_BY_GROUP_TYPE_REQ);
   rq.cparam = &cp;
   rq.clen = ATT_READ_BY_GROUP_TYPE_REQ_CP_SIZE + uuid_len;
   rq.rparam = &status;
@@ -616,8 +601,7 @@ tBleStatus aci_att_prepare_write_req(uint16_t conn_handle, uint16_t attr_handle,
   memcpy(cp.attr_val, attr_val, attr_val_len);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_ATT_PREPARE_WRITE_REQ;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_ATT_PREPARE_WRITE_REQ);
   rq.cparam = &cp;
   rq.clen = ATT_PREPARE_WRITE_REQ_CP_SIZE + attr_val_len;
   rq.rparam = &status;
@@ -639,8 +623,7 @@ tBleStatus aci_att_execute_write_req(uint16_t conn_handle, uint8_t execute)
   cp.execute = execute;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_ATT_EXECUTE_WRITE_REQ;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_ATT_EXECUTE_WRITE_REQ);
   rq.cparam = &cp;
   rq.clen = ATT_EXECUTE_WRITE_REQ_CP_SIZE;
   rq.rparam = &status;
@@ -661,8 +644,7 @@ tBleStatus aci_gatt_disc_all_prim_services(uint16_t conn_handle)
   cp.conn_handle = htobs(conn_handle);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_DISC_ALL_PRIM_SERVICES;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_DISC_ALL_PRIM_SERVICES);
   rq.cparam = &cp;
   rq.clen = GATT_DISC_ALL_PRIM_SERVICES_CP_SIZE;
   rq.event = EVT_CMD_STATUS;
@@ -694,8 +676,7 @@ tBleStatus aci_gatt_disc_prim_service_by_uuid(uint16_t conn_handle, uint8_t uuid
   memcpy(cp.uuid, uuid, uuid_len);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_DISC_PRIM_SERVICE_BY_UUID;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_DISC_PRIM_SERVICE_BY_UUID);
   rq.cparam = &cp;
   rq.clen = GATT_DISC_PRIM_SERVICE_BY_UUID_CP_SIZE + uuid_len;
   rq.event = EVT_CMD_STATUS;
@@ -720,8 +701,7 @@ tBleStatus aci_gatt_find_included_services(uint16_t conn_handle, uint16_t start_
   cp.end_handle = htobs(end_service_handle);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_FIND_INCLUDED_SERVICES;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_FIND_INCLUDED_SERVICES);
   rq.cparam = &cp;
   rq.clen = GATT_FIND_INCLUDED_SERVICES_CP_SIZE;
   rq.event = EVT_CMD_STATUS;
@@ -746,8 +726,7 @@ tBleStatus aci_gatt_disc_all_charac_of_serv(uint16_t conn_handle, uint16_t start
   cp.end_attr_handle = htobs(end_attr_handle);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_DISC_ALL_CHARAC_OF_SERV;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_DISC_ALL_CHARAC_OF_SERV);
   rq.cparam = &cp;
   rq.clen = GATT_DISC_ALL_CHARAC_OF_SERV_CP_SIZE;
   rq.event = EVT_CMD_STATUS;
@@ -796,8 +775,7 @@ tBleStatus aci_gatt_disc_charac_by_uuid(uint16_t conn_handle, uint16_t start_han
   indx +=  uuid_len;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_DISC_CHARAC_BY_UUID;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_DISC_CHARAC_BY_UUID);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
   rq.event = EVT_CMD_STATUS;
@@ -822,8 +800,7 @@ tBleStatus aci_gatt_disc_all_charac_descriptors(uint16_t conn_handle, uint16_t c
   cp.char_end_handle = htobs(char_end_handle);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_DISC_ALL_CHARAC_DESCRIPTORS;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_DISC_ALL_CHARAC_DESCRIPTORS);
   rq.cparam = &cp;
   rq.clen = GATT_DISC_ALL_CHARAC_DESCRIPTORS_CP_SIZE;
   rq.event = EVT_CMD_STATUS;
@@ -846,8 +823,7 @@ tBleStatus aci_gatt_read_charac_val(uint16_t conn_handle, uint16_t attr_handle)
   cp.attr_handle = htobs(attr_handle);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_READ_CHARAC_VAL;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_READ_CHARAC_VAL);
   rq.cparam = &cp;
   rq.clen = GATT_READ_CHARAC_VAL_CP_SIZE;
   rq.event = EVT_CMD_STATUS;
@@ -882,8 +858,7 @@ tBleStatus aci_gatt_read_using_charac_uuid(uint16_t conn_handle, uint16_t start_
   memcpy(cp.uuid, uuid, uuid_len);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_READ_USING_CHARAC_UUID;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_READ_USING_CHARAC_UUID);
   rq.cparam = &cp;
   rq.clen = GATT_READ_USING_CHARAC_UUID_CP_SIZE + uuid_len;
   rq.rparam = &status;
@@ -907,8 +882,7 @@ tBleStatus aci_gatt_read_long_charac_val(uint16_t conn_handle, uint16_t attr_han
   cp.val_offset = htobs(val_offset);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_READ_LONG_CHARAC_VAL;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_READ_LONG_CHARAC_VAL);
   rq.cparam = &cp;
   rq.clen = GATT_READ_LONG_CHARAC_VAL_CP_SIZE;
   rq.event = EVT_CMD_STATUS;
@@ -936,8 +910,7 @@ tBleStatus aci_gatt_read_multiple_charac_val(uint16_t conn_handle, uint8_t num_h
   memcpy(cp.set_of_handles, set_of_handles, 2*num_handles);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_READ_MULTIPLE_CHARAC_VAL;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_READ_MULTIPLE_CHARAC_VAL);
   rq.cparam = &cp;
   rq.clen = GATT_READ_MULTIPLE_CHARAC_VAL_CP_SIZE + 2*num_handles;
   rq.event = EVT_CMD_STATUS;
@@ -978,8 +951,7 @@ tBleStatus aci_gatt_write_charac_value(uint16_t conn_handle, uint16_t attr_handl
   indx +=  value_len;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_WRITE_CHAR_VALUE;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_WRITE_CHAR_VALUE);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
   rq.event = EVT_CMD_STATUS;
@@ -1009,8 +981,7 @@ tBleStatus aci_gatt_write_long_charac_val(uint16_t conn_handle, uint16_t attr_ha
   memcpy(cp.attr_val, attr_val, val_len);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_WRITE_LONG_CHARAC_VAL;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_WRITE_LONG_CHARAC_VAL);
   rq.cparam = &cp;
   rq.clen = GATT_WRITE_LONG_CHARAC_VAL_CP_SIZE + val_len;
   rq.event = EVT_CMD_STATUS;
@@ -1040,8 +1011,7 @@ tBleStatus aci_gatt_write_charac_reliable(uint16_t conn_handle, uint16_t attr_ha
   memcpy(cp.attr_val, attr_val, val_len);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_WRITE_CHARAC_RELIABLE;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_WRITE_CHARAC_RELIABLE);
   rq.cparam = &cp;
   rq.clen = GATT_WRITE_CHARAC_RELIABLE_CP_SIZE + val_len;
   rq.event = EVT_CMD_STATUS;
@@ -1071,8 +1041,7 @@ tBleStatus aci_gatt_write_long_charac_desc(uint16_t conn_handle, uint16_t attr_h
   memcpy(cp.attr_val, attr_val, val_len);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_WRITE_LONG_CHARAC_DESC;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_WRITE_LONG_CHARAC_DESC);
   rq.cparam = &cp;
   rq.clen = GATT_WRITE_LONG_CHARAC_DESC_CP_SIZE + val_len;
   rq.event = EVT_CMD_STATUS;
@@ -1097,8 +1066,7 @@ tBleStatus aci_gatt_read_long_charac_desc(uint16_t conn_handle, uint16_t attr_ha
   cp.val_offset = htobs(val_offset);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_READ_LONG_CHARAC_DESC;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_READ_LONG_CHARAC_DESC);
   rq.cparam = &cp;
   rq.clen = GATT_READ_LONG_CHARAC_DESC_CP_SIZE;
   rq.event = EVT_CMD_STATUS;
@@ -1137,8 +1105,7 @@ tBleStatus aci_gatt_write_charac_descriptor(uint16_t conn_handle, uint16_t attr_
   indx +=  value_len;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_WRITE_CHAR_DESCRIPTOR;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_WRITE_CHAR_DESCRIPTOR);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
   rq.event = EVT_CMD_STATUS;
@@ -1161,8 +1128,7 @@ tBleStatus aci_gatt_read_charac_desc(uint16_t conn_handle, uint16_t attr_handle)
   cp.attr_handle = htobs(attr_handle);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_READ_CHAR_DESCRIPTOR;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_READ_CHAR_DESCRIPTOR);
   rq.cparam = &cp;
   rq.clen = GATT_READ_CHAR_DESCRIPTOR_CP_SIZE;
   rq.event = EVT_CMD_STATUS;
@@ -1191,8 +1157,7 @@ tBleStatus aci_gatt_write_without_response(uint16_t conn_handle, uint16_t attr_h
   memcpy(cp.attr_val, attr_val, val_len);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_WRITE_WITHOUT_RESPONSE;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_WRITE_WITHOUT_RESPONSE);
   rq.cparam = &cp;
   rq.clen = GATT_WRITE_WITHOUT_RESPONSE_CP_SIZE + val_len;
   rq.rparam = &status;
@@ -1220,8 +1185,7 @@ tBleStatus aci_gatt_signed_write_without_resp(uint16_t conn_handle, uint16_t att
   memcpy(cp.attr_val, attr_val, val_len);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_SIGNED_WRITE_WITHOUT_RESPONSE;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_SIGNED_WRITE_WITHOUT_RESPONSE);
   rq.cparam = &cp;
   rq.clen = GATT_SIGNED_WRITE_WITHOUT_RESPONSE_CP_SIZE + val_len;
   rq.rparam = &status;
@@ -1242,8 +1206,7 @@ tBleStatus aci_gatt_confirm_indication(uint16_t conn_handle)
   cp.conn_handle = htobs(conn_handle);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_CONFIRM_INDICATION;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_CONFIRM_INDICATION);
   rq.cparam = &cp;
   rq.clen = GATT_CONFIRM_INDICATION_CP_SIZE;
   rq.rparam = &status;
@@ -1291,8 +1254,7 @@ tBleStatus aci_gatt_write_response(uint16_t conn_handle,
   indx += att_val_len;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_WRITE_RESPONSE;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_WRITE_RESPONSE);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
   rq.rparam = &status;
@@ -1317,8 +1279,7 @@ tBleStatus aci_gatt_allow_read(uint16_t conn_handle)
     cp.conn_handle = htobs(conn_handle);
 
     memset(&rq, 0, sizeof(rq));
-    rq.ogf = OGF_VENDOR_CMD;
-    rq.ocf = OCF_GATT_ALLOW_READ;
+    rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_ALLOW_READ);
     rq.cparam = &cp;
     rq.clen = GATT_ALLOW_READ_CP_SIZE;
     rq.rparam = &status;
@@ -1342,8 +1303,7 @@ tBleStatus aci_gatt_set_security_permission(uint16_t service_handle, uint16_t at
     cp.security_permission = security_permission;
 
     memset(&rq, 0, sizeof(rq));
-    rq.ogf = OGF_VENDOR_CMD;
-    rq.ocf = OCF_GATT_SET_SECURITY_PERMISSION;
+    rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_SET_SECURITY_PERMISSION);
     rq.cparam = &cp;
     rq.clen = GATT_GATT_SET_SECURITY_PERMISSION_CP_SIZE;
     rq.rparam = &status;
@@ -1392,8 +1352,7 @@ tBleStatus aci_gatt_set_desc_value(uint16_t servHandle,
   indx +=  charDescValueLen;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_SET_DESC_VAL;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_SET_DESC_VAL);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
   rq.rparam = &status;
@@ -1417,8 +1376,7 @@ tBleStatus aci_gatt_read_handle_value(uint16_t attr_handle, uint16_t data_len, u
   cp.attr_handle = htobs(attr_handle);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_READ_HANDLE_VALUE;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_READ_HANDLE_VALUE);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
   rq.rparam = &rp;
@@ -1450,8 +1408,7 @@ tBleStatus aci_gatt_read_handle_value_offset_IDB05A1(uint16_t attr_handle, uint8
   cp.offset = offset;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_READ_HANDLE_VALUE_OFFSET;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_READ_HANDLE_VALUE_OFFSET);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
   rq.rparam = &rp;
@@ -1491,8 +1448,7 @@ tBleStatus aci_gatt_update_char_value_ext_IDB05A1(uint16_t service_handle, uint1
   memcpy(cp.value, value, value_length);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GATT_UPD_CHAR_VAL_EXT;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_UPD_CHAR_VAL_EXT);
   rq.cparam = &cp;
   rq.clen = GATT_UPD_CHAR_VAL_EXT_CP_SIZE + value_length;
   rq.rparam = &status;

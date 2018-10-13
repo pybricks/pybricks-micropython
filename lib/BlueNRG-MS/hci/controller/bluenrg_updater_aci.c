@@ -30,8 +30,7 @@ tBleStatus aci_updater_start(void)
   uint8_t status = 0;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_UPDATER_START;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_UPDATER_START);
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -46,8 +45,7 @@ tBleStatus aci_updater_reboot(void)
   uint8_t status = 0;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_UPDATER_REBOOT;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_UPDATER_REBOOT);
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -64,8 +62,7 @@ tBleStatus aci_get_updater_version(uint8_t *version)
   memset(&resp, 0, sizeof(resp));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GET_UPDATER_VERSION;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GET_UPDATER_VERSION);
   rq.rparam = &resp;
   rq.rlen = GET_UPDATER_VERSION_RP_SIZE;
 
@@ -85,8 +82,7 @@ tBleStatus aci_get_updater_buffer_size(uint8_t *buffer_size)
   memset(&resp, 0, sizeof(resp));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_GET_UPDATER_BUFSIZE;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GET_UPDATER_BUFSIZE);
   rq.rparam = &resp;
   rq.rlen = GET_UPDATER_BUFSIZE_RP_SIZE;
 
@@ -104,8 +100,7 @@ tBleStatus aci_erase_blue_flag(void)
   uint8_t status;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_UPDATER_ERASE_BLUE_FLAG;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_UPDATER_ERASE_BLUE_FLAG);
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -121,8 +116,7 @@ tBleStatus aci_reset_blue_flag(void)
   uint8_t status;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_UPDATER_RESET_BLUE_FLAG;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_UPDATER_RESET_BLUE_FLAG);
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -141,8 +135,7 @@ tBleStatus aci_updater_erase_sector(uint32_t address)
   cp.address = htobl(address);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_UPDATER_ERASE_SECTOR;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_UPDATER_ERASE_SECTOR);
   rq.cparam = &cp;
   rq.clen = UPDATER_ERASE_SECTOR_CP_SIZE;
   rq.rparam = &status;
@@ -170,8 +163,7 @@ tBleStatus aci_updater_program_data_block(uint32_t address,
   memcpy(cp.data, data, len);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_UPDATER_PROG_DATA_BLOCK;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_UPDATER_PROG_DATA_BLOCK);
   rq.cparam = &cp;
   rq.clen = UPDATER_PROG_DATA_BLOCK_CP_SIZE+len;
   rq.rparam = &status;
@@ -198,8 +190,7 @@ tBleStatus aci_updater_read_data_block(uint32_t address,
   cp.data_len = htobs(data_len);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_UPDATER_READ_DATA_BLOCK;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_UPDATER_READ_DATA_BLOCK);
   rq.cparam = &cp;
   rq.clen = UPDATER_READ_DATA_BLOCK_CP_SIZE;
   rq.rparam = buffer;
@@ -228,8 +219,7 @@ tBleStatus aci_updater_calc_crc(uint32_t address,
   cp.num_sectors = num_sectors;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_UPDATER_CALC_CRC;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_UPDATER_CALC_CRC);
   rq.cparam = &cp;
   rq.clen = UPDATER_CALC_CRC_CP_SIZE;
   rq.rparam = &resp;
@@ -251,8 +241,7 @@ tBleStatus aci_updater_hw_version(uint8_t *version)
   memset(&resp, 0, sizeof(resp));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_VENDOR_CMD;
-  rq.ocf = OCF_UPDATER_HW_VERSION;
+  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_UPDATER_HW_VERSION);
   rq.rparam = &resp;
   rq.rlen = UPDATER_HW_VERSION_RP_SIZE;
 

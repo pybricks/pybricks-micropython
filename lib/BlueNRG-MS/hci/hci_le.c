@@ -33,8 +33,7 @@ int hci_reset(void)
   uint8_t status;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_HOST_CTL;
-  rq.ocf = OCF_RESET;
+  rq.opcode = cmd_opcode_pack(OGF_HOST_CTL, OCF_RESET);
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -54,8 +53,7 @@ int hci_disconnect(uint16_t handle, uint8_t reason)
   cp.reason = reason;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LINK_CTL;
-  rq.ocf = OCF_DISCONNECT;
+  rq.opcode = cmd_opcode_pack(OGF_LINK_CTL, OCF_DISCONNECT);
   rq.cparam = &cp;
   rq.clen = DISCONNECT_CP_SIZE;
   rq.event = EVT_CMD_STATUS;
@@ -77,8 +75,7 @@ int hci_le_read_local_version(uint8_t *hci_version, uint16_t *hci_revision, uint
   memset(&resp, 0, sizeof(resp));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_INFO_PARAM;
-  rq.ocf = OCF_READ_LOCAL_VERSION;
+  rq.opcode = cmd_opcode_pack(OGF_INFO_PARAM, OCF_READ_LOCAL_VERSION);
   rq.cparam = NULL;
   rq.clen = 0;
   rq.rparam = &resp;
@@ -109,8 +106,7 @@ int hci_le_read_buffer_size(uint16_t *pkt_len, uint8_t *max_pkt)
   memset(&resp, 0, sizeof(resp));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_READ_BUFFER_SIZE;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_READ_BUFFER_SIZE);
   rq.cparam = NULL;
   rq.clen = 0;
   rq.rparam = &resp;
@@ -149,8 +145,7 @@ int hci_le_set_advertising_parameters(uint16_t min_interval, uint16_t max_interv
   adv_cp.filter = filter;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_SET_ADV_PARAMETERS;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_ADV_PARAMETERS);
   rq.cparam = &adv_cp;
   rq.clen = LE_SET_ADV_PARAMETERS_CP_SIZE;
   rq.rparam = &status;
@@ -173,8 +168,7 @@ int hci_le_set_advertising_data(uint8_t length, const uint8_t data[])
   memcpy(adv_cp.data, data, MIN(31,length));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_SET_ADV_DATA;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_ADV_DATA);
   rq.cparam = &adv_cp;
   rq.clen = LE_SET_ADV_DATA_CP_SIZE;
   rq.rparam = &status;
@@ -196,8 +190,7 @@ int hci_le_set_advertise_enable(uint8_t enable)
   adv_cp.enable = enable?1:0;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_SET_ADVERTISE_ENABLE;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_ADVERTISE_ENABLE);
   rq.cparam = &adv_cp;
   rq.clen = LE_SET_ADVERTISE_ENABLE_CP_SIZE;
   rq.rparam = &status;
@@ -225,8 +218,7 @@ int hci_le_set_scan_parameters(uint8_t type, uint16_t interval,
   scan_cp.filter = filter;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_SET_SCAN_PARAMETERS;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_SCAN_PARAMETERS);
   rq.cparam = &scan_cp;
   rq.clen = LE_SET_SCAN_PARAMETERS_CP_SIZE;
   rq.rparam = &status;
@@ -249,8 +241,7 @@ int hci_le_set_scan_enable(uint8_t enable, uint8_t filter_dup)
   scan_cp.filter_dup = filter_dup;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_SET_SCAN_ENABLE;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_SCAN_ENABLE);
   rq.cparam = &scan_cp;
   rq.clen = LE_SET_SCAN_ENABLE_CP_SIZE;
   rq.rparam = &status;
@@ -270,8 +261,7 @@ int hci_le_rand(uint8_t random_number[8])
   memset(&resp, 0, sizeof(resp));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_RAND;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_RAND);
   rq.cparam = NULL;
   rq.clen = 0;
   rq.rparam = &resp;
@@ -300,8 +290,7 @@ int hci_le_set_scan_resp_data(uint8_t length, const uint8_t data[])
   memcpy(scan_resp_cp.data, data, MIN(31,length));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_SET_SCAN_RESPONSE_DATA;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_SCAN_RESPONSE_DATA);
   rq.cparam = &scan_resp_cp;
   rq.clen = LE_SET_SCAN_RESPONSE_DATA_CP_SIZE;
   rq.rparam = &status;
@@ -321,8 +310,7 @@ int hci_le_read_advertising_channel_tx_power(int8_t *tx_power_level)
   memset(&resp, 0, sizeof(resp));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_READ_ADV_CHANNEL_TX_POWER;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_READ_ADV_CHANNEL_TX_POWER);
   rq.cparam = NULL;
   rq.clen = 0;
   rq.rparam = &resp;
@@ -350,8 +338,7 @@ int hci_le_set_random_address(tBDAddr bdaddr)
   memcpy(set_rand_addr_cp.bdaddr, bdaddr, sizeof(tBDAddr));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_SET_RANDOM_ADDRESS;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_RANDOM_ADDRESS);
   rq.cparam = &set_rand_addr_cp;
   rq.clen = LE_SET_RANDOM_ADDRESS_CP_SIZE;
   rq.rparam = &status;
@@ -371,8 +358,7 @@ int hci_read_bd_addr(tBDAddr bdaddr)
   memset(&resp, 0, sizeof(resp));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_INFO_PARAM;
-  rq.ocf = OCF_READ_BD_ADDR;
+  rq.opcode = cmd_opcode_pack(OGF_INFO_PARAM, OCF_READ_BD_ADDR);
   rq.cparam = NULL;
   rq.clen = 0;
   rq.rparam = &resp;
@@ -412,8 +398,7 @@ int hci_le_create_connection(uint16_t interval, uint16_t window, uint8_t initiat
   create_cp.max_ce_length=max_ce_length;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_CREATE_CONN;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_CREATE_CONN);
   rq.cparam = &create_cp;
   rq.clen = LE_CREATE_CONN_CP_SIZE;
   rq.event = EVT_CMD_STATUS;
@@ -432,8 +417,7 @@ int hci_le_create_connection_cancel(void)
   uint8_t status;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_CREATE_CONN_CANCEL;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_CREATE_CONN_CANCEL);
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -455,8 +439,7 @@ int hci_le_encrypt(uint8_t key[16], uint8_t plaintextData[16], uint8_t encrypted
   memcpy(params.plaintext, plaintextData, 16);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_ENCRYPT;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_ENCRYPT);
   rq.cparam = &params;
   rq.clen = LE_ENCRYPT_CP_SIZE;
   rq.rparam = &resp;
@@ -487,8 +470,7 @@ int hci_le_ltk_request_reply(uint8_t key[16])
   memcpy(params.key, key, 16);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_LTK_REPLY;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_LTK_REPLY);
   rq.cparam = &params;
   rq.clen = LE_LTK_REPLY_CP_SIZE;
   rq.rparam = &resp;
@@ -511,8 +493,7 @@ int hci_le_ltk_request_neg_reply(void)
   params.handle = 1;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_LTK_NEG_REPLY;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_LTK_NEG_REPLY);
   rq.cparam = &params;
   rq.clen = LE_LTK_NEG_REPLY_CP_SIZE;
   rq.rparam = &resp;
@@ -532,8 +513,7 @@ int hci_le_read_white_list_size(uint8_t *size)
   memset(&resp, 0, sizeof(resp));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_READ_WHITE_LIST_SIZE;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_READ_WHITE_LIST_SIZE);
   rq.rparam = &resp;
   rq.rlen = LE_READ_WHITE_LIST_SIZE_RP_SIZE;
 
@@ -556,8 +536,7 @@ int hci_le_clear_white_list(void)
   uint8_t status;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_CLEAR_WHITE_LIST;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_CLEAR_WHITE_LIST);
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -578,8 +557,7 @@ int hci_le_add_device_to_white_list(uint8_t bdaddr_type, tBDAddr bdaddr)
   memcpy(params.bdaddr, bdaddr, 6);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_ADD_DEVICE_TO_WHITE_LIST;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_ADD_DEVICE_TO_WHITE_LIST);
   rq.cparam = &params;
   rq.clen = LE_ADD_DEVICE_TO_WHITE_LIST_CP_SIZE;
   rq.rparam = &status;
@@ -602,8 +580,7 @@ int hci_le_remove_device_from_white_list(uint8_t bdaddr_type, tBDAddr bdaddr)
   memcpy(params.bdaddr, bdaddr, 6);
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_REMOVE_DEVICE_FROM_WHITE_LIST;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_REMOVE_DEVICE_FROM_WHITE_LIST);
   rq.cparam = &params;
   rq.clen = LE_REMOVE_DEVICE_FROM_WHITE_LIST_CP_SIZE;
   rq.rparam = &status;
@@ -628,8 +605,7 @@ int hci_read_transmit_power_level(uint16_t *conn_handle, uint8_t type, int8_t * 
   params.type = type;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_HOST_CTL;
-  rq.ocf = OCF_READ_TRANSMIT_POWER_LEVEL;
+  rq.opcode = cmd_opcode_pack(OGF_HOST_CTL, OCF_READ_TRANSMIT_POWER_LEVEL);
   rq.cparam = &params;
   rq.clen = READ_TRANSMIT_POWER_LEVEL_CP_SIZE;
   rq.rparam = &resp;
@@ -660,8 +636,7 @@ int hci_read_rssi(uint16_t *conn_handle, int8_t * rssi)
   params.handle = *conn_handle;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_STATUS_PARAM;
-  rq.ocf = OCF_READ_RSSI;
+  rq.opcode = cmd_opcode_pack(OGF_STATUS_PARAM, OCF_READ_RSSI);
   rq.cparam = &params;
   rq.clen = READ_RSSI_CP_SIZE;
   rq.rparam = &resp;
@@ -689,8 +664,7 @@ int hci_le_read_local_supported_features(uint8_t *features)
   memset(&resp, 0, sizeof(resp));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_READ_LOCAL_SUPPORTED_FEATURES;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_READ_LOCAL_SUPPORTED_FEATURES);
   rq.rparam = &resp;
   rq.rlen = LE_READ_LOCAL_SUPPORTED_FEATURES_RP_SIZE;
 
@@ -718,8 +692,7 @@ int hci_le_read_channel_map(uint16_t conn_handle, uint8_t ch_map[5])
   params.handle = conn_handle;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_READ_CHANNEL_MAP;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_READ_CHANNEL_MAP);
   rq.cparam = &params;
   rq.clen = LE_READ_CHANNEL_MAP_CP_SIZE;
   rq.rparam = &resp;
@@ -746,8 +719,7 @@ int hci_le_read_supported_states(uint8_t states[8])
   memset(&resp, 0, sizeof(resp));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_READ_SUPPORTED_STATES;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_READ_SUPPORTED_STATES);
   rq.rparam = &resp;
   rq.rlen = LE_READ_SUPPORTED_STATES_RP_SIZE;
 
@@ -773,8 +745,7 @@ int hci_le_receiver_test(uint8_t frequency)
   params.frequency = frequency;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_RECEIVER_TEST;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_RECEIVER_TEST);
   rq.cparam = &params;
   rq.clen = LE_RECEIVER_TEST_CP_SIZE;
   rq.rparam = &status;
@@ -798,8 +769,7 @@ int hci_le_transmitter_test(uint8_t frequency, uint8_t length, uint8_t payload)
   params.payload = payload;
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_TRANSMITTER_TEST;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_TRANSMITTER_TEST);
   rq.cparam = &params;
   rq.clen = LE_TRANSMITTER_TEST_CP_SIZE;
   rq.rparam = &status;
@@ -820,8 +790,7 @@ int hci_le_test_end(uint16_t *num_pkts)
   memset(&resp, 0, sizeof(resp));
 
   memset(&rq, 0, sizeof(rq));
-  rq.ogf = OGF_LE_CTL;
-  rq.ocf = OCF_LE_TEST_END;
+  rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_TEST_END);
   rq.rparam = &resp;
   rq.rlen = LE_TEST_END_RP_SIZE;
 
