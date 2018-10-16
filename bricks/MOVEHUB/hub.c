@@ -29,42 +29,6 @@ const mp_obj_type_id_t motor_MovehubMotor_type = {
 };
 #endif //PBIO_CONFIG_ENABLE_MOTORS
 
-STATIC mp_obj_t hub_get_button(void) {
-    pbio_button_flags_t btn;
-
-    // should always return success given these parameters
-    pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
-
-    return mp_obj_new_bool(btn & PBIO_BUTTON_CENTER);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_get_button_obj, hub_get_button);
-
-mp_obj_t hub_wait_btn_press(void) {
-    pbio_button_flags_t btn;
-
-    for (;;) {
-        pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
-        if (btn & PBIO_BUTTON_CENTER) {
-            return mp_const_none;
-        }
-        MICROPY_EVENT_POLL_HOOK
-    }
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_wait_btn_press_obj, hub_wait_btn_press);
-
-mp_obj_t hub_wait_btn_release(void) {
-    pbio_button_flags_t btn;
-
-    for (;;) {
-        pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
-        if (!(btn & PBIO_BUTTON_CENTER)) {
-            return mp_const_none;
-        }
-        MICROPY_EVENT_POLL_HOOK
-    }
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_wait_btn_release_obj, hub_wait_btn_release);
-
 STATIC mp_obj_t hub_gpios(mp_obj_t bank, mp_obj_t pin, mp_obj_t action) {
     GPIO_TypeDef *gpio;
     uint8_t pin_idx;
@@ -197,9 +161,6 @@ STATIC const mp_map_elem_t hub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_PORT_B),   MP_OBJ_NEW_SMALL_INT(PBIO_PORT_B) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_PORT_C),   MP_OBJ_NEW_SMALL_INT(PBIO_PORT_C) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_PORT_D),   MP_OBJ_NEW_SMALL_INT(PBIO_PORT_D) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_get_button), (mp_obj_t)&hub_get_button_obj },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_wait_btn_press), (mp_obj_t)&hub_wait_btn_press_obj },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_wait_btn_release), (mp_obj_t)&hub_wait_btn_release_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&hub_gpios_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_power_off), (mp_obj_t)&hub_power_off_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_read_adc), (mp_obj_t)&hub_read_adc_obj },
