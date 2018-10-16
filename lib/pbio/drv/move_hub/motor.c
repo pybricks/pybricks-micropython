@@ -169,9 +169,6 @@ void EXTI0_1_IRQHandler(void) {
 
     timestamp = TIM7->CNT;
 
-    // clear events 0 an 1 (the tacho interupts)
-    EXTI->PR = EXTI_PR_PR0 | EXTI_PR_PR1;
-
     // port A
     if (exti_pr & EXTI_PR_PR1) {
         gpio_idr = GPIOB->IDR;
