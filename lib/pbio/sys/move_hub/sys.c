@@ -177,37 +177,11 @@ extern uint32_t _fw_isr_vector_dst[48];
 // this function is a mash up of ports/stm32/system_stm32f0.c from MicroPython
 // and the official LEGO firmware
 void SystemInit(void) {
-    // setup the system clock
-    RCC->CR |= RCC_CR_HSION;
-    RCC->CFGR = 0; // reset all
-    RCC->CR &= ~(RCC_CR_HSEON | RCC_CR_CSSON | RCC_CR_PLLON);
-    RCC->CR &= ~RCC_CR_HSEBYP;
-    RCC->CFGR2 &= ~RCC_CFGR2_PREDIV;
-    RCC->CFGR3 &= ~(RCC_CFGR3_USART1SW | RCC_CFGR3_I2C1SW | RCC_CFGR3_USBSW | RCC_CFGR3_ADCSW);
-
-    // Reset HSI14 bit
-    RCC->CR2 &= ~RCC_CR2_HSI14ON;
-
-    // Disable all interrupts
-    RCC->CIR = 0;
+    // normally, the system clock would be setup here, but it is already
+    // configured by the bootloader, so no need to do it again.
 
     // dpgeorge: enable 8-byte stack alignment for IRQ handlers, in accord with EABI
     SCB->CCR |= SCB_CCR_STKALIGN_Msk;
-
-    // Set flash latency to 1 because SYSCLK > 24MHz
-    FLASH->ACR = (FLASH->ACR & ~0x7) | FLASH_ACR_PRFTBE | 0x1; // TODO: FLASH_ACR_LATENCY_Msk is wrong
-
-    // using PLL as system clock
-    RCC->CFGR |= RCC_CFGR_PLLMUL12;
-    RCC->CR |= RCC_CR_PLLON;
-    while (!(RCC->CR & RCC_CR_PLLRDY)) {
-        // wait for PLL to lock
-    }
-
-    RCC->CFGR = (RCC->CFGR & ~RCC_CFGR_SW_Msk) | (2 << RCC_CFGR_SW_Pos);
-    while (((RCC->CFGR >> RCC_CFGR_SWS_Pos) & 0x3) != 2) {
-        // Wait for SYSCLK source to change
-    }
 
     // Enable all of the shared hardware modules we are using
 
