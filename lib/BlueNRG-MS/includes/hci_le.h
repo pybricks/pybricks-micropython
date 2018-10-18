@@ -20,7 +20,7 @@
 #include "bluenrg_types.h"
 #include "link_layer.h"
 
-/** 
+/**
  * @addtogroup HIGH_LEVEL_INTERFACE HIGH_LEVEL_INTERFACE
  * @{
  */
@@ -123,7 +123,8 @@ int hci_le_set_scan_enable(uint8_t enable, uint8_t filter_dup);
 
 int hci_le_set_advertising_data(uint8_t length, const uint8_t data[]);
 
-int hci_le_set_scan_resp_data(uint8_t length, const uint8_t data[]);
+int hci_le_set_scan_resp_data_begin(uint8_t length, const uint8_t *data);
+int hci_le_set_scan_resp_data_end();
 
 int hci_le_rand(uint8_t random_number[8]);
 
@@ -173,7 +174,7 @@ int hci_le_transmitter_test(uint8_t frequency, uint8_t length, uint8_t payload);
 
 int hci_le_test_end(uint16_t *num_pkts);
 
-int hci_le_read_local_version(uint8_t *hci_version, uint16_t *hci_revision, uint8_t *lmp_pal_version, 
+int hci_le_read_local_version(uint8_t *hci_version, uint16_t *hci_revision, uint8_t *lmp_pal_version,
 			      uint16_t *manufacturer_name, uint16_t *lmp_pal_subversion);
 
 /**

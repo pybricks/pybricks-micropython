@@ -18,7 +18,7 @@
 
 #include "bluenrg_def.h"
 
-/** 
+/**
  * @addtogroup HIGH_LEVEL_INTERFACE HIGH_LEVEL_INTERFACE
  * @{
  */
@@ -27,8 +27,8 @@
  * @addtogroup ACI_GATT ACI_GATT
  * @brief API for GATT layer.
  * @{
- */ 
- 
+ */
+
 /**
  * @addtogroup ACI_GATT_SERVER ACI_GATT_SERVER
  * @brief API for GATT SERVER layer.
@@ -64,7 +64,7 @@
  * @{
  */
 #define ATTR_NO_ACCESS                             (0x00)
-#define ATTR_ACCESS_READ_ONLY                      (0x01) 
+#define ATTR_ACCESS_READ_ONLY                      (0x01)
 #define ATTR_ACCESS_WRITE_REQ_ONLY                 (0x02)
 #define ATTR_ACCESS_READ_WRITE                     (0x03)
 #define ATTR_ACCESS_WRITE_WITHOUT_RESPONSE         (0x04)
@@ -151,9 +151,9 @@
  * @}
  */
 
-/** 
+/**
  * @name Type of characteristic length
- * See aci_gatt_add_char()
+ * See aci_gatt_add_char_begin()
  * @{
  */
 #define CHAR_VALUE_LEN_CONSTANT           (0x00)
@@ -248,7 +248,7 @@ typedef __packed struct _charactFormat {
 /**
  * @}
  */
- 
+
 /**
  * @}
  */

@@ -51,9 +51,9 @@
                 reboot();
               }
               const char *name = "BlueNRG";
-              ret = aci_gatt_update_char_value(service_handle, dev_name_char_handle, 0, strlen(name), (uint8_t *)name);
+              ret = aci_gatt_update_char_value_begin(service_handle, dev_name_char_handle, 0, strlen(name), (uint8_t *)name);
               if(ret){
-                PRINTF("aci_gatt_update_char_value failed.\n");
+                PRINTF("aci_gatt_update_char_value_begin failed.\n");
               }
   *         @endcode
   * @param       role     Bitmap of allowed roles: see @ref gap_roles "GAP roles".
@@ -64,48 +64,12 @@
   * @param[out]  appearance_char_handle Appearance Characteristic handle
   * @retval tBleStatus Value indicating success or error code.
   */
-tBleStatus aci_gap_init_IDB05A1_begin(uint8_t role, uint8_t privacy_enabled,
+tBleStatus aci_gap_init_begin(uint8_t role, uint8_t privacy_enabled,
                                       uint8_t device_name_char_len);
 
-tBleStatus aci_gap_init_IDB05A1_end(uint16_t* service_handle,
+tBleStatus aci_gap_init_end(uint16_t* service_handle,
                                     uint16_t* dev_name_char_handle,
                                     uint16_t* appearance_char_handle);
-
-/**
-  * @brief  Initialize the GAP layer.
-  * @note   Register the GAP service with the GATT.
-  *         All the standard GAP characteristics will also be added:
-  *         @li Device Name
-  *         @li Appearance
-  *         @li Peripheral Privacy Flag (peripheral role only)
-  *         @li Reconnection Address (peripheral role only)
-  *         @li Peripheral Preferred Connection Parameters (peripheral role only)
-  *         @code
-
-              tBleStatus ret;
-              uint16_t service_handle, dev_name_char_handle, appearance_char_handle;
-
-              ret = aci_gap_init_IDB04A1(1, &service_handle, &dev_name_char_handle, &appearance_char_handle);
-              if(ret){
-                PRINTF("GAP_Init failed.\n");
-                reboot();
-              }
-              const char *name = "BlueNRG";
-              ret = aci_gatt_update_char_value(service_handle, dev_name_char_handle, 0, strlen(name), (uint8_t *)name);
-              if(ret){
-                PRINTF("aci_gatt_update_char_value failed.\n");
-              }
-  *         @endcode
-  * @param       role     One of the allowed roles: @ref GAP_PERIPHERAL_ROLE or @ref GAP_CENTRAL_ROLE. See @ref gap_roles "GAP roles".
-  * @param[out]  service_handle  Handle of the GAP service.
-  * @param[out]  dev_name_char_handle  Device Name Characteristic handle
-  * @param[out]  appearance_char_handle Appearance Characteristic handle
-  * @retval tBleStatus Value indicating success or error code.
-  */
-tBleStatus aci_gap_init_IDB04A1(uint8_t role,
-                 uint16_t* service_handle,
-                 uint16_t* dev_name_char_handle,
-                 uint16_t* appearance_char_handle);
 
 /**
   * @brief   Set the Device in non-discoverable mode.
@@ -242,7 +206,7 @@ tBleStatus aci_gap_set_limited_discoverable(uint8_t AdvType, uint16_t AdvIntervM
  *              const char local_name[] = {AD_TYPE_COMPLETE_LOCAL_NAME,'B','l','u','e','N','R','G'};
  *              const uint8_t serviceUUIDList[] = {AD_TYPE_16_BIT_SERV_UUID,0x34,0x12};
  *
- *              ret = aci_gap_set_discoverable(ADV_IND, (ADV_INTERVAL_MIN_MS*1000)/625,
+ *              ret = aci_gap_set_discoverable_begin(ADV_IND, (ADV_INTERVAL_MIN_MS*1000)/625,
  *                                                     (ADV_INTERVAL_MAX_MS*1000)/625,
  *                                                     STATIC_RANDOM_ADDR, NO_WHITE_LIST_USE,
  *                                                     sizeof(local_name), local_name,
@@ -301,10 +265,11 @@ tBleStatus aci_gap_set_limited_discoverable(uint8_t AdvType, uint16_t AdvIntervM
  *
  * @retval tBleStatus Value indicating success or error code.
  */
-tBleStatus aci_gap_set_discoverable(uint8_t AdvType, uint16_t AdvIntervMin, uint16_t AdvIntervMax,
+tBleStatus aci_gap_set_discoverable_begin(uint8_t AdvType, uint16_t AdvIntervMin, uint16_t AdvIntervMax,
                              uint8_t OwnAddrType, uint8_t AdvFilterPolicy, uint8_t LocalNameLen,
                              const char *LocalName, uint8_t ServiceUUIDLen, uint8_t* ServiceUUIDList,
                              uint16_t SlaveConnIntervMin, uint16_t SlaveConnIntervMax);
+tBleStatus aci_gap_set_discoverable_end();
 
 /**
  * @brief Set the Device in direct connectable mode (as defined in GAP specification Volume 3, Section 9.3.3).
@@ -532,7 +497,7 @@ tBleStatus aci_gap_slave_security_request(uint16_t conn_handle, uint8_t bonding,
  *  const uint8_t serviceUUIDList[] = {AD_TYPE_16_BIT_SERV_UUID,0x34,0x12};
  *  const uint8_t manuf_data[] = {4, AD_TYPE_MANUFACTURER_SPECIFIC_DATA, 0x05, 0x02, 0x01};
  *
- *  ret = aci_gap_set_discoverable(ADV_IND, 0, 0, STATIC_RANDOM_ADDR, NO_WHITE_LIST_USE,
+ *  ret = aci_gap_set_discoverable_begin(ADV_IND, 0, 0, STATIC_RANDOM_ADDR, NO_WHITE_LIST_USE,
  *                                 8, local_name, 3, serviceUUIDList, 0, 0);
  *  ret = aci_gap_update_adv_data(5, manuf_data);
  * @endcode

@@ -18,7 +18,7 @@
 
 #include "bluenrg_gatt_server.h"
 
-/** 
+/**
  * @addtogroup HIGH_LEVEL_INTERFACE HIGH_LEVEL_INTERFACE
  * @{
  */
@@ -28,7 +28,7 @@
  * @brief API for GATT layer.
  * @{
  */
- 
+
 /**
  * @defgroup GATT_Functions GATT functions
  * @brief API for GATT layer.
@@ -43,7 +43,8 @@
   *         before using any of the GAP features.
   * @return Value indicating success or error code.
   */
-tBleStatus aci_gatt_init(void);
+tBleStatus aci_gatt_init_begin(void);
+tBleStatus aci_gatt_init_end(void);
 
 /**
  * @brief Add a service to the GATT Server. When a service is created in the server, the Host needs
@@ -65,11 +66,11 @@ tBleStatus aci_gatt_init(void);
  * 							 <serviceHandle + max_attr_records>.
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gatt_add_serv(uint8_t service_uuid_type,
-			     const uint8_t* service_uuid,
-			     uint8_t service_type,
-			     uint8_t max_attr_records,
-			     uint16_t *serviceHandle);
+tBleStatus aci_gatt_add_serv_begin(uint8_t service_uuid_type,
+                                   const uint8_t* service_uuid,
+                                   uint8_t service_type,
+                                   uint8_t max_attr_records);
+tBleStatus aci_gatt_add_serv_end(uint16_t *serviceHandle);
 
 /**
  * @brief Include a service given by included_start_handle and included_end_handle to another service
@@ -119,16 +120,16 @@ tBleStatus aci_gatt_include_service(uint16_t service_handle, uint16_t included_s
  * 		  properties.
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gatt_add_char(uint16_t serviceHandle,
-			     uint8_t charUuidType,
-			     const uint8_t* charUuid, 
-			     uint8_t charValueLen, 
-			     uint8_t charProperties,
-			     uint8_t secPermissions,
-			     uint8_t gattEvtMask,
-			     uint8_t encryKeySize,
-			     uint8_t isVariable,
-			     uint16_t* charHandle);
+tBleStatus aci_gatt_add_char_begin(uint16_t serviceHandle,
+                                   uint8_t charUuidType,
+                                   const uint8_t* charUuid,
+                                   uint8_t charValueLen,
+                                   uint8_t charProperties,
+                                   uint8_t secPermissions,
+                                   uint8_t gattEvtMask,
+                                   uint8_t encryKeySize,
+                                   uint8_t isVariable);
+tBleStatus aci_gatt_add_char_end(uint16_t* charHandle);
 
 /**
  * Add a characteristic descriptor to a service.
@@ -167,10 +168,10 @@ tBleStatus aci_gatt_add_char(uint16_t serviceHandle,
 tBleStatus aci_gatt_add_char_desc(uint16_t serviceHandle,
                                   uint16_t charHandle,
                                   uint8_t descUuidType,
-                                  const uint8_t* uuid, 
+                                  const uint8_t* uuid,
                                   uint8_t descValueMaxLen,
                                   uint8_t descValueLen,
-                                  const void* descValue, 
+                                  const void* descValue,
                                   uint8_t secPermissions,
                                   uint8_t accPermissions,
                                   uint8_t gattEvtMask,
@@ -184,7 +185,7 @@ tBleStatus aci_gatt_add_char_desc(uint16_t serviceHandle,
  *   	 will be sent to the client after sending this command to the BlueNRG. The command is queued into the
  *   	 BlueNRG command queue. If the buffer is full, because previous commands could not be still processed,
  *   	 the function will return @ref BLE_STATUS_INSUFFICIENT_RESOURCES. This will happen if notifications (or
- *   	 indications) are enabled and the application calls aci_gatt_update_char_value() at an higher rate
+ *   	 indications) are enabled and the application calls aci_gatt_update_char_value_begin() at an higher rate
  *   	 than what is allowed by the link. Throughput on BLE link depends on connection interval and
  *   	 connection length parameters (decided by the master, see aci_l2cap_connection_parameter_update_request()
  *   	 for more info on how to suggest new connection parameters from a slave). If the application does not
@@ -200,7 +201,7 @@ tBleStatus aci_gatt_add_char_desc(uint16_t serviceHandle,
  * 			tBleStatus ret;
  *
  *			val = 0x01;
- *			ret = aci_gatt_update_char_value(accServHandle, freeFallCharHandle, 0, 1, &val);
+ *			ret = aci_gatt_update_char_value_begin(accServHandle, freeFallCharHandle, 0, 1, &val);
  *
  *			if (ret != BLE_STATUS_SUCCESS){
  *			  PRINTF("Error while updating FFall characteristic.\n") ;
@@ -213,7 +214,7 @@ tBleStatus aci_gatt_add_char_desc(uint16_t serviceHandle,
  *		 @code
  *       struct timer t;
  *       Timer_Set(&t, CLOCK_SECOND*10);
- *       while(aci_gatt_update_char_value(chatServHandle,TXCharHandle,0,len,array_val)==BLE_STATUS_INSUFFICIENT_RESOURCES){
+ *       while(aci_gatt_update_char_value_begin(chatServHandle,TXCharHandle,0,len,array_val)==BLE_STATUS_INSUFFICIENT_RESOURCES){
  *         // Radio is busy (buffer full).
  *         if(Timer_Expired(&t))
  *           break;
@@ -231,11 +232,13 @@ tBleStatus aci_gatt_add_char_desc(uint16_t serviceHandle,
  * @param[in] charValue Characteristic value
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gatt_update_char_value(uint16_t servHandle, 
-				      uint16_t charHandle,
-				      uint8_t charValOffset,
-				      uint8_t charValueLen,   
-				      const void *charValue);
+tBleStatus aci_gatt_update_char_value_begin(uint16_t servHandle,
+                                            uint16_t charHandle,
+                                            uint8_t charValOffset,
+                                            uint8_t charValueLen,
+                                            const void *charValue);
+tBleStatus aci_gatt_update_char_value_end(void);
+
 /**
  * @brief Delete the specified characteristic from the service.
  * @param servHandle Handle of the service to which characteristic belongs
@@ -497,7 +500,7 @@ tBleStatus aci_gatt_read_long_charac_val(uint16_t conn_handle, uint16_t attr_han
  * @param set_of_handles The handles for which the attribute value has to be read
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gatt_read_multiple_charac_val(uint16_t conn_handle, uint8_t num_handles, 
+tBleStatus aci_gatt_read_multiple_charac_val(uint16_t conn_handle, uint8_t num_handles,
                                              uint8_t* set_of_handles);
 
 /**
@@ -670,7 +673,7 @@ tBleStatus aci_gatt_write_response(uint16_t conn_handle,
  * @note The application has to send this command when it receives the @ref EVT_BLUE_GATT_READ_PERMIT_REQ
  * 		 or @ref EVT_BLUE_GATT_READ_MULTI_PERMIT_REQ. This command indicates to the stack that the response
  * 		 can be sent to the client. So if the application wishes to update any of the attributes before
- * 		 they are read by the client, it has to update the characteristic values using the aci_gatt_update_char_value
+ * 		 they are read by the client, it has to update the characteristic values using the aci_gatt_update_char_value_begin
  * 		 and then give this command. The application should perform the required operations within 30 seconds,
  * 		 otherwise the GATT procedure will go to timeout.
  * @param conn_handle Connection handle for which the command is given.
@@ -790,20 +793,13 @@ tBleStatus aci_gatt_set_event_mask(uint32_t event_mask);
  */
 #define EVT_BLUE_GATT_ATTRIBUTE_MODIFIED          (0x0C01)
 
-typedef __packed struct _evt_gatt_attr_modified_IDB05A1{
+typedef __packed struct _evt_gatt_attr_modified{
   uint16_t conn_handle; /**< The connection handle which modified the attribute. */
   uint16_t attr_handle; /**< Handle of the attribute that was modified. */
   uint8_t  data_length; /**< The length of the data */
   uint16_t  offset; /**< Offset from which the write has been performed by the peer device */
   uint8_t  att_data[VARIABLE_SIZE]; /**< The new value (length is data_length) */
-} PACKED evt_gatt_attr_modified_IDB05A1;
-
-typedef __packed struct _evt_gatt_attr_modified_IDB04A1{
-  uint16_t conn_handle; /**< The connection handle which modified the attribute. */
-  uint16_t attr_handle; /**< Handle of the attribute that was modified. */
-  uint8_t  data_length; /**< The length of the data */
-  uint8_t  att_data[VARIABLE_SIZE]; /**< The new value (length is data_length) */
-} PACKED evt_gatt_attr_modified_IDB04A1;
+} PACKED evt_gatt_attr_modified;
 
 /**
  * This event is generated by the client/server to the application on a GATT timeout (30 seconds).
@@ -1077,7 +1073,7 @@ typedef __packed struct _evt_gatt_read_multi_permit_req{
 /**
  * This event is raised when the number of available TX buffers is above a threshold TH (TH = 2).
  * The event will be given only if a previous ACI command returned with BLE_STATUS_INSUFFICIENT_RESOURCES.
- * On receiving this event, the application can continue to send notifications by calling aci_gatt_update_char_value().
+ * On receiving this event, the application can continue to send notifications by calling aci_gatt_update_char_value_begin().
  * See @ref evt_gatt_tx_pool_vailable.
  *
  */

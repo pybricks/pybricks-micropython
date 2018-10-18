@@ -279,11 +279,10 @@ int hci_le_rand(uint8_t random_number[8])
   return 0;
 }
 
-int hci_le_set_scan_resp_data(uint8_t length, const uint8_t data[])
+int hci_le_set_scan_resp_data_begin(uint8_t length, const uint8_t *data)
 {
   struct hci_request rq;
   le_set_scan_response_data_cp scan_resp_cp;
-  uint8_t status;
 
   memset(&scan_resp_cp, 0, sizeof(scan_resp_cp));
   scan_resp_cp.length = length;
@@ -293,10 +292,23 @@ int hci_le_set_scan_resp_data(uint8_t length, const uint8_t data[])
   rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_SCAN_RESPONSE_DATA);
   rq.cparam = &scan_resp_cp;
   rq.clen = LE_SET_SCAN_RESPONSE_DATA_CP_SIZE;
+
+  if (hci_send_req(&rq) < 0)
+    return BLE_STATUS_TIMEOUT;
+
+  return 0;
+}
+
+int hci_le_set_scan_resp_data_end()
+{
+  struct hci_response rq;
+  uint8_t status;
+
+  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
+  if (hci_recv_resp(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;

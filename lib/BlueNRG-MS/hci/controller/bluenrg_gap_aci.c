@@ -26,10 +26,10 @@
 #define MIN(a,b)            ((a) < (b) )? (a) : (b)
 #define MAX(a,b)            ((a) > (b) )? (a) : (b)
 
-tBleStatus aci_gap_init_IDB05A1_begin(uint8_t role, uint8_t privacy_enabled, uint8_t device_name_char_len)
+tBleStatus aci_gap_init_begin(uint8_t role, uint8_t privacy_enabled, uint8_t device_name_char_len)
 {
   struct hci_request rq;
-  gap_init_cp_IDB05A1 cp;
+  gap_init_cp cp;
 
   cp.role = role;
   cp.privacy_enabled = privacy_enabled;
@@ -46,7 +46,7 @@ tBleStatus aci_gap_init_IDB05A1_begin(uint8_t role, uint8_t privacy_enabled, uin
   return 0;
 }
 
-tBleStatus aci_gap_init_IDB05A1_end(uint16_t* service_handle, uint16_t* dev_name_char_handle, uint16_t* appearance_char_handle)
+tBleStatus aci_gap_init_end(uint16_t* service_handle, uint16_t* dev_name_char_handle, uint16_t* appearance_char_handle)
 {
   struct hci_response rq;
   gap_init_rp resp = {};
@@ -55,37 +55,6 @@ tBleStatus aci_gap_init_IDB05A1_end(uint16_t* service_handle, uint16_t* dev_name
   rq.rlen = GAP_INIT_RP_SIZE;
 
   if (hci_recv_resp(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
-
-  if (resp.status) {
-    return resp.status;
-  }
-
-  *service_handle = btohs(resp.service_handle);
-  *dev_name_char_handle = btohs(resp.dev_name_char_handle);
-  *appearance_char_handle = btohs(resp.appearance_char_handle);
-
-  return 0;
-}
-
-tBleStatus aci_gap_init_IDB04A1(uint8_t role, uint16_t* service_handle, uint16_t* dev_name_char_handle, uint16_t* appearance_char_handle)
-{
-  struct hci_request rq;
-  gap_init_cp_IDB04A1 cp;
-  gap_init_rp resp;
-
-  cp.role = role;
-
-  memset(&resp, 0, sizeof(resp));
-
-  memset(&rq, 0, sizeof(rq));
-  rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_INIT);
-  rq.cparam = &cp;
-  rq.clen = sizeof(cp);
-  rq.rparam = &resp;
-  rq.rlen = GAP_INIT_RP_SIZE;
-
-  if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   if (resp.status) {
@@ -177,13 +146,19 @@ tBleStatus aci_gap_set_limited_discoverable(uint8_t AdvType, uint16_t AdvIntervM
   return status;
 }
 
-tBleStatus aci_gap_set_discoverable(uint8_t AdvType, uint16_t AdvIntervMin, uint16_t AdvIntervMax,
-                             uint8_t OwnAddrType, uint8_t AdvFilterPolicy, uint8_t LocalNameLen,
-                             const char *LocalName, uint8_t ServiceUUIDLen, uint8_t* ServiceUUIDList,
-                             uint16_t SlaveConnIntervMin, uint16_t SlaveConnIntervMax)
+tBleStatus aci_gap_set_discoverable_begin(uint8_t AdvType,
+                                          uint16_t AdvIntervMin,
+                                          uint16_t AdvIntervMax,
+                                          uint8_t OwnAddrType,
+                                          uint8_t AdvFilterPolicy,
+                                          uint8_t LocalNameLen,
+                                          const char *LocalName,
+                                          uint8_t ServiceUUIDLen,
+                                          uint8_t* ServiceUUIDList,
+                                          uint16_t SlaveConnIntervMin,
+                                          uint16_t SlaveConnIntervMax)
 {
   struct hci_request rq;
-  uint8_t status;
   uint8_t buffer[40];
   uint8_t indx = 0;
 
@@ -231,17 +206,26 @@ tBleStatus aci_gap_set_discoverable(uint8_t AdvType, uint16_t AdvIntervMin, uint
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_SET_DISCOVERABLE);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
-  rq.rparam = &status;
-  rq.rlen = 1;
 
   if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
-  if (status) {
-    return status;
-  }
-
   return 0;
+}
+
+tBleStatus aci_gap_set_discoverable_end()
+{
+  struct hci_response rq;
+  uint8_t status;
+
+  memset(&rq, 0, sizeof(rq));
+  rq.rparam = &status;
+  rq.rlen = 1;
+
+  if (hci_recv_resp(&rq) < 0)
+    return BLE_STATUS_TIMEOUT;
+
+  return status;
 }
 
 tBleStatus aci_gap_set_direct_connectable_IDB05A1(uint8_t own_addr_type, uint8_t directed_adv_type, uint8_t initiator_addr_type,

@@ -86,7 +86,8 @@ tBleStatus aci_hal_read_config_data(uint8_t offset, uint16_t data_len, uint8_t *
  * @param pa_level Can be from 0 to 7. Set the PA level value.
  * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_set_tx_power_level(uint8_t en_high_power, uint8_t pa_level);
+tBleStatus aci_hal_set_tx_power_level_begin(uint8_t en_high_power, uint8_t pa_level);
+tBleStatus aci_hal_set_tx_power_level_end();
 
 /**
  * @brief This command returns the number of packets sent in Direct Test Mode.

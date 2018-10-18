@@ -27,26 +27,37 @@
 #define MAX(a,b)            ((a) > (b) )? (a) : (b)
 
 
-tBleStatus aci_gatt_init(void)
+tBleStatus aci_gatt_init_begin(void)
 {
   struct hci_request rq;
-  uint8_t status;
 
   memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_INIT);
+
+  if (hci_send_req(&rq) < 0)
+    return BLE_STATUS_TIMEOUT;
+
+  return 0;
+}
+
+tBleStatus aci_gatt_init_end(void)
+{
+  struct hci_response rq;
+  uint8_t status;
+
+  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
+  if (hci_recv_resp(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;
 }
 
-tBleStatus aci_gatt_add_serv(uint8_t service_uuid_type, const uint8_t* service_uuid, uint8_t service_type, uint8_t max_attr_records, uint16_t *serviceHandle)
+tBleStatus aci_gatt_add_serv_begin(uint8_t service_uuid_type, const uint8_t* service_uuid, uint8_t service_type, uint8_t max_attr_records)
 {
   struct hci_request rq;
-  gatt_add_serv_rp resp;
   uint8_t buffer[19];
   uint8_t uuid_len;
   uint8_t indx = 0;
@@ -69,17 +80,29 @@ tBleStatus aci_gatt_add_serv(uint8_t service_uuid_type, const uint8_t* service_u
   buffer[indx] = max_attr_records;
   indx++;
 
-
-  memset(&resp, 0, sizeof(resp));
-
   memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_ADD_SERV);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
+
+  if (hci_send_req(&rq) < 0)
+    return BLE_STATUS_TIMEOUT;
+
+  return 0;
+}
+
+tBleStatus aci_gatt_add_serv_end(uint16_t *serviceHandle)
+{
+  struct hci_response rq;
+  gatt_add_serv_rp resp;
+
+  memset(&resp, 0, sizeof(resp));
+
+  memset(&rq, 0, sizeof(rq));
   rq.rparam = &resp;
   rq.rlen = GATT_ADD_SERV_RP_SIZE;
 
-  if (hci_send_req(&rq) < 0)
+  if (hci_recv_resp(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   if (resp.status) {
@@ -146,19 +169,17 @@ tBleStatus aci_gatt_include_service(uint16_t service_handle, uint16_t included_s
   return 0;
 }
 
-tBleStatus aci_gatt_add_char(uint16_t serviceHandle,
-                             uint8_t charUuidType,
-                             const uint8_t* charUuid,
-                             uint8_t charValueLen,
-                             uint8_t charProperties,
-                             uint8_t secPermissions,
-                             uint8_t gattEvtMask,
-                             uint8_t encryKeySize,
-                             uint8_t isVariable,
-                             uint16_t* charHandle)
+tBleStatus aci_gatt_add_char_begin(uint16_t serviceHandle,
+                                   uint8_t charUuidType,
+                                   const uint8_t* charUuid,
+                                   uint8_t charValueLen,
+                                   uint8_t charProperties,
+                                   uint8_t secPermissions,
+                                   uint8_t gattEvtMask,
+                                   uint8_t encryKeySize,
+                                   uint8_t isVariable)
 {
   struct hci_request rq;
-  gatt_add_serv_rp resp;
   uint8_t buffer[25];
   uint8_t uuid_len;
   uint8_t indx = 0;
@@ -197,16 +218,29 @@ tBleStatus aci_gatt_add_char(uint16_t serviceHandle,
   buffer[indx] = isVariable;
   indx++;
 
-  memset(&resp, 0, sizeof(resp));
-
   memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_ADD_CHAR);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
+
+  if (hci_send_req(&rq) < 0)
+    return BLE_STATUS_TIMEOUT;
+
+  return 0;
+}
+
+tBleStatus aci_gatt_add_char_end(uint16_t* charHandle)
+{
+  struct hci_response rq;
+  gatt_add_serv_rp resp;
+
+  memset(&resp, 0, sizeof(resp));
+
+  memset(&rq, 0, sizeof(rq));
   rq.rparam = &resp;
   rq.rlen = GATT_ADD_CHAR_RP_SIZE;
 
-  if (hci_send_req(&rq) < 0)
+  if (hci_recv_resp(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   if (resp.status) {
@@ -306,15 +340,13 @@ tBleStatus aci_gatt_add_char_desc(uint16_t serviceHandle,
   return 0;
 }
 
-
-tBleStatus aci_gatt_update_char_value(uint16_t servHandle,
-                                      uint16_t charHandle,
-                                      uint8_t charValOffset,
-                                      uint8_t charValueLen,
-                                      const void *charValue)
+tBleStatus aci_gatt_update_char_value_begin(uint16_t servHandle,
+                                            uint16_t charHandle,
+                                            uint8_t charValOffset,
+                                            uint8_t charValueLen,
+                                            const void *charValue)
 {
   struct hci_request rq;
-  uint8_t status;
   uint8_t buffer[HCI_MAX_PAYLOAD_SIZE];
   uint8_t indx = 0;
 
@@ -342,17 +374,26 @@ tBleStatus aci_gatt_update_char_value(uint16_t servHandle,
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_UPD_CHAR_VAL);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
-  rq.rparam = &status;
-  rq.rlen = 1;
 
   if (hci_send_req(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
-  if (status) {
-    return status;
-  }
-
   return 0;
+}
+
+tBleStatus aci_gatt_update_char_value_end(void)
+{
+  struct hci_response rq;
+  uint8_t status;
+
+  memset(&rq, 0, sizeof(rq));
+  rq.rparam = &status;
+  rq.rlen = 1;
+
+  if (hci_recv_resp(&rq) < 0)
+    return BLE_STATUS_TIMEOUT;
+
+  return status;
 }
 
 tBleStatus aci_gatt_del_char(uint16_t servHandle, uint16_t charHandle)

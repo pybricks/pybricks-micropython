@@ -205,17 +205,12 @@ typedef __packed struct _gap_authorization_response_cp{
 
 #define OCF_GAP_INIT		        0x008A
 
-typedef __packed struct _gap_init_cp_IDB05A1{
+typedef __packed struct _gap_init_cp{
     uint8_t	role;
     uint8_t	privacy_enabled;
     uint8_t device_name_char_len;
-} PACKED gap_init_cp_IDB05A1;
-#define GAP_INIT_CP_SIZE_IDB05A1 3
-
-typedef __packed struct _gap_init_cp_IDB04A1{
-	uint8_t	role;
-} PACKED gap_init_cp_IDB04A1;
-#define GAP_INIT_CP_SIZE_IDB04A1 1
+} PACKED gap_init_cp;
+#define GAP_INIT_CP_SIZE 3
 
 typedef __packed struct _gap_init_rp{
     uint8_t		    status;
@@ -819,6 +814,8 @@ typedef __packed struct _evt_blue_aci{
   uint16_t ecode; /**< One of the BlueNRG event codes. */
   uint8_t  data[VARIABLE_SIZE];
 } PACKED evt_blue_aci;
+
+#define EVT_BLUE_ACI_HDR_SIZE 2
 
 /**
  * @}

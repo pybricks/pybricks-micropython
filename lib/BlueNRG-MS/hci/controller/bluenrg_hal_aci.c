@@ -120,23 +120,33 @@ tBleStatus aci_hal_read_config_data(uint8_t offset, uint16_t data_len, uint8_t *
   return 0;
 }
 
-tBleStatus aci_hal_set_tx_power_level(uint8_t en_high_power, uint8_t pa_level)
+tBleStatus aci_hal_set_tx_power_level_begin(uint8_t en_high_power, uint8_t pa_level)
 {
   struct hci_request rq;
   hal_set_tx_power_level_cp cp;
-  uint8_t status;
 
   cp.en_high_power = en_high_power;
   cp.pa_level = pa_level;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_HAL_SET_TX_POWER_LEVEL);
   rq.cparam = &cp;
   rq.clen = HAL_SET_TX_POWER_LEVEL_CP_SIZE;
+
+  if (hci_send_req(&rq) < 0)
+    return BLE_STATUS_TIMEOUT;
+
+  return 0;
+}
+
+tBleStatus aci_hal_set_tx_power_level_end()
+{
+  struct hci_response rq;
+  uint8_t status;
+
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
+  if (hci_recv_resp(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;

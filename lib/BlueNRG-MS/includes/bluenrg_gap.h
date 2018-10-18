@@ -3,7 +3,7 @@
 * Author             : AMS - HEA&RF BU
 * Version            : V1.0.0
 * Date               : 19-July-2012
-* Description        : Header file for BlueNRG's GAP layer. 
+* Description        : Header file for BlueNRG's GAP layer.
 ********************************************************************************
 * THE PRESENT FIRMWARE WHICH IS FOR GUIDANCE ONLY AIMS AT PROVIDING CUSTOMERS
 * WITH CODING INFORMATION REGARDING THEIR PRODUCTS IN ORDER FOR THEM TO SAVE TIME.
@@ -17,11 +17,11 @@
 
 #include <link_layer.h>
 
-/** 
+/**
  * @addtogroup HIGH_LEVEL_INTERFACE HIGH_LEVEL_INTERFACE
  * @{
  */
- 
+
 /**
  * @addtogroup ACI_GAP ACI_GAP
  * @brief API for GAP layer.
@@ -134,7 +134,7 @@
  */
 
 /* service data AD type */
-#define AD_TYPE_SERVICE_DATA					(0x16)	
+#define AD_TYPE_SERVICE_DATA					(0x16)
 
 /* manufacturer specific data AD type */
 #define AD_TYPE_MANUFACTURER_SPECIFIC_DATA		(0xFF)
@@ -190,15 +190,10 @@
  * @name GAP Roles
  * @{
 */
-#define GAP_PERIPHERAL_ROLE_IDB05A1			(0x01)
-#define GAP_BROADCASTER_ROLE_IDB05A1		        (0x02)
-#define GAP_CENTRAL_ROLE_IDB05A1			(0x04)
-#define GAP_OBSERVER_ROLE_IDB05A1			(0x08)
-
-#define GAP_PERIPHERAL_ROLE_IDB04A1			(0x01)
-#define GAP_BROADCASTER_ROLE_IDB04A1		        (0x02)
-#define GAP_CENTRAL_ROLE_IDB04A1			(0x03)
-#define GAP_OBSERVER_ROLE_IDB04A1			(0x04)
+#define GAP_PERIPHERAL_ROLE                     (0x01)
+#define GAP_BROADCASTER_ROLE                    (0x02)
+#define GAP_CENTRAL_ROLE                        (0x04)
+#define GAP_OBSERVER_ROLE                       (0x08)
 
 /**
  * @}
@@ -228,7 +223,7 @@
 /**
  * @}
  */
-   
+
 /**
  * @}
  */
