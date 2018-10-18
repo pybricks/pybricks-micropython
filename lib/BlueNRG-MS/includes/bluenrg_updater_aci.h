@@ -67,9 +67,9 @@ tBleStatus aci_updater_hw_version(uint8_t *version);
  */
 /** HCI vendor specific event, raised at BlueNRG power-up or reboot. */
 #define EVT_BLUE_INITIALIZED                      (0x0001)
-typedef struct _evt_blue_initialized{
+typedef __packed struct _evt_blue_initialized{
   uint8_t reason_code;
-} evt_blue_initialized;
+} PACKED evt_blue_initialized;
 /**
  * @}
  */

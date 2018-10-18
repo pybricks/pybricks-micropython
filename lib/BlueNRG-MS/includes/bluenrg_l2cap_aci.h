@@ -107,7 +107,7 @@ tBleStatus aci_l2cap_connection_parameter_update_response_IDB04A1(uint16_t conn_
  * For more info see CONNECTION PARAMETER UPDATE RESPONSE and COMMAND REJECT in Bluetooth Core v4.0 spec.
  */
 #define EVT_BLUE_L2CAP_CONN_UPD_RESP		  (0x0800)
-typedef struct _evt_l2cap_conn_upd_resp{
+typedef __packed struct _evt_l2cap_conn_upd_resp{
   uint16_t conn_handle;         /**< The connection handle related to the event. */
   uint8_t  event_data_length;  /**< Length of following data. */
 /**
@@ -122,24 +122,24 @@ typedef struct _evt_l2cap_conn_upd_resp{
  * Response (code=0x13) or reason code for rejection in case of Command Reject (code=0x01).
  */
   uint16_t result;
-} evt_l2cap_conn_upd_resp;
+} PACKED evt_l2cap_conn_upd_resp;
 
 /**
  * This event is generated when the master does not respond to the connection update request
  * within 30 seconds.
  */
 #define EVT_BLUE_L2CAP_PROCEDURE_TIMEOUT      (0x0801)
-typedef struct _evt_l2cap_procedure_timeout{
+typedef __packed struct _evt_l2cap_procedure_timeout{
   uint16_t conn_handle;         /**< The connection handle related to the event. */
   uint8_t  event_data_length;  /**< Length of following data. It should be always 0 for this event. */
-} evt_l2cap_procedure_timeout;
+} PACKED evt_l2cap_procedure_timeout;
 
 /**
  * The event is given by the L2CAP layer when a connection update request is received from the slave.
  * The application has to respond by calling aci_l2cap_connection_parameter_update_response().
  */
 #define EVT_BLUE_L2CAP_CONN_UPD_REQ		  	  (0x0802)
-typedef struct _evt_l2cap_conn_upd_req{
+typedef __packed struct _evt_l2cap_conn_upd_req{
 /**
  * Handle of the connection for which the connection update request has been received.
  * The same handle has to be returned while responding to the event with the command
@@ -158,7 +158,7 @@ typedef struct _evt_l2cap_conn_upd_req{
   uint16_t interval_max;  /**< Value as defined in Bluetooth 4.0 spec, Volume 3, Part A 4.20. */
   uint16_t slave_latency; /**< Value as defined in Bluetooth 4.0 spec, Volume 3, Part A 4.20. */
   uint16_t timeout_mult;  /**< Value as defined in Bluetooth 4.0 spec, Volume 3, Part A 4.20. */
-} evt_l2cap_conn_upd_req;
+} PACKED evt_l2cap_conn_upd_req;
 
 /**
  * @}
