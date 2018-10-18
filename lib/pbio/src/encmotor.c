@@ -30,7 +30,7 @@ pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_mot
 
 pbio_error_t pbio_encmotor_set_settings(
         pbio_port_t port,
-        float_t stall_torque_limit,
+        float_t stall_torque_limit_pct,
         float_t stall_speed_limit,
         float_t min_speed,
         float_t max_speed,
@@ -42,7 +42,7 @@ pbio_error_t pbio_encmotor_set_settings(
         int16_t pid_ki,
         int16_t pid_kd
     ){
-    pbio_error_t status = pbio_dcmotor_set_settings(port, stall_torque_limit);
+    pbio_error_t status = pbio_dcmotor_set_settings(port, stall_torque_limit_pct);
     if (status != PBIO_SUCCESS) {
         return status;
     }

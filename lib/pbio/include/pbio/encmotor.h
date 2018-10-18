@@ -44,7 +44,7 @@ pbio_encmotor_settings_t encmotor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction, float_t gear_ratio);
 
-pbio_error_t pbio_encmotor_set_settings(pbio_port_t port, float_t stall_torque_limit, float_t stall_speed_limit, float_t min_speed, float_t max_speed,  float_t tolerance, float_t acceleration_start, float_t acceleration_end, float_t tight_loop_time, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd);
+pbio_error_t pbio_encmotor_set_settings(pbio_port_t port, float_t stall_torque_limit_pct, float_t stall_speed_limit, float_t min_speed, float_t max_speed,  float_t tolerance, float_t acceleration_start, float_t acceleration_end, float_t tight_loop_time, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd);
 
 void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string);
 
