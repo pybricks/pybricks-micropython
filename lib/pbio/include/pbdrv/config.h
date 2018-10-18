@@ -72,6 +72,11 @@
 #define PBDRV_CONFIG_BATTERY (1)
 #endif
 
+// enable the bluetooth driver
+#ifndef PBDRV_CONFIG_BLUETOOTH
+#define PBDRV_CONFIG_BLUETOOTH (1)
+#endif
+
 // enable the button driver
 #ifndef PBDRV_CONFIG_BUTTON
 #define PBDRV_CONFIG_BUTTON (1)

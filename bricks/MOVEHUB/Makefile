@@ -20,6 +20,8 @@ INC += -I$(TOP)/lib/cmsis/inc
 INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32F0xx/Include
 INC += -I$(TOP)/ports/pybricks/lib/pbio/drv/move_hub
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
+INC += -I$(TOP)/ports/pybricks/lib/BlueNRG-MS/includes
+INC += -I$(TOP)/ports/pybricks/lib/pt
 INC += -I$(TOP)/ports/pybricks/extmod
 INC += -I$(BUILD)
 
@@ -27,7 +29,7 @@ DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
 CHECKSUM = $(TOP)/ports/pybricks/tools/checksum.py
 
-PBIO_OPT = -DPBIO_CONFIG_ENABLE_SYS 
+PBIO_OPT = -DPBIO_CONFIG_ENABLE_SYS
 # PBIO_OPT += -DPBIO_CONFIG_ENABLE_MOTORS
 
 CFLAGS_CORTEX_M0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
@@ -79,12 +81,22 @@ PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	)
 
 ifneq (,$(findstring DPBIO_CONFIG_ENABLE_MOTORS,$(PBIO_OPT)))
-PYBRICKS_DRIVERS_SRC_C += $(addprefix ports/pybricks/extmod/modmotor.c)	
+PYBRICKS_DRIVERS_SRC_C += $(addprefix ports/pybricks/extmod/modmotor.c)
 endif
+
+BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\
+	controller/bluenrg_gap_aci.c \
+	controller/bluenrg_gatt_aci.c \
+	controller/bluenrg_hal_aci.c \
+	controller/bluenrg_l2cap_aci.c \
+	controller/bluenrg_updater_aci.c \
+	hci_le.c \
+	)
 
 PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	drv/move_hub/adc.c \
 	drv/move_hub/battery.c \
+	drv/move_hub/bluetooth.c \
 	drv/move_hub/button.c \
 	drv/move_hub/light.c \
 	drv/move_hub/ioport.c \
@@ -129,6 +141,7 @@ SRC_LIBM = $(addprefix lib/libm/,\
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_DRIVERS_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(BLUENRG_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 

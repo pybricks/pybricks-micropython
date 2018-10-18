@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 #include <pbdrv/adc.h>
+#include <pbdrv/bluetooth.h>
 #include <pbdrv/button.h>
 #include <pbdrv/light.h>
 #include <pbdrv/ioport.h>
@@ -24,6 +25,7 @@ static uint32_t prev_slow_poll_time;
  */
 void pbio_init(void) {
     _pbdrv_adc_init();
+    _pbdrv_bluetooth_init();
     _pbdrv_button_init();
     _pbdrv_light_init();
     _pbdrv_ioport_init();
@@ -52,6 +54,9 @@ void pbio_poll(void) {
         _pbsys_poll(now);
         prev_slow_poll_time = now;
     }
+
+    // Bluetooth needs < 1ms polling
+    _pbdrv_bluetooth_poll(now);
 }
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
@@ -64,6 +69,7 @@ void pbio_deinit(void) {
     _pbdrv_motor_deinit();
     _pbdrv_light_deinit();
     _pbdrv_button_deinit();
+    _pbdrv_bluetooth_deinit();
     _pbdrv_adc_deinit();
 }
 #endif
