@@ -22,8 +22,8 @@ left.run_angle(500, 90, STOP_BRAKE, True)
 left.run_target(500, 0, STOP_HOLD, True)
 
 # run both motors
-left.run_time(500, 3, STOP_BRAKE, False)
-right.run_time(500, 3, STOP_BRAKE, True)
+left.run_time(500, 3000, STOP_BRAKE, False)
+right.run_time(500, 3000, STOP_BRAKE, True)
 
 # Run then hard stop
 left.run(500)

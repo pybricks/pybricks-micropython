@@ -164,8 +164,8 @@ float_t signval(float_t signof, float_t value) {
 // Calculate the characteristic time values, encoder values, rate values and accelerations that uniquely define the rate and count trajectories
 pbio_error_t make_motor_trajectory(pbio_port_t port,
                                    pbio_motor_action_t action,
-                                   float_t rate_target,
-                                   float_t duration_or_target_count,
+                                   int32_t speed_target,
+                                   int32_t duration_or_target_position,
                                    pbio_motor_after_stop_t after_stop){
 
     // Read the current system state for this motor
@@ -188,7 +188,7 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
     float_t _count_out = 0;
     float_t _count_end = 0;
     float_t _rate_start = rate_start;
-    float_t _rate_target = rate_target * settings->counts_per_output_unit;
+    float_t _rate_target = speed_target * settings->counts_per_output_unit;
     float_t _accl_start = 0;
     float_t _accl_end = 0;
 
@@ -208,11 +208,11 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
             break;
         case RUN_TIME:
             // Do not allow negative time
-            if (duration_or_target_count < 0) {
+            if (duration_or_target_position < 0) {
                 return PBIO_ERROR_INVALID_ARG;
             }
             // For RUN_TIME, the end time is the current time plus the duration
-            _time_end = _time_start + duration_or_target_count;
+            _time_end = _time_start + ((float_t) duration_or_target_position)/MS_PER_SECOND;
             break;
         case RUN_STALLED:
             // FOR RUN and RUN_STALLED, we specify no end time
@@ -220,17 +220,17 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
             break;
         case RUN_ANGLE:
             // For RUN_ANGLE, we specify instead the end count value as the current value plus the requested angle
-            _count_end = _count_start + duration_or_target_count * settings->counts_per_output_unit;
+            _count_end = _count_start + duration_or_target_position * settings->counts_per_output_unit;
             // If the goal is to reach a relative target, the speed cannot not be zero
-            if (rate_target == 0) {
+            if (speed_target == 0) {
                 return PBIO_ERROR_INVALID_ARG;
             }
             break;
         case RUN_TARGET:
             // For RUN_TARGET, we specify instead the end count value
-            _count_end = duration_or_target_count * settings->counts_per_output_unit;
+            _count_end = duration_or_target_position * settings->counts_per_output_unit;
             // If the goal is to reach a position target, the speed cannot not be zero
-            if (rate_target == 0) {
+            if (speed_target == 0) {
                 return PBIO_ERROR_INVALID_ARG;
             }
             break;
@@ -661,7 +661,7 @@ void control_update(pbio_port_t port){
             else {
                 // When ending a time based control maneuver with hold, we trigger a new position based maneuver with zero degrees
                 pbio_dcmotor_set_duty_cycle_int(port, 0);
-                make_motor_trajectory(port, RUN_TARGET, NONZERO, count_now, PBIO_MOTOR_STOP_HOLD);
+                make_motor_trajectory(port, RUN_TARGET, NONZERO, ((float_t) count_now)/settings->counts_per_output_unit, PBIO_MOTOR_STOP_HOLD);
             }
         }
     }
