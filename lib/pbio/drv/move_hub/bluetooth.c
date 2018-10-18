@@ -215,21 +215,7 @@ static void handle_event(hci_event_pckt *event) {
     switch (event->evt) {
     case EVT_CMD_COMPLETE:
         hci_command_complete = true;
-        {
-            evt_cmd_complete *evt = (evt_cmd_complete *)event->data;
-            printf("EVT_CMD_COMPLETE: %d %04x -", evt->ncmd, evt->opcode);
-            for (int i = 0; i < event->plen; i++) {
-                printf(" %02x", event->data[i]);
-            }
-            printf("\n");
-        }
         break;
-    // case EVT_CMD_STATUS:
-    //     {
-    //         evt_cmd_status *evt = (evt_cmd_status *)event->data;
-
-    //     }
-    //     break;
     case EVT_LE_META_EVENT:
         {
             evt_le_meta_event *evt = (evt_le_meta_event *)event->data;
@@ -238,23 +224,7 @@ static void handle_event(hci_event_pckt *event) {
                 {
                     evt_le_connection_complete *subevt = (evt_le_connection_complete *)evt->data;
                     conn_handle = subevt->handle;
-                    printf("EVT_LE_CONN_COMPLETE: %04x -", subevt->handle);
-                    printf("\n");
                 }
-                break;
-            case EVT_LE_CONN_UPDATE_COMPLETE:
-                {
-                    evt_le_connection_update_complete *subevt = (evt_le_connection_update_complete *)evt->data;
-                    printf("EVT_LE_CONN_UPDATE_COMPLETE: %04x -", subevt->handle);
-                    printf("\n");
-                }
-                break;
-            default:
-                printf("unknown EVT_LE_META_EVENT: %02x -", evt->subevent);
-                for (int i = EVT_LE_META_EVENT_SIZE; i < event->plen; i++) {
-                    printf(" %02x", event->data[i]);
-                }
-                printf("\n");
                 break;
             }
         }
@@ -273,35 +243,12 @@ static void handle_event(hci_event_pckt *event) {
                 {
                     evt_gatt_attr_modified *subevt = (evt_gatt_attr_modified *)evt->data;
                     if (gatt_attr_modified_handler[subevt->attr_handle]) {
-                        printf("subevt->attr_handle %04x\n", subevt->attr_handle);
-                        printf("gatt_attr_modified_handler[subevt->attr_handle] %08lx\n", (uint32_t)gatt_attr_modified_handler[subevt->attr_handle]);
                         gatt_attr_modified_handler[subevt->attr_handle](subevt->att_data, subevt->data_length);
                     }
-                    else {
-                        printf("unhandled EVT_BLUE_GATT_ATTRIBUTE_MODIFIED: attr_handle %04x\n", subevt->attr_handle);
-                        for (int i = 0; i < subevt->data_length; i++) {
-                            printf(" %02x", subevt->att_data[i]);
-                        }
-                        printf("\n");
-                    }
                 }
-                break;
-            default:
-                printf("Unknown EVT_VENDOR: %04x -", evt->ecode);
-                for (int i = EVT_BLUE_ACI_HDR_SIZE; i < event->plen; i++) {
-                    printf(" %02x", event->data[i]);
-                }
-                printf("\n");
                 break;
             }
         }
-        break;
-    default:
-        printf("Unknown hci_event_pckt: %02x -", event->evt);
-        for (int i = 0; i < event->plen; i++) {
-            printf(" %02x", event->data[i]);
-        }
-        printf("\n");
         break;
     }
 }
@@ -426,7 +373,6 @@ static PT_THREAD(hci_init(struct pt *pt)) {
     static const uint8_t mode = 2; // Slave and master; Only one connection; 12 KB of RAM retention
     static uint16_t gap_service_handle, gap_dev_name_char_handle, gap_appearance_char_handle;
     uint8_t bd_addr[6];
-    tBleStatus ret;
 
     PT_BEGIN(pt);
 
@@ -435,8 +381,7 @@ static PT_THREAD(hci_init(struct pt *pt)) {
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_hal_write_config_data_begin(CONFIG_DATA_MODE_OFFSET, CONFIG_DATA_MODE_LEN, &mode);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    ret = aci_hal_write_config_data_end();
-    printf("%d: %d\n", __LINE__, ret);
+    aci_hal_write_config_data_end();
 
     // set the Bluetooth address
 
@@ -450,32 +395,28 @@ static PT_THREAD(hci_init(struct pt *pt)) {
     bd_addr[5] = FLASH_BD_ADDR[0];
     aci_hal_write_config_data_begin(CONFIG_DATA_PUBADDR_OFFSET, CONFIG_DATA_PUBADDR_LEN, bd_addr);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    ret = aci_hal_write_config_data_end();
-    printf("%d: %d\n", __LINE__, ret);
+    aci_hal_write_config_data_end();
 
     // set Tx power level
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_hal_set_tx_power_level_begin(1, 5); // 1.4 dBm - same as LEGO firmware
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    ret = aci_hal_set_tx_power_level_end();
-    printf("%d: %d\n", __LINE__, ret);
+    aci_hal_set_tx_power_level_end();
 
     // init GATT layer
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gatt_init_begin();
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    ret = aci_gatt_init_end();
-    printf("%d: %d\n", __LINE__, ret);
+    aci_gatt_init_end();
 
     // init GATT layer
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gap_init_begin(GAP_PERIPHERAL_ROLE, PRIVACY_DISABLED, 16); // 16 comes from LEGO bootloader
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    ret = aci_gap_init_end(&gap_service_handle, &gap_dev_name_char_handle, &gap_appearance_char_handle);
-    printf("%d: %d\n", __LINE__, ret);
+    aci_gap_init_end(&gap_service_handle, &gap_dev_name_char_handle, &gap_appearance_char_handle);
 
     // set the device name
 
@@ -483,8 +424,7 @@ static PT_THREAD(hci_init(struct pt *pt)) {
     aci_gatt_update_char_value_begin(gap_service_handle, gap_dev_name_char_handle,
         0, strlen(DEV_NAME), DEV_NAME);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    ret = aci_gatt_update_char_value_end();
-    printf("%d: %d\n", __LINE__, ret);
+    aci_gatt_update_char_value_end();
 
     PT_END(pt);
 }
@@ -521,7 +461,6 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
     #define NRF_CHAR_SIZE 20
 
     static uint16_t uart_service_handle, uart_rx_char_handle, uart_tx_char_handle;
-    tBleStatus ret;
 
     PT_BEGIN(pt);
 
@@ -529,47 +468,39 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
     // sample_service.c in BlueNRG vendor sample code and Adafruit config file
     // https://github.com/adafruit/Adafruit_nRF8001/blob/master/utility/uart/UART_over_BLE.xml)
 
-
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gatt_add_serv_begin(UUID_TYPE_128, nrf_uart_service_uuid, PRIMARY_SERVICE, 7);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    ret = aci_gatt_add_serv_end(&uart_service_handle);
-    printf("%d: %d\n", __LINE__, ret);
+    aci_gatt_add_serv_end(&uart_service_handle);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gatt_add_char_begin(uart_service_handle, UUID_TYPE_128, nrf_uart_rx_char_uuid,
         NRF_CHAR_SIZE, CHAR_PROP_WRITE_WITHOUT_RESP, ATTR_PERMISSION_NONE,
         GATT_NOTIFY_ATTRIBUTE_WRITE, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    ret = aci_gatt_add_serv_end(&uart_rx_char_handle);
-    printf("%d: %d\n", __LINE__, ret);
+    aci_gatt_add_serv_end(&uart_rx_char_handle);
 
     gatt_attr_modified_handler[uart_rx_char_handle + 1] = uart_rx_char_modified;
-
-    printf("uart_rx_char_handle: %04x\n", uart_rx_char_handle);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gatt_add_char_begin(uart_service_handle, UUID_TYPE_128, nrf_uart_tx_char_uuid,
         NRF_CHAR_SIZE, CHAR_PROP_NOTIFY, ATTR_PERMISSION_NONE,
         GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    ret = aci_gatt_add_serv_end(&uart_tx_char_handle);
-    printf("%d: %d\n", __LINE__, ret);
+    aci_gatt_add_serv_end(&uart_tx_char_handle);
 
     PT_END(pt);
 }
 
 static PT_THREAD(set_discoverable(struct pt *pt)) {
     char local_name[16];
-    tBleStatus ret;
 
     PT_BEGIN(pt);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     hci_le_set_scan_resp_data_begin(0, NULL);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    ret = hci_le_set_scan_resp_data_end();
-    printf("%d: %d\n", __LINE__, ret);
+    hci_le_set_scan_resp_data_end();
 
     // TODO probably want to call hci_le_set_advertising_data() here to advertise UART service
 
@@ -579,8 +510,7 @@ static PT_THREAD(set_discoverable(struct pt *pt)) {
     aci_gap_set_discoverable_begin(ADV_IND, 0, 0, PUBLIC_ADDR, NO_WHITE_LIST_USE,
         1 + strlen(DEV_NAME), local_name, 0, NULL, 0, 0);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    ret = aci_gap_set_discoverable_end();
-    printf("%d: %d\n", __LINE__, ret);
+    aci_gap_set_discoverable_end();
 
     PT_END(pt);
 }
@@ -599,7 +529,7 @@ static PT_THREAD(bluetooth_thread(uint32_t now)) {
 
     // take Bluetooth chip out of reset
     GPIOB->BSRR = GPIO_BSRR_BS_6;
-printf("BT out of reset\n");
+
     // wait for the Bluetooth chip to send the reset reason event so we know it is ready
     PT_WAIT_UNTIL(&bluetooth_pt, reset_reason);
     start_time = now;
@@ -610,7 +540,6 @@ printf("BT out of reset\n");
     // TODO: we should have a timeout and stop scanning eventually
     PT_WAIT_UNTIL(&bluetooth_pt, conn_handle);
 
-printf("spinning\n");
     // TODO: finish setting up the Bluetooth chip and add a loop to read/write
     // halting thread for now
     PT_WAIT_WHILE(&bluetooth_pt, true);
