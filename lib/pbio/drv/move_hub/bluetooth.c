@@ -213,6 +213,14 @@ static uint8_t reset_reason;
 // processes an event received from the Bluetooth chip
 static void handle_event(hci_event_pckt *event) {
     switch (event->evt) {
+    case EVT_DISCONN_COMPLETE:
+        {
+            evt_disconn_complete *evt = (evt_disconn_complete *)event->data;
+            if (conn_handle == evt->handle) {
+                conn_handle = 0;
+            }
+        }
+        break;
     case EVT_CMD_COMPLETE:
         hci_command_complete = true;
         break;
@@ -540,9 +548,14 @@ static PT_THREAD(bluetooth_thread(uint32_t now)) {
     // TODO: we should have a timeout and stop scanning eventually
     PT_WAIT_UNTIL(&bluetooth_pt, conn_handle);
 
-    // TODO: finish setting up the Bluetooth chip and add a loop to read/write
-    // halting thread for now
-    PT_WAIT_WHILE(&bluetooth_pt, true);
+    // conn_handle is set to 0 upon disconnection
+    while (conn_handle) {
+        // TODO: send out UART Tx data here
+        PT_YIELD(&bluetooth_pt);
+    }
+
+    // reset Bluetooth chip
+    GPIOB->BRR = GPIO_BRR_BR_6;
 
     // loop forever
     PT_RESTART(&bluetooth_pt);
