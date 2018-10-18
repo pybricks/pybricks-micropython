@@ -37,7 +37,7 @@ pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_moto
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_dcmotor_set_settings(pbio_port_t port, float_t stall_torque_limit_pct){
+pbio_error_t pbio_dcmotor_set_settings(pbio_port_t port, int16_t stall_torque_limit_pct){
     pbio_error_t status = pbio_dcmotor_coast(port);
     if (stall_torque_limit_pct < 0 || stall_torque_limit_pct > PBIO_MAX_DUTY_PCT) {
         stall_torque_limit_pct = PBIO_MAX_DUTY_PCT;
