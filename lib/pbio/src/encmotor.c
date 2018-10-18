@@ -24,7 +24,7 @@ pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_mot
         status = pbio_encmotor_reset_encoder_count(port, 0);
     }
     // TODO: Use the device_id to retrieve the default settings defined in our lib. For now just hardcode something below.
-    pbio_encmotor_set_settings(port, 100, 2, 5, 1000, 1, 1000, 1000, 0.1, 8, 8, 0.05);
+    pbio_encmotor_set_settings(port, 100, 2, 5, 1000, 1, 1000, 1000, 0.1, 800, 800, 5);
     return status;
 }
 
@@ -38,9 +38,9 @@ pbio_error_t pbio_encmotor_set_settings(
         float_t acceleration_start,
         float_t acceleration_end,
         float_t tight_loop_time,
-        float_t pid_kp,
-        float_t pid_ki,
-        float_t pid_kd
+        int16_t pid_kp,
+        int16_t pid_ki,
+        int16_t pid_kd
     ){
     pbio_error_t status = pbio_dcmotor_set_settings(port, stall_torque_limit);
     if (status != PBIO_SUCCESS) {
@@ -55,9 +55,9 @@ pbio_error_t pbio_encmotor_set_settings(
     encmotor_settings[port_index].abs_accl_start = (counts_per_output_unit * acceleration_start);
     encmotor_settings[port_index].abs_accl_end = (counts_per_output_unit * acceleration_end);
     encmotor_settings[port_index].tight_loop_time_ms = (MS_PER_SECOND * tight_loop_time);
-    encmotor_settings[port_index].pid_kp = (PID_PRESCALE * pid_kp);
-    encmotor_settings[port_index].pid_ki = (PID_PRESCALE * pid_ki);
-    encmotor_settings[port_index].pid_kd = (PID_PRESCALE * pid_kd);
+    encmotor_settings[port_index].pid_kp = pid_kp;
+    encmotor_settings[port_index].pid_ki = pid_ki;
+    encmotor_settings[port_index].pid_kd = pid_kd;
     return PBIO_SUCCESS;
 };
 
@@ -65,7 +65,7 @@ void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
     int8_t port_index = PORT_TO_IDX(port);
     float_t counts_per_output_unit = encmotor_settings[port_index].counts_per_output_unit;
     snprintf(settings_string, MAX_ENCMOTOR_SETTINGS_STR_LENGTH,
-        "Counts per unit: %.2f\nGear ratio: %.2f\nStall speed: %.2f\nMin speed: %.2f\nMax speed: %.2f\nTolerance: %.2f\nAcceleration: %.2f\nDeceleration: %.2f\nTight Loop: %.2f\nkp: %.2f\nki: %.2f\nkd: %.2f",
+        "Counts per unit: %.2f\nGear ratio: %.2f\nStall speed: %.2f\nMin speed: %.2f\nMax speed: %.2f\nTolerance: %.2f\nAcceleration: %.2f\nDeceleration: %.2f\nTight Loop: %.2f\nkp: %d\nki: %d\nkd: %d",
         encmotor_settings[port_index].counts_per_unit,
         counts_per_output_unit / encmotor_settings[port_index].counts_per_output_unit,            
         encmotor_settings[port_index].stall_speed_limit / counts_per_output_unit,
@@ -75,9 +75,9 @@ void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
         encmotor_settings[port_index].abs_accl_start / counts_per_output_unit,
         encmotor_settings[port_index].abs_accl_end / counts_per_output_unit,
         ((float_t) encmotor_settings[port_index].tight_loop_time_ms) / MS_PER_SECOND,
-        ((float_t) encmotor_settings[port_index].pid_kp) / PID_PRESCALE,
-        ((float_t) encmotor_settings[port_index].pid_ki) / PID_PRESCALE,
-        ((float_t) encmotor_settings[port_index].pid_kd) / PID_PRESCALE     
+        encmotor_settings[port_index].pid_kp,
+        encmotor_settings[port_index].pid_ki,
+        encmotor_settings[port_index].pid_kd     
     );
 }
 

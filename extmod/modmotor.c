@@ -179,9 +179,9 @@ STATIC mp_obj_t motor_Motor_settings(size_t n_args, const mp_obj_t *args){
                                                   mp_obj_get_float(args[6]),
                                                   mp_obj_get_float(args[7]),
                                                   mp_obj_get_float(args[8]),
-                                                  mp_obj_get_float(args[9]),
-                                                  mp_obj_get_float(args[10]),
-                                                  mp_obj_get_float(args[11])
+                                                  mp_obj_get_int(args[9]),
+                                                  mp_obj_get_int(args[10]),
+                                                  mp_obj_get_int(args[11])
                                                  );
     pb_raise_pbio_error(err);
     return mp_const_none;

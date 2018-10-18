@@ -504,8 +504,8 @@ void control_update(pbio_port_t port){
     rate_err = rate_ref - rate_now;
 
     // Corresponding PD control signal
-    duty_due_to_proportional = settings->pid_kp*count_err/(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS);
-    duty_due_to_derivative = settings->pid_kd*rate_err/(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS);
+    duty_due_to_proportional = settings->pid_kp*count_err;
+    duty_due_to_derivative = settings->pid_kd*rate_err;
 
     // Position anti-windup (RUN_TARGET || RUN_ANGLE)
     if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
@@ -570,7 +570,7 @@ void control_update(pbio_port_t port){
 
     // Duty cycle component due to integral position control (RUN_TARGET || RUN_ANGLE)
     if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
-        duty_due_to_integral = ((settings->pid_ki*(status->err_integral/US_PER_MS))/MS_PER_SECOND)/(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS);
+        duty_due_to_integral = (settings->pid_ki*(status->err_integral/US_PER_MS))/MS_PER_SECOND;
 
         // Integrator anti windup (stalled in the sense of integrators)
         // Limit the duty due to the integral, as well as the integral itself
@@ -578,12 +578,12 @@ void control_update(pbio_port_t port){
             // If we are additionally also running slower than the specified stall speed limit, set status to stalled
             stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_speed_limit, STALLED_INTEGRAL);            
             duty_due_to_integral = max_duty;
-            status->err_integral = ((US_PER_SECOND*(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS))/settings->pid_ki)*max_duty;
+            status->err_integral = (US_PER_SECOND/settings->pid_ki)*max_duty;
         }
         else if (duty_due_to_integral < -max_duty) {
             stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_speed_limit, STALLED_INTEGRAL);
             duty_due_to_integral = -max_duty;
-            status->err_integral = -((US_PER_SECOND*(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS))/settings->pid_ki)*max_duty;
+            status->err_integral = -(US_PER_SECOND/settings->pid_ki)*max_duty;
         }
         else {
             // Clear the integrator stall flag
