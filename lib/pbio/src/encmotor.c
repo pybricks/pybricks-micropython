@@ -32,12 +32,12 @@ pbio_error_t pbio_encmotor_set_settings(
         pbio_port_t port,
         int16_t stall_torque_limit_pct,
         int32_t stall_speed_limit,
-        float_t min_speed,
-        float_t max_speed,
+        int32_t min_speed,
+        int32_t max_speed,
         int32_t tolerance,
-        float_t acceleration_start,
-        float_t acceleration_end,
-        float_t tight_loop_time,
+        int32_t acceleration_start,
+        int32_t acceleration_end,
+        int16_t tight_loop_time,
         int16_t pid_kp,
         int16_t pid_ki,
         int16_t pid_kd
@@ -54,7 +54,7 @@ pbio_error_t pbio_encmotor_set_settings(
     encmotor_settings[port_index].count_tolerance = (counts_per_output_unit * tolerance);
     encmotor_settings[port_index].abs_accl_start = (counts_per_output_unit * acceleration_start);
     encmotor_settings[port_index].abs_accl_end = (counts_per_output_unit * acceleration_end);
-    encmotor_settings[port_index].tight_loop_time = (MS_PER_SECOND * tight_loop_time);
+    encmotor_settings[port_index].tight_loop_time = tight_loop_time;
     encmotor_settings[port_index].pid_kp = pid_kp;
     encmotor_settings[port_index].pid_ki = pid_ki;
     encmotor_settings[port_index].pid_kd = pid_kd;
