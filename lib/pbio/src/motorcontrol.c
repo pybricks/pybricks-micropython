@@ -512,7 +512,7 @@ void control_update(pbio_port_t port){
         if ((duty_due_to_proportional >= max_duty && rate_err > 0) || (duty_due_to_proportional <= -max_duty && rate_err < 0)){
             // We are at the duty limit and we should prevent further position error "integration".
             // If we are additionally also running slower than the specified stall speed limit, set status to stalled
-            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_speed_limit, STALLED_PROPORTIONAL);
+            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_rate_limit, STALLED_PROPORTIONAL);
             // To prevent further integration, we should stop the timer if it is running
             if (status->windup_status == TIME_RUNNING) {
                 // Then we must stop the time
@@ -546,7 +546,7 @@ void control_update(pbio_port_t port){
         // Check if proportional control exceeds the duty limit
         if ((duty_due_to_proportional >= max_duty && rate_err > 0) || (duty_due_to_proportional <= -max_duty && rate_err < 0)){
             // If we are additionally also running slower than the specified stall speed limit, set status to stalled
-            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_speed_limit, STALLED_PROPORTIONAL);
+            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_rate_limit, STALLED_PROPORTIONAL);
             // The integrator should NOT run.
             if (status->windup_status == SPEED_INTEGRATOR_RUNNING) {
                 // If it is running, disable it
@@ -576,12 +576,12 @@ void control_update(pbio_port_t port){
         // Limit the duty due to the integral, as well as the integral itself
         if (duty_due_to_integral > max_duty) {
             // If we are additionally also running slower than the specified stall speed limit, set status to stalled
-            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_speed_limit, STALLED_INTEGRAL);            
+            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_rate_limit, STALLED_INTEGRAL);            
             duty_due_to_integral = max_duty;
             status->err_integral = (US_PER_SECOND/settings->pid_ki)*max_duty;
         }
         else if (duty_due_to_integral < -max_duty) {
-            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_speed_limit, STALLED_INTEGRAL);
+            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_rate_limit, STALLED_INTEGRAL);
             duty_due_to_integral = -max_duty;
             status->err_integral = -(US_PER_SECOND/settings->pid_ki)*max_duty;
         }

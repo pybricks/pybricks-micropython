@@ -31,7 +31,7 @@ pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_mot
 pbio_error_t pbio_encmotor_set_settings(
         pbio_port_t port,
         int16_t stall_torque_limit_pct,
-        float_t stall_speed_limit,
+        int32_t stall_speed_limit,
         float_t min_speed,
         float_t max_speed,
         float_t tolerance,
@@ -48,7 +48,7 @@ pbio_error_t pbio_encmotor_set_settings(
     }
     int8_t port_index = PORT_TO_IDX(port);
     float_t counts_per_output_unit = encmotor_settings[port_index].counts_per_output_unit;
-    encmotor_settings[port_index].stall_speed_limit = (counts_per_output_unit * stall_speed_limit);
+    encmotor_settings[port_index].stall_rate_limit = (counts_per_output_unit * stall_speed_limit);
     encmotor_settings[port_index].min_rate = (counts_per_output_unit * min_speed);
     encmotor_settings[port_index].max_rate = (counts_per_output_unit * max_speed);
     encmotor_settings[port_index].tolerance = (counts_per_output_unit * tolerance);
@@ -68,7 +68,7 @@ void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
         "Counts per unit: %.2f\nGear ratio: %.2f\nStall speed: %.2f\nMin speed: %.2f\nMax speed: %.2f\nTolerance: %.2f\nAcceleration: %.2f\nDeceleration: %.2f\nTight Loop: %.2f\nkp: %d\nki: %d\nkd: %d",
         encmotor_settings[port_index].counts_per_unit,
         counts_per_output_unit / encmotor_settings[port_index].counts_per_output_unit,            
-        encmotor_settings[port_index].stall_speed_limit / counts_per_output_unit,
+        encmotor_settings[port_index].stall_rate_limit / counts_per_output_unit,
         encmotor_settings[port_index].min_rate / counts_per_output_unit,
         encmotor_settings[port_index].max_rate / counts_per_output_unit,
         encmotor_settings[port_index].tolerance / counts_per_output_unit,
