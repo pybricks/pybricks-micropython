@@ -105,14 +105,14 @@ pbio_error_t pbio_encmotor_reset_encoder_count(pbio_port_t port, int32_t reset_c
     return status;
 }
 
-pbio_error_t pbio_encmotor_get_angle(pbio_port_t port, float_t *angle) {
+pbio_error_t pbio_encmotor_get_angle(pbio_port_t port, int32_t *angle) {
     int32_t encoder_count;
     pbio_error_t status = pbio_encmotor_get_encoder_count(port, &encoder_count);
     *angle = encoder_count / (encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit);
     return status;    
 }
 
-pbio_error_t pbio_encmotor_reset_angle(pbio_port_t port, float_t reset_angle) {
+pbio_error_t pbio_encmotor_reset_angle(pbio_port_t port, int32_t reset_angle) {
     return pbio_encmotor_reset_encoder_count(port, (int32_t) (reset_angle * encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit));    
 }
 
@@ -124,7 +124,7 @@ pbio_error_t pbio_encmotor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     return status;    
 }
 
-pbio_error_t pbio_encmotor_get_angular_rate(pbio_port_t port, float_t *angular_rate) {
+pbio_error_t pbio_encmotor_get_angular_rate(pbio_port_t port, int32_t *angular_rate) {
     int32_t encoder_rate;
     pbio_error_t status = pbio_encmotor_get_encoder_rate(port, &encoder_rate);
     *angular_rate = encoder_rate / (encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit);

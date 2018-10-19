@@ -683,7 +683,7 @@ void _pbio_motorcontrol_poll(void){
 
 /* pbio user functions */
 
-pbio_error_t pbio_encmotor_run(pbio_port_t port, float_t speed){
+pbio_error_t pbio_encmotor_run(pbio_port_t port, int32_t speed){
     pbio_error_t err = make_motor_trajectory(port, RUN, speed, NONE, NONE);
     if (err != PBIO_SUCCESS){
         return err;
@@ -694,7 +694,7 @@ pbio_error_t pbio_encmotor_run(pbio_port_t port, float_t speed){
 
 pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_stop_t after_stop){
     // Get current rate to see if we're standing still already
-    float_t angle_now;
+    int32_t angle_now;
     rate_t rate_now;
     pbio_error_t err = pbio_encmotor_get_encoder_rate(port, &rate_now);
     if (err != PBIO_SUCCESS){
@@ -738,7 +738,7 @@ pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_
     }
 }
 
-pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop){
+pbio_error_t pbio_encmotor_run_time(pbio_port_t port, int32_t speed, int32_t duration, pbio_motor_after_stop_t after_stop){
     pbio_error_t err = make_motor_trajectory(port, RUN_TIME, speed, duration, after_stop);
     if (err != PBIO_SUCCESS){
         return err;
@@ -747,7 +747,7 @@ pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t dur
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, float_t speed, pbio_motor_after_stop_t after_stop){
+pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, int32_t speed, pbio_motor_after_stop_t after_stop){
     pbio_error_t err = make_motor_trajectory(port, RUN_STALLED, speed, NONE, after_stop);
     if (err != PBIO_SUCCESS){
         return err;
@@ -756,7 +756,7 @@ pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, float_t speed, pbio_mot
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop){
+pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, int32_t speed, int32_t angle, pbio_motor_after_stop_t after_stop){
     pbio_error_t err = make_motor_trajectory(port, RUN_ANGLE, speed, angle, after_stop);
     if (err != PBIO_SUCCESS){
         return err;
@@ -765,7 +765,7 @@ pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, float_t speed, float_t an
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop){
+pbio_error_t pbio_encmotor_run_target(pbio_port_t port, int32_t speed, int32_t target, pbio_motor_after_stop_t after_stop){
     pbio_error_t err = make_motor_trajectory(port, RUN_TARGET, speed, target, after_stop);
     if (err != PBIO_SUCCESS){
         return err;
@@ -774,6 +774,6 @@ pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t t
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_track_target(pbio_port_t port, float_t target){
+pbio_error_t pbio_encmotor_track_target(pbio_port_t port, int32_t target){
     return PBIO_ERROR_NOT_IMPLEMENTED;
 }

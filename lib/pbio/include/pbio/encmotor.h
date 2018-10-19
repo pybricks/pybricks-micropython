@@ -52,13 +52,13 @@ pbio_error_t pbio_encmotor_get_encoder_count(pbio_port_t port, int32_t *count);
 
 pbio_error_t pbio_encmotor_reset_encoder_count(pbio_port_t port, int32_t reset_count);
 
-pbio_error_t pbio_encmotor_get_angle(pbio_port_t port, float_t *angle);
+pbio_error_t pbio_encmotor_get_angle(pbio_port_t port, int32_t *angle);
 
-pbio_error_t pbio_encmotor_reset_angle(pbio_port_t port, float_t reset_angle);
+pbio_error_t pbio_encmotor_reset_angle(pbio_port_t port, int32_t reset_angle);
 
 pbio_error_t pbio_encmotor_get_encoder_rate(pbio_port_t port, int32_t *encoder_rate);
 
-pbio_error_t pbio_encmotor_get_angular_rate(pbio_port_t port, float_t *angular_rate);
+pbio_error_t pbio_encmotor_get_angular_rate(pbio_port_t port, int32_t *angular_rate);
 
 /** @}*/
 
