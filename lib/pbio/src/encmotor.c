@@ -67,7 +67,7 @@ void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
     snprintf(settings_string, MAX_ENCMOTOR_SETTINGS_STR_LENGTH,
         "Counts per unit: %.2f\nGear ratio: %.2f\nStall speed: %d\nMin speed: %d\nMax speed: %d\nTolerance: %d\nAcceleration: %d\nDeceleration: %d\nTight Loop: %d\nkp: %d\nki: %d\nkd: %d",
         encmotor_settings[port_index].counts_per_unit,
-        counts_per_output_unit / encmotor_settings[port_index].counts_per_output_unit,            
+        counts_per_output_unit / encmotor_settings[port_index].counts_per_unit,            
         (int) (encmotor_settings[port_index].stall_rate_limit / counts_per_output_unit),
         (int) (encmotor_settings[port_index].min_rate / counts_per_output_unit),
         (int) (encmotor_settings[port_index].max_rate / counts_per_output_unit),

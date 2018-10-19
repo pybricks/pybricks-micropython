@@ -119,7 +119,7 @@ EncodedMotor
         Arguments:
             port {const} -- Port to which the device is connected: PORT_A, PORT_B, etc.
             direction {const} -- DIR_NORMAL or DIR_INVERTED (default: {DIR_NORMAL})
-            gear_ratio {int} -- Absolute slow down factor of a gear train (default: {1.0})
+            gear_teeth {list} -- Description
         """
 */
 mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_id_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
@@ -128,8 +128,23 @@ mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_id_t *type, size_t n_args
     self->base.type = (mp_obj_type_t*) type;
     self->port = mp_obj_get_int(args[0]);
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
-    // TODO: ACCEPT AS TUPLE OF GEAR TEETH INTS
-    float_t gear_ratio = (n_args >= 3) ? mp_obj_get_int(args[2]): 1;
+    // Determine gear ratio from number of teeth on each gear
+    float_t gear_ratio = 1;
+    if (n_args >= 3) {
+
+        mp_obj_t *teeth;
+        size_t number_of_gears;
+        mp_obj_get_array(args[2], &number_of_gears, &teeth);
+        if (number_of_gears < 2) {
+            pb_raise_pbio_error(PBIO_ERROR_INVALID_ARG);
+        }
+        float_t teeth_now = mp_obj_get_int(teeth[0]);
+        for (int16_t gear = 1; gear <= number_of_gears-1; gear++) {
+            float_t teeth_next = mp_obj_get_int(teeth[gear]);
+            gear_ratio = gear_ratio * (teeth_next/teeth_now);
+            teeth_now = teeth_next;
+        }
+    }
     pbio_error_t err = pbio_encmotor_setup(self->port, type->device_id, direction, gear_ratio);
     pb_raise_pbio_error(err);
     return MP_OBJ_FROM_PTR(self);
