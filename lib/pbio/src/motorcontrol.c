@@ -608,9 +608,9 @@ void control_update(pbio_port_t port){
                 // Maneuver is complete, time wise
                 time_ref >= traject->time_end &&
                 // Position is within the lower tolerated bound ...
-                count_ref - settings->tolerance <= count_now &&
+                count_ref - settings->count_tolerance <= count_now &&
                 // ... and the upper tolerated bound
-                count_now <= count_ref + settings->tolerance &&
+                count_now <= count_ref + settings->count_tolerance &&
                 // And the motor stands still.
                 abs(rate_now) < settings->min_rate
             )
