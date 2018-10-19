@@ -27,13 +27,13 @@
 typedef struct _pbio_encmotor_settings_t {
     float_t counts_per_unit;        /**< Encoder counts per output unit. Counts per degree for rotational motors, counts per cm for a linear motor. */
     float_t counts_per_output_unit; /**< Encoder counts per output unit, including optional gear train. Equals counts_per_unit*gear_ratio. */
-    int32_t stall_rate_limit;      /**< If this speed cannnot be reached even with the maximum duty value (equal to stall_torque_limit), the motor is considered to be stalled*/
+    int32_t stall_rate_limit;       /**< If this speed cannnot be reached even with the maximum duty value (equal to stall_torque_limit), the motor is considered to be stalled*/
     int32_t min_rate;               /**< If encoder rate is equal or less than this, consider the motor to be standing still */
     int32_t max_rate;               /**< Soft limit on the reference encoder rate in all run commands */
     int32_t count_tolerance;        /**< Allowed deviation (counts) from target before motion is considered complete */
     int32_t abs_accl_start;         /**< Encoder acceleration rate when beginning to move. Positive value in counts per second per second */
     int32_t abs_accl_end;           /**< Encoder deceleration when stopping. Positive value in counts per second per second */
-    int16_t tight_loop_time;     /**< When a run function is called twice in this interval, assume that the user is doing their own speed control.  */
+    int16_t tight_loop_time;        /**< When a run function is called twice in this interval, assume that the user is doing their own speed control.  */
     int32_t offset;                 /**< Virtual zero point of the encoder */
     int16_t pid_kp;                 /**< Proportional position control constant (and integral speed control constant) */
     int16_t pid_ki;                 /**< Integral position control constant */
@@ -42,7 +42,7 @@ typedef struct _pbio_encmotor_settings_t {
 
 pbio_encmotor_settings_t encmotor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction, float_t gear_ratio);
+pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction, int16_t teeth_first, int16_t teeth_last);
 
 pbio_error_t pbio_encmotor_set_settings(pbio_port_t port, int16_t stall_torque_limit_pct, int32_t stall_speed_limit, int32_t min_speed, int32_t max_speed,  int32_t tolerance, int32_t acceleration_start, int32_t acceleration_end, int16_t tight_loop_time, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd);
 

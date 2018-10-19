@@ -131,7 +131,7 @@ mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_id_t *type, size_t n_args
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     int16_t teeth_first = (n_args == 4) ? mp_obj_get_int(args[2]) : 1;
     int16_t teeth_last = (n_args == 4) ? mp_obj_get_int(args[3]) : 1;
-    pbio_error_t err = pbio_encmotor_setup(self->port, type->device_id, direction, ((float_t) teeth_last)/teeth_first); // TODO: Don't compute gear ratio here. Pass on teeth numbers to motorcontrol to save some more computations there
+    pbio_error_t err = pbio_encmotor_setup(self->port, type->device_id, direction, teeth_first, teeth_last);
     pb_raise_pbio_error(err);
     return MP_OBJ_FROM_PTR(self);
 }
@@ -155,15 +155,17 @@ EncodedMotor
     def settings(self, relative_torque_limit, max_speed, tolerance, acceleration_start, acceleration_end, tight_loop_time_ms, pid_kp, pid_ki, pid_kd):
         """Update the motor settings.
         Keyword Arguments (TODO):
-        [1] relative_torque_limit {int}   -- Percentage (-100.0 to 100.0) of the maximum stationary torque that the motor is allowed to produce.
-        [2] max_speed {int}               -- Soft limit on the reference speed in all run commands
-        [3] tolerance {int}               -- Allowed deviation (deg) from target before motion is considered complete
-        [4] acceleration_start {int}      -- Acceleration when beginning to move. Positive value in degrees per second per second
-        [5] acceleration_end {int}        -- Deceleration when stopping. Positive value in degrees per second per second
-        [6] tight_loop_time {int}         -- When a run function is called twice in this interval (seconds), assume that the user is doing their own speed control.
-        [7] pid_kp {int}                  -- Proportional angle control constant (and integral speed control constant)
-        [8] pid_ki {int}                  -- Integral angle control constant
-        [9] pid_kd {int}                  -- Derivative angle control constant (and proportional speed control constant)
+        relative_torque_limit {int}   -- Percentage (-100.0 to 100.0) of the maximum stationary torque that the motor is allowed to produce.
+        stall_speed_limit {int}       -- If this speed cannnot be reached even with the maximum torque, the motor is considered to be stalled
+        min_speed {int}               -- If speed is equal or less than this, consider the motor to be standing still
+        max_speed {int}               -- Soft limit on the reference speed in all run commands
+        tolerance {int}               -- Allowed deviation (deg) from target before motion is considered complete
+        acceleration_start {int}      -- Acceleration when beginning to move. Positive value in degrees per second per second
+        acceleration_end {int}        -- Deceleration when stopping. Positive value in degrees per second per second
+        tight_loop_time {int}         -- When a run function is called twice in this interval (seconds), assume that the user is doing their own speed control.
+        pid_kp {int}                  -- Proportional angle control constant (and integral speed control constant)
+        pid_ki {int}                  -- Integral angle control constant
+        pid_kd {int}                  -- Derivative angle control constant (and proportional speed control constant)
 */
 STATIC mp_obj_t motor_Motor_settings(size_t n_args, const mp_obj_t *args){
     motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);

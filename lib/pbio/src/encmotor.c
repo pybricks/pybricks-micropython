@@ -2,7 +2,7 @@
 #include <pbio/dcmotor.h>
 #include <pbio/encmotor.h>
 
-pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction, float_t gear_ratio){
+pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction, int16_t teeth_first, int16_t teeth_last){
 
     // Verify device ID and configure DC Motor
     pbio_error_t status = pbio_dcmotor_setup(port, device_id, direction);
@@ -14,12 +14,12 @@ pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_mot
     //
     // TODO: Use the device_id to retrieve the default settings defined in our lib. For now just hardcode something below.
     //
-    float_t counts_per_unit = 1;
+    float_t counts_per_unit = 1.0;
 
     // If all checks have passed, continue with setup of encoded motor
     if (status == PBIO_SUCCESS) {
         encmotor_settings[PORT_TO_IDX(port)].counts_per_unit = counts_per_unit;
-        encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit = counts_per_unit * gear_ratio;
+        encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit = (counts_per_unit * teeth_last)/teeth_first;
         encmotor_settings[PORT_TO_IDX(port)].offset = 0;
         status = pbio_encmotor_reset_encoder_count(port, 0);
     }
