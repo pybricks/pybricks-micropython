@@ -179,10 +179,10 @@ typedef __packed struct _evt_hal_initialized{
  * IRQ pin. It is provided to detected unexpected behavior of the external microcontroller or to allow
  * application to recover situations where critical events are lost.
  */
-#define EVT_BLUE_HAL_EVENTS_LOST_IDB05A1                (0x0002)
+#define EVT_BLUE_HAL_EVENTS_LOST                (0x0002)
 typedef __packed struct _evt_hal_events_lost{
   uint8_t  lost_events[8]; /**< Bitmap of lost events. Each bit indicates one or more occurrences of the specific event. See @ref Lost_Events */
-} PACKED evt_hal_events_lost_IDB05A1;
+} PACKED evt_hal_events_lost;
 
 
 /**
@@ -190,7 +190,7 @@ typedef __packed struct _evt_hal_events_lost{
  * when a system crash is detected. This events returns system crash information for debugging purposes.
  * Information reported are useful to understand the root cause of the crash.
  */
-#define EVT_BLUE_HAL_CRASH_INFO_IDB05A1                 (0x0003)
+#define EVT_BLUE_HAL_CRASH_INFO                 (0x0003)
 typedef __packed struct _evt_hal_crash_info{
   uint8_t  crash_type; /**< Type of crash: Assert failed (0), NMI Fault (1), Hard Fault (2)  */
   uint32_t sp; /**< SP register */
@@ -204,7 +204,7 @@ typedef __packed struct _evt_hal_crash_info{
   uint32_t xpsr; /**< xPSR register  */
   uint8_t  debug_data_len; /**< length of debug_data field  */
   uint8_t  debug_data[VARIABLE_SIZE]; /**< Debug data */
-} PACKED evt_hal_crash_info_IDB05A1;
+} PACKED evt_hal_crash_info;
 
 
 /**

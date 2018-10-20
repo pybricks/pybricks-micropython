@@ -16,11 +16,11 @@
 #ifndef __BLUENRG_L2CAP_ACI_H__
 #define __BLUENRG_L2CAP_ACI_H__
 
-/** 
+/**
  * @addtogroup HIGH_LEVEL_INTERFACE HIGH_LEVEL_INTERFACE
  * @{
  */
- 
+
 /**
  *@addtogroup ACI_L2CAP ACI_L2CAP
  *@brief API for L2CAP layer.
@@ -70,33 +70,15 @@ tBleStatus aci_l2cap_connection_parameter_update_request(uint16_t conn_handle, u
  *               @arg 0x01: The connection update parameters are acceptable.
  * @return Value indicating success or error code.
  */
-tBleStatus aci_l2cap_connection_parameter_update_response_IDB05A1(uint16_t conn_handle, uint16_t interval_min,
+tBleStatus aci_l2cap_connection_parameter_update_response(uint16_t conn_handle, uint16_t interval_min,
 							 uint16_t interval_max, uint16_t slave_latency,
 							 uint16_t timeout_multiplier, uint16_t min_ce_length, uint16_t max_ce_length,
                                                          uint8_t id, uint8_t accept);
 
- /**
- * @brief Accept or reject a connection update.
- * @note  This command should be sent in response to a @ref EVT_BLUE_L2CAP_CONN_UPD_REQ event from the controller.
- * 		  The accept parameter has to be set if the connection parameters given in the event are acceptable.
- * @param conn_handle Handle received in @ref EVT_BLUE_L2CAP_CONN_UPD_REQ event.
- * @param interval_min The connection interval parameter as received in the l2cap connection update request event
- * @param interval_max The maximum connection interval parameter as received in the l2cap connection update request event.
- * @param slave_latency The slave latency parameter as received in the l2cap connection update request event.
- * @param timeout_multiplier The supervision connection timeout parameter as received in the l2cap connection update request event.
- * @param id Identifier received in @ref EVT_BLUE_L2CAP_CONN_UPD_REQ event.
- * @param accept @arg 0x00: The connection update parameters are not acceptable.
- *               @arg 0x01: The connection update parameters are acceptable.
- * @return Value indicating success or error code.
- */
-tBleStatus aci_l2cap_connection_parameter_update_response_IDB04A1(uint16_t conn_handle, uint16_t interval_min,
-							 uint16_t interval_max, uint16_t slave_latency,
-							 uint16_t timeout_multiplier, uint8_t id, uint8_t accept);
-
 /**
  * @}
  */
-   
+
 /**
  * @defgroup L2CAP_Events L2CAP events
  * @{
@@ -145,14 +127,14 @@ typedef __packed struct _evt_l2cap_conn_upd_req{
  * The same handle has to be returned while responding to the event with the command
  * aci_l2cap_connection_parameter_update_response().
  */
-  uint16_t conn_handle; 
+  uint16_t conn_handle;
   uint8_t  event_data_length; /**< Length of following data. */
 /**
  * This is the identifier which associates the request to the
  * response. The same identifier has to be returned by the upper
  * layer in the command aci_l2cap_connection_parameter_update_response().
  */
-  uint8_t  identifier; 
+  uint8_t  identifier;
   uint16_t l2cap_length;  /**< Length of the L2CAP connection update request. */
   uint16_t interval_min;  /**< Value as defined in Bluetooth 4.0 spec, Volume 3, Part A 4.20. */
   uint16_t interval_max;  /**< Value as defined in Bluetooth 4.0 spec, Volume 3, Part A 4.20. */

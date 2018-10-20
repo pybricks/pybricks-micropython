@@ -148,20 +148,14 @@ typedef __packed struct _updater_hw_version_rp{
 #define OCF_GAP_SET_DISCOVERABLE	        0x0083
 
 #define OCF_GAP_SET_DIRECT_CONNECTABLE      0x0084
-typedef __packed struct _gap_set_direct_conectable_cp_IDB05A1{
+typedef __packed struct _gap_set_direct_conectable_cp{
     uint8_t		own_bdaddr_type;
     uint8_t		directed_adv_type;
     uint8_t		direct_bdaddr_type;
     tBDAddr		direct_bdaddr;
     uint16_t            adv_interv_min;
     uint16_t            adv_interv_max;
-} PACKED gap_set_direct_conectable_cp_IDB05A1;
-
-typedef __packed struct _gap_set_direct_conectable_cp_IDB04A1{
-    uint8_t		own_bdaddr_type;
-    uint8_t		direct_bdaddr_type;
-    tBDAddr		direct_bdaddr;
-} PACKED gap_set_direct_conectable_cp_IDB04A1;
+} PACKED gap_set_direct_conectable_cp;
 
 #define OCF_GAP_SET_IO_CAPABILITY      0x0085
 typedef __packed struct _gap_set_io_capability_cp{
@@ -221,15 +215,11 @@ typedef __packed struct _gap_init_rp{
 #define GAP_INIT_RP_SIZE 7
 
 #define OCF_GAP_SET_NON_CONNECTABLE      0x008B
-typedef __packed struct _gap_set_non_connectable_cp_IDB05A1{
+typedef __packed struct _gap_set_non_connectable_cp{
     uint8_t	advertising_event_type;
     uint8_t	own_address_type;
 #endif
-} PACKED gap_set_non_connectable_cp_IDB05A1;
-
-typedef __packed struct _gap_set_non_connectable_cp_IDB04A1{
-    uint8_t	advertising_event_type;
-} PACKED gap_set_non_connectable_cp_IDB04A1;
+} PACKED gap_set_non_connectable_cp;
 
 #define OCF_GAP_SET_UNDIRECTED_CONNECTABLE      0x008C
 typedef __packed struct _gap_set_undirected_connectable_cp{
@@ -283,9 +273,9 @@ typedef __packed struct _gap_terminate_cp{
 
 #define OCF_GAP_ALLOW_REBOND_DB     0x0095
 
-typedef __packed struct _gap_allow_rebond_cp_IDB05A1{
+typedef __packed struct _gap_allow_rebond_cp{
   uint16_t conn_handle;
-} PACKED gap_allow_rebond_cp_IDB05A1;
+} PACKED gap_allow_rebond_cp;
 
 #define OCF_GAP_START_LIMITED_DISCOVERY_PROC   0x0096
 typedef __packed struct _gap_start_limited_discovery_proc_cp{
@@ -325,23 +315,13 @@ typedef __packed struct _gap_start_name_discovery_proc_cp{
 
 #define OCF_GAP_START_GENERAL_CONN_ESTABLISH_PROC  0x009A
 
-typedef __packed struct _gap_start_general_conn_establish_proc_cp_IDB05A1{
+typedef __packed struct _gap_start_general_conn_establish_proc_cp{
   uint8_t  scan_type;
   uint16_t scan_interval;
   uint16_t scan_window;
   uint8_t  own_address_type;
   uint8_t  filter_duplicates;
-} PACKED gap_start_general_conn_establish_proc_cp_IDB05A1;
-
-typedef __packed struct _gap_start_general_conn_establish_proc_cp_IDB04A1{
-  uint8_t  scan_type;
-  uint16_t scan_interval;
-  uint16_t scan_window;
-  uint8_t  own_address_type;
-  uint8_t  filter_duplicates;
-  uint8_t  use_reconn_addr;
-  tBDAddr  reconn_addr;
-} PACKED gap_start_general_conn_establish_proc_cp_IDB04A1;
+} PACKED gap_start_general_conn_establish_proc_cp;
 
 #define OCF_GAP_START_SELECTIVE_CONN_ESTABLISH_PROC  0x009B
 #define GAP_START_SELECTIVE_CONN_ESTABLISH_PROC_CP_SIZE 8
@@ -767,7 +747,7 @@ typedef __packed struct _l2cap_conn_param_update_req_cp{
 
 #define OCF_L2CAP_CONN_PARAM_UPDATE_RESP  0x0182
 
-typedef __packed struct _l2cap_conn_param_update_resp_cp_IDB05A1{
+typedef __packed struct _l2cap_conn_param_update_resp_cp{
   uint16_t conn_handle;
   uint16_t interval_min;
   uint16_t interval_max;
@@ -777,17 +757,7 @@ typedef __packed struct _l2cap_conn_param_update_resp_cp_IDB05A1{
   uint16_t max_ce_length;
   uint8_t id;
   uint8_t accept;
-} PACKED l2cap_conn_param_update_resp_cp_IDB05A1;
-
-typedef __packed struct _l2cap_conn_param_update_resp_cp_IDB04A1{
-  uint16_t conn_handle;
-  uint16_t interval_min;
-  uint16_t interval_max;
-  uint16_t slave_latency;
-  uint16_t timeout_multiplier;
-  uint8_t id;
-  uint8_t accept;
-} PACKED l2cap_conn_param_update_resp_cp_IDB04A1;
+} PACKED l2cap_conn_param_update_resp_cp;
 
 /**
  * @addtogroup HIGH_LEVEL_INTERFACE HIGH_LEVEL_INTERFACE

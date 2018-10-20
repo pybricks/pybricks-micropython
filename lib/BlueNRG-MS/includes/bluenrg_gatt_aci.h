@@ -742,7 +742,7 @@ tBleStatus aci_gatt_read_handle_value(uint16_t attr_handle, uint16_t data_len, u
  * 				attribute (in data_len_out_p).
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gatt_read_handle_value_offset_IDB05A1(uint16_t attr_handle, uint8_t offset, uint16_t data_len, uint16_t *data_len_out_p, uint8_t *data);
+tBleStatus aci_gatt_read_handle_value_offset(uint16_t attr_handle, uint8_t offset, uint16_t data_len, uint16_t *data_len_out_p, uint8_t *data);
 
 /**
  * @brief Update the value of a characteristic and sends notifications or indications.
@@ -762,7 +762,7 @@ tBleStatus aci_gatt_read_handle_value_offset_IDB05A1(uint16_t attr_handle, uint8
  * @param[out] value   Updated characteristic value
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gatt_update_char_value_ext_IDB05A1(uint16_t service_handle, uint16_t char_handle,
+tBleStatus aci_gatt_update_char_value_ext(uint16_t service_handle, uint16_t char_handle,
                                                   uint8_t update_type, uint16_t char_length,
                                                   uint16_t value_offset, uint8_t value_length,
                                                   const uint8_t* value);
@@ -789,7 +789,7 @@ tBleStatus aci_gatt_set_event_mask(uint32_t event_mask);
  * @li write characteristic value
  * @li write long characteristic value
  * @li reliable write.
- * See @ref _evt_gatt_attr_modified_IDB04A1 or @ref _evt_gatt_attr_modified__IDB05A1.
+ * See @ref _evt_gatt_attr_modified.
  */
 #define EVT_BLUE_GATT_ATTRIBUTE_MODIFIED          (0x0C01)
 
