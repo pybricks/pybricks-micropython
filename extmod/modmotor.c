@@ -9,10 +9,12 @@ class DCMotor():
 */
 
 // Class structure for DC Motors
-typedef struct _motor_DCMotor_obj_t {
+typedef struct _motor_Motor_obj_t {
     mp_obj_base_t base;
     pbio_port_t port;
-} motor_DCMotor_obj_t;
+} motor_Motor_obj_t;
+
+#define get_port(self_in) (((motor_Motor_obj_t*) MP_OBJ_TO_PTR(self_in))->port)
 
 /*
 DCMotor
@@ -35,7 +37,7 @@ STATIC void wait_for_completion(pbio_port_t port, pbio_error_t error, pbio_motor
 
 mp_obj_t motor_DCMotor_make_new(const mp_obj_type_id_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     mp_arg_check_num(n_args, n_kw, 1, 2, false);
-    motor_DCMotor_obj_t *self = m_new_obj(motor_DCMotor_obj_t);
+    motor_Motor_obj_t *self = m_new_obj(motor_Motor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
     self->port = mp_obj_get_int(args[0]);
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
@@ -50,9 +52,9 @@ DCMotor
         """String representation of DCMotor object."""
 */
 void motor_DCMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind ) {
-    motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pbio_port_t port = get_port(self_in);
     char dcmotor_settings_string[MAX_DCMOTOR_SETTINGS_STR_LENGTH];
-    pbio_dcmotor_print_settings(self->port, dcmotor_settings_string);
+    pbio_dcmotor_print_settings(port, dcmotor_settings_string);
     mp_printf(print, "%s", dcmotor_settings_string);
 }
 
@@ -64,7 +66,7 @@ DCMotor
             duty {int} -- Percentage from -100 to 100
 */
 STATIC mp_obj_t motor_DCMotor_duty(mp_obj_t self_in, mp_obj_t duty_cycle) {
-    motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_error_t err = pbio_dcmotor_set_duty_cycle(self->port, mp_obj_get_int(duty_cycle));
     pb_raise_pbio_error(err);
     return mp_const_none;
@@ -77,8 +79,8 @@ DCMotor
         """Stop by setting duty cycle to 0."""
 */
 STATIC mp_obj_t motor_DCMotor_brake(mp_obj_t self_in) {
-    motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_error_t err = pbio_dcmotor_brake(self->port);
+    pbio_port_t port = get_port(self_in);
+    pbio_error_t err = pbio_dcmotor_brake(port);
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
@@ -90,8 +92,8 @@ DCMotor
         """Coast the motor."""
 */
 STATIC mp_obj_t motor_DCMotor_coast(mp_obj_t self_in) {
-    motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_error_t err = pbio_dcmotor_coast(self->port);
+    pbio_port_t port = get_port(self_in);
+    pbio_error_t err = pbio_dcmotor_coast(port);
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
@@ -103,14 +105,6 @@ EncodedMotor
 class EncodedMotor(DCMotor):
     """Class for motors with encoders."""
 */
-
-
-// Class structure for Encoded Motors
-typedef struct _motor_EncodedMotor_obj_t {
-    mp_obj_base_t base;
-    uint8_t port;
-} motor_EncodedMotor_obj_t;
-
 
 /*
 EncodedMotor
@@ -125,7 +119,7 @@ EncodedMotor
 */
 mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_id_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
     mp_arg_check_num(n_args, n_kw, 1, 4, false);
-    motor_EncodedMotor_obj_t *self = m_new_obj(motor_EncodedMotor_obj_t);
+    motor_Motor_obj_t *self = m_new_obj(motor_Motor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
     self->port = mp_obj_get_int(args[0]);
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
@@ -142,11 +136,11 @@ EncodedMotor
         """String representation of DCMotor object."""
 */
 void motor_EncodedMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind){
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pbio_port_t port = get_port(self_in);
     char dcmotor_settings_string[MAX_DCMOTOR_SETTINGS_STR_LENGTH];
-    pbio_dcmotor_print_settings(self->port, dcmotor_settings_string);
+    pbio_dcmotor_print_settings(port, dcmotor_settings_string);
     char encmotor_settings_string[MAX_ENCMOTOR_SETTINGS_STR_LENGTH];
-    pbio_encmotor_print_settings(self->port, encmotor_settings_string);
+    pbio_encmotor_print_settings(port, encmotor_settings_string);
     mp_printf(print, "%s\n%s", dcmotor_settings_string, encmotor_settings_string);
 }
 
@@ -168,13 +162,13 @@ EncodedMotor
         pid_kd {int}                  -- Derivative angle control constant (and proportional speed control constant)
 */
 STATIC mp_obj_t motor_Motor_settings(size_t n_args, const mp_obj_t *args){
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    pbio_port_t port = get_port(args[0]);
 
     // TODO: Keyword/optional arguments
 
     // TODO: If device is a DC motor, return an error if the user tries to set EncodedMotor settings
 
-    pbio_error_t err = pbio_encmotor_set_settings(self->port,
+    pbio_error_t err = pbio_encmotor_set_settings(port,
                                                   mp_obj_get_int(args[1]),
                                                   mp_obj_get_int(args[2]),
                                                   mp_obj_get_int(args[3]),
@@ -201,9 +195,9 @@ EncodedMotor
         """
 */
 STATIC mp_obj_t motor_EncodedMotor_angle(mp_obj_t self_in) {
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pbio_port_t port = get_port(self_in);
     int32_t angle;
-    pbio_error_t err = pbio_encmotor_get_angle(self->port, &angle);
+    pbio_error_t err = pbio_encmotor_get_angle(port, &angle);
     pb_raise_pbio_error(err);
     return mp_obj_new_int(angle);
 }
@@ -217,9 +211,9 @@ EncodedMotor
             reset_angle {const} -- Value to which the rotation sensor angle should be reset (default: {0})
 */
 STATIC mp_obj_t motor_EncodedMotor_reset_angle(size_t n_args, const mp_obj_t *args){
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    pbio_port_t port = get_port(args[0]);
     int32_t reset_angle = n_args > 1 ? mp_obj_get_int(args[1]) : 0;
-    pbio_error_t err = pbio_encmotor_reset_angle(self->port, reset_angle);
+    pbio_error_t err = pbio_encmotor_reset_angle(port, reset_angle);
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
@@ -234,9 +228,9 @@ EncodedMotor
         """
 */
 STATIC mp_obj_t motor_EncodedMotor_speed(mp_obj_t self_in) {
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pbio_port_t port = get_port(self_in);
     int32_t speed;
-    pbio_error_t err = pbio_encmotor_get_angular_rate(self->port, &speed);
+    pbio_error_t err = pbio_encmotor_get_angular_rate(port, &speed);
     pb_raise_pbio_error(err);
     return mp_obj_new_int(speed);
 }
@@ -251,8 +245,8 @@ EncodedMotor
         """
 */
 STATIC mp_obj_t motor_EncodedMotor_run(mp_obj_t self_in, mp_obj_t speed) {
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_error_t err = pbio_encmotor_run(self->port, mp_obj_get_int(speed));
+    pbio_port_t port = get_port(self_in);
+    pbio_error_t err = pbio_encmotor_run(port, mp_obj_get_int(speed));
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
@@ -268,11 +262,12 @@ EncodedMotor
             wait {bool} -- Wait for complete stop (True) or decelerate in the background (False). (default: {True})
         """
 */
+
 STATIC mp_obj_t motor_EncodedMotor_stop(size_t n_args, const mp_obj_t *args){
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    pbio_error_t err = pbio_encmotor_stop(self->port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]));
+    pbio_port_t port = get_port(args[0]);
+    pbio_error_t err = pbio_encmotor_stop(port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]));
     pb_raise_pbio_error(err);
-    wait_for_completion(self->port, err, mp_obj_get_int(args[3]));
+    wait_for_completion(port, err, mp_obj_get_int(args[3]));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_stop_obj, 4, 4, motor_EncodedMotor_stop);
@@ -290,10 +285,10 @@ EncodedMotor
         """
 */
 STATIC mp_obj_t motor_EncodedMotor_run_time(size_t n_args, const mp_obj_t *args){
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    pbio_error_t err = pbio_encmotor_run_time(self->port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]), mp_obj_get_int(args[3]));
+    pbio_port_t port = get_port(args[0]);
+    pbio_error_t err = pbio_encmotor_run_time(port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]), mp_obj_get_int(args[3]));
     pb_raise_pbio_error(err);
-    wait_for_completion(self->port, err, mp_obj_get_int(args[4]));
+    wait_for_completion(port, err, mp_obj_get_int(args[4]));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_run_time_obj, 5, 5, motor_EncodedMotor_run_time);
@@ -312,14 +307,14 @@ EncodedMotor
         """
 */
 STATIC mp_obj_t motor_EncodedMotor_run_stalled(size_t n_args, const mp_obj_t *args){
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    pbio_port_t port = get_port(args[0]);
     pbio_motor_wait_t wait = mp_obj_get_int(args[3]);
-    pbio_error_t err = pbio_encmotor_run_stalled(self->port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]));
+    pbio_error_t err = pbio_encmotor_run_stalled(port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]));
     pb_raise_pbio_error(err);
-    wait_for_completion(self->port, err, wait);
+    wait_for_completion(port, err, wait);
     if (wait == PBIO_MOTOR_WAIT_WAIT) {
         int32_t stall_point;
-        pbio_encmotor_get_angle(self->port, &stall_point);
+        pbio_encmotor_get_angle(port, &stall_point);
         return mp_obj_new_int(stall_point);
     }
     else{
@@ -341,9 +336,9 @@ EncodedMotor
         """
 */
 STATIC mp_obj_t motor_EncodedMotor_run_angle(size_t n_args, const mp_obj_t *args){
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    pbio_error_t err = pbio_encmotor_run_angle(self->port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]), mp_obj_get_int(args[3]));
-    wait_for_completion(self->port, err, mp_obj_get_int(args[4]));
+    pbio_port_t port = get_port(args[0]);
+    pbio_error_t err = pbio_encmotor_run_angle(port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]), mp_obj_get_int(args[3]));
+    wait_for_completion(port, err, mp_obj_get_int(args[4]));
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
@@ -363,9 +358,9 @@ EncodedMotor
 
 */
 STATIC mp_obj_t motor_EncodedMotor_run_target(size_t n_args, const mp_obj_t *args){
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    pbio_error_t err = pbio_encmotor_run_target(self->port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]), mp_obj_get_int(args[3]));
-    wait_for_completion(self->port, err, mp_obj_get_int(args[4]));
+    pbio_port_t port = get_port(args[0]);
+    pbio_error_t err = pbio_encmotor_run_target(port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]), mp_obj_get_int(args[3]));
+    wait_for_completion(port, err, mp_obj_get_int(args[4]));
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
@@ -380,8 +375,8 @@ EncodedMotor
         """
 */
 STATIC mp_obj_t motor_EncodedMotor_track_target(mp_obj_t self_in, mp_obj_t target) {
-    motor_EncodedMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_error_t err = pbio_encmotor_track_target(self->port, mp_obj_get_int(target));
+    pbio_port_t port = get_port(self_in);
+    pbio_error_t err = pbio_encmotor_track_target(port, mp_obj_get_int(target));
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
