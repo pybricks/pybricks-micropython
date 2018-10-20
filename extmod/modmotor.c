@@ -256,7 +256,7 @@ MP_DEFINE_CONST_FUN_OBJ_2(motor_EncodedMotor_run_obj, motor_EncodedMotor_run);
 EncodedMotor
     def stop(self, smooth=True, after_stop=COAST, wait=True):
         """Stop a motor/mechanism.
-        Keyword Arguments (TODO):
+        Optional arguments:
             smooth {bool} -- Decelerate smoothly just like in the run commands (True) or stop immediately (False). (default: {True})
             after_stop {const} -- What to do after the motor stops: BRAKE, COAST, or HOLD. (default: {COAST})
             wait {bool} -- Wait for complete stop (True) or decelerate in the background (False). (default: {True})
@@ -264,13 +264,18 @@ EncodedMotor
 */
 
 STATIC mp_obj_t motor_EncodedMotor_stop(size_t n_args, const mp_obj_t *args){
+    // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
-    pbio_error_t err = pbio_encmotor_stop(port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]));
+    pbio_motor_controlled_stop_t controlled_stop = n_args > 1 ? mp_obj_get_int(args[1]) : PBIO_MOTOR_STOP_SMOOTH;
+    pbio_motor_after_stop_t after_stop           = n_args > 2 ? mp_obj_get_int(args[2]) : PBIO_MOTOR_STOP_COAST;
+    pbio_motor_wait_t wait                       = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_WAIT_WAIT;
+    // Call pbio with parsed user/default arguments
+    pbio_error_t err = pbio_encmotor_stop(port, controlled_stop, after_stop);
     pb_raise_pbio_error(err);
-    wait_for_completion(port, err, mp_obj_get_int(args[3]));
+    wait_for_completion(port, err, wait);
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_stop_obj, 4, 4, motor_EncodedMotor_stop);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_stop_obj, 1, 4, motor_EncodedMotor_stop);
 
 /*
 EncodedMotor
@@ -279,19 +284,23 @@ EncodedMotor
         Arguments:
             speed {int} -- Target speed (degrees per second)
             duration {int} -- Total duration, including start and stop (seconds)
-        Keyword Arguments (TODO):
+        Optional arguments:
             after_stop {const} -- What to do after the motor stops: BRAKE, COAST, or HOLD. (default: {COAST})
             wait {bool} -- Wait for motion to be complete (True) or run task in the background (False). (default: {True})
         """
 */
 STATIC mp_obj_t motor_EncodedMotor_run_time(size_t n_args, const mp_obj_t *args){
+    // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
-    pbio_error_t err = pbio_encmotor_run_time(port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]), mp_obj_get_int(args[3]));
+    pbio_motor_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
+    pbio_motor_wait_t wait             = n_args > 4 ? mp_obj_get_int(args[4]) : PBIO_MOTOR_WAIT_WAIT;
+    // Call pbio with parsed user/default arguments
+    pbio_error_t err = pbio_encmotor_run_time(port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]), after_stop);
     pb_raise_pbio_error(err);
-    wait_for_completion(port, err, mp_obj_get_int(args[4]));
+    wait_for_completion(port, err, wait);
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_run_time_obj, 5, 5, motor_EncodedMotor_run_time);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_run_time_obj, 3, 5, motor_EncodedMotor_run_time);
 
 /*
 EncodedMotor
@@ -299,7 +308,7 @@ EncodedMotor
         """Run a motor/mechanism at the given speed until it stalls. Then stop.
         Arguments:
             speed {int} -- Target speed (degrees per second)
-        Keyword Arguments (TODO):
+        Optional arguments:
             after_stop {const} -- What to do after the motor stops: BRAKE, COAST, or HOLD. (default: {COAST})
             wait {bool} -- Wait for motion to be complete (True) or run task in the background (False). (default: {True})
         Returns:
@@ -307,21 +316,26 @@ EncodedMotor
         """
 */
 STATIC mp_obj_t motor_EncodedMotor_run_stalled(size_t n_args, const mp_obj_t *args){
+    // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
-    pbio_motor_wait_t wait = mp_obj_get_int(args[3]);
-    pbio_error_t err = pbio_encmotor_run_stalled(port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]));
+    pbio_motor_after_stop_t after_stop = n_args > 2 ? mp_obj_get_int(args[2]) : PBIO_MOTOR_STOP_COAST;
+    pbio_motor_wait_t wait             = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_WAIT_WAIT;
+    // Call pbio with parsed user/default arguments
+    pbio_error_t err = pbio_encmotor_run_stalled(port, mp_obj_get_int(args[1]), after_stop);
     pb_raise_pbio_error(err);
     wait_for_completion(port, err, wait);
+    // If the user specified to wait for the motion to complete, return the angle at which the motor stalled
     if (wait == PBIO_MOTOR_WAIT_WAIT) {
         int32_t stall_point;
         pbio_encmotor_get_angle(port, &stall_point);
         return mp_obj_new_int(stall_point);
     }
+    // If this command is set to run in the background, return None
     else{
         return mp_const_none;
     }
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_run_stalled_obj, 4, 4, motor_EncodedMotor_run_stalled);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_run_stalled_obj, 2, 4, motor_EncodedMotor_run_stalled);
 
 /*
 EncodedMotor
@@ -330,19 +344,23 @@ EncodedMotor
         Arguments:
             speed {int} -- Absolute target speed (degrees per second). Run direction is automatically determined based on angle.
             target {int} -- Angle that the motor/mechanism should rotate by (degrees).
-        Keyword Arguments (TODO):
+        Optional arguments:
             after_stop {const} -- What to do after the motor stops at the target: BRAKE, COAST, or HOLD. (default: {COAST})
             wait {bool} -- Wait for motion to be complete (True) or run task in the background (False). (default: {True})
         """
 */
 STATIC mp_obj_t motor_EncodedMotor_run_angle(size_t n_args, const mp_obj_t *args){
+    // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
-    pbio_error_t err = pbio_encmotor_run_angle(port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]), mp_obj_get_int(args[3]));
-    wait_for_completion(port, err, mp_obj_get_int(args[4]));
+    pbio_motor_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
+    pbio_motor_wait_t wait             = n_args > 4 ? mp_obj_get_int(args[4]) : PBIO_MOTOR_WAIT_WAIT;
+    // Call pbio with parsed user/default arguments
+    pbio_error_t err = pbio_encmotor_run_angle(port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]), after_stop);
+    wait_for_completion(port, err, wait);
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_run_angle_obj, 5, 5, motor_EncodedMotor_run_angle);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_run_angle_obj, 3, 5, motor_EncodedMotor_run_angle);
 
 /*
 EncodedMotor
@@ -351,20 +369,24 @@ EncodedMotor
         Arguments:
             speed {int} -- Absolute target speed (degrees per second). Run direction (sign) is automatically determined based on target.
             target {int} -- Target for the motor/mechanism (degrees)
-        Keyword Arguments (TODO):
+        Optional arguments:
             after_stop {const} -- What to do after the motor stops at the target: BRAKE, COAST, or HOLD. (default: {COAST})
             wait {bool} -- Wait for motion to be complete (True) or run task in the background (False). (default: {True})
         """
 
 */
 STATIC mp_obj_t motor_EncodedMotor_run_target(size_t n_args, const mp_obj_t *args){
+    // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
-    pbio_error_t err = pbio_encmotor_run_target(port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]), mp_obj_get_int(args[3]));
-    wait_for_completion(port, err, mp_obj_get_int(args[4]));
+    pbio_motor_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
+    pbio_motor_wait_t wait             = n_args > 4 ? mp_obj_get_int(args[4]) : PBIO_MOTOR_WAIT_WAIT;
+    // Call pbio with parsed user/default arguments
+    pbio_error_t err = pbio_encmotor_run_target(port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]), after_stop);
+    wait_for_completion(port, err, wait);
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_run_target_obj, 5, 5, motor_EncodedMotor_run_target);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_EncodedMotor_run_target_obj, 3, 5, motor_EncodedMotor_run_target);
 
 /*
 EncodedMotor
