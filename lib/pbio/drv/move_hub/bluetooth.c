@@ -24,6 +24,10 @@
 // value returned in READY byte of BlueNRG SPI header when interface is ready
 #define BLUENRG_READY 2
 
+// max data size for nRF UART characteristics
+#define NRF_CHAR_SIZE 20
+
+
 typedef void(*gatt_attr_modified_handler_t)(void *data, uint8_t size);
 
 // array to hold GATT attribute write message callbacks. The index of the array
@@ -60,6 +64,10 @@ volatile bool spi_xfer_complete = false;
 static bool hci_command_complete = false;
 // handle to connected Bluetooth device
 static uint16_t conn_handle;
+
+// nRF UART service handles
+static uint16_t uart_service_handle, uart_rx_char_handle, uart_tx_char_handle;
+
 
 // protothreads for background tasks
 static struct pt spi_pt;
@@ -466,10 +474,6 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
         0x93, 0xf3, 0xa3, 0xb5, 0x03, 0x00, 0x40, 0x6e
     };
 
-    #define NRF_CHAR_SIZE 20
-
-    static uint16_t uart_service_handle, uart_rx_char_handle, uart_tx_char_handle;
-
     PT_BEGIN(pt);
 
     // add the nRF UART service (inspired by Add_Sample_Service() from
@@ -523,6 +527,36 @@ static PT_THREAD(set_discoverable(struct pt *pt)) {
     PT_END(pt);
 }
 
+static PT_THREAD(uart_service_send_data(struct pt *pt, const char *data, uint8_t size))
+{
+    static uint8_t i, n;
+    tBleStatus ret;
+
+    PT_BEGIN(pt);
+
+    // send data in NRF_CHAR_SIZE sized chunks
+    for (i = 0; i < size; i += NRF_CHAR_SIZE) {
+        n = size - i;
+        if (n > NRF_CHAR_SIZE) {
+            n = NRF_CHAR_SIZE;
+        }
+
+retry:
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        aci_gatt_update_char_value_begin(uart_service_handle, uart_tx_char_handle, 0, n, data + i);
+        PT_WAIT_UNTIL(pt, hci_command_complete);
+        ret = aci_gatt_update_char_value_end();
+
+        if (ret == BLE_STATUS_INSUFFICIENT_RESOURCES) {
+            // this will happen if notifications are enabled and the previous
+            // changes haven't been sent over the air yet
+            goto retry;
+        }
+    }
+
+    PT_END(pt);
+}
+
 static PT_THREAD(bluetooth_thread(uint32_t now)) {
     static uint32_t start_time;
     static struct pt child_pt;
@@ -550,7 +584,10 @@ static PT_THREAD(bluetooth_thread(uint32_t now)) {
     // conn_handle is set to 0 upon disconnection
     while (conn_handle) {
         // TODO: send out UART Tx data here
-        PT_YIELD(&bluetooth_pt);
+        start_time = now;
+        PT_WAIT_UNTIL(&bluetooth_pt, now - start_time > 1000);
+        #define HELLO_STR "Hello!"
+        PT_SPAWN(&bluetooth_pt, &child_pt, uart_service_send_data(&child_pt, HELLO_STR, strlen(HELLO_STR)));
     }
 
     // reset Bluetooth chip
