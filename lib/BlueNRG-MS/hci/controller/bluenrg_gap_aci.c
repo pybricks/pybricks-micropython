@@ -40,8 +40,7 @@ tBleStatus aci_gap_init_begin(uint8_t role, uint8_t privacy_enabled, uint8_t dev
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return 0;
 }
@@ -54,8 +53,7 @@ tBleStatus aci_gap_init_end(uint16_t* service_handle, uint16_t* dev_name_char_ha
   rq.rparam = &resp;
   rq.rlen = GAP_INIT_RP_SIZE;
 
-  if (hci_recv_resp(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_recv_resp(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -78,8 +76,7 @@ tBleStatus aci_gap_set_non_discoverable(void)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -140,8 +137,7 @@ tBleStatus aci_gap_set_limited_discoverable(uint8_t AdvType, uint16_t AdvIntervM
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -207,8 +203,7 @@ tBleStatus aci_gap_set_discoverable_begin(uint8_t AdvType,
   rq.cparam = (void *)buffer;
   rq.clen = indx;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return 0;
 }
@@ -222,8 +217,7 @@ tBleStatus aci_gap_set_discoverable_end()
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_recv_resp(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_recv_resp(&rq);
 
   return status;
 }
@@ -250,8 +244,7 @@ tBleStatus aci_gap_set_direct_connectable(uint8_t own_addr_type, uint8_t directe
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -271,8 +264,7 @@ tBleStatus aci_gap_set_io_capability(uint8_t io_capability)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -306,8 +298,7 @@ tBleStatus aci_gap_set_auth_requirement(uint8_t mitm_mode,
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   if (status) {
     return status;
@@ -332,8 +323,7 @@ tBleStatus aci_gap_set_author_requirement(uint16_t conn_handle, uint8_t authoriz
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -355,8 +345,7 @@ tBleStatus aci_gap_pass_key_response(uint16_t conn_handle, uint32_t passkey)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -377,8 +366,7 @@ tBleStatus aci_gap_authorization_response(uint16_t conn_handle, uint8_t authoriz
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -399,8 +387,7 @@ tBleStatus aci_gap_set_non_connectable(uint8_t adv_type, uint8_t own_address_typ
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -421,8 +408,7 @@ tBleStatus aci_gap_set_undirected_connectable(uint8_t own_addr_type, uint8_t adv
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -445,8 +431,7 @@ tBleStatus aci_gap_slave_security_request(uint16_t conn_handle, uint8_t bonding,
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 
@@ -475,8 +460,7 @@ tBleStatus aci_gap_update_adv_data(uint8_t AdvLen, const uint8_t *AdvData)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -496,8 +480,7 @@ tBleStatus aci_gap_delete_ad_type(uint8_t ad_type)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -515,8 +498,7 @@ tBleStatus aci_gap_get_security_level(uint8_t* mitm_protection, uint8_t* bonding
   rq.rparam = &resp;
   rq.rlen = GAP_GET_SECURITY_LEVEL_RP_SIZE;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -540,8 +522,7 @@ tBleStatus aci_gap_configure_whitelist(void)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -563,8 +544,7 @@ tBleStatus aci_gap_terminate(uint16_t conn_handle, uint8_t reason)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -579,8 +559,7 @@ tBleStatus aci_gap_clear_security_database(void)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -600,8 +579,7 @@ tBleStatus aci_gap_allow_rebond(uint16_t conn_handle)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -626,8 +604,7 @@ tBleStatus aci_gap_start_limited_discovery_proc(uint16_t scanInterval, uint16_t 
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -652,8 +629,7 @@ tBleStatus aci_gap_start_general_discovery_proc(uint16_t scanInterval, uint16_t 
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -690,8 +666,7 @@ tBleStatus aci_gap_start_name_discovery_proc(uint16_t scanInterval, uint16_t sca
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -761,8 +736,7 @@ tBleStatus aci_gap_start_auto_conn_establish_proc(uint16_t scanInterval, uint16_
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -788,8 +762,7 @@ tBleStatus aci_gap_start_general_conn_establish_proc(uint8_t scan_type, uint16_t
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -822,8 +795,7 @@ tBleStatus aci_gap_start_selective_conn_establish_proc(uint8_t scan_type, uint16
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -859,8 +831,7 @@ tBleStatus aci_gap_create_connection(uint16_t scanInterval, uint16_t scanWindow,
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -877,8 +848,7 @@ tBleStatus aci_gap_terminate_gap_procedure(uint8_t procedure_code)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 
@@ -909,8 +879,7 @@ tBleStatus aci_gap_start_connection_update(uint16_t conn_handle, uint16_t conn_m
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -932,8 +901,7 @@ tBleStatus aci_gap_send_pairing_request(uint16_t conn_handle, uint8_t force_rebo
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -953,8 +921,7 @@ tBleStatus aci_gap_resolve_private_address(const tBDAddr private_address, tBDAdd
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   if(rp.status)
     return rp.status;
@@ -997,8 +964,7 @@ tBleStatus aci_gap_set_broadcast_mode(uint16_t adv_interv_min, uint16_t adv_inte
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -1024,8 +990,7 @@ tBleStatus aci_gap_start_observation_procedure(uint16_t scan_interval, uint16_t 
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -1046,8 +1011,7 @@ tBleStatus aci_gap_is_device_bonded(uint8_t peer_address_type, const tBDAddr pee
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -1062,8 +1026,7 @@ tBleStatus aci_gap_get_bonded_devices(uint8_t *num_devices, uint8_t *device_list
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   if (rp.status) {
     return rp.status;

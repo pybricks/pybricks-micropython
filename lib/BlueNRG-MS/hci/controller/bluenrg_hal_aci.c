@@ -36,8 +36,7 @@ tBleStatus aci_hal_get_fw_build_number(uint16_t *build_number)
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   if(rp.status)
     return rp.status;
@@ -72,8 +71,7 @@ tBleStatus aci_hal_write_config_data_begin(uint8_t offset,
   rq.cparam = (void *)buffer;
   rq.clen = indx;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return 0;
 }
@@ -86,8 +84,7 @@ tBleStatus aci_hal_write_config_data_end()
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_recv_resp(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_recv_resp(&rq);
 
   return status;
 }
@@ -107,8 +104,7 @@ tBleStatus aci_hal_read_config_data(uint8_t offset, uint16_t data_len, uint8_t *
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   if(rp.status)
     return rp.status;
@@ -132,8 +128,7 @@ tBleStatus aci_hal_set_tx_power_level_begin(uint8_t en_high_power, uint8_t pa_le
   rq.cparam = &cp;
   rq.clen = HAL_SET_TX_POWER_LEVEL_CP_SIZE;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return 0;
 }
@@ -146,8 +141,7 @@ tBleStatus aci_hal_set_tx_power_level_end()
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_recv_resp(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_recv_resp(&rq);
 
   return status;
 }
@@ -162,8 +156,7 @@ tBleStatus aci_hal_le_tx_test_packet_number(uint32_t *number_of_packets)
   rq.rparam = &resp;
   rq.rlen = sizeof(resp);
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -184,8 +177,7 @@ tBleStatus aci_hal_device_standby(void)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -205,8 +197,7 @@ tBleStatus aci_hal_tone_start(uint8_t rf_channel)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -221,8 +212,7 @@ tBleStatus aci_hal_tone_stop(void)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -237,8 +227,7 @@ tBleStatus aci_hal_get_link_status(uint8_t link_status[8], uint16_t conn_handle[
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   if(rp.status)
     return rp.status;
@@ -260,8 +249,7 @@ tBleStatus aci_hal_get_anchor_period(uint32_t *anchor_period, uint32_t *max_free
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   if(rp.status)
     return rp.status;

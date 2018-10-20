@@ -48,8 +48,7 @@ tBleStatus aci_l2cap_connection_parameter_update_request(uint16_t conn_handle, u
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }
@@ -80,8 +79,7 @@ tBleStatus aci_l2cap_connection_parameter_update_response(uint16_t conn_handle, 
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
-    return BLE_STATUS_TIMEOUT;
+  hci_send_req(&rq);
 
   return status;
 }

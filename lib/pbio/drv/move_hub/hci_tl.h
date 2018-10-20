@@ -43,7 +43,7 @@ struct hci_response {
  * @param  async: TRUE if asynchronous mode, FALSE if synchronous mode
  * @retval int: 0 when success, -1 when failure
  */
-int hci_send_req(struct hci_request *r);
-int hci_recv_resp(struct hci_response *r);
+void hci_send_req(struct hci_request *r);
+void hci_recv_resp(struct hci_response *r);
 
 #endif /* _HCI_TL_TEMPLATE_H_ */

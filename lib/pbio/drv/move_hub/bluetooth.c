@@ -359,7 +359,7 @@ static PT_THREAD(spi_thread(uint32_t now)) {
 }
 
 // implements function for BlueNRG library
-int hci_send_req(struct hci_request *r) {
+void hci_send_req(struct hci_request *r) {
     hci_uart_pckt *pckt = (hci_uart_pckt *)write_buf;
     hci_command_hdr *hdr = (hci_command_hdr *)pckt->data;
     void *cmd = &write_buf[HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE];
@@ -371,16 +371,12 @@ int hci_send_req(struct hci_request *r) {
     write_xfer_size = HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE + r->clen;
 
     hci_command_complete = false;
-
-    return 0;
 }
 
 // implements function for BlueNRG library
-int hci_recv_resp(struct hci_response *r) {
+void hci_recv_resp(struct hci_response *r) {
     // TODO: might be a good idea to make sure opcodes match
     memcpy(r->rparam, &read_buf[HCI_HDR_SIZE + HCI_EVENT_HDR_SIZE + EVT_CMD_COMPLETE_SIZE], r->rlen);
-
-    return 0;
 }
 
 // Initializes the Bluetooth chip
