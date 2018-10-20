@@ -524,23 +524,22 @@ static PT_THREAD(set_discoverable(struct pt *pt)) {
 }
 
 static PT_THREAD(bluetooth_thread(uint32_t now)) {
-    static struct pt child_pt;
     static uint32_t start_time;
-    uint32_t elapsed = now - start_time;
+    static struct pt child_pt;
 
     PT_BEGIN(&bluetooth_pt)
 
     start_time = now;
 
     // make sure the Bluetooth chip is in reset long enough to actually reset
-    PT_WAIT_UNTIL(&bluetooth_pt, elapsed >= 10);
+    PT_WAIT_UNTIL(&bluetooth_pt, now - start_time >= 10);
 
     // take Bluetooth chip out of reset
     GPIOB->BSRR = GPIO_BSRR_BS_6;
 
     // wait for the Bluetooth chip to send the reset reason event so we know it is ready
     PT_WAIT_UNTIL(&bluetooth_pt, reset_reason);
-    start_time = now;
+
     PT_SPAWN(&bluetooth_pt, &child_pt, hci_init(&child_pt));
     PT_SPAWN(&bluetooth_pt, &child_pt, init_uart_service(&child_pt));
     PT_SPAWN(&bluetooth_pt, &child_pt, set_discoverable(&child_pt));
