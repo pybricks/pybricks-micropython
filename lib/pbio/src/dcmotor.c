@@ -32,23 +32,23 @@ pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_moto
     //
     // TODO: Use the device_id to set the default settings defined in our lib. For now just hardcode something below.
     //
-    pbio_dcmotor_set_settings(port, 100.0);
+    pbio_dcmotor_set_settings(port, 100);
 
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_dcmotor_set_settings(pbio_port_t port, float_t stall_torque_limit){
+pbio_error_t pbio_dcmotor_set_settings(pbio_port_t port, int16_t stall_torque_limit_pct){
     pbio_error_t status = pbio_dcmotor_coast(port);
-    if (stall_torque_limit < 0 || stall_torque_limit > PBIO_MAX_DUTY_PCT) {
-        stall_torque_limit = PBIO_MAX_DUTY_PCT;
+    if (stall_torque_limit_pct < 0 || stall_torque_limit_pct > PBIO_MAX_DUTY_PCT) {
+        stall_torque_limit_pct = PBIO_MAX_DUTY_PCT;
     }
-    dcmotor_settings[PORT_TO_IDX(port)].max_stall_duty = PBIO_DUTY_PCT_TO_ABS * stall_torque_limit;
+    dcmotor_settings[PORT_TO_IDX(port)].max_stall_duty = PBIO_DUTY_PCT_TO_ABS * stall_torque_limit_pct;
     return status;
 }
 
 void pbio_dcmotor_print_settings(pbio_port_t port, char *settings_string){
     int8_t port_index = PORT_TO_IDX(port);
-    char format_string [] = "Port: %c\nDirection: %s\nTorque limit: %f";
+    char format_string [] = "Port: %c\nDirection: %s\nTorque limit: %d";
     if (dcmotor_settings[port_index].direction == PBIO_MOTOR_DIR_NORMAL) {
         snprintf(settings_string, MAX_DCMOTOR_SETTINGS_STR_LENGTH, format_string, port, "normal", dcmotor_settings[port_index].max_stall_duty / PBIO_DUTY_PCT_TO_ABS);
     }

@@ -17,8 +17,17 @@
  * @{
  */
 
+
 /**
- * Motor action executed after completing a run command.
+ * Motor controlled stop type for use with pbio_encmotor_stop
+ */
+typedef enum {
+    PBIO_MOTOR_STOP_FAST,        /**< Immediate stop at the current location */
+    PBIO_MOTOR_STOP_SMOOTH,      /**< Controlled deceleration equivalent to the final part of a run maneuver */
+} pbio_motor_controlled_stop_t;
+
+/**
+ * Motor action executed after completing a run command that ends in a smooth stop.
  */
 typedef enum {
     PBIO_MOTOR_STOP_COAST,      /**< Coast the motor */
@@ -30,23 +39,23 @@ typedef enum {
  * Busy wait (or not) for a run command to complete
  */
 typedef enum {
-    PBIO_MOTOR_WAIT_COMPLETION = true, /**< Wait for the run command to complete */
-    PBIO_MOTOR_WAIT_NONE = false,       /**< Execute run command in the background and proceed with user program */
+    PBIO_MOTOR_WAIT_WAIT = true, /**< Wait for the run command to complete */
+    PBIO_MOTOR_WAIT_BACKGROUND = false,       /**< Execute run command in the background and proceed with user program */
 } pbio_motor_wait_t;
 
-pbio_error_t pbio_encmotor_run(pbio_port_t port, float_t speed);
+pbio_error_t pbio_encmotor_run(pbio_port_t port, int32_t speed);
 
-pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_stop_t after_stop);
+pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_controlled_stop_t smooth, pbio_motor_after_stop_t after_stop);
 
-pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop);
+pbio_error_t pbio_encmotor_run_time(pbio_port_t port, int32_t speed, int32_t duration, pbio_motor_after_stop_t after_stop);
 
-pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, float_t speed, pbio_motor_after_stop_t after_stop);
+pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, int32_t speed, pbio_motor_after_stop_t after_stop);
 
-pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop);
+pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, int32_t speed, int32_t angle, pbio_motor_after_stop_t after_stop);
 
-pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop);
+pbio_error_t pbio_encmotor_run_target(pbio_port_t port, int32_t speed, int32_t target, pbio_motor_after_stop_t after_stop);
 
-pbio_error_t pbio_encmotor_track_target(pbio_port_t port, float_t target);
+pbio_error_t pbio_encmotor_track_target(pbio_port_t port, int32_t target);
 
 #ifdef PBIO_CONFIG_ENABLE_MOTORS
 void _pbio_motorcontrol_poll(void);

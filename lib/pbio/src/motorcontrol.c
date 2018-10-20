@@ -164,8 +164,8 @@ float_t signval(float_t signof, float_t value) {
 // Calculate the characteristic time values, encoder values, rate values and accelerations that uniquely define the rate and count trajectories
 pbio_error_t make_motor_trajectory(pbio_port_t port,
                                    pbio_motor_action_t action,
-                                   float_t rate_target,
-                                   float_t duration_or_target_count,
+                                   int32_t speed_target,
+                                   int32_t duration_or_target_position,
                                    pbio_motor_after_stop_t after_stop){
 
     // Read the current system state for this motor
@@ -188,7 +188,7 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
     float_t _count_out = 0;
     float_t _count_end = 0;
     float_t _rate_start = rate_start;
-    float_t _rate_target = rate_target * settings->counts_per_output_unit;
+    float_t _rate_target = speed_target * settings->counts_per_output_unit;
     float_t _accl_start = 0;
     float_t _accl_end = 0;
 
@@ -208,11 +208,11 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
             break;
         case RUN_TIME:
             // Do not allow negative time
-            if (duration_or_target_count < 0) {
+            if (duration_or_target_position < 0) {
                 return PBIO_ERROR_INVALID_ARG;
             }
             // For RUN_TIME, the end time is the current time plus the duration
-            _time_end = _time_start + duration_or_target_count;
+            _time_end = _time_start + ((float_t) duration_or_target_position)/MS_PER_SECOND;
             break;
         case RUN_STALLED:
             // FOR RUN and RUN_STALLED, we specify no end time
@@ -220,17 +220,17 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
             break;
         case RUN_ANGLE:
             // For RUN_ANGLE, we specify instead the end count value as the current value plus the requested angle
-            _count_end = _count_start + duration_or_target_count * settings->counts_per_output_unit;
+            _count_end = _count_start + duration_or_target_position * settings->counts_per_output_unit;
             // If the goal is to reach a relative target, the speed cannot not be zero
-            if (rate_target == 0) {
+            if (speed_target == 0) {
                 return PBIO_ERROR_INVALID_ARG;
             }
             break;
         case RUN_TARGET:
             // For RUN_TARGET, we specify instead the end count value
-            _count_end = duration_or_target_count * settings->counts_per_output_unit;
+            _count_end = duration_or_target_position * settings->counts_per_output_unit;
             // If the goal is to reach a position target, the speed cannot not be zero
-            if (rate_target == 0) {
+            if (speed_target == 0) {
                 return PBIO_ERROR_INVALID_ARG;
             }
             break;
@@ -504,15 +504,15 @@ void control_update(pbio_port_t port){
     rate_err = rate_ref - rate_now;
 
     // Corresponding PD control signal
-    duty_due_to_proportional = settings->pid_kp*count_err/(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS);
-    duty_due_to_derivative = settings->pid_kd*rate_err/(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS);
+    duty_due_to_proportional = settings->pid_kp*count_err;
+    duty_due_to_derivative = settings->pid_kd*rate_err;
 
     // Position anti-windup (RUN_TARGET || RUN_ANGLE)
     if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
         if ((duty_due_to_proportional >= max_duty && rate_err > 0) || (duty_due_to_proportional <= -max_duty && rate_err < 0)){
             // We are at the duty limit and we should prevent further position error "integration".
             // If we are additionally also running slower than the specified stall speed limit, set status to stalled
-            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_speed_limit, STALLED_PROPORTIONAL);
+            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_rate_limit, STALLED_PROPORTIONAL);
             // To prevent further integration, we should stop the timer if it is running
             if (status->windup_status == TIME_RUNNING) {
                 // Then we must stop the time
@@ -546,7 +546,7 @@ void control_update(pbio_port_t port){
         // Check if proportional control exceeds the duty limit
         if ((duty_due_to_proportional >= max_duty && rate_err > 0) || (duty_due_to_proportional <= -max_duty && rate_err < 0)){
             // If we are additionally also running slower than the specified stall speed limit, set status to stalled
-            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_speed_limit, STALLED_PROPORTIONAL);
+            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_rate_limit, STALLED_PROPORTIONAL);
             // The integrator should NOT run.
             if (status->windup_status == SPEED_INTEGRATOR_RUNNING) {
                 // If it is running, disable it
@@ -570,20 +570,20 @@ void control_update(pbio_port_t port){
 
     // Duty cycle component due to integral position control (RUN_TARGET || RUN_ANGLE)
     if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
-        duty_due_to_integral = ((settings->pid_ki*(status->err_integral/US_PER_MS))/MS_PER_SECOND)/(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS);
+        duty_due_to_integral = (settings->pid_ki*(status->err_integral/US_PER_MS))/MS_PER_SECOND;
 
         // Integrator anti windup (stalled in the sense of integrators)
         // Limit the duty due to the integral, as well as the integral itself
         if (duty_due_to_integral > max_duty) {
             // If we are additionally also running slower than the specified stall speed limit, set status to stalled
-            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_speed_limit, STALLED_INTEGRAL);            
+            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_rate_limit, STALLED_INTEGRAL);            
             duty_due_to_integral = max_duty;
-            status->err_integral = ((US_PER_SECOND*(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS))/settings->pid_ki)*max_duty;
+            status->err_integral = (US_PER_SECOND/settings->pid_ki)*max_duty;
         }
         else if (duty_due_to_integral < -max_duty) {
-            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_speed_limit, STALLED_INTEGRAL);
+            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_rate_limit, STALLED_INTEGRAL);
             duty_due_to_integral = -max_duty;
-            status->err_integral = -((US_PER_SECOND*(PID_PRESCALE/PBIO_DUTY_PCT_TO_ABS))/settings->pid_ki)*max_duty;
+            status->err_integral = -(US_PER_SECOND/settings->pid_ki)*max_duty;
         }
         else {
             // Clear the integrator stall flag
@@ -608,9 +608,9 @@ void control_update(pbio_port_t port){
                 // Maneuver is complete, time wise
                 time_ref >= traject->time_end &&
                 // Position is within the lower tolerated bound ...
-                count_ref - settings->tolerance <= count_now &&
+                count_ref - settings->count_tolerance <= count_now &&
                 // ... and the upper tolerated bound
-                count_now <= count_ref + settings->tolerance &&
+                count_now <= count_ref + settings->count_tolerance &&
                 // And the motor stands still.
                 abs(rate_now) < settings->min_rate
             )
@@ -661,7 +661,7 @@ void control_update(pbio_port_t port){
             else {
                 // When ending a time based control maneuver with hold, we trigger a new position based maneuver with zero degrees
                 pbio_dcmotor_set_duty_cycle_int(port, 0);
-                make_motor_trajectory(port, RUN_TARGET, NONZERO, count_now, PBIO_MOTOR_STOP_HOLD);
+                make_motor_trajectory(port, RUN_TARGET, NONZERO, ((float_t) count_now)/settings->counts_per_output_unit, PBIO_MOTOR_STOP_HOLD);
             }
         }
     }
@@ -683,7 +683,7 @@ void _pbio_motorcontrol_poll(void){
 
 /* pbio user functions */
 
-pbio_error_t pbio_encmotor_run(pbio_port_t port, float_t speed){
+pbio_error_t pbio_encmotor_run(pbio_port_t port, int32_t speed){
     pbio_error_t err = make_motor_trajectory(port, RUN, speed, NONE, NONE);
     if (err != PBIO_SUCCESS){
         return err;
@@ -692,9 +692,9 @@ pbio_error_t pbio_encmotor_run(pbio_port_t port, float_t speed){
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_stop_t after_stop){
+pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_controlled_stop_t smooth, pbio_motor_after_stop_t after_stop){
     // Get current rate to see if we're standing still already
-    float_t angle_now;
+    int32_t angle_now;
     rate_t rate_now;
     pbio_error_t err = pbio_encmotor_get_encoder_rate(port, &rate_now);
     if (err != PBIO_SUCCESS){
@@ -738,7 +738,7 @@ pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_
     }
 }
 
-pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t duration, pbio_motor_after_stop_t after_stop){
+pbio_error_t pbio_encmotor_run_time(pbio_port_t port, int32_t speed, int32_t duration, pbio_motor_after_stop_t after_stop){
     pbio_error_t err = make_motor_trajectory(port, RUN_TIME, speed, duration, after_stop);
     if (err != PBIO_SUCCESS){
         return err;
@@ -747,7 +747,7 @@ pbio_error_t pbio_encmotor_run_time(pbio_port_t port, float_t speed, float_t dur
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, float_t speed, pbio_motor_after_stop_t after_stop){
+pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, int32_t speed, pbio_motor_after_stop_t after_stop){
     pbio_error_t err = make_motor_trajectory(port, RUN_STALLED, speed, NONE, after_stop);
     if (err != PBIO_SUCCESS){
         return err;
@@ -756,7 +756,7 @@ pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, float_t speed, pbio_mot
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, float_t speed, float_t angle, pbio_motor_after_stop_t after_stop){
+pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, int32_t speed, int32_t angle, pbio_motor_after_stop_t after_stop){
     pbio_error_t err = make_motor_trajectory(port, RUN_ANGLE, speed, angle, after_stop);
     if (err != PBIO_SUCCESS){
         return err;
@@ -765,7 +765,7 @@ pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, float_t speed, float_t an
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t target, pbio_motor_after_stop_t after_stop){
+pbio_error_t pbio_encmotor_run_target(pbio_port_t port, int32_t speed, int32_t target, pbio_motor_after_stop_t after_stop){
     pbio_error_t err = make_motor_trajectory(port, RUN_TARGET, speed, target, after_stop);
     if (err != PBIO_SUCCESS){
         return err;
@@ -774,6 +774,6 @@ pbio_error_t pbio_encmotor_run_target(pbio_port_t port, float_t speed, float_t t
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_track_target(pbio_port_t port, float_t target){
+pbio_error_t pbio_encmotor_track_target(pbio_port_t port, int32_t target){
     return PBIO_ERROR_NOT_IMPLEMENTED;
 }

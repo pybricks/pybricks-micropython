@@ -20,10 +20,10 @@ typedef float float_t;
  * Device ID
  */
 typedef enum {
-    PBIO_ID_UNKNOWN,
-    PBIO_ID_UNKNOWN_DCMOTOR,
-    PBIO_ID_UNKNOWN_ENCMOTOR,
-    PBIO_ID_PUP_MOVEHUB_MOTOR = 39,   // 0x27,
+    PBIO_ID_NO_DEVICE = 0x00,
+    PBIO_ID_PUP_TRAIN_MOTOR = 0x02,
+    PBIO_ID_PUP_INTERACTIVE_MOTOR = 0x26,
+    PBIO_ID_PUP_MOVEHUB_MOTOR = 0x27,
     PBIO_ID_EV3_MEDIUM_MOTOR,
     PBIO_ID_EV3_LARGE_MOTOR,
 } pbio_id_t;
@@ -59,7 +59,7 @@ pbio_dcmotor_settings_t dcmotor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction);
 
-pbio_error_t pbio_dcmotor_set_settings(pbio_port_t port, float_t stall_torque_limit);
+pbio_error_t pbio_dcmotor_set_settings(pbio_port_t port, int16_t stall_torque_limit_pct);
 
 void pbio_dcmotor_print_settings(pbio_port_t port, char *settings_string);
 

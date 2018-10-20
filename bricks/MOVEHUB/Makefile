@@ -30,7 +30,7 @@ PYDFU = $(TOP)/tools/pydfu.py
 CHECKSUM = $(TOP)/ports/pybricks/tools/checksum.py
 
 PBIO_OPT = -DPBIO_CONFIG_ENABLE_SYS
-# PBIO_OPT += -DPBIO_CONFIG_ENABLE_MOTORS
+PBIO_OPT += -DPBIO_CONFIG_ENABLE_MOTORS
 
 CFLAGS_CORTEX_M0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
 CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib $(CFLAGS_CORTEX_M0) $(COPT) $(PBIO_OPT)
@@ -78,10 +78,11 @@ SRC_S = \
 # Pybricks modules
 PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	extmod/pberror.c \
+	extmod/modpupdevices.c \
 	)
 
 ifneq (,$(findstring DPBIO_CONFIG_ENABLE_MOTORS,$(PBIO_OPT)))
-PYBRICKS_DRIVERS_SRC_C += $(addprefix ports/pybricks/extmod/modmotor.c)
+PYBRICKS_DRIVERS_SRC_C += $(addprefix ports/pybricks/extmod/, modmotor.c)
 endif
 
 BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\
