@@ -26,7 +26,7 @@ DCMotor
 
 // Wait for maneuver to complete
 STATIC void wait_for_completion(pbio_port_t port, pbio_error_t error, pbio_motor_wait_t wait) {
-    if (wait == PBIO_MOTOR_WAIT_COMPLETION && error == PBIO_SUCCESS) {
+    if (wait == PBIO_MOTOR_WAIT_WAIT && error == PBIO_SUCCESS) {
         while(motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_RUNNING) {
             mp_hal_delay_ms(10);
         }
@@ -317,7 +317,7 @@ STATIC mp_obj_t motor_EncodedMotor_run_stalled(size_t n_args, const mp_obj_t *ar
     pbio_error_t err = pbio_encmotor_run_stalled(self->port, mp_obj_get_int(args[1]), mp_obj_get_int(args[2]));
     pb_raise_pbio_error(err);
     wait_for_completion(self->port, err, wait);
-    if (wait == PBIO_MOTOR_WAIT_COMPLETION) {
+    if (wait == PBIO_MOTOR_WAIT_WAIT) {
         int32_t stall_point;
         pbio_encmotor_get_angle(self->port, &stall_point);
         return mp_obj_new_int(stall_point);

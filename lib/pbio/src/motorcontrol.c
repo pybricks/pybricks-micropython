@@ -692,7 +692,7 @@ pbio_error_t pbio_encmotor_run(pbio_port_t port, int32_t speed){
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_stop(pbio_port_t port, bool smooth, pbio_motor_after_stop_t after_stop){
+pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_controlled_stop_t smooth, pbio_motor_after_stop_t after_stop){
     // Get current rate to see if we're standing still already
     int32_t angle_now;
     rate_t rate_now;
