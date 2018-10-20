@@ -964,13 +964,12 @@ tBleStatus aci_gatt_read_multiple_charac_val(uint16_t conn_handle, uint8_t num_h
   return status;
 }
 
-
-
-tBleStatus aci_gatt_write_charac_value(uint16_t conn_handle, uint16_t attr_handle,
-                                       uint8_t value_len, uint8_t *attr_value)
+tBleStatus aci_gatt_write_charac_value_begin(uint16_t conn_handle,
+                                             uint16_t attr_handle,
+                                             uint8_t value_len,
+                                             uint8_t *attr_value)
 {
   struct hci_request rq;
-  uint8_t status;
   uint8_t buffer[HCI_MAX_PAYLOAD_SIZE];
   uint8_t indx = 0;
 
@@ -996,10 +995,23 @@ tBleStatus aci_gatt_write_charac_value(uint16_t conn_handle, uint16_t attr_handl
   rq.cparam = (void *)buffer;
   rq.clen = indx;
   rq.event = EVT_CMD_STATUS;
+
+  if (hci_send_req(&rq) < 0)
+    return BLE_STATUS_TIMEOUT;
+
+  return 0;
+}
+
+tBleStatus aci_gatt_write_charac_value_end()
+{
+  struct hci_response rq;
+  uint8_t status;
+
+  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
-  if (hci_send_req(&rq) < 0)
+  if (hci_recv_resp(&rq) < 0)
     return BLE_STATUS_TIMEOUT;
 
   return status;

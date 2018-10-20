@@ -518,8 +518,11 @@ tBleStatus aci_gatt_read_multiple_charac_val(uint16_t conn_handle, uint8_t num_h
  *		- Channel not open\n
  *		- Already one GATT procedure is started
  */
-tBleStatus aci_gatt_write_charac_value(uint16_t conn_handle, uint16_t attr_handle,
-				       uint8_t value_len, uint8_t *attr_value);
+tBleStatus aci_gatt_write_charac_value_begin(uint16_t conn_handle,
+                                             uint16_t attr_handle,
+                                             uint8_t value_len,
+                                             uint8_t *attr_value);
+tBleStatus aci_gatt_write_charac_value_end();
 
 /**
  * @brief Start the procedure to write a long characteristic value.
