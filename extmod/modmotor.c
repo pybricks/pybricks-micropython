@@ -394,14 +394,6 @@ EncodedMotor Class tables
 
 STATIC const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
     //
-    // Attributes common to DCMotor and EncodedMotor
-    //
-    { MP_OBJ_NEW_QSTR(MP_QSTR_DIR_NORMAL),   MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_DIR_NORMAL  ) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_DIR_INVERTED), MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_DIR_INVERTED) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_STOP_COAST),   MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_COAST  ) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_STOP_BRAKE),   MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_BRAKE  ) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_STOP_HOLD),    MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_HOLD   ) },
-    //
     // Methods common to DCMotor and EncodedMotor
     //
     { MP_ROM_QSTR(MP_QSTR_settings), MP_ROM_PTR(&motor_Motor_settings_obj) },
