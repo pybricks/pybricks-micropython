@@ -125,7 +125,7 @@ mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_id_t *type, size_t n_args
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     int16_t teeth_first = (n_args == 4) ? mp_obj_get_int(args[2]) : 1;
     int16_t teeth_last = (n_args == 4) ? mp_obj_get_int(args[3]) : 1;
-    pbio_error_t err = pbio_encmotor_setup(self->port, type->device_id, direction, teeth_first, teeth_last);
+    pbio_error_t err = pbio_encmotor_setup(self->port, type->device_id, direction, ((float_t) (teeth_last))/teeth_first);
     pb_raise_pbio_error(err);
     return MP_OBJ_FROM_PTR(self);
 }
