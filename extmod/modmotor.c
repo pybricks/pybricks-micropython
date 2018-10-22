@@ -112,20 +112,74 @@ EncodedMotor
         """Initialize the motor.
         Arguments:
             port {const} -- Port to which the device is connected: PORT_A, PORT_B, etc.
+        Optional arguments:
             direction {const} -- DIR_NORMAL or DIR_INVERTED (default: {DIR_NORMAL})
-            first_gear {int} -- Number of teeth of gear attached to motor (default: {None})
-            last_gear {int} -- Number of teeth of last gear in the gear train (default: {None})
+            train1 {list} -- List of the number of teeth of the gears in the first gear train (attached to the motor)
+            train2 {list} -- List of the number of teeth of the gears in the second gear train
+            ...
         """
+
+Two examples of the gear train lists:
+
+EXAMPLE 1: [12, 36]
+  _____________
+ |            |
+ |    motor   |
+ |____________|
+       ||       
+       || 12t      36t
+     ||||||  ||||||||||||||
+                   ||
+                   ||
+               output axle
+
+
+Example 2: [12, 20, 36], [20, 40], [20, 8, 40]
+  _____________
+ |            |
+ |    motor   |
+ |____________|
+       ||      
+       || 12t    20t           36t
+     ||||||  |||||||||||  ||||||||||||||
+                                ||
+                                ||
+                             ||||||||  |||||||||||||||||
+                                20t           || 40t
+                                              ||
+                                            ||||||||  |||  |||||||||||||||||
+                                                20t    8t         || 40t
+                                                                  ||
+                                                              output axle
+
 */
 mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_id_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
+    // Load self and determine port
     mp_arg_check_num(n_args, n_kw, 1, 4, false);
     motor_Motor_obj_t *self = m_new_obj(motor_Motor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
     self->port = mp_obj_get_int(args[0]);
+    // Configure direction or set to default
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
-    int16_t teeth_first = (n_args == 4) ? mp_obj_get_int(args[2]) : 1;
-    int16_t teeth_last = (n_args == 4) ? mp_obj_get_int(args[3]) : 1;
-    pbio_error_t err = pbio_encmotor_setup(self->port, type->device_id, direction, ((float_t) (teeth_last))/teeth_first);
+    // Compute overall gear ratio from each gear train
+    float_t gear_ratio = 1.0;
+    int8_t n_trains = n_args - 2;
+    for (int8_t train = 0; train < n_trains; train++) {
+        // For this gear train, unpack the list of gears
+        mp_obj_t *gears;
+        size_t n_gears;
+        mp_obj_get_array(args[train+2], &n_gears, &gears);
+        // For this gear train, compute the ratio from the first and last gear
+        int16_t first_gear = mp_obj_get_int(gears[0]);
+        int16_t last_gear = mp_obj_get_int(gears[n_gears-1]);
+        if (first_gear < 1 || last_gear < 1) {
+            pb_raise_pbio_error(PBIO_ERROR_INVALID_ARG);
+        } 
+        // Include the ratio of this train in the overall gear train
+        gear_ratio = (gear_ratio*last_gear)/first_gear;
+    }
+    // Configure the motor with the selected arguments at pbio level
+    pbio_error_t err = pbio_encmotor_setup(self->port, type->device_id, direction, gear_ratio);
     pb_raise_pbio_error(err);
     return MP_OBJ_FROM_PTR(self);
 }
