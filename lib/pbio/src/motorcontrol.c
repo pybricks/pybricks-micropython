@@ -553,6 +553,8 @@ void control_update(pbio_port_t port){
                 status->windup_status = SPEED_INTEGRATOR_PAUSED;
                 // Save the integrator state reached now, to continue when no longer stalled
                 status->err_integral += count_ref - status->integrator_ref_start - count_now + status->integrator_start;
+                // Store time at which speed integration is disabled
+                status->time_stopped = time_now;
             }
         }
         else {
@@ -634,7 +636,7 @@ void control_update(pbio_port_t port){
         (
         (traject->action == RUN_STALLED) &&
             // Whether the motor is stalled in either proportional or integral sense
-            (status->stalled != STALLED_NONE)
+            (status->stalled != STALLED_NONE && time_now - status->time_stopped > settings->stall_time)
         )
     )
     {

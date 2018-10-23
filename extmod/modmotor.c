@@ -192,11 +192,12 @@ void motor_EncodedMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_pri
 
 /*
 EncodedMotor
-    def settings(self, relative_torque_limit, max_speed, tolerance, acceleration_start, acceleration_end, tight_loop_time_ms, pid_kp, pid_ki, pid_kd):
+    def settings(self, relative_torque_limit, stall_speed_limit, stall_time, min_speed, max_speed, tolerance, acceleration_start, acceleration_end, tight_loop_time, pid_kp, pid_ki, pid_kd):
         """Update the motor settings.
         Keyword Arguments (TODO):
         relative_torque_limit {int}   -- Percentage (-100.0 to 100.0) of the maximum stationary torque that the motor is allowed to produce.
         stall_speed_limit {int}       -- If this speed cannnot be reached even with the maximum torque, the motor is considered to be stalled
+        stall_time {int}              -- Minimum stall time before the run_stalled action completes
         min_speed {int}               -- If speed is equal or less than this, consider the motor to be standing still
         max_speed {int}               -- Soft limit on the reference speed in all run commands
         tolerance {int}               -- Allowed deviation (deg) from target before motion is considered complete
@@ -225,12 +226,13 @@ STATIC mp_obj_t motor_Motor_settings(size_t n_args, const mp_obj_t *args){
                                                   mp_obj_get_int(args[8]),
                                                   mp_obj_get_int(args[9]),
                                                   mp_obj_get_int(args[10]),
-                                                  mp_obj_get_int(args[11])
+                                                  mp_obj_get_int(args[11]),
+                                                  mp_obj_get_int(args[12])
                                                  );
     pb_raise_pbio_error(err);
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_settings_obj, 12, 12, motor_Motor_settings);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_settings_obj, 13, 13, motor_Motor_settings);
 
 /*
 EncodedMotor
@@ -254,7 +256,7 @@ EncodedMotor
     def reset_angle(self, reset_angle):
         """Reset the angle of the motor/mechanism (degrees).
         Arguments:
-            reset_angle {const} -- Value to which the rotation sensor angle should be reset (default: {0})
+            reset_angle {int} -- Value to which the rotation sensor angle should be reset (default: {0})
 */
 STATIC mp_obj_t motor_EncodedMotor_reset_angle(size_t n_args, const mp_obj_t *args){
     pbio_port_t port = get_port(args[0]);
