@@ -8,14 +8,6 @@ class DCMotor():
     """Class for motors without encoders."""
 */
 
-// Class structure for DC Motors
-typedef struct _motor_Motor_obj_t {
-    mp_obj_base_t base;
-    pbio_port_t port;
-} motor_Motor_obj_t;
-
-#define get_port(self_in) (((motor_Motor_obj_t*) MP_OBJ_TO_PTR(self_in))->port)
-
 /*
 DCMotor
     def __init__(self, port, direction):

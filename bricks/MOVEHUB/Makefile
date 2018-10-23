@@ -82,7 +82,10 @@ PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	)
 
 ifneq (,$(findstring DPBIO_CONFIG_ENABLE_MOTORS,$(PBIO_OPT)))
-PYBRICKS_DRIVERS_SRC_C += $(addprefix ports/pybricks/extmod/, modmotor.c)
+PYBRICKS_DRIVERS_SRC_C += $(addprefix ports/pybricks/extmod/,\
+	modmotor.c \
+	modrobotics.c \
+	)
 endif
 
 BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\
