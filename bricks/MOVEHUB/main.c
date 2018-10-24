@@ -12,6 +12,7 @@
 #include "py/gc.h"
 #include "py/mperrno.h"
 #include "lib/utils/pyexec.h"
+#include "lib/utils/interrupt_char.h"
 
 #include "accel.h"
 #include "uartadr.h"
@@ -110,9 +111,13 @@ static void wait_for_button_press(void) {
 }
 #endif // MICROPY_ENABLE_COMPILER
 
+// callback for when stop button is pressed
 static void user_program_stop_func(void) {
-    pyexec_system_exit = PYEXEC_FORCED_EXIT;
-    nlr_raise(mp_obj_new_exception(&mp_type_SystemExit));
+    // we can only raise an exception if the VM is running
+    // mp_interrupt_char will be either -1 or 0 when VM is not running
+    if (mp_interrupt_char > 0) {
+        mp_keyboard_interrupt();
+    }
 }
 
 int main(int argc, char **argv) {
