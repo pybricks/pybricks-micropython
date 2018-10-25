@@ -15,16 +15,10 @@ const mp_obj_type_id_t motor_InteractiveMotor_type = {
 STATIC const mp_map_elem_t pupdevices_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_devices) },
 #if PBIO_CONFIG_ENABLE_MOTORS
-    { MP_OBJ_NEW_QSTR(MP_QSTR_NORMAL),     MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_DIR_NORMAL  ) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_INVERTED),   MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_DIR_INVERTED) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_COAST),      MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_COAST  ) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_BRAKE),      MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_BRAKE  ) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_HOLD),       MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_HOLD   ) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_FAST),       MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_FAST   ) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_SMOOTH),     MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_SMOOTH ) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_WAIT),       MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_WAIT_WAIT   ) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_BACKGROUND), MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_WAIT_BACKGROUND ) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_InteractiveMotor), (mp_obj_t)&motor_InteractiveMotor_type},
+    { MP_OBJ_NEW_QSTR(MP_QSTR_Stop), (mp_obj_t)&motor_Stop_type},
+    { MP_OBJ_NEW_QSTR(MP_QSTR_Dir), (mp_obj_t)&motor_Dir_type},
+    { MP_OBJ_NEW_QSTR(MP_QSTR_Wait), (mp_obj_t)&motor_Wait_type},  
 #endif //PBIO_CONFIG_ENABLE_MOTORS
 };
 
