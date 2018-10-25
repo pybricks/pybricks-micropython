@@ -136,7 +136,7 @@ void USART3_6_IRQHandler(void) {
         if (new_head == usart4_rx_buf_tail) {
             // buffer overrun
             // REVISIT: ignoring for now - will lose characters
-            return;
+            continue;
         }
         usart4_rx_buf[new_head] = c;
         usart4_rx_buf_head = new_head;
@@ -149,7 +149,7 @@ void USART3_6_IRQHandler(void) {
         if (new_head == usart3_rx_buf_tail) {
             // buffer overrun
             // REVISIT: ignoring for now - will lose characters
-            return;
+            continue;
         }
         usart3_rx_buf[new_head] = c;
         usart3_rx_buf_head = new_head;
