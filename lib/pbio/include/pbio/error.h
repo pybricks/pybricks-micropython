@@ -19,7 +19,8 @@ typedef enum {
     PBIO_ERROR_IO,              /**< General I/O error */
     PBIO_ERROR_NO_DEV,          /**< Device is not connected */
     PBIO_ERROR_NOT_IMPLEMENTED, /**< This feature is not yet implemented on this device */
-    PBIO_ERROR_NOT_SUPPORTED    /**< This feature is not supported on this device */
+    PBIO_ERROR_NOT_SUPPORTED,   /**< This feature is not supported on this device */
+    PBIO_ERROR_AGAIN,           /**< The function should be called again later */
 } pbio_error_t;
 
 /** @}*/

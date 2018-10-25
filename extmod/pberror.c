@@ -1,7 +1,7 @@
 #include <pberror.h>
 
-void pb_raise_pbio_error(pbio_error_t error){
-    switch(error){
+void pb_raise_pbio_error(pbio_error_t error) {
+    switch (error) {
         case PBIO_SUCCESS:
             break;
         case PBIO_ERROR_FAILED:
@@ -24,6 +24,9 @@ void pb_raise_pbio_error(pbio_error_t error){
             break;
         case PBIO_ERROR_NOT_SUPPORTED:
             mp_raise_msg(&mp_type_RuntimeError, "This feature is not supported on this device");
+            break;
+        case PBIO_ERROR_AGAIN:
+            mp_raise_msg(&mp_type_RuntimeError, "Try again later");
             break;
     }
 }
