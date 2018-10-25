@@ -380,12 +380,7 @@ void _pbdrv_ioport_poll(uint32_t now) {
 
     // TODO: skipping port C for now to use for REPL
     //poll_dcm(IOPORT_C);
-    if (connected_dev_id[IOPORT_D] == DEV_ID_LPF2_UNKNOWN_UART) {
-        while (USART3->ISR & USART_ISR_RXNE) {
-            printf("%02x\n", USART3->RDR);
-        }
-    }
-    else {
+    if (connected_dev_id[IOPORT_D] != DEV_ID_LPF2_UNKNOWN_UART) {
         poll_dcm(IOPORT_D);
     }
 
