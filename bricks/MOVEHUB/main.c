@@ -120,6 +120,10 @@ static void user_program_stop_func(void) {
     }
 }
 
+static const pbsys_user_program_callbacks_t user_program_callbacks = {
+    .stop = user_program_stop_func,
+};
+
 int main(int argc, char **argv) {
     int stack_dummy;
     stack_top = (char*)&stack_dummy;
@@ -135,7 +139,7 @@ int main(int argc, char **argv) {
 
 soft_reset:
     wait_for_button_press();
-    pbsys_prepare_user_program(user_program_stop_func);
+    pbsys_prepare_user_program(&user_program_callbacks);
 
     mp_init();
     #if MICROPY_ENABLE_COMPILER

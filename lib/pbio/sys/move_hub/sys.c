@@ -61,8 +61,13 @@ void _pbsys_init(void) {
     pbdrv_light_set_rgb(PBIO_PORT_SELF, r, g, b);
 }
 
-void pbsys_prepare_user_program(pbsys_stop_callback_t stop_func) {
-    pbsys_stop_func = stop_func;
+void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks) {
+    if (callbacks) {
+        pbsys_stop_func = callbacks->stop;
+    }
+    else {
+        pbsys_stop_func = NULL;
+    }
     _pbio_light_set_user_mode(true);
     pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE);
 }
