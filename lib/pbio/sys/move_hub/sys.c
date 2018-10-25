@@ -48,6 +48,8 @@ static uint16_t avg_battery_voltage;
 
 // user program stop function
 static pbsys_stop_callback_t pbsys_stop_func;
+// user program stdin event function
+static pbsys_stdin_event_callback_t pbsys_stdin_event_func;
 
 void _pbsys_init(void) {
     uint16_t battery_voltage;
@@ -64,9 +66,11 @@ void _pbsys_init(void) {
 void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks) {
     if (callbacks) {
         pbsys_stop_func = callbacks->stop;
+        pbsys_stdin_event_func = callbacks->stdin_event;
     }
     else {
         pbsys_stop_func = NULL;
+        pbsys_stdin_event_func = NULL;
     }
     _pbio_light_set_user_mode(true);
     pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE);
@@ -167,6 +171,14 @@ void _pbsys_poll(uint32_t now) {
     else if (avg_battery_voltage >= BATTERY_OK_MV) {
         led_status_flags &= ~LED_STATUS_BATTERY_LOW;
     }
+}
+
+bool _pbsys_stdin_irq(uint8_t c) {
+    if (pbsys_stdin_event_func) {
+        return pbsys_stdin_event_func(c);
+    }
+
+    return false;
 }
 
 // this seem to be missing from the header file

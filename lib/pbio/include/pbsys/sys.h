@@ -23,6 +23,14 @@
 typedef void (*pbsys_stop_callback_t)(void);
 
 /**
+ * Callback function to handle stdin events.
+ * @param [in]  c   the character received
+ * @return          *true* if the character was handled and should not be placed
+ *                  in the stdin buffer, otherwise *false*.
+ */
+typedef bool (*pbsys_stdin_event_callback_t)(uint8_t c);
+
+/**
  * Struct to hold callback functions for user programs.
  */
 typedef struct {
@@ -31,6 +39,15 @@ typedef struct {
      * before ::pbsys_unprepare_user_program() is called.
      */
     pbsys_stop_callback_t stop;
+
+    /**
+     * Optional function that will be called when stdin has new data to be read.
+     * WARNING: This can be called in an interrupt context.
+     *
+     * This can be used, for example, to implement a keyboard interrupt when CTRL+C
+     * is pressed.
+     */
+    pbsys_stdin_event_callback_t stdin_event;
 } pbsys_user_program_callbacks_t;
 
 #ifdef PBIO_CONFIG_ENABLE_SYS
@@ -71,6 +88,14 @@ void _pbsys_init(void);
  */
 void _pbsys_poll(uint32_t now);
 
+/**
+ * Calls the user program *stdin_event* function.
+ * @param [in]  c   the character received
+ * @return          *true* if the character was handled and should not be placed
+ *                  in the stdin buffer, otherwise *false*.
+ */
+bool _pbsys_stdin_irq(uint8_t c);
+
 /** @endcond */
 
 #else
@@ -82,6 +107,7 @@ static inline void pbsys_reboot(bool fw_update) { }
 static inline void pbsys_power_off(void) { }
 static inline void _pbsys_init(void) { }
 static inline void _pbsys_poll(uint32_t now) { }
+static inline bool _pbsys_stdin_irq(uint8_t c) { return false; }
 
 #endif
 

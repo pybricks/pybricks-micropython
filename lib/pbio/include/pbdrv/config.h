@@ -102,4 +102,9 @@
 #define PBDRV_CONFIG_TIME (1)
 #endif
 
+// enable the UART driver
+#ifndef PBDRV_CONFIG_UART
+#define PBDRV_CONFIG_UART (1)
+#endif
+
 #endif // _PBDRV_CONFIG_H_

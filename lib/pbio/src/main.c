@@ -12,6 +12,7 @@
 #include <pbdrv/ioport.h>
 #include <pbdrv/motor.h>
 #include <pbdrv/time.h>
+#include <pbdrv/uart.h>
 #include <pbsys/sys.h>
 #include <pbio/motorcontrol.h>
 
@@ -30,6 +31,7 @@ void pbio_init(void) {
     _pbdrv_light_init();
     _pbdrv_ioport_init();
     _pbdrv_motor_init();
+    _pbdrv_uart_init();
     _pbsys_init();
 }
 
@@ -66,6 +68,7 @@ void pbio_poll(void) {
  * functions may be called after this.
  */
 void pbio_deinit(void) {
+    _pbdrv_uart_deinit();
     _pbdrv_motor_deinit();
     _pbdrv_light_deinit();
     _pbdrv_button_deinit();

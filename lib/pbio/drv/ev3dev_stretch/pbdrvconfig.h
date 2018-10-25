@@ -23,5 +23,6 @@
 #define PBDRV_CONFIG_BLUETOOTH  (0)
 #define PBDRV_CONFIG_BUTTON     (0)
 #define PBDRV_CONFIG_IOPORT     (0)
+#define PBDRV_CONFIG_UART       (0)
 
 #endif // _PBDRVCONFIG_H_

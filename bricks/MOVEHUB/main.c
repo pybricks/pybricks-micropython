@@ -15,7 +15,6 @@
 #include "lib/utils/interrupt_char.h"
 
 #include "accel.h"
-#include "uartadr.h"
 
 static char *stack_top;
 #if MICROPY_ENABLE_GC
@@ -120,15 +119,23 @@ static void user_program_stop_func(void) {
     }
 }
 
+static bool user_program_stdin_event_func(uint8_t c) {
+    if (c == mp_interrupt_char) {
+        mp_keyboard_interrupt();
+        return true;
+    }
+
+    return false;
+}
+
 static const pbsys_user_program_callbacks_t user_program_callbacks = {
-    .stop = user_program_stop_func,
+    .stop           = user_program_stop_func,
+    .stdin_event    = user_program_stdin_event_func,
 };
 
 int main(int argc, char **argv) {
     int stack_dummy;
     stack_top = (char*)&stack_dummy;
-
-    uart_init();
 
     accel_init();
     pbio_init();
