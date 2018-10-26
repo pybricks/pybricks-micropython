@@ -8,22 +8,10 @@ Contained in set:
 LEGO ID: 95646
 """
 
-from time import sleep
-from constants import BOOT_NORMAL
+# import those features of the EV3 brick that are already written in MicroPython-style C code.
+from ev3brick_c import *
 
-
-def power_off():
-    """Turn the EV3 off."""
-    pass
-
-
-def reboot(boot_mode=BOOT_NORMAL):
-    """Reboot the brick into the specified mode.
-
-    Keyword Arguments:
-        boot_mode {const} -- Do a normal reboot (BOOT_NORMAL), reboot and erase the user program (BOOT_SAFE), or reboot into firmware update mode (BOOT_UPDATE). (default: {BOOT_NORMAL})
-    """
-
+# TODO: Delete dummy API below or implement it.
 
 def battery_voltage():
     """Get the battery voltage.
@@ -71,6 +59,7 @@ def beep(beeps=1):
     pass
 
 
+# TODO: make consistent with HUB light API
 def light(color):
     """Set the EV3 brick LED light to the specified color.
 

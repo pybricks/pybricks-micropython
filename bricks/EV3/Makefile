@@ -161,6 +161,7 @@ SRC_C = \
 	lib/utils/pyexec.c \
 	pbinit.c \
 	modev3devices.c \
+	modev3brick.c \
 	$(SRC_MOD)
 
 LIB_SRC_C = $(addprefix lib/,\
