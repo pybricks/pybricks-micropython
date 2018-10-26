@@ -112,12 +112,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_power_off_obj, hub_power_off);
 
 STATIC mp_obj_t hub_read_adc(mp_obj_t ch) {
     uint16_t value;
-    pbio_error_t err;
 
-    err = pbdrv_adc_get_ch(mp_obj_get_int(ch), &value);
-    if (err != PBIO_SUCCESS) {
-        mp_raise_ValueError("Invalid channel");
-    }
+    pb_assert(pbdrv_adc_get_ch(mp_obj_get_int(ch), &value));
 
     return mp_obj_new_int(value);
 }
