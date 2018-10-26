@@ -32,7 +32,7 @@ PBIO_OPT += -DPBIO_CONFIG_ENABLE_MOTORS
 # compiler settings
 CWARN = -Wall -Werror
 CWARN += -Wpointer-arith -Wuninitialized
-CFLAGS = $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA) $(PBIO_OPT)  
+CFLAGS = $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA) $(PBIO_OPT)
 
 # Debugging/Optimization
 ifdef DEBUG
@@ -178,8 +178,9 @@ PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	lib/pbio/drv/ev3dev_stretch/time.c \
 	lib/pbio/src/dcmotor.c \
 	lib/pbio/src/encmotor.c \
+	lib/pbio/src/error.c \
 	lib/pbio/src/motorcontrol.c \
-	)	
+	)
 
 # FatFS VFS support
 LIB_SRC_C += $(addprefix lib/,\
