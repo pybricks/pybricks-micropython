@@ -1,6 +1,9 @@
 #include <pberror.h>
 
-void pb_raise_pbio_error(pbio_error_t error) {
+/**
+ * Raise an exception if *error* is not *PBIO_SUCCESS*
+ */
+void pb_assert(pbio_error_t error) {
     switch (error) {
         case PBIO_SUCCESS:
             break;

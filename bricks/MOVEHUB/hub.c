@@ -89,7 +89,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_3(hub_gpios_obj, hub_gpios);
 static mp_obj_t hub_batt_volt(void) {
     uint16_t volt;
 
-    pb_raise_pbio_error(pbdrv_battery_get_voltage_now(PBIO_PORT_SELF, &volt));
+    pb_assert(pbdrv_battery_get_voltage_now(PBIO_PORT_SELF, &volt));
 
     return mp_obj_new_int(volt);
 }
@@ -98,7 +98,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_batt_volt_obj, hub_batt_volt);
 static mp_obj_t hub_batt_cur(void) {
     uint16_t cur;
 
-    pb_raise_pbio_error(pbdrv_battery_get_current_now(PBIO_PORT_SELF, &cur));
+    pb_assert(pbdrv_battery_get_current_now(PBIO_PORT_SELF, &cur));
 
     return mp_obj_new_int(cur);
 }
