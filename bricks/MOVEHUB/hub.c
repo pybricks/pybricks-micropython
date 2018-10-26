@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include <pbdrv/adc.h>
+#include <pbdrv/battery.h>
 #include <pbio/button.h>
 #include <pbio/light.h>
 #include <pbsys/sys.h>
@@ -16,6 +17,7 @@
 #include "py/binary.h"
 
 #include "gpio.h"
+#include "pberror.h"
 
 // TODO: avoid #ifs here by handling it at driver level
 #if PBIO_CONFIG_ENABLE_MOTORS
@@ -83,6 +85,24 @@ STATIC mp_obj_t hub_gpios(mp_obj_t bank, mp_obj_t pin, mp_obj_t action) {
 }
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(hub_gpios_obj, hub_gpios);
+
+static mp_obj_t hub_batt_volt(void) {
+    uint16_t volt;
+
+    pb_raise_pbio_error(pbdrv_battery_get_voltage_now(PBIO_PORT_SELF, &volt));
+
+    return mp_obj_new_int(volt);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_batt_volt_obj, hub_batt_volt);
+
+static mp_obj_t hub_batt_cur(void) {
+    uint16_t cur;
+
+    pb_raise_pbio_error(pbdrv_battery_get_current_now(PBIO_PORT_SELF, &cur));
+
+    return mp_obj_new_int(cur);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(hub_batt_cur_obj, hub_batt_cur);
 
 STATIC mp_obj_t hub_power_off(void) {
     pbsys_power_off();
@@ -170,6 +190,8 @@ STATIC PB_DEFINE_CONST_ENUM(hub_Port_enum, hub_Port_enum_table);
 STATIC const mp_map_elem_t hub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_hub) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_Port), (mp_obj_t)&hub_Port_enum },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_batt_volt), (mp_obj_t)&hub_batt_volt_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_batt_cur), (mp_obj_t)&hub_batt_cur_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&hub_gpios_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_power_off), (mp_obj_t)&hub_power_off_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_read_adc), (mp_obj_t)&hub_read_adc_obj },
