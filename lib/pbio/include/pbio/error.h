@@ -1,28 +1,30 @@
 
-
-#ifndef _PBIO_ERROR_H_
-#define _PBIO_ERROR_H_
-
 /**
  * \addtogroup Error Error handling
  * @{
  */
+
+
+#ifndef _PBIO_ERROR_H_
+#define _PBIO_ERROR_H_
 
 /**
  * Error code.
  */
 typedef enum {
     PBIO_SUCCESS,               /**< No error */
-    PBIO_ERROR_FAILED,          /**< Unspecified error */
-    PBIO_ERROR_INVALID_ARG,     /**< Invalid argument */
-    PBIO_ERROR_INVALID_PORT,    /**< Invalid port identifier */
+    PBIO_ERROR_FAILED,          /**< Unspecified error (used when no other error code fits) */
+    PBIO_ERROR_INVALID_ARG,     /**< Invalid argument (other than port) */
+    PBIO_ERROR_INVALID_PORT,    /**< Invalid port identifier (special case of ::PBIO_ERROR_INVALID_ARG) */
     PBIO_ERROR_IO,              /**< General I/O error */
     PBIO_ERROR_NO_DEV,          /**< Device is not connected */
-    PBIO_ERROR_NOT_IMPLEMENTED, /**< This feature is not yet implemented on this device */
-    PBIO_ERROR_NOT_SUPPORTED,   /**< This feature is not supported on this device */
-    PBIO_ERROR_AGAIN,           /**< The function should be called again later */
+    PBIO_ERROR_NOT_IMPLEMENTED, /**< Feature is not yet implemented */
+    PBIO_ERROR_NOT_SUPPORTED,   /**< Feature is not supported on this device */
+    PBIO_ERROR_AGAIN,           /**< Function should be called again later */
 } pbio_error_t;
 
-/** @}*/
+const char *pbio_error_str(pbio_error_t err);
 
 #endif // _PBIO_ERROR_H_
+
+/** @}*/
