@@ -54,8 +54,8 @@ STATIC const mp_map_elem_t ev3devices_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_Dir),         (mp_obj_t)&motor_Dir_enum            },
     { MP_OBJ_NEW_QSTR(MP_QSTR_Wait),        (mp_obj_t)&motor_Wait_enum           },     
 };
- STATIC MP_DEFINE_CONST_DICT (mp_module_ev3devices_globals, ev3devices_globals_table);
- const mp_obj_module_t mp_module_ev3devices = {
+ STATIC MP_DEFINE_CONST_DICT (pb_module_ev3devices_globals, ev3devices_globals_table);
+ const mp_obj_module_t pb_module_ev3devices = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_ev3devices_globals,
+    .globals = (mp_obj_dict_t*)&pb_module_ev3devices_globals,
 };

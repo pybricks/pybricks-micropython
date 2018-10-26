@@ -21,8 +21,8 @@ STATIC const mp_map_elem_t ev3brick_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_ev3brick_c)   },
     { MP_OBJ_NEW_QSTR(MP_QSTR_Port), (mp_obj_t)&motor_Port_enum },     
 };
- STATIC MP_DEFINE_CONST_DICT (mp_module_ev3brick_globals, ev3brick_globals_table);
- const mp_obj_module_t mp_module_ev3brick = {
+ STATIC MP_DEFINE_CONST_DICT (pb_module_ev3brick_globals, ev3brick_globals_table);
+ const mp_obj_module_t pb_module_ev3brick = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_ev3brick_globals,
+    .globals = (mp_obj_dict_t*)&pb_module_ev3brick_globals,
 };

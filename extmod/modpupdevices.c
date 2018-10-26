@@ -18,16 +18,16 @@ STATIC const mp_map_elem_t pupdevices_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_InteractiveMotor), (mp_obj_t)&motor_InteractiveMotor_type},
     { MP_OBJ_NEW_QSTR(MP_QSTR_Stop), (mp_obj_t)&motor_Stop_enum},
     { MP_OBJ_NEW_QSTR(MP_QSTR_Dir), (mp_obj_t)&motor_Dir_enum},
-    { MP_OBJ_NEW_QSTR(MP_QSTR_Wait), (mp_obj_t)&motor_Wait_enum},  
+    { MP_OBJ_NEW_QSTR(MP_QSTR_Wait), (mp_obj_t)&motor_Wait_enum},
 #endif //PBIO_CONFIG_ENABLE_MOTORS
 };
 
 STATIC MP_DEFINE_CONST_DICT (
-    mp_module_pupdevices_globals,
+    pb_module_pupdevices_globals,
     pupdevices_globals_table
 );
 
-const mp_obj_module_t mp_module_pupdevices = {
+const mp_obj_module_t pb_module_pupdevices = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_pupdevices_globals,
+    .globals = (mp_obj_dict_t*)&pb_module_pupdevices_globals,
 };

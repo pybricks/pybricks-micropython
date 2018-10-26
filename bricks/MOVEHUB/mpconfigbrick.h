@@ -13,11 +13,11 @@
 // Requires about 20K (21312) of flash
 #define MICROPY_FLOAT_IMPL              (MICROPY_FLOAT_IMPL_NONE)
 
-extern const struct _mp_obj_module_t mp_module_hub;
-extern const struct _mp_obj_module_t mp_module_pupdevices;
-extern const struct _mp_obj_module_t mp_module_robotics;
+extern const struct _mp_obj_module_t pb_module_hub;
+extern const struct _mp_obj_module_t pb_module_pupdevices;
+extern const struct _mp_obj_module_t pb_module_robotics;
 
 #define PYBRICKS_PORT_BUILTIN_MODULES \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_hub), (mp_obj_t)&mp_module_hub }, \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_devices), (mp_obj_t)&mp_module_pupdevices }, \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_robotics), (mp_obj_t)&mp_module_robotics },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_hub),         (mp_obj_t)&pb_module_hub },         \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_devices),     (mp_obj_t)&pb_module_pupdevices },  \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_robotics),    (mp_obj_t)&pb_module_robotics },

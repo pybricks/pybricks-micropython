@@ -27,10 +27,10 @@ mp_obj_t robotics_Mechanism_make_new(const mp_obj_type_t *type, size_t n_args, s
     mp_arg_check_num(n_args, n_kw, 3, 3, false);
     robotics_Mechanism_obj_t *self = m_new_obj(robotics_Mechanism_obj_t);
     self->base.type = (mp_obj_type_t*) type;
-    /* 
+    /*
     TODO: below, store the motor object (pointer) instead of the port, equivalent to self.motor = motor
     Currently not (quite) supported by MicroPython unless we modify the attribute handler
-    */    
+    */
     self->port = get_port(args[0]);
     self->targets = MP_OBJ_TO_PTR(args[1]);
     self->speed = mp_obj_get_int(args[2]);
@@ -85,15 +85,15 @@ robotics module tables
 
 STATIC const mp_map_elem_t robotics_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_robotics) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_Mechanism), (mp_obj_t)&robotics_Mechanism_type},    
+    { MP_OBJ_NEW_QSTR(MP_QSTR_Mechanism), (mp_obj_t)&robotics_Mechanism_type},
 };
 
 STATIC MP_DEFINE_CONST_DICT (
-    mp_module_robotics_globals,
+    pb_module_robotics_globals,
     robotics_globals_table
 );
 
-const mp_obj_module_t mp_module_robotics = {
+const mp_obj_module_t pb_module_robotics = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_robotics_globals,
+    .globals = (mp_obj_dict_t*)&pb_module_robotics_globals,
 };

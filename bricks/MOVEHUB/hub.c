@@ -199,11 +199,11 @@ STATIC const mp_map_elem_t hub_globals_table[] = {
 };
 
 STATIC MP_DEFINE_CONST_DICT (
-    mp_module_hub_globals,
+    pb_module_hub_globals,
     hub_globals_table
 );
 
-const mp_obj_module_t mp_module_hub = {
+const mp_obj_module_t pb_module_hub = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_hub_globals,
+    .globals = (mp_obj_dict_t*)&pb_module_hub_globals,
 };
