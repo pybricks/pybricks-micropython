@@ -13,7 +13,7 @@ STATIC const mp_rom_map_elem_t motor_Port_enum_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_S3),   MP_OBJ_NEW_SMALL_INT(PBIO_PORT_3) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_S4),   MP_OBJ_NEW_SMALL_INT(PBIO_PORT_4) },    
 };
-STATIC MP_DEFINE_CONST_ENUM(motor_Port_enum, motor_Port_enum_table);
+STATIC PB_DEFINE_CONST_ENUM(motor_Port_enum, motor_Port_enum_table);
 
 /* Module table */
 
