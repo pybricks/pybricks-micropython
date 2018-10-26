@@ -157,19 +157,19 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_set_light_obj, hub_set_light);
 
 /* Port enum */
 
-STATIC const mp_rom_map_elem_t motor_Port_enum_table[] = {
+STATIC const mp_rom_map_elem_t hub_Port_enum_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_A),   MP_OBJ_NEW_SMALL_INT(PBIO_PORT_A) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_B),   MP_OBJ_NEW_SMALL_INT(PBIO_PORT_B) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_C),   MP_OBJ_NEW_SMALL_INT(PBIO_PORT_C) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_D),   MP_OBJ_NEW_SMALL_INT(PBIO_PORT_D) },
 };
-STATIC PB_DEFINE_CONST_ENUM(motor_Port_enum, motor_Port_enum_table);
+STATIC PB_DEFINE_CONST_ENUM(hub_Port_enum, hub_Port_enum_table);
 
 /* Module table */
 
 STATIC const mp_map_elem_t hub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_hub) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_Port), (mp_obj_t)&motor_Port_enum },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_Port), (mp_obj_t)&hub_Port_enum },
     { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&hub_gpios_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_power_off), (mp_obj_t)&hub_power_off_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_read_adc), (mp_obj_t)&hub_read_adc_obj },
