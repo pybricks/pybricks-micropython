@@ -4,43 +4,28 @@
 
 /* Motor stop enum */
 
-STATIC const mp_rom_map_elem_t motor_Stop_locals_dict_table[] = {
+STATIC const mp_rom_map_elem_t motor_Stop_enum_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_coast),      MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_COAST  ) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_brake),      MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_BRAKE  ) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_hold),       MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_STOP_HOLD   ) },
 };
-MP_DEFINE_CONST_DICT(motor_Stop_locals_dict, motor_Stop_locals_dict_table);
-const mp_obj_type_t motor_Stop_type = {
-    { &mp_type_type },
-    .locals_dict = (mp_obj_dict_t*)&motor_Stop_locals_dict,
-};
-
+MP_DEFINE_CONST_ENUM(motor_Stop_enum, motor_Stop_enum_table);
 
 /* Motor direction enum */
 
-STATIC const mp_rom_map_elem_t motor_Dir_locals_dict_table[] = {
+STATIC const mp_rom_map_elem_t motor_Dir_enum_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_normal),    MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_DIR_NORMAL    ) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_inverted),  MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_DIR_INVERTED  ) },
 };
-MP_DEFINE_CONST_DICT(motor_Dir_locals_dict, motor_Dir_locals_dict_table);
-const mp_obj_type_t motor_Dir_type = {
-    { &mp_type_type },
-    .locals_dict = (mp_obj_dict_t*)&motor_Dir_locals_dict,
-};
+MP_DEFINE_CONST_ENUM(motor_Dir_enum, motor_Dir_enum_table);
 
 /* Motor wait enum */
 
-STATIC const mp_rom_map_elem_t motor_Wait_locals_dict_table[] = {
+STATIC const mp_rom_map_elem_t motor_Wait_enum_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_foreground),  MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_WAIT_WAIT    ) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_background),  MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_WAIT_BACKGROUND  ) },
 };
-MP_DEFINE_CONST_DICT(motor_Wait_locals_dict, motor_Wait_locals_dict_table);
-const mp_obj_type_t motor_Wait_type = {
-    { &mp_type_type },
-    .locals_dict = (mp_obj_dict_t*)&motor_Wait_locals_dict,
-};
-
-
+MP_DEFINE_CONST_ENUM(motor_Wait_enum, motor_Wait_enum_table);
 
 /*
 DCMotor

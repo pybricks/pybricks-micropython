@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <pbio/motorcontrol.h>
 #include <pberror.h>
+#include <objenum.h>
 
 // Extend _mp_obj_type_t with a device_id field.
 typedef struct _mp_obj_type_id_t mp_obj_type_id_t;
@@ -50,6 +51,6 @@ mp_obj_t motor_EncodedMotor_make_new(const mp_obj_type_id_t *type, size_t n_args
 void motor_EncodedMotor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind);
 
 // Motor enum types
-const mp_obj_type_t motor_Stop_type;
-const mp_obj_type_t motor_Wait_type;
-const mp_obj_type_t motor_Dir_type;
+const mp_obj_type_t motor_Stop_enum;
+const mp_obj_type_t motor_Wait_enum;
+const mp_obj_type_t motor_Dir_enum;

@@ -16,9 +16,9 @@ STATIC const mp_map_elem_t pupdevices_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_devices) },
 #if PBIO_CONFIG_ENABLE_MOTORS
     { MP_OBJ_NEW_QSTR(MP_QSTR_InteractiveMotor), (mp_obj_t)&motor_InteractiveMotor_type},
-    { MP_OBJ_NEW_QSTR(MP_QSTR_Stop), (mp_obj_t)&motor_Stop_type},
-    { MP_OBJ_NEW_QSTR(MP_QSTR_Dir), (mp_obj_t)&motor_Dir_type},
-    { MP_OBJ_NEW_QSTR(MP_QSTR_Wait), (mp_obj_t)&motor_Wait_type},  
+    { MP_OBJ_NEW_QSTR(MP_QSTR_Stop), (mp_obj_t)&motor_Stop_enum},
+    { MP_OBJ_NEW_QSTR(MP_QSTR_Dir), (mp_obj_t)&motor_Dir_enum},
+    { MP_OBJ_NEW_QSTR(MP_QSTR_Wait), (mp_obj_t)&motor_Wait_enum},  
 #endif //PBIO_CONFIG_ENABLE_MOTORS
 };
 
