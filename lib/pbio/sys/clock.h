@@ -83,6 +83,18 @@
 #endif
 
 /**
+ * Converts milliseconds to clock ticks, rounding up so that the actual time
+ * span will be >= *msec*.
+ *
+ * \param msec the time in milliseconds
+ *
+ * \return a ::clock_time_t value
+ */
+static inline clock_time_t clock_from_msec(unsigned int msec) {
+  return (CLOCK_SECOND + msec) / msec;
+}
+
+/**
  * Initialize the clock library.
  *
  * This function initializes the clock library and should be called
