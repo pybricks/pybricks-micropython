@@ -35,11 +35,12 @@ STATIC const mp_map_elem_t movehub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_MovehubMotor), (mp_obj_t)&motor_MovehubMotor_type},
 #endif //PBIO_CONFIG_ENABLE_MOTORS    
     /* Common to Powered Up hubs */
+    { MP_OBJ_NEW_QSTR(MP_QSTR_Color), (mp_obj_t)&pup_Color_enum },
     { MP_OBJ_NEW_QSTR(MP_QSTR_batt_volt), (mp_obj_t)&hub_batt_volt_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_batt_cur), (mp_obj_t)&hub_batt_cur_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_power_off), (mp_obj_t)&hub_power_off_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_reboot), (mp_obj_t)&hub_reboot_obj },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_set_light), (mp_obj_t)&hub_set_light_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_light), (mp_obj_t)&hub_set_light_obj },
 #if PYBRICKS_ENABLE_HARDWARE_DEBUG
     { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&hub_gpios_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_read_adc), (mp_obj_t)&hub_read_adc_obj },

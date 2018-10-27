@@ -15,15 +15,17 @@
  * Light color values.
  */
 typedef enum {
-    PBIO_LIGHT_COLOR_NONE,      /**< The light is off */
-    PBIO_LIGHT_COLOR_WHITE,     /**< The light is white */
-    PBIO_LIGHT_COLOR_RED,       /**< The light is red */
-    PBIO_LIGHT_COLOR_ORANGE,    /**< The light is orange */
-    PBIO_LIGHT_COLOR_YELLOW,    /**< The light is yellow */
-    PBIO_LIGHT_COLOR_GREEN,     /**< The light is green */
-    PBIO_LIGHT_COLOR_BLUE,      /**< The light is blue */
-    PBIO_LIGHT_COLOR_PURPLE,    /**< The light is purple */
-    PBIO_LIGHT_COLOR_PINK,      /**< The light is pink */
+    PBIO_LIGHT_COLOR_NONE      = 0,    /**< The light is off */    
+    PBIO_LIGHT_COLOR_PINK      = 1,    /**< TODO: firmware #14 */
+    PBIO_LIGHT_COLOR_PURPLE    = 2,    /**< The light is purple */
+    PBIO_LIGHT_COLOR_BLUE      = 3,    /**< The light is blue */
+    PBIO_LIGHT_COLOR_CYAN      = 4,    /**< The light is cyan (blue with some green) */
+    PBIO_LIGHT_COLOR_TURQUOISE = 5,    /**< The light is turquoise (green with some blue) */
+    PBIO_LIGHT_COLOR_GREEN     = 6,    /**< The light is green */    
+    PBIO_LIGHT_COLOR_YELLOW    = 7,    /**< The light is yellow */    
+    PBIO_LIGHT_COLOR_ORANGE    = 8,    /**< The light is orange */    
+    PBIO_LIGHT_COLOR_RED       = 9,    /**< The light is red */    
+    PBIO_LIGHT_COLOR_WHITE     = 10,   /**< The light is white */    
 } pbio_light_color_t;
 
 /**

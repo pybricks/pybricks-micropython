@@ -18,6 +18,22 @@
 #include "gpio.h"
 #include "modhubcommon.h"
 
+/* Color enum */
+
+STATIC const mp_rom_map_elem_t pup_Color_enum_table[] = {
+    { MP_OBJ_NEW_QSTR(MP_QSTR_none),      MP_OBJ_NEW_SMALL_INT(PBIO_LIGHT_COLOR_NONE)   },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_purple),    MP_OBJ_NEW_SMALL_INT(PBIO_LIGHT_COLOR_PURPLE) },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_blue),      MP_OBJ_NEW_SMALL_INT(PBIO_LIGHT_COLOR_BLUE)   },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_cyan),      MP_OBJ_NEW_SMALL_INT(0) }, // TODO, firmware #14
+    { MP_OBJ_NEW_QSTR(MP_QSTR_turquoise), MP_OBJ_NEW_SMALL_INT(0) }, // TODO, firmware #14
+    { MP_OBJ_NEW_QSTR(MP_QSTR_green),     MP_OBJ_NEW_SMALL_INT(PBIO_LIGHT_COLOR_GREEN)  },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_yellow),    MP_OBJ_NEW_SMALL_INT(PBIO_LIGHT_COLOR_YELLOW) },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_orange),    MP_OBJ_NEW_SMALL_INT(PBIO_LIGHT_COLOR_ORANGE) },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_red),       MP_OBJ_NEW_SMALL_INT(PBIO_LIGHT_COLOR_RED)    },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_white),     MP_OBJ_NEW_SMALL_INT(PBIO_LIGHT_COLOR_WHITE)  },
+};
+PB_DEFINE_CONST_ENUM(pup_Color_enum, pup_Color_enum_table);
+
 static mp_obj_t hub_batt_volt(void) {
     uint16_t volt;
 
@@ -48,49 +64,18 @@ STATIC mp_obj_t hub_reboot(mp_obj_t bootloader) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(hub_reboot_obj, hub_reboot);
 
-STATIC mp_obj_t hub_set_light(mp_obj_t state) {
-
-    if (MP_OBJ_IS_TYPE(state, &mp_type_NoneType)) {
+STATIC mp_obj_t hub_set_light(mp_obj_t color) {
+    pbio_light_color_t color_id = mp_obj_get_int(color);
+    if (color_id < PBIO_LIGHT_COLOR_NONE || color_id > PBIO_LIGHT_COLOR_WHITE) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+    if (color_id == PBIO_LIGHT_COLOR_NONE) {
         pbio_light_off(PBIO_PORT_SELF);
-        return mp_const_none;
     }
-
-    if (MP_OBJ_IS_STR(state)) {
-        qstr color = mp_obj_str_get_qstr(state);
-
-        switch (color) {
-        case MP_QSTR_white:
-            pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_WHITE);
-            break;
-        case MP_QSTR_red:
-            pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_RED);
-            break;
-        case MP_QSTR_orange:
-            pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_ORANGE);
-            break;
-        case MP_QSTR_yellow:
-            pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_YELLOW);
-            break;
-        case MP_QSTR_green:
-            pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_GREEN);
-            break;
-        case MP_QSTR_blue:
-            pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE);
-            break;
-        case MP_QSTR_purple:
-            pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_PURPLE);
-            break;
-        case MP_QSTR_pink:
-            pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_PINK);
-            break;
-        default:
-            mp_raise_ValueError("Unknown color");
-        }
-
-        return mp_const_none;
+    else {
+        pbio_light_on(PBIO_PORT_SELF, color_id);
     }
-
-    mp_raise_TypeError("Must be string or None");
+    return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(hub_set_light_obj, hub_set_light);
 
