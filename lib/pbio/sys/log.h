@@ -34,7 +34,7 @@
 #ifndef LOG_H_
 #define LOG_H_
 
-#include "contiki-conf.h"
+#include "pbio-conf.h"
 
 #if LOG_CONF_ENABLED
 void log_message(const char *part1, const char *part2);
