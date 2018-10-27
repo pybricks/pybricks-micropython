@@ -91,7 +91,7 @@
  * \return a ::clock_time_t value
  */
 static inline clock_time_t clock_from_msec(unsigned int msec) {
-  return (CLOCK_SECOND + msec) / msec;
+  return (msec * CLOCK_SECOND + 999) / 1000;
 }
 
 /**
