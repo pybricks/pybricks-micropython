@@ -34,17 +34,23 @@ STATIC const mp_rom_map_elem_t pup_Color_enum_table[] = {
 };
 PB_DEFINE_CONST_ENUM(pup_Color_enum, pup_Color_enum_table);
 
-STATIC mp_obj_t hub_power_off(void) {
+STATIC mp_obj_t hub_shutdown(void) {
     pbsys_power_off();
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_0(hub_power_off_obj, hub_power_off);
+MP_DEFINE_CONST_FUN_OBJ_0(hub_shutdown_obj, hub_shutdown);
 
-STATIC mp_obj_t hub_reboot(mp_obj_t bootloader) {
-    pbsys_reboot(mp_obj_is_true(bootloader));
+STATIC mp_obj_t hub_reboot() {
+    pbsys_reboot(0);
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_1(hub_reboot_obj, hub_reboot);
+MP_DEFINE_CONST_FUN_OBJ_0(hub_reboot_obj, hub_reboot);
+
+STATIC mp_obj_t hub_update() {
+    pbsys_reboot(1);
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_0(hub_update_obj, hub_update);
 
 STATIC mp_obj_t hub_set_light(mp_obj_t color) {
     pbio_light_color_t color_id = mp_obj_get_int(color);
