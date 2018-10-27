@@ -34,24 +34,6 @@ STATIC const mp_rom_map_elem_t pup_Color_enum_table[] = {
 };
 PB_DEFINE_CONST_ENUM(pup_Color_enum, pup_Color_enum_table);
 
-static mp_obj_t hub_batt_volt(void) {
-    uint16_t volt;
-
-    pb_assert(pbdrv_battery_get_voltage_now(PBIO_PORT_SELF, &volt));
-
-    return mp_obj_new_int(volt);
-}
-MP_DEFINE_CONST_FUN_OBJ_0(hub_batt_volt_obj, hub_batt_volt);
-
-static mp_obj_t hub_batt_cur(void) {
-    uint16_t cur;
-
-    pb_assert(pbdrv_battery_get_current_now(PBIO_PORT_SELF, &cur));
-
-    return mp_obj_new_int(cur);
-}
-MP_DEFINE_CONST_FUN_OBJ_0(hub_batt_cur_obj, hub_batt_cur);
-
 STATIC mp_obj_t hub_power_off(void) {
     pbsys_power_off();
     return mp_const_none;
