@@ -173,19 +173,19 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_set_light_obj, hub_set_light);
 
 /* Port enum */
 
-STATIC const mp_rom_map_elem_t hub_Port_enum_table[] = {
+STATIC const mp_rom_map_elem_t movehub_Port_enum_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_A),   MP_OBJ_NEW_SMALL_INT(PBIO_PORT_A) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_B),   MP_OBJ_NEW_SMALL_INT(PBIO_PORT_B) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_C),   MP_OBJ_NEW_SMALL_INT(PBIO_PORT_C) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_D),   MP_OBJ_NEW_SMALL_INT(PBIO_PORT_D) },
 };
-STATIC PB_DEFINE_CONST_ENUM(hub_Port_enum, hub_Port_enum_table);
+STATIC PB_DEFINE_CONST_ENUM(movehub_Port_enum, movehub_Port_enum_table);
 
 /* Module table */
 
-STATIC const mp_map_elem_t hub_globals_table[] = {
-    { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_hub) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_Port), (mp_obj_t)&hub_Port_enum },
+STATIC const mp_map_elem_t movehub_globals_table[] = {
+    { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_movehub) },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_Port), (mp_obj_t)&movehub_Port_enum },
     { MP_OBJ_NEW_QSTR(MP_QSTR_batt_volt), (mp_obj_t)&hub_batt_volt_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_batt_cur), (mp_obj_t)&hub_batt_cur_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&hub_gpios_obj },
@@ -199,11 +199,11 @@ STATIC const mp_map_elem_t hub_globals_table[] = {
 };
 
 STATIC MP_DEFINE_CONST_DICT (
-    pb_module_hub_globals,
-    hub_globals_table
+    pb_module_movehub_globals,
+    movehub_globals_table
 );
 
-const mp_obj_module_t pb_module_hub = {
+const mp_obj_module_t pb_module_movehub = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&pb_module_hub_globals,
+    .globals = (mp_obj_dict_t*)&pb_module_movehub_globals,
 };
