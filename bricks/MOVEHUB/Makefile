@@ -80,6 +80,7 @@ SRC_S = \
 PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	extmod/pberror.c \
 	extmod/modpupdevices.c \
+	extmod/modhubcommon.c \
 	)
 
 ifneq (,$(findstring DPBIO_CONFIG_ENABLE_MOTORS,$(PBIO_OPT)))
