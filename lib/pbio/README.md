@@ -25,6 +25,8 @@ The `include/pbio` directory contains the public header files for the main libra
 The `include/pbsys` directory contains the public header files for the
 system-level library functions.
 
+The `platform` directory contains platform-specific code.
+
 The `src` directory contains the main library source code.
 
 The `sys` directory contains platform-specific code used when this library is

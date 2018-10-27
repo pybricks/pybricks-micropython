@@ -72,7 +72,7 @@ SRC_C = \
 	lib/mp-readline/readline.c \
 
 SRC_S = \
-	ports/pybricks/lib/pbio/sys/move_hub/startup_stm32f070xb.s \
+	ports/pybricks/lib/pbio/platform/move_hub/startup_stm32f070xb.s \
 	ports/stm32/gchelper_m0.s \
 
 # Pybricks modules
@@ -107,13 +107,13 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	drv/move_hub/motor.c \
 	drv/move_hub/time.c \
 	drv/move_hub/uart.c \
+	platform/move_hub/sys.c \
 	src/dcmotor.c \
 	src/encmotor.c \
 	src/error.c \
 	src/motorcontrol.c \
 	src/light.c \
 	src/main.c \
-	sys/move_hub/sys.c \
 	)
 
 SRC_LIBM = $(addprefix lib/libm/,\
