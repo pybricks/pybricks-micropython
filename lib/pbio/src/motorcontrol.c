@@ -1,7 +1,8 @@
 #include <pbio/motorcontrol.h>
-#include <pbdrv/time.h>
 #include <stdlib.h>
 #include <math.h>
+
+#include "sys/clock.h"
 
 #define NONE (0) // A "don't care" constant for readibility of the code, but which is never used after assignment
 #define NONZERO (100) // Arbitrary nonzero speed
@@ -80,7 +81,7 @@ typedef enum {
     TIME_NOT_INITIALIZED,
     /**< Anti-windup status for PID position control:
          Pause the position and speed trajectory when
-         the motor is stalled by pausing time. */ 
+         the motor is stalled by pausing time. */
     TIME_PAUSED,
     TIME_RUNNING,
     /**< Anti-windup status for PI speed control:
@@ -131,7 +132,7 @@ void stall_set_flag_if_slow(stalled_status_t *stalled, rate_t rate_now, rate_t r
     else {
         // Otherwise we are not yet stalled, so clear this flag.
         *stalled &= ~flag;
-    }                 
+    }
 }
 
 // Clear the specified stall flag
@@ -169,7 +170,7 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
                                    pbio_motor_after_stop_t after_stop){
 
     // Read the current system state for this motor
-    ustime_t time_start = pbdrv_time_get_usec();
+    ustime_t time_start = clock_usecs();
     count_t count_start;
     rate_t rate_start;
     pbio_encmotor_get_encoder_count(port, &count_start);
@@ -427,7 +428,7 @@ void control_update(pbio_port_t port){
     duty_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative;
 
     // Read current state of this motor: current time, speed, and position
-    time_now = pbdrv_time_get_usec();
+    time_now = clock_usecs();
     pbio_encmotor_get_encoder_count(port, &count_now);
     pbio_encmotor_get_encoder_rate(port, &rate_now);
 
@@ -578,7 +579,7 @@ void control_update(pbio_port_t port){
         // Limit the duty due to the integral, as well as the integral itself
         if (duty_due_to_integral > max_duty) {
             // If we are additionally also running slower than the specified stall speed limit, set status to stalled
-            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_rate_limit, STALLED_INTEGRAL);            
+            stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_rate_limit, STALLED_INTEGRAL);
             duty_due_to_integral = max_duty;
             status->err_integral = (US_PER_SECOND/settings->pid_ki)*max_duty;
         }

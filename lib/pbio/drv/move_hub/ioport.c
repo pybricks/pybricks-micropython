@@ -2,7 +2,6 @@
 #include <stdio.h>
 
 #include <pbdrv/config.h>
-#include <pbdrv/time.h>
 #include <pbio/error.h>
 
 #include "stm32f070xb.h"

@@ -33,16 +33,16 @@
 #include "py/mpconfig.h"
 
 // using private pbdrv variable
-extern volatile uint32_t pbdrv_time_msec_ticks;
+extern volatile uint32_t clock_time_ticks;
 
 // Core delay function that does an efficient sleep and may switch thread context.
 // If IRQs are enabled then we must have the GIL.
 void mp_hal_delay_ms(mp_uint_t Delay) {
     if (__get_PRIMASK() == 0) {
         // IRQs enabled, so can use systick counter to do the delay
-        uint32_t start = pbdrv_time_msec_ticks;
+        uint32_t start = clock_time_ticks;
         // Wraparound of tick is taken care of by 2's complement arithmetic.
-        while (pbdrv_time_msec_ticks - start < Delay) {
+        while (clock_time_ticks - start < Delay) {
             // This macro will execute the necessary idle behaviour.  It may
             // raise an exception, switch threads or enter sleep mode (waiting for
             // (at least) the SysTick interrupt).

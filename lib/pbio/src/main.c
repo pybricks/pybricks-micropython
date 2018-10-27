@@ -11,11 +11,11 @@
 #include <pbdrv/light.h>
 #include <pbdrv/ioport.h>
 #include <pbdrv/motor.h>
-#include <pbdrv/time.h>
 #include <pbdrv/uart.h>
 #include <pbsys/sys.h>
 #include <pbio/motorcontrol.h>
 
+#include "sys/clock.h"
 #include "sys/process.h"
 
 static uint32_t prev_fast_poll_time;
@@ -27,6 +27,7 @@ static uint32_t prev_slow_poll_time;
  * the library.
  */
 void pbio_init(void) {
+    clock_init();
     process_init();
     _pbdrv_adc_init();
     _pbdrv_bluetooth_init();
@@ -45,7 +46,7 @@ void pbio_init(void) {
  * @return      The number of still-pending events.
  */
 int pbio_do_one_event(void) {
-    uint32_t now = pbdrv_time_get_msec();
+    clock_time_t now = clock_time();
 
     // pbio_do_one_event() can be called quite frequently (e.g. in a tight loop) so we
     // don't want to call all of the subroutines unless enough time has

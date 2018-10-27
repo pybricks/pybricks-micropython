@@ -1,7 +1,7 @@
-#include <pbdrv/time.h>
+#include "sys/clock.h"
 
 void mp_hal_set_interrupt_char(int c);
-#define mp_hal_ticks_ms pbdrv_time_get_msec
-#define mp_hal_ticks_us pbdrv_time_get_usec
-#define mp_hal_delay_us pbdrv_time_delay_usec
+#define mp_hal_ticks_ms clock_time
+#define mp_hal_ticks_us clock_usecs
+#define mp_hal_delay_us clock_delay_usec
 #define mp_hal_ticks_cpu() 0

@@ -123,6 +123,13 @@ CCIF clock_time_t clock_time(void);
 CCIF unsigned long clock_seconds(void);
 
 /**
+ * Get the current value of the platform microseconds.
+ *
+ * \return The value.
+ */
+CCIF unsigned long clock_usecs(void);
+
+/**
  * Set the value of the platform seconds.
  * \param sec   The value to set.
  *

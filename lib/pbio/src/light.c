@@ -6,7 +6,6 @@
 #include <pbio/port.h>
 
 #include <pbdrv/light.h>
-#include <pbdrv/time.h>
 
 typedef struct {
     pbio_light_pattern_t pattern;

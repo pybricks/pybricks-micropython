@@ -2,23 +2,24 @@
 #include <stdint.h>
 #include <unistd.h>
 
-uint32_t pbdrv_time_get_msec() {
+#include "sys/clock.h"
+
+void clock_init(void) {
+}
+
+clock_time_t clock_time() {
     struct timespec time_val;
     clock_gettime(CLOCK_MONOTONIC_RAW, &time_val);
     return (time_val.tv_sec*1000 + time_val.tv_nsec / 1000000);
 }
 
-uint32_t pbdrv_time_get_usec() {
+unsigned long clock_usecs() {
     struct timespec time_val;
     clock_gettime(CLOCK_MONOTONIC_RAW, &time_val);
     return (time_val.tv_sec*1000000 + time_val.tv_nsec / 1000);
 }
 
-void pbdrv_time_sleep_msec(uint32_t duration){
-    usleep(duration*1000);
-}
-
-void pbdrv_time_delay_usec(uint32_t duration){
+void clock_delay_usec(uint16_t duration){
     // FIXME: is there a way to busy-wait on Linux? maybe call clock_gettime() in a loop?
     usleep(duration);
 }

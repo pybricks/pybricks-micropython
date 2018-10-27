@@ -4,13 +4,13 @@
 #include <pbdrv/battery.h>
 #include <pbdrv/config.h>
 #include <pbdrv/light.h>
-#include <pbdrv/time.h>
 
 #include <pbio/button.h>
 #include <pbio/dcmotor.h>
 #include <pbio/light.h>
 
 #include <pbsys/sys.h>
+#include "sys/clock.h"
 
 #include "stm32f070xb.h"
 
@@ -104,9 +104,9 @@ void pbsys_power_off(void) {
     // blink pattern like LEGO firmware
     for (i = 0; i < 3; i++) {
         pbdrv_light_set_rgb(PBIO_PORT_SELF, 255, 140, 60); // white
-        pbdrv_time_delay_usec(50000);
+        clock_delay_usec(50000);
         pbdrv_light_set_rgb(PBIO_PORT_SELF, 0, 0, 0);
-        pbdrv_time_delay_usec(30000);
+        clock_delay_usec(30000);
     }
 
     // PWM doesn't work while IRQs are disabled? so this needs to be after
@@ -136,7 +136,9 @@ void _pbsys_poll(uint32_t now) {
             if (now - button_press_start_time > 5000) {
                 // turn off light briefly like official LEGO firmware
                 pbdrv_light_set_rgb(PBIO_PORT_SELF, 0, 0, 0);
-                pbdrv_time_delay_usec(580000);
+                for (int i = 0; i < 10; i++) {
+                    clock_delay_usec(58000);
+                }
 
                 pbsys_power_off();
             }
@@ -244,7 +246,4 @@ void SystemInit(void) {
 
     // this maps SRAM to 0x00000000
     SYSCFG->CFGR1 = (SYSCFG->CFGR1 & ~SYSCFG_CFGR1_MEM_MODE_Msk) | (3 << SYSCFG_CFGR1_MEM_MODE_Pos);
-
-    // SysTick set for 1ms ticks
-    SysTick_Config(PBDRV_CONFIG_SYS_CLOCK_RATE / 1000);
 }

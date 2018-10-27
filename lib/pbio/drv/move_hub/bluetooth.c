@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <pbdrv/time.h>
 #include "sys/pt.h"
 
 #include "bluenrg_aci.h"

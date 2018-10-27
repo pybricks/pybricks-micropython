@@ -1,26 +1,60 @@
 // SPDX-License-Identifier: MIT
 // This file is based on the STM32 SysTick code from MicroPython
-// Copyright (c) 2013, 2014 Damien P. George 
+
+/*
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2013, 2014 Damien P. George
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 
 #include <pbdrv/config.h>
 
+#include "sys/clock.h"
+
 #include "stm32f070xb.h"
 
-volatile uint32_t pbdrv_time_msec_ticks;
+#if CLOCK_CONF_SECOND != 1000
+#error Clock must be set to 1 msec ticks
+#endif
 
-uint32_t pbdrv_time_get_msec() {
-    return pbdrv_time_msec_ticks;
+volatile clock_time_t clock_time_ticks;
+
+void clock_init(void) {
+    // SysTick set for 1ms ticks
+    SysTick_Config(PBDRV_CONFIG_SYS_CLOCK_RATE / 1000);
+}
+
+clock_time_t clock_time() {
+    return clock_time_ticks;
 }
 
 // The SysTick timer counts down at 168 MHz, so we can use that knowledge
 // to grab a microsecond counter.
-uint32_t pbdrv_time_get_usec(void) {
+uint32_t clock_usecs(void) {
     uint32_t irq_state, counter, msec, status;
 
     irq_state = __get_PRIMASK();
     __disable_irq();
     counter = SysTick->VAL;
-    msec = pbdrv_time_msec_ticks;
+    msec = clock_time_ticks;
     status = SysTick->CTRL;
     __set_PRIMASK(irq_state);
 
@@ -46,11 +80,11 @@ uint32_t pbdrv_time_get_usec(void) {
 }
 
 // delay for given number of microseconds
-void pbdrv_time_delay_usec(uint32_t usec) {
+void clock_delay_usec(uint16_t usec) {
     if (__get_PRIMASK() == 1) {
         // IRQs enabled, so can use systick counter to do the delay
-        uint32_t start = pbdrv_time_get_usec();
-        while (pbdrv_time_get_usec() - start < usec) {
+        uint32_t start = clock_usecs();
+        while (clock_usecs() - start < usec) {
         }
     } else {
         // IRQs disabled, so need to use a busy loop for the delay
@@ -62,10 +96,10 @@ void pbdrv_time_delay_usec(uint32_t usec) {
 }
 
 void SysTick_Handler(void) {
-    pbdrv_time_msec_ticks++;
+    clock_time_ticks++;
 
     // Read the systick control regster. This has the side effect of clearing
-    // the COUNTFLAG bit, which makes the logic in pbdrv_time_get_usec
+    // the COUNTFLAG bit, which makes the logic in clock_usecs
     // work properly.
     SysTick->CTRL;
 }
