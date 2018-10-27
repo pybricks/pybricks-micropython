@@ -117,7 +117,10 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	src/motorcontrol.c \
 	src/light.c \
 	src/main.c \
+	sys/autostart.c \
+	sys/etimer.c \
 	sys/process.c \
+	sys/timer.c \
 	)
 
 SRC_LIBM = $(addprefix lib/libm/,\

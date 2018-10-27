@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "sys/autostart.h"
+#include "sys/etimer.h"
+#include "sys/process.h"
 #include "sys/pt.h"
 
 #include "bluenrg_aci.h"
@@ -68,9 +71,10 @@ static uint16_t conn_handle;
 static uint16_t uart_service_handle, uart_rx_char_handle, uart_tx_char_handle;
 
 
-// protothreads for background tasks
-static struct pt spi_pt;
-static struct pt bluetooth_pt;
+PROCESS(bluetooth_process, "Bluetooth");
+PROCESS(spi_process, "Bluetooth SPI");
+
+AUTOSTART_PROCESSES(&bluetooth_process, &spi_process);
 
 void _pbdrv_bluetooth_init(void) {
     // put Bluetooth chip into reset
@@ -139,9 +143,6 @@ void _pbdrv_bluetooth_init(void) {
     EXTI->FTSR |= EXTI_FTSR_FT2;
     NVIC_SetPriority(EXTI2_3_IRQn, 128);
     NVIC_EnableIRQ(EXTI2_3_IRQn);
-
-    PT_INIT(&spi_pt);
-    PT_INIT(&bluetooth_pt);
 }
 
 // overrides weak function in start_*.S
@@ -155,6 +156,7 @@ void DMA1_Channel4_5_IRQHandler(void) {
 
         // notify that SPI xfer is complete
         spi_xfer_complete = true;
+        process_poll(&spi_process);
     }
 }
 
@@ -164,6 +166,8 @@ void EXTI2_3_IRQHandler(void) {
 
     // clear the interrupt
     EXTI->PR = EXTI_PR_PR2;
+
+    process_poll(&spi_process);
 }
 
 static inline void spi_enable_cs() {
@@ -266,6 +270,8 @@ static void handle_event(hci_event_pckt *event) {
         }
         break;
     }
+
+    process_post_synch(&bluetooth_process, PROCESS_EVENT_NONE, NULL);
 }
 
 // read message from BlueNRG chip
@@ -276,6 +282,11 @@ static PT_THREAD(spi_read(struct pt *pt)) {
     PT_BEGIN(pt);
 
 retry:
+    if (!spi_irq) {
+        // if SPI_IRQ went away, reading will fail, so don't try
+        goto end;
+    }
+
     spi_enable_cs();
 
     // send the read header
@@ -302,6 +313,7 @@ retry:
     }
     // TODO: do we need to handle ACL packets (HCI_ACLDATA_PKT)?
 
+end: ;
     PT_END(pt);
 }
 
@@ -333,28 +345,29 @@ retry:
 
     // set to 0 to indicate that xfer is complete
     write_xfer_size = 0;
+    process_post_synch(&bluetooth_process, PROCESS_EVENT_NONE, NULL);
 
     PT_END(pt);
 }
 
-static PT_THREAD(spi_thread(uint32_t now)) {
+PROCESS_THREAD(spi_process, ev, data) {
     static struct pt child_pt;
 
-    PT_BEGIN(&spi_pt);
+    PROCESS_BEGIN();
 
-    // if there is a pending read message
-    if (spi_irq) {
-        PT_SPAWN(&spi_pt, &child_pt, spi_read(&child_pt));
+    while (1) {
+        PROCESS_WAIT_UNTIL(spi_irq || write_xfer_size);
+        // if there is a pending read message
+        if (spi_irq) {
+            PROCESS_PT_SPAWN(&child_pt, spi_read(&child_pt));
+        }
+        // if there is a pending write message
+        else if (write_xfer_size) {
+            PROCESS_PT_SPAWN(&child_pt, spi_write(&child_pt));
+        }
     }
-    // if there is a pending write message
-    else if (write_xfer_size) {
-        PT_SPAWN(&spi_pt, &child_pt, spi_write(&child_pt));
-    }
 
-    // loop forever
-    PT_RESTART(&spi_pt);
-
-    PT_END(&spi_pt);
+    PROCESS_END();
 }
 
 // implements function for BlueNRG library
@@ -370,6 +383,7 @@ void hci_send_req(struct hci_request *r) {
     write_xfer_size = HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE + r->clen;
 
     hci_command_complete = false;
+    process_post_synch(&spi_process, PROCESS_EVENT_NONE, NULL);
 }
 
 // implements function for BlueNRG library
@@ -552,51 +566,46 @@ retry:
     PT_END(pt);
 }
 
-static PT_THREAD(bluetooth_thread(uint32_t now)) {
-    static uint32_t start_time;
+PROCESS_THREAD(bluetooth_process, ev, data) {
+    static struct etimer timer;
     static struct pt child_pt;
 
-    PT_BEGIN(&bluetooth_pt)
+    PROCESS_BEGIN();
 
-    start_time = now;
+    while (true) {
+        // make sure the Bluetooth chip is in reset long enough to actually reset
+        etimer_set(&timer, clock_from_msec(10));
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
 
-    // make sure the Bluetooth chip is in reset long enough to actually reset
-    PT_WAIT_UNTIL(&bluetooth_pt, now - start_time >= 10);
+        // take Bluetooth chip out of reset
+        GPIOB->BSRR = GPIO_BSRR_BS_6;
 
-    // take Bluetooth chip out of reset
-    GPIOB->BSRR = GPIO_BSRR_BS_6;
+        // wait for the Bluetooth chip to send the reset reason event so we know it is ready
+        PROCESS_WAIT_UNTIL(reset_reason);
 
-    // wait for the Bluetooth chip to send the reset reason event so we know it is ready
-    PT_WAIT_UNTIL(&bluetooth_pt, reset_reason);
+        PROCESS_PT_SPAWN(&child_pt, hci_init(&child_pt));
+        PROCESS_PT_SPAWN(&child_pt, init_uart_service(&child_pt));
+        PROCESS_PT_SPAWN(&child_pt, set_discoverable(&child_pt));
 
-    PT_SPAWN(&bluetooth_pt, &child_pt, hci_init(&child_pt));
-    PT_SPAWN(&bluetooth_pt, &child_pt, init_uart_service(&child_pt));
-    PT_SPAWN(&bluetooth_pt, &child_pt, set_discoverable(&child_pt));
+        // TODO: we should have a timeout and stop scanning eventually
+        PROCESS_WAIT_UNTIL(conn_handle);
 
-    // TODO: we should have a timeout and stop scanning eventually
-    PT_WAIT_UNTIL(&bluetooth_pt, conn_handle);
+        etimer_set(&timer, CLOCK_SECOND);
 
-    // conn_handle is set to 0 upon disconnection
-    while (conn_handle) {
-        // TODO: send out UART Tx data here
-        start_time = now;
-        PT_WAIT_UNTIL(&bluetooth_pt, now - start_time > 1000);
-        #define HELLO_STR "Hello!"
-        PT_SPAWN(&bluetooth_pt, &child_pt, uart_service_send_data(&child_pt, HELLO_STR, strlen(HELLO_STR)));
+        // conn_handle is set to 0 upon disconnection
+        while (conn_handle) {
+            // TODO: send out UART Tx data here
+            PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+            etimer_reset(&timer);
+            #define HELLO_STR "Hello!"
+            PROCESS_PT_SPAWN(&child_pt, uart_service_send_data(&child_pt, HELLO_STR, strlen(HELLO_STR)));
+        }
+
+        // reset Bluetooth chip
+        GPIOB->BRR = GPIO_BRR_BR_6;
     }
 
-    // reset Bluetooth chip
-    GPIOB->BRR = GPIO_BRR_BR_6;
-
-    // loop forever
-    PT_RESTART(&bluetooth_pt);
-
-    PT_END(&bluetooth_pt);
-}
-
-void _pbdrv_bluetooth_poll(uint32_t now) {
-    spi_thread(now);
-    bluetooth_thread(now);
+    PROCESS_END();
 }
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT

@@ -15,7 +15,9 @@
 #include <pbsys/sys.h>
 #include <pbio/motorcontrol.h>
 
+#include "sys/autostart.h"
 #include "sys/clock.h"
+#include "sys/etimer.h"
 #include "sys/process.h"
 
 static uint32_t prev_fast_poll_time;
@@ -37,6 +39,8 @@ void pbio_init(void) {
     _pbdrv_motor_init();
     _pbdrv_uart_init();
     _pbsys_init();
+    process_start(&etimer_process, NULL);
+    autostart_start(autostart_processes);
 }
 
 /**
@@ -63,9 +67,6 @@ int pbio_do_one_event(void) {
         prev_slow_poll_time = now;
     }
 
-    // Bluetooth needs < 1ms polling
-    _pbdrv_bluetooth_poll(now);
-
     return process_run();
 }
 
@@ -76,6 +77,7 @@ int pbio_do_one_event(void) {
  * functions may be called after this.
  */
 void pbio_deinit(void) {
+    autostart_exit(autostart_processes);
     _pbdrv_uart_deinit();
     _pbdrv_motor_deinit();
     _pbdrv_light_deinit();

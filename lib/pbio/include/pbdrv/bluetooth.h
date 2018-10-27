@@ -22,8 +22,6 @@
  */
 void _pbdrv_bluetooth_init(void);
 
-void _pbdrv_bluetooth_poll(uint32_t now);
-
 /**
  * Releases the low level bluetooth driver. No bluetooth functions can be called after
  * calling this function.
@@ -39,7 +37,6 @@ static inline void _pbdrv_bluetooth_deinit(void) { }
 #else // PBDRV_CONFIG_BLUETOOTH
 
 static inline void _pbdrv_bluetooth_init(void) { }
-static inline void _pbdrv_bluetooth_poll(uint32_t now) { }
 static inline void _pbdrv_bluetooth_deinit(void) { }
 
 #endif // PBDRV_CONFIG_BLUETOOTH

@@ -28,6 +28,7 @@
 #include <pbdrv/config.h>
 
 #include "sys/clock.h"
+#include "sys/etimer.h"
 
 #include "stm32f070xb.h"
 
@@ -102,4 +103,6 @@ void SysTick_Handler(void) {
     // the COUNTFLAG bit, which makes the logic in clock_usecs
     // work properly.
     SysTick->CTRL;
+
+    etimer_request_poll();
 }
