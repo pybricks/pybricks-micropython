@@ -29,5 +29,4 @@ The `platform` directory contains platform-specific code.
 
 The `src` directory contains the main library source code.
 
-The `sys` directory contains platform-specific code used when this library is
-used as the "operating system" for a programmable brick.
+The `sys` directory contains the core "operating system" code.

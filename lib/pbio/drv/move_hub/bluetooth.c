@@ -5,12 +5,12 @@
 #include <string.h>
 
 #include <pbdrv/time.h>
+#include "sys/pt.h"
 
 #include "bluenrg_aci.h"
 #include "bluenrg_gap.h"
 #include "hci_le.h"
 #include "hci_tl.h"
-#include "pt.h"
 #include "stm32f070xb.h"
 
 // name used for standard GAP device name characteristic
