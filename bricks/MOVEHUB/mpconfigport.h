@@ -128,8 +128,8 @@ static inline mp_uint_t disable_irq(void) {
 
 #define MICROPY_VM_HOOK_LOOP \
     do { \
-        extern void pbio_poll(void); \
-        pbio_poll(); \
+        extern int pbio_do_one_event(void); \
+        pbio_do_one_event(); \
     } while (0);
 
 #define MICROPY_EVENT_POLL_HOOK \
@@ -137,7 +137,8 @@ static inline mp_uint_t disable_irq(void) {
         extern void mp_handle_pending(void); \
         mp_handle_pending(); \
         SOCKET_POLL \
-        MICROPY_VM_HOOK_LOOP \
+        extern int pbio_do_one_event(void); \
+        while (pbio_do_one_event()) { } \
         __WFI(); \
     } while (0);
 

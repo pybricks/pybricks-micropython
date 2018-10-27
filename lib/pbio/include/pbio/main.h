@@ -3,7 +3,7 @@
 #define _PBIO_MAIN_H_
 
 void pbio_init(void);
-void pbio_poll(void);
+int pbio_do_one_event(void);
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
 void pbio_deinit(void);

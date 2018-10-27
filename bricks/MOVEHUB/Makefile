@@ -20,6 +20,7 @@ INC += -I$(TOP)/lib/cmsis/inc
 INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32F0xx/Include
 INC += -I$(TOP)/ports/pybricks/lib/pbio/drv/move_hub
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
+INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/move_hub
 INC += -I$(TOP)/ports/pybricks/lib/pbio
 INC += -I$(TOP)/ports/pybricks/lib/BlueNRG-MS/includes
 INC += -I$(TOP)/ports/pybricks/extmod
@@ -114,6 +115,7 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	src/motorcontrol.c \
 	src/light.c \
 	src/main.c \
+	sys/process.c \
 	)
 
 SRC_LIBM = $(addprefix lib/libm/,\

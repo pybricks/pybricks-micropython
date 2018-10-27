@@ -101,7 +101,7 @@ static void wait_for_button_press(void) {
                 break;
             }
         }
-        pbio_poll();
+        while (pbio_do_one_event()) { }
         __WFI();
     }
 

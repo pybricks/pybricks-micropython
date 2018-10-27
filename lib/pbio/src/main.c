@@ -16,6 +16,8 @@
 #include <pbsys/sys.h>
 #include <pbio/motorcontrol.h>
 
+#include "sys/process.h"
+
 static uint32_t prev_fast_poll_time;
 static uint32_t prev_slow_poll_time;
 
@@ -25,6 +27,7 @@ static uint32_t prev_slow_poll_time;
  * the library.
  */
 void pbio_init(void) {
+    process_init();
     _pbdrv_adc_init();
     _pbdrv_bluetooth_init();
     _pbdrv_button_init();
@@ -37,12 +40,14 @@ void pbio_init(void) {
 
 /**
  * Checks for and performs pending background tasks. This function is meant to
- * be called once every millisecond in an event loop.
+ * be called as frequently as possible. To conserve power, you an wait for an
+ * interrupt after all events have been processed (i.e. return value is 0).
+ * @return      The number of still-pending events.
  */
-void pbio_poll(void) {
+int pbio_do_one_event(void) {
     uint32_t now = pbdrv_time_get_msec();
 
-    // pbio_poll() can be called quite frequently (e.g. in a tight loop) so we
+    // pbio_do_one_event() can be called quite frequently (e.g. in a tight loop) so we
     // don't want to call all of the subroutines unless enough time has
     // actually elapsed to do something useful.
     if (now - prev_fast_poll_time >= 2) {
@@ -59,6 +64,8 @@ void pbio_poll(void) {
 
     // Bluetooth needs < 1ms polling
     _pbdrv_bluetooth_poll(now);
+
+    return process_run();
 }
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT

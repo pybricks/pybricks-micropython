@@ -44,9 +44,9 @@ static void *task_caller(void *arg)
     configure_timer_thread(PERIOD_MS, &info);
     while (!stopping_thread) {
         MP_THREAD_GIL_ENTER();
-        _pbio_motorcontrol_poll(); // TODO: use the actual pbio_poll instead
+        _pbio_motorcontrol_poll(); // TODO: use the actual pbio_do_one_event instead
         MP_THREAD_GIL_EXIT();
-        wait_period(&info); // TODO: use pbio_poll approach (early return if called too often) instead of waiting here
+        wait_period(&info); // TODO: use pbio_do_one_event approach (early return if called too often) instead of waiting here
     }
     // Signal that shutdown is complete
     stopping_thread = false;
