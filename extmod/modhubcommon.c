@@ -94,6 +94,7 @@ STATIC mp_obj_t hub_set_light(mp_obj_t state) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(hub_set_light_obj, hub_set_light);
 
+#if PYBRICKS_ENABLE_HARDWARE_DEBUG
 STATIC mp_obj_t hub_gpios(mp_obj_t bank, mp_obj_t pin, mp_obj_t action) {
     GPIO_TypeDef *gpio;
     uint8_t pin_idx;
@@ -157,3 +158,4 @@ STATIC mp_obj_t hub_read_adc(mp_obj_t ch) {
     return mp_obj_new_int(value);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(hub_read_adc_obj, hub_read_adc);
+#endif //PYBRICKS_ENABLE_HARDWARE_DEBUG

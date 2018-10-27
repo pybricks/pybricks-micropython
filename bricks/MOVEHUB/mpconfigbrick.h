@@ -13,6 +13,10 @@
 // Requires about 20K (21312) of flash
 #define MICROPY_FLOAT_IMPL              (MICROPY_FLOAT_IMPL_NONE)
 
+// Set to (1) to enable user access to GPIO and ADC. Set to (0) to disable
+// Requires about 360 bytes of flash
+#define PYBRICKS_ENABLE_HARDWARE_DEBUG (0)
+
 extern const struct _mp_obj_module_t pb_module_movehub;
 extern const struct _mp_obj_module_t pb_module_pupdevices;
 extern const struct _mp_obj_module_t pb_module_robotics;

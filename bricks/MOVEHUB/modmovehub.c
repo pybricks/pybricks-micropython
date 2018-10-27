@@ -37,11 +37,13 @@ STATIC const mp_map_elem_t movehub_globals_table[] = {
     /* Common to Powered Up hubs */
     { MP_OBJ_NEW_QSTR(MP_QSTR_batt_volt), (mp_obj_t)&hub_batt_volt_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_batt_cur), (mp_obj_t)&hub_batt_cur_obj },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&hub_gpios_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_power_off), (mp_obj_t)&hub_power_off_obj },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_read_adc), (mp_obj_t)&hub_read_adc_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_reboot), (mp_obj_t)&hub_reboot_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_set_light), (mp_obj_t)&hub_set_light_obj },
+#if PYBRICKS_ENABLE_HARDWARE_DEBUG
+    { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&hub_gpios_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_read_adc), (mp_obj_t)&hub_read_adc_obj },
+#endif //PYBRICKS_ENABLE_HARDWARE_DEBUG
 };
 
 STATIC MP_DEFINE_CONST_DICT (
