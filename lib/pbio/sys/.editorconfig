@@ -1,0 +1,5 @@
+
+[*.{c,h}]
+indent_size = 2
+indent_style = space
+tab_width = 8
