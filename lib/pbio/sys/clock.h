@@ -132,14 +132,6 @@ void clock_wait(clock_time_t t);
  */
 void clock_delay_usec(uint16_t dt);
 
-/**
- * Deprecated platform-specific routines.
- *
- */
-int clock_fine_max(void);
-unsigned short clock_fine(void);
-void clock_delay(unsigned int delay);
-
 #endif /* CLOCK_H_ */
 
 /** @} */
