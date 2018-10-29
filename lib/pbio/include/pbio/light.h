@@ -23,7 +23,6 @@ typedef enum {
     PBIO_LIGHT_COLOR_GREEN,     /**< The light is green */
     PBIO_LIGHT_COLOR_BLUE,      /**< The light is blue */
     PBIO_LIGHT_COLOR_PURPLE,    /**< The light is purple */
-    PBIO_LIGHT_COLOR_PINK,      /**< The light is pink */
 } pbio_light_color_t;
 
 /**
