@@ -5,12 +5,11 @@
 /* Movehub builtin motors */
 
 #if PBIO_CONFIG_ENABLE_MOTORS
-const mp_obj_type_id_t motor_MovehubMotor_type = {
+const mp_obj_type_t motor_MovehubMotor_type = {
     { &mp_type_type },
     .name = MP_QSTR_MovehubMotor,
-    .device_id = PBIO_ID_PUP_MOVEHUB_MOTOR,
-    .print = motor_EncodedMotor_print,
-    .make_new = motor_EncodedMotor_make_new,
+    .print = motor_Motor_print,
+    .make_new = motor_Motor_make_new,
     .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
 };
 #endif //PBIO_CONFIG_ENABLE_MOTORS
