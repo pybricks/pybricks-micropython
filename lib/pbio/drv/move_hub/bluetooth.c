@@ -74,14 +74,16 @@ static uint16_t uart_service_handle, uart_rx_char_handle, uart_tx_char_handle;
 PROCESS(pbdrv_bluetooth_hci_process, "Bluetooth HCI");
 PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
 
-void _pbdrv_bluetooth_init(void) {
+static void bluetooth_init() {
     // put Bluetooth chip into reset
 
     // nRESET
     // set PB6 output low
     GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
     GPIOB->BRR = GPIO_BRR_BR_6;
+}
 
+static void spi_init() {
     // SPI2 pin mux
 
     // SPI_CS
@@ -142,6 +144,24 @@ void _pbdrv_bluetooth_init(void) {
     NVIC_SetPriority(EXTI2_3_IRQn, 128);
     NVIC_EnableIRQ(EXTI2_3_IRQn);
 }
+
+#ifdef PBIO_CONFIG_ENABLE_DEINIT
+static void bluetooth_deinit() {
+    // nRESET
+    // set PB6 output low
+    GPIOB->BRR = GPIO_BRR_BR_6;
+}
+
+static void spi_deinit() {
+    NVIC_DisableIRQ(EXTI2_3_IRQn);
+
+    // TODO: need to make sure SPI2 is not busy
+    NVIC_DisableIRQ(DMA1_Channel4_5_IRQn);
+}
+#else // PBIO_CONFIG_ENABLE_DEINIT
+#undef PROCESS_EXITHANDLER
+#define PROCESS_EXITHANDLER(x)
+#endif // PBIO_CONFIG_ENABLE_DEINIT
 
 // overrides weak function in start_*.S
 void DMA1_Channel4_5_IRQHandler(void) {
@@ -351,9 +371,13 @@ retry:
 PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
     static struct pt child_pt;
 
+    PROCESS_EXITHANDLER(spi_deinit());
+
     PROCESS_BEGIN();
 
-    while (1) {
+    spi_init();
+
+    while (true) {
         PROCESS_WAIT_UNTIL(spi_irq || write_xfer_size);
         // if there is a pending read message
         if (spi_irq) {
@@ -568,7 +592,11 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
     static struct etimer timer;
     static struct pt child_pt;
 
+    PROCESS_EXITHANDLER(bluetooth_deinit());
+
     PROCESS_BEGIN();
+
+    bluetooth_init();
 
     while (true) {
         // make sure the Bluetooth chip is in reset long enough to actually reset
@@ -605,16 +633,3 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
 
     PROCESS_END();
 }
-
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
-void _pbdrv_bluetooth_deinit(void) {
-    NVIC_DisableIRQ(EXTI2_3_IRQn);
-
-    // TODO: need to make sure SPI2 is not busy
-    NVIC_DisableIRQ(DMA1_Channel4_5_IRQn);
-
-    // nRESET
-    // set PB6 output low
-    GPIOB->BRR = GPIO_BRR_BR_6;
-}
-#endif

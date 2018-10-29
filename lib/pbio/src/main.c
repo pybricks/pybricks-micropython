@@ -40,7 +40,6 @@ void pbio_init(void) {
     clock_init();
     process_init();
     _pbdrv_adc_init();
-    _pbdrv_bluetooth_init();
     _pbdrv_button_init();
     _pbdrv_light_init();
     _pbdrv_ioport_init();
@@ -89,7 +88,6 @@ void pbio_deinit(void) {
     _pbdrv_motor_deinit();
     _pbdrv_light_deinit();
     _pbdrv_button_deinit();
-    _pbdrv_bluetooth_deinit();
     _pbdrv_adc_deinit();
 }
 #endif
