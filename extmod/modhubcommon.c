@@ -24,8 +24,6 @@ STATIC const mp_rom_map_elem_t pup_Color_enum_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_none),      MP_OBJ_NEW_SMALL_INT(PBIO_LIGHT_COLOR_NONE)   },
     { MP_OBJ_NEW_QSTR(MP_QSTR_purple),    MP_OBJ_NEW_SMALL_INT(PBIO_LIGHT_COLOR_PURPLE) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_blue),      MP_OBJ_NEW_SMALL_INT(PBIO_LIGHT_COLOR_BLUE)   },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_cyan),      MP_OBJ_NEW_SMALL_INT(0) }, // TODO, firmware #14
-    { MP_OBJ_NEW_QSTR(MP_QSTR_turquoise), MP_OBJ_NEW_SMALL_INT(0) }, // TODO, firmware #14
     { MP_OBJ_NEW_QSTR(MP_QSTR_green),     MP_OBJ_NEW_SMALL_INT(PBIO_LIGHT_COLOR_GREEN)  },
     { MP_OBJ_NEW_QSTR(MP_QSTR_yellow),    MP_OBJ_NEW_SMALL_INT(PBIO_LIGHT_COLOR_YELLOW) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_orange),    MP_OBJ_NEW_SMALL_INT(PBIO_LIGHT_COLOR_ORANGE) },
@@ -54,7 +52,7 @@ MP_DEFINE_CONST_FUN_OBJ_0(hub_update_obj, hub_update);
 
 STATIC mp_obj_t hub_set_light(mp_obj_t color) {
     pbio_light_color_t color_id = mp_obj_get_int(color);
-    if (color_id < PBIO_LIGHT_COLOR_NONE || color_id > PBIO_LIGHT_COLOR_WHITE) {
+    if (color_id < PBIO_LIGHT_COLOR_NONE || color_id > PBIO_LIGHT_COLOR_PURPLE) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
     if (color_id == PBIO_LIGHT_COLOR_NONE) {

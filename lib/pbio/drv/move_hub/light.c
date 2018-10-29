@@ -130,11 +130,6 @@ pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t 
         *g = 0;
         *b = 120;
         break;
-    case PBIO_LIGHT_COLOR_PINK:
-        *r = 255;
-        *g = 10;
-        *b = 15;
-        break;
     default:
         return PBIO_ERROR_INVALID_ARG;
     }
