@@ -23,6 +23,14 @@
 static uint32_t prev_fast_poll_time;
 static uint32_t prev_slow_poll_time;
 
+AUTOSTART_PROCESSES(
+    &etimer_process,
+#if PBDRV_CONFIG_BLUETOOTH
+    &pbdrv_bluetooth_hci_process,
+    &pbdrv_bluetooth_spi_process
+#endif // PBDRV_CONFIG_BLUETOOTH
+);
+
 /**
  * Initialize the Pybricks I/O Library. This function must be called once,
  * usually at the beginning of a program, before using any other functions in
@@ -39,7 +47,6 @@ void pbio_init(void) {
     _pbdrv_motor_init();
     _pbdrv_uart_init();
     _pbsys_init();
-    process_start(&etimer_process, NULL);
     autostart_start(autostart_processes);
 }
 

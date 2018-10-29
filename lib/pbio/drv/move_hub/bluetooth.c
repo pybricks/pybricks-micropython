@@ -71,10 +71,8 @@ static uint16_t conn_handle;
 static uint16_t uart_service_handle, uart_rx_char_handle, uart_tx_char_handle;
 
 
-PROCESS(bluetooth_process, "Bluetooth");
-PROCESS(spi_process, "Bluetooth SPI");
-
-AUTOSTART_PROCESSES(&bluetooth_process, &spi_process);
+PROCESS(pbdrv_bluetooth_hci_process, "Bluetooth HCI");
+PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
 
 void _pbdrv_bluetooth_init(void) {
     // put Bluetooth chip into reset
@@ -156,7 +154,7 @@ void DMA1_Channel4_5_IRQHandler(void) {
 
         // notify that SPI xfer is complete
         spi_xfer_complete = true;
-        process_poll(&spi_process);
+        process_poll(&pbdrv_bluetooth_spi_process);
     }
 }
 
@@ -167,7 +165,7 @@ void EXTI2_3_IRQHandler(void) {
     // clear the interrupt
     EXTI->PR = EXTI_PR_PR2;
 
-    process_poll(&spi_process);
+    process_poll(&pbdrv_bluetooth_spi_process);
 }
 
 static inline void spi_enable_cs() {
@@ -271,7 +269,7 @@ static void handle_event(hci_event_pckt *event) {
         break;
     }
 
-    process_post_synch(&bluetooth_process, PROCESS_EVENT_NONE, NULL);
+    process_post_synch(&pbdrv_bluetooth_hci_process, PROCESS_EVENT_NONE, NULL);
 }
 
 // read message from BlueNRG chip
@@ -345,12 +343,12 @@ retry:
 
     // set to 0 to indicate that xfer is complete
     write_xfer_size = 0;
-    process_post_synch(&bluetooth_process, PROCESS_EVENT_NONE, NULL);
+    process_post_synch(&pbdrv_bluetooth_hci_process, PROCESS_EVENT_NONE, NULL);
 
     PT_END(pt);
 }
 
-PROCESS_THREAD(spi_process, ev, data) {
+PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
     static struct pt child_pt;
 
     PROCESS_BEGIN();
@@ -383,7 +381,7 @@ void hci_send_req(struct hci_request *r) {
     write_xfer_size = HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE + r->clen;
 
     hci_command_complete = false;
-    process_post_synch(&spi_process, PROCESS_EVENT_NONE, NULL);
+    process_post_synch(&pbdrv_bluetooth_spi_process, PROCESS_EVENT_NONE, NULL);
 }
 
 // implements function for BlueNRG library
@@ -566,7 +564,7 @@ retry:
     PT_END(pt);
 }
 
-PROCESS_THREAD(bluetooth_process, ev, data) {
+PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
     static struct etimer timer;
     static struct pt child_pt;
 

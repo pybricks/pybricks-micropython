@@ -7,10 +7,8 @@
 #ifndef _PBDRV_BLUETOOTH_H_
 #define _PBDRV_BLUETOOTH_H_
 
-#include <stdint.h>
-
-#include <pbdrv/config.h>
-
+#include "pbdrv/config.h"
+#include "sys/process.h"
 
 #if PBDRV_CONFIG_BLUETOOTH
 
@@ -31,6 +29,9 @@ void _pbdrv_bluetooth_deinit(void);
 #else
 static inline void _pbdrv_bluetooth_deinit(void) { }
 #endif
+
+PROCESS_NAME(pbdrv_bluetooth_hci_process);
+PROCESS_NAME(pbdrv_bluetooth_spi_process);
 
 /** @endcond */
 
