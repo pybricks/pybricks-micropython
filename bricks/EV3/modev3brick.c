@@ -1,5 +1,5 @@
 #include <pbio/port.h>
-#include <objenum.h>
+#include <pbobj.h>
 
 /* Port enum */
 

@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <pbio/motorcontrol.h>
 #include <pberror.h>
-#include <objenum.h>
+#include <pbobj.h>
 
 // Class structure for Motors
 typedef struct _motor_Motor_obj_t {
