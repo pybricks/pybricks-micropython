@@ -234,30 +234,6 @@ MP_DEFINE_CONST_FUN_OBJ_2(motor_Motor_duty_obj, motor_Motor_duty);
 
 /*
 Motor
-    def brake(self):
-        """Stop by setting duty cycle to 0."""
-*/
-STATIC mp_obj_t motor_Motor_brake(mp_obj_t self_in) {
-    pbio_port_t port = get_port(self_in);
-    pb_assert(pbio_dcmotor_brake(port));
-    return mp_const_none;
-}
-MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_brake_obj, motor_Motor_brake);
-
-/*
-Motor
-    def coast(self):
-        """Coast the motor."""
-*/
-STATIC mp_obj_t motor_Motor_coast(mp_obj_t self_in) {
-    pbio_port_t port = get_port(self_in);
-    pb_assert(pbio_dcmotor_coast(port));
-    return mp_const_none;
-}
-MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_coast_obj, motor_Motor_coast);
-
-/*
-Motor
     def angle(self):
         """Return the angle of the motor/mechanism (degrees).
         Returns:
@@ -305,42 +281,42 @@ MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_speed_obj, motor_Motor_speed);
 
 /*
 Motor
-    def run(self, speed):
+    def run(self, speed, wait=False):
         """Start and keep running the motor/mechanism at the given speed (degrees per second).
         Arguments:
             speed {int} -- Target speed (degrees per second)
         """
 */
-STATIC mp_obj_t motor_Motor_run(mp_obj_t self_in, mp_obj_t speed) {
-    pbio_port_t port = get_port(self_in);
-    pb_assert(pbio_encmotor_run(port, mp_obj_get_int(speed)));
+STATIC mp_obj_t motor_Motor_run(size_t n_args, const mp_obj_t *args){
+    pbio_port_t port = get_port(args[0]);
+    pbio_motor_wait_t wait = n_args > 2 ? mp_obj_get_int(args[2]) : PBIO_MOTOR_WAIT_BACKGROUND;
+    pb_assert(pbio_encmotor_run(port, mp_obj_get_int(args[1])));
+    wait_for_completion(port, wait);
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_2(motor_Motor_run_obj, motor_Motor_run);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_obj, 2, 3, motor_Motor_run);
 
 /*
 Motor
-    def stop(self, smooth=True, after_stop=COAST, wait=True):
+    def stop(self, after_stop=COAST):
         """Stop a motor/mechanism.
         Optional arguments:
-            smooth {bool} -- Decelerate smoothly just like in the run commands (True) or stop immediately (False). (default: {True})
-            after_stop {const} -- What to do after the motor stops: BRAKE, COAST, or HOLD. (default: {COAST})
-            wait {bool} -- Wait for complete stop (True) or decelerate in the background (False). (default: {True})
+            after_stop {const} -- What to do after stopping the motor command: BRAKE, COAST, or HOLD. (default: {COAST})
         """
 */
 
 STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
-    pbio_port_t port = get_port(args[0]);
-    pbio_motor_controlled_stop_t controlled_stop = n_args > 1 ? mp_obj_get_int(args[1]) : PBIO_MOTOR_STOP_SMOOTH;
-    pbio_motor_after_stop_t after_stop           = n_args > 2 ? mp_obj_get_int(args[2]) : PBIO_MOTOR_STOP_COAST;
-    pbio_motor_wait_t wait                       = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_WAIT_WAIT;
+    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    pbio_motor_after_stop_t after_stop = n_args > 1 ? mp_obj_get_int(args[1]) : PBIO_MOTOR_STOP_COAST;
+    if (!self->encoded && after_stop == PBIO_MOTOR_STOP_HOLD){
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
     // Call pbio with parsed user/default arguments
-    pb_assert(pbio_encmotor_stop(port, controlled_stop, after_stop));
-    wait_for_completion(port, wait);
+    pb_assert(pbio_encmotor_stop(self->port, after_stop));
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_stop_obj, 1, 4, motor_Motor_stop);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_stop_obj, 1, 2, motor_Motor_stop);
 
 /*
 Motor
@@ -474,8 +450,7 @@ STATIC const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
     // Methods common to DCMotor and EncodedMotor
     //
     { MP_ROM_QSTR(MP_QSTR_settings), MP_ROM_PTR(&motor_Motor_settings_obj) },
-    { MP_ROM_QSTR(MP_QSTR_coast), MP_ROM_PTR(&motor_Motor_coast_obj) },
-    { MP_ROM_QSTR(MP_QSTR_brake), MP_ROM_PTR(&motor_Motor_brake_obj) },
+    { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_Motor_stop_obj) },    
     { MP_ROM_QSTR(MP_QSTR_duty), MP_ROM_PTR(&motor_Motor_duty_obj) },
     //
     // Methods specific to EncodedMotor
@@ -484,7 +459,6 @@ STATIC const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_speed), MP_ROM_PTR(&motor_Motor_speed_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_angle), MP_ROM_PTR(&motor_Motor_reset_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_run), MP_ROM_PTR(&motor_Motor_run_obj) },
-    { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_Motor_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_run_time), MP_ROM_PTR(&motor_Motor_run_time_obj) },
     { MP_ROM_QSTR(MP_QSTR_run_stalled), MP_ROM_PTR(&motor_Motor_run_stalled_obj) },
     { MP_ROM_QSTR(MP_QSTR_run_angle), MP_ROM_PTR(&motor_Motor_run_angle_obj) },

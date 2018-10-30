@@ -33,9 +33,9 @@ pbio_error_t pbio_encmotor_set_settings(
         int16_t stall_torque_limit_pct,
         int32_t stall_speed_limit,
         int16_t stall_time,
-        int32_t min_speed,
+        int32_t speed_tolerance,
         int32_t max_speed,
-        int32_t tolerance,
+        int32_t position_tolerance,
         int32_t acceleration_start,
         int32_t acceleration_end,
         int32_t tight_loop_time,
@@ -51,9 +51,9 @@ pbio_error_t pbio_encmotor_set_settings(
     float_t counts_per_output_unit = encmotor_settings[port_index].counts_per_output_unit;
     encmotor_settings[port_index].stall_rate_limit = (counts_per_output_unit * stall_speed_limit);
     encmotor_settings[port_index].stall_time = stall_time * US_PER_MS;
-    encmotor_settings[port_index].min_rate = (counts_per_output_unit * min_speed);
+    encmotor_settings[port_index].rate_tolerance = (counts_per_output_unit * speed_tolerance);
     encmotor_settings[port_index].max_rate = (counts_per_output_unit * max_speed);
-    encmotor_settings[port_index].count_tolerance = (counts_per_output_unit * tolerance);
+    encmotor_settings[port_index].count_tolerance = (counts_per_output_unit * position_tolerance);
     encmotor_settings[port_index].abs_accl_start = (counts_per_output_unit * acceleration_start);
     encmotor_settings[port_index].abs_accl_end = (counts_per_output_unit * acceleration_end);
     encmotor_settings[port_index].tight_loop_time = tight_loop_time * US_PER_MS;
@@ -67,12 +67,12 @@ void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
     int8_t port_index = PORT_TO_IDX(port);
     float_t counts_per_output_unit = encmotor_settings[port_index].counts_per_output_unit;
     snprintf(settings_string, MAX_ENCMOTOR_SETTINGS_STR_LENGTH,
-        "Counts per unit: %.2f\nGear ratio: %.2f\nStall speed: %d\nStall time: %d\nMin speed: %d\nMax speed: %d\nTolerance: %d\nAcceleration: %d\nDeceleration: %d\nTight Loop: %d\nkp: %d\nki: %d\nkd: %d",
+        "Counts per unit: %.2f\nGear ratio: %.2f\nStall speed: %d\nStall time: %d\nSpeed tol.: %d\nMax speed: %d\nPosition tol.: %d\nAcceleration: %d\nDeceleration: %d\nTight Loop: %d\nkp: %d\nki: %d\nkd: %d",
         encmotor_settings[port_index].counts_per_unit,
         counts_per_output_unit / encmotor_settings[port_index].counts_per_unit,            
         (int) (encmotor_settings[port_index].stall_rate_limit / counts_per_output_unit),
         (int) (encmotor_settings[port_index].stall_time  / US_PER_MS),
-        (int) (encmotor_settings[port_index].min_rate / counts_per_output_unit),
+        (int) (encmotor_settings[port_index].rate_tolerance / counts_per_output_unit),
         (int) (encmotor_settings[port_index].max_rate / counts_per_output_unit),
         (int) (encmotor_settings[port_index].count_tolerance / counts_per_output_unit),
         (int) (encmotor_settings[port_index].abs_accl_start / counts_per_output_unit),

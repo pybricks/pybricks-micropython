@@ -17,15 +17,6 @@
  * @{
  */
 
-
-/**
- * Motor controlled stop type for use with pbio_encmotor_stop
- */
-typedef enum {
-    PBIO_MOTOR_STOP_FAST,        /**< Immediate stop at the current location */
-    PBIO_MOTOR_STOP_SMOOTH,      /**< Controlled deceleration equivalent to the final part of a run maneuver */
-} pbio_motor_controlled_stop_t;
-
 /**
  * Motor action executed after completing a run command that ends in a smooth stop.
  */
@@ -45,7 +36,7 @@ typedef enum {
 
 pbio_error_t pbio_encmotor_run(pbio_port_t port, int32_t speed);
 
-pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_controlled_stop_t smooth, pbio_motor_after_stop_t after_stop);
+pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop);
 
 pbio_error_t pbio_encmotor_run_time(pbio_port_t port, int32_t speed, int32_t duration, pbio_motor_after_stop_t after_stop);
 
