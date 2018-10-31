@@ -108,10 +108,6 @@ void _pbdrv_uart_init() {
     USART3->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_RXNEIE;
 
     // TODO: this is just for debug UART on port C
-    GPIOC->MODER = (GPIOC->MODER & ~(GPIO_MODER_MODER10_Msk | GPIO_MODER_MODER11_Msk)) | (2 << GPIO_MODER_MODER10_Pos) | (2 << GPIO_MODER_MODER11_Pos);
-    GPIOC->AFR[1] = (GPIOC->AFR[1] & ~(GPIO_AFRH_AFSEL10_Msk | GPIO_AFRH_AFSEL11_Msk)) | (0 << GPIO_AFRH_AFSEL10_Pos) | (0 << GPIO_AFRH_AFSEL11_Pos);
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER4_Msk) | (1 << GPIO_MODER_MODER4_Pos);
-    GPIOB->BRR = GPIO_BRR_BR_4;
     pbdrv_uart_set_baud_rate(PBIO_PORT_C, 115200);
 
     // DMA is not possible on USART3/4 on STM32F070x6, so using interrupt

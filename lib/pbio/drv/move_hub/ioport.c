@@ -137,8 +137,28 @@ static uint8_t ioport_gpio_input(const ioport_gpio_t *gpio) {
     return (gpio->bank->IDR >> gpio->bit) & 1;
 }
 
+static void ioport_gpio_alt(const ioport_gpio_t *gpio) {
+    gpio->bank->MODER = (gpio->bank->MODER & ~(3 << (gpio->bit * 2))) | (2 << (gpio->bit * 2));
+}
+
+static void ioport_enable_uart(ioport_t port) {
+    const ioport_pins_t *pins = &ioport_pins[port];
+
+    ioport_gpio_alt(&pins->uart_rx);
+    ioport_gpio_alt(&pins->uart_tx);
+    ioport_gpio_out_low(&pins->uart_buf);
+}
+
 static void init_one(ioport_t port) {
     const ioport_pins_t pins = ioport_pins[port];
+
+    // set up alternate function for UART pins
+    if (port == IOPORT_C) {
+        GPIOC->AFR[1] = (GPIOC->AFR[1] & ~(GPIO_AFRH_AFSEL10_Msk | GPIO_AFRH_AFSEL11_Msk)) | (0 << GPIO_AFRH_AFSEL10_Pos) | (0 << GPIO_AFRH_AFSEL11_Pos);
+    }
+    else if (port == IOPORT_D) {
+        GPIOC->AFR[0] = (GPIOC->AFR[0] & ~(GPIO_AFRL_AFSEL4_Msk | GPIO_AFRL_AFSEL5_Msk)) | (1 << GPIO_AFRL_AFSEL4_Pos) | (1 << GPIO_AFRL_AFSEL5_Pos);
+    }
 
     ioport_gpio_input(&pins.id1);
     ioport_gpio_input(&pins.id2);
@@ -380,9 +400,11 @@ PROCESS_THREAD(pbdrv_ioport_process, ev, data) {
 
     etimer_set(&timer, clock_from_msec(2));
 
-    // TODO: skipping port C for now to use with REPL
-    // init_one(IOPORT_C);
+    init_one(IOPORT_C);
     init_one(IOPORT_D);
+
+    // TODO: port C is currently reserved for debug UART
+    ioport_enable_uart(IOPORT_C);
 
     while (true) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
@@ -403,11 +425,7 @@ PROCESS_THREAD(pbdrv_ioport_process, ev, data) {
                 USART3->BRR = PBDRV_CONFIG_SYS_CLOCK_RATE / 2400;
                 USART3->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;
 
-                GPIOC->MODER = (GPIOC->MODER & ~(GPIO_MODER_MODER4_Msk | GPIO_MODER_MODER5_Msk)) | (2 << GPIO_MODER_MODER4_Pos) | (2 << GPIO_MODER_MODER5_Pos);
-                GPIOC->AFR[0] = (GPIOC->AFR[0] & ~(GPIO_AFRL_AFSEL4_Msk | GPIO_AFRL_AFSEL5_Msk)) | (1 << GPIO_AFRL_AFSEL4_Pos) | (1 << GPIO_AFRL_AFSEL5_Pos);
-                // Buffer _should_ be enabled already.
-                GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER0_Msk) | (1 << GPIO_MODER_MODER0_Pos);
-                GPIOB->BSRR = GPIO_BSRR_BR_0;
+                ioport_enable_uart(IOPORT_D);
             }
         }
     }
