@@ -3,10 +3,11 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <pbdrv/config.h>
-#include <pbio/error.h>
-#include <pbio/port.h>
-#include <pbsys/sys.h>
+#include "pbdrv/config.h"
+#include "pbio/error.h"
+#include "pbio/port.h"
+#include "pbsys/sys.h"
+#include "sys/process.h"
 
 #include "stm32f070xb.h"
 
@@ -19,6 +20,8 @@ static volatile uint8_t usart4_rx_buf_tail;
 static uint8_t usart3_rx_buf[RX_BUF_SIZE];
 static volatile uint8_t usart3_rx_buf_head;
 static volatile uint8_t usart3_rx_buf_tail;
+
+PROCESS(pbdrv_uart_process, "UART");
 
 static pbio_error_t _pbdrv_uart_get_char(pbio_port_t port, uint8_t *c, bool peek) {
     uint8_t new_tail;
@@ -97,7 +100,7 @@ pbio_error_t pbdrv_uart_set_baud_rate(pbio_port_t port, uint32_t baud) {
     return PBIO_SUCCESS;
 }
 
-void _pbdrv_uart_init() {
+static void uart_init() {
     // enable power domains
     RCC->APB1ENR |= RCC_APB1ENR_USART4EN | RCC_APB1ENR_USART3EN;
 
@@ -152,6 +155,14 @@ void USART3_6_IRQHandler(void) {
     }
 }
 
-void _pbdrv_uart_poll(uint32_t now) {
+PROCESS_THREAD(pbdrv_uart_process, ev, data) {
+    PROCESS_BEGIN();
 
+    uart_init();
+
+    while (true) {
+        PROCESS_WAIT_EVENT();
+    }
+
+    PROCESS_END();
 }

@@ -9,33 +9,19 @@
 
 #include <stdint.h>
 
-#include <pbdrv/config.h>
+#include "pbdrv/config.h"
 
-#include <pbio/error.h>
-#include <pbio/port.h>
+#include "pbio/error.h"
+#include "pbio/port.h"
+
+#include "sys/process.h"
 
 
 #if PBDRV_CONFIG_UART
 
 /** @cond INTERNAL */
 
-/**
- * Initializes the low level UART driver. This should be called only
- * once and must be called before using any other UART functions.
- */
-void _pbdrv_uart_init(void);
-
-void _pbdrv_uart_poll(uint32_t now);
-
-/**
- * Releases the low level UART driver. No UART functions can be called after
- * calling this function.
- */
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
-void _pbdrv_uart_deinit(void);
-#else
-static inline void _pbdrv_uart_deinit(void) { }
-#endif
+PROCESS_NAME(pbdrv_uart_process);
 
 /** @endcond */
 
@@ -82,12 +68,6 @@ pbio_error_t pbdrv_uart_put_char(pbio_port_t port, uint8_t c);
  *                      UART associated with it.
  */
 pbio_error_t pbdrv_uart_set_baud_rate(pbio_port_t port, uint32_t baud);
-
-#else // PBDRV_CONFIG_UART
-
-static inline void _pbdrv_uart_init(void) { }
-static inline void _pbdrv_uart_poll(uint32_t now) { }
-static inline void _pbdrv_uart_deinit(void) { }
 
 #endif // PBDRV_CONFIG_UART
 

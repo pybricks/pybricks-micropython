@@ -32,6 +32,9 @@ AUTOSTART_PROCESSES(
 #if PBDRV_CONFIG_IOPORT
     ,&pbdrv_ioport_process
 #endif
+#if PBDRV_CONFIG_UART
+    ,&pbdrv_uart_process
+#endif
 );
 
 /**
@@ -46,7 +49,6 @@ void pbio_init(void) {
     _pbdrv_button_init();
     _pbdrv_light_init();
     _pbdrv_motor_init();
-    _pbdrv_uart_init();
     _pbsys_init();
     autostart_start(autostart_processes);
 }
@@ -85,7 +87,6 @@ int pbio_do_one_event(void) {
  */
 void pbio_deinit(void) {
     autostart_exit(autostart_processes);
-    _pbdrv_uart_deinit();
     _pbdrv_motor_deinit();
     _pbdrv_light_deinit();
     _pbdrv_button_deinit();
