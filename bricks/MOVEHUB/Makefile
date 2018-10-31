@@ -61,7 +61,6 @@ LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 SRC_C = \
 	main.c \
 	modmovehub.c \
-	modutime.c \
 	accel.c \
 	systick.c \
 	uart_core.c \
@@ -82,6 +81,7 @@ PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	extmod/modpupdevices.c \
 	extmod/modhubcommon.c \
 	extmod/modbattery.c \
+	extmod/modpbtime.c \
 	)
 
 ifneq (,$(findstring DPBIO_CONFIG_ENABLE_MOTORS,$(PBIO_OPT)))

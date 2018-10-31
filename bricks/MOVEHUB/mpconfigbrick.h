@@ -20,8 +20,10 @@
 extern const struct _mp_obj_module_t pb_module_movehub;
 extern const struct _mp_obj_module_t pb_module_pupdevices;
 extern const struct _mp_obj_module_t pb_module_robotics;
+extern const struct _mp_obj_module_t pb_module_time;
 
 #define PYBRICKS_PORT_BUILTIN_MODULES \
     { MP_OBJ_NEW_QSTR(MP_QSTR_movehub),     (mp_obj_t)&pb_module_movehub },    \
     { MP_OBJ_NEW_QSTR(MP_QSTR_devices),     (mp_obj_t)&pb_module_pupdevices },  \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_time),        (mp_obj_t)&pb_module_time },        \
     { MP_OBJ_NEW_QSTR(MP_QSTR_robotics),    (mp_obj_t)&pb_module_robotics },

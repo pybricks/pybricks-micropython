@@ -118,7 +118,7 @@
 #endif
 
 #define MICROPY_PY_OS_STATVFS       (1)
-#define MICROPY_PY_UTIME            (1)
+#define MICROPY_PY_UTIME            (0)
 #define MICROPY_PY_UTIME_MP_HAL     (1)
 #define MICROPY_PY_UERRNO           (1)
 #define MICROPY_PY_UCTYPES          (1)
