@@ -1,8 +1,11 @@
 
+#include <stdbool.h>
 #include <stdio.h>
 
-#include <pbdrv/config.h>
-#include <pbio/error.h>
+#include "pbdrv/config.h"
+#include "pbio/error.h"
+#include "sys/etimer.h"
+#include "sys/process.h"
 
 #include "stm32f070xb.h"
 
@@ -117,6 +120,8 @@ static const dev_id_t ioport_dev_id_lookup[3][3] = {
 static dev_id_t connected_dev_id[NUM_IOPORT];
 static dev_id_t prev_dev_id[NUM_IOPORT];
 
+PROCESS(pbdrv_ioport_process, "I/O port");
+
 static void ioport_gpio_out_low(const ioport_gpio_t *gpio) {
     gpio->bank->MODER = (gpio->bank->MODER & ~(3 << (gpio->bit * 2))) | (1 << (gpio->bit * 2));
     gpio->bank->BRR = 1 << gpio->bit;
@@ -140,12 +145,6 @@ static void init_one(ioport_t port) {
     ioport_gpio_input(&pins.uart_buf);
     ioport_gpio_input(&pins.uart_tx);
     ioport_gpio_input(&pins.uart_rx);
-}
-
-void _pbdrv_ioport_init(void) {
-    // TODO: skipping port C for now to use with REPL
-    // init_one(IOPORT_C);
-    init_one(IOPORT_D);
 }
 
 // This is the device connection manager (dcm). It monitors the ID1 and ID2 pins
@@ -374,29 +373,44 @@ static void poll_dcm(ioport_t port) {
     dcm_data[port] = data;
 }
 
-void _pbdrv_ioport_poll(uint32_t now) {
-    // TODO: don't call poll_dcm() if UART sensor is connected
+PROCESS_THREAD(pbdrv_ioport_process, ev, data) {
+    static struct etimer timer;
 
-    // TODO: skipping port C for now to use for REPL
-    //poll_dcm(IOPORT_C);
-    if (connected_dev_id[IOPORT_D] != DEV_ID_LPF2_UNKNOWN_UART) {
-        poll_dcm(IOPORT_D);
-    }
+    PROCESS_BEGIN();
 
-    if (connected_dev_id[IOPORT_D] != prev_dev_id[IOPORT_D]) {
-        printf("new device %d\n", connected_dev_id[IOPORT_D]);
-        prev_dev_id[IOPORT_D] = connected_dev_id[IOPORT_D];
-        if (connected_dev_id[IOPORT_D] == DEV_ID_LPF2_UNKNOWN_UART) {
-            printf("going to UART mode\n");
+    etimer_set(&timer, clock_from_msec(2));
 
-            USART3->BRR = PBDRV_CONFIG_SYS_CLOCK_RATE / 2400;
-            USART3->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;
+    // TODO: skipping port C for now to use with REPL
+    // init_one(IOPORT_C);
+    init_one(IOPORT_D);
 
-            GPIOC->MODER = (GPIOC->MODER & ~(GPIO_MODER_MODER4_Msk | GPIO_MODER_MODER5_Msk)) | (2 << GPIO_MODER_MODER4_Pos) | (2 << GPIO_MODER_MODER5_Pos);
-            GPIOC->AFR[0] = (GPIOC->AFR[0] & ~(GPIO_AFRL_AFSEL4_Msk | GPIO_AFRL_AFSEL5_Msk)) | (1 << GPIO_AFRL_AFSEL4_Pos) | (1 << GPIO_AFRL_AFSEL5_Pos);
-            // Buffer _should_ be enabled already.
-            GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER0_Msk) | (1 << GPIO_MODER_MODER0_Pos);
-            GPIOB->BSRR = GPIO_BSRR_BR_0;
+    while (true) {
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+        etimer_reset(&timer);
+
+        // TODO: skipping port C for now to use for REPL
+        //poll_dcm(IOPORT_C);
+        if (connected_dev_id[IOPORT_D] != DEV_ID_LPF2_UNKNOWN_UART) {
+            poll_dcm(IOPORT_D);
+        }
+
+        if (connected_dev_id[IOPORT_D] != prev_dev_id[IOPORT_D]) {
+            printf("new device %d\n", connected_dev_id[IOPORT_D]);
+            prev_dev_id[IOPORT_D] = connected_dev_id[IOPORT_D];
+            if (connected_dev_id[IOPORT_D] == DEV_ID_LPF2_UNKNOWN_UART) {
+                printf("going to UART mode\n");
+
+                USART3->BRR = PBDRV_CONFIG_SYS_CLOCK_RATE / 2400;
+                USART3->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;
+
+                GPIOC->MODER = (GPIOC->MODER & ~(GPIO_MODER_MODER4_Msk | GPIO_MODER_MODER5_Msk)) | (2 << GPIO_MODER_MODER4_Pos) | (2 << GPIO_MODER_MODER5_Pos);
+                GPIOC->AFR[0] = (GPIOC->AFR[0] & ~(GPIO_AFRL_AFSEL4_Msk | GPIO_AFRL_AFSEL5_Msk)) | (1 << GPIO_AFRL_AFSEL4_Pos) | (1 << GPIO_AFRL_AFSEL5_Pos);
+                // Buffer _should_ be enabled already.
+                GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER0_Msk) | (1 << GPIO_MODER_MODER0_Pos);
+                GPIOB->BSRR = GPIO_BSRR_BR_0;
+            }
         }
     }
+
+    PROCESS_END();
 }

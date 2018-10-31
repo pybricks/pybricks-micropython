@@ -24,11 +24,14 @@ static uint32_t prev_fast_poll_time;
 static uint32_t prev_slow_poll_time;
 
 AUTOSTART_PROCESSES(
-    &etimer_process,
+    &etimer_process
 #if PBDRV_CONFIG_BLUETOOTH
-    &pbdrv_bluetooth_hci_process,
-    &pbdrv_bluetooth_spi_process
+    ,&pbdrv_bluetooth_hci_process
+    ,&pbdrv_bluetooth_spi_process
 #endif // PBDRV_CONFIG_BLUETOOTH
+#if PBDRV_CONFIG_IOPORT
+    ,&pbdrv_ioport_process
+#endif
 );
 
 /**
@@ -42,7 +45,6 @@ void pbio_init(void) {
     _pbdrv_adc_init();
     _pbdrv_button_init();
     _pbdrv_light_init();
-    _pbdrv_ioport_init();
     _pbdrv_motor_init();
     _pbdrv_uart_init();
     _pbsys_init();
@@ -63,7 +65,6 @@ int pbio_do_one_event(void) {
     // actually elapsed to do something useful.
     if (now - prev_fast_poll_time >= 2) {
         _pbdrv_adc_poll(now);
-        _pbdrv_ioport_poll(now);
         _pbio_motorcontrol_poll();
         prev_fast_poll_time = now;
     }
