@@ -49,13 +49,7 @@ pbio_error_t pbio_dcmotor_set_settings(pbio_port_t port, int16_t stall_torque_li
 
 void pbio_dcmotor_print_settings(pbio_port_t port, char *settings_string){
     int8_t port_index = PORT_TO_IDX(port);
-    char direction[9];
-    if (dcmotor_settings[port_index].direction == PBIO_MOTOR_DIR_NORMAL) {
-        sprintf(direction, "normal");
-    }
-    else{
-        sprintf(direction, "inverted");
-    }
+    char *direction = dcmotor_settings[port_index].direction == PBIO_MOTOR_DIR_NORMAL ? "normal" : "inverted";
     snprintf(settings_string, MAX_DCMOTOR_SETTINGS_STR_LENGTH, 
         "Port\t\t %c\n"
         "Direction\t %s\n"
