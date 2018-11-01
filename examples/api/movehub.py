@@ -1,6 +1,5 @@
 from movehub import *
 from devices import *
-from utime import sleep_ms
 
 # Configure hub motor A as default
 left = MovehubMotor(Port.A)
@@ -33,5 +32,5 @@ right.run_time(500, 3000, Stop.brake)
 
 # Run then forced stop
 left.run(500)
-sleep_ms(1000)
+wait(1000)
 left.stop(False, Stop.brake) # TODO: Change after decision of stop api
