@@ -1,4 +1,4 @@
-#include <modmotor.h>
+#include "py/obj.h"
 
 /*
 LEGO MINDSTORMS EV3 Medium Motor.

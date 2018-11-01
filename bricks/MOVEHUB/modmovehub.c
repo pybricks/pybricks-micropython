@@ -1,7 +1,10 @@
-#include <modmotor.h>
-#include <mpconfigbrick.h>
-#include <modhubcommon.h>
 #include "extmod/utime_mphal.h"
+
+#include "modmotor.h"
+#include "modhubcommon.h"
+#include "pbobj.h"
+
+#include "mpconfigbrick.h"
 
 /* Movehub builtin motors */
 

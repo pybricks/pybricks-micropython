@@ -1,5 +1,7 @@
-#include "modmotor.h"
 #include "py/mphal.h"
+#include "py/runtime.h"
+
+#include "modmotor.h"
 
 /*
 class Mechanism():

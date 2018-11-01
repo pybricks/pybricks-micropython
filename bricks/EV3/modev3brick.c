@@ -1,5 +1,6 @@
 #include <pbio/port.h>
-#include <pbobj.h>
+
+#include "pbobj.h"
 #include "extmod/utime_mphal.h"
 
 /* Port enum */

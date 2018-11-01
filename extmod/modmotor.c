@@ -1,5 +1,13 @@
+#include <pbio/motorcontrol.h>
+
 #include "py/mphal.h"
+#include "py/runtime.h"
+#include "py/builtin.h"
+
 #include "modmotor.h"
+#include "pberror.h"
+#include "pbobj.h"
+
 
 /* Motor stop enum */
 

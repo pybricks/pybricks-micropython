@@ -1,12 +1,6 @@
-#include "py/nlr.h"
+#include <pbio/port.h>
+
 #include "py/obj.h"
-#include "py/runtime.h"
-#include "py/binary.h"
-#include "py/builtin.h"
-#include <stdio.h>
-#include <pbio/motorcontrol.h>
-#include <pberror.h>
-#include <pbobj.h>
 
 // Class structure for Motors
 typedef struct _motor_Motor_obj_t {
