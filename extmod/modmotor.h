@@ -26,5 +26,5 @@ void motor_Motor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind
 
 // Motor enum types
 const mp_obj_type_t motor_Stop_enum;
-const mp_obj_type_t motor_Wait_enum;
+const mp_obj_type_t motor_Run_enum;
 const mp_obj_type_t motor_Dir_enum;
