@@ -67,12 +67,16 @@ pbio_error_t pbdrv_uart_put_char(pbio_port_t port, uint8_t c) {
             return PBIO_ERROR_AGAIN;
         }
         USART4->TDR = c;
+        while (!(USART4->ISR & USART_ISR_TC)) { }
+        USART4->ICR |= USART_ICR_TCCF;
         break;
     case PBIO_PORT_D:
         if (!(USART3->ISR & USART_ISR_TXE)) {
             return PBIO_ERROR_AGAIN;
         }
         USART3->TDR = c;
+        while (!(USART3->ISR & USART_ISR_TC)) { }
+        USART3->ICR |= USART_ICR_TCCF;
         break;
     default:
         return PBIO_ERROR_INVALID_PORT;
