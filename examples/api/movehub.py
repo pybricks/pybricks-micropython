@@ -27,7 +27,7 @@ left.run_target(500, 0, Stop.hold)
 right = MovehubMotor(Port.B)
 
 # run both motors. This will become simpler and more precise (synchronized) once we implement the DriveBase class driver
-left.run_time(500, 3000, Stop.brake, Wait.background)
+left.run_time(500, 3000, Stop.brake, Run.background)
 right.run_time(500, 3000, Stop.brake)
 
 # Run then forced stop

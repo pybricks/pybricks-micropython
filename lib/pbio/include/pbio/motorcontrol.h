@@ -30,9 +30,9 @@ typedef enum {
  * Busy wait (or not) for a run command to complete
  */
 typedef enum {
-    PBIO_MOTOR_WAIT_WAIT = true, /**< Wait for the run command to complete */
-    PBIO_MOTOR_WAIT_BACKGROUND = false,       /**< Execute run command in the background and proceed with user program */
-} pbio_motor_wait_t;
+    PBIO_MOTOR_RUN_FOREGROUND = true, /**< Execute run command in the foreground and pause user program until run command is complete */
+    PBIO_MOTOR_RUN_BACKGROUND = false,/**< Execute run command in the background and proceed with user program */
+} pbio_motor_run_t;
 
 pbio_error_t pbio_encmotor_run(pbio_port_t port, int32_t speed);
 
