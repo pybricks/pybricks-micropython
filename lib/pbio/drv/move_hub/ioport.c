@@ -4,6 +4,7 @@
 
 #include "pbdrv/config.h"
 #include "pbio/error.h"
+#include "pbio/iodev.h"
 #include "sys/etimer.h"
 #include "sys/process.h"
 
@@ -31,24 +32,6 @@ typedef enum _dcm_state_t {
     DCM_STATE_11,
 } dcm_state_t;
 
-typedef enum _dev_id_t {
-    DEV_ID_LPF2_UNKNOWN,
-    DEV_ID_LPF2_MMOTOR,
-    DEV_ID_LPF2_TRAIN,
-    DEV_ID_LPF2_TURN,
-    DEV_ID_LPF2_POWER,
-    DEV_ID_LPF2_TOUCH,
-    DEV_ID_LPF2_LMOTOR,
-    DEV_ID_LPF2_XMOTOR,
-    DEV_ID_LPF2_LIGHT,
-    DEV_ID_LPF2_LIGHT1,
-    DEV_ID_LPF2_LIGHT2,
-    DEV_ID_LPF2_TPOINT,
-    DEV_ID_LPF2_EXPLOD,
-    DEV_ID_LPF2_3_PART,
-    DEV_ID_LPF2_UNKNOWN_UART,
-} dev_id_t;
-
 typedef enum _dev_id1_group_t {
     DEV_ID1_GROUP_GND,
     DEV_ID1_GROUP_VCC,
@@ -74,8 +57,8 @@ typedef struct _ioport_pins_t {
 typedef struct _dcm_data_t {
     dcm_state_t dcm_state;
     dev_id1_group_t dev_id1_group;
-    dev_id_t dev_id;
-    dev_id_t prev_dev_id;
+    pbio_iodev_type_id_t type_id;
+    pbio_iodev_type_id_t prev_type_id;
     uint8_t prev_gpio_value;
     uint8_t dev_id_match_count;
 } dcm_data_t;
@@ -99,26 +82,26 @@ static const ioport_pins_t ioport_pins[NUM_IOPORT] = {
     },
 };
 
-static const dev_id_t ioport_dev_id_lookup[3][3] = {
+static const pbio_iodev_type_id_t ioport_type_id_lookup[3][3] = {
     [DEV_ID1_GROUP_GND] = {
-        [0] = DEV_ID_LPF2_POWER,
-        [1] = DEV_ID_LPF2_TURN,
-        [2] = DEV_ID_LPF2_LIGHT2,
+        [0] = PBIO_IODEV_TYPE_ID_LPF2_POWER,
+        [1] = PBIO_IODEV_TYPE_ID_LPF2_TURN,
+        [2] = PBIO_IODEV_TYPE_ID_LPF2_LIGHT2,
     },
     [DEV_ID1_GROUP_VCC] = {
-        [0] = DEV_ID_LPF2_TRAIN,
-        [1] = DEV_ID_LPF2_LMOTOR,
-        [2] = DEV_ID_LPF2_LIGHT1,
+        [0] = PBIO_IODEV_TYPE_ID_LPF2_TRAIN,
+        [1] = PBIO_IODEV_TYPE_ID_LPF2_LMOTOR,
+        [2] = PBIO_IODEV_TYPE_ID_LPF2_LIGHT1,
     },
     [DEV_ID1_GROUP_PULL_DOWN] = {
-        [0] = DEV_ID_LPF2_MMOTOR,
-        [1] = DEV_ID_LPF2_XMOTOR,
-        [2] = DEV_ID_LPF2_LIGHT,
+        [0] = PBIO_IODEV_TYPE_ID_LPF2_MMOTOR,
+        [1] = PBIO_IODEV_TYPE_ID_LPF2_XMOTOR,
+        [2] = PBIO_IODEV_TYPE_ID_LPF2_LIGHT,
     },
 };
 
-static dev_id_t connected_dev_id[NUM_IOPORT];
-static dev_id_t prev_dev_id[NUM_IOPORT];
+static pbio_iodev_type_id_t connected_type_id[NUM_IOPORT];
+static pbio_iodev_type_id_t prev_type_id[NUM_IOPORT];
 
 PROCESS(pbdrv_ioport_process, "I/O port");
 
@@ -179,7 +162,7 @@ static void poll_dcm(ioport_t port) {
 
     switch (data.dcm_state) {
     case DCM_STATE_0:
-        data.dev_id = DEV_ID_LPF2_UNKNOWN;
+        data.type_id = PBIO_IODEV_TYPE_ID_NONE;
         data.dev_id1_group = DEV_ID1_GROUP_OPEN;
 
         // set ID1 high
@@ -207,7 +190,7 @@ static void poll_dcm(ioport_t port) {
         // if ID2 changed from high to low
         if (data.prev_gpio_value == 1 && gpio_input == 0) {
             // we have touch sensor
-            data.dev_id = DEV_ID_LPF2_TOUCH;
+            data.type_id = PBIO_IODEV_TYPE_ID_LPF2_TOUCH;
 
             // set ID1 as input
             ioport_gpio_out_high(&pins.uart_buf);
@@ -217,7 +200,7 @@ static void poll_dcm(ioport_t port) {
         }
         // if ID2 changed from low to high
         else if (data.prev_gpio_value == 0 && gpio_input == 1) {
-            data.dev_id = DEV_ID_LPF2_TPOINT;
+            data.type_id = PBIO_IODEV_TYPE_ID_LPF2_TPOINT;
 
             data.dcm_state = DCM_STATE_11;
         }
@@ -305,7 +288,7 @@ static void poll_dcm(ioport_t port) {
             // if we have ID1 = open
             if (data.dev_id1_group == DEV_ID1_GROUP_OPEN) {
                 // then we have this
-                data.dev_id = DEV_ID_LPF2_3_PART;
+                data.type_id = PBIO_IODEV_TYPE_ID_LPF2_3_PART;
             }
 
             data.dcm_state = DCM_STATE_11;
@@ -313,7 +296,7 @@ static void poll_dcm(ioport_t port) {
         // if ID1 changed from low to high
         else if (data.prev_gpio_value == 0 && gpio_input == 1) {
             // something might explode
-            data.dev_id = DEV_ID_LPF2_EXPLOD;
+            data.type_id = PBIO_IODEV_TYPE_ID_LPF2_EXPLOD;
 
             data.dcm_state = DCM_STATE_11;
         }
@@ -339,10 +322,10 @@ static void poll_dcm(ioport_t port) {
         else {
             // we know the device now
             if (data.dev_id1_group < 3) {
-                data.dev_id = ioport_dev_id_lookup[data.dev_id1_group][0];
+                data.type_id = ioport_type_id_lookup[data.dev_id1_group][0];
             }
             else {
-                data.dev_id = DEV_ID_LPF2_UNKNOWN_UART;
+                data.type_id = PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART;
             }
 
             data.dcm_state = DCM_STATE_11;
@@ -352,12 +335,12 @@ static void poll_dcm(ioport_t port) {
         // if ID2 is low
         if (ioport_gpio_input(&pins.uart_rx) == 0) {
             if (data.dev_id1_group < 3) {
-                data.dev_id = ioport_dev_id_lookup[data.dev_id1_group][2];
+                data.type_id = ioport_type_id_lookup[data.dev_id1_group][2];
             }
         }
         else {
             if (data.dev_id1_group < 3) {
-                data.dev_id = ioport_dev_id_lookup[data.dev_id1_group][1];
+                data.type_id = ioport_type_id_lookup[data.dev_id1_group][1];
             }
         }
 
@@ -371,11 +354,11 @@ static void poll_dcm(ioport_t port) {
         ioport_gpio_out_low(&pins.uart_tx);
         ioport_gpio_out_low(&pins.uart_buf);
 
-        if (data.dev_id == data.prev_dev_id) {
+        if (data.type_id == data.prev_type_id) {
             if (++data.dev_id_match_count >= 20) {
 
-                if (data.dev_id != connected_dev_id[port]) {
-                    connected_dev_id[port] = data.dev_id;
+                if (data.type_id != connected_type_id[port]) {
+                    connected_type_id[port] = data.type_id;
                 }
 
                 // don't want to wrap around and re-trigger
@@ -383,7 +366,7 @@ static void poll_dcm(ioport_t port) {
             }
         }
 
-        data.prev_dev_id = data.dev_id;
+        data.prev_type_id = data.type_id;
 
         data.dcm_state = DCM_STATE_0;
         break;
@@ -412,14 +395,14 @@ PROCESS_THREAD(pbdrv_ioport_process, ev, data) {
 
         // TODO: skipping port C for now to use for REPL
         //poll_dcm(IOPORT_C);
-        if (connected_dev_id[IOPORT_D] != DEV_ID_LPF2_UNKNOWN_UART) {
+        if (connected_type_id[IOPORT_D] != PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
             poll_dcm(IOPORT_D);
         }
 
-        if (connected_dev_id[IOPORT_D] != prev_dev_id[IOPORT_D]) {
-            printf("new device %d\n", connected_dev_id[IOPORT_D]);
-            prev_dev_id[IOPORT_D] = connected_dev_id[IOPORT_D];
-            if (connected_dev_id[IOPORT_D] == DEV_ID_LPF2_UNKNOWN_UART) {
+        if (connected_type_id[IOPORT_D] != prev_type_id[IOPORT_D]) {
+            printf("new device %d\n", connected_type_id[IOPORT_D]);
+            prev_type_id[IOPORT_D] = connected_type_id[IOPORT_D];
+            if (connected_type_id[IOPORT_D] == PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
                 printf("going to UART mode\n");
 
                 USART3->BRR = PBDRV_CONFIG_SYS_CLOCK_RATE / 2400;
