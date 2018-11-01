@@ -15,27 +15,24 @@
 
 static uint8_t usart4_rx_buf[RX_BUF_SIZE];
 static volatile uint8_t usart4_rx_buf_head;
-static volatile uint8_t usart4_rx_buf_tail;
+static uint8_t usart4_rx_buf_tail;
 
 static uint8_t usart3_rx_buf[RX_BUF_SIZE];
 static volatile uint8_t usart3_rx_buf_head;
-static volatile uint8_t usart3_rx_buf_tail;
+static uint8_t usart3_rx_buf_tail;
 
 PROCESS(pbdrv_uart_process, "UART");
 
 static pbio_error_t _pbdrv_uart_get_char(pbio_port_t port, uint8_t *c, bool peek) {
-    uint8_t new_tail;
-
     switch (port) {
     case PBIO_PORT_C:
         if (usart4_rx_buf_head == usart4_rx_buf_tail) {
             return PBIO_ERROR_AGAIN;
         }
 
-        new_tail = (usart4_rx_buf_tail + 1) & (RX_BUF_SIZE - 1);
-        *c = usart4_rx_buf[new_tail];
+        *c = usart4_rx_buf[usart4_rx_buf_tail];
         if (!peek) {
-            usart4_rx_buf_tail = new_tail;
+            usart4_rx_buf_tail = (usart4_rx_buf_tail + 1) & (RX_BUF_SIZE - 1);
         }
         break;
     case PBIO_PORT_D:
@@ -43,10 +40,9 @@ static pbio_error_t _pbdrv_uart_get_char(pbio_port_t port, uint8_t *c, bool peek
             return PBIO_ERROR_AGAIN;
         }
 
-        new_tail = (usart3_rx_buf_tail + 1) & (RX_BUF_SIZE - 1);
-        *c = usart3_rx_buf[new_tail];
+        *c = usart3_rx_buf[usart3_rx_buf_tail];
         if (!peek) {
-            usart3_rx_buf_tail = new_tail;
+            usart3_rx_buf_tail = (usart3_rx_buf_tail + 1) & (RX_BUF_SIZE - 1);
         }
         break;
     default:
@@ -137,7 +133,7 @@ void USART3_6_IRQHandler(void) {
             // REVISIT: ignoring for now - will lose characters
             continue;
         }
-        usart4_rx_buf[new_head] = c;
+        usart4_rx_buf[usart4_rx_buf_head] = c;
         usart4_rx_buf_head = new_head;
     }
 
@@ -150,7 +146,7 @@ void USART3_6_IRQHandler(void) {
             // REVISIT: ignoring for now - will lose characters
             continue;
         }
-        usart3_rx_buf[new_head] = c;
+        usart3_rx_buf[usart3_rx_buf_head] = c;
         usart3_rx_buf_head = new_head;
     }
 }
