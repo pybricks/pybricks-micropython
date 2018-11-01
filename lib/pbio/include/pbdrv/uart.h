@@ -69,6 +69,13 @@ pbio_error_t pbdrv_uart_put_char(pbio_port_t port, uint8_t c);
  */
 pbio_error_t pbdrv_uart_set_baud_rate(pbio_port_t port, uint32_t baud);
 
+#else // PBDRV_CONFIG_UART
+
+static inline pbio_error_t pbdrv_uart_peek_char(pbio_port_t port, uint8_t *c) { return PBIO_ERROR_NOT_SUPPORTED; }
+static inline pbio_error_t pbdrv_uart_get_char(pbio_port_t port, uint8_t *c) { return PBIO_ERROR_NOT_SUPPORTED; }
+static inline pbio_error_t pbdrv_uart_put_char(pbio_port_t port, uint8_t c) { return PBIO_ERROR_NOT_SUPPORTED; }
+static inline pbio_error_t pbdrv_uart_set_baud_rate(pbio_port_t port, uint32_t baud) { return PBIO_ERROR_NOT_SUPPORTED; }
+
 #endif // PBDRV_CONFIG_UART
 
 #endif // _PBDRV_UART_H_
