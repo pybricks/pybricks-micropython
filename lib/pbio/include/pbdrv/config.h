@@ -97,11 +97,6 @@
 #define PBDRV_CONFIG_MOTOR (1)
 #endif
 
-// enable the time driver
-#ifndef PBDRV_CONFIG_TIME
-#define PBDRV_CONFIG_TIME (1)
-#endif
-
 // enable the UART driver
 #ifndef PBDRV_CONFIG_UART
 #define PBDRV_CONFIG_UART (1)
