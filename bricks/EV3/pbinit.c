@@ -1,7 +1,9 @@
 
 #include <pbio/motorcontrol.h>
-#include "pbinit.h"
+
 #include "py/mpthread.h"
+
+#include "pbinit.h"
 
 // Configure timer at specified interval
 static int configure_timer_thread(unsigned int period_ms, struct periodic_info *info)

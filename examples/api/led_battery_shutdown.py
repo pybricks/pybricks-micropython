@@ -1,9 +1,8 @@
 from movehub import *
-from utime import sleep_ms
 
 # Light
 light(Color.yellow)
-sleep_ms(1000)
+wait(1000)
 light(Color.purple)
 
 # Battery

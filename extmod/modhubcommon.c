@@ -4,19 +4,16 @@
 #include <pbdrv/battery.h>
 #include <pbio/light.h>
 #include <pbsys/sys.h>
-#include <modmotor.h>
-#include <mpconfigbrick.h>
 
-#include "stm32f070xb.h"
-
-#include "py/builtin.h"
-#include "py/nlr.h"
 #include "py/obj.h"
-#include "py/runtime.h"
-#include "py/binary.h"
 
-#include "gpio.h"
+#include "mpconfigbrick.h"
+#include "modmotor.h"
 #include "modhubcommon.h"
+#include "pberror.h"
+#include "pbobj.h"
+#include "gpio.h"
+
 
 /* Color enum */
 

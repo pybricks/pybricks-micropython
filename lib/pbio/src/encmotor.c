@@ -1,6 +1,7 @@
 #include <pbdrv/motor.h>
 #include <pbio/dcmotor.h>
 #include <pbio/encmotor.h>
+#include <inttypes.h>
 
 pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction, float_t gear_ratio){
 
@@ -64,23 +65,44 @@ pbio_error_t pbio_encmotor_set_settings(
 };
 
 void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
+    // Preload several settings for easier printing
     int8_t port_index = PORT_TO_IDX(port);
     float_t counts_per_output_unit = encmotor_settings[port_index].counts_per_output_unit;
+    float_t counts_per_unit = encmotor_settings[port_index].counts_per_unit;
+    float_t gear_ratio = counts_per_output_unit / encmotor_settings[port_index].counts_per_unit;
+    // Print settings to settings_string
     snprintf(settings_string, MAX_ENCMOTOR_SETTINGS_STR_LENGTH,
-        "Counts per unit: %.2f\nGear ratio: %.2f\nStall speed: %d\nStall time: %d\nSpeed tol.: %d\nMax speed: %d\nPosition tol.: %d\nAcceleration: %d\nDeceleration: %d\nTight Loop: %d\nkp: %d\nki: %d\nkd: %d",
-        encmotor_settings[port_index].counts_per_unit,
-        counts_per_output_unit / encmotor_settings[port_index].counts_per_unit,            
-        (int) (encmotor_settings[port_index].stall_rate_limit / counts_per_output_unit),
-        (int) (encmotor_settings[port_index].stall_time  / US_PER_MS),
-        (int) (encmotor_settings[port_index].rate_tolerance / counts_per_output_unit),
-        (int) (encmotor_settings[port_index].max_rate / counts_per_output_unit),
-        (int) (encmotor_settings[port_index].count_tolerance / counts_per_output_unit),
-        (int) (encmotor_settings[port_index].abs_accl_start / counts_per_output_unit),
-        (int) (encmotor_settings[port_index].abs_accl_end / counts_per_output_unit),
-        (int) (encmotor_settings[port_index].tight_loop_time / US_PER_MS),
+        "Counts per unit\t %" PRId32 ".%" PRId32 "\n"
+        "Gear ratio\t %" PRId32 ".%" PRId32 "\n"
+        "Stall speed\t %" PRId32 "\n"
+        "Stall time\t %" PRId32 "\n"
+        "Speed tolerance\t %" PRId32 "\n"
+        "Max speed\t %" PRId32 "\n"
+        "Angle tolerance\t %" PRId32 "\n"
+        "Acceleration\t %" PRId32 "\n"
+        "Deceleration\t %" PRId32 "\n"
+        "Tight Loop\t %" PRId32 "\n"
+        "kp\t\t %" PRId16 "\n"
+        "ki\t\t %" PRId16 "\n"
+        "kd\t\t %" PRId16 "",
+        // Print counts_per_unit as floating point with 3 decimals
+        (int32_t) (counts_per_unit),
+        (int32_t) (counts_per_unit*1000 - ((int32_t) counts_per_unit)*1000),    
+        // Print counts_per_unit as floating point with 3 decimals    
+        (int32_t) (gear_ratio),
+        (int32_t) (gear_ratio*1000 - ((int32_t) gear_ratio)*1000),
+        // Print remaining settings as integers
+        (int32_t) (encmotor_settings[port_index].stall_rate_limit / counts_per_output_unit),
+        (int32_t) (encmotor_settings[port_index].stall_time  / US_PER_MS),
+        (int32_t) (encmotor_settings[port_index].rate_tolerance / counts_per_output_unit),
+        (int32_t) (encmotor_settings[port_index].max_rate / counts_per_output_unit),
+        (int32_t) (encmotor_settings[port_index].count_tolerance / counts_per_output_unit),
+        (int32_t) (encmotor_settings[port_index].abs_accl_start / counts_per_output_unit),
+        (int32_t) (encmotor_settings[port_index].abs_accl_end / counts_per_output_unit),
+        (int32_t) (encmotor_settings[port_index].tight_loop_time / US_PER_MS),
         encmotor_settings[port_index].pid_kp,
         encmotor_settings[port_index].pid_ki,
-        encmotor_settings[port_index].pid_kd     
+        encmotor_settings[port_index].pid_kd
     );
 }
 
@@ -88,9 +110,9 @@ pbio_error_t pbio_encmotor_get_encoder_count(pbio_port_t port, int32_t *count) {
     pbio_error_t status = pbdrv_motor_get_encoder_count(port, count);
     if (dcmotor_settings[PORT_TO_IDX(port)].direction == PBIO_MOTOR_DIR_INVERTED) {
         *count = -*count;
-    }    
+    }
     *count -= encmotor_settings[PORT_TO_IDX(port)].offset;
-    return status;    
+    return status;
 }
 
 pbio_error_t pbio_encmotor_reset_encoder_count(pbio_port_t port, int32_t reset_count) {
@@ -112,24 +134,24 @@ pbio_error_t pbio_encmotor_get_angle(pbio_port_t port, int32_t *angle) {
     int32_t encoder_count;
     pbio_error_t status = pbio_encmotor_get_encoder_count(port, &encoder_count);
     *angle = encoder_count / (encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit);
-    return status;    
+    return status;
 }
 
 pbio_error_t pbio_encmotor_reset_angle(pbio_port_t port, int32_t reset_angle) {
-    return pbio_encmotor_reset_encoder_count(port, (int32_t) (reset_angle * encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit));    
+    return pbio_encmotor_reset_encoder_count(port, (int32_t) (reset_angle * encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit));
 }
 
 pbio_error_t pbio_encmotor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     pbio_error_t status = pbdrv_motor_get_encoder_rate(port, rate);
     if (dcmotor_settings[PORT_TO_IDX(port)].direction == PBIO_MOTOR_DIR_INVERTED) {
         *rate = -*rate;
-    }    
-    return status;    
+    }
+    return status;
 }
 
 pbio_error_t pbio_encmotor_get_angular_rate(pbio_port_t port, int32_t *angular_rate) {
     int32_t encoder_rate;
     pbio_error_t status = pbio_encmotor_get_encoder_rate(port, &encoder_rate);
     *angular_rate = encoder_rate / (encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit);
-    return status;    
+    return status;
 }

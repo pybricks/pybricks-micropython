@@ -1,5 +1,7 @@
 #include <pbio/port.h>
-#include <pbobj.h>
+
+#include "pbobj.h"
+#include "extmod/utime_mphal.h"
 
 /* Port enum */
 
@@ -19,7 +21,8 @@ STATIC PB_DEFINE_CONST_ENUM(motor_Port_enum, motor_Port_enum_table);
 
 STATIC const mp_map_elem_t ev3brick_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_ev3brick_c)   },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_Port), (mp_obj_t)&motor_Port_enum },     
+    { MP_OBJ_NEW_QSTR(MP_QSTR_Port), (mp_obj_t)&motor_Port_enum },
+    { MP_ROM_QSTR(MP_QSTR_wait), (mp_obj_t)&mp_utime_sleep_ms_obj },
 };
  STATIC MP_DEFINE_CONST_DICT (pb_module_ev3brick_globals, ev3brick_globals_table);
  const mp_obj_module_t pb_module_ev3brick = {

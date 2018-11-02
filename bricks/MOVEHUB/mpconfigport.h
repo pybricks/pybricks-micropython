@@ -54,7 +54,7 @@
 #define MICROPY_PY_STRUCT           (0)
 #define MICROPY_PY_SYS              (0)
 #define MICROPY_PY_UTIME_MP_HAL     (1)
-#define MICROPY_MODULE_WEAK_LINKS   (1)
+#define MICROPY_MODULE_WEAK_LINKS   (0)
 #define MICROPY_CPYTHON_COMPAT      (0)
 #define MICROPY_LONGINT_IMPL        (MICROPY_LONGINT_IMPL_NONE)
 #define MICROPY_KBD_EXCEPTION       (1)
@@ -93,14 +93,8 @@ typedef long mp_off_t;
 
 #define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn_cooked(str, len)
 
-extern const struct _mp_obj_module_t mp_module_utime;
-
 #define MICROPY_PORT_BUILTIN_MODULES \
-    PYBRICKS_PORT_BUILTIN_MODULES \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_utime), (mp_obj_t)&mp_module_utime },  \
-
-#define MICROPY_PORT_BUILTIN_MODULE_WEAK_LINKS \
-    { MP_ROM_QSTR(MP_QSTR_time), MP_ROM_PTR(&mp_module_utime) }, \
+    PYBRICKS_PORT_BUILTIN_MODULES
 
 // TODO: not sure if we will have a use for this
 #define SOCKET_POLL

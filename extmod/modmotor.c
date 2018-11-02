@@ -1,5 +1,13 @@
+#include <pbio/motorcontrol.h>
+
 #include "py/mphal.h"
+#include "py/runtime.h"
+#include "py/builtin.h"
+
 #include "modmotor.h"
+#include "pberror.h"
+#include "pbobj.h"
+
 
 /* Motor stop enum */
 
@@ -18,18 +26,18 @@ STATIC const mp_rom_map_elem_t motor_Dir_enum_table[] = {
 };
 PB_DEFINE_CONST_ENUM(motor_Dir_enum, motor_Dir_enum_table);
 
-/* Motor wait enum */
+/* Motor run type enum */
 
-STATIC const mp_rom_map_elem_t motor_Wait_enum_table[] = {
-    { MP_OBJ_NEW_QSTR(MP_QSTR_foreground),  MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_WAIT_WAIT    ) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_background),  MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_WAIT_BACKGROUND  ) },
+STATIC const mp_rom_map_elem_t motor_Run_enum_table[] = {
+    { MP_OBJ_NEW_QSTR(MP_QSTR_foreground),  MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_RUN_FOREGROUND) },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_background),  MP_OBJ_NEW_SMALL_INT(PBIO_MOTOR_RUN_BACKGROUND) },
 };
-PB_DEFINE_CONST_ENUM(motor_Wait_enum, motor_Wait_enum_table);
+PB_DEFINE_CONST_ENUM(motor_Run_enum, motor_Run_enum_table);
 
 /* Wait for maneuver to complete */
 
-STATIC void wait_for_completion(pbio_port_t port, pbio_motor_wait_t wait) {
-    if (wait == PBIO_MOTOR_WAIT_WAIT) {
+STATIC void wait_for_completion(pbio_port_t port, pbio_motor_run_t runtype) {
+    if (runtype == PBIO_MOTOR_RUN_FOREGROUND) {
         while (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_RUNNING) {
             mp_hal_delay_ms(10);
         }
@@ -288,9 +296,9 @@ Motor
 */
 STATIC mp_obj_t motor_Motor_run(size_t n_args, const mp_obj_t *args){
     pbio_port_t port = get_port(args[0]);
-    pbio_motor_wait_t wait = n_args > 2 ? mp_obj_get_int(args[2]) : PBIO_MOTOR_WAIT_BACKGROUND;
+    pbio_motor_run_t runtype = n_args > 2 ? mp_obj_get_int(args[2]) : PBIO_MOTOR_RUN_BACKGROUND;
     pb_assert(pbio_encmotor_run(port, mp_obj_get_num(args[1])));
-    wait_for_completion(port, wait);
+    wait_for_completion(port, runtype);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_obj, 2, 3, motor_Motor_run);
@@ -333,10 +341,10 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
     pbio_motor_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
-    pbio_motor_wait_t wait             = n_args > 4 ? mp_obj_get_int(args[4]) : PBIO_MOTOR_WAIT_WAIT;
+    pbio_motor_run_t runtype           = n_args > 4 ? mp_obj_get_int(args[4]) : PBIO_MOTOR_RUN_FOREGROUND;
     // Call pbio with parsed user/default arguments
     pb_assert(pbio_encmotor_run_time(port, mp_obj_get_num(args[1]), mp_obj_get_num(args[2]), after_stop));
-    wait_for_completion(port, wait);
+    wait_for_completion(port, runtype);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_time_obj, 3, 5, motor_Motor_run_time);
@@ -358,12 +366,12 @@ STATIC mp_obj_t motor_Motor_run_stalled(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
     pbio_motor_after_stop_t after_stop = n_args > 2 ? mp_obj_get_int(args[2]) : PBIO_MOTOR_STOP_COAST;
-    pbio_motor_wait_t wait             = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_WAIT_WAIT;
+    pbio_motor_run_t runtype             = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_RUN_FOREGROUND;
     // Call pbio with parsed user/default arguments
     pb_assert(pbio_encmotor_run_stalled(port, mp_obj_get_num(args[1]), after_stop));
-    wait_for_completion(port, wait);
+    wait_for_completion(port, runtype);
     // If the user specified to wait for the motion to complete, return the angle at which the motor stalled
-    if (wait == PBIO_MOTOR_WAIT_WAIT) {
+    if (runtype == PBIO_MOTOR_RUN_FOREGROUND) {
         int32_t stall_point;
         pbio_encmotor_get_angle(port, &stall_point);
         return mp_obj_new_int(stall_point);
@@ -391,10 +399,10 @@ STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
     pbio_motor_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
-    pbio_motor_wait_t wait             = n_args > 4 ? mp_obj_get_int(args[4]) : PBIO_MOTOR_WAIT_WAIT;
+    pbio_motor_run_t runtype           = n_args > 4 ? mp_obj_get_int(args[4]) : PBIO_MOTOR_RUN_FOREGROUND;
     // Call pbio with parsed user/default arguments
     pb_assert(pbio_encmotor_run_angle(port, mp_obj_get_num(args[1]), mp_obj_get_num(args[2]), after_stop));
-    wait_for_completion(port, wait);
+    wait_for_completion(port, runtype);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_angle_obj, 3, 5, motor_Motor_run_angle);
@@ -416,10 +424,10 @@ STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
     pbio_motor_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
-    pbio_motor_wait_t wait             = n_args > 4 ? mp_obj_get_int(args[4]) : PBIO_MOTOR_WAIT_WAIT;
+    pbio_motor_run_t runtype           = n_args > 4 ? mp_obj_get_int(args[4]) : PBIO_MOTOR_RUN_FOREGROUND;
     // Call pbio with parsed user/default arguments
     pb_assert(pbio_encmotor_run_target(port, mp_obj_get_num(args[1]), mp_obj_get_num(args[2]), after_stop));
-    wait_for_completion(port, wait);
+    wait_for_completion(port, runtype);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_target_obj, 3, 5, motor_Motor_run_target);

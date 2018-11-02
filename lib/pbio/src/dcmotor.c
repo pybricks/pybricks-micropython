@@ -1,4 +1,5 @@
 #include <pbio/dcmotor.h>
+#include <inttypes.h>
 
 // Initialize DC Motor settings
 pbio_dcmotor_settings_t dcmotor_settings[] = {
@@ -48,13 +49,15 @@ pbio_error_t pbio_dcmotor_set_settings(pbio_port_t port, int16_t stall_torque_li
 
 void pbio_dcmotor_print_settings(pbio_port_t port, char *settings_string){
     int8_t port_index = PORT_TO_IDX(port);
-    char format_string [] = "Port: %c\nDirection: %s\nTorque limit: %d";
-    if (dcmotor_settings[port_index].direction == PBIO_MOTOR_DIR_NORMAL) {
-        snprintf(settings_string, MAX_DCMOTOR_SETTINGS_STR_LENGTH, format_string, port, "normal", dcmotor_settings[port_index].max_stall_duty / PBIO_DUTY_PCT_TO_ABS);
-    }
-    else{
-        snprintf(settings_string, MAX_DCMOTOR_SETTINGS_STR_LENGTH, format_string, port, "inverted", dcmotor_settings[port_index].max_stall_duty / PBIO_DUTY_PCT_TO_ABS);
-    }        
+    char *direction = dcmotor_settings[port_index].direction == PBIO_MOTOR_DIR_NORMAL ? "normal" : "inverted";
+    snprintf(settings_string, MAX_DCMOTOR_SETTINGS_STR_LENGTH, 
+        "Port\t\t %c\n"
+        "Direction\t %s\n"
+        "Torque limit\t %" PRId32 "",
+        port,
+        direction,
+        (int32_t) (dcmotor_settings[port_index].max_stall_duty / PBIO_DUTY_PCT_TO_ABS)
+    );
 }
 
 pbio_error_t pbio_dcmotor_coast(pbio_port_t port){

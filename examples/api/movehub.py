@@ -1,6 +1,5 @@
 from movehub import *
 from devices import *
-from utime import sleep_ms
 
 # Configure hub motor A as default
 left = MovehubMotor(Port.A)
@@ -28,10 +27,10 @@ left.run_target(500, 0, Stop.hold)
 right = MovehubMotor(Port.B)
 
 # run both motors. This will become simpler and more precise (synchronized) once we implement the DriveBase class driver
-left.run_time(500, 3000, Stop.brake, Wait.background)
+left.run_time(500, 3000, Stop.brake, Run.background)
 right.run_time(500, 3000, Stop.brake)
 
 # Run then forced stop
 left.run(500)
-sleep_ms(1000)
+wait(1000)
 left.stop(False, Stop.brake) # TODO: Change after decision of stop api
