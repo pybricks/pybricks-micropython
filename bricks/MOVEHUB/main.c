@@ -57,10 +57,7 @@ void mp_reader_new_file(mp_reader_t *reader, const char *filename) {
 }
 #endif // MICROPY_PERSISTENT_CODE_LOAD
 
-#if MICROPY_ENABLE_COMPILER
-// don't wait for button press when using REPL
-#define wait_for_button_press()
-#else // MICROPY_ENABLE_COMPILER
+#if !MICROPY_ENABLE_COMPILER
 typedef enum {
     WAITING_FOR_FIRST_RELEASE,
     WAITING_FOR_PRESS,
@@ -145,7 +142,10 @@ int main(int argc, char **argv) {
     #endif
 
 soft_reset:
+    #if !MICROPY_ENABLE_COMPILER
     wait_for_button_press();
+    #endif
+
     pbsys_prepare_user_program(&user_program_callbacks);
 
     mp_init();
