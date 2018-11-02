@@ -1,3 +1,5 @@
+#include <pbio/iodev.h>
+
 #include <modmotor.h>
 #include <mpconfigbrick.h>
 #include <modhubcommon.h>
@@ -24,6 +26,20 @@ STATIC const mp_rom_map_elem_t movehub_Port_enum_table[] = {
 };
 STATIC PB_DEFINE_CONST_ENUM(movehub_Port_enum, movehub_Port_enum_table);
 
+STATIC mp_obj_t hub_get_values(mp_obj_t port) {
+    uint8_t *data;
+    uint8_t len;
+    pb_assert(pbio_iodev_get_raw_values(mp_obj_get_int(port), &data, &len));
+    return mp_obj_new_bytearray(len, data);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(hub_get_values_obj, hub_get_values);
+
+STATIC mp_obj_t hub_set_mode(mp_obj_t port, mp_obj_t mode) {
+    pb_assert(pbio_iodev_set_mode(mp_obj_get_int(port), mp_obj_get_int(mode)));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_2(hub_set_mode_obj, hub_set_mode);
+
 /* Movehub module table */
 
 extern const struct _mp_obj_module_t pb_module_battery;
@@ -34,7 +50,7 @@ STATIC const mp_map_elem_t movehub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_Port), (mp_obj_t)&movehub_Port_enum },
 #if PBIO_CONFIG_ENABLE_MOTORS
     { MP_OBJ_NEW_QSTR(MP_QSTR_MovehubMotor), (mp_obj_t)&motor_MovehubMotor_type},
-#endif //PBIO_CONFIG_ENABLE_MOTORS    
+#endif //PBIO_CONFIG_ENABLE_MOTORS
     /* Common to Powered Up hubs */
     { MP_OBJ_NEW_QSTR(MP_QSTR_Color), (mp_obj_t)&pup_Color_enum },
     { MP_OBJ_NEW_QSTR(MP_QSTR_battery), (mp_obj_t)&pb_module_battery },
@@ -46,6 +62,9 @@ STATIC const mp_map_elem_t movehub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&hub_gpios_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_read_adc), (mp_obj_t)&hub_read_adc_obj },
 #endif //PYBRICKS_ENABLE_HARDWARE_DEBUG
+    // hacks
+    { MP_OBJ_NEW_QSTR(MP_QSTR_get_values),  (mp_obj_t)&hub_get_values_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_set_mode),    (mp_obj_t)&hub_set_mode_obj },
 };
 
 STATIC MP_DEFINE_CONST_DICT (

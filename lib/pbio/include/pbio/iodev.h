@@ -2,6 +2,7 @@
 #ifndef _PBIO_IODEV_H_
 #define _PBIO_IODEV_H_
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "pbio/port.h"
@@ -80,10 +81,6 @@ typedef enum {
      * Little endian 32-bit floating point.
      */
     PBIO_DATA_TYPE_FLOAT,
-    /**
-     * The number of enum values in ::pbio_iodev_data_type_t.
-     */
-    PBIO_NUM_DATA_TYPE
 } pbio_iodev_data_type_t;
 
 /**
@@ -203,5 +200,9 @@ typedef struct {
      */
     uint8_t bin_data[32];
 } pbio_iodev_t;
+
+size_t pbio_iodev_size_of(pbio_iodev_data_type_t type);
+pbio_error_t pbio_iodev_get_raw_values(pbio_port_t port, uint8_t **data, uint8_t *len);
+pbio_error_t pbio_iodev_set_mode(pbio_port_t port, uint8_t mode);
 
 #endif // _PBIO_IODEV_H_
