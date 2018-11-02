@@ -674,10 +674,8 @@ PROCESS_THREAD(pbio_uartdev_process, ev, data) {
 
     PROCESS_BEGIN();
 
-    // TODO: should probably not assume a 1:1 mapping to platform-specific I/O ports
-    // TODO: change 1 to 0 here and below when port C is no longer used for debug
-    for (int i = 1; i < PBDRV_CONFIG_NUM_IO_PORT; i++) {
-        dev_data[i].iodev = &_pbio_ioport_dev[i];
+    for (int i = 0; i < PBDRV_CONFIG_NUM_IO_PORT; i++) {
+        pbdrv_ioport_get_iodev(PBDRV_CONFIG_FIRST_IO_PORT + i, &dev_data[i].iodev);
     }
 
     while (true) {
@@ -687,7 +685,7 @@ PROCESS_THREAD(pbio_uartdev_process, ev, data) {
             pbio_uartdev_put(rx.port, rx.byte);
         }
         else if (ev == PROCESS_EVENT_TIMER) {
-            for (int i = 1; i < PBDRV_CONFIG_NUM_IO_PORT; i++) {
+            for (int i = 0; i < PBDRV_CONFIG_NUM_IO_PORT; i++) {
                 // keepalive timer
                 if (etimer_expired(&dev_data[i].timer)) {
                     if (dev_data[i].status == PBIO_UARTDEV_STATUS_ACK) {

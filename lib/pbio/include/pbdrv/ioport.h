@@ -8,17 +8,26 @@
 #define _PBDRV_IOPORT_H_
 
 #include "pbdrv/config.h"
+#include "pbio/error.h"
 #include "pbio/iodev.h"
+#include "pbio/port.h"
 #include "sys/process.h"
 
 #if PBDRV_CONFIG_IOPORT
 
+pbio_error_t pbdrv_ioport_get_iodev(pbio_port_t port, pbio_iodev_t **iodev);
+
 /** @cond INTERNAL */
 
 PROCESS_NAME(pbdrv_ioport_process);
-extern pbio_iodev_t _pbio_ioport_dev[PBDRV_CONFIG_NUM_IO_PORT];
 
 /** @endcond */
+
+#else // PBDRV_CONFIG_IOPORT
+
+static inline pbio_error_t pbdrv_ioport_get_iodev(pbio_port_t port, pbio_iodev_t **iodev) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
 
 #endif // PBDRV_CONFIG_IOPORT
 

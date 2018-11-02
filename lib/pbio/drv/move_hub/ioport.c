@@ -106,9 +106,9 @@ static pbio_iodev_type_id_t prev_type_id[NUM_IOPORT];
 static struct {
     pbio_iodev_info_t info;
     pbio_iodev_mode_t modes[PBIO_IODEV_MAX_NUM_MODES];
-} ioport_info[PBDRV_CONFIG_NUM_IO_PORT];
+} ioport_info[NUM_IOPORT];
 
-pbio_iodev_t _pbio_ioport_dev[PBDRV_CONFIG_NUM_IO_PORT];
+pbio_iodev_t iodevs[NUM_IOPORT];
 
 PROCESS(pbdrv_ioport_process, "I/O port");
 
@@ -131,25 +131,25 @@ static void ioport_gpio_alt(const ioport_gpio_t *gpio) {
     gpio->bank->MODER = (gpio->bank->MODER & ~(3 << (gpio->bit * 2))) | (2 << (gpio->bit * 2));
 }
 
-static void ioport_enable_uart(ioport_t port) {
-    const ioport_pins_t *pins = &ioport_pins[port];
+static void ioport_enable_uart(ioport_t ioport) {
+    const ioport_pins_t *pins = &ioport_pins[ioport];
 
     ioport_gpio_alt(&pins->uart_rx);
     ioport_gpio_alt(&pins->uart_tx);
     ioport_gpio_out_low(&pins->uart_buf);
 }
 
-static void init_one(ioport_t port) {
-    const ioport_pins_t pins = ioport_pins[port];
+static void init_one(ioport_t ioport) {
+    const ioport_pins_t pins = ioport_pins[ioport];
 
-    _pbio_ioport_dev[port].port = port + PBDRV_CONFIG_FIRST_IO_PORT;
-    _pbio_ioport_dev[port].info = &ioport_info[port].info;
+    iodevs[ioport].port = PBIO_PORT_C + ioport;
+    iodevs[ioport].info = &ioport_info[ioport].info;
 
     // set up alternate function for UART pins
-    if (port == IOPORT_C) {
+    if (ioport == IOPORT_C) {
         GPIOC->AFR[1] = (GPIOC->AFR[1] & ~(GPIO_AFRH_AFSEL10_Msk | GPIO_AFRH_AFSEL11_Msk)) | (0 << GPIO_AFRH_AFSEL10_Pos) | (0 << GPIO_AFRH_AFSEL11_Pos);
     }
-    else if (port == IOPORT_D) {
+    else if (ioport == IOPORT_D) {
         GPIOC->AFR[0] = (GPIOC->AFR[0] & ~(GPIO_AFRL_AFSEL4_Msk | GPIO_AFRL_AFSEL5_Msk)) | (1 << GPIO_AFRL_AFSEL4_Pos) | (1 << GPIO_AFRL_AFSEL5_Pos);
     }
 
@@ -160,14 +160,29 @@ static void init_one(ioport_t port) {
     ioport_gpio_input(&pins.uart_rx);
 }
 
+pbio_error_t pbdrv_ioport_get_iodev(pbio_port_t port, pbio_iodev_t **iodev) {
+    switch (port) {
+    case PBIO_PORT_C:
+        *iodev = &iodevs[IOPORT_C];
+        break;
+    case PBIO_PORT_D:
+        *iodev = &iodevs[IOPORT_D];
+        break;
+    default:
+        return PBIO_ERROR_INVALID_PORT;
+    }
+
+    return PBIO_SUCCESS;
+}
+
 // This is the device connection manager (dcm). It monitors the ID1 and ID2 pins
 // on the port to see when devices are connected or disconnected.
 // It is expected for there to be a 2ms delay between calls to this function.
-static void poll_dcm(ioport_t port) {
+static void poll_dcm(ioport_t ioport) {
     // copying the data struct reduces the code size by a few hundred bytes,
     // but we need to rember to copy it back if we change anything
-    dcm_data_t data = dcm_data[port];
-    const ioport_pins_t pins = ioport_pins[port];
+    dcm_data_t data = dcm_data[ioport];
+    const ioport_pins_t pins = ioport_pins[ioport];
     uint8_t gpio_input;
 
     switch (data.dcm_state) {
@@ -367,8 +382,8 @@ static void poll_dcm(ioport_t port) {
         if (data.type_id == data.prev_type_id) {
             if (++data.dev_id_match_count >= 20) {
 
-                if (data.type_id != connected_type_id[port]) {
-                    connected_type_id[port] = data.type_id;
+                if (data.type_id != connected_type_id[ioport]) {
+                    connected_type_id[ioport] = data.type_id;
                 }
 
                 // don't want to wrap around and re-trigger
@@ -383,7 +398,7 @@ static void poll_dcm(ioport_t port) {
     }
 
     // copy local variable back to global
-    dcm_data[port] = data;
+    dcm_data[ioport] = data;
 }
 
 PROCESS_THREAD(pbdrv_ioport_process, ev, data) {
