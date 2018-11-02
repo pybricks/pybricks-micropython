@@ -166,7 +166,6 @@ typedef enum {
  * @timer: Timer for sending keepalive messages.
  * @requested_mode: Mode that was requested by user. Used to restore previous
  * 	mode in case of a reconnect.
- * @type_id: Type id returned by the sensor
  * @new_mode: The mode requested by set_mode.
  * @new_baud_rate: New baud rate that will be set with ev3_uart_change_bitrate
  * @info_flags: Flags indicating what information has already been read
@@ -183,7 +182,6 @@ typedef struct ev3_uart_port_data {
     struct etimer timer;
     pbio_uartdev_status_t status;
     uint8_t requested_mode;
-    uint8_t type_id;
     uint8_t new_mode;
     uint32_t new_baud_rate;
     uint32_t info_flags;
@@ -285,7 +283,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             data->iodev->info->mode_info[i] = ev3_uart_default_mode_info;
         }
 
-        data->type_id = data->msg[1];
+        data->iodev->info->type_id = data->msg[1];
         data->partial_msg_size = 0;
         data->info_flags = EV3_UART_INFO_FLAG_CMD_TYPE;
         data->data_rec = 0;
@@ -347,7 +345,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
          * improved if someone can find a pattern.
          */
         if (checksum != data->msg[msg_size - 1]
-            && data->type_id != PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR
+            && data->iodev->info->type_id != PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR
             && data->msg[0] != 0xDC)
         {
             DBG_ERR(data->last_err = "Bad checksum");
