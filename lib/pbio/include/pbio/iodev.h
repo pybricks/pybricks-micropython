@@ -180,11 +180,26 @@ typedef struct {
     pbio_iodev_mode_t mode_info[0];
 } pbio_iodev_info_t;
 
-typedef struct {
+/**
+ * Data structure for holding an I/O device's state.
+ */
+typedef struct _pbio_iodev_t pbio_iodev_t;
+
+/**
+ * Function prototype for implementation of device mode setting function.
+ */
+typedef pbio_error_t (*pbio_iodev_set_mode_func_t)(pbio_iodev_t *iodev, uint8_t mode);
+
+struct _pbio_iodev_t {
     /**
      * Pointer to the mode info for this device.
      */
     pbio_iodev_info_t *info;
+    /**
+     * Optional callback to set the mode the device.
+     * This should not be called directly. Use ::pbio_iodev_set_mode() instead.
+     */
+    pbio_iodev_set_mode_func_t set_mode;
     /**
      * The port the device is attached to.
      */
@@ -199,7 +214,7 @@ typedef struct {
      * *mode* of the device.
      */
     uint8_t bin_data[32];
-} pbio_iodev_t;
+};
 
 size_t pbio_iodev_size_of(pbio_iodev_data_type_t type);
 pbio_error_t pbio_iodev_get_raw_values(pbio_port_t port, uint8_t **data, uint8_t *len);

@@ -50,6 +50,7 @@
 #define EV3_UART_MAX_MESSAGE_SIZE   (EV3_UART_MAX_DATA_SIZE + 2)
 
 #define EV3_UART_MSG_TYPE_MASK      0xC0
+#define EV3_UART_MSG_SIZE_MASK      0x38
 #define EV3_UART_CMD_SIZE(byte)     (1 << (((byte) >> 3) & 0x7))
 #define EV3_UART_MSG_CMD_MASK       0x07
 #define EV3_UART_MAX_DATA_ERR       6
@@ -68,6 +69,15 @@ enum ev3_uart_msg_type {
     EV3_UART_MSG_TYPE_CMD   = 0x40,
     EV3_UART_MSG_TYPE_INFO  = 0x80,
     EV3_UART_MSG_TYPE_DATA  = 0xC0,
+};
+
+enum ev3_uart_msg_size {
+    EV3_UART_MSG_SIZE_1     = 0x0 << 3,
+    EV3_UART_MSG_SIZE_2     = 0x1 << 3,
+    EV3_UART_MSG_SIZE_4     = 0x2 << 3,
+    EV3_UART_MSG_SIZE_8     = 0x3 << 3,
+    EV3_UART_MSG_SIZE_16    = 0x4 << 3,
+    EV3_UART_MSG_SIZE_32    = 0x5 << 3,
 };
 
 enum ev3_uart_sys {
@@ -213,7 +223,7 @@ static inline bool test_and_set_bit(uint8_t bit, uint32_t *flags) {
     return result;
 }
 
-static uint8_t ev3_uart_msg_size(uint8_t header) {
+static uint8_t ev3_uart_get_msg_size(uint8_t header) {
     uint8_t size;
 
     if (!(header & EV3_UART_MSG_TYPE_MASK)) {
@@ -295,7 +305,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
 
     if (data->partial_msg_size) {
         // collect next_byte until we have a full data->msg
-        msg_size = ev3_uart_msg_size(data->msg[0]);
+        msg_size = ev3_uart_get_msg_size(data->msg[0]);
         data->msg[data->partial_msg_size++] = next_byte;
         if (data->partial_msg_size < msg_size) {
             return;
@@ -305,7 +315,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
         return;
     } else {
         // first byte of the data->msg contains the data->msg size
-        msg_size = ev3_uart_msg_size(next_byte);
+        msg_size = ev3_uart_get_msg_size(next_byte);
         if (msg_size > EV3_UART_MAX_MESSAGE_SIZE) {
             DBG_ERR(data->last_err = "Bad data->msg size");
             goto err;
@@ -670,6 +680,30 @@ err:
     debug_pr("%s\n", data->last_err);
 }
 
+static uint8_t ev3_uart_set_msg_hdr(enum ev3_uart_msg_type type, enum ev3_uart_msg_size size, enum ev3_uart_cmd cmd)
+{
+    return (type & EV3_UART_MSG_TYPE_MASK) | (size & EV3_UART_MSG_SIZE_MASK) | (cmd & EV3_UART_MSG_CMD_MASK);
+}
+
+static pbio_error_t ev3_uart_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
+    uartdev_port_data_t *data = &dev_data[port_to_index(iodev->port)];
+    uint8_t header, checksum;
+
+    if (mode >= iodev->info->num_modes) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    data->new_mode = mode;
+    header = ev3_uart_set_msg_hdr(EV3_UART_MSG_TYPE_CMD, EV3_UART_MSG_SIZE_1, EV3_UART_CMD_SELECT);
+    checksum = 0xff ^ header ^ mode;
+
+    while (pbdrv_uart_put_char(iodev->port, header) == PBIO_ERROR_AGAIN);
+    while (pbdrv_uart_put_char(iodev->port, mode) == PBIO_ERROR_AGAIN);
+    while (pbdrv_uart_put_char(iodev->port, checksum) == PBIO_ERROR_AGAIN);
+
+    return PBIO_SUCCESS;
+}
+
 PROCESS_THREAD(pbio_uartdev_process, ev, data) {
 
     PROCESS_BEGIN();
@@ -693,6 +727,7 @@ PROCESS_THREAD(pbio_uartdev_process, ev, data) {
                         etimer_reset_with_new_interval(&dev_data[i].timer, clock_from_msec(EV3_UART_DATA_KEEP_ALIVE_TIMEOUT));
                         pbdrv_uart_set_baud_rate(dev_data[i].iodev->port, dev_data[i].new_baud_rate);
                         dev_data[i].status = PBIO_UARTDEV_STATUS_DATA;
+                        dev_data[i].iodev->set_mode = ev3_uart_set_mode;
                     }
                     else if (dev_data[i].num_data_err > 6) {
                         etimer_stop(&dev_data[i].timer);

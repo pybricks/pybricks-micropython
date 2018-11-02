@@ -65,5 +65,9 @@ pbio_error_t pbio_iodev_set_mode(pbio_port_t port, uint8_t mode) {
         return err;
     }
 
-    return PBIO_ERROR_NOT_IMPLEMENTED;
+    if (!iodev->set_mode) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
+
+    return iodev->set_mode(iodev, mode);
 }
