@@ -23,8 +23,10 @@
 #define DEBUG 0
 #if DEBUG
 #define debug_pr(fmt, ...)   printf((fmt), __VA_ARGS__)
+#define DBG_ERR(expr) expr
 #else
 #define debug_pr(...)
+#define DBG_ERR(expr)
 #endif
 
 #include <stdint.h>
@@ -187,7 +189,7 @@ typedef struct ev3_uart_port_data {
     uint32_t info_flags;
     uint8_t msg[EV3_UART_MAX_MESSAGE_SIZE];
     uint8_t partial_msg_size;
-    char *last_err;
+    DBG_ERR(const char *last_err);
     uint32_t num_data_err;
     unsigned data_rec:1;
 } uartdev_port_data_t;
@@ -307,7 +309,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
         // first byte of the data->msg contains the data->msg size
         msg_size = ev3_uart_msg_size(next_byte);
         if (msg_size > EV3_UART_MAX_MESSAGE_SIZE) {
-            data->last_err = "Bad data->msg size";
+            DBG_ERR(data->last_err = "Bad data->msg size");
             goto err;
         }
         data->msg[0] = next_byte;
@@ -348,7 +350,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             && data->type_id != PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR
             && data->msg[0] != 0xDC)
         {
-            data->last_err = "Bad checksum.";
+            DBG_ERR(data->last_err = "Bad checksum");
             // if INFO messages are done and we are now receiving data, it is
             // OK to occasionally have a bad checksum
             if (data->status == PBIO_UARTDEV_STATUS_DATA) {
@@ -371,11 +373,11 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             break;
         case EV3_UART_SYS_ACK:
             if (!data->iodev->info->num_modes) {
-                data->last_err = "Received ACK before all mode INFO.";
+                DBG_ERR(data->last_err = "Received ACK before all mode INFO");
                 goto err;
             }
             if ((data->info_flags & EV3_UART_INFO_FLAG_REQUIRED) != EV3_UART_INFO_FLAG_REQUIRED) {
-                data->last_err = "Did not receive all required INFO.";
+                DBG_ERR(data->last_err = "Did not receive all required INFO");
                 goto err;
             }
 
@@ -394,11 +396,11 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
         switch (cmd) {
         case EV3_UART_CMD_MODES:
             if (test_and_set_bit(EV3_UART_INFO_BIT_CMD_MODES, &data->info_flags)) {
-                data->last_err = "Received duplicate modes INFO.";
+                DBG_ERR(data->last_err = "Received duplicate modes INFO");
                 goto err;
             }
             if (cmd2 > EV3_UART_MODE_MAX) {
-                data->last_err = "Number of modes is out of range.";
+                DBG_ERR(data->last_err = "Number of modes is out of range");
                 goto err;
             }
             data->iodev->info->num_modes = cmd2 + 1;
@@ -421,12 +423,12 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             break;
         case EV3_UART_CMD_SPEED:
             if (test_and_set_bit(EV3_UART_INFO_BIT_CMD_SPEED, &data->info_flags)) {
-                data->last_err = "Received duplicate speed INFO.";
+                DBG_ERR(data->last_err = "Received duplicate speed INFO");
                 goto err;
             }
             speed = *(int*)(data->msg + 1);
             if (speed < EV3_UART_SPEED_MIN || speed > EV3_UART_SPEED_MAX) {
-                data->last_err = "Speed is out of range.";
+                DBG_ERR(data->last_err = "Speed is out of range");
                 goto err;
             }
             data->new_baud_rate = speed;
@@ -439,7 +441,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             break;
         case EV3_UART_CMD_VERSION:
             if (test_and_set_bit(EV3_UART_INFO_BIT_CMD_VERSION, &data->info_flags)) {
-                data->last_err = "Received duplicate version INFO.";
+                DBG_ERR(data->last_err = "Received duplicate version INFO");
                 goto err;
             }
             // TODO: this might be useful someday
@@ -448,7 +450,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
 
             break;
         default:
-            data->last_err = "Unknown command.";
+            DBG_ERR(data->last_err = "Unknown command");
             goto err;
         }
         break;
@@ -457,7 +459,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
         case EV3_UART_INFO_NAME:
             data->info_flags &= ~EV3_UART_INFO_FLAG_ALL_INFO;
             if (data->msg[2] < 'A' || data->msg[2] > 'z') {
-                data->last_err = "Invalid name INFO.";
+                DBG_ERR(data->last_err = "Invalid name INFO");
                 goto err;
             }
             /*
@@ -469,7 +471,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
              */
             data->msg[msg_size - 1] = 0;
             if (strlen((char *)data->msg + 2) > PBIO_IODEV_MODE_NAME_SIZE) {
-                data->last_err = "Name is too long.";
+                DBG_ERR(data->last_err = "Name is too long");
                 goto err;
             }
             snprintf(data->iodev->info->mode_info[mode].name,
@@ -485,11 +487,11 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             break;
         case EV3_UART_INFO_RAW:
             if (data->iodev->mode != mode) {
-                data->last_err = "Received INFO for incorrect mode.";
+                DBG_ERR(data->last_err = "Received INFO for incorrect mode");
                 goto err;
             }
             if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_RAW, &data->info_flags)) {
-                data->last_err = "Received duplicate raw scaling INFO.";
+                DBG_ERR(data->last_err = "Received duplicate raw scaling INFO");
                 goto err;
             }
             data->iodev->info->mode_info[mode].raw_min = *(float *)(data->msg + 2);
@@ -501,11 +503,11 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             break;
         case EV3_UART_INFO_PCT:
             if (data->iodev->mode != mode) {
-                data->last_err = "Received INFO for incorrect mode.";
+                DBG_ERR(data->last_err = "Received INFO for incorrect mode");
                 goto err;
             }
             if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_PCT, &data->info_flags)) {
-                data->last_err = "Received duplicate percent scaling INFO.";
+                DBG_ERR(data->last_err = "Received duplicate percent scaling INFO");
                 goto err;
             }
             data->iodev->info->mode_info[mode].pct_min = *(float *)(data->msg + 2);
@@ -517,13 +519,13 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             break;
         case EV3_UART_INFO_SI:
             if (data->iodev->mode != mode) {
-                data->last_err = "Received INFO for incorrect mode.";
+                DBG_ERR(data->last_err = "Received INFO for incorrect mode");
                 goto err;
             }
             if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_SI,
                             &data->info_flags))
             {
-                data->last_err = "Received duplicate SI scaling INFO.";
+                DBG_ERR(data->last_err = "Received duplicate SI scaling INFO");
                 goto err;
             }
             data->iodev->info->mode_info[mode].si_min = *(float *)(data->msg + 2);
@@ -535,11 +537,11 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             break;
         case EV3_UART_INFO_UNITS:
             if (data->iodev->mode != mode) {
-                data->last_err = "Received INFO for incorrect mode.";
+                DBG_ERR(data->last_err = "Received INFO for incorrect mode");
                 goto err;
             }
             if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_UNITS, &data->info_flags)) {
-                data->last_err = "Received duplicate SI units INFO.";
+                DBG_ERR(data->last_err = "Received duplicate SI units INFO");
                 goto err;
             }
             // Units may not have null terminator and we are done with the
@@ -554,11 +556,11 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             break;
         case EV3_UART_INFO_UNK1:
             if (data->iodev->mode != mode) {
-                data->last_err = "Received INFO for incorrect mode.";
+                DBG_ERR(data->last_err = "Received INFO for incorrect mode");
                 goto err;
             }
             if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_UNK1, &data->info_flags)) {
-                data->last_err = "Received duplicate UNK1 units INFO.";
+                DBG_ERR(data->last_err = "Received duplicate UNK1 units INFO");
                 goto err;
             }
             // TODO: what does this info tell us?
@@ -568,11 +570,11 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             break;
         case EV3_UART_INFO_UNK2:
             if (data->iodev->mode != mode) {
-                data->last_err = "Received INFO for incorrect mode.";
+                DBG_ERR(data->last_err = "Received INFO for incorrect mode");
                 goto err;
             }
             if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_UNK2, &data->info_flags)) {
-                data->last_err = "Received duplicate UNK2 units INFO.";
+                DBG_ERR(data->last_err = "Received duplicate UNK2 units INFO");
                 goto err;
             }
             // TODO: what does this info tell us?
@@ -582,24 +584,24 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             break;
         case EV3_UART_INFO_FORMAT:
             if (data->iodev->mode != mode) {
-                data->last_err = "Received INFO for incorrect mode.";
+                DBG_ERR(data->last_err = "Received INFO for incorrect mode");
                 goto err;
             }
             if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_FORMAT, &data->info_flags)) {
-                data->last_err = "Received duplicate format INFO.";
+                DBG_ERR(data->last_err = "Received duplicate format INFO");
                 goto err;
             }
             data->iodev->info->mode_info[mode].num_values = data->msg[2];
             if (!data->iodev->info->mode_info[mode].num_values) {
-                data->last_err = "Invalid number of data sets.";
+                DBG_ERR(data->last_err = "Invalid number of data sets");
                 goto err;
             }
             if (msg_size < 7) {
-                data->last_err = "Invalid format data->msg size.";
+                DBG_ERR(data->last_err = "Invalid format data->msg size");
                 goto err;
             }
             if ((data->info_flags & EV3_UART_INFO_FLAG_REQUIRED) != EV3_UART_INFO_FLAG_REQUIRED) {
-                data->last_err = "Did not receive all required INFO.";
+                DBG_ERR(data->last_err = "Did not receive all required INFO");
                 goto err;
             }
             switch (data->msg[3]) {
@@ -616,7 +618,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
                 data->iodev->info->mode_info[mode].data_type = PBIO_DATA_TYPE_FLOAT;
                 break;
             default:
-                data->last_err = "Invalid data type.";
+                DBG_ERR(data->last_err = "Invalid data type");
                 goto err;
             }
             data->iodev->info->mode_info[mode].digits = data->msg[4];
@@ -635,11 +637,11 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
         break;
     case EV3_UART_MSG_TYPE_DATA:
         if (data->status != PBIO_UARTDEV_STATUS_DATA) {
-            data->last_err = "Received DATA before INFO was complete.";
+            DBG_ERR(data->last_err = "Received DATA before INFO was complete");
             goto err;
         }
         if (mode > EV3_UART_MODE_MAX) {
-            data->last_err = "Invalid mode received.";
+            DBG_ERR(data->last_err = "Invalid mode received");
             goto err;
         }
         if (mode != data->iodev->mode) {
@@ -647,7 +649,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
                 data->iodev->mode = mode;
                 // TODO: notify that mode has changed
             } else {
-                data->last_err = "Unexpected mode.";
+                DBG_ERR(data->last_err = "Unexpected mode");
                 goto err;
             }
         }
@@ -705,7 +707,7 @@ PROCESS_THREAD(pbio_uartdev_process, ev, data) {
                         etimer_reset(&dev_data[i].timer);
                         if (!dev_data[i].data_rec) {
                             dev_data[i].num_data_err++;
-                            dev_data[i].last_err = "No data since last keepalive";
+                            DBG_ERR(dev_data[i].last_err = "No data since last keepalive");
                         }
                         // send keepalive
                         while (pbdrv_uart_put_char(dev_data[i].iodev->port, EV3_UART_SYS_NACK) == PBIO_ERROR_AGAIN);
