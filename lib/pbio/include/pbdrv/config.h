@@ -46,6 +46,22 @@
 #define PBDRV_CONFIG_HAS_PORT_4 (0)
 #endif
 
+// the number of I/O ports in the programmable brick
+#ifndef PBDRV_CONFIG_NUM_IO_PORT
+#define PBDRV_CONFIG_NUM_IO_PORT (0)
+#elif PBDRV_CONFIG_NUM_IO_PORT != 0
+
+// the pbio_port_t enum value of the first I/O port
+#ifndef PBDRV_CONFIG_FIRST_IO_PORT
+#error PBDRV_CONFIG_NUM_IO_PORT requires that PBDRV_CONFIG_FIRST_IO_PORT is defined
+#endif
+
+// the pbio_port_t enum value of the last I/O port
+#ifndef PBDRV_CONFIG_LAST_IO_PORT
+#error PBDRV_CONFIG_NUM_IO_PORT requires that PBDRV_CONFIG_LAST_IO_PORT is defined
+#endif
+#endif
+
 // the number of built-in motor controllers in the programmable brick
 #ifndef PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
 #define PBDRV_CONFIG_NUM_MOTOR_CONTROLLER (0)

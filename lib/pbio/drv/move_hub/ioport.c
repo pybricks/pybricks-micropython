@@ -103,6 +103,13 @@ static const pbio_iodev_type_id_t ioport_type_id_lookup[3][3] = {
 static pbio_iodev_type_id_t connected_type_id[NUM_IOPORT];
 static pbio_iodev_type_id_t prev_type_id[NUM_IOPORT];
 
+static struct {
+    pbio_iodev_info_t info;
+    pbio_iodev_mode_t modes[PBIO_IODEV_MAX_NUM_MODES];
+} ioport_info[PBDRV_CONFIG_NUM_IO_PORT];
+
+pbio_iodev_t _pbio_ioport_dev[PBDRV_CONFIG_NUM_IO_PORT];
+
 PROCESS(pbdrv_ioport_process, "I/O port");
 
 static void ioport_gpio_out_low(const ioport_gpio_t *gpio) {
@@ -134,6 +141,9 @@ static void ioport_enable_uart(ioport_t port) {
 
 static void init_one(ioport_t port) {
     const ioport_pins_t pins = ioport_pins[port];
+
+    _pbio_ioport_dev[port].port = port + PBDRV_CONFIG_FIRST_IO_PORT;
+    _pbio_ioport_dev[port].info = &ioport_info[port].info;
 
     // set up alternate function for UART pins
     if (port == IOPORT_C) {
@@ -404,9 +414,6 @@ PROCESS_THREAD(pbdrv_ioport_process, ev, data) {
             prev_type_id[IOPORT_D] = connected_type_id[IOPORT_D];
             if (connected_type_id[IOPORT_D] == PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
                 printf("going to UART mode\n");
-
-                USART3->BRR = PBDRV_CONFIG_SYS_CLOCK_RATE / 2400;
-                USART3->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;
 
                 ioport_enable_uart(IOPORT_D);
             }

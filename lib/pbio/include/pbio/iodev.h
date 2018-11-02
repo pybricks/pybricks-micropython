@@ -87,12 +87,17 @@ typedef enum {
 } pbio_iodev_data_type_t;
 
 /**
+ * The maximum number of modes a I/O device can have.
+ */
+#define PBIO_IODEV_MAX_NUM_MODES    16
+
+/**
  * Max size of mode name (not including null terminator)
  */
 #define PBIO_IODEV_MODE_NAME_SIZE   11
 
 /**
- * Max size of units of measurements.
+ * Max size of units of measurements (not including null terminator)
  */
 #define PBIO_IODEV_UOM_SIZE         4
 

@@ -5,7 +5,9 @@
 
 #include "pbdrv/config.h"
 #include "pbio/error.h"
+#include "pbio/event.h"
 #include "pbio/port.h"
+#include "pbio/uartdev.h"
 #include "pbsys/sys.h"
 #include "sys/process.h"
 
@@ -112,6 +114,7 @@ static void uart_init() {
 
     // TODO: this is just for debug UART on port C
     pbdrv_uart_set_baud_rate(PBIO_PORT_C, 115200);
+    pbdrv_uart_set_baud_rate(PBIO_PORT_D, 2400);
 
     // DMA is not possible on USART3/4 on STM32F070x6, so using interrupt
     NVIC_EnableIRQ(USART3_6_IRQn);
@@ -153,9 +156,23 @@ void USART3_6_IRQHandler(void) {
         usart3_rx_buf[usart3_rx_buf_head] = c;
         usart3_rx_buf_head = new_head;
     }
+
+    process_poll(&pbdrv_uart_process);
+}
+
+static void handle_poll() {
+    uint8_t c = 0;
+
+    // TODO: add port C
+    while (pbdrv_uart_get_char(PBIO_PORT_D, &c) == PBIO_SUCCESS) {
+        pbio_event_uart_rx_data_t rx = { .port = PBIO_PORT_D, .byte = c };
+        process_post_synch(&pbio_uartdev_process, PBIO_EVENT_UART_RX, rx.data);
+    }
 }
 
 PROCESS_THREAD(pbdrv_uart_process, ev, data) {
+    PROCESS_POLLHANDLER(handle_poll());
+
     PROCESS_BEGIN();
 
     uart_init();

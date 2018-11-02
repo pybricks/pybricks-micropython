@@ -8,6 +8,7 @@
 #define _PBDRV_IOPORT_H_
 
 #include "pbdrv/config.h"
+#include "pbio/iodev.h"
 #include "sys/process.h"
 
 #if PBDRV_CONFIG_IOPORT
@@ -15,6 +16,7 @@
 /** @cond INTERNAL */
 
 PROCESS_NAME(pbdrv_ioport_process);
+extern pbio_iodev_t _pbio_ioport_dev[PBDRV_CONFIG_NUM_IO_PORT];
 
 /** @endcond */
 

@@ -5,15 +5,16 @@
 
 #include <stdbool.h>
 
-#include <pbdrv/adc.h>
-#include <pbdrv/bluetooth.h>
-#include <pbdrv/button.h>
-#include <pbdrv/light.h>
-#include <pbdrv/ioport.h>
-#include <pbdrv/motor.h>
-#include <pbdrv/uart.h>
-#include <pbsys/sys.h>
-#include <pbio/motorcontrol.h>
+#include "pbdrv/adc.h"
+#include "pbdrv/bluetooth.h"
+#include "pbdrv/button.h"
+#include "pbdrv/light.h"
+#include "pbdrv/ioport.h"
+#include "pbdrv/motor.h"
+#include "pbdrv/uart.h"
+#include "pbsys/sys.h"
+#include "pbio/motorcontrol.h"
+#include "pbio/uartdev.h"
 
 #include "sys/autostart.h"
 #include "sys/clock.h"
@@ -34,6 +35,9 @@ AUTOSTART_PROCESSES(
 #endif
 #if PBDRV_CONFIG_UART
     ,&pbdrv_uart_process
+#endif
+#ifndef PBIO_CONFIG_DISABLE_UARTDEV
+    ,&pbio_uartdev_process
 #endif
 );
 
