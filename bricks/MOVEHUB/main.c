@@ -149,6 +149,9 @@ soft_reset:
     pbsys_prepare_user_program(&user_program_callbacks);
 
     mp_init();
+
+    pyexec_frozen_module("boot.py");
+
     #if MICROPY_ENABLE_COMPILER
     #if MICROPY_REPL_EVENT_DRIVEN
     pyexec_event_repl_init();
