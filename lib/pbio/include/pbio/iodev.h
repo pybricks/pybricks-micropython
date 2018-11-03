@@ -94,6 +94,12 @@ typedef enum {
 #define PBIO_IODEV_MODE_NAME_SIZE   11
 
 /**
+ * Max number of data bytes for I/O data. This means that 32 8-bit values, 16
+ * 16-bit values or 8 32-bit values are possible.
+ */
+#define PBIO_IODEV_MAX_DATA_SIZE    32
+
+/**
  * Max size of units of measurements (not including null terminator)
  */
 #define PBIO_IODEV_UOM_SIZE         4
@@ -213,7 +219,7 @@ struct _pbio_iodev_t {
      * is determined by the ::pbio_iodev_mode_t info associated with the current
      * *mode* of the device.
      */
-    uint8_t bin_data[32];
+    uint8_t bin_data[PBIO_IODEV_MAX_DATA_SIZE];
 };
 
 size_t pbio_iodev_size_of(pbio_iodev_data_type_t type);
