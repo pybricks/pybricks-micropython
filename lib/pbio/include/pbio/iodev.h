@@ -68,19 +68,19 @@ typedef enum {
     /**
      * Signed 8-bit integer.
      */
-    PBIO_DATA_TYPE_INT8,
+    PBIO_IODEV_DATA_TYPE_INT8,
     /**
      * Little-endian, signed 16-bit integer.
      */
-    PBIO_DATA_TYPE_INT16,
+    PBIO_IODEV_DATA_TYPE_INT16,
     /**
      * Little-endian, signed 32-bit integer.
      */
-    PBIO_DATA_TYPE_INT32,
+    PBIO_IODEV_DATA_TYPE_INT32,
     /**
      * Little endian 32-bit floating point.
      */
-    PBIO_DATA_TYPE_FLOAT,
+    PBIO_IODEV_DATA_TYPE_FLOAT,
 } pbio_iodev_data_type_t;
 
 /**

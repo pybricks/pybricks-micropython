@@ -614,16 +614,16 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             }
             switch (data->msg[3]) {
             case EV3_UART_DATA_8:
-                data->iodev->info->mode_info[mode].data_type = PBIO_DATA_TYPE_INT8;
+                data->iodev->info->mode_info[mode].data_type = PBIO_IODEV_DATA_TYPE_INT8;
                 break;
             case EV3_UART_DATA_16:
-                data->iodev->info->mode_info[mode].data_type = PBIO_DATA_TYPE_INT16;
+                data->iodev->info->mode_info[mode].data_type = PBIO_IODEV_DATA_TYPE_INT16;
                 break;
             case EV3_UART_DATA_32:
-                data->iodev->info->mode_info[mode].data_type = PBIO_DATA_TYPE_INT32;
+                data->iodev->info->mode_info[mode].data_type = PBIO_IODEV_DATA_TYPE_INT32;
                 break;
             case EV3_UART_DATA_FLOAT:
-                data->iodev->info->mode_info[mode].data_type = PBIO_DATA_TYPE_FLOAT;
+                data->iodev->info->mode_info[mode].data_type = PBIO_IODEV_DATA_TYPE_FLOAT;
                 break;
             default:
                 DBG_ERR(data->last_err = "Invalid data type");
