@@ -1,6 +1,8 @@
 #include <pbio/iodev.h>
 
 #include "extmod/utime_mphal.h"
+#include "py/mperrno.h"
+#include "py/runtime.h"
 
 #include "modmotor.h"
 #include "modhubcommon.h"
@@ -32,10 +34,49 @@ STATIC const mp_rom_map_elem_t movehub_Port_enum_table[] = {
 STATIC PB_DEFINE_CONST_ENUM(movehub_Port_enum, movehub_Port_enum_table);
 
 STATIC mp_obj_t hub_get_values(mp_obj_t port) {
+    mp_obj_t values[PBIO_IODEV_MAX_DATA_SIZE];
     uint8_t *data;
-    uint8_t len;
-    pb_assert(pbio_iodev_get_raw_values(mp_obj_get_int(port), &data, &len));
-    return mp_obj_new_bytearray(len, data);
+    uint8_t len, i;
+    pbio_iodev_data_type_t type;
+
+    pb_assert(pbio_iodev_get_raw_values(mp_obj_get_int(port), &data, &len, &type));
+
+    // this shouldn't happen, but just in case...
+    if (len == 0) {
+        return mp_const_none;
+    }
+
+    for (i = 0; i < len; i++) {
+        switch (type) {
+        case PBIO_IODEV_DATA_TYPE_INT8:
+            values[i] = mp_obj_new_int(data[i]);
+            break;
+        case PBIO_IODEV_DATA_TYPE_INT16:
+            values[i] = mp_obj_new_int(*(int16_t *)(data + i * 2));
+            break;
+        case PBIO_IODEV_DATA_TYPE_INT32:
+            values[i] = mp_obj_new_int(*(int32_t *)(data + i * 4));
+            break;
+        case PBIO_IODEV_DATA_TYPE_FLOAT:
+            #if MICROPY_PY_BUILTINS_FLOAT
+            values[i] = mp_obj_new_float(*(float *)(data + i * 4));
+            #else // MICROPY_PY_BUILTINS_FLOAT
+            // there aren't any known devices that use float data, so hopefully we will never hit this
+            mp_raise_OSError(MP_EOPNOTSUPP);
+            #endif // MICROPY_PY_BUILTINS_FLOAT
+            break;
+        default:
+            mp_raise_NotImplementedError("Unknown data type");
+        }
+    }
+
+    // if there are more than one value, pack them in a tuple
+    if (len > 1) {
+        return mp_obj_new_tuple(len, values);
+    }
+
+    // otherwise return the one value
+    return values[0];
 }
 MP_DEFINE_CONST_FUN_OBJ_1(hub_get_values_obj, hub_get_values);
 

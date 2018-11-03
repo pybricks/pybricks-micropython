@@ -58,7 +58,7 @@ ColorAndDistSensor
 */
 void pupdevices_ColorAndDistSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, qstr_str(MP_QSTR_ColorAndDistSensor));    
+    mp_printf(print, qstr_str(MP_QSTR_ColorAndDistSensor));
     mp_printf(print, " on Port.%c",  self->port);
 }
 
@@ -74,14 +74,15 @@ STATIC mp_obj_t pupdevices_ColorAndDistSensor_color(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint8_t *data;
     uint8_t len;
+    pbio_iodev_data_type_t type;
     uint8_t color;
-    pb_assert(pbio_iodev_get_raw_values(self->port, &data, &len));
+    pb_assert(pbio_iodev_get_raw_values(self->port, &data, &len, &type));
     switch(data[0]) {
         case 10:
             color = PBIO_LIGHT_COLOR_WHITE;
             break;
         default:
-            color = PBIO_LIGHT_COLOR_NONE; 
+            color = PBIO_LIGHT_COLOR_NONE;
     }
 
     return mp_obj_new_int(color);

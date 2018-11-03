@@ -217,13 +217,14 @@ struct _pbio_iodev_t {
     /**
      * Most recent binary data read from the device. How to interpret this data
      * is determined by the ::pbio_iodev_mode_t info associated with the current
-     * *mode* of the device.
+     * *mode* of the device. For example, it could be an array of int32_t and/or
+     * the values could be foreign-endian.
      */
-    uint8_t bin_data[PBIO_IODEV_MAX_DATA_SIZE];
+    uint8_t bin_data[PBIO_IODEV_MAX_DATA_SIZE]  __attribute__((aligned(32)));
 };
 
 size_t pbio_iodev_size_of(pbio_iodev_data_type_t type);
-pbio_error_t pbio_iodev_get_raw_values(pbio_port_t port, uint8_t **data, uint8_t *len);
+pbio_error_t pbio_iodev_get_raw_values(pbio_port_t port, uint8_t **data, uint8_t *len, pbio_iodev_data_type_t *type);
 pbio_error_t pbio_iodev_set_mode(pbio_port_t port, uint8_t mode);
 
 #endif // _PBIO_IODEV_H_

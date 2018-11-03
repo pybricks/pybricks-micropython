@@ -26,13 +26,14 @@ size_t pbio_iodev_size_of(pbio_iodev_data_type_t type) {
 /**
  * Gets the raw data from an I/O device.
  * @param [in]  port        The port the device is associated with
- * @param [out] data        Pointer that will point to the raw data
- * @param [out] len         The length of *data*
+ * @param [out] data        Pointer to hold array of data values
+ * @param [out] len         The length of the *data* array
+ * @param [out] type        The data type of the *data* values
  * @return                  ::PBIO_SUCCESS on success
  *                          ::PBIO_ERROR_INVALID_PORT if the port is not valid
  *                          ::PBIO_ERROR_NO_DEV if the port does not have a device attached
  */
-pbio_error_t pbio_iodev_get_raw_values(pbio_port_t port, uint8_t **data, uint8_t *len) {
+pbio_error_t pbio_iodev_get_raw_values(pbio_port_t port, uint8_t **data, uint8_t *len, pbio_iodev_data_type_t *type) {
 pbio_iodev_t *iodev;
     pbio_error_t err;
 
@@ -42,8 +43,8 @@ pbio_iodev_t *iodev;
     }
 
     *data = iodev->bin_data;
-    *len = pbio_iodev_size_of(iodev->info->mode_info[iodev->mode].data_type) *
-           iodev->info->mode_info[iodev->mode].num_values;
+    *len = iodev->info->mode_info[iodev->mode].num_values;
+    *type = iodev->info->mode_info[iodev->mode].data_type;
 
     return PBIO_SUCCESS;
 }
