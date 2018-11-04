@@ -93,7 +93,7 @@ enum ev3_uart_cmd {
     EV3_UART_CMD_SELECT     = 0x3,
     EV3_UART_CMD_WRITE      = 0x4,
     EV3_UART_CMD_UNK1       = 0x5,    // Powered Up only
-    EV3_UART_CMD_UNK2       = 0x6,    // Powered Up only
+    EV3_UART_CMD_EXT_MODE   = 0x6,    // Powered Up only
     EV3_UART_CMD_VERSION    = 0x7,    // Powered Up only
 };
 
@@ -105,7 +105,7 @@ enum ev3_uart_info {
     EV3_UART_INFO_UNITS         = 0x04,
     EV3_UART_INFO_UNK1          = 0x05,    // Powered Up only
     EV3_UART_INFO_UNK2          = 0x06,    // Powered Up only
-    EV3_UART_INFO_MODE_PLUS_8   = 0x20,    // Powered Up only
+    EV3_UART_INFO_MODE_PLUS_8   = 0x20,    // Powered Up only - not used?
     EV3_UART_INFO_FORMAT        = 0x80,
 };
 
@@ -181,6 +181,7 @@ typedef enum {
  * 	from the data.
  * @msg: partial data->msg from previous receive callback
  * @partial_msg_size: the size of the partial data->msg
+ * @ext_mode: Extra mode adder for Powered Up devices (for modes > EV3_UART_MODE_MAX)
  * @last_err: data->msg to be printed in case of an error.
  * @num_data_err: Number of bad reads when receiving DATA data->msgs.
  * @data_rec: Flag that indicates that good DATA data->msg has been received
@@ -196,6 +197,7 @@ typedef struct ev3_uart_port_data {
     uint32_t info_flags;
     uint8_t msg[EV3_UART_MAX_MESSAGE_SIZE];
     uint8_t partial_msg_size;
+    uint8_t ext_mode;
     DBG_ERR(const char *last_err);
     uint32_t num_data_err;
     unsigned data_rec:1;
@@ -246,6 +248,8 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
     data = &dev_data[port_to_index(port)];
 
     if (data->status == PBIO_UARTDEV_STATUS_ERR) {
+        data->partial_msg_size = 0;
+        data->ext_mode = 0;
         data->status = PBIO_UARTDEV_STATUS_SYNCING;
     }
 
@@ -338,9 +342,14 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
 
     // The original EV3 spec only allowed for up to 8 modes (3-bit number).
     // The Powered UP spec extents this by adding an extra flag to INFO commands.
+    // Not sure that EV3_UART_INFO_MODE_PLUS_8 is used in practice, but rather
+    // an extra (separate) EV3_UART_CMD_EXT_MODE message seems to be used instead
     if (msg_type == EV3_UART_MSG_TYPE_INFO && (cmd2 & EV3_UART_INFO_MODE_PLUS_8)) {
         mode += 8;
         cmd2 &= ~EV3_UART_INFO_MODE_PLUS_8;
+    }
+    else {
+        mode += data->ext_mode;
     }
 
     if (msg_size > 1) {
@@ -443,8 +452,10 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             debug_pr("speed: %lu\n", speed);
 
             break;
-        case EV3_UART_CMD_UNK2:
-            // TODO: what is this? (one data byte)
+        case EV3_UART_CMD_EXT_MODE:
+            // Powered up devices can have modes > EV3_UART_MODE_MAX. This
+            // command precedes other commands to add the extra 8 to the mode
+            data->ext_mode = data->msg[1];
             break;
         case EV3_UART_CMD_VERSION:
             if (test_and_set_bit(EV3_UART_INFO_BIT_CMD_VERSION, &data->info_flags)) {
@@ -647,7 +658,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             DBG_ERR(data->last_err = "Received DATA before INFO was complete");
             goto err;
         }
-        if (mode > EV3_UART_MODE_MAX) {
+        if (mode >= data->iodev->info->num_modes) {
             DBG_ERR(data->last_err = "Invalid mode received");
             goto err;
         }
@@ -672,7 +683,6 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
 
 err:
     data->status = PBIO_UARTDEV_STATUS_ERR;
-    data->partial_msg_size = 0;
     data->new_baud_rate = EV3_UART_SPEED_MIN;
     etimer_stop(&data->timer);
     pbdrv_uart_set_baud_rate(port, EV3_UART_SPEED_MIN);
