@@ -39,6 +39,9 @@ void pb_assert(pbio_error_t error) {
     case PBIO_ERROR_AGAIN:
         os_err = MP_EAGAIN;
         break;
+    case PBIO_ERROR_INVALID_OP:
+        os_err = MP_EPERM;
+        break;
     }
 
     mp_raise_OSError(os_err);

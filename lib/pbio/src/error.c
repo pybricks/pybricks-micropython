@@ -33,6 +33,8 @@ const char *pbio_error_str(pbio_error_t err) {
         return "Not supported";
     case PBIO_ERROR_AGAIN:
         return "Try again later";
+    case PBIO_ERROR_INVALID_OP:
+        return "Invalid operation";
     }
 
     return NULL;

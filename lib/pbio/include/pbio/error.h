@@ -21,6 +21,7 @@ typedef enum {
     PBIO_ERROR_NOT_IMPLEMENTED, /**< Feature is not yet implemented */
     PBIO_ERROR_NOT_SUPPORTED,   /**< Feature is not supported on this device */
     PBIO_ERROR_AGAIN,           /**< Function should be called again later */
+    PBIO_ERROR_INVALID_OP,      /**< Operation is not permitted in the current state */
 } pbio_error_t;
 
 const char *pbio_error_str(pbio_error_t err);
