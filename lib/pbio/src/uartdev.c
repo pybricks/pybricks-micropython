@@ -694,15 +694,107 @@ static uint8_t ev3_uart_set_msg_hdr(enum ev3_uart_msg_type type, enum ev3_uart_m
     return (type & EV3_UART_MSG_TYPE_MASK) | (size & EV3_UART_MSG_SIZE_MASK) | (cmd & EV3_UART_MSG_CMD_MASK);
 }
 
-static pbio_error_t ev3_uart_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
-    uartdev_port_data_t *data = &dev_data[port_to_index(iodev->port)];
-    uint8_t header, checksum;
+static pbio_error_t _ev3_uart_write(pbio_port_t port, enum ev3_uart_msg_type msg_type, enum ev3_uart_cmd cmd, uint8_t *data, uint8_t len) {
+    uint8_t msg[EV3_UART_MAX_MESSAGE_SIZE - 2];
+    uint8_t header, checksum, i;
+    enum ev3_uart_msg_size size;
 
-    if (mode >= iodev->info->num_modes) {
+    checksum = 0xff;
+    for (i = 0; i < len; i++) {
+        msg[i] = data[i];
+        checksum ^= data[i];
+    }
+
+    // can't send arbitrary number of bytes, so find nearest match
+    if (i == 1) {
+        size = EV3_UART_MSG_SIZE_1;
+    }
+    else if (i == 2) {
+        size = EV3_UART_MSG_SIZE_2;
+    }
+    else if (i <= 4) {
+        size = EV3_UART_MSG_SIZE_4;
+        len = 4;
+    }
+    else if (i <= 8) {
+        size = EV3_UART_MSG_SIZE_8;
+        len = 8;
+    }
+    else if (i <= 16) {
+        size = EV3_UART_MSG_SIZE_16;
+        len = 16;
+    }
+    else if (i <= 32) {
+        size = EV3_UART_MSG_SIZE_32;
+        len = 32;
+    }
+
+    // pad with zeros
+    for (; i < len; i++) {
+        msg[i] = 0;
+    }
+
+    header = ev3_uart_set_msg_hdr(msg_type, size, cmd);
+    checksum ^= header;
+
+    while (pbdrv_uart_put_char(port, header) == PBIO_ERROR_AGAIN);
+    for (i = 0; i < len; i++) {
+        while (pbdrv_uart_put_char(port, msg[i]) == PBIO_ERROR_AGAIN);
+    }
+    while (pbdrv_uart_put_char(port, checksum) == PBIO_ERROR_AGAIN);
+
+    return PBIO_SUCCESS;
+}
+
+static pbio_error_t ev3_uart_set_data(pbio_iodev_t *iodev, uint8_t *data, uint8_t len, pbio_iodev_data_type_t type) {
+    uartdev_port_data_t *port_data = &dev_data[port_to_index(iodev->port)];
+    uint8_t header, ext_mode, checksum;
+
+    if (port_data->status != PBIO_UARTDEV_STATUS_DATA) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // TODO: not all modes support setting data. Need to find a way to check
+    // this and return PBIO_ERROR_INVALID_OP.
+
+    // Only Powered Up devices support setting data, and they expect to have an
+    // extra command sent to give the part of the mode > 7
+    header = ev3_uart_set_msg_hdr(EV3_UART_MSG_TYPE_CMD, EV3_UART_MSG_SIZE_1, EV3_UART_CMD_EXT_MODE);
+    ext_mode = iodev->mode > EV3_UART_MODE_MAX ? 8 : 0;
+    checksum = 0xff ^ header ^ ext_mode;
+    while (pbdrv_uart_put_char(iodev->port, header) == PBIO_ERROR_AGAIN);
+    while (pbdrv_uart_put_char(iodev->port, ext_mode) == PBIO_ERROR_AGAIN);
+    while (pbdrv_uart_put_char(iodev->port, checksum) == PBIO_ERROR_AGAIN);
+
+    // set len to size in bytes
+    len = len * pbio_iodev_size_of(type);
+
+    return _ev3_uart_write(iodev-> port, EV3_UART_MSG_TYPE_DATA, iodev->mode, data, len);
+}
+
+static pbio_error_t ev3_uart_write(pbio_iodev_t *iodev, uint8_t *data, uint8_t len) {
+    uartdev_port_data_t *port_data = &dev_data[port_to_index(iodev->port)];
+
+    if (port_data->status != PBIO_UARTDEV_STATUS_DATA) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    if (len == 0 || len >= EV3_UART_MAX_MESSAGE_SIZE - 2) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    data->new_mode = mode;
+    return _ev3_uart_write(iodev-> port, EV3_UART_MSG_TYPE_CMD, EV3_UART_CMD_WRITE, data, len);
+}
+
+static pbio_error_t ev3_uart_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
+    uartdev_port_data_t *port_data = &dev_data[port_to_index(iodev->port)];
+    uint8_t header, checksum;
+
+    if (port_data->status != PBIO_UARTDEV_STATUS_DATA) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    port_data->new_mode = mode;
     header = ev3_uart_set_msg_hdr(EV3_UART_MSG_TYPE_CMD, EV3_UART_MSG_SIZE_1, EV3_UART_CMD_SELECT);
     checksum = 0xff ^ header ^ mode;
 
@@ -736,6 +828,8 @@ PROCESS_THREAD(pbio_uartdev_process, ev, data) {
                         etimer_reset_with_new_interval(&dev_data[i].timer, clock_from_msec(EV3_UART_DATA_KEEP_ALIVE_TIMEOUT));
                         pbdrv_uart_set_baud_rate(dev_data[i].iodev->port, dev_data[i].new_baud_rate);
                         dev_data[i].status = PBIO_UARTDEV_STATUS_DATA;
+                        dev_data[i].iodev->set_data = ev3_uart_set_data;
+                        dev_data[i].iodev->write = ev3_uart_write;
                         dev_data[i].iodev->set_mode = ev3_uart_set_mode;
                     }
                     else if (dev_data[i].num_data_err > 6) {

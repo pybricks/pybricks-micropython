@@ -2,6 +2,7 @@
 
 #include "extmod/utime_mphal.h"
 #include "py/mperrno.h"
+#include "py/obj.h"
 #include "py/runtime.h"
 
 #include "modmotor.h"
@@ -80,6 +81,18 @@ STATIC mp_obj_t hub_get_values(mp_obj_t port) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(hub_get_values_obj, hub_get_values);
 
+STATIC mp_obj_t hub_set_values(mp_obj_t port, mp_obj_t value) {
+    mp_buffer_info_t bufinfo;
+    // TODO: add function to get mode info (data type and number of values)
+    // then use mp_obj_get_array_fixed_n() to get values and write them to
+    // a buffer.
+    mp_get_buffer_raise(value, &bufinfo, MP_BUFFER_READ);
+
+    pb_assert(pbio_iodev_set_raw_values(mp_obj_get_int(port), bufinfo.buf, bufinfo.len, PBIO_IODEV_DATA_TYPE_INT8));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_2(hub_set_values_obj, hub_set_values);
+
 STATIC mp_obj_t hub_set_mode(mp_obj_t port, mp_obj_t mode) {
     pb_assert(pbio_iodev_set_mode(mp_obj_get_int(port), mp_obj_get_int(mode)));
     return mp_const_none;
@@ -111,6 +124,7 @@ STATIC const mp_map_elem_t movehub_globals_table[] = {
 #endif //PYBRICKS_ENABLE_HARDWARE_DEBUG
     // hacks
     { MP_OBJ_NEW_QSTR(MP_QSTR_get_values),  (mp_obj_t)&hub_get_values_obj },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_set_values),  (mp_obj_t)&hub_set_values_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_set_mode),    (mp_obj_t)&hub_set_mode_obj },
 };
 
