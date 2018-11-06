@@ -73,10 +73,8 @@ ColorAndDistSensor
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_color(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint8_t *data;
-    uint8_t len;
-    pbio_iodev_data_type_t type;
     uint8_t color;
-    pb_assert(pbio_iodev_get_raw_values(self->port, &data, &len, &type));
+    pb_assert(pbio_iodev_get_raw_values(self->port, &data));
     switch(data[0]) {
         case 10:
             color = PBIO_LIGHT_COLOR_WHITE;

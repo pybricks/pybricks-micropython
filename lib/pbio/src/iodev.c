@@ -24,19 +24,41 @@ size_t pbio_iodev_size_of(pbio_iodev_data_type_t type) {
 }
 
 /**
+ * Gets the binary format used by the current mode of an I/O device.
+ * @param [in]  port        The port the device is associated with
+ * @param [out] len         The number of values in the raw data array
+ * @param [out] type        The data type of the raw data values
+ * @return                  ::PBIO_SUCCESS on success
+ *                          ::PBIO_ERROR_INVALID_PORT if the port is not valid
+ *                          ::PBIO_ERROR_NO_DEV if the port does not have a device attached
+ */
+pbio_error_t pbio_iodev_get_bin_format(pbio_port_t port, uint8_t *len, pbio_iodev_data_type_t *type) {
+    pbio_iodev_t *iodev;
+    pbio_error_t err;
+
+    err = pbdrv_ioport_get_iodev(port, &iodev);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    *len = iodev->info->mode_info[iodev->mode].num_values;
+    *type = iodev->info->mode_info[iodev->mode].data_type;
+
+    return PBIO_SUCCESS;
+}
+
+/**
  * Gets the raw data from an I/O device.
  * @param [in]  port        The port the device is associated with
  * @param [out] data        Pointer to hold array of data values
- * @param [out] len         The length of the *data* array
- * @param [out] type        The data type of the *data* values
  * @return                  ::PBIO_SUCCESS on success
  *                          ::PBIO_ERROR_INVALID_PORT if the port is not valid
  *                          ::PBIO_ERROR_NO_DEV if the port does not have a device attached
  *
- * The length of *data* in bytes will be *len* times the size of *type*.
+ * The binary format and size of *data* is determined by ::pbio_iodev_get_bin_format().
  */
-pbio_error_t pbio_iodev_get_raw_values(pbio_port_t port, uint8_t **data, uint8_t *len, pbio_iodev_data_type_t *type) {
-pbio_iodev_t *iodev;
+pbio_error_t pbio_iodev_get_raw_values(pbio_port_t port, uint8_t **data) {
+    pbio_iodev_t *iodev;
     pbio_error_t err;
 
     err = pbdrv_ioport_get_iodev(port, &iodev);
@@ -45,8 +67,6 @@ pbio_iodev_t *iodev;
     }
 
     *data = iodev->bin_data;
-    *len = iodev->info->mode_info[iodev->mode].num_values;
-    *type = iodev->info->mode_info[iodev->mode].data_type;
 
     return PBIO_SUCCESS;
 }
@@ -59,14 +79,13 @@ pbio_iodev_t *iodev;
  * @param [in]  type        The data type of the *data* values
  * @return                  ::PBIO_SUCCESS on success
  *                          ::PBIO_ERROR_INVALID_PORT if the port is not valid
- *                          ::PBIO_ERROR_INVALID_ARG if *len* or *type* does not match the current mode
  *                          ::PBIO_ERROR_NO_DEV if the port does not have a device attached
  *                          ::PBIO_ERROR_AGAIN if the device is busy with something else
  *                          ::PBIO_ERROR_NOT_SUPPORTED if the device does not support setting values
  *
- * The length of *data* in bytes must be *len* times the size of *type*.
+ * The binary format and size of *data* is determined by ::pbio_iodev_get_bin_format().
  */
-pbio_error_t pbio_iodev_set_raw_values(pbio_port_t port, uint8_t *data, uint8_t len, pbio_iodev_data_type_t type) {
+pbio_error_t pbio_iodev_set_raw_values(pbio_port_t port, uint8_t *data) {
 pbio_iodev_t *iodev;
     pbio_error_t err;
 
@@ -79,30 +98,22 @@ pbio_iodev_t *iodev;
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
-    if (len != iodev->info->mode_info[iodev->mode].num_values) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
-    if (type != iodev->info->mode_info[iodev->mode].data_type) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
-    return iodev->set_data(iodev, data, len, type);
+    return iodev->set_data(iodev, data);
 }
 
 /**
  * Writes arbitrary data to an I/O device.
  * @param [in]  port        The port the device is associated with
  * @param [in]  data        Pointer to raw data to write
- * @param [in]  len         Length of the *data* in bytes
+ * @param [in]  size        Size of the *data* in bytes
  * @return                  ::PBIO_SUCCESS on success
  *                          ::PBIO_ERROR_INVALID_PORT if the port is not valid
- *                          ::PBIO_ERROR_INVALID_ARG if *len* is too large
+ *                          ::PBIO_ERROR_INVALID_ARG if *size* is too large
  *                          ::PBIO_ERROR_NO_DEV if the port does not have a device attached
  *                          ::PBIO_ERROR_AGAIN if the device is busy with something else
  *                          ::PBIO_ERROR_NOT_SUPPORTED if the device does not support writing
  */
-pbio_error_t pbio_iodev_write(pbio_port_t port, uint8_t *data, uint8_t len) {
+pbio_error_t pbio_iodev_write(pbio_port_t port, uint8_t *data, uint8_t size) {
 pbio_iodev_t *iodev;
     pbio_error_t err;
 
@@ -115,7 +126,7 @@ pbio_iodev_t *iodev;
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
-    return iodev->write(iodev, data, len);
+    return iodev->write(iodev, data, size);
 }
 
 /**

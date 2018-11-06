@@ -746,12 +746,12 @@ static pbio_error_t _ev3_uart_write(pbio_port_t port, enum ev3_uart_msg_type msg
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t ev3_uart_set_data(pbio_iodev_t *iodev, uint8_t *data, uint8_t len, pbio_iodev_data_type_t type) {
+static pbio_error_t ev3_uart_set_data(pbio_iodev_t *iodev, uint8_t *data) {
     uartdev_port_data_t *port_data = &dev_data[port_to_index(iodev->port)];
-    uint8_t header, ext_mode, checksum;
+    uint8_t header, ext_mode, checksum, size;
 
     if (port_data->status != PBIO_UARTDEV_STATUS_DATA) {
-        return PBIO_ERROR_INVALID_OP;
+        return PBIO_ERROR_AGAIN;
     }
 
     // TODO: not all modes support setting data. Need to find a way to check
@@ -766,10 +766,9 @@ static pbio_error_t ev3_uart_set_data(pbio_iodev_t *iodev, uint8_t *data, uint8_
     while (pbdrv_uart_put_char(iodev->port, ext_mode) == PBIO_ERROR_AGAIN);
     while (pbdrv_uart_put_char(iodev->port, checksum) == PBIO_ERROR_AGAIN);
 
-    // set len to size in bytes
-    len = len * pbio_iodev_size_of(type);
+    size = iodev->info->mode_info[iodev->mode].num_values * pbio_iodev_size_of(iodev->info->mode_info[iodev->mode].data_type);
 
-    return _ev3_uart_write(iodev-> port, EV3_UART_MSG_TYPE_DATA, iodev->mode, data, len);
+    return _ev3_uart_write(iodev-> port, EV3_UART_MSG_TYPE_DATA, iodev->mode, data, size);
 }
 
 static pbio_error_t ev3_uart_write(pbio_iodev_t *iodev, uint8_t *data, uint8_t len) {

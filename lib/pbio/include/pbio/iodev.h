@@ -204,20 +204,18 @@ typedef pbio_error_t (*pbio_iodev_set_mode_func_t)(pbio_iodev_t *iodev, uint8_t 
  * Function prototype for implementation of device set data function.
  * @param [in]  iodev   Pointer to an I/O device
  * @param [in]  data    The data values
- * @param [in]  len     The number of *data* values
- * @param [in]  type    The data type of the *data* values
  *
  * The size of *data* in bytes must be *len* times the size of *type*.
  */
-typedef pbio_error_t (*pbio_iodev_set_data_func_t)(pbio_iodev_t *iodev, uint8_t *data, uint8_t len, pbio_iodev_data_type_t type);
+typedef pbio_error_t (*pbio_iodev_set_data_func_t)(pbio_iodev_t *iodev, uint8_t *data);
 
 /**
  * Function prototype for implementation of device write function.
  * @param [in]  iodev   Pointer to an I/O device
  * @param [in]  data    The data
- * @param [in]  len     The length of *data* in bytes
+ * @param [in]  size    The size of *data* in bytes
  */
-typedef pbio_error_t (*pbio_iodev_write_func_t)(pbio_iodev_t *iodev, uint8_t *data, uint8_t len);
+typedef pbio_error_t (*pbio_iodev_write_func_t)(pbio_iodev_t *iodev, uint8_t *data, uint8_t size);
 
 struct _pbio_iodev_t {
     /**
@@ -259,9 +257,10 @@ struct _pbio_iodev_t {
 /** @endcond */
 
 size_t pbio_iodev_size_of(pbio_iodev_data_type_t type);
-pbio_error_t pbio_iodev_get_raw_values(pbio_port_t port, uint8_t **data, uint8_t *len, pbio_iodev_data_type_t *type);
-pbio_error_t pbio_iodev_set_raw_values(pbio_port_t port, uint8_t *data, uint8_t len, pbio_iodev_data_type_t type) ;
-pbio_error_t pbio_iodev_write(pbio_port_t port, uint8_t *data, uint8_t len) ;
+pbio_error_t pbio_iodev_get_bin_format(pbio_port_t port, uint8_t *len, pbio_iodev_data_type_t *type);
+pbio_error_t pbio_iodev_get_raw_values(pbio_port_t port, uint8_t **data);
+pbio_error_t pbio_iodev_set_raw_values(pbio_port_t port, uint8_t *data) ;
+pbio_error_t pbio_iodev_write(pbio_port_t port, uint8_t *data, uint8_t size) ;
 pbio_error_t pbio_iodev_set_mode(pbio_port_t port, uint8_t mode);
 
 #endif // _PBIO_IODEV_H_

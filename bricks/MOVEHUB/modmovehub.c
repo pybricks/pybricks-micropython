@@ -38,9 +38,12 @@ STATIC mp_obj_t hub_get_values(mp_obj_t port) {
     mp_obj_t values[PBIO_IODEV_MAX_DATA_SIZE];
     uint8_t *data;
     uint8_t len, i;
+    pbio_port_t _port;
     pbio_iodev_data_type_t type;
 
-    pb_assert(pbio_iodev_get_raw_values(mp_obj_get_int(port), &data, &len, &type));
+    _port = mp_obj_get_int(port);
+    pb_assert(pbio_iodev_get_raw_values(_port, &data));
+    pb_assert(pbio_iodev_get_bin_format(_port, &len, &type));
 
     // this shouldn't happen, but just in case...
     if (len == 0) {
@@ -81,14 +84,53 @@ STATIC mp_obj_t hub_get_values(mp_obj_t port) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(hub_get_values_obj, hub_get_values);
 
-STATIC mp_obj_t hub_set_values(mp_obj_t port, mp_obj_t value) {
-    mp_buffer_info_t bufinfo;
-    // TODO: add function to get mode info (data type and number of values)
-    // then use mp_obj_get_array_fixed_n() to get values and write them to
-    // a buffer.
-    mp_get_buffer_raise(value, &bufinfo, MP_BUFFER_READ);
+STATIC mp_obj_t hub_set_values(mp_obj_t port, mp_obj_t values) {
+    uint8_t data[PBIO_IODEV_MAX_DATA_SIZE];
+    mp_obj_t *items;
+    uint8_t len, i;
+    pbio_port_t _port;
+    pbio_iodev_data_type_t type;
 
-    pb_assert(pbio_iodev_set_raw_values(mp_obj_get_int(port), bufinfo.buf, bufinfo.len, PBIO_IODEV_DATA_TYPE_INT8));
+    _port = mp_obj_get_int(port);
+    pb_assert(pbio_iodev_get_bin_format(_port, &len, &type));
+
+    // if we only have one value, it doesn't have to be a tuple/list
+    if (len == 1 && (mp_obj_is_integer(values)
+        #if MICROPY_PY_BUILTINS_FLOAT
+        || mp_obj_is_float(values)
+        #endif
+    )) {
+        items = &values;
+    }
+    else {
+        mp_obj_get_array_fixed_n(values, len, &items);
+    }
+
+    for (i = 0; i < len; i++) {
+        switch (type) {
+        case PBIO_IODEV_DATA_TYPE_INT8:
+            data[i] = mp_obj_get_int(items[i]);
+            break;
+        case PBIO_IODEV_DATA_TYPE_INT16:
+            *(int16_t *)(data + i * 2) = mp_obj_get_int(items[i]);
+            break;
+        case PBIO_IODEV_DATA_TYPE_INT32:
+            *(int32_t *)(data + i * 4) = mp_obj_get_int(items[i]);
+            break;
+        case PBIO_IODEV_DATA_TYPE_FLOAT:
+            #if MICROPY_PY_BUILTINS_FLOAT
+            *(float *)(data + i * 4) = mp_obj_get_float(items[i]);
+            #else // MICROPY_PY_BUILTINS_FLOAT
+            // there aren't any known devices that use float data, so hopefully we will never hit this
+            mp_raise_OSError(MP_EOPNOTSUPP);
+            #endif // MICROPY_PY_BUILTINS_FLOAT
+            break;
+        default:
+            mp_raise_NotImplementedError("Unknown data type");
+        }
+    }
+
+    pb_assert(pbio_iodev_set_raw_values(_port, data));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(hub_set_values_obj, hub_set_values);
