@@ -25,7 +25,7 @@ typedef struct _robotics_Mechanism_obj_t {
     int32_t speed;
 } robotics_Mechanism_obj_t;
 
-mp_obj_t robotics_Mechanism_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+STATIC mp_obj_t robotics_Mechanism_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     // Initialize self
     mp_arg_check_num(n_args, n_kw, 3, 3, false);
     robotics_Mechanism_obj_t *self = m_new_obj(robotics_Mechanism_obj_t);
@@ -45,7 +45,7 @@ Mechanism
     def __str__(self):
         """String representation of Mechanism object."""
 */
-void robotics_Mechanism_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
+STATIC void robotics_Mechanism_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
     robotics_Mechanism_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, "Mechanism on PORT_%c",  self->port);
 }
@@ -62,7 +62,7 @@ STATIC mp_obj_t robotics_Mechanism_targets(mp_obj_t self_in) {
     robotics_Mechanism_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return MP_OBJ_FROM_PTR(self->targets);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(robotics_Mechanism_targets_obj, robotics_Mechanism_targets);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robotics_Mechanism_targets_obj, robotics_Mechanism_targets);
 
 /*
 Mechanism class tables
@@ -71,9 +71,9 @@ Mechanism class tables
 STATIC const mp_rom_map_elem_t robotics_Mechanism_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_targets), MP_ROM_PTR(&robotics_Mechanism_targets_obj) },
 };
-MP_DEFINE_CONST_DICT(robotics_Mechanism_locals_dict, robotics_Mechanism_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(robotics_Mechanism_locals_dict, robotics_Mechanism_locals_dict_table);
 
-const mp_obj_type_t robotics_Mechanism_type = {
+STATIC const mp_obj_type_t robotics_Mechanism_type = {
     { &mp_type_type },
     .name = MP_QSTR_Mechanism,
     .print = robotics_Mechanism_print,
@@ -112,7 +112,7 @@ STATIC mp_obj_t robotics_StopWatch_reset(mp_obj_t self_in) {
     self->running = false;
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_1(robotics_StopWatch_reset_obj, robotics_StopWatch_reset);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robotics_StopWatch_reset_obj, robotics_StopWatch_reset);
 
 /*
 StopWatch
@@ -136,7 +136,7 @@ STATIC mp_obj_t robotics_StopWatch_time(mp_obj_t self_in) {
         self->time_stop  - self->time_start - self->time_spent_pausing
     );
 }
-MP_DEFINE_CONST_FUN_OBJ_1(robotics_StopWatch_time_obj, robotics_StopWatch_time);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robotics_StopWatch_time_obj, robotics_StopWatch_time);
 
 /*
 StopWatch
@@ -154,7 +154,7 @@ STATIC mp_obj_t robotics_StopWatch_pause(mp_obj_t self_in) {
     }
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_1(robotics_StopWatch_pause_obj, robotics_StopWatch_pause);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robotics_StopWatch_pause_obj, robotics_StopWatch_pause);
 
 /*
 StopWatch
@@ -172,7 +172,7 @@ STATIC mp_obj_t robotics_StopWatch_resume(mp_obj_t self_in) {
     }
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_1(robotics_StopWatch_resume_obj, robotics_StopWatch_resume);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robotics_StopWatch_resume_obj, robotics_StopWatch_resume);
 
 /*
 StopWatch
@@ -181,7 +181,7 @@ StopWatch
         self.reset()
         self.resume()
 */
-mp_obj_t robotics_StopWatch_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+STATIC mp_obj_t robotics_StopWatch_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     // Initialize self
     robotics_StopWatch_obj_t *self = m_new_obj(robotics_StopWatch_obj_t);
     self->base.type = (mp_obj_type_t*) type;
@@ -195,7 +195,7 @@ StopWatch
     def __str__(self):
         """String representation of StopWatch object."""
 */
-void robotics_StopWatch_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
+STATIC void robotics_StopWatch_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
     mp_printf(print, qstr_str(MP_QSTR_StopWatch));
 }
 
@@ -209,9 +209,9 @@ STATIC const mp_rom_map_elem_t robotics_StopWatch_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_pause), MP_ROM_PTR(&robotics_StopWatch_pause_obj) },
     { MP_ROM_QSTR(MP_QSTR_resume), MP_ROM_PTR(&robotics_StopWatch_resume_obj) },
 };
-MP_DEFINE_CONST_DICT(robotics_StopWatch_locals_dict, robotics_StopWatch_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(robotics_StopWatch_locals_dict, robotics_StopWatch_locals_dict_table);
 
-const mp_obj_type_t robotics_StopWatch_type = {
+STATIC const mp_obj_type_t robotics_StopWatch_type = {
     { &mp_type_type },
     .name = MP_QSTR_StopWatch,
     .print = robotics_StopWatch_print,

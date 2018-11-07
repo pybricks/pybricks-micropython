@@ -83,7 +83,7 @@ STATIC mp_obj_t hub_get_values(mp_obj_t port) {
     // otherwise return the one value
     return values[0];
 }
-MP_DEFINE_CONST_FUN_OBJ_1(hub_get_values_obj, hub_get_values);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(hub_get_values_obj, hub_get_values);
 
 STATIC mp_obj_t hub_set_values(mp_obj_t port, mp_obj_t values) {
     uint8_t data[PBIO_IODEV_MAX_DATA_SIZE];
@@ -134,7 +134,7 @@ STATIC mp_obj_t hub_set_values(mp_obj_t port, mp_obj_t values) {
     pb_assert(pbio_iodev_set_raw_values(iodev, data));
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_2(hub_set_values_obj, hub_set_values);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(hub_set_values_obj, hub_set_values);
 
 STATIC mp_obj_t hub_set_mode(mp_obj_t port, mp_obj_t mode) {
     pbio_iodev_t *iodev;
@@ -142,7 +142,7 @@ STATIC mp_obj_t hub_set_mode(mp_obj_t port, mp_obj_t mode) {
     pb_assert(pbio_iodev_set_mode(iodev, mp_obj_get_int(mode)));
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_2(hub_set_mode_obj, hub_set_mode);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(hub_set_mode_obj, hub_set_mode);
 
 /* Movehub module table */
 

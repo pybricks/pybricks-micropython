@@ -74,7 +74,7 @@ typedef struct _pupdevices_ColorAndDistSensor_obj_t {
     uint8_t mode; // Temporary: Probably not handle modes at mpy level; this is a placeholder
 } pupdevices_ColorAndDistSensor_obj_t;
 
-mp_obj_t pupdevices_ColorAndDistSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+STATIC mp_obj_t pupdevices_ColorAndDistSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     // Initialize self
     mp_arg_check_num(n_args, n_kw, 1, 1, false);
     pupdevices_ColorAndDistSensor_obj_t *self = m_new_obj(pupdevices_ColorAndDistSensor_obj_t);
@@ -89,7 +89,7 @@ ColorAndDistSensor
     def __str__(self):
         """String representation of ColorAndDistSensor object."""
 */
-void pupdevices_ColorAndDistSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
+STATIC void pupdevices_ColorAndDistSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, qstr_str(MP_QSTR_ColorDistanceSensor));
     mp_printf(print, " on Port.%c",  self->port);
@@ -135,7 +135,7 @@ STATIC mp_obj_t pupdevices_ColorAndDistSensor_color(mp_obj_t self_in) {
 
     return mp_obj_new_int(color);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_color_obj, pupdevices_ColorAndDistSensor_color);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_color_obj, pupdevices_ColorAndDistSensor_color);
 
 /*
 ColorAndDistSensor
@@ -181,9 +181,9 @@ STATIC const mp_rom_map_elem_t pupdevices_ColorAndDistSensor_locals_dict_table[]
     { MP_ROM_QSTR(MP_QSTR_reflection), MP_ROM_PTR(&pupdevices_ColorAndDistSensor_reflection_obj) },
     { MP_ROM_QSTR(MP_QSTR_ambient), MP_ROM_PTR(&pupdevices_ColorAndDistSensor_ambient_obj) },
 };
-MP_DEFINE_CONST_DICT(pupdevices_ColorAndDistSensor_locals_dict, pupdevices_ColorAndDistSensor_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(pupdevices_ColorAndDistSensor_locals_dict, pupdevices_ColorAndDistSensor_locals_dict_table);
 
-const mp_obj_type_t pupdevices_ColorAndDistSensor_type = {
+STATIC const mp_obj_type_t pupdevices_ColorAndDistSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_ColorDistanceSensor,
     .print = pupdevices_ColorAndDistSensor_print,

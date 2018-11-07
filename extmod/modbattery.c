@@ -12,7 +12,7 @@ STATIC mp_obj_t battery_voltage(void) {
     pb_assert(pbdrv_battery_get_voltage_now(PBIO_PORT_SELF, &volt));
     return mp_obj_new_int(volt);
 }
-MP_DEFINE_CONST_FUN_OBJ_0(battery_voltage_obj, battery_voltage);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_voltage_obj, battery_voltage);
 
 /*
 battery
@@ -24,7 +24,7 @@ STATIC mp_obj_t battery_current(void) {
     pb_assert(pbdrv_battery_get_current_now(PBIO_PORT_SELF, &cur));
     return mp_obj_new_int(cur);
 }
-MP_DEFINE_CONST_FUN_OBJ_0(battery_current_obj, battery_current);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_current_obj, battery_current);
 
 /*
 battery
@@ -34,7 +34,7 @@ battery
 STATIC mp_obj_t battery_percent(void) {
     return mp_obj_new_int(100); // TODO
 }
-MP_DEFINE_CONST_FUN_OBJ_0(battery_percent_obj, battery_percent);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_percent_obj, battery_percent);
 
 /*
 battery
@@ -45,7 +45,7 @@ STATIC mp_obj_t battery_low(void) {
     // TODO: return True if voltage too low, false otherwise.
     return mp_obj_new_bool(0);
 }
-MP_DEFINE_CONST_FUN_OBJ_0(battery_low_obj, battery_low);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_low_obj, battery_low);
 
 /* battery module tables */
 
