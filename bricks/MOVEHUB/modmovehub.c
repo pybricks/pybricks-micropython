@@ -1,3 +1,4 @@
+#include <pbdrv/ioport.h>
 #include <pbio/iodev.h>
 
 #include "extmod/utime_mphal.h"
@@ -36,14 +37,14 @@ STATIC PB_DEFINE_CONST_ENUM(movehub_Port_enum, movehub_Port_enum_table);
 
 STATIC mp_obj_t hub_get_values(mp_obj_t port) {
     mp_obj_t values[PBIO_IODEV_MAX_DATA_SIZE];
+    pbio_iodev_t *iodev;
     uint8_t *data;
     uint8_t len, i;
-    pbio_port_t _port;
     pbio_iodev_data_type_t type;
 
-    _port = mp_obj_get_int(port);
-    pb_assert(pbio_iodev_get_raw_values(_port, &data));
-    pb_assert(pbio_iodev_get_bin_format(_port, &len, &type));
+    pb_assert(pbdrv_ioport_get_iodev(mp_obj_get_int(port), &iodev));
+    pb_assert(pbio_iodev_get_raw_values(iodev, &data));
+    pb_assert(pbio_iodev_get_bin_format(iodev, &len, &type));
 
     // this shouldn't happen, but just in case...
     if (len == 0) {
@@ -86,13 +87,13 @@ MP_DEFINE_CONST_FUN_OBJ_1(hub_get_values_obj, hub_get_values);
 
 STATIC mp_obj_t hub_set_values(mp_obj_t port, mp_obj_t values) {
     uint8_t data[PBIO_IODEV_MAX_DATA_SIZE];
+    pbio_iodev_t *iodev;
     mp_obj_t *items;
     uint8_t len, i;
-    pbio_port_t _port;
     pbio_iodev_data_type_t type;
 
-    _port = mp_obj_get_int(port);
-    pb_assert(pbio_iodev_get_bin_format(_port, &len, &type));
+    pb_assert(pbdrv_ioport_get_iodev(mp_obj_get_int(port), &iodev));
+    pb_assert(pbio_iodev_get_bin_format(iodev, &len, &type));
 
     // if we only have one value, it doesn't have to be a tuple/list
     if (len == 1 && (mp_obj_is_integer(values)
@@ -130,13 +131,15 @@ STATIC mp_obj_t hub_set_values(mp_obj_t port, mp_obj_t values) {
         }
     }
 
-    pb_assert(pbio_iodev_set_raw_values(_port, data));
+    pb_assert(pbio_iodev_set_raw_values(iodev, data));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(hub_set_values_obj, hub_set_values);
 
 STATIC mp_obj_t hub_set_mode(mp_obj_t port, mp_obj_t mode) {
-    pb_assert(pbio_iodev_set_mode(mp_obj_get_int(port), mp_obj_get_int(mode)));
+    pbio_iodev_t *iodev;
+    pb_assert(pbdrv_ioport_get_iodev(mp_obj_get_int(port), &iodev));
+    pb_assert(pbio_iodev_set_mode(iodev, mp_obj_get_int(mode)));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(hub_set_mode_obj, hub_set_mode);

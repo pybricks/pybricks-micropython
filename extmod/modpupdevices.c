@@ -1,3 +1,4 @@
+#include <pbdrv/ioport.h>
 #include <pbio/iodev.h>
 #include <pbio/light.h>
 
@@ -72,9 +73,11 @@ ColorAndDistSensor
 */
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_color(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pbio_iodev_t *iodev;
     uint8_t *data;
     uint8_t color;
-    pb_assert(pbio_iodev_get_raw_values(self->port, &data));
+    pb_assert(pbdrv_ioport_get_iodev(self->port, &iodev));
+    pb_assert(pbio_iodev_get_raw_values(iodev, &data));
     switch(data[0]) {
         case 10:
             color = PBIO_LIGHT_COLOR_WHITE;

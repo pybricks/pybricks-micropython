@@ -257,10 +257,10 @@ struct _pbio_iodev_t {
 /** @endcond */
 
 size_t pbio_iodev_size_of(pbio_iodev_data_type_t type);
-pbio_error_t pbio_iodev_get_bin_format(pbio_port_t port, uint8_t *len, pbio_iodev_data_type_t *type);
-pbio_error_t pbio_iodev_get_raw_values(pbio_port_t port, uint8_t **data);
-pbio_error_t pbio_iodev_set_raw_values(pbio_port_t port, uint8_t *data) ;
-pbio_error_t pbio_iodev_write(pbio_port_t port, uint8_t *data, uint8_t size) ;
-pbio_error_t pbio_iodev_set_mode(pbio_port_t port, uint8_t mode);
+pbio_error_t pbio_iodev_get_bin_format(pbio_iodev_t *iodev, uint8_t *len, pbio_iodev_data_type_t *type);
+pbio_error_t pbio_iodev_get_raw_values(pbio_iodev_t *iodev, uint8_t **data);
+pbio_error_t pbio_iodev_set_raw_values(pbio_iodev_t *iodev, uint8_t *data) ;
+pbio_error_t pbio_iodev_write(pbio_iodev_t *iodev, uint8_t *data, uint8_t size) ;
+pbio_error_t pbio_iodev_set_mode(pbio_iodev_t *iodev, uint8_t mode);
 
 #endif // _PBIO_IODEV_H_
