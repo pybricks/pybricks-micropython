@@ -69,11 +69,6 @@
     X(EOPNOTSUPP) \
     X(EAGAIN) \
 
-// Enable REPL unless explicitly disabled
-#ifndef MICROPY_ENABLE_COMPILER
-#define MICROPY_ENABLE_COMPILER     (1)
-#endif // MICROPY_ENABLE_COMPILER
-
 // Enable floating point support unless explicitly disabled
 #ifndef MICROPY_FLOAT_IMPL
 #define MICROPY_FLOAT_IMPL          (MICROPY_FLOAT_IMPL_FLOAT)
