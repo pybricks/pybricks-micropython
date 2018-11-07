@@ -8,25 +8,13 @@
 
 #include <pbio/error.h>
 #include <pbio/port.h>
+#include <pbio/iodev.h>
 #include <pbdrv/motor.h>
 
 typedef float float_t;
 
 #define PORT_TO_IDX(p) ((p) - PBDRV_CONFIG_FIRST_MOTOR_PORT)
 #define MAX_DCMOTOR_SETTINGS_STR_LENGTH (200)
-
-// This should go elsewhere in the lib. The items below should get the actual IDs
-/**
- * Device ID
- */
-typedef enum {
-    PBIO_ID_NO_DEVICE = 0x00,
-    PBIO_ID_PUP_TRAIN_MOTOR = 0x02,
-    PBIO_ID_PUP_INTERACTIVE_MOTOR = 0x26,
-    PBIO_ID_PUP_MOVEHUB_MOTOR = 0x27,
-    PBIO_ID_EV3_MEDIUM_MOTOR,
-    PBIO_ID_EV3_LARGE_MOTOR,
-} pbio_id_t;
 
 /**
  * Motor direction convention
@@ -57,7 +45,7 @@ typedef struct _pbio_dcmotor_settings_t {
 
 pbio_dcmotor_settings_t dcmotor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction);
+pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_iodev_type_id_t expected_id, pbio_motor_dir_t direction);
 
 pbio_error_t pbio_dcmotor_set_settings(pbio_port_t port, int16_t stall_torque_limit_pct);
 

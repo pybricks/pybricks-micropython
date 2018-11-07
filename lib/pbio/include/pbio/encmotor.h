@@ -43,7 +43,7 @@ typedef struct _pbio_encmotor_settings_t {
 
 pbio_encmotor_settings_t encmotor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction, float_t gear_ratio);
+pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_iodev_type_id_t expected_id, pbio_motor_dir_t direction, float_t gear_ratio);
 
 pbio_error_t pbio_encmotor_set_settings(pbio_port_t port, int16_t stall_torque_limit_pct, int32_t stall_speed_limit, int16_t stall_time, int32_t speed_tolerance, int32_t max_speed,  int32_t position_tolerance, int32_t acceleration_start, int32_t acceleration_end, int32_t tight_loop_time, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd);
 

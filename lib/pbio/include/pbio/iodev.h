@@ -47,9 +47,10 @@ typedef enum {
     PBIO_IODEV_TYPE_ID_WEDO2_MOTION_SENSOR      = 35,   /**< WeDo 2.0 Motion Sensor */
     PBIO_IODEV_TYPE_ID_WEDO2_GENERIC_SENSOR     = 36,
 
-    // BOOST UART devices
+    // BOOST UART devices and motors
     PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR        = 37,   /**< BOOST Color and Distance Sensor */
     PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR        = 38,   /**< BOOST Interactive Motor */
+    PBIO_IODEV_TYPE_ID_MOVEHUB_MOTOR            = 39,   /**< BOOST Movehub Motor */
 
     // FatcatLab EV3 UART devices
     PBIO_IODEV_TYPE_ID_FCL_ADC                  = 71,   /**< FatcatLab A/DC Adapter */
@@ -59,6 +60,10 @@ typedef enum {
     PBIO_IODEV_TYPE_ID_FCL_IR                   = 75,   /**< FatcatLab IR Receiver */
     PBIO_IODEV_TYPE_ID_FCL_9DOF                 = 76,   /**< FatcatLab 9DOF Sensor */
     PBIO_IODEV_TYPE_ID_FCL_HUMIDITY             = 77,   /**< FatcatLab Humidity Sensor */
+
+    // LEGO EV3 motors TODO: assign number and location in this table
+    PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR              ,   /**< MINDSTORMS EV3 Large Motor */
+    PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR             ,   /**< MINDSTORMS EV3 Medium Motor */    
 } pbio_iodev_type_id_t;
 
 /**

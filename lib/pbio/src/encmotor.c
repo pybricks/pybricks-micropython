@@ -3,14 +3,10 @@
 #include <pbio/encmotor.h>
 #include <inttypes.h>
 
-pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction, float_t gear_ratio){
+pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_iodev_type_id_t expected_id, pbio_motor_dir_t direction, float_t gear_ratio){
 
     // Verify device ID and configure DC Motor
-    pbio_error_t status = pbio_dcmotor_setup(port, device_id, direction);
-
-    //
-    // TODO: Verify that device_id is indeed an Encoded motor
-    //
+    pbio_error_t status = pbio_dcmotor_setup(port, expected_id, direction);
 
     //
     // TODO: Use the device_id to retrieve the default settings defined in our lib. For now just hardcode something below.
@@ -82,9 +78,9 @@ void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
         "Acceleration\t %" PRId32 "\n"
         "Deceleration\t %" PRId32 "\n"
         "Tight Loop\t %" PRId32 "\n"
-        "kp\t\t %" PRId16 "\n"
-        "ki\t\t %" PRId16 "\n"
-        "kd\t\t %" PRId16 "",
+        "kp\t\t %" PRId32 "\n"
+        "ki\t\t %" PRId32 "\n"
+        "kd\t\t %" PRId32 "",
         // Print counts_per_unit as floating point with 3 decimals
         (int32_t) (counts_per_unit),
         (int32_t) (counts_per_unit*1000 - ((int32_t) counts_per_unit)*1000),    
@@ -100,9 +96,9 @@ void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
         (int32_t) (encmotor_settings[port_index].abs_accl_start / counts_per_output_unit),
         (int32_t) (encmotor_settings[port_index].abs_accl_end / counts_per_output_unit),
         (int32_t) (encmotor_settings[port_index].tight_loop_time / US_PER_MS),
-        encmotor_settings[port_index].pid_kp,
-        encmotor_settings[port_index].pid_ki,
-        encmotor_settings[port_index].pid_kd
+        (int32_t) encmotor_settings[port_index].pid_kp,
+        (int32_t) encmotor_settings[port_index].pid_ki,
+        (int32_t) encmotor_settings[port_index].pid_kd
     );
 }
 

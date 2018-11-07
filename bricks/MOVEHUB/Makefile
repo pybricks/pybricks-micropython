@@ -78,6 +78,7 @@ SRC_S = \
 # Pybricks modules
 PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	extmod/pberror.c \
+	extmod/pbid.c \
 	extmod/modpupdevices.c \
 	extmod/modhubcommon.c \
 	extmod/modbattery.c \

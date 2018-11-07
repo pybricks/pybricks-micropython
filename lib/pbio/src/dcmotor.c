@@ -14,15 +14,13 @@ pbio_motor_control_active_t motor_control_active[] = {
     [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)] PBIO_MOTOR_CONTROL_PASSIVE
 };
 
-pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_id_t device_id, pbio_motor_dir_t direction){   
-    //
-    // TODO: Verify that device_id matches device attached to port, else return appropriate erorr
-    //
-    printf("Class ID:%d\n", device_id);
+pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_iodev_type_id_t expected_id, pbio_motor_dir_t direction){   
+    // Get the ID according to IODEV
+    // pbio_iodev_type_id_t auto_id = 
 
+    // TODO: Verify that auto_id matches the expected_id, else return appropriate erorr
     //
-    // TODO: Verify that device_id is indeed a DC motor or inherited thereof (i.e. lpu_TrainMotor or ev3_LargeMotor etc), else return appropriate erorr
-    //
+    printf("Class ID:%d\n", expected_id);
 
     pbio_error_t status = pbio_dcmotor_coast(port);
     if (status != PBIO_SUCCESS) {
