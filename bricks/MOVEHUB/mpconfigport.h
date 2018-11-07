@@ -59,6 +59,15 @@
 #define MICROPY_LONGINT_IMPL        (MICROPY_LONGINT_IMPL_NONE)
 #define MICROPY_KBD_EXCEPTION       (1)
 #define MICROPY_ENABLE_SCHEDULER    (1)
+#define MICROPY_PY_UERRNO           (1)
+
+#define MICROPY_PY_UERRNO_LIST \
+    X(EPERM) \
+    X(EIO) \
+    X(ENODEV) \
+    X(EINVAL) \
+    X(EOPNOTSUPP) \
+    X(EAGAIN) \
 
 // Enable REPL unless explicitly disabled
 #ifndef MICROPY_ENABLE_COMPILER
