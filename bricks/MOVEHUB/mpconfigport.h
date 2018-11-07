@@ -3,9 +3,6 @@
 #include "stm32f070xb.h"
 #include "mpconfigbrick.h"
 
-// hard-coding for pybricks since we don't expect a different value
-#define PYBRICKS_SYS_CLOCK_FREQ 48000000
-
 
 // options to control how MicroPython is built
 

@@ -26,6 +26,8 @@
 
 #include <stdint.h>
 
+#include <pbdrv/config.h>
+
 #include "stm32f070xb.h"
 
 #include "py/runtime.h"
@@ -51,7 +53,7 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
     } else {
         // IRQs disabled, so need to use a busy loop for the delay.
         // To prevent possible overflow of the counter we use a double loop.
-        const uint32_t count_1ms = PYBRICKS_SYS_CLOCK_FREQ / 4000;
+        const uint32_t count_1ms = PBDRV_CONFIG_SYS_CLOCK_RATE / 4000;
         for (int i = 0; i < Delay; i++) {
             for (uint32_t count = 0; ++count <= count_1ms;) {
             }
