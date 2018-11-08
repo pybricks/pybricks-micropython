@@ -154,6 +154,24 @@ STATIC mp_obj_t pupdevices_ColorAndDistSensor_reflection(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_reflection_obj, pupdevices_ColorAndDistSensor_reflection);
 
+/*
+ColorAndDistSensor
+    def ambient(self):
+        """// TODO:
+        """
+*/
+STATIC mp_obj_t pupdevices_ColorAndDistSensor_ambient(mp_obj_t self_in) {
+    pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_assert(set_mode(self->port, &self->mode, PBIO_IODEV_MODE_COLOR_DIST_SENSOR_AMBIENT));
+    // TODO: use generic read method here
+    pbio_iodev_t *iodev;
+    uint8_t *data;
+    pb_assert(pbdrv_ioport_get_iodev(self->port, &iodev));
+    pb_assert(pbio_iodev_get_raw_values(iodev, &data));
+    return mp_obj_new_int(data[0]);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_ambient_obj, pupdevices_ColorAndDistSensor_ambient);
+
 
 /*
 ColorAndDistSensor class tables
@@ -161,6 +179,7 @@ ColorAndDistSensor class tables
 STATIC const mp_rom_map_elem_t pupdevices_ColorAndDistSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_color), MP_ROM_PTR(&pupdevices_ColorAndDistSensor_color_obj) },
     { MP_ROM_QSTR(MP_QSTR_reflection), MP_ROM_PTR(&pupdevices_ColorAndDistSensor_reflection_obj) },
+    { MP_ROM_QSTR(MP_QSTR_ambient), MP_ROM_PTR(&pupdevices_ColorAndDistSensor_ambient_obj) },
 };
 MP_DEFINE_CONST_DICT(pupdevices_ColorAndDistSensor_locals_dict, pupdevices_ColorAndDistSensor_locals_dict_table);
 

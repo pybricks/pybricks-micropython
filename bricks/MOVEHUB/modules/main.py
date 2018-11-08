@@ -1,7 +1,8 @@
-from time import sleep
+left = MovehubMotor(Port.A)
+right = MovehubMotor(Port.B)
+base = DriveBase(left, right)
+sensor = ColorDistanceSensor(Port.D)
 
-print("User script says: started")
-
-sleep (3)
-
-print("User script says: complete")
+while True:
+    steering = ((sensor.reflection() - 45)*2)//3
+    base.drive(60, steering)
