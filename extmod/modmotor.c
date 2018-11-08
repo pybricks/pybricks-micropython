@@ -104,7 +104,7 @@ mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
     // Determine expected device id from class name and check whether the motor has encoders
     pbio_iodev_type_id_t device_id = get_id_from_qstr(type->name);
-    self->encoded = pbio_encmotor_reset_angle(self->port, 0) == PBIO_SUCCESS ? true: false;
+    self->encoded = pbio_encmotor_reset_angle(self->port, 0) == PBIO_SUCCESS;
     // Initialization specific to encoded motors
     if(self->encoded) {
         // Compute overall gear ratio from each gear train
