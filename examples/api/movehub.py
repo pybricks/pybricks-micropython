@@ -2,13 +2,13 @@ from movehub import *
 from devices import *
 
 # Configure hub motor A as default
-left = MovehubMotor(Port.A)
+left = MoveHubMotor(Port.A)
 
 # Configure motor B as inverted and with two fictitious gear trains.
 # The total reduction here is (36/12*12/36*24/12)*(16/8)=4, but the user
 # won't actually have to do any math. They can just count (or look up)
 # the number of teeth on the gears and enter them as arguments.
-right = MovehubMotor(Port.B, Dir.inverted, [12, 36, 12, 24], [8, 16])
+right = MoveHubMotor(Port.B, Dir.inverted, [12, 36, 12, 24], [8, 16])
 
 # A simple 180 maneuver to a fixed position
 left.run_target(500, 180)
@@ -24,7 +24,7 @@ right.run_angle(500, 90)
 left.run_target(500, 0, Stop.hold)
 
 # Reinit motor B with default settings, just like A
-right = MovehubMotor(Port.B)
+right = MoveHubMotor(Port.B)
 
 # run both motors. This will become simpler and more precise (synchronized) once we implement the DriveBase class driver
 left.run_time(500, 3000, Stop.brake, Run.background)

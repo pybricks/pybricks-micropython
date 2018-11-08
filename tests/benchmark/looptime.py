@@ -4,8 +4,8 @@ from hub import *
 from devices import *
 from utime import *
 
-left = MovehubMotor(Port.A)
-right = MovehubMotor(Port.B)
+left = MoveHubMotor(Port.A)
+right = MoveHubMotor(Port.B)
 
 time_now = ticks_ms()
 for i in range(0, 10000):

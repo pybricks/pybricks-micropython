@@ -13,19 +13,19 @@
 
 #include "mpconfigbrick.h"
 
-/* Movehub builtin motors */
+/* Move Hub builtin motors */
 
 #if PBIO_CONFIG_ENABLE_MOTORS
-const mp_obj_type_t motor_MovehubMotor_type = {
+const mp_obj_type_t motor_MoveHubMotor_type = {
     { &mp_type_type },
-    .name = MP_QSTR_MovehubMotor,
+    .name = MP_QSTR_MoveHubMotor,
     .print = motor_Motor_print,
     .make_new = motor_Motor_make_new,
     .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
 };
 #endif //PBIO_CONFIG_ENABLE_MOTORS
 
-/* Movehub ports */
+/* Move Hub ports */
 
 STATIC const mp_rom_map_elem_t movehub_Port_enum_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_A),   MP_OBJ_NEW_SMALL_INT(PBIO_PORT_A) },
@@ -144,16 +144,16 @@ STATIC mp_obj_t hub_set_mode(mp_obj_t port, mp_obj_t mode) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(hub_set_mode_obj, hub_set_mode);
 
-/* Movehub module table */
+/* Move Hub module table */
 
 extern const struct _mp_obj_module_t pb_module_battery;
 
 STATIC const mp_map_elem_t movehub_globals_table[] = {
-    /* Unique to Movehub */
+    /* Unique to Move Hub */
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_movehub) },
     { MP_OBJ_NEW_QSTR(MP_QSTR_Port), (mp_obj_t)&movehub_Port_enum },
 #if PBIO_CONFIG_ENABLE_MOTORS
-    { MP_OBJ_NEW_QSTR(MP_QSTR_MovehubMotor), (mp_obj_t)&motor_MovehubMotor_type},
+    { MP_OBJ_NEW_QSTR(MP_QSTR_MoveHubMotor), (mp_obj_t)&motor_MoveHubMotor_type},
 #endif //PBIO_CONFIG_ENABLE_MOTORS
     /* Common to Powered Up hubs */
     { MP_ROM_QSTR(MP_QSTR_wait), (mp_obj_t)&mp_utime_sleep_ms_obj },

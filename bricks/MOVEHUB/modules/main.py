@@ -1,5 +1,5 @@
-left = MovehubMotor(Port.A)
-right = MovehubMotor(Port.B)
+left = MoveHubMotor(Port.A)
+right = MoveHubMotor(Port.B)
 base = DriveBase(left, right)
 sensor = ColorDistanceSensor(Port.D)
 

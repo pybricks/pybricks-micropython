@@ -7,8 +7,8 @@ pbio_iodev_type_id_t get_id_from_qstr(qstr q){
         #if defined(PYBRICKS_BRICK_MOVEHUB)
         case MP_QSTR_TrainMotor:
             return PBIO_IODEV_TYPE_ID_LPF2_TRAIN;
-        case MP_QSTR_MovehubMotor:
-            return PBIO_IODEV_TYPE_ID_MOVEHUB_MOTOR;
+        case MP_QSTR_MoveHubMotor:
+            return PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR;
         case MP_QSTR_InteractiveMotor:
             return PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR;
         #endif //PYBRICKS_BRICK_MOVEHUB
@@ -20,5 +20,5 @@ pbio_iodev_type_id_t get_id_from_qstr(qstr q){
         #endif //PYBRICKS_BRICK_EV3
         default:
             return PBIO_IODEV_TYPE_ID_NONE;
-    }    
+    }
 }

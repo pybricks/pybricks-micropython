@@ -17,8 +17,8 @@
 
 # All lines with TMP comment can be removed in future once we finish certain implementation aspects
 
-second = MovehubMotor(Port.A, Dir.normal)
-minute = MovehubMotor(Port.B, Dir.normal, [8, 36, 20])
+second = MoveHubMotor(Port.A, Dir.normal)
+minute = MoveHubMotor(Port.B, Dir.normal, [8, 36, 20])
 
 sensor = ColorDistanceSensor(Port.D)
 

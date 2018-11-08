@@ -2,7 +2,7 @@
 from hub import *
 from devices import *
 from utime import *
-motor = MovehubMotor(Port.A)
+motor = MoveHubMotor(Port.A)
 
 # main
 count = 0
