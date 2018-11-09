@@ -29,6 +29,7 @@ second.run(200)
 while(sensor.reflection() < 10):
     wait(10)
 second.stop()
+second.run_angle(500, -15)
 second.reset_angle(0)
 
 # Ambient, wait for minute hand
@@ -37,11 +38,8 @@ wait(500) #TMP
 minute.run(-300)
 while(sensor.ambient() > 20):
     wait(10)
-minute.stop(Stop.hold) #TMP
-wait(100) #TMP
-minute.stop() # TMP
+minute.run_angle(500, 50) # TMP
 minute.reset_angle(0)
-minute.run_target(500, -25)
 
 kp = 1600
 second.settings(100, 2, 500, 5, 1000, 1, 1000, 1000, 100, kp, 800, 5)
