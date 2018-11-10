@@ -4,6 +4,7 @@
 
 #include "py/runtime.h"
 
+#include "modiodevice.h"
 #include "modmotor.h"
 #include "pberror.h"
 
@@ -49,24 +50,6 @@ typedef enum {
 } pbio_iodev_mode_color_dist_sensor_t;
 
 
-// TODO: Probably not handle modes at mpy level; this is a placeholder
-pbio_error_t set_mode(pbio_port_t port, uint8_t *current_mode, uint8_t new_mode) {
-    if (*current_mode == new_mode) {
-        return PBIO_SUCCESS;
-    }
-    pbio_iodev_t *iodev;
-    pbio_error_t err = pbdrv_ioport_get_iodev(port, &iodev);
-    if (err != PBIO_SUCCESS){
-        return err;
-    }
-    err = pbio_iodev_set_mode(iodev, new_mode);
-    if (err != PBIO_SUCCESS){
-        return err;
-    }    
-    *current_mode = new_mode;
-    return err;
-}
-
 // Class structure for ColorAndDistSensor
 typedef struct _pupdevices_ColorAndDistSensor_obj_t {
     mp_obj_base_t base;
@@ -105,7 +88,7 @@ ColorAndDistSensor
 */
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_color(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(set_mode(self->port, &self->mode, PBIO_IODEV_MODE_COLOR_DIST_SENSOR_COLOR));
+    pb_assert(pb_iodevice_set_mode(self->port, PBIO_IODEV_MODE_COLOR_DIST_SENSOR_COLOR));
     pbio_iodev_t *iodev;
     uint8_t *data;
     uint8_t color;
@@ -145,12 +128,8 @@ ColorAndDistSensor
 */
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_reflection(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(set_mode(self->port, &self->mode, PBIO_IODEV_MODE_COLOR_DIST_SENSOR_REFLECTED));
-    pbio_iodev_t *iodev;
-    uint8_t *data;
-    pb_assert(pbdrv_ioport_get_iodev(self->port, &iodev));
-    pb_assert(pbio_iodev_get_raw_values(iodev, &data));
-    return mp_obj_new_int(data[0]);
+    pb_assert(pb_iodevice_set_mode(self->port, PBIO_IODEV_MODE_COLOR_DIST_SENSOR_REFLECTED));
+    return pb_iodevice_get_values(self->port);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_reflection_obj, pupdevices_ColorAndDistSensor_reflection);
 
@@ -162,13 +141,8 @@ ColorAndDistSensor
 */
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_ambient(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(set_mode(self->port, &self->mode, PBIO_IODEV_MODE_COLOR_DIST_SENSOR_AMBIENT));
-    // TODO: use generic read method here
-    pbio_iodev_t *iodev;
-    uint8_t *data;
-    pb_assert(pbdrv_ioport_get_iodev(self->port, &iodev));
-    pb_assert(pbio_iodev_get_raw_values(iodev, &data));
-    return mp_obj_new_int(data[0]);
+    pb_assert(pb_iodevice_set_mode(self->port, PBIO_IODEV_MODE_COLOR_DIST_SENSOR_AMBIENT));
+    return pb_iodevice_get_values(self->port);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_ambient_obj, pupdevices_ColorAndDistSensor_ambient);
 
