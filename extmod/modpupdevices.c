@@ -149,6 +149,19 @@ MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_ambient_obj, pupdevices_
 
 
 /*
+ColorAndDistSensor
+    def rgb(self):
+        """Returns surface reflection of red, green, and blue light, each ranging from 0 (no reflection) to 100 (very high reflection)."""
+*/
+STATIC mp_obj_t pupdevices_ColorAndDistSensor_rgb(mp_obj_t self_in) {
+    pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_assert(pb_iodevice_set_mode(self->port, 6));
+    // TODO: Scale each value to 0-100. Values for red should match reflection mode exactly, scale blue and green in similar fashion.
+    return pb_iodevice_get_values(self->port);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_rgb_obj, pupdevices_ColorAndDistSensor_rgb);
+
+/*
 ColorAndDistSensor class tables
 */
 STATIC const mp_rom_map_elem_t pupdevices_ColorAndDistSensor_locals_dict_table[] = {
@@ -156,6 +169,7 @@ STATIC const mp_rom_map_elem_t pupdevices_ColorAndDistSensor_locals_dict_table[]
     { MP_ROM_QSTR(MP_QSTR_reflection), MP_ROM_PTR(&pupdevices_ColorAndDistSensor_reflection_obj) },
     { MP_ROM_QSTR(MP_QSTR_ambient), MP_ROM_PTR(&pupdevices_ColorAndDistSensor_ambient_obj) },
     { MP_ROM_QSTR(MP_QSTR_distance), MP_ROM_PTR(&pupdevices_ColorAndDistSensor_distance_obj) },
+    { MP_ROM_QSTR(MP_QSTR_rgb), MP_ROM_PTR(&pupdevices_ColorAndDistSensor_rgb_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(pupdevices_ColorAndDistSensor_locals_dict, pupdevices_ColorAndDistSensor_locals_dict_table);
 
