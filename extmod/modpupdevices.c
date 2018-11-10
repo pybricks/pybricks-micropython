@@ -156,8 +156,16 @@ ColorAndDistSensor
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_rgb(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_assert(pb_iodevice_set_mode(self->port, 6));
-    // TODO: Scale each value to 0-100. Values for red should match reflection mode exactly, scale blue and green in similar fashion.
-    return pb_iodevice_get_values(self->port);
+    pbio_iodev_t *iodev;
+    uint8_t *data;
+    pb_assert(pbdrv_ioport_get_iodev(self->port, &iodev));
+    pb_assert(pbio_iodev_get_raw_values(iodev, &data));
+    mp_obj_t rgb[3];
+    for (uint8_t col = 0; col < 3; col++) {
+        int16_t intensity = ((*(int16_t *)(data + col * 2))*10)/44;
+        rgb[col] = mp_obj_new_int(intensity < 100 ? intensity : 100);
+    }
+    return mp_obj_new_tuple(3, rgb);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_rgb_obj, pupdevices_ColorAndDistSensor_rgb);
 
