@@ -54,10 +54,6 @@ STATIC const mp_map_elem_t movehub_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_reboot), (mp_obj_t)&hub_reboot_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_update), (mp_obj_t)&hub_update_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_light), (mp_obj_t)&hub_set_light_obj },
-#if PYBRICKS_ENABLE_HARDWARE_DEBUG
-    { MP_OBJ_NEW_QSTR(MP_QSTR_gpios), (mp_obj_t)&hub_gpios_obj },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_read_adc), (mp_obj_t)&hub_read_adc_obj },
-#endif //PYBRICKS_ENABLE_HARDWARE_DEBUG
 };
 
 STATIC MP_DEFINE_CONST_DICT (
