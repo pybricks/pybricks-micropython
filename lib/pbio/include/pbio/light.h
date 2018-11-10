@@ -16,6 +16,7 @@
  */
 typedef enum {
     PBIO_LIGHT_COLOR_NONE,      /**< The light is off */
+    PBIO_LIGHT_COLOR_BLACK,      /**< The light is off */
     PBIO_LIGHT_COLOR_WHITE,     /**< The light is white */
     PBIO_LIGHT_COLOR_RED,       /**< The light is red */
     PBIO_LIGHT_COLOR_ORANGE,    /**< The light is orange */
