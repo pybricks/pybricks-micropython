@@ -1,5 +1,6 @@
 """Read and write to EV3 sensors through ev3dev sysfs."""
 from os import listdir
+from time import sleep, time
 
 
 def read_int(infile):
@@ -26,6 +27,11 @@ def write_str(outfile, value):
     outfile.flush()
 
 
+def number_of_sensors():
+    """Return the number of sensors attached to the EV3."""
+    return len(listdir('/sys/class/lego-sensor'))-2
+
+
 def get_sensor_path(port, driver_name):
     """Get a path to a device based on port number."""
     base_dir = '/sys/class/lego-sensor'
@@ -46,76 +52,58 @@ def get_sensor_path(port, driver_name):
     raise OSError('No such sensor on Port S' + chr(port))
 
 
-class Mode():
-    """Enumeration of sensor modes. Not available to user."""
-    color = 'COL-COLOR'
-    ambient = 'COL-AMBIENT'
-    reflectedraw = 'REF-RAW'
-    rgb = 'RGB-RAW'
-    proximity = 'IR-PROX'
-    beacon = 'IR-SEEK'
-    remote = 'IR-REMOTE'
-
-
 class Ev3devSensor():
     """Base class for ev3dev sensors operating through sysfs."""
+
     _ev3dev_driver_name = 'none'
     _number_of_values = 1
 
     def __init__(self, port):
         """Initialize the sensor."""
-        self.path = get_sensor_path(port, self._ev3dev_driver_name)
-        self.file_mode = open(self.path + 'mode', 'r+b')
-        self.mode_now = read_str(self.file_mode)
+        assert ord('1') <= port <= ord('4')
+        self.port = port
+        self.open_files()
 
-        # Open value files as relevant
-        self.file_value0 = open(self.path + 'value0', 'rb')
-        if self._number_of_values == 1:
-            return
-        self.file_value1 = open(self.path + 'value1', 'rb')
-        self.file_value2 = open(self.path + 'value2', 'rb')
-        if self._number_of_values == 3:
-            return
-        self.file_value3 = open(self.path + 'value3', 'rb')
-        self.file_value4 = open(self.path + 'value4', 'rb')
-        self.file_value5 = open(self.path + 'value5', 'rb')
-        self.file_value6 = open(self.path + 'value6', 'rb')
-        self.file_value7 = open(self.path + 'value7', 'rb')
+    def open_files(self):
+        """Open the sysfs files for this device."""
+        self.path = get_sensor_path(self.port, self._ev3dev_driver_name)
+        self.mode_file = open(self.path + 'mode', 'r+b')
+        self.mode_now = read_str(self.mode_file)
+        self.value_files = [open(self.path + 'value' + str(num), 'rb') for num in range(self._number_of_values)]
 
-    def mode(self, new_mode):
+    def close_files(self):
+        """Close the sysfs files for this device."""
+        self.mode_file.close()
+        for value_file in self.value_files:
+            value_file.close()
+
+    def reset(self):
+        """Force sensor to reset as if disconnecting and reconnecting it."""
+        # First, close all files for this sensor
+        self.close_files()
+        # Number of sensors before reset
+        number_of_sensors_before = number_of_sensors()
+        # Reset the sensor
+        with open('/sys/class/lego-port/port' + chr(self.port-1) + '/mode', 'w') as rf:
+            rf.write('auto')
+        # Reset takes at least a second
+        sleep(1)
+        # Wait for the sensor to come back, up to a timeout. TODO: We should really be checking the actual port status, but that seems to prevent the sensor from coming back
+        reset_time = time()
+        while not number_of_sensors() == number_of_sensors_before:
+            sleep(0.1)
+            if time() - reset_time > 4:
+                OSError("Unable to reset sensor")
+        # Now that the sensor is almost back, wait another half second and then reinitialize the files
+        sleep(0.5)
+        self.open_files()
+
+    def mode(self, mode_new):
         """Set the sensor mode. Not available to user."""
-        if new_mode != self.mode_now:
-            write_str(self.file_mode, new_mode)
-            self.mode_now = new_mode
+        if mode_new != self.mode_now:
+            write_str(self.mode_file, mode_new)
+            self.mode_now = mode_new
 
-    def value0(self):
-        """Return value in sensor/value0. Not available to user."""
-        return read_int(self.file_value0)
-
-    def value1(self):
-        """Return value in sensor/value1. Not available to user."""
-        return read_int(self.file_value1)
-
-    def value2(self):
-        """Return value in sensor/value2. Not available to user."""
-        return read_int(self.file_value2)
-
-    def value3(self):
-        """Return value in sensor/value3. Not available to user."""
-        return read_int(self.file_value3)
-
-    def value4(self):
-        """Return value in sensor/value4. Not available to user."""
-        return read_int(self.file_value4)
-
-    def value5(self):
-        """Return value in sensor/value5. Not available to user."""
-        return read_int(self.file_value5)
-
-    def value6(self):
-        """Return value in sensor/value6. Not available to user."""
-        return read_int(self.file_value6)
-
-    def value7(self):
-        """Return value in sensor/value7. Not available to user."""
-        return read_int(self.file_value7)
+    def value(self, num):
+        """Return value in sensor/valueX. Not available to user."""
+        return read_int(self.value_files[num])
