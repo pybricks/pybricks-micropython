@@ -82,33 +82,24 @@ ColorAndDistSensor
 
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_color(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    uint8_t color;
     switch(pupdevices_ColorAndDistSensor_combined_mode(self->port, 0)) {
         case 0:
-            color = PBIO_LIGHT_COLOR_BLACK;
-            break;        
+            return mp_obj_new_int(PBIO_LIGHT_COLOR_BLACK);
         case 3:
-            color = PBIO_LIGHT_COLOR_BLUE;
-            break;
+            return mp_obj_new_int(PBIO_LIGHT_COLOR_BLUE);
         case 6:
-            color = PBIO_LIGHT_COLOR_GREEN;
-            break;
+            return mp_obj_new_int(PBIO_LIGHT_COLOR_GREEN);
         case 7:
-            color = PBIO_LIGHT_COLOR_YELLOW;
-            break;
+            return mp_obj_new_int(PBIO_LIGHT_COLOR_YELLOW);
         case 8:
-            color = PBIO_LIGHT_COLOR_ORANGE;
-            break;
+            return mp_obj_new_int(PBIO_LIGHT_COLOR_ORANGE);
         case 9:
-            color = PBIO_LIGHT_COLOR_RED;
-            break;
+            return mp_obj_new_int(PBIO_LIGHT_COLOR_RED);
         case 10:
-            color = PBIO_LIGHT_COLOR_WHITE;
-            break;
+            return mp_obj_new_int(PBIO_LIGHT_COLOR_WHITE);
         default:
-            color = PBIO_LIGHT_COLOR_NONE;
+            return mp_const_none;
     }
-    return mp_obj_new_int(color);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_color_obj, pupdevices_ColorAndDistSensor_color);
 

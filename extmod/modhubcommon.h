@@ -1,7 +1,7 @@
 #include "py/obj.h"
 
 /* Enums */
-const mp_obj_type_t pup_Color_enum;
+const mp_obj_type_t pb_Color_enum;
 
 /* Module functions */
 const mp_obj_fun_builtin_fixed_t hub_batt_volt_obj;

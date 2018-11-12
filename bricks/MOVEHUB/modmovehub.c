@@ -8,6 +8,7 @@
 
 #include "modmotor.h"
 #include "modhubcommon.h"
+#include "modenumcommon.h"
 #include "pberror.h"
 #include "pbobj.h"
 
@@ -48,7 +49,7 @@ STATIC const mp_map_elem_t movehub_globals_table[] = {
 #endif //PBIO_CONFIG_ENABLE_MOTORS
     /* Common to Powered Up hubs */
     { MP_ROM_QSTR(MP_QSTR_wait), (mp_obj_t)&mp_utime_sleep_ms_obj },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_Color), (mp_obj_t)&pup_Color_enum },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_Color), (mp_obj_t)&pb_Color_enum },
     { MP_OBJ_NEW_QSTR(MP_QSTR_battery), (mp_obj_t)&pb_module_battery },
     { MP_OBJ_NEW_QSTR(MP_QSTR_shutdown), (mp_obj_t)&hub_shutdown_obj },
     { MP_OBJ_NEW_QSTR(MP_QSTR_reboot), (mp_obj_t)&hub_reboot_obj },

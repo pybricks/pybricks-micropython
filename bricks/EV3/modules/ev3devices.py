@@ -52,14 +52,14 @@ class ColorSensor(Ev3devSensor):
 
     # TODO: Use Pybricks color enum for values below instead.
     _ev3_colors = {
-        0: 0,
-        1: 1,
-        2: 2,
-        3: 3,
-        4: 4,
-        5: 5,
-        6: 6,
-        7: 7,
+        0: None,
+        1: Color.black,
+        2: Color.blue,
+        3: Color.green,
+        4: Color.yellow,
+        5: Color.red,
+        6: Color.white,
+        7: Color.brown,
     }
 
     def color(self):

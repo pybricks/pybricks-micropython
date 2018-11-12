@@ -12,18 +12,19 @@
 #include <pbio/port.h>
 
 /**
- * Light color values.
+ * Light color values or detected color values.
  */
 typedef enum {
-    PBIO_LIGHT_COLOR_NONE,      /**< The light is off */
-    PBIO_LIGHT_COLOR_BLACK,      /**< The light is off */
-    PBIO_LIGHT_COLOR_WHITE,     /**< The light is white */
-    PBIO_LIGHT_COLOR_RED,       /**< The light is red */
-    PBIO_LIGHT_COLOR_ORANGE,    /**< The light is orange */
-    PBIO_LIGHT_COLOR_YELLOW,    /**< The light is yellow */
-    PBIO_LIGHT_COLOR_GREEN,     /**< The light is green */
-    PBIO_LIGHT_COLOR_BLUE,      /**< The light is blue */
-    PBIO_LIGHT_COLOR_PURPLE,    /**< The light is purple */
+    PBIO_LIGHT_COLOR_NONE,      /**< The light is off or no color is detected*/
+    PBIO_LIGHT_COLOR_BLACK,     /**< The light is off or the detected color is black*/
+    PBIO_LIGHT_COLOR_WHITE,     /**< The light or detected color is white */
+    PBIO_LIGHT_COLOR_RED,       /**< The light or detected color is red */
+    PBIO_LIGHT_COLOR_ORANGE,    /**< The light or detected color is orange */
+    PBIO_LIGHT_COLOR_YELLOW,    /**< The light or detected color is yellow */
+    PBIO_LIGHT_COLOR_GREEN,     /**< The light or detected color is green */
+    PBIO_LIGHT_COLOR_BLUE,      /**< The light or detected color is blue */
+    PBIO_LIGHT_COLOR_PURPLE,    /**< The light or detected color is purple */
+    PBIO_LIGHT_COLOR_BROWN,     /**< The light or detected color is brown */
 } pbio_light_color_t;
 
 /**
