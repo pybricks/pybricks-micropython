@@ -4,7 +4,7 @@
 from ev3devices_c import *
 
 # Import ev3dev sysfs sensor base class and modes
-from ev3devio import Ev3devSensor, Mode
+from ev3devio import Ev3devSensor
 
 
 class TouchSensor(Ev3devSensor):
@@ -30,7 +30,7 @@ class TouchSensor(Ev3devSensor):
             bool -- True if sensor is pressed and False otherwise.
 
         """
-        return bool(self.value0())
+        return bool(self.value(0))
 
 
 class ColorSensor(Ev3devSensor):
@@ -52,37 +52,37 @@ class ColorSensor(Ev3devSensor):
 
     # TODO: Use Pybricks color enum for values below instead.
     _ev3_colors = {
-        0: 0,
-        1: 1,
-        2: 2,
-        3: 3,
-        4: 4,
-        5: 5,
-        6: 6,
-        7: 7,
+        0: None,
+        1: Color.black,
+        2: Color.blue,
+        3: Color.green,
+        4: Color.yellow,
+        5: Color.red,
+        6: Color.white,
+        7: Color.brown,
     }
 
     def color(self):
         """Return color id."""
-        self.mode(Mode.color)
-        return self._ev3_colors[self.value0()]
+        self.mode('COL-COLOR')
+        return self._ev3_colors[self.value(0)]
 
     def ambient(self):
         """Return ambient light percentage, ranging from 0 (dark) to 100 (bright)."""
-        self.mode(Mode.ambient)
-        return self.value0()
+        self.mode('COL-AMBIENT')
+        return self.value(0)
 
     def reflected(self):
         """Return reflected light percentage, ranging from 0.0 (no reflection) to 100 (high reflection)."""
-        self.mode(Mode.reflectedraw)
+        self.mode('REF-RAW')
         # Todo: verify actual formula
-        return round((653-self.value0())*0.28, 1)
+        return round((653-self.value(0))*0.28, 1)
 
     def rgb(self):
         """Return tuple of reflected light intensities for red (0-100), green (0-100) and blue (0-100)."""
-        self.mode(Mode.rgb)
+        self.mode('RGB-RAW')
         # TODO: Discuss range: (0-100 vs 0-255 vs 0-1023). Range 0-100 equivalent to reflected mode would be nice.
-        return min(self.value0()*100 >> 9, 100), min(self.value1()*100 >> 9, 100), min(self.value2()*100 >> 9, 100)
+        return min(self.value(0)*100 >> 9, 100), min(self.value(1)*100 >> 9, 100), min(self.value(2)*100 >> 9, 100)
 
 
 # TODO: replace with pbio enum consistent with other Pybricks devices. (enum number/order does not matter.)
@@ -126,8 +126,8 @@ class InfraredSensor(Ev3devSensor):
 
     def distance(self):
         """Return relative distance ranging from 0 (closest) to 100 (farthest)."""
-        self.mode(Mode.proximity)
-        return self.value0()
+        self.mode('IR-PROX')
+        return self.value(0)
 
     def beacon(self, channel):
         """Return relative distance and angle between active remote and the infrared sensor.
@@ -140,19 +140,19 @@ class InfraredSensor(Ev3devSensor):
             approximate angle between active remote and infrared sensor: -75 to 75 (degrees)
 
         """
-        self.mode(Mode.beacon)
+        self.mode('IR-SEEK')
         if channel == 1:
-            head = self.value0()
-            dist = self.value1()
+            head = self.value(0)
+            dist = self.value(1)
         elif channel == 2:
-            head = self.value2()
-            dist = self.value3()
+            head = self.value(2)
+            dist = self.value(3)
         elif channel == 3:
-            head = self.value4()
-            dist = self.value5()
+            head = self.value(4)
+            dist = self.value(5)
         elif channel == 4:
-            head = self.value6()
-            dist = self.value7()
+            head = self.value(6)
+            dist = self.value(7)
         if dist == -128:
             return None, None
         else:
@@ -168,15 +168,15 @@ class InfraredSensor(Ev3devSensor):
             list -- A list of buttons
 
         """
-        self.mode(Mode.remote)
+        self.mode('IR-REMOTE')
         if channel == 1:
-            code = self.value0()
+            code = self.value(0)
         elif channel == 2:
-            code = self.value1()
+            code = self.value(1)
         elif channel == 3:
-            code = self.value2()
+            code = self.value(2)
         elif channel == 4:
-            code = self.value3()
+            code = self.value(3)
         return self._combinations[code]
 
 

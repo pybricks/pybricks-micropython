@@ -4,6 +4,7 @@
 
 #include "py/runtime.h"
 
+#include "modiodevice.h"
 #include "modmotor.h"
 #include "pberror.h"
 
@@ -37,41 +38,10 @@ class ColorAndDistSensor():
         """
 */
 
-/**
- * Modes for the BOOST Color and Distance Sensor. TODO: move elsewhere and talk about modes
- */
-typedef enum {
-    PBIO_IODEV_MODE_COLOR_DIST_SENSOR_COLOR = 0,
-    PBIO_IODEV_MODE_COLOR_DIST_SENSOR_PROXIMITY = 1,
-    PBIO_IODEV_MODE_COLOR_DIST_SENSOR_REFLECTED = 3,
-    PBIO_IODEV_MODE_COLOR_DIST_SENSOR_AMBIENT = 4,
-    PBIO_IODEV_MODE_COLOR_DIST_SENSOR_SPEC = 8,
-} pbio_iodev_mode_color_dist_sensor_t;
-
-
-// TODO: Probably not handle modes at mpy level; this is a placeholder
-pbio_error_t set_mode(pbio_port_t port, uint8_t *current_mode, uint8_t new_mode) {
-    if (*current_mode == new_mode) {
-        return PBIO_SUCCESS;
-    }
-    pbio_iodev_t *iodev;
-    pbio_error_t err = pbdrv_ioport_get_iodev(port, &iodev);
-    if (err != PBIO_SUCCESS){
-        return err;
-    }
-    err = pbio_iodev_set_mode(iodev, new_mode);
-    if (err != PBIO_SUCCESS){
-        return err;
-    }    
-    *current_mode = new_mode;
-    return err;
-}
-
 // Class structure for ColorAndDistSensor
 typedef struct _pupdevices_ColorAndDistSensor_obj_t {
     mp_obj_base_t base;
     pbio_port_t port;
-    uint8_t mode; // Temporary: Probably not handle modes at mpy level; this is a placeholder
 } pupdevices_ColorAndDistSensor_obj_t;
 
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
@@ -80,8 +50,17 @@ STATIC mp_obj_t pupdevices_ColorAndDistSensor_make_new(const mp_obj_type_t *type
     pupdevices_ColorAndDistSensor_obj_t *self = m_new_obj(pupdevices_ColorAndDistSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
     self->port = mp_obj_get_int(args[0]);
-    self->mode = 255; // Probably not handle modes at mpy level; this is a placeholder. If we keep it, this line should read the current mode the sensor is in
+    pb_assert(pb_iodevice_set_mode(self->port, 8));
     return MP_OBJ_FROM_PTR(self);
+}
+
+STATIC uint8_t pupdevices_ColorAndDistSensor_combined_mode(pbio_port_t port, uint8_t idx) {
+    pb_assert(pb_iodevice_set_mode(port, 8));
+    pbio_iodev_t *iodev;
+    uint8_t *data;
+    pb_assert(pbdrv_ioport_get_iodev(port, &iodev));
+    pb_assert(pbio_iodev_get_raw_values(iodev, &data));
+    return data[idx];
 }
 
 /*
@@ -98,80 +77,88 @@ STATIC void pupdevices_ColorAndDistSensor_print(const mp_print_t *print,  mp_obj
 /*
 ColorAndDistSensor
     def color(self):
-        """Return the detected color.
-        Returns:
-            int -- The detected color
-        """
+        """Return the detected color.""""
 */
+
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_color(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(set_mode(self->port, &self->mode, PBIO_IODEV_MODE_COLOR_DIST_SENSOR_COLOR));
-    pbio_iodev_t *iodev;
-    uint8_t *data;
-    uint8_t color;
-    pb_assert(pbdrv_ioport_get_iodev(self->port, &iodev));
-    pb_assert(pbio_iodev_get_raw_values(iodev, &data));
-    switch(data[0]) {
+    switch(pupdevices_ColorAndDistSensor_combined_mode(self->port, 0)) {
+        case 0:
+            return mp_obj_new_int(PBIO_LIGHT_COLOR_BLACK);
         case 3:
-            color = PBIO_LIGHT_COLOR_BLUE;
-            break;
+            return mp_obj_new_int(PBIO_LIGHT_COLOR_BLUE);
         case 6:
-            color = PBIO_LIGHT_COLOR_GREEN;
-            break;
+            return mp_obj_new_int(PBIO_LIGHT_COLOR_GREEN);
         case 7:
-            color = PBIO_LIGHT_COLOR_YELLOW;
-            break;
+            return mp_obj_new_int(PBIO_LIGHT_COLOR_YELLOW);
         case 8:
-            color = PBIO_LIGHT_COLOR_ORANGE;
-            break;
+            return mp_obj_new_int(PBIO_LIGHT_COLOR_ORANGE);
         case 9:
-            color = PBIO_LIGHT_COLOR_RED;
+            return mp_obj_new_int(PBIO_LIGHT_COLOR_RED);
         case 10:
-            color = PBIO_LIGHT_COLOR_WHITE;
-            break;
+            return mp_obj_new_int(PBIO_LIGHT_COLOR_WHITE);
         default:
-            color = PBIO_LIGHT_COLOR_NONE;
+            return mp_const_none;
     }
-
-    return mp_obj_new_int(color);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_color_obj, pupdevices_ColorAndDistSensor_color);
 
 /*
 ColorAndDistSensor
+    def distance(self):
+        """Returns distance to detected object, ranging from 0 (very close) to 10 (very far)."""
+*/
+STATIC mp_obj_t pupdevices_ColorAndDistSensor_distance(mp_obj_t self_in) {
+    pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    return mp_obj_new_int(pupdevices_ColorAndDistSensor_combined_mode(self->port, 1));
+}
+MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_distance_obj, pupdevices_ColorAndDistSensor_distance);
+
+
+/*
+ColorAndDistSensor
     def reflection(self):
-        """// TODO: discuss the word reflection
-        """
+        """Returns surface reflection, ranging from 0 (no reflection) to 100 (very high reflection)."""
 */
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_reflection(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(set_mode(self->port, &self->mode, PBIO_IODEV_MODE_COLOR_DIST_SENSOR_REFLECTED));
-    pbio_iodev_t *iodev;
-    uint8_t *data;
-    pb_assert(pbdrv_ioport_get_iodev(self->port, &iodev));
-    pb_assert(pbio_iodev_get_raw_values(iodev, &data));
-    return mp_obj_new_int(data[0]);
+    return mp_obj_new_int(pupdevices_ColorAndDistSensor_combined_mode(self->port, 3));
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_reflection_obj, pupdevices_ColorAndDistSensor_reflection);
 
 /*
 ColorAndDistSensor
     def ambient(self):
-        """// TODO:
-        """
+        """Returns ambient light intensity, ranging from 0 (darkness) to 100 (very bright light)."""
 */
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_ambient(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(set_mode(self->port, &self->mode, PBIO_IODEV_MODE_COLOR_DIST_SENSOR_AMBIENT));
-    // TODO: use generic read method here
+    pb_assert(pb_iodevice_set_mode(self->port, 4));
+    return pb_iodevice_get_values(self->port);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_ambient_obj, pupdevices_ColorAndDistSensor_ambient);
+
+
+/*
+ColorAndDistSensor
+    def rgb(self):
+        """Returns surface reflection of red, green, and blue light, each ranging from 0 (no reflection) to 100 (very high reflection)."""
+*/
+STATIC mp_obj_t pupdevices_ColorAndDistSensor_rgb(mp_obj_t self_in) {
+    pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_assert(pb_iodevice_set_mode(self->port, 6));
     pbio_iodev_t *iodev;
     uint8_t *data;
     pb_assert(pbdrv_ioport_get_iodev(self->port, &iodev));
     pb_assert(pbio_iodev_get_raw_values(iodev, &data));
-    return mp_obj_new_int(data[0]);
+    mp_obj_t rgb[3];
+    for (uint8_t col = 0; col < 3; col++) {
+        int16_t intensity = ((*(int16_t *)(data + col * 2))*10)/44;
+        rgb[col] = mp_obj_new_int(intensity < 100 ? intensity : 100);
+    }
+    return mp_obj_new_tuple(3, rgb);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_ambient_obj, pupdevices_ColorAndDistSensor_ambient);
-
+MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_rgb_obj, pupdevices_ColorAndDistSensor_rgb);
 
 /*
 ColorAndDistSensor class tables
@@ -180,6 +167,8 @@ STATIC const mp_rom_map_elem_t pupdevices_ColorAndDistSensor_locals_dict_table[]
     { MP_ROM_QSTR(MP_QSTR_color), MP_ROM_PTR(&pupdevices_ColorAndDistSensor_color_obj) },
     { MP_ROM_QSTR(MP_QSTR_reflection), MP_ROM_PTR(&pupdevices_ColorAndDistSensor_reflection_obj) },
     { MP_ROM_QSTR(MP_QSTR_ambient), MP_ROM_PTR(&pupdevices_ColorAndDistSensor_ambient_obj) },
+    { MP_ROM_QSTR(MP_QSTR_distance), MP_ROM_PTR(&pupdevices_ColorAndDistSensor_distance_obj) },
+    { MP_ROM_QSTR(MP_QSTR_rgb), MP_ROM_PTR(&pupdevices_ColorAndDistSensor_rgb_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(pupdevices_ColorAndDistSensor_locals_dict, pupdevices_ColorAndDistSensor_locals_dict_table);
 

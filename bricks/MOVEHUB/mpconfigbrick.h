@@ -13,15 +13,28 @@
 // Requires about 20K (21312) of flash
 #define MICROPY_FLOAT_IMPL              (MICROPY_FLOAT_IMPL_NONE)
 
+// Set to (1) to include the advanced module or (0) to exclude it. Requires about ... bytes of flash
+// This module includes the IODevice class for setting device modes and reading/writing raw data
+#define PYBRICKS_MODULE_ADVANCED        (1)
+
 // Set to (1) to enable user access to GPIO and ADC. Set to (0) to disable
-// Requires about 360 bytes of flash
-#define PYBRICKS_ENABLE_HARDWARE_DEBUG (0)
+// Requires about 360 bytes of flash. PYBRICKS_MODULE_ADVANCED must be set
+// for this option to take effect.
+#define PYBRICKS_ENABLE_HARDWARE_DEBUG  (0)
 
 extern const struct _mp_obj_module_t pb_module_movehub;
 extern const struct _mp_obj_module_t pb_module_pupdevices;
 extern const struct _mp_obj_module_t pb_module_robotics;
 
+#if PYBRICKS_MODULE_ADVANCED
+extern const struct _mp_obj_module_t pb_module_advanced;
+#define PYBRICKS_MODULE_ADVANCED_DEF { MP_OBJ_NEW_QSTR(MP_QSTR_advanced),    (mp_obj_t)&pb_module_advanced },
+#else
+#define PYBRICKS_MODULE_ADVANCED_DEF
+#endif
+
 #define PYBRICKS_PORT_BUILTIN_MODULES \
+    PYBRICKS_MODULE_ADVANCED_DEF \
     { MP_OBJ_NEW_QSTR(MP_QSTR_movehub),     (mp_obj_t)&pb_module_movehub },    \
     { MP_OBJ_NEW_QSTR(MP_QSTR_devices),     (mp_obj_t)&pb_module_pupdevices },  \
     { MP_OBJ_NEW_QSTR(MP_QSTR_robotics),    (mp_obj_t)&pb_module_robotics },

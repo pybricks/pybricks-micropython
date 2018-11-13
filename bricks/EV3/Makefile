@@ -174,6 +174,7 @@ LIB_SRC_C = $(addprefix lib/,\
 # Pybricks drivers and modules
 PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	extmod/modmotor.c \
+	extmod/modenumcommon.c \
 	extmod/modrobotics.c \
 	extmod/pberror.c \
 	extmod/pbid.c \
