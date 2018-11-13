@@ -152,11 +152,10 @@ int hci_le_set_advertising_parameters(uint16_t min_interval, uint16_t max_interv
   return status;
 }
 
-int hci_le_set_advertising_data(uint8_t length, const uint8_t data[])
+int hci_le_set_advertising_data_begin(uint8_t length, const uint8_t *data)
 {
   struct hci_request rq;
   le_set_adv_data_cp adv_cp;
-  uint8_t status;
 
   memset(&adv_cp, 0, sizeof(adv_cp));
   adv_cp.length = length;
@@ -166,10 +165,22 @@ int hci_le_set_advertising_data(uint8_t length, const uint8_t data[])
   rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_ADV_DATA);
   rq.cparam = &adv_cp;
   rq.clen = LE_SET_ADV_DATA_CP_SIZE;
+
+  hci_send_req(&rq);
+
+  return 0;
+}
+
+int hci_le_set_advertising_data_end()
+{
+  struct hci_response rq;
+  uint8_t status;
+
+  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_recv_resp(&rq);
 
   return status;
 }
@@ -269,7 +280,7 @@ int hci_le_rand(uint8_t random_number[8])
   return 0;
 }
 
-int hci_le_set_scan_resp_data_begin(uint8_t length, const uint8_t *data)
+int hci_le_set_scan_response_data_begin(uint8_t length, const uint8_t *data)
 {
   struct hci_request rq;
   le_set_scan_response_data_cp scan_resp_cp;
@@ -288,7 +299,7 @@ int hci_le_set_scan_resp_data_begin(uint8_t length, const uint8_t *data)
   return 0;
 }
 
-int hci_le_set_scan_resp_data_end()
+int hci_le_set_scan_response_data_end()
 {
   struct hci_response rq;
   uint8_t status;
