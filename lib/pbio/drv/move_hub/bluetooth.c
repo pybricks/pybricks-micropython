@@ -536,22 +536,30 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
 }
 
 static PT_THREAD(set_discoverable(struct pt *pt)) {
-    char local_name[16];
+    // 6e400001-b5a3-f393-e0a-9e50e24dcca9e
+    static const uint8_t service_uuids[] = {
+        AD_TYPE_128_BIT_SERV_UUID_CMPLT_LIST,
+        0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
+        0x93, 0xf3, 0xa3, 0xb5, 0x01, 0x00, 0x40, 0x6e, // nRF UART service UUID
+    };
+    uint8_t response_data[16];
 
     PT_BEGIN(pt);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    hci_le_set_scan_resp_data_begin(0, NULL);
+    // TODO: LEGO firmware also includes Conn_Interval_Min, Conn_Interval_Max
+    // and Tx power level here. Do we need these?
+    response_data[0] = sizeof(DEV_NAME);
+    response_data[1] = AD_TYPE_COMPLETE_LOCAL_NAME;
+    memcpy(&response_data[2], DEV_NAME, sizeof(DEV_NAME));
+    hci_le_set_scan_response_data_begin(response_data[0] + 1, response_data);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    hci_le_set_scan_resp_data_end();
-
-    // TODO probably want to call hci_le_set_advertising_data() here to advertise UART service
+    hci_le_set_scan_response_data_end();
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    local_name[0] = AD_TYPE_COMPLETE_LOCAL_NAME;
-    strcpy(&local_name[1], DEV_NAME);
-    aci_gap_set_discoverable_begin(ADV_IND, 0, 0, PUBLIC_ADDR, NO_WHITE_LIST_USE,
-        1 + strlen(DEV_NAME), local_name, 0, NULL, 0, 0);
+    int ret = aci_gap_set_discoverable_begin(ADV_IND, 0, 0, PUBLIC_ADDR, NO_WHITE_LIST_USE,
+        0, NULL, sizeof(service_uuids), service_uuids, 0, 0);
+    printf("ret: %d\n", ret);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gap_set_discoverable_end();
 
