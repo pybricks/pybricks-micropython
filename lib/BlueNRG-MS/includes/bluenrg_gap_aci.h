@@ -265,10 +265,17 @@ tBleStatus aci_gap_set_limited_discoverable(uint8_t AdvType, uint16_t AdvIntervM
  *
  * @retval tBleStatus Value indicating success or error code.
  */
-tBleStatus aci_gap_set_discoverable_begin(uint8_t AdvType, uint16_t AdvIntervMin, uint16_t AdvIntervMax,
-                             uint8_t OwnAddrType, uint8_t AdvFilterPolicy, uint8_t LocalNameLen,
-                             const char *LocalName, uint8_t ServiceUUIDLen, uint8_t* ServiceUUIDList,
-                             uint16_t SlaveConnIntervMin, uint16_t SlaveConnIntervMax);
+tBleStatus aci_gap_set_discoverable_begin(uint8_t AdvType,
+                                          uint16_t AdvIntervMin,
+                                          uint16_t AdvIntervMax,
+                                          uint8_t OwnAddrType,
+                                          uint8_t AdvFilterPolicy,
+                                          uint8_t LocalNameLen,
+                                          const char *LocalName,
+                                          uint8_t ServiceUUIDLen,
+                                          const uint8_t* ServiceUUIDList,
+                                          uint16_t SlaveConnIntervMin,
+                                          uint16_t SlaveConnIntervMax);
 tBleStatus aci_gap_set_discoverable_end();
 
 /**

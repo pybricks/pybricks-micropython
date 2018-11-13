@@ -150,7 +150,7 @@ tBleStatus aci_gap_set_discoverable_begin(uint8_t AdvType,
                                           uint8_t LocalNameLen,
                                           const char *LocalName,
                                           uint8_t ServiceUUIDLen,
-                                          uint8_t* ServiceUUIDList,
+                                          const uint8_t* ServiceUUIDList,
                                           uint16_t SlaveConnIntervMin,
                                           uint16_t SlaveConnIntervMax)
 {
