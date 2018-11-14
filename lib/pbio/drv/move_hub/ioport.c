@@ -425,11 +425,8 @@ PROCESS_THREAD(pbdrv_ioport_process, ev, data) {
         }
 
         if (connected_type_id[IOPORT_D] != prev_type_id[IOPORT_D]) {
-            printf("new device %d\n", connected_type_id[IOPORT_D]);
             prev_type_id[IOPORT_D] = connected_type_id[IOPORT_D];
             if (connected_type_id[IOPORT_D] == PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
-                printf("going to UART mode\n");
-
                 ioport_enable_uart(IOPORT_D);
             }
         }
