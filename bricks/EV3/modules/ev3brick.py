@@ -10,6 +10,14 @@ LEGO ID: 95646
 
 # import those features of the EV3 brick that are already written in MicroPython-style C code.
 from ev3brick_c import *
+from ev3devio import write_int
+from sys import stderr
+
+
+def terminal(*args, **kwargs):
+    """Print a message on the terminal."""
+    print(*args, file=stderr, **kwargs)
+
 
 # TODO: Delete dummy API below or implement it.
 
@@ -60,13 +68,36 @@ def beep(beeps=1):
 
 
 # TODO: make consistent with HUB light API
+# TODO: Add pattern, consistent with Hubs
+
+led_left_green = open('/sys/class/leds/led0:green:brick-status/brightness', 'w')
+led_left_red = open('/sys/class/leds/led0:red:brick-status/brightness', 'w')
+led_right_green = open('/sys/class/leds/led1:green:brick-status/brightness', 'w')
+led_right_red = open('/sys/class/leds/led1:red:brick-status/brightness', 'w')
+
+
 def light(color):
     """Set the EV3 brick LED light to the specified color.
 
     Arguments:
-        color {color} -- RED, GREEN, ORANGE, or OFF
+        color {color} -- Color.Red, Color.Green, Color.Orange, or None
     """
-    pass
+    if color == Color.red:
+        r = 255
+        g = 0
+    elif color == Color.green:
+        r = 0
+        g = 255
+    elif color == Color.orange:
+        r = 255
+        g = 255
+    else:
+        r = 0
+        g = 0
+    write_int(led_left_green, g)
+    write_int(led_left_red, r)
+    write_int(led_right_green, g)
+    write_int(led_right_red, r)
 
 
 def display_clear():

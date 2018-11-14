@@ -2,6 +2,7 @@
 
 # import those ev3devices that are already written in MicroPython-style C code.
 from ev3devices_c import *
+from ev3brick_c import Color
 
 # Import ev3dev sysfs sensor base class and modes
 from ev3devio import Ev3devSensor
@@ -27,7 +28,7 @@ class TouchSensor(Ev3devSensor):
         """Check if the sensor is pressed.
 
         Returns:
-            bool -- True if sensor is pressed and False otherwise.
+            bool -- True if the sensor is pressed, False if it is not pressed.
 
         """
         return bool(self.value(0))
@@ -63,23 +64,43 @@ class ColorSensor(Ev3devSensor):
     }
 
     def color(self):
-        """Return color id."""
+        """Check the color of a surface.
+
+        Returns:
+            int -- Color.black, Color.blue, Color.green, Color.yellow, Color.red, Color.white, or Color.brown. Returns None if no color is detected.
+
+        """
         self.mode('COL-COLOR')
         return self._ev3_colors[self.value(0)]
 
     def ambient(self):
-        """Return ambient light percentage, ranging from 0 (dark) to 100 (bright)."""
+        """Measure the ambient light intensity.
+
+        Returns:
+            int -- Ambient light intensity, ranging from 0 (dark) to 100 (bright).
+
+        """
         self.mode('COL-AMBIENT')
         return self.value(0)
 
-    def reflected(self):
-        """Return reflected light percentage, ranging from 0.0 (no reflection) to 100 (high reflection)."""
+    def reflection(self):
+        """Measure the reflection of a surface (using a red light).
+
+        Returns:
+            float -- Reflection, ranging from 0.0 (no reflection) to 100.0 (high reflection).
+
+        """
         self.mode('REF-RAW')
         # Todo: verify actual formula
         return round((653-self.value(0))*0.28, 1)
 
     def rgb(self):
-        """Return tuple of reflected light intensities for red (0-100), green (0-100) and blue (0-100)."""
+        """Measure the reflection of a surface (using a red, green, and blue light, each measured in turn).
+
+        Returns:
+            (float, float, float) -- Reflection for red, green, and blue light, each ranging from 0.0 (no reflection) to 100.0 (high reflection).
+
+        """
         self.mode('RGB-RAW')
         # TODO: Discuss range: (0-100 vs 0-255 vs 0-1023). Range 0-100 equivalent to reflected mode would be nice.
         return min(self.value(0)*100 >> 9, 100), min(self.value(1)*100 >> 9, 100), min(self.value(2)*100 >> 9, 100)
@@ -194,6 +215,16 @@ class GyroSensor(Ev3devSensor):
     """
 
     _ev3dev_driver_name = 'lego-ev3-gyro'
+    _number_of_values = 2
+    _default_mode = 'GYRO-G&A'
+
+    def rate(self):
+        """Apply the angular rate (degrees per second)."""
+        return self.value(1)
+
+    def angle(self):
+        """Return the angle (degrees)."""
+        return self.value(0)
 
     pass
 
@@ -210,6 +241,7 @@ class UltrasonicSensor(Ev3devSensor):
     Compatible with:
     Pybricks for LEGO MINDSTORMS EV3
     """
+
     _ev3dev_driver_name = 'lego-ev3-us'
 
     pass

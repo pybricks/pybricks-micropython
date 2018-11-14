@@ -57,12 +57,15 @@ class Ev3devSensor():
 
     _ev3dev_driver_name = 'none'
     _number_of_values = 1
+    _default_mode = None
 
     def __init__(self, port):
         """Initialize the sensor."""
         assert ord('1') <= port <= ord('4')
         self.port = port
         self.open_files()
+        if self._default_mode:
+            self.mode(self._default_mode)
 
     def open_files(self):
         """Open the sysfs files for this device."""
@@ -97,6 +100,8 @@ class Ev3devSensor():
         # Now that the sensor is almost back, wait another half second and then reinitialize the files
         sleep(0.5)
         self.open_files()
+        if self._default_mode:
+            self.mode(self._default_mode)
 
     def mode(self, mode_new):
         """Set the sensor mode. Not available to user."""
