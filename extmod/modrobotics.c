@@ -3,6 +3,7 @@
 
 #include "modmotor.h"
 
+#if PBIO_CONFIG_ENABLE_MOTORS
 /*
 class Mechanism():
     """Class to control a motor with predefined defined target angles."""
@@ -80,6 +81,8 @@ STATIC const mp_obj_type_t robotics_Mechanism_type = {
     .make_new = robotics_Mechanism_make_new,
     .locals_dict = (mp_obj_dict_t*)&robotics_Mechanism_locals_dict,
 };
+
+#endif // PBIO_CONFIG_ENABLE_MOTORS
 
 /*
 class StopWatch():
@@ -225,7 +228,9 @@ robotics module tables
 
 STATIC const mp_map_elem_t robotics_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_robotics) },
+#if PBIO_CONFIG_ENABLE_MOTORS
     { MP_OBJ_NEW_QSTR(MP_QSTR_Mechanism), (mp_obj_t)&robotics_Mechanism_type},
+#endif // PBIO_CONFIG_ENABLE_MOTORS
     { MP_OBJ_NEW_QSTR(MP_QSTR_StopWatch), (mp_obj_t)&robotics_StopWatch_type},
 };
 
