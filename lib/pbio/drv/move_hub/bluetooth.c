@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "pbio/error.h"
+#include "pbsys/sys.h"
 #include "sys/autostart.h"
 #include "sys/etimer.h"
 #include "sys/process.h"
@@ -28,6 +30,8 @@
 
 // max data size for nRF UART characteristics
 #define NRF_CHAR_SIZE 20
+// ring buffer size for Rx data - must be power of 2!
+#define NRF_RX_BUF_SIZE 128
 
 
 typedef void(*gatt_attr_modified_handler_t)(void *data, uint8_t size);
@@ -69,6 +73,9 @@ static uint16_t conn_handle;
 
 // nRF UART service handles
 static uint16_t uart_service_handle, uart_rx_char_handle, uart_tx_char_handle;
+// nRF UART Rx ring buffer
+static uint8_t uart_rx_buf[NRF_RX_BUF_SIZE];
+static uint8_t uart_rx_buf_head, uart_rx_buf_tail;
 
 
 PROCESS(pbdrv_bluetooth_hci_process, "Bluetooth HCI");
@@ -479,11 +486,32 @@ static PT_THREAD(hci_init(struct pt *pt)) {
 static void uart_rx_char_modified(void *data, uint8_t size) {
     uint8_t *rx_data = data;
 
-    printf("UART Rx:");
     for (int i = 0; i < size; i++) {
-        printf(" %02x", rx_data[i]);
+        uint8_t new_head = (uart_rx_buf_head + 1) & (NRF_RX_BUF_SIZE - 1);
+
+        // pbsys may want to use this character
+        if (_pbsys_stdin_irq(rx_data[i])) {
+            continue;
+        }
+
+        if (new_head == uart_rx_buf_tail) {
+            // overflow. drop the data :-(
+            return;
+        }
+        uart_rx_buf[uart_rx_buf_head] = rx_data[i];
+        uart_rx_buf_head = new_head;
     }
-    printf("\n");
+}
+
+pbio_error_t pbdrv_bluetooth_get_char(uint8_t *c) {
+    if (uart_rx_buf_head == uart_rx_buf_tail) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    *c = uart_rx_buf[uart_rx_buf_tail];
+    uart_rx_buf_tail = (uart_rx_buf_tail + 1) & (NRF_RX_BUF_SIZE - 1);
+
+    return PBIO_SUCCESS;
 }
 
 static PT_THREAD(init_uart_service(struct pt *pt)) {

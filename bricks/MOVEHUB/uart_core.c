@@ -1,4 +1,5 @@
 
+#include <pbdrv/bluetooth.h>
 #include <pbdrv/uart.h>
 
 #include "py/mpconfig.h"
@@ -12,7 +13,7 @@ int mp_hal_stdin_rx_chr(void) {
     uint8_t c;
 
     // wait for rx interrupt
-    while (pbdrv_uart_get_char(PBIO_PORT_C, &c) != PBIO_SUCCESS) {
+    while (pbdrv_bluetooth_get_char(&c) != PBIO_SUCCESS) {
         MICROPY_EVENT_POLL_HOOK
     }
 
