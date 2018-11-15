@@ -19,7 +19,7 @@
 #include "stm32f070xb.h"
 
 // workaround upstream NVIC_SystemReset() not decorated with noreturn
-void NVIC_SystemReset(void) __attribute((noreturn));
+void NVIC_SystemReset(void) __attribute__((noreturn));
 
 typedef enum {
     LED_STATUS_BUTTON_PRESSED   = 1 << 0,
@@ -27,7 +27,7 @@ typedef enum {
 } led_status_flags_t;
 
 // Bootloader reads this address to know if firmware loader should run
-uint32_t bootloader_magic_addr __attribute__((section (".magic")));
+uint32_t bootloader_magic_addr __attribute__((section(".magic")));
 #define BOOTLOADER_MAGIC_VALUE  0xAAAAAAAA
 
 // period over which the battery voltage is averaged (in milliseconds)
