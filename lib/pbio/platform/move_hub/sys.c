@@ -1,16 +1,19 @@
 
 #include <string.h>
 
-#include <pbdrv/battery.h>
-#include <pbdrv/config.h>
-#include <pbdrv/light.h>
+#include "pbdrv/battery.h"
+#include "pbdrv/config.h"
+#include "pbdrv/light.h"
 
-#include <pbio/button.h>
-#include <pbio/dcmotor.h>
-#include <pbio/light.h>
+#include "pbio/button.h"
+#include "pbio/dcmotor.h"
+#include "pbio/light.h"
 
-#include <pbsys/sys.h>
+#include "pbsys/sys.h"
+
 #include "sys/clock.h"
+#include "sys/etimer.h"
+#include "sys/process.h"
 
 #include "stm32f070xb.h"
 
@@ -37,11 +40,11 @@ uint32_t bootloader_magic_addr __attribute__((section (".magic")));
 static led_status_flags_t led_status_flags;
 
 // the previous timestamp from when _pbsys_poll() was called
-static uint32_t prev_poll_time;
+static clock_time_t prev_poll_time;
 
 // values for keeping track of how long button has been pressed
 static bool button_pressed;
-static uint32_t button_press_start_time;
+static clock_time_t button_press_start_time;
 
 // the battery voltage averaged over BATTERY_PERIOD_MS
 static uint16_t avg_battery_voltage;
@@ -51,17 +54,7 @@ static pbsys_stop_callback_t pbsys_stop_func;
 // user program stdin event function
 static pbsys_stdin_event_callback_t pbsys_stdin_event_func;
 
-void _pbsys_init(void) {
-    uint16_t battery_voltage;
-    uint8_t r, g, b;
-
-    pbdrv_battery_get_voltage_now(PBIO_PORT_SELF, &battery_voltage);
-    avg_battery_voltage = battery_voltage;
-
-    _pbio_light_set_user_mode(false);
-    pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE, &r, &g, &b);
-    pbdrv_light_set_rgb(PBIO_PORT_SELF, r, g, b);
-}
+PROCESS(pbsys_process, "System");
 
 void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks) {
     if (callbacks) {
@@ -119,13 +112,20 @@ void pbsys_power_off(void) {
     }
 }
 
-void _pbsys_poll(uint32_t now) {
-    pbio_button_flags_t btn;
-    uint32_t poll_interval;
+static void init(void) {
     uint16_t battery_voltage;
+    uint8_t r, g, b;
 
-    poll_interval = now - prev_poll_time;
-    prev_poll_time = now;
+    pbdrv_battery_get_voltage_now(PBIO_PORT_SELF, &battery_voltage);
+    avg_battery_voltage = battery_voltage;
+
+    _pbio_light_set_user_mode(false);
+    pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE, &r, &g, &b);
+    pbdrv_light_set_rgb(PBIO_PORT_SELF, r, g, b);
+}
+
+static void update_button(clock_time_t now) {
+    pbio_button_flags_t btn;
 
     pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
 
@@ -133,7 +133,7 @@ void _pbsys_poll(uint32_t now) {
         if (button_pressed) {
 
             // if the button is held down for 5 seconds, power off
-            if (now - button_press_start_time > 5000) {
+            if (now - button_press_start_time > clock_from_msec(5000)) {
                 // turn off light briefly like official LEGO firmware
                 pbdrv_light_set_rgb(PBIO_PORT_SELF, 0, 0, 0);
                 for (int i = 0; i < 10; i++) {
@@ -156,6 +156,14 @@ void _pbsys_poll(uint32_t now) {
         button_pressed = false;
         led_status_flags &= ~LED_STATUS_BUTTON_PRESSED;
     }
+}
+
+static void update_battery(clock_time_t now) {
+    uint32_t poll_interval;
+    uint16_t battery_voltage;
+
+    poll_interval = clock_to_msec(now - prev_poll_time);
+    prev_poll_time = now;
 
     pbdrv_battery_get_voltage_now(PBIO_PORT_SELF, &battery_voltage);
 
@@ -173,6 +181,27 @@ void _pbsys_poll(uint32_t now) {
     else if (avg_battery_voltage >= BATTERY_OK_MV) {
         led_status_flags &= ~LED_STATUS_BATTERY_LOW;
     }
+}
+
+PROCESS_THREAD(pbsys_process, ev, data) {
+    static struct etimer timer;
+
+    PROCESS_BEGIN();
+
+    init();
+    etimer_set(&timer, clock_from_msec(50));
+
+    while (true) {
+        PROCESS_WAIT_EVENT();
+        if (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)) {
+            clock_time_t now = clock_time();
+            etimer_reset(&timer);
+            update_button(now);
+            update_battery(now);
+        }
+    }
+
+    PROCESS_END();
 }
 
 bool _pbsys_stdin_irq(uint8_t c) {

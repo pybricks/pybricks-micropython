@@ -39,6 +39,9 @@ AUTOSTART_PROCESSES(
 #ifndef PBIO_CONFIG_DISABLE_UARTDEV
     ,&pbio_uartdev_process
 #endif
+#ifdef PBIO_CONFIG_ENABLE_SYS
+    ,&pbsys_process
+#endif
 );
 
 /**
@@ -53,7 +56,6 @@ void pbio_init(void) {
     _pbdrv_button_init();
     _pbdrv_light_init();
     _pbdrv_motor_init();
-    _pbsys_init();
     autostart_start(autostart_processes);
 }
 
@@ -76,7 +78,6 @@ int pbio_do_one_event(void) {
     }
     if (now - prev_slow_poll_time >= 32) {
         _pbio_light_poll(now);
-        _pbsys_poll(now);
         prev_slow_poll_time = now;
     }
 

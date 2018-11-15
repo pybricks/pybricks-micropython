@@ -17,6 +17,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "sys/process.h"
+
 /**
  * Callback function to handle stop button press during user program.
  */
@@ -79,22 +81,14 @@ void pbsys_power_off(void) __attribute__((noreturn));
 /** @cond INTERNAL */
 
 /**
- * Initialize system.
- */
-void _pbsys_init(void);
-
-/**
- * Checks for pending system events, such as low battery.
- */
-void _pbsys_poll(uint32_t now);
-
-/**
  * Calls the user program *stdin_event* function.
  * @param [in]  c   the character received
  * @return          *true* if the character was handled and should not be placed
  *                  in the stdin buffer, otherwise *false*.
  */
 bool _pbsys_stdin_irq(uint8_t c);
+
+PROCESS_NAME(pbsys_process);
 
 /** @endcond */
 
@@ -105,8 +99,6 @@ static void pbsys_unprepare_user_program(void) { }
 static inline void pbsys_reset(void) { }
 static inline void pbsys_reboot(bool fw_update) { }
 static inline void pbsys_power_off(void) { }
-static inline void _pbsys_init(void) { }
-static inline void _pbsys_poll(uint32_t now) { }
 static inline bool _pbsys_stdin_irq(uint8_t c) { return false; }
 
 #endif
