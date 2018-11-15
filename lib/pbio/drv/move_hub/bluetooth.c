@@ -71,6 +71,12 @@ static uint16_t conn_handle;
 
 // nRF UART service handles
 static uint16_t uart_service_handle, uart_rx_char_handle, uart_tx_char_handle;
+// nRF UART tx is in progress
+static bool uart_tx_busy;
+// buffer to queue UART tx data
+static uint8_t uart_tx_buf[NRF_CHAR_SIZE];
+// bytes used in uart_tx_buf
+static uint8_t uart_tx_buf_size;
 
 
 PROCESS(pbdrv_bluetooth_hci_process, "Bluetooth HCI");
@@ -568,31 +574,45 @@ static PT_THREAD(set_discoverable(struct pt *pt)) {
     PT_END(pt);
 }
 
-static PT_THREAD(uart_service_send_data(struct pt *pt, const char *data, uint8_t size))
+pbio_error_t pbdrv_bluetooth_tx(uint8_t c) {
+    // make sure we have a Bluetooth connection
+    if (!conn_handle) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // can't add the the buffer if tx is in progress or buffer is full
+    if (uart_tx_busy || uart_tx_buf_size == NRF_CHAR_SIZE) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    // append the char
+    uart_tx_buf[uart_tx_buf_size] = c;
+    uart_tx_buf_size++;
+
+    // poke the process to start tx soon-ish. This way, we can accumulate up to
+    // NRF_CHAR_SIZE bytes before actually transmitting
+    process_post(&pbdrv_bluetooth_hci_process, PROCESS_EVENT_MSG, NULL);
+
+    return PBIO_SUCCESS;
+}
+
+static PT_THREAD(uart_service_send_data(struct pt *pt))
 {
-    static uint8_t i, n;
     tBleStatus ret;
 
     PT_BEGIN(pt);
 
-    // send data in NRF_CHAR_SIZE sized chunks
-    for (i = 0; i < size; i += NRF_CHAR_SIZE) {
-        n = size - i;
-        if (n > NRF_CHAR_SIZE) {
-            n = NRF_CHAR_SIZE;
-        }
-
 retry:
-        PT_WAIT_WHILE(pt, write_xfer_size);
-        aci_gatt_update_char_value_begin(uart_service_handle, uart_tx_char_handle, 0, n, data + i);
-        PT_WAIT_UNTIL(pt, hci_command_complete);
-        ret = aci_gatt_update_char_value_end();
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gatt_update_char_value_begin(uart_service_handle, uart_tx_char_handle,
+        0, uart_tx_buf_size, uart_tx_buf);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    ret = aci_gatt_update_char_value_end();
 
-        if (ret == BLE_STATUS_INSUFFICIENT_RESOURCES) {
-            // this will happen if notifications are enabled and the previous
-            // changes haven't been sent over the air yet
-            goto retry;
-        }
+    if (ret == BLE_STATUS_INSUFFICIENT_RESOURCES) {
+        // this will happen if notifications are enabled and the previous
+        // changes haven't been sent over the air yet
+        goto retry;
     }
 
     PT_END(pt);
@@ -626,15 +646,24 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
         // TODO: we should have a timeout and stop scanning eventually
         PROCESS_WAIT_UNTIL(conn_handle);
 
-        etimer_set(&timer, CLOCK_SECOND);
+        etimer_set(&timer, clock_from_msec(500));
 
         // conn_handle is set to 0 upon disconnection
         while (conn_handle) {
-            // TODO: send out UART Tx data here
-            PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
-            etimer_reset(&timer);
-            #define HELLO_STR "Hello!"
-            PROCESS_PT_SPAWN(&child_pt, uart_service_send_data(&child_pt, HELLO_STR, strlen(HELLO_STR)));
+            PROCESS_WAIT_EVENT();
+            if (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)) {
+                etimer_reset(&timer);
+                // just occasionally checking to see if we are still connected
+                continue;
+            }
+            if (ev == PROCESS_EVENT_MSG) {
+                uart_tx_busy = true;
+                if (uart_tx_buf_size) {
+                    PROCESS_PT_SPAWN(&child_pt, uart_service_send_data(&child_pt));
+                    uart_tx_buf_size = 0;
+                }
+                uart_tx_busy = false;
+            }
         }
 
         // reset Bluetooth chip
