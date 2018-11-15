@@ -91,7 +91,27 @@
  * \return a ::clock_time_t value
  */
 static inline clock_time_t clock_from_msec(unsigned int msec) {
+#if CLOCK_SECOND == 1000
+  return msec;
+#else
   return (msec * CLOCK_SECOND + 999) / 1000;
+#endif
+}
+
+/**
+ * Converts clock ticks to milliseconds, rounding down so that the actual time
+ * span will be <= *ticks*.
+ *
+ * \param ticks a ::clock_time_t value
+ *
+ * \return the time in milliseconds
+ */
+static inline unsigned int clock_to_msec(clock_time_t ticks) {
+#if CLOCK_SECOND == 1000
+  return ticks;
+#else
+  return ticks * 1000 / CLOCK_SECOND;
+#endif
 }
 
 /**
