@@ -21,7 +21,7 @@
 #define PBDRV_CONFIG_ADC        (0)
 #define PBDRV_CONFIG_BATTERY    (0)
 #define PBDRV_CONFIG_BLUETOOTH  (0)
-#define PBDRV_CONFIG_BUTTON     (0)
+#define PBDRV_CONFIG_BUTTON     (1)
 #define PBDRV_CONFIG_IOPORT     (0)
 #define PBDRV_CONFIG_UART       (0)
 

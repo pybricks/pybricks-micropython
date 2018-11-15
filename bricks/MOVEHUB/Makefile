@@ -83,7 +83,7 @@ PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	extmod/modiodevice.c \
 	extmod/modadvanced.c \
 	extmod/modhubcommon.c \
-	extmod/modenumcommon.c \
+	extmod/modcommon.c \
 	extmod/modbattery.c \
 	extmod/modrobotics.c \
 	)

@@ -100,8 +100,6 @@ bool _pbsys_stdin_irq(uint8_t c);
 
 #else
 
-static void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks) { }
-static void pbsys_unprepare_user_program(void) { }
 static inline void pbsys_reset(void) { }
 static inline void pbsys_reboot(bool fw_update) { }
 static inline void pbsys_power_off(void) { }

@@ -174,13 +174,17 @@ LIB_SRC_C = $(addprefix lib/,\
 # Pybricks drivers and modules
 PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	extmod/modmotor.c \
-	extmod/modenumcommon.c \
+	extmod/modcommon.c \
 	extmod/modrobotics.c \
 	extmod/pberror.c \
 	extmod/pbid.c \
 	lib/pbio/drv/ev3dev_stretch/motor.c \
+	lib/pbio/drv/ev3dev_stretch/button.c \
+	lib/pbio/drv/ev3dev_stretch/light.c \
 	lib/pbio/platform/ev3dev_stretch/clock.c \
 	lib/pbio/src/dcmotor.c \
+	lib/pbio/src/main.c \
+	lib/pbio/src/light.c \
 	lib/pbio/src/encmotor.c \
 	lib/pbio/src/error.c \
 	lib/pbio/src/motorcontrol.c \
