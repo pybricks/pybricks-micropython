@@ -411,15 +411,21 @@ PROCESS_THREAD(pbdrv_ioport_process, ev, data) {
     init_one(IOPORT_C);
     init_one(IOPORT_D);
 
-    // TODO: port C is currently reserved for debug UART
-    ioport_enable_uart(IOPORT_C);
-
     while (true) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
         etimer_reset(&timer);
 
-        // TODO: skipping port C for now to use for REPL
-        //poll_dcm(IOPORT_C);
+        if (connected_type_id[IOPORT_C] != PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
+            poll_dcm(IOPORT_C);
+        }
+
+        if (connected_type_id[IOPORT_C] != prev_type_id[IOPORT_C]) {
+            prev_type_id[IOPORT_C] = connected_type_id[IOPORT_C];
+            if (connected_type_id[IOPORT_C] == PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
+                ioport_enable_uart(IOPORT_C);
+            }
+        }
+
         if (connected_type_id[IOPORT_D] != PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
             poll_dcm(IOPORT_D);
         }

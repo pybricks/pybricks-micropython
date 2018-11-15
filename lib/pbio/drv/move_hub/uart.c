@@ -112,8 +112,7 @@ static void uart_init() {
     USART4->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_RXNEIE;
     USART3->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_RXNEIE;
 
-    // TODO: this is just for debug UART on port C
-    pbdrv_uart_set_baud_rate(PBIO_PORT_C, 115200);
+    pbdrv_uart_set_baud_rate(PBIO_PORT_C, 2400);
     pbdrv_uart_set_baud_rate(PBIO_PORT_D, 2400);
 
     // DMA is not possible on USART3/4 on STM32F070x6, so using interrupt
@@ -156,9 +155,12 @@ void USART3_6_IRQHandler(void) {
 }
 
 static void handle_poll() {
-    uint8_t c = 0;
+    uint8_t c;
 
-    // TODO: add port C
+    while (pbdrv_uart_get_char(PBIO_PORT_C, &c) == PBIO_SUCCESS) {
+        pbio_event_uart_rx_data_t rx = { .port = PBIO_PORT_C, .byte = c };
+        process_post_synch(&pbio_uartdev_process, PBIO_EVENT_UART_RX, rx.data);
+    }
     while (pbdrv_uart_get_char(PBIO_PORT_D, &c) == PBIO_SUCCESS) {
         pbio_event_uart_rx_data_t rx = { .port = PBIO_PORT_D, .byte = c };
         process_post_synch(&pbio_uartdev_process, PBIO_EVENT_UART_RX, rx.data);
