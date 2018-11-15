@@ -81,6 +81,7 @@ void pbsys_unprepare_user_program(void) {
     uint8_t r, g, b;
 
     pbsys_stop_func = NULL;
+    pbsys_stdin_event_func = NULL;
     _pbio_light_set_user_mode(false);
     pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE, &r, &g, &b);
     pbdrv_light_set_rgb(PBIO_PORT_SELF, r, g, b);
