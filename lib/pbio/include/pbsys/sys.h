@@ -66,14 +66,24 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
 void pbsys_unprepare_user_program(void);
 
 /**
- * Get one character from stdin.
+ * Read one character from stdin.
  * @param [out] c       The character read
- * @return              ::PBIO_SUCCESS if a character was available, or
+ * @return              ::PBIO_SUCCESS if a character was available,
  *                      ::PBIO_ERROR_AGAIN if no character was available to be
  *                      read at this time or ::PBIO_ERROR_NOT_SUPPORTED if the
  *                      platform does not have a stdin.
  */
 pbio_error_t pbsys_stdin_get_char(uint8_t *c);
+
+/**
+ * Write one character to stdout.
+ * @param [in] c        The character to write
+ * @return              ::PBIO_SUCCESS if a character was written,
+ *                      ::PBIO_ERROR_AGAIN if the character could not be written
+ *                      at this time or ::PBIO_ERROR_NOT_SUPPORTED if the
+ *                      platform does not have a stdout.
+ */
+pbio_error_t pbsys_stdout_put_char(uint8_t c);
 
 /**
  * Reboots the brick. This could also be considered a "hard" reset. This
@@ -99,6 +109,7 @@ PROCESS_NAME(pbsys_process);
 static inline void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks) { }
 static inline void pbsys_unprepare_user_program(void) { }
 static inline pbio_error_t pbsys_stdin_get_char(uint8_t *c) { return PBIO_ERROR_NOT_SUPPORTED; }
+static inline pbio_error_t pbsys_stdout_put_char(uint8_t c) { return PBIO_ERROR_NOT_SUPPORTED; }
 static inline void pbsys_reset(void) { }
 static inline void pbsys_reboot(bool fw_update) { }
 static inline void pbsys_power_off(void) { }

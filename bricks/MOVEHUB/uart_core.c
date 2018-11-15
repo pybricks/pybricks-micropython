@@ -1,6 +1,5 @@
 
 #include <pbsys/sys.h>
-#include <pbdrv/uart.h>
 
 #include "py/mpconfig.h"
 
@@ -26,7 +25,9 @@ void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
 
     while (len--) {
         c = *str++;
-        // busy-wait until char has been sent
-        while (pbdrv_uart_put_char(PBIO_PORT_C, c) != PBIO_SUCCESS) { }
+        while (pbsys_stdout_put_char(c) == PBIO_ERROR_AGAIN) {
+            // only run pbio events here - don't want keyboard interrupt in middle of printf()
+            MICROPY_VM_HOOK_LOOP
+        }
     }
 }

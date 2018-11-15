@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "pbdrv/battery.h"
+#include "pbdrv/bluetooth.h"
 #include "pbdrv/config.h"
 #include "pbdrv/light.h"
 
@@ -101,6 +102,10 @@ pbio_error_t pbsys_stdin_get_char(uint8_t *c) {
     stdin_buf_tail = (stdin_buf_tail + 1) & (STDIN_BUF_SIZE - 1);
 
     return PBIO_SUCCESS;
+}
+
+pbio_error_t pbsys_stdout_put_char(uint8_t c) {
+    return pbdrv_bluetooth_tx(c);
 }
 
 void pbsys_reboot(bool fw_update) {
