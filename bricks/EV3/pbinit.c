@@ -1,5 +1,6 @@
 
-#include <pbio/motorcontrol.h>
+#include <pbio/main.h>
+#include <pbio/light.h>
 
 #include "py/mpthread.h"
 
@@ -46,9 +47,9 @@ static void *task_caller(void *arg)
     configure_timer_thread(PERIOD_MS, &info);
     while (!stopping_thread) {
         MP_THREAD_GIL_ENTER();
-        _pbio_motorcontrol_poll(); // TODO: use the actual pbio_do_one_event instead
+        pbio_do_one_event();
         MP_THREAD_GIL_EXIT();
-        wait_period(&info); // TODO: use pbio_do_one_event approach (early return if called too often) instead of waiting here
+        wait_period(&info); // TODO: check if we should do any waiting here
     }
     // Signal that shutdown is complete
     stopping_thread = false;
@@ -57,9 +58,8 @@ static void *task_caller(void *arg)
 
 // Pybricks initialization tasks
 void pybricks_init(){
-    // Initialize the motors
-    _pbdrv_motor_init();
-    // Start the background thread
+    pbio_init();
+    pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE); // TODO: define PBIO_LIGHT_PATTERN_EV3_RUN (Or, discuss if we want to use breathe for EV3, too)
     pthread_t task_caller_thread;
     pthread_create(&task_caller_thread, NULL, task_caller, NULL);
 }
@@ -69,6 +69,5 @@ void pybricks_deinit(){
     // Signal motor thread to stop and wait for it to do so.
     stopping_thread = true;
     while (stopping_thread);
-    // Stop and reset the motors
-    _pbdrv_motor_deinit();
+    pbio_deinit();
 }

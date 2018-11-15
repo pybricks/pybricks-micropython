@@ -67,39 +67,6 @@ def beep(beeps=1):
     pass
 
 
-# TODO: make consistent with HUB light API
-# TODO: Add pattern, consistent with Hubs
-
-led_left_green = open('/sys/class/leds/led0:green:brick-status/brightness', 'w')
-led_left_red = open('/sys/class/leds/led0:red:brick-status/brightness', 'w')
-led_right_green = open('/sys/class/leds/led1:green:brick-status/brightness', 'w')
-led_right_red = open('/sys/class/leds/led1:red:brick-status/brightness', 'w')
-
-
-def light(color):
-    """Set the EV3 brick LED light to the specified color.
-
-    Arguments:
-        color {color} -- Color.Red, Color.Green, Color.Orange, or None
-    """
-    if color == Color.red:
-        r = 255
-        g = 0
-    elif color == Color.green:
-        r = 0
-        g = 255
-    elif color == Color.orange:
-        r = 255
-        g = 255
-    else:
-        r = 0
-        g = 0
-    write_int(led_left_green, g)
-    write_int(led_left_red, r)
-    write_int(led_right_green, g)
-    write_int(led_right_red, r)
-
-
 def display_clear():
     """Clear anything on the display."""
     pass
