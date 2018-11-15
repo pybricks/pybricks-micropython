@@ -17,6 +17,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "pbio/error.h"
 #include "sys/process.h"
 
 /**
@@ -44,10 +45,9 @@ typedef struct {
 
     /**
      * Optional function that will be called when stdin has new data to be read.
-     * WARNING: This can be called in an interrupt context.
      *
-     * This can be used, for example, to implement a keyboard interrupt when CTRL+C
-     * is pressed.
+     * This can be used, for example, to implement a keyboard interrupt when
+     * CTRL+C is pressed.
      */
     pbsys_stdin_event_callback_t stdin_event;
 } pbsys_user_program_callbacks_t;
@@ -66,6 +66,16 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
 void pbsys_unprepare_user_program(void);
 
 /**
+ * Get one character from stdin.
+ * @param [out] c       The character read
+ * @return              ::PBIO_SUCCESS if a character was available, or
+ *                      ::PBIO_ERROR_AGAIN if no character was available to be
+ *                      read at this time or ::PBIO_ERROR_NOT_SUPPORTED if the
+ *                      platform does not have a stdin.
+ */
+pbio_error_t pbsys_stdin_get_char(uint8_t *c);
+
+/**
  * Reboots the brick. This could also be considered a "hard" reset. This
  * function never returns.
  * @param fw_update     If *true*, system will reboot into firmware update mode,
@@ -80,26 +90,18 @@ void pbsys_power_off(void) __attribute__((noreturn));
 
 /** @cond INTERNAL */
 
-/**
- * Calls the user program *stdin_event* function.
- * @param [in]  c   the character received
- * @return          *true* if the character was handled and should not be placed
- *                  in the stdin buffer, otherwise *false*.
- */
-bool _pbsys_stdin_irq(uint8_t c);
-
 PROCESS_NAME(pbsys_process);
 
 /** @endcond */
 
 #else
 
-static void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks) { }
-static void pbsys_unprepare_user_program(void) { }
+static inline void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks) { }
+static inline void pbsys_unprepare_user_program(void) { }
+static inline pbio_error_t pbsys_stdin_get_char(uint8_t *c) { return PBIO_ERROR_NOT_SUPPORTED; }
 static inline void pbsys_reset(void) { }
 static inline void pbsys_reboot(bool fw_update) { }
 static inline void pbsys_power_off(void) { }
-static inline bool _pbsys_stdin_irq(uint8_t c) { return false; }
 
 #endif
 

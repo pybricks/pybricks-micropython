@@ -129,11 +129,6 @@ void USART3_6_IRQHandler(void) {
     while (USART4->ISR & USART_ISR_RXNE) {
         c = USART4->RDR;
 
-        // pbsys may want to use this character
-        if (_pbsys_stdin_irq(c)) {
-            continue;
-        }
-
         new_head = (usart4_rx_buf_head + 1) & (RX_BUF_SIZE - 1);
         if (new_head == usart4_rx_buf_tail) {
             // buffer overrun
