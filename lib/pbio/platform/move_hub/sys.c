@@ -54,9 +54,9 @@ static clock_time_t button_press_start_time;
 static uint16_t avg_battery_voltage;
 
 // user program stop function
-static pbsys_stop_callback_t pbsys_stop_func;
+static pbsys_stop_callback_t user_stop_func;
 // user program stdin event function
-static pbsys_stdin_event_callback_t pbsys_stdin_event_func;
+static pbsys_stdin_event_callback_t user_stdin_event_func;
 
 // stdin ring buffer
 static uint8_t stdin_buf[STDIN_BUF_SIZE];
@@ -66,12 +66,12 @@ PROCESS(pbsys_process, "System");
 
 void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks) {
     if (callbacks) {
-        pbsys_stop_func = callbacks->stop;
-        pbsys_stdin_event_func = callbacks->stdin_event;
+        user_stop_func = callbacks->stop;
+        user_stdin_event_func = callbacks->stdin_event;
     }
     else {
-        pbsys_stop_func = NULL;
-        pbsys_stdin_event_func = NULL;
+        user_stop_func = NULL;
+        user_stdin_event_func = NULL;
     }
     _pbio_light_set_user_mode(true);
     pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE);
@@ -80,8 +80,8 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
 void pbsys_unprepare_user_program(void) {
     uint8_t r, g, b;
 
-    pbsys_stop_func = NULL;
-    pbsys_stdin_event_func = NULL;
+    user_stop_func = NULL;
+    user_stdin_event_func = NULL;
     _pbio_light_set_user_mode(false);
     pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE, &r, &g, &b);
     pbdrv_light_set_rgb(PBIO_PORT_SELF, r, g, b);
@@ -167,8 +167,8 @@ static void update_button(clock_time_t now) {
             button_press_start_time = now;
             button_pressed = true;
             led_status_flags |= LED_STATUS_BUTTON_PRESSED;
-            if (pbsys_stop_func) {
-                pbsys_stop_func();
+            if (user_stop_func) {
+                user_stop_func();
             }
         }
     }
@@ -207,7 +207,7 @@ static void handle_stdin_char(uint8_t c) {
     uint8_t new_head = (stdin_buf_head + 1) & (STDIN_BUF_SIZE - 1);
 
     // optional hook function can steal the character
-    if (pbsys_stdin_event_func && pbsys_stdin_event_func(c)) {
+    if (user_stdin_event_func && user_stdin_event_func(c)) {
         return;
     }
 
