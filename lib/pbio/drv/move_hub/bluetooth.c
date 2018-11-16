@@ -32,13 +32,6 @@
 // max data size for nRF UART characteristics
 #define NRF_CHAR_SIZE 20
 
-typedef void(*gatt_attr_modified_handler_t)(void *data, uint8_t size);
-
-// array to hold GATT attribute write message callbacks. The index of the array
-// is the attribute handle, so we need to make sure this is big enough if we
-// add more attributes
-static gatt_attr_modified_handler_t gatt_attr_modified_handler[32];
-
 // BlueNRG header data for SPI write xfer
 static const uint8_t write_header_tx[BLUENRG_HEADER_SIZE] = { 0x0a };
 // BlueNRG header data for SPI read xfer
@@ -247,6 +240,8 @@ static bool get_bluenrg_buf_size(uint8_t *wbuf, uint8_t *rbuf) {
 // assigned to one of RESET_* from bluenrg_hal_aci.h
 static uint8_t reset_reason;
 
+static void uart_rx_char_modified(void *data, uint8_t size);
+
 // processes an event received from the Bluetooth chip
 static void handle_event(hci_event_pckt *event) {
     switch (event->evt) {
@@ -287,8 +282,8 @@ static void handle_event(hci_event_pckt *event) {
             case EVT_BLUE_GATT_ATTRIBUTE_MODIFIED:
                 {
                     evt_gatt_attr_modified *subevt = (evt_gatt_attr_modified *)evt->data;
-                    if (gatt_attr_modified_handler[subevt->attr_handle]) {
-                        gatt_attr_modified_handler[subevt->attr_handle](subevt->att_data, subevt->data_length);
+                    if (subevt->attr_handle == uart_rx_char_handle + 1) {
+                        uart_rx_char_modified(subevt->att_data, subevt->data_length);
                     }
                 }
                 break;
@@ -530,8 +525,6 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
         GATT_NOTIFY_ATTRIBUTE_WRITE, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gatt_add_serv_end(&uart_rx_char_handle);
-
-    gatt_attr_modified_handler[uart_rx_char_handle + 1] = uart_rx_char_modified;
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gatt_add_char_begin(uart_service_handle, UUID_TYPE_128, nrf_uart_tx_char_uuid,
