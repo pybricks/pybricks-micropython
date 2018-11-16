@@ -153,17 +153,7 @@ soft_reset:
     pyexec_frozen_module("boot.py");
 
     #if MICROPY_ENABLE_COMPILER
-    #if MICROPY_REPL_EVENT_DRIVEN
-    pyexec_event_repl_init();
-    for (;;) {
-        int c = mp_hal_stdin_rx_chr();
-        if (pyexec_event_repl_process_char(c)) {
-            break;
-        }
-    }
-    #else // MICROPY_REPL_EVENT_DRIVEN
     pyexec_friendly_repl();
-    #endif // MICROPY_REPL_EVENT_DRIVEN
     #else // MICROPY_ENABLE_COMPILER
     #if MICROPY_PERSISTENT_CODE_LOAD
     run_user_program();
