@@ -8,15 +8,16 @@ Contained in set:
 LEGO ID: 95646
 """
 
+from sys import stderr
+from builtins import print as builtinprint
+
 # import those features of the EV3 brick that are already written in MicroPython-style C code.
 from ev3brick_c import *
-from ev3devio import write_int
-from sys import stderr
 
 
-def terminal(*args, **kwargs):
-    """Print a message on the terminal."""
-    print(*args, file=stderr, **kwargs)
+def print(*args, **kwargs):
+    """Print a message on the IDE terminal."""
+    builtinprint(*args, file=stderr, **kwargs)
 
 
 # TODO: Delete dummy API below or implement it.
