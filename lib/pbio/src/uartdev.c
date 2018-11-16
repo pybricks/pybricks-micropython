@@ -175,7 +175,8 @@ typedef enum {
  * @timer: Timer for sending keepalive messages.
  * @requested_mode: Mode that was requested by user. Used to restore previous
  * 	mode in case of a reconnect.
- * @new_mode: The mode requested by set_mode.
+ * @new_mode: The mode requested by set_mode. Also used to keep track of mode
+ *  in INFO messages while syncing.
  * @new_baud_rate: New baud rate that will be set with ev3_uart_change_bitrate
  * @info_flags: Flags indicating what information has already been read
  * 	from the data.
@@ -398,6 +399,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             }
 
             data->status = PBIO_UARTDEV_STATUS_ACK;
+            data->iodev->mode = data->new_mode;
 
             // reply with ACK
             while (pbdrv_uart_put_char(port, EV3_UART_SYS_ACK) == PBIO_ERROR_AGAIN);
@@ -495,16 +497,14 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             snprintf(data->iodev->info->mode_info[mode].name,
                         PBIO_IODEV_MODE_NAME_SIZE + 1, "%s",
                         data->msg + 2);
-            if (data->iodev->mode != mode) {
-                data->iodev->mode = mode;
-            }
+            data->new_mode = mode;
             data->info_flags |= EV3_UART_INFO_FLAG_INFO_NAME;
 
             debug_pr("name: %s\n", data->iodev->info->mode_info[mode].name);
 
             break;
         case EV3_UART_INFO_RAW:
-            if (data->iodev->mode != mode) {
+            if (data->new_mode != mode) {
                 DBG_ERR(data->last_err = "Received INFO for incorrect mode");
                 goto err;
             }
@@ -520,7 +520,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
 
             break;
         case EV3_UART_INFO_PCT:
-            if (data->iodev->mode != mode) {
+            if (data->new_mode != mode) {
                 DBG_ERR(data->last_err = "Received INFO for incorrect mode");
                 goto err;
             }
@@ -536,7 +536,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
 
             break;
         case EV3_UART_INFO_SI:
-            if (data->iodev->mode != mode) {
+            if (data->new_mode != mode) {
                 DBG_ERR(data->last_err = "Received INFO for incorrect mode");
                 goto err;
             }
@@ -554,7 +554,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
 
             break;
         case EV3_UART_INFO_UNITS:
-            if (data->iodev->mode != mode) {
+            if (data->new_mode != mode) {
                 DBG_ERR(data->last_err = "Received INFO for incorrect mode");
                 goto err;
             }
@@ -573,7 +573,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
 
             break;
         case EV3_UART_INFO_UNK1:
-            if (data->iodev->mode != mode) {
+            if (data->new_mode != mode) {
                 DBG_ERR(data->last_err = "Received INFO for incorrect mode");
                 goto err;
             }
@@ -587,7 +587,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
 
             break;
         case EV3_UART_INFO_UNK2:
-            if (data->iodev->mode != mode) {
+            if (data->new_mode != mode) {
                 DBG_ERR(data->last_err = "Received INFO for incorrect mode");
                 goto err;
             }
@@ -601,7 +601,7 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
 
             break;
         case EV3_UART_INFO_FORMAT:
-            if (data->iodev->mode != mode) {
+            if (data->new_mode != mode) {
                 DBG_ERR(data->last_err = "Received INFO for incorrect mode");
                 goto err;
             }
@@ -641,8 +641,8 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             }
             data->iodev->info->mode_info[mode].digits = data->msg[4];
             data->iodev->info->mode_info[mode].decimals = data->msg[5];
-            if (data->iodev->mode) {
-                data->iodev->mode--;
+            if (data->new_mode) {
+                data->new_mode--;
             }
 
             debug_pr("num_values: %d\n", data->iodev->info->mode_info[mode].num_values);
