@@ -2,9 +2,7 @@
 
 # import those ev3devices that are already written in MicroPython-style C code.
 from ev3devices_c import *
-from ev3brick_c import Color
-from ev3brick import wait
-from robotics import StopWatch
+from timing import StopWatch, wait
 
 # Import ev3dev sysfs sensor base class and modes
 from ev3devio import Ev3devSensor
@@ -106,15 +104,6 @@ class ColorSensor(Ev3devSensor):
         self.mode('RGB-RAW')
         # TODO: Discuss range: (0-100 vs 0-255 vs 0-1023). Range 0-100 equivalent to reflected mode would be nice.
         return min(self.value(0)*100 >> 9, 100), min(self.value(1)*100 >> 9, 100), min(self.value(2)*100 >> 9, 100)
-
-
-# TODO: replace with pbio enum consistent with other Pybricks devices. (enum number/order does not matter.)
-class Button():
-    beacon = 1
-    left_up = 2
-    left_down = 3
-    right_up = 4
-    right_down = 5
 
 
 class InfraredSensor(Ev3devSensor):

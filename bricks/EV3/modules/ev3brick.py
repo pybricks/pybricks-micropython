@@ -11,37 +11,15 @@ LEGO ID: 95646
 from sys import stderr
 from builtins import print as builtinprint
 
+from uev3dev._sound import _beep
+
 # import those features of the EV3 brick that are already written in MicroPython-style C code.
 from ev3brick_c import *
-
-from uev3dev._sound import _beep
 
 
 def print(*args, **kwargs):
     """Print a message on the IDE terminal."""
     builtinprint(*args, file=stderr, **kwargs)
-
-
-# TODO: Delete dummy API below or implement it.
-
-def battery_voltage():
-    """Get the battery voltage.
-
-    Returns:
-        float -- Battery voltage (Volt)
-
-    """
-    pass
-
-
-def battery_low():
-    """Check if the battery is low.
-
-    Returns:
-        bool -- True if the battery voltage is low. False if it's not.
-
-    """
-    pass
 
 
 def beep(frequency=500, duration=100, volume=30):
@@ -75,30 +53,3 @@ def tune(frequencies_and_durations, volume=30):
     """
     for (frequency, duration) in frequencies_and_durations:
         beep(frequency, duration, volume)
-
-
-def display_clear():
-    """Clear anything on the display."""
-    pass
-
-
-def display_text(text, x, y, size=2):
-    """Display text. The x and y coordinate specify the top left of the first character.
-
-    Arguments:
-        text {str} -- Text to display.
-        x {int} -- x location, counted from the left of the first character (0-177)
-        y {int} -- y location, counted from the top of the first character (0-128)
-        size {int} -- Font size: SMALL, MEDIUM, or LARGE
-    """
-    pass
-
-
-def display_text_line(text, line):
-    """Display text at the given line number and erase any previous text on this line.
-
-    Arguments:
-        line {int} -- Line number (0-6)
-        text {str} -- Text to display.
-    """
-    pass

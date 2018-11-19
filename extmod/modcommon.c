@@ -1,4 +1,5 @@
 #include <pbio/light.h>
+#include <pbio/button.h>
 
 #include "py/obj.h"
 
@@ -19,6 +20,28 @@ STATIC const mp_rom_map_elem_t pb_Color_enum_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR_brown),     MP_OBJ_NEW_SMALL_INT(PBIO_LIGHT_COLOR_BROWN)  },
 };
 PB_DEFINE_CONST_ENUM(pb_Color_enum, pb_Color_enum_table);
+
+/* Generic button enum */
+
+// TODO: Discuss using 10 unique numbers at PBIO instead of 8 with overlap
+
+STATIC const mp_rom_map_elem_t pb_Button_enum_table[] = {
+#if defined(PYBRICKS_BRICK_EV3)
+    { MP_OBJ_NEW_QSTR(MP_QSTR_up),         MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_UP)     },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_down),       MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_DOWN)   },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_left),       MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_LEFT)   },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_right),      MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_RIGHT)  },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_center),     MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_CENTER) },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_back),       MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_STOP)   },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_left_up),    MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_UP)     },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_left_down),  MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_DOWN)   },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_right_up),   MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_UP2)    },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_right_down), MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_DOWN2)  },   
+    { MP_OBJ_NEW_QSTR(MP_QSTR_beacon),     MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_UP)     },
+#endif //PYBRICKS_BRICK_EV3    
+};
+PB_DEFINE_CONST_ENUM(pb_Button_enum, pb_Button_enum_table);
+
 
 /* User status light functions */
 

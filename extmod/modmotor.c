@@ -448,21 +448,12 @@ STATIC const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
 
 MP_DEFINE_CONST_DICT(motor_EncodedMotor_locals_dict, motor_EncodedMotor_locals_dict_table);
 
-/*
-DCMotor Class tables
-*/
-
-// Instead of using the MP_DEFINE_CONST_DICT macro directly, we modify it
-// to use a shortened version of the EncodedMotor locals dict table
-const mp_obj_dict_t motor_DCMotor_locals_dict = {
-    .base = {&mp_type_dict},
-    .map = {
-        .all_keys_are_qstrs = 1,
-        .is_fixed = 1,
-        .is_ordered = 1,
-        // Use the first 4 items from the EncodedMotor table
-        .used = 4,
-        .alloc = 4,
-        .table = (mp_map_elem_t*)(mp_rom_map_elem_t*)motor_EncodedMotor_locals_dict_table,
-    },
+#if PBIO_CONFIG_ENABLE_MOTORS
+const mp_obj_type_t motor_Motor_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_Motor,
+    .print = motor_Motor_print,
+    .make_new = motor_Motor_make_new,
+    .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
 };
+#endif //PBIO_CONFIG_ENABLE_MOTORS
