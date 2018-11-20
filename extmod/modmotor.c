@@ -102,9 +102,8 @@ mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n
     self->port = mp_obj_get_int(args[0]);
     // Configure direction or set to default
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
-    // Determine expected device id from class name and check whether the motor has encoders
-    pbio_iodev_type_id_t device_id = get_id_from_qstr(type->name);
-    self->encoded = pbio_encmotor_reset_angle(self->port, 0) == PBIO_SUCCESS;
+    // Check whether the motor has encoders
+    self->encoded = pbio_encmotor_has_encoder(self->port);
     // Initialization specific to encoded motors
     if(self->encoded) {
         // Compute overall gear ratio from each gear train
@@ -125,11 +124,11 @@ mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n
             gear_ratio = (gear_ratio*last_gear)/first_gear;
         }
         // Configure the encoded motor with the selected arguments at pbio level
-        pb_assert(pbio_encmotor_setup(self->port, device_id, direction, gear_ratio));
+        pb_assert(pbio_encmotor_setup(self->port, direction, gear_ratio));
     }
     else {
         // Configure the dc motor with the selected arguments at pbio level
-        pb_assert(pbio_dcmotor_setup(self->port, device_id, direction));
+        pb_assert(pbio_dcmotor_setup(self->port, direction));
     }
     return MP_OBJ_FROM_PTR(self);
 }
@@ -425,15 +424,15 @@ MP_DEFINE_CONST_FUN_OBJ_2(motor_Motor_track_target_obj, motor_Motor_track_target
 Motor Class tables
 */
 
-STATIC const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
+STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     //
-    // Methods common to DCMotor and EncodedMotor
+    // Methods common to DC motors and encoded motors
     //
     { MP_ROM_QSTR(MP_QSTR_settings), MP_ROM_PTR(&motor_Motor_settings_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_Motor_stop_obj) },    
     { MP_ROM_QSTR(MP_QSTR_duty), MP_ROM_PTR(&motor_Motor_duty_obj) },
     //
-    // Methods specific to EncodedMotor
+    // Methods specific to encoded motors
     //
     { MP_ROM_QSTR(MP_QSTR_angle), MP_ROM_PTR(&motor_Motor_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_speed), MP_ROM_PTR(&motor_Motor_speed_obj) },
@@ -445,8 +444,7 @@ STATIC const mp_rom_map_elem_t motor_EncodedMotor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_run_target), MP_ROM_PTR(&motor_Motor_run_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&motor_Motor_track_target_obj) },
 };
-
-MP_DEFINE_CONST_DICT(motor_EncodedMotor_locals_dict, motor_EncodedMotor_locals_dict_table);
+MP_DEFINE_CONST_DICT(motor_Motor_locals_dict, motor_Motor_locals_dict_table);
 
 #if PBIO_CONFIG_ENABLE_MOTORS
 const mp_obj_type_t motor_Motor_type = {
@@ -454,6 +452,6 @@ const mp_obj_type_t motor_Motor_type = {
     .name = MP_QSTR_Motor,
     .print = motor_Motor_print,
     .make_new = motor_Motor_make_new,
-    .locals_dict = (mp_obj_dict_t*)&motor_EncodedMotor_locals_dict,
+    .locals_dict = (mp_obj_dict_t*)&motor_Motor_locals_dict,
 };
 #endif //PBIO_CONFIG_ENABLE_MOTORS

@@ -3,10 +3,10 @@
 #include <pbio/encmotor.h>
 #include <inttypes.h>
 
-pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_iodev_type_id_t expected_id, pbio_motor_dir_t direction, float_t gear_ratio){
+pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_motor_dir_t direction, float_t gear_ratio){
 
-    // Verify device ID and configure DC Motor
-    pbio_error_t status = pbio_dcmotor_setup(port, expected_id, direction);
+    // Configure DC Motor
+    pbio_error_t status = pbio_dcmotor_setup(port, direction);
 
     //
     // TODO: Use the device_id to retrieve the default settings defined in our lib. For now just hardcode something below.
@@ -100,6 +100,11 @@ void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
         (int32_t) encmotor_settings[port_index].pid_ki,
         (int32_t) encmotor_settings[port_index].pid_kd
     );
+}
+
+bool pbio_encmotor_has_encoder(pbio_port_t port){
+    int32_t count;
+    return pbdrv_motor_get_encoder_count(port, &count) == PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_encmotor_get_encoder_count(pbio_port_t port, int32_t *count) {
