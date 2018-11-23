@@ -1,18 +1,16 @@
-from movehub import *
-
-# Light
-light(Color.yellow)
+# hub.light
+hub.light(Color.yellow)
 wait(1000)
-light(Color.purple)
+hub.light(Color.purple)
 
 # Battery
-print("mV:", battery.voltage())
-print("mA:", battery.current())
-print(" %:", battery.percent())
-if battery.low():
+print("mV:", hub.battery.voltage())
+print("mA:", hub.battery.current())
+print(" %:", hub.battery.percent())
+if hub.battery.low():
     print("Replace batteries")
 
 # Try one of the following
-shutdown()
-reboot()
-update()
+hub.shutdown()
+hub.reboot()
+hub.update()

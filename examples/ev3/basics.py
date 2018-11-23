@@ -1,7 +1,5 @@
 #!/home/robot/pybricks
-from ev3brick import *
-from ev3devices import *
-from robotics import *
+from boot import *
 
 # Configure motors and sensors
 ir = InfraredSensor(Port.S4)

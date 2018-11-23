@@ -96,7 +96,7 @@ class Ev3devSensor():
         while not number_of_sensors() == number_of_sensors_before:
             sleep(0.1)
             if time() - reset_time > 4:
-                OSError("Unable to reset sensor")
+                raise OSError("Unable to reset sensor")
         # Now that the sensor is almost back, wait another half second and then reinitialize the files
         sleep(0.5)
         self.open_files()

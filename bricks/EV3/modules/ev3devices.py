@@ -2,7 +2,7 @@
 
 # import those ev3devices that are already written in MicroPython-style C code.
 from ev3devices_c import *
-from ev3brick_c import Color
+from timing import StopWatch, wait
 
 # Import ev3dev sysfs sensor base class and modes
 from ev3devio import Ev3devSensor
@@ -106,15 +106,6 @@ class ColorSensor(Ev3devSensor):
         return min(self.value(0)*100 >> 9, 100), min(self.value(1)*100 >> 9, 100), min(self.value(2)*100 >> 9, 100)
 
 
-# TODO: replace with pbio enum consistent with other Pybricks devices. (enum number/order does not matter.)
-class Button():
-    beacon = 1
-    left_up = 2
-    left_down = 3
-    right_up = 4
-    right_down = 5
-
-
 class InfraredSensor(Ev3devSensor):
     """LEGO MINDSTORMS EV3 Infrared Sensor and Beacon.
 
@@ -146,7 +137,12 @@ class InfraredSensor(Ev3devSensor):
     }
 
     def distance(self):
-        """Return relative distance ranging from 0 (closest) to 100 (farthest)."""
+        """Measure approximate distance based on the intensity of reflected infrared light.
+
+        Returns:
+            int -- Relative distance ranging from 0 (closest) to 100 (farthest)
+
+        """
         self.mode('IR-PROX')
         return self.value(0)
 
@@ -219,11 +215,21 @@ class GyroSensor(Ev3devSensor):
     _default_mode = 'GYRO-G&A'
 
     def rate(self):
-        """Apply the angular rate (degrees per second)."""
+        """Measure the angular velocity of the sensor.
+
+        Returns:
+            int -- Angular velocity (degrees per second).
+
+        """
         return self.value(1)
 
     def angle(self):
-        """Return the angle (degrees)."""
+        """Get the accumulated angle of the sensor.
+
+        Returns:
+            int -- Angle (degrees).
+
+        """
         return self.value(0)
 
     pass
@@ -244,4 +250,106 @@ class UltrasonicSensor(Ev3devSensor):
 
     _ev3dev_driver_name = 'lego-ev3-us'
 
-    pass
+    BITS = 8
+    PING_WAIT = 300
+    BIT_DURATION = PING_WAIT + 50
+    TIME_OUT = 3000
+    SUCCESS_COUNT = 50
+
+    def distance(self, turn_off=False):
+        """Measure distance to the nearest object using ultrasonic waves.
+
+        Keyword Arguments:
+            turn_off {bool} -- Set to True to turn the sensor off after measuring the distance.
+                               Doing so reduces interference with other ultrasonic sensors, but
+                               it takes approximately 300 ms. (default: {False})
+
+        Returns:
+            int -- Distance (millimeters).
+
+        """
+        if turn_off:
+            self.mode_now = None
+            self.mode('US-SI-CM')
+            return self.value(0)
+            wait(PING_WAIT)
+        else:
+            self.mode('US-DIST-CM')
+            return self.value(0)
+
+    def presence(self):
+        """Look for the presence of other ultrasonic sensors by checking for ultrasonic sounds.
+
+        Returns:
+            bool -- True if ultrasonic sounds are detected, False if not.
+
+        """
+        self.mode('US-LISTEN')
+        return self.value(0)
+
+    # The following two methods are experimental and mainly just for fun. Ultimately,
+    # we could have something more generic in the robotics library, for anything that
+    # can pulse and sense. So, that could include communication between light sensors
+    # or even motors pushing touch sensors.
+    def send(self, number):
+        """Transmit a number using ultrasonic waves.
+
+        Arguments:
+            number {int} -- The number to transmit (0-255)
+
+        """
+        # Verify input is in range
+        MAX = 2**self.BITS-1
+        number = int(number)
+        assert 0 <= number <= MAX, "Number must be between 0 and " + str(MAX) + "."
+
+        # Make message as binary list, MSB first
+        message = [0 for i in range(self.BITS+1)]
+        number += MAX + 1  # Add an extra high bit at start
+        for i in range(self.BITS, -1, -1):
+            if number % 2:
+                message[i] = 1
+            number = number // 2
+
+        # Send the message
+        watch = StopWatch()
+        for i, bit in enumerate(message):
+            if bit:
+                self.distance(True)
+            while watch.time() < (i+1)*self.BIT_DURATION:
+                wait(10)
+
+    def receive(self):
+        """Wait for an ultrasonic message and convert it to a number.
+
+        Returns:
+            int -- The received number (0-255)
+
+        """
+        # Wait for bit that signifies start of message
+        watch = StopWatch()
+        self.mode('US-LISTEN')
+        counts = 0
+        while watch.time() < self.TIME_OUT:
+            if self.value(0):
+                counts += 1
+            if counts >= self.SUCCESS_COUNT:
+                break
+        if counts < self.SUCCESS_COUNT:
+            raise OSError("Did not receive message.")
+
+        # Reset stopwatch and record time of subsequent bits
+        watch.reset()
+        watch.resume()
+        detections = [0 for bit in range(self.BITS)]
+        while watch.time() < (self.BITS+1)*self.BIT_DURATION:
+            # If pulse is detected, round to nearest bit and increase detection count for that bit
+            if self.value(0):
+                bit = round(watch.time()/self.BIT_DURATION)-1
+                if 0 <= bit <= self.BITS-1:
+                    detections[bit] = detections[bit] + 1
+
+        # Return decode message as decimal number
+        return sum(
+            [2**(self.BITS-bit-1) if count > self.SUCCESS_COUNT else 0 for bit, count in enumerate(detections)]
+        )

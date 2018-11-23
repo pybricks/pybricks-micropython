@@ -14,13 +14,9 @@ pbio_motor_control_active_t motor_control_active[] = {
     [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)] PBIO_MOTOR_CONTROL_PASSIVE
 };
 
-pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_iodev_type_id_t expected_id, pbio_motor_dir_t direction){   
+pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_motor_dir_t direction){   
     // Get the ID according to IODEV
     // pbio_iodev_type_id_t auto_id = 
-
-    // TODO: Verify that auto_id matches the expected_id, else return appropriate erorr
-    //
-    printf("Class ID:%d\n", expected_id);
 
     pbio_error_t status = pbio_dcmotor_coast(port);
     if (status != PBIO_SUCCESS) {
@@ -29,7 +25,7 @@ pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_iodev_type_id_t expected_
     dcmotor_settings[PORT_TO_IDX(port)].direction = direction;
 
     //
-    // TODO: Use the device_id to set the default settings defined in our lib. For now just hardcode something below.
+    // TODO: Use the auto_id to set the default settings defined in our lib. For now just hardcode something below.
     //
     pbio_dcmotor_set_settings(port, 100);
 

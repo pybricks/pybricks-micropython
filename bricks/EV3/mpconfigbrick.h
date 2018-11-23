@@ -11,9 +11,11 @@
 
 extern const struct _mp_obj_module_t pb_module_ev3brick;
 extern const struct _mp_obj_module_t pb_module_ev3devices;
+extern const struct _mp_obj_module_t pb_module_timing;
 extern const struct _mp_obj_module_t pb_module_robotics;
 
 #define PYBRICKS_PORT_BUILTIN_MODULES \
     { MP_OBJ_NEW_QSTR(MP_QSTR_ev3devices_c), (mp_obj_t)&pb_module_ev3devices }, \
     { MP_OBJ_NEW_QSTR(MP_QSTR_ev3brick_c),   (mp_obj_t)&pb_module_ev3brick   }, \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_timing),       (mp_obj_t)&pb_module_timing     }, \
     { MP_OBJ_NEW_QSTR(MP_QSTR_robotics),     (mp_obj_t)&pb_module_robotics   },
