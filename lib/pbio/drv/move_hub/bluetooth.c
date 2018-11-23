@@ -62,7 +62,10 @@ static bool hci_command_complete = false;
 // handle to connected Bluetooth device
 static uint16_t conn_handle;
 
-// nRF UART service handles
+// Pybricks GATT service handles
+static uint16_t pybricks_service_handle, pybricks_char_handle;
+
+// nRF UART GATT service handles
 static uint16_t uart_service_handle, uart_rx_char_handle, uart_tx_char_handle;
 // nRF UART tx is in progress
 static bool uart_tx_busy;
@@ -240,7 +243,49 @@ static bool get_bluenrg_buf_size(uint8_t *wbuf, uint8_t *rbuf) {
 // assigned to one of RESET_* from bluenrg_hal_aci.h
 static uint8_t reset_reason;
 
-static void uart_rx_char_modified(void *data, uint8_t size);
+static void pybricks_char_modified(uint8_t *data, uint8_t size) {
+    if (size < 2) {
+        return;
+    }
+
+    switch (data[0]) {
+    case PBIO_COM_MSG_TYPE_CMD:
+        process_post(&pbsys_process, PBIO_EVENT_COM_CMD, (process_data_t)(uint32_t)data[1]);
+        break;
+    }
+}
+
+static PT_THREAD(init_pybricks_service(struct pt *pt)) {
+    // c5f50001-8280-46da-89f4-6d8051e4aeef
+    static const uint8_t pybricks_service_uuid[] = {
+        0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
+        0xda, 0x46, 0x80, 0x82, 0x01, 0x00, 0xf5, 0xc5
+    };
+
+    // c5f50002-8280-46da-89f4-6d8051e4aeef
+    static const uint8_t pybricks_char_uuid[] = {
+        0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
+        0xda, 0x46, 0x80, 0x82, 0x02, 0x00, 0xf5, 0xc5
+    };
+
+    PT_BEGIN(pt);
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gatt_add_serv_begin(UUID_TYPE_128, pybricks_service_uuid, PRIMARY_SERVICE, 7);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    aci_gatt_add_serv_end(&pybricks_service_handle);
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gatt_add_char_begin(uart_service_handle, UUID_TYPE_128, pybricks_char_uuid,
+        NRF_CHAR_SIZE, CHAR_PROP_WRITE_WITHOUT_RESP | CHAR_PROP_NOTIFY, ATTR_PERMISSION_NONE,
+        GATT_NOTIFY_ATTRIBUTE_WRITE, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    aci_gatt_add_serv_end(&pybricks_char_handle);
+
+    PT_END(pt);
+}
+
+static void uart_rx_char_modified(uint8_t *data, uint8_t size);
 
 // processes an event received from the Bluetooth chip
 static void handle_event(hci_event_pckt *event) {
@@ -282,7 +327,10 @@ static void handle_event(hci_event_pckt *event) {
             case EVT_BLUE_GATT_ATTRIBUTE_MODIFIED:
                 {
                     evt_gatt_attr_modified *subevt = (evt_gatt_attr_modified *)evt->data;
-                    if (subevt->attr_handle == uart_rx_char_handle + 1) {
+                    if (subevt->attr_handle == pybricks_char_handle + 1) {
+                        pybricks_char_modified(subevt->att_data, subevt->data_length);
+                    }
+                    else if (subevt->attr_handle == uart_rx_char_handle + 1) {
                         uart_rx_char_modified(subevt->att_data, subevt->data_length);
                     }
                 }
@@ -479,12 +527,10 @@ static PT_THREAD(hci_init(struct pt *pt)) {
     PT_END(pt);
 }
 
-static void uart_rx_char_modified(void *data, uint8_t size) {
-    uint8_t *rx_data = data;
-
+static void uart_rx_char_modified(uint8_t *data, uint8_t size) {
     for (int i = 0; i < size; i++) {
         // TODO: set .port = bluetooth port
-        pbio_event_uart_rx_data_t rx = { .byte = rx_data[i] };
+        pbio_event_uart_rx_data_t rx = { .byte = data[i] };
         process_post_synch(&pbsys_process, PBIO_EVENT_UART_RX, rx.data);
     }
 }
@@ -539,9 +585,9 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
 static PT_THREAD(set_discoverable(struct pt *pt)) {
     // 6e400001-b5a3-f393-e0a-9e50e24dcca9e
     static const uint8_t service_uuids[] = {
-        AD_TYPE_128_BIT_SERV_UUID_CMPLT_LIST,
-        0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-        0x93, 0xf3, 0xa3, 0xb5, 0x01, 0x00, 0x40, 0x6e, // nRF UART service UUID
+        AD_TYPE_128_BIT_SERV_UUID,
+        0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
+        0xda, 0x46, 0x80, 0x82, 0x01, 0x00, 0xf5, 0xc5 // Pybricks service UUID
     };
     uint8_t response_data[16];
 
@@ -584,6 +630,8 @@ pbio_error_t pbdrv_bluetooth_tx(uint8_t c) {
 
     // poke the process to start tx soon-ish. This way, we can accumulate up to
     // NRF_CHAR_SIZE bytes before actually transmitting
+    // TODO: it probably would be better to poll here instead of using events
+    // so that we don't fill up the event queue with 20 events
     process_post(&pbdrv_bluetooth_hci_process, PROCESS_EVENT_MSG, NULL);
 
     return PBIO_SUCCESS;
@@ -633,6 +681,7 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
         PROCESS_WAIT_UNTIL(reset_reason);
 
         PROCESS_PT_SPAWN(&child_pt, hci_init(&child_pt));
+        PROCESS_PT_SPAWN(&child_pt, init_pybricks_service(&child_pt));
         PROCESS_PT_SPAWN(&child_pt, init_uart_service(&child_pt));
         PROCESS_PT_SPAWN(&child_pt, set_discoverable(&child_pt));
 
@@ -649,13 +698,11 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
                 // just occasionally checking to see if we are still connected
                 continue;
             }
-            if (ev == PROCESS_EVENT_MSG) {
+            if (ev == PROCESS_EVENT_MSG && uart_tx_buf_size) {
                 uart_tx_busy = true;
-                if (uart_tx_buf_size) {
-                    PROCESS_PT_SPAWN(&child_pt, uart_service_send_data(&child_pt));
-                    uart_tx_buf_size = 0;
-                }
+                PROCESS_PT_SPAWN(&child_pt, uart_service_send_data(&child_pt));
                 uart_tx_busy = false;
+                uart_tx_buf_size = 0;
             }
         }
 
