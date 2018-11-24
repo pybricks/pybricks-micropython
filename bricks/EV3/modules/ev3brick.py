@@ -15,6 +15,7 @@ from uev3dev._sound import _beep
 
 # import those features of the EV3 brick that are already written in MicroPython-style C code.
 from ev3brick_c import *
+from timing import wait
 
 
 def print(*args, **kwargs):
