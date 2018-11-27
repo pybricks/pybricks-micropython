@@ -14,5 +14,8 @@ ev3dev:
 	@$(MAKE) -C bricks/ev3dev axtls
 	@$(MAKE) -C bricks/ev3dev
 
+clean-ev3dev:
+	@$(MAKE) -C bricks/ev3dev clean
+
 MOVEHUB:
 	@$(MAKE) -C bricks/MOVEHUB
