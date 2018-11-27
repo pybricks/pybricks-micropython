@@ -10,9 +10,9 @@ doc:
 doc-pbio:
 	@$(MAKE) -C lib/pbio/doc
 
-EV3:
-	@$(MAKE) -C bricks/EV3 axtls
-	@$(MAKE) -C bricks/EV3
+ev3dev:
+	@$(MAKE) -C bricks/ev3dev axtls
+	@$(MAKE) -C bricks/ev3dev
 
 MOVEHUB:
 	@$(MAKE) -C bricks/MOVEHUB

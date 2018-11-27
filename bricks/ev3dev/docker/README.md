@@ -5,17 +5,17 @@ Using Docker to Cross-Compile the MicroPython unix port
 --------------------------------------------
 
 This assumes that you have already `docker` installed and that you have cloned
-our [MicroPython fork](https://github.com/laurensvalk/micropython) and its submodules. 
-The current working directory is the `micropython/ports/pybricks/bricks/EV3`
+our [MicroPython fork](https://github.com/laurensvalk/micropython) and its submodules.
+The current working directory is the `micropython/ports/pybricks/bricks/ev3dev`
 source code directory.
 
 1. Create the docker image and a docker container.
 
         ./docker/setup.sh armel
 
-2.  Get an interactive shell with the working directory in bricks/EV3
+2.  Get an interactive shell with the working directory in bricks/ev3dev
 
-        docker run --rm -it -v /abs/path/to/micropython:/micropython -w /micropython/ports/pybricks/bricks/EV3 pybricks-ev3-armel
+        docker run --rm -it -v /abs/path/to/micropython:/micropython -w /micropython/ports/pybricks/bricks/ev3dev pybricks-ev3-armel
 
 3. Cross compile `axtls`
 
@@ -29,4 +29,4 @@ source code directory.
 
         exit
 
-6. Transfer the generated MicroPython application (from the EV3 folder) to the EV3 brick and run it.
+6. Transfer the generated MicroPython application (from the ev3dev folder) to the EV3 brick and run it.

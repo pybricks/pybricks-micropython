@@ -45,4 +45,4 @@ genrst/
 
 # Micropython executable
 ###################
-bricks/EV3/micropython
+bricks/ev3dev/micropython
