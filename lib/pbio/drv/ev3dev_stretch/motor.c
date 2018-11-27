@@ -1,8 +1,9 @@
 
+#include <dirent.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <dirent.h>
 #include <string.h>
+
 #include <pbdrv/motor.h>
 
 
@@ -38,25 +39,34 @@ pbio_error_t slow_write(pbio_port_t port, const char* filename, const char* cont
     // Open the file in the directory corresponding to the specified port
     char filepath[MAX_PATH_LENGTH];
     snprintf(filepath, MAX_PATH_LENGTH, "/sys/class/tacho-motor/motor%d/%s", motor_files[PORT_TO_IDX(port)].dir_number, filename);
-    FILE* file = fopen(filepath, "w"); 
-    if (file != NULL) {
+    FILE* file = fopen(filepath, "w");
+    if (file) {
+        int ret;
+
         // Write the contents to the file
-        fprintf(file, "%s", content);  
+        ret = fprintf(file, "%s", content);
+        if (ret < 0) {
+            fclose(file);
+            return PBIO_ERROR_IO;
+        }
         // Close the file
-        fclose(file); 
+        fclose(file);
         return PBIO_SUCCESS;
     }
-    else{
+    else {
         return PBIO_ERROR_IO;
     }
-          
+
 }
 
 void _pbdrv_motor_init(void) {
     // Open tacho-motor directory
     DIR *dp;
     struct dirent *ep;
-    dp = opendir ("/sys/class/tacho-motor");
+    dp = opendir("/sys/class/tacho-motor");
+    if (!dp) {
+        return;
+    }
     // Loop through the motorXs
     while ((ep = readdir(dp))) {
         // Ignore the . and .. folders
@@ -97,12 +107,12 @@ void _pbdrv_motor_init(void) {
             motor_files[port_index].f_encoder_count = fopen(filepath, "r");
             // Open the speed file
             snprintf(filepath, MAX_PATH_LENGTH, "/sys/class/tacho-motor/motor%d/speed", motor_files[port_index].dir_number);
-            motor_files[port_index].f_encoder_rate = fopen(filepath, "r");            
+            motor_files[port_index].f_encoder_rate = fopen(filepath, "r");
             // Open the duty file
             snprintf(filepath, MAX_PATH_LENGTH, "/sys/class/tacho-motor/motor%d/duty_cycle_sp", motor_files[port_index].dir_number);
             motor_files[port_index].f_duty = fopen(filepath, "w");
         }
-    }    
+    }
 }
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
@@ -147,7 +157,7 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
     }
     fseek(motor_files[PORT_TO_IDX(port)].f_duty, 0, SEEK_SET);
     fprintf(motor_files[PORT_TO_IDX(port)].f_duty, "%d", duty_cycle/100);
-    int err = fflush(motor_files[PORT_TO_IDX(port)].f_duty); 
+    int err = fflush(motor_files[PORT_TO_IDX(port)].f_duty);
     if (err == EOF) {
         return PBIO_ERROR_IO;
     }
@@ -163,7 +173,7 @@ pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
     if (!motor_files[PORT_TO_IDX(port)].connected) {
         return PBIO_ERROR_NO_DEV;
     }
-    
+
     fseek(motor_files[PORT_TO_IDX(port)].f_encoder_count, 0, SEEK_SET);
     int err = fscanf(motor_files[PORT_TO_IDX(port)].f_encoder_count, "%d", count);
     fflush(motor_files[PORT_TO_IDX(port)].f_encoder_count);
@@ -185,5 +195,5 @@ pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     fseek(motor_files[PORT_TO_IDX(port)].f_encoder_rate, 0, SEEK_SET);
     fscanf(motor_files[PORT_TO_IDX(port)].f_encoder_rate, "%d", rate);
     fflush(motor_files[PORT_TO_IDX(port)].f_encoder_rate);
-    return PBIO_SUCCESS;    
+    return PBIO_SUCCESS;
 }
