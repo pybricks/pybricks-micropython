@@ -1,1 +1,0 @@
-../../../../unix/coverage-frzstr/frzstr1.py

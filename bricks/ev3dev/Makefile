@@ -27,6 +27,7 @@ INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/ev3dev_stretch
 INC += -I$(TOP)/ports/pybricks/lib/pbdrv/include
 INC += -I$(TOP)/ports/pybricks/extmod
+INC += -I$(TOP)/ports/unix
 
 PBIO_OPT = -DPBIO_CONFIG_ENABLE_DEINIT
 PBIO_OPT += -DPBIO_CONFIG_ENABLE_MOTORS
@@ -104,11 +105,11 @@ LIB_SRC_C_EXTRA += mp-readline/readline.c
 endif
 ifeq ($(MICROPY_PY_TERMIOS),1)
 CFLAGS_MOD += -DMICROPY_PY_TERMIOS=1
-SRC_MOD += modtermios.c
+SRC_MOD += ports/unix/modtermios.c
 endif
 ifeq ($(MICROPY_PY_SOCKET),1)
 CFLAGS_MOD += -DMICROPY_PY_SOCKET=1
-SRC_MOD += modusocket.c
+SRC_MOD += ports/unix/modusocket.c
 endif
 ifeq ($(MICROPY_PY_THREAD),1)
 CFLAGS_MOD += -DMICROPY_PY_THREAD=1 -DMICROPY_PY_THREAD_GIL=0
@@ -135,17 +136,17 @@ endif
 
 CFLAGS_MOD += $(LIBFFI_CFLAGS_MOD) -DMICROPY_PY_FFI=1
 LDFLAGS_MOD += $(LIBFFI_LDFLAGS_MOD)
-SRC_MOD += modffi.c
+SRC_MOD += ports/unix/modffi.c
 endif
 
 ifeq ($(MICROPY_PY_JNI),1)
 # Path for 64-bit OpenJDK, should be adjusted for other JDKs
 CFLAGS_MOD += -I/usr/lib/jvm/java-7-openjdk-amd64/include -DMICROPY_PY_JNI=1
-SRC_MOD += modjni.c
+SRC_MOD += ports/unix/modjni.c
 endif
 
 # source files
-SRC_C = \
+SRC_C = $(addprefix ports/unix/,\
 	main.c \
 	gccollect.c \
 	unix_mphal.c \
@@ -160,15 +161,20 @@ SRC_C = \
 	alloc.c \
 	coverage.c \
 	fatfs_port.c \
-	lib/utils/pyexec.c \
+	)
+
+SRC_C += $(SRC_MOD)
+
+# Pybricks port core source files
+SRC_C += \
 	pbinit.c \
 	modev3devices.c \
 	modev3brick.c \
-	$(SRC_MOD)
 
 LIB_SRC_C = $(addprefix lib/,\
 	$(LIB_SRC_C_EXTRA) \
 	timeutils/timeutils.c \
+	utils/pyexec.c \
 	)
 
 # Pybricks drivers and modules
