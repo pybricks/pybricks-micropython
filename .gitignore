@@ -42,7 +42,3 @@ user.props
 # Generated rst files
 ######################
 genrst/
-
-# Micropython executable
-###################
-bricks/ev3dev/micropython

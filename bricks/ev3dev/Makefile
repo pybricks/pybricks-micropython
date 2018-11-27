@@ -10,7 +10,7 @@ FROZEN_MPY_DIR = modules
 QSTR_GLOBAL_DEPENDENCIES = mpconfigbrick.h
 
 # define main target
-PROG = micropython
+PROG = pybricks-micropython
 
 # OS name, for simple autoconfig
 UNAME_S := $(shell uname -s)
@@ -233,11 +233,11 @@ test: $(PROG) $(TOP)/tests/run-tests
 	cd $(TOP)/tests && MICROPY_MICROPYTHON=../$(DIRNAME)/$(PROG) ./run-tests
 
 # install micropython in /usr/local/bin
-TARGET = micropython
+TARGET = $(PROG)
 PREFIX = $(DESTDIR)/usr/local
 BINDIR = $(PREFIX)/bin
 
-install: micropython
+install: $(PROG)
 	install -d $(BINDIR)
 	install $(TARGET) $(BINDIR)/$(TARGET)
 
