@@ -10,12 +10,23 @@ doc:
 doc-pbio:
 	@$(MAKE) -C lib/pbio/doc
 
-ev3dev:
+ev3dev-host:
 	@$(MAKE) -C bricks/ev3dev axtls
 	@$(MAKE) -C bricks/ev3dev
 
-clean-ev3dev:
+clean-ev3dev-host:
 	@$(MAKE) -C bricks/ev3dev clean
+
+ev3dev-armel:
+	@if [ ! -d bricks/ev3dev/build-armel ]; then \
+		bricks/ev3dev/docker/setup.sh armel; \
+	fi
+	@docker exec --tty pybricks-ev3dev_armel make
+
+clean-ev3dev-armel:
+	@if [ -d bricks/ev3dev/build-armel ]; then \
+		docker exec --tty pybricks-ev3dev_armel make clean; \
+	fi
 
 MOVEHUB:
 	@$(MAKE) -C bricks/MOVEHUB

@@ -6,3 +6,5 @@ RUN sudo apt-get update && \
         python \
         python3
 ENV PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabi/pkgconfig
+ENV CROSS_COMPILE=arm-linux-gnueabi-
+ENV BUILD=build-armel

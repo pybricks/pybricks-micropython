@@ -1,5 +1,3 @@
-# Cross compiler for EV3
-CROSS_COMPILE ?= arm-linux-gnueabi-
 
 # Environment
 -include mpconfigport.mk

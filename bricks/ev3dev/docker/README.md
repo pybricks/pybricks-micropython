@@ -1,32 +1,21 @@
-Adapted from [docker for lms2012](https://github.com/ev3dev/lms2012-compat/blob/ev3dev-stretch/docker/README.md).
-
-
-Using Docker to Cross-Compile the MicroPython unix port
---------------------------------------------
+Using Docker to Cross-Compile Pybricks MicroPython for ev3dev
+-------------------------------------------------------------
 
 This assumes that you have already `docker` installed and that you have cloned
-our [MicroPython fork](https://github.com/laurensvalk/micropython) and its submodules.
-The current working directory is the `micropython/ports/pybricks/bricks/ev3dev`
-source code directory.
+our [MicroPython fork](https://github.com/pybricks/micropython) and its submodules.
 
 1. Create the docker image and a docker container.
 
         ./docker/setup.sh armel
 
-2.  Get an interactive shell with the working directory in bricks/ev3dev
+2. Cross compile MicroPython.
 
-        docker run --rm -it -v /abs/path/to/micropython:/micropython -w /micropython/ports/pybricks/bricks/ev3dev pybricks-ev3-armel
+        docker exec --tty pybricks-ev3dev_armel make
 
-3. Cross compile `axtls`
+3. Transfer the generated `pybricks-micropython` to the EV3 brick.
 
-        make axtls
+        scp bricks/ev3dev/pybricks-micropython robot@ev3dev:~
 
-4. Cross compile MicroPython
+4. Run it on the EV3.
 
-        make
-
-5. Exit when ready
-
-        exit
-
-6. Transfer the generated MicroPython application (from the ev3dev folder) to the EV3 brick and run it.
+        ssh -t robot@ev3dev -C "conrun -ioe -- ./pybricks-micropython"
