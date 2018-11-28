@@ -1,6 +1,7 @@
 #include <pbio/port.h>
 #include <pbio/button.h>
 
+#include "pberror.h"
 #include "pbobj.h"
 #include "modcommon.h"
 
@@ -18,14 +19,33 @@ STATIC const mp_rom_map_elem_t motor_Port_enum_table[] = {
 };
 STATIC PB_DEFINE_CONST_ENUM(motor_Port_enum, motor_Port_enum_table);
 
-/* Return a list of pressed buttons (EV3/ev3dev can detect only one button at a time). */
-
 STATIC mp_obj_t ev3brick_buttons(void) {
-    pbio_button_flags_t pressed = 0;
-    pbdrv_button_is_pressed(PBIO_PORT_SELF, &pressed);
-    mp_obj_t button_list[1];
-    button_list[0] = mp_obj_new_int(pressed);
-    return mp_obj_new_list(pressed ? 1 : 0, button_list);
+    mp_obj_t button_list[6];
+    pbio_button_flags_t pressed;
+    uint8_t size = 0;
+
+    pb_assert(pbio_button_is_pressed(PBIO_PORT_SELF, &pressed));
+
+    if (pressed & PBIO_BUTTON_CENTER) {
+        button_list[size++] = mp_obj_new_int(PBIO_BUTTON_CENTER);
+    }
+    if (pressed & PBIO_BUTTON_LEFT) {
+        button_list[size++] = mp_obj_new_int(PBIO_BUTTON_LEFT);
+    }
+    if (pressed & PBIO_BUTTON_RIGHT) {
+        button_list[size++] = mp_obj_new_int(PBIO_BUTTON_RIGHT);
+    }
+    if (pressed & PBIO_BUTTON_UP) {
+        button_list[size++] = mp_obj_new_int(PBIO_BUTTON_UP);
+    }
+    if (pressed & PBIO_BUTTON_DOWN) {
+        button_list[size++] = mp_obj_new_int(PBIO_BUTTON_DOWN);
+    }
+    if (pressed & PBIO_BUTTON_STOP) {
+        button_list[size++] = mp_obj_new_int(PBIO_BUTTON_STOP);
+    }
+
+    return mp_obj_new_tuple(size, button_list);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(ev3brick_buttons_obj, ev3brick_buttons);
 

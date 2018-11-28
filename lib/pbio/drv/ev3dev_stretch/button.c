@@ -6,14 +6,7 @@
 #include <pbio/error.h>
 #include <pbio/port.h>
 
-#define EV3KEY_UP (103)
-#define EV3KEY_CENTER (28)
-#define EV3KEY_DOWN (108)
-#define EV3KEY_RIGHT (106)
-#define EV3KEY_LEFT (105)
-#define EV3KEY_BACK (14)
-
-uint8_t f_btn; // Button file descriptor
+static uint8_t f_btn = -1; // Button file descriptor
 
 void _pbdrv_button_init(void) {
     f_btn = open("/dev/input/by-path/platform-gpio_keys-event", O_RDONLY);
@@ -21,39 +14,45 @@ void _pbdrv_button_init(void) {
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
 void _pbdrv_button_deinit(void) {
-    close(f_btn); 
+    close(f_btn);
+    f_btn = -1;
  }
 #endif
 
-bool check(uint8_t *buffer, uint8_t key){
+static bool check(uint8_t *buffer, uint8_t key) {
     return buffer[key>>3] & (1 << (key % 8));
 }
 
 pbio_error_t pbdrv_button_is_pressed(pbio_port_t port, pbio_button_flags_t *pressed) {
+    uint8_t buffer[(KEY_CNT + 7) / 8];
+
     if (port != PBIO_PORT_SELF) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    uint8_t buffer[(KEY_CNT + 8 - 1 ) / 8];
-    ioctl(f_btn, EVIOCGKEY(sizeof(buffer)), &buffer);
-    
-    if(check(buffer, EV3KEY_UP)) {
-        *pressed = PBIO_BUTTON_UP;
+    if (ioctl(f_btn, EVIOCGKEY(sizeof(buffer)), &buffer) == -1) {
+        return PBIO_ERROR_IO;
     }
-    else if(check(buffer, EV3KEY_CENTER)) {
-        *pressed = PBIO_BUTTON_CENTER;
-    }    
-    else if(check(buffer, EV3KEY_DOWN)) {
-        *pressed = PBIO_BUTTON_DOWN;
-    }  
-    else if(check(buffer, EV3KEY_RIGHT)) {
-        *pressed = PBIO_BUTTON_RIGHT;
-    }  
-    else if(check(buffer, EV3KEY_LEFT)) {
-        *pressed = PBIO_BUTTON_LEFT;
-    }  
-    else if(check(buffer, EV3KEY_BACK)) {
-        *pressed = PBIO_BUTTON_STOP;
-    } 
+
+    *pressed = 0;
+    if (check(buffer, KEY_UP)) {
+        *pressed |= PBIO_BUTTON_UP;
+    }
+    if (check(buffer, KEY_ENTER)) {
+        *pressed |= PBIO_BUTTON_CENTER;
+    }
+    if (check(buffer, KEY_DOWN)) {
+        *pressed |= PBIO_BUTTON_DOWN;
+    }
+    if (check(buffer, KEY_RIGHT)) {
+        *pressed |= PBIO_BUTTON_RIGHT;
+    }
+    if (check(buffer, KEY_LEFT)) {
+        *pressed |= PBIO_BUTTON_LEFT;
+    }
+    if (check(buffer, KEY_BACKSPACE)) {
+        *pressed |= PBIO_BUTTON_STOP;
+    }
+
     return PBIO_SUCCESS;
 }
