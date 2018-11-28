@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from uerrno import ENODEV
 from uctypes import addressof, sizeof, struct
 from uctypes import INT32, UINT16, UINT64
 from utime import sleep_ms
@@ -27,6 +28,7 @@ from utime import sleep_ms
 from uev3dev._alsa import Mixer
 from uev3dev._alsa import PCM
 
+# FIXME: this path is only for ev3dev-stretch on LEGO MINDSTORMS EV3
 _BEEP_DEV = '/dev/input/by-path/platform-sound-event'
 _EV_SND = 0x12
 _SND_TONE = 0x02
@@ -37,19 +39,23 @@ _input_event = {
     'value': INT32 | 12,
 }
 
-_beep_dev = open(_BEEP_DEV, 'b+')
-_mixer = Mixer()
-_pcm = PCM()
-_tone_data = bytearray(sizeof(_input_event))
-_tone_event = struct(addressof(_tone_data), _input_event)
+try:
+    _beep_dev = open(_BEEP_DEV, 'b+')
+    _mixer = Mixer()
+    _pcm = PCM()
+    _tone_data = bytearray(sizeof(_input_event))
+    _tone_event = struct(addressof(_tone_data), _input_event)
 
+    def _beep(frequency, duration, volume):
+        _mixer.set_beep_volume(int(volume))
+        _tone_event.type = _EV_SND
+        _tone_event.code = _SND_TONE
+        _tone_event.value = int(frequency)
+        _beep_dev.write(_tone_data)
+        sleep_ms(int(duration))
+        _tone_event.value = 0
+        _beep_dev.write(_tone_data)
 
-def _beep(frequency, duration, volume):
-    _mixer.set_beep_volume(int(volume))
-    _tone_event.type = _EV_SND
-    _tone_event.code = _SND_TONE
-    _tone_event.value = int(frequency)
-    _beep_dev.write(_tone_data)
-    sleep_ms(int(duration))
-    _tone_event.value = 0
-    _beep_dev.write(_tone_data)
+except OSError:
+    def _beep(frequency, duration, volume):
+        raise OSError(ENODEV)

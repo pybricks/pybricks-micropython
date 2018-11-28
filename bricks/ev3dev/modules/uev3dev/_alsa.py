@@ -20,16 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from errno import EPIPE
-from struct import calcsize
-from struct import unpack
-
-import ffilib
+import ffi
+from uerrno import EPIPE
+from ustruct import calcsize
+from ustruct import unpack
 from uctypes import addressof
 
-# from uev3dev.util import debug_print
 
-_alsa = ffilib.open('libasound')
+_alsa = ffi.open('libasound.so.2')
 _strerror = _alsa.func('s', 'snd_strerror', 'i')
 
 
