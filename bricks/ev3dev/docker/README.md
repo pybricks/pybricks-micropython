@@ -18,4 +18,4 @@ our [MicroPython fork](https://github.com/pybricks/micropython) and its submodul
 
 4. Run it on the EV3.
 
-        ssh -t robot@ev3dev -C "conrun -ioe -- ./pybricks-micropython"
+        ssh -t robot@ev3dev "brickrun -r -- ./pybricks-micropython"
