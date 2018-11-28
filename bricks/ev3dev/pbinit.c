@@ -47,7 +47,7 @@ static void *task_caller(void *arg)
     configure_timer_thread(PERIOD_MS, &info);
     while (!stopping_thread) {
         MP_THREAD_GIL_ENTER();
-        pbio_do_one_event();
+        while (pbio_do_one_event()) { }
         MP_THREAD_GIL_EXIT();
         wait_period(&info); // TODO: check if we should do any waiting here
     }
