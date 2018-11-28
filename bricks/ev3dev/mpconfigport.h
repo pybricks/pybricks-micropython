@@ -27,6 +27,19 @@
 // Pybricks brick specific definitions
 #include "mpconfigbrick.h"
 
+static const char pybricks_ev3dev_help_text[] =
+"Welcome to Pybricks MicroPython!\n"
+"\n"
+"For online docs please visit http://docs.pybricks.com/micropython\n"
+"\n"
+"Control commands:\n"
+"  CTRL-C        -- interrupt a running program\n"
+"  CTRL-D        -- on a blank line, exit\n"
+"  CTRL-E        -- on a blank line, enter paste mode\n"
+"\n"
+"For further help on a specific object, type help(obj)\n"
+;
+
 // options to control how MicroPython is built
 
 #define MICROPY_ALLOC_PATH_MAX      (PATH_MAX)
@@ -85,6 +98,9 @@
 #define MICROPY_PY_BUILTINS_COMPILE (1)
 #define MICROPY_PY_BUILTINS_NOTIMPLEMENTED (1)
 #define MICROPY_PY_BUILTINS_INPUT   (1)
+#define MICROPY_PY_BUILTINS_HELP    (1)
+#define MICROPY_PY_BUILTINS_HELP_TEXT pybricks_ev3dev_help_text
+#define MICROPY_PY_BUILTINS_HELP_MODULES (1)
 #define MICROPY_PY_BUILTINS_POW3    (1)
 #define MICROPY_PY_BUILTINS_ROUND_INT    (1)
 #define MICROPY_PY_MICROPYTHON_MEM_INFO (1)
