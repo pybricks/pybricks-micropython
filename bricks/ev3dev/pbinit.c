@@ -1,10 +1,27 @@
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <pthread.h>
+#include <string.h>
+#include <unistd.h>
+
+#include <sys/time.h>
+#include <sys/timerfd.h>
+
 #include <pbio/main.h>
 #include <pbio/light.h>
 
 #include "py/mpthread.h"
 
 #include "pbinit.h"
+
+#define PERIOD_MS 10
+
+struct periodic_info {
+    int timer_fd;
+    unsigned long long wakeups_missed;
+};
 
 // Configure timer at specified interval
 static int configure_timer_thread(unsigned int period_ms, struct periodic_info *info)
