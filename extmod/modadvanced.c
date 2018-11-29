@@ -19,7 +19,7 @@ class IODevice():
     """Docstring."""
 */
 
-// Class structure for IODevices 
+// Class structure for IODevices
 // TODO: Use generic type for classes that just have a port property. They can also share the get_port.
 typedef struct _advanced_IODevice_obj_t {
     mp_obj_base_t base;
@@ -48,7 +48,7 @@ IODevice
 STATIC void advanced_IODevice_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
     advanced_IODevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, qstr_str(MP_QSTR_IODevice));
-    mp_printf(print, " on Port.%c",  self->port);    
+    mp_printf(print, " on Port.%c",  self->port);
 }
 
 
@@ -85,8 +85,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(advanced_IODevice_values_obj, 1, 2, a
 IODevice class tables
 */
 STATIC const mp_rom_map_elem_t advanced_IODevice_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_values), MP_ROM_PTR(&advanced_IODevice_values_obj) },
-    { MP_ROM_QSTR(MP_QSTR_mode), MP_ROM_PTR(&advanced_IODevice_mode_obj) },   
+    { MP_ROM_QSTR(MP_QSTR_values),  MP_ROM_PTR(&advanced_IODevice_values_obj)   },
+    { MP_ROM_QSTR(MP_QSTR_mode),    MP_ROM_PTR(&advanced_IODevice_mode_obj)     },
 };
 STATIC MP_DEFINE_CONST_DICT(advanced_IODevice_locals_dict, advanced_IODevice_locals_dict_table);
 
@@ -169,20 +169,15 @@ MP_DEFINE_CONST_FUN_OBJ_1(hub_read_adc_obj, hub_read_adc);
 advanced module tables
 */
 
-STATIC const mp_map_elem_t advanced_globals_table[] = {
-    { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_advanced) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_IODevice), (mp_obj_t)&advanced_IODevice_type},
+STATIC const mp_rom_map_elem_t advanced_globals_table[] = {
+    { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_advanced)       },
+    { MP_ROM_QSTR(MP_QSTR_IODevice),    MP_ROM_PTR(&advanced_IODevice_type) },
 #if PYBRICKS_ENABLE_HARDWARE_DEBUG
-    { MP_OBJ_NEW_QSTR(MP_QSTR_gpios),    (mp_obj_t)&hub_gpios_obj },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_read_adc), (mp_obj_t)&hub_read_adc_obj },
+    { MP_ROM_QSTR(MP_QSTR_gpios),       MP_ROM_PTR(&hub_gpios_obj)          },
+    { MP_ROM_QSTR(MP_QSTR_read_adc),    MP_ROM_PTR(&hub_read_adc_obj)       },
 #endif //PYBRICKS_ENABLE_HARDWARE_DEBUG
 };
-
-STATIC MP_DEFINE_CONST_DICT (
-    pb_module_advanced_globals,
-    advanced_globals_table
-);
-
+STATIC MP_DEFINE_CONST_DICT(pb_module_advanced_globals, advanced_globals_table);
 
 const mp_obj_module_t pb_module_advanced = {
     .base = { &mp_type_module },

@@ -88,17 +88,13 @@ STATIC const mp_obj_type_t robotics_Mechanism_type = {
 robotics module tables
 */
 
-STATIC const mp_map_elem_t robotics_globals_table[] = {
-    { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_robotics) },
+STATIC const mp_rom_map_elem_t robotics_globals_table[] = {
+    { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_robotics) },
 #if PBIO_CONFIG_ENABLE_MOTORS
-    { MP_OBJ_NEW_QSTR(MP_QSTR_Mechanism), (mp_obj_t)&robotics_Mechanism_type},
+    { MP_ROM_QSTR(MP_QSTR_Mechanism),   MP_ROM_PTR(&robotics_Mechanism_type)    },
 #endif // PBIO_CONFIG_ENABLE_MOTORS
 };
-
-STATIC MP_DEFINE_CONST_DICT (
-    pb_module_robotics_globals,
-    robotics_globals_table
-);
+STATIC MP_DEFINE_CONST_DICT(pb_module_robotics_globals, robotics_globals_table);
 
 const mp_obj_module_t pb_module_robotics = {
     .base = { &mp_type_module },

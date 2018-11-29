@@ -166,16 +166,16 @@ STATIC const mp_obj_type_t pupdevices_ColorAndDistSensor_type = {
 /*
 pupdevices module table
 */
-STATIC const mp_map_elem_t pupdevices_globals_table[] = {
-    { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_devices) },
+STATIC const mp_rom_map_elem_t pupdevices_globals_table[] = {
+    { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_devices) },
 #if PBIO_CONFIG_ENABLE_MOTORS
-    { MP_OBJ_NEW_QSTR(MP_QSTR_Motor),            (mp_obj_t)&motor_Motor_type            },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_Stop),             (mp_obj_t)&motor_Stop_enum             },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_Dir),              (mp_obj_t)&motor_Dir_enum              },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_Run),              (mp_obj_t)&motor_Run_enum              },
+    { MP_ROM_QSTR(MP_QSTR_Motor),               MP_ROM_PTR(&motor_Motor_type)   },
+    { MP_ROM_QSTR(MP_QSTR_Stop),                MP_ROM_PTR(&motor_Stop_enum)    },
+    { MP_ROM_QSTR(MP_QSTR_Dir),                 MP_ROM_PTR(&motor_Dir_enum)     },
+    { MP_ROM_QSTR(MP_QSTR_Run),                 MP_ROM_PTR(&motor_Run_enum)     },
 #endif //PBIO_CONFIG_ENABLE_MOTORS
-    { MP_OBJ_NEW_QSTR(MP_QSTR_ColorDistanceSensor), (mp_obj_t)&pupdevices_ColorAndDistSensor_type },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_Color),            (mp_obj_t)&pb_Color_enum               },
+    { MP_ROM_QSTR(MP_QSTR_ColorDistanceSensor), MP_ROM_PTR(&pupdevices_ColorAndDistSensor_type) },
+    { MP_ROM_QSTR(MP_QSTR_Color),               MP_ROM_PTR(&pb_Color_enum)      },
 };
 
 STATIC MP_DEFINE_CONST_DICT (

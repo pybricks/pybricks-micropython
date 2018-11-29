@@ -49,14 +49,13 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_low_obj, battery_low);
 
 /* battery module tables */
 
-STATIC const mp_map_elem_t battery_globals_table[] = {
-    { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_battery) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_voltage), (mp_obj_t)&battery_voltage_obj },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_current), (mp_obj_t)&battery_current_obj },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_percent), (mp_obj_t)&battery_percent_obj },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_low    ), (mp_obj_t)&battery_low_obj     },
+STATIC const mp_rom_map_elem_t battery_globals_table[] = {
+    { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_battery)        },
+    { MP_ROM_QSTR(MP_QSTR_voltage),     MP_ROM_PTR(&battery_voltage_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_current),     MP_ROM_PTR(&battery_current_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_percent),     MP_ROM_PTR(&battery_percent_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_low),         MP_ROM_PTR(&battery_low_obj)        },
 };
-
 STATIC MP_DEFINE_CONST_DICT(pb_module_battery_globals, battery_globals_table);
 
 const mp_obj_module_t pb_module_battery = {
