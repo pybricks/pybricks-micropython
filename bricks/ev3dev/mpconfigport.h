@@ -1,6 +1,4 @@
 /*
- * This file is part of the MicroPython project, http://micropython.org/
- *
  * The MIT License (MIT)
  *
  * Copyright (c) 2013, 2014 Damien P. George

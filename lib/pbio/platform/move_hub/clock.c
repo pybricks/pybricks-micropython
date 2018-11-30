@@ -1,6 +1,3 @@
-// SPDX-License-Identifier: MIT
-// This file is based on the STM32 SysTick code from MicroPython
-
 /*
  * The MIT License (MIT)
  *
