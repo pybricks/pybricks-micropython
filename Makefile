@@ -14,7 +14,7 @@ ev3dev-host:
 	@$(MAKE) -C bricks/ev3dev axtls
 	@$(MAKE) -C bricks/ev3dev
 
-clean-ev3dev-host:
+clean-ev3dev-host: clean-mpy-cross
 	@$(MAKE) -C bricks/ev3dev clean
 
 ev3dev-armel:
@@ -23,10 +23,16 @@ ev3dev-armel:
 	fi
 	@docker exec --tty pybricks-ev3dev_armel make
 
-clean-ev3dev-armel:
+clean-ev3dev-armel: clean-mpy-cross
 	@if [ -d bricks/ev3dev/build-armel/ports ]; then \
 		docker exec --tty pybricks-ev3dev_armel make clean; \
 	fi
 
-MOVEHUB:
+movehub:
 	@$(MAKE) -C bricks/MOVEHUB
+
+clean-movehub: clean-mpy-cross
+	@$(MAKE) -C bricks/MOVEHUB clean
+
+clean-mpy-cross:
+	@$(MAKE) -C ../../mpy-cross clean
