@@ -220,7 +220,7 @@ $(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(ECHO) "BIN creating firmware file"
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $(FIRMWARE_EXTRA_ARGS) $^ $@
-	$(ECHO) "`stat --printf='%s\n' $@` bytes"
+	$(ECHO) "`wc -c < $@` bytes"
 
 
 include $(TOP)/py/mkrules.mk
