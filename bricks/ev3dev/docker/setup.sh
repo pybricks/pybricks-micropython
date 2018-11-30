@@ -4,7 +4,12 @@ set -e
 
 project="pybricks-ev3dev"
 
-script_dir=$(dirname $(readlink -f "${0}"))
+abs_path() {
+    # https://stackoverflow.com/a/3915420/1976323
+    echo "$(cd "$(dirname "$1")"; pwd -P)/$(basename "$1")"
+}
+
+script_dir=$(dirname $(abs_path "${0}"))
 
 case ${1} in
     armel)
@@ -27,7 +32,7 @@ image_name="${project}-${arch}"
 container_name="${project}_${arch}"
 
 if [ -e ${build_dir} ]; then
-    read -r -n 1 -p "Delete existing build directory at '$(readlink -f ${build_dir})'? (y/n/q) "
+    read -r -n 1 -p "Delete existing build directory at '$(abs_path ${build_dir})'? (y/n/q) "
     echo
     case $REPLY in
         y|Y)
@@ -50,7 +55,7 @@ docker build \
 
 docker rm --force ${container_name} >/dev/null 2>&1 || true
 docker run \
-    --volume "$(readlink -f ${src_dir}):/src" \
+    --volume "$(abs_path ${src_dir}):/src" \
     --workdir /src/ports/pybricks/bricks/ev3dev \
     --name ${container_name} \
     --env "TERM=${TERM}" \
