@@ -94,7 +94,7 @@ STATIC mp_obj_t pupdevices_ColorAndDistSensor_color(mp_obj_t self_in) {
             return mp_obj_new_int(PBIO_LIGHT_COLOR_BLACK);
         case 3:
             return mp_obj_new_int(PBIO_LIGHT_COLOR_BLUE);
-        case 6:
+        case 5:
             return mp_obj_new_int(PBIO_LIGHT_COLOR_GREEN);
         case 7:
             return mp_obj_new_int(PBIO_LIGHT_COLOR_YELLOW);
