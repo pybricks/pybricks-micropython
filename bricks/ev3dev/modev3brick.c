@@ -69,7 +69,7 @@ STATIC mp_obj_t ev3brick_buttons(void) {
         button_list[size++] = mp_obj_new_int(PBIO_BUTTON_STOP);
     }
 
-    return mp_obj_new_tuple(size, button_list);
+    return mp_obj_new_list(size, button_list);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(ev3brick_buttons_obj, ev3brick_buttons);
 
