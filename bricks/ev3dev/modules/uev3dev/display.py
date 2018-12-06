@@ -23,10 +23,10 @@
 """Display screen"""
 
 from fcntl import ioctl
+from mmap import mmap
 
 from framebuf import FrameBuffer
-from framebuf import MONO_HLSB
-from framebuf import MONO_HMSB
+from framebuf import MONO_HLSB, RGB565, XRGB8888
 from uctypes import addressof
 from uctypes import sizeof
 from uctypes import struct
@@ -45,6 +45,7 @@ _FBIOGET_FSCREENINFO = 0x4602
 
 _FB_VISUAL_MONO01 = 0
 _FB_VISUAL_MONO10 = 1
+_FB_VISUAL_TRUECOLOR = 2
 
 _fb_fix_screeninfo = {
     'id_name': (ARRAY | 0, UINT8 | 16),
@@ -111,7 +112,7 @@ class _Screen():
     """Object that represents a screen"""
 
     BLACK = 0
-    WHITE = 1
+    WHITE = ~0
 
     def __init__(self):
         self._fbdev = open('/dev/fb0', 'w+')
@@ -125,6 +126,7 @@ class _Screen():
         self._var_info = struct(addressof(self._var_info_data),
                                 _fb_var_screeninfo)
         self._fb_data = {}
+        self._mmap = mmap(fd, self._fix_info.smem_len)
 
     @property
     def width(self):
@@ -146,8 +148,8 @@ class _Screen():
 
         Must be data returned by self.framebuffer().
         """
-        self._fbdev.seek(0)
-        self._fbdev.write(data)
+        self._mmap.seek(0)
+        self._mmap.write(data)
 
     def framebuffer(self):
         """Creates a new framebuffer for the screen
@@ -156,10 +158,16 @@ class _Screen():
         object to be passed to self.update()
         """
         data = bytearray(self._fix_info.line_length * self.height)
-        if self._fix_info.visual in (_FB_VISUAL_MONO01, _FB_VISUAL_MONO10):
-            format = MONO_HMSB
+        if self._fix_info.visual != _FB_VISUAL_TRUECOLOR:
+            raise RuntimeError("Unsupported fbdev color format")
+        if self.bpp == 32:
+            format = XRGB8888
+        elif self.bpp == 16:
+            format = RGB565
+        else:
+            raise RuntimeError("Unsupported pixel depth")
         fbuf = FrameBuffer(data, self.width, self.height, format,
-                           self._fix_info.line_length // self.bpp * 8)
+                           self._fix_info.line_length * 8 // self.bpp)
         return fbuf, data
 
 
@@ -202,7 +210,7 @@ class Display():
         """
         if clear:
             self._fb.fill(_Screen.WHITE)
-        self._fb.blit(image_file._framebuf, x, y, _Screen.WHITE)
+        self._fb.blit(image_file._framebuf, x, y, 1)
         self._screen.update(self._data)
 
     def reset_screen(self):
@@ -237,9 +245,6 @@ class ImageFile():
                 # image
                 pass
 
-            # convert to native format (1bpp)
-            # TODO: if source image is color, we should dither or make dither
-            # an optional parameter
             wand.image_format = 'GRAY'
             wand.image_depth = 1
 

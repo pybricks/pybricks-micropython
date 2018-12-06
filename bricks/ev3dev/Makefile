@@ -174,6 +174,7 @@ SRC_C = $(addprefix ports/unix/,\
 	file.c \
 	modmachine.c \
 	modos.c \
+	modmmap.c \
 	moduos_vfs.c \
 	modtime.c \
 	moduselect.c \
