@@ -61,7 +61,7 @@ while True:
     color_list = []
 
     # scan loop
-    while True:
+    while len(color_list) < 8:
         # show arrow pointing to color sensor
         brick.display.image(Image.right, True, 0, 0)
         brick.display.text_grid(len(color_list), False, 0, 0, False, 2)
@@ -73,21 +73,20 @@ while True:
             if pressed or color in POSSIBLE_COLORS:
                 break
 
-        # if a color was scanned...
-        if not pressed:
+        if pressed:
+            # if the button was pressed, end the loop early
+            break
+        else:
+            # if a color was scanned, add it to the list
             brick.beep(1000, 100, 100)
-            # add it to the list
             color_list.append(color)
             while color_sensor.color() not in (Color.black, None):
                 pass
             brick.beep(2000, 100, 100)
+
+            # point arrow to center button to ask if we are done
             brick.display.image(Image.backward, True, 0, 0)
             wait(2000)
-
-        # stop scanning if all blocks have been scanned or the center button
-        # was pressed
-        if len(color_list) >= 8 or pressed:
-            break
 
     brick.sound.play_file(Sound.ready, 100, 0)
 
