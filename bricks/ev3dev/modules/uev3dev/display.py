@@ -198,6 +198,20 @@ class Display():
         self._fb.text(str(text), x, y, color)
         self._screen.update(self._data)
 
+    def text_grid(self, text, clear, x, y, color, font):
+        """Draw text on the screen
+
+        Parameters:
+            text (str): The text to draw
+            clear (bool): When ``True``, clear the screen first
+            x (int): Where to start the left side of the text
+            y (int): Where to start the top of the text
+            color (bool): ``True`` for white, otherwise black
+            font (int): The size of the font [0..2]
+        """
+        # TODO: adjust grid size based on font size
+        self.text_pixels(text, clear, x * 8, y * 8, color, font)
+
     def image(self, image_file, clear, x, y):
         """Draw an image on the screen.
 
