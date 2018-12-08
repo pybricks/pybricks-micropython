@@ -26,7 +26,6 @@ from uctypes import INT32, UINT16, UINT64
 from utime import sleep_ms
 
 from uev3dev._alsa import Mixer
-from uev3dev._alsa import PCM
 
 # FIXME: this path is only for ev3dev-stretch on LEGO MINDSTORMS EV3
 _BEEP_DEV = '/dev/input/by-path/platform-sound-event'
@@ -42,7 +41,6 @@ _input_event = {
 try:
     _beep_dev = open(_BEEP_DEV, 'b+')
     _mixer = Mixer()
-    _pcm = PCM()
     _tone_data = bytearray(sizeof(_input_event))
     _tone_event = struct(addressof(_tone_data), _input_event)
 
