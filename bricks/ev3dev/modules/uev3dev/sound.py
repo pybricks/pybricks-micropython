@@ -26,7 +26,7 @@ import os
 from struct import calcsize
 from struct import pack
 from struct import unpack
-from time import sleep
+from time import sleep, sleep_ms
 
 import ffilib
 from uctypes import addressof
@@ -154,6 +154,12 @@ class Sound():
         self._tone_event.code = _SND_TONE
         self._tone_event.value = int(frequency)
         self._beep_dev.write(self._tone_data)
+
+    def _beep(self, frequency, duration, volume):
+        self._mixer.set_beep_volume(int(volume))
+        self._play_tone(frequency)
+        sleep_ms(int(duration))
+        self._play_tone(0)
 
     def play_tone(self, frequency, duration, volume, play_type):
         """Play a tone
