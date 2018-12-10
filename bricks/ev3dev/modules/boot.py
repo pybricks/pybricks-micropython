@@ -30,3 +30,4 @@ from timing import *
 # Import enums
 from ev3brick import Port
 from speaker import Sound
+from display import Image, Align

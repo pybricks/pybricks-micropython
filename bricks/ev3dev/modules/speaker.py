@@ -30,6 +30,8 @@ from timing import wait
 
 
 class Sound():
+    """Paths to default sounds."""
+
     # TODO: These locations are currently ev3dev-specific
     _SOUND_PATH = '/usr/share/sounds/ev3dev'
     blue = path.join(_SOUND_PATH, 'colors/blue.wav')
@@ -86,7 +88,6 @@ class Speaker():
             file_name {str} -- Path to the sound file
             volume {int} -- Volume of the sound (0-100%) (default: {30})
         """
-        # TODO: if relative path, join with path to running script
 
         if file_name not in self._loaded_files:
             self._loaded_files[file_name] = SoundFile(file_name)

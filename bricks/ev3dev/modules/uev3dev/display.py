@@ -195,7 +195,14 @@ class Display():
         else:
             color = _Screen.BLACK
         # TODO: micropython framebuf only has one font
-        self._fb.text(str(text), x, y, color)
+        # TODO: Discuss where origin should be for text and pictures (micropython vs. EV3-G)
+        self._fb.text(str(text), x, y-7, color)
+        self._screen.update(self._data)
+
+    def scroll(self, font=0):
+        """Scroll display contents up by one line."""
+        # TODO: use font size to get height of one line
+        self._fb.scroll(0, -8)
         self._screen.update(self._data)
 
     def text_grid(self, text, clear, x, y, color, font):
@@ -244,17 +251,9 @@ class ImageFile():
             wand.read_image(filename)
 
             # make the image fit
-            img_w, img_h = wand.image_width, wand.image_height
+            self.width, self.height = wand.image_width, wand.image_height
             disp_w, disp_h = display._screen.width, display._screen.height
-            if img_w < disp_w and img_h < disp_h:
-                # if the image is smaller than the screen, extend it with a
-                # white border
-                # TODO: if the screen is >= 2x the image, double the image size
-                # instead of adding a border
-                x = -(disp_w - img_w) // 2
-                y = -(disp_h - img_h) // 2
-                wand.extent_image(disp_w, disp_h, x, y)
-            elif img_w > disp_w and img_h > disp_h:
+            if self.width > disp_w or self.height > disp_h:
                 # FIXME: figure out which resize method is best and shrink the
                 # image
                 pass

@@ -38,11 +38,12 @@ from ev3brick_c import *
 from timing import wait
 
 from speaker import Speaker
-
+from display import Display
 
 def print(*args, **kwargs):
     """Print a message on the IDE terminal."""
     builtinprint(*args, file=stderr, **kwargs)
 
-# Initialize the EV3 speaker
+# Initialize the EV3 speaker and display
 sound = Speaker('EV3')
+display = Display('EV3')
