@@ -25,7 +25,7 @@
 # import those ev3devices that are already written in MicroPython-style C code.
 from ev3devices_c import Motor
 from .parameters import Color, Button
-from timing import StopWatch, wait
+from .tools import StopWatch, wait
 
 # Import ev3dev sysfs sensor base class and modes
 from .ev3devio import Ev3devSensor

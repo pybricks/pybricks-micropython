@@ -26,7 +26,7 @@
 from .uev3dev.sound import Sound as Ev3devSpeaker
 from .uev3dev.sound import SoundFile
 from os import path
-from timing import wait
+from .tools import wait
 from .ev3devio import tree_as_enum
 
 Sound = tree_as_enum('/usr/share/sounds/ev3dev')

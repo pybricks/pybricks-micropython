@@ -4,7 +4,7 @@
 from pybricks import ev3brick as brick
 from pybricks.ev3devices import Motor, TouchSensor, ColorSensor, InfraredSensor, UltrasonicSensor, GyroSensor
 from pybricks.parameters import Port, Stop, Direction, Completion, Button, Color, Image, Align, Sound
-from pybricks.timing import wait, StopWatch
+from pybricks.tools import wait, StopWatch
 
 POSSIBLE_COLORS = (Color.red, Color.green, Color.blue, Color.yellow)
 

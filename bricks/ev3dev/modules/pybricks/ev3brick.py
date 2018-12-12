@@ -35,7 +35,6 @@ from builtins import print as builtinprint
 
 # import those features of the EV3 brick that are already written in MicroPython-style C code.
 from ev3brick_c import buttons, light
-from timing import wait
 
 from .speaker import Speaker
 from .display import Display
