@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 """Read and write to EV3 sensors through ev3dev sysfs."""
-from os import listdir
+from os import listdir, path
 from time import sleep, time
 
 
@@ -72,6 +72,17 @@ def get_sensor_path(port, driver_name):
                     if driver_name in driver_file.read():
                         return full_dir
     raise OSError('No such sensor on Port S' + chr(port))
+
+
+def tree_as_enum(folder):
+    """Create a flat enum type represention of a file tree with one subfolder."""
+    treedict = {}
+    for category in listdir(folder):
+        categorypath = path.join(folder, category)
+        for filename in listdir(categorypath):
+            name = filename[0:len(filename)-4]
+            treedict[name] = path.join(categorypath, filename)
+    return type('Enum', (type(object),), treedict)
 
 
 class Ev3devSensor():

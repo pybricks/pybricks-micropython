@@ -36,9 +36,9 @@ from uctypes import UINT16
 from uctypes import UINT32
 from uctypes import UINT64
 
-from uev3dev._wand import CompositeOp
-from uev3dev._wand import MagickWand
-from uev3dev._wand import PixelWand
+from ._wand import CompositeOp
+from ._wand import MagickWand
+from ._wand import PixelWand
 
 _FBIOGET_VSCREENINFO = 0x4600
 _FBIOGET_FSCREENINFO = 0x4602

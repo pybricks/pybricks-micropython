@@ -23,19 +23,12 @@
 """Pybricks module for showing text or images on a display (e.g. EV3 screen)"""
 # TODO: This module should go elsewhere since it isn't EV3 specific.
 
-from uev3dev.display import Display as Ev3devDisplay
-from uev3dev.display import ImageFile
+from .uev3dev.display import Display as Ev3devDisplay
+from .uev3dev.display import ImageFile
 from os import path
+from .ev3devio import tree_as_enum
 
-
-class Image():
-    """Paths to default images."""
-
-    # TODO: Add all files under mono, or let class just use the whole folder
-    _IMAGE_PATH = '/usr/share/images/ev3dev/mono'
-    neutral = path.join(_IMAGE_PATH, 'eyes/neutral.png')
-    up = path.join(_IMAGE_PATH, 'eyes/up.png')
-
+Image = tree_as_enum('/usr/share/images/ev3dev/mono')
 
 class Align():
     bottom_left = 1

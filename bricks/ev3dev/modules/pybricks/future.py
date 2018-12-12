@@ -22,7 +22,7 @@
 
 """Experimental features to be rewritten in C code at a later stage."""
 
-from ev3devices import Run, Stop
+from .ev3devices import Run, Stop
 
 class Mechanism():
     """Class to control a motor with predefined target angles."""

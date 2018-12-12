@@ -19,15 +19,3 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-# Import device classes/modules
-from ev3devices import *
-import ev3brick as brick
-
-# Import Pybricks generics
-from timing import *
-
-# Import enums
-from ev3brick import Port
-from speaker import Sound
-from display import Image, Align
