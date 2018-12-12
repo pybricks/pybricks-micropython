@@ -27,18 +27,9 @@ from .uev3dev.sound import Sound as Ev3devSpeaker
 from .uev3dev.sound import SoundFile
 from os import path
 from timing import wait
+from .ev3devio import tree_as_enum
 
-
-class Sound():
-    """Paths to default sounds."""
-
-    # TODO: These locations are currently ev3dev-specific
-    _SOUND_PATH = '/usr/share/sounds/ev3dev'
-    blue = path.join(_SOUND_PATH, 'colors/blue.wav')
-    green = path.join(_SOUND_PATH, 'colors/green.wav')
-    red = path.join(_SOUND_PATH, 'colors/red.wav')
-    yellow = path.join(_SOUND_PATH, 'colors/yellow.wav')
-
+Sound = tree_as_enum('/usr/share/sounds/ev3dev')
 
 class Speaker():
     """Play beeps and sound files using a speaker."""

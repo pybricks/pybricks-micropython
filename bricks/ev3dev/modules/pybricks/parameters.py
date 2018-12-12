@@ -1,6 +1,6 @@
 # MIT License
 #
-# Copyright (c) 2017 Laurens Valk
+# Copyright (c) 2018 Laurens Valk
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,12 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+"""Enum classes of parameters, used by modules in the Pybricks package."""
+
+# TODO: if going forward with this branch, we can start properly re-organize/rename these at the C-level instead, so it applies to all platforms
+from ev3brick_c import Port
+from ev3devices_c import Stop, Color, Button
+from ev3devices_c import Dir as Direction
+from ev3devices_c import Run as Completion
+from .display import Image, Align
+from .speaker import Sound

@@ -23,7 +23,8 @@
 """Classes for LEGO MINDSTORMS EV3 Devices."""
 
 # import those ev3devices that are already written in MicroPython-style C code.
-from ev3devices_c import *
+from ev3devices_c import Motor
+from .parameters import Color, Button
 from timing import StopWatch, wait
 
 # Import ev3dev sysfs sensor base class and modes
