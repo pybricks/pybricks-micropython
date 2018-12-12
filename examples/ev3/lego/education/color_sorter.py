@@ -68,25 +68,19 @@ while True:
     for color in color_list:
         wait(1000)
 
-        # make sure belt motor is in the starting position
-        belt_motor.run(-500)
-        while not touch_sensor.pressed():
-            pass
-        belt_motor.stop()
-
         # run belt motor to position based on the color
         if color == Color.blue:
             brick.sound.file(Sound.blue)
-            belt_motor.run_angle(500, 10)
+            belt_motor.run_target(500, 10)
         elif color == Color.green:
             brick.sound.file(Sound.green)
-            belt_motor.run_angle(500, 132)
+            belt_motor.run_target(500, 132)
         elif color == Color.yellow:
             brick.sound.file(Sound.yellow)
-            belt_motor.run_angle(500, 360)
+            belt_motor.run_target(500, 360)
         elif color == Color.red:
             brick.sound.file(Sound.red)
-            belt_motor.run_angle(500, 530)
+            belt_motor.run_target(500, 530)
 
         # eject the color block
         feed_motor.run_angle(1500, 90)
