@@ -27,7 +27,7 @@ from ev3devices_c import *
 from timing import StopWatch, wait
 
 # Import ev3dev sysfs sensor base class and modes
-from ev3devio import Ev3devSensor
+from .ev3devio import Ev3devSensor
 
 
 class TouchSensor(Ev3devSensor):

@@ -37,8 +37,8 @@ from builtins import print as builtinprint
 from ev3brick_c import *
 from timing import wait
 
-from speaker import Speaker
-from display import Display
+from .speaker import Speaker
+from .display import Display
 
 def print(*args, **kwargs):
     """Print a message on the IDE terminal."""

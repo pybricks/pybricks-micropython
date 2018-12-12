@@ -37,10 +37,10 @@ from uctypes import UINT16
 from uctypes import UINT32
 from uctypes import UINT64
 
-from uev3dev._alsa import Mixer
-from uev3dev._alsa import PCM
-from uev3dev.util import debug_print
-from uev3dev.util import Timeout
+from ._alsa import Mixer
+from ._alsa import PCM
+from .util import debug_print
+from .util import Timeout
 
 # TODO: os.SEEK_SET is not defined in micropython-lib
 _SEEK_SET = 0

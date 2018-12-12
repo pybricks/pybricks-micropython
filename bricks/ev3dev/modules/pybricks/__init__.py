@@ -21,13 +21,13 @@
 # SOFTWARE.
 
 # Import device classes/modules
-from ev3devices import *
-import ev3brick as brick
+from .ev3devices import *
+from . import ev3brick as brick
 
 # Import Pybricks generics
 from timing import *
 
 # Import enums
-from ev3brick import Port
-from speaker import Sound
-from display import Image, Align
+from .ev3brick import Port
+from .speaker import Sound
+from .display import Image, Align

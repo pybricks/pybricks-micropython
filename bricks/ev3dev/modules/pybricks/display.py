@@ -23,8 +23,8 @@
 """Pybricks module for showing text or images on a display (e.g. EV3 screen)"""
 # TODO: This module should go elsewhere since it isn't EV3 specific.
 
-from uev3dev.display import Display as Ev3devDisplay
-from uev3dev.display import ImageFile
+from .uev3dev.display import Display as Ev3devDisplay
+from .uev3dev.display import ImageFile
 from os import path
 
 
