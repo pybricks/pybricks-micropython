@@ -61,7 +61,7 @@ STATIC const mp_rom_map_elem_t pb_Button_enum_table[] = {
     { MP_ROM_QSTR(MP_QSTR_left_down),   MP_ROM_INT(PBIO_BUTTON_DOWN)    },
     { MP_ROM_QSTR(MP_QSTR_right_up),    MP_ROM_INT(PBIO_BUTTON_UP2)     },
     { MP_ROM_QSTR(MP_QSTR_right_down),  MP_ROM_INT(PBIO_BUTTON_DOWN2)   },
-    { MP_ROM_QSTR(MP_QSTR_beacon),      MP_ROM_INT(PBIO_BUTTON_UP)      },
+    { MP_ROM_QSTR(MP_QSTR_beacon),      MP_ROM_INT(PBIO_BUTTON_CENTER)  },
 #endif //PYBRICKS_BRICK_EV3
 };
 PB_DEFINE_CONST_ENUM(pb_Button_enum, pb_Button_enum_table);
