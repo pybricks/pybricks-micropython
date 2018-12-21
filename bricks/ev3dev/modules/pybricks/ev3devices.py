@@ -74,17 +74,6 @@ class ColorSensor(Ev3devSensor):
     _ev3dev_driver_name = 'lego-ev3-color'
     _number_of_values = 3
 
-    # TODO: Use Pybricks color enum for values below instead.
-    _ev3_colors = {
-        0: None,
-        1: Color.black,
-        2: Color.blue,
-        3: Color.green,
-        4: Color.yellow,
-        5: Color.red,
-        6: Color.white,
-        7: Color.brown,
-    }
 
     def color(self):
         """Check the color of a surface.
@@ -94,7 +83,8 @@ class ColorSensor(Ev3devSensor):
 
         """
         self.mode('COL-COLOR')
-        return self._ev3_colors[self.value(0)]
+        color = self.value(0)
+        return None if color == 0 else color
 
     def ambient(self):
         """Measure the ambient light intensity.

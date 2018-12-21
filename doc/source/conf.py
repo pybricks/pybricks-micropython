@@ -19,7 +19,7 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../lib/fake-pybricks'))
+sys.path.insert(0, os.path.abspath('../../lib/fake-pybricks/pybricks'))
 
 # on_rtd is whether we are on readthedocs.org, this line of code grabbed from docs.readthedocs.org
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
@@ -122,7 +122,7 @@ else:
 # documentation.
 #
 html_theme_options = {
-    'style_external_links': True,
+#    'style_external_links': True,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
