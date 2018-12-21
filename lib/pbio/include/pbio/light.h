@@ -43,16 +43,16 @@
  * Light color values or detected color values.
  */
 typedef enum {
-    PBIO_LIGHT_COLOR_NONE,      /**< The light is off or no color is detected*/
-    PBIO_LIGHT_COLOR_BLACK,     /**< The light is off or the detected color is black*/
-    PBIO_LIGHT_COLOR_WHITE,     /**< The light or detected color is white */
-    PBIO_LIGHT_COLOR_RED,       /**< The light or detected color is red */
-    PBIO_LIGHT_COLOR_ORANGE,    /**< The light or detected color is orange */
-    PBIO_LIGHT_COLOR_YELLOW,    /**< The light or detected color is yellow */
-    PBIO_LIGHT_COLOR_GREEN,     /**< The light or detected color is green */
-    PBIO_LIGHT_COLOR_BLUE,      /**< The light or detected color is blue */
-    PBIO_LIGHT_COLOR_PURPLE,    /**< The light or detected color is purple */
-    PBIO_LIGHT_COLOR_BROWN,     /**< The light or detected color is brown */
+    PBIO_LIGHT_COLOR_NONE   = 0,   /**< The light is off or no color is detected*/
+    PBIO_LIGHT_COLOR_BLACK  = 1,   /**< The light is off or the detected color is black*/
+    PBIO_LIGHT_COLOR_BLUE   = 2,   /**< The light or detected color is blue */
+    PBIO_LIGHT_COLOR_GREEN  = 3,   /**< The light or detected color is green */
+    PBIO_LIGHT_COLOR_YELLOW = 4,   /**< The light or detected color is yellow */
+    PBIO_LIGHT_COLOR_RED    = 5,   /**< The light or detected color is red */
+    PBIO_LIGHT_COLOR_WHITE  = 6,   /**< The light or detected color is white */
+    PBIO_LIGHT_COLOR_BROWN  = 7,   /**< The light or detected color is brown */    
+    PBIO_LIGHT_COLOR_ORANGE = 8,   /**< The light or detected color is orange */
+    PBIO_LIGHT_COLOR_PURPLE = 9,   /**< The light or detected color is purple */
 } pbio_light_color_t;
 
 /**

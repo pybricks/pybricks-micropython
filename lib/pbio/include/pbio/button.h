@@ -43,78 +43,79 @@
  * Button flags.
  */
 typedef enum _pbio_button_flags_t {
-    PBIO_BUTTON_CENTER  = 1 << 0,   /**< | Device               | Button
-                                     *   |----------------------|---------------
-                                     *   | Powered UP hub       | Green button
-                                     *   | Powered UP remote    | Green button
-                                     *   | EV3 brick            | Center button
-                                     *   | EV3 IR remote        | Beacon button
-                                     *   | NXT brick            | On/enter (orange) button
-                                     */
-    PBIO_BUTTON_LEFT    = 1 << 1,   /**< | Device               | Button
-                                     *   |----------------------|---------------
-                                     *   | Powered UP hub       | *invalid*
-                                     *   | Powered UP remote    | *invalid*
-                                     *   | EV3 brick            | Left button
-                                     *   | EV3 IR remote        | *invalid*
-                                     *   | NXT brick            | Left arrow button
-                                     */
-    PBIO_BUTTON_RIGHT   = 1 << 2,   /**< | Device               | Button
-                                     *   |----------------------|---------------
-                                     *   | Powered UP hub       | *invalid*
-                                     *   | Powered UP remote    | *invalid*
-                                     *   | EV3 brick            | Right button
-                                     *   | EV3 IR remote        | *invalid*
-                                     *   | NXT brick            | Right arrow button
-                                     */
-    PBIO_BUTTON_UP      = 1 << 3,   /**< | Device               | Button
-                                     *   |----------------------|---------------
-                                     *   | Powered UP hub       | *invalid*
-                                     *   | Powered UP remote    | Lefthand '+' button
-                                     *   | EV3 brick            | Up button
-                                     *   | EV3 IR remote        | Lefthand up button (red bar)
-                                     *   | NXT brick            | *invalid*
-                                     */
-    PBIO_BUTTON_DOWN    = 1 << 4,   /**< | Device               | Button
-                                     *   |----------------------|---------------
-                                     *   | Powered UP hub       | *invalid*
-                                     *   | Powered UP remote    | Lefthand '-' button
-                                     *   | EV3 brick            | Up button
-                                     *   | EV3 IR remote        | Lefthand down button (red bar)
-                                     *   | NXT brick            | *invalid*
-                                     */
-    PBIO_BUTTON_STOP    = 1 << 5,   /**< | Device               | Button
-                                     *   |----------------------|---------------
-                                     *   | Powered UP hub       | *invalid*
-                                     *   | Powered UP remote    | Lefthand stop button
-                                     *   | EV3 brick            | Back button (reserved for system - not useable in user programs)
-                                     *   | EV3 IR remote        | *invalid*
-                                     *   | NXT brick            | Clear/go back (dark gray) button (reserved for system - not useable in user programs)
-                                     */
-    PBIO_BUTTON_UP2     = 1 << 6,   /**< | Device               | Button
-                                     *   |----------------------|---------------
-                                     *   | Powered UP hub       | *invalid*
-                                     *   | Powered UP remote    | Righthand '+' button
-                                     *   | EV3 brick            | *invalid*
-                                     *   | EV3 IR remote        | Righthand up button (blue bar)
-                                     *   | NXT brick            | *invalid*
-                                     */
-    PBIO_BUTTON_DOWN2   = 1 << 7,   /**< | Device               | Button
-                                     *   |----------------------|---------------
-                                     *   | Powered UP hub       | *invalid*
-                                     *   | Powered UP remote    | Righthand '-' button
-                                     *   | EV3 brick            | *invalid*
-                                     *   | EV3 IR remote        | Righthand down button (blue bar)
-                                     *   | NXT brick            | *invalid*
-                                     */
-    PBIO_BUTTON_STOP2   = 1 << 8,   /**< | Device               | Button
-                                     *   |----------------------|---------------
-                                     *   | Powered UP hub       | *invalid*
-                                     *   | Powered UP remote    | Righthand stop (red) button
-                                     *   | EV3 brick            | *invalid*
-                                     *   | EV3 IR remote        | *invalid*
-                                     *   | NXT brick            | *invalid*
-                                     */
+    PBIO_BUTTON_LEFT_DOWN  = 1 << 1, /**< | Device               | Button
+                                      *   |----------------------|---------------
+                                      *   | Powered UP hub       | *invalid*
+                                      *   | Powered UP remote    | Lefthand '-' button
+                                      *   | EV3 brick            | *invalid*
+                                      *   | EV3 IR remote        | Lefthand down button (red bar)
+                                      *   | NXT brick            | *invalid*
+                                      */
+    PBIO_BUTTON_DOWN       = 1 << 2, /**< | Device               | Button
+                                      *   |----------------------|---------------
+                                      *   | Powered UP hub       | *invalid*
+                                      *   | Powered UP remote    | *invalid*
+                                      *   | EV3 brick            | Down button
+                                      *   | EV3 IR remote        | *invalid*
+                                      *   | NXT brick            | Dark gray button (reserved for system - not useable in user programs)
+                                      */
+    PBIO_BUTTON_RIGHT_DOWN = 1 << 3, /**< | Device               | Button
+                                      *   |----------------------|---------------
+                                      *   | Powered UP hub       | *invalid*
+                                      *   | Powered UP remote    | Righthand '-' button
+                                      *   | EV3 brick            | *invalid*
+                                      *   | EV3 IR remote        | Righthand down button (blue bar)
+                                      *   | NXT brick            | *invalid*
+                                      */
+    PBIO_BUTTON_LEFT       = 1 << 4, /**< | Device               | Button
+                                      *   |----------------------|---------------
+                                      *   | Powered UP hub       | *invalid*
+                                      *   | Powered UP remote    | Lefthand red button
+                                      *   | EV3 brick            | Left button
+                                      *   | EV3 IR remote        | *invalid*
+                                      *   | NXT brick            | Left arrow button
+                                      */
+    PBIO_BUTTON_CENTER     = 1 << 5, /**< | Device               | Button
+                                      *   |----------------------|---------------
+                                      *   | Powered UP hub       | Green button
+                                      *   | Powered UP remote    | Green button
+                                      *   | EV3 brick            | Center button
+                                      *   | EV3 IR remote        | *invalid*
+                                      *   | NXT brick            | Orange button
+                                      */
+    PBIO_BUTTON_RIGHT      = 1 << 6, /**< | Device               | Button
+                                      *   |----------------------|---------------
+                                      *   | Powered UP hub       | *invalid*
+                                      *   | Powered UP remote    | Righthand red button
+                                      *   | EV3 brick            | Right button
+                                      *   | EV3 IR remote        | *invalid*
+                                      *   | NXT brick            | Right arrow button
+                                      */
+    PBIO_BUTTON_LEFT_UP    = 1 << 7, /**< | Device               | Button
+                                      *   |----------------------|---------------
+                                      *   | Powered UP hub       | *invalid*
+                                      *   | Powered UP remote    | Lefthand '+' button
+                                      *   | EV3 brick            | Back button (reserved for system - not useable in user programs)
+                                      *   | EV3 IR remote        | Lefthand up button (red bar)
+                                      *   | NXT brick            | *invalid*
+                                      */
+    PBIO_BUTTON_UP         = 1 << 8, /**< | Device               | Button
+                                      *   |----------------------|---------------
+                                      *   | Powered UP hub       | *invalid*
+                                      *   | Powered UP remote    | *invalid*
+                                      *   | EV3 brick            | Up button
+                                      *   | EV3 IR remote        | Beacon
+                                      *   | NXT brick            | *invalid*
+                                      */
+    PBIO_BUTTON_RIGHT_UP   = 1 << 9, /**< | Device               | Button
+                                      *   |----------------------|---------------
+                                      *   | Powered UP hub       | *invalid*
+                                      *   | Powered UP remote    | Righthand '+' button
+                                      *   | EV3 brick            | *invalid*
+                                      *   | EV3 IR remote        | Righthand up button (blue bar)
+                                      *   | NXT brick            | *invalid*
+                                      */
+
 } pbio_button_flags_t;
 
 /** @cond */

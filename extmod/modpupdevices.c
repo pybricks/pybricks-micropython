@@ -194,12 +194,8 @@ STATIC const mp_rom_map_elem_t pupdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_devices) },
 #if PBIO_CONFIG_ENABLE_MOTORS
     { MP_ROM_QSTR(MP_QSTR_Motor),               MP_ROM_PTR(&motor_Motor_type)   },
-    { MP_ROM_QSTR(MP_QSTR_Stop),                MP_ROM_PTR(&motor_Stop_enum)    },
-    { MP_ROM_QSTR(MP_QSTR_Dir),                 MP_ROM_PTR(&motor_Dir_enum)     },
-    { MP_ROM_QSTR(MP_QSTR_Run),                 MP_ROM_PTR(&motor_Run_enum)     },
 #endif //PBIO_CONFIG_ENABLE_MOTORS
     { MP_ROM_QSTR(MP_QSTR_ColorDistanceSensor), MP_ROM_PTR(&pupdevices_ColorAndDistSensor_type) },
-    { MP_ROM_QSTR(MP_QSTR_Color),               MP_ROM_PTR(&pb_Color_enum)      },
 };
 
 STATIC MP_DEFINE_CONST_DICT (

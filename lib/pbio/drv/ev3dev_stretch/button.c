@@ -79,7 +79,7 @@ pbio_error_t pbdrv_button_is_pressed(pbio_port_t port, pbio_button_flags_t *pres
         *pressed |= PBIO_BUTTON_LEFT;
     }
     if (check(buffer, KEY_BACKSPACE)) {
-        *pressed |= PBIO_BUTTON_STOP;
+        *pressed |= PBIO_BUTTON_LEFT_UP;
     }
 
     return PBIO_SUCCESS;
