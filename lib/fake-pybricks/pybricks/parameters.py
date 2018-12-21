@@ -39,13 +39,17 @@ class Port(Enum):
 class Stop(Enum):
     """Action after the motor stops: coast, brake, or hold.
 
-    This defines the resistance to motion after coming to standstill:
+    This action defines the resistance to motion after coming to standstill:
 
-               | Resistance  | Physical meaning
-    ---------------------------------------------------------
-    Stop.coast | low         | Friction
-    Stop.brake | medium      | Friction + Torque opposite to speed
-    Stop.hold  | high        | Friction + Torque to maintain fixed angle
+    +-----------+-------------+------------------------------------------+
+    |Parameter  | Resistance  | Physical meaning                         |
+    +===========+=============+==========================================+
+    |Stop.coast | low         | Friction                                 |
+    +-----------+-------------+------------------------------------------+
+    |Stop.brake | medium      | Friction + Torque opposite to speed      |
+    +-----------+-------------+------------------------------------------+
+    |Stop.hold  | high        | Friction + Torque to maintain fixed angle|
+    +-----------+-------------+------------------------------------------+
 
     """
 
@@ -54,17 +58,51 @@ class Stop(Enum):
     hold = 2
 
 
-class Direction(Enum):
+class Direction():
     """Direction for positive speed values: clockwise or counterclockwise.
 
     For all motors, this is defined when looking at the shaft, just like looking at a clock.
 
     For NXT or EV3 motors, make sure to look at the motor with the red/orange shaft to the lower right.
 
-                               | Positive speed    | Negative speed
-    ---------------------------------------------------------
-    Direction.clockwise        | clockwise         | counterclockwise
-    Direction.counterclockwise | counterclockwise  | clockwise
+    +----------------------------+-------------------+-----------------+
+    | Parameter                  | Positive speed    | Negative speed  |
+    +============================+===================+=================+
+    | Direction.clockwise        | clockwise         | counterclockwise|
+    +----------------------------+-------------------+-----------------+
+    | Direction.counterclockwise | counterclockwise  | clockwise       |
+    +----------------------------+-------------------+-----------------+
+
+    ::
+
+        
+         Powered Up Motor:
+        
+        
+         counterclockwise          clockwise
+               ____                 _____
+              /                          \ 
+             /       _____________        \ 
+            /       /              \       \ 
+            |      |        _       |       |
+            |      |     __| |__    |       |
+            v      |    |__ o __|   |       v
+                   |       |_|      |
+                   |                |
+                    \______________/
+        
+        
+         NXT and EV3 motors:
+        
+              ________
+             /         \        ___    ___
+            _|          \      /          \ 
+            |             ----/------      \ 
+            counterclockwise  |    __\__    |  clockwise
+              \__________     v  /      \   v
+                          -------|  +   |
+                                 \_____/
+        
 
     """
 
@@ -72,46 +110,19 @@ class Direction(Enum):
     counterclockwise = -1
 
 
-#
-#  Powered Up Motor:
-#
-#
-#  counterclockwise          clockwise
-#        ____                 _____
-#       /                          \
-#      /       _____________        \
-#     /       /              \       \
-#     |      |        _       |       |
-#     |      |     __| |__    |       |
-#     v      |    |__ o __|   |       v
-#            |       |_|      |
-#            |                |
-#             \______________/
-#
-#
-#  NXT and EV3 motors:
-#
-#       ________
-#      /         \        ___    ___
-#     _|          \      /          \
-#     |             ----/------      \
-#     counterclockwise  |    __\__    |  clockwise
-#       \__________     v  /      \   v
-#                   -------|  +   |
-#                          \_____/
-#
-
-
 class Completion(Enum):
     """How the motor action should complete: foreground or background.
 
-                            | Effect
-    ---------------------------------------------------------
-    Completion.foreground   | Motor moves in foreground: Your script waits for the motor action to complete.
-    Completion.background   | Motor moves in background: Your script continues immediately while the motor is still moving.
-
     Note: A motor can only do one thing at the time. If a motor is running in
-    the background and you give it a new command, only the new command applies.
+    the background and you give it a new command, only the new command applies.    
+
+    +-----------------------+-------------------------------------------------------------------+
+    | Parameter             | Effect                                                            |
+    +=======================+===================================================================+
+    | Completion.foreground | Your script waits for the motor action to complete.               |
+    +-----------------------+-------------------------------------------------------------------+
+    | Completion.background | Your script continues immediately while the motor is still moving.|
+    +-----------------------+-------------------------------------------------------------------+
 
     """
 
@@ -120,19 +131,21 @@ class Completion(Enum):
 
 
 class Button(Enum):
-    """Buttons on a brick or remote: up, down, left, right, center, left_up, left_down, right_up, right_down, or beacon.
+    """Buttons on a brick or remote:
 
-              |          |
-    left_up   |    up    | right_up
-              |          |
-    ---------------------------------
-              |          |
-    left      |  center  | right
-              |          |
-    ---------------------------------
-              |          |
-    left_down |   down   | right_down
-              |          |
+    +-----------+----------+-----------+
+    |           |          |           |
+    | left_up   |up/beacon | right_up  |
+    |           |          |           |
+    +-----------+----------+-----------+
+    |           |          |           |
+    | left      |  center  | right     |
+    |           |          |           |
+    +-----------+----------+-----------+
+    |           |          |           |
+    | left_down |   down   | right_down|
+    |           |          |           |
+    +-----------+----------+-----------+
     """
 
     left_down = 1

@@ -3,12 +3,5 @@
 
 Intro
 
-
-Port
----------
-
-Text about ports.
-
-.. autoclass:: parameters.Port
-
+.. automodule:: parameters
 
