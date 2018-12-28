@@ -47,7 +47,7 @@ pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_motor_dir_t direction){
     // pbio_iodev_type_id_t auto_id =
 
     pbio_error_t status = pbio_dcmotor_coast(port);
-    if (status != PBIO_SUCCESS) {
+    if (status != PBIO_SUCCESS && status != PBIO_ERROR_IO) {
         return status;
     }
     dcmotor_settings[PORT_TO_IDX(port)].direction = direction;

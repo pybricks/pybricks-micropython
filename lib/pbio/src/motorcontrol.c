@@ -200,8 +200,14 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
     ustime_t time_start = clock_usecs();
     count_t count_start;
     rate_t rate_start;
-    pbio_encmotor_get_encoder_count(port, &count_start);
+    pbio_error_t err = pbio_encmotor_get_encoder_count(port, &count_start);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
     pbio_encmotor_get_encoder_rate(port, &rate_start);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }    
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
     pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
 

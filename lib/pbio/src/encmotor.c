@@ -131,8 +131,11 @@ void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
 }
 
 bool pbio_encmotor_has_encoder(pbio_port_t port){
+    // First check if there is any motor and reinitialize if necessary.
+    pbio_error_t err = pbio_dcmotor_coast(port);
+    // Return true if there is a motor and reading the encoder succeeds.
     int32_t count;
-    return pbdrv_motor_get_encoder_count(port, &count) == PBIO_SUCCESS;
+    return (err == PBIO_SUCCESS || err == PBIO_ERROR_IO) && pbdrv_motor_get_encoder_count(port, &count) == PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_encmotor_get_encoder_count(pbio_port_t port, int32_t *count) {
