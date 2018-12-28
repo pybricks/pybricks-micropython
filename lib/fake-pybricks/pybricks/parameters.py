@@ -6,7 +6,15 @@ from enum import Enum
 class Color(Enum):
     """Light or surface color.
 
-    black, blue, green, yellow, red, white, brown, orange, or purple.
+    .. data:: black
+    .. data:: blue
+    .. data:: green
+    .. data:: yellow
+    .. data:: red
+    .. data:: white
+    .. data:: brown
+    .. data:: orange
+    .. data:: purple
     """
 
     black = 1
@@ -21,7 +29,17 @@ class Color(Enum):
 
 
 class Port(Enum):
-    """Port on the intelligent brick."""
+    """Port on the intelligent brick.
+
+    .. data:: A
+    .. data:: B
+    .. data:: C
+    .. data:: D
+    .. data:: S1
+    .. data:: S2
+    .. data:: S3
+    .. data:: S4
+    """
 
     # Generic motor/sensor ports
     A = ord('A')
@@ -39,16 +57,28 @@ class Port(Enum):
 class Stop(Enum):
     """Action after the motor stops: coast, brake, or hold.
 
-    This action defines the resistance to motion after coming to standstill:
+    .. data:: coast
+
+        Let the motor move freely.
+
+    .. data:: brake
+
+        Passively resist small external forces.
+
+    .. data:: hold
+
+        Keep controlling the motor to hold it at the commanded angle.
+
+    The stop type defines the resistance to motion after coming to standstill:
 
     +-----------+-------------+------------------------------------------+
     |Parameter  | Resistance  | Physical meaning                         |
     +===========+=============+==========================================+
     |Stop.coast | low         | Friction                                 |
     +-----------+-------------+------------------------------------------+
-    |Stop.brake | medium      | Friction + Torque opposite to speed      |
+    |Stop.brake | medium      | Friction + Torque opposite to motion     |
     +-----------+-------------+------------------------------------------+
-    |Stop.hold  | high        | Friction + Torque to maintain fixed angle|
+    |Stop.hold  | high        | Friction + Torque to hold commanded angle|
     +-----------+-------------+------------------------------------------+
 
     """
@@ -59,7 +89,15 @@ class Stop(Enum):
 
 
 class Direction():
-    """Direction for positive speed values: clockwise or counterclockwise.
+    """Rotational direction for positive speed values: clockwise or counterclockwise.
+
+    .. data:: clockwise
+
+        A positive speed value should make the motor move clockwise.
+
+    .. data:: counterclockwise
+
+        A positive speed value should make the motor move counterclockwise.
 
     For all motors, this is defined when looking at the shaft, just like looking at a clock.
 
@@ -75,34 +113,34 @@ class Direction():
 
     ::
 
-        
-         Powered Up Motor:
-        
-        
+
+         Medium EV3 Motor:
+
+
          counterclockwise          clockwise
                ____                 _____
-              /                          \ 
-             /       _____________        \ 
-            /       /              \       \ 
+              /                          \\
+             /       _____________        \\
+            /       /              \       \\
             |      |        _       |       |
             |      |     __| |__    |       |
             v      |    |__ o __|   |       v
                    |       |_|      |
                    |                |
                     \______________/
-        
-        
-         NXT and EV3 motors:
-        
+
+
+         Large EV3 motor:
+
               ________
              /         \        ___    ___
-            _|          \      /          \ 
-            |             ----/------      \ 
+            _|          \      /          \\
+            |             ----/------      \\
             counterclockwise  |    __\__    |  clockwise
               \__________     v  /      \   v
                           -------|  +   |
                                  \_____/
-        
+
 
     """
 
