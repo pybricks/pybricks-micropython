@@ -110,26 +110,6 @@ class Direction():
     counterclockwise = -1
 
 
-class Completion(Enum):
-    """How the motor action should complete: foreground or background.
-
-    Note: A motor can only do one thing at the time. If a motor is running in
-    the background and you give it a new command, only the new command applies.    
-
-    +-----------------------+-------------------------------------------------------------------+
-    | Parameter             | Effect                                                            |
-    +=======================+===================================================================+
-    | Completion.foreground | Your script waits for the motor action to complete.               |
-    +-----------------------+-------------------------------------------------------------------+
-    | Completion.background | Your script continues immediately while the motor is still moving.|
-    +-----------------------+-------------------------------------------------------------------+
-
-    """
-
-    foreground = 0
-    background = 1
-
-
 class Button(Enum):
     """Buttons on a brick or remote:
 

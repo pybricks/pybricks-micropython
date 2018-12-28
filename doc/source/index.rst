@@ -11,6 +11,7 @@ Welcome to Pybricks's documentation!
    :caption: EV3 Modules:
 
    parameters
+   ev3devices
 
 
 
