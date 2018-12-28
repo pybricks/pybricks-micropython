@@ -35,6 +35,11 @@ tests/*.out
 __pycache__/
 *.pyc
 
+# PyPi build files
+######################
+*.egg-info/
+dist/
+
 # Customized Makefile/project overrides
 ######################
 GNUmakefile

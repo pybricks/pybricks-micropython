@@ -8,23 +8,9 @@ Welcome to Pybricks's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Basics:
+   :caption: EV3 Modules:
 
-   repl
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Device-specific modules:
-
-   modmovehub
-
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Common modules:
-
-   modpblight
-   modutime
+   parameters
 
 
 

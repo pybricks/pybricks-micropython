@@ -21,4 +21,4 @@
 # SOFTWARE.
 
 # TODO: This is a quick fix for the purpose of proposing the API change. If moving forward with this, we can properly adjust the implementation at c level instead.
-from timing import wait, StopWatch
+from tools import wait, StopWatch

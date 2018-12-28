@@ -21,10 +21,6 @@
 # SOFTWARE.
 """Enum classes of parameters, used by modules in the Pybricks package."""
 
-# TODO: if going forward with this branch, we can start properly re-organize/rename these at the C-level instead, so it applies to all platforms
-from ev3brick_c import Port
-from ev3devices_c import Stop, Color, Button
-from ev3devices_c import Dir as Direction
-from ev3devices_c import Run as Completion
+from parameters_c import Port, Direction, Completion, Stop, Color, Button
 from .display import Image, Align
 from .speaker import Sound

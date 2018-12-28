@@ -34,30 +34,6 @@
 #include "pbobj.h"
 
 
-/* Motor stop enum */
-
-STATIC const mp_rom_map_elem_t motor_Stop_enum_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_coast),       MP_ROM_INT(PBIO_MOTOR_STOP_COAST)   },
-    { MP_ROM_QSTR(MP_QSTR_brake),       MP_ROM_INT(PBIO_MOTOR_STOP_BRAKE)   },
-    { MP_ROM_QSTR(MP_QSTR_hold),        MP_ROM_INT(PBIO_MOTOR_STOP_HOLD)    },
-};
-PB_DEFINE_CONST_ENUM(motor_Stop_enum, motor_Stop_enum_table);
-
-/* Motor direction enum */
-
-STATIC const mp_rom_map_elem_t motor_Dir_enum_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_normal),      MP_ROM_INT(PBIO_MOTOR_DIR_NORMAL)   },
-    { MP_ROM_QSTR(MP_QSTR_inverted),    MP_ROM_INT(PBIO_MOTOR_DIR_INVERTED) },
-};
-PB_DEFINE_CONST_ENUM(motor_Dir_enum, motor_Dir_enum_table);
-
-/* Motor run type enum */
-
-STATIC const mp_rom_map_elem_t motor_Run_enum_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_foreground),  MP_ROM_INT(PBIO_MOTOR_RUN_FOREGROUND)   },
-    { MP_ROM_QSTR(MP_QSTR_background),  MP_ROM_INT(PBIO_MOTOR_RUN_BACKGROUND)   },
-};
-PB_DEFINE_CONST_ENUM(motor_Run_enum, motor_Run_enum_table);
 
 /* Wait for maneuver to complete */
 
