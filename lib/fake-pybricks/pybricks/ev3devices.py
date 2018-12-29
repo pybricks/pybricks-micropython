@@ -48,6 +48,22 @@ class Motor():
         """
         pass
 
-    def run_time(self, speed):
-        """Test docstring."""
+    def settings(self, torque_limit, stall_speed, stall_time, max_speed, speed_tolerance, angle_tolerance, acceleration_start, acceleration_end, manual_control_time, kp, ki, kd):
+        """Test
+
+        Arguments:
+            torque_limit (:term:`percentage`): test
+            max_speed (:term:`speed`): test
+            speed_tolerance (:term:`speed`): test
+            angle_tolerance (:term:`angle`): test
+            acceleration_start (:term:`acceleration`): test
+            acceleration_end (:term:`acceleration`): test
+            stall_speed (:term:`speed`): test
+            stall_time (:term:`time`): test
+            manual_control_time (:term:`time`): test
+            kp (int): test
+            ki (int): test
+            kd (int): test
+        """
+
         pass

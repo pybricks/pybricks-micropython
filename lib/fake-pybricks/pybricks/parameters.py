@@ -31,10 +31,15 @@ class Color(Enum):
 class Port(Enum):
     """Port on the intelligent brick.
 
+    Motor ports:
+
     .. data:: A
     .. data:: B
     .. data:: C
     .. data:: D
+
+    Sensor ports:
+
     .. data:: S1
     .. data:: S2
     .. data:: S3
@@ -150,6 +155,17 @@ class Direction():
 
 class Button(Enum):
     """Buttons on a brick or remote:
+
+    .. data:: left_down
+    .. data:: down
+    .. data:: right_down
+    .. data:: left
+    .. data:: center
+    .. data:: right
+    .. data:: left_up
+    .. data:: up
+    .. data:: beacon
+    .. data:: right_up
 
     +-----------+----------+-----------+
     |           |          |           |

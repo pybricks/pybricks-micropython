@@ -8,10 +8,11 @@ Welcome to Pybricks's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: EV3 Modules:
+   :caption: Pybricks:
 
    parameters
    ev3devices
+   signaltypes
 
 
 
