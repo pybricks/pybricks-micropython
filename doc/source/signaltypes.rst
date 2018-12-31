@@ -1,4 +1,4 @@
-Signals and units
+Signals and Units
 =================
 
 Intro

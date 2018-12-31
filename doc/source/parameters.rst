@@ -1,5 +1,5 @@
-:mod:`parameters` -- Title
-==========================
+:mod:`parameters` -- Parameters and Constants
+=============================================
 
 Intro
 

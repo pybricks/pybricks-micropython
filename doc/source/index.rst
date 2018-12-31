@@ -7,13 +7,28 @@ Welcome to Pybricks's documentation!
 ====================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Pybricks:
+   :maxdepth: 1
+   :caption: Getting started:
 
-   parameters
+   startinstall
+   startrun
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Modules:
+
+   ev3brick
    ev3devices
-   signaltypes
+   parameters
+   tools
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Engineering essentials:
+
+   signaltypes
+   motorcontrol
 
 
 Indices and tables
