@@ -1,4 +1,4 @@
 :mod:`tools` -- Timing and Datalogging
 ======================================
 
-Intro
+.. automodule:: tools

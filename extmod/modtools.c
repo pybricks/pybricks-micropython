@@ -54,7 +54,6 @@ STATIC mp_obj_t tools_StopWatch_reset(mp_obj_t self_in) {
     self->time_start = mp_hal_ticks_ms();
     self->time_stop = self->time_start;
     self->time_spent_pausing = 0;
-    self->running = false;
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(tools_StopWatch_reset_obj, tools_StopWatch_reset);
