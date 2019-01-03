@@ -19,39 +19,16 @@ class Motor():
         Arguments:
             port (Port): Port to which the motor is connected
             direction (Direction): Positive speed direction. (*Default*: Direction.clockwise)
-            gears (list): List of the number of teeth on each gear in a gear train, as shown in the examples below. Use a list of lists for multiple gear trains. (*Default*: None)
-        ::
+            gears (list): List of gears linked to the motor. (*Default*: ``None``)
 
-            Example for one gear train: gears=[12, 36]
-             ____________
-            |            |
-            |    motor   |
-            |____________|
-                  ||
-                  || 12t      36t
-                ||||||  ||||||||||||||
-                              ||
-                              ||
-                          output axle
+                          For example: ``[12, 36]`` represents a gear train with a 12-tooth and a 36-tooth gear. See :ref:`ratio` for illustrated examples.
 
+                          Use a list of lists for multiple gear trains, such as ``[[12, 36], [20, 16, 40]]``.
 
-            Example with multiple gear trains: gears=[[12, 20, 36], [20, 40], [20, 8, 40]]
-            _____________
-            |            |
-            |    motor   |
-            |____________|
-                  ||
-                  || 12t    20t           36t
-                ||||||  |||||||||||  ||||||||||||||
-                                           ||
-                                           ||
-                                        ||||||||  |||||||||||||||||
-                                            20t          || 40t
-                                                         ||
-                                                      ||||||||  |||  |||||||||||||||||
-                                                          20t    8t         || 40t
-                                                                            ||
-                                                                        output axle
+                          When you specify a gear train, all motor commands and settings will be adjusted to account for the resulting gear ratio.
+
+                          For example, with ``gears=[12, 36]``, the gear ratio is 3, and the motor will automatically turn 3 times as fast and 3 times as far when you give a motor command. So when you run ``motor.run_angle(200, 90)``, it will automatically make your geared mechanism output turn by precisely 90 degrees.
+
         """
         pass
 
@@ -73,7 +50,6 @@ class Motor():
             acceleration (:ref:`acceleration`): Acceleration towards the target speed.
             deceleration (:ref:`acceleration`): Deceleration towards standstill.
         """
-
         pass
 
     def set_control_settings(self, kp, ki, kd, pid_reset_time, angle_tolerance, speed_tolerance, stall_speed, stall_time):
@@ -88,6 +64,126 @@ class Motor():
             speed_tolerance (:ref:`speed`): Allowed deviation from zero speed before motion is considered complete.
             stall_speed (:ref:`speed`): If the motor moves slower than ``stall_speed`` for ``stall_time`` during any of the ``run`` commands, the motor is considered to be stalled.
             stall_time (:ref:`time`): See ``stall_speed``.
+        """
+        pass
+
+    def duty(self, duty):
+        """Set the :ref:`duty cycle <duty>` of the motor.
+
+        Arguments:
+            duty (percentage): The duty cycle (-100.0 to 100).
+        """
+        pass
+
+    def angle(self):
+        """Get the rotation angle of the motor or mechanism.
+
+        Returns:
+            :ref:`angle`: Motor or mechanism angle.
+
+        """
+        pass
+
+    def speed(self):
+        """Get the speed (angular velocity) of the motor or mechanism.
+
+        Returns:
+            :ref:`speed`: Motor or mechanism speed.
+
+        """
+        pass
+
+    def reset_angle(self, angle=0):
+        """Reset the accumulated rotation angle of the motor or mechanism.
+
+        Arguments:
+            angle (:ref:`angle`): Value to which the angle should be reset (*Default*: 0).
+        """
+        pass
+
+    def stop(self, stop_type=Stop.coast):
+        """stop(self, stop_type=Stop.coast)
+
+        Stop the motor.
+
+        Arguments:
+            stop_type (Stop): Whether to coast, brake, or hold (*Default*: :class:`Stop.coast <parameters.Stop>`).
+        """
+        pass
+
+    def run(self, speed, wait=False):
+        """Keep the motor runnning at a constant speed (angular velocity).
+
+        The motor will accelerate towards the requested speed and the duty cycle is automatically adjusted to keep the speed constant, even under some load. This continues in the background until you give this motor a new command.
+
+        Arguments:
+            speed (:ref:`speed`): Speed of the motor.
+            wait (bool): Wait for the motor to reach the requested speed before continuing with the rest of the program (*Default*: ``False``).
+        """
+        pass
+
+    def run_time(self, speed, time, wait=True, stop_type=Stop.coast):
+        """run_time(self, speed, time, wait=False, stop_type=Stop.coast)
+
+        Run the motor at a constant speed (angular velocity) for a given amount of time.
+
+        The motor will accelerate towards the requested speed and the duty cycle is automatically adjusted to keep the speed constant, even under some load. It begins to decelerate just in time to reach standstill after the specified duration.
+
+        Arguments:
+            speed (:ref:`speed`): Speed of the motor.
+            time (:ref:`time`): Duration of the maneuver.
+            wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits for the specified ``time``.
+            stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
+        """
+        pass
+
+    def run_angle(self, speed, rotation_angle, wait=True, stop_type=Stop.coast):
+        """run_angle(self, speed, rotation_angle, wait=False, stop_type=Stop.coast)
+
+        Run the motor at a constant speed (angular velocity) by a given angle.
+
+        The motor will accelerate towards the requested speed and the duty cycle is automatically adjusted to keep the speed constant, even under some load. It begins to decelerate just in time so that it comes to standstill after traversing the given angle.
+
+        Arguments:
+            speed (:ref:`speed`): Speed of the motor.
+            rotation_angle (:ref:`time`): Angle by which the motor or mechanism should rotate.
+            wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits until the motor has traveled precisely the requested angle.
+            stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
+        """
+        pass
+
+    def run_target(self, speed, target_angle, wait=True, stop_type=Stop.coast):
+        """run_target(self, speed, target_angle, wait=False, stop_type=Stop.coast)
+
+        Run the motor at a constant speed (angular velocity) towards a given target angle.
+
+        The motor will accelerate towards the requested speed and the duty cycle is automatically adjusted to keep the speed constant, even under some load. It begins to decelerate just in time so that it comes to standstill at the given target angle.
+        
+        The direction of rotation is automatically selected based on the target angle.
+
+        Arguments:
+            speed (:ref:`speed`): Absolute speed of the motor. The direction will be automatically selected based on the target angle: it makes no difference if you specify a positive or negative speed.
+            target_angle (:ref:`time`): Target angle that the motor should go to, regardless of its current angle.
+            wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits until the motor has reached the target angle.
+            stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
+        """
+        pass
+
+    def run_until_stalled(self, speed, torque_limit, stop_type=Stop.coast):
+        """run_until_stalled(self, speed, torque_limit, stop_type=Stop.coast)
+
+        Run the motor at a constant speed (angular velocity) until it stalls.
+
+        The motor will accelerate towards the requested speed and the duty cycle is automatically adjusted to keep the speed constant, until it encounters an obstacle that prevents it from turning any further. Then the motor stops.
+
+        Arguments:
+            speed (:ref:`speed`): Speed of the motor.
+            torque_limit (:ref:`percentage`): Maximum duty cycle used during this command. It works just like :func:`.set_torque_limit`, but it is temporary: once this command completes the motor uses the default or user-specified torque limit again. For example, this allows you to avoid high torques when resetting a mechanism, while the motor operates normally afterwards.
+            stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
+
+        Returns:
+            :ref:`angle`: Angle at which the motor or mechanism became stalled.
+
         """
         pass
 
@@ -210,7 +306,7 @@ class InfraredSensor():
             channel (int): Channel number of the remote
 
         :returns: Tuple of relative distance (0 to 100) and approximate angle (-75 to 75 degrees) between remote and infrared sensor.
-        :rtype: (:ref:`relativedistance`, :ref:`angle`)
+        :rtype: (:ref:`relativedistance`, :ref:`angle`) or (``None``, ``None``) if no remote is detected.
         """
         pass
 
@@ -247,7 +343,7 @@ class GyroSensor():
 
     def reset(self):
         """Force sensor to reset as if disconnecting and reconnecting it.
-        
+
         This can take up to 3 seconds.
         """
         pass
@@ -297,7 +393,7 @@ class UltrasonicSensor():
             silent (bool): Choose ``True`` to turn the sensor off after measuring the distance.
 
                            Choose ``False`` to leave the sensor on (*Default*).
-                           
+
                            When you choose ``silent=True``, the sensor does not emit sounds waves
                            except when taking the measurement. This reduces interference with
                            other ultrasonic sensors, but turning the sensor off takes approximately 300 ms each time.
@@ -310,7 +406,7 @@ class UltrasonicSensor():
 
     def presence(self):
         """Check for the presence of other ultrasonic sensors by detecting ultrasonic sounds.
-        
+
         If the other ultrasonic sensor operates in silent mode, you can only detect the presence of that sensor while it is taking a measurement.
 
         Returns:

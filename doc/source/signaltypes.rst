@@ -5,51 +5,53 @@ Intro
 
 .. _time:
 
-time
-----
+time: ms
+---------
 TODO definition of physical quantity and units and :py:obj:`float` type
 
 .. _angle:
 
-angle
------
+angle: deg
+-----------
 TODO definition of physical quantity and units and :py:obj:`float` type
 
 
 .. _distance:
 
-distance
---------
+distance: mm
+-------------
 TODO definition of physical quantity and units and :py:obj:`float` type
 
 
 .. _relativedistance:
 
-relative distance
------------------
+relative distance: %
+---------------------
 TODO definition of physical quantity and units and :py:obj:`float` type
 
 .. _speed:
 
-speed
------
+speed: deg/s
+-------------
 (angular velocity for motor, sensor) TODO definition of physical quantity and units and :py:obj:`float` type
 
 
-speed
------
+.. _travelspeed:
+
+speed: mm/s
+------------
 (drive speed) TODO definition of physical quantity and units and :py:obj:`float` type
 
 
 
 .. _acceleration:
 
-acceleration
-------------
+acceleration: deg/s/s
+----------------------
 TODO definition of physical quantity and units and :py:obj:`float` type
 
 .. _percentage:
 
-percentage
-----------
+percentage: %
+--------------
 TODO definition of physical quantity and units and :py:obj:`float` type
