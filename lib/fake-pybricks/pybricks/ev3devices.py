@@ -25,9 +25,11 @@ class Motor():
 
                           Use a list of lists for multiple gear trains, such as ``[[12, 36], [20, 16, 40]]``.
 
-                          When you specify a gear train, all motor commands and settings will be adjusted to account for the resulting gear ratio.
+                          When you specify a gear train, all motor commands and settings are automatically adjusted to account for the resulting gear ratio.
 
-                          For example, with ``gears=[12, 36]``, the gear ratio is 3, and the motor will automatically turn 3 times as fast and 3 times as far when you give a motor command. So when you run ``motor.run_angle(200, 90)``, it will automatically make your geared mechanism output turn by precisely 90 degrees.
+                          For example, with ``gears=[12, 36]``, the gear ratio is 3, which means that the output is mechanically slowed down by a factor of 3. To compensate, the motor will automatically turn 3 times as fast and 3 times as far when you give a motor command. So when you choose ``run_angle(200, 90)``, your mechanism output simply turns at 200 deg/s by 90 degrees.
+
+                          The same holds for the documentation below: When it says "motor angle" or "motor speed", you can read it as "mechanism output angle" and "mechanism output speed", and so on, because the gear ratio is automatically accounted for.
 
         """
         pass
@@ -76,25 +78,25 @@ class Motor():
         pass
 
     def angle(self):
-        """Get the rotation angle of the motor or mechanism.
+        """Get the rotation angle of the motor.
 
         Returns:
-            :ref:`angle`: Motor or mechanism angle.
+            :ref:`angle`: Motor angle.
 
         """
         pass
 
     def speed(self):
-        """Get the speed (angular velocity) of the motor or mechanism.
+        """Get the speed (angular velocity) of the motor.
 
         Returns:
-            :ref:`speed`: Motor or mechanism speed.
+            :ref:`speed`: Motor speed.
 
         """
         pass
 
     def reset_angle(self, angle=0):
-        """Reset the accumulated rotation angle of the motor or mechanism.
+        """Reset the accumulated rotation angle of the motor.
 
         Arguments:
             angle (:ref:`angle`): Value to which the angle should be reset (*Default*: 0).
@@ -111,14 +113,13 @@ class Motor():
         """
         pass
 
-    def run(self, speed, wait=False):
+    def run(self, speed):
         """Keep the motor runnning at a constant speed (angular velocity).
 
-        The motor will accelerate towards the requested speed and the duty cycle is automatically adjusted to keep the speed constant, even under some load. This continues in the background until you give this motor a new command.
+        The motor will accelerate towards the requested speed and the duty cycle is automatically adjusted to keep the speed constant, even under some load. This continues in the background until you give the motor a new command or until the program stops.
 
         Arguments:
             speed (:ref:`speed`): Speed of the motor.
-            wait (bool): Wait for the motor to reach the requested speed before continuing with the rest of the program (*Default*: ``False``).
         """
         pass
 
@@ -146,7 +147,7 @@ class Motor():
 
         Arguments:
             speed (:ref:`speed`): Speed of the motor.
-            rotation_angle (:ref:`time`): Angle by which the motor or mechanism should rotate.
+            rotation_angle (:ref:`time`): Angle by which the motor should rotate.
             wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits until the motor has traveled precisely the requested angle.
             stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
         """
@@ -182,7 +183,7 @@ class Motor():
             stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
 
         Returns:
-            :ref:`angle`: Angle at which the motor or mechanism became stalled.
+            :ref:`angle`: Angle at which the motor became stalled.
 
         """
         pass

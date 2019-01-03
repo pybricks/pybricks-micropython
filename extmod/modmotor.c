@@ -342,6 +342,7 @@ STATIC mp_obj_t motor_Motor_run_stalled(size_t n_args, const mp_obj_t *args){
     // Call pbio with parsed user/default arguments
     pb_assert(pbio_encmotor_run_stalled(port, mp_obj_get_num(args[1]), after_stop));
     wait_for_completion(port, runtype);
+    // TODO: THIS MANEUVER SHOULD ALWAYS COMPLETE
     // If the user specified to wait for the motion to complete, return the angle at which the motor stalled
     if (runtype == PBIO_MOTOR_RUN_FOREGROUND) {
         int32_t stall_point;
