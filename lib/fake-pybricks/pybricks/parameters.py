@@ -192,3 +192,63 @@ class Button(Enum):
     up = 8
     beacon = 8
     right_up = 9
+
+
+class Pattern():
+    """Light patterns.
+
+    .. data:: solid
+
+        The light stays on.
+
+    .. data:: blink1
+
+        The light blinks once per second: It stays on for 500 ms and then stays off for 500 ms.
+
+    .. data:: blink2
+
+        The light blinks twice per second: It stays on for 250 ms and then stays off for 250 ms.
+
+    .. data:: blink3
+
+        The light blinks three times per second: It stays on for 167 ms and then stays off for 167 ms.
+
+    .. data:: glow
+
+        The light gradually turns on and then off again, as if glowing.
+
+    .. data:: ev3
+
+        The default pattern of a running EV3-G program.
+    """
+
+    solid = [(100, 1000)]
+    blink1 = [(100, 500), (0, 500)]
+    blink2 = [(100, 250), (0, 250)]
+    blink3 = [(100, 167), (0, 167)]
+    glow = [] # TODO
+    ev3 = [(100, 100), (0, 100), (100, 100), (0, 700)] # TODO: Get the true values
+
+
+class Align():
+    """Alignment of an image on a screen. TODO: use same logic as buttons??
+
+    .. data:: center
+    """
+    bottom_left = 1
+    bottom = 2
+    bottom_right = 3
+    left = 4
+    center = 5
+    right = 6
+    top_left = 7
+    top = 8
+    top_right = 9
+
+
+class Image():
+    """Paths to standard EV3 images.
+
+    .. data:: up
+    """
+    up = '/path/to/up'

@@ -55,3 +55,9 @@ TODO definition of physical quantity and units and :py:obj:`float` type
 percentage: %
 --------------
 TODO definition of physical quantity and units and :py:obj:`float` type
+
+.. _frequency:
+
+frequency: Hz
+--------------
+TODO definition of physical quantity and units and :py:obj:`float` type

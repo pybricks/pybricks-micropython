@@ -18,3 +18,12 @@ Intro
 
 .. autoclass:: parameters.Button
     :no-members:
+
+.. autoclass:: parameters.Pattern
+    :no-members:
+
+.. autoclass:: parameters.Align
+    :no-members:
+
+.. autoclass:: parameters.Image
+    :no-members:
