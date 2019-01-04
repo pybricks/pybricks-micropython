@@ -250,7 +250,7 @@ include $(TOP)/py/mkrules.mk
 .PHONY: test
 
 test: $(PROG) $(TOP)/tests/run-tests
-	$(eval DIRNAME=ports/$(notdir $(CURDIR)))
+	$(eval DIRNAME=ports/pybricks/bricks/$(notdir $(CURDIR)))
 	cd $(TOP)/tests && MICROPY_MICROPYTHON=../$(DIRNAME)/$(PROG) ./run-tests
 
 # install micropython in /usr/local/bin
@@ -285,14 +285,7 @@ libffi:
 	../configure $(CROSS_COMPILE_HOST) --prefix=$$PWD/out --disable-structs CC="$(CC)" CXX="$(CXX)" LD="$(LD)" CFLAGS="-Os -fomit-frame-pointer -fstrict-aliasing -ffast-math -fno-exceptions"; \
 	$(MAKE) install-exec-recursive; $(MAKE) -C include install-data-am
 
-axtls: $(BUILD)/libaxtls.a
-
-$(BUILD)/libaxtls.a: $(TOP)/lib/axtls/README | $(OBJ_DIRS)
-	cd $(TOP)/lib/axtls; cp config/upyconfig config/.config
-	cd $(TOP)/lib/axtls; $(MAKE) oldconfig -B  HOSTCC="$(CC)"
-	cd $(TOP)/lib/axtls; $(MAKE) clean
-	cd $(TOP)/lib/axtls; $(MAKE) all CC="$(CC)" LD="$(LD)"
-	cp $(TOP)/lib/axtls/_stage/libaxtls.a $@
+axtls: $(TOP)/lib/axtls/README
 
 $(TOP)/lib/axtls/README:
 	@echo "You cloned without --recursive, fetching submodules for you."

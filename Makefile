@@ -11,7 +11,6 @@ doc-pbio:
 	@$(MAKE) -C lib/pbio/doc
 
 ev3dev-host:
-	@$(MAKE) -C bricks/ev3dev axtls
 	@$(MAKE) -C bricks/ev3dev
 
 clean-ev3dev-host: clean-mpy-cross

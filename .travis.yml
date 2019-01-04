@@ -3,6 +3,8 @@ language:
   - c
 compiler:
   - gcc
+services:
+  - docker
 cache:
   directories:
     - "${HOME}/persist"
@@ -48,20 +50,20 @@ jobs:
       after_failure:
         - (cd tests && for exp in *.exp; do testbase=$(basename $exp .exp); echo -e "\nFAILURE $testbase"; diff -u $testbase.exp $testbase.out; done)
 
-    # standard unix port
+    # Pybricks ev3dev
     - stage: test
-      env: NAME="unix port build and tests"
+      env: NAME="Pybricks ev3dev build"
       install:
+        - sudo apt update -qq || true
+        - sudo apt install qemu-user-static
         - cd ${HOME}
         - git clone --depth=10 --recursive https://github.com/pybricks/micropython
         - cd micropython/ports/pybricks
         - git checkout ${TRAVIS_COMMIT}
-        - cd ../..
+        - bricks/ev3dev/docker/setup.sh armel
       script:
-        - make ${MAKEOPTS} -C mpy-cross
-        - make ${MAKEOPTS} -C ports/unix deplibs
-        - make ${MAKEOPTS} -C ports/unix
-        - make ${MAKEOPTS} -C ports/unix test
+        - docker exec --tty pybricks-ev3dev_armel make
+        - docker exec --tty pybricks-ev3dev_armel make test
 
     # Pybricks Move Hub
     - stage: test

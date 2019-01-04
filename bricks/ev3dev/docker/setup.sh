@@ -60,11 +60,9 @@ docker run \
     --name ${container_name} \
     --env "TERM=${TERM}" \
     --env "DESTDIR=/build/dist" \
+    --user $(id -u):$(id -g) \
     --tty \
     --detach \
     ${image_name} tail
-
-docker exec --tty ${container_name} pwd
-docker exec --tty ${container_name} make axtls
 
 echo "Done. You can now compile by running 'docker exec --tty ${container_name} make'"
