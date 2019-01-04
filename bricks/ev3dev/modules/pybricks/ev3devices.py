@@ -104,8 +104,7 @@ class ColorSensor(Ev3devSensor):
 
         """
         self.mode('REF-RAW')
-        # Todo: verify actual formula
-        return round((653-self.value(0))*0.28, 1)
+        return round(max(0, min(self.value(0)*-0.2965+193.6, 100)), 1)
 
     def rgb(self):
         """Measure the reflection of a surface (using a red, green, and blue light, each measured in turn).
@@ -115,8 +114,10 @@ class ColorSensor(Ev3devSensor):
 
         """
         self.mode('RGB-RAW')
-        # TODO: Discuss range: (0-100 vs 0-255 vs 0-1023). Range 0-100 equivalent to reflected mode would be nice.
-        return min(self.value(0)*100 >> 9, 100), min(self.value(1)*100 >> 9, 100), min(self.value(2)*100 >> 9, 100)
+        r = round(max(0, min(self.value(0)*0.258-0.3, 100)), 1)
+        g = round(max(0, min(self.value(1)*0.280-0.8, 100)), 1)
+        b = round(max(0, min(self.value(2)*0.523-3.7, 100)), 1)
+        return r, g, b
 
 
 class InfraredSensor(Ev3devSensor):
