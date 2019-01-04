@@ -20,7 +20,6 @@ Intro
     :no-members:
 
 .. autoclass:: parameters.Pattern
-    :no-members:
 
 .. autoclass:: parameters.Align
     :no-members:

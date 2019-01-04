@@ -61,3 +61,10 @@ TODO definition of physical quantity and units and :py:obj:`float` type
 frequency: Hz
 --------------
 TODO definition of physical quantity and units and :py:obj:`float` type
+
+
+.. _colortuple:
+
+custom color
+--------------
+TODO definition of physical quantity and units and :py:obj:`float` type

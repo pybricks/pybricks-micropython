@@ -15,6 +15,13 @@ class Speaker():
             frequency (:ref:`frequency`): Frequency of the beep (*Default*: 500).
             duration (:ref:`time`): Duration of the beep (*Default*: 100).
             volume (:ref:`percentage`): Volume of the beep (*Default*: 30).
+        ::
+
+            # A simple beep
+            brick.sound.beep()
+
+            # A high pitch (1500 Hz) for one second (1000 ms) at 50% volume
+            brick.sound.beep(1500, 1000, 50)
         """
         pass
 
@@ -23,6 +30,11 @@ class Speaker():
 
         Arguments:
             number (int): Number of beeps
+
+        ::
+
+            # Make 5 simple beeps
+            brick.sound.beeps(5)
         """
         pass
 
@@ -32,6 +44,13 @@ class Speaker():
         Arguments:
             frequencies_and_durations (list): List of (:ref:`frequency`, :ref:`time`) pairs
             volume (:ref:`percentage`): Volume of the tune (*Default*: 30).
+
+        ::
+
+            # Play a tune of three notes with increasing
+            # pitch (500 Hz, 1000 Hz, 1500 Hz), each 200 ms.
+            my_tune = [(500, 200), (1000, 200), (1500, 200)]
+            brick.sound.tune(my_tune)
         """
         pass
 
@@ -41,6 +60,15 @@ class Speaker():
         Arguments:
             file_name (str): Path to the sound file, including extension.
             volume (:ref:`percentage`): Volume of the sound (*Default*: 100).
+
+        ::
+
+            # Play one of the built-in sounds
+            brick.sound.file(Sound.hello)
+
+            # Play a sound file from your project folder
+            brick.sound.file('mysound.wav')
+
         """
 
         pass
@@ -51,5 +79,9 @@ class Speaker():
         Arguments:
             text (str): The text to speak.
             volume (:ref:`percentage`): Volume of the sound (*Default*: 100).
+        ::
+
+            # Say "Hi!"
+            brick.sound.speak('Hi!')
         """
         pass
