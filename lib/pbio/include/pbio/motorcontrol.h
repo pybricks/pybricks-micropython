@@ -45,14 +45,7 @@
  * @{
  */
 
-/**
- * Motor action executed after completing a run command that ends in a smooth stop.
- */
-typedef enum {
-    PBIO_MOTOR_STOP_COAST,      /**< Coast the motor */
-    PBIO_MOTOR_STOP_BRAKE,      /**< Brake the motor */
-    PBIO_MOTOR_STOP_HOLD,       /**< Actively hold the motor in place */
-} pbio_motor_after_stop_t;
+
 
 /**
  * Busy wait (or not) for a run command to complete
