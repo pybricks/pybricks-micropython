@@ -49,11 +49,15 @@
 #define NONZERO (100) // Arbitrary nonzero speed
 #define max_abs_accl (1000000) // "Infinite" acceleration, equivalent to reaching 1000 deg/s in just 1 milisecond.
 
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
+
 // Macro to evaluate b*t/US_PER_SECOND in two steps to avoid excessive round-off errors and overflows.
 #define timest(b, t) ((b * ((t)/US_PER_MS))/MS_PER_SECOND)
 // Same trick to evaluate formulas of the form 1/2*b*t^2/US_PER_SECOND^2
 #define timest2(b, t) ((timest(timest(b, (t)),(t)))/2)
-
+// Macro to evaluate division of speed by acceleration (w/a), yielding time, in the appropriate units
+#define wdiva(w, a) ((((w)*US_PER_MS)/a)*MS_PER_SECOND)
 
 /**
  * Integer signal type with units of microseconds
@@ -93,8 +97,23 @@ typedef enum {
     TRACK_TARGET,
 } pbio_motor_action_t;
 
+
+
 /**
- * Motor trajectory parameters for an ideal maneuver without disturbances
+ * NEW Motor trajectory parameters
+ */
+typedef struct _pbio_motor_ref_t {
+    ustime_t t0, t1, t2, t3;
+    count_t th0, th1, th2, th3;
+    rate_t w0, w1;
+    accl_t a0, a2;
+} pbio_motor_ref_t;
+
+pbio_motor_ref_t refs[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+
+
+/**
+ * OLD, will be phased out. Motor trajectory parameters for an ideal maneuver without disturbances
  */
 typedef struct _pbio_motor_trajectory_t {
     pbio_motor_action_t action;         /**<  Motor action type */

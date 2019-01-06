@@ -32,6 +32,206 @@
 
 #include "sys/clock.h"
 
+void reverse_trajectory(pbio_motor_ref_t *ref){
+    // Mirror angles about initial angle th0
+    ref->th1 = 2*ref->th0 - ref->th1;
+    ref->th2 = 2*ref->th0 - ref->th2;
+    ref->th3 = 2*ref->th0 - ref->th3;
+
+    // Negate speeds and accelerations
+    ref->w0 *= -1;
+    ref->w1 *= -1;
+    ref->a0 *= -1;
+    ref->a2 *= -1;
+}
+
+void make_trajectory_none(ustime_t t0, count_t th0, pbio_motor_ref_t *ref){
+    // All times equal to initial time:
+    ref->t0 = t0;
+    ref->t1 = t0;
+    ref->t2 = t0;
+    ref->t3 = t0;
+
+    // All angles equal to initial angle:
+    ref->th0 = th0;
+    ref->th1 = th0;
+    ref->th2 = th0;
+    ref->th3 = th0;
+
+    // All speeds/accelerations zero:
+    ref->w0 = 0;
+    ref->w1 = 0;
+    ref->a0 = 0;
+    ref->a2 = 0;   
+}
+
+pbio_error_t make_trajectory_time_based(ustime_t t0, ustime_t t3, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_motor_ref_t *ref){
+
+    // Work with time intervals instead of absolute time. Read 'm' as '-'.
+    ustime_t t3mt0 = t3-t0;
+    ustime_t t3mt2;
+    ustime_t t2mt1;
+    ustime_t t1mt0;
+
+    // Return error for negative user-specified duration
+    if (t3mt0 < 0) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Remember if the original user-specified maneuver was backward
+    bool backward = wt < 0;
+
+    // Convert user parameters into a forward maneuver to simplify computations (we negate results at the end)
+    if (backward) {
+        wt *= -1;
+        w0 *= -1;
+    }
+
+    // Limit initial speed
+    rate_t max_init = timest(a, t3mt0);
+    rate_t abs_max = min(wmax, max_init);
+    w0 = max(-abs_max, min(w0, abs_max));
+
+    // Initial speed is less than the target speed
+    if (w0 < wt) {
+        // Therefore accelerate
+        ref->a0 = a;
+        // If target speed can be reached
+        if (wdiva(wt-w0, a) - (t3mt0-wdiva(w0, a))/2 < 0) {
+            t1mt0 = wdiva(wt-w0, a);
+            ref->w1 = wt;
+        }
+        // If target speed cannot be reached
+        else {
+            t1mt0 = (t3mt0-wdiva(w0, a))/2;
+            ref->w1 = timest(a, t3mt0)/2+w0/2;
+        }
+    }
+    // Initial speed is equal to or more than the target speed
+    else {
+        // Therefore decelerate
+        ref->a0 = -a;
+        t1mt0 = wdiva(w0-wt, a);
+        ref->w1 = wt;
+    }
+
+    // # Deceleration phase
+    ref->a2 = -a;
+    t3mt2 =  wdiva(ref->w1, a);
+    
+    // Constant speed duration
+    t2mt1 = t3mt0 - t3mt2 - t1mt0;
+
+    // Assert that all time intervals are positive
+    if (t1mt0 < 0 || t2mt1 < 0 || t3mt2 < 0) {
+        return PBIO_ERROR_FAILED;
+    }
+
+    // Store other results/arguments
+    ref->w0 = w0;
+    ref->th0 = th0;
+    ref->t0 = t0;
+    ref->t1 = t0 + t1mt0;
+    ref->t2 = t0 + t1mt0 + t2mt1;
+    ref->t3 = t3;
+
+    // Corresponding angle values
+    ref->th1 = ref->th0 + timest(ref->w0, t1mt0) + timest2(ref->a0, t1mt0);
+    ref->th2 = ref->th1 + timest(ref->w1, t2mt1);
+    ref->th3 = ref->th2 + timest(ref->w1, t3mt2) + timest2(ref->a2, t3mt2);
+
+    // Reverse the maneuver if the original arguments imposed backward motion
+    if (backward) {
+        reverse_trajectory(ref);
+    }
+
+    return PBIO_SUCCESS;
+}
+
+
+pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_motor_ref_t *ref){
+
+    // Return error for zero speed
+    if (wt == 0) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    // Return empty maneuver for zero angle
+    if (th3 == th0) {
+        make_trajectory_none(t0, th0, ref);
+        return PBIO_SUCCESS;
+    }    
+
+    // Remember if the original user-specified maneuver was backward
+    bool backward = th3 < th0;
+
+    // Convert user parameters into a forward maneuver to simplify computations (we negate results at the end)
+    if (backward) {
+        th3 = 2*th0 - th3;
+        w0 *= -1;
+    }
+    wt = abs(wt);
+
+    // Limit initial speed, but evaluate square root only if necessary (usually not)
+    if (w0 > 0 && (w0*w0)/(2*a) > th3 - th0) {
+        w0 = sqrt(2*a*(th3 - th0)); // TODO: Use int implementation
+    }
+
+    // Initial speed is less than the target speed
+    if (w0 < wt) {
+        // Therefore accelerate towards intersection from below,
+        // either by reaching constant speed phase or not.
+        ref->a0 = a;
+
+        // Fictitious zero speed angle (ahead of us if we have negative initial speed; behind us if we have initial positive speed)
+        count_t thf = th0 - (w0*w0)/(2*a);
+
+        // Test if we can get to ref speed
+        if (th3-thf >= (wt*wt)/a) {
+            //  If so, find both constant speed intersections
+            ref->th1 = thf + (wt*wt)/(2*a);
+            ref->th2 = th3 - (wt*wt)/(2*a);
+            ref->w1 = wt;
+        }
+        else {
+            // Otherwise, intersect halfway between accelerating and decelerating square root arcs
+            ref->th1 = (th3+thf)/2;
+            ref->th2 = ref->th1;
+            ref->w1 = sqrt(2*a*(ref->th1-thf)); // TODO: Use int implementation
+        }
+    }
+    // Initial speed is equal to or more than the target speed
+    else {
+        // Therefore decelerate towards intersection from above
+        ref->a0 = -a;
+        ref->th1 = th0 + (w0*w0-wt*wt)/(2*a);
+        ref->th2 = th3 - (wt*wt)/(2*a);
+        ref->w1 = wt;
+    }
+
+    // Corresponding time intervals
+    ustime_t t1mt0 = wdiva(ref->w1-w0, ref->a0);
+    ustime_t t2mt1 = wdiva(ref->th2-ref->th1, ref->w1);
+    ustime_t t3mt2 = wdiva(ref->w1, a);
+
+    // Store other results/arguments
+    ref->w0 = w0;
+    ref->th0 = th0;
+    ref->th3 = th3;
+    ref->t0 = t0;
+    ref->t1 = t0 + t1mt0;
+    ref->t2 = ref->t1 + t2mt1;
+    ref->t3 = ref->t2 + t3mt2;
+    ref->a2 = -a;
+
+    // Reverse the maneuver if the original arguments imposed backward motion
+    if (backward) {
+        reverse_trajectory(ref);
+    }
+
+    return PBIO_SUCCESS;
+}
+
+/////////////////////OLD////////////////////////////
 
 // Return max(-limit, min(value, limit)): Limit the magnitude of value to be equal to or less than provided limit
 float_t limit(float_t value, float_t limit){
@@ -261,6 +461,67 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
     traject->accl_end = _accl_end;
     traject->action = action;
     traject->after_stop = after_stop;
+
+    if (action == RUN_TIME || action == RUN_TARGET || action == RUN_ANGLE) {
+        // PRINT ORIGINAL MANEUVER
+        printf("\nPort       : %c\nAction     : %d\nAfter stop : %d\ntime_start : %u\ntime_in    : %u\ntime_out   : %u\ntime_end   : %u\ncount_start: %d\ncount_in   : %d\ncount_out  : %d\ncount_end  : %d\nrate_start : %d\nrate_target: %d\naccl_start : %d\naccl_end   : %d\n", 
+            port,
+            (int)traject->action,
+            (int)traject->after_stop,
+            (int)traject->time_start,
+            (int)(traject->time_in-traject->time_start),
+            (int)(traject->time_out-traject->time_start),
+            (int)(traject->time_end-traject->time_start),
+            (int)traject->count_start,
+            (int)traject->count_in,
+            (int)traject->count_out,
+            (int)traject->count_end,
+            (int)traject->rate_start,
+            (int)traject->rate_target,
+            (int)traject->accl_start,
+            (int)traject->accl_end
+        );
+        // PRINT NEW MANEUVER    
+        pbio_motor_ref_t *test = &refs[PORT_TO_IDX(port)];
+        if (action == RUN_TARGET) {
+            make_trajectory_angle_based(time_start, count_start, duration_or_target_position, rate_start, speed_target, settings->max_rate, settings->abs_accl_start, test);
+        }   
+        else if (action == RUN_ANGLE) {
+            make_trajectory_angle_based(time_start, count_start, count_start + duration_or_target_position, rate_start, speed_target, settings->max_rate, settings->abs_accl_start, test);
+        }
+        else { // RUN_TIME
+            make_trajectory_time_based(time_start, time_start + duration_or_target_position*US_PER_MS, count_start, rate_start, speed_target, settings->max_rate, settings->abs_accl_start, test);
+        }
+        
+        printf(
+            "-----------------\n"
+            "t0   : %d\n"
+            "t1-t0: %d\n"
+            "t2-t0: %d\n"
+            "t3-t0: %d\n"
+            "th0  : %d\n"
+            "th1  : %d\n"
+            "th2  : %d\n"
+            "th3  : %d\n"
+            "w0   : %d\n"
+            "w1   : %d\n"
+            "a0   : %d\n"
+            "a2   : %d\n", 
+            test->t0,
+            test->t1-test->t0,
+            test->t2-test->t0,
+            test->t3-test->t0,
+            test->th0,
+            test->th1,
+            test->th2,
+            test->th3,
+            test->w0,
+            test->w1,
+            test->a0,
+            test->a2
+        );     
+    }
+
     return PBIO_SUCCESS;
 }
 
