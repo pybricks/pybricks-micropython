@@ -123,8 +123,8 @@ class Motor():
         """
         pass
 
-    def run_time(self, speed, time, wait=True, stop_type=Stop.coast):
-        """run_time(self, speed, time, wait=False, stop_type=Stop.coast)
+    def run_time(self, speed, time, stop_type=Stop.coast, wait=True):
+        """run_time(self, speed, time, stop_type=Stop.coast, wait=True)
 
         Run the motor at a constant speed (angular velocity) for a given amount of time.
 
@@ -133,13 +133,13 @@ class Motor():
         Arguments:
             speed (:ref:`speed`): Speed of the motor.
             time (:ref:`time`): Duration of the maneuver.
-            wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits for the specified ``time``.
             stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
+            wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits for the specified ``time``.
         """
         pass
 
-    def run_angle(self, speed, rotation_angle, wait=True, stop_type=Stop.coast):
-        """run_angle(self, speed, rotation_angle, wait=False, stop_type=Stop.coast)
+    def run_angle(self, speed, rotation_angle, stop_type=Stop.coast, wait=True):
+        """run_angle(self, speed, rotation_angle, stop_type=Stop.coast, wait=True)
 
         Run the motor at a constant speed (angular velocity) by a given angle.
 
@@ -148,25 +148,25 @@ class Motor():
         Arguments:
             speed (:ref:`speed`): Speed of the motor.
             rotation_angle (:ref:`time`): Angle by which the motor should rotate.
-            wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits until the motor has traveled precisely the requested angle.
             stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
+            wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits until the motor has traveled precisely the requested angle.
         """
         pass
 
-    def run_target(self, speed, target_angle, wait=True, stop_type=Stop.coast):
-        """run_target(self, speed, target_angle, wait=False, stop_type=Stop.coast)
+    def run_target(self, speed, target_angle, stop_type=Stop.coast, wait=True):
+        """run_target(self, speed, target_angle, stop_type=Stop.coast, wait=True)
 
         Run the motor at a constant speed (angular velocity) towards a given target angle.
 
         The motor will accelerate towards the requested speed and the duty cycle is automatically adjusted to keep the speed constant, even under some load. It begins to decelerate just in time so that it comes to standstill at the given target angle.
-        
+
         The direction of rotation is automatically selected based on the target angle.
 
         Arguments:
             speed (:ref:`speed`): Absolute speed of the motor. The direction will be automatically selected based on the target angle: it makes no difference if you specify a positive or negative speed.
             target_angle (:ref:`time`): Target angle that the motor should go to, regardless of its current angle.
-            wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits until the motor has reached the target angle.
             stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
+            wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits until the motor has reached the target angle.
         """
         pass
 
