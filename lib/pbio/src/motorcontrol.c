@@ -114,7 +114,7 @@ void control_update(pbio_port_t port){
 
     // The very first time this is called, we initialize a fictitious previous maneuver
     if (status->windup_status == TIME_NOT_INITIALIZED) {
-        status->time_started = traject->time_start - US_PER_SECOND;
+        status->time_started = traject->t0 - US_PER_SECOND;
     }
 
     // Declare current time, positions, rates, and their reference value and error
@@ -129,9 +129,9 @@ void control_update(pbio_port_t port){
     pbio_encmotor_get_encoder_rate(port, &rate_now);
 
     // Check if the trajectory starting time equals the current maneuver start time
-    if (traject->time_start != status->time_started) {
+    if (traject->t0 != status->time_started) {
         // If not, then we are starting a new maneuver, and we update its starting time
-        status->time_started = traject->time_start;
+        status->time_started = traject->t0;
 
         // For this new maneuver, we reset PID variables and related persistent control settings
         status->err_integral = 0;
@@ -151,7 +151,7 @@ void control_update(pbio_port_t port){
         else {
             status->windup_status = SPEED_INTEGRATOR_RUNNING;
             status->integrator_start = count_now;
-            status->integrator_ref_start = traject->count_start;
+            status->integrator_ref_start = traject->th0;
         }
     }
 
@@ -305,7 +305,7 @@ void control_update(pbio_port_t port){
         (traject->action == RUN_TARGET || traject->action == RUN_ANGLE) &&
             (
                 // Maneuver is complete, time wise
-                time_ref >= traject->time_end &&
+                time_ref >= traject->t3 &&
                 // Position is within the lower tolerated bound ...
                 count_ref - settings->count_tolerance <= count_now &&
                 // ... and the upper tolerated bound
@@ -319,7 +319,7 @@ void control_update(pbio_port_t port){
         (
         (traject->action == RUN_TIME) &&
             // We are past the total duration of the timed command
-            (time_now >= traject->time_end)
+            (time_now >= traject->t3)
         )
         ||
         // Conditions for run_stalled commands
@@ -361,7 +361,7 @@ void control_update(pbio_port_t port){
     else {
         // For run commands, even though we continue actuating to maintain the target speed, we set a "complete" flag
         // once we are past the in-phase the run command and we have reached the desired speed
-        if (traject->action == RUN && time_now >= traject->time_in && abs(traject->rate_target - rate_now) < settings->rate_tolerance)
+        if (traject->action == RUN && time_now >= traject->t1 && abs(traject->w1 - rate_now) < settings->rate_tolerance)
         {
             // Altough we keep tracking the speed, the maneuver is completed
             motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_DONE;
