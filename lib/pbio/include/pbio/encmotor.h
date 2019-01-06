@@ -60,8 +60,7 @@ typedef struct _pbio_encmotor_settings_t {
     int32_t max_rate;               /**< Soft limit on the reference encoder rate in all run commands */
     int32_t rate_tolerance;         /**< Allowed deviation (counts/s) from target speed. Hence, if speed target is zero, any speed below this tolerance is considered to be standstill. */
     int32_t count_tolerance;        /**< Allowed deviation (counts) from target before motion is considered complete */
-    int32_t abs_accl_start;         /**< Encoder acceleration rate when beginning to move. Positive value in counts per second per second */
-    int32_t abs_accl_end;           /**< Encoder deceleration when stopping. Positive value in counts per second per second */
+    int32_t abs_acceleration;       /**< Encoder acceleration/deceleration rate when beginning to move or stopping. Positive value in counts per second per second */
     int32_t tight_loop_time;        /**< When a run function is called twice in this interval, assume that the user is doing their own speed control.  */
     int32_t offset;                 /**< Virtual zero point of the encoder */
     int16_t pid_kp;                 /**< Proportional position control constant (and integral speed control constant) */
@@ -73,7 +72,7 @@ pbio_encmotor_settings_t encmotor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_motor_dir_t direction, float_t gear_ratio);
 
-pbio_error_t pbio_encmotor_set_settings(pbio_port_t port, int16_t stall_torque_limit_pct, int32_t stall_speed_limit, int16_t stall_time, int32_t speed_tolerance, int32_t max_speed,  int32_t position_tolerance, int32_t acceleration_start, int32_t acceleration_end, int32_t tight_loop_time, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd);
+pbio_error_t pbio_encmotor_set_settings(pbio_port_t port, int16_t stall_torque_limit_pct, int32_t stall_speed_limit, int16_t stall_time, int32_t speed_tolerance, int32_t max_speed,  int32_t position_tolerance, int32_t acceleration, int32_t tight_loop_time, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd);
 
 void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string);
 

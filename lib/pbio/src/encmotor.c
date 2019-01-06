@@ -49,7 +49,7 @@ pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_motor_dir_t direction, f
         status = pbio_encmotor_reset_encoder_count(port, 0);
     }
     // TODO: Use the device_id to retrieve the default settings defined in our lib. For now just hardcode something below.
-    pbio_encmotor_set_settings(port, 100, 2, 500, 5, 1000, 1, 1000, 1000, 100, 800, 800, 5);
+    pbio_encmotor_set_settings(port, 100, 2, 500, 5, 1000, 1, 1000, 100, 800, 800, 5);
     return status;
 }
 
@@ -61,8 +61,7 @@ pbio_error_t pbio_encmotor_set_settings(
         int32_t speed_tolerance,
         int32_t max_speed,
         int32_t position_tolerance,
-        int32_t acceleration_start,
-        int32_t acceleration_end,
+        int32_t acceleration,
         int32_t tight_loop_time,
         int16_t pid_kp,
         int16_t pid_ki,
@@ -79,8 +78,7 @@ pbio_error_t pbio_encmotor_set_settings(
     encmotor_settings[port_index].rate_tolerance = (counts_per_output_unit * speed_tolerance);
     encmotor_settings[port_index].max_rate = (counts_per_output_unit * max_speed);
     encmotor_settings[port_index].count_tolerance = (counts_per_output_unit * position_tolerance);
-    encmotor_settings[port_index].abs_accl_start = (counts_per_output_unit * acceleration_start);
-    encmotor_settings[port_index].abs_accl_end = (counts_per_output_unit * acceleration_end);
+    encmotor_settings[port_index].abs_acceleration = (counts_per_output_unit * acceleration);
     encmotor_settings[port_index].tight_loop_time = tight_loop_time * US_PER_MS;
     encmotor_settings[port_index].pid_kp = pid_kp;
     encmotor_settings[port_index].pid_ki = pid_ki;
@@ -104,7 +102,6 @@ void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
         "Max speed\t %" PRId32 "\n"
         "Angle tolerance\t %" PRId32 "\n"
         "Acceleration\t %" PRId32 "\n"
-        "Deceleration\t %" PRId32 "\n"
         "Tight Loop\t %" PRId32 "\n"
         "kp\t\t %" PRId32 "\n"
         "ki\t\t %" PRId32 "\n"
@@ -121,8 +118,7 @@ void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
         (int32_t) (encmotor_settings[port_index].rate_tolerance / counts_per_output_unit),
         (int32_t) (encmotor_settings[port_index].max_rate / counts_per_output_unit),
         (int32_t) (encmotor_settings[port_index].count_tolerance / counts_per_output_unit),
-        (int32_t) (encmotor_settings[port_index].abs_accl_start / counts_per_output_unit),
-        (int32_t) (encmotor_settings[port_index].abs_accl_end / counts_per_output_unit),
+        (int32_t) (encmotor_settings[port_index].abs_acceleration / counts_per_output_unit),
         (int32_t) (encmotor_settings[port_index].tight_loop_time / US_PER_MS),
         (int32_t) encmotor_settings[port_index].pid_kp,
         (int32_t) encmotor_settings[port_index].pid_ki,

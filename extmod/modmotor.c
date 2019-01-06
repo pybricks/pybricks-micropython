@@ -189,11 +189,10 @@ STATIC mp_obj_t motor_Motor_settings(size_t n_args, const mp_obj_t *args){
                                          mp_obj_get_num(args[8]),
                                          mp_obj_get_num(args[9]),
                                          mp_obj_get_num(args[10]),
-                                         mp_obj_get_num(args[11]),
-                                         mp_obj_get_num(args[12])));
+                                         mp_obj_get_num(args[11])));
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_settings_obj, 13, 13, motor_Motor_settings);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_settings_obj, 12, 12, motor_Motor_settings);
 
 
 

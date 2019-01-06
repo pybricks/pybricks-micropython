@@ -255,7 +255,7 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
     traject->action = action;
     traject->after_stop = after_stop;
 
-    if (action == RUN_TIME || action == RUN_TIME || action == RUN_STALLED) {
+    if (action == RUN_TIME || action == RUN || action == RUN_STALLED) {
         if (action != RUN_TIME) {
             // For RUN and RUN_STALLED, no end time is specified, so we take a
             // fictitious 30 seconds. This allows us to use the same code to get
@@ -271,7 +271,7 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
             rate_start,
             speed_target*settings->counts_per_output_unit,
             settings->max_rate,
-            settings->abs_accl_start,
+            settings->abs_acceleration,
             traject);
         if (err != PBIO_SUCCESS) {
             return err;
@@ -300,7 +300,7 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
             rate_start,
             speed_target*settings->counts_per_output_unit,
             settings->max_rate,
-            settings->abs_accl_start,
+            settings->abs_acceleration,
             traject);
         if (err != PBIO_SUCCESS) {
             return err;
@@ -309,6 +309,33 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
     else {
         // TRACK_TARGET: NOT IMPLEMENTED
     }
+    printf(
+        "-----------------\n"
+        "t0   : %d\n"
+        "t1-t0: %d\n"
+        "t2-t0: %d\n"
+        "t3-t0: %d\n"
+        "th0  : %d\n"
+        "th1  : %d\n"
+        "th2  : %d\n"
+        "th3  : %d\n"
+        "w0   : %d\n"
+        "w1   : %d\n"
+        "a0   : %d\n"
+        "a2   : %d\n",
+        (int)traject->t0,
+        (int)(traject->t1-traject->t0),
+        (int)(traject->t2-traject->t0),
+        (int)(traject->t3-traject->t0),
+        (int)traject->th0,
+        (int)traject->th1,
+        (int)traject->th2,
+        (int)traject->th3,
+        (int)traject->w0,
+        (int)traject->w1,
+        (int)traject->a0,
+        (int)traject->a2
+    );    
 
     return PBIO_SUCCESS;
 }
