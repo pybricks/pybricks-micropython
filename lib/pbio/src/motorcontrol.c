@@ -269,7 +269,7 @@ void control_update(pbio_port_t port){
                 // If it is running, disable it
                 status->windup_status = SPEED_INTEGRATOR_PAUSED;
                 // Save the integrator state reached now, to continue when no longer stalled
-                status->err_integral += count_ref - status->integrator_ref_start - count_now + status->integrator_start;
+                status->speed_integrator += count_ref - status->integrator_ref_start - count_now + status->integrator_start;
                 // Store time at which speed integration is disabled
                 status->time_stopped = time_now;
             }
