@@ -241,16 +241,33 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
     ustime_t time_start = clock_usecs();
     count_t count_start;
     rate_t rate_start;
-    pbio_error_t err = pbio_encmotor_get_encoder_count(port, &count_start);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    pbio_encmotor_get_encoder_rate(port, &rate_start);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
+    pbio_error_t err;
+
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
     pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
+
+    bool currently_active =
+        motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_RUNNING ||
+        motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_HOLDING;
+
+    if (currently_active) {
+        // Continue the reference from the currently active maneuver, for a smooth transition
+
+        // TODO: FOR RUN_ANGLE, RUN_TIME this isn't the absolute time: subtract paused time
+
+        get_reference(time_start, traject, &count_start, &rate_start);
+    }
+    else {
+        // Otherwise, start the reference from the current position and speed
+        err = pbio_encmotor_get_encoder_count(port, &count_start);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        err = pbio_encmotor_get_encoder_rate(port, &rate_start);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
 
     traject->action = action;
     traject->after_stop = after_stop;
@@ -281,7 +298,7 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
 
         // The absolute target count
         count_t count_target;
-        
+
         if (action == RUN_TARGET) {
             // In target mode, the user argument is just the target
             count_target = duration_or_target_position*settings->counts_per_output_unit;
@@ -309,33 +326,12 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
     else {
         // TRACK_TARGET: NOT IMPLEMENTED
     }
-    printf(
-        "-----------------\n"
-        "t0   : %d\n"
-        "t1-t0: %d\n"
-        "t2-t0: %d\n"
-        "t3-t0: %d\n"
-        "th0  : %d\n"
-        "th1  : %d\n"
-        "th2  : %d\n"
-        "th3  : %d\n"
-        "w0   : %d\n"
-        "w1   : %d\n"
-        "a0   : %d\n"
-        "a2   : %d\n",
-        (int)traject->t0,
-        (int)(traject->t1-traject->t0),
-        (int)(traject->t2-traject->t0),
-        (int)(traject->t3-traject->t0),
-        (int)traject->th0,
-        (int)traject->th1,
-        (int)traject->th2,
-        (int)traject->th3,
-        (int)traject->w0,
-        (int)traject->w1,
-        (int)traject->a0,
-        (int)traject->a2
-    );    
+
+    // If this new maneuver aborts an existing running or holding command, we "restart"
+    // while keeping PID status. Otherwise, we just "start" with zero PID parameters.
+    motor_control_active[PORT_TO_IDX(port)] = currently_active ?
+        PBIO_MOTOR_CONTROL_RESTARTING:
+        PBIO_MOTOR_CONTROL_STARTING;
 
     return PBIO_SUCCESS;
 }

@@ -66,7 +66,9 @@ typedef enum {
 typedef struct _pbio_motor_control_status_t {
     windup_status_t windup_status; /**< State of the anti-windup variables */
     stalled_status_t stalled;      /**< Stalled state of the motor */
-    count_t err_integral;          /**< Integral of position error (RUN_ANGLE or RUN_TARGET) or state of the speed integrator (all other modes) */
+    count_t err_integral;          /**< Integral of position error (RUN_ANGLE or RUN_TARGET) */
+    count_t speed_integrator;      /**< State of the speed integrator (all other modes) */
+    duty_t load_duty;
     count_t count_err_prev;        /**< Position error in the previous control iteration */
     ustime_t time_prev;            /**< Time at the previous control iteration */
     ustime_t time_started;         /**< Time that this maneuver/command/trajectory was started */
@@ -129,12 +131,29 @@ void control_update(pbio_port_t port){
     pbio_encmotor_get_encoder_rate(port, &rate_now);
 
     // Check if the trajectory starting time equals the current maneuver start time
-    if (traject->t0 != status->time_started) {
+    if (motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_STARTING) {
         // If not, then we are starting a new maneuver, and we update its starting time
         status->time_started = traject->t0;
 
         // For this new maneuver, we reset PID variables and related persistent control settings
-        status->err_integral = 0;
+        // If still running and restarting a new maneuver, however, we keep part of the PID status
+        // in order to create a smooth transition from one maneuver to the next.
+        if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_RESTARTING) {
+            // If it is a position control mode, we apply the surplus to the I term
+            if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
+                status->err_integral = settings->pid_ki > 0 ? (US_PER_SECOND/settings->pid_ki)*status->load_duty : 0;
+            }
+            // Otherwise, we apply it to the P term
+            else {
+                status->speed_integrator = status->load_duty/settings->pid_kp;
+            }
+        }
+        else {
+            // If no previous maneuver was active, just set these to zero.
+            status->load_duty = 0;
+            status->err_integral = 0;
+            status->speed_integrator = 0;
+        }
         status->time_paused = 0;
         status->time_stopped = 0;
 
@@ -153,6 +172,7 @@ void control_update(pbio_port_t port){
             status->integrator_start = count_now;
             status->integrator_ref_start = traject->th0;
         }
+        motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
     }
 
     // Get the time at which we want to evaluate the reference position/velocities, for position based commands
@@ -189,11 +209,11 @@ void control_update(pbio_port_t port){
         // while stalled, to prevent windup.
         if (status->windup_status == SPEED_INTEGRATOR_RUNNING) {
             // If integrator is active, it is the previously accumulated sum, plus the integral since its last restart
-            count_err = status->err_integral + count_ref - status->integrator_ref_start - count_now + status->integrator_start;
+            count_err = status->speed_integrator + count_ref - status->integrator_ref_start - count_now + status->integrator_start;
         }
         else {
             // Otherwise, it is just the previously accumulated sum and it doesn't integrate further
-            count_err = status->err_integral;
+            count_err = status->speed_integrator;
         }
     }
 
@@ -268,7 +288,7 @@ void control_update(pbio_port_t port){
     }
 
     // Duty cycle component due to integral position control (RUN_TARGET || RUN_ANGLE)
-    if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
+    if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE) {
         duty_due_to_integral = (settings->pid_ki*(status->err_integral/US_PER_MS))/MS_PER_SECOND;
 
         // Integrator anti windup (stalled in the sense of integrators)
@@ -288,11 +308,15 @@ void control_update(pbio_port_t port){
             // Clear the integrator stall flag
             stall_clear_flag(&status->stalled, STALLED_INTEGRAL);
         }
+        // Load duty
+        status->load_duty = duty_due_to_integral;
     }
     else {
         // RUN || RUN_TIME || RUN_STALLED have no position integral control
         duty_due_to_integral = 0;
         stall_clear_flag(&status->stalled, STALLED_INTEGRAL);
+        // Load duty
+        status->load_duty = duty_due_to_proportional;        
     }
 
     // Calculate duty signal
@@ -347,7 +371,7 @@ void control_update(pbio_port_t port){
                 pbio_dcmotor_set_duty_cycle_int(port, duty);
 
                 // Altough we keep holding, the maneuver is completed
-                motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_DONE;
+                motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_HOLDING;
             }
             // RUN_TIME || RUN_STALLED
             else {
@@ -359,13 +383,6 @@ void control_update(pbio_port_t port){
     }
     // If we are not standing still at a target yet, actuate with the calculated signal
     else {
-        // For run commands, even though we continue actuating to maintain the target speed, we set a "complete" flag
-        // once we are past the in-phase the run command and we have reached the desired speed
-        if (traject->action == RUN && time_now >= traject->t1 && abs(traject->w1 - rate_now) < settings->rate_tolerance)
-        {
-            // Altough we keep tracking the speed, the maneuver is completed
-            motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_DONE;
-        }
         pbio_dcmotor_set_duty_cycle_int(port, duty);
     }
 }
@@ -383,12 +400,7 @@ void _pbio_motorcontrol_poll(void){
 /* pbio user functions */
 
 pbio_error_t pbio_encmotor_run(pbio_port_t port, int32_t speed){
-    pbio_error_t err = make_motor_trajectory(port, RUN, speed, NONE, NONE);
-    if (err != PBIO_SUCCESS){
-        return err;
-    }
-    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
-    return PBIO_SUCCESS;
+    return make_motor_trajectory(port, RUN, speed, NONE, NONE);
 }
 
 pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop){
@@ -411,48 +423,26 @@ pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_after_stop_t after_
             // Holding is equivalent to driving to that position actively,
             // which automatically corrects the overshoot that is inevitable
             // when the user requests an immediate stop.
-            make_motor_trajectory(port, RUN_TARGET, NONZERO, angle_now, after_stop);
-            motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
-            return err;
+            return make_motor_trajectory(port, RUN_TARGET, NONZERO, angle_now, after_stop);
         default:
             return PBIO_ERROR_INVALID_ARG;
     }
 }
 
 pbio_error_t pbio_encmotor_run_time(pbio_port_t port, int32_t speed, int32_t duration, pbio_motor_after_stop_t after_stop){
-    pbio_error_t err = make_motor_trajectory(port, RUN_TIME, speed, duration, after_stop);
-    if (err != PBIO_SUCCESS){
-        return err;
-    }
-    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
-    return PBIO_SUCCESS;
+    return make_motor_trajectory(port, RUN_TIME, speed, duration, after_stop);
 }
 
 pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, int32_t speed, pbio_motor_after_stop_t after_stop){
-    pbio_error_t err = make_motor_trajectory(port, RUN_STALLED, speed, NONE, after_stop);
-    if (err != PBIO_SUCCESS){
-        return err;
-    }
-    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
-    return PBIO_SUCCESS;
+    return make_motor_trajectory(port, RUN_STALLED, speed, NONE, after_stop);
 }
 
 pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, int32_t speed, int32_t angle, pbio_motor_after_stop_t after_stop){
-    pbio_error_t err = make_motor_trajectory(port, RUN_ANGLE, speed, angle, after_stop);
-    if (err != PBIO_SUCCESS){
-        return err;
-    }
-    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
-    return PBIO_SUCCESS;
+    return make_motor_trajectory(port, RUN_ANGLE, speed, angle, after_stop);
 }
 
 pbio_error_t pbio_encmotor_run_target(pbio_port_t port, int32_t speed, int32_t target, pbio_motor_after_stop_t after_stop){
-    pbio_error_t err = make_motor_trajectory(port, RUN_TARGET, speed, target, after_stop);
-    if (err != PBIO_SUCCESS){
-        return err;
-    }
-    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
-    return PBIO_SUCCESS;
+    return make_motor_trajectory(port, RUN_TARGET, speed, target, after_stop);
 }
 
 pbio_error_t pbio_encmotor_track_target(pbio_port_t port, int32_t target){

@@ -39,7 +39,7 @@
 
 STATIC void wait_for_completion(pbio_port_t port, pbio_motor_run_t runtype) {
     if (runtype == PBIO_MOTOR_RUN_FOREGROUND) {
-        while (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_RUNNING) {
+        while (motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_RUNNING) {
             mp_hal_delay_ms(10);
         }
     };

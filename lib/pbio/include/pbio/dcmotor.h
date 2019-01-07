@@ -66,8 +66,10 @@ typedef enum {
  */
 typedef enum {
     PBIO_MOTOR_CONTROL_PASSIVE, /**< Motor is coasting, braking, or set to a duty value by the user. */
-    PBIO_MOTOR_CONTROL_RUNNING, /**< Motor busy executing command: Firmware repeatedly sets duty cycle to control motor speed and position for a desired trajectory*/
-    PBIO_MOTOR_CONTROL_DONE,    /**< Motor is holding position or speed after completing command: Firmware repeatedly sets duty cycle to keep constant position OR speed */
+    PBIO_MOTOR_CONTROL_HOLDING,    /**< Motor is holding position or speed after completing command: Firmware repeatedly sets duty cycle to keep constant position */
+    PBIO_MOTOR_CONTROL_RUNNING, /**< Motor busy executing command: Firmware repeatedly sets duty cycle to control motor speed and position for a desired trajectory*/     
+    PBIO_MOTOR_CONTROL_STARTING, /**< Motor ready for first control update */
+    PBIO_MOTOR_CONTROL_RESTARTING, /**< Motor ready to transition to first control update of new command*/   
 } pbio_motor_control_active_t;
 
 pbio_motor_control_active_t motor_control_active[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
