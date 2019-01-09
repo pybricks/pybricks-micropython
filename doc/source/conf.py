@@ -90,6 +90,7 @@ todo_include_todos = True
 autodoc_member_order = 'bysource'
 autodoc_default_flags = ['members', 'undoc-members']
 autoclass_content = 'both' # This ensures init arguments are not ignored but added to class docstring.
+add_module_names = False # Hide module name
 
 # -- Options for HTML output ----------------------------------------------
 

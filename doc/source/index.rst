@@ -18,8 +18,8 @@ Welcome to Pybricks's documentation!
    :maxdepth: 1
    :caption: Modules:
 
-   brick
-   devices
+   ev3brick
+   ev3devices
    parameters
    tools
 
