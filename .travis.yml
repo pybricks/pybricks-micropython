@@ -54,6 +54,8 @@ jobs:
     - stage: test
       env: NAME="Pybricks ev3dev build"
       install:
+        - npm install -g jfrog-cli-go
+        - pip install --user Sphinx sphinx_rtd_theme
         - sudo apt update -qq || true
         - sudo apt install qemu-user-static
         - cd ${HOME}
@@ -64,6 +66,20 @@ jobs:
       script:
         - docker exec --tty pybricks-ev3dev_armel make
         - docker exec --tty pybricks-ev3dev_armel make test
+        - make -C doc html
+      after_success:
+        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET
+        - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
+          "${HOME}/micropython/ports/pybricks/bricks/ev3dev/pybricks-micropython"
+          pybricks-ev3dev/$TRAVIS_REPO_SLUG/build$TRAVIS_JOB_NUMBER/
+        - tar -C ${HOME}/micropython/ports/pybricks/doc/build html -czf html.tar.gz
+        - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
+          --explode=true "html.tar.gz"
+          pybricks-ev3dev/$TRAVIS_REPO_SLUG/build$TRAVIS_JOB_NUMBER/
+        - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
+        - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
+        - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
+
 
     # Pybricks Move Hub
     - stage: test
@@ -71,6 +87,7 @@ jobs:
         - NAME="Pybricks Move Hub build"
         - PATH="/opt/gcc-arm-none-eabi-7-2018-q2-update/bin:${PATH}"
       install:
+        - npm install -g jfrog-cli-go
         - cd ${HOME}
         - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
         - sudo tar -C /opt -xf gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
@@ -80,3 +97,11 @@ jobs:
         - cd ../..
       script:
         - make ${MAKEOPTS} -C ports/pybricks/bricks/MOVEHUB
+      after_success:
+        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET
+        - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
+          "${HOME}/micropython/ports/pybricks/bricks/MOVEHUB/build/firmware.bin"
+          pybricks-powered-up/$TRAVIS_REPO_SLUG/build$TRAVIS_JOB_NUMBER/
+        - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
+        - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
+        - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
