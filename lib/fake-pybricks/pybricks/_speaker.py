@@ -38,22 +38,6 @@ class Speaker():
         """
         pass
 
-    def tune(self, frequencies_and_durations, volume=30):
-        """Play a tune composed of beeps.
-
-        Arguments:
-            frequencies_and_durations (list): List of (:ref:`frequency`, :ref:`time`) pairs
-            volume (:ref:`percentage`): Volume of the tune (*Default*: 30).
-
-        ::
-
-            # Play a tune of three notes with increasing
-            # pitch (500 Hz, 1000 Hz, 1500 Hz), each 200 ms.
-            my_tune = [(500, 200), (1000, 200), (1500, 200)]
-            brick.sound.tune(my_tune)
-        """
-        pass
-
     def file(self, file_name, volume=100):
         """Play a sound file.
 

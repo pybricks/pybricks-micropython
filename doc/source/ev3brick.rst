@@ -24,9 +24,6 @@ Sound
 .. automethod:: ev3brick.sound.beeps
 
 
-.. automethod:: ev3brick.sound.tune
-
-
 .. automethod:: ev3brick.sound.file
 
 

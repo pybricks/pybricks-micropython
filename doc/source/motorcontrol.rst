@@ -59,6 +59,7 @@ TODO
                                                                         output axle
 
 
+.. _maneuvers:
 
 Motor maneuvers
 ---------------

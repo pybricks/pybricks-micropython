@@ -44,12 +44,12 @@ class Motor():
         """
         pass
 
-    def duty(self, duty, limit=100):
+    def dc(self, duty, limit=100):
         """Set the :ref:`duty cycle <duty>` of the motor.
 
         Arguments:
-            duty (percentage): The duty cycle (-100.0 to 100).
-            limit (percentage): Limit on the maximum ``duty`` value. (*Default*: 100). This overrides the first argument when it exceeds the limit. This ensures that ``abs(duty)`` <``limit``. This is useful when you use your own formula to set the duty cycle, because provides a limit when your formula gives a very big number. For example, you could use this to prevent your LEGO train from unintentionally going at full speed.
+            duty (:ref:`percentage`): The duty cycle (-100.0 to 100).
+            limit (:ref:`percentage`): Limit on the maximum ``duty`` value. (*Default*: 100). This overrides the first argument when it exceeds the limit. This ensures that ``abs(duty)`` <``limit``. This is useful when you use your own formula to set the duty cycle, because provides a limit when your formula gives a very big number. For example, you could use this to prevent your LEGO train from unintentionally going at full speed.
 
         ::
 
@@ -62,6 +62,19 @@ class Motor():
             example_duty = (sensor.reflection() - 40) / 3
             example_motor.duty(example_duty, 30)
 
+        """
+        pass
+
+    def dc_time(self, duty, time, stop_type=Stop.coast, wait=True, limit=100):
+        """dc_time(self, duty, time, stop_type=Stop.coast, wait=True, limit=100)
+        Set the :ref:`duty cycle <duty>` of the motor for a given amount of time, then turn off the motor.
+
+        Arguments:
+            duty (:ref:`percentage`): The duty cycle (-100.0 to 100).
+            time (:ref:`time`): Duration of the maneuver.
+            stop_type (Stop): Coast, brake, or hold after stopping (*Default*: :class:`Stop.coast <parameters.Stop>`).
+            wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits for the specified ``time``.
+            limit (percentage): Limit on the maximum ``duty`` value. (*Default*: 100).
         """
         pass
 
@@ -79,6 +92,31 @@ class Motor():
 
         Returns:
             :ref:`speed`: Motor speed.
+
+        """
+        pass
+
+    def reference(self):
+        """Get the reference angle and reference speed of the motor.
+
+        Returns:
+            Tuple of motor angle and speed reference at the current time.
+        :rtype: (:ref:`angle`, :ref:`speed`) or (``None``, ``None``) if no maneuver is active.
+
+        """
+        pass
+
+    def maneuver(self):
+        """
+        Get the time, angle, velocity, and acceleration parameters of the currently active motor maneuver.
+        See :ref:`maneuvers` for a description of each symbol.
+
+        Returns:
+            (:math:`t_0`, :math:`t_1`, :math:`t_2`, :math:`t_3`),
+            (:math:`\\theta_0`, :math:`\\theta_1`, :math:`\\theta_2`, :math:`\\theta_3`),
+            (:math:`\\omega_0`, :math:`\\omega_1`),
+            (:math:`\\alpha_0`, :math:`\\alpha_2`)
+        :rtype: Four tuples of :ref:`time`, :ref:`angle`, :ref:`speed`, and :ref:`acceleration`
 
         """
         pass
@@ -146,7 +184,7 @@ class Motor():
 
         Arguments:
             speed (:ref:`speed`): Speed of the motor.
-            rotation_angle (:ref:`time`): Angle by which the motor should rotate.
+            rotation_angle (:ref:`angle`): Angle by which the motor should rotate.
             stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
             wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits until the motor has traveled precisely the requested angle.
         """
@@ -163,7 +201,7 @@ class Motor():
 
         Arguments:
             speed (:ref:`speed`): Absolute speed of the motor. The direction will be automatically selected based on the target angle: it makes no difference if you specify a positive or negative speed.
-            target_angle (:ref:`time`): Target angle that the motor should go to, regardless of its current angle.
+            target_angle (:ref:`angle`): Target angle that the motor should go to, regardless of its current angle.
             stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
             wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits until the motor has reached the target angle.
         """
@@ -183,6 +221,39 @@ class Motor():
 
         Returns:
             :ref:`angle`: Angle at which the motor became stalled.
+
+        """
+        pass
+
+    def track_target(self, target_angle):
+        """Track a target angle that varies in time.
+
+        This function is quite similar to :func:`.run_target`, but speed and acceleration settings are ignored: it will move to the target angle as fast as possible. Instead, you adjust speed and acceleration by choosing how fast or how slowly you vary the ``target_angle``.
+
+        This method is useful in fast loops where the motor target continously changes.
+
+        Arguments:
+            target_angle (:ref:`angle`): Target angle that the motor should go to.
+
+        ::
+
+            # Initialize motor and timer
+            from math import sin
+            motor = Motor(Port.A)
+            watch = StopWatch()
+            amplitude = 90
+
+            # In a fast loop, compute a reference angle
+            # and make the motor track it.
+            while True:
+                # Get the time in seconds
+                seconds = watch.time()/1000
+                # Compute a reference angle. This produces
+                # a sine wave that makes the motor move
+                # smoothly between -90 and +90 degrees.
+                angle_now = sin(seconds)*amplitude
+                # Make the motor track the given angle
+                motor.track_target(angle_now)
 
         """
         pass
