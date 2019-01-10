@@ -25,55 +25,56 @@ class Motor():
 
                           Use a list of lists for multiple gear trains, such as ``[[12, 36], [20, 16, 40]]``.
 
-                          When you specify a gear train, all motor commands and settings are automatically adjusted to account for the resulting gear ratio.
+                          When you specify a gear train, all motor commands and settings are automatically adjusted to account for the resulting gear ratio. The motor direction remains unchanged, no matter how many gears you choose.
 
                           For example, with ``gears=[12, 36]``, the gear ratio is 3, which means that the output is mechanically slowed down by a factor of 3. To compensate, the motor will automatically turn 3 times as fast and 3 times as far when you give a motor command. So when you choose ``run_angle(200, 90)``, your mechanism output simply turns at 200 deg/s by 90 degrees.
 
                           The same holds for the documentation below: When it says "motor angle" or "motor speed", you can read it as "mechanism output angle" and "mechanism output speed", and so on, because the gear ratio is automatically accounted for.
 
+        ::
+
+            # Initialize a motor (by default this means clockwise, without any gears).
+            example_motor = Motor(Port.A)
+
+            # Initialize a motor where positive speed values should go counterclockwise
+            right_motor = Motor(Port.B, Direction.counterclockwise)
+
+            # Initialize a motor with a gear train
+            robot_arm = Motor(Port.C, Direction.clockwise, [12, 36])
         """
         pass
 
-    def set_torque_settings(self, limit):
-        """Configure the maximum torque that can be applied to the motor. (*Default*: 100)
-
-        This sets the maximum :ref:`duty cycle <duty>` that is applied during any subsequent motor command. This reduces the maximum torque output to a percentage of the absolute maximum stall torque. This is useful to avoid applying the full motor torque to a geared or lever mechanism.
-
-        Arguments:
-            limit (:ref:`percentage`): Relative torque limit during ``duty`` or ``run`` commands.
-        """
-        pass
-
-    def set_run_settings(self, max_speed, acceleration, deceleration):
-        """Configure the maximum speed, acceleration, and deceleration of the motor for all of the ``run`` commands. See also the :ref:`default parameters <defaultpars>` for each motor.
-
-        Arguments:
-            max_speed (:ref:`speed`): Maximum speed of the motor.
-            acceleration (:ref:`acceleration`): Acceleration towards the target speed.
-            deceleration (:ref:`acceleration`): Deceleration towards standstill.
-        """
-        pass
-
-    def set_control_settings(self, kp, ki, kd, pid_reset_time, angle_tolerance, speed_tolerance, stall_speed, stall_time):
-        """Configure the settings of the position and speed controllers. See also :ref:`pid` and the :ref:`default parameters <defaultpars>` for each motor.
-
-        Arguments:
-            kp (int): Proportional position (and integral speed) control constant
-            ki (int): Integral position control constant.
-            kd (int): Derivative position (and proportional speed) control constant.
-            pid_reset_time (:ref:`time`): If you execute any of the ``run`` command within this interval after starting the previous command, the motor will keep its accumulated PID errors. This provides smoother motion when you call any of the ``run`` commands in a tight loop.
-            angle_tolerance (:ref:`angle`): Allowed deviation from the target angle before motion is considered complete.
-            speed_tolerance (:ref:`speed`): Allowed deviation from zero speed before motion is considered complete.
-            stall_speed (:ref:`speed`): If the motor moves slower than ``stall_speed`` for ``stall_time`` during any of the ``run`` commands, the motor is considered to be stalled.
-            stall_time (:ref:`time`): See ``stall_speed``.
-        """
-        pass
-
-    def duty(self, duty):
+    def dc(self, duty, limit=100):
         """Set the :ref:`duty cycle <duty>` of the motor.
 
         Arguments:
-            duty (percentage): The duty cycle (-100.0 to 100).
+            duty (:ref:`percentage`): The duty cycle (-100.0 to 100).
+            limit (:ref:`percentage`): Limit on the maximum ``duty`` value. (*Default*: 100). This overrides the first argument when it exceeds the limit. This ensures that ``abs(duty)`` <``limit``. This is useful when you use your own formula to set the duty cycle, because provides a limit when your formula gives a very big number. For example, you could use this to prevent your LEGO train from unintentionally going at full speed.
+
+        ::
+
+            # Set the motor duty cycle to 75%.
+            example_motor.duty(75)
+
+        ::
+
+            # Use a computed duty cycle value, but ensure it stays within the range (-30, 30).
+            example_duty = (sensor.reflection() - 40) / 3
+            example_motor.duty(example_duty, 30)
+
+        """
+        pass
+
+    def dc_time(self, duty, time, stop_type=Stop.coast, wait=True, limit=100):
+        """dc_time(self, duty, time, stop_type=Stop.coast, wait=True, limit=100)
+        Set the :ref:`duty cycle <duty>` of the motor for a given amount of time, then turn off the motor.
+
+        Arguments:
+            duty (:ref:`percentage`): The duty cycle (-100.0 to 100).
+            time (:ref:`time`): Duration of the maneuver.
+            stop_type (Stop): Coast, brake, or hold after stopping (*Default*: :class:`Stop.coast <parameters.Stop>`).
+            wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits for the specified ``time``.
+            limit (percentage): Limit on the maximum ``duty`` value. (*Default*: 100).
         """
         pass
 
@@ -91,6 +92,42 @@ class Motor():
 
         Returns:
             :ref:`speed`: Motor speed.
+
+        """
+        pass
+
+    def reference(self):
+        """Get the reference angle and reference speed of the motor.
+
+        Returns:
+            Tuple of motor angle and speed reference at the current time.
+        :rtype: (:ref:`angle`, :ref:`speed`) or (``None``, ``None``) if no maneuver is active.
+
+        """
+        pass
+
+    def maneuver(self):
+        """
+        Get the time, angle, velocity, and acceleration parameters of the currently active motor maneuver.
+        See :ref:`maneuvers` for a description of each symbol.
+
+        Returns:
+            (:math:`t_0`, :math:`t_1`, :math:`t_2`, :math:`t_3`),
+            (:math:`\\theta_0`, :math:`\\theta_1`, :math:`\\theta_2`, :math:`\\theta_3`),
+            (:math:`\\omega_0`, :math:`\\omega_1`),
+            (:math:`\\alpha_0`, :math:`\\alpha_2`)
+        :rtype: Four tuples of :ref:`time`, :ref:`angle`, :ref:`speed`, and :ref:`acceleration`
+
+        """
+        pass
+
+    def stalled(self):
+        """Check whether the motor is currently stalled.
+
+        When a motor is stalled, this means that it cannot move even with the maximum torque. For example, something might be blocking the motor or your mechanism simply cannot turn any further. See also :func:`.set_stall_settings`.
+
+        Returns:
+            bool: ``True`` if the motor is stalled, ``False`` if it is not.
 
         """
         pass
@@ -147,7 +184,7 @@ class Motor():
 
         Arguments:
             speed (:ref:`speed`): Speed of the motor.
-            rotation_angle (:ref:`time`): Angle by which the motor should rotate.
+            rotation_angle (:ref:`angle`): Angle by which the motor should rotate.
             stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
             wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits until the motor has traveled precisely the requested angle.
         """
@@ -164,7 +201,7 @@ class Motor():
 
         Arguments:
             speed (:ref:`speed`): Absolute speed of the motor. The direction will be automatically selected based on the target angle: it makes no difference if you specify a positive or negative speed.
-            target_angle (:ref:`time`): Target angle that the motor should go to, regardless of its current angle.
+            target_angle (:ref:`angle`): Target angle that the motor should go to, regardless of its current angle.
             stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
             wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits until the motor has reached the target angle.
         """
@@ -185,6 +222,86 @@ class Motor():
         Returns:
             :ref:`angle`: Angle at which the motor became stalled.
 
+        """
+        pass
+
+    def track_target(self, target_angle):
+        """Track a target angle that varies in time.
+
+        This function is quite similar to :func:`.run_target`, but speed and acceleration settings are ignored: it will move to the target angle as fast as possible. Instead, you adjust speed and acceleration by choosing how fast or how slowly you vary the ``target_angle``.
+
+        This method is useful in fast loops where the motor target continously changes.
+
+        Arguments:
+            target_angle (:ref:`angle`): Target angle that the motor should go to.
+
+        ::
+
+            # Initialize motor and timer
+            from math import sin
+            motor = Motor(Port.A)
+            watch = StopWatch()
+            amplitude = 90
+
+            # In a fast loop, compute a reference angle
+            # and make the motor track it.
+            while True:
+                # Get the time in seconds
+                seconds = watch.time()/1000
+                # Compute a reference angle. This produces
+                # a sine wave that makes the motor move
+                # smoothly between -90 and +90 degrees.
+                angle_now = sin(seconds)*amplitude
+                # Make the motor track the given angle
+                motor.track_target(angle_now)
+
+        """
+        pass
+
+    def set_run_settings(self, max_speed, acceleration):
+        """Configure the maximum speed and acceleration/deceleration of the motor for all run commands.
+
+        This applies to the ``run``, ``run_time``, ``run_angle``, ``run_target``, or ``run_until_stalled`` commands you give the motor. See also the :ref:`default parameters <defaultpars>` for each motor.
+
+        Arguments:
+            max_speed (:ref:`speed`): Maximum speed of the motor during a motor command.
+            acceleration (:ref:`acceleration`): Acceleration towards the target speed and deceleration towards standstill. This should be a positive value. The motor will automatically change the sign to decelerate as needed.
+
+        ::
+
+            # Set the maximum speed to 200 deg/s and set the acceleration to 400 deg/s/s.
+            example_motor.set_run_settings(200, 400)
+
+            # Make the motor run for 5 seconds. Even though the speed argument is 300 deg/s in
+            # this example, the motor will move at only 200 deg/s because of the settings above.
+            example_motor.run_time(300, 5000)
+        """
+        pass
+
+    def set_pid_settings(self, kp, ki, kd, tight_loop_limit, angle_tolerance, speed_tolerance):
+        """Configure the settings of the position and speed controllers. See also :ref:`pid` and the :ref:`default parameters <defaultpars>` for each motor.
+
+        Arguments:
+            kp (int): Proportional position (and integral speed) control constant
+            ki (int): Integral position control constant.
+            kd (int): Derivative position (and proportional speed) control constant.
+            tight_loop_limit (:ref:`time`): If you execute any of the ``run`` command within this interval after starting the previous command, the controllers assume that you want to control the speed directly. This means that it will ignore the acceleration setting: it will immediately begin tracking the speed you give in the ``run`` command. This is useful in a fast loop, where you usually want the motors to respond quickly rather than accelerate smoothly, for example with a line following robot.
+            angle_tolerance (:ref:`angle`): Allowed deviation from the target angle before motion is considered complete.
+            speed_tolerance (:ref:`speed`): Allowed deviation from zero speed before motion is considered complete.
+        """
+        pass
+
+    def set_stall_settings(self, duty_limit, stall_speed, stall_time):
+        """Configure when the motor is considered to be :func:`.stalled`.
+
+        The motor is considered stalled when it cannot move even with the maximum torque.
+
+        Specifically, the motor is stalled when the duty cycle computed by the PID controllers has reached the maximum (so ``duty`` = ``duty_limit``) and still the motor cannot reach a minimal speed (so ``speed`` < ``stall_speed``) for a period of at least ``stall_time``. Changing these settings lets you adjust how soon the motor should be considered to be stalled.
+
+        Arguments:
+            duty_limit (:ref:`percentage`): Relative torque limit during subsequent ``run`` commands. This sets the maximum :ref:`duty cycle <duty>` that is applied during any subsequent motor command. This reduces the maximum torque output to a percentage of the absolute maximum stall torque. This is useful to avoid applying the full motor torque to a geared or lever mechanism.
+            stall_speed (:ref:`speed`): If the motor moves slower than ``stall_speed`` for ``stall_time`` during any of the ``run`` commands, the motor is considered to be stalled.
+            stall_time (:ref:`time`): As above: see ``stall_speed``.
         """
         pass
 

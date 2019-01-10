@@ -72,7 +72,7 @@ class Stop(Enum):
 
     .. data:: hold
 
-        Keep controlling the motor to hold it at the commanded angle.
+        Keep controlling the motor to hold it at the commanded angle. This is only available on motors with encoders.
 
     The stop type defines the resistance to motion after coming to standstill:
 
