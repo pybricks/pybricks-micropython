@@ -64,6 +64,8 @@ typedef enum {
     PBIO_MOTOR_DIR_INVERTED,    /**< Swap positive and negative for both the encoder value and the duty cycle */
 } pbio_motor_dir_t;
 
+pbio_motor_dir_t motor_directions[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+
 /**
  * Motor action executed after completing a run command that ends in a smooth stop.
  */
@@ -86,7 +88,6 @@ typedef enum {
 
 pbio_motor_control_active_t motor_control_active[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-pbio_motor_dir_t motor_directions[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 /**
  * Settings for an encoded motor
@@ -108,7 +109,14 @@ typedef struct _pbio_encmotor_settings_t {
     int16_t pid_kd;                 /**< Derivative position control constant (and proportional speed control constant) */
 } pbio_encmotor_settings_t;
 
+bool motor_has_encoders[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 pbio_encmotor_settings_t encmotor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+
+pbio_error_t pbio_encmotor_set_run_settings(pbio_port_t port, int32_t max_speed, int32_t acceleration);
+
+pbio_error_t pbio_encmotor_set_pid_settings(pbio_port_t port, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd, int32_t tight_loop_time, int32_t position_tolerance, int32_t speed_tolerance);
+
+pbio_error_t pbio_encmotor_set_stall_settings(pbio_port_t port, int16_t stall_torque_limit_pct, int32_t stall_speed_limit, int16_t stall_time);
 
 pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_motor_dir_t direction);
 
@@ -122,9 +130,8 @@ pbio_error_t pbio_dcmotor_set_duty_cycle_int(pbio_port_t port, int32_t duty_cycl
 
 pbio_error_t pbio_dcmotor_set_duty_cycle(pbio_port_t port, float_t duty_cycle);
 
-pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_motor_dir_t direction, float_t gear_ratio);
+pbio_error_t pbio_motor_setup(pbio_port_t port, pbio_motor_dir_t direction, float_t gear_ratio);
 
-pbio_error_t pbio_encmotor_set_settings(pbio_port_t port, int16_t stall_torque_limit_pct, int32_t stall_speed_limit, int16_t stall_time, int32_t speed_tolerance, int32_t max_speed,  int32_t position_tolerance, int32_t acceleration, int32_t tight_loop_time, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd);
 
 void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string);
 

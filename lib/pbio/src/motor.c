@@ -45,6 +45,7 @@ pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_motor_dir_t direction){
         return status;
     }
     motor_directions[PORT_TO_IDX(port)] = direction;
+    motor_has_encoders[PORT_TO_IDX(port)] = false;
 
     return PBIO_SUCCESS;
 }
@@ -53,7 +54,7 @@ void pbio_dcmotor_print_settings(pbio_port_t port, char *settings_string){
     char *direction = motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_NORMAL ? "normal" : "inverted";
     snprintf(settings_string, MAX_DCMOTOR_SETTINGS_STR_LENGTH,
         "Port\t\t %c\n"
-        "Direction\t %s\n",
+        "Direction\t %s",
         port,
         direction
     );
@@ -90,55 +91,71 @@ pbio_error_t pbio_dcmotor_set_duty_cycle(pbio_port_t port, float_t duty_cycle) {
     return pbio_dcmotor_set_duty_cycle_int(port, PBIO_DUTY_PCT_TO_ABS * duty_cycle);
 }
 
-pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_motor_dir_t direction, float_t gear_ratio){
+pbio_error_t pbio_motor_setup(pbio_port_t port, pbio_motor_dir_t direction, float_t gear_ratio) {
 
     // Configure DC Motor
     pbio_error_t status = pbio_dcmotor_setup(port, direction);
+    if (status != PBIO_SUCCESS) {
+        return status;
+    }
+    // Reset encoder, and in the process check that it is an encoded motor
+    motor_has_encoders[PORT_TO_IDX(port)] = pbio_encmotor_reset_encoder_count(port, 0) == PBIO_SUCCESS;
+
+    // Return if there are no encoders, because then we are done
+    if (!motor_has_encoders[PORT_TO_IDX(port)]) {
+        return PBIO_SUCCESS;
+    }
 
     //
     // TODO: Use the device_id to retrieve the default settings defined in our lib. For now just hardcode something below.
     //
     float_t counts_per_unit = 1.0;
 
-    // If all checks have passed, continue with setup of encoded motor
-    if (status == PBIO_SUCCESS) {
-        encmotor_settings[PORT_TO_IDX(port)].counts_per_unit = counts_per_unit;
-        encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit = counts_per_unit * gear_ratio;
-        encmotor_settings[PORT_TO_IDX(port)].offset = 0;
-        status = pbio_encmotor_reset_encoder_count(port, 0);
-    }
+    encmotor_settings[PORT_TO_IDX(port)].counts_per_unit = counts_per_unit;
+    encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit = counts_per_unit * gear_ratio;
+
     // TODO: Use the device_id to retrieve the default settings defined in our lib. For now just hardcode something below.
-    pbio_encmotor_set_settings(port, 100, 2, 500, 5, 1000, 1, 1000, 100, 800, 800, 5);
-    return status;
+    pbio_encmotor_set_run_settings(port, 1000, 1000);
+
+    // TODO: Add quick hack to distinguish between ev3 large/small
+    pbio_encmotor_set_pid_settings(port, 800, 800, 5, 100, 1, 5);
+
+    pbio_encmotor_set_stall_settings(port, 100, 2, 500);
+
+    return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_set_settings(
+pbio_error_t pbio_encmotor_set_run_settings(pbio_port_t port, int32_t max_speed, int32_t acceleration) {
+    int8_t port_index = PORT_TO_IDX(port);
+    float_t counts_per_output_unit = encmotor_settings[port_index].counts_per_output_unit;
+    encmotor_settings[port_index].max_rate = (counts_per_output_unit * max_speed);
+    encmotor_settings[port_index].abs_acceleration = (counts_per_output_unit * acceleration);
+    return PBIO_SUCCESS;
+};
+
+pbio_error_t pbio_encmotor_set_pid_settings(pbio_port_t port, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd, int32_t tight_loop_time, int32_t position_tolerance, int32_t speed_tolerance) {
+    int8_t port_index = PORT_TO_IDX(port);
+    float_t counts_per_output_unit = encmotor_settings[port_index].counts_per_output_unit;
+    encmotor_settings[port_index].pid_kp = pid_kp;
+    encmotor_settings[port_index].pid_ki = pid_ki;
+    encmotor_settings[port_index].pid_kd = pid_kd;
+    encmotor_settings[port_index].tight_loop_time = tight_loop_time * US_PER_MS;
+    encmotor_settings[port_index].count_tolerance = (counts_per_output_unit * position_tolerance);
+    encmotor_settings[port_index].rate_tolerance = (counts_per_output_unit * speed_tolerance);
+    return PBIO_SUCCESS;
+};
+
+pbio_error_t pbio_encmotor_set_stall_settings(
         pbio_port_t port,
         int16_t stall_torque_limit_pct,
         int32_t stall_speed_limit,
-        int16_t stall_time,
-        int32_t speed_tolerance,
-        int32_t max_speed,
-        int32_t position_tolerance,
-        int32_t acceleration,
-        int32_t tight_loop_time,
-        int16_t pid_kp,
-        int16_t pid_ki,
-        int16_t pid_kd
+        int16_t stall_time
     ){
     int8_t port_index = PORT_TO_IDX(port);
     float_t counts_per_output_unit = encmotor_settings[port_index].counts_per_output_unit;
     encmotor_settings[port_index].max_stall_duty = PBIO_DUTY_PCT_TO_ABS * stall_torque_limit_pct;
     encmotor_settings[port_index].stall_rate_limit = (counts_per_output_unit * stall_speed_limit);
     encmotor_settings[port_index].stall_time = stall_time * US_PER_MS;
-    encmotor_settings[port_index].rate_tolerance = (counts_per_output_unit * speed_tolerance);
-    encmotor_settings[port_index].max_rate = (counts_per_output_unit * max_speed);
-    encmotor_settings[port_index].count_tolerance = (counts_per_output_unit * position_tolerance);
-    encmotor_settings[port_index].abs_acceleration = (counts_per_output_unit * acceleration);
-    encmotor_settings[port_index].tight_loop_time = tight_loop_time * US_PER_MS;
-    encmotor_settings[port_index].pid_kp = pid_kp;
-    encmotor_settings[port_index].pid_ki = pid_ki;
-    encmotor_settings[port_index].pid_kd = pid_kd;
     return PBIO_SUCCESS;
 };
 
@@ -183,11 +200,7 @@ void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
 }
 
 bool pbio_encmotor_has_encoder(pbio_port_t port){
-    // First check if there is any motor and reinitialize if necessary.
-    pbio_error_t err = pbio_dcmotor_coast(port);
-    // Return true if there is a motor and reading the encoder succeeds.
-    int32_t count;
-    return (err == PBIO_SUCCESS || err == PBIO_ERROR_IO) && pbdrv_motor_get_encoder_count(port, &count) == PBIO_SUCCESS;
+    return motor_has_encoders[PORT_TO_IDX(port)];
 }
 
 pbio_error_t pbio_encmotor_get_encoder_count(pbio_port_t port, int32_t *count) {

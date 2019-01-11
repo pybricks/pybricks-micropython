@@ -102,12 +102,14 @@ mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n
     self->port = mp_obj_get_int(args[0]);
     // Configure direction or set to default
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_NORMAL;
-    // Check whether the motor has encoders
-    self->encoded = pbio_encmotor_has_encoder(self->port);
-    // Initialization specific to encoded motors
-    if(self->encoded) {
+
+    // Default gear ratio
+    float_t gear_ratio = 1.0;
+
+    if (n_args == 3) {
+        // TODO: Update way gear ratio is parsed/plus first check whether arg is given
         // Compute overall gear ratio from each gear train
-        float_t gear_ratio = 1.0;
+        
         int8_t n_trains = n_args - 2;
         for (int8_t train = 0; train < n_trains; train++) {
             // For this gear train, unpack the list of gears
@@ -123,13 +125,9 @@ mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n
             // Include the ratio of this train in the overall gear train
             gear_ratio = (gear_ratio*last_gear)/first_gear;
         }
-        // Configure the encoded motor with the selected arguments at pbio level
-        pb_assert(pbio_encmotor_setup(self->port, direction, gear_ratio));
     }
-    else {
-        // Configure the dc motor with the selected arguments at pbio level
-        pb_assert(pbio_dcmotor_setup(self->port, direction));
-    }
+    // Configure the encoded motor with the selected arguments at pbio level
+    pb_assert(pbio_motor_setup(self->port, direction, gear_ratio));
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -139,11 +137,10 @@ Motor
         """String representation of DCMotor object."""
 */
 void motor_Motor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind){
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_port_t port = get_port(self_in);
     char dcmotor_settings_string[MAX_DCMOTOR_SETTINGS_STR_LENGTH];
     pbio_dcmotor_print_settings(port, dcmotor_settings_string);
-    if (self->encoded) {
+    if (pbio_encmotor_has_encoder(port)) {
         char encmotor_settings_string[MAX_ENCMOTOR_SETTINGS_STR_LENGTH];
         pbio_encmotor_print_settings(port, encmotor_settings_string);
         mp_printf(print, "%s\n%s", dcmotor_settings_string, encmotor_settings_string);
@@ -152,49 +149,6 @@ void motor_Motor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind
         mp_printf(print, "%s", dcmotor_settings_string);
     }
 }
-
-/*
-Motor
-    def settings(self, relative_torque_limit, stall_speed_limit, stall_time, min_speed, max_speed, tolerance, acceleration_start, acceleration_end, tight_loop_time, pid_kp, pid_ki, pid_kd):
-        """Update the motor settings.
-        Keyword Arguments (TODO):
-        relative_torque_limit {int}   -- Percentage (-100.0 to 100.0) of the maximum stationary torque that the motor is allowed to produce.
-        stall_speed_limit {int}       -- If this speed cannnot be reached even with the maximum torque, the motor is considered to be stalled
-        stall_time {int}              -- Minimum stall time before the run_stalled action completes
-        min_speed {int}               -- If speed is equal or less than this, consider the motor to be standing still
-        max_speed {int}               -- Soft limit on the reference speed in all run commands
-        tolerance {int}               -- Allowed deviation (deg) from target before motion is considered complete
-        acceleration_start {int}      -- Acceleration when beginning to move. Positive value in degrees per second per second
-        acceleration_end {int}        -- Deceleration when stopping. Positive value in degrees per second per second
-        tight_loop_time {int}         -- When a run function is called twice in this interval (seconds), assume that the user is doing their own speed control.
-        pid_kp {int}                  -- Proportional angle control constant (and integral speed control constant)
-        pid_ki {int}                  -- Integral angle control constant
-        pid_kd {int}                  -- Derivative angle control constant (and proportional speed control constant)
-*/
-STATIC mp_obj_t motor_Motor_settings(size_t n_args, const mp_obj_t *args){
-    pbio_port_t port = get_port(args[0]);
-
-    // TODO: Keyword/optional arguments
-
-    // TODO: If device is a DC motor, return an error if the user tries to set Motor settings
-
-    pb_assert(pbio_encmotor_set_settings(port,
-                                         mp_obj_get_num(args[1]),
-                                         mp_obj_get_num(args[2]),
-                                         mp_obj_get_num(args[3]),
-                                         mp_obj_get_num(args[4]),
-                                         mp_obj_get_num(args[5]),
-                                         mp_obj_get_num(args[6]),
-                                         mp_obj_get_num(args[7]),
-                                         mp_obj_get_num(args[8]),
-                                         mp_obj_get_num(args[9]),
-                                         mp_obj_get_num(args[10]),
-                                         mp_obj_get_num(args[11])));
-    return mp_const_none;
-}
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_settings_obj, 12, 12, motor_Motor_settings);
-
-
 
 /*
 Motor
@@ -285,13 +239,13 @@ Motor
 
 STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    pbio_port_t port = get_port(args[0]);
     pbio_motor_after_stop_t after_stop = n_args > 1 ? mp_obj_get_int(args[1]) : PBIO_MOTOR_STOP_COAST;
-    if (!self->encoded && after_stop == PBIO_MOTOR_STOP_HOLD){
+    if (!pbio_encmotor_has_encoder(port) && after_stop == PBIO_MOTOR_STOP_HOLD){
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
     // Call pbio with parsed user/default arguments
-    pb_assert(pbio_encmotor_stop(self->port, after_stop));
+    pb_assert(pbio_encmotor_stop(port, after_stop));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_stop_obj, 1, 2, motor_Motor_stop);
@@ -420,6 +374,39 @@ STATIC mp_obj_t motor_Motor_track_target(mp_obj_t self_in, mp_obj_t target) {
 MP_DEFINE_CONST_FUN_OBJ_2(motor_Motor_track_target_obj, motor_Motor_track_target);
 
 
+STATIC mp_obj_t motor_Motor_set_run_settings(size_t n_args, const mp_obj_t *args){
+    pbio_port_t port = get_port(args[0]);
+    pb_assert(pbio_encmotor_set_run_settings(port,
+                                             mp_obj_get_num(args[1]),
+                                             mp_obj_get_num(args[2])));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_set_run_settings_obj, 3, 3, motor_Motor_set_run_settings);
+
+STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *args){
+    pbio_port_t port = get_port(args[0]);
+    pb_assert(pbio_encmotor_set_pid_settings(port,
+                                             mp_obj_get_num(args[1]),
+                                             mp_obj_get_num(args[2]),
+                                             mp_obj_get_num(args[3]),
+                                             mp_obj_get_num(args[4]),
+                                             mp_obj_get_num(args[5]),
+                                             mp_obj_get_num(args[6])));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_set_pid_settings_obj, 7, 7, motor_Motor_set_pid_settings);
+
+STATIC mp_obj_t motor_Motor_set_stall_settings(size_t n_args, const mp_obj_t *args){
+    pbio_port_t port = get_port(args[0]);
+    pb_assert(pbio_encmotor_set_stall_settings(port,
+                                               mp_obj_get_num(args[1]),
+                                               mp_obj_get_num(args[2]),
+                                               mp_obj_get_num(args[3])));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_set_stall_settings_obj, 4, 4, motor_Motor_set_stall_settings);
+
+
 /*
 Motor Class tables
 */
@@ -428,12 +415,14 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     //
     // Methods common to DC motors and encoded motors
     //
-    { MP_ROM_QSTR(MP_QSTR_settings), MP_ROM_PTR(&motor_Motor_settings_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_Motor_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_duty), MP_ROM_PTR(&motor_Motor_duty_obj) },
     //
     // Methods specific to encoded motors
     //
+    { MP_ROM_QSTR(MP_QSTR_set_run_settings), MP_ROM_PTR(&motor_Motor_set_run_settings_obj) },
+    { MP_ROM_QSTR(MP_QSTR_set_pid_settings), MP_ROM_PTR(&motor_Motor_set_pid_settings_obj) },
+    { MP_ROM_QSTR(MP_QSTR_set_stall_settings), MP_ROM_PTR(&motor_Motor_set_stall_settings_obj) },
     { MP_ROM_QSTR(MP_QSTR_angle), MP_ROM_PTR(&motor_Motor_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_speed), MP_ROM_PTR(&motor_Motor_speed_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_angle), MP_ROM_PTR(&motor_Motor_reset_angle_obj) },
