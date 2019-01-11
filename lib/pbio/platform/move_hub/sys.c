@@ -34,7 +34,7 @@
 #include "pbdrv/light.h"
 
 #include "pbio/button.h"
-#include "pbio/dcmotor.h"
+#include "pbio/motor.h"
 #include "pbio/event.h"
 #include "pbio/light.h"
 

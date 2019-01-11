@@ -26,10 +26,69 @@
  * SUCH DAMAGE.
  */
 
-#include <pbdrv/motor.h>
-#include <pbio/dcmotor.h>
-#include <pbio/encmotor.h>
 #include <inttypes.h>
+
+#include <pbdrv/motor.h>
+#include <pbio/motor.h>
+
+// Initialize motor control state as inactive
+pbio_motor_control_active_t motor_control_active[] = {
+    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)] PBIO_MOTOR_CONTROL_PASSIVE
+};
+
+pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_motor_dir_t direction){
+    // Get the ID according to IODEV
+    // pbio_iodev_type_id_t auto_id =
+
+    pbio_error_t status = pbio_dcmotor_coast(port);
+    if (status != PBIO_SUCCESS && status != PBIO_ERROR_IO) {
+        return status;
+    }
+    motor_directions[PORT_TO_IDX(port)] = direction;
+
+    return PBIO_SUCCESS;
+}
+
+void pbio_dcmotor_print_settings(pbio_port_t port, char *settings_string){
+    char *direction = motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_NORMAL ? "normal" : "inverted";
+    snprintf(settings_string, MAX_DCMOTOR_SETTINGS_STR_LENGTH,
+        "Port\t\t %c\n"
+        "Direction\t %s\n",
+        port,
+        direction
+    );
+}
+
+pbio_error_t pbio_dcmotor_coast(pbio_port_t port){
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_PASSIVE;
+    return pbdrv_motor_coast(port);
+}
+
+pbio_error_t pbio_dcmotor_brake(pbio_port_t port){
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_PASSIVE;
+    return pbdrv_motor_set_duty_cycle(port, 0);
+}
+
+pbio_error_t pbio_dcmotor_set_duty_cycle_int(pbio_port_t port, int32_t duty_cycle_int) {
+    // Limit the duty cycle value
+    int32_t limit = encmotor_settings[PORT_TO_IDX(port)].max_stall_duty;
+    if (duty_cycle_int > limit) {
+        duty_cycle_int = limit;
+    }
+    if (duty_cycle_int < -limit) {
+        duty_cycle_int = -limit;
+    }
+    // Flip sign if motor is inverted
+    if (motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_INVERTED){
+        duty_cycle_int = -duty_cycle_int;
+    }
+    return pbdrv_motor_set_duty_cycle(port, duty_cycle_int);
+}
+
+pbio_error_t pbio_dcmotor_set_duty_cycle(pbio_port_t port, float_t duty_cycle) {
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_PASSIVE;
+    return pbio_dcmotor_set_duty_cycle_int(port, PBIO_DUTY_PCT_TO_ABS * duty_cycle);
+}
 
 pbio_error_t pbio_encmotor_setup(pbio_port_t port, pbio_motor_dir_t direction, float_t gear_ratio){
 
@@ -67,12 +126,9 @@ pbio_error_t pbio_encmotor_set_settings(
         int16_t pid_ki,
         int16_t pid_kd
     ){
-    pbio_error_t status = pbio_dcmotor_set_settings(port, stall_torque_limit_pct);
-    if (status != PBIO_SUCCESS) {
-        return status;
-    }
     int8_t port_index = PORT_TO_IDX(port);
     float_t counts_per_output_unit = encmotor_settings[port_index].counts_per_output_unit;
+    encmotor_settings[port_index].max_stall_duty = PBIO_DUTY_PCT_TO_ABS * stall_torque_limit_pct;
     encmotor_settings[port_index].stall_rate_limit = (counts_per_output_unit * stall_speed_limit);
     encmotor_settings[port_index].stall_time = stall_time * US_PER_MS;
     encmotor_settings[port_index].rate_tolerance = (counts_per_output_unit * speed_tolerance);
@@ -136,7 +192,7 @@ bool pbio_encmotor_has_encoder(pbio_port_t port){
 
 pbio_error_t pbio_encmotor_get_encoder_count(pbio_port_t port, int32_t *count) {
     pbio_error_t status = pbdrv_motor_get_encoder_count(port, count);
-    if (dcmotor_settings[PORT_TO_IDX(port)].direction == PBIO_MOTOR_DIR_INVERTED) {
+    if (motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_INVERTED) {
         *count = -*count;
     }
     *count -= encmotor_settings[PORT_TO_IDX(port)].offset;
@@ -171,7 +227,7 @@ pbio_error_t pbio_encmotor_reset_angle(pbio_port_t port, int32_t reset_angle) {
 
 pbio_error_t pbio_encmotor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     pbio_error_t status = pbdrv_motor_get_encoder_rate(port, rate);
-    if (dcmotor_settings[PORT_TO_IDX(port)].direction == PBIO_MOTOR_DIR_INVERTED) {
+    if (motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_INVERTED) {
         *rate = -*rate;
     }
     return status;

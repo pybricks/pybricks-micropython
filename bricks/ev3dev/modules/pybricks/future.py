@@ -22,7 +22,9 @@
 
 """Experimental features to be rewritten in C code at a later stage."""
 
-from .ev3devices import Run, Stop
+from .parameters import Stop
+from math import pi
+
 
 class Mechanism():
     """Class to control a motor with predefined target angles."""
@@ -56,14 +58,31 @@ class Mechanism():
 
         # Temporarily set specified duty limit (TODO: First GET old setting so we can return it afterwards)
         self.motor.settings(self.reset_torque, 0, 500, 5, 1000, 1, 1000, 1000, 100, 800, 800, 5) #( TODO: Implement keyword args to change only the two relevant settings)
-        self.motor.run_stalled(speed, Stop.hold, Run.foreground)
+        self.motor.run_stalled(speed, Stop.hold)
         self.motor.reset_angle(self.targets['reset'])
         self.motor.settings(100, 2, 500, 5, 1000, 1, 1000, 1000, 100, 800, 800, 5) #( TODO: Implement keyword args to change only the two relevant settings)
 
         # Because reset_angle coasts the motor, ensure we stay on reset target with configured stop type
         self.go('reset')
 
-    def go(self, target_key, run_type=Run.foreground):
+    def go(self, target_key, wait=True):
         """Go to the target specified by the key."""
         # TODO: make speed and after_stop type optional as well, defaulting to initialized values
-        self.motor.run_target(self.speed_abs, self.targets[target_key], self.after_stop, run_type)
+        self.motor.run_target(self.speed_abs, self.targets[target_key], self.after_stop, wait)
+
+class DriveBase():
+    def __init__(self, left_motor, right_motor, wheel_diameter, axle_track):
+        self.left_motor = left_motor
+        self.right_motor = right_motor
+        self.wheel_diameter = wheel_diameter
+        self.axle_track = axle_track
+
+    def drive(self, speed, steering):
+        speedsum = speed/self.wheel_diameter*(720/pi)
+        speeddif = 2*self.axle_track/self.wheel_diameter*steering
+        self.left_motor.run((speedsum+speeddif)/2)
+        self.right_motor.run((speedsum-speeddif)/2)
+
+    def stop(self, stop_type=Stop.coast):
+        self.left_motor.stop(stop_type)
+        self.right_motor.stop(stop_type)

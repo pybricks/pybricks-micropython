@@ -107,7 +107,7 @@ void control_update(pbio_port_t port){
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
     pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
     pbio_motor_control_status_t *status = &motor_control_status[PORT_TO_IDX(port)];
-    duty_t max_duty = dcmotor_settings[PORT_TO_IDX(port)].max_stall_duty;
+    duty_t max_duty = settings->max_stall_duty;
 
     // Return immediately if control is not active; then there is nothing we need to do
     if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_PASSIVE) {

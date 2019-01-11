@@ -37,8 +37,7 @@
 #include <pbio/error.h>
 #include <pbio/port.h>
 
-#include <pbio/dcmotor.h>
-#include <pbio/encmotor.h>
+#include <pbio/motor.h>
 
 /**
  * \addtogroup Motor Motors
