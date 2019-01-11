@@ -5,6 +5,49 @@ Motors
 ------
 
 .. autoclass:: ev3devices.Motor
+    :no-members:
+
+    .. rubric:: Methods for motors without rotation sensors
+
+    .. automethod:: ev3devices.Motor.dc
+
+    .. automethod:: ev3devices.Motor.dc_time
+
+    .. rubric:: Methods for motors with rotation sensors
+
+    .. automethod:: ev3devices.Motor.angle
+
+    .. automethod:: ev3devices.Motor.reset_angle
+
+    .. automethod:: ev3devices.Motor.speed
+
+    .. automethod:: ev3devices.Motor.stop
+
+    .. automethod:: ev3devices.Motor.run
+
+    .. automethod:: ev3devices.Motor.run_time
+
+    .. automethod:: ev3devices.Motor.run_angle
+
+    .. automethod:: ev3devices.Motor.run_target
+
+    .. automethod:: ev3devices.Motor.run_until_stalled
+
+    .. rubric:: Advanced methods for motors with rotation sensors
+
+    .. automethod:: ev3devices.Motor.track_target
+
+    .. automethod:: ev3devices.Motor.reference
+
+    .. automethod:: ev3devices.Motor.maneuver
+
+    .. automethod:: ev3devices.Motor.stalled
+
+    .. automethod:: ev3devices.Motor.set_stall_settings
+
+    .. automethod:: ev3devices.Motor.set_run_settings
+
+    .. automethod:: ev3devices.Motor.set_pid_settings
 
 Sensors
 -------

@@ -19,7 +19,7 @@ class Motor():
         Arguments:
             port (Port): Port to which the motor is connected
             direction (Direction): Positive speed direction. (*Default*: Direction.clockwise)
-            gears (list): List of gears linked to the motor. (*Default*: ``None``)
+            gears (list): List of gears linked to the motor. (*Default*: ``None``).
 
                           For example: ``[12, 36]`` represents a gear train with a 12-tooth and a 36-tooth gear. See :ref:`ratio` for illustrated examples.
 
@@ -30,6 +30,8 @@ class Motor():
                           For example, with ``gears=[12, 36]``, the gear ratio is 3, which means that the output is mechanically slowed down by a factor of 3. To compensate, the motor will automatically turn 3 times as fast and 3 times as far when you give a motor command. So when you choose ``run_angle(200, 90)``, your mechanism output simply turns at 200 deg/s by 90 degrees.
 
                           The same holds for the documentation below: When it says "motor angle" or "motor speed", you can read it as "mechanism output angle" and "mechanism output speed", and so on, because the gear ratio is automatically accounted for.
+
+                          The ``gears`` setting is only available for motors with rotation sensors.
 
         ::
 
