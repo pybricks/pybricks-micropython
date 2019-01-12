@@ -250,6 +250,15 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
         motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_RUNNING ||
         motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_HOLDING;
 
+    // Handle track target
+    if (action == TRACK_TARGET) {
+        // If the previous action was also track target, just keep running, otherwise start a new maneuver
+        motor_control_active[PORT_TO_IDX(port)] = traject->action == TRACK_TARGET ? PBIO_MOTOR_CONTROL_RUNNING: PBIO_MOTOR_CONTROL_STARTING;         
+        traject->action = action;   
+        make_trajectory_none(count_start, duration_or_target_position*settings->counts_per_output_unit, traject);
+        return PBIO_SUCCESS;
+    }
+
     // For now, disable smooth transitions if the next step is a position based maneuver
     // TODO: implement the actual transtion properly
     if (action == RUN_TARGET || action == RUN_ANGLE) {
@@ -330,7 +339,7 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
         }
     }
     else {
-        // TRACK_TARGET: NOT IMPLEMENTED
+        // ?
     }
 
     // If this new maneuver aborts an existing running or holding command, we "restart"

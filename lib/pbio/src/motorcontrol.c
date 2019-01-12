@@ -176,7 +176,7 @@ void control_update(pbio_port_t port){
     }
 
     // Get the time at which we want to evaluate the reference position/velocities, for position based commands
-    if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
+    if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE || traject->action == TRACK_TARGET){
         // In nominal operation, take the current time, minus the amount of time we have spent stalled
         if (status->windup_status == TIME_RUNNING) {
             time_ref = time_now - status->time_paused;
@@ -197,7 +197,7 @@ void control_update(pbio_port_t port){
     get_reference(time_ref, traject, &count_ref, &rate_ref);
 
     // Position error
-    if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
+    if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE || traject->action == TRACK_TARGET){
         // For position based commands, this is just the reference minus the current value
         count_err = count_ref - count_now;
     }
@@ -225,7 +225,7 @@ void control_update(pbio_port_t port){
     duty_due_to_derivative = settings->pid_kd*rate_err;
 
     // Position anti-windup (RUN_TARGET || RUN_ANGLE)
-    if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
+    if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE || traject->action == TRACK_TARGET){
         if ((duty_due_to_proportional >= max_duty && rate_err > 0) || (duty_due_to_proportional <= -max_duty && rate_err < 0)){
             // We are at the duty limit and we should prevent further position error "integration".
             // If we are additionally also running slower than the specified stall speed limit, set status to stalled
@@ -288,7 +288,7 @@ void control_update(pbio_port_t port){
     }
 
     // Duty cycle component due to integral position control (RUN_TARGET || RUN_ANGLE)
-    if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE) {
+    if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE || traject->action == TRACK_TARGET) {
         duty_due_to_integral = (settings->pid_ki*(status->err_integral/US_PER_MS))/MS_PER_SECOND;
 
         // Integrator anti windup (stalled in the sense of integrators)
@@ -452,5 +452,5 @@ pbio_error_t pbio_encmotor_run_target(pbio_port_t port, int32_t speed, int32_t t
 }
 
 pbio_error_t pbio_encmotor_track_target(pbio_port_t port, int32_t target){
-    return PBIO_ERROR_NOT_IMPLEMENTED;
+    return make_motor_trajectory(port, TRACK_TARGET, NONE, target, PBIO_MOTOR_STOP_HOLD);
 }
