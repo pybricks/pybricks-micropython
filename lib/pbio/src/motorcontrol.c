@@ -37,8 +37,6 @@
  * Status of the anti-windup integrators
  */
 typedef enum {
-    /**< Initial status prior to initialization */
-    TIME_NOT_INITIALIZED,
     /**< Anti-windup status for PID position control:
          Pause the position and speed trajectory when
          the motor is stalled by pausing time. */
@@ -71,19 +69,14 @@ typedef struct _pbio_motor_control_status_t {
     duty_t load_duty;
     count_t count_err_prev;        /**< Position error in the previous control iteration */
     ustime_t time_prev;            /**< Time at the previous control iteration */
-    ustime_t time_started;         /**< Time that this maneuver/command/trajectory was started */
     ustime_t time_paused;          /**< The amount of time the speed integrator has spent paused */
     ustime_t time_stopped;         /**< Time at which the speed integrator last stopped */
     count_t integrator_ref_start;  /**< Integrated speed value prior to enabling integrator */
     count_t integrator_start;      /**< Integrated reference speed value prior to enabling integrator */
 } pbio_motor_control_status_t;
 
-// Initialize the current control status to being uninitialized
-pbio_motor_control_status_t motor_control_status[] = {
-    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
-        .windup_status = TIME_NOT_INITIALIZED
-    }
-};
+// Current control status for each motor
+pbio_motor_control_status_t motor_control_status[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 // If the controller reach the maximum duty cycle value, this shortcut sets the stalled flag when the speed is below the stall limit.
 void stall_set_flag_if_slow(stalled_status_t *stalled, rate_t rate_now, rate_t rate_limit, stalled_status_t flag){
@@ -114,11 +107,6 @@ void control_update(pbio_port_t port){
         return;
     }
 
-    // The very first time this is called, we initialize a fictitious previous maneuver
-    if (status->windup_status == TIME_NOT_INITIALIZED) {
-        status->time_started = traject->t0 - US_PER_SECOND;
-    }
-
     // Declare current time, positions, rates, and their reference value and error
     ustime_t time_now, time_ref, time_loop;
     count_t count_now, count_ref, count_err;
@@ -130,11 +118,8 @@ void control_update(pbio_port_t port){
     pbio_encmotor_get_encoder_count(port, &count_now);
     pbio_encmotor_get_encoder_rate(port, &rate_now);
 
-    // Check if the trajectory starting time equals the current maneuver start time
+    // Check if the trajectory controller must be reinitialized/started
     if (motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_STARTING) {
-        // If not, then we are starting a new maneuver, and we update its starting time
-        status->time_started = traject->t0;
-
         // For this new maneuver, we reset PID variables and related persistent control settings
         // If still running and restarting a new maneuver, however, we keep part of the PID status
         // in order to create a smooth transition from one maneuver to the next.
@@ -160,7 +145,7 @@ void control_update(pbio_port_t port){
         // Clear stalled status
         stall_clear_flag(&status->stalled, STALLED_PROPORTIONAL || STALLED_INTEGRAL);
 
-        status->time_prev = status->time_started;
+        status->time_prev = traject->t0;
         status->count_err_prev = 0;
         // Reset control status flags
         if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){

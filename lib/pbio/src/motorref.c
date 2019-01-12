@@ -270,6 +270,8 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
 
         // TODO: FOR RUN_ANGLE, RUN_TIME this isn't the absolute time: subtract paused time
 
+        // Related, use time_stopped to maintain run maneuvers.
+
         get_reference(time_start, traject, &count_start, &rate_start);
     }
     else {
