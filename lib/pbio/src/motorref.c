@@ -45,7 +45,7 @@ void reverse_trajectory(pbio_motor_trajectory_t *ref) {
     ref->a2 *= -1;
 }
 
-void make_trajectory_none(ustime_t t0, count_t th0, pbio_motor_trajectory_t *ref) {
+void make_trajectory_none(ustime_t t0, count_t th0, rate_t w1, pbio_motor_trajectory_t *ref) {
     // All times equal to initial time:
     ref->t0 = t0;
     ref->t1 = t0;
@@ -60,7 +60,7 @@ void make_trajectory_none(ustime_t t0, count_t th0, pbio_motor_trajectory_t *ref
 
     // All speeds/accelerations zero:
     ref->w0 = 0;
-    ref->w1 = 0;
+    ref->w1 = w1;
     ref->a0 = 0;
     ref->a2 = 0;
 }
@@ -157,7 +157,7 @@ pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, 
     }
     // Return empty maneuver for zero angle
     if (th3 == th0) {
-        make_trajectory_none(t0, th0, ref);
+        make_trajectory_none(t0, th0, 0, ref);
         return PBIO_SUCCESS;
     }
 
@@ -246,16 +246,31 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
     pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
 
+    ustime_t previous_time_start = traject->t0;
+    pbio_motor_action_t previous_action = traject->action;
+
     bool currently_active =
         motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_RUNNING ||
         motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_HOLDING;
 
+    // Experimental work around for run in fast loop
+    if (action == RUN && 
+        previous_action == RUN &&
+        currently_active &&
+        time_start - previous_time_start < settings->tight_loop_time) {
+        get_reference(time_start, traject, &count_start, &rate_start);
+        make_trajectory_none(time_start, count_start, speed_target*settings->counts_per_output_unit, traject);
+        return PBIO_SUCCESS;
+    }
+
     // Handle track target
     if (action == TRACK_TARGET) {
         // If the previous action was also track target, just keep running, otherwise start a new maneuver
-        motor_control_active[PORT_TO_IDX(port)] = traject->action == TRACK_TARGET ? PBIO_MOTOR_CONTROL_RUNNING: PBIO_MOTOR_CONTROL_STARTING;         
+        motor_control_active[PORT_TO_IDX(port)] = previous_action == TRACK_TARGET && currently_active ?
+                                                  PBIO_MOTOR_CONTROL_RUNNING:
+                                                  PBIO_MOTOR_CONTROL_STARTING;         
         traject->action = action;   
-        make_trajectory_none(count_start, duration_or_target_position*settings->counts_per_output_unit, traject);
+        make_trajectory_none(time_start, duration_or_target_position*settings->counts_per_output_unit, 0, traject);
         return PBIO_SUCCESS;
     }
 
