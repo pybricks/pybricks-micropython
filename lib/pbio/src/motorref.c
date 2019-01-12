@@ -250,6 +250,12 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
         motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_RUNNING ||
         motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_HOLDING;
 
+    // For now, disable smooth transitions if the next step is a position based maneuver
+    // TODO: implement the actual transtion properly
+    if (action == RUN_TARGET || action == RUN_ANGLE) {
+        currently_active = 0;
+    }
+
     if (currently_active) {
         // Continue the reference from the currently active maneuver, for a smooth transition
 

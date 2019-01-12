@@ -209,21 +209,21 @@ class Motor():
         """
         pass
 
-    def run_until_stalled(self, speed, torque_limit, stop_type=Stop.coast):
-        """run_until_stalled(self, speed, torque_limit, stop_type=Stop.coast)
+    def run_until_stalled(self, speed, stop_type=Stop.coast, duty_limit=100, stall_speed=5, stall_time=200):
+        """run_until_stalled(self, speed, stop_type=Stop.coast, duty_limit=100, stall_speed=5, stall_time=200)
 
-        Run the motor at a constant speed (angular velocity) until it stalls.
+        Run the motor at a constant speed (angular velocity) until it stalls. The motor is considered stalled when it cannot move even with the maximum torque.
 
-        The motor will accelerate towards the requested speed and the duty cycle is automatically adjusted to keep the speed constant, until it encounters an obstacle that prevents it from turning any further. Then the motor stops.
+        Specifically, the motor is stalled when the duty cycle computed by the PID controllers has reached the maximum (so ``duty`` = ``duty_limit``) and still the motor cannot reach a minimal speed (so ``speed`` < ``stall_speed``) for a period of at least ``stall_time``. These settings lets you adjust how soon the motor should be considered to be stalled.
+
+        These settings are exactly the same as :func:`.set_stall_settings`, but in this function they are only applied temporarily. For example, you can choose ``duty_limit=50`` to limit the motor torque during this maneuver, but it returns to its original value aftwards.
 
         Arguments:
             speed (:ref:`speed`): Speed of the motor.
-            torque_limit (:ref:`percentage`): Maximum duty cycle used during this command. It works just like :func:`.set_torque_limit`, but it is temporary: once this command completes the motor uses the default or user-specified torque limit again. For example, this allows you to avoid high torques when resetting a mechanism, while the motor operates normally afterwards.
             stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
-
-        Returns:
-            :ref:`angle`: Angle at which the motor became stalled.
-
+            duty_limit (:ref:`percentage`): Relative torque limit during subsequent ``run`` commands. This sets the maximum :ref:`duty cycle <duty>` that is applied during any subsequent motor command. This reduces the maximum torque output to a percentage of the absolute maximum stall torque. This is useful to avoid applying the full motor torque to a geared or lever mechanism.
+            stall_speed (:ref:`speed`): If the motor moves slower than ``stall_speed`` for ``stall_time`` during any of the ``run`` commands, the motor is considered to be stalled.
+            stall_time (:ref:`time`): As above: see ``stall_speed``.
         """
         pass
 

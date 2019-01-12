@@ -377,6 +377,7 @@ void control_update(pbio_port_t port){
             else {
                 // When ending a time based control maneuver with hold, we trigger a new position based maneuver with zero degrees
                 pbio_dcmotor_set_duty_cycle_int(port, 0);
+                
                 make_motor_trajectory(port, RUN_TARGET, NONZERO, ((float_t) count_now)/settings->counts_per_output_unit, PBIO_MOTOR_STOP_HOLD);
             }
         }
@@ -433,7 +434,7 @@ pbio_error_t pbio_encmotor_run_time(pbio_port_t port, int32_t speed, int32_t dur
     return make_motor_trajectory(port, RUN_TIME, speed, duration, after_stop);
 }
 
-pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, int32_t speed, pbio_motor_after_stop_t after_stop){
+pbio_error_t pbio_encmotor_run_until_stalled(pbio_port_t port, int32_t speed, pbio_motor_after_stop_t after_stop){
     return make_motor_trajectory(port, RUN_STALLED, speed, NONE, after_stop);
 }
 

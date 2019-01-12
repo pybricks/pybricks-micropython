@@ -60,7 +60,7 @@ pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_after_stop_t after_
 
 pbio_error_t pbio_encmotor_run_time(pbio_port_t port, int32_t speed, int32_t duration, pbio_motor_after_stop_t after_stop);
 
-pbio_error_t pbio_encmotor_run_stalled(pbio_port_t port, int32_t speed, pbio_motor_after_stop_t after_stop);
+pbio_error_t pbio_encmotor_run_until_stalled(pbio_port_t port, int32_t speed, pbio_motor_after_stop_t after_stop);
 
 pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, int32_t speed, int32_t angle, pbio_motor_after_stop_t after_stop);
 

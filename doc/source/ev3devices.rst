@@ -31,8 +31,6 @@ Motors
 
     .. automethod:: ev3devices.Motor.run_target
 
-    .. automethod:: ev3devices.Motor.run_until_stalled
-
     .. rubric:: Advanced methods for motors with rotation sensors
 
     .. automethod:: ev3devices.Motor.track_target
@@ -42,6 +40,8 @@ Motors
     .. automethod:: ev3devices.Motor.maneuver
 
     .. automethod:: ev3devices.Motor.stalled
+
+    .. automethod:: ev3devices.Motor.run_until_stalled
 
     .. automethod:: ev3devices.Motor.set_stall_settings
 

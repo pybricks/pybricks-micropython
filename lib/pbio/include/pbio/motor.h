@@ -116,7 +116,9 @@ pbio_error_t pbio_encmotor_set_run_settings(pbio_port_t port, int32_t max_speed,
 
 pbio_error_t pbio_encmotor_set_pid_settings(pbio_port_t port, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd, int32_t tight_loop_time, int32_t position_tolerance, int32_t speed_tolerance);
 
-pbio_error_t pbio_encmotor_set_stall_settings(pbio_port_t port, int16_t stall_torque_limit_pct, int32_t stall_speed_limit, int16_t stall_time);
+pbio_error_t pbio_encmotor_set_stall_settings(pbio_port_t port, int32_t stall_torque_limit_pct, int32_t stall_speed_limit, int32_t stall_time);
+
+pbio_error_t pbio_encmotor_get_stall_settings(pbio_port_t port, int32_t *stall_torque_limit_pct, int32_t *stall_speed_limit, int32_t *stall_time);
 
 pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_motor_dir_t direction);
 

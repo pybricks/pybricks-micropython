@@ -85,7 +85,7 @@ mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n
                 pb_assert(PBIO_ERROR_INVALID_ARG);
             }
             // Include the ratio of this train in the overall gear train
-            gear_ratio = (gear_ratio*last_gear)/first_gear;                
+            gear_ratio = (gear_ratio*last_gear)/first_gear;
         }
     }
     // Configure the encoded motor with the selected arguments at pbio level
@@ -172,27 +172,38 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *args){
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_time_obj, 3, 5, motor_Motor_run_time);
 
-STATIC mp_obj_t motor_Motor_run_stalled(size_t n_args, const mp_obj_t *args){
+STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
     pbio_motor_after_stop_t after_stop = n_args > 2 ? mp_obj_get_int(args[2]) : PBIO_MOTOR_STOP_COAST;
-    pbio_motor_run_t runtype             = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_RUN_FOREGROUND;
+    int32_t temporary_stall_duty  = n_args > 3 ? mp_obj_get_num(args[3]) : 100;
+    int32_t temporary_stall_speed = n_args > 4 ? mp_obj_get_num(args[4]) : 5;
+    int32_t temporary_stall_time  = n_args > 5 ? mp_obj_get_num(args[5]) : 200;
+
+    // Save old settings
+    int32_t old_stall_duty;
+    int32_t old_stall_speed;
+    int32_t old_stall_time;
+    pbio_encmotor_get_stall_settings(port, &old_stall_duty, &old_stall_speed, &old_stall_time);
+
+    // Set temporary settings supplied by user for this maneuver
+    pbio_encmotor_set_stall_settings(port, temporary_stall_duty, temporary_stall_speed, temporary_stall_time);
+
     // Call pbio with parsed user/default arguments
-    pb_assert(pbio_encmotor_run_stalled(port, mp_obj_get_num(args[1]), after_stop));
-    wait_for_completion(port, runtype);
-    // TODO: THIS MANEUVER SHOULD ALWAYS COMPLETE
-    // If the user specified to wait for the motion to complete, return the angle at which the motor stalled
-    if (runtype == PBIO_MOTOR_RUN_FOREGROUND) {
-        int32_t stall_point;
-        pbio_encmotor_get_angle(port, &stall_point);
-        return mp_obj_new_int(stall_point);
-    }
-    // If this command is set to run in the background, return None
-    else{
-        return mp_const_none;
-    }
+    pb_assert(pbio_encmotor_run_until_stalled(port, mp_obj_get_num(args[1]), after_stop));
+    wait_for_completion(port, PBIO_MOTOR_RUN_FOREGROUND);
+
+    // Read the angle upon completion of the stall maneuver
+    int32_t stall_point;
+    pbio_encmotor_get_angle(port, &stall_point);
+
+    // Return stall settings to old values
+    pbio_encmotor_set_stall_settings(port, old_stall_duty, old_stall_speed, old_stall_time);
+
+    // Return angle at which the motor stalled
+    return mp_obj_new_int(stall_point);
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_stalled_obj, 2, 4, motor_Motor_run_stalled);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_until_stalled_obj, 2, 6, motor_Motor_run_until_stalled);
 
 STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
@@ -278,7 +289,7 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_reset_angle), MP_ROM_PTR(&motor_Motor_reset_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_run), MP_ROM_PTR(&motor_Motor_run_obj) },
     { MP_ROM_QSTR(MP_QSTR_run_time), MP_ROM_PTR(&motor_Motor_run_time_obj) },
-    { MP_ROM_QSTR(MP_QSTR_run_stalled), MP_ROM_PTR(&motor_Motor_run_stalled_obj) },
+    { MP_ROM_QSTR(MP_QSTR_run_until_stalled), MP_ROM_PTR(&motor_Motor_run_until_stalled_obj) },
     { MP_ROM_QSTR(MP_QSTR_run_angle), MP_ROM_PTR(&motor_Motor_run_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_run_target), MP_ROM_PTR(&motor_Motor_run_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&motor_Motor_track_target_obj) },

@@ -147,15 +147,29 @@ pbio_error_t pbio_encmotor_set_pid_settings(pbio_port_t port, int16_t pid_kp, in
 
 pbio_error_t pbio_encmotor_set_stall_settings(
         pbio_port_t port,
-        int16_t stall_torque_limit_pct,
+        int32_t stall_torque_limit_pct,
         int32_t stall_speed_limit,
-        int16_t stall_time
+        int32_t stall_time
     ){
     int8_t port_index = PORT_TO_IDX(port);
     float_t counts_per_output_unit = encmotor_settings[port_index].counts_per_output_unit;
     encmotor_settings[port_index].max_stall_duty = PBIO_DUTY_PCT_TO_ABS * stall_torque_limit_pct;
     encmotor_settings[port_index].stall_rate_limit = (counts_per_output_unit * stall_speed_limit);
     encmotor_settings[port_index].stall_time = stall_time * US_PER_MS;
+    return PBIO_SUCCESS;
+};
+
+pbio_error_t pbio_encmotor_get_stall_settings(
+        pbio_port_t port,
+        int32_t *stall_torque_limit_pct,
+        int32_t *stall_speed_limit,
+        int32_t *stall_time
+    ){
+    int8_t port_index = PORT_TO_IDX(port);
+    float_t counts_per_output_unit = encmotor_settings[port_index].counts_per_output_unit;
+    *stall_torque_limit_pct = encmotor_settings[port_index].max_stall_duty/PBIO_DUTY_PCT_TO_ABS;
+    *stall_speed_limit = encmotor_settings[port_index].stall_rate_limit/counts_per_output_unit;
+    *stall_time = encmotor_settings[port_index].stall_time/US_PER_MS;
     return PBIO_SUCCESS;
 };
 
