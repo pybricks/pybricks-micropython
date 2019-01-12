@@ -34,7 +34,6 @@
 #include "pbobj.h"
 
 
-
 /* Wait for maneuver to complete */
 
 STATIC void wait_for_completion(pbio_port_t port, pbio_motor_run_t runtype) {
@@ -45,58 +44,9 @@ STATIC void wait_for_completion(pbio_port_t port, pbio_motor_run_t runtype) {
     };
 }
 
-/*
-Motor
-    def __init__(self, port, direction):
-        """Initialize the motor.
-        Arguments:
-            port {const} -- Port to which the device is connected: PORT_A, PORT_B, etc.
-        Optional arguments (DC and Encoded motor)
-            direction {const} -- DIR_NORMAL or DIR_INVERTED (default: {DIR_NORMAL})
-        Optional arguments (Encoded motor only)
-            train1 {list} -- List of the number of teeth of the gears in the first gear train (attached to the motor)
-            train2 {list} -- List of the number of teeth of the gears in the second gear train
-            ...
-        """
-
-Two examples of the gear train lists:
-
-EXAMPLE 1: [12, 36]
-  _____________
- |            |
- |    motor   |
- |____________|
-       ||
-       || 12t      36t
-     ||||||  ||||||||||||||
-                   ||
-                   ||
-               output axle
-
-
-Example 2: [12, 20, 36], [20, 40], [20, 8, 40]
-  _____________
- |            |
- |    motor   |
- |____________|
-       ||
-       || 12t    20t           36t
-     ||||||  |||||||||||  ||||||||||||||
-                                ||
-                                ||
-                             ||||||||  |||||||||||||||||
-                                20t           || 40t
-                                              ||
-                                            ||||||||  |||  |||||||||||||||||
-                                                20t    8t         || 40t
-                                                                  ||
-                                                              output axle
-
-*/
-
 mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
     // Load self and determine port
-    mp_arg_check_num(n_args, n_kw, 1, 4, false);
+    mp_arg_check_num(n_args, n_kw, 1, 3, false);
     motor_Motor_obj_t *self = m_new_obj(motor_Motor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
     self->port = mp_obj_get_int(args[0]);
@@ -106,16 +56,28 @@ mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n
     // Default gear ratio
     float_t gear_ratio = 1.0;
 
+    // Parse gear argument of the form [[12, 20, 36], [20, 40]] or [12, 20, 36]
     if (n_args == 3) {
-        // TODO: Update way gear ratio is parsed/plus first check whether arg is given
-        // Compute overall gear ratio from each gear train
-        
-        int8_t n_trains = n_args - 2;
-        for (int8_t train = 0; train < n_trains; train++) {
-            // For this gear train, unpack the list of gears
-            mp_obj_t *gears;
-            size_t n_gears;
-            mp_obj_get_array(args[train+2], &n_gears, &gears);
+        // Unpack the main list
+        mp_obj_t *trains, *gears;
+        size_t n_trains, n_gears;
+        mp_obj_get_array(args[2], &n_trains, &trains);
+
+        // If the first and last element is an integer, assume the user gave just one list of gears, i.e. [12, 20, 36]
+        bool is_one_train = MP_OBJ_IS_SMALL_INT(trains[0]) && MP_OBJ_IS_SMALL_INT(trains[n_trains-1]);
+        // This means we don't have a list of gear trains, but just one gear train with a given number of gears
+        if (is_one_train) {
+            n_gears = n_trains;
+            gears = trains;
+            n_trains = 1;
+        }
+
+        // Iterate through each of the n_trains lists
+        for (int16_t train = 0; train < n_trains; train++) {
+            // Unless we have just one list of gears, unpack the list of gears for this train
+            if (!is_one_train) {
+                mp_obj_get_array(trains[train], &n_gears, &gears);
+            }
             // For this gear train, compute the ratio from the first and last gear
             int16_t first_gear = mp_obj_get_int(gears[0]);
             int16_t last_gear = mp_obj_get_int(gears[n_gears-1]);
@@ -123,7 +85,7 @@ mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n
                 pb_assert(PBIO_ERROR_INVALID_ARG);
             }
             // Include the ratio of this train in the overall gear train
-            gear_ratio = (gear_ratio*last_gear)/first_gear;
+            gear_ratio = (gear_ratio*last_gear)/first_gear;                
         }
     }
     // Configure the encoded motor with the selected arguments at pbio level
@@ -131,11 +93,6 @@ mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n
     return MP_OBJ_FROM_PTR(self);
 }
 
-/*
-Motor
-    def __str__(self):
-        """String representation of DCMotor object."""
-*/
 void motor_Motor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind){
     pbio_port_t port = get_port(self_in);
     char dcmotor_settings_string[MAX_DCMOTOR_SETTINGS_STR_LENGTH];
@@ -150,13 +107,6 @@ void motor_Motor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind
     }
 }
 
-/*
-Motor
-    def duty(self, duty):
-        """Set motor duty cycle.
-        Arguments:
-            duty {int} -- Percentage from -100 to 100
-*/
 STATIC mp_obj_t motor_Motor_duty(mp_obj_t self_in, mp_obj_t duty_cycle) {
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_assert(pbio_dcmotor_set_duty_cycle(self->port, mp_obj_get_num(duty_cycle)));
@@ -164,14 +114,6 @@ STATIC mp_obj_t motor_Motor_duty(mp_obj_t self_in, mp_obj_t duty_cycle) {
 }
 MP_DEFINE_CONST_FUN_OBJ_2(motor_Motor_duty_obj, motor_Motor_duty);
 
-/*
-Motor
-    def angle(self):
-        """Return the angle of the motor/mechanism (degrees).
-        Returns:
-            int -- Position of the motor/mechanism (degrees).
-        """
-*/
 STATIC mp_obj_t motor_Motor_angle(mp_obj_t self_in) {
     pbio_port_t port = get_port(self_in);
     int32_t angle;
@@ -180,13 +122,6 @@ STATIC mp_obj_t motor_Motor_angle(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_angle_obj, motor_Motor_angle);
 
-/*
-Motor
-    def reset_angle(self, reset_angle):
-        """Reset the angle of the motor/mechanism (degrees).
-        Arguments:
-            reset_angle {int} -- Value to which the rotation sensor angle should be reset (default: {0})
-*/
 STATIC mp_obj_t motor_Motor_reset_angle(size_t n_args, const mp_obj_t *args){
     pbio_port_t port = get_port(args[0]);
     int32_t reset_angle = n_args > 1 ? mp_obj_get_num(args[1]) : 0;
@@ -195,14 +130,6 @@ STATIC mp_obj_t motor_Motor_reset_angle(size_t n_args, const mp_obj_t *args){
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_reset_angle_obj, 1, 2, motor_Motor_reset_angle);
 
-/*
-Motor
-    def speed(self):
-        """Return the angular speed of the motor/mechanism (degrees per second).
-        Returns:
-            int -- Angular speed of the motor/mechanism (degrees per second).
-        """
-*/
 STATIC mp_obj_t motor_Motor_speed(mp_obj_t self_in) {
     pbio_port_t port = get_port(self_in);
     int32_t speed;
@@ -211,14 +138,6 @@ STATIC mp_obj_t motor_Motor_speed(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_speed_obj, motor_Motor_speed);
 
-/*
-Motor
-    def run(self, speed, wait=False):
-        """Start and keep running the motor/mechanism at the given speed (degrees per second).
-        Arguments:
-            speed {int} -- Target speed (degrees per second)
-        """
-*/
 STATIC mp_obj_t motor_Motor_run(size_t n_args, const mp_obj_t *args){
     pbio_port_t port = get_port(args[0]);
     pbio_motor_run_t runtype = n_args > 2 ? mp_obj_get_int(args[2]) : PBIO_MOTOR_RUN_BACKGROUND;
@@ -227,15 +146,6 @@ STATIC mp_obj_t motor_Motor_run(size_t n_args, const mp_obj_t *args){
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_obj, 2, 3, motor_Motor_run);
-
-/*
-Motor
-    def stop(self, after_stop=COAST):
-        """Stop a motor/mechanism.
-        Optional arguments:
-            after_stop {const} -- What to do after stopping the motor command: BRAKE, COAST, or HOLD. (default: {COAST})
-        """
-*/
 
 STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
@@ -250,18 +160,6 @@ STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *args){
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_stop_obj, 1, 2, motor_Motor_stop);
 
-/*
-Motor
-    def run_time(self, speed, duration, after_stop=COAST, wait=True):
-        """Run a motor/mechanism at the given speed for a given duration. Then stop.
-        Arguments:
-            speed {int} -- Target speed (degrees per second)
-            duration {int} -- Total duration, including start and stop (seconds)
-        Optional arguments:
-            after_stop {const} -- What to do after the motor stops: BRAKE, COAST, or HOLD. (default: {COAST})
-            wait {bool} -- Wait for motion to be complete (True) or run task in the background (False). (default: {True})
-        """
-*/
 STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
@@ -274,19 +172,6 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *args){
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_time_obj, 3, 5, motor_Motor_run_time);
 
-/*
-Motor
-    def run_stalled(self, speed, after_stop=COAST, wait=True):
-        """Run a motor/mechanism at the given speed until it stalls. Then stop.
-        Arguments:
-            speed {int} -- Target speed (degrees per second)
-        Optional arguments:
-            after_stop {const} -- What to do after the motor stops: BRAKE, COAST, or HOLD. (default: {COAST})
-            wait {bool} -- Wait for motion to be complete (True) or run task in the background (False). (default: {True})
-        Returns:
-            int -- If wait is True, then return the angle (degrees) at the time of stalling, otherwise return None
-        """
-*/
 STATIC mp_obj_t motor_Motor_run_stalled(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
@@ -309,18 +194,6 @@ STATIC mp_obj_t motor_Motor_run_stalled(size_t n_args, const mp_obj_t *args){
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_stalled_obj, 2, 4, motor_Motor_run_stalled);
 
-/*
-Motor
-    def run_angle(self, speed, angle, after_stop=COAST, wait=True):
-        """Rotate a motor by the given angle at a given speed.
-        Arguments:
-            speed {int} -- Absolute target speed (degrees per second). Run direction is automatically determined based on angle.
-            target {int} -- Angle that the motor/mechanism should rotate by (degrees).
-        Optional arguments:
-            after_stop {const} -- What to do after the motor stops at the target: BRAKE, COAST, or HOLD. (default: {COAST})
-            wait {bool} -- Wait for motion to be complete (True) or run task in the background (False). (default: {True})
-        """
-*/
 STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
@@ -333,19 +206,6 @@ STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *args){
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_angle_obj, 3, 5, motor_Motor_run_angle);
 
-/*
-Motor
-    def run_target(self, speed, target, after_stop=COAST, wait=True):
-        """Run a motor at a given speed and stop precisely at given target.
-        Arguments:
-            speed {int} -- Absolute target speed (degrees per second). Run direction (sign) is automatically determined based on target.
-            target {int} -- Target for the motor/mechanism (degrees)
-        Optional arguments:
-            after_stop {const} -- What to do after the motor stops at the target: BRAKE, COAST, or HOLD. (default: {COAST})
-            wait {bool} -- Wait for motion to be complete (True) or run task in the background (False). (default: {True})
-        """
-
-*/
 STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
@@ -358,21 +218,12 @@ STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *args){
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_target_obj, 3, 5, motor_Motor_run_target);
 
-/*
-Motor
-    def track_target(self, target):
-        """Position tracking for use in a control loop.
-        Arguments:
-            target {int} -- Target for the motor/mechanism (degrees)
-        """
-*/
 STATIC mp_obj_t motor_Motor_track_target(mp_obj_t self_in, mp_obj_t target) {
     pbio_port_t port = get_port(self_in);
     pb_assert(pbio_encmotor_track_target(port, mp_obj_get_num(target)));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(motor_Motor_track_target_obj, motor_Motor_track_target);
-
 
 STATIC mp_obj_t motor_Motor_set_run_settings(size_t n_args, const mp_obj_t *args){
     pbio_port_t port = get_port(args[0]);
@@ -405,7 +256,6 @@ STATIC mp_obj_t motor_Motor_set_stall_settings(size_t n_args, const mp_obj_t *ar
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_set_stall_settings_obj, 4, 4, motor_Motor_set_stall_settings);
-
 
 /*
 Motor Class tables
