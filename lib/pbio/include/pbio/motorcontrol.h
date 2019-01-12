@@ -54,6 +54,8 @@ typedef enum {
     PBIO_MOTOR_RUN_BACKGROUND = false,/**< Execute run command in the background and proceed with user program */
 } pbio_motor_run_t;
 
+pbio_error_t pbio_encmotor_is_stalled(pbio_port_t port, bool *stalled);
+
 pbio_error_t pbio_encmotor_run(pbio_port_t port, int32_t speed);
 
 pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop);

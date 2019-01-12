@@ -377,7 +377,7 @@ void control_update(pbio_port_t port){
             else {
                 // When ending a time based control maneuver with hold, we trigger a new position based maneuver with zero degrees
                 pbio_dcmotor_set_duty_cycle_int(port, 0);
-                
+
                 make_motor_trajectory(port, RUN_TARGET, NONZERO, ((float_t) count_now)/settings->counts_per_output_unit, PBIO_MOTOR_STOP_HOLD);
             }
         }
@@ -399,6 +399,11 @@ void _pbio_motorcontrol_poll(void){
 #endif // PBIO_CONFIG_ENABLE_MOTORS
 
 /* pbio user functions */
+
+pbio_error_t pbio_encmotor_is_stalled(pbio_port_t port, bool *stalled) {
+    *stalled = motor_control_status[PORT_TO_IDX(port)].stalled != STALLED_NONE;
+    return PBIO_SUCCESS;
+}
 
 pbio_error_t pbio_encmotor_run(pbio_port_t port, int32_t speed){
     return make_motor_trajectory(port, RUN, speed, NONE, NONE);
