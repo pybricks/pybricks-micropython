@@ -107,12 +107,14 @@ void motor_Motor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind
     }
 }
 
-STATIC mp_obj_t motor_Motor_duty(mp_obj_t self_in, mp_obj_t duty_cycle) {
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(pbio_dcmotor_set_duty_cycle(self->port, mp_obj_get_num(duty_cycle)));
+
+STATIC mp_obj_t motor_Motor_duty(size_t n_args, const mp_obj_t *args){
+    pbio_port_t port = get_port(args[0]);
+    float_t limit = n_args > 2  ? mp_obj_get_num(args[2]) : 100;
+    pb_assert(pbio_dcmotor_set_duty_cycle(port, mp_obj_get_num(args[1]), limit));
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_2(motor_Motor_duty_obj, motor_Motor_duty);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_duty_obj, 2, 3, motor_Motor_duty);
 
 STATIC mp_obj_t motor_Motor_angle(mp_obj_t self_in) {
     pbio_port_t port = get_port(self_in);
@@ -285,7 +287,7 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     // Methods common to DC motors and encoded motors
     //
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_Motor_stop_obj) },
-    { MP_ROM_QSTR(MP_QSTR_duty), MP_ROM_PTR(&motor_Motor_duty_obj) },
+    { MP_ROM_QSTR(MP_QSTR_dc), MP_ROM_PTR(&motor_Motor_duty_obj) },
     //
     // Methods specific to encoded motors
     //

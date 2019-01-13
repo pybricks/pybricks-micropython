@@ -130,7 +130,7 @@ pbio_error_t pbio_dcmotor_brake(pbio_port_t port);
 
 pbio_error_t pbio_dcmotor_set_duty_cycle_int(pbio_port_t port, int32_t duty_cycle_int);
 
-pbio_error_t pbio_dcmotor_set_duty_cycle(pbio_port_t port, float_t duty_cycle);
+pbio_error_t pbio_dcmotor_set_duty_cycle(pbio_port_t port, float_t duty_cycle, float_t duty_limit);
 
 pbio_error_t pbio_motor_setup(pbio_port_t port, pbio_motor_dir_t direction, float_t gear_ratio);
 

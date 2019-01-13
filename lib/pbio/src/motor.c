@@ -86,7 +86,14 @@ pbio_error_t pbio_dcmotor_set_duty_cycle_int(pbio_port_t port, int32_t duty_cycl
     return pbdrv_motor_set_duty_cycle(port, duty_cycle_int);
 }
 
-pbio_error_t pbio_dcmotor_set_duty_cycle(pbio_port_t port, float_t duty_cycle) {
+pbio_error_t pbio_dcmotor_set_duty_cycle(pbio_port_t port, float_t duty_cycle, float_t duty_limit) {
+    duty_limit = duty_limit >= 0 ? duty_limit : -duty_limit;
+    if (duty_cycle > duty_limit) {
+        duty_cycle = duty_limit;
+    }
+    else if (duty_cycle < -duty_limit) {
+        duty_cycle = -duty_limit;
+    }
     motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_PASSIVE;
     return pbio_dcmotor_set_duty_cycle_int(port, PBIO_DUTY_PCT_TO_ABS * duty_cycle);
 }

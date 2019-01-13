@@ -67,19 +67,6 @@ class Motor():
         """
         pass
 
-    def dc_time(self, duty, time, stop_type=Stop.coast, wait=True, limit=100):
-        """dc_time(self, duty, time, stop_type=Stop.coast, wait=True, limit=100)
-        Set the :ref:`duty cycle <duty>` of the motor for a given amount of time, then turn off the motor.
-
-        Arguments:
-            duty (:ref:`percentage`): The duty cycle (-100.0 to 100).
-            time (:ref:`time`): Duration of the maneuver.
-            stop_type (Stop): Coast, brake, or hold after stopping (*Default*: :class:`Stop.coast <parameters.Stop>`).
-            wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits for the specified ``time``.
-            limit (percentage): Limit on the maximum ``duty`` value. (*Default*: 100).
-        """
-        pass
-
     def angle(self):
         """Get the rotation angle of the motor.
 
