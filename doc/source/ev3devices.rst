@@ -11,8 +11,6 @@ Motors
 
     .. automethod:: ev3devices.Motor.dc
 
-    .. automethod:: ev3devices.Motor.dc_time
-
     .. rubric:: Methods for motors with rotation sensors
 
     .. automethod:: ev3devices.Motor.angle
