@@ -30,7 +30,7 @@ Contained in set:
 LEGO ID: 95646
 """
 
-from sys import stderr
+from sys import stderr, exit
 from builtins import print as builtinprint
 
 # import those features of the EV3 brick that are already written in MicroPython-style C code.
@@ -43,6 +43,10 @@ def print(*args, **kwargs):
     """Print a message on the IDE terminal."""
     builtinprint(*args, file=stderr, **kwargs)
 
-# Initialize the EV3 speaker and display
-sound = Speaker('EV3')
-display = Display('EV3')
+try:
+    # Initialize the EV3 speaker and display
+    sound = Speaker('EV3')
+    display = Display('EV3')
+except Exception as exception:
+    print("Pybricks is already running on this device. Exiting...")
+    exit()
