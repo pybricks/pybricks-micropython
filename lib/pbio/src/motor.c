@@ -51,7 +51,7 @@ pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_motor_dir_t direction){
 }
 
 void pbio_dcmotor_print_settings(pbio_port_t port, char *settings_string){
-    char *direction = motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_NORMAL ? "normal" : "inverted";
+    char *direction = motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_CLOCKWISE ? "clockwise" : "counterclockwise";
     snprintf(settings_string, MAX_DCMOTOR_SETTINGS_STR_LENGTH,
         "Port\t\t %c\n"
         "Direction\t %s",
@@ -80,7 +80,7 @@ pbio_error_t pbio_dcmotor_set_duty_cycle_int(pbio_port_t port, int32_t duty_cycl
         duty_cycle_int = -limit;
     }
     // Flip sign if motor is inverted
-    if (motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_INVERTED){
+    if (motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_COUNTERCLOCKWISE){
         duty_cycle_int = -duty_cycle_int;
     }
     return pbdrv_motor_set_duty_cycle(port, duty_cycle_int);
@@ -226,7 +226,7 @@ bool pbio_encmotor_has_encoder(pbio_port_t port){
 
 pbio_error_t pbio_encmotor_get_encoder_count(pbio_port_t port, int32_t *count) {
     pbio_error_t status = pbdrv_motor_get_encoder_count(port, count);
-    if (motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_INVERTED) {
+    if (motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_COUNTERCLOCKWISE) {
         *count = -*count;
     }
     *count -= encmotor_settings[PORT_TO_IDX(port)].offset;
@@ -261,7 +261,7 @@ pbio_error_t pbio_encmotor_reset_angle(pbio_port_t port, int32_t reset_angle) {
 
 pbio_error_t pbio_encmotor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     pbio_error_t status = pbdrv_motor_get_encoder_rate(port, rate);
-    if (motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_INVERTED) {
+    if (motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_COUNTERCLOCKWISE) {
         *rate = -*rate;
     }
     return status;
