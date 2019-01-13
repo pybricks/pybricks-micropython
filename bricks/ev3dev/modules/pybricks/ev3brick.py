@@ -31,7 +31,6 @@ LEGO ID: 95646
 """
 
 from sys import stderr, exit
-from builtins import print as builtinprint
 
 # import those features of the EV3 brick that are already written in MicroPython-style C code.
 from ev3brick_c import buttons, light
@@ -39,14 +38,11 @@ from ev3brick_c import buttons, light
 from .speaker import Speaker
 from .display import Display
 
-def print(*args, **kwargs):
-    """Print a message on the IDE terminal."""
-    builtinprint(*args, file=stderr, **kwargs)
 
 try:
     # Initialize the EV3 speaker and display
     sound = Speaker('EV3')
     display = Display('EV3')
 except Exception as exception:
-    print("Pybricks is already running on this device. Exiting...")
+    print("Pybricks is already running on this device. Exiting...", file=stderr)
     exit()

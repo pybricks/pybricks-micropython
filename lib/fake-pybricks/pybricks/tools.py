@@ -1,6 +1,23 @@
 """Common tools for timing and debugging."""
 
 
+def print():
+    """print(value, ..., sep, end, file, flush)
+
+    Prints the values to the terminal or a stream.
+
+    ::
+
+        # Print some text
+        print("Hello, world")
+
+        # Print some text and a number
+        print("Value:", 5)
+
+    """
+    pass
+
+
 def wait(time):
     """Pause the user program for a specified amount of time.
 
@@ -9,7 +26,6 @@ def wait(time):
 
     """
     pass
-
 
 class StopWatch():
     """A stopwatch to measure time intervals. Similar to the stopwatch feature on your phone."""

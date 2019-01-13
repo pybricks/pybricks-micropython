@@ -2,3 +2,10 @@
 ======================================
 
 .. automodule:: tools
+    :no-members:
+
+    .. autofunction:: print
+
+    .. autofunction:: wait
+
+    .. autoclass:: StopWatch

@@ -112,8 +112,6 @@ pbio_error_t sysfs_motor_init(pbio_port_t port){
             if (port_index == PORT_TO_IDX(port)) {
                 // Motor detected. Configure accordingly
                 motor_files[port_index].dir_number = dir_number;
-                //Debug message. Should replace with debug print
-                printf("Initialized motor%d on port %c.\n", dir_number, port_index+'A');
                 // Reset motor
                 sysfs_motor_command(port, "reset");
                 motor_files[PORT_TO_IDX(port)].coasting = true;
