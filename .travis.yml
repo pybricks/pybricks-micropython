@@ -55,7 +55,8 @@ jobs:
       env: NAME="Pybricks ev3dev build"
       install:
         - npm install -g jfrog-cli-go
-        - pip install --user Sphinx sphinx_rtd_theme
+        - pyenv shell 3.6
+        - pip3 install --user Sphinx sphinx_rtd_theme
         - sudo apt update -qq || true
         - sudo apt install qemu-user-static
         - cd ${HOME}
