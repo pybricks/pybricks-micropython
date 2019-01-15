@@ -80,6 +80,7 @@ jobs:
         - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
         - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
         - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
+        - $TRAVIS_BUILD_DIR/.travis/deploy_pypi.sh
 
 
     # Pybricks Move Hub
