@@ -15,7 +15,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='pybricks',
+    name='fake-pybricks',
     version='0.1',
     description='Pybricks',
     long_description=long_description,
