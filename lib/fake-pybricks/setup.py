@@ -9,6 +9,8 @@ from setuptools import setup
 from codecs import open
 from os import path
 
+import versioneer
+
 
 here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
@@ -16,7 +18,8 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='fake-pybricks',
-    version='0.1',
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     description='Pybricks',
     long_description=long_description,
     url='https://github.com/pybricks',
