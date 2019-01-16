@@ -256,7 +256,7 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
     // Experimental work around for run in fast loop
     if (action == RUN && 
         previous_action == RUN &&
-        currently_active &&
+        (currently_active || motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_STARTING) &&
         time_start - previous_time_start < settings->tight_loop_time) {
         get_reference(time_start, traject, &count_start, &rate_start);
         make_trajectory_none(time_start, count_start, speed_target*settings->counts_per_output_unit, traject);

@@ -150,9 +150,8 @@ MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_speed_obj, motor_Motor_speed);
 
 STATIC mp_obj_t motor_Motor_run(size_t n_args, const mp_obj_t *args){
     pbio_port_t port = get_port(args[0]);
-    pbio_motor_run_t runtype = n_args > 2 ? mp_obj_get_int(args[2]) : PBIO_MOTOR_RUN_BACKGROUND;
     pb_assert(pbio_encmotor_run(port, mp_obj_get_num(args[1])));
-    wait_for_completion(port, runtype);
+    mp_hal_delay_ms(15);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_obj, 2, 3, motor_Motor_run);
