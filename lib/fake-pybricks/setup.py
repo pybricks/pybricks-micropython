@@ -9,14 +9,17 @@ from setuptools import setup
 from codecs import open
 from os import path
 
+import versioneer
+
 
 here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='pybricks',
-    version='0.1',
+    name='fake-pybricks',
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     description='Pybricks',
     long_description=long_description,
     url='https://github.com/pybricks',
@@ -28,6 +31,6 @@ setup(
         'Programming Language :: Python :: 3',
     ],
     keywords='lego mindstorms ev3',
-    python_requires='>=3',
+    python_requires='~=3.4',
     packages=['pybricks'],
 )
