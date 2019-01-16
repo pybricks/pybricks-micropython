@@ -31,6 +31,6 @@ setup(
         'Programming Language :: Python :: 3',
     ],
     keywords='lego mindstorms ev3',
-    python_requires='>=3',
+    python_requires='~=3.4',
     packages=['pybricks'],
 )
