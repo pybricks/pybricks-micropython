@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Pybricks's documentation!
-====================================
+Using Python with LEGO MINDSTORMS EV3
+=====================================
 
 .. toctree::
    :maxdepth: 1
@@ -16,7 +16,7 @@ Welcome to Pybricks's documentation!
 
 .. toctree::
    :maxdepth: 1
-   :caption: Modules:
+   :caption: Pybricks Modules:
 
    ev3brick
    ev3devices

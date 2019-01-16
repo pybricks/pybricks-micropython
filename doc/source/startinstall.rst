@@ -1,2 +1,15 @@
-Installing Pybricks
+Installation
 ===================
+
+.. note::
+    
+
+    
+
+Preparing the SD Card
+-----------------------------------------------------------
+
+
+Preparing Visual Studio Code
+-----------------------------------------------------------
+
