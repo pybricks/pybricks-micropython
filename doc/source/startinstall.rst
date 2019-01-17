@@ -50,10 +50,10 @@ Preparing the SD Card
 You will now follow a series of steps to download and install the EV3 Python firmware onto your micro SD card.
 
 
-1. Download the `EV3 Python firmware <stretch-build6.zip>`_ and save it in a convenient location.
+1. Download the `EV3 Python firmware <stretch-build7.zip>`_ and save it in a convenient location. Do *not* unzip the file.
 2. Download and install `Etcher <https://www.balena.io/etcher/>`_. This is the program for installing the firmware file on your micro SD card.
 3. Insert the micro SD card into your computer or card reader.
-4. Launch the etcher program and follow the steps on your screen to install the firmware you have just downloaded. Do not remove the card until the installation process is complete.
+4. Launch the etcher program and follow the steps on your screen to install the firmware file you have just downloaded. Do not remove the card until the installation process is complete.
 5. Put the micro SD card in the SD card slot of the EV3 brick. 
 
 
