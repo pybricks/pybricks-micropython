@@ -125,7 +125,7 @@ pbio_error_t pbio_motor_setup(pbio_port_t port, pbio_motor_dir_t direction, floa
     pbio_encmotor_set_run_settings(port, 1000, 1000);
 
     // TODO: Add quick hack to distinguish between ev3 large/small
-    pbio_encmotor_set_pid_settings(port, 500, 500, 5, 100, 1, 5);
+    pbio_encmotor_set_pid_settings(port, 500, 800, 5, 100, 3, 5);
 
     pbio_encmotor_set_stall_settings(port, 100, 2, 500);
 
