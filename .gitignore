@@ -24,6 +24,7 @@
 ######################
 build/
 build-*/
+_build/
 
 # Test failure outputs
 ######################
