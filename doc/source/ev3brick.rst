@@ -27,9 +27,6 @@ Sound
 .. automethod:: ev3brick.sound.file
 
 
-.. automethod:: ev3brick.sound.speak
-
-
 Display
 -------
 ::

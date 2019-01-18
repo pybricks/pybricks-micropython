@@ -85,31 +85,6 @@ class Motor():
         """
         pass
 
-    def reference(self):
-        """Get the reference angle and reference speed of the motor.
-
-        Returns:
-            Tuple of motor angle and speed reference at the current time.
-        :rtype: (:ref:`angle`, :ref:`speed`) or (``None``, ``None``) if no maneuver is active.
-
-        """
-        pass
-
-    def maneuver(self):
-        """
-        Get the time, angle, velocity, and acceleration parameters of the currently active motor maneuver.
-        See :ref:`maneuvers` for a description of each symbol.
-
-        Returns:
-            (:math:`t_0`, :math:`t_1`, :math:`t_2`, :math:`t_3`),
-            (:math:`\\theta_0`, :math:`\\theta_1`, :math:`\\theta_2`, :math:`\\theta_3`),
-            (:math:`\\omega_0`, :math:`\\omega_1`),
-            (:math:`\\alpha_0`, :math:`\\alpha_2`)
-        :rtype: Four tuples of :ref:`time`, :ref:`angle`, :ref:`speed`, and :ref:`acceleration`
-
-        """
-        pass
-
     def stalled(self):
         """Check whether the motor is currently stalled.
 
@@ -520,19 +495,3 @@ class UltrasonicSensor():
             :obj:`bool`: ``True`` if ultrasonic sounds are detected, ``False`` if not.
         """
         pass
-
-    def send(self, number):
-        """Transmit an encoded number using ultrasonic waves.
-
-        The number is converted to a binary sequence, which is transmitted by turning the sensor on and off. The message always starts with one pulse as the start of the message, followed by 8 "bits" where the sensor is either on or off during a short interval.
-
-        Arguments:
-            number (int): The number to transmit (0-255)
-        """
-
-    def receive(self):
-        """Wait for a message from another ultrasonic sensor and convert it to a number.
-
-        Returns:
-            :obj:`int`: The received number (0-255)
-        """

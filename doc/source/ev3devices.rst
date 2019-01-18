@@ -33,10 +33,6 @@ Motors
 
     .. automethod:: ev3devices.Motor.track_target
 
-    .. automethod:: ev3devices.Motor.reference
-
-    .. automethod:: ev3devices.Motor.maneuver
-
     .. automethod:: ev3devices.Motor.stalled
 
     .. automethod:: ev3devices.Motor.run_until_stalled

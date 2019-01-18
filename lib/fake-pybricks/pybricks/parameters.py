@@ -149,8 +149,8 @@ class Direction():
 
     """
 
-    clockwise = 1
-    counterclockwise = -1
+    clockwise = 0
+    counterclockwise = 1
 
 
 class Button(Enum):
@@ -192,28 +192,6 @@ class Button(Enum):
     up = 8
     beacon = 8
     right_up = 9
-
-
-class Pattern():
-    """Standard light patterns."""
-
-    solid = [(100, 1000)]
-    """The light stays on."""
-
-    blink1 = [(100, 500), (0, 500)]
-    """The light blinks once per second: It stays on for 500 ms and then stays off for 500 ms."""
-
-    blink2 = [(100, 250), (0, 250)]
-    """The light blinks twice per second: It stays on for 250 ms and then stays off for 250 ms."""
-
-    blink3 = [(100, 167), (0, 167)]
-    """The light blinks three times per second: It stays on for 167 ms and then stays off for 167 ms."""
-
-    glow = [] # TODO
-    """The light gradually turns on and then off again, as if glowing. (TODO)"""
-
-    ev3 = [(100, 100), (0, 100), (100, 100), (0, 700)] # TODO: Get the true values
-    """The default pattern of a running EV3-G program."""
 
 
 class Align():

@@ -1,6 +1,6 @@
 """LEGO MINDSTORMS EV3 Brick"""
 
-from parameters import Color, Pattern
+from parameters import Color
 from _speaker import Speaker
 from _display import Display
 

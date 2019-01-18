@@ -56,16 +56,3 @@ class Speaker():
         """
 
         pass
-
-    def speak(self, text, volume=30):
-        """Speak a given string of text.
-
-        Arguments:
-            text (str): The text to speak.
-            volume (:ref:`percentage`): Volume of the sound (*Default*: 100).
-        ::
-
-            # Say "Hi!"
-            brick.sound.speak('Hi!')
-        """
-        pass

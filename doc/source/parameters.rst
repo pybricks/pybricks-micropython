@@ -19,8 +19,6 @@ Intro
 .. autoclass:: parameters.Button
     :no-members:
 
-.. autoclass:: parameters.Pattern
-
 .. autoclass:: parameters.Align
     :no-members:
 
