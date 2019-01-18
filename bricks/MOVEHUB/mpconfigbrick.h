@@ -50,7 +50,6 @@ extern const struct _mp_obj_module_t pb_module_movehub;
 extern const struct _mp_obj_module_t pb_module_pupdevices;
 extern const struct _mp_obj_module_t pb_module_parameters;
 extern const struct _mp_obj_module_t pb_module_tools;
-extern const struct _mp_obj_module_t pb_module_robotics;
 
 #if PYBRICKS_MODULE_ADVANCED
 extern const struct _mp_obj_module_t pb_module_advanced;
@@ -64,5 +63,4 @@ extern const struct _mp_obj_module_t pb_module_advanced;
     { MP_OBJ_NEW_QSTR(MP_QSTR_movehub),     (mp_obj_t)&pb_module_movehub },    \
     { MP_OBJ_NEW_QSTR(MP_QSTR_devices),     (mp_obj_t)&pb_module_pupdevices },  \
     { MP_OBJ_NEW_QSTR(MP_QSTR_parameters),  (mp_obj_t)&pb_module_parameters },  \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_tools),       (mp_obj_t)&pb_module_tools     },  \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_robotics),    (mp_obj_t)&pb_module_robotics },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_tools),       (mp_obj_t)&pb_module_tools     },
