@@ -1,15 +1,5 @@
-.. warning::
-
-    None
-        - ***
-        - ***
-
 Installation
 ===================
-
-
-
-
 
 This page shows how you prepare your computer and the EV3 brick for writing and running Python programs. The final configuration is shown in the figure below.
 
