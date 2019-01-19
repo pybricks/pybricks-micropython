@@ -6,12 +6,12 @@
 Using Python with LEGO MINDSTORMS EV3
 =====================================
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Getting started:
+.. .. toctree::
+..    :maxdepth: 1
+..    :caption: Getting started:
 
-   startinstall
-   startrun
+..    startinstall
+..    startrun
 
 
 .. toctree::
@@ -23,12 +23,23 @@ Using Python with LEGO MINDSTORMS EV3
    parameters
    tools
 
+.. .. toctree::
+..    :maxdepth: 1
+..    :caption: Engineering essentials:
+
+..    signaltypes
+..    motorcontrol
+
+
+
 .. toctree::
    :maxdepth: 1
-   :caption: Engineering essentials:
+   :caption: Examples:
 
-   signaltypes
-   motorcontrol
+   examples/colorsorter
+   examples/armh25
+
+
 
 
 Indices and tables
