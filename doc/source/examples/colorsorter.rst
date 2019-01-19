@@ -1,4 +1,4 @@
 Color Sorter
 =====================
 
-.. literalinclude:: ../../../examples/ev3/lego/education/colorsorter.py
+.. literalinclude:: ../../../examples/ev3/colorsorter/main.py

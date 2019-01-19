@@ -37,7 +37,7 @@ Using Python with LEGO MINDSTORMS EV3
    :caption: Examples:
 
    examples/colorsorter
-   examples/armh25
+   examples/robotarmh25
 
 
 
