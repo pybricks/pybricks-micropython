@@ -195,7 +195,7 @@ class Button(Enum):
 
 
 class Align():
-    """Alignment of an image on a screen. TODO: use same logic as buttons??
+    """Alignment of an image on a screen.
 
     .. data:: center
     """
