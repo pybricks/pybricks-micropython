@@ -63,6 +63,9 @@ jobs:
         - git clone --depth=10 --recursive https://github.com/pybricks/micropython
         - cd micropython/ports/pybricks
         - git checkout ${TRAVIS_COMMIT}
+        - cd examples
+        - git submodule update --init
+        - cd -
         - bricks/ev3dev/docker/setup.sh armel
       script:
         - docker exec --tty pybricks-ev3dev_armel make
