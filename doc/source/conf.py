@@ -21,10 +21,15 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../../lib/fake-pybricks/pybricks'))
 
-import _version
+import _version  # noqa E402
 
-# on_rtd is whether we are on readthedocs.org, this line of code grabbed from docs.readthedocs.org
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+# ON_RTD is whether we are on readthedocs.org
+# this line of code grabbed from docs.readthedocs.org
+ON_RTD = os.environ.get('READTHEDOCS', None) == 'True'
+
+# branding
+LOGO_SMALL = os.environ.get('PYBRICKS_LOGO_SMALL', 'images/pybricks-logo-small.png')
+LOGO_LARGE = os.environ.get('PYBRICKS_LOGO_LARGE', 'images/pybricks-logo-large.png')
 
 # -- General configuration ------------------------------------------------
 
@@ -96,7 +101,7 @@ add_module_names = False # Hide module name
 
 # -- Options for HTML output ----------------------------------------------
 
-if on_rtd:
+if ON_RTD:
     html_theme = 'default'
     html_context = {
         'css_files': [
@@ -114,6 +119,8 @@ else:
             '_static/css/theme_overrides.css',
         ],
     }
+
+html_logo = LOGO_SMALL
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
@@ -180,6 +187,8 @@ latex_documents = [
     (master_doc, 'Pybricks.tex', 'Pybricks Documentation',
      'Laurens Valk, David Lechner', 'manual'),
 ]
+
+latex_logo = LOGO_LARGE
 
 
 # -- Options for manual page output ---------------------------------------
