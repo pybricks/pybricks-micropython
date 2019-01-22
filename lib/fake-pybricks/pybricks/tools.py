@@ -6,7 +6,7 @@ def print():
 
     Prints the values to the terminal or a stream.
 
-    ::
+    Example::
 
         # Print some text
         print("Hello, world")

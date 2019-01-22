@@ -22,7 +22,7 @@ class Display():
             text (str): The text to display.
             coordinate (tuple): ``(x, y)`` coordinate tuple. It is the top-left corner of the first character. If no location is specified, it is printed on the next line.
 
-        ::
+        Example::
 
             # Clear the display
             brick.display.clear()
@@ -52,7 +52,7 @@ class Display():
             coordinate (tuple): ``(x, y)`` coordinate tuple. It is the top-left corner of the image (*Default*: None).
             clear (bool): Whether to clear the screen before showing the image. (*Default*: ``True``)
 
-        ::
+        Example::
 
             # Show a built-in image showing two eyes looking upward
             brick.display.image(Image.up)

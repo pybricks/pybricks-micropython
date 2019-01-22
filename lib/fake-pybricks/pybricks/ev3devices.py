@@ -33,7 +33,7 @@ class Motor():
 
                           The ``gears`` setting is only available for motors with rotation sensors.
 
-        ::
+        Example::
 
             # Initialize a motor (by default this means clockwise, without any gears).
             example_motor = Motor(Port.A)
@@ -53,7 +53,7 @@ class Motor():
             duty (:ref:`percentage`): The duty cycle (-100.0 to 100).
             limit (:ref:`percentage`): Limit on the maximum ``duty`` value. (*Default*: 100). This overrides the first argument when it exceeds the limit. This ensures that ``abs(duty)`` <``limit``. This is useful when you use your own formula to set the duty cycle, because provides a limit when your formula gives a very big number. For example, you could use this to prevent your LEGO train from unintentionally going at full speed.
 
-        ::
+        Example::
 
             # Set the motor duty cycle to 75%.
             example_motor.duty(75)
@@ -199,7 +199,7 @@ class Motor():
         Arguments:
             target_angle (:ref:`angle`): Target angle that the motor should go to.
 
-        ::
+        Example::
 
             # Initialize motor and timer
             from math import sin
@@ -231,7 +231,7 @@ class Motor():
             max_speed (:ref:`speed`): Maximum speed of the motor during a motor command.
             acceleration (:ref:`acceleration`): Acceleration towards the target speed and deceleration towards standstill. This should be a positive value. The motor will automatically change the sign to decelerate as needed.
 
-        ::
+        Example::
 
             # Set the maximum speed to 200 deg/s and set the acceleration to 400 deg/s/s.
             example_motor.set_run_settings(200, 400)

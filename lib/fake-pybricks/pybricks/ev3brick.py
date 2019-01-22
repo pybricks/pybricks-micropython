@@ -10,7 +10,7 @@ def buttons():
     :returns: List of pressed buttons.
     :rtype: List of :class:`Button <parameters.Button>`
 
-    ::
+    Example::
 
         if Button.left in brick.buttons():
             print("The left button is pressed.")
@@ -25,7 +25,7 @@ def light(color):
     Arguments:
         color (Color): Color of the light. Choose ``Color.black`` or ``None`` to turn the light off.
 
-    ::
+    Example::
 
         # Make the light red
         brick.light(Color.red)

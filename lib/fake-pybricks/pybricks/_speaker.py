@@ -15,7 +15,8 @@ class Speaker():
             frequency (:ref:`frequency`): Frequency of the beep (*Default*: 500).
             duration (:ref:`time`): Duration of the beep (*Default*: 100).
             volume (:ref:`percentage`): Volume of the beep (*Default*: 30).
-        ::
+
+        Example::
 
             # A simple beep
             brick.sound.beep()
@@ -31,7 +32,7 @@ class Speaker():
         Arguments:
             number (int): Number of beeps
 
-        ::
+        Example::
 
             # Make 5 simple beeps
             brick.sound.beeps(5)
@@ -45,7 +46,7 @@ class Speaker():
             file_name (str): Path to the sound file, including extension.
             volume (:ref:`percentage`): Volume of the sound (*Default*: 100).
 
-        ::
+        Example::
 
             # Play one of the built-in sounds
             brick.sound.file(Sound.hello)
