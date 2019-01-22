@@ -36,8 +36,8 @@ Using Python with LEGO MINDSTORMS EV3
    :maxdepth: 1
    :caption: Examples:
 
-   examples/colorsorter
-   examples/robotarmh25
+   examples/color_sorter
+   examples/robot_arm_h25
 
 
 
