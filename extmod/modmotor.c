@@ -32,10 +32,12 @@
 #include "pberror.h"
 #include "pbid.h"
 #include "pbobj.h"
+#include "pbthread.h"
 
 
 /* Wait for maneuver to complete */
 
+// Must not be called while pybricks thread lock is held!
 STATIC void wait_for_completion(pbio_port_t port, pbio_motor_run_t runtype) {
     if (runtype == PBIO_MOTOR_RUN_FOREGROUND) {
         while (motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_RUNNING) {
@@ -52,6 +54,7 @@ mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n
     self->port = mp_obj_get_int(args[0]);
     // Configure direction or set to default
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_CLOCKWISE;
+    pbio_error_t err;
 
     // Default gear ratio
     float_t gear_ratio = 1.0;
@@ -89,13 +92,21 @@ mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n
         }
     }
     // Configure the encoded motor with the selected arguments at pbio level
-    pb_assert(pbio_motor_setup(self->port, direction, gear_ratio));
+    pb_thread_enter();
+    err = pbio_motor_setup(self->port, direction, gear_ratio);
+    pb_thread_exit();
+
+    pb_assert(err);
+
     return MP_OBJ_FROM_PTR(self);
 }
 
 void motor_Motor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind){
     pbio_port_t port = get_port(self_in);
     char dcmotor_settings_string[MAX_DCMOTOR_SETTINGS_STR_LENGTH];
+
+    pb_thread_enter();
+
     pbio_dcmotor_print_settings(port, dcmotor_settings_string);
     if (pbio_encmotor_has_encoder(port)) {
         char encmotor_settings_string[MAX_ENCMOTOR_SETTINGS_STR_LENGTH];
@@ -105,13 +116,23 @@ void motor_Motor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind
     else {
         mp_printf(print, "%s", dcmotor_settings_string);
     }
+
+    pb_thread_exit();
 }
 
 
 STATIC mp_obj_t motor_Motor_duty(size_t n_args, const mp_obj_t *args){
     pbio_port_t port = get_port(args[0]);
+    float_t duty_cycle = mp_obj_get_num(args[1]);
     float_t limit = n_args > 2  ? mp_obj_get_num(args[2]) : 100;
-    pb_assert(pbio_dcmotor_set_duty_cycle(port, mp_obj_get_num(args[1]), limit));
+    pbio_error_t err;
+
+    pb_thread_enter();
+    err = pbio_dcmotor_set_duty_cycle(port, duty_cycle, limit);
+    pb_thread_exit();
+
+    pb_assert(err);
+
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_duty_obj, 2, 3, motor_Motor_duty);
@@ -119,7 +140,14 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_duty_obj, 2, 3, motor_Motor_duty
 STATIC mp_obj_t motor_Motor_angle(mp_obj_t self_in) {
     pbio_port_t port = get_port(self_in);
     int32_t angle;
-    pb_assert(pbio_encmotor_get_angle(port, &angle));
+    pbio_error_t err;
+
+    pb_thread_enter();
+    err = pbio_encmotor_get_angle(port, &angle);
+    pb_thread_exit();
+
+    pb_assert(err);
+
     return mp_obj_new_int(angle);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_angle_obj, motor_Motor_angle);
@@ -127,7 +155,14 @@ MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_angle_obj, motor_Motor_angle);
 STATIC mp_obj_t motor_Motor_stalled(mp_obj_t self_in) {
     pbio_port_t port = get_port(self_in);
     bool stalled;
-    pb_assert(pbio_encmotor_is_stalled(port, &stalled));
+    pbio_error_t err;
+
+    pb_thread_enter();
+    err = pbio_encmotor_is_stalled(port, &stalled);
+    pb_thread_exit();
+
+    pb_assert(err);
+
     return mp_obj_new_bool(stalled);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_stalled_obj, motor_Motor_stalled);
@@ -135,7 +170,14 @@ MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_stalled_obj, motor_Motor_stalled);
 STATIC mp_obj_t motor_Motor_reset_angle(size_t n_args, const mp_obj_t *args){
     pbio_port_t port = get_port(args[0]);
     int32_t reset_angle = n_args > 1 ? mp_obj_get_num(args[1]) : 0;
-    pb_assert(pbio_encmotor_reset_angle(port, reset_angle));
+    pbio_error_t err;
+
+    pb_thread_enter();
+    err = pbio_encmotor_reset_angle(port, reset_angle);
+    pb_thread_exit();
+
+    pb_assert(err);
+
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_reset_angle_obj, 1, 2, motor_Motor_reset_angle);
@@ -143,15 +185,30 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_reset_angle_obj, 1, 2, motor_Mot
 STATIC mp_obj_t motor_Motor_speed(mp_obj_t self_in) {
     pbio_port_t port = get_port(self_in);
     int32_t speed;
-    pb_assert(pbio_encmotor_get_angular_rate(port, &speed));
+    pbio_error_t err;
+
+    pb_thread_enter();
+    err = pbio_encmotor_get_angular_rate(port, &speed);
+    pb_thread_exit();
+
+    pb_assert(err);
+
     return mp_obj_new_int(speed);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_speed_obj, motor_Motor_speed);
 
 STATIC mp_obj_t motor_Motor_run(size_t n_args, const mp_obj_t *args){
     pbio_port_t port = get_port(args[0]);
-    pb_assert(pbio_encmotor_run(port, mp_obj_get_num(args[1])));
+    int32_t speed = mp_obj_get_num(args[1]);
+    pbio_error_t err;
+
+    pb_thread_enter();
+    err = pbio_encmotor_run(port, speed);
+    pb_thread_exit();
+
+    pb_assert(err);
     mp_hal_delay_ms(15);
+
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_obj, 2, 3, motor_Motor_run);
@@ -160,11 +217,21 @@ STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
     pbio_motor_after_stop_t after_stop = n_args > 1 ? mp_obj_get_int(args[1]) : PBIO_MOTOR_STOP_COAST;
-    if (!pbio_encmotor_has_encoder(port) && after_stop == PBIO_MOTOR_STOP_HOLD){
+    pbio_error_t err;
+
+    pb_thread_enter();
+
+    if (!pbio_encmotor_has_encoder(port) && after_stop == PBIO_MOTOR_STOP_HOLD) {
+        pb_thread_exit();
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
     // Call pbio with parsed user/default arguments
-    pb_assert(pbio_encmotor_stop(port, after_stop));
+    err = pbio_encmotor_stop(port, after_stop);
+
+    pb_thread_exit();
+
+    pb_assert(err);
+
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_stop_obj, 1, 2, motor_Motor_stop);
@@ -172,11 +239,20 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_stop_obj, 1, 2, motor_Motor_stop
 STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
+    int32_t speed = mp_obj_get_num(args[1]);
+    int32_t duration = mp_obj_get_num(args[2]);
     pbio_motor_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
     pbio_motor_run_t runtype           = n_args > 4 ? mp_obj_get_int(args[4]) : PBIO_MOTOR_RUN_FOREGROUND;
+    pbio_error_t err;
+
+    pb_thread_enter();
     // Call pbio with parsed user/default arguments
-    pb_assert(pbio_encmotor_run_time(port, mp_obj_get_num(args[1]), mp_obj_get_num(args[2]), after_stop));
+    err = pbio_encmotor_run_time(port, speed, duration, after_stop);
+    pb_thread_exit();
+
+    pb_assert(err);
     wait_for_completion(port, runtype);
+
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_time_obj, 3, 5, motor_Motor_run_time);
@@ -184,7 +260,10 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_time_obj, 3, 5, motor_Motor_
 STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
+    int32_t speed = mp_obj_get_num(args[1]);
     pbio_motor_after_stop_t after_stop = n_args > 2 ? mp_obj_get_int(args[2]) : PBIO_MOTOR_STOP_COAST;
+    pbio_error_t err;
+
     int32_t temporary_stall_duty  = n_args > 3 ? mp_obj_get_num(args[3]) : 100;
     int32_t temporary_stall_speed = n_args > 4 ? mp_obj_get_num(args[4]) : 5;
     int32_t temporary_stall_time  = n_args > 5 ? mp_obj_get_num(args[5]) : 200;
@@ -193,14 +272,23 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *arg
     int32_t old_stall_duty;
     int32_t old_stall_speed;
     int32_t old_stall_time;
+
+    pb_thread_enter();
+
     pbio_encmotor_get_stall_settings(port, &old_stall_duty, &old_stall_speed, &old_stall_time);
 
     // Set temporary settings supplied by user for this maneuver
     pbio_encmotor_set_stall_settings(port, temporary_stall_duty, temporary_stall_speed, temporary_stall_time);
 
     // Call pbio with parsed user/default arguments
-    pb_assert(pbio_encmotor_run_until_stalled(port, mp_obj_get_num(args[1]), after_stop));
+    err = pbio_encmotor_run_until_stalled(port, speed, after_stop);
+
+    pb_thread_exit();
+
+    pb_assert(err);
     wait_for_completion(port, PBIO_MOTOR_RUN_FOREGROUND);
+
+    pb_thread_enter();
 
     // Read the angle upon completion of the stall maneuver
     int32_t stall_point;
@@ -208,6 +296,8 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *arg
 
     // Return stall settings to old values
     pbio_encmotor_set_stall_settings(port, old_stall_duty, old_stall_speed, old_stall_time);
+
+    pb_thread_exit();
 
     // Return angle at which the motor stalled
     return mp_obj_new_int(stall_point);
@@ -217,11 +307,20 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_until_stalled_obj, 2, 6, mot
 STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
+    int32_t speed = mp_obj_get_num(args[1]);
+    int32_t angle = mp_obj_get_num(args[2]);
     pbio_motor_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
     pbio_motor_run_t runtype           = n_args > 4 ? mp_obj_get_int(args[4]) : PBIO_MOTOR_RUN_FOREGROUND;
+    pbio_error_t err;
+
+    pb_thread_enter();
     // Call pbio with parsed user/default arguments
-    pb_assert(pbio_encmotor_run_angle(port, mp_obj_get_num(args[1]), mp_obj_get_num(args[2]), after_stop));
+    err = pbio_encmotor_run_angle(port, speed, angle, after_stop);
+    pb_thread_exit();
+
+    pb_assert(err);
     wait_for_completion(port, runtype);
+
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_angle_obj, 3, 5, motor_Motor_run_angle);
@@ -229,50 +328,88 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_angle_obj, 3, 5, motor_Motor
 STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
+    int32_t speed = mp_obj_get_num(args[1]);
+    int32_t target = mp_obj_get_num(args[2]);
     pbio_motor_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
     pbio_motor_run_t runtype           = n_args > 4 ? mp_obj_get_int(args[4]) : PBIO_MOTOR_RUN_FOREGROUND;
+    pbio_error_t err;
+
     // Call pbio with parsed user/default arguments
-    pb_assert(pbio_encmotor_run_target(port, mp_obj_get_num(args[1]), mp_obj_get_num(args[2]), after_stop));
+    pb_thread_enter();
+    err = pbio_encmotor_run_target(port, speed, target, after_stop);
+    pb_thread_exit();
+
+    pb_assert(err);
     wait_for_completion(port, runtype);
+
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_target_obj, 3, 5, motor_Motor_run_target);
 
 STATIC mp_obj_t motor_Motor_track_target(mp_obj_t self_in, mp_obj_t target) {
     pbio_port_t port = get_port(self_in);
-    pb_assert(pbio_encmotor_track_target(port, mp_obj_get_num(target)));
+    int32_t target_ = mp_obj_get_num(target);
+    pbio_error_t err;
+
+    pb_thread_enter();
+    err = pbio_encmotor_track_target(port, target_);
+    pb_thread_exit();
+
+    pb_assert(err);
+
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(motor_Motor_track_target_obj, motor_Motor_track_target);
 
 STATIC mp_obj_t motor_Motor_set_run_settings(size_t n_args, const mp_obj_t *args){
     pbio_port_t port = get_port(args[0]);
-    pb_assert(pbio_encmotor_set_run_settings(port,
-                                             mp_obj_get_num(args[1]),
-                                             mp_obj_get_num(args[2])));
+    int32_t max_speed = mp_obj_get_num(args[1]);
+    int32_t acceleration = mp_obj_get_num(args[2]);
+    pbio_error_t err;
+
+    pb_thread_enter();
+    err = pbio_encmotor_set_run_settings(port, max_speed, acceleration);
+    pb_thread_exit();
+
+    pb_assert(err);
+
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_set_run_settings_obj, 3, 3, motor_Motor_set_run_settings);
 
 STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *args){
     pbio_port_t port = get_port(args[0]);
-    pb_assert(pbio_encmotor_set_pid_settings(port,
-                                             mp_obj_get_num(args[1]),
-                                             mp_obj_get_num(args[2]),
-                                             mp_obj_get_num(args[3]),
-                                             mp_obj_get_num(args[4]),
-                                             mp_obj_get_num(args[5]),
-                                             mp_obj_get_num(args[6])));
+    int16_t kp = mp_obj_get_num(args[1]);
+    int16_t ki = mp_obj_get_num(args[2]);
+    int16_t kd = mp_obj_get_num(args[3]);
+    int16_t loop_time = mp_obj_get_num(args[4]);
+    int16_t pos_tolerance = mp_obj_get_num(args[5]);
+    int16_t speed_tolerance = mp_obj_get_num(args[6]);
+    pbio_error_t err;
+
+    pb_thread_enter();
+    err = pbio_encmotor_set_pid_settings(port, kp, ki, kd, loop_time, pos_tolerance, speed_tolerance);
+    pb_thread_exit();
+
+    pb_assert(err);
+
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_set_pid_settings_obj, 7, 7, motor_Motor_set_pid_settings);
 
 STATIC mp_obj_t motor_Motor_set_stall_settings(size_t n_args, const mp_obj_t *args){
     pbio_port_t port = get_port(args[0]);
-    pb_assert(pbio_encmotor_set_stall_settings(port,
-                                               mp_obj_get_num(args[1]),
-                                               mp_obj_get_num(args[2]),
-                                               mp_obj_get_num(args[3])));
+    int32_t torque_limit = mp_obj_get_num(args[1]);
+    int32_t speed_limit = mp_obj_get_num(args[2]);
+    int32_t stall_time = mp_obj_get_num(args[3]);
+    pbio_error_t err;
+
+    pb_thread_enter();
+    err = pbio_encmotor_set_stall_settings(port, torque_limit, speed_limit, stall_time);
+    pb_thread_exit();
+
+    pb_assert(err);
+
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_set_stall_settings_obj, 4, 4, motor_Motor_set_stall_settings);

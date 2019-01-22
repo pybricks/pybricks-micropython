@@ -39,6 +39,7 @@
 #include "py/mpthread.h"
 
 #include "pbinit.h"
+#include "pbthread.h"
 
 #define PERIOD_MS 10
 
@@ -87,9 +88,9 @@ static void *task_caller(void *arg)
     struct periodic_info info;
     configure_timer_thread(PERIOD_MS, &info);
     while (!stopping_thread) {
-        MP_THREAD_GIL_ENTER();
+        pb_thread_enter();
         while (pbio_do_one_event()) { }
-        MP_THREAD_GIL_EXIT();
+        pb_thread_exit();
         wait_period(&info); // TODO: check if we should do any waiting here
     }
     // Signal that shutdown is complete
@@ -99,6 +100,7 @@ static void *task_caller(void *arg)
 
 // Pybricks initialization tasks
 void pybricks_init(){
+    pb_thread_init();
     pbio_init();
     pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE); // TODO: define PBIO_LIGHT_PATTERN_EV3_RUN (Or, discuss if we want to use breathe for EV3, too)
     pthread_t task_caller_thread;
