@@ -171,14 +171,14 @@ class Motor():
         """
         pass
 
-    def run_until_stalled(self, speed, stop_type=Stop.coast, duty_limit=100, stall_speed=5, stall_time=200):
-        """run_until_stalled(self, speed, stop_type=Stop.coast, duty_limit=100, stall_speed=5, stall_time=200)
+    def run_until_stalled(self, speed, stop_type=Stop.coast, duty_limit=None, stall_speed=None, stall_time=None):
+        """run_until_stalled(self, speed, stop_type=Stop.coast, duty_limit=default, stall_speed=default, stall_time=default)
 
         Run the motor at a constant speed (angular velocity) until it stalls. The motor is considered stalled when it cannot move even with the maximum torque.
 
         Specifically, the motor is stalled when the duty cycle computed by the PID controllers has reached the maximum (so ``duty`` = ``duty_limit``) and still the motor cannot reach a minimal speed (so ``speed`` < ``stall_speed``) for a period of at least ``stall_time``. These settings lets you adjust how soon the motor should be considered to be stalled.
 
-        These settings are exactly the same as :func:`.set_stall_settings`, but in this function they are only applied temporarily. For example, you can choose ``duty_limit=50`` to limit the motor torque during this maneuver, but it returns to its original value aftwards.
+        These optional settings are exactly the same as :func:`.set_stall_settings`, but in this method they are only applied temporarily. For example, you can choose ``duty_limit=50`` to limit the motor torque during this maneuver, but it returns to its previous value aftwards.
 
         Arguments:
             speed (:ref:`speed`): Speed of the motor.

@@ -264,10 +264,6 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *arg
     pbio_motor_after_stop_t after_stop = n_args > 2 ? mp_obj_get_int(args[2]) : PBIO_MOTOR_STOP_COAST;
     pbio_error_t err;
 
-    int32_t temporary_stall_duty  = n_args > 3 ? mp_obj_get_num(args[3]) : 100;
-    int32_t temporary_stall_speed = n_args > 4 ? mp_obj_get_num(args[4]) : 5;
-    int32_t temporary_stall_time  = n_args > 5 ? mp_obj_get_num(args[5]) : 200;
-
     // Save old settings
     int32_t old_stall_duty;
     int32_t old_stall_speed;
@@ -276,6 +272,10 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *arg
     pb_thread_enter();
 
     pbio_encmotor_get_stall_settings(port, &old_stall_duty, &old_stall_speed, &old_stall_time);
+
+    int32_t temporary_stall_duty  = n_args > 3 ? mp_obj_get_num(args[3]) : old_stall_duty;
+    int32_t temporary_stall_speed = n_args > 4 ? mp_obj_get_num(args[4]) : old_stall_speed;
+    int32_t temporary_stall_time  = n_args > 5 ? mp_obj_get_num(args[5]) : old_stall_time;
 
     // Set temporary settings supplied by user for this maneuver
     pbio_encmotor_set_stall_settings(port, temporary_stall_duty, temporary_stall_speed, temporary_stall_time);
