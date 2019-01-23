@@ -53,6 +53,8 @@ pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_motor_dir_t direction){
 void pbio_dcmotor_print_settings(pbio_port_t port, char *settings_string){
     char *direction = motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_CLOCKWISE ? "clockwise" : "counterclockwise";
     snprintf(settings_string, MAX_DCMOTOR_SETTINGS_STR_LENGTH,
+        "Motor properties:\n"
+        "------------------------\n"
         "Port\t\t %c\n"
         "Direction\t %s",
         port,
@@ -158,6 +160,10 @@ pbio_error_t pbio_encmotor_set_stall_settings(
         int32_t stall_speed_limit,
         int32_t stall_time
     ){
+
+    if (stall_torque_limit_pct < 0 || stall_speed_limit < 0 || stall_time < 0) {
+        return PBIO_ERROR_INVALID_ARG;
+    }        
     int8_t port_index = PORT_TO_IDX(port);
     float_t counts_per_output_unit = encmotor_settings[port_index].counts_per_output_unit;
     encmotor_settings[port_index].max_stall_duty = PBIO_DUTY_PCT_TO_ABS * stall_torque_limit_pct;
@@ -190,33 +196,43 @@ void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
     snprintf(settings_string, MAX_ENCMOTOR_SETTINGS_STR_LENGTH,
         "Counts per unit\t %" PRId32 ".%" PRId32 "\n"
         "Gear ratio\t %" PRId32 ".%" PRId32 "\n"
+        "\nRun settings:\n"
+        "------------------------\n"
+        "Max speed\t %" PRId32 "\n"
+        "Acceleration\t %" PRId32 "\n"
+        "\nStall settings:\n"
+        "------------------------\n"
+        "Duty limit\t %" PRId32 "\n"
         "Stall speed\t %" PRId32 "\n"
         "Stall time\t %" PRId32 "\n"
-        "Speed tolerance\t %" PRId32 "\n"
-        "Max speed\t %" PRId32 "\n"
-        "Angle tolerance\t %" PRId32 "\n"
-        "Acceleration\t %" PRId32 "\n"
-        "Tight Loop\t %" PRId32 "\n"
+        "\nPID settings:\n"
+        "------------------------\n"
         "kp\t\t %" PRId32 "\n"
         "ki\t\t %" PRId32 "\n"
-        "kd\t\t %" PRId32 "",
+        "kd\t\t %" PRId32 "\n"
+        "Tight Loop\t %" PRId32 "\n"
+        "Angle tolerance\t %" PRId32 "\n"
+        "Speed tolerance\t %" PRId32,
         // Print counts_per_unit as floating point with 3 decimals
         (int32_t) (counts_per_unit),
         (int32_t) (counts_per_unit*1000 - ((int32_t) counts_per_unit)*1000),
         // Print counts_per_unit as floating point with 3 decimals
         (int32_t) (gear_ratio),
         (int32_t) (gear_ratio*1000 - ((int32_t) gear_ratio)*1000),
-        // Print remaining settings as integers
+        // Print run settings
+        (int32_t) (encmotor_settings[port_index].max_rate / counts_per_output_unit),
+        (int32_t) (encmotor_settings[port_index].abs_acceleration / counts_per_output_unit),
+        // Print stall settings
+        (int32_t) (encmotor_settings[port_index].max_stall_duty / PBIO_DUTY_PCT_TO_ABS),
         (int32_t) (encmotor_settings[port_index].stall_rate_limit / counts_per_output_unit),
         (int32_t) (encmotor_settings[port_index].stall_time  / US_PER_MS),
-        (int32_t) (encmotor_settings[port_index].rate_tolerance / counts_per_output_unit),
-        (int32_t) (encmotor_settings[port_index].max_rate / counts_per_output_unit),
-        (int32_t) (encmotor_settings[port_index].count_tolerance / counts_per_output_unit),
-        (int32_t) (encmotor_settings[port_index].abs_acceleration / counts_per_output_unit),
-        (int32_t) (encmotor_settings[port_index].tight_loop_time / US_PER_MS),
+        // Print PID settings
         (int32_t) encmotor_settings[port_index].pid_kp,
         (int32_t) encmotor_settings[port_index].pid_ki,
-        (int32_t) encmotor_settings[port_index].pid_kd
+        (int32_t) encmotor_settings[port_index].pid_kd,
+        (int32_t) (encmotor_settings[port_index].tight_loop_time / US_PER_MS),
+        (int32_t) (encmotor_settings[port_index].count_tolerance / counts_per_output_unit),
+        (int32_t) (encmotor_settings[port_index].rate_tolerance / counts_per_output_unit)
     );
 }
 
