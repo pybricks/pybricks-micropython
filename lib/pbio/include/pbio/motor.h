@@ -49,9 +49,9 @@ typedef float float_t;
 
 
 #define PORT_TO_IDX(p) ((p) - PBDRV_CONFIG_FIRST_MOTOR_PORT)
-#define MAX_DCMOTOR_SETTINGS_STR_LENGTH (200)
+#define MAX_DCMOTOR_SETTINGS_STR_LENGTH (128)
 
-#define MAX_ENCMOTOR_SETTINGS_STR_LENGTH (256)
+#define MAX_ENCMOTOR_SETTINGS_STR_LENGTH (400)
 #define MS_PER_SECOND (1000)
 #define US_PER_MS (1000)
 #define US_PER_SECOND (1000000)
@@ -95,7 +95,7 @@ pbio_motor_control_active_t motor_control_active[PBDRV_CONFIG_NUM_MOTOR_CONTROLL
 typedef struct _pbio_encmotor_settings_t {
     float_t counts_per_unit;        /**< Encoder counts per output unit. Counts per degree for rotational motors, counts per cm for a linear motor. */
     float_t counts_per_output_unit; /**< Encoder counts per output unit, including optional gear train. Equals counts_per_unit*gear_ratio. */
-    int32_t max_stall_duty;     /**< Upper limit on duty cycle, which corresponds to a maximum torque while stalled. */
+    int32_t max_stall_duty;         /**< Upper limit on duty cycle, which corresponds to a maximum torque while stalled. */
     int32_t stall_rate_limit;       /**< If this speed cannnot be reached even with the maximum duty value (equal to stall_torque_limit), the motor is considered to be stalled */
     int32_t stall_time;             /**< Minimum stall time before the run_stalled action completes */
     int32_t max_rate;               /**< Soft limit on the reference encoder rate in all run commands */

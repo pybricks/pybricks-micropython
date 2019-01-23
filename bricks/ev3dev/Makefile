@@ -205,6 +205,7 @@ PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	extmod/modparameters.c \
 	extmod/pberror.c \
 	extmod/pbid.c \
+	extmod/pbthread.c \
 	lib/pbio/drv/ev3dev_stretch/motor.c \
 	lib/pbio/drv/ev3dev_stretch/button.c \
 	lib/pbio/drv/ev3dev_stretch/light.c \
