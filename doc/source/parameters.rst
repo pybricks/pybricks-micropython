@@ -1,9 +1,6 @@
 :mod:`parameters` -- Parameters and Constants
 =============================================
 
-Intro
-
-
 .. autoclass:: parameters.Port
     :no-members:
 
