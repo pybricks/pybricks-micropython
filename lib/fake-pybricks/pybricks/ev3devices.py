@@ -60,7 +60,8 @@ class Motor():
 
         ::
 
-            # Use a computed duty cycle value, but ensure it stays within the range (-30, 30).
+            # Use a computed duty cycle value, but ensure it stays within the range
+            # (-30, 30).
             example_duty = (sensor.reflection() - 40) / 3
             example_motor.duty(example_duty, 30)
 
@@ -236,8 +237,9 @@ class Motor():
             # Set the maximum speed to 200 deg/s and set the acceleration to 400 deg/s/s.
             example_motor.set_run_settings(200, 400)
 
-            # Make the motor run for 5 seconds. Even though the speed argument is 300 deg/s in
-            # this example, the motor will move at only 200 deg/s because of the settings above.
+            # Make the motor run for 5 seconds. Even though the speed argument is 300
+            # deg/s in this example, the motor will move at only 200 deg/s because of
+            # the settings above.
             example_motor.run_time(300, 5000)
         """
         pass

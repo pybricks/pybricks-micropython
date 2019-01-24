@@ -60,7 +60,8 @@ class Display():
             # Display a custom image from your project folder
             brick.display.image('pybricks.png')
 
-            # Display a custom image image at the top right of the screen, without clearing first
+            # Display a custom image image at the top right of the screen, without clearing
+            # the screen first
             brick.display.image('arrow.png', Align.top_right, clear=False)
         """
         pass
