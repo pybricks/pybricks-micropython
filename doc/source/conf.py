@@ -31,6 +31,9 @@ ON_RTD = os.environ.get('READTHEDOCS', None) == 'True'
 LOGO_SMALL = os.environ.get('PYBRICKS_LOGO_SMALL', 'images/pybricks-logo-small.png')
 LOGO_LARGE = os.environ.get('PYBRICKS_LOGO_LARGE', 'images/pybricks-logo-large.png')
 
+_TITLE = 'Pybricks Modules and Examples'
+_DISCLAIMER = 'LEGO, the LEGO logo, and MINDSTORMS are trademarks of the LEGO Group.'
+
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -62,7 +65,7 @@ master_doc = 'index'
 # General information about the project.
 project = 'Pybricks'
 copyright = '2018, Laurens Valk, David Lechner'
-author = 'Laurens Valk, David Lechner'
+author = ''
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -171,20 +174,40 @@ latex_elements = {
 
     # Additional stuff for the LaTeX preamble.
     #
-    # 'preamble': '',
+    'preamble': r'''
+    \makeatletter
+    \fancypagestyle{normal}{
+        \fancyhf{}
+        \fancyfoot[R]{{\py@HeaderFamily\thepage}}
+        \fancyfoot[C]{{\tiny \ \\ %(disclaimer)s}}
+        \fancyhead[L]{{\py@HeaderFamily \@title}}
+        \fancyhead[R]{{\py@HeaderFamily \py@release}}
+        \renewcommand{\headrulewidth}{0.4pt}
+        \renewcommand{\footrulewidth}{0.4pt}
+    }
+    \fancypagestyle{plain}{
+        \fancyhf{}
+        \fancyfoot[R]{{\py@HeaderFamily\thepage}}
+        \fancyfoot[C]{{\tiny \ \\ %(disclaimer)s}}
+        \renewcommand{\headrulewidth}{0.4pt}
+        \renewcommand{\footrulewidth}{0.4pt}
+    }
+    \makeatother
+    ''' % {'disclaimer': _DISCLAIMER},
 
     # Latex figure (float) alignment
     #
     # 'figure_align': 'htbp',
-    'extraclassoptions': 'openany,oneside'
+    'extraclassoptions': 'openany,oneside',
+
+    'releasename': 'Version',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Pybricks.tex', 'Pybricks Documentation',
-     'Laurens Valk, David Lechner', 'manual'),
+    (master_doc, 'Pybricks.tex', _TITLE, author, 'manual'),
 ]
 
 latex_logo = LOGO_LARGE
