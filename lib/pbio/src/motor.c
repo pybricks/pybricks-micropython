@@ -115,21 +115,53 @@ pbio_error_t pbio_motor_setup(pbio_port_t port, pbio_motor_dir_t direction, floa
         return PBIO_SUCCESS;
     }
 
+    // Return on invalid gear ratio
+    if (gear_ratio <= 0) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    pbio_iodev_type_id_t id;
+    status = pbdrv_motor_get_id(port, &id);
+    if (status != PBIO_SUCCESS) {
+        return status;
+    }
+
     //
-    // TODO: Use the device_id to retrieve the default settings defined in our lib. For now just hardcode something below.
+    // TODO: Use the device_id to retrieve this number. It is 1.0 for all of the supported motors so far.
+    // It is 2.0 for motors with double resolution, and it is counts/mm for linear actuators.
     //
     float_t counts_per_unit = 1.0;
 
+    // Overal ratio between encoder counts and output
+    float_t ratio = counts_per_unit * gear_ratio;
+    
     encmotor_settings[PORT_TO_IDX(port)].counts_per_unit = counts_per_unit;
-    encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit = counts_per_unit * gear_ratio;
+    encmotor_settings[PORT_TO_IDX(port)].counts_per_output_unit = ratio;
 
-    // TODO: Use the device_id to retrieve the default settings defined in our lib. For now just hardcode something below.
-    pbio_encmotor_set_run_settings(port, 1000, 1000);
+    // TODO: Load data by ID rather than hardcoding here, and define shared defaults to reduce size
+    if (id == PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR) {
+        pbio_encmotor_set_run_settings(port, 1200/ratio, 2400/ratio);
+        pbio_encmotor_set_pid_settings(port, 400, 600, 5, 100, 3, 5);
+        pbio_encmotor_set_stall_settings(port, 100, 2, 200);
+    }
+    else if (id == PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR) {
+        pbio_encmotor_set_run_settings(port, 800/ratio, 1600/ratio);
+        pbio_encmotor_set_pid_settings(port, 500, 800, 5, 100, 3, 5);
+        pbio_encmotor_set_stall_settings(port, 100, 2, 200);
+    }
+    else if (id == PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR) {
+        pbio_encmotor_set_run_settings(port, 1500/ratio, 3000/ratio);
+        pbio_encmotor_set_pid_settings(port, 400, 600, 5, 100, 3, 5);
+        pbio_encmotor_set_stall_settings(port, 100, 2, 200);
+    }
+    else {
+        // Defaults
+        pbio_encmotor_set_run_settings(port, 1000/ratio, 1000/ratio);
+        pbio_encmotor_set_pid_settings(port, 500, 800, 5, 100, 3, 5);
+        pbio_encmotor_set_stall_settings(port, 100, 2, 500);
+    }
 
-    // TODO: Add quick hack to distinguish between ev3 large/small
-    pbio_encmotor_set_pid_settings(port, 500, 800, 5, 100, 3, 5);
 
-    pbio_encmotor_set_stall_settings(port, 100, 2, 500);
 
     return PBIO_SUCCESS;
 }
@@ -163,7 +195,7 @@ pbio_error_t pbio_encmotor_set_stall_settings(
 
     if (stall_torque_limit_pct < 0 || stall_speed_limit < 0 || stall_time < 0) {
         return PBIO_ERROR_INVALID_ARG;
-    }        
+    }
     int8_t port_index = PORT_TO_IDX(port);
     float_t counts_per_output_unit = encmotor_settings[port_index].counts_per_output_unit;
     encmotor_settings[port_index].max_stall_duty = PBIO_DUTY_PCT_TO_ABS * stall_torque_limit_pct;

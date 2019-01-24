@@ -40,6 +40,7 @@
 
 // Motor file structure for each motor
 typedef struct _motor_file_t {
+    pbio_iodev_type_id_t id;
     bool coasting;
     int dir_number;
     bool files_open;
@@ -111,12 +112,27 @@ pbio_error_t sysfs_motor_init(pbio_port_t port){
 
             if (port_index == PORT_TO_IDX(port)) {
                 // Motor detected. Configure accordingly
-                motor_files[port_index].dir_number = dir_number;
+                motor_files[port_index].dir_number = dir_number;               
                 // Reset motor
                 sysfs_motor_command(port, "reset");
                 motor_files[PORT_TO_IDX(port)].coasting = true;
                 // File path character array to the relevant speed, position files, etc.
                 char filepath[MAX_PATH_LENGTH];
+                // Device ID
+                motor_files[port_index].id = PBIO_IODEV_TYPE_ID_NONE;
+                snprintf(filepath, MAX_PATH_LENGTH, "/sys/class/tacho-motor/motor%d/driver_name", dir_number);
+                FILE* idf = fopen(filepath, "r");
+                // Extract the port (14th) character, convert to numeric, and close address file
+                char driver_name[32];
+                fgets(driver_name, sizeof(driver_name), idf);
+                fclose(idf);                 
+                driver_name[strcspn(driver_name, "\n")] = 0;
+                if (!strcmp(driver_name, "lego-ev3-m-motor")) {
+                    motor_files[port_index].id = PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR;
+                }
+                else if (!strcmp(driver_name, "lego-ev3-l-motor")) {
+                    motor_files[port_index].id = PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR;
+                }
                 // Open the position file
                 snprintf(filepath, MAX_PATH_LENGTH, "/sys/class/tacho-motor/motor%d/position", dir_number);
                 motor_files[port_index].f_encoder_count = fopen(filepath, "r");
@@ -221,4 +237,14 @@ pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
         return PBIO_SUCCESS;
     }
     return PBIO_ERROR_IO;    
+}
+
+pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
+    *id = motor_files[PORT_TO_IDX(port)].id;
+    if (*id == PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR || *id == PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR) {
+        return PBIO_SUCCESS;
+    }
+    else {
+        return PBIO_ERROR_NO_DEV;
+    }
 }
