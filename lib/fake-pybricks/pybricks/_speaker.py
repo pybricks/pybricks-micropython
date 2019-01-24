@@ -30,7 +30,7 @@ class Speaker():
         """Play a number of default beeps with a brief pause in between.
 
         Arguments:
-            number (int): Number of beeps
+            number (int): Number of beeps.
 
         Example::
 

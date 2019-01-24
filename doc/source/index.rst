@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Using Python with LEGO MINDSTORMS EV3
-=====================================
+Using Python with LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3
+=========================================================
 
 .. .. toctree::
 ..    :maxdepth: 1

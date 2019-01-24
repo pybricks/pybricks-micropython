@@ -4,22 +4,22 @@ from parameters import Stop, Direction
 
 
 class Motor():
-    """LEGO MINDSTORMS EV3 Medium or Large Motor.
+    """LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 Medium or Large Motor.
 
     Element 99455/6148292 or 95658/6148278, contained in:
 
-    * 31313: LEGO MINDSTORMS EV3 (2013)
-    * 45544: LEGO MINDSTORMS Education EV3 Core Set (2013)
-    * 45502 or 45502: Separate part (2013)
+    * 31313: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 (2013)
+    * 45544: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` Education EV3 Core Set (2013)
+    * 45503 or 45502: Separate part (2013)
     """
 
     def __init__(self, port, direction=Direction.clockwise, gears=None):
         """Motor(port, direction=Direction.clockwise, gears=None)
 
         Arguments:
-            port (Port): Port to which the motor is connected
-            direction (Direction): Positive speed direction. (*Default*: Direction.clockwise)
-            gears (list): List of gears linked to the motor. (*Default*: ``None``).
+            port (Port): Port to which the motor is connected.
+            direction (Direction): Positive speed direction (*Default*: Direction.clockwise).
+            gears (list): List of gears linked to the motor (*Default*: ``None``).
 
                           For example: ``[12, 36]`` represents a gear train with a 12-tooth and a 36-tooth gear. See :ref:`ratio` for illustrated examples.
 
@@ -27,9 +27,9 @@ class Motor():
 
                           When you specify a gear train, all motor commands and settings are automatically adjusted to account for the resulting gear ratio. The motor direction remains unchanged, no matter how many gears you choose.
 
-                          For example, with ``gears=[12, 36]``, the gear ratio is 3, which means that the output is mechanically slowed down by a factor of 3. To compensate, the motor will automatically turn 3 times as fast and 3 times as far when you give a motor command. So when you choose ``run_angle(200, 90)``, your mechanism output simply turns at 200 deg/s by 90 degrees.
+                          For example, with ``gears=[12, 36]``, the gear ratio is 3, which means that the output is mechanically slowed down by a factor of 3. To compensate, the motor will automatically turn 3 times as fast and 3 times as far when you give a motor command. So when you choose ``run_angle(200, 90)``, your mechanism output simply turns at 200 deg/s for 90 degrees.
 
-                          The same holds for the documentation below: When it says "motor angle" or "motor speed", you can read it as "mechanism output angle" and "mechanism output speed", and so on, because the gear ratio is automatically accounted for.
+                          The same holds for the documentation below: When it states "motor angle" or "motor speed", you can read this as "mechanism output angle" and "mechanism output speed", and so on, as the gear ratio is automatically accounted for.
 
                           The ``gears`` setting is only available for motors with rotation sensors.
 
@@ -51,7 +51,7 @@ class Motor():
 
         Arguments:
             duty (:ref:`percentage`): The duty cycle (-100.0 to 100).
-            limit (:ref:`percentage`): Limit on the maximum ``duty`` value. (*Default*: 100). This overrides the first argument when it exceeds the limit. This ensures that ``abs(duty)`` <``limit``. This is useful when you use your own formula to set the duty cycle, because provides a limit when your formula gives a very big number. For example, you could use this to prevent your LEGO train from unintentionally going at full speed.
+            limit (:ref:`percentage`): Limit on the maximum ``duty`` value (*Default*: 100). This overrides the first argument when it exceeds the limit. This ensures that ``abs(duty)`` <``limit`` and is useful when you use your own formula to set the duty cycle, as it provides a limit when your formula returns a very large number. For example, you could use this to prevent your LEGO\ :sup:`®` train from unintentionally going at full speed.
 
         Example::
 
@@ -88,7 +88,7 @@ class Motor():
     def stalled(self):
         """Check whether the motor is currently stalled.
 
-        When a motor is stalled, this means that it cannot move even with the maximum torque. For example, something might be blocking the motor or your mechanism simply cannot turn any further. See also :func:`.set_stall_settings`.
+        A motor is stalled when it cannot move even with the maximum torque. For example, something might be blocking the motor or your mechanism simply cannot turn any further. See also :func:`.set_stall_settings`.
 
         Returns:
             bool: ``True`` if the motor is stalled, ``False`` if it is not.
@@ -115,9 +115,9 @@ class Motor():
         pass
 
     def run(self, speed):
-        """Keep the motor runnning at a constant speed (angular velocity).
+        """Keep the motor running at a constant speed (angular velocity).
 
-        The motor will accelerate towards the requested speed and the duty cycle is automatically adjusted to keep the speed constant, even under some load. This continues in the background until you give the motor a new command or until the program stops.
+        The motor will accelerate towards the requested speed and the duty cycle is automatically adjusted to keep the speed constant, even under some load. This continues in the background until you give the motor a new command or the program stops.
 
         Arguments:
             speed (:ref:`speed`): Speed of the motor.
@@ -134,7 +134,7 @@ class Motor():
         Arguments:
             speed (:ref:`speed`): Speed of the motor.
             time (:ref:`time`): Duration of the maneuver.
-            stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
+            stop_type (Stop): Whether to coast, brake, or hold after coming to a standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
             wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits for the specified ``time``.
         """
         pass
@@ -144,12 +144,12 @@ class Motor():
 
         Run the motor at a constant speed (angular velocity) by a given angle.
 
-        The motor will accelerate towards the requested speed and the duty cycle is automatically adjusted to keep the speed constant, even under some load. It begins to decelerate just in time so that it comes to standstill after traversing the given angle.
+        The motor will accelerate towards the requested speed and the duty cycle is automatically adjusted to keep the speed constant, even under some load. It begins to decelerate just in time so that it comes to a standstill after traversing the given angle.
 
         Arguments:
             speed (:ref:`speed`): Speed of the motor.
             rotation_angle (:ref:`angle`): Angle by which the motor should rotate.
-            stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
+            stop_type (Stop): Whether to coast, brake, or hold after coming to a standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
             wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits until the motor has traveled precisely the requested angle.
         """
         pass
@@ -159,14 +159,14 @@ class Motor():
 
         Run the motor at a constant speed (angular velocity) towards a given target angle.
 
-        The motor will accelerate towards the requested speed and the duty cycle is automatically adjusted to keep the speed constant, even under some load. It begins to decelerate just in time so that it comes to standstill at the given target angle.
+        The motor will accelerate towards the requested speed and the duty cycle is automatically adjusted to keep the speed constant, even under some load. It begins to decelerate just in time so that it comes to a standstill at the given target angle.
 
         The direction of rotation is automatically selected based on the target angle.
 
         Arguments:
             speed (:ref:`speed`): Absolute speed of the motor. The direction will be automatically selected based on the target angle: it makes no difference if you specify a positive or negative speed.
-            target_angle (:ref:`angle`): Target angle that the motor should go to, regardless of its current angle.
-            stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
+            target_angle (:ref:`angle`): Target angle that the motor should rotate to, regardless of its current angle.
+            stop_type (Stop): Whether to coast, brake, or hold after coming to a standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
             wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits until the motor has reached the target angle.
         """
         pass
@@ -176,13 +176,13 @@ class Motor():
 
         Run the motor at a constant speed (angular velocity) until it stalls. The motor is considered stalled when it cannot move even with the maximum torque.
 
-        Specifically, the motor is stalled when the duty cycle computed by the PID controllers has reached the maximum (so ``duty`` = ``duty_limit``) and still the motor cannot reach a minimal speed (so ``speed`` < ``stall_speed``) for a period of at least ``stall_time``. These settings lets you adjust how soon the motor should be considered to be stalled.
+        Specifically, the motor is stalled when the duty cycle computed by the PID controllers has reached the maximum (so ``duty`` = ``duty_limit``) and the motor still cannot reach a minimal speed (so ``speed`` < ``stall_speed``) for a period of at least ``stall_time``. These settings let you adjust how soon the motor should be considered stalled.
 
-        These optional settings are exactly the same as :func:`.set_stall_settings`, but in this method they are only applied temporarily. For example, you can choose ``duty_limit=50`` to limit the motor torque during this maneuver, but it returns to its previous value aftwards.
+        These optional settings are identical to :func:`.set_stall_settings`, but in this method they are only applied temporarily. For example, you can choose ``duty_limit=50`` to limit the motor torque during this maneuver, but have it return to its previous value afterwards.
 
         Arguments:
             speed (:ref:`speed`): Speed of the motor.
-            stop_type (Stop): Whether to coast, brake, or hold after coming to standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
+            stop_type (Stop): Whether to coast, brake, or hold after coming to a standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
             duty_limit (:ref:`percentage`): Relative torque limit during subsequent ``run`` commands. This sets the maximum :ref:`duty cycle <duty>` that is applied during any subsequent motor command. This reduces the maximum torque output to a percentage of the absolute maximum stall torque. This is useful to avoid applying the full motor torque to a geared or lever mechanism.
             stall_speed (:ref:`speed`): If the motor moves slower than ``stall_speed`` for ``stall_time`` during any of the ``run`` commands, the motor is considered to be stalled.
             stall_time (:ref:`time`): As above: see ``stall_speed``.
@@ -192,12 +192,12 @@ class Motor():
     def track_target(self, target_angle):
         """Track a target angle that varies in time.
 
-        This function is quite similar to :func:`.run_target`, but speed and acceleration settings are ignored: it will move to the target angle as fast as possible. Instead, you adjust speed and acceleration by choosing how fast or how slowly you vary the ``target_angle``.
+        This function is quite similar to :func:`.run_target`, but speed and acceleration settings are ignored: it will move to the target angle as fast as possible. Instead, you adjust speed and acceleration by choosing how fast or slow you vary the ``target_angle``.
 
-        This method is useful in fast loops where the motor target continously changes.
+        This method is useful in fast loops where the motor target changes continously.
 
         Arguments:
-            target_angle (:ref:`angle`): Target angle that the motor should go to.
+            target_angle (:ref:`angle`): Target angle that the motor should rotate to.
 
         Example::
 
@@ -246,10 +246,10 @@ class Motor():
         """Configure the settings of the position and speed controllers. See also :ref:`pid` and the :ref:`default parameters <defaultpars>` for each motor.
 
         Arguments:
-            kp (int): Proportional position (and integral speed) control constant
+            kp (int): Proportional position (and integral speed) control constant.
             ki (int): Integral position control constant.
             kd (int): Derivative position (and proportional speed) control constant.
-            tight_loop_limit (:ref:`time`): If you execute any of the ``run`` command within this interval after starting the previous command, the controllers assume that you want to control the speed directly. This means that it will ignore the acceleration setting: it will immediately begin tracking the speed you give in the ``run`` command. This is useful in a fast loop, where you usually want the motors to respond quickly rather than accelerate smoothly, for example with a line following robot.
+            tight_loop_limit (:ref:`time`): If you execute any of the ``run`` commands within this interval after starting the previous command, the controllers assume that you want to control the speed directly. This means that it will ignore the acceleration setting and immediately begin tracking the speed you give in the ``run`` command. This is useful in a fast loop, where you usually want the motors to respond quickly rather than accelerate smoothly, for example with a line-following robot.
             angle_tolerance (:ref:`angle`): Allowed deviation from the target angle before motion is considered complete.
             speed_tolerance (:ref:`speed`): Allowed deviation from zero speed before motion is considered complete.
         """
@@ -271,12 +271,12 @@ class Motor():
 
 
 class TouchSensor():
-    """LEGO MINDSTORMS EV3 Touch Sensor.
+    """LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 Touch Sensor.
 
     Element 95648/6138404, contained in:
 
-    * 31313: LEGO MINDSTORMS EV3 (2013)
-    * 45544: LEGO MINDSTORMS Education EV3 Core Set (2013)
+    * 31313: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 (2013)
+    * 45544: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` Education EV3 Core Set (2013)
     * 45507: Separate part (2013)
 
     """
@@ -300,12 +300,12 @@ class TouchSensor():
 
 
 class ColorSensor():
-    """LEGO MINDSTORMS EV3 Color Sensor.
+    """LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 Color Sensor.
 
     Element 95650/6128869, contained in:
 
-    * 31313: LEGO MINDSTORMS EV3 (2013)
-    * 45544: LEGO MINDSTORMS Education EV3 Core Set (2013)
+    * 31313: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 (2013)
+    * 45544: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` Education EV3 Core Set (2013)
     * 45506: Separate part (2013)
     """
 
@@ -336,7 +336,7 @@ class ColorSensor():
         pass
 
     def reflection(self):
-        """Measure the reflection of a surface to using a red light.
+        """Measure the reflection of a surface using a red light.
 
         Returns:
             :ref:`percentage`: Reflection, ranging from 0.0 (no reflection) to 100.0 (high reflection).
@@ -355,11 +355,11 @@ class ColorSensor():
 
 
 class InfraredSensor():
-    """LEGO MINDSTORMS EV3 Infrared Sensor and Beacon.
+    """LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 Infrared Sensor and Beacon.
 
     Element 95654/6132629 and 72156/6127283, contained in:
 
-    * 31313: LEGO MINDSTORMS EV3 (2013)
+    * 31313: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 (2013)
     * 45509 and 45508: Separate parts (2013)
     """
 
@@ -385,7 +385,7 @@ class InfraredSensor():
         """Measure the relative distance and angle between the remote and the infrared sensor.
 
         Arguments:
-            channel (int): Channel number of the remote
+            channel (int): Channel number of the remote.
 
         :returns: Tuple of relative distance (0 to 100) and approximate angle (-75 to 75 degrees) between remote and infrared sensor.
         :rtype: (:ref:`relativedistance`, :ref:`angle`) or (``None``, ``None``) if no remote is detected.
@@ -393,10 +393,10 @@ class InfraredSensor():
         pass
 
     def buttons(self, channel):
-        """Check which buttons of the infrared remote are pressed.
+        """Check which buttons on the infrared remote are pressed.
 
         Arguments:
-            channel (int): Channel number of the remote
+            channel (int): Channel number of the remote.
 
         :returns: List of pressed buttons on the remote on the specified channel.
         :rtype: List of :class:`Button <parameters.Button>`
@@ -406,11 +406,11 @@ class InfraredSensor():
 
 
 class GyroSensor():
-    """LEGO MINDSTORMS EV3 Gyro Sensor.
+    """LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 Gyro Sensor.
 
     Element 99380/6138411, contained in:
 
-    * 45544: LEGO MINDSTORMS Education EV3 Core Set (2013)
+    * 45544: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` Education EV3 Core Set (2013)
     * 45505: Separate part (2013)
     """
 
@@ -450,11 +450,11 @@ class GyroSensor():
 
 
 class UltrasonicSensor():
-    """LEGO MINDSTORMS EV3 Ultrasonic Sensor.
+    """LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 Ultrasonic Sensor.
 
     Element 95652/6138403, contained in:
 
-    * 45544: LEGO MINDSTORMS Education EV3 Core Set (2013)
+    * 45544: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` Education EV3 Core Set (2013)
     * 45504: Separate part (2013)
 
     """
@@ -489,7 +489,7 @@ class UltrasonicSensor():
     def presence(self):
         """Check for the presence of other ultrasonic sensors by detecting ultrasonic sounds.
 
-        If the other ultrasonic sensor operates in silent mode, you can only detect the presence of that sensor while it is taking a measurement.
+        If the other ultrasonic sensor is operating in silent mode, you can only detect the presence of that sensor while it is taking a measurement.
 
         Returns:
             :obj:`bool`: ``True`` if ultrasonic sounds are detected, ``False`` if not.

@@ -1,10 +1,10 @@
-"""Common tools for timing and debugging."""
+"""Common tools for timing and datalogging."""
 
 
 def print():
     """print(value, ..., sep, end, file, flush)
 
-    Prints the values to the terminal or a stream.
+    Print values on the terminal or a stream.
 
     Example::
 
@@ -26,6 +26,7 @@ def wait(time):
 
     """
     pass
+
 
 class StopWatch():
     """A stopwatch to measure time intervals. Similar to the stopwatch feature on your phone."""

@@ -5,7 +5,7 @@ from _speaker import Speaker
 from _display import Display
 
 def buttons():
-    """Check which buttons of the EV3 brick are currently pressed.
+    """Check which buttons on the EV3 brick are currently pressed.
 
     :returns: List of pressed buttons.
     :rtype: List of :class:`Button <parameters.Button>`

@@ -29,7 +29,7 @@ class Color(Enum):
 
 
 class Port(Enum):
-    """Port on the intelligent brick.
+    """Port on the EV3 Programmable Brick.
 
     Motor ports:
 
@@ -195,7 +195,7 @@ class Button(Enum):
 
 
 class Align():
-    """Alignment of an image on a screen.
+    """Alignment of an image on the display.
 
     .. data:: center
     """

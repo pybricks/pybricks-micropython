@@ -20,7 +20,7 @@ class Display():
 
         Parameters:
             text (str): The text to display.
-            coordinate (tuple): ``(x, y)`` coordinate tuple. It is the top-left corner of the first character. If no location is specified, it is printed on the next line.
+            coordinate (tuple): ``(x, y)`` coordinate tuple. It is the top-left corner of the first character. If no coordinate is specified, it is printed on the next line.
 
         Example::
 
@@ -44,13 +44,13 @@ class Display():
 
         Show an image file.
 
-        You can specify its placement either using ``alignment`` or by specifying an ``coordinate``, but not both.
+        You can specify its placement either using ``alignment`` or by specifying a ``coordinate``, but not both.
 
         Arguments:
             file_name (str): Path to the image file. Paths may be absolute or relative from the project folder.
-            alignment (Align): Where to place the image. (*Default*: Align.center).
+            alignment (Align): Where to place the image (*Default*: Align.center).
             coordinate (tuple): ``(x, y)`` coordinate tuple. It is the top-left corner of the image (*Default*: None).
-            clear (bool): Whether to clear the screen before showing the image. (*Default*: ``True``)
+            clear (bool): Whether to clear the screen before showing the image (*Default*: ``True``).
 
         Example::
 
