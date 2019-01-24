@@ -1,6 +1,9 @@
 :mod:`ev3devices` -- EV3 Motors and Sensors
 ===========================================
 
+.. automodule:: ev3devices
+    :no-members:
+
 Motors
 ------
 

@@ -1,4 +1,4 @@
-"""EV3 motors and sensors."""
+"""LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 motors and sensors."""
 
 from parameters import Stop, Direction
 

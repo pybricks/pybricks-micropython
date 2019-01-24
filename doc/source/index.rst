@@ -40,11 +40,3 @@ Using Python with LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3
    examples/robot_arm_h25
 
 
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

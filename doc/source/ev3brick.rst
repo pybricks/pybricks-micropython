@@ -1,6 +1,9 @@
 :mod:`ev3brick` -- The EV3 Programmable Brick
 =============================================
 
+.. automodule:: ev3brick
+    :no-members:
+
 
 Buttons
 -------
@@ -30,10 +33,10 @@ Sound
 Display
 -------
 ::
-     
+
                        x
               -------------->
-     (0, 0)  __________________  
+     (0, 0)  __________________
             |                  |
         |   |                  |
      y  |   |      Hello       |
