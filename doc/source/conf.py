@@ -30,8 +30,8 @@ ON_RTD = os.environ.get('READTHEDOCS', None) == 'True'
 # branding
 LOGO_SMALL = os.environ.get('PYBRICKS_LOGO_SMALL', 'images/pybricks-logo-small.png')
 LOGO_LARGE = os.environ.get('PYBRICKS_LOGO_LARGE', 'images/pybricks-logo-large.png')
+_TITLE = os.environ.get('PYBRICKS_TITLE', 'Pybricks Modules and Examples')
 
-_TITLE = 'Pybricks Modules and Examples'
 _DISCLAIMER = 'LEGO, the LEGO logo, and MINDSTORMS are trademarks of the LEGO Group.'
 
 # -- General configuration ------------------------------------------------
