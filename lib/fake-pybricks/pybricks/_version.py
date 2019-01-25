@@ -41,8 +41,8 @@ def get_config():
     cfg = VersioneerConfig()
     cfg.VCS = "git"
     cfg.style = "pep440"
-    cfg.tag_prefix = "'v'"
-    cfg.parentdir_prefix = "'fake-pybricks-'"
+    cfg.tag_prefix = "v"
+    cfg.parentdir_prefix = "fake-pybricks-"
     cfg.versionfile_source = "pybricks/_version.py"
     cfg.verbose = False
     return cfg
