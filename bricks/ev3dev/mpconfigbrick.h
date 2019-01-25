@@ -24,6 +24,7 @@
 
 #include "pbinit.h"
 
+#define PYBRICKS_PLATFORM                 "pybricks-ev3dev-stretch"
 #define PYBRICKS_BRICK_EV3
 #define MICROPY_HW_BOARD_NAME             "LEGO MINDSTORMS EV3 Intelligent Brick"
 #define MICROPY_HW_MCU_NAME               "Texas Instruments AM1808"
