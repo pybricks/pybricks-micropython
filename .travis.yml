@@ -31,6 +31,10 @@ jobs:
         - python3 --version
         - cd ${HOME}
         - git clone --depth=10 --recursive https://github.com/pybricks/micropython
+        - if [ -n "$TRAVIS_TAG" ]; then
+              MPY_TAG = $(git tag | grep pybricks$TRAVIS_TAG);
+              git -C micropython checkout $MPY_TAG;
+          fi
         - cd micropython/ports/pybricks
         - git checkout --recurse-submodules ${TRAVIS_COMMIT}
         - cd ../..
@@ -61,6 +65,10 @@ jobs:
         - sudo apt install qemu-user-static
         - cd ${HOME}
         - git clone --depth=10 --recursive https://github.com/pybricks/micropython
+        - if [ -n "$TRAVIS_TAG" ]; then
+              MPY_TAG = $(git tag | grep pybricks$TRAVIS_TAG);
+              git -C micropython checkout $MPY_TAG;
+          fi
         - cd micropython/ports/pybricks
         - git checkout --recurse-submodules ${TRAVIS_COMMIT}
         - bricks/ev3dev/docker/setup.sh armel
@@ -99,6 +107,10 @@ jobs:
         - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
         - sudo tar -C /opt -xf gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
         - git clone --depth=10 --recursive https://github.com/pybricks/micropython
+        - if [ -n "$TRAVIS_TAG" ]; then
+              MPY_TAG = $(git tag | grep pybricks$TRAVIS_TAG);
+              git -C micropython checkout $MPY_TAG;
+          fi
         - cd micropython/ports/pybricks
         - git checkout --recurse-submodules ${TRAVIS_COMMIT}
         - cd ../..
