@@ -22,7 +22,7 @@
 
 """Read and write to EV3 sensors through ev3dev sysfs."""
 from os import listdir, path
-from time import sleep, time
+from .tools import wait, StopWatch
 
 
 def read_int(infile):
@@ -47,11 +47,6 @@ def write_str(outfile, value):
     """Write a string to a previously opened file descriptor."""
     outfile.write(value)
     outfile.flush()
-
-
-def number_of_sensors():
-    """Return the number of sensors attached to the EV3."""
-    return len(listdir('/sys/class/lego-sensor'))-2
 
 
 def get_sensor_path(port, driver_name):
@@ -113,29 +108,6 @@ class Ev3devSensor():
         for value_file in self.value_files:
             value_file.close()
 
-    def reset(self):
-        """Force sensor to reset as if disconnecting and reconnecting it."""
-        # First, close all files for this sensor
-        self.close_files()
-        # Number of sensors before reset
-        number_of_sensors_before = number_of_sensors()
-        # Reset the sensor
-        with open('/sys/class/lego-port/port' + chr(self.port-1) + '/mode', 'w') as rf:
-            rf.write('auto')
-        # Reset takes at least a second
-        sleep(1)
-        # Wait for the sensor to come back, up to a timeout. TODO: We should really be checking the actual port status, but that seems to prevent the sensor from coming back
-        reset_time = time()
-        while not number_of_sensors() == number_of_sensors_before:
-            sleep(0.1)
-            if time() - reset_time > 4:
-                raise OSError("Unable to reset sensor")
-        # Now that the sensor is almost back, wait another half second and then reinitialize the files
-        sleep(0.5)
-        self.open_files()
-        if self._default_mode:
-            self.mode(self._default_mode)
-
     def mode(self, mode_new):
         """Set the sensor mode. Not available to user."""
         if mode_new != self.mode_now:
@@ -145,3 +117,55 @@ class Ev3devSensor():
     def value(self, num):
         """Return value in sensor/valueX. Not available to user."""
         return read_int(self.value_files[num])
+
+
+class Ev3devUartSensor(Ev3devSensor):
+    """UART ev3dev sensor operating through sysfs."""
+
+    def _reset_port(self):
+        path = '/sys/class/lego-port/port' + chr(self.port-1) + '/'
+        with open(path + 'mode', 'w') as rf:
+            rf.write('auto')
+        with open(path + 'mode', 'w') as rf:
+            rf.write('ev3-uart')
+        watch = StopWatch()
+        while True:
+            with open(path + 'status', 'r') as sf:
+                status = sf.read().strip()
+                if status != "no-sensor":
+                    break
+            wait(100)
+            if watch.time() > 5000:
+                raise OSError("Unable to reset sensor.")
+
+    def _reset(self):
+        """Force sensor to reset as if disconnecting and reconnecting it."""
+        # First, close all files for this sensor
+        try:
+            self.close_files()
+        except ValueError as err:
+            pass
+        # Reset the sensor
+        self._reset_port()
+        total = StopWatch()
+        sub = StopWatch()
+        # Wait for sensor to come back
+        wait(2000)
+        success = False
+        while total.time() < 15000:
+            wait(250)
+            if sub.time() > 5000:
+                self._reset_port()
+                sub.reset()
+            try:
+                self.open_files()
+                success = True
+            except OSError:
+                continue
+            break
+
+        if not success:
+            raise OSError("Unable to reset sensor.")
+
+        if self._default_mode:
+            self.mode(self._default_mode)    

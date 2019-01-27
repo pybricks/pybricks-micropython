@@ -28,7 +28,7 @@ from .parameters import Color, Button
 from .tools import StopWatch, wait
 
 # Import ev3dev sysfs sensor base class and modes
-from .ev3devio import Ev3devSensor
+from .ev3devio import Ev3devSensor, Ev3devUartSensor
 
 
 class TouchSensor(Ev3devSensor):
@@ -211,7 +211,7 @@ class InfraredSensor(Ev3devSensor):
         return self._combinations[code]
 
 
-class GyroSensor(Ev3devSensor):
+class GyroSensor(Ev3devUartSensor):
     """LEGO MINDSTORMS EV3 Gyro Sensor.
 
     Contained in set:
