@@ -91,30 +91,30 @@ class Ev3devSensor():
         """Initialize the sensor."""
         assert ord('1') <= port <= ord('4')
         self.port = port
-        self.open_files()
+        self._open_files()
         if self._default_mode:
-            self.mode(self._default_mode)
+            self._mode(self._default_mode)
 
-    def open_files(self):
+    def _open_files(self):
         """Open the sysfs files for this device."""
         self.path = get_sensor_path(self.port, self._ev3dev_driver_name)
         self.mode_file = open(self.path + 'mode', 'r+b')
         self.mode_now = read_str(self.mode_file)
         self.value_files = [open(self.path + 'value' + str(num), 'rb') for num in range(self._number_of_values)]
 
-    def close_files(self):
+    def _close_files(self):
         """Close the sysfs files for this device."""
         self.mode_file.close()
         for value_file in self.value_files:
             value_file.close()
 
-    def mode(self, mode_new):
+    def _mode(self, mode_new):
         """Set the sensor mode. Not available to user."""
         if mode_new != self.mode_now:
             write_str(self.mode_file, mode_new)
             self.mode_now = mode_new
 
-    def value(self, num):
+    def _value(self, num):
         """Return value in sensor/valueX. Not available to user."""
         return read_int(self.value_files[num])
 
@@ -142,7 +142,7 @@ class Ev3devUartSensor(Ev3devSensor):
         """Force sensor to reset as if disconnecting and reconnecting it."""
         # First, close all files for this sensor
         try:
-            self.close_files()
+            self._close_files()
         except ValueError as err:
             pass
         # Reset the sensor
@@ -158,7 +158,7 @@ class Ev3devUartSensor(Ev3devSensor):
                 self._reset_port()
                 sub.reset()
             try:
-                self.open_files()
+                self._open_files()
                 success = True
             except OSError:
                 continue
@@ -168,4 +168,4 @@ class Ev3devUartSensor(Ev3devSensor):
             raise OSError("Unable to reset sensor.")
 
         if self._default_mode:
-            self.mode(self._default_mode)    
+            self._mode(self._default_mode)

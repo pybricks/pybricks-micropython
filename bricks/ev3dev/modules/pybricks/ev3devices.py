@@ -54,7 +54,7 @@ class TouchSensor(Ev3devSensor):
             bool -- True if the sensor is pressed, False if it is not pressed.
 
         """
-        return bool(self.value(0))
+        return bool(self._value(0))
 
 
 class ColorSensor(Ev3devSensor):
@@ -82,8 +82,8 @@ class ColorSensor(Ev3devSensor):
             int -- Color.black, Color.blue, Color.green, Color.yellow, Color.red, Color.white, or Color.brown. Returns None if no color is detected.
 
         """
-        self.mode('COL-COLOR')
-        color = self.value(0)
+        self._mode('COL-COLOR')
+        color = self._value(0)
         return None if color == 0 else color
 
     def ambient(self):
@@ -93,8 +93,8 @@ class ColorSensor(Ev3devSensor):
             int -- Ambient light intensity, ranging from 0 (dark) to 100 (bright).
 
         """
-        self.mode('COL-AMBIENT')
-        return self.value(0)
+        self._mode('COL-AMBIENT')
+        return self._value(0)
 
     def reflection(self):
         """Measure the reflection of a surface (using a red light).
@@ -103,8 +103,8 @@ class ColorSensor(Ev3devSensor):
             float -- Reflection, ranging from 0.0 (no reflection) to 100.0 (high reflection).
 
         """
-        self.mode('REF-RAW')
-        return round(max(0, min(self.value(0)*-0.2965+193.6, 100)), 1)
+        self._mode('REF-RAW')
+        return round(max(0, min(self._value(0)*-0.2965+193.6, 100)), 1)
 
     def rgb(self):
         """Measure the reflection of a surface (using a red, green, and blue light, each measured in turn).
@@ -113,10 +113,10 @@ class ColorSensor(Ev3devSensor):
             (float, float, float) -- Reflection for red, green, and blue light, each ranging from 0.0 (no reflection) to 100.0 (high reflection).
 
         """
-        self.mode('RGB-RAW')
-        r = round(max(0, min(self.value(0)*0.258-0.3, 100)), 1)
-        g = round(max(0, min(self.value(1)*0.280-0.8, 100)), 1)
-        b = round(max(0, min(self.value(2)*0.523-3.7, 100)), 1)
+        self._mode('RGB-RAW')
+        r = round(max(0, min(self._value(0)*0.258-0.3, 100)), 1)
+        g = round(max(0, min(self._value(1)*0.280-0.8, 100)), 1)
+        b = round(max(0, min(self._value(2)*0.523-3.7, 100)), 1)
         return r, g, b
 
 
@@ -157,8 +157,8 @@ class InfraredSensor(Ev3devSensor):
             int -- Relative distance ranging from 0 (closest) to 100 (farthest)
 
         """
-        self.mode('IR-PROX')
-        return self.value(0)
+        self._mode('IR-PROX')
+        return self._value(0)
 
     def beacon(self, channel):
         """Return relative distance and angle between active remote and the infrared sensor.
@@ -171,19 +171,19 @@ class InfraredSensor(Ev3devSensor):
             approximate angle between active remote and infrared sensor: -75 to 75 (degrees)
 
         """
-        self.mode('IR-SEEK')
+        self._mode('IR-SEEK')
         if channel == 1:
-            head = self.value(0)
-            dist = self.value(1)
+            head = self._value(0)
+            dist = self._value(1)
         elif channel == 2:
-            head = self.value(2)
-            dist = self.value(3)
+            head = self._value(2)
+            dist = self._value(3)
         elif channel == 3:
-            head = self.value(4)
-            dist = self.value(5)
+            head = self._value(4)
+            dist = self._value(5)
         elif channel == 4:
-            head = self.value(6)
-            dist = self.value(7)
+            head = self._value(6)
+            dist = self._value(7)
         if dist == -128:
             return None, None
         else:
@@ -199,15 +199,15 @@ class InfraredSensor(Ev3devSensor):
             list -- A list of buttons
 
         """
-        self.mode('IR-REMOTE')
+        self._mode('IR-REMOTE')
         if channel == 1:
-            code = self.value(0)
+            code = self._value(0)
         elif channel == 2:
-            code = self.value(1)
+            code = self._value(1)
         elif channel == 3:
-            code = self.value(2)
+            code = self._value(2)
         elif channel == 4:
-            code = self.value(3)
+            code = self._value(3)
         return self._combinations[code]
 
 
@@ -235,7 +235,7 @@ class GyroSensor(Ev3devUartSensor):
             int -- Angular velocity (degrees per second).
 
         """
-        return self.value(1)
+        return self._value(1)
 
     def angle(self):
         """Get the accumulated angle of the sensor.
@@ -244,7 +244,7 @@ class GyroSensor(Ev3devUartSensor):
             int -- Angle (degrees).
 
         """
-        return self.value(0)
+        return self._value(0)
 
     pass
 
@@ -280,12 +280,12 @@ class UltrasonicSensor(Ev3devSensor):
         """
         if turn_off:
             self.mode_now = None
-            self.mode('US-SI-CM')
-            return self.value(0)
+            self._mode('US-SI-CM')
+            return self._value(0)
             wait(self.PING_WAIT)
         else:
-            self.mode('US-DIST-CM')
-            return self.value(0)
+            self._mode('US-DIST-CM')
+            return self._value(0)
 
     def presence(self):
         """Look for the presence of other ultrasonic sensors by checking for ultrasonic sounds.
@@ -294,5 +294,5 @@ class UltrasonicSensor(Ev3devSensor):
             bool -- True if ultrasonic sounds are detected, False if not.
 
         """
-        self.mode('US-LISTEN')
-        return self.value(0)
+        self._mode('US-LISTEN')
+        return self._value(0)
