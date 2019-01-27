@@ -24,7 +24,18 @@
 
 #include "py/mphal.h"
 #include "py/runtime.h"
-#include "extmod/utime_mphal.h"
+#include "pberror.h"
+#include "pbobj.h"
+
+STATIC mp_obj_t tools_wait(mp_obj_t arg) {
+    int32_t duration = mp_obj_get_num(arg);
+    if (duration < 0) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+    mp_hal_delay_ms(duration);
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(tools_wait_obj, tools_wait);
 
 /*
 class StopWatch():
@@ -169,7 +180,7 @@ tools module tables
 
 STATIC const mp_rom_map_elem_t tools_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_tools)         },
-    { MP_ROM_QSTR(MP_QSTR_wait),        MP_ROM_PTR(&mp_utime_sleep_ms_obj)  },
+    { MP_ROM_QSTR(MP_QSTR_wait),        MP_ROM_PTR(&tools_wait_obj)  },
     { MP_ROM_QSTR(MP_QSTR_StopWatch),   MP_ROM_PTR(&tools_StopWatch_type)  },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_tools_globals, tools_globals_table);
