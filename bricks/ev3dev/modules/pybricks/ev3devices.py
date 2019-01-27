@@ -228,25 +228,22 @@ class GyroSensor(Ev3devUartSensor):
     _number_of_values = 2
     _default_mode = 'GYRO-G&A'
 
+    def __init__(self, port):
+        Ev3devUartSensor.__init__(self, port)
+        self.reset_angle()
+
     def rate(self):
-        """Measure the angular velocity of the sensor.
-
-        Returns:
-            int -- Angular velocity (degrees per second).
-
-        """
         return self._value(1)
 
     def angle(self):
-        """Get the accumulated angle of the sensor.
+        return self._value(0) - self.offset
 
-        Returns:
-            int -- Angle (degrees).
+    def reset_angle(self, angle=0):
+        self.offset = self._value(0) - angle
 
-        """
-        return self._value(0)
-
-    pass
+    def calibrate(self):
+        self._reset()
+        self.reset_angle(0)
 
 
 class UltrasonicSensor(Ev3devSensor):
