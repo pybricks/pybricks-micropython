@@ -26,20 +26,8 @@
 from .uev3dev.display import Display as Ev3devDisplay
 from .uev3dev.display import ImageFile
 from os import path
-from .ev3devio import tree_as_enum
 
-Image = tree_as_enum('/usr/share/images/ev3dev/mono')
-
-class Align():
-    bottom_left = 1
-    bottom = 2
-    bottom_right = 3
-    left = 4
-    center = 5
-    right = 6
-    top_left = 7
-    top = 8
-    top_right = 9
+from .parameters import Align
 
 
 class Display():

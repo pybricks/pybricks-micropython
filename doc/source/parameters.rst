@@ -24,3 +24,6 @@
 
 .. autoclass:: parameters.Image
     :no-members:
+
+.. autoclass:: parameters.Sound
+    :no-members:
