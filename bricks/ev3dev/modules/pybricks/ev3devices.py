@@ -24,7 +24,7 @@
 
 # import those ev3devices that are already written in MicroPython-style C code.
 from ev3devices_c import Motor
-from .parameters import Color, Button
+from .parameters import Color, Button, Direction
 from .tools import StopWatch, wait
 
 # Import ev3dev sysfs sensor base class and modes
@@ -228,18 +228,28 @@ class GyroSensor(Ev3devUartSensor):
     _number_of_values = 2
     _default_mode = 'GYRO-G&A'
 
-    def __init__(self, port):
+    def __init__(self, port, direction=Direction.clockwise):
         Ev3devUartSensor.__init__(self, port)
+        self._direction = direction
         self.reset_angle()
 
-    def rate(self):
-        return self._value(1)
+    def speed(self):
+        if self._direction == Direction.clockwise:
+            return self._value(1)
+        else:
+            return -self._value(1)
 
     def angle(self):
-        return self._value(0) - self.offset
+        if self._direction == Direction.clockwise:
+            return self._value(0) - self.offset
+        else:
+            return -self._value(0) - self.offset
 
     def reset_angle(self, angle=0):
-        self.offset = self._value(0) - angle
+        if self._direction == Direction.clockwise:
+            self.offset = self._value(0) - angle
+        else:
+            self.offset = -self._value(0) - angle
 
     def calibrate(self):
         self._reset()

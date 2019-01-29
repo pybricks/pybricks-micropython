@@ -417,38 +417,49 @@ class GyroSensor():
     """
 
     def __init__(self, port):
-        """GyroSensor(port)
+        """GyroSensor(port, direction=Direction.clockwise)
 
         Arguments:
             port (Port): Port to which the sensor is connected.
+            direction (Direction): Positive rotation direction when looking at the red dot on top of the sensor. (*Default*: Direction.clockwise).
 
         """
         pass
 
-    def reset(self):
-        """Force sensor to reset as if disconnecting and reconnecting it.
-
-        This can take up to 3 seconds.
-        """
-        pass
-
-    def rate(self):
-        """Measure the angular velocity of the sensor.
+    def speed(self):
+        """Get the speed (angular velocity) of the sensor.
 
         Returns:
-            :ref:`speed`: Angular velocity (degrees per second).
+            :ref:`speed`: Sensor angular velocity.
 
         """
-        return self.value(1)
+        pass        
 
     def angle(self):
         """Get the accumulated angle of the sensor.
 
         Returns:
-            :ref:`angle`: Rotation angle (degrees) since initialization or last reset.
+            :ref:`angle`: Rotation angle.
 
         """
-        return self.value(0)
+        pass
+
+    def reset_angle(self, angle=0):
+        """Set the rotation angle of the sensor to a desired value.
+
+        Arguments:
+            angle (:ref:`angle`): Value to which the angle should be reset (*Default*: 0).
+        """
+        pass
+
+    def calibrate(self):
+        """Calibrate the sensor. This process sets the speed and angle to zero and ensures that the angle value does not drift.
+
+        Make sure that the sensor does not move while calibrating.
+
+        This process can take up to 15 seconds.
+        """
+        pass
 
 
 class UltrasonicSensor():
