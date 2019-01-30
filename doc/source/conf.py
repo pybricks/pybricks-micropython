@@ -28,11 +28,12 @@ import _version  # noqa E402
 ON_RTD = os.environ.get('READTHEDOCS', None) == 'True'
 
 # branding
-LOGO_SMALL = os.environ.get('PYBRICKS_LOGO_SMALL', 'images/pybricks-logo-small.png')
-LOGO_LARGE = os.environ.get('PYBRICKS_LOGO_LARGE', 'images/pybricks-logo-large.png')
+_LOGO_SMALL = os.environ.get('PYBRICKS_LOGO_SMALL', 'images/pybricks-logo-small.png')
+_LOGO_LARGE = os.environ.get('PYBRICKS_LOGO_LARGE', 'images/pybricks-logo-large.png')
 _TITLE = os.environ.get('PYBRICKS_TITLE', 'Pybricks Modules and Examples')
+_COPYRIGHT = os.environ.get('PYBRICKS_COPYRIGHT', 'Copyright © 2018-2019 The Pybricks MicroPython Authors')
 
-_DISCLAIMER = 'LEGO, the LEGO logo, and MINDSTORMS are trademarks of the LEGO Group.'
+_DISCLAIMER = 'LEGO, the LEGO logo, MINDSTORMS and the MINDSTORMS EV3 logo are trademarks and/or copyrights of the LEGO Group.'
 
 # -- General configuration ------------------------------------------------
 
@@ -64,7 +65,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Pybricks'
-copyright = '2018, Laurens Valk, David Lechner'
+copyright = _COPYRIGHT
 author = ''
 
 # The version info for the project you're documenting, acts as replacement for
@@ -130,7 +131,7 @@ else:
         ],
     }
 
-html_logo = LOGO_SMALL
+html_logo = _LOGO_SMALL
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
@@ -186,8 +187,9 @@ latex_elements = {
     \makeatletter
     \fancypagestyle{normal}{
         \fancyhf{}
+        \fancyfoot[L]{\raisebox{-2mm}{\includegraphics[height=6mm]{%(logo)s}}}
         \fancyfoot[R]{{\py@HeaderFamily\thepage}}
-        \fancyfoot[C]{{\tiny \ \\ %(disclaimer)s}}
+        \fancyfoot[C]{\raisebox{-7mm}{\tiny %(disclaimer)s}}
         \fancyhead[L]{{\py@HeaderFamily \@title}}
         \fancyhead[R]{{\py@HeaderFamily \py@release}}
         \renewcommand{\headrulewidth}{0.4pt}
@@ -195,13 +197,17 @@ latex_elements = {
     }
     \fancypagestyle{plain}{
         \fancyhf{}
+        \fancyfoot[L]{\raisebox{-2mm}{\includegraphics[height=6mm]{%(logo)s}}}
         \fancyfoot[R]{{\py@HeaderFamily\thepage}}
-        \fancyfoot[C]{{\tiny \ \\ %(disclaimer)s}}
+        \fancyfoot[C]{\raisebox{-7mm}{\tiny %(disclaimer)s}}
         \renewcommand{\headrulewidth}{0.4pt}
         \renewcommand{\footrulewidth}{0.4pt}
     }
     \makeatother
-    ''' % {'disclaimer': _DISCLAIMER},
+    ''' % {
+        'disclaimer': ' '.join((_DISCLAIMER, _COPYRIGHT)),
+        'logo': os.path.basename(_LOGO_SMALL),
+    },
 
     # Latex figure (float) alignment
     #
@@ -218,7 +224,9 @@ latex_documents = [
     (master_doc, 'Pybricks.tex', _TITLE, author, 'manual'),
 ]
 
-latex_logo = LOGO_LARGE
+latex_logo = _LOGO_LARGE
+
+latex_additional_files = [_LOGO_SMALL]
 
 
 # -- Options for manual page output ---------------------------------------
