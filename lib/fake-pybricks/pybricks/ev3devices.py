@@ -89,7 +89,11 @@ class Motor():
     def stalled(self):
         """Check whether the motor is currently stalled.
 
-        A motor is stalled when it cannot move even with the maximum torque. For example, something might be blocking the motor or your mechanism simply cannot turn any further. See also :func:`.set_stall_settings`.
+        A motor is stalled when it cannot move even with the maximum torque. For example, it cannot move because something is blocking the motor or your mechanism simply cannot turn any further.
+
+        Specifically, the motor is stalled when the duty cycle computed by the PID controllers has reached the maximum (so ``duty`` = ``duty_limit``) and still the motor cannot reach a minimal speed (so ``speed`` < ``stall_speed``) for a period of at least ``stall_time``.
+
+        You can change the ``duty_limit``, ``stall_speed``, and ``stall_time`` settings using :meth:`.set_dc_settings` and :meth:`.set_pid_settings` in order to change the sensitivity to being stalled.
 
         Returns:
             bool: ``True`` if the motor is stalled, ``False`` if it is not.
@@ -172,28 +176,24 @@ class Motor():
         """
         pass
 
-    def run_until_stalled(self, speed, stop_type=Stop.coast, duty_limit=None, stall_speed=None, stall_time=None):
-        """run_until_stalled(self, speed, stop_type=Stop.coast, duty_limit=default, stall_speed=default, stall_time=default)
+    def run_until_stalled(self, speed, stop_type=Stop.coast, duty_limit=None):
+        """run_until_stalled(self, speed, stop_type=Stop.coast, duty_limit=default)
 
-        Run the motor at a constant speed (angular velocity) until it stalls. The motor is considered stalled when it cannot move even with the maximum torque.
+        Run the motor at a constant speed (angular velocity) until it stalls. The motor is considered stalled when it cannot move even with the maximum torque. See :meth:`.stalled` for a more precise definition.
 
-        Specifically, the motor is stalled when the duty cycle computed by the PID controllers has reached the maximum (so ``duty`` = ``duty_limit``) and the motor still cannot reach a minimal speed (so ``speed`` < ``stall_speed``) for a period of at least ``stall_time``. These settings let you adjust how soon the motor should be considered stalled.
-
-        These optional settings are identical to :func:`.set_stall_settings`, but in this method they are only applied temporarily. For example, you can choose ``duty_limit=50`` to limit the motor torque during this maneuver, but have it return to its previous value afterwards.
+        The ``duty_limit`` argument lets you temporarily limit the motor torque during this maneuver. This is useful to avoid applying the full motor torque to a geared or lever mechanism.
 
         Arguments:
             speed (:ref:`speed`): Speed of the motor.
             stop_type (Stop): Whether to coast, brake, or hold after coming to a standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
-            duty_limit (:ref:`percentage`): Relative torque limit during subsequent ``run`` commands. This sets the maximum :ref:`duty cycle <duty>` that is applied during any subsequent motor command. This reduces the maximum torque output to a percentage of the absolute maximum stall torque. This is useful to avoid applying the full motor torque to a geared or lever mechanism.
-            stall_speed (:ref:`speed`): If the motor moves slower than ``stall_speed`` for ``stall_time`` during any of the ``run`` commands, the motor is considered to be stalled.
-            stall_time (:ref:`time`): As above: see ``stall_speed``.
+            duty_limit (:ref:`percentage`): Relative torque limit. This limit works just like :meth:`.set_dc_settings`, but in this case the limit is temporary: it returns to its previous value after completing this command.
         """
         pass
 
     def track_target(self, target_angle):
         """Track a target angle that varies in time.
 
-        This function is quite similar to :func:`.run_target`, but speed and acceleration settings are ignored: it will move to the target angle as fast as possible. Instead, you adjust speed and acceleration by choosing how fast or slow you vary the ``target_angle``.
+        This function is quite similar to :meth:`.run_target`, but speed and acceleration settings are ignored: it will move to the target angle as fast as possible. Instead, you adjust speed and acceleration by choosing how fast or slow you vary the ``target_angle``.
 
         This method is useful in fast loops where the motor target changes continously.
 
@@ -223,6 +223,15 @@ class Motor():
         """
         pass
 
+    def set_dc_settings(self, duty_limit, duty_offset):
+        """TODO
+
+        Arguments:
+            duty_limit (:ref:`percentage`): TODO
+            duty_offset (:ref:`percentage`): TODO
+        """
+        pass
+
     def set_run_settings(self, max_speed, acceleration):
         """Configure the maximum speed and acceleration/deceleration of the motor for all run commands.
 
@@ -244,7 +253,7 @@ class Motor():
         """
         pass
 
-    def set_pid_settings(self, kp, ki, kd, tight_loop_limit, angle_tolerance, speed_tolerance):
+    def set_pid_settings(self, kp, ki, kd, tight_loop_limit, angle_tolerance, speed_tolerance, stall_speed, stall_time):
         """Configure the settings of the position and speed controllers. See also :ref:`pid` and the :ref:`default parameters <defaultpars>` for each motor.
 
         Arguments:
@@ -254,20 +263,8 @@ class Motor():
             tight_loop_limit (:ref:`time`): If you execute any of the ``run`` commands within this interval after starting the previous command, the controllers assume that you want to control the speed directly. This means that it will ignore the acceleration setting and immediately begin tracking the speed you give in the ``run`` command. This is useful in a fast loop, where you usually want the motors to respond quickly rather than accelerate smoothly, for example with a line-following robot.
             angle_tolerance (:ref:`angle`): Allowed deviation from the target angle before motion is considered complete.
             speed_tolerance (:ref:`speed`): Allowed deviation from zero speed before motion is considered complete.
-        """
-        pass
-
-    def set_stall_settings(self, duty_limit, stall_speed, stall_time):
-        """Configure when the motor is considered to be :func:`.stalled`.
-
-        The motor is considered stalled when it cannot move even with the maximum torque.
-
-        Specifically, the motor is stalled when the duty cycle computed by the PID controllers has reached the maximum (so ``duty`` = ``duty_limit``) and still the motor cannot reach a minimal speed (so ``speed`` < ``stall_speed``) for a period of at least ``stall_time``. Changing these settings lets you adjust how soon the motor should be considered to be stalled.
-
-        Arguments:
-            duty_limit (:ref:`percentage`): Relative torque limit during subsequent ``run`` commands. This sets the maximum :ref:`duty cycle <duty>` that is applied during any subsequent motor command. This reduces the maximum torque output to a percentage of the absolute maximum stall torque. This is useful to avoid applying the full motor torque to a geared or lever mechanism.
-            stall_speed (:ref:`speed`): If the motor moves slower than ``stall_speed`` for ``stall_time`` during any of the ``run`` commands, the motor is considered to be stalled.
-            stall_time (:ref:`time`): As above: see ``stall_speed``.
+            stall_speed (:ref:`speed`): See :meth:`.stalled`.
+            stall_time (:ref:`time`): See :meth:`.stalled`.
         """
         pass
 
@@ -433,7 +430,7 @@ class GyroSensor():
             :ref:`speed`: Sensor angular velocity.
 
         """
-        pass        
+        pass
 
     def angle(self):
         """Get the accumulated angle of the sensor.
