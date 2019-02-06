@@ -95,7 +95,8 @@ pbio_motor_control_active_t motor_control_active[PBDRV_CONFIG_NUM_MOTOR_CONTROLL
 typedef struct _pbio_encmotor_settings_t {
     float_t counts_per_unit;        /**< Encoder counts per output unit. Counts per degree for rotational motors, counts per cm for a linear motor. */
     float_t counts_per_output_unit; /**< Encoder counts per output unit, including optional gear train. Equals counts_per_unit*gear_ratio. */
-    int32_t max_stall_duty;         /**< Upper limit on duty cycle, which corresponds to a maximum torque while stalled. */
+    int32_t duty_offset;            /**< TODO. */
+    int32_t max_stall_duty;         /**< TODO. */
     int32_t stall_rate_limit;       /**< If this speed cannnot be reached even with the maximum duty value (equal to stall_torque_limit), the motor is considered to be stalled */
     int32_t stall_time;             /**< Minimum stall time before the run_stalled action completes */
     int32_t max_rate;               /**< Soft limit on the reference encoder rate in all run commands */
@@ -111,6 +112,8 @@ typedef struct _pbio_encmotor_settings_t {
 
 bool motor_has_encoders[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 pbio_encmotor_settings_t encmotor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+
+pbio_error_t pbio_encmotor_set_dc_settings(pbio_port_t port, int32_t duty_offset_pct);
 
 pbio_error_t pbio_encmotor_set_run_settings(pbio_port_t port, int32_t max_speed, int32_t acceleration);
 

@@ -81,6 +81,10 @@ pbio_error_t pbio_dcmotor_set_duty_cycle_int(pbio_port_t port, int32_t duty_cycl
     if (duty_cycle_int < -limit) {
         duty_cycle_int = -limit;
     }
+    int32_t offset = encmotor_settings[PORT_TO_IDX(port)].duty_offset * (duty_cycle_int > 0 ? 1 : -1);
+    if (duty_cycle_int != 0) {
+        duty_cycle_int = offset + ((PBIO_MAX_DUTY-encmotor_settings[PORT_TO_IDX(port)].duty_offset)*duty_cycle_int)/PBIO_MAX_DUTY;
+    }
     // Flip sign if motor is inverted
     if (motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_COUNTERCLOCKWISE){
         duty_cycle_int = -duty_cycle_int;
@@ -140,22 +144,26 @@ pbio_error_t pbio_motor_setup(pbio_port_t port, pbio_motor_dir_t direction, floa
 
     // TODO: Load data by ID rather than hardcoding here, and define shared defaults to reduce size
     if (id == PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR) {
+        pbio_encmotor_set_dc_settings(port, 20);
         pbio_encmotor_set_run_settings(port, 1200/ratio, 2400/ratio);
         pbio_encmotor_set_pid_settings(port, 400, 600, 5, 100, 3, 5);
         pbio_encmotor_set_stall_settings(port, 100, 2, 200);
     }
     else if (id == PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR) {
+        pbio_encmotor_set_dc_settings(port, 5);
         pbio_encmotor_set_run_settings(port, 800/ratio, 1600/ratio);
         pbio_encmotor_set_pid_settings(port, 500, 800, 5, 100, 3, 5);
         pbio_encmotor_set_stall_settings(port, 100, 2, 200);
     }
     else if (id == PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR) {
+        pbio_encmotor_set_dc_settings(port, 30);
         pbio_encmotor_set_run_settings(port, 1500/ratio, 3000/ratio);
         pbio_encmotor_set_pid_settings(port, 400, 600, 5, 100, 3, 5);
         pbio_encmotor_set_stall_settings(port, 100, 2, 200);
     }
     else {
         // Defaults
+        pbio_encmotor_set_dc_settings(port, 5);
         pbio_encmotor_set_run_settings(port, 1000/ratio, 1000/ratio);
         pbio_encmotor_set_pid_settings(port, 500, 800, 5, 100, 3, 5);
         pbio_encmotor_set_stall_settings(port, 100, 2, 500);
@@ -164,6 +172,11 @@ pbio_error_t pbio_motor_setup(pbio_port_t port, pbio_motor_dir_t direction, floa
 
 
     return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_encmotor_set_dc_settings(pbio_port_t port, int32_t duty_offset_pct) {
+    encmotor_settings[PORT_TO_IDX(port)].duty_offset = PBIO_DUTY_PCT_TO_ABS * duty_offset_pct;
+    return PBIO_SUCCESS;    
 }
 
 pbio_error_t pbio_encmotor_set_run_settings(pbio_port_t port, int32_t max_speed, int32_t acceleration) {
