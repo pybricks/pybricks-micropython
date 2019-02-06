@@ -121,21 +121,20 @@ void motor_Motor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind
 }
 
 
-STATIC mp_obj_t motor_Motor_duty(size_t n_args, const mp_obj_t *args){
-    pbio_port_t port = get_port(args[0]);
-    float_t duty_cycle = mp_obj_get_num(args[1]);
-    float_t limit = n_args > 2  ? mp_obj_get_num(args[2]) : 100;
+STATIC mp_obj_t motor_Motor_duty(mp_obj_t self_in, mp_obj_t duty){
+    pbio_port_t port = get_port(self_in);
+    float_t duty_cycle = mp_obj_get_num(duty);
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_dcmotor_set_duty_cycle(port, duty_cycle, limit);
+    err = pbio_dcmotor_set_duty_cycle(port, duty_cycle);
     pb_thread_exit();
 
     pb_assert(err);
 
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_duty_obj, 2, 3, motor_Motor_duty);
+MP_DEFINE_CONST_FUN_OBJ_2(motor_Motor_duty_obj, motor_Motor_duty);
 
 STATIC mp_obj_t motor_Motor_angle(mp_obj_t self_in) {
     pbio_port_t port = get_port(self_in);
@@ -266,19 +265,20 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *arg
 
     // Save old settings
     int32_t old_stall_duty;
-    int32_t old_stall_speed;
-    int32_t old_stall_time;
+    int32_t old_duty_offset;
 
     pb_thread_enter();
 
-    pbio_encmotor_get_stall_settings(port, &old_stall_duty, &old_stall_speed, &old_stall_time);
+    pbio_encmotor_get_dc_settings(port, &old_stall_duty, &old_duty_offset);
+
+    pb_thread_exit();
 
     int32_t temporary_stall_duty  = n_args > 3 ? mp_obj_get_num(args[3]) : old_stall_duty;
-    int32_t temporary_stall_speed = n_args > 4 ? mp_obj_get_num(args[4]) : old_stall_speed;
-    int32_t temporary_stall_time  = n_args > 5 ? mp_obj_get_num(args[5]) : old_stall_time;
+
+    pb_thread_enter();
 
     // Set temporary settings supplied by user for this maneuver
-    pbio_encmotor_set_stall_settings(port, temporary_stall_duty, temporary_stall_speed, temporary_stall_time);
+    pbio_encmotor_set_dc_settings(port, temporary_stall_duty, old_duty_offset);
 
     // Call pbio with parsed user/default arguments
     err = pbio_encmotor_run_until_stalled(port, speed, after_stop);
@@ -295,7 +295,7 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *arg
     pbio_encmotor_get_angle(port, &stall_point);
 
     // Return stall settings to old values
-    pbio_encmotor_set_stall_settings(port, old_stall_duty, old_stall_speed, old_stall_time);
+    pbio_encmotor_set_dc_settings(port, old_stall_duty, old_duty_offset);
 
     pb_thread_exit();
 
@@ -377,6 +377,22 @@ STATIC mp_obj_t motor_Motor_set_run_settings(size_t n_args, const mp_obj_t *args
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_set_run_settings_obj, 3, 3, motor_Motor_set_run_settings);
 
+STATIC mp_obj_t motor_Motor_set_dc_settings(size_t n_args, const mp_obj_t *args){
+    pbio_port_t port = get_port(args[0]);
+    int32_t stall_torque_limit_pct = mp_obj_get_num(args[1]);
+    int32_t duty_offset_pct = mp_obj_get_num(args[2]);
+    pbio_error_t err;
+
+    pb_thread_enter();
+    err = pbio_encmotor_set_dc_settings(port, stall_torque_limit_pct, duty_offset_pct);
+    pb_thread_exit();
+
+    pb_assert(err);
+
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_set_dc_settings_obj, 3, 3, motor_Motor_set_dc_settings);
+
 STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *args){
     pbio_port_t port = get_port(args[0]);
     int16_t kp = mp_obj_get_num(args[1]);
@@ -385,34 +401,19 @@ STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *args
     int16_t loop_time = mp_obj_get_num(args[4]);
     int16_t pos_tolerance = mp_obj_get_num(args[5]);
     int16_t speed_tolerance = mp_obj_get_num(args[6]);
+    int16_t stall_speed_limit = mp_obj_get_num(args[7]);
+    int16_t stall_time = mp_obj_get_num(args[8]);    
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_encmotor_set_pid_settings(port, kp, ki, kd, loop_time, pos_tolerance, speed_tolerance);
+    err = pbio_encmotor_set_pid_settings(port, kp, ki, kd, loop_time, pos_tolerance, speed_tolerance, stall_speed_limit, stall_time);
     pb_thread_exit();
 
     pb_assert(err);
 
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_set_pid_settings_obj, 7, 7, motor_Motor_set_pid_settings);
-
-STATIC mp_obj_t motor_Motor_set_stall_settings(size_t n_args, const mp_obj_t *args){
-    pbio_port_t port = get_port(args[0]);
-    int32_t torque_limit = mp_obj_get_num(args[1]);
-    int32_t speed_limit = mp_obj_get_num(args[2]);
-    int32_t stall_time = mp_obj_get_num(args[3]);
-    pbio_error_t err;
-
-    pb_thread_enter();
-    err = pbio_encmotor_set_stall_settings(port, torque_limit, speed_limit, stall_time);
-    pb_thread_exit();
-
-    pb_assert(err);
-
-    return mp_const_none;
-}
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_set_stall_settings_obj, 4, 4, motor_Motor_set_stall_settings);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_set_pid_settings_obj, 9, 9, motor_Motor_set_pid_settings);
 
 /*
 Motor Class tables
@@ -429,7 +430,7 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     //
     { MP_ROM_QSTR(MP_QSTR_set_run_settings), MP_ROM_PTR(&motor_Motor_set_run_settings_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_pid_settings), MP_ROM_PTR(&motor_Motor_set_pid_settings_obj) },
-    { MP_ROM_QSTR(MP_QSTR_set_stall_settings), MP_ROM_PTR(&motor_Motor_set_stall_settings_obj) },
+    { MP_ROM_QSTR(MP_QSTR_set_dc_settings), MP_ROM_PTR(&motor_Motor_set_dc_settings_obj) },
     { MP_ROM_QSTR(MP_QSTR_angle), MP_ROM_PTR(&motor_Motor_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_speed), MP_ROM_PTR(&motor_Motor_speed_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_angle), MP_ROM_PTR(&motor_Motor_reset_angle_obj) },
