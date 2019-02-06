@@ -36,6 +36,7 @@
 #include "pbdrv/adc.h"
 #include "pbdrv/bluetooth.h"
 #include "pbdrv/button.h"
+#include "pbdrv/battery.h"
 #include "pbdrv/light.h"
 #include "pbdrv/ioport.h"
 #include "pbdrv/motor.h"
@@ -83,6 +84,7 @@ void pbio_init(void) {
     process_init();
 #endif
     _pbdrv_adc_init();
+    _pbdrv_battery_init();
     _pbdrv_button_init();
     _pbdrv_light_init();
     _pbdrv_motor_init();
@@ -132,6 +134,7 @@ void pbio_deinit(void) {
     _pbdrv_motor_deinit();
     _pbdrv_light_deinit();
     _pbdrv_button_deinit();
+    _pbdrv_battery_deinit();
     _pbdrv_adc_deinit();
 }
 #endif
