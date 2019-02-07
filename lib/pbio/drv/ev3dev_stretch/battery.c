@@ -43,8 +43,12 @@ void _pbdrv_battery_poll(uint32_t now) { }
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
 void _pbdrv_battery_deinit(void) {
-    fclose(f_voltage);
-    fclose(f_current);
+    if (f_voltage != NULL) {
+        fclose(f_voltage);
+    }
+    if (f_current != NULL) {    
+        fclose(f_current);
+    }
 }
 #endif
 

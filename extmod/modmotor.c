@@ -261,24 +261,24 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *arg
     pbio_port_t port = get_port(args[0]);
     int32_t speed = mp_obj_get_num(args[1]);
     pbio_motor_after_stop_t after_stop = n_args > 2 ? mp_obj_get_int(args[2]) : PBIO_MOTOR_STOP_COAST;
-    pbio_error_t err;
 
-    // Save old settings
+    int32_t temporary_stall_duty = 100;
     int32_t old_stall_duty;
     int32_t old_duty_offset;
+    pbio_error_t err;
+
+    bool override_duty_limit = n_args > 3;
+
+    if (override_duty_limit) {
+        temporary_stall_duty  = mp_obj_get_num(args[3]);
+    }
 
     pb_thread_enter();
 
-    pbio_encmotor_get_dc_settings(port, &old_stall_duty, &old_duty_offset);
-
-    pb_thread_exit();
-
-    int32_t temporary_stall_duty  = n_args > 3 ? mp_obj_get_num(args[3]) : old_stall_duty;
-
-    pb_thread_enter();
-
-    // Set temporary settings supplied by user for this maneuver
-    pbio_encmotor_set_dc_settings(port, temporary_stall_duty, old_duty_offset);
+    if (override_duty_limit) {
+        pbio_encmotor_get_dc_settings(port, &old_stall_duty, &old_duty_offset);
+        pbio_encmotor_set_dc_settings(port, temporary_stall_duty, old_duty_offset);
+    }
 
     // Call pbio with parsed user/default arguments
     err = pbio_encmotor_run_until_stalled(port, speed, after_stop);
@@ -294,15 +294,17 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *arg
     int32_t stall_point;
     pbio_encmotor_get_angle(port, &stall_point);
 
-    // Return stall settings to old values
-    pbio_encmotor_set_dc_settings(port, old_stall_duty, old_duty_offset);
+    if (override_duty_limit) {
+        // Return stall settings to old values if they were changed
+        pbio_encmotor_set_dc_settings(port, old_stall_duty, old_duty_offset);
+    }
 
     pb_thread_exit();
 
     // Return angle at which the motor stalled
     return mp_obj_new_int(stall_point);
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_until_stalled_obj, 2, 6, motor_Motor_run_until_stalled);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_until_stalled_obj, 2, 4, motor_Motor_run_until_stalled);
 
 STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
@@ -402,7 +404,7 @@ STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *args
     int16_t pos_tolerance = mp_obj_get_num(args[5]);
     int16_t speed_tolerance = mp_obj_get_num(args[6]);
     int16_t stall_speed_limit = mp_obj_get_num(args[7]);
-    int16_t stall_time = mp_obj_get_num(args[8]);    
+    int16_t stall_time = mp_obj_get_num(args[8]);
     pbio_error_t err;
 
     pb_thread_enter();
