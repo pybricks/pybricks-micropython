@@ -236,7 +236,7 @@ void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string){
         "------------------------\n"
         "Max speed\t %" PRId32 "\n"
         "Acceleration\t %" PRId32 "\n"
-        "\nStall settings:\n"
+        "\nDC settings:\n"
         "------------------------\n"
         "Duty limit\t %" PRId32 "\n"
         "Duty offset\t %" PRId32 "\n"

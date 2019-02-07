@@ -89,7 +89,6 @@ language = None
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = [
     'motorcontrol.rst',
-    'signaltypes.rst',
     'startinstall.rst',
     'startrun.rst',
 ]

@@ -23,12 +23,13 @@ Using Python with LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3
    parameters
    tools
 
-.. .. toctree::
-..    :maxdepth: 1
-..    :caption: Engineering essentials:
+.. toctree::
+   :maxdepth: 1
+   :caption: Engineering essentials:
 
-..    signaltypes
-..    motorcontrol
+   signaltypes
+
+.. motorcontrol
 
 
 
