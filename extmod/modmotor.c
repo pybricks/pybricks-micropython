@@ -127,7 +127,7 @@ STATIC mp_obj_t motor_Motor_duty(mp_obj_t self_in, mp_obj_t duty){
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_dcmotor_set_duty_cycle(port, duty_cycle);
+    err = pbio_dcmotor_set_duty_cycle_usr(port, duty_cycle);
     pb_thread_exit();
 
     pb_assert(err);

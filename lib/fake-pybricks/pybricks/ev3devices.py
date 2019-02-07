@@ -224,11 +224,11 @@ class Motor():
         pass
 
     def set_dc_settings(self, duty_limit, duty_offset):
-        """TODO
+        """Configure the settings to adjust the behavior of the :meth:`.dc` command. This also affects the all of the ``run`` commands, which use the :meth:`.dc` in the background.
 
         Arguments:
-            duty_limit (:ref:`percentage`): TODO
-            duty_offset (:ref:`percentage`): TODO
+            duty_limit (:ref:`percentage`): Relative torque limit during subsequent motor commands. This sets the maximum duty cycle that is applied during any subsequent motor command. This reduces the maximum torque output to a percentage of the absolute maximum stall torque. This is useful to avoid applying the full motor torque to a geared or lever mechanism. (*Default*: 100).
+            duty_offset (:ref:`percentage`): Minimum duty cycle given when you use :meth:`.dc`. This adds a small feed forward torque so that your motor will move even for very low duty cycle values, which can be useful when you create your own feedback controllers (*Default*: 0).
         """
         pass
 
@@ -418,7 +418,7 @@ class GyroSensor():
 
         Arguments:
             port (Port): Port to which the sensor is connected.
-            direction (Direction): Positive rotation direction when looking at the red dot on top of the sensor. (*Default*: Direction.clockwise).
+            direction (Direction): Positive rotation direction when looking at the red dot on top of the sensor (*Default*: Direction.clockwise).
 
         """
         pass
