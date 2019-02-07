@@ -137,6 +137,13 @@ typedef enum {
 #define PBIO_IODEV_UOM_SIZE         4
 
 /**
+ * I/O device capability flags.
+ */
+typedef enum {
+    PBIO_IODEV_FLAG_IS_MOTOR = 0x01,
+} pbio_iodev_flag_t;
+
+/**
  * Information about one mode of an I/O device.
  */
 typedef struct {
@@ -247,7 +254,7 @@ typedef pbio_error_t (*pbio_iodev_set_data_func_t)(pbio_iodev_t *iodev, uint8_t 
  * @param [in]  data    The data
  * @param [in]  size    The size of *data* in bytes
  */
-typedef pbio_error_t (*pbio_iodev_write_func_t)(pbio_iodev_t *iodev, uint8_t *data, uint8_t size);
+typedef pbio_error_t (*pbio_iodev_write_func_t)(pbio_iodev_t *iodev, const uint8_t *data, uint8_t size);
 
 struct _pbio_iodev_t {
     /**
@@ -277,6 +284,10 @@ struct _pbio_iodev_t {
      * The current active mode.
      */
     uint8_t mode;
+    /**
+     * Capability flags.
+     */
+    pbio_iodev_flag_t flags;
     /**
      * Most recent binary data read from the device. How to interpret this data
      * is determined by the ::pbio_iodev_mode_t info associated with the current

@@ -207,6 +207,7 @@ typedef enum {
  * @msg: partial data->msg from previous receive callback
  * @partial_msg_size: the size of the partial data->msg
  * @ext_mode: Extra mode adder for Powered Up devices (for modes > EV3_UART_MODE_MAX)
+ * @write_cmd_size: The size parameter received from a WRITE command
  * @last_err: data->msg to be printed in case of an error.
  * @num_data_err: Number of bad reads when receiving DATA data->msgs.
  * @data_rec: Flag that indicates that good DATA data->msg has been received
@@ -223,6 +224,7 @@ typedef struct ev3_uart_port_data {
     uint8_t msg[EV3_UART_MAX_MESSAGE_SIZE];
     uint8_t partial_msg_size;
     uint8_t ext_mode;
+    uint8_t write_cmd_size;
     DBG_ERR(const char *last_err);
     uint32_t num_data_err;
     unsigned data_rec:1;
@@ -478,6 +480,19 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             debug_pr("speed: %lu\n", speed);
 
             break;
+        case EV3_UART_CMD_WRITE:
+            if (cmd2 & 0x20) {
+                data->write_cmd_size = cmd2 & 0x3;
+                if (data->iodev->info->type_id == PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR) {
+                    // TODO: msg[3] and msg[4] probably give us useful information
+                    data->iodev->flags |= PBIO_IODEV_FLAG_IS_MOTOR;
+                    // FIXME: clear this flag when device disconnects
+                }
+                else {
+                    // TODO: handle other write commands
+                }
+            }
+            break;
         case EV3_UART_CMD_EXT_MODE:
             // Powered up devices can have modes > EV3_UART_MODE_MAX. This
             // command precedes other commands to add the extra 8 to the mode
@@ -682,20 +697,27 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             DBG_ERR(data->last_err = "Received DATA before INFO was complete");
             goto err;
         }
-        if (mode >= data->iodev->info->num_modes) {
-            DBG_ERR(data->last_err = "Invalid mode received");
-            goto err;
+
+        if (data->iodev->info->type_id == PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR && data->write_cmd_size > 0) {
+            memcpy(data->iodev->bin_data, data->msg + 1, 6);
         }
-        if (mode != data->iodev->mode) {
-            if (mode == data->new_mode) {
-                data->iodev->mode = mode;
-                // TODO: notify that mode has changed
-            } else {
-                DBG_ERR(data->last_err = "Unexpected mode");
+        else {
+            if (mode >= data->iodev->info->num_modes) {
+                DBG_ERR(data->last_err = "Invalid mode received");
                 goto err;
             }
+            if (mode != data->iodev->mode) {
+                if (mode == data->new_mode) {
+                    data->iodev->mode = mode;
+                    // TODO: notify that mode has changed
+                } else {
+                    DBG_ERR(data->last_err = "Unexpected mode");
+                    goto err;
+                }
+            }
+            memcpy(data->iodev->bin_data, data->msg + 1, msg_size - 2);
         }
-        memcpy(data->iodev->bin_data, data->msg + 1, msg_size - 2);
+
         data->data_rec = 1;
         if (data->num_data_err) {
             data->num_data_err--;
@@ -718,7 +740,7 @@ static uint8_t ev3_uart_set_msg_hdr(enum ev3_uart_msg_type type, enum ev3_uart_m
     return (type & EV3_UART_MSG_TYPE_MASK) | (size & EV3_UART_MSG_SIZE_MASK) | (cmd & EV3_UART_MSG_CMD_MASK);
 }
 
-static pbio_error_t _ev3_uart_write(pbio_port_t port, enum ev3_uart_msg_type msg_type, enum ev3_uart_cmd cmd, uint8_t *data, uint8_t len) {
+static pbio_error_t _ev3_uart_write(pbio_port_t port, enum ev3_uart_msg_type msg_type, enum ev3_uart_cmd cmd, const uint8_t *data, uint8_t len) {
     uint8_t msg[EV3_UART_MAX_MESSAGE_SIZE - 2];
     uint8_t header, checksum, i;
     enum ev3_uart_msg_size size;
@@ -795,7 +817,7 @@ static pbio_error_t ev3_uart_set_data(pbio_iodev_t *iodev, uint8_t *data) {
     return _ev3_uart_write(iodev-> port, EV3_UART_MSG_TYPE_DATA, iodev->mode, data, size);
 }
 
-static pbio_error_t ev3_uart_write(pbio_iodev_t *iodev, uint8_t *data, uint8_t len) {
+static pbio_error_t ev3_uart_write(pbio_iodev_t *iodev, const uint8_t *data, uint8_t len) {
     uartdev_port_data_t *port_data = &dev_data[port_to_index(iodev->port)];
 
     if (port_data->status != PBIO_UARTDEV_STATUS_DATA) {
@@ -854,6 +876,13 @@ PROCESS_THREAD(pbio_uartdev_process, ev, data) {
                         dev_data[i].iodev->set_data = ev3_uart_set_data;
                         dev_data[i].iodev->write = ev3_uart_write;
                         dev_data[i].iodev->set_mode = ev3_uart_set_mode;
+
+                        if (dev_data[i].iodev->info->type_id == PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR) {
+                            const uint8_t msg[] = { 0x22, 0x00, 0x10, 0x20 };
+
+                            // send magic sequence to tell motor to send position and speed data
+                            while (ev3_uart_write(dev_data[i].iodev, msg, 4) == PBIO_ERROR_AGAIN);
+                        }
                     }
                     else if (dev_data[i].num_data_err > 6) {
                         etimer_stop(&dev_data[i].timer);

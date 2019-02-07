@@ -28,6 +28,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "stm32f070xb.h"
 
@@ -232,16 +233,43 @@ void TIM7_IRQHandler(void) {
     }
 }
 
+static pbio_iodev_t *get_iodev(pbio_port_t port) {
+    pbio_iodev_t *iodev;
+    pbio_error_t err;
+
+    err = pbdrv_ioport_get_iodev(port, &iodev);
+    if (err != PBIO_SUCCESS) {
+        return NULL;
+    }
+
+    if (!(iodev->flags & PBIO_IODEV_FLAG_IS_MOTOR)) {
+        return NULL;
+    }
+
+    return iodev;
+}
+
 pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
     int index = port - PBIO_PORT_A;
 
-    if (port < PBIO_PORT_A || port > PBIO_PORT_B) {
+    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
+    if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
+        pbio_iodev_t *iodev;
 
-    // TODO: get port C/D motor position from UART data if motor is attached
-    // or return PBIO_ERROR_NO_DEV if motor is not attached
+        iodev = get_iodev(port);
+
+        if (!iodev) {
+            return PBIO_ERROR_NO_DEV;
+        }
+
+        // *sigh*, unaligned 32-bit value
+        memcpy(count, iodev->bin_data + 1, 4);
+
+        return PBIO_SUCCESS;
+    }
 
     *count = pbdrv_motor_tacho_data[index].count;
 
@@ -254,8 +282,23 @@ pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     uint16_t now, head_time, tail_time = 0;
     uint8_t head, tail, x = 0;
 
-    if (port < PBIO_PORT_A || port > PBIO_PORT_B) {
+    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
         return PBIO_ERROR_INVALID_PORT;
+    }
+
+    if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
+        pbio_iodev_t *iodev;
+
+        iodev = get_iodev(port);
+
+        if (!iodev) {
+            return PBIO_ERROR_NO_DEV;
+        }
+
+        // scaling factor of 14 determined empirically
+        *rate = *(int8_t *)iodev->bin_data * 14;
+
+        return PBIO_SUCCESS;
     }
 
     // TODO: get port C/D motor speed from UART data if motor is attached
@@ -309,8 +352,9 @@ pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
 
 pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
     if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
-        // TODO: return PBIO_ERROR_NO_DEV for ports C/D if no motor is attached
-        return PBIO_ERROR_NO_DEV;
+        if (!get_iodev(port)) {
+            return PBIO_ERROR_NO_DEV;
+        }
     }
 
     // set both port pins 1 and 2 to output low
@@ -447,7 +491,15 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    // TODO: return PBIO_ERROR_NO_DEV for ports C/D if no motor is attached
+    if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
+        pbio_iodev_t *iodev;
+
+        iodev = get_iodev(port);
+
+        if (!iodev) {
+            return PBIO_ERROR_NO_DEV;
+        }
+    }
 
     if (duty_cycle < -10000 || duty_cycle > 10000) {
         return PBIO_ERROR_INVALID_ARG;
@@ -469,12 +521,21 @@ pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
         *id = PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR;
         return PBIO_SUCCESS;
     }
-    else 
-    {
-        // TODO: Auto id for motors on ports C, D.
-        *id = PBIO_IODEV_TYPE_ID_NONE;
-        return PBIO_ERROR_NO_DEV;
+    else  if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
+        pbio_iodev_t *iodev;
+
+        iodev = get_iodev(port);
+
+        if (!iodev) {
+            return PBIO_ERROR_NO_DEV;
+        }
+
+        *id = iodev->info->type_id;
+
+        return PBIO_SUCCESS;
     }
+
+    return PBIO_ERROR_INVALID_PORT;
 }
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
