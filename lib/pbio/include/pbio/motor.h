@@ -56,6 +56,10 @@ typedef float float_t;
 #define US_PER_MS (1000)
 #define US_PER_SECOND (1000000)
 
+#define PBIO_DUTY_STEPS (PBDRV_MAX_DUTY)
+#define PBIO_DUTY_USER_STEPS (100)
+#define PBIO_DUTY_STEPS_PER_USER_STEP (PBIO_DUTY_STEPS/PBIO_DUTY_USER_STEPS)
+
 /**
  * Motor direction convention
  */
@@ -95,7 +99,8 @@ pbio_motor_control_active_t motor_control_active[PBDRV_CONFIG_NUM_MOTOR_CONTROLL
 typedef struct _pbio_encmotor_settings_t {
     float_t counts_per_unit;        /**< Encoder counts per output unit. Counts per degree for rotational motors, counts per cm for a linear motor. */
     float_t counts_per_output_unit; /**< Encoder counts per output unit, including optional gear train. Equals counts_per_unit*gear_ratio. */
-    int32_t max_stall_duty;         /**< Upper limit on duty cycle, which corresponds to a maximum torque while stalled. */
+    int32_t duty_offset;            /**< TODO. */
+    int32_t max_duty_steps;         /**< TODO. */
     int32_t stall_rate_limit;       /**< If this speed cannnot be reached even with the maximum duty value (equal to stall_torque_limit), the motor is considered to be stalled */
     int32_t stall_time;             /**< Minimum stall time before the run_stalled action completes */
     int32_t max_rate;               /**< Soft limit on the reference encoder rate in all run commands */
@@ -112,13 +117,13 @@ typedef struct _pbio_encmotor_settings_t {
 bool motor_has_encoders[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 pbio_encmotor_settings_t encmotor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
+pbio_error_t pbio_encmotor_set_dc_settings(pbio_port_t port, int32_t stall_torque_limit_pct, int32_t duty_offset_pct);
+
+pbio_error_t pbio_encmotor_get_dc_settings(pbio_port_t port, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct);
+
 pbio_error_t pbio_encmotor_set_run_settings(pbio_port_t port, int32_t max_speed, int32_t acceleration);
 
-pbio_error_t pbio_encmotor_set_pid_settings(pbio_port_t port, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd, int32_t tight_loop_time, int32_t position_tolerance, int32_t speed_tolerance);
-
-pbio_error_t pbio_encmotor_set_stall_settings(pbio_port_t port, int32_t stall_torque_limit_pct, int32_t stall_speed_limit, int32_t stall_time);
-
-pbio_error_t pbio_encmotor_get_stall_settings(pbio_port_t port, int32_t *stall_torque_limit_pct, int32_t *stall_speed_limit, int32_t *stall_time);
+pbio_error_t pbio_encmotor_set_pid_settings(pbio_port_t port, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd, int32_t tight_loop_time, int32_t position_tolerance, int32_t speed_tolerance, int32_t stall_speed_limit, int32_t stall_time);
 
 pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_motor_dir_t direction);
 
@@ -128,12 +133,11 @@ pbio_error_t pbio_dcmotor_coast(pbio_port_t port);
 
 pbio_error_t pbio_dcmotor_brake(pbio_port_t port);
 
-pbio_error_t pbio_dcmotor_set_duty_cycle_int(pbio_port_t port, int32_t duty_cycle_int);
+pbio_error_t pbio_dcmotor_set_duty_cycle_sys(pbio_port_t port, int32_t duty_steps);
 
-pbio_error_t pbio_dcmotor_set_duty_cycle(pbio_port_t port, float_t duty_cycle, float_t duty_limit);
+pbio_error_t pbio_dcmotor_set_duty_cycle_usr(pbio_port_t port, float_t duty_steps);
 
 pbio_error_t pbio_motor_setup(pbio_port_t port, pbio_motor_dir_t direction, float_t gear_ratio);
-
 
 void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string);
 

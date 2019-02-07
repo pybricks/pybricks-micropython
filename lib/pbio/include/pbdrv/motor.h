@@ -44,9 +44,7 @@
 /**
  * Motor constants across devices
  */
-#define PBIO_MAX_DUTY (10000)
-#define PBIO_MAX_DUTY_PCT (100)
-#define PBIO_DUTY_PCT_TO_ABS (PBIO_MAX_DUTY/PBIO_MAX_DUTY_PCT)
+#define PBDRV_MAX_DUTY (10000)
 
 #if PBDRV_CONFIG_MOTOR
 

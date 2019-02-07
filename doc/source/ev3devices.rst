@@ -40,7 +40,7 @@ Motors
 
     .. automethod:: ev3devices.Motor.run_until_stalled
 
-    .. automethod:: ev3devices.Motor.set_stall_settings
+    .. automethod:: ev3devices.Motor.set_dc_settings
 
     .. automethod:: ev3devices.Motor.set_run_settings
 

@@ -105,7 +105,7 @@ void control_update(pbio_port_t port){
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
     pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
     pbio_motor_control_status_t *status = &motor_control_status[PORT_TO_IDX(port)];
-    duty_t max_duty = settings->max_stall_duty;
+    duty_t max_duty = settings->max_duty_steps;
 
     // Return immediately if control is not active; then there is nothing we need to do
     if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_PASSIVE) {
@@ -355,7 +355,7 @@ void control_update(pbio_port_t port){
             // Hold the motor
             if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
                 // In position based control, holding just means that we continue the position control loop without changes
-                pbio_dcmotor_set_duty_cycle_int(port, duty);
+                pbio_dcmotor_set_duty_cycle_sys(port, duty);
 
                 // Altough we keep holding, the maneuver is completed
                 motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_HOLDING;
@@ -363,7 +363,7 @@ void control_update(pbio_port_t port){
             // RUN_TIME || RUN_STALLED
             else {
                 // When ending a time based control maneuver with hold, we trigger a new position based maneuver with zero degrees
-                pbio_dcmotor_set_duty_cycle_int(port, 0);
+                pbio_dcmotor_set_duty_cycle_sys(port, 0);
 
                 make_motor_trajectory(port, RUN_TARGET, NONZERO, ((float_t) count_now)/settings->counts_per_output_unit, PBIO_MOTOR_STOP_HOLD);
             }
@@ -371,7 +371,7 @@ void control_update(pbio_port_t port){
     }
     // If we are not standing still at a target yet, actuate with the calculated signal
     else {
-        pbio_dcmotor_set_duty_cycle_int(port, duty);
+        pbio_dcmotor_set_duty_cycle_sys(port, duty);
     }
 }
 
