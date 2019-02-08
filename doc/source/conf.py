@@ -89,8 +89,6 @@ language = None
 # This patterns also effect to html_static_path and html_extra_path
 exclude_patterns = [
     'motorcontrol.rst',
-    'startinstall.rst',
-    'startrun.rst',
 ]
 
 # TODO: remove this when pages above are added back in

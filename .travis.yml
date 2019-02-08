@@ -63,6 +63,7 @@ jobs:
         - pip3 install --user Sphinx sphinx_rtd_theme
         - sudo apt update -qq || true
         - sudo apt install qemu-user-static
+        - sudo apt install inkscape
         - cd ${HOME}
         - git clone --depth=10 --recursive https://github.com/pybricks/micropython
         - if [ -n "$TRAVIS_TAG" ]; then
@@ -75,6 +76,7 @@ jobs:
       script:
         - docker exec --tty pybricks-ev3dev_armel make
         - docker exec --tty pybricks-ev3dev_armel make test
+        - cd doc/source/images && ./render.sh && cd -
         - make -C doc html
         - cd lib/fake-pybricks && python3 setup.py sdist &&
           export FAKE_PYBRICKS_VERSION=$(python3 setup.py --version); cd -

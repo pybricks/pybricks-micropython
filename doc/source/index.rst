@@ -6,12 +6,12 @@
 Using Python with LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3
 =========================================================
 
-.. .. toctree::
-..    :maxdepth: 1
-..    :caption: Getting started:
+.. toctree::
+    :maxdepth: 1
+    :caption: Getting started:
 
-..    startinstall
-..    startrun
+    startinstall
+    startrun
 
 
 .. toctree::
