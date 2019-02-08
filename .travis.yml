@@ -1,4 +1,5 @@
 # global options
+dist: xenial
 language:
   - c
 compiler:
@@ -57,13 +58,17 @@ jobs:
     # Pybricks ev3dev
     - stage: test
       env: NAME="Pybricks ev3dev build"
+      before_install:
+        - pyenv versions
+        - sudo apt-get update -qq || true
+        # fonts-roboto-slab was not introduced until bionic
+        - wget -P $HOME http://mirrors.kernel.org/ubuntu/pool/universe/f/fonts-roboto-slab/fonts-roboto-slab_1.100263+20170512-1_all.deb
       install:
         - npm install -g jfrog-cli-go
-        - pyenv shell 3.6
+        - pyenv shell 3.6.7
         - pip3 install --user Sphinx sphinx_rtd_theme
-        - sudo apt update -qq || true
-        - sudo apt install qemu-user-static
-        - sudo apt install inkscape
+        - sudo dpkg -i $HOME/fonts-roboto-slab_1.100263+20170512-1_all.deb
+        - sudo apt-get install qemu-user-static inkscape fonts-lato
         - cd ${HOME}
         - git clone --depth=10 --recursive https://github.com/pybricks/micropython
         - if [ -n "$TRAVIS_TAG" ]; then
