@@ -81,7 +81,6 @@ jobs:
       script:
         - docker exec --tty pybricks-ev3dev_armel make
         - docker exec --tty pybricks-ev3dev_armel make test
-        - cd doc/source/images && ./render.sh && cd -
         - make -C doc html
         - cd lib/fake-pybricks && python3 setup.py sdist &&
           export FAKE_PYBRICKS_VERSION=$(python3 setup.py --version); cd -

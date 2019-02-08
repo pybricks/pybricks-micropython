@@ -4,7 +4,7 @@ Installation
 This page shows how you prepare your computer and the EV3 brick for writing and running Python programs. The final configuration is shown in the figure below.
 
 
-.. figure:: images/build/overview.png
+.. figure:: images/overview.png
 
 .. Caption
 
@@ -34,7 +34,7 @@ You will be writing your Python programs using Visual Studio Code. You can downl
 3. Download the `EV3 Python extension <.>`_. Follow the steps in the diagram below to install it.
 4. Close Visual Studio Code and open it again to activate the extensions.
 
-.. image:: images/build/vsix.png
+.. image:: images/vsix.png
 
 Preparing the SD Card
 -----------------------------------------------------------
@@ -47,7 +47,7 @@ You will now follow a series of steps to download and install the EV3 Python fir
 3. Insert the micro SD card into your computer or card reader.
 4. Launch the etcher program and follow the steps on your screen to install the firmware file you have just downloaded. Do not remove the card until the installation process is complete.
 5. Turn the EV3 brick off if it is currently on.
-6. Put the micro SD card in the SD card slot of the EV3 brick. 
+6. Put the micro SD card in the SD card slot of the EV3 brick.
 
 
 Using the EV3 brick

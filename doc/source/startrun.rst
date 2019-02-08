@@ -4,14 +4,14 @@ Creating and running programs
 Starting a new project
 -----------------------------------------------------------
 
-.. image:: images/build/newproject.png
+.. image:: images/newproject.png
 
 Example text
 
 Understanding projects folder and files
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. image:: images/build/projectoverview.png
+.. image:: images/projectoverview.png
 
 Example text
 
@@ -25,14 +25,14 @@ Running a program
 Connecting the EV3 brick and the computer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. image:: images/build/connecting.png
+.. image:: images/connecting.png
 
 Example text
 
 Downloading and running a program
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. image:: images/build/running.png
+.. image:: images/running.png
 
 Example text
 
