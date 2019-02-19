@@ -88,8 +88,8 @@
      id="namedview4"
      showgrid="false"
      inkscape:zoom="1.668772"
-     inkscape:cx="356.64959"
-     inkscape:cy="226.97772"
+     inkscape:cx="288.13198"
+     inkscape:cy="284.1425"
      inkscape:window-x="67"
      inkscape:window-y="27"
      inkscape:window-maximized="1"
@@ -98,13 +98,13 @@
   <image
      sodipodi:absref="sd1.jpg"
      xlink:href="sd1.jpg"
-     style="stroke-width:1.52126789"
-     width="700"
-     height="525"
-     preserveAspectRatio="none"
-     id="image852"
+     y="0"
      x="0"
-     y="0" />
+     id="image852"
+     preserveAspectRatio="none"
+     height="525"
+     width="700"
+     style="stroke-width:1.52126789" />
   <rect
      style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
      id="rect4173"
@@ -143,13 +143,13 @@
   <image
      sodipodi:absref="sd2.png"
      xlink:href="sd2.png"
-     style="stroke-width:2.4499228"
-     width="241.09604"
-     height="140.95683"
-     preserveAspectRatio="none"
-     id="image4537"
+     y="330.08475"
      x="143.6497"
-     y="330.08475" />
+     id="image4537"
+     preserveAspectRatio="none"
+     height="140.95683"
+     width="241.09604"
+     style="stroke-width:2.4499228" />
   <path
      style="fill:none;stroke:#6ab0de;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;marker-end:url(#Arrow1Mend)"
      d="M 366.76497,344.27659 545.85712,247.06098"
@@ -172,8 +172,8 @@
   <rect
      style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
      id="rect4651"
-     width="213.105"
-     height="107.72381"
+     width="208.91029"
+     height="136.48747"
      x="52.770428"
      y="194.14906" />
   <rect
@@ -203,5 +203,40 @@
        y="287.50131"
        x="62.740643"
        sodipodi:role="line"
-       id="tspan5220">for easy removal</tspan></text>
+       id="tspan5220">to easily remove</tspan><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054"
+       y="318.58524"
+       x="62.740643"
+       sodipodi:role="line"
+       id="tspan3764">the card later</tspan></text>
+  <rect
+     y="22.962622"
+     x="34.973816"
+     height="75.520416"
+     width="187.68127"
+     id="rect3732"
+     style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+  <rect
+     y="22.962606"
+     x="34.973816"
+     height="4"
+     width="187.68127"
+     id="rect3734"
+     style="opacity:1;fill:#6ab0de;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-weight:normal;font-size:24.19441986px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#404140;fill-opacity:1;stroke:none;stroke-width:0.60486054"
+     x="44.944031"
+     y="54.147087"
+     id="text3742"><tspan
+       sodipodi:role="line"
+       x="44.944031"
+       y="54.147087"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054"
+       id="tspan3758">First, turn off</tspan><tspan
+       sodipodi:role="line"
+       x="44.944031"
+       y="85.230988"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054"
+       id="tspan3762">the EV3 brick</tspan></text>
 </svg>

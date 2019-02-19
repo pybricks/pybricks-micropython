@@ -54,7 +54,7 @@
      inkscape:snap-global="false"
      showguides="false" />
   <image
-     sodipodi:absref="/home/laurens/pybricks/git/micropython/ports/pybricks/doc/source/_images/firstprogram1.jpg"
+     sodipodi:absref="firstprogram1.jpg"
      xlink:href="firstprogram1.jpg"
      y="0"
      x="0"
@@ -138,7 +138,7 @@
        sodipodi:role="line"
        id="tspan915">Port B</tspan></text>
   <image
-     sodipodi:absref="/home/laurens/pybricks/git/micropython/ports/pybricks/doc/source/_images/firstprogram2.png"
+     sodipodi:absref="firstprogram2.png"
      xlink:href="firstprogram2.png"
      style="stroke-width:5.66956329"
      width="111.70762"

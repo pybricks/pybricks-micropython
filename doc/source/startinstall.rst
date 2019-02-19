@@ -23,18 +23,22 @@ You'll need internet access to complete the steps on this page. While programmin
 Preparing your computer
 -----------------------------------------------------------
 
-.. warning::
 
-    The download links below do not work yet. Please follow the instructions provided separately.
 
 You will be writing your Python programs using Visual Studio Code. You can download, install, and configure this program using the steps below.
 
 1. Download, install, and open `Visual Studio Code  <https://code.visualstudio.com/Download>`_.
-2. Download the `Pybricks extension <.>`_. Follow the steps in the diagram below to install it.
-3. Download the `EV3 Python extension <.>`_. Follow the steps in the diagram below to install it.
-4. Close Visual Studio Code and open it again to activate the extensions.
+2. Install the EV3 extension as shown below:
 
-.. image:: images/vsix.png
+.. image:: images/store.png
+
+.. warning::
+
+    The all-in-one extension is not yet available in the Visual Studio Code marketplace.
+    
+    Please install the **two** extensions manually as shown:
+
+    .. image:: images/vsix.png
 
 Preparing the SD Card
 -----------------------------------------------------------
