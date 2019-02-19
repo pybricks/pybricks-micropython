@@ -46,24 +46,16 @@ class Motor():
         """
         pass
 
-    def dc(self, duty, limit=100):
+    def dc(self, duty):
         """Set the :ref:`duty cycle <duty>` of the motor.
 
         Arguments:
             duty (:ref:`percentage`): The duty cycle (-100.0 to 100).
-            limit (:ref:`percentage`): Limit on the maximum ``duty`` value (*Default*: 100). This overrides the first argument when it exceeds the limit. This ensures that ``abs(duty)`` <``limit`` and is useful when you use your own formula to set the duty cycle, as it provides a limit when your formula returns a very large number. For example, you could use this to prevent your LEGO\ :sup:`®` train from unintentionally going at full speed.
 
         Example::
 
             # Set the motor duty cycle to 75%.
             example_motor.duty(75)
-
-        ::
-
-            # Use a computed duty cycle value, but ensure it stays within the range
-            # (-30, 30).
-            example_duty = (sensor.reflection() - 40) / 3
-            example_motor.duty(example_duty, 30)
 
         """
         pass
@@ -227,7 +219,7 @@ class Motor():
         """Configure the settings to adjust the behavior of the :meth:`.dc` command. This also affects the all of the ``run`` commands, which use the :meth:`.dc` in the background.
 
         Arguments:
-            duty_limit (:ref:`percentage`): Relative torque limit during subsequent motor commands. This sets the maximum duty cycle that is applied during any subsequent motor command. This reduces the maximum torque output to a percentage of the absolute maximum stall torque. This is useful to avoid applying the full motor torque to a geared or lever mechanism. (*Default*: 100).
+            duty_limit (:ref:`percentage`): Relative torque limit during subsequent motor commands. This sets the maximum duty cycle that is applied during any subsequent motor command. This reduces the maximum torque output to a percentage of the absolute maximum stall torque. This is useful to avoid applying the full motor torque to a geared or lever mechanism, or to prevent your LEGO\ :sup:`®` train from unintentionally going at full speed. (*Default*: 100).
             duty_offset (:ref:`percentage`): Minimum duty cycle given when you use :meth:`.dc`. This adds a small feed forward torque so that your motor will move even for very low duty cycle values, which can be useful when you create your own feedback controllers (*Default*: 0).
         """
         pass
