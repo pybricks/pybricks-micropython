@@ -25,7 +25,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -40,26 +40,26 @@
      guidetolerance="10"
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
-     inkscape:window-width="1853"
-     inkscape:window-height="1016"
+     inkscape:window-width="1920"
+     inkscape:window-height="1043"
      id="namedview4"
      showgrid="false"
      inkscape:zoom="0.89655172"
-     inkscape:cx="389.22745"
-     inkscape:cy="256.08603"
-     inkscape:window-x="67"
-     inkscape:window-y="27"
+     inkscape:cx="6.4836564"
+     inkscape:cy="285.3705"
+     inkscape:window-x="1920"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
-     inkscape:current-layer="svg2" />
+     inkscape:current-layer="g913" />
   <image
      sodipodi:absref="etcher.png"
      xlink:href="etcher.png"
-     y="0"
-     x="0"
-     id="image10"
-     preserveAspectRatio="none"
+     width="783"
      height="326"
-     width="783" />
+     preserveAspectRatio="none"
+     id="image10"
+     x="0"
+     y="0" />
   <rect
      style="opacity:1;fill:#2297de;fill-opacity:1;stroke:none;stroke-width:10;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
      id="rect4161"
@@ -132,14 +132,14 @@
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:24.19441986px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#404140;fill-opacity:1;stroke:none;stroke-width:0.60486054"
-       x="137.59927"
-       y="-239.34277"
+       x="136.02188"
+       y="-240.92017"
        id="text4660"><tspan
          sodipodi:role="line"
          id="tspan4658"
-         x="137.59927"
-         y="-239.34277"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054">1</tspan></text>
+         x="136.02188"
+         y="-240.92017"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054">a</tspan></text>
   </g>
   <g
      id="g918"
@@ -153,14 +153,14 @@
     <text
        xml:space="preserve"
        style="font-style:normal;font-weight:normal;font-size:24.19441986px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#404140;fill-opacity:1;stroke:none;stroke-width:0.60486054"
-       x="309.28381"
-       y="23.416279"
+       x="310.07251"
+       y="21.838886"
        id="text958"><tspan
          sodipodi:role="line"
          id="tspan956"
-         x="309.28381"
-         y="23.416279"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054">3</tspan></text>
+         x="310.07251"
+         y="21.838886"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054">c</tspan></text>
   </g>
   <g
      id="g908"
@@ -185,13 +185,13 @@
     <text
        id="text1030"
        y="-193.54724"
-       x="309.28381"
+       x="310.07251"
        style="font-style:normal;font-weight:normal;font-size:24.19441986px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#404140;fill-opacity:1;stroke:none;stroke-width:0.60486054"
        xml:space="preserve"><tspan
          style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054"
          y="-193.54724"
-         x="309.28381"
+         x="310.07251"
          id="tspan1028"
-         sodipodi:role="line">2</tspan></text>
+         sodipodi:role="line">b</tspan></text>
   </g>
 </svg>
