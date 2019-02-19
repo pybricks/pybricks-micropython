@@ -40,6 +40,8 @@ A first example program
 
 .. image:: images/firstprogram.png
 
+.. literalinclude:: ../../examples/ev3/getting_started/main.py
+
 Example text
 
 Running a program without a computer
