@@ -46,3 +46,4 @@ Example text
 
 Running a program without a computer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. image:: images/manualrun.png

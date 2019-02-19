@@ -10,10 +10,21 @@ def buttons():
     :returns: List of pressed buttons.
     :rtype: List of :class:`Button <parameters.Button>`
 
-    Example::
+    Examples::
 
+        # Do something if the left button is pressed
         if Button.left in brick.buttons():
             print("The left button is pressed.")
+
+    ::
+
+        # Wait until any of the buttons is pressed
+        while not any(brick.buttons()):
+            wait(10)
+
+        # Wait until all buttons are released
+        while any(brick.buttons()):
+            wait(10)
 
     """
     pass
