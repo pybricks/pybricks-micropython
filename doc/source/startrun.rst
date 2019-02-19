@@ -34,6 +34,12 @@ Downloading and running a program
 
 .. image:: images/running.png
 
+A first example program
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+.. image:: images/firstprogram.png
+
 Example text
 
 Running a program without a computer

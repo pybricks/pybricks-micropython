@@ -49,9 +49,12 @@ You will now follow a series of steps to download and install the EV3 Python fir
 5. Turn the EV3 brick off if it is currently on.
 6. Put the micro SD card in the SD card slot of the EV3 brick.
 
+.. image:: images/etcher.png
 
 Using the EV3 brick
 -----------------------------------------------------------
+
+.. image:: images/sd.png
 
 Turning the EV3 brick on and off
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

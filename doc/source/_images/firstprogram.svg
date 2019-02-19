@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   id="svg2"
+   width="700"
+   height="525"
+   viewBox="0 0 699.99997 525"
+   sodipodi:docname="firstprogram.svg"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)">
+  <metadata
+     id="metadata8">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs6" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1853"
+     inkscape:window-height="1016"
+     id="namedview4"
+     showgrid="false"
+     inkscape:zoom="0.59"
+     inkscape:cx="140.39593"
+     inkscape:cy="378.04825"
+     inkscape:window-x="67"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2"
+     inkscape:snap-global="false"
+     showguides="false" />
+  <image
+     sodipodi:absref="/home/laurens/pybricks/git/micropython/ports/pybricks/doc/source/_images/firstprogram1.jpg"
+     xlink:href="firstprogram1.jpg"
+     y="0"
+     x="0"
+     id="image852"
+     preserveAspectRatio="none"
+     height="525"
+     width="700"
+     style="stroke-width:1.52126789" />
+  <path
+     style="fill:none;stroke:#6ab0de;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="m 461.40206,372.35423 v 67.17516"
+     id="path909"
+     inkscape:connector-curvature="0" />
+  <rect
+     style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect4173"
+     width="161.103"
+     height="40.594421"
+     x="423.58261"
+     y="420.42203" />
+  <rect
+     style="opacity:1;fill:#6ab0de;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect4175"
+     width="161.103"
+     height="4"
+     x="423.58261"
+     y="420.42203" />
+  <text
+     id="text114"
+     y="451.00729"
+     x="438.34674"
+     style="font-style:normal;font-weight:normal;font-size:24.19441986px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#404140;fill-opacity:1;stroke:none;stroke-width:0.60486054"
+     xml:space="preserve"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054"
+       y="451.00729"
+       x="438.34674"
+       sodipodi:role="line"
+       id="tspan907">Large Motor</tspan></text>
+  <circle
+     r="19.024944"
+     cy="353.3613"
+     cx="460.99387"
+     id="path118"
+     style="fill:#e7f2fa;fill-opacity:1;stroke:#6ab0de;stroke-width:4;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  <circle
+     transform="scale(1,-1)"
+     r="23.597612"
+     cy="-269.81473"
+     cx="187.02357"
+     id="circle4625"
+     style="opacity:1;fill:none;fill-opacity:1;stroke:#6ab0de;stroke-width:4;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+  <path
+     sodipodi:nodetypes="cc"
+     inkscape:connector-curvature="0"
+     id="path4649"
+     d="m 186.62339,293.36057 0,78.93719"
+     style="fill:none;stroke:#6ab0de;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  <rect
+     style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect4651"
+     width="85.56263"
+     height="39.079742"
+     x="139.21111"
+     y="370.42023" />
+  <rect
+     style="opacity:1;fill:#6ab0de;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect4653"
+     width="85.56263"
+     height="4"
+     x="139.21111"
+     y="370.42023" />
+  <text
+     id="text4657"
+     y="401.00546"
+     x="149.18132"
+     style="font-style:normal;font-weight:normal;font-size:24.19441986px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#404140;fill-opacity:1;stroke:none;stroke-width:0.60486054"
+     xml:space="preserve"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054"
+       y="401.00546"
+       x="149.18132"
+       sodipodi:role="line"
+       id="tspan915">Port B</tspan></text>
+  <image
+     sodipodi:absref="/home/laurens/pybricks/git/micropython/ports/pybricks/doc/source/_images/firstprogram2.png"
+     xlink:href="firstprogram2.png"
+     style="stroke-width:5.66956329"
+     width="111.70762"
+     height="68.670792"
+     preserveAspectRatio="none"
+     id="image882"
+     x="150.2825"
+     y="154.17384" />
+  <path
+     style="fill:#3d3d3d;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     d="m 349.90693,228.11591 14.56568,-10.48729 1.95974,0.3178 1.80085,-1.11228 1.53602,0.053 -22.40467,16.10169 -1.48305,-0.4767 3.81356,-2.91313 z"
+     id="path826"
+     inkscape:connector-curvature="0"
+     sodipodi:nodetypes="ccccccccc" />
+</svg>
