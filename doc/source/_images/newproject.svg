@@ -44,9 +44,9 @@
      inkscape:window-height="1043"
      id="namedview4"
      showgrid="false"
-     inkscape:zoom="0.69276317"
-     inkscape:cx="381.57189"
-     inkscape:cy="393.19933"
+     inkscape:zoom="0.97971507"
+     inkscape:cx="577.17957"
+     inkscape:cy="299.64576"
      inkscape:window-x="1920"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
@@ -54,12 +54,12 @@
   <image
      sodipodi:absref="newproject.png"
      xlink:href="newproject.png"
-     width="1013.3333"
-     height="389.33334"
-     preserveAspectRatio="none"
-     id="image10"
+     y="0"
      x="0"
-     y="0" />
+     id="image10"
+     preserveAspectRatio="none"
+     height="389.33334"
+     width="1013.3333" />
   <rect
      style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
      id="rect4173"
@@ -273,4 +273,22 @@
      width="204.83461"
      id="rect886"
      style="fill:none;fill-opacity:1;stroke:#6ab0de;stroke-width:4;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  <rect
+     style="fill:#3c3c3c;fill-opacity:1;stroke:none;stroke-width:4;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect847"
+     width="105.01424"
+     height="17.682812"
+     x="409.23074"
+     y="42.8946" />
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:17.61719322px;line-height:1.25;font-family:lato;-inkscape-font-specification:lato;letter-spacing:0px;word-spacing:0px;fill:#cacaca;fill-opacity:1;stroke:none;stroke-width:0.99999994"
+     x="412.81161"
+     y="55.640434"
+     id="text851"><tspan
+       sodipodi:role="line"
+       id="tspan849"
+       x="412.81161"
+       y="55.640434"
+       style="fill:#cacaca;fill-opacity:1;stroke-width:0.99999994">getting_started</tspan></text>
 </svg>
