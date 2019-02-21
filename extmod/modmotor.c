@@ -32,7 +32,7 @@ mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n
     self->base.type = (mp_obj_type_t*) type;
     self->port = mp_obj_get_int(args[0]);
     // Configure direction or set to default
-    int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_CLOCKWISE;
+    int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_CW;
     pbio_error_t err;
 
     // Default gear ratio

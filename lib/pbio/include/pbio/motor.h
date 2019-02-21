@@ -39,8 +39,8 @@ typedef float float_t;
  * Motor direction convention
  */
 typedef enum {
-    PBIO_MOTOR_DIR_CLOCKWISE,         /**< Positive speed/duty means clockwise */
-    PBIO_MOTOR_DIR_COUNTERCLOCKWISE,  /**< Positive speed/duty means counterclockwise */
+    PBIO_MOTOR_DIR_CW,      /**< Positive speed/duty means clockwise */
+    PBIO_MOTOR_DIR_CCW,     /**< Positive speed/duty means counterclockwise */
 } pbio_motor_dir_t;
 
 pbio_motor_dir_t motor_directions[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];

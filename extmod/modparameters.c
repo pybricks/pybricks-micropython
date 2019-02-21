@@ -41,8 +41,8 @@ PB_DEFINE_CONST_ENUM(motor_Stop_enum, motor_Stop_enum_table);
 /* Motor direction enum */
 
 STATIC const mp_rom_map_elem_t motor_Direction_enum_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_clockwise),        MP_ROM_INT(PBIO_MOTOR_DIR_CLOCKWISE)        },
-    { MP_ROM_QSTR(MP_QSTR_counterclockwise), MP_ROM_INT(PBIO_MOTOR_DIR_COUNTERCLOCKWISE) },
+    { MP_ROM_QSTR(MP_QSTR_CW),      MP_ROM_INT(PBIO_MOTOR_DIR_CW)   },
+    { MP_ROM_QSTR(MP_QSTR_CCW),     MP_ROM_INT(PBIO_MOTOR_DIR_CCW)  },
 };
 PB_DEFINE_CONST_ENUM(motor_Direction_enum, motor_Direction_enum_table);
 
