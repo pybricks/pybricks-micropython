@@ -58,6 +58,14 @@ While we recommend to work with millimeters in your programs, you can use the fo
 | 1 inch =| 25.4 | 2.54| 1      |
 +---------+------+-----+--------+
 
+.. _dimension:
+
+dimension: mm
+-------------
+Dimensions are expressed in millimeters (mm) whenever possible, just like distances.
+
+For example, the diameter of a wheel is measured in millimeters.
+
 
 .. _relativedistance:
 

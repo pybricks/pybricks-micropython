@@ -46,6 +46,7 @@ programs.
    ev3devices
    parameters
    tools
+   robotics
 
 .. toctree::
    :maxdepth: 1
