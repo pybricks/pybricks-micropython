@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 /*
  * Copyright (c) 2015, Scanimetrics - http://www.scanimetrics.com
  * All rights reserved.

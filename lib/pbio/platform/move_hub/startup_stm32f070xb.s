@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 /**
   ******************************************************************************
   * @file      startup_stm32f070xb.s
@@ -12,7 +13,7 @@
   *            After Reset the Cortex-M0 processor is in Thread mode,
   *            priority is Privileged, and the Stack is set to Main.
   ******************************************************************************
-  * 
+  *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
   *   1. Redistributions of source code must retain the above copyright notice,
@@ -81,7 +82,7 @@ LoopCopyDataInit:
   adds r4, r0, r3
   cmp r4, r1
   bcc CopyDataInit
-  
+
 /* Zero fill the bss segment. */
   ldr r2, =_sbss
   ldr r4, =_ebss
