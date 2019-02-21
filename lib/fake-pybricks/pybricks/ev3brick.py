@@ -13,7 +13,7 @@ def buttons():
     Examples::
 
         # Do something if the left button is pressed
-        if Button.left in brick.buttons():
+        if Button.LEFT in brick.buttons():
             print("The left button is pressed.")
 
     ::

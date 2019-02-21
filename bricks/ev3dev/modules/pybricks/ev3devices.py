@@ -118,17 +118,17 @@ class InfraredSensor(Ev3devSensor):
     _number_of_values = 8
     _combinations = {
         0: [],
-        1: [Button.left_up],
-        2: [Button.left_down],
-        3: [Button.right_up],
-        4: [Button.right_down],
-        5: [Button.left_up, Button.right_up],
-        6: [Button.left_up, Button.right_down],
-        7: [Button.left_down, Button.right_up],
-        8: [Button.left_down, Button.right_down],
-        9: [Button.beacon],
-        10: [Button.left_up, Button.left_down],
-        11: [Button.right_up, Button.right_down]
+        1: [Button.LEFT_UP],
+        2: [Button.LEFT_DOWN],
+        3: [Button.RIGHT_UP],
+        4: [Button.RIGHT_DOWN],
+        5: [Button.LEFT_UP, Button.RIGHT_UP],
+        6: [Button.LEFT_UP, Button.RIGHT_DOWN],
+        7: [Button.LEFT_DOWN, Button.RIGHT_UP],
+        8: [Button.LEFT_DOWN, Button.RIGHT_DOWN],
+        9: [Button.BEACON],
+        10: [Button.LEFT_UP, Button.LEFT_DOWN],
+        11: [Button.RIGHT_UP, Button.RIGHT_DOWN]
     }
 
     def distance(self):

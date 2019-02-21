@@ -73,17 +73,17 @@ PB_DEFINE_CONST_ENUM(pb_Color_enum, pb_Color_enum_table);
 /* Generic button enum */
 
 STATIC const mp_rom_map_elem_t pb_Button_enum_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_up),          MP_ROM_INT(PBIO_BUTTON_UP)         },
-    { MP_ROM_QSTR(MP_QSTR_down),        MP_ROM_INT(PBIO_BUTTON_DOWN)       },
-    { MP_ROM_QSTR(MP_QSTR_left),        MP_ROM_INT(PBIO_BUTTON_LEFT)       },
-    { MP_ROM_QSTR(MP_QSTR_right),       MP_ROM_INT(PBIO_BUTTON_RIGHT)      },
-    { MP_ROM_QSTR(MP_QSTR_center),      MP_ROM_INT(PBIO_BUTTON_CENTER)     },
-    { MP_ROM_QSTR(MP_QSTR_left_up),     MP_ROM_INT(PBIO_BUTTON_LEFT_UP)    },
-    { MP_ROM_QSTR(MP_QSTR_left_down),   MP_ROM_INT(PBIO_BUTTON_LEFT_DOWN)  },
-    { MP_ROM_QSTR(MP_QSTR_right_up),    MP_ROM_INT(PBIO_BUTTON_RIGHT_UP)   },
-    { MP_ROM_QSTR(MP_QSTR_right_down),  MP_ROM_INT(PBIO_BUTTON_RIGHT_DOWN) },
+    { MP_ROM_QSTR(MP_QSTR_UP),          MP_ROM_INT(PBIO_BUTTON_UP)         },
+    { MP_ROM_QSTR(MP_QSTR_DOWN),        MP_ROM_INT(PBIO_BUTTON_DOWN)       },
+    { MP_ROM_QSTR(MP_QSTR_LEFT),        MP_ROM_INT(PBIO_BUTTON_LEFT)       },
+    { MP_ROM_QSTR(MP_QSTR_RIGHT),       MP_ROM_INT(PBIO_BUTTON_RIGHT)      },
+    { MP_ROM_QSTR(MP_QSTR_CENTER),      MP_ROM_INT(PBIO_BUTTON_CENTER)     },
+    { MP_ROM_QSTR(MP_QSTR_LEFT_UP),     MP_ROM_INT(PBIO_BUTTON_LEFT_UP)    },
+    { MP_ROM_QSTR(MP_QSTR_LEFT_DOWN),   MP_ROM_INT(PBIO_BUTTON_LEFT_DOWN)  },
+    { MP_ROM_QSTR(MP_QSTR_RIGHT_UP),    MP_ROM_INT(PBIO_BUTTON_RIGHT_UP)   },
+    { MP_ROM_QSTR(MP_QSTR_RIGHT_DOWN),  MP_ROM_INT(PBIO_BUTTON_RIGHT_DOWN) },
 #if defined(PYBRICKS_BRICK_EV3)
-    { MP_ROM_QSTR(MP_QSTR_beacon),      MP_ROM_INT(PBIO_BUTTON_UP)         },
+    { MP_ROM_QSTR(MP_QSTR_BEACON),      MP_ROM_INT(PBIO_BUTTON_UP)         },
 #endif //PYBRICKS_BRICK_EV3
 };
 PB_DEFINE_CONST_ENUM(pb_Button_enum, pb_Button_enum_table);

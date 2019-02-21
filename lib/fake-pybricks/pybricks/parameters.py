@@ -156,42 +156,42 @@ class Direction():
 class Button(Enum):
     """Buttons on a brick or remote:
 
-    .. data:: left_down
-    .. data:: down
-    .. data:: right_down
-    .. data:: left
-    .. data:: center
-    .. data:: right
-    .. data:: left_up
-    .. data:: up
-    .. data:: beacon
-    .. data:: right_up
+    .. data:: LEFT_DOWN
+    .. data:: DOWN
+    .. data:: RIGHT_DOWN
+    .. data:: LEFT
+    .. data:: CENTER
+    .. data:: RIGHT
+    .. data:: LEFT_UP
+    .. data:: UP
+    .. data:: BEACON
+    .. data:: RIGHT_UP
 
     +-----------+----------+-----------+
     |           |          |           |
-    | left_up   |up/beacon | right_up  |
+    | LEFT_UP   |UP/BEACON | RIGHT_UP  |
     |           |          |           |
     +-----------+----------+-----------+
     |           |          |           |
-    | left      |  center  | right     |
+    | LEFT      |  CENTER  | RIGHT     |
     |           |          |           |
     +-----------+----------+-----------+
     |           |          |           |
-    | left_down |   down   | right_down|
+    | LEFT_DOWN |   DOWN   | RIGHT_DOWN|
     |           |          |           |
     +-----------+----------+-----------+
     """
 
-    left_down = 1
-    down = 2
-    right_down = 3
-    left = 4
-    center = 5
-    right = 6
-    left_up = 7
-    up = 8
-    beacon = 8
-    right_up = 9
+    LEFT_DOWN = 1
+    DOWN = 2
+    RIGHT_DOWN = 3
+    LEFT = 4
+    CENTER = 5
+    RIGHT = 6
+    LEFT_UP = 7
+    UP = 8
+    BEACON = 8
+    RIGHT_UP = 9
 
 
 class Align():
