@@ -219,7 +219,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'Pybricks.tex', _TITLE, author, 'manual'),
+    (master_doc, ''.join([project, '-v', version, '.tex']), _TITLE, author, 'manual'),
 ]
 
 latex_logo = _LOGO_LARGE
