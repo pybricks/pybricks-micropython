@@ -50,7 +50,7 @@ typedef enum {
     PBIO_LIGHT_COLOR_YELLOW = 4,   /**< The light or detected color is yellow */
     PBIO_LIGHT_COLOR_RED    = 5,   /**< The light or detected color is red */
     PBIO_LIGHT_COLOR_WHITE  = 6,   /**< The light or detected color is white */
-    PBIO_LIGHT_COLOR_BROWN  = 7,   /**< The light or detected color is brown */    
+    PBIO_LIGHT_COLOR_BROWN  = 7,   /**< The light or detected color is brown */
     PBIO_LIGHT_COLOR_ORANGE = 8,   /**< The light or detected color is orange */
     PBIO_LIGHT_COLOR_PURPLE = 9,   /**< The light or detected color is purple */
 } pbio_light_color_t;

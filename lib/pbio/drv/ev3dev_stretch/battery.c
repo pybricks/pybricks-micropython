@@ -46,7 +46,7 @@ void _pbdrv_battery_deinit(void) {
     if (f_voltage != NULL) {
         fclose(f_voltage);
     }
-    if (f_current != NULL) {    
+    if (f_current != NULL) {
         fclose(f_current);
     }
 }
@@ -60,7 +60,7 @@ pbio_error_t pbdrv_battery_get_voltage_now(pbio_port_t port, uint16_t *value) {
         *value = (microvolt / 1000);
         return PBIO_SUCCESS;
     }
-    return PBIO_ERROR_IO;    
+    return PBIO_ERROR_IO;
 }
 
 pbio_error_t pbdrv_battery_get_current_now(pbio_port_t port, uint16_t *value) {
@@ -71,5 +71,5 @@ pbio_error_t pbdrv_battery_get_current_now(pbio_port_t port, uint16_t *value) {
         *value = (microamp / 1000);
         return PBIO_SUCCESS;
     }
-    return PBIO_ERROR_IO; 
+    return PBIO_ERROR_IO;
 }

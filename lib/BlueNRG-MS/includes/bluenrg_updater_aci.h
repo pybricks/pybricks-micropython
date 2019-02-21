@@ -18,7 +18,7 @@
 
 #include "bluenrg_types.h"
 
-/** 
+/**
  * @addtogroup HIGH_LEVEL_INTERFACE HIGH_LEVEL_INTERFACE
  * @{
  */
@@ -28,7 +28,7 @@
  * @brief API for UPDATER layer.
  * @{
  */
- 
+
 /**
  * @defgroup Updater_Functions Updater functions
  * @brief API for BlueNRG Updater.

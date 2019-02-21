@@ -1,19 +1,19 @@
 /*
  * Copyright (c) 2003, Adam Dunkels.
- * All rights reserved. 
+ * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above
  *    copyright notice, this list of conditions and the following
  *    disclaimer in the documentation and/or other materials provided
- *    with the distribution. 
+ *    with the distribution.
  * 3. The name of the author may not be used to endorse or promote
  *    products derived from this software without specific prior
- *    written permission.  
+ *    written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -25,7 +25,7 @@
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
  * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.  
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * This file is part of the Contiki desktop environment
  *
@@ -75,18 +75,18 @@
 struct dsc {
   char *description; /**< A text string containing a one-line
 			description of the program */
-  
+
 #if WITH_LOADER_ARCH
   char *prgname;     /**< The name of the program on disk. */
 #else /* WITH_LOADER_ARCH */
   struct process *process; /**< A pointer to the program's process. */
 #endif /* WITH_LOADER_ARCH */
-  
-#if CTK_CONF_ICONS  
+
+#if CTK_CONF_ICONS
   struct ctk_icon *icon;  /**< A pointer to the ctk_icon structure for
 			     the DSC. */
 #endif /* CTK_CONF_ICONS */
- 
+
 #if WITH_LOADER_ARCH
   void *loadaddr;         /**< The loading address of the DSC. Used by
 			     the LOADER_UNLOAD() function when

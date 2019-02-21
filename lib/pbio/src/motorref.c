@@ -254,7 +254,7 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
         motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_HOLDING;
 
     // Experimental work around for run in fast loop
-    if (action == RUN && 
+    if (action == RUN &&
         previous_action == RUN &&
         (currently_active || motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_STARTING) &&
         time_start - previous_time_start < settings->tight_loop_time) {
@@ -268,8 +268,8 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
         // If the previous action was also track target, just keep running, otherwise start a new maneuver
         motor_control_active[PORT_TO_IDX(port)] = previous_action == TRACK_TARGET && currently_active ?
                                                   PBIO_MOTOR_CONTROL_RUNNING:
-                                                  PBIO_MOTOR_CONTROL_STARTING;         
-        traject->action = action;   
+                                                  PBIO_MOTOR_CONTROL_STARTING;
+        traject->action = action;
         make_trajectory_none(time_start, duration_or_target_position*settings->counts_per_output_unit, 0, traject);
         return PBIO_SUCCESS;
     }
