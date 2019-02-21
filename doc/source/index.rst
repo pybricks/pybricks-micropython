@@ -62,5 +62,6 @@ programs.
    :caption: Demo Programs
    :hidden:
 
+   examples/robot_educator
    examples/color_sorter
    examples/robot_arm_h25
