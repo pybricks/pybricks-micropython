@@ -101,13 +101,13 @@ class Motor():
         """
         pass
 
-    def stop(self, stop_type=Stop.coast):
-        """stop(stop_type=Stop.coast)
+    def stop(self, stop_type=Stop.COAST):
+        """stop(stop_type=Stop.COAST)
 
         Stop the motor.
 
         Arguments:
-            stop_type (Stop): Whether to coast, brake, or hold (*Default*: :class:`Stop.coast <parameters.Stop>`).
+            stop_type (Stop): Whether to coast, brake, or hold (*Default*: :class:`Stop.COAST <parameters.Stop>`).
         """
         pass
 
@@ -121,8 +121,8 @@ class Motor():
         """
         pass
 
-    def run_time(self, speed, time, stop_type=Stop.coast, wait=True):
-        """run_time(speed, time, stop_type=Stop.coast, wait=True)
+    def run_time(self, speed, time, stop_type=Stop.COAST, wait=True):
+        """run_time(speed, time, stop_type=Stop.COAST, wait=True)
 
         Run the motor at a constant speed (angular velocity) for a given amount of time.
 
@@ -131,13 +131,13 @@ class Motor():
         Arguments:
             speed (:ref:`speed`): Speed of the motor.
             time (:ref:`time`): Duration of the maneuver.
-            stop_type (Stop): Whether to coast, brake, or hold after coming to a standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
+            stop_type (Stop): Whether to coast, brake, or hold after coming to a standstill (*Default*: :class:`Stop.COAST <parameters.Stop>`).
             wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits for the specified ``time``.
         """
         pass
 
-    def run_angle(self, speed, rotation_angle, stop_type=Stop.coast, wait=True):
-        """run_angle(speed, rotation_angle, stop_type=Stop.coast, wait=True)
+    def run_angle(self, speed, rotation_angle, stop_type=Stop.COAST, wait=True):
+        """run_angle(speed, rotation_angle, stop_type=Stop.COAST, wait=True)
 
         Run the motor at a constant speed (angular velocity) by a given angle.
 
@@ -146,13 +146,13 @@ class Motor():
         Arguments:
             speed (:ref:`speed`): Speed of the motor.
             rotation_angle (:ref:`angle`): Angle by which the motor should rotate.
-            stop_type (Stop): Whether to coast, brake, or hold after coming to a standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
+            stop_type (Stop): Whether to coast, brake, or hold after coming to a standstill (*Default*: :class:`Stop.COAST <parameters.Stop>`).
             wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits until the motor has traveled precisely the requested angle.
         """
         pass
 
-    def run_target(self, speed, target_angle, stop_type=Stop.coast, wait=True):
-        """run_target(speed, target_angle, stop_type=Stop.coast, wait=True)
+    def run_target(self, speed, target_angle, stop_type=Stop.COAST, wait=True):
+        """run_target(speed, target_angle, stop_type=Stop.COAST, wait=True)
 
         Run the motor at a constant speed (angular velocity) towards a given target angle.
 
@@ -163,13 +163,13 @@ class Motor():
         Arguments:
             speed (:ref:`speed`): Absolute speed of the motor. The direction will be automatically selected based on the target angle: it makes no difference if you specify a positive or negative speed.
             target_angle (:ref:`angle`): Target angle that the motor should rotate to, regardless of its current angle.
-            stop_type (Stop): Whether to coast, brake, or hold after coming to a standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
+            stop_type (Stop): Whether to coast, brake, or hold after coming to a standstill (*Default*: :class:`Stop.COAST <parameters.Stop>`).
             wait (bool): Wait for the maneuver to complete before continuing with the rest of the program (*Default*: ``True``). This means that your program waits until the motor has reached the target angle.
         """
         pass
 
-    def run_until_stalled(self, speed, stop_type=Stop.coast, duty_limit=None):
-        """run_until_stalled(speed, stop_type=Stop.coast, duty_limit=default)
+    def run_until_stalled(self, speed, stop_type=Stop.COAST, duty_limit=None):
+        """run_until_stalled(speed, stop_type=Stop.COAST, duty_limit=default)
 
         Run the motor at a constant speed (angular velocity) until it stalls. The motor is considered stalled when it cannot move even with the maximum torque. See :meth:`.stalled` for a more precise definition.
 
@@ -177,7 +177,7 @@ class Motor():
 
         Arguments:
             speed (:ref:`speed`): Speed of the motor.
-            stop_type (Stop): Whether to coast, brake, or hold after coming to a standstill (*Default*: :class:`Stop.coast <parameters.Stop>`).
+            stop_type (Stop): Whether to coast, brake, or hold after coming to a standstill (*Default*: :class:`Stop.COAST <parameters.Stop>`).
             duty_limit (:ref:`percentage`): Relative torque limit. This limit works just like :meth:`.set_dc_settings`, but in this case the limit is temporary: it returns to its previous value after completing this command.
         """
         pass

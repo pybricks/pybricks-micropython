@@ -62,15 +62,15 @@ class Port(Enum):
 class Stop(Enum):
     """Action after the motor stops: coast, brake, or hold.
 
-    .. data:: coast
+    .. data:: COAST
 
         Let the motor move freely.
 
-    .. data:: brake
+    .. data:: BRAKE
 
         Passively resist small external forces.
 
-    .. data:: hold
+    .. data:: HOLD
 
         Keep controlling the motor to hold it at the commanded angle. This is only available on motors with encoders.
 
@@ -79,18 +79,18 @@ class Stop(Enum):
     +-----------+-------------+------------------------------------------+
     |Parameter  | Resistance  | Physical meaning                         |
     +===========+=============+==========================================+
-    |Stop.coast | low         | Friction                                 |
+    |Stop.COAST | low         | Friction                                 |
     +-----------+-------------+------------------------------------------+
-    |Stop.brake | medium      | Friction + Torque opposite to motion     |
+    |Stop.BRAKE | medium      | Friction + Torque opposite to motion     |
     +-----------+-------------+------------------------------------------+
-    |Stop.hold  | high        | Friction + Torque to hold commanded angle|
+    |Stop.HOLD  | high        | Friction + Torque to hold commanded angle|
     +-----------+-------------+------------------------------------------+
 
     """
 
-    coast = 0
-    brake = 1
-    hold = 2
+    COAST = 0
+    BRAKE = 1
+    HOLD = 2
 
 
 class Direction():
