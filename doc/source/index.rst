@@ -3,6 +3,11 @@ Using Python with LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3
 
 .. toctree::
     :maxdepth: 1
+    :caption: Table of Contents
+    :hidden:
+
+.. toctree::
+    :maxdepth: 1
     :caption: Getting Started
     :hidden:
 
