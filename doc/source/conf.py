@@ -28,6 +28,7 @@ import _version  # noqa E402
 ON_RTD = os.environ.get('READTHEDOCS', None) == 'True'
 
 # branding
+_PROJECT = os.environ.get('PYBRICKS_PROJECT', 'pybricks-micropython')
 _LOGO_SMALL = os.environ.get('PYBRICKS_LOGO_SMALL', 'images/pybricks-logo-small.png')
 _LOGO_LARGE = os.environ.get('PYBRICKS_LOGO_LARGE', 'images/pybricks-logo-large.png')
 _TITLE = os.environ.get('PYBRICKS_TITLE', 'Pybricks Modules and Examples')
@@ -64,7 +65,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'Pybricks'
+project = _PROJECT
 copyright = _COPYRIGHT
 author = ''
 
