@@ -34,12 +34,13 @@ def light(color):
     """Set the color of the brick light.
 
     Arguments:
-        color (Color): Color of the light. Choose ``Color.black`` or ``None`` to turn the light off.
+        color (Color): Color of the light. Choose ``Color.BLACK`` or ``None``
+                       to turn the light off.
 
     Example::
 
         # Make the light red
-        brick.light(Color.red)
+        brick.light(Color.RED)
 
         # Turn the light off
         brick.light(None)

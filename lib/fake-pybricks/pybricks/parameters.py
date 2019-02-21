@@ -6,26 +6,26 @@ from enum import Enum
 class Color(Enum):
     """Light or surface color.
 
-    .. data:: black
-    .. data:: blue
-    .. data:: green
-    .. data:: yellow
-    .. data:: red
-    .. data:: white
-    .. data:: brown
-    .. data:: orange
-    .. data:: purple
+    .. data:: BLACK
+    .. data:: BLUE
+    .. data:: GREEN
+    .. data:: YELLOW
+    .. data:: RED
+    .. data:: WHITE
+    .. data:: BROWN
+    .. data:: ORANGE
+    .. data:: PURPLE
     """
 
-    black = 1
-    blue = 2
-    green = 3
-    yellow = 4
-    red = 5
-    white = 6
-    brown = 7
-    orange = 8
-    purple = 9
+    BLACK = 1
+    BLUE = 2
+    GREEN = 3
+    YELLOW = 4
+    RED = 5
+    WHITE = 6
+    BROWN = 7
+    ORANGE = 8
+    PURPLE = 9
 
 
 class Port(Enum):

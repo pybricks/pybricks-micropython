@@ -313,7 +313,8 @@ class ColorSensor():
         """Measure the color of a surface.
 
         :returns:
-            ``Color.black``, ``Color.blue``, ``Color.green``, ``Color.yellow``, ``Color.red``, ``Color.white``, ``Color.brown`` or ``None``.
+            ``Color.BLACK``, ``Color.BLUE``, ``Color.GREEN``, ``Color.YELLOW``,
+            ``Color.RED``, ``Color.WHITE``, ``Color.BROWN`` or ``None``.
         :rtype: :class:`Color <parameters.Color>`, or ``None`` if no color is detected.
         """
         pass

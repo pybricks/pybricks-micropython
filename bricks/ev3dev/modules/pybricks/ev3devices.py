@@ -60,7 +60,9 @@ class ColorSensor(Ev3devSensor):
         """Check the color of a surface.
 
         Returns:
-            int -- Color.black, Color.blue, Color.green, Color.yellow, Color.red, Color.white, or Color.brown. Returns None if no color is detected.
+            int -- Color.BLACK, Color.BLUE, Color.GREEN, Color.YELLOW,
+                   Color.RED, Color.WHITE, or Color.BROWN. Returns None if no
+                   color is detected.
 
         """
         self._mode('COL-COLOR')
