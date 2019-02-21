@@ -72,7 +72,7 @@ When the program starts, a pop up toolbar allows you to stop the program if nece
 Expanding the example program
 -----------------------------------------------------------
 
-...
+Now that you've run the basic code template, let's expand the program to make a motor move. First, attach a Large Motor to Port B on the EV3 brick, as shown below.
 
 
 .. figure:: images/firstprogram.png
@@ -82,16 +82,26 @@ Expanding the example program
 
    The EV3 brick with a Large Motor attached to port B.
 
+Next, edit *main.py* such that looks like this:
+
 .. literalinclude:: ../../examples/ev3/getting_started/main.py
 
-...
+When you run the program, you'll hear a beep, the motor rotates, and you'll hear another higher pitched beep.
 
 .. _managefiles:
 
 Managing files on the EV3
 -----------------------------------------------------------
 
-...
+After you've downloaded a project to the EV3, you can run, delete, or back up programs stored on the EV3, as shown in the diagram below.
+
+.. figure:: images/files.png
+   :width: 100 %
+   :alt: alt
+   :align: center
+
+   The EV3 brick with a Large Motor attached to port B.
+
 
 Running a program without a computer
 -----------------------------------------------------------
