@@ -55,7 +55,7 @@ class Display():
         Example::
 
             # Show a built-in image showing two eyes looking upward
-            brick.display.image(Image.up)
+            brick.display.image(Image.UP)
 
             # Display a custom image from your project folder
             brick.display.image('pybricks.png')
