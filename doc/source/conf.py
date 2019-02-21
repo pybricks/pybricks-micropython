@@ -31,7 +31,7 @@ ON_RTD = os.environ.get('READTHEDOCS', None) == 'True'
 _LOGO_SMALL = os.environ.get('PYBRICKS_LOGO_SMALL', 'images/pybricks-logo-small.png')
 _LOGO_LARGE = os.environ.get('PYBRICKS_LOGO_LARGE', 'images/pybricks-logo-large.png')
 _TITLE = os.environ.get('PYBRICKS_TITLE', 'Pybricks Modules and Examples')
-_COPYRIGHT = os.environ.get('PYBRICKS_COPYRIGHT', 'Copyright © 2018-2019 The Pybricks MicroPython Authors')
+_COPYRIGHT = os.environ.get('PYBRICKS_COPYRIGHT', '2018-2019 The Pybricks MicroPython Authors')
 
 _DISCLAIMER = 'LEGO, the LEGO logo, MINDSTORMS and the MINDSTORMS EV3 logo are trademarks and/or copyrights of the LEGO Group.'
 
@@ -202,7 +202,7 @@ latex_elements = {
     }
     \makeatother
     ''' % {
-        'disclaimer': ' '.join((_DISCLAIMER, _COPYRIGHT)),
+        'disclaimer': ' '.join((_DISCLAIMER, '©', copyright)),
         'logo': os.path.basename(_LOGO_SMALL),
     },
 
