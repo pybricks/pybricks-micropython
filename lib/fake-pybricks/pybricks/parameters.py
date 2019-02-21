@@ -197,25 +197,25 @@ class Button(Enum):
 class Align():
     """Alignment of an image on the display.
 
-    .. data:: bottom_left
-    .. data:: bottom
-    .. data:: bottom_right
-    .. data:: left
-    .. data:: center
-    .. data:: right
-    .. data:: top_left
-    .. data:: top
-    .. data:: top_right
+    .. data:: BOTTOM_LEFT
+    .. data:: BOTTOM
+    .. data:: BOTTOM_RIGHT
+    .. data:: LEFT
+    .. data:: CENTER
+    .. data:: RIGHT
+    .. data:: TOP_LEFT
+    .. data:: TOP
+    .. data:: TOP_RIGHT
     """
-    bottom_left = 1
-    bottom = 2
-    bottom_right = 3
-    left = 4
-    center = 5
-    right = 6
-    top_left = 7
-    top = 8
-    top_right = 9
+    BOTTOM_LEFT = 1
+    BOTTOM = 2
+    BOTTOM_RIGHT = 3
+    LEFT = 4
+    CENTER = 5
+    RIGHT = 6
+    TOP_LEFT = 7
+    TOP = 8
+    TOP_RIGHT = 9
 
 
 class Sound():

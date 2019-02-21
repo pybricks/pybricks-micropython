@@ -39,8 +39,8 @@ class Display():
 
         pass
 
-    def image(self, file_name, alignment=Align.center, coordinate=None, clear=True):
-        """image(file_name, alignment=Align.center, coordinate=None, clear=True)
+    def image(self, file_name, alignment=Align.CENTER, coordinate=None, clear=True):
+        """image(file_name, alignment=Align.CENTER, coordinate=None, clear=True)
 
         Show an image file.
 
@@ -48,7 +48,7 @@ class Display():
 
         Arguments:
             file_name (str): Path to the image file. Paths may be absolute or relative from the project folder.
-            alignment (Align): Where to place the image (*Default*: Align.center).
+            alignment (Align): Where to place the image (*Default*: Align.CENTER).
             coordinate (tuple): ``(x, y)`` coordinate tuple. It is the top-left corner of the image (*Default*: None).
             clear (bool): Whether to clear the screen before showing the image (*Default*: ``True``).
 
@@ -62,7 +62,7 @@ class Display():
 
             # Display a custom image image at the top right of the screen, without clearing
             # the screen first
-            brick.display.image('arrow.png', Align.top_right, clear=False)
+            brick.display.image('arrow.png', Align.TOP_RIGHT, clear=False)
         """
         pass
 

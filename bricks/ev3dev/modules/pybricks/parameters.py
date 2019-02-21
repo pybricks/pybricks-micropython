@@ -6,15 +6,15 @@ from parameters_c import Port, Direction, Stop, Color, Button
 
 
 class Align():
-    bottom_left = 1
-    bottom = 2
-    bottom_right = 3
-    left = 4
-    center = 5
-    right = 6
-    top_left = 7
-    top = 8
-    top_right = 9
+    BOTTOM_LEFT = 1
+    BOTTOM = 2
+    BOTTOM_RIGHT = 3
+    LEFT = 4
+    CENTER = 5
+    RIGHT = 6
+    TOP_LEFT = 7
+    TOP = 8
+    TOP_RIGHT = 9
 
 
 class Sound():
