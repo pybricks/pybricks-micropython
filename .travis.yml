@@ -37,7 +37,7 @@ jobs:
               git -C micropython checkout $MPY_TAG;
           fi
         - cd micropython/ports/pybricks
-        - git checkout --recurse-submodules ${TRAVIS_COMMIT}
+        - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
         - cd ../..
       script:
         - make ${MAKEOPTS} -C mpy-cross
@@ -76,7 +76,7 @@ jobs:
               git -C micropython checkout $MPY_TAG;
           fi
         - cd micropython/ports/pybricks
-        - git checkout --recurse-submodules ${TRAVIS_COMMIT}
+        - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
         - bricks/ev3dev/docker/setup.sh armel
       script:
         - docker exec --tty pybricks-ev3dev_armel make
@@ -118,7 +118,7 @@ jobs:
               git -C micropython checkout $MPY_TAG;
           fi
         - cd micropython/ports/pybricks
-        - git checkout --recurse-submodules ${TRAVIS_COMMIT}
+        - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
         - cd ../..
       script:
         - make ${MAKEOPTS} -C ports/pybricks/bricks/MOVEHUB
