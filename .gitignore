@@ -49,3 +49,8 @@ user.props
 # Generated rst files
 ######################
 genrst/
+
+# Pipenv & Pip files
+######################
+Pipfile
+Pipfile.lock
