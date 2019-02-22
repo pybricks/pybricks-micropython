@@ -118,6 +118,7 @@ if ON_RTD:
             'https://media.readthedocs.org/css/readthedocs-doc-embed.css',
             '_static/css/theme_overrides.css',
         ],
+        'disclaimer': _DISCLAIMER,
     }
 else:
     import sphinx_rtd_theme
@@ -127,6 +128,7 @@ else:
         'css_files': [
             '_static/css/theme_overrides.css',
         ],
+        'disclaimer': _DISCLAIMER,
     }
 
 html_logo = _LOGO_SMALL

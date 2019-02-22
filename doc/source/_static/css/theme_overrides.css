@@ -1,1 +1,5 @@
-/* nothing here yet */
+div.disclaimer {
+    margin-top: 12px;
+    font-size: 10px;
+    font-style: italic;
+}
