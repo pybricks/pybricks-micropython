@@ -143,7 +143,7 @@ html_logo = _LOGO_SMALL
 # documentation.
 #
 html_theme_options = {
-#    'style_external_links': True,
+   'style_external_links': True,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
