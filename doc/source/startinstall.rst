@@ -29,7 +29,7 @@ The easiest way to write your MicroPython programs is using Microsoft Visual Stu
 2. Follow the on-screen instructions to install the application.
 3. Launch Visual Studio Code
 4. Open the extensions tab as shown below.
-4. Install and activate the required extensions:
+5. Install and activate the required extensions:
 
 .. warning::
 
@@ -74,7 +74,7 @@ To create the micro SD card:
    Using Etcher to flash the firmware to the micro SD card
 
 Updating from older version of EV3 MicroPython
-____________________________________________________________
+-----------------------------------------------------------
 To update the firmware to the latest version, simply download a new image and flash it to the micro SD card as described above. Be sure to :ref:`back up any Python programs you want to save <managefiles>`.
 
 Running the ev3dev image on the brick
