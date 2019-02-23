@@ -54,3 +54,7 @@ genrst/
 ######################
 Pipfile
 Pipfile.lock
+
+# VS Code local settings
+######################
+.vscode/*
