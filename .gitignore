@@ -58,3 +58,7 @@ Pipfile.lock
 # VS Code local settings
 ######################
 .vscode/*
+
+# Mac OS cache
+######################
+.DS_Store
