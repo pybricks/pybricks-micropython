@@ -1,30 +1,5 @@
-/*
- * Copyright (c) 2018 Laurens Valk
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the Institute nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2018 Laurens Valk
 
 #include <pbio/motorref.h>
 #include <stdlib.h>
@@ -254,7 +229,7 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
         motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_HOLDING;
 
     // Experimental work around for run in fast loop
-    if (action == RUN && 
+    if (action == RUN &&
         previous_action == RUN &&
         (currently_active || motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_STARTING) &&
         time_start - previous_time_start < settings->tight_loop_time) {
@@ -268,8 +243,8 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
         // If the previous action was also track target, just keep running, otherwise start a new maneuver
         motor_control_active[PORT_TO_IDX(port)] = previous_action == TRACK_TARGET && currently_active ?
                                                   PBIO_MOTOR_CONTROL_RUNNING:
-                                                  PBIO_MOTOR_CONTROL_STARTING;         
-        traject->action = action;   
+                                                  PBIO_MOTOR_CONTROL_STARTING;
+        traject->action = action;
         make_trajectory_none(time_start, duration_or_target_position*settings->counts_per_output_unit, 0, traject);
         return PBIO_SUCCESS;
     }

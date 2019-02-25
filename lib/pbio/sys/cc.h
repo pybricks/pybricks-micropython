@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: BSD-3-Clause
 /*
  * Copyright (c) 2003, Adam Dunkels.
  * All rights reserved.

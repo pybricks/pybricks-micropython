@@ -1,10 +1,10 @@
 /******************************************************************************
 *
-*  File Description 
+*  File Description
 *  ---------------------
 * This file defines constants and functions for HCI layer.
 * See Bluetooth Core v 4.0, Vol. 2, Part E.
-* 
+*
 *******************************************************************************/
 
 #ifndef __HCI_CONST_H_

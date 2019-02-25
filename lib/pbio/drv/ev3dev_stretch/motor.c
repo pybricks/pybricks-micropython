@@ -1,30 +1,5 @@
-/*
- * Copyright (c) 2018 Laurens Valk
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the Institute nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2018 Laurens Valk
 
 #include <dirent.h>
 #include <stdbool.h>
@@ -112,7 +87,7 @@ pbio_error_t sysfs_motor_init(pbio_port_t port){
 
             if (port_index == PORT_TO_IDX(port)) {
                 // Motor detected. Configure accordingly
-                motor_files[port_index].dir_number = dir_number;               
+                motor_files[port_index].dir_number = dir_number;
                 // Reset motor
                 sysfs_motor_command(port, "reset");
                 motor_files[PORT_TO_IDX(port)].coasting = true;
@@ -125,7 +100,7 @@ pbio_error_t sysfs_motor_init(pbio_port_t port){
                 // Extract the port (14th) character, convert to numeric, and close address file
                 char driver_name[32];
                 fgets(driver_name, sizeof(driver_name), idf);
-                fclose(idf);                 
+                fclose(idf);
                 driver_name[strcspn(driver_name, "\n")] = 0;
                 if (!strcmp(driver_name, "lego-ev3-m-motor")) {
                     motor_files[port_index].id = PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR;
@@ -220,7 +195,7 @@ pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
         return PBIO_ERROR_INVALID_PORT;
     }
     if (0 == fseek(motor_files[PORT_TO_IDX(port)].f_encoder_count, 0, SEEK_SET) &&
-        0 <= fscanf(motor_files[PORT_TO_IDX(port)].f_encoder_count, "%d", count) && 
+        0 <= fscanf(motor_files[PORT_TO_IDX(port)].f_encoder_count, "%d", count) &&
         0 == fflush(motor_files[PORT_TO_IDX(port)].f_encoder_count)) {
         return PBIO_SUCCESS;
     }
@@ -236,7 +211,7 @@ pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
         0 == fflush(motor_files[PORT_TO_IDX(port)].f_encoder_rate)) {
         return PBIO_SUCCESS;
     }
-    return PBIO_ERROR_IO;    
+    return PBIO_ERROR_IO;
 }
 
 pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
