@@ -13,7 +13,7 @@ This page shows you how to create such a project and how to transfer it to the E
    :alt: alt
    :align: center
 
-   A project contains a program called **main.py** and optional resources like sounds or Python modules.
+   A project contains a program called **main.py** and optional resources like sounds or MicroPython modules.
 
 
 Creating a new project
@@ -30,7 +30,7 @@ To create a new project, open the Pybricks tab and click *create a new project*.
 
 When you create a new project, it already includes an example *main.py* file that you can modify and extend. To see its contents and to modify it, open it from the file browser as shown below.
 
-If you are new to Python or MicroPython programming, we recommend that you keep the existing code in place, and write your own code below it.
+If you are new to MicroPython programming, we recommend that you keep the existing code in place, and write your own code below it.
 
 .. figure:: images/projectoverview.png
    :width: 100 %

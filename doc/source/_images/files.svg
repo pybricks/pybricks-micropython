@@ -75,7 +75,7 @@
      inkscape:window-maximized="1"
      inkscape:current-layer="svg2" />
   <image
-     sodipodi:absref="/home/laurens/pybricks/git/micropython/ports/pybricks/doc/source/_images/files.png"
+     sodipodi:absref="files.png"
      xlink:href="files.png"
      width="977"
      height="643"
@@ -84,7 +84,7 @@
      x="0"
      y="0" />
   <image
-     sodipodi:absref="/home/laurens/pybricks/git/micropython/ports/pybricks/doc/source/_images/files1.png"
+     sodipodi:absref="files1.png"
      xlink:href="files1.png"
      width="173"
      height="156"
@@ -100,7 +100,7 @@
      x="502.80865"
      y="210.17946" />
   <image
-     sodipodi:absref="/home/laurens/pybricks/git/micropython/ports/pybricks/doc/source/_images/files.png"
+     sodipodi:absref="files.png"
      xlink:href="files.png"
      transform="translate(-40.656854,-304.01429)"
      clip-path="url(#clipPath883)"
