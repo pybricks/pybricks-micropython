@@ -25,7 +25,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -44,9 +44,9 @@
      inkscape:window-height="1016"
      id="namedview4"
      showgrid="false"
-     inkscape:zoom="0.834386"
-     inkscape:cx="453.11103"
-     inkscape:cy="370.06923"
+     inkscape:zoom="2.36"
+     inkscape:cx="170.96633"
+     inkscape:cy="193.22709"
      inkscape:window-x="67"
      inkscape:window-y="27"
      inkscape:window-maximized="1"
@@ -54,13 +54,13 @@
   <image
      sodipodi:absref="overview.jpg"
      xlink:href="overview.jpg"
-     style="stroke-width:0.3199999"
-     width="800"
-     height="521"
-     preserveAspectRatio="none"
-     id="image852"
+     y="0"
      x="0"
-     y="0" />
+     id="image852"
+     preserveAspectRatio="none"
+     height="521"
+     width="800"
+     style="stroke-width:0.3199999" />
   <path
      style="fill:none;stroke:#6ab0de;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
      d="M 514.53044,444.44518 H 581.7056"
@@ -112,14 +112,14 @@
      style="opacity:1;fill:none;fill-opacity:1;stroke:#6ab0de;stroke-width:4;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
   <rect
      y="374.04733"
-     x="27.343678"
+     x="26.49622"
      height="42.092525"
      width="228.95509"
      id="rect4629"
      style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
   <rect
      y="374.04733"
-     x="27.343678"
+     x="26.49622"
      height="4"
      width="228.95509"
      id="rect4631"
@@ -127,44 +127,44 @@
   <text
      xml:space="preserve"
      style="font-style:normal;font-weight:normal;font-size:24.19441986px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#404140;fill-opacity:1;stroke:none;stroke-width:0.60486054"
-     x="37.313892"
+     x="36.466434"
      y="404.63257"
      id="text4635"><tspan
        sodipodi:role="line"
        id="tspan4633"
-       x="37.313892"
+       x="36.466434"
        y="404.63257"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054">Download and run</tspan></text>
   <rect
      style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
      id="rect4651"
-     width="271.32797"
+     width="300.14154"
      height="73.236595"
-     x="27.343678"
+     x="26.49622"
      y="374.04733" />
   <rect
      style="opacity:1;fill:#6ab0de;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
      id="rect4653"
-     width="271.32797"
+     width="300.14154"
      height="4"
-     x="27.343678"
+     x="26.49622"
      y="374.04733" />
   <text
      id="text4657"
      y="404.63257"
-     x="37.313892"
+     x="36.466434"
      style="font-style:normal;font-weight:normal;font-size:24.19441986px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#404140;fill-opacity:1;stroke:none;stroke-width:0.60486054"
      xml:space="preserve"><tspan
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054"
        y="404.63257"
-       x="37.313892"
+       x="36.466434"
        id="tspan4655"
-       sodipodi:role="line">Micro SD card with</tspan><tspan
+       sodipodi:role="line">MicroSD card with</tspan><tspan
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054"
        y="435.71646"
-       x="37.313892"
+       x="36.466434"
        sodipodi:role="line"
-       id="tspan915">EV3 Python Firmware</tspan></text>
+       id="tspan915">EV3 MicroPython image</tspan></text>
   <path
      style="fill:none;stroke:#6ab0de;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
      d="M 474.94723,55.976055 H 407.77207"
@@ -247,5 +247,5 @@
        y="244.96677"
        x="37.086269"
        id="tspan4615"
-       sodipodi:role="line">EV3 Brick</tspan></text>
+       sodipodi:role="line">EV3 brick</tspan></text>
 </svg>

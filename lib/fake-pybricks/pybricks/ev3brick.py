@@ -1,4 +1,4 @@
-"""LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 Brick."""
+"""LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 brick."""
 
 from parameters import Color
 from _speaker import Speaker

@@ -3,6 +3,8 @@ Creating and running programs
 
 Now that you've set up your computer and your EV3 brick, you're ready to start writing programs.
 
+To make it easier to create and manage your programs, let's first have a quick look at how MicroPython projects and programs for your EV3 robots are organized.
+
 Programs are organized into *project folders*, as shown below. A project folder is a directory on your computer that contains the main program (**main.py**), and other optional scripts or files. This project folder and all of its contents will be copied to the EV3, where the main program will be run.
 
 This page shows you how to create such a project and how to transfer it to the EV3.
@@ -13,13 +15,13 @@ This page shows you how to create such a project and how to transfer it to the E
    :alt: alt
    :align: center
 
-   A project contains a program called **main.py** and optional resources like sounds or Python modules.
+   A project contains a program called **main.py** and optional resources like sounds or MicroPython modules.
 
 
 Creating a new project
 -----------------------------------------------------------
 
-To create a new project, open the Pybricks tab and click *create a new project*. Enter a project name in the text field that appears, and press *Enter*. When prompted, choose for a location for this program and confirm by clocking *choose folder*. This is summarized in the diagram below.
+To create a new project, open the Pybricks tab and click *create a new project*, as shown below. Enter a project name in the text field that appears and press *Enter*. When prompted, choose a location for this program and confirm by clicking *choose folder*.
 
 .. figure:: images/newproject.png
    :width: 100 %
@@ -28,9 +30,9 @@ To create a new project, open the Pybricks tab and click *create a new project*.
 
    Creating a new project. This example is called *getting_started*, but you can choose any name.
 
-When you create a new project, it already includes an example *main.py* file that you can modify and extend. To see its contents and to modify it, open it from the file browser as shown below.
+When you create a new project, it already includes a file called *main.py*. To see its contents and to modify it, open it from the file browser as shown below. This is where you'll write your programs.
 
-If you are new to Python or MicroPython programming, we recommend that you keep the existing code in place, and write your own code below it.
+If you are new to MicroPython programming, we recommend that you keep the existing code in place and add your code to it.
 
 .. figure:: images/projectoverview.png
    :width: 100 %
@@ -41,26 +43,30 @@ If you are new to Python or MicroPython programming, we recommend that you keep 
 
 
 
-Setting up the connection
+Connecting to the EV3 brick with Visual Studio Code
 -----------------------------------------------------------
 
-You'll now learn how to transfer your project to the EV3 brick and run the main program. 
+To be able to transfer your code to the EV3 brick, you'll first need to connect the EV3 brick to your computer with the mini-USB cable and configure this connection with Visual Studio Code. To do so:
 
-First, make sure that your EV3 is turned on and that it is connected to your computer. Then, follow the steps below to configure the connection.
+- Turn the EV3 brick on
+- Connect the EV3 brick to your computer with the mini-USB cable
+- Configure the USB connection as shown:
 
 .. figure:: images/connecting.png
    :width: 100 %
    :alt: alt
    :align: center
 
-   Configuring the connection between the computer and the EV3
+   Configuring the USB connection between the computer and the EV3 brick
 
 Downloading and running a program
 -----------------------------------------------------------
 
-You can press the F5 key to run your program. Alternatively, you can start it manually by going to the *debug* tab, and clicking the green start arrow, as shown below.
+You can press the F5 key to run the program. Alternatively, you can start it manually by going to the *debug* tab, and clicking the green start arrow, as shown below.
 
-When the program starts, a pop up toolbar allows you to stop the program if necessary. If your program produces any output, this is shown in the output window.
+When the program starts, a pop up toolbar allows you to stop the program if necessary. You can also stop the program at any time using the back button on the EV3 brick.
+
+If your program produces any output with the :mod:`print <.tools>` command, this is shown in the output window.
 
 .. figure:: images/running.png
    :width: 100 %
@@ -72,7 +78,7 @@ When the program starts, a pop up toolbar allows you to stop the program if nece
 Expanding the example program
 -----------------------------------------------------------
 
-Now that you've run the basic code template, let's expand the program to make a motor move. First, attach a Large Motor to Port B on the EV3 brick, as shown below.
+Now that you've run the basic code template, you can expand the program to make a motor move. First, attach a Large Motor to Port B on the EV3 brick, as shown below.
 
 
 .. figure:: images/firstprogram.png
@@ -82,36 +88,37 @@ Now that you've run the basic code template, let's expand the program to make a 
 
    The EV3 brick with a Large Motor attached to port B.
 
-Next, edit *main.py* such that looks like this:
+Next, edit *main.py* to make it look like this:
 
 .. literalinclude:: ../../examples/ev3/getting_started/main.py
 
-When you run the program, you'll hear a beep, the motor rotates, and you'll hear another higher pitched beep.
+This program makes your robot beep, rotate the motor, and beep again with a higher pitched tone. Run the program to make sure that it works as expected.
 
 .. _managefiles:
 
 Managing files on the EV3
 -----------------------------------------------------------
 
-After you've downloaded a project to the EV3, you can run, delete, or back up programs stored on the EV3, as shown in the diagram below.
+After you've downloaded a project to the EV3, you can run, delete, or back up programs stored on the EV3 using the device browser:
 
 .. figure:: images/files.png
    :width: 100 %
    :alt: alt
    :align: center
 
-   The EV3 brick with a Large Motor attached to port B.
+   Using the EV3 device browser to manage files on your EV3
 
 
 Running a program without a computer
 -----------------------------------------------------------
 
+You can run previously downloaded programs directly from the brick.
 
-After you've downloaded your project to your EV3 brick, you can restart it even when it is not connected to a computer. To do so, find the file using the *file browser* and use the *Enter* key to start the program.
+To do so, find the program using the *file browser* on the EV3 screen and use the center button key to start the program.
 
 .. figure:: images/manualrun.png
    :width: 100 %
    :alt: alt
    :align: center
 
-   Starting a program using the buttons of the EV3 brick
+   Starting a program using the buttons on the EV3 brick
