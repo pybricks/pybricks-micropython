@@ -1,16 +1,15 @@
-Ultrasonic Sensor Driving Base
+Robot Educator
 =====================
 
-The program in this example makes the Ultrasonic Sensor Driving Base drive until it sees an obstacle. When it does it backs up, turns and starts driving again.
+This example makes the Robot Educator drive until it sees an obstacle. Then it backs up, turns around, and starts driving again.
 
 You can find building instructions on the `LEGO Education website <https://education.lego.com/en-us/support/mindstorms-ev3/building-instructions#robot>`_.
 
 .. figure:: ../images/ultrasonic_sensor_driving_base.jpg
-   :width: 90 %
+   :width: 50 %
    :alt: overview
    :align: center
 
-   Educator Driving base with Ultrasonic Sensor
-
+   Robot Educator with the Ultrasonic Sensor
 
 .. literalinclude:: ../../../examples/ev3/robot_educator/main.py

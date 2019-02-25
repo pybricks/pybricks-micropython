@@ -1,15 +1,18 @@
 Robot Arm H25
 =====================
 
-The example program below is written for the core education Robot Arm H25. It moves the black hubs around forever. Start the program with the black hubs positioned as show in the picture. The robot arm will first initialise and then start moving the hubs around. 
+This example program makes the robot move the black wheel hub stacks around forever. Start the program with the black hubs positioned as show in the picture. The robot arm will first initialize and then start moving the hubs around. 
 
-Building instructions for the robot arm can be found `on the LEGO website <https://le-www-live-s.legocdn.com/sc/media/lessons/mindstorms-ev3/building-instructions/ev3-model-core-set-robot-arm-h25-56cdb22c1e3a02f1770bda72862ce2bd.pdf>`_. Hint: turn the EV3 Intelligent Brick 180 degrees around when building. This way the micro SD card slot is accessible.
+You can find building instructions on the `LEGO Education website <https://le-www-live-s.legocdn.com/sc/media/lessons/mindstorms-ev3/building-instructions/ev3-model-core-set-robot-arm-h25-56cdb22c1e3a02f1770bda72862ce2bd.pdf>`_.
+
+
+Tip: When building the robot, reverse the orientation of the EV3 brick such that the microSD card is easily accessible.
 
 .. figure:: ../images/robot_arm.jpg
    :width: 90 %
    :alt: overview
    :align: center
 
-   Overview of the robot arm
+   Robot Arm H25
 
 .. literalinclude:: ../../../examples/ev3/robot_arm_h25/main.py
