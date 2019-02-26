@@ -40,7 +40,7 @@ class Display():
         pass
 
     def image(self, file_name, alignment=Align.center, coordinate=None, clear=True):
-        """image(self, file_name, alignment=Align.center, coordinate=None, clear=True)
+        """image(file_name, alignment=Align.center, coordinate=None, clear=True)
 
         Show an image file.
 

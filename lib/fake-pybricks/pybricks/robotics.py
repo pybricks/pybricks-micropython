@@ -67,7 +67,7 @@ class DriveBase():
         pass
 
     def stop(self, stop_type=Stop.coast):
-        """stop(self, stop_type=Stop.coast)
+        """stop(stop_type=Stop.coast)
 
         Stop the robot.
 

@@ -102,7 +102,7 @@ class Motor():
         pass
 
     def stop(self, stop_type=Stop.coast):
-        """stop(self, stop_type=Stop.coast)
+        """stop(stop_type=Stop.coast)
 
         Stop the motor.
 
@@ -122,7 +122,7 @@ class Motor():
         pass
 
     def run_time(self, speed, time, stop_type=Stop.coast, wait=True):
-        """run_time(self, speed, time, stop_type=Stop.coast, wait=True)
+        """run_time(speed, time, stop_type=Stop.coast, wait=True)
 
         Run the motor at a constant speed (angular velocity) for a given amount of time.
 
@@ -137,7 +137,7 @@ class Motor():
         pass
 
     def run_angle(self, speed, rotation_angle, stop_type=Stop.coast, wait=True):
-        """run_angle(self, speed, rotation_angle, stop_type=Stop.coast, wait=True)
+        """run_angle(speed, rotation_angle, stop_type=Stop.coast, wait=True)
 
         Run the motor at a constant speed (angular velocity) by a given angle.
 
@@ -152,7 +152,7 @@ class Motor():
         pass
 
     def run_target(self, speed, target_angle, stop_type=Stop.coast, wait=True):
-        """run_target(self, speed, target_angle, stop_type=Stop.coast, wait=True)
+        """run_target(speed, target_angle, stop_type=Stop.coast, wait=True)
 
         Run the motor at a constant speed (angular velocity) towards a given target angle.
 
@@ -169,7 +169,7 @@ class Motor():
         pass
 
     def run_until_stalled(self, speed, stop_type=Stop.coast, duty_limit=None):
-        """run_until_stalled(self, speed, stop_type=Stop.coast, duty_limit=default)
+        """run_until_stalled(speed, stop_type=Stop.coast, duty_limit=default)
 
         Run the motor at a constant speed (angular velocity) until it stalls. The motor is considered stalled when it cannot move even with the maximum torque. See :meth:`.stalled` for a more precise definition.
 
