@@ -46,15 +46,6 @@ STATIC const mp_rom_map_elem_t motor_Direction_enum_table[] = {
 };
 PB_DEFINE_CONST_ENUM(motor_Direction_enum, motor_Direction_enum_table);
 
-/* Motor completion type enum */
-
-STATIC const mp_rom_map_elem_t motor_Completion_enum_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_foreground),  MP_ROM_INT(PBIO_MOTOR_RUN_FOREGROUND)   },
-    { MP_ROM_QSTR(MP_QSTR_background),  MP_ROM_INT(PBIO_MOTOR_RUN_BACKGROUND)   },
-};
-PB_DEFINE_CONST_ENUM(motor_Completion_enum, motor_Completion_enum_table);
-
-
 /* Color enum */
 
 STATIC const mp_rom_map_elem_t pb_Color_enum_table[] = {
@@ -102,7 +93,6 @@ STATIC const mp_rom_map_elem_t parameters_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Port),        MP_ROM_PTR(&pb_Port_enum)           },
     { MP_ROM_QSTR(MP_QSTR_Stop),        MP_ROM_PTR(&motor_Stop_enum)        },
     { MP_ROM_QSTR(MP_QSTR_Direction),   MP_ROM_PTR(&motor_Direction_enum)   },
-    { MP_ROM_QSTR(MP_QSTR_Completion),  MP_ROM_PTR(&motor_Completion_enum)  },
     { MP_ROM_QSTR(MP_QSTR_Color),       MP_ROM_PTR(&pb_Color_enum)          },
     { MP_ROM_QSTR(MP_QSTR_Button),      MP_ROM_PTR(&pb_Button_enum)         },
 };
