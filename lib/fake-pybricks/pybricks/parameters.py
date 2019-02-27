@@ -218,7 +218,7 @@ class Align():
     TOP_RIGHT = 9
 
 
-class Sound():
+class SoundFile():
     """Paths to standard EV3 sounds.
 
     Expressions
@@ -463,7 +463,7 @@ class Sound():
     OVERPOWER = _BASE_PATH + 'system/overpower.wav'
 
 
-class Image():
+class ImageFile():
     """Paths to standard EV3 images.
 
     Information

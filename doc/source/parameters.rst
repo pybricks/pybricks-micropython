@@ -22,8 +22,8 @@
 .. autoclass:: parameters.Align
     :no-members:
 
-.. autoclass:: parameters.Image
+.. autoclass:: parameters.ImageFile
     :no-members:
 
-.. autoclass:: parameters.Sound
+.. autoclass:: parameters.SoundFile
     :no-members:
