@@ -1,15 +1,15 @@
-"""LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 motors and sensors."""
+"""LEGO® MINDSTORMS® EV3 motors and sensors."""
 
 from parameters import Stop, Direction
 
 
 class Motor():
-    """LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 Medium or Large Motor.
+    """LEGO® MINDSTORMS® EV3 Medium or Large Motor.
 
     Element 99455/6148292 or 95658/6148278, contained in:
 
-    * 31313: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 (2013)
-    * 45544: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` Education EV3 Core Set (2013)
+    * 31313: LEGO® MINDSTORMS® EV3 (2013)
+    * 45544: LEGO® MINDSTORMS® Education EV3 Core Set (2013)
     * 45503 or 45502: Separate part (2013)
     """
 
@@ -219,7 +219,7 @@ class Motor():
         """Configure the settings to adjust the behavior of the :meth:`.dc` command. This also affects all of the ``run`` commands, which use the :meth:`.dc` method in the background.
 
         Arguments:
-            duty_limit (:ref:`percentage`): Relative torque limit during subsequent motor commands. This sets the maximum duty cycle that is applied during any subsequent motor command. This reduces the maximum torque output to a percentage of the absolute maximum stall torque. This is useful to avoid applying the full motor torque to a geared or lever mechanism, or to prevent your LEGO\ :sup:`®` train from unintentionally going at full speed. (*Default*: 100).
+            duty_limit (:ref:`percentage`): Relative torque limit during subsequent motor commands. This sets the maximum duty cycle that is applied during any subsequent motor command. This reduces the maximum torque output to a percentage of the absolute maximum stall torque. This is useful to avoid applying the full motor torque to a geared or lever mechanism, or to prevent your LEGO® train from unintentionally going at full speed. (*Default*: 100).
             duty_offset (:ref:`percentage`): Minimum duty cycle given when you use :meth:`.dc`. This adds a small feed forward torque so that your motor will move even for very low duty cycle values, which can be useful when you create your own feedback controllers (*Default*: 0).
         """
         pass
@@ -262,12 +262,12 @@ class Motor():
 
 
 class TouchSensor():
-    """LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 Touch Sensor.
+    """LEGO® MINDSTORMS® EV3 Touch Sensor.
 
     Element 95648/6138404, contained in:
 
-    * 31313: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 (2013)
-    * 45544: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` Education EV3 Core Set (2013)
+    * 31313: LEGO® MINDSTORMS® EV3 (2013)
+    * 45544: LEGO® MINDSTORMS® Education EV3 Core Set (2013)
     * 45507: Separate part (2013)
 
     """
@@ -291,12 +291,12 @@ class TouchSensor():
 
 
 class ColorSensor():
-    """LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 Color Sensor.
+    """LEGO® MINDSTORMS® EV3 Color Sensor.
 
     Element 95650/6128869, contained in:
 
-    * 31313: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 (2013)
-    * 45544: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` Education EV3 Core Set (2013)
+    * 31313: LEGO® MINDSTORMS® EV3 (2013)
+    * 45544: LEGO® MINDSTORMS® Education EV3 Core Set (2013)
     * 45506: Separate part (2013)
     """
 
@@ -347,11 +347,11 @@ class ColorSensor():
 
 
 class InfraredSensor():
-    """LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 Infrared Sensor and Beacon.
+    """LEGO® MINDSTORMS® EV3 Infrared Sensor and Beacon.
 
     Element 95654/6132629 and 72156/6127283, contained in:
 
-    * 31313: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 (2013)
+    * 31313: LEGO® MINDSTORMS® EV3 (2013)
     * 45509 and 45508: Separate parts (2013)
     """
 
@@ -398,11 +398,11 @@ class InfraredSensor():
 
 
 class GyroSensor():
-    """LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 Gyro Sensor.
+    """LEGO® MINDSTORMS® EV3 Gyro Sensor.
 
     Element 99380/6138411, contained in:
 
-    * 45544: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` Education EV3 Core Set (2013)
+    * 45544: LEGO® MINDSTORMS® Education EV3 Core Set (2013)
     * 45505: Separate part (2013)
     """
 
@@ -453,11 +453,11 @@ class GyroSensor():
 
 
 class UltrasonicSensor():
-    """LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 Ultrasonic Sensor.
+    """LEGO® MINDSTORMS® EV3 Ultrasonic Sensor.
 
     Element 95652/6138403, contained in:
 
-    * 45544: LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` Education EV3 Core Set (2013)
+    * 45544: LEGO® MINDSTORMS® Education EV3 Core Set (2013)
     * 45504: Separate part (2013)
 
     """

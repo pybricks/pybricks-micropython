@@ -52,7 +52,7 @@ You'll write your MicroPython programs using Visual Studio Code. Follow the step
 Preparing the microSD card
 -----------------------------------------------------------
 
-To make it possible to run MicroPython programs on your EV3 brick, you'll now learn how to install the required tools on your microSD card.
+To make it possible to run MicroPython programs on your EV3 Brick, you'll now learn how to install the required tools on your microSD card.
 
 If the microSD card contains files you want to keep, make sure to create a backup of its contents first. See :ref:`managing files on the EV3 <managefiles>` to learn how to backup your previous MicroPython programs if necessary.
 
@@ -85,34 +85,34 @@ To update the microSD card, download a new image file using the link above and f
 
 You do not need to erase the contents of the microSD card first. This is done automatically when you flash the new image file.
 
-Using the EV3 brick
+Using the EV3 Brick
 -----------------------------------------------------------
 
-Make sure the EV3 brick is turned off. Insert the microSD card you prepared into the microSD card slot on the EV3 brick, as shown below.
+Make sure the EV3 Brick is turned off. Insert the microSD card you prepared into the microSD card slot on the EV3 Brick, as shown below.
 
 .. figure:: images/sd.png
    :width: 75 %
    :alt: sd
    :align: center
 
-   Inserting the flashed microSD card into the EV3 brick
+   Inserting the flashed microSD card into the EV3 Brick
 
 
-Turning the EV3 brick on and off
+Turning the EV3 Brick on and off
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Turn on the EV3 brick by pressing the dark gray center button.
+Turn on the EV3 Brick by pressing the dark gray center button.
 
-The boot process may take several minutes. While booting, the EV3 brick status light turns orange and blinks intermittently, and you'll see a lot of text on the EV3 screen. The EV3 brick is ready for use when the status light turns green.
+The boot process may take several minutes. While booting, the EV3 Brick status light turns orange and blinks intermittently, and you'll see a lot of text on the EV3 screen. The EV3 Brick is ready for use when the status light turns green.
 
-To turn the EV3 brick off, open the shutdown menu with the back button, and then select *Power Off* using the center button, as shown below.
+To turn the EV3 Brick off, open the shutdown menu with the back button, and then select *Power Off* using the center button, as shown below.
 
 .. figure:: images/onoff.png
    :width: 65 %
    :alt: devicebrowser
    :align: center
 
-   Turning the EV3 brick off
+   Turning the EV3 Brick off
 
 Viewing motor and sensor values
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -131,7 +131,7 @@ Going back to the original firmware
 
 You can go back to the LEGO® firmware and your LEGO programs at any time. To do so:
 
-1. Turn the EV3 brick off as shown above.
+1. Turn the EV3 Brick off as shown above.
 2. Wait for the screen and brick status light to turn off.
 3. Remove the microSD card.
 4. Turn the EV3 on.

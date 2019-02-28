@@ -49,7 +49,7 @@ def _ba2str(ba):
 
 
 class BluetoothRemote():
-    """Object that represents a Bluetooth connection to a remote EV3 brick.
+    """Object that represents a Bluetooth connection to a remote EV3 Brick.
 
     Parameters:
         name (str): The MAC address of the remote brick

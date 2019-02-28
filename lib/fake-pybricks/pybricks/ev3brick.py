@@ -1,11 +1,11 @@
-"""LEGO\ :sup:`®` MINDSTORMS\ :sup:`®` EV3 brick."""
+"""LEGO® MINDSTORMS® EV3 Brick."""
 
 from parameters import Color
 from _speaker import Speaker
 from _display import Display
 
 def buttons():
-    """Check which buttons on the EV3 brick are currently pressed.
+    """Check which buttons on the EV3 Brick are currently pressed.
 
     :returns: List of pressed buttons.
     :rtype: List of :class:`Button <parameters.Button>`

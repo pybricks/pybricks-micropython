@@ -12,7 +12,7 @@ our [MicroPython fork](https://github.com/pybricks/micropython) and its submodul
 
         docker exec --tty pybricks-ev3dev_armel make
 
-3. Transfer the generated `pybricks-micropython` to the EV3 brick.
+3. Transfer the generated `pybricks-micropython` to the EV3 Brick.
 
         scp bricks/ev3dev/pybricks-micropython robot@ev3dev:~
 
