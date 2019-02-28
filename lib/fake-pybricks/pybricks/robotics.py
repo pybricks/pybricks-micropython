@@ -66,12 +66,12 @@ class DriveBase():
         """
         pass
 
-    def stop(self, stop_type=Stop.coast):
-        """stop(stop_type=Stop.coast)
+    def stop(self, stop_type=Stop.COAST):
+        """stop(stop_type=Stop.COAST)
 
         Stop the robot.
 
         Arguments:
-            stop_type (Stop): Whether to coast, brake, or hold (*Default*: :class:`Stop.coast <parameters.Stop>`).
+            stop_type (Stop): Whether to coast, brake, or hold (*Default*: :class:`Stop.COAST <parameters.Stop>`).
         """
         pass

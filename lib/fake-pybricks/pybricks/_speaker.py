@@ -49,7 +49,7 @@ class Speaker():
         Example::
 
             # Play one of the built-in sounds
-            brick.sound.file(Sound.hello)
+            brick.sound.file(SoundFile.HELLO)
 
             # Play a sound file from your project folder
             brick.sound.file('mysound.wav')

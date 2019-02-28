@@ -63,12 +63,12 @@ class Display():
 
         self._prev_text_location = (x, y)
 
-    def image(self, file_name, location_or_alignment=Align.center, clear=True):
+    def image(self, file_name, location_or_alignment=Align.CENTER, clear=True):
         """Show an image file on the display.
 
         Arguments:
             file_name {str} -- Path to the image file.
-            location_or_alignment {(x, y) coordinate or alignment} -- Where to place the image. (default: {Align.center})
+            location_or_alignment {(x, y) coordinate or alignment} -- Where to place the image. (default: {Align.CENTER})
             clear {bool} -- Clear the screen before showing the image. (default: {True})
         """
         # Load the file unless already loaded
@@ -85,20 +85,20 @@ class Display():
         else:
             # Otherwise, get x, y based on location and image size
             align = location_or_alignment
-            assert Align.bottom_left <= align <= Align.top_right, "Invalid location."
+            assert Align.BOTTOM_LEFT <= align <= Align.TOP_RIGHT, "Invalid location."
 
             # Find horizontal location
-            if align in [Align.left, Align.bottom_left, Align.top_left]:
+            if align in [Align.LEFT, Align.BOTTOM_LEFT, Align.TOP_LEFT]:
                 x = 0
-            elif align in [Align.right, Align.bottom_right, Align.top_right]:
+            elif align in [Align.RIGHT, Align.BOTTOM_RIGHT, Align.TOP_RIGHT]:
                 x = self._device._screen.width - width
             else:
                 x = (self._device._screen.width - width) // 2
 
             # Find vertical location
-            if align in [Align.top, Align.top_left, Align.top_right]:
+            if align in [Align.TOP, Align.TOP_LEFT, Align.TOP_RIGHT]:
                 y = 0
-            elif align in [Align.bottom, Align.bottom_left, Align.bottom_right]:
+            elif align in [Align.BOTTOM, Align.BOTTOM_LEFT, Align.BOTTOM_RIGHT]:
                 y = self._device._screen.height - height
             else:
                 y = (self._device._screen.height - height) // 2

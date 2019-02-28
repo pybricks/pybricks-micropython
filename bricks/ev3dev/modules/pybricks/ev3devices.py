@@ -60,7 +60,9 @@ class ColorSensor(Ev3devSensor):
         """Check the color of a surface.
 
         Returns:
-            int -- Color.black, Color.blue, Color.green, Color.yellow, Color.red, Color.white, or Color.brown. Returns None if no color is detected.
+            int -- Color.BLACK, Color.BLUE, Color.GREEN, Color.YELLOW,
+                   Color.RED, Color.WHITE, or Color.BROWN. Returns None if no
+                   color is detected.
 
         """
         self._mode('COL-COLOR')
@@ -118,17 +120,17 @@ class InfraredSensor(Ev3devSensor):
     _number_of_values = 8
     _combinations = {
         0: [],
-        1: [Button.left_up],
-        2: [Button.left_down],
-        3: [Button.right_up],
-        4: [Button.right_down],
-        5: [Button.left_up, Button.right_up],
-        6: [Button.left_up, Button.right_down],
-        7: [Button.left_down, Button.right_up],
-        8: [Button.left_down, Button.right_down],
-        9: [Button.beacon],
-        10: [Button.left_up, Button.left_down],
-        11: [Button.right_up, Button.right_down]
+        1: [Button.LEFT_UP],
+        2: [Button.LEFT_DOWN],
+        3: [Button.RIGHT_UP],
+        4: [Button.RIGHT_DOWN],
+        5: [Button.LEFT_UP, Button.RIGHT_UP],
+        6: [Button.LEFT_UP, Button.RIGHT_DOWN],
+        7: [Button.LEFT_DOWN, Button.RIGHT_UP],
+        8: [Button.LEFT_DOWN, Button.RIGHT_DOWN],
+        9: [Button.BEACON],
+        10: [Button.LEFT_UP, Button.LEFT_DOWN],
+        11: [Button.RIGHT_UP, Button.RIGHT_DOWN]
     }
 
     def distance(self):
@@ -209,25 +211,25 @@ class GyroSensor(Ev3devUartSensor):
     _number_of_values = 2
     _default_mode = 'GYRO-G&A'
 
-    def __init__(self, port, direction=Direction.clockwise):
+    def __init__(self, port, direction=Direction.CLOCKWISE):
         Ev3devUartSensor.__init__(self, port)
         self._direction = direction
         self.reset_angle()
 
     def speed(self):
-        if self._direction == Direction.clockwise:
+        if self._direction == Direction.CLOCKWISE:
             return self._value(1)
         else:
             return -self._value(1)
 
     def angle(self):
-        if self._direction == Direction.clockwise:
+        if self._direction == Direction.CLOCKWISE:
             return self._value(0) - self.offset
         else:
             return -self._value(0) - self.offset
 
     def reset_angle(self, angle=0):
-        if self._direction == Direction.clockwise:
+        if self._direction == Direction.CLOCKWISE:
             self.offset = self._value(0) - angle
         else:
             self.offset = -self._value(0) - angle

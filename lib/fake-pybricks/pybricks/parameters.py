@@ -6,26 +6,26 @@ from enum import Enum
 class Color(Enum):
     """Light or surface color.
 
-    .. data:: black
-    .. data:: blue
-    .. data:: green
-    .. data:: yellow
-    .. data:: red
-    .. data:: white
-    .. data:: brown
-    .. data:: orange
-    .. data:: purple
+    .. data:: BLACK
+    .. data:: BLUE
+    .. data:: GREEN
+    .. data:: YELLOW
+    .. data:: RED
+    .. data:: WHITE
+    .. data:: BROWN
+    .. data:: ORANGE
+    .. data:: PURPLE
     """
 
-    black = 1
-    blue = 2
-    green = 3
-    yellow = 4
-    red = 5
-    white = 6
-    brown = 7
-    orange = 8
-    purple = 9
+    BLACK = 1
+    BLUE = 2
+    GREEN = 3
+    YELLOW = 4
+    RED = 5
+    WHITE = 6
+    BROWN = 7
+    ORANGE = 8
+    PURPLE = 9
 
 
 class Port(Enum):
@@ -62,15 +62,15 @@ class Port(Enum):
 class Stop(Enum):
     """Action after the motor stops: coast, brake, or hold.
 
-    .. data:: coast
+    .. data:: COAST
 
         Let the motor move freely.
 
-    .. data:: brake
+    .. data:: BRAKE
 
         Passively resist small external forces.
 
-    .. data:: hold
+    .. data:: HOLD
 
         Keep controlling the motor to hold it at the commanded angle. This is only available on motors with encoders.
 
@@ -79,28 +79,28 @@ class Stop(Enum):
     +-----------+-------------+------------------------------------------+
     |Parameter  | Resistance  | Physical meaning                         |
     +===========+=============+==========================================+
-    |Stop.coast | low         | Friction                                 |
+    |Stop.COAST | low         | Friction                                 |
     +-----------+-------------+------------------------------------------+
-    |Stop.brake | medium      | Friction + Torque opposite to motion     |
+    |Stop.BRAKE | medium      | Friction + Torque opposite to motion     |
     +-----------+-------------+------------------------------------------+
-    |Stop.hold  | high        | Friction + Torque to hold commanded angle|
+    |Stop.HOLD  | high        | Friction + Torque to hold commanded angle|
     +-----------+-------------+------------------------------------------+
 
     """
 
-    coast = 0
-    brake = 1
-    hold = 2
+    COAST = 0
+    BRAKE = 1
+    HOLD = 2
 
 
 class Direction():
     """Rotational direction for positive speed values: clockwise or counterclockwise.
 
-    .. data:: clockwise
+    .. data:: CLOCKWISE
 
         A positive speed value should make the motor move clockwise.
 
-    .. data:: counterclockwise
+    .. data:: COUNTERCLOCKWISE
 
         A positive speed value should make the motor move counterclockwise.
 
@@ -111,9 +111,9 @@ class Direction():
     +----------------------------+-------------------+-----------------+
     | Parameter                  | Positive speed    | Negative speed  |
     +============================+===================+=================+
-    | Direction.clockwise        | clockwise         | counterclockwise|
+    | Direction.CLOCKWISE        | clockwise         | counterclockwise|
     +----------------------------+-------------------+-----------------+
-    | Direction.counterclockwise | counterclockwise  | clockwise       |
+    | Direction.COUNTERCLOCKWISE | counterclockwise  | clockwise       |
     +----------------------------+-------------------+-----------------+
 
     ::
@@ -149,410 +149,410 @@ class Direction():
 
     """
 
-    clockwise = 0
-    counterclockwise = 1
+    CLOCKWISE = 0
+    COUNTERCLOCKWISE = 1
 
 
 class Button(Enum):
     """Buttons on a brick or remote:
 
-    .. data:: left_down
-    .. data:: down
-    .. data:: right_down
-    .. data:: left
-    .. data:: center
-    .. data:: right
-    .. data:: left_up
-    .. data:: up
-    .. data:: beacon
-    .. data:: right_up
+    .. data:: LEFT_DOWN
+    .. data:: DOWN
+    .. data:: RIGHT_DOWN
+    .. data:: LEFT
+    .. data:: CENTER
+    .. data:: RIGHT
+    .. data:: LEFT_UP
+    .. data:: UP
+    .. data:: BEACON
+    .. data:: RIGHT_UP
 
     +-----------+----------+-----------+
     |           |          |           |
-    | left_up   |up/beacon | right_up  |
+    | LEFT_UP   |UP/BEACON | RIGHT_UP  |
     |           |          |           |
     +-----------+----------+-----------+
     |           |          |           |
-    | left      |  center  | right     |
+    | LEFT      |  CENTER  | RIGHT     |
     |           |          |           |
     +-----------+----------+-----------+
     |           |          |           |
-    | left_down |   down   | right_down|
+    | LEFT_DOWN |   DOWN   | RIGHT_DOWN|
     |           |          |           |
     +-----------+----------+-----------+
     """
 
-    left_down = 1
-    down = 2
-    right_down = 3
-    left = 4
-    center = 5
-    right = 6
-    left_up = 7
-    up = 8
-    beacon = 8
-    right_up = 9
+    LEFT_DOWN = 1
+    DOWN = 2
+    RIGHT_DOWN = 3
+    LEFT = 4
+    CENTER = 5
+    RIGHT = 6
+    LEFT_UP = 7
+    UP = 8
+    BEACON = 8
+    RIGHT_UP = 9
 
 
 class Align():
     """Alignment of an image on the display.
 
-    .. data:: bottom_left
-    .. data:: bottom
-    .. data:: bottom_right
-    .. data:: left
-    .. data:: center
-    .. data:: right
-    .. data:: top_left
-    .. data:: top
-    .. data:: top_right
+    .. data:: BOTTOM_LEFT
+    .. data:: BOTTOM
+    .. data:: BOTTOM_RIGHT
+    .. data:: LEFT
+    .. data:: CENTER
+    .. data:: RIGHT
+    .. data:: TOP_LEFT
+    .. data:: TOP
+    .. data:: TOP_RIGHT
     """
-    bottom_left = 1
-    bottom = 2
-    bottom_right = 3
-    left = 4
-    center = 5
-    right = 6
-    top_left = 7
-    top = 8
-    top_right = 9
+    BOTTOM_LEFT = 1
+    BOTTOM = 2
+    BOTTOM_RIGHT = 3
+    LEFT = 4
+    CENTER = 5
+    RIGHT = 6
+    TOP_LEFT = 7
+    TOP = 8
+    TOP_RIGHT = 9
 
 
-class Sound():
+class SoundFile():
     """Paths to standard EV3 sounds.
 
     Expressions
 
-    .. data:: shouting
-    .. data:: cheering
-    .. data:: crying
-    .. data:: ouch
-    .. data:: laughing_2
-    .. data:: sneezing
-    .. data:: smack
-    .. data:: boing
-    .. data:: boo
-    .. data:: uh_oh
-    .. data:: snoring
-    .. data:: kung_fu
-    .. data:: fanfare
-    .. data:: crunching
-    .. data:: magic_wand
-    .. data:: laughing_1
+    .. data:: SHOUTING
+    .. data:: CHEERING
+    .. data:: CRYING
+    .. data:: OUCH
+    .. data:: LAUGHING_2
+    .. data:: SNEEZING
+    .. data:: SMACK
+    .. data:: BOING
+    .. data:: BOO
+    .. data:: UH_OH
+    .. data:: SNORING
+    .. data:: KUNG_FU
+    .. data:: FANFARE
+    .. data:: CRUNCHING
+    .. data:: MAGIC_WAND
+    .. data:: LAUGHING_1
 
     Information
 
-    .. data:: left
-    .. data:: backwards
-    .. data:: right
-    .. data:: object
-    .. data:: color
-    .. data:: flashing
-    .. data:: error
-    .. data:: error_alarm
-    .. data:: down
-    .. data:: forward
-    .. data:: activate
-    .. data:: searching
-    .. data:: touch
-    .. data:: up
-    .. data:: analyze
-    .. data:: stop
-    .. data:: detected
-    .. data:: turn
-    .. data:: start
+    .. data:: LEFT
+    .. data:: BACKWARDS
+    .. data:: RIGHT
+    .. data:: OBJECT
+    .. data:: COLOR
+    .. data:: FLASHING
+    .. data:: ERROR
+    .. data:: ERROR_ALARM
+    .. data:: DOWN
+    .. data:: FORWARD
+    .. data:: ACTIVATE
+    .. data:: SEARCHING
+    .. data:: TOUCH
+    .. data:: UP
+    .. data:: ANALYZE
+    .. data:: STOP
+    .. data:: DETECTED
+    .. data:: TURN
+    .. data:: START
 
     Communication
 
-    .. data:: morning
-    .. data:: ev3
-    .. data:: go
-    .. data:: good_job
-    .. data:: okey_dokey
-    .. data:: good
-    .. data:: no
-    .. data:: thank_you
-    .. data:: yes
-    .. data:: game_over
-    .. data:: okay
-    .. data:: sorry
-    .. data:: bravo
-    .. data:: goodbye
-    .. data:: hi
-    .. data:: hello
-    .. data:: mindstorms
-    .. data:: lego
-    .. data:: fantastic
+    .. data:: MORNING
+    .. data:: EV3
+    .. data:: GO
+    .. data:: GOOD_JOB
+    .. data:: OKEY_DOKEY
+    .. data:: GOOD
+    .. data:: NO
+    .. data:: THANK_YOU
+    .. data:: YES
+    .. data:: GAME_OVER
+    .. data:: OKAY
+    .. data:: SORRY
+    .. data:: BRAVO
+    .. data:: GOODBYE
+    .. data:: HI
+    .. data:: HELLO
+    .. data:: MINDSTORMS
+    .. data:: LEGO
+    .. data:: FANTASTIC
 
     Movements
 
-    .. data:: speed_idle
-    .. data:: speed_down
-    .. data:: speed_up
+    .. data:: SPEED_IDLE
+    .. data:: SPEED_DOWN
+    .. data:: SPEED_UP
 
     Color
 
-    .. data:: brown
-    .. data:: green
-    .. data:: black
-    .. data:: white
-    .. data:: red
-    .. data:: blue
-    .. data:: yellow
+    .. data:: BROWN
+    .. data:: GREEN
+    .. data:: BLACK
+    .. data:: WHITE
+    .. data:: RED
+    .. data:: BLUE
+    .. data:: YELLOW
 
     Mechanical
 
-    .. data:: tick_tack
-    .. data:: horn_1
-    .. data:: backing_alert
-    .. data:: motor_idle
-    .. data:: air_release
-    .. data:: airbrake
-    .. data:: ratchet
-    .. data:: motor_stop
-    .. data:: horn_2
-    .. data:: laser
-    .. data:: sonar
-    .. data:: motor_start
+    .. data:: TICK_TACK
+    .. data:: HORN_1
+    .. data:: BACKING_ALERT
+    .. data:: MOTOR_IDLE
+    .. data:: AIR_RELEASE
+    .. data:: AIRBRAKE
+    .. data:: RATCHET
+    .. data:: MOTOR_STOP
+    .. data:: HORN_2
+    .. data:: LASER
+    .. data:: SONAR
+    .. data:: MOTOR_START
 
     Animals
 
-    .. data:: insect_buzz_2
-    .. data:: elephant_call
-    .. data:: snake_hiss
-    .. data:: dog_bark_2
-    .. data:: dog_whine
-    .. data:: insect_buzz_1
-    .. data:: dog_sniff
-    .. data:: t_rex_roar
-    .. data:: insect_chirp
-    .. data:: dog_growl
-    .. data:: snake_rattle
-    .. data:: dog_bark_1
-    .. data:: cat_purr
+    .. data:: INSECT_BUZZ_2
+    .. data:: ELEPHANT_CALL
+    .. data:: SNAKE_HISS
+    .. data:: DOG_BARK_2
+    .. data:: DOG_WHINE
+    .. data:: INSECT_BUZZ_1
+    .. data:: DOG_SNIFF
+    .. data:: T_REX_ROAR
+    .. data:: INSECT_CHIRP
+    .. data:: DOG_GROWL
+    .. data:: SNAKE_RATTLE
+    .. data:: DOG_BARK_1
+    .. data:: CAT_PURR
 
     Numbers
 
-    .. data:: zero
-    .. data:: one
-    .. data:: two
-    .. data:: three
-    .. data:: four
-    .. data:: five
-    .. data:: six
-    .. data:: seven
-    .. data:: eight
-    .. data:: nine
-    .. data:: ten
+    .. data:: ZERO
+    .. data:: ONE
+    .. data:: TWO
+    .. data:: THREE
+    .. data:: FOUR
+    .. data:: FIVE
+    .. data:: SIX
+    .. data:: SEVEN
+    .. data:: EIGHT
+    .. data:: NINE
+    .. data:: TEN
 
     System
 
-    .. data:: ready
-    .. data:: confirm
-    .. data:: general_alert
-    .. data:: click
-    .. data:: overpower
+    .. data:: READY
+    .. data:: CONFIRM
+    .. data:: GENERAL_ALERT
+    .. data:: CLICK
+    .. data:: OVERPOWER
 
     """
 
-    _basepath = '/usr/share/sounds/ev3dev/'
-    shouting = _basepath + 'expressions/shouting.wav'
-    cheering = _basepath + 'expressions/cheering.wav'
-    crying = _basepath + 'expressions/crying.wav'
-    ouch = _basepath + 'expressions/ouch.wav'
-    laughing_2 = _basepath + 'expressions/laughing_2.wav'
-    sneezing = _basepath + 'expressions/sneezing.wav'
-    smack = _basepath + 'expressions/smack.wav'
-    boing = _basepath + 'expressions/boing.wav'
-    boo = _basepath + 'expressions/boo.wav'
-    uh_oh = _basepath + 'expressions/uh-oh.wav'
-    snoring = _basepath + 'expressions/snoring.wav'
-    kung_fu = _basepath + 'expressions/kung_fu.wav'
-    fanfare = _basepath + 'expressions/fanfare.wav'
-    crunching = _basepath + 'expressions/crunching.wav'
-    magic_wand = _basepath + 'expressions/magic_wand.wav'
-    laughing_1 = _basepath + 'expressions/laughing_1.wav'
-    left = _basepath + 'information/left.wav'
-    backwards = _basepath + 'information/backwards.wav'
-    right = _basepath + 'information/right.wav'
-    object = _basepath + 'information/object.wav'
-    color = _basepath + 'information/color.wav'
-    flashing = _basepath + 'information/flashing.wav'
-    error = _basepath + 'information/error.wav'
-    error_alarm = _basepath + 'information/error_alarm.wav'
-    down = _basepath + 'information/down.wav'
-    forward = _basepath + 'information/forward.wav'
-    activate = _basepath + 'information/activate.wav'
-    searching = _basepath + 'information/searching.wav'
-    touch = _basepath + 'information/touch.wav'
-    up = _basepath + 'information/up.wav'
-    analyze = _basepath + 'information/analyze.wav'
-    stop = _basepath + 'information/stop.wav'
-    detected = _basepath + 'information/detected.wav'
-    turn = _basepath + 'information/turn.wav'
-    start = _basepath + 'information/start.wav'
-    morning = _basepath + 'communication/morning.wav'
-    ev3 = _basepath + 'communication/ev3.wav'
-    go = _basepath + 'communication/go.wav'
-    good_job = _basepath + 'communication/good_job.wav'
-    okey_dokey = _basepath + 'communication/okey-dokey.wav'
-    good = _basepath + 'communication/good.wav'
-    no = _basepath + 'communication/no.wav'
-    thank_you = _basepath + 'communication/thank_you.wav'
-    yes = _basepath + 'communication/yes.wav'
-    game_over = _basepath + 'communication/game_over.wav'
-    okay = _basepath + 'communication/okay.wav'
-    sorry = _basepath + 'communication/sorry.wav'
-    bravo = _basepath + 'communication/bravo.wav'
-    goodbye = _basepath + 'communication/goodbye.wav'
-    hi = _basepath + 'communication/hi.wav'
-    hello = _basepath + 'communication/hello.wav'
-    mindstorms = _basepath + 'communication/mindstorms.wav'
-    lego = _basepath + 'communication/lego.wav'
-    fantastic = _basepath + 'communication/fantastic.wav'
-    speed_idle = _basepath + 'movements/speed_idle.wav'
-    speed_down = _basepath + 'movements/speed_down.wav'
-    speed_up = _basepath + 'movements/speed_up.wav'
-    brown = _basepath + 'colors/brown.wav'
-    green = _basepath + 'colors/green.wav'
-    black = _basepath + 'colors/black.wav'
-    white = _basepath + 'colors/white.wav'
-    red = _basepath + 'colors/red.wav'
-    blue = _basepath + 'colors/blue.wav'
-    yellow = _basepath + 'colors/yellow.wav'
-    tick_tack = _basepath + 'mechanical/tick_tack.wav'
-    horn_1 = _basepath + 'mechanical/horn_1.wav'
-    backing_alert = _basepath + 'mechanical/backing_alert.wav'
-    motor_idle = _basepath + 'mechanical/motor_idle.wav'
-    air_release = _basepath + 'mechanical/air_release.wav'
-    airbrake = _basepath + 'mechanical/airbrake.wav'
-    ratchet = _basepath + 'mechanical/ratchet.wav'
-    motor_stop = _basepath + 'mechanical/motor_stop.wav'
-    horn_2 = _basepath + 'mechanical/horn_2.wav'
-    laser = _basepath + 'mechanical/laser.wav'
-    sonar = _basepath + 'mechanical/sonar.wav'
-    motor_start = _basepath + 'mechanical/motor_start.wav'
-    insect_buzz_2 = _basepath + 'animals/insect_buzz_2.wav'
-    elephant_call = _basepath + 'animals/elephant_call.wav'
-    snake_hiss = _basepath + 'animals/snake_hiss.wav'
-    dog_bark_2 = _basepath + 'animals/dog_bark_2.wav'
-    dog_whine = _basepath + 'animals/dog_whine.wav'
-    insect_buzz_1 = _basepath + 'animals/insect_buzz_1.wav'
-    dog_sniff = _basepath + 'animals/dog_sniff.wav'
-    t_rex_roar = _basepath + 'animals/t-rex_roar.wav'
-    insect_chirp = _basepath + 'animals/insect_chirp.wav'
-    dog_growl = _basepath + 'animals/dog_growl.wav'
-    snake_rattle = _basepath + 'animals/snake_rattle.wav'
-    dog_bark_1 = _basepath + 'animals/dog_bark_1.wav'
-    cat_purr = _basepath + 'animals/cat_purr.wav'
-    eight = _basepath + 'numbers/eight.wav'
-    seven = _basepath + 'numbers/seven.wav'
-    six = _basepath + 'numbers/six.wav'
-    four = _basepath + 'numbers/four.wav'
-    ten = _basepath + 'numbers/ten.wav'
-    one = _basepath + 'numbers/one.wav'
-    two = _basepath + 'numbers/two.wav'
-    three = _basepath + 'numbers/three.wav'
-    zero = _basepath + 'numbers/zero.wav'
-    five = _basepath + 'numbers/five.wav'
-    nine = _basepath + 'numbers/nine.wav'
-    ready = _basepath + 'system/ready.wav'
-    confirm = _basepath + 'system/confirm.wav'
-    general_alert = _basepath + 'system/general_alert.wav'
-    click = _basepath + 'system/click.wav'
-    overpower = _basepath + 'system/overpower.wav'
+    _BASE_PATH = '/usr/share/sounds/ev3dev/'
+    SHOUTING = _BASE_PATH + 'expressions/shouting.wav'
+    CHEERING = _BASE_PATH + 'expressions/cheering.wav'
+    CRYING = _BASE_PATH + 'expressions/crying.wav'
+    OUCH = _BASE_PATH + 'expressions/ouch.wav'
+    LAUGHING_2 = _BASE_PATH + 'expressions/laughing_2.wav'
+    SNEEZING = _BASE_PATH + 'expressions/sneezing.wav'
+    SMACK = _BASE_PATH + 'expressions/smack.wav'
+    BOING = _BASE_PATH + 'expressions/boing.wav'
+    BOO = _BASE_PATH + 'expressions/boo.wav'
+    UH_OH = _BASE_PATH + 'expressions/uh-oh.wav'
+    SNORING = _BASE_PATH + 'expressions/snoring.wav'
+    KUNG_FU = _BASE_PATH + 'expressions/kung_fu.wav'
+    FANFARE = _BASE_PATH + 'expressions/fanfare.wav'
+    CRUNCHING = _BASE_PATH + 'expressions/crunching.wav'
+    MAGIC_WAND = _BASE_PATH + 'expressions/magic_wand.wav'
+    LAUGHING_1 = _BASE_PATH + 'expressions/laughing_1.wav'
+    LEFT = _BASE_PATH + 'information/left.wav'
+    BACKWARDS = _BASE_PATH + 'information/backwards.wav'
+    RIGHT = _BASE_PATH + 'information/right.wav'
+    OBJECT = _BASE_PATH + 'information/object.wav'
+    COLOR = _BASE_PATH + 'information/color.wav'
+    FLASHING = _BASE_PATH + 'information/flashing.wav'
+    ERROR = _BASE_PATH + 'information/error.wav'
+    ERROR_ALARM = _BASE_PATH + 'information/error_alarm.wav'
+    DOWN = _BASE_PATH + 'information/down.wav'
+    FORWARD = _BASE_PATH + 'information/forward.wav'
+    ACTIVATE = _BASE_PATH + 'information/activate.wav'
+    SEARCHING = _BASE_PATH + 'information/searching.wav'
+    TOUCH = _BASE_PATH + 'information/touch.wav'
+    UP = _BASE_PATH + 'information/up.wav'
+    ANALYZE = _BASE_PATH + 'information/analyze.wav'
+    STOP = _BASE_PATH + 'information/stop.wav'
+    DETECTED = _BASE_PATH + 'information/detected.wav'
+    TURN = _BASE_PATH + 'information/turn.wav'
+    START = _BASE_PATH + 'information/start.wav'
+    MORNING = _BASE_PATH + 'communication/morning.wav'
+    EV3 = _BASE_PATH + 'communication/ev3.wav'
+    GO = _BASE_PATH + 'communication/go.wav'
+    GOOD_JOB = _BASE_PATH + 'communication/good_job.wav'
+    OKEY_DOKEY = _BASE_PATH + 'communication/okey-dokey.wav'
+    GOOD = _BASE_PATH + 'communication/good.wav'
+    NO = _BASE_PATH + 'communication/no.wav'
+    THANK_YOU = _BASE_PATH + 'communication/thank_you.wav'
+    YES = _BASE_PATH + 'communication/yes.wav'
+    GAME_OVER = _BASE_PATH + 'communication/game_over.wav'
+    OKAY = _BASE_PATH + 'communication/okay.wav'
+    SORRY = _BASE_PATH + 'communication/sorry.wav'
+    BRAVO = _BASE_PATH + 'communication/bravo.wav'
+    GOODBYE = _BASE_PATH + 'communication/goodbye.wav'
+    HI = _BASE_PATH + 'communication/hi.wav'
+    HELLO = _BASE_PATH + 'communication/hello.wav'
+    MINDSTORMS = _BASE_PATH + 'communication/mindstorms.wav'
+    LEGO = _BASE_PATH + 'communication/lego.wav'
+    FANTASTIC = _BASE_PATH + 'communication/fantastic.wav'
+    SPEED_IDLE = _BASE_PATH + 'movements/speed_idle.wav'
+    SPEED_DOWN = _BASE_PATH + 'movements/speed_down.wav'
+    SPEED_UP = _BASE_PATH + 'movements/speed_up.wav'
+    BROWN = _BASE_PATH + 'colors/brown.wav'
+    GREEN = _BASE_PATH + 'colors/green.wav'
+    BLACK = _BASE_PATH + 'colors/black.wav'
+    WHITE = _BASE_PATH + 'colors/white.wav'
+    RED = _BASE_PATH + 'colors/red.wav'
+    BLUE = _BASE_PATH + 'colors/blue.wav'
+    YELLOW = _BASE_PATH + 'colors/yellow.wav'
+    TICK_TACK = _BASE_PATH + 'mechanical/tick_tack.wav'
+    HORN_1 = _BASE_PATH + 'mechanical/horn_1.wav'
+    BACKING_ALERT = _BASE_PATH + 'mechanical/backing_alert.wav'
+    MOTOR_IDLE = _BASE_PATH + 'mechanical/motor_idle.wav'
+    AIR_RELEASE = _BASE_PATH + 'mechanical/air_release.wav'
+    AIRBRAKE = _BASE_PATH + 'mechanical/airbrake.wav'
+    RATCHET = _BASE_PATH + 'mechanical/ratchet.wav'
+    MOTOR_STOP = _BASE_PATH + 'mechanical/motor_stop.wav'
+    HORN_2 = _BASE_PATH + 'mechanical/horn_2.wav'
+    LASER = _BASE_PATH + 'mechanical/laser.wav'
+    SONAR = _BASE_PATH + 'mechanical/sonar.wav'
+    MOTOR_START = _BASE_PATH + 'mechanical/motor_start.wav'
+    INSECT_BUZZ_2 = _BASE_PATH + 'animals/insect_buzz_2.wav'
+    ELEPHANT_CALL = _BASE_PATH + 'animals/elephant_call.wav'
+    SNAKE_HISS = _BASE_PATH + 'animals/snake_hiss.wav'
+    DOG_BARK_2 = _BASE_PATH + 'animals/dog_bark_2.wav'
+    DOG_WHINE = _BASE_PATH + 'animals/dog_whine.wav'
+    INSECT_BUZZ_1 = _BASE_PATH + 'animals/insect_buzz_1.wav'
+    DOG_SNIFF = _BASE_PATH + 'animals/dog_sniff.wav'
+    T_REX_ROAR = _BASE_PATH + 'animals/t-rex_roar.wav'
+    INSECT_CHIRP = _BASE_PATH + 'animals/insect_chirp.wav'
+    DOG_GROWL = _BASE_PATH + 'animals/dog_growl.wav'
+    SNAKE_RATTLE = _BASE_PATH + 'animals/snake_rattle.wav'
+    DOG_BARK_1 = _BASE_PATH + 'animals/dog_bark_1.wav'
+    CAT_PURR = _BASE_PATH + 'animals/cat_purr.wav'
+    EIGHT = _BASE_PATH + 'numbers/eight.wav'
+    SEVEN = _BASE_PATH + 'numbers/seven.wav'
+    SIX = _BASE_PATH + 'numbers/six.wav'
+    FOUR = _BASE_PATH + 'numbers/four.wav'
+    TEN = _BASE_PATH + 'numbers/ten.wav'
+    ONE = _BASE_PATH + 'numbers/one.wav'
+    TWO = _BASE_PATH + 'numbers/two.wav'
+    THREE = _BASE_PATH + 'numbers/three.wav'
+    ZERO = _BASE_PATH + 'numbers/zero.wav'
+    FIVE = _BASE_PATH + 'numbers/five.wav'
+    NINE = _BASE_PATH + 'numbers/nine.wav'
+    READY = _BASE_PATH + 'system/ready.wav'
+    CONFIRM = _BASE_PATH + 'system/confirm.wav'
+    GENERAL_ALERT = _BASE_PATH + 'system/general_alert.wav'
+    CLICK = _BASE_PATH + 'system/click.wav'
+    OVERPOWER = _BASE_PATH + 'system/overpower.wav'
 
 
-class Image():
+class ImageFile():
     """Paths to standard EV3 images.
 
     Information
 
-    .. data:: right
-    .. data:: forward
-    .. data:: accept
-    .. data:: question_mark
-    .. data:: stop_1
-    .. data:: left
-    .. data:: decline
-    .. data:: thumbs_down
-    .. data:: backward
-    .. data:: no_go
-    .. data:: warning
-    .. data:: stop_2
-    .. data:: thumbs_up
+    .. data:: RIGHT
+    .. data:: FORWARD
+    .. data:: ACCEPT
+    .. data:: QUESTION_MARK
+    .. data:: STOP_1
+    .. data:: LEFT
+    .. data:: DECLINE
+    .. data:: THUMBS_DOWN
+    .. data:: BACKWARD
+    .. data:: NO_GO
+    .. data:: WARNING
+    .. data:: STOP_2
+    .. data:: THUMBS_UP
 
     LEGO
 
-    .. data:: ev3
-    .. data:: ev3_icon
+    .. data:: EV3
+    .. data:: EV3_ICON
 
     Objects
 
-    .. data:: target
+    .. data:: TARGET
 
     Eyes
 
-    .. data:: bottom_right
-    .. data:: bottom_left
-    .. data:: evil
-    .. data:: crazy_2
-    .. data:: knocked_out
-    .. data:: pinched_right
-    .. data:: winking
-    .. data:: dizzy
-    .. data:: down
-    .. data:: tired_middle
-    .. data:: middle_right
-    .. data:: sleeping
-    .. data:: middle_left
-    .. data:: tired_right
-    .. data:: pinched_left
-    .. data:: pinched_middle
-    .. data:: crazy_1
-    .. data:: neutral
-    .. data:: awake
-    .. data:: up
-    .. data:: tired_left
-    .. data:: angry
+    .. data:: BOTTOM_RIGHT
+    .. data:: BOTTOM_LEFT
+    .. data:: EVIL
+    .. data:: CRAZY_2
+    .. data:: KNOCKED_OUT
+    .. data:: PINCHED_RIGHT
+    .. data:: WINKING
+    .. data:: DIZZY
+    .. data:: DOWN
+    .. data:: TIRED_MIDDLE
+    .. data:: MIDDLE_RIGHT
+    .. data:: SLEEPING
+    .. data:: MIDDLE_LEFT
+    .. data:: TIRED_RIGHT
+    .. data:: PINCHED_LEFT
+    .. data:: PINCHED_MIDDLE
+    .. data:: CRAZY_1
+    .. data:: NEUTRAL
+    .. data:: AWAKE
+    .. data:: UP
+    .. data:: TIRED_LEFT
+    .. data:: ANGRY
     """
 
-    _basepath = '/usr/share/images/ev3dev/mono/'
-    right = _basepath + 'information/right.png'
-    forward = _basepath + 'information/forward.png'
-    accept = _basepath + 'information/accept.png'
-    question_mark = _basepath + 'information/question_mark.png'
-    stop_1 = _basepath + 'information/stop_1.png'
-    left = _basepath + 'information/left.png'
-    decline = _basepath + 'information/decline.png'
-    thumbs_down = _basepath + 'information/thumbs_down.png'
-    backward = _basepath + 'information/backward.png'
-    no_go = _basepath + 'information/no_go.png'
-    warning = _basepath + 'information/warning.png'
-    stop_2 = _basepath + 'information/stop_2.png'
-    thumbs_up = _basepath + 'information/thumbs_up.png'
-    ev3 = _basepath + 'lego/ev3.png'
-    ev3_icon = _basepath + 'lego/ev3_icon.png'
-    target = _basepath + 'objects/target.png'
-    bottom_right = _basepath + 'eyes/bottom_right.png'
-    bottom_left = _basepath + 'eyes/bottom_left.png'
-    evil = _basepath + 'eyes/evil.png'
-    crazy_2 = _basepath + 'eyes/crazy_2.png'
-    knocked_out = _basepath + 'eyes/knocked_out.png'
-    pinched_right = _basepath + 'eyes/pinched_right.png'
-    winking = _basepath + 'eyes/winking.png'
-    dizzy = _basepath + 'eyes/dizzy.png'
-    down = _basepath + 'eyes/down.png'
-    tired_middle = _basepath + 'eyes/tired_middle.png'
-    middle_right = _basepath + 'eyes/middle_right.png'
-    sleeping = _basepath + 'eyes/sleeping.png'
-    middle_left = _basepath + 'eyes/middle_left.png'
-    tired_right = _basepath + 'eyes/tired_right.png'
-    pinched_left = _basepath + 'eyes/pinched_left.png'
-    pinched_middle = _basepath + 'eyes/pinched_middle.png'
-    crazy_1 = _basepath + 'eyes/crazy_1.png'
-    neutral = _basepath + 'eyes/neutral.png'
-    awake = _basepath + 'eyes/awake.png'
-    up = _basepath + 'eyes/up.png'
-    tired_left = _basepath + 'eyes/tired_left.png'
-    angry = _basepath + 'eyes/angry.png'
+    _BASE_PATH = '/usr/share/images/ev3dev/mono/'
+    RIGHT = _BASE_PATH + 'information/right.png'
+    FORWARD = _BASE_PATH + 'information/forward.png'
+    ACCEPT = _BASE_PATH + 'information/accept.png'
+    QUESTION_MARK = _BASE_PATH + 'information/question_mark.png'
+    STOP_1 = _BASE_PATH + 'information/stop_1.png'
+    LEFT = _BASE_PATH + 'information/left.png'
+    DECLINE = _BASE_PATH + 'information/decline.png'
+    THUMBS_DOWN = _BASE_PATH + 'information/thumbs_down.png'
+    BACKWARD = _BASE_PATH + 'information/backward.png'
+    NO_GO = _BASE_PATH + 'information/no_go.png'
+    WARNING = _BASE_PATH + 'information/warning.png'
+    STOP_2 = _BASE_PATH + 'information/stop_2.png'
+    THUMBS_UP = _BASE_PATH + 'information/thumbs_up.png'
+    EV3 = _BASE_PATH + 'lego/ev3.png'
+    EV3_ICON = _BASE_PATH + 'lego/ev3_icon.png'
+    TARGET = _BASE_PATH + 'objects/target.png'
+    BOTTOM_RIGHT = _BASE_PATH + 'eyes/bottom_right.png'
+    BOTTOM_LEFT = _BASE_PATH + 'eyes/bottom_left.png'
+    EVIL = _BASE_PATH + 'eyes/evil.png'
+    CRAZY_2 = _BASE_PATH + 'eyes/crazy_2.png'
+    KNOCKED_OUT = _BASE_PATH + 'eyes/knocked_out.png'
+    PINCHED_RIGHT = _BASE_PATH + 'eyes/pinched_right.png'
+    WINKING = _BASE_PATH + 'eyes/winking.png'
+    DIZZY = _BASE_PATH + 'eyes/dizzy.png'
+    DOWN = _BASE_PATH + 'eyes/down.png'
+    TIRED_MIDDLE = _BASE_PATH + 'eyes/tired_middle.png'
+    MIDDLE_RIGHT = _BASE_PATH + 'eyes/middle_right.png'
+    SLEEPING = _BASE_PATH + 'eyes/sleeping.png'
+    MIDDLE_LEFT = _BASE_PATH + 'eyes/middle_left.png'
+    TIRED_RIGHT = _BASE_PATH + 'eyes/tired_right.png'
+    PINCHED_LEFT = _BASE_PATH + 'eyes/pinched_left.png'
+    PINCHED_MIDDLE = _BASE_PATH + 'eyes/pinched_middle.png'
+    CRAZY_1 = _BASE_PATH + 'eyes/crazy_1.png'
+    NEUTRAL = _BASE_PATH + 'eyes/neutral.png'
+    AWAKE = _BASE_PATH + 'eyes/awake.png'
+    UP = _BASE_PATH + 'eyes/up.png'
+    TIRED_LEFT = _BASE_PATH + 'eyes/tired_left.png'
+    ANGRY = _BASE_PATH + 'eyes/angry.png'

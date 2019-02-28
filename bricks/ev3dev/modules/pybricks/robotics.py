@@ -25,6 +25,6 @@ class DriveBase():
         wait(time)
         self.stop()
 
-    def stop(self, stop_type=Stop.coast):
+    def stop(self, stop_type=Stop.COAST):
         self.left_motor.stop(stop_type)
         self.right_motor.stop(stop_type)

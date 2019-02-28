@@ -17,8 +17,8 @@
 /* Wait for maneuver to complete */
 
 // Must not be called while pybricks thread lock is held!
-STATIC void wait_for_completion(pbio_port_t port, pbio_motor_run_t runtype) {
-    if (runtype == PBIO_MOTOR_RUN_FOREGROUND) {
+STATIC void wait_for_completion(pbio_port_t port, bool foreground) {
+    if (foreground) {
         while (motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_RUNNING) {
             mp_hal_delay_ms(10);
         }
@@ -220,7 +220,7 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *args){
     int32_t speed = mp_obj_get_num(args[1]);
     int32_t duration = mp_obj_get_num(args[2]);
     pbio_motor_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
-    pbio_motor_run_t runtype           = n_args > 4 ? mp_obj_get_int(args[4]) : PBIO_MOTOR_RUN_FOREGROUND;
+    bool foreground = n_args > 4 ? mp_obj_is_true(args[4]) : true;
     pbio_error_t err;
 
     pb_thread_enter();
@@ -229,7 +229,7 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *args){
     pb_thread_exit();
 
     pb_assert(err);
-    wait_for_completion(port, runtype);
+    wait_for_completion(port, foreground);
 
     return mp_const_none;
 }
@@ -265,7 +265,7 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *arg
     pb_thread_exit();
 
     pb_assert(err);
-    wait_for_completion(port, PBIO_MOTOR_RUN_FOREGROUND);
+    wait_for_completion(port, true);
 
     pb_thread_enter();
 
@@ -291,7 +291,7 @@ STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *args){
     int32_t speed = mp_obj_get_num(args[1]);
     int32_t angle = mp_obj_get_num(args[2]);
     pbio_motor_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
-    pbio_motor_run_t runtype           = n_args > 4 ? mp_obj_get_int(args[4]) : PBIO_MOTOR_RUN_FOREGROUND;
+    bool foreground = n_args > 4 ? mp_obj_is_true(args[4]) : true;
     pbio_error_t err;
 
     pb_thread_enter();
@@ -300,7 +300,7 @@ STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *args){
     pb_thread_exit();
 
     pb_assert(err);
-    wait_for_completion(port, runtype);
+    wait_for_completion(port, foreground);
 
     return mp_const_none;
 }
@@ -312,7 +312,7 @@ STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *args){
     int32_t speed = mp_obj_get_num(args[1]);
     int32_t target = mp_obj_get_num(args[2]);
     pbio_motor_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
-    pbio_motor_run_t runtype           = n_args > 4 ? mp_obj_get_int(args[4]) : PBIO_MOTOR_RUN_FOREGROUND;
+    bool foreground = n_args > 4 ? mp_obj_is_true(args[4]) : true;
     pbio_error_t err;
 
     // Call pbio with parsed user/default arguments
@@ -321,7 +321,7 @@ STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *args){
     pb_thread_exit();
 
     pb_assert(err);
-    wait_for_completion(port, runtype);
+    wait_for_completion(port, foreground);
 
     return mp_const_none;
 }
