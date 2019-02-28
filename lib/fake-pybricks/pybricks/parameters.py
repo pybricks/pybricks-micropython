@@ -74,7 +74,7 @@ class Stop(Enum):
 
         Keep controlling the motor to hold it at the commanded angle. This is only available on motors with encoders.
 
-    The stop type defines the resistance to motion after coming to standstill:
+    The stop type defines the resistance to motion after coming to a standstill:
 
     +-----------+-------------+------------------------------------------+
     |Parameter  | Resistance  | Physical meaning                         |
@@ -135,7 +135,7 @@ class Direction():
                     \______________/
 
 
-         Large EV3 motor:
+         Large EV3 Motor:
 
               ________
              /         \        ___    ___

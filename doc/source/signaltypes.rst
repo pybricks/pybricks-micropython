@@ -28,7 +28,7 @@ Rotational speed, or *angular velocity* describes how fast something rotates, ex
 
 For example, the rotational speed values of a :meth:`Motor <.ev3devices.Motor.speed>` or the :meth:`GyroSensor <.ev3devices.GyroSensor.speed>` are expressed in degrees per second.
 
-While we recommend to work with degrees per second in your programs, you can use the following table to convert between commonly used units.
+While we recommend working with degrees per second in your programs, you can use the following table to convert between commonly used units.
 
 +-----------+-------+-----------+
 |           | deg/s | rpm       |
@@ -46,7 +46,7 @@ Distances are expressed in millimeters (mm) whenever possible.
 
 For example, the distance value of the :meth:`UltrasonicSensor <.ev3devices.UltrasonicSensor.distance>` is measured in millimeters.
 
-While we recommend to work with millimeters in your programs, you can use the following table to convert between commonly used units.
+While we recommend working with millimeters in your programs, you can use the following table to convert between commonly used units.
 
 +---------+------+-----+--------+
 |         | mm   | cm  | inch   |
@@ -93,7 +93,7 @@ rotational acceleration: deg/s/s
 --------------------------------
 Rotational acceleration, or *angular acceleration* describes how fast the rotational speed changes. This is expressed as the change of the number of degrees per second, during one second (deg/s/s). This is also commonly written as  :math:`deg/s^2`.
 
-For example, you can adjust the rotational acceleration setting of a :meth:`Motor <.ev3devices.Motor.set_run_settings>` to change how smoothly or how quickly a motor reaches the constant speed set point.
+For example, you can adjust the rotational acceleration setting of a :meth:`Motor <.ev3devices.Motor.set_run_settings>` to change how smoothly or how quickly it reaches the constant speed set point.
 
 
 .. _percentage:
@@ -102,12 +102,12 @@ percentage: %
 --------------
 Some signals do not have specific units but range from a minimum (0%) to a maximum (100%). A specific type of percentages are :ref:`relative distances <relativedistance>`.
 
-For example, the sound :meth:`volume <.ev3brick.sound.beep>` range from 0% to 100%.
+For example, the sound :meth:`volume <.ev3brick.sound.beep>` ranges from 0% to 100%.
 
 .. _frequency:
 
 frequency: Hz
 --------------
-Sound frequencies are expressed in Herz (Hz).
+Sound frequencies are expressed in Hertz (Hz).
 
 For example, you can choose the frequency of a :meth:`beep <.ev3brick.sound.beep>` to change the pitch.

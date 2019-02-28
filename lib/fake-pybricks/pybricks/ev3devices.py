@@ -81,7 +81,7 @@ class Motor():
     def stalled(self):
         """Check whether the motor is currently stalled.
 
-        A motor is stalled when it cannot move even with the maximum torque. For example, it cannot move because something is blocking the motor or your mechanism simply cannot turn any further.
+        A motor is stalled when it cannot move even with the maximum torque. For example, when something is blocking the motor or your mechanism simply cannot turn any further.
 
         Specifically, the motor is stalled when the duty cycle computed by the PID controllers has reached the maximum (so ``duty`` = ``duty_limit``) and still the motor cannot reach a minimal speed (so ``speed`` < ``stall_speed``) for a period of at least ``stall_time``.
 
@@ -187,7 +187,7 @@ class Motor():
 
         This function is quite similar to :meth:`.run_target`, but speed and acceleration settings are ignored: it will move to the target angle as fast as possible. Instead, you adjust speed and acceleration by choosing how fast or slow you vary the ``target_angle``.
 
-        This method is useful in fast loops where the motor target changes continously.
+        This method is useful in fast loops where the motor target changes continuously.
 
         Arguments:
             target_angle (:ref:`angle`): Target angle that the motor should rotate to.
@@ -216,7 +216,7 @@ class Motor():
         pass
 
     def set_dc_settings(self, duty_limit, duty_offset):
-        """Configure the settings to adjust the behavior of the :meth:`.dc` command. This also affects the all of the ``run`` commands, which use the :meth:`.dc` in the background.
+        """Configure the settings to adjust the behavior of the :meth:`.dc` command. This also affects all of the ``run`` commands, which use the :meth:`.dc` method in the background.
 
         Arguments:
             duty_limit (:ref:`percentage`): Relative torque limit during subsequent motor commands. This sets the maximum duty cycle that is applied during any subsequent motor command. This reduces the maximum torque output to a percentage of the absolute maximum stall torque. This is useful to avoid applying the full motor torque to a geared or lever mechanism, or to prevent your LEGO\ :sup:`®` train from unintentionally going at full speed. (*Default*: 100).
@@ -235,7 +235,7 @@ class Motor():
 
         Example::
 
-            # Set the maximum speed to 200 deg/s and set the acceleration to 400 deg/s/s.
+            # Set the maximum speed to 200 deg/s and acceleration to 400 deg/s/s.
             example_motor.set_run_settings(200, 400)
 
             # Make the motor run for 5 seconds. Even though the speed argument is 300

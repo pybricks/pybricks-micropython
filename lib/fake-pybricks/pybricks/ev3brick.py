@@ -18,7 +18,7 @@ def buttons():
 
     ::
 
-        # Wait until any of the buttons is pressed
+        # Wait until any of the buttons are pressed
         while not any(brick.buttons()):
             wait(10)
 

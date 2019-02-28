@@ -1,13 +1,13 @@
 Creating and running programs
 =============================
 
-Now that you've set up your computer and your EV3 brick, you're ready to start writing programs.
+Now that you've set up your computer and EV3 brick, you're ready to start writing programs.
 
 To make it easier to create and manage your programs, let's first have a quick look at how MicroPython projects and programs for your EV3 robots are organized.
 
-Programs are organized into *project folders*, as shown below. A project folder is a directory on your computer that contains the main program (**main.py**), and other optional scripts or files. This project folder and all of its contents will be copied to the EV3, where the main program will be run.
+Programs are organized into *project folders*, as shown below. A project folder is a directory on your computer that contains the main program (**main.py**) and other optional scripts or files. This project folder and all of its contents will be copied to the EV3 brick, where the main program will be run.
 
-This page shows you how to create such a project and how to transfer it to the EV3.
+This page shows you how to create such a project and how to transfer it to the EV3 brick.
 
 
 .. figure:: images/projectstructure.png
@@ -46,7 +46,7 @@ If you are new to MicroPython programming, we recommend that you keep the existi
 Connecting to the EV3 brick with Visual Studio Code
 -----------------------------------------------------------
 
-To be able to transfer your code to the EV3 brick, you'll first need to connect the EV3 brick to your computer with the mini-USB cable and configure this connection with Visual Studio Code. To do so:
+To be able to transfer your code to the EV3 brick, you'll first need to connect the EV3 brick to your computer with the mini-USB cable and configure the connection with Visual Studio Code. To do so:
 
 - Turn the EV3 brick on
 - Connect the EV3 brick to your computer with the mini-USB cable
@@ -62,9 +62,9 @@ To be able to transfer your code to the EV3 brick, you'll first need to connect 
 Downloading and running a program
 -----------------------------------------------------------
 
-You can press the F5 key to run the program. Alternatively, you can start it manually by going to the *debug* tab, and clicking the green start arrow, as shown below.
+You can press the F5 key to run the program. Alternatively, you can start it manually by going to the *debug* tab and clicking the green start arrow, as shown below.
 
-When the program starts, a pop up toolbar allows you to stop the program if necessary. You can also stop the program at any time using the back button on the EV3 brick.
+When the program starts, a pop-up toolbar allows you to stop the program if necessary. You can also stop the program at any time using the back button on the EV3 brick.
 
 If your program produces any output with the :mod:`print <.tools>` command, this is shown in the output window.
 
@@ -96,25 +96,25 @@ This program makes your robot beep, rotate the motor, and beep again with a high
 
 .. _managefiles:
 
-Managing files on the EV3
+Managing files on the EV3 brick
 -----------------------------------------------------------
 
-After you've downloaded a project to the EV3, you can run, delete, or back up programs stored on the EV3 using the device browser:
+After you've downloaded a project to the EV3 brick, you can run, delete, or back up programs stored on it using the device browser:
 
 .. figure:: images/files.png
    :width: 100 %
    :alt: alt
    :align: center
 
-   Using the EV3 device browser to manage files on your EV3
+   Using the device browser to manage files on your EV3 brick
 
 
 Running a program without a computer
 -----------------------------------------------------------
 
-You can run previously downloaded programs directly from the brick.
+You can run previously downloaded programs directly from the EV3 brick.
 
-To do so, find the program using the *file browser* on the EV3 screen and use the center button key to start the program.
+To do so, find the program using the *file browser* on the EV3 screen and press the center button key to start the program.
 
 .. figure:: images/manualrun.png
    :width: 100 %

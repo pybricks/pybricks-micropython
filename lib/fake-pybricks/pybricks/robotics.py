@@ -4,7 +4,7 @@ from parameters import Stop, Direction
 
 
 class DriveBase():
-    """Class respresenting a robotic vehicle with two powered wheels and optional wheel caster(s)."""
+    """Class representing a robotic vehicle with two powered wheels and optional wheel caster(s)."""
 
     def __init__(self, left_motor, right_motor, wheel_diameter, axle_track):
         """DriveBase(left_motor, right_motor, wheel_diameter, axle_track)

@@ -1,7 +1,7 @@
 Installation
 ===================
 
-This page guides you through the steps to collect and install everything you need to get started programming.
+This page guides you through the steps to collect and install everything you need to start programming.
 
 What do you need?
 -----------------------------------------------------------
@@ -15,13 +15,13 @@ To get started, you'll need:
 
 - A microSD card
 
-    You'll need a card with a minimum size of 4GB and a maximum size of 32GB. This type of microSD cards is also known as microSDHC. We recommend cards with Application Performance Class A1.
+    You'll need a card with a minimum capacity of 4GB and a maximum capacity of 32GB. This type of microSD cards is also known as microSDHC. We recommend cards with Application Performance Class A1.
 
 - A microSD card slot or card reader in your computer
 
     If your computer does not have a (micro)SD card slot, you can use an external USB (micro)SD card reader.
 
-- A mini-USB cable, like the one included included with your EV3 set
+- A mini-USB cable, like the one included with your EV3 set
 
 The typical configuration of this equipment is summarized in the figure below.
 
@@ -95,7 +95,7 @@ Make sure the EV3 brick is turned off. Insert the microSD card you prepared into
    :alt: sd
    :align: center
 
-   Inserting the finished microSD card into the EV3 brick
+   Inserting the flashed microSD card into the EV3 brick
 
 
 Turning the EV3 brick on and off
@@ -129,7 +129,7 @@ When you're not running a program, you can view motor and sensor values using th
 Going back to the original firmware
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can go back to the LEGO® firmware and your LEGO® programs at any time. To do so:
+You can go back to the LEGO® firmware and your LEGO programs at any time. To do so:
 
 1. Turn the EV3 brick off as shown above.
 2. Wait for the screen and brick status light to turn off.

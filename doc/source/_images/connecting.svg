@@ -25,7 +25,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -67,9 +67,9 @@
      inkscape:window-height="1043"
      id="namedview4"
      showgrid="false"
-     inkscape:zoom="0.75"
-     inkscape:cx="208.63819"
-     inkscape:cy="324.28105"
+     inkscape:zoom="0.75000002"
+     inkscape:cx="430.67066"
+     inkscape:cy="226.10152"
      inkscape:window-x="1920"
      inkscape:window-y="0"
      inkscape:window-maximized="1"
@@ -199,16 +199,16 @@
      y="292.53476"
      x="257.90811"
      height="42.092525"
-     width="274.44144"
+     width="313.44144"
      id="rect946"
-     style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+     style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.27988029;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
   <rect
      y="292.53476"
      x="257.90811"
      height="4"
-     width="274.44144"
+     width="313.44144"
      id="rect948"
-     style="opacity:1;fill:#6ab0de;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+     style="opacity:1;fill:#6ab0de;fill-opacity:1;stroke:none;stroke-width:2.27988029;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
   <text
      xml:space="preserve"
      style="font-style:normal;font-weight:normal;font-size:24.19441986px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#404140;fill-opacity:1;stroke:none;stroke-width:0.60486054"
@@ -252,16 +252,16 @@
      d="m 227.46478,350.23507 h 67.17514"
      style="fill:none;stroke:#6ab0de;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
   <rect
-     style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.27988029;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
      id="rect962"
-     width="274.44144"
+     width="313.44144"
      height="42.092525"
      x="257.90811"
      y="340.80838" />
   <rect
-     style="opacity:1;fill:#6ab0de;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     style="opacity:1;fill:#6ab0de;fill-opacity:1;stroke:none;stroke-width:2.27988029;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
      id="rect964"
-     width="274.44144"
+     width="313.44144"
      height="4"
      x="257.90811"
      y="340.80838" />
@@ -275,7 +275,7 @@
        y="371.39371"
        x="267.87827"
        id="tspan966"
-       sodipodi:role="line">Search for your EV3</tspan></text>
+       sodipodi:role="line">Search for your EV3 brick</tspan></text>
   <circle
      r="19.024944"
      cy="389.61261"
@@ -308,16 +308,16 @@
      id="path1022"
      inkscape:connector-curvature="0" />
   <rect
-     style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.45158863;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
      id="rect872"
-     width="199.95952"
+     width="264.07053"
      height="42.092525"
      x="497.38162"
      y="57.1996" />
   <rect
-     style="opacity:1;fill:#6ab0de;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     style="opacity:1;fill:#6ab0de;fill-opacity:1;stroke:none;stroke-width:2.45158863;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
      id="rect874"
-     width="199.95952"
+     width="264.07053"
      height="4"
      x="497.38162"
      y="57.1996" />
@@ -331,7 +331,7 @@
        y="87.784927"
        x="507.35178"
        id="tspan876"
-       sodipodi:role="line">Select your EV3</tspan></text>
+       sodipodi:role="line">Select your EV3 brick</tspan></text>
   <circle
      r="19.024944"
      cy="49.884659"
@@ -362,16 +362,16 @@
      y="179.10568"
      x="257.90811"
      height="42.092525"
-     width="453.77478"
+     width="515.76447"
      id="rect1010"
-     style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+     style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.27438617;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
   <rect
      y="179.10568"
      x="257.90811"
      height="4"
-     width="453.77478"
+     width="515.76447"
      id="rect1012"
-     style="opacity:1;fill:#6ab0de;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+     style="opacity:1;fill:#6ab0de;fill-opacity:1;stroke:none;stroke-width:2.27438617;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
   <text
      xml:space="preserve"
      style="font-style:normal;font-weight:normal;font-size:24.19441986px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#404140;fill-opacity:1;stroke:none;stroke-width:0.60486054"
@@ -382,7 +382,7 @@
        id="tspan1014"
        x="267.87827"
        y="209.69101"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054">Connect your EV3 with the USB cable</tspan></text>
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054">Connect your EV3 brick with the USB cable</tspan></text>
   <text
      id="text1020"
      y="183.34192"

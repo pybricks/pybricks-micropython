@@ -54,13 +54,13 @@ class Display():
 
         Example::
 
-            # Show a built-in image showing two eyes looking upward
+            # Show a built-in image of two eyes looking upward
             brick.display.image(ImageFile.UP)
 
             # Display a custom image from your project folder
             brick.display.image('pybricks.png')
 
-            # Display a custom image image at the top right of the screen, without clearing
+            # Display a custom image at the top right of the screen, without clearing
             # the screen first
             brick.display.image('arrow.png', Align.TOP_RIGHT, clear=False)
         """
