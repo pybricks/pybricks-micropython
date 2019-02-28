@@ -13,12 +13,12 @@ class Motor():
     * 45503 or 45502: Separate part (2013)
     """
 
-    def __init__(self, port, direction=Direction.CW, gears=None):
-        """Motor(port, direction=Direction.CW, gears=None)
+    def __init__(self, port, direction=Direction.CLOCKWISE, gears=None):
+        """Motor(port, direction=Direction.CLOCKWISE, gears=None)
 
         Arguments:
             port (Port): Port to which the motor is connected.
-            direction (Direction): Positive speed direction (*Default*: Direction.CW).
+            direction (Direction): Positive speed direction (*Default*: Direction.CLOCKWISE).
             gears (list): List of gears linked to the motor (*Default*: ``None``).
 
                           For example: ``[12, 36]`` represents a gear train with a 12-tooth and a 36-tooth gear. See :ref:`ratio` for illustrated examples.
@@ -39,10 +39,10 @@ class Motor():
             example_motor = Motor(Port.A)
 
             # Initialize a motor where positive speed values should go counterclockwise
-            right_motor = Motor(Port.B, Direction.CCW)
+            right_motor = Motor(Port.B, Direction.COUNTERCLOCKWISE)
 
             # Initialize a motor with a gear train
-            robot_arm = Motor(Port.C, Direction.CW, [12, 36])
+            robot_arm = Motor(Port.C, Direction.CLOCKWISE, [12, 36])
         """
         pass
 
@@ -407,11 +407,11 @@ class GyroSensor():
     """
 
     def __init__(self, port):
-        """GyroSensor(port, direction=Direction.CW)
+        """GyroSensor(port, direction=Direction.CLOCKWISE)
 
         Arguments:
             port (Port): Port to which the sensor is connected.
-            direction (Direction): Positive rotation direction when looking at the red dot on top of the sensor (*Default*: Direction.CW).
+            direction (Direction): Positive rotation direction when looking at the red dot on top of the sensor (*Default*: Direction.CLOCKWISE).
 
         """
         pass

@@ -96,11 +96,11 @@ class Stop(Enum):
 class Direction():
     """Rotational direction for positive speed values: clockwise or counterclockwise.
 
-    .. data:: CW
+    .. data:: CLOCKWISE
 
         A positive speed value should make the motor move clockwise.
 
-    .. data:: CCW
+    .. data:: COUNTERCLOCKWISE
 
         A positive speed value should make the motor move counterclockwise.
 
@@ -108,13 +108,13 @@ class Direction():
 
     For NXT or EV3 motors, make sure to look at the motor with the red/orange shaft to the lower right.
 
-    +-------------------+-------------------+------------------+
-    | Parameter         | Positive speed    | Negative speed   |
-    +===================+===================+==================+
-    | Direction.CW      | clockwise         | counterclockwise |
-    +-------------------+-------------------+------------------+
-    | Direction.CCW     | counterclockwise  | clockwise        |
-    +-------------------+-------------------+------------------+
+    +----------------------------+-------------------+-----------------+
+    | Parameter                  | Positive speed    | Negative speed  |
+    +============================+===================+=================+
+    | Direction.CLOCKWISE        | clockwise         | counterclockwise|
+    +----------------------------+-------------------+-----------------+
+    | Direction.COUNTERCLOCKWISE | counterclockwise  | clockwise       |
+    +----------------------------+-------------------+-----------------+
 
     ::
 
@@ -149,8 +149,8 @@ class Direction():
 
     """
 
-    CW = 0
-    CCW = 1
+    CLOCKWISE = 0
+    COUNTERCLOCKWISE = 1
 
 
 class Button(Enum):
