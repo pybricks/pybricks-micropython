@@ -23,12 +23,16 @@ To get started, you'll need:
 
 - A mini-USB cable, like the one included with your EV3 set
 
-The typical configuration of this equipment is summarized in the figure below.
+The typical configuration of this equipment is summarized in :numref:`fig_overview`.
+
+.. _fig_overview:
 
 .. figure:: images/overview.png
    :width: 90 %
    :alt: overview
-   :align: center   
+   :align: center
+
+   Setup overview
 
 Preparing your computer
 -----------------------------------------------------------
@@ -38,8 +42,10 @@ You'll write your MicroPython programs using Visual Studio Code. Follow the step
 1. Download `Visual Studio Code <https://code.visualstudio.com/Download>`_.
 2. Follow the on-screen instructions to install the application.
 3. Launch Visual Studio Code.
-4. Open the extensions tab as shown below.
-5. Install and activate the required extension:
+4. Open the extensions tab.
+5. Install the extension as shown in :numref:`fig_store`.
+
+.. _fig_store:
 
 .. figure:: images/store.png
     :alt: store
@@ -65,11 +71,13 @@ To install the MicroPython tools on your microSD card:
 1. Download the `EV3 MicroPython microSD card image <.>`_ and save it in a convenient location. This file is approximately 360 MB. Do **not** open or unzip the file.
 2. Download and install a microSD card flashing tool such as `Etcher <https://www.balena.io/etcher/>`_.
 3. Insert the microSD card into your computer or card reader.
-4. Launch the flashing tool and follow the steps on your screen to install the file you have just downloaded. If you use Etcher, you can follow the instructions in the diagram below:
+4. Launch the flashing tool and follow the steps on your screen to install the file you have just downloaded. If you use Etcher, you can follow the instructions below, as shown in :numref:`fig_etcher`.
 
     a. Select the EV3 MicroPython microSD card image file you have just downloaded.
     b. Select your microSD card. Make sure that the device and size correspond to your microSD card.
     c. Start the flashing process. This may take several minutes. Do not remove the card until the flashing process is complete.
+
+.. _fig_etcher:
 
 .. figure:: images/etcher.png
    :width: 85 %
@@ -88,7 +96,9 @@ You do not need to erase the contents of the microSD card first. This is done au
 Using the EV3 Brick
 -----------------------------------------------------------
 
-Make sure the EV3 Brick is turned off. Insert the microSD card you prepared into the microSD card slot on the EV3 Brick, as shown below.
+Make sure the EV3 Brick is turned off. Insert the microSD card you prepared into the microSD card slot on the EV3 Brick, as shown in :numref:`fig_sd`.
+
+.. _fig_sd:
 
 .. figure:: images/sd.png
    :width: 75 %
@@ -105,7 +115,9 @@ Turn on the EV3 Brick by pressing the dark gray center button.
 
 The boot process may take several minutes. While booting, the EV3 Brick status light turns orange and blinks intermittently, and you'll see a lot of text on the EV3 screen. The EV3 Brick is ready for use when the status light turns green.
 
-To turn the EV3 Brick off, open the shutdown menu with the back button, and then select *Power Off* using the center button, as shown below.
+To turn the EV3 Brick off, open the shutdown menu with the back button, and then select *Power Off* using the center button, as shown in :numref:`fig_onoff`.
+
+.. _fig_onoff:
 
 .. figure:: images/onoff.png
    :width: 65 %
@@ -117,7 +129,9 @@ To turn the EV3 Brick off, open the shutdown menu with the back button, and then
 Viewing motor and sensor values
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When you're not running a program, you can view motor and sensor values using the device browser, as shown below.
+When you're not running a program, you can view motor and sensor values using the device browser, as shown in :numref:`fig_devicebrowser`.
+
+.. _fig_devicebrowser:
 
 .. figure:: images/devicebrowser.png
    :width: 100 %
