@@ -18,7 +18,6 @@ typedef struct _motor_file_t {
     pbio_iodev_type_id_t id;
     bool coasting;
     int dir_number;
-    bool files_open;
     FILE *f_encoder_count;
     FILE *f_encoder_rate;
     FILE *f_duty;
@@ -26,7 +25,7 @@ typedef struct _motor_file_t {
 
 motor_file_t motor_files[] = {
     [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
-        .files_open = false
+        .dir_number = -1
     }
 };
 
@@ -49,11 +48,11 @@ pbio_error_t sysfs_motor_command(pbio_port_t port, const char* command) {
 // Close files if they are open
 void close_files(pbio_port_t port){
     int port_index = PORT_TO_IDX(port);
-    if (motor_files[port_index].files_open) {
+    if (motor_files[port_index].dir_number >= 0) {
         fclose(motor_files[port_index].f_encoder_count);
         fclose(motor_files[port_index].f_encoder_rate);
         fclose(motor_files[port_index].f_duty);
-        motor_files[port_index].files_open = false;
+        motor_files[port_index].dir_number = -1;
     }
 }
 
@@ -119,8 +118,6 @@ pbio_error_t sysfs_motor_init(pbio_port_t port){
                 motor_files[port_index].f_duty = fopen(filepath, "w");
                 // Close tacho-motor directory when done
                 closedir (dp);
-                // Files are opened
-                motor_files[port_index].files_open = true;
                 // Return success
                 return PBIO_SUCCESS;
             }
