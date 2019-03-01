@@ -111,3 +111,19 @@ frequency: Hz
 Sound frequencies are expressed in Hertz (Hz).
 
 For example, you can choose the frequency of a :meth:`beep <.ev3brick.sound.beep>` to change the pitch.
+
+.. _voltage:
+
+voltage: mV
+--------------
+Voltages are expressed in millivolt (mV).
+
+For example, you can check the voltage of the :meth:`battery <.ev3brick.battery.voltage>`.
+
+.. _current:
+
+current: mA
+--------------
+Electrical currents are expressed in milliampere (mA).
+
+For example, you can check the current supplied by the :meth:`battery <.ev3brick.battery.current>`.

@@ -50,3 +50,10 @@ Display
 .. automethod:: ev3brick.display.text
 
 .. automethod:: ev3brick.display.image
+
+Battery
+-------
+
+.. automethod:: ev3brick.battery.voltage
+
+.. automethod:: ev3brick.battery.current

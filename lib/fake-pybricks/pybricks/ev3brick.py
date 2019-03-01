@@ -1,8 +1,8 @@
 """LEGO® MINDSTORMS® EV3 Brick."""
 
 from parameters import Color
-from _speaker import Speaker
-from _display import Display
+from _common import Speaker, Display, Battery
+
 
 def buttons():
     """Check which buttons on the EV3 Brick are currently pressed.
@@ -47,5 +47,7 @@ def light(color):
     """
     pass
 
+
 sound = Speaker('EV3')
 display = Display('EV3')
+battery = Battery('EV3')
