@@ -16,11 +16,6 @@ STATIC mp_obj_t tools_wait(mp_obj_t arg) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(tools_wait_obj, tools_wait);
 
-/*
-class StopWatch():
-    """Time the duration of a program or event."""
-*/
-
 // Class structure for StopWatch
 typedef struct _tools_StopWatch_obj_t {
     mp_obj_base_t base;
@@ -30,15 +25,6 @@ typedef struct _tools_StopWatch_obj_t {
     bool running;
 } tools_StopWatch_obj_t;
 
-/*
-StopWatch
-    def reset(self):
-        """Set time to zero and pause."""
-        self.time_start = get_time()
-        self.time_stop = self.time_start
-        self.time_spent_pausing = 0
-        self.running = False
-*/
 STATIC mp_obj_t tools_StopWatch_reset(mp_obj_t self_in) {
     tools_StopWatch_obj_t *self = MP_OBJ_TO_PTR(self_in);
     self->time_start = mp_hal_ticks_ms();
@@ -48,20 +34,6 @@ STATIC mp_obj_t tools_StopWatch_reset(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(tools_StopWatch_reset_obj, tools_StopWatch_reset);
 
-/*
-StopWatch
-    def time(self):
-        """Get the current time of the stopwatch.
-
-        Returns:
-            int -- time in milliseconds
-
-        """
-        if self.running:
-            return get_time()-self.time_start-self.time_spent_pausing
-        else:
-            return self.time_stop-self.time_start-self.time_spent_pausing
-*/
 STATIC mp_obj_t tools_StopWatch_time(mp_obj_t self_in) {
     tools_StopWatch_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return mp_obj_new_int(
@@ -72,14 +44,6 @@ STATIC mp_obj_t tools_StopWatch_time(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(tools_StopWatch_time_obj, tools_StopWatch_time);
 
-/*
-StopWatch
-    def pause(self):
-        """Pause the stopwatch."""
-        if self.running:
-            self.running = False
-            self.time_stop = get_time()
-*/
 STATIC mp_obj_t tools_StopWatch_pause(mp_obj_t self_in) {
     tools_StopWatch_obj_t *self = MP_OBJ_TO_PTR(self_in);
     if (self->running) {
@@ -90,14 +54,6 @@ STATIC mp_obj_t tools_StopWatch_pause(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(tools_StopWatch_pause_obj, tools_StopWatch_pause);
 
-/*
-StopWatch
-    def resume(self):
-        """Resume the stopwatch."""
-        if not self.running:
-            self.running = True
-            self.time_spent_pausing += get_time()-self.time_stop
-*/
 STATIC mp_obj_t tools_StopWatch_resume(mp_obj_t self_in) {
     tools_StopWatch_obj_t *self = MP_OBJ_TO_PTR(self_in);
     if (!self->running) {
@@ -108,13 +64,6 @@ STATIC mp_obj_t tools_StopWatch_resume(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(tools_StopWatch_resume_obj, tools_StopWatch_resume);
 
-/*
-StopWatch
-    def __init__(self):
-        """Create the StopWatch object, reset it, and start it."""
-        self.reset()
-        self.resume()
-*/
 STATIC mp_obj_t tools_StopWatch_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     // Initialize self
     tools_StopWatch_obj_t *self = m_new_obj(tools_StopWatch_obj_t);
@@ -124,11 +73,6 @@ STATIC mp_obj_t tools_StopWatch_make_new(const mp_obj_type_t *type, size_t n_arg
     return MP_OBJ_FROM_PTR(self);
 }
 
-/*
-StopWatch
-    def __str__(self):
-        """String representation of StopWatch object."""
-*/
 STATIC void tools_StopWatch_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
     mp_printf(print, qstr_str(MP_QSTR_StopWatch));
 }

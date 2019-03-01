@@ -12,18 +12,6 @@
 #include "modcommon.h"
 #include "pberror.h"
 
-/*
-class ColorAndDistSensor():
-    """Class for the Powered Up ColorAndDistSensor."""
-
-    def __init__(self, port):
-        """Initialize the ColorAndDistSensor.
-
-        Arguments:
-            port -- Port on the hub: Port.A, Port.B, etc.
-        """
-*/
-
 // Class structure for ColorAndDistSensor
 typedef struct _pupdevices_ColorAndDistSensor_obj_t {
     mp_obj_base_t base;
@@ -49,22 +37,11 @@ STATIC uint8_t pupdevices_ColorAndDistSensor_combined_mode(pbio_port_t port, uin
     return data[idx];
 }
 
-/*
-ColorAndDistSensor
-    def __str__(self):
-        """String representation of ColorAndDistSensor object."""
-*/
 STATIC void pupdevices_ColorAndDistSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, qstr_str(MP_QSTR_ColorDistanceSensor));
     mp_printf(print, " on Port.%c",  self->port);
 }
-
-/*
-ColorAndDistSensor
-    def color(self):
-        """Return the detected color.""""
-*/
 
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_color(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -89,34 +66,18 @@ STATIC mp_obj_t pupdevices_ColorAndDistSensor_color(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_color_obj, pupdevices_ColorAndDistSensor_color);
 
-/*
-ColorAndDistSensor
-    def distance(self):
-        """Returns distance to detected object, ranging from 0 (very close) to 10 (very far)."""
-*/
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_distance(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return mp_obj_new_int(pupdevices_ColorAndDistSensor_combined_mode(self->port, 1));
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_distance_obj, pupdevices_ColorAndDistSensor_distance);
 
-
-/*
-ColorAndDistSensor
-    def reflection(self):
-        """Returns surface reflection, ranging from 0 (no reflection) to 100 (very high reflection)."""
-*/
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_reflection(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return mp_obj_new_int(pupdevices_ColorAndDistSensor_combined_mode(self->port, 3));
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_reflection_obj, pupdevices_ColorAndDistSensor_reflection);
 
-/*
-ColorAndDistSensor
-    def ambient(self):
-        """Returns ambient light intensity, ranging from 0 (darkness) to 100 (very bright light)."""
-*/
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_ambient(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_assert(pb_iodevice_set_mode(self->port, 4));
@@ -124,12 +85,6 @@ STATIC mp_obj_t pupdevices_ColorAndDistSensor_ambient(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_ambient_obj, pupdevices_ColorAndDistSensor_ambient);
 
-
-/*
-ColorAndDistSensor
-    def rgb(self):
-        """Returns surface reflection of red, green, and blue light, each ranging from 0 (no reflection) to 100 (very high reflection)."""
-*/
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_rgb(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_assert(pb_iodevice_set_mode(self->port, 6));

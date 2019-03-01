@@ -5,11 +5,6 @@
 #include <pberror.h>
 #include <pbdrv/battery.h>
 
-/*
-battery
-    def voltage():
-        """Return battery voltage (mV: millivolt)."""
-*/
 STATIC mp_obj_t battery_voltage(void) {
     uint16_t volt;
     pb_assert(pbdrv_battery_get_voltage_now(PBIO_PORT_SELF, &volt));
@@ -17,11 +12,6 @@ STATIC mp_obj_t battery_voltage(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_voltage_obj, battery_voltage);
 
-/*
-battery
-    def current():
-        """Return battery current (mA: milliampere)."""
-*/
 STATIC mp_obj_t battery_current(void) {
     uint16_t cur;
     pb_assert(pbdrv_battery_get_current_now(PBIO_PORT_SELF, &cur));
