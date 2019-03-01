@@ -3,3 +3,9 @@ div.disclaimer {
     font-size: 10px;
     font-style: italic;
 }
+div.figure p.caption {
+    padding-top: 0.8em;
+}
+span.caption-number:after {
+    content: ": ";
+ }

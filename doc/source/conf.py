@@ -97,6 +97,12 @@ todo_include_todos = True
 
 # Figure numbering
 numfig = True
+numfig_format = {
+    'figure': 'Figure %s',
+    'table': 'Table %s',
+    'code-block': 'Listing %s',
+    'section': 'Section %s'
+}
 
 # -- Autodoc options ------------------------------------------------------
 
