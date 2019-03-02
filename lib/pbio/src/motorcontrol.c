@@ -36,7 +36,7 @@ typedef enum {
 /**
  * Motor PID control status
  */
-typedef struct _pbio_motor_position_based_control_status_t {
+typedef struct _pbio_motor_angle_based_control_status_t {
     windup_status_t windup_status; /**< State of the anti-windup variables */
     count_t err_integral;          /**< Integral of position error (RUN_ANGLE or RUN_TARGET) */
     count_t speed_integrator;      /**< State of the speed integrator (all other modes) */
@@ -45,7 +45,7 @@ typedef struct _pbio_motor_position_based_control_status_t {
     ustime_t time_prev;            /**< Time at the previous control iteration */
     ustime_t time_paused;          /**< The amount of time the speed integrator has spent paused */
     ustime_t time_stopped;         /**< Time at which the time was paused */
-} pbio_motor_position_based_control_status_t;
+} pbio_motor_angle_based_control_status_t;
 
 typedef struct _pbio_motor_time_based_control_status_t {
     windup_status_t windup_status; /**< State of the anti-windup variables */
@@ -57,7 +57,7 @@ typedef struct _pbio_motor_time_based_control_status_t {
 } pbio_motor_time_based_control_status_t;
 
 // Current control status for each motor
-pbio_motor_position_based_control_status_t motor_control_status_position_based[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+pbio_motor_angle_based_control_status_t motor_control_status_angle_based[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 pbio_motor_time_based_control_status_t motor_control_status_time_based[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 stalled_status_t stalled_status[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
@@ -84,11 +84,11 @@ void stall_clear_flag(stalled_status_t *stalled, stalled_status_t flag){
     *stalled &= ~flag;
 }
 
-void control_update_position_target_init(pbio_port_t port){
+void control_update_angle_target_init(pbio_port_t port){
     // Trajectory and setting shortcuts for this motor
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
     pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
-    pbio_motor_position_based_control_status_t *status = &motor_control_status_position_based[PORT_TO_IDX(port)];
+    pbio_motor_angle_based_control_status_t *status = &motor_control_status_angle_based[PORT_TO_IDX(port)];
 
     // Check if the trajectory controller must be reinitialized/started
     if (motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_STARTING) {
@@ -124,19 +124,191 @@ void control_update_position_target_init(pbio_port_t port){
     }
 }
 
-void control_update_position_target(pbio_port_t port) {
+
+void control_update_time_target_init(pbio_port_t port) {
+    // Trajectory and setting shortcuts for this motor
+    pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
+    pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
+    pbio_motor_time_based_control_status_t *status = &motor_control_status_time_based[PORT_TO_IDX(port)];
+
+    // Read current state of this motor: current time, speed, and position
+    count_t count_now;
+    pbio_encmotor_get_encoder_count(port, &count_now);
+
+    // Check if the trajectory controller must be reinitialized/started
+    if (motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_STARTING) {
+        // For this new maneuver, we reset PID variables and related persistent control settings
+        // If still running and restarting a new maneuver, however, we keep part of the PID status
+        // in order to create a smooth transition from one maneuver to the next.
+        if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_RESTARTING) {
+            status->speed_integrator = status->load_duty/settings->pid_kp;
+        }
+        else {
+            // If no previous maneuver was active, just set these to zero.
+            status->load_duty = 0;
+            status->speed_integrator = 0;
+        }
+        status->integrator_time_stopped = 0;
+
+        // Reset control status flags
+        status->windup_status = SPEED_INTEGRATOR_RUNNING;
+        status->integrator_start = count_now;
+        status->integrator_ref_start = traject->th0;
+        motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
+    }
+}
+
+// Calculate the characteristic time values, encoder values, rate values and accelerations that uniquely define the rate and count trajectories
+pbio_error_t make_motor_trajectory(pbio_port_t port,
+                                   pbio_motor_action_t action,
+                                   int32_t speed_target,
+                                   int32_t duration_or_target_position,
+                                   pbio_motor_after_stop_t after_stop){
+
+    // Read the current system state for this motor
+    ustime_t time_start = clock_usecs();
+    count_t count_start;
+    rate_t rate_start;
+    pbio_error_t err;
+
+    pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
+    pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
+
+    ustime_t previous_time_start = traject->t0;
+    pbio_motor_action_t previous_action = traject->action;
+
+    bool currently_active =
+        motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_RUNNING ||
+        motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_HOLDING;
+
+    // Experimental work around for run in fast loop
+    if (action == RUN &&
+        previous_action == RUN &&
+        (currently_active || motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_STARTING) &&
+        time_start - previous_time_start < settings->tight_loop_time) {
+        get_reference(time_start, traject, &count_start, &rate_start);
+        make_trajectory_none(time_start, count_start, speed_target*settings->counts_per_output_unit, traject);
+        return PBIO_SUCCESS;
+    }
+
+    // Handle track target
+    if (action == TRACK_TARGET) {
+        // If the previous action was also track target, just keep running, otherwise start a new maneuver
+        motor_control_active[PORT_TO_IDX(port)] = previous_action == TRACK_TARGET && currently_active ?
+                                                  PBIO_MOTOR_CONTROL_RUNNING:
+                                                  PBIO_MOTOR_CONTROL_STARTING;
+        traject->action = action;
+        make_trajectory_none(time_start, duration_or_target_position*settings->counts_per_output_unit, 0, traject);
+        return PBIO_SUCCESS;
+    }
+
+    // For now, disable smooth transitions if the next step is a position based maneuver
+    // TODO: implement the actual transtion properly
+    if (action == RUN_TARGET || action == RUN_ANGLE) {
+        currently_active = 0;
+    }
+
+    if (currently_active) {
+        // Continue the reference from the currently active maneuver, for a smooth transition
+
+        // TODO: FOR RUN_ANGLE, RUN_TIME this isn't the absolute time: subtract paused time
+
+        // Related, use time_stopped to maintain run maneuvers.
+
+        get_reference(time_start, traject, &count_start, &rate_start);
+    }
+    else {
+        // Otherwise, start the reference from the current position and speed
+        err = pbio_encmotor_get_encoder_count(port, &count_start);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        err = pbio_encmotor_get_encoder_rate(port, &rate_start);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
+
+    traject->action = action;
+    traject->after_stop = after_stop;
+
+    if (action == RUN_TIME || action == RUN || action == RUN_STALLED) {
+        if (action != RUN_TIME) {
+            // For RUN and RUN_STALLED, no end time is specified, so we take a
+            // fictitious 30 seconds. This allows us to use the same code to get
+            // the acceleration parameters. Later on, when computing the actual
+            // references in the control loop, we skip the deceleration
+            // phase, such that RUN and RUN_STALLED are indeed infinite.
+            duration_or_target_position = 30*1000;
+        }
+        err = make_trajectory_time_based(
+            time_start,
+            time_start + duration_or_target_position*US_PER_MS,
+            count_start,
+            rate_start,
+            speed_target*settings->counts_per_output_unit,
+            settings->max_rate,
+            settings->abs_acceleration,
+            traject);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
+    else if (action == RUN_ANGLE || action == RUN_TARGET) {
+
+        // The absolute target count
+        count_t count_target;
+
+        if (action == RUN_TARGET) {
+            // In target mode, the user argument is just the target
+            count_target = duration_or_target_position*settings->counts_per_output_unit;
+        }
+        else {
+            // If the speed is negative, the meaning of angle reverses
+            int32_t angle_relative = speed_target > 0 ? duration_or_target_position: -duration_or_target_position;
+
+            // The absolute is then the starting point plus the relative angle
+            count_target = angle_relative*settings->counts_per_output_unit + count_start;
+        }
+        err = make_trajectory_angle_based(
+            time_start,
+            count_start,
+            count_target,
+            rate_start,
+            speed_target*settings->counts_per_output_unit,
+            settings->max_rate,
+            settings->abs_acceleration,
+            traject);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
+    else {
+        // ?
+    }
+
+    // If this new maneuver aborts an existing running or holding command, we "restart"
+    // while keeping PID status. Otherwise, we just "start" with zero PID parameters.
+    motor_control_active[PORT_TO_IDX(port)] = currently_active ?
+        PBIO_MOTOR_CONTROL_RESTARTING:
+        PBIO_MOTOR_CONTROL_STARTING;
+
+    return PBIO_SUCCESS;
+}
+
+void control_update_angle_target(pbio_port_t port) {
 
     // Return immediately if control is not active; then there is nothing we need to do
     if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_PASSIVE) {
         return;
     }
 
-    control_update_position_target_init(port);
+    control_update_angle_target_init(port);
 
     // Trajectory and setting shortcuts for this motor
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
     pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
-    pbio_motor_position_based_control_status_t *status = &motor_control_status_position_based[PORT_TO_IDX(port)];
+    pbio_motor_angle_based_control_status_t *status = &motor_control_status_angle_based[PORT_TO_IDX(port)];
     stalled_status_t *stalled = &stalled_status[PORT_TO_IDX(port)];
     duty_t max_duty = settings->max_duty_steps;
 
@@ -272,39 +444,6 @@ void control_update_position_target(pbio_port_t port) {
     // If we are not standing still at a target yet, actuate with the calculated signal
     else {
         pbio_dcmotor_set_duty_cycle_sys(port, duty);
-    }
-}
-
-void control_update_time_target_init(pbio_port_t port) {
-    // Trajectory and setting shortcuts for this motor
-    pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
-    pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
-    pbio_motor_time_based_control_status_t *status = &motor_control_status_time_based[PORT_TO_IDX(port)];
-
-    // Read current state of this motor: current time, speed, and position
-    count_t count_now;
-    pbio_encmotor_get_encoder_count(port, &count_now);
-
-    // Check if the trajectory controller must be reinitialized/started
-    if (motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_STARTING) {
-        // For this new maneuver, we reset PID variables and related persistent control settings
-        // If still running and restarting a new maneuver, however, we keep part of the PID status
-        // in order to create a smooth transition from one maneuver to the next.
-        if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_RESTARTING) {
-            status->speed_integrator = status->load_duty/settings->pid_kp;
-        }
-        else {
-            // If no previous maneuver was active, just set these to zero.
-            status->load_duty = 0;
-            status->speed_integrator = 0;
-        }
-        status->integrator_time_stopped = 0;
-
-        // Reset control status flags
-        status->windup_status = SPEED_INTEGRATOR_RUNNING;
-        status->integrator_start = count_now;
-        status->integrator_ref_start = traject->th0;
-        motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
     }
 }
 
@@ -450,7 +589,7 @@ void control_update(pbio_port_t port){
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
 
     if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE || traject->action == TRACK_TARGET){
-        control_update_position_target(port);
+        control_update_angle_target(port);
     }
     
     else { // else: RUN || RUN_TIME || RUN_STALLED

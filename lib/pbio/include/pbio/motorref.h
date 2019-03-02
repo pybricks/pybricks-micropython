@@ -92,12 +92,12 @@ typedef struct _pbio_motor_trajectory_t {
 
 pbio_motor_trajectory_t trajectories[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-void get_reference(ustime_t time_ref, pbio_motor_trajectory_t *traject, count_t *count_ref, rate_t *rate_ref);
+void make_trajectory_none(ustime_t t0, count_t th0, rate_t w1, pbio_motor_trajectory_t *ref);
 
-pbio_error_t make_motor_trajectory(pbio_port_t port,
-                                   pbio_motor_action_t action,
-                                   int32_t speed_target,
-                                   int32_t duration_or_target_position,
-                                   pbio_motor_after_stop_t after_stop);
+pbio_error_t make_trajectory_time_based(ustime_t t0, ustime_t t3, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_motor_trajectory_t *ref);
+
+pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_motor_trajectory_t *ref);
+
+void get_reference(ustime_t time_ref, pbio_motor_trajectory_t *traject, count_t *count_ref, rate_t *rate_ref);
 
 #endif // _PBIO_MOTORREF_H_
