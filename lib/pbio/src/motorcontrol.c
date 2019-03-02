@@ -45,21 +45,15 @@ typedef struct _pbio_motor_position_based_control_status_t {
     count_t count_err_prev;        /**< Position error in the previous control iteration */
     ustime_t time_prev;            /**< Time at the previous control iteration */
     ustime_t time_paused;          /**< The amount of time the speed integrator has spent paused */
-    ustime_t time_stopped;         /**< Time at which the speed integrator last stopped */
-    count_t integrator_ref_start;  /**< Integrated speed value prior to enabling integrator */
-    count_t integrator_start;      /**< Integrated reference speed value prior to enabling integrator */
+    ustime_t time_stopped;         /**< Time at which the time was paused */
 } pbio_motor_position_based_control_status_t;
 
 typedef struct _pbio_motor_time_based_control_status_t {
     windup_status_t windup_status; /**< State of the anti-windup variables */
     stalled_status_t stalled;      /**< Stalled state of the motor */
-    count_t err_integral;          /**< Integral of position error (RUN_ANGLE or RUN_TARGET) */
     count_t speed_integrator;      /**< State of the speed integrator (all other modes) */
     duty_t load_duty;
-    count_t count_err_prev;        /**< Position error in the previous control iteration */
-    ustime_t time_prev;            /**< Time at the previous control iteration */
-    ustime_t time_paused;          /**< The amount of time the speed integrator has spent paused */
-    ustime_t time_stopped;         /**< Time at which the speed integrator last stopped */
+    ustime_t integrator_time_stopped;         /**< Time at which the speed integrator last stopped */
     count_t integrator_ref_start;  /**< Integrated speed value prior to enabling integrator */
     count_t integrator_start;      /**< Integrated reference speed value prior to enabling integrator */
 } pbio_motor_time_based_control_status_t;
@@ -299,26 +293,15 @@ void control_update_time_target(pbio_port_t port){
         // If still running and restarting a new maneuver, however, we keep part of the PID status
         // in order to create a smooth transition from one maneuver to the next.
         if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_RESTARTING) {
-            // If it is a position control mode, we apply the surplus to the I term
-            if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE){
-                status->err_integral = settings->pid_ki > 0 ? (US_PER_SECOND/settings->pid_ki)*status->load_duty : 0;
-            }
-            // Otherwise, we apply it to the P term
-            else {
-                status->speed_integrator = status->load_duty/settings->pid_kp;
-            }
+            status->speed_integrator = status->load_duty/settings->pid_kp;
         }
         else {
             // If no previous maneuver was active, just set these to zero.
             status->load_duty = 0;
-            status->err_integral = 0;
             status->speed_integrator = 0;
         }
-        status->time_paused = 0;
-        status->time_stopped = 0;
+        status->integrator_time_stopped = 0;
 
-        status->time_prev = traject->t0;
-        status->count_err_prev = 0;
         // Reset control status flags
         status->windup_status = SPEED_INTEGRATOR_RUNNING;
         status->integrator_start = count_now;
@@ -358,7 +341,7 @@ void control_update_time_target(pbio_port_t port){
     // Check if proportional control exceeds the duty limit
     if ((duty_due_to_proportional >= max_duty && rate_err > 0) || (duty_due_to_proportional <= -max_duty && rate_err < 0)){
         // If we are additionally also running slower than the specified stall speed limit, set status to stalled
-        stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_rate_limit, time_now - status->time_stopped, settings->stall_time, STALLED_PROPORTIONAL);
+        stall_set_flag_if_slow(&status->stalled, rate_now, settings->stall_rate_limit, time_now - status->integrator_time_stopped, settings->stall_time, STALLED_PROPORTIONAL);
         // The integrator should NOT run.
         if (status->windup_status == SPEED_INTEGRATOR_RUNNING) {
             // If it is running, disable it
@@ -366,7 +349,7 @@ void control_update_time_target(pbio_port_t port){
             // Save the integrator state reached now, to continue when no longer stalled
             status->speed_integrator += count_ref - status->integrator_ref_start - count_now + status->integrator_start;
             // Store time at which speed integration is disabled
-            status->time_stopped = time_now;
+            status->integrator_time_stopped = time_now;
         }
     }
     else {
