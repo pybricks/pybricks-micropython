@@ -84,29 +84,11 @@ void stall_clear_flag(stalled_status_t *stalled, stalled_status_t flag){
     *stalled &= ~flag;
 }
 
-void control_update_position_target(pbio_port_t port){
+void control_update_position_target_init(pbio_port_t port){
     // Trajectory and setting shortcuts for this motor
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
     pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
     pbio_motor_position_based_control_status_t *status = &motor_control_status_position_based[PORT_TO_IDX(port)];
-    stalled_status_t *stalled = &stalled_status[PORT_TO_IDX(port)];
-    duty_t max_duty = settings->max_duty_steps;
-
-    // Return immediately if control is not active; then there is nothing we need to do
-    if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_PASSIVE) {
-        return;
-    }
-
-    // Declare current time, positions, rates, and their reference value and error
-    ustime_t time_now, time_ref, time_loop;
-    count_t count_now, count_ref, count_err;
-    rate_t rate_now, rate_ref, rate_err;
-    duty_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative;
-
-    // Read current state of this motor: current time, speed, and position
-    time_now = clock_usecs();
-    pbio_encmotor_get_encoder_count(port, &count_now);
-    pbio_encmotor_get_encoder_rate(port, &rate_now);
 
     // Check if the trajectory controller must be reinitialized/started
     if (motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_STARTING) {
@@ -140,6 +122,34 @@ void control_update_position_target(pbio_port_t port){
         }
         motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
     }
+}
+
+void control_update_position_target(pbio_port_t port) {
+
+    // Return immediately if control is not active; then there is nothing we need to do
+    if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_PASSIVE) {
+        return;
+    }
+
+    control_update_position_target_init(port);
+
+    // Trajectory and setting shortcuts for this motor
+    pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
+    pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
+    pbio_motor_position_based_control_status_t *status = &motor_control_status_position_based[PORT_TO_IDX(port)];
+    stalled_status_t *stalled = &stalled_status[PORT_TO_IDX(port)];
+    duty_t max_duty = settings->max_duty_steps;
+
+    // Declare current time, positions, rates, and their reference value and error
+    ustime_t time_now, time_ref, time_loop;
+    count_t count_now, count_ref, count_err;
+    rate_t rate_now, rate_ref, rate_err;
+    duty_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative;
+
+    // Read current state of this motor: current time, speed, and position
+    time_now = clock_usecs();
+    pbio_encmotor_get_encoder_count(port, &count_now);
+    pbio_encmotor_get_encoder_rate(port, &rate_now);
 
     // Get the time at which we want to evaluate the reference position/velocities, for position based commands
 
@@ -265,29 +275,15 @@ void control_update_position_target(pbio_port_t port){
     }
 }
 
-void control_update_time_target(pbio_port_t port){
+void control_update_time_target_init(pbio_port_t port) {
     // Trajectory and setting shortcuts for this motor
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
     pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
     pbio_motor_time_based_control_status_t *status = &motor_control_status_time_based[PORT_TO_IDX(port)];
-    stalled_status_t *stalled = &stalled_status[PORT_TO_IDX(port)];
-    duty_t max_duty = settings->max_duty_steps;
-
-    // Return immediately if control is not active; then there is nothing we need to do
-    if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_PASSIVE) {
-        return;
-    }
-
-    // Declare current time, positions, rates, and their reference value and error
-    ustime_t time_now, time_ref;
-    count_t count_now, count_ref, count_err;
-    rate_t rate_now, rate_ref, rate_err;
-    duty_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative;
 
     // Read current state of this motor: current time, speed, and position
-    time_now = clock_usecs();
+    count_t count_now;
     pbio_encmotor_get_encoder_count(port, &count_now);
-    pbio_encmotor_get_encoder_rate(port, &rate_now);
 
     // Check if the trajectory controller must be reinitialized/started
     if (motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_STARTING) {
@@ -310,6 +306,39 @@ void control_update_time_target(pbio_port_t port){
         status->integrator_ref_start = traject->th0;
         motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING;
     }
+}
+
+void control_update_time_target(pbio_port_t port){
+
+    // Return immediately if control is not active; then there is nothing we need to do
+    if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_PASSIVE) {
+        return;
+    }
+
+    control_update_time_target_init(port);
+
+    // Trajectory and setting shortcuts for this motor
+    pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
+    pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
+    pbio_motor_time_based_control_status_t *status = &motor_control_status_time_based[PORT_TO_IDX(port)];
+    stalled_status_t *stalled = &stalled_status[PORT_TO_IDX(port)];
+    duty_t max_duty = settings->max_duty_steps;
+
+    // Return immediately if control is not active; then there is nothing we need to do
+    if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_PASSIVE) {
+        return;
+    }
+
+    // Declare current time, positions, rates, and their reference value and error
+    ustime_t time_now, time_ref;
+    count_t count_now, count_ref, count_err;
+    rate_t rate_now, rate_ref, rate_err;
+    duty_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative;
+
+    // Read current state of this motor: current time, speed, and position
+    time_now = clock_usecs();
+    pbio_encmotor_get_encoder_count(port, &count_now);
+    pbio_encmotor_get_encoder_rate(port, &rate_now);
 
     // Get the time at which we want to evaluate the reference position/velocities. 
     // For time based commands, we never pause the time; it is just the current time
