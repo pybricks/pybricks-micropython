@@ -36,7 +36,7 @@ typedef enum {
 /**
  * Motor PID control status
  */
-typedef struct _pbio_motor_control_status_t {
+typedef struct _pbio_motor_position_based_control_status_t {
     windup_status_t windup_status; /**< State of the anti-windup variables */
     stalled_status_t stalled;      /**< Stalled state of the motor */
     count_t err_integral;          /**< Integral of position error (RUN_ANGLE or RUN_TARGET) */
@@ -48,10 +48,25 @@ typedef struct _pbio_motor_control_status_t {
     ustime_t time_stopped;         /**< Time at which the speed integrator last stopped */
     count_t integrator_ref_start;  /**< Integrated speed value prior to enabling integrator */
     count_t integrator_start;      /**< Integrated reference speed value prior to enabling integrator */
-} pbio_motor_control_status_t;
+} pbio_motor_position_based_control_status_t;
+
+typedef struct _pbio_motor_time_based_control_status_t {
+    windup_status_t windup_status; /**< State of the anti-windup variables */
+    stalled_status_t stalled;      /**< Stalled state of the motor */
+    count_t err_integral;          /**< Integral of position error (RUN_ANGLE or RUN_TARGET) */
+    count_t speed_integrator;      /**< State of the speed integrator (all other modes) */
+    duty_t load_duty;
+    count_t count_err_prev;        /**< Position error in the previous control iteration */
+    ustime_t time_prev;            /**< Time at the previous control iteration */
+    ustime_t time_paused;          /**< The amount of time the speed integrator has spent paused */
+    ustime_t time_stopped;         /**< Time at which the speed integrator last stopped */
+    count_t integrator_ref_start;  /**< Integrated speed value prior to enabling integrator */
+    count_t integrator_start;      /**< Integrated reference speed value prior to enabling integrator */
+} pbio_motor_time_based_control_status_t;
 
 // Current control status for each motor
-pbio_motor_control_status_t motor_control_status[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+pbio_motor_position_based_control_status_t motor_control_status_position_based[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+pbio_motor_time_based_control_status_t motor_control_status_time_based[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 // If the controller reach the maximum duty cycle value, this shortcut sets the stalled flag when the speed is below the stall limit.
 void stall_set_flag_if_slow(stalled_status_t *stalled,
@@ -79,7 +94,7 @@ void control_update_position_target(pbio_port_t port){
     // Trajectory and setting shortcuts for this motor
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
     pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
-    pbio_motor_control_status_t *status = &motor_control_status[PORT_TO_IDX(port)];
+    pbio_motor_position_based_control_status_t *status = &motor_control_status_position_based[PORT_TO_IDX(port)];
     duty_t max_duty = settings->max_duty_steps;
 
     // Return immediately if control is not active; then there is nothing we need to do
@@ -259,7 +274,7 @@ void control_update_time_target(pbio_port_t port){
     // Trajectory and setting shortcuts for this motor
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
     pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
-    pbio_motor_control_status_t *status = &motor_control_status[PORT_TO_IDX(port)];
+    pbio_motor_time_based_control_status_t *status = &motor_control_status_time_based[PORT_TO_IDX(port)];
     duty_t max_duty = settings->max_duty_steps;
 
     // Return immediately if control is not active; then there is nothing we need to do
@@ -443,8 +458,9 @@ void _pbio_motorcontrol_poll(void){
 /* pbio user functions */
 
 pbio_error_t pbio_encmotor_is_stalled(pbio_port_t port, bool *stalled) {
-    *stalled = motor_control_status[PORT_TO_IDX(port)].stalled != STALLED_NONE &&
-               motor_control_active[PORT_TO_IDX(port)] != PBIO_MOTOR_CONTROL_PASSIVE;
+    // TODO: Fix once new status structures in place
+    // *stalled = motor_control_status[PORT_TO_IDX(port)].stalled != STALLED_NONE &&
+    //            motor_control_active[PORT_TO_IDX(port)] != PBIO_MOTOR_CONTROL_PASSIVE;
     return PBIO_SUCCESS;
 }
 
