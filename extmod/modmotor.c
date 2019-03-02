@@ -185,7 +185,6 @@ STATIC mp_obj_t motor_Motor_run(mp_obj_t self_in, mp_obj_t speed_in) {
     pb_thread_exit();
 
     pb_assert(err);
-    mp_hal_delay_ms(15);
 
     return mp_const_none;
 }

@@ -199,6 +199,7 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
                                                   PBIO_MOTOR_CONTROL_STARTING;
         traject->action = action;
         make_trajectory_none(time_start, duration_or_target_position*settings->counts_per_output_unit, 0, traject);
+        control_update_angle_target_init(port);
         return PBIO_SUCCESS;
     }
 
@@ -293,6 +294,14 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
         PBIO_MOTOR_CONTROL_RESTARTING:
         PBIO_MOTOR_CONTROL_STARTING;
 
+    if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE || traject->action == TRACK_TARGET){
+        control_update_angle_target_init(port);
+    }
+    
+    else { // else: RUN || RUN_TIME || RUN_STALLED
+        control_update_time_target_init(port);
+    }
+
     return PBIO_SUCCESS;
 }
 
@@ -302,8 +311,6 @@ void control_update_angle_target(pbio_port_t port) {
     if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_PASSIVE) {
         return;
     }
-
-    control_update_angle_target_init(port);
 
     // Trajectory and setting shortcuts for this motor
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
@@ -453,8 +460,6 @@ void control_update_time_target(pbio_port_t port){
     if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_PASSIVE) {
         return;
     }
-
-    control_update_time_target_init(port);
 
     // Trajectory and setting shortcuts for this motor
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
