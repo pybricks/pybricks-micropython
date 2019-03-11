@@ -7,10 +7,8 @@ from __future__ import print_function
 import struct
 import sys
 
-# TODO: probably want to pass this as argument
-MAX_SIZE = 106 * 1024
 
-if len(sys.argv) < 2:
+if len(sys.argv) < 3:
     print("Missing arguments", file=sys.stderr)
     sys.exit(1)
 
@@ -24,6 +22,8 @@ with open(sys.argv[1], 'rb') as f:
             break
         checksum += struct.unpack('I', word)[0]
         size += 4
+
+MAX_SIZE = int(sys.argv[2])
 
 if size > MAX_SIZE:
     print("File is too large", file=sys.stderr)

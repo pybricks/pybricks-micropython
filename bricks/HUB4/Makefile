@@ -21,9 +21,9 @@ INC += -I.
 INC += -I$(TOP)
 INC += -I$(TOP)/lib/cmsis/inc
 INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32F0xx/Include
-INC += -I$(TOP)/ports/pybricks/lib/pbio/drv/move_hub
+INC += -I$(TOP)/ports/pybricks/lib/pbio/drv/hub4
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
-INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/move_hub
+INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/hub4
 INC += -I$(TOP)/ports/pybricks/lib/pbio
 INC += -I$(TOP)/ports/pybricks/lib/BlueNRG-MS/includes
 INC += -I$(TOP)/ports/pybricks/extmod
@@ -32,7 +32,7 @@ INC += -I$(BUILD)
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
 CHECKSUM = $(TOP)/ports/pybricks/tools/checksum.py
-FIRMWARE_MAX_SIZE = 108544
+FIRMWARE_MAX_SIZE = 237568
 
 PBIO_OPT = -DPBIO_CONFIG_ENABLE_SYS
 PBIO_OPT += -DPBIO_CONFIG_ENABLE_MOTORS
@@ -76,7 +76,7 @@ SRC_C = \
 	lib/mp-readline/readline.c \
 
 SRC_S = \
-	ports/pybricks/lib/pbio/platform/move_hub/startup_stm32f070xb.s \
+	ports/pybricks/lib/pbio/platform/hub4/startup_stm32f030xc.s \
 	ports/stm32/gchelper_m0.s \
 
 # Pybricks modules
@@ -109,16 +109,16 @@ BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\
 	)
 
 PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
-	drv/move_hub/adc.c \
-	drv/move_hub/battery.c \
-	drv/move_hub/bluetooth.c \
-	drv/move_hub/button.c \
-	drv/move_hub/light.c \
-	drv/move_hub/ioport.c \
-	drv/move_hub/motor.c \
-	drv/move_hub/uart.c \
-	platform/move_hub/clock.c \
-	platform/move_hub/sys.c \
+	drv/hub4/adc.c \
+	drv/hub4/battery.c \
+	drv/hub4/bluetooth.c \
+	drv/hub4/button.c \
+	drv/hub4/light.c \
+	drv/hub4/ioport.c \
+	drv/hub4/motor.c \
+	drv/hub4/uart.c \
+	platform/hub4/clock.c \
+	platform/hub4/sys.c \
 	src/motor.c \
 	src/error.c \
 	src/iodev.c \
