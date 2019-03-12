@@ -38,7 +38,7 @@ typedef enum {
  */
 typedef struct _pbio_motor_angle_based_control_status_t {
     windup_status_t windup_status; /**< State of the anti-windup variables */
-    count_t err_integral;          /**< Integral of position error (RUN_ANGLE or RUN_TARGET) */
+    count_t err_integral;          /**< Integral of position error (RUN_TARGET) */
     count_t speed_integrator;      /**< State of the speed integrator (all other modes) */
     duty_t load_duty;
     count_t count_err_prev;        /**< Position error in the previous control iteration */
@@ -180,22 +180,11 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
             return err;
         }
     }
-    else if (action == RUN_ANGLE || action == RUN_TARGET) {
+    else if (action == RUN_TARGET) {
 
         // The absolute target count
-        count_t count_target;
+        count_t count_target = duration_or_target_position*settings->counts_per_output_unit;
 
-        if (action == RUN_TARGET) {
-            // In target mode, the user argument is just the target
-            count_target = duration_or_target_position*settings->counts_per_output_unit;
-        }
-        else {
-            // If the speed is negative, the meaning of angle reverses
-            int32_t angle_relative = speed_target > 0 ? duration_or_target_position: -duration_or_target_position;
-
-            // The absolute is then the starting point plus the relative angle
-            count_target = angle_relative*settings->counts_per_output_unit + count_start;
-        }
         err = make_trajectory_angle_based(
             time_start,
             count_start,
@@ -213,10 +202,10 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
         // handle track target
     }
 
-    if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE || traject->action == TRACK_TARGET){
+    if (traject->action == RUN_TARGET || traject->action == TRACK_TARGET){
         control_update_angle_target_init(port);
     }
-    
+
     else { // else: RUN || RUN_TIME || RUN_STALLED
         control_update_time_target_init(port);
     }
@@ -307,7 +296,7 @@ void control_update_angle_target(pbio_port_t port) {
     status->count_err_prev = count_err;
     status->time_prev = time_now;
 
-    // Duty cycle component due to integral position control (RUN_TARGET || RUN_ANGLE)
+    // Duty cycle component due to integral position control
     duty_due_to_integral = (settings->pid_ki*(status->err_integral/US_PER_MS))/MS_PER_SECOND;
 
     // Integrator anti windup (stalled in the sense of integrators)
@@ -335,7 +324,7 @@ void control_update_angle_target(pbio_port_t port) {
 
     // Check if we are at the target and standing still, with slightly different end conditions for each mode
     if (
-        (traject->action == RUN_TARGET || traject->action == RUN_ANGLE) &&
+        (traject->action == RUN_TARGET) &&
             (
                 // Maneuver is complete, time wise
                 time_ref >= traject->t3 &&
@@ -364,7 +353,7 @@ void control_update_angle_target(pbio_port_t port) {
 
             // Altough we keep holding, the maneuver is completed
             motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_HOLDING;
-            
+
         }
     }
     // If we are not standing still at a target yet, actuate with the calculated signal
@@ -403,7 +392,7 @@ void control_update_time_target(pbio_port_t port){
     pbio_encmotor_get_encoder_count(port, &count_now);
     pbio_encmotor_get_encoder_rate(port, &rate_now);
 
-    // Get the time at which we want to evaluate the reference position/velocities. 
+    // Get the time at which we want to evaluate the reference position/velocities.
     // For time based commands, we never pause the time; it is just the current time
     time_ref = time_now;
 
@@ -512,10 +501,10 @@ void control_update_time_target(pbio_port_t port){
 void control_update(pbio_port_t port){
     pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
 
-    if (traject->action == RUN_TARGET || traject->action == RUN_ANGLE || traject->action == TRACK_TARGET){
+    if (traject->action == RUN_TARGET || traject->action == TRACK_TARGET){
         control_update_angle_target(port);
     }
-    
+
     else { // else: RUN || RUN_TIME || RUN_STALLED
         control_update_time_target(port);
     }
@@ -579,7 +568,24 @@ pbio_error_t pbio_encmotor_run_until_stalled(pbio_port_t port, int32_t speed, pb
 }
 
 pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, int32_t speed, int32_t angle, pbio_motor_after_stop_t after_stop){
-    return make_motor_trajectory(port, RUN_ANGLE, speed, angle, after_stop);
+
+    // Speed  | Angle | End target  | Effect
+    //  > 0   |  > 0  | now + angle | Forward
+    //  > 0   |  < 0  | now + angle | Backward
+    //  < 0   |  > 0  | now - angle | Backward
+    //  < 0   |  < 0  | now - angle | Forward
+
+    // Read the instantaneous angle
+    int32_t angle_now;
+    pbio_error_t err = pbio_encmotor_get_angle(port, &angle_now);
+    if (err != PBIO_SUCCESS){
+        return err;
+    }
+
+    // The angle target is the instantaneous angle plus the angle to be traveled
+    int32_t angle_target = angle_now + (speed < 0 ? -angle: angle);
+
+    return pbio_encmotor_run_target(port, speed, angle_target, after_stop);
 }
 
 pbio_error_t pbio_encmotor_run_target(pbio_port_t port, int32_t speed, int32_t target, pbio_motor_after_stop_t after_stop){

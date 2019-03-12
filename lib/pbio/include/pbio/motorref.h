@@ -65,7 +65,6 @@ typedef enum {
     RUN,
     RUN_TIME,
     RUN_STALLED,
-    RUN_ANGLE,
     RUN_TARGET,
     TRACK_TARGET,
 } pbio_motor_action_t;
