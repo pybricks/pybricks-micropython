@@ -34,6 +34,17 @@ typedef enum {
 } stalled_status_t;
 
 /**
+ * Motor control actions
+ */
+typedef enum {
+    RUN,
+    RUN_TIME,
+    RUN_STALLED,
+    RUN_TARGET,
+    TRACK_TARGET,
+} pbio_motor_action_t;
+
+/**
  * Motor PID control status
  */
 typedef struct _pbio_motor_angle_based_control_status_t {
@@ -55,6 +66,18 @@ typedef struct _pbio_motor_time_based_control_status_t {
     count_t integrator_ref_start;  /**< Integrated speed value prior to enabling integrator */
     count_t integrator_start;      /**< Integrated reference speed value prior to enabling integrator */
 } pbio_motor_time_based_control_status_t;
+
+/**
+ * Single motor maneuver
+ */
+typedef struct _pbio_motor_maneuver_t {
+    pbio_motor_action_t action;         /**<  Motor action type */
+    pbio_motor_after_stop_t after_stop; /**<  BRAKE, COAST or HOLD after motion complete */
+    pbio_motor_trajectory_t trajectory;
+} pbio_motor_maneuver_t;
+
+pbio_motor_maneuver_t maneuvers[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+
 
 // Current control status for each motor
 pbio_motor_angle_based_control_status_t motor_control_status_angle_based[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
@@ -97,7 +120,8 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
     rate_t rate_start;
     pbio_error_t err;
 
-    pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
+    pbio_motor_maneuver_t *maneuver = &maneuvers[PORT_TO_IDX(port)];
+    pbio_motor_trajectory_t *traject = &maneuver->trajectory;
     pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
 
     // Otherwise, start the reference from the current position and speed
@@ -110,30 +134,38 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
         return err;
     }
 
-    traject->action = action;
-    traject->after_stop = after_stop;
+    maneuver->action = action;
+    maneuver->after_stop = after_stop;
 
     if (action == RUN_TIME || action == RUN || action == RUN_STALLED) {
-        if (action != RUN_TIME) {
-            // For RUN and RUN_STALLED, no end time is specified, so we take a
-            // fictitious 30 seconds. This allows us to use the same code to get
-            // the acceleration parameters. Later on, when computing the actual
-            // references in the control loop, we skip the deceleration
-            // phase, such that RUN and RUN_STALLED are indeed infinite.
-            duration_or_target_position = 30*1000;
+        if (action == RUN_TIME) {
+            err = make_trajectory_time_based(
+                time_start,
+                time_start + duration_or_target_position*US_PER_MS,
+                count_start,
+                rate_start,
+                speed_target*settings->counts_per_output_unit,
+                settings->max_rate,
+                settings->abs_acceleration,
+                traject);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
         }
-        err = make_trajectory_time_based(
-            time_start,
-            time_start + duration_or_target_position*US_PER_MS,
-            count_start,
-            rate_start,
-            speed_target*settings->counts_per_output_unit,
-            settings->max_rate,
-            settings->abs_acceleration,
-            traject);
-        if (err != PBIO_SUCCESS) {
-            return err;
+        else {
+            err = make_trajectory_time_based_forever(
+                time_start,
+                count_start,
+                rate_start,
+                speed_target*settings->counts_per_output_unit,
+                settings->max_rate,
+                settings->abs_acceleration,
+                traject);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }            
         }
+        
     }
     else if (action == RUN_TARGET) {
 
@@ -157,7 +189,7 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
         // handle track target
     }
 
-    if (traject->action == RUN_TARGET || traject->action == TRACK_TARGET){
+    if (maneuver->action == RUN_TARGET || maneuver->action == TRACK_TARGET){
         // Trajectory and setting shortcuts for this motor
         pbio_motor_angle_based_control_status_t *status = &motor_control_status_angle_based[PORT_TO_IDX(port)];
 
@@ -200,13 +232,9 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
 
 void control_update_angle_target(pbio_port_t port) {
 
-    // Return immediately if control is not active; then there is nothing we need to do
-    if (motor_control_active[PORT_TO_IDX(port)] < PBIO_MOTOR_CONTROL_TRACKING) {
-        return;
-    }
-
     // Trajectory and setting shortcuts for this motor
-    pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
+    pbio_motor_maneuver_t *maneuver = &maneuvers[PORT_TO_IDX(port)];
+    pbio_motor_trajectory_t *traject = &maneuver->trajectory;
     pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
     pbio_motor_angle_based_control_status_t *status = &motor_control_status_angle_based[PORT_TO_IDX(port)];
     stalled_status_t *stalled = &stalled_status[PORT_TO_IDX(port)];
@@ -309,7 +337,7 @@ void control_update_angle_target(pbio_port_t port) {
 
     // Check if we are at the target and standing still, with slightly different end conditions for each mode
     if (
-        (traject->action == RUN_TARGET) &&
+        (maneuver->action == RUN_TARGET) &&
             (
                 // Maneuver is complete, time wise
                 time_ref >= traject->t3 &&
@@ -324,15 +352,15 @@ void control_update_angle_target(pbio_port_t port) {
     {
     // If so, we have reached our goal. We can keep running this loop in order to hold this position.
     // But if brake or coast was specified as the afer_stop, we trigger that. Also clear the running flag to stop waiting for completion.
-        if (traject->after_stop == PBIO_MOTOR_STOP_COAST){
+        if (maneuver->after_stop == PBIO_MOTOR_STOP_COAST){
             // Coast the motor
             pbio_dcmotor_coast(port);
         }
-        else if (traject->after_stop == PBIO_MOTOR_STOP_BRAKE){
+        else if (maneuver->after_stop == PBIO_MOTOR_STOP_BRAKE){
             // Brake the motor
             pbio_dcmotor_brake(port);
         }
-        else if (traject->after_stop == PBIO_MOTOR_STOP_HOLD) {
+        else if (maneuver->after_stop == PBIO_MOTOR_STOP_HOLD) {
             // Hold the motor. In position based control, holding just means that we continue the position control loop without changes
             pbio_dcmotor_set_duty_cycle_sys(port, duty);
 
@@ -349,13 +377,9 @@ void control_update_angle_target(pbio_port_t port) {
 
 void control_update_time_target(pbio_port_t port){
 
-    // Return immediately if control is not active; then there is nothing we need to do
-    if (motor_control_active[PORT_TO_IDX(port)] < PBIO_MOTOR_CONTROL_TRACKING) {
-        return;
-    }
-
     // Trajectory and setting shortcuts for this motor
-    pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
+    pbio_motor_maneuver_t *maneuver = &maneuvers[PORT_TO_IDX(port)];
+    pbio_motor_trajectory_t *traject = &maneuver->trajectory;
     pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
     pbio_motor_time_based_control_status_t *status = &motor_control_status_time_based[PORT_TO_IDX(port)];
     stalled_status_t *stalled = &stalled_status[PORT_TO_IDX(port)];
@@ -440,14 +464,14 @@ void control_update_time_target(pbio_port_t port){
     if (
         // Conditions for RUN_TIME command
         (
-        (traject->action == RUN_TIME) &&
+        (maneuver->action == RUN_TIME) &&
             // We are past the total duration of the timed command
             (time_now >= traject->t3)
         )
         ||
         // Conditions for run_stalled commands
         (
-        (traject->action == RUN_STALLED) &&
+        (maneuver->action == RUN_STALLED) &&
             // Whether the motor is stalled in either proportional or integral sense
             *stalled != STALLED_NONE
         )
@@ -455,15 +479,15 @@ void control_update_time_target(pbio_port_t port){
     {
     // If so, we have reached our goal. We can keep running this loop in order to hold this position.
     // But if brake or coast was specified as the afer_stop, we trigger that. Also clear the running flag to stop waiting for completion.
-        if (traject->after_stop == PBIO_MOTOR_STOP_COAST){
+        if (maneuver->after_stop == PBIO_MOTOR_STOP_COAST){
             // Coast the motor
             pbio_dcmotor_coast(port);
         }
-        else if (traject->after_stop == PBIO_MOTOR_STOP_BRAKE){
+        else if (maneuver->after_stop == PBIO_MOTOR_STOP_BRAKE){
             // Brake the motor
             pbio_dcmotor_brake(port);
         }
-        else if (traject->after_stop == PBIO_MOTOR_STOP_HOLD) {
+        else if (maneuver->after_stop == PBIO_MOTOR_STOP_HOLD) {
             // Hold the motor
             // RUN_TIME || RUN_STALLED
             // When ending a time based control maneuver with hold, we trigger a new position based maneuver with zero degrees
@@ -479,16 +503,17 @@ void control_update_time_target(pbio_port_t port){
 }
 
 void control_update(pbio_port_t port){
-    pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
-
-    if (traject->action == RUN_TARGET || traject->action == TRACK_TARGET){
-        control_update_angle_target(port);
+    switch (motor_control_active[PORT_TO_IDX(port)]) {
+        case PBIO_MOTOR_CONTROL_TRACKING:
+        case PBIO_MOTOR_CONTROL_RUNNING_ANGLE:
+            control_update_angle_target(port);
+            break;
+        case PBIO_MOTOR_CONTROL_RUNNING_TIME:
+            control_update_time_target(port);
+            break;            
+        default:
+            break;
     }
-
-    else { // else: RUN || RUN_TIME || RUN_STALLED
-        control_update_time_target(port);
-    }
-
 }
 
 #ifdef PBIO_CONFIG_ENABLE_MOTORS

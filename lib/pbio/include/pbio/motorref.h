@@ -59,22 +59,10 @@ typedef int32_t duty_t;
 
 
 /**
- * Motor control actions
- */
-typedef enum {
-    RUN,
-    RUN_TIME,
-    RUN_STALLED,
-    RUN_TARGET,
-    TRACK_TARGET,
-} pbio_motor_action_t;
-
-/**
  * Motor trajectory parameters for an ideal maneuver without disturbances
  */
 typedef struct _pbio_motor_trajectory_t {
-    pbio_motor_action_t action;         /**<  Motor action type */
-    pbio_motor_after_stop_t after_stop; /**<  BRAKE, COAST or HOLD after maneuver */
+    bool forever;                       /**<  Whether maneuver has end-point */
     ustime_t t0;                        /**<  Time at start of maneuver */
     ustime_t t1;                        /**<  Time after the acceleration in-phase */
     ustime_t t2;                        /**<  Time at start of acceleration out-phase */
@@ -89,11 +77,11 @@ typedef struct _pbio_motor_trajectory_t {
     accl_t a2;                          /**<  Encoder acceleration during out-phase */
 } pbio_motor_trajectory_t;
 
-pbio_motor_trajectory_t trajectories[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-
 void make_trajectory_none(ustime_t t0, count_t th0, rate_t w1, pbio_motor_trajectory_t *ref);
 
 pbio_error_t make_trajectory_time_based(ustime_t t0, ustime_t t3, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_motor_trajectory_t *ref);
+
+pbio_error_t make_trajectory_time_based_forever(ustime_t t0, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_motor_trajectory_t *ref);
 
 pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_motor_trajectory_t *ref);
 

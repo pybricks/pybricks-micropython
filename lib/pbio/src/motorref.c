@@ -38,6 +38,9 @@ void make_trajectory_none(ustime_t t0, count_t th0, rate_t w1, pbio_motor_trajec
     ref->w1 = w1;
     ref->a0 = 0;
     ref->a2 = 0;
+
+    // This is a finite maneuver
+    ref->forever = false;
 }
 
 pbio_error_t make_trajectory_time_based(ustime_t t0, ustime_t t3, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_motor_trajectory_t *ref) {
@@ -120,9 +123,25 @@ pbio_error_t make_trajectory_time_based(ustime_t t0, ustime_t t3, count_t th0, r
         reverse_trajectory(ref);
     }
 
+    // This is a finite maneuver
+    ref->forever = false;
+
     return PBIO_SUCCESS;
 }
 
+
+pbio_error_t make_trajectory_time_based_forever(ustime_t t0, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_motor_trajectory_t *ref) {
+    // For infinite maneuvers like RUN and RUN_STALLED, no end time is specified, so we take a
+    // fictitious 60 seconds. This allows us to use the same code to get the trajectory for the 
+    // initial acceleration phase and the constant speed phase. Setting the forever flag allows
+    // us to ignore the deceleration phase while getting the reference, hence moving forever.
+    pbio_error_t err = make_trajectory_time_based(t0, t0 + 60*US_PER_SECOND, th0, w0, wt, wmax, a, ref);
+
+    // This is an infinite maneuver
+    ref->forever = true;
+
+    return err;
+}
 
 pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_motor_trajectory_t *ref) {
 
@@ -202,6 +221,10 @@ pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, 
     if (backward) {
         reverse_trajectory(ref);
     }
+
+    // This is a finite maneuver
+    ref->forever = false;
+
     return PBIO_SUCCESS;
 }
 
@@ -213,7 +236,7 @@ void get_reference(ustime_t time_ref, pbio_motor_trajectory_t *traject, count_t 
         *rate_ref = traject->w0   + timest(traject->a0, time_ref-traject->t0);
         *count_ref = traject->th0 + timest(traject->w0, time_ref-traject->t0) + timest2(traject->a0, time_ref-traject->t0);
     }
-    else if ((traject->action == RUN) || (traject->action == RUN_STALLED) || time_ref - traject->t2 <= 0) {
+    else if (traject->forever || time_ref - traject->t2 <= 0) {
         // If we are here, then we are in the constant speed phase
         *rate_ref = traject->w1;
         *count_ref = traject->th1 + timest(traject->w1, time_ref-traject->t1);
