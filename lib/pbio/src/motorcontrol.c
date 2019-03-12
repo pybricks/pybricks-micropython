@@ -101,7 +101,7 @@ void control_update_angle_target_init(pbio_port_t port){
     status->time_prev = traject->t0;
     status->count_err_prev = 0;
     status->windup_status = TIME_RUNNING;
-    motor_control_active[PORT_TO_IDX(port)]= PBIO_MOTOR_CONTROL_RUNNING;
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING_ANGLE;
 }
 
 
@@ -126,7 +126,7 @@ void control_update_time_target_init(pbio_port_t port) {
     status->windup_status = SPEED_INTEGRATOR_RUNNING;
     status->integrator_start = count_now;
     status->integrator_ref_start = traject->th0;
-    motor_control_active[PORT_TO_IDX(port)]= PBIO_MOTOR_CONTROL_RUNNING;
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING_TIME;
 }
 
 // Calculate the characteristic time values, encoder values, rate values and accelerations that uniquely define the rate and count trajectories
@@ -216,7 +216,7 @@ pbio_error_t make_motor_trajectory(pbio_port_t port,
 void control_update_angle_target(pbio_port_t port) {
 
     // Return immediately if control is not active; then there is nothing we need to do
-    if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_PASSIVE) {
+    if (motor_control_active[PORT_TO_IDX(port)] < PBIO_MOTOR_CONTROL_TRACKING) {
         return;
     }
 
@@ -352,7 +352,7 @@ void control_update_angle_target(pbio_port_t port) {
             pbio_dcmotor_set_duty_cycle_sys(port, duty);
 
             // Altough we keep holding, the maneuver is completed
-            motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_HOLDING;
+            motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_TRACKING;
 
         }
     }
@@ -365,7 +365,7 @@ void control_update_angle_target(pbio_port_t port) {
 void control_update_time_target(pbio_port_t port){
 
     // Return immediately if control is not active; then there is nothing we need to do
-    if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_PASSIVE) {
+    if (motor_control_active[PORT_TO_IDX(port)] < PBIO_MOTOR_CONTROL_TRACKING) {
         return;
     }
 
@@ -375,11 +375,6 @@ void control_update_time_target(pbio_port_t port){
     pbio_motor_time_based_control_status_t *status = &motor_control_status_time_based[PORT_TO_IDX(port)];
     stalled_status_t *stalled = &stalled_status[PORT_TO_IDX(port)];
     duty_t max_duty = settings->max_duty_steps;
-
-    // Return immediately if control is not active; then there is nothing we need to do
-    if (motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_PASSIVE) {
-        return;
-    }
 
     // Declare current time, positions, rates, and their reference value and error
     ustime_t time_now, time_ref;
@@ -525,7 +520,7 @@ void _pbio_motorcontrol_poll(void){
 
 pbio_error_t pbio_encmotor_is_stalled(pbio_port_t port, bool *stalled) {
     *stalled = stalled_status[PORT_TO_IDX(port)] != STALLED_NONE &&
-               motor_control_active[PORT_TO_IDX(port)] != PBIO_MOTOR_CONTROL_PASSIVE;
+               motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_TRACKING;
     return PBIO_SUCCESS;
 }
 

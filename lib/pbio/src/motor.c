@@ -8,7 +8,7 @@
 
 // Initialize motor control state as inactive
 pbio_motor_control_active_t motor_control_active[] = {
-    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)] PBIO_MOTOR_CONTROL_PASSIVE
+    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)] PBIO_MOTOR_CONTROL_COASTING
 };
 
 pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_motor_dir_t direction){
@@ -38,12 +38,12 @@ void pbio_dcmotor_print_settings(pbio_port_t port, char *settings_string){
 }
 
 pbio_error_t pbio_dcmotor_coast(pbio_port_t port){
-    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_PASSIVE;
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_COASTING;
     return pbdrv_motor_coast(port);
 }
 
 pbio_error_t pbio_dcmotor_brake(pbio_port_t port){
-    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_PASSIVE;
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_BRAKING;
     return pbdrv_motor_set_duty_cycle(port, 0);
 }
 
@@ -74,7 +74,7 @@ pbio_error_t pbio_dcmotor_set_duty_cycle_sys(pbio_port_t port, int32_t duty_step
 }
 
 pbio_error_t pbio_dcmotor_set_duty_cycle_usr(pbio_port_t port, float_t duty_steps) {
-    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_PASSIVE;
+    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_USRDUTY;
     return pbio_dcmotor_set_duty_cycle_sys(port, PBIO_DUTY_STEPS_PER_USER_STEP * duty_steps);
 }
 

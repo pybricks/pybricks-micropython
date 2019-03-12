@@ -58,11 +58,14 @@ typedef enum {
  * Motor control active state
  */
 typedef enum {
-    PBIO_MOTOR_CONTROL_PASSIVE, /**< Motor is coasting, braking, or set to a duty value by the user. */
-    PBIO_MOTOR_CONTROL_HOLDING,    /**< Motor is holding position or speed after completing command: Firmware repeatedly sets duty cycle to keep constant position */
-    PBIO_MOTOR_CONTROL_RUNNING, /**< Motor busy executing command: Firmware repeatedly sets duty cycle to control motor speed and position for a desired trajectory*/
-    PBIO_MOTOR_CONTROL_STARTING, /**< Motor ready for first control update */
-    PBIO_MOTOR_CONTROL_RESTARTING, /**< Motor ready to transition to first control update of new command*/
+    /* Passive control statuses: No PID Control Active */
+    PBIO_MOTOR_CONTROL_COASTING,
+    PBIO_MOTOR_CONTROL_BRAKING,
+    PBIO_MOTOR_CONTROL_USRDUTY,
+    /* Active control statuses: PID Control Active */   
+    PBIO_MOTOR_CONTROL_TRACKING,      /**< Motor is tracking a position or holding position after completing command */
+    PBIO_MOTOR_CONTROL_RUNNING_TIME,  /**< Motor is executing angle based maneuver by doing speed/position control */
+    PBIO_MOTOR_CONTROL_RUNNING_ANGLE, /**< Motor is executing time based  maneuver by doing speed/position control */
 } pbio_motor_control_active_t;
 
 pbio_motor_control_active_t motor_control_active[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
