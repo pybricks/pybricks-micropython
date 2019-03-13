@@ -91,7 +91,7 @@ void pbsys_unprepare_user_program(void) {
 
     // TODO: would be nice to have something like _pbio_light_set_user_mode() for motors
     for (pbio_port_t p = PBDRV_CONFIG_FIRST_MOTOR_PORT; p <= PBDRV_CONFIG_LAST_MOTOR_PORT; p++) {
-        pbio_dcmotor_coast(p);
+        pbio_motor_coast(p);
     }
 }
 

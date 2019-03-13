@@ -74,7 +74,7 @@ pbio_motor_control_active_t motor_control_active[PBDRV_CONFIG_NUM_MOTOR_CONTROLL
 /**
  * Settings for an encoded motor
  */
-typedef struct _pbio_encmotor_settings_t {
+typedef struct _pbio_motor_settings_t {
     float_t counts_per_unit;        /**< Encoder counts per output unit. Counts per degree for rotational motors, counts per cm for a linear motor. */
     float_t counts_per_output_unit; /**< Encoder counts per output unit, including optional gear train. Equals counts_per_unit*gear_ratio. */
     int32_t duty_offset;            /**< TODO. */
@@ -90,48 +90,44 @@ typedef struct _pbio_encmotor_settings_t {
     int16_t pid_kp;                 /**< Proportional position control constant (and integral speed control constant) */
     int16_t pid_ki;                 /**< Integral position control constant */
     int16_t pid_kd;                 /**< Derivative position control constant (and proportional speed control constant) */
-} pbio_encmotor_settings_t;
+} pbio_motor_settings_t;
 
 bool motor_has_encoders[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-pbio_encmotor_settings_t encmotor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+pbio_motor_settings_t motor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-pbio_error_t pbio_encmotor_set_dc_settings(pbio_port_t port, int32_t stall_torque_limit_pct, int32_t duty_offset_pct);
+pbio_error_t pbio_motor_set_dc_settings(pbio_port_t port, int32_t stall_torque_limit_pct, int32_t duty_offset_pct);
 
-pbio_error_t pbio_encmotor_get_dc_settings(pbio_port_t port, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct);
+pbio_error_t pbio_motor_get_dc_settings(pbio_port_t port, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct);
 
-pbio_error_t pbio_encmotor_set_run_settings(pbio_port_t port, int32_t max_speed, int32_t acceleration);
+pbio_error_t pbio_motor_set_run_settings(pbio_port_t port, int32_t max_speed, int32_t acceleration);
 
-pbio_error_t pbio_encmotor_set_pid_settings(pbio_port_t port, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd, int32_t tight_loop_time, int32_t position_tolerance, int32_t speed_tolerance, int32_t stall_speed_limit, int32_t stall_time);
+pbio_error_t pbio_motor_set_pid_settings(pbio_port_t port, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd, int32_t tight_loop_time, int32_t position_tolerance, int32_t speed_tolerance, int32_t stall_speed_limit, int32_t stall_time);
 
-pbio_error_t pbio_dcmotor_setup(pbio_port_t port, pbio_motor_dir_t direction);
+pbio_error_t pbio_motor_coast(pbio_port_t port);
 
-void pbio_dcmotor_print_settings(pbio_port_t port, char *settings_string);
+pbio_error_t pbio_motor_brake(pbio_port_t port);
 
-pbio_error_t pbio_dcmotor_coast(pbio_port_t port);
+pbio_error_t pbio_motor_set_duty_cycle_sys(pbio_port_t port, int32_t duty_steps);
 
-pbio_error_t pbio_dcmotor_brake(pbio_port_t port);
-
-pbio_error_t pbio_dcmotor_set_duty_cycle_sys(pbio_port_t port, int32_t duty_steps);
-
-pbio_error_t pbio_dcmotor_set_duty_cycle_usr(pbio_port_t port, float_t duty_steps);
+pbio_error_t pbio_motor_set_duty_cycle_usr(pbio_port_t port, float_t duty_steps);
 
 pbio_error_t pbio_motor_setup(pbio_port_t port, pbio_motor_dir_t direction, float_t gear_ratio);
 
-void pbio_encmotor_print_settings(pbio_port_t port, char *settings_string);
+void pbio_motor_print_settings(pbio_port_t port, char *dc_settings_string, char *enc_settings_string);
 
-bool pbio_encmotor_has_encoder(pbio_port_t port);
+bool pbio_motor_has_encoder(pbio_port_t port);
 
-pbio_error_t pbio_encmotor_get_encoder_count(pbio_port_t port, int32_t *count);
+pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count);
 
-pbio_error_t pbio_encmotor_reset_encoder_count(pbio_port_t port, int32_t reset_count);
+pbio_error_t pbio_motor_reset_encoder_count(pbio_port_t port, int32_t reset_count);
 
-pbio_error_t pbio_encmotor_get_angle(pbio_port_t port, int32_t *angle);
+pbio_error_t pbio_motor_get_angle(pbio_port_t port, int32_t *angle);
 
-pbio_error_t pbio_encmotor_reset_angle(pbio_port_t port, int32_t reset_angle);
+pbio_error_t pbio_motor_reset_angle(pbio_port_t port, int32_t reset_angle);
 
-pbio_error_t pbio_encmotor_get_encoder_rate(pbio_port_t port, int32_t *encoder_rate);
+pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *encoder_rate);
 
-pbio_error_t pbio_encmotor_get_angular_rate(pbio_port_t port, int32_t *angular_rate);
+pbio_error_t pbio_motor_get_angular_rate(pbio_port_t port, int32_t *angular_rate);
 
 /** @}*/
 

@@ -112,7 +112,7 @@ pbio_error_t control_update_angle_target(pbio_port_t port) {
     // Trajectory and setting shortcuts for this motor
     pbio_motor_maneuver_t *maneuver = &maneuvers[PORT_TO_IDX(port)];
     pbio_motor_trajectory_t *traject = &maneuver->trajectory;
-    pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
+    pbio_motor_settings_t *settings = &motor_settings[PORT_TO_IDX(port)];
     pbio_motor_angle_based_control_status_t *status = &motor_control_status_angle_based[PORT_TO_IDX(port)];
     stalled_status_t *stalled = &stalled_status[PORT_TO_IDX(port)];
     duty_t max_duty = settings->max_duty_steps;
@@ -125,8 +125,8 @@ pbio_error_t control_update_angle_target(pbio_port_t port) {
 
     // Read current state of this motor: current time, speed, and position
     time_now = clock_usecs();
-    pbio_encmotor_get_encoder_count(port, &count_now);
-    pbio_encmotor_get_encoder_rate(port, &rate_now);
+    pbio_motor_get_encoder_count(port, &count_now);
+    pbio_motor_get_encoder_rate(port, &rate_now);
 
     // Get the time at which we want to evaluate the reference position/velocities, for position based commands
 
@@ -231,15 +231,15 @@ pbio_error_t control_update_angle_target(pbio_port_t port) {
     // But if brake or coast was specified as the afer_stop, we trigger that. Also clear the running flag to stop waiting for completion.
         if (maneuver->after_stop == PBIO_MOTOR_STOP_COAST) {
             // Coast the motor
-            pbio_dcmotor_coast(port);
+            pbio_motor_coast(port);
         }
         else if (maneuver->after_stop == PBIO_MOTOR_STOP_BRAKE) {
             // Brake the motor
-            pbio_dcmotor_brake(port);
+            pbio_motor_brake(port);
         }
         else if (maneuver->after_stop == PBIO_MOTOR_STOP_HOLD) {
             // Hold the motor. In position based control, holding just means that we continue the position control loop without changes
-            pbio_dcmotor_set_duty_cycle_sys(port, duty);
+            pbio_motor_set_duty_cycle_sys(port, duty);
 
             // Altough we keep holding, the maneuver is completed
             motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_TRACKING;
@@ -248,7 +248,7 @@ pbio_error_t control_update_angle_target(pbio_port_t port) {
     }
     // If we are not standing still at a target yet, actuate with the calculated signal
     else {
-        pbio_dcmotor_set_duty_cycle_sys(port, duty);
+        pbio_motor_set_duty_cycle_sys(port, duty);
     }
     return PBIO_SUCCESS; // TODO catch and return errors for all above IO tasks
 }
@@ -258,7 +258,7 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
     // Trajectory and setting shortcuts for this motor
     pbio_motor_maneuver_t *maneuver = &maneuvers[PORT_TO_IDX(port)];
     pbio_motor_trajectory_t *traject = &maneuver->trajectory;
-    pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
+    pbio_motor_settings_t *settings = &motor_settings[PORT_TO_IDX(port)];
     pbio_motor_time_based_control_status_t *status = &motor_control_status_time_based[PORT_TO_IDX(port)];
     stalled_status_t *stalled = &stalled_status[PORT_TO_IDX(port)];
     duty_t max_duty = settings->max_duty_steps;
@@ -271,8 +271,8 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
 
     // Read current state of this motor: current time, speed, and position
     time_now = clock_usecs();
-    pbio_encmotor_get_encoder_count(port, &count_now);
-    pbio_encmotor_get_encoder_rate(port, &rate_now);
+    pbio_motor_get_encoder_count(port, &count_now);
+    pbio_motor_get_encoder_rate(port, &rate_now);
 
     // Get the time at which we want to evaluate the reference position/velocities.
     // For time based commands, we never pause the time; it is just the current time
@@ -359,24 +359,24 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
     // But if brake or coast was specified as the afer_stop, we trigger that. Also clear the running flag to stop waiting for completion.
         if (maneuver->after_stop == PBIO_MOTOR_STOP_COAST) {
             // Coast the motor
-            pbio_dcmotor_coast(port);
+            pbio_motor_coast(port);
         }
         else if (maneuver->after_stop == PBIO_MOTOR_STOP_BRAKE) {
             // Brake the motor
-            pbio_dcmotor_brake(port);
+            pbio_motor_brake(port);
         }
         else if (maneuver->after_stop == PBIO_MOTOR_STOP_HOLD) {
             // Hold the motor
             // RUN_TIME || RUN_STALLED
             // When ending a time based control maneuver with hold, we trigger a new position based maneuver with zero degrees
-            pbio_dcmotor_set_duty_cycle_sys(port, 0);
+            pbio_motor_set_duty_cycle_sys(port, 0);
 
-            pbio_encmotor_track_target(port, ((float_t) count_now)/settings->counts_per_output_unit);
+            pbio_motor_track_target(port, ((float_t) count_now)/settings->counts_per_output_unit);
         }
     }
     // If we are not standing still at a target yet, actuate with the calculated signal
     else {
-        pbio_dcmotor_set_duty_cycle_sys(port, duty);
+        pbio_motor_set_duty_cycle_sys(port, duty);
     }
     return PBIO_SUCCESS; // TODO catch and return errors for all above IO tasks
 }
@@ -411,15 +411,15 @@ void _pbio_motorcontrol_poll(void) {
 #endif // PBIO_CONFIG_ENABLE_MOTORS
 
 
-pbio_error_t pbio_encmotor_get_initial_state(pbio_port_t port, count_t *count_start, rate_t *rate_start) {
+pbio_error_t pbio_motor_get_initial_state(pbio_port_t port, count_t *count_start, rate_t *rate_start) {
     // TODO If already running, start from ref + set flag of original state
 
     pbio_error_t err;
 
-    err = pbio_encmotor_get_encoder_count(port, count_start);
+    err = pbio_motor_get_encoder_count(port, count_start);
     if (err != PBIO_SUCCESS) { return err; }
 
-    err = pbio_encmotor_get_encoder_rate(port, rate_start);
+    err = pbio_motor_get_encoder_rate(port, rate_start);
     if (err != PBIO_SUCCESS) { return err; }
 
     return PBIO_SUCCESS;
@@ -466,16 +466,16 @@ void control_init_time_target(pbio_port_t port) {
 
 /* pbio user functions */
 
-pbio_error_t pbio_encmotor_is_stalled(pbio_port_t port, bool *stalled) {
+pbio_error_t pbio_motor_is_stalled(pbio_port_t port, bool *stalled) {
     *stalled = stalled_status[PORT_TO_IDX(port)] != STALLED_NONE &&
                motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_TRACKING;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_run(pbio_port_t port, int32_t speed) {
+pbio_error_t pbio_motor_run(pbio_port_t port, int32_t speed) {
 
     // Load motor settings and status
-    pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
+    pbio_motor_settings_t *settings = &motor_settings[PORT_TO_IDX(port)];
     pbio_motor_maneuver_t *maneuver = &maneuvers[PORT_TO_IDX(port)];
     pbio_error_t err;
 
@@ -487,7 +487,7 @@ pbio_error_t pbio_encmotor_run(pbio_port_t port, int32_t speed) {
     ustime_t time_start = clock_usecs();
     count_t count_start;
     rate_t rate_start;
-    err = pbio_encmotor_get_initial_state(port, &count_start, &rate_start);
+    err = pbio_motor_get_initial_state(port, &count_start, &rate_start);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Compute new maneuver based on user argument, starting from the initial state
@@ -511,36 +511,36 @@ pbio_error_t pbio_encmotor_run(pbio_port_t port, int32_t speed) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop) {
+pbio_error_t pbio_motor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop) {
     int32_t angle_now;
     pbio_error_t err;
     switch (after_stop) {
         case PBIO_MOTOR_STOP_COAST:
             // Stop by coasting
-            return pbio_dcmotor_coast(port);
+            return pbio_motor_coast(port);
         case PBIO_MOTOR_STOP_BRAKE:
             // Stop by braking
-            return pbio_dcmotor_brake(port);
+            return pbio_motor_brake(port);
         case PBIO_MOTOR_STOP_HOLD:
             // Force stop by holding the current position.
             // First, read where this position is
-            err = pbio_encmotor_get_angle(port, &angle_now);
+            err = pbio_motor_get_angle(port, &angle_now);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
             // Holding is equivalent to driving to that position actively,
             // which automatically corrects the overshoot that is inevitable
             // when the user requests an immediate stop.
-            pbio_encmotor_track_target(port, angle_now);
+            pbio_motor_track_target(port, angle_now);
         default:
             return PBIO_ERROR_INVALID_ARG;
     }
 }
 
-pbio_error_t pbio_encmotor_run_time(pbio_port_t port, int32_t speed, int32_t duration, pbio_motor_after_stop_t after_stop) {
+pbio_error_t pbio_motor_run_time(pbio_port_t port, int32_t speed, int32_t duration, pbio_motor_after_stop_t after_stop) {
 
     // Load motor settings and status
-    pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
+    pbio_motor_settings_t *settings = &motor_settings[PORT_TO_IDX(port)];
     pbio_motor_maneuver_t *maneuver = &maneuvers[PORT_TO_IDX(port)];
     pbio_error_t err;
 
@@ -552,7 +552,7 @@ pbio_error_t pbio_encmotor_run_time(pbio_port_t port, int32_t speed, int32_t dur
     ustime_t time_start = clock_usecs();
     count_t count_start;
     rate_t rate_start;
-    err = pbio_encmotor_get_initial_state(port, &count_start, &rate_start);
+    err = pbio_motor_get_initial_state(port, &count_start, &rate_start);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Compute new maneuver based on user argument, starting from the initial state
@@ -577,10 +577,10 @@ pbio_error_t pbio_encmotor_run_time(pbio_port_t port, int32_t speed, int32_t dur
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_run_until_stalled(pbio_port_t port, int32_t speed, pbio_motor_after_stop_t after_stop) {
+pbio_error_t pbio_motor_run_until_stalled(pbio_port_t port, int32_t speed, pbio_motor_after_stop_t after_stop) {
 
     // Load motor settings and status
-    pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
+    pbio_motor_settings_t *settings = &motor_settings[PORT_TO_IDX(port)];
     pbio_motor_maneuver_t *maneuver = &maneuvers[PORT_TO_IDX(port)];
     pbio_error_t err;
 
@@ -592,7 +592,7 @@ pbio_error_t pbio_encmotor_run_until_stalled(pbio_port_t port, int32_t speed, pb
     ustime_t time_start = clock_usecs();
     count_t count_start;
     rate_t rate_start;
-    err = pbio_encmotor_get_initial_state(port, &count_start, &rate_start);
+    err = pbio_motor_get_initial_state(port, &count_start, &rate_start);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Compute new maneuver based on user argument, starting from the initial state
@@ -616,10 +616,10 @@ pbio_error_t pbio_encmotor_run_until_stalled(pbio_port_t port, int32_t speed, pb
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_run_target(pbio_port_t port, int32_t speed, int32_t target, pbio_motor_after_stop_t after_stop) {
+pbio_error_t pbio_motor_run_target(pbio_port_t port, int32_t speed, int32_t target, pbio_motor_after_stop_t after_stop) {
 
     // Load motor settings and status
-    pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
+    pbio_motor_settings_t *settings = &motor_settings[PORT_TO_IDX(port)];
     pbio_motor_maneuver_t *maneuver = &maneuvers[PORT_TO_IDX(port)];
     pbio_error_t err;
 
@@ -631,7 +631,7 @@ pbio_error_t pbio_encmotor_run_target(pbio_port_t port, int32_t speed, int32_t t
     ustime_t time_start = clock_usecs();
     count_t count_start;
     rate_t rate_start;
-    err = pbio_encmotor_get_initial_state(port, &count_start, &rate_start);
+    err = pbio_motor_get_initial_state(port, &count_start, &rate_start);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Compute new maneuver based on user argument, starting from the initial state
@@ -656,7 +656,7 @@ pbio_error_t pbio_encmotor_run_target(pbio_port_t port, int32_t speed, int32_t t
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, int32_t speed, int32_t angle, pbio_motor_after_stop_t after_stop) {
+pbio_error_t pbio_motor_run_angle(pbio_port_t port, int32_t speed, int32_t angle, pbio_motor_after_stop_t after_stop) {
 
     // Speed  | Angle | End target  | Effect
     //  > 0   |  > 0  | now + angle | Forward
@@ -666,7 +666,7 @@ pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, int32_t speed, int32_t an
 
     // Read the instantaneous angle
     int32_t angle_now;
-    pbio_error_t err = pbio_encmotor_get_angle(port, &angle_now);
+    pbio_error_t err = pbio_motor_get_angle(port, &angle_now);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -674,12 +674,12 @@ pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, int32_t speed, int32_t an
     // The angle target is the instantaneous angle plus the angle to be traveled
     int32_t angle_target = angle_now + (speed < 0 ? -angle: angle);
 
-    return pbio_encmotor_run_target(port, speed, angle_target, after_stop);
+    return pbio_motor_run_target(port, speed, angle_target, after_stop);
 }
 
-pbio_error_t pbio_encmotor_track_target(pbio_port_t port, int32_t target) {
+pbio_error_t pbio_motor_track_target(pbio_port_t port, int32_t target) {
     // Load motor settings and status
-    pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
+    pbio_motor_settings_t *settings = &motor_settings[PORT_TO_IDX(port)];
     pbio_motor_maneuver_t *maneuver = &maneuvers[PORT_TO_IDX(port)];
     pbio_error_t err;
 
@@ -691,7 +691,7 @@ pbio_error_t pbio_encmotor_track_target(pbio_port_t port, int32_t target) {
     ustime_t time_start = clock_usecs();
     count_t count_start;
     rate_t rate_start;
-    err = pbio_encmotor_get_initial_state(port, &count_start, &rate_start);
+    err = pbio_motor_get_initial_state(port, &count_start, &rate_start);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Compute new maneuver based on user argument, starting from the initial state

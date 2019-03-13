@@ -19,21 +19,21 @@
  * @{
  */
 
-pbio_error_t pbio_encmotor_is_stalled(pbio_port_t port, bool *stalled);
+pbio_error_t pbio_motor_is_stalled(pbio_port_t port, bool *stalled);
 
-pbio_error_t pbio_encmotor_run(pbio_port_t port, int32_t speed);
+pbio_error_t pbio_motor_run(pbio_port_t port, int32_t speed);
 
-pbio_error_t pbio_encmotor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop);
+pbio_error_t pbio_motor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop);
 
-pbio_error_t pbio_encmotor_run_time(pbio_port_t port, int32_t speed, int32_t duration, pbio_motor_after_stop_t after_stop);
+pbio_error_t pbio_motor_run_time(pbio_port_t port, int32_t speed, int32_t duration, pbio_motor_after_stop_t after_stop);
 
-pbio_error_t pbio_encmotor_run_until_stalled(pbio_port_t port, int32_t speed, pbio_motor_after_stop_t after_stop);
+pbio_error_t pbio_motor_run_until_stalled(pbio_port_t port, int32_t speed, pbio_motor_after_stop_t after_stop);
 
-pbio_error_t pbio_encmotor_run_angle(pbio_port_t port, int32_t speed, int32_t angle, pbio_motor_after_stop_t after_stop);
+pbio_error_t pbio_motor_run_angle(pbio_port_t port, int32_t speed, int32_t angle, pbio_motor_after_stop_t after_stop);
 
-pbio_error_t pbio_encmotor_run_target(pbio_port_t port, int32_t speed, int32_t target, pbio_motor_after_stop_t after_stop);
+pbio_error_t pbio_motor_run_target(pbio_port_t port, int32_t speed, int32_t target, pbio_motor_after_stop_t after_stop);
 
-pbio_error_t pbio_encmotor_track_target(pbio_port_t port, int32_t target);
+pbio_error_t pbio_motor_track_target(pbio_port_t port, int32_t target);
 
 #ifdef PBIO_CONFIG_ENABLE_MOTORS
 void _pbio_motorcontrol_poll(void);
