@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 Laurens Valk
 
-#include <pbio/motorcontrol.h>
+#include <pbio/motor.h>
 
 #include "py/mphal.h"
 #include "py/runtime.h"

@@ -15,7 +15,7 @@ pbio_motor_t motor[] = {
 };
 
 // Initialize motor control state as inactive
-pbio_motor_control_active_t motor_control_active[] = {
+pbio_motor_control_state_t motor_control_active[] = {
     [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)] PBIO_MOTOR_CONTROL_COASTING
 };
 

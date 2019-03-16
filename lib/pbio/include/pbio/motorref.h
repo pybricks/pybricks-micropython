@@ -12,15 +12,9 @@
 #include <pbio/error.h>
 #include <pbio/port.h>
 
-#include <pbio/motor.h>
-
-/**
- * \addtogroup Motor Motors
- * @{
- */
-
-#define NONE (0) // A "don't care" constant for readibility of the code, but which is never used after assignment
-#define NONZERO (100) // Arbitrary nonzero speed
+#define MS_PER_SECOND (1000)
+#define US_PER_MS (1000)
+#define US_PER_SECOND (1000000)
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))

@@ -12,6 +12,7 @@
 
 #include <pbio/error.h>
 #include <pbio/port.h>
+#include <pbio/motorref.h>
 
 #include <pbio/iodev.h>
 
@@ -27,9 +28,6 @@ typedef float float_t;
 #define MAX_DCMOTOR_SETTINGS_STR_LENGTH (128)
 
 #define MAX_ENCMOTOR_SETTINGS_STR_LENGTH (400)
-#define MS_PER_SECOND (1000)
-#define US_PER_MS (1000)
-#define US_PER_SECOND (1000000)
 
 #define PBIO_DUTY_STEPS (PBDRV_MAX_DUTY)
 #define PBIO_DUTY_USER_STEPS (100)
@@ -64,7 +62,7 @@ typedef enum {
     PBIO_MOTOR_CONTROL_TRACKING,      /**< Motor is tracking a position or holding position after completing command */
     PBIO_MOTOR_CONTROL_RUNNING_TIME,  /**< Motor is executing angle based maneuver by doing speed/position control */
     PBIO_MOTOR_CONTROL_RUNNING_ANGLE, /**< Motor is executing time based  maneuver by doing speed/position control */
-} pbio_motor_control_active_t;
+} pbio_motor_control_state_t;
 
 /**
  * Settings for an encoded motor
@@ -87,11 +85,83 @@ typedef struct _pbio_motor_settings_t {
     int16_t pid_kd;                 /**< Derivative position control constant (and proportional speed control constant) */
 } pbio_motor_settings_t;
 
+/**
+ * Status of the anti-windup integrators
+ */
+typedef enum {
+    /**< Anti-windup status for PID position control:
+         Pause the position and speed trajectory when
+         the motor is stalled by pausing time. */
+    TIME_PAUSED,
+    TIME_RUNNING,
+    /**< Anti-windup status for PI speed control:
+         Pause the integration of the
+         accumulated speed error when stalled. */
+    SPEED_INTEGRATOR_RUNNING,
+    SPEED_INTEGRATOR_PAUSED,
+} windup_status_t;
+
+typedef enum {
+    /**< Motor is not stalled */
+    STALLED_NONE = 0x00,
+    /**< The proportional duty control term is larger than the maximum and still the motor moves slower than specified limit */
+    STALLED_PROPORTIONAL = 0x01,
+    /**< The integral duty control term is larger than the maximum and still the motor moves slower than specified limit */
+    STALLED_INTEGRAL = 0x02,
+} stalled_status_t;
+
+/**
+ * Motor control actions
+ */
+typedef enum {
+    RUN,
+    RUN_TIME,
+    RUN_STALLED,
+    RUN_TARGET,
+    TRACK_TARGET,
+} pbio_motor_action_t;
+
+/**
+ * Motor PID control status
+ */
+typedef struct _pbio_motor_angular_control_status_t {
+    windup_status_t windup_status; /**< State of the anti-windup variables */
+    count_t err_integral;          /**< Integral of position error (RUN_TARGET) */
+    count_t speed_integrator;      /**< State of the speed integrator (all other modes) */
+    duty_t load_duty;
+    count_t count_err_prev;        /**< Position error in the previous control iteration */
+    ustime_t time_prev;            /**< Time at the previous control iteration */
+    ustime_t time_paused;          /**< The amount of time the speed integrator has spent paused */
+    ustime_t time_stopped;         /**< Time at which the time was paused */
+} pbio_motor_angular_control_status_t;
+
+typedef struct _pbio_motor_timed_control_status_t {
+    windup_status_t windup_status; /**< State of the anti-windup variables */
+    count_t speed_integrator;      /**< State of the speed integrator (all other modes) */
+    duty_t load_duty;
+    ustime_t integrator_time_stopped;         /**< Time at which the speed integrator last stopped */
+    count_t integrator_ref_start;  /**< Integrated speed value prior to enabling integrator */
+    count_t integrator_start;      /**< Integrated reference speed value prior to enabling integrator */
+} pbio_motor_timed_control_status_t;
+
+/**
+ * Single motor maneuver
+ */
+typedef struct _pbio_motor_maneuver_t {
+    pbio_motor_action_t action;         /**<  Motor action type */
+    pbio_motor_after_stop_t after_stop; /**<  BRAKE, COAST or HOLD after motion complete */
+    pbio_motor_trajectory_t trajectory;
+} pbio_motor_maneuver_t;
+
 typedef struct _pbio_motor_t {
     pbio_motor_dir_t direction;
     bool has_encoders;
     pbio_motor_settings_t settings;
-    pbio_motor_control_active_t state;
+    pbio_motor_control_state_t state;
+    pbio_motor_maneuver_t maneuver;
+    pbio_motor_angular_control_status_t angular_control_status;
+    pbio_motor_timed_control_status_t timed_control_status;
+    stalled_status_t stalled;
 } pbio_motor_t;
 
 pbio_motor_t motor[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
@@ -129,6 +199,28 @@ pbio_error_t pbio_motor_reset_angle(pbio_port_t port, int32_t reset_angle);
 pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *encoder_rate);
 
 pbio_error_t pbio_motor_get_angular_rate(pbio_port_t port, int32_t *angular_rate);
+
+pbio_error_t pbio_motor_is_stalled(pbio_port_t port, bool *stalled);
+
+pbio_error_t pbio_motor_run(pbio_port_t port, int32_t speed);
+
+pbio_error_t pbio_motor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop);
+
+pbio_error_t pbio_motor_run_time(pbio_port_t port, int32_t speed, int32_t duration, pbio_motor_after_stop_t after_stop);
+
+pbio_error_t pbio_motor_run_until_stalled(pbio_port_t port, int32_t speed, pbio_motor_after_stop_t after_stop);
+
+pbio_error_t pbio_motor_run_angle(pbio_port_t port, int32_t speed, int32_t angle, pbio_motor_after_stop_t after_stop);
+
+pbio_error_t pbio_motor_run_target(pbio_port_t port, int32_t speed, int32_t target, pbio_motor_after_stop_t after_stop);
+
+pbio_error_t pbio_motor_track_target(pbio_port_t port, int32_t target);
+
+#ifdef PBIO_CONFIG_ENABLE_MOTORS
+void _pbio_motorcontrol_poll(void);
+#else
+static inline void _pbio_motorcontrol_poll(void) { }
+#endif // PBIO_CONFIG_ENABLE_MOTORS
 
 /** @}*/
 
