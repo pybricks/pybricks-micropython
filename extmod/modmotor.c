@@ -19,7 +19,7 @@
 // Must not be called while pybricks thread lock is held!
 STATIC void wait_for_completion(pbio_port_t port, bool foreground) {
     if (foreground) {
-        while (motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_RUNNING_TIME) {
+        while (motor[PORT_TO_IDX(port)].state >= PBIO_MOTOR_CONTROL_RUNNING_TIME) {
             mp_hal_delay_ms(10);
         }
     };

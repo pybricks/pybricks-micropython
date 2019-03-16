@@ -43,8 +43,6 @@ typedef enum {
     PBIO_MOTOR_DIR_COUNTERCLOCKWISE,  /**< Positive speed/duty means counterclockwise */
 } pbio_motor_dir_t;
 
-pbio_motor_dir_t motor_directions[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-
 /**
  * Motor action executed after completing a run command that ends in a smooth stop.
  */
@@ -68,9 +66,6 @@ typedef enum {
     PBIO_MOTOR_CONTROL_RUNNING_ANGLE, /**< Motor is executing time based  maneuver by doing speed/position control */
 } pbio_motor_control_active_t;
 
-pbio_motor_control_active_t motor_control_active[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-
-
 /**
  * Settings for an encoded motor
  */
@@ -92,8 +87,14 @@ typedef struct _pbio_motor_settings_t {
     int16_t pid_kd;                 /**< Derivative position control constant (and proportional speed control constant) */
 } pbio_motor_settings_t;
 
-bool motor_has_encoders[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-pbio_motor_settings_t motor_settings[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+typedef struct _pbio_motor_t {
+    pbio_motor_dir_t direction;
+    bool has_encoders;
+    pbio_motor_settings_t settings;
+    pbio_motor_control_active_t state;
+} pbio_motor_t;
+
+pbio_motor_t motor[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 pbio_error_t pbio_motor_set_dc_settings(pbio_port_t port, int32_t stall_torque_limit_pct, int32_t duty_offset_pct);
 

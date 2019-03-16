@@ -6,24 +6,32 @@
 #include <pbdrv/motor.h>
 #include <pbio/motor.h>
 
+// Initialize motors with control state as inactive
+pbio_motor_t motor[] = {
+    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)] {
+        .state = PBIO_MOTOR_CONTROL_COASTING,
+        .has_encoders = false
+    }
+};
+
 // Initialize motor control state as inactive
 pbio_motor_control_active_t motor_control_active[] = {
     [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)] PBIO_MOTOR_CONTROL_COASTING
 };
 
 pbio_error_t pbio_motor_coast(pbio_port_t port){
-    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_COASTING;
+    motor[PORT_TO_IDX(port)].state = PBIO_MOTOR_CONTROL_COASTING;
     return pbdrv_motor_coast(port);
 }
 
 pbio_error_t pbio_motor_brake(pbio_port_t port){
-    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_BRAKING;
+    motor[PORT_TO_IDX(port)].state = PBIO_MOTOR_CONTROL_BRAKING;
     return pbdrv_motor_set_duty_cycle(port, 0);
 }
 
 pbio_error_t pbio_motor_set_duty_cycle_sys(pbio_port_t port, int32_t duty_steps) {
     // Limit the duty cycle value
-    int32_t limit = motor_settings[PORT_TO_IDX(port)].max_duty_steps;
+    int32_t limit = motor[PORT_TO_IDX(port)].settings.max_duty_steps;
     if (duty_steps > limit) {
         duty_steps = limit;
     }
@@ -36,19 +44,19 @@ pbio_error_t pbio_motor_set_duty_cycle_sys(pbio_port_t port, int32_t duty_steps)
         duty_cycle = 0;
     }
     else {
-        int32_t offset = motor_settings[PORT_TO_IDX(port)].duty_offset;
+        int32_t offset = motor[PORT_TO_IDX(port)].settings.duty_offset;
         int32_t offset_signed = duty_steps > 0 ? offset : -offset;
         duty_cycle = offset_signed + ((PBIO_DUTY_STEPS-offset)*duty_steps)/PBIO_DUTY_STEPS;
     }
     // Flip sign if motor is inverted
-    if (motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_COUNTERCLOCKWISE){
+    if (motor[PORT_TO_IDX(port)].direction == PBIO_MOTOR_DIR_COUNTERCLOCKWISE){
         duty_cycle = -duty_cycle;
     }
     return pbdrv_motor_set_duty_cycle(port, duty_cycle);
 }
 
 pbio_error_t pbio_motor_set_duty_cycle_usr(pbio_port_t port, float_t duty_steps) {
-    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_USRDUTY;
+    motor[PORT_TO_IDX(port)].state = PBIO_MOTOR_CONTROL_USRDUTY;
     return pbio_motor_set_duty_cycle_sys(port, PBIO_DUTY_STEPS_PER_USER_STEP * duty_steps);
 }
 
@@ -59,16 +67,16 @@ pbio_error_t pbio_motor_setup(pbio_port_t port, pbio_motor_dir_t direction, floa
     if (status != PBIO_SUCCESS && status != PBIO_ERROR_IO) {
         return status;
     }
-    motor_directions[PORT_TO_IDX(port)] = direction;
+    motor[PORT_TO_IDX(port)].direction = direction;
 
     if (status != PBIO_SUCCESS) {
         return status;
     }
     // Reset encoder, and in the process check that it is an encoded motor
-    motor_has_encoders[PORT_TO_IDX(port)] = pbio_motor_reset_encoder_count(port, 0) == PBIO_SUCCESS;
+    motor[PORT_TO_IDX(port)].has_encoders = pbio_motor_reset_encoder_count(port, 0) == PBIO_SUCCESS;
 
     // Return if there are no encoders, because then we are done
-    if (!motor_has_encoders[PORT_TO_IDX(port)]) {
+    if (!motor[PORT_TO_IDX(port)].has_encoders) {
         return PBIO_SUCCESS;
     }
 
@@ -92,8 +100,8 @@ pbio_error_t pbio_motor_setup(pbio_port_t port, pbio_motor_dir_t direction, floa
     // Overal ratio between encoder counts and output
     float_t ratio = counts_per_unit * gear_ratio;
 
-    motor_settings[PORT_TO_IDX(port)].counts_per_unit = counts_per_unit;
-    motor_settings[PORT_TO_IDX(port)].counts_per_output_unit = ratio;
+    motor[PORT_TO_IDX(port)].settings.counts_per_unit = counts_per_unit;
+    motor[PORT_TO_IDX(port)].settings.counts_per_output_unit = ratio;
 
     // TODO: Load data by ID rather than hardcoding here, and define shared defaults to reduce size
     if (id == PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR) {
@@ -127,23 +135,23 @@ pbio_error_t pbio_motor_set_dc_settings(pbio_port_t port, int32_t stall_torque_l
         return PBIO_ERROR_INVALID_ARG;
     }
     int8_t port_index = PORT_TO_IDX(port);
-    motor_settings[port_index].max_duty_steps = PBIO_DUTY_STEPS_PER_USER_STEP * stall_torque_limit_pct;
-    motor_settings[port_index].duty_offset = PBIO_DUTY_STEPS_PER_USER_STEP * duty_offset_pct;
+    motor[port_index].settings.max_duty_steps = PBIO_DUTY_STEPS_PER_USER_STEP * stall_torque_limit_pct;
+    motor[port_index].settings.duty_offset = PBIO_DUTY_STEPS_PER_USER_STEP * duty_offset_pct;
     return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_motor_get_dc_settings(pbio_port_t port, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct) {
     int8_t port_index = PORT_TO_IDX(port);
-    *stall_torque_limit_pct = motor_settings[port_index].max_duty_steps/PBIO_DUTY_STEPS_PER_USER_STEP;
-    *duty_offset_pct = motor_settings[port_index].duty_offset/PBIO_DUTY_STEPS_PER_USER_STEP;
+    *stall_torque_limit_pct = motor[port_index].settings.max_duty_steps/PBIO_DUTY_STEPS_PER_USER_STEP;
+    *duty_offset_pct = motor[port_index].settings.duty_offset/PBIO_DUTY_STEPS_PER_USER_STEP;
     return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_motor_set_run_settings(pbio_port_t port, int32_t max_speed, int32_t acceleration) {
     int8_t port_index = PORT_TO_IDX(port);
-    float_t counts_per_output_unit = motor_settings[port_index].counts_per_output_unit;
-    motor_settings[port_index].max_rate = (counts_per_output_unit * max_speed);
-    motor_settings[port_index].abs_acceleration = (counts_per_output_unit * acceleration);
+    float_t counts_per_output_unit = motor[port_index].settings.counts_per_output_unit;
+    motor[port_index].settings.max_rate = (counts_per_output_unit * max_speed);
+    motor[port_index].settings.abs_acceleration = (counts_per_output_unit * acceleration);
     return PBIO_SUCCESS;
 }
 
@@ -158,28 +166,28 @@ pbio_error_t pbio_motor_set_pid_settings(
         int32_t stall_speed_limit,
         int32_t stall_time) {
     int8_t port_index = PORT_TO_IDX(port);
-    float_t counts_per_output_unit = motor_settings[port_index].counts_per_output_unit;
+    float_t counts_per_output_unit = motor[port_index].settings.counts_per_output_unit;
 
     if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || tight_loop_time < 0 ||
         position_tolerance < 0 || speed_tolerance < 0 || stall_speed_limit < 0 || stall_time < 0) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    motor_settings[port_index].pid_kp = pid_kp;
-    motor_settings[port_index].pid_ki = pid_ki;
-    motor_settings[port_index].pid_kd = pid_kd;
-    motor_settings[port_index].tight_loop_time = tight_loop_time * US_PER_MS;
-    motor_settings[port_index].count_tolerance = (counts_per_output_unit * position_tolerance);
-    motor_settings[port_index].rate_tolerance = (counts_per_output_unit * speed_tolerance);
-    motor_settings[port_index].stall_rate_limit = (counts_per_output_unit * stall_speed_limit);
-    motor_settings[port_index].stall_time = stall_time * US_PER_MS;
+    motor[port_index].settings.pid_kp = pid_kp;
+    motor[port_index].settings.pid_ki = pid_ki;
+    motor[port_index].settings.pid_kd = pid_kd;
+    motor[port_index].settings.tight_loop_time = tight_loop_time * US_PER_MS;
+    motor[port_index].settings.count_tolerance = (counts_per_output_unit * position_tolerance);
+    motor[port_index].settings.rate_tolerance = (counts_per_output_unit * speed_tolerance);
+    motor[port_index].settings.stall_rate_limit = (counts_per_output_unit * stall_speed_limit);
+    motor[port_index].settings.stall_time = stall_time * US_PER_MS;
     return PBIO_SUCCESS;
 }
 
 void pbio_motor_print_settings(pbio_port_t port, char *dc_settings_string, char *enc_settings_string) {
     int8_t port_index = PORT_TO_IDX(port);
 
-    char *direction = motor_directions[port_index] == PBIO_MOTOR_DIR_CLOCKWISE ? "clockwise" : "counterclockwise";
+    char *direction = motor[port_index].direction == PBIO_MOTOR_DIR_CLOCKWISE ? "clockwise" : "counterclockwise";
     snprintf(dc_settings_string, MAX_DCMOTOR_SETTINGS_STR_LENGTH,
         "Motor properties:\n"
         "------------------------\n"
@@ -193,9 +201,9 @@ void pbio_motor_print_settings(pbio_port_t port, char *dc_settings_string, char 
     }
     else {
         // Preload several settings for easier printing
-        float_t counts_per_output_unit = motor_settings[port_index].counts_per_output_unit;
-        float_t counts_per_unit = motor_settings[port_index].counts_per_unit;
-        float_t gear_ratio = counts_per_output_unit / motor_settings[port_index].counts_per_unit;
+        float_t counts_per_output_unit = motor[port_index].settings.counts_per_output_unit;
+        float_t counts_per_unit = motor[port_index].settings.counts_per_unit;
+        float_t gear_ratio = counts_per_output_unit / motor[port_index].settings.counts_per_unit;
         // Print settings to settings_string
         snprintf(enc_settings_string, MAX_ENCMOTOR_SETTINGS_STR_LENGTH,
             "Counts per unit\t %" PRId32 ".%" PRId32 "\n"
@@ -225,34 +233,34 @@ void pbio_motor_print_settings(pbio_port_t port, char *dc_settings_string, char 
             (int32_t) (gear_ratio),
             (int32_t) (gear_ratio*1000 - ((int32_t) gear_ratio)*1000),
             // Print run settings
-            (int32_t) (motor_settings[port_index].max_rate / counts_per_output_unit),
-            (int32_t) (motor_settings[port_index].abs_acceleration / counts_per_output_unit),
+            (int32_t) (motor[port_index].settings.max_rate / counts_per_output_unit),
+            (int32_t) (motor[port_index].settings.abs_acceleration / counts_per_output_unit),
             // Print DC settings
-            (int32_t) (motor_settings[port_index].max_duty_steps / PBIO_DUTY_STEPS_PER_USER_STEP),
-            (int32_t) (motor_settings[port_index].duty_offset / PBIO_DUTY_STEPS_PER_USER_STEP),
+            (int32_t) (motor[port_index].settings.max_duty_steps / PBIO_DUTY_STEPS_PER_USER_STEP),
+            (int32_t) (motor[port_index].settings.duty_offset / PBIO_DUTY_STEPS_PER_USER_STEP),
             // Print PID settings
-            (int32_t) motor_settings[port_index].pid_kp,
-            (int32_t) motor_settings[port_index].pid_ki,
-            (int32_t) motor_settings[port_index].pid_kd,
-            (int32_t) (motor_settings[port_index].tight_loop_time / US_PER_MS),
-            (int32_t) (motor_settings[port_index].count_tolerance / counts_per_output_unit),
-            (int32_t) (motor_settings[port_index].rate_tolerance / counts_per_output_unit),
-            (int32_t) (motor_settings[port_index].stall_rate_limit / counts_per_output_unit),
-            (int32_t) (motor_settings[port_index].stall_time  / US_PER_MS)
+            (int32_t) motor[port_index].settings.pid_kp,
+            (int32_t) motor[port_index].settings.pid_ki,
+            (int32_t) motor[port_index].settings.pid_kd,
+            (int32_t) (motor[port_index].settings.tight_loop_time / US_PER_MS),
+            (int32_t) (motor[port_index].settings.count_tolerance / counts_per_output_unit),
+            (int32_t) (motor[port_index].settings.rate_tolerance / counts_per_output_unit),
+            (int32_t) (motor[port_index].settings.stall_rate_limit / counts_per_output_unit),
+            (int32_t) (motor[port_index].settings.stall_time  / US_PER_MS)
         );
     }
 }
 
 bool pbio_motor_has_encoder(pbio_port_t port){
-    return motor_has_encoders[PORT_TO_IDX(port)];
+    return motor[PORT_TO_IDX(port)].has_encoders;
 }
 
 pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
     pbio_error_t status = pbdrv_motor_get_encoder_count(port, count);
-    if (motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_COUNTERCLOCKWISE) {
+    if (motor[PORT_TO_IDX(port)].direction == PBIO_MOTOR_DIR_COUNTERCLOCKWISE) {
         *count = -*count;
     }
-    *count -= motor_settings[PORT_TO_IDX(port)].offset;
+    *count -= motor[PORT_TO_IDX(port)].settings.offset;
     return status;
 }
 
@@ -263,10 +271,10 @@ pbio_error_t pbio_motor_reset_encoder_count(pbio_port_t port, int32_t reset_coun
     // First get the counter value without any offsets, but with the appropriate polarity/sign.
     int32_t count_no_offset;
     pbio_error_t status = pbio_motor_get_encoder_count(port, &count_no_offset);
-    count_no_offset += motor_settings[PORT_TO_IDX(port)].offset;
+    count_no_offset += motor[PORT_TO_IDX(port)].settings.offset;
 
     // Calculate the new offset
-    motor_settings[PORT_TO_IDX(port)].offset = count_no_offset - reset_count;
+    motor[PORT_TO_IDX(port)].settings.offset = count_no_offset - reset_count;
 
     return status;
 }
@@ -274,17 +282,17 @@ pbio_error_t pbio_motor_reset_encoder_count(pbio_port_t port, int32_t reset_coun
 pbio_error_t pbio_motor_get_angle(pbio_port_t port, int32_t *angle) {
     int32_t encoder_count;
     pbio_error_t status = pbio_motor_get_encoder_count(port, &encoder_count);
-    *angle = encoder_count / (motor_settings[PORT_TO_IDX(port)].counts_per_output_unit);
+    *angle = encoder_count / (motor[PORT_TO_IDX(port)].settings.counts_per_output_unit);
     return status;
 }
 
 pbio_error_t pbio_motor_reset_angle(pbio_port_t port, int32_t reset_angle) {
-    return pbio_motor_reset_encoder_count(port, (int32_t) (reset_angle * motor_settings[PORT_TO_IDX(port)].counts_per_output_unit));
+    return pbio_motor_reset_encoder_count(port, (int32_t) (reset_angle * motor[PORT_TO_IDX(port)].settings.counts_per_output_unit));
 }
 
 pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
     pbio_error_t status = pbdrv_motor_get_encoder_rate(port, rate);
-    if (motor_directions[PORT_TO_IDX(port)] == PBIO_MOTOR_DIR_COUNTERCLOCKWISE) {
+    if (motor[PORT_TO_IDX(port)].direction == PBIO_MOTOR_DIR_COUNTERCLOCKWISE) {
         *rate = -*rate;
     }
     return status;
@@ -293,6 +301,6 @@ pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
 pbio_error_t pbio_motor_get_angular_rate(pbio_port_t port, int32_t *angular_rate) {
     int32_t encoder_rate;
     pbio_error_t status = pbio_motor_get_encoder_rate(port, &encoder_rate);
-    *angular_rate = encoder_rate / (motor_settings[PORT_TO_IDX(port)].counts_per_output_unit);
+    *angular_rate = encoder_rate / (motor[PORT_TO_IDX(port)].settings.counts_per_output_unit);
     return status;
 }

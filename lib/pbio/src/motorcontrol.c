@@ -112,7 +112,7 @@ pbio_error_t control_update_angle_target(pbio_port_t port) {
     // Trajectory and setting shortcuts for this motor
     pbio_motor_maneuver_t *maneuver = &maneuvers[PORT_TO_IDX(port)];
     pbio_motor_trajectory_t *traject = &maneuver->trajectory;
-    pbio_motor_settings_t *settings = &motor_settings[PORT_TO_IDX(port)];
+    pbio_motor_settings_t *settings = &motor[PORT_TO_IDX(port)].settings;
     pbio_motor_angle_based_control_status_t *status = &motor_control_status_angle_based[PORT_TO_IDX(port)];
     stalled_status_t *stalled = &stalled_status[PORT_TO_IDX(port)];
     duty_t max_duty = settings->max_duty_steps;
@@ -242,7 +242,7 @@ pbio_error_t control_update_angle_target(pbio_port_t port) {
             pbio_motor_set_duty_cycle_sys(port, duty);
 
             // Altough we keep holding, the maneuver is completed
-            motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_TRACKING;
+            motor[PORT_TO_IDX(port)].state = PBIO_MOTOR_CONTROL_TRACKING;
 
         }
     }
@@ -258,7 +258,7 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
     // Trajectory and setting shortcuts for this motor
     pbio_motor_maneuver_t *maneuver = &maneuvers[PORT_TO_IDX(port)];
     pbio_motor_trajectory_t *traject = &maneuver->trajectory;
-    pbio_motor_settings_t *settings = &motor_settings[PORT_TO_IDX(port)];
+    pbio_motor_settings_t *settings = &motor[PORT_TO_IDX(port)].settings;
     pbio_motor_time_based_control_status_t *status = &motor_control_status_time_based[PORT_TO_IDX(port)];
     stalled_status_t *stalled = &stalled_status[PORT_TO_IDX(port)];
     duty_t max_duty = settings->max_duty_steps;
@@ -383,7 +383,7 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
 
 void control_update(pbio_port_t port) {
     pbio_error_t err;
-    switch (motor_control_active[PORT_TO_IDX(port)]) {
+    switch (motor[PORT_TO_IDX(port)].state) {
         case PBIO_MOTOR_CONTROL_TRACKING:
         case PBIO_MOTOR_CONTROL_RUNNING_ANGLE:
             err = control_update_angle_target(port);
@@ -427,7 +427,7 @@ pbio_error_t pbio_motor_get_initial_state(pbio_port_t port, count_t *count_start
 
 void control_init_angle_target(pbio_port_t port) {
     // TODO If already running, start from ref + set flag of original state
-    // pbio_motor_control_active_t old_control_mode = motor_control_active[PORT_TO_IDX(port)];
+    // pbio_motor_control_active_t old_control_mode = motor[PORT_TO_IDX(port)].state;
     pbio_motor_angle_based_control_status_t *status = &motor_control_status_angle_based[PORT_TO_IDX(port)];
     pbio_motor_trajectory_t *trajectory = &maneuvers[PORT_TO_IDX(port)].trajectory;
 
@@ -443,13 +443,13 @@ void control_init_angle_target(pbio_port_t port) {
     status->time_prev = trajectory->t0;
     status->count_err_prev = 0;
     status->windup_status = TIME_RUNNING;
-    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING_ANGLE;
+    motor[PORT_TO_IDX(port)].state = PBIO_MOTOR_CONTROL_RUNNING_ANGLE;
 }
 
 
 void control_init_time_target(pbio_port_t port) {
     // TODO If already running, start from ref + set flag of original state
-    // pbio_motor_control_active_t old_control_mode = motor_control_active[PORT_TO_IDX(port)];
+    // pbio_motor_control_active_t old_control_mode = motor[PORT_TO_IDX(port)].state;
     pbio_motor_time_based_control_status_t *status = &motor_control_status_time_based[PORT_TO_IDX(port)];
     pbio_motor_trajectory_t *trajectory = &maneuvers[PORT_TO_IDX(port)].trajectory;
 
@@ -460,7 +460,7 @@ void control_init_time_target(pbio_port_t port) {
     status->windup_status = SPEED_INTEGRATOR_RUNNING;
     status->integrator_start = trajectory->th0;
     status->integrator_ref_start = trajectory->th0;
-    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_RUNNING_TIME;
+    motor[PORT_TO_IDX(port)].state = PBIO_MOTOR_CONTROL_RUNNING_TIME;
 }
 
 
@@ -468,14 +468,14 @@ void control_init_time_target(pbio_port_t port) {
 
 pbio_error_t pbio_motor_is_stalled(pbio_port_t port, bool *stalled) {
     *stalled = stalled_status[PORT_TO_IDX(port)] != STALLED_NONE &&
-               motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_TRACKING;
+               motor[PORT_TO_IDX(port)].state >= PBIO_MOTOR_CONTROL_TRACKING;
     return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_motor_run(pbio_port_t port, int32_t speed) {
 
     // Load motor settings and status
-    pbio_motor_settings_t *settings = &motor_settings[PORT_TO_IDX(port)];
+    pbio_motor_settings_t *settings = &motor[PORT_TO_IDX(port)].settings;
     pbio_motor_maneuver_t *maneuver = &maneuvers[PORT_TO_IDX(port)];
     pbio_error_t err;
 
@@ -540,7 +540,7 @@ pbio_error_t pbio_motor_stop(pbio_port_t port, pbio_motor_after_stop_t after_sto
 pbio_error_t pbio_motor_run_time(pbio_port_t port, int32_t speed, int32_t duration, pbio_motor_after_stop_t after_stop) {
 
     // Load motor settings and status
-    pbio_motor_settings_t *settings = &motor_settings[PORT_TO_IDX(port)];
+    pbio_motor_settings_t *settings = &motor[PORT_TO_IDX(port)].settings;
     pbio_motor_maneuver_t *maneuver = &maneuvers[PORT_TO_IDX(port)];
     pbio_error_t err;
 
@@ -580,7 +580,7 @@ pbio_error_t pbio_motor_run_time(pbio_port_t port, int32_t speed, int32_t durati
 pbio_error_t pbio_motor_run_until_stalled(pbio_port_t port, int32_t speed, pbio_motor_after_stop_t after_stop) {
 
     // Load motor settings and status
-    pbio_motor_settings_t *settings = &motor_settings[PORT_TO_IDX(port)];
+    pbio_motor_settings_t *settings = &motor[PORT_TO_IDX(port)].settings;
     pbio_motor_maneuver_t *maneuver = &maneuvers[PORT_TO_IDX(port)];
     pbio_error_t err;
 
@@ -619,7 +619,7 @@ pbio_error_t pbio_motor_run_until_stalled(pbio_port_t port, int32_t speed, pbio_
 pbio_error_t pbio_motor_run_target(pbio_port_t port, int32_t speed, int32_t target, pbio_motor_after_stop_t after_stop) {
 
     // Load motor settings and status
-    pbio_motor_settings_t *settings = &motor_settings[PORT_TO_IDX(port)];
+    pbio_motor_settings_t *settings = &motor[PORT_TO_IDX(port)].settings;
     pbio_motor_maneuver_t *maneuver = &maneuvers[PORT_TO_IDX(port)];
     pbio_error_t err;
 
@@ -679,7 +679,7 @@ pbio_error_t pbio_motor_run_angle(pbio_port_t port, int32_t speed, int32_t angle
 
 pbio_error_t pbio_motor_track_target(pbio_port_t port, int32_t target) {
     // Load motor settings and status
-    pbio_motor_settings_t *settings = &motor_settings[PORT_TO_IDX(port)];
+    pbio_motor_settings_t *settings = &motor[PORT_TO_IDX(port)].settings;
     pbio_motor_maneuver_t *maneuver = &maneuvers[PORT_TO_IDX(port)];
     pbio_error_t err;
 
@@ -700,7 +700,7 @@ pbio_error_t pbio_motor_track_target(pbio_port_t port, int32_t target) {
     // Initialize or reset the PID control status for the given maneuver
     control_init_angle_target(port);
 
-    motor_control_active[PORT_TO_IDX(port)] = PBIO_MOTOR_CONTROL_TRACKING;
+    motor[PORT_TO_IDX(port)].state = PBIO_MOTOR_CONTROL_TRACKING;
 
     // Run one control update synchronously with user command 
     err = control_update_angle_target(port);
