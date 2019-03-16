@@ -58,6 +58,7 @@ typedef enum {
     PBIO_MOTOR_CONTROL_COASTING,
     PBIO_MOTOR_CONTROL_BRAKING,
     PBIO_MOTOR_CONTROL_USRDUTY,
+    PBIO_MOTOR_CONTROL_ERRORED,
     /* Active control statuses: PID Control Active */   
     PBIO_MOTOR_CONTROL_TRACKING,      /**< Motor is tracking a position or holding position after completing command */
     PBIO_MOTOR_CONTROL_RUNNING_TIME,  /**< Motor is executing angle based maneuver by doing speed/position control */
