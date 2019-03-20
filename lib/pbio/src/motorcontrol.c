@@ -189,7 +189,7 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
     pbio_error_t err;
 
     // Declare current time, positions, rates, and their reference value and error
-    ustime_t time_now, time_ref;
+    ustime_t time_now;
     count_t count_now, count_ref, count_err;
     rate_t rate_now, rate_ref, rate_err;
     duty_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative;
@@ -201,14 +201,9 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
     err = pbio_motor_get_encoder_rate(port, &rate_now);
     if (err != PBIO_SUCCESS) { return err; }
 
-    // Get the time at which we want to evaluate the reference position/velocities.
-    // For time based commands, we never pause the time; it is just the current time
-    time_ref = time_now;
-
     // Get reference signals
-    get_reference(time_ref, &mtr->maneuver.trajectory, &count_ref, &rate_ref);
+    get_reference(time_now, &mtr->maneuver.trajectory, &count_ref, &rate_ref);
 
-    // else: RUN || RUN_TIME || RUN_STALLED
     // For time based commands, we do not aim to drive to a specific position, but we use the
     // "proportional position control" as an exact way to implement "integral speed control".
     // The speed integral is simply the position, but the speed reference should stop integrating
@@ -229,7 +224,7 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
     duty_due_to_proportional = mtr->settings.pid_kp*count_err;
     duty_due_to_derivative = mtr->settings.pid_kd*rate_err;
 
-    // Position anti-windup (RUN || RUN_TIME || RUN_STALLED)
+    // Position anti-windup
     // Check if proportional control exceeds the duty limit
     if ((duty_due_to_proportional >= max_duty && rate_err > 0) || (duty_due_to_proportional <= -max_duty && rate_err < 0)) {
         // If we are additionally also running slower than the specified stall speed limit, set status to stalled
@@ -282,8 +277,7 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
         )
     )
     {
-    // If so, we have reached our goal. We can keep running this loop in order to hold this position.
-    // But if brake or coast was specified as the afer_stop, we trigger that. Also clear the running flag to stop waiting for completion.
+    // If so, we have reached our goal and we trigger the stop
         if (mtr->maneuver.after_stop == PBIO_MOTOR_STOP_COAST) {
             // Coast the motor
             err = pbio_motor_coast(port);
@@ -295,9 +289,7 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
             if (err != PBIO_SUCCESS) { return err; }
         }
         else if (mtr->maneuver.after_stop == PBIO_MOTOR_STOP_HOLD) {
-            // Hold the motor
-            // RUN_TIME || RUN_STALLED
-            // When ending a time based control maneuver with hold, we trigger a new position based maneuver with zero degrees
+            // Hold the motor. When ending a time based control maneuver with hold, we trigger a new position based maneuver with zero degrees
             err = pbio_motor_set_duty_cycle_sys(port, 0);
             if (err != PBIO_SUCCESS) { return err; }
 
@@ -352,21 +344,36 @@ void _pbio_motorcontrol_poll(void) {
 
 
 pbio_error_t pbio_motor_get_initial_state(pbio_port_t port, count_t *count_start, rate_t *rate_start) {
-    // TODO If already running, start from ref + set flag of original state
-
+    pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
     pbio_error_t err;
+    ustime_t time_now = clock_usecs();
 
-    err = pbio_motor_get_encoder_count(port, count_start);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (mtr->state == PBIO_MOTOR_CONTROL_RUNNING_TIME) {
+        get_reference(time_now, &mtr->maneuver.trajectory, count_start, rate_start);
+    }
+    else if (mtr->state == PBIO_MOTOR_CONTROL_RUNNING_ANGLE || mtr->state == PBIO_MOTOR_CONTROL_TRACKING) {
+        pbio_motor_angular_control_status_t status = mtr->angular_control_status;
+        ustime_t time_ref = status.windup_status == TIME_RUNNING ?
+            time_now - status.time_paused :
+            status.time_stopped - status.time_paused;
+        get_reference(time_ref, &mtr->maneuver.trajectory, count_start, rate_start);
+    }
+    else {
+        // Otherwise, we are not currently in a control mode, and we start from the instantaneous motor state
+        err = pbio_motor_get_encoder_count(port, count_start);
+        if (err != PBIO_SUCCESS) { return err; }
 
-    err = pbio_motor_get_encoder_rate(port, rate_start);
-    if (err != PBIO_SUCCESS) { return err; }
-
+        err = pbio_motor_get_encoder_rate(port, rate_start);
+        if (err != PBIO_SUCCESS) { return err; }
+    }
     return PBIO_SUCCESS;
 }
 
 void control_init_angle_target(pbio_port_t port) {
     // TODO If already running, start from ref + set flag of original state
+
+    // depending on wind up status, keep or finalize integrator state, plus maintain status
+
     // pbio_motor_control_state_t old_control_mode = motor[PORT_TO_IDX(port)].state;
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
     pbio_motor_angular_control_status_t *status = &mtr->angular_control_status;
@@ -391,7 +398,7 @@ void control_init_angle_target(pbio_port_t port) {
 void control_init_time_target(pbio_port_t port) {
     // TODO If already running, start from ref + set flag of original state
     // pbio_motor_control_state_t old_control_mode = motor[PORT_TO_IDX(port)].state;
-    pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];    
+    pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
     pbio_motor_timed_control_status_t *status = &mtr->timed_control_status;
     pbio_motor_trajectory_t *trajectory = &mtr->maneuver.trajectory;
 
@@ -636,7 +643,7 @@ pbio_error_t pbio_motor_track_target(pbio_port_t port, int32_t target) {
 
     mtr->state = PBIO_MOTOR_CONTROL_TRACKING;
 
-    // Run one control update synchronously with user command 
+    // Run one control update synchronously with user command
     err = control_update_angle_target(port);
     if (err != PBIO_SUCCESS) { return err; }
 
