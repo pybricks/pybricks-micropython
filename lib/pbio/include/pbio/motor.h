@@ -86,21 +86,6 @@ typedef struct _pbio_motor_settings_t {
     int16_t pid_kd;                 /**< Derivative position control constant (and proportional speed control constant) */
 } pbio_motor_settings_t;
 
-/**
- * Status of the anti-windup integrators
- */
-typedef enum {
-    /**< Anti-windup status for PID position control:
-         Pause the position and speed trajectory when
-         the motor is stalled by pausing time. */
-    TIME_PAUSED,
-    TIME_RUNNING,
-    /**< Anti-windup status for PI speed control:
-         Pause the integration of the
-         accumulated speed error when stalled. */
-    SPEED_INTEGRATOR_RUNNING,
-    SPEED_INTEGRATOR_PAUSED,
-} windup_status_t;
 
 typedef enum {
     /**< Motor is not stalled */
@@ -126,10 +111,9 @@ typedef enum {
  * Motor PID control status
  */
 typedef struct _pbio_motor_angular_control_status_t {
-    windup_status_t windup_status; /**< State of the anti-windup variables */
+    bool ref_time_running;         /**< Whether the time at which the reference is evaluated is progressing (true) or paused (false) */
     count_t err_integral;          /**< Integral of position error (RUN_TARGET) */
     count_t speed_integrator;      /**< State of the speed integrator (all other modes) */
-    duty_t load_duty;
     count_t count_err_prev;        /**< Position error in the previous control iteration */
     ustime_t time_prev;            /**< Time at the previous control iteration */
     ustime_t time_paused;          /**< The amount of time the speed integrator has spent paused */
@@ -137,12 +121,11 @@ typedef struct _pbio_motor_angular_control_status_t {
 } pbio_motor_angular_control_status_t;
 
 typedef struct _pbio_motor_timed_control_status_t {
-    windup_status_t windup_status; /**< State of the anti-windup variables */
-    count_t speed_integrator;      /**< State of the speed integrator (all other modes) */
-    duty_t load_duty;
-    ustime_t integrator_time_stopped;         /**< Time at which the speed integrator last stopped */
-    count_t integrator_ref_start;  /**< Integrated speed value prior to enabling integrator */
-    count_t integrator_start;      /**< Integrated reference speed value prior to enabling integrator */
+    bool speed_integrator_running;   /**< Whether the speed integrator is active (true) or paused to prevent windup (false) */
+    count_t speed_integrator;        /**< State of the speed integrator (all other modes) */
+    ustime_t integrator_time_stopped;/**< Time at which the speed integrator last stopped */
+    count_t integrator_ref_start;    /**< Integrated speed value prior to enabling integrator */
+    count_t integrator_start;        /**< Integrated reference speed value prior to enabling integrator */
 } pbio_motor_timed_control_status_t;
 
 /**

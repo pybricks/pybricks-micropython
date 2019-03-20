@@ -54,7 +54,7 @@ pbio_error_t control_update_angle_target(pbio_port_t port) {
     // Get the time at which we want to evaluate the reference position/velocities, for position based commands
 
     // In nominal operation, take the current time, minus the amount of time we have spent stalled
-    if (status->windup_status == TIME_RUNNING) {
+    if (status->ref_time_running) {
         time_ref = time_now - status->time_paused;
     }
     else {
@@ -82,9 +82,9 @@ pbio_error_t control_update_angle_target(pbio_port_t port) {
         // If we are additionally also running slower than the specified stall speed limit, set status to stalled
         stall_set_flag_if_slow(&mtr->stalled, rate_now, mtr->settings.stall_rate_limit, time_now - status->time_stopped, mtr->settings.stall_time, STALLED_PROPORTIONAL);
         // To prevent further integration, we should stop the timer if it is running
-        if (status->windup_status == TIME_RUNNING) {
+        if (status->ref_time_running) {
             // Then we must stop the time
-            status->windup_status = TIME_PAUSED;
+            status->ref_time_running = false;
             // We save the time value reached now, to continue later
             status->time_stopped = time_now;
         }
@@ -93,16 +93,16 @@ pbio_error_t control_update_angle_target(pbio_port_t port) {
         // Otherwise, the timer should be running, and we are not stalled
         stall_clear_flag(&mtr->stalled, STALLED_PROPORTIONAL);
         // So we should restart the time if it isn't already running
-        if (status->windup_status == TIME_PAUSED) {
+        if (!status->ref_time_running) {
             // Then we must restart the time
-            status->windup_status = TIME_RUNNING;
+            status->ref_time_running = true;
             // We begin counting again from the stopped point
             status->time_paused += time_now - status->time_stopped;
         }
     }
 
     // Integrate position error
-    if (status->windup_status == TIME_RUNNING) {
+    if (status->ref_time_running) {
         time_loop = time_now - status->time_prev;
         status->err_integral += status->count_err_prev*time_loop;
     }
@@ -129,8 +129,6 @@ pbio_error_t control_update_angle_target(pbio_port_t port) {
         // Clear the integrator stall flag
         stall_clear_flag(&mtr->stalled, STALLED_INTEGRAL);
     }
-    // Load duty
-    status->load_duty = duty_due_to_integral;
 
     // Calculate duty signal
     duty = duty_due_to_proportional + duty_due_to_integral + duty_due_to_derivative;
@@ -208,7 +206,7 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
     // "proportional position control" as an exact way to implement "integral speed control".
     // The speed integral is simply the position, but the speed reference should stop integrating
     // while stalled, to prevent windup.
-    if (status->windup_status == SPEED_INTEGRATOR_RUNNING) {
+    if (status->speed_integrator_running) {
         // If integrator is active, it is the previously accumulated sum, plus the integral since its last restart
         count_err = status->speed_integrator + count_ref - status->integrator_ref_start - count_now + status->integrator_start;
     }
@@ -230,9 +228,9 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
         // If we are additionally also running slower than the specified stall speed limit, set status to stalled
         stall_set_flag_if_slow(&mtr->stalled, rate_now, mtr->settings.stall_rate_limit, time_now - status->integrator_time_stopped, mtr->settings.stall_time, STALLED_PROPORTIONAL);
         // The integrator should NOT run.
-        if (status->windup_status == SPEED_INTEGRATOR_RUNNING) {
+        if (status->speed_integrator_running) {
             // If it is running, disable it
-            status->windup_status = SPEED_INTEGRATOR_PAUSED;
+            status->speed_integrator_running = false;
             // Save the integrator state reached now, to continue when no longer stalled
             status->speed_integrator += count_ref - status->integrator_ref_start - count_now + status->integrator_start;
             // Store time at which speed integration is disabled
@@ -242,9 +240,9 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
     else {
         stall_clear_flag(&mtr->stalled, STALLED_PROPORTIONAL);
         // The integrator SHOULD RUN.
-        if (status->windup_status == SPEED_INTEGRATOR_PAUSED) {
+        if (!status->speed_integrator_running) {
             // If it isn't running, enable it
-            status->windup_status = SPEED_INTEGRATOR_RUNNING;
+            status->speed_integrator_running = true;
             // Begin integrating again from the current point
             status->integrator_ref_start = count_ref;
             status->integrator_start = count_now;
@@ -254,8 +252,6 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
     // RUN || RUN_TIME || RUN_STALLED have no position integral control
     duty_due_to_integral = 0;
     stall_clear_flag(&mtr->stalled, STALLED_INTEGRAL);
-    // Load duty
-    status->load_duty = duty_due_to_proportional;
 
     // Calculate duty signal
     duty = duty_due_to_proportional + duty_due_to_integral + duty_due_to_derivative;
@@ -353,7 +349,7 @@ pbio_error_t pbio_motor_get_initial_state(pbio_port_t port, count_t *count_start
     }
     else if (mtr->state == PBIO_MOTOR_CONTROL_RUNNING_ANGLE || mtr->state == PBIO_MOTOR_CONTROL_TRACKING) {
         pbio_motor_angular_control_status_t status = mtr->angular_control_status;
-        ustime_t time_ref = status.windup_status == TIME_RUNNING ?
+        ustime_t time_ref = status.ref_time_running ?
             time_now - status.time_paused :
             status.time_stopped - status.time_paused;
         get_reference(time_ref, &mtr->maneuver.trajectory, count_start, rate_start);
@@ -383,14 +379,13 @@ void control_init_angle_target(pbio_port_t port) {
     // If still running and restarting a new maneuver, however, we keep part of the PID status
     // in order to create a smooth transition from one maneuver to the next.
     // If no previous maneuver was active, just set these to zero.
-    status->load_duty = 0;
     status->err_integral = 0;
     status->speed_integrator = 0;
     status->time_paused = 0;
     status->time_stopped = 0;
     status->time_prev = trajectory->t0;
     status->count_err_prev = 0;
-    status->windup_status = TIME_RUNNING;
+    status->ref_time_running = true;
     mtr->state = PBIO_MOTOR_CONTROL_RUNNING_ANGLE;
 }
 
@@ -403,10 +398,9 @@ void control_init_time_target(pbio_port_t port) {
     pbio_motor_trajectory_t *trajectory = &mtr->maneuver.trajectory;
 
     // Init control depending on old control mode. For now assume old mode was passive, so start from zero,
-    status->load_duty = 0;
     status->speed_integrator = 0;
     status->integrator_time_stopped = 0;
-    status->windup_status = SPEED_INTEGRATOR_RUNNING;
+    status->speed_integrator_running = true;
     status->integrator_start = trajectory->th0;
     status->integrator_ref_start = trajectory->th0;
     mtr->state = PBIO_MOTOR_CONTROL_RUNNING_TIME;
