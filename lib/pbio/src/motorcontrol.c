@@ -134,19 +134,15 @@ pbio_error_t control_update_angle_target(pbio_port_t port) {
     duty = duty_due_to_proportional + duty_due_to_integral + duty_due_to_derivative;
 
     // Check if we are at the target and standing still, with slightly different end conditions for each mode
-    if (
-        (mtr->maneuver.action == RUN_TARGET) &&
-            (
-                // Maneuver is complete, time wise
-                time_ref >= mtr->maneuver.trajectory.t3 &&
-                // Position is within the lower tolerated bound ...
-                mtr->maneuver.trajectory.th3 - mtr->settings.count_tolerance <= count_now &&
-                // ... and the upper tolerated bound
-                count_now <= mtr->maneuver.trajectory.th3 + mtr->settings.count_tolerance &&
-                // And the motor stands still.
-                abs(rate_now) < mtr->settings.rate_tolerance
-            )
-        )
+    if (mtr->maneuver.action == RUN_TARGET &&
+        // Maneuver is complete, time wise
+        time_ref >= mtr->maneuver.trajectory.t3 &&
+        // Position is within the lower tolerated bound ...
+        mtr->maneuver.trajectory.th3 - mtr->settings.count_tolerance <= count_now &&
+        // ... and the upper tolerated bound
+        count_now <= mtr->maneuver.trajectory.th3 + mtr->settings.count_tolerance &&
+        // And the motor stands still.
+        abs(rate_now) < mtr->settings.rate_tolerance)
     {
     // If so, we have reached our goal. We can keep running this loop in order to hold this position.
     // But if brake or coast was specified as the afer_stop, we trigger that. Also clear the running flag to stop waiting for completion.
@@ -258,18 +254,14 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
 
     // Check if we are at the target and standing still, with slightly different end conditions for each mode
     if (
-        // Conditions for RUN_TIME command
+        // Conditions for RUN_TIME command: past the total duration of the timed command
         (
-        (mtr->maneuver.action == RUN_TIME) &&
-            // We are past the total duration of the timed command
-            (time_now >= mtr->maneuver.trajectory.t3)
+            mtr->maneuver.action == RUN_TIME && time_now >= mtr->maneuver.trajectory.t3
         )
         ||
-        // Conditions for run_stalled commands
+        // Conditions for run_stalled commands: the motor is stalled in either proportional or integral sense
         (
-        (mtr->maneuver.action == RUN_STALLED) &&
-            // Whether the motor is stalled in either proportional or integral sense
-            mtr->stalled != STALLED_NONE
+            mtr->maneuver.action == RUN_STALLED && mtr->stalled != STALLED_NONE
         )
     )
     {
