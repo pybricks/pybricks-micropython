@@ -204,7 +204,7 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
     // while stalled, to prevent windup.
     if (status->speed_integrator_running) {
         // If integrator is active, it is the previously accumulated sum, plus the integral since its last restart
-        count_err = status->speed_integrator + count_ref - status->integrator_ref_start - count_now + status->integrator_start;
+        count_err = status->speed_integrator + (count_ref - status->integrator_ref_start) - (count_now - status->integrator_start);
     }
     else {
         // Otherwise, it is just the previously accumulated sum and it doesn't integrate further
@@ -372,7 +372,6 @@ void control_init_angle_target(pbio_port_t port) {
     // in order to create a smooth transition from one maneuver to the next.
     // If no previous maneuver was active, just set these to zero.
     status->err_integral = 0;
-    status->speed_integrator = 0;
     status->time_paused = 0;
     status->time_stopped = 0;
     status->time_prev = trajectory->t0;
@@ -389,12 +388,20 @@ void control_init_time_target(pbio_port_t port) {
     pbio_motor_timed_control_status_t *status = &mtr->timed_control_status;
     pbio_motor_trajectory_t *trajectory = &mtr->maneuver.trajectory;
 
-    // Init control depending on old control mode. For now assume old mode was passive, so start from zero,
-    status->speed_integrator = 0;
-    status->integrator_time_stopped = 0;
-    status->speed_integrator_running = true;
-    status->integrator_start = trajectory->th0;
-    status->integrator_ref_start = trajectory->th0;
+    if (mtr->state == PBIO_MOTOR_CONTROL_RUNNING_TIME) {
+        if (status->speed_integrator_running) {
+            status->speed_integrator += trajectory->th0 - status->integrator_ref_start;
+            status->integrator_ref_start = trajectory->th0;
+        }
+    } 
+    else {
+        // old mode was passive, so start from zero,
+        status->speed_integrator = 0;
+        status->integrator_time_stopped = 0;
+        status->speed_integrator_running = true;
+        status->integrator_start = trajectory->th0;
+        status->integrator_ref_start = trajectory->th0;
+    }
     mtr->state = PBIO_MOTOR_CONTROL_RUNNING_TIME;
 }
 

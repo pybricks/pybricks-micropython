@@ -112,8 +112,7 @@ typedef enum {
  */
 typedef struct _pbio_motor_angular_control_status_t {
     bool ref_time_running;         /**< Whether the time at which the reference is evaluated is progressing (true) or paused (false) */
-    count_t err_integral;          /**< Integral of position error (RUN_TARGET) */
-    count_t speed_integrator;      /**< State of the speed integrator (all other modes) */
+    count_t err_integral;          /**< Integral of position error */
     count_t count_err_prev;        /**< Position error in the previous control iteration */
     ustime_t time_prev;            /**< Time at the previous control iteration */
     ustime_t time_paused;          /**< The amount of time the speed integrator has spent paused */
@@ -122,7 +121,7 @@ typedef struct _pbio_motor_angular_control_status_t {
 
 typedef struct _pbio_motor_timed_control_status_t {
     bool speed_integrator_running;   /**< Whether the speed integrator is active (true) or paused to prevent windup (false) */
-    count_t speed_integrator;        /**< State of the speed integrator (all other modes) */
+    count_t speed_integrator;        /**< State of the speed integrator */
     ustime_t integrator_time_stopped;/**< Time at which the speed integrator last stopped */
     count_t integrator_ref_start;    /**< Integrated speed value prior to enabling integrator */
     count_t integrator_start;        /**< Integrated reference speed value prior to enabling integrator */
