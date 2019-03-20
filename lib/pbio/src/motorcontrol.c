@@ -278,9 +278,6 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
         }
         else if (mtr->maneuver.after_stop == PBIO_MOTOR_STOP_HOLD) {
             // Hold the motor. When ending a time based control maneuver with hold, we trigger a new position based maneuver with zero degrees
-            err = pbio_motor_set_duty_cycle_sys(port, 0);
-            if (err != PBIO_SUCCESS) { return err; }
-
             err = pbio_motor_track_target(port, ((float_t) count_now)/mtr->settings.counts_per_output_unit);
             if (err != PBIO_SUCCESS) { return err; }
         }
@@ -290,7 +287,7 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
         err = pbio_motor_set_duty_cycle_sys(port, duty);
         if (err != PBIO_SUCCESS) { return err; }
     }
-    return PBIO_SUCCESS; // TODO catch and return errors for all above IO tasks
+    return PBIO_SUCCESS;
 }
 
 void control_update(pbio_port_t port) {
@@ -382,8 +379,6 @@ void control_init_angle_target(pbio_port_t port) {
 
 
 void control_init_time_target(pbio_port_t port) {
-    // TODO If already running, start from ref + set flag of original state
-    // pbio_motor_control_state_t old_control_mode = motor[PORT_TO_IDX(port)].state;
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
     pbio_motor_timed_control_status_t *status = &mtr->timed_control_status;
     pbio_motor_trajectory_t *trajectory = &mtr->maneuver.trajectory;
@@ -419,6 +414,13 @@ pbio_error_t pbio_motor_run(pbio_port_t port, int32_t speed) {
 
     // Load motor settings and status
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
+
+    if (mtr->state == PBIO_MOTOR_CONTROL_RUNNING_TIME &&
+        mtr->maneuver.action == RUN && 
+        ((uint32_t) (speed * mtr->settings.counts_per_output_unit)) == mtr->maneuver.trajectory.w1) {
+        // If the exact same command is already running, there is nothing we need to do
+        return PBIO_SUCCESS;
+    }
 
     // Set new maneuver action and stop type
     mtr->maneuver.action = RUN;
