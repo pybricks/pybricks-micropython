@@ -265,8 +265,6 @@ pbio_error_t pbio_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
 }
 
 pbio_error_t pbio_motor_reset_encoder_count(pbio_port_t port, int32_t reset_count) {
-    // Set the motor to coast and stop any running maneuvers
-    pbio_motor_coast(port);
 
     // First get the counter value without any offsets, but with the appropriate polarity/sign.
     int32_t count_no_offset;
@@ -287,7 +285,37 @@ pbio_error_t pbio_motor_get_angle(pbio_port_t port, int32_t *angle) {
 }
 
 pbio_error_t pbio_motor_reset_angle(pbio_port_t port, int32_t reset_angle) {
-    return pbio_motor_reset_encoder_count(port, (int32_t) (reset_angle * motor[PORT_TO_IDX(port)].settings.counts_per_output_unit));
+    // Load motor settings and status
+    pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
+    pbio_error_t err;
+
+    // Perform angle reset in case of tracking
+    if (mtr->state == PBIO_MOTOR_CONTROL_TRACKING) {
+        // Get the old angle
+        int32_t angle_old;
+        err = pbio_motor_get_encoder_count(port, &angle_old);
+        if (err != PBIO_SUCCESS) { return err; }
+        // Get the old target
+        int32_t target_old = (int32_t) (mtr->maneuver.trajectory.th3 / mtr->settings.counts_per_output_unit);
+        // Reset the angle
+        err = pbio_motor_reset_encoder_count(port, (int32_t) (reset_angle * mtr->settings.counts_per_output_unit));
+        if (err != PBIO_SUCCESS) { return err; }
+        // Set the new target based on the old angle and the old target, after the angle reset
+        uint32_t new_target = reset_angle + target_old - angle_old;
+        return pbio_motor_track_target(port, new_target);
+
+    }
+    // Perform angle reset in case of active background maneuver
+    else if (mtr->state >= PBIO_MOTOR_CONTROL_RUNNING_TIME) {
+        err = pbio_motor_reset_encoder_count(port, (int32_t) (reset_angle * mtr->settings.counts_per_output_unit));
+        if (err != PBIO_SUCCESS) { return err; }
+        // Resetting the angle makes background maneuvers undefined, so stop and coast
+        return pbio_motor_coast(port);
+    }
+    else {
+        // Otherwise, reset the angle while leaving the coast or brake status unchanged
+        return pbio_motor_reset_encoder_count(port, (int32_t) (reset_angle * mtr->settings.counts_per_output_unit));
+    }
 }
 
 pbio_error_t pbio_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
