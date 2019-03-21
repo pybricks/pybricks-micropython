@@ -136,7 +136,7 @@ pbio_error_t control_update_angle_target(pbio_port_t port) {
     // Check if we are at the target and standing still, with slightly different end conditions for each mode
     if (mtr->maneuver.action == RUN_TARGET &&
         // Maneuver is complete, time wise
-        time_ref >= mtr->maneuver.trajectory.t3 &&
+        time_ref - mtr->maneuver.trajectory.t3 >= 0 &&
         // Position is within the lower tolerated bound ...
         mtr->maneuver.trajectory.th3 - mtr->settings.count_tolerance <= count_now &&
         // ... and the upper tolerated bound

@@ -38,8 +38,7 @@ pbio_error_t sysfs_motor_command(pbio_port_t port, const char* command) {
     char filepath[MAX_PATH_LENGTH];
     snprintf(filepath, MAX_PATH_LENGTH, "/sys/class/tacho-motor/motor%d/command", motor_files[PORT_TO_IDX(port)].dir_number);
     FILE* file = fopen(filepath, "w");
-    if (file != NULL && fprintf(file, "%s", command) >= 0) {
-        fclose(file);
+    if (file != NULL && fprintf(file, "%s", command) >= 0 && fclose(file) == 0) {
         return PBIO_SUCCESS;
     }
     return PBIO_ERROR_IO;
