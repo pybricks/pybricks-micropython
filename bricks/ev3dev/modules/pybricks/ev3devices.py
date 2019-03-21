@@ -214,7 +214,7 @@ class GyroSensor(Ev3devUartSensor):
     def __init__(self, port, direction=Direction.CLOCKWISE):
         Ev3devUartSensor.__init__(self, port)
         self._direction = direction
-        self.reset_angle()
+        self.reset_angle(0)
 
     def speed(self):
         if self._direction == Direction.CLOCKWISE:
@@ -228,7 +228,7 @@ class GyroSensor(Ev3devUartSensor):
         else:
             return -self._value(0) - self.offset
 
-    def reset_angle(self, angle=0):
+    def reset_angle(self, angle):
         if self._direction == Direction.CLOCKWISE:
             self.offset = self._value(0) - angle
         else:

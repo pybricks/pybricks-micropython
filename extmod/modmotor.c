@@ -147,7 +147,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_stalled_obj, motor_Motor_stalled);
 
 STATIC mp_obj_t motor_Motor_reset_angle(size_t n_args, const mp_obj_t *args){
     pbio_port_t port = get_port(args[0]);
-    int32_t reset_angle = n_args > 1 ? mp_obj_get_num(args[1]) : 0;
+    int32_t reset_angle = mp_obj_get_num(args[1]);
     pbio_error_t err;
 
     pb_thread_enter();
@@ -158,7 +158,7 @@ STATIC mp_obj_t motor_Motor_reset_angle(size_t n_args, const mp_obj_t *args){
 
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_reset_angle_obj, 1, 2, motor_Motor_reset_angle);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_reset_angle_obj, 2, 2, motor_Motor_reset_angle);
 
 STATIC mp_obj_t motor_Motor_speed(mp_obj_t self_in) {
     pbio_port_t port = get_port(self_in);
@@ -175,9 +175,9 @@ STATIC mp_obj_t motor_Motor_speed(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_speed_obj, motor_Motor_speed);
 
-STATIC mp_obj_t motor_Motor_run(size_t n_args, const mp_obj_t *args){
-    pbio_port_t port = get_port(args[0]);
-    int32_t speed = mp_obj_get_num(args[1]);
+STATIC mp_obj_t motor_Motor_run(mp_obj_t self_in, mp_obj_t speed_in) {
+    pbio_port_t port = get_port(self_in);
+    int32_t speed = mp_obj_get_num(speed_in);
     pbio_error_t err;
 
     pb_thread_enter();
@@ -189,7 +189,7 @@ STATIC mp_obj_t motor_Motor_run(size_t n_args, const mp_obj_t *args){
 
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_obj, 2, 3, motor_Motor_run);
+MP_DEFINE_CONST_FUN_OBJ_2(motor_Motor_run_obj, motor_Motor_run);
 
 STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments

@@ -93,11 +93,11 @@ class Motor():
         """
         pass
 
-    def reset_angle(self, angle=0):
+    def reset_angle(self, angle):
         """Reset the accumulated rotation angle of the motor.
 
         Arguments:
-            angle (:ref:`angle`): Value to which the angle should be reset (*Default*: 0).
+            angle (:ref:`angle`): Value to which the angle should be reset.
         """
         pass
 
@@ -434,11 +434,11 @@ class GyroSensor():
         """
         pass
 
-    def reset_angle(self, angle=0):
+    def reset_angle(self, angle):
         """Set the rotation angle of the sensor to a desired value.
 
         Arguments:
-            angle (:ref:`angle`): Value to which the angle should be reset (*Default*: 0).
+            angle (:ref:`angle`): Value to which the angle should be reset.
         """
         pass
 
