@@ -47,7 +47,19 @@ If you are new to MicroPython programming, we recommend that you keep the existi
 
    Opening the default *main.py* program.
 
+Opening an existing project
+-----------------------------------------------------------
 
+To open a project you created previously, click *File* and click *Open Folder*, as shown in :numref:`fig_existingproject`. Next, navigate to your previously created project folder and click *OK*. You can also open your recently used projects using the *Open Recent* menu option.
+
+.. _fig_existingproject:
+
+.. figure:: images/existingproject.png
+   :width: 75 %
+   :alt: existingproject
+   :align: center
+
+   Opening a previously created project.
 
 Connecting to the EV3 Brick with Visual Studio Code
 -----------------------------------------------------------
