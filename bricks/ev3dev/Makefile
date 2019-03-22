@@ -185,6 +185,7 @@ PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	extmod/modbattery.c \
 	extmod/modtools.c \
 	extmod/modparameters.c \
+	extmod/modrobotics.c \
 	extmod/pberror.c \
 	extmod/pbid.c \
 	extmod/pbthread.c \
@@ -199,6 +200,7 @@ PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	lib/pbio/src/error.c \
 	lib/pbio/src/motorcontrol.c \
 	lib/pbio/src/motorref.c \
+	lib/pbio/src/motorpair.c \
 	)
 
 # FatFS VFS support
