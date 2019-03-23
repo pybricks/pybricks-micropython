@@ -4,6 +4,7 @@
 #include <math.h>
 
 #include <pbio/motor.h>
+#include <pbio/motorpair.h>
 
 #include "py/mphal.h"
 #include "py/runtime.h"
@@ -36,17 +37,9 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     self->port_left = get_port(args[0]);
     self->port_right = get_port(args[1]);
 
-    // Argument must be two unique motors
-    if (self->port_left == self->port_right) {
-        pb_assert(PBIO_ERROR_INVALID_ARG);
-    }
-
-    // Motors should still be connected and should have encoders, which we can test by reading their angles
-    if (self->port_left == self->port_right) {
-        int32_t dummy_angle;
-        pb_assert(pbio_motor_get_angle(self->port_left, &dummy_angle));
-        pb_assert(pbio_motor_get_angle(self->port_right, &dummy_angle));
-    }
+    // Assert that motors can be paired
+    pbio_motor_pair_t pair;
+    pb_assert(pbio_get_motor_pair(self->port_left, self->port_right, &pair));
 
     // Get wheel diameter and axle track dimensions
     self->wheel_diameter = mp_obj_get_num(args[2]);

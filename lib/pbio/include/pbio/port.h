@@ -19,6 +19,8 @@
  * I/O port identifier. The meaning and availability of a port is device-specific.
  */
 typedef enum {
+    PBIO_PORT_NONE = 0, /**< Unknown or nonexisting port */
+
     PBIO_PORT_SELF = '@', /**< Virtual port for the programmable brick itself */
 
 #if PBDRV_CONFIG_HAS_PORT_A
