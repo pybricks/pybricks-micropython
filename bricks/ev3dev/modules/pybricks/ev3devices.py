@@ -86,8 +86,8 @@ class ColorSensor(Ev3devSensor):
             float -- Reflection, ranging from 0.0 (no reflection) to 100.0 (high reflection).
 
         """
-        self._mode('REF-RAW')
-        return round(max(0, min(self._value(0)*-0.2965+193.6, 100)), 1)
+        self._mode('COL-REFLECT')
+        return self._value(0)
 
     def rgb(self):
         """Measure the reflection of a surface (using a red, green, and blue light, each measured in turn).

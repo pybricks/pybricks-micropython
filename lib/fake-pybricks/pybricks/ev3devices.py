@@ -331,7 +331,7 @@ class ColorSensor():
         """Measure the reflection of a surface using a red light.
 
         Returns:
-            :ref:`percentage`: Reflection, ranging from 0.0 (no reflection) to 100.0 (high reflection).
+            :ref:`percentage`: Reflection, ranging from 0 (no reflection) to 100 (high reflection).
 
         """
         pass
