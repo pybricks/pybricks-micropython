@@ -234,7 +234,7 @@ class GyroSensor(Ev3devUartSensor):
         else:
             self.offset = -self._value(0) - angle
 
-    def calibrate(self):
+    def _calibrate(self):
         self._reset()
         self.reset_angle(0)
 

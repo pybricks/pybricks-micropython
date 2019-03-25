@@ -442,8 +442,11 @@ class GyroSensor():
         """
         pass
 
-    def calibrate(self):
-        """Calibrate the sensor. This process sets the speed and angle to zero and ensures that the angle value does not drift.
+    def _calibrate(self):
+        """Calibrate the sensor.
+
+        This process sets the speed and angle to zero and ensures that the
+        angle value does not drift.
 
         Make sure that the sensor does not move while calibrating.
 
