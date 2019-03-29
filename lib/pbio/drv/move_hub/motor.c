@@ -237,7 +237,8 @@ pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
         iodev = get_iodev(port);
 
         if (!iodev) {
-            return PBIO_ERROR_NO_DEV;
+            return PBIO_ERROR_NOT_SUPPORTED;
+            // return PBIO_ERROR_NO_DEV;
         }
 
         // *sigh*, unaligned 32-bit value
@@ -267,7 +268,8 @@ pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
         iodev = get_iodev(port);
 
         if (!iodev) {
-            return PBIO_ERROR_NO_DEV;
+            return PBIO_ERROR_NOT_SUPPORTED;
+            // return PBIO_ERROR_NO_DEV;
         }
 
         // scaling factor of 14 determined empirically
@@ -326,11 +328,11 @@ pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
 }
 
 pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
-    if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
-        if (!get_iodev(port)) {
-            return PBIO_ERROR_NO_DEV;
-        }
-    }
+    // if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
+    //     if (!get_iodev(port)) {
+    //         return PBIO_ERROR_NO_DEV;
+    //     }
+    // }
 
     // set both port pins 1 and 2 to output low
     switch (port) {
@@ -466,15 +468,15 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
-        pbio_iodev_t *iodev;
+    // if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
+    //     pbio_iodev_t *iodev;
 
-        iodev = get_iodev(port);
+    //     iodev = get_iodev(port);
 
-        if (!iodev) {
-            return PBIO_ERROR_NO_DEV;
-        }
-    }
+    //     if (!iodev) {
+    //         return PBIO_ERROR_NO_DEV;
+    //     }
+    // }
 
     if (duty_cycle < -10000 || duty_cycle > 10000) {
         return PBIO_ERROR_INVALID_ARG;
@@ -506,7 +508,7 @@ pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
         }
 
         *id = iodev->info->type_id;
-
+        printf("%d\n", *id);
         return PBIO_SUCCESS;
     }
 
