@@ -20,10 +20,10 @@
 STATIC void wait_for_completion(pbio_port_t port, bool foreground) {
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
     if (foreground) {
-        while (mtr->state >= PBIO_MOTOR_CONTROL_RUNNING_TIME) {
+        while (mtr->state >= PBIO_CONTROL_RUNNING_TIME) {
             mp_hal_delay_ms(10);
         }
-        if (mtr->state == PBIO_MOTOR_CONTROL_ERRORED) {
+        if (mtr->state == PBIO_CONTROL_ERRORED) {
             pb_assert(PBIO_ERROR_IO);
         }
     };
