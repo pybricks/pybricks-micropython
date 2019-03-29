@@ -75,11 +75,17 @@ pbio_error_t pbio_motor_setup(pbio_port_t port, pbio_motor_dir_t direction, floa
     if (err != PBIO_SUCCESS) { return err; }
 
     // Reset encoder, and in the process check that it is an encoded motor
-    mtr->has_encoders = pbio_motor_reset_encoder_count(port, 0) == PBIO_SUCCESS;
+    err = pbio_motor_reset_encoder_count(port, 0);
 
-    // Return if there are no encoders, because then we are done
-    if (!mtr->has_encoders) {
-        return PBIO_SUCCESS;
+    if (err == PBIO_SUCCESS) {
+        mtr->has_encoders = true;
+    }
+    else if (err == PBIO_ERROR_NOT_SUPPORTED) {
+        // In this case there are no encoders and we are done by configuring DC settings only
+        mtr->has_encoders = false;
+        return pbio_motor_set_dc_settings(port, 100, 0);
+    } else {
+        return err;
     }
 
     // Return on invalid gear ratio
