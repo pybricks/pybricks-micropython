@@ -162,7 +162,7 @@ pbio_error_t control_update_angle_target(pbio_port_t port) {
             if (err != PBIO_SUCCESS) { return err; }
 
             // Altough we keep holding, the maneuver is completed
-            mtr->state = PBIO_CONTROL_TRACKING;
+            mtr->state = PBIO_CONTROL_ANGLE_BACKGROUND;
 
         }
     }
@@ -294,12 +294,14 @@ void control_update(pbio_port_t port) {
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
     pbio_error_t err = PBIO_SUCCESS;
     switch (mtr->state) {
-        case PBIO_CONTROL_TRACKING:
-            // Fall through to RUNNING_ANGLE
-        case PBIO_CONTROL_RUNNING_ANGLE:
+        // Update the angular control in these modes
+        case PBIO_CONTROL_ANGLE_BACKGROUND:
+        case PBIO_CONTROL_ANGLE_FOREGROUND:
             err = control_update_angle_target(port);
             break;
-        case PBIO_CONTROL_RUNNING_TIME:
+        // Update the timed control in these modes
+        case PBIO_CONTROL_TIME_BACKGROUND:
+        case PBIO_CONTROL_TIME_FOREGROUND:
             err = control_update_time_target(port);
             break;
         default:
@@ -333,10 +335,10 @@ pbio_error_t pbio_motor_get_initial_state(pbio_port_t port, count_t *count_start
     pbio_error_t err;
     ustime_t time_now = clock_usecs();
 
-    if (mtr->state == PBIO_CONTROL_RUNNING_TIME) {
+    if (mtr->state == PBIO_CONTROL_TIME_FOREGROUND || mtr->state == PBIO_CONTROL_TIME_BACKGROUND) {
         get_reference(time_now, &mtr->maneuver.trajectory, count_start, rate_start);
     }
-    else if (mtr->state == PBIO_CONTROL_RUNNING_ANGLE || mtr->state == PBIO_CONTROL_TRACKING) {
+    else if (mtr->state == PBIO_CONTROL_ANGLE_FOREGROUND || mtr->state == PBIO_CONTROL_ANGLE_BACKGROUND) {
         pbio_angular_control_status_t status = mtr->angular_control_status;
         ustime_t time_ref = status.ref_time_running ?
             time_now - status.time_paused :
@@ -374,7 +376,6 @@ void control_init_angle_target(pbio_port_t port) {
     status->time_prev = trajectory->t0;
     status->count_err_prev = 0;
     status->ref_time_running = true;
-    mtr->state = PBIO_CONTROL_RUNNING_ANGLE;
 }
 
 
@@ -383,7 +384,7 @@ void control_init_time_target(pbio_port_t port) {
     pbio_timed_control_status_t *status = &mtr->timed_control_status;
     pbio_motor_trajectory_t *trajectory = &mtr->maneuver.trajectory;
 
-    if (mtr->state == PBIO_CONTROL_RUNNING_TIME) {
+    if (mtr->state == PBIO_CONTROL_TIME_BACKGROUND) {
         if (status->speed_integrator_running) {
             status->speed_integrator += trajectory->th0 - status->integrator_ref_start;
             status->integrator_ref_start = trajectory->th0;
@@ -397,7 +398,6 @@ void control_init_time_target(pbio_port_t port) {
         status->integrator_start = trajectory->th0;
         status->integrator_ref_start = trajectory->th0;
     }
-    mtr->state = PBIO_CONTROL_RUNNING_TIME;
 }
 
 
@@ -406,7 +406,7 @@ void control_init_time_target(pbio_port_t port) {
 pbio_error_t pbio_motor_is_stalled(pbio_port_t port, bool *stalled) {
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
     *stalled = mtr->stalled > STALLED_NONE &&
-               mtr->state >= PBIO_CONTROL_TRACKING;
+               mtr->state >= PBIO_CONTROL_ANGLE_BACKGROUND;
     return PBIO_SUCCESS;
 }
 
@@ -415,7 +415,7 @@ pbio_error_t pbio_motor_run(pbio_port_t port, int32_t speed) {
     // Load motor settings and status
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
 
-    if (mtr->state == PBIO_CONTROL_RUNNING_TIME &&
+    if (mtr->state == PBIO_CONTROL_TIME_BACKGROUND &&
         mtr->maneuver.action == RUN && 
         ((uint32_t) (speed * mtr->counts_per_output_unit)) == mtr->maneuver.trajectory.w1) {
         // If the exact same command is already running, there is nothing we need to do
@@ -452,6 +452,9 @@ pbio_error_t pbio_motor_run(pbio_port_t port, int32_t speed) {
     err = control_update_time_target(port);
     if (err != PBIO_SUCCESS) { return err; }
 
+    // Run is always in the background
+    mtr->state = PBIO_CONTROL_TIME_BACKGROUND;
+
     return PBIO_SUCCESS;
 }
 
@@ -479,7 +482,7 @@ pbio_error_t pbio_motor_stop(pbio_port_t port, pbio_motor_after_stop_t after_sto
     }
 }
 
-pbio_error_t pbio_motor_run_time(pbio_port_t port, int32_t speed, int32_t duration, pbio_motor_after_stop_t after_stop) {
+pbio_error_t pbio_motor_run_time(pbio_port_t port, int32_t speed, int32_t duration, pbio_motor_after_stop_t after_stop, bool foreground) {
 
     // Load motor settings and status
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
@@ -514,6 +517,9 @@ pbio_error_t pbio_motor_run_time(pbio_port_t port, int32_t speed, int32_t durati
     // Run one control update synchronously with user command.
     err = control_update_time_target(port);
     if (err != PBIO_SUCCESS) { return err; }
+
+    // Set user specified foreground or background state
+    mtr->state = foreground ? PBIO_CONTROL_TIME_FOREGROUND : PBIO_CONTROL_TIME_BACKGROUND;
 
     return PBIO_SUCCESS;
 }
@@ -553,10 +559,13 @@ pbio_error_t pbio_motor_run_until_stalled(pbio_port_t port, int32_t speed, pbio_
     err = control_update_time_target(port);
     if (err != PBIO_SUCCESS) { return err; }
 
+    // Run until stalled is always in the foreground
+    mtr->state = PBIO_CONTROL_TIME_FOREGROUND;
+
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_run_target(pbio_port_t port, int32_t speed, int32_t target, pbio_motor_after_stop_t after_stop) {
+pbio_error_t pbio_motor_run_target(pbio_port_t port, int32_t speed, int32_t target, pbio_motor_after_stop_t after_stop, bool foreground) {
 
     // Load motor settings and status
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
@@ -592,10 +601,13 @@ pbio_error_t pbio_motor_run_target(pbio_port_t port, int32_t speed, int32_t targ
     err = control_update_angle_target(port);
     if (err != PBIO_SUCCESS) { return err; }
 
+    // Set user specified foreground or background state
+    mtr->state = foreground ? PBIO_CONTROL_ANGLE_FOREGROUND : PBIO_CONTROL_ANGLE_BACKGROUND;
+
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_run_angle(pbio_port_t port, int32_t speed, int32_t angle, pbio_motor_after_stop_t after_stop) {
+pbio_error_t pbio_motor_run_angle(pbio_port_t port, int32_t speed, int32_t angle, pbio_motor_after_stop_t after_stop, bool foreground) {
 
     // Speed  | Angle | End target  | Effect
     //  > 0   |  > 0  | now + angle | Forward
@@ -611,7 +623,7 @@ pbio_error_t pbio_motor_run_angle(pbio_port_t port, int32_t speed, int32_t angle
     // The angle target is the instantaneous angle plus the angle to be traveled
     int32_t angle_target = angle_now + (speed < 0 ? -angle: angle);
 
-    return pbio_motor_run_target(port, speed, angle_target, after_stop);
+    return pbio_motor_run_target(port, speed, angle_target, after_stop, foreground);
 }
 
 pbio_error_t pbio_motor_track_target(pbio_port_t port, int32_t target) {
@@ -636,11 +648,12 @@ pbio_error_t pbio_motor_track_target(pbio_port_t port, int32_t target) {
     // Initialize or reset the PID control status for the given maneuver
     control_init_angle_target(port);
 
-    mtr->state = PBIO_CONTROL_TRACKING;
-
     // Run one control update synchronously with user command
     err = control_update_angle_target(port);
     if (err != PBIO_SUCCESS) { return err; }
+
+    // Tracking a target is always a background action
+    mtr->state = PBIO_CONTROL_ANGLE_BACKGROUND;
 
     return PBIO_SUCCESS;
 }

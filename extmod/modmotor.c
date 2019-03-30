@@ -17,16 +17,14 @@
 /* Wait for maneuver to complete */
 
 // Must not be called while pybricks thread lock is held!
-STATIC void wait_for_completion(pbio_port_t port, bool foreground) {
+STATIC void wait_for_completion(pbio_port_t port) {
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
-    if (foreground) {
-        while (mtr->state >= PBIO_CONTROL_RUNNING_TIME) {
-            mp_hal_delay_ms(10);
-        }
-        if (mtr->state == PBIO_CONTROL_ERRORED) {
-            pb_assert(PBIO_ERROR_IO);
-        }
-    };
+    while (mtr->state >= PBIO_CONTROL_ANGLE_FOREGROUND) {
+        mp_hal_delay_ms(10);
+    }
+    if (mtr->state == PBIO_CONTROL_ERRORED) {
+        pb_assert(PBIO_ERROR_IO);
+    }
 }
 
 mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
@@ -222,11 +220,11 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *args){
 
     pb_thread_enter();
     // Call pbio with parsed user/default arguments
-    err = pbio_motor_run_time(port, speed, duration, after_stop);
+    err = pbio_motor_run_time(port, speed, duration, after_stop, foreground);
     pb_thread_exit();
 
     pb_assert(err);
-    wait_for_completion(port, foreground);
+    wait_for_completion(port);
 
     return mp_const_none;
 }
@@ -262,7 +260,7 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *arg
     pb_thread_exit();
 
     pb_assert(err);
-    wait_for_completion(port, true);
+    wait_for_completion(port);
 
     pb_thread_enter();
 
@@ -293,11 +291,11 @@ STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *args){
 
     pb_thread_enter();
     // Call pbio with parsed user/default arguments
-    err = pbio_motor_run_angle(port, speed, angle, after_stop);
+    err = pbio_motor_run_angle(port, speed, angle, after_stop, foreground);
     pb_thread_exit();
 
     pb_assert(err);
-    wait_for_completion(port, foreground);
+    wait_for_completion(port);
 
     return mp_const_none;
 }
@@ -314,11 +312,11 @@ STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *args){
 
     // Call pbio with parsed user/default arguments
     pb_thread_enter();
-    err = pbio_motor_run_target(port, speed, target, after_stop);
+    err = pbio_motor_run_target(port, speed, target, after_stop, foreground);
     pb_thread_exit();
 
     pb_assert(err);
-    wait_for_completion(port, foreground);
+    wait_for_completion(port);
 
     return mp_const_none;
 }

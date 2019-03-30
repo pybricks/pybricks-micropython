@@ -25,10 +25,12 @@ typedef enum {
     PBIO_CONTROL_BRAKING,
     PBIO_CONTROL_USRDUTY,
     PBIO_CONTROL_ERRORED,
-    /* Active control statuses: PID Control Active */   
-    PBIO_CONTROL_TRACKING,      /**< Motor is tracking a position or holding position after completing command */
-    PBIO_CONTROL_RUNNING_TIME,  /**< Motor is executing angle based maneuver by doing speed/position control */
-    PBIO_CONTROL_RUNNING_ANGLE, /**< Motor is executing time based  maneuver by doing speed/position control */
+    /* Active control statuses: PID Control Active in non-blocking manner */   
+    PBIO_CONTROL_ANGLE_BACKGROUND,
+    PBIO_CONTROL_TIME_BACKGROUND,
+    /* Active control statuses: PID Control Active which blocks user program */  
+    PBIO_CONTROL_ANGLE_FOREGROUND,
+    PBIO_CONTROL_TIME_FOREGROUND,
 } pbio_control_state_t;
 
 /**
