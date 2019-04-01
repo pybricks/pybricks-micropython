@@ -81,7 +81,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_3(robotics_DriveBase_drive_obj, robotics_DriveBas
 STATIC mp_obj_t robotics_DriveBase_stop(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    pbio_motor_after_stop_t after_stop = n_args > 1 ? mp_obj_get_int(args[1]) : PBIO_MOTOR_STOP_COAST;
+    pbio_control_after_stop_t after_stop = n_args > 1 ? mp_obj_get_int(args[1]) : PBIO_MOTOR_STOP_COAST;
     pbio_error_t err_left, err_right;
 
     pb_thread_enter();

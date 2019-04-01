@@ -310,13 +310,13 @@ pbio_error_t pbio_motor_reset_angle(pbio_port_t port, int32_t reset_angle) {
     pbio_error_t err;
 
     // Perform angle reset in case of tracking / holding
-    if (mtr->state == PBIO_CONTROL_ANGLE_BACKGROUND && mtr->control.maneuver.action == TRACK_TARGET) {
+    if (mtr->state == PBIO_CONTROL_ANGLE_BACKGROUND && mtr->control.action == TRACK_TARGET) {
         // Get the old angle
         int32_t angle_old;
         err = pbio_motor_get_encoder_count(port, &angle_old);
         if (err != PBIO_SUCCESS) { return err; }
         // Get the old target
-        int32_t target_old = (int32_t) (mtr->control.maneuver.trajectory.th3 / mtr->counts_per_output_unit);
+        int32_t target_old = (int32_t) (mtr->control.trajectory.th3 / mtr->counts_per_output_unit);
         // Reset the angle
         err = pbio_motor_reset_encoder_count(port, (int32_t) (reset_angle * mtr->counts_per_output_unit));
         if (err != PBIO_SUCCESS) { return err; }

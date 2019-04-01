@@ -42,43 +42,6 @@ typedef enum {
     PBIO_MOTOR_DIR_COUNTERCLOCKWISE,  /**< Positive speed/duty means counterclockwise */
 } pbio_motor_dir_t;
 
-/**
- * Motor action executed after completing a run command that ends in a smooth stop.
- */
-typedef enum {
-    PBIO_MOTOR_STOP_COAST,      /**< Coast the motor */
-    PBIO_MOTOR_STOP_BRAKE,      /**< Brake the motor */
-    PBIO_MOTOR_STOP_HOLD,       /**< Actively hold the motor in place */
-} pbio_motor_after_stop_t;
-
-/**
- * Single motor actions
- */
-typedef enum {
-    RUN,
-    RUN_TIME,
-    RUN_STALLED,
-    RUN_TARGET,
-    TRACK_TARGET,
-} pbio_motor_action_t;
-
-/**
- * Single motor maneuver
- */
-typedef struct _pbio_motor_maneuver_t {
-    pbio_motor_action_t action;         /**<  Motor action type */
-    pbio_motor_after_stop_t after_stop; /**<  BRAKE, COAST or HOLD after motion complete */
-    pbio_motor_trajectory_t trajectory;
-} pbio_motor_maneuver_t;
-
-typedef struct _pbio_control_t {
-    pbio_control_settings_t settings;
-    pbio_motor_maneuver_t maneuver;
-    pbio_status_angular_t status_angular;
-    pbio_status_timed_t status_timed;
-    stalled_status_t stalled;
-} pbio_control_t;
-
 typedef struct _pbio_motor_t {
     pbio_motor_dir_t direction;
     int32_t offset;                 /**< Virtual zero point of the encoder */
@@ -131,15 +94,15 @@ pbio_error_t pbio_motor_is_stalled(pbio_port_t port, bool *stalled);
 
 pbio_error_t pbio_motor_run(pbio_port_t port, int32_t speed);
 
-pbio_error_t pbio_motor_stop(pbio_port_t port, pbio_motor_after_stop_t after_stop);
+pbio_error_t pbio_motor_stop(pbio_port_t port, pbio_control_after_stop_t after_stop);
 
-pbio_error_t pbio_motor_run_time(pbio_port_t port, int32_t speed, int32_t duration, pbio_motor_after_stop_t after_stop, bool foreground);
+pbio_error_t pbio_motor_run_time(pbio_port_t port, int32_t speed, int32_t duration, pbio_control_after_stop_t after_stop, bool foreground);
 
-pbio_error_t pbio_motor_run_until_stalled(pbio_port_t port, int32_t speed, pbio_motor_after_stop_t after_stop);
+pbio_error_t pbio_motor_run_until_stalled(pbio_port_t port, int32_t speed, pbio_control_after_stop_t after_stop);
 
-pbio_error_t pbio_motor_run_angle(pbio_port_t port, int32_t speed, int32_t angle, pbio_motor_after_stop_t after_stop, bool foreground);
+pbio_error_t pbio_motor_run_angle(pbio_port_t port, int32_t speed, int32_t angle, pbio_control_after_stop_t after_stop, bool foreground);
 
-pbio_error_t pbio_motor_run_target(pbio_port_t port, int32_t speed, int32_t target, pbio_motor_after_stop_t after_stop, bool foreground);
+pbio_error_t pbio_motor_run_target(pbio_port_t port, int32_t speed, int32_t target, pbio_control_after_stop_t after_stop, bool foreground);
 
 pbio_error_t pbio_motor_track_target(pbio_port_t port, int32_t target);
 

@@ -55,7 +55,7 @@ typedef int32_t duty_t;
 /**
  * Motor trajectory parameters for an ideal maneuver without disturbances
  */
-typedef struct _pbio_motor_trajectory_t {
+typedef struct _pbio_control_trajectory_t {
     bool forever;                       /**<  Whether maneuver has end-point */
     ustime_t t0;                        /**<  Time at start of maneuver */
     ustime_t t1;                        /**<  Time after the acceleration in-phase */
@@ -69,16 +69,16 @@ typedef struct _pbio_motor_trajectory_t {
     rate_t w1;                          /**<  Encoder rate target when not accelerating */
     accl_t a0;                          /**<  Encoder acceleration during in-phase */
     accl_t a2;                          /**<  Encoder acceleration during out-phase */
-} pbio_motor_trajectory_t;
+} pbio_control_trajectory_t;
 
-void make_trajectory_none(ustime_t t0, count_t th0, rate_t w1, pbio_motor_trajectory_t *ref);
+void make_trajectory_none(ustime_t t0, count_t th0, rate_t w1, pbio_control_trajectory_t *ref);
 
-pbio_error_t make_trajectory_time_based(ustime_t t0, ustime_t t3, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_motor_trajectory_t *ref);
+pbio_error_t make_trajectory_time_based(ustime_t t0, ustime_t t3, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_control_trajectory_t *ref);
 
-pbio_error_t make_trajectory_time_based_forever(ustime_t t0, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_motor_trajectory_t *ref);
+pbio_error_t make_trajectory_time_based_forever(ustime_t t0, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_control_trajectory_t *ref);
 
-pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_motor_trajectory_t *ref);
+pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_control_trajectory_t *ref);
 
-void get_reference(ustime_t time_ref, pbio_motor_trajectory_t *traject, count_t *count_ref, rate_t *rate_ref);
+void get_reference(ustime_t time_ref, pbio_control_trajectory_t *traject, count_t *count_ref, rate_t *rate_ref);
 
 #endif // _PBIO_MOTORREF_H_

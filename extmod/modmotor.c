@@ -189,7 +189,7 @@ MP_DEFINE_CONST_FUN_OBJ_2(motor_Motor_run_obj, motor_Motor_run);
 STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
-    pbio_motor_after_stop_t after_stop = n_args > 1 ? mp_obj_get_int(args[1]) : PBIO_MOTOR_STOP_COAST;
+    pbio_control_after_stop_t after_stop = n_args > 1 ? mp_obj_get_int(args[1]) : PBIO_MOTOR_STOP_COAST;
     pbio_error_t err;
 
     pb_thread_enter();
@@ -214,7 +214,7 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *args){
     pbio_port_t port = get_port(args[0]);
     int32_t speed = mp_obj_get_num(args[1]);
     int32_t duration = mp_obj_get_num(args[2]);
-    pbio_motor_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
+    pbio_control_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
     bool foreground = n_args > 4 ? mp_obj_is_true(args[4]) : true;
     pbio_error_t err;
 
@@ -234,7 +234,7 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *arg
     // Parse arguments and/or set default optional arguments
     pbio_port_t port = get_port(args[0]);
     int32_t speed = mp_obj_get_num(args[1]);
-    pbio_motor_after_stop_t after_stop = n_args > 2 ? mp_obj_get_int(args[2]) : PBIO_MOTOR_STOP_COAST;
+    pbio_control_after_stop_t after_stop = n_args > 2 ? mp_obj_get_int(args[2]) : PBIO_MOTOR_STOP_COAST;
 
     int32_t temporary_stall_duty = 100;
     int32_t old_stall_duty;
@@ -285,7 +285,7 @@ STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *args){
     pbio_port_t port = get_port(args[0]);
     int32_t speed = mp_obj_get_num(args[1]);
     int32_t angle = mp_obj_get_num(args[2]);
-    pbio_motor_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
+    pbio_control_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
     bool foreground = n_args > 4 ? mp_obj_is_true(args[4]) : true;
     pbio_error_t err;
 
@@ -306,7 +306,7 @@ STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *args){
     pbio_port_t port = get_port(args[0]);
     int32_t speed = mp_obj_get_num(args[1]);
     int32_t target = mp_obj_get_num(args[2]);
-    pbio_motor_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
+    pbio_control_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
     bool foreground = n_args > 4 ? mp_obj_is_true(args[4]) : true;
     pbio_error_t err;
 

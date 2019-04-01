@@ -57,26 +57,50 @@ typedef enum {
     STALLED_PROPORTIONAL = 0x01,
     /**< The integral duty control term is larger than the maximum and still the motor moves slower than specified limit */
     STALLED_INTEGRAL = 0x02,
-} stalled_status_t;
+} pbio_control_stalled_t;
 
 /**
  * Motor PID control status
  */
-typedef struct _pbio_status_angular_t {
+typedef struct _pbio_control_status_angular_t {
     bool ref_time_running;         /**< Whether the time at which the reference is evaluated is progressing (true) or paused (false) */
     count_t err_integral;          /**< Integral of position error */
     count_t count_err_prev;        /**< Position error in the previous control iteration */
     ustime_t time_prev;            /**< Time at the previous control iteration */
     ustime_t time_paused;          /**< The amount of time the speed integrator has spent paused */
     ustime_t time_stopped;         /**< Time at which the time was paused */
-} pbio_status_angular_t;
+} pbio_control_status_angular_t;
 
-typedef struct _pbio_status_timed_t {
+typedef struct _pbio_control_status_timed_t {
     bool speed_integrator_running;   /**< Whether the speed integrator is active (true) or paused to prevent windup (false) */
     count_t speed_integrator;        /**< State of the speed integrator */
     ustime_t integrator_time_stopped;/**< Time at which the speed integrator last stopped */
     count_t integrator_ref_start;    /**< Integrated speed value prior to enabling integrator */
     count_t integrator_start;        /**< Integrated reference speed value prior to enabling integrator */
-} pbio_status_timed_t;
+} pbio_control_status_timed_t;
+
+typedef enum {
+    PBIO_MOTOR_STOP_COAST,      /**< Coast the motor */
+    PBIO_MOTOR_STOP_BRAKE,      /**< Brake the motor */
+    PBIO_MOTOR_STOP_HOLD,       /**< Actively hold the motor in place */
+} pbio_control_after_stop_t;
+
+typedef enum {
+    RUN,
+    RUN_TIME,
+    RUN_STALLED,
+    RUN_TARGET,
+    TRACK_TARGET,
+} pbio_control_action_t;
+
+typedef struct _pbio_control_t {
+    pbio_control_settings_t settings;
+    pbio_control_action_t action;
+    pbio_control_after_stop_t after_stop;
+    pbio_control_trajectory_t trajectory;
+    pbio_control_status_angular_t status_angular;
+    pbio_control_status_timed_t status_timed;
+    pbio_control_stalled_t stalled;
+} pbio_control_t;
 
 #endif // _PBIO_CONTROL_H_
