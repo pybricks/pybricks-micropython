@@ -31,7 +31,7 @@ typedef enum {
     /* Active control statuses: PID Control Active which blocks user program */  
     PBIO_CONTROL_ANGLE_FOREGROUND,
     PBIO_CONTROL_TIME_FOREGROUND,
-} pbio_control_state_t;
+} pbio_motor_state_t;
 
 /**
  * Control settings
@@ -62,21 +62,21 @@ typedef enum {
 /**
  * Motor PID control status
  */
-typedef struct _pbio_angular_control_status_t {
+typedef struct _pbio_status_angular_t {
     bool ref_time_running;         /**< Whether the time at which the reference is evaluated is progressing (true) or paused (false) */
     count_t err_integral;          /**< Integral of position error */
     count_t count_err_prev;        /**< Position error in the previous control iteration */
     ustime_t time_prev;            /**< Time at the previous control iteration */
     ustime_t time_paused;          /**< The amount of time the speed integrator has spent paused */
     ustime_t time_stopped;         /**< Time at which the time was paused */
-} pbio_angular_control_status_t;
+} pbio_status_angular_t;
 
-typedef struct _pbio_timed_control_status_t {
+typedef struct _pbio_status_timed_t {
     bool speed_integrator_running;   /**< Whether the speed integrator is active (true) or paused to prevent windup (false) */
     count_t speed_integrator;        /**< State of the speed integrator */
     ustime_t integrator_time_stopped;/**< Time at which the speed integrator last stopped */
     count_t integrator_ref_start;    /**< Integrated speed value prior to enabling integrator */
     count_t integrator_start;        /**< Integrated reference speed value prior to enabling integrator */
-} pbio_timed_control_status_t;
+} pbio_status_timed_t;
 
 #endif // _PBIO_CONTROL_H_

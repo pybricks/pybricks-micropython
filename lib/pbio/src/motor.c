@@ -15,7 +15,7 @@ pbio_motor_t motor[] = {
 };
 
 // Initialize motor control state as inactive
-pbio_control_state_t motor_control_active[] = {
+pbio_motor_state_t motor_control_active[] = {
     [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)] PBIO_CONTROL_COASTING
 };
 
@@ -168,8 +168,8 @@ pbio_error_t pbio_motor_get_dc_settings(pbio_port_t port, int32_t *stall_torque_
 pbio_error_t pbio_motor_set_run_settings(pbio_port_t port, int32_t max_speed, int32_t acceleration) {
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
     float_t counts_per_output_unit = mtr->counts_per_output_unit;
-    mtr->settings.max_rate = (counts_per_output_unit * max_speed);
-    mtr->settings.abs_acceleration = (counts_per_output_unit * acceleration);
+    mtr->control.settings.max_rate = (counts_per_output_unit * max_speed);
+    mtr->control.settings.abs_acceleration = (counts_per_output_unit * acceleration);
     return PBIO_SUCCESS;
 }
 
@@ -193,14 +193,14 @@ pbio_error_t pbio_motor_set_pid_settings(
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    mtr->settings.pid_kp = pid_kp;
-    mtr->settings.pid_ki = pid_ki;
-    mtr->settings.pid_kd = pid_kd;
-    mtr->settings.tight_loop_time = tight_loop_time * US_PER_MS;
-    mtr->settings.count_tolerance = (counts_per_output_unit * position_tolerance);
-    mtr->settings.rate_tolerance = (counts_per_output_unit * speed_tolerance);
-    mtr->settings.stall_rate_limit = (counts_per_output_unit * stall_speed_limit);
-    mtr->settings.stall_time = stall_time * US_PER_MS;
+    mtr->control.settings.pid_kp = pid_kp;
+    mtr->control.settings.pid_ki = pid_ki;
+    mtr->control.settings.pid_kd = pid_kd;
+    mtr->control.settings.tight_loop_time = tight_loop_time * US_PER_MS;
+    mtr->control.settings.count_tolerance = (counts_per_output_unit * position_tolerance);
+    mtr->control.settings.rate_tolerance = (counts_per_output_unit * speed_tolerance);
+    mtr->control.settings.stall_rate_limit = (counts_per_output_unit * stall_speed_limit);
+    mtr->control.settings.stall_time = stall_time * US_PER_MS;
     return PBIO_SUCCESS;
 }
 
@@ -253,20 +253,20 @@ void pbio_motor_print_settings(pbio_port_t port, char *dc_settings_string, char 
             (int32_t) (gear_ratio),
             (int32_t) (gear_ratio*1000 - ((int32_t) gear_ratio)*1000),
             // Print run settings
-            (int32_t) (mtr->settings.max_rate / counts_per_output_unit),
-            (int32_t) (mtr->settings.abs_acceleration / counts_per_output_unit),
+            (int32_t) (mtr->control.settings.max_rate / counts_per_output_unit),
+            (int32_t) (mtr->control.settings.abs_acceleration / counts_per_output_unit),
             // Print DC settings
             (int32_t) (mtr->max_duty_steps / PBIO_DUTY_STEPS_PER_USER_STEP),
             (int32_t) (mtr->duty_offset / PBIO_DUTY_STEPS_PER_USER_STEP),
             // Print PID settings
-            (int32_t) mtr->settings.pid_kp,
-            (int32_t) mtr->settings.pid_ki,
-            (int32_t) mtr->settings.pid_kd,
-            (int32_t) (mtr->settings.tight_loop_time / US_PER_MS),
-            (int32_t) (mtr->settings.count_tolerance / counts_per_output_unit),
-            (int32_t) (mtr->settings.rate_tolerance / counts_per_output_unit),
-            (int32_t) (mtr->settings.stall_rate_limit / counts_per_output_unit),
-            (int32_t) (mtr->settings.stall_time  / US_PER_MS)
+            (int32_t) mtr->control.settings.pid_kp,
+            (int32_t) mtr->control.settings.pid_ki,
+            (int32_t) mtr->control.settings.pid_kd,
+            (int32_t) (mtr->control.settings.tight_loop_time / US_PER_MS),
+            (int32_t) (mtr->control.settings.count_tolerance / counts_per_output_unit),
+            (int32_t) (mtr->control.settings.rate_tolerance / counts_per_output_unit),
+            (int32_t) (mtr->control.settings.stall_rate_limit / counts_per_output_unit),
+            (int32_t) (mtr->control.settings.stall_time  / US_PER_MS)
         );
     }
 }
@@ -310,13 +310,13 @@ pbio_error_t pbio_motor_reset_angle(pbio_port_t port, int32_t reset_angle) {
     pbio_error_t err;
 
     // Perform angle reset in case of tracking / holding
-    if (mtr->state == PBIO_CONTROL_ANGLE_BACKGROUND && mtr->maneuver.action == TRACK_TARGET) {
+    if (mtr->state == PBIO_CONTROL_ANGLE_BACKGROUND && mtr->control.maneuver.action == TRACK_TARGET) {
         // Get the old angle
         int32_t angle_old;
         err = pbio_motor_get_encoder_count(port, &angle_old);
         if (err != PBIO_SUCCESS) { return err; }
         // Get the old target
-        int32_t target_old = (int32_t) (mtr->maneuver.trajectory.th3 / mtr->counts_per_output_unit);
+        int32_t target_old = (int32_t) (mtr->control.maneuver.trajectory.th3 / mtr->counts_per_output_unit);
         // Reset the angle
         err = pbio_motor_reset_encoder_count(port, (int32_t) (reset_angle * mtr->counts_per_output_unit));
         if (err != PBIO_SUCCESS) { return err; }

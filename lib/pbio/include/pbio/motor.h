@@ -71,6 +71,14 @@ typedef struct _pbio_motor_maneuver_t {
     pbio_motor_trajectory_t trajectory;
 } pbio_motor_maneuver_t;
 
+typedef struct _pbio_control_t {
+    pbio_control_settings_t settings;
+    pbio_motor_maneuver_t maneuver;
+    pbio_status_angular_t status_angular;
+    pbio_status_timed_t status_timed;
+    stalled_status_t stalled;
+} pbio_control_t;
+
 typedef struct _pbio_motor_t {
     pbio_motor_dir_t direction;
     int32_t offset;                 /**< Virtual zero point of the encoder */
@@ -79,12 +87,8 @@ typedef struct _pbio_motor_t {
     int32_t duty_offset;            /**< TODO. */
     int32_t max_duty_steps;         /**< TODO. */
     bool has_encoders;
-    pbio_control_settings_t settings;
-    pbio_control_state_t state;
-    pbio_motor_maneuver_t maneuver;
-    pbio_angular_control_status_t angular_control_status;
-    pbio_timed_control_status_t timed_control_status;
-    stalled_status_t stalled;
+    pbio_motor_state_t state;
+    pbio_control_t control;
 } pbio_motor_t;
 
 pbio_motor_t motor[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
