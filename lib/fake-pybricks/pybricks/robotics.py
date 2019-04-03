@@ -59,10 +59,10 @@ class DriveBase():
         Example::
 
             # Drive forward at 100 mm/s for two seconds
-            robot.drive(100, 0, 2000)
+            robot.drive_time(100, 0, 2000)
 
             # Turn at 45 deg/s for three seconds
-            robot.drive(0, 45, 3000)
+            robot.drive_time(0, 45, 3000)
         """
         pass
 
