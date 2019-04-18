@@ -13,8 +13,8 @@
 #include "stm32f030xc.h"
 
 typedef enum _ioport_t {
-    IOPORT_B,
     IOPORT_A,
+    IOPORT_B,
     NUM_IOPORT
 } ioport_t;
 
@@ -144,7 +144,7 @@ static void ioport_enable_uart(ioport_t ioport) {
 static void init_one(ioport_t ioport) {
     const ioport_pins_t pins = ioport_pins[ioport];
 
-    iodevs[ioport].port = PBIO_PORT_B + ioport;
+    iodevs[ioport].port = PBIO_PORT_A + ioport;
     iodevs[ioport].info = &ioport_info[ioport].info;
 
     // set up alternate function for UART pins
