@@ -7,7 +7,7 @@
 
 #include "sys/clock.h"
 
-void reverse_trajectory(pbio_motor_trajectory_t *ref) {
+void reverse_trajectory(pbio_control_trajectory_t *ref) {
     // Mirror angles about initial angle th0
     ref->th1 = 2*ref->th0 - ref->th1;
     ref->th2 = 2*ref->th0 - ref->th2;
@@ -20,7 +20,7 @@ void reverse_trajectory(pbio_motor_trajectory_t *ref) {
     ref->a2 *= -1;
 }
 
-void make_trajectory_none(ustime_t t0, count_t th0, rate_t w1, pbio_motor_trajectory_t *ref) {
+void make_trajectory_none(ustime_t t0, count_t th0, rate_t w1, pbio_control_trajectory_t *ref) {
     // All times equal to initial time:
     ref->t0 = t0;
     ref->t1 = t0;
@@ -38,9 +38,12 @@ void make_trajectory_none(ustime_t t0, count_t th0, rate_t w1, pbio_motor_trajec
     ref->w1 = w1;
     ref->a0 = 0;
     ref->a2 = 0;
+
+    // This is a finite maneuver
+    ref->forever = false;
 }
 
-pbio_error_t make_trajectory_time_based(ustime_t t0, ustime_t t3, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_motor_trajectory_t *ref) {
+pbio_error_t make_trajectory_time_based(ustime_t t0, ustime_t t3, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_control_trajectory_t *ref) {
 
     // Work with time intervals instead of absolute time. Read 'm' as '-'.
     ustime_t t3mt0 = t3-t0;
@@ -120,11 +123,27 @@ pbio_error_t make_trajectory_time_based(ustime_t t0, ustime_t t3, count_t th0, r
         reverse_trajectory(ref);
     }
 
+    // This is a finite maneuver
+    ref->forever = false;
+
     return PBIO_SUCCESS;
 }
 
 
-pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_motor_trajectory_t *ref) {
+pbio_error_t make_trajectory_time_based_forever(ustime_t t0, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_control_trajectory_t *ref) {
+    // For infinite maneuvers like RUN and RUN_STALLED, no end time is specified, so we take a
+    // fictitious 60 seconds. This allows us to use the same code to get the trajectory for the 
+    // initial acceleration phase and the constant speed phase. Setting the forever flag allows
+    // us to ignore the deceleration phase while getting the reference, hence moving forever.
+    pbio_error_t err = make_trajectory_time_based(t0, t0 + 60*US_PER_SECOND, th0, w0, wt, wmax, a, ref);
+
+    // This is an infinite maneuver
+    ref->forever = true;
+
+    return err;
+}
+
+pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_control_trajectory_t *ref) {
 
     // Return error for zero speed
     if (wt == 0) {
@@ -202,156 +221,22 @@ pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, 
     if (backward) {
         reverse_trajectory(ref);
     }
-    return PBIO_SUCCESS;
-}
 
-// Calculate the characteristic time values, encoder values, rate values and accelerations that uniquely define the rate and count trajectories
-pbio_error_t make_motor_trajectory(pbio_port_t port,
-                                   pbio_motor_action_t action,
-                                   int32_t speed_target,
-                                   int32_t duration_or_target_position,
-                                   pbio_motor_after_stop_t after_stop){
-
-    // Read the current system state for this motor
-    ustime_t time_start = clock_usecs();
-    count_t count_start;
-    rate_t rate_start;
-    pbio_error_t err;
-
-    pbio_motor_trajectory_t *traject = &trajectories[PORT_TO_IDX(port)];
-    pbio_encmotor_settings_t *settings = &encmotor_settings[PORT_TO_IDX(port)];
-
-    ustime_t previous_time_start = traject->t0;
-    pbio_motor_action_t previous_action = traject->action;
-
-    bool currently_active =
-        motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_RUNNING ||
-        motor_control_active[PORT_TO_IDX(port)] == PBIO_MOTOR_CONTROL_HOLDING;
-
-    // Experimental work around for run in fast loop
-    if (action == RUN &&
-        previous_action == RUN &&
-        (currently_active || motor_control_active[PORT_TO_IDX(port)] >= PBIO_MOTOR_CONTROL_STARTING) &&
-        time_start - previous_time_start < settings->tight_loop_time) {
-        get_reference(time_start, traject, &count_start, &rate_start);
-        make_trajectory_none(time_start, count_start, speed_target*settings->counts_per_output_unit, traject);
-        return PBIO_SUCCESS;
-    }
-
-    // Handle track target
-    if (action == TRACK_TARGET) {
-        // If the previous action was also track target, just keep running, otherwise start a new maneuver
-        motor_control_active[PORT_TO_IDX(port)] = previous_action == TRACK_TARGET && currently_active ?
-                                                  PBIO_MOTOR_CONTROL_RUNNING:
-                                                  PBIO_MOTOR_CONTROL_STARTING;
-        traject->action = action;
-        make_trajectory_none(time_start, duration_or_target_position*settings->counts_per_output_unit, 0, traject);
-        return PBIO_SUCCESS;
-    }
-
-    // For now, disable smooth transitions if the next step is a position based maneuver
-    // TODO: implement the actual transtion properly
-    if (action == RUN_TARGET || action == RUN_ANGLE) {
-        currently_active = 0;
-    }
-
-    if (currently_active) {
-        // Continue the reference from the currently active maneuver, for a smooth transition
-
-        // TODO: FOR RUN_ANGLE, RUN_TIME this isn't the absolute time: subtract paused time
-
-        // Related, use time_stopped to maintain run maneuvers.
-
-        get_reference(time_start, traject, &count_start, &rate_start);
-    }
-    else {
-        // Otherwise, start the reference from the current position and speed
-        err = pbio_encmotor_get_encoder_count(port, &count_start);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-        err = pbio_encmotor_get_encoder_rate(port, &rate_start);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-    }
-
-    traject->action = action;
-    traject->after_stop = after_stop;
-
-    if (action == RUN_TIME || action == RUN || action == RUN_STALLED) {
-        if (action != RUN_TIME) {
-            // For RUN and RUN_STALLED, no end time is specified, so we take a
-            // fictitious 30 seconds. This allows us to use the same code to get
-            // the acceleration parameters. Later on, when computing the actual
-            // references in the control loop, we skip the deceleration
-            // phase, such that RUN and RUN_STALLED are indeed infinite.
-            duration_or_target_position = 30*1000;
-        }
-        err = make_trajectory_time_based(
-            time_start,
-            time_start + duration_or_target_position*US_PER_MS,
-            count_start,
-            rate_start,
-            speed_target*settings->counts_per_output_unit,
-            settings->max_rate,
-            settings->abs_acceleration,
-            traject);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-    }
-    else if (action == RUN_ANGLE || action == RUN_TARGET) {
-
-        // The absolute target count
-        count_t count_target;
-
-        if (action == RUN_TARGET) {
-            // In target mode, the user argument is just the target
-            count_target = duration_or_target_position*settings->counts_per_output_unit;
-        }
-        else {
-            // If the speed is negative, the meaning of angle reverses
-            int32_t angle_relative = speed_target > 0 ? duration_or_target_position: -duration_or_target_position;
-
-            // The absolute is then the starting point plus the relative angle
-            count_target = angle_relative*settings->counts_per_output_unit + count_start;
-        }
-        err = make_trajectory_angle_based(
-            time_start,
-            count_start,
-            count_target,
-            rate_start,
-            speed_target*settings->counts_per_output_unit,
-            settings->max_rate,
-            settings->abs_acceleration,
-            traject);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-    }
-    else {
-        // ?
-    }
-
-    // If this new maneuver aborts an existing running or holding command, we "restart"
-    // while keeping PID status. Otherwise, we just "start" with zero PID parameters.
-    motor_control_active[PORT_TO_IDX(port)] = currently_active ?
-        PBIO_MOTOR_CONTROL_RESTARTING:
-        PBIO_MOTOR_CONTROL_STARTING;
+    // This is a finite maneuver
+    ref->forever = false;
 
     return PBIO_SUCCESS;
 }
 
 // Evaluate the reference speed and velocity at the (shifted) time
-void get_reference(ustime_t time_ref, pbio_motor_trajectory_t *traject, count_t *count_ref, rate_t *rate_ref){
+void get_reference(ustime_t time_ref, pbio_control_trajectory_t *traject, count_t *count_ref, rate_t *rate_ref){
     // For RUN and RUN_STALLED, the end time is infinite, meaning that the reference signals do not have a deceleration phase
     if (time_ref - traject->t1 < 0) {
         // If we are here, then we are still in the acceleration phase. Includes conversion from microseconds to seconds, in two steps to avoid overflows and round off errors
         *rate_ref = traject->w0   + timest(traject->a0, time_ref-traject->t0);
         *count_ref = traject->th0 + timest(traject->w0, time_ref-traject->t0) + timest2(traject->a0, time_ref-traject->t0);
     }
-    else if ((traject->action == RUN) || (traject->action == RUN_STALLED) || time_ref - traject->t2 <= 0) {
+    else if (traject->forever || time_ref - traject->t2 <= 0) {
         // If we are here, then we are in the constant speed phase
         *rate_ref = traject->w1;
         *count_ref = traject->th1 + timest(traject->w1, time_ref-traject->t1);

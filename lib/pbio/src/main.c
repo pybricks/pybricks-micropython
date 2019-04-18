@@ -17,7 +17,7 @@
 #include "pbdrv/motor.h"
 #include "pbdrv/uart.h"
 #include "pbsys/sys.h"
-#include "pbio/motorcontrol.h"
+#include "pbio/motor.h"
 #include "pbio/uartdev.h"
 
 #include "sys/autostart.h"

@@ -4,7 +4,7 @@
 
 #include <pbio/light.h>
 #include <pbio/button.h>
-#include <pbio/motorcontrol.h>
+#include <pbio/motor.h>
 
 #include "py/obj.h"
 #include "py/runtime.h"

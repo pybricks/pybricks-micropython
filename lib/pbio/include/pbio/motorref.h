@@ -12,15 +12,9 @@
 #include <pbio/error.h>
 #include <pbio/port.h>
 
-#include <pbio/motor.h>
-
-/**
- * \addtogroup Motor Motors
- * @{
- */
-
-#define NONE (0) // A "don't care" constant for readibility of the code, but which is never used after assignment
-#define NONZERO (100) // Arbitrary nonzero speed
+#define MS_PER_SECOND (1000)
+#define US_PER_MS (1000)
+#define US_PER_SECOND (1000000)
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
@@ -59,23 +53,10 @@ typedef int32_t duty_t;
 
 
 /**
- * Motor control actions
- */
-typedef enum {
-    RUN,
-    RUN_TIME,
-    RUN_STALLED,
-    RUN_ANGLE,
-    RUN_TARGET,
-    TRACK_TARGET,
-} pbio_motor_action_t;
-
-/**
  * Motor trajectory parameters for an ideal maneuver without disturbances
  */
-typedef struct _pbio_motor_trajectory_t {
-    pbio_motor_action_t action;         /**<  Motor action type */
-    pbio_motor_after_stop_t after_stop; /**<  BRAKE, COAST or HOLD after maneuver */
+typedef struct _pbio_control_trajectory_t {
+    bool forever;                       /**<  Whether maneuver has end-point */
     ustime_t t0;                        /**<  Time at start of maneuver */
     ustime_t t1;                        /**<  Time after the acceleration in-phase */
     ustime_t t2;                        /**<  Time at start of acceleration out-phase */
@@ -88,16 +69,16 @@ typedef struct _pbio_motor_trajectory_t {
     rate_t w1;                          /**<  Encoder rate target when not accelerating */
     accl_t a0;                          /**<  Encoder acceleration during in-phase */
     accl_t a2;                          /**<  Encoder acceleration during out-phase */
-} pbio_motor_trajectory_t;
+} pbio_control_trajectory_t;
 
-pbio_motor_trajectory_t trajectories[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+void make_trajectory_none(ustime_t t0, count_t th0, rate_t w1, pbio_control_trajectory_t *ref);
 
-void get_reference(ustime_t time_ref, pbio_motor_trajectory_t *traject, count_t *count_ref, rate_t *rate_ref);
+pbio_error_t make_trajectory_time_based(ustime_t t0, ustime_t t3, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_control_trajectory_t *ref);
 
-pbio_error_t make_motor_trajectory(pbio_port_t port,
-                                   pbio_motor_action_t action,
-                                   int32_t speed_target,
-                                   int32_t duration_or_target_position,
-                                   pbio_motor_after_stop_t after_stop);
+pbio_error_t make_trajectory_time_based_forever(ustime_t t0, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_control_trajectory_t *ref);
+
+pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_control_trajectory_t *ref);
+
+void get_reference(ustime_t time_ref, pbio_control_trajectory_t *traject, count_t *count_ref, rate_t *rate_ref);
 
 #endif // _PBIO_MOTORREF_H_
