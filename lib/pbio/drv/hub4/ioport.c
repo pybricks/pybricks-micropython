@@ -13,8 +13,8 @@
 #include "stm32f030xc.h"
 
 typedef enum _ioport_t {
-    IOPORT_C,
-    IOPORT_D,
+    IOPORT_B,
+    IOPORT_A,
     NUM_IOPORT
 } ioport_t;
 
@@ -68,14 +68,14 @@ typedef struct _dcm_data_t {
 static dcm_data_t dcm_data[NUM_IOPORT];
 
 static const ioport_pins_t ioport_pins[NUM_IOPORT] = {
-    [IOPORT_C] = {
+    [IOPORT_B] = {
         .id1        = { .bank = GPIOB, .bit = 7  },
         .id2        = { .bank = GPIOC, .bit = 15 },
         .uart_buf   = { .bank = GPIOB, .bit = 4  },
         .uart_tx    = { .bank = GPIOC, .bit = 10 },
         .uart_rx    = { .bank = GPIOC, .bit = 11 },
     },
-    [IOPORT_D] = {
+    [IOPORT_A] = {
         .id1        = { .bank = GPIOB, .bit = 10 },
         .id2        = { .bank = GPIOA, .bit = 12 },
         .uart_buf   = { .bank = GPIOB, .bit = 0  },
@@ -144,14 +144,14 @@ static void ioport_enable_uart(ioport_t ioport) {
 static void init_one(ioport_t ioport) {
     const ioport_pins_t pins = ioport_pins[ioport];
 
-    iodevs[ioport].port = PBIO_PORT_C + ioport;
+    iodevs[ioport].port = PBIO_PORT_B + ioport;
     iodevs[ioport].info = &ioport_info[ioport].info;
 
     // set up alternate function for UART pins
-    if (ioport == IOPORT_C) {
+    if (ioport == IOPORT_B) {
         GPIOC->AFR[1] = (GPIOC->AFR[1] & ~(GPIO_AFRH_AFSEL10_Msk | GPIO_AFRH_AFSEL11_Msk)) | (0 << GPIO_AFRH_AFSEL10_Pos) | (0 << GPIO_AFRH_AFSEL11_Pos);
     }
-    else if (ioport == IOPORT_D) {
+    else if (ioport == IOPORT_A) {
         GPIOC->AFR[0] = (GPIOC->AFR[0] & ~(GPIO_AFRL_AFSEL4_Msk | GPIO_AFRL_AFSEL5_Msk)) | (1 << GPIO_AFRL_AFSEL4_Pos) | (1 << GPIO_AFRL_AFSEL5_Pos);
     }
 
@@ -164,11 +164,11 @@ static void init_one(ioport_t ioport) {
 
 pbio_error_t pbdrv_ioport_get_iodev(pbio_port_t port, pbio_iodev_t **iodev) {
     switch (port) {
-    case PBIO_PORT_C:
-        *iodev = &iodevs[IOPORT_C];
+    case PBIO_PORT_B:
+        *iodev = &iodevs[IOPORT_B];
         break;
-    case PBIO_PORT_D:
-        *iodev = &iodevs[IOPORT_D];
+    case PBIO_PORT_A:
+        *iodev = &iodevs[IOPORT_A];
         break;
     default:
         return PBIO_ERROR_INVALID_PORT;
@@ -410,32 +410,32 @@ PROCESS_THREAD(pbdrv_ioport_process, ev, data) {
 
     etimer_set(&timer, clock_from_msec(2));
 
-    init_one(IOPORT_C);
-    init_one(IOPORT_D);
+    init_one(IOPORT_B);
+    init_one(IOPORT_A);
 
     while (true) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
         etimer_reset(&timer);
 
-        if (connected_type_id[IOPORT_C] != PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
-            poll_dcm(IOPORT_C);
+        if (connected_type_id[IOPORT_B] != PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
+            poll_dcm(IOPORT_B);
         }
 
-        if (connected_type_id[IOPORT_C] != prev_type_id[IOPORT_C]) {
-            prev_type_id[IOPORT_C] = connected_type_id[IOPORT_C];
-            if (connected_type_id[IOPORT_C] == PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
-                ioport_enable_uart(IOPORT_C);
+        if (connected_type_id[IOPORT_B] != prev_type_id[IOPORT_B]) {
+            prev_type_id[IOPORT_B] = connected_type_id[IOPORT_B];
+            if (connected_type_id[IOPORT_B] == PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
+                ioport_enable_uart(IOPORT_B);
             }
         }
 
-        if (connected_type_id[IOPORT_D] != PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
-            poll_dcm(IOPORT_D);
+        if (connected_type_id[IOPORT_A] != PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
+            poll_dcm(IOPORT_A);
         }
 
-        if (connected_type_id[IOPORT_D] != prev_type_id[IOPORT_D]) {
-            prev_type_id[IOPORT_D] = connected_type_id[IOPORT_D];
-            if (connected_type_id[IOPORT_D] == PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
-                ioport_enable_uart(IOPORT_D);
+        if (connected_type_id[IOPORT_A] != prev_type_id[IOPORT_A]) {
+            prev_type_id[IOPORT_A] = connected_type_id[IOPORT_A];
+            if (connected_type_id[IOPORT_A] == PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
+                ioport_enable_uart(IOPORT_A);
             }
         }
     }

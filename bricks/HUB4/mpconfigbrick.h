@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018 David Lechner
+// Copyright (c) 2018 Laurens Valk
 
 #define PYBRICKS_BRICK_HUB4
-#define MICROPY_HW_BOARD_NAME           "BOOST Move Hub"
-#define MICROPY_HW_MCU_NAME             "STM32F070RB"
+#define MICROPY_HW_BOARD_NAME           "LPF2 HUB4"
+#define MICROPY_HW_MCU_NAME             "STM32F030RC"
 
 // You can disable the built-in MicroPython compiler by setting the following
 // config option to 0.  If you do this then you won't get a REPL prompt, but you
@@ -25,7 +25,7 @@
 // for this option to take effect.
 #define PYBRICKS_ENABLE_HARDWARE_DEBUG  (0)
 
-extern const struct _mp_obj_module_t pb_module_movehub;
+extern const struct _mp_obj_module_t pb_module_hub4;
 extern const struct _mp_obj_module_t pb_module_pupdevices;
 extern const struct _mp_obj_module_t pb_module_parameters;
 extern const struct _mp_obj_module_t pb_module_tools;
@@ -39,7 +39,7 @@ extern const struct _mp_obj_module_t pb_module_advanced;
 
 #define PYBRICKS_PORT_BUILTIN_MODULES \
     PYBRICKS_MODULE_ADVANCED_DEF \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_movehub),     (mp_obj_t)&pb_module_movehub },    \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_hub4),        (mp_obj_t)&pb_module_hub4       },  \
     { MP_OBJ_NEW_QSTR(MP_QSTR_devices),     (mp_obj_t)&pb_module_pupdevices },  \
     { MP_OBJ_NEW_QSTR(MP_QSTR_parameters),  (mp_obj_t)&pb_module_parameters },  \
     { MP_OBJ_NEW_QSTR(MP_QSTR_tools),       (mp_obj_t)&pb_module_tools     },

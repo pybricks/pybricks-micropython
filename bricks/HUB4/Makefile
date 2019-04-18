@@ -39,7 +39,7 @@ PBIO_OPT += -DPBIO_CONFIG_ENABLE_MOTORS
 
 CFLAGS_CORTEX_M0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
 CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib $(CFLAGS_CORTEX_M0) $(COPT) $(PBIO_OPT)
-LDFLAGS = -nostdlib -T move-hub.ld -Map=$@.map --cref --gc-sections
+LDFLAGS = -nostdlib -T hub4.ld -Map=$@.map --cref --gc-sections
 
 # Tune for Debugging or Optimization
 ifeq ($(DEBUG), 1)
@@ -64,7 +64,7 @@ LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
 SRC_C = \
 	main.c \
-	modmovehub.c \
+	modhub4.c \
 	accel.c \
 	systick.c \
 	uart_core.c \

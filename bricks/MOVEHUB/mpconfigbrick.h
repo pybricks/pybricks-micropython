@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018 David Lechner
+// Copyright (c) 2018 Laurens Valk
 
 #define PYBRICKS_BRICK_MOVEHUB
 #define MICROPY_HW_BOARD_NAME           "BOOST Move Hub"

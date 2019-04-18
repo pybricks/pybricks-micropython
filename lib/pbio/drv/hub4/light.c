@@ -64,7 +64,7 @@ void _pbdrv_light_deinit(void) {
 #endif
 
 pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, uint8_t r, uint8_t g, uint8_t b) {
-    if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
+    if (port == PBIO_PORT_B || port == PBIO_PORT_A) {
         // TODO: check for Powered UP Lights connected to ports C/D
         return PBIO_ERROR_NO_DEV;
     }
@@ -82,7 +82,7 @@ pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, uint8_t r, uint8_t g, uint8_t
 
 pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t color,
                                            uint8_t *r, uint8_t *g, uint8_t *b) {
-    if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
+    if (port == PBIO_PORT_B || port == PBIO_PORT_A) {
         // TODO: check for Powered UP Lights connected to ports C/D
         return PBIO_ERROR_NO_DEV;
     }

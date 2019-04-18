@@ -17,15 +17,6 @@
 
 #include "mpconfigbrick.h"
 
-/* Move Hub ports */
-
-STATIC const mp_rom_map_elem_t movehub_Port_enum_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_A),   MP_ROM_INT(PBIO_PORT_A) },
-    { MP_ROM_QSTR(MP_QSTR_B),   MP_ROM_INT(PBIO_PORT_B) },
-    { MP_ROM_QSTR(MP_QSTR_C),   MP_ROM_INT(PBIO_PORT_C) },
-    { MP_ROM_QSTR(MP_QSTR_D),   MP_ROM_INT(PBIO_PORT_D) },
-};
-STATIC PB_DEFINE_CONST_ENUM(movehub_Port_enum, movehub_Port_enum_table);
 
 /* Move Hub module table */
 
@@ -34,7 +25,6 @@ extern const struct _mp_obj_module_t pb_module_battery;
 STATIC const mp_rom_map_elem_t movehub_globals_table[] = {
     /* Unique to Move Hub */
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_movehub)    },
-    { MP_ROM_QSTR(MP_QSTR_Port),        MP_ROM_PTR(&movehub_Port_enum)  },
     /* Common to Powered Up hubs */
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)  },
     { MP_ROM_QSTR(MP_QSTR_shutdown),    MP_ROM_PTR(&hub_shutdown_obj)   },

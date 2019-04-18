@@ -1,6 +1,6 @@
 hub.light(Color.RED)
 wait(1000)
-test = Motor(Port.C)
+test = Motor(Port.B)
 test.dc(50)
 wait(2000)
 hub.shutdown()

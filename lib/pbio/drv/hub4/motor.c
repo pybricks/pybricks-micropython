@@ -17,72 +17,6 @@ void _pbdrv_motor_init(void) {
     GPIOB->BSRR = GPIO_BSRR_BS_2;
     GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER2_Msk) | (1 << GPIO_MODER_MODER2_Pos);
 
-    // // TIM1 provides PWM for ports A/B
-    // RCC->APB2ENR |= RCC_APB2ENR_TIM1EN;
-    // TIM1->PSC = 3;      // divide by 4 (= 3 + 1), so ticks are 12MHz
-    // TIM1->ARR = 10000;  // 12MHz divided by 10k makes 1.2kHz PWM
-    // TIM1->BDTR |= TIM_BDTR_MOE;
-
-    // port A
-    // init PWM pins as gpio out low (coasting) and prepare alternate function
-    // GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
-    // GPIOA->BRR = GPIO_BRR_BR_8;
-    // GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10_Msk) | (1 << GPIO_MODER_MODER10_Pos);
-    // GPIOA->BRR = GPIO_BRR_BR_10;
-    // GPIOA->AFR[1] = (GPIOA->AFR[1] & ~GPIO_AFRH_AFSEL8_Msk) | (2 << GPIO_AFRH_AFSEL8_Pos);
-    // GPIOA->AFR[1] = (GPIOA->AFR[1] & ~GPIO_AFRH_AFSEL10_Msk) | (2 << GPIO_AFRH_AFSEL10_Pos);
-    // TIM1->CCR1 = 0;
-    // TIM1->CCR3 = 0;
-    // TIM1->CCMR1 |= (6 << TIM_CCMR1_OC1M_Pos) | TIM_CCMR1_OC1PE; // PWM mode 1
-    // TIM1->CCMR2 |= (6 << TIM_CCMR2_OC3M_Pos) | TIM_CCMR2_OC3PE; // PWM mode 1
-    // TIM1->CCER |= TIM_CCER_CC1E | TIM_CCER_CC3E;
-
-    // port B
-    // init PWM pins as gpio out low (coasting) and prepare alternate function
-    // GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
-    // GPIOA->BRR = GPIO_BRR_BR_9;
-    // GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
-    // GPIOA->BRR = GPIO_BRR_BR_11;
-    // GPIOA->AFR[1] = (GPIOA->AFR[1] & ~GPIO_AFRH_AFSEL9_Msk) | (2 << GPIO_AFRH_AFSEL9_Pos);
-    // GPIOA->AFR[1] = (GPIOA->AFR[1] & ~GPIO_AFRH_AFSEL11_Msk) | (2 << GPIO_AFRH_AFSEL11_Pos);
-    // TIM1->CCR2 = 0;
-    // TIM1->CCR4 = 0;
-    // TIM1->CCMR1 |= (6 << TIM_CCMR1_OC2M_Pos) | TIM_CCMR1_OC2PE; // PWM mode 1
-    // TIM1->CCMR2 |= (6 << TIM_CCMR2_OC4M_Pos) | TIM_CCMR2_OC4PE; // PWM mode 1
-    // TIM1->CCER |= TIM_CCER_CC2E | TIM_CCER_CC4E;
-
-    // apply settings and start timer
-    // TIM1->CR1 |= TIM_CR1_CEN;
-    // TIM1->EGR |= TIM_EGR_UG;
-
-    // init port A/B tacho pins as inputs
-
-    // port A
-    // GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER1_Msk) | (0 << GPIO_MODER_MODER1_Pos); // interupt
-    // GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER9_Msk) | (0 << GPIO_MODER_MODER9_Pos); // direction
-    // GPIOB->PUPDR = (GPIOB->PUPDR & ~GPIO_PUPDR_PUPDR9_Msk) | (2 << GPIO_PUPDR_PUPDR9_Pos); // pull down
-
-    // // port B
-    // GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER0_Msk) | (0 << GPIO_MODER_MODER0_Pos); // interrupt
-    // GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER1_Msk) | (0 << GPIO_MODER_MODER1_Pos); // direction
-    // GPIOA->PUPDR = (GPIOA->PUPDR & ~GPIO_PUPDR_PUPDR1_Msk) | (2 << GPIO_PUPDR_PUPDR1_Pos); // pull down
-
-    // assign tacho pins to interrupts
-    // SYSCFG->EXTICR[0] |= SYSCFG_EXTICR1_EXTI0_PA | SYSCFG_EXTICR1_EXTI1_PB;
-    // EXTI->IMR |= EXTI_EMR_MR0 | EXTI_EMR_MR1;
-    // EXTI->RTSR |= EXTI_RTSR_RT0 | EXTI_RTSR_RT1;
-    // EXTI->FTSR |= EXTI_FTSR_FT0 | EXTI_FTSR_FT1;
-    // NVIC_EnableIRQ(EXTI0_1_IRQn);
-    // NVIC_SetPriority(EXTI0_1_IRQn, 0);
-
-    // TIM7 is used for clock in speed measurement
-    // RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
-    // TIM7->PSC = 479;    // divide 48MHz by 480 (= 479 + 1) to get 100kHz clock.
-    // TIM7->CR1 = TIM_CR1_CEN;
-    // TIM7->DIER = TIM_DIER_UIE;
-    // NVIC_EnableIRQ(TIM7_IRQn);
-    // NVIC_SetPriority(TIM7_IRQn, 128);
-
     // TIM3 is used for port C PWM
     RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
     TIM3->PSC = 3;      // divide by 4 (= 3 + 1), so ticks are 12MHz
@@ -141,7 +75,7 @@ static pbio_iodev_t *get_iodev(pbio_port_t port) {
 }
 
 pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
-    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
+    if (port < PBIO_PORT_A || port > PBIO_PORT_B) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
@@ -161,7 +95,7 @@ pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
 }
 
 pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
-    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
+    if (port < PBIO_PORT_A || port > PBIO_PORT_B) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
@@ -181,7 +115,7 @@ pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
 }
 
 pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
-    // if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
+    // if (port == PBIO_PORT_B || port == PBIO_PORT_A) {
     //     if (!get_iodev(port)) {
     //         return PBIO_ERROR_NO_DEV;
     //     }
@@ -189,13 +123,13 @@ pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
 
     // set both port pins 1 and 2 to output low
     switch (port) {
-    case PBIO_PORT_C:
+    case PBIO_PORT_B:
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
         GPIOC->BRR = GPIO_BRR_BR_6;
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
         GPIOC->BRR = GPIO_BRR_BR_8;
         break;
-    case PBIO_PORT_D:
+    case PBIO_PORT_A:
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
         GPIOC->BRR = GPIO_BRR_BR_7;
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
@@ -211,13 +145,13 @@ pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
 static void pbdrv_motor_brake(pbio_port_t port) {
     // set both port pins 1 and 2 to output high
     switch (port) {
-    case PBIO_PORT_C:
+    case PBIO_PORT_B:
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
         GPIOC->BSRR = GPIO_BSRR_BS_6;
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
         GPIOC->BSRR = GPIO_BSRR_BS_8;
         break;
-    case PBIO_PORT_D:
+    case PBIO_PORT_A:
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
         GPIOC->BSRR = GPIO_BSRR_BS_7;
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
@@ -231,13 +165,13 @@ static void pbdrv_motor_brake(pbio_port_t port) {
 static void pbdrv_motor_run_fwd(pbio_port_t port, int16_t duty_cycle) {
     // one pin as out, high and the other as PWM
     switch (port) {
-    case PBIO_PORT_C:
+    case PBIO_PORT_B:
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
         GPIOC->BSRR = GPIO_BSRR_BS_6;
         TIM3->CCR3 = 10000 - duty_cycle;
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (2 << GPIO_MODER_MODER8_Pos);
         break;
-    case PBIO_PORT_D:
+    case PBIO_PORT_A:
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
         GPIOC->BSRR = GPIO_BSRR_BS_9;
         TIM3->CCR2 = 10000 - duty_cycle;
@@ -251,13 +185,13 @@ static void pbdrv_motor_run_fwd(pbio_port_t port, int16_t duty_cycle) {
 static void pbdrv_motor_run_rev(pbio_port_t port, int16_t duty_cycle) {
     // one pin as out, high and the other as PWM
     switch (port) {
-    case PBIO_PORT_C:
+    case PBIO_PORT_B:
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
         GPIOC->BSRR = GPIO_BSRR_BS_8;
         TIM3->CCR1 = 10000 + duty_cycle;
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (2 << GPIO_MODER_MODER6_Pos);
         break;
-    case PBIO_PORT_D:
+    case PBIO_PORT_A:
         GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
         GPIOC->BSRR = GPIO_BSRR_BS_7;
         TIM3->CCR4 = 10000 + duty_cycle;
@@ -269,11 +203,11 @@ static void pbdrv_motor_run_rev(pbio_port_t port, int16_t duty_cycle) {
 }
 
 pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
-    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
+    if (port < PBIO_PORT_A || port > PBIO_PORT_B) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    // if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
+    // if (port == PBIO_PORT_B || port == PBIO_PORT_A) {
     //     pbio_iodev_t *iodev;
 
     //     iodev = get_iodev(port);
@@ -315,19 +249,7 @@ pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
 void _pbdrv_motor_deinit(void) {
     // disable the PWM timers
-    // TIM1->CR1 &= TIM_CR1_CEN;
     TIM3->CR1 &= TIM_CR1_CEN;
-    // TIM7->CR1 &= TIM_CR1_CEN;
-
-    // set H-bridge pins to output, low (coast)
-    // GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
-    // GPIOA->BRR = GPIO_BRR_BR_8;
-    // GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10_Msk) | (1 << GPIO_MODER_MODER10_Pos);
-    // GPIOA->BRR = GPIO_BRR_BR_10;
-    // GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
-    // GPIOA->BRR = GPIO_BRR_BR_9;
-    // GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
-    // GPIOA->BRR = GPIO_BRR_BR_11;
     GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
     GPIOC->BRR = GPIO_BRR_BR_6;
     GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);

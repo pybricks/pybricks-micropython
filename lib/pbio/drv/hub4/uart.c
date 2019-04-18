@@ -29,7 +29,7 @@ PROCESS(pbdrv_uart_process, "UART");
 
 static pbio_error_t _pbdrv_uart_get_char(pbio_port_t port, uint8_t *c, bool peek) {
     switch (port) {
-    case PBIO_PORT_C:
+    case PBIO_PORT_B:
         if (usart4_rx_buf_head == usart4_rx_buf_tail) {
             return PBIO_ERROR_AGAIN;
         }
@@ -39,7 +39,7 @@ static pbio_error_t _pbdrv_uart_get_char(pbio_port_t port, uint8_t *c, bool peek
             usart4_rx_buf_tail = (usart4_rx_buf_tail + 1) & (RX_BUF_SIZE - 1);
         }
         break;
-    case PBIO_PORT_D:
+    case PBIO_PORT_A:
         if (usart3_rx_buf_head == usart3_rx_buf_tail) {
             return PBIO_ERROR_AGAIN;
         }
@@ -66,7 +66,7 @@ pbio_error_t pbdrv_uart_get_char(pbio_port_t port, uint8_t *c) {
 
 pbio_error_t pbdrv_uart_put_char(pbio_port_t port, uint8_t c) {
     switch (port) {
-    case PBIO_PORT_C:
+    case PBIO_PORT_B:
         if (!(USART4->ISR & USART_ISR_TXE)) {
             return PBIO_ERROR_AGAIN;
         }
@@ -74,7 +74,7 @@ pbio_error_t pbdrv_uart_put_char(pbio_port_t port, uint8_t c) {
         while (!(USART4->ISR & USART_ISR_TC)) { }
         USART4->ICR |= USART_ICR_TCCF;
         break;
-    case PBIO_PORT_D:
+    case PBIO_PORT_A:
         if (!(USART3->ISR & USART_ISR_TXE)) {
             return PBIO_ERROR_AGAIN;
         }
@@ -91,10 +91,10 @@ pbio_error_t pbdrv_uart_put_char(pbio_port_t port, uint8_t c) {
 
 pbio_error_t pbdrv_uart_set_baud_rate(pbio_port_t port, uint32_t baud) {
     switch (port) {
-    case PBIO_PORT_C:
+    case PBIO_PORT_B:
         USART4->BRR = PBDRV_CONFIG_SYS_CLOCK_RATE / baud;
         break;
-    case PBIO_PORT_D:
+    case PBIO_PORT_A:
         USART3->BRR = PBDRV_CONFIG_SYS_CLOCK_RATE / baud;
         break;
     default:
@@ -114,8 +114,8 @@ static void uart_init() {
     USART4->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_RXNEIE;
     USART3->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_RXNEIE;
 
-    pbdrv_uart_set_baud_rate(PBIO_PORT_C, 2400);
-    pbdrv_uart_set_baud_rate(PBIO_PORT_D, 2400);
+    pbdrv_uart_set_baud_rate(PBIO_PORT_B, 2400);
+    pbdrv_uart_set_baud_rate(PBIO_PORT_A, 2400);
 
     // DMA is not possible on USART3/4 on STM32F070x6, so using interrupt
     NVIC_EnableIRQ(USART3_6_IRQn);
@@ -159,12 +159,12 @@ void USART3_6_IRQHandler(void) {
 static void handle_poll() {
     uint8_t c;
 
-    while (pbdrv_uart_get_char(PBIO_PORT_C, &c) == PBIO_SUCCESS) {
-        pbio_event_uart_rx_data_t rx = { .port = PBIO_PORT_C, .byte = c };
+    while (pbdrv_uart_get_char(PBIO_PORT_B, &c) == PBIO_SUCCESS) {
+        pbio_event_uart_rx_data_t rx = { .port = PBIO_PORT_B, .byte = c };
         process_post_synch(&pbio_uartdev_process, PBIO_EVENT_UART_RX, rx.data);
     }
-    while (pbdrv_uart_get_char(PBIO_PORT_D, &c) == PBIO_SUCCESS) {
-        pbio_event_uart_rx_data_t rx = { .port = PBIO_PORT_D, .byte = c };
+    while (pbdrv_uart_get_char(PBIO_PORT_A, &c) == PBIO_SUCCESS) {
+        pbio_event_uart_rx_data_t rx = { .port = PBIO_PORT_A, .byte = c };
         process_post_synch(&pbio_uartdev_process, PBIO_EVENT_UART_RX, rx.data);
     }
 }
