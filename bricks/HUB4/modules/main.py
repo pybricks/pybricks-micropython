@@ -1,4 +1,4 @@
-hub.light(Color.BLUE)
+hub.light(Color.RED)
 wait(1000)
 test = Motor(Port.C)
 test.dc(50)

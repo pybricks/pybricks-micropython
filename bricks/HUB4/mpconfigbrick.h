@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 David Lechner
 
-#define PYBRICKS_BRICK_MOVEHUB
+#define PYBRICKS_BRICK_HUB4
 #define MICROPY_HW_BOARD_NAME           "BOOST Move Hub"
 #define MICROPY_HW_MCU_NAME             "STM32F070RB"
 
