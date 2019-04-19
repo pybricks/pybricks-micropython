@@ -7,10 +7,12 @@ test.dc(0)
 try:
     hub.light(Color.GREEN)
     sensor = ColorDistanceSensor(Port.A)
-    sensor.ambient()
-    wait(1000)
-    sensor.color()
-    wait(1000)
+
+    while True:
+        if sensor.reflection() < 40:
+            test.dc(20)
+        else:
+            test.dc(-20)
 except:
     hub.light(Color.RED)
     wait(1000)

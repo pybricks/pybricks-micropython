@@ -68,14 +68,14 @@ typedef struct _dcm_data_t {
 static dcm_data_t dcm_data[NUM_IOPORT];
 
 static const ioport_pins_t ioport_pins[NUM_IOPORT] = {
-    [IOPORT_C] = {
+    [IOPORT_C] = { // USART4
         .id1        = { .bank = GPIOB, .bit = 7  },
         .id2        = { .bank = GPIOC, .bit = 15 },
         .uart_buf   = { .bank = GPIOB, .bit = 4  },
         .uart_tx    = { .bank = GPIOC, .bit = 10 },
         .uart_rx    = { .bank = GPIOC, .bit = 11 },
     },
-    [IOPORT_D] = {
+    [IOPORT_D] = { //USART3
         .id1        = { .bank = GPIOB, .bit = 10 },
         .id2        = { .bank = GPIOA, .bit = 12 },
         .uart_buf   = { .bank = GPIOB, .bit = 0  },

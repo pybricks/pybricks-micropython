@@ -68,19 +68,19 @@ typedef struct _dcm_data_t {
 static dcm_data_t dcm_data[NUM_IOPORT];
 
 static const ioport_pins_t ioport_pins[NUM_IOPORT] = {
-    [IOPORT_B] = {
+    [IOPORT_A] = { // USART3
+        .id1        = { .bank = GPIOB, .bit = 10 },
+        .id2        = { .bank = GPIOA, .bit = 12 },      
+        .uart_buf   = { .bank = GPIOB, .bit = 5  }, // confirmed; deviates from movehub
+        .uart_tx    = { .bank = GPIOC, .bit = 4  }, // confirmed
+        .uart_rx    = { .bank = GPIOC, .bit = 5  }, // confirmed
+    },
+    [IOPORT_B] = { // USART4
         .id1        = { .bank = GPIOB, .bit = 7  },
         .id2        = { .bank = GPIOC, .bit = 15 },
-        .uart_buf   = { .bank = GPIOB, .bit = 4  },
-        .uart_tx    = { .bank = GPIOC, .bit = 10 },
-        .uart_rx    = { .bank = GPIOC, .bit = 11 },
-    },
-    [IOPORT_A] = {
-        .id1        = { .bank = GPIOB, .bit = 10 },
-        .id2        = { .bank = GPIOA, .bit = 12 },
-        .uart_buf   = { .bank = GPIOB, .bit = 0  },
-        .uart_tx    = { .bank = GPIOC, .bit = 4  },
-        .uart_rx    = { .bank = GPIOC, .bit = 5  },
+        .uart_buf   = { .bank = GPIOB, .bit = 4  }, // confirmed
+        .uart_tx    = { .bank = GPIOC, .bit = 10 }, // confirmed
+        .uart_rx    = { .bank = GPIOC, .bit = 11 }, // confirmed
     },
 };
 
@@ -164,11 +164,11 @@ static void init_one(ioport_t ioport) {
 
 pbio_error_t pbdrv_ioport_get_iodev(pbio_port_t port, pbio_iodev_t **iodev) {
     switch (port) {
-    case PBIO_PORT_B:
-        *iodev = &iodevs[IOPORT_B];
-        break;
     case PBIO_PORT_A:
         *iodev = &iodevs[IOPORT_A];
+        break;
+    case PBIO_PORT_B:
+        *iodev = &iodevs[IOPORT_B];
         break;
     default:
         return PBIO_ERROR_INVALID_PORT;
@@ -410,23 +410,15 @@ PROCESS_THREAD(pbdrv_ioport_process, ev, data) {
 
     etimer_set(&timer, clock_from_msec(2));
 
-    init_one(IOPORT_B);
     init_one(IOPORT_A);
+    init_one(IOPORT_B);
 
-    while (true) {
+    ioport_enable_uart(IOPORT_A); // Temporarily just enable UART
+    ioport_enable_uart(IOPORT_B); // Temporarily just enable UART
+
+    while (true && false) { // Temporarily disable auto detect
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
         etimer_reset(&timer);
-
-        if (connected_type_id[IOPORT_B] != PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
-            poll_dcm(IOPORT_B);
-        }
-
-        if (connected_type_id[IOPORT_B] != prev_type_id[IOPORT_B]) {
-            prev_type_id[IOPORT_B] = connected_type_id[IOPORT_B];
-            if (connected_type_id[IOPORT_B] == PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
-                ioport_enable_uart(IOPORT_B);
-            }
-        }
 
         if (connected_type_id[IOPORT_A] != PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
             poll_dcm(IOPORT_A);
@@ -436,6 +428,17 @@ PROCESS_THREAD(pbdrv_ioport_process, ev, data) {
             prev_type_id[IOPORT_A] = connected_type_id[IOPORT_A];
             if (connected_type_id[IOPORT_A] == PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
                 ioport_enable_uart(IOPORT_A);
+            }
+        }
+
+        if (connected_type_id[IOPORT_B] != PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
+            poll_dcm(IOPORT_B);
+        }
+
+        if (connected_type_id[IOPORT_B] != prev_type_id[IOPORT_B]) {
+            prev_type_id[IOPORT_B] = connected_type_id[IOPORT_B];
+            if (connected_type_id[IOPORT_B] == PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
+                ioport_enable_uart(IOPORT_B);
             }
         }
     }
