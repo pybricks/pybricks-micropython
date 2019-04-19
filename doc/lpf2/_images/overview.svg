@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   id="svg2"
+   width="800"
+   height="521"
+   viewBox="0 0 799.99997 521"
+   sodipodi:docname="overview.svg"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)">
+  <metadata
+     id="metadata8">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs6" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1853"
+     inkscape:window-height="1016"
+     id="namedview4"
+     showgrid="false"
+     inkscape:zoom="2.36"
+     inkscape:cx="170.96633"
+     inkscape:cy="193.22709"
+     inkscape:window-x="67"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
+  <image
+     sodipodi:absref="overview.jpg"
+     xlink:href="overview.jpg"
+     y="0"
+     x="0"
+     id="image852"
+     preserveAspectRatio="none"
+     height="521"
+     width="800"
+     style="stroke-width:0.3199999" />
+  <path
+     style="fill:none;stroke:#6ab0de;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 514.53044,444.44518 H 581.7056"
+     id="path909"
+     inkscape:connector-curvature="0" />
+  <rect
+     style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect4173"
+     width="239.00459"
+     height="72.354301"
+     x="545.22894"
+     y="406.83414" />
+  <rect
+     style="opacity:1;fill:#6ab0de;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect4175"
+     width="239.00459"
+     height="4"
+     x="545.22894"
+     y="406.83414" />
+  <text
+     id="text114"
+     y="437.4194"
+     x="559.9931"
+     style="font-style:normal;font-weight:normal;font-size:24.19441986px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#404140;fill-opacity:1;stroke:none;stroke-width:0.60486054"
+     xml:space="preserve"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054"
+       y="437.4194"
+       x="559.9931"
+       id="tspan112"
+       sodipodi:role="line">Computer with </tspan><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054"
+       y="468.5033"
+       x="559.9931"
+       sodipodi:role="line"
+       id="tspan907">Visual Studio Code</tspan></text>
+  <circle
+     r="19.024944"
+     cy="495.53748"
+     cx="-444.85339"
+     id="path118"
+     style="fill:#e7f2fa;fill-opacity:1;stroke:#6ab0de;stroke-width:4;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     transform="rotate(-90)" />
+  <circle
+     transform="scale(1,-1)"
+     r="20.301775"
+     cy="-314.50687"
+     cx="321.67059"
+     id="circle4625"
+     style="opacity:1;fill:none;fill-opacity:1;stroke:#6ab0de;stroke-width:4;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+  <rect
+     y="374.04733"
+     x="26.49622"
+     height="42.092525"
+     width="228.95509"
+     id="rect4629"
+     style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+  <rect
+     y="374.04733"
+     x="26.49622"
+     height="4"
+     width="228.95509"
+     id="rect4631"
+     style="opacity:1;fill:#6ab0de;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-weight:normal;font-size:24.19441986px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#404140;fill-opacity:1;stroke:none;stroke-width:0.60486054"
+     x="36.466434"
+     y="404.63257"
+     id="text4635"><tspan
+       sodipodi:role="line"
+       id="tspan4633"
+       x="36.466434"
+       y="404.63257"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054">Download and run</tspan></text>
+  <rect
+     style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect4651"
+     width="300.14154"
+     height="73.236595"
+     x="26.49622"
+     y="374.04733" />
+  <rect
+     style="opacity:1;fill:#6ab0de;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect4653"
+     width="300.14154"
+     height="4"
+     x="26.49622"
+     y="374.04733" />
+  <text
+     id="text4657"
+     y="404.63257"
+     x="36.466434"
+     style="font-style:normal;font-weight:normal;font-size:24.19441986px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#404140;fill-opacity:1;stroke:none;stroke-width:0.60486054"
+     xml:space="preserve"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054"
+       y="404.63257"
+       x="36.466434"
+       id="tspan4655"
+       sodipodi:role="line">MicroSD card with</tspan><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054"
+       y="435.71646"
+       x="36.466434"
+       sodipodi:role="line"
+       id="tspan915">EV3 MicroPython image</tspan></text>
+  <path
+     style="fill:none;stroke:#6ab0de;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 474.94723,55.976055 H 407.77207"
+     id="path917"
+     inkscape:connector-curvature="0" />
+  <circle
+     r="19.024944"
+     cy="58.132839"
+     cx="387.95428"
+     id="circle919"
+     style="fill:none;fill-opacity:1;stroke:#6ab0de;stroke-width:4;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  <rect
+     y="30.709236"
+     x="440.86319"
+     height="42.092525"
+     width="196.33363"
+     id="rect921"
+     style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+  <rect
+     y="30.709236"
+     x="440.86319"
+     height="4"
+     width="196.33363"
+     id="rect923"
+     style="opacity:1;fill:#6ab0de;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-weight:normal;font-size:24.19441986px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#404140;fill-opacity:1;stroke:none;stroke-width:0.60486054"
+     x="450.8334"
+     y="61.294502"
+     id="text927"><tspan
+       sodipodi:role="line"
+       id="tspan925"
+       x="450.8334"
+       y="61.294502"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054">Mini-USB cable</tspan></text>
+  <path
+     style="fill:none;stroke:#838383;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     d="m 321.14228,303.04679 3.39982,17.75063"
+     id="path855"
+     inkscape:connector-curvature="0" />
+  <path
+     style="fill:none;stroke:#6ab0de;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 320.61117,234.27679 H 160.61327"
+     id="path857"
+     inkscape:connector-curvature="0"
+     sodipodi:nodetypes="cc" />
+  <path
+     inkscape:connector-curvature="0"
+     id="path859"
+     d="M 301.11963,316.65812 H 154.00546 v 59.02544"
+     style="fill:none;stroke:#6ab0de;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+  <circle
+     style="fill:#e7f2fa;fill-opacity:1;stroke:#6ab0de;stroke-width:4;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="circle913"
+     cx="321.31552"
+     cy="230.23854"
+     r="19.024944" />
+  <rect
+     style="opacity:1;fill:#e7f2fa;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect4611"
+     width="138.70651"
+     height="42.092525"
+     x="27.116055"
+     y="214.3815" />
+  <rect
+     style="opacity:1;fill:#6ab0de;fill-opacity:1;stroke:none;stroke-width:2.13333321;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect4613"
+     width="138.70651"
+     height="4"
+     x="27.116055"
+     y="214.3815" />
+  <text
+     id="text4617"
+     y="244.96677"
+     x="37.086269"
+     style="font-style:normal;font-weight:normal;font-size:24.19441986px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#404140;fill-opacity:1;stroke:none;stroke-width:0.60486054"
+     xml:space="preserve"><tspan
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Slab';-inkscape-font-specification:'Roboto Slab';fill:#404140;fill-opacity:1;stroke-width:0.60486054"
+       y="244.96677"
+       x="37.086269"
+       id="tspan4615"
+       sodipodi:role="line">EV3 Brick</tspan></text>
+</svg>
