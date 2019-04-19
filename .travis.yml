@@ -81,7 +81,7 @@ jobs:
       script:
         - docker exec --tty pybricks-ev3dev_armel make
         - docker exec --tty pybricks-ev3dev_armel make test
-        - make -C doc html
+        - make SOURCEDIR=ev3dev doc
         - cd lib/fake-pybricks && python3 setup.py sdist &&
           export FAKE_PYBRICKS_VERSION=$(python3 setup.py --version); cd -
       after_success:
@@ -89,9 +89,9 @@ jobs:
         - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
           "${HOME}/micropython/ports/pybricks/bricks/ev3dev/pybricks-micropython"
           pybricks-ev3dev/$TRAVIS_REPO_SLUG/build$TRAVIS_JOB_NUMBER/
-        - tar -C ${HOME}/micropython/ports/pybricks/doc/build html -czf html.tar.gz
+        - tar -C ${HOME}/micropython/ports/pybricks/doc/ev3dev/build html -czf ev3dev.tar.gz
         - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
-          "html.tar.gz" pybricks-ev3dev/$TRAVIS_REPO_SLUG/build$TRAVIS_JOB_NUMBER/
+          "ev3dev.tar.gz" pybricks-ev3dev/$TRAVIS_REPO_SLUG/build$TRAVIS_JOB_NUMBER/
         - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
           --props "pypi.name=fake-pybricks;pypi.version=$FAKE_PYBRICKS_VERSION"
           "${HOME}/micropython/ports/pybricks/lib/fake-pybricks/dist/fake-pybricks-$FAKE_PYBRICKS_VERSION.tar.gz"

@@ -44,7 +44,7 @@ extensions = [
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ['../common/_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -134,7 +134,7 @@ else:
         'disclaimer': _DISCLAIMER,
     }
 
-html_logo = 'images/pybricks-logo-small.png'
+html_logo = '../common/images/pybricks-logo-small.png'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
@@ -152,7 +152,7 @@ html_theme_options = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ['../common/_static']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -224,7 +224,7 @@ latex_documents = [
     (master_doc, ''.join([project, '-v', version, '.tex']), _TITLE, author, 'manual'),
 ]
 
-latex_logo = 'images/pybricks-logo-large.png'
+latex_logo = '../common/images/pybricks-logo-large.png'
 
 
 # -- Options for manual page output ---------------------------------------
