@@ -417,7 +417,7 @@ pbio_error_t pbio_motor_run(pbio_port_t port, int32_t speed) {
 
     if (mtr->state == PBIO_CONTROL_TIME_BACKGROUND &&
         mtr->control.action == RUN && 
-        ((uint32_t) (speed * mtr->counts_per_output_unit)) == mtr->control.trajectory.w1) {
+        ((int32_t) (speed * mtr->counts_per_output_unit)) == mtr->control.trajectory.w1) {
         // If the exact same command is already running, there is nothing we need to do
         return PBIO_SUCCESS;
     }
