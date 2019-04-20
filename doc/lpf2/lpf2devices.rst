@@ -49,3 +49,6 @@ Motors
 Sensors
 -------
 
+Color and Distance Sensor
+^^^^^^^^^^^^^^^^^^^^^^^^^
+.. autoclass:: lpf2devices.ColorDistanceSensor
