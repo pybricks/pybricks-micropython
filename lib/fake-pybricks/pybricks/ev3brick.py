@@ -48,6 +48,6 @@ def light(color):
     pass
 
 
-sound = Speaker('EV3')
-display = Display('EV3')
-battery = Battery('EV3')
+sound = Speaker()
+display = Display()
+battery = Battery()

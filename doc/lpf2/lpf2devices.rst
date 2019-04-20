@@ -1,5 +1,5 @@
-:mod:`lpf2` -- Power Function 2.0 Motors and Sensors
-====================================================
+:mod:`lpf2devices` -- Power Function 2.0 Motors and Sensors
+===========================================================
 
 .. automodule:: lpf2devices
     :no-members:

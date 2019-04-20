@@ -257,10 +257,6 @@ class Motor():
 class Display():
     """Show images or text on a display."""
 
-    def __init__(self, device_type):
-        """Device-specific display initialization."""
-        pass
-
     def clear(self):
         """Clear everything on the display."""
         pass
@@ -317,10 +313,6 @@ class Display():
 class Speaker():
     """Play beeps and sound files using a speaker."""
 
-    def __init__(self, device_type):
-        """Device specific speaker initialization."""
-        pass
-
     def beep(self, frequency=500, duration=100, volume=30):
         """Play a beep/tone.
 
@@ -375,23 +367,11 @@ class Speaker():
 class Battery():
     """Get the status of a battery."""
 
-    def __init__(self, device_type):
-        """Battery-specific initialization."""
-        pass
-
     def voltage(self):
         """Get the voltage of the battery.
 
         Returns:
             :ref:`voltage`: Battery voltage.
-
-        Examples::
-
-            # Play a warning sound when the battery voltage
-            # is below 7 Volt (7000 mV = 7V)
-            if brick.battery.voltage() < 7000:
-                brick.sound.beep()
-
         """
         pass
 
