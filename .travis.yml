@@ -95,7 +95,11 @@ jobs:
         - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
           "pybricks-ev3dev.tar.gz" pybricks-ev3dev/$TRAVIS_REPO_SLUG/build$TRAVIS_JOB_NUMBER/
         - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
-          "pybricks-lpf2.tar.gz" pybricks-ev3dev/$TRAVIS_REPO_SLUG/build$TRAVIS_JOB_NUMBER/          
+          "pybricks-lpf2.tar.gz" pybricks-ev3dev/$TRAVIS_REPO_SLUG/build$TRAVIS_JOB_NUMBER/
+        - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
+          --explode=true "pybricks-lpf2.tar.gz" pybricks-ev3dev/$TRAVIS_REPO_SLUG/debug-lpf2/
+        - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
+          --explode=true "pybricks-ev3dev.tar.gz" pybricks-ev3dev/$TRAVIS_REPO_SLUG/debug-ev3dev/
         - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
           --props "pypi.name=fake-pybricks;pypi.version=$FAKE_PYBRICKS_VERSION"
           "${HOME}/micropython/ports/pybricks/lib/fake-pybricks/dist/fake-pybricks-$FAKE_PYBRICKS_VERSION.tar.gz"
