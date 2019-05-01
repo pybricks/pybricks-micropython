@@ -102,8 +102,10 @@ enum ev3_uart_info {
     EV3_UART_INFO_PCT           = 0x02,
     EV3_UART_INFO_SI            = 0x03,
     EV3_UART_INFO_UNITS         = 0x04,
-    EV3_UART_INFO_UNK1          = 0x05,    // Powered Up only
+    EV3_UART_INFO_MAPPING       = 0x05,    // Powered Up only
     EV3_UART_INFO_UNK2          = 0x06,    // Powered Up only
+    EV3_UART_INFO_MOTOR_BIAS    = 0x07,    // Powered Up only
+    EV3_UART_INFO_CAPABILITY    = 0x08,    // Powered Up only
     EV3_UART_INFO_MODE_PLUS_8   = 0x20,    // Powered Up only - not used?
     EV3_UART_INFO_FORMAT        = 0x80,
 };
@@ -118,31 +120,38 @@ enum ev3_uart_info_bit {
     EV3_UART_INFO_BIT_INFO_PCT,
     EV3_UART_INFO_BIT_INFO_SI,
     EV3_UART_INFO_BIT_INFO_UNITS,
-    EV3_UART_INFO_BIT_INFO_UNK1,
+    EV3_UART_INFO_BIT_INFO_MAPPING,
     EV3_UART_INFO_BIT_INFO_UNK2,
+    EV3_UART_INFO_BIT_INFO_MOTOR_BIAS,
+    EV3_UART_INFO_BIT_INFO_CAPABILITY,
     EV3_UART_INFO_BIT_INFO_FORMAT,
 };
 
 enum ev3_uart_info_flags {
-    EV3_UART_INFO_FLAG_CMD_TYPE     = 1 << EV3_UART_INFO_BIT_CMD_TYPE,
-    EV3_UART_INFO_FLAG_CMD_MODES    = 1 << EV3_UART_INFO_BIT_CMD_MODES,
-    EV3_UART_INFO_FLAG_CMD_SPEED    = 1 << EV3_UART_INFO_BIT_CMD_SPEED,
-    EV3_UART_INFO_FLAG_CMD_VERSION  = 1 << EV3_UART_INFO_BIT_CMD_VERSION,
-    EV3_UART_INFO_FLAG_INFO_NAME    = 1 << EV3_UART_INFO_BIT_INFO_NAME,
-    EV3_UART_INFO_FLAG_INFO_RAW     = 1 << EV3_UART_INFO_BIT_INFO_RAW,
-    EV3_UART_INFO_FLAG_INFO_PCT     = 1 << EV3_UART_INFO_BIT_INFO_PCT,
-    EV3_UART_INFO_FLAG_INFO_SI      = 1 << EV3_UART_INFO_BIT_INFO_SI,
-    EV3_UART_INFO_FLAG_INFO_UNITS   = 1 << EV3_UART_INFO_BIT_INFO_UNITS,
-    EV3_UART_INFO_FLAG_INFO_UNK1    = 1 << EV3_UART_INFO_BIT_INFO_UNK1,
-    EV3_UART_INFO_FLAG_INFO_UNK2    = 1 << EV3_UART_INFO_BIT_INFO_UNK2,
-    EV3_UART_INFO_FLAG_INFO_FORMAT  = 1 << EV3_UART_INFO_BIT_INFO_FORMAT,
+    EV3_UART_INFO_FLAG_CMD_TYPE                 = 1 << EV3_UART_INFO_BIT_CMD_TYPE,
+    EV3_UART_INFO_FLAG_CMD_MODES                = 1 << EV3_UART_INFO_BIT_CMD_MODES,
+    EV3_UART_INFO_FLAG_CMD_SPEED                = 1 << EV3_UART_INFO_BIT_CMD_SPEED,
+    EV3_UART_INFO_FLAG_CMD_VERSION              = 1 << EV3_UART_INFO_BIT_CMD_VERSION,
+    EV3_UART_INFO_FLAG_INFO_NAME                = 1 << EV3_UART_INFO_BIT_INFO_NAME,
+    EV3_UART_INFO_FLAG_INFO_RAW                 = 1 << EV3_UART_INFO_BIT_INFO_RAW,
+    EV3_UART_INFO_FLAG_INFO_PCT                 = 1 << EV3_UART_INFO_BIT_INFO_PCT,
+    EV3_UART_INFO_FLAG_INFO_SI                  = 1 << EV3_UART_INFO_BIT_INFO_SI,
+    EV3_UART_INFO_FLAG_INFO_UNITS               = 1 << EV3_UART_INFO_BIT_INFO_UNITS,
+    EV3_UART_INFO_FLAG_INFO_MAPPING             = 1 << EV3_UART_INFO_BIT_INFO_MAPPING,
+    EV3_UART_INFO_FLAG_INFO_UNK2                = 1 << EV3_UART_INFO_BIT_INFO_UNK2,
+    EV3_UART_INFO_FLAG_INFO_MOTOR_BIAS          = 1 << EV3_UART_INFO_BIT_INFO_MOTOR_BIAS,
+    EV3_UART_INFO_FLAG_INFO_MOTOR_CAPABILITY    = 1 << EV3_UART_INFO_BIT_INFO_CAPABILITY,
+    EV3_UART_INFO_FLAG_INFO_FORMAT              = 1 << EV3_UART_INFO_BIT_INFO_FORMAT,
+
     EV3_UART_INFO_FLAG_ALL_INFO     = EV3_UART_INFO_FLAG_INFO_NAME
                                     | EV3_UART_INFO_FLAG_INFO_RAW
                                     | EV3_UART_INFO_FLAG_INFO_PCT
                                     | EV3_UART_INFO_FLAG_INFO_SI
                                     | EV3_UART_INFO_FLAG_INFO_UNITS
-                                    | EV3_UART_INFO_FLAG_INFO_UNK1
+                                    | EV3_UART_INFO_FLAG_INFO_MAPPING
                                     | EV3_UART_INFO_FLAG_INFO_UNK2
+                                    | EV3_UART_INFO_FLAG_INFO_MOTOR_BIAS
+                                    | EV3_UART_INFO_FLAG_INFO_MOTOR_CAPABILITY
                                     | EV3_UART_INFO_FLAG_INFO_FORMAT,
     EV3_UART_INFO_FLAG_REQUIRED     = EV3_UART_INFO_FLAG_CMD_TYPE
                                     | EV3_UART_INFO_FLAG_CMD_MODES
@@ -586,18 +595,19 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             debug_pr("uom: %s\n", data->iodev->info->mode_info[mode].uom);
 
             break;
-        case EV3_UART_INFO_UNK1:
+        case EV3_UART_INFO_MAPPING:
             if (data->new_mode != mode) {
                 DBG_ERR(data->last_err = "Received INFO for incorrect mode");
                 goto err;
             }
-            if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_UNK1, &data->info_flags)) {
-                DBG_ERR(data->last_err = "Received duplicate UNK1 units INFO");
+            if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_MAPPING, &data->info_flags)) {
+                DBG_ERR(data->last_err = "Received duplicate mapping INFO");
                 goto err;
             }
-            // TODO: what does this info tell us?
+            // TODO: we should probably store this info if we want to support
+            // arbitrary/unknown sensors
 
-            debug_pr("UNK1: %02x %02x\n", data->msg[2], data->msg[3]);
+            debug_pr("mapping: %02x %02x\n", data->msg[2], data->msg[3]);
 
             break;
         case EV3_UART_INFO_UNK2:
@@ -606,12 +616,42 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
                 goto err;
             }
             if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_UNK2, &data->info_flags)) {
-                DBG_ERR(data->last_err = "Received duplicate UNK2 units INFO");
+                DBG_ERR(data->last_err = "Received duplicate UNK2 INFO");
                 goto err;
             }
             // TODO: what does this info tell us?
 
             debug_pr("UNK2: %02x %02x\n", data->msg[2], data->msg[3]);
+
+            break;
+        case EV3_UART_INFO_MOTOR_BIAS:
+            if (data->new_mode != mode) {
+                DBG_ERR(data->last_err = "Received INFO for incorrect mode");
+                goto err;
+            }
+            if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_MOTOR_BIAS, &data->info_flags)) {
+                DBG_ERR(data->last_err = "Received duplicate motor bias INFO");
+                goto err;
+            }
+            // TODO: do we need to store this info?
+
+            debug_pr("motor bias: %02x\n", data->msg[2]);
+
+            break;
+        case EV3_UART_INFO_CAPABILITY:
+            if (data->new_mode != mode) {
+                DBG_ERR(data->last_err = "Received INFO for incorrect mode");
+                goto err;
+            }
+            if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_CAPABILITY, &data->info_flags)) {
+                DBG_ERR(data->last_err = "Received duplicate capability INFO");
+                goto err;
+            }
+            // TODO: do we need to store this info?
+
+            debug_pr("capability: %02x %02x %02x %02x %02x %02x\n",
+                data->msg[2], data->msg[3], data->msg[4],
+                data->msg[5], data->msg[6], data->msg[7]);
 
             break;
         case EV3_UART_INFO_FORMAT:
