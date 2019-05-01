@@ -34,7 +34,12 @@ pbio_error_t sysfs_append_motor_number(DIR *dir, char *portpath, char *devpath) 
     struct dirent *ent;
     while ((ent = readdir(dir))) {
         if (ent->d_name[0] != '.') {
+#pragma GCC diagnostic push
+#if (__GNUC__ > 7) || (__GNUC__ == 7 && __GNUC_MINOR__ >= 1)
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
             snprintf(devpath, MAX_PATH_LENGTH, "%s%s", portpath, ent->d_name);
+#pragma GCC diagnostic pop
             return PBIO_SUCCESS;
         }
     }
