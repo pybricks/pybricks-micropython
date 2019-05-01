@@ -35,6 +35,12 @@ typedef enum {
 #if PBDRV_CONFIG_HAS_PORT_D
     PBIO_PORT_D = 'D', /**< I/O port labeled as "D" */
 #endif
+#if PBDRV_CONFIG_HAS_PORT_E
+    PBIO_PORT_E = 'E', /**< I/O port labeled as "C" */
+#endif
+#if PBDRV_CONFIG_HAS_PORT_F
+    PBIO_PORT_F = 'F', /**< I/O port labeled as "F" */
+#endif
 #if PBDRV_CONFIG_HAS_PORT_1
     PBIO_PORT_1 = '1', /**< I/O port labeled as "1" */
 #endif

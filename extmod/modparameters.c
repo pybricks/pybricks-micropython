@@ -28,6 +28,12 @@ STATIC const mp_rom_map_elem_t pb_Port_enum_table[] = {
 #if PBDRV_CONFIG_HAS_PORT_D
     { MP_ROM_QSTR(MP_QSTR_D),   MP_ROM_INT(PBIO_PORT_D) },
 #endif
+#if PBDRV_CONFIG_HAS_PORT_E
+    { MP_ROM_QSTR(MP_QSTR_E),   MP_ROM_INT(PBIO_PORT_E) },
+#endif
+#if PBDRV_CONFIG_HAS_PORT_F
+    { MP_ROM_QSTR(MP_QSTR_F),   MP_ROM_INT(PBIO_PORT_F) },
+#endif
 #if PBDRV_CONFIG_HAS_PORT_1
     { MP_ROM_QSTR(MP_QSTR_S1),  MP_ROM_INT(PBIO_PORT_1) },
 #endif
