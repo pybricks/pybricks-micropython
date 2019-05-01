@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 Laurens Valk
 
-#define PYBRICKS_BRICK_HUB4
 #define MICROPY_HW_BOARD_NAME           "LPF2 HUB4"
 #define MICROPY_HW_MCU_NAME             "STM32F030RC"
 

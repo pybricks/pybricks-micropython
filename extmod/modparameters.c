@@ -2,6 +2,7 @@
 // Copyright (c) 2018 Laurens Valk
 
 
+#include <pbdrv/config.h>
 #include <pbio/light.h>
 #include <pbio/button.h>
 #include <pbio/motor.h>
@@ -15,18 +16,30 @@
 /* Brick/Hub Port enum */
 
 STATIC const mp_rom_map_elem_t pb_Port_enum_table[] = {
+#if PBDRV_CONFIG_HAS_PORT_A
     { MP_ROM_QSTR(MP_QSTR_A),   MP_ROM_INT(PBIO_PORT_A) },
+#endif
+#if PBDRV_CONFIG_HAS_PORT_B
     { MP_ROM_QSTR(MP_QSTR_B),   MP_ROM_INT(PBIO_PORT_B) },
-#if (defined(PYBRICKS_BRICK_EV3) || defined(PYBRICKS_BRICK_MOVEHUB))
+#endif
+#if PBDRV_CONFIG_HAS_PORT_C
     { MP_ROM_QSTR(MP_QSTR_C),   MP_ROM_INT(PBIO_PORT_C) },
+#endif
+#if PBDRV_CONFIG_HAS_PORT_D
     { MP_ROM_QSTR(MP_QSTR_D),   MP_ROM_INT(PBIO_PORT_D) },
-#endif // PYBRICKS_BRICK_EV3 || PYBRICKS_BRICK_MOVEHUB
-#if defined(PYBRICKS_BRICK_EV3)
+#endif
+#if PBDRV_CONFIG_HAS_PORT_1
     { MP_ROM_QSTR(MP_QSTR_S1),  MP_ROM_INT(PBIO_PORT_1) },
+#endif
+#if PBDRV_CONFIG_HAS_PORT_2
     { MP_ROM_QSTR(MP_QSTR_S2),  MP_ROM_INT(PBIO_PORT_2) },
+#endif
+#if PBDRV_CONFIG_HAS_PORT_3
     { MP_ROM_QSTR(MP_QSTR_S3),  MP_ROM_INT(PBIO_PORT_3) },
+#endif
+#if PBDRV_CONFIG_HAS_PORT_4
     { MP_ROM_QSTR(MP_QSTR_S4),  MP_ROM_INT(PBIO_PORT_4) },
-#endif //PYBRICKS_BRICK_EV3
+#endif
 };
 STATIC PB_DEFINE_CONST_ENUM(pb_Port_enum, pb_Port_enum_table);
 
@@ -75,16 +88,9 @@ STATIC const mp_rom_map_elem_t pb_Button_enum_table[] = {
     { MP_ROM_QSTR(MP_QSTR_LEFT_DOWN),   MP_ROM_INT(PBIO_BUTTON_LEFT_DOWN)  },
     { MP_ROM_QSTR(MP_QSTR_RIGHT_UP),    MP_ROM_INT(PBIO_BUTTON_RIGHT_UP)   },
     { MP_ROM_QSTR(MP_QSTR_RIGHT_DOWN),  MP_ROM_INT(PBIO_BUTTON_RIGHT_DOWN) },
-#if defined(PYBRICKS_BRICK_EV3)
     { MP_ROM_QSTR(MP_QSTR_BEACON),      MP_ROM_INT(PBIO_BUTTON_UP)         },
-#endif //PYBRICKS_BRICK_EV3
 };
 PB_DEFINE_CONST_ENUM(pb_Button_enum, pb_Button_enum_table);
-
-
-#if defined(PYBRICKS_BRICK_EV3)
-
-#endif //PYBRICKS_BRICK_EV3
 
 /*
 parameters module tables
