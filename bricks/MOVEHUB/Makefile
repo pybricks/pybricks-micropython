@@ -89,14 +89,9 @@ PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	extmod/modhubcommon.c \
 	extmod/modcommon.c \
 	extmod/modbattery.c \
+	extmod/modmotor.c \
 	extmod/modtools.c \
 	)
-
-ifneq (,$(findstring DPBIO_CONFIG_ENABLE_MOTORS,$(PBIO_OPT)))
-PYBRICKS_DRIVERS_SRC_C += $(addprefix ports/pybricks/extmod/,\
-	modmotor.c \
-	)
-endif
 
 BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\
 	controller/bluenrg_gap_aci.c \

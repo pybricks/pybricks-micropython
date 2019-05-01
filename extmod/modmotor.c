@@ -13,6 +13,8 @@
 #include "pbthread.h"
 
 
+#if PBIO_CONFIG_ENABLE_MOTORS
+
 /* Wait for maneuver to complete */
 
 // Must not be called while pybricks thread lock is held!
@@ -419,7 +421,6 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
 };
 MP_DEFINE_CONST_DICT(motor_Motor_locals_dict, motor_Motor_locals_dict_table);
 
-#if PBIO_CONFIG_ENABLE_MOTORS
 const mp_obj_type_t motor_Motor_type = {
     { &mp_type_type },
     .name = MP_QSTR_Motor,
