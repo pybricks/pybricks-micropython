@@ -16,6 +16,8 @@ How to write a useful commit message
 
 5. Include a link to the relevant GitHub issue, if applicable.
 
+6. Include the change in firmware size, if applicable.
+
 
 Coding style
 ------------
