@@ -15,7 +15,16 @@
 
 #include "stm32f030xc.h"
 
+#define TX_BUF_SIZE 32  // must be power of 2!
 #define RX_BUF_SIZE 64  // must be power of 2!
+
+static uint8_t usart4_tx_buf[TX_BUF_SIZE];
+static volatile uint8_t usart4_tx_buf_head;
+static uint8_t usart4_tx_buf_tail;
+
+static uint8_t usart3_tx_buf[TX_BUF_SIZE];
+static volatile uint8_t usart3_tx_buf_head;
+static uint8_t usart3_tx_buf_tail;
 
 static uint8_t usart4_rx_buf[RX_BUF_SIZE];
 static volatile uint8_t usart4_rx_buf_head;
@@ -65,22 +74,40 @@ pbio_error_t pbdrv_uart_get_char(pbio_port_t port, uint8_t *c) {
 }
 
 pbio_error_t pbdrv_uart_put_char(pbio_port_t port, uint8_t c) {
+    uint8_t new_head;
+
     switch (port) {
     case PBIO_PORT_B:
-        if (!(USART4->ISR & USART_ISR_TXE)) {
+        if (usart4_tx_buf_head == usart4_tx_buf_tail) {
+            // if ring buffer is empty and Tx is not busy, just send the byte
+            USART4->TDR = c;
+        }
+        else {
+            // otherwise queue it in the ring buffer
+            new_head = (usart4_tx_buf_head + 1) & (TX_BUF_SIZE - 1);
+            if (new_head == usart4_tx_buf_tail) {
+                // buffer is full
             return PBIO_ERROR_AGAIN;
         }
-        USART4->TDR = c;
-        while (!(USART4->ISR & USART_ISR_TC)) { }
-        USART4->ICR |= USART_ICR_TCCF;
+            usart4_tx_buf[usart4_tx_buf_head] = c;
+            usart4_tx_buf_head = new_head;
+        }
         break;
     case PBIO_PORT_A:
-        if (!(USART3->ISR & USART_ISR_TXE)) {
+        if (usart3_tx_buf_head == usart3_tx_buf_tail) {
+            // if ring buffer is empty and Tx is not busy, just send the byte
+            USART3->TDR = c;
+        }
+        else {
+            // otherwise queue it in the ring buffer
+            new_head = (usart3_tx_buf_head + 1) & (TX_BUF_SIZE - 1);
+            if (new_head == usart3_tx_buf_tail) {
+                // buffer is full
             return PBIO_ERROR_AGAIN;
         }
-        USART3->TDR = c;
-        while (!(USART3->ISR & USART_ISR_TC)) { }
-        USART3->ICR |= USART_ICR_TCCF;
+            usart3_tx_buf[usart3_tx_buf_head] = c;
+            usart3_tx_buf_head = new_head;
+        }
         break;
     default:
         return PBIO_ERROR_INVALID_PORT;
@@ -111,8 +138,8 @@ static void uart_init() {
     // note: pin mux is handled in ioport.c
 
     // enable the UARTs
-    USART4->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_RXNEIE;
-    USART3->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_RXNEIE;
+    USART4->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TCIE;
+    USART3->CR1 = USART_CR1_TE | USART_CR1_RE | USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TCIE;
 
     pbdrv_uart_set_baud_rate(PBIO_PORT_B, 2400);
     pbdrv_uart_set_baud_rate(PBIO_PORT_A, 2400);
@@ -140,6 +167,17 @@ void USART3_6_IRQHandler(void) {
         usart4_rx_buf_head = new_head;
     }
 
+    if (USART4->ISR & USART_ISR_TC) {
+        if (usart4_tx_buf_tail == usart4_tx_buf_head) {
+            // buffer is empty, set transmition complete bit
+            USART4->ICR |= USART_ICR_TCCF;
+        }
+        else {
+            USART4->TDR = usart4_tx_buf[usart4_tx_buf_tail];
+            usart4_tx_buf_tail = (usart4_tx_buf_tail + 1) & (TX_BUF_SIZE - 1);
+        }
+    }
+
     // port D
     while (USART3->ISR & USART_ISR_RXNE) {
         c = USART3->RDR;
@@ -151,6 +189,17 @@ void USART3_6_IRQHandler(void) {
         }
         usart3_rx_buf[usart3_rx_buf_head] = c;
         usart3_rx_buf_head = new_head;
+    }
+
+    if (USART3->ISR & USART_ISR_TC) {
+        if (usart3_tx_buf_tail == usart3_tx_buf_head) {
+            // buffer is empty, set transmition complete bit
+            USART3->ICR |= USART_ICR_TCCF;
+        }
+        else {
+            USART3->TDR = usart3_tx_buf[usart3_tx_buf_tail];
+            usart3_tx_buf_tail = (usart3_tx_buf_tail + 1) & (TX_BUF_SIZE - 1);
+        }
     }
 
     process_poll(&pbdrv_uart_process);
