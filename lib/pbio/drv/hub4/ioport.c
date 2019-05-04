@@ -69,18 +69,18 @@ static dcm_data_t dcm_data[NUM_IOPORT];
 
 static const ioport_pins_t ioport_pins[NUM_IOPORT] = {
     [IOPORT_A] = { // USART3
-        .id1        = { .bank = GPIOB, .bit = 10 },
-        .id2        = { .bank = GPIOA, .bit = 12 },      
-        .uart_buf   = { .bank = GPIOB, .bit = 5  }, // confirmed; deviates from movehub
-        .uart_tx    = { .bank = GPIOC, .bit = 4  }, // confirmed
-        .uart_rx    = { .bank = GPIOC, .bit = 5  }, // confirmed
+        .id1        = { .bank = GPIOA, .bit = 1  },
+        .id2        = { .bank = GPIOA, .bit = 3  },
+        .uart_buf   = { .bank = GPIOB, .bit = 5  },
+        .uart_tx    = { .bank = GPIOC, .bit = 4  },
+        .uart_rx    = { .bank = GPIOC, .bit = 5  },
     },
     [IOPORT_B] = { // USART4
-        .id1        = { .bank = GPIOB, .bit = 7  },
-        .id2        = { .bank = GPIOC, .bit = 15 },
-        .uart_buf   = { .bank = GPIOB, .bit = 4  }, // confirmed
-        .uart_tx    = { .bank = GPIOC, .bit = 10 }, // confirmed
-        .uart_rx    = { .bank = GPIOC, .bit = 11 }, // confirmed
+        .id1        = { .bank = GPIOA, .bit = 0  },
+        .id2        = { .bank = GPIOA, .bit = 2  },
+        .uart_buf   = { .bank = GPIOB, .bit = 4  },
+        .uart_tx    = { .bank = GPIOC, .bit = 10 },
+        .uart_rx    = { .bank = GPIOC, .bit = 11 },
     },
 };
 
@@ -413,10 +413,7 @@ PROCESS_THREAD(pbdrv_ioport_process, ev, data) {
     init_one(IOPORT_A);
     init_one(IOPORT_B);
 
-    ioport_enable_uart(IOPORT_A); // Temporarily just enable UART
-    ioport_enable_uart(IOPORT_B); // Temporarily just enable UART
-
-    while (true && false) { // Temporarily disable auto detect
+    while (true) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
         etimer_reset(&timer);
 
