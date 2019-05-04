@@ -132,16 +132,24 @@ void pbsys_power_off(void) {
     // PWM doesn't work while IRQs are disabled? so this needs to be after
     __disable_irq();
 
+    // setting PB11 low cuts the power
+    GPIOB->BRR = GPIO_BRR_BR_11;
+
     // need to loop because power will stay on as long as button is pressed
     while (true) {
-        // setting PB11 low cuts the power
-        GPIOB->BRR = GPIO_BRR_BR_11;
+        IWDG->KR = 0xaaaa;
     }
 }
 
 static void init(void) {
     uint16_t battery_voltage;
     uint8_t r, g, b;
+
+    IWDG->KR = 0x5555; // enable register access
+    IWDG->PR = IWDG_PR_PR_2; // divide by 64
+    IWDG->RLR = 1875; // 40kHz / 64 / 1875 = 0.33.. Hz => 3 second timeout
+    IWDG->KR = 0xaaaa; // refresh counter
+    IWDG->KR = 0xcccc; // start watchdog timer
 
     pbdrv_battery_get_voltage_now(PBIO_PORT_SELF, &battery_voltage);
     avg_battery_voltage = battery_voltage;
@@ -261,6 +269,7 @@ PROCESS_THREAD(pbsys_process, ev, data) {
                 break;
             }
         }
+        IWDG->KR = 0xaaaa;
     }
 
     PROCESS_END();
