@@ -829,7 +829,7 @@ static pbio_error_t ev3_uart_set_data(pbio_iodev_t *iodev, uint8_t *data) {
 
     size = iodev->info->mode_info[iodev->mode].num_values * pbio_iodev_size_of(iodev->info->mode_info[iodev->mode].data_type);
 
-    return _ev3_uart_write(iodev-> port, EV3_UART_MSG_TYPE_DATA, iodev->mode, data, size);
+    return _ev3_uart_write(iodev->port, EV3_UART_MSG_TYPE_DATA, iodev->mode, data, size);
 }
 
 static pbio_error_t ev3_uart_write(pbio_iodev_t *iodev, const uint8_t *data, uint8_t len) {
@@ -843,7 +843,7 @@ static pbio_error_t ev3_uart_write(pbio_iodev_t *iodev, const uint8_t *data, uin
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    return _ev3_uart_write(iodev-> port, EV3_UART_MSG_TYPE_CMD, EV3_UART_CMD_WRITE, data, len);
+    return _ev3_uart_write(iodev->port, EV3_UART_MSG_TYPE_CMD, EV3_UART_CMD_WRITE, data, len);
 }
 
 static pbio_error_t ev3_uart_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
