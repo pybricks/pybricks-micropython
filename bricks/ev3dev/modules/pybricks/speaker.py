@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2017 Laurens Valk
+# Copyright (c) 2018-2019 Laurens Valk
+# Copyright (c) 2018-2019 David Lechner
+# Copyright (c) 2019 LEGO System A/S
 
 """Pybricks sound/speaker module for playing sounds (e.g. EV3 speaker, Bluetooth speaker, or IDE speaker)"""
 # TODO: This module should go elsewhere since it isn't EV3 specific.

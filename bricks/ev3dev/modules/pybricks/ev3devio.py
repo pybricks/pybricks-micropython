@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2017 Laurens Valk
+# Copyright (c) 2018-2019 Laurens Valk
 
 """Read and write to EV3 sensors through ev3dev sysfs."""
 from os import listdir, path

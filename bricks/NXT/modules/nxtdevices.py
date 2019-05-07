@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2017 Laurens Valk
+# Copyright (c) 2018 Laurens Valk
 
 """Classes for LEGO MINDSTORMS NXT Devices."""
 

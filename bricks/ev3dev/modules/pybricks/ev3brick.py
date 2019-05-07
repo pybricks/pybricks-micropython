@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2017 Laurens Valk
+# Copyright (c) 2018-2019 Laurens Valk
 
 """LEGO MINDSTORMS EV3 Programmable Brick.
 

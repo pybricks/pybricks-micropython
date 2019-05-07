@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018 David Lechner
+// Copyright (c) 2019 David Lechner
+// Copyright (c) 2019 LEGO System A/S
 
 #include "py/mpthread.h"
 
