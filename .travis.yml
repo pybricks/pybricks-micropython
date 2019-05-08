@@ -31,10 +31,10 @@ jobs:
         - gcc --version
         - python3 --version
         - cd ${HOME}
-        - git clone --depth=10 --recursive https://github.com/pybricks/micropython
         - if [ -n "$TRAVIS_TAG" ]; then
-              MPY_TAG = $(git tag | grep pybricks$TRAVIS_TAG);
-              git -C micropython checkout $MPY_TAG;
+              git clone --depth=10 --branch=v1.9.4+pybricks${TRAVIS_TAG:1} --recursive https://github.com/pybricks/micropython;
+          else
+              git clone --depth=10 --recursive https://github.com/pybricks/micropython;
           fi
         - cd micropython/ports/pybricks
         - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
@@ -70,10 +70,10 @@ jobs:
         - sudo dpkg -i $HOME/fonts-roboto-slab_1.100263+20170512-1_all.deb
         - sudo apt-get install qemu-user-static inkscape fonts-lato
         - cd ${HOME}
-        - git clone --depth=10 --recursive https://github.com/pybricks/micropython
         - if [ -n "$TRAVIS_TAG" ]; then
-              MPY_TAG = $(git tag | grep pybricks$TRAVIS_TAG);
-              git -C micropython checkout $MPY_TAG;
+              git clone --depth=10 --branch=v1.9.4+pybricks${TRAVIS_TAG:1} --recursive https://github.com/pybricks/micropython;
+          else
+              git clone --depth=10 --recursive https://github.com/pybricks/micropython;
           fi
         - cd micropython/ports/pybricks
         - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
@@ -119,10 +119,10 @@ jobs:
         - cd ${HOME}
         - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
         - sudo tar -C /opt -xf gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
-        - git clone --depth=10 --recursive https://github.com/pybricks/micropython
         - if [ -n "$TRAVIS_TAG" ]; then
-              MPY_TAG = $(git tag | grep pybricks$TRAVIS_TAG);
-              git -C micropython checkout $MPY_TAG;
+              git clone --depth=10 --branch=v1.9.4+pybricks${TRAVIS_TAG:1} --recursive https://github.com/pybricks/micropython;
+          else
+              git clone --depth=10 --recursive https://github.com/pybricks/micropython;
           fi
         - cd micropython/ports/pybricks
         - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
@@ -148,10 +148,10 @@ jobs:
         - cd ${HOME}
         - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
         - sudo tar -C /opt -xf gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
-        - git clone --depth=10 --recursive https://github.com/pybricks/micropython
         - if [ -n "$TRAVIS_TAG" ]; then
-              MPY_TAG = $(git tag | grep pybricks$TRAVIS_TAG);
-              git -C micropython checkout $MPY_TAG;
+              git clone --depth=10 --branch=v1.9.4+pybricks${TRAVIS_TAG:1} --recursive https://github.com/pybricks/micropython;
+          else
+              git clone --depth=10 --recursive https://github.com/pybricks/micropython;
           fi
         - cd micropython/ports/pybricks
         - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
