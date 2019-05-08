@@ -1,6 +1,7 @@
 FROM ev3dev/debian-stretch-cross
 RUN sudo apt-get update && \
     DEBIAN_FRONTEND=noninteractive sudo apt-get install --yes --no-install-recommends \
+        build-essential \
         libffi-dev:armel \
         pkg-config \
         python \
