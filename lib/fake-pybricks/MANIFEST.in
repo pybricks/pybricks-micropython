@@ -1,2 +1,0 @@
-include versioneer.py
-include pybricks/_version.py
