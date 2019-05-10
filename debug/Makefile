@@ -1,9 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2013, 2014 Damien P. George
 
-include ../../py/mkenv.mk
-
-CROSS = 0
+include ../../../py/mkenv.mk
 
 # qstr definitions (must come before including py.mk)
 QSTR_DEFS = qstrdefsport.h
