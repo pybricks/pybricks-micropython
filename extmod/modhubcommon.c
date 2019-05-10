@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 Laurens Valk
 
+#include "py/mpconfig.h"
+
 #include <stdio.h>
 
 #include <pbdrv/battery.h>
@@ -9,7 +11,6 @@
 
 #include "py/obj.h"
 
-#include "mpconfigbrick.h"
 #include "modmotor.h"
 #include "modhubcommon.h"
 #include "pberror.h"

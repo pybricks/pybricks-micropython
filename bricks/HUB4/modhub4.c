@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 David Lechner
 
+#include "py/mpconfig.h"
+
 #include <pbdrv/ioport.h>
 #include <pbio/iodev.h>
 
@@ -14,9 +16,6 @@
 #include "modcommon.h"
 #include "pberror.h"
 #include "pbobj.h"
-
-#include "mpconfigbrick.h"
-
 
 /* Move Hub module table */
 

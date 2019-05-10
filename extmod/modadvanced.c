@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 Laurens Valk
 
-#include "mpconfigbrick.h"
+#include "py/mpconfig.h"
+
 #if PYBRICKS_MODULE_ADVANCED
 
 #include <pbdrv/ioport.h>
