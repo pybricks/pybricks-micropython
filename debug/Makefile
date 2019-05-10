@@ -21,6 +21,8 @@ CFLAGS_CORTEX_M4 = -mthumb -mtune=cortex-m4 -mabi=aapcs-linux -mcpu=cortex-m4 -m
 CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib $(CFLAGS_CORTEX_M4) $(COPT)
 LDFLAGS = -nostdlib -T stm32f405.ld -Map=$@.map --cref --gc-sections
 
+DEBUG ?= 1
+
 # Tune for Debugging or Optimization
 ifeq ($(DEBUG), 1)
 CFLAGS += -O0 -ggdb
