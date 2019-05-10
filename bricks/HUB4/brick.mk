@@ -20,7 +20,7 @@ CROSS_COMPILE ?= arm-none-eabi-
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(TOP)/lib/cmsis/inc
-INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32F0xx/Include
+INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32F$(CPU_FAMILY)xx/Include
 INC += -I$(TOP)/ports/pybricks/lib/pbio/drv/hub4
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/hub4
@@ -33,14 +33,15 @@ DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
 CHECKSUM = $(TOP)/ports/pybricks/tools/checksum.py
 OPENOCD ?= openocd
-OPENOCD_CONFIG ?= openocd_stm32f4.cfg
+OPENOCD_CONFIG ?= openocd_stm32f$(CPU_FAMILY).cfg
 TEXT0_ADDR ?= 0x08000000
 
 PBIO_OPT = -DPBIO_CONFIG_ENABLE_SYS
 PBIO_OPT += -DPBIO_CONFIG_ENABLE_MOTORS
 
 CFLAGS_CORTEX_M0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
-CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib $(CFLAGS_CORTEX_M0) $(COPT) $(PBIO_OPT)
+CFLAGS_CORTEX_M4 = -mthumb -mtune=cortex-m4 -mabi=aapcs-linux -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fsingle-precision-constant -Wdouble-promotion
+CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib $(CFLAGS_CORTEX_M$(CPU_FAMILY)) $(COPT) $(PBIO_OPT)
 LDFLAGS = -nostdlib -T hub4.ld -Map=$@.map --cref --gc-sections
 
 # Tune for Debugging or Optimization
@@ -79,7 +80,12 @@ SRC_C = \
 
 SRC_S = \
 	ports/pybricks/lib/pbio/platform/hub4/startup_stm32f030xc.s \
-	ports/stm32/gchelper_m0.s \
+
+ifeq ($(CPU_FAMILY),0)
+	SRC_S += $(TOP)/ports/stm32/gchelper_m0.s
+else
+	SRC_S += $(TOP)/ports/stm32/gchelper.s
+endif
 
 # Pybricks modules
 PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\

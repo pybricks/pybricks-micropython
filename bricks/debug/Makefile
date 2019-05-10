@@ -3,6 +3,7 @@
 
 DEBUG ?= 1
 
+CPU_FAMILY = 4
 FIRMWARE_MAX_SIZE = 524288
 
 include brick.mk
