@@ -101,8 +101,6 @@ void MP_WEAK __assert_func(const char *file, int line, const char *func, const c
 }
 #endif
 
-#if MICROPY_MIN_USE_CORTEX_CPU
-
 // this is a minimal IRQ and reset framework for any Cortex-M CPU
 
 extern uint32_t _estack, _sidata, _sdata, _edata, _sbss, _ebss;
@@ -155,10 +153,8 @@ void _start(void) {
     *((volatile uint32_t*)0xe000ed14) |= 1 << 9;
 
     // initialise the cpu and peripherals
-    #if MICROPY_MIN_USE_STM32_MCU
     void stm32_init(void);
     stm32_init();
-    #endif
 
     // now that we have a basic system up and running we can call main
     main(0, NULL);
@@ -167,10 +163,6 @@ void _start(void) {
     for (;;) {
     }
 }
-
-#endif
-
-#if MICROPY_MIN_USE_STM32_MCU
 
 // this is minimal set-up code for an STM32 MCU
 
@@ -257,5 +249,3 @@ void stm32_init(void) {
     USART1->BRR = (104 << 4) | 3; // 16MHz/(16*104.1875) = 9598 baud
     USART1->CR1 = 0x0000200c; // USART enable, tx enable, rx enable
 }
-
-#endif
