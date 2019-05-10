@@ -51,6 +51,7 @@ SRC_C = \
 
 SRC_S = \
 	$(TOP)/ports/stm32/boards/startup_stm32f4.s \
+	$(TOP)/ports/stm32/gchelper.s \
 
 OBJ = $(PY_CORE_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
 
