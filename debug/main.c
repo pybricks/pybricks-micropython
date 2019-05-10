@@ -12,6 +12,8 @@
 #include "py/mperrno.h"
 #include "lib/utils/pyexec.h"
 
+#include "stm32f446xx.h"
+
 #if MICROPY_ENABLE_COMPILER
 void do_str(const char *src, mp_parse_input_kind_t input_kind) {
     nlr_buf_t nlr;
@@ -149,8 +151,8 @@ const uint32_t isr_vector[] __attribute__((section(".isr_vector"))) = {
 void _start(void) {
     // when we get here: stack is initialised, bss is clear, data is copied
 
-    // SCB->CCR: enable 8-byte stack alignment for IRQ handlers, in accord with EABI
-    *((volatile uint32_t*)0xe000ed14) |= 1 << 9;
+    // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
+    SCB->CCR |= 1 << 9;
 
     // initialise the cpu and peripherals
     void stm32_init(void);
@@ -166,45 +168,6 @@ void _start(void) {
 
 // this is minimal set-up code for an STM32 MCU
 
-typedef struct {
-    volatile uint32_t CR;
-    volatile uint32_t PLLCFGR;
-    volatile uint32_t CFGR;
-    volatile uint32_t CIR;
-    uint32_t _1[8];
-    volatile uint32_t AHB1ENR;
-    volatile uint32_t AHB2ENR;
-    volatile uint32_t AHB3ENR;
-    uint32_t _2;
-    volatile uint32_t APB1ENR;
-    volatile uint32_t APB2ENR;
-} periph_rcc_t;
-
-typedef struct {
-    volatile uint32_t MODER;
-    volatile uint32_t OTYPER;
-    volatile uint32_t OSPEEDR;
-    volatile uint32_t PUPDR;
-    volatile uint32_t IDR;
-    volatile uint32_t ODR;
-    volatile uint16_t BSRRL;
-    volatile uint16_t BSRRH;
-    volatile uint32_t LCKR;
-    volatile uint32_t AFR[2];
-} periph_gpio_t;
-
-typedef struct {
-    volatile uint32_t SR;
-    volatile uint32_t DR;
-    volatile uint32_t BRR;
-    volatile uint32_t CR1;
-} periph_uart_t;
-
-#define USART1 ((periph_uart_t*) 0x40011000)
-#define GPIOA  ((periph_gpio_t*) 0x40020000)
-#define GPIOB  ((periph_gpio_t*) 0x40020400)
-#define RCC    ((periph_rcc_t*)  0x40023800)
-
 // simple GPIO interface
 #define GPIO_MODE_IN (0)
 #define GPIO_MODE_OUT (1)
@@ -212,7 +175,7 @@ typedef struct {
 #define GPIO_PULL_NONE (0)
 #define GPIO_PULL_UP (0)
 #define GPIO_PULL_DOWN (1)
-void gpio_init(periph_gpio_t *gpio, int pin, int mode, int pull, int alt) {
+void gpio_init(GPIO_TypeDef *gpio, int pin, int mode, int pull, int alt) {
     gpio->MODER = (gpio->MODER & ~(3 << (2 * pin))) | (mode << (2 * pin));
     // OTYPER is left as default push-pull
     // OSPEEDR is left as default low speed
@@ -221,22 +184,23 @@ void gpio_init(periph_gpio_t *gpio, int pin, int mode, int pull, int alt) {
 }
 #define gpio_get(gpio, pin) ((gpio->IDR >> (pin)) & 1)
 #define gpio_set(gpio, pin, value) do { gpio->ODR = (gpio->ODR & ~(1 << (pin))) | (value << pin); } while (0)
-#define gpio_low(gpio, pin) do { gpio->BSRRH = (1 << (pin)); } while (0)
-#define gpio_high(gpio, pin) do { gpio->BSRRL = (1 << (pin)); } while (0)
+#define gpio_low(gpio, pin) do { gpio->BSRR = ((1 << 16) << (pin)); } while (0)
+#define gpio_high(gpio, pin) do { gpio->BSRR = (1 << (pin)); } while (0)
 
 void stm32_init(void) {
     // basic MCU config
-    RCC->CR |= (uint32_t)0x00000001; // set HSION
-    RCC->CFGR = 0x00000000; // reset all
-    RCC->CR &= (uint32_t)0xfef6ffff; // reset HSEON, CSSON, PLLON
-    RCC->PLLCFGR = 0x24003010; // reset PLLCFGR
-    RCC->CR &= (uint32_t)0xfffbffff; // reset HSEBYP
-    RCC->CIR = 0x00000000; // disable IRQs
+    RCC->CR |= RCC_CR_HSION;
+    RCC->CFGR = 0; // reset all
+    RCC->CR &= ~(RCC_CR_HSION | RCC_CR_CSSON | RCC_CR_PLLON);
+    RCC->PLLCFGR = RCC_PLLCFGR_PLLR_1 | RCC_PLLCFGR_PLLQ_2 | RCC_PLLCFGR_PLLN_7
+                 | RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLM_4; // reset PLLCFGR
+    RCC->CR &= ~RCC_CR_HSEBYP;
+    RCC->CIR = 0; // disable IRQs
 
     // leave the clock as-is (internal 16MHz)
 
     // enable GPIO clocks
-    RCC->AHB1ENR |= 0x00000003; // GPIOAEN, GPIOBEN
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN;
 
     // turn on an LED! (on pyboard it's the red one)
     gpio_init(GPIOA, 13, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
@@ -245,7 +209,7 @@ void stm32_init(void) {
     // enable UART1 at 9600 baud (TX=B6, RX=B7)
     gpio_init(GPIOB, 6, GPIO_MODE_ALT, GPIO_PULL_NONE, 7);
     gpio_init(GPIOB, 7, GPIO_MODE_ALT, GPIO_PULL_NONE, 7);
-    RCC->APB2ENR |= 0x00000010; // USART1EN
+    RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
     USART1->BRR = (104 << 4) | 3; // 16MHz/(16*104.1875) = 9598 baud
-    USART1->CR1 = 0x0000200c; // USART enable, tx enable, rx enable
+    USART1->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
 }
