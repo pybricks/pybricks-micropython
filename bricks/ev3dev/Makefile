@@ -7,7 +7,7 @@ include ../../../../py/mkenv.mk
 
 FROZEN_DIR = scripts
 FROZEN_MPY_DIR = modules
-QSTR_GLOBAL_DEPENDENCIES = mpconfigbrick.h
+QSTR_GLOBAL_DEPENDENCIES = brickconfig.h
 
 # define main target
 PROG = pybricks-micropython

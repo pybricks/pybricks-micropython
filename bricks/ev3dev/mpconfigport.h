@@ -2,7 +2,7 @@
 // Copyright (c) 2013, 2014 Damien P. George
 
 // Pybricks brick specific definitions
-#include "mpconfigbrick.h"
+#include "brickconfig.h"
 
 static const char pybricks_ev3dev_help_text[] =
 "Welcome to Pybricks MicroPython!\n"

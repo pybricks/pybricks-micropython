@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "mpconfigbrick.h"
+#include "brickconfig.h"
 
 
 // options to control how MicroPython is built

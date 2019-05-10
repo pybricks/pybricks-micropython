@@ -4,7 +4,7 @@
 include ../../../../py/mkenv.mk
 
 # qstr definitions (must come before including py.mk)
-QSTR_GLOBAL_DEPENDENCIES = mpconfigbrick.h
+QSTR_GLOBAL_DEPENDENCIES = brickconfig.h
 
 #PYBRICKS_MPY_MAIN_MODULE ?= modules/main.py
 
