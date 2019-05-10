@@ -1,13 +1,12 @@
 /*
-    GNU linker script for STM32F405
+    GNU linker script for STM32F446
 */
 
 /* Specify the memory areas */
 MEMORY
 {
-    FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 0x100000 /* entire flash, 1 MiB */
-    CCMRAM (xrw)    : ORIGIN = 0x10000000, LENGTH = 0x010000 /* 64 KiB */
-    RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 0x020000 /* 128 KiB */
+    FLASH (rx)      : ORIGIN = 0x08000000, LENGTH = 512K /* entire flash */
+    RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 128K
 }
 
 /* top end of the stack */
