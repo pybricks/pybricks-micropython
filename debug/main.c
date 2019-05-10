@@ -202,9 +202,9 @@ void stm32_init(void) {
     // enable GPIO clocks
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN;
 
-    // turn on an LED! (on pyboard it's the red one)
-    gpio_init(GPIOA, 13, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
-    gpio_high(GPIOA, 13);
+    // turn on user LED LD1!
+    gpio_init(GPIOB, 0, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
+    gpio_high(GPIOB, 0);
 
     // enable UART1 at 9600 baud (TX=B6, RX=B7)
     gpio_init(GPIOB, 6, GPIO_MODE_ALT, GPIO_PULL_NONE, 7);
