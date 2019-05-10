@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2013, 2014 Damien P. George
+
 #include <stdint.h>
 
 // options to control how MicroPython is built
