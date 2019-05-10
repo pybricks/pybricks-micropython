@@ -32,7 +32,6 @@ INC += -I$(BUILD)
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
 CHECKSUM = $(TOP)/ports/pybricks/tools/checksum.py
-FIRMWARE_MAX_SIZE = 237568
 
 PBIO_OPT = -DPBIO_CONFIG_ENABLE_SYS
 PBIO_OPT += -DPBIO_CONFIG_ENABLE_MOTORS
