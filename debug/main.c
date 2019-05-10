@@ -200,16 +200,16 @@ void stm32_init(void) {
     // leave the clock as-is (internal 16MHz)
 
     // enable GPIO clocks
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN;
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOGEN;
 
     // turn on user LED LD1!
     gpio_init(GPIOB, 0, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
     gpio_high(GPIOB, 0);
 
-    // enable UART1 at 9600 baud (TX=B6, RX=B7)
-    gpio_init(GPIOB, 6, GPIO_MODE_ALT, GPIO_PULL_NONE, 7);
-    gpio_init(GPIOB, 7, GPIO_MODE_ALT, GPIO_PULL_NONE, 7);
-    RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
-    USART1->BRR = (104 << 4) | 3; // 16MHz/(16*104.1875) = 9598 baud
-    USART1->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
+    // enable UART1 at 9600 baud (TX=PG14, RX=PG9)
+    gpio_init(GPIOG, 14, GPIO_MODE_ALT, GPIO_PULL_NONE, 8);
+    gpio_init(GPIOG, 9, GPIO_MODE_ALT, GPIO_PULL_NONE, 8);
+    RCC->APB2ENR |= RCC_APB2ENR_USART6EN;
+    USART6->BRR = (104 << 4) | 3; // 16MHz/(16*104.1875) = 9598 baud
+    USART6->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
 }

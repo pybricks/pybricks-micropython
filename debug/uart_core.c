@@ -14,9 +14,9 @@
 int mp_hal_stdin_rx_chr(void) {
     unsigned char c = 0;
     // wait for RXNE
-    while ((USART1->SR & USART_SR_RXNE) == 0) {
+    while ((USART6->SR & USART_SR_RXNE) == 0) {
     }
-    c = USART1->DR;
+    c = USART6->DR;
     return c;
 }
 
@@ -24,8 +24,8 @@ int mp_hal_stdin_rx_chr(void) {
 void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
     while (len--) {
         // wait for TXE
-        while ((USART1->SR & USART_SR_TXE) == 0) {
+        while ((USART6->SR & USART_SR_TXE) == 0) {
         }
-        USART1->DR = *str++;
+        USART6->DR = *str++;
     }
 }
