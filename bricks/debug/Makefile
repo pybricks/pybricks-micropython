@@ -3,4 +3,6 @@
 
 DEBUG ?= 1
 
+FIRMWARE_MAX_SIZE = 524288
+
 include brick.mk

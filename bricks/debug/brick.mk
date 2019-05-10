@@ -15,10 +15,6 @@ FROZEN_MPY_TOOL_ARGS = -mlongint-impl=none
 # include py core make definitions
 include $(TOP)/py/py.mk
 
-OPENOCD ?= openocd
-OPENOCD_CONFIG ?= openocd_stm32f4.cfg
-TEXT0_ADDR ?= 0x08000000
-
 CROSS_COMPILE ?= arm-none-eabi-
 
 INC += -I.
@@ -29,6 +25,11 @@ INC += -I$(BUILD)
 
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
+CHECKSUM = $(TOP)/ports/pybricks/tools/checksum.py
+OPENOCD ?= openocd
+OPENOCD_CONFIG ?= openocd_stm32f4.cfg
+TEXT0_ADDR ?= 0x08000000
+
 CFLAGS_CORTEX_M4 = -mthumb -mtune=cortex-m4 -mabi=aapcs-linux -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fsingle-precision-constant -Wdouble-promotion
 CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib $(CFLAGS_CORTEX_M4) $(COPT)
 LDFLAGS = -nostdlib -T stm32f446.ld -Map=$@.map --cref --gc-sections
@@ -87,29 +88,34 @@ SRC_QSTR += $(SRC_C) $(PYBRICKS_DRIVERS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
 
-all: $(BUILD)/firmware.dfu
+all: $(BUILD)/firmware.bin
 
-$(BUILD)/firmware.elf: $(OBJ)
+$(BUILD)/firmware-no-checksum.elf: $(OBJ)
+	$(Q)$(LD) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $^ $(LIBS)
+
+$(BUILD)/firmware-no-checksum.bin: $(BUILD)/firmware-no-checksum.elf
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $@
+
+$(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(LD) $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(Q)$(LD) --defsym=CHECKSUM=`$(CHECKSUM) $< $(FIRMWARE_MAX_SIZE)` $(LDFLAGS) -o $@ $(filter-out $<,$^) $(LIBS)
 	$(Q)$(SIZE) $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $(BUILD)/firmware.bin
+	$(ECHO) "BIN creating firmware file"
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $(FIRMWARE_EXTRA_ARGS) $^ $@
+	$(ECHO) "`wc -c < $@` bytes"
 
-$(BUILD)/firmware.dfu: $(BUILD)/firmware.bin
+$(BUILD)/firmware.dfu: $(BUILD)/firmware-no-checksum.bin
 	$(ECHO) "Create $@"
-	$(Q)$(PYTHON) $(DFU) -b 0x08000000:$(BUILD)/firmware.bin $@
+	$(Q)$(PYTHON) $(DFU) -b 0x08000000:$< $@
 
 deploy: $(BUILD)/firmware.dfu
 	$(ECHO) "Writing $< to the board"
 	$(Q)$(PYTHON) $(PYDFU) -u $<
 
-deploy-openocd: $(BUILD)/firmware.dfu
-	$(ECHO) "Writing $(BUILD)/firmware.bin to the board via ST-LINK using OpenOCD"
-	$(Q)$(OPENOCD) -f $(OPENOCD_CONFIG) -c "stm_flash $(BUILD)/firmware.bin $(TEXT0_ADDR)"
-
-test: $(BUILD)/firmware.elf
-	$(Q)/bin/echo -e "print('hello world!', list(x+1 for x in range(10)), end='eol\\\\n')\\r\\n\\x04" | $(BUILD)/firmware.elf | tail -n2 | grep "^hello world! \\[1, 2, 3, 4, 5, 6, 7, 8, 9, 10\\]eol"
+deploy-openocd: $(BUILD)/firmware-no-checksum.bin
+	$(ECHO) "Writing $< to the board via ST-LINK using OpenOCD"
+	$(Q)$(OPENOCD) -f $(OPENOCD_CONFIG) -c "stm_flash $< $(TEXT0_ADDR)"
 
 include $(TOP)/py/mkrules.mk

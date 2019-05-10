@@ -32,6 +32,9 @@ INC += -I$(BUILD)
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
 CHECKSUM = $(TOP)/ports/pybricks/tools/checksum.py
+OPENOCD ?= openocd
+OPENOCD_CONFIG ?= openocd_stm32f4.cfg
+TEXT0_ADDR ?= 0x08000000
 
 PBIO_OPT = -DPBIO_CONFIG_ENABLE_SYS
 PBIO_OPT += -DPBIO_CONFIG_ENABLE_MOTORS
@@ -197,5 +200,16 @@ $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $(FIRMWARE_EXTRA_ARGS) $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
+$(BUILD)/firmware.dfu: $(BUILD)/firmware-no-checksum.bin
+	$(ECHO) "Create $@"
+	$(Q)$(PYTHON) $(DFU) -b 0x08000000:$< $@
+
+deploy: $(BUILD)/firmware.dfu
+	$(ECHO) "Writing $< to the board"
+	$(Q)$(PYTHON) $(PYDFU) -u $<
+
+deploy-openocd: $(BUILD)/firmware-no-checksum.bin
+	$(ECHO) "Writing $< to the board via ST-LINK using OpenOCD"
+	$(Q)$(OPENOCD) -f $(OPENOCD_CONFIG) -c "stm_flash $< $(TEXT0_ADDR)"
 
 include $(TOP)/py/mkrules.mk
