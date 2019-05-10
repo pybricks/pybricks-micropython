@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019 David Lechner
 
-#ifndef _MPCONFIGBRICK_H_
-#define _MPCONFIGBRICK_H_
+#include "stm32f446xx.h"
 
-#endif // _MPCONFIGBRICK_H_
+#define MICROPY_HW_BOARD_NAME           "NUCLEO-F446RE"
+#define MICROPY_HW_MCU_NAME             "STM32F446xx"
+

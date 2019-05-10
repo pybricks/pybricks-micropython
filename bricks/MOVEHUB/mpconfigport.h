@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 
-#include "stm32f070xb.h"
 #include "mpconfigbrick.h"
 
 
