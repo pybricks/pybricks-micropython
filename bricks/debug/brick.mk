@@ -4,7 +4,13 @@
 include ../../../../py/mkenv.mk
 
 # qstr definitions (must come before including py.mk)
-QSTR_DEFS = qstrdefsport.h
+QSTR_GLOBAL_DEPENDENCIES = mpconfigbrick.h
+
+#PYBRICKS_MPY_MAIN_MODULE ?= modules/main.py
+
+# directory containing scripts to be frozen as bytecode
+FROZEN_MPY_DIR ?= modules
+FROZEN_MPY_TOOL_ARGS = -mlongint-impl=none
 
 # include py core make definitions
 include $(TOP)/py/py.mk
@@ -35,6 +41,17 @@ CFLAGS += -Os -DNDEBUG
 CFLAGS += -fdata-sections -ffunction-sections
 endif
 
+ifneq ($(PYBRICKS_MPY_MAIN_MODULE),)
+CFLAGS += -DPYBRICKS_MPY_MAIN_MODULE=MP_STRINGIFY\($(basename $(notdir $(PYBRICKS_MPY_MAIN_MODULE)))\)
+endif
+
+ifneq ($(FROZEN_MPY_DIR),)
+# To use frozen bytecode, put your .py files in a subdirectory (eg frozen/) and
+# then invoke make with FROZEN_MPY_DIR=frozen (be sure to build from scratch).
+CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
+CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
+endif
+
 LIBS =
 
 SRC_C = \
@@ -45,19 +62,32 @@ SRC_C = \
 	lib/utils/pyexec.c \
 	lib/libc/string0.c \
 	lib/mp-readline/readline.c \
-	$(BUILD)/_frozen_mpy.c \
 
 SRC_S = \
 	$(TOP)/ports/stm32/boards/startup_stm32f4.s \
 	$(TOP)/ports/stm32/gchelper.s \
 
-OBJ = $(PY_CORE_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
+OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
+
+# Optionally append .mpy file specified by PYBRICKS_MPY_MAIN_MODULE to 2K free space after 106K firmware
+ifneq ($(PYBRICKS_MPY_MAIN_MODULE),)
+OBJ += $(BUILD)/main_mpy.o
+
+$(BUILD)/main.mpy: $(PYBRICKS_MPY_MAIN_MODULE)
+	$(Q)$(MPY_CROSS) -o $@ $(MPY_CROSS_FLAGS) $^
+
+$(BUILD)/main_mpy.o: $(BUILD)/main.mpy
+	$(Q)$(OBJCOPY) -I binary -O elf32-littlearm -B arm --rename-section .data=.mpy,alloc,load,readonly,data,contents $^ $@
+
+FIRMWARE_EXTRA_ARGS = -j .user --gap-fill=0xff
+endif
+
+# List of sources for qstr extraction
+SRC_QSTR += $(SRC_C) $(PYBRICKS_DRIVERS_SRC_C)
+# Append any auto-generated sources that are needed by sources listed in SRC_QSTR
+SRC_QSTR_AUTO_DEPS +=
 
 all: $(BUILD)/firmware.dfu
-
-$(BUILD)/_frozen_mpy.c: frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
-	$(ECHO) "MISC freezing bytecode"
-	$(Q)$(TOP)/tools/mpy-tool.py -f -q $(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $< > $@
 
 $(BUILD)/firmware.elf: $(OBJ)
 	$(ECHO) "LINK $@"
