@@ -21,6 +21,12 @@ INC += -I.
 INC += -I$(TOP)
 INC += -I$(TOP)/lib/cmsis/inc
 INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32F$(CPU_FAMILY)xx/Include
+INC += -I$(TOP)/ports/pybricks/lib/pbio/drv/$(PBIO_PLATFORM)
+INC += -I$(TOP)/ports/pybricks/lib/pbio/include
+INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)
+INC += -I$(TOP)/ports/pybricks/lib/pbio
+INC += -I$(TOP)/ports/pybricks/lib/BlueNRG-MS/includes
+INC += -I$(TOP)/ports/pybricks/extmod
 INC += -I$(BUILD)
 
 DFU = $(TOP)/tools/dfu.py
@@ -33,7 +39,7 @@ TEXT0_ADDR ?= 0x08000000
 CFLAGS_CORTEX_M0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
 CFLAGS_CORTEX_M4 = -mthumb -mtune=cortex-m4 -mabi=aapcs-linux -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fsingle-precision-constant -Wdouble-promotion
 CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib $(CFLAGS_CORTEX_M$(CPU_FAMILY)) $(COPT) $(PBIO_OPT)
-LDFLAGS = -nostdlib -T stm32f446.ld -Map=$@.map --cref --gc-sections
+LDFLAGS = -nostdlib -T $(PBIO_PLATFORM).ld -Map=$@.map --cref --gc-sections
 
 # Tune for Debugging or Optimization
 ifeq ($(DEBUG), 1)
@@ -66,7 +72,7 @@ SRC_C = \
 	lib/mp-readline/readline.c \
 
 SRC_S = \
-	$(TOP)/ports/stm32/boards/startup_stm32f4.s \
+	ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)/startup.s \
 
 ifeq ($(CPU_FAMILY),0)
 	SRC_S += $(TOP)/ports/stm32/gchelper_m0.s
