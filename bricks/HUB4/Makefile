@@ -5,4 +5,4 @@ PBIO_PLATFORM = hub4
 CPU_FAMILY = 0
 FIRMWARE_MAX_SIZE = 237568
 
-include brick.mk
+include ../brick.mk

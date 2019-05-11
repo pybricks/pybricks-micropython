@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2013, 2014 Damien P. George
 
+# This file is shared by all STM32-based Pybricks ports
+# Other ports should not use this file
+
 include ../../../../py/mkenv.mk
 
 # qstr definitions (must come before including py.mk)

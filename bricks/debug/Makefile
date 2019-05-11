@@ -7,4 +7,4 @@ PBIO_PLATFORM = debug
 CPU_FAMILY = 4
 FIRMWARE_MAX_SIZE = 524288
 
-include brick.mk
+include ../brick.mk
