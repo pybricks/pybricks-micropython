@@ -67,8 +67,11 @@ endif
 
 LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
-SRC_C = \
-	main.c \
+SRC_C = $(addprefix ports/pybricks/bricks/,\
+	stm32_main.c \
+	)
+
+SRC_C += \
 	modhub4.c \
 	modmovehub.c \
 	systick.c \
