@@ -11,18 +11,16 @@
 void _pbdrv_light_init(void) {
     RCC->APB1ENR |= RCC_APB1ENR_TIM3EN | RCC_APB1ENR_TIM4EN | RCC_APB1ENR_TIM12EN;
 
-    // RGB values are 0-255, so multiplying by 5 here to limit brightness to
-    // 1/5 of max possible without having to do division later. It should also
-    // give use smoother steps than the official LEGO firmware since we aren't
-    // jumping by 5s.
+    // RGB values are 0-255, so setup timer to allow using those values
+    // directly in TIMx->CCRx
     TIM12->PSC = 187;
-    TIM12->ARR = 256 * 5;
+    TIM12->ARR = 256;
     TIM12->BDTR |= TIM_BDTR_MOE;
     TIM3->PSC = 187;
-    TIM3->ARR = 256 * 5;
+    TIM3->ARR = 256;
     TIM3->BDTR |= TIM_BDTR_MOE;
     TIM4->PSC = 187;
-    TIM4->ARR = 256 * 5;
+    TIM4->ARR = 256;
     TIM4->BDTR |= TIM_BDTR_MOE;
 
     // red LED LD3 on PB14 using TIM12 CH1
