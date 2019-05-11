@@ -69,10 +69,10 @@ LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
 SRC_C = $(addprefix ports/pybricks/bricks/,\
 	stm32_main.c \
+	systick.c \
 	)
 
 SRC_C += \
-	systick.c \
 	uart_core.c \
 	lib/utils/interrupt_char.c \
 	lib/utils/printf.c \

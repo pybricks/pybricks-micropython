@@ -5,8 +5,6 @@
 
 #include <pbdrv/config.h>
 
-#include "stm32f070xb.h"
-
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "py/mpconfig.h"
