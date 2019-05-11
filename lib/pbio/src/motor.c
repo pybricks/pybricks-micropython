@@ -8,12 +8,7 @@
 #include <pbio/motor.h>
 
 // Initialize motors with control state as inactive
-pbio_motor_t motor[] = {
-    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)] {
-        .state = PBIO_CONTROL_COASTING,
-        .has_encoders = false
-    }
-};
+pbio_motor_t motor[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 pbio_error_t pbio_motor_coast(pbio_port_t port){
     motor[PORT_TO_IDX(port)].state = PBIO_CONTROL_COASTING;
