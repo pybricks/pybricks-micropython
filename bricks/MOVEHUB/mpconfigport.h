@@ -48,4 +48,4 @@ extern const struct _mp_obj_module_t pb_module_advanced;
     { MP_OBJ_NEW_QSTR(MP_QSTR_parameters),  (mp_obj_t)&pb_module_parameters },  \
     { MP_OBJ_NEW_QSTR(MP_QSTR_tools),       (mp_obj_t)&pb_module_tools     },
 
-#include "stm32configport.h"
+#include "../stm32configport.h"

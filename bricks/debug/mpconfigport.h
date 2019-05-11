@@ -11,4 +11,4 @@
 
 #define PYBRICKS_PORT_BUILTIN_MODULES
 
-#include "stm32configport.h"
+#include "../stm32configport.h"

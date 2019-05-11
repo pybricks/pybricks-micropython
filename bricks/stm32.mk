@@ -7,7 +7,7 @@
 include ../../../../py/mkenv.mk
 
 # qstr definitions (must come before including py.mk)
-QSTR_GLOBAL_DEPENDENCIES = stm32configport.h
+QSTR_GLOBAL_DEPENDENCIES = $(TOP)/ports/pybricks/bricks/stm32configport.h
 
 #PYBRICKS_MPY_MAIN_MODULE ?= modules/main.py
 
