@@ -5,4 +5,4 @@ PBIO_PLATFORM = move_hub
 CPU_FAMILY = 0
 FIRMWARE_MAX_SIZE = 108544
 
-include ../brick.mk
+include ../stm32.mk
