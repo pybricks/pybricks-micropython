@@ -10,12 +10,12 @@
 #include "sys/clock.h"
 
 // If the controller reach the maximum duty cycle value, this shortcut sets the stalled flag when the speed is below the stall limit.
-void stall_set_flag_if_slow(pbio_control_stalled_t *stalled,
-                            rate_t rate_now,
-                            rate_t rate_limit,
-                            ustime_t stall_time,
-                            ustime_t stall_time_limit,
-                            pbio_control_stalled_t flag) {
+static void stall_set_flag_if_slow(pbio_control_stalled_t *stalled,
+                                   rate_t rate_now,
+                                   rate_t rate_limit,
+                                   ustime_t stall_time,
+                                   ustime_t stall_time_limit,
+                                   pbio_control_stalled_t flag) {
     if (abs(rate_now) <= rate_limit && stall_time > stall_time_limit) {
         // If the speed is less than the specified limit, set stalled flag.
         *stalled |= flag;
@@ -27,11 +27,11 @@ void stall_set_flag_if_slow(pbio_control_stalled_t *stalled,
 }
 
 // Clear the specified stall flag
-void stall_clear_flag(pbio_control_stalled_t *stalled, pbio_control_stalled_t flag) {
+static void stall_clear_flag(pbio_control_stalled_t *stalled, pbio_control_stalled_t flag) {
     *stalled &= ~flag;
 }
 
-pbio_error_t control_update_angle_target(pbio_port_t port) {
+static pbio_error_t control_update_angle_target(pbio_port_t port) {
 
     // Trajectory and setting shortcuts for this motor
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
@@ -175,7 +175,7 @@ pbio_error_t control_update_angle_target(pbio_port_t port) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t control_update_time_target(pbio_port_t port) {
+static pbio_error_t control_update_time_target(pbio_port_t port) {
 
     // Trajectory and setting shortcuts for this motor
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
@@ -291,7 +291,7 @@ pbio_error_t control_update_time_target(pbio_port_t port) {
     return PBIO_SUCCESS;
 }
 
-void control_update(pbio_port_t port) {
+static void control_update(pbio_port_t port) {
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
     pbio_error_t err = PBIO_SUCCESS;
     switch (mtr->state) {
@@ -328,7 +328,7 @@ void _pbio_motorcontrol_poll(void) {
     }
 }
 
-pbio_error_t pbio_motor_get_initial_state(pbio_port_t port, count_t *count_start, rate_t *rate_start) {
+static pbio_error_t pbio_motor_get_initial_state(pbio_port_t port, count_t *count_start, rate_t *rate_start) {
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
     pbio_error_t err;
     ustime_t time_now = clock_usecs();
@@ -354,7 +354,7 @@ pbio_error_t pbio_motor_get_initial_state(pbio_port_t port, count_t *count_start
     return PBIO_SUCCESS;
 }
 
-void control_init_angle_target(pbio_port_t port) {
+static void control_init_angle_target(pbio_port_t port) {
     // TODO If already running, start from ref + set flag of original state
 
     // depending on wind up status, keep or finalize integrator state, plus maintain status
@@ -377,7 +377,7 @@ void control_init_angle_target(pbio_port_t port) {
 }
 
 
-void control_init_time_target(pbio_port_t port) {
+static void control_init_time_target(pbio_port_t port) {
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
     pbio_control_status_timed_t *status = &mtr->control.status_timed;
     pbio_control_trajectory_t *trajectory = &mtr->control.trajectory;
