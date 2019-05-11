@@ -319,11 +319,13 @@ static void control_update(pbio_motor_t *mtr) {
 
 // TODO: convert these two functions to contiki process
 void _pbio_motorcontroll_init(void) {
+#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
     int i;
 
     for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
         motor[i].port = PBDRV_CONFIG_FIRST_MOTOR_PORT + i;
     }
+#endif
 }
 
 // Service all the motors by calling this function at approximately constant intervals.
