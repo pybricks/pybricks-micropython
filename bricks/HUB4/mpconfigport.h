@@ -6,6 +6,8 @@
 #define MICROPY_HW_BOARD_NAME           "LPF2 HUB4"
 #define MICROPY_HW_MCU_NAME             "STM32F030RC"
 
+#define PYBRICKS_HEAP_KB                16 // half of RAM
+
 // Pybricks modules
 #define PYBRICKS_PY_HUB4                (1)
 #define PYBRICKS_PY_MOTOR               (1)

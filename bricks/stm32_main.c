@@ -19,7 +19,7 @@
 
 static char *stack_top;
 #if MICROPY_ENABLE_GC
-static char heap[8 * 1024];
+static char heap[PYBRICKS_HEAP_KB * 1024];
 #endif
 
 #if MICROPY_PERSISTENT_CODE_LOAD
