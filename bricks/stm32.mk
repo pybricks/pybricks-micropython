@@ -93,17 +93,17 @@ else
 endif
 
 # Pybricks modules
-PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
-	extmod/pberror.c \
-	extmod/modpupdevices.c \
-	extmod/modparameters.c \
-	extmod/modiodevice.c \
-	extmod/modadvanced.c \
-	extmod/modhubcommon.c \
-	extmod/modcommon.c \
-	extmod/modbattery.c \
-	extmod/modmotor.c \
-	extmod/modtools.c \
+PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/extmod/,\
+	modadvanced.c \
+	modbattery.c \
+	modcommon.c \
+	modhubcommon.c \
+	modiodevice.c \
+	modmotor.c \
+	modparameters.c \
+	modpupdevices.c \
+	modtools.c \
+	pberror.c \
 	)
 
 BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\
@@ -170,7 +170,7 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	)
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
-OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_DRIVERS_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PY_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(BLUENRG_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
@@ -189,7 +189,7 @@ FIRMWARE_EXTRA_ARGS = -j .user --gap-fill=0xff
 endif
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(PYBRICKS_DRIVERS_SRC_C)
+SRC_QSTR += $(SRC_C) $(PYBRICKS_PY_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
 
