@@ -66,6 +66,7 @@ LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
 SRC_C = \
 	main.c \
+	modhub4.c \
 	modmovehub.c \
 	accel.c \
 	systick.c \
