@@ -72,8 +72,6 @@ SRC_C = $(addprefix ports/pybricks/bricks/,\
 	)
 
 SRC_C += \
-	modhub4.c \
-	modmovehub.c \
 	systick.c \
 	uart_core.c \
 	lib/utils/interrupt_char.c \
@@ -97,9 +95,11 @@ PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modadvanced.c \
 	modbattery.c \
 	modcommon.c \
+	modhub4.c \
 	modhubcommon.c \
 	modiodevice.c \
 	modmotor.c \
+	modmovehub.c \
 	modparameters.c \
 	modpupdevices.c \
 	modtools.c \
