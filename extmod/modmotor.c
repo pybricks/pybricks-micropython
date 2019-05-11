@@ -3,6 +3,10 @@
 // Copyright (c) 2019 David Lechner
 // Copyright (c) 2019 LEGO System A/S
 
+#include "py/mpconfig.h"
+
+#if PYBRICKS_PY_MOTOR
+
 #include <pbio/motor.h>
 
 #include "py/mphal.h"
@@ -13,9 +17,6 @@
 #include "pberror.h"
 #include "pbobj.h"
 #include "pbthread.h"
-
-
-#if PBIO_CONFIG_ENABLE_MOTORS
 
 /* Wait for maneuver to complete */
 
@@ -430,4 +431,4 @@ const mp_obj_type_t motor_Motor_type = {
     .make_new = motor_Motor_make_new,
     .locals_dict = (mp_obj_dict_t*)&motor_Motor_locals_dict,
 };
-#endif //PBIO_CONFIG_ENABLE_MOTORS
+#endif //PYBRICKS_PY_MOTOR

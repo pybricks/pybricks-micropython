@@ -107,11 +107,7 @@ pbio_error_t pbio_motor_run_target(pbio_port_t port, int32_t speed, int32_t targ
 
 pbio_error_t pbio_motor_track_target(pbio_port_t port, int32_t target);
 
-#ifdef PBIO_CONFIG_ENABLE_MOTORS
 void _pbio_motorcontrol_poll(void);
-#else
-static inline void _pbio_motorcontrol_poll(void) { }
-#endif // PBIO_CONFIG_ENABLE_MOTORS
 
 /** @}*/
 

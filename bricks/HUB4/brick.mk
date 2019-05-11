@@ -37,7 +37,6 @@ OPENOCD_CONFIG ?= openocd_stm32f$(CPU_FAMILY).cfg
 TEXT0_ADDR ?= 0x08000000
 
 PBIO_OPT = -DPBIO_CONFIG_ENABLE_SYS
-PBIO_OPT += -DPBIO_CONFIG_ENABLE_MOTORS
 
 CFLAGS_CORTEX_M0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
 CFLAGS_CORTEX_M4 = -mthumb -mtune=cortex-m4 -mabi=aapcs-linux -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fsingle-precision-constant -Wdouble-promotion

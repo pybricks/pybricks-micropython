@@ -320,7 +320,6 @@ void control_update(pbio_port_t port) {
 
 }
 
-#ifdef PBIO_CONFIG_ENABLE_MOTORS
 // Service all the motors by calling this function at approximately constant intervals.
 void _pbio_motorcontrol_poll(void) {
     // Do the update for each motor
@@ -328,8 +327,6 @@ void _pbio_motorcontrol_poll(void) {
         control_update(port);
     }
 }
-#endif // PBIO_CONFIG_ENABLE_MOTORS
-
 
 pbio_error_t pbio_motor_get_initial_state(pbio_port_t port, count_t *count_start, rate_t *rate_start) {
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
@@ -390,7 +387,7 @@ void control_init_time_target(pbio_port_t port) {
             status->speed_integrator += trajectory->th0 - status->integrator_ref_start;
             status->integrator_ref_start = trajectory->th0;
         }
-    } 
+    }
     else {
         // old mode was passive, so start from zero,
         status->speed_integrator = 0;
@@ -417,7 +414,7 @@ pbio_error_t pbio_motor_run(pbio_port_t port, int32_t speed) {
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
 
     if (mtr->state == PBIO_CONTROL_TIME_BACKGROUND &&
-        mtr->control.action == RUN && 
+        mtr->control.action == RUN &&
         ((int32_t) (speed * mtr->counts_per_output_unit)) == mtr->control.trajectory.w1) {
         // If the exact same command is already running, there is nothing we need to do
         return PBIO_SUCCESS;

@@ -30,7 +30,6 @@ INC += -I$(TOP)/ports/pybricks/extmod
 INC += -I$(TOP)/ports/unix
 
 PBIO_OPT = -DPBIO_CONFIG_ENABLE_DEINIT
-PBIO_OPT += -DPBIO_CONFIG_ENABLE_MOTORS
 
 # compiler settings
 CWARN = -Wall -Werror

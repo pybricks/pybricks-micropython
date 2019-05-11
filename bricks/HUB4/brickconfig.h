@@ -6,6 +6,9 @@
 #define MICROPY_HW_BOARD_NAME           "LPF2 HUB4"
 #define MICROPY_HW_MCU_NAME             "STM32F030RC"
 
+// Pybricks modules
+#define PYBRICKS_PY_MOTOR               (1)
+
 // You can disable the built-in MicroPython compiler by setting the following
 // config option to 0.  If you do this then you won't get a REPL prompt, but you
 // will still be able to execute pre-compiled scripts, compiled with mpy-cross.

@@ -6,3 +6,5 @@
 #define MICROPY_HW_BOARD_NAME           "NUCLEO-F446RE"
 #define MICROPY_HW_MCU_NAME             "STM32F446xx"
 
+// Pybricks modules
+#define PYBRICKS_PY_MOTOR               (0)
