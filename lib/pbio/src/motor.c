@@ -15,11 +15,6 @@ pbio_motor_t motor[] = {
     }
 };
 
-// Initialize motor control state as inactive
-pbio_motor_state_t motor_control_active[] = {
-    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)] PBIO_CONTROL_COASTING
-};
-
 pbio_error_t pbio_motor_coast(pbio_port_t port){
     motor[PORT_TO_IDX(port)].state = PBIO_CONTROL_COASTING;
     return pbdrv_motor_coast(port);
@@ -207,7 +202,7 @@ pbio_error_t pbio_motor_set_pid_settings(
 
 void pbio_motor_print_settings(pbio_port_t port, char *dc_settings_string, char *enc_settings_string) {
     pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
-    
+
     char *direction = mtr->direction == PBIO_MOTOR_DIR_CLOCKWISE ? "clockwise" : "counterclockwise";
     snprintf(dc_settings_string, MAX_DCMOTOR_SETTINGS_STR_LENGTH,
         "Motor properties:\n"
