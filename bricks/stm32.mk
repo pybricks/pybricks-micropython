@@ -71,7 +71,6 @@ SRC_C = \
 	main.c \
 	modhub4.c \
 	modmovehub.c \
-	accel.c \
 	systick.c \
 	uart_core.c \
 	lib/utils/interrupt_char.c \

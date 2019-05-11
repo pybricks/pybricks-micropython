@@ -17,8 +17,6 @@
 #include "lib/utils/pyexec.h"
 #include "lib/utils/interrupt_char.h"
 
-#include "accel.h"
-
 static char *stack_top;
 #if MICROPY_ENABLE_GC
 static char heap[8 * 1024];
@@ -137,7 +135,6 @@ int main(int argc, char **argv) {
     int stack_dummy;
     stack_top = (char*)&stack_dummy;
 
-    accel_init();
     pbio_init();
 
     #if MICROPY_ENABLE_GC
@@ -170,7 +167,6 @@ soft_reset:
 
     goto soft_reset;
 
-    accel_deinit();
     pbio_deinit();
 
     return 0;
