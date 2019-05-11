@@ -31,10 +31,9 @@ static void stall_clear_flag(pbio_control_stalled_t *stalled, pbio_control_stall
     *stalled &= ~flag;
 }
 
-static pbio_error_t control_update_angle_target(pbio_port_t port) {
+static pbio_error_t control_update_angle_target(pbio_motor_t *mtr) {
 
     // Trajectory and setting shortcuts for this motor
-    pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
     pbio_control_status_angular_t *status = &mtr->control.status_angular;
     duty_t max_duty = mtr->max_duty_steps;
     pbio_error_t err;
@@ -47,9 +46,9 @@ static pbio_error_t control_update_angle_target(pbio_port_t port) {
 
     // Read current state of this motor: current time, speed, and position
     time_now = clock_usecs();
-    err = pbio_motor_get_encoder_count(port, &count_now);
+    err = pbio_motor_get_encoder_count(mtr, &count_now);
     if (err != PBIO_SUCCESS) { return err; }
-    err = pbio_motor_get_encoder_rate(port, &rate_now);
+    err = pbio_motor_get_encoder_rate(mtr, &rate_now);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Get the time at which we want to evaluate the reference position/velocities, for position based commands
@@ -149,17 +148,17 @@ static pbio_error_t control_update_angle_target(pbio_port_t port) {
     // But if brake or coast was specified as the afer_stop, we trigger that. Also clear the running flag to stop waiting for completion.
         if (mtr->control.after_stop == PBIO_MOTOR_STOP_COAST) {
             // Coast the motor
-            err = pbio_motor_coast(port);
+            err = pbio_motor_coast(mtr);
             if (err != PBIO_SUCCESS) { return err; }
         }
         else if (mtr->control.after_stop == PBIO_MOTOR_STOP_BRAKE) {
             // Brake the motor
-            err = pbio_motor_brake(port);
+            err = pbio_motor_brake(mtr);
             if (err != PBIO_SUCCESS) { return err; }
         }
         else if (mtr->control.after_stop == PBIO_MOTOR_STOP_HOLD) {
             // Hold the motor. In position based control, holding just means that we continue the position control loop without changes
-            err = pbio_motor_set_duty_cycle_sys(port, duty);
+            err = pbio_motor_set_duty_cycle_sys(mtr, duty);
             if (err != PBIO_SUCCESS) { return err; }
 
             // Altough we keep holding, the maneuver is completed
@@ -169,16 +168,15 @@ static pbio_error_t control_update_angle_target(pbio_port_t port) {
     }
     // If we are not standing still at a target yet, actuate with the calculated signal
     else {
-        err = pbio_motor_set_duty_cycle_sys(port, duty);
+        err = pbio_motor_set_duty_cycle_sys(mtr, duty);
         if (err != PBIO_SUCCESS) { return err; }
     }
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t control_update_time_target(pbio_port_t port) {
+static pbio_error_t control_update_time_target(pbio_motor_t *mtr) {
 
     // Trajectory and setting shortcuts for this motor
-    pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
     pbio_control_status_timed_t *status = &mtr->control.status_timed;
     duty_t max_duty = mtr->max_duty_steps;
     pbio_error_t err;
@@ -191,9 +189,9 @@ static pbio_error_t control_update_time_target(pbio_port_t port) {
 
     // Read current state of this motor: current time, speed, and position
     time_now = clock_usecs();
-    err = pbio_motor_get_encoder_count(port, &count_now);
+    err = pbio_motor_get_encoder_count(mtr, &count_now);
     if (err != PBIO_SUCCESS) { return err; }
-    err = pbio_motor_get_encoder_rate(port, &rate_now);
+    err = pbio_motor_get_encoder_rate(mtr, &rate_now);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Get reference signals
@@ -269,41 +267,40 @@ static pbio_error_t control_update_time_target(pbio_port_t port) {
     // If so, we have reached our goal and we trigger the stop
         if (mtr->control.after_stop == PBIO_MOTOR_STOP_COAST) {
             // Coast the motor
-            err = pbio_motor_coast(port);
+            err = pbio_motor_coast(mtr);
             if (err != PBIO_SUCCESS) { return err; }
         }
         else if (mtr->control.after_stop == PBIO_MOTOR_STOP_BRAKE) {
             // Brake the motor
-            err = pbio_motor_brake(port);
+            err = pbio_motor_brake(mtr);
             if (err != PBIO_SUCCESS) { return err; }
         }
         else if (mtr->control.after_stop == PBIO_MOTOR_STOP_HOLD) {
             // Hold the motor. When ending a time based control maneuver with hold, we trigger a new position based maneuver with zero degrees
-            err = pbio_motor_track_target(port, ((float_t) count_now)/mtr->counts_per_output_unit);
+            err = pbio_motor_track_target(mtr, ((float_t) count_now)/mtr->counts_per_output_unit);
             if (err != PBIO_SUCCESS) { return err; }
         }
     }
     // If we are not standing still at a target yet, actuate with the calculated signal
     else {
-        err = pbio_motor_set_duty_cycle_sys(port, duty);
+        err = pbio_motor_set_duty_cycle_sys(mtr, duty);
         if (err != PBIO_SUCCESS) { return err; }
     }
     return PBIO_SUCCESS;
 }
 
-static void control_update(pbio_port_t port) {
-    pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
+static void control_update(pbio_motor_t *mtr) {
     pbio_error_t err = PBIO_SUCCESS;
     switch (mtr->state) {
         // Update the angular control in these modes
         case PBIO_CONTROL_ANGLE_BACKGROUND:
         case PBIO_CONTROL_ANGLE_FOREGROUND:
-            err = control_update_angle_target(port);
+            err = control_update_angle_target(mtr);
             break;
         // Update the timed control in these modes
         case PBIO_CONTROL_TIME_BACKGROUND:
         case PBIO_CONTROL_TIME_FOREGROUND:
-            err = control_update_time_target(port);
+            err = control_update_time_target(mtr);
             break;
         default:
             break;
@@ -312,7 +309,7 @@ static void control_update(pbio_port_t port) {
     if (err != PBIO_SUCCESS) {
         // Attempt lowest level coast without checking
         // for further errors: turn off power
-        pbdrv_motor_coast(port);
+        pbdrv_motor_coast(mtr->port);
 
         // Let foreground tasks know about error in order to stop blocking wait tasks
         mtr->state = PBIO_CONTROL_ERRORED;
@@ -320,16 +317,26 @@ static void control_update(pbio_port_t port) {
 
 }
 
-// Service all the motors by calling this function at approximately constant intervals.
-void _pbio_motorcontrol_poll(void) {
-    // Do the update for each motor
-    for (pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
-        control_update(port);
+// TODO: convert these two functions to contiki process
+void _pbio_motorcontroll_init(void) {
+    int i;
+
+    for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
+        motor[i].port = PBDRV_CONFIG_FIRST_MOTOR_PORT + i;
     }
 }
 
-static pbio_error_t pbio_motor_get_initial_state(pbio_port_t port, count_t *count_start, rate_t *rate_start) {
-    pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
+// Service all the motors by calling this function at approximately constant intervals.
+void _pbio_motorcontrol_poll(void) {
+    int i;
+
+    // Do the update for each motor
+    for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
+        control_update(&motor[i]);
+    }
+}
+
+static pbio_error_t pbio_motor_get_initial_state(pbio_motor_t *mtr, count_t *count_start, rate_t *rate_start) {
     pbio_error_t err;
     ustime_t time_now = clock_usecs();
 
@@ -345,22 +352,20 @@ static pbio_error_t pbio_motor_get_initial_state(pbio_port_t port, count_t *coun
     }
     else {
         // Otherwise, we are not currently in a control mode, and we start from the instantaneous motor state
-        err = pbio_motor_get_encoder_count(port, count_start);
+        err = pbio_motor_get_encoder_count(mtr, count_start);
         if (err != PBIO_SUCCESS) { return err; }
 
-        err = pbio_motor_get_encoder_rate(port, rate_start);
+        err = pbio_motor_get_encoder_rate(mtr, rate_start);
         if (err != PBIO_SUCCESS) { return err; }
     }
     return PBIO_SUCCESS;
 }
 
-static void control_init_angle_target(pbio_port_t port) {
+static void control_init_angle_target(pbio_motor_t *mtr) {
     // TODO If already running, start from ref + set flag of original state
 
     // depending on wind up status, keep or finalize integrator state, plus maintain status
 
-    // pbio_motor_state_t old_control_mode = motor[PORT_TO_IDX(port)].state;
-    pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
     pbio_control_status_angular_t *status = &mtr->control.status_angular;
     pbio_control_trajectory_t *trajectory = &mtr->control.trajectory;
 
@@ -377,8 +382,7 @@ static void control_init_angle_target(pbio_port_t port) {
 }
 
 
-static void control_init_time_target(pbio_port_t port) {
-    pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
+static void control_init_time_target(pbio_motor_t *mtr) {
     pbio_control_status_timed_t *status = &mtr->control.status_timed;
     pbio_control_trajectory_t *trajectory = &mtr->control.trajectory;
 
@@ -401,18 +405,13 @@ static void control_init_time_target(pbio_port_t port) {
 
 /* pbio user functions */
 
-pbio_error_t pbio_motor_is_stalled(pbio_port_t port, bool *stalled) {
-    pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
+pbio_error_t pbio_motor_is_stalled(pbio_motor_t *mtr, bool *stalled) {
     *stalled = mtr->control.stalled > STALLED_NONE &&
                mtr->state >= PBIO_CONTROL_ANGLE_BACKGROUND;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_run(pbio_port_t port, int32_t speed) {
-
-    // Load motor settings and status
-    pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
-
+pbio_error_t pbio_motor_run(pbio_motor_t *mtr, int32_t speed) {
     if (mtr->state == PBIO_CONTROL_TIME_BACKGROUND &&
         mtr->control.action == RUN &&
         ((int32_t) (speed * mtr->counts_per_output_unit)) == mtr->control.trajectory.w1) {
@@ -429,7 +428,7 @@ pbio_error_t pbio_motor_run(pbio_port_t port, int32_t speed) {
     count_t count_start;
     rate_t rate_start;
     pbio_error_t err;
-    err = pbio_motor_get_initial_state(port, &count_start, &rate_start);
+    err = pbio_motor_get_initial_state(mtr, &count_start, &rate_start);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Compute new maneuver based on user argument, starting from the initial state
@@ -444,10 +443,10 @@ pbio_error_t pbio_motor_run(pbio_port_t port, int32_t speed) {
     if (err != PBIO_SUCCESS) { return err; }
 
     // Initialize or reset the PID control status for the given maneuver
-    control_init_time_target(port);
+    control_init_time_target(mtr);
 
     // Run one control update synchronously with user command.
-    err = control_update_time_target(port);
+    err = control_update_time_target(mtr);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Run is always in the background
@@ -456,35 +455,31 @@ pbio_error_t pbio_motor_run(pbio_port_t port, int32_t speed) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_stop(pbio_port_t port, pbio_control_after_stop_t after_stop) {
+pbio_error_t pbio_motor_stop(pbio_motor_t *mtr, pbio_control_after_stop_t after_stop) {
     int32_t angle_now;
     pbio_error_t err;
     switch (after_stop) {
         case PBIO_MOTOR_STOP_COAST:
             // Stop by coasting
-            return pbio_motor_coast(port);
+            return pbio_motor_coast(mtr);
         case PBIO_MOTOR_STOP_BRAKE:
             // Stop by braking
-            return pbio_motor_brake(port);
+            return pbio_motor_brake(mtr);
         case PBIO_MOTOR_STOP_HOLD:
             // Force stop by holding the current position.
             // First, read where this position is
-            err = pbio_motor_get_angle(port, &angle_now);
+            err = pbio_motor_get_angle(mtr, &angle_now);
             if (err != PBIO_SUCCESS) { return err; }
             // Holding is equivalent to driving to that position actively,
             // which automatically corrects the overshoot that is inevitable
             // when the user requests an immediate stop.
-            return pbio_motor_track_target(port, angle_now);
+            return pbio_motor_track_target(mtr, angle_now);
         default:
             return PBIO_ERROR_INVALID_ARG;
     }
 }
 
-pbio_error_t pbio_motor_run_time(pbio_port_t port, int32_t speed, int32_t duration, pbio_control_after_stop_t after_stop, bool foreground) {
-
-    // Load motor settings and status
-    pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
-
+pbio_error_t pbio_motor_run_time(pbio_motor_t *mtr, int32_t speed, int32_t duration, pbio_control_after_stop_t after_stop, bool foreground) {
     // Set new maneuver action and stop type
     mtr->control.action = RUN_TIME;
     mtr->control.after_stop = after_stop;
@@ -494,7 +489,7 @@ pbio_error_t pbio_motor_run_time(pbio_port_t port, int32_t speed, int32_t durati
     count_t count_start;
     rate_t rate_start;
     pbio_error_t err;
-    err = pbio_motor_get_initial_state(port, &count_start, &rate_start);
+    err = pbio_motor_get_initial_state(mtr, &count_start, &rate_start);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Compute new maneuver based on user argument, starting from the initial state
@@ -510,10 +505,10 @@ pbio_error_t pbio_motor_run_time(pbio_port_t port, int32_t speed, int32_t durati
     if (err != PBIO_SUCCESS) { return err; }
 
     // Initialize or reset the PID control status for the given maneuver
-    control_init_time_target(port);
+    control_init_time_target(mtr);
 
     // Run one control update synchronously with user command.
-    err = control_update_time_target(port);
+    err = control_update_time_target(mtr);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Set user specified foreground or background state
@@ -522,11 +517,7 @@ pbio_error_t pbio_motor_run_time(pbio_port_t port, int32_t speed, int32_t durati
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_run_until_stalled(pbio_port_t port, int32_t speed, pbio_control_after_stop_t after_stop) {
-
-    // Load motor settings and status
-    pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
-
+pbio_error_t pbio_motor_run_until_stalled(pbio_motor_t *mtr, int32_t speed, pbio_control_after_stop_t after_stop) {
     // Set new maneuver action and stop type
     mtr->control.action = RUN_STALLED;
     mtr->control.after_stop = after_stop;
@@ -536,7 +527,7 @@ pbio_error_t pbio_motor_run_until_stalled(pbio_port_t port, int32_t speed, pbio_
     count_t count_start;
     rate_t rate_start;
     pbio_error_t err;
-    err = pbio_motor_get_initial_state(port, &count_start, &rate_start);
+    err = pbio_motor_get_initial_state(mtr, &count_start, &rate_start);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Compute new maneuver based on user argument, starting from the initial state
@@ -551,10 +542,10 @@ pbio_error_t pbio_motor_run_until_stalled(pbio_port_t port, int32_t speed, pbio_
     if (err != PBIO_SUCCESS) { return err; }
 
     // Initialize or reset the PID control status for the given maneuver
-    control_init_time_target(port);
+    control_init_time_target(mtr);
 
     // Run one control update synchronously with user command.
-    err = control_update_time_target(port);
+    err = control_update_time_target(mtr);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Run until stalled is always in the foreground
@@ -563,11 +554,7 @@ pbio_error_t pbio_motor_run_until_stalled(pbio_port_t port, int32_t speed, pbio_
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_run_target(pbio_port_t port, int32_t speed, int32_t target, pbio_control_after_stop_t after_stop, bool foreground) {
-
-    // Load motor settings and status
-    pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
-
+pbio_error_t pbio_motor_run_target(pbio_motor_t *mtr, int32_t speed, int32_t target, pbio_control_after_stop_t after_stop, bool foreground) {
     // Set new maneuver action and stop type
     mtr->control.action = RUN_TARGET;
     mtr->control.after_stop = after_stop;
@@ -577,7 +564,7 @@ pbio_error_t pbio_motor_run_target(pbio_port_t port, int32_t speed, int32_t targ
     count_t count_start;
     rate_t rate_start;
     pbio_error_t err;
-    err = pbio_motor_get_initial_state(port, &count_start, &rate_start);
+    err = pbio_motor_get_initial_state(mtr, &count_start, &rate_start);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Compute new maneuver based on user argument, starting from the initial state
@@ -593,10 +580,10 @@ pbio_error_t pbio_motor_run_target(pbio_port_t port, int32_t speed, int32_t targ
     if (err != PBIO_SUCCESS) { return err; }
 
     // Initialize or reset the PID control status for the given maneuver
-    control_init_angle_target(port);
+    control_init_angle_target(mtr);
 
     // Run one control update synchronously with user command.
-    err = control_update_angle_target(port);
+    err = control_update_angle_target(mtr);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Set user specified foreground or background state
@@ -605,7 +592,7 @@ pbio_error_t pbio_motor_run_target(pbio_port_t port, int32_t speed, int32_t targ
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_run_angle(pbio_port_t port, int32_t speed, int32_t angle, pbio_control_after_stop_t after_stop, bool foreground) {
+pbio_error_t pbio_motor_run_angle(pbio_motor_t *mtr, int32_t speed, int32_t angle, pbio_control_after_stop_t after_stop, bool foreground) {
 
     // Speed  | Angle | End target  | Effect
     //  > 0   |  > 0  | now + angle | Forward
@@ -615,19 +602,16 @@ pbio_error_t pbio_motor_run_angle(pbio_port_t port, int32_t speed, int32_t angle
 
     // Read the instantaneous angle
     int32_t angle_now;
-    pbio_error_t err = pbio_motor_get_angle(port, &angle_now);
+    pbio_error_t err = pbio_motor_get_angle(mtr, &angle_now);
     if (err != PBIO_SUCCESS) { return err; }
 
     // The angle target is the instantaneous angle plus the angle to be traveled
     int32_t angle_target = angle_now + (speed < 0 ? -angle: angle);
 
-    return pbio_motor_run_target(port, speed, angle_target, after_stop, foreground);
+    return pbio_motor_run_target(mtr, speed, angle_target, after_stop, foreground);
 }
 
-pbio_error_t pbio_motor_track_target(pbio_port_t port, int32_t target) {
-    // Load motor settings and status
-    pbio_motor_t *mtr = &motor[PORT_TO_IDX(port)];
-
+pbio_error_t pbio_motor_track_target(pbio_motor_t *mtr, int32_t target) {
     // Set new maneuver action and stop type
     mtr->control.action = TRACK_TARGET;
     mtr->control.after_stop = PBIO_MOTOR_STOP_COAST;
@@ -637,17 +621,17 @@ pbio_error_t pbio_motor_track_target(pbio_port_t port, int32_t target) {
     count_t count_start;
     rate_t rate_start;
     pbio_error_t err;
-    err = pbio_motor_get_initial_state(port, &count_start, &rate_start);
+    err = pbio_motor_get_initial_state(mtr, &count_start, &rate_start);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Compute new maneuver based on user argument, starting from the initial state
     make_trajectory_none(time_start, target*mtr->counts_per_output_unit, 0, &mtr->control.trajectory);
 
     // Initialize or reset the PID control status for the given maneuver
-    control_init_angle_target(port);
+    control_init_angle_target(mtr);
 
     // Run one control update synchronously with user command
-    err = control_update_angle_target(port);
+    err = control_update_angle_target(mtr);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Tracking a target is always a background action

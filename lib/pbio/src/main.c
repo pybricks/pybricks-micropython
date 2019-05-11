@@ -63,6 +63,7 @@ void pbio_init(void) {
     _pbdrv_button_init();
     _pbdrv_light_init();
     _pbdrv_motor_init();
+    _pbio_motorcontroll_init();
 #ifdef PBIO_CONFIG_ENABLE_SYS
     autostart_start(autostart_processes);
 #endif

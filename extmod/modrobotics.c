@@ -17,8 +17,8 @@
 // Class structure for DriveBase
 typedef struct _robotics_DriveBase_obj_t {
     mp_obj_base_t base;
-    pbio_port_t port_left;
-    pbio_port_t port_right;
+    motor_Motor_obj_t *mtr_left;
+    motor_Motor_obj_t *mtr_right;
     float_t wheel_diameter;
     float_t axle_track;
 } robotics_DriveBase_obj_t;
@@ -34,12 +34,12 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     if (!MP_OBJ_IS_TYPE(args[0], &motor_Motor_type) || !MP_OBJ_IS_TYPE(args[1], &motor_Motor_type)) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
-    self->port_left = get_port(args[0]);
-    self->port_right = get_port(args[1]);
+    self->mtr_left = MP_OBJ_TO_PTR(args[0]);
+    self->mtr_right = MP_OBJ_TO_PTR(args[1]);
 
     // Assert that motors can be paired
     pbio_motor_pair_t pair;
-    pb_assert(pbio_get_motor_pair(self->port_left, self->port_right, &pair));
+    pb_assert(pbio_get_motor_pair(self->mtr_left->mtr, self->mtr_right->mtr, &pair));
 
     // Get wheel diameter and axle track dimensions
     self->wheel_diameter = mp_obj_get_num(args[2]);
@@ -56,7 +56,8 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
 STATIC void robotics_DriveBase_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, qstr_str(MP_QSTR_DriveBase));
-    mp_printf(print, " with left motor on Port %c and right motor on Port %c", self->port_left, self->port_right);
+    mp_printf(print, " with left motor on Port %c and right motor on Port %c",
+        self->mtr_left->mtr->port, self->mtr_right->mtr->port);
 }
 
 STATIC mp_obj_t robotics_DriveBase_drive(mp_obj_t self_in, mp_obj_t speed, mp_obj_t steering) {
@@ -66,8 +67,8 @@ STATIC mp_obj_t robotics_DriveBase_drive(mp_obj_t self_in, mp_obj_t speed, mp_ob
 
     pb_thread_enter();
 
-    pbio_error_t err_left = pbio_motor_run(self->port_left, (sum+dif)/2);
-    pbio_error_t err_right = pbio_motor_run(self->port_right, (sum-dif)/2);
+    pbio_error_t err_left = pbio_motor_run(self->mtr_left->mtr, (sum+dif)/2);
+    pbio_error_t err_right = pbio_motor_run(self->mtr_right->mtr, (sum-dif)/2);
 
     pb_thread_exit();
 
@@ -86,8 +87,8 @@ STATIC mp_obj_t robotics_DriveBase_stop(size_t n_args, const mp_obj_t *args){
 
     pb_thread_enter();
 
-    err_left = pbio_motor_stop(self->port_left, after_stop);
-    err_right = pbio_motor_stop(self->port_right, after_stop);
+    err_left = pbio_motor_stop(self->mtr_left->mtr, after_stop);
+    err_right = pbio_motor_stop(self->mtr_right->mtr, after_stop);
 
     pb_thread_exit();
 
