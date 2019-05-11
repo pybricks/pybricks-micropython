@@ -8,3 +8,5 @@
 
 // Pybricks modules
 #define PYBRICKS_PY_MOTOR               (0)
+
+#define PYBRICKS_PORT_BUILTIN_MODULES

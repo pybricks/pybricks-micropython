@@ -36,6 +36,8 @@ OPENOCD ?= openocd
 OPENOCD_CONFIG ?= openocd_stm32f$(CPU_FAMILY).cfg
 TEXT0_ADDR ?= 0x08000000
 
+PBIO_OPT = -DPBIO_CONFIG_ENABLE_SYS
+
 CFLAGS_CORTEX_M0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
 CFLAGS_CORTEX_M4 = -mthumb -mtune=cortex-m4 -mabi=aapcs-linux -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fsingle-precision-constant -Wdouble-promotion
 CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib $(CFLAGS_CORTEX_M$(CPU_FAMILY)) $(COPT) $(PBIO_OPT)
@@ -60,11 +62,16 @@ CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
 CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
 endif
 
-LIBS =
+LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
 SRC_C = \
 	main.c \
+	modhub4.c \
+	modmovehub.c \
+	accel.c \
+	systick.c \
 	uart_core.c \
+	lib/utils/interrupt_char.c \
 	lib/utils/printf.c \
 	lib/utils/stdout_helpers.c \
 	lib/utils/pyexec.c \
@@ -80,7 +87,88 @@ else
 	SRC_S += $(TOP)/ports/stm32/gchelper.s
 endif
 
+# Pybricks modules
+PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
+	extmod/pberror.c \
+	extmod/modpupdevices.c \
+	extmod/modparameters.c \
+	extmod/modiodevice.c \
+	extmod/modadvanced.c \
+	extmod/modhubcommon.c \
+	extmod/modcommon.c \
+	extmod/modbattery.c \
+	extmod/modmotor.c \
+	extmod/modtools.c \
+	)
+
+BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\
+	controller/bluenrg_gap_aci.c \
+	controller/bluenrg_gatt_aci.c \
+	controller/bluenrg_hal_aci.c \
+	controller/bluenrg_l2cap_aci.c \
+	controller/bluenrg_updater_aci.c \
+	hci_le.c \
+	)
+
+PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
+	drv/$(PBIO_PLATFORM)/adc.c \
+	drv/$(PBIO_PLATFORM)/battery.c \
+	drv/$(PBIO_PLATFORM)/bluetooth.c \
+	drv/$(PBIO_PLATFORM)/button.c \
+	drv/$(PBIO_PLATFORM)/light.c \
+	drv/$(PBIO_PLATFORM)/ioport.c \
+	drv/$(PBIO_PLATFORM)/motor.c \
+	drv/$(PBIO_PLATFORM)/uart.c \
+	platform/$(PBIO_PLATFORM)/clock.c \
+	platform/$(PBIO_PLATFORM)/sys.c \
+	src/motor.c \
+	src/error.c \
+	src/iodev.c \
+	src/motorcontrol.c \
+	src/motorref.c \
+	src/light.c \
+	src/main.c \
+	src/uartdev.c \
+	sys/autostart.c \
+	sys/etimer.c \
+	sys/process.c \
+	sys/timer.c \
+	)
+
+SRC_LIBM = $(addprefix lib/libm/,\
+	math.c \
+	acoshf.c \
+	asinfacosf.c \
+	asinhf.c \
+	atan2f.c \
+	atanf.c \
+	atanhf.c \
+	ef_rem_pio2.c \
+	erf_lgamma.c \
+	fmodf.c \
+	kf_cos.c \
+	kf_rem_pio2.c \
+	kf_sin.c \
+	kf_tan.c \
+	log1pf.c \
+	nearbyintf.c \
+	sf_cos.c \
+	sf_erf.c \
+	sf_frexp.c \
+	sf_ldexp.c \
+	sf_modf.c \
+	sf_sin.c \
+	sf_tan.c \
+	wf_lgamma.c \
+	wf_tgamma.c \
+	ef_sqrt.c \
+	)
+
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
+OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_DRIVERS_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(BLUENRG_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 
 # Optionally append .mpy file specified by PYBRICKS_MPY_MAIN_MODULE to 2K free space after 106K firmware
 ifneq ($(PYBRICKS_MPY_MAIN_MODULE),)

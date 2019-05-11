@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2013, 2014 Damien P. George
+// Copyright (c) 2018 David Lechner
 
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <pbio/button.h>
+#include <pbio/main.h>
+#include <pbsys/sys.h>
 
 #include "py/compile.h"
 #include "py/runtime.h"
@@ -11,61 +15,167 @@
 #include "py/gc.h"
 #include "py/mperrno.h"
 #include "lib/utils/pyexec.h"
+#include "lib/utils/interrupt_char.h"
 
-#include "stm32f446xx.h"
+static char *stack_top;
+#if MICROPY_ENABLE_GC
+static char heap[8 * 1024];
+#endif
 
-#if MICROPY_ENABLE_COMPILER
-void do_str(const char *src, mp_parse_input_kind_t input_kind) {
+#if MICROPY_PERSISTENT_CODE_LOAD
+static void run_user_program() {
     nlr_buf_t nlr;
+
     if (nlr_push(&nlr) == 0) {
-        mp_lexer_t *lex = mp_lexer_new_from_str_len(MP_QSTR__lt_stdin_gt_, src, strlen(src), 0);
-        qstr source_name = lex->source_name;
-        mp_parse_tree_t parse_tree = mp_parse(lex, input_kind);
-        mp_obj_t module_fun = mp_compile(&parse_tree, source_name, MP_EMIT_OPT_NONE, true);
-        mp_call_function_0(module_fun);
+        mp_call_function_0(mp_import_name(QSTR_FROM_STR_STATIC(PYBRICKS_MPY_MAIN_MODULE),
+            mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
         nlr_pop();
     } else {
         // uncaught exception
         mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
     }
 }
-#endif
 
-static char *stack_top;
-#if MICROPY_ENABLE_GC
-static char heap[64*1024];
-#endif
+// _binary_build_main_mpy_start is defined by objcopy during make
+extern uint32_t _binary_build_main_mpy_start;
+#define main_mpy ((const uint8_t *)_binary_build_main_mpy_start)
+
+static uint32_t main_mpy_pos;
+
+static mp_uint_t main_mpy_readbyte(void *data) {
+    // TODO: do we need to handle end of file?
+    return main_mpy[main_mpy_pos];
+}
+
+static void main_mpy_close(void *data) {
+    main_mpy_pos = 0;
+}
+
+void mp_reader_new_file(mp_reader_t *reader, const char *filename) {
+    reader->data = NULL;
+    reader->readbyte = main_mpy_readbyte;
+    reader->close = main_mpy_close;
+}
+#endif // MICROPY_PERSISTENT_CODE_LOAD
+
+#if !MICROPY_ENABLE_COMPILER
+typedef enum {
+    WAITING_FOR_FIRST_RELEASE,
+    WAITING_FOR_PRESS,
+    WAITING_FOR_SECOND_RELEASE
+} waiting_for_t;
+
+// wait for button to be pressed/released before starting program
+static void wait_for_button_press(void) {
+    pbio_button_flags_t btn;
+    waiting_for_t wait_for = WAITING_FOR_FIRST_RELEASE;
+
+    mp_print_str(&mp_plat_print, "\nPress green button to start...");
+
+    // wait for button rising edge, then falling edge
+    for (;;) {
+        pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
+        if (btn & PBIO_BUTTON_CENTER) {
+            // step 2:
+            // once we are sure the button is released, we wait for it to be
+            // pressed (rising edge).
+            if (wait_for == WAITING_FOR_PRESS) {
+                wait_for = WAITING_FOR_SECOND_RELEASE;
+            }
+        }
+        else {
+            // step 1:
+            // we have to make sure the button is released before waiting for
+            // it to be pressed, otherwise programs would be restarted as soon
+            // as they are stopped because the button is already pressed.
+            if (wait_for == WAITING_FOR_FIRST_RELEASE) {
+                wait_for = WAITING_FOR_PRESS;
+            }
+            // step 3:
+            // after the button has been pressed, we need to wait for it to be
+            // released (falling edge), otherwise programs would stop as soon
+            // as they were started because the button is already pressed.
+            else if (wait_for == WAITING_FOR_SECOND_RELEASE) {
+                break;
+            }
+        }
+        while (pbio_do_one_event()) { }
+        __WFI();
+    }
+
+    // add some space so user knows where their output starts
+    mp_print_str(&mp_plat_print, "\n\n");
+}
+#endif // MICROPY_ENABLE_COMPILER
+
+// callback for when stop button is pressed
+static void user_program_stop_func(void) {
+    // we can only raise an exception if the VM is running
+    // mp_interrupt_char will be either -1 or 0 when VM is not running
+    if (mp_interrupt_char > 0) {
+        mp_keyboard_interrupt();
+    }
+}
+
+static bool user_program_stdin_event_func(uint8_t c) {
+    if (c == mp_interrupt_char) {
+        mp_keyboard_interrupt();
+        return true;
+    }
+
+    return false;
+}
+
+static const pbsys_user_program_callbacks_t user_program_callbacks = {
+    .stop           = user_program_stop_func,
+    .stdin_event    = user_program_stdin_event_func,
+};
 
 int main(int argc, char **argv) {
     int stack_dummy;
     stack_top = (char*)&stack_dummy;
 
+    pbio_init();
+
     #if MICROPY_ENABLE_GC
     gc_init(heap, heap + sizeof(heap));
     #endif
+
+soft_reset:
+    #if !MICROPY_ENABLE_COMPILER
+    wait_for_button_press();
+    #endif
+
+    pbsys_prepare_user_program(&user_program_callbacks);
+
     mp_init();
+
+    pyexec_frozen_module("boot.py");
+
     #if MICROPY_ENABLE_COMPILER
-    #if MICROPY_REPL_EVENT_DRIVEN
-    pyexec_event_repl_init();
-    for (;;) {
-        int c = mp_hal_stdin_rx_chr();
-        if (pyexec_event_repl_process_char(c)) {
-            break;
-        }
-    }
-    #else
     pyexec_friendly_repl();
-    #endif
-    //do_str("print('hello world!', list(x+1 for x in range(10)), end='eol\\n')", MP_PARSE_SINGLE_INPUT);
-    //do_str("for i in range(10):\r\n  print(i)", MP_PARSE_FILE_INPUT);
-    #else
+    #else // MICROPY_ENABLE_COMPILER
+    #if MICROPY_PERSISTENT_CODE_LOAD
+    run_user_program();
+    #else // MICROPY_PERSISTENT_CODE_LOAD
     pyexec_frozen_module("main.py");
-    #endif
+    #endif // MICROPY_PERSISTENT_CODE_LOAD
+    #endif // MICROPY_ENABLE_COMPILER
     mp_deinit();
+
+    pbsys_unprepare_user_program();
+
+    goto soft_reset;
+
+    pbio_deinit();
+
     return 0;
 }
 
-extern uintptr_t gc_helper_get_regs_and_sp(uintptr_t *regs);
+// defined in linker script
+extern uint32_t _estack;
+// defined in ports/stm32/gchelper_m0.s
+uintptr_t gc_helper_get_regs_and_sp(uintptr_t *regs);
 
 void gc_collect(void) {
     // start the GC
@@ -76,20 +186,13 @@ void gc_collect(void) {
     uintptr_t sp = gc_helper_get_regs_and_sp(regs);
 
     // trace the stack, including the registers (since they live on the stack in this function)
-    #if MICROPY_PY_THREAD
-    gc_collect_root((void**)sp, ((uint32_t)MP_STATE_THREAD(stack_top) - sp) / sizeof(uint32_t));
-    #else
-    extern uint32_t _ram_end;
-    gc_collect_root((void**)sp, ((uint32_t)&_ram_end - sp) / sizeof(uint32_t));
-    #endif
-
-    // trace root pointers from any threads
-    #if MICROPY_PY_THREAD
-    mp_thread_gc_others();
-    #endif
+    gc_collect_root((void**)sp, ((uint32_t)&_estack - sp) / sizeof(uint32_t));
 
     // end the GC
     gc_collect_end();
+
+    // for debug during development
+    gc_dump_info();
 }
 
 mp_lexer_t *mp_lexer_new_from_file(const char *filename) {
@@ -97,13 +200,13 @@ mp_lexer_t *mp_lexer_new_from_file(const char *filename) {
 }
 
 mp_import_stat_t mp_import_stat(const char *path) {
+#if MICROPY_PERSISTENT_CODE_LOAD
+    if (strcmp(path, PYBRICKS_MPY_MAIN_MODULE ".mpy") == 0) {
+        return MP_IMPORT_STAT_FILE;
+    }
+#endif
     return MP_IMPORT_STAT_NO_EXIST;
 }
-
-mp_obj_t mp_builtin_open(size_t n_args, const mp_obj_t *args, mp_map_t *kwargs) {
-    return mp_const_none;
-}
-MP_DEFINE_CONST_FUN_OBJ_KW(mp_builtin_open_obj, 1, mp_builtin_open);
 
 void nlr_jump_fail(void *val) {
     while (1);
@@ -119,51 +222,3 @@ void MP_WEAK __assert_func(const char *file, int line, const char *func, const c
     __fatal_error("Assertion failed");
 }
 #endif
-
-// this is minimal set-up code for an STM32 MCU
-
-// simple GPIO interface
-#define GPIO_MODE_IN (0)
-#define GPIO_MODE_OUT (1)
-#define GPIO_MODE_ALT (2)
-#define GPIO_PULL_NONE (0)
-#define GPIO_PULL_UP (0)
-#define GPIO_PULL_DOWN (1)
-void gpio_init(GPIO_TypeDef *gpio, int pin, int mode, int pull, int alt) {
-    gpio->MODER = (gpio->MODER & ~(3 << (2 * pin))) | (mode << (2 * pin));
-    // OTYPER is left as default push-pull
-    // OSPEEDR is left as default low speed
-    gpio->PUPDR = (gpio->PUPDR & ~(3 << (2 * pin))) | (pull << (2 * pin));
-    gpio->AFR[pin >> 3] = (gpio->AFR[pin >> 3] & ~(15 << (4 * (pin & 7)))) | (alt << (4 * (pin & 7)));
-}
-#define gpio_get(gpio, pin) ((gpio->IDR >> (pin)) & 1)
-#define gpio_set(gpio, pin, value) do { gpio->ODR = (gpio->ODR & ~(1 << (pin))) | (value << pin); } while (0)
-#define gpio_low(gpio, pin) do { gpio->BSRR = ((1 << 16) << (pin)); } while (0)
-#define gpio_high(gpio, pin) do { gpio->BSRR = (1 << (pin)); } while (0)
-
-void SystemInit(void) {
-    // basic MCU config
-    RCC->CR |= RCC_CR_HSION;
-    RCC->CFGR = 0; // reset all
-    RCC->CR &= ~(RCC_CR_HSION | RCC_CR_CSSON | RCC_CR_PLLON);
-    RCC->PLLCFGR = RCC_PLLCFGR_PLLR_1 | RCC_PLLCFGR_PLLQ_2 | RCC_PLLCFGR_PLLN_7
-                 | RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLM_4; // reset PLLCFGR
-    RCC->CR &= ~RCC_CR_HSEBYP;
-    RCC->CIR = 0; // disable IRQs
-
-    // leave the clock as-is (internal 16MHz)
-
-    // enable GPIO clocks
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOGEN;
-
-    // turn on user LED LD1!
-    gpio_init(GPIOB, 0, GPIO_MODE_OUT, GPIO_PULL_NONE, 0);
-    gpio_high(GPIOB, 0);
-
-    // enable UART1 at 9600 baud (TX=PG14, RX=PG9)
-    gpio_init(GPIOG, 14, GPIO_MODE_ALT, GPIO_PULL_NONE, 8);
-    gpio_init(GPIOG, 9, GPIO_MODE_ALT, GPIO_PULL_NONE, 8);
-    RCC->APB2ENR |= RCC_APB2ENR_USART6EN;
-    USART6->BRR = (104 << 4) | 3; // 16MHz/(16*104.1875) = 9598 baud
-    USART6->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
-}
