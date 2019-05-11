@@ -51,7 +51,7 @@ pbio_error_t pbdrv_battery_get_current_now(pbio_port_t port, uint16_t *value);
 #else
 
 static inline void _pbdrv_battery_init(void) { }
-static void _pbdrv_battery_poll(uint32_t now) { }
+static inline void _pbdrv_battery_poll(uint32_t now) { }
 static inline void _pbdrv_battery_deinit(void) { }
 static inline pbio_error_t pbdrv_battery_get_voltage_now(pbio_port_t port, uint16_t *value) {
     return PBIO_ERROR_NOT_SUPPORTED;
