@@ -226,7 +226,11 @@ static const pbio_iodev_mode_t ev3_uart_default_mode_info = {
 };
 
 static inline uint8_t port_to_index(pbio_port_t port) {
+#if PBDRV_CONFIG_NUM_IO_PORT
     return port - PBDRV_CONFIG_FIRST_IO_PORT;
+#else
+    return 0;
+#endif
 }
 
 static inline bool test_and_set_bit(uint8_t bit, uint32_t *flags) {
@@ -750,6 +754,7 @@ err:
     debug_pr("%s\n", data->last_err);
 }
 
+#if PBDRV_CONFIG_NUM_IO_PORT
 static uint8_t ev3_uart_set_msg_hdr(enum ev3_uart_msg_type type, enum ev3_uart_msg_size size, enum ev3_uart_cmd cmd)
 {
     return (type & EV3_UART_MSG_TYPE_MASK) | (size & EV3_UART_MSG_SIZE_MASK) | (cmd & EV3_UART_MSG_CMD_MASK);
@@ -864,14 +869,17 @@ static pbio_error_t ev3_uart_set_mode(pbio_iodev_t *iodev, uint8_t mode) {
 
     return PBIO_SUCCESS;
 }
+#endif // PBDRV_CONFIG_NUM_IO_PORT
 
 PROCESS_THREAD(pbio_uartdev_process, ev, data) {
 
     PROCESS_BEGIN();
 
+#if PBDRV_CONFIG_NUM_IO_PORT
     for (int i = 0; i < PBDRV_CONFIG_NUM_IO_PORT; i++) {
         pbdrv_ioport_get_iodev(PBDRV_CONFIG_FIRST_IO_PORT + i, &dev_data[i].iodev);
     }
+#endif
 
     while (true) {
         PROCESS_WAIT_EVENT();
@@ -880,6 +888,7 @@ PROCESS_THREAD(pbio_uartdev_process, ev, data) {
             pbio_uartdev_put(rx.port, rx.byte);
         }
         else if (ev == PROCESS_EVENT_TIMER) {
+#if PBDRV_CONFIG_NUM_IO_PORT
             for (int i = 0; i < PBDRV_CONFIG_NUM_IO_PORT; i++) {
                 // keepalive timer
                 if (etimer_expired(&dev_data[i].timer)) {
@@ -916,6 +925,7 @@ PROCESS_THREAD(pbio_uartdev_process, ev, data) {
                     }
                 }
             }
+#endif // PBDRV_CONFIG_NUM_IO_PORT
         }
     }
 
