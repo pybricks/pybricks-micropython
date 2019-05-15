@@ -8,31 +8,48 @@ import struct
 import sys
 
 
-if len(sys.argv) < 3:
-    print("Missing arguments", file=sys.stderr)
-    sys.exit(1)
+def xor_checksum(fw, max_size):
+    """Calculate the checksum of a firmware file using a simple xor of every
+    four bytes.
 
-checksum = 0
-size = 0
+    Parameters
+    ----------
+    fw : file
+        The firmware file (a binary buffer - e.g. a file opened in 'rb' mode)
+    max_size : int
+        The maximum size of the firmware file.
 
-with open(sys.argv[1], 'rb') as f:
+    Returns
+    -------
+    int
+        The checksum
+    """
+    checksum = 0
+    size = 0
+
     while True:
-        word = f.read(4)
+        word = fw.read(4)
         if not word:
             break
         checksum += struct.unpack('I', word)[0]
         size += 4
 
-MAX_SIZE = int(sys.argv[2])
+    if size > max_size:
+        raise ValueError("File is too large")
 
-if size > MAX_SIZE:
-    print("File is too large", file=sys.stderr)
-    sys.exit(1)
+    for _ in range(size, max_size, 4):
+        checksum += 0xffffffff
 
-for _ in range(size, MAX_SIZE, 4):
-    checksum += 0xffffffff
+    checksum &= 0xffffffff
+    correction = checksum and (1 << 32) - checksum or 0
 
-checksum &= 0xffffffff
-correction = checksum and (1 << 32) - checksum or 0
+    return hex(correction)
 
-print(hex(correction))
+
+if __name__ == '__main__':
+    if len(sys.argv) < 3:
+        print("Missing arguments", file=sys.stderr)
+        sys.exit(1)
+
+    with open(sys.argv[1], 'rb') as f:
+        print(xor_checksum(f, int(sys.argv[2])))
