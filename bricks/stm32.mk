@@ -35,6 +35,7 @@ INC += -I$(BUILD)
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
 CHECKSUM = $(TOP)/ports/pybricks/tools/checksum.py
+CHECKSUM_TYPE ?= xor
 OPENOCD ?= openocd
 OPENOCD_CONFIG ?= openocd_stm32f$(CPU_FAMILY).cfg
 TEXT0_ADDR ?= 0x08000000
@@ -203,7 +204,7 @@ $(BUILD)/firmware-no-checksum.bin: $(BUILD)/firmware-no-checksum.elf
 
 $(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(LD) --defsym=CHECKSUM=`$(CHECKSUM) $< $(FIRMWARE_MAX_SIZE)` $(LDFLAGS) -o $@ $(filter-out $<,$^) $(LIBS)
+	$(Q)$(LD) --defsym=CHECKSUM=`$(CHECKSUM) $(CHECKSUM_TYPE) $< $(FIRMWARE_MAX_SIZE)` $(LDFLAGS) -o $@ $(filter-out $<,$^) $(LIBS)
 	$(Q)$(SIZE) $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf

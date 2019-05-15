@@ -46,9 +46,14 @@ def xor_checksum(fw, max_size):
 
     return hex(correction)
 
+def crc32_checksum(fw, max_size):
+    raise NotImplementedError()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Compute checksum.')
+    parser.add_argument('checksum_type', metavar='type', choices=['xor', 'crc32'], 
+                        help='checksum type')
     parser.add_argument('fw_file', type=argparse.FileType('rb'),
                         help='firmware file name')
     parser.add_argument('max_size', type=int,
@@ -56,4 +61,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    print(xor_checksum(args.fw_file, args.max_size))
+    if args.checksum_type == 'xor':
+        print(xor_checksum(args.fw_file, args.max_size))
+    elif args.checksum_type == 'crc32':
+        print(crc32_checksum(args.fw_file, args.max_size))
