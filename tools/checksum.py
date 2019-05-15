@@ -4,6 +4,7 @@ the MOVEHUB does."""
 
 from __future__ import print_function
 
+import argparse
 import struct
 import sys
 
@@ -47,9 +48,12 @@ def xor_checksum(fw, max_size):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        print("Missing arguments", file=sys.stderr)
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description='Compute checksum.')
+    parser.add_argument('fw_file', type=argparse.FileType('rb'),
+                        help='firmware file name')
+    parser.add_argument('max_size', type=int,
+                        help='max size of firmware file')
 
-    with open(sys.argv[1], 'rb') as f:
-        print(xor_checksum(f, int(sys.argv[2])))
+    args = parser.parse_args()
+
+    print(xor_checksum(args.fw_file, args.max_size))
