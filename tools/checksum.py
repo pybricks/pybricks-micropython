@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """Calculate checksum of firmware file in the same way that the bootloader on
 the MOVEHUB does."""
 
