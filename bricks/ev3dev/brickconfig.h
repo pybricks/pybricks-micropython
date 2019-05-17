@@ -10,6 +10,7 @@
 #define PYBRICKS_PY_BATTERY             (1)
 #define PYBRICKS_PY_IODEVICE            (1)
 #define PYBRICKS_PY_MOTOR               (1)
+#define PYBRICKS_PY_PUPDEVICES          (1)
 
 #define MICROPY_PORT_INIT_FUNC pybricks_init()
 #define MICROPY_PORT_DEINIT_FUNC pybricks_deinit()

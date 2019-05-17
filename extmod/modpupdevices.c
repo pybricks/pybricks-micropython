@@ -3,6 +3,8 @@
 
 #include "py/mpconfig.h"
 
+#if PYBRICKS_PY_PUPDEVICES
+
 #include <pbdrv/ioport.h>
 #include <pbio/iodev.h>
 #include <pbio/light.h>
@@ -143,3 +145,5 @@ const mp_obj_module_t pb_module_pupdevices = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t*)&pb_module_pupdevices_globals,
 };
+
+#endif // PYBRICKS_PY_PUPDEVICES

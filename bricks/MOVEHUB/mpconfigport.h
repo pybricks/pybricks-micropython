@@ -13,6 +13,7 @@
 #define PYBRICKS_PY_IODEVICE            (1)
 #define PYBRICKS_PY_MOTOR               (1)
 #define PYBRICKS_PY_MOVEHUB             (1)
+#define PYBRICKS_PY_PUPDEVICES          (1)
 
 // You can disable the built-in MicroPython compiler by setting the following
 // config option to 0.  If you do this then you won't get a REPL prompt, but you
