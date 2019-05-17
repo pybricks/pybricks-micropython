@@ -6,7 +6,6 @@ from __future__ import print_function
 
 import argparse
 import struct
-import sys
 
 
 def xor_checksum(fw, max_size):
@@ -23,7 +22,7 @@ def xor_checksum(fw, max_size):
     Returns
     -------
     int
-        The checksum
+        The correction needed to make the checksum of the file == 0.
     """
     checksum = 0
     size = 0
@@ -44,10 +43,65 @@ def xor_checksum(fw, max_size):
     checksum &= 0xffffffff
     correction = checksum and (1 << 32) - checksum or 0
 
-    return hex(correction)
+    return correction
+
+
+# thanks https://stackoverflow.com/a/33152544/1976323
+
+_CRC_TABLE = (0x00000000, 0x04C11DB7, 0x09823B6E, 0x0D4326D9,
+              0x130476DC, 0x17C56B6B, 0x1A864DB2, 0x1E475005,
+              0x2608EDB8, 0x22C9F00F, 0x2F8AD6D6, 0x2B4BCB61,
+              0x350C9B64, 0x31CD86D3, 0x3C8EA00A, 0x384FBDBD)
+
+
+def _dword(value):
+    return value & 0xFFFFFFFF
+
+
+def _crc32_fast(crc, data):
+    crc, data = _dword(crc), _dword(data)
+    crc ^= data
+    for _ in range(8):
+        crc = _dword(crc << 4) ^ _CRC_TABLE[crc >> 28]
+    return crc
+
+
+def _crc32_fast_block(crc, buffer):
+    for data in buffer:
+        crc = _crc32_fast(crc, data)
+    return crc
+
 
 def crc32_checksum(fw, max_size):
-    raise NotImplementedError()
+    """Calculate the checksum of a firmware file using CRC-32 as implemented
+    in STM32 microprocessors.
+
+    Parameters
+    ----------
+    fw : file
+        The firmware file (a binary buffer - e.g. a file opened in 'rb' mode)
+    max_size : int
+        The maximum size of the firmware file.
+
+    Returns
+    -------
+    int
+        The checksum
+    """
+
+    # remove the last 4 bytes that are the placeholder for the checksum
+    fw = fw.read()[:-4]
+    if len(fw) + 4 > max_size:
+        raise ValueError("File is too large")
+
+    if len(fw) & 3:
+        raise ValueError('bytes_data length must be multiple of four')
+
+    crc = 0xffffffff
+    for index in range(0, len(fw), 4):
+        data = int.from_bytes(fw[index:index+4], 'little')
+        crc = _crc32_fast(crc, data)
+    return crc
 
 
 if __name__ == '__main__':
@@ -62,6 +116,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.checksum_type == 'xor':
-        print(xor_checksum(args.fw_file, args.max_size))
+        print(hex(xor_checksum(args.fw_file, args.max_size)))
     elif args.checksum_type == 'crc32':
-        print(crc32_checksum(args.fw_file, args.max_size))
+        print(hex(crc32_checksum(args.fw_file, args.max_size)))
