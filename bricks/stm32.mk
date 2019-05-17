@@ -200,7 +200,7 @@ $(BUILD)/firmware-no-checksum.elf: $(OBJ)
 	$(Q)$(LD) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $^ $(LIBS)
 
 $(BUILD)/firmware-no-checksum.bin: $(BUILD)/firmware-no-checksum.elf
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $@
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .checksum $^ $@
 
 $(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 	$(ECHO) "LINK $@"
@@ -209,7 +209,7 @@ $(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(ECHO) "BIN creating firmware file"
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $(FIRMWARE_EXTRA_ARGS) $^ $@
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .checksum $(FIRMWARE_EXTRA_ARGS) $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
 $(BUILD)/firmware.dfu: $(BUILD)/firmware.bin
