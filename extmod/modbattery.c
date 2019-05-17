@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 Laurens Valk
 
+#include "py/mpconfig.h"
+
+#if PYBRICKS_PY_BATTERY
+
 #include "py/obj.h"
 #include <pberror.h>
 #include <pbdrv/battery.h>
@@ -32,3 +36,5 @@ const mp_obj_module_t pb_module_battery = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t*)&pb_module_battery_globals,
 };
+
+#endif // PYBRICKS_PY_BATTERY
