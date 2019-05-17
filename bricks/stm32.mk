@@ -212,9 +212,9 @@ $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $(FIRMWARE_EXTRA_ARGS) $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
-$(BUILD)/firmware.dfu: $(BUILD)/firmware-no-checksum.bin
+$(BUILD)/firmware.dfu: $(BUILD)/firmware.bin
 	$(ECHO) "Create $@"
-	$(Q)$(PYTHON) $(DFU) -b 0x08000000:$< $@
+	$(Q)$(PYTHON) $(DFU) -b $(TEXT0_ADDR):$< $@
 
 deploy: $(BUILD)/firmware.dfu
 	$(ECHO) "Writing $< to the board"
