@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 Laurens Valk
 
+#include "py/mpconfig.h"
+
+#if PYBRICKS_PY_IODEVICE
+
 #include <pbdrv/ioport.h>
 #include <pbio/iodev.h>
 
@@ -135,3 +139,5 @@ mp_obj_t pb_iodevice_set_values(pbio_port_t port, mp_obj_t values) {
     pb_assert(pbio_iodev_set_raw_values(iodev, data));
     return mp_const_none;
 }
+
+#endif // PYBRICKS_PY_IODEVICE

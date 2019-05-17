@@ -11,6 +11,7 @@
 // Pybricks modules
 #define PYBRICKS_PY_BATTERY             (1)
 #define PYBRICKS_PY_HUB4                (1)
+#define PYBRICKS_PY_IODEVICE            (1)
 #define PYBRICKS_PY_MOTOR               (1)
 
 // You can disable the built-in MicroPython compiler by setting the following
