@@ -3,8 +3,8 @@
 
 #include "stm32f446xx.h"
 
-#define MICROPY_HW_BOARD_NAME           "NUCLEO-F446RE"
-#define MICROPY_HW_MCU_NAME             "STM32F446xx"
+#define MICROPY_HW_BOARD_NAME           "NUCLEO-F446ZE"
+#define MICROPY_HW_MCU_NAME             "STM32F446ZE"
 
 #define PYBRICKS_HEAP_KB                64 // half of RAM
 
