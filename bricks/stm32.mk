@@ -24,6 +24,9 @@ INC += -I.
 INC += -I$(TOP)
 INC += -I$(TOP)/lib/cmsis/inc
 INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32F$(CPU_FAMILY)xx/Include
+ifeq ($(USE_HAL),1)
+INC += -I$(TOP)/lib/stm32lib/STM32F$(CPU_FAMILY)xx_HAL_Driver/Inc
+endif
 INC += -I$(TOP)/ports/pybricks/lib/pbio/drv/$(PBIO_PLATFORM)
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)
@@ -53,6 +56,10 @@ CFLAGS += -O0 -ggdb
 else
 CFLAGS += -Os -DNDEBUG
 CFLAGS += -fdata-sections -ffunction-sections
+endif
+
+ifneq ($(CMSIS_MCU),)
+CFLAGS += -D$(CMSIS_MCU)
 endif
 
 ifneq ($(PYBRICKS_MPY_MAIN_MODULE),)
@@ -116,6 +123,18 @@ BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\
 	hci_le.c \
 	)
 
+HAL_SRC_C = $(addprefix lib/stm32lib/STM32F$(CPU_FAMILY)xx_HAL_Driver/Src/,\
+	stm32f$(CPU_FAMILY)xx_hal.c \
+	stm32f$(CPU_FAMILY)xx_hal_adc.c \
+	stm32f$(CPU_FAMILY)xx_hal_adc_ex.c \
+	stm32f$(CPU_FAMILY)xx_hal_cortex.c \
+	stm32f$(CPU_FAMILY)xx_hal_dma.c \
+	stm32f$(CPU_FAMILY)xx_hal_gpio.c \
+	stm32f$(CPU_FAMILY)xx_hal_rcc.c \
+	stm32f$(CPU_FAMILY)xx_hal_tim.c \
+	stm32f$(CPU_FAMILY)xx_hal_tim_ex.c \
+	)
+
 PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	drv/$(PBIO_PLATFORM)/adc.c \
 	drv/$(PBIO_PLATFORM)/battery.c \
@@ -173,6 +192,9 @@ SRC_LIBM = $(addprefix lib/libm/,\
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PY_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(BLUENRG_SRC_C:.c=.o))
+ifeq ($(USE_HAL),1)
+OBJ += $(addprefix $(BUILD)/, $(HAL_SRC_C:.c=.o))
+endif
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 

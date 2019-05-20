@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 David Lechner
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include <pbio/error.h>
+#include "sys/process.h"
 
 #include "stm32f030xc.h"
+
+PROCESS(pbdrv_adc_process, "ADC");
 
 static void pbdrv_adc_calibrate() {
     // NB: it takes more than this to make sure ADC is disabled
@@ -20,7 +24,7 @@ static void pbdrv_adc_calibrate() {
     while (ADC1->CR & ADC_CR_ADCAL) { }
 }
 
-void _pbdrv_adc_init() {
+static void pbdrv_adc_init() {
     // enable power domain
     RCC->APB2ENR |= RCC_APB2ENR_ADCEN;
 
@@ -48,10 +52,6 @@ void _pbdrv_adc_init() {
     // some kind of ID resistor?
 }
 
-void _pbdrv_adc_poll(void) {
-    // TODO: use DMA for reading analog values
-}
-
 // does a single coversion for the specified channel
 pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     if (ch > ADC_CHSELR_CHSEL18_Pos) {
@@ -70,7 +70,7 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
 }
 
 #ifdef PBIO_CONFIG_ENABLE_DEINIT
-void _pbdrv_adc_deinit() {
+static void pbdrv_adc_exit() {
     // REVISIT: do we need timeouts here?
     ADC1->CR |= ADC_CR_ADSTP;
     while (ADC1->CR & ADC_CR_ADSTP) { }
@@ -79,3 +79,21 @@ void _pbdrv_adc_deinit() {
     while (ADC1->CR & ADC_CR_ADEN) { }
 }
 #endif
+
+PROCESS_THREAD(pbdrv_adc_process, ev, data) {
+    // TODO: use DMA for background updates and add filtering
+    // PROCESS_POLLHANDLER(pbdrv_adc_poll());
+#ifdef PBIO_CONFIG_ENABLE_DEINIT
+    PROCESS_EXITHANDLER(pbdrv_adc_exit());
+#endif
+
+    PROCESS_BEGIN();
+
+    pbdrv_adc_init();
+
+    while (true) {
+        PROCESS_WAIT_EVENT();
+    }
+
+    PROCESS_END();
+}

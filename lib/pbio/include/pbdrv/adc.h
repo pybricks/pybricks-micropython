@@ -12,19 +12,13 @@
 #include <stdint.h>
 
 #include <pbdrv/config.h>
-
 #include <pbio/error.h>
+#include <sys/process.h>
 
 #if PBDRV_CONFIG_ADC
 
 /** @cond INTERNAL */
-void _pbdrv_adc_init(void);
-void _pbdrv_adc_poll(uint32_t now);
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
-void _pbdrv_adc_deinit(void);
-#else
-static inline void _pbdrv_adc_deinit(void) { }
-#endif
+PROCESS_NAME(pbdrv_adc_process);
 /** @endcond */
 
 /**
@@ -39,9 +33,6 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value);
 
 #else
 
-static inline void _pbdrv_adc_init(void) { }
-static inline void _pbdrv_adc_poll(uint32_t now) { }
-static inline void _pbdrv_adc_deinit(void) { }
 static inline pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }

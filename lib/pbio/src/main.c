@@ -30,6 +30,9 @@ static uint32_t prev_slow_poll_time;
 
 AUTOSTART_PROCESSES(
     &etimer_process
+#if PBDRV_CONFIG_ADC
+    ,&pbdrv_adc_process
+#endif
 #if PBDRV_CONFIG_BLUETOOTH
     ,&pbdrv_bluetooth_hci_process
     ,&pbdrv_bluetooth_spi_process
@@ -58,7 +61,6 @@ void pbio_init(void) {
 #ifdef PBIO_CONFIG_ENABLE_SYS
     process_init();
 #endif
-    _pbdrv_adc_init();
     _pbdrv_battery_init();
     _pbdrv_button_init();
     _pbdrv_light_init();
@@ -82,7 +84,6 @@ int pbio_do_one_event(void) {
     // don't want to call all of the subroutines unless enough time has
     // actually elapsed to do something useful.
     if (now - prev_fast_poll_time >= 2) {
-        _pbdrv_adc_poll(now);
         _pbio_motorcontrol_poll();
         prev_fast_poll_time = now;
     }
@@ -111,7 +112,6 @@ void pbio_deinit(void) {
     _pbdrv_light_deinit();
     _pbdrv_button_deinit();
     _pbdrv_battery_deinit();
-    _pbdrv_adc_deinit();
 }
 #endif
 
