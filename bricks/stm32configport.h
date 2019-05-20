@@ -91,8 +91,64 @@ typedef long mp_off_t;
 
 #define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn_cooked(str, len)
 
+#if PYBRICKS_PY_ADVANCED
+extern const struct _mp_obj_module_t pb_module_advanced;
+#define _PYBRICKS_MODULE_ADVANCED \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_advanced), (mp_obj_t)&pb_module_advanced },
+#else
+#define _PYBRICKS_MODULE_ADVANCED
+#endif
+#if PYBRICKS_PY_DEBUG
+extern const struct _mp_obj_module_t pb_module_debug;
+#define _PYBRICKS_MODULE_DEBUG \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_debug), (mp_obj_t)&pb_module_debug },
+#else
+#define _PYBRICKS_MODULE_DEBUG
+#endif
+#if PYBRICKS_PY_HUB4
+extern const struct _mp_obj_module_t pb_module_hub4;
+#define _PYBRICKS_MODULE_HUB4 \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_hub4), (mp_obj_t)&pb_module_hub4 },
+#else
+#define _PYBRICKS_MODULE_HUB4
+#endif
+#if PYBRICKS_PY_MOVEHUB
+extern const struct _mp_obj_module_t pb_module_movehub;
+#define _PYBRICKS_MODULE_MOVEHUB \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_movehub), (mp_obj_t)&pb_module_movehub },
+#else
+#define _PYBRICKS_MODULE_MOVEHUB
+#endif
+#if PYBRICKS_PY_PUPDEVICES
+extern const struct _mp_obj_module_t pb_module_pupdevices;
+#define _PYBRICKS_MODULE_PUPDEVICES \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_devices), (mp_obj_t)&pb_module_pupdevices },
+#else
+#define _PYBRICKS_MODULE_PUPDEVICES
+#endif
+#if PYBRICKS_PY_PARAMETERS
+extern const struct _mp_obj_module_t pb_module_parameters;
+#define _PYBRICKS_MODULE_PARAMETERS \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_parameters), (mp_obj_t)&pb_module_parameters },
+#else
+#define _PYBRICKS_MODULE_PARAMETERS
+#endif
+#if PYBRICKS_PY_TOOLS
+extern const struct _mp_obj_module_t pb_module_tools;
+#define _PYBRICKS_MODULE_TOOLS \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_tools), (mp_obj_t)&pb_module_tools },
+#else
+#define _PYBRICKS_MODULE_TOOLS
+#endif
+
 #define MICROPY_PORT_BUILTIN_MODULES \
-    PYBRICKS_PORT_BUILTIN_MODULES
+    _PYBRICKS_MODULE_ADVANCED       \
+    _PYBRICKS_MODULE_DEBUG          \
+    _PYBRICKS_MODULE_HUB4           \
+    _PYBRICKS_MODULE_MOVEHUB        \
+    _PYBRICKS_MODULE_PUPDEVICES     \
+    _PYBRICKS_MODULE_PARAMETERS     \
+    _PYBRICKS_MODULE_TOOLS          \
 
 // TODO: not sure if we will have a use for this
 #define SOCKET_POLL
