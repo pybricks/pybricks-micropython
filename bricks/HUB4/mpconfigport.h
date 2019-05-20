@@ -28,22 +28,22 @@
 
 // Set to (1) to include the advanced module or (0) to exclude it. Requires about ... bytes of flash
 // This module includes the IODevice class for setting device modes and reading/writing raw data
-#define PYBRICKS_MODULE_ADVANCED        (1)
+#define PYBRICKS_PY_ADVANCED        (1)
 
 extern const struct _mp_obj_module_t pb_module_hub4;
 extern const struct _mp_obj_module_t pb_module_pupdevices;
 extern const struct _mp_obj_module_t pb_module_parameters;
 extern const struct _mp_obj_module_t pb_module_tools;
 
-#if PYBRICKS_MODULE_ADVANCED
+#if PYBRICKS_PY_ADVANCED
 extern const struct _mp_obj_module_t pb_module_advanced;
-#define PYBRICKS_MODULE_ADVANCED_DEF { MP_OBJ_NEW_QSTR(MP_QSTR_advanced),    (mp_obj_t)&pb_module_advanced },
+#define PYBRICKS_PY_ADVANCED_DEF { MP_OBJ_NEW_QSTR(MP_QSTR_advanced),    (mp_obj_t)&pb_module_advanced },
 #else
-#define PYBRICKS_MODULE_ADVANCED_DEF
+#define PYBRICKS_PY_ADVANCED_DEF
 #endif
 
 #define PYBRICKS_PORT_BUILTIN_MODULES \
-    PYBRICKS_MODULE_ADVANCED_DEF \
+    PYBRICKS_PY_ADVANCED_DEF \
     { MP_OBJ_NEW_QSTR(MP_QSTR_hub4),        (mp_obj_t)&pb_module_hub4       },  \
     { MP_OBJ_NEW_QSTR(MP_QSTR_devices),     (mp_obj_t)&pb_module_pupdevices },  \
     { MP_OBJ_NEW_QSTR(MP_QSTR_parameters),  (mp_obj_t)&pb_module_parameters },  \
