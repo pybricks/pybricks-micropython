@@ -181,6 +181,8 @@ PROCESS_THREAD(pbsys_process, ev, data) {
     PROCESS_END();
 }
 
+uint32_t SystemCoreClock = 16000000;
+
 void SystemInit(void) {
     // basic MCU config
     RCC->CR |= RCC_CR_HSION;
@@ -197,7 +199,11 @@ void SystemInit(void) {
     SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 
     // enable GPIO clocks
-    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOGEN;
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN |
+                    RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_GPIOFEN |
+                    RCC_AHB1ENR_GPIOGEN | RCC_AHB1ENR_DMA2EN;
+    RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
+    RCC->APB2ENR |= RCC_APB2ENR_ADC3EN;
 
     // UART for terminal
     GPIOG->MODER = (GPIOG->MODER & ~GPIO_MODER_MODER9_Msk) | (2 << GPIO_MODER_MODER9_Pos);
@@ -207,4 +213,8 @@ void SystemInit(void) {
     RCC->APB2ENR |= RCC_APB2ENR_USART6EN;
     USART6->BRR = (104 << 4) | 3; // 16MHz/(16*104.1875) = 9598 baud
     USART6->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
+}
+
+void assert_failed(uint8_t* file, uint32_t line) {
+    // set a breakpoint here for debugging
 }

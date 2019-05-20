@@ -4,10 +4,11 @@
 #ifndef _PBDRVCONFIG_H_
 #define _PBDRVCONFIG_H_
 
-#define PBDRV_CONFIG_ADC            (0)
+#define PBDRV_CONFIG_ADC            (1)
 #define PBDRV_CONFIG_BATTERY        (0)
 #define PBDRV_CONFIG_BLUETOOTH      (0)
 #define PBDRV_CONFIG_IOPORT         (0)
+#define PBDRV_CONFIG_LIGHT          (1)
 #define PBDRV_CONFIG_MOTOR          (0)
 #define PBDRV_CONFIG_UART           (0)
 
