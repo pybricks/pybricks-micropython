@@ -103,6 +103,7 @@ PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modadvanced.c \
 	modbattery.c \
 	modcommon.c \
+	moddebug.c \
 	modhub4.c \
 	modhubcommon.c \
 	modiodevice.c \
