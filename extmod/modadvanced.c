@@ -53,6 +53,13 @@ STATIC void advanced_IODevice_print(const mp_print_t *print,  mp_obj_t self_in, 
     mp_printf(print, " on Port.%c",  self->port);
 }
 
+STATIC mp_obj_t advanced_IODevice_type_id(const mp_obj_t self_in) {
+    advanced_IODevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pbio_iodev_type_id_t id;
+    pb_assert(pb_iodevice_get_type_id(self->port, &id));
+    return mp_obj_new_int(id);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(advanced_IODevice_type_id_obj, advanced_IODevice_type_id);
 
 STATIC mp_obj_t advanced_IODevice_mode(size_t n_args, const mp_obj_t *args) {
     advanced_IODevice_obj_t *self = MP_OBJ_TO_PTR(args[0]);
@@ -87,6 +94,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(advanced_IODevice_values_obj, 1, 2, a
 IODevice class tables
 */
 STATIC const mp_rom_map_elem_t advanced_IODevice_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_type_id), MP_ROM_PTR(&advanced_IODevice_type_id_obj)  },
     { MP_ROM_QSTR(MP_QSTR_values),  MP_ROM_PTR(&advanced_IODevice_values_obj)   },
     { MP_ROM_QSTR(MP_QSTR_mode),    MP_ROM_PTR(&advanced_IODevice_mode_obj)     },
 };

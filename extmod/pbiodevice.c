@@ -16,6 +16,16 @@
 #include "pberror.h"
 #include "pbiodevice.h"
 
+pbio_error_t pb_iodevice_get_type_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
+    pbio_iodev_t *iodev;
+    pbio_error_t err = pbdrv_ioport_get_iodev(port, &iodev);
+    if (err != PBIO_SUCCESS){
+        return err;
+    }
+    *id = iodev->info->type_id;
+    return PBIO_SUCCESS;
+}
+
 pbio_error_t pb_iodevice_get_mode(pbio_port_t port, uint8_t *current_mode) {
     pbio_iodev_t *iodev;
     pbio_error_t err = pbdrv_ioport_get_iodev(port, &iodev);
