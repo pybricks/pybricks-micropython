@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_IODEVICE
+#if PYBRICKS_PY_ADVANCED || PYBRICKS_PY_PUPDEVICES
 
 #include <pbdrv/ioport.h>
 #include <pbio/iodev.h>
@@ -140,4 +140,4 @@ mp_obj_t pb_iodevice_set_values(pbio_port_t port, mp_obj_t values) {
     return mp_const_none;
 }
 
-#endif // PYBRICKS_PY_IODEVICE
+#endif // PYBRICKS_PY_ADVANCED || PYBRICKS_PY_PUPDEVICES

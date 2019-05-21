@@ -12,7 +12,6 @@
 #define PYBRICKS_PY_ADVANCED            (1)
 #define PYBRICKS_PY_BATTERY             (1)
 #define PYBRICKS_PY_DEBUG               (0)
-#define PYBRICKS_PY_IODEVICE            (1)
 #define PYBRICKS_PY_MOTOR               (1)
 #define PYBRICKS_PY_MOVEHUB             (1)
 #define PYBRICKS_PY_PARAMETERS          (1)
