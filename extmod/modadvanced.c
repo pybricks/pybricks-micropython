@@ -13,8 +13,8 @@
 #include "py/obj.h"
 #include "py/mperrno.h"
 
-#include "modiodevice.h"
 #include "pberror.h"
+#include "pbiodevice.h"
 
 /*
 class IODevice():

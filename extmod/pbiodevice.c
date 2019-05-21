@@ -14,7 +14,7 @@
 #include "py/mperrno.h"
 
 #include "pberror.h"
-#include "modiodevice.h"
+#include "pbiodevice.h"
 
 pbio_error_t pb_iodevice_get_mode(pbio_port_t port, uint8_t *current_mode) {
     pbio_iodev_t *iodev;

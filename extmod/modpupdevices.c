@@ -11,10 +11,10 @@
 
 #include "py/runtime.h"
 
-#include "modiodevice.h"
-#include "modmotor.h"
 #include "modcommon.h"
+#include "modmotor.h"
 #include "pberror.h"
+#include "pbiodevice.h"
 
 // Class structure for ColorAndDistSensor
 typedef struct _pupdevices_ColorAndDistSensor_obj_t {

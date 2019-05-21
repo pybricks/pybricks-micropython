@@ -106,13 +106,13 @@ PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	moddebug.c \
 	modhub4.c \
 	modhubcommon.c \
-	modiodevice.c \
 	modmotor.c \
 	modmovehub.c \
 	modparameters.c \
 	modpupdevices.c \
 	modtools.c \
 	pberror.c \
+	pbiodevice.c \
 	)
 
 BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\
@@ -134,6 +134,7 @@ HAL_SRC_C = $(addprefix lib/stm32lib/STM32F$(CPU_FAMILY)xx_HAL_Driver/Src/,\
 	stm32f$(CPU_FAMILY)xx_hal_rcc.c \
 	stm32f$(CPU_FAMILY)xx_hal_tim.c \
 	stm32f$(CPU_FAMILY)xx_hal_tim_ex.c \
+	stm32f$(CPU_FAMILY)xx_hal_uart.c \
 	)
 
 PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
