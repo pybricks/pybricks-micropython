@@ -183,6 +183,11 @@ PROCESS_THREAD(pbsys_process, ev, data) {
 
 uint32_t SystemCoreClock = 16000000;
 
+// copied from system_stm32.c in stm32 port
+const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
+const uint8_t APBPrescTable[8] = {0, 0, 0, 0, 1, 2, 3, 4};
+
+// speci
 void SystemInit(void) {
     // basic MCU config
     RCC->CR |= RCC_CR_HSION;
@@ -202,15 +207,14 @@ void SystemInit(void) {
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN |
                     RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_GPIOFEN |
                     RCC_AHB1ENR_GPIOGEN | RCC_AHB1ENR_DMA2EN;
-    RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
-    RCC->APB2ENR |= RCC_APB2ENR_ADC3EN;
+    RCC->APB1ENR |= RCC_APB1ENR_TIM2EN | RCC_APB1ENR_USART2EN;
+    RCC->APB2ENR |= RCC_APB2ENR_ADC3EN | RCC_APB2ENR_USART6EN;
 
     // UART for terminal
     GPIOG->MODER = (GPIOG->MODER & ~GPIO_MODER_MODER9_Msk) | (2 << GPIO_MODER_MODER9_Pos);
     GPIOG->AFR[1] = (GPIOG->AFR[1] & ~GPIO_AFRH_AFSEL9_Msk) | (8 << GPIO_AFRH_AFSEL9_Pos);
     GPIOG->MODER = (GPIOG->MODER & ~GPIO_MODER_MODER14_Msk) | (2 << GPIO_MODER_MODER14_Pos);
     GPIOG->AFR[1] = (GPIOG->AFR[1] & ~GPIO_AFRH_AFSEL14_Msk) | (8 << GPIO_AFRH_AFSEL14_Pos);
-    RCC->APB2ENR |= RCC_APB2ENR_USART6EN;
     USART6->BRR = (104 << 4) | 3; // 16MHz/(16*104.1875) = 9598 baud
     USART6->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
 }
