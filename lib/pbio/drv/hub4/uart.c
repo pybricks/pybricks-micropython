@@ -210,11 +210,11 @@ static void handle_poll() {
 
     while (pbdrv_uart_get_char(PBIO_PORT_B, &c) == PBIO_SUCCESS) {
         pbio_event_uart_rx_data_t rx = { .port = PBIO_PORT_B, .byte = c };
-        process_post_synch(&pbio_uartdev_process, PBIO_EVENT_UART_RX, rx.data);
+        process_post_synch(&pbio_uartdev_process, PBIO_EVENT_UART_RX, &rx);
     }
     while (pbdrv_uart_get_char(PBIO_PORT_A, &c) == PBIO_SUCCESS) {
         pbio_event_uart_rx_data_t rx = { .port = PBIO_PORT_A, .byte = c };
-        process_post_synch(&pbio_uartdev_process, PBIO_EVENT_UART_RX, rx.data);
+        process_post_synch(&pbio_uartdev_process, PBIO_EVENT_UART_RX, &rx);
     }
 }
 

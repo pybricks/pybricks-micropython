@@ -253,8 +253,8 @@ PROCESS_THREAD(pbsys_process, ev, data) {
             update_battery(now);
         }
         else if (ev == PBIO_EVENT_UART_RX) {
-            pbio_event_uart_rx_data_t rx = { .data = data };
-            handle_stdin_char(rx.byte);
+            pbio_event_uart_rx_data_t *rx = data;
+            handle_stdin_char(rx->byte);
         }
         else if (ev == PBIO_EVENT_COM_CMD) {
             pbio_com_cmd_t cmd = (uint32_t)data;

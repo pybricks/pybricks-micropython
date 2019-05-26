@@ -533,7 +533,7 @@ static void uart_rx_char_modified(uint8_t *data, uint8_t size) {
     for (int i = 0; i < size; i++) {
         // TODO: set .port = bluetooth port
         pbio_event_uart_rx_data_t rx = { .byte = data[i] };
-        process_post_synch(&pbsys_process, PBIO_EVENT_UART_RX, rx.data);
+        process_post_synch(&pbsys_process, PBIO_EVENT_UART_RX, &rx);
     }
 }
 

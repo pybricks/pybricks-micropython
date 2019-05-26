@@ -884,8 +884,8 @@ PROCESS_THREAD(pbio_uartdev_process, ev, data) {
     while (true) {
         PROCESS_WAIT_EVENT();
         if (ev == PBIO_EVENT_UART_RX) {
-            pbio_event_uart_rx_data_t rx = { .data = data };
-            pbio_uartdev_put(rx.port, rx.byte);
+            pbio_event_uart_rx_data_t *rx = data;
+            pbio_uartdev_put(rx->port, rx->byte);
         }
         else if (ev == PROCESS_EVENT_TIMER) {
 #if PBDRV_CONFIG_NUM_IO_PORT

@@ -20,12 +20,9 @@ typedef enum {
 /**
  * Data for ::PBIO_EVENT_UART_RX.
  */
-typedef union {
-    struct {
-        pbio_port_t port;       /**< The port the UART is associated with. */
-        uint8_t byte;           /**< The byte received. */
-    };
-    process_data_t data;        /**< For casting ::pbio_event_uart_rx_data_t to/from ::process_data_t */
+typedef struct {
+    pbio_port_t port;           /**< The port the UART is associated with. */
+    uint8_t byte;               /**< The byte received. */
 } pbio_event_uart_rx_data_t;
 
 // TODO: these enums for Pybricks communication protocol should have their own header file
