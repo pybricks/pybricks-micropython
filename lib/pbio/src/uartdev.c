@@ -542,8 +542,8 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             data->iodev->info->mode_info[mode].raw_min = *(float *)(data->msg + 2);
             data->iodev->info->mode_info[mode].raw_max = *(float *)(data->msg + 6);
 
-            debug_pr("raw: %f %f\n", data->iodev->info->mode_info[mode].raw_min,
-                                     data->iodev->info->mode_info[mode].raw_max);
+            debug_pr("raw: %f %f\n", (double)data->iodev->info->mode_info[mode].raw_min,
+                                     (double)data->iodev->info->mode_info[mode].raw_max);
 
             break;
         case EV3_UART_INFO_PCT:
@@ -558,8 +558,8 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             data->iodev->info->mode_info[mode].pct_min = *(float *)(data->msg + 2);
             data->iodev->info->mode_info[mode].pct_max = *(float *)(data->msg + 6);
 
-            debug_pr("pct: %f %f\n", data->iodev->info->mode_info[mode].pct_min,
-                                     data->iodev->info->mode_info[mode].pct_max);
+            debug_pr("pct: %f %f\n", (double)data->iodev->info->mode_info[mode].pct_min,
+                                     (double)data->iodev->info->mode_info[mode].pct_max);
 
             break;
         case EV3_UART_INFO_SI:
@@ -576,8 +576,8 @@ static void pbio_uartdev_put(pbio_port_t port, uint8_t next_byte) {
             data->iodev->info->mode_info[mode].si_min = *(float *)(data->msg + 2);
             data->iodev->info->mode_info[mode].si_max = *(float *)(data->msg + 6);
 
-            debug_pr("si: %f %f\n", data->iodev->info->mode_info[mode].si_min,
-                                    data->iodev->info->mode_info[mode].si_max);
+            debug_pr("si: %f %f\n", (double)data->iodev->info->mode_info[mode].si_min,
+                                    (double)data->iodev->info->mode_info[mode].si_max);
 
             break;
         case EV3_UART_INFO_UNITS:
