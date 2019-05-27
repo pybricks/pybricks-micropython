@@ -1,21 +1,20 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018 David Lechner
+// Copyright (c) 2018-2019 David Lechner
+
+#include <pbdrv/config.h>
+
+#if PBDRV_CONFIG_BATTERY
 
 #include <pbdrv/adc.h>
 
 #include <pbio/error.h>
 #include <pbio/port.h>
+#include <sys/process.h>
+
+PROCESS(pbdrv_battery_process, "battery");
 
 #define PBDRV_BATTERY_VOLTAGE_CH 11
 #define PBDRV_BATTERY_CURRENT_CH 10
-
-void _pbdrv_battery_init(void) { }
-
-void _pbdrv_battery_poll(uint32_t now) { }
-
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
-void _pbdrv_battery_deinit(void) { }
-#endif
 
 pbio_error_t pbdrv_battery_get_voltage_now(pbio_port_t port, uint16_t *value) {
     uint16_t raw;
@@ -57,3 +56,15 @@ pbio_error_t pbdrv_battery_get_current_now(pbio_port_t port, uint16_t *value) {
 
     return PBIO_SUCCESS;
 }
+
+PROCESS_THREAD(pbdrv_battery_process, ev, data) {
+    PROCESS_BEGIN();
+
+    while (true) {
+        PROCESS_WAIT_EVENT();
+    }
+
+    PROCESS_END();
+}
+
+#endif // PBDRV_CONFIG_BATTERY

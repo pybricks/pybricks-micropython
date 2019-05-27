@@ -33,6 +33,9 @@ AUTOSTART_PROCESSES(
 #if PBDRV_CONFIG_ADC
     ,&pbdrv_adc_process
 #endif
+#if PBDRV_CONFIG_BATTERY
+    ,&pbdrv_battery_process
+#endif
 #if PBDRV_CONFIG_BLUETOOTH
     ,&pbdrv_bluetooth_hci_process
     ,&pbdrv_bluetooth_spi_process
@@ -61,7 +64,6 @@ void pbio_init(void) {
 #ifdef PBIO_CONFIG_ENABLE_SYS
     process_init();
 #endif
-    _pbdrv_battery_init();
     _pbdrv_button_init();
     _pbdrv_light_init();
     _pbdrv_motor_init();
@@ -111,7 +113,6 @@ void pbio_deinit(void) {
     _pbdrv_motor_deinit();
     _pbdrv_light_deinit();
     _pbdrv_button_deinit();
-    _pbdrv_battery_deinit();
 }
 #endif
 

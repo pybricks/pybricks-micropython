@@ -1,31 +1,20 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 Laurens Valk
 
+#include <pbdrv/config.h>
+
+#if PBDRV_CONFIG_BATTERY
+
 #include <stdio.h>
 
 #include <pbio/error.h>
 #include <pbio/port.h>
+#include <sys/process.h>
 
-FILE *f_voltage;
-FILE *f_current;
+PROCESS(pbdrv_battery_process, "battery");
 
-void _pbdrv_battery_init(void) {
-    f_voltage = fopen("/sys/class/power_supply/lego-ev3-battery/voltage_now", "r");
-    f_current = fopen("/sys/class/power_supply/lego-ev3-battery/current_now", "r");
-}
-
-void _pbdrv_battery_poll(uint32_t now) { }
-
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
-void _pbdrv_battery_deinit(void) {
-    if (f_voltage != NULL) {
-        fclose(f_voltage);
-    }
-    if (f_current != NULL) {
-        fclose(f_current);
-    }
-}
-#endif
+static FILE *f_voltage;
+static FILE *f_current;
 
 pbio_error_t pbdrv_battery_get_voltage_now(pbio_port_t port, uint16_t *value) {
     int32_t microvolt;
@@ -48,3 +37,29 @@ pbio_error_t pbdrv_battery_get_current_now(pbio_port_t port, uint16_t *value) {
     }
     return PBIO_ERROR_IO;
 }
+
+static void pbdrv_battery_exit(void) {
+    if (f_voltage != NULL) {
+        fclose(f_voltage);
+    }
+    if (f_current != NULL) {
+        fclose(f_current);
+    }
+}
+
+PROCESS_THREAD(pbdrv_battery_process, ev, data) {
+    PROCESS_EXITHANDLER(pbdrv_battery_exit());
+
+    PROCESS_BEGIN();
+
+    f_voltage = fopen("/sys/class/power_supply/lego-ev3-battery/voltage_now", "r");
+    f_current = fopen("/sys/class/power_supply/lego-ev3-battery/current_now", "r");
+
+    while (true) {
+        PROCESS_WAIT_EVENT();
+    }
+
+    PROCESS_END();
+}
+
+#endif // PBDRV_CONFIG_BATTERY
