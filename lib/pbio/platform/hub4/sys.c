@@ -151,7 +151,7 @@ static void init(void) {
     IWDG->KR = 0xaaaa; // refresh counter
     IWDG->KR = 0xcccc; // start watchdog timer
 
-    pbdrv_battery_get_voltage_now(PBIO_PORT_SELF, &battery_voltage);
+    pbdrv_battery_get_voltage_now(&battery_voltage);
     avg_battery_voltage = battery_voltage;
 
     _pbio_light_set_user_mode(false);
@@ -200,7 +200,7 @@ static void update_battery(clock_time_t now) {
     poll_interval = clock_to_msec(now - prev_poll_time);
     prev_poll_time = now;
 
-    pbdrv_battery_get_voltage_now(PBIO_PORT_SELF, &battery_voltage);
+    pbdrv_battery_get_voltage_now(&battery_voltage);
 
     avg_battery_voltage = (avg_battery_voltage * (BATTERY_PERIOD_MS - poll_interval)
         + battery_voltage * poll_interval) / BATTERY_PERIOD_MS;

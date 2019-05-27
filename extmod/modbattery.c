@@ -11,14 +11,14 @@
 
 STATIC mp_obj_t battery_voltage(void) {
     uint16_t volt;
-    pb_assert(pbdrv_battery_get_voltage_now(PBIO_PORT_SELF, &volt));
+    pb_assert(pbdrv_battery_get_voltage_now(&volt));
     return mp_obj_new_int(volt);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_voltage_obj, battery_voltage);
 
 STATIC mp_obj_t battery_current(void) {
     uint16_t cur;
-    pb_assert(pbdrv_battery_get_current_now(PBIO_PORT_SELF, &cur));
+    pb_assert(pbdrv_battery_get_current_now(&cur));
     return mp_obj_new_int(cur);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_current_obj, battery_current);

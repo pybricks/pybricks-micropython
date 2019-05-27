@@ -8,10 +8,10 @@
 
 #if PBDRV_CONFIG_BATTERY
 
+#include <stdbool.h>
 #include <stdio.h>
 
 #include <pbio/error.h>
-#include <pbio/port.h>
 #include <sys/process.h>
 
 PROCESS(pbdrv_battery_process, "battery");
@@ -19,7 +19,7 @@ PROCESS(pbdrv_battery_process, "battery");
 static FILE *f_voltage;
 static FILE *f_current;
 
-pbio_error_t pbdrv_battery_get_voltage_now(pbio_port_t port, uint16_t *value) {
+pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
     int32_t microvolt;
     if (0 == fseek(f_voltage, 0, SEEK_SET) &&
         0 <= fscanf(f_voltage, "%d", &microvolt) &&
@@ -30,7 +30,7 @@ pbio_error_t pbdrv_battery_get_voltage_now(pbio_port_t port, uint16_t *value) {
     return PBIO_ERROR_IO;
 }
 
-pbio_error_t pbdrv_battery_get_current_now(pbio_port_t port, uint16_t *value) {
+pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
     int32_t microamp;
     if (0 == fseek(f_current, 0, SEEK_SET) &&
         0 <= fscanf(f_current, "%d", &microamp) &&

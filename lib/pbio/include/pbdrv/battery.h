@@ -12,7 +12,6 @@
 #include <pbdrv/config.h>
 
 #include <pbio/error.h>
-#include <pbio/port.h>
 
 #if PBDRV_CONFIG_BATTERY
 
@@ -26,32 +25,30 @@ PROCESS_NAME(pbdrv_battery_process);
 
 /**
  * Gets the battery voltage.
- * @param [in]  port    The I/O port
  * @param [out] value   The voltage in millivolts
  * @return              ::PBIO_SUCCESS on success, ::PBIO_ERROR_INVALID_PORT if
  *                      the port is not valid or ::PBIO_ERROR_IO if there was
  *                      an I/O error.
  */
-pbio_error_t pbdrv_battery_get_voltage_now(pbio_port_t port, uint16_t *value);
+pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value);
 
 /**
  * Gets the battery current.
- * @param [in]  port    The I/O port
  * @param [out] value   The current in milliamps
  * @return              ::PBIO_SUCCESS on success, ::PBIO_ERROR_INVALID_PORT if
  *                      the port is not valid or ::PBIO_ERROR_IO if there was
  *                      an I/O error.
  */
-pbio_error_t pbdrv_battery_get_current_now(pbio_port_t port, uint16_t *value);
+pbio_error_t pbdrv_battery_get_current_now(uint16_t *value);
 
 #else
 
 static inline void _pbdrv_battery_poll(uint32_t now) { }
 static inline void _pbdrv_battery_deinit(void) { }
-static inline pbio_error_t pbdrv_battery_get_voltage_now(pbio_port_t port, uint16_t *value) {
+static inline pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline pbio_error_t pbdrv_battery_get_current_now(pbio_port_t port, uint16_t *value) {
+static inline pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

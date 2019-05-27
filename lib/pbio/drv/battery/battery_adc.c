@@ -7,21 +7,18 @@
 
 #if PBDRV_CONFIG_BATTERY
 
+#include <stdbool.h>
+
 #include <pbdrv/adc.h>
 
 #include <pbio/error.h>
-#include <pbio/port.h>
 #include <sys/process.h>
 
 PROCESS(pbdrv_battery_process, "battery");
 
-pbio_error_t pbdrv_battery_get_voltage_now(pbio_port_t port, uint16_t *value) {
+pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
     uint16_t raw;
     pbio_error_t err;
-
-    if (port != PBIO_PORT_SELF) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
 
     err = pbdrv_adc_get_ch(PBDRV_CONFIG_BATTERY_ADC_VOLTAGE_CH, &raw);
     if (err != PBIO_SUCCESS) {
@@ -35,13 +32,9 @@ pbio_error_t pbdrv_battery_get_voltage_now(pbio_port_t port, uint16_t *value) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_battery_get_current_now(pbio_port_t port, uint16_t *value) {
+pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
     uint16_t raw;
     pbio_error_t err;
-
-    if (port != PBIO_PORT_SELF) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
 
     // this is measuring the voltage across a 0.05 ohm shunt resistor probably
     // via an op amp with unknown gain.
