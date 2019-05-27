@@ -1,11 +1,13 @@
-FROM ev3dev/debian-stretch-cross
-RUN sudo apt-get update && \
-    DEBIAN_FRONTEND=noninteractive sudo apt-get install --yes --no-install-recommends \
+FROM ubuntu:xenial
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends --allow-unauthenticated \
+        software-properties-common && \
+    add-apt-repository ppa:team-gcc-arm-embedded/ppa -y && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends --allow-unauthenticated \
+        gcc-arm-embedded \
+        u-boot-tools \
         build-essential \
-        libffi-dev:armel \
-        pkg-config \
-        python \
-        python3
-ENV PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabi/pkgconfig
-ENV CROSS_COMPILE=arm-linux-gnueabi-
-ENV BUILD=build-armel
+        pkg-config \        
+        libboost1.58-all-dev 
+ENV PKG_CONFIG_PATH=/usr/lib/pkgconfig

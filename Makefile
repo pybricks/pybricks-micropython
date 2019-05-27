@@ -27,6 +27,17 @@ clean-ev3dev-armel: clean-mpy-cross
 		docker exec --tty pybricks-ev3dev_armel make clean; \
 	fi
 
+ev3rt:
+	@if [ ! -d bricks/ev3rt/build/ports ]; then \
+		bricks/ev3rt/docker/setup.sh; \
+	fi	
+	@docker exec --tty pybricks-ev3rt make
+	@docker exec --tty pybricks-ev3rt bash -c '\
+		cd ev3rt-hrp2/sdk/workspace && \
+		make img=helloev3 && \
+		cd ../../ \
+	'
+
 movehub:
 	@$(MAKE) -C bricks/movehub
 
