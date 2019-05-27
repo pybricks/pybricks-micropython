@@ -1,5 +1,8 @@
 MPTOP = ../../../..
 CROSS_COMPILE=arm-none-eabi-
+
+# NXT:
+# CROSS_COMPILE=/path/to/bin/arm-elf-
 -include mpconfigport.mk
 include $(MPTOP)/py/mkenv.mk
 
@@ -20,7 +23,9 @@ INC += -I$(BUILD)
 # compiler settings
 CWARN = -Wall -Werror
 CWARN += -Wpointer-arith -Wuninitialized
-CFLAGS = $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA)
+CFLAGS = $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA) 
+# NXT:
+# CFLAGS += -DMP_ENDIANNESS_LITTLE -mthumb-interwork
 
 # Debugging/Optimization
 ifdef DEBUG
@@ -144,6 +149,7 @@ SRC_C = $(addprefix ports/unix/,\
 LIB_SRC_C = $(addprefix lib/,\
 	$(LIB_SRC_C_EXTRA) \
 	utils/printf.c \
+	utils/interrupt_char.c \
 	timeutils/timeutils.c \
 	)
 

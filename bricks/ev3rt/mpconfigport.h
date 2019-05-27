@@ -1,4 +1,4 @@
-/*
+    /*
  * This file is part of the MicroPython project, http://micropython.org/
  *
  * The MIT License (MIT)
@@ -26,6 +26,9 @@
 
 // options to control how MicroPython is built
 
+// NXT:
+// #define PATH_MAX        4096
+
 #define MICROPY_ALLOC_PATH_MAX      (PATH_MAX)
 #define MICROPY_ENABLE_GC           (1)
 #define MICROPY_ENABLE_FINALISER    (0)
@@ -33,10 +36,11 @@
 #define MICROPY_COMP_CONST          (0)
 #define MICROPY_MEM_STATS           (0)
 #define MICROPY_DEBUG_PRINTERS      (0)
-#define MICROPY_READER_POSIX        (1)
+#define MICROPY_READER_POSIX        (0)
+#define MICROPY_READER_VFS          (0)
 #define MICROPY_KBD_EXCEPTION       (1)
 #define MICROPY_HELPER_REPL         (1)
-#define MICROPY_HELPER_LEXER_UNIX   (1)
+#define MICROPY_HELPER_LEXER_UNIX   (0)
 #define MICROPY_ENABLE_SOURCE_LINE  (0)
 #define MICROPY_ERROR_REPORTING     (MICROPY_ERROR_REPORTING_TERSE)
 #define MICROPY_WARNINGS            (0)
@@ -85,10 +89,11 @@
 #define MICROPY_PY_UHEAPQ           (0)
 #define MICROPY_PY_UHASHLIB         (0)
 #define MICROPY_PY_UBINASCII        (0)
+#define MICROPY_USE_INTERNAL_PRINTF (0)
 
 // extra built in names to add to the global namespace
-#define MICROPY_PORT_BUILTINS \
-    { MP_ROM_QSTR(MP_QSTR_open), MP_ROM_PTR(&mp_builtin_open_obj) },
+/*#define MICROPY_PORT_BUILTINS \
+    { MP_ROM_QSTR(MP_QSTR_open), MP_ROM_PTR(&mp_builtin_open_obj) },*/
 
 #define MICROPY_PORT_ROOT_POINTERS \
 
