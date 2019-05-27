@@ -14,9 +14,9 @@
 #include "py/runtime.h"
 
 #include "modmotor.h"
-#include "modhubcommon.h"
 #include "modcommon.h"
 #include "pberror.h"
+#include "pbhub.h"
 #include "pbobj.h"
 
 /* Move Hub module table */
