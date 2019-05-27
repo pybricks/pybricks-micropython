@@ -27,7 +27,6 @@ INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32F$(CPU_FAMILY)xx/Include
 ifeq ($(USE_HAL),1)
 INC += -I$(TOP)/lib/stm32lib/STM32F$(CPU_FAMILY)xx_HAL_Driver/Inc
 endif
-INC += -I$(TOP)/ports/pybricks/lib/pbio/drv/$(PBIO_PLATFORM)
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)
 INC += -I$(TOP)/ports/pybricks/lib/pbio
