@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 Laurens Valk
 
+// Battery driver that uses the mainline Linux kernel driver for LEGO
+// MINDSTORMS EV3
+
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_BATTERY

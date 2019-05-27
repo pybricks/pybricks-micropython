@@ -148,7 +148,7 @@ HAL_SRC_C = $(addprefix lib/stm32lib/STM32F$(CPU_FAMILY)xx_HAL_Driver/Src/,\
 
 PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	drv/adc/adc_stm32f$(CPU_FAMILY).c \
-	drv/$(PBIO_PLATFORM)/battery.c \
+	drv/battery/battery_adc.c \
 	drv/$(PBIO_PLATFORM)/bluetooth.c \
 	drv/$(PBIO_PLATFORM)/button.c \
 	drv/$(PBIO_PLATFORM)/light.c \

@@ -12,7 +12,8 @@
 #define PBDRV_CONFIG_ADC_STM32F4_DMA_IRQ            DMA2_Stream0_IRQn
 #define PBDRV_CONFIG_ADC_STM32F4_TIMER_INSTANCE     TIM2
 
-#define PBDRV_CONFIG_BATTERY        (0)
+#define PBDRV_CONFIG_BATTERY                        (0)
+
 #define PBDRV_CONFIG_BLUETOOTH      (0)
 #define PBDRV_CONFIG_IOPORT         (1)
 #define PBDRV_CONFIG_LIGHT          (1)

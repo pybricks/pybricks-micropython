@@ -6,6 +6,10 @@
 
 // platform-specific configuration for LEGO BOOST Move Hub
 
+#define PBDRV_CONFIG_BATTERY                        (1)
+#define PBDRV_CONFIG_BATTERY_ADC_VOLTAGE_CH         11
+#define PBDRV_CONFIG_BATTERY_ADC_CURRENT_CH         10
+
 #define PBDRV_CONFIG_HAS_PORT_A (1)
 #define PBDRV_CONFIG_HAS_PORT_B (1)
 #define PBDRV_CONFIG_HAS_PORT_C (1)

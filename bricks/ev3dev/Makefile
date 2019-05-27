@@ -185,9 +185,9 @@ PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
 	extmod/modrobotics.c \
 	extmod/pberror.c \
 	extmod/pbthread.c \
+	lib/pbio/drv/battery/battery_ev3_linux.c \
 	lib/pbio/drv/ev3dev_stretch/motor.c \
 	lib/pbio/drv/ev3dev_stretch/button.c \
-	lib/pbio/drv/ev3dev_stretch/battery.c \
 	lib/pbio/drv/ev3dev_stretch/light.c \
 	lib/pbio/platform/ev3dev_stretch/clock.c \
 	lib/pbio/src/main.c \

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2019 David Lechner
 
+// Battery driver that uses an ADC to read battery voltage and current
+
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_BATTERY
@@ -13,9 +15,6 @@
 
 PROCESS(pbdrv_battery_process, "battery");
 
-#define PBDRV_BATTERY_VOLTAGE_CH 11
-#define PBDRV_BATTERY_CURRENT_CH 10
-
 pbio_error_t pbdrv_battery_get_voltage_now(pbio_port_t port, uint16_t *value) {
     uint16_t raw;
     pbio_error_t err;
@@ -24,7 +23,7 @@ pbio_error_t pbdrv_battery_get_voltage_now(pbio_port_t port, uint16_t *value) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    err = pbdrv_adc_get_ch(PBDRV_BATTERY_VOLTAGE_CH, &raw);
+    err = pbdrv_adc_get_ch(PBDRV_CONFIG_BATTERY_ADC_VOLTAGE_CH, &raw);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -46,7 +45,7 @@ pbio_error_t pbdrv_battery_get_current_now(pbio_port_t port, uint16_t *value) {
 
     // this is measuring the voltage across a 0.05 ohm shunt resistor probably
     // via an op amp with unknown gain.
-    err = pbdrv_adc_get_ch(PBDRV_BATTERY_CURRENT_CH, &raw);
+    err = pbdrv_adc_get_ch(PBDRV_CONFIG_BATTERY_ADC_CURRENT_CH, &raw);
     if (err != PBIO_SUCCESS) {
         return err;
     }
