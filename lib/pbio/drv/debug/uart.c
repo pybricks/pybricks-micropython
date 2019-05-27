@@ -10,6 +10,7 @@
 #include "pbio/event.h"
 #include "pbio/port.h"
 #include "pbio/uartdev.h"
+#include "pbio/util.h"
 #include "pbsys/sys.h"
 #include "sys/process.h"
 
@@ -20,7 +21,7 @@
 #define RX_BUF_SIZE 64  // must be power of 2!
 
 typedef struct {
-    UART_HandleTypeDef handle;      // must be first in struct!
+    UART_HandleTypeDef handle;
     const uint8_t irq;
     uint8_t tx_buf[TX_BUF_SIZE];
     uint8_t rx_buf[RX_BUF_SIZE];
@@ -50,7 +51,7 @@ PROCESS(pbdrv_uart_process, "UART");
 
 // overrides weak function in stm32f4xx_hal_uart.c
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-    pbdrv_uart_t *uart = (void *)huart;
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(huart, pbdrv_uart_t, handle);
     uint8_t new_head;
 
     new_head = (uart->rx_buf_head + 1) & (RX_BUF_SIZE - 1);
@@ -100,7 +101,7 @@ pbio_error_t pbdrv_uart_get_char(pbio_port_t port, uint8_t *c) {
 
 // overrides weak function in stm32f4xx_hal_uart.c
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
-    pbdrv_uart_t *uart = (void *)huart;
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(huart, pbdrv_uart_t, handle);
 
     if (uart->tx_buf_tail != uart->tx_buf_head) {
         // there is still more data to send
@@ -160,7 +161,7 @@ pbio_error_t pbdrv_uart_set_baud_rate(pbio_port_t port, uint32_t baud) {
 
 // overrides weak function in stm32f4xx_hal_uart.c
 void HAL_UART_MspInit(UART_HandleTypeDef *huart) {
-    pbdrv_uart_t *uart = (void *)huart;
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(huart, pbdrv_uart_t, handle);
 
     // clocks are enabled in sys.c
     // pin mux is handled in ioport.c
@@ -171,7 +172,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart) {
 
 // overrides weak function in stm32f4xx_hal_uart.c
 void HAL_UART_MspDeInit(UART_HandleTypeDef *huart) {
-    pbdrv_uart_t *uart = (void *)huart;
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(huart, pbdrv_uart_t, handle);
 
     HAL_NVIC_DisableIRQ(uart->irq);
 }
