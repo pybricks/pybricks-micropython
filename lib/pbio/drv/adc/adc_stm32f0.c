@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 David Lechner
 
+#include <pbdrv/config.h>
+
+#if PBDRV_CONFIG_ADC
+
 #include <stdbool.h>
 #include <stdint.h>
 
 #include <pbio/error.h>
 #include "sys/process.h"
 
-#include "stm32f030xc.h"
+#include "stm32f0xx.h"
 
 PROCESS(pbdrv_adc_process, "ADC");
 
@@ -97,3 +101,5 @@ PROCESS_THREAD(pbdrv_adc_process, ev, data) {
 
     PROCESS_END();
 }
+
+#endif // PBDRV_CONFIG_ADC

@@ -16,7 +16,8 @@
 #include "sys/etimer.h"
 #include "sys/process.h"
 
-#include "stm32f446xx.h"
+#define USE_HAL_DRIVER
+#include "stm32f4xx.h"
 
 // workaround upstream NVIC_SystemReset() not decorated with noreturn
 void NVIC_SystemReset(void) __attribute__((noreturn));
@@ -221,4 +222,92 @@ void SystemInit(void) {
 
 void assert_failed(uint8_t* file, uint32_t line) {
     // set a breakpoint here for debugging
+}
+
+void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc) {
+    GPIO_InitTypeDef gpio_init;
+    ADC_ChannelConfTypeDef adc_ch_config;
+
+    // clocks are enabled in SystemInit
+    assert_param(__HAL_RCC_TIM2_IS_CLK_ENABLED());
+    assert_param(__HAL_RCC_DMA2_IS_CLK_ENABLED());
+    assert_param(__HAL_RCC_ADC3_IS_CLK_ENABLED());
+
+    // PA3, A0
+
+    gpio_init.Pin = GPIO_PIN_3;
+    gpio_init.Mode = GPIO_MODE_ANALOG;
+    gpio_init.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &gpio_init);
+
+    adc_ch_config.Channel = ADC_CHANNEL_3;
+    adc_ch_config.Rank = 1;
+    adc_ch_config.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+    adc_ch_config.Offset = 0;
+    HAL_ADC_ConfigChannel(hadc, &adc_ch_config);
+
+    // PC0, A1
+
+    gpio_init.Pin = GPIO_PIN_0;
+    gpio_init.Mode = GPIO_MODE_ANALOG;
+    gpio_init.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOC, &gpio_init);
+
+    adc_ch_config.Channel = ADC_CHANNEL_10;
+    adc_ch_config.Rank = 2;
+    adc_ch_config.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+    adc_ch_config.Offset = 0;
+    HAL_ADC_ConfigChannel(hadc, &adc_ch_config);
+
+    // PC3, A2
+
+    gpio_init.Pin = GPIO_PIN_3;
+    gpio_init.Mode = GPIO_MODE_ANALOG;
+    gpio_init.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOC, &gpio_init);
+
+    adc_ch_config.Channel = ADC_CHANNEL_13;
+    adc_ch_config.Rank = 3;
+    adc_ch_config.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+    adc_ch_config.Offset = 0;
+    HAL_ADC_ConfigChannel(hadc, &adc_ch_config);
+
+    // PF3, A3
+
+    gpio_init.Pin = GPIO_PIN_3;
+    gpio_init.Mode = GPIO_MODE_ANALOG;
+    gpio_init.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOF, &gpio_init);
+
+    adc_ch_config.Channel = ADC_CHANNEL_9;
+    adc_ch_config.Rank = 4;
+    adc_ch_config.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+    adc_ch_config.Offset = 0;
+    HAL_ADC_ConfigChannel(hadc, &adc_ch_config);
+
+    // PF5, A4
+
+    gpio_init.Pin = GPIO_PIN_5;
+    gpio_init.Mode = GPIO_MODE_ANALOG;
+    gpio_init.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOF, &gpio_init);
+
+    adc_ch_config.Channel = ADC_CHANNEL_15;
+    adc_ch_config.Rank = 5;
+    adc_ch_config.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+    adc_ch_config.Offset = 0;
+    HAL_ADC_ConfigChannel(hadc, &adc_ch_config);
+
+    // PF10, A5
+
+    gpio_init.Pin = GPIO_PIN_10;
+    gpio_init.Mode = GPIO_MODE_ANALOG;
+    gpio_init.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOF, &gpio_init);
+
+    adc_ch_config.Channel = ADC_CHANNEL_8;
+    adc_ch_config.Rank = 6;
+    adc_ch_config.SamplingTime = ADC_SAMPLETIME_15CYCLES;
+    adc_ch_config.Offset = 0;
+    HAL_ADC_ConfigChannel(hadc, &adc_ch_config);
 }

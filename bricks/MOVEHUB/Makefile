@@ -3,6 +3,7 @@
 
 PBIO_PLATFORM = move_hub
 CPU_FAMILY = 0
+CMSIS_MCU = STM32F070xB
 FIRMWARE_MAX_SIZE = 108544
 
 include ../stm32.mk

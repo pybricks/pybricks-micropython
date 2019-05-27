@@ -20,6 +20,17 @@ include $(TOP)/py/py.mk
 
 CROSS_COMPILE ?= arm-none-eabi-
 
+# Bricks must specify the following variables in their Makefile
+ifeq ($(CPU_FAMILY),)
+$(error "CPU_FAMILY is not specified - add it in <hub>/Makefile)
+endif
+ifeq ($(CMSIS_MCU),)
+$(error "CMSIS_MCU is not specified - add it in <hub>/Makefile")
+endif
+ifeq ($(PBIO_PLATFORM),)
+$(error "PBIO_PLATFORM is not specified - add it in <hub>/Makefile)
+endif
+
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(TOP)/lib/cmsis/inc
@@ -57,9 +68,8 @@ CFLAGS += -Os -DNDEBUG
 CFLAGS += -fdata-sections -ffunction-sections
 endif
 
-ifneq ($(CMSIS_MCU),)
+# Required for STM32 library
 CFLAGS += -D$(CMSIS_MCU)
-endif
 
 ifneq ($(PYBRICKS_MPY_MAIN_MODULE),)
 CFLAGS += -DPYBRICKS_MPY_MAIN_MODULE=MP_STRINGIFY\($(basename $(notdir $(PYBRICKS_MPY_MAIN_MODULE)))\)
@@ -137,7 +147,7 @@ HAL_SRC_C = $(addprefix lib/stm32lib/STM32F$(CPU_FAMILY)xx_HAL_Driver/Src/,\
 	)
 
 PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
-	drv/$(PBIO_PLATFORM)/adc.c \
+	drv/adc/adc_stm32f$(CPU_FAMILY).c \
 	drv/$(PBIO_PLATFORM)/battery.c \
 	drv/$(PBIO_PLATFORM)/bluetooth.c \
 	drv/$(PBIO_PLATFORM)/button.c \
