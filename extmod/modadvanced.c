@@ -25,7 +25,7 @@ class IODevice():
 // TODO: Use generic type for classes that just have a port property. They can also share the get_port.
 typedef struct _advanced_IODevice_obj_t {
     mp_obj_base_t base;
-    pbio_port_t port;
+    pbio_iodev_t *iodev;
 } advanced_IODevice_obj_t;
 
 /*
@@ -37,8 +37,9 @@ STATIC mp_obj_t advanced_IODevice_make_new(const mp_obj_type_t *type, size_t n_a
     // Initialize self
     mp_arg_check_num(n_args, n_kw, 1, 1, false);
     advanced_IODevice_obj_t *self = m_new_obj(advanced_IODevice_obj_t);
-    self->base.type = (mp_obj_type_t*) type;
-    self->port = mp_obj_get_int(args[0]);
+    self->base.type = (mp_obj_type_t *)type;
+    pbio_port_t port = mp_obj_get_int(args[0]);
+    pb_assert(pbdrv_ioport_get_iodev(port, &self->iodev));
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -50,13 +51,13 @@ IODevice
 STATIC void advanced_IODevice_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
     advanced_IODevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, qstr_str(MP_QSTR_IODevice));
-    mp_printf(print, " on Port.%c",  self->port);
+    mp_printf(print, " on Port.%c",  self->iodev->port);
 }
 
 STATIC mp_obj_t advanced_IODevice_type_id(const mp_obj_t self_in) {
     advanced_IODevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_iodev_type_id_t id;
-    pb_assert(pb_iodevice_get_type_id(self->port, &id));
+    pb_assert(pb_iodevice_get_type_id(self->iodev, &id));
     return mp_obj_new_int(id);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(advanced_IODevice_type_id_obj, advanced_IODevice_type_id);
@@ -66,12 +67,12 @@ STATIC mp_obj_t advanced_IODevice_mode(size_t n_args, const mp_obj_t *args) {
     if (n_args == 1) {
         // get mode
         uint8_t mode;
-        pb_assert(pb_iodevice_get_mode(self->port, &mode));
+        pb_assert(pb_iodevice_get_mode(self->iodev, &mode));
         return mp_obj_new_int(mode);
     }
     else {
         // set mode
-        pb_assert(pb_iodevice_set_mode(self->port, mp_obj_get_int(args[1])));
+        pb_assert(pb_iodevice_set_mode(self->iodev, mp_obj_get_int(args[1])));
         return mp_const_none;
     }
 }
@@ -81,11 +82,11 @@ STATIC mp_obj_t advanced_IODevice_values(size_t n_args, const mp_obj_t *args) {
     advanced_IODevice_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     if (n_args == 1) {
         // get values
-        return pb_iodevice_get_values(self->port);
+        return pb_iodevice_get_values(self->iodev);
     }
     else {
         // set values
-        return pb_iodevice_set_values(self->port, args[1]);
+        return pb_iodevice_set_values(self->iodev, args[1]);
     }
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(advanced_IODevice_values_obj, 1, 2, advanced_IODevice_values);

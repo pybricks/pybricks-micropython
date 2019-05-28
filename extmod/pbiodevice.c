@@ -16,33 +16,35 @@
 #include "pberror.h"
 #include "pbiodevice.h"
 
-pbio_error_t pb_iodevice_get_type_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
-    pbio_iodev_t *iodev;
-    pbio_error_t err = pbdrv_ioport_get_iodev(port, &iodev);
-    if (err != PBIO_SUCCESS){
-        return err;
+void pb_iodevice_assert_type_id(pbio_iodev_t *iodev, pbio_iodev_type_id_t type_id) {
+    if (!iodev->info || iodev->info->type_id != type_id) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+}
+
+pbio_error_t pb_iodevice_get_type_id(pbio_iodev_t *iodev, pbio_iodev_type_id_t *id) {
+    if (!iodev->info) {
+        return PBIO_ERROR_NO_DEV;
     }
     *id = iodev->info->type_id;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pb_iodevice_get_mode(pbio_port_t port, uint8_t *current_mode) {
-    pbio_iodev_t *iodev;
-    pbio_error_t err = pbdrv_ioport_get_iodev(port, &iodev);
-    if (err != PBIO_SUCCESS){
-        return err;
-    }
+pbio_error_t pb_iodevice_get_mode(pbio_iodev_t *iodev, uint8_t *current_mode) {
     *current_mode = iodev->mode;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pb_iodevice_set_mode(pbio_port_t port, uint8_t new_mode) {
-    pbio_iodev_t *iodev;
-    pbio_error_t err = pbdrv_ioport_get_iodev(port, &iodev);
-    // Return error if any. Return success if mode already set.
-    if (err != PBIO_SUCCESS || iodev->mode == new_mode){
-        return err;
+pbio_error_t pb_iodevice_set_mode(pbio_iodev_t *iodev, uint8_t new_mode) {
+    pbio_error_t err;
+
+    // FIXME: it would be better to do this check on a per-sensor basis since
+    // some sensors use setting the mode as a oneshot to update the sensor
+    // value - e.g. LEGO EV3 Ultrasonic sensor in certain modes.
+    if (iodev->mode == new_mode){
+        return PBIO_SUCCESS;
     }
+
     err = pbio_iodev_set_mode(iodev, new_mode);
     // Wait for mode change to complete unless there was an error.
     while (err == PBIO_SUCCESS && iodev->mode != new_mode) {
@@ -51,14 +53,12 @@ pbio_error_t pb_iodevice_set_mode(pbio_port_t port, uint8_t new_mode) {
     return err;
 }
 
-mp_obj_t pb_iodevice_get_values(pbio_port_t port) {
+mp_obj_t pb_iodevice_get_values(pbio_iodev_t *iodev) {
     mp_obj_t values[PBIO_IODEV_MAX_DATA_SIZE];
-    pbio_iodev_t *iodev;
     uint8_t *data;
     uint8_t len, i;
     pbio_iodev_data_type_t type;
 
-    pb_assert(pbdrv_ioport_get_iodev(port, &iodev));
     pb_assert(pbio_iodev_get_raw_values(iodev, &data));
     pb_assert(pbio_iodev_get_bin_format(iodev, &len, &type));
 
@@ -100,14 +100,12 @@ mp_obj_t pb_iodevice_get_values(pbio_port_t port) {
     return values[0];
 }
 
-mp_obj_t pb_iodevice_set_values(pbio_port_t port, mp_obj_t values) {
+mp_obj_t pb_iodevice_set_values(pbio_iodev_t *iodev, mp_obj_t values) {
     uint8_t data[PBIO_IODEV_MAX_DATA_SIZE];
-    pbio_iodev_t *iodev;
     mp_obj_t *items;
     uint8_t len, i;
     pbio_iodev_data_type_t type;
 
-    pb_assert(pbdrv_ioport_get_iodev(port, &iodev));
     pb_assert(pbio_iodev_get_bin_format(iodev, &len, &type));
 
     // if we only have one value, it doesn't have to be a tuple/list
