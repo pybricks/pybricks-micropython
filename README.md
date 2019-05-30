@@ -10,6 +10,10 @@ cloning this repository directly, do this:
 Then you will find this repo at `ports/pybricks` in the `micropython` directory
 that was just cloned.
 
+By default, this will exclude the large submodules for the Pybricks EV3RT port. If you want to download those as well, go to `bricks/ev3rt` and do this:
+
+    git submodule update --checkout --init --recursive
+
 We may occasionally rebase the `pybricks/micropython` repository. To update
 to the latest version, run the following commands:
 
