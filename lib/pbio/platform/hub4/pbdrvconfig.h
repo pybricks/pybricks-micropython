@@ -10,6 +10,15 @@
 #define PBDRV_CONFIG_BATTERY_ADC_VOLTAGE_CH         11
 #define PBDRV_CONFIG_BATTERY_ADC_CURRENT_CH         10
 
+#define PBDRV_CONFIG_GPIO                           (1)
+#define PBDRV_CONFIG_GPIO_STM32F0                   (1)
+
+#define PBDRV_CONFIG_IOPORT                         (1)
+#define PBDRV_CONFIG_IOPORT_LPF2                    (1)
+#define PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS          (2)
+#define PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT         PBIO_PORT_A
+#define PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT          PBIO_PORT_B
+
 #define PBDRV_CONFIG_HAS_PORT_A (1)
 #define PBDRV_CONFIG_HAS_PORT_B (1)
 

@@ -12,8 +12,8 @@
 #include "pbdrv/bluetooth.h"
 #include "pbdrv/button.h"
 #include "pbdrv/battery.h"
+#include "pbdrv/config.h"
 #include "pbdrv/light.h"
-#include "pbdrv/ioport.h"
 #include "pbdrv/motor.h"
 #include "pbdrv/uart.h"
 #include "pbsys/sys.h"
@@ -25,6 +25,7 @@
 #include "sys/clock.h"
 #include "sys/etimer.h"
 #include "sys/process.h"
+#include "processes.h"
 
 static uint32_t prev_fast_poll_time;
 static uint32_t prev_slow_poll_time;
@@ -40,9 +41,9 @@ AUTOSTART_PROCESSES(
 #if PBDRV_CONFIG_BLUETOOTH
     ,&pbdrv_bluetooth_hci_process
     ,&pbdrv_bluetooth_spi_process
-#endif // PBDRV_CONFIG_BLUETOOTH
-#if PBDRV_CONFIG_IOPORT
-    ,&pbdrv_ioport_process
+#endif
+#if PBDRV_CONFIG_IOPORT_LPF2
+    ,&pbdrv_ioport_lpf2_process
 #endif
 #if PBDRV_CONFIG_UART
     ,&pbdrv_uart_process
