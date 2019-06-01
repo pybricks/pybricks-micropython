@@ -2,8 +2,9 @@
 // Copyright (c) 2018 David Lechner
 
 #include <pbdrv/light.h>
-#include <pbio/port.h>
+#include <pbio/config.h>
 #include <pbio/error.h>
+#include <pbio/port.h>
 
 #include "stm32f446xx.h"
 
@@ -52,7 +53,7 @@ void _pbdrv_light_init(void) {
     TIM4->CCR2 = 0;
 }
 
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
+#if PBIO_CONFIG_ENABLE_DEINIT
 // turn off the light
 void _pbdrv_light_deinit(void) {
     TIM12->CR1 &= ~TIM_CR1_CEN;

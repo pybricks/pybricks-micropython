@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include <pbdrv/motor.h>
+#include <pbio/config.h>
 
 
 #define MAX_PATH_LENGTH 120
@@ -166,7 +167,7 @@ void _pbdrv_motor_init(void) {
     }
 }
 
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
+#if PBIO_CONFIG_ENABLE_DEINIT
 void _pbdrv_motor_deinit(void) {
     for(pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
         sysfs_close_and_reset(port);

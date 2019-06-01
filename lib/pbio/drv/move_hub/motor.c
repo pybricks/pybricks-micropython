@@ -8,6 +8,7 @@
 #include "stm32f070xb.h"
 
 #include <pbdrv/motor.h>
+#include <pbio/config.h>
 
 #define PBIO_MOTOR_BUF_SIZE 32 // must be power of 2!
 
@@ -515,7 +516,7 @@ pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
     return PBIO_ERROR_INVALID_PORT;
 }
 
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
+#if PBIO_CONFIG_ENABLE_DEINIT
 void _pbdrv_motor_deinit(void) {
     // disable the PWM timers
     TIM1->CR1 &= TIM_CR1_CEN;

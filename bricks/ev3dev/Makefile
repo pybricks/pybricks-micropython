@@ -27,12 +27,10 @@ INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/ev3dev_stretch
 INC += -I$(TOP)/ports/pybricks/extmod
 INC += -I$(TOP)/ports/unix
 
-PBIO_OPT = -DPBIO_CONFIG_ENABLE_DEINIT
-
 # compiler settings
 CWARN = -Wall -Werror
 CWARN += -Wpointer-arith -Wuninitialized
-CFLAGS = $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA) $(PBIO_OPT)
+CFLAGS = $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA)
 
 # Debugging/Optimization
 ifdef DEBUG

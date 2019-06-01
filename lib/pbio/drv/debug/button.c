@@ -2,6 +2,7 @@
 // Copyright (c) 2018 David Lechner
 
 #include <pbio/button.h>
+#include <pbio/config.h>
 #include <pbio/error.h>
 #include <pbio/port.h>
 
@@ -13,7 +14,7 @@ void _pbdrv_button_init(void) {
     GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER13_Msk) | (0 << GPIO_MODER_MODER13_Pos);
 }
 
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
+#if PBIO_CONFIG_ENABLE_DEINIT
 void _pbdrv_button_deinit(void) { }
 #endif
 

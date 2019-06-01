@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #include <pbio/button.h>
+#include <pbio/config.h>
 #include <pbio/error.h>
 #include <pbio/port.h>
 
@@ -15,7 +16,7 @@ void _pbdrv_button_init(void) {
     f_btn = open("/dev/input/by-path/platform-gpio_keys-event", O_RDONLY);
 }
 
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
+#if PBIO_CONFIG_ENABLE_DEINIT
 void _pbdrv_button_deinit(void) {
     close(f_btn);
     f_btn = -1;

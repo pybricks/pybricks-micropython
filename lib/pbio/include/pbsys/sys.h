@@ -19,6 +19,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "pbio/config.h"
 #include "pbio/error.h"
 #include "sys/process.h"
 
@@ -54,7 +55,7 @@ typedef struct {
     pbsys_stdin_event_callback_t stdin_event;
 } pbsys_user_program_callbacks_t;
 
-#ifdef PBIO_CONFIG_ENABLE_SYS
+#if PBIO_CONFIG_ENABLE_SYS
 
 /**
  * Performs platform-specific preperation for running a user program.

@@ -4,8 +4,9 @@
 #include <stdio.h>
 
 #include <pbdrv/light.h>
-#include <pbio/port.h>
+#include <pbio/config.h>
 #include <pbio/error.h>
+#include <pbio/port.h>
 
 #define NLEDS 4
 
@@ -38,7 +39,7 @@ void _pbdrv_light_init(void) {
     }
 }
 
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
+#if PBIO_CONFIG_ENABLE_DEINIT
 void _pbdrv_light_deinit(void) {
     for (int led = 0; led < NLEDS; led++) {
         if (f_brightness[led]) {

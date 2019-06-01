@@ -8,6 +8,7 @@
 #include "stm32f030xc.h"
 
 #include <pbdrv/motor.h>
+#include <pbio/config.h>
 
 void _pbdrv_motor_init(void) {
     // it isn't clear what PB2 does yet, but tacho doesn't work without setting it high.
@@ -242,11 +243,11 @@ pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
     }
 
     *id = iodev->info->type_id;
-    
+
     return PBIO_SUCCESS;
 }
 
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
+#if PBIO_CONFIG_ENABLE_DEINIT
 void _pbdrv_motor_deinit(void) {
     // disable the PWM timers
     TIM3->CR1 &= TIM_CR1_CEN;

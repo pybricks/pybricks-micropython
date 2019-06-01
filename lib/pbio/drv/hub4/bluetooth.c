@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "pbio/config.h"
 #include "pbio/error.h"
 #include "pbio/event.h"
 #include "pbsys/sys.h"
@@ -151,7 +152,7 @@ static void spi_init() {
     NVIC_EnableIRQ(EXTI2_3_IRQn);
 }
 
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
+#if PBIO_CONFIG_ENABLE_DEINIT
 static void bluetooth_deinit() {
     // nRESET
     // set PB6 output low

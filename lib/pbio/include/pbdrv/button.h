@@ -14,6 +14,7 @@
 #include <pbdrv/config.h>
 
 #include <pbio/button.h>
+#include <pbio/config.h>
 #include <pbio/error.h>
 #include <pbio/port.h>
 
@@ -32,7 +33,7 @@ void _pbdrv_button_init(void);
  * Releases the low level button driver. No button functions can be called after
  * calling this function.
  */
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
+#if PBIO_CONFIG_ENABLE_DEINIT
 void _pbdrv_button_deinit(void);
 #else
 static inline void _pbdrv_button_deinit(void) { }

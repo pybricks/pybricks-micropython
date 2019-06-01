@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <pbio/config.h>
 #include <pbio/error.h>
 #include "sys/process.h"
 
@@ -73,7 +74,7 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     return PBIO_SUCCESS;
 }
 
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
+#if PBIO_CONFIG_ENABLE_DEINIT
 static void pbdrv_adc_exit() {
     // REVISIT: do we need timeouts here?
     ADC1->CR |= ADC_CR_ADSTP;
@@ -87,7 +88,7 @@ static void pbdrv_adc_exit() {
 PROCESS_THREAD(pbdrv_adc_process, ev, data) {
     // TODO: use DMA for background updates and add filtering
     // PROCESS_POLLHANDLER(pbdrv_adc_poll());
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
+#if PBIO_CONFIG_ENABLE_DEINIT
     PROCESS_EXITHANDLER(pbdrv_adc_exit());
 #endif
 

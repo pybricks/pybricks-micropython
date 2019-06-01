@@ -17,6 +17,7 @@
 #include "pbdrv/motor.h"
 #include "pbdrv/uart.h"
 #include "pbsys/sys.h"
+#include "pbio/config.h"
 #include "pbio/motor.h"
 #include "pbio/uartdev.h"
 
@@ -49,7 +50,7 @@ AUTOSTART_PROCESSES(
 #ifndef PBIO_CONFIG_DISABLE_UARTDEV
     ,&pbio_uartdev_process
 #endif
-#ifdef PBIO_CONFIG_ENABLE_SYS
+#if PBIO_CONFIG_ENABLE_SYS
     ,&pbsys_process
 #endif
 );
@@ -61,14 +62,14 @@ AUTOSTART_PROCESSES(
  */
 void pbio_init(void) {
     clock_init();
-#ifdef PBIO_CONFIG_ENABLE_SYS
+#if PBIO_CONFIG_ENABLE_SYS
     process_init();
 #endif
     _pbdrv_button_init();
     _pbdrv_light_init();
     _pbdrv_motor_init();
     _pbio_motorcontroll_init();
-#ifdef PBIO_CONFIG_ENABLE_SYS
+#if PBIO_CONFIG_ENABLE_SYS
     autostart_start(autostart_processes);
 #endif
 }
@@ -93,21 +94,21 @@ int pbio_do_one_event(void) {
         _pbio_light_poll(now);
         prev_slow_poll_time = now;
     }
-#ifdef PBIO_CONFIG_ENABLE_SYS
+#if PBIO_CONFIG_ENABLE_SYS
     return process_run();
 #else
     return 0;
 #endif
 }
 
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
+#if PBIO_CONFIG_ENABLE_DEINIT
 /**
  * Releases all resources used by the library. Calling this function is
  * optional. It should be called once at the end of a program. No other
  * functions may be called after this.
  */
 void pbio_deinit(void) {
-#ifdef PBIO_CONFIG_ENABLE_SYS
+#if PBIO_CONFIG_ENABLE_SYS
     autostart_exit(autostart_processes);
 #endif
     _pbdrv_motor_deinit();

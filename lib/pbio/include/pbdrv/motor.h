@@ -13,6 +13,7 @@
 
 #include <pbdrv/config.h>
 #include <pbdrv/ioport.h>
+#include <pbio/config.h>
 #include <pbio/error.h>
 #include <pbio/port.h>
 
@@ -35,7 +36,7 @@ void _pbdrv_motor_init(void);
  * Releases the low level motor driver. No motor functions can be called after
  * calling this function.
  */
-#ifdef PBIO_CONFIG_ENABLE_DEINIT
+#if PBIO_CONFIG_ENABLE_DEINIT
 void _pbdrv_motor_deinit(void);
 #else
 static inline void _pbdrv_motor_deinit(void) { }
