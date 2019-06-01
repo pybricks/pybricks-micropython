@@ -14,6 +14,7 @@
 #include "sys/etimer.h"
 #include "sys/process.h"
 #include "sys/pt.h"
+#include "../../src/processes.h"
 
 #include "bluenrg_aci.h"
 #include "bluenrg_gap.h"

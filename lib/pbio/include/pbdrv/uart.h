@@ -11,21 +11,11 @@
 
 #include <stdint.h>
 
-#include "pbdrv/config.h"
-
-#include "pbio/error.h"
-#include "pbio/port.h"
-
-#include "sys/process.h"
-
+#include <pbdrv/config.h>
+#include <pbio/error.h>
+#include <pbio/port.h>
 
 #if PBDRV_CONFIG_UART
-
-/** @cond INTERNAL */
-
-PROCESS_NAME(pbdrv_uart_process);
-
-/** @endcond */
 
 /**
  * Peeks at the next character in the UART receive buffer without removing it

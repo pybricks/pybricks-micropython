@@ -12,6 +12,7 @@
 #include "pbio/uartdev.h"
 #include "pbsys/sys.h"
 #include "sys/process.h"
+#include "../../src/processes.h"
 
 #include "stm32f070xb.h"
 

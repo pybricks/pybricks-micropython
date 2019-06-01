@@ -9,19 +9,12 @@
 #ifndef _PBDRV_BATTERY_H_
 #define _PBDRV_BATTERY_H_
 
-#include <pbdrv/config.h>
+#include <stdint.h>
 
+#include <pbdrv/config.h>
 #include <pbio/error.h>
 
 #if PBDRV_CONFIG_BATTERY
-
-#include <stdint.h>
-
-#include <sys/process.h>
-
-/** @cond INTERNAL */
-PROCESS_NAME(pbdrv_battery_process);
-/** @endcond */
 
 /**
  * Gets the battery voltage.
@@ -41,7 +34,7 @@ pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value);
  */
 pbio_error_t pbdrv_battery_get_current_now(uint16_t *value);
 
-#else
+#else // PBDRV_CONFIG_BATTERY
 
 static inline void _pbdrv_battery_poll(uint32_t now) { }
 static inline void _pbdrv_battery_deinit(void) { }
@@ -52,8 +45,8 @@ static inline pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-#endif
+#endif // PBDRV_CONFIG_BATTERY
 
-#endif /* _PBDRV_BATTERY_H_ */
+#endif // _PBDRV_BATTERY_H_
 
 /** @} */

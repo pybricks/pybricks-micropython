@@ -13,6 +13,7 @@
 #include "pbio/util.h"
 #include "pbsys/sys.h"
 #include "sys/process.h"
+#include "../../src/processes.h"
 
 #define USE_HAL_DRIVER
 #include "stm32f4xx.h"

@@ -7,7 +7,6 @@
 #include <stdint.h>
 
 #include "pbio/port.h"
-#include "sys/process.h"
 
 /**
  * Contiki process events.

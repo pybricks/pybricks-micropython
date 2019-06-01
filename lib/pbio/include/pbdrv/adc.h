@@ -13,13 +13,8 @@
 
 #include <pbdrv/config.h>
 #include <pbio/error.h>
-#include <sys/process.h>
 
 #if PBDRV_CONFIG_ADC
-
-/** @cond INTERNAL */
-PROCESS_NAME(pbdrv_adc_process);
-/** @endcond */
 
 /**
  * Gets the raw analog value for the specified channel.

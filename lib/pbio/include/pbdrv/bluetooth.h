@@ -9,9 +9,10 @@
 #ifndef _PBDRV_BLUETOOTH_H_
 #define _PBDRV_BLUETOOTH_H_
 
-#include "pbdrv/config.h"
-#include "pbio/error.h"
-#include "sys/process.h"
+#include <stdint.h>
+
+#include <pbdrv/config.h>
+#include <pbio/error.h>
 
 #if PBDRV_CONFIG_BLUETOOTH
 
@@ -26,14 +27,7 @@
  */
 pbio_error_t pbdrv_bluetooth_tx(uint8_t c);
 
-/** @cond INTERNAL */
-
-PROCESS_NAME(pbdrv_bluetooth_hci_process);
-PROCESS_NAME(pbdrv_bluetooth_spi_process);
-
-/** @endcond */
-
-#else
+#else // PBDRV_CONFIG_BLUETOOTH
 
 static inline pbio_error_t pbdrv_bluetooth_tx(uint8_t c) { return PBIO_ERROR_NOT_SUPPORTED; }
 

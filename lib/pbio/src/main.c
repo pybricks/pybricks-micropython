@@ -8,14 +8,10 @@
 
 #include <stdbool.h>
 
-#include "pbdrv/adc.h"
-#include "pbdrv/bluetooth.h"
 #include "pbdrv/button.h"
-#include "pbdrv/battery.h"
 #include "pbdrv/config.h"
 #include "pbdrv/light.h"
 #include "pbdrv/motor.h"
-#include "pbdrv/uart.h"
 #include "pbsys/sys.h"
 #include "pbio/config.h"
 #include "pbio/motor.h"

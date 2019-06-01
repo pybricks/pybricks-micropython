@@ -19,9 +19,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "pbio/config.h"
-#include "pbio/error.h"
-#include "sys/process.h"
+#include <pbio/config.h>
+#include <pbio/error.h>
 
 /**
  * Callback function to handle stop button press during user program.
@@ -101,13 +100,7 @@ void pbsys_reboot(bool fw_update) __attribute__((noreturn));
  */
 void pbsys_power_off(void) __attribute__((noreturn));
 
-/** @cond INTERNAL */
-
-PROCESS_NAME(pbsys_process);
-
-/** @endcond */
-
-#else
+#else // PBIO_CONFIG_ENABLE_SYS
 
 static inline void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks) { }
 static inline void pbsys_unprepare_user_program(void) { }
@@ -117,7 +110,7 @@ static inline void pbsys_reset(void) { }
 static inline void pbsys_reboot(bool fw_update) { }
 static inline void pbsys_power_off(void) { }
 
-#endif
+#endif // PBIO_CONFIG_ENABLE_SYS
 
 #endif // _PBSYS_SYS_H_
 
