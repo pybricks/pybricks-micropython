@@ -3,7 +3,7 @@
 
 #include "stm32f030xc.h"
 
-#define MICROPY_HW_BOARD_NAME           "LPF2 HUB4"
+#define MICROPY_HW_BOARD_NAME           "Powered Up Smart Hub"
 #define MICROPY_HW_MCU_NAME             "STM32F030RC"
 
 #define PYBRICKS_HEAP_KB                16 // half of RAM
@@ -11,8 +11,8 @@
 // Pybricks modules
 #define PYBRICKS_PY_ADVANCED            (1)
 #define PYBRICKS_PY_BATTERY             (1)
+#define PYBRICKS_PY_CITYHUB             (1)
 #define PYBRICKS_PY_DEBUG               (0)
-#define PYBRICKS_PY_HUB4                (1)
 #define PYBRICKS_PY_MOTOR               (1)
 #define PYBRICKS_PY_PARAMETERS          (1)
 #define PYBRICKS_PY_PUPDEVICES          (1)

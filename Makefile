@@ -33,11 +33,11 @@ movehub:
 clean-movehub: clean-mpy-cross
 	@$(MAKE) -C bricks/movehub clean
 
-hub4:
-	@$(MAKE) -C bricks/HUB4
+cityhub:
+	@$(MAKE) -C bricks/cityhub
 
-clean-hub4: clean-mpy-cross
-	@$(MAKE) -C bricks/HUB4 clean
+clean-cityhub: clean-mpy-cross
+	@$(MAKE) -C bricks/cityhub clean
 
 clean-mpy-cross:
 	@$(MAKE) -C ../../mpy-cross clean
