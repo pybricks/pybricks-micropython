@@ -4,7 +4,9 @@
 #ifndef _PBIO_UARTDEV_H_
 #define _PBIO_UARTDEV_H_
 
-#ifndef PBIO_CONFIG_DISABLE_UARTDEV
+#include <pbio/config.h>
+
+#if PBIO_CONFIG_UARTDEV
 
 #include "sys/process.h"
 
@@ -14,6 +16,6 @@ PROCESS_NAME(pbio_uartdev_process);
 
 /** @endcond */
 
-#endif // PBIO_CONFIG_DISABLE_UARTDEV
+#endif // PBIO_CONFIG_UARTDEV
 
 #endif // _PBIO_UARTDEV_H_

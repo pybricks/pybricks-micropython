@@ -19,6 +19,10 @@
  * This file may be redistributed under either or both licenses.
  */
 
+#include <pbio/config.h>
+
+#if PBIO_CONFIG_UARTDEV
+
 #define DEBUG 0
 #if DEBUG
 #define debug_pr(fmt, ...)   printf((fmt), __VA_ARGS__)
@@ -42,8 +46,6 @@
 #include "pbio/uartdev.h"
 #include "sys/etimer.h"
 #include "sys/process.h"
-
-#ifndef PBIO_CONFIG_DISABLE_UARTDEV
 
 #define EV3_UART_MAX_MESSAGE_SIZE   (PBIO_IODEV_MAX_DATA_SIZE + 2)
 
