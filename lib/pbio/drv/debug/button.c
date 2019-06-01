@@ -18,11 +18,7 @@ void _pbdrv_button_init(void) {
 void _pbdrv_button_deinit(void) { }
 #endif
 
-pbio_error_t pbdrv_button_is_pressed(pbio_port_t port, pbio_button_flags_t *pressed) {
-    if (port != PBIO_PORT_SELF) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
-
+pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
     *pressed = (GPIOC->IDR & GPIO_IDR_ID13) ? PBIO_BUTTON_CENTER : 0;
 
     return PBIO_SUCCESS;

@@ -162,7 +162,7 @@ static void init(void) {
 static void update_button(clock_time_t now) {
     pbio_button_flags_t btn;
 
-    pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
+    pbio_button_is_pressed(&btn);
 
     if (btn & PBIO_BUTTON_CENTER) {
         if (button_pressed) {

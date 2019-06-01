@@ -25,7 +25,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(debug_read_adc_obj, debug_read_adc);
 STATIC mp_obj_t debug_read_buttons() {
     pbio_button_flags_t flags;
 
-    pb_assert(pbdrv_button_is_pressed(PBIO_PORT_SELF, &flags));
+    pb_assert(pbdrv_button_is_pressed(&flags));
 
     return mp_obj_new_int(flags);
 }

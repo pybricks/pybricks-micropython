@@ -103,14 +103,13 @@ typedef enum _pbio_button_flags_t {
 
 /**
  * Get bitmask indicating currently pressed buttons.
- * @param [in] port         The port to read
  * @param [out] pressed     Bitmask indicating which buttons are pressed
  * @return                  ::PBIO_SUCCESS if the call was successful,
  *                          ::PBIO_ERROR_INVALID_PORT if port is not a valid port
  *                          ::PBIO_ERROR_NO_DEV if port is valid but a device with buttons is not connected
  *                          ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbio_button_is_pressed(pbio_port_t port, pbio_button_flags_t *pressed);
+pbio_error_t pbio_button_is_pressed(pbio_button_flags_t *pressed);
 
 #endif // _PBIO_BUTTON_H_
 

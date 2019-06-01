@@ -27,12 +27,8 @@ static bool check(uint8_t *buffer, uint8_t key) {
     return buffer[key>>3] & (1 << (key % 8));
 }
 
-pbio_error_t pbdrv_button_is_pressed(pbio_port_t port, pbio_button_flags_t *pressed) {
+pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
     uint8_t buffer[(KEY_CNT + 7) / 8];
-
-    if (port != PBIO_PORT_SELF) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
 
     if (ioctl(f_btn, EVIOCGKEY(sizeof(buffer)), &buffer) == -1) {
         return PBIO_ERROR_IO;

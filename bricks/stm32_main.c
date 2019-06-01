@@ -74,7 +74,7 @@ static void wait_for_button_press(void) {
 
     // wait for button rising edge, then falling edge
     for (;;) {
-        pbio_button_is_pressed(PBIO_PORT_SELF, &btn);
+        pbio_button_is_pressed(&btn);
         if (btn & PBIO_BUTTON_CENTER) {
             // step 2:
             // once we are sure the button is released, we wait for it to be

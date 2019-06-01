@@ -13,7 +13,7 @@ STATIC mp_obj_t ev3brick_buttons(void) {
     pbio_button_flags_t pressed;
     uint8_t size = 0;
 
-    pb_assert(pbio_button_is_pressed(PBIO_PORT_SELF, &pressed));
+    pb_assert(pbio_button_is_pressed(&pressed));
 
     if (pressed & PBIO_BUTTON_CENTER) {
         button_list[size++] = mp_obj_new_int(PBIO_BUTTON_CENTER);
