@@ -8,7 +8,6 @@
 #include <pbio/button.h>
 #include <pbio/config.h>
 #include <pbio/error.h>
-#include <pbio/port.h>
 
 static uint8_t f_btn = -1; // Button file descriptor
 

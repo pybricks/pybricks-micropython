@@ -2,9 +2,23 @@
 // Copyright (c) 2019 David Lechner
 
 #include <pbdrv/config.h>
+#include <pbdrv/gpio.h>
+#include <pbio/button.h>
 #include <pbio/error.h>
 #include <pbio/iodev.h>
 #include <pbio/port.h>
+
+#include "../../drv/button/button_gpio.h"
+
+#include "stm32f446xx.h"
+
+const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON] = {
+    [0] = {
+        .gpio   = { .bank = GPIOC, .pin = 13 },
+        .pull   = PBDRV_GPIO_PULL_UP,
+        .button = PBIO_BUTTON_CENTER,
+    }
+};
 
 static struct {
     pbio_iodev_info_t info;

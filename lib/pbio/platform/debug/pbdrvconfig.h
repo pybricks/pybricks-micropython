@@ -14,6 +14,13 @@
 
 #define PBDRV_CONFIG_BATTERY                        (0)
 
+#define PBDRV_CONFIG_BUTTON                         (1)
+#define PBDRV_CONFIG_BUTTON_GPIO                    (1)
+#define PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON         (1)
+
+#define PBDRV_CONFIG_GPIO                           (1)
+#define PBDRV_CONFIG_GPIO_STM32F4                   (1)
+
 #define PBDRV_CONFIG_BLUETOOTH      (0)
 #define PBDRV_CONFIG_IOPORT         (1)
 #define PBDRV_CONFIG_LIGHT          (1)

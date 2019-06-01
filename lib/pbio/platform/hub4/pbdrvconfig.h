@@ -10,6 +10,10 @@
 #define PBDRV_CONFIG_BATTERY_ADC_VOLTAGE_CH         11
 #define PBDRV_CONFIG_BATTERY_ADC_CURRENT_CH         10
 
+#define PBDRV_CONFIG_BUTTON                         (1)
+#define PBDRV_CONFIG_BUTTON_GPIO                    (1)
+#define PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON         (1)
+
 #define PBDRV_CONFIG_GPIO                           (1)
 #define PBDRV_CONFIG_GPIO_STM32F0                   (1)
 

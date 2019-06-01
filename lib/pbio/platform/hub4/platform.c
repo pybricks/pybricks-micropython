@@ -1,9 +1,22 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019 David Lechner
 
+#include <pbdrv/gpio.h>
+#include <pbio/button.h>
+
+#include "../../drv/button/button_gpio.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 
 #include "stm32f030xc.h"
+
+const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON] = {
+    [0] = {
+        .gpio   = { .bank = GPIOC, .pin = 13 },
+        .pull   = PBDRV_GPIO_PULL_UP,
+        .button = PBIO_BUTTON_CENTER,
+        .active_low = true,
+    }
+};
 
 // Port A - USART3
 const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_0 = {
