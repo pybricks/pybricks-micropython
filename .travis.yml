@@ -106,11 +106,11 @@ jobs:
         - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
         - cd ../..
       script:
-        - make ${MAKEOPTS} -C ports/pybricks/bricks/MOVEHUB
+        - make ${MAKEOPTS} -C ports/pybricks/bricks/movehub
       after_success:
         - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET
         - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
-          "${HOME}/micropython/ports/pybricks/bricks/MOVEHUB/build/firmware.bin"
+          "${HOME}/micropython/ports/pybricks/bricks/movehub/build/firmware.bin"
           pybricks-powered-up/$TRAVIS_REPO_SLUG/build$TRAVIS_JOB_NUMBER/
         - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
         - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Calculate checksum of firmware file in the same way that the bootloader on
-the MOVEHUB does."""
+the movehub does."""
 
 from __future__ import print_function
 
@@ -106,7 +106,7 @@ def crc32_checksum(fw, max_size):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Compute checksum.')
-    parser.add_argument('checksum_type', metavar='type', choices=['xor', 'crc32'], 
+    parser.add_argument('checksum_type', metavar='type', choices=['xor', 'crc32'],
                         help='checksum type')
     parser.add_argument('fw_file', type=argparse.FileType('rb'),
                         help='firmware file name')

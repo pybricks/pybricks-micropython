@@ -28,10 +28,10 @@ clean-ev3dev-armel: clean-mpy-cross
 	fi
 
 movehub:
-	@$(MAKE) -C bricks/MOVEHUB
+	@$(MAKE) -C bricks/movehub
 
 clean-movehub: clean-mpy-cross
-	@$(MAKE) -C bricks/MOVEHUB clean
+	@$(MAKE) -C bricks/movehub clean
 
 hub4:
 	@$(MAKE) -C bricks/HUB4
