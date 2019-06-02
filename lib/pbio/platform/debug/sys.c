@@ -216,7 +216,7 @@ void SystemInit(void) {
     GPIOG->AFR[1] = (GPIOG->AFR[1] & ~GPIO_AFRH_AFSEL9_Msk) | (8 << GPIO_AFRH_AFSEL9_Pos);
     GPIOG->MODER = (GPIOG->MODER & ~GPIO_MODER_MODER14_Msk) | (2 << GPIO_MODER_MODER14_Pos);
     GPIOG->AFR[1] = (GPIOG->AFR[1] & ~GPIO_AFRH_AFSEL14_Msk) | (8 << GPIO_AFRH_AFSEL14_Pos);
-    USART6->BRR = (104 << 4) | 3; // 16MHz/(16*104.1875) = 9598 baud
+    USART6->BRR = (8 << 4) | 11; // 16MHz/(16*8.6875) = 115108 baud
     USART6->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
 }
 
