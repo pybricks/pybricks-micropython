@@ -53,6 +53,9 @@ void pb_assert(pbio_error_t error) {
         os_err = MP_ETIMEDOUT;
         break;
 #endif
+    case PBIO_ERROR_CANCELED:
+        os_err = MP_ECANCELED;
+        break;
     }
 
     mp_raise_OSError(os_err);

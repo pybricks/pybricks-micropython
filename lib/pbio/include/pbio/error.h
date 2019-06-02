@@ -25,6 +25,7 @@ typedef enum {
     PBIO_ERROR_AGAIN,           /**< Function should be called again later */
     PBIO_ERROR_INVALID_OP,      /**< Operation is not permitted in the current state */
     PBIO_ERROR_TIMEDOUT,        /**< The operation has timed out */
+    PBIO_ERROR_CANCELED         /**< The operation was canceled */
 } pbio_error_t;
 
 const char *pbio_error_str(pbio_error_t err);

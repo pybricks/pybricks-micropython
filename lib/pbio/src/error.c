@@ -39,6 +39,8 @@ const char *pbio_error_str(pbio_error_t err) {
         return "Invalid operation";
     case PBIO_ERROR_TIMEDOUT:
         return "Timed out";
+    case PBIO_ERROR_CANCELED:
+        return "Canceled";
     }
 
     return NULL;

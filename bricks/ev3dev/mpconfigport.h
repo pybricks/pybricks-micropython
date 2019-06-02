@@ -141,6 +141,7 @@ static const char pybricks_ev3dev_help_text[] =
     X(EPERM) \
     X(EPIPE) \
     X(ETIMEDOUT) \
+    X(ECANCELED) \
 
 #define MICROPY_PY_UCTYPES          (1)
 #define MICROPY_PY_UZLIB            (1)
