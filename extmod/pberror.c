@@ -45,6 +45,14 @@ void pb_assert(pbio_error_t error) {
     case PBIO_ERROR_INVALID_OP:
         os_err = MP_EPERM;
         break;
+    case PBIO_ERROR_TIMEDOUT:
+#if MICROPY_PY_BUILTINS_TIMEOUTERROR
+        mp_raise_msg(&mp_type_TimeoutError, NULL);
+        return;
+#else
+        os_err = MP_ETIMEDOUT;
+        break;
+#endif
     }
 
     mp_raise_OSError(os_err);

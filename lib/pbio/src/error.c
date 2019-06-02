@@ -37,6 +37,8 @@ const char *pbio_error_str(pbio_error_t err) {
         return "Try again later";
     case PBIO_ERROR_INVALID_OP:
         return "Invalid operation";
+    case PBIO_ERROR_TIMEDOUT:
+        return "Timed out";
     }
 
     return NULL;

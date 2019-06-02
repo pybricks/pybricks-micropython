@@ -62,6 +62,7 @@
     X(EINVAL) \
     X(EOPNOTSUPP) \
     X(EAGAIN) \
+    X(ETIMEDOUT) \
 
 // Enable floating point support unless explicitly disabled
 #ifndef MICROPY_FLOAT_IMPL
