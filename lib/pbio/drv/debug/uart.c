@@ -162,10 +162,22 @@ pbio_error_t pbdrv_uart_set_baud_rate(pbio_port_t port, uint32_t baud) {
 
 // overrides weak function in stm32f4xx_hal_uart.c
 void HAL_UART_MspInit(UART_HandleTypeDef *huart) {
+    GPIO_InitTypeDef gpio_init;
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(huart, pbdrv_uart_t, handle);
 
     // clocks are enabled in sys.c
-    // pin mux is handled in ioport.c
+
+    gpio_init.Pin = GPIO_PIN_5;
+    gpio_init.Mode = GPIO_MODE_AF_PP;
+    gpio_init.Pull = GPIO_PULLUP;
+    gpio_init.Alternate = 7;
+    HAL_GPIO_Init(GPIOD, &gpio_init);
+
+    gpio_init.Pin = GPIO_PIN_6;
+    gpio_init.Mode = GPIO_MODE_AF_PP;
+    gpio_init.Pull = GPIO_PULLUP;
+    gpio_init.Alternate = 7;
+    HAL_GPIO_Init(GPIOD, &gpio_init);
 
     HAL_NVIC_SetPriority(uart->irq, 1, 0);
     HAL_NVIC_EnableIRQ(uart->irq);
