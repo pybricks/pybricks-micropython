@@ -15,7 +15,6 @@
 const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON] = {
     [0] = {
         .gpio   = { .bank = GPIOC, .pin = 13 },
-        .pull   = PBDRV_GPIO_PULL_UP,
         .button = PBIO_BUTTON_CENTER,
     }
 };
