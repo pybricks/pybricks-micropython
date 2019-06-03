@@ -189,20 +189,33 @@ const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 
 const uint8_t APBPrescTable[8] = {0, 0, 0, 0, 1, 2, 3, 4};
 
 void SystemInit(void) {
+    RCC_OscInitTypeDef osc_init;
+    RCC_ClkInitTypeDef clk_init;
+
+    // Using internal 16Mhz oscillator
+    osc_init.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+    osc_init.HSEState = RCC_HSE_OFF;
+    osc_init.HSIState = RCC_HSI_ON;
+    osc_init.PLL.PLLState = RCC_PLL_ON;
+    osc_init.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+    osc_init.PLL.PLLM = 8; // VCO_IN 2MHz (16MHz / 8)
+    osc_init.PLL.PLLN = 96; // VCO_OUT 192MHz (2MHz * 168)
+    osc_init.PLL.PLLP = RCC_PLLP_DIV4; // PLLCLK 48MHz (to match move hub/city hub)
+    osc_init.PLL.PLLQ = 4; // 48MHz USB clock (192MHz / 4)
+
+    HAL_RCC_OscConfig(&osc_init);
+
+    clk_init.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+    clk_init.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+    clk_init.AHBCLKDivider  = RCC_SYSCLK_DIV1; // HCLK 48MHz (max 180MHz)
+    clk_init.APB1CLKDivider = RCC_HCLK_DIV1; // 48MHz (max 45MHz)
+    clk_init.APB2CLKDivider = RCC_HCLK_DIV1; // 48MHz (max 90MHz)
+
+    HAL_RCC_ClockConfig(&clk_init, FLASH_LATENCY_5);
+
 #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
     SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  /* set CP10 and CP11 Full Access */
 #endif
-
-    // basic MCU config
-    RCC->CR |= RCC_CR_HSION;
-    RCC->CFGR = 0; // reset all
-    RCC->CR &= ~(RCC_CR_HSION | RCC_CR_CSSON | RCC_CR_PLLON);
-    RCC->PLLCFGR = RCC_PLLCFGR_PLLR_1 | RCC_PLLCFGR_PLLQ_2 | RCC_PLLCFGR_PLLN_7
-                 | RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLM_4; // reset PLLCFGR
-    RCC->CR &= ~RCC_CR_HSEBYP;
-    RCC->CIR = 0; // disable IRQs
-
-    // leave the clock as-is (internal 16MHz)
 
     // dpgeorge: enable 8-byte stack alignment for IRQ handlers, in accord with EABI
     SCB->CCR |= SCB_CCR_STKALIGN_Msk;
@@ -219,7 +232,7 @@ void SystemInit(void) {
     GPIOG->AFR[1] = (GPIOG->AFR[1] & ~GPIO_AFRH_AFSEL9_Msk) | (8 << GPIO_AFRH_AFSEL9_Pos);
     GPIOG->MODER = (GPIOG->MODER & ~GPIO_MODER_MODER14_Msk) | (2 << GPIO_MODER_MODER14_Pos);
     GPIOG->AFR[1] = (GPIOG->AFR[1] & ~GPIO_AFRH_AFSEL14_Msk) | (8 << GPIO_AFRH_AFSEL14_Pos);
-    USART6->BRR = (8 << 4) | 11; // 16MHz/(16*8.6875) = 115108 baud
+    USART6->BRR = (26 << 4) | 1; // 48MHz/(16*26.0625) = 115107 baud
     USART6->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
 }
 

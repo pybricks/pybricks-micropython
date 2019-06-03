@@ -15,8 +15,7 @@
 volatile clock_time_t clock_time_ticks;
 
 void clock_init(void) {
-    // SysTick set for 1ms ticks
-    SysTick_Config(PBDRV_CONFIG_SYS_CLOCK_RATE / 1000);
+    // SysTick is configured in SystemInit
 }
 
 clock_time_t clock_time() {
