@@ -11,7 +11,6 @@
 
 #include "py/runtime.h"
 
-#include "modcommon.h"
 #include "modmotor.h"
 #include "pberror.h"
 #include "pbiodevice.h"
