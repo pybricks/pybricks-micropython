@@ -89,12 +89,12 @@ SRC_C = $(addprefix ports/pybricks/bricks/,\
 	)
 
 SRC_C += \
-	lib/utils/interrupt_char.c \
-	lib/utils/printf.c \
-	lib/utils/stdout_helpers.c \
-	lib/utils/pyexec.c \
 	lib/libc/string0.c \
 	lib/mp-readline/readline.c \
+	lib/utils/interrupt_char.c \
+	lib/utils/printf.c \
+	lib/utils/pyexec.c \
+	lib/utils/stdout_helpers.c \
 
 SRC_S = \
 	ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)/startup.s \
@@ -110,8 +110,8 @@ PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modadvanced.c \
 	modbattery.c \
 	modcityhub.c \
-	modlight.c \
 	moddebug.c \
+	modlight.c \
 	modmotor.c \
 	modmovehub.c \
 	modparameters.c \
@@ -132,38 +132,38 @@ BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\
 	)
 
 HAL_SRC_C = $(addprefix lib/stm32lib/STM32F$(CPU_FAMILY)xx_HAL_Driver/Src/,\
-	stm32f$(CPU_FAMILY)xx_hal.c \
-	stm32f$(CPU_FAMILY)xx_hal_adc.c \
 	stm32f$(CPU_FAMILY)xx_hal_adc_ex.c \
+	stm32f$(CPU_FAMILY)xx_hal_adc.c \
 	stm32f$(CPU_FAMILY)xx_hal_cortex.c \
 	stm32f$(CPU_FAMILY)xx_hal_dma.c \
 	stm32f$(CPU_FAMILY)xx_hal_gpio.c \
 	stm32f$(CPU_FAMILY)xx_hal_rcc.c \
-	stm32f$(CPU_FAMILY)xx_hal_tim.c \
 	stm32f$(CPU_FAMILY)xx_hal_tim_ex.c \
+	stm32f$(CPU_FAMILY)xx_hal_tim.c \
 	stm32f$(CPU_FAMILY)xx_hal_uart.c \
+	stm32f$(CPU_FAMILY)xx_hal.c \
 	)
 
 PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
+	drv/$(PBIO_PLATFORM)/bluetooth.c \
+	drv/$(PBIO_PLATFORM)/light.c \
+	drv/$(PBIO_PLATFORM)/motor.c \
+	drv/$(PBIO_PLATFORM)/uart.c \
 	drv/adc/adc_stm32f$(CPU_FAMILY).c \
 	drv/battery/battery_adc.c \
 	drv/button/button_gpio.c \
 	drv/gpio/gpio_stm32f$(CPU_FAMILY).c \
 	drv/ioport/ioport_lpf2.c \
-	drv/$(PBIO_PLATFORM)/bluetooth.c \
-	drv/$(PBIO_PLATFORM)/light.c \
-	drv/$(PBIO_PLATFORM)/motor.c \
-	drv/$(PBIO_PLATFORM)/uart.c \
 	platform/$(PBIO_PLATFORM)/clock.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	platform/$(PBIO_PLATFORM)/sys.c \
-	src/motor.c \
 	src/error.c \
 	src/iodev.c \
-	src/motorcontrol.c \
-	src/motorref.c \
 	src/light.c \
 	src/main.c \
+	src/motor.c \
+	src/motorcontrol.c \
+	src/motorref.c \
 	src/uartdev.c \
 	sys/autostart.c \
 	sys/etimer.c \
@@ -172,7 +172,6 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	)
 
 SRC_LIBM = $(addprefix lib/libm/,\
-	math.c \
 	acoshf.c \
 	asinfacosf.c \
 	asinhf.c \
@@ -180,6 +179,7 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	atanf.c \
 	atanhf.c \
 	ef_rem_pio2.c \
+	ef_sqrt.c \
 	erf_lgamma.c \
 	fmodf.c \
 	kf_cos.c \
@@ -187,6 +187,7 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	kf_sin.c \
 	kf_tan.c \
 	log1pf.c \
+	math.c \
 	nearbyintf.c \
 	sf_cos.c \
 	sf_erf.c \
@@ -197,7 +198,6 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	sf_tan.c \
 	wf_lgamma.c \
 	wf_tgamma.c \
-	ef_sqrt.c \
 	)
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
