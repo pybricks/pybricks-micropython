@@ -120,6 +120,22 @@ typedef enum {
 } pbio_iodev_flag_t;
 
 /**
+ * Mapping flags that describe the input and output values of an I/O device.
+ */
+typedef enum {
+    /** The value is a discrete value, e.g. a color index. */
+    LPF2_MAPPING_FLAG_DISCRETE  = 1 << 2,
+    /** The value is a relative value, e.g. a motor position. */
+    LPF2_MAPPING_FLAG_RELATIVE  = 1 << 3,
+    /** The value is an absolute value, e.g. a distance measurement. */
+    LPF2_MAPPING_FLAG_ABSOLUTE  = 1 << 4,
+    /** Supports functional mapping 2.0+. */
+    LPF2_MAPPING_FLAG_2_0       = 1 << 6,
+    /** Supports NULL value. */
+    LPF2_MAPPING_FLAG_NULL      = 1 << 7,
+} pbio_iodev_mapping_flag_t;
+
+/**
  * Information about one mode of an I/O device.
  */
 typedef struct {
@@ -175,6 +191,14 @@ typedef struct {
      * The units of measurement.
      */
     char uom[PBIO_IODEV_UOM_SIZE + 1];
+    /**
+     * Input value mapping flags.
+     */
+    pbio_iodev_mapping_flag_t input_flags;
+    /**
+     * Output value mapping flags.
+     */
+    pbio_iodev_mapping_flag_t output_flags;
 } pbio_iodev_mode_t;
 
 /**
@@ -209,49 +233,29 @@ typedef struct _pbio_iodev_t pbio_iodev_t;
 /** @cond INTERNAL */
 
 /**
- * Function prototype for implementation of device mode setting function.
- * @param [in]  iodev   Pointer to an I/O device
- * @param [in]  mode    The new mode
+ * Device-specific communication functions.
  */
-typedef pbio_error_t (*pbio_iodev_set_mode_func_t)(pbio_iodev_t *iodev, uint8_t mode);
-
-/**
- * Function prototype for implementation of device set data function.
- * @param [in]  iodev   Pointer to an I/O device
- * @param [in]  data    The data values
- *
- * The size of *data* in bytes must be *len* times the size of *type*.
- */
-typedef pbio_error_t (*pbio_iodev_set_data_func_t)(pbio_iodev_t *iodev, uint8_t *data);
-
-/**
- * Function prototype for implementation of device write function.
- * @param [in]  iodev   Pointer to an I/O device
- * @param [in]  data    The data
- * @param [in]  size    The size of *data* in bytes
- */
-typedef pbio_error_t (*pbio_iodev_write_func_t)(pbio_iodev_t *iodev, const uint8_t *data, uint8_t size);
+typedef struct {
+    pbio_error_t (*set_mode_begin)(pbio_iodev_t *iodev, uint8_t mode);
+    pbio_error_t (*set_mode_end)(pbio_iodev_t *iodev);
+    void (*set_mode_cancel)(pbio_iodev_t *iodev);
+    pbio_error_t (*set_data_begin)(pbio_iodev_t *iodev, const uint8_t *data);
+    pbio_error_t (*set_data_end)(pbio_iodev_t *iodev);
+    void (*set_data_cancel)(pbio_iodev_t *iodev);
+    pbio_error_t (*write_begin)(pbio_iodev_t *iodev, const uint8_t *data, uint8_t size);
+    pbio_error_t (*write_end)(pbio_iodev_t *iodev);
+    void (*write_cancel)(pbio_iodev_t *iodev);
+} pbio_iodev_ops_t;
 
 struct _pbio_iodev_t {
     /**
      * Pointer to the mode info for this device.
      */
-    pbio_iodev_info_t *info;
+    const pbio_iodev_info_t *info;
     /**
-     * Optional callback to write data values the device.
-     * This should not be called directly. Use ::pbio_iodev_set_raw_values() instead.
+     * Pointer to the device-specific communication functions.
      */
-    pbio_iodev_set_data_func_t set_data;
-    /**
-     * Optional callback to write to the device.
-     * This should not be called directly. Use ::pbio_iodev_write() instead.
-     */
-    pbio_iodev_write_func_t write;
-    /**
-     * Optional callback to set the mode the device.
-     * This should not be called directly. Use ::pbio_iodev_set_mode() instead.
-     */
-    pbio_iodev_set_mode_func_t set_mode;
+    const pbio_iodev_ops_t *ops;
     /**
      * The port the device is attached to.
      */
@@ -276,10 +280,16 @@ struct _pbio_iodev_t {
 /** @endcond */
 
 size_t pbio_iodev_size_of(pbio_iodev_data_type_t type);
-pbio_error_t pbio_iodev_get_bin_format(pbio_iodev_t *iodev, uint8_t *len, pbio_iodev_data_type_t *type);
-pbio_error_t pbio_iodev_get_raw_values(pbio_iodev_t *iodev, uint8_t **data);
-pbio_error_t pbio_iodev_set_raw_values(pbio_iodev_t *iodev, uint8_t *data) ;
-pbio_error_t pbio_iodev_write(pbio_iodev_t *iodev, uint8_t *data, uint8_t size) ;
-pbio_error_t pbio_iodev_set_mode(pbio_iodev_t *iodev, uint8_t mode);
+pbio_error_t pbio_iodev_get_data_format(pbio_iodev_t *iodev, uint8_t mode, uint8_t *len, pbio_iodev_data_type_t *type);
+pbio_error_t pbio_iodev_get_data(pbio_iodev_t *iodev, uint8_t **data);
+pbio_error_t pbio_iodev_set_mode_begin(pbio_iodev_t *iodev, uint8_t mode);
+pbio_error_t pbio_iodev_set_mode_end(pbio_iodev_t *iodev);
+void pbio_iodev_set_mode_cancel(pbio_iodev_t *iodev);
+pbio_error_t pbio_iodev_set_data_begin(pbio_iodev_t *iodev, uint8_t mode, const uint8_t *data);
+pbio_error_t pbio_iodev_set_data_end(pbio_iodev_t *iodev);
+void pbio_iodev_set_data_cancel(pbio_iodev_t *iodev);
+pbio_error_t pbio_iodev_write_begin(pbio_iodev_t *iodev, const uint8_t *data, uint8_t size);
+pbio_error_t pbio_iodev_write_end(pbio_iodev_t *iodev);
+void pbio_iodev_write_cancel(pbio_iodev_t *iodev);
 
 #endif // _PBIO_IODEV_H_

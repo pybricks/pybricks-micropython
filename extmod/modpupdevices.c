@@ -30,14 +30,14 @@ STATIC mp_obj_t pupdevices_ColorAndDistSensor_make_new(const mp_obj_type_t *type
 
     pb_assert(pbdrv_ioport_get_iodev(port, &self->iodev));
     pb_iodevice_assert_type_id(self->iodev, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
-    pb_assert(pb_iodevice_set_mode(self->iodev, 8));
+    pb_iodevice_set_mode(self->iodev, 8);
     return MP_OBJ_FROM_PTR(self);
 }
 
 STATIC uint8_t pupdevices_ColorAndDistSensor_combined_mode(pbio_iodev_t *iodev, uint8_t idx) {
-    pb_assert(pb_iodevice_set_mode(iodev, 8));
+    pb_iodevice_set_mode(iodev, 8);
     uint8_t *data;
-    pb_assert(pbio_iodev_get_raw_values(iodev, &data));
+    pb_assert(pbio_iodev_get_data(iodev, &data));
     return data[idx];
 }
 
@@ -91,7 +91,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_reflection_obj, pupdevic
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_ambient(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_iodevice_assert_type_id(self->iodev, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
-    pb_assert(pb_iodevice_set_mode(self->iodev, 4));
+    pb_iodevice_set_mode(self->iodev, 4);
     return pb_iodevice_get_values(self->iodev);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_ambient_obj, pupdevices_ColorAndDistSensor_ambient);
@@ -99,9 +99,9 @@ MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_ambient_obj, pupdevices_
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_rgb(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_iodevice_assert_type_id(self->iodev, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
-    pb_assert(pb_iodevice_set_mode(self->iodev, 6));
+    pb_iodevice_set_mode(self->iodev, 6);
     uint8_t *data;
-    pb_assert(pbio_iodev_get_raw_values(self->iodev, &data));
+    pb_assert(pbio_iodev_get_data(self->iodev, &data));
     mp_obj_t rgb[3];
     for (uint8_t col = 0; col < 3; col++) {
         int16_t intensity = ((*(int16_t *)(data + col * 2))*10)/44;

@@ -72,7 +72,7 @@ STATIC mp_obj_t advanced_IODevice_mode(size_t n_args, const mp_obj_t *args) {
     }
     else {
         // set mode
-        pb_assert(pb_iodevice_set_mode(self->iodev, mp_obj_get_int(args[1])));
+        pb_iodevice_set_mode(self->iodev, mp_obj_get_int(args[1]));
         return mp_const_none;
     }
 }

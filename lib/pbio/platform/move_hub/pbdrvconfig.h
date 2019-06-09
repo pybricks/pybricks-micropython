@@ -23,6 +23,10 @@
 #define PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT         PBIO_PORT_C
 #define PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT          PBIO_PORT_D
 
+#define PBDRV_CONFIG_UART                           (1)
+#define PBDRV_CONFIG_UART_STM32F0                   (1)
+#define PBDRV_CONFIG_UART_STM32F0_NUM_UART          (2)
+
 #define PBDRV_CONFIG_HAS_PORT_A (1)
 #define PBDRV_CONFIG_HAS_PORT_B (1)
 #define PBDRV_CONFIG_HAS_PORT_C (1)

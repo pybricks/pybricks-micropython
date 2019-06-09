@@ -3,9 +3,11 @@
 
 #include <pbdrv/gpio.h>
 #include <pbio/button.h>
+#include <pbio/uartdev.h>
 
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/ioport/ioport_lpf2.h"
+#include "../../drv/uart/uart_stm32f0.h"
 
 #include "stm32f030xc.h"
 
@@ -36,4 +38,37 @@ const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_1 = {
     .uart_tx    = { .bank = GPIOC, .pin = 10  },
     .uart_rx    = { .bank = GPIOC, .pin = 11 },
     .alt        = 0,
+};
+
+// UART
+
+enum {
+    UART_ID_0,
+    UART_ID_1,
+};
+
+const pbdrv_uart_stm32f0_platform_data_t pbdrv_uart_stm32f0_platform_data[PBDRV_CONFIG_UART_STM32F0_NUM_UART] = {
+    [UART_ID_0] = {
+        .uart   = USART3,
+        .irq    = USART3_6_IRQn,
+    },
+    [UART_ID_1] = {
+        .uart   = USART4,
+        .irq    = USART3_6_IRQn,
+    },
+};
+
+// overrides weak function in setup_*.m
+void USART3_6_IRQHandler(void) {
+    pbdrv_uart_stm32f0_handle_irq(UART_ID_0);
+    pbdrv_uart_stm32f0_handle_irq(UART_ID_1);
+}
+
+const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
+    [0] = {
+        .uart_id    = UART_ID_0,
+    },
+    [1] = {
+        .uart_id    = UART_ID_1,
+    },
 };

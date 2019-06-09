@@ -13,6 +13,7 @@
 #include <pbdrv/gpio.h>
 #include <pbio/error.h>
 #include <pbio/iodev.h>
+#include <pbio/uartdev.h>
 
 #include "ioport_lpf2.h"
 #include "sys/etimer.h"
@@ -35,6 +36,7 @@ typedef struct _dcm_data_t {
 } dcm_data_t;
 
 typedef struct {
+    pbio_iodev_t *iodev;
     const pbdrv_ioport_lpf2_platform_port_t *pins;
     dcm_data_t dcm;
     struct pt pt;
@@ -59,13 +61,6 @@ static const pbio_iodev_type_id_t ioport_type_id_lookup[3][3] = {
         [2] = PBIO_IODEV_TYPE_ID_LPF2_LIGHT,
     },
 };
-
-static struct {
-    pbio_iodev_info_t info;
-    pbio_iodev_mode_t modes[PBIO_IODEV_MAX_NUM_MODES];
-} ioport_info[PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS];
-
-static pbio_iodev_t iodevs[PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS];
 
 PROCESS(pbdrv_ioport_lpf2_process, "I/O port");
 
@@ -115,9 +110,6 @@ static void init_one(uint8_t ioport) {
 
     PT_INIT(&ioport_devs[ioport].pt);
 
-    iodevs[ioport].port = PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT + ioport;
-    iodevs[ioport].info = &ioport_info[ioport].info;
-
     pbdrv_gpio_input(&pins->id1);
     pbdrv_gpio_input(&pins->id2);
     pbdrv_gpio_input(&pins->uart_buf);
@@ -131,7 +123,10 @@ pbio_error_t pbdrv_ioport_get_iodev(pbio_port_t port, pbio_iodev_t **iodev) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    *iodev = &iodevs[port - PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT];
+    *iodev = ioport_devs[port - PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT].iodev;
+    if (*iodev == NULL) {
+        return PBIO_ERROR_NO_DEV;
+    }
 
     return PBIO_SUCCESS;
 }
@@ -357,6 +352,7 @@ PROCESS_THREAD(pbdrv_ioport_lpf2_process, ev, data) {
                 ioport->prev_type_id = ioport->connected_type_id;
                 if (ioport->connected_type_id == PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
                     ioport_enable_uart(ioport);
+                    pbio_uartdev_get(i, &ioport->iodev);
                 }
             }
         }
