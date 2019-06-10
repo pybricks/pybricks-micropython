@@ -9,7 +9,7 @@
 #define PYBRICKS_HEAP_KB                8 // half of RAM
 
 // Pybricks modules
-#define PYBRICKS_PY_ADVANCED            (1)
+#define PYBRICKS_PY_ADVANCED            (0)
 #define PYBRICKS_PY_BATTERY             (1)
 #define PYBRICKS_PY_DEBUG               (0)
 #define PYBRICKS_PY_MOTOR               (1)
