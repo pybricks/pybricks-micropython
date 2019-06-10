@@ -2,6 +2,10 @@
 // Copyright (c) 2018-2019 Laurens Valk
 // Copyright (c) 2019 LEGO System A/S
 
+#include <pbdrv/config.h>
+
+#if PBDRV_CONFIG_MOTOR
+
 #include <dirent.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -257,3 +261,5 @@ pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
     }
     return PBIO_SUCCESS;
 }
+
+#endif // PBDRV_CONFIG_MOTOR

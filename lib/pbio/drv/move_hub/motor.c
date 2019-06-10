@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 David Lechner
 
+#include <pbdrv/config.h>
+
+#if PBDRV_CONFIG_MOTOR
+
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -545,3 +549,5 @@ void _pbdrv_motor_deinit(void) {
     NVIC_DisableIRQ(EXTI0_1_IRQn);
 }
 #endif
+
+#endif // PBDRV_CONFIG_MOTOR
