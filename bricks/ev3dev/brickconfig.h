@@ -8,6 +8,7 @@
 
 // Pybricks modules
 #define PYBRICKS_PY_BATTERY             (1)
+#define PYBRICKS_PY_BUTTONS             (1)
 #define PYBRICKS_PY_MOTOR               (1)
 #define PYBRICKS_PY_PUPDEVICES          (1)
 
