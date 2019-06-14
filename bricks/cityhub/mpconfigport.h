@@ -18,6 +18,9 @@
 #define PYBRICKS_PY_PUPDEVICES          (1)
 #define PYBRICKS_PY_TOOLS               (1)
 
+// Enable (1) or disable (0) keyword argument support in Pybricks modules
+#define PYBRICKS_ENABLE_KWARGS          (1)
+
 // You can disable the built-in MicroPython compiler by setting the following
 // config option to 0.  If you do this then you won't get a REPL prompt, but you
 // will still be able to execute pre-compiled scripts, compiled with mpy-cross.

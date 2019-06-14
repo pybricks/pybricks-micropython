@@ -42,11 +42,8 @@ class CompatLight():
     def off(self):
         newlight.off()
 
-    def color(self, color):
-        newlight.color(color)
-
-    def brightness(self, red, green, blue):
-        newlight.brightness(red, green, blue)
+    def on(self, color, brightness=100):
+        newlight.color(color, brightness)
 
 
 class CompatButtons():

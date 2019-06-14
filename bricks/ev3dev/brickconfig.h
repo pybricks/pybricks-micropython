@@ -12,6 +12,9 @@
 #define PYBRICKS_PY_MOTOR               (1)
 #define PYBRICKS_PY_PUPDEVICES          (1)
 
+// Enable (1) or disable (0) keyword argument support in Pybricks modules
+#define PYBRICKS_ENABLE_KWARGS          (1)
+
 #define MICROPY_PORT_INIT_FUNC pybricks_init()
 #define MICROPY_PORT_DEINIT_FUNC pybricks_deinit()
 
