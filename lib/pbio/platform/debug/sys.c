@@ -196,6 +196,7 @@ void SystemInit(void) {
     osc_init.OscillatorType = RCC_OSCILLATORTYPE_HSI;
     osc_init.HSEState = RCC_HSE_OFF;
     osc_init.HSIState = RCC_HSI_ON;
+    osc_init.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
     osc_init.PLL.PLLState = RCC_PLL_ON;
     osc_init.PLL.PLLSource = RCC_PLLSOURCE_HSI;
     osc_init.PLL.PLLM = 8; // VCO_IN 2MHz (16MHz / 8)
