@@ -265,7 +265,13 @@ pbio_error_t pbio_uartdev_get(uint8_t id, pbio_iodev_t **iodev) {
         return PBIO_ERROR_NO_DEV;
     }
 
+    if (!dev_data[id].iodev.info) {
+        // device has not been initalized yet
+        return PBIO_ERROR_AGAIN;
+    }
+
     *iodev = &dev_data[id].iodev;
+
     return PBIO_SUCCESS;
 }
 
