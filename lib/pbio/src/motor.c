@@ -43,9 +43,9 @@ pbio_error_t pbio_motor_set_duty_cycle_sys(pbio_motor_t *mtr, int32_t duty_steps
     return pbdrv_motor_set_duty_cycle(mtr->port, duty_cycle);
 }
 
-pbio_error_t pbio_motor_set_duty_cycle_usr(pbio_motor_t *mtr, float_t duty_steps) {
+pbio_error_t pbio_motor_set_duty_cycle_usr(pbio_motor_t *mtr, int32_t duty_steps) {
     mtr->state = PBIO_CONTROL_USRDUTY;
-    return pbio_motor_set_duty_cycle_sys(mtr, PBIO_DUTY_STEPS_PER_USER_STEP * duty_steps);
+    return pbio_motor_set_duty_cycle_sys(mtr, PBIO_DUTY_STEPS * duty_steps / PBIO_DUTY_USER_STEPS);
 }
 
 pbio_error_t pbio_motor_setup(pbio_motor_t *mtr, pbio_motor_dir_t direction, float_t gear_ratio) {

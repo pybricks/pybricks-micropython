@@ -62,7 +62,7 @@ pbio_error_t pbio_motor_set_pid_settings(pbio_motor_t *mtr, int16_t pid_kp, int1
 pbio_error_t pbio_motor_coast(pbio_motor_t *mtr);
 pbio_error_t pbio_motor_brake(pbio_motor_t *mtr);
 pbio_error_t pbio_motor_set_duty_cycle_sys(pbio_motor_t *mtr, int32_t duty_steps);
-pbio_error_t pbio_motor_set_duty_cycle_usr(pbio_motor_t *mtr, float_t duty_steps);
+pbio_error_t pbio_motor_set_duty_cycle_usr(pbio_motor_t *mtr, int32_t duty_steps);
 pbio_error_t pbio_motor_setup(pbio_motor_t *mtr, pbio_motor_dir_t direction, float_t gear_ratio);
 void pbio_motor_print_settings(pbio_motor_t *mtr, char *dc_settings_string, char *enc_settings_string);
 bool pbio_motor_has_encoder(pbio_motor_t *mtr);
