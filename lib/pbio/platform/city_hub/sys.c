@@ -275,11 +275,6 @@ PROCESS_THREAD(pbsys_process, ev, data) {
     PROCESS_END();
 }
 
-// this seem to be missing from the header file
-#ifndef RCC_CFGR3_ADCSW
-#define RCC_CFGR3_ADCSW (1 << 8)
-#endif
-
 // special memory addresses defined in linker script
 extern uint32_t _fw_isr_vector_src[48];
 extern uint32_t _fw_isr_vector_dst[48];
