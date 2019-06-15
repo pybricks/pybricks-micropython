@@ -55,7 +55,7 @@ TEXT0_ADDR ?= 0x08000000
 
 CFLAGS_CORTEX_M0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
 CFLAGS_CORTEX_M4 = -mthumb -mtune=cortex-m4 -mabi=aapcs-linux -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fsingle-precision-constant -Wdouble-promotion
-CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib $(CFLAGS_CORTEX_M$(CPU_FAMILY)) $(COPT)
+CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_CORTEX_M$(CPU_FAMILY)) $(COPT)
 LDFLAGS = -nostdlib -T $(PBIO_PLATFORM).ld -Map=$@.map --cref --gc-sections
 
 # Tune for Debugging or Optimization
