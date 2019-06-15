@@ -182,13 +182,12 @@ void SystemInit(void) {
     RCC_ClkInitTypeDef clk_init;
 
     // Using internal 16Mhz oscillator
-    osc_init.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-    osc_init.HSEState = RCC_HSE_OFF;
-    osc_init.HSIState = RCC_HSI_ON;
-    osc_init.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+    osc_init.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+    osc_init.HSEState = RCC_HSE_ON;
+    osc_init.HSIState = RCC_HSI_OFF;
     osc_init.PLL.PLLState = RCC_PLL_ON;
-    osc_init.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-    osc_init.PLL.PLLM = 8; // VCO_IN 2MHz (16MHz / 8)
+    osc_init.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+    osc_init.PLL.PLLM = 4; // VCO_IN 2MHz (8MHz / 4)
     osc_init.PLL.PLLN = 96; // VCO_OUT 192MHz (2MHz * 168)
     osc_init.PLL.PLLP = RCC_PLLP_DIV4; // PLLCLK 48MHz (to match move hub/city hub)
     osc_init.PLL.PLLQ = 4; // 48MHz USB clock (192MHz / 4)
