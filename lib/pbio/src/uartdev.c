@@ -1090,15 +1090,15 @@ static pbio_error_t ev3_uart_set_mode_end(pbio_iodev_t *iodev) {
 
 static pbio_error_t ev3_uart_set_data_begin(pbio_iodev_t *iodev, const uint8_t *data) {
     uartdev_port_data_t *port_data = __containerof(iodev, uartdev_port_data_t, iodev);
+    pbio_iodev_mode_t *mode = &port_data->info->mode_info[iodev->mode];
     uint8_t size;
 
     // not all modes support setting data
-    if (!port_data->info->mode_info[iodev->mode].output_flags) {
+    if (!mode->output_flags) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    size = port_data->info->mode_info[iodev->mode].num_values *
-        pbio_iodev_size_of(port_data->info->mode_info[iodev->mode].data_type);
+    size = mode->num_values * pbio_iodev_size_of(mode->data_type);
 
     return ev3_uart_begin_tx_msg(port_data, EV3_UART_MSG_TYPE_DATA, iodev->mode, data, size);
 }
