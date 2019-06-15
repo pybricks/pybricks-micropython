@@ -993,6 +993,7 @@ static pbio_error_t ev3_uart_begin_tx_msg(uartdev_port_data_t *port_data, enum e
     uint8_t header, checksum, i;
     uint8_t offset = 0;
     enum ev3_uart_msg_size size;
+    pbio_error_t err;
 
     if (len == 0 || len > 32) {
         return PBIO_ERROR_INVALID_ARG;
@@ -1058,7 +1059,12 @@ static pbio_error_t ev3_uart_begin_tx_msg(uartdev_port_data_t *port_data, enum e
     port_data->tx_msg[offset] = header;
     port_data->tx_msg[offset + i + 1] = checksum;
 
-    return pbdrv_uart_write_begin(port_data->uart, port_data->tx_msg, offset + i + 2, EV3_UART_IO_TIMEOUT);
+    err = pbdrv_uart_write_begin(port_data->uart, port_data->tx_msg, offset + i + 2, EV3_UART_IO_TIMEOUT);
+    if (err != PBIO_SUCCESS) {
+        port_data->tx_busy = false;
+    }
+
+    return err;
 }
 
 static pbio_error_t ev3_uart_set_mode_begin(pbio_iodev_t *iodev, uint8_t mode) {
