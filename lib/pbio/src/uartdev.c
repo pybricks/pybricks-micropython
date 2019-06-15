@@ -182,12 +182,11 @@ typedef enum {
 
 /**
  * struct ev3_uart_port_data - Data for EV3/LPF2 UART Sensor communication
- * @uart: Pointer to the UART device to use for communications
  * @pt: Protothread for main communication protocol
  * @pt_data: Protothread for receiving sensor data
  * @timer: Timer for sending keepalive messages and other delays.
+ * @uart: Pointer to the UART device to use for communications
  * @info: The I/O device information struct for the connected device
- * @modes: The mode info array for @info
  * @iodev: The I/O device state information struct
  * @status: The current device connection state
  * @type_id: The type ID received
@@ -211,12 +210,11 @@ typedef enum {
  * @tx_busy: mutex that protects tx_msg
  */
 typedef struct {
-    pbdrv_uart_dev_t *uart;
     struct pt pt;
     struct pt data_pt;
     struct etimer timer;
-    pbio_iodev_info_t info;
-    pbio_iodev_mode_t modes[PBIO_IODEV_MAX_NUM_MODES];
+    pbdrv_uart_dev_t *uart;
+    pbio_iodev_info_t *info;
     pbio_iodev_t iodev;
     pbio_uartdev_status_t status;
     pbio_iodev_type_id_t type_id;
@@ -224,8 +222,8 @@ typedef struct {
     uint8_t new_mode;
     uint32_t new_baud_rate;
     uint32_t info_flags;
-    uint8_t tx_msg[EV3_UART_MAX_MESSAGE_SIZE];
-    uint8_t rx_msg[EV3_UART_MAX_MESSAGE_SIZE];
+    uint8_t *tx_msg;
+    uint8_t *rx_msg;
     uint8_t rx_msg_size;
     uint8_t ext_mode;
     uint8_t write_cmd_size;
@@ -237,6 +235,13 @@ typedef struct {
 } uartdev_port_data_t;
 
 PROCESS(pbio_uartdev_process, "UART device");
+
+static struct {
+    pbio_iodev_info_t info;
+    pbio_iodev_mode_t modes[PBIO_IODEV_MAX_NUM_MODES];
+} infos[PBIO_CONFIG_UARTDEV_NUM_DEV];
+
+static uint8_t bufs[PBIO_CONFIG_UARTDEV_NUM_DEV][2][EV3_UART_MAX_MESSAGE_SIZE];
 
 static uartdev_port_data_t dev_data[PBIO_CONFIG_UARTDEV_NUM_DEV];
 
@@ -362,7 +367,7 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
             }
             break;
         case EV3_UART_SYS_ACK:
-            if (!data->info.num_modes) {
+            if (!data->info->num_modes) {
                 DBG_ERR(data->last_err = "Received ACK before all mode INFO");
                 goto err;
             }
@@ -388,22 +393,22 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 DBG_ERR(data->last_err = "Number of modes is out of range");
                 goto err;
             }
-            data->info.num_modes = cmd2 + 1;
+            data->info->num_modes = cmd2 + 1;
             if (msg_size > 5) {
                 // Powered Up devices can have an extended mode message that
                 // includes modes > EV3_UART_MODE_MAX
-                data->info.num_modes = data->rx_msg[3] + 1;
-                data->info.num_view_modes = data->rx_msg[4] + 1;
+                data->info->num_modes = data->rx_msg[3] + 1;
+                data->info->num_view_modes = data->rx_msg[4] + 1;
             }
             else if (msg_size > 3) {
-                data->info.num_view_modes = data->rx_msg[2] + 1;
+                data->info->num_view_modes = data->rx_msg[2] + 1;
             }
             else {
-                data->info.num_view_modes = data->info.num_modes;
+                data->info->num_view_modes = data->info->num_modes;
             }
 
-            debug_pr("num_modes: %d\n", data->info.num_modes);
-            debug_pr("num_view_modes: %d\n", data->info.num_view_modes);
+            debug_pr("num_modes: %d\n", data->info->num_modes);
+            debug_pr("num_view_modes: %d\n", data->info->num_view_modes);
 
             break;
         case EV3_UART_CMD_SPEED:
@@ -474,13 +479,13 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 DBG_ERR(data->last_err = "Name is too long");
                 goto err;
             }
-            snprintf(data->info.mode_info[mode].name,
+            snprintf(data->info->mode_info[mode].name,
                         PBIO_IODEV_MODE_NAME_SIZE + 1, "%s",
                         data->rx_msg + 2);
             data->new_mode = mode;
             data->info_flags |= EV3_UART_INFO_FLAG_INFO_NAME;
 
-            debug_pr("name: %s\n", data->info.mode_info[mode].name);
+            debug_pr("name: %s\n", data->info->mode_info[mode].name);
 
             break;
         case EV3_UART_INFO_RAW:
@@ -492,11 +497,11 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 DBG_ERR(data->last_err = "Received duplicate raw scaling INFO");
                 goto err;
             }
-            data->info.mode_info[mode].raw_min = float_le(data->rx_msg + 2);
-            data->info.mode_info[mode].raw_max = float_le(data->rx_msg + 6);
+            data->info->mode_info[mode].raw_min = float_le(data->rx_msg + 2);
+            data->info->mode_info[mode].raw_max = float_le(data->rx_msg + 6);
 
-            debug_pr("raw: %f %f\n", (double)data->info.mode_info[mode].raw_min,
-                                     (double)data->info.mode_info[mode].raw_max);
+            debug_pr("raw: %f %f\n", (double)data->info->mode_info[mode].raw_min,
+                                     (double)data->info->mode_info[mode].raw_max);
 
             break;
         case EV3_UART_INFO_PCT:
@@ -508,11 +513,11 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 DBG_ERR(data->last_err = "Received duplicate percent scaling INFO");
                 goto err;
             }
-            data->info.mode_info[mode].pct_min = uint32_le(data->rx_msg + 2);
-            data->info.mode_info[mode].pct_max = uint32_le(data->rx_msg + 6);
+            data->info->mode_info[mode].pct_min = uint32_le(data->rx_msg + 2);
+            data->info->mode_info[mode].pct_max = uint32_le(data->rx_msg + 6);
 
-            debug_pr("pct: %f %f\n", (double)data->info.mode_info[mode].pct_min,
-                                     (double)data->info.mode_info[mode].pct_max);
+            debug_pr("pct: %f %f\n", (double)data->info->mode_info[mode].pct_min,
+                                     (double)data->info->mode_info[mode].pct_max);
 
             break;
         case EV3_UART_INFO_SI:
@@ -526,11 +531,11 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 DBG_ERR(data->last_err = "Received duplicate SI scaling INFO");
                 goto err;
             }
-            data->info.mode_info[mode].si_min = float_le(data->rx_msg + 2);
-            data->info.mode_info[mode].si_max = float_le(data->rx_msg + 6);
+            data->info->mode_info[mode].si_min = float_le(data->rx_msg + 2);
+            data->info->mode_info[mode].si_max = float_le(data->rx_msg + 6);
 
-            debug_pr("si: %f %f\n", (double)data->info.mode_info[mode].si_min,
-                                    (double)data->info.mode_info[mode].si_max);
+            debug_pr("si: %f %f\n", (double)data->info->mode_info[mode].si_min,
+                                    (double)data->info->mode_info[mode].si_max);
 
             break;
         case EV3_UART_INFO_UNITS:
@@ -546,10 +551,10 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
             // checksum at this point so we are writing 0 over the checksum to
             // ensure a null terminator for the string functions.
             data->rx_msg[msg_size - 1] = 0;
-            snprintf(data->info.mode_info[mode].uom, PBIO_IODEV_UOM_SIZE + 1,
+            snprintf(data->info->mode_info[mode].uom, PBIO_IODEV_UOM_SIZE + 1,
                      "%s", data->rx_msg + 2);
 
-            debug_pr("uom: %s\n", data->info.mode_info[mode].uom);
+            debug_pr("uom: %s\n", data->info->mode_info[mode].uom);
 
             break;
         case EV3_UART_INFO_MAPPING:
@@ -562,8 +567,8 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 goto err;
             }
 
-            data->modes[mode].input_flags = data->rx_msg[2];
-            data->modes[mode].output_flags = data->rx_msg[3];
+            data->info->mode_info[mode].input_flags = data->rx_msg[2];
+            data->info->mode_info[mode].output_flags = data->rx_msg[3];
 
             debug_pr("mapping: %02x %02x\n", data->rx_msg[2], data->rx_msg[3]);
 
@@ -621,8 +626,8 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 DBG_ERR(data->last_err = "Received duplicate format INFO");
                 goto err;
             }
-            data->info.mode_info[mode].num_values = data->rx_msg[2];
-            if (!data->info.mode_info[mode].num_values) {
+            data->info->mode_info[mode].num_values = data->rx_msg[2];
+            if (!data->info->mode_info[mode].num_values) {
                 DBG_ERR(data->last_err = "Invalid number of data sets");
                 goto err;
             }
@@ -636,31 +641,31 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
             }
             switch (data->rx_msg[3]) {
             case EV3_UART_DATA_8:
-                data->info.mode_info[mode].data_type = PBIO_IODEV_DATA_TYPE_INT8;
+                data->info->mode_info[mode].data_type = PBIO_IODEV_DATA_TYPE_INT8;
                 break;
             case EV3_UART_DATA_16:
-                data->info.mode_info[mode].data_type = PBIO_IODEV_DATA_TYPE_INT16;
+                data->info->mode_info[mode].data_type = PBIO_IODEV_DATA_TYPE_INT16;
                 break;
             case EV3_UART_DATA_32:
-                data->info.mode_info[mode].data_type = PBIO_IODEV_DATA_TYPE_INT32;
+                data->info->mode_info[mode].data_type = PBIO_IODEV_DATA_TYPE_INT32;
                 break;
             case EV3_UART_DATA_FLOAT:
-                data->info.mode_info[mode].data_type = PBIO_IODEV_DATA_TYPE_FLOAT;
+                data->info->mode_info[mode].data_type = PBIO_IODEV_DATA_TYPE_FLOAT;
                 break;
             default:
                 DBG_ERR(data->last_err = "Invalid data type");
                 goto err;
             }
-            data->info.mode_info[mode].digits = data->rx_msg[4];
-            data->info.mode_info[mode].decimals = data->rx_msg[5];
+            data->info->mode_info[mode].digits = data->rx_msg[4];
+            data->info->mode_info[mode].decimals = data->rx_msg[5];
             if (data->new_mode) {
                 data->new_mode--;
             }
 
-            debug_pr("num_values: %d\n", data->info.mode_info[mode].num_values);
-            debug_pr("data_type: %d\n", data->info.mode_info[mode].data_type);
-            debug_pr("digits: %d\n", data->info.mode_info[mode].digits);
-            debug_pr("decimals: %d\n", data->info.mode_info[mode].decimals);
+            debug_pr("num_values: %d\n", data->info->mode_info[mode].num_values);
+            debug_pr("data_type: %d\n", data->info->mode_info[mode].data_type);
+            debug_pr("digits: %d\n", data->info->mode_info[mode].digits);
+            debug_pr("decimals: %d\n", data->info->mode_info[mode].decimals);
 
             break;
         }
@@ -675,7 +680,7 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
             memcpy(data->iodev.bin_data, data->rx_msg + 1, 6);
         }
         else {
-            if (mode >= data->info.num_modes) {
+            if (mode >= data->info->num_modes) {
                 DBG_ERR(data->last_err = "Invalid mode received");
                 goto err;
             }
@@ -713,7 +718,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t *data)) {
     PT_BEGIN(&data->pt);
 
     // reset state for new device
-    data->info.type_id = PBIO_IODEV_TYPE_ID_NONE;
+    data->info->type_id = PBIO_IODEV_TYPE_ID_NONE;
     data->ext_mode = 0;
     data->status = PBIO_UARTDEV_STATUS_SYNCING;
     PBIO_PT_WAIT_READY(&data->pt, pbdrv_uart_set_baud_rate(data->uart, EV3_UART_SPEED_MIN));
@@ -765,11 +770,11 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t *data)) {
 
     // if all was good, we are ready to start receiving the mode info
 
-    data->info.num_modes = 1;
-    data->info.num_view_modes = 1;
+    data->info->num_modes = 1;
+    data->info->num_view_modes = 1;
 
     for (int i = 0; i < PBIO_IODEV_MAX_NUM_MODES; i++) {
-        data->info.mode_info[i] = ev3_uart_default_mode_info;
+        data->info->mode_info[i] = ev3_uart_default_mode_info;
     }
 
     data->type_id = data->rx_msg[1];
@@ -847,7 +852,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t *data)) {
     PBIO_PT_WAIT_READY(&data->pt, pbdrv_uart_set_baud_rate(data->uart, data->new_baud_rate));
 
     // setting type_id in info struct lets external modules know a device is connected
-    data->info.type_id = data->type_id;
+    data->info->type_id = data->type_id;
     data->status = PBIO_UARTDEV_STATUS_DATA;
     // reset data rx thread
     PT_INIT(&data->data_pt);
@@ -1088,11 +1093,12 @@ static pbio_error_t ev3_uart_set_data_begin(pbio_iodev_t *iodev, const uint8_t *
     uint8_t size;
 
     // not all modes support setting data
-    if (!port_data->modes[iodev->mode].output_flags) {
+    if (!port_data->info->mode_info[iodev->mode].output_flags) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    size = port_data->modes[iodev->mode].num_values * pbio_iodev_size_of(port_data->modes[iodev->mode].data_type);
+    size = port_data->info->mode_info[iodev->mode].num_values *
+        pbio_iodev_size_of(port_data->info->mode_info[iodev->mode].data_type);
 
     return ev3_uart_begin_tx_msg(port_data, EV3_UART_MSG_TYPE_DATA, iodev->mode, data, size);
 }
@@ -1140,8 +1146,11 @@ static PT_THREAD(pbio_uartdev_init(struct pt *pt, uint8_t id)) {
     PT_BEGIN(pt);
 
     PT_WAIT_UNTIL(pt, pbdrv_uart_get(pdata->uart_id, &port_data->uart) == PBIO_SUCCESS);
-    port_data->iodev.info = &port_data->info;
+    port_data->iodev.info = &infos[id].info;
     port_data->iodev.ops = &pbio_uartdev_ops;
+    port_data->info =  &infos[id].info;
+    port_data->rx_msg = &bufs[id][0][0];
+    port_data->tx_msg = &bufs[id][1][0];
 
     PT_END(pt);
 }
