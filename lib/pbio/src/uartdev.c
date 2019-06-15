@@ -343,7 +343,7 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 // for RGB-RAW data (mode 4). The check here could be
                 // improved if someone can find a pattern.
                 if (data->type_id != PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR
-                    && data->rx_msg[0] != (EV3_UART_MSG_TYPE_DATA | EV3_UART_MSG_SIZE_8 | 4)) {
+                    || data->rx_msg[0] != (EV3_UART_MSG_TYPE_DATA | EV3_UART_MSG_SIZE_8 | 4)) {
                     return;
                 }
             } else {
