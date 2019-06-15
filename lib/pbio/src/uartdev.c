@@ -270,29 +270,18 @@ pbio_error_t pbio_uartdev_get(uint8_t id, pbio_iodev_t **iodev) {
 }
 
 static inline uint32_t uint32_le(uint8_t *bytes) {
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-    uint32_t result;
-
-    // avoiding unaligned access
-    memcpy(&result, bytes, 4);
-
-    return result;
-#else
-#error Big endian not implemented
-#endif
+    return bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24);
 }
 
 static inline float float_le(uint8_t *bytes) {
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-    float result;
+    union {
+        float f;
+        uint32_t u;
+    } result;
 
-    // avoiding unaligned access
-    memcpy(&result, bytes, 4);
+    result.u = uint32_le(bytes);
 
-    return result;
-#else
-#error Big endian not implemented
-#endif
+    return result.f;
 }
 
 static inline bool test_and_set_bit(uint8_t bit, uint32_t *flags) {
