@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 David Lechner
 
-#include <string.h>
-
 #include "pbdrv/battery.h"
 #include "pbdrv/bluetooth.h"
 #include "pbdrv/config.h"
@@ -273,77 +271,4 @@ PROCESS_THREAD(pbsys_process, ev, data) {
     }
 
     PROCESS_END();
-}
-
-// special memory addresses defined in linker script
-extern uint32_t _fw_isr_vector_src[48];
-extern uint32_t _fw_isr_vector_dst[48];
-
-// Called from assembly code in startup_stm32f070xb.s
-// this function is a mash up of ports/stm32/system_stm32f0.c from MicroPython
-// and the official LEGO firmware
-void SystemInit(void) {
-    // normally, the system clock would be setup here, but it is already
-    // configured by the bootloader, so no need to do it again.
-
-    // dpgeorge: enable 8-byte stack alignment for IRQ handlers, in accord with EABI
-    SCB->CCR |= SCB_CCR_STKALIGN_Msk;
-
-    // Enable all of the shared hardware modules we are using
-
-    RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOCEN
-                |  RCC_AHBENR_GPIODEN | RCC_AHBENR_GPIOFEN;
-    RCC->APB1ENR |= RCC_APB1ENR_USART3EN | RCC_APB1ENR_USART4EN;
-    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN;
-
-
-    // Keep BOOST alive
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
-    GPIOB->BSRR = GPIO_BSRR_BS_11;
-
-    // not sure what the rest of these pins do
-
-    // PA15 output, low
-    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER15_Msk) | (1 << GPIO_MODER_MODER15_Pos);
-    GPIOA->BSRR = GPIO_BSRR_BR_15;
-
-    // PB1 output, low
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER1_Msk) | (1 << GPIO_MODER_MODER1_Pos);
-    GPIOB->BSRR = GPIO_BSRR_BR_1;
-
-    // PB7 output, low
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
-    GPIOB->BSRR = GPIO_BSRR_BR_7;
-
-    // PB9 output, low
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
-    GPIOB->BSRR = GPIO_BSRR_BR_9;
-
-    // PB10 output, low
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER10_Msk) | (1 << GPIO_MODER_MODER10_Pos);
-    GPIOB->BSRR = GPIO_BSRR_BR_10;
-
-    // PC14 output, low
-    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER14_Msk) | (1 << GPIO_MODER_MODER14_Pos);
-    GPIOC->BSRR = GPIO_BSRR_BR_14;
-
-    // PC15 output, low
-    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER15_Msk) | (1 << GPIO_MODER_MODER15_Pos);
-    GPIOC->BSRR = GPIO_BSRR_BR_15;
-
-    // PF0 output, low
-    GPIOF->MODER = (GPIOF->MODER & ~GPIO_MODER_MODER0_Msk) | (1 << GPIO_MODER_MODER0_Pos);
-    GPIOF->BSRR = GPIO_BSRR_BR_0;
-
-    // PF1 output, low
-    GPIOF->MODER = (GPIOF->MODER & ~GPIO_MODER_MODER1_Msk) | (1 << GPIO_MODER_MODER1_Pos);
-    GPIOF->BSRR = GPIO_BSRR_BR_1;
-
-    // since the firmware starts at 0x08005000, we need to relocate the
-    // interrupt vector table to a place where the CPU knows about it.
-    // The space at the start of SRAM is reserved in via the linker script.
-    memcpy(_fw_isr_vector_dst, _fw_isr_vector_src, sizeof(_fw_isr_vector_dst));
-
-    // this maps SRAM to 0x00000000
-    SYSCFG->CFGR1 = (SYSCFG->CFGR1 & ~SYSCFG_CFGR1_MEM_MODE_Msk) | (3 << SYSCFG_CFGR1_MEM_MODE_Pos);
 }
