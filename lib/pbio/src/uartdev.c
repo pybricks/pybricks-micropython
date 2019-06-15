@@ -234,6 +234,12 @@ typedef struct {
     bool tx_busy;
 } uartdev_port_data_t;
 
+enum {
+    BUF_TX_MSG,
+    BUF_RX_MSG,
+    NUM_BUF
+};
+
 PROCESS(pbio_uartdev_process, "UART device");
 
 static struct {
@@ -241,7 +247,7 @@ static struct {
     pbio_iodev_mode_t modes[PBIO_IODEV_MAX_NUM_MODES];
 } infos[PBIO_CONFIG_UARTDEV_NUM_DEV];
 
-static uint8_t bufs[PBIO_CONFIG_UARTDEV_NUM_DEV][2][EV3_UART_MAX_MESSAGE_SIZE];
+static uint8_t bufs[PBIO_CONFIG_UARTDEV_NUM_DEV][NUM_BUF][EV3_UART_MAX_MESSAGE_SIZE];
 
 static uartdev_port_data_t dev_data[PBIO_CONFIG_UARTDEV_NUM_DEV];
 
@@ -1157,8 +1163,8 @@ static PT_THREAD(pbio_uartdev_init(struct pt *pt, uint8_t id)) {
     port_data->iodev.info = &infos[id].info;
     port_data->iodev.ops = &pbio_uartdev_ops;
     port_data->info =  &infos[id].info;
-    port_data->rx_msg = &bufs[id][0][0];
-    port_data->tx_msg = &bufs[id][1][0];
+    port_data->tx_msg = &bufs[id][BUF_TX_MSG][0];
+    port_data->rx_msg = &bufs[id][BUF_RX_MSG][0];
 
     PT_END(pt);
 }
