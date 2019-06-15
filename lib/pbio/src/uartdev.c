@@ -1069,14 +1069,16 @@ static pbio_error_t ev3_uart_begin_tx_msg(uartdev_port_data_t *port_data, enum e
 
 static pbio_error_t ev3_uart_set_mode_begin(pbio_iodev_t *iodev, uint8_t mode) {
     uartdev_port_data_t *port_data = __containerof(iodev, uartdev_port_data_t, iodev);
+    pbio_error_t err;
 
-    if (port_data->status != PBIO_UARTDEV_STATUS_DATA) {
-        return PBIO_ERROR_AGAIN;
+    err = ev3_uart_begin_tx_msg(port_data, EV3_UART_MSG_TYPE_CMD, EV3_UART_CMD_SELECT, &mode, 1);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     port_data->new_mode = mode;
 
-    return ev3_uart_begin_tx_msg(port_data, EV3_UART_MSG_TYPE_CMD, EV3_UART_CMD_SELECT, &mode, 1);
+    return PBIO_SUCCESS;
 }
 
 static pbio_error_t ev3_uart_set_mode_end(pbio_iodev_t *iodev) {
