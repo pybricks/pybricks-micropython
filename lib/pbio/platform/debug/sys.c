@@ -255,6 +255,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc) {
     gpio_init.Pin = GPIO_PIN_3;
     gpio_init.Mode = GPIO_MODE_ANALOG;
     gpio_init.Pull = GPIO_NOPULL;
+    gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(GPIOA, &gpio_init);
 
     adc_ch_config.Channel = ADC_CHANNEL_3;
@@ -268,6 +269,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc) {
     gpio_init.Pin = GPIO_PIN_0;
     gpio_init.Mode = GPIO_MODE_ANALOG;
     gpio_init.Pull = GPIO_NOPULL;
+    gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(GPIOC, &gpio_init);
 
     adc_ch_config.Channel = ADC_CHANNEL_10;
@@ -281,6 +283,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc) {
     gpio_init.Pin = GPIO_PIN_3;
     gpio_init.Mode = GPIO_MODE_ANALOG;
     gpio_init.Pull = GPIO_NOPULL;
+    gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(GPIOC, &gpio_init);
 
     adc_ch_config.Channel = ADC_CHANNEL_13;
@@ -294,6 +297,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc) {
     gpio_init.Pin = GPIO_PIN_3;
     gpio_init.Mode = GPIO_MODE_ANALOG;
     gpio_init.Pull = GPIO_NOPULL;
+    gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(GPIOF, &gpio_init);
 
     adc_ch_config.Channel = ADC_CHANNEL_9;
@@ -307,6 +311,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc) {
     gpio_init.Pin = GPIO_PIN_5;
     gpio_init.Mode = GPIO_MODE_ANALOG;
     gpio_init.Pull = GPIO_NOPULL;
+    gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(GPIOF, &gpio_init);
 
     adc_ch_config.Channel = ADC_CHANNEL_15;
@@ -320,6 +325,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc) {
     gpio_init.Pin = GPIO_PIN_10;
     gpio_init.Mode = GPIO_MODE_ANALOG;
     gpio_init.Pull = GPIO_NOPULL;
+    gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(GPIOF, &gpio_init);
 
     adc_ch_config.Channel = ADC_CHANNEL_8;

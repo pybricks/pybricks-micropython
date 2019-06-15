@@ -8,6 +8,7 @@
 // gpio_init.Pin = GPIO_PIN_3;
 // gpio_init.Mode = GPIO_MODE_ANALOG;
 // gpio_init.Pull = GPIO_NOPULL;
+// gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
 // HAL_GPIO_Init(GPIOA, &gpio_init);
 
 // ADC_ChannelConfTypeDef adc_ch_config;

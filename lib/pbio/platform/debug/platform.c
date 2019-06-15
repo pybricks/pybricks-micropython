@@ -53,6 +53,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart) {
 
     gpio_init.Mode = GPIO_MODE_AF_PP;
     gpio_init.Pull = GPIO_PULLUP;
+    gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
     gpio_init.Alternate = 7;
 
     gpio_init.Pin = GPIO_PIN_5;
