@@ -182,12 +182,12 @@ typedef enum {
 
 /**
  * struct ev3_uart_port_data - Data for EV3/LPF2 UART Sensor communication
+ * @iodev: The I/O device state information struct
  * @pt: Protothread for main communication protocol
  * @pt_data: Protothread for receiving sensor data
  * @timer: Timer for sending keepalive messages and other delays.
  * @uart: Pointer to the UART device to use for communications
  * @info: The I/O device information struct for the connected device
- * @iodev: The I/O device state information struct
  * @status: The current device connection state
  * @type_id: The type ID received
  * @requested_mode: Mode that was requested by user. Used to restore previous
@@ -210,12 +210,12 @@ typedef enum {
  * @tx_busy: mutex that protects tx_msg
  */
 typedef struct {
+    pbio_iodev_t iodev;
     struct pt pt;
     struct pt data_pt;
     struct etimer timer;
     pbdrv_uart_dev_t *uart;
     pbio_iodev_info_t *info;
-    pbio_iodev_t iodev;
     pbio_uartdev_status_t status;
     pbio_iodev_type_id_t type_id;
     uint8_t requested_mode;
