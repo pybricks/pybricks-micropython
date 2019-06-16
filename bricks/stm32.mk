@@ -38,6 +38,7 @@ INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32F$(CPU_FAMILY)xx/Include
 ifeq ($(USE_HAL),1)
 INC += -I$(TOP)/lib/stm32lib/STM32F$(CPU_FAMILY)xx_HAL_Driver/Inc
 endif
+INC += -I$(TOP)/ports/pybricks/lib/libfixmath/libfixmath
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)
 INC += -I$(TOP)/ports/pybricks/lib/pbio
@@ -52,6 +53,8 @@ CHECKSUM_TYPE ?= xor
 OPENOCD ?= openocd
 OPENOCD_CONFIG ?= openocd_stm32f$(CPU_FAMILY).cfg
 TEXT0_ADDR ?= 0x08000000
+
+COPT += -DFIXMATH_NO_CTYPE
 
 CFLAGS_CORTEX_M0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
 CFLAGS_CORTEX_M4 = -mthumb -mtune=cortex-m4 -mabi=aapcs-linux -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fsingle-precision-constant -Wdouble-promotion
@@ -145,6 +148,13 @@ HAL_SRC_C = $(addprefix lib/stm32lib/STM32F$(CPU_FAMILY)xx_HAL_Driver/Src/,\
 	stm32f$(CPU_FAMILY)xx_hal.c \
 	)
 
+LIBFIXMATH_SRC_C = $(addprefix ports/pybricks/lib/libfixmath/libfixmath/,\
+	fix16_sqrt.c \
+	fix16_str.c \
+	fix16.c \
+	uint32.c \
+	)
+
 PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	drv/$(PBIO_PLATFORM)/bluetooth.c \
 	drv/$(PBIO_PLATFORM)/light.c \
@@ -207,6 +217,7 @@ OBJ += $(addprefix $(BUILD)/, $(BLUENRG_SRC_C:.c=.o))
 ifeq ($(USE_HAL),1)
 OBJ += $(addprefix $(BUILD)/, $(HAL_SRC_C:.c=.o))
 endif
+OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 

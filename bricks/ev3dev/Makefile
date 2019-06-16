@@ -21,6 +21,7 @@ include $(TOP)/py/py.mk
 INC +=  -I.
 INC +=  -I$(TOP)
 INC += -I$(BUILD)
+INC += -I$(TOP)/ports/pybricks/lib/libfixmath/libfixmath
 INC += -I$(TOP)/ports/pybricks/lib/pbio
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/ev3dev_stretch
@@ -188,6 +189,10 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	)
 
 PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
+	libfixmath/libfixmath/fix16_sqrt.c \
+	libfixmath/libfixmath/fix16_str.c \
+	libfixmath/libfixmath/fix16.c \
+	libfixmath/libfixmath/uint32.c \
 	pbio/drv/battery/battery_linux_ev3.c \
 	pbio/drv/button/button_linux_ev3.c \
 	pbio/drv/ev3dev_stretch/motor.c \
