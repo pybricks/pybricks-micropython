@@ -2,10 +2,11 @@
 // Copyright (c) 2018-2019 Laurens Valk
 // Copyright (c) 2019 LEGO System A/S
 
+#include <stdlib.h>
+#include <fixmath.h>
+
 #include <pbio/motor.h>
 #include <pbio/motorref.h>
-#include <stdlib.h>
-#include <math.h>
 
 #include "sys/clock.h"
 
@@ -19,6 +20,14 @@ pbio_error_t pbio_motor_get(uint8_t index, pbio_motor_t **mtr) {
     }
     *mtr = &motor[index];
     return PBIO_SUCCESS;
+}
+
+static inline int32_t int_fix16_div(int32_t a, fix16_t b) {
+    return fix16_to_int(fix16_div(fix16_from_int(a), b));
+}
+
+static inline int32_t int_fix16_mul(int32_t a, fix16_t b) {
+    return fix16_to_int(fix16_mul(fix16_from_int(a), b));
 }
 
 // If the controller reach the maximum duty cycle value, this shortcut sets the stalled flag when the speed is below the stall limit.
@@ -289,7 +298,7 @@ static pbio_error_t control_update_time_target(pbio_motor_t *mtr) {
         }
         else if (mtr->control.after_stop == PBIO_MOTOR_STOP_HOLD) {
             // Hold the motor. When ending a time based control maneuver with hold, we trigger a new position based maneuver with zero degrees
-            err = pbio_motor_track_target(mtr, ((float_t) count_now)/mtr->counts_per_output_unit);
+            err = pbio_motor_track_target(mtr, int_fix16_div(count_now, mtr->counts_per_output_unit));
             if (err != PBIO_SUCCESS) { return err; }
         }
     }
@@ -428,7 +437,7 @@ pbio_error_t pbio_motor_is_stalled(pbio_motor_t *mtr, bool *stalled) {
 pbio_error_t pbio_motor_run(pbio_motor_t *mtr, int32_t speed) {
     if (mtr->state == PBIO_CONTROL_TIME_BACKGROUND &&
         mtr->control.action == RUN &&
-        ((int32_t) (speed * mtr->counts_per_output_unit)) == mtr->control.trajectory.w1) {
+        int_fix16_mul(speed, mtr->counts_per_output_unit) == mtr->control.trajectory.w1) {
         // If the exact same command is already running, there is nothing we need to do
         return PBIO_SUCCESS;
     }
@@ -450,7 +459,7 @@ pbio_error_t pbio_motor_run(pbio_motor_t *mtr, int32_t speed) {
         time_start,
         count_start,
         rate_start,
-        speed * mtr->counts_per_output_unit,
+        int_fix16_mul(speed, mtr->counts_per_output_unit),
         mtr->control.settings.max_rate,
         mtr->control.settings.abs_acceleration,
         &mtr->control.trajectory);
@@ -512,7 +521,7 @@ pbio_error_t pbio_motor_run_time(pbio_motor_t *mtr, int32_t speed, int32_t durat
         time_start + duration*US_PER_MS,
         count_start,
         rate_start,
-        speed * mtr->counts_per_output_unit,
+        int_fix16_mul(speed, mtr->counts_per_output_unit),
         mtr->control.settings.max_rate,
         mtr->control.settings.abs_acceleration,
         &mtr->control.trajectory);
@@ -549,7 +558,7 @@ pbio_error_t pbio_motor_run_until_stalled(pbio_motor_t *mtr, int32_t speed, pbio
         time_start,
         count_start,
         rate_start,
-        speed * mtr->counts_per_output_unit,
+        int_fix16_mul(speed, mtr->counts_per_output_unit),
         mtr->control.settings.max_rate,
         mtr->control.settings.abs_acceleration,
         &mtr->control.trajectory);
@@ -585,9 +594,9 @@ pbio_error_t pbio_motor_run_target(pbio_motor_t *mtr, int32_t speed, int32_t tar
     err = make_trajectory_angle_based(
         time_start,
         count_start,
-        target*mtr->counts_per_output_unit,
+        int_fix16_mul(target, mtr->counts_per_output_unit),
         rate_start,
-        speed*mtr->counts_per_output_unit,
+        int_fix16_mul(speed, mtr->counts_per_output_unit),
         mtr->control.settings.max_rate,
         mtr->control.settings.abs_acceleration,
         &mtr->control.trajectory);
@@ -639,7 +648,7 @@ pbio_error_t pbio_motor_track_target(pbio_motor_t *mtr, int32_t target) {
     if (err != PBIO_SUCCESS) { return err; }
 
     // Compute new maneuver based on user argument, starting from the initial state
-    make_trajectory_none(time_start, target*mtr->counts_per_output_unit, 0, &mtr->control.trajectory);
+    make_trajectory_none(time_start, int_fix16_mul(target, mtr->counts_per_output_unit), 0, &mtr->control.trajectory);
 
     // Initialize or reset the PID control status for the given maneuver
     control_init_angle_target(mtr);

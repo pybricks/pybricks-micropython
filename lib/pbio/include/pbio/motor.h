@@ -8,6 +8,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <fixmath.h>
+
 #include <pbdrv/config.h>
 #include <pbdrv/motor.h>
 
@@ -22,8 +24,6 @@
  * \addtogroup Motor Motors
  * @{
  */
-
-typedef float float_t;
 
 #define MAX_DCMOTOR_SETTINGS_STR_LENGTH (128)
 
@@ -44,8 +44,8 @@ typedef enum {
 typedef struct _pbio_motor_t {
     pbio_motor_dir_t direction;
     int32_t offset;                 /**< Virtual zero point of the encoder */
-    float_t counts_per_unit;        /**< Encoder counts per output unit. Counts per degree for rotational motors, counts per cm for a linear motor. */
-    float_t counts_per_output_unit; /**< Encoder counts per output unit, including optional gear train. Equals counts_per_unit*gear_ratio. */
+    fix16_t counts_per_unit;        /**< Encoder counts per output unit. Counts per degree for rotational motors, counts per cm for a linear motor. */
+    fix16_t counts_per_output_unit; /**< Encoder counts per output unit, including optional gear train. Equals counts_per_unit*gear_ratio. */
     int32_t duty_offset;            /**< TODO. */
     int32_t max_duty_steps;         /**< TODO. */
     bool has_encoders;
@@ -63,7 +63,7 @@ pbio_error_t pbio_motor_coast(pbio_motor_t *mtr);
 pbio_error_t pbio_motor_brake(pbio_motor_t *mtr);
 pbio_error_t pbio_motor_set_duty_cycle_sys(pbio_motor_t *mtr, int32_t duty_steps);
 pbio_error_t pbio_motor_set_duty_cycle_usr(pbio_motor_t *mtr, int32_t duty_steps);
-pbio_error_t pbio_motor_setup(pbio_motor_t *mtr, pbio_motor_dir_t direction, float_t gear_ratio);
+pbio_error_t pbio_motor_setup(pbio_motor_t *mtr, pbio_motor_dir_t direction, fix16_t gear_ratio);
 void pbio_motor_print_settings(pbio_motor_t *mtr, char *dc_settings_string, char *enc_settings_string);
 bool pbio_motor_has_encoder(pbio_motor_t *mtr);
 pbio_error_t pbio_motor_get_encoder_count(pbio_motor_t *mtr, int32_t *count);

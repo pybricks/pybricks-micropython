@@ -4,8 +4,18 @@
 
 #include <inttypes.h>
 
+#include <fixmath.h>
+
 #include <pbdrv/motor.h>
 #include <pbio/motor.h>
+
+static inline int32_t int_fix16_div(int32_t a, fix16_t b) {
+    return fix16_to_int(fix16_div(fix16_from_int(a), b));
+}
+
+static inline int32_t int_fix16_mul(int32_t a, fix16_t b) {
+    return fix16_to_int(fix16_mul(fix16_from_int(a), b));
+}
 
 pbio_error_t pbio_motor_coast(pbio_motor_t *mtr){
     mtr->state = PBIO_CONTROL_COASTING;
@@ -48,7 +58,7 @@ pbio_error_t pbio_motor_set_duty_cycle_usr(pbio_motor_t *mtr, int32_t duty_steps
     return pbio_motor_set_duty_cycle_sys(mtr, PBIO_DUTY_STEPS * duty_steps / PBIO_DUTY_USER_STEPS);
 }
 
-pbio_error_t pbio_motor_setup(pbio_motor_t *mtr, pbio_motor_dir_t direction, float_t gear_ratio) {
+pbio_error_t pbio_motor_setup(pbio_motor_t *mtr, pbio_motor_dir_t direction, fix16_t gear_ratio) {
     // Coast DC Motor
     pbio_error_t err = pbio_motor_coast(mtr);
     if (err != PBIO_SUCCESS && err != PBIO_ERROR_IO) {
@@ -85,10 +95,10 @@ pbio_error_t pbio_motor_setup(pbio_motor_t *mtr, pbio_motor_dir_t direction, flo
     // TODO: Use the device_id to retrieve this number. It is 1.0 for all of the supported motors so far.
     // It is 2.0 for motors with double resolution, and it is counts/mm for linear actuators.
     //
-    float_t counts_per_unit = 1.0;
+    fix16_t counts_per_unit = F16C(1, 0);
 
-    // Overal ratio between encoder counts and output
-    float_t ratio = counts_per_unit * gear_ratio;
+    // Overall ratio between encoder counts and output
+    fix16_t ratio = fix16_mul(counts_per_unit, gear_ratio);
 
     mtr->counts_per_unit = counts_per_unit;
     mtr->counts_per_output_unit = ratio;
@@ -97,7 +107,7 @@ pbio_error_t pbio_motor_setup(pbio_motor_t *mtr, pbio_motor_dir_t direction, flo
     if (id == PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR) {
         err = pbio_motor_set_dc_settings(mtr, 100, 0);
         if (err != PBIO_SUCCESS) { return err; }
-        err = pbio_motor_set_run_settings(mtr, 1200/ratio, 2400/ratio);
+        err = pbio_motor_set_run_settings(mtr, int_fix16_div(1200, ratio), int_fix16_div(2400, ratio));
         if (err != PBIO_SUCCESS) { return err; }
         err = pbio_motor_set_pid_settings(mtr, 400, 600, 5, 100, 3, 5, 2, 200);
         if (err != PBIO_SUCCESS) { return err; }
@@ -105,7 +115,7 @@ pbio_error_t pbio_motor_setup(pbio_motor_t *mtr, pbio_motor_dir_t direction, flo
     else if (id == PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR) {
         err = pbio_motor_set_dc_settings(mtr, 100, 0);
         if (err != PBIO_SUCCESS) { return err; }
-        err = pbio_motor_set_run_settings(mtr, 800/ratio, 1600/ratio);
+        err = pbio_motor_set_run_settings(mtr, int_fix16_div(800, ratio), int_fix16_div(1600, ratio));
         if (err != PBIO_SUCCESS) { return err; }
         err = pbio_motor_set_pid_settings(mtr, 500, 800, 5, 100, 3, 5, 2, 200);
         if (err != PBIO_SUCCESS) { return err; }
@@ -113,7 +123,7 @@ pbio_error_t pbio_motor_setup(pbio_motor_t *mtr, pbio_motor_dir_t direction, flo
     else if (id == PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR) {
         err = pbio_motor_set_dc_settings(mtr, 100, 0);
         if (err != PBIO_SUCCESS) { return err; }
-        err = pbio_motor_set_run_settings(mtr, 1500/ratio, 3000/ratio);
+        err = pbio_motor_set_run_settings(mtr, int_fix16_div(1500, ratio), int_fix16_div(3000, ratio));
         if (err != PBIO_SUCCESS) { return err; }
         err = pbio_motor_set_pid_settings(mtr, 400, 600, 5, 100, 3, 5, 2, 200);
         if (err != PBIO_SUCCESS) { return err; }
@@ -122,7 +132,7 @@ pbio_error_t pbio_motor_setup(pbio_motor_t *mtr, pbio_motor_dir_t direction, flo
         // Defaults
         err = pbio_motor_set_dc_settings(mtr, 100, 0);
         if (err != PBIO_SUCCESS) { return err; }
-        err = pbio_motor_set_run_settings(mtr, 1000/ratio, 1000/ratio);
+        err = pbio_motor_set_run_settings(mtr, int_fix16_div(1000, ratio), int_fix16_div(1000, ratio));
         if (err != PBIO_SUCCESS) { return err; }
         err = pbio_motor_set_pid_settings(mtr, 500, 800, 5, 100, 3, 5, 2, 500);
         if (err != PBIO_SUCCESS) { return err; }
@@ -147,9 +157,8 @@ pbio_error_t pbio_motor_get_dc_settings(pbio_motor_t *mtr, int32_t *stall_torque
 }
 
 pbio_error_t pbio_motor_set_run_settings(pbio_motor_t *mtr, int32_t max_speed, int32_t acceleration) {
-    float_t counts_per_output_unit = mtr->counts_per_output_unit;
-    mtr->control.settings.max_rate = (counts_per_output_unit * max_speed);
-    mtr->control.settings.abs_acceleration = (counts_per_output_unit * acceleration);
+    mtr->control.settings.max_rate = int_fix16_mul(max_speed, mtr->counts_per_output_unit);
+    mtr->control.settings.abs_acceleration = int_fix16_mul(acceleration, mtr->counts_per_output_unit);
     return PBIO_SUCCESS;
 }
 
@@ -162,7 +171,7 @@ pbio_error_t pbio_motor_set_pid_settings(pbio_motor_t *mtr,
                                          int32_t speed_tolerance,
                                          int32_t stall_speed_limit,
                                          int32_t stall_time) {
-    float_t counts_per_output_unit = mtr->counts_per_output_unit;
+    fix16_t counts_per_output_unit = mtr->counts_per_output_unit;
 
     if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || tight_loop_time < 0 ||
         position_tolerance < 0 || speed_tolerance < 0 || stall_speed_limit < 0 || stall_time < 0) {
@@ -173,9 +182,9 @@ pbio_error_t pbio_motor_set_pid_settings(pbio_motor_t *mtr,
     mtr->control.settings.pid_ki = pid_ki;
     mtr->control.settings.pid_kd = pid_kd;
     mtr->control.settings.tight_loop_time = tight_loop_time * US_PER_MS;
-    mtr->control.settings.count_tolerance = (counts_per_output_unit * position_tolerance);
-    mtr->control.settings.rate_tolerance = (counts_per_output_unit * speed_tolerance);
-    mtr->control.settings.stall_rate_limit = (counts_per_output_unit * stall_speed_limit);
+    mtr->control.settings.count_tolerance = int_fix16_mul(position_tolerance, counts_per_output_unit);
+    mtr->control.settings.rate_tolerance = int_fix16_mul(speed_tolerance, counts_per_output_unit);
+    mtr->control.settings.stall_rate_limit = int_fix16_mul(stall_speed_limit, counts_per_output_unit);
     mtr->control.settings.stall_time = stall_time * US_PER_MS;
     return PBIO_SUCCESS;
 }
@@ -194,14 +203,18 @@ void pbio_motor_print_settings(pbio_motor_t *mtr, char *dc_settings_string, char
         enc_settings_string[0] = 0;
     }
     else {
+        char counts_per_unit_str[13];
+        char gear_ratio_str[13];
         // Preload several settings for easier printing
-        float_t counts_per_output_unit = mtr->counts_per_output_unit;
-        float_t counts_per_unit = mtr->counts_per_unit;
-        float_t gear_ratio = counts_per_output_unit / mtr->counts_per_unit;
+        fix16_t counts_per_output_unit = mtr->counts_per_output_unit;
+        fix16_t counts_per_unit = mtr->counts_per_unit;
+        fix16_t gear_ratio = fix16_div(counts_per_output_unit, mtr->counts_per_unit);
+        fix16_to_str(counts_per_unit, counts_per_unit_str, 3);
+        fix16_to_str(gear_ratio, gear_ratio_str, 3);
         // Print settings to settings_string
         snprintf(enc_settings_string, MAX_ENCMOTOR_SETTINGS_STR_LENGTH,
-            "Counts per unit\t %" PRId32 ".%" PRId32 "\n"
-            "Gear ratio\t %" PRId32 ".%" PRId32 "\n"
+            "Counts per unit\t %s\n"
+            "Gear ratio\t %s\n"
             "\nRun settings:\n"
             "------------------------\n"
             "Max speed\t %" PRId32 "\n"
@@ -220,15 +233,11 @@ void pbio_motor_print_settings(pbio_motor_t *mtr, char *dc_settings_string, char
             "Speed tolerance\t %" PRId32 "\n"
             "Stall speed\t %" PRId32 "\n"
             "Stall time\t %" PRId32,
-            // Print counts_per_unit as floating point with 3 decimals
-            (int32_t) (counts_per_unit),
-            (int32_t) (counts_per_unit*1000 - ((int32_t) counts_per_unit)*1000),
-            // Print counts_per_unit as floating point with 3 decimals
-            (int32_t) (gear_ratio),
-            (int32_t) (gear_ratio*1000 - ((int32_t) gear_ratio)*1000),
+            counts_per_unit_str,
+            gear_ratio_str,
             // Print run settings
-            (int32_t) (mtr->control.settings.max_rate / counts_per_output_unit),
-            (int32_t) (mtr->control.settings.abs_acceleration / counts_per_output_unit),
+            int_fix16_div(mtr->control.settings.max_rate, counts_per_output_unit),
+            int_fix16_div(mtr->control.settings.abs_acceleration, counts_per_output_unit),
             // Print DC settings
             (int32_t) (mtr->max_duty_steps / PBIO_DUTY_STEPS_PER_USER_STEP),
             (int32_t) (mtr->duty_offset / PBIO_DUTY_STEPS_PER_USER_STEP),
@@ -237,9 +246,9 @@ void pbio_motor_print_settings(pbio_motor_t *mtr, char *dc_settings_string, char
             (int32_t) mtr->control.settings.pid_ki,
             (int32_t) mtr->control.settings.pid_kd,
             (int32_t) (mtr->control.settings.tight_loop_time / US_PER_MS),
-            (int32_t) (mtr->control.settings.count_tolerance / counts_per_output_unit),
-            (int32_t) (mtr->control.settings.rate_tolerance / counts_per_output_unit),
-            (int32_t) (mtr->control.settings.stall_rate_limit / counts_per_output_unit),
+            int_fix16_div(mtr->control.settings.count_tolerance, counts_per_output_unit),
+            int_fix16_div(mtr->control.settings.rate_tolerance, counts_per_output_unit),
+            int_fix16_div(mtr->control.settings.stall_rate_limit, counts_per_output_unit),
             (int32_t) (mtr->control.settings.stall_time  / US_PER_MS)
         );
     }
@@ -274,7 +283,7 @@ pbio_error_t pbio_motor_reset_encoder_count(pbio_motor_t *mtr, int32_t reset_cou
 pbio_error_t pbio_motor_get_angle(pbio_motor_t *mtr, int32_t *angle) {
     int32_t encoder_count;
     pbio_error_t err = pbio_motor_get_encoder_count(mtr, &encoder_count);
-    *angle = encoder_count / (mtr->counts_per_output_unit);
+    *angle = int_fix16_div(encoder_count, mtr->counts_per_output_unit);
     return err;
 }
 
@@ -289,9 +298,9 @@ pbio_error_t pbio_motor_reset_angle(pbio_motor_t *mtr, int32_t reset_angle) {
         err = pbio_motor_get_encoder_count(mtr, &angle_old);
         if (err != PBIO_SUCCESS) { return err; }
         // Get the old target
-        int32_t target_old = (int32_t) (mtr->control.trajectory.th3 / mtr->counts_per_output_unit);
+        int32_t target_old = int_fix16_div(mtr->control.trajectory.th3, mtr->counts_per_output_unit);
         // Reset the angle
-        err = pbio_motor_reset_encoder_count(mtr, (int32_t) (reset_angle * mtr->counts_per_output_unit));
+        err = pbio_motor_reset_encoder_count(mtr, int_fix16_mul(reset_angle, mtr->counts_per_output_unit));
         if (err != PBIO_SUCCESS) { return err; }
         // Set the new target based on the old angle and the old target, after the angle reset
         int32_t new_target = reset_angle + target_old - angle_old;
@@ -300,13 +309,13 @@ pbio_error_t pbio_motor_reset_angle(pbio_motor_t *mtr, int32_t reset_angle) {
     }
     // If the motor was in a passive mode (coast, brake, user duty), reset angle and leave state unchanged
     else if (mtr->state <= PBIO_CONTROL_USRDUTY){
-        return pbio_motor_reset_encoder_count(mtr, (int32_t)(reset_angle * mtr->counts_per_output_unit));
+        return pbio_motor_reset_encoder_count(mtr, int_fix16_mul(reset_angle, mtr->counts_per_output_unit));
     }
     // In all other cases, stop the ongoing maneuver by coasting and then reset the angle
     else {
         err = pbio_motor_coast(mtr);
         if (err != PBIO_SUCCESS) { return err; }
-        return pbio_motor_reset_encoder_count(mtr, (int32_t)(reset_angle * mtr->counts_per_output_unit));
+        return pbio_motor_reset_encoder_count(mtr, int_fix16_mul(reset_angle, mtr->counts_per_output_unit));
     }
 }
 
@@ -321,6 +330,6 @@ pbio_error_t pbio_motor_get_encoder_rate(pbio_motor_t *mtr, int32_t *rate) {
 pbio_error_t pbio_motor_get_angular_rate(pbio_motor_t *mtr, int32_t *angular_rate) {
     int32_t encoder_rate;
     pbio_error_t err = pbio_motor_get_encoder_rate(mtr, &encoder_rate);
-    *angular_rate = encoder_rate / mtr->counts_per_output_unit;
+    *angular_rate = int_fix16_div(encoder_rate, mtr->counts_per_output_unit);
     return err;
 }

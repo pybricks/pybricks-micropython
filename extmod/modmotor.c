@@ -46,7 +46,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
     pbio_error_t err;
 
     // Default gear ratio
-    float_t gear_ratio = 1.0;
+    fix16_t gear_ratio = F16C(1, 0);
 
     // Parse gear argument of the form [[12, 20, 36], [20, 40]] or [12, 20, 36]
     if (n_args == 3) {
@@ -71,13 +71,13 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
                 mp_obj_get_array(trains[train], &n_gears, &gears);
             }
             // For this gear train, compute the ratio from the first and last gear
-            int16_t first_gear = mp_obj_get_int(gears[0]);
-            int16_t last_gear = mp_obj_get_int(gears[n_gears-1]);
+            fix16_t first_gear = fix16_from_int(mp_obj_get_int(gears[0]));
+            fix16_t last_gear = fix16_from_int(mp_obj_get_int(gears[n_gears-1]));
             if (first_gear < 1 || last_gear < 1) {
                 pb_assert(PBIO_ERROR_INVALID_ARG);
             }
             // Include the ratio of this train in the overall gear train
-            gear_ratio = (gear_ratio*last_gear)/first_gear;
+            gear_ratio = fix16_div(fix16_mul(gear_ratio, last_gear), first_gear);
         }
     }
     // Configure the encoded motor with the selected arguments at pbio level
