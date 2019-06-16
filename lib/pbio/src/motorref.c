@@ -2,11 +2,19 @@
 // Copyright (c) 2018-2019 Laurens Valk
 // Copyright (c) 2019 LEGO System A/S
 
-#include <pbio/motorref.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
-#include <math.h>
+
+#include <fixmath.h>
+
+#include <pbio/motorref.h>
 
 #include "sys/clock.h"
+
+static inline int32_t int_sqrt(int32_t x) {
+    return fix16_to_int(fix16_sqrt(fix16_from_int(x)));
+}
 
 void reverse_trajectory(pbio_control_trajectory_t *ref) {
     // Mirror angles about initial angle th0
@@ -133,7 +141,7 @@ pbio_error_t make_trajectory_time_based(ustime_t t0, ustime_t t3, count_t th0, r
 
 pbio_error_t make_trajectory_time_based_forever(ustime_t t0, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_control_trajectory_t *ref) {
     // For infinite maneuvers like RUN and RUN_STALLED, no end time is specified, so we take a
-    // fictitious 60 seconds. This allows us to use the same code to get the trajectory for the 
+    // fictitious 60 seconds. This allows us to use the same code to get the trajectory for the
     // initial acceleration phase and the constant speed phase. Setting the forever flag allows
     // us to ignore the deceleration phase while getting the reference, hence moving forever.
     pbio_error_t err = make_trajectory_time_based(t0, t0 + 60*US_PER_SECOND, th0, w0, wt, wmax, a, ref);
@@ -169,7 +177,7 @@ pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, 
 
     // Limit initial speed, but evaluate square root only if necessary (usually not)
     if (w0 > 0 && (w0*w0)/(2*a) > th3 - th0) {
-        w0 = sqrtf(2*a*(th3 - th0)); // TODO: Use int implementation
+        w0 = int_sqrt(2*a*(th3 - th0));
     }
 
     // Initial speed is less than the target speed
@@ -192,7 +200,7 @@ pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, 
             // Otherwise, intersect halfway between accelerating and decelerating square root arcs
             ref->th1 = (th3+thf)/2;
             ref->th2 = ref->th1;
-            ref->w1 = sqrtf(2*a*(ref->th1-thf)); // TODO: Use int implementation
+            ref->w1 = int_sqrt(2*a*(ref->th1 - thf));
         }
     }
     // Initial speed is equal to or more than the target speed
