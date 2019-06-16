@@ -174,28 +174,31 @@ LIB_SRC_C = $(addprefix lib/,\
 	)
 
 # Pybricks drivers and modules
-PYBRICKS_DRIVERS_SRC_C = $(addprefix ports/pybricks/,\
-	extmod/modmotor.c \
-	extmod/modlight.c \
-	extmod/modbattery.c \
-	extmod/modbuttons.c \
-	extmod/modtools.c \
-	extmod/modparameters.c \
-	extmod/modrobotics.c \
-	extmod/pberror.c \
-	extmod/pbthread.c \
-	lib/pbio/drv/battery/battery_ev3_linux.c \
-	lib/pbio/drv/button/button_linux_ev3.c \
-	lib/pbio/drv/ev3dev_stretch/motor.c \
-	lib/pbio/drv/ev3dev_stretch/light.c \
-	lib/pbio/platform/ev3dev_stretch/clock.c \
-	lib/pbio/src/main.c \
-	lib/pbio/src/light.c \
-	lib/pbio/src/motor.c \
-	lib/pbio/src/error.c \
-	lib/pbio/src/motorcontrol.c \
-	lib/pbio/src/motorref.c \
-	lib/pbio/src/motorpair.c \
+PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
+	modmotor.c \
+	modlight.c \
+	modbattery.c \
+	modbuttons.c \
+	modtools.c \
+	modparameters.c \
+	modrobotics.c \
+	pberror.c \
+	pbthread.c \
+	)
+
+PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
+	pbio/drv/battery/battery_ev3_linux.c \
+	pbio/drv/button/button_linux_ev3.c \
+	pbio/drv/ev3dev_stretch/motor.c \
+	pbio/drv/ev3dev_stretch/light.c \
+	pbio/platform/ev3dev_stretch/clock.c \
+	pbio/src/main.c \
+	pbio/src/light.c \
+	pbio/src/motor.c \
+	pbio/src/error.c \
+	pbio/src/motorcontrol.c \
+	pbio/src/motorref.c \
+	pbio/src/motorpair.c \
 	)
 
 # FatFS VFS support
@@ -207,10 +210,11 @@ LIB_SRC_C += $(addprefix lib/,\
 OBJ = $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_DRIVERS_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_LIB_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(LIB_SRC_C) $(PYBRICKS_DRIVERS_SRC_C)
+SRC_QSTR += $(SRC_C) $(LIB_SRC_C) $(PYBRICKS_EXTMOD_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in
 # SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
