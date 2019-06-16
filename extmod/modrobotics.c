@@ -19,8 +19,8 @@ typedef struct _robotics_DriveBase_obj_t {
     mp_obj_base_t base;
     motor_Motor_obj_t *mtr_left;
     motor_Motor_obj_t *mtr_right;
-    float_t wheel_diameter;
-    float_t axle_track;
+    mp_int_t wheel_diameter;
+    mp_int_t axle_track;
 } robotics_DriveBase_obj_t;
 
 STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
@@ -42,8 +42,8 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     pb_assert(pbio_get_motor_pair(self->mtr_left->mtr, self->mtr_right->mtr, &pair));
 
     // Get wheel diameter and axle track dimensions
-    self->wheel_diameter = mp_obj_get_num(args[2]);
-    self->axle_track = mp_obj_get_num(args[3]);
+    self->wheel_diameter = pb_obj_get_int(args[2]);
+    self->axle_track = pb_obj_get_int(args[3]);
 
     // Assert that the dimensions are positive
     if (self->wheel_diameter < 1 || self->axle_track < 1) {
@@ -62,8 +62,8 @@ STATIC void robotics_DriveBase_print(const mp_print_t *print,  mp_obj_t self_in,
 
 STATIC mp_obj_t robotics_DriveBase_drive(mp_obj_t self_in, mp_obj_t speed, mp_obj_t steering) {
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    float sum = mp_obj_get_num(speed)/self->wheel_diameter*(720.0/M_PI);
-    float dif = 2*self->axle_track/self->wheel_diameter*mp_obj_get_num(steering);
+    mp_int_t sum = pb_obj_get_int(speed)*(int)(720.0/M_PI)/self->wheel_diameter;
+    mp_int_t dif = 2*self->axle_track*pb_obj_get_int(steering)/self->wheel_diameter;
 
     pb_thread_enter();
 
@@ -102,7 +102,7 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(robotics_DriveBase_stop_obj, 1, 2, robotics_
 STATIC mp_obj_t robotics_DriveBase_drive_time(size_t n_args, const mp_obj_t *args){
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     robotics_DriveBase_drive(self, args[1], args[2]);
-    mp_hal_delay_ms(mp_obj_get_num(args[3]));
+    mp_hal_delay_ms(pb_obj_get_int(args[3]));
     // TODO: parse stop type
     robotics_DriveBase_drive(self, MP_OBJ_NEW_SMALL_INT(0), MP_OBJ_NEW_SMALL_INT(0));
     return mp_const_none;

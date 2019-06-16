@@ -106,7 +106,7 @@ void motor_Motor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind
 
 STATIC mp_obj_t motor_Motor_duty(mp_obj_t self_in, mp_obj_t duty){
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    float_t duty_cycle = mp_obj_get_num(duty);
+    mp_int_t duty_cycle = pb_obj_get_int(duty);
     pbio_error_t err;
 
     pb_thread_enter();
@@ -151,7 +151,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_stalled_obj, motor_Motor_stalled);
 
 STATIC mp_obj_t motor_Motor_reset_angle(size_t n_args, const mp_obj_t *args){
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    int32_t reset_angle = mp_obj_get_num(args[1]);
+    mp_int_t reset_angle = pb_obj_get_int(args[1]);
     pbio_error_t err;
 
     pb_thread_enter();
@@ -181,7 +181,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_speed_obj, motor_Motor_speed);
 
 STATIC mp_obj_t motor_Motor_run(mp_obj_t self_in, mp_obj_t speed_in) {
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t speed = mp_obj_get_num(speed_in);
+    mp_int_t speed = pb_obj_get_int(speed_in);
     pbio_error_t err;
 
     pb_thread_enter();
@@ -220,8 +220,8 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_stop_obj, 1, 2, motor_Motor_stop
 STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    int32_t speed = mp_obj_get_num(args[1]);
-    int32_t duration = mp_obj_get_num(args[2]);
+    mp_int_t speed = pb_obj_get_int(args[1]);
+    mp_int_t duration = pb_obj_get_int(args[2]);
     pbio_control_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
     bool foreground = n_args > 4 ? mp_obj_is_true(args[4]) : true;
     pbio_error_t err;
@@ -241,7 +241,7 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_time_obj, 3, 5, motor_Motor_
 STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    int32_t speed = mp_obj_get_num(args[1]);
+    mp_int_t speed = pb_obj_get_int(args[1]);
     pbio_control_after_stop_t after_stop = n_args > 2 ? mp_obj_get_int(args[2]) : PBIO_MOTOR_STOP_COAST;
 
     int32_t temporary_stall_duty = 100;
@@ -252,7 +252,7 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *arg
     bool override_duty_limit = n_args > 3;
 
     if (override_duty_limit) {
-        temporary_stall_duty  = mp_obj_get_num(args[3]);
+        temporary_stall_duty = pb_obj_get_int(args[3]);
     }
 
     pb_thread_enter();
@@ -291,8 +291,8 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_until_stalled_obj, 2, 4, mot
 STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    int32_t speed = mp_obj_get_num(args[1]);
-    int32_t angle = mp_obj_get_num(args[2]);
+    mp_int_t speed = pb_obj_get_int(args[1]);
+    mp_int_t angle = pb_obj_get_int(args[2]);
     pbio_control_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
     bool foreground = n_args > 4 ? mp_obj_is_true(args[4]) : true;
     pbio_error_t err;
@@ -312,8 +312,8 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_angle_obj, 3, 5, motor_Motor
 STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *args){
     // Parse arguments and/or set default optional arguments
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    int32_t speed = mp_obj_get_num(args[1]);
-    int32_t target = mp_obj_get_num(args[2]);
+    mp_int_t speed = pb_obj_get_int(args[1]);
+    mp_int_t target = pb_obj_get_int(args[2]);
     pbio_control_after_stop_t after_stop = n_args > 3 ? mp_obj_get_int(args[3]) : PBIO_MOTOR_STOP_COAST;
     bool foreground = n_args > 4 ? mp_obj_is_true(args[4]) : true;
     pbio_error_t err;
@@ -332,7 +332,7 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_run_target_obj, 3, 5, motor_Moto
 
 STATIC mp_obj_t motor_Motor_track_target(mp_obj_t self_in, mp_obj_t target) {
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t target_ = mp_obj_get_num(target);
+    mp_int_t target_ = pb_obj_get_int(target);
     pbio_error_t err;
 
     pb_thread_enter();
@@ -347,8 +347,8 @@ MP_DEFINE_CONST_FUN_OBJ_2(motor_Motor_track_target_obj, motor_Motor_track_target
 
 STATIC mp_obj_t motor_Motor_set_run_settings(size_t n_args, const mp_obj_t *args){
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    int32_t max_speed = mp_obj_get_num(args[1]);
-    int32_t acceleration = mp_obj_get_num(args[2]);
+    mp_int_t max_speed = pb_obj_get_int(args[1]);
+    mp_int_t acceleration = pb_obj_get_int(args[2]);
     pbio_error_t err;
 
     pb_thread_enter();
@@ -363,8 +363,8 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_set_run_settings_obj, 3, 3, moto
 
 STATIC mp_obj_t motor_Motor_set_dc_settings(size_t n_args, const mp_obj_t *args){
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    int32_t stall_torque_limit_pct = mp_obj_get_num(args[1]);
-    int32_t duty_offset_pct = mp_obj_get_num(args[2]);
+    mp_int_t stall_torque_limit_pct = pb_obj_get_int(args[1]);
+    mp_int_t duty_offset_pct = pb_obj_get_int(args[2]);
     pbio_error_t err;
 
     pb_thread_enter();
@@ -379,14 +379,14 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(motor_Motor_set_dc_settings_obj, 3, 3, motor
 
 STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *args){
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    int16_t kp = mp_obj_get_num(args[1]);
-    int16_t ki = mp_obj_get_num(args[2]);
-    int16_t kd = mp_obj_get_num(args[3]);
-    int16_t loop_time = mp_obj_get_num(args[4]);
-    int16_t pos_tolerance = mp_obj_get_num(args[5]);
-    int16_t speed_tolerance = mp_obj_get_num(args[6]);
-    int16_t stall_speed_limit = mp_obj_get_num(args[7]);
-    int16_t stall_time = mp_obj_get_num(args[8]);
+    mp_int_t kp = pb_obj_get_int(args[1]);
+    mp_int_t ki = pb_obj_get_int(args[2]);
+    mp_int_t kd = pb_obj_get_int(args[3]);
+    mp_int_t loop_time = pb_obj_get_int(args[4]);
+    mp_int_t pos_tolerance = pb_obj_get_int(args[5]);
+    mp_int_t speed_tolerance = pb_obj_get_int(args[6]);
+    mp_int_t stall_speed_limit = pb_obj_get_int(args[7]);
+    mp_int_t stall_time = pb_obj_get_int(args[8]);
     pbio_error_t err;
 
     pb_thread_enter();

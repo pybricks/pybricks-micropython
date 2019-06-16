@@ -120,6 +120,7 @@ PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	pberror.c \
 	pbhub.c \
 	pbiodevice.c \
+	pbobj.c \
 	)
 
 BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\

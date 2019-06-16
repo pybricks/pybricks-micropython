@@ -7,7 +7,7 @@
 #include "pbobj.h"
 
 STATIC mp_obj_t tools_wait(mp_obj_t arg) {
-    int32_t duration = mp_obj_get_num(arg);
+    mp_int_t duration = pb_obj_get_int(arg);
     if (duration < 0) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }

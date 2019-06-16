@@ -14,11 +14,11 @@ const mp_obj_type_t enum_name = { \
     .locals_dict = (mp_obj_dict_t*)&(enum_name ## _locals_dict),\
 }
 
-// Get a real-valued number as float object if supported and as integer object otherwise
-#if MICROPY_FLOAT_IMPL == MICROPY_FLOAT_IMPL_NONE
-    #define mp_obj_get_num mp_obj_get_int
+// like mp_obj_get_int() but also allows float
+#if MICROPY_PY_BUILTINS_FLOAT
+mp_int_t pb_obj_get_int(mp_obj_t arg);
 #else
-    #define mp_obj_get_num mp_obj_get_float
-#endif //MICROPY_FLOAT_IMPL
+#define pb_obj_get_int mp_obj_get_int
+#endif
 
 #endif // PYBRICKS_INCLUDED_PBOBJ_H
