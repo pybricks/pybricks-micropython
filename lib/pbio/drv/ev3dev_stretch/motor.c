@@ -29,14 +29,10 @@ typedef struct _motor_file_t {
     FILE *f_duty;
 } motor_file_t;
 
-motor_file_t motor_files[] = {
-    [PORT_TO_IDX(PBDRV_CONFIG_FIRST_MOTOR_PORT) ... PORT_TO_IDX(PBDRV_CONFIG_LAST_MOTOR_PORT)]{
-        .id = PBIO_IODEV_TYPE_ID_NONE
-    }
-};
+static motor_file_t motor_files[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 // Read and append motorX to device path so the end result is /path/to/motorX
-pbio_error_t sysfs_append_motor_number(DIR *dir, char *portpath, char *devpath) {
+static pbio_error_t sysfs_append_motor_number(DIR *dir, char *portpath, char *devpath) {
     struct dirent *ent;
     while ((ent = readdir(dir))) {
         if (ent->d_name[0] != '.') {
@@ -53,7 +49,7 @@ pbio_error_t sysfs_append_motor_number(DIR *dir, char *portpath, char *devpath) 
 }
 
 // Get the device ID and device path for the given motor port, if any
-pbio_error_t sysfs_get_motor(pbio_port_t port, pbio_iodev_type_id_t *id, char *devpath) {
+static pbio_error_t sysfs_get_motor(pbio_port_t port, pbio_iodev_type_id_t *id, char *devpath) {
     char portpath[MAX_PATH_LENGTH];
     DIR *dir;
 
@@ -85,7 +81,7 @@ pbio_error_t sysfs_get_motor(pbio_port_t port, pbio_iodev_type_id_t *id, char *d
 }
 
 // Open command file, write command, close.
-pbio_error_t sysfs_motor_command(pbio_port_t port, const char* command) {
+static pbio_error_t sysfs_motor_command(pbio_port_t port, const char* command) {
     motor_file_t *mtr_files = &motor_files[PORT_TO_IDX(port)];
     // Open the file in the directory corresponding to the specified port
     char commandpath[MAX_PATH_LENGTH];
@@ -98,7 +94,7 @@ pbio_error_t sysfs_motor_command(pbio_port_t port, const char* command) {
 }
 
 // Reset motor and close files if they are open
-pbio_error_t sysfs_close_and_reset(pbio_port_t port){
+static pbio_error_t sysfs_close_and_reset(pbio_port_t port){
     motor_file_t *mtr_files = &motor_files[PORT_TO_IDX(port)];
     pbio_error_t err;
     switch (mtr_files->id) {
@@ -125,7 +121,7 @@ pbio_error_t sysfs_close_and_reset(pbio_port_t port){
     }
 }
 
-pbio_error_t sysfs_motor_init(pbio_port_t port){
+static pbio_error_t sysfs_motor_init(pbio_port_t port){
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
         return PBIO_ERROR_INVALID_PORT;
     }
