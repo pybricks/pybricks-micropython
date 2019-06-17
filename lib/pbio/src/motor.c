@@ -7,9 +7,6 @@
 #include <pbdrv/motor.h>
 #include <pbio/motor.h>
 
-// Initialize motors with control state as inactive
-pbio_motor_t motor[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-
 pbio_error_t pbio_motor_coast(pbio_motor_t *mtr){
     mtr->state = PBIO_CONTROL_COASTING;
     return pbdrv_motor_coast(mtr->port);

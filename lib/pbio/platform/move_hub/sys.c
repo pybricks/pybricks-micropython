@@ -89,7 +89,10 @@ void pbsys_unprepare_user_program(void) {
 
     // TODO: would be nice to have something like _pbio_light_set_user_mode() for motors
     for (int i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        pbio_motor_coast(&motor[i]);
+        pbio_motor_t *mtr;
+        if (pbio_motor_get(i, &mtr) == PBIO_SUCCESS) {
+            pbio_motor_coast(mtr);
+        }
     }
 }
 

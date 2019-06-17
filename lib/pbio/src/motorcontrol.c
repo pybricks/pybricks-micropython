@@ -9,6 +9,18 @@
 
 #include "sys/clock.h"
 
+static pbio_motor_t motor[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+
+// TODO: this function belongs in motor.c, but we need to separate the motor
+// from the controller first
+pbio_error_t pbio_motor_get(uint8_t index, pbio_motor_t **mtr) {
+    if (index >= PBDRV_CONFIG_NUM_MOTOR_CONTROLLER) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    *mtr = &motor[index];
+    return PBIO_SUCCESS;
+}
+
 // If the controller reach the maximum duty cycle value, this shortcut sets the stalled flag when the speed is below the stall limit.
 static void stall_set_flag_if_slow(pbio_control_stalled_t *stalled,
                                    rate_t rate_now,

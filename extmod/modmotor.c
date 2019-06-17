@@ -35,14 +35,11 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
     mp_arg_check_num(n_args, n_kw, 1, 3, false);
     motor_Motor_obj_t *self = m_new_obj(motor_Motor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
+
     pbio_port_t port = mp_obj_get_int(args[0]);
+    pb_assert(pbio_motor_get(port - PBDRV_CONFIG_FIRST_MOTOR_PORT, &self->mtr));
 
-    // FIXME: this should return an error for I/O ports with no motor plugged in
-    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
-        pb_assert(PBIO_ERROR_INVALID_PORT);
-    }
-
-    self->mtr = &motor[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
+    // FIXME: raise an ENODEV exception here for I/O ports with no motor plugged in
 
     // Configure direction or set to default
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_CLOCKWISE;
