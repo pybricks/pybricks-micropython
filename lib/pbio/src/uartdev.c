@@ -1017,49 +1017,47 @@ static PT_THREAD(pbio_uartdev_receive_data(uartdev_port_data_t *data)) {
 
     PT_BEGIN(&data->data_pt);
 
-retry:
-    PBIO_PT_WAIT_READY(&data->data_pt,
-        err = pbdrv_uart_read_begin(data->uart, data->rx_msg, 1, EV3_UART_IO_TIMEOUT));
-    if (err != PBIO_SUCCESS) {
-        DBG_ERR(data->last_err = "UART Rx data header begin error");
-        goto err;
-    }
-    PBIO_PT_WAIT_READY(&data->data_pt, err = pbdrv_uart_read_end(data->uart));
-    if (err != PBIO_SUCCESS) {
-        DBG_ERR(data->last_err = "UART Rx data header end error");
-        goto err;
-    }
+    while (true) {
+        PBIO_PT_WAIT_READY(&data->data_pt,
+            err = pbdrv_uart_read_begin(data->uart, data->rx_msg, 1, EV3_UART_IO_TIMEOUT));
+        if (err != PBIO_SUCCESS) {
+            DBG_ERR(data->last_err = "UART Rx data header begin error");
+            break;
+        }
+        PBIO_PT_WAIT_READY(&data->data_pt, err = pbdrv_uart_read_end(data->uart));
+        if (err != PBIO_SUCCESS) {
+            DBG_ERR(data->last_err = "UART Rx data header end error");
+            break;
+        }
 
-    data->rx_msg_size = ev3_uart_get_msg_size(data->rx_msg[0]);
-    if (data->rx_msg_size < 3 || data->rx_msg_size > EV3_UART_MAX_MESSAGE_SIZE) {
-        DBG_ERR(data->last_err = "Bad data message size");
-        goto retry;
-    }
-    if ((data->rx_msg[0] & EV3_UART_MSG_TYPE_MASK) != EV3_UART_MSG_TYPE_DATA &&
-        (data->rx_msg[0] & (EV3_UART_MSG_TYPE_MASK | EV3_UART_MSG_CMD_MASK)) != (EV3_UART_MSG_TYPE_CMD | EV3_UART_CMD_WRITE)) {
-        DBG_ERR(data->last_err = "Bad msg type");
-        goto retry;
-    }
+        data->rx_msg_size = ev3_uart_get_msg_size(data->rx_msg[0]);
+        if (data->rx_msg_size < 3 || data->rx_msg_size > EV3_UART_MAX_MESSAGE_SIZE) {
+            DBG_ERR(data->last_err = "Bad data message size");
+            continue;
+        }
+        if ((data->rx_msg[0] & EV3_UART_MSG_TYPE_MASK) != EV3_UART_MSG_TYPE_DATA &&
+            (data->rx_msg[0] & (EV3_UART_MSG_TYPE_MASK | EV3_UART_MSG_CMD_MASK)) != (EV3_UART_MSG_TYPE_CMD | EV3_UART_CMD_WRITE)) {
+            DBG_ERR(data->last_err = "Bad msg type");
+            continue;
+        }
 
-    PBIO_PT_WAIT_READY(&data->data_pt,
-        err = pbdrv_uart_read_begin(data->uart, data->rx_msg + 1, data->rx_msg_size - 1, EV3_UART_IO_TIMEOUT));
-    if (err != PBIO_SUCCESS) {
-        DBG_ERR(data->last_err = "UART Rx data begin error");
-        goto err;
-    }
-    PBIO_PT_WAIT_READY(&data->data_pt, err = pbdrv_uart_read_end(data->uart));
-    if (err != PBIO_SUCCESS) {
-        DBG_ERR(data->last_err = "UART Rx data end error");
-        goto err;
-    }
+        PBIO_PT_WAIT_READY(&data->data_pt,
+            err = pbdrv_uart_read_begin(data->uart, data->rx_msg + 1, data->rx_msg_size - 1, EV3_UART_IO_TIMEOUT));
+        if (err != PBIO_SUCCESS) {
+            DBG_ERR(data->last_err = "UART Rx data begin error");
+            break;
+        }
+        PBIO_PT_WAIT_READY(&data->data_pt, err = pbdrv_uart_read_end(data->uart));
+        if (err != PBIO_SUCCESS) {
+            DBG_ERR(data->last_err = "UART Rx data end error");
+            break;
+        }
 
-    // at this point, we have a full data->msg that can be parsed
-    pbio_uartdev_parse_msg(data);
+        // at this point, we have a full data->msg that can be parsed
+        pbio_uartdev_parse_msg(data);
+    }
 
     PT_END(&data->data_pt);
-
-err:
-    PT_EXIT(&data->pt);
 }
 
 static pbio_error_t ev3_uart_set_mode_begin(pbio_iodev_t *iodev, uint8_t mode) {
