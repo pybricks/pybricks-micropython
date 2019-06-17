@@ -8,6 +8,7 @@
 
 #define CCIF
 #define CLIF
+#define AUTOSTART_ENABLE 1
 
 // TODO: could use 64-bit time struct
 typedef uint32_t clock_time_t;

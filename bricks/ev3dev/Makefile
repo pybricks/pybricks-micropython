@@ -199,6 +199,10 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	pbio/src/motorcontrol.c \
 	pbio/src/motorref.c \
 	pbio/src/motorpair.c \
+	pbio/sys/autostart.c \
+	pbio/sys/etimer.c \
+	pbio/sys/process.c \
+	pbio/sys/timer.c \
 	)
 
 # FatFS VFS support

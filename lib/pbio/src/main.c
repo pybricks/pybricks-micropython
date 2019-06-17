@@ -59,16 +59,12 @@ AUTOSTART_PROCESSES(
  */
 void pbio_init(void) {
     clock_init();
-#if PBIO_CONFIG_ENABLE_SYS
     process_init();
-#endif
     _pbdrv_button_init();
     _pbdrv_light_init();
     _pbdrv_motor_init();
     _pbio_motorcontroll_init();
-#if PBIO_CONFIG_ENABLE_SYS
     autostart_start(autostart_processes);
-#endif
 }
 
 /**
@@ -91,11 +87,7 @@ int pbio_do_one_event(void) {
         _pbio_light_poll(now);
         prev_slow_poll_time = now;
     }
-#if PBIO_CONFIG_ENABLE_SYS
     return process_run();
-#else
-    return 0;
-#endif
 }
 
 #if PBIO_CONFIG_ENABLE_DEINIT
@@ -105,9 +97,7 @@ int pbio_do_one_event(void) {
  * functions may be called after this.
  */
 void pbio_deinit(void) {
-#if PBIO_CONFIG_ENABLE_SYS
     autostart_exit(autostart_processes);
-#endif
     _pbdrv_motor_deinit();
     _pbdrv_light_deinit();
     _pbdrv_button_deinit();
