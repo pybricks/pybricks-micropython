@@ -1061,7 +1061,7 @@ static PT_THREAD(pbio_uartdev_receive_data(uartdev_port_data_t *data)) {
 }
 
 static pbio_error_t ev3_uart_set_mode_begin(pbio_iodev_t *iodev, uint8_t mode) {
-    uartdev_port_data_t *port_data = __containerof(iodev, uartdev_port_data_t, iodev);
+    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
     pbio_error_t err;
 
     err = ev3_uart_begin_tx_msg(port_data, EV3_UART_MSG_TYPE_CMD, EV3_UART_CMD_SELECT, &mode, 1);
@@ -1075,7 +1075,7 @@ static pbio_error_t ev3_uart_set_mode_begin(pbio_iodev_t *iodev, uint8_t mode) {
 }
 
 static pbio_error_t ev3_uart_set_mode_end(pbio_iodev_t *iodev) {
-    uartdev_port_data_t *port_data = __containerof(iodev, uartdev_port_data_t, iodev);
+    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
     pbio_error_t err;
 
     err = pbdrv_uart_write_end(port_data->uart);
@@ -1090,7 +1090,7 @@ static pbio_error_t ev3_uart_set_mode_end(pbio_iodev_t *iodev) {
 }
 
 static pbio_error_t ev3_uart_set_data_begin(pbio_iodev_t *iodev, const uint8_t *data) {
-    uartdev_port_data_t *port_data = __containerof(iodev, uartdev_port_data_t, iodev);
+    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
     pbio_iodev_mode_t *mode = &port_data->info->mode_info[iodev->mode];
     uint8_t size;
 
@@ -1105,13 +1105,13 @@ static pbio_error_t ev3_uart_set_data_begin(pbio_iodev_t *iodev, const uint8_t *
 }
 
 static pbio_error_t ev3_uart_write_begin(pbio_iodev_t *iodev, const uint8_t *data, uint8_t size) {
-    uartdev_port_data_t *port_data = __containerof(iodev, uartdev_port_data_t, iodev);
+    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
 
     return ev3_uart_begin_tx_msg(port_data, EV3_UART_MSG_TYPE_CMD, EV3_UART_CMD_WRITE, data, size);
 }
 
 static pbio_error_t ev3_uart_write_end(pbio_iodev_t *iodev) {
-    uartdev_port_data_t *port_data = __containerof(iodev, uartdev_port_data_t, iodev);
+    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
     pbio_error_t err;
 
     err = pbdrv_uart_write_end(port_data->uart);
@@ -1123,7 +1123,7 @@ static pbio_error_t ev3_uart_write_end(pbio_iodev_t *iodev) {
 }
 
 static void ev3_uart_write_cancel(pbio_iodev_t *iodev) {
-    uartdev_port_data_t *port_data = __containerof(iodev, uartdev_port_data_t, iodev);
+    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
 
     pbdrv_uart_write_cancel(port_data->uart);
 }

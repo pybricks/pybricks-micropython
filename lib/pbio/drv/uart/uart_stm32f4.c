@@ -11,6 +11,7 @@
 
 #include <pbdrv/uart.h>
 #include <pbio/error.h>
+#include <pbio/util.h>
 
 #include "sys/etimer.h"
 #include "sys/process.h"
@@ -49,7 +50,7 @@ pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
 }
 
 pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout) {
-    pbdrv_uart_t *uart = __containerof(uart_dev, pbdrv_uart_t, uart_dev);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
     HAL_StatusTypeDef ret;
 
     if (uart->huart.RxState != HAL_UART_STATE_READY) {
@@ -74,7 +75,7 @@ pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uin
 }
 
 pbio_error_t pbdrv_uart_read_end(pbdrv_uart_dev_t *uart_dev) {
-    pbdrv_uart_t *uart = __containerof(uart_dev, pbdrv_uart_t, uart_dev);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
     pbio_error_t err = uart->rx_result; // read once since interrupt can modify it
 
     if (err != PBIO_ERROR_AGAIN) {
@@ -91,13 +92,13 @@ pbio_error_t pbdrv_uart_read_end(pbdrv_uart_dev_t *uart_dev) {
 }
 
 void pbdrv_uart_read_cancel(pbdrv_uart_dev_t *uart_dev) {
-    pbdrv_uart_t *uart = __containerof(uart_dev, pbdrv_uart_t, uart_dev);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
 
     HAL_UART_AbortReceive_IT(&uart->huart);
 }
 
 pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout) {
-    pbdrv_uart_t *uart = __containerof(uart_dev, pbdrv_uart_t, uart_dev);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
     HAL_StatusTypeDef ret;
 
     ret = HAL_UART_Transmit_IT(&uart->huart, msg, length);
@@ -115,7 +116,7 @@ pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, ui
 }
 
 pbio_error_t pbdrv_uart_write_end(pbdrv_uart_dev_t *uart_dev) {
-    pbdrv_uart_t *uart = __containerof(uart_dev, pbdrv_uart_t, uart_dev);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
     pbio_error_t err = uart->tx_result; // read once since interrupt can modify it
 
     if (err != PBIO_ERROR_AGAIN) {
@@ -132,13 +133,13 @@ pbio_error_t pbdrv_uart_write_end(pbdrv_uart_dev_t *uart_dev) {
 }
 
 void pbdrv_uart_write_cancel(pbdrv_uart_dev_t *uart_dev) {
-    pbdrv_uart_t *uart = __containerof(uart_dev, pbdrv_uart_t, uart_dev);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
 
     HAL_UART_AbortTransmit_IT(&uart->huart);
 }
 
 pbio_error_t pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud) {
-    pbdrv_uart_t *uart = __containerof(uart_dev, pbdrv_uart_t, uart_dev);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
 
     if (HAL_UART_GetState(&uart->huart) != HAL_UART_STATE_READY) {
         return PBIO_ERROR_AGAIN;
@@ -153,7 +154,7 @@ pbio_error_t pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud)
 
 // overrides weak function in stm32f4xx_hal_uart.c
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
-    pbdrv_uart_t *uart = __containerof(huart, pbdrv_uart_t, huart);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(huart, pbdrv_uart_t, huart);
 
     if (uart->huart.ErrorCode & HAL_UART_ERROR_ORE) {
         uart->rx_result = PBIO_ERROR_IO;
@@ -163,7 +164,7 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
 
 // overrides weak function in stm32f4xx_hal_uart.c
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-    pbdrv_uart_t *uart = __containerof(huart, pbdrv_uart_t, huart);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(huart, pbdrv_uart_t, huart);
 
     uart->rx_result = PBIO_SUCCESS;
     process_poll(&pbdrv_uart_process);
@@ -171,14 +172,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 
 // overrides weak function in stm32f4xx_hal_uart.c
 void HAL_UART_AbortReceiveCpltCallback(UART_HandleTypeDef *huart) {
-    pbdrv_uart_t *uart = __containerof(huart, pbdrv_uart_t, huart);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(huart, pbdrv_uart_t, huart);
 
     uart->rx_result = PBIO_ERROR_CANCELED;
 }
 
 // overrides weak function in stm32f4xx_hal_uart.c
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
-    pbdrv_uart_t *uart = __containerof(huart, pbdrv_uart_t, huart);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(huart, pbdrv_uart_t, huart);
 
     uart->tx_result = PBIO_SUCCESS;
     process_poll(&pbdrv_uart_process);
@@ -186,7 +187,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 
 // overrides weak function in stm32f4xx_hal_uart.c
 void HAL_UART_AbortTransmitCpltCallback(UART_HandleTypeDef *huart) {
-    pbdrv_uart_t *uart = __containerof(huart, pbdrv_uart_t, huart);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(huart, pbdrv_uart_t, huart);
 
     uart->tx_result = PBIO_ERROR_CANCELED;
 }

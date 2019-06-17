@@ -4,7 +4,7 @@
 #ifndef _PBIO_UTIL_H_
 #define _PBIO_UTIL_H_
 
-#include <stddef.h>
+#include <sys/cdefs.h>
 
 /**
  * Get the length of a fixed-sized array.
@@ -18,6 +18,11 @@
  * @param type      The type of the parent structure
  * @param member    The name of the field containing ptr
  */
+#ifdef __containerof
+#define PBIO_CONTAINER_OF __containerof
+#else
+#include <stddef.h>
 #define PBIO_CONTAINER_OF(ptr, type, member) ((type *)((char *)(ptr) - offsetof(type, member)))
+#endif
 
 #endif // _PBIO_UTIL_H_

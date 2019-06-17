@@ -17,6 +17,7 @@
 
 #include <pbdrv/uart.h>
 #include <pbio/error.h>
+#include <pbio/util.h>
 
 #include "sys/etimer.h"
 #include "sys/process.h"
@@ -66,7 +67,7 @@ pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
 }
 
 pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout) {
-    pbdrv_uart_t *uart = __containerof(uart_dev, pbdrv_uart_t, uart_dev);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
 
     if (!msg || !length) {
       return PBIO_ERROR_INVALID_ARG;
@@ -89,7 +90,7 @@ pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uin
 }
 
 pbio_error_t pbdrv_uart_read_end(pbdrv_uart_dev_t *uart_dev) {
-    pbdrv_uart_t *uart = __containerof(uart_dev, pbdrv_uart_t, uart_dev);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
     pbio_error_t err = uart->rx_result; // read once since interrupt can modify it
 
     if (uart->rx_buf == NULL) {
@@ -110,13 +111,13 @@ pbio_error_t pbdrv_uart_read_end(pbdrv_uart_dev_t *uart_dev) {
 }
 
 void pbdrv_uart_read_cancel(pbdrv_uart_dev_t *uart_dev) {
-    pbdrv_uart_t *uart = __containerof(uart_dev, pbdrv_uart_t, uart_dev);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
 
     uart->rx_result = PBIO_ERROR_CANCELED;
 }
 
 pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout) {
-    pbdrv_uart_t *uart = __containerof(uart_dev, pbdrv_uart_t, uart_dev);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
 
     if (!msg || !length) {
       return PBIO_ERROR_INVALID_ARG;
@@ -139,7 +140,7 @@ pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, ui
 }
 
 pbio_error_t pbdrv_uart_write_end(pbdrv_uart_dev_t *uart_dev) {
-    pbdrv_uart_t *uart = __containerof(uart_dev, pbdrv_uart_t, uart_dev);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
     pbio_error_t err = uart->tx_result; // read once since interrupt can modify it
 
     if (uart->tx_buf == NULL) {
@@ -161,14 +162,14 @@ pbio_error_t pbdrv_uart_write_end(pbdrv_uart_dev_t *uart_dev) {
 }
 
 void pbdrv_uart_write_cancel(pbdrv_uart_dev_t *uart_dev) {
-    pbdrv_uart_t *uart = __containerof(uart_dev, pbdrv_uart_t, uart_dev);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
 
     uart->USART->CR1 &= ~(USART_CR1_TXEIE | USART_CR1_TCIE);
     uart->tx_result = PBIO_ERROR_CANCELED;
 }
 
 pbio_error_t pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud) {
-    pbdrv_uart_t *uart = __containerof(uart_dev, pbdrv_uart_t, uart_dev);
+    pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
 
     if (uart->tx_buf || uart->rx_buf) {
         return PBIO_ERROR_AGAIN;
