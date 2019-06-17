@@ -195,6 +195,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	libfixmath/libfixmath/uint32.c \
 	pbio/drv/battery/battery_linux_ev3.c \
 	pbio/drv/button/button_linux_ev3.c \
+	pbio/drv/counter/counter_core.c \
 	pbio/drv/ev3dev_stretch/motor.c \
 	pbio/drv/ev3dev_stretch/light.c \
 	pbio/platform/ev3dev_stretch/clock.c \

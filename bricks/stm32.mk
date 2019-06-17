@@ -162,6 +162,7 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	drv/adc/adc_stm32f$(CPU_FAMILY).c \
 	drv/battery/battery_adc.c \
 	drv/button/button_gpio.c \
+	drv/counter/counter_core.c \
 	drv/gpio/gpio_stm32f$(CPU_FAMILY).c \
 	drv/ioport/ioport_lpf2.c \
 	drv/uart/uart_stm32f$(CPU_FAMILY).c \

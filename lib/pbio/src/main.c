@@ -38,6 +38,9 @@ AUTOSTART_PROCESSES(
     ,&pbdrv_bluetooth_hci_process
     ,&pbdrv_bluetooth_spi_process
 #endif
+#if PBDRV_CONFIG_COUNTER
+    ,&pbdrv_counter_process
+#endif
 #if PBDRV_CONFIG_IOPORT_LPF2
     ,&pbdrv_ioport_lpf2_process
 #endif
