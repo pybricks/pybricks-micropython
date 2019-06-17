@@ -6,6 +6,11 @@
 
 // platform-specific configuration for LEGO MINDSTORMS EV3 running ev3dev-stretch
 
+#define PBDRV_CONFIG_COUNTER                                (1)
+#define PBDRV_CONFIG_COUNTER_NUM_DEV                        (4)
+#define PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO             (1)
+#define PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO_NUM_DEV     (4)
+
 #define PBDRV_CONFIG_HAS_PORT_A (1)
 #define PBDRV_CONFIG_HAS_PORT_B (1)
 #define PBDRV_CONFIG_HAS_PORT_C (1)

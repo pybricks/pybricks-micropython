@@ -14,18 +14,6 @@
 #include <pbdrv/motor.h>
 #include <pbio/config.h>
 
-#define PBIO_MOTOR_BUF_SIZE 32 // must be power of 2!
-
-typedef struct {
-    int32_t counts[PBIO_MOTOR_BUF_SIZE];
-    uint16_t timestamps[PBIO_MOTOR_BUF_SIZE];
-    int32_t count;
-    uint8_t head;
-} pbdrv_motor_tacho_data_t;
-
-// only for ports A/B
-static pbdrv_motor_tacho_data_t pbdrv_motor_tacho_data[2];
-
 void _pbdrv_motor_init(void) {
     // it isn't clear what PB2 does yet, but tacho doesn't work without setting it high.
     // maybe it switches power to the IR LEDs? plus more?
@@ -72,35 +60,7 @@ void _pbdrv_motor_init(void) {
     TIM1->CR1 |= TIM_CR1_CEN;
     TIM1->EGR |= TIM_EGR_UG;
 
-    // init port A/B tacho pins as inputs
-
-    // port A
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER1_Msk) | (0 << GPIO_MODER_MODER1_Pos); // interupt
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER9_Msk) | (0 << GPIO_MODER_MODER9_Pos); // direction
-    GPIOB->PUPDR = (GPIOB->PUPDR & ~GPIO_PUPDR_PUPDR9_Msk) | (2 << GPIO_PUPDR_PUPDR9_Pos); // pull down
-
-    // port B
-    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER0_Msk) | (0 << GPIO_MODER_MODER0_Pos); // interrupt
-    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER1_Msk) | (0 << GPIO_MODER_MODER1_Pos); // direction
-    GPIOA->PUPDR = (GPIOA->PUPDR & ~GPIO_PUPDR_PUPDR1_Msk) | (2 << GPIO_PUPDR_PUPDR1_Pos); // pull down
-
-    // assign tacho pins to interrupts
-    SYSCFG->EXTICR[0] |= SYSCFG_EXTICR1_EXTI0_PA | SYSCFG_EXTICR1_EXTI1_PB;
-    EXTI->IMR |= EXTI_EMR_MR0 | EXTI_EMR_MR1;
-    EXTI->RTSR |= EXTI_RTSR_RT0 | EXTI_RTSR_RT1;
-    EXTI->FTSR |= EXTI_FTSR_FT0 | EXTI_FTSR_FT1;
-    NVIC_EnableIRQ(EXTI0_1_IRQn);
-    NVIC_SetPriority(EXTI0_1_IRQn, 0);
-
-    // TIM7 is used for clock in speed measurement
-    RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
-    TIM7->PSC = 479;    // divide 48MHz by 480 (= 479 + 1) to get 100kHz clock.
-    TIM7->CR1 = TIM_CR1_CEN;
-    TIM7->DIER = TIM_DIER_UIE;
-    NVIC_EnableIRQ(TIM7_IRQn);
-    NVIC_SetPriority(TIM7_IRQn, 128);
-
-    // TIM3 is used for port C PWM
+    // TIM3 is used for port C/D PWM
     RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
     TIM3->PSC = 3;      // divide by 4 (= 3 + 1), so ticks are 12MHz
     TIM3->ARR = 10000;  // 12MHz divided by 10k makes 1.2kHz PWM
@@ -141,78 +101,6 @@ void _pbdrv_motor_init(void) {
     TIM3->EGR |= TIM_EGR_UG;
 }
 
-static void pbdrv_motor_tacho_update_count(pbio_port_t port, bool int_pin_state, bool dir_pin_state, uint16_t timestamp) {
-    pbdrv_motor_tacho_data_t *data;
-
-    data = &pbdrv_motor_tacho_data[port - PBIO_PORT_A];
-
-    if (int_pin_state ^ dir_pin_state) {
-        data->count--;
-    }
-    else {
-        data->count++;
-    }
-
-    // log timestamp on rising edge for rate calculation
-    if (int_pin_state) {
-        uint8_t new_head = (data->head + 1) & (PBIO_MOTOR_BUF_SIZE - 1);
-
-        data->counts[new_head] = data->count;
-        data->timestamps[new_head] = timestamp;
-        data->head = new_head;
-    }
-}
-
-// irq handler name defined in startup_stm32f0.s
-void EXTI0_1_IRQHandler(void) {
-    uint32_t exti_pr;
-    uint32_t gpio_idr;
-    uint16_t timestamp;
-    bool int_pin_state;
-    bool dir_pin_state;
-
-    exti_pr = EXTI->PR & (EXTI_PR_PR0 | EXTI_PR_PR1);
-    EXTI->PR = exti_pr; // clear the events we are handling
-
-    timestamp = TIM7->CNT;
-
-    // port A
-    if (exti_pr & EXTI_PR_PR1) {
-        gpio_idr = GPIOB->IDR;
-        int_pin_state = !!(gpio_idr & GPIO_IDR_1);
-        dir_pin_state = !!(gpio_idr & GPIO_IDR_9);
-        pbdrv_motor_tacho_update_count(PBIO_PORT_A, int_pin_state, dir_pin_state, timestamp);
-    }
-
-    // port B
-    if (exti_pr & EXTI_PR_PR0) {
-        gpio_idr = GPIOA->IDR;
-        int_pin_state = !!(gpio_idr & GPIO_IDR_0);
-        dir_pin_state = !!(gpio_idr & GPIO_IDR_1);
-        pbdrv_motor_tacho_update_count(PBIO_PORT_B, int_pin_state, dir_pin_state, timestamp);
-    }
-}
-
-void TIM7_IRQHandler(void) {
-    pbdrv_motor_tacho_data_t *data;
-    uint16_t timestamp;
-    uint8_t i, new_head;
-
-    TIM7->SR &= ~TIM_SR_UIF; // clear interrupt
-
-    timestamp = TIM7->CNT;
-
-    // log a new timestamp when the timer recycles to avoid rate calculation
-    // problems when the motor is not moving
-    for (i = 0; i < 2; i++) {
-        data = &pbdrv_motor_tacho_data[i];
-        new_head = (data->head + 1) & (PBIO_MOTOR_BUF_SIZE - 1);
-        data->counts[new_head] = data->count;
-        data->timestamps[new_head] = timestamp;
-        data->head = new_head;
-    }
-}
-
 static pbio_iodev_t *get_iodev(pbio_port_t port) {
     pbio_iodev_t *iodev;
     pbio_error_t err;
@@ -227,109 +115,6 @@ static pbio_iodev_t *get_iodev(pbio_port_t port) {
     }
 
     return iodev;
-}
-
-pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
-    int index = port - PBIO_PORT_A;
-
-    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
-
-    if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
-        pbio_iodev_t *iodev;
-
-        iodev = get_iodev(port);
-
-        if (!iodev) {
-            return PBIO_ERROR_NOT_SUPPORTED;
-            // return PBIO_ERROR_NO_DEV;
-        }
-
-        // *sigh*, unaligned 32-bit value
-        memcpy(count, iodev->bin_data + 1, 4);
-
-        return PBIO_SUCCESS;
-    }
-
-    *count = pbdrv_motor_tacho_data[index].count;
-
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
-    pbdrv_motor_tacho_data_t *data;
-    int32_t head_count, tail_count = 0;
-    uint16_t now, head_time, tail_time = 0;
-    uint8_t head, tail, x = 0;
-
-    if (port < PBIO_PORT_A || port > PBIO_PORT_D) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
-
-    if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
-        pbio_iodev_t *iodev;
-
-        iodev = get_iodev(port);
-
-        if (!iodev) {
-            return PBIO_ERROR_NOT_SUPPORTED;
-            // return PBIO_ERROR_NO_DEV;
-        }
-
-        // scaling factor of 14 determined empirically
-        *rate = *(int8_t *)iodev->bin_data * 14;
-
-        return PBIO_SUCCESS;
-    }
-
-    // TODO: get port C/D motor speed from UART data if motor is attached
-    // or return PBIO_ERROR_NO_DEV if motor is not attached
-
-    data = &pbdrv_motor_tacho_data[port - PBIO_PORT_A];
-    // head can be updated in interrupt, so only read it once
-    head = data->head;
-    head_count = data->counts[head];
-    head_time = data->timestamps[head];
-
-    now = TIM7->CNT;
-
-    // if it has been more than 50ms since last timestamp, we are not moving.
-    if ((uint16_t)(now - head_time) > 50 * 100) {
-        *rate = 0;
-        return PBIO_SUCCESS;
-    }
-
-     while (x++ < PBIO_MOTOR_BUF_SIZE) {
-        tail = (head - x) & (PBIO_MOTOR_BUF_SIZE - 1);
-
-        tail_count = data->counts[tail];
-        tail_time = data->timestamps[tail];
-
-        // if count hasn't changed, then we are not moving
-        if (head_count == tail_count) {
-            *rate = 0;
-            return PBIO_SUCCESS;
-        }
-
-        /*
-         * we need delta_t to be >= 20ms to be reasonably accurate.
-         * timer is 10us, thus * 100 to get ms.
-         */
-        if ((uint16_t)(head_time - tail_time) >= 20 * 100) {
-            break;
-        }
-    }
-
-    /* avoid divide by 0 - motor probably hasn't moved yet */
-    if (head_time == tail_time) {
-        *rate = 0;
-        return PBIO_SUCCESS;
-    }
-
-    /* timer is 100000kHz */
-    *rate = (head_count - tail_count) * 100000 / (uint16_t)(head_time - tail_time);
-    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
@@ -525,7 +310,6 @@ void _pbdrv_motor_deinit(void) {
     // disable the PWM timers
     TIM1->CR1 &= TIM_CR1_CEN;
     TIM3->CR1 &= TIM_CR1_CEN;
-    TIM7->CR1 &= TIM_CR1_CEN;
 
     // set H-bridge pins to output, low (coast)
     GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);

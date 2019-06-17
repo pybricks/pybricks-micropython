@@ -6,6 +6,7 @@
 
 #include <fixmath.h>
 
+#include <pbdrv/counter.h>
 #include <pbdrv/motor.h>
 #include <pbio/motor.h>
 
@@ -259,32 +260,58 @@ bool pbio_motor_has_encoder(pbio_motor_t *mtr) {
 }
 
 pbio_error_t pbio_motor_get_encoder_count(pbio_motor_t *mtr, int32_t *count) {
-    pbio_error_t err = pbdrv_motor_get_encoder_count(mtr->port, count);
+    pbdrv_counter_dev_t *tacho_counter;
+    pbio_error_t err;
+
+    // TODO: get tacho_counter once at init when this is converted to contiki process
+    err = pbdrv_counter_get(mtr->counter_id, &tacho_counter);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    err = pbdrv_counter_get_count(tacho_counter, count);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     if (mtr->direction == PBIO_MOTOR_DIR_COUNTERCLOCKWISE) {
         *count = -*count;
     }
     *count -= mtr->offset;
-    return err;
+
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_motor_reset_encoder_count(pbio_motor_t *mtr, int32_t reset_count) {
+    int32_t count_no_offset;
+    pbio_error_t err;
 
     // First get the counter value without any offsets, but with the appropriate polarity/sign.
-    int32_t count_no_offset;
-    pbio_error_t err = pbio_motor_get_encoder_count(mtr, &count_no_offset);
+    err = pbio_motor_get_encoder_count(mtr, &count_no_offset);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     count_no_offset += mtr->offset;
 
     // Calculate the new offset
     mtr->offset = count_no_offset - reset_count;
 
-    return err;
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_motor_get_angle(pbio_motor_t *mtr, int32_t *angle) {
     int32_t encoder_count;
-    pbio_error_t err = pbio_motor_get_encoder_count(mtr, &encoder_count);
+    pbio_error_t err;
+
+    err = pbio_motor_get_encoder_count(mtr, &encoder_count);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     *angle = int_fix16_div(encoder_count, mtr->counts_per_output_unit);
-    return err;
+
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_motor_reset_angle(pbio_motor_t *mtr, int32_t reset_angle) {
@@ -320,16 +347,44 @@ pbio_error_t pbio_motor_reset_angle(pbio_motor_t *mtr, int32_t reset_angle) {
 }
 
 pbio_error_t pbio_motor_get_encoder_rate(pbio_motor_t *mtr, int32_t *rate) {
-    pbio_error_t err = pbdrv_motor_get_encoder_rate(mtr->port, rate);
+    pbdrv_counter_dev_t *tacho_counter;
+    pbio_error_t err;
+
+    // TODO: get tacho_counter once at init when this is converted to contiki process
+    err = pbdrv_counter_get(mtr->counter_id, &tacho_counter);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    err = pbdrv_counter_get_rate(tacho_counter, rate);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     if (mtr->direction == PBIO_MOTOR_DIR_COUNTERCLOCKWISE) {
         *rate = -*rate;
     }
-    return err;
+
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_motor_get_angular_rate(pbio_motor_t *mtr, int32_t *angular_rate) {
+    pbdrv_counter_dev_t *tacho_counter;
     int32_t encoder_rate;
-    pbio_error_t err = pbio_motor_get_encoder_rate(mtr, &encoder_rate);
+    pbio_error_t err;
+
+    // TODO: get tacho_counter once at init when this is converted to contiki process
+    err = pbdrv_counter_get(mtr->counter_id, &tacho_counter);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    err = pbdrv_counter_get_rate(tacho_counter, &encoder_rate);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     *angular_rate = int_fix16_div(encoder_rate, mtr->counts_per_output_unit);
-    return err;
+
+    return PBIO_SUCCESS;
 }

@@ -52,6 +52,7 @@ typedef struct _pbio_motor_t {
     pbio_motor_state_t state;
     pbio_control_t control;
     pbio_port_t port;
+    uint8_t counter_id;
 } pbio_motor_t;
 
 pbio_error_t pbio_motor_get(uint8_t index, pbio_motor_t **mtr);

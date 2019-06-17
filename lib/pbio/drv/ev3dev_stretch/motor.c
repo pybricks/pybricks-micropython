@@ -24,8 +24,6 @@ typedef struct _motor_file_t {
     pbio_iodev_type_id_t id;
     bool coasting;
     char devpath[MAX_PATH_LENGTH];
-    FILE *f_encoder_count;
-    FILE *f_encoder_rate;
     FILE *f_duty;
 } motor_file_t;
 
@@ -103,8 +101,6 @@ static pbio_error_t sysfs_close_and_reset(pbio_port_t port){
         case PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR:
             err = sysfs_motor_command(port, "reset");
             if (err != PBIO_SUCCESS) { return err; }
-            fclose(mtr_files->f_encoder_count);
-            fclose(mtr_files->f_encoder_rate);
             fclose(mtr_files->f_duty);
             mtr_files->id = PBIO_IODEV_TYPE_ID_NONE;
             mtr_files->coasting = true;
@@ -144,19 +140,7 @@ static pbio_error_t sysfs_motor_init(pbio_port_t port){
     mtr_files->f_duty = fopen(filepath, "w");
     if (mtr_files->f_duty == NULL) { return PBIO_ERROR_IO; }
 
-    // Open additional files for encoded motors
-    if (mtr_files->id != PBIO_IODEV_TYPE_ID_EV3_DC_MOTOR) {
-        // Open the position file
-        snprintf(filepath, MAX_PATH_LENGTH, "%s/position", mtr_files->devpath);
-        mtr_files->f_encoder_count = fopen(filepath, "r");
-        if (mtr_files->f_encoder_count == NULL) { return PBIO_ERROR_IO; }
-        // Open the speed file
-        snprintf(filepath, MAX_PATH_LENGTH, "%s/speed", mtr_files->devpath);
-        mtr_files->f_encoder_rate = fopen(filepath, "r");
-        if (mtr_files->f_encoder_rate == NULL) { return PBIO_ERROR_IO; }
-    }
-
-    // If we're here, all files have been openened.
+    // If we're here, all files have been opened.
     return PBIO_SUCCESS;
 
 }
@@ -212,38 +196,6 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
     if (0 == fseek(mtr_files->f_duty, 0, SEEK_SET) &&
         0 <= fprintf(mtr_files->f_duty, "%d", duty_cycle/100) &&
         0 == fflush(mtr_files->f_duty)){
-        return PBIO_SUCCESS;
-    }
-    return PBIO_ERROR_IO;
-}
-
-pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
-    motor_file_t *mtr_files = &motor_files[PORT_TO_IDX(port)];
-    if (mtr_files->id == PBIO_IODEV_TYPE_ID_NONE) {
-        return PBIO_ERROR_NO_DEV;
-    }
-    if (mtr_files->id == PBIO_IODEV_TYPE_ID_EV3_DC_MOTOR) {
-        return PBIO_ERROR_NOT_SUPPORTED;
-    }
-    if (0 == fseek(mtr_files->f_encoder_count, 0, SEEK_SET) &&
-        0 <= fscanf(mtr_files->f_encoder_count, "%d", count) &&
-        0 == fflush(mtr_files->f_encoder_count)) {
-        return PBIO_SUCCESS;
-    }
-    return PBIO_ERROR_IO;
-}
-
-pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
-    motor_file_t *mtr_files = &motor_files[PORT_TO_IDX(port)];
-    if (mtr_files->id == PBIO_IODEV_TYPE_ID_NONE) {
-        return PBIO_ERROR_NO_DEV;
-    }
-    if (mtr_files->id == PBIO_IODEV_TYPE_ID_EV3_DC_MOTOR) {
-        return PBIO_ERROR_NOT_SUPPORTED;
-    }
-    if (0 == fseek(mtr_files->f_encoder_rate, 0, SEEK_SET) &&
-        0 <= fscanf(mtr_files->f_encoder_rate, "%d", rate) &&
-        0 == fflush(mtr_files->f_encoder_rate)) {
         return PBIO_SUCCESS;
     }
     return PBIO_ERROR_IO;

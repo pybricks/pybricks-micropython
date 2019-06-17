@@ -66,12 +66,19 @@ void USART3_6_IRQHandler(void) {
     pbdrv_uart_stm32f0_handle_irq(UART_ID_1);
 }
 
+enum {
+    COUNTER_PORT_A,
+    COUNTER_PORT_B,
+};
+
 const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
     [0] = {
         .uart_id    = UART_ID_0,
+        .counter_id = COUNTER_PORT_A,
     },
     [1] = {
         .uart_id    = UART_ID_1,
+        .counter_id = COUNTER_PORT_B,
     },
 };
 

@@ -45,6 +45,7 @@
 #include "pbio/port.h"
 #include "pbio/uartdev.h"
 #include "pbio/util.h"
+#include "../drv/counter/counter.h"
 #include "sys/etimer.h"
 #include "sys/process.h"
 
@@ -184,6 +185,7 @@ typedef enum {
 /**
  * struct ev3_uart_port_data - Data for EV3/LPF2 UART Sensor communication
  * @iodev: The I/O device state information struct
+ * @counter_dev: A counter device to provide access to tacho counts
  * @pt: Protothread for main communication protocol
  * @pt_data: Protothread for receiving sensor data
  * @timer: Timer for sending keepalive messages and other delays.
@@ -198,11 +200,13 @@ typedef enum {
  * @new_baud_rate: New baud rate that will be set with ev3_uart_change_bitrate
  * @info_flags: Flags indicating what information has already been read
  * 	from the data.
+ * @tacho_count: The tacho count received from an LPF2 motor
  * @tx_msg: Buffer to hold messages transmitted to the device
  * @rx_msg: Buffer to hold messages received from the device
  * @rx_msg_size: Size of the current message being received
  * @ext_mode: Extra mode adder for Powered Up devices (for modes > EV3_UART_MODE_MAX)
  * @write_cmd_size: The size parameter received from a WRITE command
+ * @tacho_rate: The tacho rate received from an LPF2 motor
  * @last_err: data->msg to be printed in case of an error.
  * @err_count: Total number of errors that have occurred
  * @num_data_err: Number of bad reads when receiving DATA data->msgs.
@@ -212,6 +216,7 @@ typedef enum {
  */
 typedef struct {
     pbio_iodev_t iodev;
+    pbdrv_counter_dev_t counter_dev;
     struct pt pt;
     struct pt data_pt;
     struct etimer timer;
@@ -223,11 +228,13 @@ typedef struct {
     uint8_t new_mode;
     uint32_t new_baud_rate;
     uint32_t info_flags;
+    int32_t tacho_count;
     uint8_t *tx_msg;
     uint8_t *rx_msg;
     uint8_t rx_msg_size;
     uint8_t ext_mode;
     uint8_t write_cmd_size;
+    int8_t tacho_rate;
     DBG_ERR(const char *last_err);
     uint32_t err_count;
     uint32_t num_data_err;
@@ -679,7 +686,8 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
         }
 
         if (data->type_id == PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR && data->write_cmd_size > 0) {
-            memcpy(data->iodev.bin_data, data->rx_msg + 1, 6);
+            data->tacho_rate = data->rx_msg[1];
+            data->tacho_count = uint32_le(data->rx_msg + 2);
         }
         else {
             if (mode >= data->info->num_modes) {
@@ -1140,6 +1148,31 @@ static const pbio_iodev_ops_t pbio_uartdev_ops = {
     .write_cancel = ev3_uart_write_cancel,
 };
 
+static pbio_error_t pbio_uartdev_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
+    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(dev, uartdev_port_data_t, counter_dev);
+
+    if (port_data->info->type_id != PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR) {
+        return PBIO_ERROR_NO_DEV;
+    }
+
+    *count = port_data->tacho_count;
+
+    return PBIO_SUCCESS;
+}
+
+static pbio_error_t pbio_uartdev_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
+    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(dev, uartdev_port_data_t, counter_dev);
+
+    if (port_data->info->type_id != PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR) {
+        return PBIO_ERROR_NO_DEV;
+    }
+
+    // scaling factor of 14 determined empirically
+    *rate = port_data->tacho_rate * 14;
+
+    return PBIO_SUCCESS;
+}
+
 static PT_THREAD(pbio_uartdev_init(struct pt *pt, uint8_t id)) {
     const pbio_uartdev_platform_data_t *pdata = &pbio_uartdev_platform_data[id];
     uartdev_port_data_t *port_data = &dev_data[id];
@@ -1149,9 +1182,14 @@ static PT_THREAD(pbio_uartdev_init(struct pt *pt, uint8_t id)) {
     PT_WAIT_UNTIL(pt, pbdrv_uart_get(pdata->uart_id, &port_data->uart) == PBIO_SUCCESS);
     port_data->iodev.info = &infos[id].info;
     port_data->iodev.ops = &pbio_uartdev_ops;
+    port_data->counter_dev.get_count = pbio_uartdev_get_count;
+    port_data->counter_dev.get_rate = pbio_uartdev_get_rate;
+    port_data->counter_dev.initalized = true;
     port_data->info =  &infos[id].info;
     port_data->tx_msg = &bufs[id][BUF_TX_MSG][0];
     port_data->rx_msg = &bufs[id][BUF_RX_MSG][0];
+
+    pbdrv_counter_register(pdata->counter_id, &port_data->counter_dev);
 
     PT_END(pt);
 }

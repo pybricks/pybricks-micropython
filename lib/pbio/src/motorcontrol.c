@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <fixmath.h>
 
+#include <pbdrv/counter.h>
 #include <pbio/motor.h>
 #include <pbio/motorref.h>
 
@@ -53,11 +54,18 @@ static void stall_clear_flag(pbio_control_stalled_t *stalled, pbio_control_stall
 }
 
 static pbio_error_t control_update_angle_target(pbio_motor_t *mtr) {
+    pbdrv_counter_dev_t *tacho_counter;
+    pbio_error_t err;
+
+    // TODO: get tacho_counter once at init when this is converted to contiki process
+    err = pbdrv_counter_get(mtr->counter_id, &tacho_counter);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Trajectory and setting shortcuts for this motor
     pbio_control_status_angular_t *status = &mtr->control.status_angular;
     duty_t max_duty = mtr->max_duty_steps;
-    pbio_error_t err;
 
     // Declare current time, positions, rates, and their reference value and error
     ustime_t time_now, time_ref, time_loop;
@@ -67,10 +75,15 @@ static pbio_error_t control_update_angle_target(pbio_motor_t *mtr) {
 
     // Read current state of this motor: current time, speed, and position
     time_now = clock_usecs();
-    err = pbio_motor_get_encoder_count(mtr, &count_now);
-    if (err != PBIO_SUCCESS) { return err; }
-    err = pbio_motor_get_encoder_rate(mtr, &rate_now);
-    if (err != PBIO_SUCCESS) { return err; }
+    err = pbdrv_counter_get_count(tacho_counter, &count_now);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    err = pbdrv_counter_get_rate(tacho_counter, &rate_now);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Get the time at which we want to evaluate the reference position/velocities, for position based commands
 
@@ -196,11 +209,18 @@ static pbio_error_t control_update_angle_target(pbio_motor_t *mtr) {
 }
 
 static pbio_error_t control_update_time_target(pbio_motor_t *mtr) {
+    pbdrv_counter_dev_t *tacho_counter;
+    pbio_error_t err;
+
+    // TODO: get tacho_counter once at init when this is converted to contiki process
+    err = pbdrv_counter_get(mtr->counter_id, &tacho_counter);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Trajectory and setting shortcuts for this motor
     pbio_control_status_timed_t *status = &mtr->control.status_timed;
     duty_t max_duty = mtr->max_duty_steps;
-    pbio_error_t err;
 
     // Declare current time, positions, rates, and their reference value and error
     ustime_t time_now;
@@ -210,10 +230,14 @@ static pbio_error_t control_update_time_target(pbio_motor_t *mtr) {
 
     // Read current state of this motor: current time, speed, and position
     time_now = clock_usecs();
-    err = pbio_motor_get_encoder_count(mtr, &count_now);
-    if (err != PBIO_SUCCESS) { return err; }
-    err = pbio_motor_get_encoder_rate(mtr, &rate_now);
-    if (err != PBIO_SUCCESS) { return err; }
+    err = pbdrv_counter_get_count(tacho_counter, &count_now);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = pbdrv_counter_get_rate(tacho_counter, &rate_now);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Get reference signals
     get_reference(time_now, &mtr->control.trajectory, &count_ref, &rate_ref);
@@ -345,6 +369,7 @@ void _pbio_motorcontroll_init(void) {
 
     for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
         motor[i].port = PBDRV_CONFIG_FIRST_MOTOR_PORT + i;
+        motor[i].counter_id = i;
     }
 #endif
 }
@@ -360,8 +385,15 @@ void _pbio_motorcontrol_poll(void) {
 }
 
 static pbio_error_t pbio_motor_get_initial_state(pbio_motor_t *mtr, count_t *count_start, rate_t *rate_start) {
-    pbio_error_t err;
+    pbdrv_counter_dev_t *tacho_counter;
     ustime_t time_now = clock_usecs();
+    pbio_error_t err;
+
+    // TODO: get tacho_counter once at init when this is converted to contiki process
+    err = pbdrv_counter_get(mtr->counter_id, &tacho_counter);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     if (mtr->state == PBIO_CONTROL_TIME_FOREGROUND || mtr->state == PBIO_CONTROL_TIME_BACKGROUND) {
         get_reference(time_now, &mtr->control.trajectory, count_start, rate_start);
@@ -375,11 +407,15 @@ static pbio_error_t pbio_motor_get_initial_state(pbio_motor_t *mtr, count_t *cou
     }
     else {
         // Otherwise, we are not currently in a control mode, and we start from the instantaneous motor state
-        err = pbio_motor_get_encoder_count(mtr, count_start);
-        if (err != PBIO_SUCCESS) { return err; }
+        err = pbdrv_counter_get_count(tacho_counter, count_start);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
 
-        err = pbio_motor_get_encoder_rate(mtr, rate_start);
-        if (err != PBIO_SUCCESS) { return err; }
+        err = pbdrv_counter_get_rate(tacho_counter, rate_start);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
     }
     return PBIO_SUCCESS;
 }

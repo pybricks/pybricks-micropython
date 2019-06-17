@@ -8,6 +8,7 @@
 #include <pbio/uartdev.h>
 
 #include "../../drv/button/button_gpio.h"
+#include "../../drv/counter/counter_stm32f0_gpio_quad_enc.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/uart/uart_stm32f0.h"
 
@@ -19,6 +20,29 @@ const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTO
         .pull   = PBDRV_GPIO_PULL_UP,
         .button = PBIO_BUTTON_CENTER,
         .active_low = true,
+    },
+};
+
+// counter devices
+
+enum {
+    COUNTER_PORT_A,
+    COUNTER_PORT_B,
+    COUNTER_PORT_C,
+    COUNTER_PORT_D,
+};
+
+const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t
+pbdrv_counter_stm32f0_gpio_quad_enc_platform_data[] = {
+    [0] = {
+        .gpio_int     = { .bank = GPIOB, .pin = 1},
+        .gpio_dir     = { .bank = GPIOB, .pin = 9},
+        .counter_id   = COUNTER_PORT_A,
+    },
+    [1] = {
+        .gpio_int     = { .bank = GPIOA, .pin = 0},
+        .gpio_dir     = { .bank = GPIOA, .pin = 1},
+        .counter_id   = COUNTER_PORT_B,
     },
 };
 
@@ -70,9 +94,11 @@ void USART3_4_IRQHandler(void) {
 const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
     [0] = {
         .uart_id    = UART_ID_0,
+        .counter_id = COUNTER_PORT_C,
     },
     [1] = {
         .uart_id    = UART_ID_1,
+        .counter_id = COUNTER_PORT_D,
     },
 };
 #endif // PBIO_CONFIG_UARTDEV

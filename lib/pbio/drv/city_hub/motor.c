@@ -79,46 +79,6 @@ static pbio_iodev_t *get_iodev(pbio_port_t port) {
     return iodev;
 }
 
-pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
-    if (port < PBIO_PORT_A || port > PBIO_PORT_B) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
-
-    pbio_iodev_t *iodev;
-
-    iodev = get_iodev(port);
-
-    if (!iodev) {
-        return PBIO_ERROR_NOT_SUPPORTED;
-        // return PBIO_ERROR_NO_DEV;
-    }
-
-    // *sigh*, unaligned 32-bit value
-    memcpy(count, iodev->bin_data + 1, 4);
-
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
-    if (port < PBIO_PORT_A || port > PBIO_PORT_B) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
-
-    pbio_iodev_t *iodev;
-
-    iodev = get_iodev(port);
-
-    if (!iodev) {
-        return PBIO_ERROR_NOT_SUPPORTED;
-        // return PBIO_ERROR_NO_DEV;
-    }
-
-    // scaling factor of 14 determined empirically
-    *rate = *(int8_t *)iodev->bin_data * 14;
-
-    return PBIO_SUCCESS;
-}
-
 pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
     // if (port == PBIO_PORT_B || port == PBIO_PORT_A) {
     //     if (!get_iodev(port)) {

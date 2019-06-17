@@ -45,28 +45,6 @@ static inline void _pbdrv_motor_deinit(void) { }
 /** @endcond */
 
 /**
- * Gets the tachometer encoder count.
- * @param [in]  port    The motor port
- * @param [out] count   The count
- * @return              ::PBIO_SUCCESS if the call was successful,
- *                      ::PBIO_ERROR_INVALID_PORT if port is not a valid port
- *                      ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
- *                      ::PBIO_ERROR_IO if there was an I/O error
- */
-pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count);
-
-/**
- * Gets the tachometer encoder rate in counts per second.
- * @param [in]  port    The motor port
- * @param [out] rate    The rate
- * @return              ::PBIO_SUCCESS if the call was successful,
- *                      ::PBIO_ERROR_INVALID_PORT if port is not a valid port
- *                      ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
- *                      ::PBIO_ERROR_IO if there was an I/O error
- */
-pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate);
-
-/**
  * Instructs the motor to coast freely.
  * @param [in]  port    The motor port
  * @return              ::PBIO_SUCCESS if the call was successful,
@@ -103,12 +81,6 @@ pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id);
 
 static inline void _pbdrv_motor_init(void) { }
 static inline void _pbdrv_motor_deinit(void) { }
-static inline pbio_error_t pbdrv_motor_get_encoder_count(pbio_port_t port, int32_t *count) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-static inline pbio_error_t pbdrv_motor_get_encoder_rate(pbio_port_t port, int32_t *rate) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
 static inline pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
