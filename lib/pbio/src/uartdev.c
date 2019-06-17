@@ -44,6 +44,7 @@
 #include "pbio/iodev.h"
 #include "pbio/port.h"
 #include "pbio/uartdev.h"
+#include "pbio/util.h"
 #include "sys/etimer.h"
 #include "sys/process.h"
 
@@ -712,6 +713,90 @@ err:
     data->status = PBIO_UARTDEV_STATUS_ERR;
 }
 
+static uint8_t ev3_uart_set_msg_hdr(enum ev3_uart_msg_type type, enum ev3_uart_msg_size size, enum ev3_uart_cmd cmd)
+{
+    return (type & EV3_UART_MSG_TYPE_MASK) | (size & EV3_UART_MSG_SIZE_MASK) | (cmd & EV3_UART_MSG_CMD_MASK);
+}
+
+static pbio_error_t ev3_uart_begin_tx_msg(uartdev_port_data_t *port_data, enum ev3_uart_msg_type msg_type,
+                                          enum ev3_uart_cmd cmd, const uint8_t *data, uint8_t len) {
+    uint8_t header, checksum, i;
+    uint8_t offset = 0;
+    enum ev3_uart_msg_size size;
+    pbio_error_t err;
+
+    if (len == 0 || len > 32) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    if (port_data->status != PBIO_UARTDEV_STATUS_DATA) {
+        return PBIO_ERROR_NO_DEV;
+    }
+
+    if (port_data->tx_busy) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    port_data->tx_busy = true;
+
+    if (msg_type == EV3_UART_MSG_TYPE_DATA) {
+        // Only Powered Up devices support setting data, and they expect to have an
+        // extra command sent to give the part of the mode > 7
+        port_data->tx_msg[0] = ev3_uart_set_msg_hdr(EV3_UART_MSG_TYPE_CMD, EV3_UART_MSG_SIZE_1, EV3_UART_CMD_EXT_MODE);
+        port_data->tx_msg[1] = port_data->iodev.mode > EV3_UART_MODE_MAX ? 8 : 0;
+        port_data->tx_msg[2] = 0xff ^ port_data->tx_msg[0] ^ port_data->tx_msg[1];
+        offset = 3;
+    }
+
+    checksum = 0xff;
+    for (i = 0; i < len; i++) {
+        port_data->tx_msg[offset + i + 1] = data[i];
+        checksum ^= data[i];
+    }
+
+    // can't send arbitrary number of bytes, so find nearest match
+    if (i == 1) {
+        size = EV3_UART_MSG_SIZE_1;
+    }
+    else if (i == 2) {
+        size = EV3_UART_MSG_SIZE_2;
+    }
+    else if (i <= 4) {
+        size = EV3_UART_MSG_SIZE_4;
+        len = 4;
+    }
+    else if (i <= 8) {
+        size = EV3_UART_MSG_SIZE_8;
+        len = 8;
+    }
+    else if (i <= 16) {
+        size = EV3_UART_MSG_SIZE_16;
+        len = 16;
+    }
+    else if (i <= 32) {
+        size = EV3_UART_MSG_SIZE_32;
+        len = 32;
+    }
+
+    // pad with zeros
+    for (; i < len; i++) {
+        port_data->tx_msg[offset + i + 1] = 0;
+    }
+
+    header = ev3_uart_set_msg_hdr(msg_type, size, cmd);
+    checksum ^= header;
+
+    port_data->tx_msg[offset] = header;
+    port_data->tx_msg[offset + i + 1] = checksum;
+
+    err = pbdrv_uart_write_begin(port_data->uart, port_data->tx_msg, offset + i + 2, EV3_UART_IO_TIMEOUT);
+    if (err != PBIO_SUCCESS) {
+        port_data->tx_busy = false;
+    }
+
+    return err;
+}
+
 static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t *data)) {
     pbio_error_t err;
     uint8_t checksum;
@@ -859,19 +944,12 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t *data)) {
     PT_INIT(&data->data_pt);
 
     if (data->type_id == PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR) {
+        static const uint8_t magic[] = { 0x22, 0x00, 0x10, 0x20 };
+
         // send magic sequence to tell motor to send position and speed data
-        PT_WAIT_WHILE(&data->pt, data->tx_busy);
-        data->tx_busy = true;
-
-        data->tx_msg[0] = 0x22;
-        data->tx_msg[1] = 0x00;
-        data->tx_msg[2] = 0x10;
-        data->tx_msg[3] = 0x20;
-
         PBIO_PT_WAIT_READY(&data->pt,
-            err = pbdrv_uart_write_begin(data->uart, data->tx_msg, 4, EV3_UART_IO_TIMEOUT));
+            err = ev3_uart_begin_tx_msg(data, EV3_UART_MSG_TYPE_CMD, EV3_UART_CMD_WRITE, magic, PBIO_ARRAY_SIZE(magic)));
         if (err != PBIO_SUCCESS) {
-            data->tx_busy = false;
             DBG_ERR(data->last_err = "UART Tx begin error during motor");
             goto err;
         }
@@ -957,8 +1035,8 @@ retry:
         DBG_ERR(data->last_err = "Bad data message size");
         goto retry;
     }
-    // TODO: also allow write cmd for motors
-    if ((data->rx_msg[0] & EV3_UART_MSG_TYPE_MASK) != EV3_UART_MSG_TYPE_DATA) {
+    if ((data->rx_msg[0] & EV3_UART_MSG_TYPE_MASK) != EV3_UART_MSG_TYPE_DATA &&
+        (data->rx_msg[0] & (EV3_UART_MSG_TYPE_MASK | EV3_UART_MSG_CMD_MASK)) != (EV3_UART_MSG_TYPE_CMD | EV3_UART_CMD_WRITE)) {
         DBG_ERR(data->last_err = "Bad msg type");
         goto retry;
     }
@@ -982,90 +1060,6 @@ retry:
 
 err:
     PT_EXIT(&data->pt);
-}
-
-static uint8_t ev3_uart_set_msg_hdr(enum ev3_uart_msg_type type, enum ev3_uart_msg_size size, enum ev3_uart_cmd cmd)
-{
-    return (type & EV3_UART_MSG_TYPE_MASK) | (size & EV3_UART_MSG_SIZE_MASK) | (cmd & EV3_UART_MSG_CMD_MASK);
-}
-
-static pbio_error_t ev3_uart_begin_tx_msg(uartdev_port_data_t *port_data, enum ev3_uart_msg_type msg_type,
-                                          enum ev3_uart_cmd cmd, const uint8_t *data, uint8_t len) {
-    uint8_t header, checksum, i;
-    uint8_t offset = 0;
-    enum ev3_uart_msg_size size;
-    pbio_error_t err;
-
-    if (len == 0 || len > 32) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
-    if (port_data->status != PBIO_UARTDEV_STATUS_DATA) {
-        return PBIO_ERROR_NO_DEV;
-    }
-
-    if (port_data->tx_busy) {
-        return PBIO_ERROR_AGAIN;
-    }
-
-    port_data->tx_busy = true;
-
-    if (msg_type == EV3_UART_MSG_TYPE_DATA) {
-        // Only Powered Up devices support setting data, and they expect to have an
-        // extra command sent to give the part of the mode > 7
-        port_data->tx_msg[0] = ev3_uart_set_msg_hdr(EV3_UART_MSG_TYPE_CMD, EV3_UART_MSG_SIZE_1, EV3_UART_CMD_EXT_MODE);
-        port_data->tx_msg[1] = port_data->iodev.mode > EV3_UART_MODE_MAX ? 8 : 0;
-        port_data->tx_msg[2] = 0xff ^ port_data->tx_msg[0] ^ port_data->tx_msg[1];
-        offset = 3;
-    }
-
-    checksum = 0xff;
-    for (i = 0; i < len; i++) {
-        port_data->tx_msg[offset + i + 1] = data[i];
-        checksum ^= data[i];
-    }
-
-    // can't send arbitrary number of bytes, so find nearest match
-    if (i == 1) {
-        size = EV3_UART_MSG_SIZE_1;
-    }
-    else if (i == 2) {
-        size = EV3_UART_MSG_SIZE_2;
-    }
-    else if (i <= 4) {
-        size = EV3_UART_MSG_SIZE_4;
-        len = 4;
-    }
-    else if (i <= 8) {
-        size = EV3_UART_MSG_SIZE_8;
-        len = 8;
-    }
-    else if (i <= 16) {
-        size = EV3_UART_MSG_SIZE_16;
-        len = 16;
-    }
-    else if (i <= 32) {
-        size = EV3_UART_MSG_SIZE_32;
-        len = 32;
-    }
-
-    // pad with zeros
-    for (; i < len; i++) {
-        port_data->tx_msg[offset + i + 1] = 0;
-    }
-
-    header = ev3_uart_set_msg_hdr(msg_type, size, cmd);
-    checksum ^= header;
-
-    port_data->tx_msg[offset] = header;
-    port_data->tx_msg[offset + i + 1] = checksum;
-
-    err = pbdrv_uart_write_begin(port_data->uart, port_data->tx_msg, offset + i + 2, EV3_UART_IO_TIMEOUT);
-    if (err != PBIO_SUCCESS) {
-        port_data->tx_busy = false;
-    }
-
-    return err;
 }
 
 static pbio_error_t ev3_uart_set_mode_begin(pbio_iodev_t *iodev, uint8_t mode) {
