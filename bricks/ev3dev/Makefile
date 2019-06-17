@@ -141,6 +141,9 @@ CFLAGS_MOD += -I/usr/lib/jvm/java-7-openjdk-amd64/include -DMICROPY_PY_JNI=1
 SRC_MOD += ports/unix/modjni.c
 endif
 
+CFLAGS_MOD += $(shell pkg-config --cflags libudev)
+LDFLAGS_MOD += $(shell pkg-config --libs libudev)
+
 # source files
 SRC_C = $(addprefix ports/unix/,\
 	main.c \
@@ -196,6 +199,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	pbio/drv/battery/battery_linux_ev3.c \
 	pbio/drv/button/button_linux_ev3.c \
 	pbio/drv/counter/counter_core.c \
+	pbio/drv/counter/counter_ev3dev_stretch_iio.c \
 	pbio/drv/ev3dev_stretch/motor.c \
 	pbio/drv/ev3dev_stretch/light.c \
 	pbio/platform/ev3dev_stretch/clock.c \
