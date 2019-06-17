@@ -21,24 +21,42 @@ static FILE *f_current;
 
 pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
     int32_t microvolt;
-    if (0 == fseek(f_voltage, 0, SEEK_SET) &&
-        0 <= fscanf(f_voltage, "%d", &microvolt) &&
-        0 == fflush(f_voltage)) {
-        *value = (microvolt / 1000);
-        return PBIO_SUCCESS;
+
+    if (f_voltage == NULL) {
+        return PBIO_ERROR_NO_DEV;
     }
-    return PBIO_ERROR_IO;
+
+    if (fseek(f_voltage, 0, SEEK_SET) == -1) {
+        return PBIO_ERROR_IO;
+    }
+
+    if (fscanf(f_voltage, "%d", &microvolt) == EOF) {
+        return PBIO_ERROR_IO;
+    }
+
+    *value = microvolt / 1000;
+
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
     int32_t microamp;
-    if (0 == fseek(f_current, 0, SEEK_SET) &&
-        0 <= fscanf(f_current, "%d", &microamp) &&
-        0 == fflush(f_current)) {
-        *value = (microamp / 1000);
-        return PBIO_SUCCESS;
+
+    if (f_current == NULL) {
+        return PBIO_ERROR_NO_DEV;
     }
-    return PBIO_ERROR_IO;
+
+    if (fseek(f_current, 0, SEEK_SET) == -1) {
+        return PBIO_ERROR_IO;
+    }
+
+    if (fscanf(f_current, "%d", &microamp) == EOF) {
+        return PBIO_ERROR_IO;
+    }
+
+    *value = microamp / 1000;
+
+    return PBIO_SUCCESS;
 }
 
 static void pbdrv_battery_exit(void) {
