@@ -187,7 +187,7 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	)
 
 PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
-	pbio/drv/battery/battery_ev3_linux.c \
+	pbio/drv/battery/battery_linux_ev3.c \
 	pbio/drv/button/button_linux_ev3.c \
 	pbio/drv/ev3dev_stretch/motor.c \
 	pbio/drv/ev3dev_stretch/light.c \
