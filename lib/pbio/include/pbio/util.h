@@ -4,6 +4,8 @@
 #ifndef _PBIO_UTIL_H_
 #define _PBIO_UTIL_H_
 
+#include <stddef.h>
+
 /**
  * Get the length of a fixed-sized array.
  * @param a     The array
