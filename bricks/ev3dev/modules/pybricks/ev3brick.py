@@ -37,13 +37,13 @@ from ev3brick_c import buttons as newbuttons
 
 class CompatLight():
     def __call__(self, color):
-        newlight.color(color)
+        newlight.on(color)
 
     def off(self):
         newlight.off()
 
     def on(self, color, brightness=100):
-        newlight.color(color, brightness)
+        newlight.on(color, brightness)
 
 
 class CompatButtons():

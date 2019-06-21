@@ -11,7 +11,6 @@
 #include "pberror.h"
 #include "pbobj.h"
 
-#if PYBRICKS_ENABLE_KWARGS
 STATIC mp_obj_t colorlight_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     enum { ARG_color, ARG_brightness };
     STATIC const mp_arg_t colorlight_on_allowed_args[] = {
@@ -26,15 +25,7 @@ STATIC mp_obj_t colorlight_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t 
         PBIO_LIGHT_COLOR_NONE:
         mp_obj_get_int(args[ARG_color].u_obj);
 
-    int32_t bright = mp_obj_get_num(args[ARG_brightness].u_obj);
-#else
-STATIC mp_obj_t colorlight_on(mp_obj_t color, mp_obj_t brightness) {
-    pbio_light_color_t color_id = MP_OBJ_IS_TYPE(color, &mp_type_NoneType) ?
-        PBIO_LIGHT_COLOR_NONE:
-        mp_obj_get_int(color);
-
-    int32_t bright = mp_obj_get_num(brightness);
-#endif
+    mp_int_t bright = pb_obj_get_int(args[ARG_brightness].u_obj);
     bright = bright < 0 ? 0 : bright > 100 ? 100: bright;
 
     if (bright != 100) {
@@ -52,11 +43,7 @@ STATIC mp_obj_t colorlight_on(mp_obj_t color, mp_obj_t brightness) {
     }
     return mp_const_none;
 }
-#if PYBRICKS_ENABLE_KWARGS
 MP_DEFINE_CONST_FUN_OBJ_KW(colorlight_on_obj, 0, colorlight_on);
-#else
-MP_DEFINE_CONST_FUN_OBJ_2(colorlight_on_obj, colorlight_on);
-#endif
 
 STATIC mp_obj_t colorlight_off() {
 
