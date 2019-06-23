@@ -82,8 +82,8 @@ static pbio_error_t sysfs_get_motor(pbio_port_t port, pbio_iodev_type_id_t *id, 
 static pbio_error_t sysfs_motor_command(pbio_port_t port, const char* command) {
     motor_file_t *mtr_files = &motor_files[PORT_TO_IDX(port)];
     // Open the file in the directory corresponding to the specified port
-    char commandpath[MAX_PATH_LENGTH];
-    snprintf(commandpath, MAX_PATH_LENGTH, "%s/command", mtr_files->devpath);
+    char commandpath[MAX_PATH_LENGTH + 8];
+    snprintf(commandpath, MAX_PATH_LENGTH + 8, "%s/command", mtr_files->devpath);
     FILE* file = fopen(commandpath, "w");
     if (file != NULL && fprintf(file, "%s", command) >= 0 && fclose(file) == 0) {
         return PBIO_SUCCESS;
@@ -133,10 +133,10 @@ static pbio_error_t sysfs_motor_init(pbio_port_t port){
     if (err != PBIO_SUCCESS) {  return err; }
 
     // File path character array to the relevant files
-    char filepath[MAX_PATH_LENGTH];
+    char filepath[MAX_PATH_LENGTH + 14];
 
     // Open the duty file
-    snprintf(filepath, MAX_PATH_LENGTH, "%s/duty_cycle_sp", mtr_files->devpath);
+    snprintf(filepath, MAX_PATH_LENGTH + 14, "%s/duty_cycle_sp", mtr_files->devpath);
     mtr_files->f_duty = fopen(filepath, "w");
     if (mtr_files->f_duty == NULL) { return PBIO_ERROR_IO; }
 
