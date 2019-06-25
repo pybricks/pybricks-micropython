@@ -3,7 +3,6 @@
 
 """Display screen"""
 
-from fcntl import ioctl
 from mmap import mmap
 
 from framebuf import FrameBuffer
@@ -16,6 +15,7 @@ from uctypes import UINT8
 from uctypes import UINT16
 from uctypes import UINT32
 from uctypes import UINT64
+from ufcntl import ioctl
 
 from ._wand import CompositeOp
 from ._wand import MagickWand
@@ -99,11 +99,11 @@ class _Screen():
         self._fbdev = open('/dev/fb0', 'w+')
         self._fix_info_data = bytearray(sizeof(_fb_fix_screeninfo))
         fd = self._fbdev.fileno()
-        ioctl(fd, _FBIOGET_FSCREENINFO, self._fix_info_data, mut=True)
+        ioctl(fd, _FBIOGET_FSCREENINFO, self._fix_info_data)
         self._fix_info = struct(addressof(self._fix_info_data),
                                 _fb_fix_screeninfo)
         self._var_info_data = bytearray(sizeof(_fb_var_screeninfo))
-        ioctl(fd, _FBIOGET_VSCREENINFO, self._var_info_data, mut=True)
+        ioctl(fd, _FBIOGET_VSCREENINFO, self._var_info_data)
         self._var_info = struct(addressof(self._var_info_data),
                                 _fb_var_screeninfo)
         self._fb_data = {}

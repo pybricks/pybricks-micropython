@@ -3,7 +3,7 @@
 
 import uctypes
 
-from fcntl import ioctl
+from ufcntl import ioctl
 
 # from linux/i2c.h
 
@@ -93,7 +93,7 @@ class SMBus():
         self._devnode = open(path, 'w+')
         self._fd = self._devnode.fileno()
         flags = bytes(4)
-        ioctl(self._fd, _I2C_FUNCS, flags, mut=True)
+        ioctl(self._fd, _I2C_FUNCS, flags)
         flags = uctypes.struct(uctypes.addressof(flags), {
             'flags': uctypes.UINT32  # unsigned long
         }).flags
@@ -133,7 +133,7 @@ class SMBus():
         args.command = command
         args.size = size
         args.data = uctypes.addressof(data)
-        ioctl(self._fd, _I2C_SMBUS, args, mut=True)
+        ioctl(self._fd, _I2C_SMBUS, args)
 
     def write_quick(self, value):
         self._access(value, 0, _I2C_SMBUS_QUICK, None)

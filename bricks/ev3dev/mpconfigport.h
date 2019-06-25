@@ -156,6 +156,7 @@ static const char pybricks_ev3dev_help_text[] =
 #endif
 #define MICROPY_PY_UBINASCII        (1)
 #define MICROPY_PY_UBINASCII_CRC32  (1)
+#define MICROPY_PY_UFCNTL_POSIX     (1)
 #define MICROPY_PY_URANDOM          (1)
 #ifndef MICROPY_PY_USELECT_POSIX
 #define MICROPY_PY_USELECT_POSIX    (1)
@@ -206,6 +207,7 @@ extern const struct _mp_obj_module_t mp_module_termios;
 extern const struct _mp_obj_module_t mp_module_socket;
 extern const struct _mp_obj_module_t mp_module_ffi;
 extern const struct _mp_obj_module_t mp_module_jni;
+extern const struct _mp_obj_module_t mp_module_ufcntl;
 
 #if MICROPY_PY_UOS_VFS
 #define MICROPY_PY_UOS_DEF { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos_vfs) },
@@ -254,6 +256,7 @@ extern const struct _mp_obj_module_t mp_module_jni;
     MICROPY_PY_USELECT_DEF \
     MICROPY_PY_TERMIOS_DEF \
     { MP_ROM_QSTR(MP_QSTR_mmap), MP_ROM_PTR(&mp_module_mmap) }, \
+    { MP_ROM_QSTR(MP_QSTR_ufcntl), MP_ROM_PTR(&mp_module_ufcntl) }, \
 
 // type definitions for the specific machine
 
