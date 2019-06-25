@@ -25,7 +25,7 @@ try:
     display = Display('EV3')
 except Exception as exception:
     print("Pybricks is already running on this device. Exiting...", file=stderr)
-    exit()
+    exit(1)
 
 # The new light and button API can be enabled using:
 # from ev3brick_c import light, buttons
