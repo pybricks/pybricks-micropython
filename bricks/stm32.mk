@@ -4,6 +4,9 @@
 # This file is shared by all STM32-based Pybricks ports
 # Other ports should not use this file
 
+# Sanity check
+include ../check.mk
+
 include ../../../../py/mkenv.mk
 
 # qstr definitions (must come before including py.mk)

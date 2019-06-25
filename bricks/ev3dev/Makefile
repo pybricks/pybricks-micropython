@@ -1,6 +1,9 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2013, 2014 Damien P. George
 
+# Sanity check
+include ../check.mk
+
 # Environment
 -include mpconfigport.mk
 include ../../../../py/mkenv.mk

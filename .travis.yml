@@ -12,6 +12,8 @@ cache:
 env:
   global:
     - MAKEOPTS="-j4"
+git:
+  submodules: false
 
 # define the successive stages
 stages:
@@ -31,11 +33,7 @@ jobs:
         - gcc --version
         - python3 --version
         - cd ${HOME}
-        - if [ -n "$TRAVIS_TAG" ]; then
-              git clone --depth=10 --branch=v1.9.4+pybricks${TRAVIS_TAG:1} --recursive https://github.com/pybricks/micropython;
-          else
-              git clone --depth=10 --recursive https://github.com/pybricks/micropython;
-          fi
+        - git clone --depth=10 --branch=$(cat ${TRAVIS_BUILD_DIR}/micropython-tag) --recursive https://github.com/pybricks/micropython;
         - cd micropython/ports/pybricks
         - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
         - cd ../..
@@ -66,11 +64,7 @@ jobs:
         - pyenv shell 3.6.7
         - sudo apt-get install qemu-user-static
         - cd ${HOME}
-        - if [ -n "$TRAVIS_TAG" ]; then
-              git clone --depth=10 --branch=v1.9.4+pybricks${TRAVIS_TAG:1} --recursive https://github.com/pybricks/micropython;
-          else
-              git clone --depth=10 --recursive https://github.com/pybricks/micropython;
-          fi
+        - git clone --depth=10 --branch=$(cat ${TRAVIS_BUILD_DIR}/micropython-tag) --recursive https://github.com/pybricks/micropython;
         - cd micropython/ports/pybricks
         - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
         - bricks/ev3dev/docker/setup.sh armel
@@ -97,11 +91,7 @@ jobs:
         - cd ${HOME}
         - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
         - sudo tar -C /opt -xf gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
-        - if [ -n "$TRAVIS_TAG" ]; then
-              git clone --depth=10 --branch=v1.9.4+pybricks${TRAVIS_TAG:1} --recursive https://github.com/pybricks/micropython;
-          else
-              git clone --depth=10 --recursive https://github.com/pybricks/micropython;
-          fi
+        - git clone --depth=10 --branch=$(cat ${TRAVIS_BUILD_DIR}/micropython-tag) --recursive https://github.com/pybricks/micropython;
         - cd micropython/ports/pybricks
         - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
         - cd ../..
@@ -126,11 +116,7 @@ jobs:
         - cd ${HOME}
         - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
         - sudo tar -C /opt -xf gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
-        - if [ -n "$TRAVIS_TAG" ]; then
-              git clone --depth=10 --branch=v1.9.4+pybricks${TRAVIS_TAG:1} --recursive https://github.com/pybricks/micropython;
-          else
-              git clone --depth=10 --recursive https://github.com/pybricks/micropython;
-          fi
+        - git clone --depth=10 --branch=$(cat ${TRAVIS_BUILD_DIR}/micropython-tag) --recursive https://github.com/pybricks/micropython;
         - cd micropython/ports/pybricks
         - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
         - cd ../..
