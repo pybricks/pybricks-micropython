@@ -4,12 +4,13 @@
 """Wrapper around libmagickwand
 """
 
+import ffi
 from ustruct import calcsize
 from ustruct import unpack
 
 from uctypes import bytearray_at
 
-_wand = ffilib.open('libMagickWand-6.Q16')
+_wand = ffi.open('libMagickWand-6.Q16.so.3')
 _genisis = _wand.func('v', 'MagickWandGenesis', '')
 _terminus = _wand.func('v', 'MagickWandTerminus', '')
 _new = _wand.func('p', 'NewMagickWand', '')

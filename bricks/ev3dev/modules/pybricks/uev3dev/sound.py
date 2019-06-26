@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2017 David Lechner <david@lechnology.com>
 
+import ffi
 import _thread
 
 from ustruct import calcsize
@@ -41,7 +42,7 @@ _input_event = {
 
 # libsndfile
 
-_libsndfile = ffilib.open('libsndfile')
+_libsndfile = ffi.open('libsndfile.so.1')
 
 _sf_count_t = UINT64
 

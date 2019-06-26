@@ -3,6 +3,7 @@
 
 """Utility module"""
 
+import ffi
 import _thread
 import os
 import sys
@@ -18,9 +19,10 @@ from uctypes import struct
 from uctypes import UINT32
 from uctypes import UINT64
 
-_libc = libc()
+_libc = ffi.open('libc.so.6')
 
 _eventfd = _libc.func('i', 'eventfd', 'ii')
+_errno = _libc.var('i', 'errno')
 _EFD_CLOEXEC = 0o2000000
 
 
@@ -123,7 +125,8 @@ class Timeout():
 
     def __init__(self, interval, func, repeat=False):
         self._fd = _eventfd(0, _EFD_CLOEXEC)
-        os.check_error(self._fd)
+        if self._fd == -1:
+            raise OSError(_errno.get())
         self._poll = poll()
         self._poll.register(self._fd, POLLIN)
         self._interval = interval
