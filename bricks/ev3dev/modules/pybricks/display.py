@@ -8,8 +8,6 @@
 
 from .uev3dev.display import Display as Ev3devDisplay
 from .uev3dev.display import ImageFile
-from os import path
-
 from .parameters import Align
 
 

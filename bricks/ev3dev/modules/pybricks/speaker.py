@@ -8,7 +8,6 @@
 
 from .uev3dev.sound import Sound as Ev3devSpeaker
 from .uev3dev.sound import SoundFile
-from os import path
 from .tools import wait
 
 

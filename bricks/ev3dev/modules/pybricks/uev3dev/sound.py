@@ -2,7 +2,6 @@
 # Copyright (c) 2017 David Lechner <david@lechnology.com>
 
 import _thread
-import os
 
 from struct import calcsize
 from struct import pack
