@@ -8,9 +8,8 @@ import os
 import sys
 import utime
 
-from errno import EINTR
+from uerrno import EINTR
 
-from ffilib import libc
 from uselect import poll
 from uselect import POLLIN
 from uctypes import addressof
