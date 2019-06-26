@@ -6,8 +6,8 @@ import _thread
 from ustruct import calcsize
 from ustruct import pack
 from ustruct import unpack
+from utime import sleep, sleep_ms
 
-import ffilib
 from uctypes import addressof
 from uctypes import INT32
 from uctypes import sizeof

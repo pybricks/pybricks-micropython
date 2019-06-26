@@ -6,7 +6,7 @@
 import _thread
 import os
 import sys
-import time
+import utime
 
 from errno import EINTR
 
@@ -71,14 +71,14 @@ class Timer():
         self.reset()
 
     def reset(self):
-        self._start_time = time.perf_counter()
+        self._start_time = utime.ticks_ms()
 
     def elapsed_time(self):
-        now = time.perf_counter()
-        return now - self._start_time
+        now = utime.ticks_ms()
+        return (now - self._start_time) / 1000
 
     def wait(self, compare, value):
-        while not compare(self.elapsed_time(), 0.8):
+        while not compare(self.elapsed_time(), value):
             pass
 
 
