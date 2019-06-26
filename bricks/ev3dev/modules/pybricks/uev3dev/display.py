@@ -15,6 +15,7 @@ from uctypes import UINT8
 from uctypes import UINT16
 from uctypes import UINT32
 from uctypes import UINT64
+from uctypes import ULONG
 from ufcntl import ioctl
 
 from ._wand import CompositeOp
@@ -28,23 +29,26 @@ _FB_VISUAL_MONO01 = 0
 _FB_VISUAL_MONO10 = 1
 _FB_VISUAL_TRUECOLOR = 2
 
+# hack for 32-bit vs 64-bit long
+_ALIGN1, _ALIGN2, _ALIGN3 = (0, 0, 0) if ULONG == UINT32 else (4, 8, 12)
+
 _fb_fix_screeninfo = {
     'id_name': (ARRAY | 0, UINT8 | 16),
-    'smem_start': UINT32 | 16,  # long
-    'smem_len': UINT32 | 20,
-    'type': UINT32 | 24,
-    'type_aux': UINT32 | 28,
-    'visual': UINT32 | 32,
-    'xpanstep': UINT16 | 36,
-    'ypanstep': UINT16 | 38,
-    'ywrapstep': UINT16 | 40,
-    'line_length': UINT32 | 44,
-    'mmio_start': UINT32 | 48,  # long
-    'mmio_len': UINT32 | 52,
-    'accel': UINT32 | 56,
-    'capabilities': UINT16 | 60,
-    'reserved0': UINT16 | 62,
-    'reserved1': UINT16 | 64,
+    'smem_start': ULONG | 16,
+    'smem_len': UINT32 | 20 + _ALIGN1,
+    'type': UINT32 | 24 + _ALIGN1,
+    'type_aux': UINT32 | 28 + _ALIGN1,
+    'visual': UINT32 | 32 + _ALIGN1,
+    'xpanstep': UINT16 | 36 + _ALIGN1,
+    'ypanstep': UINT16 | 38 + _ALIGN1,
+    'ywrapstep': UINT16 | 40 + _ALIGN1,
+    'line_length': UINT32 | 44 + _ALIGN1,
+    'mmio_start': ULONG | 48 + _ALIGN2,
+    'mmio_len': UINT32 | 52 + _ALIGN3,
+    'accel': UINT32 | 56 + _ALIGN3,
+    'capabilities': UINT16 | 60 + _ALIGN3,
+    'reserved0': UINT16 | 62 + _ALIGN3,
+    'reserved1': UINT16 | 64 + _ALIGN3,
 }
 
 _fb_bitfield = {
@@ -96,7 +100,7 @@ class _Screen():
     WHITE = ~0
 
     def __init__(self):
-        self._fbdev = open('/dev/fb0', 'w+')
+        self._fbdev = open('/dev/fb0', 'r+b')
         self._fix_info_data = bytearray(sizeof(_fb_fix_screeninfo))
         fd = self._fbdev.fileno()
         ioctl(fd, _FBIOGET_FSCREENINFO, self._fix_info_data)
