@@ -258,6 +258,16 @@ include $(TOP)/py/mkrules.mk
 
 .PHONY: test
 
+EV3DEV_TEST_DIRS = $(addprefix ../ports/pybricks/tests/ev3dev/, \
+	brick \
+	uev3dev \
+	)
+
+test-ev3dev: $(PROG) $(TOP)/tests/run-tests
+	$(eval DIRNAME=ports/pybricks/bricks/$(notdir $(CURDIR)))
+	cd $(TOP)/tests && MICROPY_MICROPYTHON="../$(DIRNAME)/$(PROG)" ev3dev-mocks-run \
+		./run-tests --test-dirs $(EV3DEV_TEST_DIRS)
+
 test: $(PROG) $(TOP)/tests/run-tests
 	$(eval DIRNAME=ports/pybricks/bricks/$(notdir $(CURDIR)))
 	cd $(TOP)/tests && MICROPY_MICROPYTHON=../$(DIRNAME)/$(PROG) ./run-tests
