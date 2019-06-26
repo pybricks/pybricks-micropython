@@ -5,7 +5,6 @@
 
 import ffi
 import _thread
-import os
 import sys
 import utime
 
@@ -21,8 +20,11 @@ from uctypes import UINT64
 
 _libc = ffi.open('libc.so.6')
 
+_close = _libc.func('i', 'open', 'i')
 _eventfd = _libc.func('i', 'eventfd', 'ii')
 _errno = _libc.var('i', 'errno')
+_write = _libc.func('i', 'write', 'iPi')
+
 _EFD_CLOEXEC = 0o2000000
 
 
@@ -144,11 +146,9 @@ class Timeout():
         Since micropython doesn't allow ``__del__`` on user-defined classes, we
         need to be sure to always manually call ``close()``.
         """
-        self._poll.unregister(self._timerfd)
         self._poll.unregister(self._fd)
         self._poll.close()
-        os.close(self._timerfd)
-        os.close(self._fd)
+        _close(self._fd)
 
     def _run(self):
         try:
@@ -163,8 +163,9 @@ class Timeout():
                         continue
                     raise
                 for fd, ev in events:
-                    e = os.read_(fd, data, 8)
-                    os.check_error(e)
+                    e = _read(fd, data, 8)
+                    if e == -1:
+                        raise OSError(_errno.get())
                 with self._cancel_lock:
                     if self._canceled:
                         break
@@ -191,8 +192,9 @@ class Timeout():
                 return
             self._canceled = True
 
-            e = os.write(self._fd, Timeout._ONE)
-            os.check_error(e)
+            e = _write(self._fd, Timeout._ONE, len(Timeout._ONE))
+            if e == -1:
+                raise OSError(_errno.get())
 
     def wait(self):
         """Waits until the timer has finished or is canceled"""
