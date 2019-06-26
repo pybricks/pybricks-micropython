@@ -4,9 +4,8 @@
 """Wrapper around libmagickwand
 """
 
-import ffilib
-from struct import calcsize
-from struct import unpack
+from ustruct import calcsize
+from ustruct import unpack
 
 from uctypes import bytearray_at
 

@@ -3,10 +3,9 @@
 
 import _thread
 
-from struct import calcsize
-from struct import pack
-from struct import unpack
-from time import sleep, sleep_ms
+from ustruct import calcsize
+from ustruct import pack
+from ustruct import unpack
 
 import ffilib
 from uctypes import addressof
