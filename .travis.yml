@@ -71,6 +71,9 @@ jobs:
       script:
         - docker exec --tty pybricks-ev3dev_armel make
         - docker exec --tty pybricks-ev3dev_armel make test
+        - docker exec --tty pybricks-ev3dev_armel make test-ev3dev
+      after_failure:
+        - ./tests/dump-out-files.sh
       after_success:
         - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET
         - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
