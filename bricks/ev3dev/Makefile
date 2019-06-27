@@ -265,8 +265,7 @@ EV3DEV_TEST_DIRS = $(addprefix ../ports/pybricks/tests/ev3dev/, \
 
 test-ev3dev: $(PROG) $(TOP)/tests/run-tests
 	$(eval DIRNAME=ports/pybricks/bricks/$(notdir $(CURDIR)))
-	cd $(TOP)/tests && MICROPY_MICROPYTHON="../$(DIRNAME)/$(PROG)" \
-		MICROPY_EXEC_WRAPPER=ev3dev-mocks-run \
+	cd $(TOP)/tests && MICROPY_MICROPYTHON="../$(DIRNAME)/test-wrapper.sh" \
 		./run-tests --test-dirs $(EV3DEV_TEST_DIRS)
 
 test: $(PROG) $(TOP)/tests/run-tests
