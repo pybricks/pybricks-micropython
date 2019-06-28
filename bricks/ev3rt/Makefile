@@ -23,9 +23,12 @@ INC += -I$(BUILD)
 # compiler settings
 CWARN = -Wall -Werror
 CWARN += -Wpointer-arith -Wuninitialized
-CFLAGS = $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA) 
+CFLAGS = $(INC) $(CWARN) -std=gnu99 $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA)
 # NXT:
 # CFLAGS += -DMP_ENDIANNESS_LITTLE -mthumb-interwork
+
+# Compiler flags should match TOPPERS kernel
+CFLAGS += -mcpu=arm926ej-s -mlittle-endian
 
 # Debugging/Optimization
 ifdef DEBUG
