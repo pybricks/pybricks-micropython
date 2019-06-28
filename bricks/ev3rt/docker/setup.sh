@@ -14,7 +14,7 @@ if ! which docker >/dev/null; then
     exit 1
 fi
 
-src_dir="${script_dir}/../../../../.."
+src_dir="${script_dir}/../../../../.." # micropython directory
 build_dir="${script_dir}/../build"
 image_name="${project}"
 container_name="${project}"
@@ -38,22 +38,20 @@ mkdir -p ${build_dir}
 docker build \
     --tag ${image_name} \
     --no-cache \
-    --file "${script_dir}/pybricks-ev3rt.dockerfile" \
     "${script_dir}/"
 
 docker rm --force ${container_name} >/dev/null 2>&1 || true
 docker run \
-    --volume "$(abs_path ${src_dir}):/home/user/micropython" \
-    --workdir /home/user/micropython/ports/pybricks/bricks/ev3rt \
+    --volume "$(abs_path ${src_dir}):/src" \
+    --workdir /src/ports/pybricks/bricks/ev3rt \
     --name ${container_name} \
     --env "TERM=${TERM}" \
-    --env "DESTDIR=/build/dist" \
     --user $(id -u):$(id -g) \
     --tty \
     --detach \
     ${image_name} tail
 
-docker exec --tty pybricks-ev3rt bash -c '\
+docker exec --tty ${container_name} bash -c '\
     cd ev3rt-hrp2/cfg && \
     make && \
     cd ../base-workspace && \
