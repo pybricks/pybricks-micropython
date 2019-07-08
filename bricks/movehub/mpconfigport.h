@@ -18,10 +18,6 @@
 #define PYBRICKS_PY_PUPDEVICES          (1)
 #define PYBRICKS_PY_TOOLS               (1)
 
-// You can enable/disable the use of external import statements by setting
-// the following config option to 1 or 0. Requires about 1.5K of flash.
-#define MICROPY_ENABLE_EXTERNAL_IMPORT  (0)
-
 // You can disable the built-in MicroPython compiler by setting the following
 // config option to 0.  If you do this then you won't get a REPL prompt, but you
 // will still be able to execute pre-compiled scripts, compiled with mpy-cross.
