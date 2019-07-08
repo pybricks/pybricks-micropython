@@ -150,7 +150,27 @@ soft_reset:
 
     mp_init();
 
-    pyexec_frozen_module("boot.py");
+    #if PYBRICKS_PY_MOVEHUB
+    mp_store_global(MP_QSTR_movehub, mp_import_name(MP_QSTR_movehub, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
+    #endif
+    #if PYBRICKS_PY_CITYHUB
+    mp_store_global(MP_QSTR_cityhub, mp_import_name(MP_QSTR_cityhub, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
+    #endif
+    #if PYBRICKS_PY_DEBUG
+    mp_import_all(mp_import_name(MP_QSTR_debug, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
+    #endif
+    #if PYBRICKS_PY_TOOLS
+    mp_import_all(mp_import_name(MP_QSTR_tools, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
+    #endif
+    #if PYBRICKS_PY_PUPDEVICES
+    mp_import_all(mp_import_name(MP_QSTR_devices, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
+    #endif
+    #if PYBRICKS_PY_PARAMETERS
+    mp_import_all(mp_import_name(MP_QSTR_parameters, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
+    #endif
+    #if PYBRICKS_PY_ADVANCED
+    mp_import_all(mp_import_name(MP_QSTR_advanced, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
+    #endif
 
     #if MICROPY_ENABLE_COMPILER
     pyexec_friendly_repl();
