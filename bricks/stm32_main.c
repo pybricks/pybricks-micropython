@@ -9,6 +9,8 @@
 #include <pbio/main.h>
 #include <pbsys/sys.h>
 
+#include "pbobj.h"
+
 #include "py/compile.h"
 #include "py/runtime.h"
 #include "py/repl.h"
@@ -131,6 +133,30 @@ static const pbsys_user_program_callbacks_t user_program_callbacks = {
     .stdin_event    = user_program_stdin_event_func,
 };
 
+static void pb_imports() {
+    #if PYBRICKS_PY_ADVANCED
+    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_advanced);
+    #endif
+    #if PYBRICKS_PY_CITYHUB
+    PB_IMPORT_MODULE(MP_QSTR_cityhub);
+    #endif
+    #if PYBRICKS_PY_PUPDEVICES
+    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_devices);
+    #endif
+    #if PYBRICKS_PY_DEBUG
+    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_debug);
+    #endif
+    #if PYBRICKS_PY_MOVEHUB
+    PB_IMPORT_MODULE(MP_QSTR_movehub);
+    #endif
+    #if PYBRICKS_PY_PARAMETERS
+    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_parameters);
+    #endif
+    #if PYBRICKS_PY_TOOLS
+    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_tools);
+    #endif
+}
+
 int main(int argc, char **argv) {
     int stack_dummy;
     stack_top = (char*)&stack_dummy;
@@ -150,27 +176,7 @@ soft_reset:
 
     mp_init();
 
-    #if PYBRICKS_PY_MOVEHUB
-    mp_store_global(MP_QSTR_movehub, mp_import_name(MP_QSTR_movehub, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
-    #endif
-    #if PYBRICKS_PY_CITYHUB
-    mp_store_global(MP_QSTR_cityhub, mp_import_name(MP_QSTR_cityhub, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
-    #endif
-    #if PYBRICKS_PY_DEBUG
-    mp_import_all(mp_import_name(MP_QSTR_debug, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
-    #endif
-    #if PYBRICKS_PY_TOOLS
-    mp_import_all(mp_import_name(MP_QSTR_tools, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
-    #endif
-    #if PYBRICKS_PY_PUPDEVICES
-    mp_import_all(mp_import_name(MP_QSTR_devices, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
-    #endif
-    #if PYBRICKS_PY_PARAMETERS
-    mp_import_all(mp_import_name(MP_QSTR_parameters, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
-    #endif
-    #if PYBRICKS_PY_ADVANCED
-    mp_import_all(mp_import_name(MP_QSTR_advanced, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
-    #endif
+    pb_imports();
 
     #if MICROPY_ENABLE_COMPILER
     pyexec_friendly_repl();
