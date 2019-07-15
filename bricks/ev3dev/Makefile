@@ -178,8 +178,7 @@ SRC_C += $(SRC_MOD)
 # Pybricks port core source files
 SRC_C += \
 	pbinit.c \
-	modev3devices.c \
-	modev3brick.c \
+	ev3platform.c \
 
 LIB_SRC_C = $(addprefix lib/,\
 	$(LIB_SRC_C_EXTRA) \
@@ -192,6 +191,8 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modmotor.c \
 	modlight.c \
 	modbattery.c \
+	modev3devices.c \
+	modev3brick.c \
 	modbuttons.c \
 	modtools.c \
 	modparameters.c \
@@ -220,6 +221,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	pbio/src/error.c \
 	pbio/src/motorcontrol.c \
 	pbio/src/motorref.c \
+	pbio/src/ev3device.c \
 	pbio/src/motorpair.c \
 	pbio/sys/autostart.c \
 	pbio/sys/etimer.c \
