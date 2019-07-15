@@ -10,6 +10,7 @@
 
 #include "ev3platform.h"
 
+// TODO: Make structure like iodevice
 typedef struct _ev3_iodev_t {
     /**
      * The device ID
@@ -23,6 +24,14 @@ typedef struct _ev3_iodev_t {
      * The current active mode.
      */
     pbio_iodev_mode_id_t mode;
+    /**
+     * The current active mode.
+     */
+    uint8_t data_len;
+    /**
+     * The current active mode.
+     */
+    pbio_iodev_data_type_t data_type;
     /**
      * ev3dev sysfs HAL?
      */

@@ -74,6 +74,23 @@ pbio_error_t sysfs_read_str(FILE *file, char *dest) {
     return PBIO_SUCCESS;
 }
 
+// Read an int from a previously opened sysfs attribute
+pbio_error_t sysfs_read_int(FILE *file, int *dest) {
+    if (fseek(file, 0, SEEK_SET) == -1) {
+        return PBIO_ERROR_IO;
+    }
+
+    if (fscanf(file, "%d", dest) < 1) {
+        return PBIO_ERROR_IO;
+    }
+
+    if (fflush(file) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    return PBIO_SUCCESS;
+}
+
 // Initialize an ev3dev sensor by opening the relevant sysfs attributes
 pbio_error_t ev3_sensor_init(ev3_platform_t *platform, pbio_port_t port) {
     pbio_error_t err;
@@ -85,6 +102,12 @@ pbio_error_t ev3_sensor_init(ev3_platform_t *platform, pbio_port_t port) {
     if (err != PBIO_SUCCESS) { return err; }
 
     err = sysfs_open(&platform->f_mode, platform->n_sensor, "mode", "r+");
+    if (err != PBIO_SUCCESS) { return err; }
+
+    err = sysfs_open(&platform->f_bin_data_format, platform->n_sensor, "bin_data_format", "r");
+    if (err != PBIO_SUCCESS) { return err; }
+
+    err = sysfs_open(&platform->f_num_values, platform->n_sensor, "num_values", "r");
     if (err != PBIO_SUCCESS) { return err; }
 
     err = sysfs_open(&platform->f_bin_data, platform->n_sensor, "bin_data", "rb");
@@ -107,16 +130,49 @@ pbio_error_t ev3_sensor_get_id(ev3_platform_t *platform, pbio_iodev_type_id_t *i
     return PBIO_ERROR_IO;
 }
 
-// Set the sensor mode
-pbio_error_t ev3_sensor_set_mode(ev3_platform_t *platform, pbio_iodev_mode_id_t *current_mode, pbio_iodev_mode_id_t new_mode) {
+// Get the device info
+pbio_error_t ev3_sensor_get_info(ev3_platform_t *platform, uint8_t *data_len, pbio_iodev_data_type_t *data_type) {
 
-    // Set the mode only if not already set, or if this sensor mode requires it
-    if (*current_mode == new_mode && new_mode != 0) {
+    pbio_error_t err;
+
+    // Read data length attribute
+    int data_len_int;
+    err = sysfs_read_int(platform->f_num_values, &data_len_int);
+    if (err != PBIO_SUCCESS) { return err; }
+    *data_len = data_len_int;
+
+    // Read data type attribute
+    char s_data_type[10];
+    err = sysfs_read_str(platform->f_bin_data_format, s_data_type);
+    if (err != PBIO_SUCCESS) { return err; }
+
+    // Convert data type identifier
+    if (!strcmp(s_data_type, "s8")) {
+        *data_type = PBIO_IODEV_DATA_TYPE_INT8;
+        return PBIO_SUCCESS;
+    }
+    else if (!strcmp(s_data_type, "s16")) {
+        *data_type = PBIO_IODEV_DATA_TYPE_INT16;
+        return PBIO_SUCCESS;
+    }
+    else if (!strcmp(s_data_type, "s32")) {
+        *data_type = PBIO_IODEV_DATA_TYPE_INT32;
+        return PBIO_SUCCESS;
+    }
+    else if (!strcmp(s_data_type, "float")) {
+        *data_type = PBIO_IODEV_DATA_TYPE_FLOAT;
         return PBIO_SUCCESS;
     }
 
+    return PBIO_ERROR_IO;
+}
+
+// Set the sensor mode
+pbio_error_t ev3_sensor_set_mode(ev3_platform_t *platform, pbio_iodev_mode_id_t mode) {
+
+    // sysfs identifier for mode
     char *sysfs_mode;
-    switch (new_mode) {
+    switch (mode) {
         case (PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_PROX):
             sysfs_mode = "IR-PROX";
             break;
@@ -127,7 +183,7 @@ pbio_error_t ev3_sensor_set_mode(ev3_platform_t *platform, pbio_iodev_mode_id_t 
             return PBIO_ERROR_INVALID_ARG;
     }
     
-    // Start of mode file
+    // Write mode identifier
     if (fseek(platform->f_mode, 0, SEEK_SET) == -1) {
         return PBIO_ERROR_IO;
     }
@@ -139,7 +195,6 @@ pbio_error_t ev3_sensor_set_mode(ev3_platform_t *platform, pbio_iodev_mode_id_t 
     if (fflush(platform->f_mode) != 0) {
         return PBIO_ERROR_IO;
     }
-    *current_mode = new_mode;
 
     return PBIO_SUCCESS;
 }
