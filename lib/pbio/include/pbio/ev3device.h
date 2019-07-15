@@ -22,7 +22,7 @@ typedef struct _ev3_iodev_t {
     /**
      * The current active mode.
      */
-    uint8_t mode;
+    pbio_iodev_mode_id_t mode;
     /**
      * ev3dev sysfs HAL?
      */
@@ -31,4 +31,4 @@ typedef struct _ev3_iodev_t {
 
 pbio_error_t ev3device_get_device(ev3_iodev_t **iodev, pbio_port_t port);
 
-pbio_error_t ev3device_get_values_at_mode(ev3_iodev_t *iodev, pbio_iodev_type_id_t valid_id, uint8_t mode, void *values);
+pbio_error_t ev3device_get_values_at_mode(ev3_iodev_t *iodev, pbio_iodev_mode_id_t mode, void *values);

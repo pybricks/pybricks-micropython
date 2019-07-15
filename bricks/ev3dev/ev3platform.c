@@ -84,7 +84,7 @@ pbio_error_t ev3_sensor_init(ev3_platform_t *platform, pbio_port_t port) {
     err = sysfs_open(&platform->f_driver_name, platform->n_sensor, "driver_name", "r");
     if (err != PBIO_SUCCESS) { return err; }
 
-    err = sysfs_open(&platform->f_mode, platform->n_sensor, "mode", "w");
+    err = sysfs_open(&platform->f_mode, platform->n_sensor, "mode", "r+");
     if (err != PBIO_SUCCESS) { return err; }
 
     err = sysfs_open(&platform->f_bin_data, platform->n_sensor, "bin_data", "rb");
@@ -107,6 +107,43 @@ pbio_error_t ev3_sensor_get_id(ev3_platform_t *platform, pbio_iodev_type_id_t *i
     return PBIO_ERROR_IO;
 }
 
+// Set the sensor mode
+pbio_error_t ev3_sensor_set_mode(ev3_platform_t *platform, pbio_iodev_mode_id_t *current_mode, pbio_iodev_mode_id_t new_mode) {
+
+    // Set the mode only if not already set, or if this sensor mode requires it
+    if (*current_mode == new_mode && new_mode != 0) {
+        return PBIO_SUCCESS;
+    }
+
+    char *sysfs_mode;
+    switch (new_mode) {
+        case (PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_PROX):
+            sysfs_mode = "IR-PROX";
+            break;
+        case (PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_SEEK):
+            sysfs_mode = "IR-SEEK";
+            break;
+        default:
+            return PBIO_ERROR_INVALID_ARG;
+    }
+    
+    // Start of mode file
+    if (fseek(platform->f_mode, 0, SEEK_SET) == -1) {
+        return PBIO_ERROR_IO;
+    }
+
+    if (fprintf(platform->f_mode, sysfs_mode) != strlen(sysfs_mode)) {
+        return PBIO_ERROR_IO;
+    }
+    
+    if (fflush(platform->f_mode) != 0) {
+        return PBIO_ERROR_IO;
+    }
+    *current_mode = new_mode;
+
+    return PBIO_SUCCESS;
+}
+
 // Read 32 bytes from bin_data attribute
 pbio_error_t ev3_sensor_get_bin_data(ev3_platform_t *platform, char *bin_data) {
     if (fseek(platform->f_bin_data, 0, SEEK_SET) == -1) {
@@ -114,6 +151,9 @@ pbio_error_t ev3_sensor_get_bin_data(ev3_platform_t *platform, char *bin_data) {
     }
 
     if (fread(bin_data, 1, PBIO_IODEV_MAX_DATA_SIZE, platform->f_bin_data) < PBIO_IODEV_MAX_DATA_SIZE) {
+        return PBIO_ERROR_IO;
+    }
+    if (fflush(platform->f_bin_data) != 0) {
         return PBIO_ERROR_IO;
     }
     return PBIO_SUCCESS;

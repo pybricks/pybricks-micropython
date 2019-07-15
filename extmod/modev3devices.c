@@ -6,6 +6,7 @@
 #include "py/mphal.h"
 #include "py/runtime.h"
 
+#include <pbio/iodev.h>
 #include <pbio/ev3device.h>
 #include <pberror.h>
 
@@ -33,7 +34,8 @@ STATIC void ev3devices_InfraredSensor_print(const mp_print_t *print,  mp_obj_t s
 STATIC mp_obj_t ev3devices_InfraredSensor_distance(mp_obj_t self_in) {
     ev3devices_InfraredSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     char values[PBIO_IODEV_MAX_DATA_SIZE];
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR, 0, values));
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_SEEK, values));
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_PROX, values));
     return mp_obj_new_int(0);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_InfraredSensor_distance_obj, ev3devices_InfraredSensor_distance);

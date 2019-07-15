@@ -37,18 +37,21 @@ pbio_error_t ev3device_get_device(ev3_iodev_t **iodev, pbio_port_t port) {
         return err;
     }
 
-    // discuss connect disconnect, should break even if same type connected...
     return PBIO_SUCCESS;
 }
 
-pbio_error_t ev3device_get_values_at_mode(ev3_iodev_t *iodev, pbio_iodev_type_id_t valid_id, uint8_t mode, void *values) {
+pbio_error_t ev3device_get_values_at_mode(ev3_iodev_t *iodev, pbio_iodev_mode_id_t mode, void *values) {
 
-    // Assert device is of the expected type
-    if (iodev->type_id != valid_id) {
+    // Assert that device is of the expected type
+    if (iodev->type_id != mode >> 8) {
         return PBIO_ERROR_NO_DEV;
     }
 
-    // Set the mode if not already set
+    // Set the mode
+    pbio_error_t err = ev3_sensor_set_mode(&iodev->platform, &iodev->mode, mode);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Read raw data from device
     char bin_data[PBIO_IODEV_MAX_DATA_SIZE];

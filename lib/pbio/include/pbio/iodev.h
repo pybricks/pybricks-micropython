@@ -74,6 +74,19 @@ typedef enum {
 } pbio_iodev_type_id_t;
 
 /**
+ * Mode identifiers for I/O devices.
+ */
+typedef enum {
+    // LEGO MINDSTORMS EV3 Infrared Sensor
+    PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_PROX          = (PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR << 8) | 0,
+    PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_SEEK          = (PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR << 8) | 1,
+    PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_REMOTE        = (PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR << 8) | 2,
+    PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_REM_A         = (PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR << 8) | 3,
+    PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_S_ALT         = (PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR << 8) | 4,
+    PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_CAL           = (PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR << 8) | 1,
+} pbio_iodev_mode_id_t;
+
+/**
  * Data types used by I/O devices.
  */
 typedef enum {

@@ -20,3 +20,5 @@ pbio_error_t ev3_sensor_init(ev3_platform_t *platform, pbio_port_t port);
 pbio_error_t ev3_sensor_get_id(ev3_platform_t *platform, pbio_iodev_type_id_t *id);
 
 pbio_error_t ev3_sensor_get_bin_data(ev3_platform_t *platform, char *bin_data);
+
+pbio_error_t ev3_sensor_set_mode(ev3_platform_t *platform, pbio_iodev_mode_id_t *current_mode, pbio_iodev_mode_id_t new_mode);
