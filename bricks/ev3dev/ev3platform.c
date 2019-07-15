@@ -126,6 +126,10 @@ pbio_error_t ev3_sensor_get_id(ev3_platform_t *platform, pbio_iodev_type_id_t *i
         *id = PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR;
         return PBIO_SUCCESS;
     }
+    else if (!strcmp(driver_name, "lego-ev3-color")) {
+        *id = PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR;
+        return PBIO_SUCCESS;
+    }
 
     return PBIO_ERROR_IO;
 }
@@ -172,12 +176,43 @@ pbio_error_t ev3_sensor_set_mode(ev3_platform_t *platform, pbio_iodev_mode_id_t 
 
     // sysfs identifier for mode
     char *sysfs_mode;
+
     switch (mode) {
-        case (PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_PROX):
+        case PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__COL_REFLECT:
+            sysfs_mode = "COL-REFLECT";
+            break;
+        case PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__COL_AMBIENT:
+            sysfs_mode = "COL-AMBIENT";
+            break;
+        case PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__COL_COLOR:
+            sysfs_mode = "COL-COLOR";
+            break;
+        case PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__REF_RAW:
+            sysfs_mode = "REW-RAW";
+            break;
+        case PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__RGB_RAW:
+            sysfs_mode = "RGB-RAW";
+            break;
+        case PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__COL_CAL:
+            sysfs_mode = "COL-CAL";
+            break;
+        case PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_PROX:
             sysfs_mode = "IR-PROX";
             break;
-        case (PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_SEEK):
+        case PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_SEEK:
             sysfs_mode = "IR-SEEK";
+            break;
+        case PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_REMOTE:
+            sysfs_mode = "IR-REMOTE";
+            break;
+        case PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_REM_A:
+            sysfs_mode = "IR-REM-A";
+            break;
+        case PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_S_ALT:
+            sysfs_mode = "IR-S-ALT";
+            break;
+        case PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_CAL:
+            sysfs_mode = "IR-CAL";
             break;
         default:
             return PBIO_ERROR_INVALID_ARG;
