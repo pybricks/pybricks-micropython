@@ -13,13 +13,12 @@
 
 STATIC mp_obj_t colorlight_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     enum { ARG_color, ARG_brightness };
-    STATIC const mp_arg_t colorlight_on_allowed_args[] = {
-        { MP_QSTR_color, MP_ARG_OBJ | MP_ARG_REQUIRED},
-        { MP_QSTR_brightness, MP_ARG_OBJ, {.u_obj = MP_OBJ_NEW_SMALL_INT(100)} },
+
+    STATIC const mp_arg_t allowed_args[] = {
+        PB_ARG_REQUIRED(color),
+        PB_ARG_DEFAULT_INT(brightness, 100),
     };
-    mp_arg_val_t args[MP_ARRAY_SIZE(colorlight_on_allowed_args)];
-    mp_arg_parse_all(n_args, pos_args, kw_args,
-        MP_ARRAY_SIZE(colorlight_on_allowed_args), colorlight_on_allowed_args, args);
+    PB_PARSE_ARGS_FUNCTION(args, n_args, pos_args, kw_args, allowed_args);
 
     pbio_light_color_t color_id = MP_OBJ_IS_TYPE(args[ARG_color].u_obj, &mp_type_NoneType) ?
         PBIO_LIGHT_COLOR_NONE:
