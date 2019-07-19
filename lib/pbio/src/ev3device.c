@@ -13,32 +13,34 @@
 
 ev3_iodev_t iodevices[4];
 
+// Get an ev3dev sensor
 pbio_error_t ev3device_get_device(ev3_iodev_t **iodev, pbio_port_t port) {
     if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    *iodev = &iodevices[port - PBIO_PORT_1];
-    ev3_platform_t *platform = &(*iodev)->platform;
+    ev3_iodev_t *_iodev = &iodevices[port - PBIO_PORT_1];
+
+    *iodev = _iodev;
+
+    _iodev->port = port;
 
     pbio_error_t err;
 
-    err = ev3_sensor_init(platform, port);
+    err = ev3_sensor_get_platform(&_iodev->platform, _iodev->port);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // Set the device port
-    (*iodev)->port = port;
-
     // Get device ID
-    err = ev3_sensor_get_id(platform, &(*iodev)->type_id);
+    err = ev3_sensor_get_id(_iodev->platform, &_iodev->type_id);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     return PBIO_SUCCESS;
 }
+
 
 pbio_error_t ev3device_get_values_at_mode(ev3_iodev_t *iodev, pbio_iodev_mode_id_t mode, void *values) {
 
@@ -51,13 +53,13 @@ pbio_error_t ev3device_get_values_at_mode(ev3_iodev_t *iodev, pbio_iodev_mode_id
 
     // Set the mode only if not already set, or if this sensor mode requires it
     if (iodev->mode != mode || mode == 0) {
-        err = ev3_sensor_set_mode(&iodev->platform, mode);
+        err = ev3_sensor_set_mode(iodev->platform, mode);
         if (err != PBIO_SUCCESS) {
             return err;
         }
         // Set the new mode and corresponding data info
         iodev->mode = mode;
-        err = ev3_sensor_get_info(&iodev->platform, &iodev->data_len, &iodev->data_type);
+        err = ev3_sensor_get_info(iodev->platform, &iodev->data_len, &iodev->data_type);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -65,7 +67,7 @@ pbio_error_t ev3device_get_values_at_mode(ev3_iodev_t *iodev, pbio_iodev_mode_id
 
     // Read raw data from device
     char data[PBIO_IODEV_MAX_DATA_SIZE];
-    ev3_sensor_get_bin_data(&iodev->platform, data);
+    ev3_sensor_get_bin_data(iodev->platform, data);
 
     for (uint8_t i = 0; i < iodev->data_len; i++) {
         switch (iodev->data_type) {

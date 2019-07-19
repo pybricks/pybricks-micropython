@@ -33,9 +33,9 @@ typedef struct _ev3_iodev_t {
      */
     pbio_iodev_data_type_t data_type;
     /**
-     * ev3dev sysfs HAL?
+     * Platform specific low-level device abstraction
      */
-    ev3_platform_t platform;
+    ev3_platform_t *platform;
 } ev3_iodev_t;
 
 pbio_error_t ev3device_get_device(ev3_iodev_t **iodev, pbio_port_t port);

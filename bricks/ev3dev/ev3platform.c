@@ -14,6 +14,15 @@
 #define MAX_PATH_LENGTH 60
 #define MAX_READ_LENGTH "60"
 
+struct _ev3_platform_t {
+    int n_sensor;
+    FILE *f_mode;
+    FILE *f_driver_name;
+    FILE *f_bin_data;
+    FILE *f_num_values;
+    FILE *f_bin_data_format;
+};
+
 // Get the ev3dev sensor number for a given port
 pbio_error_t sysfs_get_number(pbio_port_t port, int *sysfs_number) {
     // Open lego-sensor directory in sysfs
@@ -92,7 +101,7 @@ pbio_error_t sysfs_read_int(FILE *file, int *dest) {
 }
 
 // Initialize an ev3dev sensor by opening the relevant sysfs attributes
-pbio_error_t ev3_sensor_init(ev3_platform_t *platform, pbio_port_t port) {
+pbio_error_t ev3_platform_init(ev3_platform_t *platform, pbio_port_t port) {
     pbio_error_t err;
 
     err = sysfs_get_number(port, &platform->n_sensor) ;
@@ -113,6 +122,19 @@ pbio_error_t ev3_sensor_init(ev3_platform_t *platform, pbio_port_t port) {
     err = sysfs_open(&platform->f_bin_data, platform->n_sensor, "bin_data", "rb");
 
     return PBIO_SUCCESS;
+}
+
+struct _ev3_platform_t platforms[4];
+
+// Get an ev3dev sensor
+pbio_error_t ev3_sensor_get_platform(ev3_platform_t **platform, pbio_port_t port) {
+    if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
+        return PBIO_ERROR_INVALID_PORT;
+    }
+
+    *platform = &platforms[port - PBIO_PORT_1];
+
+    return ev3_platform_init(*platform, port);
 }
 
 // Get the device ID
