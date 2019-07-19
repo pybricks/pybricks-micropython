@@ -36,6 +36,12 @@ const mp_obj_type_t enum_name = { \
 #define PB_PARSE_ARGS_METHOD(parsed_args, n_args_including_self, pos_args, kw_args, allowed_args) \
     PB_PARSE_ARGS(parsed_args, n_args_including_self, pos_args, kw_args, allowed_args, 1)
 
+// Parse the arguments of a __init__ (without parsing self)
+#define PB_PARSE_ARGS_CLASS(parsed_args, n_args, pos_and_kw_args, allowed_args) \
+    mp_map_t kw_args; \
+    mp_map_init_fixed_table(&kw_args, n_kw, pos_and_kw_args + n_args); \
+    PB_PARSE_ARGS(parsed_args, n_args, pos_and_kw_args, &kw_args, allowed_args, 0)
+
 // Required argument
 #define PB_ARG_REQUIRED(name) {MP_QSTR_##name, MP_ARG_OBJ | MP_ARG_REQUIRED}
 

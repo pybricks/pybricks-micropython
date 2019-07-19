@@ -19,10 +19,16 @@ typedef struct _ev3devices_InfraredSensor_obj_t {
 
 // pybricks.ev3devices.InfraredSensor.__init__
 STATIC mp_obj_t ev3devices_InfraredSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
-    mp_arg_check_num(n_args, n_kw, 1, 1, false);
+    STATIC const mp_arg_t allowed_args[] = {
+        PB_ARG_REQUIRED(port),
+    };
+    PB_PARSE_ARGS_CLASS(parsed_args, n_args, args, allowed_args);
+
+    mp_obj_t port = parsed_args[0].u_obj;
+
     ev3devices_InfraredSensor_obj_t *self = m_new_obj(ev3devices_InfraredSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
-    pb_assert(ev3device_get_device(&self->iodev, mp_obj_get_int(args[0])));
+    pb_assert(ev3device_get_device(&self->iodev, mp_obj_get_int(port)));
     return MP_OBJ_FROM_PTR(self);
 }
 
