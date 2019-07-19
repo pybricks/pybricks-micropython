@@ -178,7 +178,6 @@ SRC_C += $(SRC_MOD)
 # Pybricks port core source files
 SRC_C += \
 	pbinit.c \
-	ev3platform.c \
 
 LIB_SRC_C = $(addprefix lib/,\
 	$(LIB_SRC_C_EXTRA) \
@@ -214,6 +213,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	pbio/drv/ev3dev_stretch/motor.c \
 	pbio/drv/ev3dev_stretch/light.c \
 	pbio/drv/ioport/ioport_ev3dev_stretch.c \
+	pbio/drv/ev3dev_stretch/ev3sensor.c \
 	pbio/platform/ev3dev_stretch/clock.c \
 	pbio/src/main.c \
 	pbio/src/light.c \

@@ -8,10 +8,10 @@
 
 #include "py/obj.h"
 
-#include "ev3platform.h"
+#include <pbdrv/ev3sensor.h>
 
 // TODO: Make structure like iodevice
-typedef struct _ev3_iodev_t {
+typedef struct _pbio_ev3iodev_t {
     /**
      * The device ID
      */
@@ -35,9 +35,9 @@ typedef struct _ev3_iodev_t {
     /**
      * Platform specific low-level device abstraction
      */
-    ev3_platform_t *platform;
-} ev3_iodev_t;
+    pbdrv_ev3_sensor_t *sensor;
+} pbio_ev3iodev_t;
 
-pbio_error_t ev3device_get_device(ev3_iodev_t **iodev, pbio_port_t port);
+pbio_error_t ev3device_get_device(pbio_ev3iodev_t **iodev, pbio_port_t port);
 
-pbio_error_t ev3device_get_values_at_mode(ev3_iodev_t *iodev, pbio_iodev_mode_id_t mode, void *values);
+pbio_error_t ev3device_get_values_at_mode(pbio_ev3iodev_t *iodev, pbio_iodev_mode_id_t mode, void *values);

@@ -6,15 +6,15 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <pbdrv/ev3sensor.h>
+
 #include <pbio/port.h>
 #include <pbio/iodev.h>
-
-#include "ev3platform.h"
 
 #define MAX_PATH_LENGTH 60
 #define MAX_READ_LENGTH "60"
 
-struct _ev3_platform_t {
+struct _pbdrv_ev3_sensor_t {
     int n_sensor;
     FILE *f_mode;
     FILE *f_driver_name;
@@ -101,47 +101,47 @@ pbio_error_t sysfs_read_int(FILE *file, int *dest) {
 }
 
 // Initialize an ev3dev sensor by opening the relevant sysfs attributes
-pbio_error_t ev3_platform_init(ev3_platform_t *platform, pbio_port_t port) {
+pbio_error_t ev3_sensor_init(pbdrv_ev3_sensor_t *sensor, pbio_port_t port) {
     pbio_error_t err;
 
-    err = sysfs_get_number(port, &platform->n_sensor) ;
+    err = sysfs_get_number(port, &sensor->n_sensor) ;
     if (err != PBIO_SUCCESS) { return err; }
 
-    err = sysfs_open(&platform->f_driver_name, platform->n_sensor, "driver_name", "r");
+    err = sysfs_open(&sensor->f_driver_name, sensor->n_sensor, "driver_name", "r");
     if (err != PBIO_SUCCESS) { return err; }
 
-    err = sysfs_open(&platform->f_mode, platform->n_sensor, "mode", "r+");
+    err = sysfs_open(&sensor->f_mode, sensor->n_sensor, "mode", "r+");
     if (err != PBIO_SUCCESS) { return err; }
 
-    err = sysfs_open(&platform->f_bin_data_format, platform->n_sensor, "bin_data_format", "r");
+    err = sysfs_open(&sensor->f_bin_data_format, sensor->n_sensor, "bin_data_format", "r");
     if (err != PBIO_SUCCESS) { return err; }
 
-    err = sysfs_open(&platform->f_num_values, platform->n_sensor, "num_values", "r");
+    err = sysfs_open(&sensor->f_num_values, sensor->n_sensor, "num_values", "r");
     if (err != PBIO_SUCCESS) { return err; }
 
-    err = sysfs_open(&platform->f_bin_data, platform->n_sensor, "bin_data", "rb");
+    err = sysfs_open(&sensor->f_bin_data, sensor->n_sensor, "bin_data", "rb");
 
     return PBIO_SUCCESS;
 }
 
-struct _ev3_platform_t platforms[4];
+struct _pbdrv_ev3_sensor_t sensors[4];
 
 // Get an ev3dev sensor
-pbio_error_t ev3_sensor_get_platform(ev3_platform_t **platform, pbio_port_t port) {
+pbio_error_t pbdrv_ev3_sensor_get(pbdrv_ev3_sensor_t **sensor, pbio_port_t port) {
     if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    *platform = &platforms[port - PBIO_PORT_1];
+    *sensor = &sensors[port - PBIO_PORT_1];
 
-    return ev3_platform_init(*platform, port);
+    return ev3_sensor_init(*sensor, port);
 }
 
 // Get the device ID
-pbio_error_t ev3_sensor_get_id(ev3_platform_t *platform, pbio_iodev_type_id_t *id) {
+pbio_error_t pbdrv_ev3_sensor_get_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_type_id_t *id) {
     char driver_name[MAX_PATH_LENGTH];
 
-    pbio_error_t err = sysfs_read_str(platform->f_driver_name, driver_name);
+    pbio_error_t err = sysfs_read_str(sensor->f_driver_name, driver_name);
     if (err != PBIO_SUCCESS) { return err; }
 
     if (!strcmp(driver_name, "lego-ev3-ir")) {
@@ -157,19 +157,19 @@ pbio_error_t ev3_sensor_get_id(ev3_platform_t *platform, pbio_iodev_type_id_t *i
 }
 
 // Get the device info
-pbio_error_t ev3_sensor_get_info(ev3_platform_t *platform, uint8_t *data_len, pbio_iodev_data_type_t *data_type) {
+pbio_error_t pbdrv_ev3_sensor_get_info(pbdrv_ev3_sensor_t *sensor, uint8_t *data_len, pbio_iodev_data_type_t *data_type) {
 
     pbio_error_t err;
 
     // Read data length attribute
     int data_len_int;
-    err = sysfs_read_int(platform->f_num_values, &data_len_int);
+    err = sysfs_read_int(sensor->f_num_values, &data_len_int);
     if (err != PBIO_SUCCESS) { return err; }
     *data_len = data_len_int;
 
     // Read data type attribute
     char s_data_type[10];
-    err = sysfs_read_str(platform->f_bin_data_format, s_data_type);
+    err = sysfs_read_str(sensor->f_bin_data_format, s_data_type);
     if (err != PBIO_SUCCESS) { return err; }
 
     // Convert data type identifier
@@ -194,7 +194,7 @@ pbio_error_t ev3_sensor_get_info(ev3_platform_t *platform, uint8_t *data_len, pb
 }
 
 // Set the sensor mode
-pbio_error_t ev3_sensor_set_mode(ev3_platform_t *platform, pbio_iodev_mode_id_t mode) {
+pbio_error_t pbdrv_ev3_sensor_set_mode(pbdrv_ev3_sensor_t *sensor, pbio_iodev_mode_id_t mode) {
 
     // sysfs identifier for mode
     char *sysfs_mode;
@@ -241,15 +241,15 @@ pbio_error_t ev3_sensor_set_mode(ev3_platform_t *platform, pbio_iodev_mode_id_t 
     }
     
     // Write mode identifier
-    if (fseek(platform->f_mode, 0, SEEK_SET) == -1) {
+    if (fseek(sensor->f_mode, 0, SEEK_SET) == -1) {
         return PBIO_ERROR_IO;
     }
 
-    if (fprintf(platform->f_mode, sysfs_mode) != strlen(sysfs_mode)) {
+    if (fprintf(sensor->f_mode, sysfs_mode) != strlen(sysfs_mode)) {
         return PBIO_ERROR_IO;
     }
     
-    if (fflush(platform->f_mode) != 0) {
+    if (fflush(sensor->f_mode) != 0) {
         return PBIO_ERROR_IO;
     }
 
@@ -257,15 +257,15 @@ pbio_error_t ev3_sensor_set_mode(ev3_platform_t *platform, pbio_iodev_mode_id_t 
 }
 
 // Read 32 bytes from bin_data attribute
-pbio_error_t ev3_sensor_get_bin_data(ev3_platform_t *platform, char *bin_data) {
-    if (fseek(platform->f_bin_data, 0, SEEK_SET) == -1) {
+pbio_error_t pbdrv_ev3_sensor_get_bin_data(pbdrv_ev3_sensor_t *sensor, char *bin_data) {
+    if (fseek(sensor->f_bin_data, 0, SEEK_SET) == -1) {
         return PBIO_ERROR_IO;
     }
 
-    if (fread(bin_data, 1, PBIO_IODEV_MAX_DATA_SIZE, platform->f_bin_data) < PBIO_IODEV_MAX_DATA_SIZE) {
+    if (fread(bin_data, 1, PBIO_IODEV_MAX_DATA_SIZE, sensor->f_bin_data) < PBIO_IODEV_MAX_DATA_SIZE) {
         return PBIO_ERROR_IO;
     }
-    if (fflush(platform->f_bin_data) != 0) {
+    if (fflush(sensor->f_bin_data) != 0) {
         return PBIO_ERROR_IO;
     }
     return PBIO_SUCCESS;

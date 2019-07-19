@@ -14,7 +14,7 @@
 // pybricks.ev3devices.InfraredSensor class object
 typedef struct _ev3devices_InfraredSensor_obj_t {
     mp_obj_base_t base;
-    ev3_iodev_t *iodev;
+    pbio_ev3iodev_t *iodev;
 } ev3devices_InfraredSensor_obj_t;
 
 // pybricks.ev3devices.InfraredSensor.__init__
@@ -97,7 +97,7 @@ STATIC const mp_obj_type_t ev3devices_InfraredSensor_type = {
 // ColorSensor
 typedef struct _ev3devices_ColorSensor_obj_t {
     mp_obj_base_t base;
-    ev3_iodev_t *iodev;
+    pbio_ev3iodev_t *iodev;
 } ev3devices_ColorSensor_obj_t;
 
 STATIC mp_obj_t ev3devices_ColorSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {

@@ -11,15 +11,15 @@
 
 #include <pbio/ev3device.h>
 
-ev3_iodev_t iodevices[4];
+pbio_ev3iodev_t iodevices[4];
 
 // Get an ev3dev sensor
-pbio_error_t ev3device_get_device(ev3_iodev_t **iodev, pbio_port_t port) {
+pbio_error_t ev3device_get_device(pbio_ev3iodev_t **iodev, pbio_port_t port) {
     if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    ev3_iodev_t *_iodev = &iodevices[port - PBIO_PORT_1];
+    pbio_ev3iodev_t *_iodev = &iodevices[port - PBIO_PORT_1];
 
     *iodev = _iodev;
 
@@ -27,13 +27,13 @@ pbio_error_t ev3device_get_device(ev3_iodev_t **iodev, pbio_port_t port) {
 
     pbio_error_t err;
 
-    err = ev3_sensor_get_platform(&_iodev->platform, _iodev->port);
+    err = pbdrv_ev3_sensor_get(&_iodev->sensor, _iodev->port);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Get device ID
-    err = ev3_sensor_get_id(_iodev->platform, &_iodev->type_id);
+    err = pbdrv_ev3_sensor_get_id(_iodev->sensor, &_iodev->type_id);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -42,7 +42,7 @@ pbio_error_t ev3device_get_device(ev3_iodev_t **iodev, pbio_port_t port) {
 }
 
 
-pbio_error_t ev3device_get_values_at_mode(ev3_iodev_t *iodev, pbio_iodev_mode_id_t mode, void *values) {
+pbio_error_t ev3device_get_values_at_mode(pbio_ev3iodev_t *iodev, pbio_iodev_mode_id_t mode, void *values) {
 
     pbio_error_t err;
 
@@ -53,13 +53,13 @@ pbio_error_t ev3device_get_values_at_mode(ev3_iodev_t *iodev, pbio_iodev_mode_id
 
     // Set the mode only if not already set, or if this sensor mode requires it
     if (iodev->mode != mode || mode == 0) {
-        err = ev3_sensor_set_mode(iodev->platform, mode);
+        err = pbdrv_ev3_sensor_set_mode(iodev->sensor, mode);
         if (err != PBIO_SUCCESS) {
             return err;
         }
         // Set the new mode and corresponding data info
         iodev->mode = mode;
-        err = ev3_sensor_get_info(iodev->platform, &iodev->data_len, &iodev->data_type);
+        err = pbdrv_ev3_sensor_get_info(iodev->sensor, &iodev->data_len, &iodev->data_type);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -67,7 +67,7 @@ pbio_error_t ev3device_get_values_at_mode(ev3_iodev_t *iodev, pbio_iodev_mode_id
 
     // Read raw data from device
     char data[PBIO_IODEV_MAX_DATA_SIZE];
-    ev3_sensor_get_bin_data(iodev->platform, data);
+    pbdrv_ev3_sensor_get_bin_data(iodev->sensor, data);
 
     for (uint8_t i = 0; i < iodev->data_len; i++) {
         switch (iodev->data_type) {
