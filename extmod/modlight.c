@@ -10,26 +10,26 @@
 
 #include "pberror.h"
 #include "pbobj.h"
+#include "pbkwarg.h"
+
 
 STATIC mp_obj_t colorlight_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    enum { ARG_color, ARG_brightness };
-
-    STATIC const mp_arg_t allowed_args[] = {
+    PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
         PB_ARG_REQUIRED(color),
-        PB_ARG_DEFAULT_INT(brightness, 100),
-    };
-    PB_PARSE_ARGS_FUNCTION(args, n_args, pos_args, kw_args, allowed_args);
+        PB_ARG_DEFAULT_INT(brightness, 100)
+    );
 
-    pbio_light_color_t color_id = MP_OBJ_IS_TYPE(args[ARG_color].u_obj, &mp_type_NoneType) ?
+    pbio_light_color_t color_id = MP_OBJ_IS_TYPE(color, &mp_type_NoneType) ?
         PBIO_LIGHT_COLOR_NONE:
-        mp_obj_get_int(args[ARG_color].u_obj);
+        mp_obj_get_int(color);
 
-    mp_int_t bright = pb_obj_get_int(args[ARG_brightness].u_obj);
+
+    mp_int_t bright = pb_obj_get_int(brightness);
     bright = bright < 0 ? 0 : bright > 100 ? 100: bright;
 
     if (bright != 100) {
         pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-    }    
+    }
 
     if (color_id < PBIO_LIGHT_COLOR_NONE || color_id > PBIO_LIGHT_COLOR_PURPLE) {
         pb_assert(PBIO_ERROR_INVALID_ARG);

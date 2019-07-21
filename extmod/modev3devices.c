@@ -6,6 +6,7 @@
 #include "py/runtime.h"
 
 #include "pbobj.h"
+#include "pbkwarg.h"
 
 #include <pbio/iodev.h>
 #include <pbio/ev3device.h>
@@ -19,12 +20,9 @@ typedef struct _ev3devices_InfraredSensor_obj_t {
 
 // pybricks.ev3devices.InfraredSensor.__init__
 STATIC mp_obj_t ev3devices_InfraredSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
-    STATIC const mp_arg_t allowed_args[] = {
-        PB_ARG_REQUIRED(port),
-    };
-    PB_PARSE_ARGS_CLASS(parsed_args, n_args, args, allowed_args);
-
-    mp_obj_t port = parsed_args[0].u_obj;
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args, 
+        PB_ARG_REQUIRED(port)
+    );
 
     ev3devices_InfraredSensor_obj_t *self = m_new_obj(ev3devices_InfraredSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
@@ -52,23 +50,21 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_InfraredSensor_distance_obj, ev3devi
 STATIC mp_obj_t ev3devices_InfraredSensor_beacon(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     ev3devices_InfraredSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(channel)
+    );
 
-    STATIC const mp_arg_t allowed_args[] = {
-        PB_ARG_REQUIRED(channel),
-    };
-    PB_PARSE_ARGS_METHOD(args, n_args, pos_args, kw_args, allowed_args);
+    mp_int_t channel_no = pb_obj_get_int(channel);
 
-    mp_int_t channel = pb_obj_get_int(args[0].u_obj);
-
-    if (channel < 1 || channel > 4) {
+    if (channel_no < 1 || channel_no > 4) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
     int8_t beacon_data[8];
     pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_SEEK, beacon_data));
 
-    mp_int_t heading = beacon_data[channel*2-2]*3;
-    mp_int_t distance = beacon_data[channel*2-1];
+    mp_int_t heading = beacon_data[channel_no*2-2]*3;
+    mp_int_t distance = beacon_data[channel_no*2-1];
     
     mp_obj_t ret[2];
     
