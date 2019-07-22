@@ -24,6 +24,7 @@ pbio_error_t ev3device_get_device(pbio_ev3iodev_t **iodev, pbio_port_t port) {
     *iodev = _iodev;
 
     _iodev->port = port;
+    _iodev->mode = 255;
 
     pbio_error_t err;
 

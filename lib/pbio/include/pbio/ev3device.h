@@ -49,6 +49,11 @@ pbio_error_t ev3device_get_values_at_mode(pbio_ev3iodev_t *iodev, uint8_t mode, 
  * Mode identifiers for EV3 devices.
  */
 
+// LEGO MINDSTORMS EV3 Touch Sensor
+enum {    
+    PBIO_IODEV_MODE_ID_EV3_TOUCH_SENSOR__TOUCH   = 0,
+};
+
 // LEGO MINDSTORMS EV3 Color Sensor
 enum {    
     PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__COL_REFLECT   = 0,

@@ -147,14 +147,17 @@ pbio_error_t pbdrv_ev3_sensor_get_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_type
 
     if (!strcmp(driver_name, "lego-ev3-ir")) {
         *id = PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR;
-        return PBIO_SUCCESS;
     }
     else if (!strcmp(driver_name, "lego-ev3-color")) {
         *id = PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR;
-        return PBIO_SUCCESS;
     }
-
-    return PBIO_ERROR_IO;
+    else if (!strcmp(driver_name, "lego-ev3-touch")) {
+        *id = PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR;
+    }
+    else {
+        return PBIO_ERROR_IO;
+    }
+    return PBIO_SUCCESS;
 }
 
 // Get the device info
@@ -201,6 +204,15 @@ pbio_error_t pbdrv_ev3_sensor_set_mode(pbdrv_ev3_sensor_t *sensor, pbio_iodev_ty
     char *sysfs_mode;
 
     switch(id) {
+        case PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR:
+            switch (mode) {
+                case PBIO_IODEV_MODE_ID_EV3_TOUCH_SENSOR__TOUCH:
+                    sysfs_mode = "TOUCH";
+                    break;
+                default:
+                    return PBIO_ERROR_INVALID_ARG;
+            }
+            break;
         case PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR:
             switch (mode) {
                 case PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__COL_REFLECT:

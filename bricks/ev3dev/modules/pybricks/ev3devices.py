@@ -4,7 +4,7 @@
 """Classes for LEGO MINDSTORMS EV3 Devices."""
 
 # import those ev3devices that are already written in MicroPython-style C code.
-from ev3devices_c import Motor, InfraredSensor, ColorSensor
+from ev3devices_c import Motor, InfraredSensor, ColorSensor, TouchSensor
 from .parameters import Color, Button, Direction
 from .tools import StopWatch, wait
 
@@ -12,7 +12,7 @@ from .tools import StopWatch, wait
 from .ev3devio import Ev3devSensor, Ev3devUartSensor
 
 
-class TouchSensor(Ev3devSensor):
+class TouchSensorOld(Ev3devSensor):
     """LEGO MINDSTORMS EV3 Touch Sensor.
 
     Contained in set:

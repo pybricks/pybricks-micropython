@@ -13,6 +13,53 @@
 #include <pbio/ev3device.h>
 #include <pberror.h>
 
+// pybricks.ev3devices.TouchSensor class object
+typedef struct _ev3devices_TouchSensor_obj_t {
+    mp_obj_base_t base;
+    pbio_ev3iodev_t *iodev;
+} ev3devices_TouchSensor_obj_t;
+
+// pybricks.ev3devices.TouchSensor.__init__
+STATIC mp_obj_t ev3devices_TouchSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+    mp_arg_check_num(n_args, n_kw, 1, 1, false);
+    ev3devices_TouchSensor_obj_t *self = m_new_obj(ev3devices_TouchSensor_obj_t);
+    self->base.type = (mp_obj_type_t*) type;
+    pb_assert(ev3device_get_device(&self->iodev, mp_obj_get_int(args[0])));
+    return MP_OBJ_FROM_PTR(self);
+}
+
+// pybricks.ev3devices.TouchSensor.__str__
+STATIC void ev3devices_TouchSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
+    ev3devices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    mp_printf(print, qstr_str(MP_QSTR_TouchSensor));
+    mp_printf(print, " on Port.S%c",  self->iodev->port);
+}
+
+// pybricks.ev3devices.TouchSensor.pressed
+STATIC mp_obj_t ev3devices_TouchSensor_pressed(mp_obj_t self_in) {
+    ev3devices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t analog;
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_ID_EV3_TOUCH_SENSOR__TOUCH, &analog));
+    return mp_obj_new_bool(analog > 250);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_TouchSensor_pressed_obj, ev3devices_TouchSensor_pressed);
+
+
+// dir(pybricks.ev3devices.TouchSensor)
+STATIC const mp_rom_map_elem_t ev3devices_TouchSensor_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_pressed), MP_ROM_PTR(&ev3devices_TouchSensor_pressed_obj) },
+};
+STATIC MP_DEFINE_CONST_DICT(ev3devices_TouchSensor_locals_dict, ev3devices_TouchSensor_locals_dict_table);
+
+// type(pybricks.ev3devices.TouchSensor)
+STATIC const mp_obj_type_t ev3devices_TouchSensor_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_TouchSensor,
+    .print = ev3devices_TouchSensor_print,
+    .make_new = ev3devices_TouchSensor_make_new,
+    .locals_dict = (mp_obj_dict_t*)&ev3devices_TouchSensor_locals_dict,
+};
+
 // pybricks.ev3devices.InfraredSensor class object
 typedef struct _ev3devices_InfraredSensor_obj_t {
     mp_obj_base_t base;
@@ -199,6 +246,7 @@ STATIC const mp_rom_map_elem_t ev3devices_InfraredSensor_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(ev3devices_InfraredSensor_locals_dict, ev3devices_InfraredSensor_locals_dict_table);
 
+// type(pybricks.ev3devices.InfraredSensor)
 STATIC const mp_obj_type_t ev3devices_InfraredSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_InfraredSensor,
@@ -207,12 +255,13 @@ STATIC const mp_obj_type_t ev3devices_InfraredSensor_type = {
     .locals_dict = (mp_obj_dict_t*)&ev3devices_InfraredSensor_locals_dict,
 };
 
-// ColorSensor
+// pybricks.ev3devices.ColorSensor class object
 typedef struct _ev3devices_ColorSensor_obj_t {
     mp_obj_base_t base;
     pbio_ev3iodev_t *iodev;
 } ev3devices_ColorSensor_obj_t;
 
+// pybricks.ev3devices.ColorSensor.__init__
 STATIC mp_obj_t ev3devices_ColorSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     mp_arg_check_num(n_args, n_kw, 1, 1, false);
     ev3devices_ColorSensor_obj_t *self = m_new_obj(ev3devices_ColorSensor_obj_t);
@@ -221,12 +270,14 @@ STATIC mp_obj_t ev3devices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     return MP_OBJ_FROM_PTR(self);
 }
 
+// pybricks.ev3devices.ColorSensor.__str__
 STATIC void ev3devices_ColorSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
     ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, qstr_str(MP_QSTR_ColorSensor));
     mp_printf(print, " on Port.S%c",  self->iodev->port);
 }
 
+// pybricks.ev3devices.ColorSensor.reflection
 STATIC mp_obj_t ev3devices_ColorSensor_reflection(mp_obj_t self_in) {
     ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int8_t reflection;
@@ -235,6 +286,7 @@ STATIC mp_obj_t ev3devices_ColorSensor_reflection(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_ColorSensor_reflection_obj, ev3devices_ColorSensor_reflection);
 
+// pybricks.ev3devices.ColorSensor.rgb
 STATIC mp_obj_t ev3devices_ColorSensor_rgb(mp_obj_t self_in) {
     ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int16_t rgb[3];
@@ -254,12 +306,14 @@ STATIC mp_obj_t ev3devices_ColorSensor_rgb(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_ColorSensor_rgb_obj, ev3devices_ColorSensor_rgb);
 
+// dir(pybricks.ev3devices.ColorSensor)
 STATIC const mp_rom_map_elem_t ev3devices_ColorSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_reflection), MP_ROM_PTR(&ev3devices_ColorSensor_reflection_obj) },
     { MP_ROM_QSTR(MP_QSTR_rgb), MP_ROM_PTR(&ev3devices_ColorSensor_rgb_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(ev3devices_ColorSensor_locals_dict, ev3devices_ColorSensor_locals_dict_table);
 
+// type(pybricks.ev3devices.ColorSensor)
 STATIC const mp_obj_type_t ev3devices_ColorSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_ColorSensor,
@@ -268,9 +322,11 @@ STATIC const mp_obj_type_t ev3devices_ColorSensor_type = {
     .locals_dict = (mp_obj_dict_t*)&ev3devices_ColorSensor_locals_dict,
 };
 
+// dir(pybricks.ev3devices)
 STATIC const mp_rom_map_elem_t ev3devices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),       MP_ROM_QSTR(MP_QSTR_ev3devices)              },
     { MP_ROM_QSTR(MP_QSTR_Motor),          MP_ROM_PTR(&motor_Motor_type)                },
+    { MP_ROM_QSTR(MP_QSTR_TouchSensor),    MP_ROM_PTR(&ev3devices_TouchSensor_type)     },
     { MP_ROM_QSTR(MP_QSTR_InfraredSensor), MP_ROM_PTR(&ev3devices_InfraredSensor_type)  },
     { MP_ROM_QSTR(MP_QSTR_ColorSensor),    MP_ROM_PTR(&ev3devices_ColorSensor_type)     },
 };
