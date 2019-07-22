@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018 Laurens Valk
+// Copyright (c) 2019 Laurens Valk
 
 #include "modmotor.h"
 #include "py/mphal.h"
@@ -9,6 +9,7 @@
 #include "pbkwarg.h"
 
 #include <pbio/iodev.h>
+#include <pbio/light.h>
 #include <pbio/button.h>
 #include <pbio/ev3device.h>
 #include <pberror.h>
@@ -277,6 +278,35 @@ STATIC void ev3devices_ColorSensor_print(const mp_print_t *print,  mp_obj_t self
     mp_printf(print, " on Port.S%c",  self->iodev->port);
 }
 
+// pybricks.ev3devices.ColorSensor.color
+STATIC mp_obj_t ev3devices_ColorSensor_color(mp_obj_t self_in) {
+    ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int8_t color;
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__COL_COLOR, &color));
+
+    switch(color) {
+        case 1: return mp_obj_new_int(PBIO_LIGHT_COLOR_BLACK);
+        case 2: return mp_obj_new_int(PBIO_LIGHT_COLOR_BLUE);
+        case 3: return mp_obj_new_int(PBIO_LIGHT_COLOR_GREEN);
+        case 4: return mp_obj_new_int(PBIO_LIGHT_COLOR_YELLOW);
+        case 5: return mp_obj_new_int(PBIO_LIGHT_COLOR_RED);
+        case 6: return mp_obj_new_int(PBIO_LIGHT_COLOR_WHITE);
+        case 7: return mp_obj_new_int(PBIO_LIGHT_COLOR_BROWN);
+        default: return mp_const_none;
+    }
+    return mp_obj_new_int(color);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_ColorSensor_color_obj, ev3devices_ColorSensor_color);
+
+// pybricks.ev3devices.ColorSensor.ambient
+STATIC mp_obj_t ev3devices_ColorSensor_ambient(mp_obj_t self_in) {
+    ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int8_t ambient;
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__COL_AMBIENT, &ambient));
+    return mp_obj_new_int(ambient);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_ColorSensor_ambient_obj, ev3devices_ColorSensor_ambient);
+
 // pybricks.ev3devices.ColorSensor.reflection
 STATIC mp_obj_t ev3devices_ColorSensor_reflection(mp_obj_t self_in) {
     ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -309,7 +339,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_ColorSensor_rgb_obj, ev3devices_Colo
 // dir(pybricks.ev3devices.ColorSensor)
 STATIC const mp_rom_map_elem_t ev3devices_ColorSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_reflection), MP_ROM_PTR(&ev3devices_ColorSensor_reflection_obj) },
-    { MP_ROM_QSTR(MP_QSTR_rgb), MP_ROM_PTR(&ev3devices_ColorSensor_rgb_obj) },
+    { MP_ROM_QSTR(MP_QSTR_ambient   ), MP_ROM_PTR(&ev3devices_ColorSensor_ambient_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_color     ), MP_ROM_PTR(&ev3devices_ColorSensor_color_obj)      },
+    { MP_ROM_QSTR(MP_QSTR_rgb       ), MP_ROM_PTR(&ev3devices_ColorSensor_rgb_obj)        },
 };
 STATIC MP_DEFINE_CONST_DICT(ev3devices_ColorSensor_locals_dict, ev3devices_ColorSensor_locals_dict_table);
 
