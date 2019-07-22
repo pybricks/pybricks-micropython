@@ -24,7 +24,7 @@ STATIC mp_obj_t ev3devices_TouchSensor_make_new(const mp_obj_type_t *type, size_
     mp_arg_check_num(n_args, n_kw, 1, 1, false);
     ev3devices_TouchSensor_obj_t *self = m_new_obj(ev3devices_TouchSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
-    pb_assert(ev3device_get_device(&self->iodev, mp_obj_get_int(args[0])));
+    pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR, mp_obj_get_int(args[0])));
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -74,7 +74,7 @@ STATIC mp_obj_t ev3devices_InfraredSensor_make_new(const mp_obj_type_t *type, si
 
     ev3devices_InfraredSensor_obj_t *self = m_new_obj(ev3devices_InfraredSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
-    pb_assert(ev3device_get_device(&self->iodev, mp_obj_get_int(port)));
+    pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR, mp_obj_get_int(port)));
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -266,7 +266,7 @@ STATIC mp_obj_t ev3devices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     mp_arg_check_num(n_args, n_kw, 1, 1, false);
     ev3devices_ColorSensor_obj_t *self = m_new_obj(ev3devices_ColorSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
-    pb_assert(ev3device_get_device(&self->iodev, mp_obj_get_int(args[0])));
+    pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR, mp_obj_get_int(args[0])));
     return MP_OBJ_FROM_PTR(self);
 }
 

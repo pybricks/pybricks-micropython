@@ -14,7 +14,7 @@
 pbio_ev3iodev_t iodevices[4];
 
 // Get an ev3dev sensor
-pbio_error_t ev3device_get_device(pbio_ev3iodev_t **iodev, pbio_port_t port) {
+pbio_error_t ev3device_get_device(pbio_ev3iodev_t **iodev, pbio_iodev_type_id_t valid_id, pbio_port_t port) {
     if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -33,10 +33,13 @@ pbio_error_t ev3device_get_device(pbio_ev3iodev_t **iodev, pbio_port_t port) {
         return err;
     }
 
-    // Get device ID
+    // Get and verify device ID
     err = pbdrv_ev3_sensor_get_id(_iodev->sensor, &_iodev->type_id);
     if (err != PBIO_SUCCESS) {
         return err;
+    }
+    if (_iodev->type_id != valid_id) {
+        return PBIO_ERROR_NO_DEV;
     }
 
     return PBIO_SUCCESS;
