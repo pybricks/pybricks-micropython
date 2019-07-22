@@ -40,7 +40,7 @@ STATIC void ev3devices_TouchSensor_print(const mp_print_t *print,  mp_obj_t self
 STATIC mp_obj_t ev3devices_TouchSensor_pressed(mp_obj_t self_in) {
     ev3devices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t analog;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_ID_EV3_TOUCH_SENSOR__TOUCH, &analog));
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_TOUCH_SENSOR__TOUCH, &analog));
     return mp_obj_new_bool(analog > 250);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_TouchSensor_pressed_obj, ev3devices_TouchSensor_pressed);
@@ -90,7 +90,7 @@ STATIC void ev3devices_InfraredSensor_print(const mp_print_t *print,  mp_obj_t s
 STATIC mp_obj_t ev3devices_InfraredSensor_distance(mp_obj_t self_in) {
     ev3devices_InfraredSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int8_t distance;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_PROX, &distance));
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_INFRARED_SENSOR__PROX, &distance));
     return mp_obj_new_int(distance);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_InfraredSensor_distance_obj, ev3devices_InfraredSensor_distance);
@@ -110,7 +110,7 @@ STATIC mp_obj_t ev3devices_InfraredSensor_beacon(size_t n_args, const mp_obj_t *
     }
 
     int8_t beacon_data[8];
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_SEEK, beacon_data));
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_INFRARED_SENSOR__SEEK, beacon_data));
 
     mp_int_t heading = beacon_data[channel_no*2-2]*3;
     mp_int_t distance = beacon_data[channel_no*2-1];
@@ -145,7 +145,7 @@ STATIC mp_obj_t ev3devices_InfraredSensor_buttons(size_t n_args, const mp_obj_t 
     }
 
     int8_t buttons_data[4];
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_REMOTE, buttons_data));
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_INFRARED_SENSOR__REMOTE, buttons_data));
 
     mp_int_t encoded = buttons_data[channel_no-1];
     mp_int_t pressed[2];
@@ -212,7 +212,7 @@ STATIC mp_obj_t ev3devices_InfraredSensor_keypad(mp_obj_t self_in) {
     ev3devices_InfraredSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     int16_t keypad_data;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_REM_A, &keypad_data));
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_INFRARED_SENSOR__REM_A, &keypad_data));
 
     mp_obj_t pressed_obj[4];
     uint8_t len = 0;
@@ -242,7 +242,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_InfraredSensor_keypad_obj, ev3device
 STATIC const mp_rom_map_elem_t ev3devices_InfraredSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_distance), MP_ROM_PTR(&ev3devices_InfraredSensor_distance_obj) },
     { MP_ROM_QSTR(MP_QSTR_beacon),   MP_ROM_PTR(&ev3devices_InfraredSensor_beacon_obj) },
-    { MP_ROM_QSTR(MP_QSTR_buttons),   MP_ROM_PTR(&ev3devices_InfraredSensor_buttons_obj) },
+    { MP_ROM_QSTR(MP_QSTR_buttons),  MP_ROM_PTR(&ev3devices_InfraredSensor_buttons_obj) },
     { MP_ROM_QSTR(MP_QSTR_keypad),   MP_ROM_PTR(&ev3devices_InfraredSensor_keypad_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(ev3devices_InfraredSensor_locals_dict, ev3devices_InfraredSensor_locals_dict_table);
@@ -282,7 +282,7 @@ STATIC void ev3devices_ColorSensor_print(const mp_print_t *print,  mp_obj_t self
 STATIC mp_obj_t ev3devices_ColorSensor_color(mp_obj_t self_in) {
     ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int8_t color;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__COL_COLOR, &color));
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_COLOR_SENSOR__COLOR, &color));
 
     switch(color) {
         case 1: return mp_obj_new_int(PBIO_LIGHT_COLOR_BLACK);
@@ -302,7 +302,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_ColorSensor_color_obj, ev3devices_Co
 STATIC mp_obj_t ev3devices_ColorSensor_ambient(mp_obj_t self_in) {
     ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int8_t ambient;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__COL_AMBIENT, &ambient));
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_COLOR_SENSOR__AMBIENT, &ambient));
     return mp_obj_new_int(ambient);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_ColorSensor_ambient_obj, ev3devices_ColorSensor_ambient);
@@ -311,7 +311,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_ColorSensor_ambient_obj, ev3devices_
 STATIC mp_obj_t ev3devices_ColorSensor_reflection(mp_obj_t self_in) {
     ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int8_t reflection;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__COL_REFLECT, &reflection));
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_COLOR_SENSOR__REFLECT, &reflection));
     return mp_obj_new_int(reflection);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_ColorSensor_reflection_obj, ev3devices_ColorSensor_reflection);
@@ -320,7 +320,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_ColorSensor_reflection_obj, ev3devic
 STATIC mp_obj_t ev3devices_ColorSensor_rgb(mp_obj_t self_in) {
     ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int16_t rgb[3];
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__RGB_RAW, rgb));
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_COLOR_SENSOR__RGB_RAW, rgb));
     mp_obj_t tup[3];
 
     rgb[0] = (0.258*rgb[0])-0.3;
@@ -356,11 +356,11 @@ STATIC const mp_obj_type_t ev3devices_ColorSensor_type = {
 
 // dir(pybricks.ev3devices)
 STATIC const mp_rom_map_elem_t ev3devices_globals_table[] = {
-    { MP_ROM_QSTR(MP_QSTR___name__),       MP_ROM_QSTR(MP_QSTR_ev3devices)              },
-    { MP_ROM_QSTR(MP_QSTR_Motor),          MP_ROM_PTR(&motor_Motor_type)                },
-    { MP_ROM_QSTR(MP_QSTR_TouchSensor),    MP_ROM_PTR(&ev3devices_TouchSensor_type)     },
-    { MP_ROM_QSTR(MP_QSTR_InfraredSensor), MP_ROM_PTR(&ev3devices_InfraredSensor_type)  },
-    { MP_ROM_QSTR(MP_QSTR_ColorSensor),    MP_ROM_PTR(&ev3devices_ColorSensor_type)     },
+    { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_ev3devices)              },
+    { MP_ROM_QSTR(MP_QSTR_Motor),            MP_ROM_PTR(&motor_Motor_type)                },
+    { MP_ROM_QSTR(MP_QSTR_TouchSensor),      MP_ROM_PTR(&ev3devices_TouchSensor_type)     },
+    { MP_ROM_QSTR(MP_QSTR_InfraredSensor),   MP_ROM_PTR(&ev3devices_InfraredSensor_type)  },
+    { MP_ROM_QSTR(MP_QSTR_ColorSensor),      MP_ROM_PTR(&ev3devices_ColorSensor_type)     },
 };
 
 STATIC MP_DEFINE_CONST_DICT(pb_module_ev3devices_globals, ev3devices_globals_table);
