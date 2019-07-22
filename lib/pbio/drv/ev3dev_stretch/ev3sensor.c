@@ -17,11 +17,13 @@
 
 struct _pbdrv_ev3_sensor_t {
     int n_sensor;
+    int n_modes;
     FILE *f_mode;
     FILE *f_driver_name;
     FILE *f_bin_data;
     FILE *f_num_values;
     FILE *f_bin_data_format;
+    char modes[12][17];
 };
 
 // Get the ev3dev sensor number for a given port
@@ -121,6 +123,17 @@ pbio_error_t ev3_sensor_init(pbdrv_ev3_sensor_t *sensor, pbio_port_t port) {
     if (err != PBIO_SUCCESS) { return err; }
 
     err = sysfs_open(&sensor->f_bin_data, sensor->n_sensor, "bin_data", "rb");
+    if (err != PBIO_SUCCESS) { return err; }
+
+    FILE *f_modes;
+    err = sysfs_open(&f_modes, sensor->n_sensor, "modes", "r");
+    if (err != PBIO_SUCCESS) { return err; }
+    
+    sensor->n_modes = 0;
+    while (fscanf(f_modes, " %16s", sensor->modes[sensor->n_modes++]) == 1);
+    if (fclose(f_modes) != 0) {
+        return PBIO_ERROR_IO;
+    }
 
     return PBIO_SUCCESS;
 }
@@ -198,73 +211,15 @@ pbio_error_t pbdrv_ev3_sensor_get_info(pbdrv_ev3_sensor_t *sensor, uint8_t *data
 }
 
 // Set the sensor mode
-pbio_error_t pbdrv_ev3_sensor_set_mode(pbdrv_ev3_sensor_t *sensor, pbio_iodev_type_id_t id, uint8_t mode) {
+pbio_error_t pbdrv_ev3_sensor_set_mode(pbdrv_ev3_sensor_t *sensor, uint8_t mode) {
+
+    if (mode > sensor->n_modes) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
 
     // sysfs identifier for mode
-    char *sysfs_mode;
+    char *sysfs_mode = sensor->modes[mode];
 
-    switch(id) {
-        case PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR:
-            switch (mode) {
-                case PBIO_IODEV_MODE_ID_EV3_TOUCH_SENSOR__TOUCH:
-                    sysfs_mode = "TOUCH";
-                    break;
-                default:
-                    return PBIO_ERROR_INVALID_ARG;
-            }
-            break;
-        case PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR:
-            switch (mode) {
-                case PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__COL_REFLECT:
-                    sysfs_mode = "COL-REFLECT";
-                    break;
-                case PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__COL_AMBIENT:
-                    sysfs_mode = "COL-AMBIENT";
-                    break;
-                case PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__COL_COLOR:
-                    sysfs_mode = "COL-COLOR";
-                    break;
-                case PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__REF_RAW:
-                    sysfs_mode = "REW-RAW";
-                    break;
-                case PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__RGB_RAW:
-                    sysfs_mode = "RGB-RAW";
-                    break;
-                case PBIO_IODEV_MODE_ID_EV3_COLOR_SENSOR__COL_CAL:
-                    sysfs_mode = "COL-CAL";
-                    break;
-                default:
-                    return PBIO_ERROR_INVALID_ARG;
-            }
-            break;
-        case PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR:
-            switch (mode) {
-                case PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_PROX:
-                    sysfs_mode = "IR-PROX";
-                    break;
-                case PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_SEEK:
-                    sysfs_mode = "IR-SEEK";
-                    break;
-                case PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_REMOTE:
-                    sysfs_mode = "IR-REMOTE";
-                    break;
-                case PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_REM_A:
-                    sysfs_mode = "IR-REM-A";
-                    break;
-                case PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_S_ALT:
-                    sysfs_mode = "IR-S-ALT";
-                    break;
-                case PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_CAL:
-                    sysfs_mode = "IR-CAL";
-                    break;
-                default:
-                    return PBIO_ERROR_INVALID_ARG;
-            }
-            break;
-        default:
-            return PBIO_ERROR_INVALID_ARG;
-    }
-    
     // Write mode identifier
     if (fseek(sensor->f_mode, 0, SEEK_SET) == -1) {
         return PBIO_ERROR_IO;
