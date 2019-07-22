@@ -9,6 +9,7 @@
 #include "pbkwarg.h"
 
 #include <pbio/iodev.h>
+#include <pbio/button.h>
 #include <pbio/ev3device.h>
 #include <pberror.h>
 
@@ -49,13 +50,13 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_InfraredSensor_distance_obj, ev3devi
 // pybricks.ev3devices.InfraredSensor.beacon
 STATIC mp_obj_t ev3devices_InfraredSensor_beacon(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
-    ev3devices_InfraredSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         PB_ARG_REQUIRED(channel)
     );
 
-    mp_int_t channel_no = pb_obj_get_int(channel);
+    ev3devices_InfraredSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
+    mp_int_t channel_no = pb_obj_get_int(channel);
     if (channel_no < 1 || channel_no > 4) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
@@ -79,12 +80,122 @@ STATIC mp_obj_t ev3devices_InfraredSensor_beacon(size_t n_args, const mp_obj_t *
 
     return mp_obj_new_tuple(2, ret);
 }
-MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_InfraredSensor_beacon_obj, 0, ev3devices_InfraredSensor_beacon);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_InfraredSensor_beacon_obj, 0, ev3devices_InfraredSensor_beacon);
+
+// pybricks.ev3devices.InfraredSensor.buttons
+STATIC mp_obj_t ev3devices_InfraredSensor_buttons(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(channel)
+    );
+
+    ev3devices_InfraredSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
+    mp_int_t channel_no = pb_obj_get_int(channel);
+    if (channel_no < 1 || channel_no > 4) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    int8_t buttons_data[4];
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_REMOTE, buttons_data));
+
+    mp_int_t encoded = buttons_data[channel_no-1];
+    mp_int_t pressed[2];
+    mp_obj_t pressed_obj[2];
+    uint8_t len = 0;
+
+    switch(encoded) {
+        case 0:
+            break;
+        case 1:
+            pressed[len++] = PBIO_BUTTON_LEFT_UP;
+            break;
+        case 2:
+            pressed[len++] = PBIO_BUTTON_LEFT_DOWN;
+            break;
+        case 3:
+            pressed[len++] = PBIO_BUTTON_RIGHT_UP;
+            break;
+        case 4:
+            pressed[len++] = PBIO_BUTTON_RIGHT_DOWN;
+            break;
+        case 5: 
+            pressed[len++] = PBIO_BUTTON_LEFT_UP;
+            pressed[len++] = PBIO_BUTTON_RIGHT_UP;
+            break;
+        case 6:
+            pressed[len++] = PBIO_BUTTON_LEFT_UP;
+            pressed[len++] = PBIO_BUTTON_RIGHT_DOWN;
+            break;
+        case 7:
+            pressed[len++] = PBIO_BUTTON_LEFT_DOWN;
+            pressed[len++] = PBIO_BUTTON_RIGHT_UP;
+            break;
+        case 8: 
+            pressed[len++] = PBIO_BUTTON_LEFT_DOWN;
+            pressed[len++] = PBIO_BUTTON_RIGHT_DOWN;
+            break;
+        case 10:
+            pressed[len++] = PBIO_BUTTON_LEFT_UP;
+            pressed[len++] = PBIO_BUTTON_LEFT_DOWN;
+            break;
+        case 11: 
+            pressed[len++] = PBIO_BUTTON_RIGHT_UP;
+            pressed[len++] = PBIO_BUTTON_RIGHT_DOWN;
+            break;
+        case 9: 
+            pressed[len++] = PBIO_BUTTON_UP;
+            break;
+        default:
+            pb_assert(PBIO_ERROR_IO);
+            break;
+    }
+
+    for (uint8_t i = 0; i < len; i++) {
+        pressed_obj[i] = MP_OBJ_NEW_SMALL_INT(pressed[i]);
+    }
+    return mp_obj_new_list(len, pressed_obj);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_InfraredSensor_buttons_obj, 0, ev3devices_InfraredSensor_buttons);
+
+// pybricks.ev3devices.InfraredSensor.keypad
+STATIC mp_obj_t ev3devices_InfraredSensor_keypad(mp_obj_t self_in) {
+
+    ev3devices_InfraredSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    int16_t keypad_data;
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_ID_EV3_IR_SENSOR__IR_REM_A, &keypad_data));
+
+    mp_obj_t pressed_obj[4];
+    uint8_t len = 0;
+
+    if (keypad_data == 384) {
+        return mp_obj_new_list(0, pressed_obj);
+    } else {
+        if (keypad_data & 0x10) {
+            pressed_obj[len++] = MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_LEFT_UP);
+        }
+        if (keypad_data & 0x20) {
+            pressed_obj[len++] = MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_LEFT_DOWN);
+        }
+        if (keypad_data & 0x40) {
+            pressed_obj[len++] = MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_RIGHT_UP);
+        }
+        if (keypad_data & 0x80) {
+            pressed_obj[len++] = MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_RIGHT_DOWN);
+        }   
+    }
+    
+    return mp_obj_new_list(len, pressed_obj);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_InfraredSensor_keypad_obj, ev3devices_InfraredSensor_keypad);
 
 // dir(pybricks.ev3devices.InfraredSensor)
 STATIC const mp_rom_map_elem_t ev3devices_InfraredSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_distance), MP_ROM_PTR(&ev3devices_InfraredSensor_distance_obj) },
     { MP_ROM_QSTR(MP_QSTR_beacon),   MP_ROM_PTR(&ev3devices_InfraredSensor_beacon_obj) },
+    { MP_ROM_QSTR(MP_QSTR_buttons),   MP_ROM_PTR(&ev3devices_InfraredSensor_buttons_obj) },
+    { MP_ROM_QSTR(MP_QSTR_keypad),   MP_ROM_PTR(&ev3devices_InfraredSensor_keypad_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(ev3devices_InfraredSensor_locals_dict, ev3devices_InfraredSensor_locals_dict_table);
 
