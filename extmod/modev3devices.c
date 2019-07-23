@@ -8,6 +8,8 @@
 #include "pbobj.h"
 #include "pbkwarg.h"
 
+#include "py/objtype.h"
+
 #include <pbio/iodev.h>
 #include <pbio/light.h>
 #include <pbio/button.h>
@@ -22,10 +24,13 @@ typedef struct _ev3devices_TouchSensor_obj_t {
 
 // pybricks.ev3devices.TouchSensor.__init__
 STATIC mp_obj_t ev3devices_TouchSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
-    mp_arg_check_num(n_args, n_kw, 1, 1, false);
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port)
+    );
+
     ev3devices_TouchSensor_obj_t *self = m_new_obj(ev3devices_TouchSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
-    pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR, mp_obj_get_int(args[0])));
+    pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR, mp_obj_get_int(port)));
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -69,7 +74,7 @@ typedef struct _ev3devices_InfraredSensor_obj_t {
 
 // pybricks.ev3devices.InfraredSensor.__init__
 STATIC mp_obj_t ev3devices_InfraredSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args, 
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port)
     );
 
@@ -114,9 +119,9 @@ STATIC mp_obj_t ev3devices_InfraredSensor_beacon(size_t n_args, const mp_obj_t *
 
     mp_int_t heading = beacon_data[channel_no*2-2]*3;
     mp_int_t distance = beacon_data[channel_no*2-1];
-    
+
     mp_obj_t ret[2];
-    
+
     if (distance == -128) {
         ret[0] = mp_const_none;
         ret[1] = mp_const_none;
@@ -167,7 +172,7 @@ STATIC mp_obj_t ev3devices_InfraredSensor_buttons(size_t n_args, const mp_obj_t 
         case 4:
             pressed[len++] = PBIO_BUTTON_RIGHT_DOWN;
             break;
-        case 5: 
+        case 5:
             pressed[len++] = PBIO_BUTTON_LEFT_UP;
             pressed[len++] = PBIO_BUTTON_RIGHT_UP;
             break;
@@ -179,7 +184,7 @@ STATIC mp_obj_t ev3devices_InfraredSensor_buttons(size_t n_args, const mp_obj_t 
             pressed[len++] = PBIO_BUTTON_LEFT_DOWN;
             pressed[len++] = PBIO_BUTTON_RIGHT_UP;
             break;
-        case 8: 
+        case 8:
             pressed[len++] = PBIO_BUTTON_LEFT_DOWN;
             pressed[len++] = PBIO_BUTTON_RIGHT_DOWN;
             break;
@@ -187,11 +192,11 @@ STATIC mp_obj_t ev3devices_InfraredSensor_buttons(size_t n_args, const mp_obj_t 
             pressed[len++] = PBIO_BUTTON_LEFT_UP;
             pressed[len++] = PBIO_BUTTON_LEFT_DOWN;
             break;
-        case 11: 
+        case 11:
             pressed[len++] = PBIO_BUTTON_RIGHT_UP;
             pressed[len++] = PBIO_BUTTON_RIGHT_DOWN;
             break;
-        case 9: 
+        case 9:
             pressed[len++] = PBIO_BUTTON_UP;
             break;
         default:
@@ -231,9 +236,9 @@ STATIC mp_obj_t ev3devices_InfraredSensor_keypad(mp_obj_t self_in) {
         }
         if (keypad_data & 0x80) {
             pressed_obj[len++] = MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_RIGHT_DOWN);
-        }   
+        }
     }
-    
+
     return mp_obj_new_list(len, pressed_obj);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_InfraredSensor_keypad_obj, ev3devices_InfraredSensor_keypad);
@@ -244,6 +249,7 @@ STATIC const mp_rom_map_elem_t ev3devices_InfraredSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_beacon),   MP_ROM_PTR(&ev3devices_InfraredSensor_beacon_obj) },
     { MP_ROM_QSTR(MP_QSTR_buttons),  MP_ROM_PTR(&ev3devices_InfraredSensor_buttons_obj) },
     { MP_ROM_QSTR(MP_QSTR_keypad),   MP_ROM_PTR(&ev3devices_InfraredSensor_keypad_obj) },
+    { MP_ROM_QSTR(MP_QSTR_hellow), MP_OBJ_NEW_SMALL_INT(25) },
 };
 STATIC MP_DEFINE_CONST_DICT(ev3devices_InfraredSensor_locals_dict, ev3devices_InfraredSensor_locals_dict_table);
 
@@ -354,21 +360,95 @@ STATIC const mp_obj_type_t ev3devices_ColorSensor_type = {
     .locals_dict = (mp_obj_dict_t*)&ev3devices_ColorSensor_locals_dict,
 };
 
+// pybricks.ev3devices.Light class object
+typedef struct _ev3devices_Light_obj_t {
+    mp_obj_base_t base;
+    pbio_ev3iodev_t *iodev;
+} ev3devices_Light_obj_t;
+
+// pybricks.ev3devices.Light.blink
+STATIC mp_obj_t ev3devices_Light_blink(mp_obj_t self_in) {
+    ev3devices_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int8_t unused;
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__LISTEN, &unused));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_Light_blink_obj, ev3devices_Light_blink);
+
+// pybricks.ev3devices.Light.on
+STATIC mp_obj_t ev3devices_Light_on(mp_obj_t self_in) {
+    ev3devices_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int16_t unused;
+    // TODO: Move to modlight and generalize to deal with any light instance
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__DIST_CM, &unused));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_Light_on_obj, ev3devices_Light_on);
+
+// pybricks.ev3devices.Light.off
+STATIC mp_obj_t ev3devices_Light_off(mp_obj_t self_in) {
+    ev3devices_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int16_t unused;
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__SI_CM, &unused));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_Light_off_obj, ev3devices_Light_off);
+
+// dir(pybricks.ev3devices.Light)
+STATIC const mp_rom_map_elem_t ev3devices_Light_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_blink), MP_ROM_PTR(&ev3devices_Light_blink_obj) },
+    { MP_ROM_QSTR(MP_QSTR_on   ), MP_ROM_PTR(&ev3devices_Light_on_obj) },
+    { MP_ROM_QSTR(MP_QSTR_off  ), MP_ROM_PTR(&ev3devices_Light_off_obj) },
+};
+STATIC MP_DEFINE_CONST_DICT(ev3devices_Light_locals_dict, ev3devices_Light_locals_dict_table);
+
+// type(pybricks.ev3devices.Light)
+STATIC const mp_obj_type_t ev3devices_Light_type = {
+    { &mp_type_type },
+    .locals_dict = (mp_obj_dict_t*)&ev3devices_Light_locals_dict,
+};
+
 // pybricks.ev3devices.UltrasonicSensor class object
 typedef struct _ev3devices_UltrasonicSensor_obj_t {
     mp_obj_base_t base;
+    mp_obj_t light;
     pbio_ev3iodev_t *iodev;
 } ev3devices_UltrasonicSensor_obj_t;
 
+STATIC void pb_get_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+    if (dest[0] == MP_OBJ_NULL) {
+
+        // Return the light attribute
+        if (attr == MP_QSTR_light) {
+            ev3devices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+            dest[0] = self->light;
+        }
+        // For all other cases, do a generic lookup
+        mp_obj_type_t *type = mp_obj_get_type(self_in);
+        mp_map_t *locals_map = &type->locals_dict->map;
+        mp_map_elem_t *elem = mp_map_lookup(locals_map, MP_OBJ_NEW_QSTR(attr), MP_MAP_LOOKUP);
+        if (elem != NULL) {
+            mp_convert_member_lookup(self_in, type, elem->value, dest);
+        }
+    }
+}
+
 // pybricks.ev3devices.UltrasonicSensor.__init__
 STATIC mp_obj_t ev3devices_UltrasonicSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args, 
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port)
     );
 
     ev3devices_UltrasonicSensor_obj_t *self = m_new_obj(ev3devices_UltrasonicSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
     pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR, mp_obj_get_int(port)));
+
+    // Create an instance of the Light class
+    ev3devices_Light_obj_t *light = m_new_obj(ev3devices_Light_obj_t);
+    light->base.type = (mp_obj_type_t*) &ev3devices_Light_type;
+    light->iodev = self->iodev;
+    self->light = light;
+
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -401,6 +481,7 @@ STATIC const mp_obj_type_t ev3devices_UltrasonicSensor_type = {
     .print = ev3devices_UltrasonicSensor_print,
     .make_new = ev3devices_UltrasonicSensor_make_new,
     .locals_dict = (mp_obj_dict_t*)&ev3devices_UltrasonicSensor_locals_dict,
+    .attr = pb_get_attr,
 };
 
 // dir(pybricks.ev3devices)
