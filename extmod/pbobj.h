@@ -22,6 +22,9 @@ const mp_obj_type_t enum_name = { \
     .locals_dict = (mp_obj_dict_t*)&(enum_name ## _locals_dict),\
 }
 
+// Shortcut for defining attribute as address offset from base
+#define PB_ATTR(type, elem) &(mp_int_t){offsetof(type, elem)}
+
 // like mp_obj_get_int() but also allows float
 #if MICROPY_PY_BUILTINS_FLOAT
 mp_int_t pb_obj_get_int(mp_obj_t arg);

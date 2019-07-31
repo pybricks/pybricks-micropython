@@ -415,23 +415,6 @@ typedef struct _ev3devices_UltrasonicSensor_obj_t {
     pbio_ev3iodev_t *iodev;
 } ev3devices_UltrasonicSensor_obj_t;
 
-STATIC void pb_get_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
-    if (dest[0] == MP_OBJ_NULL) {
-
-        // Return the light attribute
-        if (attr == MP_QSTR_light) {
-            ev3devices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-            dest[0] = self->light;
-        }
-        // For all other cases, do a generic lookup
-        mp_obj_type_t *type = mp_obj_get_type(self_in);
-        mp_map_t *locals_map = &type->locals_dict->map;
-        mp_map_elem_t *elem = mp_map_lookup(locals_map, MP_OBJ_NEW_QSTR(attr), MP_MAP_LOOKUP);
-        if (elem != NULL) {
-            mp_convert_member_lookup(self_in, type, elem->value, dest);
-        }
-    }
-}
 
 // pybricks.ev3devices.UltrasonicSensor.__init__
 STATIC mp_obj_t ev3devices_UltrasonicSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
@@ -474,6 +457,11 @@ STATIC const mp_rom_map_elem_t ev3devices_UltrasonicSensor_locals_dict_table[] =
 };
 STATIC MP_DEFINE_CONST_DICT(ev3devices_UltrasonicSensor_locals_dict, ev3devices_UltrasonicSensor_locals_dict_table);
 
+STATIC const mp_rom_map_elem_t ev3devices_UltrasonicSensor_locals_attr_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_light), PB_ATTR(ev3devices_UltrasonicSensor_obj_t, light)},
+};
+STATIC MP_DEFINE_CONST_DICT(ev3devices_UltrasonicSensor_locals_attr, ev3devices_UltrasonicSensor_locals_attr_table);
+
 // type(pybricks.ev3devices.UltrasonicSensor)
 STATIC const mp_obj_type_t ev3devices_UltrasonicSensor_type = {
     { &mp_type_type },
@@ -481,7 +469,7 @@ STATIC const mp_obj_type_t ev3devices_UltrasonicSensor_type = {
     .print = ev3devices_UltrasonicSensor_print,
     .make_new = ev3devices_UltrasonicSensor_make_new,
     .locals_dict = (mp_obj_dict_t*)&ev3devices_UltrasonicSensor_locals_dict,
-    .attr = pb_get_attr,
+    .locals_attr = (mp_obj_dict_t*)&ev3devices_UltrasonicSensor_locals_attr,
 };
 
 // dir(pybricks.ev3devices)
