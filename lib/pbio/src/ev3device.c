@@ -50,8 +50,11 @@ pbio_error_t ev3device_get_values_at_mode(pbio_ev3iodev_t *iodev, uint8_t mode, 
 
     pbio_error_t err;
 
-    // Set the mode only if not already set, or if this sensor mode requires it
-    if (iodev->mode != mode || mode == 0) { // TODO: special case like Ultrasonic single read
+    // Set the mode if not already set
+    if (iodev->mode != mode || (
+        // and also if this sensor/mode requires setting it every time:
+        iodev->type_id == PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR && mode >= PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__SI_CM
+    )) {
         err = pbdrv_ev3_sensor_set_mode(iodev->sensor, mode);
         if (err != PBIO_SUCCESS) {
             return err;
