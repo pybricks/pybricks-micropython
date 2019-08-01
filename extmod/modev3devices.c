@@ -454,13 +454,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_UltrasonicSensor_distance_obj, ev3de
 // dir(pybricks.ev3devices.UltrasonicSensor)
 STATIC const mp_rom_map_elem_t ev3devices_UltrasonicSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_distance), MP_ROM_PTR(&ev3devices_UltrasonicSensor_distance_obj) },
+    { MP_ROM_QSTR(MP_QSTR_light), MP_DEFINE_ATTRIBUTE_OFFSET(ev3devices_UltrasonicSensor_obj_t, light) },
 };
 STATIC MP_DEFINE_CONST_DICT(ev3devices_UltrasonicSensor_locals_dict, ev3devices_UltrasonicSensor_locals_dict_table);
-
-STATIC const mp_rom_map_elem_t ev3devices_UltrasonicSensor_locals_attr_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_light), PB_ATTR(ev3devices_UltrasonicSensor_obj_t, light)},
-};
-STATIC MP_DEFINE_CONST_DICT(ev3devices_UltrasonicSensor_locals_attr, ev3devices_UltrasonicSensor_locals_attr_table);
 
 // type(pybricks.ev3devices.UltrasonicSensor)
 STATIC const mp_obj_type_t ev3devices_UltrasonicSensor_type = {
@@ -469,7 +465,6 @@ STATIC const mp_obj_type_t ev3devices_UltrasonicSensor_type = {
     .print = ev3devices_UltrasonicSensor_print,
     .make_new = ev3devices_UltrasonicSensor_make_new,
     .locals_dict = (mp_obj_dict_t*)&ev3devices_UltrasonicSensor_locals_dict,
-    .locals_attr = (mp_obj_dict_t*)&ev3devices_UltrasonicSensor_locals_attr,
 };
 
 // dir(pybricks.ev3devices)
