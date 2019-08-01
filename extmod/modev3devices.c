@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019 Laurens Valk
 
+#include "py/mpconfig.h"
+
+#if PYBRICKS_PY_EV3DEVICES
+
 #include "modmotor.h"
 #include "py/mphal.h"
 #include "py/runtime.h"
 
 #include "pbobj.h"
 #include "pbkwarg.h"
+#include "modlight.h"
 
 #include "py/objtype.h"
 
@@ -360,54 +365,6 @@ STATIC const mp_obj_type_t ev3devices_ColorSensor_type = {
     .locals_dict = (mp_obj_dict_t*)&ev3devices_ColorSensor_locals_dict,
 };
 
-// pybricks.ev3devices.Light class object
-typedef struct _ev3devices_Light_obj_t {
-    mp_obj_base_t base;
-    pbio_ev3iodev_t *iodev;
-} ev3devices_Light_obj_t;
-
-// pybricks.ev3devices.Light.blink
-STATIC mp_obj_t ev3devices_Light_blink(mp_obj_t self_in) {
-    ev3devices_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int8_t unused;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__LISTEN, &unused));
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_Light_blink_obj, ev3devices_Light_blink);
-
-// pybricks.ev3devices.Light.on
-STATIC mp_obj_t ev3devices_Light_on(mp_obj_t self_in) {
-    ev3devices_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int16_t unused;
-    // TODO: Move to modlight and generalize to deal with any light instance
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__DIST_CM, &unused));
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_Light_on_obj, ev3devices_Light_on);
-
-// pybricks.ev3devices.Light.off
-STATIC mp_obj_t ev3devices_Light_off(mp_obj_t self_in) {
-    ev3devices_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int16_t unused;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__SI_CM, &unused));
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_Light_off_obj, ev3devices_Light_off);
-
-// dir(pybricks.ev3devices.Light)
-STATIC const mp_rom_map_elem_t ev3devices_Light_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_blink), MP_ROM_PTR(&ev3devices_Light_blink_obj) },
-    { MP_ROM_QSTR(MP_QSTR_on   ), MP_ROM_PTR(&ev3devices_Light_on_obj) },
-    { MP_ROM_QSTR(MP_QSTR_off  ), MP_ROM_PTR(&ev3devices_Light_off_obj) },
-};
-STATIC MP_DEFINE_CONST_DICT(ev3devices_Light_locals_dict, ev3devices_Light_locals_dict_table);
-
-// type(pybricks.ev3devices.Light)
-STATIC const mp_obj_type_t ev3devices_Light_type = {
-    { &mp_type_type },
-    .locals_dict = (mp_obj_dict_t*)&ev3devices_Light_locals_dict,
-};
-
 // pybricks.ev3devices.UltrasonicSensor class object
 typedef struct _ev3devices_UltrasonicSensor_obj_t {
     mp_obj_base_t base;
@@ -427,10 +384,7 @@ STATIC mp_obj_t ev3devices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR, mp_obj_get_int(port)));
 
     // Create an instance of the Light class
-    ev3devices_Light_obj_t *light = m_new_obj(ev3devices_Light_obj_t);
-    light->base.type = (mp_obj_type_t*) &ev3devices_Light_type;
-    light->iodev = self->iodev;
-    self->light = light;
+    self->light = ev3devices_Light_obj_make_new(self->iodev);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -482,3 +436,5 @@ const mp_obj_module_t pb_module_ev3devices = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t*)&pb_module_ev3devices_globals,
 };
+
+#endif // PYBRICKS_PY_EV3DEVICES

@@ -11,6 +11,7 @@
 #define PYBRICKS_PY_BUTTONS             (1)
 #define PYBRICKS_PY_MOTOR               (1)
 #define PYBRICKS_PY_PUPDEVICES          (0)
+#define PYBRICKS_PY_EV3DEVICES          (1)
 
 #define MICROPY_PORT_INIT_FUNC pybricks_init()
 #define MICROPY_PORT_DEINIT_FUNC pybricks_deinit()
