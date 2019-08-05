@@ -24,8 +24,10 @@ include $(TOP)/py/py.mk
 CROSS_COMPILE ?= arm-none-eabi-
 
 # Bricks must specify the following variables in their Makefile
-ifeq ($(CPU_FAMILY),)
-$(error "CPU_FAMILY is not specified - add it in <hub>/Makefile)
+ifeq ($(MCU_SERIES),)
+$(error "MCU_SERIES is not specified - add it in <hub>/Makefile)
+else
+MCU_SERIES_LCASE = $(subst F,f,$(subst L,l,$(MCU_SERIES)))
 endif
 ifeq ($(CMSIS_MCU),)
 $(error "CMSIS_MCU is not specified - add it in <hub>/Makefile")
@@ -37,9 +39,9 @@ endif
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(TOP)/lib/cmsis/inc
-INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32F$(CPU_FAMILY)xx/Include
+INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32$(MCU_SERIES)xx/Include
 ifeq ($(USE_HAL),1)
-INC += -I$(TOP)/lib/stm32lib/STM32F$(CPU_FAMILY)xx_HAL_Driver/Inc
+INC += -I$(TOP)/lib/stm32lib/STM32$(MCU_SERIES)xx_HAL_Driver/Inc
 endif
 INC += -I$(TOP)/ports/pybricks/lib/libfixmath/libfixmath
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
@@ -54,15 +56,18 @@ PYDFU = $(TOP)/tools/pydfu.py
 CHECKSUM = $(TOP)/ports/pybricks/tools/checksum.py
 CHECKSUM_TYPE ?= xor
 OPENOCD ?= openocd
-OPENOCD_CONFIG ?= openocd_stm32f$(CPU_FAMILY).cfg
+OPENOCD_CONFIG ?= openocd_stm32$(MCU_SERIES_LCASE).cfg
 TEXT0_ADDR ?= 0x08000000
 
 COPT += -DFIXMATH_NO_CTYPE
 
-CFLAGS_CORTEX_M0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
-CFLAGS_CORTEX_M4 = -mthumb -mtune=cortex-m4 -mabi=aapcs-linux -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fsingle-precision-constant -Wdouble-promotion
-CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_CORTEX_M$(CPU_FAMILY)) $(COPT)
+CFLAGS_MCU_F0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
+CFLAGS_MCU_F4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
+CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(MCU_SERIES)) $(COPT)
 LDFLAGS = -nostdlib -T $(PBIO_PLATFORM).ld -Map=$@.map --cref --gc-sections
+
+# avoid doubles
+CFLAGS += -fsingle-precision-constant -Wdouble-promotion
 
 # Tune for Debugging or Optimization
 ifeq ($(DEBUG), 1)
@@ -105,7 +110,7 @@ SRC_C += \
 SRC_S = \
 	ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)/startup.s \
 
-ifeq ($(CPU_FAMILY),0)
+ifeq ($(MCU_SERIES),F0)
 	SRC_S += $(TOP)/ports/stm32/gchelper_m0.s
 else
 	SRC_S += $(TOP)/ports/stm32/gchelper.s
@@ -138,17 +143,17 @@ BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\
 	hci_le.c \
 	)
 
-HAL_SRC_C = $(addprefix lib/stm32lib/STM32F$(CPU_FAMILY)xx_HAL_Driver/Src/,\
-	stm32f$(CPU_FAMILY)xx_hal_adc_ex.c \
-	stm32f$(CPU_FAMILY)xx_hal_adc.c \
-	stm32f$(CPU_FAMILY)xx_hal_cortex.c \
-	stm32f$(CPU_FAMILY)xx_hal_dma.c \
-	stm32f$(CPU_FAMILY)xx_hal_gpio.c \
-	stm32f$(CPU_FAMILY)xx_hal_rcc.c \
-	stm32f$(CPU_FAMILY)xx_hal_tim_ex.c \
-	stm32f$(CPU_FAMILY)xx_hal_tim.c \
-	stm32f$(CPU_FAMILY)xx_hal_uart.c \
-	stm32f$(CPU_FAMILY)xx_hal.c \
+HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(MCU_SERIES)xx_HAL_Driver/Src/,\
+	stm32$(MCU_SERIES_LCASE)xx_hal_adc_ex.c \
+	stm32$(MCU_SERIES_LCASE)xx_hal_adc.c \
+	stm32$(MCU_SERIES_LCASE)xx_hal_cortex.c \
+	stm32$(MCU_SERIES_LCASE)xx_hal_dma.c \
+	stm32$(MCU_SERIES_LCASE)xx_hal_gpio.c \
+	stm32$(MCU_SERIES_LCASE)xx_hal_rcc.c \
+	stm32$(MCU_SERIES_LCASE)xx_hal_tim_ex.c \
+	stm32$(MCU_SERIES_LCASE)xx_hal_tim.c \
+	stm32$(MCU_SERIES_LCASE)xx_hal_uart.c \
+	stm32$(MCU_SERIES_LCASE)xx_hal.c \
 	)
 
 LIBFIXMATH_SRC_C = $(addprefix ports/pybricks/lib/libfixmath/libfixmath/,\
@@ -162,14 +167,14 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	drv/$(PBIO_PLATFORM)/bluetooth.c \
 	drv/$(PBIO_PLATFORM)/light.c \
 	drv/$(PBIO_PLATFORM)/motor.c \
-	drv/adc/adc_stm32f$(CPU_FAMILY).c \
+	drv/adc/adc_stm32$(MCU_SERIES_LCASE).c \
 	drv/battery/battery_adc.c \
 	drv/button/button_gpio.c \
 	drv/counter/counter_core.c \
 	drv/counter/counter_stm32f0_gpio_quad_enc.c \
-	drv/gpio/gpio_stm32f$(CPU_FAMILY).c \
+	drv/gpio/gpio_stm32$(MCU_SERIES_LCASE).c \
 	drv/ioport/ioport_lpf2.c \
-	drv/uart/uart_stm32f$(CPU_FAMILY).c \
+	drv/uart/uart_stm32$(MCU_SERIES_LCASE).c \
 	platform/$(PBIO_PLATFORM)/clock.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	platform/$(PBIO_PLATFORM)/sys.c \
