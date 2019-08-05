@@ -106,7 +106,11 @@ PROCESS_THREAD(pbdrv_adc_process, ev, data) {
     // using DMA
 
     pbdrv_adc_hdma.Instance = PBDRV_CONFIG_ADC_STM32_HAL_DMA_INSTANCE;
+#ifdef STM32L4
+    pbdrv_adc_hdma.Init.Request = PBDRV_CONFIG_ADC_STM32_HAL_DMA_REQUEST;
+#else
     pbdrv_adc_hdma.Init.Channel = PBDRV_CONFIG_ADC_STM32_HAL_DMA_CHANNEL;
+#endif
     pbdrv_adc_hdma.Init.Direction = DMA_PERIPH_TO_MEMORY;
     pbdrv_adc_hdma.Init.PeriphInc = DMA_PINC_DISABLE;
     pbdrv_adc_hdma.Init.MemInc = DMA_MINC_ENABLE;
@@ -114,10 +118,6 @@ PROCESS_THREAD(pbdrv_adc_process, ev, data) {
     pbdrv_adc_hdma.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
     pbdrv_adc_hdma.Init.Mode = DMA_CIRCULAR;
     pbdrv_adc_hdma.Init.Priority = DMA_PRIORITY_MEDIUM;
-    pbdrv_adc_hdma.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
-    pbdrv_adc_hdma.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_1QUARTERFULL;
-    pbdrv_adc_hdma.Init.MemBurst = DMA_MBURST_SINGLE;
-    pbdrv_adc_hdma.Init.PeriphBurst = DMA_PBURST_SINGLE;
 
     HAL_DMA_Init(&pbdrv_adc_hdma);
 
@@ -131,7 +131,7 @@ PROCESS_THREAD(pbdrv_adc_process, ev, data) {
     pbdrv_adc_hadc.Init.NbrOfConversion = PBDRV_CONFIG_ADC_STM32_HAL_ADC_NUM_CHANNELS;
     pbdrv_adc_hadc.Init.DiscontinuousConvMode = DISABLE;
     pbdrv_adc_hadc.Init.NbrOfDiscConversion = 0;
-    pbdrv_adc_hadc.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T2_TRGO;
+    pbdrv_adc_hadc.Init.ExternalTrigConv = PBDRV_CONFIG_ADC_STM32_HAL_TIMER_TRIGGER;
     pbdrv_adc_hadc.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
     pbdrv_adc_hadc.Init.DMAContinuousRequests = ENABLE;
 
