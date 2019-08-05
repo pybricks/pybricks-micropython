@@ -9,8 +9,7 @@
 #include <pbio/port.h>
 #include <pbio/uartdev.h>
 
-#define USE_HAL_DRIVER
-#include "stm32f4xx.h"
+#include "stm32f4xx_hal.h"
 
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/uart/uart_stm32_hal.h"
