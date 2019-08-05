@@ -223,7 +223,9 @@ SRC_LIBM = $(addprefix lib/libm/,\
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PY_SRC_C:.c=.o))
+ifeq ($(USE_BLUENRG),1)
 OBJ += $(addprefix $(BUILD)/, $(BLUENRG_SRC_C:.c=.o))
+endif
 ifeq ($(USE_HAL),1)
 OBJ += $(addprefix $(BUILD)/, $(HAL_SRC_C:.c=.o))
 endif
