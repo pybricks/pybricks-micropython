@@ -3,7 +3,7 @@
 
 #include "pbdrv/config.h"
 
-#if PBDRV_CONFIG_UART_STM32F4
+#if PBDRV_CONFIG_UART_STM32_HAL
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -17,9 +17,8 @@
 #include "sys/process.h"
 #include "../../src/processes.h"
 
-#define USE_HAL_DRIVER
-#include "stm32f4xx.h"
-#include "uart_stm32f4.h"
+#include STM32_HAL_H
+#include "uart_stm32_hal.h"
 
 typedef struct {
     pbdrv_uart_dev_t uart_dev;
@@ -31,12 +30,12 @@ typedef struct {
     uint8_t irq;
 } pbdrv_uart_t;
 
-static pbdrv_uart_t pbdrv_uart[PBDRV_CONFIG_UART_STM32F4_NUM_UART];
+static pbdrv_uart_t pbdrv_uart[PBDRV_CONFIG_UART_STM32_HAL_NUM_UART];
 
 PROCESS(pbdrv_uart_process, "UART");
 
 pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
-    if (id >= PBDRV_CONFIG_UART_STM32F4_NUM_UART) {
+    if (id >= PBDRV_CONFIG_UART_STM32_HAL_NUM_UART) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
@@ -192,7 +191,7 @@ void HAL_UART_AbortTransmitCpltCallback(UART_HandleTypeDef *huart) {
     uart->tx_result = PBIO_ERROR_CANCELED;
 }
 
-void pbdrv_uart_stm32f4_handle_irq(uint8_t id) {
+void pbdrv_uart_stm32_hal_handle_irq(uint8_t id) {
     HAL_UART_IRQHandler(&pbdrv_uart[id].huart);
 }
 
@@ -201,7 +200,7 @@ static void handle_poll() {
 }
 
 static void handle_exit() {
-    for (int i = 0; i < PBDRV_CONFIG_UART_STM32F4_NUM_UART; i++) {
+    for (int i = 0; i < PBDRV_CONFIG_UART_STM32_HAL_NUM_UART; i++) {
         pbdrv_uart_t *uart = &pbdrv_uart[i];
         HAL_NVIC_DisableIRQ(uart->irq);
         HAL_UART_DeInit(&uart->huart);
@@ -214,8 +213,8 @@ PROCESS_THREAD(pbdrv_uart_process, ev, data) {
 
     PROCESS_BEGIN();
 
-    for (int i = 0; i < PBDRV_CONFIG_UART_STM32F4_NUM_UART; i++) {
-        const pbdrv_uart_stm32f4_platform_data_t *pdata = &pbdrv_uart_stm32f4_platform_data[i];
+    for (int i = 0; i < PBDRV_CONFIG_UART_STM32_HAL_NUM_UART; i++) {
+        const pbdrv_uart_stm32_hal_platform_data_t *pdata = &pbdrv_uart_stm32_hal_platform_data[i];
         pbdrv_uart_t *uart = &pbdrv_uart[i];
 
         uart->huart.Instance = pdata->uart,
@@ -239,4 +238,4 @@ PROCESS_THREAD(pbdrv_uart_process, ev, data) {
     PROCESS_END();
 }
 
-#endif // PBDRV_CONFIG_UART_STM32F4
+#endif // PBDRV_CONFIG_UART_STM32_HAL

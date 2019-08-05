@@ -3,7 +3,7 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_ADC
+#if PBDRV_CONFIG_ADC_STM32F0
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -103,4 +103,4 @@ PROCESS_THREAD(pbdrv_adc_process, ev, data) {
     PROCESS_END();
 }
 
-#endif // PBDRV_CONFIG_ADC
+#endif // PBDRV_CONFIG_ADC_STM32F0

@@ -80,6 +80,8 @@ endif
 # Required for STM32 library
 CFLAGS += -D$(CMSIS_MCU)
 
+CFLAGS += -DSTM32_HAL_H='<stm32$(MCU_SERIES_LCASE)xx_hal.h>'
+
 ifneq ($(PYBRICKS_MPY_MAIN_MODULE),)
 CFLAGS += -DPYBRICKS_MPY_MAIN_MODULE=MP_STRINGIFY\($(basename $(notdir $(PYBRICKS_MPY_MAIN_MODULE)))\)
 endif
@@ -167,14 +169,17 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	drv/$(PBIO_PLATFORM)/bluetooth.c \
 	drv/$(PBIO_PLATFORM)/light.c \
 	drv/$(PBIO_PLATFORM)/motor.c \
-	drv/adc/adc_stm32$(MCU_SERIES_LCASE).c \
+	drv/adc/adc_stm32f0.c \
+	drv/adc/adc_stm32_hal.c \
 	drv/battery/battery_adc.c \
 	drv/button/button_gpio.c \
 	drv/counter/counter_core.c \
 	drv/counter/counter_stm32f0_gpio_quad_enc.c \
-	drv/gpio/gpio_stm32$(MCU_SERIES_LCASE).c \
+	drv/gpio/gpio_stm32f0.c \
+	drv/gpio/gpio_stm32f4.c \
 	drv/ioport/ioport_lpf2.c \
-	drv/uart/uart_stm32$(MCU_SERIES_LCASE).c \
+	drv/uart/uart_stm32f0.c \
+	drv/uart/uart_stm32_hal.c \
 	platform/$(PBIO_PLATFORM)/clock.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	platform/$(PBIO_PLATFORM)/sys.c \

@@ -17,4 +17,4 @@ extern const pbdrv_uart_stm32f0_platform_data_t pbdrv_uart_stm32f0_platform_data
 
 void pbdrv_uart_stm32f0_handle_irq(uint8_t id);
 
-#endif // _UART_STM32F4_H_
+#endif // _UART_STM32F0_H_
