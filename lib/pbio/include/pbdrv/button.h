@@ -56,6 +56,7 @@ pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed);
 static inline void _pbdrv_button_init(void) { }
 static inline void _pbdrv_button_deinit(void) { }
 static inline pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
+    *pressed = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

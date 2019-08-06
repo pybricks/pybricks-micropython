@@ -104,7 +104,10 @@ void pbsys_power_off(void) __attribute__((noreturn));
 
 static inline void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks) { }
 static inline void pbsys_unprepare_user_program(void) { }
-static inline pbio_error_t pbsys_stdin_get_char(uint8_t *c) { return PBIO_ERROR_NOT_SUPPORTED; }
+static inline pbio_error_t pbsys_stdin_get_char(uint8_t *c) {
+    *c = 0;
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
 static inline pbio_error_t pbsys_stdout_put_char(uint8_t c) { return PBIO_ERROR_NOT_SUPPORTED; }
 static inline void pbsys_reset(void) { }
 static inline void pbsys_reboot(bool fw_update) { }

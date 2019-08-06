@@ -4,6 +4,7 @@
 #ifndef _PBIO_UARTDEV_H_
 #define _PBIO_UARTDEV_H_
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include <pbio/config.h>
@@ -27,7 +28,10 @@ extern const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG
 
 #else // PBIO_CONFIG_UARTDEV
 
-static inline pbio_error_t pbio_uartdev_get(uint8_t id, pbio_iodev_t **iodev) { return PBIO_ERROR_NOT_SUPPORTED; }
+static inline pbio_error_t pbio_uartdev_get(uint8_t id, pbio_iodev_t **iodev) {
+    *iodev = NULL;
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
 
 #endif // PBIO_CONFIG_UARTDEV
 

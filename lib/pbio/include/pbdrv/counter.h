@@ -9,6 +9,7 @@
 #ifndef _PBDRV_COUNTER_H_
 #define _PBDRV_COUNTER_H_
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include <pbdrv/config.h>
@@ -28,9 +29,18 @@ pbio_error_t pbdrv_counter_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate);
 
 #else // PBDRV_CONFIG_COUNTER
 
-static inline pbio_error_t pbdrv_counter_get(uint8_t id, pbdrv_counter_dev_t **dev) { return PBIO_ERROR_NOT_SUPPORTED; }
-static inline pbio_error_t pbdrv_counter_get_count(pbdrv_counter_dev_t *dev, int32_t *count) { return PBIO_ERROR_NOT_SUPPORTED; }
-static inline pbio_error_t pbdrv_counter_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) { return PBIO_ERROR_NOT_SUPPORTED; }
+static inline pbio_error_t pbdrv_counter_get(uint8_t id, pbdrv_counter_dev_t **dev) {
+    *dev = NULL;
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+static inline pbio_error_t pbdrv_counter_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
+    *count = 0;
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+static inline pbio_error_t pbdrv_counter_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
+    *rate = 0;
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
 
 #endif // PBDRV_CONFIG_COUNTER
 

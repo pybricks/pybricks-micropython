@@ -39,9 +39,11 @@ pbio_error_t pbdrv_battery_get_current_now(uint16_t *value);
 static inline void _pbdrv_battery_poll(uint32_t now) { }
 static inline void _pbdrv_battery_deinit(void) { }
 static inline pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
+    *value = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
+    *value = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

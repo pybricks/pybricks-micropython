@@ -88,6 +88,7 @@ static inline pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t 
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
+    *id = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

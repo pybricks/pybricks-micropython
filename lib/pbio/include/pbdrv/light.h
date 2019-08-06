@@ -89,6 +89,7 @@ static inline pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, uint8_t r, uint
 }
 static inline pbio_error_t
 pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t color, uint8_t *r, uint8_t *g, uint8_t *b) {
+    *r = *g = *b = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

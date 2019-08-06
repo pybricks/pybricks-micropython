@@ -29,6 +29,7 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value);
 #else
 
 static inline pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
+    *value = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
