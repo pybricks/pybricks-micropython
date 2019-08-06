@@ -54,11 +54,9 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     return PBIO_SUCCESS;
 }
 
-#if PBDRV_CONFIG_ADC_STM32_HAL_DMA_IRQ == DMA2_Stream0_IRQn
-void DMA2_Stream0_IRQHandler() {
+void pbdrv_adc_stm32_hal_handle_irq() {
     HAL_DMA_IRQHandler(&pbdrv_adc_hdma);
 }
-#endif
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
     process_poll(&pbdrv_adc_process);

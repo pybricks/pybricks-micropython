@@ -11,6 +11,7 @@
 
 #include "stm32f4xx_hal.h"
 
+#include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/uart/uart_stm32_hal.h"
 
@@ -106,6 +107,10 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc) {
     adc_ch_config.SamplingTime = ADC_SAMPLETIME_15CYCLES;
     adc_ch_config.Offset = 0;
     HAL_ADC_ConfigChannel(hadc, &adc_ch_config);
+}
+
+void DMA2_Stream0_IRQHandler() {
+    pbdrv_adc_stm32_hal_handle_irq();
 }
 
 const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON] = {
