@@ -63,6 +63,7 @@ COPT += -DFIXMATH_NO_CTYPE
 
 CFLAGS_MCU_F0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
 CFLAGS_MCU_F4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
+CFLAGS_MCU_L4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(MCU_SERIES)) $(COPT)
 LDFLAGS = -nostdlib -T $(PBIO_PLATFORM).ld -Map=$@.map --cref --gc-sections
 
@@ -151,6 +152,7 @@ HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(MCU_SERIES)xx_HAL_Driver/Src/,\
 	stm32$(MCU_SERIES_LCASE)xx_hal_cortex.c \
 	stm32$(MCU_SERIES_LCASE)xx_hal_dma.c \
 	stm32$(MCU_SERIES_LCASE)xx_hal_gpio.c \
+	stm32$(MCU_SERIES_LCASE)xx_hal_pwr_ex.c \
 	stm32$(MCU_SERIES_LCASE)xx_hal_rcc.c \
 	stm32$(MCU_SERIES_LCASE)xx_hal_tim_ex.c \
 	stm32$(MCU_SERIES_LCASE)xx_hal_tim.c \
@@ -177,6 +179,7 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	drv/counter/counter_stm32f0_gpio_quad_enc.c \
 	drv/gpio/gpio_stm32f0.c \
 	drv/gpio/gpio_stm32f4.c \
+	drv/gpio/gpio_stm32l4.c \
 	drv/ioport/ioport_lpf2.c \
 	drv/uart/uart_stm32f0.c \
 	drv/uart/uart_stm32_hal.c \
