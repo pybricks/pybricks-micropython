@@ -14,8 +14,6 @@
 #define PBDRV_CONFIG_ADC_STM32_HAL_TIMER_INSTANCE   TIM2
 #define PBDRV_CONFIG_ADC_STM32_HAL_TIMER_TRIGGER    ADC_EXTERNALTRIGCONV_T2_TRGO
 
-#define PBDRV_CONFIG_BATTERY                        (0)
-
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)
 #define PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON         (1)

@@ -96,11 +96,6 @@
 #define PBDRV_CONFIG_ADC (1)
 #endif
 
-// enable the battery driver
-#ifndef PBDRV_CONFIG_BATTERY
-#define PBDRV_CONFIG_BATTERY (1)
-#endif
-
 // enable the bluetooth driver
 #ifndef PBDRV_CONFIG_BLUETOOTH
 #define PBDRV_CONFIG_BLUETOOTH (1)

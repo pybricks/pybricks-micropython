@@ -10,6 +10,7 @@
 #define PBDRV_CONFIG_ADC_STM32F0                    (1)
 
 #define PBDRV_CONFIG_BATTERY                        (1)
+#define PBDRV_CONFIG_BATTERY_ADC                    (1)
 #define PBDRV_CONFIG_BATTERY_ADC_VOLTAGE_CH         11
 #define PBDRV_CONFIG_BATTERY_ADC_CURRENT_CH         10
 

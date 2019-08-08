@@ -6,7 +6,7 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_BATTERY
+#if PBDRV_CONFIG_BATTERY_LINUX_EV3
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -83,4 +83,4 @@ PROCESS_THREAD(pbdrv_battery_process, ev, data) {
     PROCESS_END();
 }
 
-#endif // PBDRV_CONFIG_BATTERY
+#endif // PBDRV_CONFIG_BATTERY_LINUX_EV3

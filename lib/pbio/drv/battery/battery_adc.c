@@ -5,7 +5,7 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_BATTERY
+#if PBDRV_CONFIG_BATTERY_ADC
 
 #include <stdbool.h>
 
@@ -59,4 +59,4 @@ PROCESS_THREAD(pbdrv_battery_process, ev, data) {
     PROCESS_END();
 }
 
-#endif // PBDRV_CONFIG_BATTERY
+#endif // PBDRV_CONFIG_BATTERY_ADC
