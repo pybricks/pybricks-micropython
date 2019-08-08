@@ -135,6 +135,10 @@ PROCESS_THREAD(pbdrv_adc_process, ev, data) {
 
     HAL_ADC_Init(&pbdrv_adc_hadc);
 
+#ifdef STM32L4
+    HAL_ADCEx_Calibration_Start(&pbdrv_adc_hadc, ADC_SINGLE_ENDED);
+#endif
+
     __HAL_LINKDMA(&pbdrv_adc_hadc, DMA_Handle, pbdrv_adc_hdma);
     HAL_NVIC_SetPriority(PBDRV_CONFIG_ADC_STM32_HAL_DMA_IRQ, 0, 0);
     HAL_NVIC_EnableIRQ(PBDRV_CONFIG_ADC_STM32_HAL_DMA_IRQ);
