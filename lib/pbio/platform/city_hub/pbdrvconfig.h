@@ -12,7 +12,12 @@
 #define PBDRV_CONFIG_BATTERY                        (1)
 #define PBDRV_CONFIG_BATTERY_ADC                    (1)
 #define PBDRV_CONFIG_BATTERY_ADC_VOLTAGE_CH         11
+#define PBDRV_CONFIG_BATTERY_ADC_VOLTAGE_RAW_MAX    3893
+#define PBDRV_CONFIG_BATTERY_ADC_VOLTAGE_SCALED_MAX 9600
 #define PBDRV_CONFIG_BATTERY_ADC_CURRENT_CH         10
+// FIXME: these values come from LEGO firmware, but seem to be 2x current
+#define PBDRV_CONFIG_BATTERY_ADC_CURRENT_RAW_MAX    4095
+#define PBDRV_CONFIG_BATTERY_ADC_CURRENT_SCALED_MAX 2444
 
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)

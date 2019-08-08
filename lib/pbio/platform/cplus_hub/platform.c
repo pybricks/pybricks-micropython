@@ -142,7 +142,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc) {
 
     LL_RCC_SetADCClockSource(LL_RCC_ADC_CLKSOURCE_SYSCLK);
 
-    // PC1, battery current
+    // PC1, battery voltage
 
     gpio_init.Pin = GPIO_PIN_1;
     gpio_init.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
@@ -154,7 +154,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc) {
     adc_ch_config.SamplingTime = ADC_SAMPLETIME_640CYCLES_5;
     HAL_ADC_ConfigChannel(hadc, &adc_ch_config);
 
-    // PC2, battery voltage
+    // PC2, battery current
 
     gpio_init.Pin = GPIO_PIN_2;
     gpio_init.Mode = GPIO_MODE_ANALOG_ADC_CONTROL;
