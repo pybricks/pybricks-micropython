@@ -107,6 +107,13 @@ extern const struct _mp_obj_module_t pb_module_cityhub;
 #else
 #define _PYBRICKS_MODULE_CITYHUB
 #endif
+#if PYBRICKS_PY_CPLUSHUB
+extern const struct _mp_obj_module_t pb_module_cplushub;
+#define _PYBRICKS_MODULE_CPLUSHUB \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_cplushub), (mp_obj_t)&pb_module_cplushub },
+#else
+#define _PYBRICKS_MODULE_CPLUSHUB
+#endif
 #if PYBRICKS_PY_DEBUG
 extern const struct _mp_obj_module_t pb_module_debug;
 #define _PYBRICKS_MODULE_DEBUG \
@@ -146,6 +153,7 @@ extern const struct _mp_obj_module_t pb_module_tools;
 #define MICROPY_PORT_BUILTIN_MODULES \
     _PYBRICKS_MODULE_ADVANCED       \
     _PYBRICKS_MODULE_CITYHUB        \
+    _PYBRICKS_MODULE_CPLUSHUB       \
     _PYBRICKS_MODULE_DEBUG          \
     _PYBRICKS_MODULE_MOVEHUB        \
     _PYBRICKS_MODULE_PUPDEVICES     \
