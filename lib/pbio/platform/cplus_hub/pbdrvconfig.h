@@ -4,8 +4,8 @@
 #ifndef _PBDRVCONFIG_H_
 #define _PBDRVCONFIG_H_
 
-#define PBDRV_CONFIG_ADC                            (0)
-#define PBDRV_CONFIG_ADC_STM32_HAL                  (0)
+#define PBDRV_CONFIG_ADC                            (1)
+#define PBDRV_CONFIG_ADC_STM32_HAL                  (1)
 #define PBDRV_CONFIG_ADC_STM32_HAL_ADC_INSTANCE     ADC1
 #define PBDRV_CONFIG_ADC_STM32_HAL_ADC_NUM_CHANNELS 3
 #define PBDRV_CONFIG_ADC_STM32_HAL_DMA_INSTANCE     DMA1_Channel1

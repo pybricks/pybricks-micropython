@@ -174,7 +174,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc) {
     HAL_ADC_ConfigChannel(hadc, &adc_ch_config);
 }
 
-void DMA1_Stream0_IRQHandler() {
+void DMA1_Channel1_IRQHandler() {
     pbdrv_adc_stm32_hal_handle_irq();
 }
 
