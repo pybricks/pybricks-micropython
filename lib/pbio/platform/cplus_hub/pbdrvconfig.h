@@ -30,7 +30,7 @@
 #define PBDRV_CONFIG_GPIO                           (1)
 #define PBDRV_CONFIG_GPIO_STM32L4                   (1)
 
-#define PBDRV_CONFIG_IOPORT                         (0)
+#define PBDRV_CONFIG_IOPORT                         (1)
 #define PBDRV_CONFIG_IOPORT_LPF2                    (1)
 #define PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS          (3)
 // #define PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS          (4)
@@ -38,8 +38,8 @@
 #define PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT          PBIO_PORT_C
 // #define PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT          PBIO_PORT_D
 
-#define PBDRV_CONFIG_UART                           (0)
-#define PBDRV_CONFIG_UART_STM32_HAL                 (0)
+#define PBDRV_CONFIG_UART                           (1)
+#define PBDRV_CONFIG_UART_STM32_HAL                 (1)
 #define PBDRV_CONFIG_UART_STM32_HAL_NUM_UART        (3)
 // #define PBDRV_CONFIG_UART_STM32_HAL_NUM_UART        (4)
 

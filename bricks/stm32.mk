@@ -157,6 +157,7 @@ HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(MCU_SERIES)xx_HAL_Driver/Src/,\
 	stm32$(MCU_SERIES_LCASE)xx_hal_rcc.c \
 	stm32$(MCU_SERIES_LCASE)xx_hal_tim_ex.c \
 	stm32$(MCU_SERIES_LCASE)xx_hal_tim.c \
+	stm32$(MCU_SERIES_LCASE)xx_hal_uart_ex.c \
 	stm32$(MCU_SERIES_LCASE)xx_hal_uart.c \
 	stm32$(MCU_SERIES_LCASE)xx_hal.c \
 	)
