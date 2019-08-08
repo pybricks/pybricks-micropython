@@ -91,11 +91,6 @@
 #endif
 #endif
 
-// enable the A/DC driver
-#ifndef PBDRV_CONFIG_ADC
-#define PBDRV_CONFIG_ADC (1)
-#endif
-
 // enable the bluetooth driver
 #ifndef PBDRV_CONFIG_BLUETOOTH
 #define PBDRV_CONFIG_BLUETOOTH (1)
