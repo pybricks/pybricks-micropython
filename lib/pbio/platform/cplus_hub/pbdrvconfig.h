@@ -27,6 +27,10 @@
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)
 #define PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON         (1)
 
+#define PBDRV_CONFIG_COUNTER                        (1)
+#define PBDRV_CONFIG_COUNTER_NUM_DEV                (3)
+// #define PBDRV_CONFIG_COUNTER_NUM_DEV                (4)
+
 #define PBDRV_CONFIG_GPIO                           (1)
 #define PBDRV_CONFIG_GPIO_STM32L4                   (1)
 
@@ -45,7 +49,7 @@
 
 #define PBDRV_CONFIG_BLUETOOTH      (0)
 #define PBDRV_CONFIG_LIGHT          (1)
-#define PBDRV_CONFIG_MOTOR          (0)
+#define PBDRV_CONFIG_MOTOR          (1)
 
 #define PBDRV_CONFIG_HAS_PORT_A (1)
 #define PBDRV_CONFIG_HAS_PORT_B (1)
