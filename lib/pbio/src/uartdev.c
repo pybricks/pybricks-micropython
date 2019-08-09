@@ -438,7 +438,9 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
         case EV3_UART_CMD_WRITE:
             if (cmd2 & 0x20) {
                 data->write_cmd_size = cmd2 & 0x3;
-                if (data->type_id == PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR) {
+                if (data->type_id == PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR ||
+                    data->type_id == PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR ||
+                    data->type_id == PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR) {
                     // TODO: msg[3] and msg[4] probably give us useful information
                     data->iodev.flags |= PBIO_IODEV_FLAG_IS_MOTOR;
                     // FIXME: clear this flag when device disconnects
@@ -685,7 +687,9 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
             goto err;
         }
 
-        if (data->type_id == PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR && data->write_cmd_size > 0) {
+        if ((data->type_id == PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR ||
+             data->type_id == PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR ||
+             data->type_id == PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR) && data->write_cmd_size > 0) {
             data->tacho_rate = data->rx_msg[1];
             data->tacho_count = uint32_le(data->rx_msg + 2);
         }
@@ -951,7 +955,9 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t *data)) {
     // reset data rx thread
     PT_INIT(&data->data_pt);
 
-    if (data->type_id == PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR) {
+    if (data->type_id == PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR ||
+        data->type_id == PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR ||
+        data->type_id == PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR) {
         static const uint8_t magic[] = { 0x22, 0x00, 0x10, 0x20 };
 
         // send magic sequence to tell motor to send position and speed data
@@ -1151,7 +1157,9 @@ static const pbio_iodev_ops_t pbio_uartdev_ops = {
 static pbio_error_t pbio_uartdev_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
     uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(dev, uartdev_port_data_t, counter_dev);
 
-    if (port_data->info->type_id != PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR) {
+    if (port_data->info->type_id != PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR &&
+        port_data->info->type_id != PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR &&
+        port_data->info->type_id != PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR) {
         return PBIO_ERROR_NO_DEV;
     }
 
@@ -1163,11 +1171,16 @@ static pbio_error_t pbio_uartdev_get_count(pbdrv_counter_dev_t *dev, int32_t *co
 static pbio_error_t pbio_uartdev_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
     uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(dev, uartdev_port_data_t, counter_dev);
 
-    if (port_data->info->type_id != PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR) {
+    if (port_data->info->type_id != PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR &&
+        port_data->info->type_id != PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR &&
+        port_data->info->type_id != PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR) {
         return PBIO_ERROR_NO_DEV;
     }
 
-    // scaling factor of 14 determined empirically
+    // UART motors return speed in % of max speed, so we have to adjust it to
+    // counts per second.
+    // scaling factor of 14 determined empirically for BOOST Interactive motor
+    // TODO: scale rate based on individual motor type.
     *rate = port_data->tacho_rate * 14;
 
     return PBIO_SUCCESS;

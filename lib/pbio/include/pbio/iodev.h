@@ -52,7 +52,11 @@ typedef enum {
     // BOOST UART devices and motors
     PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR        = 37,   /**< BOOST Color and Distance Sensor */
     PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR        = 38,   /**< BOOST Interactive Motor */
-    PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR            = 39,   /**< BOOST Move Hub built-in Motor */
+    PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR           = 39,   /**< BOOST Move Hub built-in Motor */
+
+    // TECHNIC Control+ motors
+    PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR            = 46,   /**< TECHNIC Control+ Large Motor */
+    PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR           = 47,   /**< TECHNIC Control+ XL Motor */
 
     // FatcatLab EV3 UART devices
     PBIO_IODEV_TYPE_ID_FCL_ADC                  = 71,   /**< FatcatLab A/DC Adapter */
