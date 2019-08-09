@@ -958,11 +958,17 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t *data)) {
     if (data->type_id == PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR ||
         data->type_id == PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR ||
         data->type_id == PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR) {
-        static const uint8_t magic[] = { 0x22, 0x00, 0x10, 0x20 };
+        static const uint8_t mode_1_and_2_combo[] = {
+            0x20 | 2,   // modo combo command, 2 modes
+            0,          // combo index
+            1 << 4 | 0, // mode 1, dataset 0
+            2 << 4 | 0, // mode 2, dataset 0
+        };
 
-        // send magic sequence to tell motor to send position and speed data
+        // setup motor to send position and speed data
         PBIO_PT_WAIT_READY(&data->pt,
-            err = ev3_uart_begin_tx_msg(data, EV3_UART_MSG_TYPE_CMD, EV3_UART_CMD_WRITE, magic, PBIO_ARRAY_SIZE(magic)));
+            err = ev3_uart_begin_tx_msg(data, EV3_UART_MSG_TYPE_CMD, EV3_UART_CMD_WRITE,
+                mode_1_and_2_combo, PBIO_ARRAY_SIZE(mode_1_and_2_combo)));
         if (err != PBIO_SUCCESS) {
             DBG_ERR(data->last_err = "UART Tx begin error during motor");
             goto err;
