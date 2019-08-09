@@ -200,12 +200,19 @@ void DMA1_Channel1_IRQHandler() {
 // special memory addresses defined in linker script
 extern uint32_t *_fw_isr_vector_src;
 
+TIM_HandleTypeDef *cplus_hub_htim1;
+TIM_HandleTypeDef *cplus_hub_htim15;
+TIM_HandleTypeDef *cplus_hub_htim16;
+
 // Called from assembly code in startup.s
 void SystemInit(void) {
     RCC_OscInitTypeDef osc_init = { 0 };
     RCC_ClkInitTypeDef clk_init = { 0 };
     GPIO_InitTypeDef gpio_init = { 0 };
     static UART_HandleTypeDef huart;
+    static TIM_HandleTypeDef htim1;
+    static TIM_HandleTypeDef htim15;
+    static TIM_HandleTypeDef htim16;
 
 #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
     SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  /* set CP10 and CP11 Full Access */
@@ -275,6 +282,27 @@ void SystemInit(void) {
     huart.Init.BaudRate = 115200;
     HAL_UART_Init(&huart);
     LPUART1->CR1 |= USART_CR1_TE | USART_CR1_RE;
+
+    // shared timers
+
+    htim1.Instance = TIM1;
+    htim1.Init.Prescaler = 8 - 1;
+    htim1.Init.Period = 10000 -1;
+    HAL_TIM_Base_Init(&htim1);
+
+    htim15.Instance = TIM15;
+    htim15.Init.Prescaler = 8 - 1;
+    htim15.Init.Period = 10000 -1;
+    HAL_TIM_Base_Init(&htim15);
+
+    htim16.Instance = TIM16;
+    htim16.Init.Prescaler = 8 - 1;
+    htim16.Init.Period = 10000 -1;
+    HAL_TIM_Base_Init(&htim16);
+
+    cplus_hub_htim1 = &htim1;
+    cplus_hub_htim15 = &htim15;
+    cplus_hub_htim16 = &htim16;
 
     // since the firmware starts at 0x08008000, we need to set the vector table offset
     SCB->VTOR = (uint32_t)&_fw_isr_vector_src;
