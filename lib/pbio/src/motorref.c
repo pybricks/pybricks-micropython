@@ -12,8 +12,20 @@
 
 #include "sys/clock.h"
 
-static inline int32_t int_sqrt(int32_t x) {
-    return fix16_to_int(fix16_sqrt(fix16_from_int(x)));
+static int32_t int_sqrt(int32_t n) {
+    if (n < 0) {
+        return 0;
+    }
+    int32_t x0 = n;
+    int32_t x1 = x0;
+
+    while (true) {
+        x1 = (x0 + n/x0)/2;
+        if (x1 == x0 || x1 == x0 + 1) {
+            return x0; 
+        }
+        x0 = x1;
+    }
 }
 
 void reverse_trajectory(pbio_control_trajectory_t *ref) {
