@@ -369,17 +369,10 @@ pbio_error_t pbio_motor_get_encoder_rate(pbio_motor_t *mtr, int32_t *rate) {
 }
 
 pbio_error_t pbio_motor_get_angular_rate(pbio_motor_t *mtr, int32_t *angular_rate) {
-    pbdrv_counter_dev_t *tacho_counter;
     int32_t encoder_rate;
     pbio_error_t err;
 
-    // TODO: get tacho_counter once at init when this is converted to contiki process
-    err = pbdrv_counter_get(mtr->counter_id, &tacho_counter);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    err = pbdrv_counter_get_rate(tacho_counter, &encoder_rate);
+    err = pbio_motor_get_encoder_rate(mtr, &encoder_rate);
     if (err != PBIO_SUCCESS) {
         return err;
     }
