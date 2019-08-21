@@ -154,6 +154,13 @@ extern const struct _mp_obj_module_t pb_module_tools;
 #else
 #define _PYBRICKS_MODULE_TOOLS
 #endif
+#if PYBRICKS_PY_ROBOTICS
+extern const struct _mp_obj_module_t pb_module_robotics;
+#define _PYBRICKS_MODULE_ROBOTICS \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_robotics), (mp_obj_t)&pb_module_robotics },
+#else
+#define _PYBRICKS_MODULE_ROBOTICS
+#endif
 
 #define MICROPY_PORT_BUILTIN_MODULES \
     _PYBRICKS_MODULE_ADVANCED       \
@@ -164,6 +171,7 @@ extern const struct _mp_obj_module_t pb_module_tools;
     _PYBRICKS_MODULE_PUPDEVICES     \
     _PYBRICKS_MODULE_PARAMETERS     \
     _PYBRICKS_MODULE_TOOLS          \
+    _PYBRICKS_MODULE_ROBOTICS       \
 
 // TODO: not sure if we will have a use for this
 #define SOCKET_POLL

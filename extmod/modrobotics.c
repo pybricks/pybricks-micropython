@@ -62,7 +62,7 @@ STATIC void robotics_DriveBase_print(const mp_print_t *print,  mp_obj_t self_in,
 
 STATIC mp_obj_t robotics_DriveBase_drive(mp_obj_t self_in, mp_obj_t speed, mp_obj_t steering) {
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_int_t sum = pb_obj_get_int(speed)*(int)(720.0/M_PI)/self->wheel_diameter;
+    mp_int_t sum = pb_obj_get_int(speed)*229/self->wheel_diameter; //TODO: use libfixmath
     mp_int_t dif = 2*self->axle_track*pb_obj_get_int(steering)/self->wheel_diameter;
 
     pb_thread_enter();

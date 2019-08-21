@@ -132,6 +132,7 @@ PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modparameters.c \
 	modpupdevices.c \
 	modtools.c \
+	modrobotics.c \
 	pberror.c \
 	pbhub.c \
 	pbiodevice.c \
@@ -193,6 +194,7 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	src/light.c \
 	src/main.c \
 	src/motor.c \
+	src/motorpair.c \
 	src/motorcontrol.c \
 	src/motorref.c \
 	src/uartdev.c \

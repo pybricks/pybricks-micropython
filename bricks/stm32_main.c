@@ -155,6 +155,9 @@ static void pb_imports() {
     #if PYBRICKS_PY_TOOLS
     PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_tools);
     #endif
+    #if PYBRICKS_PY_ROBOTICS
+    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_robotics);
+    #endif
 }
 
 int main(int argc, char **argv) {
