@@ -51,5 +51,11 @@ cityhub:
 clean-cityhub: clean-mpy-cross
 	@$(MAKE) -C bricks/cityhub clean
 
+cplushub:
+	@$(MAKE) -C bricks/cplushub
+
+clean-cplushub: clean-mpy-cross
+	@$(MAKE) -C bricks/cplushub clean
+
 clean-mpy-cross:
 	@$(MAKE) -C ../../mpy-cross clean
