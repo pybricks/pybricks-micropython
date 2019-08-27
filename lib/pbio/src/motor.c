@@ -20,11 +20,11 @@ static inline int32_t int_fix16_mul(int32_t a, fix16_t b) {
 
 static pbio_motor_t motor[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-pbio_error_t pbio_motor_get(uint8_t index, pbio_motor_t **mtr) {
-    if (index >= PBDRV_CONFIG_NUM_MOTOR_CONTROLLER) {
-        return PBIO_ERROR_INVALID_ARG;
+pbio_error_t pbio_motor_get(pbio_port_t port, pbio_motor_t **mtr) {
+    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
+        return PBIO_ERROR_INVALID_PORT;
     }
-    *mtr = &motor[index];
+    *mtr = &motor[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
     return PBIO_SUCCESS;
 }
 

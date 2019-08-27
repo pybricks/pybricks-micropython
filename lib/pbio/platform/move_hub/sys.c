@@ -88,9 +88,9 @@ void pbsys_unprepare_user_program(void) {
     pbdrv_light_set_rgb(PBIO_PORT_SELF, r, g, b);
 
     // TODO: would be nice to have something like _pbio_light_set_user_mode() for motors
-    for (int i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
+    for (int port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port < PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
         pbio_motor_t *mtr;
-        if (pbio_motor_get(i, &mtr) == PBIO_SUCCESS) {
+        if (pbio_motor_get(port, &mtr) == PBIO_SUCCESS) {
             pbio_motor_coast(mtr);
         }
     }

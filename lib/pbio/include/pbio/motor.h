@@ -55,7 +55,7 @@ typedef struct _pbio_motor_t {
     uint8_t counter_id;
 } pbio_motor_t;
 
-pbio_error_t pbio_motor_get(uint8_t index, pbio_motor_t **mtr);
+pbio_error_t pbio_motor_get(pbio_port_t port, pbio_motor_t **mtr);
 pbio_error_t pbio_motor_set_dc_settings(pbio_motor_t *mtr, int32_t stall_torque_limit_pct, int32_t duty_offset_pct);
 pbio_error_t pbio_motor_get_dc_settings(pbio_motor_t *mtr, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct);
 pbio_error_t pbio_motor_set_run_settings(pbio_motor_t *mtr, int32_t max_speed, int32_t acceleration);

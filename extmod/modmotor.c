@@ -37,7 +37,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
     self->base.type = (mp_obj_type_t*) type;
 
     pbio_port_t port = mp_obj_get_int(args[0]);
-    pb_assert(pbio_motor_get(port - PBDRV_CONFIG_FIRST_MOTOR_PORT, &self->mtr));
+    pb_assert(pbio_motor_get(port, &self->mtr));
 
     // FIXME: raise an ENODEV exception here for I/O ports with no motor plugged in
 
