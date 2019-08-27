@@ -10,18 +10,6 @@
 
 #include "sys/clock.h"
 
-static pbio_motor_t motor[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-
-// TODO: this function belongs in motor.c, but we need to separate the motor
-// from the controller first
-pbio_error_t pbio_motor_get(uint8_t index, pbio_motor_t **mtr) {
-    if (index >= PBDRV_CONFIG_NUM_MOTOR_CONTROLLER) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-    *mtr = &motor[index];
-    return PBIO_SUCCESS;
-}
-
 static inline int32_t int_fix16_div(int32_t a, fix16_t b) {
     return fix16_to_int(fix16_div(fix16_from_int(a), b));
 }
@@ -318,7 +306,7 @@ static pbio_error_t control_update_time_target(pbio_motor_t *mtr) {
     return PBIO_SUCCESS;
 }
 
-static void control_update(pbio_motor_t *mtr) {
+void control_update(pbio_motor_t *mtr) {
     pbio_error_t err = PBIO_SUCCESS;
     switch (mtr->state) {
         // Update the angular control in these modes
@@ -346,27 +334,6 @@ static void control_update(pbio_motor_t *mtr) {
 
 }
 
-// TODO: convert these two functions to contiki process
-void _pbio_motorcontroll_init(void) {
-#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
-    int i;
-
-    for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        motor[i].port = PBDRV_CONFIG_FIRST_MOTOR_PORT + i;
-        motor[i].counter_id = i;
-    }
-#endif
-}
-
-// Service all the motors by calling this function at approximately constant intervals.
-void _pbio_motorcontrol_poll(void) {
-    int i;
-
-    // Do the update for each motor
-    for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        control_update(&motor[i]);
-    }
-}
 
 static pbio_error_t pbio_motor_get_initial_state(pbio_motor_t *mtr, count_t *count_start, rate_t *rate_start) {
 

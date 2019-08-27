@@ -18,6 +18,16 @@ static inline int32_t int_fix16_mul(int32_t a, fix16_t b) {
     return fix16_to_int(fix16_mul(fix16_from_int(a), b));
 }
 
+static pbio_motor_t motor[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+
+pbio_error_t pbio_motor_get(uint8_t index, pbio_motor_t **mtr) {
+    if (index >= PBDRV_CONFIG_NUM_MOTOR_CONTROLLER) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    *mtr = &motor[index];
+    return PBIO_SUCCESS;
+}
+
 pbio_error_t pbio_motor_coast(pbio_motor_t *mtr){
     mtr->state = PBIO_CONTROL_COASTING;
     return pbdrv_motor_coast(mtr->port);
@@ -380,4 +390,26 @@ pbio_error_t pbio_motor_get_angular_rate(pbio_motor_t *mtr, int32_t *angular_rat
     *angular_rate = int_fix16_div(encoder_rate, mtr->counts_per_output_unit);
 
     return PBIO_SUCCESS;
+}
+
+// TODO: convert these two functions to contiki process
+void _pbio_motorcontroll_init(void) {
+#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
+    int i;
+
+    for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
+        motor[i].port = PBDRV_CONFIG_FIRST_MOTOR_PORT + i;
+        motor[i].counter_id = i;
+    }
+#endif
+}
+
+// Service all the motors by calling this function at approximately constant intervals.
+void _pbio_motorcontrol_poll(void) {
+    int i;
+
+    // Do the update for each motor
+    for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
+        control_update(&motor[i]);  // make single control update in .h... whch uses *mtr. then thsi file is motor agnostic . put poll in motor.c
+    }
 }
