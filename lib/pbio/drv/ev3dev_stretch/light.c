@@ -36,6 +36,11 @@ void _pbdrv_light_init(void) {
         fprintf(f_trigger, "none");
         fclose(f_trigger);
         f_brightness[led] = fopen(brightness_paths[led], "w");
+        if (f_brightness[led]) {
+            perror("LED init failed");
+        } else {
+            setbuf(f_brightness[led], NULL);
+        }
     }
 }
 
@@ -63,10 +68,6 @@ pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, uint8_t r, uint8_t g, uint8_t
             }
             ret = fprintf(f_brightness[led], "%d", led < 2 ? r : g);
             if (ret < 0) {
-                return PBIO_ERROR_IO;
-            }
-            ret = fflush(f_brightness[led]);
-            if (ret == EOF) {
                 return PBIO_ERROR_IO;
             }
         }

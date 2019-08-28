@@ -126,12 +126,16 @@ static pbio_error_t counter_ev3dev_stretch_iio_init() {
             continue;
         }
 
+        setbuf(data->count, NULL);
+
         snprintf(buf, sizeof(buf), "%s/in_frequency%d_input", udev_list_entry_get_name(entry), i);
         data->rate = fopen(buf, "r");
         if (!data->rate) {
             dbg_err("failed to open rate attribute");
             continue;
         }
+
+        setbuf(data->rate, NULL);
 
         data->dev.get_count = pbdrv_counter_ev3dev_stretch_iio_get_count;
         data->dev.get_rate = pbdrv_counter_ev3dev_stretch_iio_get_rate;

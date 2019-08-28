@@ -74,7 +74,18 @@ PROCESS_THREAD(pbdrv_battery_process, ev, data) {
     PROCESS_BEGIN();
 
     f_voltage = fopen("/sys/class/power_supply/lego-ev3-battery/voltage_now", "r");
+    if (!f_voltage) {
+        perror("Battery voltage init failed");
+    } else {
+        setbuf(f_voltage, NULL);
+    }
+
     f_current = fopen("/sys/class/power_supply/lego-ev3-battery/current_now", "r");
+    if (!f_current) {
+        perror("Battery current init failed");
+    } else {
+        setbuf(f_voltage, NULL);
+    }
 
     while (true) {
         PROCESS_WAIT_EVENT();

@@ -138,7 +138,10 @@ static pbio_error_t sysfs_motor_init(pbio_port_t port){
     // Open the duty file
     snprintf(filepath, MAX_PATH_LENGTH + 14, "%s/duty_cycle_sp", mtr_files->devpath);
     mtr_files->f_duty = fopen(filepath, "w");
-    if (mtr_files->f_duty == NULL) { return PBIO_ERROR_IO; }
+    if (mtr_files->f_duty == NULL) {
+        return PBIO_ERROR_IO;
+    }
+    setbuf(mtr_files->f_duty, NULL);
 
     // If we're here, all files have been opened.
     return PBIO_SUCCESS;
@@ -194,8 +197,7 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
     }
     // Write the duty cycle and return on success
     if (0 == fseek(mtr_files->f_duty, 0, SEEK_SET) &&
-        0 <= fprintf(mtr_files->f_duty, "%d", duty_cycle/100) &&
-        0 == fflush(mtr_files->f_duty)){
+        0 <= fprintf(mtr_files->f_duty, "%d", duty_cycle/100)) {
         return PBIO_SUCCESS;
     }
     return PBIO_ERROR_IO;
