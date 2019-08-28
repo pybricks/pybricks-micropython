@@ -103,12 +103,17 @@ pbio_error_t pbio_motor_setup(pbio_motor_t *mtr, pbio_motor_dir_t direction, fix
     if (err != PBIO_SUCCESS) { return err; }
 
     //
-    // TODO: Use the device_id to retrieve this number. It is 1.0 for all of the supported motors so far.
-    // It is 2.0 for motors with double resolution, and it is counts/mm for linear actuators.
+    // TODO: Get this ratio from platform config
     //
-    fix16_t counts_per_unit = F16C(1, 0);
+    fix16_t counts_per_unit;
+    if (id == PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR || id == PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR) {
+        counts_per_unit = F16C(2, 0);
+    }
+    else {
+        counts_per_unit = F16C(1, 0);
+    }
 
-    // Overall ratio between encoder counts and output
+    // Overall ratio between encoder counts and output including gear train
     fix16_t ratio = fix16_mul(counts_per_unit, gear_ratio);
 
     mtr->counts_per_unit = counts_per_unit;
