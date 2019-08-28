@@ -48,6 +48,10 @@ static pbio_error_t pbdrv_counter_ev3dev_stretch_iio_get_count(pbdrv_counter_dev
         return PBIO_ERROR_IO;
     }
 
+    if (fflush(data->count) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
     return PBIO_SUCCESS;
 }
 
@@ -63,6 +67,10 @@ static pbio_error_t pbdrv_counter_ev3dev_stretch_iio_get_rate(pbdrv_counter_dev_
     }
 
     if (fscanf(data->rate, "%d", rate) == EOF) {
+        return PBIO_ERROR_IO;
+    }
+
+    if (fflush(data->rate) != 0) {
         return PBIO_ERROR_IO;
     }
 
