@@ -98,8 +98,8 @@ static pbio_error_t counter_ev3dev_stretch_iio_init() {
         goto free_enumerate;
     }
 
-    if ((errno = udev_enumerate_scan_subsystems(enumerate) < 0)) {
-        dbg_err("udev_enumerate_scan_subsystems failed");
+    if ((errno = udev_enumerate_scan_devices(enumerate) < 0)) {
+        dbg_err("udev_enumerate_scan_devices failed");
         goto free_enumerate;
     }
 
