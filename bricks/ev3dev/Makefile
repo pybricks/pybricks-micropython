@@ -260,6 +260,7 @@ include $(TOP)/py/mkrules.mk
 
 EV3DEV_TEST_DIRS = $(addprefix ../ports/pybricks/tests/ev3dev/, \
 	brick \
+	motor \
 	uev3dev \
 	)
 
