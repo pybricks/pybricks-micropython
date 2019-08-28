@@ -2,7 +2,7 @@
 # Copyright (c) 2018-2019 Laurens Valk
 
 """Read and write to EV3 sensors through ev3dev sysfs."""
-from os import listdir, path
+from uos import ilistdir
 from .tools import wait, StopWatch
 
 
@@ -34,7 +34,7 @@ def get_sensor_path(port, driver_name):
     """Get a path to a device based on port number."""
     base_dir = '/sys/class/lego-sensor'
     # Iterate through ['sensor0', 'sensor1', 'sensor2', ...]
-    for device_dir in listdir(base_dir):
+    for device_dir, _, _ in ilistdir(base_dir):
         # In each folder, open the address file
         with open(base_dir + '/' + device_dir + '/address', 'r') as addr_file:
             # Read the port string (e.g. 'outB')
