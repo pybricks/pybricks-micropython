@@ -101,11 +101,6 @@
 #define PBDRV_CONFIG_BUTTON (1)
 #endif
 
-// enable the I/O port driver
-#ifndef PBDRV_CONFIG_IOPORT
-#define PBDRV_CONFIG_IOPORT (1)
-#endif
-
 // enable the light driver
 #ifndef PBDRV_CONFIG_LIGHT
 #define PBDRV_CONFIG_LIGHT (1)
