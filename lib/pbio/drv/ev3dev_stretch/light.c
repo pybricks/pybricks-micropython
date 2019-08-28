@@ -37,8 +37,6 @@ void _pbdrv_light_init(void) {
         fclose(f_trigger);
         f_brightness[led] = fopen(brightness_paths[led], "w");
         if (f_brightness[led]) {
-            perror("LED init failed");
-        } else {
             setbuf(f_brightness[led], NULL);
         }
     }
