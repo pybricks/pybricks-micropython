@@ -9,6 +9,7 @@
 
 #if PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO
 
+#include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -87,17 +88,17 @@ static pbio_error_t counter_ev3dev_stretch_iio_init() {
         goto free_udev;
     }
 
-    if (udev_enumerate_add_match_subsystem(enumerate, "iio") < 0) {
+    if ((errno = udev_enumerate_add_match_subsystem(enumerate, "iio")) < 0) {
         dbg_err("udev_enumerate_add_match_subsystem failed");
         goto free_enumerate;
     }
 
-    if (udev_enumerate_add_match_property(enumerate, "OF_NAME", "ev3-tacho-rpmsg") < 0) {
+    if ((errno = udev_enumerate_add_match_property(enumerate, "OF_NAME", "ev3-tacho-rpmsg")) < 0) {
         dbg_err("udev_enumerate_add_match_property failed");
         goto free_enumerate;
     }
 
-    if (udev_enumerate_scan_subsystems(enumerate) < 0) {
+    if ((errno = udev_enumerate_scan_subsystems(enumerate) < 0)) {
         dbg_err("udev_enumerate_scan_subsystems failed");
         goto free_enumerate;
     }
