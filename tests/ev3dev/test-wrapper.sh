@@ -4,4 +4,4 @@
 
 DIR="$(dirname $(readlink -f $0))"
 
-exec ev3dev-mocks-run "$DIR/pybricks-micropython" "$@"
+exec ev3dev-mocks-run "$DIR/../../bricks/ev3dev/pybricks-micropython" "$@"
