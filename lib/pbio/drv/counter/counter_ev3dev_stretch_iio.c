@@ -48,9 +48,6 @@ static pbio_error_t pbdrv_counter_ev3dev_stretch_iio_get_count(pbdrv_counter_dev
         return PBIO_ERROR_IO;
     }
 
-    // iio driver gives us 720 counts per rotation but pbio motor code expects 360
-    *count /= 2;
-
     return PBIO_SUCCESS;
 }
 
@@ -68,9 +65,6 @@ static pbio_error_t pbdrv_counter_ev3dev_stretch_iio_get_rate(pbdrv_counter_dev_
     if (fscanf(data->rate, "%d", rate) == EOF) {
         return PBIO_ERROR_IO;
     }
-
-    // iio driver gives us 720 counts per rotation but pbio motor code expects 360
-    *rate /= 2;
 
     return PBIO_SUCCESS;
 }
