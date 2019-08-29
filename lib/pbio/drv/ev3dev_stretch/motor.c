@@ -101,32 +101,16 @@ static pbio_error_t sysfs_motor_command(pbio_port_t port, const char* command) {
 }
 
 // Reset motor and close files if they are open
-static pbio_error_t sysfs_close_and_reset(pbio_port_t port){
+static void sysfs_close_and_reset(pbio_port_t port){
     motor_file_t *mtr_files = &motor_files[PORT_TO_IDX(port)];
-    pbio_error_t err;
-    switch (mtr_files->id) {
-        // Do the same for Large and Medium motors
-        case PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR:
-        case PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR:
-            err = sysfs_motor_command(port, "reset");
-            if (err != PBIO_SUCCESS) { return err; }
-            fclose(mtr_files->f_duty);
-            mtr_files->id = PBIO_IODEV_TYPE_ID_NONE;
-            mtr_files->coasting = true;
-            return PBIO_SUCCESS;
-        case PBIO_IODEV_TYPE_ID_EV3_DC_MOTOR:
-            err = sysfs_motor_command(port, "stop");
-            if (err != PBIO_SUCCESS) { return err; }
-            fclose(mtr_files->f_duty);
-            mtr_files->id = PBIO_IODEV_TYPE_ID_NONE;
-            mtr_files->coasting = true;
-            return PBIO_SUCCESS;
-        default:
-            return PBIO_SUCCESS;
+    if (mtr_files->id) {
+        fclose(mtr_files->f_duty);
     }
+    mtr_files->id = PBIO_IODEV_TYPE_ID_NONE;
+    mtr_files->coasting = true;
 }
 
-static pbio_error_t sysfs_motor_init(pbio_port_t port){
+static pbio_error_t sysfs_motor_init(pbio_port_t port) {
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -134,9 +118,8 @@ static pbio_error_t sysfs_motor_init(pbio_port_t port){
     pbio_error_t err;
 
     // Reset and close motor if already open
-    err = sysfs_close_and_reset(port);
-    if (err != PBIO_SUCCESS) {  return err; }
-
+    sysfs_close_and_reset(port);
+    
     // Get the motor ID and device path
     err = sysfs_get_motor(port, &mtr_files->id, mtr_files->devpath);
     if (err != PBIO_SUCCESS) {  return err; }
@@ -157,13 +140,7 @@ static pbio_error_t sysfs_motor_init(pbio_port_t port){
 
 }
 
-void _pbdrv_motor_init(void) {
-    for(pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
-        // FIXME: it is not safe to assume that all motors are present when the
-        // program starts. They could be plugged in later.
-        sysfs_motor_init(port);
-    }
-}
+inline void _pbdrv_motor_init(void) { }
 
 #if PBIO_CONFIG_ENABLE_DEINIT
 void _pbdrv_motor_deinit(void) {
@@ -175,9 +152,6 @@ void _pbdrv_motor_deinit(void) {
 
 pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
     motor_file_t *mtr_files = &motor_files[PORT_TO_IDX(port)];
-    if (mtr_files->id == PBIO_IODEV_TYPE_ID_NONE) {
-        return PBIO_ERROR_NO_DEV;
-    }
     mtr_files->coasting = true;
     pbio_error_t err = sysfs_motor_command(port, "stop");
     if (err == PBIO_SUCCESS) {
@@ -185,12 +159,8 @@ pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
         return PBIO_SUCCESS;
     }
     else {
-        // Otherwise, try reinitializing once:
-        // > If this fails, this means there is no device: PBIO_ERROR_NO_DEV
-        // > If this succeeds, there was an error but the motor is still there.
-        //   This can happen when a user unplugs and then reconnects a motor.
-        //   This returns PBIO_ERROR_IO so pbio can reinitialize the motor.
-        return sysfs_motor_init(port) == PBIO_SUCCESS ? PBIO_ERROR_IO : PBIO_ERROR_NO_DEV;
+        // Otherwise, try reinitializing. A new motor may be plugged in.
+        return sysfs_motor_init(port);
     }
 }
 

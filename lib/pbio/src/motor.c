@@ -72,13 +72,11 @@ pbio_error_t pbio_motor_set_duty_cycle_usr(pbio_motor_t *mtr, int32_t duty_steps
 pbio_error_t pbio_motor_setup(pbio_motor_t *mtr, pbio_motor_dir_t direction, fix16_t gear_ratio) {
     // Coast DC Motor
     pbio_error_t err = pbio_motor_coast(mtr);
-    if (err != PBIO_SUCCESS && err != PBIO_ERROR_IO) {
+    if (err != PBIO_SUCCESS) {
         return err;
     }
     mtr->direction = direction;
-
-    if (err != PBIO_SUCCESS) { return err; }
-
+    
     // Reset encoder, and in the process check that it is an encoded motor
     err = pbio_motor_reset_encoder_count(mtr, 0);
 
