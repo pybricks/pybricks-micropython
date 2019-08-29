@@ -49,7 +49,6 @@ pbio_error_t ev3device_get_device(pbio_ev3iodev_t **iodev, pbio_iodev_type_id_t 
 pbio_error_t ev3device_get_values_at_mode(pbio_ev3iodev_t *iodev, uint8_t mode, void *values) {
 
     pbio_error_t err;
-
     // Set the mode if not already set
     if (iodev->mode != mode || (
         // and also if this sensor/mode requires setting it every time:
@@ -69,7 +68,11 @@ pbio_error_t ev3device_get_values_at_mode(pbio_ev3iodev_t *iodev, uint8_t mode, 
 
     // Read raw data from device
     char data[PBIO_IODEV_MAX_DATA_SIZE];
-    pbdrv_ev3_sensor_get_bin_data(iodev->sensor, data);
+
+    err = pbdrv_ev3_sensor_get_bin_data(iodev->sensor, data);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     for (uint8_t i = 0; i < iodev->data_len; i++) {
         switch (iodev->data_type) {
