@@ -68,9 +68,9 @@ void pbio_init(void) {
     process_init();
     _pbdrv_button_init();
     _pbdrv_light_init();
+    autostart_start(autostart_processes);
     _pbdrv_motor_init();
     _pbio_motorcontroll_init();
-    autostart_start(autostart_processes);
 }
 
 /**

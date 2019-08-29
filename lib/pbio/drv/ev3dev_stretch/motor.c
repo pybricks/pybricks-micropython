@@ -14,6 +14,8 @@
 #include <pbdrv/motor.h>
 #include <pbio/config.h>
 
+#include "../ioport/ioport_ev3dev_stretch.h"
+
 
 #define MAX_PATH_LENGTH 120
 
@@ -49,24 +51,31 @@ static pbio_error_t sysfs_append_motor_number(DIR *dir, char *portpath, char *de
 // Get the device ID and device path for the given motor port, if any
 static pbio_error_t sysfs_get_motor(pbio_port_t port, pbio_iodev_type_id_t *id, char *devpath) {
     char portpath[MAX_PATH_LENGTH];
+    const char *port_syspath;
     DIR *dir;
+    pbio_error_t err;
+
+    err = pbdrv_ioport_ev3dev_get_syspath(port, &port_syspath);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Check if there is a Large EV3 Motor on this port
-    snprintf(portpath, MAX_PATH_LENGTH, "/sys/class/lego-port/port%d/ev3-ports:out%c:lego-ev3-l-motor/tacho-motor/", 4 + PORT_TO_IDX(port), port);
+    snprintf(portpath, MAX_PATH_LENGTH, "%s/ev3-ports:out%c:lego-ev3-l-motor/tacho-motor/", port_syspath, port);
     dir = opendir(portpath);
     if (dir) {
         *id = PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR;
         return sysfs_append_motor_number(dir, portpath, devpath);
     }
     // Check if there is a Medium EV3 Motor on this port
-    snprintf(portpath, MAX_PATH_LENGTH, "/sys/class/lego-port/port%d/ev3-ports:out%c:lego-ev3-m-motor/tacho-motor/", 4 + PORT_TO_IDX(port), port);
+    snprintf(portpath, MAX_PATH_LENGTH, "%s/ev3-ports:out%c:lego-ev3-m-motor/tacho-motor/",port_syspath, port);
     dir = opendir(portpath);
     if (dir) {
         *id = PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR;
         return sysfs_append_motor_number(dir, portpath, devpath);
     }
     // Check if there is a DC Motor on this port
-    snprintf(portpath, MAX_PATH_LENGTH, "/sys/class/lego-port/port%d/ev3-ports:out%c:rcx-motor/dc-motor/", 4 + PORT_TO_IDX(port), port);
+    snprintf(portpath, MAX_PATH_LENGTH, "%s/ev3-ports:out%c:rcx-motor/dc-motor/", port_syspath, port);
     dir = opendir(portpath);
     if (dir) {
         *id = PBIO_IODEV_TYPE_ID_EV3_DC_MOTOR;
@@ -150,6 +159,8 @@ static pbio_error_t sysfs_motor_init(pbio_port_t port){
 
 void _pbdrv_motor_init(void) {
     for(pbio_port_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
+        // FIXME: it is not safe to assume that all motors are present when the
+        // program starts. They could be plugged in later.
         sysfs_motor_init(port);
     }
 }
