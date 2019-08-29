@@ -41,7 +41,12 @@ pbio_error_t sysfs_get_number(pbio_port_t port, int *sysfs_number) {
         if (entry->d_name[0] != '.') {
             // Open the address file to get the port number
             char p_address[MAX_PATH_LENGTH];
+#pragma GCC diagnostic push
+#if (__GNUC__ > 7) || (__GNUC__ == 7 && __GNUC_MINOR__ >= 1)
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
             snprintf(p_address, MAX_PATH_LENGTH, "/sys/class/lego-sensor/%s/address", entry->d_name);
+#pragma GCC diagnostic pop
             FILE *f_address = fopen(p_address, "r");
             if (f_address == NULL) {
                 return PBIO_ERROR_IO;
