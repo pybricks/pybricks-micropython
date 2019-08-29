@@ -128,7 +128,7 @@ pbio_error_t ev3_sensor_init(pbdrv_ev3_sensor_t *sensor, pbio_port_t port) {
     FILE *f_modes;
     err = sysfs_open(&f_modes, sensor->n_sensor, "modes", "r");
     if (err != PBIO_SUCCESS) { return err; }
-    
+
     sensor->n_modes = 0;
     while (fscanf(f_modes, " %16s", sensor->modes[sensor->n_modes++]) == 1);
     if (fclose(f_modes) != 0) {
@@ -231,10 +231,10 @@ pbio_error_t pbdrv_ev3_sensor_set_mode(pbdrv_ev3_sensor_t *sensor, uint8_t mode)
         return PBIO_ERROR_IO;
     }
 
-    if (fprintf(sensor->f_mode, sysfs_mode) != strlen(sysfs_mode)) {
+    if (fprintf(sensor->f_mode, "%s", sysfs_mode) != strlen(sysfs_mode)) {
         return PBIO_ERROR_IO;
     }
-    
+
     if (fflush(sensor->f_mode) != 0) {
         return PBIO_ERROR_IO;
     }
