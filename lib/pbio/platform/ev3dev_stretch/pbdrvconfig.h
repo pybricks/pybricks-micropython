@@ -14,6 +14,9 @@
 #define PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO             (1)
 #define PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO_NUM_DEV     (4)
 
+#define PBDRV_CONFIG_IOPORT                                 (1)
+#define PBDRV_CONFIG_IOPORT_EV3DEV_STRETCH                  (1)
+
 #define PBDRV_CONFIG_HAS_PORT_A (1)
 #define PBDRV_CONFIG_HAS_PORT_B (1)
 #define PBDRV_CONFIG_HAS_PORT_C (1)
@@ -29,7 +32,6 @@
 
 #define PBDRV_CONFIG_BLUETOOTH  (0)
 #define PBDRV_CONFIG_BUTTON     (1)
-#define PBDRV_CONFIG_IOPORT     (0)
 #define PBDRV_CONFIG_UART       (0)
 
 #endif // _PBDRVCONFIG_H_

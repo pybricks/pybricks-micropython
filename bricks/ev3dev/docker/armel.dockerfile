@@ -12,7 +12,8 @@ RUN sudo apt-get update && \
         libumockdev0:armel \
         pkg-config \
         python \
-        python3
+        python3 \
+        uthash-dev:armel
 RUN apt-get download umockdev:armel && \
     ar x umockdev*.deb data.tar.xz && \
     sudo tar -C / -xf data.tar.xz ./usr/lib/arm-linux-gnueabi/libumockdev-preload.so.0.0.0 && \
