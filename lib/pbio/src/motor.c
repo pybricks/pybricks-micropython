@@ -413,6 +413,6 @@ void _pbio_motorcontrol_poll(void) {
 
     // Do the update for each motor
     for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        control_update(&motor[i]);  // make single control update in .h... whch uses *mtr. then thsi file is motor agnostic . put poll in motor.c
+        control_update(&motor[i]);
     }
 }

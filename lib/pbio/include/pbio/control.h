@@ -83,7 +83,8 @@ typedef enum {
     PBIO_MOTOR_STOP_COAST,      /**< Coast the motor */
     PBIO_MOTOR_STOP_BRAKE,      /**< Brake the motor */
     PBIO_MOTOR_STOP_HOLD,       /**< Actively hold the motor in place */
-} pbio_control_after_stop_t;
+    PBIO_ACTUATION_DUTY,
+} pbio_control_after_stop_t; // TODO: generalize enum names to pbio_actuation_t
 
 typedef enum {
     RUN,
