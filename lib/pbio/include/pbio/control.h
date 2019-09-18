@@ -7,9 +7,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <pbdrv/config.h>
-#include <pbdrv/motor.h>
-
 #include <pbio/error.h>
 #include <pbio/port.h>
 #include <pbio/motorref.h>

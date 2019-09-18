@@ -12,8 +12,3 @@ typedef struct _motor_Motor_obj_t {
 } motor_Motor_obj_t;
 
 const mp_obj_type_t motor_Motor_type;
-
-// Motor enum types
-const mp_obj_type_t motor_Stop_enum;
-const mp_obj_type_t motor_Run_enum;
-const mp_obj_type_t motor_Dir_enum;

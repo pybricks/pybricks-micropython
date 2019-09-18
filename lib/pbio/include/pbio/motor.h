@@ -82,6 +82,9 @@ pbio_error_t pbio_motor_run_angle(pbio_motor_t *mtr, int32_t speed, int32_t angl
 pbio_error_t pbio_motor_run_target(pbio_motor_t *mtr, int32_t speed, int32_t target, pbio_control_after_stop_t after_stop, bool foreground);
 pbio_error_t pbio_motor_track_target(pbio_motor_t *mtr, int32_t target);
 
+pbio_error_t control_update_angle_target(pbio_motor_t *mtr, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t *actuation_type, int32_t *control);
+pbio_error_t control_update_time_target(pbio_motor_t *mtr, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t *actuation_type, int32_t *control);
+
 pbio_error_t control_update(pbio_motor_t *mtr);
 
 void _pbio_motorcontroll_init(void);
