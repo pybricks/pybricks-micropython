@@ -261,3 +261,43 @@ pbio_error_t control_update_time_target(pbio_motor_t *mtr, ustime_t time_now, co
     }
     return PBIO_SUCCESS;
 }
+
+void control_init_angle_target(pbio_motor_t *mtr) {
+    // TODO If already running, start from ref + set flag of original state
+
+    // depending on wind up status, keep or finalize integrator state, plus maintain status
+
+    pbio_control_status_angular_t *status = &mtr->control.status_angular;
+    pbio_control_trajectory_t *trajectory = &mtr->control.trajectory;
+
+    // For this new maneuver, we reset PID variables and related persistent control settings
+    // If still running and restarting a new maneuver, however, we keep part of the PID status
+    // in order to create a smooth transition from one maneuver to the next.
+    // If no previous maneuver was active, just set these to zero.
+    status->err_integral = 0;
+    status->time_paused = 0;
+    status->time_stopped = 0;
+    status->time_prev = trajectory->t0;
+    status->count_err_prev = 0;
+    status->ref_time_running = true;
+}
+
+void control_init_time_target(pbio_motor_t *mtr) {
+    pbio_control_status_timed_t *status = &mtr->control.status_timed;
+    pbio_control_trajectory_t *trajectory = &mtr->control.trajectory;
+
+    if (mtr->state == PBIO_CONTROL_TIME_BACKGROUND) {
+        if (status->speed_integrator_running) {
+            status->speed_integrator += trajectory->th0 - status->integrator_ref_start;
+            status->integrator_ref_start = trajectory->th0;
+        }
+    }
+    else {
+        // old mode was passive, so start from zero,
+        status->speed_integrator = 0;
+        status->integrator_time_stopped = 0;
+        status->speed_integrator_running = true;
+        status->integrator_start = trajectory->th0;
+        status->integrator_ref_start = trajectory->th0;
+    }
+}
