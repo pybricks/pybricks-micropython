@@ -70,7 +70,7 @@ void pbio_init(void) {
     _pbdrv_light_init();
     autostart_start(autostart_processes);
     _pbdrv_motor_init();
-    _pbio_motorcontroll_init();
+    _pbio_servo_init();
 }
 
 /**
@@ -86,7 +86,7 @@ int pbio_do_one_event(void) {
     // don't want to call all of the subroutines unless enough time has
     // actually elapsed to do something useful.
     if (now - prev_fast_poll_time >= 2) {
-        _pbio_motorcontrol_poll();
+        _pbio_servo_poll();
         prev_fast_poll_time = now;
     }
     if (now - prev_slow_poll_time >= 32) {

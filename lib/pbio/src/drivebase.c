@@ -37,11 +37,11 @@ static pbio_error_t pbio_motor_make_pair(pbio_motor_t *mtr1, pbio_motor_t *mtr2)
 
     // Motors should still be connected and should have encoders, which we can test by reading their angles
     int32_t dummy_angle;
-    err = pbio_motor_get_angle(mtr1, &dummy_angle);
+    err = pbio_tacho_get_angle(mtr1, &dummy_angle);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_motor_get_angle(mtr2, &dummy_angle);
+    err = pbio_tacho_get_angle(mtr2, &dummy_angle);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -55,11 +55,11 @@ static pbio_error_t pbio_motor_make_pair(pbio_motor_t *mtr1, pbio_motor_t *mtr2)
             PORT(pair_idx[i].motor_two) == mtr2->port) {
 
             // Coast both of the motors in that pair
-            err = pbio_motor_coast(pair_idx[i].motor_one);
+            err = pbio_dc_coast(pair_idx[i].motor_one);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
-            err = pbio_motor_coast(pair_idx[i].motor_two);
+            err = pbio_dc_coast(pair_idx[i].motor_two);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
@@ -78,11 +78,11 @@ static pbio_error_t pbio_motor_make_pair(pbio_motor_t *mtr1, pbio_motor_t *mtr2)
         }
     }
     // Coast both motors of the new pair
-    err = pbio_motor_coast(mtr1);
+    err = pbio_dc_coast(mtr1);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_motor_coast(mtr2);
+    err = pbio_dc_coast(mtr2);
     if (err != PBIO_SUCCESS) {
         return err;
     }

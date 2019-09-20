@@ -67,8 +67,8 @@ STATIC mp_obj_t robotics_DriveBase_drive(mp_obj_t self_in, mp_obj_t speed, mp_ob
 
     pb_thread_enter();
 
-    pbio_error_t err_left = pbio_motor_run(self->mtr_left->mtr, (sum+dif)/2);
-    pbio_error_t err_right = pbio_motor_run(self->mtr_right->mtr, (sum-dif)/2);
+    pbio_error_t err_left = pbio_servo_run(self->mtr_left->mtr, (sum+dif)/2);
+    pbio_error_t err_right = pbio_servo_run(self->mtr_right->mtr, (sum-dif)/2);
 
     pb_thread_exit();
 
@@ -87,8 +87,8 @@ STATIC mp_obj_t robotics_DriveBase_stop(size_t n_args, const mp_obj_t *args){
 
     pb_thread_enter();
 
-    err_left = pbio_motor_stop(self->mtr_left->mtr, after_stop);
-    err_right = pbio_motor_stop(self->mtr_right->mtr, after_stop);
+    err_left = pbio_servo_stop(self->mtr_left->mtr, after_stop);
+    err_right = pbio_servo_stop(self->mtr_right->mtr, after_stop);
 
     pb_thread_exit();
 
