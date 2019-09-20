@@ -444,7 +444,7 @@ STATIC const mp_obj_type_t ev3devices_UltrasonicSensor_type = {
 typedef struct _ev3devices_GyroSensor_obj_t {
     mp_obj_base_t base;
     pbio_ev3iodev_t *iodev;
-    pbio_motor_dir_t direction;
+    pbio_direction_t direction;
     mp_int_t offset;
 } ev3devices_GyroSensor_obj_t;
 
@@ -457,13 +457,13 @@ STATIC void ev3devices_GyroSensor_raw(pbio_ev3iodev_t *iodev, mp_int_t *raw_angl
 }
 
 // pybricks.ev3devices.GyroSensor (internal) Get new offset  for new reset angle
-STATIC mp_int_t ev3devices_GyroSensor_get_angle_offset(pbio_ev3iodev_t *iodev, pbio_motor_dir_t direction, mp_int_t new_angle) {
+STATIC mp_int_t ev3devices_GyroSensor_get_angle_offset(pbio_ev3iodev_t *iodev, pbio_direction_t direction, mp_int_t new_angle) {
     // Read raw sensor values
     mp_int_t raw_angle, raw_speed;
     ev3devices_GyroSensor_raw(iodev, &raw_angle, &raw_speed);
 
     // Get new offset using arguments and raw values
-    if (direction == PBIO_MOTOR_DIR_CLOCKWISE) {
+    if (direction == PBIO_DIRECTION_CLOCKWISE) {
         return raw_angle - new_angle;
     }
     else {
@@ -475,7 +475,7 @@ STATIC mp_int_t ev3devices_GyroSensor_get_angle_offset(pbio_ev3iodev_t *iodev, p
 STATIC mp_obj_t ev3devices_GyroSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
-        PB_ARG_DEFAULT_INT(direction, PBIO_MOTOR_DIR_CLOCKWISE)
+        PB_ARG_DEFAULT_INT(direction, PBIO_DIRECTION_CLOCKWISE)
     );
 
     ev3devices_GyroSensor_obj_t *self = m_new_obj(ev3devices_GyroSensor_obj_t);
@@ -492,7 +492,7 @@ STATIC mp_obj_t ev3devices_GyroSensor_speed(mp_obj_t self_in) {
     mp_int_t raw_angle, raw_speed;
     ev3devices_GyroSensor_raw(self->iodev, &raw_angle, &raw_speed);
 
-    if (self->direction == PBIO_MOTOR_DIR_CLOCKWISE) {
+    if (self->direction == PBIO_DIRECTION_CLOCKWISE) {
         return mp_obj_new_int(raw_speed);
     }
     else {
@@ -507,7 +507,7 @@ STATIC mp_obj_t ev3devices_GyroSensor_angle(mp_obj_t self_in) {
     mp_int_t raw_angle, raw_speed;
     ev3devices_GyroSensor_raw(self->iodev, &raw_angle, &raw_speed);
 
-    if (self->direction == PBIO_MOTOR_DIR_CLOCKWISE) {
+    if (self->direction == PBIO_DIRECTION_CLOCKWISE) {
         return mp_obj_new_int(raw_angle - self->offset);
     }
     else {

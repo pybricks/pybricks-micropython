@@ -21,7 +21,7 @@
 /* Wait for maneuver to complete */
 
 // Must not be called while pybricks thread lock is held!
-STATIC void wait_for_completion(pbio_motor_t *mtr) {
+STATIC void wait_for_completion(pbio_servo_t *mtr) {
     while (mtr->state >= PBIO_CONTROL_ANGLE_FOREGROUND) {
         mp_hal_delay_ms(10);
     }
@@ -42,7 +42,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
     // FIXME: raise an ENODEV exception here for I/O ports with no motor plugged in
 
     // Configure direction or set to default
-    int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_MOTOR_DIR_CLOCKWISE;
+    int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_DIRECTION_CLOCKWISE;
     pbio_error_t err;
 
     // Default gear ratio

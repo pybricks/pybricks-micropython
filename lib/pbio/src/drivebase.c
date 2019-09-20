@@ -21,7 +21,7 @@ static uint8_t ports_to_index(pbio_port_t port_one, pbio_port_t port_two) {
     return NOPAIR;
 }
 
-static pbio_error_t pbio_motor_make_pair(pbio_motor_t *mtr1, pbio_motor_t *mtr2) {
+static pbio_error_t pbio_motor_make_pair(pbio_servo_t *mtr1, pbio_servo_t *mtr2) {
 
     pbio_error_t err;
 
@@ -89,7 +89,7 @@ static pbio_error_t pbio_motor_make_pair(pbio_motor_t *mtr1, pbio_motor_t *mtr2)
     return PBIO_ERROR_INVALID_ARG;
 }
 
-pbio_error_t pbio_get_motor_pair(pbio_motor_t *mtr1, pbio_motor_t *mtr2, pbio_motor_pair_t* pair) {
+pbio_error_t pbio_get_motor_pair(pbio_servo_t *mtr1, pbio_servo_t *mtr2, pbio_motor_pair_t* pair) {
     // Make the pair if it doesn't already exist
     pbio_error_t err = pbio_motor_make_pair(mtr1, mtr2);
     if (err != PBIO_SUCCESS) {

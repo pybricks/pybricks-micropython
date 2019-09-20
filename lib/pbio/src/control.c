@@ -31,10 +31,10 @@ static void stall_clear_flag(pbio_control_stalled_t *stalled, pbio_control_stall
 }
 
 
-pbio_error_t control_update_angle_target(pbio_motor_t *mtr, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t *actuation_type, int32_t *control) {
+pbio_error_t control_update_angle_target(pbio_servo_t *mtr, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t *actuation_type, int32_t *control) {
     // Trajectory and setting shortcuts for this motor
     pbio_control_status_angular_t *status = &mtr->control.status_angular;
-    duty_t max_duty = mtr->max_duty_steps; // TODO: Make control property
+    duty_t max_duty = mtr->dc.max_duty_steps; // TODO: Make control property
 
     // Declare current time, positions, rates, and their reference value and error
     ustime_t time_ref, time_loop;
@@ -159,11 +159,11 @@ pbio_error_t control_update_angle_target(pbio_motor_t *mtr, ustime_t time_now, c
     return PBIO_SUCCESS;
 }
 
-pbio_error_t control_update_time_target(pbio_motor_t *mtr, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t *actuation_type, int32_t *control) {
+pbio_error_t control_update_time_target(pbio_servo_t *mtr, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t *actuation_type, int32_t *control) {
 
     // Trajectory and setting shortcuts for this motor
     pbio_control_status_timed_t *status = &mtr->control.status_timed;
-    duty_t max_duty = mtr->max_duty_steps; // TODO: make control property
+    duty_t max_duty = mtr->dc.max_duty_steps; // TODO: make control property
 
     // Declare time, positions, rates, and their reference value and error
     count_t count_ref, count_err;
@@ -262,7 +262,7 @@ pbio_error_t control_update_time_target(pbio_motor_t *mtr, ustime_t time_now, co
     return PBIO_SUCCESS;
 }
 
-void control_init_angle_target(pbio_motor_t *mtr) {
+void control_init_angle_target(pbio_servo_t *mtr) {
     // TODO If already running, start from ref + set flag of original state
 
     // depending on wind up status, keep or finalize integrator state, plus maintain status
@@ -282,7 +282,7 @@ void control_init_angle_target(pbio_motor_t *mtr) {
     status->ref_time_running = true;
 }
 
-void control_init_time_target(pbio_motor_t *mtr) {
+void control_init_time_target(pbio_servo_t *mtr) {
     pbio_control_status_timed_t *status = &mtr->control.status_timed;
     pbio_control_trajectory_t *trajectory = &mtr->control.trajectory;
 
