@@ -202,10 +202,8 @@ STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *args){
 
     pb_thread_enter();
 
-    if (!pbio_motor_has_encoder(self->mtr) && after_stop == PBIO_MOTOR_STOP_HOLD) {
-        pb_thread_exit();
-        pb_assert(PBIO_ERROR_INVALID_ARG);
-    }
+    // TODO: raise PBIO_ERROR_INVALID_ARG for Stop.HOLD in case of dc motor
+
     // Call pbio with parsed user/default arguments
     err = pbio_servo_stop(self->mtr, after_stop);
 

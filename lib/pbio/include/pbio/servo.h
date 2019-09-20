@@ -59,7 +59,6 @@ typedef struct _pbio_tacho_t {
 typedef struct _pbio_servo_t {
     pbio_dc_t dc;
     pbio_tacho_t tacho;
-    bool has_encoders;
     pbio_motor_state_t state;
     pbio_control_t control;
     pbio_port_t port;
@@ -97,8 +96,6 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *mtr, int32_t target);
 pbio_error_t pbio_servo_set_run_settings(pbio_servo_t *mtr, int32_t max_speed, int32_t acceleration);
 pbio_error_t pbio_servo_set_pid_settings(pbio_servo_t *mtr, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd, int32_t tight_loop_time, int32_t position_tolerance, int32_t speed_tolerance, int32_t stall_speed_limit, int32_t stall_time);
 pbio_error_t pbio_servo_control_update(pbio_servo_t *mtr);
-
-bool pbio_motor_has_encoder(pbio_servo_t *mtr); // obsolete once distinguishing between servo and dc
 
 // TODO: Move these four to control.h once dependency on motor is dropped
 void control_init_angle_target(pbio_servo_t *mtr);

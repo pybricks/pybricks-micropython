@@ -83,17 +83,6 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix
     // Reset encoder, and in the process check that it is an encoded motor
     err = pbio_tacho_reset_count(mtr, 0);
 
-    if (err == PBIO_SUCCESS) {
-        mtr->has_encoders = true;
-    }
-    else if (err == PBIO_ERROR_NOT_SUPPORTED) {
-        // In this case there are no encoders and we are done by configuring DC settings only
-        mtr->has_encoders = false;
-        return pbio_dc_set_settings(mtr, 100, 0);
-    } else {
-        return err;
-    }
-
     // Return on invalid gear ratio
     if (gear_ratio <= 0) {
         return PBIO_ERROR_INVALID_ARG;
@@ -216,63 +205,54 @@ void pbio_servo_print_settings(pbio_servo_t *mtr, char *dc_settings_string, char
         mtr->port,
         direction
     );
-    if (!pbio_motor_has_encoder(mtr)) {
-        enc_settings_string[0] = 0;
-    }
-    else {
-        char counts_per_unit_str[13];
-        char gear_ratio_str[13];
-        // Preload several settings for easier printing
-        fix16_t counts_per_output_unit = mtr->tacho.counts_per_output_unit;
-        fix16_t counts_per_unit = mtr->tacho.counts_per_unit;
-        fix16_t gear_ratio = fix16_div(counts_per_output_unit, mtr->tacho.counts_per_unit);
-        fix16_to_str(counts_per_unit, counts_per_unit_str, 3);
-        fix16_to_str(gear_ratio, gear_ratio_str, 3);
-        // Print settings to settings_string
-        snprintf(enc_settings_string, MAX_ENCMOTOR_SETTINGS_STR_LENGTH,
-            "Counts per unit\t %s\n"
-            "Gear ratio\t %s\n"
-            "\nRun settings:\n"
-            "------------------------\n"
-            "Max speed\t %" PRId32 "\n"
-            "Acceleration\t %" PRId32 "\n"
-            "\nDC settings:\n"
-            "------------------------\n"
-            "Duty limit\t %" PRId32 "\n"
-            "Duty offset\t %" PRId32 "\n"
-            "\nPID settings:\n"
-            "------------------------\n"
-            "kp\t\t %" PRId32 "\n"
-            "ki\t\t %" PRId32 "\n"
-            "kd\t\t %" PRId32 "\n"
-            "Tight Loop\t %" PRId32 "\n"
-            "Angle tolerance\t %" PRId32 "\n"
-            "Speed tolerance\t %" PRId32 "\n"
-            "Stall speed\t %" PRId32 "\n"
-            "Stall time\t %" PRId32,
-            counts_per_unit_str,
-            gear_ratio_str,
-            // Print run settings
-            int_fix16_div(mtr->control.settings.max_rate, counts_per_output_unit),
-            int_fix16_div(mtr->control.settings.abs_acceleration, counts_per_output_unit),
-            // Print DC settings
-            (int32_t) (mtr->dc.max_duty_steps / PBIO_DUTY_STEPS_PER_USER_STEP),
-            (int32_t) (mtr->dc.duty_offset / PBIO_DUTY_STEPS_PER_USER_STEP),
-            // Print PID settings
-            (int32_t) mtr->control.settings.pid_kp,
-            (int32_t) mtr->control.settings.pid_ki,
-            (int32_t) mtr->control.settings.pid_kd,
-            (int32_t) (mtr->control.settings.tight_loop_time / US_PER_MS),
-            int_fix16_div(mtr->control.settings.count_tolerance, counts_per_output_unit),
-            int_fix16_div(mtr->control.settings.rate_tolerance, counts_per_output_unit),
-            int_fix16_div(mtr->control.settings.stall_rate_limit, counts_per_output_unit),
-            (int32_t) (mtr->control.settings.stall_time  / US_PER_MS)
-        );
-    }
-}
-
-bool pbio_motor_has_encoder(pbio_servo_t *mtr) {
-    return mtr->has_encoders;
+    char counts_per_unit_str[13];
+    char gear_ratio_str[13];
+    // Preload several settings for easier printing
+    fix16_t counts_per_output_unit = mtr->tacho.counts_per_output_unit;
+    fix16_t counts_per_unit = mtr->tacho.counts_per_unit;
+    fix16_t gear_ratio = fix16_div(counts_per_output_unit, mtr->tacho.counts_per_unit);
+    fix16_to_str(counts_per_unit, counts_per_unit_str, 3);
+    fix16_to_str(gear_ratio, gear_ratio_str, 3);
+    // Print settings to settings_string
+    snprintf(enc_settings_string, MAX_ENCMOTOR_SETTINGS_STR_LENGTH,
+        "Counts per unit\t %s\n"
+        "Gear ratio\t %s\n"
+        "\nRun settings:\n"
+        "------------------------\n"
+        "Max speed\t %" PRId32 "\n"
+        "Acceleration\t %" PRId32 "\n"
+        "\nDC settings:\n"
+        "------------------------\n"
+        "Duty limit\t %" PRId32 "\n"
+        "Duty offset\t %" PRId32 "\n"
+        "\nPID settings:\n"
+        "------------------------\n"
+        "kp\t\t %" PRId32 "\n"
+        "ki\t\t %" PRId32 "\n"
+        "kd\t\t %" PRId32 "\n"
+        "Tight Loop\t %" PRId32 "\n"
+        "Angle tolerance\t %" PRId32 "\n"
+        "Speed tolerance\t %" PRId32 "\n"
+        "Stall speed\t %" PRId32 "\n"
+        "Stall time\t %" PRId32,
+        counts_per_unit_str,
+        gear_ratio_str,
+        // Print run settings
+        int_fix16_div(mtr->control.settings.max_rate, counts_per_output_unit),
+        int_fix16_div(mtr->control.settings.abs_acceleration, counts_per_output_unit),
+        // Print DC settings
+        (int32_t) (mtr->dc.max_duty_steps / PBIO_DUTY_STEPS_PER_USER_STEP),
+        (int32_t) (mtr->dc.duty_offset / PBIO_DUTY_STEPS_PER_USER_STEP),
+        // Print PID settings
+        (int32_t) mtr->control.settings.pid_kp,
+        (int32_t) mtr->control.settings.pid_ki,
+        (int32_t) mtr->control.settings.pid_kd,
+        (int32_t) (mtr->control.settings.tight_loop_time / US_PER_MS),
+        int_fix16_div(mtr->control.settings.count_tolerance, counts_per_output_unit),
+        int_fix16_div(mtr->control.settings.rate_tolerance, counts_per_output_unit),
+        int_fix16_div(mtr->control.settings.stall_rate_limit, counts_per_output_unit),
+        (int32_t) (mtr->control.settings.stall_time  / US_PER_MS)
+    );
 }
 
 pbio_error_t pbio_tacho_get_count(pbio_servo_t *mtr, int32_t *count) {
