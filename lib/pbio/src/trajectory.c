@@ -8,7 +8,7 @@
 
 #include <fixmath.h>
 
-#include <pbio/motorref.h>
+#include <pbio/trajectory.h>
 
 #include "sys/clock.h"
 

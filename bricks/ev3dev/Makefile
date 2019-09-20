@@ -217,13 +217,13 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	pbio/platform/ev3dev_stretch/clock.c \
 	pbio/src/main.c \
 	pbio/src/light.c \
-	pbio/src/motor.c \
+	pbio/src/servo.c \
 	pbio/src/error.c \
 	pbio/src/control.c \
 	pbio/src/motorcontrol.c \
-	pbio/src/motorref.c \
+	pbio/src/trajectory.c \
 	pbio/src/ev3device.c \
-	pbio/src/motorpair.c \
+	pbio/src/drivebase.c \
 	pbio/sys/autostart.c \
 	pbio/sys/etimer.c \
 	pbio/sys/process.c \

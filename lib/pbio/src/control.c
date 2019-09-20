@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <fixmath.h>
 
-#include <pbio/motor.h>
-#include <pbio/motorref.h>
+#include <pbio/servo.h>
+#include <pbio/trajectory.h>
 
 // If the controller reach the maximum duty cycle value, this shortcut sets the stalled flag when the speed is below the stall limit.
 static void stall_set_flag_if_slow(pbio_control_stalled_t *stalled,

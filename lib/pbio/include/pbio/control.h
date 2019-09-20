@@ -9,7 +9,7 @@
 
 #include <pbio/error.h>
 #include <pbio/port.h>
-#include <pbio/motorref.h>
+#include <pbio/trajectory.h>
 
 #include <pbio/iodev.h>
 

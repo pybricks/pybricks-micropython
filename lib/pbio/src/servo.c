@@ -8,7 +8,7 @@
 
 #include <pbdrv/counter.h>
 #include <pbdrv/motor.h>
-#include <pbio/motor.h>
+#include <pbio/servo.h>
 
 static inline int32_t int_fix16_div(int32_t a, fix16_t b) {
     return fix16_to_int(fix16_div(fix16_from_int(a), b));

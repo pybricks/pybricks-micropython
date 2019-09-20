@@ -2,8 +2,8 @@
 // Copyright (c) 2018-2019 Laurens Valk
 // Copyright (c) 2019 LEGO System A/S
 
-#ifndef _PBIO_MOTORREF_H_
-#define _PBIO_MOTORREF_H_
+#ifndef _PBIO_TRAJECTORY_H_
+#define _PBIO_TRAJECTORY_H_
 
 #include <stdint.h>
 #include <stdio.h>
@@ -82,4 +82,4 @@ pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, 
 
 void get_reference(ustime_t time_ref, pbio_control_trajectory_t *traject, count_t *count_ref, rate_t *rate_ref);
 
-#endif // _PBIO_MOTORREF_H_
+#endif // _PBIO_TRAJECTORY_H_

@@ -7,7 +7,7 @@
 
 #if PYBRICKS_PY_MOTOR
 
-#include <pbio/motor.h>
+#include <pbio/servo.h>
 
 #include "py/mphal.h"
 #include "py/runtime.h"

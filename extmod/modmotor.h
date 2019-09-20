@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 Laurens Valk
 
-#include <pbio/motor.h>
+#include <pbio/servo.h>
 
 #include "py/obj.h"
 

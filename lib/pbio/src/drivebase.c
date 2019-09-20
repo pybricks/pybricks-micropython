@@ -2,8 +2,8 @@
 // Copyright (c) 2019 Laurens Valk
 
 
-#include <pbio/motor.h>
-#include <pbio/motorpair.h>
+#include <pbio/servo.h>
+#include <pbio/drivebase.h>
 
 static pbio_motor_pair_t pair_idx[PBDRV_CONFIG_NUM_MOTOR_PAIRS];
 static pbio_motor_pair_t pairs[PBDRV_CONFIG_NUM_MOTOR_PAIRS];

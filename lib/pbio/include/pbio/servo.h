@@ -2,8 +2,8 @@
 // Copyright (c) 2018-2019 Laurens Valk
 // Copyright (c) 2019 LEGO System A/S
 
-#ifndef _PBIO_ENCMOTOR_H_
-#define _PBIO_ENCMOTOR_H_
+#ifndef _PBIO_SERVO_H_
+#define _PBIO_SERVO_H_
 
 #include <stdint.h>
 #include <stdio.h>
@@ -15,7 +15,7 @@
 
 #include <pbio/error.h>
 #include <pbio/port.h>
-#include <pbio/motorref.h>
+#include <pbio/trajectory.h>
 #include <pbio/control.h>
 
 #include <pbio/iodev.h>
@@ -92,4 +92,4 @@ void _pbio_motorcontrol_poll(void);
 
 /** @}*/
 
-#endif // _PBIO_ENCMOTOR_H_
+#endif // _PBIO_SERVO_H_

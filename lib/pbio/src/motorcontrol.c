@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <fixmath.h>
 
-#include <pbio/motor.h>
-#include <pbio/motorref.h>
+#include <pbio/servo.h>
+#include <pbio/trajectory.h>
 
 #include "sys/clock.h"
 
