@@ -10,7 +10,7 @@
 #include <fixmath.h>
 
 #include <pbdrv/counter.h>
-#include <pbio/dc.h>
+#include <pbio/pwm.h>
 
 int32_t int_fix16_div(int32_t a, fix16_t b);
 int32_t int_fix16_mul(int32_t a, fix16_t b);

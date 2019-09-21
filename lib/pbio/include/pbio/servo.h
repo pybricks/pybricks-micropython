@@ -16,7 +16,7 @@
 
 #include <pbio/error.h>
 #include <pbio/port.h>
-#include <pbio/dc.h>
+#include <pbio/pwm.h>
 #include <pbio/tacho.h>
 #include <pbio/trajectory.h>
 #include <pbio/control.h>
@@ -38,22 +38,22 @@
 
 
 typedef struct _pbio_servo_t {
-    pbio_dc_t dc;
+    pbio_pwm_t pwm;
     pbio_tacho_t *tacho;
     pbio_motor_state_t state;
     pbio_control_t control;
     pbio_port_t port;
 } pbio_servo_t;
 
-pbio_error_t pbio_dc_coast(pbio_servo_t *mtr);
-pbio_error_t pbio_dc_brake(pbio_servo_t *mtr);
-pbio_error_t pbio_dc_set_duty_cycle_sys(pbio_servo_t *mtr, int32_t duty_steps);
-pbio_error_t pbio_dc_set_duty_cycle_usr(pbio_servo_t *mtr, int32_t duty_steps);
+pbio_error_t pbio_pwm_coast(pbio_servo_t *mtr);
+pbio_error_t pbio_pwm_brake(pbio_servo_t *mtr);
+pbio_error_t pbio_pwm_set_duty_cycle_sys(pbio_servo_t *mtr, int32_t duty_steps);
+pbio_error_t pbio_pwm_set_duty_cycle_usr(pbio_servo_t *mtr, int32_t duty_steps);
 
 void _pbio_servo_init(void);
 void _pbio_servo_poll(void);
-pbio_error_t pbio_dc_set_settings(pbio_servo_t *mtr, int32_t stall_torque_limit_pct, int32_t duty_offset_pct);
-pbio_error_t pbio_dc_get_settings(pbio_servo_t *mtr, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct);
+pbio_error_t pbio_pwm_set_settings(pbio_servo_t *mtr, int32_t stall_torque_limit_pct, int32_t duty_offset_pct);
+pbio_error_t pbio_pwm_get_settings(pbio_servo_t *mtr, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct);
 
 
 
