@@ -96,7 +96,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix
     pbio_tacho_get(mtr->port, &mtr->tacho, direction, counts_per_degree, gear_ratio);
     fix16_t ratio = mtr->tacho->counts_per_output_unit;
     // Reset encoder (TODO: Move to tacho)
-    err = pbio_tacho_reset_count(mtr, 0);
+    err = pbio_tacho_reset_count(mtr->tacho, 0);
     // TODO: Load data by ID rather than hardcoding here, and define shared defaults to reduce size
     if (id == PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR) {
         err = pbio_dc_set_settings(mtr, 100, 0);
@@ -243,55 +243,55 @@ void pbio_servo_print_settings(pbio_servo_t *mtr, char *dc_settings_string, char
     );
 }
 
-pbio_error_t pbio_tacho_get_count(pbio_servo_t *mtr, int32_t *count) {
+pbio_error_t pbio_tacho_get_count(pbio_tacho_t *tacho, int32_t *count) {
     pbio_error_t err;
 
-    err = pbdrv_counter_get_count(mtr->tacho->counter, count);
+    err = pbdrv_counter_get_count(tacho->counter, count);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    if (mtr->tacho->direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
+    if (tacho->direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
         *count = -*count;
     }
-    *count -= mtr->tacho->offset;
+    *count -= tacho->offset;
 
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_tacho_reset_count(pbio_servo_t *mtr, int32_t reset_count) {
+pbio_error_t pbio_tacho_reset_count(pbio_tacho_t *tacho, int32_t reset_count) {
     int32_t count_no_offset;
     pbio_error_t err;
 
     // First get the counter value without any offsets, but with the appropriate polarity/sign.
-    err = pbio_tacho_get_count(mtr, &count_no_offset);
+    err = pbio_tacho_get_count(tacho, &count_no_offset);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    count_no_offset += mtr->tacho->offset;
+    count_no_offset += tacho->offset;
 
     // Calculate the new offset
-    mtr->tacho->offset = count_no_offset - reset_count;
+    tacho->offset = count_no_offset - reset_count;
 
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_tacho_get_angle(pbio_servo_t *mtr, int32_t *angle) {
+pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, int32_t *angle) {
     int32_t encoder_count;
     pbio_error_t err;
 
-    err = pbio_tacho_get_count(mtr, &encoder_count);
+    err = pbio_tacho_get_count(tacho, &encoder_count);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    *angle = int_fix16_div(encoder_count, mtr->tacho->counts_per_output_unit);
+    *angle = int_fix16_div(encoder_count, tacho->counts_per_output_unit);
 
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_tacho_reset_angle(pbio_servo_t *mtr, int32_t reset_angle) {
+pbio_error_t pbio_servo_reset_angle(pbio_servo_t *mtr, int32_t reset_angle) {
     // Load motor settings and status
     pbio_error_t err;
 
@@ -299,12 +299,12 @@ pbio_error_t pbio_tacho_reset_angle(pbio_servo_t *mtr, int32_t reset_angle) {
     if (mtr->state == PBIO_CONTROL_ANGLE_BACKGROUND && mtr->control.action == TRACK_TARGET) {
         // Get the old angle
         int32_t angle_old;
-        err = pbio_tacho_get_count(mtr, &angle_old);
+        err = pbio_tacho_get_count(mtr->tacho, &angle_old);
         if (err != PBIO_SUCCESS) { return err; }
         // Get the old target
         int32_t target_old = int_fix16_div(mtr->control.trajectory.th3, mtr->tacho->counts_per_output_unit);
         // Reset the angle
-        err = pbio_tacho_reset_count(mtr, int_fix16_mul(reset_angle, mtr->tacho->counts_per_output_unit));
+        err = pbio_tacho_reset_count(mtr->tacho, int_fix16_mul(reset_angle, mtr->tacho->counts_per_output_unit));
         if (err != PBIO_SUCCESS) { return err; }
         // Set the new target based on the old angle and the old target, after the angle reset
         int32_t new_target = reset_angle + target_old - angle_old;
@@ -313,41 +313,41 @@ pbio_error_t pbio_tacho_reset_angle(pbio_servo_t *mtr, int32_t reset_angle) {
     }
     // If the motor was in a passive mode (coast, brake, user duty), reset angle and leave state unchanged
     else if (mtr->state <= PBIO_CONTROL_USRDUTY){
-        return pbio_tacho_reset_count(mtr, int_fix16_mul(reset_angle, mtr->tacho->counts_per_output_unit));
+        return pbio_tacho_reset_count(mtr->tacho, int_fix16_mul(reset_angle, mtr->tacho->counts_per_output_unit));
     }
     // In all other cases, stop the ongoing maneuver by coasting and then reset the angle
     else {
         err = pbio_dc_coast(mtr);
         if (err != PBIO_SUCCESS) { return err; }
-        return pbio_tacho_reset_count(mtr, int_fix16_mul(reset_angle, mtr->tacho->counts_per_output_unit));
+        return pbio_tacho_reset_count(mtr->tacho, int_fix16_mul(reset_angle, mtr->tacho->counts_per_output_unit));
     }
 }
 
-pbio_error_t pbio_tacho_get_rate(pbio_servo_t *mtr, int32_t *rate) {
+pbio_error_t pbio_tacho_get_rate(pbio_tacho_t *tacho, int32_t *rate) {
     pbio_error_t err;
 
-    err = pbdrv_counter_get_rate(mtr->tacho->counter, rate);
+    err = pbdrv_counter_get_rate(tacho->counter, rate);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    if (mtr->tacho->direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
+    if (tacho->direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
         *rate = -*rate;
     }
 
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_tacho_get_angular_rate(pbio_servo_t *mtr, int32_t *angular_rate) {
+pbio_error_t pbio_tacho_get_angular_rate(pbio_tacho_t *tacho, int32_t *angular_rate) {
     int32_t encoder_rate;
     pbio_error_t err;
 
-    err = pbio_tacho_get_rate(mtr, &encoder_rate);
+    err = pbio_tacho_get_rate(tacho, &encoder_rate);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    *angular_rate = int_fix16_div(encoder_rate, mtr->tacho->counts_per_output_unit);
+    *angular_rate = int_fix16_div(encoder_rate, tacho->counts_per_output_unit);
 
     return PBIO_SUCCESS;
 }
@@ -359,11 +359,11 @@ static pbio_error_t control_get_state(pbio_servo_t *mtr, ustime_t *time_now, cou
 
     // Read current state of this motor: current time, speed, and position
     *time_now = clock_usecs();
-    err = pbio_tacho_get_count(mtr, count_now);
+    err = pbio_tacho_get_count(mtr->tacho, count_now);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_tacho_get_rate(mtr, rate_now);
+    err = pbio_tacho_get_rate(mtr->tacho, rate_now);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -459,12 +459,12 @@ static pbio_error_t pbio_motor_get_initial_state(pbio_servo_t *mtr, count_t *cou
         // TODO: use generic get state functions
 
         // Otherwise, we are not currently in a control mode, and we start from the instantaneous motor state
-        err = pbio_tacho_get_count(mtr, count_start);
+        err = pbio_tacho_get_count(mtr->tacho, count_start);
         if (err != PBIO_SUCCESS) {
             return err;
         }
 
-        err = pbio_tacho_get_rate(mtr, rate_start);
+        err = pbio_tacho_get_rate(mtr->tacho, rate_start);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -537,7 +537,7 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *mtr, pbio_control_after_stop_t after_
         case PBIO_MOTOR_STOP_HOLD:
             // Force stop by holding the current position.
             // First, read where this position is
-            err = pbio_tacho_get_angle(mtr, &angle_now);
+            err = pbio_tacho_get_angle(mtr->tacho, &angle_now);
             if (err != PBIO_SUCCESS) { return err; }
             // Holding is equivalent to driving to that position actively,
             // which automatically corrects the overshoot that is inevitable
@@ -670,7 +670,7 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *mtr, int32_t speed, int32_t angl
 
     // Read the instantaneous angle
     int32_t angle_now;
-    pbio_error_t err = pbio_tacho_get_angle(mtr, &angle_now);
+    pbio_error_t err = pbio_tacho_get_angle(mtr->tacho, &angle_now);
     if (err != PBIO_SUCCESS) { return err; }
 
     // The angle target is the instantaneous angle plus the angle to be traveled

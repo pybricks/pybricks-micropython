@@ -125,7 +125,7 @@ STATIC mp_obj_t motor_Motor_angle(mp_obj_t self_in) {
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_tacho_get_angle(self->mtr, &angle);
+    err = pbio_tacho_get_angle(self->mtr->tacho, &angle);
     pb_thread_exit();
 
     pb_assert(err);
@@ -155,7 +155,7 @@ STATIC mp_obj_t motor_Motor_reset_angle(size_t n_args, const mp_obj_t *args){
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_tacho_reset_angle(self->mtr, reset_angle);
+    err = pbio_servo_reset_angle(self->mtr, reset_angle);
     pb_thread_exit();
 
     pb_assert(err);
@@ -170,7 +170,7 @@ STATIC mp_obj_t motor_Motor_speed(mp_obj_t self_in) {
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_tacho_get_angular_rate(self->mtr, &speed);
+    err = pbio_tacho_get_angular_rate(self->mtr->tacho, &speed);
     pb_thread_exit();
 
     pb_assert(err);
@@ -272,7 +272,7 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *arg
 
     // Read the angle upon completion of the stall maneuver
     int32_t stall_point;
-    pbio_tacho_get_angle(self->mtr, &stall_point);
+    pbio_tacho_get_angle(self->mtr->tacho, &stall_point);
 
     if (override_duty_limit) {
         // Return stall settings to old values if they were changed

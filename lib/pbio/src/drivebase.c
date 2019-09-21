@@ -37,11 +37,11 @@ static pbio_error_t pbio_motor_make_pair(pbio_servo_t *mtr1, pbio_servo_t *mtr2)
 
     // Motors should still be connected and should have encoders, which we can test by reading their angles
     int32_t dummy_angle;
-    err = pbio_tacho_get_angle(mtr1, &dummy_angle);
+    err = pbio_tacho_get_angle(mtr1->tacho, &dummy_angle);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_tacho_get_angle(mtr2, &dummy_angle);
+    err = pbio_tacho_get_angle(mtr2->tacho, &dummy_angle);
     if (err != PBIO_SUCCESS) {
         return err;
     }
