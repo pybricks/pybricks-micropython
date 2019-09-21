@@ -39,11 +39,10 @@
 
 typedef struct _pbio_servo_t {
     pbio_dc_t dc;
-    pbio_tacho_t tacho;
+    pbio_tacho_t *tacho;
     pbio_motor_state_t state;
     pbio_control_t control;
     pbio_port_t port;
-    uint8_t counter_id;
 } pbio_servo_t;
 
 pbio_error_t pbio_dc_coast(pbio_servo_t *mtr);

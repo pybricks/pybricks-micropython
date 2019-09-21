@@ -78,37 +78,25 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix
         return err;
     }
     mtr->dc.direction = direction;
-    mtr->tacho.direction = direction;
-    
-    // Reset encoder, and in the process check that it is an encoded motor
-    err = pbio_tacho_reset_count(mtr, 0);
-
-    // Return on invalid gear ratio
-    if (gear_ratio <= 0) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
 
     pbio_iodev_type_id_t id;
     err = pbdrv_motor_get_id(mtr->port, &id);
     if (err != PBIO_SUCCESS) { return err; }
-
     //
     // TODO: Get this ratio from platform config
     //
-    fix16_t counts_per_unit;
+    fix16_t counts_per_degree;
     if (id == PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR || id == PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR) {
-        counts_per_unit = F16C(2, 0);
+        counts_per_degree = F16C(2, 0);
     }
     else {
-        counts_per_unit = F16C(1, 0);
+        counts_per_degree = F16C(1, 0);
     }
-
-    // Overall ratio between encoder counts and output including gear train
-    fix16_t ratio = fix16_mul(counts_per_unit, gear_ratio);
-
-    mtr->tacho.counts_per_unit = counts_per_unit;
-    mtr->tacho.counts_per_output_unit = ratio;
-
+    // Initialize tacho
+    pbio_tacho_get(mtr->port, &mtr->tacho, direction, counts_per_degree, gear_ratio);
+    fix16_t ratio = mtr->tacho->counts_per_output_unit;
+    // Reset encoder (TODO: Move to tacho)
+    err = pbio_tacho_reset_count(mtr, 0);
     // TODO: Load data by ID rather than hardcoding here, and define shared defaults to reduce size
     if (id == PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR) {
         err = pbio_dc_set_settings(mtr, 100, 0);
@@ -163,8 +151,8 @@ pbio_error_t pbio_dc_get_settings(pbio_servo_t *mtr, int32_t *stall_torque_limit
 }
 
 pbio_error_t pbio_servo_set_run_settings(pbio_servo_t *mtr, int32_t max_speed, int32_t acceleration) {
-    mtr->control.settings.max_rate = int_fix16_mul(max_speed, mtr->tacho.counts_per_output_unit);
-    mtr->control.settings.abs_acceleration = int_fix16_mul(acceleration, mtr->tacho.counts_per_output_unit);
+    mtr->control.settings.max_rate = int_fix16_mul(max_speed, mtr->tacho->counts_per_output_unit);
+    mtr->control.settings.abs_acceleration = int_fix16_mul(acceleration, mtr->tacho->counts_per_output_unit);
     return PBIO_SUCCESS;
 }
 
@@ -177,7 +165,7 @@ pbio_error_t pbio_servo_set_pid_settings(pbio_servo_t *mtr,
                                          int32_t speed_tolerance,
                                          int32_t stall_speed_limit,
                                          int32_t stall_time) {
-    fix16_t counts_per_output_unit = mtr->tacho.counts_per_output_unit;
+    fix16_t counts_per_output_unit = mtr->tacho->counts_per_output_unit;
 
     if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || tight_loop_time < 0 ||
         position_tolerance < 0 || speed_tolerance < 0 || stall_speed_limit < 0 || stall_time < 0) {
@@ -205,13 +193,13 @@ void pbio_servo_print_settings(pbio_servo_t *mtr, char *dc_settings_string, char
         mtr->port,
         direction
     );
-    char counts_per_unit_str[13];
+    char counts_per_degree_str[13];
     char gear_ratio_str[13];
     // Preload several settings for easier printing
-    fix16_t counts_per_output_unit = mtr->tacho.counts_per_output_unit;
-    fix16_t counts_per_unit = mtr->tacho.counts_per_unit;
-    fix16_t gear_ratio = fix16_div(counts_per_output_unit, mtr->tacho.counts_per_unit);
-    fix16_to_str(counts_per_unit, counts_per_unit_str, 3);
+    fix16_t counts_per_output_unit = mtr->tacho->counts_per_output_unit;
+    fix16_t counts_per_degree = mtr->tacho->counts_per_degree;
+    fix16_t gear_ratio = fix16_div(counts_per_output_unit, mtr->tacho->counts_per_degree);
+    fix16_to_str(counts_per_degree, counts_per_degree_str, 3);
     fix16_to_str(gear_ratio, gear_ratio_str, 3);
     // Print settings to settings_string
     snprintf(enc_settings_string, MAX_ENCMOTOR_SETTINGS_STR_LENGTH,
@@ -235,7 +223,7 @@ void pbio_servo_print_settings(pbio_servo_t *mtr, char *dc_settings_string, char
         "Speed tolerance\t %" PRId32 "\n"
         "Stall speed\t %" PRId32 "\n"
         "Stall time\t %" PRId32,
-        counts_per_unit_str,
+        counts_per_degree_str,
         gear_ratio_str,
         // Print run settings
         int_fix16_div(mtr->control.settings.max_rate, counts_per_output_unit),
@@ -256,24 +244,17 @@ void pbio_servo_print_settings(pbio_servo_t *mtr, char *dc_settings_string, char
 }
 
 pbio_error_t pbio_tacho_get_count(pbio_servo_t *mtr, int32_t *count) {
-    pbdrv_counter_dev_t *tacho_counter;
     pbio_error_t err;
 
-    // TODO: get tacho_counter once at init when this is converted to contiki process
-    err = pbdrv_counter_get(mtr->counter_id, &tacho_counter);
+    err = pbdrv_counter_get_count(mtr->tacho->counter, count);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    err = pbdrv_counter_get_count(tacho_counter, count);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    if (mtr->tacho.direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
+    if (mtr->tacho->direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
         *count = -*count;
     }
-    *count -= mtr->tacho.offset;
+    *count -= mtr->tacho->offset;
 
     return PBIO_SUCCESS;
 }
@@ -288,10 +269,10 @@ pbio_error_t pbio_tacho_reset_count(pbio_servo_t *mtr, int32_t reset_count) {
         return err;
     }
 
-    count_no_offset += mtr->tacho.offset;
+    count_no_offset += mtr->tacho->offset;
 
     // Calculate the new offset
-    mtr->tacho.offset = count_no_offset - reset_count;
+    mtr->tacho->offset = count_no_offset - reset_count;
 
     return PBIO_SUCCESS;
 }
@@ -305,7 +286,7 @@ pbio_error_t pbio_tacho_get_angle(pbio_servo_t *mtr, int32_t *angle) {
         return err;
     }
 
-    *angle = int_fix16_div(encoder_count, mtr->tacho.counts_per_output_unit);
+    *angle = int_fix16_div(encoder_count, mtr->tacho->counts_per_output_unit);
 
     return PBIO_SUCCESS;
 }
@@ -321,9 +302,9 @@ pbio_error_t pbio_tacho_reset_angle(pbio_servo_t *mtr, int32_t reset_angle) {
         err = pbio_tacho_get_count(mtr, &angle_old);
         if (err != PBIO_SUCCESS) { return err; }
         // Get the old target
-        int32_t target_old = int_fix16_div(mtr->control.trajectory.th3, mtr->tacho.counts_per_output_unit);
+        int32_t target_old = int_fix16_div(mtr->control.trajectory.th3, mtr->tacho->counts_per_output_unit);
         // Reset the angle
-        err = pbio_tacho_reset_count(mtr, int_fix16_mul(reset_angle, mtr->tacho.counts_per_output_unit));
+        err = pbio_tacho_reset_count(mtr, int_fix16_mul(reset_angle, mtr->tacho->counts_per_output_unit));
         if (err != PBIO_SUCCESS) { return err; }
         // Set the new target based on the old angle and the old target, after the angle reset
         int32_t new_target = reset_angle + target_old - angle_old;
@@ -332,32 +313,25 @@ pbio_error_t pbio_tacho_reset_angle(pbio_servo_t *mtr, int32_t reset_angle) {
     }
     // If the motor was in a passive mode (coast, brake, user duty), reset angle and leave state unchanged
     else if (mtr->state <= PBIO_CONTROL_USRDUTY){
-        return pbio_tacho_reset_count(mtr, int_fix16_mul(reset_angle, mtr->tacho.counts_per_output_unit));
+        return pbio_tacho_reset_count(mtr, int_fix16_mul(reset_angle, mtr->tacho->counts_per_output_unit));
     }
     // In all other cases, stop the ongoing maneuver by coasting and then reset the angle
     else {
         err = pbio_dc_coast(mtr);
         if (err != PBIO_SUCCESS) { return err; }
-        return pbio_tacho_reset_count(mtr, int_fix16_mul(reset_angle, mtr->tacho.counts_per_output_unit));
+        return pbio_tacho_reset_count(mtr, int_fix16_mul(reset_angle, mtr->tacho->counts_per_output_unit));
     }
 }
 
 pbio_error_t pbio_tacho_get_rate(pbio_servo_t *mtr, int32_t *rate) {
-    pbdrv_counter_dev_t *tacho_counter;
     pbio_error_t err;
 
-    // TODO: get tacho_counter once at init when this is converted to contiki process
-    err = pbdrv_counter_get(mtr->counter_id, &tacho_counter);
+    err = pbdrv_counter_get_rate(mtr->tacho->counter, rate);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    err = pbdrv_counter_get_rate(tacho_counter, rate);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    if (mtr->tacho.direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
+    if (mtr->tacho->direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
         *rate = -*rate;
     }
 
@@ -373,7 +347,7 @@ pbio_error_t pbio_tacho_get_angular_rate(pbio_servo_t *mtr, int32_t *angular_rat
         return err;
     }
 
-    *angular_rate = int_fix16_div(encoder_rate, mtr->tacho.counts_per_output_unit);
+    *angular_rate = int_fix16_div(encoder_rate, mtr->tacho->counts_per_output_unit);
 
     return PBIO_SUCCESS;
 }
@@ -411,7 +385,7 @@ static pbio_error_t control_update_actuate(pbio_servo_t *mtr, pbio_control_after
         err = pbio_dc_brake(mtr);
         break;
     case PBIO_MOTOR_STOP_HOLD:
-        err = pbio_servo_track_target(mtr, int_fix16_div(control, mtr->tacho.counts_per_output_unit));
+        err = pbio_servo_track_target(mtr, int_fix16_div(control, mtr->tacho->counts_per_output_unit));
         break;
     case PBIO_ACTUATION_DUTY:
         err = pbio_dc_set_duty_cycle_sys(mtr, control);
@@ -509,7 +483,7 @@ pbio_error_t pbio_servo_is_stalled(pbio_servo_t *mtr, bool *stalled) {
 pbio_error_t pbio_servo_run(pbio_servo_t *mtr, int32_t speed) {
     if (mtr->state == PBIO_CONTROL_TIME_BACKGROUND &&
         mtr->control.action == RUN &&
-        int_fix16_mul(speed, mtr->tacho.counts_per_output_unit) == mtr->control.trajectory.w1) {
+        int_fix16_mul(speed, mtr->tacho->counts_per_output_unit) == mtr->control.trajectory.w1) {
         // If the exact same command is already running, there is nothing we need to do
         return PBIO_SUCCESS;
     }
@@ -531,7 +505,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *mtr, int32_t speed) {
         time_start,
         count_start,
         rate_start,
-        int_fix16_mul(speed, mtr->tacho.counts_per_output_unit),
+        int_fix16_mul(speed, mtr->tacho->counts_per_output_unit),
         mtr->control.settings.max_rate,
         mtr->control.settings.abs_acceleration,
         &mtr->control.trajectory);
@@ -593,7 +567,7 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *mtr, int32_t speed, int32_t durat
         time_start + duration*US_PER_MS,
         count_start,
         rate_start,
-        int_fix16_mul(speed, mtr->tacho.counts_per_output_unit),
+        int_fix16_mul(speed, mtr->tacho->counts_per_output_unit),
         mtr->control.settings.max_rate,
         mtr->control.settings.abs_acceleration,
         &mtr->control.trajectory);
@@ -629,7 +603,7 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *mtr, int32_t speed, pbio
         time_start,
         count_start,
         rate_start,
-        int_fix16_mul(speed, mtr->tacho.counts_per_output_unit),
+        int_fix16_mul(speed, mtr->tacho->counts_per_output_unit),
         mtr->control.settings.max_rate,
         mtr->control.settings.abs_acceleration,
         &mtr->control.trajectory);
@@ -665,9 +639,9 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *mtr, int32_t speed, int32_t tar
     err = make_trajectory_angle_based(
         time_start,
         count_start,
-        int_fix16_mul(target, mtr->tacho.counts_per_output_unit),
+        int_fix16_mul(target, mtr->tacho->counts_per_output_unit),
         rate_start,
-        int_fix16_mul(speed, mtr->tacho.counts_per_output_unit),
+        int_fix16_mul(speed, mtr->tacho->counts_per_output_unit),
         mtr->control.settings.max_rate,
         mtr->control.settings.abs_acceleration,
         &mtr->control.trajectory);
@@ -723,7 +697,7 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *mtr, int32_t target) {
     if (err != PBIO_SUCCESS) { return err; }
 
     // Compute new maneuver based on user argument, starting from the initial state
-    make_trajectory_none(time_start, int_fix16_mul(target, mtr->tacho.counts_per_output_unit), 0, &mtr->control.trajectory);
+    make_trajectory_none(time_start, int_fix16_mul(target, mtr->tacho->counts_per_output_unit), 0, &mtr->control.trajectory);
 
     // Initialize or reset the PID control status for the given maneuver
     control_init_angle_target(mtr);
@@ -745,7 +719,6 @@ void _pbio_servo_init(void) {
 
     for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
         motor[i].port = PBDRV_CONFIG_FIRST_MOTOR_PORT + i;
-        motor[i].counter_id = i;
     }
 #endif
 }
