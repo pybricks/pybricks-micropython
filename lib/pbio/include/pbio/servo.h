@@ -16,7 +16,7 @@
 
 #include <pbio/error.h>
 #include <pbio/port.h>
-#include <pbio/pwm.h>
+#include <pbio/hbridge.h>
 #include <pbio/tacho.h>
 #include <pbio/trajectory.h>
 #include <pbio/control.h>
@@ -33,7 +33,7 @@
 #define MAX_ENCMOTOR_SETTINGS_STR_LENGTH (400)
 
 typedef struct _pbio_servo_t {
-    pbio_pwm_t *pwm;
+    pbio_hbridge_t *hbridge;
     pbio_tacho_t *tacho;
     pbio_motor_state_t state;
     pbio_control_t control;
@@ -42,8 +42,8 @@ typedef struct _pbio_servo_t {
 
 void _pbio_servo_init(void);
 void _pbio_servo_poll(void);
-pbio_error_t pbio_pwm_set_settings(pbio_servo_t *mtr, int32_t stall_torque_limit_pct, int32_t duty_offset_pct);
-pbio_error_t pbio_pwm_get_settings(pbio_servo_t *mtr, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct);
+pbio_error_t pbio_hbridge_set_settings(pbio_servo_t *mtr, int32_t stall_torque_limit_pct, int32_t duty_offset_pct);
+pbio_error_t pbio_hbridge_get_settings(pbio_servo_t *mtr, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct);
 
 pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **mtr);  // TODO: Make dc and servo version
 pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix16_t gear_ratio);

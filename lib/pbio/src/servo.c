@@ -27,7 +27,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix
     // FIXME: change order to: (a) Read ID, (b) load config properties for ID, (c) get & set pwm/tacho device and properties 
 
     // Get and coast dc motor
-    pbio_error_t err = pbio_pwm_get(mtr->port, &mtr->pwm, direction, 0, 10000);
+    pbio_error_t err = pbio_hbridge_get(mtr->port, &mtr->hbridge, direction, 0, 10000);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -51,7 +51,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix
 
     // TODO: Load data by ID rather than hardcoding here, and define shared defaults to reduce size
     if (id == PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR) {
-        err = pbio_pwm_set_settings(mtr, 100, 0);
+        err = pbio_hbridge_set_settings(mtr, 100, 0);
         if (err != PBIO_SUCCESS) { return err; }
         err = pbio_servo_set_run_settings(mtr, int_fix16_div(1200, ratio), int_fix16_div(2400, ratio));
         if (err != PBIO_SUCCESS) { return err; }
@@ -59,7 +59,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix
         if (err != PBIO_SUCCESS) { return err; }
     }
     else if (id == PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR) {
-        err = pbio_pwm_set_settings(mtr, 100, 0);
+        err = pbio_hbridge_set_settings(mtr, 100, 0);
         if (err != PBIO_SUCCESS) { return err; }
         err = pbio_servo_set_run_settings(mtr, int_fix16_div(800, ratio), int_fix16_div(1600, ratio));
         if (err != PBIO_SUCCESS) { return err; }
@@ -67,7 +67,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix
         if (err != PBIO_SUCCESS) { return err; }
     }
     else if (id == PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR) {
-        err = pbio_pwm_set_settings(mtr, 100, 0);
+        err = pbio_hbridge_set_settings(mtr, 100, 0);
         if (err != PBIO_SUCCESS) { return err; }
         err = pbio_servo_set_run_settings(mtr, int_fix16_div(1500, ratio), int_fix16_div(3000, ratio));
         if (err != PBIO_SUCCESS) { return err; }
@@ -76,7 +76,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix
     }
     else {
         // Defaults
-        err = pbio_pwm_set_settings(mtr, 100, 0);
+        err = pbio_hbridge_set_settings(mtr, 100, 0);
         if (err != PBIO_SUCCESS) { return err; }
         err = pbio_servo_set_run_settings(mtr, int_fix16_div(1000, ratio), int_fix16_div(1000, ratio));
         if (err != PBIO_SUCCESS) { return err; }
@@ -87,18 +87,18 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_pwm_set_settings(pbio_servo_t *mtr, int32_t stall_torque_limit_pct, int32_t duty_offset_pct) {
+pbio_error_t pbio_hbridge_set_settings(pbio_servo_t *mtr, int32_t stall_torque_limit_pct, int32_t duty_offset_pct) {
     if (stall_torque_limit_pct < 0 || duty_offset_pct < 0) {
         return PBIO_ERROR_INVALID_ARG;
     }
-    mtr->pwm->max_duty_steps = PBIO_DUTY_STEPS_PER_USER_STEP * stall_torque_limit_pct;
-    mtr->pwm->duty_offset = PBIO_DUTY_STEPS_PER_USER_STEP * duty_offset_pct;
+    mtr->hbridge->max_duty_steps = PBIO_DUTY_STEPS_PER_USER_STEP * stall_torque_limit_pct;
+    mtr->hbridge->duty_offset = PBIO_DUTY_STEPS_PER_USER_STEP * duty_offset_pct;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_pwm_get_settings(pbio_servo_t *mtr, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct) {
-    *stall_torque_limit_pct = mtr->pwm->max_duty_steps/PBIO_DUTY_STEPS_PER_USER_STEP;
-    *duty_offset_pct = mtr->pwm->duty_offset/PBIO_DUTY_STEPS_PER_USER_STEP;
+pbio_error_t pbio_hbridge_get_settings(pbio_servo_t *mtr, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct) {
+    *stall_torque_limit_pct = mtr->hbridge->max_duty_steps/PBIO_DUTY_STEPS_PER_USER_STEP;
+    *duty_offset_pct = mtr->hbridge->duty_offset/PBIO_DUTY_STEPS_PER_USER_STEP;
     return PBIO_SUCCESS;
 }
 
@@ -136,7 +136,7 @@ pbio_error_t pbio_servo_set_pid_settings(pbio_servo_t *mtr,
 }
 
 void pbio_servo_print_settings(pbio_servo_t *mtr, char *dc_settings_string, char *enc_settings_string) {
-    char *direction = mtr->pwm->direction == PBIO_DIRECTION_CLOCKWISE ? "clockwise" : "counterclockwise";
+    char *direction = mtr->hbridge->direction == PBIO_DIRECTION_CLOCKWISE ? "clockwise" : "counterclockwise";
     snprintf(dc_settings_string, MAX_DCMOTOR_SETTINGS_STR_LENGTH,
         "Motor properties:\n"
         "------------------------\n"
@@ -181,8 +181,8 @@ void pbio_servo_print_settings(pbio_servo_t *mtr, char *dc_settings_string, char
         int_fix16_div(mtr->control.settings.max_rate, counts_per_output_unit),
         int_fix16_div(mtr->control.settings.abs_acceleration, counts_per_output_unit),
         // Print DC settings
-        (int32_t) (mtr->pwm->max_duty_steps / PBIO_DUTY_STEPS_PER_USER_STEP),
-        (int32_t) (mtr->pwm->duty_offset / PBIO_DUTY_STEPS_PER_USER_STEP),
+        (int32_t) (mtr->hbridge->max_duty_steps / PBIO_DUTY_STEPS_PER_USER_STEP),
+        (int32_t) (mtr->hbridge->duty_offset / PBIO_DUTY_STEPS_PER_USER_STEP),
         // Print PID settings
         (int32_t) mtr->control.settings.pid_kp,
         (int32_t) mtr->control.settings.pid_ki,
@@ -221,7 +221,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *mtr, int32_t reset_angle) {
     }
     // In all other cases, stop the ongoing maneuver by coasting and then reset the angle
     else {
-        err = pbio_pwm_coast(mtr->pwm);
+        err = pbio_hbridge_coast(mtr->hbridge);
         if (err != PBIO_SUCCESS) { return err; }
         return pbio_tacho_reset_angle(mtr->tacho, reset_angle);
     }
@@ -254,16 +254,16 @@ static pbio_error_t control_update_actuate(pbio_servo_t *mtr, pbio_control_after
     switch (actuation_type)
     {
     case PBIO_MOTOR_STOP_COAST:
-        err = pbio_pwm_coast(mtr->pwm);
+        err = pbio_hbridge_coast(mtr->hbridge);
         break;
     case PBIO_MOTOR_STOP_BRAKE:
-        err = pbio_pwm_brake(mtr->pwm);
+        err = pbio_hbridge_brake(mtr->hbridge);
         break;
     case PBIO_MOTOR_STOP_HOLD:
         err = pbio_servo_track_target(mtr, int_fix16_div(control, mtr->tacho->counts_per_output_unit));
         break;
     case PBIO_ACTUATION_DUTY:
-        err = pbio_pwm_set_duty_cycle_sys(mtr->pwm, control);
+        err = pbio_hbridge_set_duty_cycle_sys(mtr->hbridge, control);
         break;
     }
     
@@ -281,7 +281,7 @@ static pbio_error_t control_update_actuate(pbio_servo_t *mtr, pbio_control_after
 pbio_error_t pbio_servo_control_update(pbio_servo_t *mtr) {
 
     // FIXME: STATE HIERARCHY & INIT
-    if (mtr->pwm->state < PBIO_PWM_ACTIVE) {
+    if (mtr->hbridge->state < PBIO_HBRIDGE_ACTIVE) {
         return PBIO_SUCCESS;
     }
     // Read the physical state
@@ -405,10 +405,10 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *mtr, pbio_control_after_stop_t after_
     switch (after_stop) {
         case PBIO_MOTOR_STOP_COAST:
             // Stop by coasting
-            return pbio_pwm_coast(mtr->pwm);
+            return pbio_hbridge_coast(mtr->hbridge);
         case PBIO_MOTOR_STOP_BRAKE:
             // Stop by braking
-            return pbio_pwm_brake(mtr->pwm);
+            return pbio_hbridge_brake(mtr->hbridge);
         case PBIO_MOTOR_STOP_HOLD:
             // Force stop by holding the current position.
             // First, read where this position is

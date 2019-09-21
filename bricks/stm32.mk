@@ -193,7 +193,7 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	src/iodev.c \
 	src/light.c \
 	src/main.c \
-	src/pwm.c \
+	src/hbridge.c \
 	src/tacho.c \
 	src/servo.c \
 	src/drivebase.c \

@@ -55,11 +55,11 @@ static pbio_error_t pbio_motor_make_pair(pbio_servo_t *mtr1, pbio_servo_t *mtr2)
             PORT(pair_idx[i].motor_two) == mtr2->port) {
 
             // Coast both of the motors in that pair
-            err = pbio_pwm_coast(pair_idx[i].motor_one->pwm);
+            err = pbio_hbridge_coast(pair_idx[i].motor_one->hbridge);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
-            err = pbio_pwm_coast(pair_idx[i].motor_two->pwm);
+            err = pbio_hbridge_coast(pair_idx[i].motor_two->hbridge);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
@@ -78,11 +78,11 @@ static pbio_error_t pbio_motor_make_pair(pbio_servo_t *mtr1, pbio_servo_t *mtr2)
         }
     }
     // Coast both motors of the new pair
-    err = pbio_pwm_coast(mtr1->pwm);
+    err = pbio_hbridge_coast(mtr1->hbridge);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_pwm_coast(mtr2->pwm);
+    err = pbio_hbridge_coast(mtr2->hbridge);
     if (err != PBIO_SUCCESS) {
         return err;
     }
