@@ -59,10 +59,4 @@ pbio_error_t pbio_servo_set_pid_settings(pbio_servo_t *mtr, int16_t pid_kp, int1
 
 pbio_error_t pbio_servo_control_update(pbio_servo_t *mtr);
 
-// TODO: Move these four to control.h once dependency on motor is dropped
-void control_init_angle_target(pbio_servo_t *mtr);
-void control_init_time_target(pbio_servo_t *mtr);
-pbio_error_t control_update_angle_target(pbio_servo_t *mtr, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t *actuation_type, int32_t *control);
-pbio_error_t control_update_time_target(pbio_servo_t *mtr, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t *actuation_type, int32_t *control);
-
 #endif // _PBIO_SERVO_H_

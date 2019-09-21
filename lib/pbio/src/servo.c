@@ -288,13 +288,13 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *mtr) {
     // Calculate controls for position based control
     if (mtr->state == PBIO_CONTROL_ANGLE_BACKGROUND ||
         mtr->state == PBIO_CONTROL_ANGLE_FOREGROUND) {
-        err = control_update_angle_target(mtr, time_now, count_now, rate_now, &actuation, &control);
+        err = control_update_angle_target(&mtr->control, time_now, count_now, rate_now, &actuation, &control);
     }
     // Calculate controls for time based control
     else if (mtr->state == PBIO_CONTROL_TIME_BACKGROUND ||
              mtr->state == PBIO_CONTROL_TIME_FOREGROUND) {
         // Get control type and signal for given state
-        err = control_update_time_target(mtr, time_now, count_now, rate_now, &actuation, &control);
+        err = control_update_time_target(&mtr->control, time_now, count_now, rate_now, &actuation, &control);
     }
     if (err != PBIO_SUCCESS) {
         return err;
@@ -375,7 +375,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *mtr, int32_t speed) {
     if (err != PBIO_SUCCESS) { return err; }
 
     // Initialize or reset the PID control status for the given maneuver
-    control_init_time_target(mtr);
+    control_init_time_target(&mtr->control);
 
     // Run is always in the background
     mtr->state = PBIO_CONTROL_TIME_BACKGROUND;
@@ -440,7 +440,7 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *mtr, int32_t speed, int32_t durat
     if (err != PBIO_SUCCESS) { return err; }
 
     // Initialize or reset the PID control status for the given maneuver
-    control_init_time_target(mtr);
+    control_init_time_target(&mtr->control);
 
     // Set user specified foreground or background state
     mtr->state = foreground ? PBIO_CONTROL_TIME_FOREGROUND : PBIO_CONTROL_TIME_BACKGROUND;
@@ -479,7 +479,7 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *mtr, int32_t speed, pbio
     if (err != PBIO_SUCCESS) { return err; }
 
     // Initialize or reset the PID control status for the given maneuver
-    control_init_time_target(mtr);
+    control_init_time_target(&mtr->control);
 
     // Run until stalled is always in the foreground
     mtr->state = PBIO_CONTROL_TIME_FOREGROUND;
@@ -520,7 +520,7 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *mtr, int32_t speed, int32_t tar
     if (err != PBIO_SUCCESS) { return err; }
 
     // Initialize or reset the PID control status for the given maneuver
-    control_init_angle_target(mtr);
+    control_init_angle_target(&mtr->control);
 
     // Set user specified foreground or background state
     mtr->state = foreground ? PBIO_CONTROL_ANGLE_FOREGROUND : PBIO_CONTROL_ANGLE_BACKGROUND;
@@ -572,7 +572,7 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *mtr, int32_t target) {
     make_trajectory_none(time_start, int_fix16_mul(target, mtr->tacho->counts_per_output_unit), 0, &mtr->control.trajectory);
 
     // Initialize or reset the PID control status for the given maneuver
-    control_init_angle_target(mtr);
+    control_init_angle_target(&mtr->control);
 
     // Tracking a target is always a background action
     mtr->state = PBIO_CONTROL_ANGLE_BACKGROUND;

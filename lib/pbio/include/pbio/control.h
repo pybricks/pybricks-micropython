@@ -100,4 +100,9 @@ typedef struct _pbio_control_t {
     pbio_control_stalled_t stalled;
 } pbio_control_t;
 
+void control_init_angle_target(pbio_control_t *ctl);
+void control_init_time_target(pbio_control_t *ctl);
+pbio_error_t control_update_angle_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t *actuation_type, int32_t *control);
+pbio_error_t control_update_time_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t *actuation_type, int32_t *control);
+
 #endif // _PBIO_CONTROL_H_
