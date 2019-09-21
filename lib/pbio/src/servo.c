@@ -117,6 +117,7 @@ pbio_error_t pbio_servo_set_pid_settings(pbio_servo_t *mtr,
     mtr->control.settings.rate_tolerance = int_fix16_mul(speed_tolerance, counts_per_output_unit);
     mtr->control.settings.stall_rate_limit = int_fix16_mul(stall_speed_limit, counts_per_output_unit);
     mtr->control.settings.stall_time = stall_time * US_PER_MS;
+    mtr->control.settings.max_control = 10000; // TODO: Add setter
     return PBIO_SUCCESS;
 }
 

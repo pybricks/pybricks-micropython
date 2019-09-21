@@ -42,6 +42,7 @@ typedef struct _pbio_control_settings_t {
     int16_t pid_kp;                 /**< Proportional position control constant (and integral speed control constant) */
     int16_t pid_ki;                 /**< Integral position control constant */
     int16_t pid_kd;                 /**< Derivative position control constant (and proportional speed control constant) */
+    int32_t max_control;            /**< Upper limit on control output */
 } pbio_control_settings_t;
 
 

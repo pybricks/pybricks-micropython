@@ -34,7 +34,7 @@ static void stall_clear_flag(pbio_control_stalled_t *stalled, pbio_control_stall
 pbio_error_t control_update_angle_target(pbio_servo_t *mtr, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t *actuation_type, int32_t *control) {
     // Trajectory and setting shortcuts for this motor
     pbio_control_status_angular_t *status = &mtr->control.status_angular;
-    duty_t max_duty = mtr->hbridge->max_duty_steps; // TODO: Make control property
+    duty_t max_duty = mtr->control.settings.max_control;
 
     // Declare current time, positions, rates, and their reference value and error
     ustime_t time_ref, time_loop;
@@ -163,7 +163,7 @@ pbio_error_t control_update_time_target(pbio_servo_t *mtr, ustime_t time_now, co
 
     // Trajectory and setting shortcuts for this motor
     pbio_control_status_timed_t *status = &mtr->control.status_timed;
-    duty_t max_duty = mtr->hbridge->max_duty_steps; // TODO: make control property
+    duty_t max_duty = mtr->control.settings.max_control;
 
     // Declare time, positions, rates, and their reference value and error
     count_t count_ref, count_err;
