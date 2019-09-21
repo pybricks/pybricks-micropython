@@ -16,6 +16,8 @@
 
 #include <pbio/error.h>
 #include <pbio/port.h>
+#include <pbio/dc.h>
+#include <pbio/tacho.h>
 #include <pbio/trajectory.h>
 #include <pbio/control.h>
 
@@ -34,27 +36,6 @@
 #define PBIO_DUTY_USER_STEPS (100)
 #define PBIO_DUTY_STEPS_PER_USER_STEP (PBIO_DUTY_STEPS/PBIO_DUTY_USER_STEPS)
 
-/**
- * Motor direction convention
- */
-typedef enum {
-    PBIO_DIRECTION_CLOCKWISE,         /**< Positive speed/duty means clockwise */
-    PBIO_DIRECTION_COUNTERCLOCKWISE,  /**< Positive speed/duty means counterclockwise */
-} pbio_direction_t;
-
-typedef struct _pbio_dc_t {
-    pbio_direction_t direction;
-    int32_t duty_offset;
-    int32_t max_duty_steps;
-} pbio_dc_t;
-
-typedef struct _pbio_tacho_t {
-    pbio_direction_t direction;
-    int32_t offset;                 /**< Virtual zero point of the encoder */
-    fix16_t counts_per_unit;        /**< Encoder counts per output unit. Counts per degree for rotational motors, counts per cm for a linear motor. */
-    fix16_t counts_per_output_unit; /**< Encoder counts per output unit, including optional gear train. Equals counts_per_unit*gear_ratio. */
-    pbdrv_counter_dev_t *counter;
-} pbio_tacho_t;
 
 typedef struct _pbio_servo_t {
     pbio_dc_t dc;
