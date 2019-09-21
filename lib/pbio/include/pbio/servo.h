@@ -38,7 +38,7 @@
 
 
 typedef struct _pbio_servo_t {
-    pbio_pwm_t pwm;
+    pbio_pwm_t *pwm;
     pbio_tacho_t *tacho;
     pbio_motor_state_t state;
     pbio_control_t control;

@@ -34,7 +34,7 @@ pbio_error_t pbio_pwm_brake(pbio_servo_t *mtr){
 
 pbio_error_t pbio_pwm_set_duty_cycle_sys(pbio_servo_t *mtr, int32_t duty_steps) {
     // Limit the duty cycle value
-    int32_t limit = mtr->pwm.max_duty_steps;
+    int32_t limit = mtr->pwm->max_duty_steps;
     if (duty_steps > limit) {
         duty_steps = limit;
     }
@@ -47,12 +47,12 @@ pbio_error_t pbio_pwm_set_duty_cycle_sys(pbio_servo_t *mtr, int32_t duty_steps) 
         duty_cycle = 0;
     }
     else {
-        int32_t offset = mtr->pwm.duty_offset;
+        int32_t offset = mtr->pwm->duty_offset;
         int32_t offset_signed = duty_steps > 0 ? offset : -offset;
         duty_cycle = offset_signed + ((PBIO_DUTY_STEPS-offset)*duty_steps)/PBIO_DUTY_STEPS;
     }
     // Flip sign if motor is inverted
-    if (mtr->pwm.direction == PBIO_DIRECTION_COUNTERCLOCKWISE){
+    if (mtr->pwm->direction == PBIO_DIRECTION_COUNTERCLOCKWISE){
         duty_cycle = -duty_cycle;
     }
     return pbdrv_motor_set_duty_cycle(mtr->port, duty_cycle);
@@ -64,12 +64,17 @@ pbio_error_t pbio_pwm_set_duty_cycle_usr(pbio_servo_t *mtr, int32_t duty_steps) 
 }
 
 pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix16_t gear_ratio) {
-    // Coast DC Motor
-    pbio_error_t err = pbio_pwm_coast(mtr);
+
+    // FIXME: change order to: (a) Read ID, (b) load config properties for ID, (c) get & set pwm/tacho device and properties 
+
+    // Get and coast dc motor
+    pbio_error_t err = pbio_pwm_get(mtr->port, &mtr->pwm, direction, 0, 10000);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    mtr->pwm.direction = direction;
+
+    // TODO: Move to pwm setup:
+    err = pbio_pwm_coast(mtr);
 
     pbio_iodev_type_id_t id;
     err = pbdrv_motor_get_id(mtr->port, &id);
@@ -130,14 +135,14 @@ pbio_error_t pbio_pwm_set_settings(pbio_servo_t *mtr, int32_t stall_torque_limit
     if (stall_torque_limit_pct < 0 || duty_offset_pct < 0) {
         return PBIO_ERROR_INVALID_ARG;
     }
-    mtr->pwm.max_duty_steps = PBIO_DUTY_STEPS_PER_USER_STEP * stall_torque_limit_pct;
-    mtr->pwm.duty_offset = PBIO_DUTY_STEPS_PER_USER_STEP * duty_offset_pct;
+    mtr->pwm->max_duty_steps = PBIO_DUTY_STEPS_PER_USER_STEP * stall_torque_limit_pct;
+    mtr->pwm->duty_offset = PBIO_DUTY_STEPS_PER_USER_STEP * duty_offset_pct;
     return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_pwm_get_settings(pbio_servo_t *mtr, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct) {
-    *stall_torque_limit_pct = mtr->pwm.max_duty_steps/PBIO_DUTY_STEPS_PER_USER_STEP;
-    *duty_offset_pct = mtr->pwm.duty_offset/PBIO_DUTY_STEPS_PER_USER_STEP;
+    *stall_torque_limit_pct = mtr->pwm->max_duty_steps/PBIO_DUTY_STEPS_PER_USER_STEP;
+    *duty_offset_pct = mtr->pwm->duty_offset/PBIO_DUTY_STEPS_PER_USER_STEP;
     return PBIO_SUCCESS;
 }
 
@@ -175,7 +180,7 @@ pbio_error_t pbio_servo_set_pid_settings(pbio_servo_t *mtr,
 }
 
 void pbio_servo_print_settings(pbio_servo_t *mtr, char *dc_settings_string, char *enc_settings_string) {
-    char *direction = mtr->pwm.direction == PBIO_DIRECTION_CLOCKWISE ? "clockwise" : "counterclockwise";
+    char *direction = mtr->pwm->direction == PBIO_DIRECTION_CLOCKWISE ? "clockwise" : "counterclockwise";
     snprintf(dc_settings_string, MAX_DCMOTOR_SETTINGS_STR_LENGTH,
         "Motor properties:\n"
         "------------------------\n"
@@ -220,8 +225,8 @@ void pbio_servo_print_settings(pbio_servo_t *mtr, char *dc_settings_string, char
         int_fix16_div(mtr->control.settings.max_rate, counts_per_output_unit),
         int_fix16_div(mtr->control.settings.abs_acceleration, counts_per_output_unit),
         // Print DC settings
-        (int32_t) (mtr->pwm.max_duty_steps / PBIO_DUTY_STEPS_PER_USER_STEP),
-        (int32_t) (mtr->pwm.duty_offset / PBIO_DUTY_STEPS_PER_USER_STEP),
+        (int32_t) (mtr->pwm->max_duty_steps / PBIO_DUTY_STEPS_PER_USER_STEP),
+        (int32_t) (mtr->pwm->duty_offset / PBIO_DUTY_STEPS_PER_USER_STEP),
         // Print PID settings
         (int32_t) mtr->control.settings.pid_kp,
         (int32_t) mtr->control.settings.pid_ki,

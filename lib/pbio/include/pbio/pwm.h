@@ -18,4 +18,6 @@ typedef struct _pbio_pwm_t {
     int32_t max_duty_steps;
 } pbio_pwm_t;
 
+pbio_error_t pbio_pwm_get(pbio_port_t port, pbio_pwm_t **pwm, pbio_direction_t direction, int32_t duty_offset, int32_t max_duty_steps);
+
 #endif // _PBIO_PWM_H_
