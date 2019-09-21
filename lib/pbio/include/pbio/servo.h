@@ -30,7 +30,7 @@
 typedef struct _pbio_servo_t {
     pbio_hbridge_t *hbridge;
     pbio_tacho_t *tacho;
-    pbio_motor_state_t state;
+    pbio_servo_state_t state;
     pbio_control_t control;
     pbio_port_t port;
 } pbio_servo_t;

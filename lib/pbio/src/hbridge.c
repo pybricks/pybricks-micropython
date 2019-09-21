@@ -90,11 +90,11 @@ pbio_error_t pbio_hbridge_set_duty_cycle_sys(pbio_hbridge_t *hbridge, int32_t du
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    hbridge->state = PBIO_HBRIDGE_ACTIVE;
+    hbridge->state = PBIO_HBRIDGE_DUTY_ACTIVE;
     return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_hbridge_set_duty_cycle_usr(pbio_hbridge_t *hbridge, int32_t duty_steps) {
-    hbridge->state = PBIO_HBRIDGE_PASSIVE;
+    hbridge->state = PBIO_HBRIDGE_DUTY_PASSIVE;
     return pbio_hbridge_set_duty_cycle_sys(hbridge, PBIO_DUTY_STEPS * duty_steps / PBIO_DUTY_USER_STEPS);
 }

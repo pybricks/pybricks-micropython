@@ -201,7 +201,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *mtr, int32_t reset_angle) {
         return pbio_servo_track_target(mtr, new_target);
     }
     // If the motor was in a passive mode (coast, brake, user duty), reset angle and leave state unchanged
-    else if (mtr->state == PBIO_CONTROL_PASSIVE){
+    else if (mtr->hbridge->state != PBIO_HBRIDGE_DUTY_ACTIVE){
         return pbio_tacho_reset_angle(mtr->tacho, reset_angle);
     }
     // In all other cases, stop the ongoing maneuver by coasting and then reset the angle
@@ -240,9 +240,11 @@ static pbio_error_t control_update_actuate(pbio_servo_t *mtr, pbio_control_after
     {
     case PBIO_MOTOR_STOP_COAST:
         err = pbio_hbridge_coast(mtr->hbridge);
+        mtr->state = PBIO_CONTROL_PASSIVE;
         break;
     case PBIO_MOTOR_STOP_BRAKE:
         err = pbio_hbridge_brake(mtr->hbridge);
+        mtr->state = PBIO_CONTROL_PASSIVE;
         break;
     case PBIO_MOTOR_STOP_HOLD:
         err = pbio_servo_track_target(mtr, int_fix16_div(control, mtr->tacho->counts_per_output_unit));
@@ -265,8 +267,8 @@ static pbio_error_t control_update_actuate(pbio_servo_t *mtr, pbio_control_after
 
 pbio_error_t pbio_servo_control_update(pbio_servo_t *mtr) {
 
-    // FIXME: STATE HIERARCHY & INIT
-    if (mtr->hbridge->state < PBIO_HBRIDGE_ACTIVE) {
+    // Do not service a passive motor
+    if (mtr->hbridge->state <= PBIO_HBRIDGE_DUTY_PASSIVE) {
         return PBIO_SUCCESS;
     }
     // Read the physical state
@@ -377,6 +379,9 @@ pbio_error_t pbio_servo_run(pbio_servo_t *mtr, int32_t speed) {
     // Run is always in the background
     mtr->state = PBIO_CONTROL_TIME_BACKGROUND;
 
+    // The hbridge is actively controled
+    mtr->hbridge->state = PBIO_HBRIDGE_DUTY_ACTIVE;
+
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(mtr);
     if (err != PBIO_SUCCESS) { return err; }
@@ -439,6 +444,9 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *mtr, int32_t speed, int32_t durat
     // Set user specified foreground or background state
     mtr->state = foreground ? PBIO_CONTROL_TIME_FOREGROUND : PBIO_CONTROL_TIME_BACKGROUND;
 
+    // The hbridge is actively controled
+    mtr->hbridge->state = PBIO_HBRIDGE_DUTY_ACTIVE;
+
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(mtr);
 
@@ -474,6 +482,9 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *mtr, int32_t speed, pbio
 
     // Run until stalled is always in the foreground
     mtr->state = PBIO_CONTROL_TIME_FOREGROUND;
+
+    // The hbridge is actively controled
+    mtr->hbridge->state = PBIO_HBRIDGE_DUTY_ACTIVE;
 
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(mtr);
@@ -513,6 +524,9 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *mtr, int32_t speed, int32_t tar
     // Set user specified foreground or background state
     mtr->state = foreground ? PBIO_CONTROL_ANGLE_FOREGROUND : PBIO_CONTROL_ANGLE_BACKGROUND;
 
+    // The hbridge is actively controled
+    mtr->hbridge->state = PBIO_HBRIDGE_DUTY_ACTIVE;
+
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(mtr);
     if (err != PBIO_SUCCESS) { return err; }
@@ -539,9 +553,6 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *mtr, int32_t speed, int32_t angl
     return pbio_servo_run_target(mtr, speed, angle_target, after_stop, foreground);
 }
 
-// generalize to generic control? or sub call that is generic? then hold after generic timed can use it too
-
-// then we can also specify target as counts to avoid duplicate scaling, i.e. when we call hold from timed
 
 pbio_error_t pbio_servo_track_target(pbio_servo_t *mtr, int32_t target) {
     // Set new maneuver action and stop type
@@ -565,6 +576,9 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *mtr, int32_t target) {
     // Tracking a target is always a background action
     mtr->state = PBIO_CONTROL_ANGLE_BACKGROUND;
 
+    // The hbridge is actively controled
+    mtr->hbridge->state = PBIO_HBRIDGE_DUTY_ACTIVE;
+
     // Run one control update synchronously with user command
     err = pbio_servo_control_update(mtr);
     if (err != PBIO_SUCCESS) { return err; }
@@ -579,6 +593,11 @@ void _pbio_servo_init(void) {
 
     for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
         motor[i].port = PBDRV_CONFIG_FIRST_MOTOR_PORT + i;
+        // FIXME: we really don't need to init hbridge here, but currently
+        // hbridges need to exist so the control loop knows it can skip them.
+        // Instead, we should adjust the poll so it services only those servos
+        // that are in fact attached.
+        pbio_hbridge_get(motor[i].port, &motor[i].hbridge, 0, 0, 10000);
     }
 #endif
 }

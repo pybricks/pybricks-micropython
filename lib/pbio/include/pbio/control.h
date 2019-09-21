@@ -26,7 +26,7 @@ typedef enum {
     /* Active control statuses: PID Control Active which blocks user program */  
     PBIO_CONTROL_ANGLE_FOREGROUND,
     PBIO_CONTROL_TIME_FOREGROUND,
-} pbio_motor_state_t;
+} pbio_servo_state_t;
 
 /**
  * Control settings
