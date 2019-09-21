@@ -22,47 +22,6 @@ pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **mtr) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_pwm_coast(pbio_servo_t *mtr){
-    mtr->state = PBIO_CONTROL_COASTING;
-    return pbdrv_motor_coast(mtr->port);
-}
-
-pbio_error_t pbio_pwm_brake(pbio_servo_t *mtr){
-    mtr->state = PBIO_CONTROL_BRAKING;
-    return pbdrv_motor_set_duty_cycle(mtr->port, 0);
-}
-
-pbio_error_t pbio_pwm_set_duty_cycle_sys(pbio_servo_t *mtr, int32_t duty_steps) {
-    // Limit the duty cycle value
-    int32_t limit = mtr->pwm->max_duty_steps;
-    if (duty_steps > limit) {
-        duty_steps = limit;
-    }
-    if (duty_steps < -limit) {
-        duty_steps = -limit;
-    }
-    int32_t duty_cycle;
-    // Add the configured offset and scale remaining duty
-    if (duty_steps == 0) {
-        duty_cycle = 0;
-    }
-    else {
-        int32_t offset = mtr->pwm->duty_offset;
-        int32_t offset_signed = duty_steps > 0 ? offset : -offset;
-        duty_cycle = offset_signed + ((PBIO_DUTY_STEPS-offset)*duty_steps)/PBIO_DUTY_STEPS;
-    }
-    // Flip sign if motor is inverted
-    if (mtr->pwm->direction == PBIO_DIRECTION_COUNTERCLOCKWISE){
-        duty_cycle = -duty_cycle;
-    }
-    return pbdrv_motor_set_duty_cycle(mtr->port, duty_cycle);
-}
-
-pbio_error_t pbio_pwm_set_duty_cycle_usr(pbio_servo_t *mtr, int32_t duty_steps) {
-    mtr->state = PBIO_CONTROL_USRDUTY;
-    return pbio_pwm_set_duty_cycle_sys(mtr, PBIO_DUTY_STEPS * duty_steps / PBIO_DUTY_USER_STEPS);
-}
-
 pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix16_t gear_ratio) {
 
     // FIXME: change order to: (a) Read ID, (b) load config properties for ID, (c) get & set pwm/tacho device and properties 
@@ -72,9 +31,6 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix
     if (err != PBIO_SUCCESS) {
         return err;
     }
-
-    // TODO: Move to pwm setup:
-    err = pbio_pwm_coast(mtr);
 
     pbio_iodev_type_id_t id;
     err = pbdrv_motor_get_id(mtr->port, &id);
@@ -260,12 +216,12 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *mtr, int32_t reset_angle) {
         return pbio_servo_track_target(mtr, new_target);
     }
     // If the motor was in a passive mode (coast, brake, user duty), reset angle and leave state unchanged
-    else if (mtr->state <= PBIO_CONTROL_USRDUTY){
+    else if (mtr->state == PBIO_CONTROL_PASSIVE){
         return pbio_tacho_reset_angle(mtr->tacho, reset_angle);
     }
     // In all other cases, stop the ongoing maneuver by coasting and then reset the angle
     else {
-        err = pbio_pwm_coast(mtr);
+        err = pbio_pwm_coast(mtr->pwm);
         if (err != PBIO_SUCCESS) { return err; }
         return pbio_tacho_reset_angle(mtr->tacho, reset_angle);
     }
@@ -298,16 +254,16 @@ static pbio_error_t control_update_actuate(pbio_servo_t *mtr, pbio_control_after
     switch (actuation_type)
     {
     case PBIO_MOTOR_STOP_COAST:
-        err = pbio_pwm_coast(mtr);
+        err = pbio_pwm_coast(mtr->pwm);
         break;
     case PBIO_MOTOR_STOP_BRAKE:
-        err = pbio_pwm_brake(mtr);
+        err = pbio_pwm_brake(mtr->pwm);
         break;
     case PBIO_MOTOR_STOP_HOLD:
         err = pbio_servo_track_target(mtr, int_fix16_div(control, mtr->tacho->counts_per_output_unit));
         break;
     case PBIO_ACTUATION_DUTY:
-        err = pbio_pwm_set_duty_cycle_sys(mtr, control);
+        err = pbio_pwm_set_duty_cycle_sys(mtr->pwm, control);
         break;
     }
     
@@ -324,8 +280,8 @@ static pbio_error_t control_update_actuate(pbio_servo_t *mtr, pbio_control_after
 
 pbio_error_t pbio_servo_control_update(pbio_servo_t *mtr) {
 
-    // Passive modes do not need control
-    if (mtr->state <= PBIO_CONTROL_ERRORED) {
+    // FIXME: STATE HIERARCHY & INIT
+    if (mtr->pwm->state < PBIO_PWM_ACTIVE) {
         return PBIO_SUCCESS;
     }
     // Read the physical state
@@ -449,10 +405,10 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *mtr, pbio_control_after_stop_t after_
     switch (after_stop) {
         case PBIO_MOTOR_STOP_COAST:
             // Stop by coasting
-            return pbio_pwm_coast(mtr);
+            return pbio_pwm_coast(mtr->pwm);
         case PBIO_MOTOR_STOP_BRAKE:
             // Stop by braking
-            return pbio_pwm_brake(mtr);
+            return pbio_pwm_brake(mtr->pwm);
         case PBIO_MOTOR_STOP_HOLD:
             // Force stop by holding the current position.
             // First, read where this position is

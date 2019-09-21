@@ -18,9 +18,7 @@
  */
 typedef enum {
     /* Passive control statuses: No PID Control Active */
-    PBIO_CONTROL_COASTING,
-    PBIO_CONTROL_BRAKING,
-    PBIO_CONTROL_USRDUTY,
+    PBIO_CONTROL_PASSIVE,
     PBIO_CONTROL_ERRORED,
     /* Active control statuses: PID Control Active in non-blocking manner */   
     PBIO_CONTROL_ANGLE_BACKGROUND,

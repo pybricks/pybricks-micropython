@@ -32,11 +32,6 @@
 
 #define MAX_ENCMOTOR_SETTINGS_STR_LENGTH (400)
 
-#define PBIO_DUTY_STEPS (PBDRV_MAX_DUTY)
-#define PBIO_DUTY_USER_STEPS (100)
-#define PBIO_DUTY_STEPS_PER_USER_STEP (PBIO_DUTY_STEPS/PBIO_DUTY_USER_STEPS)
-
-
 typedef struct _pbio_servo_t {
     pbio_pwm_t *pwm;
     pbio_tacho_t *tacho;
@@ -45,17 +40,10 @@ typedef struct _pbio_servo_t {
     pbio_port_t port;
 } pbio_servo_t;
 
-pbio_error_t pbio_pwm_coast(pbio_servo_t *mtr);
-pbio_error_t pbio_pwm_brake(pbio_servo_t *mtr);
-pbio_error_t pbio_pwm_set_duty_cycle_sys(pbio_servo_t *mtr, int32_t duty_steps);
-pbio_error_t pbio_pwm_set_duty_cycle_usr(pbio_servo_t *mtr, int32_t duty_steps);
-
 void _pbio_servo_init(void);
 void _pbio_servo_poll(void);
 pbio_error_t pbio_pwm_set_settings(pbio_servo_t *mtr, int32_t stall_torque_limit_pct, int32_t duty_offset_pct);
 pbio_error_t pbio_pwm_get_settings(pbio_servo_t *mtr, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct);
-
-
 
 pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **mtr);  // TODO: Make dc and servo version
 pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix16_t gear_ratio);
