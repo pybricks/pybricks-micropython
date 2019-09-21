@@ -12,6 +12,9 @@
 #include <pbdrv/counter.h>
 #include <pbio/dc.h>
 
+int32_t int_fix16_div(int32_t a, fix16_t b);
+int32_t int_fix16_mul(int32_t a, fix16_t b);
+
 typedef struct _pbio_tacho_t {
     pbio_direction_t direction;
     int32_t offset;
@@ -22,5 +25,12 @@ typedef struct _pbio_tacho_t {
 } pbio_tacho_t;
 
 pbio_error_t pbio_tacho_get(pbio_port_t port, pbio_tacho_t **tacho, pbio_direction_t direction, fix16_t counts_per_degree, fix16_t gear_ratio);
+
+pbio_error_t pbio_tacho_get_count(pbio_tacho_t *tacho, int32_t *count);
+pbio_error_t pbio_tacho_reset_count(pbio_tacho_t *tacho, int32_t reset_count);
+pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, int32_t *angle);
+pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t reset_angle);
+pbio_error_t pbio_tacho_get_rate(pbio_tacho_t *tacho, int32_t *encoder_rate);
+pbio_error_t pbio_tacho_get_angular_rate(pbio_tacho_t *tacho, int32_t *angular_rate);
 
 #endif // _PBIO_TACHO_H_

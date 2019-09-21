@@ -9,9 +9,17 @@
 #include <pbio/port.h>
 #include <pbio/tacho.h>
 
+int32_t int_fix16_div(int32_t a, fix16_t b) {
+    return fix16_to_int(fix16_div(fix16_from_int(a), b));
+}
+
+int32_t int_fix16_mul(int32_t a, fix16_t b) {
+    return fix16_to_int(fix16_mul(fix16_from_int(a), b));
+}
+
 static pbio_tacho_t tachos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pbio_direction_t direction, fix16_t counts_per_degree, fix16_t gear_ratio) {
+static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pbio_direction_t direction, fix16_t counts_per_degree, fix16_t gear_ratio) {
     // Assert that scaling factors are positive
     if (gear_ratio < 0 || counts_per_degree < 0) {
         return PBIO_ERROR_INVALID_ARG;
@@ -48,4 +56,86 @@ pbio_error_t pbio_tacho_get(pbio_port_t port, pbio_tacho_t **tacho, pbio_directi
 
     // Initialize and set up tacho properties
     return pbio_tacho_setup(*tacho, counter_id, direction, counts_per_degree, gear_ratio);
+}
+
+pbio_error_t pbio_tacho_get_count(pbio_tacho_t *tacho, int32_t *count) {
+    pbio_error_t err;
+
+    err = pbdrv_counter_get_count(tacho->counter, count);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    if (tacho->direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
+        *count = -*count;
+    }
+    *count -= tacho->offset;
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_tacho_reset_count(pbio_tacho_t *tacho, int32_t reset_count) {
+    int32_t count_no_offset;
+    pbio_error_t err;
+
+    // First get the counter value without any offsets, but with the appropriate polarity/sign.
+    err = pbio_tacho_get_count(tacho, &count_no_offset);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    count_no_offset += tacho->offset;
+
+    // Calculate the new offset
+    tacho->offset = count_no_offset - reset_count;
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, int32_t *angle) {
+    int32_t encoder_count;
+    pbio_error_t err;
+
+    err = pbio_tacho_get_count(tacho, &encoder_count);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    *angle = int_fix16_div(encoder_count, tacho->counts_per_output_unit);
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t reset_angle) {
+    return pbio_tacho_reset_count(tacho, int_fix16_mul(reset_angle, tacho->counts_per_output_unit));
+}
+
+
+pbio_error_t pbio_tacho_get_rate(pbio_tacho_t *tacho, int32_t *rate) {
+    pbio_error_t err;
+
+    err = pbdrv_counter_get_rate(tacho->counter, rate);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    if (tacho->direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
+        *rate = -*rate;
+    }
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_tacho_get_angular_rate(pbio_tacho_t *tacho, int32_t *angular_rate) {
+    int32_t encoder_rate;
+    pbio_error_t err;
+
+    err = pbio_tacho_get_rate(tacho, &encoder_rate);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    *angular_rate = int_fix16_div(encoder_rate, tacho->counts_per_output_unit);
+
+    return PBIO_SUCCESS;
 }

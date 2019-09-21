@@ -55,12 +55,7 @@ void _pbio_servo_poll(void);
 pbio_error_t pbio_dc_set_settings(pbio_servo_t *mtr, int32_t stall_torque_limit_pct, int32_t duty_offset_pct);
 pbio_error_t pbio_dc_get_settings(pbio_servo_t *mtr, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct);
 
-pbio_error_t pbio_tacho_get_count(pbio_tacho_t *tacho, int32_t *count);
-pbio_error_t pbio_tacho_reset_count(pbio_tacho_t *tacho, int32_t reset_count);
-pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, int32_t *angle);
-pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t reset_angle);
-pbio_error_t pbio_tacho_get_rate(pbio_tacho_t *tacho, int32_t *encoder_rate);
-pbio_error_t pbio_tacho_get_angular_rate(pbio_tacho_t *tacho, int32_t *angular_rate);
+
 
 pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **mtr);  // TODO: Make dc and servo version
 pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix16_t gear_ratio);
