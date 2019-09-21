@@ -58,13 +58,14 @@ pbio_error_t pbio_dc_get_settings(pbio_servo_t *mtr, int32_t *stall_torque_limit
 pbio_error_t pbio_tacho_get_count(pbio_tacho_t *tacho, int32_t *count);
 pbio_error_t pbio_tacho_reset_count(pbio_tacho_t *tacho, int32_t reset_count);
 pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, int32_t *angle);
-pbio_error_t pbio_servo_reset_angle(pbio_servo_t *mtr, int32_t reset_angle);
+pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t reset_angle);
 pbio_error_t pbio_tacho_get_rate(pbio_tacho_t *tacho, int32_t *encoder_rate);
 pbio_error_t pbio_tacho_get_angular_rate(pbio_tacho_t *tacho, int32_t *angular_rate);
 
 pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **mtr);  // TODO: Make dc and servo version
 pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix16_t gear_ratio);
 void pbio_servo_print_settings(pbio_servo_t *mtr, char *dc_settings_string, char *enc_settings_string);
+pbio_error_t pbio_servo_reset_angle(pbio_servo_t *mtr, int32_t reset_angle);
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *mtr, bool *stalled);
 pbio_error_t pbio_servo_run(pbio_servo_t *mtr, int32_t speed);
 pbio_error_t pbio_servo_stop(pbio_servo_t *mtr, pbio_control_after_stop_t after_stop); // TODO: Make dc and servo version

@@ -291,11 +291,16 @@ pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, int32_t *angle) {
     return PBIO_SUCCESS;
 }
 
+pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t reset_angle) {
+    return pbio_tacho_reset_count(tacho, int_fix16_mul(reset_angle, tacho->counts_per_output_unit));
+}
+
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *mtr, int32_t reset_angle) {
     // Load motor settings and status
     pbio_error_t err;
 
     // Perform angle reset in case of tracking / holding
+    // FIXME: This does not currently capture hold after run_target
     if (mtr->state == PBIO_CONTROL_ANGLE_BACKGROUND && mtr->control.action == TRACK_TARGET) {
         // Get the old angle
         int32_t angle_old;
@@ -304,22 +309,21 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *mtr, int32_t reset_angle) {
         // Get the old target
         int32_t target_old = int_fix16_div(mtr->control.trajectory.th3, mtr->tacho->counts_per_output_unit);
         // Reset the angle
-        err = pbio_tacho_reset_count(mtr->tacho, int_fix16_mul(reset_angle, mtr->tacho->counts_per_output_unit));
+        err = pbio_tacho_reset_angle(mtr->tacho, reset_angle);
         if (err != PBIO_SUCCESS) { return err; }
         // Set the new target based on the old angle and the old target, after the angle reset
         int32_t new_target = reset_angle + target_old - angle_old;
         return pbio_servo_track_target(mtr, new_target);
-
     }
     // If the motor was in a passive mode (coast, brake, user duty), reset angle and leave state unchanged
     else if (mtr->state <= PBIO_CONTROL_USRDUTY){
-        return pbio_tacho_reset_count(mtr->tacho, int_fix16_mul(reset_angle, mtr->tacho->counts_per_output_unit));
+        return pbio_tacho_reset_angle(mtr->tacho, reset_angle);
     }
     // In all other cases, stop the ongoing maneuver by coasting and then reset the angle
     else {
         err = pbio_dc_coast(mtr);
         if (err != PBIO_SUCCESS) { return err; }
-        return pbio_tacho_reset_count(mtr->tacho, int_fix16_mul(reset_angle, mtr->tacho->counts_per_output_unit));
+        return pbio_tacho_reset_angle(mtr->tacho, reset_angle);
     }
 }
 
