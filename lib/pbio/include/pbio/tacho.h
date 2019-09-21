@@ -20,7 +20,6 @@ typedef struct _pbio_tacho_t {
     int32_t offset;
     fix16_t counts_per_degree;
     fix16_t counts_per_output_unit;
-    uint8_t counter_id;
     pbdrv_counter_dev_t *counter;
 } pbio_tacho_t;
 

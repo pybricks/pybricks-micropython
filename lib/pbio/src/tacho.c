@@ -31,7 +31,7 @@ static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pb
     tacho->direction = direction;
 
     // Get counter device
-    pbio_error_t err = pbdrv_counter_get(tacho->counter_id, &tacho->counter);
+    pbio_error_t err = pbdrv_counter_get(counter_id, &tacho->counter);
     if (err != PBIO_SUCCESS) {
         return err;
     }
