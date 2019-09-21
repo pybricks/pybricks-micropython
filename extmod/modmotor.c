@@ -256,8 +256,8 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *arg
     pb_thread_enter();
 
     if (override_duty_limit) {
-        pbio_hbridge_get_settings(self->mtr, &old_stall_duty, &old_duty_offset);
-        pbio_hbridge_set_settings(self->mtr, temporary_stall_duty, old_duty_offset);
+        pbio_hbridge_get_settings(self->mtr->hbridge, &old_stall_duty, &old_duty_offset);
+        pbio_hbridge_set_settings(self->mtr->hbridge, temporary_stall_duty, old_duty_offset);
     }
 
     // Call pbio with parsed user/default arguments
@@ -276,7 +276,7 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *arg
 
     if (override_duty_limit) {
         // Return stall settings to old values if they were changed
-        pbio_hbridge_set_settings(self->mtr, old_stall_duty, old_duty_offset);
+        pbio_hbridge_set_settings(self->mtr->hbridge, old_stall_duty, old_duty_offset);
     }
 
     pb_thread_exit();
@@ -366,7 +366,7 @@ STATIC mp_obj_t motor_Motor_set_dc_settings(size_t n_args, const mp_obj_t *args)
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_hbridge_set_settings(self->mtr, stall_torque_limit_pct, duty_offset_pct);
+    err = pbio_hbridge_set_settings(self->mtr->hbridge, stall_torque_limit_pct, duty_offset_pct);
     pb_thread_exit();
 
     pb_assert(err);

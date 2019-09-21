@@ -51,7 +51,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix
 
     // TODO: Load data by ID rather than hardcoding here, and define shared defaults to reduce size
     if (id == PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR) {
-        err = pbio_hbridge_set_settings(mtr, 100, 0);
+        err = pbio_hbridge_set_settings(mtr->hbridge, 100, 0);
         if (err != PBIO_SUCCESS) { return err; }
         err = pbio_servo_set_run_settings(mtr, int_fix16_div(1200, ratio), int_fix16_div(2400, ratio));
         if (err != PBIO_SUCCESS) { return err; }
@@ -59,7 +59,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix
         if (err != PBIO_SUCCESS) { return err; }
     }
     else if (id == PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR) {
-        err = pbio_hbridge_set_settings(mtr, 100, 0);
+        err = pbio_hbridge_set_settings(mtr->hbridge, 100, 0);
         if (err != PBIO_SUCCESS) { return err; }
         err = pbio_servo_set_run_settings(mtr, int_fix16_div(800, ratio), int_fix16_div(1600, ratio));
         if (err != PBIO_SUCCESS) { return err; }
@@ -67,7 +67,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix
         if (err != PBIO_SUCCESS) { return err; }
     }
     else if (id == PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR) {
-        err = pbio_hbridge_set_settings(mtr, 100, 0);
+        err = pbio_hbridge_set_settings(mtr->hbridge, 100, 0);
         if (err != PBIO_SUCCESS) { return err; }
         err = pbio_servo_set_run_settings(mtr, int_fix16_div(1500, ratio), int_fix16_div(3000, ratio));
         if (err != PBIO_SUCCESS) { return err; }
@@ -76,7 +76,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix
     }
     else {
         // Defaults
-        err = pbio_hbridge_set_settings(mtr, 100, 0);
+        err = pbio_hbridge_set_settings(mtr->hbridge, 100, 0);
         if (err != PBIO_SUCCESS) { return err; }
         err = pbio_servo_set_run_settings(mtr, int_fix16_div(1000, ratio), int_fix16_div(1000, ratio));
         if (err != PBIO_SUCCESS) { return err; }
@@ -84,21 +84,6 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix
         if (err != PBIO_SUCCESS) { return err; }
     }
 
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_hbridge_set_settings(pbio_servo_t *mtr, int32_t stall_torque_limit_pct, int32_t duty_offset_pct) {
-    if (stall_torque_limit_pct < 0 || duty_offset_pct < 0) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-    mtr->hbridge->max_duty_steps = PBIO_DUTY_STEPS_PER_USER_STEP * stall_torque_limit_pct;
-    mtr->hbridge->duty_offset = PBIO_DUTY_STEPS_PER_USER_STEP * duty_offset_pct;
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_hbridge_get_settings(pbio_servo_t *mtr, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct) {
-    *stall_torque_limit_pct = mtr->hbridge->max_duty_steps/PBIO_DUTY_STEPS_PER_USER_STEP;
-    *duty_offset_pct = mtr->hbridge->duty_offset/PBIO_DUTY_STEPS_PER_USER_STEP;
     return PBIO_SUCCESS;
 }
 

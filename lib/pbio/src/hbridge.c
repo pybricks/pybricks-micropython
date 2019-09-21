@@ -36,6 +36,21 @@ pbio_error_t pbio_hbridge_get(pbio_port_t port, pbio_hbridge_t **hbridge, pbio_d
     return pbio_hbridge_setup(*hbridge, port, direction, duty_offset, max_duty_steps);
 }
 
+pbio_error_t pbio_hbridge_set_settings(pbio_hbridge_t *hbridge, int32_t stall_torque_limit_pct, int32_t duty_offset_pct) {
+    if (stall_torque_limit_pct < 0 || duty_offset_pct < 0) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    hbridge->max_duty_steps = PBIO_DUTY_STEPS_PER_USER_STEP * stall_torque_limit_pct;
+    hbridge->duty_offset = PBIO_DUTY_STEPS_PER_USER_STEP * duty_offset_pct;
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_hbridge_get_settings(pbio_hbridge_t *hbridge, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct) {
+    *stall_torque_limit_pct = hbridge->max_duty_steps/PBIO_DUTY_STEPS_PER_USER_STEP;
+    *duty_offset_pct = hbridge->duty_offset/PBIO_DUTY_STEPS_PER_USER_STEP;
+    return PBIO_SUCCESS;
+}
+
 pbio_error_t pbio_hbridge_coast(pbio_hbridge_t *hbridge) {
     hbridge->state = PBIO_HBRIDGE_COAST;
     return pbdrv_motor_coast(hbridge->port);
