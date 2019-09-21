@@ -36,10 +36,10 @@ static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pb
         return err;
     }
 
-    // Set the offset such that tacho output is 0 or absolute starting point
-    // TODO: call reset
+    // Set the offset such that tacho output is 0.
+    return pbio_tacho_reset_angle(tacho, 0);
 
-    return PBIO_SUCCESS;
+    // TODO: Enable reset to absolute value if available
 }
 
 pbio_error_t pbio_tacho_get(pbio_port_t port, pbio_tacho_t **tacho, pbio_direction_t direction, fix16_t counts_per_degree, fix16_t gear_ratio) {

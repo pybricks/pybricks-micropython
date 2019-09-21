@@ -87,8 +87,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *mtr, pbio_direction_t direction, fix
     // Initialize tacho
     pbio_tacho_get(mtr->port, &mtr->tacho, direction, counts_per_degree, gear_ratio);
     fix16_t ratio = mtr->tacho->counts_per_output_unit;
-    // Reset encoder (TODO: Move to tacho)
-    err = pbio_tacho_reset_count(mtr->tacho, 0);
+
     // TODO: Load data by ID rather than hardcoding here, and define shared defaults to reduce size
     if (id == PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR) {
         err = pbio_dc_set_settings(mtr, 100, 0);
