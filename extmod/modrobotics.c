@@ -39,7 +39,7 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
 
     // Assert that motors can be paired
     pbio_motor_pair_t pair;
-    pb_assert(pbio_get_motor_pair(self->mtr_left->mtr, self->mtr_right->mtr, &pair));
+    pb_assert(pbio_get_motor_pair(self->mtr_left->srv, self->mtr_right->srv, &pair));
 
     // Get wheel diameter and axle track dimensions
     self->wheel_diameter = pb_obj_get_int(args[2]);
@@ -57,7 +57,7 @@ STATIC void robotics_DriveBase_print(const mp_print_t *print,  mp_obj_t self_in,
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, qstr_str(MP_QSTR_DriveBase));
     mp_printf(print, " with left motor on Port %c and right motor on Port %c",
-        self->mtr_left->mtr->port, self->mtr_right->mtr->port);
+        self->mtr_left->srv->port, self->mtr_right->srv->port);
 }
 
 STATIC mp_obj_t robotics_DriveBase_drive(mp_obj_t self_in, mp_obj_t speed, mp_obj_t steering) {
@@ -67,8 +67,8 @@ STATIC mp_obj_t robotics_DriveBase_drive(mp_obj_t self_in, mp_obj_t speed, mp_ob
 
     pb_thread_enter();
 
-    pbio_error_t err_left = pbio_servo_run(self->mtr_left->mtr, (sum+dif)/2);
-    pbio_error_t err_right = pbio_servo_run(self->mtr_right->mtr, (sum-dif)/2);
+    pbio_error_t err_left = pbio_servo_run(self->mtr_left->srv, (sum+dif)/2);
+    pbio_error_t err_right = pbio_servo_run(self->mtr_right->srv, (sum-dif)/2);
 
     pb_thread_exit();
 
@@ -87,8 +87,8 @@ STATIC mp_obj_t robotics_DriveBase_stop(size_t n_args, const mp_obj_t *args){
 
     pb_thread_enter();
 
-    err_left = pbio_servo_stop(self->mtr_left->mtr, after_stop);
-    err_right = pbio_servo_stop(self->mtr_right->mtr, after_stop);
+    err_left = pbio_servo_stop(self->mtr_left->srv, after_stop);
+    err_right = pbio_servo_stop(self->mtr_right->srv, after_stop);
 
     pb_thread_exit();
 

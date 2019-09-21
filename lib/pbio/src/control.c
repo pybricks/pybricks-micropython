@@ -143,7 +143,7 @@ pbio_error_t control_update_angle_target(pbio_control_t *ctl, ustime_t time_now,
 
             // Altough we keep holding, the maneuver is completed
             // FIXME: state change should reach servo level
-            // mtr->state = PBIO_CONTROL_ANGLE_BACKGROUND;
+            // srv->state = PBIO_CONTROL_ANGLE_BACKGROUND;
         }
         else {
             // Otherwise, the next action is the specified after_stop, which is brake or coast
@@ -288,7 +288,7 @@ void control_init_time_target(pbio_control_t *ctl) {
     pbio_control_trajectory_t *trajectory = &ctl->trajectory;
 
     //FIXME: Address generic maneuver transitions
-    if (0/*mtr->state == PBIO_CONTROL_TIME_BACKGROUND*/) {
+    if (0/*srv->state == PBIO_CONTROL_TIME_BACKGROUND*/) {
         if (status->speed_integrator_running) {
             status->speed_integrator += trajectory->th0 - status->integrator_ref_start;
             status->integrator_ref_start = trajectory->th0;

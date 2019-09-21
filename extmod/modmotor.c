@@ -21,11 +21,11 @@
 /* Wait for maneuver to complete */
 
 // Must not be called while pybricks thread lock is held!
-STATIC void wait_for_completion(pbio_servo_t *mtr) {
-    while (mtr->state >= PBIO_CONTROL_ANGLE_FOREGROUND) {
+STATIC void wait_for_completion(pbio_servo_t *srv) {
+    while (srv->state >= PBIO_CONTROL_ANGLE_FOREGROUND) {
         mp_hal_delay_ms(10);
     }
-    if (mtr->state == PBIO_CONTROL_ERRORED) {
+    if (srv->state == PBIO_CONTROL_ERRORED) {
         pb_assert(PBIO_ERROR_IO);
     }
 }
@@ -37,7 +37,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
     self->base.type = (mp_obj_type_t*) type;
 
     pbio_port_t port = mp_obj_get_int(args[0]);
-    pb_assert(pbio_servo_get(port, &self->mtr));
+    pb_assert(pbio_servo_get(port, &self->srv));
 
     // FIXME: raise an ENODEV exception here for I/O ports with no motor plugged in
 
@@ -82,7 +82,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
     }
     // Configure the encoded motor with the selected arguments at pbio level
     pb_thread_enter();
-    err = pbio_servo_setup(self->mtr, direction, gear_ratio);
+    err = pbio_servo_setup(self->srv, direction, gear_ratio);
     pb_thread_exit();
 
     pb_assert(err);
@@ -97,7 +97,7 @@ void motor_Motor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind
 
     pb_thread_enter();
 
-    pbio_servo_print_settings(self->mtr, dc_motor_settings_string, enc_motor_settings_string);
+    pbio_servo_print_settings(self->srv, dc_motor_settings_string, enc_motor_settings_string);
     mp_printf(print, "%s\n%s", dc_motor_settings_string, enc_motor_settings_string);
 
     pb_thread_exit();
@@ -110,7 +110,7 @@ STATIC mp_obj_t motor_Motor_duty(mp_obj_t self_in, mp_obj_t duty){
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_hbridge_set_duty_cycle_usr(self->mtr->hbridge, duty_cycle);
+    err = pbio_hbridge_set_duty_cycle_usr(self->srv->hbridge, duty_cycle);
     pb_thread_exit();
 
     pb_assert(err);
@@ -125,7 +125,7 @@ STATIC mp_obj_t motor_Motor_angle(mp_obj_t self_in) {
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_tacho_get_angle(self->mtr->tacho, &angle);
+    err = pbio_tacho_get_angle(self->srv->tacho, &angle);
     pb_thread_exit();
 
     pb_assert(err);
@@ -140,7 +140,7 @@ STATIC mp_obj_t motor_Motor_stalled(mp_obj_t self_in) {
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_servo_is_stalled(self->mtr, &stalled);
+    err = pbio_servo_is_stalled(self->srv, &stalled);
     pb_thread_exit();
 
     pb_assert(err);
@@ -155,7 +155,7 @@ STATIC mp_obj_t motor_Motor_reset_angle(size_t n_args, const mp_obj_t *args){
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_servo_reset_angle(self->mtr, reset_angle);
+    err = pbio_servo_reset_angle(self->srv, reset_angle);
     pb_thread_exit();
 
     pb_assert(err);
@@ -170,7 +170,7 @@ STATIC mp_obj_t motor_Motor_speed(mp_obj_t self_in) {
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_tacho_get_angular_rate(self->mtr->tacho, &speed);
+    err = pbio_tacho_get_angular_rate(self->srv->tacho, &speed);
     pb_thread_exit();
 
     pb_assert(err);
@@ -185,7 +185,7 @@ STATIC mp_obj_t motor_Motor_run(mp_obj_t self_in, mp_obj_t speed_in) {
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_servo_run(self->mtr, speed);
+    err = pbio_servo_run(self->srv, speed);
     pb_thread_exit();
 
     pb_assert(err);
@@ -205,7 +205,7 @@ STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *args){
     // TODO: raise PBIO_ERROR_INVALID_ARG for Stop.HOLD in case of dc motor
 
     // Call pbio with parsed user/default arguments
-    err = pbio_servo_stop(self->mtr, after_stop);
+    err = pbio_servo_stop(self->srv, after_stop);
 
     pb_thread_exit();
 
@@ -226,11 +226,11 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *args){
 
     pb_thread_enter();
     // Call pbio with parsed user/default arguments
-    err = pbio_servo_run_time(self->mtr, speed, duration, after_stop, foreground);
+    err = pbio_servo_run_time(self->srv, speed, duration, after_stop, foreground);
     pb_thread_exit();
 
     pb_assert(err);
-    wait_for_completion(self->mtr);
+    wait_for_completion(self->srv);
 
     return mp_const_none;
 }
@@ -256,27 +256,27 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *arg
     pb_thread_enter();
 
     if (override_duty_limit) {
-        pbio_hbridge_get_settings(self->mtr->hbridge, &old_stall_duty, &old_duty_offset);
-        pbio_hbridge_set_settings(self->mtr->hbridge, temporary_stall_duty, old_duty_offset);
+        pbio_hbridge_get_settings(self->srv->hbridge, &old_stall_duty, &old_duty_offset);
+        pbio_hbridge_set_settings(self->srv->hbridge, temporary_stall_duty, old_duty_offset);
     }
 
     // Call pbio with parsed user/default arguments
-    err = pbio_servo_run_until_stalled(self->mtr, speed, after_stop);
+    err = pbio_servo_run_until_stalled(self->srv, speed, after_stop);
 
     pb_thread_exit();
 
     pb_assert(err);
-    wait_for_completion(self->mtr);
+    wait_for_completion(self->srv);
 
     pb_thread_enter();
 
     // Read the angle upon completion of the stall maneuver
     int32_t stall_point;
-    pbio_tacho_get_angle(self->mtr->tacho, &stall_point);
+    pbio_tacho_get_angle(self->srv->tacho, &stall_point);
 
     if (override_duty_limit) {
         // Return stall settings to old values if they were changed
-        pbio_hbridge_set_settings(self->mtr->hbridge, old_stall_duty, old_duty_offset);
+        pbio_hbridge_set_settings(self->srv->hbridge, old_stall_duty, old_duty_offset);
     }
 
     pb_thread_exit();
@@ -297,11 +297,11 @@ STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *args){
 
     pb_thread_enter();
     // Call pbio with parsed user/default arguments
-    err = pbio_servo_run_angle(self->mtr, speed, angle, after_stop, foreground);
+    err = pbio_servo_run_angle(self->srv, speed, angle, after_stop, foreground);
     pb_thread_exit();
 
     pb_assert(err);
-    wait_for_completion(self->mtr);
+    wait_for_completion(self->srv);
 
     return mp_const_none;
 }
@@ -318,11 +318,11 @@ STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *args){
 
     // Call pbio with parsed user/default arguments
     pb_thread_enter();
-    err = pbio_servo_run_target(self->mtr, speed, target, after_stop, foreground);
+    err = pbio_servo_run_target(self->srv, speed, target, after_stop, foreground);
     pb_thread_exit();
 
     pb_assert(err);
-    wait_for_completion(self->mtr);
+    wait_for_completion(self->srv);
 
     return mp_const_none;
 }
@@ -334,7 +334,7 @@ STATIC mp_obj_t motor_Motor_track_target(mp_obj_t self_in, mp_obj_t target) {
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_servo_track_target(self->mtr, target_);
+    err = pbio_servo_track_target(self->srv, target_);
     pb_thread_exit();
 
     pb_assert(err);
@@ -350,7 +350,7 @@ STATIC mp_obj_t motor_Motor_set_run_settings(size_t n_args, const mp_obj_t *args
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_servo_set_run_settings(self->mtr, max_speed, acceleration);
+    err = pbio_servo_set_run_settings(self->srv, max_speed, acceleration);
     pb_thread_exit();
 
     pb_assert(err);
@@ -366,7 +366,7 @@ STATIC mp_obj_t motor_Motor_set_dc_settings(size_t n_args, const mp_obj_t *args)
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_hbridge_set_settings(self->mtr->hbridge, stall_torque_limit_pct, duty_offset_pct);
+    err = pbio_hbridge_set_settings(self->srv->hbridge, stall_torque_limit_pct, duty_offset_pct);
     pb_thread_exit();
 
     pb_assert(err);
@@ -388,7 +388,7 @@ STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *args
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_servo_set_pid_settings(self->mtr, kp, ki, kd, loop_time, pos_tolerance, speed_tolerance, stall_speed_limit, stall_time);
+    err = pbio_servo_set_pid_settings(self->srv, kp, ki, kd, loop_time, pos_tolerance, speed_tolerance, stall_speed_limit, stall_time);
     pb_thread_exit();
 
     pb_assert(err);
