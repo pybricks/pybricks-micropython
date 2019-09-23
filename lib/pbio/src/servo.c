@@ -187,23 +187,16 @@ pbio_error_t pbio_servo_set_pid_settings(pbio_servo_t *srv,
                                          int32_t speed_tolerance,
                                          int32_t stall_speed_limit,
                                          int32_t stall_time) {
-    fix16_t counts_per_output_unit = srv->tacho->counts_per_output_unit;
-
-    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || tight_loop_time < 0 ||
-        position_tolerance < 0 || speed_tolerance < 0 || stall_speed_limit < 0 || stall_time < 0) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
-    srv->control.settings.pid_kp = pid_kp;
-    srv->control.settings.pid_ki = pid_ki;
-    srv->control.settings.pid_kd = pid_kd;
-    srv->control.settings.tight_loop_time = tight_loop_time * US_PER_MS;
-    srv->control.settings.count_tolerance = int_fix16_mul(position_tolerance, counts_per_output_unit);
-    srv->control.settings.rate_tolerance = int_fix16_mul(speed_tolerance, counts_per_output_unit);
-    srv->control.settings.stall_rate_limit = int_fix16_mul(stall_speed_limit, counts_per_output_unit);
-    srv->control.settings.stall_time = stall_time * US_PER_MS;
-    srv->control.settings.max_control = 10000; // TODO: Add setter
-    return PBIO_SUCCESS;
+    return pbio_control_set_pid_settings(&srv->control.settings,
+                                          srv->tacho->counts_per_output_unit,
+                                          pid_kp,
+                                          pid_ki,
+                                          pid_kd,
+                                          tight_loop_time,
+                                          position_tolerance,
+                                          speed_tolerance,
+                                          stall_speed_limit,
+                                          stall_time);
 }
 
 void pbio_servo_print_settings(pbio_servo_t *srv, char *dc_settings_string, char *enc_settings_string) {

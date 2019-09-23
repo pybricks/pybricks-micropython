@@ -10,7 +10,6 @@
 
 #include <pbdrv/config.h>
 
-#include <pbio/fixmath.h>
 #include <pbio/error.h>
 #include <pbio/port.h>
 

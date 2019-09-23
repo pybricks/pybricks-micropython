@@ -3,8 +3,8 @@
 // Copyright (c) 2019 LEGO System A/S
 
 #include <stdlib.h>
-#include <fixmath.h>
 
+#include <pbio/fixmath.h>
 #include <pbio/control.h>
 #include <pbio/trajectory.h>
 
@@ -302,4 +302,34 @@ void control_init_time_target(pbio_control_t *ctl) {
         status->integrator_start = trajectory->th0;
         status->integrator_ref_start = trajectory->th0;
     }
+}
+
+pbio_error_t pbio_control_set_pid_settings(pbio_control_settings_t *settings,
+                                           fix16_t counts_per_output_unit,
+                                           int16_t pid_kp,
+                                           int16_t pid_ki,
+                                           int16_t pid_kd,
+                                           int32_t tight_loop_time,
+                                           int32_t position_tolerance,
+                                           int32_t speed_tolerance,
+                                           int32_t stall_speed_limit,
+                                           int32_t stall_time) {
+    // Assert that settings have postive sign
+    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || tight_loop_time < 0 ||
+        position_tolerance < 0 || speed_tolerance < 0 ||
+        stall_speed_limit < 0 || stall_time < 0) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Set parameters, scaled by output scaling and gear ratio as needed
+    settings->pid_kp = pid_kp;
+    settings->pid_ki = pid_ki;
+    settings->pid_kd = pid_kd;
+    settings->tight_loop_time = tight_loop_time * US_PER_MS;
+    settings->count_tolerance = int_fix16_mul(position_tolerance, counts_per_output_unit);
+    settings->rate_tolerance = int_fix16_mul(speed_tolerance, counts_per_output_unit);
+    settings->stall_rate_limit = int_fix16_mul(stall_speed_limit, counts_per_output_unit);
+    settings->stall_time = stall_time * US_PER_MS;
+    settings->max_control = 10000; // TODO: Add setter
+    return PBIO_SUCCESS;
 }

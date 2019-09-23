@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include <fixmath.h>
+#include <pbio/fixmath.h>
 
 #include <pbio/trajectory.h>
 
