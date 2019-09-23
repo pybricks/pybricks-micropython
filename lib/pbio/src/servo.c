@@ -95,6 +95,13 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     // Get device ID
     pbio_iodev_type_id_t id;
     err = pbdrv_motor_get_id(srv->port, &id);
+
+    // If no device is found on this port, always attempt to reset hbridge, in order to safely coast
+    if (err == PBIO_ERROR_NO_DEV) {
+        pbio_hbridge_get(srv->port, &srv->hbridge, direction, 0, 100);
+    }
+
+    // Return if no device is found or there was an error
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -123,7 +130,7 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
         return err;
     }
 
-    // Get and coast dc motor
+    // Get, coast, and configure dc motor
     err = pbio_hbridge_get(srv->port, &srv->hbridge, direction, duty_offset_pct, stall_torque_limit_pct);
     if (err != PBIO_SUCCESS) {
         return err;
