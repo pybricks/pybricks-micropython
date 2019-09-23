@@ -7,6 +7,7 @@
 #include "pbdrv/light.h"
 
 #include "pbio/button.h"
+#include "pbio/servo.h"
 #include "pbio/event.h"
 #include "pbio/light.h"
 
