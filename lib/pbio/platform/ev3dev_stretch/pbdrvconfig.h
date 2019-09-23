@@ -14,6 +14,8 @@
 #define PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO             (1)
 #define PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO_NUM_DEV     (4)
 
+#define PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE              (2)
+
 #define PBDRV_CONFIG_IOPORT                                 (1)
 #define PBDRV_CONFIG_IOPORT_EV3DEV_STRETCH                  (1)
 

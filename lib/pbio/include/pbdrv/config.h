@@ -78,6 +78,12 @@
 #define PBDRV_CONFIG_NUM_MOTOR_CONTROLLER (0)
 #elif PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
+// the default number of encoder counts per degree of a motor
+#ifndef PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE
+#define PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE (1)
+#endif
+
+// The maximum number of motor pairs
 #define PBDRV_CONFIG_NUM_MOTOR_PAIRS (PBDRV_CONFIG_NUM_MOTOR_CONTROLLER/2)
 
 // the pbio_port_t enum value of the first motor port

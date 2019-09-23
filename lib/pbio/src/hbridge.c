@@ -10,7 +10,7 @@
 
 #include <pbio/hbridge.h>
 
-static pbio_hbridge_t pwms[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+static pbio_hbridge_t hbridges[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 static pbio_error_t pbio_hbridge_setup(pbio_hbridge_t *hbridge, pbio_port_t port, pbio_direction_t direction, int32_t duty_offset, int32_t max_duty_steps) {
 
@@ -30,8 +30,8 @@ pbio_error_t pbio_hbridge_get(pbio_port_t port, pbio_hbridge_t **hbridge, pbio_d
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    // Get pointer to pwm
-    *hbridge = &pwms[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
+    // Get pointer to hbridge
+    *hbridge = &hbridges[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
     
     // Initialize and set up pwm properties
     return pbio_hbridge_setup(*hbridge, port, direction, duty_offset, max_duty_steps);

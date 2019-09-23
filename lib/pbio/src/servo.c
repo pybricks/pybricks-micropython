@@ -28,8 +28,7 @@ pbio_error_t pbio_config_get_defaults_servo(pbio_iodev_type_id_t id,
                                     int32_t *stall_speed_limit, 
                                     int32_t *stall_time) {
     // Default counts per degree
-    // TODO: GET FROM PLATFORM
-    *counts_per_degree = F16C(1, 0);
+    *counts_per_degree = F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0);
 
     // Default dc motor settings
     *stall_torque_limit_pct = 100;
@@ -125,15 +124,16 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     }
 
     // Get and coast dc motor
-    err = pbio_hbridge_get(srv->port, &srv->hbridge, direction, 0, 10000);
+    err = pbio_hbridge_get(srv->port, &srv->hbridge, direction, duty_offset_pct, stall_torque_limit_pct);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Get and reset tacho
-    pbio_tacho_get(srv->port, &srv->tacho, direction, counts_per_degree, gear_ratio);
-    fix16_t ratio = srv->tacho->counts_per_output_unit;
-
+    err = pbio_tacho_get(srv->port, &srv->tacho, direction, counts_per_degree, gear_ratio);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
     // Reset state
     srv->state = PBIO_CONTROL_PASSIVE;
 
@@ -142,7 +142,7 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_servo_set_run_settings(srv, int_fix16_div(max_speed, ratio), int_fix16_div(acceleration, ratio));
+    err = pbio_servo_set_run_settings(srv, int_fix16_div(max_speed, srv->tacho->counts_per_output_unit), int_fix16_div(acceleration, srv->tacho->counts_per_output_unit));
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -150,7 +150,6 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     if (err != PBIO_SUCCESS) {
         return err;
     }
-
     return PBIO_SUCCESS;
 }
 
@@ -161,6 +160,7 @@ pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction
     }
     // Get pointer to servo object
     *srv = &servo[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
+    (*srv)->port = port;
 
     // Initialize and onfigure the servo
     return pbio_servo_setup(*srv, direction, gear_ratio);
