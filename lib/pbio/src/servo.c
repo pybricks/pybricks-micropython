@@ -12,71 +12,143 @@
 
 #include "sys/clock.h"
 
+// TODO: Generalize and move to config:
+pbio_error_t pbio_config_get_defaults_servo(pbio_iodev_type_id_t id,
+                                    fix16_t *counts_per_degree,
+                                    int32_t *stall_torque_limit_pct,
+                                    int32_t *duty_offset_pct,
+                                    int32_t *max_speed,
+                                    int32_t *acceleration,
+                                    int16_t *pid_kp,
+                                    int16_t *pid_ki,
+                                    int16_t *pid_kd,
+                                    int32_t *tight_loop_time,
+                                    int32_t *position_tolerance,
+                                    int32_t *speed_tolerance,
+                                    int32_t *stall_speed_limit, 
+                                    int32_t *stall_time) {
+    // Default counts per degree
+    // TODO: GET FROM PLATFORM
+    *counts_per_degree = F16C(1, 0);
+
+    // Default dc motor settings
+    *stall_torque_limit_pct = 100;
+    *duty_offset_pct = 0;
+
+    // Default max target run speed
+    switch (id) {
+        case PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR:
+            *max_speed = 1000;
+            break;
+        case PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR:
+            *max_speed = 800;
+            break;
+        case PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR:
+            *max_speed = 1500;
+            break;
+        default:
+            *max_speed = 1000;
+            break;
+    }
+
+    // Default acceleration is to reach max target speed in 500 ms
+    *acceleration = 2*(*max_speed);
+
+    // Default PID settings for general purpose behavior
+    switch (id) {
+        case PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR:
+            *pid_kp = 400;
+            *pid_ki = 600;
+            *pid_kd = 5;
+            break;
+        case PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR:
+            *pid_kp = 500;
+            *pid_ki = 800;
+            *pid_kd = 5;
+            break;
+        case PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR:
+            *pid_kp = 400;
+            *pid_ki = 600;
+            *pid_kd = 5;
+            break;
+        default:
+            *pid_kp = 500;
+            *pid_ki = 800;
+            *pid_kd = 5;
+            break;
+    }
+
+    // Default tolerances for general purpose behavior
+    *tight_loop_time = 100;
+    *position_tolerance = 3;
+    *speed_tolerance = 5;
+    *stall_speed_limit = 2;
+    *stall_time = 200;
+
+    return PBIO_SUCCESS;
+}
+
 static pbio_servo_t servo[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio) {
+    pbio_error_t err;
 
-    // FIXME: change order to: (a) Read ID, (b) load config properties for ID, (c) get & set pwm/tacho device and properties 
-
-    // Get and coast dc motor
-    pbio_error_t err = pbio_hbridge_get(srv->port, &srv->hbridge, direction, 0, 10000);
+    // Get device ID
+    pbio_iodev_type_id_t id;
+    err = pbdrv_motor_get_id(srv->port, &id);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    pbio_iodev_type_id_t id;
-    err = pbdrv_motor_get_id(srv->port, &id);
-    if (err != PBIO_SUCCESS) { return err; }
-    //
-    // TODO: Get this ratio from platform config
-    //
+    // Get default servo parameters
     fix16_t counts_per_degree;
-    if (id == PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR || id == PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR) {
-        counts_per_degree = F16C(2, 0);
+    int32_t stall_torque_limit_pct;
+    int32_t duty_offset_pct;
+    int32_t max_speed;
+    int32_t acceleration;
+    int16_t pid_kp;
+    int16_t pid_ki;
+    int16_t pid_kd;
+    int32_t tight_loop_time;
+    int32_t position_tolerance;
+    int32_t speed_tolerance;
+    int32_t stall_speed_limit;
+    int32_t stall_time;
+
+    err = pbio_config_get_defaults_servo(id, &counts_per_degree,
+                                        &stall_torque_limit_pct, &duty_offset_pct,
+                                        &max_speed, &acceleration,
+                                        &pid_kp, &pid_ki, &pid_kd, &tight_loop_time,
+                                        &position_tolerance, &speed_tolerance, &stall_speed_limit, &stall_time);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
-    else {
-        counts_per_degree = F16C(1, 0);
+
+    // Get and coast dc motor
+    err = pbio_hbridge_get(srv->port, &srv->hbridge, direction, 0, 10000);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
-    // Initialize tacho
+
+    // Get and reset tacho
     pbio_tacho_get(srv->port, &srv->tacho, direction, counts_per_degree, gear_ratio);
     fix16_t ratio = srv->tacho->counts_per_output_unit;
 
     // Reset state
     srv->state = PBIO_CONTROL_PASSIVE;
 
-    // TODO: Load data by ID rather than hardcoding here, and define shared defaults to reduce size
-    if (id == PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR) {
-        err = pbio_hbridge_set_settings(srv->hbridge, 100, 0);
-        if (err != PBIO_SUCCESS) { return err; }
-        err = pbio_servo_set_run_settings(srv, int_fix16_div(1200, ratio), int_fix16_div(2400, ratio));
-        if (err != PBIO_SUCCESS) { return err; }
-        err = pbio_servo_set_pid_settings(srv, 400, 600, 5, 100, 3, 5, 2, 200);
-        if (err != PBIO_SUCCESS) { return err; }
+    // Set default settings for this device
+    err = pbio_hbridge_set_settings(srv->hbridge, stall_torque_limit_pct, duty_offset_pct);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
-    else if (id == PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR) {
-        err = pbio_hbridge_set_settings(srv->hbridge, 100, 0);
-        if (err != PBIO_SUCCESS) { return err; }
-        err = pbio_servo_set_run_settings(srv, int_fix16_div(800, ratio), int_fix16_div(1600, ratio));
-        if (err != PBIO_SUCCESS) { return err; }
-        err = pbio_servo_set_pid_settings(srv, 500, 800, 5, 100, 3, 5, 2, 200);
-        if (err != PBIO_SUCCESS) { return err; }
+    err = pbio_servo_set_run_settings(srv, int_fix16_div(max_speed, ratio), int_fix16_div(acceleration, ratio));
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
-    else if (id == PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR) {
-        err = pbio_hbridge_set_settings(srv->hbridge, 100, 0);
-        if (err != PBIO_SUCCESS) { return err; }
-        err = pbio_servo_set_run_settings(srv, int_fix16_div(1500, ratio), int_fix16_div(3000, ratio));
-        if (err != PBIO_SUCCESS) { return err; }
-        err = pbio_servo_set_pid_settings(srv, 400, 600, 5, 100, 3, 5, 2, 200);
-        if (err != PBIO_SUCCESS) { return err; }
-    }
-    else {
-        // Defaults
-        err = pbio_hbridge_set_settings(srv->hbridge, 100, 0);
-        if (err != PBIO_SUCCESS) { return err; }
-        err = pbio_servo_set_run_settings(srv, int_fix16_div(1000, ratio), int_fix16_div(1000, ratio));
-        if (err != PBIO_SUCCESS) { return err; }
-        err = pbio_servo_set_pid_settings(srv, 500, 800, 5, 100, 3, 5, 2, 500);
-        if (err != PBIO_SUCCESS) { return err; }
+    err = pbio_servo_set_pid_settings(srv, pid_kp, pid_ki, pid_kd, tight_loop_time, position_tolerance, speed_tolerance, stall_speed_limit, stall_time);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     return PBIO_SUCCESS;
