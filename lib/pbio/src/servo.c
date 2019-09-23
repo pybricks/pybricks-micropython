@@ -4,8 +4,7 @@
 
 #include <inttypes.h>
 
-#include <fixmath.h>
-
+#include <pbio/fixmath.h>
 #include <pbdrv/counter.h>
 #include <pbdrv/motor.h>
 #include <pbio/servo.h>

@@ -4,18 +4,9 @@
 
 #include <inttypes.h>
 
-#include <fixmath.h>
-
+#include <pbio/fixmath.h>
 #include <pbio/port.h>
 #include <pbio/tacho.h>
-
-int32_t int_fix16_div(int32_t a, fix16_t b) {
-    return fix16_to_int(fix16_div(fix16_from_int(a), b));
-}
-
-int32_t int_fix16_mul(int32_t a, fix16_t b) {
-    return fix16_to_int(fix16_mul(fix16_from_int(a), b));
-}
 
 static pbio_tacho_t tachos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 

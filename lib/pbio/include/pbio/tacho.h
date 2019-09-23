@@ -9,11 +9,10 @@
 
 #include <fixmath.h>
 
+#include <pbio/fixmath.h>
 #include <pbdrv/counter.h>
 #include <pbio/hbridge.h>
 
-int32_t int_fix16_div(int32_t a, fix16_t b);
-int32_t int_fix16_mul(int32_t a, fix16_t b);
 
 typedef struct _pbio_tacho_t {
     pbio_direction_t direction;

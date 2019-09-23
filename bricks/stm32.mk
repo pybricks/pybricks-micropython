@@ -199,6 +199,7 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	src/drivebase.c \
 	src/control.c \
 	src/trajectory.c \
+	src/fixmath.c \
 	src/uartdev.c \
 	sys/autostart.c \
 	sys/etimer.c \

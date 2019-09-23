@@ -12,22 +12,6 @@
 
 #include "sys/clock.h"
 
-static int32_t int_sqrt(int32_t n) {
-    if (n < 0) {
-        return 0;
-    }
-    int32_t x0 = n;
-    int32_t x1 = x0;
-
-    while (true) {
-        x1 = (x0 + n/x0)/2;
-        if (x1 == x0 || x1 == x0 + 1) {
-            return x0; 
-        }
-        x0 = x1;
-    }
-}
-
 void reverse_trajectory(pbio_control_trajectory_t *ref) {
     // Mirror angles about initial angle th0
     ref->th1 = 2*ref->th0 - ref->th1;
