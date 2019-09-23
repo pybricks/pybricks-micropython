@@ -37,13 +37,9 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
     self->base.type = (mp_obj_type_t*) type;
 
     pbio_port_t port = mp_obj_get_int(args[0]);
-    pb_assert(pbio_servo_get(port, &self->srv));
-
-    // FIXME: raise an ENODEV exception here for I/O ports with no motor plugged in
 
     // Configure direction or set to default
     int8_t direction = (n_args > 1) ? mp_obj_get_int(args[1]) : PBIO_DIRECTION_CLOCKWISE;
-    pbio_error_t err;
 
     // Default gear ratio
     fix16_t gear_ratio = F16C(1, 0);
@@ -82,10 +78,8 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
     }
     // Configure the encoded motor with the selected arguments at pbio level
     pb_thread_enter();
-    err = pbio_servo_setup(self->srv, direction, gear_ratio);
+    pb_assert(pbio_servo_get(port, &self->srv, direction, gear_ratio));
     pb_thread_exit();
-
-    pb_assert(err);
 
     return MP_OBJ_FROM_PTR(self);
 }

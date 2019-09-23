@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <fixmath.h>
 
-#include <pbio/servo.h>
+#include <pbio/control.h>
 #include <pbio/trajectory.h>
 
 // If the controller reach the maximum duty cycle value, this shortcut sets the stalled flag when the speed is below the stall limit.

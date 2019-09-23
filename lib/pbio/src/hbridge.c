@@ -19,6 +19,7 @@ static pbio_error_t pbio_hbridge_setup(pbio_hbridge_t *hbridge, pbio_port_t port
     hbridge->duty_offset = duty_offset;
     hbridge->max_duty_steps = max_duty_steps;
     hbridge->port = port;
+    hbridge->state = PBIO_HBRIDGE_COAST;
 
     return pbio_hbridge_coast(hbridge);
 }

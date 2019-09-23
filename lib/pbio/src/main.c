@@ -70,7 +70,7 @@ void pbio_init(void) {
     _pbdrv_light_init();
     autostart_start(autostart_processes);
     _pbdrv_motor_init();
-    _pbio_servo_init();
+    _pbio_servo_reset_all();
 }
 
 /**

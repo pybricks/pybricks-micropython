@@ -12,17 +12,9 @@
 
 #include "sys/clock.h"
 
-static pbio_servo_t motor[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+static pbio_servo_t servo[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **mtr) {
-    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
-    *mtr = &motor[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio) {
+static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio) {
 
     // FIXME: change order to: (a) Read ID, (b) load config properties for ID, (c) get & set pwm/tacho device and properties 
 
@@ -48,6 +40,9 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     // Initialize tacho
     pbio_tacho_get(srv->port, &srv->tacho, direction, counts_per_degree, gear_ratio);
     fix16_t ratio = srv->tacho->counts_per_output_unit;
+
+    // Reset state
+    srv->state = PBIO_CONTROL_PASSIVE;
 
     // TODO: Load data by ID rather than hardcoding here, and define shared defaults to reduce size
     if (id == PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR) {
@@ -85,6 +80,18 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     }
 
     return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction_t direction, fix16_t gear_ratio) {
+    // Validate port
+    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
+        return PBIO_ERROR_INVALID_PORT;
+    }
+    // Get pointer to servo object
+    *srv = &servo[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
+
+    // Initialize and onfigure the servo
+    return pbio_servo_setup(*srv, direction, gear_ratio);
 }
 
 pbio_error_t pbio_servo_set_run_settings(pbio_servo_t *srv, int32_t max_speed, int32_t acceleration) {
@@ -587,28 +594,23 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     return PBIO_SUCCESS;
 }
 
-// TODO: convert these two functions to contiki process
-void _pbio_servo_init(void) {
+void _pbio_servo_reset_all(void) {
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
     int i;
-
     for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        motor[i].port = PBDRV_CONFIG_FIRST_MOTOR_PORT + i;
-        // FIXME: we really don't need to init hbridge here, but currently
-        // hbridges need to exist so the control loop knows it can skip them.
-        // Instead, we should adjust the poll so it services only those servos
-        // that are in fact attached.
-        pbio_hbridge_get(motor[i].port, &motor[i].hbridge, 0, 0, 10000);
+        pbio_servo_t *srv;
+        pbio_servo_get(PBDRV_CONFIG_FIRST_MOTOR_PORT + i, &srv, PBIO_DIRECTION_CLOCKWISE, 1);
     }
 #endif
 }
 
+// TODO: Convert to Contiki process
+
 // Service all the motors by calling this function at approximately constant intervals.
 void _pbio_servo_poll(void) {
     int i;
-
     // Do the update for each motor
     for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        pbio_servo_control_update(&motor[i]);
+        pbio_servo_control_update(&servo[i]);
     }
 }

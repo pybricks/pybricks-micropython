@@ -35,11 +35,10 @@ typedef struct _pbio_servo_t {
     pbio_port_t port;
 } pbio_servo_t;
 
-void _pbio_servo_init(void);
+void _pbio_servo_reset_all(void);
 void _pbio_servo_poll(void);
 
-pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **mtr);  // TODO: Make dc and servo version
-pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio);
+pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction_t direction, fix16_t gear_ratio);  // TODO: Make dc and servo version
 
 void pbio_servo_print_settings(pbio_servo_t *srv, char *dc_settings_string, char *enc_settings_string);
 
