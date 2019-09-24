@@ -57,5 +57,12 @@ cplushub:
 clean-cplushub: clean-mpy-cross
 	@$(MAKE) -C bricks/cplushub clean
 
+nxt:
+	@$(MAKE) -C bricks/nxt
+
+clean-nxt: clean-mpy-cross
+	@$(MAKE) -C bricks/nxt clean
+	@$(MAKE) -C bricks/nxt clean-standalone
+
 clean-mpy-cross:
 	@$(MAKE) -C ../../mpy-cross clean

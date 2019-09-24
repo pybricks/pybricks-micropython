@@ -5,3 +5,6 @@
 [submodule "lib/libfixmath"]
 	path = lib/libfixmath
 	url = https://github.com/pybricks/libfixmath
+[submodule "bricks/nxt/nxt-firmware-drivers"]
+	path = bricks/nxt/nxt-firmware-drivers
+	url = https://github.com/pybricks/nxt-firmware-drivers.git
