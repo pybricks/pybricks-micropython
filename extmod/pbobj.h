@@ -32,4 +32,7 @@ mp_int_t pb_obj_get_int(mp_obj_t arg);
 #define pb_obj_get_int mp_obj_get_int
 #endif
 
+// Get value if object is not none, else return default
+mp_int_t pb_obj_get_default_int(mp_obj_t obj, mp_int_t default_val);
+
 #endif // PYBRICKS_INCLUDED_PBOBJ_H

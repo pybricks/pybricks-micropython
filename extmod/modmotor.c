@@ -374,18 +374,28 @@ STATIC mp_obj_t motor_Motor_track_target(size_t n_args, const mp_obj_t *pos_args
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_track_target_obj, 0, motor_Motor_track_target);
 
 STATIC mp_obj_t motor_Motor_set_run_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    // TODO: make optional and set only given kwargs, by getting existing values first
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        PB_ARG_REQUIRED(max_speed),
-        PB_ARG_REQUIRED(acceleration)
+        PB_ARG_DEFAULT_NONE(max_speed),
+        PB_ARG_DEFAULT_NONE(acceleration)
     );
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-    mp_int_t max_speed_arg = pb_obj_get_int(max_speed);
-    mp_int_t acceleration_arg = pb_obj_get_int(acceleration);
+
+    // Load original values
     pbio_error_t err;
+    int32_t max_speed_val;
+    int32_t acceleration_val;
 
     pb_thread_enter();
-    err = pbio_servo_set_run_settings(self->srv, max_speed_arg, acceleration_arg);
+    err = pbio_servo_get_run_settings(self->srv, &max_speed_val, &acceleration_val);
+    pb_thread_exit();
+
+    // Set values if given by the user
+    max_speed_val = pb_obj_get_default_int(max_speed, max_speed_val);
+    acceleration_val = pb_obj_get_default_int(acceleration, acceleration_val);
+
+    // Write resulting values
+    pb_thread_enter();
+    err = pbio_servo_set_run_settings(self->srv, max_speed_val, acceleration_val);
     pb_thread_exit();
 
     pb_assert(err);
@@ -395,16 +405,26 @@ STATIC mp_obj_t motor_Motor_set_run_settings(size_t n_args, const mp_obj_t *pos_
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_set_run_settings_obj, 0, motor_Motor_set_run_settings);
 
 STATIC mp_obj_t motor_Motor_set_dc_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    // TODO: make optional and set only given kwargs, by getting existing values first
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        PB_ARG_REQUIRED(duty_limit),
-        PB_ARG_REQUIRED(duty_offset)
+        PB_ARG_DEFAULT_NONE(duty_limit),
+        PB_ARG_DEFAULT_NONE(duty_offset)
     );
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-    mp_int_t stall_torque_limit_pct = pb_obj_get_int(duty_limit);
-    mp_int_t duty_offset_pct = pb_obj_get_int(duty_offset);
-    pbio_error_t err;
 
+    // Load original values
+    pbio_error_t err;
+    int32_t stall_torque_limit_pct;
+    int32_t duty_offset_pct;
+
+    pb_thread_enter();
+    err = pbio_hbridge_get_settings(self->srv->hbridge, &stall_torque_limit_pct, &duty_offset_pct);
+    pb_thread_exit();
+
+    // Set values if given by the user
+    stall_torque_limit_pct = pb_obj_get_default_int(duty_limit, stall_torque_limit_pct);
+    duty_offset_pct = pb_obj_get_default_int(duty_offset, duty_offset_pct);
+
+    // Write resulting values
     pb_thread_enter();
     err = pbio_hbridge_set_settings(self->srv->hbridge, stall_torque_limit_pct, duty_offset_pct);
     pb_thread_exit();
@@ -416,30 +436,46 @@ STATIC mp_obj_t motor_Motor_set_dc_settings(size_t n_args, const mp_obj_t *pos_a
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_set_dc_settings_obj, 0, motor_Motor_set_dc_settings);
 
 STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    // TODO: make optional and set only given kwargs, by getting existing values first
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        PB_ARG_REQUIRED(kp),
-        PB_ARG_REQUIRED(ki),
-        PB_ARG_REQUIRED(kd),
-        PB_ARG_REQUIRED(tight_loop_limit),
-        PB_ARG_REQUIRED(angle_tolerance),
-        PB_ARG_REQUIRED(speed_tolerance),
-        PB_ARG_REQUIRED(stall_speed),
-        PB_ARG_REQUIRED(stall_time)
+        PB_ARG_DEFAULT_NONE(kp),
+        PB_ARG_DEFAULT_NONE(ki),
+        PB_ARG_DEFAULT_NONE(kd),
+        PB_ARG_DEFAULT_NONE(tight_loop_limit),
+        PB_ARG_DEFAULT_NONE(angle_tolerance),
+        PB_ARG_DEFAULT_NONE(speed_tolerance),
+        PB_ARG_DEFAULT_NONE(stall_speed),
+        PB_ARG_DEFAULT_NONE(stall_time)
     );
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-    mp_int_t kp_arg = pb_obj_get_int(kp);
-    mp_int_t ki_arg = pb_obj_get_int(ki);
-    mp_int_t kd_arg = pb_obj_get_int(kd);
-    mp_int_t loop_time_arg = pb_obj_get_int(tight_loop_limit);
-    mp_int_t pos_tolerance_arg = pb_obj_get_int(angle_tolerance);
-    mp_int_t speed_tolerance_arg = pb_obj_get_int(speed_tolerance);
-    mp_int_t stall_speed_limit_arg = pb_obj_get_int(stall_speed);
-    mp_int_t stall_time_arg = pb_obj_get_int(stall_time);
+
+    // Load original values
     pbio_error_t err;
+    int16_t kp_val;
+    int16_t ki_val;
+    int16_t kd_val;
+    int32_t loop_time_val;
+    int32_t pos_tolerance_val;
+    int32_t speed_tolerance_val;
+    int32_t stall_speed_limit_val;
+    int32_t stall_time_val;
 
     pb_thread_enter();
-    err = pbio_servo_set_pid_settings(self->srv, kp_arg, ki_arg, kd_arg, loop_time_arg, pos_tolerance_arg, speed_tolerance_arg, stall_speed_limit_arg, stall_time_arg);
+    err = pbio_servo_get_pid_settings(self->srv, &kp_val, &ki_val, &kd_val, &loop_time_val, &pos_tolerance_val, &speed_tolerance_val, &stall_speed_limit_val, &stall_time_val);
+    pb_thread_exit();
+
+    // Set values if given by the user
+    kp_val = pb_obj_get_default_int(kp, kp_val);
+    ki_val = pb_obj_get_default_int(ki, ki_val);
+    kd_val = pb_obj_get_default_int(kd, kd_val);
+    loop_time_val = pb_obj_get_default_int(tight_loop_limit, loop_time_val);
+    pos_tolerance_val = pb_obj_get_default_int(angle_tolerance, pos_tolerance_val);
+    speed_tolerance_val = pb_obj_get_default_int(speed_tolerance, speed_tolerance_val);
+    stall_speed_limit_val = pb_obj_get_default_int(stall_speed, stall_speed_limit_val);
+    stall_time_val = pb_obj_get_default_int(stall_time, stall_time_val);
+
+    // Write resulting values
+    pb_thread_enter();
+    err = pbio_servo_set_pid_settings(self->srv, kp_val, ki_val, kd_val, loop_time_val, pos_tolerance_val, speed_tolerance_val, stall_speed_limit_val, stall_time_val);
     pb_thread_exit();
 
     pb_assert(err);
