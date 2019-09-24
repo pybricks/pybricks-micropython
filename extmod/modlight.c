@@ -21,7 +21,7 @@ STATIC mp_obj_t colorlight_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t 
         PB_ARG_DEFAULT_INT(brightness, 100)
     );
 
-    pbio_light_color_t color_id = MP_OBJ_IS_TYPE(color, &mp_type_NoneType) ?
+    pbio_light_color_t color_id = color == mp_const_none ?
         PBIO_LIGHT_COLOR_NONE:
         mp_obj_get_int(color);
 
