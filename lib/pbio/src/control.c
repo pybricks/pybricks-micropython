@@ -304,12 +304,44 @@ void control_init_time_target(pbio_control_t *ctl) {
     }
 }
 
+pbio_error_t pbio_control_get_limits(pbio_control_settings_t *settings,
+                                     fix16_t counts_per_output_unit,
+                                     int32_t *max_speed,
+                                     int32_t *acceleration) {
+    *max_speed = int_fix16_div(settings->max_rate, counts_per_output_unit);
+    *acceleration = int_fix16_div(settings->abs_acceleration, counts_per_output_unit);
+    return PBIO_SUCCESS;
+}
+
 pbio_error_t pbio_control_set_limits(pbio_control_settings_t *settings,
                                      fix16_t counts_per_output_unit,
                                      int32_t max_speed,
                                      int32_t acceleration) {
     settings->max_rate = int_fix16_mul(max_speed, counts_per_output_unit);
     settings->abs_acceleration = int_fix16_mul(acceleration, counts_per_output_unit);
+    // TODO: Add getter for max control
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_control_get_pid_settings(pbio_control_settings_t *settings,
+                                           fix16_t counts_per_output_unit,
+                                           int16_t *pid_kp,
+                                           int16_t *pid_ki,
+                                           int16_t *pid_kd,
+                                           int32_t *tight_loop_time,
+                                           int32_t *position_tolerance,
+                                           int32_t *speed_tolerance,
+                                           int32_t *stall_speed_limit,
+                                           int32_t *stall_time) {
+    // Set parameters, scaled by output scaling and gear ratio as needed
+    *pid_kp = settings->pid_kp;
+    *pid_ki = settings->pid_ki;
+    *pid_kd = settings->pid_kd;
+    *tight_loop_time = settings->tight_loop_time / US_PER_MS;
+    *position_tolerance = int_fix16_div(settings->count_tolerance, counts_per_output_unit);
+    *speed_tolerance = int_fix16_div(settings->rate_tolerance, counts_per_output_unit);
+    *stall_speed_limit = int_fix16_div(settings->stall_rate_limit, counts_per_output_unit);
+    *stall_time = settings->stall_time / US_PER_MS;
     return PBIO_SUCCESS;
 }
 
@@ -323,7 +355,7 @@ pbio_error_t pbio_control_set_pid_settings(pbio_control_settings_t *settings,
                                            int32_t speed_tolerance,
                                            int32_t stall_speed_limit,
                                            int32_t stall_time) {
-    // Assert that settings have postive sign
+    // Assert that settings have positive sign
     if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || tight_loop_time < 0 ||
         position_tolerance < 0 || speed_tolerance < 0 ||
         stall_speed_limit < 0 || stall_time < 0) {

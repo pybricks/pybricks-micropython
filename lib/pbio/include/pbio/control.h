@@ -100,10 +100,26 @@ typedef struct _pbio_control_t {
     pbio_control_stalled_t stalled;
 } pbio_control_t;
 
+pbio_error_t pbio_control_get_limits(pbio_control_settings_t *settings,
+                                     fix16_t counts_per_output_unit,
+                                     int32_t *max_speed,
+                                     int32_t *acceleration);
+
 pbio_error_t pbio_control_set_limits(pbio_control_settings_t *settings,
                                      fix16_t counts_per_output_unit,
                                      int32_t max_speed,
                                      int32_t acceleration);
+
+pbio_error_t pbio_control_get_pid_settings(pbio_control_settings_t *settings,
+                                           fix16_t counts_per_output_unit,
+                                           int16_t *pid_kp,
+                                           int16_t *pid_ki,
+                                           int16_t *pid_kd,
+                                           int32_t *tight_loop_time,
+                                           int32_t *position_tolerance,
+                                           int32_t *speed_tolerance,
+                                           int32_t *stall_speed_limit,
+                                           int32_t *stall_time);
 
 pbio_error_t pbio_control_set_pid_settings(pbio_control_settings_t *settings,
                                            fix16_t counts_per_output_unit,

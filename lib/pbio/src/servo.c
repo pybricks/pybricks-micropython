@@ -172,8 +172,33 @@ pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction
     return pbio_servo_setup(*srv, direction, gear_ratio);
 }
 
+pbio_error_t pbio_servo_get_run_settings(pbio_servo_t *srv, int32_t *max_speed, int32_t *acceleration) {
+    return pbio_control_get_limits(&srv->control.settings, srv->tacho->counts_per_output_unit, max_speed, acceleration);
+}
+
 pbio_error_t pbio_servo_set_run_settings(pbio_servo_t *srv, int32_t max_speed, int32_t acceleration) {
     return pbio_control_set_limits(&srv->control.settings, srv->tacho->counts_per_output_unit, max_speed, acceleration);
+}
+
+pbio_error_t pbio_servo_get_pid_settings(pbio_servo_t *srv,
+                                         int16_t *pid_kp,
+                                         int16_t *pid_ki,
+                                         int16_t *pid_kd,
+                                         int32_t *tight_loop_time,
+                                         int32_t *position_tolerance,
+                                         int32_t *speed_tolerance,
+                                         int32_t *stall_speed_limit,
+                                         int32_t *stall_time) {
+    return pbio_control_get_pid_settings(&srv->control.settings,
+                                          srv->tacho->counts_per_output_unit,
+                                          pid_kp,
+                                          pid_ki,
+                                          pid_kd,
+                                          tight_loop_time,
+                                          position_tolerance,
+                                          speed_tolerance,
+                                          stall_speed_limit,
+                                          stall_time);
 }
 
 pbio_error_t pbio_servo_set_pid_settings(pbio_servo_t *srv,

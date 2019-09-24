@@ -40,6 +40,28 @@ void _pbio_servo_poll(void);
 
 pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction_t direction, fix16_t gear_ratio);  // TODO: Make dc and servo version
 
+pbio_error_t pbio_servo_get_run_settings(pbio_servo_t *srv, int32_t *max_speed, int32_t *acceleration);
+pbio_error_t pbio_servo_set_run_settings(pbio_servo_t *srv, int32_t max_speed, int32_t acceleration);
+
+pbio_error_t pbio_servo_get_pid_settings(pbio_servo_t *srv,
+                                         int16_t *pid_kp,
+                                         int16_t *pid_ki,
+                                         int16_t *pid_kd,
+                                         int32_t *tight_loop_time,
+                                         int32_t *position_tolerance,
+                                         int32_t *speed_tolerance,
+                                         int32_t *stall_speed_limit,
+                                         int32_t *stall_time);
+pbio_error_t pbio_servo_set_pid_settings(pbio_servo_t *srv,
+                                         int16_t pid_kp,
+                                         int16_t pid_ki,
+                                         int16_t pid_kd,
+                                         int32_t tight_loop_time,
+                                         int32_t position_tolerance,
+                                         int32_t speed_tolerance,
+                                         int32_t stall_speed_limit,
+                                         int32_t stall_time);
+
 void pbio_servo_print_settings(pbio_servo_t *srv, char *dc_settings_string, char *enc_settings_string);
 
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle);
@@ -52,9 +74,6 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
 pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_control_after_stop_t after_stop, bool foreground);
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_control_after_stop_t after_stop, bool foreground);
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target);
-
-pbio_error_t pbio_servo_set_run_settings(pbio_servo_t *srv, int32_t max_speed, int32_t acceleration);
-pbio_error_t pbio_servo_set_pid_settings(pbio_servo_t *srv, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd, int32_t tight_loop_time, int32_t position_tolerance, int32_t speed_tolerance, int32_t stall_speed_limit, int32_t stall_time);
 
 pbio_error_t pbio_servo_control_update(pbio_servo_t *srv);
 
