@@ -11,6 +11,6 @@ typedef struct _pbio_drivebase_t {
     pbio_servo_t *right;
 } pbio_drivebase_t;
 
-pbio_error_t pbio_drivebase_get(pbio_servo_t *left, pbio_servo_t *right, pbio_drivebase_t **pair);
+pbio_error_t pbio_drivebase_get(pbio_drivebase_t **drivebase, pbio_servo_t *left, pbio_servo_t *right);
 
 #endif // _PBIO_DRIVEBASE_H_
