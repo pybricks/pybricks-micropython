@@ -10,6 +10,7 @@
 #include "py/runtime.h"
 #include "pberror.h"
 #include "pbobj.h"
+#include "pbkwarg.h"
 #include "modmotor.h"
 #include "pbthread.h"
 
@@ -17,35 +18,41 @@
 // Class structure for DriveBase
 typedef struct _robotics_DriveBase_obj_t {
     mp_obj_base_t base;
-    motor_Motor_obj_t *mtr_left;
-    motor_Motor_obj_t *mtr_right;
+    pbio_drivebase_t *drivebase;
+    motor_Motor_obj_t *left;
+    motor_Motor_obj_t *right;
     mp_int_t wheel_diameter;
     mp_int_t axle_track;
 } robotics_DriveBase_obj_t;
 
 STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(left_motor),
+        PB_ARG_REQUIRED(right_motor),
+        PB_ARG_REQUIRED(wheel_diameter),
+        PB_ARG_REQUIRED(axle_track)
+    );
+
     robotics_DriveBase_obj_t *self = m_new_obj(robotics_DriveBase_obj_t);
     self->base.type = (mp_obj_type_t*) type;
 
-    // We should have four arguments
-    mp_arg_check_num(n_args, n_kw, 4, 4, false);
-
     // Argument must be two motors and two dimensions
-    if (!MP_OBJ_IS_TYPE(args[0], &motor_Motor_type) || !MP_OBJ_IS_TYPE(args[1], &motor_Motor_type)) {
+    if (!MP_OBJ_IS_TYPE(left_motor, &motor_Motor_type) || !MP_OBJ_IS_TYPE(right_motor, &motor_Motor_type)) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
-    self->mtr_left = MP_OBJ_TO_PTR(args[0]);
-    self->mtr_right = MP_OBJ_TO_PTR(args[1]);
+    
+    self->left = MP_OBJ_TO_PTR(left_motor);
+    self->right = MP_OBJ_TO_PTR(right_motor);
 
     // Assert that motors can be paired
-    pbio_motor_pair_t pair;
-    pb_assert(pbio_get_motor_pair(self->mtr_left->srv, self->mtr_right->srv, &pair));
+    pb_assert(pbio_drivebase_get(self->left->srv, self->right->srv, &self->drivebase));
 
     // Get wheel diameter and axle track dimensions
-    self->wheel_diameter = pb_obj_get_int(args[2]);
-    self->axle_track = pb_obj_get_int(args[3]);
+    self->wheel_diameter = pb_obj_get_int(wheel_diameter);
+    self->axle_track = pb_obj_get_int(axle_track);
 
-    // Assert that the dimensions are positive
+    // Assert that the dimensions are positive // MOVE TO drivebase as well
     if (self->wheel_diameter < 1 || self->axle_track < 1) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
@@ -57,7 +64,7 @@ STATIC void robotics_DriveBase_print(const mp_print_t *print,  mp_obj_t self_in,
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, qstr_str(MP_QSTR_DriveBase));
     mp_printf(print, " with left motor on Port %c and right motor on Port %c",
-        self->mtr_left->srv->port, self->mtr_right->srv->port);
+        self->drivebase->left->port, self->drivebase->right->port);
 }
 
 STATIC mp_obj_t robotics_DriveBase_drive(mp_obj_t self_in, mp_obj_t speed, mp_obj_t steering) {
@@ -66,9 +73,9 @@ STATIC mp_obj_t robotics_DriveBase_drive(mp_obj_t self_in, mp_obj_t speed, mp_ob
     mp_int_t dif = 2*self->axle_track*pb_obj_get_int(steering)/self->wheel_diameter;
 
     pb_thread_enter();
-
-    pbio_error_t err_left = pbio_servo_run(self->mtr_left->srv, (sum+dif)/2);
-    pbio_error_t err_right = pbio_servo_run(self->mtr_right->srv, (sum-dif)/2);
+    
+    pbio_error_t err_left = pbio_servo_run(self->left->srv, (sum+dif)/2);
+    pbio_error_t err_right = pbio_servo_run(self->right->srv, (sum-dif)/2);
 
     pb_thread_exit();
 
@@ -79,16 +86,19 @@ STATIC mp_obj_t robotics_DriveBase_drive(mp_obj_t self_in, mp_obj_t speed, mp_ob
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(robotics_DriveBase_drive_obj, robotics_DriveBase_drive);
 
-STATIC mp_obj_t robotics_DriveBase_stop(size_t n_args, const mp_obj_t *args){
-    // Parse arguments and/or set default optional arguments
-    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    pbio_control_after_stop_t after_stop = n_args > 1 ? mp_obj_get_int(args[1]) : PBIO_MOTOR_STOP_COAST;
+STATIC mp_obj_t robotics_DriveBase_stop(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        PB_ARG_DEFAULT_INT(stop_type, PBIO_MOTOR_STOP_COAST)
+    );
+    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+    pbio_control_after_stop_t after_stop = mp_obj_get_int(stop_type);
+
     pbio_error_t err_left, err_right;
 
     pb_thread_enter();
 
-    err_left = pbio_servo_stop(self->mtr_left->srv, after_stop);
-    err_right = pbio_servo_stop(self->mtr_right->srv, after_stop);
+    err_left = pbio_servo_stop(self->left->srv, after_stop);
+    err_right = pbio_servo_stop(self->right->srv, after_stop);
 
     pb_thread_exit();
 
@@ -97,25 +107,13 @@ STATIC mp_obj_t robotics_DriveBase_stop(size_t n_args, const mp_obj_t *args){
 
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(robotics_DriveBase_stop_obj, 1, 2, robotics_DriveBase_stop);
-
-STATIC mp_obj_t robotics_DriveBase_drive_time(size_t n_args, const mp_obj_t *args){
-    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(args[0]);
-    robotics_DriveBase_drive(self, args[1], args[2]);
-    mp_hal_delay_ms(pb_obj_get_int(args[3]));
-    // TODO: parse stop type
-    robotics_DriveBase_drive(self, MP_OBJ_NEW_SMALL_INT(0), MP_OBJ_NEW_SMALL_INT(0));
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(robotics_DriveBase_drive_time_obj, 4, 5, robotics_DriveBase_drive_time);
-
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_stop_obj, 0, robotics_DriveBase_stop);
 /*
 DriveBase class tables
 */
 STATIC const mp_rom_map_elem_t robotics_DriveBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_drive), MP_ROM_PTR(&robotics_DriveBase_drive_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&robotics_DriveBase_stop_obj) },
-    { MP_ROM_QSTR(MP_QSTR_drive_time), MP_ROM_PTR(&robotics_DriveBase_drive_time_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(robotics_DriveBase_locals_dict, robotics_DriveBase_locals_dict_table);
 
