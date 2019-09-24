@@ -173,9 +173,7 @@ pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction
 }
 
 pbio_error_t pbio_servo_set_run_settings(pbio_servo_t *srv, int32_t max_speed, int32_t acceleration) {
-    srv->control.settings.max_rate = int_fix16_mul(max_speed, srv->tacho->counts_per_output_unit);
-    srv->control.settings.abs_acceleration = int_fix16_mul(acceleration, srv->tacho->counts_per_output_unit);
-    return PBIO_SUCCESS;
+    return pbio_control_set_limits(&srv->control.settings, srv->tacho->counts_per_output_unit, max_speed, acceleration);
 }
 
 pbio_error_t pbio_servo_set_pid_settings(pbio_servo_t *srv,

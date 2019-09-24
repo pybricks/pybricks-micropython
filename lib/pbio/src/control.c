@@ -304,6 +304,15 @@ void control_init_time_target(pbio_control_t *ctl) {
     }
 }
 
+pbio_error_t pbio_control_set_limits(pbio_control_settings_t *settings,
+                                     fix16_t counts_per_output_unit,
+                                     int32_t max_speed,
+                                     int32_t acceleration) {
+    settings->max_rate = int_fix16_mul(max_speed, counts_per_output_unit);
+    settings->abs_acceleration = int_fix16_mul(acceleration, counts_per_output_unit);
+    return PBIO_SUCCESS;
+}
+
 pbio_error_t pbio_control_set_pid_settings(pbio_control_settings_t *settings,
                                            fix16_t counts_per_output_unit,
                                            int16_t pid_kp,
