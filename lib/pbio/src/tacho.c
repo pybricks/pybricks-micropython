@@ -16,6 +16,7 @@ static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pb
         return PBIO_ERROR_INVALID_ARG;
     }
     // Get overal ratio from counts to output variable, including gear train
+    tacho->counts_per_degree = counts_per_degree;
     tacho->counts_per_output_unit = fix16_mul(counts_per_degree, gear_ratio);
 
     // Configure direction
