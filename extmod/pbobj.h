@@ -5,6 +5,7 @@
 #define PYBRICKS_INCLUDED_PBOBJ_H
 
 #include "py/obj.h"
+#include <fixmath.h>
 
 // Shortcut for the equivalent of: import name
 #define PB_IMPORT_MODULE(name) \
@@ -31,6 +32,8 @@ mp_int_t pb_obj_get_int(mp_obj_t arg);
 #else
 #define pb_obj_get_int mp_obj_get_int
 #endif
+
+fix16_t pb_obj_get_fix16(mp_obj_t arg);
 
 // Get value if object is not none, else return default
 mp_int_t pb_obj_get_default_int(mp_obj_t obj, mp_int_t default_val);

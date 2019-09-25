@@ -21,8 +21,6 @@ typedef struct _robotics_DriveBase_obj_t {
     pbio_drivebase_t *drivebase;
     motor_Motor_obj_t *left;
     motor_Motor_obj_t *right;
-    mp_int_t wheel_diameter;
-    mp_int_t axle_track;
 } robotics_DriveBase_obj_t;
 
 STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
@@ -42,20 +40,19 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
     
+    // Pointer to the Python (not pbio) Motor objects
     self->left = MP_OBJ_TO_PTR(left_motor);
     self->right = MP_OBJ_TO_PTR(right_motor);
 
-    // Assert that motors can be paired
-    pb_assert(pbio_drivebase_get(&self->drivebase, self->left->srv, self->right->srv));
-
     // Get wheel diameter and axle track dimensions
-    self->wheel_diameter = pb_obj_get_int(wheel_diameter);
-    self->axle_track = pb_obj_get_int(axle_track);
+    fix16_t wheel_diameter_val = pb_obj_get_fix16(wheel_diameter);
+    fix16_t axle_track_val = pb_obj_get_fix16(axle_track);
 
-    // Assert that the dimensions are positive // MOVE TO drivebase as well
-    if (self->wheel_diameter < 1 || self->axle_track < 1) {
-        pb_assert(PBIO_ERROR_INVALID_ARG);
-    }
+    // Create drivebase
+    pb_thread_enter();
+    pbio_error_t err = pbio_drivebase_get(&self->drivebase, self->left->srv, self->right->srv, wheel_diameter_val, axle_track_val);
+    pb_thread_exit();
+    pb_assert(err);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -67,24 +64,26 @@ STATIC void robotics_DriveBase_print(const mp_print_t *print,  mp_obj_t self_in,
         self->drivebase->left->port, self->drivebase->right->port);
 }
 
-STATIC mp_obj_t robotics_DriveBase_drive(mp_obj_t self_in, mp_obj_t speed, mp_obj_t steering) {
-    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_int_t sum = pb_obj_get_int(speed)*229/self->wheel_diameter; //TODO: use libfixmath
-    mp_int_t dif = 2*self->axle_track*pb_obj_get_int(steering)/self->wheel_diameter;
+STATIC mp_obj_t robotics_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(speed),
+        PB_ARG_REQUIRED(turn_rate)
+    );
+    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
-    pb_thread_enter();
-    
-    pbio_error_t err_left = pbio_servo_run(self->drivebase->left, (sum+dif)/2);
-    pbio_error_t err_right = pbio_servo_run(self->drivebase->right, (sum-dif)/2);
+    // Get wheel diameter and axle track dimensions
+    int32_t speed_val = pb_obj_get_int(speed);
+    int32_t turn_rate_val = pb_obj_get_int(turn_rate);
 
+    pbio_error_t err;
+    pb_thread_enter();    
+    err = pbio_drivebase_drive(self->drivebase, speed_val, turn_rate_val);
     pb_thread_exit();
-
-    pb_assert(err_left);
-    pb_assert(err_right);
+    pb_assert(err);
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_3(robotics_DriveBase_drive_obj, robotics_DriveBase_drive);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_drive_obj, 0, robotics_DriveBase_drive);
 
 STATIC mp_obj_t robotics_DriveBase_stop(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -93,17 +92,11 @@ STATIC mp_obj_t robotics_DriveBase_stop(size_t n_args, const mp_obj_t *pos_args,
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
     pbio_control_after_stop_t after_stop = mp_obj_get_int(stop_type);
 
-    pbio_error_t err_left, err_right;
-
-    pb_thread_enter();
-
-    err_left = pbio_servo_stop(self->drivebase->left, after_stop);
-    err_right = pbio_servo_stop(self->drivebase->right, after_stop);
-
+    pbio_error_t err;
+    pb_thread_enter();    
+    err = pbio_drivebase_stop(self->drivebase, after_stop);
     pb_thread_exit();
-
-    pb_assert(err_left);
-    pb_assert(err_right);
+    pb_assert(err);
 
     return mp_const_none;
 }
@@ -112,6 +105,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_stop_obj, 0, robotics_Drive
 DriveBase class tables
 */
 STATIC const mp_rom_map_elem_t robotics_DriveBase_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_left), MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, left) },
+    { MP_ROM_QSTR(MP_QSTR_right), MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, right) },
     { MP_ROM_QSTR(MP_QSTR_drive), MP_ROM_PTR(&robotics_DriveBase_drive_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&robotics_DriveBase_stop_obj) },
 };
@@ -139,4 +134,3 @@ const mp_obj_module_t pb_module_robotics = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t*)&pb_module_robotics_globals,
 };
-
