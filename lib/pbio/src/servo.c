@@ -96,9 +96,11 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     pbio_iodev_type_id_t id;
     err = pbdrv_motor_get_id(srv->port, &id);
 
-    // If no device is found on this port, always attempt to reset hbridge, in order to safely coast
+    // If no device is found on this port, always attempt to get devices, in order to safely coast
     if (err == PBIO_ERROR_NO_DEV) {
         pbio_hbridge_get(srv->port, &srv->hbridge, direction, 0, 100);
+        // FIXME: We shouldn't need to do this if we only serviced motors that are in fact attached
+        pbio_tacho_get(srv->port, &srv->tacho, direction, fix16_one, fix16_one);
     }
 
     // Return if no device is found or there was an error
@@ -423,8 +425,8 @@ pbio_error_t pbio_servo_log_save(pbio_servo_t *srv) {
     // Logger for this servo
     pbio_log_t *log = &srv->log;
 
-    // Only save the log if it is done
-    if (log->state != PBIO_LOG_DONE) {
+    // Only save the log if there is any data
+    if (log->state == PBIO_LOG_NONE) {
         return PBIO_ERROR_INVALID_OP;
     }
 
@@ -444,6 +446,7 @@ pbio_error_t pbio_servo_log_save(pbio_servo_t *srv) {
     return PBIO_SUCCESS;
 }
 
+// Log motor data for a motor that is being actively controlled
 pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t actuation, int32_t control) {
 
     // Logger for this servo
@@ -472,19 +475,58 @@ pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t
     log->rate[log->sampled] = rate_now;
     log->sampled++;
 
-    // FIXME: This terminates when command is over, but may want to log after
-    if (srv->hbridge->state != PBIO_HBRIDGE_DUTY_ACTIVE) {
-        log->state = PBIO_LOG_DONE;
+    return PBIO_SUCCESS;
+}
+
+// Log motor data for a passive motor
+pbio_error_t pbio_servo_log_passive(pbio_servo_t *srv) {
+
+    // Read the physical state
+    ustime_t time_now = 0;
+    count_t count_now = 0;
+    rate_t rate_now = 0;
+
+    // Get I/O state without error checking
+    control_get_state(srv, &time_now, &count_now, &rate_now);
+
+    // "Control action"
+    pbio_control_after_stop_t actuation;
+    int32_t control;
+
+    // Get the passive bridge state for logging
+    switch (srv->hbridge->state)
+    {
+    case PBIO_HBRIDGE_COAST:
+        actuation = PBIO_MOTOR_STOP_COAST;
+        control = 0;
+        break;
+    case PBIO_HBRIDGE_BRAKE:
+        actuation = PBIO_MOTOR_STOP_BRAKE;
+        control = 0;
+        break;
+    case PBIO_HBRIDGE_DUTY_PASSIVE:
+        actuation = PBIO_ACTUATION_DUTY;
+        // FIXME: read passive duty from bridge
+        control = 0;
+        break;
+    default:
+        return PBIO_ERROR_INVALID_OP;
     }
 
-    return PBIO_SUCCESS;
+    return pbio_servo_log_update(srv, time_now, count_now, rate_now, actuation, control);
 }
 
 pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
 
     // Do not service a passive motor
     if (srv->hbridge->state <= PBIO_HBRIDGE_DUTY_PASSIVE) {
-        return PBIO_SUCCESS;
+        // We may be here since the user aborted an active maneuver
+        // by triggering coast, brake, or a constant duty. This means
+        // That the servo is now in a passive state.
+        srv->state = PBIO_CONTROL_PASSIVE;
+
+        // Log only passive data.
+        return pbio_servo_log_passive(srv);
     }
     // Read the physical state
     ustime_t time_now;
@@ -496,8 +538,8 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     }
 
     // Control action to be calculated
-    pbio_control_after_stop_t actuation = PBIO_MOTOR_STOP_COAST;
-    int32_t control = 0;
+    pbio_control_after_stop_t actuation;
+    int32_t control;
 
     // Calculate controls for position based control
     if (srv->state == PBIO_CONTROL_ANGLE_BACKGROUND ||
@@ -509,6 +551,9 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
              srv->state == PBIO_CONTROL_TIME_FOREGROUND) {
         // Get control type and signal for given state
         err = control_update_time_target(&srv->control, time_now, count_now, rate_now, &actuation, &control);
+    }
+    else {
+        return PBIO_ERROR_INVALID_OP;       
     }
     if (err != PBIO_SUCCESS) {
         return err;
