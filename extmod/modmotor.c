@@ -504,6 +504,27 @@ STATIC mp_obj_t motor_Motor_log_start(size_t n_args, const mp_obj_t *pos_args, m
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_log_start_obj, 0, motor_Motor_log_start);
 
+STATIC mp_obj_t motor_Motor_log_read(mp_obj_t self_in) {
+    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    // FIXME: Use generic approach using uctypes to get data to user level
+
+    mp_obj_t count[MAX_LOG_LEN];
+
+    pb_thread_enter();
+
+    pbio_log_t *log = &self->srv->log;
+
+    for (uint32_t idx = 0; idx < log->sampled; idx++) {
+        // FIXME: Should not use mp call this within enter/exit
+        count[idx] = mp_obj_new_int(log->count[idx]);
+    }
+    pb_thread_exit();
+
+    return mp_obj_new_list(log->sampled, count);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_log_read_obj, motor_Motor_log_read);
+
 STATIC mp_obj_t motor_Motor_log_save(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         PB_ARG_DEFAULT_NONE(file)
@@ -554,6 +575,7 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_run_target), MP_ROM_PTR(&motor_Motor_run_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&motor_Motor_track_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_log_start), MP_ROM_PTR(&motor_Motor_log_start_obj) },
+    { MP_ROM_QSTR(MP_QSTR_log_read), MP_ROM_PTR(&motor_Motor_log_read_obj) },
     { MP_ROM_QSTR(MP_QSTR_log_save), MP_ROM_PTR(&motor_Motor_log_save_obj) },
 };
 MP_DEFINE_CONST_DICT(motor_Motor_locals_dict, motor_Motor_locals_dict_table);

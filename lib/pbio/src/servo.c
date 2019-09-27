@@ -398,15 +398,15 @@ static pbio_error_t pbio_servo_log_create(pbio_log_t *log, ustime_t time_now, ui
     }
 
     // Allocate memory for the logs
-    log->time = malloc(log->len * sizeof(ustime_t));
+    log->time = malloc(len * sizeof(ustime_t));
     if (log->time == NULL) {
         return PBIO_ERROR_FAILED;
     }
-    log->count = malloc(log->len * sizeof(count_t));
+    log->count = malloc(len * sizeof(count_t));
     if (log->count == NULL) {
         return PBIO_ERROR_FAILED;
     }
-    log->rate = malloc(log->len * sizeof(rate_t));
+    log->rate = malloc(len * sizeof(rate_t));
     if (log->rate == NULL) {
         return PBIO_ERROR_FAILED;
     }
@@ -415,7 +415,6 @@ static pbio_error_t pbio_servo_log_create(pbio_log_t *log, ustime_t time_now, ui
     log->len = len;
     log->end = time_now + duration * US_PER_MS;
     log->state = PBIO_LOG_ACTIVE;
-
     return PBIO_SUCCESS;
 }
 
@@ -444,10 +443,7 @@ pbio_error_t pbio_servo_log_save(pbio_servo_t *srv) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    // TODO: Here we can return, save, or print the log
-    for (int32_t idx = 0; idx < log->sampled; idx++) {
-        printf("T: %d\n", log->rate[idx]);
-    }
+    // TODO: Write to file or dump to stdout on ports without file system
 
     // Free memory allocated for logs
     pbio_servo_log_delete(log);
