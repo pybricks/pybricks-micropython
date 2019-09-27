@@ -373,35 +373,29 @@ static pbio_error_t control_update_actuate(pbio_servo_t *srv, pbio_control_after
 // FIXME: Move to port configuration
 #define MIN_PERIOD 10
 
-pbio_error_t pbio_servo_log_start(pbio_servo_t *srv, int32_t duration) {
+static void pbio_servo_log_delete(pbio_log_t *log) {
+    // Free log if any
+    if (log->len > 0) {
+        free(log->time);
+        free(log->count);
+        free(log->rate);
+    }
+    log->sampled = 0;
+    log->len = 0;
+    log->state = PBIO_LOG_NONE;
+}
 
-    // Assert that specified duration is not too long
-    if (duration > MAX_LOG_LEN * MIN_PERIOD) {
+static pbio_error_t pbio_servo_log_create(pbio_log_t *log, ustime_t time_now, uint32_t duration) {
+    // Free any existing log
+    pbio_servo_log_delete(log);
+
+    // Minimal log length
+    uint32_t len = duration / MIN_PERIOD + 1;
+
+    // Assert length is allowed
+    if (len > MAX_LOG_LEN) {
         return PBIO_ERROR_INVALID_ARG;
     }
-
-    // Assert that we can correctly read the motor state
-    ustime_t time_now;
-    count_t count_now;
-    rate_t rate_now;
-    pbio_error_t err = control_get_state(srv, &time_now, &count_now, &rate_now);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Logger for this servo
-    pbio_log_t *log = &srv->log;
-
-    // Any existing log should finish logging first
-    if (log->state != PBIO_LOG_NONE) {
-        return PBIO_ERROR_INVALID_OP;
-    }
-
-    // (re-)initialize logger for this servo
-    log->sampled = 0;
-    log->len = duration / MIN_PERIOD;
-    log->end = time_now + duration * US_PER_MS;
-    log->state = PBIO_LOG_ACTIVE;
 
     // Allocate memory for the logs
     log->time = malloc(log->len * sizeof(ustime_t));
@@ -417,7 +411,27 @@ pbio_error_t pbio_servo_log_start(pbio_servo_t *srv, int32_t duration) {
         return PBIO_ERROR_FAILED;
     }
 
+    // (re-)initialize logger status for this servo
+    log->len = len;
+    log->end = time_now + duration * US_PER_MS;
+    log->state = PBIO_LOG_ACTIVE;
+
     return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_servo_log_start(pbio_servo_t *srv, int32_t duration) {
+
+    // Assert that we can correctly read the motor state
+    ustime_t time_now;
+    count_t count_now;
+    rate_t rate_now;
+    pbio_error_t err = control_get_state(srv, &time_now, &count_now, &rate_now);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Allocate memory for log
+    return pbio_servo_log_create(&srv->log, time_now, duration);
 }
 
 pbio_error_t pbio_servo_log_save(pbio_servo_t *srv) {
@@ -436,9 +450,7 @@ pbio_error_t pbio_servo_log_save(pbio_servo_t *srv) {
     }
 
     // Free memory allocated for logs
-    free(log->time);
-    free(log->count);
-    free(log->rate);
+    pbio_servo_log_delete(log);
 
     // Release the logger for re-use
     log->state = PBIO_LOG_NONE;
