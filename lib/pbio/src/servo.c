@@ -2,6 +2,7 @@
 // Copyright (c) 2018-2019 Laurens Valk
 // Copyright (c) 2019 LEGO System A/S
 
+#include <stdlib.h>
 #include <inttypes.h>
 
 #include <pbio/fixmath.h>
@@ -367,6 +368,118 @@ static pbio_error_t control_update_actuate(pbio_servo_t *srv, pbio_control_after
     return err;
 }
 
+// FIXME: Move to port configuration
+#define MIN_PERIOD 10
+
+pbio_error_t pbio_servo_log_start(pbio_servo_t *srv, int32_t duration) {
+
+    // Assert that specified duration is not too long
+    if (duration > MAX_LOG_LEN * MIN_PERIOD) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Assert that we can correctly read the motor state
+    ustime_t time_now;
+    count_t count_now;
+    rate_t rate_now;
+    pbio_error_t err = control_get_state(srv, &time_now, &count_now, &rate_now);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Logger for this servo
+    pbio_log_t *log = &srv->log;
+
+    // Any existing log should finish logging first
+    if (log->state != PBIO_LOG_NONE) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // (re-)initialize logger for this servo
+    log->sampled = 0;
+    log->len = duration / MIN_PERIOD;
+    log->end = time_now + duration * US_PER_MS;
+    log->state = PBIO_LOG_ACTIVE;
+
+    // Allocate memory for the logs
+    log->time = malloc(log->len * sizeof(ustime_t));
+    if (log->time == NULL) {
+        return PBIO_ERROR_FAILED;
+    }
+    log->count = malloc(log->len * sizeof(count_t));
+    if (log->count == NULL) {
+        return PBIO_ERROR_FAILED;
+    }
+    log->rate = malloc(log->len * sizeof(rate_t));
+    if (log->rate == NULL) {
+        return PBIO_ERROR_FAILED;
+    }
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_servo_log_save(pbio_servo_t *srv) {
+
+    // Logger for this servo
+    pbio_log_t *log = &srv->log;
+
+    // Only save the log if it is done
+    if (log->state != PBIO_LOG_DONE) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // TODO: Here we can return, save, or print the log
+    for (int32_t idx = 0; idx < log->sampled; idx++) {
+        printf("T: %d\n", log->rate[idx]);
+    }
+
+    // Free memory allocated for logs
+    free(log->time);
+    free(log->count);
+    free(log->rate);
+
+    // Release the logger for re-use
+    log->state = PBIO_LOG_NONE;
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t actuation, int32_t control) {
+
+    // Logger for this servo
+    pbio_log_t *log = &srv->log;
+
+    // Log nothing if logger is inactive
+    if (log->state != PBIO_LOG_ACTIVE) {
+        return PBIO_SUCCESS;
+    }
+
+    // Raise error if log is full, which should not happen
+    if (log->sampled > log->len) {
+        log->state = PBIO_LOG_NONE;
+        return PBIO_ERROR_FAILED;
+    }    
+
+    // Stop successfully when done
+    if (time_now > log->end || log->sampled == log->len) {
+        log->state = PBIO_LOG_DONE;
+        return PBIO_SUCCESS;
+    }
+
+    // Log data
+    log->time[log->sampled] = time_now;
+    log->count[log->sampled] = count_now;
+    log->rate[log->sampled] = rate_now;
+    log->sampled++;
+
+    // FIXME: This terminates when command is over, but may want to log after
+    if (srv->hbridge->state != PBIO_HBRIDGE_DUTY_ACTIVE) {
+        log->state = PBIO_LOG_DONE;
+    }
+
+    return PBIO_SUCCESS;
+}
+
 pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
 
     // Do not service a passive motor
@@ -401,7 +514,13 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
         return err;
     } 
     // Apply the control type and signal
-    return control_update_actuate(srv, actuation, control);
+    err = control_update_actuate(srv, actuation, control);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Log data if logger enabled
+    return pbio_servo_log_update(srv, time_now, count_now, rate_now, actuation, control);
 }
 
 static pbio_error_t pbio_motor_get_initial_state(pbio_servo_t *srv, count_t *count_start, rate_t *rate_start) {

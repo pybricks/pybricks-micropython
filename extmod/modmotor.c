@@ -484,6 +484,49 @@ STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *pos_
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_set_pid_settings_obj, 0, motor_Motor_set_pid_settings);
 
+STATIC mp_obj_t motor_Motor_log_start(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(duration)
+    );
+    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
+    mp_int_t duration_arg = pb_obj_get_int(duration);
+
+    pbio_error_t err;
+
+    pb_thread_enter();
+    err = pbio_servo_log_start(self->srv, duration_arg);
+    pb_thread_exit();
+
+    pb_assert(err);
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_log_start_obj, 0, motor_Motor_log_start);
+
+STATIC mp_obj_t motor_Motor_log_save(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        PB_ARG_DEFAULT_NONE(file)
+    );
+    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
+    // TODO: Optionally write to file on ports with a file system.
+    if (file != mp_const_none) {
+        pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
+    }
+
+    pbio_error_t err;
+
+    pb_thread_enter();
+    err = pbio_servo_log_save(self->srv);
+    pb_thread_exit();
+
+    pb_assert(err);
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_log_save_obj, 0, motor_Motor_log_save);
+
 /*
 Motor Class tables
 */
@@ -510,6 +553,8 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_run_angle), MP_ROM_PTR(&motor_Motor_run_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_run_target), MP_ROM_PTR(&motor_Motor_run_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&motor_Motor_track_target_obj) },
+    { MP_ROM_QSTR(MP_QSTR_log_start), MP_ROM_PTR(&motor_Motor_log_start_obj) },
+    { MP_ROM_QSTR(MP_QSTR_log_save), MP_ROM_PTR(&motor_Motor_log_save_obj) },
 };
 MP_DEFINE_CONST_DICT(motor_Motor_locals_dict, motor_Motor_locals_dict_table);
 

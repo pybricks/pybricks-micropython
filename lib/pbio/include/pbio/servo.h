@@ -27,12 +27,31 @@
 
 #define MAX_ENCMOTOR_SETTINGS_STR_LENGTH (400)
 
+#define MAX_LOG_LEN 1000
+
+typedef enum {
+    PBIO_LOG_NONE,
+    PBIO_LOG_ACTIVE,
+    PBIO_LOG_DONE,
+} pbio_log_state_t;
+
+typedef struct _pbio_log_t {
+    pbio_log_state_t state;
+    uint32_t sampled;
+    uint32_t len;
+    ustime_t end;
+    ustime_t *time;
+    count_t *count;
+    rate_t *rate;
+} pbio_log_t;
+
 typedef struct _pbio_servo_t {
     pbio_hbridge_t *hbridge;
     pbio_tacho_t *tacho;
     pbio_servo_state_t state;
     pbio_control_t control;
     pbio_port_t port;
+    pbio_log_t log;
 } pbio_servo_t;
 
 void _pbio_servo_reset_all(void);
@@ -74,6 +93,11 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
 pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_control_after_stop_t after_stop, bool foreground);
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_control_after_stop_t after_stop, bool foreground);
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target);
+
+
+pbio_error_t pbio_servo_log_start(pbio_servo_t *srv, int32_t duration);
+
+pbio_error_t pbio_servo_log_save(pbio_servo_t *srv);
 
 pbio_error_t pbio_servo_control_update(pbio_servo_t *srv);
 
