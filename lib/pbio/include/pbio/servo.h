@@ -27,7 +27,10 @@
 
 #define MAX_ENCMOTOR_SETTINGS_STR_LENGTH (400)
 
-#define MAX_LOG_LEN 1000
+// TODO move upper limit to port config
+#define MAX_LOG_MEM_KB 2*1024 // 2 MB on EV3
+
+#define MAX_LOG_LEN ((MAX_LOG_MEM_KB*1024)/sizeof(pbio_log_data_t))
 
 typedef enum {
     PBIO_LOG_NONE,
@@ -35,14 +38,19 @@ typedef enum {
     PBIO_LOG_DONE,
 } pbio_log_state_t;
 
+typedef struct _pbio_log_data_t {
+    ustime_t time;
+    count_t count;
+    rate_t rate;
+    pbio_control_t control; //FIXME: This should only be logged in debug mode or devices with much RAM.
+} pbio_log_data_t;
+
 typedef struct _pbio_log_t {
     pbio_log_state_t state;
     uint32_t sampled;
     uint32_t len;
     ustime_t end;
-    ustime_t *time;
-    count_t *count;
-    rate_t *rate;
+    pbio_log_data_t *data;
 } pbio_log_t;
 
 typedef struct _pbio_servo_t {

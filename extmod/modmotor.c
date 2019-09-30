@@ -517,7 +517,7 @@ STATIC mp_obj_t motor_Motor_log_read(mp_obj_t self_in) {
 
     for (uint32_t idx = 0; idx < log->sampled; idx++) {
         // FIXME: Should not use mp call this within enter/exit
-        count[idx] = mp_obj_new_int(log->count[idx]);
+        count[idx] = mp_obj_new_int(log->data[idx].count);
     }
     pb_thread_exit();
 

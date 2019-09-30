@@ -376,9 +376,7 @@ static pbio_error_t control_update_actuate(pbio_servo_t *srv, pbio_control_after
 static void pbio_servo_log_delete(pbio_log_t *log) {
     // Free log if any
     if (log->len > 0) {
-        free(log->time);
-        free(log->count);
-        free(log->rate);
+        free(log->data);
     }
     log->sampled = 0;
     log->len = 0;
@@ -398,16 +396,8 @@ static pbio_error_t pbio_servo_log_create(pbio_log_t *log, ustime_t time_now, ui
     }
 
     // Allocate memory for the logs
-    log->time = malloc(len * sizeof(ustime_t));
-    if (log->time == NULL) {
-        return PBIO_ERROR_FAILED;
-    }
-    log->count = malloc(len * sizeof(count_t));
-    if (log->count == NULL) {
-        return PBIO_ERROR_FAILED;
-    }
-    log->rate = malloc(len * sizeof(rate_t));
-    if (log->rate == NULL) {
+    log->data = malloc(len * sizeof(pbio_log_data_t));
+    if (log->data == NULL) {
         return PBIO_ERROR_FAILED;
     }
 
@@ -477,10 +467,13 @@ pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t
         return PBIO_SUCCESS;
     }
 
-    // Log data
-    log->time[log->sampled] = time_now;
-    log->count[log->sampled] = count_now;
-    log->rate[log->sampled] = rate_now;
+    // Store data
+    log->data[log->sampled] = (pbio_log_data_t) {
+        .time = time_now,
+        .count = count_now,
+        .rate = rate_now,
+        .control = srv->control
+    };
     log->sampled++;
 
     return PBIO_SUCCESS;
