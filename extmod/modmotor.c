@@ -489,6 +489,36 @@ STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *pos_
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_set_pid_settings_obj, 0, motor_Motor_set_pid_settings);
 
+STATIC mp_obj_t motor_Motor_trajectory(mp_obj_t self_in) {
+    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pbio_control_trajectory_t trajectory;
+
+    mp_obj_t parms[12];
+
+    pb_thread_enter();
+    bool active = self->srv->state > PBIO_CONTROL_ERRORED;
+    trajectory = self->srv->control.trajectory;
+    pb_thread_exit();
+
+    if (active) {
+        parms[0] = mp_obj_new_int((trajectory.t0-trajectory.t0)/1000);
+        parms[1] = mp_obj_new_int((trajectory.t1-trajectory.t0)/1000);
+        parms[2] = mp_obj_new_int((trajectory.t2-trajectory.t0)/1000);
+        parms[3] = mp_obj_new_int((trajectory.t3-trajectory.t0)/1000);
+        parms[4] = mp_obj_new_int(trajectory.th0);
+        parms[5] = mp_obj_new_int(trajectory.th1);
+        parms[6] = mp_obj_new_int(trajectory.th2);
+        parms[7] = mp_obj_new_int(trajectory.th3);
+        parms[8] = mp_obj_new_int(trajectory.w0);
+        parms[9] = mp_obj_new_int(trajectory.w1);
+        parms[10] = mp_obj_new_int(trajectory.a0);
+        parms[11] = mp_obj_new_int(trajectory.a2);
+        return mp_obj_new_tuple(12, parms);
+    }
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_trajectory_obj, motor_Motor_trajectory);
+
 /*
 Motor Class tables
 */
@@ -516,6 +546,7 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_run_target), MP_ROM_PTR(&motor_Motor_run_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&motor_Motor_track_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_log), MP_ROM_ATTRIBUTE_OFFSET(motor_Motor_obj_t, logger) },
+    { MP_ROM_QSTR(MP_QSTR_trajectory), MP_ROM_PTR(&motor_Motor_trajectory_obj) },
 };
 MP_DEFINE_CONST_DICT(motor_Motor_locals_dict, motor_Motor_locals_dict_table);
 
