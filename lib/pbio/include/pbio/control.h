@@ -76,11 +76,11 @@ typedef struct _pbio_control_status_timed_t {
 } pbio_control_status_timed_t;
 
 typedef enum {
-    PBIO_MOTOR_STOP_COAST,      /**< Coast the motor */
-    PBIO_MOTOR_STOP_BRAKE,      /**< Brake the motor */
-    PBIO_MOTOR_STOP_HOLD,       /**< Actively hold the motor in place */
+    PBIO_ACTUATION_COAST,      /**< Coast the motor */
+    PBIO_ACTUATION_BRAKE,      /**< Brake the motor */
+    PBIO_ACTUATION_HOLD,       /**< Actively hold the motor in place */
     PBIO_ACTUATION_DUTY,
-} pbio_control_after_stop_t; // TODO: generalize enum names to pbio_actuation_t
+} pbio_actuation_t;
 
 typedef enum {
     RUN,
@@ -93,7 +93,7 @@ typedef enum {
 typedef struct _pbio_control_t {
     pbio_control_settings_t settings;
     pbio_control_action_t action;
-    pbio_control_after_stop_t after_stop;
+    pbio_actuation_t after_stop;
     pbio_control_trajectory_t trajectory;
     pbio_control_status_angular_t status_angular;
     pbio_control_status_timed_t status_timed;
@@ -134,7 +134,7 @@ pbio_error_t pbio_control_set_pid_settings(pbio_control_settings_t *settings,
 
 void control_init_angle_target(pbio_control_t *ctl);
 void control_init_time_target(pbio_control_t *ctl);
-pbio_error_t control_update_angle_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t *actuation_type, int32_t *control);
-pbio_error_t control_update_time_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t *actuation_type, int32_t *control);
+pbio_error_t control_update_angle_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_actuation_t *actuation_type, int32_t *control);
+pbio_error_t control_update_time_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_actuation_t *actuation_type, int32_t *control);
 
 #endif // _PBIO_CONTROL_H_

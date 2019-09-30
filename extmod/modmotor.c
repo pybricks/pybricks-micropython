@@ -207,10 +207,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_run_obj, 0, motor_Motor_run);
 
 STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        PB_ARG_DEFAULT_INT(stop_type, PBIO_MOTOR_STOP_COAST)
+        PB_ARG_DEFAULT_INT(stop_type, PBIO_ACTUATION_COAST)
     );
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-    pbio_control_after_stop_t after_stop = mp_obj_get_int(stop_type);
+    pbio_actuation_t after_stop = mp_obj_get_int(stop_type);
     pbio_error_t err;
 
     pb_thread_enter();
@@ -232,13 +232,13 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(time),
-        PB_ARG_DEFAULT_INT(stop_type, PBIO_MOTOR_STOP_COAST),
+        PB_ARG_DEFAULT_INT(stop_type, PBIO_ACTUATION_COAST),
         PB_ARG_DEFAULT_TRUE(wait)
     );
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t time_arg = pb_obj_get_int(time);
-    pbio_control_after_stop_t after_stop = mp_obj_get_int(stop_type);
+    pbio_actuation_t after_stop = mp_obj_get_int(stop_type);
     bool foreground = mp_obj_is_true(wait);
     pbio_error_t err;
 
@@ -257,12 +257,12 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_run_time_obj, 0, motor_Motor_run_t
 STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         PB_ARG_REQUIRED(speed),
-        PB_ARG_DEFAULT_INT(stop_type, PBIO_MOTOR_STOP_COAST),
+        PB_ARG_DEFAULT_INT(stop_type, PBIO_ACTUATION_COAST),
         PB_ARG_DEFAULT_INT(duty_limit, 100)
     );
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
     mp_int_t speed_arg = pb_obj_get_int(speed);
-    pbio_control_after_stop_t after_stop = mp_obj_get_int(stop_type);
+    pbio_actuation_t after_stop = mp_obj_get_int(stop_type);
 
     int32_t temporary_stall_duty = 100;
     int32_t old_stall_duty;
@@ -312,13 +312,13 @@ STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, m
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(rotation_angle),
-        PB_ARG_DEFAULT_INT(stop_type, PBIO_MOTOR_STOP_COAST),
+        PB_ARG_DEFAULT_INT(stop_type, PBIO_ACTUATION_COAST),
         PB_ARG_DEFAULT_TRUE(wait)
     );
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t angle_arg = pb_obj_get_int(rotation_angle);
-    pbio_control_after_stop_t after_stop = mp_obj_get_int(stop_type);
+    pbio_actuation_t after_stop = mp_obj_get_int(stop_type);
     bool foreground = mp_obj_is_true(wait);
     pbio_error_t err;
 
@@ -338,13 +338,13 @@ STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *pos_args, 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(target_angle),
-        PB_ARG_DEFAULT_INT(stop_type, PBIO_MOTOR_STOP_COAST),
+        PB_ARG_DEFAULT_INT(stop_type, PBIO_ACTUATION_COAST),
         PB_ARG_DEFAULT_TRUE(wait)
     );
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t angle_arg = pb_obj_get_int(target_angle);
-    pbio_control_after_stop_t after_stop = mp_obj_get_int(stop_type);
+    pbio_actuation_t after_stop = mp_obj_get_int(stop_type);
     bool foreground = mp_obj_is_true(wait);
     pbio_error_t err;
 

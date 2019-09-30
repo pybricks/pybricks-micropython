@@ -70,13 +70,13 @@ void pbio_servo_print_settings(pbio_servo_t *srv, char *dc_settings_string, char
 
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle);
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled);
-pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_after_stop_t after_stop); // TODO: Make dc and servo version
+pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop); // TODO: Make dc and servo version
 
 pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed);
-pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_control_after_stop_t after_stop, bool foreground);
-pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio_control_after_stop_t after_stop);
-pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_control_after_stop_t after_stop, bool foreground);
-pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_control_after_stop_t after_stop, bool foreground);
+pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop, bool foreground);
+pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio_actuation_t after_stop);
+pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_actuation_t after_stop, bool foreground);
+pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop, bool foreground);
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target);
 
 

@@ -22,11 +22,11 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *drivebase,
     pbio_error_t err;
 
     // Reset both motors to a passive state
-    err = pbio_servo_stop(left, PBIO_MOTOR_STOP_COAST);
+    err = pbio_servo_stop(left, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_servo_stop(right, PBIO_MOTOR_STOP_COAST);
+    err = pbio_servo_stop(right, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -53,17 +53,17 @@ pbio_error_t pbio_drivebase_get(pbio_drivebase_t **drivebase, pbio_servo_t *left
     return pbio_drivebase_setup(*drivebase, left, right, wheel_diameter, axle_track);
 }
 
-pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *drivebase, pbio_control_after_stop_t after_stop) {
+pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *drivebase, pbio_actuation_t after_stop) {
     
     pbio_error_t err_l, err_r;
 
     switch (after_stop) {
-        case PBIO_MOTOR_STOP_COAST:
+        case PBIO_ACTUATION_COAST:
             // Stop by coasting
             err_l = pbio_hbridge_coast(drivebase->left->hbridge);
             err_r = pbio_hbridge_coast(drivebase->right->hbridge);
             return error_or(err_l, err_r);
-        case PBIO_MOTOR_STOP_BRAKE:
+        case PBIO_ACTUATION_BRAKE:
             // Stop by braking
             err_l = pbio_hbridge_brake(drivebase->left->hbridge);
             err_r = pbio_hbridge_brake(drivebase->right->hbridge);

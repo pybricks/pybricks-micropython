@@ -340,22 +340,22 @@ static pbio_error_t control_get_state(pbio_servo_t *srv, ustime_t *time_now, cou
 }
 
 // Actuate a single motor
-static pbio_error_t control_update_actuate(pbio_servo_t *srv, pbio_control_after_stop_t actuation_type, int32_t control) {
+static pbio_error_t control_update_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_type, int32_t control) {
 
     pbio_error_t err = PBIO_SUCCESS;
 
     // Apply the calculated actuation, by type
     switch (actuation_type)
     {
-    case PBIO_MOTOR_STOP_COAST:
+    case PBIO_ACTUATION_COAST:
         err = pbio_hbridge_coast(srv->hbridge);
         srv->state = PBIO_CONTROL_PASSIVE;
         break;
-    case PBIO_MOTOR_STOP_BRAKE:
+    case PBIO_ACTUATION_BRAKE:
         err = pbio_hbridge_brake(srv->hbridge);
         srv->state = PBIO_CONTROL_PASSIVE;
         break;
-    case PBIO_MOTOR_STOP_HOLD:
+    case PBIO_ACTUATION_HOLD:
         err = pbio_servo_track_target(srv, int_fix16_div(control, srv->tacho->counts_per_output_unit));
         break;
     case PBIO_ACTUATION_DUTY:
@@ -375,7 +375,7 @@ static pbio_error_t control_update_actuate(pbio_servo_t *srv, pbio_control_after
 }
 
 // Log motor data for a motor that is being actively controlled
-static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t actuation, int32_t control) {
+static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_actuation_t actuation, int32_t control) {
 
     int32_t buf[SERVO_LOG_NUM_VALUES];
     buf[0] = (time_now - srv->log.start) / 1000;
@@ -399,18 +399,18 @@ static pbio_error_t pbio_servo_log_passive(pbio_servo_t *srv) {
     control_get_state(srv, &time_now, &count_now, &rate_now);
 
     // "Control action"
-    pbio_control_after_stop_t actuation;
+    pbio_actuation_t actuation;
     int32_t control;
 
     // Get the passive bridge state for logging
     switch (srv->hbridge->state)
     {
     case PBIO_HBRIDGE_COAST:
-        actuation = PBIO_MOTOR_STOP_COAST;
+        actuation = PBIO_ACTUATION_COAST;
         control = 0;
         break;
     case PBIO_HBRIDGE_BRAKE:
-        actuation = PBIO_MOTOR_STOP_BRAKE;
+        actuation = PBIO_ACTUATION_BRAKE;
         control = 0;
         break;
     case PBIO_HBRIDGE_DUTY_PASSIVE:
@@ -447,7 +447,7 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     }
 
     // Control action to be calculated
-    pbio_control_after_stop_t actuation;
+    pbio_actuation_t actuation;
     int32_t control;
 
     // Calculate controls for position based control
@@ -527,7 +527,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
 
     // Set new maneuver action and stop type
     srv->control.action = RUN;
-    srv->control.after_stop = PBIO_MOTOR_STOP_COAST;
+    srv->control.after_stop = PBIO_ACTUATION_COAST;
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
     ustime_t time_start = clock_usecs();
@@ -564,17 +564,17 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_after_stop_t after_stop) {
+pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
     int32_t angle_now;
     pbio_error_t err;
     switch (after_stop) {
-        case PBIO_MOTOR_STOP_COAST:
+        case PBIO_ACTUATION_COAST:
             // Stop by coasting
             return pbio_hbridge_coast(srv->hbridge);
-        case PBIO_MOTOR_STOP_BRAKE:
+        case PBIO_ACTUATION_BRAKE:
             // Stop by braking
             return pbio_hbridge_brake(srv->hbridge);
-        case PBIO_MOTOR_STOP_HOLD:
+        case PBIO_ACTUATION_HOLD:
             // Force stop by holding the current position.
             // First, read where this position is
             err = pbio_tacho_get_angle(srv->tacho, &angle_now);
@@ -588,7 +588,7 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_control_after_stop_t after_
     }
 }
 
-pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_control_after_stop_t after_stop, bool foreground) {
+pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop, bool foreground) {
     // Set new maneuver action and stop type
     srv->control.action = RUN_TIME;
     srv->control.after_stop = after_stop;
@@ -628,7 +628,7 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
     return err;
 }
 
-pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio_control_after_stop_t after_stop) {
+pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio_actuation_t after_stop) {
     // Set new maneuver action and stop type
     srv->control.action = RUN_STALLED;
     srv->control.after_stop = after_stop;
@@ -668,7 +668,7 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_control_after_stop_t after_stop, bool foreground) {
+pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop, bool foreground) {
     // Set new maneuver action and stop type
     srv->control.action = RUN_TARGET;
     srv->control.after_stop = after_stop;
@@ -709,7 +709,7 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_control_after_stop_t after_stop, bool foreground) {
+pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_actuation_t after_stop, bool foreground) {
 
     // Speed  | Angle | End target  | Effect
     //  > 0   |  > 0  | now + angle | Forward
@@ -732,7 +732,7 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     // Set new maneuver action and stop type
     srv->control.action = TRACK_TARGET;
-    srv->control.after_stop = PBIO_MOTOR_STOP_COAST;
+    srv->control.after_stop = PBIO_ACTUATION_COAST;
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
     ustime_t time_start = clock_usecs();

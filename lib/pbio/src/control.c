@@ -31,7 +31,7 @@ static void stall_clear_flag(pbio_control_stalled_t *stalled, pbio_control_stall
 }
 
 
-pbio_error_t control_update_angle_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t *actuation_type, int32_t *control) {
+pbio_error_t control_update_angle_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
     // Trajectory and setting shortcuts for this motor
     pbio_control_status_angular_t *status = &ctl->status_angular;
     duty_t max_duty = ctl->settings.max_control;
@@ -136,7 +136,7 @@ pbio_error_t control_update_angle_target(pbio_control_t *ctl, ustime_t time_now,
         abs(rate_now) < ctl->settings.rate_tolerance)
     {
         // If so, we have reached our goal. Decide what to do next.
-        if (ctl->after_stop == PBIO_MOTOR_STOP_HOLD) {
+        if (ctl->after_stop == PBIO_ACTUATION_HOLD) {
             // Holding just means that we continue the position control loop without changes
             *actuation_type = PBIO_ACTUATION_DUTY;
             *control = duty;
@@ -160,7 +160,7 @@ pbio_error_t control_update_angle_target(pbio_control_t *ctl, ustime_t time_now,
     return PBIO_SUCCESS;
 }
 
-pbio_error_t control_update_time_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t *actuation_type, int32_t *control) {
+pbio_error_t control_update_time_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
 
     // Trajectory and setting shortcuts for this motor
     pbio_control_status_timed_t *status = &ctl->status_timed;
@@ -246,7 +246,7 @@ pbio_error_t control_update_time_target(pbio_control_t *ctl, ustime_t time_now, 
 
         // If that next action is holding, the corresponding signal is the
         // target position that must be held, which is the current position.
-        if (*actuation_type == PBIO_MOTOR_STOP_HOLD) {
+        if (*actuation_type == PBIO_ACTUATION_HOLD) {
             *control = count_now;
         }
         // Otherwise, for coasting or braking, there is no further control signal.

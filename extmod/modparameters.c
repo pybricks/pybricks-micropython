@@ -55,9 +55,9 @@ STATIC PB_DEFINE_CONST_ENUM(pb_Port_enum, pb_Port_enum_table);
 /* Motor stop enum */
 
 STATIC const mp_rom_map_elem_t motor_Stop_enum_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_COAST),       MP_ROM_INT(PBIO_MOTOR_STOP_COAST)   },
-    { MP_ROM_QSTR(MP_QSTR_BRAKE),       MP_ROM_INT(PBIO_MOTOR_STOP_BRAKE)   },
-    { MP_ROM_QSTR(MP_QSTR_HOLD),        MP_ROM_INT(PBIO_MOTOR_STOP_HOLD)    },
+    { MP_ROM_QSTR(MP_QSTR_COAST),       MP_ROM_INT(PBIO_ACTUATION_COAST)   },
+    { MP_ROM_QSTR(MP_QSTR_BRAKE),       MP_ROM_INT(PBIO_ACTUATION_BRAKE)   },
+    { MP_ROM_QSTR(MP_QSTR_HOLD),        MP_ROM_INT(PBIO_ACTUATION_HOLD)    },
 };
 PB_DEFINE_CONST_ENUM(motor_Stop_enum, motor_Stop_enum_table);
 
