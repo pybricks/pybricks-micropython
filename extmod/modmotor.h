@@ -9,6 +9,7 @@
 typedef struct _motor_Motor_obj_t {
     mp_obj_base_t base;
     pbio_servo_t *srv;
+    mp_obj_t logger;
 } motor_Motor_obj_t;
 
 const mp_obj_type_t motor_Motor_type;

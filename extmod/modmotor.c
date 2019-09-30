@@ -12,8 +12,10 @@
 #include "py/mphal.h"
 #include "py/runtime.h"
 #include "py/builtin.h"
+#include "py/obj.h"
 
 #include "modmotor.h"
+#include "modlogger.h"
 #include "pberror.h"
 #include "pbobj.h"
 #include "pbkwarg.h"
@@ -83,6 +85,9 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
     pb_thread_enter();
     pb_assert(pbio_servo_get(port_arg, &self->srv, direction_arg, gear_ratio));
     pb_thread_exit();
+
+    // Create an instance of the Logger class
+    self->logger = logger_obj_make_new(self->srv);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -484,103 +489,6 @@ STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *pos_
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_set_pid_settings_obj, 0, motor_Motor_set_pid_settings);
 
-STATIC mp_obj_t motor_Motor_log_start(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        PB_ARG_REQUIRED(duration)
-    );
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-
-    mp_int_t duration_arg = pb_obj_get_int(duration);
-
-    pbio_error_t err;
-
-    pb_thread_enter();
-    err = pbio_servo_log_start(self->srv, duration_arg);
-    pb_thread_exit();
-
-    pb_assert(err);
-
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_log_start_obj, 0, motor_Motor_log_start);
-
-// Placeholder function for getting data samples from a servo
-STATIC mp_obj_t motor_Motor_log_get(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        PB_ARG_DEFAULT_INT(index, -1)
-    );
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-
-    bool latest = mp_obj_get_int(index) == -1;
-    uint32_t idx = mp_obj_get_int(index);
-
-    pbio_error_t err = PBIO_SUCCESS;
-    int32_t time = 0;
-    int32_t count = 0;
-    int32_t rate = 0;
-
-    pb_thread_enter();
-
-    pbio_log_t *log = &self->srv->log;
-
-    // Get the latest sample
-    if (latest) {
-        idx = log->sampled - 1;
-    }
-
-    // Get the sample at given index
-    if (idx < log->sampled) {
-        time = log->data[idx].time;
-        count = log->data[idx].count;
-        rate = log->data[idx].rate;
-    }
-    // Return error for out of bound
-    else {
-        err = PBIO_ERROR_INVALID_ARG;
-    }
-    pb_thread_exit();
-
-    pb_assert(err);
-
-    // Convert data to user objects
-    mp_obj_t ret[3];
-    ret[0] = mp_obj_new_int(time/1000); // since start or maneuver?
-    ret[1] = mp_obj_new_int(count);
-    ret[2] = mp_obj_new_int(rate);
-
-    return mp_obj_new_tuple(3, ret);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_log_get_obj, 0, motor_Motor_log_get);
-
-STATIC mp_obj_t motor_Motor_log_stop(mp_obj_t self_in) {
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    pbio_error_t err;
-
-    pb_thread_enter();
-    err = pbio_servo_log_stop(self->srv);
-    pb_thread_exit();
-
-    pb_assert(err);
-
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_log_stop_obj, motor_Motor_log_stop);
-
-// FIXME: Implement as unary op for logger object
-STATIC mp_obj_t motor_Motor_log_len(mp_obj_t self_in) {
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    uint32_t len;
-
-    pb_thread_enter();
-    len = self->srv->log.sampled;
-    pb_thread_exit();
-
-    return mp_obj_new_int(len);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_log_len_obj, motor_Motor_log_len);
-
 /*
 Motor Class tables
 */
@@ -607,10 +515,7 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_run_angle), MP_ROM_PTR(&motor_Motor_run_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_run_target), MP_ROM_PTR(&motor_Motor_run_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&motor_Motor_track_target_obj) },
-    { MP_ROM_QSTR(MP_QSTR_log_start), MP_ROM_PTR(&motor_Motor_log_start_obj) },
-    { MP_ROM_QSTR(MP_QSTR_log_get), MP_ROM_PTR(&motor_Motor_log_get_obj) },
-    { MP_ROM_QSTR(MP_QSTR_log_stop), MP_ROM_PTR(&motor_Motor_log_stop_obj) },
-    { MP_ROM_QSTR(MP_QSTR___len__), MP_ROM_PTR(&motor_Motor_log_len_obj) },
+    { MP_ROM_QSTR(MP_QSTR_log), MP_ROM_ATTRIBUTE_OFFSET(motor_Motor_obj_t, logger) },
 };
 MP_DEFINE_CONST_DICT(motor_Motor_locals_dict, motor_Motor_locals_dict_table);
 
