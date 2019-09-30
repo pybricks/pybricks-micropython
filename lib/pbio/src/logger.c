@@ -76,9 +76,12 @@ pbio_error_t pbio_logger_update(pbio_log_t *log, int32_t *buf) {
         return PBIO_SUCCESS;
     }
 
+    // Write time of logging
+    log->data[log->sampled*log->num_values] = (clock_usecs() - log->start)/1000;
+
     // Write the data
-    for (uint8_t i = 0; i < log->num_values; i++) {
-        log->data[log->sampled*log->num_values + i] = buf[i];
+    for (uint8_t i = NUM_DEFAULT_LOG_VALUES; i < log->num_values; i++) {
+        log->data[log->sampled*log->num_values + i] = buf[i-NUM_DEFAULT_LOG_VALUES];
     }
 
     // Increment number of written samples
@@ -96,6 +99,11 @@ pbio_error_t pbio_logger_read(pbio_log_t *log, int32_t sindex, int32_t *buf) {
 
     // Get index or latest sample if requested index is -1
     uint32_t index = sindex == -1 ? log->sampled - 1 : sindex;
+
+    // Ensure index is within bounds
+    if (index >= log->sampled) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
 
     // Read the data
     for (uint8_t i = 0; i < log->num_values; i++) {

@@ -24,7 +24,7 @@
 
 #include <pbio/iodev.h>
 
-#define SERVO_LOG_NUM_VALUES (5)
+#define SERVO_LOG_NUM_VALUES (5 + NUM_DEFAULT_LOG_VALUES)
 
 #define MAX_DCMOTOR_SETTINGS_STR_LENGTH (128)
 

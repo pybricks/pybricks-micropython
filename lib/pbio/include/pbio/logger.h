@@ -15,6 +15,9 @@
 // FIXME: move upper limit to port config
 #define MAX_LOG_MEM_KB 2*1024 // 2 MB on EV3
 
+// Number of values logged by the logger itself, such as time of call to logger
+#define NUM_DEFAULT_LOG_VALUES (1)
+
 // Maximum number of values to be logged per sample
 #define MAX_LOG_VALUES (8)
 

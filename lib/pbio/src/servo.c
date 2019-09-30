@@ -378,9 +378,21 @@ static pbio_error_t control_update_actuate(pbio_servo_t *srv, pbio_actuation_t a
 static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_actuation_t actuation, int32_t control) {
 
     int32_t buf[SERVO_LOG_NUM_VALUES];
-    buf[0] = (time_now - srv->log.start) / 1000;
+
+    // Log the time since start of control trajectory
+    if (srv->state >= PBIO_CONTROL_ANGLE_BACKGROUND) {
+        buf[0] = (time_now - srv->control.trajectory.t0) / 1000;
+    }
+    else {
+        // Not applicable for passive motors
+        buf[0] = 0;
+    }
+    
+    // Log the physical state of the motor
     buf[1] = count_now;
     buf[2] = rate_now;
+
+    // Log the resulting control signal
     buf[3] = actuation;
     buf[4] = control;
 
