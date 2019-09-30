@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2019 Laurens Valk
+// Copyright (c) 2019 LEGO System A/S
 
 #include <pbio/servo.h>
 
@@ -103,26 +104,24 @@ STATIC mp_obj_t tools_Logger_stop(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(tools_Logger_stop_obj, tools_Logger_stop);
 
-// FIXME: Implement as unary op for logger object
-STATIC mp_obj_t tools_Logger_len(mp_obj_t self_in) {
+STATIC mp_obj_t tools_Logger_unary_op(mp_unary_op_t op, mp_obj_t self_in) {
     tools_Logger_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    uint32_t len;
-
-    pb_thread_enter();
-    len = self->srv->log.sampled;
-    pb_thread_exit();
-
-    return mp_obj_new_int(len);
+    switch (op) {
+        case MP_UNARY_OP_LEN:
+            pb_thread_enter();
+            uint32_t len = self->srv->log.sampled;
+            pb_thread_exit();
+            return MP_OBJ_NEW_SMALL_INT(len);
+        default:
+            return MP_OBJ_NULL;
+    }
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(tools_Logger_len_obj, tools_Logger_len);
 
 // dir(pybricks.tools.Logger)
 STATIC const mp_rom_map_elem_t tools_Logger_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_start), MP_ROM_PTR(&tools_Logger_start_obj) },
     { MP_ROM_QSTR(MP_QSTR_get), MP_ROM_PTR(&tools_Logger_get_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&tools_Logger_stop_obj) },
-    { MP_ROM_QSTR(MP_QSTR___len__), MP_ROM_PTR(&tools_Logger_len_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(tools_Logger_locals_dict, tools_Logger_locals_dict_table);
 
@@ -130,6 +129,7 @@ STATIC MP_DEFINE_CONST_DICT(tools_Logger_locals_dict, tools_Logger_locals_dict_t
 STATIC const mp_obj_type_t tools_Logger_type = {
     { &mp_type_type },
     .locals_dict = (mp_obj_dict_t*)&tools_Logger_locals_dict,
+    .unary_op = tools_Logger_unary_op,
 };
 
 mp_obj_t logger_obj_make_new(pbio_servo_t *srv) {
