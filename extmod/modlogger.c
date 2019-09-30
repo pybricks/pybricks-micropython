@@ -52,23 +52,24 @@ STATIC mp_obj_t tools_Logger_get(size_t n_args, const mp_obj_t *pos_args, mp_map
 
     // Data buffer for this sample
     // FIXME: Set upper limit in logger.h
-    mp_obj_t ret[8];
-    int32_t data[8];
+    mp_obj_t ret[MAX_LOG_VALUES];
+    int32_t data[MAX_LOG_VALUES];
 
-    uint8_t len;
+    uint8_t num_values;
     pbio_error_t err;
     
     // Get data for this sample
     pb_thread_enter();
-    err = pbio_logger_read(self->log, index_val, &len, data);
+    err = pbio_logger_read(self->log, index_val, data);
+    num_values = self->log->num_values;
     pb_thread_exit();
     pb_assert(err);
 
     // Convert data to user objects
-    for (uint8_t i = 0; i < 8; i++) {
+    for (uint8_t i = 0; i < MAX_LOG_VALUES; i++) {
         ret[i] = mp_obj_new_int(data[i]);
     }
-    return mp_obj_new_tuple(len, ret);
+    return mp_obj_new_tuple(num_values, ret);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_get_obj, 0, tools_Logger_get);
 

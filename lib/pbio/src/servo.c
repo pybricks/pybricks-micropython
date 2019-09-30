@@ -159,6 +159,10 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     if (err != PBIO_SUCCESS) {
         return err;
     }
+
+    // Configure the logs for a servo 
+    srv->log.num_values = SERVO_LOG_NUM_VALUES;
+
     return PBIO_SUCCESS;
 }
 
@@ -373,35 +377,12 @@ static pbio_error_t control_update_actuate(pbio_servo_t *srv, pbio_control_after
 // Log motor data for a motor that is being actively controlled
 static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t actuation, int32_t control) {
 
-    // Logger for this servo
-    pbio_log_t *log = &srv->log;
+    int32_t buf[SERVO_LOG_NUM_VALUES];
+    buf[0] = time_now;
+    buf[1] = count_now;
+    buf[2] = rate_now;
 
-    // Log nothing if logger is inactive
-    if (!log->active) {
-        return PBIO_SUCCESS;
-    }
-
-    // Raise error if log is full, which should not happen
-    if (log->sampled > log->len) {
-        log->active = false;
-        return PBIO_ERROR_FAILED;
-    }    
-
-    // Stop successfully when done
-    if (log->sampled == log->len) {
-        log->active = false;
-        return PBIO_SUCCESS;
-    }
-
-    // Store data
-    log->data[log->sampled] = (pbio_log_data_t) {
-        .time = time_now,
-        .count = count_now,
-        .rate = rate_now
-    };
-    log->sampled++;
-
-    return PBIO_SUCCESS;
+    return pbio_logger_update(&srv->log, buf);
 }
 
 // Log motor data for a passive motor

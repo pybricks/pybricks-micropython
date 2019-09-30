@@ -24,6 +24,8 @@
 
 #include <pbio/iodev.h>
 
+#define SERVO_LOG_NUM_VALUES (3)
+
 #define MAX_DCMOTOR_SETTINGS_STR_LENGTH (128)
 
 #define MAX_ENCMOTOR_SETTINGS_STR_LENGTH (400)
@@ -77,10 +79,6 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_control_after_stop_t after_stop, bool foreground);
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target);
 
-
-pbio_error_t pbio_logger_start(pbio_log_t *log, int32_t duration);
-pbio_error_t pbio_logger_read(pbio_log_t *log, int32_t sindex, uint8_t *len, int32_t *buf);
-pbio_error_t pbio_logger_stop(pbio_log_t *log);
 
 pbio_error_t pbio_servo_control_update(pbio_servo_t *srv);
 

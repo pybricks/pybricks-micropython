@@ -34,7 +34,7 @@ static pbio_error_t pbio_logger_empty(pbio_log_t *log, int32_t time_now, uint32_
     }
 
     // Allocate memory for the logs
-    log->data = malloc(len * sizeof(pbio_log_data_t));
+    log->data = malloc(len * log->num_values);
     if (log->data == NULL) {
         return PBIO_ERROR_FAILED;
     }
@@ -57,7 +57,37 @@ pbio_error_t pbio_logger_stop(pbio_log_t *log) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_logger_read(pbio_log_t *log, int32_t sindex, uint8_t *len, int32_t *buf) {
+pbio_error_t pbio_logger_update(pbio_log_t *log, int32_t *buf) {
+
+    // Log nothing if logger is inactive
+    if (!log->active) {
+        return PBIO_SUCCESS;
+    }
+
+    // Raise error if log is full, which should not happen
+    if (log->sampled > log->len) {
+        log->active = false;
+        return PBIO_ERROR_FAILED;
+    }    
+
+    // Stop successfully when done
+    if (log->sampled == log->len) {
+        log->active = false;
+        return PBIO_SUCCESS;
+    }
+
+    // Write the data
+    for (uint8_t i = 0; i < log->num_values; i++) {
+        log->data[log->sampled*log->num_values + i] = buf[i];
+    }
+
+    // Increment number of written samples
+    log->sampled++;
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_logger_read(pbio_log_t *log, int32_t sindex, int32_t *buf) {
 
     // Validate index value
     if (sindex < -1) {
@@ -67,11 +97,10 @@ pbio_error_t pbio_logger_read(pbio_log_t *log, int32_t sindex, uint8_t *len, int
     // Get index or latest sample if requested index is -1
     uint32_t index = sindex == -1 ? log->sampled - 1 : sindex;
 
-    // Servo specific data to be returned
-    *len = 3; // FIXME: Move to servo setup in log config
-    buf[0] = (log->data[index].time - log->start)/1000;
-    buf[1] = log->data[index].count;
-    buf[2] = log->data[index].rate;
+    // Read the data
+    for (uint8_t i = 0; i < log->num_values; i++) {
+        buf[i] = log->data[index*log->num_values + i];
+    }
 
     return PBIO_SUCCESS;
 }
