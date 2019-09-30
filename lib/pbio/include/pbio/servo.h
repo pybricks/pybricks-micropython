@@ -97,9 +97,9 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target);
 
 
-pbio_error_t pbio_servo_log_start(pbio_servo_t *srv, int32_t duration);
-pbio_error_t pbio_servo_log_get(pbio_servo_t *srv, int32_t sindex, pbio_log_data_t *data);
-pbio_error_t pbio_servo_log_stop(pbio_servo_t *srv);
+pbio_error_t pbio_servo_log_start(pbio_log_t *log, int32_t duration);
+pbio_error_t pbio_servo_log_get(pbio_log_t *log, int32_t sindex, uint8_t *len, int32_t *buf);
+pbio_error_t pbio_servo_log_stop(pbio_log_t *log);
 
 pbio_error_t pbio_servo_control_update(pbio_servo_t *srv);
 

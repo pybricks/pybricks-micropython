@@ -87,7 +87,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
     pb_thread_exit();
 
     // Create an instance of the Logger class
-    self->logger = logger_obj_make_new(self->srv);
+    self->logger = logger_obj_make_new(&self->srv->log);
 
     return MP_OBJ_FROM_PTR(self);
 }

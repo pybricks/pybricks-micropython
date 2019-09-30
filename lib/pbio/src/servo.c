@@ -408,36 +408,18 @@ static pbio_error_t pbio_servo_log_create(pbio_log_t *log, ustime_t time_now, ui
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_servo_log_start(pbio_servo_t *srv, int32_t duration) {
-
-    // Assert that we can correctly read the motor state
-    ustime_t time_now;
-    count_t count_now;
-    rate_t rate_now;
-    pbio_error_t err = control_get_state(srv, &time_now, &count_now, &rate_now);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
+pbio_error_t pbio_servo_log_start(pbio_log_t *log, int32_t duration) {
     // Allocate memory for log
-    return pbio_servo_log_create(&srv->log, time_now, duration);
+    return pbio_servo_log_create(log, clock_usecs(), duration);
 }
 
-pbio_error_t pbio_servo_log_stop(pbio_servo_t *srv) {
-
-    // Logger for this servo
-    pbio_log_t *log = &srv->log;
-
+pbio_error_t pbio_servo_log_stop(pbio_log_t *log) {
     // Release the logger for re-use
     log->active = false;
-
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_servo_log_get(pbio_servo_t *srv, int32_t sindex, pbio_log_data_t *data) {
-
-    // Logger for this servo
-    pbio_log_t *log = &srv->log;
+pbio_error_t pbio_servo_log_get(pbio_log_t *log, int32_t sindex, uint8_t *len, int32_t *buf) {
 
     // Validate index value
     if (sindex < -1) {
@@ -447,8 +429,11 @@ pbio_error_t pbio_servo_log_get(pbio_servo_t *srv, int32_t sindex, pbio_log_data
     // Get index or latest sample if requested index is -1
     uint32_t index = sindex == -1 ? log->sampled - 1 : sindex;
 
-    // TODO: generalize to buffer of int32_t with return *len
-    *data = log->data[index];
+    // Servo specific data to be returned
+    *len = 3; // FIXME: Move to servo setup in log config
+    buf[0] = (log->data[index].time - log->start)/1000;
+    buf[1] = log->data[index].count;
+    buf[2] = log->data[index].rate;
 
     return PBIO_SUCCESS;
 }
@@ -478,7 +463,7 @@ pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t
 
     // Store data
     log->data[log->sampled] = (pbio_log_data_t) {
-        .time = time_now - log->start,
+        .time = time_now,
         .count = count_now,
         .rate = rate_now,
         .control = srv->control

@@ -9,6 +9,6 @@
 
 #include "py/obj.h"
 
-mp_obj_t logger_obj_make_new(pbio_servo_t *srv);
+mp_obj_t logger_obj_make_new(pbio_log_t *log);
 
 #endif // _PYBRICKS_EXTMOD_MODLOGGER_H_
