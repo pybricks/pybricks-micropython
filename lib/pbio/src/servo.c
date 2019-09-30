@@ -378,9 +378,11 @@ static pbio_error_t control_update_actuate(pbio_servo_t *srv, pbio_control_after
 static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t actuation, int32_t control) {
 
     int32_t buf[SERVO_LOG_NUM_VALUES];
-    buf[0] = time_now;
+    buf[0] = (time_now - srv->log.start) / 1000;
     buf[1] = count_now;
     buf[2] = rate_now;
+    buf[3] = actuation;
+    buf[4] = control;
 
     return pbio_logger_update(&srv->log, buf);
 }

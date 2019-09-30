@@ -34,7 +34,7 @@ static pbio_error_t pbio_logger_empty(pbio_log_t *log, int32_t time_now, uint32_
     }
 
     // Allocate memory for the logs
-    log->data = malloc(len * log->num_values);
+    log->data = malloc(len * log->num_values * sizeof(int32_t));
     if (log->data == NULL) {
         return PBIO_ERROR_FAILED;
     }
