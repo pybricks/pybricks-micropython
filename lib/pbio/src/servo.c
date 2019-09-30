@@ -388,7 +388,7 @@ static pbio_error_t pbio_servo_log_create(pbio_log_t *log, ustime_t time_now, ui
     pbio_servo_log_delete(log);
 
     // Minimal log length
-    uint32_t len = duration / MIN_PERIOD + 1;
+    uint32_t len = duration / MIN_PERIOD;
 
     // Assert length is allowed
     if (len > MAX_LOG_LEN) {
@@ -403,7 +403,7 @@ static pbio_error_t pbio_servo_log_create(pbio_log_t *log, ustime_t time_now, ui
 
     // (re-)initialize logger status for this servo
     log->len = len;
-    log->end = time_now + duration * US_PER_MS;
+    log->start = time_now;
     log->active = true;
     return PBIO_SUCCESS;
 }
@@ -427,11 +427,6 @@ pbio_error_t pbio_servo_log_stop(pbio_servo_t *srv) {
 
     // Logger for this servo
     pbio_log_t *log = &srv->log;
-
-    // Only stop the log if it is running
-    if (!log->active) {
-        return PBIO_ERROR_INVALID_OP;
-    }
 
     // Release the logger for re-use
     log->active = false;
@@ -457,14 +452,14 @@ pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t
     }    
 
     // Stop successfully when done
-    if (time_now > log->end || log->sampled == log->len) {
+    if (log->sampled == log->len) {
         log->active = false;
         return PBIO_SUCCESS;
     }
 
     // Store data
     log->data[log->sampled] = (pbio_log_data_t) {
-        .time = time_now,
+        .time = time_now - log->start,
         .count = count_now,
         .rate = rate_now,
         .control = srv->control

@@ -81,7 +81,7 @@ STATIC mp_obj_t tools_Logger_get(size_t n_args, const mp_obj_t *pos_args, mp_map
 
     // Convert data to user objects
     mp_obj_t ret[3];
-    ret[0] = mp_obj_new_int(time/1000); // since start or maneuver?
+    ret[0] = mp_obj_new_int(time/1000);
     ret[1] = mp_obj_new_int(count);
     ret[2] = mp_obj_new_int(rate);
 

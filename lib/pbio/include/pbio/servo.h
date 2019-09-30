@@ -43,7 +43,7 @@ typedef struct _pbio_log_t {
     bool active;
     uint32_t sampled;
     uint32_t len;
-    ustime_t end;
+    ustime_t start;
     pbio_log_data_t *data;
 } pbio_log_t;
 
