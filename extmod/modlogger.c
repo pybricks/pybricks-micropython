@@ -2,7 +2,9 @@
 // Copyright (c) 2018-2019 Laurens Valk
 // Copyright (c) 2019 LEGO System A/S
 
-#include <pbio/servo.h>
+#include <stdbool.h>
+
+#include <pbio/logger.h>
 
 #include "py/obj.h"
 #include "py/runtime.h"
@@ -32,7 +34,7 @@ STATIC mp_obj_t tools_Logger_start(size_t n_args, const mp_obj_t *pos_args, mp_m
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_servo_log_start(self->log, duration_arg);
+    err = pbio_logger_start(self->log, duration_arg);
     pb_thread_exit();
 
     pb_assert(err);
@@ -58,7 +60,7 @@ STATIC mp_obj_t tools_Logger_get(size_t n_args, const mp_obj_t *pos_args, mp_map
     
     // Get data for this sample
     pb_thread_enter();
-    err = pbio_servo_log_get(self->log, index_val, &len, data);
+    err = pbio_logger_read(self->log, index_val, &len, data);
     pb_thread_exit();
     pb_assert(err);
 
@@ -76,7 +78,7 @@ STATIC mp_obj_t tools_Logger_stop(mp_obj_t self_in) {
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_servo_log_stop(self->log);
+    err = pbio_logger_stop(self->log);
     pb_thread_exit();
 
     pb_assert(err);

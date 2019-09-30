@@ -20,32 +20,13 @@
 #include <pbio/tacho.h>
 #include <pbio/trajectory.h>
 #include <pbio/control.h>
+#include <pbio/logger.h>
 
 #include <pbio/iodev.h>
 
 #define MAX_DCMOTOR_SETTINGS_STR_LENGTH (128)
 
 #define MAX_ENCMOTOR_SETTINGS_STR_LENGTH (400)
-
-// TODO move upper limit to port config
-#define MAX_LOG_MEM_KB 2*1024 // 2 MB on EV3
-
-#define MAX_LOG_LEN ((MAX_LOG_MEM_KB*1024)/sizeof(pbio_log_data_t))
-
-typedef struct _pbio_log_data_t {
-    ustime_t time;
-    count_t count;
-    rate_t rate;
-    pbio_control_t control; //FIXME: This should only be logged in debug mode or devices with much RAM.
-} pbio_log_data_t;
-
-typedef struct _pbio_log_t {
-    bool active;
-    uint32_t sampled;
-    uint32_t len;
-    ustime_t start;
-    pbio_log_data_t *data;
-} pbio_log_t;
 
 typedef struct _pbio_servo_t {
     pbio_hbridge_t *hbridge;
@@ -97,9 +78,9 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target);
 
 
-pbio_error_t pbio_servo_log_start(pbio_log_t *log, int32_t duration);
-pbio_error_t pbio_servo_log_get(pbio_log_t *log, int32_t sindex, uint8_t *len, int32_t *buf);
-pbio_error_t pbio_servo_log_stop(pbio_log_t *log);
+pbio_error_t pbio_logger_start(pbio_log_t *log, int32_t duration);
+pbio_error_t pbio_logger_read(pbio_log_t *log, int32_t sindex, uint8_t *len, int32_t *buf);
+pbio_error_t pbio_logger_stop(pbio_log_t *log);
 
 pbio_error_t pbio_servo_control_update(pbio_servo_t *srv);
 

@@ -222,6 +222,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	pbio/src/error.c \
 	pbio/src/hbridge.c \
 	pbio/src/tacho.c \
+	pbio/src/logger.c \
 	pbio/src/control.c \
 	pbio/src/trajectory.c \
 	pbio/src/fixmath.c \

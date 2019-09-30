@@ -370,76 +370,8 @@ static pbio_error_t control_update_actuate(pbio_servo_t *srv, pbio_control_after
     return err;
 }
 
-// FIXME: Move to port configuration
-#define MIN_PERIOD 10
-
-static void pbio_servo_log_delete(pbio_log_t *log) {
-    // Free log if any
-    if (log->len > 0) {
-        free(log->data);
-    }
-    log->sampled = 0;
-    log->len = 0;
-    log->active = false;
-}
-
-static pbio_error_t pbio_servo_log_create(pbio_log_t *log, ustime_t time_now, uint32_t duration) {
-    // Free any existing log
-    pbio_servo_log_delete(log);
-
-    // Minimal log length
-    uint32_t len = duration / MIN_PERIOD;
-
-    // Assert length is allowed
-    if (len > MAX_LOG_LEN) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
-    // Allocate memory for the logs
-    log->data = malloc(len * sizeof(pbio_log_data_t));
-    if (log->data == NULL) {
-        return PBIO_ERROR_FAILED;
-    }
-
-    // (re-)initialize logger status for this servo
-    log->len = len;
-    log->start = time_now;
-    log->active = true;
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_servo_log_start(pbio_log_t *log, int32_t duration) {
-    // Allocate memory for log
-    return pbio_servo_log_create(log, clock_usecs(), duration);
-}
-
-pbio_error_t pbio_servo_log_stop(pbio_log_t *log) {
-    // Release the logger for re-use
-    log->active = false;
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_servo_log_get(pbio_log_t *log, int32_t sindex, uint8_t *len, int32_t *buf) {
-
-    // Validate index value
-    if (sindex < -1) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
-    // Get index or latest sample if requested index is -1
-    uint32_t index = sindex == -1 ? log->sampled - 1 : sindex;
-
-    // Servo specific data to be returned
-    *len = 3; // FIXME: Move to servo setup in log config
-    buf[0] = (log->data[index].time - log->start)/1000;
-    buf[1] = log->data[index].count;
-    buf[2] = log->data[index].rate;
-
-    return PBIO_SUCCESS;
-}
-
 // Log motor data for a motor that is being actively controlled
-pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t actuation, int32_t control) {
+static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t actuation, int32_t control) {
 
     // Logger for this servo
     pbio_log_t *log = &srv->log;
@@ -465,8 +397,7 @@ pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t
     log->data[log->sampled] = (pbio_log_data_t) {
         .time = time_now,
         .count = count_now,
-        .rate = rate_now,
-        .control = srv->control
+        .rate = rate_now
     };
     log->sampled++;
 
@@ -474,7 +405,7 @@ pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t
 }
 
 // Log motor data for a passive motor
-pbio_error_t pbio_servo_log_passive(pbio_servo_t *srv) {
+static pbio_error_t pbio_servo_log_passive(pbio_servo_t *srv) {
 
     // Read the physical state
     ustime_t time_now = 0;
