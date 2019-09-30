@@ -32,12 +32,6 @@
 
 #define MAX_LOG_LEN ((MAX_LOG_MEM_KB*1024)/sizeof(pbio_log_data_t))
 
-typedef enum {
-    PBIO_LOG_NONE,
-    PBIO_LOG_ACTIVE,
-    PBIO_LOG_DONE,
-} pbio_log_state_t;
-
 typedef struct _pbio_log_data_t {
     ustime_t time;
     count_t count;
@@ -46,7 +40,7 @@ typedef struct _pbio_log_data_t {
 } pbio_log_data_t;
 
 typedef struct _pbio_log_t {
-    pbio_log_state_t state;
+    bool active;
     uint32_t sampled;
     uint32_t len;
     ustime_t end;
@@ -105,7 +99,7 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target);
 
 pbio_error_t pbio_servo_log_start(pbio_servo_t *srv, int32_t duration);
 
-pbio_error_t pbio_servo_log_save(pbio_servo_t *srv);
+pbio_error_t pbio_servo_log_stop(pbio_servo_t *srv);
 
 pbio_error_t pbio_servo_control_update(pbio_servo_t *srv);
 

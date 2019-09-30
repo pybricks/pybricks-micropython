@@ -380,7 +380,7 @@ static void pbio_servo_log_delete(pbio_log_t *log) {
     }
     log->sampled = 0;
     log->len = 0;
-    log->state = PBIO_LOG_NONE;
+    log->active = false;
 }
 
 static pbio_error_t pbio_servo_log_create(pbio_log_t *log, ustime_t time_now, uint32_t duration) {
@@ -404,7 +404,7 @@ static pbio_error_t pbio_servo_log_create(pbio_log_t *log, ustime_t time_now, ui
     // (re-)initialize logger status for this servo
     log->len = len;
     log->end = time_now + duration * US_PER_MS;
-    log->state = PBIO_LOG_ACTIVE;
+    log->active = true;
     return PBIO_SUCCESS;
 }
 
@@ -423,23 +423,18 @@ pbio_error_t pbio_servo_log_start(pbio_servo_t *srv, int32_t duration) {
     return pbio_servo_log_create(&srv->log, time_now, duration);
 }
 
-pbio_error_t pbio_servo_log_save(pbio_servo_t *srv) {
+pbio_error_t pbio_servo_log_stop(pbio_servo_t *srv) {
 
     // Logger for this servo
     pbio_log_t *log = &srv->log;
 
-    // Only save the log if there is any data
-    if (log->state == PBIO_LOG_NONE) {
+    // Only stop the log if it is running
+    if (!log->active) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    // TODO: Write to file or dump to stdout on ports without file system
-
-    // Free memory allocated for logs
-    pbio_servo_log_delete(log);
-
     // Release the logger for re-use
-    log->state = PBIO_LOG_NONE;
+    log->active = false;
 
     return PBIO_SUCCESS;
 }
@@ -451,19 +446,19 @@ pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t
     pbio_log_t *log = &srv->log;
 
     // Log nothing if logger is inactive
-    if (log->state != PBIO_LOG_ACTIVE) {
+    if (!log->active) {
         return PBIO_SUCCESS;
     }
 
     // Raise error if log is full, which should not happen
     if (log->sampled > log->len) {
-        log->state = PBIO_LOG_NONE;
+        log->active = false;
         return PBIO_ERROR_FAILED;
     }    
 
     // Stop successfully when done
     if (time_now > log->end || log->sampled == log->len) {
-        log->state = PBIO_LOG_DONE;
+        log->active = false;
         return PBIO_SUCCESS;
     }
 

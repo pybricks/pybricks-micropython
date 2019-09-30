@@ -525,28 +525,20 @@ STATIC mp_obj_t motor_Motor_log_read(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_log_read_obj, motor_Motor_log_read);
 
-STATIC mp_obj_t motor_Motor_log_save(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        PB_ARG_DEFAULT_NONE(file)
-    );
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-
-    // TODO: Optionally write to file on ports with a file system.
-    if (file != mp_const_none) {
-        pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-    }
+STATIC mp_obj_t motor_Motor_log_stop(mp_obj_t self_in) {
+    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_servo_log_save(self->srv);
+    err = pbio_servo_log_stop(self->srv);
     pb_thread_exit();
 
     pb_assert(err);
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_log_save_obj, 0, motor_Motor_log_save);
+MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_log_stop_obj, motor_Motor_log_stop);
 
 /*
 Motor Class tables
@@ -576,7 +568,7 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&motor_Motor_track_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_log_start), MP_ROM_PTR(&motor_Motor_log_start_obj) },
     { MP_ROM_QSTR(MP_QSTR_log_read), MP_ROM_PTR(&motor_Motor_log_read_obj) },
-    { MP_ROM_QSTR(MP_QSTR_log_save), MP_ROM_PTR(&motor_Motor_log_save_obj) },
+    { MP_ROM_QSTR(MP_QSTR_log_stop), MP_ROM_PTR(&motor_Motor_log_stop_obj) },
 };
 MP_DEFINE_CONST_DICT(motor_Motor_locals_dict, motor_Motor_locals_dict_table);
 
