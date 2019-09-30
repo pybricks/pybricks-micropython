@@ -266,12 +266,41 @@ STATIC mp_obj_t builtins_Control_stall_tolerances(size_t n_args, const mp_obj_t 
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Control_stall_tolerances_obj, 0, builtins_Control_stall_tolerances);
 
+// pybricks.builtins.Control.trajectory
+STATIC mp_obj_t builtins_Control_trajectory(mp_obj_t self_in) {
+    builtins_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pbio_trajectory_t trajectory;
+
+    mp_obj_t parms[12];
+
+    trajectory = self->control->trajectory;
+
+    if (self->control->type != PBIO_CONTROL_NONE) {
+        parms[0] = mp_obj_new_int((trajectory.t0-trajectory.t0)/1000);
+        parms[1] = mp_obj_new_int((trajectory.t1-trajectory.t0)/1000);
+        parms[2] = mp_obj_new_int((trajectory.t2-trajectory.t0)/1000);
+        parms[3] = mp_obj_new_int((trajectory.t3-trajectory.t0)/1000);
+        parms[4] = mp_obj_new_int(trajectory.th0);
+        parms[5] = mp_obj_new_int(trajectory.th1);
+        parms[6] = mp_obj_new_int(trajectory.th2);
+        parms[7] = mp_obj_new_int(trajectory.th3);
+        parms[8] = mp_obj_new_int(trajectory.w0);
+        parms[9] = mp_obj_new_int(trajectory.w1);
+        parms[10] = mp_obj_new_int(trajectory.a0);
+        parms[11] = mp_obj_new_int(trajectory.a2);
+        return mp_obj_new_tuple(12, parms);
+    }
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(builtins_Control_trajectory_obj, builtins_Control_trajectory);
+
 // dir(pybricks.builtins.Control)
 STATIC const mp_rom_map_elem_t builtins_Control_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_limits           ), MP_ROM_PTR(&builtins_Control_limits_obj           ) },
     { MP_ROM_QSTR(MP_QSTR_pid              ), MP_ROM_PTR(&builtins_Control_pid_obj              ) },
     { MP_ROM_QSTR(MP_QSTR_target_tolerances), MP_ROM_PTR(&builtins_Control_target_tolerances_obj) },
-    { MP_ROM_QSTR(MP_QSTR_stall_tolerances),  MP_ROM_PTR(&builtins_Control_stall_tolerances_obj ) },
+    { MP_ROM_QSTR(MP_QSTR_stall_tolerances ), MP_ROM_PTR(&builtins_Control_stall_tolerances_obj ) },
+    { MP_ROM_QSTR(MP_QSTR_trajectory       ), MP_ROM_PTR(&builtins_Control_trajectory_obj       ) },
 };
 STATIC MP_DEFINE_CONST_DICT(builtins_Control_locals_dict, builtins_Control_locals_dict_table);
 
