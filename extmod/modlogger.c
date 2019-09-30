@@ -41,49 +41,26 @@ STATIC mp_obj_t tools_Logger_start(size_t n_args, const mp_obj_t *pos_args, mp_m
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_start_obj, 0, tools_Logger_start);
 
-// Placeholder function for getting data samples from a servo
 STATIC mp_obj_t tools_Logger_get(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        PB_ARG_DEFAULT_INT(index, -1)
+        PB_ARG_DEFAULT_NONE(index)
     );
     tools_Logger_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
-    bool latest = mp_obj_get_int(index) == -1;
-    uint32_t idx = mp_obj_get_int(index);
-
-    pbio_error_t err = PBIO_SUCCESS;
-    int32_t time = 0;
-    int32_t count = 0;
-    int32_t rate = 0;
-
+    mp_int_t index_val = pb_obj_get_default_int(index, -1);
+    pbio_log_data_t data;
+    pbio_error_t err;
+    
     pb_thread_enter();
-
-    pbio_log_t *log = &self->srv->log;
-
-    // Get the latest sample
-    if (latest) {
-        idx = log->sampled - 1;
-    }
-
-    // Get the sample at given index
-    if (idx < log->sampled) {
-        time = log->data[idx].time;
-        count = log->data[idx].count;
-        rate = log->data[idx].rate;
-    }
-    // Return error for out of bound
-    else {
-        err = PBIO_ERROR_INVALID_ARG;
-    }
+    err = pbio_servo_log_get(self->srv, index_val, &data);
     pb_thread_exit();
-
     pb_assert(err);
 
     // Convert data to user objects
     mp_obj_t ret[3];
-    ret[0] = mp_obj_new_int(time/1000);
-    ret[1] = mp_obj_new_int(count);
-    ret[2] = mp_obj_new_int(rate);
+    ret[0] = mp_obj_new_int(data.time/1000);
+    ret[1] = mp_obj_new_int(data.count);
+    ret[2] = mp_obj_new_int(data.rate);
 
     return mp_obj_new_tuple(3, ret);
 }

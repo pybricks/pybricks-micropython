@@ -434,6 +434,25 @@ pbio_error_t pbio_servo_log_stop(pbio_servo_t *srv) {
     return PBIO_SUCCESS;
 }
 
+pbio_error_t pbio_servo_log_get(pbio_servo_t *srv, int32_t sindex, pbio_log_data_t *data) {
+
+    // Logger for this servo
+    pbio_log_t *log = &srv->log;
+
+    // Validate index value
+    if (sindex < -1) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Get index or latest sample if requested index is -1
+    uint32_t index = sindex == -1 ? log->sampled - 1 : sindex;
+
+    // TODO: generalize to buffer of int32_t with return *len
+    *data = log->data[index];
+
+    return PBIO_SUCCESS;
+}
+
 // Log motor data for a motor that is being actively controlled
 pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_control_after_stop_t actuation, int32_t control) {
 
