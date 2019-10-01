@@ -402,6 +402,11 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, 
 // Log motor data for a passive motor
 static pbio_error_t pbio_servo_log_passive(pbio_servo_t *srv) {
 
+    // Log nothing if logger is inactive
+    if (!srv->log.active) {
+        return PBIO_SUCCESS;
+    }
+
     // Read the physical state
     ustime_t time_now = 0;
     count_t count_now = 0;
