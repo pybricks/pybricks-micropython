@@ -57,6 +57,8 @@
 #define MICROPY_ENABLE_SCHEDULER    (0)
 #define MICROPY_PY_UERRNO           (1)
 #define MICROPY_PY_INSTANCE_ATTRS   (1)
+
+#define MICROPY_PERSISTENT_CODE_LOAD    (1)
 #define MICROPY_ENABLE_EXTERNAL_IMPORT  (0)
 
 #define MICROPY_PY_UERRNO_LIST \
@@ -74,10 +76,6 @@
 #define MICROPY_FLOAT_IMPL          (MICROPY_FLOAT_IMPL_FLOAT)
 #endif // MICROPY_FLOAT_IMPL
 
-// PYBRICKS_MPY_MAIN_MODULE is optionally defined in the Makefile
-#ifdef PYBRICKS_MPY_MAIN_MODULE
-#define MICROPY_PERSISTENT_CODE_LOAD (1)
-#endif
 
 
 // type definitions for the specific machine

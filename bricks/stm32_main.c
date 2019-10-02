@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018 David Lechner
+// Copyright (c) 2018-2019 David Lechner
+// Copyright (c) 2019 Laurens Valk
 
 #include <stdint.h>
 #include <stdio.h>
@@ -16,8 +17,11 @@
 #include "py/repl.h"
 #include "py/gc.h"
 #include "py/mperrno.h"
+#include "py/persistentcode.h"
 #include "lib/utils/pyexec.h"
 #include "lib/utils/interrupt_char.h"
+
+#include "py/mphal.h"
 
 // FIXME: Decide whether or not to pre-allocate
 // memory for logging instead or just disable
@@ -34,43 +38,9 @@ static char *stack_top;
 static char heap[PYBRICKS_HEAP_KB * 1024];
 #endif
 
-#if MICROPY_PERSISTENT_CODE_LOAD
-static void run_user_program() {
-    nlr_buf_t nlr;
 
-    if (nlr_push(&nlr) == 0) {
-        mp_call_function_0(mp_import_name(QSTR_FROM_STR_STATIC(PYBRICKS_MPY_MAIN_MODULE),
-            mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
-        nlr_pop();
-    } else {
-        // uncaught exception
-        mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
-    }
-}
+#define MPY_MAX_BYTES (1024)
 
-// _binary_build_main_mpy_start is defined by objcopy during make
-extern uint32_t _binary_build_main_mpy_start;
-#define main_mpy ((const uint8_t *)_binary_build_main_mpy_start)
-
-static uint32_t main_mpy_pos;
-
-static mp_uint_t main_mpy_readbyte(void *data) {
-    // TODO: do we need to handle end of file?
-    return main_mpy[main_mpy_pos];
-}
-
-static void main_mpy_close(void *data) {
-    main_mpy_pos = 0;
-}
-
-void mp_reader_new_file(mp_reader_t *reader, const char *filename) {
-    reader->data = NULL;
-    reader->readbyte = main_mpy_readbyte;
-    reader->close = main_mpy_close;
-}
-#endif // MICROPY_PERSISTENT_CODE_LOAD
-
-#if !MICROPY_ENABLE_COMPILER
 typedef enum {
     WAITING_FOR_FIRST_RELEASE,
     WAITING_FOR_PRESS,
@@ -78,11 +48,11 @@ typedef enum {
 } waiting_for_t;
 
 // wait for button to be pressed/released before starting program
-static void wait_for_button_press(void) {
+static bool wait_for_button_press(uint32_t time_out_ms) {
     pbio_button_flags_t btn;
     waiting_for_t wait_for = WAITING_FOR_FIRST_RELEASE;
 
-    mp_print_str(&mp_plat_print, "\nPress green button to start...");
+    uint32_t time_start = clock_usecs();
 
     // wait for button rising edge, then falling edge
     for (;;) {
@@ -108,17 +78,90 @@ static void wait_for_button_press(void) {
             // released (falling edge), otherwise programs would stop as soon
             // as they were started because the button is already pressed.
             else if (wait_for == WAITING_FOR_SECOND_RELEASE) {
-                break;
+                if (time_out_ms == 0) {
+                    return true;
+                }
+                else {
+                    return (time_start - clock_usecs())/1000 < time_out_ms;
+                }
             }
         }
         while (pbio_do_one_event()) { }
         __WFI();
     }
-
-    // add some space so user knows where their output starts
-    mp_print_str(&mp_plat_print, "\n\n");
+    return false;
 }
-#endif // MICROPY_ENABLE_COMPILER
+
+static uint32_t get_user_program(uint8_t **buf) {
+
+    #ifdef PYBRICKS_MPY_MAIN_MODULE
+    mp_print_str(&mp_plat_print, "\nLoading built-in user program from flash.\n");
+    //FIXME: set buf to address in flash and return len stored in flash and set free_len=0
+    return 0;
+    #endif
+
+    mp_print_str(&mp_plat_print, "\nWaiting for program.\n");
+    
+    // TODO: Get len, checksum and prog over Bluetooth instead. This is just a placeholder for testing
+    const uint8_t prog[] = {77, 3, 3, 31, 30, 2, 0, 0, 0, 0, 0, 8, 54, 0,
+                            247, 0, 42, 0, 0, 255, 27, 199, 0, 0, 23, 0,
+                            100, 1, 50, 133, 36, 248, 0, 17, 91, 8, 60, 109,
+                            111, 100, 117, 108, 101, 62, 11, 109, 97, 105,
+                            110, 109, 97, 105, 110, 46, 112, 121, 5, 112,
+                            114, 105, 110, 116, 1, 120, 1, 0, 115, 30, 68,
+                            111, 110, 39, 116, 32, 102, 111, 114, 103, 101,
+                            116, 32, 116, 111, 32, 115, 109, 105, 108, 101,
+                            32, 116, 111, 100, 97, 121, 32, 58, 41};
+
+    // Get the length over bluetooth
+    uint32_t len;
+
+    //(FIXME: this is using the fake "prog" placeholder for now)
+    len = sizeof(prog);
+
+    // Assert that the length is allowed
+    if (len > MPY_MAX_BYTES) {
+        return 0;
+    }
+
+    // Allocate buffer for MPY file with known length
+    *buf = m_malloc(len);
+    if (*buf == NULL) {
+        return 0;
+    }
+
+    // Acknowledge that we are ready for the main program
+
+    // Receive program over Bluetooth (FIXME: this is using the fake "prog" placeholder for now)
+    for (uint32_t i = 0; i < len; i++) {
+        *buf[i] = prog[i];
+    }
+
+    // On error/timeout, free buf and return 0
+
+    return len;
+}
+
+static void run_user_program(uint32_t len, uint8_t *buf) {
+    mp_print_str(&mp_plat_print, "Starting user program now.\n");    
+    mp_reader_t reader;
+    mp_reader_new_mem(&reader, buf, len, len);
+
+    // Convert buf to raw code and do m_free(buf) in the process
+    mp_raw_code_t *raw_code = mp_raw_code_load(&reader);
+    
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        mp_obj_t module_fun = mp_make_function_from_raw_code(raw_code, MP_OBJ_NULL, MP_OBJ_NULL);
+        mp_call_function_0(module_fun);
+        nlr_pop();
+    } else {
+        // nlr_jump(nlr.ret_val);
+        mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
+    }
+
+    mp_print_str(&mp_plat_print, "Done running user program.\n");
+}
 
 // callback for when stop button is pressed
 static void user_program_stop_func(void) {
@@ -170,6 +213,15 @@ static void pb_imports() {
     #endif
 }
 
+static void run_repl_program() {
+#if MICROPY_ENABLE_COMPILER
+    mp_print_str(&mp_plat_print, "Entering REPL.\n");
+    pyexec_friendly_repl();
+#else
+    mp_print_str(&mp_plat_print, "REPL unavailable.\n");
+#endif // MICROPY_ENABLE_COMPILER
+}
+
 int main(int argc, char **argv) {
     int stack_dummy;
     stack_top = (char*)&stack_dummy;
@@ -180,26 +232,39 @@ int main(int argc, char **argv) {
     gc_init(heap, heap + sizeof(heap));
     #endif
 
+    bool pressed_during_boot;
+
 soft_reset:
-    #if !MICROPY_ENABLE_COMPILER
-    wait_for_button_press();
-    #endif
+    // For debuggging purposes, we enter the REPL if the button is clicked
+    // within 1 second after reset/boot. Later, we can enable activation of
+    // the REPL through an IDE and avoid this artificial boot time here.
+    mp_print_str(&mp_plat_print, "Press green button now for REPL.\n");
+    pressed_during_boot = wait_for_button_press(1000);
 
     pbsys_prepare_user_program(&user_program_callbacks);
 
     mp_init();
 
+    // Import standard Pybricks modules
     pb_imports();
 
-    #if MICROPY_ENABLE_COMPILER
-    pyexec_friendly_repl();
-    #else // MICROPY_ENABLE_COMPILER
-    #if MICROPY_PERSISTENT_CODE_LOAD
-    run_user_program();
-    #else // MICROPY_PERSISTENT_CODE_LOAD
-    pyexec_frozen_module("main.py");
-    #endif // MICROPY_PERSISTENT_CODE_LOAD
-    #endif // MICROPY_ENABLE_COMPILER
+    // Either enter the REPL...
+    if (pressed_during_boot) {
+        run_repl_program();
+    }
+    // ... or load and run a pre-compiled MPY program
+    else {
+        uint8_t *program;
+        uint32_t len = get_user_program(&program);
+
+        if (len > 0) {
+            run_user_program(len, program);
+        }
+        else {
+            mp_print_str(&mp_plat_print, "No valid program received. Reboot.\n");
+        }
+    }
+
     mp_deinit();
 
     pbsys_unprepare_user_program();
@@ -238,12 +303,11 @@ mp_lexer_t *mp_lexer_new_from_file(const char *filename) {
     mp_raise_OSError(MP_ENOENT);
 }
 
+void mp_reader_new_file(mp_reader_t *reader, const char *filename) {
+    mp_raise_OSError(MP_ENOENT);
+}
+
 mp_import_stat_t mp_import_stat(const char *path) {
-#if MICROPY_PERSISTENT_CODE_LOAD
-    if (strcmp(path, PYBRICKS_MPY_MAIN_MODULE ".mpy") == 0) {
-        return MP_IMPORT_STAT_FILE;
-    }
-#endif
     return MP_IMPORT_STAT_NO_EXIST;
 }
 
