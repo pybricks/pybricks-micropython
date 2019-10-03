@@ -106,16 +106,20 @@ static uint32_t get_user_program(uint8_t **buf) {
     return 0;
     #endif
 
+    // Empty rx buffer
+    uint8_t c;
+    while (pbsys_stdin_get_char(&c) != PBIO_ERROR_AGAIN) {
+        MICROPY_EVENT_POLL_HOOK
+    }
+
     mp_print_str(&mp_plat_print, "\nReady to receive program.\n");
-    
-    // TODO: Get len, checksum and prog over Bluetooth instead. This is just a placeholder for testing
-    const uint8_t prog[] = {77, 3, 0, 31, 29, 2, 0, 0, 0, 0, 0, 8, 54, 0, 246, 0, 41, 0, 0, 255, 27, 198, 0, 23, 0, 100, 1, 50, 133, 36, 247, 0, 17, 91, 8, 60, 109, 111, 100, 117, 108, 101, 62, 19, 46, 46, 47, 117, 110, 105, 120, 47, 109, 97, 105, 110, 109, 97, 105, 110, 46, 112, 121, 5, 112, 114, 105, 110, 116, 1, 120, 1, 0, 115, 30, 68, 111, 110, 39, 116, 32, 102, 111, 114, 103, 101, 116, 32, 116, 111, 32, 115, 109, 105, 108, 101, 32, 116, 111, 100, 97, 121, 32, 58, 41};
 
-    // Get the length over bluetooth
-    uint32_t len;
-
-    //(FIXME: this is using the fake "prog" placeholder for now)
-    len = sizeof(prog);
+    // Get the length of the mpy file
+    uint32_t len = 0;
+    for (uint8_t i = 0; i < 4; i++) {
+        c = mp_hal_stdin_rx_chr();
+        len |= c << (3-i)*8;
+    }
 
     // Assert that the length is allowed
     if (len > MPY_MAX_BYTES) {
@@ -131,20 +135,19 @@ static uint32_t get_user_program(uint8_t **buf) {
     // We are ready for the main program
     mp_print_str(&mp_plat_print, "\nReceiving program...\n");
 
-    // Receive program over Bluetooth (FIXME: this is using the fake "prog" placeholder for now)
+    // Receive program over Bluetooth
     for (uint32_t i = 0; i < len; i++) {
-        mpy[i] = prog[i];
-        // Fake delay
-        mp_hal_delay_ms(20);
+        mpy[i] = mp_hal_stdin_rx_chr();
     }
-    // On error/timeout, free buf and return 0
+
+    // TODO: On error/timeout, free buf and return 0
 
     *buf = mpy;
     return len;
 }
 
 static void run_user_program(uint32_t len, uint8_t *buf) {
-    mp_print_str(&mp_plat_print, "Starting user program now.\n");    
+    mp_print_str(&mp_plat_print, "Starting user program now.\n");
 
     #ifdef PYBRICKS_MPY_MAIN_MODULE
     uint32_t free_len = 0;
@@ -157,7 +160,7 @@ static void run_user_program(uint32_t len, uint8_t *buf) {
 
     // Convert buf to raw code and do m_free(buf) in the process
     mp_raw_code_t *raw_code = mp_raw_code_load(&reader);
-    
+
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
         mp_obj_t module_fun = mp_make_function_from_raw_code(raw_code, MP_OBJ_NULL, MP_OBJ_NULL);
@@ -244,14 +247,17 @@ int main(int argc, char **argv) {
 
 soft_reset:
     // For debuggging purposes, we enter the REPL if the button is clicked
-    // within 2 second after reset/boot. Later, we can enable activation of
+    // within 0.5 seconds after reset/boot. Later, we can enable activation of
     // the REPL through an IDE and avoid this artificial boot time here.
+    // In other words, for now:
+    // - Single click to boot Download & Run mode
+    // - Double click to boot REPL
     _pbio_light_set_user_mode(1);
     pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_RED);
     mp_print_str(&mp_plat_print, "\n\n----------------\n"
                                      "Booting Pybricks\n"
                                      "----------------\n");
-    pressed_during_boot = wait_for_button_press(2000);
+    pressed_during_boot = wait_for_button_press(500);
     pbsys_prepare_user_program(&user_program_callbacks);
 
     mp_init();
@@ -266,8 +272,10 @@ soft_reset:
     // Otherwise load and run a pre-compiled MPY program
     else {
         uint8_t *program;
+        // FIXME: Correctly handle 0x00
+        pbsys_unprepare_user_program();
         uint32_t len = get_user_program(&program);
-
+        pbsys_prepare_user_program(&user_program_callbacks);
         if (len > 0) {
             run_user_program(len, program);
         }
