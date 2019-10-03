@@ -8,6 +8,7 @@
 
 #include <pbio/button.h>
 #include <pbio/main.h>
+#include <pbio/light.h>
 #include <pbsys/sys.h>
 
 #include "pbobj.h"
@@ -47,15 +48,20 @@ typedef enum {
     WAITING_FOR_SECOND_RELEASE
 } waiting_for_t;
 
+static bool timed_out(uint32_t time_start, uint32_t time_out) {
+    // Return true if more than time_out ms have elapsed
+    // since time_start, otherwise return false.
+    return clock_usecs()/1000 - time_start > time_out;
+}
+
 // wait for button to be pressed/released before starting program
-static bool wait_for_button_press(uint32_t time_out_ms) {
+static bool wait_for_button_press(uint32_t time_out) {
     pbio_button_flags_t btn;
     waiting_for_t wait_for = WAITING_FOR_FIRST_RELEASE;
-
-    uint32_t time_start = clock_usecs();
+    uint32_t time_start = clock_usecs()/1000;
 
     // wait for button rising edge, then falling edge
-    for (;;) {
+    while (!timed_out(time_start, time_out)) {
         pbio_button_is_pressed(&btn);
         if (btn & PBIO_BUTTON_CENTER) {
             // step 2:
@@ -78,11 +84,11 @@ static bool wait_for_button_press(uint32_t time_out_ms) {
             // released (falling edge), otherwise programs would stop as soon
             // as they were started because the button is already pressed.
             else if (wait_for == WAITING_FOR_SECOND_RELEASE) {
-                if (time_out_ms == 0) {
+                if (time_out == 0) {
                     return true;
                 }
                 else {
-                    return (time_start - clock_usecs())/1000 < time_out_ms;
+                    return !timed_out(time_start, time_out);
                 }
             }
         }
@@ -96,22 +102,14 @@ static uint32_t get_user_program(uint8_t **buf) {
 
     #ifdef PYBRICKS_MPY_MAIN_MODULE
     mp_print_str(&mp_plat_print, "\nLoading built-in user program from flash.\n");
-    //FIXME: set buf to address in flash and return len stored in flash and set free_len=0
+    // TODO: set buf to address in flash and return len stored in flash
     return 0;
     #endif
 
-    mp_print_str(&mp_plat_print, "\nWaiting for program.\n");
+    mp_print_str(&mp_plat_print, "\nReady to receive program.\n");
     
     // TODO: Get len, checksum and prog over Bluetooth instead. This is just a placeholder for testing
-    const uint8_t prog[] = {77, 3, 3, 31, 30, 2, 0, 0, 0, 0, 0, 8, 54, 0,
-                            247, 0, 42, 0, 0, 255, 27, 199, 0, 0, 23, 0,
-                            100, 1, 50, 133, 36, 248, 0, 17, 91, 8, 60, 109,
-                            111, 100, 117, 108, 101, 62, 11, 109, 97, 105,
-                            110, 109, 97, 105, 110, 46, 112, 121, 5, 112,
-                            114, 105, 110, 116, 1, 120, 1, 0, 115, 30, 68,
-                            111, 110, 39, 116, 32, 102, 111, 114, 103, 101,
-                            116, 32, 116, 111, 32, 115, 109, 105, 108, 101,
-                            32, 116, 111, 100, 97, 121, 32, 58, 41};
+    const uint8_t prog[] = {77, 3, 0, 31, 29, 2, 0, 0, 0, 0, 0, 8, 54, 0, 246, 0, 41, 0, 0, 255, 27, 198, 0, 23, 0, 100, 1, 50, 133, 36, 247, 0, 17, 91, 8, 60, 109, 111, 100, 117, 108, 101, 62, 19, 46, 46, 47, 117, 110, 105, 120, 47, 109, 97, 105, 110, 109, 97, 105, 110, 46, 112, 121, 5, 112, 114, 105, 110, 116, 1, 120, 1, 0, 115, 30, 68, 111, 110, 39, 116, 32, 102, 111, 114, 103, 101, 116, 32, 116, 111, 32, 115, 109, 105, 108, 101, 32, 116, 111, 100, 97, 121, 32, 58, 41};
 
     // Get the length over bluetooth
     uint32_t len;
@@ -125,27 +123,37 @@ static uint32_t get_user_program(uint8_t **buf) {
     }
 
     // Allocate buffer for MPY file with known length
-    *buf = m_malloc(len);
-    if (*buf == NULL) {
+    uint8_t *mpy = m_malloc(len);
+    if (mpy == NULL) {
         return 0;
     }
 
-    // Acknowledge that we are ready for the main program
+    // We are ready for the main program
+    mp_print_str(&mp_plat_print, "\nReceiving program...\n");
 
     // Receive program over Bluetooth (FIXME: this is using the fake "prog" placeholder for now)
     for (uint32_t i = 0; i < len; i++) {
-        *buf[i] = prog[i];
+        mpy[i] = prog[i];
+        // Fake delay
+        mp_hal_delay_ms(20);
     }
-
     // On error/timeout, free buf and return 0
 
+    *buf = mpy;
     return len;
 }
 
 static void run_user_program(uint32_t len, uint8_t *buf) {
     mp_print_str(&mp_plat_print, "Starting user program now.\n");    
+
+    #ifdef PYBRICKS_MPY_MAIN_MODULE
+    uint32_t free_len = 0;
+    #else
+    uint32_t free_len = len;
+    #endif
+
     mp_reader_t reader;
-    mp_reader_new_mem(&reader, buf, len, len);
+    mp_reader_new_mem(&reader, buf, len, free_len);
 
     // Convert buf to raw code and do m_free(buf) in the process
     mp_raw_code_t *raw_code = mp_raw_code_load(&reader);
@@ -215,7 +223,7 @@ static void pb_imports() {
 
 static void run_repl_program() {
 #if MICROPY_ENABLE_COMPILER
-    mp_print_str(&mp_plat_print, "Entering REPL.\n");
+    mp_print_str(&mp_plat_print, "Entering REPL. CTRL+D to exit.\n");
     pyexec_friendly_repl();
 #else
     mp_print_str(&mp_plat_print, "REPL unavailable.\n");
@@ -236,11 +244,14 @@ int main(int argc, char **argv) {
 
 soft_reset:
     // For debuggging purposes, we enter the REPL if the button is clicked
-    // within 1 second after reset/boot. Later, we can enable activation of
+    // within 2 second after reset/boot. Later, we can enable activation of
     // the REPL through an IDE and avoid this artificial boot time here.
-    mp_print_str(&mp_plat_print, "Press green button now for REPL.\n");
-    pressed_during_boot = wait_for_button_press(1000);
-
+    _pbio_light_set_user_mode(1);
+    pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_RED);
+    mp_print_str(&mp_plat_print, "\n\n----------------\n"
+                                     "Booting Pybricks\n"
+                                     "----------------\n");
+    pressed_during_boot = wait_for_button_press(2000);
     pbsys_prepare_user_program(&user_program_callbacks);
 
     mp_init();
@@ -248,11 +259,11 @@ soft_reset:
     // Import standard Pybricks modules
     pb_imports();
 
-    // Either enter the REPL...
+    // Enter the REPL if button was pressed while red light was on
     if (pressed_during_boot) {
         run_repl_program();
     }
-    // ... or load and run a pre-compiled MPY program
+    // Otherwise load and run a pre-compiled MPY program
     else {
         uint8_t *program;
         uint32_t len = get_user_program(&program);

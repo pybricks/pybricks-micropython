@@ -9,7 +9,7 @@ TMPFILE = 'script.py'
 def get_bytes(path):
     """Compile a Python file with mpy-cross and return as list of bytes."""
     # TODO: Check versions and compatibility
-    proc = mpy_cross.run(path, '-mcache-lookup-bc')
+    proc = mpy_cross.run(path, '-mno-unicode')
     proc.wait()
 
     with open(path[0:-3]+'.mpy', 'rb') as mpy:
