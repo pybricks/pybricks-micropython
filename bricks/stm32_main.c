@@ -48,6 +48,7 @@ typedef enum {
     WAITING_FOR_SECOND_RELEASE
 } waiting_for_t;
 
+#if MICROPY_ENABLE_COMPILER
 static bool timed_out(uint32_t time_start, uint32_t time_out) {
     // Return true if more than time_out ms have elapsed
     // since time_start, otherwise return false.
@@ -97,11 +98,12 @@ static bool wait_for_button_press(uint32_t time_out) {
     }
     return false;
 }
+#endif // MICROPY_ENABLE_COMPILER
 
 static uint32_t get_user_program(uint8_t **buf) {
 
     #ifdef PYBRICKS_MPY_MAIN_MODULE
-    mp_print_str(&mp_plat_print, "\nLoading built-in user program from flash.\n");
+    mp_print_str(&mp_plat_print, "\nLoading program from flash.\n");
     // TODO: set buf to address in flash and return len stored in flash
     return 0;
     #endif
@@ -111,8 +113,6 @@ static uint32_t get_user_program(uint8_t **buf) {
     while (pbsys_stdin_get_char(&c) != PBIO_ERROR_AGAIN) {
         MICROPY_EVENT_POLL_HOOK
     }
-
-    mp_print_str(&mp_plat_print, "\nReady to receive program.\n");
 
     // Get the length of the mpy file
     uint32_t len = 0;
@@ -133,7 +133,7 @@ static uint32_t get_user_program(uint8_t **buf) {
     }
 
     // We are ready for the main program
-    mp_print_str(&mp_plat_print, "\nReceiving program...\n");
+    // TODO: ACK that we are ready
 
     // Receive program over Bluetooth
     for (uint32_t i = 0; i < len; i++) {
@@ -147,7 +147,13 @@ static uint32_t get_user_program(uint8_t **buf) {
 }
 
 static void run_user_program(uint32_t len, uint8_t *buf) {
-    mp_print_str(&mp_plat_print, "Starting user program now.\n");
+
+    if (len == 0) {
+        mp_print_str(&mp_plat_print, "No program received. Reboot.\n");
+        return;
+    }
+
+    mp_print_str(&mp_plat_print, "Starting script.\n\n");
 
     #ifdef PYBRICKS_MPY_MAIN_MODULE
     uint32_t free_len = 0;
@@ -170,8 +176,6 @@ static void run_user_program(uint32_t len, uint8_t *buf) {
         // nlr_jump(nlr.ret_val);
         mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
     }
-
-    mp_print_str(&mp_plat_print, "Done running user program.\n");
 }
 
 // callback for when stop button is pressed
@@ -224,15 +228,6 @@ static void pb_imports() {
     #endif
 }
 
-static void run_repl_program() {
-#if MICROPY_ENABLE_COMPILER
-    mp_print_str(&mp_plat_print, "Entering REPL. CTRL+D to exit.\n");
-    pyexec_friendly_repl();
-#else
-    mp_print_str(&mp_plat_print, "REPL unavailable.\n");
-#endif // MICROPY_ENABLE_COMPILER
-}
-
 int main(int argc, char **argv) {
     int stack_dummy;
     stack_top = (char*)&stack_dummy;
@@ -243,49 +238,42 @@ int main(int argc, char **argv) {
     gc_init(heap, heap + sizeof(heap));
     #endif
 
-    bool pressed_during_boot;
-
 soft_reset:
-    // For debuggging purposes, we enter the REPL if the button is clicked
-    // within 0.5 seconds after reset/boot. Later, we can enable activation of
-    // the REPL through an IDE and avoid this artificial boot time here.
-    // In other words, for now:
-    // - Single click to boot Download & Run mode
-    // - Double click to boot REPL
-    _pbio_light_set_user_mode(1);
-    pbio_light_on(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_RED);
-    mp_print_str(&mp_plat_print, "\n\n----------------\n"
-                                     "Booting Pybricks\n"
-                                     "----------------\n");
-    pressed_during_boot = wait_for_button_press(500);
+    // (re)boot message
+    mp_print_str(&mp_plat_print, "\n\n--------\n"
+                                     "Pybricks\n"
+                                     "--------\n");
+
+    #if MICROPY_ENABLE_COMPILER
+    // Enter the REPL if button was clicked again right after boot
+    if (wait_for_button_press(500)) {
+        pbsys_prepare_user_program(&user_program_callbacks);
+        mp_init();
+        pb_imports();
+        mp_print_str(&mp_plat_print, "Entering REPL. CTRL+D to exit.\n");
+        pyexec_friendly_repl();
+        mp_deinit();
+        pbsys_unprepare_user_program();
+        goto soft_reset;
+    }
+    #endif // MICROPY_ENABLE_COMPILER
+
+    // Receive an mpy-cross compiled Python script
+    uint8_t *program;
+    uint32_t len = get_user_program(&program);
+
+    // Get system hardware ready
     pbsys_prepare_user_program(&user_program_callbacks);
 
+    // Initialize MicroPython and run default imports
     mp_init();
-
-    // Import standard Pybricks modules
     pb_imports();
 
-    // Enter the REPL if button was pressed while red light was on
-    if (pressed_during_boot) {
-        run_repl_program();
-    }
-    // Otherwise load and run a pre-compiled MPY program
-    else {
-        uint8_t *program;
-        // FIXME: Correctly handle 0x00
-        pbsys_unprepare_user_program();
-        uint32_t len = get_user_program(&program);
-        pbsys_prepare_user_program(&user_program_callbacks);
-        if (len > 0) {
-            run_user_program(len, program);
-        }
-        else {
-            mp_print_str(&mp_plat_print, "No valid program received. Reboot.\n");
-        }
-    }
+    // Execute the user script
+    run_user_program(len, program);
 
+    // Uninitialize MicroPython and the system hardware
     mp_deinit();
-
     pbsys_unprepare_user_program();
 
     goto soft_reset;
