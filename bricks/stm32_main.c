@@ -167,6 +167,9 @@ static void run_user_program(uint32_t len, uint8_t *buf) {
     // Convert buf to raw code and do m_free(buf) in the process
     mp_raw_code_t *raw_code = mp_raw_code_load(&reader);
 
+    // Allow script to be stopped with hub button
+    mp_hal_set_interrupt_char(3);
+        
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
         mp_obj_t module_fun = mp_make_function_from_raw_code(raw_code, MP_OBJ_NULL, MP_OBJ_NULL);
@@ -176,6 +179,9 @@ static void run_user_program(uint32_t len, uint8_t *buf) {
         // nlr_jump(nlr.ret_val);
         mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
     }
+
+    // Reset interrupt
+    mp_hal_set_interrupt_char(-1);
 }
 
 // callback for when stop button is pressed
