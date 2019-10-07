@@ -41,12 +41,14 @@ SECTIONS
 
     .user :
     {
-        BYTE(0)             /* In official LEGO firmware, this is where brick name is stored.
+        LONG(0);            /* In official LEGO firmware, this is where brick name is stored.
                                It needs to be zeroed so that when the official firmware is
                                reloaded, it will use the default name */
-
-        KEEP(*(.mpy))       /* Compiled main.mpy file */
+        LONG(MPYSIZE);
+        KEEP(*(.mpy));       /* Compiled main.mpy file */
     } >USER_FLASH
+
+    __user_flash_start = ORIGIN(USER_FLASH);
 
     /* This section is for special needs of the Move Hub firmware - must be first section in SRAM! */
     .magic :

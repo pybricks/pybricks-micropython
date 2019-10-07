@@ -48,8 +48,7 @@ typedef enum {
     WAITING_FOR_SECOND_RELEASE
 } waiting_for_t;
 
-#if MICROPY_ENABLE_COMPILER
-static bool timed_out(uint32_t time_start, uint32_t time_out) {
+bool timed_out(uint32_t time_start, uint32_t time_out) {
     // If time_out is zero, we say it never times out.
     if (time_out == 0) {
         return false;
@@ -60,7 +59,7 @@ static bool timed_out(uint32_t time_start, uint32_t time_out) {
 }
 
 // wait for button to be pressed/released before starting program
-static bool wait_for_button_press(uint32_t time_out) {
+bool wait_for_button_press(uint32_t time_out) {
     pbio_button_flags_t btn;
     waiting_for_t wait_for = WAITING_FOR_FIRST_RELEASE;
     uint32_t time_start = clock_usecs()/1000;
@@ -97,24 +96,25 @@ static bool wait_for_button_press(uint32_t time_out) {
     }
     return false;
 }
-#endif // MICROPY_ENABLE_COMPILER
 
+#ifdef PYBRICKS_MPY_MAIN_MODULE
+extern uint32_t __user_flash_start;
+
+// Get user program stored in rom
 static uint32_t get_user_program(uint8_t **buf) {
 
-    #ifdef PYBRICKS_MPY_MAIN_MODULE
     wait_for_button_press(0);
     mp_print_str(&mp_plat_print, "\nLoading program from flash.\n");
-    // FIXME: This is a placeholder program that does the following:
-    // motor = Motor(Port.A)
-    // motor.run_angle(500, 720)
-    static uint8_t _flash_program[] = {77, 3, 0, 31, 46, 4, 0, 0, 0, 0, 0, 8, 54, 0, 246, 0, 47, 0, 0, 255, 27, 248, 0, 27, 249, 0, 29, 250, 0, 100, 1, 36, 247, 0, 27, 247, 0, 30, 251, 0, 20, 131, 116, 20, 133, 80, 102, 2, 50, 17, 91, 8, 60, 109, 111, 100, 117, 108, 101, 62, 9, 115, 99, 114, 105, 112, 116, 46, 112, 121, 5, 77, 111, 116, 111, 114, 4, 80, 111, 114, 116, 1, 65, 5, 109, 111, 116, 111, 114, 5, 109, 111, 116, 111, 114, 9, 114, 117, 110, 95, 97, 110, 103, 108, 101, 0, 0};
-    uint32_t _flash_program_len = sizeof(_flash_program);
 
-    // FIXME: This should be stored and set during build
-    *buf = _flash_program;
-    return _flash_program_len;
-    #endif
+    // Return .mpy size and location in rom
+    uint32_t *_mpy_size = ((uint32_t *) &__user_flash_start) + 1;
+    *buf = (uint8_t *)(_mpy_size + 1);
+    return *_mpy_size;
+}
+#else // PYBRICKS_MPY_MAIN_MODULE
 
+// Get user program via serial
+static uint32_t get_user_program(uint8_t **buf) {
     // Empty rx buffer
     uint8_t c;
     while (pbsys_stdin_get_char(&c) != PBIO_ERROR_AGAIN) {
@@ -152,6 +152,7 @@ static uint32_t get_user_program(uint8_t **buf) {
     *buf = mpy;
     return len;
 }
+#endif // PYBRICKS_MPY_MAIN_MODULE
 
 static void run_user_program(uint32_t len, uint8_t *buf) {
 

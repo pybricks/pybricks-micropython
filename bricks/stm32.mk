@@ -12,7 +12,8 @@ include ../../../../py/mkenv.mk
 # qstr definitions (must come before including py.mk)
 QSTR_GLOBAL_DEPENDENCIES = $(TOP)/ports/pybricks/bricks/stm32configport.h
 
-#PYBRICKS_MPY_MAIN_MODULE ?= modules/main.py
+# Module included as mpy file in persistent user ROM
+# PYBRICKS_MPY_MAIN_MODULE ?= main.py
 
 # directory containing scripts to be frozen as bytecode
 FROZEN_MPY_DIR ?= modules
@@ -84,7 +85,7 @@ CFLAGS += -D$(CMSIS_MCU)
 CFLAGS += -DSTM32_HAL_H='<stm32$(MCU_SERIES_LCASE)xx_hal.h>'
 
 ifneq ($(PYBRICKS_MPY_MAIN_MODULE),)
-CFLAGS += -DPYBRICKS_MPY_MAIN_MODULE=MP_STRINGIFY\($(basename $(notdir $(PYBRICKS_MPY_MAIN_MODULE)))\)
+CFLAGS += -DPYBRICKS_MPY_MAIN_MODULE
 endif
 
 ifneq ($(FROZEN_MPY_DIR),)
@@ -254,13 +255,19 @@ OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 ifneq ($(PYBRICKS_MPY_MAIN_MODULE),)
 OBJ += $(BUILD)/main_mpy.o
 
+MPY_CROSS_FLAGS += -mno-unicode
+
 $(BUILD)/main.mpy: $(PYBRICKS_MPY_MAIN_MODULE)
-	$(Q)$(MPY_CROSS) -o $@ $(MPY_CROSS_FLAGS) $^
+	$(Q)$(MPY_CROSS) -o $@ $(MPY_CROSS_FLAGS)  $^
 
 $(BUILD)/main_mpy.o: $(BUILD)/main.mpy
 	$(Q)$(OBJCOPY) -I binary -O elf32-littlearm -B arm --rename-section .data=.mpy,alloc,load,readonly,data,contents $^ $@
 
+MPYSIZE := $$(wc -c < "$(BUILD)/main.mpy")
+
 FIRMWARE_EXTRA_ARGS = -j .user --gap-fill=0xff
+else
+MPYSIZE := 0
 endif
 
 # List of sources for qstr extraction
@@ -271,14 +278,14 @@ SRC_QSTR_AUTO_DEPS +=
 all: $(BUILD)/firmware.bin
 
 $(BUILD)/firmware-no-checksum.elf: $(OBJ)
-	$(Q)$(LD) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $^ $(LIBS)
+	$(Q)$(LD) --defsym=MPYSIZE=$(MPYSIZE) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $^ $(LIBS)
 
 $(BUILD)/firmware-no-checksum.bin: $(BUILD)/firmware-no-checksum.elf
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .checksum $^ $@
 
 $(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(LD) --defsym=CHECKSUM=`$(CHECKSUM) $(CHECKSUM_TYPE) $< $(FIRMWARE_MAX_SIZE)` $(LDFLAGS) -o $@ $(filter-out $<,$^) $(LIBS)
+	$(Q)$(LD) --defsym=MPYSIZE=$(MPYSIZE) --defsym=CHECKSUM=`$(CHECKSUM) $(CHECKSUM_TYPE) $< $(FIRMWARE_MAX_SIZE)` $(LDFLAGS) -o $@ $(filter-out $<,$^) $(LIBS)
 	$(Q)$(SIZE) $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
