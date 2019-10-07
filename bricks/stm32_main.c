@@ -104,8 +104,15 @@ static uint32_t get_user_program(uint8_t **buf) {
 
     #ifdef PYBRICKS_MPY_MAIN_MODULE
     mp_print_str(&mp_plat_print, "\nLoading program from flash.\n");
-    // TODO: set buf to address in flash and return len stored in flash
-    return 0;
+    // FIXME: This is a placeholder program that does the following:
+    // motor = Motor(Port.A)
+    // motor.run_angle(500, 720)
+    static uint8_t _flash_program[] = {77, 3, 0, 31, 46, 4, 0, 0, 0, 0, 0, 8, 54, 0, 246, 0, 47, 0, 0, 255, 27, 248, 0, 27, 249, 0, 29, 250, 0, 100, 1, 36, 247, 0, 27, 247, 0, 30, 251, 0, 20, 131, 116, 20, 133, 80, 102, 2, 50, 17, 91, 8, 60, 109, 111, 100, 117, 108, 101, 62, 9, 115, 99, 114, 105, 112, 116, 46, 112, 121, 5, 77, 111, 116, 111, 114, 4, 80, 111, 114, 116, 1, 65, 5, 109, 111, 116, 111, 114, 5, 109, 111, 116, 111, 114, 9, 114, 117, 110, 95, 97, 110, 103, 108, 101, 0, 0};
+    uint32_t _flash_program_len = sizeof(_flash_program);
+
+    // FIXME: This should be stored and set during build
+    *buf = _flash_program;
+    return _flash_program_len;
     #endif
 
     // Empty rx buffer
