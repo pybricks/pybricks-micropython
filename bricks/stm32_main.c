@@ -208,20 +208,15 @@ static const pbsys_user_program_callbacks_t user_program_callbacks = {
 };
 
 static void pb_imports() {
+    // Import port-specific hub module
+    PB_IMPORT_MODULE(PYBRICKS_HUB_NAME);
+
+    // Import generic modules
     #if PYBRICKS_PY_ADVANCED
     PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_advanced);
     #endif
-    #if PYBRICKS_PY_CITYHUB
-    PB_IMPORT_MODULE(MP_QSTR_cityhub);
-    #endif
     #if PYBRICKS_PY_PUPDEVICES
     PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_devices);
-    #endif
-    #if PYBRICKS_PY_DEBUG
-    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_debug);
-    #endif
-    #if PYBRICKS_PY_MOVEHUB
-    PB_IMPORT_MODULE(MP_QSTR_movehub);
     #endif
     #if PYBRICKS_PY_PARAMETERS
     PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_parameters);

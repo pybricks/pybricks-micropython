@@ -8,11 +8,13 @@
 
 #define PYBRICKS_HEAP_KB                16
 
+// Pybricks hub module
+#define PYBRICKS_HUB_NAME               MP_QSTR_cplushub
+#define PYBRICKS_HUB_MODULE             pb_module_cplushub
+
 // Pybricks modules
 #define PYBRICKS_PY_ADVANCED            (1)
 #define PYBRICKS_PY_BATTERY             (1)
-#define PYBRICKS_PY_CPLUSHUB            (1)
-#define PYBRICKS_PY_DEBUG               (0)
 #define PYBRICKS_PY_MOTOR               (1)
 #define PYBRICKS_PY_PARAMETERS          (1)
 #define PYBRICKS_PY_PUPDEVICES          (1)

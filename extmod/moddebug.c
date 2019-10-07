@@ -3,8 +3,6 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_DEBUG
-
 #include <pbdrv/adc.h>
 #include <pbdrv/button.h>
 #include <pbdrv/uart.h>
@@ -116,5 +114,3 @@ const mp_obj_module_t pb_module_debug = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t*)&pb_module_debug_globals,
 };
-
-#endif //PYBRICKS_PY_DEBUG

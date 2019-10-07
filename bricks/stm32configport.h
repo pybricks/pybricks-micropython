@@ -97,40 +97,16 @@ typedef long mp_off_t;
 
 #define PYBRICKS_PY_EV3DEVICES          (0)
 
+extern const struct _mp_obj_module_t PYBRICKS_HUB_MODULE;
+#define _PYBRICKS_MODULE_HUB \
+    { MP_OBJ_NEW_QSTR(PYBRICKS_HUB_NAME), (mp_obj_t)&PYBRICKS_HUB_MODULE},
+
 #if PYBRICKS_PY_ADVANCED
 extern const struct _mp_obj_module_t pb_module_advanced;
 #define _PYBRICKS_MODULE_ADVANCED \
     { MP_OBJ_NEW_QSTR(MP_QSTR_advanced), (mp_obj_t)&pb_module_advanced },
 #else
 #define _PYBRICKS_MODULE_ADVANCED
-#endif
-#if PYBRICKS_PY_CITYHUB
-extern const struct _mp_obj_module_t pb_module_cityhub;
-#define _PYBRICKS_MODULE_CITYHUB \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_cityhub), (mp_obj_t)&pb_module_cityhub },
-#else
-#define _PYBRICKS_MODULE_CITYHUB
-#endif
-#if PYBRICKS_PY_CPLUSHUB
-extern const struct _mp_obj_module_t pb_module_cplushub;
-#define _PYBRICKS_MODULE_CPLUSHUB \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_cplushub), (mp_obj_t)&pb_module_cplushub },
-#else
-#define _PYBRICKS_MODULE_CPLUSHUB
-#endif
-#if PYBRICKS_PY_DEBUG
-extern const struct _mp_obj_module_t pb_module_debug;
-#define _PYBRICKS_MODULE_DEBUG \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_debug), (mp_obj_t)&pb_module_debug },
-#else
-#define _PYBRICKS_MODULE_DEBUG
-#endif
-#if PYBRICKS_PY_MOVEHUB
-extern const struct _mp_obj_module_t pb_module_movehub;
-#define _PYBRICKS_MODULE_MOVEHUB \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_movehub), (mp_obj_t)&pb_module_movehub },
-#else
-#define _PYBRICKS_MODULE_MOVEHUB
 #endif
 #if PYBRICKS_PY_PUPDEVICES
 extern const struct _mp_obj_module_t pb_module_pupdevices;
@@ -163,10 +139,7 @@ extern const struct _mp_obj_module_t pb_module_robotics;
 
 #define MICROPY_PORT_BUILTIN_MODULES \
     _PYBRICKS_MODULE_ADVANCED       \
-    _PYBRICKS_MODULE_CITYHUB        \
-    _PYBRICKS_MODULE_CPLUSHUB       \
-    _PYBRICKS_MODULE_DEBUG          \
-    _PYBRICKS_MODULE_MOVEHUB        \
+    _PYBRICKS_MODULE_HUB        \
     _PYBRICKS_MODULE_PUPDEVICES     \
     _PYBRICKS_MODULE_PARAMETERS     \
     _PYBRICKS_MODULE_TOOLS          \

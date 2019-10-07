@@ -5,8 +5,6 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_CPLUSHUB
-
 #include "py/obj.h"
 #include "py/runtime.h"
 
@@ -16,7 +14,7 @@ extern const struct _mp_obj_module_t pb_module_battery;
 extern const struct _mp_obj_module_t pb_module_colorlight;
 
 STATIC const mp_rom_map_elem_t cplushub_globals_table[] = {
-    { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_cplushub)       },
+    { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(PYBRICKS_HUB_NAME)      },
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)      },
     { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_PTR(&pb_module_colorlight)   },
     { MP_ROM_QSTR(MP_QSTR_shutdown),    MP_ROM_PTR(&hub_shutdown_obj)       },
@@ -29,5 +27,3 @@ const mp_obj_module_t pb_module_cplushub = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t*)&pb_module_cplushub_globals,
 };
-
-#endif // PYBRICKS_PY_CPLUSHUB
