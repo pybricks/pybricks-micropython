@@ -50,6 +50,10 @@ typedef enum {
 
 #if MICROPY_ENABLE_COMPILER
 static bool timed_out(uint32_t time_start, uint32_t time_out) {
+    // If time_out is zero, we say it never times out.
+    if (time_out == 0) {
+        return false;
+    }
     // Return true if more than time_out ms have elapsed
     // since time_start, otherwise return false.
     return clock_usecs()/1000 - time_start > time_out;
@@ -85,12 +89,7 @@ static bool wait_for_button_press(uint32_t time_out) {
             // released (falling edge), otherwise programs would stop as soon
             // as they were started because the button is already pressed.
             else if (wait_for == WAITING_FOR_SECOND_RELEASE) {
-                if (time_out == 0) {
-                    return true;
-                }
-                else {
-                    return !timed_out(time_start, time_out);
-                }
+                return !timed_out(time_start, time_out);
             }
         }
         while (pbio_do_one_event()) { }
@@ -103,6 +102,7 @@ static bool wait_for_button_press(uint32_t time_out) {
 static uint32_t get_user_program(uint8_t **buf) {
 
     #ifdef PYBRICKS_MPY_MAIN_MODULE
+    wait_for_button_press(0);
     mp_print_str(&mp_plat_print, "\nLoading program from flash.\n");
     // FIXME: This is a placeholder program that does the following:
     // motor = Motor(Port.A)
