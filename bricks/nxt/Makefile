@@ -1,165 +1,58 @@
-default: all
-
-LEJOS_NXT_ARM_GCC ?= arm-none-eabi-gcc
-
-BASE_ABI_FLAGS := -mcpu=arm7tdmi -mlittle-endian -mfloat-abi=soft -mthumb-interwork
-LIB_ABI_FLAGS  := $(BASE_ABI_FLAGS) -mthumb
-
-MACRO_PROG_PATH = $(abspath $(shell "$(CC)" -print-prog-name="$(1)"))
-
-CC        := $(LEJOS_NXT_ARM_GCC)
-OBJCOPY   := $(call MACRO_PROG_PATH,objcopy)
-OBJDUMP   := $(call MACRO_PROG_PATH,objdump)
-
-.PHONY: EnvironmentMessage
-EnvironmentMessage:
-	@echo " CC      $(CC)"
-	@echo " OBJCOPY $(OBJCOPY)"
-	@echo " OBJDUMP $(OBJDUMP)"
-	@echo ""
-
-TARGET := firmware.bin
-
-C_PLATFORM_OBJECTS := $(addprefix nxt-firmware-drivers/nxt/,\
-	aic.o \
-	systick.o \
-	udp.o \
-	twi.o \
-	nxt_spi.o \
-	nxt_motors.o \
-	data_abort.o \
-	display.o \
-	i2c.o \
-	sound.o \
-	bt.o \
-	hs.o \
-	usart.o \
-	flashprog.o \
-	flashwrite.o \
-	printf.o \
-	)
-
-# merge main and mpy main
-C_HOOK_OBJECTS := $(addprefix nxt-firmware-drivers/nxt/,\
-	maininit.o \
-	nxt_avr.o \
-	sensors.o \
-	nxt_lcd.o \
-	)
-
-C_OBJECTS := \
-	$(C_PLATFORM_OBJECTS) \
-	$(C_HOOK_OBJECTS) \
-	$(C_RAM_OBJECTS)
-
-ifeq ($(STANDALONE), 1)
-	C_OBJECTS += $(addprefix nxt-firmware-drivers/nxt/,main.o)
-endif
-
-S_OBJECTS := $(addprefix nxt-firmware-drivers/nxt/,\
-	interrupts.o \
-	vectors.o \
-	init.o \
-	irq.o \
-	)	
-
-C_OPTIMISATION_FLAGS = -Os
-#C_OPTIMISATION_FLAGS = -Os -Xassembler -aslh
-#C_OPTIMISATION_FLAGS = -O0
-
-CFLAGS_LEJOS = $(BASE_ABI_FLAGS) -mthumb \
-	-ffreestanding -fsigned-char \
-	$(C_OPTIMISATION_FLAGS) -g \
-	-Wall -Winline -Werror-implicit-function-declaration \
-	-Inxt-firmware-drivers/nxt \
-	-ffunction-sections -fdata-sections
-
-LDFLAGS_LEJOS = $(LIB_ABI_FLAGS) -nostdlib -nodefaultlibs -Wl,-cref,--gc-sections
-
-
-ALL_BIN := $(TARGET)
-ALL_OBJECTS := $(C_OBJECTS) $(S_OBJECTS)
-ALL_ELF := $(ALL_BIN:.bin=.elf)
-ALL_MAP := $(ALL_BIN:.bin=.map)
-ALL_ASM := $(ALL_BIN:.bin=.asm) $(ALL_OBJECTS:.o=.asm)
-
-.SECONDARY: $(ALL_ELF) $(ALL_MAP) $(ALL_OBJECTS)
-
-.PHONY: all
-all:  BuildMessage $(TARGET)
-
-.PHONY: everything
-everything: BuildMessage $(ALL_BIN) $(ALL_ASM)
-
-.PHONY: TargetMessage
-TargetMessage:
-	@echo ""
-	@echo "Building: $(TARGET)"
-	@echo ""
-	@echo "C objects: $(C_OBJECTS)"
-	@echo ""
-	@echo "Assembler objects: $(S_OBJECTS)"
-	@echo ""
-	@echo "LD source: $(LDSCRIPT_SOURCE)"
-	@echo ""
-
-.PHONY: BuildMessage
-BuildMessage: TargetMessage EnvironmentMessage
-
-.PHONY: clean
-clean-standalone:
-	@echo "Removing All Objects"
-	@rm -f $(ALL_OBJECTS)
-	@echo "Removing target"
-	@rm -f $(ALL_ELF) $(ALL_BIN)
-	@echo "Removing map files"
-	@rm -f $(ALL_MAP)
-	@echo "Removing asm files"
-	@rm -f $(ALL_ASM)
-
-firmware.elf: nxt-firmware-drivers/nxt/lejos_nxt_rom.lds $(C_OBJECTS) $(S_OBJECTS) mpobjects
-	@echo "### Linking $@ using linker script $<"
-	$(CC) $(LDFLAGS_LEJOS) -Wl,-T,$<,-Map,${@:.elf=.map} -o $@ $(C_OBJECTS) $(S_OBJECTS) $(OBJ) -lm -lc -lgcc
-
-%.map: %.elf
-	@true
-
-%.bin: %.elf
-	@echo "### Generating binary file $@ from $<"
-	$(OBJCOPY) -O binary $< $@
-
-# default rules for compiling sources
-
-%.o: %.S
-	@echo "### Assembling $< to $@"
-	$(CC) $(CFLAGS_LEJOS) -c -o $@ $< 
-
-%.o: %.c
-	@echo "### Compiling $< to $@"
-	$(CC) $(CFLAGS_LEJOS) -c -o $@ $< 
-
-
 # MicroPython
+
+PBIO_PLATFORM = nxt
+MCU_SERIES = NA
+CMSIS_MCU = NA
+FIRMWARE_MAX_SIZE = 200000
 
 include ../../../../py/mkenv.mk
 
-CROSS = 1
-
 # qstr definitions (must come before including py.mk)
-QSTR_DEFS = qstrdefsport.h
+QSTR_GLOBAL_DEPENDENCIES = $(TOP)/ports/pybricks/bricks/nxt/mpconfigport.h
+
+# directory containing scripts to be frozen as bytecode
+FROZEN_MPY_DIR ?= modules
+FROZEN_MPY_TOOL_ARGS = -mlongint-impl=none
 
 # include py core make definitions
 include $(TOP)/py/py.mk
 
 CROSS_COMPILE = arm-none-eabi-
 
+# Bricks must specify the following variables in their Makefile
+ifeq ($(MCU_SERIES),)
+$(error "MCU_SERIES is not specified - add it in <hub>/Makefile)
+else
+MCU_SERIES_LCASE = $(subst F,f,$(subst L,l,$(MCU_SERIES)))
+endif
+ifeq ($(CMSIS_MCU),)
+$(error "CMSIS_MCU is not specified - add it in <hub>/Makefile")
+endif
+ifeq ($(PBIO_PLATFORM),)
+$(error "PBIO_PLATFORM is not specified - add it in <hub>/Makefile)
+endif
+
 INC += -I.
 INC += -I$(TOP)
+INC += -I$(TOP)/ports/pybricks/lib/libfixmath/libfixmath
+INC += -I$(TOP)/ports/pybricks/lib/pbio/include
+INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)
+INC += -I$(TOP)/ports/pybricks/lib/pbio
+INC += -I$(TOP)/ports/pybricks/extmod
 INC += -I$(BUILD)
 
-CFLAGS_CORTEX_M4 = -mthumb -mtune=cortex-m4 -mabi=aapcs-linux -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard -fsingle-precision-constant -Wdouble-promotion
-CFLAGS = $(CFLAGS_LEJOS) $(INC) -Wall -Werror -std=c99 -nostdlib $(COPT)
-LDFLAGS = $(LDFLAGS_LEJOS)
+COPT += -DFIXMATH_NO_CTYPE
+C_OPTIMISATION_FLAGS = -Os
+CFLAGS = $(BASE_ABI_FLAGS) -mthumb \
+	-ffreestanding -fsigned-char \
+	$(C_OPTIMISATION_FLAGS) -g \
+	-Inxt-firmware-drivers/nxt \
+	$(INC) -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(MCU_SERIES)) $(COPT) \
+	-fsingle-precision-constant -Wdouble-promotion
+
+BASE_ABI_FLAGS := -mcpu=arm7tdmi -mlittle-endian -mfloat-abi=soft -mthumb-interwork
+LIB_ABI_FLAGS  := $(BASE_ABI_FLAGS) -mthumb
+LDFLAGS = $(LIB_ABI_FLAGS) -nostdlib -Wl,-cref,--gc-sections
 
 # Tune for Debugging or Optimization
 ifeq ($(DEBUG), 1)
@@ -169,30 +62,73 @@ CFLAGS += -Os -DNDEBUG
 CFLAGS += -fdata-sections -ffunction-sections
 endif
 
-LIBS =
+ifneq ($(FROZEN_MPY_DIR),)
+CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
+CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
+endif
 
-SRC_C = \
+LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
+
+SRC_C = $(addprefix ports/pybricks/bricks/nxt/,\
 	main.c \
-	lib/utils/printf.c \
+	)
+
+SRC_C += \
 	lib/utils/stdout_helpers.c \
 	lib/utils/pyexec.c \
 	lib/libc/string0.c \
 	lib/mp-readline/readline.c \
-	$(BUILD)/_frozen_mpy.c \
+	lib/utils/interrupt_char.c \
+	# lib/utils/printf.c \ # FIXME: Conflict with NXT printf
 
-OBJ = $(PY_CORE_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
+SRC_C_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
+	aic.c \
+	systick.c \
+	udp.c \
+	twi.c \
+	nxt_spi.c \
+	nxt_motors.c \
+	data_abort.c \
+	display.c \
+	i2c.c \
+	sound.c \
+	bt.c \
+	hs.c \
+	usart.c \
+	flashprog.c \
+	flashwrite.c \
+	printf.c \
+	maininit.c \
+	nxt_avr.c \
+	sensors.c \
+	nxt_lcd.c \
+	)
 
-$(BUILD)/_frozen_mpy.c: $(BUILD)/frozentest.mpy $(BUILD)/genhdr/qstrdefs.generated.h
-	$(ECHO) "MISC freezing bytecode" $(BUILD)
-	$(Q)$(TOP)/tools/mpy-tool.py -f -q $(BUILD)/genhdr/qstrdefs.preprocessed.h -mlongint-impl=none $< > $@
+SRC_S_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
+	interrupts.s \
+	vectors.s \
+	init.s \
+	irq.s \
+	)	
 
-$(BUILD)/frozentest.mpy: frozentest.py
-	$(Q)$(MPY_CROSS) -o $@ $(MPY_CROSS_FLAGS) $^
+OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_C_NXT:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SRC_S_NXT:.s=.o))
 
-ifeq ($(STANDALONE), 1)
-mpobjects:
-else
-mpobjects: $(OBJ) $(BUILD)/_frozen_mpy.c
-endif
+# List of sources for qstr extraction
+SRC_QSTR += $(SRC_C) $(PYBRICKS_PY_SRC_C)
+# Append any auto-generated sources that are needed by sources listed in SRC_QSTR
+SRC_QSTR_AUTO_DEPS +=
+
+all: $(BUILD)/firmware.bin
+
+$(BUILD)/firmware.elf: nxt-firmware-drivers/nxt/lejos_nxt_rom.lds $(OBJ)
+	@echo "### Linking $@ using linker script $<"
+	$(CC) $(LDFLAGS) -Wl,-T,$<,-Map,${@:.elf=.map} -o $@ $(OBJ) $(LIBS)
+
+$(BUILD)/firmware.bin: $(BUILD)/firmware.elf
+	$(ECHO) "BIN creating firmware file"
+	$(OBJCOPY) -O binary $< $@
+	$(ECHO) "`wc -c < $@` bytes"
 
 include $(TOP)/py/mkrules.mk
