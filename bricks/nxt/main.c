@@ -1,16 +1,32 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2018-2019 David Lechner
+// Copyright (c) 2019 Laurens Valk
+
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <pbio/main.h>
+#include <pbio/button.h>
+#include <pbio/main.h>
+#include <pbio/light.h>
+#include <pbsys/sys.h>
+
+#include "pbobj.h"
 
 #include "py/compile.h"
 #include "py/runtime.h"
 #include "py/repl.h"
 #include "py/gc.h"
 #include "py/mperrno.h"
+#include "py/persistentcode.h"
 #include "lib/utils/pyexec.h"
+#include "lib/utils/interrupt_char.h"
 
-#include "nxt-firmware-drivers/nxt/display.h"
-#include "nxt-firmware-drivers/nxt/maininit.h"
+#include "py/mphal.h"
+
+#include <nxt/display.h>
+#include <nxt/maininit.h>
 
 // Receive single character
 int mp_hal_stdin_rx_chr(void) {
@@ -21,53 +37,95 @@ int mp_hal_stdin_rx_chr(void) {
 // Send string of given length
 void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
     display_string(str);
+    display_update();
 }
-
-
-#if MICROPY_ENABLE_COMPILER
-void do_str(const char *src, mp_parse_input_kind_t input_kind) {
-    nlr_buf_t nlr;
-    if (nlr_push(&nlr) == 0) {
-        mp_lexer_t *lex = mp_lexer_new_from_str_len(MP_QSTR__lt_stdin_gt_, src, strlen(src), 0);
-        qstr source_name = lex->source_name;
-        mp_parse_tree_t parse_tree = mp_parse(lex, input_kind);
-        mp_obj_t module_fun = mp_compile(&parse_tree, source_name, MP_EMIT_OPT_NONE, true);
-        mp_call_function_0(module_fun);
-        nlr_pop();
-    } else {
-        // uncaught exception
-        mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
-    }
-}
-#endif
 
 static char *stack_top;
 #if MICROPY_ENABLE_GC
 static char heap[2048];
 #endif
 
+// callback for when stop button is pressed
+static void user_program_stop_func(void) {
+    // we can only raise an exception if the VM is running
+    // mp_interrupt_char will be either -1 or 0 when VM is not running
+    if (mp_interrupt_char > 0) {
+        mp_keyboard_interrupt();
+    }
+}
+
+static bool user_program_stdin_event_func(uint8_t c) {
+    if (c == mp_interrupt_char) {
+        mp_keyboard_interrupt();
+        return true;
+    }
+
+    return false;
+}
+
+static const pbsys_user_program_callbacks_t user_program_callbacks = {
+    .stop           = user_program_stop_func,
+    .stdin_event    = user_program_stdin_event_func,
+};
+
+static void pb_imports() {
+
+}
+
 int main(int argc, char **argv) {
     int stack_dummy;
     stack_top = (char*)&stack_dummy;
 
+    pbio_init();
+    nxt_init();
+
     #if MICROPY_ENABLE_GC
     gc_init(heap, heap + sizeof(heap));
     #endif
-    nxt_init();
+
+    // (re)boot message
+    mp_print_str(&mp_plat_print, "--------\n"
+                                 "Pybricks\n"
+                                 "--------\n");
+
+    // Get system hardware ready
+    pbsys_prepare_user_program(&user_program_callbacks);
+
+    // Initialize MicroPython and run default imports
     mp_init();
+    pb_imports();
+
     pyexec_frozen_module("frozen.py");
+
+    // Uninitialize MicroPython and the system hardware
     mp_deinit();
+    pbsys_unprepare_user_program();
+
+    pbio_deinit();
     nxt_deinit();
     return 0;
 }
 
+// defined in linker script
+extern uint32_t __free_ram_end__;
+
+// FIXME: Define gc_helper_get_regs_and_sp like in ports/stm32/gchelper_m0.s
+
 void gc_collect(void) {
-    // WARNING: This gc_collect implementation doesn't try to get root
-    // pointers from CPU registers, and thus may function incorrectly.
-    void *dummy;
+    // start the GC
     gc_collect_start();
-    gc_collect_root(&dummy, ((mp_uint_t)stack_top - (mp_uint_t)&dummy) / sizeof(mp_uint_t));
+
+    // get the registers and the sp
+    // uintptr_t regs[10];
+    // uintptr_t sp = gc_helper_get_regs_and_sp(regs);
+
+    // trace the stack, including the registers (since they live on the stack in this function)
+    // gc_collect_root((void**)sp, ((uint32_t)&__free_ram_end__ - sp) / sizeof(uint32_t));
+
+    // end the GC
     gc_collect_end();
+
+    // for debug during development
     gc_dump_info();
 }
 
@@ -78,11 +136,6 @@ mp_lexer_t *mp_lexer_new_from_file(const char *filename) {
 mp_import_stat_t mp_import_stat(const char *path) {
     return MP_IMPORT_STAT_NO_EXIST;
 }
-
-mp_obj_t mp_builtin_open(size_t n_args, const mp_obj_t *args, mp_map_t *kwargs) {
-    return mp_const_none;
-}
-MP_DEFINE_CONST_FUN_OBJ_KW(mp_builtin_open_obj, 1, mp_builtin_open);
 
 void nlr_jump_fail(void *val) {
     while (1);

@@ -62,7 +62,6 @@ nxt:
 
 clean-nxt: clean-mpy-cross
 	@$(MAKE) -C bricks/nxt clean
-	@$(MAKE) -C bricks/nxt clean-standalone
 
 clean-mpy-cross:
 	@$(MAKE) -C ../../mpy-cross clean

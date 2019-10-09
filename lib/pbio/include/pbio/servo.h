@@ -39,8 +39,13 @@ typedef struct _pbio_servo_t {
     pbio_log_t log;
 } pbio_servo_t;
 
+#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER == 0
+static inline void _pbio_servo_reset_all(void) { }
+static inline void _pbio_servo_poll(void) { }
+#else
 void _pbio_servo_reset_all(void);
 void _pbio_servo_poll(void);
+#endif
 
 pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction_t direction, fix16_t gear_ratio);  // TODO: Make dc and servo version
 

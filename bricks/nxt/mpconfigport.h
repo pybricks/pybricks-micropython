@@ -56,6 +56,8 @@
 #define MICROPY_CPYTHON_COMPAT      (0)
 #define MICROPY_LONGINT_IMPL        (MICROPY_LONGINT_IMPL_NONE)
 #define MICROPY_FLOAT_IMPL          (MICROPY_FLOAT_IMPL_NONE)
+#define MICROPY_KBD_EXCEPTION       (1)
+#define MICROPY_ENABLE_SCHEDULER    (0)
 
 // type definitions for the specific machine
 
@@ -72,26 +74,43 @@ typedef unsigned mp_uint_t; // must be pointer size
 
 typedef long mp_off_t;
 
-#define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn_cooked(str, len)
-
-// extra built in names to add to the global namespace
-#define MICROPY_PORT_BUILTINS \
-    { MP_ROM_QSTR(MP_QSTR_open), MP_ROM_PTR(&mp_builtin_open_obj) },
+#define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn(str, len)
 
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>
 
-#define MICROPY_HW_BOARD_NAME "minimal"
-#define MICROPY_HW_MCU_NAME "unknown-cpu"
+#include <nxt/interrupts.h>
+#include <nxt/systick.h>
 
-#ifdef __linux__
-#define MICROPY_MIN_USE_STDOUT (1)
-#endif
+// TODO: not sure if we will have a use for this
+#define SOCKET_POLL
 
-#ifdef __thumb__
-#define MICROPY_MIN_USE_CORTEX_CPU (1)
-#define MICROPY_MIN_USE_STM32_MCU (1)
-#endif
+#define MICROPY_BEGIN_ATOMIC_SECTION()     interrupts_get_and_disable()
+#define MICROPY_END_ATOMIC_SECTION(state)  interrupts_enable()
+
+// FIXME
+static inline void __WFI() {
+    systick_wait_ms(1);
+}
+
+#define MICROPY_VM_HOOK_LOOP \
+    do { \
+        extern int pbio_do_one_event(void); \
+        pbio_do_one_event(); \
+    } while (0);
+
+#define MICROPY_EVENT_POLL_HOOK \
+    do { \
+        extern void mp_handle_pending(void); \
+        mp_handle_pending(); \
+        SOCKET_POLL \
+        extern int pbio_do_one_event(void); \
+        while (pbio_do_one_event()) { } \
+        __WFI(); \
+    } while (0);
+
+#define MICROPY_HW_BOARD_NAME "LEGO MINDSTORMS NXT Brick"
+#define MICROPY_HW_MCU_NAME "AT91SAM7S256"
 
 #define MP_STATE_PORT MP_STATE_VM
 

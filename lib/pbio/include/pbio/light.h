@@ -30,6 +30,8 @@ typedef enum {
     PBIO_LIGHT_COLOR_PURPLE = 9,   /**< The light or detected color is purple */
 } pbio_light_color_t;
 
+#if PBDRV_CONFIG_LIGHT
+
 /**
  * Light patterns.
  */
@@ -85,5 +87,10 @@ void _pbio_light_set_user_mode(bool user_mode);
 #define pbio_light_on_with_pattern(p, c, t) _pbio_light_on((p), (c), (t))
 #define pbio_light_off(p) _pbio_light_on((p), PBIO_LIGHT_COLOR_NONE, PBIO_LIGHT_PATTERN_NONE)
 /** @endcond */
+
+#else
+static inline void _pbio_light_poll(uint32_t now) {
+}
+#endif // PBDRV_CONFIG_LIGHT
 
 #endif // _PBIO_LIGHT_H_

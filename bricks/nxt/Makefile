@@ -35,6 +35,7 @@ endif
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(TOP)/ports/pybricks/lib/libfixmath/libfixmath
+INC += -I$(TOP)/ports/pybricks/bricks/nxt/nxt-firmware-drivers
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)
 INC += -I$(TOP)/ports/pybricks/lib/pbio
@@ -46,7 +47,6 @@ C_OPTIMISATION_FLAGS = -Os
 CFLAGS = $(BASE_ABI_FLAGS) -mthumb \
 	-ffreestanding -fsigned-char \
 	$(C_OPTIMISATION_FLAGS) -g \
-	-Inxt-firmware-drivers/nxt \
 	$(INC) -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(MCU_SERIES)) $(COPT) \
 	-fsingle-precision-constant -Wdouble-promotion
 
@@ -71,6 +71,7 @@ LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
 SRC_C = $(addprefix ports/pybricks/bricks/nxt/,\
 	main.c \
+	systick.c \
 	)
 
 SRC_C += \
@@ -109,11 +110,26 @@ SRC_S_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
 	vectors.s \
 	init.s \
 	irq.s \
-	)	
+	)
+
+PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
+	platform/$(PBIO_PLATFORM)/clock.c \
+	platform/$(PBIO_PLATFORM)/platform.c \
+	platform/$(PBIO_PLATFORM)/sys.c \
+	drv/battery/battery_nxt.c \
+	drv/button/button_nxt.c \
+	drv/$(PBIO_PLATFORM)/motor.c \
+	src/main.c \
+	sys/autostart.c \
+	sys/etimer.c \
+	sys/process.c \
+	sys/timer.c \
+	)
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_C_NXT:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_S_NXT:.s=.o))
+OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
 SRC_QSTR += $(SRC_C) $(PYBRICKS_PY_SRC_C)
