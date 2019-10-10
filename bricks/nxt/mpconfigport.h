@@ -1,5 +1,23 @@
 #include <stdint.h>
 
+
+#define MICROPY_HW_BOARD_NAME           "LEGO MINDSTORMS NXT Brick"
+#define MICROPY_HW_MCU_NAME             "AT91SAM7S256"
+
+#define PYBRICKS_HEAP_KB                32 // half of RAM
+
+// Pybricks hub module
+#define PYBRICKS_HUB_NAME               MP_QSTR_nxtbrick
+// #define PYBRICKS_HUB_MODULE             pb_module_nxtbrick
+
+// Pybricks modules
+#define PYBRICKS_PY_BATTERY             (1)
+#define PYBRICKS_PY_NXTDEVICES          (1)
+#define PYBRICKS_PY_MOTOR               (1)
+#define PYBRICKS_PY_PARAMETERS          (1)
+#define PYBRICKS_PY_TOOLS               (1)
+#define PYBRICKS_PY_ROBOTICS            (1)
+
 // options to control how MicroPython is built
 
 // You can disable the built-in MicroPython compiler by setting the following
@@ -58,6 +76,7 @@
 #define MICROPY_FLOAT_IMPL          (MICROPY_FLOAT_IMPL_NONE)
 #define MICROPY_KBD_EXCEPTION       (1)
 #define MICROPY_ENABLE_SCHEDULER    (0)
+#define MICROPY_PY_INSTANCE_ATTRS   (1)
 
 // type definitions for the specific machine
 
@@ -75,6 +94,44 @@ typedef unsigned mp_uint_t; // must be pointer size
 typedef long mp_off_t;
 
 #define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn(str, len)
+
+#define PYBRICKS_PY_EV3DEVICES          (0)
+
+#if PYBRICKS_PY_PARAMETERS
+extern const struct _mp_obj_module_t pb_module_parameters;
+#define _PYBRICKS_MODULE_PARAMETERS \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_parameters), (mp_obj_t)&pb_module_parameters },
+#else
+#define _PYBRICKS_MODULE_PARAMETERS
+#endif
+#if PYBRICKS_PY_TOOLS
+extern const struct _mp_obj_module_t pb_module_tools;
+#define _PYBRICKS_MODULE_TOOLS \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_tools), (mp_obj_t)&pb_module_tools },
+#else
+#define _PYBRICKS_MODULE_TOOLS
+#endif
+#if PYBRICKS_PY_ROBOTICS
+extern const struct _mp_obj_module_t pb_module_robotics;
+#define _PYBRICKS_MODULE_ROBOTICS \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_robotics), (mp_obj_t)&pb_module_robotics },
+#else
+#define _PYBRICKS_MODULE_ROBOTICS
+#endif
+#if PYBRICKS_PY_NXTDEVICES
+extern const struct _mp_obj_module_t pb_module_nxtdevices;
+#define _PYBRICKS_MODULE_NXTDEVICES \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_nxtdevices), (mp_obj_t)&pb_module_nxtdevices },
+#else
+#define _PYBRICKS_MODULE_NXTDEVICES
+#endif
+
+#define MICROPY_PORT_BUILTIN_MODULES \
+    _PYBRICKS_MODULE_PARAMETERS     \
+    _PYBRICKS_MODULE_NXTDEVICES     \
+    _PYBRICKS_MODULE_TOOLS          \
+    _PYBRICKS_MODULE_ROBOTICS       \
+
 
 // We need to provide a declaration/definition of alloca()
 #include <alloca.h>
@@ -108,9 +165,6 @@ static inline void __WFI() {
         while (pbio_do_one_event()) { } \
         __WFI(); \
     } while (0);
-
-#define MICROPY_HW_BOARD_NAME "LEGO MINDSTORMS NXT Brick"
-#define MICROPY_HW_MCU_NAME "AT91SAM7S256"
 
 #define MP_STATE_PORT MP_STATE_VM
 

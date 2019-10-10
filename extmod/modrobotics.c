@@ -8,6 +8,8 @@
 
 #include "py/mphal.h"
 #include "py/runtime.h"
+#include "py/obj.h"
+
 #include "pberror.h"
 #include "pbobj.h"
 #include "pbkwarg.h"

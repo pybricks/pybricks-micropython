@@ -80,7 +80,9 @@ SRC_C += \
 	lib/libc/string0.c \
 	lib/mp-readline/readline.c \
 	lib/utils/interrupt_char.c \
-	# lib/utils/printf.c \ # FIXME: Conflict with NXT printf
+	# lib/utils/printf.c
+	
+	# FIXME: Conflict with NXT printf
 
 SRC_C_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
 	aic.c \
@@ -112,14 +114,48 @@ SRC_S_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
 	irq.s \
 	)
 
+# Pybricks modules
+PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/extmod/,\
+	modadvanced.c \
+	modbattery.c \
+	modmotor.c \
+	modrobotics.c \
+	modnxtdevices.c \
+	modparameters.c \
+	modtools.c \
+	modlogger.c \
+	pberror.c \
+	pbhub.c \
+	pbobj.c \
+	)
+
+
+LIBFIXMATH_SRC_C = $(addprefix ports/pybricks/lib/libfixmath/libfixmath/,\
+	fix16_sqrt.c \
+	fix16_str.c \
+	fix16.c \
+	uint32.c \
+	)
+
 PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
+	drv/$(PBIO_PLATFORM)/motor.c \
+	drv/battery/battery_nxt.c \
+	drv/button/button_nxt.c \
 	platform/$(PBIO_PLATFORM)/clock.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	platform/$(PBIO_PLATFORM)/sys.c \
-	drv/battery/battery_nxt.c \
-	drv/button/button_nxt.c \
-	drv/$(PBIO_PLATFORM)/motor.c \
+	drv/counter/counter_core.c \
+	drv/counter/counter_nxt.c \
+	src/error.c \
 	src/main.c \
+	src/hbridge.c \
+	src/tacho.c \
+	src/logger.c \
+	src/servo.c \
+	src/drivebase.c \
+	src/control.c \
+	src/trajectory.c \
+	src/fixmath.c \
 	sys/autostart.c \
 	sys/etimer.c \
 	sys/process.c \
@@ -130,6 +166,8 @@ OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_C_NXT:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_S_NXT:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PY_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
 SRC_QSTR += $(SRC_C) $(PYBRICKS_PY_SRC_C)

@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include <pbio/main.h>
+#include <pbio/servo.h>
 #include <pbio/button.h>
 #include <pbio/main.h>
 #include <pbio/light.h>
@@ -28,6 +29,22 @@
 #include <nxt/display.h>
 #include <nxt/maininit.h>
 
+// FIXME: Decide whether or not to pre-allocate
+// memory for logging instead or just disable
+// logging altogether on some constrained ports.
+void *malloc(size_t n) {
+    return m_malloc(n);
+}
+void free(void *p) {
+    m_free(p);
+}
+
+static char *stack_top;
+#if MICROPY_ENABLE_GC
+static char heap[PYBRICKS_HEAP_KB * 1024];
+#endif
+
+
 // Receive single character
 int mp_hal_stdin_rx_chr(void) {
     unsigned char c = 0;
@@ -39,11 +56,6 @@ void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
     display_string(str);
     display_update();
 }
-
-static char *stack_top;
-#if MICROPY_ENABLE_GC
-static char heap[2048];
-#endif
 
 // callback for when stop button is pressed
 static void user_program_stop_func(void) {
@@ -69,7 +81,22 @@ static const pbsys_user_program_callbacks_t user_program_callbacks = {
 };
 
 static void pb_imports() {
+    // Import port-specific hub module
+    // PB_IMPORT_MODULE(PYBRICKS_HUB_NAME);
 
+    // Import generic modules
+    #if PYBRICKS_PY_PARAMETERS
+    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_parameters);
+    #endif
+    #if PYBRICKS_PY_TOOLS
+    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_tools);
+    #endif
+    #if PYBRICKS_PY_ROBOTICS
+    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_robotics);
+    #endif
+    #if PYBRICKS_PY_NXTDEVICES
+    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_nxtdevices);
+    #endif
 }
 
 int main(int argc, char **argv) {
@@ -84,9 +111,7 @@ int main(int argc, char **argv) {
     #endif
 
     // (re)boot message
-    mp_print_str(&mp_plat_print, "--------\n"
-                                 "Pybricks\n"
-                                 "--------\n");
+    mp_print_str(&mp_plat_print, "Pybricks\n");
 
     // Get system hardware ready
     pbsys_prepare_user_program(&user_program_callbacks);
@@ -95,6 +120,7 @@ int main(int argc, char **argv) {
     mp_init();
     pb_imports();
 
+    // Run a program
     pyexec_frozen_module("frozen.py");
 
     // Uninitialize MicroPython and the system hardware
