@@ -15,7 +15,7 @@ static void stall_set_flag_if_slow(pbio_control_stalled_t *stalled,
                                    ustime_t stall_time,
                                    ustime_t stall_time_limit,
                                    pbio_control_stalled_t flag) {
-    if (abs(rate_now) <= rate_limit && stall_time > stall_time_limit) {
+    if (int_abs(rate_now) <= rate_limit && stall_time > stall_time_limit) {
         // If the speed is less than the specified limit, set stalled flag.
         *stalled |= flag;
     }
@@ -133,7 +133,7 @@ pbio_error_t control_update_angle_target(pbio_control_t *ctl, ustime_t time_now,
         // ... and the upper tolerated bound
         count_now <= ctl->trajectory.th3 + ctl->settings.count_tolerance &&
         // And the motor stands still.
-        abs(rate_now) < ctl->settings.rate_tolerance)
+        int_abs(rate_now) < ctl->settings.rate_tolerance)
     {
         // If so, we have reached our goal. Decide what to do next.
         if (ctl->after_stop == PBIO_ACTUATION_HOLD) {
