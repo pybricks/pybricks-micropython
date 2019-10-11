@@ -5,7 +5,7 @@ import argparse
 import tempfile
 
 
-def get_bytes_from_file(path, fake_name=None):
+def get_bytes_from_file(path):
     """Compile a Python file with mpy-cross and return as list of bytes."""
 
     # Cross-compile Python file to .mpy
@@ -17,13 +17,8 @@ def get_bytes_from_file(path, fake_name=None):
     with open(mpy_path, 'rb') as mpy:
         contents = mpy.read()
 
-    # Override the module name if requested (else it is /path/to/script.py)
-    if fake_name:
-        bin_path = bytes(path.encode('utf-8'))
-        fake_path = bytes(fake_name.encode('utf-8'))
-        contents = contents.replace(bin_path, fake_path)
-
     # Remove the temporary .mpy file and return the contents
+    os.remove(path)
     os.remove(mpy_path)
     return [int(c) for c in contents]
 
@@ -32,9 +27,10 @@ def get_bytes_from_str(string):
     """Compile a Python command with mpy-cross and return as list of bytes."""
 
     # Write Python command to a temporary file and convert as a regular script.
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py') as f:
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
         f.write(string + '\n')
-        return get_bytes_from_file(f.name, fake_name='script.py')
+        f.flush()
+        return get_bytes_from_file(f.name)
 
 
 if __name__ == "__main__":

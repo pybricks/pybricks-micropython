@@ -39,9 +39,6 @@ static char *stack_top;
 static char heap[PYBRICKS_HEAP_KB * 1024];
 #endif
 
-
-#define MPY_MAX_BYTES (1024)
-
 typedef enum {
     WAITING_FOR_FIRST_RELEASE,
     WAITING_FOR_PRESS,
@@ -122,6 +119,8 @@ static uint32_t get_user_program(uint8_t **buf) {
     }
 
     // Get the length of the mpy file
+    mp_print_str(&mp_plat_print, "Waiting for length.\n");
+
     uint32_t len = 0;
     for (uint8_t i = 0; i < 4; i++) {
         c = mp_hal_stdin_rx_chr();
@@ -140,7 +139,7 @@ static uint32_t get_user_program(uint8_t **buf) {
     }
 
     // We are ready for the main program
-    // TODO: ACK that we are ready
+    mp_print_str(&mp_plat_print, "Ready to receive.\n");
 
     // Receive program over Bluetooth
     for (uint32_t i = 0; i < len; i++) {
