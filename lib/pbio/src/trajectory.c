@@ -169,7 +169,7 @@ pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, 
         w0 *= -1;
     }
     // In a forward maneuver, the target speed is always positive.
-    wt = int_abs(wt);
+    wt = abs(wt);
 
     // Limit initial speed, but evaluate square root only if necessary (usually not)
     if (w0 > 0 && (w0*w0)/(2*a) > th3 - th0) {

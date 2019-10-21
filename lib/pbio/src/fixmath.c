@@ -30,7 +30,3 @@ int32_t int_sqrt(int32_t n) {
         x0 = x1;
     }
 }
-
-int32_t int_abs(int32_t val) {
-    return val < 0 ? -val: val;
-}

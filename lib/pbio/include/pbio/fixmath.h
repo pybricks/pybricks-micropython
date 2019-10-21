@@ -13,6 +13,5 @@
 int32_t int_fix16_div(int32_t a, fix16_t b);
 int32_t int_fix16_mul(int32_t a, fix16_t b);
 int32_t int_sqrt(int32_t n);
-int32_t int_abs(int32_t val);
 
 #endif // _PBIO_FIXMATH_H_
