@@ -135,7 +135,7 @@ int main(int argc, char **argv) {
 // defined in linker script
 extern uint32_t __free_ram_end__;
 
-// FIXME: Define gc_helper_get_regs_and_sp like in ports/stm32/gchelper_m0.s
+// FIXME: Define gc_helper_get_regs_and_sp like in lib/utils/gchelper_m0.s
 
 void gc_collect(void) {
     // start the GC

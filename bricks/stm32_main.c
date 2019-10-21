@@ -177,7 +177,7 @@ static void run_user_program(uint32_t len, uint8_t *buf) {
 
     // Allow script to be stopped with hub button
     mp_hal_set_interrupt_char(3);
-        
+
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
         mp_obj_t module_fun = mp_make_function_from_raw_code(raw_code, MP_OBJ_NULL, MP_OBJ_NULL);
@@ -294,7 +294,7 @@ soft_reset:
 
 // defined in linker script
 extern uint32_t _estack;
-// defined in ports/stm32/gchelper_m0.s
+// defined in lib/utils/gchelper_m0.s
 uintptr_t gc_helper_get_regs_and_sp(uintptr_t *regs);
 
 void gc_collect(void) {

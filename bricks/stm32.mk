@@ -115,9 +115,9 @@ SRC_S = \
 	ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)/startup.s \
 
 ifeq ($(MCU_SERIES),F0)
-	SRC_S += $(TOP)/ports/stm32/gchelper_m0.s
+	SRC_S += $(TOP)/lib/utils/gchelper_m0.s
 else
-	SRC_S += $(TOP)/ports/stm32/gchelper.s
+	SRC_S += $(TOP)/lib/utils/gchelper_m0.s
 endif
 
 # Pybricks modules
