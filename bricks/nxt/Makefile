@@ -17,7 +17,7 @@ FROZEN_MPY_TOOL_ARGS = -mlongint-impl=none
 # include py core make definitions
 include $(TOP)/py/py.mk
 
-CROSS_COMPILE = arm-none-eabi-
+CROSS_COMPILE ?= arm-none-eabi-
 
 # Bricks must specify the following variables in their Makefile
 ifeq ($(MCU_SERIES),)
@@ -81,7 +81,7 @@ SRC_C += \
 	lib/mp-readline/readline.c \
 	lib/utils/interrupt_char.c \
 	# lib/utils/printf.c
-	
+
 	# FIXME: Conflict with NXT printf
 
 SRC_C_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
