@@ -38,11 +38,11 @@ COPT += -DFIXMATH_NO_CTYPE
 
 CFLAGS_MCU = -mthumb -mtune=arm7tdmi -mcpu=arm7tdmi -msoft-float
 CFLAGS = $(INC) -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU) $(COPT)
+LDSCRIPT = $(PBIO_PLATFORM).ld
+LDFLAGS = -nostdlib -T $(LDSCRIPT) -Map=$@.map --cref --gc-sections
 
 # avoid doubles
 CFLAGS += -fsingle-precision-constant -Wdouble-promotion
-
-LDFLAGS = -nostdlib -Wl,-cref,--gc-sections
 
 # Tune for Debugging or Optimization
 ifeq ($(DEBUG), 1)
@@ -166,9 +166,9 @@ SRC_QSTR_AUTO_DEPS +=
 
 all: $(BUILD)/firmware.bin
 
-$(BUILD)/firmware.elf: nxt-firmware-drivers/nxt/lejos_nxt_rom.lds $(OBJ)
-	@echo "### Linking $@ using linker script $<"
-	$(CC) $(LDFLAGS) -Wl,-T,$<,-Map,${@:.elf=.map} -o $@ $(OBJ) $(LIBS)
+$(BUILD)/firmware.elf: $(LDSCRIPT) $(OBJ)
+	$(ECHO) "LINK $@"
+	$(Q)$(LD) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(ECHO) "BIN creating firmware file"
