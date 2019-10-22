@@ -38,8 +38,16 @@ def download_and_run(device, mpy_bytes):
 
 
 if __name__ == "__main__":
+    examples = """Examples:
+
+    python3 tools/runserial.py --dev /dev/ttyACM0 --string 'print("Hello!")'
+    python3 tools/runserial.py --dev /dev/ttyACM0 --file ~/helloworld.py
+    """
+
     parser = argparse.ArgumentParser(
-        description='Run Pybricks scripts or commands over serial port.')
+        description='Run Pybricks scripts or commands over serial port.',
+        epilog=examples,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument(
         '--dev', dest='device', nargs='?', type=str, required=True)
