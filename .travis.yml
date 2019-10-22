@@ -112,7 +112,7 @@ jobs:
     # Pybricks City Hub (Hub No. 4)
     - stage: test
       env:
-        - NAME="Pybricks Hub No. 4 build"
+        - NAME="Pybricks City Hub build"
         - PATH="/opt/gcc-arm-none-eabi-7-2018-q2-update/bin:${PATH}"
       install:
         - npm install -g jfrog-cli-go
