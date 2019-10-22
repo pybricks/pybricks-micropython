@@ -6,9 +6,9 @@ import time
 from mpybytes import get_bytes_from_file, get_bytes_from_str
 
 
-def download_and_run(mpy_bytes):
+def download_and_run(device, mpy_bytes):
     # Open serial port
-    ser = serial.Serial('/dev/ttyACM0', baudrate=115200, interCharTimeout=1)
+    ser = serial.Serial(device, baudrate=115200, interCharTimeout=1)
 
     # Get the mpy file size, divide into 4 bytes and send to hub
     size = len(mpy_bytes)
@@ -40,6 +40,9 @@ def download_and_run(mpy_bytes):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Run Pybricks scripts or commands over serial port.')
+
+    parser.add_argument(
+        '--dev', dest='device', nargs='?', type=str, required=True)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--file', dest='file', nargs='?', const=1, type=str)
     group.add_argument('--string', dest='string', nargs='?', const=1, type=str)
@@ -51,4 +54,4 @@ if __name__ == "__main__":
     if args.string:
         bytearr = get_bytes_from_str(args.string)
 
-    download_and_run(bytearr)
+    download_and_run(args.device, bytearr)
