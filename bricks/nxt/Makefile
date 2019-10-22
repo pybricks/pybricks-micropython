@@ -45,8 +45,10 @@ INC += -I$(BUILD)
 COPT += -DFIXMATH_NO_CTYPE
 CFLAGS = $(BASE_ABI_FLAGS) -mthumb \
 	-ffreestanding -fsigned-char \
-	$(INC) -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(MCU_SERIES)) $(COPT) \
-	-fsingle-precision-constant -Wdouble-promotion
+	$(INC) -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(MCU_SERIES)) $(COPT)
+
+# avoid doubles
+CFLAGS += -fsingle-precision-constant -Wdouble-promotion
 
 BASE_ABI_FLAGS := -mcpu=arm7tdmi -mlittle-endian -mfloat-abi=soft -mthumb-interwork
 LDFLAGS = -nostdlib -Wl,-cref,--gc-sections
