@@ -43,14 +43,13 @@ INC += -I$(TOP)/ports/pybricks/extmod
 INC += -I$(BUILD)
 
 COPT += -DFIXMATH_NO_CTYPE
-CFLAGS = $(BASE_ABI_FLAGS) -mthumb \
-	-ffreestanding -fsigned-char \
-	$(INC) -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(MCU_SERIES)) $(COPT)
+
+CFLAGS_MCU = -mthumb -mtune=arm7tdmi -mcpu=arm7tdmi -msoft-float
+CFLAGS = $(INC) -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU) $(COPT)
 
 # avoid doubles
 CFLAGS += -fsingle-precision-constant -Wdouble-promotion
 
-BASE_ABI_FLAGS := -mcpu=arm7tdmi -mlittle-endian -mfloat-abi=soft -mthumb-interwork
 LDFLAGS = -nostdlib -Wl,-cref,--gc-sections
 
 # Tune for Debugging or Optimization
