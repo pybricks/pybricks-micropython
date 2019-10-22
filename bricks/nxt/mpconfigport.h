@@ -145,11 +145,6 @@ extern const struct _mp_obj_module_t pb_module_nxtdevices;
 #define MICROPY_BEGIN_ATOMIC_SECTION()     interrupts_get_and_disable()
 #define MICROPY_END_ATOMIC_SECTION(state)  if (state) { interrupts_enable(); }
 
-// FIXME
-static inline void __WFI() {
-    systick_wait_ms(1);
-}
-
 #define MICROPY_VM_HOOK_LOOP \
     do { \
         extern int pbio_do_one_event(void); \
@@ -163,7 +158,6 @@ static inline void __WFI() {
         SOCKET_POLL \
         extern int pbio_do_one_event(void); \
         while (pbio_do_one_event()) { } \
-        __WFI(); \
     } while (0);
 
 #define MP_STATE_PORT MP_STATE_VM
