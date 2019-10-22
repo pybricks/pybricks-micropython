@@ -10,6 +10,7 @@ def get_bytes_from_file(path):
 
     # Cross-compile Python file to .mpy
     mpy_path = os.path.splitext(path)[0] + '.mpy'
+    proc = mpy_cross.run(path, '--version')
     proc = mpy_cross.run(path, '-mno-unicode', '-o', mpy_path)
     proc.wait()
 
@@ -27,14 +28,15 @@ def get_bytes_from_str(string):
     """Compile a Python command with mpy-cross and return as list of bytes."""
 
     # Write Python command to a temporary file and convert as a regular script.
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+    with tempfile.NamedTemporaryFile('w', suffix='.py', delete=False) as f:
         f.write(string + '\n')
         f.flush()
         return get_bytes_from_file(f.name)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Convert Python scripts or commands to .mpy byte streams.')
+    parser = argparse.ArgumentParser(
+        description='Convert Python scripts or commands to .mpy byte streams.')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--file', dest='file', nargs='?', const=1, type=str)
     group.add_argument('--string', dest='string', nargs='?', const=1, type=str)

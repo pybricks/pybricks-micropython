@@ -24,7 +24,8 @@ def download_and_run(mpy_bytes):
     # Split binary up in digestable chunks
     n = 1
     chunks = [mpy_bytes[i:i+n] for i in range(0, len(mpy_bytes), n)]
-    print('Sending mpy of {0} bytes in {1} chunks of {2} bytes each'.format(size, len(chunks), n))
+    print('Sending mpy of {0} bytes in {1} chunks of '
+          '{2} bytes each'.format(size, len(chunks), n))
 
     # Send the data
     for chunk in chunks:
@@ -37,7 +38,8 @@ def download_and_run(mpy_bytes):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Run Pybricks scripts or commands over serial port.')
+    parser = argparse.ArgumentParser(
+        description='Run Pybricks scripts or commands over serial port.')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--file', dest='file', nargs='?', const=1, type=str)
     group.add_argument('--string', dest='string', nargs='?', const=1, type=str)
