@@ -1,4 +1,6 @@
-# MicroPython
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2013, 2014 Damien P. George
+# Copyright (C) 2019 David Lechner <david@pybricks.com>
 
 PBIO_PLATFORM = nxt
 
