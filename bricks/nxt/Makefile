@@ -171,7 +171,7 @@ $(BUILD)/firmware.elf: $(LDSCRIPT) $(OBJ)
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(ECHO) "BIN creating firmware file"
-	$(OBJCOPY) -O binary $< $@
+	$(Q)$(OBJCOPY) -O binary $< $@
 	$(ECHO) "`wc -c < $@` bytes"
 
 include $(TOP)/py/mkrules.mk
