@@ -71,18 +71,92 @@ PB_DEFINE_CONST_ENUM(motor_Direction_enum, motor_Direction_enum_table);
 
 /* Color enum */
 
-STATIC const mp_rom_map_elem_t pb_Color_enum_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_BLACK),   MP_ROM_INT(PBIO_LIGHT_COLOR_BLACK)  },
-    { MP_ROM_QSTR(MP_QSTR_PURPLE),  MP_ROM_INT(PBIO_LIGHT_COLOR_PURPLE) },
-    { MP_ROM_QSTR(MP_QSTR_BLUE),    MP_ROM_INT(PBIO_LIGHT_COLOR_BLUE)   },
-    { MP_ROM_QSTR(MP_QSTR_GREEN),   MP_ROM_INT(PBIO_LIGHT_COLOR_GREEN)  },
-    { MP_ROM_QSTR(MP_QSTR_YELLOW),  MP_ROM_INT(PBIO_LIGHT_COLOR_YELLOW) },
-    { MP_ROM_QSTR(MP_QSTR_ORANGE),  MP_ROM_INT(PBIO_LIGHT_COLOR_ORANGE) },
-    { MP_ROM_QSTR(MP_QSTR_RED),     MP_ROM_INT(PBIO_LIGHT_COLOR_RED)    },
-    { MP_ROM_QSTR(MP_QSTR_WHITE),   MP_ROM_INT(PBIO_LIGHT_COLOR_WHITE)  },
-    { MP_ROM_QSTR(MP_QSTR_BROWN),   MP_ROM_INT(PBIO_LIGHT_COLOR_BROWN)  },
+const mp_obj_type_t pb_enum_type_Color;
+
+// Color is just like the other enums, but we define entries manually
+// instead of using the MP_ROM_ENUM_ELEM macro, so we can also return
+// these constants from color sensors.
+const pb_obj_enum_elem_t pb_const_black = {
+    {&pb_enum_type_Color},
+    .name = MP_QSTR_BLACK,
+    .value = PBIO_LIGHT_COLOR_BLACK
 };
-PB_DEFINE_CONST_ENUM(pb_Color_enum, pb_Color_enum_table);
+
+const pb_obj_enum_elem_t pb_const_purple = {
+    {&pb_enum_type_Color},
+    .name = MP_QSTR_PURPLE,
+    .value = PBIO_LIGHT_COLOR_PURPLE
+};
+
+const pb_obj_enum_elem_t pb_const_blue = {
+    {&pb_enum_type_Color},
+    .name = MP_QSTR_BLUE,
+    .value = PBIO_LIGHT_COLOR_BLUE
+};
+
+const pb_obj_enum_elem_t pb_const_green = {
+    {&pb_enum_type_Color},
+    .name = MP_QSTR_GREEN,
+    .value = PBIO_LIGHT_COLOR_GREEN
+};
+
+const pb_obj_enum_elem_t pb_const_yellow = {
+    {&pb_enum_type_Color},
+    .name = MP_QSTR_YELLOW,
+    .value = PBIO_LIGHT_COLOR_YELLOW
+};
+
+const pb_obj_enum_elem_t pb_const_orange = {
+    {&pb_enum_type_Color},
+    .name = MP_QSTR_ORANGE,
+    .value = PBIO_LIGHT_COLOR_ORANGE
+};
+
+const pb_obj_enum_elem_t pb_const_red = {
+    {&pb_enum_type_Color},
+    .name = MP_QSTR_RED,
+    .value = PBIO_LIGHT_COLOR_RED
+};
+
+const pb_obj_enum_elem_t pb_const_white = {
+    {&pb_enum_type_Color},
+    .name = MP_QSTR_WHITE,
+    .value = PBIO_LIGHT_COLOR_WHITE
+};
+
+const pb_obj_enum_elem_t pb_const_brown = {
+    {&pb_enum_type_Color},
+    .name = MP_QSTR_BROWN,
+    .value = PBIO_LIGHT_COLOR_BROWN
+};
+
+STATIC const mp_rom_map_elem_t pb_Color_enum_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_BLACK),   MP_ROM_PTR(&pb_const_black)  },
+    { MP_ROM_QSTR(MP_QSTR_PURPLE),  MP_ROM_PTR(&pb_const_purple) },
+    { MP_ROM_QSTR(MP_QSTR_BLUE),    MP_ROM_PTR(&pb_const_blue)   },
+    { MP_ROM_QSTR(MP_QSTR_GREEN),   MP_ROM_PTR(&pb_const_green)  },
+    { MP_ROM_QSTR(MP_QSTR_YELLOW),  MP_ROM_PTR(&pb_const_yellow) },
+    { MP_ROM_QSTR(MP_QSTR_ORANGE),  MP_ROM_PTR(&pb_const_orange) },
+    { MP_ROM_QSTR(MP_QSTR_RED),     MP_ROM_PTR(&pb_const_red)    },
+    { MP_ROM_QSTR(MP_QSTR_WHITE),   MP_ROM_PTR(&pb_const_white)   },
+    { MP_ROM_QSTR(MP_QSTR_BROWN),   MP_ROM_PTR(&pb_const_brown)   },
+};
+STATIC MP_DEFINE_CONST_DICT(pb_parameters_Color_locals_dict, pb_Color_enum_table);
+
+STATIC void enum_class_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
+    pb_obj_enum_elem_t *self = MP_OBJ_TO_PTR(self_in);
+    mp_printf(print, qstr_str(self->base.type->name));
+    mp_printf(print, ".");
+    mp_printf(print, qstr_str(self->name));
+}
+
+const mp_obj_type_t pb_enum_type_Color = {
+    { &mp_type_type },
+    .name = MP_QSTR_Color,
+    .locals_dict = (mp_obj_dict_t*)&(pb_parameters_Color_locals_dict),
+    .print = enum_class_print,
+};
+
 
 /* Generic button enum */
 
@@ -109,7 +183,7 @@ STATIC const mp_rom_map_elem_t parameters_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Port),        MP_ROM_PTR(&pb_Port_enum)           },
     { MP_ROM_QSTR(MP_QSTR_Stop),        MP_ROM_PTR(&motor_Stop_enum)        },
     { MP_ROM_QSTR(MP_QSTR_Direction),   MP_ROM_PTR(&motor_Direction_enum)   },
-    { MP_ROM_QSTR(MP_QSTR_Color),       MP_ROM_PTR(&pb_Color_enum)          },
+    { MP_ROM_QSTR(MP_QSTR_Color),       MP_ROM_PTR(&pb_enum_type_Color)     },
     { MP_ROM_QSTR(MP_QSTR_Button),      MP_ROM_PTR(&pb_Button_enum)         },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_parameters_globals, parameters_globals_table);

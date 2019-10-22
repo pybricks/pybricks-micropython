@@ -134,7 +134,6 @@ STATIC mp_obj_t motor_Motor_angle(mp_obj_t self_in) {
     pb_thread_exit();
 
     pb_assert(err);
-
     return mp_obj_new_int(angle);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_angle_obj, motor_Motor_angle);
