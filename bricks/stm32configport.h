@@ -147,9 +147,6 @@ extern const struct _mp_obj_module_t pb_module_robotics;
     _PYBRICKS_MODULE_TOOLS          \
     _PYBRICKS_MODULE_ROBOTICS       \
 
-// TODO: not sure if we will have a use for this
-#define SOCKET_POLL
-
 // We have inlined IRQ functions for efficiency (they are generally
 // 1 machine instruction).
 //
@@ -181,7 +178,6 @@ static inline mp_uint_t disable_irq(void) {
     do { \
         extern void mp_handle_pending(void); \
         mp_handle_pending(); \
-        SOCKET_POLL \
         extern int pbio_do_one_event(void); \
         while (pbio_do_one_event()) { } \
         __WFI(); \
