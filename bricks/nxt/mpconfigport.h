@@ -143,7 +143,7 @@ extern const struct _mp_obj_module_t pb_module_nxtdevices;
 #define SOCKET_POLL
 
 #define MICROPY_BEGIN_ATOMIC_SECTION()     interrupts_get_and_disable()
-#define MICROPY_END_ATOMIC_SECTION(state)  interrupts_enable()
+#define MICROPY_END_ATOMIC_SECTION(state)  if (state) { interrupts_enable(); }
 
 // FIXME
 static inline void __WFI() {
