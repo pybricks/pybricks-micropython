@@ -66,7 +66,8 @@ CFLAGS_MCU_F0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
 CFLAGS_MCU_F4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS_MCU_L4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(MCU_SERIES)) $(COPT)
-LDFLAGS = -nostdlib -T $(PBIO_PLATFORM).ld -Map=$@.map --cref --gc-sections
+LDSCRIPT = $(PBIO_PLATFORM).ld
+LDFLAGS = -nostdlib -T $(LDSCRIPT) -Map=$@.map --cref --gc-sections
 
 # avoid doubles
 CFLAGS += -fsingle-precision-constant -Wdouble-promotion
@@ -276,15 +277,15 @@ SRC_QSTR_AUTO_DEPS +=
 
 all: $(BUILD)/firmware.bin
 
-$(BUILD)/firmware-no-checksum.elf: $(OBJ)
-	$(Q)$(LD) --defsym=MPYSIZE=$(MPYSIZE) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $^ $(LIBS)
+$(BUILD)/firmware-no-checksum.elf: $(LDSCRIPT) $(OBJ)
+	$(Q)$(LD) --defsym=MPYSIZE=$(MPYSIZE) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 
 $(BUILD)/firmware-no-checksum.bin: $(BUILD)/firmware-no-checksum.elf
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .checksum $^ $@
 
 $(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(LD) --defsym=MPYSIZE=$(MPYSIZE) --defsym=CHECKSUM=`$(CHECKSUM) $(CHECKSUM_TYPE) $< $(FIRMWARE_MAX_SIZE)` $(LDFLAGS) -o $@ $(filter-out $<,$^) $(LIBS)
+	$(Q)$(LD) --defsym=MPYSIZE=$(MPYSIZE) --defsym=CHECKSUM=`$(CHECKSUM) $(CHECKSUM_TYPE) $< $(FIRMWARE_MAX_SIZE)` $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 	$(Q)$(SIZE) $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
