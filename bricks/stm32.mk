@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2013, 2014 Damien P. George
+# Copyright (C) 2019 David Lechner <david@pybricks.com>
 
 # This file is shared by all STM32-based Pybricks ports
 # Other ports should not use this file
