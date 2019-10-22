@@ -65,55 +65,52 @@ SRC_C = $(addprefix ports/pybricks/bricks/nxt/,\
 	)
 
 SRC_C += \
-	lib/utils/stdout_helpers.c \
-	lib/utils/pyexec.c \
 	lib/libc/string0.c \
 	lib/mp-readline/readline.c \
 	lib/utils/interrupt_char.c \
-	# lib/utils/printf.c
-
-	# FIXME: Conflict with NXT printf
+	lib/utils/pyexec.c \
+	lib/utils/stdout_helpers.c \
 
 SRC_C_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
 	aic.c \
-	systick.c \
-	udp.c \
-	twi.c \
-	nxt_spi.c \
-	nxt_motors.c \
+	bt.c \
 	data_abort.c \
 	display.c \
-	i2c.c \
-	sound.c \
-	bt.c \
-	hs.c \
-	usart.c \
 	flashprog.c \
 	flashwrite.c \
-	printf.c \
+	hs.c \
+	i2c.c \
 	maininit.c \
 	nxt_avr.c \
-	sensors.c \
 	nxt_lcd.c \
+	nxt_motors.c \
+	nxt_spi.c \
+	printf.c \
+	sensors.c \
+	sound.c \
+	systick.c \
+	twi.c \
+	udp.c \
+	usart.c \
 	)
 
 SRC_S_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
-	interrupts.s \
-	vectors.s \
 	init.s \
+	interrupts.s \
 	irq.s \
+	vectors.s \
 	)
 
 # Pybricks modules
 PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modadvanced.c \
 	modbattery.c \
+	modlogger.c \
 	modmotor.c \
-	modrobotics.c \
 	modnxtdevices.c \
 	modparameters.c \
+	modrobotics.c \
 	modtools.c \
-	modlogger.c \
 	pberror.c \
 	pbhub.c \
 	pbobj.c \
@@ -131,21 +128,21 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	drv/$(PBIO_PLATFORM)/motor.c \
 	drv/battery/battery_nxt.c \
 	drv/button/button_nxt.c \
+	drv/counter/counter_core.c \
+	drv/counter/counter_nxt.c \
 	platform/$(PBIO_PLATFORM)/clock.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	platform/$(PBIO_PLATFORM)/sys.c \
-	drv/counter/counter_core.c \
-	drv/counter/counter_nxt.c \
-	src/error.c \
-	src/main.c \
-	src/hbridge.c \
-	src/tacho.c \
-	src/logger.c \
-	src/servo.c \
-	src/drivebase.c \
 	src/control.c \
-	src/trajectory.c \
+	src/drivebase.c \
+	src/error.c \
 	src/fixmath.c \
+	src/hbridge.c \
+	src/logger.c \
+	src/main.c \
+	src/servo.c \
+	src/tacho.c \
+	src/trajectory.c \
 	sys/autostart.c \
 	sys/etimer.c \
 	sys/process.c \
