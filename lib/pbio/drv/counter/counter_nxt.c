@@ -31,8 +31,6 @@ static pbio_error_t pbdrv_counter_nxt_get_count(pbdrv_counter_dev_t *dev, int32_
 }
 
 static pbio_error_t pbdrv_counter_nxt_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
-    private_data_t *data = PBIO_CONTAINER_OF(dev, private_data_t, dev);
-
     *rate = 0;
 
     return PBIO_SUCCESS;

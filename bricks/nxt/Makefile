@@ -37,7 +37,7 @@ INC += -I$(BUILD)
 COPT += -DFIXMATH_NO_CTYPE
 
 CFLAGS_MCU = -mthumb -mtune=arm7tdmi -mcpu=arm7tdmi -msoft-float
-CFLAGS = $(INC) -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU) $(COPT)
+CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU) $(COPT)
 LDSCRIPT = $(PBIO_PLATFORM).ld
 LDFLAGS = -nostdlib -T $(LDSCRIPT) -Map=$@.map --cref --gc-sections
 

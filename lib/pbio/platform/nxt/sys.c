@@ -73,8 +73,6 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
 }
 
 void pbsys_unprepare_user_program(void) {
-    uint8_t r, g, b;
-
     user_stop_func = NULL;
     user_stdin_event_func = NULL;
     // _pbio_servo_reset_all();
