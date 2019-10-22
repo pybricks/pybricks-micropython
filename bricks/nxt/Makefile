@@ -43,10 +43,8 @@ INC += -I$(TOP)/ports/pybricks/extmod
 INC += -I$(BUILD)
 
 COPT += -DFIXMATH_NO_CTYPE
-C_OPTIMISATION_FLAGS = -Os
 CFLAGS = $(BASE_ABI_FLAGS) -mthumb \
 	-ffreestanding -fsigned-char \
-	$(C_OPTIMISATION_FLAGS) -g \
 	$(INC) -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(MCU_SERIES)) $(COPT) \
 	-fsingle-precision-constant -Wdouble-promotion
 
