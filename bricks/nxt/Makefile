@@ -1,9 +1,6 @@
 # MicroPython
 
 PBIO_PLATFORM = nxt
-MCU_SERIES = NA
-CMSIS_MCU = NA
-FIRMWARE_MAX_SIZE = 200000
 
 # Sanity check
 include ../check.mk
@@ -23,14 +20,6 @@ include $(TOP)/py/py.mk
 CROSS_COMPILE ?= arm-none-eabi-
 
 # Bricks must specify the following variables in their Makefile
-ifeq ($(MCU_SERIES),)
-$(error "MCU_SERIES is not specified - add it in <hub>/Makefile)
-else
-MCU_SERIES_LCASE = $(subst F,f,$(subst L,l,$(MCU_SERIES)))
-endif
-ifeq ($(CMSIS_MCU),)
-$(error "CMSIS_MCU is not specified - add it in <hub>/Makefile")
-endif
 ifeq ($(PBIO_PLATFORM),)
 $(error "PBIO_PLATFORM is not specified - add it in <hub>/Makefile)
 endif
