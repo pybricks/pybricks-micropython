@@ -19,7 +19,6 @@ def get_bytes_from_file(path):
         contents = mpy.read()
 
     # Remove the temporary .mpy file and return the contents
-    os.remove(path)
     os.remove(mpy_path)
     return [int(c) for c in contents]
 
@@ -31,7 +30,9 @@ def get_bytes_from_str(string):
     with tempfile.NamedTemporaryFile('w', suffix='.py', delete=False) as f:
         f.write(string + '\n')
         f.flush()
-        return get_bytes_from_file(f.name)
+        mpy_bytes = get_bytes_from_file(f.name)
+    os.remove(f.name)
+    return mpy_bytes
 
 
 if __name__ == "__main__":
