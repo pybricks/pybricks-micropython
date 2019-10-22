@@ -30,9 +30,6 @@ void mp_hal_delay_ms(mp_uint_t Delay) {
         }
     } else {
         // IRQs disabled, so need to use a busy loop for the delay.
-        // To prevent possible overflow of the counter we use a double loop.
-        for (int i = 0; i < Delay; i++) {
-            systick_wait_ns(1E9);
-        }
+        systick_wait_ms(Delay);
     }
 }
