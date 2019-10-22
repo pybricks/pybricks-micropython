@@ -107,7 +107,6 @@ SRC_C += \
 	lib/libc/string0.c \
 	lib/mp-readline/readline.c \
 	lib/utils/interrupt_char.c \
-	lib/utils/printf.c \
 	lib/utils/pyexec.c \
 	lib/utils/stdout_helpers.c \
 
