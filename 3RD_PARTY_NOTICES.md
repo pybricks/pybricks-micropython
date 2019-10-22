@@ -5,6 +5,21 @@ license text and additional information can be found in the specified
 subdirectories.
 
 
+### LeJOS
+
+**path**: `bricks/nxt/nxt-firmware-drivers`
+
+**origin**: Git commit 079530f422098faeb89fee4cb52065ea66d2a836
+
+**url**: https://github.com/cmorty/lejos
+
+**terms**:
+- License: MPL-1.0
+- Permissions: Commercial use, distribution, modification, private use
+- Conditions: Disclose source, license/copyright notice and state changes
+- Restrictions: Liability, patent use, trademark use, warranty
+
+
 ### BlueNRG-MS
 
 **path**: `lib/BlueNRG-MS/`
