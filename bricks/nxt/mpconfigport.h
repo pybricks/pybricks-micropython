@@ -139,9 +139,6 @@ extern const struct _mp_obj_module_t pb_module_nxtdevices;
 #include <nxt/interrupts.h>
 #include <nxt/systick.h>
 
-// TODO: not sure if we will have a use for this
-#define SOCKET_POLL
-
 #define MICROPY_BEGIN_ATOMIC_SECTION()     interrupts_get_and_disable()
 #define MICROPY_END_ATOMIC_SECTION(state)  if (state) { interrupts_enable(); }
 
@@ -155,7 +152,6 @@ extern const struct _mp_obj_module_t pb_module_nxtdevices;
     do { \
         extern void mp_handle_pending(void); \
         mp_handle_pending(); \
-        SOCKET_POLL \
         extern int pbio_do_one_event(void); \
         while (pbio_do_one_event()) { } \
     } while (0);
