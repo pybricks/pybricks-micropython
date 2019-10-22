@@ -51,8 +51,7 @@ CFLAGS = $(BASE_ABI_FLAGS) -mthumb \
 	-fsingle-precision-constant -Wdouble-promotion
 
 BASE_ABI_FLAGS := -mcpu=arm7tdmi -mlittle-endian -mfloat-abi=soft -mthumb-interwork
-LIB_ABI_FLAGS  := $(BASE_ABI_FLAGS) -mthumb
-LDFLAGS = $(LIB_ABI_FLAGS) -nostdlib -Wl,-cref,--gc-sections
+LDFLAGS = -nostdlib -Wl,-cref,--gc-sections
 
 # Tune for Debugging or Optimization
 ifeq ($(DEBUG), 1)
