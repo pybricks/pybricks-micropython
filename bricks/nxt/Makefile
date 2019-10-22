@@ -5,6 +5,9 @@ MCU_SERIES = NA
 CMSIS_MCU = NA
 FIRMWARE_MAX_SIZE = 200000
 
+# Sanity check
+include ../check.mk
+
 include ../../../../py/mkenv.mk
 
 # qstr definitions (must come before including py.mk)
