@@ -58,6 +58,8 @@ SECTIONS {
     *(.stack .stack.*)
   } >RAM
 
+  _estack = ADDR(.stack) + SIZEOF(.stack);
+
   __free_ram_start__ = ALIGN(ADDR(.stack) + SIZEOF(.stack), 16);
   __free_ram_end__   = ORIGIN(RAM) + LENGTH(RAM);
 }

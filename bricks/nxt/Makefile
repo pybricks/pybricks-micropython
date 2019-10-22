@@ -73,6 +73,9 @@ SRC_C += \
 	lib/utils/pyexec.c \
 	lib/utils/stdout_helpers.c \
 
+SRC_S = \
+	$(TOP)/lib/utils/gchelper_arm7tdmi.s \
+
 SRC_C_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
 	aic.c \
 	bt.c \

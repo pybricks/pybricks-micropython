@@ -133,20 +133,20 @@ int main(int argc, char **argv) {
 }
 
 // defined in linker script
-extern uint32_t __free_ram_end__;
-
-// FIXME: Define gc_helper_get_regs_and_sp like in lib/utils/gchelper_m0.s
+extern uint32_t _estack;
+// defined in lib/utils/gchelper_arm7tdmi.s
+extern uintptr_t gc_helper_get_regs_and_sp(uintptr_t *regs);
 
 void gc_collect(void) {
     // start the GC
     gc_collect_start();
 
     // get the registers and the sp
-    // uintptr_t regs[10];
-    // uintptr_t sp = gc_helper_get_regs_and_sp(regs);
+    uintptr_t regs[10];
+    uintptr_t sp = gc_helper_get_regs_and_sp(regs);
 
     // trace the stack, including the registers (since they live on the stack in this function)
-    // gc_collect_root((void**)sp, ((uint32_t)&__free_ram_end__ - sp) / sizeof(uint32_t));
+    gc_collect_root((void**)sp, ((uint32_t)&_estack - sp) / sizeof(uint32_t));
 
     // end the GC
     gc_collect_end();
