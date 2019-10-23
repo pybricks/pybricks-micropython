@@ -12,6 +12,7 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 
+#include "modparameters.h"
 #include "modenum.h"
 #include "pbobj.h"
 #include "pberror.h"
@@ -19,8 +20,6 @@
 /* Brick/Hub Port enum */
 
 /* Port enum */
-
-const mp_obj_type_t pb_enum_type_Port;
 
 STATIC const mp_rom_map_elem_t pb_enum_Port_table[] = {
 #if PBDRV_CONFIG_HAS_PORT_A
@@ -58,8 +57,6 @@ PB_DEFINE_ENUM(pb_enum_type_Port, MP_QSTR_Port, pb_enum_Port_table);
 
 /* Stop enum */
 
-const mp_obj_type_t pb_enum_type_Stop;
-
 STATIC const mp_rom_map_elem_t pb_enum_Stop_table[] = {
     MP_ROM_ENUM_ELEM(pb_enum_type_Stop, MP_QSTR_COAST, PBIO_ACTUATION_COAST),
     MP_ROM_ENUM_ELEM(pb_enum_type_Stop, MP_QSTR_BRAKE, PBIO_ACTUATION_BRAKE),
@@ -69,8 +66,6 @@ PB_DEFINE_ENUM(pb_enum_type_Stop, MP_QSTR_Stop, pb_enum_Stop_table);
 
 /* Direction enum */
 
-const mp_obj_type_t pb_enum_type_Direction;
-
 STATIC const mp_rom_map_elem_t pb_enum_Direction_table[] = {
     MP_ROM_ENUM_ELEM(pb_enum_type_Direction, MP_QSTR_CLOCKWISE, PBIO_DIRECTION_CLOCKWISE),
     MP_ROM_ENUM_ELEM(pb_enum_type_Direction, MP_QSTR_COUNTERCLOCKWISE, PBIO_DIRECTION_COUNTERCLOCKWISE)
@@ -78,8 +73,6 @@ STATIC const mp_rom_map_elem_t pb_enum_Direction_table[] = {
 PB_DEFINE_ENUM(pb_enum_type_Direction, MP_QSTR_Direction, pb_enum_Direction_table);
 
 /* Color enum */
-
-const mp_obj_type_t pb_enum_type_Color;
 
 // Color is just like the other enums, but we define entries manually
 // instead of using the MP_ROM_ENUM_ELEM macro, so we can also return
@@ -153,8 +146,6 @@ PB_DEFINE_ENUM(pb_enum_type_Color, MP_QSTR_Color, pb_Color_enum_table);
 
 
 /* Button enum */
-
-const mp_obj_type_t pb_enum_type_Button;
 
 STATIC const mp_rom_map_elem_t pb_enum_Button_table[] = {
     MP_ROM_ENUM_ELEM(pb_enum_type_Button, MP_QSTR_UP, PBIO_BUTTON_UP),

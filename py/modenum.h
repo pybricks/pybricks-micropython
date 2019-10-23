@@ -9,11 +9,14 @@
 
 void enum_class_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind);
 
+// returns enum->value if enum is of expected type, throws TypeError otherwise
+mp_int_t enum_get_value_maybe(mp_obj_t enum_elem, const mp_obj_type_t *valid_type);
+
 // An enum element consists of a name and a value
 typedef struct _pb_obj_enum_elem_t {
     mp_obj_base_t base;
     uint16_t name;
-    int32_t value;
+    mp_int_t value;
 } pb_obj_enum_elem_t;
 
 // Macro to produce element of an enum table

@@ -12,6 +12,7 @@
 #include "pbobj.h"
 #include "pbkwarg.h"
 #include "modlight.h"
+#include "modparameters.h"
 
 #include "py/objtype.h"
 
@@ -274,10 +275,15 @@ typedef struct _ev3devices_ColorSensor_obj_t {
 
 // pybricks.ev3devices.ColorSensor.__init__
 STATIC mp_obj_t ev3devices_ColorSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
-    mp_arg_check_num(n_args, n_kw, 1, 1, false);
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port)
+    );
     ev3devices_ColorSensor_obj_t *self = m_new_obj(ev3devices_ColorSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
-    pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR, mp_obj_get_int(args[0])));
+
+    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+
+    pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR, port_num));
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -295,13 +301,13 @@ STATIC mp_obj_t ev3devices_ColorSensor_color(mp_obj_t self_in) {
     pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_COLOR_SENSOR__COLOR, &color));
 
     switch(color) {
-        case 1: return mp_obj_new_int(PBIO_LIGHT_COLOR_BLACK);
-        case 2: return mp_obj_new_int(PBIO_LIGHT_COLOR_BLUE);
-        case 3: return mp_obj_new_int(PBIO_LIGHT_COLOR_GREEN);
-        case 4: return mp_obj_new_int(PBIO_LIGHT_COLOR_YELLOW);
-        case 5: return mp_obj_new_int(PBIO_LIGHT_COLOR_RED);
-        case 6: return mp_obj_new_int(PBIO_LIGHT_COLOR_WHITE);
-        case 7: return mp_obj_new_int(PBIO_LIGHT_COLOR_BROWN);
+        case 1: return MP_OBJ_FROM_PTR(&pb_const_black);
+        case 2: return MP_OBJ_FROM_PTR(&pb_const_blue);
+        case 3: return MP_OBJ_FROM_PTR(&pb_const_green);
+        case 4: return MP_OBJ_FROM_PTR(&pb_const_yellow);
+        case 5: return MP_OBJ_FROM_PTR(&pb_const_red);
+        case 6: return MP_OBJ_FROM_PTR(&pb_const_white);
+        case 7: return MP_OBJ_FROM_PTR(&pb_const_brown);
         default: return mp_const_none;
     }
     return mp_obj_new_int(color);
