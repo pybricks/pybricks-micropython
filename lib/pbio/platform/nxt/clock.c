@@ -9,6 +9,14 @@
 #include <nxt/at91sam7.h>
 #include <nxt/systick.h>
 
+#if CLOCK_CONF_SECOND != 1000
+#error Clock must be set to 1 msec ticks
+#endif
+
+static void clock_systick_hook() {
+    etimer_request_poll();
+}
+
 clock_time_t clock_time() {
     return systick_get_ms();
 }
@@ -19,6 +27,7 @@ uint32_t clock_usecs(void) {
 
 void clock_init(void) {
     // TODO: Split NXT init into clock_init etc
+    systick_set_hook(clock_systick_hook);
 }
 
 /* The inner loop takes 4 cycles. The outer 5+SPIN_COUNT*4. */
