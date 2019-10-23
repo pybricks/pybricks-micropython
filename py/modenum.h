@@ -29,4 +29,14 @@ typedef struct _pb_obj_enum_elem_t {
         )) \
     }
 
+// Shortcut for converting table to Enum-like class object
+#define PB_DEFINE_ENUM(enum_type, enum_name, table_name) \
+STATIC MP_DEFINE_CONST_DICT(enum_type ## _locals_dict, table_name); \
+const mp_obj_type_t enum_type = { \
+    { &mp_type_type }, \
+    .name = enum_name, \
+    .print = enum_class_print, \
+    .locals_dict = (mp_obj_dict_t*)&(enum_type ## _locals_dict),\
+}
+
 #endif // PYBRICKS_INCLUDED_MODENUM_H

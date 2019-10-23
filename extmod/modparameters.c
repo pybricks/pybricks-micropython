@@ -142,14 +142,7 @@ STATIC const mp_rom_map_elem_t pb_Color_enum_table[] = {
     { MP_ROM_QSTR(MP_QSTR_WHITE),   MP_ROM_PTR(&pb_const_white)   },
     { MP_ROM_QSTR(MP_QSTR_BROWN),   MP_ROM_PTR(&pb_const_brown)   },
 };
-STATIC MP_DEFINE_CONST_DICT(pb_parameters_Color_locals_dict, pb_Color_enum_table);
-
-const mp_obj_type_t pb_enum_type_Color = {
-    { &mp_type_type },
-    .name = MP_QSTR_Color,
-    .locals_dict = (mp_obj_dict_t*)&(pb_parameters_Color_locals_dict),
-    .print = enum_class_print,
-};
+PB_DEFINE_ENUM(pb_enum_type_Color, MP_QSTR_Color, pb_Color_enum_table);
 
 /* Generic button enum */
 
