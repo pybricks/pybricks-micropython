@@ -12,6 +12,7 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 
+#include "modenum.h"
 #include "pbobj.h"
 #include "pberror.h"
 
@@ -143,20 +144,12 @@ STATIC const mp_rom_map_elem_t pb_Color_enum_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(pb_parameters_Color_locals_dict, pb_Color_enum_table);
 
-STATIC void enum_class_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    pb_obj_enum_elem_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, qstr_str(self->base.type->name));
-    mp_printf(print, ".");
-    mp_printf(print, qstr_str(self->name));
-}
-
 const mp_obj_type_t pb_enum_type_Color = {
     { &mp_type_type },
     .name = MP_QSTR_Color,
     .locals_dict = (mp_obj_dict_t*)&(pb_parameters_Color_locals_dict),
     .print = enum_class_print,
 };
-
 
 /* Generic button enum */
 

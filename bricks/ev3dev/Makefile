@@ -32,6 +32,7 @@ INC += -I$(TOP)/ports/pybricks/lib/pbio
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/ev3dev_stretch
 INC += -I$(TOP)/ports/pybricks/extmod
+INC += -I$(TOP)/ports/pybricks/py
 INC += -I$(TOP)/ports/unix
 
 # compiler settings
@@ -200,6 +201,9 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	pberror.c \
 	pbthread.c \
 	pbobj.c \
+	) \
+	$(addprefix ports/pybricks/py/,\
+	modenum.c \
 	)
 
 PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\

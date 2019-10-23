@@ -51,6 +51,7 @@ INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)
 INC += -I$(TOP)/ports/pybricks/lib/pbio
 INC += -I$(TOP)/ports/pybricks/lib/BlueNRG-MS/includes
 INC += -I$(TOP)/ports/pybricks/extmod
+INC += -I$(TOP)/ports/pybricks/py
 INC += -I$(BUILD)
 
 DFU = $(TOP)/tools/dfu.py
@@ -140,6 +141,9 @@ PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	pbhub.c \
 	pbiodevice.c \
 	pbobj.c \
+	) \
+	$(addprefix ports/pybricks/py/,\
+	modenum.c \
 	)
 
 BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\
