@@ -16,6 +16,7 @@
 
 #include "modmotor.h"
 #include "modlogger.h"
+#include "modparameters.h"
 #include "pberror.h"
 #include "pbobj.h"
 #include "pbkwarg.h"
@@ -79,7 +80,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
         }
     }
     // Configure the encoded motor with the selected arguments at pbio level
-    pbio_port_t port_arg = mp_obj_get_int(port);
+    mp_int_t port_arg = enum_get_value_maybe(port, &pb_enum_type_Port);
     pbio_direction_t direction_arg = mp_obj_get_int(direction);
 
     pb_thread_enter();
