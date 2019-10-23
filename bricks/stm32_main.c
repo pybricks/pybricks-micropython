@@ -52,14 +52,14 @@ bool timed_out(uint32_t time_start, uint32_t time_out) {
     }
     // Return true if more than time_out ms have elapsed
     // since time_start, otherwise return false.
-    return clock_usecs()/1000 - time_start > time_out;
+    return mp_hal_ticks_ms()- time_start > time_out;
 }
 
 // wait for button to be pressed/released before starting program
 bool wait_for_button_press(uint32_t time_out) {
     pbio_button_flags_t btn;
     waiting_for_t wait_for = WAITING_FOR_FIRST_RELEASE;
-    uint32_t time_start = clock_usecs()/1000;
+    uint32_t time_start = mp_hal_ticks_ms();
 
     // wait for button rising edge, then falling edge
     while (!timed_out(time_start, time_out)) {
