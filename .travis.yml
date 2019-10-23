@@ -104,7 +104,7 @@ jobs:
         - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET
         - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
           "${HOME}/micropython/ports/pybricks/bricks/movehub/build/firmware.bin"
-          pybricks-firmware/$TRAVIS_REPO_SLUG/build$TRAVIS_JOB_NUMBER/
+          pybricks-firmware/pybricks-micropython-movehub-build$TRAVIS_BUILD_NUMBER-firmware.bin
         - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
         - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
         - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
@@ -129,7 +129,7 @@ jobs:
         - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET
         - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
           "${HOME}/micropython/ports/pybricks/bricks/cityhub/build/firmware.bin"
-          pybricks-firmware/$TRAVIS_REPO_SLUG/build$TRAVIS_JOB_NUMBER/
+          pybricks-firmware/pybricks-micropython-cityhub-build$TRAVIS_BUILD_NUMBER-firmware.bin
         - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
         - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
         - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
@@ -154,7 +154,7 @@ jobs:
         - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET
         - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
           "${HOME}/micropython/ports/pybricks/bricks/cplushub/build/firmware.bin"
-          pybricks-firmware/$TRAVIS_REPO_SLUG/build$TRAVIS_JOB_NUMBER/
+          pybricks-firmware/pybricks-micropython-cplushub-build$TRAVIS_BUILD_NUMBER-firmware.bin
         - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
         - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
         - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
@@ -179,7 +179,7 @@ jobs:
         - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET
         - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
           "${HOME}/micropython/ports/pybricks/bricks/nxt/build/firmware.bin"
-          pybricks-firmware/$TRAVIS_REPO_SLUG/build$TRAVIS_JOB_NUMBER/
+          pybricks-firmware/pybricks-micropython-nxt-build$TRAVIS_BUILD_NUMBER-firmware.bin
         - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
         - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
         - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
