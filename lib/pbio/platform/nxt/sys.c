@@ -116,6 +116,7 @@ static void update_button(clock_time_t now) {
 
     pbio_button_is_pressed(&btn);
 
+    // the orange center button acts as the power button
     if (btn & PBIO_BUTTON_CENTER) {
         if (button_pressed) {
 
@@ -128,14 +129,16 @@ static void update_button(clock_time_t now) {
             button_press_start_time = now;
             button_pressed = true;
             led_status_flags |= LED_STATUS_BUTTON_PRESSED;
-            if (user_stop_func) {
-                user_stop_func();
-            }
         }
     }
     else {
         button_pressed = false;
         led_status_flags &= ~LED_STATUS_BUTTON_PRESSED;
+    }
+
+    // the dark gray button stops user programs
+    if (btn & PBIO_BUTTON_DOWN && user_stop_func) {
+        user_stop_func();
     }
 }
 
