@@ -1,8 +1,5 @@
 /* SPDX-License-Identifier: MPL-1.0 */
 /**
- * This script is for a system that runs with the memory
- * mapped so that ram is visible at both 0 and 2M.
- *
  * Notes on alignment:
  * 1) Section to be relocated should be at least 4- or even 16-byte aligned.
  * 2) Same holds for sections to be initialized.
@@ -26,13 +23,18 @@
  */
 MEMORY {
   ROM : ORIGIN = 1M, LENGTH = 256k
-  RAM : ORIGIN = 0M, LENGTH =  64K
+  RAM : ORIGIN = 2M, LENGTH =  64K
 }
 
 SECTIONS {
 
-  .data : {
+  .text : {
     KEEP(*(.vectors))
+    *(.rodata .rodata.*)
+    *(.text .text.*)
+  } >ROM
+
+  .data : {
     *(.ramfunc .ramfunc.*)
     *(.data .data.*)
   } >RAM AT>ROM
@@ -41,11 +43,6 @@ SECTIONS {
   __relocate_vma_end__   = ADDR(.data) + SIZEOF(.data);
   __relocate_lma_start__ = LOADADDR(.data);
   __relocate_lma_end__   = LOADADDR(.data) + SIZEOF(.data);
-
-  .text : {
-    *(.rodata .rodata.*)
-    *(.text .text.*)
-  } >ROM
 
   .bss (NOLOAD) : ALIGN(4) {
     *(.bss .bss.*)
