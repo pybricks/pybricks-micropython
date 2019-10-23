@@ -15,14 +15,6 @@ mp_store_global(name, mp_import_name(name, mp_const_none, MP_OBJ_NEW_SMALL_INT(0
 #define PB_FROM_MODULE_IMPORT_ALL(name) \
 mp_import_all(mp_import_name(name, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)))
 
-// Shortcut for converting table to Enum-like class object
-#define PB_DEFINE_CONST_ENUM(enum_name, table_name) \
-MP_DEFINE_CONST_DICT(enum_name ## _locals_dict, table_name); \
-const mp_obj_type_t enum_name = { \
-    { &mp_type_type }, \
-    .locals_dict = (mp_obj_dict_t*)&(enum_name ## _locals_dict),\
-}
-
 // Shortcut for defining attribute as address offset from base
 #define PB_ATTR(type, elem) &(mp_int_t){offsetof(type, elem)}
 
