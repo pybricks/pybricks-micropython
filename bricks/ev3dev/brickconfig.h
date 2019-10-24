@@ -19,7 +19,6 @@
 #define MICROPY_PY_SYS_PATH_DEFAULT (":~/.micropython/lib:/usr/lib/micropython")
 
 extern const struct _mp_obj_module_t pb_module_hubs;
-extern const struct _mp_obj_module_t pb_module_ev3brick;
 extern const struct _mp_obj_module_t pb_module_ev3devices;
 extern const struct _mp_obj_module_t pb_module_robotics;
 extern const struct _mp_obj_module_t pb_module_parameters;
@@ -28,7 +27,6 @@ extern const struct _mp_obj_module_t pb_module_tools;
 #define PYBRICKS_PORT_BUILTIN_MODULES \
     { MP_ROM_QSTR(MP_QSTR_hubs_c),       MP_ROM_PTR(&pb_module_hubs) }, \
     { MP_ROM_QSTR(MP_QSTR_ev3devices_c), MP_ROM_PTR(&pb_module_ev3devices) }, \
-    { MP_ROM_QSTR(MP_QSTR_ev3brick_c),   MP_ROM_PTR(&pb_module_ev3brick)   }, \
     { MP_ROM_QSTR(MP_QSTR_robotics_c),   MP_ROM_PTR(&pb_module_robotics)   }, \
     { MP_ROM_QSTR(MP_QSTR_parameters_c), MP_ROM_PTR(&pb_module_parameters) }, \
     { MP_ROM_QSTR(MP_QSTR_tools),        MP_ROM_PTR(&pb_module_tools)      },
