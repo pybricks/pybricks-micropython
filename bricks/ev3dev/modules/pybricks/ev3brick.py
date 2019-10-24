@@ -1,60 +1,30 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2018-2019 Laurens Valk
 
-"""LEGO MINDSTORMS EV3 Programmable Brick.
-
-Contained in set:
-31313: LEGO MINDSTORMS EV3 (2013)
-45544: LEGO MINDSTORMS Education EV3 Core Set (2013)
-45500: Separate part (2013)
-
-LEGO ID: 95646
-"""
-
-from sys import stderr, exit
-
-from ev3brick_c import battery
-
-from .speaker import Speaker
-from .display import Display
+"""Backwards compatibility module for pybricks.ev3brick"""
 
 
-try:
-    # Initialize the EV3 speaker and display
-    sound = Speaker('EV3')
-    display = Display('EV3')
-except Exception as exception:
-    print("Pybricks is already running on this device. Exiting...", file=stderr)
-    exit(1)
+# Import the new EV3 Brick class
+from .hubs import EV3Brick
 
-# The new light and button API can be enabled using:
-# from ev3brick_c import light, buttons
-# However, we use the following workaround to maintain backwards
-# compatibility with the 1.0.0 API.
-from ev3brick_c import light as newlight
-from ev3brick_c import buttons as newbuttons
+# Create an instance of an EV3 Brick
+_brickobj = EV3Brick()
 
+# Map the instance attributes to a flattened module
+# to make it work like the MicroPython 1.0 API.
 
-class CompatLight():
-    def __call__(self, color):
-        newlight.on(color)
+sound = _brickobj.speaker
 
-    def off(self):
-        newlight.off()
+display = _brickobj.display
 
-    def on(self, color, brightness=100):
-        newlight.on(color, brightness)
+battery = _brickobj.battery
+
+# Map new class methods to old functions
 
 
-class CompatButtons():
-    def __call__(self):
-        # this provides the old syntax
-        return newbuttons.pressed()
-
-    # The following are the actual (new) methods
-    def pressed(self):
-        return newbuttons.pressed()
+def light(color):
+    _brickobj.light.on(color)
 
 
-light = CompatLight()
-buttons = CompatButtons()
+def buttons():
+    return _brickobj.buttons.pressed()
