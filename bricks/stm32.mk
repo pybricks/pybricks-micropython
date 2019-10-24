@@ -137,14 +137,14 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modtools.c \
 	modlogger.c \
 	modrobotics.c \
-	pberror.c \
 	pbhub.c \
 	pbiodevice.c \
-	pbobj.c \
 	)
 
 PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/py/,\
 	modenum.c \
+	pbobj.c \
+	pberror.c \
 	)
 
 BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\

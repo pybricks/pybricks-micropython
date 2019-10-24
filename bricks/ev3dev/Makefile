@@ -198,13 +198,13 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modlogger.c \
 	modparameters.c \
 	modrobotics.c \
-	pberror.c \
-	pbthread.c \
-	pbobj.c \
 	)
 
 PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/py/,\
 	modenum.c \
+	pbobj.c \
+	pberror.c \
+	pbthread.c \
 	)
 
 PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\

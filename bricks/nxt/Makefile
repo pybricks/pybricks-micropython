@@ -117,13 +117,13 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modparameters.c \
 	modrobotics.c \
 	modtools.c \
-	pberror.c \
 	pbhub.c \
-	pbobj.c \
 	)
 
 PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/py/,\
 	modenum.c \
+	pbobj.c \
+	pberror.c \
 	)
 
 LIBFIXMATH_SRC_C = $(addprefix ports/pybricks/lib/libfixmath/libfixmath/,\
