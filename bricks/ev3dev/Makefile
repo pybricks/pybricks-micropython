@@ -253,7 +253,7 @@ OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_LIB_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(LIB_SRC_C) $(PYBRICKS_EXTMOD_SRC_C)
+SRC_QSTR += $(SRC_C) $(LIB_SRC_C) $(PYBRICKS_PY_SRC_C) $(PYBRICKS_EXTMOD_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in
 # SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
