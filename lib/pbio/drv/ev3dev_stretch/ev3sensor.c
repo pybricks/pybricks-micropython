@@ -176,7 +176,7 @@ pbio_error_t pbdrv_ev3_sensor_get_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_type
         *id = PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR;
     }
     else if (!strcmp(driver_name, "lego-ev3-gyro")) {
-        *id = PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR;
+        *id = PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR;
     }
     else {
         return PBIO_ERROR_IO;
