@@ -14,10 +14,12 @@ ev3dev-armel:
 	@if [ ! -d bricks/ev3dev/build-armel/ports ]; then \
 		bricks/ev3dev/docker/setup.sh armel; \
 	fi
+	@docker start pybricks-ev3dev_armel
 	@docker exec --tty pybricks-ev3dev_armel make
 
 clean-ev3dev-armel: clean-mpy-cross
 	@if [ -d bricks/ev3dev/build-armel/ports ]; then \
+		@docker start pybricks-ev3dev_armel; \
 		docker exec --tty pybricks-ev3dev_armel make clean; \
 	fi
 
