@@ -123,7 +123,7 @@ else
 endif
 
 # Pybricks modules
-PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/extmod/,\
+PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modadvanced.c \
 	modbattery.c \
 	modcityhub.c \
@@ -141,8 +141,9 @@ PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	pbhub.c \
 	pbiodevice.c \
 	pbobj.c \
-	) \
-	$(addprefix ports/pybricks/py/,\
+	)
+
+PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/py/,\
 	modenum.c \
 	)
 
@@ -245,6 +246,7 @@ SRC_LIBM = $(addprefix lib/libm/,\
 	)
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
+OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PY_SRC_C:.c=.o))
 ifeq ($(USE_BLUENRG),1)
 OBJ += $(addprefix $(BUILD)/, $(BLUENRG_SRC_C:.c=.o))

@@ -201,8 +201,9 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	pberror.c \
 	pbthread.c \
 	pbobj.c \
-	) \
-	$(addprefix ports/pybricks/py/,\
+	)
+
+PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/py/,\
 	modenum.c \
 	)
 
@@ -247,6 +248,7 @@ LIB_SRC_C += $(addprefix lib/,\
 OBJ = $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PY_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_LIB_SRC_C:.c=.o))
 

@@ -34,6 +34,7 @@ INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)
 INC += -I$(TOP)/ports/pybricks/lib/pbio
 INC += -I$(TOP)/ports/pybricks/extmod
+INC += -I$(TOP)/ports/pybricks/py
 INC += -I$(BUILD)
 
 COPT += -DFIXMATH_NO_CTYPE
@@ -107,7 +108,7 @@ SRC_S_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
 	)
 
 # Pybricks modules
-PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/extmod/,\
+PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modadvanced.c \
 	modbattery.c \
 	modlogger.c \
@@ -121,6 +122,9 @@ PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	pbobj.c \
 	)
 
+PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/py/,\
+	modenum.c \
+	)
 
 LIBFIXMATH_SRC_C = $(addprefix ports/pybricks/lib/libfixmath/libfixmath/,\
 	fix16_sqrt.c \
@@ -159,6 +163,7 @@ OBJ += $(addprefix $(BUILD)/, $(SRC_C_NXT:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_S_NXT:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PY_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
