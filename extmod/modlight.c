@@ -10,6 +10,7 @@
 
 #include "modlight.h"
 
+#include "modparameters.h"
 #include "pberror.h"
 #include "pbobj.h"
 #include "pbkwarg.h"
@@ -21,7 +22,11 @@ STATIC mp_obj_t colorlight_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t 
         PB_ARG_DEFAULT_INT(brightness, 100)
     );
 
-    pbio_light_color_t color_id = pb_obj_get_default_int(color, PBIO_LIGHT_COLOR_NONE);
+    if (color == mp_const_none) {
+        color = MP_OBJ_FROM_PTR(&pb_const_black);
+    }
+
+    pbio_light_color_t color_id = enum_get_value_maybe(color, &pb_enum_type_Color);
 
     mp_int_t bright = pb_obj_get_int(brightness);
     bright = bright < 0 ? 0 : bright > 100 ? 100: bright;
