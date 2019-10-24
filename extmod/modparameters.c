@@ -66,9 +66,21 @@ PB_DEFINE_ENUM(pb_enum_type_Stop, MP_QSTR_Stop, pb_enum_Stop_table);
 
 /* Direction enum */
 
+const pb_obj_enum_elem_t pb_const_clockwise = {
+    {&pb_enum_type_Direction},
+    .name = MP_QSTR_CLOCKWISE,
+    .value = PBIO_DIRECTION_CLOCKWISE
+};
+
+const pb_obj_enum_elem_t pb_const_counterclockwise = {
+    {&pb_enum_type_Direction},
+    .name = MP_QSTR_COUNTERCLOCKWISE,
+    .value = PBIO_DIRECTION_COUNTERCLOCKWISE
+};
+
 STATIC const mp_rom_map_elem_t pb_enum_Direction_table[] = {
-    MP_ROM_ENUM_ELEM(pb_enum_type_Direction, MP_QSTR_CLOCKWISE, PBIO_DIRECTION_CLOCKWISE),
-    MP_ROM_ENUM_ELEM(pb_enum_type_Direction, MP_QSTR_COUNTERCLOCKWISE, PBIO_DIRECTION_COUNTERCLOCKWISE)
+    { MP_ROM_QSTR(MP_QSTR_CLOCKWISE),         MP_ROM_PTR(&pb_const_clockwise)        },
+    { MP_ROM_QSTR(MP_QSTR_COUNTERCLOCKWISE),  MP_ROM_PTR(&pb_const_counterclockwise) },
 };
 PB_DEFINE_ENUM(pb_enum_type_Direction, MP_QSTR_Direction, pb_enum_Direction_table);
 
