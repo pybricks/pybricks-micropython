@@ -23,16 +23,17 @@ STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t hubs_EV3Brick_debug(mp_obj_t self_in) {
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(hubs_EV3Brick_debug_obj, hubs_EV3Brick_debug);
+extern const struct _mp_obj_module_t pb_module_buttons;
+extern const struct _mp_obj_module_t pb_module_battery;
+extern const struct _mp_obj_module_t pb_module_colorlight;
 
 /*
 EV3Brick class tables
 */
 STATIC const mp_rom_map_elem_t hubs_EV3Brick_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_debug), MP_ROM_PTR(&hubs_EV3Brick_debug_obj) },
+    { MP_ROM_QSTR(MP_QSTR_buttons),     MP_ROM_PTR(&pb_module_buttons)      },
+    { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_PTR(&pb_module_colorlight)   }, 
+    { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)      },
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_EV3Brick_locals_dict, hubs_EV3Brick_locals_dict_table);
 
