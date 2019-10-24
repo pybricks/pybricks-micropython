@@ -24,7 +24,7 @@ mp_int_t enum_get_value_maybe(mp_obj_t enum_elem, const mp_obj_type_t *valid_typ
             pb_assert(PBIO_ERROR_INVALID_ARG);
         } else {
             nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_TypeError,
-                "can't convert %s to %s", qstr_str(elem->base.type->name), qstr_str(valid_type->name)));
+                "can't convert %s to %s", mp_obj_get_type_str(enum_elem), qstr_str(valid_type->name)));
         }
     }
     return elem->value;
