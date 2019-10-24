@@ -57,10 +57,28 @@ PB_DEFINE_ENUM(pb_enum_type_Port, MP_QSTR_Port, pb_enum_Port_table);
 
 /* Stop enum */
 
+const pb_obj_enum_elem_t pb_const_coast = {
+    {&pb_enum_type_Stop},
+    .name = MP_QSTR_COAST,
+    .value = PBIO_ACTUATION_COAST
+};
+
+const pb_obj_enum_elem_t pb_const_brake = {
+    {&pb_enum_type_Stop},
+    .name = MP_QSTR_BRAKE,
+    .value = PBIO_ACTUATION_BRAKE
+};
+
+const pb_obj_enum_elem_t pb_const_hold = {
+    {&pb_enum_type_Stop},
+    .name = MP_QSTR_HOLD,
+    .value = PBIO_ACTUATION_HOLD
+};
+
 STATIC const mp_rom_map_elem_t pb_enum_Stop_table[] = {
-    MP_ROM_ENUM_ELEM(pb_enum_type_Stop, MP_QSTR_COAST, PBIO_ACTUATION_COAST),
-    MP_ROM_ENUM_ELEM(pb_enum_type_Stop, MP_QSTR_BRAKE, PBIO_ACTUATION_BRAKE),
-    MP_ROM_ENUM_ELEM(pb_enum_type_Stop, MP_QSTR_HOLD, PBIO_ACTUATION_HOLD),
+    { MP_ROM_QSTR(MP_QSTR_COAST),   MP_ROM_PTR(&pb_const_coast) },
+    { MP_ROM_QSTR(MP_QSTR_BRAKE),   MP_ROM_PTR(&pb_const_brake) },
+    { MP_ROM_QSTR(MP_QSTR_HOLD),    MP_ROM_PTR(&pb_const_hold)  },
 };
 PB_DEFINE_ENUM(pb_enum_type_Stop, MP_QSTR_Stop, pb_enum_Stop_table);
 

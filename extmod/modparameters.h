@@ -9,7 +9,12 @@
 const mp_obj_type_t pb_enum_type_Port;
 
 const mp_obj_type_t pb_enum_type_Button;
+
+// Stop Enum
 const mp_obj_type_t pb_enum_type_Stop;
+const pb_obj_enum_elem_t pb_const_coast;
+const pb_obj_enum_elem_t pb_const_brake;
+const pb_obj_enum_elem_t pb_const_hold;
 
 // Direction Enum
 const mp_obj_type_t pb_enum_type_Direction;
