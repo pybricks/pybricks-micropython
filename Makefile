@@ -4,6 +4,10 @@ help:
 
 .PHONY: doc
 
+all: movehub cityhub cplushub nxt ev3dev-armel
+
+clean-all: clean-movehub clean-cityhub clean-cplushub clean-nxt clean-ev3dev-armel
+
 ev3dev-host:
 	@$(MAKE) -C bricks/ev3dev CROSS_COMPILE=
 
