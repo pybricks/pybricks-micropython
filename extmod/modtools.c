@@ -5,16 +5,20 @@
 #include "py/runtime.h"
 #include "pberror.h"
 #include "pbobj.h"
+#include "pbkwarg.h"
 
-STATIC mp_obj_t tools_wait(mp_obj_t arg) {
-    mp_int_t duration = pb_obj_get_int(arg);
+STATIC mp_obj_t tools_wait(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(time)
+    );
+    mp_int_t duration = pb_obj_get_int(time);
     if (duration < 0) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
     mp_hal_delay_ms(duration);
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_1(tools_wait_obj, tools_wait);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_wait_obj, 0, tools_wait);
 
 // Class structure for StopWatch
 typedef struct _tools_StopWatch_obj_t {
