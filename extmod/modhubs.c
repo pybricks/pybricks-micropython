@@ -4,6 +4,8 @@
 #include <pbio/port.h>
 #include <pbio/button.h>
 
+#include "modparameters.h"
+
 #include "pberror.h"
 #include "pbobj.h"
 
@@ -32,7 +34,8 @@ EV3Brick class tables
 */
 STATIC const mp_rom_map_elem_t hubs_EV3Brick_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_buttons),     MP_ROM_PTR(&pb_module_buttons)      },
-    { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_PTR(&pb_module_colorlight)   }, 
+    { MP_ROM_QSTR(MP_QSTR_Port),        MP_ROM_PTR(&pb_enum_type_Port)      },
+    { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_PTR(&pb_module_colorlight)   },
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)      },
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_EV3Brick_locals_dict, hubs_EV3Brick_locals_dict_table);
