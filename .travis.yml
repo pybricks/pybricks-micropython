@@ -91,6 +91,7 @@ jobs:
         - PATH="/opt/gcc-arm-none-eabi-7-2018-q2-update/bin:${PATH}"
       install:
         - npm install -g jfrog-cli-go
+        - pyenv shell 3.6.7
         - cd ${HOME}
         - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
         - sudo tar -C /opt -xf gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
@@ -108,6 +109,7 @@ jobs:
         - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
         - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
         - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
+        - $TRAVIS_BUILD_DIR/.travis/upload-fw-size.sh movehub "${HOME}/micropython/ports/pybricks/bricks/movehub/build/firmware.bin"
 
     # Pybricks City Hub (Hub No. 4)
     - stage: test
@@ -116,6 +118,7 @@ jobs:
         - PATH="/opt/gcc-arm-none-eabi-7-2018-q2-update/bin:${PATH}"
       install:
         - npm install -g jfrog-cli-go
+        - pyenv shell 3.6.7
         - cd ${HOME}
         - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
         - sudo tar -C /opt -xf gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
@@ -133,6 +136,7 @@ jobs:
         - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
         - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
         - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
+        - $TRAVIS_BUILD_DIR/.travis/upload-fw-size.sh cityhub "${HOME}/micropython/ports/pybricks/bricks/cityhub/build/firmware.bin"
 
     # Pybricks Technic Control+ Hub (Hub No. 2)
     - stage: test
@@ -141,6 +145,7 @@ jobs:
         - PATH="/opt/gcc-arm-none-eabi-7-2018-q2-update/bin:${PATH}"
       install:
         - npm install -g jfrog-cli-go
+        - pyenv shell 3.6.7
         - cd ${HOME}
         - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
         - sudo tar -C /opt -xf gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
@@ -158,6 +163,7 @@ jobs:
         - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
         - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
         - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
+        - $TRAVIS_BUILD_DIR/.travis/upload-fw-size.sh cplushub "${HOME}/micropython/ports/pybricks/bricks/cplushub/build/firmware.bin"
 
     # Pybricks NXT Brick
     - stage: test
@@ -166,6 +172,7 @@ jobs:
         - PATH="/opt/gcc-arm-none-eabi-7-2018-q2-update/bin:${PATH}"
       install:
         - npm install -g jfrog-cli-go
+        - pyenv shell 3.6.7
         - cd ${HOME}
         - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
         - sudo tar -C /opt -xf gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
@@ -183,3 +190,4 @@ jobs:
         - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
         - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
         - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
+        - $TRAVIS_BUILD_DIR/.travis/upload-fw-size.sh nxt "${HOME}/micropython/ports/pybricks/bricks/nxt/build/firmware.bin"
