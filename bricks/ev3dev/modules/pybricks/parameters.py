@@ -4,7 +4,13 @@
 
 """Enum classes of parameters, used by modules in the Pybricks package."""
 
-from parameters_c import Port, Direction, Stop, Color, Button
+from parameters_c import Direction, Stop, Color, Button
+
+
+# Expose pybricks.hubs.EV3Brick.Port as pybricks.parameters.Port
+# for backwards compatibility with EV3 MicroPython 1.0
+from hubs_c import EV3Brick
+Port = EV3Brick.Port
 
 
 class Align():
