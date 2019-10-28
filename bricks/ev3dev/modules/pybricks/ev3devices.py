@@ -5,6 +5,6 @@
 
 # import those ev3devices that are already written in MicroPython-style C code.
 from ev3devices_c import (Motor, InfraredSensor, ColorSensor, TouchSensor,
-                          UltrasonicSensor, GyroSensor)
+                          UltrasonicSensor, GyroSensor, AnalogSensor)
 from .parameters import Color, Button, Direction
 from .tools import StopWatch, wait

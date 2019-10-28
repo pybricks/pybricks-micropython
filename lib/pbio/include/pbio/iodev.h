@@ -68,6 +68,8 @@ typedef enum {
     PBIO_IODEV_TYPE_ID_FCL_HUMIDITY             = 77,   /**< FatcatLab Humidity Sensor */
 
     // LEGO EV3 motors TODO: assign number and location in this table
+    PBIO_IODEV_TYPE_ID_NXT_ANALOG                   ,   /**< MINDSTORMS NXT Analog Sensor */
+    PBIO_IODEV_TYPE_ID_EV3_ANALOG                   ,   /**< MINDSTORMS EV3 Analog Sensor */
     PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR             ,   /**< MINDSTORMS EV3 Touch Sensor */
     PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR              ,   /**< MINDSTORMS EV3 Large Motor */
     PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR             ,   /**< MINDSTORMS EV3 Medium Motor */

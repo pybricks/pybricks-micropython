@@ -178,6 +178,12 @@ pbio_error_t pbdrv_ev3_sensor_get_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_type
     else if (!strcmp(driver_name, "lego-ev3-gyro")) {
         *id = PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR;
     }
+    else if (!strcmp(driver_name, "nxt-analog")) {
+        *id = PBIO_IODEV_TYPE_ID_NXT_ANALOG;
+    }
+    else if (!strncmp(driver_name, "ev3-analog-", 11)) {
+        *id = PBIO_IODEV_TYPE_ID_EV3_ANALOG;
+    }
     else {
         return PBIO_ERROR_IO;
     }
