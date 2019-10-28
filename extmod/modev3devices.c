@@ -598,13 +598,19 @@ PB_DEFINE_ENUM(pb_enum_type_AnalogType, MP_QSTR_AnalogType, pb_enum_AnalogType_t
 STATIC mp_obj_t ev3devices_AnalogSensor_make_new(const mp_obj_type_t *otype, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
-        PB_ARG_DEFAULT_ENUM(type, pb_const_nxt)
+        PB_ARG_DEFAULT_ENUM(type, pb_const_nxt),
+        PB_ARG_DEFAULT_FALSE(force)
     );
     ev3devices_AnalogSensor_obj_t *self = m_new_obj(ev3devices_AnalogSensor_obj_t);
     self->base.type = (mp_obj_type_t*) otype;
 
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
     mp_int_t type_arg = enum_get_value_maybe(type, &pb_enum_type_AnalogType);
+    bool force_arg = mp_obj_is_true(force);
+
+    if (force_arg) {
+        // TODO: Force the port to user-specified analog
+    }
 
     pb_assert(ev3device_get_device(&self->iodev, type_arg, port_num));
     return MP_OBJ_FROM_PTR(self);
