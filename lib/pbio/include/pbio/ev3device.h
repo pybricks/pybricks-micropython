@@ -103,8 +103,8 @@ enum {
 
 // LEGO MINDSTORMS NXT Analog Sensor
 enum {
-    PBIO_IODEV_MODE_NXT_ANALOG__RAW0               = 0,
-    PBIO_IODEV_MODE_NXT_ANALOG__RAW1               = 1,
+    PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE            = 0,
+    PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE             = 1,
 };
 
 #endif // _PBIO_EV3DEVICE_H_
