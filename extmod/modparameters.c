@@ -17,6 +17,8 @@
 #include "pbobj.h"
 #include "pberror.h"
 
+#if PYBRICKS_PY_PARAMETERS
+
 /* Brick/Hub Port enum */
 
 /* Port enum */
@@ -209,3 +211,5 @@ const mp_obj_module_t pb_module_parameters = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t*)&pb_module_parameters_globals,
 };
+
+#endif // PYBRICKS_PY_PARAMETERS

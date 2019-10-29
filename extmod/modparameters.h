@@ -6,6 +6,8 @@
 
 #include "modenum.h"
 
+#if PYBRICKS_PY_PARAMETERS
+
 const mp_obj_type_t pb_enum_type_Port;
 
 const mp_obj_type_t pb_enum_type_Button;
@@ -32,5 +34,7 @@ const pb_obj_enum_elem_t pb_const_orange;
 const pb_obj_enum_elem_t pb_const_red;
 const pb_obj_enum_elem_t pb_const_white;
 const pb_obj_enum_elem_t pb_const_brown;
+
+#endif // PYBRICKS_PY_PARAMETERS
 
 #endif // PYBRICKS_INCLUDED_MODPARAMETERS_H
