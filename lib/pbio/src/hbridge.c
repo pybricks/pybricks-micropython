@@ -10,6 +10,8 @@
 
 #include <pbio/hbridge.h>
 
+#if PBDRV_CONFIG_HBRIDGE
+
 static pbio_hbridge_t hbridges[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 static pbio_error_t pbio_hbridge_setup(pbio_hbridge_t *hbridge, pbio_port_t port, pbio_direction_t direction, int32_t duty_offset, int32_t max_duty_steps) {
@@ -99,3 +101,5 @@ pbio_error_t pbio_hbridge_set_duty_cycle_usr(pbio_hbridge_t *hbridge, int32_t du
     hbridge->state = PBIO_HBRIDGE_DUTY_PASSIVE;
     return pbio_hbridge_set_duty_cycle_sys(hbridge, PBIO_DUTY_STEPS * duty_steps / PBIO_DUTY_USER_STEPS);
 }
+
+#endif // PBDRV_CONFIG_HBRIDGE

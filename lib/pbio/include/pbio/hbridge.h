@@ -8,6 +8,8 @@
 #include <stdint.h>
 #include <pbio/port.h>
 
+#if PBDRV_CONFIG_HBRIDGE
+
 #define PBIO_DUTY_STEPS (PBDRV_MAX_DUTY)
 #define PBIO_DUTY_USER_STEPS (100)
 #define PBIO_DUTY_STEPS_PER_USER_STEP (PBIO_DUTY_STEPS/PBIO_DUTY_USER_STEPS)
@@ -41,5 +43,7 @@ pbio_error_t pbio_hbridge_coast(pbio_hbridge_t *hbridge);
 pbio_error_t pbio_hbridge_brake(pbio_hbridge_t *hbridge);
 pbio_error_t pbio_hbridge_set_duty_cycle_sys(pbio_hbridge_t *hbridge, int32_t duty_steps);
 pbio_error_t pbio_hbridge_set_duty_cycle_usr(pbio_hbridge_t *hbridge, int32_t duty_steps);
+
+#endif // PBDRV_CONFIG_HBRIDGE
 
 #endif // _PBIO_HBRIDGE_H_
