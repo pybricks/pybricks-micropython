@@ -58,6 +58,10 @@ typedef enum {
     PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR            = 46,   /**< TECHNIC Control+ Large Motor */
     PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR           = 47,   /**< TECHNIC Control+ XL Motor */
 
+    // Powered Up and Move Hubs
+    PBIO_IODEV_TYPE_ID_MOVEHUB                  = 64, /**< LEGO Boost Move Hub */
+    PBIO_IODEV_TYPE_ID_CITYHUB                  = 65, /**< LEGO Powered Up City Hub */
+
     // FatcatLab EV3 UART devices
     PBIO_IODEV_TYPE_ID_FCL_ADC                  = 71,   /**< FatcatLab A/DC Adapter */
     PBIO_IODEV_TYPE_ID_FCL_GESTURE              = 72,   /**< FatcatLab Gesture Sensor */
@@ -67,8 +71,15 @@ typedef enum {
     PBIO_IODEV_TYPE_ID_FCL_9DOF                 = 76,   /**< FatcatLab 9DOF Sensor */
     PBIO_IODEV_TYPE_ID_FCL_HUMIDITY             = 77,   /**< FatcatLab Humidity Sensor */
 
-    // LEGO EV3 motors TODO: assign number and location in this table
-    PBIO_IODEV_TYPE_ID_NXT_ANALOG                   ,   /**< MINDSTORMS NXT Analog Sensor */
+    // TECHNIC Control+ Hub
+    PBIO_IODEV_TYPE_ID_CPLUSHUB                 = 128,  /**< LEGO TECHNIC Control+ Hub */
+
+    // NXT Devices
+    PBIO_IODEV_TYPE_ID_NXT_BRICK                    ,   /**< LEGO MINDSTORMS NXT Programmable Brick  */
+    PBIO_IODEV_TYPE_ID_NXT_ANALOG                   ,   /**< LEGO MINDSTORMS NXT Analog Sensor */
+
+    // EV3 Devices
+    PBIO_IODEV_TYPE_ID_EV3_BRICK                    ,   /**< LEGO MINDSTORMS NXT Programmable Brick */
     PBIO_IODEV_TYPE_ID_EV3_ANALOG                   ,   /**< MINDSTORMS EV3 Analog Sensor */
     PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR             ,   /**< MINDSTORMS EV3 Touch Sensor */
     PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR              ,   /**< MINDSTORMS EV3 Large Motor */

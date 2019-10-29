@@ -6,6 +6,8 @@
 
 // platform-specific configuration for LEGO Powered Up Smart Hub
 
+#define PBDRV_CONFIG_HUB_ID                         (PBIO_IODEV_TYPE_ID_CITYHUB)
+
 #define PBDRV_CONFIG_ADC                            (1)
 #define PBDRV_CONFIG_ADC_STM32F0                    (1)
 
