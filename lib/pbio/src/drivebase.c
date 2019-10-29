@@ -5,6 +5,8 @@
 #include <pbio/servo.h>
 #include <pbio/drivebase.h>
 
+#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
+
 static pbio_drivebase_t base;
 
 static pbio_error_t error_or(pbio_error_t left, pbio_error_t right) {
@@ -87,3 +89,5 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *drivebase, int32_t speed, in
 
     return error_or(err_l, err_r);
 }
+
+#endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
