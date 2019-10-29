@@ -9,6 +9,8 @@
 #include "pberror.h"
 #include "pbobj.h"
 
+#if PBDRV_CONFIG_HUB_ID == PBIO_IODEV_TYPE_ID_EV3_BRICK
+
 // Class structure for EV3Brick
 typedef struct _hubs_EV3Brick_obj_t {
     mp_obj_base_t base;
@@ -48,11 +50,15 @@ STATIC const mp_obj_type_t hubs_EV3Brick_type = {
     .locals_dict = (mp_obj_dict_t*)&hubs_EV3Brick_locals_dict,
 };
 
+#endif // PBDRV_CONFIG_HUB_ID == PBIO_IODEV_TYPE_ID_EV3_BRICK
+
 /* Module table */
 
 STATIC const mp_rom_map_elem_t hubs_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_hubs )      },
+#if PBDRV_CONFIG_HUB_ID == PBIO_IODEV_TYPE_ID_EV3_BRICK
     { MP_ROM_QSTR(MP_QSTR_EV3Brick),    MP_ROM_PTR(&hubs_EV3Brick_type) },
+#endif // PBDRV_CONFIG_HUB_ID == PBIO_IODEV_TYPE_ID_EV3_BRICK
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_hubs_globals, hubs_globals_table);
 
