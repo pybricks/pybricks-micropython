@@ -8,16 +8,17 @@
 #include <stdint.h>
 #include <pbio/port.h>
 
+typedef enum {
+    PBIO_DIRECTION_CLOCKWISE,         /**< Positive means clockwise */
+    PBIO_DIRECTION_COUNTERCLOCKWISE,  /**< Positive means counterclockwise */
+} pbio_direction_t;
+
 #if PBDRV_CONFIG_HBRIDGE
 
 #define PBIO_DUTY_STEPS (PBDRV_MAX_DUTY)
 #define PBIO_DUTY_USER_STEPS (100)
 #define PBIO_DUTY_STEPS_PER_USER_STEP (PBIO_DUTY_STEPS/PBIO_DUTY_USER_STEPS)
 
-typedef enum {
-    PBIO_DIRECTION_CLOCKWISE,         /**< Positive means clockwise */
-    PBIO_DIRECTION_COUNTERCLOCKWISE,  /**< Positive means counterclockwise */
-} pbio_direction_t;
 
 typedef enum {
     PBIO_HBRIDGE_COAST,               /**< hbridge set to coast */
