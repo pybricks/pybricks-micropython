@@ -13,6 +13,7 @@
 #include <pbdrv/counter.h>
 #include <pbio/hbridge.h>
 
+#if PBDRV_CONFIG_TACHO
 
 typedef struct _pbio_tacho_t {
     pbio_direction_t direction;
@@ -30,5 +31,7 @@ pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, int32_t *angle);
 pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t reset_angle);
 pbio_error_t pbio_tacho_get_rate(pbio_tacho_t *tacho, int32_t *encoder_rate);
 pbio_error_t pbio_tacho_get_angular_rate(pbio_tacho_t *tacho, int32_t *angular_rate);
+
+#endif // PBDRV_CONFIG_TACHO
 
 #endif // _PBIO_TACHO_H_

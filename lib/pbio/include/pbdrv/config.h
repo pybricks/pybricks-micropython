@@ -122,6 +122,11 @@
 #define PBDRV_CONFIG_HBRIDGE (1)
 #endif
 
+// enable the tacho driver
+#ifndef PBDRV_CONFIG_TACHO
+#define PBDRV_CONFIG_TACHO (1)
+#endif
+
 // enable the UART driver
 #ifndef PBDRV_CONFIG_UART
 #define PBDRV_CONFIG_UART (1)

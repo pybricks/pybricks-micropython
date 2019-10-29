@@ -8,6 +8,8 @@
 #include <pbio/port.h>
 #include <pbio/tacho.h>
 
+#if PBDRV_CONFIG_TACHO
+
 static pbio_tacho_t tachos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pbio_direction_t direction, fix16_t counts_per_degree, fix16_t gear_ratio) {
@@ -131,3 +133,5 @@ pbio_error_t pbio_tacho_get_angular_rate(pbio_tacho_t *tacho, int32_t *angular_r
 
     return PBIO_SUCCESS;
 }
+
+#endif // PBDRV_CONFIG_TACHO
