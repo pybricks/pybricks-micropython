@@ -38,6 +38,9 @@
 #define PBDRV_CONFIG_LAST_IO_PORT           PBIO_PORT_1
 #define PBDRV_CONFIG_NUM_IO_PORT            (1)
 
+#define PBDRV_CONFIG_HBRIDGE                        (0)
+#define PBDRV_CONFIG_TACHO                          (0)
+
 #define PBDRV_CONFIG_SYS_CLOCK_RATE 48000000
 
 #endif // _PBDRVCONFIG_H_
