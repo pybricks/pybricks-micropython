@@ -16,6 +16,7 @@
 #include "modmotor.h"
 #include "pbthread.h"
 
+#if PYBRICKS_PY_ROBOTICS
 
 // Class structure for DriveBase
 typedef struct _robotics_DriveBase_obj_t {
@@ -136,3 +137,5 @@ const mp_obj_module_t pb_module_robotics = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t*)&pb_module_robotics_globals,
 };
+
+#endif // PYBRICKS_PY_ROBOTICS
