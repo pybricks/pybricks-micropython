@@ -12,6 +12,8 @@
 
 #include "sys/clock.h"
 
+#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
+
 // TODO: Generalize and move to config:
 pbio_error_t pbio_config_get_defaults_servo(pbio_iodev_type_id_t id,
                                     fix16_t *counts_per_degree,
@@ -779,13 +781,11 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
 }
 
 void _pbio_servo_reset_all(void) {
-#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
     int i;
     for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
         pbio_servo_t *srv;
         pbio_servo_get(PBDRV_CONFIG_FIRST_MOTOR_PORT + i, &srv, PBIO_DIRECTION_CLOCKWISE, 1);
     }
-#endif
 }
 
 // TODO: Convert to Contiki process
@@ -798,3 +798,5 @@ void _pbio_servo_poll(void) {
         pbio_servo_control_update(&servo[i]);
     }
 }
+
+#endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER

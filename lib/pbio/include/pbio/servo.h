@@ -24,6 +24,8 @@
 
 #include <pbio/iodev.h>
 
+#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
+
 #define SERVO_LOG_NUM_VALUES (5 + NUM_DEFAULT_LOG_VALUES)
 
 #define MAX_DCMOTOR_SETTINGS_STR_LENGTH (128)
@@ -38,14 +40,6 @@ typedef struct _pbio_servo_t {
     pbio_port_t port;
     pbio_log_t log;
 } pbio_servo_t;
-
-#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER == 0
-static inline void _pbio_servo_reset_all(void) { }
-static inline void _pbio_servo_poll(void) { }
-#else
-void _pbio_servo_reset_all(void);
-void _pbio_servo_poll(void);
-#endif
 
 pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction_t direction, fix16_t gear_ratio);  // TODO: Make dc and servo version
 
@@ -84,7 +78,16 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop, bool foreground);
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target);
 
-
 pbio_error_t pbio_servo_control_update(pbio_servo_t *srv);
+
+void _pbio_servo_reset_all(void);
+void _pbio_servo_poll(void);
+
+#else
+
+static inline void _pbio_servo_reset_all(void) { }
+static inline void _pbio_servo_poll(void) { }
+
+#endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
 
 #endif // _PBIO_SERVO_H_
