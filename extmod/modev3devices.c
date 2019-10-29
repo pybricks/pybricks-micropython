@@ -3,8 +3,6 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_EV3DEVICES
-
 #include "modmotor.h"
 #include "py/mphal.h"
 #include "py/runtime.h"
@@ -719,5 +717,3 @@ const mp_obj_module_t pb_module_ev3devices = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t*)&pb_module_ev3devices_globals,
 };
-
-#endif // PYBRICKS_PY_EV3DEVICES

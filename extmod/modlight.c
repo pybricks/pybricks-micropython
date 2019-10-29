@@ -68,7 +68,7 @@ const mp_obj_module_t pb_module_colorlight = {
     .globals = (mp_obj_dict_t*)&pb_module_colorlight_globals,
 };
 
-#if PYBRICKS_PY_EV3DEVICES // TODO: make compatible with PUPDEVICES
+#if PBDRV_CONFIG_HUB_ID == PBIO_IODEV_TYPE_ID_EV3_BRICK // FIXME: Don't use hub name here; make compatible with PUPDEVICES
 
 // pybricks.ev3devices.Light class object
 typedef struct _ev3devices_Light_obj_t {
@@ -117,4 +117,4 @@ mp_obj_t ev3devices_Light_obj_make_new(pbio_ev3iodev_t *iodev) {
     return light;
 }
 
-#endif // PYBRICKS_PY_EV3DEVICES
+#endif

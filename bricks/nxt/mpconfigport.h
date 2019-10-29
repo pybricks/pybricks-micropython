@@ -95,8 +95,6 @@ typedef long mp_off_t;
 
 #define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn(str, len)
 
-#define PYBRICKS_PY_EV3DEVICES          (0)
-
 #if PYBRICKS_PY_PARAMETERS
 extern const struct _mp_obj_module_t pb_module_parameters;
 #define _PYBRICKS_MODULE_PARAMETERS \
