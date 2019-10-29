@@ -5,6 +5,8 @@
 
 #include "py/obj.h"
 
+#if PYBRICKS_PY_MOTOR
+
 // Class structure for Motors
 typedef struct _motor_Motor_obj_t {
     mp_obj_base_t base;
@@ -13,3 +15,5 @@ typedef struct _motor_Motor_obj_t {
 } motor_Motor_obj_t;
 
 const mp_obj_type_t motor_Motor_type;
+
+#endif // PYBRICKS_PY_MOTOR
