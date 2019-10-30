@@ -215,10 +215,10 @@ static const pbsys_user_program_callbacks_t user_program_callbacks = {
 };
 
 static void pb_imports() {
-    // Import port-specific hub module
-    PB_IMPORT_MODULE(PYBRICKS_HUB_NAME);
+    // Import hubs module
+    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_hubs);
 
-    // Import generic modules
+    // Import other modules if enabled
     #if PYBRICKS_PY_ADVANCED
     PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_advanced);
     #endif

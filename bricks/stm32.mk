@@ -126,12 +126,10 @@ endif
 PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modadvanced.c \
 	modbattery.c \
-	modcityhub.c \
-	modcplushub.c \
 	moddebug.c \
 	modlight.c \
 	modmotor.c \
-	modmovehub.c \
+	modhubs.c \
 	modparameters.c \
 	modpupdevices.c \
 	modtools.c \

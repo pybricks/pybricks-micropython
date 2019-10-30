@@ -97,9 +97,9 @@ typedef long mp_off_t;
 
 #define MPY_MAX_BYTES (PYBRICKS_HEAP_KB*1024/2)
 
-extern const struct _mp_obj_module_t PYBRICKS_HUB_MODULE;
-#define _PYBRICKS_MODULE_HUB \
-    { MP_OBJ_NEW_QSTR(PYBRICKS_HUB_NAME), (mp_obj_t)&PYBRICKS_HUB_MODULE},
+extern const struct _mp_obj_module_t pb_module_hubs;
+#define _PYBRICKS_MODULE_HUBS \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_hubs), (mp_obj_t)&pb_module_hubs},
 
 #if PYBRICKS_PY_ADVANCED
 extern const struct _mp_obj_module_t pb_module_advanced;
@@ -139,7 +139,7 @@ extern const struct _mp_obj_module_t pb_module_robotics;
 
 #define MICROPY_PORT_BUILTIN_MODULES \
     _PYBRICKS_MODULE_ADVANCED       \
-    _PYBRICKS_MODULE_HUB        \
+    _PYBRICKS_MODULE_HUBS           \
     _PYBRICKS_MODULE_PUPDEVICES     \
     _PYBRICKS_MODULE_PARAMETERS     \
     _PYBRICKS_MODULE_TOOLS          \
