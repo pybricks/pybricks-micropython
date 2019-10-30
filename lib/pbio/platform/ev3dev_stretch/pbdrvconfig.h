@@ -36,6 +36,7 @@
 
 #define PBDRV_CONFIG_BLUETOOTH  (0)
 #define PBDRV_CONFIG_BUTTON     (1)
+#define PBDRV_CONFIG_KEYPAD     (1)
 #define PBDRV_CONFIG_UART       (0)
 
 #endif // _PBDRVCONFIG_H_

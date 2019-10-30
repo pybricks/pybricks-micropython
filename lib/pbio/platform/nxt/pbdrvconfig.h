@@ -16,6 +16,7 @@
 #define PBDRV_CONFIG_LIGHT                          (0)
 
 #define PBDRV_CONFIG_BUTTON                         (1)
+#define PBDRV_CONFIG_KEYPAD                         (1)
 
 #define PBDRV_CONFIG_BLUETOOTH                      (0)
 
