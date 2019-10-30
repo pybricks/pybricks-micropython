@@ -173,13 +173,46 @@ STATIC const mp_obj_type_t hubs_CPlusHub_type = {
 
 #endif // PBDRV_CONFIG_HUB_CPLUSHUB
 
+#ifdef PBDRV_CONFIG_HUB_NXTBRICK
+
+// Class structure for NXTBrick
+typedef struct _hubs_NXTBrick_obj_t {
+    mp_obj_base_t base;
+} hubs_NXTBrick_obj_t;
+
+STATIC void hubs_NXTBrick_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
+    mp_printf(print, qstr_str(MP_QSTR_NXTBrick));
+}
+
+STATIC mp_obj_t hubs_NXTBrick_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+    hubs_NXTBrick_obj_t *self = m_new_obj(hubs_NXTBrick_obj_t);
+    self->base.type = (mp_obj_type_t*) type;
+    return MP_OBJ_FROM_PTR(self);
+}
+
+/*
+NXTBrick class tables
+*/
+STATIC const mp_rom_map_elem_t hubs_NXTBrick_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_Port),        MP_ROM_PTR(&pb_enum_type_Port)    },
+    { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)    },
+};
+STATIC MP_DEFINE_CONST_DICT(hubs_NXTBrick_locals_dict, hubs_NXTBrick_locals_dict_table);
+
+STATIC const mp_obj_type_t hubs_NXTBrick_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_NXTBrick,
+    .print = hubs_NXTBrick_print,
+    .make_new = hubs_NXTBrick_make_new,
+    .locals_dict = (mp_obj_dict_t*)&hubs_NXTBrick_locals_dict,
+};
+
+#endif // PBDRV_CONFIG_HUB_NXTBRICK
+
 /* Module table */
 
 STATIC const mp_rom_map_elem_t hubs_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_hubs )      },
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
-    { MP_ROM_QSTR(MP_QSTR_EV3Brick),    MP_ROM_PTR(&hubs_EV3Brick_type) },
-#endif
 #ifdef PBDRV_CONFIG_HUB_MOVEHUB
     { MP_ROM_QSTR(MP_QSTR_MoveHub),    MP_ROM_PTR(&hubs_MoveHub_type) },
 #endif
@@ -188,6 +221,12 @@ STATIC const mp_rom_map_elem_t hubs_globals_table[] = {
 #endif
 #ifdef PBDRV_CONFIG_HUB_CPLUSHUB
     { MP_ROM_QSTR(MP_QSTR_CPlusHub),    MP_ROM_PTR(&hubs_CPlusHub_type) },
+#endif
+#ifdef PBDRV_CONFIG_HUB_NXTBRICK
+    { MP_ROM_QSTR(MP_QSTR_NXTBrick),    MP_ROM_PTR(&hubs_NXTBrick_type) },
+#endif
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+    { MP_ROM_QSTR(MP_QSTR_EV3Brick),    MP_ROM_PTR(&hubs_EV3Brick_type) },
 #endif
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_hubs_globals, hubs_globals_table);
