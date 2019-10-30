@@ -11,8 +11,11 @@
 
 #include "py/runtime.h"
 
-#include "modmotor.h"
 #include "pberror.h"
+#include "pbkwarg.h"
+
+#include "modparameters.h"
+#include "modmotor.h"
 #include "pbiodevice.h"
 
 // Class structure for ColorAndDistSensor
@@ -21,14 +24,17 @@ typedef struct _pupdevices_ColorAndDistSensor_obj_t {
     pbio_iodev_t *iodev;
 } pupdevices_ColorAndDistSensor_obj_t;
 
+// pybricks.ev3devices.pupdevices_ColorAndDistSensor.__init__
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
-    // Initialize self
-    mp_arg_check_num(n_args, n_kw, 1, 1, false);
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port)
+    );
+
     pupdevices_ColorAndDistSensor_obj_t *self = m_new_obj(pupdevices_ColorAndDistSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
-    pbio_port_t port = mp_obj_get_int(args[0]);
 
-    pb_assert(pbdrv_ioport_get_iodev(port, &self->iodev));
+    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+    pb_assert(pbdrv_ioport_get_iodev(port_num, &self->iodev));
     pb_iodevice_assert_type_id(self->iodev, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
     pb_iodevice_set_mode(self->iodev, 8);
     return MP_OBJ_FROM_PTR(self);
