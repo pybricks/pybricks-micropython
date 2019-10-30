@@ -313,7 +313,6 @@ STATIC mp_obj_t ev3devices_ColorSensor_color(mp_obj_t self_in) {
         case 7: return MP_OBJ_FROM_PTR(&pb_const_brown);
         default: return mp_const_none;
     }
-    return mp_obj_new_int(color);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_ColorSensor_color_obj, ev3devices_ColorSensor_color);
 
