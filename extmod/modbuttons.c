@@ -6,8 +6,11 @@
 #if PYBRICKS_PY_BUTTONS
 
 #include "py/obj.h"
-#include <pberror.h>
+
 #include <pbio/button.h>
+
+#include "pberror.h"
+#include "modparameters.h"
 
 STATIC mp_obj_t buttons_pressed(void) {
     mp_obj_t button_list[10];
@@ -17,22 +20,22 @@ STATIC mp_obj_t buttons_pressed(void) {
     pb_assert(pbio_button_is_pressed(&pressed));
 
     if (pressed & PBIO_BUTTON_CENTER) {
-        button_list[size++] = mp_obj_new_int(PBIO_BUTTON_CENTER);
+        button_list[size++] = MP_OBJ_FROM_PTR(&pb_const_btn_center);
     }
     if (pressed & PBIO_BUTTON_LEFT) {
-        button_list[size++] = mp_obj_new_int(PBIO_BUTTON_LEFT);
+        button_list[size++] = MP_OBJ_FROM_PTR(&pb_const_btn_left);
     }
     if (pressed & PBIO_BUTTON_RIGHT) {
-        button_list[size++] = mp_obj_new_int(PBIO_BUTTON_RIGHT);
+        button_list[size++] = MP_OBJ_FROM_PTR(&pb_const_btn_right);
     }
     if (pressed & PBIO_BUTTON_UP) {
-        button_list[size++] = mp_obj_new_int(PBIO_BUTTON_UP);
+        button_list[size++] = MP_OBJ_FROM_PTR(&pb_const_btn_up);
     }
     if (pressed & PBIO_BUTTON_DOWN) {
-        button_list[size++] = mp_obj_new_int(PBIO_BUTTON_DOWN);
+        button_list[size++] = MP_OBJ_FROM_PTR(&pb_const_btn_down);
     }
     if (pressed & PBIO_BUTTON_LEFT_UP) {
-        button_list[size++] = mp_obj_new_int(PBIO_BUTTON_LEFT_UP);
+        button_list[size++] = MP_OBJ_FROM_PTR(&pb_const_btn_left_up);
     }
 
     return mp_obj_new_list(size, button_list);
