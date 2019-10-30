@@ -60,22 +60,14 @@ STATIC mp_obj_t pupdevices_ColorAndDistSensor_color(mp_obj_t self_in) {
     pb_iodevice_assert_type_id(self->iodev, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
 
     switch(pupdevices_ColorAndDistSensor_combined_mode(self->iodev, 0)) {
-        case 0:
-            return mp_obj_new_int(PBIO_LIGHT_COLOR_BLACK);
-        case 3:
-            return mp_obj_new_int(PBIO_LIGHT_COLOR_BLUE);
-        case 5:
-            return mp_obj_new_int(PBIO_LIGHT_COLOR_GREEN);
-        case 7:
-            return mp_obj_new_int(PBIO_LIGHT_COLOR_YELLOW);
-        case 8:
-            return mp_obj_new_int(PBIO_LIGHT_COLOR_ORANGE);
-        case 9:
-            return mp_obj_new_int(PBIO_LIGHT_COLOR_RED);
-        case 10:
-            return mp_obj_new_int(PBIO_LIGHT_COLOR_WHITE);
-        default:
-            return mp_const_none;
+        case 1: return MP_OBJ_FROM_PTR(&pb_const_black);
+        case 3: return MP_OBJ_FROM_PTR(&pb_const_blue);
+        case 5: return MP_OBJ_FROM_PTR(&pb_const_green);
+        case 7: return MP_OBJ_FROM_PTR(&pb_const_yellow);
+        case 8: return MP_OBJ_FROM_PTR(&pb_const_orange);
+        case 9: return MP_OBJ_FROM_PTR(&pb_const_red);
+        case 10: return MP_OBJ_FROM_PTR(&pb_const_white);
+        default: return mp_const_none;
     }
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_color_obj, pupdevices_ColorAndDistSensor_color);
