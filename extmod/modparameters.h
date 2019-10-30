@@ -10,7 +10,18 @@
 
 const mp_obj_type_t pb_enum_type_Port;
 
+// Button Enum
 const mp_obj_type_t pb_enum_type_Button;
+const pb_obj_enum_elem_t pb_const_btn_up;
+const pb_obj_enum_elem_t pb_const_btn_down;
+const pb_obj_enum_elem_t pb_const_btn_left;
+const pb_obj_enum_elem_t pb_const_btn_right;
+const pb_obj_enum_elem_t pb_const_btn_center;
+const pb_obj_enum_elem_t pb_const_btn_left_up;
+const pb_obj_enum_elem_t pb_const_btn_left_down;
+const pb_obj_enum_elem_t pb_const_btn_right_up;
+const pb_obj_enum_elem_t pb_const_btn_right_down;
+const pb_obj_enum_elem_t pb_const_btn_beacon;
 
 // Stop Enum
 const mp_obj_type_t pb_enum_type_Stop;

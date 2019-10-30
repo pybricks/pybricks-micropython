@@ -106,9 +106,6 @@ PB_DEFINE_ENUM(pb_enum_type_Direction, MP_QSTR_Direction, pb_enum_Direction_tabl
 
 /* Color enum */
 
-// Color is just like the other enums, but we define entries manually
-// instead of using the MP_ROM_ENUM_ELEM macro, so we can also return
-// these constants from color sensors.
 const pb_obj_enum_elem_t pb_const_black = {
     {&pb_enum_type_Color},
     .name = MP_QSTR_BLACK,
@@ -179,17 +176,77 @@ PB_DEFINE_ENUM(pb_enum_type_Color, MP_QSTR_Color, pb_Color_enum_table);
 
 /* Button enum */
 
+const pb_obj_enum_elem_t pb_const_btn_up = {
+    {&pb_enum_type_Button},
+    .name = MP_QSTR_UP,
+    .value = PBIO_BUTTON_UP
+};
+
+const pb_obj_enum_elem_t pb_const_btn_down = {
+    {&pb_enum_type_Button},
+    .name = MP_QSTR_DOWN,
+    .value = PBIO_BUTTON_DOWN
+};
+
+const pb_obj_enum_elem_t pb_const_btn_left = {
+    {&pb_enum_type_Button},
+    .name = MP_QSTR_LEFT,
+    .value = PBIO_BUTTON_LEFT
+};
+
+const pb_obj_enum_elem_t pb_const_btn_right = {
+    {&pb_enum_type_Button},
+    .name = MP_QSTR_RIGHT,
+    .value = PBIO_BUTTON_RIGHT
+};
+
+const pb_obj_enum_elem_t pb_const_btn_center = {
+    {&pb_enum_type_Button},
+    .name = MP_QSTR_CENTER,
+    .value = PBIO_BUTTON_CENTER
+};
+
+const pb_obj_enum_elem_t pb_const_btn_left_up = {
+    {&pb_enum_type_Button},
+    .name = MP_QSTR_LEFT_UP,
+    .value = PBIO_BUTTON_LEFT_UP
+};
+
+const pb_obj_enum_elem_t pb_const_btn_left_down = {
+    {&pb_enum_type_Button},
+    .name = MP_QSTR_LEFT_DOWN,
+    .value = PBIO_BUTTON_LEFT_DOWN
+};
+
+const pb_obj_enum_elem_t pb_const_btn_right_up = {
+    {&pb_enum_type_Button},
+    .name = MP_QSTR_RIGHT_UP,
+    .value = PBIO_BUTTON_RIGHT_UP
+};
+
+const pb_obj_enum_elem_t pb_const_btn_right_down = {
+    {&pb_enum_type_Button},
+    .name = MP_QSTR_RIGHT_DOWN,
+    .value = PBIO_BUTTON_RIGHT_DOWN
+};
+
+const pb_obj_enum_elem_t pb_const_btn_beacon = {
+    {&pb_enum_type_Button},
+    .name = MP_QSTR_BEACON,
+    .value = PBIO_BUTTON_UP
+};
+
 STATIC const mp_rom_map_elem_t pb_enum_Button_table[] = {
-    MP_ROM_ENUM_ELEM(pb_enum_type_Button, MP_QSTR_UP, PBIO_BUTTON_UP),
-    MP_ROM_ENUM_ELEM(pb_enum_type_Button, MP_QSTR_DOWN, PBIO_BUTTON_DOWN),
-    MP_ROM_ENUM_ELEM(pb_enum_type_Button, MP_QSTR_LEFT, PBIO_BUTTON_LEFT),
-    MP_ROM_ENUM_ELEM(pb_enum_type_Button, MP_QSTR_RIGHT, PBIO_BUTTON_RIGHT),
-    MP_ROM_ENUM_ELEM(pb_enum_type_Button, MP_QSTR_CENTER, PBIO_BUTTON_CENTER),
-    MP_ROM_ENUM_ELEM(pb_enum_type_Button, MP_QSTR_LEFT_UP, PBIO_BUTTON_LEFT_UP),
-    MP_ROM_ENUM_ELEM(pb_enum_type_Button, MP_QSTR_LEFT_DOWN, PBIO_BUTTON_LEFT_DOWN),
-    MP_ROM_ENUM_ELEM(pb_enum_type_Button, MP_QSTR_RIGHT_UP, PBIO_BUTTON_RIGHT_UP),
-    MP_ROM_ENUM_ELEM(pb_enum_type_Button, MP_QSTR_RIGHT_DOWN, PBIO_BUTTON_RIGHT_DOWN),
-    MP_ROM_ENUM_ELEM(pb_enum_type_Button, MP_QSTR_BEACON, PBIO_BUTTON_UP),
+    { MP_ROM_QSTR(MP_QSTR_UP),         MP_ROM_PTR(&pb_const_btn_up)        },
+    { MP_ROM_QSTR(MP_QSTR_DOWN),       MP_ROM_PTR(&pb_const_btn_down)      },
+    { MP_ROM_QSTR(MP_QSTR_LEFT),       MP_ROM_PTR(&pb_const_btn_left)      },
+    { MP_ROM_QSTR(MP_QSTR_RIGHT),      MP_ROM_PTR(&pb_const_btn_right)     },
+    { MP_ROM_QSTR(MP_QSTR_CENTER),     MP_ROM_PTR(&pb_const_btn_center)    },
+    { MP_ROM_QSTR(MP_QSTR_LEFT_UP),    MP_ROM_PTR(&pb_const_btn_left_up)   },
+    { MP_ROM_QSTR(MP_QSTR_LEFT_DOWN),  MP_ROM_PTR(&pb_const_btn_left_down) },
+    { MP_ROM_QSTR(MP_QSTR_RIGHT_UP),   MP_ROM_PTR(&pb_const_btn_right_up)  },
+    { MP_ROM_QSTR(MP_QSTR_RIGHT_DOWN), MP_ROM_PTR(&pb_const_btn_right_down)},
+    { MP_ROM_QSTR(MP_QSTR_BEACON),     MP_ROM_PTR(&pb_const_btn_beacon)    },
 };
 PB_DEFINE_ENUM(pb_enum_type_Button, MP_QSTR_Button, pb_enum_Button_table);
 
