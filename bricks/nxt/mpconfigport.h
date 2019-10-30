@@ -6,10 +6,6 @@
 
 #define PYBRICKS_HEAP_KB                32 // half of RAM
 
-// Pybricks hub module
-#define PYBRICKS_HUB_NAME               MP_QSTR_nxtbrick
-// #define PYBRICKS_HUB_MODULE             pb_module_nxtbrick
-
 // Pybricks modules
 #define PYBRICKS_PY_BATTERY             (1)
 #define PYBRICKS_PY_NXTDEVICES          (1)
