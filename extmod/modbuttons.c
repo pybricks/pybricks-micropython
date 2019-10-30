@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_BUTTONS
+#if PBDRV_CONFIG_BUTTON
 
 #include "py/obj.h"
 
@@ -55,4 +55,4 @@ const mp_obj_module_t pb_module_buttons = {
     .globals = (mp_obj_dict_t*)&pb_module_buttons_globals,
 };
 
-#endif // PYBRICKS_PY_BUTTONS
+#endif // PBDRV_CONFIG_BUTTON

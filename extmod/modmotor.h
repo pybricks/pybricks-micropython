@@ -5,7 +5,7 @@
 
 #include "py/obj.h"
 
-#if PYBRICKS_PY_MOTOR
+#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
 // Class structure for Motors
 typedef struct _motor_Motor_obj_t {
@@ -16,4 +16,4 @@ typedef struct _motor_Motor_obj_t {
 
 const mp_obj_type_t motor_Motor_type;
 
-#endif // PYBRICKS_PY_MOTOR
+#endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER

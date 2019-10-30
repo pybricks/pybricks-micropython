@@ -10,8 +10,6 @@
 
 // Pybricks modules
 #define PYBRICKS_PY_ADVANCED            (1)
-#define PYBRICKS_PY_BATTERY             (0)
-#define PYBRICKS_PY_MOTOR               (0)
 #define PYBRICKS_PY_PARAMETERS          (1)
 #define PYBRICKS_PY_PUPDEVICES          (0)
 #define PYBRICKS_PY_TOOLS               (0)

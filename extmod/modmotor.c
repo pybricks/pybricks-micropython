@@ -5,7 +5,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_MOTOR
+#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
 #include <pbio/servo.h>
 
@@ -557,4 +557,4 @@ const mp_obj_type_t motor_Motor_type = {
     .make_new = motor_Motor_make_new,
     .locals_dict = (mp_obj_dict_t*)&motor_Motor_locals_dict,
 };
-#endif //PYBRICKS_PY_MOTOR
+#endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER

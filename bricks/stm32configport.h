@@ -2,6 +2,7 @@
 // Copyright (c) 2013, 2014 Damien P. George
 
 #include <stdint.h>
+#include <pbdrv/config.h>
 
 // options to control how MicroPython is built
 
