@@ -4,7 +4,7 @@
 #ifndef _PBDRVCONFIG_H_
 #define _PBDRVCONFIG_H_
 
-#define PBDRV_CONFIG_HUB_ID                         (PBIO_IODEV_TYPE_ID_CPLUSHUB)
+#define PBDRV_CONFIG_HUB_CPLUSHUB
 
 #define PBDRV_CONFIG_ADC                            (1)
 #define PBDRV_CONFIG_ADC_STM32_HAL                  (1)

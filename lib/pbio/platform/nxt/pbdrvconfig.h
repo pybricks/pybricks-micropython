@@ -6,7 +6,7 @@
 
 // platform-specific configuration for LEGO MINDSTORMS NXT
 
-#define PBDRV_CONFIG_HUB_ID                         (PBIO_IODEV_TYPE_ID_NXT_BRICK)
+#define PBDRV_CONFIG_HUB_NXTBRICK
 
 #define PBDRV_CONFIG_ADC                            (0)
 

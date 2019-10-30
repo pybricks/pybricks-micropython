@@ -6,7 +6,7 @@
 
 // platform-specific configuration for LEGO MINDSTORMS EV3 running ev3dev-stretch
 
-#define PBDRV_CONFIG_HUB_ID                                 (PBIO_IODEV_TYPE_ID_EV3_BRICK)
+#define PBDRV_CONFIG_HUB_EV3BRICK
 
 #define PBDRV_CONFIG_BATTERY                                (1)
 #define PBDRV_CONFIG_BATTERY_LINUX_EV3                      (1)

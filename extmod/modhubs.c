@@ -9,7 +9,7 @@
 #include "pberror.h"
 #include "pbobj.h"
 
-#if PBDRV_CONFIG_HUB_ID == PBIO_IODEV_TYPE_ID_EV3_BRICK
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
 
 // Class structure for EV3Brick
 typedef struct _hubs_EV3Brick_obj_t {
@@ -56,7 +56,7 @@ STATIC const mp_obj_type_t hubs_EV3Brick_type = {
 
 STATIC const mp_rom_map_elem_t hubs_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_hubs )      },
-#if PBDRV_CONFIG_HUB_ID == PBIO_IODEV_TYPE_ID_EV3_BRICK
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     { MP_ROM_QSTR(MP_QSTR_EV3Brick),    MP_ROM_PTR(&hubs_EV3Brick_type) },
 #endif // PBDRV_CONFIG_HUB_ID == PBIO_IODEV_TYPE_ID_EV3_BRICK
 };

@@ -8,7 +8,7 @@
 
 #include "py/obj.h"
 
-#if PBDRV_CONFIG_HUB_ID == PBIO_IODEV_TYPE_ID_EV3_BRICK // FIXME: Don't use hub name here; make compatible with PUPDEVICES
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK // FIXME: Don't use hub name here; make compatible with PUPDEVICES
 mp_obj_t ev3devices_Light_obj_make_new(pbio_ev3iodev_t *iodev);
 #endif
 
