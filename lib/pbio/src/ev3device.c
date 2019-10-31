@@ -28,13 +28,8 @@ pbio_error_t ev3device_get_device(pbio_ev3iodev_t **iodev, pbio_iodev_type_id_t 
 
     pbio_error_t err;
 
-    err = pbdrv_ev3_sensor_get(&_iodev->sensor, _iodev->port);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Check device ID
-    err = pbdrv_ev3_sensor_assert_id(_iodev->sensor, valid_id);
+    // Get the device and assert that is has a valid id 
+    err = pbdrv_ev3_sensor_get(&_iodev->sensor, _iodev->port, valid_id);
     if (err != PBIO_SUCCESS) {
         return err;
     }

@@ -149,17 +149,6 @@ pbio_error_t ev3_sensor_init(pbdrv_ev3_sensor_t *sensor, pbio_port_t port) {
 
 struct _pbdrv_ev3_sensor_t sensors[4];
 
-// Get an ev3dev sensor
-pbio_error_t pbdrv_ev3_sensor_get(pbdrv_ev3_sensor_t **sensor, pbio_port_t port) {
-    if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
-
-    *sensor = &sensors[port - PBIO_PORT_1];
-
-    return ev3_sensor_init(*sensor, port);
-}
-
 // Get the device ID
 pbio_error_t pbdrv_ev3_sensor_assert_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_type_id_t valid_id) {
     char driver_name[MAX_PATH_LENGTH];
@@ -195,6 +184,33 @@ pbio_error_t pbdrv_ev3_sensor_assert_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_t
     }
     if (id != valid_id) {
         return PBIO_ERROR_NO_DEV;
+    }
+    return PBIO_SUCCESS;
+}
+
+// Get an ev3dev sensor
+pbio_error_t pbdrv_ev3_sensor_get(pbdrv_ev3_sensor_t **sensor, pbio_port_t port, pbio_iodev_type_id_t valid_id) {
+    if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
+        return PBIO_ERROR_INVALID_PORT;
+    }
+
+    *sensor = &sensors[port - PBIO_PORT_1];
+
+    pbio_error_t err;
+
+    // Initialize port if needed for this ID
+    // TODO
+    
+    // Initialize sysfs
+    err = ev3_sensor_init(*sensor, port);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Assert that the expected device is attached
+    err = pbdrv_ev3_sensor_assert_id(*sensor, valid_id);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
     return PBIO_SUCCESS;
 }
