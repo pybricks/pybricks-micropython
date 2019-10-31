@@ -15,9 +15,31 @@
 #define MAX_PATH_LENGTH 60
 #define MAX_READ_LENGTH "60"
 
+typedef enum {
+    AUTO,
+    NXT_ANALOG,
+    NXT_COLOR,
+    NXT_I2C,
+    OTHER_I2C,
+    EV3_ANALOG,
+    EV3_UART,
+    OTHER_UART,
+    RAW,
+} _pbdrv_ev3dev_port_t;
+
+static const char* const port_modes[] = {
+    "auto",
+    "nxt-analog",
+    "nxt-color",
+    "nxt-i2c",
+    "other-i2c",
+    "ev3-analog",
+    "ev3-uart",
+    "other-uart raw"
+};
+
 struct _pbdrv_ev3_sensor_t {
     int n_sensor;
-    int n_lport;
     int n_modes;
     FILE *f_mode;
     FILE *f_driver_name;
@@ -109,14 +131,55 @@ static pbio_error_t sysfs_read_int(FILE *file, int *dest) {
     return PBIO_SUCCESS;
 }
 
+// Set the port mode
+pbio_error_t ev3_sensor_set_port_mode(pbio_port_t port, _pbdrv_ev3dev_port_t mode) {
+    
+    // Read lego-port number
+    int n_lport;
+    pbio_error_t err;
+
+    err = sysfs_get_number(port, "/sys/class/lego-port", &n_lport);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Open mode file for writing
+    char path[MAX_PATH_LENGTH];
+    snprintf(path, MAX_PATH_LENGTH, "/sys/class/lego-port/port%d/mode", n_lport);
+    FILE *file = fopen(path, "w");
+    if (file == NULL) {
+        return PBIO_ERROR_IO;
+    }
+
+    // Write mode
+    if (fprintf(file, "%s", port_modes[mode]) != strlen(port_modes[mode])) {
+        return PBIO_ERROR_IO;
+    }
+
+    // Close the file
+    if (fclose(file) != 0) {
+        return PBIO_ERROR_IO;
+    }
+    return PBIO_SUCCESS;
+}
+
+// Set port configuration for some devices
+pbio_error_t ev3_sensor_configure_port(pbio_port_t port, pbio_iodev_type_id_t *id) {
+    switch (*id)
+    {
+    case PBIO_IODEV_TYPE_ID_NXT_ANALOG_CUSTOM:
+        *id = PBIO_IODEV_TYPE_ID_NXT_ANALOG;
+        return ev3_sensor_set_port_mode(port, NXT_ANALOG);
+    default:
+        return PBIO_SUCCESS;
+    }
+}
+
 // Initialize an ev3dev sensor by opening the relevant sysfs attributes
 static pbio_error_t ev3_sensor_init(pbdrv_ev3_sensor_t *sensor, pbio_port_t port) {
     pbio_error_t err;
 
     err = sysfs_get_number(port, "/sys/class/lego-sensor", &sensor->n_sensor);
-    if (err != PBIO_SUCCESS) { return err; }
-
-    err = sysfs_get_number(port, "/sys/class/lego-port", &sensor->n_lport);
     if (err != PBIO_SUCCESS) { return err; }
 
     err = sysfs_open(&sensor->f_driver_name, sensor->n_sensor, "driver_name", "r");
@@ -199,7 +262,10 @@ pbio_error_t pbdrv_ev3_sensor_get(pbdrv_ev3_sensor_t **sensor, pbio_port_t port,
     pbio_error_t err;
 
     // Initialize port if needed for this ID
-    // TODO
+    err = ev3_sensor_configure_port(port, &valid_id);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
     
     // Initialize sysfs
     err = ev3_sensor_init(*sensor, port);
