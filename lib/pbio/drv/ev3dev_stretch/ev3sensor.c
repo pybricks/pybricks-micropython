@@ -133,7 +133,6 @@ static pbio_error_t sysfs_read_int(FILE *file, int *dest) {
 
 // Set the port mode
 pbio_error_t ev3_sensor_set_port_mode(pbio_port_t port, _pbdrv_ev3dev_port_t mode) {
-    
     // Read lego-port number
     int n_lport;
     pbio_error_t err;
@@ -143,24 +142,48 @@ pbio_error_t ev3_sensor_set_port_mode(pbio_port_t port, _pbdrv_ev3dev_port_t mod
         return err;
     }
 
+    // Status file path
+    char p_status[MAX_PATH_LENGTH];
+    snprintf(p_status, MAX_PATH_LENGTH, "/sys/class/lego-port/port%d/status", n_lport);
+    // Open status file for reading
+    char status[12];
+    FILE *f_status = fopen(p_status, "r");
+    if (f_status == NULL) {
+        return PBIO_ERROR_IO;
+    }
+    // Read the current status
+    if (fscanf(f_status, "%" MAX_READ_LENGTH "s", status) < 1) {
+        return PBIO_ERROR_IO;
+    }
+    // Close the status file
+    if (fclose(f_status) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    // If the mode is already set, we are done
+    if (!strcmp(status, port_modes[mode])) {
+        return PBIO_SUCCESS;
+    }
+
+    // Mode file path
+    char p_mode[MAX_PATH_LENGTH];
+    snprintf(p_mode, MAX_PATH_LENGTH, "/sys/class/lego-port/port%d/mode", n_lport);
     // Open mode file for writing
-    char path[MAX_PATH_LENGTH];
-    snprintf(path, MAX_PATH_LENGTH, "/sys/class/lego-port/port%d/mode", n_lport);
-    FILE *file = fopen(path, "w");
-    if (file == NULL) {
+    FILE *f_port_mode = fopen(p_mode, "w");
+    if (f_port_mode == NULL) {
         return PBIO_ERROR_IO;
     }
-
     // Write mode
-    if (fprintf(file, "%s", port_modes[mode]) != strlen(port_modes[mode])) {
+    if (fprintf(f_port_mode, "%s", port_modes[mode]) != strlen(port_modes[mode])) {
+        return PBIO_ERROR_IO;
+    }
+    // Close the mode file
+    if (fclose(f_port_mode) != 0) {
         return PBIO_ERROR_IO;
     }
 
-    // Close the file
-    if (fclose(file) != 0) {
-        return PBIO_ERROR_IO;
-    }
-    return PBIO_SUCCESS;
+    // This should be called again later when the mode switch is complete
+    return PBIO_ERROR_AGAIN;
 }
 
 // Set port configuration for some devices
