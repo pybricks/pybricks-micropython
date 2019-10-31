@@ -161,35 +161,40 @@ pbio_error_t pbdrv_ev3_sensor_get(pbdrv_ev3_sensor_t **sensor, pbio_port_t port)
 }
 
 // Get the device ID
-pbio_error_t pbdrv_ev3_sensor_get_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_type_id_t *id) {
+pbio_error_t pbdrv_ev3_sensor_assert_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_type_id_t valid_id) {
     char driver_name[MAX_PATH_LENGTH];
 
     pbio_error_t err = sysfs_read_str(sensor->f_driver_name, driver_name);
     if (err != PBIO_SUCCESS) { return err; }
 
+    pbio_iodev_type_id_t id;
+
     if (!strcmp(driver_name, "lego-ev3-ir")) {
-        *id = PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR;
+        id = PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR;
     }
     else if (!strcmp(driver_name, "lego-ev3-color")) {
-        *id = PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR;
+        id = PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR;
     }
     else if (!strcmp(driver_name, "lego-ev3-touch")) {
-        *id = PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR;
+        id = PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR;
     }
     else if (!strcmp(driver_name, "lego-ev3-us")) {
-        *id = PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR;
+        id = PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR;
     }
     else if (!strcmp(driver_name, "lego-ev3-gyro")) {
-        *id = PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR;
+        id = PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR;
     }
     else if (!strcmp(driver_name, "nxt-analog")) {
-        *id = PBIO_IODEV_TYPE_ID_NXT_ANALOG;
+        id = PBIO_IODEV_TYPE_ID_NXT_ANALOG;
     }
     else if (!strncmp(driver_name, "ev3-analog-", 11)) {
-        *id = PBIO_IODEV_TYPE_ID_EV3_ANALOG;
+        id = PBIO_IODEV_TYPE_ID_EV3_ANALOG;
     }
     else {
         return PBIO_ERROR_IO;
+    }
+    if (id != valid_id) {
+        return PBIO_ERROR_NO_DEV;
     }
     return PBIO_SUCCESS;
 }

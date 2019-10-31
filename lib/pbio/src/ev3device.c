@@ -33,14 +33,12 @@ pbio_error_t ev3device_get_device(pbio_ev3iodev_t **iodev, pbio_iodev_type_id_t 
         return err;
     }
 
-    // Get and verify device ID
-    err = pbdrv_ev3_sensor_get_id(_iodev->sensor, &_iodev->type_id);
+    // Check device ID
+    err = pbdrv_ev3_sensor_assert_id(_iodev->sensor, valid_id);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    if (_iodev->type_id != valid_id) {
-        return PBIO_ERROR_NO_DEV;
-    }
+    _iodev->type_id = valid_id;
 
     return PBIO_SUCCESS;
 }
