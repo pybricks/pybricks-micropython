@@ -35,7 +35,8 @@ static const char* const port_modes[] = {
     "other-i2c",
     "ev3-analog",
     "ev3-uart",
-    "other-uart raw"
+    "other-uart",
+    "raw"
 };
 
 struct _pbdrv_ev3_sensor_t {
