@@ -28,7 +28,7 @@ struct _pbdrv_ev3_sensor_t {
 };
 
 // Get the ev3dev sensor number for a given port
-pbio_error_t sysfs_get_number(pbio_port_t port, const char *rdir, int *sysfs_number) {
+static pbio_error_t sysfs_get_number(pbio_port_t port, const char *rdir, int *sysfs_number) {
     // Open lego-sensor directory in sysfs
     DIR *d_sensor;
     struct dirent *entry;
@@ -72,7 +72,7 @@ pbio_error_t sysfs_get_number(pbio_port_t port, const char *rdir, int *sysfs_num
 }
 
 // Open a sysfs attribute
-pbio_error_t sysfs_open(FILE **file, int n, const char *attribute, const char *rw) {
+static pbio_error_t sysfs_open(FILE **file, int n, const char *attribute, const char *rw) {
     char path[MAX_PATH_LENGTH];
     snprintf(path, MAX_PATH_LENGTH, "/sys/class/lego-sensor/sensor%d/%s", n, attribute);
     *file = fopen(path, rw);
@@ -80,7 +80,7 @@ pbio_error_t sysfs_open(FILE **file, int n, const char *attribute, const char *r
 }
 
 // Read a string from a previously opened sysfs attribute
-pbio_error_t sysfs_read_str(FILE *file, char *dest) {
+static pbio_error_t sysfs_read_str(FILE *file, char *dest) {
     if (fseek(file, 0, SEEK_SET) == -1) {
         return PBIO_ERROR_IO;
     }
@@ -93,7 +93,7 @@ pbio_error_t sysfs_read_str(FILE *file, char *dest) {
 }
 
 // Read an int from a previously opened sysfs attribute
-pbio_error_t sysfs_read_int(FILE *file, int *dest) {
+static pbio_error_t sysfs_read_int(FILE *file, int *dest) {
     if (fseek(file, 0, SEEK_SET) == -1) {
         return PBIO_ERROR_IO;
     }
@@ -110,7 +110,7 @@ pbio_error_t sysfs_read_int(FILE *file, int *dest) {
 }
 
 // Initialize an ev3dev sensor by opening the relevant sysfs attributes
-pbio_error_t ev3_sensor_init(pbdrv_ev3_sensor_t *sensor, pbio_port_t port) {
+static pbio_error_t ev3_sensor_init(pbdrv_ev3_sensor_t *sensor, pbio_port_t port) {
     pbio_error_t err;
 
     err = sysfs_get_number(port, "/sys/class/lego-sensor", &sensor->n_sensor);
@@ -147,10 +147,8 @@ pbio_error_t ev3_sensor_init(pbdrv_ev3_sensor_t *sensor, pbio_port_t port) {
     return PBIO_SUCCESS;
 }
 
-struct _pbdrv_ev3_sensor_t sensors[4];
-
 // Get the device ID
-pbio_error_t pbdrv_ev3_sensor_assert_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_type_id_t valid_id) {
+static pbio_error_t ev3_sensor_assert_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_type_id_t valid_id) {
     char driver_name[MAX_PATH_LENGTH];
 
     pbio_error_t err = sysfs_read_str(sensor->f_driver_name, driver_name);
@@ -188,6 +186,8 @@ pbio_error_t pbdrv_ev3_sensor_assert_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_t
     return PBIO_SUCCESS;
 }
 
+struct _pbdrv_ev3_sensor_t sensors[4];
+
 // Get an ev3dev sensor
 pbio_error_t pbdrv_ev3_sensor_get(pbdrv_ev3_sensor_t **sensor, pbio_port_t port, pbio_iodev_type_id_t valid_id) {
     if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
@@ -208,7 +208,7 @@ pbio_error_t pbdrv_ev3_sensor_get(pbdrv_ev3_sensor_t **sensor, pbio_port_t port,
     }
 
     // Assert that the expected device is attached
-    err = pbdrv_ev3_sensor_assert_id(*sensor, valid_id);
+    err = ev3_sensor_assert_id(*sensor, valid_id);
     if (err != PBIO_SUCCESS) {
         return err;
     }
