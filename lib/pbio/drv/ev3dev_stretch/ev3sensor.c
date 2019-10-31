@@ -17,6 +17,7 @@
 
 struct _pbdrv_ev3_sensor_t {
     int n_sensor;
+    int n_lport;
     int n_modes;
     FILE *f_mode;
     FILE *f_driver_name;
@@ -27,11 +28,11 @@ struct _pbdrv_ev3_sensor_t {
 };
 
 // Get the ev3dev sensor number for a given port
-pbio_error_t sysfs_get_number(pbio_port_t port, int *sysfs_number) {
+pbio_error_t sysfs_get_number(pbio_port_t port, const char *rdir, int *sysfs_number) {
     // Open lego-sensor directory in sysfs
     DIR *d_sensor;
     struct dirent *entry;
-    d_sensor = opendir("/sys/class/lego-sensor");
+    d_sensor = opendir(rdir);
     if (!d_sensor) {
         return PBIO_ERROR_NO_DEV;
     }
@@ -45,7 +46,7 @@ pbio_error_t sysfs_get_number(pbio_port_t port, int *sysfs_number) {
 #if (__GNUC__ > 7) || (__GNUC__ == 7 && __GNUC_MINOR__ >= 1)
 #pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
-            snprintf(p_address, MAX_PATH_LENGTH, "/sys/class/lego-sensor/%s/address", entry->d_name);
+            snprintf(p_address, MAX_PATH_LENGTH, "%s/%s/address", rdir, entry->d_name);
 #pragma GCC diagnostic pop
             FILE *f_address = fopen(p_address, "r");
             if (f_address == NULL) {
@@ -59,7 +60,7 @@ pbio_error_t sysfs_get_number(pbio_port_t port, int *sysfs_number) {
 
             // If the port matches the requested port, get where it was found.
             if (port_found == port) {
-                sscanf(entry->d_name, "%*6c%d",  sysfs_number);
+                sscanf(entry->d_name, "%*[a-z]%d",  sysfs_number);
                 closedir(d_sensor);
                 return PBIO_SUCCESS;
             }
@@ -112,7 +113,10 @@ pbio_error_t sysfs_read_int(FILE *file, int *dest) {
 pbio_error_t ev3_sensor_init(pbdrv_ev3_sensor_t *sensor, pbio_port_t port) {
     pbio_error_t err;
 
-    err = sysfs_get_number(port, &sensor->n_sensor) ;
+    err = sysfs_get_number(port, "/sys/class/lego-sensor", &sensor->n_sensor);
+    if (err != PBIO_SUCCESS) { return err; }
+
+    err = sysfs_get_number(port, "/sys/class/lego-port", &sensor->n_lport);
     if (err != PBIO_SUCCESS) { return err; }
 
     err = sysfs_open(&sensor->f_driver_name, sensor->n_sensor, "driver_name", "r");
