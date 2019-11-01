@@ -398,7 +398,7 @@ STATIC mp_obj_t ev3devices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     };
 
     // Create an instance of the Light class
-    self->light = ev3devices_Light_obj_make_new(dev);
+    self->light = light_Light_obj_make_new(dev);
 
     return MP_OBJ_FROM_PTR(self);
 }
