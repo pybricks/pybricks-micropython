@@ -36,7 +36,7 @@ STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
     pbio_lightdev_t dev = {
         .id = PBIO_IODEV_TYPE_ID_NONE,
     };
-    self->light = light_Light_obj_make_new(dev, &light_Light_type);
+    self->light = light_Light_obj_make_new(dev, &light_ColorLight_type);
 
     return MP_OBJ_FROM_PTR(self);
 }

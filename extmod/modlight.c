@@ -149,7 +149,6 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(light_Light_off_obj, light_Light_off);
 // dir(pybricks.builtins.Light)
 STATIC const mp_rom_map_elem_t light_Light_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_on   ), MP_ROM_PTR(&light_Light_on_obj) },
-    { MP_ROM_QSTR(MP_QSTR_on2  ), MP_ROM_PTR(&light_ColorLight_on_obj) }, // Fixme: move to ColorLight
     { MP_ROM_QSTR(MP_QSTR_off  ), MP_ROM_PTR(&light_Light_off_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(light_Light_locals_dict, light_Light_locals_dict_table);
@@ -159,6 +158,20 @@ const mp_obj_type_t light_Light_type = {
     { &mp_type_type },
     .name = MP_QSTR_Light,
     .locals_dict = (mp_obj_dict_t*)&light_Light_locals_dict,
+};
+
+// dir(pybricks.builtins.ColorLight)
+STATIC const mp_rom_map_elem_t light_ColorLight_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_on   ), MP_ROM_PTR(&light_ColorLight_on_obj) },
+    { MP_ROM_QSTR(MP_QSTR_off  ), MP_ROM_PTR(&light_Light_off_obj) },
+};
+STATIC MP_DEFINE_CONST_DICT(light_ColorLight_locals_dict, light_ColorLight_locals_dict_table);
+
+// type(pybricks.builtins.ColorLight)
+const mp_obj_type_t light_ColorLight_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_ColorLight,
+    .locals_dict = (mp_obj_dict_t*)&light_ColorLight_locals_dict,
 };
 
 mp_obj_t light_Light_obj_make_new(pbio_lightdev_t dev, const mp_obj_type_t *type) {

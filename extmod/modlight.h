@@ -16,6 +16,7 @@ typedef struct _pbio_lightdev_t {
 #include "py/obj.h"
 
 const mp_obj_type_t light_Light_type;
+const mp_obj_type_t light_ColorLight_type;
 
 mp_obj_t light_Light_obj_make_new(pbio_lightdev_t dev, const mp_obj_type_t *type);
 
