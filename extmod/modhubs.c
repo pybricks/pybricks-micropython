@@ -12,7 +12,6 @@
 #include "pbhub.h"
 
 extern const struct _mp_obj_module_t pb_module_battery;
-extern const struct _mp_obj_module_t pb_module_colorlight;
 
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
 
