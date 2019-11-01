@@ -9,6 +9,8 @@
 
 #include <pbdrv/light.h>
 
+#if PBDRV_CONFIG_LIGHT
+
 typedef struct {
     pbio_light_pattern_t pattern;
     uint8_t r;
@@ -102,3 +104,5 @@ void _pbio_light_poll(uint32_t now) {
 void _pbio_light_set_user_mode(bool user_mode) {
     user_mode_active = user_mode;
 }
+
+#endif // PBDRV_CONFIG_LIGHT

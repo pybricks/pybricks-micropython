@@ -30,8 +30,6 @@ typedef enum {
     PBIO_LIGHT_COLOR_PURPLE = 9,   /**< The light or detected color is purple */
 } pbio_light_color_t;
 
-#if PBDRV_CONFIG_LIGHT
-
 /**
  * Light patterns.
  */
@@ -40,6 +38,8 @@ typedef enum {
     PBIO_LIGHT_PATTERN_FLASH,   /**< The light flashes */
     PBIO_LIGHT_PATTERN_BREATHE, /**< The light breathes */
 } pbio_light_pattern_t;
+
+#if PBDRV_CONFIG_LIGHT
 
 /**
  * Turns the light on. Some lights may not be capable of display all colors or
@@ -81,16 +81,17 @@ void _pbio_light_poll(uint32_t now);
 void _pbio_light_set_user_mode(bool user_mode);
 /** @endcond */
 
+#else
+static inline void _pbio_light_poll(uint32_t now) { }
+static inline void _pbio_light_set_user_mode(bool user_mode) { }
+static inline pbio_error_t _pbio_light_on(pbio_port_t port, pbio_light_color_t color, pbio_light_pattern_t pattern) { return PBIO_SUCCESS; }
+#endif // PBDRV_CONFIG_LIGHT
+
 /** @cond */
 // using macros for reduced code size
 #define pbio_light_on(p, c) _pbio_light_on((p), (c), PBIO_LIGHT_PATTERN_NONE)
 #define pbio_light_on_with_pattern(p, c, t) _pbio_light_on((p), (c), (t))
 #define pbio_light_off(p) _pbio_light_on((p), PBIO_LIGHT_COLOR_NONE, PBIO_LIGHT_PATTERN_NONE)
 /** @endcond */
-
-#else
-static inline void _pbio_light_poll(uint32_t now) {
-}
-#endif // PBDRV_CONFIG_LIGHT
 
 #endif // _PBIO_LIGHT_H_
