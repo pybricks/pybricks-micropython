@@ -155,17 +155,17 @@ STATIC const mp_rom_map_elem_t light_Light_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(light_Light_locals_dict, light_Light_locals_dict_table);
 
 // type(pybricks.builtins.Light)
-STATIC const mp_obj_type_t light_Light_type = {
+const mp_obj_type_t light_Light_type = {
     { &mp_type_type },
     .name = MP_QSTR_Light,
     .locals_dict = (mp_obj_dict_t*)&light_Light_locals_dict,
 };
 
-mp_obj_t light_Light_obj_make_new(pbio_lightdev_t dev) {
+mp_obj_t light_Light_obj_make_new(pbio_lightdev_t dev, const mp_obj_type_t *type) {
     // Create new light instance
     light_Light_obj_t *light = m_new_obj(light_Light_obj_t);
     // Set type and iodev
-    light->base.type = (mp_obj_type_t*) &light_Light_type;
+    light->base.type = type;
     light->dev = dev;
     return light;
 }
