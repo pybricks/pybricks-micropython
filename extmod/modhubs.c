@@ -5,6 +5,7 @@
 #include <pbio/button.h>
 
 #include "modparameters.h"
+#include "modlight.h"
 
 #include "pberror.h"
 #include "pbobj.h"
@@ -20,6 +21,7 @@ extern const struct _mp_obj_module_t pb_module_buttons;
 // Class structure for EV3Brick
 typedef struct _hubs_EV3Brick_obj_t {
     mp_obj_base_t base;
+    mp_obj_t light;
 } hubs_EV3Brick_obj_t;
 
 STATIC void hubs_EV3Brick_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
@@ -29,6 +31,13 @@ STATIC void hubs_EV3Brick_print(const mp_print_t *print,  mp_obj_t self_in, mp_p
 STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     hubs_EV3Brick_obj_t *self = m_new_obj(hubs_EV3Brick_obj_t);
     self->base.type = (mp_obj_type_t*) type;
+
+    // Create an instance of the Light class
+    pbio_lightdev_t dev = {
+        .id = PBIO_IODEV_TYPE_ID_NONE,
+    };
+    self->light = light_Light_obj_make_new(dev);
+
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -38,8 +47,8 @@ EV3Brick class tables
 STATIC const mp_rom_map_elem_t hubs_EV3Brick_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_buttons),     MP_ROM_PTR(&pb_module_buttons)      },
     { MP_ROM_QSTR(MP_QSTR_Port),        MP_ROM_PTR(&pb_enum_type_Port)      },
-    { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_PTR(&pb_module_colorlight)   },
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)      },
+    { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_ATTRIBUTE_OFFSET(hubs_EV3Brick_obj_t, light) },
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_EV3Brick_locals_dict, hubs_EV3Brick_locals_dict_table);
 
