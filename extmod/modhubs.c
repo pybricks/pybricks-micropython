@@ -32,7 +32,7 @@ STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
     hubs_EV3Brick_obj_t *self = m_new_obj(hubs_EV3Brick_obj_t);
     self->base.type = (mp_obj_type_t*) type;
 
-    // Create an instance of the Light class
+    // Create an instance of the Light class, representing the brick status light
     pbio_lightdev_t dev = {
         .id = PBIO_IODEV_TYPE_ID_NONE,
     };
@@ -67,6 +67,7 @@ STATIC const mp_obj_type_t hubs_EV3Brick_type = {
 // Class structure for MoveHub
 typedef struct _hubs_MoveHub_obj_t {
     mp_obj_base_t base;
+    mp_obj_t light;
 } hubs_MoveHub_obj_t;
 
 STATIC void hubs_MoveHub_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
@@ -76,6 +77,13 @@ STATIC void hubs_MoveHub_print(const mp_print_t *print,  mp_obj_t self_in, mp_pr
 STATIC mp_obj_t hubs_MoveHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     hubs_MoveHub_obj_t *self = m_new_obj(hubs_MoveHub_obj_t);
     self->base.type = (mp_obj_type_t*) type;
+
+    // Create an instance of the Light class, representing the hub light
+    pbio_lightdev_t dev = {
+        .id = PBIO_IODEV_TYPE_ID_NONE,
+    };
+    self->light = light_Light_obj_make_new(dev, &light_ColorLight_type);
+
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -84,11 +92,11 @@ MoveHub class tables
 */
 STATIC const mp_rom_map_elem_t hubs_MoveHub_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Port),        MP_ROM_PTR(&pb_enum_type_Port)    },
-    { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_PTR(&pb_module_colorlight) },
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)    },
     { MP_ROM_QSTR(MP_QSTR_shutdown),    MP_ROM_PTR(&hub_shutdown_obj)     },
     { MP_ROM_QSTR(MP_QSTR_reboot),      MP_ROM_PTR(&hub_reboot_obj)       },
     { MP_ROM_QSTR(MP_QSTR_update),      MP_ROM_PTR(&hub_update_obj)       },
+    { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_ATTRIBUTE_OFFSET(hubs_MoveHub_obj_t, light) },
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_MoveHub_locals_dict, hubs_MoveHub_locals_dict_table);
 
@@ -107,6 +115,7 @@ STATIC const mp_obj_type_t hubs_MoveHub_type = {
 // Class structure for CityHub
 typedef struct _hubs_CityHub_obj_t {
     mp_obj_base_t base;
+    mp_obj_t light;
 } hubs_CityHub_obj_t;
 
 STATIC void hubs_CityHub_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
@@ -116,6 +125,13 @@ STATIC void hubs_CityHub_print(const mp_print_t *print,  mp_obj_t self_in, mp_pr
 STATIC mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     hubs_CityHub_obj_t *self = m_new_obj(hubs_CityHub_obj_t);
     self->base.type = (mp_obj_type_t*) type;
+
+    // Create an instance of the Light class, representing the hub light
+    pbio_lightdev_t dev = {
+        .id = PBIO_IODEV_TYPE_ID_NONE,
+    };
+    self->light = light_Light_obj_make_new(dev, &light_ColorLight_type);
+
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -124,11 +140,11 @@ CityHub class tables
 */
 STATIC const mp_rom_map_elem_t hubs_CityHub_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Port),        MP_ROM_PTR(&pb_enum_type_Port)    },
-    { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_PTR(&pb_module_colorlight) },
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)    },
     { MP_ROM_QSTR(MP_QSTR_shutdown),    MP_ROM_PTR(&hub_shutdown_obj)     },
     { MP_ROM_QSTR(MP_QSTR_reboot),      MP_ROM_PTR(&hub_reboot_obj)       },
     { MP_ROM_QSTR(MP_QSTR_update),      MP_ROM_PTR(&hub_update_obj)       },
+    { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_ATTRIBUTE_OFFSET(hubs_CityHub_obj_t, light) },
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_CityHub_locals_dict, hubs_CityHub_locals_dict_table);
 
@@ -147,6 +163,7 @@ STATIC const mp_obj_type_t hubs_CityHub_type = {
 // Class structure for CPlusHub
 typedef struct _hubs_CPlusHub_obj_t {
     mp_obj_base_t base;
+    mp_obj_t light;
 } hubs_CPlusHub_obj_t;
 
 STATIC void hubs_CPlusHub_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
@@ -156,6 +173,13 @@ STATIC void hubs_CPlusHub_print(const mp_print_t *print,  mp_obj_t self_in, mp_p
 STATIC mp_obj_t hubs_CPlusHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     hubs_CPlusHub_obj_t *self = m_new_obj(hubs_CPlusHub_obj_t);
     self->base.type = (mp_obj_type_t*) type;
+
+    // Create an instance of the Light class, representing the hub light
+    pbio_lightdev_t dev = {
+        .id = PBIO_IODEV_TYPE_ID_NONE,
+    };
+    self->light = light_Light_obj_make_new(dev, &light_ColorLight_type);
+
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -164,11 +188,11 @@ CPlusHub class tables
 */
 STATIC const mp_rom_map_elem_t hubs_CPlusHub_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Port),        MP_ROM_PTR(&pb_enum_type_Port)    },
-    { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_PTR(&pb_module_colorlight) },
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)    },
     { MP_ROM_QSTR(MP_QSTR_shutdown),    MP_ROM_PTR(&hub_shutdown_obj)     },
     { MP_ROM_QSTR(MP_QSTR_reboot),      MP_ROM_PTR(&hub_reboot_obj)       },
     { MP_ROM_QSTR(MP_QSTR_update),      MP_ROM_PTR(&hub_update_obj)       },
+    { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_ATTRIBUTE_OFFSET(hubs_CPlusHub_obj_t, light) },
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_CPlusHub_locals_dict, hubs_CPlusHub_locals_dict_table);
 
