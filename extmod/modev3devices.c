@@ -392,8 +392,13 @@ STATIC mp_obj_t ev3devices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
     pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR, port_num));
 
+    pbio_lightdev_t dev = {
+        .id = self->iodev->type_id,
+        .ev3iodev = self->iodev
+    };
+
     // Create an instance of the Light class
-    self->light = ev3devices_Light_obj_make_new(self->iodev);
+    self->light = ev3devices_Light_obj_make_new(dev);
 
     return MP_OBJ_FROM_PTR(self);
 }
