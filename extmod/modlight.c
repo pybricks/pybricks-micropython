@@ -9,6 +9,7 @@
 #include "py/mpconfig.h"
 
 #include "modlight.h"
+#include "pbiodevice.h"
 
 #include "modparameters.h"
 #include "pberror.h"
@@ -78,7 +79,24 @@ STATIC mp_obj_t light_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, mp_
 #endif
 #if PYBRICKS_PY_PUPDEVICES
     if (self->dev.id == PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR) {
-        // TODO
+        uint8_t mode;
+        switch (color_id) {
+            case PBIO_LIGHT_COLOR_GREEN:
+                mode = 1;
+                break;
+            case PBIO_LIGHT_COLOR_RED:
+                mode = 3;
+                break;
+            case PBIO_LIGHT_COLOR_BLUE:
+                mode = 4;
+                break;
+            default:
+                mode = 7;
+                break;
+        }
+        pb_iodevice_set_mode(self->dev.pupiodev, mode);
+        uint8_t *data;
+        pb_assert(pbio_iodev_get_data(self->dev.pupiodev, &data));
         return mp_const_none;
     }
 #endif
@@ -98,7 +116,9 @@ STATIC mp_obj_t light_Light_off(mp_obj_t self_in) {
 
 #if PYBRICKS_PY_PUPDEVICES
     if (self->dev.id == PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR) {
-        // TODO
+        pb_iodevice_set_mode(self->dev.pupiodev, 7);
+        uint8_t *data;
+        pb_assert(pbio_iodev_get_data(self->dev.pupiodev, &data));
         return mp_const_none;
     }
 #endif
