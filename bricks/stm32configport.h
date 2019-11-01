@@ -98,6 +98,8 @@ typedef long mp_off_t;
 
 #define MPY_MAX_BYTES (PYBRICKS_HEAP_KB*1024/2)
 
+#define PYBRICKS_PY_EV3DEVICES      (0)
+
 extern const struct _mp_obj_module_t pb_module_hubs;
 #define _PYBRICKS_MODULE_HUBS \
     { MP_OBJ_NEW_QSTR(MP_QSTR_hubs), (mp_obj_t)&pb_module_hubs},
