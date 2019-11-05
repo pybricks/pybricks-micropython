@@ -323,6 +323,9 @@ static pbio_error_t ev3_sensor_assert_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_
     else if (!strcmp(driver_name, "lego-nxt-touch")) {
         id = PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR;
     }
+    else if (!strcmp(driver_name, "lego-nxt-light")) {
+        id = PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR;
+    }
     else {
         return PBIO_ERROR_IO;
     }

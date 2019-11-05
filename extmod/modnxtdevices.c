@@ -269,6 +269,102 @@ STATIC const mp_obj_type_t nxtdevices_SoundSensor_type = {
     .make_new = nxtdevices_SoundSensor_make_new,
     .locals_dict = (mp_obj_dict_t*)&nxtdevices_SoundSensor_locals_dict,
 };
+
+// pybricks.nxtdevices.LightSensor class object
+typedef struct _nxtdevices_LightSensor_obj_t {
+    mp_obj_base_t base;
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+    pbio_ev3iodev_t *iodev;
+#else
+    pbio_port_t port;
+#endif
+} nxtdevices_LightSensor_obj_t;
+
+// pybricks.nxtdevices.LightSensor.__init__
+STATIC mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port)
+    );
+
+    nxtdevices_LightSensor_obj_t *self = m_new_obj(nxtdevices_LightSensor_obj_t);
+    self->base.type = (mp_obj_type_t*) type;
+
+    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+    // Get the device and assert that it is of the right type
+    pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR, port_num));
+#else
+    self->port = port_num;
+    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
+#endif
+    return MP_OBJ_FROM_PTR(self);
+}
+
+// pybricks.nxtdevices.LightSensor.__str__
+STATIC void nxtdevices_LightSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
+    nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    mp_printf(print, qstr_str(MP_QSTR_LightSensor));
+    pbio_port_t port;
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+    port = self->iodev->port;
+#else
+    port = self->port;
+#endif
+    mp_printf(print, " on Port.S%c",  port);
+}
+
+#define LIGHT_VOLT_MIN (1906)
+#define LIGHT_VOLT_MAX (4164)
+
+STATIC int32_t analog_light(int32_t mvolts) {
+    int32_t light = 100-(100*(mvolts-LIGHT_VOLT_MIN))/(LIGHT_VOLT_MAX-LIGHT_VOLT_MIN);
+    return max(-100, min(light, 100));
+}
+
+// pybricks.nxtdevices.LightSensor.ambient
+STATIC mp_obj_t nxtdevices_LightSensor_ambient(mp_obj_t self_in) {
+    nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t analog;
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__AMBIENT, &analog));
+#else
+    analog = self->port;
+    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
+#endif
+    return mp_obj_new_int(analog_light(analog));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_ambient_obj, nxtdevices_LightSensor_ambient);
+
+// pybricks.nxtdevices.LightSensor.reflection
+STATIC mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
+    nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t analog;
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT, &analog));
+#else
+    analog = self->port;
+    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
+#endif
+    return mp_obj_new_int((analog));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_reflection_obj, nxtdevices_LightSensor_reflection);
+
+// dir(pybricks.ev3devices.LightSensor)
+STATIC const mp_rom_map_elem_t nxtdevices_LightSensor_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_ambient),  MP_ROM_PTR(&nxtdevices_LightSensor_ambient_obj ) },
+    { MP_ROM_QSTR(MP_QSTR_reflection), MP_ROM_PTR(&nxtdevices_LightSensor_reflection_obj) },
+};
+STATIC MP_DEFINE_CONST_DICT(nxtdevices_LightSensor_locals_dict, nxtdevices_LightSensor_locals_dict_table);
+
+// type(pybricks.ev3devices.LightSensor)
+STATIC const mp_obj_type_t nxtdevices_LightSensor_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_LightSensor,
+    .print = nxtdevices_LightSensor_print,
+    .make_new = nxtdevices_LightSensor_make_new,
+    .locals_dict = (mp_obj_dict_t*)&nxtdevices_LightSensor_locals_dict,
+};
+
 // dir(pybricks.nxtdevices)
 STATIC const mp_rom_map_elem_t nxtdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_nxtdevices)              },
@@ -277,6 +373,7 @@ STATIC const mp_rom_map_elem_t nxtdevices_globals_table[] = {
 #endif
     { MP_ROM_QSTR(MP_QSTR_TouchSensor),      MP_ROM_PTR(&nxtdevices_TouchSensor_type)     },
     { MP_ROM_QSTR(MP_QSTR_SoundSensor),      MP_ROM_PTR(&nxtdevices_SoundSensor_type)     },
+    { MP_ROM_QSTR(MP_QSTR_LightSensor),      MP_ROM_PTR(&nxtdevices_LightSensor_type)     },
     { MP_ROM_QSTR(MP_QSTR_UltrasonicSensor), MP_ROM_PTR(&nxtdevices_UltrasonicSensor_type)},
 };
 
