@@ -578,15 +578,15 @@ typedef struct _ev3devices_AnalogSensor_obj_t {
 STATIC mp_obj_t ev3devices_AnalogSensor_make_new(const mp_obj_type_t *otype, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
-        PB_ARG_DEFAULT_TRUE(check_type)
+        PB_ARG_DEFAULT_TRUE(verify_type)
     );
     ev3devices_AnalogSensor_obj_t *self = m_new_obj(ev3devices_AnalogSensor_obj_t);
     self->base.type = (mp_obj_type_t*) otype;
 
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
-    bool check_type_arg = mp_obj_is_true(check_type);
+    bool verify_type_arg = mp_obj_is_true(verify_type);
 
-    if (check_type_arg) {
+    if (verify_type_arg) {
         // Get the device and assert that it is of the right type
         pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_ANALOG, port_num));
     }
