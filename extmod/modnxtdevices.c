@@ -46,36 +46,16 @@ STATIC void nxtdevices_UltrasonicSensor_print(const mp_print_t *print,  mp_obj_t
 
 // pybricks.nxtdevices.UltrasonicSensor.distance
 STATIC mp_obj_t nxtdevices_UltrasonicSensor_distance(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        PB_ARG_DEFAULT_FALSE(silent)
-    );
     nxtdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-
     uint8_t distance;
-    if (mp_obj_is_true(silent)) {
-        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ULTRASONIC_SENSOR__SI_CM, &distance));
-    }
-    else {
-        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ULTRASONIC_SENSOR__DIST_CM, &distance));
-    }
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ULTRASONIC_SENSOR__DIST_CM, &distance));
     return mp_obj_new_int(distance * 10);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_UltrasonicSensor_distance_obj, 0, nxtdevices_UltrasonicSensor_distance);
 
-// pybricks.nxtdevices.UltrasonicSensor.presence
-STATIC mp_obj_t nxtdevices_UltrasonicSensor_presence(mp_obj_t self_in) {
-    nxtdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    uint8_t presence;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ULTRASONIC_SENSOR__LISTEN, &presence));
-    return mp_obj_new_bool(presence);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_UltrasonicSensor_presence_obj, nxtdevices_UltrasonicSensor_presence);
-
 // dir(pybricks.nxtdevices.UltrasonicSensor)
 STATIC const mp_rom_map_elem_t nxtdevices_UltrasonicSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_distance), MP_ROM_PTR(&nxtdevices_UltrasonicSensor_distance_obj) },
-    { MP_ROM_QSTR(MP_QSTR_presence), MP_ROM_PTR(&nxtdevices_UltrasonicSensor_presence_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(nxtdevices_UltrasonicSensor_locals_dict, nxtdevices_UltrasonicSensor_locals_dict_table);
 
