@@ -10,6 +10,7 @@
 #include <pbio/iodev.h>
 
 #include <pbio/ev3device.h>
+#include <pbdrv/nxtcolor.h>
 
 pbio_ev3iodev_t iodevices[4];
 
@@ -28,7 +29,7 @@ pbio_error_t ev3device_get_device(pbio_ev3iodev_t **iodev, pbio_iodev_type_id_t 
 
     pbio_error_t err;
 
-    // Get the device and assert that is has a valid id 
+    // Get the device and assert that is has a valid id
     err = pbdrv_ev3_sensor_get(&_iodev->sensor, _iodev->port, valid_id);
     if (err != PBIO_SUCCESS) {
         return err;
@@ -40,6 +41,11 @@ pbio_error_t ev3device_get_device(pbio_ev3iodev_t **iodev, pbio_iodev_type_id_t 
 
 
 pbio_error_t ev3device_get_values_at_mode(pbio_ev3iodev_t *iodev, uint8_t mode, void *values) {
+
+    // The NXT Color Sensor is a special case, so deal with it accordingly
+    if (iodev->type_id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
+        return nxtcolor_get_values_at_mode(iodev->port, mode, values);
+    }
 
     pbio_error_t err;
     // Set the mode if not already set
@@ -57,7 +63,7 @@ pbio_error_t ev3device_get_values_at_mode(pbio_ev3iodev_t *iodev, uint8_t mode, 
         if (err != PBIO_SUCCESS) {
             return err;
         }
-    }    
+    }
 
     // Read raw data from device
     char data[PBIO_IODEV_MAX_DATA_SIZE];

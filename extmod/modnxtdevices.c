@@ -371,7 +371,7 @@ STATIC mp_obj_t nxtdevices_ColorSensor_color(size_t n_args, const mp_obj_t *pos_
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
     uint8_t color;
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
-    color = self->iodev->type_id;
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__COLOR, &color));
 #else
     color = self->port;
     pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);

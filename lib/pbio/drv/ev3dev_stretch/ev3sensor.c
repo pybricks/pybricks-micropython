@@ -358,6 +358,12 @@ pbio_error_t pbdrv_ev3_sensor_get(pbdrv_ev3_sensor_t **sensor, pbio_port_t port,
         return err;
     }
 
+    // In the special case of the NXT Color Sensor
+    // there is nothing left to do/initialize.
+    if (valid_id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
+        return PBIO_SUCCESS;
+    }
+
     // Initialize sysfs
     err = ev3_sensor_init(*sensor, port);
     if (err != PBIO_SUCCESS) {
