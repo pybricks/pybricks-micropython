@@ -25,7 +25,7 @@ typedef enum {
     EV3_UART,
     OTHER_UART,
     RAW,
-} _pbdrv_ev3dev_port_t;
+} pbdrv_ev3dev_port_t;
 
 static const char* const port_modes[] = {
     "auto",
@@ -132,38 +132,54 @@ static pbio_error_t sysfs_read_int(FILE *file, int *dest) {
     return PBIO_SUCCESS;
 }
 
-// Set the port mode
-pbio_error_t ev3_sensor_set_port_mode(pbio_port_t port, _pbdrv_ev3dev_port_t mode) {
+// Get the port mode
+static pbio_error_t ev3_sensor_get_port_mode(pbio_port_t port, pbdrv_ev3dev_port_t *port_mode) {
     // Read lego-port number
     int n_lport;
     pbio_error_t err;
-
     err = sysfs_get_number(port, "/sys/class/lego-port", &n_lport);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // Status file path
-    char p_status[MAX_PATH_LENGTH];
-    snprintf(p_status, MAX_PATH_LENGTH, "/sys/class/lego-port/port%d/status", n_lport);
-    // Open status file for reading
-    char status[12];
-    FILE *f_status = fopen(p_status, "r");
-    if (f_status == NULL) {
+    // Get mode file path
+    char path[MAX_PATH_LENGTH];
+    snprintf(path, MAX_PATH_LENGTH, "/sys/class/lego-port/port%d/mode", n_lport);
+
+    // Open mode file for reading
+    char mode[12];
+    FILE *f_mode = fopen(path, "r");
+    if (f_mode == NULL) {
         return PBIO_ERROR_IO;
     }
-    // Read the current status
-    if (fscanf(f_status, "%" MAX_READ_LENGTH "s", status) < 1) {
+    // Read the current mode
+    if (fscanf(f_mode, "%" MAX_READ_LENGTH "s", mode) < 1) {
         return PBIO_ERROR_IO;
     }
-    // Close the status file
-    if (fclose(f_status) != 0) {
+    // Close the mode file
+    if (fclose(f_mode) != 0) {
         return PBIO_ERROR_IO;
     }
 
-    // If the mode is already set, we are done
-    if (!strcmp(status, port_modes[mode])) {
-        return PBIO_SUCCESS;
+    // Find matching port mode string
+    for (int i = 0; i < sizeof(port_modes)/sizeof(port_modes[0]); i++) {
+        if (!strcmp(mode, port_modes[i])) {
+            *port_mode = i;
+            return PBIO_SUCCESS;
+        }
+    }
+    return PBIO_ERROR_IO;
+}
+
+// Write the port mode without questions
+static pbio_error_t ev3_sensor_write_port_mode(pbio_port_t port, pbdrv_ev3dev_port_t mode) {
+
+    // Read lego-port number
+    int n_lport;
+    pbio_error_t err;
+    err = sysfs_get_number(port, "/sys/class/lego-port", &n_lport);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     // Mode file path
@@ -182,13 +198,38 @@ pbio_error_t ev3_sensor_set_port_mode(pbio_port_t port, _pbdrv_ev3dev_port_t mod
     if (fclose(f_port_mode) != 0) {
         return PBIO_ERROR_IO;
     }
+    return PBIO_SUCCESS;
+}
 
-    // This should be called again later when the mode switch is complete
-    return PBIO_ERROR_AGAIN;
+// Write the port mode, but only if needed
+static pbio_error_t ev3_sensor_set_port_mode(pbio_port_t port, pbdrv_ev3dev_port_t mode) {
+
+    // Get the current mode
+    pbio_error_t err;
+    pbdrv_ev3dev_port_t mode_now;
+    err = ev3_sensor_get_port_mode(port, &mode_now);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // If the mode is already set, we are done
+    if (mode == mode_now) {
+        return PBIO_SUCCESS;
+    }
+
+    // If not, we should write the new port mode
+    err = ev3_sensor_write_port_mode(port, mode);
+
+    // If the mode write is successful, raise EAGAIN so high level knows
+    // it should call the sensor again when the mode switch is done.
+    if (err == PBIO_SUCCESS) {
+        return PBIO_ERROR_AGAIN;
+    }
+    return err;
 }
 
 // Set port configuration for some devices
-pbio_error_t ev3_sensor_configure_port(pbio_port_t port, pbio_iodev_type_id_t *id) {
+static pbio_error_t ev3_sensor_configure_port(pbio_port_t port, pbio_iodev_type_id_t *id) {
     switch (*id)
     {
     case PBIO_IODEV_TYPE_ID_NXT_ANALOG_CUSTOM:
