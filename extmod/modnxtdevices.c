@@ -358,6 +358,8 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
         mp_hal_delay_ms(500);
     }
     pb_assert(err);
+    uint8_t color;
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__COLOR, &color));
 #else
     self->port = port_num;
     pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
