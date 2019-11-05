@@ -57,13 +57,6 @@ STATIC uint8_t pupdevices_ColorAndDistSensor_combined_mode(pbio_iodev_t *iodev, 
     return data[idx];
 }
 
-STATIC void pupdevices_ColorAndDistSensor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
-    pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_iodevice_assert_type_id(self->iodev, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
-    mp_printf(print, qstr_str(MP_QSTR_ColorDistanceSensor));
-    mp_printf(print, " on Port.%c",  self->iodev->port);
-}
-
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_color(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -135,7 +128,6 @@ STATIC MP_DEFINE_CONST_DICT(pupdevices_ColorAndDistSensor_locals_dict, pupdevice
 STATIC const mp_obj_type_t pupdevices_ColorAndDistSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_ColorDistanceSensor,
-    .print = pupdevices_ColorAndDistSensor_print,
     .make_new = pupdevices_ColorAndDistSensor_make_new,
     .locals_dict = (mp_obj_dict_t*)&pupdevices_ColorAndDistSensor_locals_dict,
 };

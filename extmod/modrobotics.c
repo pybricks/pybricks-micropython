@@ -60,13 +60,6 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC void robotics_DriveBase_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, qstr_str(MP_QSTR_DriveBase));
-    mp_printf(print, " with left motor on Port %c and right motor on Port %c",
-        self->drivebase->left->port, self->drivebase->right->port);
-}
-
 STATIC mp_obj_t robotics_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         PB_ARG_REQUIRED(speed),
@@ -118,7 +111,6 @@ STATIC MP_DEFINE_CONST_DICT(robotics_DriveBase_locals_dict, robotics_DriveBase_l
 STATIC const mp_obj_type_t robotics_DriveBase_type = {
     { &mp_type_type },
     .name = MP_QSTR_DriveBase,
-    .print = robotics_DriveBase_print,
     .make_new = robotics_DriveBase_make_new,
     .locals_dict = (mp_obj_dict_t*)&robotics_DriveBase_locals_dict,
 };

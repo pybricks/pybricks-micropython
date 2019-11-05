@@ -40,13 +40,6 @@ STATIC mp_obj_t ev3devices_TouchSensor_make_new(const mp_obj_type_t *type, size_
     return MP_OBJ_FROM_PTR(self);
 }
 
-// pybricks.ev3devices.TouchSensor.__str__
-STATIC void ev3devices_TouchSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    ev3devices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, qstr_str(MP_QSTR_TouchSensor));
-    mp_printf(print, " on Port.S%c",  self->iodev->port);
-}
-
 // pybricks.ev3devices.TouchSensor.pressed
 STATIC mp_obj_t ev3devices_TouchSensor_pressed(mp_obj_t self_in) {
     ev3devices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -67,7 +60,6 @@ STATIC MP_DEFINE_CONST_DICT(ev3devices_TouchSensor_locals_dict, ev3devices_Touch
 STATIC const mp_obj_type_t ev3devices_TouchSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_TouchSensor,
-    .print = ev3devices_TouchSensor_print,
     .make_new = ev3devices_TouchSensor_make_new,
     .locals_dict = (mp_obj_dict_t*)&ev3devices_TouchSensor_locals_dict,
 };
@@ -91,13 +83,6 @@ STATIC mp_obj_t ev3devices_InfraredSensor_make_new(const mp_obj_type_t *type, si
 
     pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR, port_num));
     return MP_OBJ_FROM_PTR(self);
-}
-
-// pybricks.ev3devices.InfraredSensor.__str__
-STATIC void ev3devices_InfraredSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    ev3devices_InfraredSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, qstr_str(MP_QSTR_InfraredSensor));
-    mp_printf(print, " on Port.S%c",  self->iodev->port);
 }
 
 // pybricks.ev3devices.InfraredSensor.distance
@@ -265,7 +250,6 @@ STATIC MP_DEFINE_CONST_DICT(ev3devices_InfraredSensor_locals_dict, ev3devices_In
 STATIC const mp_obj_type_t ev3devices_InfraredSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_InfraredSensor,
-    .print = ev3devices_InfraredSensor_print,
     .make_new = ev3devices_InfraredSensor_make_new,
     .locals_dict = (mp_obj_dict_t*)&ev3devices_InfraredSensor_locals_dict,
 };
@@ -288,13 +272,6 @@ STATIC mp_obj_t ev3devices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 
     pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR, port_num));
     return MP_OBJ_FROM_PTR(self);
-}
-
-// pybricks.ev3devices.ColorSensor.__str__
-STATIC void ev3devices_ColorSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, qstr_str(MP_QSTR_ColorSensor));
-    mp_printf(print, " on Port.S%c",  self->iodev->port);
 }
 
 // pybricks.ev3devices.ColorSensor.color
@@ -367,7 +344,6 @@ STATIC MP_DEFINE_CONST_DICT(ev3devices_ColorSensor_locals_dict, ev3devices_Color
 STATIC const mp_obj_type_t ev3devices_ColorSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_ColorSensor,
-    .print = ev3devices_ColorSensor_print,
     .make_new = ev3devices_ColorSensor_make_new,
     .locals_dict = (mp_obj_dict_t*)&ev3devices_ColorSensor_locals_dict,
 };
@@ -400,13 +376,6 @@ STATIC mp_obj_t ev3devices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     self->light = light_Light_obj_make_new(dev, &light_Light_type);
 
     return MP_OBJ_FROM_PTR(self);
-}
-
-// pybricks.ev3devices.UltrasonicSensor.__str__
-STATIC void ev3devices_UltrasonicSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    ev3devices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, qstr_str(MP_QSTR_UltrasonicSensor));
-    mp_printf(print, " on Port.S%c",  self->iodev->port);
 }
 
 // pybricks.ev3devices.UltrasonicSensor.distance
@@ -449,7 +418,6 @@ STATIC MP_DEFINE_CONST_DICT(ev3devices_UltrasonicSensor_locals_dict, ev3devices_
 STATIC const mp_obj_type_t ev3devices_UltrasonicSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_UltrasonicSensor,
-    .print = ev3devices_UltrasonicSensor_print,
     .make_new = ev3devices_UltrasonicSensor_make_new,
     .locals_dict = (mp_obj_dict_t*)&ev3devices_UltrasonicSensor_locals_dict,
 };
@@ -543,13 +511,6 @@ STATIC mp_obj_t ev3devices_GyroSensor_reset_angle(size_t n_args, const mp_obj_t 
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_GyroSensor_reset_angle_obj, 0, ev3devices_GyroSensor_reset_angle);
 
-// pybricks.ev3devices.GyroSensor.__str__
-STATIC void ev3devices_GyroSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    ev3devices_GyroSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, qstr_str(MP_QSTR_GyroSensor));
-    mp_printf(print, " on Port.S%c",  self->iodev->port);
-}
-
 // dir(pybricks.ev3devices.GyroSensor)
 STATIC const mp_rom_map_elem_t ev3devices_GyroSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_angle),       MP_ROM_PTR(&ev3devices_GyroSensor_angle_obj)       },
@@ -562,7 +523,6 @@ STATIC MP_DEFINE_CONST_DICT(ev3devices_GyroSensor_locals_dict, ev3devices_GyroSe
 STATIC const mp_obj_type_t ev3devices_GyroSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_GyroSensor,
-    .print = ev3devices_GyroSensor_print,
     .make_new = ev3devices_GyroSensor_make_new,
     .locals_dict = (mp_obj_dict_t*)&ev3devices_GyroSensor_locals_dict,
 };
@@ -605,13 +565,6 @@ STATIC mp_obj_t ev3devices_AnalogSensor_make_new(const mp_obj_type_t *otype, siz
     pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &voltage));
 
     return MP_OBJ_FROM_PTR(self);
-}
-
-// pybricks.ev3devices.AnalogSensor.__str__
-STATIC void ev3devices_AnalogSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    ev3devices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, qstr_str(MP_QSTR_AnalogSensor));
-    mp_printf(print, " on Port.S%c",  self->iodev->port);
 }
 
 // pybricks.ev3devices.AnalogSensor.voltage
@@ -663,7 +616,6 @@ STATIC MP_DEFINE_CONST_DICT(ev3devices_AnalogSensor_locals_dict, ev3devices_Anal
 STATIC const mp_obj_type_t ev3devices_AnalogSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_AnalogSensor,
-    .print = ev3devices_AnalogSensor_print,
     .make_new = ev3devices_AnalogSensor_make_new,
     .locals_dict = (mp_obj_dict_t*)&ev3devices_AnalogSensor_locals_dict,
 };

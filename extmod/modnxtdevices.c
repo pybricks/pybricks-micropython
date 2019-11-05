@@ -47,20 +47,6 @@ STATIC mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     return MP_OBJ_FROM_PTR(self);
 }
 
-// pybricks.nxtdevices.UltrasonicSensor.__str__
-STATIC void nxtdevices_UltrasonicSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    nxtdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, qstr_str(MP_QSTR_UltrasonicSensor));
-
-    pbio_port_t port;
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
-    port = self->iodev->port;
-#else
-    port = self->port;
-#endif
-    mp_printf(print, " on Port.S%c",  port);
-}
-
 // pybricks.nxtdevices.UltrasonicSensor.distance
 STATIC mp_obj_t nxtdevices_UltrasonicSensor_distance(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     nxtdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
@@ -85,7 +71,6 @@ STATIC MP_DEFINE_CONST_DICT(nxtdevices_UltrasonicSensor_locals_dict, nxtdevices_
 STATIC const mp_obj_type_t nxtdevices_UltrasonicSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_UltrasonicSensor,
-    .print = nxtdevices_UltrasonicSensor_print,
     .make_new = nxtdevices_UltrasonicSensor_make_new,
     .locals_dict = (mp_obj_dict_t*)&nxtdevices_UltrasonicSensor_locals_dict,
 };
@@ -133,19 +118,6 @@ STATIC mp_obj_t nxtdevices_TouchSensor_make_new(const mp_obj_type_t *type, size_
     return MP_OBJ_FROM_PTR(self);
 }
 
-// pybricks.nxtdevices.TouchSensor.__str__
-STATIC void nxtdevices_TouchSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    nxtdevices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, qstr_str(MP_QSTR_TouchSensor));
-    pbio_port_t port;
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
-    port = self->iodev->port;
-#else
-    port = self->port;
-#endif
-    mp_printf(print, " on Port.S%c",  port);
-}
-
 // pybricks.nxtdevices.TouchSensor.pressed
 STATIC mp_obj_t nxtdevices_TouchSensor_pressed(mp_obj_t self_in) {
     nxtdevices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -170,7 +142,6 @@ STATIC MP_DEFINE_CONST_DICT(nxtdevices_TouchSensor_locals_dict, nxtdevices_Touch
 STATIC const mp_obj_type_t nxtdevices_TouchSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_TouchSensor,
-    .print = nxtdevices_TouchSensor_print,
     .make_new = nxtdevices_TouchSensor_make_new,
     .locals_dict = (mp_obj_dict_t*)&nxtdevices_TouchSensor_locals_dict,
 };
@@ -203,19 +174,6 @@ STATIC mp_obj_t nxtdevices_SoundSensor_make_new(const mp_obj_type_t *type, size_
     pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
 #endif
     return MP_OBJ_FROM_PTR(self);
-}
-
-// pybricks.nxtdevices.SoundSensor.__str__
-STATIC void nxtdevices_SoundSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    nxtdevices_SoundSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, qstr_str(MP_QSTR_SoundSensor));
-    pbio_port_t port;
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
-    port = self->iodev->port;
-#else
-    port = self->port;
-#endif
-    mp_printf(print, " on Port.S%c",  port);
 }
 
 #define SOUND_VOLT_MIN (650)
@@ -265,7 +223,6 @@ STATIC MP_DEFINE_CONST_DICT(nxtdevices_SoundSensor_locals_dict, nxtdevices_Sound
 STATIC const mp_obj_type_t nxtdevices_SoundSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_SoundSensor,
-    .print = nxtdevices_SoundSensor_print,
     .make_new = nxtdevices_SoundSensor_make_new,
     .locals_dict = (mp_obj_dict_t*)&nxtdevices_SoundSensor_locals_dict,
 };
@@ -303,19 +260,6 @@ STATIC mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_
     pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
 #endif
     return MP_OBJ_FROM_PTR(self);
-}
-
-// pybricks.nxtdevices.LightSensor.__str__
-STATIC void nxtdevices_LightSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, qstr_str(MP_QSTR_LightSensor));
-    pbio_port_t port;
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
-    port = self->iodev->port;
-#else
-    port = self->port;
-#endif
-    mp_printf(print, " on Port.S%c",  port);
 }
 
 #define LIGHT_VOLT_MIN (1906)
@@ -383,7 +327,6 @@ STATIC MP_DEFINE_CONST_DICT(nxtdevices_LightSensor_locals_dict, nxtdevices_Light
 STATIC const mp_obj_type_t nxtdevices_LightSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_LightSensor,
-    .print = nxtdevices_LightSensor_print,
     .make_new = nxtdevices_LightSensor_make_new,
     .locals_dict = (mp_obj_dict_t*)&nxtdevices_LightSensor_locals_dict,
 };
@@ -423,20 +366,6 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     return MP_OBJ_FROM_PTR(self);
 }
 
-// pybricks.nxtdevices.ColorSensor.__str__
-STATIC void nxtdevices_ColorSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, qstr_str(MP_QSTR_ColorSensor));
-
-    pbio_port_t port;
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
-    port = self->iodev->port;
-#else
-    port = self->port;
-#endif
-    mp_printf(print, " on Port.S%c",  port);
-}
-
 // pybricks.nxtdevices.ColorSensor.color
 STATIC mp_obj_t nxtdevices_ColorSensor_color(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
@@ -461,7 +390,6 @@ STATIC MP_DEFINE_CONST_DICT(nxtdevices_ColorSensor_locals_dict, nxtdevices_Color
 STATIC const mp_obj_type_t nxtdevices_ColorSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_ColorSensor,
-    .print = nxtdevices_ColorSensor_print,
     .make_new = nxtdevices_ColorSensor_make_new,
     .locals_dict = (mp_obj_dict_t*)&nxtdevices_ColorSensor_locals_dict,
 };

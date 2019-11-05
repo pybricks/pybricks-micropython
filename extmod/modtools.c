@@ -77,11 +77,6 @@ STATIC mp_obj_t tools_StopWatch_make_new(const mp_obj_type_t *type, size_t n_arg
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC void tools_StopWatch_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    mp_printf(print, qstr_str(MP_QSTR_StopWatch));
-}
-
-
 /*
 StopWatch class tables
 */
@@ -96,7 +91,6 @@ STATIC MP_DEFINE_CONST_DICT(tools_StopWatch_locals_dict, tools_StopWatch_locals_
 STATIC const mp_obj_type_t tools_StopWatch_type = {
     { &mp_type_type },
     .name = MP_QSTR_StopWatch,
-    .print = tools_StopWatch_print,
     .make_new = tools_StopWatch_make_new,
     .locals_dict = (mp_obj_dict_t*)&tools_StopWatch_locals_dict,
 };

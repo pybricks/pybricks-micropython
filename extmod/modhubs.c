@@ -23,10 +23,6 @@ typedef struct _hubs_EV3Brick_obj_t {
     mp_obj_t light;
 } hubs_EV3Brick_obj_t;
 
-STATIC void hubs_EV3Brick_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    mp_printf(print, qstr_str(MP_QSTR_EV3Brick));
-}
-
 STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     hubs_EV3Brick_obj_t *self = m_new_obj(hubs_EV3Brick_obj_t);
     self->base.type = (mp_obj_type_t*) type;
@@ -54,7 +50,6 @@ STATIC MP_DEFINE_CONST_DICT(hubs_EV3Brick_locals_dict, hubs_EV3Brick_locals_dict
 STATIC const mp_obj_type_t hubs_EV3Brick_type = {
     { &mp_type_type },
     .name = MP_QSTR_EV3Brick,
-    .print = hubs_EV3Brick_print,
     .make_new = hubs_EV3Brick_make_new,
     .locals_dict = (mp_obj_dict_t*)&hubs_EV3Brick_locals_dict,
 };
@@ -68,10 +63,6 @@ typedef struct _hubs_MoveHub_obj_t {
     mp_obj_base_t base;
     mp_obj_t light;
 } hubs_MoveHub_obj_t;
-
-STATIC void hubs_MoveHub_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    mp_printf(print, qstr_str(MP_QSTR_MoveHub));
-}
 
 STATIC mp_obj_t hubs_MoveHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     hubs_MoveHub_obj_t *self = m_new_obj(hubs_MoveHub_obj_t);
@@ -102,7 +93,6 @@ STATIC MP_DEFINE_CONST_DICT(hubs_MoveHub_locals_dict, hubs_MoveHub_locals_dict_t
 STATIC const mp_obj_type_t hubs_MoveHub_type = {
     { &mp_type_type },
     .name = MP_QSTR_MoveHub,
-    .print = hubs_MoveHub_print,
     .make_new = hubs_MoveHub_make_new,
     .locals_dict = (mp_obj_dict_t*)&hubs_MoveHub_locals_dict,
 };
@@ -116,10 +106,6 @@ typedef struct _hubs_CityHub_obj_t {
     mp_obj_base_t base;
     mp_obj_t light;
 } hubs_CityHub_obj_t;
-
-STATIC void hubs_CityHub_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    mp_printf(print, qstr_str(MP_QSTR_CityHub));
-}
 
 STATIC mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     hubs_CityHub_obj_t *self = m_new_obj(hubs_CityHub_obj_t);
@@ -150,7 +136,6 @@ STATIC MP_DEFINE_CONST_DICT(hubs_CityHub_locals_dict, hubs_CityHub_locals_dict_t
 STATIC const mp_obj_type_t hubs_CityHub_type = {
     { &mp_type_type },
     .name = MP_QSTR_CityHub,
-    .print = hubs_CityHub_print,
     .make_new = hubs_CityHub_make_new,
     .locals_dict = (mp_obj_dict_t*)&hubs_CityHub_locals_dict,
 };
@@ -164,10 +149,6 @@ typedef struct _hubs_CPlusHub_obj_t {
     mp_obj_base_t base;
     mp_obj_t light;
 } hubs_CPlusHub_obj_t;
-
-STATIC void hubs_CPlusHub_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    mp_printf(print, qstr_str(MP_QSTR_CPlusHub));
-}
 
 STATIC mp_obj_t hubs_CPlusHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     hubs_CPlusHub_obj_t *self = m_new_obj(hubs_CPlusHub_obj_t);
@@ -198,7 +179,6 @@ STATIC MP_DEFINE_CONST_DICT(hubs_CPlusHub_locals_dict, hubs_CPlusHub_locals_dict
 STATIC const mp_obj_type_t hubs_CPlusHub_type = {
     { &mp_type_type },
     .name = MP_QSTR_CPlusHub,
-    .print = hubs_CPlusHub_print,
     .make_new = hubs_CPlusHub_make_new,
     .locals_dict = (mp_obj_dict_t*)&hubs_CPlusHub_locals_dict,
 };
@@ -211,10 +191,6 @@ STATIC const mp_obj_type_t hubs_CPlusHub_type = {
 typedef struct _hubs_NXTBrick_obj_t {
     mp_obj_base_t base;
 } hubs_NXTBrick_obj_t;
-
-STATIC void hubs_NXTBrick_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
-    mp_printf(print, qstr_str(MP_QSTR_NXTBrick));
-}
 
 STATIC mp_obj_t hubs_NXTBrick_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     hubs_NXTBrick_obj_t *self = m_new_obj(hubs_NXTBrick_obj_t);
@@ -234,7 +210,6 @@ STATIC MP_DEFINE_CONST_DICT(hubs_NXTBrick_locals_dict, hubs_NXTBrick_locals_dict
 STATIC const mp_obj_type_t hubs_NXTBrick_type = {
     { &mp_type_type },
     .name = MP_QSTR_NXTBrick,
-    .print = hubs_NXTBrick_print,
     .make_new = hubs_NXTBrick_make_new,
     .locals_dict = (mp_obj_dict_t*)&hubs_NXTBrick_locals_dict,
 };
