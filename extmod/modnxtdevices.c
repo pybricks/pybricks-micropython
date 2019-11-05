@@ -388,6 +388,84 @@ STATIC const mp_obj_type_t nxtdevices_LightSensor_type = {
     .locals_dict = (mp_obj_dict_t*)&nxtdevices_LightSensor_locals_dict,
 };
 
+// pybricks.nxtdevices.ColorSensor class object
+typedef struct _nxtdevices_ColorSensor_obj_t {
+    mp_obj_base_t base;
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+    pbio_ev3iodev_t *iodev;
+#else
+    pbio_port_t port;
+#endif
+} nxtdevices_ColorSensor_obj_t;
+
+// pybricks.nxtdevices.ColorSensor.__init__
+STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port)
+    );
+
+    nxtdevices_ColorSensor_obj_t *self = m_new_obj(nxtdevices_ColorSensor_obj_t);
+    self->base.type = (mp_obj_type_t*) type;
+
+    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+    pbio_error_t err = PBIO_ERROR_AGAIN;
+    while (err == PBIO_ERROR_AGAIN) {
+        err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR, port_num);
+        mp_hal_delay_ms(500);
+    }
+    pb_assert(err);
+#else
+    self->port = port_num;
+    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
+#endif
+
+    return MP_OBJ_FROM_PTR(self);
+}
+
+// pybricks.nxtdevices.ColorSensor.__str__
+STATIC void nxtdevices_ColorSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
+    nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    mp_printf(print, qstr_str(MP_QSTR_ColorSensor));
+
+    pbio_port_t port;
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+    port = self->iodev->port;
+#else
+    port = self->port;
+#endif
+    mp_printf(print, " on Port.S%c",  port);
+}
+
+// pybricks.nxtdevices.ColorSensor.color
+STATIC mp_obj_t nxtdevices_ColorSensor_color(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+    uint8_t color;
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+    color = self->iodev->type_id;
+#else
+    color = self->port;
+    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
+#endif
+    return mp_obj_new_int(color * 10);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_ColorSensor_color_obj, 0, nxtdevices_ColorSensor_color);
+
+// dir(pybricks.nxtdevices.ColorSensor)
+STATIC const mp_rom_map_elem_t nxtdevices_ColorSensor_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_color), MP_ROM_PTR(&nxtdevices_ColorSensor_color_obj) },
+};
+STATIC MP_DEFINE_CONST_DICT(nxtdevices_ColorSensor_locals_dict, nxtdevices_ColorSensor_locals_dict_table);
+
+// type(pybricks.nxtdevices.ColorSensor)
+STATIC const mp_obj_type_t nxtdevices_ColorSensor_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_ColorSensor,
+    .print = nxtdevices_ColorSensor_print,
+    .make_new = nxtdevices_ColorSensor_make_new,
+    .locals_dict = (mp_obj_dict_t*)&nxtdevices_ColorSensor_locals_dict,
+};
+
 // dir(pybricks.nxtdevices)
 STATIC const mp_rom_map_elem_t nxtdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_nxtdevices)              },
@@ -398,6 +476,7 @@ STATIC const mp_rom_map_elem_t nxtdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_SoundSensor),      MP_ROM_PTR(&nxtdevices_SoundSensor_type)     },
     { MP_ROM_QSTR(MP_QSTR_LightSensor),      MP_ROM_PTR(&nxtdevices_LightSensor_type)     },
     { MP_ROM_QSTR(MP_QSTR_UltrasonicSensor), MP_ROM_PTR(&nxtdevices_UltrasonicSensor_type)},
+    { MP_ROM_QSTR(MP_QSTR_ColorSensor),      MP_ROM_PTR(&nxtdevices_ColorSensor_type)     },
 };
 
 STATIC MP_DEFINE_CONST_DICT(pb_module_nxtdevices_globals, nxtdevices_globals_table);
