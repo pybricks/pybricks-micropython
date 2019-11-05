@@ -68,19 +68,26 @@ typedef enum {
     PBIO_IODEV_TYPE_ID_FCL_HUMIDITY             = 77,   /**< FatcatLab Humidity Sensor */
 
     // NXT Devices
-    PBIO_IODEV_TYPE_ID_NXT_ANALOG                   ,   /**< LEGO MINDSTORMS NXT Analog Sensor */
-    PBIO_IODEV_TYPE_ID_NXT_ANALOG_CUSTOM            ,   /**< Custom NXT-style Analog Sensor */
     PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR             ,   /**< MINDSTORMS NXT Touch Sensor */
     PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR             ,   /**< MINDSTORMS NXT Lght Sensor */
     PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR             ,   /**< MINDSTORMS NXT Color Sensor */
     PBIO_IODEV_TYPE_ID_NXT_ULTRASONIC_SENSOR        ,   /**< MINDSTORMS NXT Ultrasonic Sensor */
 
     // EV3 Devices
-    PBIO_IODEV_TYPE_ID_EV3_ANALOG                   ,   /**< MINDSTORMS EV3 Analog Sensor */
     PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR             ,   /**< MINDSTORMS EV3 Touch Sensor */
     PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR              ,   /**< MINDSTORMS EV3 Large Motor */
     PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR             ,   /**< MINDSTORMS EV3 Medium Motor */
     PBIO_IODEV_TYPE_ID_EV3_DC_MOTOR                 ,   /**< ev3dev DC Motor */
+
+    // Generic & Custom devices
+    PBIO_IODEV_TYPE_ID_NXT_ANALOG                   ,   /**< MINDSTORMS NXT-style Analog Sensor */
+    PBIO_IODEV_TYPE_ID_EV3_ANALOG                   ,   /**< MINDSTORMS EV3-style Analog Sensor */
+    PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG                ,   /**< Custom Analog Sensor */
+    PBIO_IODEV_TYPE_ID_NXT_I2C                      ,   /**< MINDSTORMS NXT-style I2C Sensor */
+    PBIO_IODEV_TYPE_ID_CUSTOM_I2C                   ,   /**< Custom I2C Sensor */
+    PBIO_IODEV_TYPE_ID_EV3_UART                     ,   /**< MINDSTORMS EV3-style UART Sensor */
+    PBIO_IODEV_TYPE_ID_CUSTOM_UART                  ,   /**< Custom UART Sensor */
+
 } pbio_iodev_type_id_t;
 
 /**

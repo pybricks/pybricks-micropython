@@ -594,7 +594,7 @@ STATIC mp_obj_t ev3devices_AnalogSensor_make_new(const mp_obj_type_t *otype, siz
         // Set the sensor as a custom NXT Analog Sensor
         pbio_error_t err = PBIO_ERROR_AGAIN;
         while (err == PBIO_ERROR_AGAIN) {
-            err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_ANALOG_CUSTOM, port_num);
+            err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG, port_num);
             mp_hal_delay_ms(500);
         }
         pb_assert(err);
