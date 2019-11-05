@@ -69,6 +69,9 @@ pbio_error_t ev3device_get_values_at_mode(pbio_ev3iodev_t *iodev, uint8_t mode, 
 
     for (uint8_t i = 0; i < iodev->data_len; i++) {
         switch (iodev->data_type) {
+            case PBIO_IODEV_DATA_TYPE_UINT8:
+            memcpy((int8_t  *) values + i * 1, (uint8_t *)(data + i * 1), 1);
+            break;
         case PBIO_IODEV_DATA_TYPE_INT8:
             memcpy((int8_t  *) values + i * 1, (int8_t  *)(data + i * 1), 1);
             break;

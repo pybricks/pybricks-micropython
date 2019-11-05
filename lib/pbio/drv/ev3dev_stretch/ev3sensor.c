@@ -326,6 +326,10 @@ pbio_error_t pbdrv_ev3_sensor_get_info(pbdrv_ev3_sensor_t *sensor, uint8_t *data
         *data_type = PBIO_IODEV_DATA_TYPE_INT8;
         return PBIO_SUCCESS;
     }
+    else if (!strcmp(s_data_type, "u8")) {
+        *data_type = PBIO_IODEV_DATA_TYPE_UINT8;
+        return PBIO_SUCCESS;
+    }
     else if (!strcmp(s_data_type, "s16")) {
         *data_type = PBIO_IODEV_DATA_TYPE_INT16;
         return PBIO_SUCCESS;
