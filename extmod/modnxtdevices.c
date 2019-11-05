@@ -14,12 +14,17 @@
 #include "pbobj.h"
 #include "pbkwarg.h"
 
+#include "modmotor.h"
 #include "modparameters.h"
 
 // pybricks.nxtdevices.UltrasonicSensor class object
 typedef struct _nxtdevices_UltrasonicSensor_obj_t {
     mp_obj_base_t base;
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     pbio_ev3iodev_t *iodev;
+#else
+    pbio_port_t port;
+#endif
 } nxtdevices_UltrasonicSensor_obj_t;
 
 // pybricks.nxtdevices.UltrasonicSensor.__init__
@@ -32,7 +37,12 @@ STATIC mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     self->base.type = (mp_obj_type_t*) type;
 
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_ULTRASONIC_SENSOR, port_num));
+#else
+    self->port = port_num;
+    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
+#endif
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -41,14 +51,26 @@ STATIC mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
 STATIC void nxtdevices_UltrasonicSensor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
     nxtdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, qstr_str(MP_QSTR_UltrasonicSensor));
-    mp_printf(print, " on Port.S%c",  self->iodev->port);
+
+    pbio_port_t port;
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+    port = self->iodev->port;
+#else
+    port = self->port;
+#endif
+    mp_printf(print, " on Port.S%c",  port);
 }
 
 // pybricks.nxtdevices.UltrasonicSensor.distance
 STATIC mp_obj_t nxtdevices_UltrasonicSensor_distance(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     nxtdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
     uint8_t distance;
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ULTRASONIC_SENSOR__DIST_CM, &distance));
+#else
+    distance = self->port;
+    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
+#endif
     return mp_obj_new_int(distance * 10);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_UltrasonicSensor_distance_obj, 0, nxtdevices_UltrasonicSensor_distance);
