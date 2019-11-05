@@ -70,6 +70,10 @@ typedef enum {
     // NXT Devices
     PBIO_IODEV_TYPE_ID_NXT_ANALOG                   ,   /**< LEGO MINDSTORMS NXT Analog Sensor */
     PBIO_IODEV_TYPE_ID_NXT_ANALOG_CUSTOM            ,   /**< Custom NXT-style Analog Sensor */
+    PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR             ,   /**< MINDSTORMS NXT Touch Sensor */
+    PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR             ,   /**< MINDSTORMS NXT Lght Sensor */
+    PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR             ,   /**< MINDSTORMS NXT Color Sensor */
+    PBIO_IODEV_TYPE_ID_NXT_ULTRASONIC_SENSOR        ,   /**< MINDSTORMS NXT Ultrasonic Sensor */
 
     // EV3 Devices
     PBIO_IODEV_TYPE_ID_EV3_ANALOG                   ,   /**< MINDSTORMS EV3 Analog Sensor */
