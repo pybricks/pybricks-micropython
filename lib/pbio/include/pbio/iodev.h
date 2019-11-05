@@ -88,6 +88,10 @@ typedef enum {
  */
 typedef enum {
     /**
+     * Unsigned 8-bit integer.
+     */
+    PBIO_IODEV_DATA_TYPE_UINT8,
+    /**
      * Signed 8-bit integer.
      */
     PBIO_IODEV_DATA_TYPE_INT8,

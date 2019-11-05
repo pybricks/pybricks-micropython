@@ -14,6 +14,8 @@
  */
 size_t pbio_iodev_size_of(pbio_iodev_data_type_t type) {
     switch (type) {
+    case PBIO_IODEV_DATA_TYPE_UINT8:
+        return 1;
     case PBIO_IODEV_DATA_TYPE_INT8:
         return 1;
     case PBIO_IODEV_DATA_TYPE_INT16:
