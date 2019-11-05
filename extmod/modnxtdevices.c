@@ -275,7 +275,7 @@ STATIC mp_obj_t nxtdevices_LightSensor_ambient(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t analog;
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__AMBIENT, &analog));
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__AMBIENT, &analog));
 #else
     analog = self->port;
     pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
@@ -292,17 +292,17 @@ STATIC mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
     int32_t reflection;
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
     if (self->compensate_ambient) {
-        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__AMBIENT, &analog));
+        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__AMBIENT, &analog));
         mp_hal_delay_ms(30);
-        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__AMBIENT, &analog));
+        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__AMBIENT, &analog));
         ambient = analog_light(analog);
-        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT, &analog));
+        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__REFLECT, &analog));
         mp_hal_delay_ms(30);
-        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT, &analog));
+        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__REFLECT, &analog));
         reflection = analog_light(analog);
     }
     else {
-        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT, &analog));
+        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__REFLECT, &analog));
         reflection = analog_light(analog);
         ambient = 0;
     }
