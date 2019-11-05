@@ -103,7 +103,8 @@ typedef struct _nxtdevices_TouchSensor_obj_t {
 // pybricks.nxtdevices.TouchSensor.__init__
 STATIC mp_obj_t nxtdevices_TouchSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port)
+        PB_ARG_REQUIRED(port),
+        PB_ARG_DEFAULT_TRUE(verify_type)
     );
 
     nxtdevices_TouchSensor_obj_t *self = m_new_obj(nxtdevices_TouchSensor_obj_t);
@@ -111,8 +112,21 @@ STATIC mp_obj_t nxtdevices_TouchSensor_make_new(const mp_obj_type_t *type, size_
 
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
-    pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR, port_num));
+    if (mp_obj_is_true(verify_type)) {
+        // Get the device and assert that it is of the right type
+        pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR, port_num));
+    }
+    else {
+        // Set the sensor as a custom NXT Analog Sensor, so the old-style NXT Touch Sensor will work
+        pbio_error_t err = PBIO_ERROR_AGAIN;
+        while (err == PBIO_ERROR_AGAIN) {
+            err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG, port_num);
+            mp_hal_delay_ms(500);
+        }
+        pb_assert(err);
+    }
 #else
+    mp_obj_is_true(verify_type);
     self->port = port_num;
     pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
 #endif
