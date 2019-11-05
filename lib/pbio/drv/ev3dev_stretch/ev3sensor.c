@@ -201,10 +201,10 @@ static pbio_error_t ev3_sensor_write_port_mode(pbio_port_t port, pbdrv_ev3dev_po
     return PBIO_SUCCESS;
 }
 
-// Write the port mode, but only if needed
-static pbio_error_t ev3_sensor_set_port_mode(pbio_port_t port, pbdrv_ev3dev_port_t mode) {
+// Set port configuration for some devices
+static pbio_error_t ev3_sensor_configure_port(pbio_port_t port, pbio_iodev_type_id_t id) {
 
-    // Get the current mode
+    // Get the current port mode
     pbio_error_t err;
     pbdrv_ev3dev_port_t mode_now;
     err = ev3_sensor_get_port_mode(port, &mode_now);
@@ -212,32 +212,44 @@ static pbio_error_t ev3_sensor_set_port_mode(pbio_port_t port, pbdrv_ev3dev_port
         return err;
     }
 
-    // If the mode is already set, we are done
-    if (mode == mode_now) {
+    // If special modes have been set previously and they're still good, we're done.
+    if ((id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR && mode_now == RAW       ) ||
+        (id == PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG    && mode_now == NXT_ANALOG) ||
+        (id == PBIO_IODEV_TYPE_ID_CUSTOM_I2C       && mode_now == OTHER_I2C ) ||
+        (id == PBIO_IODEV_TYPE_ID_CUSTOM_UART      && mode_now == OTHER_UART) ){
         return PBIO_SUCCESS;
     }
 
-    // If not, we should write the new port mode
-    err = ev3_sensor_write_port_mode(port, mode);
-
-    // If the mode write is successful, raise EAGAIN so high level knows
-    // it should call the sensor again when the mode switch is done.
-    if (err == PBIO_SUCCESS) {
-        return PBIO_ERROR_AGAIN;
+    // For Custom Analog Sensors, port must be set on first use
+    if (id == PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG) {
+        err = ev3_sensor_write_port_mode(port, NXT_ANALOG);
+        return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
     }
-    return err;
-}
 
-// Set port configuration for some devices
-static pbio_error_t ev3_sensor_configure_port(pbio_port_t port, pbio_iodev_type_id_t *id) {
-    switch (*id)
-    {
-    case PBIO_IODEV_TYPE_ID_NXT_ANALOG_CUSTOM:
-        *id = PBIO_IODEV_TYPE_ID_NXT_ANALOG;
-        return ev3_sensor_set_port_mode(port, NXT_ANALOG);
-    default:
-        return PBIO_SUCCESS;
+    // For Custom UART Sensors, port must be set on first use
+    if (id == PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG) {
+        err = ev3_sensor_write_port_mode(port, OTHER_UART);
+        return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
     }
+
+    // For Custom I2C Sensors, port must be set on first use
+    if (id == PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG) {
+        err = ev3_sensor_write_port_mode(port, OTHER_I2C);
+        return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
+    }
+
+    // For NXT 2.0 Color Sensor, port must be set to raw mode on first use
+    if (id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
+        err = ev3_sensor_write_port_mode(port, RAW);
+        return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
+    }
+
+    // For all other devices, the port should be in auto mode.
+    if (mode_now != AUTO) {
+        err = ev3_sensor_write_port_mode(port, AUTO);
+        return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
+    }
+    return PBIO_SUCCESS;
 }
 
 // Initialize an ev3dev sensor by opening the relevant sysfs attributes
@@ -311,10 +323,15 @@ static pbio_error_t ev3_sensor_assert_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_
     else {
         return PBIO_ERROR_IO;
     }
-    if (id != valid_id) {
-        return PBIO_ERROR_NO_DEV;
+    // If the detected ID matches the expected ID, return success.
+    if (id == valid_id) {
+        return PBIO_SUCCESS;
     }
-    return PBIO_SUCCESS;
+    // Custom NXT Analog sensors work the same as regular NXT Analog sensors.
+    if (id == PBIO_IODEV_TYPE_ID_NXT_ANALOG && valid_id == PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG) {
+        return PBIO_SUCCESS;
+    }
+    return PBIO_ERROR_NO_DEV;
 }
 
 struct _pbdrv_ev3_sensor_t sensors[4];
@@ -330,11 +347,11 @@ pbio_error_t pbdrv_ev3_sensor_get(pbdrv_ev3_sensor_t **sensor, pbio_port_t port,
     pbio_error_t err;
 
     // Initialize port if needed for this ID
-    err = ev3_sensor_configure_port(port, &valid_id);
+    err = ev3_sensor_configure_port(port, valid_id);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    
+
     // Initialize sysfs
     err = ev3_sensor_init(*sensor, port);
     if (err != PBIO_SUCCESS) {
