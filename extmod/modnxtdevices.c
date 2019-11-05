@@ -273,6 +273,7 @@ STATIC const mp_obj_type_t nxtdevices_SoundSensor_type = {
 // pybricks.nxtdevices.LightSensor class object
 typedef struct _nxtdevices_LightSensor_obj_t {
     mp_obj_base_t base;
+    bool compensate_ambient;
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
     pbio_ev3iodev_t *iodev;
 #else
@@ -283,13 +284,17 @@ typedef struct _nxtdevices_LightSensor_obj_t {
 // pybricks.nxtdevices.LightSensor.__init__
 STATIC mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port)
+        PB_ARG_REQUIRED(port),
+        PB_ARG_DEFAULT_FALSE(compensation)
     );
 
     nxtdevices_LightSensor_obj_t *self = m_new_obj(nxtdevices_LightSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
 
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+
+    self->compensate_ambient = mp_obj_is_true(compensation);
+
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
     // Get the device and assert that it is of the right type
     pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR, port_num));
@@ -339,13 +344,31 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_ambient_obj, nxtdevices_
 STATIC mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t analog;
+    int32_t ambient = 0;
+    int32_t reflection;
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT, &analog));
+    if (self->compensate_ambient) {
+        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__AMBIENT, &analog));
+        mp_hal_delay_ms(30);
+        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__AMBIENT, &analog));
+        ambient = analog_light(analog);
+        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT, &analog));
+        mp_hal_delay_ms(30);
+        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT, &analog));
+        reflection = analog_light(analog);
+    }
+    else {
+        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT, &analog));
+        reflection = analog_light(analog);
+        ambient = 0;
+    }
 #else
-    analog = self->port;
+    analog = 0;
+    reflection = analog;
+    ambient = self->port;
     pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
 #endif
-    return mp_obj_new_int((analog));
+    return mp_obj_new_int(max(reflection-ambient, 0));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_reflection_obj, nxtdevices_LightSensor_reflection);
 
