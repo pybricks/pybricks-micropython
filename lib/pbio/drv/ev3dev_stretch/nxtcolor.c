@@ -48,6 +48,9 @@ typedef struct _pbdrv_nxtcolor_t {
     bool waiting;
     pbio_light_color_t state;
     pbio_light_color_t lamp;
+    uint32_t calibration[3][4];
+    uint16_t threshold[2];
+    uint16_t crc;
     uint32_t wait_start;
     const pbdrv_nxtcolor_pininfo_t *pins;
     FILE *f_digi0_val;
@@ -117,7 +120,13 @@ static pbio_error_t nxtcolor_get_digi1(pbdrv_nxtcolor_t *nxtcolor, bool *val) {
         nxtcolor->digi1_dir = IN;
     }
     // Get the state
-    return sysfs_read_int(nxtcolor->f_digi1_val, (int*) val);
+    int bit;
+    err = sysfs_read_int(nxtcolor->f_digi1_val, &bit);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    *val = bit == 1;
+    return PBIO_SUCCESS;
 }
 
 static pbio_error_t nxtcolor_get_adc(pbdrv_nxtcolor_t *nxtcolor, int32_t *analog) {
@@ -337,14 +346,31 @@ static pbio_error_t nxtcolor_init(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t port) 
         return err;
     }
 
-    // Read (and ignore) calibration data bytes
-    for (uint8_t i = 0; i < 60; i++) {
-        uint8_t byte;
-        err = nxtcolor_read_byte(nxtcolor, &byte);
+    // Read calibration data and crc bytes
+    uint8_t buf[sizeof(nxtcolor->calibration) + sizeof(nxtcolor->threshold) + sizeof(nxtcolor->crc)];
+    for (uint8_t i = 0; i < sizeof(buf); i++) {
+        err = nxtcolor_read_byte(nxtcolor, &buf[i]);
         if (err != PBIO_SUCCESS) {
             return err;
         }
     }
+
+    // Process first table
+    for (uint32_t row = 0; row < 3; row++) {
+        for (uint32_t col = 0; col < 4; col++) {
+            uint32_t val = 0;
+            uint32_t idx = row*4+col;
+            for (uint32_t b = 0; b < 4; b++) {
+                val += buf[idx*4+b] << 8*b;
+            }
+            nxtcolor->calibration[row][col] = val;
+        }
+    }
+
+    // Process second table
+    uint32_t start = sizeof(buf) - sizeof(nxtcolor->crc) - sizeof(nxtcolor->threshold);
+    nxtcolor->threshold[0] = (buf[start+1] << 8) + buf[start+0];
+    nxtcolor->threshold[1] = (buf[start+3] << 8) + buf[start+2];
 
     // The sensor is now in the full-color-ambient state
     nxtcolor->state = PBIO_LIGHT_COLOR_NONE;
@@ -423,7 +449,7 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, void *v
 
     // In measure mode, cycle through the colors and calculate color id
     int32_t argb[5];
-    
+
     // Read analog for each color
     for (uint8_t i = 0; i < 4; i++) { // FIXME: loop through rgb
         err = nxtcolor_set_light(nxtcolor, lamp_colors[i]);
