@@ -387,7 +387,7 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 // pybricks.nxtdevices.ColorSensor.raw
 STATIC mp_obj_t nxtdevices_ColorSensor_raw(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-    int32_t raw[5];
+    uint8_t raw[5];
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
     pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, raw));
 #else

@@ -36,10 +36,10 @@ static const pbdrv_nxtcolor_pininfo_t pininfo[4] = {
 };
 
 static const pbio_light_color_t lamp_colors[] = {
-    PBIO_LIGHT_COLOR_NONE,
     PBIO_LIGHT_COLOR_RED,
     PBIO_LIGHT_COLOR_GREEN,
-    PBIO_LIGHT_COLOR_BLUE
+    PBIO_LIGHT_COLOR_BLUE,
+    PBIO_LIGHT_COLOR_NONE,
 };
 
 typedef struct _pbdrv_nxtcolor_t {
@@ -407,7 +407,7 @@ pbio_error_t nxtcolor_set_light(pbdrv_nxtcolor_t *nxtcolor, pbio_light_color_t c
     pbio_error_t err;
 
     // Default unknown colors to no color
-    if (color != PBIO_LIGHT_COLOR_RED && color != PBIO_LIGHT_COLOR_RED && color != PBIO_LIGHT_COLOR_BLUE) {
+    if (color != PBIO_LIGHT_COLOR_RED && color != PBIO_LIGHT_COLOR_GREEN && color != PBIO_LIGHT_COLOR_BLUE) {
         color = PBIO_LIGHT_COLOR_NONE;
     }
 
@@ -448,25 +448,57 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, void *v
     }
 
     // In measure mode, cycle through the colors and calculate color id
-    int32_t argb[5];
+    int32_t rgba[4];
 
     // Read analog for each color
-    for (uint8_t i = 0; i < 4; i++) { // FIXME: loop through rgb
+    for (uint8_t i = 0; i < 4; i++) {
+        // Set the light
         err = nxtcolor_set_light(nxtcolor, lamp_colors[i]);
         if (err != PBIO_SUCCESS) {
             return err;
         }
-        err = nxtcolor_get_adc(nxtcolor, &argb[i]);
+        err = nxtcolor_get_adc(nxtcolor, &rgba[i]);
         if (err != PBIO_SUCCESS) {
             return err;
         }
     }
-    // TODO: Calculate color
+
+    // Select calibration row based on ambient light
+    uint8_t row = 0;
+    if (rgba[3] < nxtcolor->threshold[1]) {
+        row = 2;
+    }
+    else if (rgba[3] < nxtcolor->threshold[0]) {
+        row = 1;
+    }
+
+    uint8_t rgba_pct[5];
+
+    // Adjust analog to percentage for each color
+    for (uint8_t i = 0; i < 3; i++) {
+        if (rgba[i] < rgba[3]){
+            // If rgb is less than ambient, assume zero
+            rgba_pct[i] = 0;
+        }
+        else {
+            // Otherwise, scale by calibration multiplier
+            rgba_pct[i] = ( ( (uint32_t) (rgba[i] - rgba[3])) * nxtcolor->calibration[row][i] ) / 167116;
+        }
+    }
+
+    // Adjust ambient to percentage
+    rgba[3] -= 50;
+    rgba[3] = rgba[3] < 0 ? 0: rgba[3];
+    rgba[3] = rgba[3] > 700 ? 700 : rgba[3];
+    rgba[3] = (rgba[3]*100)/700; 
+    rgba_pct[3] = rgba[3];
+
+    // TODO: Calculate color index
     pbio_light_color_t calculated_color = PBIO_LIGHT_COLOR_BLACK;
-    argb[4] = calculated_color;
+    rgba_pct[4] = calculated_color;
 
     // Return RGB and Color data
-    memcpy(values, argb, 20);
+    memcpy(values, rgba_pct, sizeof(rgba_pct));
 
     // Set the light back to the configured lamp status
     return nxtcolor_set_light(nxtcolor, nxtcolor->lamp);
