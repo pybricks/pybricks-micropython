@@ -350,6 +350,40 @@ static pbio_error_t nxtcolor_init(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t port) 
     return PBIO_SUCCESS;
 }
 
+pbio_error_t nxtcolor_toggle_color(pbdrv_nxtcolor_t *nxtcolor) {
+    bool set = 0;
+    switch(nxtcolor->state) {
+        case COLOR_NONE:
+            nxtcolor->state = COLOR_RED;
+            set = 1;
+            break;
+        case COLOR_RED:
+            nxtcolor->state = COLOR_GREEN;
+            set = 0;
+            break;
+        case COLOR_GREEN:
+            nxtcolor->state = COLOR_BLUE;
+            set = 1;
+            break;
+        case COLOR_BLUE:
+            set = 0;
+            nxtcolor->state = COLOR_NONE;
+            break;
+    }
+    return nxtcolor_set_digi0(nxtcolor, set);
+}
+
+pbio_error_t nxtcolor_set_light(pbdrv_nxtcolor_t *nxtcolor, pbdrv_nxtcolor_ledstate_t color) {
+    pbio_error_t err;
+    while (nxtcolor->state != color) {
+        err = nxtcolor_toggle_color(nxtcolor);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
+    return PBIO_SUCCESS;
+}
+
 pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, void *values) {
 
     pbio_error_t err;
@@ -370,7 +404,37 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, void *v
         }
         nxtcolor->ready = true;
     }
-    
+
+    if (mode >= PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT_RGB) {
+        // TODO: Toggle through colors, measure RGB, calc color
+        int32_t color;
+        memcpy(values, &color, 4);
+        return PBIO_SUCCESS;
+    }
+
+    pbdrv_nxtcolor_ledstate_t color;
+
+    switch(mode) {
+        case PBIO_IODEV_MODE_NXT_COLOR_SENSOR__AMBIENT:
+            color = COLOR_NONE;
+            break;
+        case PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT_R:
+            color = COLOR_RED;
+            break;
+        case PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT_G:
+            color = COLOR_GREEN;
+            break;
+        case PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT_B:
+            color = COLOR_BLUE;
+            break;
+        default:
+            return PBIO_ERROR_IO;
+    }
+    err = nxtcolor_set_light(nxtcolor, color);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     // Read the adc
     int32_t analog;
     err = nxtcolor_get_adc(nxtcolor, &analog);
