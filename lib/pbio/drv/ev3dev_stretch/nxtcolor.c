@@ -34,10 +34,18 @@ static const pbdrv_nxtcolor_pininfo_t pininfo[4] = {
     },
 };
 
+typedef enum {
+    COLOR_NONE,
+    COLOR_RED,
+    COLOR_GREEN,
+    COLOR_BLUE,
+} pbdrv_nxtcolor_ledstate_t;
+
 typedef struct _pbdrv_nxtcolor_t {
     bool ready;
     bool fs_initialized;
     bool waiting;
+    pbdrv_nxtcolor_ledstate_t state;
     uint32_t wait_start;
     const pbdrv_nxtcolor_pininfo_t *pins;
     FILE *f_digi0_val;
@@ -321,6 +329,24 @@ static pbio_error_t nxtcolor_init(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t port) 
         return err;
     }
 
+    // Set sensor to full color mode
+    err = nxtcolor_send_byte(nxtcolor, 13);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Read (and ignore) calibration data bytes
+    for (uint8_t i = 0; i < 60; i++) {
+        uint8_t byte;
+        err = nxtcolor_read_byte(nxtcolor, &byte);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
+
+    // The sensor is now in the full-color-ambient state
+    nxtcolor->state = COLOR_NONE;
+
     return PBIO_SUCCESS;
 }
 
@@ -344,22 +370,7 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, void *v
         }
         nxtcolor->ready = true;
     }
-
-    // Send initial mode command
-    err = nxtcolor_send_byte(nxtcolor, 16);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Read data bytes
-    for (uint8_t i = 0; i < 60; i++) {
-        uint8_t byte;
-        err = nxtcolor_read_byte(nxtcolor, &byte);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-    }
-
+    
     // Read the adc
     int32_t analog;
     err = nxtcolor_get_adc(nxtcolor, &analog);
