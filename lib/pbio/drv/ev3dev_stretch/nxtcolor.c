@@ -13,6 +13,8 @@
 #include <pbio/port.h>
 #include <pbio/iodev.h>
 
+#include "sys/clock.h"
+
 #define IN (0)
 #define OUT (1)
 
@@ -33,7 +35,10 @@ static const pbdrv_nxtcolor_pininfo_t pininfo[4] = {
 };
 
 typedef struct _pbdrv_nxtcolor_t {
-    bool initialized;
+    bool ready;
+    bool fs_initialized;
+    bool waiting;
+    uint32_t wait_start;
     const pbdrv_nxtcolor_pininfo_t *pins;
     FILE *f_digi0_val;
     FILE *f_digi0_dir;
@@ -45,6 +50,29 @@ typedef struct _pbdrv_nxtcolor_t {
 } pbdrv_nxtcolor_t;
 
 pbdrv_nxtcolor_t nxtcolorsensors[4];
+
+// Simplistic nonbusy wait. May be called only once per blocking operation.
+pbio_error_t nxtcolor_wait(pbdrv_nxtcolor_t *nxtcolor, uint32_t ms) {
+
+    uint32_t now = clock_usecs();
+
+    // Wait for existing wait to complete
+    if (nxtcolor->waiting) {
+        if (now - nxtcolor->wait_start > 1000*ms) {
+            nxtcolor->waiting = false;
+            return PBIO_SUCCESS;
+        }
+        else {
+            return PBIO_ERROR_AGAIN;
+        }
+    }
+    // We are not waiting, so start a new wait
+    else {
+        nxtcolor->waiting = true;
+        nxtcolor->wait_start = now;
+        return PBIO_ERROR_AGAIN;
+    }
+}
 
 static pbio_error_t nxtcolor_set_digi0(pbdrv_nxtcolor_t *nxtcolor, bool val) {
     return sysfs_write_int(nxtcolor->f_digi0_val, val);
@@ -98,7 +126,115 @@ static pbio_error_t nxtcolor_get_adc(pbdrv_nxtcolor_t *nxtcolor, int32_t *analog
     return sysfs_read_int(nxtcolor->f_adc_val, analog);
 }
 
-static pbio_error_t nxtcolor_init(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t port) {
+static pbio_error_t nxtcolor_reset(pbdrv_nxtcolor_t *nxtcolor)
+{
+    pbio_error_t err;
+
+    // Reset sequence init
+    err = nxtcolor_set_digi0(nxtcolor, 0);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = nxtcolor_set_digi1(nxtcolor, 1);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Toggle digi0 several times
+    err = nxtcolor_set_digi0(nxtcolor, 1);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = nxtcolor_set_digi0(nxtcolor, 0);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = nxtcolor_set_digi0(nxtcolor, 1);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = nxtcolor_set_digi0(nxtcolor, 0);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    return PBIO_SUCCESS;
+}
+
+static pbio_error_t nxtcolor_read_byte(pbdrv_nxtcolor_t *nxtcolor, uint8_t *msg)
+{
+    pbio_error_t err;
+    *msg = 0;
+
+    // Set data back to input
+    bool bit;
+    err = nxtcolor_get_digi1(nxtcolor, &bit);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Read 8 bits while toggling the "clock"
+    for (uint8_t i = 0; i < 8; i++) {
+        err = nxtcolor_set_digi0(nxtcolor, 1);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        *msg = *msg >> 1;
+        err = nxtcolor_get_digi1(nxtcolor, &bit);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        if (bit) {
+            *msg |= 0x80;
+        }
+        err = nxtcolor_set_digi0(nxtcolor, 0);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
+    return PBIO_SUCCESS;
+}
+
+static pbio_error_t nxtcolor_send_byte(pbdrv_nxtcolor_t *nxtcolor, uint8_t msg)
+{
+    pbio_error_t err;
+
+    // Init both pins as low
+    err = nxtcolor_set_digi0(nxtcolor, 0);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = nxtcolor_set_digi1(nxtcolor, 0);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    for (uint8_t i = 0; i < 8; i++)
+	{
+        // Set data pin
+        err = nxtcolor_set_digi1(nxtcolor, msg & 1);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+		msg = msg >> 1;
+
+        // Set clock high
+        err = nxtcolor_set_digi0(nxtcolor, 1);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+
+        // Set clock low
+        err = nxtcolor_set_digi0(nxtcolor, 0);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+	}
+
+    return PBIO_SUCCESS;
+}
+
+static pbio_error_t nxtcolor_init_fs(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t port) {
 
     pbio_error_t err;
 
@@ -158,7 +294,32 @@ static pbio_error_t nxtcolor_init(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t port) 
         return err;
     }
 
-    nxtcolor->initialized = true;
+    return PBIO_SUCCESS;
+}
+
+static pbio_error_t nxtcolor_init(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t port) {
+    pbio_error_t err;
+
+    // Init the file system
+    if (!nxtcolor->fs_initialized) {
+        err = nxtcolor_init_fs(nxtcolor, port);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        nxtcolor->fs_initialized = true;
+
+        // Reset the sensor
+        err = nxtcolor_reset(nxtcolor);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
+
+    // Wait 100 ms
+    err = nxtcolor_wait(nxtcolor, 100);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     return PBIO_SUCCESS;
 }
@@ -173,12 +334,39 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, void *v
 
     pbdrv_nxtcolor_t *nxtcolor = &nxtcolorsensors[port-PBIO_PORT_1];
 
-    if (!nxtcolor->initialized) {
+    // We don't have a formal "get" function since the higher level code
+    // does not know about the color sensor being a special case. So instead
+    // initialize the first time the sensor is called.
+    if (!nxtcolor->ready) {
         err = nxtcolor_init(nxtcolor, port);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        nxtcolor->ready = true;
+    }
+
+    // Send initial mode command
+    err = nxtcolor_send_byte(nxtcolor, 16);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Read data bytes
+    for (uint8_t i = 0; i < 60; i++) {
+        uint8_t byte;
+        err = nxtcolor_read_byte(nxtcolor, &byte);
         if (err != PBIO_SUCCESS) {
             return err;
         }
     }
 
-    return PBIO_ERROR_NOT_IMPLEMENTED;
+    // Read the adc
+    int32_t analog;
+    err = nxtcolor_get_adc(nxtcolor, &analog);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    memcpy(values, &analog, 4);
+
+    return PBIO_SUCCESS;
 }

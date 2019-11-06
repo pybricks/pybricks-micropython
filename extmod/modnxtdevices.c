@@ -358,8 +358,6 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
         mp_hal_delay_ms(500);
     }
     pb_assert(err);
-    uint8_t color;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__COLOR, &color));
 #else
     self->port = port_num;
     pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
@@ -371,14 +369,19 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 // pybricks.nxtdevices.ColorSensor.color
 STATIC mp_obj_t nxtdevices_ColorSensor_color(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-    uint8_t color;
+    int32_t color;
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__COLOR, &color));
+    pbio_error_t err = PBIO_ERROR_AGAIN;
+    while (err == PBIO_ERROR_AGAIN) {
+        err = ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__COLOR, &color);
+        mp_hal_delay_ms(1);
+    }
+    pb_assert(err);
 #else
     color = self->port;
     pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
 #endif
-    return mp_obj_new_int(color * 10);
+    return mp_obj_new_int(color);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_ColorSensor_color_obj, 0, nxtdevices_ColorSensor_color);
 
