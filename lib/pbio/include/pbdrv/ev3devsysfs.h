@@ -17,6 +17,8 @@ pbio_error_t sysfs_open_sensor_attr(FILE **file, int n, const char *attribute, c
 
 pbio_error_t sysfs_read_str(FILE *file, char *dest);
 
+pbio_error_t sysfs_write_str(FILE *file, const char *str);
+
 pbio_error_t sysfs_read_int(FILE *file, int *dest);
 
 

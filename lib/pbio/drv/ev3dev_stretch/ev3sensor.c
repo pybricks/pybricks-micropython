@@ -345,23 +345,7 @@ pbio_error_t pbdrv_ev3_sensor_set_mode(pbdrv_ev3_sensor_t *sensor, uint8_t mode)
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    // sysfs identifier for mode
-    char *sysfs_mode = sensor->modes[mode];
-
-    // Write mode identifier
-    if (fseek(sensor->f_mode, 0, SEEK_SET) == -1) {
-        return PBIO_ERROR_IO;
-    }
-
-    if (fprintf(sensor->f_mode, "%s", sysfs_mode) != strlen(sysfs_mode)) {
-        return PBIO_ERROR_IO;
-    }
-
-    if (fflush(sensor->f_mode) != 0) {
-        return PBIO_ERROR_IO;
-    }
-
-    return PBIO_SUCCESS;
+    return sysfs_write_str(sensor->f_mode, sensor->modes[mode]);
 }
 
 // Read 32 bytes from bin_data attribute
