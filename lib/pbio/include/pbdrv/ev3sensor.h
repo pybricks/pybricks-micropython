@@ -9,8 +9,6 @@
 #include <pbio/error.h>
 #include <pbio/iodev.h>
 
-#include "py/obj.h"
-
 typedef struct _pbdrv_ev3_sensor_t pbdrv_ev3_sensor_t;
 
 pbio_error_t pbdrv_ev3_sensor_get(pbdrv_ev3_sensor_t **sensor, pbio_port_t port, pbio_iodev_type_id_t valid_id);
