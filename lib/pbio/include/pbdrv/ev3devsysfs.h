@@ -21,5 +21,7 @@ pbio_error_t sysfs_write_str(FILE *file, const char *str);
 
 pbio_error_t sysfs_read_int(FILE *file, int *dest);
 
+pbio_error_t sysfs_write_int(FILE *file, int val);
+
 
 #endif // _PBIO_EVDEVSYSFS_H_

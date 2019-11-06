@@ -118,3 +118,20 @@ pbio_error_t sysfs_read_int(FILE *file, int *dest) {
 
     return PBIO_SUCCESS;
 }
+
+// Write a number to a previously opened sysfs attribute
+pbio_error_t sysfs_write_int(FILE *file, int val) {
+    if (fseek(file, 0, SEEK_SET) == -1) {
+        return PBIO_ERROR_IO;
+    }
+
+    if (fprintf(file, "%d", val) <= 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    if (fflush(file) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    return PBIO_SUCCESS;
+}
