@@ -13,6 +13,9 @@
 #include <pbio/port.h>
 #include <pbio/iodev.h>
 
+#define IN (0)
+#define OUT (1)
+
 typedef struct {
     const int digi0; // GPIO on wire 5
     const int digi1; // GPIO on wire 6
@@ -36,11 +39,64 @@ typedef struct _pbdrv_nxtcolor_t {
     FILE *f_digi0_dir;
     FILE *f_digi1_val;
     FILE *f_digi1_dir;
+    bool digi1_dir;
     FILE *f_adc_val;
     FILE *f_adc_con;
 } pbdrv_nxtcolor_t;
 
 pbdrv_nxtcolor_t nxtcolorsensors[4];
+
+static pbio_error_t nxtcolor_set_digi0(pbdrv_nxtcolor_t *nxtcolor, bool val) {
+    return sysfs_write_int(nxtcolor->f_digi0_val, val);
+}
+
+static pbio_error_t nxtcolor_set_digi1(pbdrv_nxtcolor_t *nxtcolor, bool val) {
+
+    pbio_error_t err;
+
+    // First, ensure it is set as a digital out
+    if (nxtcolor->digi1_dir == IN) {
+        err = sysfs_write_str(nxtcolor->f_digi1_dir, "out");
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        nxtcolor->digi1_dir = OUT;
+    }
+    // Set the requested state
+    return sysfs_write_int(nxtcolor->f_digi1_val, val);
+}
+
+static pbio_error_t nxtcolor_get_digi1(pbdrv_nxtcolor_t *nxtcolor, bool *val) {
+
+    pbio_error_t err;
+
+    // First, ensure it is set as a digital in
+    if (nxtcolor->digi1_dir == OUT) {
+        err = sysfs_write_str(nxtcolor->f_digi1_dir, "in");
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        nxtcolor->digi1_dir = IN;
+    }
+    // Get the state
+    return sysfs_read_int(nxtcolor->f_digi1_val, (int*) val);
+}
+
+static pbio_error_t nxtcolor_get_adc(pbdrv_nxtcolor_t *nxtcolor, int32_t *analog) {
+
+    pbio_error_t err;
+
+    // First, ensure it is set as an input
+    if (nxtcolor->digi1_dir == OUT) {
+        err = sysfs_write_str(nxtcolor->f_digi1_dir, "in");
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        nxtcolor->digi1_dir = IN;
+    }
+    // Get the state
+    return sysfs_read_int(nxtcolor->f_adc_val, analog);
+}
 
 static pbio_error_t nxtcolor_init(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t port) {
 
@@ -55,19 +111,19 @@ static pbio_error_t nxtcolor_init(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t port) 
     nxtcolor->pins = &pininfo[port-PBIO_PORT_1];
 
     // Open the sysfs files for this sensor
-    err = sysfs_open(&nxtcolor->f_digi0_val, "/sys/class/gpio/gpio%d/%s", nxtcolor->pins->digi0, "value", "r");
+    err = sysfs_open(&nxtcolor->f_digi0_val, "/sys/class/gpio/gpio%d/%s", nxtcolor->pins->digi0, "value", "w");
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = sysfs_open(&nxtcolor->f_digi0_dir, "/sys/class/gpio/gpio%d/%s", nxtcolor->pins->digi0, "direction", "r");
+    err = sysfs_open(&nxtcolor->f_digi0_dir, "/sys/class/gpio/gpio%d/%s", nxtcolor->pins->digi0, "direction", "w");
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = sysfs_open(&nxtcolor->f_digi1_val, "/sys/class/gpio/gpio%d/%s", nxtcolor->pins->digi1, "value", "r");
+    err = sysfs_open(&nxtcolor->f_digi1_val, "/sys/class/gpio/gpio%d/%s", nxtcolor->pins->digi1, "value", "r+");
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = sysfs_open(&nxtcolor->f_digi1_dir, "/sys/class/gpio/gpio%d/%s", nxtcolor->pins->digi1, "direction", "r");
+    err = sysfs_open(&nxtcolor->f_digi1_dir, "/sys/class/gpio/gpio%d/%s", nxtcolor->pins->digi1, "direction", "w");
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -85,6 +141,21 @@ static pbio_error_t nxtcolor_init(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t port) 
     err = sysfs_read_int(nxtcolor->f_adc_con, &adc_con);
     if (adc_con > 50) {
         return PBIO_ERROR_NO_DEV;
+    }
+
+    // Digi0 is always an output pin. Init as low
+    err = sysfs_write_str(nxtcolor->f_digi0_dir, "out");
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = nxtcolor_set_digi0(nxtcolor, 0);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    // Digi1 can be set as output, or read as digital, and analog. Init as low.
+    err = nxtcolor_set_digi1(nxtcolor, 0);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     nxtcolor->initialized = true;
