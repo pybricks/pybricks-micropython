@@ -60,11 +60,16 @@ pbio_error_t sysfs_get_number(pbio_port_t port, const char *rdir, int *sysfs_num
 }
 
 // Open a sysfs attribute
-pbio_error_t sysfs_open(FILE **file, int n, const char *attribute, const char *rw) {
+pbio_error_t sysfs_open(FILE **file, const char *pathpat, int n, const char *attribute, const char *rw) {
     char path[MAX_PATH_LENGTH];
-    snprintf(path, MAX_PATH_LENGTH, "/sys/class/lego-sensor/sensor%d/%s", n, attribute);
+    snprintf(path, MAX_PATH_LENGTH, pathpat, n, attribute);
     *file = fopen(path, rw);
-    return file == NULL? PBIO_ERROR_IO : PBIO_SUCCESS;
+    return file == NULL? PBIO_ERROR_IO : PBIO_SUCCESS; 
+}
+
+// Open a sensor sysfs attribute
+pbio_error_t sysfs_open_sensor_attr(FILE **file, int n, const char *attribute, const char *rw) {
+    return sysfs_open(file, "/sys/class/lego-sensor/sensor%d/%s", n, attribute, rw);
 }
 
 // Read a string from a previously opened sysfs attribute

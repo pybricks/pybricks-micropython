@@ -178,23 +178,23 @@ static pbio_error_t ev3_sensor_init(pbdrv_ev3_sensor_t *sensor, pbio_port_t port
     err = sysfs_get_number(port, "/sys/class/lego-sensor", &sensor->n_sensor);
     if (err != PBIO_SUCCESS) { return err; }
 
-    err = sysfs_open(&sensor->f_driver_name, sensor->n_sensor, "driver_name", "r");
+    err = sysfs_open_sensor_attr(&sensor->f_driver_name, sensor->n_sensor, "driver_name", "r");
     if (err != PBIO_SUCCESS) { return err; }
 
-    err = sysfs_open(&sensor->f_mode, sensor->n_sensor, "mode", "r+");
+    err = sysfs_open_sensor_attr(&sensor->f_mode, sensor->n_sensor, "mode", "r+");
     if (err != PBIO_SUCCESS) { return err; }
 
-    err = sysfs_open(&sensor->f_bin_data_format, sensor->n_sensor, "bin_data_format", "r");
+    err = sysfs_open_sensor_attr(&sensor->f_bin_data_format, sensor->n_sensor, "bin_data_format", "r");
     if (err != PBIO_SUCCESS) { return err; }
 
-    err = sysfs_open(&sensor->f_num_values, sensor->n_sensor, "num_values", "r");
+    err = sysfs_open_sensor_attr(&sensor->f_num_values, sensor->n_sensor, "num_values", "r");
     if (err != PBIO_SUCCESS) { return err; }
 
-    err = sysfs_open(&sensor->f_bin_data, sensor->n_sensor, "bin_data", "rb");
+    err = sysfs_open_sensor_attr(&sensor->f_bin_data, sensor->n_sensor, "bin_data", "rb");
     if (err != PBIO_SUCCESS) { return err; }
 
     FILE *f_modes;
-    err = sysfs_open(&f_modes, sensor->n_sensor, "modes", "r");
+    err = sysfs_open_sensor_attr(&f_modes, sensor->n_sensor, "modes", "r");
     if (err != PBIO_SUCCESS) { return err; }
 
     sensor->n_modes = 0;
