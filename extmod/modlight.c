@@ -76,6 +76,25 @@ STATIC mp_obj_t light_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, mp_
         // TODO
         return mp_const_none;
     }
+    else if (self->dev.id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
+        uint8_t mode;
+        switch (color_id) {
+            case PBIO_LIGHT_COLOR_GREEN:
+                mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT_G;
+                break;
+            case PBIO_LIGHT_COLOR_RED:
+                mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT_R;
+                break;
+            case PBIO_LIGHT_COLOR_BLUE:
+                mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT_B;
+                break;
+            default:
+                mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__AMBIENT;
+                break;
+        }
+        pb_assert(ev3device_get_values_at_mode(self->dev.ev3iodev, mode, &color));
+        return mp_const_none;
+    }
 #endif
 #if PYBRICKS_PY_PUPDEVICES
     if (self->dev.id == PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR) {

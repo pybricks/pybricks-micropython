@@ -15,6 +15,7 @@
 #include "pbkwarg.h"
 
 #include "modmotor.h"
+#include "modlight.h"
 #include "modparameters.h"
 
 // pybricks.nxtdevices.UltrasonicSensor class object
@@ -335,6 +336,7 @@ STATIC const mp_obj_type_t nxtdevices_LightSensor_type = {
 typedef struct _nxtdevices_ColorSensor_obj_t {
     mp_obj_base_t base;
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
+    mp_obj_t light;
     pbio_ev3iodev_t *iodev;
 #else
     pbio_port_t port;
@@ -355,9 +357,25 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     pbio_error_t err = PBIO_ERROR_AGAIN;
     while (err == PBIO_ERROR_AGAIN) {
         err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR, port_num);
-        mp_hal_delay_ms(500);
+        mp_hal_delay_ms(100);
     }
     pb_assert(err);
+
+    // Perform one read operation
+    err = PBIO_ERROR_AGAIN;
+    int32_t color;
+    while (err == PBIO_ERROR_AGAIN) {
+        err = ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__COLOR, &color);
+        mp_hal_delay_ms(1);
+    }
+    pb_assert(err);
+
+    // Create an instance of the Light class
+    pbio_lightdev_t dev = {
+        .id = self->iodev->type_id,
+        .ev3iodev = self->iodev
+    };
+    self->light = light_Light_obj_make_new(dev, &light_ColorLight_type);
 #else
     self->port = port_num;
     pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
@@ -388,6 +406,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_ColorSensor_color_obj, 0, nxtdevice
 // dir(pybricks.nxtdevices.ColorSensor)
 STATIC const mp_rom_map_elem_t nxtdevices_ColorSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_color), MP_ROM_PTR(&nxtdevices_ColorSensor_color_obj) },
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+    { MP_ROM_QSTR(MP_QSTR_light), MP_ROM_ATTRIBUTE_OFFSET(nxtdevices_ColorSensor_obj_t, light) },
+#endif
 };
 STATIC MP_DEFINE_CONST_DICT(nxtdevices_ColorSensor_locals_dict, nxtdevices_ColorSensor_locals_dict_table);
 
