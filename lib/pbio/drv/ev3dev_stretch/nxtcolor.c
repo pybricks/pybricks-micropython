@@ -12,6 +12,7 @@
 
 #include <pbio/port.h>
 #include <pbio/iodev.h>
+#include <pbio/light.h>
 
 #include "sys/clock.h"
 
@@ -34,18 +35,19 @@ static const pbdrv_nxtcolor_pininfo_t pininfo[4] = {
     },
 };
 
-typedef enum {
-    COLOR_NONE,
-    COLOR_RED,
-    COLOR_GREEN,
-    COLOR_BLUE,
-} pbdrv_nxtcolor_ledstate_t;
+static const pbio_light_color_t lamp_colors[] = {
+    PBIO_LIGHT_COLOR_NONE,
+    PBIO_LIGHT_COLOR_RED,
+    PBIO_LIGHT_COLOR_GREEN,
+    PBIO_LIGHT_COLOR_BLUE
+};
 
 typedef struct _pbdrv_nxtcolor_t {
     bool ready;
     bool fs_initialized;
     bool waiting;
-    pbdrv_nxtcolor_ledstate_t state;
+    pbio_light_color_t state;
+    pbio_light_color_t lamp;
     uint32_t wait_start;
     const pbdrv_nxtcolor_pininfo_t *pins;
     FILE *f_digi0_val;
@@ -345,7 +347,7 @@ static pbio_error_t nxtcolor_init(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t port) 
     }
 
     // The sensor is now in the full-color-ambient state
-    nxtcolor->state = COLOR_NONE;
+    nxtcolor->state = PBIO_LIGHT_COLOR_NONE;
 
     return PBIO_SUCCESS;
 }
@@ -353,28 +355,36 @@ static pbio_error_t nxtcolor_init(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t port) 
 pbio_error_t nxtcolor_toggle_color(pbdrv_nxtcolor_t *nxtcolor) {
     bool set = 0;
     switch(nxtcolor->state) {
-        case COLOR_NONE:
-            nxtcolor->state = COLOR_RED;
+        case PBIO_LIGHT_COLOR_NONE:
+            nxtcolor->state = PBIO_LIGHT_COLOR_RED;
             set = 1;
             break;
-        case COLOR_RED:
-            nxtcolor->state = COLOR_GREEN;
+        case PBIO_LIGHT_COLOR_RED:
+            nxtcolor->state = PBIO_LIGHT_COLOR_GREEN;
             set = 0;
             break;
-        case COLOR_GREEN:
-            nxtcolor->state = COLOR_BLUE;
+        case PBIO_LIGHT_COLOR_GREEN:
+            nxtcolor->state = PBIO_LIGHT_COLOR_BLUE;
             set = 1;
             break;
-        case COLOR_BLUE:
+        case PBIO_LIGHT_COLOR_BLUE:
             set = 0;
-            nxtcolor->state = COLOR_NONE;
+            nxtcolor->state = PBIO_LIGHT_COLOR_NONE;
             break;
+        default:
+            return PBIO_ERROR_FAILED;
     }
     return nxtcolor_set_digi0(nxtcolor, set);
 }
 
-pbio_error_t nxtcolor_set_light(pbdrv_nxtcolor_t *nxtcolor, pbdrv_nxtcolor_ledstate_t color) {
+pbio_error_t nxtcolor_set_light(pbdrv_nxtcolor_t *nxtcolor, pbio_light_color_t color) {
     pbio_error_t err;
+
+    // Default unknown colors to no color
+    if (color != PBIO_LIGHT_COLOR_RED && color != PBIO_LIGHT_COLOR_RED && color != PBIO_LIGHT_COLOR_BLUE) {
+        color = PBIO_LIGHT_COLOR_NONE;
+    }
+
     while (nxtcolor->state != color) {
         err = nxtcolor_toggle_color(nxtcolor);
         if (err != PBIO_SUCCESS) {
@@ -405,43 +415,33 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, void *v
         nxtcolor->ready = true;
     }
 
-    if (mode >= PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT_RGB) {
-        // TODO: Toggle through colors, measure RGB, calc color
-        int32_t color;
-        memcpy(values, &color, 4);
-        return PBIO_SUCCESS;
+    // In lamp mode, just set the right color
+    if (mode == PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP) {
+        nxtcolor->lamp = *((pbio_light_color_t*) values);
+        return nxtcolor_set_light(nxtcolor, nxtcolor->lamp);
     }
 
-    pbdrv_nxtcolor_ledstate_t color;
-
-    switch(mode) {
-        case PBIO_IODEV_MODE_NXT_COLOR_SENSOR__AMBIENT:
-            color = COLOR_NONE;
-            break;
-        case PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT_R:
-            color = COLOR_RED;
-            break;
-        case PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT_G:
-            color = COLOR_GREEN;
-            break;
-        case PBIO_IODEV_MODE_NXT_COLOR_SENSOR__REFLECT_B:
-            color = COLOR_BLUE;
-            break;
-        default:
-            return PBIO_ERROR_IO;
+    // In measure mode, cycle through the colors and calculate color id
+    int32_t argb[5];
+    
+    // Read analog for each color
+    for (uint8_t i = 0; i < 4; i++) { // FIXME: loop through rgb
+        err = nxtcolor_set_light(nxtcolor, lamp_colors[i]);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        err = nxtcolor_get_adc(nxtcolor, &argb[i]);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
     }
-    err = nxtcolor_set_light(nxtcolor, color);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
+    // TODO: Calculate color
+    pbio_light_color_t calculated_color = PBIO_LIGHT_COLOR_BLACK;
+    argb[4] = calculated_color;
 
-    // Read the adc
-    int32_t analog;
-    err = nxtcolor_get_adc(nxtcolor, &analog);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    memcpy(values, &analog, 4);
+    // Return RGB and Color data
+    memcpy(values, argb, 20);
 
-    return PBIO_SUCCESS;
+    // Set the light back to the configured lamp status
+    return nxtcolor_set_light(nxtcolor, nxtcolor->lamp);
 }

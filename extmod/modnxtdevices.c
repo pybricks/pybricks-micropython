@@ -361,11 +361,11 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     }
     pb_assert(err);
 
-    // Perform one read operation
+    // Perform one operation
     err = PBIO_ERROR_AGAIN;
-    int32_t color;
+    int32_t color = 0;
     while (err == PBIO_ERROR_AGAIN) {
-        err = ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__COLOR, &color);
+        err = ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP, &color);
         mp_hal_delay_ms(1);
     }
     pb_assert(err);
@@ -384,28 +384,27 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     return MP_OBJ_FROM_PTR(self);
 }
 
-// pybricks.nxtdevices.ColorSensor.color
-STATIC mp_obj_t nxtdevices_ColorSensor_color(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+// pybricks.nxtdevices.ColorSensor.raw
+STATIC mp_obj_t nxtdevices_ColorSensor_raw(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-    int32_t color;
+    int32_t raw[5];
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
-    pbio_error_t err = PBIO_ERROR_AGAIN;
-    while (err == PBIO_ERROR_AGAIN) {
-        err = ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__COLOR, &color);
-        mp_hal_delay_ms(1);
-    }
-    pb_assert(err);
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, raw));
 #else
-    color = self->port;
+    raw[0] = self->port;
     pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
 #endif
-    return mp_obj_new_int(color);
+    mp_obj_t ret[5];
+    for (uint8_t i = 0; i < 5; i++) {
+        ret[i] = mp_obj_new_int(raw[i]);
+    }
+    return mp_obj_new_tuple(5, ret);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_ColorSensor_color_obj, 0, nxtdevices_ColorSensor_color);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_ColorSensor_raw_obj, 0, nxtdevices_ColorSensor_raw);
 
 // dir(pybricks.nxtdevices.ColorSensor)
 STATIC const mp_rom_map_elem_t nxtdevices_ColorSensor_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_color), MP_ROM_PTR(&nxtdevices_ColorSensor_color_obj) },
+    { MP_ROM_QSTR(MP_QSTR_raw), MP_ROM_PTR(&nxtdevices_ColorSensor_raw_obj) },
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
     { MP_ROM_QSTR(MP_QSTR_light), MP_ROM_ATTRIBUTE_OFFSET(nxtdevices_ColorSensor_obj_t, light) },
 #endif
