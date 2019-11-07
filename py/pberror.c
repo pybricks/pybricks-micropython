@@ -34,7 +34,19 @@ void pb_assert(pbio_error_t error) {
         os_err = MP_EIO;
         break;
     case PBIO_ERROR_NO_DEV:
+#if MICROPY_ERROR_REPORTING == MICROPY_ERROR_REPORTING_TERSE
         mp_raise_msg(&mp_type_OSError, pbio_error_str(error));
+#else
+        mp_raise_msg(&mp_type_OSError, 
+                "\n\n"
+               "A sensor or motor is not connected to the specified port:\n"
+               "--> Check the cables to each motor and sensor.\n"
+               "--> Check the port settings in your script.\n"
+               "--> Check the line in your script that matches\n"
+               "    the line number given in the 'Traceback' above."
+               "\n\n"
+        );
+#endif
         return;
     case PBIO_ERROR_NOT_SUPPORTED:
         os_err = MP_EOPNOTSUPP;
