@@ -36,7 +36,13 @@ STATIC mp_obj_t ev3devices_TouchSensor_make_new(const mp_obj_type_t *type, size_
     self->base.type = (mp_obj_type_t*) type;
 
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
-    pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR, port_num));
+
+    pbio_error_t err;
+    while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(1000);
+    }
+    pb_assert(err);
+
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -81,7 +87,12 @@ STATIC mp_obj_t ev3devices_InfraredSensor_make_new(const mp_obj_type_t *type, si
 
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
 
-    pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR, port_num));
+    pbio_error_t err;
+    while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(1000);
+    }
+    pb_assert(err);
+
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -270,7 +281,12 @@ STATIC mp_obj_t ev3devices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
 
-    pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR, port_num));
+    pbio_error_t err;
+    while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(1000);
+    }
+    pb_assert(err);
+
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -366,7 +382,12 @@ STATIC mp_obj_t ev3devices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     self->base.type = (mp_obj_type_t*) type;
 
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
-    pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR, port_num));
+
+    pbio_error_t err;
+    while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(1000);
+    }
+    pb_assert(err);
 
     // Create an instance of the Light class
     pbio_lightdev_t dev = {
@@ -465,7 +486,13 @@ STATIC mp_obj_t ev3devices_GyroSensor_make_new(const mp_obj_type_t *type, size_t
     self->direction = enum_get_value_maybe(direction, &pb_enum_type_Direction);
 
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
-    pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR, port_num));
+
+    pbio_error_t err;
+    while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(1000);
+    }
+    pb_assert(err);
+
     self->offset = ev3devices_GyroSensor_get_angle_offset(self->iodev, self->direction, 0);
     return MP_OBJ_FROM_PTR(self);
 }
@@ -544,21 +571,14 @@ STATIC mp_obj_t ev3devices_AnalogSensor_make_new(const mp_obj_type_t *otype, siz
     self->base.type = (mp_obj_type_t*) otype;
 
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
-    bool verify_type_arg = mp_obj_is_true(verify_type);
 
-    if (verify_type_arg) {
-        // Get the device and assert that it is of the right type
-        pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_ANALOG, port_num));
+    pbio_iodev_type_id_t id = mp_obj_is_true(verify_type) ? PBIO_IODEV_TYPE_ID_NXT_ANALOG : PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG;
+
+    pbio_error_t err;
+    while ((err = ev3device_get_device(&self->iodev, id, port_num)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(1000);
     }
-    else {
-        // Set the sensor as a custom NXT Analog Sensor
-        pbio_error_t err = PBIO_ERROR_AGAIN;
-        while (err == PBIO_ERROR_AGAIN) {
-            err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG, port_num);
-            mp_hal_delay_ms(500);
-        }
-        pb_assert(err);
-    }
+    pb_assert(err);
 
     // Initialize NXT sensors to passive state
     int32_t voltage;
