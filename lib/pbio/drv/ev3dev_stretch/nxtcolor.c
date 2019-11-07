@@ -19,6 +19,9 @@
 #define IN (0)
 #define OUT (1)
 
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
+
 typedef struct {
     const int digi0; // GPIO on wire 5
     const int digi1; // GPIO on wire 6
@@ -50,6 +53,8 @@ typedef struct _pbdrv_nxtcolor_t {
     pbio_light_color_t lamp;
     uint32_t calibration[3][4];
     uint16_t threshold[2];
+    uint32_t raw_min;
+    uint32_t raw_max;
     uint16_t crc;
     uint32_t wait_start;
     const pbdrv_nxtcolor_pininfo_t *pins;
@@ -372,6 +377,10 @@ static pbio_error_t nxtcolor_init(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t port) 
     nxtcolor->threshold[0] = (buf[start+1] << 8) + buf[start+0];
     nxtcolor->threshold[1] = (buf[start+3] << 8) + buf[start+2];
 
+    // Other analog calibration values from NXT firmware / experiments
+    nxtcolor->raw_max = 750;
+    nxtcolor->raw_min = 50;
+
     // The sensor is now in the full-color-ambient state
     nxtcolor->state = PBIO_LIGHT_COLOR_NONE;
 
@@ -482,16 +491,16 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, void *v
         }
         else {
             // Otherwise, scale by calibration multiplier
-            rgba_pct[i] = ( ( (uint32_t) (rgba[i] - rgba[3])) * nxtcolor->calibration[row][i] ) / 167116;
+            rgba_pct[i] = ( ( (uint32_t) (rgba[i] - rgba[3])) * nxtcolor->calibration[row][i] ) / 111410;
+            rgba_pct[i] = rgba_pct[i] > 100 ? 100 : rgba_pct[i];
         }
     }
 
-    // Adjust ambient to percentage
-    rgba[3] -= 50;
-    rgba[3] = rgba[3] < 0 ? 0: rgba[3];
-    rgba[3] = rgba[3] > 700 ? 700 : rgba[3];
-    rgba[3] = (rgba[3]*100)/700; 
-    rgba_pct[3] = rgba[3];
+    // Clamp ambient between estimated max and min raw value
+    int32_t amb = max(nxtcolor->raw_min, min(rgba[3], nxtcolor->raw_max));
+
+    // Scale ambient to percentage
+    rgba_pct[3] = ((amb-nxtcolor->raw_min)*100)/(nxtcolor->raw_max-nxtcolor->raw_min);
 
     // TODO: Calculate color index
     pbio_light_color_t calculated_color = PBIO_LIGHT_COLOR_BLACK;
