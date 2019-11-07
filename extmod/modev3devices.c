@@ -591,18 +591,28 @@ STATIC mp_obj_t ev3devices_AnalogSensor_make_new(const mp_obj_type_t *otype, siz
 STATIC mp_obj_t ev3devices_AnalogSensor_voltage(mp_obj_t self_in) {
     ev3devices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t voltage;
-    uint8_t mode;
-    
-    if (self->active) {
-        mode = PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE;
-    }
-    else {
-        mode = PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
-    }
+    uint8_t mode = self->active ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
     pb_assert(ev3device_get_values_at_mode(self->iodev, mode, &voltage));
     return mp_obj_new_int(voltage);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_AnalogSensor_voltage_obj, ev3devices_AnalogSensor_voltage);
+
+// pybricks.ev3devices.AnalogSensor.resistance
+STATIC mp_obj_t ev3devices_AnalogSensor_resistance(mp_obj_t self_in) {
+    ev3devices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t voltage;
+    uint8_t mode = self->active ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
+    pb_assert(ev3device_get_values_at_mode(self->iodev, mode, &voltage));
+
+    // Open terminal/infinite resistance, return none
+    const int32_t vmax = 4972;
+    if (voltage >= vmax) {
+        return mp_const_none;
+    }
+    // Return as if a pure voltage divider between load and 10K internal resistor
+    return mp_obj_new_int((10000*voltage)/(vmax-voltage));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_AnalogSensor_resistance_obj, ev3devices_AnalogSensor_resistance);
 
 // pybricks.ev3devices.AnalogSensor.active
 STATIC mp_obj_t ev3devices_AnalogSensor_active(mp_obj_t self_in) {
@@ -626,9 +636,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_AnalogSensor_passive_obj, ev3devices
 
 // dir(pybricks.ev3devices.AnalogSensor)
 STATIC const mp_rom_map_elem_t ev3devices_AnalogSensor_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_voltage), MP_ROM_PTR(&ev3devices_AnalogSensor_voltage_obj) },
-    { MP_ROM_QSTR(MP_QSTR_active),  MP_ROM_PTR(&ev3devices_AnalogSensor_active_obj)  },
-    { MP_ROM_QSTR(MP_QSTR_passive), MP_ROM_PTR(&ev3devices_AnalogSensor_passive_obj) },
+    { MP_ROM_QSTR(MP_QSTR_voltage),    MP_ROM_PTR(&ev3devices_AnalogSensor_voltage_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_resistance), MP_ROM_PTR(&ev3devices_AnalogSensor_resistance_obj) },
+    { MP_ROM_QSTR(MP_QSTR_active),     MP_ROM_PTR(&ev3devices_AnalogSensor_active_obj )    },
+    { MP_ROM_QSTR(MP_QSTR_passive),    MP_ROM_PTR(&ev3devices_AnalogSensor_passive_obj)    },
 };
 STATIC MP_DEFINE_CONST_DICT(ev3devices_AnalogSensor_locals_dict, ev3devices_AnalogSensor_locals_dict_table);
 
