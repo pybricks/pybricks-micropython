@@ -34,8 +34,8 @@ void pb_assert(pbio_error_t error) {
         os_err = MP_EIO;
         break;
     case PBIO_ERROR_NO_DEV:
-        os_err = MP_ENODEV;
-        break;
+        mp_raise_msg(&mp_type_OSError, pbio_error_str(error));
+        return;
     case PBIO_ERROR_NOT_SUPPORTED:
         os_err = MP_EOPNOTSUPP;
         break;
