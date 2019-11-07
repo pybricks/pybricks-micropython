@@ -52,13 +52,13 @@ STATIC mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
 }
 
 // pybricks.nxtdevices.UltrasonicSensor.distance
-STATIC mp_obj_t nxtdevices_UltrasonicSensor_distance(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    nxtdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+STATIC mp_obj_t nxtdevices_UltrasonicSensor_distance(mp_obj_t self_in) {
+    nxtdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint8_t distance;
     pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ULTRASONIC_SENSOR__DIST_CM, &distance));
     return mp_obj_new_int(distance * 10);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_UltrasonicSensor_distance_obj, 0, nxtdevices_UltrasonicSensor_distance);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_UltrasonicSensor_distance_obj, nxtdevices_UltrasonicSensor_distance);
 
 // dir(pybricks.nxtdevices.UltrasonicSensor)
 STATIC const mp_rom_map_elem_t nxtdevices_UltrasonicSensor_locals_dict_table[] = {
@@ -304,8 +304,8 @@ static mp_obj_t color_obj(pbio_light_color_t color) {
 }
 
 // pybricks.nxtdevices.ColorSensor.all
-STATIC mp_obj_t nxtdevices_ColorSensor_all(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+STATIC mp_obj_t nxtdevices_ColorSensor_all(mp_obj_t self_in) {
+    nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     uint8_t all[5];
     pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all));
     mp_obj_t ret[5];
@@ -316,12 +316,45 @@ STATIC mp_obj_t nxtdevices_ColorSensor_all(size_t n_args, const mp_obj_t *pos_ar
 
     return mp_obj_new_tuple(5, ret);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_ColorSensor_all_obj, 0, nxtdevices_ColorSensor_all);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_all_obj, nxtdevices_ColorSensor_all);
+
+// pybricks.nxtdevices.ColorSensor.reflection
+STATIC mp_obj_t nxtdevices_ColorSensor_reflection(mp_obj_t self_in) {
+    nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    uint8_t all[5];
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all));
+    // Return the average of red, green, and blue reflection
+    return mp_obj_new_int((all[0]+all[1]+all[2])/3);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_reflection_obj, nxtdevices_ColorSensor_reflection);
+
+// pybricks.nxtdevices.ColorSensor.ambient
+STATIC mp_obj_t nxtdevices_ColorSensor_ambient(mp_obj_t self_in) {
+    nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    uint8_t all[5];
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all));
+    // Return the ambient light
+    return mp_obj_new_int(all[3]);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_ambient_obj, nxtdevices_ColorSensor_ambient);
+
+// pybricks.nxtdevices.ColorSensor.color
+STATIC mp_obj_t nxtdevices_ColorSensor_color(mp_obj_t self_in) {
+    nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    uint8_t all[5];
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all));
+    // Return the color ID
+    return color_obj(all[4]);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_color_obj, nxtdevices_ColorSensor_color);
 
 // dir(pybricks.nxtdevices.ColorSensor)
 STATIC const mp_rom_map_elem_t nxtdevices_ColorSensor_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_all), MP_ROM_PTR(&nxtdevices_ColorSensor_all_obj) },
-    { MP_ROM_QSTR(MP_QSTR_light), MP_ROM_ATTRIBUTE_OFFSET(nxtdevices_ColorSensor_obj_t, light) },
+    { MP_ROM_QSTR(MP_QSTR_all),        MP_ROM_PTR(&nxtdevices_ColorSensor_all_obj)                  },
+    { MP_ROM_QSTR(MP_QSTR_ambient),    MP_ROM_PTR(&nxtdevices_ColorSensor_ambient_obj)              },
+    { MP_ROM_QSTR(MP_QSTR_reflection), MP_ROM_PTR(&nxtdevices_ColorSensor_reflection_obj)           },
+    { MP_ROM_QSTR(MP_QSTR_color),      MP_ROM_PTR(&nxtdevices_ColorSensor_color_obj)                },
+    { MP_ROM_QSTR(MP_QSTR_light),      MP_ROM_ATTRIBUTE_OFFSET(nxtdevices_ColorSensor_obj_t, light) },
 };
 STATIC MP_DEFINE_CONST_DICT(nxtdevices_ColorSensor_locals_dict, nxtdevices_ColorSensor_locals_dict_table);
 
