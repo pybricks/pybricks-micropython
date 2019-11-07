@@ -18,14 +18,12 @@
 #include "modlight.h"
 #include "modparameters.h"
 
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+
 // pybricks.nxtdevices.UltrasonicSensor class object
 typedef struct _nxtdevices_UltrasonicSensor_obj_t {
     mp_obj_base_t base;
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     pbio_ev3iodev_t *iodev;
-#else
-    pbio_port_t port;
-#endif
 } nxtdevices_UltrasonicSensor_obj_t;
 
 // pybricks.nxtdevices.UltrasonicSensor.__init__
@@ -38,12 +36,7 @@ STATIC mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     self->base.type = (mp_obj_type_t*) type;
 
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_ULTRASONIC_SENSOR, port_num));
-#else
-    self->port = port_num;
-    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-#endif
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -52,12 +45,7 @@ STATIC mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
 STATIC mp_obj_t nxtdevices_UltrasonicSensor_distance(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     nxtdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
     uint8_t distance;
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ULTRASONIC_SENSOR__DIST_CM, &distance));
-#else
-    distance = self->port;
-    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-#endif
     return mp_obj_new_int(distance * 10);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_UltrasonicSensor_distance_obj, 0, nxtdevices_UltrasonicSensor_distance);
@@ -79,11 +67,7 @@ STATIC const mp_obj_type_t nxtdevices_UltrasonicSensor_type = {
 // pybricks.nxtdevices.TouchSensor class object
 typedef struct _nxtdevices_TouchSensor_obj_t {
     mp_obj_base_t base;
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     pbio_ev3iodev_t *iodev;
-#else
-    pbio_port_t port;
-#endif
 } nxtdevices_TouchSensor_obj_t;
 
 // pybricks.nxtdevices.TouchSensor.__init__
@@ -97,7 +81,6 @@ STATIC mp_obj_t nxtdevices_TouchSensor_make_new(const mp_obj_type_t *type, size_
     self->base.type = (mp_obj_type_t*) type;
 
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     if (mp_obj_is_true(verify_type)) {
         // Get the device and assert that it is of the right type
         pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR, port_num));
@@ -111,11 +94,6 @@ STATIC mp_obj_t nxtdevices_TouchSensor_make_new(const mp_obj_type_t *type, size_
         }
         pb_assert(err);
     }
-#else
-    mp_obj_is_true(verify_type);
-    self->port = port_num;
-    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-#endif
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -123,12 +101,7 @@ STATIC mp_obj_t nxtdevices_TouchSensor_make_new(const mp_obj_type_t *type, size_
 STATIC mp_obj_t nxtdevices_TouchSensor_pressed(mp_obj_t self_in) {
     nxtdevices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t analog;
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_TOUCH_SENSOR__TOUCH, &analog));
-#else
-    analog = self->port;
-    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-#endif
     return mp_obj_new_bool(analog < 2500);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TouchSensor_pressed_obj, nxtdevices_TouchSensor_pressed);
@@ -150,11 +123,7 @@ STATIC const mp_obj_type_t nxtdevices_TouchSensor_type = {
 // pybricks.nxtdevices.SoundSensor class object
 typedef struct _nxtdevices_SoundSensor_obj_t {
     mp_obj_base_t base;
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     pbio_ev3iodev_t *iodev;
-#else
-    pbio_port_t port;
-#endif
 } nxtdevices_SoundSensor_obj_t;
 
 // pybricks.nxtdevices.SoundSensor.__init__
@@ -167,13 +136,8 @@ STATIC mp_obj_t nxtdevices_SoundSensor_make_new(const mp_obj_type_t *type, size_
     self->base.type = (mp_obj_type_t*) type;
 
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     // Get the device and assert that it is of the right type
     pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_ANALOG, port_num));
-#else
-    self->port = port_num;
-    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-#endif
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -189,12 +153,7 @@ STATIC int32_t analog_sound(int32_t mvolts) {
 STATIC mp_obj_t nxtdevices_SoundSensor_db(mp_obj_t self_in) {
     nxtdevices_SoundSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t analog;
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &analog));
-#else
-    analog = self->port;
-    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-#endif
     return mp_obj_new_int(analog_sound(analog));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_SoundSensor_db_obj, nxtdevices_SoundSensor_db);
@@ -203,12 +162,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_SoundSensor_db_obj, nxtdevices_Sound
 STATIC mp_obj_t nxtdevices_SoundSensor_dba(mp_obj_t self_in) {
     nxtdevices_SoundSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t analog;
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE, &analog));
-#else
-    analog = self->port;
-    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-#endif
     return mp_obj_new_int(analog_sound(analog));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_SoundSensor_dba_obj, nxtdevices_SoundSensor_dba);
@@ -232,11 +186,7 @@ STATIC const mp_obj_type_t nxtdevices_SoundSensor_type = {
 typedef struct _nxtdevices_LightSensor_obj_t {
     mp_obj_base_t base;
     bool compensate_ambient;
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     pbio_ev3iodev_t *iodev;
-#else
-    pbio_port_t port;
-#endif
 } nxtdevices_LightSensor_obj_t;
 
 // pybricks.nxtdevices.LightSensor.__init__
@@ -253,13 +203,8 @@ STATIC mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_
 
     self->compensate_ambient = mp_obj_is_true(compensation);
 
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     // Get the device and assert that it is of the right type
     pb_assert(ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR, port_num));
-#else
-    self->port = port_num;
-    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-#endif
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -275,12 +220,7 @@ STATIC int32_t analog_light(int32_t mvolts) {
 STATIC mp_obj_t nxtdevices_LightSensor_ambient(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t analog;
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__AMBIENT, &analog));
-#else
-    analog = self->port;
-    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-#endif
     return mp_obj_new_int(analog_light(analog));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_ambient_obj, nxtdevices_LightSensor_ambient);
@@ -291,7 +231,6 @@ STATIC mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
     int32_t analog;
     int32_t ambient = 0;
     int32_t reflection;
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     if (self->compensate_ambient) {
         pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__AMBIENT, &analog));
         mp_hal_delay_ms(30);
@@ -307,12 +246,6 @@ STATIC mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
         reflection = analog_light(analog);
         ambient = 0;
     }
-#else
-    analog = 0;
-    reflection = analog;
-    ambient = self->port;
-    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-#endif
     return mp_obj_new_int(max(reflection-ambient, 0));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_reflection_obj, nxtdevices_LightSensor_reflection);
@@ -335,12 +268,8 @@ STATIC const mp_obj_type_t nxtdevices_LightSensor_type = {
 // pybricks.nxtdevices.ColorSensor class object
 typedef struct _nxtdevices_ColorSensor_obj_t {
     mp_obj_base_t base;
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     mp_obj_t light;
     pbio_ev3iodev_t *iodev;
-#else
-    pbio_port_t port;
-#endif
 } nxtdevices_ColorSensor_obj_t;
 
 // pybricks.nxtdevices.ColorSensor.__init__
@@ -353,11 +282,10 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     self->base.type = (mp_obj_type_t*) type;
 
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     pbio_error_t err = PBIO_ERROR_AGAIN;
     while (err == PBIO_ERROR_AGAIN) {
         err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR, port_num);
-        mp_hal_delay_ms(100);
+        mp_hal_delay_ms(1000);
     }
     pb_assert(err);
 
@@ -376,11 +304,6 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
         .ev3iodev = self->iodev
     };
     self->light = light_Light_obj_make_new(dev, &light_ColorLight_type);
-#else
-    self->port = port_num;
-    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-#endif
-
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -388,12 +311,7 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 STATIC mp_obj_t nxtdevices_ColorSensor_raw(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
     uint8_t raw[5];
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, raw));
-#else
-    raw[0] = self->port;
-    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-#endif
     mp_obj_t ret[5];
     for (uint8_t i = 0; i < 5; i++) {
         ret[i] = mp_obj_new_int(raw[i]);
@@ -405,9 +323,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_ColorSensor_raw_obj, 0, nxtdevices_
 // dir(pybricks.nxtdevices.ColorSensor)
 STATIC const mp_rom_map_elem_t nxtdevices_ColorSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_raw), MP_ROM_PTR(&nxtdevices_ColorSensor_raw_obj) },
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     { MP_ROM_QSTR(MP_QSTR_light), MP_ROM_ATTRIBUTE_OFFSET(nxtdevices_ColorSensor_obj_t, light) },
-#endif
 };
 STATIC MP_DEFINE_CONST_DICT(nxtdevices_ColorSensor_locals_dict, nxtdevices_ColorSensor_locals_dict_table);
 
@@ -419,17 +335,20 @@ STATIC const mp_obj_type_t nxtdevices_ColorSensor_type = {
     .locals_dict = (mp_obj_dict_t*)&nxtdevices_ColorSensor_locals_dict,
 };
 
+#endif // PBDRV_CONFIG_HUB_EV3BRICK
+
 // dir(pybricks.nxtdevices)
 STATIC const mp_rom_map_elem_t nxtdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_nxtdevices)              },
 #ifdef PBDRV_CONFIG_HUB_NXTBRICK
     { MP_ROM_QSTR(MP_QSTR_Motor),            MP_ROM_PTR(&motor_Motor_type)                },
-#endif
+#else
     { MP_ROM_QSTR(MP_QSTR_TouchSensor),      MP_ROM_PTR(&nxtdevices_TouchSensor_type)     },
     { MP_ROM_QSTR(MP_QSTR_SoundSensor),      MP_ROM_PTR(&nxtdevices_SoundSensor_type)     },
     { MP_ROM_QSTR(MP_QSTR_LightSensor),      MP_ROM_PTR(&nxtdevices_LightSensor_type)     },
     { MP_ROM_QSTR(MP_QSTR_UltrasonicSensor), MP_ROM_PTR(&nxtdevices_UltrasonicSensor_type)},
     { MP_ROM_QSTR(MP_QSTR_ColorSensor),      MP_ROM_PTR(&nxtdevices_ColorSensor_type)     },
+#endif
 };
 
 STATIC MP_DEFINE_CONST_DICT(pb_module_nxtdevices_globals, nxtdevices_globals_table);
