@@ -20,6 +20,15 @@
 
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
 
+// Generic linear scaling of an analog value between a known min and max to a percentage
+STATIC int32_t analog_scale(int32_t mvolts, int32_t mvolts_min, int32_t mvolts_max, bool invert) {
+    int32_t scaled = (100*(mvolts-mvolts_min))/(mvolts_max-mvolts_min);
+    if (invert) {
+        scaled = 100 - scaled;
+    }
+    return max(0, min(scaled, 100));
+}
+
 // pybricks.nxtdevices.UltrasonicSensor class object
 typedef struct _nxtdevices_UltrasonicSensor_obj_t {
     mp_obj_base_t base;
@@ -141,20 +150,12 @@ STATIC mp_obj_t nxtdevices_SoundSensor_make_new(const mp_obj_type_t *type, size_
     return MP_OBJ_FROM_PTR(self);
 }
 
-#define SOUND_VOLT_MIN (650)
-#define SOUND_VOLT_MAX (4860)
-
-STATIC int32_t analog_sound(int32_t mvolts) {
-    int32_t sound = 100-(100*(mvolts-SOUND_VOLT_MIN))/(SOUND_VOLT_MAX-SOUND_VOLT_MIN);
-    return max(-100, min(sound, 100));
-}
-
 // pybricks.nxtdevices.SoundSensor.db
 STATIC mp_obj_t nxtdevices_SoundSensor_db(mp_obj_t self_in) {
     nxtdevices_SoundSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t analog;
     pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &analog));
-    return mp_obj_new_int(analog_sound(analog));
+    return mp_obj_new_int(analog_scale(analog, 650, 4860, true));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_SoundSensor_db_obj, nxtdevices_SoundSensor_db);
 
@@ -163,7 +164,7 @@ STATIC mp_obj_t nxtdevices_SoundSensor_dba(mp_obj_t self_in) {
     nxtdevices_SoundSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t analog;
     pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE, &analog));
-    return mp_obj_new_int(analog_sound(analog));
+    return mp_obj_new_int(analog_scale(analog, 650, 4860, true));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_SoundSensor_dba_obj, nxtdevices_SoundSensor_dba);
 
@@ -204,20 +205,12 @@ STATIC mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_
     return MP_OBJ_FROM_PTR(self);
 }
 
-#define LIGHT_VOLT_MIN (1906)
-#define LIGHT_VOLT_MAX (4164)
-
-STATIC int32_t analog_light(int32_t mvolts) {
-    int32_t light = 100-(100*(mvolts-LIGHT_VOLT_MIN))/(LIGHT_VOLT_MAX-LIGHT_VOLT_MIN);
-    return max(-100, min(light, 100));
-}
-
 // pybricks.nxtdevices.LightSensor.ambient
 STATIC mp_obj_t nxtdevices_LightSensor_ambient(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t analog;
     pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__AMBIENT, &analog));
-    return mp_obj_new_int(analog_light(analog));
+    return mp_obj_new_int(analog_scale(analog, 1906, 4164, true));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_ambient_obj, nxtdevices_LightSensor_ambient);
 
@@ -226,7 +219,7 @@ STATIC mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t analog;
     pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__REFLECT, &analog));
-    return mp_obj_new_int(analog_light(analog));
+    return mp_obj_new_int(analog_scale(analog, 1906, 3000, true));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_reflection_obj, nxtdevices_LightSensor_reflection);
 
