@@ -30,11 +30,29 @@ typedef struct {
 } pbdrv_nxtcolor_pininfo_t;
 
 static const pbdrv_nxtcolor_pininfo_t pininfo[4] = {
+    [PBIO_PORT_1 - PBIO_PORT_1] = {
+        .digi0 = 2,
+        .digi1 = 15,
+        .adc_val = 5,
+        .adc_con = 6,
+    },
     [PBIO_PORT_2 - PBIO_PORT_1] = {
         .digi0 = 14,
         .digi1 = 13,
         .adc_val = 7,
         .adc_con = 8,
+    },
+    [PBIO_PORT_3 - PBIO_PORT_1] = {
+        .digi0 = 12,
+        .digi1 = 30,
+        .adc_val = 9,
+        .adc_con = 10,
+    },
+    [PBIO_PORT_4 - PBIO_PORT_1] = {
+        .digi0 = 1,
+        .digi1 = 31,
+        .adc_val = 11,
+        .adc_con = 12,
     },
 };
 
@@ -261,11 +279,6 @@ static pbio_error_t nxtcolor_send_byte(pbdrv_nxtcolor_t *nxtcolor, uint8_t msg)
 static pbio_error_t nxtcolor_init_fs(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t port) {
 
     pbio_error_t err;
-
-    // Support only port 2 for now
-    if (port != PBIO_PORT_2) {
-        return PBIO_ERROR_NOT_IMPLEMENTED;
-    }
 
     // Get the pin info for this port
     nxtcolor->pins = &pininfo[port-PBIO_PORT_1];
