@@ -502,11 +502,61 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, void *v
     // Scale ambient to percentage
     rgba_pct[3] = ((amb-nxtcolor->raw_min)*100)/(nxtcolor->raw_max-nxtcolor->raw_min);
 
-    // TODO: Calculate color index
-    pbio_light_color_t calculated_color = PBIO_LIGHT_COLOR_BLACK;
-    rgba_pct[4] = calculated_color;
+    // Calculate color index. Use HSV instead of LEGO if/else tree.
+    int32_t red = rgba_pct[0];
+    int32_t green = rgba_pct[1];
+    int32_t blue = rgba_pct[2];
+
+    int32_t cmax = max(red, max(green, blue));
+    int32_t cmin = min(red, min(green, blue));
+
+    int32_t hue = 0;
+    if (cmax == cmin) {
+        hue = 0;
+    }
+    else if (cmax == red) {
+        hue = 0   + (60 * (green - blue))/(cmax-cmin);
+    }
+    else if (cmax == green) {
+        hue = 120 + (60 * (blue - red  ))/(cmax-cmin);
+    }
+    else if (cmax == blue) {
+        hue = 240 + (60 * (red - green ))/(cmax-cmin);
+    }
+    if (hue < 0) {
+        hue += 360;
+    }
+    int32_t saturation = cmax == 0 ? 0 : (100*(cmax-cmin))/cmax;
+
+    pbio_light_color_t color;
+
+    if (cmax < 8) {
+         color = PBIO_LIGHT_COLOR_NONE;
+    }
+    else if (red > 25 && green > 25 && blue > 25) {
+        color = PBIO_LIGHT_COLOR_WHITE;
+    }
+    // If the color is saturated enough, discretize hue
+    else if (saturation > 35) {
+        if (hue >= 20 && hue < 80) {
+            color = PBIO_LIGHT_COLOR_YELLOW;
+        }
+        else if (hue >= 80 && hue < 180) {
+            color = PBIO_LIGHT_COLOR_GREEN;
+        }
+        else if (hue >= 180 && hue < 300) {
+            color = PBIO_LIGHT_COLOR_BLUE;
+        }
+        else {
+            color = PBIO_LIGHT_COLOR_RED;
+        }
+    }
+    else {
+        color = PBIO_LIGHT_COLOR_BLACK;
+    }
 
     // Return RGB and Color data
+    rgba_pct[4] = color;
     memcpy(values, rgba_pct, sizeof(rgba_pct));
 
     // Set the light back to the configured lamp status
