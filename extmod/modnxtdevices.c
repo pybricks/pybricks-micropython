@@ -5,6 +5,7 @@
 #include <pberror.h>
 #include <pbio/iodev.h>
 #include <pbio/ev3device.h>
+#include <pbio/light.h>
 
 #include "py/mpconfig.h"
 #include "py/mphal.h"
@@ -255,9 +256,12 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     self->base.type = (mp_obj_type_t*) type;
 
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
-    pbio_error_t err = PBIO_ERROR_AGAIN;
-    while (err == PBIO_ERROR_AGAIN) {
+    pbio_error_t err;
+    while (true) {
         err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR, port_num);
+        if (err != PBIO_ERROR_AGAIN) {
+            break;
+        }
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);
@@ -280,22 +284,43 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     return MP_OBJ_FROM_PTR(self);
 }
 
-// pybricks.nxtdevices.ColorSensor.raw
-STATIC mp_obj_t nxtdevices_ColorSensor_raw(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-    uint8_t raw[5];
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, raw));
-    mp_obj_t ret[5];
-    for (uint8_t i = 0; i < 5; i++) {
-        ret[i] = mp_obj_new_int(raw[i]);
+static mp_obj_t color_obj(pbio_light_color_t color) {
+    switch(color) {
+        case PBIO_LIGHT_COLOR_RED:
+            return MP_OBJ_FROM_PTR(&pb_const_red);
+        case PBIO_LIGHT_COLOR_GREEN:
+            return MP_OBJ_FROM_PTR(&pb_const_green);
+        case PBIO_LIGHT_COLOR_BLUE:
+            return MP_OBJ_FROM_PTR(&pb_const_blue);
+        case PBIO_LIGHT_COLOR_YELLOW:
+            return MP_OBJ_FROM_PTR(&pb_const_yellow);
+        case PBIO_LIGHT_COLOR_BLACK:
+            return MP_OBJ_FROM_PTR(&pb_const_black);
+        case PBIO_LIGHT_COLOR_WHITE:
+            return MP_OBJ_FROM_PTR(&pb_const_white);
+        default:
+            return mp_const_none;
     }
+}
+
+// pybricks.nxtdevices.ColorSensor.all
+STATIC mp_obj_t nxtdevices_ColorSensor_all(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+    uint8_t all[5];
+    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all));
+    mp_obj_t ret[5];
+    for (uint8_t i = 0; i < 4; i++) {
+        ret[i] = mp_obj_new_int(all[i]);
+    }
+    ret[4] = color_obj(all[4]);
+
     return mp_obj_new_tuple(5, ret);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_ColorSensor_raw_obj, 0, nxtdevices_ColorSensor_raw);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_ColorSensor_all_obj, 0, nxtdevices_ColorSensor_all);
 
 // dir(pybricks.nxtdevices.ColorSensor)
 STATIC const mp_rom_map_elem_t nxtdevices_ColorSensor_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_raw), MP_ROM_PTR(&nxtdevices_ColorSensor_raw_obj) },
+    { MP_ROM_QSTR(MP_QSTR_all), MP_ROM_PTR(&nxtdevices_ColorSensor_all_obj) },
     { MP_ROM_QSTR(MP_QSTR_light), MP_ROM_ATTRIBUTE_OFFSET(nxtdevices_ColorSensor_obj_t, light) },
 };
 STATIC MP_DEFINE_CONST_DICT(nxtdevices_ColorSensor_locals_dict, nxtdevices_ColorSensor_locals_dict_table);
