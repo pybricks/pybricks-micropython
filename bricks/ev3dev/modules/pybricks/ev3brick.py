@@ -3,6 +3,10 @@
 
 """Backwards compatibility module for pybricks.ev3brick"""
 
+from sys import stderr, exit
+
+from .speaker import Speaker
+from .display import Display
 
 # Import the new EV3 Brick class
 from .hubs import EV3Brick
@@ -10,12 +14,16 @@ from .hubs import EV3Brick
 # Create an instance of an EV3 Brick
 _brickobj = EV3Brick()
 
-# Map the instance attributes to a flattened module
-# to make it work like the MicroPython 1.0 API.
+# Use EV3 MicroPython 1.0 sound/display implementation
 
-sound = _brickobj.speaker
-
-display = _brickobj.display
+try:
+    # Initialize the EV3 speaker and display
+    sound = Speaker('EV3')
+    display = Display('EV3')
+except Exception as exception:
+    print("Pybricks is already running on this device. Exiting...",
+            file=stderr)
+    exit(1)
 
 battery = _brickobj.battery
 
