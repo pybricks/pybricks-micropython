@@ -30,7 +30,7 @@ STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
     self->base.type = (mp_obj_type_t*) type;
 
     // Create an instance of a speaker
-    self->speaker = builtins_Speaker_obj_make_new();
+    self->speaker = builtins_Speaker_obj_make_new(50);
 
     // Create an instance of the Light class, representing the brick status light
     pbio_lightdev_t dev = {

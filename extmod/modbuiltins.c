@@ -19,15 +19,33 @@ typedef struct _builtins_Speaker_obj_t {
 } builtins_Speaker_obj_t;
 
 // pybricks.builtins.Speaker.__init__/__new__
-mp_obj_t builtins_Speaker_obj_make_new() {
+mp_obj_t builtins_Speaker_obj_make_new(uint8_t volume) {
+
     builtins_Speaker_obj_t *self = m_new_obj(builtins_Speaker_obj_t);
     self->base.type = &builtins_Speaker_type;
 
     // Here we can do things like init/reset speaker
-    self->volume = 50;
+    self->volume = volume;
 
     return self;
 }
+
+// pybricks.builtins.Speaker.volume
+STATIC mp_obj_t builtins_Speaker_volume(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(volume)
+    );
+    builtins_Speaker_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
+    mp_int_t vol_arg = pb_obj_get_int(volume);
+    vol_arg = vol_arg > 100 ? 100 : vol_arg;
+    vol_arg = vol_arg < 0   ? 0   : vol_arg;
+    self->volume = vol_arg;
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Speaker_volume_obj, 0, builtins_Speaker_volume);
 
 // pybricks.builtins.Speaker.busy
 STATIC mp_obj_t builtins_Speaker_busy(mp_obj_t self_in) {
@@ -142,6 +160,7 @@ STATIC const mp_rom_map_elem_t builtins_Speaker_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_play   ), MP_ROM_PTR(&builtins_Speaker_play_obj) },
     { MP_ROM_QSTR(MP_QSTR_say    ), MP_ROM_PTR(&builtins_Speaker_say_obj ) },
     { MP_ROM_QSTR(MP_QSTR_stop   ), MP_ROM_PTR(&builtins_Speaker_stop_obj) },
+    { MP_ROM_QSTR(MP_QSTR_volume ), MP_ROM_PTR(&builtins_Speaker_volume_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(builtins_Speaker_locals_dict, builtins_Speaker_locals_dict_table);
 
