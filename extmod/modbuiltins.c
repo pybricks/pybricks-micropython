@@ -119,8 +119,8 @@ STATIC mp_obj_t builtins_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, m
 
     // DELETEME
     printf("We should beep at %d Hz, for %d ms, at volume %d (%s).\n",
-           mp_obj_get_int(frequency),
-           mp_obj_get_int(duration),
+           pb_obj_get_int(frequency),
+           pb_obj_get_int(duration),
            self->volume,
            blocking ? "blocking" : "background"
     );
