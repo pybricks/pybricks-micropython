@@ -28,13 +28,22 @@ mp_obj_t builtins_Speaker_obj_make_new() {
     return self;
 }
 
+// pybricks.builtins.Speaker.busy
+STATIC mp_obj_t builtins_Speaker_busy(mp_obj_t self_in) {
+    builtins_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    // DELETEME
+    bool busy = self->foo % 2;
+
+    return mp_obj_new_bool(busy);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(builtins_Speaker_busy_obj, builtins_Speaker_busy);
+
 // pybricks.builtins.Speaker.stop
 STATIC mp_obj_t builtins_Speaker_stop(mp_obj_t self_in) {
     builtins_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    // This is an example of a method with no arguments other than self.
-    // Delete this function if we don't actually want a stop method.
-
+    // DELETEME
     self->foo += 1;
 
     return mp_const_none;
@@ -45,15 +54,19 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(builtins_Speaker_stop_obj, builtins_Speaker_sto
 STATIC mp_obj_t builtins_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        PB_ARG_REQUIRED(phrase)
+        PB_ARG_REQUIRED(phrase),
+        PB_ARG_DEFAULT_TRUE(wait)
     );
     builtins_Speaker_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-    self->foo += 1;
 
     const char *text = mp_obj_str_get_str(phrase);
+    bool blocking = mp_obj_is_true(wait);
 
     // DELETEME
-    printf("The user wants to say at volume %d:\n%s\n", self->volume, text);
+    printf("The user wants to say at volume %d (%s):\n%s\n",
+           self->volume,
+           blocking ? "blocking" : "background",
+           text);
 
     return mp_const_none;
 }
@@ -64,15 +77,18 @@ STATIC mp_obj_t builtins_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, m
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         PB_ARG_DEFAULT_INT(frequency, 500),
-        PB_ARG_DEFAULT_INT(duration, 100)
+        PB_ARG_DEFAULT_INT(duration, 100),
+        PB_ARG_DEFAULT_TRUE(wait)
     );
     builtins_Speaker_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+    bool blocking = mp_obj_is_true(wait);
 
     // DELETEME
-    printf("We should beep at %d Hz, for %d ms, at volume %d.\n",
+    printf("We should beep at %d Hz, for %d ms, at volume %d (%s).\n",
            mp_obj_get_int(frequency),
            mp_obj_get_int(duration),
-           self->volume
+           self->volume,
+           blocking ? "blocking" : "background"
     );
 
     return mp_const_none;
@@ -83,15 +99,18 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Speaker_beep_obj, 0, builtins_Speaker
 STATIC mp_obj_t builtins_Speaker_play(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        PB_ARG_REQUIRED(file)
+        PB_ARG_REQUIRED(file),
+        PB_ARG_DEFAULT_TRUE(wait)
     );
     builtins_Speaker_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     const char *path = mp_obj_str_get_str(file);
+    bool blocking = mp_obj_is_true(wait);
 
     // DELETEME
-    printf("Play this file at volume %d:\n%s\n",
+    printf("Play this file at volume %d (%s):\n%s\n",
            self->volume,
+           blocking ? "blocking" : "background",
            path
     );
 
@@ -101,6 +120,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Speaker_play_obj, 0, builtins_Speaker
 
 // dir(pybricks.builtins.Speaker)
 STATIC const mp_rom_map_elem_t builtins_Speaker_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_busy   ), MP_ROM_PTR(&builtins_Speaker_busy_obj) },
     { MP_ROM_QSTR(MP_QSTR_beep   ), MP_ROM_PTR(&builtins_Speaker_beep_obj) },
     { MP_ROM_QSTR(MP_QSTR_play   ), MP_ROM_PTR(&builtins_Speaker_play_obj) },
     { MP_ROM_QSTR(MP_QSTR_say    ), MP_ROM_PTR(&builtins_Speaker_say_obj ) },
