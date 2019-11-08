@@ -4,6 +4,7 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 #include "py/mpconfig.h"
+#include "py/mphal.h"
 
 #include "modbuiltins.h"
 #include "pberror.h"
@@ -14,7 +15,7 @@
 typedef struct _builtins_Speaker_obj_t {
     mp_obj_base_t base;
     uint8_t volume;
-    uint8_t foo;
+    uint8_t foo; // DELETEME
 } builtins_Speaker_obj_t;
 
 // pybricks.builtins.Speaker.__init__/__new__
@@ -49,6 +50,21 @@ STATIC mp_obj_t builtins_Speaker_stop(mp_obj_t self_in) {
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(builtins_Speaker_stop_obj, builtins_Speaker_stop);
+
+// pybricks.builtins.Speaker.wait
+STATIC mp_obj_t builtins_Speaker_wait(mp_obj_t self_in) {
+    builtins_Speaker_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    // DELETEME
+    bool busy = self->foo * 0;
+
+    // Wait for a background sound to finish
+    while (busy) {
+        mp_hal_delay_ms(10);
+    }
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(builtins_Speaker_wait_obj, builtins_Speaker_wait);
 
 // pybricks.builtins.Speaker.say
 STATIC mp_obj_t builtins_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -121,6 +137,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Speaker_play_obj, 0, builtins_Speaker
 // dir(pybricks.builtins.Speaker)
 STATIC const mp_rom_map_elem_t builtins_Speaker_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_busy   ), MP_ROM_PTR(&builtins_Speaker_busy_obj) },
+    { MP_ROM_QSTR(MP_QSTR_wait   ), MP_ROM_PTR(&builtins_Speaker_wait_obj) },
     { MP_ROM_QSTR(MP_QSTR_beep   ), MP_ROM_PTR(&builtins_Speaker_beep_obj) },
     { MP_ROM_QSTR(MP_QSTR_play   ), MP_ROM_PTR(&builtins_Speaker_play_obj) },
     { MP_ROM_QSTR(MP_QSTR_say    ), MP_ROM_PTR(&builtins_Speaker_say_obj ) },
