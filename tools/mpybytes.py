@@ -6,7 +6,7 @@ import tempfile
 
 
 def get_bytes_from_file(path):
-    """Compile a Python file with mpy-cross and return as list of bytes."""
+    """Compile a Python file with pybricks-mpy-cross and return as list of bytes."""
 
     # Cross-compile Python file to .mpy
     mpy_path = os.path.splitext(path)[0] + '.mpy'
@@ -24,7 +24,7 @@ def get_bytes_from_file(path):
 
 
 def get_bytes_from_str(string):
-    """Compile a Python command with mpy-cross and return as list of bytes."""
+    """Compile a Python command with pybricks-mpy-cross and return as list of bytes."""
 
     # Write Python command to a temporary file and convert as a regular script.
     with tempfile.NamedTemporaryFile('w', suffix='.py', delete=False) as f:
