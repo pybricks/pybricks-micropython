@@ -16,7 +16,7 @@
 #define MICROPY_PORT_INIT_FUNC pybricks_init()
 #define MICROPY_PORT_DEINIT_FUNC pybricks_deinit()
 
-#define MICROPY_PY_SYS_PATH_DEFAULT (":~/.micropython/lib:/usr/lib/micropython")
+#define MICROPY_PY_SYS_PATH_DEFAULT (":~/.pybricks-micropython/lib:/usr/lib/pybricks-micropython")
 
 extern const struct _mp_obj_module_t pb_module_hubs;
 extern const struct _mp_obj_module_t pb_module_ev3devices;
