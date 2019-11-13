@@ -554,103 +554,6 @@ STATIC const mp_obj_type_t ev3devices_GyroSensor_type = {
     .locals_dict = (mp_obj_dict_t*)&ev3devices_GyroSensor_locals_dict,
 };
 
-// pybricks.ev3devices.AnalogSensor class object
-typedef struct _ev3devices_AnalogSensor_obj_t {
-    mp_obj_base_t base;
-    bool active;
-    pbio_ev3iodev_t *iodev;
-} ev3devices_AnalogSensor_obj_t;
-
-// pybricks.ev3devices.AnalogSensor.__init__
-STATIC mp_obj_t ev3devices_AnalogSensor_make_new(const mp_obj_type_t *otype, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port),
-        PB_ARG_DEFAULT_TRUE(verify_type)
-    );
-    ev3devices_AnalogSensor_obj_t *self = m_new_obj(ev3devices_AnalogSensor_obj_t);
-    self->base.type = (mp_obj_type_t*) otype;
-
-    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
-
-    pbio_iodev_type_id_t id = mp_obj_is_true(verify_type) ? PBIO_IODEV_TYPE_ID_NXT_ANALOG : PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG;
-
-    pbio_error_t err;
-    while ((err = ev3device_get_device(&self->iodev, id, port_num)) == PBIO_ERROR_AGAIN) {
-        mp_hal_delay_ms(1000);
-    }
-    pb_assert(err);
-
-    // Initialize NXT sensors to passive state
-    int32_t voltage;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &voltage));
-
-    return MP_OBJ_FROM_PTR(self);
-}
-
-// pybricks.ev3devices.AnalogSensor.voltage
-STATIC mp_obj_t ev3devices_AnalogSensor_voltage(mp_obj_t self_in) {
-    ev3devices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t voltage;
-    uint8_t mode = self->active ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, mode, &voltage));
-    return mp_obj_new_int(voltage);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_AnalogSensor_voltage_obj, ev3devices_AnalogSensor_voltage);
-
-// pybricks.ev3devices.AnalogSensor.resistance
-STATIC mp_obj_t ev3devices_AnalogSensor_resistance(mp_obj_t self_in) {
-    ev3devices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t voltage;
-    uint8_t mode = self->active ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, mode, &voltage));
-
-    // Open terminal/infinite resistance, return none
-    const int32_t vmax = 4972;
-    if (voltage >= vmax) {
-        return mp_const_none;
-    }
-    // Return as if a pure voltage divider between load and 10K internal resistor
-    return mp_obj_new_int((10000*voltage)/(vmax-voltage));
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_AnalogSensor_resistance_obj, ev3devices_AnalogSensor_resistance);
-
-// pybricks.ev3devices.AnalogSensor.active
-STATIC mp_obj_t ev3devices_AnalogSensor_active(mp_obj_t self_in) {
-    ev3devices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t voltage;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE, &voltage));
-    self->active = true;
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_AnalogSensor_active_obj, ev3devices_AnalogSensor_active);
-
-// pybricks.ev3devices.AnalogSensor.passive
-STATIC mp_obj_t ev3devices_AnalogSensor_passive(mp_obj_t self_in) {
-    ev3devices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t voltage;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &voltage));
-    self->active = false;
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_AnalogSensor_passive_obj, ev3devices_AnalogSensor_passive);
-
-// dir(pybricks.ev3devices.AnalogSensor)
-STATIC const mp_rom_map_elem_t ev3devices_AnalogSensor_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_voltage),    MP_ROM_PTR(&ev3devices_AnalogSensor_voltage_obj)    },
-    { MP_ROM_QSTR(MP_QSTR_resistance), MP_ROM_PTR(&ev3devices_AnalogSensor_resistance_obj) },
-    { MP_ROM_QSTR(MP_QSTR_active),     MP_ROM_PTR(&ev3devices_AnalogSensor_active_obj )    },
-    { MP_ROM_QSTR(MP_QSTR_passive),    MP_ROM_PTR(&ev3devices_AnalogSensor_passive_obj)    },
-};
-STATIC MP_DEFINE_CONST_DICT(ev3devices_AnalogSensor_locals_dict, ev3devices_AnalogSensor_locals_dict_table);
-
-// type(pybricks.ev3devices.AnalogSensor)
-STATIC const mp_obj_type_t ev3devices_AnalogSensor_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_AnalogSensor,
-    .make_new = ev3devices_AnalogSensor_make_new,
-    .locals_dict = (mp_obj_dict_t*)&ev3devices_AnalogSensor_locals_dict,
-};
-
 // dir(pybricks.ev3devices)
 STATIC const mp_rom_map_elem_t ev3devices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_ev3devices)              },
@@ -660,7 +563,6 @@ STATIC const mp_rom_map_elem_t ev3devices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_ColorSensor),      MP_ROM_PTR(&ev3devices_ColorSensor_type)     },
     { MP_ROM_QSTR(MP_QSTR_UltrasonicSensor), MP_ROM_PTR(&ev3devices_UltrasonicSensor_type)},
     { MP_ROM_QSTR(MP_QSTR_GyroSensor),       MP_ROM_PTR(&ev3devices_GyroSensor_type)      },
-    { MP_ROM_QSTR(MP_QSTR_AnalogSensor),     MP_ROM_PTR(&ev3devices_AnalogSensor_type)    },
 };
 
 STATIC MP_DEFINE_CONST_DICT(pb_module_ev3devices_globals, ev3devices_globals_table);
