@@ -152,11 +152,40 @@ STATIC mp_obj_t customdevices_I2CDevice_make_new(const mp_obj_type_t *otype, siz
 }
 
 // pybricks.customdevices.I2CDevice.read
-STATIC mp_obj_t customdevices_I2CDevice_read(mp_obj_t self_in) {
-    customdevices_I2CDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return mp_obj_new_int(self->iodev->port);
+STATIC mp_obj_t customdevices_I2CDevice_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(reg),
+        PB_ARG_REQUIRED(length)
+    );
+
+    customdevices_I2CDevice_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
+    mp_int_t regist = mp_obj_get_int(reg);
+    if (regist < 0 || regist > 255) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+    mp_int_t len = mp_obj_get_int(length);
+    if (len < 0 || len > 255) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    uint8_t buf[I2C_MAX_LEN];
+    mp_obj_t ret[I2C_MAX_LEN];
+
+    // TODO: quick read for reg = None
+
+    pb_assert(smbus_read_bytes(self->bus, regist, len, buf));
+
+    for (uint8_t i = 0; i < len; i++) {
+        printf("%d, %d\n", i, buf[i]);
+        ret[i] = mp_obj_new_int(buf[i]);
+    }
+
+    return mp_obj_new_tuple(len, ret);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(customdevices_I2CDevice_read_obj, customdevices_I2CDevice_read);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(customdevices_I2CDevice_read_obj, 0, customdevices_I2CDevice_read);
+
 
 // dir(pybricks.customdevices.I2CDevice)
 STATIC const mp_rom_map_elem_t customdevices_I2CDevice_locals_dict_table[] = {
