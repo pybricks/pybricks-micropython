@@ -114,10 +114,55 @@ STATIC const mp_obj_type_t customdevices_AnalogSensor_type = {
     .locals_dict = (mp_obj_dict_t*)&customdevices_AnalogSensor_locals_dict,
 };
 
+// pybricks.customdevices.I2CDevice class object
+typedef struct _customdevices_I2CDevice_obj_t {
+    mp_obj_base_t base;
+    pbio_ev3iodev_t *iodev;
+} customdevices_I2CDevice_obj_t;
+
+// pybricks.customdevices.I2CDevice.__init__
+STATIC mp_obj_t customdevices_I2CDevice_make_new(const mp_obj_type_t *otype, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port),
+        PB_ARG_REQUIRED(address)
+    );
+    customdevices_I2CDevice_obj_t *self = m_new_obj(customdevices_I2CDevice_obj_t);
+    self->base.type = (mp_obj_type_t*) otype;
+
+    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+    mp_int_t i2c_address = mp_obj_get_int(address);
+
+    printf("I2C Sensor with address %d on port %c\n", i2c_address, port_num);
+
+    return MP_OBJ_FROM_PTR(self);
+}
+
+// pybricks.customdevices.I2CDevice.read
+STATIC mp_obj_t customdevices_I2CDevice_read(mp_obj_t self_in) {
+    customdevices_I2CDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    return mp_obj_new_int(self->iodev->port);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(customdevices_I2CDevice_read_obj, customdevices_I2CDevice_read);
+
+// dir(pybricks.customdevices.I2CDevice)
+STATIC const mp_rom_map_elem_t customdevices_I2CDevice_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_read),    MP_ROM_PTR(&customdevices_I2CDevice_read_obj)    },
+};
+STATIC MP_DEFINE_CONST_DICT(customdevices_I2CDevice_locals_dict, customdevices_I2CDevice_locals_dict_table);
+
+// type(pybricks.customdevices.I2CDevice)
+STATIC const mp_obj_type_t customdevices_I2CDevice_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_I2CDevice,
+    .make_new = customdevices_I2CDevice_make_new,
+    .locals_dict = (mp_obj_dict_t*)&customdevices_I2CDevice_locals_dict,
+};
+
 // dir(pybricks.customdevices)
 STATIC const mp_rom_map_elem_t customdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_customdevices)              },
     { MP_ROM_QSTR(MP_QSTR_AnalogSensor),     MP_ROM_PTR(&customdevices_AnalogSensor_type)    },
+    { MP_ROM_QSTR(MP_QSTR_I2CDevice),        MP_ROM_PTR(&customdevices_I2CDevice_type   )    },
 };
 
 STATIC MP_DEFINE_CONST_DICT(pb_module_customdevices_globals, customdevices_globals_table);
