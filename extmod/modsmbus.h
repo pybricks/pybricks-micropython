@@ -6,4 +6,4 @@
 
 typedef struct _smbus_t smbus_t;
 
-pbio_error_t smbus_get(smbus_t **bus, int bus_num);
+pbio_error_t smbus_get(smbus_t **_bus, int bus_num, int address);

@@ -119,7 +119,6 @@ STATIC const mp_obj_type_t customdevices_AnalogSensor_type = {
 typedef struct _customdevices_I2CDevice_obj_t {
     mp_obj_base_t base;
     pbio_ev3iodev_t *iodev;
-    uint8_t address;
     smbus_t *bus;
 } customdevices_I2CDevice_obj_t;
 
@@ -134,12 +133,11 @@ STATIC mp_obj_t customdevices_I2CDevice_make_new(const mp_obj_type_t *otype, siz
 
     // Get port number
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
-
+    mp_int_t addr = mp_obj_get_int(address);
     // Get I2C Address 
-    if (mp_obj_get_int(address) < 0 || mp_obj_get_int(address) > 255) {
+    if (addr < 0 || addr > 255) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
-    self->address = mp_obj_get_int(address);
 
     // Init I2C port
     pbio_error_t err;
@@ -148,7 +146,7 @@ STATIC mp_obj_t customdevices_I2CDevice_make_new(const mp_obj_type_t *otype, siz
     }
 
     // Get the smbus, which on ev3dev is zero based sensor port number + 3.
-    pb_assert(smbus_get(&self->bus, port_num - PBIO_PORT_1 + 3));
+    pb_assert(smbus_get(&self->bus, port_num - PBIO_PORT_1 + 3, addr));
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -156,7 +154,7 @@ STATIC mp_obj_t customdevices_I2CDevice_make_new(const mp_obj_type_t *otype, siz
 // pybricks.customdevices.I2CDevice.read
 STATIC mp_obj_t customdevices_I2CDevice_read(mp_obj_t self_in) {
     customdevices_I2CDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return mp_obj_new_int(self->address);
+    return mp_obj_new_int(self->iodev->port);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(customdevices_I2CDevice_read_obj, customdevices_I2CDevice_read);
 

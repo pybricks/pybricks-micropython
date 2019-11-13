@@ -23,8 +23,17 @@ typedef struct _smbus_t {
 
 smbus_t buses[BUS_NUM_MAX-BUS_NUM_MIN+1];
 
-pbio_error_t smbus_get(smbus_t **_bus, int bus_num)
-{
+static pbio_error_t smbus_set_address(smbus_t *bus, int address) {
+    if (bus->address != address) {
+        if (ioctl(bus->file, I2C_SLAVE, address) != 0) {
+            return PBIO_ERROR_IO;
+        }
+        bus->address = address;
+    }
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t smbus_get(smbus_t **_bus, int bus_num, int addr) {
     if (bus_num < BUS_NUM_MIN || bus_num > BUS_NUM_MAX) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -41,6 +50,11 @@ pbio_error_t smbus_get(smbus_t **_bus, int bus_num)
 
     if (bus->file == -1) {
         return PBIO_ERROR_IO;
+    }
+
+    pbio_error_t err = smbus_set_address(bus, addr);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     *_bus = bus;
