@@ -10,6 +10,7 @@
 #include "pbobj.h"
 #include "pbkwarg.h"
 #include "modparameters.h"
+#include "modsmbus.h"
 
 #include "py/objtype.h"
 
@@ -119,6 +120,7 @@ typedef struct _customdevices_I2CDevice_obj_t {
     mp_obj_base_t base;
     pbio_ev3iodev_t *iodev;
     uint8_t address;
+    smbus_t *bus;
 } customdevices_I2CDevice_obj_t;
 
 // pybricks.customdevices.I2CDevice.__init__
@@ -144,6 +146,9 @@ STATIC mp_obj_t customdevices_I2CDevice_make_new(const mp_obj_type_t *otype, siz
     while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_CUSTOM_I2C, port_num)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
+
+    // Get the smbus, which on ev3dev is zero based sensor port number + 3.
+    pb_assert(smbus_get(&self->bus, port_num - PBIO_PORT_1 + 3));
 
     return MP_OBJ_FROM_PTR(self);
 }
