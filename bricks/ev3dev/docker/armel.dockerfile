@@ -13,6 +13,7 @@ RUN sudo apt-get update && \
         pkg-config \
         python \
         python3 \
+        libi2c-dev \
         uthash-dev:armel
 RUN apt-get download umockdev:armel && \
     ar x umockdev*.deb data.tar.xz && \
