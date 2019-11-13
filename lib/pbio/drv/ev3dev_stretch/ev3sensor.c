@@ -146,13 +146,13 @@ static pbio_error_t ev3_sensor_configure_port(pbio_port_t port, pbio_iodev_type_
     }
 
     // For Custom UART Sensors, port must be set on first use
-    if (id == PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG) {
+    if (id == PBIO_IODEV_TYPE_ID_CUSTOM_UART) {
         err = ev3_sensor_write_port_mode(port, OTHER_UART);
         return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
     }
 
     // For Custom I2C Sensors, port must be set on first use
-    if (id == PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG) {
+    if (id == PBIO_IODEV_TYPE_ID_CUSTOM_I2C) {
         err = ev3_sensor_write_port_mode(port, OTHER_I2C);
         return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
     }
@@ -277,9 +277,11 @@ pbio_error_t pbdrv_ev3_sensor_get(pbdrv_ev3_sensor_t **sensor, pbio_port_t port,
         return err;
     }
 
-    // In the special case of the NXT Color Sensor
-    // there is nothing left to do/initialize.
-    if (valid_id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
+    // For some custom sensors, there is no
+    // lego-sensor to initialize, so we're done.
+    if (valid_id == PBIO_IODEV_TYPE_ID_CUSTOM_I2C  ||
+        valid_id == PBIO_IODEV_TYPE_ID_CUSTOM_UART ||
+        valid_id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
         return PBIO_SUCCESS;
     }
 
