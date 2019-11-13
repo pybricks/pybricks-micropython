@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <fcntl.h>
 
-#include <sys/ioctl.h>
-#include <linux/i2c-dev.h>
+#include "/usr/include/linux/i2c-dev.h"
 
 #include <pbio/error.h>
 
@@ -59,5 +59,13 @@ pbio_error_t smbus_get(smbus_t **_bus, int bus_num, int addr) {
 
     *_bus = bus;
 
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t smbus_read_bytes(smbus_t *bus, uint8_t reg, uint8_t len, uint8_t *buf) {
+    int rclen = i2c_smbus_read_i2c_block_data(bus->file, reg, len, buf);
+    if (rclen != len) {
+        return PBIO_ERROR_IO;
+    }
     return PBIO_SUCCESS;
 }
