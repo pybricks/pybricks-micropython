@@ -67,10 +67,10 @@ STATIC mp_obj_t customdevices_AnalogSensor_resistance(mp_obj_t self_in) {
     uint8_t mode = self->active ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
     pb_assert(ev3device_get_values_at_mode(self->iodev, mode, &voltage));
 
-    // Open terminal/infinite resistance, return none
+    // Open terminal/infinite resistance, return infinite resistance
     const int32_t vmax = 4972;
     if (voltage >= vmax) {
-        return mp_const_none;
+        return mp_obj_new_int(MP_SSIZE_MAX);
     }
     // Return as if a pure voltage divider between load and 10K internal resistor
     return mp_obj_new_int((10000*voltage)/(vmax-voltage));
