@@ -178,7 +178,6 @@ STATIC mp_obj_t customdevices_I2CDevice_read(size_t n_args, const mp_obj_t *pos_
     pb_assert(smbus_read_bytes(self->bus, regist, len, buf));
 
     for (uint8_t i = 0; i < len; i++) {
-        printf("%d, %d\n", i, buf[i]);
         ret[i] = mp_obj_new_int(buf[i]);
     }
 
@@ -186,10 +185,50 @@ STATIC mp_obj_t customdevices_I2CDevice_read(size_t n_args, const mp_obj_t *pos_
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(customdevices_I2CDevice_read_obj, 0, customdevices_I2CDevice_read);
 
+// pybricks.customdevices.I2CDevice.write
+STATIC mp_obj_t customdevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(reg),
+        PB_ARG_REQUIRED(data)
+    );
+
+    customdevices_I2CDevice_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
+    mp_int_t regist = mp_obj_get_int(reg);
+    if (regist < 0 || regist > 255) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+    mp_obj_t *bytes;
+    size_t len;
+    mp_obj_get_array(data, &len, &bytes);
+    if (len > I2C_MAX_LEN) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    uint8_t buf[I2C_MAX_LEN];
+
+    for (uint8_t i = 0; i < len; i++) {
+        mp_int_t byte = mp_obj_get_int(bytes[i]);
+        if (byte < 0 || byte > 255) {
+            pb_assert(PBIO_ERROR_INVALID_ARG);
+        }
+        buf[i] = byte;
+    }
+
+    // TODO: quick write for reg = None
+
+    pb_assert(smbus_write_bytes(self->bus, regist, len, buf));
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(customdevices_I2CDevice_write_obj, 0, customdevices_I2CDevice_write);
+
 
 // dir(pybricks.customdevices.I2CDevice)
 STATIC const mp_rom_map_elem_t customdevices_I2CDevice_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_read),    MP_ROM_PTR(&customdevices_I2CDevice_read_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_write),   MP_ROM_PTR(&customdevices_I2CDevice_write_obj)    },
 };
 STATIC MP_DEFINE_CONST_DICT(customdevices_I2CDevice_locals_dict, customdevices_I2CDevice_locals_dict_table);
 
