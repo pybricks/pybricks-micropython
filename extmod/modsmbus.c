@@ -33,7 +33,7 @@ static pbio_error_t smbus_set_address(smbus_t *bus, int address) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t smbus_get(smbus_t **_bus, int bus_num, int addr) {
+pbio_error_t smbus_get(smbus_t **_bus, int bus_num) {
     if (bus_num < BUS_NUM_MIN || bus_num > BUS_NUM_MAX) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -47,14 +47,10 @@ pbio_error_t smbus_get(smbus_t **_bus, int bus_num, int addr) {
     }
 
     bus->file = open(devpath, O_RDWR, 0);
+    bus->address = -1;
 
     if (bus->file == -1) {
         return PBIO_ERROR_IO;
-    }
-
-    pbio_error_t err = smbus_set_address(bus, addr);
-    if (err != PBIO_SUCCESS) {
-        return err;
     }
 
     *_bus = bus;
@@ -62,7 +58,13 @@ pbio_error_t smbus_get(smbus_t **_bus, int bus_num, int addr) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t smbus_read_bytes(smbus_t *bus, uint8_t reg, uint8_t len, uint8_t *buf) {
+pbio_error_t smbus_read_bytes(smbus_t *bus, uint8_t address, uint8_t reg, uint8_t len, uint8_t *buf) {
+
+    pbio_error_t err = smbus_set_address(bus, address);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     int rclen = i2c_smbus_read_i2c_block_data(bus->file, reg, len, buf);
     if (rclen != len) {
         return PBIO_ERROR_IO;
@@ -70,7 +72,13 @@ pbio_error_t smbus_read_bytes(smbus_t *bus, uint8_t reg, uint8_t len, uint8_t *b
     return PBIO_SUCCESS;
 }
 
-pbio_error_t smbus_write_bytes(smbus_t *bus, uint8_t reg, uint8_t len, uint8_t *buf) {
+pbio_error_t smbus_write_bytes(smbus_t *bus, uint8_t address, uint8_t reg, uint8_t len, uint8_t *buf) {
+
+    pbio_error_t err = smbus_set_address(bus, address);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     if (i2c_smbus_write_i2c_block_data(bus->file, reg, len, buf) != 0) {
         return PBIO_ERROR_IO;
     }

@@ -120,6 +120,7 @@ typedef struct _customdevices_I2CDevice_obj_t {
     mp_obj_base_t base;
     pbio_ev3iodev_t *iodev;
     smbus_t *bus;
+    int8_t address;
 } customdevices_I2CDevice_obj_t;
 
 // pybricks.customdevices.I2CDevice.__init__
@@ -133,11 +134,13 @@ STATIC mp_obj_t customdevices_I2CDevice_make_new(const mp_obj_type_t *otype, siz
 
     // Get port number
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+
+    // Get selected I2C Address 
     mp_int_t addr = mp_obj_get_int(address);
-    // Get I2C Address 
     if (addr < 0 || addr > 255) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
+    self->address = addr;
 
     // Init I2C port
     pbio_error_t err;
@@ -146,7 +149,7 @@ STATIC mp_obj_t customdevices_I2CDevice_make_new(const mp_obj_type_t *otype, siz
     }
 
     // Get the smbus, which on ev3dev is zero based sensor port number + 3.
-    pb_assert(smbus_get(&self->bus, port_num - PBIO_PORT_1 + 3, addr));
+    pb_assert(smbus_get(&self->bus, port_num - PBIO_PORT_1 + 3));
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -175,7 +178,7 @@ STATIC mp_obj_t customdevices_I2CDevice_read(size_t n_args, const mp_obj_t *pos_
 
     // TODO: quick read for reg = None
 
-    pb_assert(smbus_read_bytes(self->bus, regist, len, buf));
+    pb_assert(smbus_read_bytes(self->bus, self->address, regist, len, buf));
 
     for (uint8_t i = 0; i < len; i++) {
         ret[i] = mp_obj_new_int(buf[i]);
@@ -218,7 +221,7 @@ STATIC mp_obj_t customdevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos
 
     // TODO: quick write for reg = None
 
-    pb_assert(smbus_write_bytes(self->bus, regist, len, buf));
+    pb_assert(smbus_write_bytes(self->bus, self->address, regist, len, buf));
 
     return mp_const_none;
 }
