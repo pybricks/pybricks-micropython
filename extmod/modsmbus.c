@@ -26,16 +26,19 @@ struct _smbus_t {
 smbus_t buses[BUS_NUM_MAX-BUS_NUM_MIN+1];
 
 static pbio_error_t smbus_set_address(smbus_t *bus, int address) {
+
     if (bus->address != address) {
         if (ioctl(bus->file, I2C_SLAVE, address) != 0) {
             return PBIO_ERROR_IO;
         }
         bus->address = address;
     }
+
     return PBIO_SUCCESS;
 }
 
 pbio_error_t smbus_get(smbus_t **_bus, int bus_num) {
+
     if (bus_num < BUS_NUM_MIN || bus_num > BUS_NUM_MAX) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -71,6 +74,7 @@ pbio_error_t smbus_read_bytes(smbus_t *bus, uint8_t address, uint8_t reg, uint8_
     if (rclen != len) {
         return PBIO_ERROR_IO;
     }
+
     return PBIO_SUCCESS;
 }
 
@@ -84,5 +88,65 @@ pbio_error_t smbus_write_bytes(smbus_t *bus, uint8_t address, uint8_t reg, uint8
     if (i2c_smbus_write_i2c_block_data(bus->file, reg, len, buf) != 0) {
         return PBIO_ERROR_IO;
     }
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t smbus_read_no_reg(smbus_t *bus, uint8_t address, uint8_t *buf) {
+
+    pbio_error_t err = smbus_set_address(bus, address);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+	int result = i2c_smbus_read_byte(bus->file);
+
+    if (result < 0) {
+        return PBIO_ERROR_IO;
+    }
+    *buf = (uint8_t) result;
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t smbus_write_no_reg(smbus_t *bus, uint8_t address, uint8_t buf) {
+
+    pbio_error_t err = smbus_set_address(bus, address);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    if (i2c_smbus_write_byte(bus->file, buf) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t smbus_read_quick(smbus_t *bus, uint8_t address) {
+
+    pbio_error_t err = smbus_set_address(bus, address);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    if (i2c_smbus_write_quick(bus->file, I2C_SMBUS_READ) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t smbus_write_quick(smbus_t *bus, uint8_t address) {
+
+    pbio_error_t err = smbus_set_address(bus, address);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    if (i2c_smbus_write_quick(bus->file, I2C_SMBUS_WRITE) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
     return PBIO_SUCCESS;
 }
