@@ -12,14 +12,16 @@
 
 #include <pbio/error.h>
 
+#include "modsmbus.h"
+
 #define MAXDEVPATH (16)
 #define BUS_NUM_MIN (3)
 #define BUS_NUM_MAX (6)
 
-typedef struct _smbus_t {
+struct _smbus_t {
     int file;
     int address;
-} smbus_t;
+};
 
 smbus_t buses[BUS_NUM_MAX-BUS_NUM_MIN+1];
 
