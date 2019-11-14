@@ -164,22 +164,43 @@ STATIC mp_obj_t customdevices_I2CDevice_read(size_t n_args, const mp_obj_t *pos_
 
     customdevices_I2CDevice_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
+    // Get requested data length
+    mp_int_t len = mp_obj_get_int(length);
+    if (len < 0 || len > I2C_MAX_LEN) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // First, deal with the case where no register is given
+    if (reg == mp_const_none) {
+        uint8_t data;
+        switch (len) {
+            case 0:
+                // No register, no data, so quick-read:
+                pb_assert(smbus_read_quick(self->bus, self->address));
+                return mp_const_none;
+            case 1:
+                // No register, read 1 byte:
+                pb_assert(smbus_read_no_reg(self->bus, self->address, &data));
+                return mp_obj_new_int(data);
+            default:
+                pb_assert(PBIO_ERROR_INVALID_ARG);
+                return mp_const_none;
+        }
+    }
+
+    // There was a register, so get it
     mp_int_t regist = mp_obj_get_int(reg);
     if (regist < 0 || regist > 255) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
-    mp_int_t len = mp_obj_get_int(length);
-    if (len < 0 || len > 255) {
-        pb_assert(PBIO_ERROR_INVALID_ARG);
-    }
 
+    // Read the given amount of bytes
     uint8_t buf[I2C_MAX_LEN];
     mp_obj_t ret[I2C_MAX_LEN];
 
-    // TODO: quick read for reg = None
-
     pb_assert(smbus_read_bytes(self->bus, self->address, regist, len, buf));
 
+    // Wrap the data in a tuple and return it
     for (uint8_t i = 0; i < len; i++) {
         ret[i] = mp_obj_new_int(buf[i]);
     }
