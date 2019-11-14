@@ -219,17 +219,52 @@ STATIC mp_obj_t customdevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos
 
     customdevices_I2CDevice_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
+    // First, deal with the case where no data is given
+    if (data == mp_const_none) {
+        // In this case, register must also be None
+        if (reg != mp_const_none) {
+            pb_assert(PBIO_ERROR_INVALID_ARG);
+        }
+        // Do a quick write and we're done
+        pb_assert(smbus_write_quick(self->bus, self->address));
+        return mp_const_none;
+    }
+
+    // Get and unpack the data, either as int or tuple/list
+    mp_obj_t *bytes;
+    size_t len;
+    if (mp_obj_is_small_int(data)) {
+        len = 1;
+        bytes = &data;
+    }
+    else {
+        mp_obj_get_array(data, &len, &bytes);
+        if (len > I2C_MAX_LEN) {
+            pb_assert(PBIO_ERROR_INVALID_ARG);
+        }
+    }
+
+    // First, deal with the case where no register is given
+    if (reg == mp_const_none) {
+        // Write one byte
+        if (len != 1) {
+            pb_assert(PBIO_ERROR_INVALID_ARG);
+        }
+        mp_int_t byte = mp_obj_get_int(bytes[0]);
+        if (byte < 0 || byte > 255) {
+            pb_assert(PBIO_ERROR_INVALID_ARG);
+        }
+        pb_assert(smbus_write_no_reg(self->bus, self->address, byte));
+        return mp_const_none;
+    }
+
+    // There is data and a register, so get register
     mp_int_t regist = mp_obj_get_int(reg);
     if (regist < 0 || regist > 255) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
-    mp_obj_t *bytes;
-    size_t len;
-    mp_obj_get_array(data, &len, &bytes);
-    if (len > I2C_MAX_LEN) {
-        pb_assert(PBIO_ERROR_INVALID_ARG);
-    }
 
+    // Get data as simple bytes
     uint8_t buf[I2C_MAX_LEN];
 
     for (uint8_t i = 0; i < len; i++) {
@@ -239,11 +274,8 @@ STATIC mp_obj_t customdevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos
         }
         buf[i] = byte;
     }
-
-    // TODO: quick write for reg = None
-
+    // Send the datas
     pb_assert(smbus_write_bytes(self->bus, self->address, regist, len, buf));
-
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(customdevices_I2CDevice_write_obj, 0, customdevices_I2CDevice_write);
