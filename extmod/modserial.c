@@ -2,6 +2,9 @@
 // Copyright (c) 2019 Laurens Valk
 // Copyright (c) 2019 LEGO System A/S
 
+// Portions of this file (termios settings) adapted from MicroPython, modtermios.c
+// Copyright (c) 2014-2015 Paul Sokolovsky
+
 #include <fcntl.h>
 #include <termios.h>
 
@@ -18,7 +21,6 @@ static const char* const TTY_PATH[] = {
 
 struct _serial_t {
     int file;
-    int baudrate;
     int timeout;
 };
 
@@ -39,6 +41,51 @@ static pbio_error_t serial_open(serial_t *ser, int tty) {
     return PBIO_SUCCESS;
 }
 
+static pbio_error_t serial_config(serial_t *ser, int baudrate) {
+
+    // Convert to termios baudrate
+    speed_t speed;
+    switch (baudrate) {
+        case 9600:
+            speed = B9600;
+            break;
+        case 115200:
+            speed = B115200;
+            break;        
+        default:
+            return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Get termios attributes
+    struct termios term;
+    if (tcgetattr(ser->file, &term) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    // Set termios attributes
+    term.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+    term.c_oflag = 0;
+    term.c_cflag = (term.c_cflag & ~(CSIZE | PARENB)) | CS8;
+    term.c_lflag = 0;
+    term.c_cc[VMIN] = 1;
+    term.c_cc[VTIME] = 0;
+
+    if (cfsetispeed(&term, speed) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    if (cfsetospeed(&term, speed) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    // Write attributes
+    if (tcsetattr(ser->file, TCSAFLUSH, &term) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    return PBIO_SUCCESS;
+}
+
 
 pbio_error_t serial_get(serial_t **_ser, int tty, int baudrate, int timeout) {
 
@@ -47,20 +94,16 @@ pbio_error_t serial_get(serial_t **_ser, int tty, int baudrate, int timeout) {
     serial_t *ser = &serials[tty];
 
     // Configure settings
-    switch (baudrate) {
-        case 9600:
-            ser->baudrate = B9600;
-            break;
-        case 115200:
-            ser->baudrate = B115200;
-            break;        
-        default:
-            return PBIO_ERROR_INVALID_ARG;
-    }
     ser->timeout = timeout;
 
     // Open serial port
     err = serial_open(ser, tty);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Config serial port
+    err = serial_config(ser, baudrate);
     if (err != PBIO_SUCCESS) {
         return err;
     }
