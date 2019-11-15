@@ -538,10 +538,46 @@ STATIC mp_obj_t ev3devices_GyroSensor_reset_angle(size_t n_args, const mp_obj_t 
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_GyroSensor_reset_angle_obj, 0, ev3devices_GyroSensor_reset_angle);
 
+// pybricks.ev3devices.GyroSensor.calibrate
+STATIC mp_obj_t ev3devices_GyroSensor_calibrate(mp_obj_t self_in) {
+    ev3devices_GyroSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    pbio_port_t port = self->iodev->port;
+
+    // Trick the sensor into going into other uart mode mode
+    pbio_error_t err;
+    while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_CUSTOM_UART, port)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(1000);
+    }
+    pb_assert(err);
+
+    // Wait until the sensor is back, up to a timeout
+    mp_int_t time_start = mp_hal_ticks_ms();
+    while (mp_hal_ticks_ms() - time_start < 10000) {
+        err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR, port);
+        if (err == PBIO_SUCCESS) {
+            break;
+        }
+        mp_hal_delay_ms(500);
+    }
+
+    // If there was no success, then the sensor did not come back
+    if (err != PBIO_SUCCESS) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+
+    // Also reset the offset and get mode right
+    self->offset = ev3devices_GyroSensor_get_angle_offset(self->iodev, self->direction, 0);
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_GyroSensor_calibrate_obj, ev3devices_GyroSensor_calibrate);
+
 // dir(pybricks.ev3devices.GyroSensor)
 STATIC const mp_rom_map_elem_t ev3devices_GyroSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_angle),       MP_ROM_PTR(&ev3devices_GyroSensor_angle_obj)       },
     { MP_ROM_QSTR(MP_QSTR_speed),       MP_ROM_PTR(&ev3devices_GyroSensor_speed_obj)       },
+    { MP_ROM_QSTR(MP_QSTR_calibrate),   MP_ROM_PTR(&ev3devices_GyroSensor_calibrate_obj)   },
     { MP_ROM_QSTR(MP_QSTR_reset_angle), MP_ROM_PTR(&ev3devices_GyroSensor_reset_angle_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(ev3devices_GyroSensor_locals_dict, ev3devices_GyroSensor_locals_dict_table);
