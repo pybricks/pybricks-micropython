@@ -416,10 +416,51 @@ STATIC const mp_obj_type_t customdevices_UARTDevice_type = {
     .locals_dict = (mp_obj_dict_t*)&customdevices_UARTDevice_locals_dict,
 };
 
+// pybricks.customdevices.Ev3devSensor class object
+typedef struct _customdevices_Ev3devSensor_obj_t {
+    mp_obj_base_t base;
+    pbio_ev3iodev_t *iodev;
+} customdevices_Ev3devSensor_obj_t;
+
+// pybricks.customdevices.Ev3devSensor.__init__
+STATIC mp_obj_t customdevices_Ev3devSensor_make_new(const mp_obj_type_t *otype, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port)
+    );
+    customdevices_Ev3devSensor_obj_t *self = m_new_obj(customdevices_Ev3devSensor_obj_t);
+    self->base.type = (mp_obj_type_t*) otype;
+
+    // Get port number
+    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+
+    // Get the device
+    pbio_error_t err;
+    while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(1000);
+    }
+    pb_assert(err);
+
+    return MP_OBJ_FROM_PTR(self);
+}
+
+// dir(pybricks.customdevices.Ev3devSensor)
+STATIC const mp_rom_map_elem_t customdevices_Ev3devSensor_locals_dict_table[] = {
+};
+STATIC MP_DEFINE_CONST_DICT(customdevices_Ev3devSensor_locals_dict, customdevices_Ev3devSensor_locals_dict_table);
+
+// type(pybricks.customdevices.Ev3devSensor)
+STATIC const mp_obj_type_t customdevices_Ev3devSensor_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_Ev3devSensor,
+    .make_new = customdevices_Ev3devSensor_make_new,
+    .locals_dict = (mp_obj_dict_t*)&customdevices_Ev3devSensor_locals_dict,
+};
+
 // dir(pybricks.customdevices)
 STATIC const mp_rom_map_elem_t customdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_customdevices)              },
     { MP_ROM_QSTR(MP_QSTR_AnalogSensor),     MP_ROM_PTR(&customdevices_AnalogSensor_type)    },
+    { MP_ROM_QSTR(MP_QSTR_Ev3devSensor),     MP_ROM_PTR(&customdevices_Ev3devSensor_type)    },
     { MP_ROM_QSTR(MP_QSTR_I2CDevice),        MP_ROM_PTR(&customdevices_I2CDevice_type   )    },
     { MP_ROM_QSTR(MP_QSTR_UARTDevice),       MP_ROM_PTR(&customdevices_UARTDevice_type  )    },
 };
