@@ -10,7 +10,9 @@
 #include "pbobj.h"
 #include "pbkwarg.h"
 #include "modparameters.h"
+
 #include "modsmbus.h"
+#include "modserial.h"
 
 #include "py/objtype.h"
 
@@ -135,7 +137,7 @@ STATIC mp_obj_t customdevices_I2CDevice_make_new(const mp_obj_type_t *otype, siz
     // Get port number
     mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
 
-    // Get selected I2C Address 
+    // Get selected I2C Address
     mp_int_t addr = mp_obj_get_int(address);
     if (addr < 0 || addr > 255) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
@@ -300,12 +302,15 @@ STATIC const mp_obj_type_t customdevices_I2CDevice_type = {
 typedef struct _customdevices_UARTDevice_obj_t {
     mp_obj_base_t base;
     pbio_ev3iodev_t *iodev;
+    serial_t *serial;
 } customdevices_UARTDevice_obj_t;
 
 // pybricks.customdevices.UARTDevice.__init__
 STATIC mp_obj_t customdevices_UARTDevice_make_new(const mp_obj_type_t *otype, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port)
+        PB_ARG_REQUIRED(port),
+        PB_ARG_REQUIRED(baudrate),
+        PB_ARG_DEFAULT_NONE(timeout)
     );
     customdevices_UARTDevice_obj_t *self = m_new_obj(customdevices_UARTDevice_obj_t);
     self->base.type = (mp_obj_type_t*) otype;
@@ -318,6 +323,14 @@ STATIC mp_obj_t customdevices_UARTDevice_make_new(const mp_obj_type_t *otype, si
     while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_CUSTOM_UART, port_num)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
+
+    // Get and init serial
+    pb_assert(serial_get(
+        &self->serial,
+        self->iodev->port - PBIO_PORT_1,
+        pb_obj_get_int(baudrate),
+        timeout == mp_const_none ? -1 : pb_obj_get_int(timeout)
+    ));
 
     return MP_OBJ_FROM_PTR(self);
 }
