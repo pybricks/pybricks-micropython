@@ -363,8 +363,37 @@ STATIC mp_obj_t customdevices_UARTDevice_waiting(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(customdevices_UARTDevice_waiting_obj, customdevices_UARTDevice_waiting);
 
+// pybricks.customdevices.UARTDevice.read
+STATIC mp_obj_t customdevices_UARTDevice_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        PB_ARG_DEFAULT_INT(length, 1)
+    );
+
+    customdevices_UARTDevice_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
+    // Get requested data length
+    size_t len = mp_obj_get_int(length);
+    if (len > UART_MAX_LEN) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // Read data into buffer
+    uint8_t *buf = m_malloc(len);
+    pb_assert(serial_read(self->serial, buf, len));
+
+    // Convert to bytes
+    mp_obj_t ret = mp_obj_new_bytes(buf, len);
+
+    // Free internal buffer and return bytes
+    m_free(buf, len);
+    return ret;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(customdevices_UARTDevice_read_obj, 0, customdevices_UARTDevice_read);
+
 // dir(pybricks.customdevices.UARTDevice)
 STATIC const mp_rom_map_elem_t customdevices_UARTDevice_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_read),  MP_ROM_PTR(&customdevices_UARTDevice_read_obj) },
     { MP_ROM_QSTR(MP_QSTR_write),  MP_ROM_PTR(&customdevices_UARTDevice_write_obj) },
     { MP_ROM_QSTR(MP_QSTR_waiting),MP_ROM_PTR(&customdevices_UARTDevice_waiting_obj) },
 };

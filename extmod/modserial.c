@@ -129,3 +129,10 @@ pbio_error_t serial_in_waiting(serial_t *ser, size_t *waiting) {
     }
     return PBIO_SUCCESS;
 }
+
+pbio_error_t serial_read(serial_t *ser, void *buf, size_t count) {
+    if (read(ser->file, buf, count) != count) {
+        return PBIO_ERROR_IO;
+    }
+    return PBIO_SUCCESS;
+}
