@@ -6,6 +6,7 @@
 // Copyright (c) 2014-2015 Paul Sokolovsky
 
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
@@ -35,7 +36,7 @@ static pbio_error_t serial_open(serial_t *ser, int tty) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    ser->file = open(TTY_PATH[tty], O_RDWR | O_NOCTTY);
+    ser->file = open(TTY_PATH[tty], O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (ser->file == -1) {
         return PBIO_ERROR_IO;
     }
@@ -133,7 +134,13 @@ pbio_error_t serial_in_waiting(serial_t *ser, size_t *waiting) {
 static pbio_error_t serial_read_count(serial_t *ser, uint8_t *buf, size_t count, size_t *result) {
     int ret = read(ser->file, buf, count);
     if (ret < 0) {
-        return PBIO_ERROR_IO;
+        if (errno == EAGAIN) {
+            *result = 0;
+            return PBIO_SUCCESS;
+        }
+        else {
+            return PBIO_ERROR_IO;
+        }
     }
     *result = ret;
     return PBIO_SUCCESS;
