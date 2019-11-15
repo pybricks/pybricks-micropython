@@ -372,13 +372,19 @@ STATIC mp_obj_t customdevices_UARTDevice_read(size_t n_args, const mp_obj_t *pos
 
     // Get requested data length
     size_t len = mp_obj_get_int(length);
+    size_t remaining = len;
     if (len > UART_MAX_LEN) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
     // Read data into buffer
     uint8_t *buf = m_malloc(len);
-    pb_assert(serial_read(self->serial, buf, len));
+
+    pbio_error_t err;
+    while ((err = serial_read_blocking(self->serial, buf, len, &remaining)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(10);
+    }
+    pb_assert(err);
 
     // Convert to bytes
     mp_obj_t ret = mp_obj_new_bytes(buf, len);

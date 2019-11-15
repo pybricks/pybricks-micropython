@@ -130,9 +130,33 @@ pbio_error_t serial_in_waiting(serial_t *ser, size_t *waiting) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t serial_read(serial_t *ser, void *buf, size_t count) {
-    if (read(ser->file, buf, count) != count) {
+static pbio_error_t serial_read_count(serial_t *ser, uint8_t *buf, size_t count, size_t *result) {
+    int ret = read(ser->file, buf, count);
+    if (ret < 0) {
         return PBIO_ERROR_IO;
     }
+    *result = ret;
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t serial_read_blocking(serial_t *ser, uint8_t *buf, size_t count, size_t *remaining) {
+
+    pbio_error_t err;
+    
+    // Read and keep track of how much was read
+    size_t read_now;
+    err = serial_read_count(ser, &buf[count - *remaining], count, &read_now);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Decrement remaining count
+    *remaining -= read_now;
+
+    // If there is still something remaining, we need to call this again
+    if (*remaining > 0) {
+        return PBIO_ERROR_AGAIN;
+    }
+
     return PBIO_SUCCESS;
 }
