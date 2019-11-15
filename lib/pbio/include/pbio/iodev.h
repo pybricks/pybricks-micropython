@@ -77,7 +77,10 @@ typedef enum {
     PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR             ,   /**< MINDSTORMS EV3 Touch Sensor */
     PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR              ,   /**< MINDSTORMS EV3 Large Motor */
     PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR             ,   /**< MINDSTORMS EV3 Medium Motor */
-    PBIO_IODEV_TYPE_ID_EV3_DC_MOTOR                 ,   /**< ev3dev DC Motor */
+
+    // ev3dev devices
+    PBIO_IODEV_TYPE_ID_EV3DEV_DC_MOTOR              ,   /**< generic ev3dev rcx-motor */
+    PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR           ,   /**< generic ev3dev-supported sensor */
 
     // Generic & Custom devices
     PBIO_IODEV_TYPE_ID_NXT_ANALOG                   ,   /**< MINDSTORMS NXT-style Analog Sensor */

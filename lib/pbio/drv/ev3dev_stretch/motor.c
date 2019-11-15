@@ -78,7 +78,7 @@ static pbio_error_t sysfs_get_motor(pbio_port_t port, pbio_iodev_type_id_t *id, 
     snprintf(portpath, MAX_PATH_LENGTH, "%s/ev3-ports:out%c:rcx-motor/dc-motor/", port_syspath, port);
     dir = opendir(portpath);
     if (dir) {
-        *id = PBIO_IODEV_TYPE_ID_EV3_DC_MOTOR;
+        *id = PBIO_IODEV_TYPE_ID_EV3DEV_DC_MOTOR;
         return sysfs_append_motor_number(dir, portpath, devpath);
     }
 
