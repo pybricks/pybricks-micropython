@@ -4,6 +4,7 @@
 
 #include "py/mpconfig.h"
 
+#include "py/objstr.h"
 #include "py/mphal.h"
 #include "py/runtime.h"
 
@@ -344,11 +345,8 @@ STATIC mp_obj_t customdevices_UARTDevice_write(size_t n_args, const mp_obj_t *po
 
     customdevices_UARTDevice_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
     
-    // TODO: Data is not a string, in general,
-    // but this suffices as working test.
-    #include <string.h>
-    const char* string = mp_obj_str_get_str(data);
-    pb_assert(serial_write(self->serial, string, strlen(string)));
+    GET_STR_DATA_LEN(data, string, len);
+    pb_assert(serial_write(self->serial, string, len));
 
     return mp_const_none;
 }
