@@ -379,6 +379,9 @@ STATIC mp_obj_t customdevices_UARTDevice_read(size_t n_args, const mp_obj_t *pos
 
     // Read data into buffer
     uint8_t *buf = m_malloc(len);
+    if (buf == NULL) {
+        pb_assert(PBIO_ERROR_FAILED);
+    }
 
     // Start time
     int32_t time_start = mp_hal_ticks_ms();
