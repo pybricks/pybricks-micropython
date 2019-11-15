@@ -6,6 +6,7 @@
 // Copyright (c) 2014-2015 Paul Sokolovsky
 
 #include <fcntl.h>
+#include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -117,6 +118,13 @@ pbio_error_t serial_get(serial_t **_ser, int tty, int baudrate, int timeout) {
 
 pbio_error_t serial_write(serial_t *ser, const void *buf, size_t count) {
     if (write(ser->file, buf, count) != count) {
+        return PBIO_ERROR_IO;
+    }
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t serial_in_waiting(serial_t *ser, size_t *waiting) {
+    if (ioctl(ser->file, FIONREAD, waiting) == -1) {
         return PBIO_ERROR_IO;
     }
     return PBIO_SUCCESS;

@@ -354,9 +354,19 @@ STATIC mp_obj_t customdevices_UARTDevice_write(size_t n_args, const mp_obj_t *po
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(customdevices_UARTDevice_write_obj, 0, customdevices_UARTDevice_write);
 
+// pybricks.customdevices.UARTDevice.waiting
+STATIC mp_obj_t customdevices_UARTDevice_waiting(mp_obj_t self_in) {
+    customdevices_UARTDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    size_t waiting;
+    pb_assert(serial_in_waiting(self->serial, &waiting));
+    return mp_obj_new_int(waiting);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(customdevices_UARTDevice_waiting_obj, customdevices_UARTDevice_waiting);
+
 // dir(pybricks.customdevices.UARTDevice)
 STATIC const mp_rom_map_elem_t customdevices_UARTDevice_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_write),  MP_ROM_PTR(&customdevices_UARTDevice_write_obj) },
+    { MP_ROM_QSTR(MP_QSTR_waiting),MP_ROM_PTR(&customdevices_UARTDevice_waiting_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(customdevices_UARTDevice_locals_dict, customdevices_UARTDevice_locals_dict_table);
 
