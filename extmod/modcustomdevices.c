@@ -335,8 +335,28 @@ STATIC mp_obj_t customdevices_UARTDevice_make_new(const mp_obj_type_t *otype, si
     return MP_OBJ_FROM_PTR(self);
 }
 
+// pybricks.customdevices.UARTDevice.write
+STATIC mp_obj_t customdevices_UARTDevice_write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(data)
+    );
+
+    customdevices_UARTDevice_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+    
+    // TODO: Data is not a string, in general,
+    // but this suffices as working test.
+    #include <string.h>
+    const char* string = mp_obj_str_get_str(data);
+    pb_assert(serial_write(self->serial, string, strlen(string)));
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(customdevices_UARTDevice_write_obj, 0, customdevices_UARTDevice_write);
+
 // dir(pybricks.customdevices.UARTDevice)
 STATIC const mp_rom_map_elem_t customdevices_UARTDevice_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_write),  MP_ROM_PTR(&customdevices_UARTDevice_write_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(customdevices_UARTDevice_locals_dict, customdevices_UARTDevice_locals_dict_table);
 

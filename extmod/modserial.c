@@ -7,6 +7,7 @@
 
 #include <fcntl.h>
 #include <termios.h>
+#include <unistd.h>
 
 #include <pbio/error.h>
 
@@ -111,5 +112,12 @@ pbio_error_t serial_get(serial_t **_ser, int tty, int baudrate, int timeout) {
     // Return pointer to device
     *_ser = ser;
 
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t serial_write(serial_t *ser, const void *buf, size_t count) {
+    if (write(ser->file, buf, count) != count) {
+        return PBIO_ERROR_IO;
+    }
     return PBIO_SUCCESS;
 }
