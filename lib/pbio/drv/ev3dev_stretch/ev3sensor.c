@@ -215,6 +215,12 @@ static pbio_error_t ev3_sensor_assert_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_
 
     pbio_iodev_type_id_t id;
 
+    // If we are here, we have already confirmed that a lego-sensor exists.
+    // So if the user asserts that this should be a lego-sensor, this passes.
+    if (valid_id == PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR) {
+        return PBIO_SUCCESS;
+    }
+
     if (!strcmp(driver_name, "lego-ev3-ir")) {
         id = PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR;
     }
