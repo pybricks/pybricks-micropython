@@ -2,6 +2,8 @@
 // Copyright (c) 2019 Laurens Valk
 // Copyright (c) 2019 LEGO System A/S
 
+#include <string.h>
+
 #include "py/mpconfig.h"
 
 #include "py/objstr.h"
@@ -446,8 +448,41 @@ STATIC mp_obj_t customdevices_Ev3devSensor_make_new(const mp_obj_type_t *otype, 
     return MP_OBJ_FROM_PTR(self);
 }
 
+// pybricks.customdevices.Ev3devSensor.mode
+STATIC mp_obj_t customdevices_Ev3devSensor_mode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(mode)
+    );
+
+    customdevices_Ev3devSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
+    uint8_t bin[PBIO_IODEV_MAX_DATA_SIZE];
+
+    pb_assert(ev3device_get_values_at_mode(self->iodev, mp_obj_get_int(mode), bin));
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(customdevices_Ev3devSensor_mode_obj, 0, customdevices_Ev3devSensor_mode);
+
+// pybricks.customdevices.Ev3devSensor.bin
+STATIC mp_obj_t customdevices_Ev3devSensor_bin(mp_obj_t self_in) {
+
+    customdevices_Ev3devSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    uint8_t bin[PBIO_IODEV_MAX_DATA_SIZE];
+    memset(bin, 0, sizeof(bin)); 
+
+    pb_assert(ev3device_get_values_at_mode(self->iodev, self->iodev->mode, bin));
+
+    return mp_obj_new_bytes(bin, PBIO_IODEV_MAX_DATA_SIZE);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(customdevices_Ev3devSensor_bin_obj, customdevices_Ev3devSensor_bin);
+
 // dir(pybricks.customdevices.Ev3devSensor)
 STATIC const mp_rom_map_elem_t customdevices_Ev3devSensor_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_mode),   MP_ROM_PTR(&customdevices_Ev3devSensor_mode_obj)   },
+    { MP_ROM_QSTR(MP_QSTR_bin),    MP_ROM_PTR(&customdevices_Ev3devSensor_bin_obj)    },
 };
 STATIC MP_DEFINE_CONST_DICT(customdevices_Ev3devSensor_locals_dict, customdevices_Ev3devSensor_locals_dict_table);
 
