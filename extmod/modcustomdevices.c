@@ -296,11 +296,51 @@ STATIC const mp_obj_type_t customdevices_I2CDevice_type = {
     .locals_dict = (mp_obj_dict_t*)&customdevices_I2CDevice_locals_dict,
 };
 
+// pybricks.customdevices.UARTDevice class object
+typedef struct _customdevices_UARTDevice_obj_t {
+    mp_obj_base_t base;
+    pbio_ev3iodev_t *iodev;
+} customdevices_UARTDevice_obj_t;
+
+// pybricks.customdevices.UARTDevice.__init__
+STATIC mp_obj_t customdevices_UARTDevice_make_new(const mp_obj_type_t *otype, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port)
+    );
+    customdevices_UARTDevice_obj_t *self = m_new_obj(customdevices_UARTDevice_obj_t);
+    self->base.type = (mp_obj_type_t*) otype;
+
+    // Get port number
+    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+
+    // Init UART port
+    pbio_error_t err;
+    while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_CUSTOM_UART, port_num)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(1000);
+    }
+
+    return MP_OBJ_FROM_PTR(self);
+}
+
+// dir(pybricks.customdevices.UARTDevice)
+STATIC const mp_rom_map_elem_t customdevices_UARTDevice_locals_dict_table[] = {
+};
+STATIC MP_DEFINE_CONST_DICT(customdevices_UARTDevice_locals_dict, customdevices_UARTDevice_locals_dict_table);
+
+// type(pybricks.customdevices.UARTDevice)
+STATIC const mp_obj_type_t customdevices_UARTDevice_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_UARTDevice,
+    .make_new = customdevices_UARTDevice_make_new,
+    .locals_dict = (mp_obj_dict_t*)&customdevices_UARTDevice_locals_dict,
+};
+
 // dir(pybricks.customdevices)
 STATIC const mp_rom_map_elem_t customdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_customdevices)              },
     { MP_ROM_QSTR(MP_QSTR_AnalogSensor),     MP_ROM_PTR(&customdevices_AnalogSensor_type)    },
     { MP_ROM_QSTR(MP_QSTR_I2CDevice),        MP_ROM_PTR(&customdevices_I2CDevice_type   )    },
+    { MP_ROM_QSTR(MP_QSTR_UARTDevice),       MP_ROM_PTR(&customdevices_UARTDevice_type  )    },
 };
 
 STATIC MP_DEFINE_CONST_DICT(pb_module_customdevices_globals, customdevices_globals_table);
