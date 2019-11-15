@@ -16,4 +16,4 @@ pbio_error_t serial_write(serial_t *ser, const void *buf, size_t count);
 
 pbio_error_t serial_in_waiting(serial_t *ser, size_t *waiting);
 
-pbio_error_t serial_read_blocking(serial_t *ser, uint8_t *buf, size_t count, size_t *remaining);
+pbio_error_t serial_read_blocking(serial_t *ser, uint8_t *buf, size_t count, size_t *remaining, int32_t time_start, int32_t time_now);

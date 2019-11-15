@@ -380,10 +380,15 @@ STATIC mp_obj_t customdevices_UARTDevice_read(size_t n_args, const mp_obj_t *pos
     // Read data into buffer
     uint8_t *buf = m_malloc(len);
 
+    // Start time
+    int32_t time_start = mp_hal_ticks_ms();
+
+    // Read up to the timeout
     pbio_error_t err;
-    while ((err = serial_read_blocking(self->serial, buf, len, &remaining)) == PBIO_ERROR_AGAIN) {
+    while ((err = serial_read_blocking(self->serial, buf, len, &remaining, time_start, mp_hal_ticks_ms())) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(10);
     }
+    // Raise io/timeout error if needed.
     pb_assert(err);
 
     // Convert to bytes

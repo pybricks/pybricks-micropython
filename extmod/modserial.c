@@ -146,7 +146,7 @@ static pbio_error_t serial_read_count(serial_t *ser, uint8_t *buf, size_t count,
     return PBIO_SUCCESS;
 }
 
-pbio_error_t serial_read_blocking(serial_t *ser, uint8_t *buf, size_t count, size_t *remaining) {
+pbio_error_t serial_read_blocking(serial_t *ser, uint8_t *buf, size_t count, size_t *remaining, int32_t time_start, int32_t time_now) {
 
     pbio_error_t err;
     
@@ -160,10 +160,16 @@ pbio_error_t serial_read_blocking(serial_t *ser, uint8_t *buf, size_t count, siz
     // Decrement remaining count
     *remaining -= read_now;
 
-    // If there is still something remaining, we need to call this again
-    if (*remaining > 0) {
-        return PBIO_ERROR_AGAIN;
+    // If there is nothing remaining, we are done
+    if (*remaining == 0) {
+        return PBIO_SUCCESS;
     }
 
-    return PBIO_SUCCESS;
+    // If we have timed out, let the user know
+    if (ser->timeout >= 0 && time_now - time_start > ser->timeout) {
+        return PBIO_ERROR_TIMEDOUT;
+    }
+
+    // If we are here, we need to call this again
+    return PBIO_ERROR_AGAIN;
 }
