@@ -6,7 +6,7 @@ import tempfile
 
 
 def get_bytes_from_file(path):
-    """Compile a Python file with mpy-cross and return as list of bytes."""
+    """Compile a Python file with mpy-cross and return as bytes."""
 
     # Cross-compile Python file to .mpy
     mpy_path = os.path.splitext(path)[0] + '.mpy'
@@ -20,7 +20,7 @@ def get_bytes_from_file(path):
 
     # Remove the temporary .mpy file and return the contents
     os.remove(mpy_path)
-    return [int(c) for c in contents]
+    return contents
 
 
 def get_bytes_from_str(string):
@@ -37,7 +37,7 @@ def get_bytes_from_str(string):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='Convert Python scripts or commands to .mpy byte streams.')
+        description='Convert Python scripts or commands to .mpy bytes.')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--file', dest='file', nargs='?', const=1, type=str)
     group.add_argument('--string', dest='string', nargs='?', const=1, type=str)
