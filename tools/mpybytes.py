@@ -44,7 +44,25 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.file:
-        print(get_bytes_from_file(args.file))
+        data = get_bytes_from_file(args.file)
 
     if args.string:
-        print(get_bytes_from_str(args.string))
+        data = get_bytes_from_str(args.string)
+
+    # Print as string. Because strings in the Python script will be visible in
+    # this format, this may be used as a sanity check to make sure you are
+    # looking at the correct script.
+    print("\nBytes:")
+    print(data)
+
+    # Print the bytes as a C byte array for visual inspection. May also be used
+    # to run Python scripts in experimental MicroPython ports that do not yet
+    # have a REPL or any other form of of input/output.
+    WIDTH = 8
+    print("\n// MPY file. Version: {0}. Size: {1}".format(data[1], len(data)) +
+          "\nconst uint8_t script[] = ")
+    for i in range(0, len(data), WIDTH):
+        chunk = data[i:i+WIDTH]
+        hex_repr = ["0x{0}".format(hex(i)[2:].zfill(2).upper()) for i in chunk]
+        print("    " + ", ".join(hex_repr) + ",")
+    print("};")
