@@ -110,22 +110,98 @@ static uint32_t get_user_program(uint8_t **buf) {
 }
 #else // PYBRICKS_MPY_MAIN_MODULE
 
-// Get user program via serial
-static uint32_t get_user_program(uint8_t **buf) {
-    // Empty rx buffer
-    uint8_t c;
-    while (pbsys_stdin_get_char(&c) != PBIO_ERROR_AGAIN) {
+// Wait for data from an IDE
+static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, uint32_t time_out) {
+    
+    // Optionally clear existing buffer
+    if (clear) {
+        uint8_t c;
+        while (pbsys_stdin_get_char(&c) != PBIO_ERROR_AGAIN) {
+            MICROPY_EVENT_POLL_HOOK
+        }
+    }
+
+    // Maximum time between two bytes
+    const uint32_t time_interval = 100;
+
+    // Acknowledge at the end of each message or each data chunk
+    const uint32_t chunk_size = 20;
+
+    pbio_error_t err;
+
+    // Initialize
+    uint8_t checksum = 0;
+    uint32_t rx_count = 0;
+    uint32_t time_start = mp_hal_ticks_ms();
+    uint32_t time_now = time_start;
+
+    while (true) {
+        // Current time
+        time_now = mp_hal_ticks_ms();
+
+        // Try to get one byte
+        err = pbsys_stdin_get_char(&buf[rx_count]);
+
+        if (err == PBIO_SUCCESS) {
+            // On success, reset timeout
+            time_start = time_now;
+
+            // Update checksum
+            checksum ^= buf[rx_count];
+
+            // Increment rx counter
+            rx_count++;
+
+            // When done, acknowledge with the checksum
+            if (rx_count == rx_len) {
+                return pbsys_stdout_put_char(checksum);
+            }
+
+            // Acknowledge after receiving a chunk.
+            if (rx_count % chunk_size == 0) {
+                err = pbsys_stdout_put_char(checksum);
+                if (err != PBIO_SUCCESS) {
+                    return err;
+                }
+                // Reset the checksum
+                checksum = 0;
+            }
+        }
+        // Check if we have timed out
+        if (rx_count == 0) {
+            // Use given timeout for first byte
+            if (time_now - time_start > time_out) {
+                return PBIO_ERROR_TIMEDOUT;
+            }
+        }
+        else if (time_now - time_start > time_interval) {
+            // After the first byte, apply much shorter interval timeout
+            return PBIO_ERROR_TIMEDOUT;
+        }
+        // Keep polling
         MICROPY_EVENT_POLL_HOOK
     }
+}
+
+// Get user program via serial
+static uint32_t get_user_program(uint8_t **buf) {
+    pbio_error_t err;
 
     // Get the length of the mpy file
-    mp_print_str(&mp_plat_print, "Waiting for length.\n");
+    mp_print_str(&mp_plat_print, "START");
 
-    uint32_t len = 0;
-    for (uint8_t i = 0; i < 4; i++) {
-        c = mp_hal_stdin_rx_chr();
-        len |= c << (3-i)*8;
+    // Get the program length
+    uint8_t len_buf[4];
+    err = get_message(len_buf, 4, true, 5000);
+    if (err != PBIO_SUCCESS) {
+        return 0;
     }
+
+    // Convert to uint32
+    uint32_t len = ((uint32_t) len_buf[0]) << 24 |
+                   ((uint32_t) len_buf[1]) << 16 |
+                   ((uint32_t) len_buf[2]) << 8 |
+                   ((uint32_t) len_buf[3]);
 
     // Assert that the length is allowed
     if (len > MPY_MAX_BYTES) {
@@ -138,15 +214,14 @@ static uint32_t get_user_program(uint8_t **buf) {
         return 0;
     }
 
-    // We are ready for the main program
-    mp_print_str(&mp_plat_print, "Ready to receive.\n");
+    // Get the program
+    err = get_message(mpy, len, false, 1000);
 
-    // Receive program over Bluetooth
-    for (uint32_t i = 0; i < len; i++) {
-        mpy[i] = mp_hal_stdin_rx_chr();
+    // Did not receive a whole program, so discard it
+    if (err != PBIO_SUCCESS) {
+        m_free(mpy);
+        len = 0;
     }
-
-    // TODO: On error/timeout, free buf and return 0
 
     *buf = mpy;
     return len;
