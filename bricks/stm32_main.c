@@ -111,7 +111,7 @@ static uint32_t get_user_program(uint8_t **buf) {
 #else // PYBRICKS_MPY_MAIN_MODULE
 
 // Wait for data from an IDE
-static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, uint32_t time_out) {
+static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, int32_t time_out) {
     
     // Optionally clear existing buffer
     if (clear) {
@@ -122,7 +122,7 @@ static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, uint3
     }
 
     // Maximum time between two bytes
-    const uint32_t time_interval = 100;
+    const int32_t time_interval = 250;
 
     // Acknowledge at the end of each message or each data chunk
     const uint32_t chunk_size = 20;
@@ -132,8 +132,8 @@ static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, uint3
     // Initialize
     uint8_t checksum = 0;
     uint32_t rx_count = 0;
-    uint32_t time_start = mp_hal_ticks_ms();
-    uint32_t time_now = time_start;
+    int32_t time_start = mp_hal_ticks_ms();
+    int32_t time_now = time_start;
 
     while (true) {
         // Current time
@@ -170,7 +170,7 @@ static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, uint3
         // Check if we have timed out
         if (rx_count == 0) {
             // Use given timeout for first byte
-            if (time_now - time_start > time_out) {
+            if (time_out != -1 && time_now - time_start > time_out) {
                 return PBIO_ERROR_TIMEDOUT;
             }
         }
@@ -187,12 +187,9 @@ static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, uint3
 static uint32_t get_user_program(uint8_t **buf) {
     pbio_error_t err;
 
-    // Get the length of the mpy file
-    mp_print_str(&mp_plat_print, "START");
-
     // Get the program length
     uint8_t len_buf[4];
-    err = get_message(len_buf, 4, true, 5000);
+    err = get_message(len_buf, 4, true, -1);
     if (err != PBIO_SUCCESS) {
         return 0;
     }
@@ -215,7 +212,7 @@ static uint32_t get_user_program(uint8_t **buf) {
     }
 
     // Get the program
-    err = get_message(mpy, len, false, 1000);
+    err = get_message(mpy, len, false, 500);
 
     // Did not receive a whole program, so discard it
     if (err != PBIO_SUCCESS) {
@@ -231,11 +228,9 @@ static uint32_t get_user_program(uint8_t **buf) {
 static void run_user_program(uint32_t len, uint8_t *buf) {
 
     if (len == 0) {
-        mp_print_str(&mp_plat_print, "No program received. Reboot.\n");
+        mp_print_str(&mp_plat_print, ">>>> ERROR\n");
         return;
     }
-
-    mp_print_str(&mp_plat_print, "Starting script.\n\n");
 
     #ifdef PYBRICKS_MPY_MAIN_MODULE
     uint32_t free_len = 0;
@@ -322,10 +317,6 @@ int main(int argc, char **argv) {
     #endif
 
 soft_reset:
-    // (re)boot message
-    mp_print_str(&mp_plat_print, "\n\n--------\n"
-                                     "Pybricks\n"
-                                     "--------\n");
 
     #if MICROPY_ENABLE_COMPILER
     // Enter the REPL if button was clicked again right after boot
@@ -341,6 +332,9 @@ soft_reset:
     }
     #endif // MICROPY_ENABLE_COMPILER
 
+    // Send a message to say hub is idle
+    mp_print_str(&mp_plat_print, ">>>> IDLE\n");
+
     // Receive an mpy-cross compiled Python script
     uint8_t *program;
     uint32_t len = get_user_program(&program);
@@ -351,6 +345,9 @@ soft_reset:
     // Initialize MicroPython and run default imports
     mp_init();
     pb_imports();
+
+    // Send a message to say we will run a program
+    mp_print_str(&mp_plat_print, "\n>>>> RUNNING\n");
 
     // Execute the user script
     run_user_program(len, program);
