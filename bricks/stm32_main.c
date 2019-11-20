@@ -234,6 +234,7 @@ static void run_user_program(uint32_t len, uint8_t *buf) {
 
     #if MICROPY_ENABLE_COMPILER
     if (len == 4 && !strcmp((char *) buf, "REPL")) {
+        m_free(buf);
         pyexec_friendly_repl();
         return;
     }
