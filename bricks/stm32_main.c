@@ -312,11 +312,11 @@ int main(int argc, char **argv) {
 
     pbio_init();
 
+soft_reset:
+
     #if MICROPY_ENABLE_GC
     gc_init(heap, heap + sizeof(heap));
     #endif
-
-soft_reset:
 
     #if MICROPY_ENABLE_COMPILER
     // Enter the REPL if button was clicked again right after boot
