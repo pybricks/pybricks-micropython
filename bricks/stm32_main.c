@@ -232,6 +232,13 @@ static void run_user_program(uint32_t len, uint8_t *buf) {
         return;
     }
 
+    #if MICROPY_ENABLE_COMPILER
+    if (len == 4 && !strcmp((char *) buf, "REPL")) {
+        pyexec_friendly_repl();
+        return;
+    }
+    #endif // MICROPY_ENABLE_COMPILER
+
     #ifdef PYBRICKS_MPY_MAIN_MODULE
     uint32_t free_len = 0;
     #else
@@ -317,20 +324,6 @@ soft_reset:
     #if MICROPY_ENABLE_GC
     gc_init(heap, heap + sizeof(heap));
     #endif
-
-    #if MICROPY_ENABLE_COMPILER
-    // Enter the REPL if button was clicked again right after boot
-    if (wait_for_button_press(500)) {
-        pbsys_prepare_user_program(&user_program_callbacks);
-        mp_init();
-        pb_imports();
-        mp_print_str(&mp_plat_print, "Entering REPL. CTRL+D to exit.\n");
-        pyexec_friendly_repl();
-        mp_deinit();
-        pbsys_unprepare_user_program();
-        goto soft_reset;
-    }
-    #endif // MICROPY_ENABLE_COMPILER
 
     // Send a message to say hub is idle
     mp_print_str(&mp_plat_print, ">>>> IDLE\n");
