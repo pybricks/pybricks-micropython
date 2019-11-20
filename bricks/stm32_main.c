@@ -121,11 +121,11 @@ static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, int32
         }
     }
 
-    // Maximum time between two bytes
-    const int32_t time_interval = 250;
+    // Maximum time between two bytes/chunks
+    const int32_t time_interval = 500;
 
     // Acknowledge at the end of each message or each data chunk
-    const uint32_t chunk_size = 20;
+    const uint32_t chunk_size = 100;
 
     pbio_error_t err;
 
