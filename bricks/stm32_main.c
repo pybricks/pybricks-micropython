@@ -332,6 +332,23 @@ soft_reset:
     uint8_t *program;
     uint32_t len = get_user_program(&program);
 
+    // If we have no bluetooth, make a fake message
+    // that would otherwise be sent by the IDE to get
+    // the hub into REPL. We can delete this once all
+    // stm32 hubs have bluetooth enabled. Then we can
+    // Use the IDE to send this message instead.
+    #ifndef PYBRICKS_MPY_MAIN_MODULE
+    #if !PBDRV_CONFIG_BLUETOOTH
+    // Mimic the otherwise dynamic read since we free it later
+    len = 4;
+    program = m_malloc(len);
+    program[0] = 'R';
+    program[1] = 'E';
+    program[2] = 'P';
+    program[3] = 'L';
+    #endif
+    #endif
+
     // Get system hardware ready
     pbsys_prepare_user_program(&user_program_callbacks);
 
