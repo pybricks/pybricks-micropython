@@ -94,24 +94,8 @@ bool wait_for_button_press(uint32_t time_out) {
     return false;
 }
 
-#ifdef PYBRICKS_MPY_MAIN_MODULE
-extern uint32_t __user_flash_start;
-
-// Get user program stored in rom
-static uint32_t get_user_program(uint8_t **buf) {
-
-    wait_for_button_press(0);
-    mp_print_str(&mp_plat_print, "\nLoading program from flash.\n");
-
-    // Return .mpy size and location in rom
-    uint32_t *_mpy_size = ((uint32_t *) &__user_flash_start) + 1;
-    *buf = (uint8_t *)(_mpy_size + 1);
-    return *_mpy_size;
-}
-#else // PYBRICKS_MPY_MAIN_MODULE
-
 // Wait for data from an IDE
-static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, int32_t time_out) {
+pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, int32_t time_out) {
     
     // Optionally clear existing buffer
     if (clear) {
@@ -183,7 +167,23 @@ static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, int32
     }
 }
 
-// Get user program via serial
+#ifdef PYBRICKS_MPY_MAIN_MODULE
+extern uint32_t __user_flash_start;
+
+// Get user program stored in rom
+static uint32_t get_user_program(uint8_t **buf) {
+
+    wait_for_button_press(0);
+    mp_print_str(&mp_plat_print, "\nLoading program from flash.\n");
+
+    // Return .mpy size and location in rom
+    uint32_t *_mpy_size = ((uint32_t *) &__user_flash_start) + 1;
+    *buf = (uint8_t *)(_mpy_size + 1);
+    return *_mpy_size;
+}
+#else // PYBRICKS_MPY_MAIN_MODULE
+
+// Get user program via serial/bluetooth
 static uint32_t get_user_program(uint8_t **buf) {
     pbio_error_t err;
 
