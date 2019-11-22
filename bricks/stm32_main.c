@@ -232,13 +232,15 @@ static void run_user_program(uint32_t len, uint8_t *buf) {
         return;
     }
 
-    #if MICROPY_ENABLE_COMPILER
     if (len == 4 && !strcmp((char *) buf, "REPL")) {
         m_free(buf);
+        #if MICROPY_ENABLE_COMPILER
         pyexec_friendly_repl();
+        #else
+        mp_print_str(&mp_plat_print, "Not supported!\n");
+        #endif // MICROPY_ENABLE_COMPILER
         return;
     }
-    #endif // MICROPY_ENABLE_COMPILER
 
     #ifdef PYBRICKS_MPY_MAIN_MODULE
     uint32_t free_len = 0;
