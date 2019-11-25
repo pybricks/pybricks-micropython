@@ -30,13 +30,9 @@ struct _pbdrv_serial_t {
 pbdrv_serial_t pbdrv_serials[sizeof(TTY_PATH)/sizeof(TTY_PATH[0])];
 const int num_tty = sizeof(TTY_PATH)/sizeof(TTY_PATH[0]);
 
-static pbio_error_t pbdrv_serial_open(pbdrv_serial_t *ser, int tty) {
+static pbio_error_t pbdrv_serial_open(pbdrv_serial_t *ser, const char *path) {
 
-    if (tty < 0 || tty >= num_tty) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
-
-    ser->file = open(TTY_PATH[tty], O_RDWR | O_NOCTTY | O_NONBLOCK);
+    ser->file = open(path, O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (ser->file == -1) {
         return PBIO_ERROR_IO;
     }
@@ -105,17 +101,21 @@ static pbio_error_t pbdrv_serial_config(pbdrv_serial_t *ser, int baudrate) {
 }
 
 
-pbio_error_t pbdrv_serial_get(pbdrv_serial_t **_ser, int tty, int baudrate, int timeout) {
+pbio_error_t pbdrv_serial_get(pbdrv_serial_t **_ser, pbio_port_t port, int baudrate, int timeout) {
+
+    if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
+        return PBIO_ERROR_INVALID_PORT;
+    }
 
     // Get device pointer
     pbio_error_t err;
-    pbdrv_serial_t *ser = &pbdrv_serials[tty];
+    pbdrv_serial_t *ser = &pbdrv_serials[port-PBIO_PORT_1];
 
     // Configure settings
     ser->timeout = timeout;
 
     // Open pbdrv_serial port
-    err = pbdrv_serial_open(ser, tty);
+    err = pbdrv_serial_open(ser, TTY_PATH[port-PBIO_PORT_1]);
     if (err != PBIO_SUCCESS) {
         return err;
     }

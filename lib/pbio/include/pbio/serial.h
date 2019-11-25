@@ -6,11 +6,14 @@
 #include <unistd.h>
 #include <stdint.h>
 
+#include <pbio/port.h>
 #include <pbdrv/serial.h>
 
-typedef pbdrv_serial_t pbio_serial_t;
+typedef struct _pbio_serial_t {
+    pbdrv_serial_t *dev;
+} pbio_serial_t;
 
-pbio_error_t pbio_serial_get(pbio_serial_t **_ser, int tty, int baudrate, int timeout);
+pbio_error_t pbio_serial_get(pbio_serial_t **_ser, pbio_port_t port, int baudrate, int timeout);
 
 pbio_error_t pbio_serial_write(pbio_serial_t *ser, const void *buf, size_t count);
 

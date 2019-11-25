@@ -330,7 +330,7 @@ STATIC mp_obj_t customdevices_UARTDevice_make_new(const mp_obj_type_t *otype, si
     // Get and init serial
     pb_assert(pbio_serial_get(
         &self->serial,
-        self->iodev->port - PBIO_PORT_1,
+        self->iodev->port,
         pb_obj_get_int(baudrate),
         timeout == mp_const_none ? -1 : pb_obj_get_int(timeout)
     ));
