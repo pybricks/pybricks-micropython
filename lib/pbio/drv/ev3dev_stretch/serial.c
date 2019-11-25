@@ -13,7 +13,7 @@
 
 #include <pbio/error.h>
 
-#include "modserial.h"
+#include <pbdrv/serial.h>
 
 static const char* const TTY_PATH[] = {
     "/dev/tty_ev3-ports:in1",
@@ -22,15 +22,15 @@ static const char* const TTY_PATH[] = {
     "/dev/tty_ev3-ports:in4",
 };
 
-struct _serial_t {
+struct _pbdrv_serial_t {
     int file;
     int timeout;
 };
 
-serial_t serials[sizeof(TTY_PATH)/sizeof(TTY_PATH[0])];
+pbdrv_serial_t pbdrv_serials[sizeof(TTY_PATH)/sizeof(TTY_PATH[0])];
 const int num_tty = sizeof(TTY_PATH)/sizeof(TTY_PATH[0]);
 
-static pbio_error_t serial_open(serial_t *ser, int tty) {
+static pbio_error_t pbdrv_serial_open(pbdrv_serial_t *ser, int tty) {
 
     if (tty < 0 || tty >= num_tty) {
         return PBIO_ERROR_INVALID_PORT;
@@ -44,7 +44,7 @@ static pbio_error_t serial_open(serial_t *ser, int tty) {
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t serial_config(serial_t *ser, int baudrate) {
+static pbio_error_t pbdrv_serial_config(pbdrv_serial_t *ser, int baudrate) {
 
     // Convert to termios baudrate
     speed_t speed;
@@ -105,23 +105,23 @@ static pbio_error_t serial_config(serial_t *ser, int baudrate) {
 }
 
 
-pbio_error_t serial_get(serial_t **_ser, int tty, int baudrate, int timeout) {
+pbio_error_t pbdrv_serial_get(pbdrv_serial_t **_ser, int tty, int baudrate, int timeout) {
 
     // Get device pointer
     pbio_error_t err;
-    serial_t *ser = &serials[tty];
+    pbdrv_serial_t *ser = &pbdrv_serials[tty];
 
     // Configure settings
     ser->timeout = timeout;
 
-    // Open serial port
-    err = serial_open(ser, tty);
+    // Open pbdrv_serial port
+    err = pbdrv_serial_open(ser, tty);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // Config serial port
-    err = serial_config(ser, baudrate);
+    // Config pbdrv_serial port
+    err = pbdrv_serial_config(ser, baudrate);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -132,21 +132,21 @@ pbio_error_t serial_get(serial_t **_ser, int tty, int baudrate, int timeout) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t serial_write(serial_t *ser, const void *buf, size_t count) {
+pbio_error_t pbdrv_serial_write(pbdrv_serial_t *ser, const void *buf, size_t count) {
     if (write(ser->file, buf, count) != count) {
         return PBIO_ERROR_IO;
     }
     return PBIO_SUCCESS;
 }
 
-pbio_error_t serial_in_waiting(serial_t *ser, size_t *waiting) {
+pbio_error_t pbdrv_serial_in_waiting(pbdrv_serial_t *ser, size_t *waiting) {
     if (ioctl(ser->file, FIONREAD, waiting) == -1) {
         return PBIO_ERROR_IO;
     }
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t serial_read_count(serial_t *ser, uint8_t *buf, size_t count, size_t *result) {
+static pbio_error_t pbdrv_serial_read_count(pbdrv_serial_t *ser, uint8_t *buf, size_t count, size_t *result) {
     int ret = read(ser->file, buf, count);
     if (ret < 0) {
         if (errno == EAGAIN) {
@@ -161,13 +161,13 @@ static pbio_error_t serial_read_count(serial_t *ser, uint8_t *buf, size_t count,
     return PBIO_SUCCESS;
 }
 
-pbio_error_t serial_read_blocking(serial_t *ser, uint8_t *buf, size_t count, size_t *remaining, int32_t time_start, int32_t time_now) {
+pbio_error_t pbdrv_serial_read_blocking(pbdrv_serial_t *ser, uint8_t *buf, size_t count, size_t *remaining, int32_t time_start, int32_t time_now) {
 
     pbio_error_t err;
 
     // Read and keep track of how much was read
     size_t read_now;
-    err = serial_read_count(ser, &buf[count - *remaining], count, &read_now);
+    err = pbdrv_serial_read_count(ser, &buf[count - *remaining], count, &read_now);
     if (err != PBIO_SUCCESS) {
         return err;
     }

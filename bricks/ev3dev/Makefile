@@ -195,7 +195,6 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modev3devices.c \
 	modcustomdevices.c \
 	modsmbus.c \
-	modserial.c \
 	modbuiltins.c \
 	modnxtdevices.c \
 	modbuttons.c \
@@ -226,6 +225,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	pbio/drv/ioport/ioport_ev3dev_stretch.c \
 	pbio/drv/ev3dev_stretch/ev3sensor.c \
 	pbio/drv/ev3dev_stretch/ev3devsysfs.c \
+	pbio/drv/ev3dev_stretch/serial.c \
 	pbio/drv/ev3dev_stretch/nxtcolor.c \
 	pbio/platform/ev3dev_stretch/clock.c \
 	pbio/src/main.c \
@@ -240,6 +240,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	pbio/src/fixmath.c \
 	pbio/src/ev3device.c \
 	pbio/src/drivebase.c \
+	pbio/src/serial.c \
 	pbio/sys/autostart.c \
 	pbio/sys/etimer.c \
 	pbio/sys/process.c \

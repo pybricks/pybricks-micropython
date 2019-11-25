@@ -15,12 +15,12 @@
 #include "modparameters.h"
 
 #include "modsmbus.h"
-#include "modserial.h"
 
 #include "py/objtype.h"
 
 #include <pbio/iodev.h>
 #include <pbio/ev3device.h>
+#include <pbio/serial.h>
 #include <pberror.h>
 
 // pybricks.customdevices.AnalogSensor class object
@@ -305,7 +305,7 @@ STATIC const mp_obj_type_t customdevices_I2CDevice_type = {
 typedef struct _customdevices_UARTDevice_obj_t {
     mp_obj_base_t base;
     pbio_ev3iodev_t *iodev;
-    serial_t *serial;
+    pbio_serial_t *serial;
 } customdevices_UARTDevice_obj_t;
 
 // pybricks.customdevices.UARTDevice.__init__
@@ -328,7 +328,7 @@ STATIC mp_obj_t customdevices_UARTDevice_make_new(const mp_obj_type_t *otype, si
     }
 
     // Get and init serial
-    pb_assert(serial_get(
+    pb_assert(pbio_serial_get(
         &self->serial,
         self->iodev->port - PBIO_PORT_1,
         pb_obj_get_int(baudrate),
@@ -348,7 +348,7 @@ STATIC mp_obj_t customdevices_UARTDevice_write(size_t n_args, const mp_obj_t *po
     customdevices_UARTDevice_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
     
     GET_STR_DATA_LEN(data, string, len);
-    pb_assert(serial_write(self->serial, string, len));
+    pb_assert(pbio_serial_write(self->serial, string, len));
 
     return mp_const_none;
 }
@@ -358,7 +358,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(customdevices_UARTDevice_write_obj, 0, customd
 STATIC mp_obj_t customdevices_UARTDevice_waiting(mp_obj_t self_in) {
     customdevices_UARTDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
     size_t waiting;
-    pb_assert(serial_in_waiting(self->serial, &waiting));
+    pb_assert(pbio_serial_in_waiting(self->serial, &waiting));
     return mp_obj_new_int(waiting);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(customdevices_UARTDevice_waiting_obj, customdevices_UARTDevice_waiting);
@@ -390,7 +390,7 @@ STATIC mp_obj_t customdevices_UARTDevice_read(size_t n_args, const mp_obj_t *pos
 
     // Read up to the timeout
     pbio_error_t err;
-    while ((err = serial_read_blocking(self->serial, buf, len, &remaining, time_start, mp_hal_ticks_ms())) == PBIO_ERROR_AGAIN) {
+    while ((err = pbio_serial_read_blocking(self->serial, buf, len, &remaining, time_start, mp_hal_ticks_ms())) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(10);
     }
     // Raise io/timeout error if needed.
