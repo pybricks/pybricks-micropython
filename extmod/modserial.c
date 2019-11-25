@@ -49,12 +49,27 @@ static pbio_error_t serial_config(serial_t *ser, int baudrate) {
     // Convert to termios baudrate
     speed_t speed;
     switch (baudrate) {
-        case 9600:
-            speed = B9600;
-            break;
-        case 115200:
-            speed = B115200;
-            break;        
+        case 50: speed = B50; break;
+        case 75: speed = B75; break;
+        case 110: speed = B110; break;
+        case 134: speed = B134; break;
+        case 150: speed = B150; break;
+        case 200: speed = B200; break;
+        case 300: speed = B300; break;
+        case 600: speed = B600; break;
+        case 1200: speed = B1200; break;
+        case 1800: speed = B1800; break;
+        case 2400: speed = B2400; break;
+        case 4800: speed = B4800; break;
+        case 9600: speed = B9600; break;
+        case 19200: speed = B19200; break;
+        case 38400: speed = B38400; break;
+        case 57600: speed = B57600; break;
+        case 115200: speed = B115200; break;
+        case 230400: speed = B230400; break;
+        case 460800: speed = B460800; break;
+        case 500000: speed = B500000; break;
+        case 576000: speed = B576000; break;
         default:
             return PBIO_ERROR_INVALID_ARG;
     }
@@ -149,7 +164,7 @@ static pbio_error_t serial_read_count(serial_t *ser, uint8_t *buf, size_t count,
 pbio_error_t serial_read_blocking(serial_t *ser, uint8_t *buf, size_t count, size_t *remaining, int32_t time_start, int32_t time_now) {
 
     pbio_error_t err;
-    
+
     // Read and keep track of how much was read
     size_t read_now;
     err = serial_read_count(ser, &buf[count - *remaining], count, &read_now);
