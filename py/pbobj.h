@@ -30,4 +30,8 @@ fix16_t pb_obj_get_fix16(mp_obj_t arg);
 // Get value if object is not none, else return default
 mp_int_t pb_obj_get_default_int(mp_obj_t obj, mp_int_t default_val);
 
+// Get bytes from user argument, which may be int/tuple/list/bytearray
+// Returns true if we must free *bytes after using it 
+bool unpack_byte_arg(mp_obj_t arg, uint8_t **bytes, size_t *len);
+
 #endif // PYBRICKS_INCLUDED_PBOBJ_H

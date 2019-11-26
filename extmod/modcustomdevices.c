@@ -6,7 +6,6 @@
 
 #include "py/mpconfig.h"
 
-#include "py/objstr.h"
 #include "py/mphal.h"
 #include "py/runtime.h"
 
@@ -15,8 +14,6 @@
 #include "modparameters.h"
 
 #include "modsmbus.h"
-
-#include "py/objtype.h"
 
 #include <pbio/iodev.h>
 #include <pbio/ev3device.h>
@@ -235,52 +232,44 @@ STATIC mp_obj_t customdevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos
         return mp_const_none;
     }
 
-    // Get and unpack the data, either as int or tuple/list
-    mp_obj_t *bytes;
-    size_t len;
-    if (mp_obj_is_small_int(data)) {
-        len = 1;
-        bytes = &data;
-    }
-    else {
-        mp_obj_get_array(data, &len, &bytes);
-        if (len > I2C_MAX_LEN) {
+    // Get register if given
+    mp_int_t regist = 0;
+    if (reg != mp_const_none) {
+        regist = mp_obj_get_int(reg);
+        if (regist < 0 || regist > 255) {
             pb_assert(PBIO_ERROR_INVALID_ARG);
         }
     }
+
+    // Unpack user argument to bytes
+    uint8_t *bytes;
+    size_t len;
+    bool clean = unpack_byte_arg(data, &bytes, &len);
+
+    pbio_error_t err;
 
     // First, deal with the case where no register is given
     if (reg == mp_const_none) {
-        // Write one byte
+        // There must be only one byte
         if (len != 1) {
-            pb_assert(PBIO_ERROR_INVALID_ARG);
+            err = PBIO_ERROR_INVALID_ARG;
         }
-        mp_int_t byte = mp_obj_get_int(bytes[0]);
-        if (byte < 0 || byte > 255) {
-            pb_assert(PBIO_ERROR_INVALID_ARG);
+        else {
+            err = smbus_write_no_reg(self->bus, self->address, bytes[0]);
         }
-        pb_assert(smbus_write_no_reg(self->bus, self->address, byte));
-        return mp_const_none;
+    }
+    else {
+        // There is data and a register, so send all data
+        err = smbus_write_bytes(self->bus, self->address, regist, len, bytes);
     }
 
-    // There is data and a register, so get register
-    mp_int_t regist = mp_obj_get_int(reg);
-    if (regist < 0 || regist > 255) {
-        pb_assert(PBIO_ERROR_INVALID_ARG);
+    // Clean up bytes buffer if needed
+    if (clean) {
+        m_free(bytes, len);
     }
 
-    // Get data as simple bytes
-    uint8_t buf[I2C_MAX_LEN];
-
-    for (uint8_t i = 0; i < len; i++) {
-        mp_int_t byte = mp_obj_get_int(bytes[i]);
-        if (byte < 0 || byte > 255) {
-            pb_assert(PBIO_ERROR_INVALID_ARG);
-        }
-        buf[i] = byte;
-    }
-    // Send the datas
-    pb_assert(smbus_write_bytes(self->bus, self->address, regist, len, buf));
+    // Assert error if any
+    pb_assert(err);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(customdevices_I2CDevice_write_obj, 0, customdevices_I2CDevice_write);
@@ -346,9 +335,18 @@ STATIC mp_obj_t customdevices_UARTDevice_write(size_t n_args, const mp_obj_t *po
     );
 
     customdevices_UARTDevice_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-    
-    GET_STR_DATA_LEN(data, string, len);
-    pb_assert(pbio_serial_write(self->serial, string, len));
+
+    uint8_t *bytes;
+    size_t len;
+    bool clean = unpack_byte_arg(data, &bytes, &len);
+
+    pbio_error_t err = pbio_serial_write(self->serial, bytes, len);
+
+    if (clean) {
+        m_free(bytes, len);
+    }
+
+    pb_assert(err);
 
     return mp_const_none;
 }
@@ -471,7 +469,7 @@ STATIC mp_obj_t customdevices_Ev3devSensor_bin(mp_obj_t self_in) {
     customdevices_Ev3devSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     uint8_t bin[PBIO_IODEV_MAX_DATA_SIZE];
-    memset(bin, 0, sizeof(bin)); 
+    memset(bin, 0, sizeof(bin));
 
     pb_assert(ev3device_get_values_at_mode(self->iodev, self->iodev->mode, bin));
 
