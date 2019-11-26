@@ -76,7 +76,6 @@ static pbio_error_t pbio_serial_read_stop(pbio_serial_t *ser, pbio_error_t err) 
     return err;
 }
 
-
 pbio_error_t pbio_serial_read(pbio_serial_t *ser, uint8_t *buf, size_t count) {
 
     pbio_error_t err;
@@ -109,4 +108,8 @@ pbio_error_t pbio_serial_read(pbio_serial_t *ser, uint8_t *buf, size_t count) {
 
     // If we are here, we need to call this again
     return PBIO_ERROR_AGAIN;
+}
+
+pbio_error_t pbio_serial_clear(pbio_serial_t *ser) {
+    return pbdrv_serial_clear(ser->dev);
 }

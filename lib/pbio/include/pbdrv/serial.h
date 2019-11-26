@@ -19,3 +19,5 @@ pbio_error_t pbdrv_serial_write(pbdrv_serial_t *ser, const void *buf, size_t cou
 pbio_error_t pbdrv_serial_in_waiting(pbdrv_serial_t *ser, size_t *waiting);
 
 pbio_error_t pbdrv_serial_read(pbdrv_serial_t *ser, uint8_t *buf, size_t count, size_t *received);
+
+pbio_error_t pbdrv_serial_clear(pbdrv_serial_t *ser);

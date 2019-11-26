@@ -157,3 +157,10 @@ pbio_error_t pbdrv_serial_read(pbdrv_serial_t *ser, uint8_t *buf, size_t count, 
     *received = ret;
     return PBIO_SUCCESS;
 }
+
+pbio_error_t pbdrv_serial_clear(pbdrv_serial_t *ser) {
+    if (tcflush(ser->file, TCIOFLUSH) != 0) {
+        return PBIO_ERROR_IO;
+    }
+    return PBIO_SUCCESS;
+}

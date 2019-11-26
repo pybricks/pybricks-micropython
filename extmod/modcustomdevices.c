@@ -317,6 +317,7 @@ STATIC mp_obj_t customdevices_UARTDevice_make_new(const mp_obj_type_t *otype, si
         pb_obj_get_int(baudrate),
         timeout == mp_const_none ? -1 : pb_obj_get_int(timeout)
     ));
+    pb_assert(pbio_serial_clear(self->serial));
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -408,11 +409,20 @@ STATIC mp_obj_t customdevices_UARTDevice_read(size_t n_args, const mp_obj_t *pos
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(customdevices_UARTDevice_read_obj, 0, customdevices_UARTDevice_read);
 
+// pybricks.customdevices.UARTDevice.clear
+STATIC mp_obj_t customdevices_UARTDevice_clear(mp_obj_t self_in) {
+    customdevices_UARTDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_assert(pbio_serial_clear(self->serial));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(customdevices_UARTDevice_clear_obj, customdevices_UARTDevice_clear);
+
 // dir(pybricks.customdevices.UARTDevice)
 STATIC const mp_rom_map_elem_t customdevices_UARTDevice_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_read),  MP_ROM_PTR(&customdevices_UARTDevice_read_obj) },
     { MP_ROM_QSTR(MP_QSTR_write),  MP_ROM_PTR(&customdevices_UARTDevice_write_obj) },
     { MP_ROM_QSTR(MP_QSTR_waiting),MP_ROM_PTR(&customdevices_UARTDevice_waiting_obj) },
+    { MP_ROM_QSTR(MP_QSTR_clear),MP_ROM_PTR(&customdevices_UARTDevice_clear_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(customdevices_UARTDevice_locals_dict, customdevices_UARTDevice_locals_dict_table);
 
