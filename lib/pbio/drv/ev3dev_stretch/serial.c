@@ -84,11 +84,7 @@ static pbio_error_t pbdrv_serial_config(pbdrv_serial_t *ser, int baudrate) {
     term.c_cc[VMIN] = 1;
     term.c_cc[VTIME] = 0;
 
-    if (cfsetispeed(&term, speed) != 0) {
-        return PBIO_ERROR_IO;
-    }
-
-    if (cfsetospeed(&term, speed) != 0) {
+    if (cfsetspeed(&term, speed) != 0) {
         return PBIO_ERROR_IO;
     }
 
