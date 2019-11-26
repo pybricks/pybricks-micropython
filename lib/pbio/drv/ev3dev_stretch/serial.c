@@ -28,7 +28,6 @@ struct _pbdrv_serial_t {
 };
 
 pbdrv_serial_t pbdrv_serials[sizeof(TTY_PATH)/sizeof(TTY_PATH[0])];
-const int num_tty = sizeof(TTY_PATH)/sizeof(TTY_PATH[0]);
 
 static pbio_error_t pbdrv_serial_open(pbdrv_serial_t *ser, const char *path) {
 
