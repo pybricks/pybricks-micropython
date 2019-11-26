@@ -93,7 +93,11 @@ bool unpack_byte_arg(mp_obj_t arg, uint8_t **bytes, size_t *len) {
 
     // Clean up if we failed to get the data
     if (err != PBIO_SUCCESS) {
+#if MICROPY_MALLOC_USES_ALLOCATED_SIZE
         m_free(*bytes, *len);
+#else
+        m_free(*bytes);
+#endif
         pb_assert(err);
         return false;
     }
