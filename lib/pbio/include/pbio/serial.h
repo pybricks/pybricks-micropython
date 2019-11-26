@@ -12,6 +12,9 @@
 typedef struct _pbio_serial_t {
     pbdrv_serial_t *dev;
     int timeout;
+    bool busy;
+    int time_start;
+    size_t remaining;
 } pbio_serial_t;
 
 pbio_error_t pbio_serial_get(pbio_serial_t **_ser, pbio_port_t port, int baudrate, int timeout);
@@ -20,4 +23,4 @@ pbio_error_t pbio_serial_write(pbio_serial_t *ser, const void *buf, size_t count
 
 pbio_error_t pbio_serial_in_waiting(pbio_serial_t *ser, size_t *waiting);
 
-pbio_error_t pbio_serial_read(pbio_serial_t *ser, uint8_t *buf, size_t count, size_t *remaining, int32_t time_start, int32_t time_now);
+pbio_error_t pbio_serial_read(pbio_serial_t *ser, uint8_t *buf, size_t count);

@@ -366,7 +366,6 @@ STATIC mp_obj_t customdevices_UARTDevice_read(size_t n_args, const mp_obj_t *pos
 
     // Get requested data length
     size_t len = mp_obj_get_int(length);
-    size_t remaining = len;
     if (len > UART_MAX_LEN) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
@@ -377,12 +376,9 @@ STATIC mp_obj_t customdevices_UARTDevice_read(size_t n_args, const mp_obj_t *pos
         pb_assert(PBIO_ERROR_FAILED);
     }
 
-    // Start time
-    int32_t time_start = mp_hal_ticks_ms();
-
     // Read up to the timeout
     pbio_error_t err;
-    while ((err = pbio_serial_read(self->serial, buf, len, &remaining, time_start, mp_hal_ticks_ms())) == PBIO_ERROR_AGAIN) {
+    while ((err = pbio_serial_read(self->serial, buf, len)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(10);
     }
     // Raise io/timeout error if needed.
