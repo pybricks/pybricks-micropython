@@ -370,6 +370,12 @@ STATIC mp_obj_t customdevices_UARTDevice_read(size_t n_args, const mp_obj_t *pos
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
+    // If we don't need to read anything, return empty bytearray
+    if (len < 1) {
+        uint8_t none = 0;
+        return mp_obj_new_bytes(&none, 0);
+    }
+
     // Read data into buffer
     uint8_t *buf = m_malloc(len);
     if (buf == NULL) {
