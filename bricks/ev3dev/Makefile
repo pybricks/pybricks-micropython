@@ -154,6 +154,9 @@ endif
 CFLAGS_MOD += $(shell pkg-config --cflags libudev)
 LDFLAGS_MOD += $(shell pkg-config --libs libudev)
 
+# for modsmbus
+LDFLAGS_MOD += -li2c
+
 # source files
 SRC_C = $(addprefix ports/unix/,\
 	main.c \
