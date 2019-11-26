@@ -101,7 +101,7 @@ static pbio_error_t pbdrv_serial_config(pbdrv_serial_t *ser, int baudrate) {
 }
 
 
-pbio_error_t pbdrv_serial_get(pbdrv_serial_t **_ser, pbio_port_t port, int baudrate, int timeout) {
+pbio_error_t pbdrv_serial_get(pbdrv_serial_t **_ser, pbio_port_t port, int baudrate) {
 
     if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
         return PBIO_ERROR_INVALID_PORT;
@@ -110,9 +110,6 @@ pbio_error_t pbdrv_serial_get(pbdrv_serial_t **_ser, pbio_port_t port, int baudr
     // Get device pointer
     pbio_error_t err;
     pbdrv_serial_t *ser = &pbdrv_serials[port-PBIO_PORT_1];
-
-    // Configure settings
-    ser->timeout = timeout;
 
     // Open pbdrv_serial port
     err = pbdrv_serial_open(ser, TTY_PATH[port-PBIO_PORT_1]);
@@ -146,45 +143,17 @@ pbio_error_t pbdrv_serial_in_waiting(pbdrv_serial_t *ser, size_t *waiting) {
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t pbdrv_serial_read_count(pbdrv_serial_t *ser, uint8_t *buf, size_t count, size_t *result) {
+pbio_error_t pbdrv_serial_read(pbdrv_serial_t *ser, uint8_t *buf, size_t count, size_t *received) {
     int ret = read(ser->file, buf, count);
     if (ret < 0) {
         if (errno == EAGAIN) {
-            *result = 0;
+            *received = 0;
             return PBIO_SUCCESS;
         }
         else {
             return PBIO_ERROR_IO;
         }
     }
-    *result = ret;
+    *received = ret;
     return PBIO_SUCCESS;
-}
-
-pbio_error_t pbdrv_serial_read_blocking(pbdrv_serial_t *ser, uint8_t *buf, size_t count, size_t *remaining, int32_t time_start, int32_t time_now) {
-
-    pbio_error_t err;
-
-    // Read and keep track of how much was read
-    size_t read_now;
-    err = pbdrv_serial_read_count(ser, &buf[count - *remaining], count, &read_now);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Decrement remaining count
-    *remaining -= read_now;
-
-    // If there is nothing remaining, we are done
-    if (*remaining == 0) {
-        return PBIO_SUCCESS;
-    }
-
-    // If we have timed out, let the user know
-    if (ser->timeout >= 0 && time_now - time_start > ser->timeout) {
-        return PBIO_ERROR_TIMEDOUT;
-    }
-
-    // If we are here, we need to call this again
-    return PBIO_ERROR_AGAIN;
 }

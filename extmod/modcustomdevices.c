@@ -390,7 +390,7 @@ STATIC mp_obj_t customdevices_UARTDevice_read(size_t n_args, const mp_obj_t *pos
 
     // Read up to the timeout
     pbio_error_t err;
-    while ((err = pbio_serial_read_blocking(self->serial, buf, len, &remaining, time_start, mp_hal_ticks_ms())) == PBIO_ERROR_AGAIN) {
+    while ((err = pbio_serial_read(self->serial, buf, len, &remaining, time_start, mp_hal_ticks_ms())) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(10);
     }
     // Raise io/timeout error if needed.
