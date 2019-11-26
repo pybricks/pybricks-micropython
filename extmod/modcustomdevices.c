@@ -183,7 +183,7 @@ STATIC mp_obj_t customdevices_I2CDevice_read(size_t n_args, const mp_obj_t *pos_
             case 1:
                 // No register, read 1 byte:
                 pb_assert(smbus_read_no_reg(self->bus, self->address, &data));
-                return mp_obj_new_int(data);
+                return mp_obj_new_bytes(&data, 1);
             default:
                 pb_assert(PBIO_ERROR_INVALID_ARG);
                 return mp_const_none;
@@ -198,16 +198,10 @@ STATIC mp_obj_t customdevices_I2CDevice_read(size_t n_args, const mp_obj_t *pos_
 
     // Read the given amount of bytes
     uint8_t buf[I2C_MAX_LEN];
-    mp_obj_t ret[I2C_MAX_LEN];
 
     pb_assert(smbus_read_bytes(self->bus, self->address, regist, len, buf));
 
-    // Wrap the data in a tuple and return it
-    for (uint8_t i = 0; i < len; i++) {
-        ret[i] = mp_obj_new_int(buf[i]);
-    }
-
-    return mp_obj_new_tuple(len, ret);
+    return mp_obj_new_bytes(buf, len);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(customdevices_I2CDevice_read_obj, 0, customdevices_I2CDevice_read);
 
