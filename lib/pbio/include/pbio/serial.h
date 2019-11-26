@@ -9,13 +9,7 @@
 #include <pbio/port.h>
 #include <pbdrv/serial.h>
 
-typedef struct _pbio_serial_t {
-    pbdrv_serial_t *dev;
-    int timeout;
-    bool busy;
-    int time_start;
-    size_t remaining;
-} pbio_serial_t;
+typedef struct _pbio_serial_t pbio_serial_t;
 
 pbio_error_t pbio_serial_get(pbio_serial_t **_ser, pbio_port_t port, int baudrate, int timeout);
 
