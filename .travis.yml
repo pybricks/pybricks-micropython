@@ -1,5 +1,5 @@
 # global options
-dist: xenial
+dist: bionic
 language:
   - c
 compiler:
@@ -53,9 +53,9 @@ jobs:
       after_failure:
         - (cd tests && for exp in *.exp; do testbase=$(basename $exp .exp); echo -e "\nFAILURE $testbase"; diff -u $testbase.exp $testbase.out; done)
 
-    # Pybricks ev3dev
+    # Pybricks ev3dev-stretch armel
     - stage: test
-      env: NAME="Pybricks ev3dev build"
+      env: NAME="Pybricks ev3dev-stretch build"
       before_install:
         - pyenv versions
         - sudo apt-get update -qq || true
@@ -191,3 +191,43 @@ jobs:
         - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
         - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
         - $TRAVIS_BUILD_DIR/.travis/upload-fw-size.sh nxt "${HOME}/micropython/ports/pybricks/bricks/nxt/build/firmware.bin"
+
+    # Pybricks bionic
+    - stage: test
+      env: NAME="Pybricks ev3dev bionic build"
+      before_install:
+        - pyenv versions
+        - sudo apt-get update -qq || true
+      install:
+        - npm install -g jfrog-cli-go
+        - pyenv shell 3.6.7
+        - sudo apt-add-repository --update --yes ppa:ev3dev/tools
+        - sudo apt-get install --no-install-recommends --yes
+          ev3dev-mocks
+          libasound2-plugin-ev3dev
+          libasound2
+          libffi-dev
+          libi2c-dev
+          libmagickwand-6.q16-3
+          libsndfile1
+          libudev-dev
+          libumockdev0
+          pkg-config
+          uthash-dev
+        - cd ${HOME}
+        - git clone --depth=10 --branch=$(cat ${TRAVIS_BUILD_DIR}/micropython-tag) --recursive https://github.com/pybricks/micropython;
+        - cd micropython/ports/pybricks
+        - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
+      before_script:
+        - export CROSS_COMPILE=
+      script:
+        - make ${MAKEOPTS} -C bricks/ev3dev
+        - make ${MAKEOPTS} -C bricks/ev3dev test
+        - make ${MAKEOPTS} -C bricks/ev3dev test-ev3dev
+      after_failure:
+        - ./tests/dump-out-files.sh
+      after_success:
+        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET
+        - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
+        - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
+        - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
