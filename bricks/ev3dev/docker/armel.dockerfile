@@ -20,6 +20,11 @@ RUN apt-get download umockdev:armel && \
     sudo tar -C / -xf data.tar.xz ./usr/lib/arm-linux-gnueabi/libumockdev-preload.so.0.0.0 && \
     sudo tar -C / -xf data.tar.xz ./usr/lib/arm-linux-gnueabi/libumockdev-preload.so.0 && \
     rm data.tar.xz && rm *.deb
+# Hack to get correct linux/i2c-dev.h header file in cross compiler
+# Kernel version of i2c-dev.h is in /usr/arm-linux-gnueabi/include/ which is first in search path
+# thanks https://stackoverflow.com/a/36287466/1976323
+RUN sudo mv /usr/arm-linux-gnueabi/include/linux/i2c-dev.h /usr/arm-linux-gnueabi/include/linux/i2c-dev.h.kernel && \
+    sudo cp /usr/include/linux/i2c-dev.h /usr/arm-linux-gnueabi/include/linux/i2c-dev.h
 ENV PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabi/pkgconfig
 ENV CROSS_COMPILE=arm-linux-gnueabi-
 ENV BUILD=build-armel

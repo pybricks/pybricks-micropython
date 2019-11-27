@@ -8,14 +8,16 @@
 #include <stdint.h>
 #include <fcntl.h>
 
-#include <i2c/smbus.h>
-#include <linux/i2c.h>
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
+// i2ctools v4 moved smbus functions to a new header file
+#if PB_HAVE_LIBI2C
+#include <i2c/smbus.h>
+#endif
 
 #include <pbio/error.h>
 
-#include "modsmbus.h"
+#include "pbsmbus.h"
 
 #define MAXDEVPATH (16)
 #define BUS_NUM_MIN (3)
@@ -28,7 +30,7 @@ struct _smbus_t {
 
 smbus_t buses[BUS_NUM_MAX-BUS_NUM_MIN+1];
 
-static pbio_error_t smbus_set_address(smbus_t *bus, int address) {
+static pbio_error_t pb_smbus_set_address(smbus_t *bus, int address) {
 
     if (bus->address != address) {
         if (ioctl(bus->file, I2C_SLAVE, address) != 0) {
@@ -40,7 +42,7 @@ static pbio_error_t smbus_set_address(smbus_t *bus, int address) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t smbus_get(smbus_t **_bus, int bus_num) {
+pbio_error_t pb_smbus_get(smbus_t **_bus, int bus_num) {
 
     if (bus_num < BUS_NUM_MIN || bus_num > BUS_NUM_MAX) {
         return PBIO_ERROR_INVALID_PORT;
@@ -66,9 +68,9 @@ pbio_error_t smbus_get(smbus_t **_bus, int bus_num) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t smbus_read_bytes(smbus_t *bus, uint8_t address, uint8_t reg, uint8_t len, uint8_t *buf) {
+pbio_error_t pb_smbus_read_bytes(smbus_t *bus, uint8_t address, uint8_t reg, uint8_t len, uint8_t *buf) {
 
-    pbio_error_t err = smbus_set_address(bus, address);
+    pbio_error_t err = pb_smbus_set_address(bus, address);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -81,9 +83,9 @@ pbio_error_t smbus_read_bytes(smbus_t *bus, uint8_t address, uint8_t reg, uint8_
     return PBIO_SUCCESS;
 }
 
-pbio_error_t smbus_write_bytes(smbus_t *bus, uint8_t address, uint8_t reg, uint8_t len, uint8_t *buf) {
+pbio_error_t pb_smbus_write_bytes(smbus_t *bus, uint8_t address, uint8_t reg, uint8_t len, uint8_t *buf) {
 
-    pbio_error_t err = smbus_set_address(bus, address);
+    pbio_error_t err = pb_smbus_set_address(bus, address);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -95,9 +97,9 @@ pbio_error_t smbus_write_bytes(smbus_t *bus, uint8_t address, uint8_t reg, uint8
     return PBIO_SUCCESS;
 }
 
-pbio_error_t smbus_read_no_reg(smbus_t *bus, uint8_t address, uint8_t *buf) {
+pbio_error_t pb_smbus_read_no_reg(smbus_t *bus, uint8_t address, uint8_t *buf) {
 
-    pbio_error_t err = smbus_set_address(bus, address);
+    pbio_error_t err = pb_smbus_set_address(bus, address);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -112,9 +114,9 @@ pbio_error_t smbus_read_no_reg(smbus_t *bus, uint8_t address, uint8_t *buf) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t smbus_write_no_reg(smbus_t *bus, uint8_t address, uint8_t buf) {
+pbio_error_t pb_smbus_write_no_reg(smbus_t *bus, uint8_t address, uint8_t buf) {
 
-    pbio_error_t err = smbus_set_address(bus, address);
+    pbio_error_t err = pb_smbus_set_address(bus, address);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -126,9 +128,9 @@ pbio_error_t smbus_write_no_reg(smbus_t *bus, uint8_t address, uint8_t buf) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t smbus_read_quick(smbus_t *bus, uint8_t address) {
+pbio_error_t pb_smbus_read_quick(smbus_t *bus, uint8_t address) {
 
-    pbio_error_t err = smbus_set_address(bus, address);
+    pbio_error_t err = pb_smbus_set_address(bus, address);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -140,9 +142,9 @@ pbio_error_t smbus_read_quick(smbus_t *bus, uint8_t address) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t smbus_write_quick(smbus_t *bus, uint8_t address) {
+pbio_error_t pb_smbus_write_quick(smbus_t *bus, uint8_t address) {
 
-    pbio_error_t err = smbus_set_address(bus, address);
+    pbio_error_t err = pb_smbus_set_address(bus, address);
     if (err != PBIO_SUCCESS) {
         return err;
     }

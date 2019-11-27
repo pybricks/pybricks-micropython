@@ -13,7 +13,7 @@
 #include "pbkwarg.h"
 #include "modparameters.h"
 
-#include "modsmbus.h"
+#include "pbsmbus.h"
 
 #include <pbio/iodev.h>
 #include <pbio/ev3device.h>
@@ -151,7 +151,7 @@ STATIC mp_obj_t customdevices_I2CDevice_make_new(const mp_obj_type_t *otype, siz
     }
 
     // Get the smbus, which on ev3dev is zero based sensor port number + 3.
-    pb_assert(smbus_get(&self->bus, port_num - PBIO_PORT_1 + 3));
+    pb_assert(pb_smbus_get(&self->bus, port_num - PBIO_PORT_1 + 3));
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -168,7 +168,7 @@ STATIC mp_obj_t customdevices_I2CDevice_read(size_t n_args, const mp_obj_t *pos_
 
     // Get requested data length
     mp_int_t len = mp_obj_get_int(length);
-    if (len < 0 || len > I2C_MAX_LEN) {
+    if (len < 0 || len > PB_SMBUS_BLOCK_MAX) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
@@ -178,11 +178,11 @@ STATIC mp_obj_t customdevices_I2CDevice_read(size_t n_args, const mp_obj_t *pos_
         switch (len) {
             case 0:
                 // No register, no data, so quick-read:
-                pb_assert(smbus_read_quick(self->bus, self->address));
+                pb_assert(pb_smbus_read_quick(self->bus, self->address));
                 return mp_const_none;
             case 1:
                 // No register, read 1 byte:
-                pb_assert(smbus_read_no_reg(self->bus, self->address, &data));
+                pb_assert(pb_smbus_read_no_reg(self->bus, self->address, &data));
                 return mp_obj_new_bytes(&data, 1);
             default:
                 pb_assert(PBIO_ERROR_INVALID_ARG);
@@ -197,9 +197,9 @@ STATIC mp_obj_t customdevices_I2CDevice_read(size_t n_args, const mp_obj_t *pos_
     }
 
     // Read the given amount of bytes
-    uint8_t buf[I2C_MAX_LEN];
+    uint8_t buf[PB_SMBUS_BLOCK_MAX];
 
-    pb_assert(smbus_read_bytes(self->bus, self->address, regist, len, buf));
+    pb_assert(pb_smbus_read_bytes(self->bus, self->address, regist, len, buf));
 
     return mp_obj_new_bytes(buf, len);
 }
@@ -222,7 +222,7 @@ STATIC mp_obj_t customdevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos
             pb_assert(PBIO_ERROR_INVALID_ARG);
         }
         // Do a quick write and we're done
-        pb_assert(smbus_write_quick(self->bus, self->address));
+        pb_assert(pb_smbus_write_quick(self->bus, self->address));
         return mp_const_none;
     }
 
@@ -249,12 +249,12 @@ STATIC mp_obj_t customdevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos
             err = PBIO_ERROR_INVALID_ARG;
         }
         else {
-            err = smbus_write_no_reg(self->bus, self->address, bytes[0]);
+            err = pb_smbus_write_no_reg(self->bus, self->address, bytes[0]);
         }
     }
     else {
         // There is data and a register, so send all data
-        err = smbus_write_bytes(self->bus, self->address, regist, len, bytes);
+        err = pb_smbus_write_bytes(self->bus, self->address, regist, len, bytes);
     }
 
     // Clean up bytes buffer if needed

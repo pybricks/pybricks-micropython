@@ -154,8 +154,12 @@ endif
 CFLAGS_MOD += $(shell pkg-config --cflags libudev)
 LDFLAGS_MOD += $(shell pkg-config --libs libudev)
 
-# for modsmbus
+# for pbsmbus
+ifneq ($(shell $(CC) -print-file-name=libi2c.a),libi2c.a)
+# in i2ctools v4, there is an acutal library and the header file has moved
+CFLAGS_MOD += -DPB_HAVE_LIBI2C=1
 LDFLAGS_MOD += -li2c
+endif
 
 # source files
 SRC_C = $(addprefix ports/unix/,\
@@ -180,8 +184,9 @@ SRC_C = $(addprefix ports/unix/,\
 SRC_C += $(SRC_MOD)
 
 # Pybricks port core source files
-SRC_C += \
+PYBRICKS_SRC_C += \
 	pbinit.c \
+	pbsmbus.c \
 
 LIB_SRC_C = $(addprefix lib/,\
 	$(LIB_SRC_C_EXTRA) \
@@ -197,7 +202,6 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modhubs.c \
 	modev3devices.c \
 	modcustomdevices.c \
-	modsmbus.c \
 	modbuiltins.c \
 	modnxtdevices.c \
 	modbuttons.c \
@@ -259,6 +263,7 @@ LIB_SRC_C += $(addprefix lib/,\
 OBJ = $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PY_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_LIB_SRC_C:.c=.o))
