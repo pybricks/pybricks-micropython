@@ -3,9 +3,10 @@ RUN sudo apt-get update && \
     DEBIAN_FRONTEND=noninteractive sudo apt-get install --yes --no-install-recommends \
         build-essential \
         ev3dev-mocks \
-        libasound2:armel \
         libasound2-plugin-ev3dev:armel \
+        libasound2:armel \
         libffi-dev:armel \
+        libi2c-dev \
         libmagickwand-6.q16-3:armel \
         libsndfile1:armel \
         libudev-dev:armel \
@@ -13,7 +14,6 @@ RUN sudo apt-get update && \
         pkg-config \
         python \
         python3 \
-        libi2c-dev \
         uthash-dev:armel
 RUN apt-get download umockdev:armel && \
     ar x umockdev*.deb data.tar.xz && \
