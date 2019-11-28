@@ -233,6 +233,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	pbio/drv/ev3dev_stretch/ev3sensor.c \
 	pbio/drv/ev3dev_stretch/ev3devsysfs.c \
 	pbio/drv/ev3dev_stretch/serial.c \
+	pbio/drv/ev3dev_stretch/sound.c \
 	pbio/drv/ev3dev_stretch/nxtcolor.c \
 	pbio/platform/ev3dev_stretch/clock.c \
 	pbio/src/main.c \
