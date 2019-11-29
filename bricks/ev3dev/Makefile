@@ -249,6 +249,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	pbio/src/ev3device.c \
 	pbio/src/drivebase.c \
 	pbio/src/serial.c \
+	pbio/src/sound.c \
 	pbio/sys/autostart.c \
 	pbio/sys/etimer.c \
 	pbio/sys/process.c \

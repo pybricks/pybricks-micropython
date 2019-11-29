@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2019 Laurens Valk
 
+#include <pbio/sound.h>
+
 #include "py/obj.h"
 #include "py/runtime.h"
 #include "py/mpconfig.h"
@@ -11,11 +13,13 @@
 #include "pbobj.h"
 #include "pbkwarg.h"
 
+
 // pybricks.builtins.Speaker class object structure
 typedef struct _builtins_Speaker_obj_t {
     mp_obj_base_t base;
     uint8_t volume;
     uint8_t foo; // DELETEME
+    pbio_sound_t *sound;
 } builtins_Speaker_obj_t;
 
 // pybricks.builtins.Speaker.__init__/__new__
@@ -24,9 +28,10 @@ mp_obj_t builtins_Speaker_obj_make_new(uint8_t volume) {
     builtins_Speaker_obj_t *self = m_new_obj(builtins_Speaker_obj_t);
     self->base.type = &builtins_Speaker_type;
 
-    // Here we can do things like init/reset speaker
+    // Init/reset speaker
     self->volume = volume;
-
+    pb_assert(pbio_sound_get(&self->sound));
+    
     return self;
 }
 
@@ -117,13 +122,18 @@ STATIC mp_obj_t builtins_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, m
     builtins_Speaker_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
     bool blocking = mp_obj_is_true(wait);
 
-    // DELETEME
-    printf("We should beep at " INT_FMT " Hz, for " INT_FMT " ms, at volume %d (%s).\n",
-           pb_obj_get_int(frequency),
-           pb_obj_get_int(duration),
-           self->volume,
-           blocking ? "blocking" : "background"
-    );
+    if (!blocking) {
+        pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
+    }
+
+    pbio_error_t err;
+    mp_int_t freq = pb_obj_get_int(frequency);
+    mp_int_t ms = pb_obj_get_int(duration);
+
+    while ((err = pbio_sound_beep(self->sound, freq, ms)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(10);
+    }
+    pb_assert(err);
 
     return mp_const_none;
 }

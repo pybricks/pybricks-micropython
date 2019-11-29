@@ -5,7 +5,6 @@
 #include <stdint.h>
 
 #include <pbio/error.h>
-#include <pbio/port.h>
 
 typedef struct _pbdrv_sound_dev_t pbdrv_sound_dev_t;
 

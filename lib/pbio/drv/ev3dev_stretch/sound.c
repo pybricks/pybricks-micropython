@@ -19,7 +19,7 @@ struct _pbdrv_sound_dev_t {
     int beep_file;
 };
 
-pbdrv_sound_dev_t sound_dev;
+static pbdrv_sound_dev_t sound_dev;
 
 pbio_error_t pbdrv_sound_get(pbdrv_sound_dev_t **_dev) {
 
@@ -44,7 +44,9 @@ pbio_error_t pbdrv_sound_beep_freq(pbdrv_sound_dev_t *dev, uint32_t freq) {
     event.code = SND_TONE;
     event.value = freq;
 
-    write(dev->beep_file, &event, sizeof(struct input_event));
+    if (write(dev->beep_file, &event, sizeof(struct input_event)) == -1) {
+        return PBIO_ERROR_IO;
+    }
 
     return PBIO_SUCCESS;
 }
