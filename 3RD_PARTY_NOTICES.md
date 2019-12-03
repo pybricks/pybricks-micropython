@@ -20,7 +20,22 @@ subdirectories.
 - Restrictions: Liability, patent use, trademark use, warranty
 
 
-### BlueNRG-MS
+### Texas Instruments BLE5-Stack
+
+**path**: `lib/ble5stack/`
+
+**origin**: simplelink_sdk_ble_plugin_3_20_00_24
+
+**url**: https://www.ti.com/tool/download/SIMPLELINK-SDK-BLUETOOTH-PLUGIN
+
+**terms**:
+- License: proprietary/BSD-3-Clause
+- Permissions: Commercial use, distribution, modification, private use
+- Conditions: Compiled code can only be executed on TI products
+- Restrictions: Liability, trademark use, warranty
+
+
+### STM32 BlueNRG-MS
 
 **path**: `lib/BlueNRG-MS/`
 
