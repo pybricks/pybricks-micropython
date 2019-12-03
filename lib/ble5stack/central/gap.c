@@ -435,7 +435,7 @@ HCI_StatusCodes_t GAP_Authenticate(gapAuthParams_t *pParams,
 
     pData[152] = pParams->secReqs.maxEncKeySize;
 
-    memcpy(&pData[153], &pParams->secReqs.keyDist, sizeof(&pParams->secReqs.keyDist));
+    memcpy(&pData[153], &pParams->secReqs.keyDist, sizeof(pParams->secReqs.keyDist));
 
     pData[154] = pPairReq->enable;
 
@@ -447,7 +447,7 @@ HCI_StatusCodes_t GAP_Authenticate(gapAuthParams_t *pParams,
 
     pData[158] = pPairReq->maxEncKeySize;
 
-    memcpy(&pData[159], &pPairReq->keyDist, sizeof(&pPairReq->keyDist));
+    memcpy(&pData[159], &pPairReq->keyDist, sizeof(pPairReq->keyDist));
 
     status = HCI_sendHCICommand(opcode, pData, 160);
 
