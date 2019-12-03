@@ -542,7 +542,7 @@ static void uart_rx_char_modified(uint8_t *data, uint8_t size) {
 static PT_THREAD(init_uart_service(struct pt *pt)) {
     // using well-known (but not standard) nRF UART UUIDs
 
-    // 6e400001-b5a3-f393-e0a-9e50e24dcca9e
+    // 6e400001-b5a3-f393-e0a9-e50e24dcca9e
     static const uint8_t nrf_uart_service_uuid[] = {
         0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
         0x93, 0xf3, 0xa3, 0xb5, 0x01, 0x00, 0x40, 0x6e
