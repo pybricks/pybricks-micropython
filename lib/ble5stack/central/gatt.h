@@ -327,16 +327,16 @@ extern uint8_t gattNumConns;
  * @ref ATT_ExchangeMTUReq is used by this sub-procedure.
  *
  * @par Corresponding Events:
- * If the return status from this function is @ref SUCCESS, the calling
+ * If the return status from this function is @ref bleSUCCESS, the calling
  * application task will receive a @ref GATT_MSG_EVENT message with method:
  * - @ref ATT_EXCHANGE_MTU_RSP of type @ref attExchangeMTURsp_t , with
- * status @ref SUCCESS or @ref bleTimeout , if the procedure was successful
+ * status @ref bleSUCCESS or @ref bleTimeout , if the procedure was successful
  * - @ref ATT_ERROR_RSP of type @ref attErrorRsp_t , with
- * status @ref SUCCESS  , if an error occurred on the server
+ * status @ref bleSUCCESS  , if an error occurred on the server
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -347,8 +347,8 @@ extern uint8_t gattNumConns;
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_ExchangeMTU( uint16_t connHandle, attExchangeMTUReq_t *pReq);
 
@@ -365,7 +365,7 @@ extern HCI_StatusCodes_t GATT_ExchangeMTU( uint16_t connHandle, attExchangeMTURe
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -374,7 +374,7 @@ extern HCI_StatusCodes_t GATT_ExchangeMTU( uint16_t connHandle, attExchangeMTURe
  *  @ref bleTimeout : Previous transaction timed out.
  *
  * @par Corresponding Events:
- * If the return status from this function is @ref SUCCESS, the calling
+ * If the return status from this function is @ref bleSUCCESS, the calling
  * application task will receive multiple @ref GATT_MSG_EVENT messages with method:
  * - @ref ATT_READ_BY_GRP_TYPE_RSP of type @ref attReadByGrpTypeRsp_t ,
  * if the procedure was successful
@@ -382,12 +382,12 @@ extern HCI_StatusCodes_t GATT_ExchangeMTU( uint16_t connHandle, attExchangeMTURe
 
  * @note This sub-procedure is complete when either @ref ATT_READ_BY_GRP_TYPE_RSP
  * (with @ref bleProcedureComplete or @ref bleTimeout status) or
- * @ref ATT_ERROR_RSP (with @ref SUCCESS status) is received by the calling task
+ * @ref ATT_ERROR_RSP (with @ref bleSUCCESS status) is received by the calling task
  *
  * @param   connHandle - connection to use
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_DiscAllPrimaryServices( uint16_t connHandle);
 
@@ -408,7 +408,7 @@ extern HCI_StatusCodes_t GATT_DiscAllPrimaryServices( uint16_t connHandle);
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -417,7 +417,7 @@ extern HCI_StatusCodes_t GATT_DiscAllPrimaryServices( uint16_t connHandle);
  *  @ref bleTimeout : Previous transaction timed out.
  *
  * @par Corresponding Events:
- * If the return status from this function is @ref SUCCESS, the calling
+ * If the return status from this function is @ref bleSUCCESS, the calling
  * application task will receive multiple @ref GATT_MSG_EVENT messages with method:
  * - @ref ATT_FIND_BY_TYPE_VALUE_RSP of type @ref attFindByTypeValueRsp_t ,
  * if the procedure was successful
@@ -425,14 +425,14 @@ extern HCI_StatusCodes_t GATT_DiscAllPrimaryServices( uint16_t connHandle);
  *
  * @note This sub-procedure is complete when either @ref ATT_FIND_BY_TYPE_VALUE_RSP
  * (with @ref bleProcedureComplete or @ref bleTimeout status) or @ref ATT_ERROR_RSP
- * (with @ref SUCCESS status) is received by the calling task.
+ * (with @ref bleSUCCESS status) is received by the calling task.
  *
  * @param   connHandle - connection to use
  * @param   pUUID - pointer to service UUID to look for
  * @param   len - length of value
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_DiscPrimaryServiceByUUID( uint16_t connHandle, uint8_t *pUUID,
                                                 uint8_t len);
@@ -450,7 +450,7 @@ extern HCI_StatusCodes_t GATT_DiscPrimaryServiceByUUID( uint16_t connHandle, uin
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -459,21 +459,21 @@ extern HCI_StatusCodes_t GATT_DiscPrimaryServiceByUUID( uint16_t connHandle, uin
  *  @ref bleTimeout : Previous transaction timed out.
  *
  * @par Corresponding Events:
- * If the return status from this function is @ref SUCCESS, the calling
+ * If the return status from this function is @ref bleSUCCESS, the calling
  * application task will receive multiple @ref GATT_MSG_EVENT messages with method:
  * - @ref ATT_READ_BY_TYPE_RSP of type @ref attReadByTypeRsp_t ,if the procedure was successful
  * - @ref ATT_ERROR_RSP of type @ref attErrorRsp_t ,if an error occurred on the server
  *
  * @note This sub-procedure is complete when either @ref ATT_READ_BY_TYPE_RSP
  *       (with @ref bleProcedureComplete or @ref bleTimeout status) or @ref ATT_ERROR_RSP
- *       (with @ref SUCCESS status) is received by the calling task.
+ *       (with @ref bleSUCCESS status) is received by the calling task.
  *
  * @param   connHandle - connection to use
  * @param   startHandle - starting handle
  * @param   endHandle - end handle
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_FindIncludedServices( uint16_t connHandle, uint16_t startHandle,
                                             uint16_t endHandle);
@@ -492,14 +492,14 @@ extern HCI_StatusCodes_t GATT_FindIncludedServices( uint16_t connHandle, uint16_
  * service.
  *
  * @par Corresponding Events:
- * If the return status from this function is @ref SUCCESS, the calling
+ * If the return status from this function is @ref bleSUCCESS, the calling
  * application task will receive multiple @ref GATT_MSG_EVENT messages with method:
  * - @ref ATT_READ_BY_TYPE_RSP of type @ref attReadByTypeRsp_t , if the procedure was successful
  * - @ref ATT_ERROR_RSP of type @ref attErrorRsp_t , if an error occurred on the server
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -509,14 +509,14 @@ extern HCI_StatusCodes_t GATT_FindIncludedServices( uint16_t connHandle, uint16_
  *
  * @note This sub-procedure is complete when either @ref ATT_READ_BY_TYPE_RSP
  * (with @ref bleProcedureComplete or @ref bleTimeout status) or @ref ATT_ERROR_RSP
- * (with @ref SUCCESS status) is received by the calling task.
+ * (with @ref bleSUCCESS status) is received by the calling task.
  *
  * @param   connHandle - connection to use
  * @param   startHandle - starting handle
  * @param   endHandle - end handle
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_DiscAllChars( uint16_t connHandle, uint16_t startHandle,
                                     uint16_t endHandle);
@@ -537,14 +537,14 @@ extern HCI_StatusCodes_t GATT_DiscAllChars( uint16_t connHandle, uint16_t startH
  * handle range.
  *
  * @par Corresponding Events:
- * If the return status from this function is @ref SUCCESS, the calling
+ * If the return status from this function is @ref bleSUCCESS, the calling
  * application task will receive multiple @ref GATT_MSG_EVENT messages with method:
  * - @ref ATT_READ_BY_TYPE_RSP of type @ref attReadByTypeRsp_t , if the procedure was successful
  * - @ref ATT_ERROR_RSP of type @ref attErrorRsp_t , if an error occurred on the server
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -554,13 +554,13 @@ extern HCI_StatusCodes_t GATT_DiscAllChars( uint16_t connHandle, uint16_t startH
  *
  * @note This sub-procedure is complete when either @ref ATT_READ_BY_TYPE_RSP
  * (with @ref bleProcedureComplete or @ref bleTimeout status) or @ref ATT_ERROR_RSP
- * (with @ref SUCCESS status) is received by the calling task.
+ * (with @ref bleSUCCESS status) is received by the calling task.
  *
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_DiscCharsByUUID( uint16_t connHandle, attReadByTypeReq_t *pReq);
 
@@ -579,14 +579,14 @@ extern HCI_StatusCodes_t GATT_DiscCharsByUUID( uint16_t connHandle, attReadByTyp
  * characteristic. The UUID Filter parameter is NULL (zero length).
  *
  * @par Corresponding Events:
- * If the return status from this function is @ref SUCCESS, the calling
+ * If the return status from this function is @ref bleSUCCESS, the calling
  * application task will receive multiple @ref GATT_MSG_EVENT messages with method:
  * - @ref ATT_FIND_INFO_RSP of type @ref attFindInfoRsp_t , if the procedure was successful
  * - @ref ATT_ERROR_RSP of type @ref attErrorRsp_t , if an error occurred on the server
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -596,14 +596,14 @@ extern HCI_StatusCodes_t GATT_DiscCharsByUUID( uint16_t connHandle, attReadByTyp
  *
  * @note This sub-procedure is complete when either @ref ATT_FIND_INFO_RSP
  * (with @ref bleProcedureComplete or @ref bleTimeout status) or @ref ATT_ERROR_RSP
- * (with @ref SUCCESS status) is received by the calling task.
+ * (with @ref bleSUCCESS status) is received by the calling task.
  *
  * @param   connHandle - connection to use
  * @param   startHandle - starting handle
  * @param   endHandle - end handle
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_DiscAllCharDescs( uint16_t connHandle, uint16_t startHandle,
                                         uint16_t endHandle);
@@ -627,14 +627,14 @@ extern HCI_StatusCodes_t GATT_DiscAllCharDescs( uint16_t connHandle, uint16_t st
  * be used if the rest of the Characteristic Value is required.
  *
  * @par Corresponding Events:
- * If the return status from this function is @ref SUCCESS, the calling
+ * If the return status from this function is @ref bleSUCCESS, the calling
  * application task will receive a @ref GATT_MSG_EVENT message with method:
  * - @ref ATT_READ_RSP of type @ref attReadRsp_t , if the procedure was successful
  * - @ref ATT_ERROR_RSP of type @ref attErrorRsp_t , if an error occurred on the server
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -643,14 +643,14 @@ extern HCI_StatusCodes_t GATT_DiscAllCharDescs( uint16_t connHandle, uint16_t st
  *  @ref bleTimeout : Previous transaction timed out.
  *
  * @note This sub-procedure is complete when either @ref ATT_READ_RSP
- * (with @ref SUCCESS or @ref bleTimeout status) or @ref ATT_ERROR_RSP (with
- * @ref SUCCESS status) is received by the calling task.
+ * (with @ref bleSUCCESS or @ref bleTimeout status) or @ref ATT_ERROR_RSP (with
+ * @ref bleSUCCESS status) is received by the calling task.
  *
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_ReadCharValue( uint16_t connHandle, attReadReq_t *pReq);
 
@@ -669,14 +669,14 @@ extern HCI_StatusCodes_t GATT_ReadCharValue( uint16_t connHandle, attReadReq_t *
  * characteristic belongs.
  *
  * @par Corresponding Events:
- * If the return status from this function is @ref SUCCESS, the calling
+ * If the return status from this function is @ref bleSUCCESS, the calling
  * application task will receive a @ref GATT_MSG_EVENT messages with method:
  * - @ref ATT_READ_BY_TYPE_RSP of type @ref attReadByTypeRsp_t ,if the procedure was successful
  * - @ref ATT_ERROR_RSP of type @ref attErrorRsp_t ,if an error occurred on the server
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -685,14 +685,14 @@ extern HCI_StatusCodes_t GATT_ReadCharValue( uint16_t connHandle, attReadReq_t *
  *  @ref bleTimeout : Previous transaction timed out.
  *
  * @note This sub-procedure is complete when either @ref ATT_READ_BY_TYPE_RSP
- * (with @ref SUCCESS or @ref bleTimeout status) or @ref ATT_ERROR_RSP (with
- * @ref SUCCESS status) is received by the calling task.
+ * (with @ref bleSUCCESS or @ref bleTimeout status) or @ref ATT_ERROR_RSP (with
+ * @ref bleSUCCESS status) is received by the calling task.
  *
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_ReadUsingCharUUID( uint16_t connHandle, attReadByTypeReq_t *pReq);
 /**
@@ -706,14 +706,14 @@ extern HCI_StatusCodes_t GATT_ReadUsingCharUUID( uint16_t connHandle, attReadByT
  * @ref ATT_ReadBlobReq is used in this sub-procedure.
  *
  * @par Corresponding Events:
- * If the return status from this function is @ref SUCCESS, the calling
+ * If the return status from this function is @ref bleSUCCESS, the calling
  * application task will receive multiple @ref GATT_MSG_EVENT messages with method:
  * - @ref ATT_READ_BLOB_RSP of type @ref attReadBlobRsp_t ,if the procedure was successful
  * - @ref ATT_ERROR_RSP of type @ref attErrorRsp_t ,if an error occurred on the server
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -723,13 +723,13 @@ extern HCI_StatusCodes_t GATT_ReadUsingCharUUID( uint16_t connHandle, attReadByT
  *
  * @note This sub-procedure is complete when either @ref ATT_READ_BLOB_RSP
  * (with @ref bleProcedureComplete or @ref bleTimeout status) or @ref ATT_ERROR_RSP
- * (with @ref SUCCESS status) is received by the calling task.
+ * (with @ref bleSUCCESS status) is received by the calling task.
  *
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 
 extern HCI_StatusCodes_t GATT_ReadLongCharValue( uint16_t connHandle, attReadBlobReq_t *pReq);
@@ -747,14 +747,14 @@ extern HCI_StatusCodes_t GATT_ReadLongCharValue( uint16_t connHandle, attReadBlo
  * @ref ATT_ReadMultiReq is used in this sub-procedure.
  *
  * @par Corresponding Events:
- * If the return status from this function is @ref SUCCESS, the calling
+ * If the return status from this function is @ref bleSUCCESS, the calling
  * application task will receive a @ref GATT_MSG_EVENT message with method:
  * - @ref ATT_READ_MULTI_RSP of type @ref attReadMultiRsp_t ,if the procedure was successful
  * - @ref ATT_ERROR_RSP of type @ref attErrorRsp_t ,if an error occurred on the server
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -763,14 +763,14 @@ extern HCI_StatusCodes_t GATT_ReadLongCharValue( uint16_t connHandle, attReadBlo
  *  @ref bleTimeout : Previous transaction timed out.
  *
  * @note This sub-procedure is complete when either @ref ATT_READ_MULTI_RSP
- * (with @ref SUCCESS or @ref bleTimeout status) or @ref ATT_ERROR_RSP (with
- * @ref SUCCESS status) is received by the calling task.
+ * (with @ref bleSUCCESS or @ref bleTimeout status) or @ref ATT_ERROR_RSP (with
+ * @ref bleSUCCESS status) is received by the calling task.
  *
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_ReadMultiCharValues( uint16_t connHandle, attReadMultiReq_t *pReq);
 
@@ -793,7 +793,7 @@ extern HCI_StatusCodes_t GATT_ReadMultiCharValues( uint16_t connHandle, attReadM
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -809,8 +809,8 @@ extern HCI_StatusCodes_t GATT_ReadMultiCharValues( uint16_t connHandle, attReadM
  * @param   connHandle - connection to use
  * @param   pReq - pointer to command to be sent
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_WriteNoRsp( uint16_t connHandle, attWriteReq_t *pReq );
 
@@ -836,7 +836,7 @@ extern HCI_StatusCodes_t GATT_WriteNoRsp( uint16_t connHandle, attWriteReq_t *pR
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -854,8 +854,8 @@ extern HCI_StatusCodes_t GATT_WriteNoRsp( uint16_t connHandle, attWriteReq_t *pR
  * @param   connHandle - connection to use
  * @param   pReq - pointer to command to be sent
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_SignedWriteNoRsp( uint16_t connHandle, attWriteReq_t *pReq );
 
@@ -875,14 +875,14 @@ extern HCI_StatusCodes_t GATT_SignedWriteNoRsp( uint16_t connHandle, attWriteReq
  * the new characteristic.
  *
  * @par Corresponding Events:
- * If the return status from this function is @ref SUCCESS, the calling
+ * If the return status from this function is @ref bleSUCCESS, the calling
  * application task will receive a @ref GATT_MSG_EVENT message with method:
  * - @ref ATT_WRITE_RSP if the procedure is successfull
  * - @ref ATT_ERROR_RSP of type @ref attErrorRsp_t ,if an error occurred on the server
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -891,13 +891,13 @@ extern HCI_StatusCodes_t GATT_SignedWriteNoRsp( uint16_t connHandle, attWriteReq
  *  @ref bleTimeout : Previous transaction timed out.
  *
  * @note This sub-procedure is complete when either @ref ATT_WRITE_RSP
- * (with @ref SUCCESS or @ref bleTimeout status) or @ref ATT_ERROR_RSP (with
- * @ref SUCCESS status) is received by the calling task.
+ * (with @ref bleSUCCESS or @ref bleTimeout status) or @ref ATT_ERROR_RSP (with
+ * @ref bleSUCCESS status) is received by the calling task.
  *
  * @param   para @ref GattWriteCharValue_t struct containing write request info
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_WriteCharValue(GattWriteCharValue_t *para);
 /**
@@ -912,7 +912,7 @@ extern HCI_StatusCodes_t GATT_WriteCharValue(GattWriteCharValue_t *para);
  * used to perform this sub-procedure.
  *
  * @par Corresponding Events:
- * If the return status from this function is @ref SUCCESS, the calling
+ * If the return status from this function is @ref bleSUCCESS, the calling
  * application task will receive a @ref GATT_MSG_EVENT message with method:
  * - @ref ATT_WRITE_RSP and @ref ATT_EXECUTE_WRITE_RSP if the procedure is successfull
  * - @ref ATT_EXECUTE_WRITE_RSP of type
@@ -920,7 +920,7 @@ extern HCI_StatusCodes_t GATT_WriteCharValue(GattWriteCharValue_t *para);
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -929,8 +929,8 @@ extern HCI_StatusCodes_t GATT_WriteCharValue(GattWriteCharValue_t *para);
  *  @ref bleTimeout : Previous transaction timed out.
  *
  * @note This sub-procedure is complete when either @ref ATT_PREPARE_WRITE_RSP
- * (with @ref bleTimeout status), @ref ATT_EXECUTE_WRITE_RSP (with @ref SUCCESS
- * or @ref bleTimeout status), or @ref ATT_ERROR_RSP (with @ref SUCCESS status)
+ * (with @ref bleTimeout status), @ref ATT_EXECUTE_WRITE_RSP (with @ref bleSUCCESS
+ * or @ref bleTimeout status), or @ref ATT_ERROR_RSP (with @ref bleSUCCESS status)
  * is received by the calling task.
  *
  * @warning The 'pReq->pValue' pointer will be freed when the sub-procedure is complete.
@@ -938,8 +938,8 @@ extern HCI_StatusCodes_t GATT_WriteCharValue(GattWriteCharValue_t *para);
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_WriteLongCharValue( uint16_t connHandle, attPrepareWriteReq_t *pReq);
 
@@ -954,14 +954,14 @@ extern HCI_StatusCodes_t GATT_WriteLongCharValue( uint16_t connHandle, attPrepar
  * parameter set to the characteristic descriptor handle.
  *
  * @par Corresponding Events:
- * If the return status from this function is @ref SUCCESS, the calling
+ * If the return status from this function is @ref bleSUCCESS, the calling
  * application task will receive a @ref GATT_MSG_EVENT message with method:
  * - @ref ATT_READ_RSP of type attReadRsp_t if the procedure is successfull
  * - @ref ATT_ERROR_RSP of type @ref attErrorRsp_t ,if an error occurred on the server
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -970,14 +970,14 @@ extern HCI_StatusCodes_t GATT_WriteLongCharValue( uint16_t connHandle, attPrepar
  *  @ref bleTimeout : Previous transaction timed out.
  *
  * @note This sub-procedure is complete when either @ref ATT_READ_RSP
- * (with @ref SUCCESS or @ref bleTimeout status) or @ref ATT_ERROR_RSP (with
- * @ref SUCCESS status) is received by the calling task.
+ * (with @ref bleSUCCESS or @ref bleTimeout status) or @ref ATT_ERROR_RSP (with
+ * @ref bleSUCCESS status) is received by the calling task.
  *
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_ReadCharDesc( uint16_t connHandle, attReadReq_t *pReq);
 
@@ -996,14 +996,14 @@ extern HCI_StatusCodes_t GATT_ReadCharDesc( uint16_t connHandle, attReadReq_t *p
  *  within the characteristic descriptor to be read.
  *
  * @par Corresponding Events:
- * If the return status from this function is @ref SUCCESS, the calling
+ * If the return status from this function is @ref bleSUCCESS, the calling
  * application task will receive a @ref GATT_MSG_EVENT message with method:
  * - @ref ATT_READ_BLOB_RSP of type attReadBlobRsp_t if the procedure is successfull
  * - @ref ATT_ERROR_RSP of type @ref attErrorRsp_t ,if an error occurred on the server
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -1013,13 +1013,13 @@ extern HCI_StatusCodes_t GATT_ReadCharDesc( uint16_t connHandle, attReadReq_t *p
  *
  * @note This sub-procedure is complete when either @ref ATT_READ_BLOB_RSP
  * (with @ref bleProcedureComplete or @ref bleTimeout status) or @ref ATT_ERROR_RSP
- * (with @ref SUCCESS status) is received by the calling task.
+ * (with @ref bleSUCCESS status) is received by the calling task.
  *
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_ReadLongCharDesc( uint16_t connHandle, attReadBlobReq_t *pReq);
 
@@ -1036,14 +1036,14 @@ extern HCI_StatusCodes_t GATT_ReadLongCharDesc( uint16_t connHandle, attReadBlob
  * set to the new characteristic descriptor value.
  *
  * @par Corresponding Events:
- * If the return status from this function is @ref SUCCESS, the calling
+ * If the return status from this function is @ref bleSUCCESS, the calling
  * application task will receive a @ref GATT_MSG_EVENT message with method:
  * - @ref ATT_WRITE_RSP if the procedure is successfull
  * - @ref ATT_ERROR_RSP of type @ref attErrorRsp_t ,if an error occurred on the server
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -1052,14 +1052,14 @@ extern HCI_StatusCodes_t GATT_ReadLongCharDesc( uint16_t connHandle, attReadBlob
  *  @ref bleTimeout : Previous transaction timed out.
  *
  * @note This sub-procedure is complete when either @ref ATT_WRITE_RSP
- * (with @ref SUCCESS or @ref bleTimeout status) or @ref ATT_ERROR_RSP (with
- * @ref SUCCESS status) is received by the calling task.
+ * (with @ref bleSUCCESS or @ref bleTimeout status) or @ref ATT_ERROR_RSP (with
+ * @ref bleSUCCESS status) is received by the calling task.
  *
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_WriteCharDesc( uint16_t connHandle, attWriteReq_t *pReq);
 
@@ -1075,7 +1075,7 @@ extern HCI_StatusCodes_t GATT_WriteCharDesc( uint16_t connHandle, attWriteReq_t 
  * used to perform this sub-procedure.
  *
  * @par Corresponding Events:
- * If the return status from this function is @ref SUCCESS, the calling
+ * If the return status from this function is @ref bleSUCCESS, the calling
  * application task will receive a @ref GATT_MSG_EVENT message with method:
  * - @ref ATT_PREPARE_WRITE_RSP of type @ref attPrepareWriteRsp_t and
  * @ref ATT_EXECUTE_WRITE_RSP if the procedure is successfull
@@ -1083,7 +1083,7 @@ extern HCI_StatusCodes_t GATT_WriteCharDesc( uint16_t connHandle, attWriteReq_t 
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Request was queued successfully.
+ *  @ref bleSUCCESS : Request was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -1092,8 +1092,8 @@ extern HCI_StatusCodes_t GATT_WriteCharDesc( uint16_t connHandle, attWriteReq_t 
  *  @ref bleTimeout : Previous transaction timed out.
  *
  * @note This sub-procedure is complete when either @ref ATT_PREPARE_WRITE_RSP
- * (with @ref bleTimeout status), @ref ATT_EXECUTE_WRITE_RSP (with @ref SUCCESS
- * or @ref bleTimeout status), or @ref ATT_ERROR_RSP (with @ref SUCCESS status)
+ * (with @ref bleTimeout status), @ref ATT_EXECUTE_WRITE_RSP (with @ref bleSUCCESS
+ * or @ref bleTimeout status), or @ref ATT_ERROR_RSP (with @ref bleSUCCESS status)
  * is received by the calling task.
  *
  * @warning The 'pReq->pValue' pointer will be freed when the sub-procedure
@@ -1102,8 +1102,8 @@ extern HCI_StatusCodes_t GATT_WriteCharDesc( uint16_t connHandle, attWriteReq_t 
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GATT_WriteLongCharDesc( uint16_t connHandle, attPrepareWriteReq_t *pReq);
 
@@ -1123,15 +1123,15 @@ extern HCI_StatusCodes_t GATT_WriteLongCharDesc( uint16_t connHandle, attPrepare
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS
+ *  @ref bleSUCCESS
  *  @ref INVALIDPARAMETER
  *  @ref bleMemAllocError
  *
  * @param   connHandle - connection handle.
  * @param   mtuSize - new MTU size.
  *
- * @return SUCCESS Stack was notified of updated MTU
- * @return FAILURE invalid MTU size or connection not found
+ * @return bleSUCCESS Stack was notified of updated MTU
+ * @return bleFAILURE invalid MTU size or connection not found
  */
 
 extern HCI_StatusCodes_t GATT_UpdateMTU( uint16_t connHandle, uint16_t mtuSize );
@@ -1152,16 +1152,16 @@ extern HCI_StatusCodes_t GATT_UpdateMTU( uint16_t connHandle, uint16_t mtuSize )
  * @ref ATT_HandleValueInd is used in this sub-procedure.
  *
  * @par Corresponding Events
- * If the return status from this function is @ref SUCCESS and the GATT client
+ * If the return status from this function is @ref bleSUCCESS and the GATT client
  * succesfully sends an acknowledgement,  the calling
  * application task will receive a @ref GATT_MSG_EVENT message with method:
  * @ref ATT_HANDLE_VALUE_CFM of type @ref attHandleValueInd_t , with
- * status @ref SUCCESS or @ref bleTimeout . At this point, the procedure
+ * status @ref bleSUCCESS or @ref bleTimeout . At this point, the procedure
  * is complete.
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Indication was queued successfully.
+ *  @ref bleSUCCESS : Indication was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -1183,8 +1183,8 @@ extern HCI_StatusCodes_t GATT_UpdateMTU( uint16_t connHandle, uint16_t mtuSize )
  *                          0x02: Secure Connections authenticated
  * @param   taskId - task to be notified of response
  *
- * @return SUCCESS Stack was notified of updated MTU
- * @return FAILURE invalid MTU size or connection not found
+ * @return bleSUCCESS Stack was notified of updated MTU
+ * @return bleFAILURE invalid MTU size or connection not found
  */
 extern HCI_StatusCodes_t GATT_Indication( uint16_t connHandle, attHandleValueInd_t *pInd,
                                   uint8_t authenticated);
@@ -1201,7 +1201,7 @@ extern HCI_StatusCodes_t GATT_Indication( uint16_t connHandle, attHandleValueInd
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- *  @ref SUCCESS : Notification was queued successfully.
+ *  @ref bleSUCCESS : Notification was queued successfully.
  *  @ref INVALIDPARAMETER
  *  @ref MSG_BUFFER_NOT_AVAIL
  *  @ref bleNotConnected
@@ -1224,8 +1224,8 @@ extern HCI_StatusCodes_t GATT_Indication( uint16_t connHandle, attHandleValueInd
  *                          0x01: LE Legacy authenticated
  *                          0x02: Secure Connections authenticated
  *
- * @return SUCCESS Stack was notified of updated MTU
- * @return FAILURE invalid MTU size or connection not found
+ * @return bleSUCCESS Stack was notified of updated MTU
+ * @return bleFAILURE invalid MTU size or connection not found
  */
 extern HCI_StatusCodes_t GATT_Notification( uint16_t connHandle, attHandleValueNoti_t *pNoti,
                                     uint8_t authenticated );
@@ -1249,8 +1249,8 @@ extern HCI_StatusCodes_t GATT_Notification( uint16_t connHandle, attHandleValueN
  *                      service attribute)
  * @param   encKeySize - The minimum encryption key size (in octets) required by the service.
  *
- * @return SUCCESS Stack was notified of updated MTU
- * @return FAILURE invalid MTU size or connection not found
+ * @return bleSUCCESS Stack was notified of updated MTU
+ * @return bleFAILURE invalid MTU size or connection not found
  */
 extern HCI_StatusCodes_t GATT_AddService( uint16_t uuid, uint16_t numAttrs,
                                     uint8_t encKeySize );
@@ -1266,8 +1266,8 @@ extern HCI_StatusCodes_t GATT_AddService( uint16_t uuid, uint16_t numAttrs,
  *
  * @param   handle - The handle of the service to be deleted
  *
- * @return SUCCESS Stack was notified of updated MTU
- * @return FAILURE invalid MTU size or connection not found
+ * @return bleSUCCESS Stack was notified of updated MTU
+ * @return bleFAILURE invalid MTU size or connection not found
  */
 extern HCI_StatusCodes_t GATT_DelService(uint16_t handle);
 

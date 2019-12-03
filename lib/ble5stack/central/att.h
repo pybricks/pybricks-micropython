@@ -4,7 +4,7 @@
  Target Device: cc13x2_26x2
 
  ******************************************************************************
- 
+
  Copyright (c) 2009-2019, Texas Instruments Incorporated
  All rights reserved.
 
@@ -37,8 +37,8 @@
  contact Texas Instruments Incorporated at www.TI.com.
 
  ******************************************************************************
- 
- 
+
+
  *****************************************************************************/
 
 /**
@@ -1077,7 +1077,7 @@ extern bStatus_t ATT_ParseHandleValueCfm( uint8_t *pParams, uint16_t len, attMsg
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return  @ref SUCCESS : Request was sent successfully.
+ * @return  @ref bleSUCCESS : Request was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid request field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1091,7 +1091,7 @@ extern bStatus_t ATT_ExchangeMTUReq( uint16_t connHandle, attExchangeMTUReq_t *p
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return  @ref SUCCESS : Request was sent successfully.
+ * @return  @ref bleSUCCESS : Request was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid request field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1105,7 +1105,7 @@ extern bStatus_t ATT_FindInfoReq( uint16_t connHandle, attFindInfoReq_t *pReq );
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return  @ref SUCCESS : Request was sent successfully.
+ * @return  @ref bleSUCCESS : Request was sent successfully.
  *          @ref INVALIDPARAMETER : Invalid request field.
  *          @ref MSG_BUFFER_NOT_AVAIL
  *          @ref bleNotConnected
@@ -1119,7 +1119,7 @@ extern bStatus_t ATT_FindByTypeValueReq( uint16_t connHandle, attFindByTypeValue
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return  @ref SUCCESS : Request was sent successfully.
+ * @return  @ref bleSUCCESS : Request was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid request field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1133,7 +1133,7 @@ extern bStatus_t ATT_ReadByTypeReq( uint16_t connHandle, attReadByTypeReq_t *pRe
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return  @ref SUCCESS : Request was sent successfully.
+ * @return  @ref bleSUCCESS : Request was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid request field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1147,7 +1147,7 @@ extern bStatus_t ATT_ReadReq( uint16_t connHandle, attReadReq_t *pReq );
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return  @ref SUCCESS : Request was sent successfully.
+ * @return  @ref bleSUCCESS : Request was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid request field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1161,7 +1161,7 @@ extern bStatus_t ATT_ReadBlobReq( uint16_t connHandle, attReadBlobReq_t *pReq );
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return  @ref SUCCESS : Request was sent successfully.
+ * @return  @ref bleSUCCESS : Request was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid request field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1175,7 +1175,7 @@ extern bStatus_t ATT_ReadMultiReq( uint16_t connHandle, attReadMultiReq_t *pReq 
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return  @ref SUCCESS : Request was sent successfully.
+ * @return  @ref bleSUCCESS : Request was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid request field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1189,7 +1189,7 @@ extern bStatus_t ATT_ReadByGrpTypeReq( uint16_t connHandle, attReadByGrpTypeReq_
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return  @ref SUCCESS : Request was sent successfully.
+ * @return  @ref bleSUCCESS : Request was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid request field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1204,7 +1204,7 @@ extern bStatus_t ATT_WriteReq( uint16_t connHandle, attWriteReq_t *pReq );
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return  @ref SUCCESS : Request was sent successfully.
+ * @return  @ref bleSUCCESS : Request was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid request field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1218,7 +1218,7 @@ extern bStatus_t ATT_PrepareWriteReq( uint16_t connHandle, attPrepareWriteReq_t 
  * @param   connHandle - connection to use
  * @param   pReq - pointer to request to be sent
  *
- * @return  @ref SUCCESS : Request was sent successfully.
+ * @return  @ref bleSUCCESS : Request was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid request field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1231,7 +1231,7 @@ extern bStatus_t ATT_ExecuteWriteReq( uint16_t connHandle, attExecuteWriteReq_t 
  *
  * @param   connHandle - connection to use
  *
- * @return  @ref SUCCESS : Confirmation was sent successfully.
+ * @return  @ref bleSUCCESS : Confirmation was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid confirmation field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1250,7 +1250,7 @@ extern bStatus_t ATT_HandleValueCfm( uint16_t connHandle );
  * @param   connHandle - connection to use
  * @param   pRsp - pointer to error response to be sent
  *
- * @return  @ref SUCCESS : Response was sent successfully.
+ * @return  @ref bleSUCCESS : Response was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid response field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1264,7 +1264,7 @@ extern bStatus_t ATT_ErrorRsp( uint16_t connHandle, attErrorRsp_t *pRsp );
  * @param   connHandle - connection to use
  * @param   pRsp - pointer to request to be sent
  *
- * @return  @ref SUCCESS : Response was sent successfully.
+ * @return  @ref bleSUCCESS : Response was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid response field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1278,7 +1278,7 @@ extern bStatus_t ATT_ExchangeMTURsp( uint16_t connHandle, attExchangeMTURsp_t *p
  * @param   connHandle - connection to use
  * @param   pRsp - pointer to response to be sent
  *
- * @return  @ref SUCCESS : Response was sent successfully.
+ * @return  @ref bleSUCCESS : Response was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid response field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1292,7 +1292,7 @@ extern bStatus_t ATT_FindInfoRsp( uint16_t connHandle, attFindInfoRsp_t *pRsp );
  * @param   connHandle - connection to use
  * @param   pRsp - pointer to response to be sent
  *
- * @return  @ref SUCCESS : Response was sent successfully.
+ * @return  @ref bleSUCCESS : Response was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid response field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1306,7 +1306,7 @@ extern bStatus_t ATT_FindByTypeValueRsp( uint16_t connHandle, attFindByTypeValue
  * @param   connHandle - connection to use
  * @param   pRsp - pointer to response to be sent
  *
- * @return  @ref SUCCESS : Response was sent successfully.
+ * @return  @ref bleSUCCESS : Response was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid response field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1320,7 +1320,7 @@ extern bStatus_t ATT_ReadByTypeRsp( uint16_t connHandle, attReadByTypeRsp_t *pRs
  * @param   connHandle - connection to use
  * @param   pRsp - pointer to response to be sent
  *
- * @return  @ref SUCCESS : Response was sent successfully.
+ * @return  @ref bleSUCCESS : Response was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid response field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1334,7 +1334,7 @@ extern bStatus_t ATT_ReadRsp( uint16_t connHandle, attReadRsp_t *pRsp );
  * @param   connHandle - connection to use
  * @param   pRsp - pointer to response to be sent
  *
- * @return  @ref SUCCESS : Response was sent successfully.
+ * @return  @ref bleSUCCESS : Response was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid response field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1348,7 +1348,7 @@ extern bStatus_t ATT_ReadBlobRsp( uint16_t connHandle, attReadBlobRsp_t *pRsp );
  * @param   connHandle - connection to use
  * @param   pRsp - pointer to response to be sent
  *
- * @return  @ref SUCCESS : Response was sent successfully.
+ * @return  @ref bleSUCCESS : Response was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid response field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1362,7 +1362,7 @@ extern bStatus_t ATT_ReadMultiRsp( uint16_t connHandle, attReadMultiRsp_t *pRsp 
  * @param   connHandle - connection to use
  * @param   pRsp - pointer to response to be sent
  *
- * @return  @ref SUCCESS : Response was sent successfully.
+ * @return  @ref bleSUCCESS : Response was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid response field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1375,7 +1375,7 @@ extern bStatus_t ATT_ReadByGrpTypeRsp( uint16_t connHandle, attReadByGrpTypeRsp_
  *
  * @param   connHandle - connection to use
  *
- * @return  @ref SUCCESS : Response was sent successfully.
+ * @return  @ref bleSUCCESS : Response was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid response field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1389,7 +1389,7 @@ extern bStatus_t ATT_WriteRsp( uint16_t connHandle );
  * @param   connHandle - connection to use
  * @param   pRsp - pointer to response to be sent
  *
- * @return  @ref SUCCESS : Response was sent successfully.
+ * @return  @ref bleSUCCESS : Response was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid response field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1402,7 +1402,7 @@ extern bStatus_t ATT_PrepareWriteRsp( uint16_t connHandle, attPrepareWriteRsp_t 
  *
  * @param   connHandle - connection to use
  *
- * @return  @ref SUCCESS : Response was sent successfully.
+ * @return  @ref bleSUCCESS : Response was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid response field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1416,7 +1416,7 @@ extern bStatus_t ATT_ExecuteWriteRsp( uint16_t connHandle );
  * @param   connHandle - connection to use
  * @param   pNoti - pointer to notification to be sent
  *
- * @return  @ref SUCCESS : Notification was sent successfully.
+ * @return  @ref bleSUCCESS : Notification was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid notification field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1430,7 +1430,7 @@ extern bStatus_t ATT_HandleValueNoti( uint16_t connHandle, attHandleValueNoti_t 
  * @param   connHandle - connection to use
  * @param   pInd - pointer to indication to be sent
  *
- * @return  @ref SUCCESS : Indication was sent successfully.
+ * @return  @ref bleSUCCESS : Indication was sent successfully.
  * @return  @ref INVALIDPARAMETER : Invalid indication field.
  * @return  @ref MSG_BUFFER_NOT_AVAIL
  * @return  @ref bleNotConnected
@@ -1448,8 +1448,8 @@ extern bStatus_t ATT_HandleValueInd( uint16_t connHandle, attHandleValueInd_t *p
  * @param   connHandle - connection handle.
  * @param   MTU - new MTU.
  *
- * @return  @ref SUCCESS : MTU was updated successfully.
- * @return  @ref FAILURE : MTU wasn't updated.
+ * @return  @ref bleSUCCESS : MTU was updated successfully.
+ * @return  @ref bleFAILURE : MTU wasn't updated.
  */
 extern uint8_t ATT_UpdateMTU( uint16_t connHandle, uint16_t MTU );
 

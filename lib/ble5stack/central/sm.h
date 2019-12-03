@@ -4,7 +4,7 @@
  Target Device: cc13x2_26x2
 
  ******************************************************************************
- 
+
  Copyright (c) 2009-2019, Texas Instruments Incorporated
  All rights reserved.
 
@@ -37,8 +37,8 @@
  contact Texas Instruments Incorporated at www.TI.com.
 
  ******************************************************************************
- 
- 
+
+
  *****************************************************************************/
 
 /**
@@ -133,7 +133,7 @@ extern "C"
  */
 typedef struct
 {
-  uint8_t newKey[KEYLEN];       //!< New key value - if status is SUCCESS
+  uint8_t newKey[KEYLEN];       //!< New key value - if status is bleSUCCESS
 } smNewRandKeyEvent_t;
 
 /**

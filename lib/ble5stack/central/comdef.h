@@ -102,8 +102,8 @@
 ///// @endcond // NODOC
 //
 ///*** Generic Status Return Values ***/
-////#define SUCCESS                   0x00 //!< SUCCESS
-////#define FAILURE                   0x01 //!< Failure
+////#define bleSUCCESS                   0x00 //!< bleSUCCESS
+////#define bleFAILURE                   0x01 //!< Failure
 ////#define INVALIDPARAMETER          0x02 //!< Invalid Parameter
 ////#define INVALID_TASK              0x03 //!< Invalid Task
 ////#define MSG_BUFFER_NOT_AVAIL      0x04 //!< No HCI Buffer is Available

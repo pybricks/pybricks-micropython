@@ -577,7 +577,7 @@ typedef uint32_t GapScan_EventMask_t;
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS
+ * @ref bleSUCCESS
  * @ref bleInvalidRange
  *
  * @param primPhys Primary advertising channel PHY(s). Individual values of
@@ -587,8 +587,8 @@ typedef uint32_t GapScan_EventMask_t;
  *        window
  * @param window Scanning window
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 HCI_StatusCodes_t GapScan_setPhyParams(uint8_t primPhys, GapScan_ScanType_t type,
                               uint16_t interval, uint16_t window);
@@ -601,7 +601,7 @@ HCI_StatusCodes_t GapScan_setPhyParams(uint8_t primPhys, GapScan_ScanType_t type
  * The host will send the CommandStatus Event to return the parameter value
  * in question.
  * The following can be received from the CommandStatus Event:
- * @ref SUCCESS
+ * @ref bleSUCCESS
  * @ref bleInvalidRange
  * @ref INVALIDPARAMETER
  *
@@ -614,8 +614,8 @@ HCI_StatusCodes_t GapScan_setPhyParams(uint8_t primPhys, GapScan_ScanType_t type
  *        @ref GapScan_PrimPhy_t.
 
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 HCI_StatusCodes_t GapScan_getPhyParams(uint8_t primPhy);
 
@@ -624,7 +624,7 @@ HCI_StatusCodes_t GapScan_getPhyParams(uint8_t primPhy);
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- * @return @ref SUCCESS
+ * @return @ref bleSUCCESS
  * @return @ref bleInvalidRange
  * @return @ref INVALIDPARAMETER
  * @return @ref bleIncorrectMode
@@ -632,8 +632,8 @@ HCI_StatusCodes_t GapScan_getPhyParams(uint8_t primPhy);
  * @param paramId parameter ID
  * @param pValue pointer to the value to set the parameter with
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 HCI_StatusCodes_t GapScan_setParam(GapScan_ParamId_t paramId, void* pValue);
 
@@ -643,13 +643,13 @@ HCI_StatusCodes_t GapScan_setParam(GapScan_ParamId_t paramId, void* pValue);
  * The host will send the CommandStatus Event to return the parameter value
  * in question.
  * The following can be received from the CommandStatus Event:
- * @ref SUCCESS
+ * @ref bleSUCCESS
  * @ref bleInvalidRange
  * @ref INVALIDPARAMETER
  *
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 HCI_StatusCodes_t GapScan_getParam(GapScan_ParamId_t paramId);
 
@@ -675,7 +675,7 @@ HCI_StatusCodes_t GapScan_setEventMask(GapScan_EventMask_t eventMask);
  *
  * The host will send the CommandStatus Event to indicate the scan has started
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS
+ * @ref bleSUCCESS
  * @ref bleNotReady
  * @ref bleInvalidRange
  * @ref bleMemAllocError
@@ -689,8 +689,8 @@ HCI_StatusCodes_t GapScan_setEventMask(GapScan_EventMask_t eventMask);
  *        of which is up to maxNumReport) will be generated and come with
  *        @ref GAP_EVT_SCAN_DISABLED.
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 HCI_StatusCodes_t GapScan_Enable(uint16_t period, uint16_t duration,
                     uint8_t maxNumReport);
@@ -700,12 +700,12 @@ HCI_StatusCodes_t GapScan_Enable(uint16_t period, uint16_t duration,
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS
- * @ref FAILURE
+ * @ref bleSUCCESS
+ * @ref bleFAILURE
  * @ref bleIncorrectMode
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 HCI_StatusCodes_t GapScan_disable(void);
 
@@ -717,14 +717,14 @@ HCI_StatusCodes_t GapScan_disable(void);
  *
  * The host will send the CommandStatus Event to return the advertising report.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS
+ * @ref bleSUCCESS
  * @ref bleInvalidRange
  * @ref INVALIDPARAMETER
  *
  * @param rptIdx Index of the advertising report in the list
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 HCI_StatusCodes_t GapScan_getAdvReport(uint8_t rptIdx);
 

@@ -4,7 +4,7 @@
  Target Device: cc13x2_26x2
 
  ******************************************************************************
- 
+
  Copyright (c) 2009-2019, Texas Instruments Incorporated
  All rights reserved.
 
@@ -37,8 +37,8 @@
  contact Texas Instruments Incorporated at www.TI.com.
 
  ******************************************************************************
- 
- 
+
+
  *****************************************************************************/
 
 /**
@@ -237,7 +237,7 @@ typedef struct
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS
+ * @ref bleSUCCESS
  * @ref bleInvalidRange
  *
  * @param phys connection channel PHY(s): Individual PHY values of
@@ -245,8 +245,8 @@ typedef struct
  * @param paramId parameter ID
  * @param value parameter value
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 HCI_StatusCodes_t GapInit_setPhyParam(uint8_t phys, GapInit_PhyParamId_t paramId,
                              uint16_t value);
@@ -259,15 +259,15 @@ HCI_StatusCodes_t GapInit_setPhyParam(uint8_t phys, GapInit_PhyParamId_t paramId
  * The host will send the CommandStatus Event to return the parameter value
  * in question.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS
+ * @ref bleSUCCESS
  * @ref INVALIDPARAMETER
  * @ref bleInvalidRange
  *
  * @param phy connection channel PHY: shall be one from @ref GapInit_InitPhy_t.
  * @param paramId parameter ID
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 HCI_StatusCodes_t GapInit_getPhyParam(uint8_t phy, GapInit_PhyParamId_t paramId);
 
@@ -278,7 +278,7 @@ HCI_StatusCodes_t GapInit_getPhyParam(uint8_t phy, GapInit_PhyParamId_t paramId)
  * process has started successfully. If a connection is formed, the
  * GAP_LinkEstablished event will be returned.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS
+ * @ref bleSUCCESS
  * @ref bleNotReady
  * @ref bleInvalidRange
  * @ref bleMemAllocError
@@ -293,8 +293,8 @@ HCI_StatusCodes_t GapInit_getPhyParam(uint8_t phy, GapInit_PhyParamId_t paramId)
  *        0, the initiator will keep trying to get a chance to make a connection
  *        until @ref GapInit_cancelConnect is called.
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 HCI_StatusCodes_t GapInit_connect(GAP_Peer_Addr_Types_t peerAddrType,
                          uint8_t* pPeerAddress, uint8_t phys, uint16_t timeout);
@@ -307,7 +307,7 @@ HCI_StatusCodes_t GapInit_connect(GAP_Peer_Addr_Types_t peerAddrType,
  * process has started successfully. If a connection is formed, the
  * GAP_LinkEstablished event will be returned.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS
+ * @ref bleSUCCESS
  * @ref bleNotReady
  * @ref bleInvalidRange
  * @ref bleMemAllocError
@@ -320,8 +320,8 @@ HCI_StatusCodes_t GapInit_connect(GAP_Peer_Addr_Types_t peerAddrType,
  *        0, the initiator will keep trying to get a chance to make a connection
  *        until @ref GapInit_cancelConnect is called.
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 HCI_StatusCodes_t GapInit_connectWl(uint8_t phys, uint16_t timeout);
 
@@ -331,12 +331,12 @@ HCI_StatusCodes_t GapInit_connectWl(uint8_t phys, uint16_t timeout);
  * The host will send the CommandStatus Event to indicate whether the connect
  * cancel process has started successfully. If the cancel completes, the
  * GAP_ConnectingCancelled event will be returned.
- * @ref SUCCESS
+ * @ref bleSUCCESS
  * @ref bleNotReady
  * @ref bleIncorrectMode
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 HCI_StatusCodes_t GapInit_cancelConnect(void);
 

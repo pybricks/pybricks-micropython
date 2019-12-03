@@ -69,19 +69,19 @@
 /* HCI Status return types  */
 typedef enum
 {
-    SUCCESS                       = 0x00,
-    FAILURE                       = 0x01,
-    InvalidParameter              = 0x02,
-    InvalidTask                   = 0x03,
-    MsgBufferNotAvailable         = 0x04,
-    InvalidMsgPointer             = 0x05,
-    InvalidEventId                = 0x06,
-    InvalidInteruptId             = 0x07,
-    NoTimerAvail                  = 0x08,
-    NVItemUnInit                  = 0x09,
-    NVOpFailed                    = 0x0A,
-    InvalidMemSize                = 0x0B,
-    ErrorCommandDisallowed        = 0x0C,
+    bleSUCCESS                    = 0x00,
+    bleFAILURE                    = 0x01,
+    bleInvalidParameter           = 0x02,
+    bleInvalidTask                = 0x03,
+    bleMsgBufferNotAvailable      = 0x04,
+    bleInvalidMsgPointer          = 0x05,
+    bleInvalidEventId             = 0x06,
+    bleInvalidInteruptId          = 0x07,
+    bleNoTimerAvail               = 0x08,
+    bleNVItemUnInit               = 0x09,
+    bleNVOpFailed                 = 0x0A,
+    bleInvalidMemSize             = 0x0B,
+    bleErrorCommandDisallowed     = 0x0C,
 
     bleNotReady                   = 0x10,   // Not ready to perform task
     bleAlreadyInRequestedMode     = 0x11,   // Already performing that task

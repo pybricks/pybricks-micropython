@@ -1108,11 +1108,11 @@ typedef struct
  * @ref GAP_LINK_ESTABLISHED_EVENT message format.
  *
  * This message is sent to the app when a link is established (with status
- * SUCCESS). For a Central, this is after @ref GapInit_connect or
+ * bleSUCCESS). For a Central, this is after @ref GapInit_connect or
  * @ref GapInit_connectWl completes successfully. For a Peripheral, this message
  * is sent to indicate that a link has been created.
  *
- * A status of something other than SUCCESS is possible in the following cases
+ * A status of something other than bleSUCCESS is possible in the following cases
  * - LL_STATUS_ERROR_UNKNOWN_CONN_HANDLE (0x02): As a master, connection
  * creation has been canceled.
  * - LL_STATUS_ERROR_DIRECTED_ADV_TIMEOUT (0x3C): As a slave, directed
@@ -1445,7 +1445,7 @@ typedef void (*pfnGapConnEvtCB_t)
  * Event. When initialization task is complete, the host will send the
  * GAP_DeviceInitDone event.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS : initialization started
+ * @ref bleSUCCESS : initialization started
  * @ref INVALIDPARAMETER : invalid profile role, role combination,
  *         or invalid Random Static Address,
  * @ref bleIncorrectMode : initialization has already occurred
@@ -1462,8 +1462,8 @@ typedef void (*pfnGapConnEvtCB_t)
  *        is @ref ADDRMODE_RANDOM or @ref ADDRMODE_RP_WITH_RANDOM_ID and can
  *        not be NULL in these cases. Ignored for other address types.
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  *
  */
 extern HCI_StatusCodes_t GAP_deviceInit(uint8_t profileRole,
@@ -1477,14 +1477,14 @@ extern HCI_StatusCodes_t GAP_deviceInit(uint8_t profileRole,
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS
+ * @ref bleSUCCESS
  * @ref INVALIDPARAMETER
  *
  * @param paramID parameter ID: @ref Gap_ParamIDs_t
  * @param paramValue new param value
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GAP_SetParamValue(uint8_t paramID, uint16_t paramValue);
 
@@ -1498,8 +1498,8 @@ extern HCI_StatusCodes_t GAP_SetParamValue(uint8_t paramID, uint16_t paramValue)
  *
  * @param paramID parameter ID: @ref Gap_ParamIDs_t
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GAP_GetParamValue(uint8_t paramID);
 
@@ -1517,7 +1517,7 @@ extern HCI_StatusCodes_t GAP_GetParamValue(uint8_t paramID);
  * Event. When the connection is terminated, the GAP_LinkTerminated Event
  * will be generated.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS : termination request sent to stack
+ * @ref bleSUCCESS : termination request sent to stack
  * @ref bleIncorrectMode : No Link to terminate
  * @ref bleInvalidTaskID : not app that established link
  *
@@ -1525,8 +1525,8 @@ extern HCI_StatusCodes_t GAP_GetParamValue(uint8_t paramID);
  *        or @ref LINKDB_CONNHANDLE_ALL
  * @param reason terminate reason.
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 HCI_StatusCodes_t GAP_TerminateLinkReq(uint16_t connectionHandle, uint8_t reason);
 
@@ -1547,7 +1547,7 @@ HCI_StatusCodes_t GAP_TerminateLinkReq(uint16_t connectionHandle, uint8_t reason
  * Event. When the connection is terminated, the GAP_LinkParamUpdate Event
  * will be generated.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS : update request sent to stack
+ * @ref bleSUCCESS : update request sent to stack
  * @ref INVALIDPARAMETER : one of the parameters were invalid
  * @ref bleIncorrectMode : invalid profile role
  * @ref bleAlreadyInRequestedMode : already updating link parameters
@@ -1555,8 +1555,8 @@ HCI_StatusCodes_t GAP_TerminateLinkReq(uint16_t connectionHandle, uint8_t reason
  *
  * @param pParams link update parameters
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GAP_UpdateLinkParamReq(gapUpdateLinkParamReq_t *pParams);
 
@@ -1579,7 +1579,7 @@ extern HCI_StatusCodes_t GAP_UpdateLinkParamReq(gapUpdateLinkParamReq_t *pParams
  * Event. When the connection is terminated, the GAP_LinkParamUpdate Event
  * will be generated.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS : reply sent successfully
+ * @ref bleSUCCESS : reply sent successfully
  * @ref INVALIDPARAMETER : one of the parameters were invalid
  * @ref bleIncorrectMode : invalid profile role
  * @ref bleAlreadyInRequestedMode : already updating link parameters
@@ -1587,8 +1587,8 @@ extern HCI_StatusCodes_t GAP_UpdateLinkParamReq(gapUpdateLinkParamReq_t *pParams
  *
  * @param pParams local device's desired connection parameters.
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GAP_UpdateLinkParamReqReply(gapUpdateLinkParamReqReply_t *pParams);
 
@@ -1604,7 +1604,7 @@ extern HCI_StatusCodes_t GAP_UpdateLinkParamReqReply(gapUpdateLinkParamReqReply_
  *
  * When this command is received, the host will send the CommandStatu Event.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS
+ * @ref bleSUCCESS
  * @ref INVALIDPARAMETER
  * @ref bleInvalidRange NULL pointer was passed
  * @ref bleIncorrectMode Device is already initialized
@@ -1613,8 +1613,8 @@ extern HCI_StatusCodes_t GAP_UpdateLinkParamReqReply(gapUpdateLinkParamReqReply_
  * @param pValue pointer to parameter value. Cast based on the type defined in
  *        @ref Gap_configParamIds_t
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GapConfig_SetParameter(Gap_configParamIds_t param,
                                         void *pValue);
@@ -1643,24 +1643,24 @@ extern HCI_StatusCodes_t GapConfig_SetParameter(Gap_configParamIds_t param,
  * @ref GAP_AUTHENTICATION_FAILURE_EVT
  *
  * When this command is received, the host will send the CommandStatus Event.
- * When the pairing process is complete (either SUCCESS or Failure), a
+ * When the pairing process is complete (either bleSUCCESS or Failure), a
  * GAP_AuthenticationComplete will be generated. If a passkey is needed, a
  * GAP_PasskeyNeeded will be generated.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS : authentication request sent to stack
+ * @ref bleSUCCESS : authentication request sent to stack
  * @ref bleIncorrectMode : Not correct profile role
  * @ref INVALIDPARAMETER
  * @ref bleNotConnected
  * @ref bleAlreadyInRequestedMode
- * @ref FAILURE : not workable
+ * @ref bleFAILURE : not workable
  *
  * @param  pParams Authentication parameters
  * @param  pPairReq Enter these parameters if the Pairing Request was already
  *         received. <br>
  *         NULL, if waiting for Pairing Request or if initiating.
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GAP_Authenticate(gapAuthParams_t *pParams,
                                   gapPairingReq_t *pPairReq);
@@ -1678,7 +1678,7 @@ extern HCI_StatusCodes_t GAP_Authenticate(gapAuthParams_t *pParams,
  * When the existing pairing had ended, the GAP_AuthenticationComplete with
  * be generated.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS : function was successful
+ * @ref bleSUCCESS : function was successful
  * @ref bleMemAllocError : memory allocation error
  * @ref INVALIDPARAMETER : one of the parameters were invalid
  * @ref bleNotConnected : link not found
@@ -1687,8 +1687,8 @@ extern HCI_StatusCodes_t GAP_Authenticate(gapAuthParams_t *pParams,
  * @param  connectionHandle connection handle.
  * @param  reason Pairing Failed reason code.
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GAP_TerminateAuth(uint16_t connectionHandle, uint8_t reason);
 
@@ -1706,7 +1706,7 @@ extern HCI_StatusCodes_t GAP_TerminateAuth(uint16_t connectionHandle, uint8_t re
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS : will start pairing with this entry
+ * @ref bleSUCCESS : will start pairing with this entry
  * @ref bleIncorrectMode : Link not found
  * @ref INVALIDPARAMETER : passkey == NULL or passkey isn't formatted
  * properly
@@ -1715,8 +1715,8 @@ extern HCI_StatusCodes_t GAP_TerminateAuth(uint16_t connectionHandle, uint8_t re
  *        This string's range is "000000" to "999999"
  * @param connectionHandle connection handle.
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GAP_PasskeyUpdate(uint8_t *pPasskey, uint16_t connectionHandle);
 
@@ -1729,7 +1729,7 @@ extern HCI_StatusCodes_t GAP_PasskeyUpdate(uint8_t *pPasskey, uint16_t connectio
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS : will send
+ * @ref bleSUCCESS : will send
  * @ref bleNotConnected : Link not found
  * @ref bleIncorrectMode : wrong GAP role, must be a Peripheral Role
  *
@@ -1738,8 +1738,8 @@ extern HCI_StatusCodes_t GAP_PasskeyUpdate(uint8_t *pPasskey, uint16_t connectio
  *        Bits 0-1: bonding (0 - no bonding, 1 - bonding)
  *        Bit 3: Secure Connections
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GAP_SendSlaveSecurityRequest(uint16_t connectionHandle,
                                               uint8_t authReq);
@@ -1752,19 +1752,19 @@ extern HCI_StatusCodes_t GAP_SendSlaveSecurityRequest(uint16_t connectionHandle,
  *
  * When this command is received, the host will send the CommandStatus Event.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS
+ * @ref bleSUCCESS
  * @ref bleIncorrectMode : Not correct profile role
  * @ref INVALIDPARAMETER
  * @ref bleNotConnected
- * @ref FAILURE : not workable
+ * @ref bleFAILURE : not workable
  *
  * @param connectionHandle connection handle of the signing information
  * @param authenticated TRUE if the signing information is authenticated,
  *        FALSE otherwise
  * @param pParams signing parameters
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GAP_Signable(uint16_t connectionHandle, uint8_t authenticated,
                               smSigningInfo_t *pParams);
@@ -1783,11 +1783,11 @@ extern HCI_StatusCodes_t GAP_Signable(uint16_t connectionHandle, uint8_t authent
  * When both connected devices have setup encryption, the GAP_BondComplete
  * is generated.
  * The following status values can be received from the CommandStatus Event:
- * @ref SUCCESS
+ * @ref bleSUCCESS
  * @ref bleIncorrectMode : Not correct profile role
  * @ref INVALIDPARAMETER
  * @ref bleNotConnected
- * @ref FAILURE : not workable
+ * @ref bleFAILURE : not workable
  *
  * @param connectionHandle connection handle of the signing information
  * @param authenticated TRUE if bond is authenticated.
@@ -1795,8 +1795,8 @@ extern HCI_StatusCodes_t GAP_Signable(uint16_t connectionHandle, uint8_t authent
  * @param pParams the connected device's security parameters
  * @param startEncryption whether or not to start encryption
  *
- * @return @ref SUCCESS : command sent successfully over HCI transport layer
- * @return @ref FAILURE : command failed to send over HCI transport layer
+ * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
+ * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
 extern HCI_StatusCodes_t GAP_Bond(uint16_t connectionHandle, uint8_t authenticated,
                           uint8_t secureConnections, smSecurityInfo_t *pParams,

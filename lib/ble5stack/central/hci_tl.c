@@ -150,7 +150,7 @@ eventHeader_t HCI_decodeEventHeader(uint8_t *packet)
   default: /* Received other event */
       header.eventOpCode = NULL;
       header.esg = NULL;
-      header.status = FAILURE;
+      header.status = bleFAILURE;
       break;
   }
     return (header);
@@ -440,14 +440,14 @@ HCI_StatusCodes_t HCI_sendHCICommand(uint16_t opcode, uint8_t *pData, uint8_t da
     /* Allocated an empty HCI packet */
     pPkt = HCI_buildHCIPacket(HCI_CMD_PACKET, opcode, dataLength);
 
-    /* If allocation failed, then return status FAILURE */
+    /* If allocation failed, then return status bleFAILURE */
     if (pPkt == NULL)
     {
-        status = FAILURE;
+        status = bleFAILURE;
     }
     else
     {
-        status = SUCCESS;
+        status = bleSUCCESS;
 
         /* Copy pointer data */
         memcpy(pPkt->pData, pData, dataLength);
