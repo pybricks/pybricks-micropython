@@ -66,10 +66,6 @@
 #define HCI_RX_TASK_PRIORITY        4
 #define HCI_RX_TASK_STACK_SIZE      2048
 
-/* Built a uint16 given a low byte and high byte */
-#define BUILD_UINT16(loByte, hiByte) \
-          ((uint16_t)(((loByte) & 0x00FF) + (((hiByte) & 0x00FF) << 8)))
-
 /* HCI Status return types  */
 typedef enum
 {

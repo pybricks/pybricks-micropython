@@ -8,7 +8,7 @@
  Target Device: cc13x2_26x2
 
  ******************************************************************************
- 
+
  Copyright (c) 2005-2019, Texas Instruments Incorporated
  All rights reserved.
 
@@ -40,8 +40,8 @@
  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
  ******************************************************************************
- 
- 
+
+
  *****************************************************************************/
 
 #ifndef HAL_DEFS_H
@@ -84,8 +84,8 @@
           + ((uint32)((Byte2) & 0x00FF) << 16) \
           + ((uint32)((Byte3) & 0x00FF) << 24)))
 
-//#define BUILD_UINT16(loByte, hiByte) \
-//          ((uint16)(((loByte) & 0x00FF) + (((hiByte) & 0x00FF) << 8)))
+#define BUILD_UINT16(loByte, hiByte) \
+         ((uint16)(((loByte) & 0x00FF) + (((hiByte) & 0x00FF) << 8)))
 
 #define HI_UINT16(a) (((a) >> 8) & 0xFF)
 #define LO_UINT16(a) ((a) & 0xFF)
