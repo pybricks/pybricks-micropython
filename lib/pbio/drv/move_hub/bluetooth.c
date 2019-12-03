@@ -23,7 +23,7 @@
 #include "stm32f070xb.h"
 
 // name used for standard GAP device name characteristic
-#define DEV_NAME "PyBricks Hub"
+#define DEV_NAME "Pybricks Hub"
 
 // bluetooth address is set at factory at this address
 #define FLASH_BD_ADDR ((const uint8_t *)0x08004ffa)
