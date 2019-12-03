@@ -26,13 +26,13 @@ include $(TOP)/py/py.mk
 CROSS_COMPILE ?= arm-none-eabi-
 
 # Bricks must specify the following variables in their Makefile
-ifeq ($(MCU_SERIES),)
-$(error "MCU_SERIES is not specified - add it in <hub>/Makefile)
+ifeq ($(PB_MCU_SERIES),)
+$(error "PB_MCU_SERIES is not specified - add it in <hub>/Makefile)
 else
-MCU_SERIES_LCASE = $(subst F,f,$(subst L,l,$(MCU_SERIES)))
+PB_MCU_SERIES_LCASE = $(subst F,f,$(subst L,l,$(PB_MCU_SERIES)))
 endif
-ifeq ($(CMSIS_MCU),)
-$(error "CMSIS_MCU is not specified - add it in <hub>/Makefile")
+ifeq ($(PB_CMSIS_MCU),)
+$(error "PB_CMSIS_MCU is not specified - add it in <hub>/Makefile")
 endif
 ifeq ($(PBIO_PLATFORM),)
 $(error "PBIO_PLATFORM is not specified - add it in <hub>/Makefile)
@@ -41,9 +41,9 @@ endif
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(TOP)/lib/cmsis/inc
-INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32$(MCU_SERIES)xx/Include
-ifeq ($(USE_HAL),1)
-INC += -I$(TOP)/lib/stm32lib/STM32$(MCU_SERIES)xx_HAL_Driver/Inc
+INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32$(PB_MCU_SERIES)xx/Include
+ifeq ($(PB_USE_HAL),1)
+INC += -I$(TOP)/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Inc
 endif
 INC += -I$(TOP)/ports/pybricks/lib/libfixmath/libfixmath
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
@@ -59,7 +59,7 @@ PYDFU = $(TOP)/tools/pydfu.py
 CHECKSUM = $(TOP)/ports/pybricks/tools/checksum.py
 CHECKSUM_TYPE ?= xor
 OPENOCD ?= openocd
-OPENOCD_CONFIG ?= openocd_stm32$(MCU_SERIES_LCASE).cfg
+OPENOCD_CONFIG ?= openocd_stm32$(PB_MCU_SERIES_LCASE).cfg
 TEXT0_ADDR ?= 0x08000000
 
 COPT += -DFIXMATH_NO_CTYPE
@@ -67,7 +67,7 @@ COPT += -DFIXMATH_NO_CTYPE
 CFLAGS_MCU_F0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
 CFLAGS_MCU_F4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS_MCU_L4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
-CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(MCU_SERIES)) $(COPT)
+CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(PB_MCU_SERIES)) $(COPT)
 LDSCRIPT = $(PBIO_PLATFORM).ld
 LDFLAGS = -nostdlib -T $(LDSCRIPT) -Map=$@.map --cref --gc-sections
 
@@ -83,9 +83,9 @@ CFLAGS += -fdata-sections -ffunction-sections
 endif
 
 # Required for STM32 library
-CFLAGS += -D$(CMSIS_MCU)
+CFLAGS += -D$(PB_CMSIS_MCU)
 
-CFLAGS += -DSTM32_HAL_H='<stm32$(MCU_SERIES_LCASE)xx_hal.h>'
+CFLAGS += -DSTM32_HAL_H='<stm32$(PB_MCU_SERIES_LCASE)xx_hal.h>'
 
 ifneq ($(PYBRICKS_MPY_MAIN_MODULE),)
 CFLAGS += -DPYBRICKS_MPY_MAIN_MODULE
@@ -116,7 +116,7 @@ SRC_C += \
 SRC_S = \
 	ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)/startup.s \
 
-ifeq ($(MCU_SERIES),F0)
+ifeq ($(PB_MCU_SERIES),F0)
 	SRC_S += $(TOP)/lib/utils/gchelper_m0.s
 else
 	SRC_S += $(TOP)/lib/utils/gchelper_m0.s
@@ -154,19 +154,19 @@ BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\
 	hci_le.c \
 	)
 
-HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(MCU_SERIES)xx_HAL_Driver/Src/,\
-	stm32$(MCU_SERIES_LCASE)xx_hal_adc_ex.c \
-	stm32$(MCU_SERIES_LCASE)xx_hal_adc.c \
-	stm32$(MCU_SERIES_LCASE)xx_hal_cortex.c \
-	stm32$(MCU_SERIES_LCASE)xx_hal_dma.c \
-	stm32$(MCU_SERIES_LCASE)xx_hal_gpio.c \
-	stm32$(MCU_SERIES_LCASE)xx_hal_pwr_ex.c \
-	stm32$(MCU_SERIES_LCASE)xx_hal_rcc.c \
-	stm32$(MCU_SERIES_LCASE)xx_hal_tim_ex.c \
-	stm32$(MCU_SERIES_LCASE)xx_hal_tim.c \
-	stm32$(MCU_SERIES_LCASE)xx_hal_uart_ex.c \
-	stm32$(MCU_SERIES_LCASE)xx_hal_uart.c \
-	stm32$(MCU_SERIES_LCASE)xx_hal.c \
+HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_adc_ex.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_adc.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_cortex.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dma.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_gpio.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_pwr_ex.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_rcc.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_tim_ex.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_tim.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_uart_ex.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_uart.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal.c \
 	)
 
 LIBFIXMATH_SRC_C = $(addprefix ports/pybricks/lib/libfixmath/libfixmath/,\
@@ -246,10 +246,10 @@ SRC_LIBM = $(addprefix lib/libm/,\
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PY_SRC_C:.c=.o))
-ifeq ($(USE_BLUENRG),1)
+ifeq ($(PB_LIB_BLUENRG),1)
 OBJ += $(addprefix $(BUILD)/, $(BLUENRG_SRC_C:.c=.o))
 endif
-ifeq ($(USE_HAL),1)
+ifeq ($(PB_USE_HAL),1)
 OBJ += $(addprefix $(BUILD)/, $(HAL_SRC_C:.c=.o))
 endif
 OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))
@@ -290,7 +290,7 @@ $(BUILD)/firmware-no-checksum.bin: $(BUILD)/firmware-no-checksum.elf
 
 $(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(LD) --defsym=MPYSIZE=$(MPYSIZE) --defsym=CHECKSUM=`$(CHECKSUM) $(CHECKSUM_TYPE) $< $(FIRMWARE_MAX_SIZE)` $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
+	$(Q)$(LD) --defsym=MPYSIZE=$(MPYSIZE) --defsym=CHECKSUM=`$(CHECKSUM) $(CHECKSUM_TYPE) $< $(PB_FIRMWARE_MAX_SIZE)` $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 	$(Q)$(SIZE) $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
