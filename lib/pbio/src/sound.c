@@ -9,30 +9,30 @@
 #include <pbio/error.h>
 #include <pbio/sound.h>
 
-#include <pbdrv/sound.h>
+#include <pbdrv/beep.h>
 
 #include "sys/clock.h"
 
 struct _pbio_sound_t {
-    pbdrv_sound_dev_t *dev;
+    pbdrv_beep_dev_t *beep_dev;
     bool busy;
     int time_start;
 };
 
-static pbio_sound_t speaker;
+static pbio_sound_t __sound;
 
 pbio_error_t pbio_sound_get(pbio_sound_t **_sound) {
 
-    pbio_sound_t *sound = &speaker;
+    pbio_sound_t *sound = &__sound;
 
     pbio_error_t err;
     
-    err = pbdrv_sound_get(&sound->dev);
+    err = pbdrv_beep_get(&sound->beep_dev);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    err = pbdrv_sound_beep_freq(sound->dev, 0);
+    err = pbdrv_beep_start_freq(sound->beep_dev, 0);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -53,13 +53,13 @@ static pbio_error_t pbio_sound_beep_start(pbio_sound_t *sound, uint32_t freq) {
     sound->time_start = clock_usecs()/1000;
 
     // Start beeping by setting the frequency
-    return pbdrv_sound_beep_freq(sound->dev, freq);
+    return pbdrv_beep_start_freq(sound->beep_dev, freq);
 }
 
 static pbio_error_t pbio_sound_beep_stop(pbio_sound_t *sound, pbio_error_t stop_err) {
 
     // Stop the frequency
-    pbio_error_t err = pbdrv_sound_beep_freq(sound->dev, 0);
+    pbio_error_t err = pbdrv_beep_start_freq(sound->beep_dev, 0);
     if (err != PBIO_SUCCESS) {
         return err;
     }

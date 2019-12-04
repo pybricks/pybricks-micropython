@@ -13,30 +13,30 @@
 
 #include <pbio/error.h>
 
-#include <pbdrv/sound.h>
+#include <pbdrv/beep.h>
 
-struct _pbdrv_sound_dev_t {
-    int beep_file;
+struct _pbdrv_beep_dev_t {
+    int fd;
 };
 
-static pbdrv_sound_dev_t sound_dev;
+static pbdrv_beep_dev_t __beep_dev;
 
-pbio_error_t pbdrv_sound_get(pbdrv_sound_dev_t **_dev) {
+pbio_error_t pbdrv_beep_get(pbdrv_beep_dev_t **_beep_dev) {
 
-    pbdrv_sound_dev_t *dev = &sound_dev;
+    pbdrv_beep_dev_t *beep_dev = &__beep_dev;
 
-    dev->beep_file = open("/dev/input/by-path/platform-sound-event", O_RDWR, 0);
+    beep_dev->fd = open("/dev/input/by-path/platform-sound-event", O_RDWR, 0);
 
-    if (dev->beep_file == -1) {
+    if (beep_dev->fd == -1) {
         return PBIO_ERROR_IO;
     }
 
-    *_dev = dev;
+    *_beep_dev = beep_dev;
 
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_sound_beep_freq(pbdrv_sound_dev_t *dev, uint32_t freq) {
+pbio_error_t pbdrv_beep_start_freq(pbdrv_beep_dev_t *beep_dev, uint32_t freq) {
 
     struct input_event event;
 
@@ -44,7 +44,7 @@ pbio_error_t pbdrv_sound_beep_freq(pbdrv_sound_dev_t *dev, uint32_t freq) {
     event.code = SND_TONE;
     event.value = freq;
 
-    if (write(dev->beep_file, &event, sizeof(struct input_event)) == -1) {
+    if (write(beep_dev->fd, &event, sizeof(struct input_event)) == -1) {
         return PBIO_ERROR_IO;
     }
 
