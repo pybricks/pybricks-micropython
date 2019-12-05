@@ -161,6 +161,9 @@ CFLAGS_MOD += -DPB_HAVE_LIBI2C=1
 LDFLAGS_MOD += -li2c
 endif
 
+# for alsa
+LDFLAGS_MOD += -lasound
+
 # source files
 SRC_C = $(addprefix ports/unix/,\
 	main.c \

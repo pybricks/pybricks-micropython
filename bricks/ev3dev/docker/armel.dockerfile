@@ -9,6 +9,7 @@ RUN sudo apt-get update && \
         libi2c-dev \
         libmagickwand-6.q16-3:armel \
         libsndfile1:armel \
+        libasound2-dev:armel \
         libudev-dev:armel \
         libumockdev0:armel \
         pkg-config \
