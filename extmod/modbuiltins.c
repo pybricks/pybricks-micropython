@@ -17,7 +17,6 @@
 // pybricks.builtins.Speaker class object structure
 typedef struct _builtins_Speaker_obj_t {
     mp_obj_base_t base;
-    uint8_t volume;
     uint8_t foo; // DELETEME
     pbio_sound_t *sound;
 } builtins_Speaker_obj_t;
@@ -29,8 +28,8 @@ mp_obj_t builtins_Speaker_obj_make_new(uint8_t volume) {
     self->base.type = &builtins_Speaker_type;
 
     // Init/reset speaker
-    self->volume = volume;
     pb_assert(pbio_sound_get(&self->sound));
+    pb_assert(pbio_sound_set_volume(self->sound, 20));
     
     return self;
 }
@@ -46,7 +45,8 @@ STATIC mp_obj_t builtins_Speaker_volume(size_t n_args, const mp_obj_t *pos_args,
     mp_int_t vol_arg = pb_obj_get_int(volume);
     vol_arg = vol_arg > 100 ? 100 : vol_arg;
     vol_arg = vol_arg < 0   ? 0   : vol_arg;
-    self->volume = vol_arg;
+    
+    pb_assert(pbio_sound_set_volume(self->sound, vol_arg));
 
     return mp_const_none;
 }
@@ -103,7 +103,7 @@ STATIC mp_obj_t builtins_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp
 
     // DELETEME
     printf("The user wants to say at volume %d (%s):\n%s\n",
-           self->volume,
+           self->foo,
            blocking ? "blocking" : "background",
            text);
 
@@ -153,7 +153,7 @@ STATIC mp_obj_t builtins_Speaker_play(size_t n_args, const mp_obj_t *pos_args, m
 
     // DELETEME
     printf("Play this file at volume %d (%s):\n%s\n",
-           self->volume,
+           self->foo,
            blocking ? "blocking" : "background",
            path
     );

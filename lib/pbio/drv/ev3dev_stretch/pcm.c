@@ -85,6 +85,10 @@ static pbio_error_t configure_volume_control(pbdrv_pcm_dev_t *pcm_dev) {
 
 pbio_error_t pbdrv_pcm_set_volume(pbdrv_pcm_dev_t *pcm_dev, uint32_t volume) {
 
+    if (volume > 100 || volume < 0) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
     long pcm_vol = (volume*(pcm_dev->pcm_vol_max - pcm_dev->pcm_vol_min))/100 + pcm_dev->pcm_vol_min;
     long beep_vol = (volume*(pcm_dev->beep_vol_max - pcm_dev->beep_vol_min))/100 + pcm_dev->beep_vol_min;
 
