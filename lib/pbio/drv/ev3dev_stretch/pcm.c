@@ -4,7 +4,7 @@
 // Copyright (c) 2019 LEGO System A/S
 
 #include <stdint.h>
-
+#include <sndfile.h>
 #include <alsa/asoundlib.h>
 
 #include <pbio/error.h>
@@ -19,6 +19,8 @@ struct _pbdrv_pcm_dev_t {
     snd_mixer_elem_t *pcm_elem;
     long pcm_vol_min;
     long pcm_vol_max;
+    SNDFILE *sf;
+    SF_INFO sf_info;
 };
 
 static pbdrv_pcm_dev_t __pcm_dev;
@@ -103,6 +105,13 @@ pbio_error_t pbdrv_pcm_set_volume(pbdrv_pcm_dev_t *pcm_dev, uint32_t volume) {
     return PBIO_SUCCESS;
 }
 
+pbio_error_t pbdrv_pcm_play_file(pbdrv_pcm_dev_t *pcm_dev, const char *path) {
+    pcm_dev->sf = sf_open(path, SFM_READ, &pcm_dev->sf_info);
+    if (pcm_dev->sf == NULL) {
+        return PBIO_ERROR_IO;
+    }
+    return PBIO_SUCCESS;
+}
 
 pbio_error_t pbdrv_pcm_get(pbdrv_pcm_dev_t **_pcm_dev) {
 
@@ -123,9 +132,5 @@ pbio_error_t pbdrv_pcm_get(pbdrv_pcm_dev_t **_pcm_dev) {
 
     *_pcm_dev = pcm_dev;
 
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbdrv_pcm_play_file(pbdrv_pcm_dev_t *pcm_dev, const char *path) {
     return PBIO_SUCCESS;
 }

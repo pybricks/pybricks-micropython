@@ -162,7 +162,7 @@ LDFLAGS_MOD += -li2c
 endif
 
 # for alsa
-LDFLAGS_MOD += -lasound
+LDFLAGS_MOD += -lasound -lsndfile
 
 # source files
 SRC_C = $(addprefix ports/unix/,\
