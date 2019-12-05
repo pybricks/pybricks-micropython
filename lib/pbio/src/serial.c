@@ -2,12 +2,6 @@
 // Copyright (c) 2019 Laurens Valk
 // Copyright (c) 2019 LEGO System A/S
 
-#include <fcntl.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include <termios.h>
-#include <unistd.h>
-
 #include <pbio/port.h>
 #include <pbdrv/config.h>
 #include <pbio/error.h>
