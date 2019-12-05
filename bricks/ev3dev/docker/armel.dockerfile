@@ -5,11 +5,12 @@ RUN sudo apt-get update && \
         ev3dev-mocks \
         libasound2-plugin-ev3dev:armel \
         libasound2:armel \
+        libasound2-dev:armel \
+        libsndfile1-dev:armel \
         libffi-dev:armel \
         libi2c-dev \
         libmagickwand-6.q16-3:armel \
         libsndfile1:armel \
-        libasound2-dev:armel \
         libudev-dev:armel \
         libumockdev0:armel \
         pkg-config \
