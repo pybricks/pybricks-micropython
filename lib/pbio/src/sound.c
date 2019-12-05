@@ -100,3 +100,7 @@ pbio_error_t pbio_sound_beep(pbio_sound_t *sound, uint32_t freq, uint32_t durati
     // If we are here, we need to call this again
     return PBIO_ERROR_AGAIN;
 }
+
+pbio_error_t pbio_sound_set_volume(pbio_sound_t *sound, uint32_t volume) {
+    return pbdrv_pcm_set_volume(sound->pcm_dev, volume);
+}

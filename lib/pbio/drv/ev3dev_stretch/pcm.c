@@ -83,10 +83,10 @@ static pbio_error_t configure_volume_control(pbdrv_pcm_dev_t *pcm_dev) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_pcm_set_volume(pbdrv_pcm_dev_t *pcm_dev, uint32_t percent) {
+pbio_error_t pbdrv_pcm_set_volume(pbdrv_pcm_dev_t *pcm_dev, uint32_t volume) {
 
-    long pcm_vol = (percent*(pcm_dev->pcm_vol_max - pcm_dev->pcm_vol_min))/100 + pcm_dev->pcm_vol_min;
-    long beep_vol = (percent*(pcm_dev->beep_vol_max - pcm_dev->beep_vol_min))/100 + pcm_dev->beep_vol_min;
+    long pcm_vol = (volume*(pcm_dev->pcm_vol_max - pcm_dev->pcm_vol_min))/100 + pcm_dev->pcm_vol_min;
+    long beep_vol = (volume*(pcm_dev->beep_vol_max - pcm_dev->beep_vol_min))/100 + pcm_dev->beep_vol_min;
 
     if (snd_mixer_selem_set_playback_volume_all(pcm_dev->pcm_elem, pcm_vol) != 0) {
         return PBIO_ERROR_IO;
