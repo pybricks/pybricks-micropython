@@ -10,11 +10,13 @@
 #include <pbio/sound.h>
 
 #include <pbdrv/beep.h>
+#include <pbdrv/pcm.h>
 
 #include "sys/clock.h"
 
 struct _pbio_sound_t {
     pbdrv_beep_dev_t *beep_dev;
+    pbdrv_pcm_dev_t *pcm_dev;
     bool busy;
     int time_start;
 };
@@ -27,12 +29,20 @@ pbio_error_t pbio_sound_get(pbio_sound_t **_sound) {
 
     pbio_error_t err;
     
+    // Get the beep device
     err = pbdrv_beep_get(&sound->beep_dev);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
+    // Stop beeping
     err = pbdrv_beep_start_freq(sound->beep_dev, 0);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Get the PCM device
+    err = pbdrv_pcm_get(&sound->pcm_dev);
     if (err != PBIO_SUCCESS) {
         return err;
     }
