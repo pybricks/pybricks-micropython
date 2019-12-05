@@ -151,12 +151,11 @@ STATIC mp_obj_t builtins_Speaker_play(size_t n_args, const mp_obj_t *pos_args, m
     const char *path = mp_obj_str_get_str(file);
     bool blocking = mp_obj_is_true(wait);
 
-    // DELETEME
-    printf("Play this file at volume %d (%s):\n%s\n",
-           self->foo,
-           blocking ? "blocking" : "background",
-           path
-    );
+    if (!blocking) {
+        pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
+    }
+
+    pb_assert(pbio_sound_play_file(self->sound, path));
 
     return mp_const_none;
 }

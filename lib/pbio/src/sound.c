@@ -104,3 +104,8 @@ pbio_error_t pbio_sound_beep(pbio_sound_t *sound, uint32_t freq, uint32_t durati
 pbio_error_t pbio_sound_set_volume(pbio_sound_t *sound, uint32_t volume) {
     return pbdrv_pcm_set_volume(sound->pcm_dev, volume);
 }
+
+pbio_error_t pbio_sound_play_file(pbio_sound_t *sound, const char *path) {
+    // TODO, return PBIO_ERROR_AGAIN until done
+    return pbdrv_pcm_play_file(sound->pcm_dev, path);
+}

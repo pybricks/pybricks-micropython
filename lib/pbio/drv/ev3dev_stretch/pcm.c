@@ -125,3 +125,7 @@ pbio_error_t pbdrv_pcm_get(pbdrv_pcm_dev_t **_pcm_dev) {
 
     return PBIO_SUCCESS;
 }
+
+pbio_error_t pbdrv_pcm_play_file(pbdrv_pcm_dev_t *pcm_dev, const char *path) {
+    return PBIO_SUCCESS;
+}
