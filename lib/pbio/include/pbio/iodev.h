@@ -97,10 +97,7 @@ typedef enum {
  * Data types used by I/O devices.
  */
 typedef enum {
-    /**
-     * Unsigned 8-bit integer.
-     */
-    PBIO_IODEV_DATA_TYPE_UINT8,
+    /*** LPF2 DATA TYPES BELOW ***/
     /**
      * Signed 8-bit integer.
      */
@@ -117,6 +114,11 @@ typedef enum {
      * Little endian 32-bit floating point.
      */
     PBIO_IODEV_DATA_TYPE_FLOAT,
+    /*** LEGACY DATA TYPES BELOW***/
+    /**
+     * Unsigned 8-bit integer.
+     */
+    PBIO_IODEV_DATA_TYPE_UINT8,
 } pbio_iodev_data_type_t;
 
 /**
