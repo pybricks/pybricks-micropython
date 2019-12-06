@@ -188,6 +188,31 @@ pbio_error_t pbdrv_pcm_play_file(pbdrv_pcm_dev_t *pcm_dev, const char *path) {
             &dir) != 0) {
         return PBIO_ERROR_IO;
     }
+
+    // Allocate buf
+    short *buf = alloca(uframes * pcm_dev->sf_info.channels * sizeof(short));
+    if (buf == NULL) {
+        return PBIO_ERROR_FAILED;
+    }
+
+    // Play a sound in a blocking way. TODO: nonblocking.
+    while (1) {
+        sf_count_t count = sf_readf_short(pcm_dev->sf, buf, uframes);
+        if (count < 0) {
+            return PBIO_ERROR_IO;
+        }
+        if (count == 0) {
+            break;
+        }
+        snd_pcm_sframes_t wr = snd_pcm_writei(pcm_dev->pcm, buf, count);
+        if (wr <= 0) {
+            return PBIO_ERROR_IO;
+        }
+    }
+
+    if (snd_pcm_drain(pcm_dev->pcm) != 0) {
+        return PBIO_ERROR_IO;
+    }
    
     return PBIO_SUCCESS;
 }
