@@ -513,7 +513,7 @@ static PT_THREAD(hci_init(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gatt_init_end();
 
-    // init GATT layer
+    // init GAP layer
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gap_init_begin(GAP_PERIPHERAL_ROLE, PRIVACY_DISABLED, 16); // 16 comes from LEGO bootloader
