@@ -13,6 +13,8 @@
 
 struct _pbdrv_pcm_dev_t {
     snd_mixer_t *mixer;
+    snd_pcm_t *pcm;
+    snd_pcm_hw_params_t *hp;
     snd_mixer_elem_t *beep_elem;
     long beep_vol_min;
     long beep_vol_max;
@@ -85,6 +87,31 @@ static pbio_error_t configure_volume_control(pbdrv_pcm_dev_t *pcm_dev) {
     return PBIO_SUCCESS;
 }
 
+
+static pbio_error_t configure_pcm(pbdrv_pcm_dev_t *pcm_dev) {
+    // Open pcm
+    if (snd_pcm_open(
+            &pcm_dev->pcm,
+            "default",
+            SND_PCM_STREAM_PLAYBACK, 0) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    // Allocate space for params
+    if (snd_pcm_hw_params_malloc(&pcm_dev->hp) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    // Get the parameters pcm
+    if (snd_pcm_hw_params_any(
+            pcm_dev->pcm,
+            pcm_dev->hp) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    return PBIO_SUCCESS;
+}
+
 pbio_error_t pbdrv_pcm_set_volume(pbdrv_pcm_dev_t *pcm_dev, uint32_t volume) {
 
     if (volume > 100 || volume < 0) {
@@ -106,10 +133,62 @@ pbio_error_t pbdrv_pcm_set_volume(pbdrv_pcm_dev_t *pcm_dev, uint32_t volume) {
 }
 
 pbio_error_t pbdrv_pcm_play_file(pbdrv_pcm_dev_t *pcm_dev, const char *path) {
+
+    // Open sound file and get info
     pcm_dev->sf = sf_open(path, SFM_READ, &pcm_dev->sf_info);
     if (pcm_dev->sf == NULL) {
         return PBIO_ERROR_IO;
     }
+
+    // Set access
+    if (snd_pcm_hw_params_set_access(
+            pcm_dev->pcm,
+            pcm_dev->hp,
+            SND_PCM_ACCESS_RW_INTERLEAVED) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    // Set format
+    if (snd_pcm_hw_params_set_format(
+            pcm_dev->pcm,
+            pcm_dev->hp,
+            SND_PCM_FORMAT_S16_LE) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    // Set channels
+    if (snd_pcm_hw_params_set_channels(
+            pcm_dev->pcm,
+            pcm_dev->hp,
+            pcm_dev->sf_info.channels) != 0) {
+        return PBIO_ERROR_IO;
+    }
+    
+    // Set rate
+    if (snd_pcm_hw_params_set_rate(
+            pcm_dev->pcm,
+            pcm_dev->hp,
+            pcm_dev->sf_info.samplerate, 0) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    // Set params
+    if (snd_pcm_hw_params(
+            pcm_dev->pcm,
+            pcm_dev->hp) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    // Get period
+    snd_pcm_uframes_t uframes;
+    int dir;
+    if (snd_pcm_hw_params_get_period_size(
+            pcm_dev->hp,
+            &uframes,
+            &dir) != 0) {
+        return PBIO_ERROR_IO;
+    }
+   
     return PBIO_SUCCESS;
 }
 
@@ -126,6 +205,12 @@ pbio_error_t pbdrv_pcm_get(pbdrv_pcm_dev_t **_pcm_dev) {
 
     // Get volume control
     err = configure_volume_control(pcm_dev);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Configure pcm
+    err = configure_pcm(pcm_dev);
     if (err != PBIO_SUCCESS) {
         return err;
     }
