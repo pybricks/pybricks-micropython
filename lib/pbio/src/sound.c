@@ -106,6 +106,18 @@ pbio_error_t pbio_sound_set_volume(pbio_sound_t *sound, uint32_t volume) {
 }
 
 pbio_error_t pbio_sound_play_file(pbio_sound_t *sound, const char *path) {
-    // TODO, return PBIO_ERROR_AGAIN until done
-    return pbdrv_pcm_play_file(sound->pcm_dev, path);
+    pbio_error_t err;
+    err = pbdrv_pcm_play_file_start(sound->pcm_dev, path);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = pbdrv_pcm_play_file_update(sound->pcm_dev);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = pbdrv_pcm_play_file_stop(sound->pcm_dev);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    return PBIO_SUCCESS;
 }

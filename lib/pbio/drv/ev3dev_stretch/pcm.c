@@ -15,6 +15,7 @@ struct _pbdrv_pcm_dev_t {
     snd_mixer_t *mixer;
     snd_pcm_t *pcm;
     snd_pcm_hw_params_t *hp;
+    snd_pcm_uframes_t uframes;
     snd_mixer_elem_t *beep_elem;
     long beep_vol_min;
     long beep_vol_max;
@@ -132,7 +133,7 @@ pbio_error_t pbdrv_pcm_set_volume(pbdrv_pcm_dev_t *pcm_dev, uint32_t volume) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_pcm_play_file(pbdrv_pcm_dev_t *pcm_dev, const char *path) {
+pbio_error_t pbdrv_pcm_play_file_start(pbdrv_pcm_dev_t *pcm_dev, const char *path) {
 
     // Open sound file and get info
     pcm_dev->sf = sf_open(path, SFM_READ, &pcm_dev->sf_info);
@@ -180,24 +181,27 @@ pbio_error_t pbdrv_pcm_play_file(pbdrv_pcm_dev_t *pcm_dev, const char *path) {
     }
 
     // Get period
-    snd_pcm_uframes_t uframes;
     int dir;
     if (snd_pcm_hw_params_get_period_size(
             pcm_dev->hp,
-            &uframes,
+            &pcm_dev->uframes,
             &dir) != 0) {
         return PBIO_ERROR_IO;
     }
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbdrv_pcm_play_file_update(pbdrv_pcm_dev_t *pcm_dev) {
 
     // Allocate buf
-    short *buf = alloca(uframes * pcm_dev->sf_info.channels * sizeof(short));
+    short *buf = alloca(pcm_dev->uframes * pcm_dev->sf_info.channels * sizeof(short));
     if (buf == NULL) {
         return PBIO_ERROR_FAILED;
     }
 
     // Play a sound in a blocking way. TODO: nonblocking.
     while (1) {
-        sf_count_t count = sf_readf_short(pcm_dev->sf, buf, uframes);
+        sf_count_t count = sf_readf_short(pcm_dev->sf, buf, pcm_dev->uframes);
         if (count < 0) {
             return PBIO_ERROR_IO;
         }
@@ -209,6 +213,10 @@ pbio_error_t pbdrv_pcm_play_file(pbdrv_pcm_dev_t *pcm_dev, const char *path) {
             return PBIO_ERROR_IO;
         }
     }
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbdrv_pcm_play_file_stop(pbdrv_pcm_dev_t *pcm_dev) {
 
     if (snd_pcm_drain(pcm_dev->pcm) != 0) {
         return PBIO_ERROR_IO;
