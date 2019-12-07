@@ -94,7 +94,8 @@ static pbio_error_t configure_pcm(pbdrv_pcm_dev_t *pcm_dev) {
     if (snd_pcm_open(
             &pcm_dev->pcm,
             "default",
-            SND_PCM_STREAM_PLAYBACK, 0) != 0) {
+            SND_PCM_STREAM_PLAYBACK,
+            SND_PCM_NONBLOCK) != 0) {
         return PBIO_ERROR_IO;
     }
 
@@ -121,13 +122,16 @@ pbio_error_t pbdrv_pcm_set_volume(pbdrv_pcm_dev_t *pcm_dev, uint32_t volume) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_pcm_play_file_start(pbdrv_pcm_dev_t *pcm_dev, const char *path) {
+pbio_error_t pbdrv_pcm_play_file_start(pbdrv_pcm_dev_t *pcm_dev, const char *path, int32_t *duration) {
 
     // Open sound file and get info
     pcm_dev->sf = sf_open(path, SFM_READ, &pcm_dev->sf_info);
     if (pcm_dev->sf == NULL) {
         return PBIO_ERROR_IO;
     }
+
+    // Nominal play duration of the file
+    *duration = (pcm_dev->sf_info.frames * 1000) / pcm_dev->sf_info.samplerate;
 
     // Get hw params
     snd_pcm_hw_params_t *hp;
@@ -177,30 +181,6 @@ pbio_error_t pbdrv_pcm_play_file_start(pbdrv_pcm_dev_t *pcm_dev, const char *pat
     // clean up hw params
     snd_pcm_hw_params_free(hp);
 
-
-    // Get sw params
-    snd_pcm_sw_params_t *sw;
-    if (snd_pcm_sw_params_malloc(&sw) != 0) {
-        return PBIO_ERROR_IO;
-    }
-    if (snd_pcm_sw_params_current(pcm_dev->pcm, sw) != 0) {
-        return PBIO_ERROR_IO;
-    }
-
-    // Set threshold and buffer
-    if (snd_pcm_sw_params_set_start_threshold(pcm_dev->pcm, sw, pcm_dev->buffer_size - pcm_dev->period_size) != 0) {
-        return PBIO_ERROR_IO;
-    }
-    if (snd_pcm_sw_params_set_avail_min(pcm_dev->pcm, sw, pcm_dev->period_size) != 0) {
-        return PBIO_ERROR_IO;
-    }
-
-    // Apply and clean up sw params
-    if (snd_pcm_sw_params(pcm_dev->pcm, sw) != 0) {
-        return PBIO_ERROR_IO;
-    }
-    snd_pcm_sw_params_free(sw);
-
     // Prepare the device to make sure it is ready
     if (snd_pcm_prepare(pcm_dev->pcm) != 0) {
         return PBIO_ERROR_IO;
@@ -217,29 +197,49 @@ pbio_error_t pbdrv_pcm_play_file_update(pbdrv_pcm_dev_t *pcm_dev) {
         return PBIO_ERROR_FAILED;
     }
 
-    // Play a sound in a blocking way. TODO: nonblocking.
-    while (1) {
-        sf_count_t count = sf_readf_short(pcm_dev->sf, buf, pcm_dev->period_size);
-        if (count < 0) {
-            return PBIO_ERROR_IO;
-        }
-        if (count == 0) {
-            break;
-        }
-        snd_pcm_sframes_t wr = snd_pcm_writei(pcm_dev->pcm, buf, count);
-        if (wr <= 0) {
-            return PBIO_ERROR_IO;
-        }
+    // Check how many frames may write
+    sf_count_t avail = snd_pcm_avail_update(pcm_dev->pcm);
+    if (avail < 0) {
+        return PBIO_ERROR_IO;
     }
-    return PBIO_SUCCESS;
+
+    // From the sound file we want to read one period unless less is available to write
+    sf_count_t read = avail < pcm_dev->period_size ? avail : pcm_dev->period_size;
+
+    // Read requested number of frames from file
+    sf_count_t count = sf_readf_short(pcm_dev->sf, buf, read);
+    if (count < 0) {
+        return PBIO_ERROR_IO;
+    }
+    
+    // If there are no frames, we are done
+    if (count == 0) {
+        return PBIO_SUCCESS;
+    }
+
+    // Write the read frames to the sound buffer
+    snd_pcm_sframes_t wr = snd_pcm_writei(pcm_dev->pcm, buf, count);
+    if (wr <= 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    // If we read less than a period from the file and write succeeded, we are done
+    if (count < read && wr == count) {
+        return PBIO_SUCCESS;
+    }
+
+    // We need to call this again to read the next chunk of the file and write to sound device
+    return PBIO_ERROR_AGAIN;
 }
 
 pbio_error_t pbdrv_pcm_play_file_stop(pbdrv_pcm_dev_t *pcm_dev) {
-
-    if (snd_pcm_drain(pcm_dev->pcm) != 0) {
+    int err = snd_pcm_drop(pcm_dev->pcm);
+    if (errno == EAGAIN) {
+        return PBIO_ERROR_AGAIN;
+    }
+    if (err != 0) {
         return PBIO_ERROR_IO;
     }
-   
     return PBIO_SUCCESS;
 }
 

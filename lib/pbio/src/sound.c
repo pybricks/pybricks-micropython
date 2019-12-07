@@ -18,7 +18,8 @@ struct _pbio_sound_t {
     pbdrv_beep_dev_t *beep_dev;
     pbdrv_pcm_dev_t *pcm_dev;
     bool busy;
-    int time_start;
+    int32_t time_start;
+    int32_t time_duration;
 };
 
 static pbio_sound_t __sound;
@@ -52,7 +53,7 @@ pbio_error_t pbio_sound_get(pbio_sound_t **_sound) {
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t pbio_sound_beep_start(pbio_sound_t *sound, uint32_t freq) {
+static pbio_error_t beep_start(pbio_sound_t *sound, uint32_t freq, int32_t duration) {
     // Already started, so return
     if (sound->busy) {
         return PBIO_SUCCESS;
@@ -61,12 +62,13 @@ static pbio_error_t pbio_sound_beep_start(pbio_sound_t *sound, uint32_t freq) {
     // Reset state variables
     sound->busy = true;
     sound->time_start = clock_usecs()/1000;
+    sound->time_duration = duration;
 
     // Start beeping by setting the frequency
     return pbdrv_beep_start_freq(sound->beep_dev, freq);
 }
 
-static pbio_error_t pbio_sound_beep_stop(pbio_sound_t *sound, pbio_error_t stop_err) {
+static pbio_error_t beep_stop(pbio_sound_t *sound, pbio_error_t stop_err) {
 
     // Stop the frequency
     pbio_error_t err = pbdrv_beep_start_freq(sound->beep_dev, 0);
@@ -77,24 +79,23 @@ static pbio_error_t pbio_sound_beep_stop(pbio_sound_t *sound, pbio_error_t stop_
     // Return to default state
     sound->busy = false;
 
-
     // Return the error that was raised on stopping
     return stop_err;
 }
 
-pbio_error_t pbio_sound_beep(pbio_sound_t *sound, uint32_t freq, uint32_t duration) {
+pbio_error_t pbio_sound_beep(pbio_sound_t *sound, uint32_t freq, int32_t duration) {
 
     pbio_error_t err;
 
     // If this is called for the first time, init:
-    err = pbio_sound_beep_start(sound, freq);
+    err = beep_start(sound, freq, duration);
     if (err != PBIO_SUCCESS) {
-        return pbio_sound_beep_stop(sound, err);
+        return beep_stop(sound, err);
     }
 
     // If we are done, stop
     if (clock_usecs()/1000 - sound->time_start > duration) {
-        return pbio_sound_beep_stop(sound, PBIO_SUCCESS);
+        return beep_stop(sound, PBIO_SUCCESS);
     }
 
     // If we are here, we need to call this again
@@ -105,19 +106,61 @@ pbio_error_t pbio_sound_set_volume(pbio_sound_t *sound, uint32_t volume) {
     return pbdrv_pcm_set_volume(sound->pcm_dev, volume);
 }
 
-pbio_error_t pbio_sound_play_file(pbio_sound_t *sound, const char *path) {
+
+static pbio_error_t file_start(pbio_sound_t *sound, const char *path) {
+    
+    // Already started, so return
+    if (sound->busy) {
+        return PBIO_SUCCESS;
+    }
+
+    // Reset state variables
+    sound->busy = true;
+    sound->time_start = clock_usecs()/1000;
+
+    // Init the sound
+    return pbdrv_pcm_play_file_start(sound->pcm_dev, path, &sound->time_duration);
+}
+
+static pbio_error_t file_stop(pbio_sound_t *sound, pbio_error_t stop_err) {
+
     pbio_error_t err;
-    err = pbdrv_pcm_play_file_start(sound->pcm_dev, path);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    err = pbdrv_pcm_play_file_update(sound->pcm_dev);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
+    
+    // Stop the sound
     err = pbdrv_pcm_play_file_stop(sound->pcm_dev);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    return PBIO_SUCCESS;
+
+    // Return to default state
+    sound->busy = false;
+
+    // Return the error that was raised on stopping
+    return stop_err;
+}
+
+pbio_error_t pbio_sound_play_file(pbio_sound_t *sound, const char *path) {
+
+    pbio_error_t err;
+    // If this is called for the first time, init:
+    err = file_start(sound, path);
+    if (err != PBIO_SUCCESS) {
+        return file_stop(sound, err);
+    }
+
+    // Update buffer as needed
+    err = pbdrv_pcm_play_file_update(sound->pcm_dev);
+    if (err == PBIO_ERROR_AGAIN) {
+        return err;
+    }
+    if (err != PBIO_SUCCESS) {
+        return file_stop(sound, err);
+    }
+    // If we are done and the timer is done too, stop
+    if (clock_usecs()/1000 - sound->time_start > sound->time_duration) {
+        return file_stop(sound, PBIO_SUCCESS);
+    }
+
+    // If we are here, we need to call this again until the sound is done
+    return PBIO_ERROR_AGAIN;
 }

@@ -155,7 +155,11 @@ STATIC mp_obj_t builtins_Speaker_play(size_t n_args, const mp_obj_t *pos_args, m
         pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
     }
 
-    pb_assert(pbio_sound_play_file(self->sound, path));
+    pbio_error_t err;
+    while ((err = pbio_sound_play_file(self->sound, path)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(10);
+    }
+    pb_assert(err);
 
     return mp_const_none;
 }
