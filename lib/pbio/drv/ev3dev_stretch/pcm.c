@@ -14,7 +14,8 @@
 struct _pbdrv_pcm_dev_t {
     snd_mixer_t *mixer;
     snd_pcm_t *pcm;
-    snd_pcm_uframes_t uframes;
+    snd_pcm_uframes_t period_size; // Probably can be kept local, so delete
+    snd_pcm_uframes_t buffer_size; // Probably can be kept local, so delete
     snd_mixer_elem_t *beep_elem;
     long beep_vol_min;
     long beep_vol_max;
@@ -159,19 +160,51 @@ pbio_error_t pbdrv_pcm_play_file_start(pbdrv_pcm_dev_t *pcm_dev, const char *pat
         return PBIO_ERROR_IO;
     }
 
-    // Set params
+    // Apply params
     if (snd_pcm_hw_params(pcm_dev->pcm, hp) != 0) {
         return PBIO_ERROR_IO;
     }
 
-    // Get period
+    // Get period and buffer size
     int dir;
-    if (snd_pcm_hw_params_get_period_size(hp, &pcm_dev->uframes, &dir) != 0) {
+    if (snd_pcm_hw_params_get_period_size(hp, &pcm_dev->period_size, &dir) != 0) {
+        return PBIO_ERROR_IO;
+    }
+    if (snd_pcm_hw_params_get_buffer_size(hp, &pcm_dev->buffer_size) != 0) {
         return PBIO_ERROR_IO;
     }
 
     // clean up hw params
     snd_pcm_hw_params_free(hp);
+
+
+    // Get sw params
+    snd_pcm_sw_params_t *sw;
+    if (snd_pcm_sw_params_malloc(&sw) != 0) {
+        return PBIO_ERROR_IO;
+    }
+    if (snd_pcm_sw_params_current(pcm_dev->pcm, sw) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    // Set threshold and buffer
+    if (snd_pcm_sw_params_set_start_threshold(pcm_dev->pcm, sw, pcm_dev->buffer_size - pcm_dev->period_size) != 0) {
+        return PBIO_ERROR_IO;
+    }
+    if (snd_pcm_sw_params_set_avail_min(pcm_dev->pcm, sw, pcm_dev->period_size) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    // Apply and clean up sw params
+    if (snd_pcm_sw_params(pcm_dev->pcm, sw) != 0) {
+        return PBIO_ERROR_IO;
+    }
+    snd_pcm_sw_params_free(sw);
+
+    // Prepare the device to make sure it is ready
+    if (snd_pcm_prepare(pcm_dev->pcm) != 0) {
+        return PBIO_ERROR_IO;
+    }
 
     return PBIO_SUCCESS;
 }
@@ -179,14 +212,14 @@ pbio_error_t pbdrv_pcm_play_file_start(pbdrv_pcm_dev_t *pcm_dev, const char *pat
 pbio_error_t pbdrv_pcm_play_file_update(pbdrv_pcm_dev_t *pcm_dev) {
 
     // Allocate buf
-    short *buf = alloca(pcm_dev->uframes * pcm_dev->sf_info.channels * sizeof(short));
+    short *buf = alloca(pcm_dev->period_size * pcm_dev->sf_info.channels * sizeof(short));
     if (buf == NULL) {
         return PBIO_ERROR_FAILED;
     }
 
     // Play a sound in a blocking way. TODO: nonblocking.
     while (1) {
-        sf_count_t count = sf_readf_short(pcm_dev->sf, buf, pcm_dev->uframes);
+        sf_count_t count = sf_readf_short(pcm_dev->sf, buf, pcm_dev->period_size);
         if (count < 0) {
             return PBIO_ERROR_IO;
         }
