@@ -14,7 +14,6 @@
 struct _pbdrv_pcm_dev_t {
     snd_mixer_t *mixer;
     snd_pcm_t *pcm;
-    snd_pcm_hw_params_t *hp;
     snd_pcm_uframes_t uframes;
     snd_mixer_elem_t *beep_elem;
     long beep_vol_min;
@@ -98,18 +97,6 @@ static pbio_error_t configure_pcm(pbdrv_pcm_dev_t *pcm_dev) {
         return PBIO_ERROR_IO;
     }
 
-    // Allocate space for params
-    if (snd_pcm_hw_params_malloc(&pcm_dev->hp) != 0) {
-        return PBIO_ERROR_IO;
-    }
-
-    // Get the parameters pcm
-    if (snd_pcm_hw_params_any(
-            pcm_dev->pcm,
-            pcm_dev->hp) != 0) {
-        return PBIO_ERROR_IO;
-    }
-
     return PBIO_SUCCESS;
 }
 
@@ -141,53 +128,51 @@ pbio_error_t pbdrv_pcm_play_file_start(pbdrv_pcm_dev_t *pcm_dev, const char *pat
         return PBIO_ERROR_IO;
     }
 
+    // Get hw params
+    snd_pcm_hw_params_t *hp;
+    if (snd_pcm_hw_params_malloc(&hp) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
+    // Get the parameters pcm
+    if (snd_pcm_hw_params_any(pcm_dev->pcm, hp) != 0) {
+        return PBIO_ERROR_IO;
+    }
+
     // Set access
-    if (snd_pcm_hw_params_set_access(
-            pcm_dev->pcm,
-            pcm_dev->hp,
-            SND_PCM_ACCESS_RW_INTERLEAVED) != 0) {
+    if (snd_pcm_hw_params_set_access(pcm_dev->pcm, hp, SND_PCM_ACCESS_RW_INTERLEAVED) != 0) {
         return PBIO_ERROR_IO;
     }
 
     // Set format
-    if (snd_pcm_hw_params_set_format(
-            pcm_dev->pcm,
-            pcm_dev->hp,
-            SND_PCM_FORMAT_S16_LE) != 0) {
+    if (snd_pcm_hw_params_set_format(pcm_dev->pcm, hp, SND_PCM_FORMAT_S16_LE) != 0) {
         return PBIO_ERROR_IO;
     }
 
     // Set channels
-    if (snd_pcm_hw_params_set_channels(
-            pcm_dev->pcm,
-            pcm_dev->hp,
-            pcm_dev->sf_info.channels) != 0) {
+    if (snd_pcm_hw_params_set_channels(pcm_dev->pcm, hp, pcm_dev->sf_info.channels) != 0) {
         return PBIO_ERROR_IO;
     }
     
     // Set rate
-    if (snd_pcm_hw_params_set_rate(
-            pcm_dev->pcm,
-            pcm_dev->hp,
-            pcm_dev->sf_info.samplerate, 0) != 0) {
+    if (snd_pcm_hw_params_set_rate(pcm_dev->pcm, hp, pcm_dev->sf_info.samplerate, 0) != 0) {
         return PBIO_ERROR_IO;
     }
 
     // Set params
-    if (snd_pcm_hw_params(
-            pcm_dev->pcm,
-            pcm_dev->hp) != 0) {
+    if (snd_pcm_hw_params(pcm_dev->pcm, hp) != 0) {
         return PBIO_ERROR_IO;
     }
 
     // Get period
     int dir;
-    if (snd_pcm_hw_params_get_period_size(
-            pcm_dev->hp,
-            &pcm_dev->uframes,
-            &dir) != 0) {
+    if (snd_pcm_hw_params_get_period_size(hp, &pcm_dev->uframes, &dir) != 0) {
         return PBIO_ERROR_IO;
     }
+
+    // clean up hw params
+    snd_pcm_hw_params_free(hp);
+
     return PBIO_SUCCESS;
 }
 
