@@ -90,6 +90,12 @@ static pbio_error_t configure_volume_control(pbdrv_pcm_dev_t *pcm_dev) {
 
 
 static pbio_error_t configure_pcm(pbdrv_pcm_dev_t *pcm_dev) {
+
+    // If device has already been opened, return
+    if (pcm_dev->pcm != NULL) {
+        return PBIO_SUCCESS;
+    }
+
     // Open pcm
     if (snd_pcm_open(
             &pcm_dev->pcm,
