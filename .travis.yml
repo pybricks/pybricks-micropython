@@ -205,11 +205,11 @@ jobs:
         - sudo apt-get install --no-install-recommends --yes
           ev3dev-mocks
           libasound2-plugin-ev3dev
-          libasound2
+          libasound2-dev
           libffi-dev
           libi2c-dev
           libmagickwand-6.q16-3
-          libsndfile1
+          libsndfile1-dev
           libudev-dev
           libumockdev0
           pkg-config
