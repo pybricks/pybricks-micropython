@@ -28,7 +28,7 @@ mp_obj_t builtins_Speaker_obj_make_new(uint8_t volume) {
 
     // Init/reset speaker
     pb_assert(pbio_sound_get(&self->sound));
-    pb_assert(pbio_sound_set_volume(self->sound, 20));
+    pb_assert(pbio_sound_set_volume(self->sound, volume));
     
     return self;
 }
