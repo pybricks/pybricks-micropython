@@ -161,8 +161,11 @@ CFLAGS_MOD += -DPB_HAVE_LIBI2C=1
 LDFLAGS_MOD += -li2c
 endif
 
-# for alsa
-LDFLAGS_MOD += -lasound -lsndfile
+# for sound
+CFLAGS_MOD += $(shell pkg-config alsa --cflags)
+LDFLAGS_MOD += $(shell pkg-config alsa --libs)
+CFLAGS_MOD += $(shell pkg-config sndfile --cflags)
+LDFLAGS_MOD += $(shell pkg-config sndfile --libs)
 
 # source files
 SRC_C = $(addprefix ports/unix/,\
