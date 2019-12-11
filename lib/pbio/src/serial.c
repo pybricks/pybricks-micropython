@@ -2,8 +2,18 @@
 // Copyright (c) 2019 Laurens Valk
 // Copyright (c) 2019 LEGO System A/S
 
+#include <pbio/config.h>
+
+#if PBIO_CONFIG_SERIAL
+
+#include <fcntl.h>
+#include <errno.h>
+#include <sys/ioctl.h>
+#include <termios.h>
+#include <unistd.h>
+
+#include <pbdrv/serial.h>
 #include <pbio/port.h>
-#include <pbdrv/config.h>
 #include <pbio/error.h>
 #include <pbio/serial.h>
 
@@ -107,3 +117,5 @@ pbio_error_t pbio_serial_read(pbio_serial_t *ser, uint8_t *buf, size_t count) {
 pbio_error_t pbio_serial_clear(pbio_serial_t *ser) {
     return pbdrv_serial_clear(ser->dev);
 }
+
+#endif // PBIO_CONFIG_SERIAL

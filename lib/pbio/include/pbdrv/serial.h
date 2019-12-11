@@ -10,8 +10,6 @@
 
 typedef struct _pbdrv_serial_t pbdrv_serial_t;
 
-#define UART_MAX_LEN (32*1024)
-
 pbio_error_t pbdrv_serial_get(pbdrv_serial_t **_ser, pbio_port_t port, int baudrate);
 
 pbio_error_t pbdrv_serial_write(pbdrv_serial_t *ser, const void *buf, size_t count);

@@ -20,6 +20,8 @@
 #include <pbio/serial.h>
 #include <pberror.h>
 
+#define UART_MAX_LEN (32*1024)
+
 // pybricks.customdevices.AnalogSensor class object
 typedef struct _customdevices_AnalogSensor_obj_t {
     mp_obj_base_t base;
