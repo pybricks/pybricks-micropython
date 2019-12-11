@@ -44,14 +44,14 @@
 #define PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT          PBIO_PORT_C
 // #define PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT          PBIO_PORT_D
 
+#define PBDRV_CONFIG_LIGHT                          (1)
+
+#define PBDRV_CONFIG_MOTOR                          (1)
+
 #define PBDRV_CONFIG_UART                           (1)
 #define PBDRV_CONFIG_UART_STM32_HAL                 (1)
 #define PBDRV_CONFIG_UART_STM32_HAL_NUM_UART        (3)
 // #define PBDRV_CONFIG_UART_STM32_HAL_NUM_UART        (4)
-
-#define PBDRV_CONFIG_BLUETOOTH      (0)
-#define PBDRV_CONFIG_LIGHT          (1)
-#define PBDRV_CONFIG_MOTOR          (1)
 
 #define PBDRV_CONFIG_HAS_PORT_A (1)
 #define PBDRV_CONFIG_HAS_PORT_B (1)

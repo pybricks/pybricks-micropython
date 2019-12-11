@@ -23,14 +23,13 @@
 #define PBDRV_CONFIG_GPIO                           (1)
 #define PBDRV_CONFIG_GPIO_STM32F4                   (1)
 
+#define PBDRV_CONFIG_IOPORT                         (1)
+
+#define PBDRV_CONFIG_LIGHT                          (1)
+
 #define PBDRV_CONFIG_UART                           (1)
 #define PBDRV_CONFIG_UART_STM32_HAL                 (1)
 #define PBDRV_CONFIG_UART_STM32_HAL_NUM_UART        (1)
-
-#define PBDRV_CONFIG_BLUETOOTH      (0)
-#define PBDRV_CONFIG_IOPORT         (1)
-#define PBDRV_CONFIG_LIGHT          (1)
-#define PBDRV_CONFIG_MOTOR          (0)
 
 #define PBDRV_CONFIG_HAS_PORT_1 (1)
 

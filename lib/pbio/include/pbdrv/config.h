@@ -97,34 +97,4 @@
 #endif
 #endif
 
-// enable the bluetooth driver
-#ifndef PBDRV_CONFIG_BLUETOOTH
-#define PBDRV_CONFIG_BLUETOOTH (1)
-#endif
-
-// enable the button driver
-#ifndef PBDRV_CONFIG_BUTTON
-#define PBDRV_CONFIG_BUTTON (1)
-#endif
-
-// devices with more than one button have a keypad
-#ifndef PBDRV_CONFIG_KEYPAD
-#define PBDRV_CONFIG_KEYPAD (0)
-#endif
-
-// enable the light driver
-#ifndef PBDRV_CONFIG_LIGHT
-#define PBDRV_CONFIG_LIGHT (1)
-#endif
-
-// enable the motor driver
-#ifndef PBDRV_CONFIG_MOTOR
-#define PBDRV_CONFIG_MOTOR (1)
-#endif
-
-// enable the UART driver
-#ifndef PBDRV_CONFIG_UART
-#define PBDRV_CONFIG_UART (1)
-#endif
-
 #endif // _PBDRV_CONFIG_H_
