@@ -1625,48 +1625,6 @@ extern HCI_StatusCodes_t GapConfig_SetParameter(Gap_configParamIds_t param,
  */
 
 /**
- *  Start Authentication
- *
- * Start the Authentication process with the requested device.
- * This function is used to Initiate/Allow pairing.
- * Called by both master and slave device (Central and Peripheral).
- *
- * @warning This API should not be called by the application if the
- * gapbondmgr exists as it will be used automatically based on
- * @ref GAPBOND_PAIRING_MODE
- *
- * @par Corresponding Events:
- * After pairing is completed successfully, the calling task will receive a
- * @ref GAP_AUTHENTICATION_COMPLETE_EVENT of type
- * @ref gapAuthCompleteEvent_t <br>
- * After a failed pairing, the calling task will receive a
- * @ref GAP_AUTHENTICATION_FAILURE_EVT
- *
- * When this command is received, the host will send the CommandStatus Event.
- * When the pairing process is complete (either bleSUCCESS or Failure), a
- * GAP_AuthenticationComplete will be generated. If a passkey is needed, a
- * GAP_PasskeyNeeded will be generated.
- * The following status values can be received from the CommandStatus Event:
- * @ref bleSUCCESS : authentication request sent to stack
- * @ref bleIncorrectMode : Not correct profile role
- * @ref INVALIDPARAMETER
- * @ref bleNotConnected
- * @ref bleAlreadyInRequestedMode
- * @ref bleFAILURE : not workable
- *
- * @param  pParams Authentication parameters
- * @param  pPairReq Enter these parameters if the Pairing Request was already
- *         received. <br>
- *         NULL, if waiting for Pairing Request or if initiating.
- *
- * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
- * @return @ref bleFAILURE : command failed to send over HCI transport layer
- */
-extern HCI_StatusCodes_t GAP_Authenticate(gapAuthParams_t *pParams,
-                                  gapPairingReq_t *pPairReq);
-
-
-/**
  * Terminate Authentication
  *
  * Send a Pairing Failed message and end any existing pairing.

@@ -399,61 +399,6 @@ HCI_StatusCodes_t GapInit_setPhyParam(uint8_t phys,
     return status;
 }
 
-HCI_StatusCodes_t GAP_Authenticate(gapAuthParams_t *pParams,
-                                  gapPairingReq_t *pPairReq)
-{
-    HCI_StatusCodes_t status;
-    uint16_t opcode = GAP_AUTHENTICATE;
-    uint8_t pData[160];
-
-    pData[0] = LO_UINT16(pParams->connectionHandle);
-    pData[1] = HI_UINT16(pParams->connectionHandle);
-
-    pData[2] = pParams->secReqs.ioCaps;
-
-    pData[3] = pParams->secReqs.oobAvailable;
-
-    memcpy(&pData[4], &pParams->secReqs.oob, KEYLEN);
-
-    memcpy(&pData[20], &pParams->secReqs.oobConfirm, KEYLEN);
-
-    pData[36] = pParams->secReqs.localOobAvailable;
-
-    memcpy(&pData[37], &pParams->secReqs.localOob, KEYLEN);
-
-    pData[53] = pParams->secReqs.isSCOnlyMode;
-
-    pData[54] = pParams->secReqs.eccKeys.isUsed;
-
-    memcpy(&pData[55], &pParams->secReqs.eccKeys.sK, SM_ECC_KEY_LEN);
-
-    memcpy(&pData[87], &pParams->secReqs.eccKeys.pK_x, SM_ECC_KEY_LEN);
-
-    memcpy(&pData[119], &pParams->secReqs.eccKeys.pK_y, SM_ECC_KEY_LEN);
-
-    pData[151] = pParams->secReqs.authReq;
-
-    pData[152] = pParams->secReqs.maxEncKeySize;
-
-    memcpy(&pData[153], &pParams->secReqs.keyDist, sizeof(pParams->secReqs.keyDist));
-
-    pData[154] = pPairReq->enable;
-
-    pData[155] = pPairReq->ioCap;
-
-    pData[156] = pPairReq->oobDataFlag;
-
-    pData[157] = pPairReq->authReq;
-
-    pData[158] = pPairReq->maxEncKeySize;
-
-    memcpy(&pData[159], &pPairReq->keyDist, sizeof(pPairReq->keyDist));
-
-    status = HCI_sendHCICommand(opcode, pData, 160);
-
-    return status;
-}
-
 HCI_StatusCodes_t GAP_TerminateAuth(uint16_t connectionHandle, uint8_t reason)
 {
     HCI_StatusCodes_t status;
