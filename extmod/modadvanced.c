@@ -6,6 +6,7 @@
 #if PYBRICKS_PY_ADVANCED
 
 #include <pbdrv/ioport.h>
+#include <pbio/config.h>
 #include <pbio/iodev.h>
 #include <pbio/hbridge.h>
 #include <pbio/error.h>
@@ -29,7 +30,7 @@ class IODevice():
 typedef struct _advanced_IODevice_obj_t {
     mp_obj_base_t base;
     pbio_iodev_t *iodev;
-#if PBDRV_CONFIG_HBRIDGE
+#if PBIO_CONFIG_HBRIDGE
     pbio_hbridge_t *hbridge;
 #endif
 } advanced_IODevice_obj_t;
@@ -47,7 +48,7 @@ STATIC mp_obj_t advanced_IODevice_make_new(const mp_obj_type_t *type, size_t n_a
     pbio_port_t port = mp_obj_get_int(args[0]);
     pb_assert(pbdrv_ioport_get_iodev(port, &self->iodev));
 
-#if PBDRV_CONFIG_HBRIDGE
+#if PBIO_CONFIG_HBRIDGE
     pbio_error_t err;
     err = pbio_hbridge_get(port, &self->hbridge, PBIO_DIRECTION_COUNTERCLOCKWISE, 0, 10000);
     pb_assert(err);
@@ -104,13 +105,13 @@ STATIC mp_obj_t advanced_IODevice_values(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(advanced_IODevice_values_obj, 1, 2, advanced_IODevice_values);
 
-#if PBDRV_CONFIG_HBRIDGE
+#if PBIO_CONFIG_HBRIDGE
 STATIC mp_obj_t advanced_IODevice_supply_on(mp_obj_t self_in) {
     advanced_IODevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_error_t err;
 
-    pb_thread_enter();   
-    
+    pb_thread_enter();
+
     err = pbio_hbridge_set_duty_cycle_usr(self->hbridge, 100);
 
     pb_thread_exit();
@@ -125,8 +126,8 @@ STATIC mp_obj_t advanced_IODevice_supply_off(mp_obj_t self_in) {
     advanced_IODevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_error_t err;
 
-    pb_thread_enter();   
-    
+    pb_thread_enter();
+
     err = pbio_hbridge_coast(self->hbridge);
 
     pb_thread_exit();
@@ -137,7 +138,7 @@ STATIC mp_obj_t advanced_IODevice_supply_off(mp_obj_t self_in) {
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(advanced_IODevice_supply_off_obj, advanced_IODevice_supply_off);
-#endif // PBDRV_CONFIG_HBRIDGE
+#endif // PBIO_CONFIG_HBRIDGE
 
 /*
 IODevice class tables
@@ -146,7 +147,7 @@ STATIC const mp_rom_map_elem_t advanced_IODevice_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_type_id), MP_ROM_PTR(&advanced_IODevice_type_id_obj)  },
     { MP_ROM_QSTR(MP_QSTR_values),  MP_ROM_PTR(&advanced_IODevice_values_obj)   },
     { MP_ROM_QSTR(MP_QSTR_mode),    MP_ROM_PTR(&advanced_IODevice_mode_obj)     },
-#if PBDRV_CONFIG_HBRIDGE
+#if PBIO_CONFIG_HBRIDGE
     { MP_ROM_QSTR(MP_QSTR_on),    MP_ROM_PTR(&advanced_IODevice_supply_on_obj)     },
     { MP_ROM_QSTR(MP_QSTR_off),    MP_ROM_PTR(&advanced_IODevice_supply_off_obj)     },
 #endif

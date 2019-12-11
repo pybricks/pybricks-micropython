@@ -2,15 +2,17 @@
 // Copyright (c) 2018-2019 Laurens Valk
 // Copyright (c) 2019 LEGO System A/S
 
+#include <pbio/config.h>
+
+#if PBIO_CONFIG_HBRIDGE
+
 #include <inttypes.h>
 
 #include <fixmath.h>
 
+#include <pbdrv/config.h>
 #include <pbdrv/motor.h>
-
 #include <pbio/hbridge.h>
-
-#if PBDRV_CONFIG_HBRIDGE
 
 static pbio_hbridge_t hbridges[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
@@ -34,7 +36,7 @@ pbio_error_t pbio_hbridge_get(pbio_port_t port, pbio_hbridge_t **hbridge, pbio_d
 
     // Get pointer to hbridge
     *hbridge = &hbridges[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
-    
+
     // Initialize and set up pwm properties
     return pbio_hbridge_setup(*hbridge, port, direction, duty_offset, max_duty_steps);
 }
@@ -102,4 +104,4 @@ pbio_error_t pbio_hbridge_set_duty_cycle_usr(pbio_hbridge_t *hbridge, int32_t du
     return pbio_hbridge_set_duty_cycle_sys(hbridge, PBIO_DUTY_STEPS * duty_steps / PBIO_DUTY_USER_STEPS);
 }
 
-#endif // PBDRV_CONFIG_HBRIDGE
+#endif // PBIO_CONFIG_HBRIDGE

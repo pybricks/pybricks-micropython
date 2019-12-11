@@ -122,11 +122,6 @@
 #define PBDRV_CONFIG_MOTOR (1)
 #endif
 
-// enable the hbridge driver
-#ifndef PBDRV_CONFIG_HBRIDGE
-#define PBDRV_CONFIG_HBRIDGE (1)
-#endif
-
 // enable the tacho driver
 #ifndef PBDRV_CONFIG_TACHO
 #define PBDRV_CONFIG_TACHO (1)
