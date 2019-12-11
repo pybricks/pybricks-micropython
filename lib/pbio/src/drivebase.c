@@ -2,6 +2,7 @@
 // Copyright (c) 2019 Laurens Valk
 
 
+#include <pbio/fixmath.h>
 #include <pbio/servo.h>
 #include <pbio/drivebase.h>
 
@@ -56,7 +57,7 @@ pbio_error_t pbio_drivebase_get(pbio_drivebase_t **drivebase, pbio_servo_t *left
 }
 
 pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *drivebase, pbio_actuation_t after_stop) {
-    
+
     pbio_error_t err_l, err_r;
 
     switch (after_stop) {

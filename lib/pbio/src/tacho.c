@@ -2,13 +2,15 @@
 // Copyright (c) 2018-2019 Laurens Valk
 // Copyright (c) 2019 LEGO System A/S
 
+#include <pbio/config.h>
+
+#if PBIO_CONFIG_TACHO
+
 #include <inttypes.h>
 
 #include <pbio/fixmath.h>
 #include <pbio/port.h>
 #include <pbio/tacho.h>
-
-#if PBDRV_CONFIG_TACHO
 
 static pbio_tacho_t tachos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
@@ -44,7 +46,7 @@ pbio_error_t pbio_tacho_get(pbio_port_t port, pbio_tacho_t **tacho, pbio_directi
 
     // Get pointer to tacho
     *tacho = &tachos[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
-    
+
     // FIXME: Make proper way to get counter id
     uint8_t counter_id = port - PBDRV_CONFIG_FIRST_MOTOR_PORT;
 
@@ -134,4 +136,4 @@ pbio_error_t pbio_tacho_get_angular_rate(pbio_tacho_t *tacho, int32_t *angular_r
     return PBIO_SUCCESS;
 }
 
-#endif // PBDRV_CONFIG_TACHO
+#endif // PBIO_CONFIG_TACHO
