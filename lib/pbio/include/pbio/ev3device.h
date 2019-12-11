@@ -9,8 +9,6 @@
 #include <pbio/error.h>
 #include <pbio/iodev.h>
 
-#include "py/obj.h"
-
 #include <pbdrv/ev3sensor.h>
 
 // TODO: Make structure like iodevice
