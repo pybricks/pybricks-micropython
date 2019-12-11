@@ -3,6 +3,10 @@
 
 // LEGO Power Functions 2 I/O port
 
+#include <pbio/config.h>
+
+#if PBIO_CONFIG_IOPORT_LPF2
+
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -386,3 +390,5 @@ PROCESS_THREAD(pbio_ioport_lpf2_process, ev, data) {
 
     PROCESS_END();
 }
+
+#endif // PBIO_CONFIG_IOPORT_LPF2
