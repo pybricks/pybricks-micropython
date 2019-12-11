@@ -2,6 +2,10 @@
 // Copyright (c) 2019 Laurens Valk
 // Copyright (c) 2019 LEGO System A/S
 
+#include <pbio/config.h>
+
+#if PBIO_CONFIG_SOUND
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -29,7 +33,7 @@ pbio_error_t pbio_sound_get(pbio_sound_t **_sound) {
     pbio_sound_t *sound = &__sound;
 
     pbio_error_t err;
-    
+
     // Get the beep device
     err = pbdrv_beep_get(&sound->beep_dev);
     if (err != PBIO_SUCCESS) {
@@ -108,7 +112,7 @@ pbio_error_t pbio_sound_set_volume(pbio_sound_t *sound, uint32_t volume) {
 
 
 static pbio_error_t file_start(pbio_sound_t *sound, const char *path) {
-    
+
     // Already started, so return
     if (sound->busy) {
         return PBIO_SUCCESS;
@@ -125,7 +129,7 @@ static pbio_error_t file_start(pbio_sound_t *sound, const char *path) {
 static pbio_error_t file_stop(pbio_sound_t *sound, pbio_error_t stop_err) {
 
     pbio_error_t err;
-    
+
     // Stop the sound
     err = pbdrv_pcm_play_file_stop(sound->pcm_dev);
     if (err != PBIO_SUCCESS) {
@@ -164,3 +168,5 @@ pbio_error_t pbio_sound_play_file(pbio_sound_t *sound, const char *path) {
     // If we are here, we need to call this again until the sound is done
     return PBIO_ERROR_AGAIN;
 }
+
+#endif // PBIO_CONFIG_SOUND
