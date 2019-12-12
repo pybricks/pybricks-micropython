@@ -40,6 +40,8 @@
 
 #include "sys/autostart.h"
 
+#if AUTOSTART_ENABLE
+
 #define DEBUG 0
 #if DEBUG
 #include <stdio.h>
@@ -71,3 +73,5 @@ autostart_exit(struct process * const processes[])
   }
 }
 /*---------------------------------------------------------------------------*/
+
+#endif /* AUTOSTART_ENABLE */
