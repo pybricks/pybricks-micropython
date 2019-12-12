@@ -45,6 +45,7 @@ INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32$(PB_MCU_SERIES)xx/Include
 ifeq ($(PB_USE_HAL),1)
 INC += -I$(TOP)/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Inc
 endif
+INC += -I$(TOP)/ports/pybricks/lib/contiki-core
 INC += -I$(TOP)/ports/pybricks/lib/libfixmath/libfixmath
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)
@@ -169,6 +170,13 @@ HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal.c \
 	)
 
+CONTIKI_SRC_C = $(addprefix ports/pybricks/lib/contiki-core/,\
+	sys/autostart.c \
+	sys/etimer.c \
+	sys/process.c \
+	sys/timer.c \
+	)
+
 LIBFIXMATH_SRC_C = $(addprefix ports/pybricks/lib/libfixmath/libfixmath/,\
 	fix16_sqrt.c \
 	fix16_str.c \
@@ -208,10 +216,6 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	src/trajectory.c \
 	src/fixmath.c \
 	src/uartdev.c \
-	sys/autostart.c \
-	sys/etimer.c \
-	sys/process.c \
-	sys/timer.c \
 	)
 
 SRC_LIBM = $(addprefix lib/libm/,\
@@ -252,6 +256,7 @@ endif
 ifeq ($(PB_USE_HAL),1)
 OBJ += $(addprefix $(BUILD)/, $(HAL_SRC_C:.c=.o))
 endif
+OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))

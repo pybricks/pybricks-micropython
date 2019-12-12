@@ -27,6 +27,7 @@ include $(TOP)/py/py.mk
 INC +=  -I.
 INC +=  -I$(TOP)
 INC += -I$(BUILD)
+INC += -I$(TOP)/ports/pybricks/lib/contiki-core
 INC += -I$(TOP)/ports/pybricks/lib/libfixmath/libfixmath
 INC += -I$(TOP)/ports/pybricks/lib/pbio
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
@@ -225,6 +226,10 @@ PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/py/,\
 	)
 
 PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
+	contiki-core/sys/autostart.c \
+	contiki-core/sys/etimer.c \
+	contiki-core/sys/process.c \
+	contiki-core/sys/timer.c \
 	libfixmath/libfixmath/fix16_sqrt.c \
 	libfixmath/libfixmath/fix16_str.c \
 	libfixmath/libfixmath/fix16.c \
@@ -257,10 +262,6 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	pbio/src/drivebase.c \
 	pbio/src/serial.c \
 	pbio/src/sound.c \
-	pbio/sys/autostart.c \
-	pbio/sys/etimer.c \
-	pbio/sys/process.c \
-	pbio/sys/timer.c \
 	)
 
 # FatFS VFS support

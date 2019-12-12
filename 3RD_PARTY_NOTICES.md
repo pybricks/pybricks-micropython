@@ -38,7 +38,7 @@ subdirectories.
 
 ### Contiki OS
 
-**path**: `lib/pbio/sys/`
+**path**: `lib/contiki-core/`
 
 **origin**: Git commit 32b5b17f674232867c22916bb2e2534c8e9a92ff
 

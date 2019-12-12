@@ -28,6 +28,7 @@ endif
 
 INC += -I.
 INC += -I$(TOP)
+INC += -I$(TOP)/ports/pybricks/lib/contiki-core
 INC += -I$(TOP)/ports/pybricks/lib/libfixmath/libfixmath
 INC += -I$(TOP)/ports/pybricks/bricks/nxt/nxt-firmware-drivers
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
@@ -126,6 +127,13 @@ PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/py/,\
 	pberror.c \
 	)
 
+CONTIKI_SRC_C = $(addprefix ports/pybricks/lib/contiki-core/,\
+	sys/autostart.c \
+	sys/etimer.c \
+	sys/process.c \
+	sys/timer.c \
+	)
+
 LIBFIXMATH_SRC_C = $(addprefix ports/pybricks/lib/libfixmath/libfixmath/,\
 	fix16_sqrt.c \
 	fix16_str.c \
@@ -152,10 +160,6 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	src/servo.c \
 	src/tacho.c \
 	src/trajectory.c \
-	sys/autostart.c \
-	sys/etimer.c \
-	sys/process.c \
-	sys/timer.c \
 	)
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
@@ -164,6 +168,7 @@ OBJ += $(addprefix $(BUILD)/, $(SRC_S_NXT:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PY_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
