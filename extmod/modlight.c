@@ -11,6 +11,7 @@
 #include "modlight.h"
 #include "pbiodevice.h"
 
+#include "modlight.h"
 #include "modparameters.h"
 #include "pberror.h"
 #include "pbobj.h"
@@ -25,24 +26,7 @@ typedef struct _light_Light_obj_t {
 // pybricks.builtins.Light.on
 STATIC mp_obj_t light_Light_on(mp_obj_t self_in) {
     light_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    // Turn the light on, using the command specific to the device.
-#if PYBRICKS_PY_PUPDEVICES
-    if (self->dev.id == PBIO_IODEV_TYPE_ID_LPF2_LIGHT) {
-        // TODO
-        return mp_const_none;
-    }
-#endif
-#if PYBRICKS_PY_EV3DEVICES
-    if (self->dev.id == PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR) {
-        int16_t unused;
-        pb_assert(ev3device_get_values_at_mode(self->dev.ev3iodev,
-                                               PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__DIST_CM,
-                                               &unused));
-        return mp_const_none;
-    }
-#endif
-    pb_assert(PBIO_ERROR_NOT_SUPPORTED);
+    pb_assert(pb_light_on(&self->dev));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(light_Light_on_obj, light_Light_on);
@@ -70,42 +54,8 @@ STATIC mp_obj_t light_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, mp_
         pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
     }
 
-    // Turn the light on, using the command specific to the device.
-#if PYBRICKS_PY_EV3DEVICES
-    if (self->dev.id == PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR) {
-        // TODO
-        return mp_const_none;
-    }
-    else if (self->dev.id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
-        pb_assert(ev3device_get_values_at_mode(self->dev.ev3iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP, &color_id));
-        return mp_const_none;
-    }
-#endif
-#if PYBRICKS_PY_PUPDEVICES
-    if (self->dev.id == PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR) {
-        uint8_t mode;
-        switch (color_id) {
-            case PBIO_LIGHT_COLOR_GREEN:
-                mode = 1;
-                break;
-            case PBIO_LIGHT_COLOR_RED:
-                mode = 3;
-                break;
-            case PBIO_LIGHT_COLOR_BLUE:
-                mode = 4;
-                break;
-            default:
-                mode = 7;
-                break;
-        }
-        pb_iodevice_set_mode(self->dev.pupiodev, mode);
-        uint8_t *data;
-        pb_assert(pbio_iodev_get_data(self->dev.pupiodev, &data));
-        return mp_const_none;
-    }
-#endif
-    // No external device, so assume command is for the internal light
-    pb_assert(pbio_light_on(PBIO_PORT_SELF, color_id));
+    pb_assert(pb_color_light_on(&self->dev, color_id));
+
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(light_ColorLight_on_obj, 0, light_ColorLight_on);
@@ -117,27 +67,8 @@ STATIC mp_obj_t light_Light_off(mp_obj_t self_in) {
     light_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // Turn the light off, using the command specific to the device. 
+    pb_assert(pb_color_light_on(&self->dev, PBIO_LIGHT_COLOR_NONE));
 
-#if PYBRICKS_PY_PUPDEVICES
-    if (self->dev.id == PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR) {
-        pb_iodevice_set_mode(self->dev.pupiodev, 7);
-        uint8_t *data;
-        pb_assert(pbio_iodev_get_data(self->dev.pupiodev, &data));
-        return mp_const_none;
-    }
-#endif
-#if PYBRICKS_PY_EV3DEVICES
-    if (self->dev.id == PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR) {
-        int16_t unused;
-        pb_assert(ev3device_get_values_at_mode(self->dev.ev3iodev,
-                                               PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__SI_CM,
-                                               &unused));
-        return mp_const_none;
-    }
-#endif
-
-    // No external device, so assume command is for the internal light
-    pb_assert(pbio_light_off(PBIO_PORT_SELF));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(light_Light_off_obj, light_Light_off);

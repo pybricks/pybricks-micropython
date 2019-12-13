@@ -205,6 +205,7 @@ LIB_SRC_C = $(addprefix lib/,\
 PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modmotor.c \
 	modlight.c \
+	pblight.c \
 	modbattery.c \
 	modhubs.c \
 	modev3devices.c \

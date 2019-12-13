@@ -6,12 +6,7 @@
 
 #include <pbio/ev3device.h>
 
-// TODO: Ultimately, lights should be redesigned and moved to pbio
-typedef struct _pbio_lightdev_t {
-    pbio_iodev_type_id_t id;
-    pbio_iodev_t *pupiodev;
-    pbio_ev3iodev_t *ev3iodev;
-} pbio_lightdev_t;
+#include "pblight.h"
 
 #include "py/obj.h"
 
