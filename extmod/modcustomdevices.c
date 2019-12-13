@@ -8,6 +8,7 @@
 
 #include "py/mphal.h"
 #include "py/runtime.h"
+#include "py/objstr.h"
 
 #include "pbobj.h"
 #include "pbkwarg.h"
@@ -217,55 +218,39 @@ STATIC mp_obj_t customdevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos
 
     customdevices_I2CDevice_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
-    // First, deal with the case where no data is given
-    if (data == mp_const_none) {
-        // In this case, register must also be None
-        if (reg != mp_const_none) {
-            pb_assert(PBIO_ERROR_INVALID_ARG);
-        }
-        // Do a quick write and we're done
+    // Assert that data argument are bytes
+    if (!mp_obj_is_str_or_bytes(data)) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // Get data and length
+    GET_STR_DATA_LEN(data, bytes, len);
+
+    // Len 0 with no register given
+    if (len == 0 && reg == mp_const_none) {
         pb_assert(pb_smbus_write_quick(self->bus, self->address));
         return mp_const_none;
     }
 
-    // Get register if given
-    mp_int_t regist = 0;
-    if (reg != mp_const_none) {
-        regist = mp_obj_get_int(reg);
-        if (regist < 0 || regist > 255) {
-            pb_assert(PBIO_ERROR_INVALID_ARG);
-        }
+    // Len 0 is not allowed in any other case
+    if (len == 0) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+        return mp_const_none;
     }
 
-    // Unpack user argument to bytes
-    uint8_t *bytes;
-    size_t len;
-    bool clean = unpack_byte_arg(data, &bytes, &len);
-
-    pbio_error_t err;
-
-    // First, deal with the case where no register is given
-    if (reg == mp_const_none) {
-        // There must be only one byte
-        if (len != 1) {
-            err = PBIO_ERROR_INVALID_ARG;
-        }
-        else {
-            err = pb_smbus_write_no_reg(self->bus, self->address, bytes[0]);
-        }
-    }
-    else {
-        // There is data and a register, so send all data
-        err = pb_smbus_write_bytes(self->bus, self->address, regist, len, bytes);
+    // Len 1 with no register given
+    if (len == 1 && reg == mp_const_none) {
+        pb_smbus_write_no_reg(self->bus, self->address, bytes[0]);
+        return mp_const_none;
     }
 
-    // Clean up bytes buffer if needed
-    if (clean) {
-        m_free(bytes, len);
+    // Get register
+    mp_int_t regist = mp_obj_get_int(reg);
+    if (regist < 0 || regist > 255) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
-    // Assert error if any
-    pb_assert(err);
+    pb_assert(pb_smbus_write_bytes(self->bus, self->address, regist, len, bytes));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(customdevices_I2CDevice_write_obj, 0, customdevices_I2CDevice_write);
