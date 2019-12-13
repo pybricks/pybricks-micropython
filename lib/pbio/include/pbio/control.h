@@ -7,6 +7,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <fixmath.h>
+
 #include <pbio/error.h>
 #include <pbio/port.h>
 #include <pbio/trajectory.h>
@@ -20,10 +22,10 @@ typedef enum {
     /* Passive control statuses: No PID Control Active */
     PBIO_CONTROL_PASSIVE,
     PBIO_CONTROL_ERRORED,
-    /* Active control statuses: PID Control Active in non-blocking manner */   
+    /* Active control statuses: PID Control Active in non-blocking manner */
     PBIO_CONTROL_ANGLE_BACKGROUND,
     PBIO_CONTROL_TIME_BACKGROUND,
-    /* Active control statuses: PID Control Active which blocks user program */  
+    /* Active control statuses: PID Control Active which blocks user program */
     PBIO_CONTROL_ANGLE_FOREGROUND,
     PBIO_CONTROL_TIME_FOREGROUND,
 } pbio_servo_state_t;

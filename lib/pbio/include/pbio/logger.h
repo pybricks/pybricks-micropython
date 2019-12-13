@@ -5,7 +5,8 @@
 #ifndef _PBIO_LOGGER_H_
 #define _PBIO_LOGGER_H_
 
-#include <inttypes.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 #include <pbio/error.h>
 
