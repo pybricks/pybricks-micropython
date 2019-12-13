@@ -83,7 +83,7 @@ pbio_error_t pb_smbus_read_bytes(smbus_t *bus, uint8_t address, uint8_t reg, uin
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pb_smbus_write_bytes(smbus_t *bus, uint8_t address, uint8_t reg, uint8_t len, uint8_t *buf) {
+pbio_error_t pb_smbus_write_bytes(smbus_t *bus, uint8_t address, uint8_t reg, uint8_t len, const uint8_t *buf) {
 
     pbio_error_t err = pb_smbus_set_address(bus, address);
     if (err != PBIO_SUCCESS) {
