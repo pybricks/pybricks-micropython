@@ -318,17 +318,16 @@ STATIC mp_obj_t customdevices_UARTDevice_write(size_t n_args, const mp_obj_t *po
 
     customdevices_UARTDevice_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
-    uint8_t *bytes;
-    size_t len;
-    bool clean = unpack_byte_arg(data, &bytes, &len);
-
-    pbio_error_t err = pbio_serial_write(self->serial, bytes, len);
-
-    if (clean) {
-        m_free(bytes, len);
+    // Assert that data argument are bytes
+    if (!mp_obj_is_str_or_bytes(data)) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
-    pb_assert(err);
+    // Get data and length
+    GET_STR_DATA_LEN(data, bytes, len);
+
+    // Write data to serial
+    pb_assert(pbio_serial_write(self->serial, bytes, len));
 
     return mp_const_none;
 }
