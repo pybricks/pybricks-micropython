@@ -9,13 +9,11 @@
 
 #include "pbobj.h"
 #include "pbkwarg.h"
-#include "modlight.h"
 #include "modparameters.h"
 
 #include "py/objtype.h"
 
 #include <pbio/iodev.h>
-#include <pbio/light.h>
 #include <pbio/button.h>
 #include <pbio/ev3device.h>
 #include <pberror.h>
@@ -367,7 +365,6 @@ STATIC const mp_obj_type_t ev3devices_ColorSensor_type = {
 // pybricks.ev3devices.UltrasonicSensor class object
 typedef struct _ev3devices_UltrasonicSensor_obj_t {
     mp_obj_base_t base;
-    mp_obj_t light;
     pbio_ev3iodev_t *iodev;
 } ev3devices_UltrasonicSensor_obj_t;
 
@@ -388,13 +385,6 @@ STATIC mp_obj_t ev3devices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);
-
-    // Create an instance of the Light class
-    pbio_lightdev_t dev = {
-        .id = self->iodev->type_id,
-        .ev3iodev = self->iodev
-    };
-    self->light = light_Light_obj_make_new(dev, &light_Light_type);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -431,7 +421,6 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_UltrasonicSensor_presence_obj, ev3de
 STATIC const mp_rom_map_elem_t ev3devices_UltrasonicSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_distance), MP_ROM_PTR(&ev3devices_UltrasonicSensor_distance_obj) },
     { MP_ROM_QSTR(MP_QSTR_presence), MP_ROM_PTR(&ev3devices_UltrasonicSensor_presence_obj) },
-    { MP_ROM_QSTR(MP_QSTR_light), MP_ROM_ATTRIBUTE_OFFSET(ev3devices_UltrasonicSensor_obj_t, light) },
 };
 STATIC MP_DEFINE_CONST_DICT(ev3devices_UltrasonicSensor_locals_dict, ev3devices_UltrasonicSensor_locals_dict_table);
 
