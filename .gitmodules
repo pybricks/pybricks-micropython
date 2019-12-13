@@ -4,7 +4,7 @@
 	update = none
 [submodule "lib/libfixmath"]
 	path = lib/libfixmath
-	url = https://github.com/pybricks/libfixmath
+	url = https://github.com/PetteriAimonen/libfixmath.git
 [submodule "bricks/nxt/nxt-firmware-drivers"]
 	path = bricks/nxt/nxt-firmware-drivers
 	url = https://github.com/pybricks/nxt-firmware-drivers.git
