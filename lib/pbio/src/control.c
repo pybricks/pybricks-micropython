@@ -135,19 +135,16 @@ pbio_error_t control_update_angle_target(pbio_control_t *ctl, ustime_t time_now,
         // And the motor stands still.
         abs(rate_now) < ctl->settings.rate_tolerance)
     {
-        // If so, we have reached our goal. Decide what to do next.
-        if (ctl->after_stop == PBIO_ACTUATION_HOLD) {
-            // Holding just means that we continue the position control loop without changes
-            *actuation_type = PBIO_ACTUATION_DUTY;
-            *control = duty;
+        // If so, we have reached our goal. So the action is the after_stop:
+        *actuation_type = ctl->after_stop;
 
-            // Altough we keep holding, the maneuver is completed
-            // FIXME: state change should reach servo level
-            // srv->state = PBIO_CONTROL_ANGLE_BACKGROUND;
+        // The payload of that action is:
+        if (ctl->after_stop == PBIO_ACTUATION_HOLD) {
+            // Hold at the final angle
+            *control = ctl->trajectory.th3;
         }
         else {
-            // Otherwise, the next action is the specified after_stop, which is brake or coast
-            *actuation_type = ctl->after_stop;
+            // no payload for coast or brake
             *control = 0;
         }
     }
