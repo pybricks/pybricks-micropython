@@ -179,13 +179,13 @@ call_process(struct process *p, process_event_t ev, process_data_t data)
 
 #if DEBUG
   if(p->state == PROCESS_STATE_CALLED) {
-    printf("process: process '%s' called again with event %d\n", PROCESS_NAME_STRING(p), ev);
+    printf("process: process '%s' called again with event 0x%02X\n", PROCESS_NAME_STRING(p), ev);
   }
 #endif /* DEBUG */
 
   if((p->state & PROCESS_STATE_RUNNING) &&
      p->thread != NULL) {
-    PRINTF("process: calling process '%s' with event %d\n", PROCESS_NAME_STRING(p), ev);
+    PRINTF("process: calling process '%s' with event 0x%02X\n", PROCESS_NAME_STRING(p), ev);
     process_current = p;
     p->state = PROCESS_STATE_CALLED;
     ret = p->thread(&p->pt, ev, data);
@@ -325,10 +325,10 @@ process_post(struct process *p, process_event_t ev, process_data_t data)
   process_num_events_t snum;
 
   if(PROCESS_CURRENT() == NULL) {
-    PRINTF("process_post: NULL process posts event %d to process '%s', nevents %d\n",
+    PRINTF("process_post: NULL process posts event 0x%02X to process '%s', nevents %d\n",
 	   ev,PROCESS_NAME_STRING(p), nevents);
   } else {
-    PRINTF("process_post: Process '%s' posts event %d to process '%s', nevents %d\n",
+    PRINTF("process_post: Process '%s' posts event 0x%02X to process '%s', nevents %d\n",
 	   PROCESS_NAME_STRING(PROCESS_CURRENT()), ev,
 	   p == PROCESS_BROADCAST? "<broadcast>": PROCESS_NAME_STRING(p), nevents);
   }
