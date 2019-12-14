@@ -95,15 +95,97 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
 
 void motor_Motor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind){
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    char dc_motor_settings_string[MAX_DCMOTOR_SETTINGS_STR_LENGTH];
-    char enc_motor_settings_string[MAX_ENCMOTOR_SETTINGS_STR_LENGTH];
+
+    pbio_error_t err;
 
     pb_thread_enter();
+    char counts_per_degree_str[13];
+    char gear_ratio_str[13];
+    err = pbio_servo_get_gear_settings(self->srv, gear_ratio_str, counts_per_degree_str);
+    if (err != PBIO_SUCCESS) {
+        pb_thread_exit();
+        pb_assert(err);
+    }
 
-    pbio_servo_print_settings(self->srv, dc_motor_settings_string, enc_motor_settings_string);
-    mp_printf(print, "%s\n%s", dc_motor_settings_string, enc_motor_settings_string);
+    pbio_direction_t direction;
+    int32_t stall_duty, duty_offset;
+    err = pbio_hbridge_get_settings(self->srv->hbridge, &direction, &stall_duty, &duty_offset);
+    if (err != PBIO_SUCCESS) {
+        pb_thread_exit();
+        pb_assert(err);
+    }
+
+    int32_t max_speed, acceleration;
+    err = pbio_servo_get_run_settings(self->srv, &max_speed, &acceleration);
+    if (err != PBIO_SUCCESS) {
+        pb_thread_exit();
+        pb_assert(err);
+    }
+
+    int16_t pid_kp, pid_ki, pid_kd;
+    int32_t tight_loop_time, stall_time;
+    int32_t position_tolerance, speed_tolerance, stall_speed_limit;
+    err = pbio_servo_get_pid_settings(
+        self->srv,
+        &pid_kp, &pid_ki, &pid_kd,
+        &tight_loop_time, &position_tolerance,
+        &speed_tolerance, &stall_speed_limit, &stall_time);
+    if (err != PBIO_SUCCESS) {
+        pb_thread_exit();
+        pb_assert(err);
+    }
 
     pb_thread_exit();
+
+    char settings_string[512];
+
+    snprintf(settings_string, sizeof(settings_string),
+        "Motor properties:\n"
+        "------------------------\n"
+        "Port\t\t %c\n"
+        "Direction\t %s\n"
+        "Counts per unit\t %s\n"
+        "Gear ratio\t %s\n"
+        "\nRun settings:\n"
+        "------------------------\n"
+        "Max speed\t %" PRId32 "\n"
+        "Acceleration\t %" PRId32 "\n"
+        "\nDC settings:\n"
+        "------------------------\n"
+        "Duty limit\t %" PRId32 "\n"
+        "Duty offset\t %" PRId32 "\n"
+        "\nPID settings:\n"
+        "------------------------\n"
+        "kp\t\t %" PRId16 "\n"
+        "ki\t\t %" PRId16 "\n"
+        "kd\t\t %" PRId16 "\n"
+        "Tight Loop\t %" PRId32 "\n"
+        "Angle tolerance\t %" PRId32 "\n"
+        "Speed tolerance\t %" PRId32 "\n"
+        "Stall speed\t %" PRId32 "\n"
+        "Stall time\t %" PRId32,
+        self->srv->port,
+        direction == PBIO_DIRECTION_CLOCKWISE ? "clockwise" : "counterclockwise",
+        counts_per_degree_str,
+        gear_ratio_str,
+        // Print run settings
+        max_speed,
+        acceleration,
+        // Print DC settings
+        stall_duty,
+        duty_offset,
+        // Print PID settings
+        pid_kp,
+        pid_ki,
+        pid_kd,
+        tight_loop_time,
+        position_tolerance,
+        speed_tolerance,
+        stall_speed_limit,
+        stall_time
+    );
+
+    mp_printf(print, "%s\n", settings_string);
 }
 
 

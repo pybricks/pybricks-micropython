@@ -181,6 +181,12 @@ pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction
     return pbio_servo_setup(*srv, direction, gear_ratio);
 }
 
+pbio_error_t pbio_servo_get_gear_settings(pbio_servo_t *srv, char *gear_ratio_str, char *counts_per_degree_str) {
+    fix16_to_str(srv->tacho->counts_per_degree, counts_per_degree_str, 3);
+    fix16_to_str(fix16_div(srv->tacho->counts_per_output_unit, srv->tacho->counts_per_degree), gear_ratio_str, 3);
+    return PBIO_SUCCESS;
+}
+
 pbio_error_t pbio_servo_get_run_settings(pbio_servo_t *srv, int32_t *max_speed, int32_t *acceleration) {
     return pbio_control_get_limits(&srv->control.settings, srv->tacho->counts_per_output_unit, max_speed, acceleration);
 }
@@ -229,66 +235,6 @@ pbio_error_t pbio_servo_set_pid_settings(pbio_servo_t *srv,
                                           speed_tolerance,
                                           stall_speed_limit,
                                           stall_time);
-}
-
-void pbio_servo_print_settings(pbio_servo_t *srv, char *dc_settings_string, char *enc_settings_string) {
-    char *direction = srv->hbridge->direction == PBIO_DIRECTION_CLOCKWISE ? "clockwise" : "counterclockwise";
-    snprintf(dc_settings_string, MAX_DCMOTOR_SETTINGS_STR_LENGTH,
-        "Motor properties:\n"
-        "------------------------\n"
-        "Port\t\t %c\n"
-        "Direction\t %s",
-        srv->port,
-        direction
-    );
-    char counts_per_degree_str[13];
-    char gear_ratio_str[13];
-    // Preload several settings for easier printing
-    fix16_t counts_per_output_unit = srv->tacho->counts_per_output_unit;
-    fix16_t counts_per_degree = srv->tacho->counts_per_degree;
-    fix16_t gear_ratio = fix16_div(counts_per_output_unit, srv->tacho->counts_per_degree);
-    fix16_to_str(counts_per_degree, counts_per_degree_str, 3);
-    fix16_to_str(gear_ratio, gear_ratio_str, 3);
-    // Print settings to settings_string
-    snprintf(enc_settings_string, MAX_ENCMOTOR_SETTINGS_STR_LENGTH,
-        "Counts per unit\t %s\n"
-        "Gear ratio\t %s\n"
-        "\nRun settings:\n"
-        "------------------------\n"
-        "Max speed\t %" PRId32 "\n"
-        "Acceleration\t %" PRId32 "\n"
-        "\nDC settings:\n"
-        "------------------------\n"
-        "Duty limit\t %" PRId32 "\n"
-        "Duty offset\t %" PRId32 "\n"
-        "\nPID settings:\n"
-        "------------------------\n"
-        "kp\t\t %" PRId32 "\n"
-        "ki\t\t %" PRId32 "\n"
-        "kd\t\t %" PRId32 "\n"
-        "Tight Loop\t %" PRId32 "\n"
-        "Angle tolerance\t %" PRId32 "\n"
-        "Speed tolerance\t %" PRId32 "\n"
-        "Stall speed\t %" PRId32 "\n"
-        "Stall time\t %" PRId32,
-        counts_per_degree_str,
-        gear_ratio_str,
-        // Print run settings
-        int_fix16_div(srv->control.settings.max_rate, counts_per_output_unit),
-        int_fix16_div(srv->control.settings.abs_acceleration, counts_per_output_unit),
-        // Print DC settings
-        (int32_t) (srv->hbridge->max_duty_steps / PBIO_DUTY_STEPS_PER_USER_STEP),
-        (int32_t) (srv->hbridge->duty_offset / PBIO_DUTY_STEPS_PER_USER_STEP),
-        // Print PID settings
-        (int32_t) srv->control.settings.pid_kp,
-        (int32_t) srv->control.settings.pid_ki,
-        (int32_t) srv->control.settings.pid_kd,
-        (int32_t) (srv->control.settings.tight_loop_time / US_PER_MS),
-        int_fix16_div(srv->control.settings.count_tolerance, counts_per_output_unit),
-        int_fix16_div(srv->control.settings.rate_tolerance, counts_per_output_unit),
-        int_fix16_div(srv->control.settings.stall_rate_limit, counts_per_output_unit),
-        (int32_t) (srv->control.settings.stall_time  / US_PER_MS)
-    );
 }
 
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle) {

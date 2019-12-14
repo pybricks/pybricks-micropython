@@ -28,10 +28,6 @@
 
 #define SERVO_LOG_NUM_VALUES (5 + NUM_DEFAULT_LOG_VALUES)
 
-#define MAX_DCMOTOR_SETTINGS_STR_LENGTH (128)
-
-#define MAX_ENCMOTOR_SETTINGS_STR_LENGTH (400)
-
 typedef struct _pbio_servo_t {
     pbio_hbridge_t *hbridge;
     pbio_tacho_t *tacho;
@@ -43,6 +39,7 @@ typedef struct _pbio_servo_t {
 
 pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction_t direction, fix16_t gear_ratio);  // TODO: Make dc and servo version
 
+pbio_error_t pbio_servo_get_gear_settings(pbio_servo_t *srv, char *gear_ratio_str, char *counts_per_degree_str);
 pbio_error_t pbio_servo_get_run_settings(pbio_servo_t *srv, int32_t *max_speed, int32_t *acceleration);
 pbio_error_t pbio_servo_set_run_settings(pbio_servo_t *srv, int32_t max_speed, int32_t acceleration);
 
@@ -64,8 +61,6 @@ pbio_error_t pbio_servo_set_pid_settings(pbio_servo_t *srv,
                                          int32_t speed_tolerance,
                                          int32_t stall_speed_limit,
                                          int32_t stall_time);
-
-void pbio_servo_print_settings(pbio_servo_t *srv, char *dc_settings_string, char *enc_settings_string);
 
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle);
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled);
