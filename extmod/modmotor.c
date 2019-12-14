@@ -266,6 +266,7 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
 
     int32_t temporary_stall_duty = 100;
     int32_t old_stall_duty;
+    pbio_direction_t direction;
     int32_t old_duty_offset;
     pbio_error_t err;
 
@@ -278,7 +279,7 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
     pb_thread_enter();
 
     if (override_duty_limit) {
-        pbio_hbridge_get_settings(self->srv->hbridge, &old_stall_duty, &old_duty_offset);
+        pbio_hbridge_get_settings(self->srv->hbridge, &direction, &old_stall_duty, &old_duty_offset);
         pbio_hbridge_set_settings(self->srv->hbridge, temporary_stall_duty, old_duty_offset);
     }
 
@@ -418,11 +419,12 @@ STATIC mp_obj_t motor_Motor_set_dc_settings(size_t n_args, const mp_obj_t *pos_a
 
     // Load original values
     pbio_error_t err;
+    pbio_direction_t direction;
     int32_t stall_torque_limit_pct;
     int32_t duty_offset_pct;
 
     pb_thread_enter();
-    err = pbio_hbridge_get_settings(self->srv->hbridge, &stall_torque_limit_pct, &duty_offset_pct);
+    err = pbio_hbridge_get_settings(self->srv->hbridge, &direction, &stall_torque_limit_pct, &duty_offset_pct);
     pb_thread_exit();
 
     // Set values if given by the user

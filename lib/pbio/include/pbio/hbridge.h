@@ -39,7 +39,7 @@ typedef struct _pbio_hbridge_t {
 pbio_error_t pbio_hbridge_get(pbio_port_t port, pbio_hbridge_t **hbridge, pbio_direction_t direction, int32_t duty_offset, int32_t max_duty_steps);
 
 pbio_error_t pbio_hbridge_set_settings(pbio_hbridge_t *hbridge, int32_t stall_torque_limit_pct, int32_t duty_offset_pct);
-pbio_error_t pbio_hbridge_get_settings(pbio_hbridge_t *hbridge, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct);
+pbio_error_t pbio_hbridge_get_settings(pbio_hbridge_t *hbridge, pbio_direction_t *direction, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct);
 
 pbio_error_t pbio_hbridge_coast(pbio_hbridge_t *hbridge);
 pbio_error_t pbio_hbridge_brake(pbio_hbridge_t *hbridge);
@@ -51,7 +51,7 @@ pbio_error_t pbio_hbridge_set_duty_cycle_usr(pbio_hbridge_t *hbridge, int32_t du
 static inline pbio_error_t pbio_hbridge_get(pbio_port_t port, pbio_hbridge_t **hbridge, pbio_direction_t direction, int32_t duty_offset, int32_t max_duty_steps) { return PBIO_ERROR_NOT_SUPPORTED; }
 
 static inline pbio_error_t pbio_hbridge_set_settings(pbio_hbridge_t *hbridge, int32_t stall_torque_limit_pct, int32_t duty_offset_pct) { return PBIO_ERROR_NOT_SUPPORTED; }
-static inline pbio_error_t pbio_hbridge_get_settings(pbio_hbridge_t *hbridge, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct) { return PBIO_ERROR_NOT_SUPPORTED; }
+static inline pbio_error_t pbio_hbridge_get_settings(pbio_hbridge_t *hbridge, pbio_direction_t *direction, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct) { return PBIO_ERROR_NOT_SUPPORTED; }
 
 static inline pbio_error_t pbio_hbridge_coast(pbio_hbridge_t *hbridge) { return PBIO_ERROR_NOT_SUPPORTED; }
 static inline pbio_error_t pbio_hbridge_brake(pbio_hbridge_t *hbridge) { return PBIO_ERROR_NOT_SUPPORTED; }

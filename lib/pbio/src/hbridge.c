@@ -50,7 +50,8 @@ pbio_error_t pbio_hbridge_set_settings(pbio_hbridge_t *hbridge, int32_t stall_to
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_hbridge_get_settings(pbio_hbridge_t *hbridge, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct) {
+pbio_error_t pbio_hbridge_get_settings(pbio_hbridge_t *hbridge, pbio_direction_t *direction, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct) {
+    *direction = hbridge->direction;
     *stall_torque_limit_pct = hbridge->max_duty_steps/PBIO_DUTY_STEPS_PER_USER_STEP;
     *duty_offset_pct = hbridge->duty_offset/PBIO_DUTY_STEPS_PER_USER_STEP;
     return PBIO_SUCCESS;
