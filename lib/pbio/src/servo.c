@@ -349,56 +349,8 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, 
     return pbio_logger_update(&srv->log, buf);
 }
 
-// Log motor data for a passive motor // FIXME: This is an hbridge task
-static pbio_error_t pbio_servo_log_passive(pbio_servo_t *srv) {
-
-    // Log nothing if logger is inactive
-    if (!srv->log.active) {
-        return PBIO_SUCCESS;
-    }
-
-    // Read the physical state
-    ustime_t time_now = 0;
-    count_t count_now = 0;
-    rate_t rate_now = 0;
-
-    // Get I/O state without error checking
-    control_get_state(srv, &time_now, &count_now, &rate_now);
-
-    // "Control action"
-    pbio_actuation_t actuation;
-    int32_t control;
-
-    // Get the passive bridge state for logging
-    switch (srv->hbridge->state)
-    {
-    case PBIO_HBRIDGE_COAST:
-        actuation = PBIO_ACTUATION_COAST;
-        control = 0;
-        break;
-    case PBIO_HBRIDGE_BRAKE:
-        actuation = PBIO_ACTUATION_BRAKE;
-        control = 0;
-        break;
-    case PBIO_HBRIDGE_DUTY_PASSIVE:
-        actuation = PBIO_ACTUATION_DUTY;
-        // FIXME: read passive duty from bridge
-        control = 0;
-        break;
-    default:
-        return PBIO_ERROR_INVALID_OP;
-    }
-
-    return pbio_servo_log_update(srv, time_now, count_now, rate_now, actuation, control);
-}
-
 pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
 
-    // Do not service a passive motor
-    if (srv->state == PBIO_CONTROL_PASSIVE) {
-        // Log only passive data.
-        return pbio_servo_log_passive(srv);
-    }
     // Read the physical state
     ustime_t time_now;
     count_t count_now;
@@ -411,6 +363,17 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     // Control action to be calculated
     pbio_actuation_t actuation;
     int32_t control;
+
+    // Do not service a passive motor
+    if (srv->state == PBIO_CONTROL_PASSIVE) {
+        // No control, but still log state data
+        pbio_passivity_t state;
+        err = pbio_hbridge_get_state(srv->hbridge, &state, &control);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        return pbio_servo_log_update(srv, time_now, count_now, rate_now, state, control);
+    }
 
     // Calculate controls for position based control
     if (srv->state == PBIO_CONTROL_ANGLE_BACKGROUND ||
