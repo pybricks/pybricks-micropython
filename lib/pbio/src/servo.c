@@ -529,6 +529,11 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     return PBIO_SUCCESS;
 }
 
+pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps) {
+    srv->state = PBIO_CONTROL_PASSIVE;
+    return pbio_hbridge_set_duty_cycle_usr(srv->hbridge, duty_steps);
+}
+
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
     int32_t angle_now;
     pbio_error_t err;

@@ -198,7 +198,7 @@ STATIC mp_obj_t motor_Motor_duty(size_t n_args, const mp_obj_t *pos_args, mp_map
     pbio_error_t err;
 
     pb_thread_enter();
-    err = pbio_hbridge_set_duty_cycle_usr(self->srv->hbridge, duty_cycle);
+    err = pbio_servo_set_duty_cycle(self->srv, duty_cycle);
     pb_thread_exit();
 
     pb_assert(err);

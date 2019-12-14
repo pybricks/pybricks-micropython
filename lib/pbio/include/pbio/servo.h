@@ -37,7 +37,7 @@ typedef struct _pbio_servo_t {
     pbio_log_t log;
 } pbio_servo_t;
 
-pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction_t direction, fix16_t gear_ratio);  // TODO: Make dc and servo version
+pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction_t direction, fix16_t gear_ratio);
 
 pbio_error_t pbio_servo_get_gear_settings(pbio_servo_t *srv, char *gear_ratio_str, char *counts_per_degree_str);
 pbio_error_t pbio_servo_get_run_settings(pbio_servo_t *srv, int32_t *max_speed, int32_t *acceleration);
@@ -64,7 +64,8 @@ pbio_error_t pbio_servo_set_pid_settings(pbio_servo_t *srv,
 
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle);
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled);
-pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop); // TODO: Make dc and servo version
+pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop);
+pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps);
 
 pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed);
 pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop, bool foreground);
