@@ -258,7 +258,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle) {
         return pbio_servo_track_target(srv, new_target);
     }
     // If the motor was in a passive mode (coast, brake, user duty), reset angle and leave state unchanged
-    else if (srv->hbridge->state != PBIO_HBRIDGE_DUTY_ACTIVE){
+    else if (srv->state == PBIO_CONTROL_PASSIVE){
         return pbio_tacho_reset_angle(srv->tacho, reset_angle);
     }
     // In all other cases, stop the ongoing maneuver by coasting and then reset the angle
@@ -347,7 +347,7 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, 
     return pbio_logger_update(&srv->log, buf);
 }
 
-// Log motor data for a passive motor
+// Log motor data for a passive motor // FIXME: This is an hbridge task
 static pbio_error_t pbio_servo_log_passive(pbio_servo_t *srv) {
 
     // Log nothing if logger is inactive
@@ -393,12 +393,7 @@ static pbio_error_t pbio_servo_log_passive(pbio_servo_t *srv) {
 pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
 
     // Do not service a passive motor
-    if (srv->hbridge->state <= PBIO_HBRIDGE_DUTY_PASSIVE) {
-        // We may be here since the user aborted an active maneuver
-        // by triggering coast, brake, or a constant duty. This means
-        // That the servo is now in a passive state.
-        srv->state = PBIO_CONTROL_PASSIVE;
-
+    if (srv->state == PBIO_CONTROL_PASSIVE) {
         // Log only passive data.
         return pbio_servo_log_passive(srv);
     }
@@ -519,9 +514,6 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     // Run is always in the background
     srv->state = PBIO_CONTROL_TIME_BACKGROUND;
 
-    // The hbridge is actively controled
-    srv->hbridge->state = PBIO_HBRIDGE_DUTY_ACTIVE;
-
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(srv);
     if (err != PBIO_SUCCESS) { return err; }
@@ -589,9 +581,6 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
     // Set user specified foreground or background state
     srv->state = foreground ? PBIO_CONTROL_TIME_FOREGROUND : PBIO_CONTROL_TIME_BACKGROUND;
 
-    // The hbridge is actively controled
-    srv->hbridge->state = PBIO_HBRIDGE_DUTY_ACTIVE;
-
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(srv);
 
@@ -627,9 +616,6 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
 
     // Run until stalled is always in the foreground
     srv->state = PBIO_CONTROL_TIME_FOREGROUND;
-
-    // The hbridge is actively controled
-    srv->hbridge->state = PBIO_HBRIDGE_DUTY_ACTIVE;
 
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(srv);
@@ -668,9 +654,6 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
 
     // Set user specified foreground or background state
     srv->state = foreground ? PBIO_CONTROL_ANGLE_FOREGROUND : PBIO_CONTROL_ANGLE_BACKGROUND;
-
-    // The hbridge is actively controled
-    srv->hbridge->state = PBIO_HBRIDGE_DUTY_ACTIVE;
 
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(srv);
@@ -720,9 +703,6 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
 
     // Tracking a target is always a background action
     srv->state = PBIO_CONTROL_ANGLE_BACKGROUND;
-
-    // The hbridge is actively controled
-    srv->hbridge->state = PBIO_HBRIDGE_DUTY_ACTIVE;
 
     // Run one control update synchronously with user command
     err = pbio_servo_control_update(srv);
