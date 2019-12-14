@@ -57,6 +57,12 @@ pbio_error_t pbio_hbridge_get_settings(pbio_hbridge_t *hbridge, pbio_direction_t
     return PBIO_SUCCESS;
 }
 
+pbio_error_t pbio_hbridge_get_state(pbio_hbridge_t *hbridge, pbio_passivity_t *state, int32_t *duty_now) {
+    *state = hbridge->state;
+    *duty_now = hbridge->state < PBIO_HBRIDGE_DUTY_PASSIVE ? 0 : hbridge->duty_now;
+    return PBIO_SUCCESS;
+}
+
 pbio_error_t pbio_hbridge_coast(pbio_hbridge_t *hbridge) {
     hbridge->state = PBIO_HBRIDGE_COAST;
     return pbdrv_motor_coast(hbridge->port);
@@ -88,6 +94,9 @@ pbio_error_t pbio_hbridge_set_duty_cycle_sys(pbio_hbridge_t *hbridge, int32_t du
         int32_t offset_signed = duty_steps > 0 ? offset : -offset;
         duty_cycle = offset_signed + ((PBIO_DUTY_STEPS-offset)*duty_steps)/PBIO_DUTY_STEPS;
     }
+    // Signed duty cycle applied to bridge
+    hbridge->duty_now = duty_cycle;
+
     // Flip sign if motor is inverted
     if (hbridge->direction == PBIO_DIRECTION_COUNTERCLOCKWISE){
         duty_cycle = -duty_cycle;
