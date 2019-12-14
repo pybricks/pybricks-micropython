@@ -29,6 +29,7 @@
 #define SERVO_LOG_NUM_VALUES (5 + NUM_DEFAULT_LOG_VALUES)
 
 typedef struct _pbio_servo_t {
+    bool connected;
     pbio_hbridge_t *hbridge;
     pbio_tacho_t *tacho;
     pbio_servo_state_t state;

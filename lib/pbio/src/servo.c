@@ -101,8 +101,6 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     // If no device is found on this port, always attempt to get devices, in order to safely coast
     if (err == PBIO_ERROR_NO_DEV) {
         pbio_hbridge_get(srv->port, &srv->hbridge, direction, 0, 100);
-        // FIXME: We shouldn't need to do this if we only serviced motors that are in fact attached
-        pbio_tacho_get(srv->port, &srv->tacho, direction, fix16_one, fix16_one);
     }
 
     // Return if no device is found or there was an error
@@ -178,7 +176,11 @@ pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction
     (*srv)->port = port;
 
     // Initialize and onfigure the servo
-    return pbio_servo_setup(*srv, direction, gear_ratio);
+    pbio_error_t err = pbio_servo_setup(*srv, direction, gear_ratio);
+    if (err == PBIO_SUCCESS) {
+        (*srv)->connected = true;
+    }
+    return err;
 }
 
 pbio_error_t pbio_servo_get_gear_settings(pbio_servo_t *srv, char *gear_ratio_str, char *counts_per_degree_str) {
@@ -726,7 +728,13 @@ void _pbio_servo_poll(void) {
     int i;
     // Do the update for each motor
     for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        pbio_servo_control_update(&servo[i]);
+        pbio_servo_t *srv = &servo[i];
+
+        // FIXME: Use a better solution skip servicing disconnected connected servos.
+        if (!srv->connected) {
+            continue;
+        }
+        srv->connected = pbio_servo_control_update(srv) == PBIO_SUCCESS;
     }
 }
 
