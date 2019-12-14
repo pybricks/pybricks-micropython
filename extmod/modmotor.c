@@ -93,7 +93,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
     return MP_OBJ_FROM_PTR(self);
 }
 
-void motor_Motor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind){
+void motor_Motor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     pbio_error_t err;
@@ -637,7 +637,9 @@ MP_DEFINE_CONST_DICT(motor_Motor_locals_dict, motor_Motor_locals_dict_table);
 const mp_obj_type_t motor_Motor_type = {
     { &mp_type_type },
     .name = MP_QSTR_Motor,
+#ifndef PBDRV_CONFIG_HUB_MOVEHUB
     .print = motor_Motor_print,
+#endif
     .make_new = motor_Motor_make_new,
     .locals_dict = (mp_obj_dict_t*)&motor_Motor_locals_dict,
 };
