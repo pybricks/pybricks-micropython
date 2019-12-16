@@ -497,15 +497,18 @@ pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps) {
     return pbio_hbridge_set_duty_cycle_usr(srv->hbridge, duty_steps);
 }
 
+// FIXME: re-use control_update_actuate to save on code size
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
     int32_t angle_now;
     pbio_error_t err;
     switch (after_stop) {
         case PBIO_ACTUATION_COAST:
             // Stop by coasting
+            srv->state = PBIO_SERVO_STATE_PASSIVE;
             return pbio_hbridge_coast(srv->hbridge);
         case PBIO_ACTUATION_BRAKE:
             // Stop by braking
+            srv->state = PBIO_SERVO_STATE_PASSIVE;
             return pbio_hbridge_brake(srv->hbridge);
         case PBIO_ACTUATION_HOLD:
             // Force stop by holding the current position.
