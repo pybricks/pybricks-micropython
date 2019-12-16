@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include "sys/clock.h"
+#include <contiki.h>
 
 void clock_init(void) {
 }

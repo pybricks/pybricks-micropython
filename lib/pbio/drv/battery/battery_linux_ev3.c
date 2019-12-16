@@ -11,8 +11,9 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include <contiki.h>
+
 #include <pbio/error.h>
-#include <sys/process.h>
 
 PROCESS(pbdrv_battery_process, "battery");
 

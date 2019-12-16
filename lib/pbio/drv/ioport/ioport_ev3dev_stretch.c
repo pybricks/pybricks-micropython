@@ -12,15 +12,13 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include <contiki.h>
 #include <libudev.h>
 #include <uthash.h>
 
 #include <pbio/error.h>
 #include <pbio/iodev.h>
 #include <pbio/port.h>
-
-#include "sys/etimer.h"
-#include "sys/process.h"
 
 typedef struct {
     const char *name;

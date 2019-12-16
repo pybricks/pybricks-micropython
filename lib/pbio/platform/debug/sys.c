@@ -3,6 +3,8 @@
 
 #include <string.h>
 
+#include <contiki.h>
+
 #include "pbdrv/config.h"
 #include "pbdrv/light.h"
 
@@ -11,10 +13,6 @@
 #include "pbio/light.h"
 
 #include "pbsys/sys.h"
-
-#include "sys/clock.h"
-#include "sys/etimer.h"
-#include "sys/process.h"
 
 #include "stm32f4xx.h"
 

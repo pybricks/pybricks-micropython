@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2013, 2014 Damien P. George
 
-#include <pbdrv/config.h>
+#include <contiki.h>
 
-#include "sys/clock.h"
-#include "sys/etimer.h"
+#include <pbdrv/config.h>
 
 #include "stm32f446xx.h"
 

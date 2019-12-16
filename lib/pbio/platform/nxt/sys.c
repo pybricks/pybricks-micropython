@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 David Lechner
 
+#include <contiki.h>
+
 #include "pbdrv/battery.h"
 #include "pbdrv/bluetooth.h"
 #include "pbdrv/config.h"
@@ -11,10 +13,6 @@
 #include "pbio/light.h"
 
 #include "pbsys/sys.h"
-
-#include "sys/clock.h"
-#include "sys/etimer.h"
-#include "sys/process.h"
 
 // workaround upstream NVIC_SystemReset() not decorated with noreturn
 void NVIC_SystemReset(void) __attribute__((noreturn));

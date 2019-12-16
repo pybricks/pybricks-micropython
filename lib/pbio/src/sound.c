@@ -10,13 +10,13 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include <pbio/error.h>
-#include <pbio/sound.h>
+#include <contiki.h>
 
 #include <pbdrv/beep.h>
 #include <pbdrv/pcm.h>
+#include <pbio/error.h>
+#include <pbio/sound.h>
 
-#include "sys/clock.h"
 
 struct _pbio_sound_t {
     pbdrv_beep_dev_t *beep_dev;

@@ -6,11 +6,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include <contiki.h>
+
 #include <pbio/fixmath.h>
-
 #include <pbio/trajectory.h>
-
-#include "sys/clock.h"
 
 void reverse_trajectory(pbio_control_trajectory_t *ref) {
     // Mirror angles about initial angle th0

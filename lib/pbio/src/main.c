@@ -8,6 +8,8 @@
 
 #include <stdbool.h>
 
+#include <contiki.h>
+
 #include "pbdrv/button.h"
 #include "pbdrv/config.h"
 #include "pbdrv/light.h"
@@ -17,10 +19,6 @@
 #include "pbio/servo.h"
 #include "pbio/uartdev.h"
 
-#include "sys/autostart.h"
-#include "sys/clock.h"
-#include "sys/etimer.h"
-#include "sys/process.h"
 #include "processes.h"
 
 static uint32_t prev_fast_poll_time;

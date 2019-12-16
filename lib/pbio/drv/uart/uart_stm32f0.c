@@ -15,12 +15,12 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <contiki.h>
+
 #include <pbdrv/uart.h>
 #include <pbio/error.h>
 #include <pbio/util.h>
 
-#include "sys/etimer.h"
-#include "sys/process.h"
 #include "../../src/processes.h"
 
 #include "stm32f0xx.h"

@@ -8,9 +8,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <contiki.h>
+
 #include <pbio/config.h>
 #include <pbio/error.h>
-#include "sys/process.h"
 
 #include "stm32f0xx.h"
 

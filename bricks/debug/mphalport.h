@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 David Lechner
 
-#include "sys/clock.h"
+#include <contiki.h>
 
 void mp_hal_set_interrupt_char(int c);
 #define mp_hal_ticks_ms clock_time

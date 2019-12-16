@@ -4,9 +4,9 @@
 #ifndef _PBIO_PROCESSES_H_
 #define _PBIO_PROCESSES_H_
 
-#include <pbdrv/config.h>
+#include <contiki.h>
 
-#include "sys/process.h"
+#include <pbdrv/config.h>
 
 // All of the contiki processes
 

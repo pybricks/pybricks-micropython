@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2013, 2014 Damien P. George
 
-#include <pbdrv/config.h>
-
-#include "sys/clock.h"
-#include "sys/etimer.h"
+#include <contiki.h>
 
 #include <nxt/at91sam7.h>
 #include <nxt/systick.h>
+
+#include <pbdrv/config.h>
 
 #if CLOCK_CONF_SECOND != 1000
 #error Clock must be set to 1 msec ticks

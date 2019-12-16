@@ -12,12 +12,12 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include <contiki.h>
+
 #include <pbdrv/serial.h>
 #include <pbio/port.h>
 #include <pbio/error.h>
 #include <pbio/serial.h>
-
-#include "sys/clock.h"
 
 struct _pbio_serial_t {
     pbdrv_serial_t *dev;

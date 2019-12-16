@@ -6,10 +6,10 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
+#include <contiki.h>
+
 #include <pbio/error.h>
 #include <pbio/logger.h>
-
-#include "sys/clock.h"
 
 static void pbio_logger_delete(pbio_log_t *log) {
     // Free log if any
@@ -68,7 +68,7 @@ pbio_error_t pbio_logger_update(pbio_log_t *log, int32_t *buf) {
     if (log->sampled > log->len) {
         log->active = false;
         return PBIO_ERROR_FAILED;
-    }    
+    }
 
     // Stop successfully when done
     if (log->sampled == log->len) {

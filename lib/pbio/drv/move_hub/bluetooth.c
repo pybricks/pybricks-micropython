@@ -6,14 +6,12 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <contiki.h>
+
 #include "pbio/config.h"
 #include "pbio/error.h"
 #include "pbio/event.h"
 #include "pbsys/sys.h"
-#include "sys/autostart.h"
-#include "sys/etimer.h"
-#include "sys/process.h"
-#include "sys/pt.h"
 #include "../../src/processes.h"
 
 #include "bluenrg_aci.h"

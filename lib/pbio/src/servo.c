@@ -5,12 +5,12 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+#include <contiki.h>
+
 #include <pbio/fixmath.h>
 #include <pbdrv/counter.h>
 #include <pbdrv/motor.h>
 #include <pbio/servo.h>
-
-#include "sys/clock.h"
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
@@ -27,7 +27,7 @@ pbio_error_t pbio_config_get_defaults_servo(pbio_iodev_type_id_t id,
                                     int32_t *tight_loop_time,
                                     int32_t *position_tolerance,
                                     int32_t *speed_tolerance,
-                                    int32_t *stall_speed_limit, 
+                                    int32_t *stall_speed_limit,
                                     int32_t *stall_time) {
     // Default counts per degree
     *counts_per_degree = F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0);
@@ -160,7 +160,7 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
         return err;
     }
 
-    // Configure the logs for a servo 
+    // Configure the logs for a servo
     srv->log.num_values = SERVO_LOG_NUM_VALUES;
 
     return PBIO_SUCCESS;
@@ -312,7 +312,7 @@ static pbio_error_t control_update_actuate(pbio_servo_t *srv, pbio_actuation_t a
         err = pbio_hbridge_set_duty_cycle_sys(srv->hbridge, control);
         break;
     }
-    
+
     // Handle errors during actuation
     if (err != PBIO_SUCCESS) {
         // Attempt lowest level coast: turn off power
@@ -337,7 +337,7 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, 
         // Not applicable for passive motors
         buf[0] = 0;
     }
-    
+
     // Log the physical state of the motor
     buf[1] = count_now;
     buf[2] = rate_now;
@@ -387,11 +387,11 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
         err = control_update_time_target(&srv->control, time_now, count_now, rate_now, &actuation, &control);
     }
     else {
-        return PBIO_ERROR_INVALID_OP;       
+        return PBIO_ERROR_INVALID_OP;
     }
     if (err != PBIO_SUCCESS) {
         return err;
-    } 
+    }
     // Apply the control type and signal
     err = control_update_actuate(srv, actuation, control);
     if (err != PBIO_SUCCESS) {

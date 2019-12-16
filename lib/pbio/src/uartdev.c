@@ -36,6 +36,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <contiki.h>
+
 #include "pbdrv/config.h"
 #include "pbdrv/ioport.h"
 #include "pbdrv/uart.h"
@@ -46,8 +48,6 @@
 #include "pbio/uartdev.h"
 #include "pbio/util.h"
 #include "../drv/counter/counter.h"
-#include "sys/etimer.h"
-#include "sys/process.h"
 
 #define EV3_UART_MAX_MESSAGE_SIZE   (PBIO_IODEV_MAX_DATA_SIZE + 2)
 

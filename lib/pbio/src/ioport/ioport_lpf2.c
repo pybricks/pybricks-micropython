@@ -10,12 +10,12 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include <contiki.h>
+
 #include "pbdrv/config.h"
 #include "pbdrv/gpio.h"
 #include "pbio/error.h"
 #include "pbio/iodev.h"
-#include "sys/etimer.h"
-#include "sys/process.h"
 
 typedef enum _dev_id1_group_t {
     DEV_ID1_GROUP_GND,

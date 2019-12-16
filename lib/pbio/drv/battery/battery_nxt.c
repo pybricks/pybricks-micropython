@@ -10,10 +10,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include <pbio/error.h>
-#include <sys/process.h>
-
+#include <contiki.h>
 #include <nxt/nxt_avr.h>
+
+#include <pbio/error.h>
+
 
 PROCESS(pbdrv_battery_process, "battery");
 

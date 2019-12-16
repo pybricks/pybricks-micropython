@@ -8,9 +8,10 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#include <contiki.h>
+
 #include <pbdrv/counter.h>
 #include <pbio/error.h>
-#include "sys/process.h"
 #include "counter.h"
 #include "counter_nxt.h"
 #include "counter_ev3dev_stretch_iio.h"

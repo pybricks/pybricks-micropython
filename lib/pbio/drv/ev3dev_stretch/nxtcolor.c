@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <contiki.h>
+
 #include <pbdrv/ev3sensor.h>
 #include <pbdrv/ev3devsysfs.h>
 #include <pbio/ev3device.h>
@@ -13,8 +15,6 @@
 #include <pbio/port.h>
 #include <pbio/iodev.h>
 #include <pbio/light.h>
-
-#include "sys/clock.h"
 
 #define IN (0)
 #define OUT (1)

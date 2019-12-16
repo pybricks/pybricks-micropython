@@ -26,9 +26,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <contiki.h>
+
 #include <pbio/error.h>
 #include <pbio/util.h>
-#include "sys/process.h"
 
 #include STM32_HAL_H
 
