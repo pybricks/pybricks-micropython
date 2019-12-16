@@ -352,6 +352,11 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, 
 
 pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
 
+    // Do not service a motor claimed by a drivebase
+    if (srv->state == PBIO_SERVO_STATE_CLAIMED) {
+        return PBIO_SUCCESS;
+    }
+
     // Read the physical state
     ustime_t time_now;
     count_t count_now;
