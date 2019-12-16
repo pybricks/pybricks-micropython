@@ -291,7 +291,7 @@ static pbio_error_t control_get_state(pbio_servo_t *srv, ustime_t *time_now, cou
 }
 
 // Actuate a single motor
-static pbio_error_t control_update_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_type, int32_t control) {
+static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_type, int32_t control) {
 
     pbio_error_t err = PBIO_SUCCESS;
 
@@ -399,7 +399,7 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
         return err;
     }
     // Apply the control type and signal
-    err = control_update_actuate(srv, actuation, control);
+    err = pbio_servo_actuate(srv, actuation, control);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -497,31 +497,21 @@ pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps) {
     return pbio_hbridge_set_duty_cycle_usr(srv->hbridge, duty_steps);
 }
 
-// FIXME: re-use control_update_actuate to save on code size
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
-    int32_t angle_now;
-    pbio_error_t err;
-    switch (after_stop) {
-        case PBIO_ACTUATION_COAST:
-            // Stop by coasting
-            srv->state = PBIO_SERVO_STATE_PASSIVE;
-            return pbio_hbridge_coast(srv->hbridge);
-        case PBIO_ACTUATION_BRAKE:
-            // Stop by braking
-            srv->state = PBIO_SERVO_STATE_PASSIVE;
-            return pbio_hbridge_brake(srv->hbridge);
-        case PBIO_ACTUATION_HOLD:
-            // Force stop by holding the current position.
-            // First, read where this position is
-            err = pbio_tacho_get_angle(srv->tacho, &angle_now);
-            if (err != PBIO_SUCCESS) { return err; }
-            // Holding is equivalent to driving to that position actively,
-            // which automatically corrects the overshoot that is inevitable
-            // when the user requests an immediate stop.
-            return pbio_servo_track_target(srv, angle_now);
-        default:
-            return PBIO_ERROR_INVALID_ARG;
+
+    // For most stop methods, the actuation payload is 0
+    int32_t control = 0;
+
+    // For hold, the actuation payload is the current count
+    if (after_stop == PBIO_ACTUATION_HOLD) {
+        pbio_error_t err = pbio_tacho_get_count(srv->tacho, &control);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
     }
+
+    // Apply the actuation
+    return pbio_servo_actuate(srv, after_stop, control);
 }
 
 pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop, bool foreground) {
