@@ -144,7 +144,7 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
         return err;
     }
     // Reset state
-    srv->state = PBIO_CONTROL_PASSIVE;
+    srv->state = PBIO_SERVO_STATE_PASSIVE;
 
     // Set default settings for this device
     err = pbio_hbridge_set_settings(srv->hbridge, stall_torque_limit_pct, duty_offset_pct);
@@ -246,7 +246,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle) {
 
     // Perform angle reset in case of tracking / holding
     // FIXME: This does not currently capture hold after run_target
-    if (srv->state == PBIO_CONTROL_ANGLE_BACKGROUND && srv->control.action == TRACK_TARGET) {
+    if (srv->state == PBIO_SERVO_STATE_ANGLE_BACKGROUND && srv->control.action == TRACK_TARGET) {
         // Get the old angle
         int32_t angle_old;
         err = pbio_tacho_get_count(srv->tacho, &angle_old);
@@ -261,7 +261,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle) {
         return pbio_servo_track_target(srv, new_target);
     }
     // If the motor was in a passive mode (coast, brake, user duty), reset angle and leave state unchanged
-    else if (srv->state == PBIO_CONTROL_PASSIVE){
+    else if (srv->state == PBIO_SERVO_STATE_PASSIVE){
         return pbio_tacho_reset_angle(srv->tacho, reset_angle);
     }
     // In all other cases, stop the ongoing maneuver by coasting and then reset the angle
@@ -300,11 +300,11 @@ static pbio_error_t control_update_actuate(pbio_servo_t *srv, pbio_actuation_t a
     {
     case PBIO_ACTUATION_COAST:
         err = pbio_hbridge_coast(srv->hbridge);
-        srv->state = PBIO_CONTROL_PASSIVE;
+        srv->state = PBIO_SERVO_STATE_PASSIVE;
         break;
     case PBIO_ACTUATION_BRAKE:
         err = pbio_hbridge_brake(srv->hbridge);
-        srv->state = PBIO_CONTROL_PASSIVE;
+        srv->state = PBIO_SERVO_STATE_PASSIVE;
         break;
     case PBIO_ACTUATION_HOLD:
         err = pbio_servo_track_target(srv, pbio_math_div_i32_fix16(control, srv->tacho->counts_per_output_unit));
@@ -320,7 +320,7 @@ static pbio_error_t control_update_actuate(pbio_servo_t *srv, pbio_actuation_t a
         pbdrv_motor_coast(srv->port);
 
         // Let foreground tasks know about error in order to stop blocking wait tasks
-        srv->state = PBIO_CONTROL_ERRORED;
+        srv->state = PBIO_SERVO_STATE_ERRORED;
     }
     return err;
 }
@@ -331,7 +331,7 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, 
     int32_t buf[SERVO_LOG_NUM_VALUES];
 
     // Log the time since start of control trajectory
-    if (srv->state >= PBIO_CONTROL_ANGLE_BACKGROUND) {
+    if (srv->state >= PBIO_SERVO_STATE_ANGLE_BACKGROUND) {
         buf[0] = (time_now - srv->control.trajectory.t0) / 1000;
     }
     else {
@@ -366,7 +366,7 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     int32_t control;
 
     // Do not service a passive motor
-    if (srv->state == PBIO_CONTROL_PASSIVE) {
+    if (srv->state == PBIO_SERVO_STATE_PASSIVE) {
         // No control, but still log state data
         pbio_passivity_t state;
         err = pbio_hbridge_get_state(srv->hbridge, &state, &control);
@@ -377,13 +377,13 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     }
 
     // Calculate controls for position based control
-    if (srv->state == PBIO_CONTROL_ANGLE_BACKGROUND ||
-        srv->state == PBIO_CONTROL_ANGLE_FOREGROUND) {
+    if (srv->state == PBIO_SERVO_STATE_ANGLE_BACKGROUND ||
+        srv->state == PBIO_SERVO_STATE_ANGLE_FOREGROUND) {
         err = control_update_angle_target(&srv->control, time_now, count_now, rate_now, &actuation, &control);
     }
     // Calculate controls for time based control
-    else if (srv->state == PBIO_CONTROL_TIME_BACKGROUND ||
-             srv->state == PBIO_CONTROL_TIME_FOREGROUND) {
+    else if (srv->state == PBIO_SERVO_STATE_TIME_BACKGROUND ||
+             srv->state == PBIO_SERVO_STATE_TIME_FOREGROUND) {
         // Get control type and signal for given state
         err = control_update_time_target(&srv->control, time_now, count_now, rate_now, &actuation, &control);
     }
@@ -408,10 +408,10 @@ static pbio_error_t pbio_motor_get_initial_state(pbio_servo_t *srv, count_t *cou
     ustime_t time_now = clock_usecs();
     pbio_error_t err;
 
-    if (srv->state == PBIO_CONTROL_TIME_FOREGROUND || srv->state == PBIO_CONTROL_TIME_BACKGROUND) {
+    if (srv->state == PBIO_SERVO_STATE_TIME_FOREGROUND || srv->state == PBIO_SERVO_STATE_TIME_BACKGROUND) {
         get_reference(time_now, &srv->control.trajectory, count_start, rate_start);
     }
-    else if (srv->state == PBIO_CONTROL_ANGLE_FOREGROUND || srv->state == PBIO_CONTROL_ANGLE_BACKGROUND) {
+    else if (srv->state == PBIO_SERVO_STATE_ANGLE_FOREGROUND || srv->state == PBIO_SERVO_STATE_ANGLE_BACKGROUND) {
         pbio_control_status_angular_t status = srv->control.status_angular;
         ustime_t time_ref = status.ref_time_running ?
             time_now - status.time_paused :
@@ -439,12 +439,12 @@ static pbio_error_t pbio_motor_get_initial_state(pbio_servo_t *srv, count_t *cou
 
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled) {
     *stalled = srv->control.stalled > STALLED_NONE &&
-               srv->state >= PBIO_CONTROL_ANGLE_BACKGROUND;
+               srv->state >= PBIO_SERVO_STATE_ANGLE_BACKGROUND;
     return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
-    if (srv->state == PBIO_CONTROL_TIME_BACKGROUND &&
+    if (srv->state == PBIO_SERVO_STATE_TIME_BACKGROUND &&
         srv->control.action == RUN &&
         pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit) == srv->control.trajectory.w1) {
         // If the exact same command is already running, there is nothing we need to do
@@ -478,7 +478,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     control_init_time_target(&srv->control);
 
     // Run is always in the background
-    srv->state = PBIO_CONTROL_TIME_BACKGROUND;
+    srv->state = PBIO_SERVO_STATE_TIME_BACKGROUND;
 
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(srv);
@@ -488,7 +488,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
 }
 
 pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps) {
-    srv->state = PBIO_CONTROL_PASSIVE;
+    srv->state = PBIO_SERVO_STATE_PASSIVE;
     return pbio_hbridge_set_duty_cycle_usr(srv->hbridge, duty_steps);
 }
 
@@ -545,7 +545,7 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
     control_init_time_target(&srv->control);
 
     // Set user specified foreground or background state
-    srv->state = foreground ? PBIO_CONTROL_TIME_FOREGROUND : PBIO_CONTROL_TIME_BACKGROUND;
+    srv->state = foreground ? PBIO_SERVO_STATE_TIME_FOREGROUND : PBIO_SERVO_STATE_TIME_BACKGROUND;
 
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(srv);
@@ -581,7 +581,7 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
     control_init_time_target(&srv->control);
 
     // Run until stalled is always in the foreground
-    srv->state = PBIO_CONTROL_TIME_FOREGROUND;
+    srv->state = PBIO_SERVO_STATE_TIME_FOREGROUND;
 
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(srv);
@@ -619,7 +619,7 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
     control_init_angle_target(&srv->control);
 
     // Set user specified foreground or background state
-    srv->state = foreground ? PBIO_CONTROL_ANGLE_FOREGROUND : PBIO_CONTROL_ANGLE_BACKGROUND;
+    srv->state = foreground ? PBIO_SERVO_STATE_ANGLE_FOREGROUND : PBIO_SERVO_STATE_ANGLE_BACKGROUND;
 
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(srv);
@@ -668,7 +668,7 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     control_init_angle_target(&srv->control);
 
     // Tracking a target is always a background action
-    srv->state = PBIO_CONTROL_ANGLE_BACKGROUND;
+    srv->state = PBIO_SERVO_STATE_ANGLE_BACKGROUND;
 
     // Run one control update synchronously with user command
     err = pbio_servo_control_update(srv);

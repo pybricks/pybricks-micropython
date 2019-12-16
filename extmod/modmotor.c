@@ -28,10 +28,10 @@
 
 // Must not be called while pybricks thread lock is held!
 STATIC void wait_for_completion(pbio_servo_t *srv) {
-    while (srv->state >= PBIO_CONTROL_ANGLE_FOREGROUND) {
+    while (srv->state >= PBIO_SERVO_STATE_ANGLE_FOREGROUND) {
         mp_hal_delay_ms(10);
     }
-    if (srv->state == PBIO_CONTROL_ERRORED) {
+    if (srv->state == PBIO_SERVO_STATE_ERRORED) {
         pb_assert(PBIO_ERROR_IO);
     }
 }
@@ -582,7 +582,7 @@ STATIC mp_obj_t motor_Motor_trajectory(mp_obj_t self_in) {
     mp_obj_t parms[12];
 
     pb_thread_enter();
-    bool active = self->srv->state > PBIO_CONTROL_ERRORED;
+    bool active = self->srv->state > PBIO_SERVO_STATE_ERRORED;
     trajectory = self->srv->control.trajectory;
     pb_thread_exit();
 

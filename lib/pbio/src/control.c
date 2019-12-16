@@ -285,7 +285,7 @@ void control_init_time_target(pbio_control_t *ctl) {
     pbio_control_trajectory_t *trajectory = &ctl->trajectory;
 
     //FIXME: Address generic maneuver transitions
-    if (0/*srv->state == PBIO_CONTROL_TIME_BACKGROUND*/) {
+    if (0/*srv->state == PBIO_SERVO_STATE_TIME_BACKGROUND*/) {
         if (status->speed_integrator_running) {
             status->speed_integrator += trajectory->th0 - status->integrator_ref_start;
             status->integrator_ref_start = trajectory->th0;

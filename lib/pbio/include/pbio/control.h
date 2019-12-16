@@ -16,21 +16,6 @@
 #include <pbio/iodev.h>
 
 /**
- * Control states
- */
-typedef enum {
-    /* Passive control statuses: No PID Control Active */
-    PBIO_CONTROL_PASSIVE,
-    PBIO_CONTROL_ERRORED,
-    /* Active control statuses: PID Control Active in non-blocking manner */
-    PBIO_CONTROL_ANGLE_BACKGROUND,
-    PBIO_CONTROL_TIME_BACKGROUND,
-    /* Active control statuses: PID Control Active which blocks user program */
-    PBIO_CONTROL_ANGLE_FOREGROUND,
-    PBIO_CONTROL_TIME_FOREGROUND,
-} pbio_servo_state_t;
-
-/**
  * Control settings
  */
 typedef struct _pbio_control_settings_t {

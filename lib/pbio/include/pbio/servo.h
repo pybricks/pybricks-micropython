@@ -28,6 +28,21 @@
 
 #define SERVO_LOG_NUM_VALUES (5 + NUM_DEFAULT_LOG_VALUES)
 
+/**
+ * Servo states
+ */
+typedef enum {
+    /* Passive control statuses: No PID Control Active */
+    PBIO_SERVO_STATE_PASSIVE,
+    PBIO_SERVO_STATE_ERRORED,
+    /* Active control statuses: PID Control Active in non-blocking manner */   
+    PBIO_SERVO_STATE_ANGLE_BACKGROUND,
+    PBIO_SERVO_STATE_TIME_BACKGROUND,
+    /* Active control statuses: PID Control Active which blocks user program */  
+    PBIO_SERVO_STATE_ANGLE_FOREGROUND,
+    PBIO_SERVO_STATE_TIME_FOREGROUND,
+} pbio_servo_state_t;
+
 typedef struct _pbio_servo_t {
     bool connected;
     pbio_hbridge_t *hbridge;
