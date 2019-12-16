@@ -23,7 +23,7 @@ typedef enum {
     PBIO_HBRIDGE_COAST,               /**< hbridge set to coast */
     PBIO_HBRIDGE_BRAKE,               /**< hbridge set to brake */
     PBIO_HBRIDGE_DUTY_PASSIVE,        /**< hbridge set to constant duty. */
-    PBIO_HBRIDGE_DUTY_ACTIVE,         /**< hbridge set to varying duty by active controller. */
+    PBIO_HBRIDGE_CLAIMED,             /**< hbridge set to varying duty by active controller. */
 } pbio_passivity_t;
 
 typedef struct _pbio_hbridge_t {

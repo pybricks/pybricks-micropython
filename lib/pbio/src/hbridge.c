@@ -105,7 +105,7 @@ pbio_error_t pbio_hbridge_set_duty_cycle_sys(pbio_hbridge_t *hbridge, int32_t du
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    hbridge->state = PBIO_HBRIDGE_DUTY_ACTIVE;
+    hbridge->state = PBIO_HBRIDGE_CLAIMED;
     return PBIO_SUCCESS;
 }
 
