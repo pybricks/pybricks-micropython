@@ -45,7 +45,7 @@
  * @{
  */
 
-#include "pbio-conf.h"
+#include "contiki-conf.h"
 #include "sys/clock.h"
 #include "sys/timer.h"
 

@@ -46,7 +46,7 @@
 #ifndef CC_H_
 #define CC_H_
 
-#include "pbio-conf.h"
+#include "contiki-conf.h"
 #include "sys/cc-gcc.h"
 
 /**

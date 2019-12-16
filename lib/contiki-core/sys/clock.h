@@ -70,7 +70,7 @@
 #ifndef CLOCK_H_
 #define CLOCK_H_
 
-#include "pbio-conf.h"
+#include "contiki-conf.h"
 
 /**
  * A second, measured in system clock time.

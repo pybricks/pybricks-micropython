@@ -43,7 +43,7 @@
  * @{
  */
 
-#include "pbio-conf.h"
+#include "contiki-conf.h"
 #include "sys/energest.h"
 #include "sys/compower.h"
 #include "net/packetbuf.h"

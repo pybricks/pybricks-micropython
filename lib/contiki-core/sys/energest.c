@@ -39,7 +39,7 @@
  */
 
 #include "sys/energest.h"
-#include "pbio-conf.h"
+#include "contiki-conf.h"
 
 #if ENERGEST_CONF_ON
 
