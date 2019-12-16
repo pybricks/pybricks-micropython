@@ -41,6 +41,8 @@ typedef enum {
     /* Active control statuses: PID Control Active which blocks user program */  
     PBIO_SERVO_STATE_ANGLE_FOREGROUND,
     PBIO_SERVO_STATE_TIME_FOREGROUND,
+    /* Controlled/claimed by a higher level construct such as a drivebase */
+    PBIO_SERVO_STATE_CLAIMED,
 } pbio_servo_state_t;
 
 typedef struct _pbio_servo_t {
