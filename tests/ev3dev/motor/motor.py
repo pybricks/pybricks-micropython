@@ -75,3 +75,8 @@ print_tacho('duty_cycle_sp')  # expect -100
 m.dc(-101)
 print_tacho('command')  # expect "run-direct"
 print_tacho('duty_cycle_sp')  # expect -100
+
+
+# testing __str__/__repr__
+
+print(m)
