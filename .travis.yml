@@ -231,3 +231,30 @@ jobs:
         - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
         - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
         - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
+
+    # pbio tests/coverage
+    - stage: test
+      env: NAME="pbio tests/coverage"
+      before_install:
+        - pyenv versions
+        - sudo apt-get update -qq || true
+      install:
+        - npm install -g jfrog-cli-go
+        - pyenv shell 3.6.7
+        - cd ${HOME}
+        - git clone --depth=10 --branch=$(cat ${TRAVIS_BUILD_DIR}/micropython-tag) --recursive https://github.com/pybricks/micropython;
+        - cd micropython/ports/pybricks
+        - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
+      before_script:
+        - export CROSS_COMPILE=
+      script:
+        - make ${MAKEOPTS} -C lib/pbio/test
+        - ./lib/pbio/test/build/test-pbio
+        - make ${MAKEOPTS} -C lib/pbio/test COVERAGE=1
+        - ./lib/pbio/test/build-coverage/test-pbio
+        - # TODO: run coveralls
+      after_success:
+        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET
+        - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
+        - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
+        - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
