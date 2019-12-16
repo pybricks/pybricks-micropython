@@ -17,6 +17,7 @@
 #include "pbsys/sys.h"
 #include "pbio/config.h"
 #include "pbio/servo.h"
+#include "pbio/drivebase.h"
 #include "pbio/uartdev.h"
 
 #include "processes.h"
@@ -85,6 +86,7 @@ int pbio_do_one_event(void) {
     // actually elapsed to do something useful.
     if (now - prev_fast_poll_time >= 2) {
         _pbio_servo_poll();
+        _pbio_drivebase_poll();
         prev_fast_poll_time = now;
     }
     if (now - prev_slow_poll_time >= 32) {

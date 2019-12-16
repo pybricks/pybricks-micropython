@@ -21,6 +21,12 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *drivebase, pbio_actuation_t a
 
 pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *drivebase, int32_t speed, int32_t turn_rate);
 
+void _pbio_drivebase_poll(void);
+
+#else
+
+static inline void _pbio_drivebase_poll(void) { }
+
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
 
 #endif // _PBIO_DRIVEBASE_H_

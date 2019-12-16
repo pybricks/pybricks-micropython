@@ -91,4 +91,19 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *drivebase, int32_t speed, in
     return error_or(err_l, err_r);
 }
 
+static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *drivebase) {
+    return PBIO_SUCCESS;
+}
+
+// TODO: Convert to Contiki process
+
+// Service all drivebase motors by calling this function at approximately constant intervals.
+void _pbio_drivebase_poll(void) {
+    pbio_drivebase_t *drivebase = &base;
+
+    if (drivebase->left && drivebase->left->connected && drivebase->right && drivebase->right->connected) {
+        pbio_drivebase_update(drivebase);
+    }
+}
+
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
