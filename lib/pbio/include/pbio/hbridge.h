@@ -54,7 +54,7 @@ static inline pbio_error_t pbio_hbridge_get(pbio_port_t port, pbio_hbridge_t **h
 
 static inline pbio_error_t pbio_hbridge_set_settings(pbio_hbridge_t *hbridge, int32_t stall_torque_limit_pct, int32_t duty_offset_pct) { return PBIO_ERROR_NOT_SUPPORTED; }
 static inline pbio_error_t pbio_hbridge_get_settings(pbio_hbridge_t *hbridge, pbio_direction_t *direction, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct) { return PBIO_ERROR_NOT_SUPPORTED; }
-static inline pbio_error_t pbio_hbridge_get_state(pbio_hbridge_t *hbridge, pbio_passivity_t *state, int32_t *duty_now);
+static inline pbio_error_t pbio_hbridge_get_state(pbio_hbridge_t *hbridge, pbio_passivity_t *state, int32_t *duty_now) { return PBIO_ERROR_NOT_SUPPORTED; }
 
 static inline pbio_error_t pbio_hbridge_coast(pbio_hbridge_t *hbridge) { return PBIO_ERROR_NOT_SUPPORTED; }
 static inline pbio_error_t pbio_hbridge_brake(pbio_hbridge_t *hbridge) { return PBIO_ERROR_NOT_SUPPORTED; }
