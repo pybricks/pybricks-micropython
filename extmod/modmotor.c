@@ -7,6 +7,8 @@
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
+#include <inttypes.h>
+
 #include <pbio/servo.h>
 
 #include "py/mphal.h"
