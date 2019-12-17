@@ -85,10 +85,10 @@ pbdrv_uart_stm32_hal_platform_data[PBDRV_CONFIG_UART_STM32_HAL_NUM_UART] = {
         .uart   = USART3,
         .irq    = USART3_IRQn,
     },
-    // [UART_PORT_D] = {
-    //     .uart   = LPUART1,
-    //     .irq    = LPUART1_IRQn,
-    // },
+    [UART_PORT_D] = {
+        .uart   = LPUART1,
+        .irq    = LPUART1_IRQn,
+    },
 };
 
 void USART1_IRQHandler() {
@@ -103,9 +103,9 @@ void USART3_IRQHandler() {
     pbdrv_uart_stm32_hal_handle_irq(UART_PORT_C);
 }
 
-// void LPUART1_IRQHandler() {
-//     pbdrv_uart_stm32_hal_handle_irq(UART_PORT_D);
-// }
+void LPUART1_IRQHandler() {
+    pbdrv_uart_stm32_hal_handle_irq(UART_PORT_D);
+}
 
 enum {
     COUNTER_PORT_A,
@@ -127,10 +127,10 @@ const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDE
         .uart_id    = UART_PORT_C,
         .counter_id = COUNTER_PORT_C,
     },
-    // [3] = {
-    //     .uart_id    = UART_PORT_D,
-    //     .counter_id = COUNTER_PORT_D,
-    // },
+    [3] = {
+        .uart_id    = UART_PORT_D,
+        .counter_id = COUNTER_PORT_D,
+    },
 };
 
 
@@ -209,7 +209,6 @@ void SystemInit(void) {
     RCC_OscInitTypeDef osc_init = { 0 };
     RCC_ClkInitTypeDef clk_init = { 0 };
     GPIO_InitTypeDef gpio_init = { 0 };
-    static UART_HandleTypeDef huart;
     static TIM_HandleTypeDef htim1;
     static TIM_HandleTypeDef htim15;
     static TIM_HandleTypeDef htim16;
@@ -266,22 +265,6 @@ void SystemInit(void) {
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
     HAL_GPIO_Init(GPIOB, &gpio_init);
 
-    // FIXME: temporarily using port D for terminal until we get Bluetooth working
-    gpio_init.Pin = GPIO_PIN_7;
-    gpio_init.Mode = GPIO_MODE_OUTPUT_PP;
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, GPIO_PIN_RESET);
-    HAL_GPIO_Init(GPIOC, &gpio_init);
-    gpio_init.Pin = GPIO_PIN_11;
-    gpio_init.Mode = GPIO_MODE_AF_PP;
-    gpio_init.Pull = GPIO_PULLUP;
-    gpio_init.Alternate = GPIO_AF8_LPUART1;
-    HAL_GPIO_Init(GPIOB, &gpio_init);
-    gpio_init.Pin = GPIO_PIN_10;
-    HAL_GPIO_Init(GPIOB, &gpio_init);
-    huart.Instance = LPUART1;
-    huart.Init.BaudRate = 115200;
-    HAL_UART_Init(&huart);
-    LPUART1->CR1 |= USART_CR1_TE | USART_CR1_RE;
 
     // shared timers
 

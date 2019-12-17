@@ -52,14 +52,14 @@ platform_data[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
         .alt = 1,
         .tim_ccr = &TIM1->CCR1,
     },
-    // {
-    //     .pin1_gpio.bank = GPIOA,
-    //     .pin1_gpio.pin = 10,
-    //     .pin2_gpio.bank = GPIOB,
-    //     .pin2_gpio.pin = 1,
-    //     .alt = 1,
-    //     .tim_ccr = &TIM1->CCR3,
-    // },
+    {
+        .pin1_gpio.bank = GPIOA,
+        .pin1_gpio.pin = 10,
+        .pin2_gpio.bank = GPIOB,
+        .pin2_gpio.pin = 1,
+        .alt = 1,
+        .tim_ccr = &TIM1->CCR3,
+    },
 };
 
 void _pbdrv_motor_init(void) {
@@ -83,10 +83,10 @@ void _pbdrv_motor_init(void) {
     HAL_TIM_PWM_Start(cplus_hub_htim1, TIM_CHANNEL_1);
     HAL_TIMEx_PWMN_Start(cplus_hub_htim1, TIM_CHANNEL_1);
 
-    // pbdrv_motor_coast(PBIO_PORT_D);
-    // HAL_TIM_PWM_ConfigChannel(cplus_hub_htim1, &tim_oc_init, TIM_CHANNEL_3);
-    // HAL_TIM_PWM_Start(cplus_hub_htim1, TIM_CHANNEL_3);
-    // HAL_TIMEx_PWMN_Start(cplus_hub_htim1, TIM_CHANNEL_3);
+    pbdrv_motor_coast(PBIO_PORT_D);
+    HAL_TIM_PWM_ConfigChannel(cplus_hub_htim1, &tim_oc_init, TIM_CHANNEL_3);
+    HAL_TIM_PWM_Start(cplus_hub_htim1, TIM_CHANNEL_3);
+    HAL_TIMEx_PWMN_Start(cplus_hub_htim1, TIM_CHANNEL_3);
 }
 
 static pbio_iodev_t *get_iodev(pbio_port_t port) {
