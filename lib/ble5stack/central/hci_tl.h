@@ -50,13 +50,13 @@
 #define HCI_EVENT_PACKET               0x04
 
 /* HCI Event Codes */
-#define HCI_COMMANDCOMPLETEEVENT        0x0E
-#define HCI_LE_EXTEVENT                 0xFF
+#define HCI_COMMAND_COMPLETE_EVENT      0x0E
+#define HCI_LE_EXT_EVENT                0xFF
 
 /* HCI Vendor Specific API Opcodes */
 #define HCI_EXT_RESETSYSTEMDONE         0x041D
 #define HCI_EXT_RESETSYSTEMCMD          0xFC1D
-#define HCI_COMMANDSTATUS               0x067F
+#define HCI_COMMAND_STATUS              0x067F
 
 /* HCI port types */
 #define HCI_PORT_REMOTE_UART      0x01
@@ -65,6 +65,36 @@
 /* Task configuration */
 #define HCI_RX_TASK_PRIORITY        4
 #define HCI_RX_TASK_STACK_SIZE      2048
+
+/*
+** HCI Command Opcodes
+*/
+
+// Link Control Commands
+#define HCI_DISCONNECT                                    0x0406	//!< opcode of @ref HCI_DisconnectCmd
+#define HCI_READ_REMOTE_VERSION_INFO                      0x041D	//!< opcode of @ref HCI_ReadRemoteVersionInfoCmd
+
+// Controller and Baseband Commands
+#define HCI_SET_EVENT_MASK                                0x0C01	//!< opcode of @ref HCI_SetEventMaskCmd
+#define HCI_RESET                                         0x0C03	//!< opcode of@ref HCI_ResetCmd
+#define HCI_READ_TRANSMIT_POWER                           0x0C2D	//!< opcode of@ref HCI_ReadTransmitPowerLevelCmd
+/// @cond NODOC
+#define HCI_SET_CONTROLLER_TO_HOST_FLOW_CONTROL           0x0C31	//!< opcode of @ref HCI_SetControllerToHostFlowCtrlCmd
+#define HCI_HOST_BUFFER_SIZE                              0x0C33	//!< opcode of @ref HCI_HostBufferSizeCmd
+/// @endcond //NODOC
+#define HCI_HOST_NUM_COMPLETED_PACKETS                    0x0C35	//!< opcode of @ref HCI_HostNumCompletedPktCmd
+#define HCI_SET_EVENT_MASK_PAGE_2                         0x0C63	//!< opcode of @ref HCI_SetEventMaskPage2Cmd
+#define HCI_READ_AUTH_PAYLOAD_TIMEOUT                     0x0C7B	//!< opcode of @ref HCI_ReadAuthPayloadTimeoutCmd
+#define HCI_WRITE_AUTH_PAYLOAD_TIMEOUT                    0x0C7C	//!< opcode of @ref HCI_WriteAuthPayloadTimeoutCmd
+
+// Information Parameters
+#define HCI_READ_LOCAL_VERSION_INFO                       0x1001	//!< opcode of @ref HCI_ReadLocalVersionInfoCmd
+#define HCI_READ_LOCAL_SUPPORTED_COMMANDS                 0x1002	//!< opcode of @ref HCI_ReadLocalSupportedCommandsCmd
+#define HCI_READ_LOCAL_SUPPORTED_FEATURES                 0x1003	//!< opcode of @ref HCI_ReadLocalSupportedFeaturesCmd
+#define HCI_READ_BDADDR                                   0x1009	//!< opcode of @ref HCI_ReadBDADDRCmd
+
+// Status Parameters
+#define HCI_READ_RSSI                                     0x1405	//!< opcode of @ref HCI_ReadRssiCmd
 
 /* HCI Status return types  */
 typedef enum

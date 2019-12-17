@@ -38,25 +38,70 @@
 #include "gap_scanner.h"
 #include "gap_initiator.h"
 
-HCI_StatusCodes_t GAP_deviceInit(uint8_t profileRole, GAP_Addr_Modes_t addrMode,
-                                 uint8_t* pRandomAddr)
+HCI_StatusCodes_t GAP_deviceInit(uint8_t profileRole, uint8_t maxScanResponses,
+                                 uint8_t *irk, uint8_t *csrk, uint32_t signCounter)
 {
-    HCI_StatusCodes_t status;
-    uint8_t index;
-    uint8_t pData[8];
+    uint8_t pData[38];
 
     pData[0] = profileRole;
-    pData[1] = addrMode;
-
-    for (index = 0; index < DEFAULT_ADDRESS_SIZE; index++)
-    {
-        pData[2 + index] = *pRandomAddr;
-        pRandomAddr++;
+    pData[1] = maxScanResponses;
+    if (irk) {
+        memcpy(&pData[2], irk, 16);
     }
+    else {
+        memset(&pData[2], 0, 16);
+    }
+    if (csrk) {
+        memcpy(&pData[18], csrk, 16);
+    }
+    else {
+        memset(&pData[18], 0, 16);
+    }
+    pData[34] = signCounter & 0xFF;
+    pData[35] = (signCounter >> 8) & 0xFF;
+    pData[36] = (signCounter >> 16) & 0xFF;
+    pData[37] = (signCounter >> 24) & 0xFF;
 
-    status = HCI_sendHCICommand(GAP_DEVICEINIT, pData, 8);
+    return HCI_sendHCICommand(GAP_DEVICE_INIT, pData, 38);
+}
 
-    return status;
+HCI_StatusCodes_t GAP_makeDiscoverable(Gap_eventType_t eventType,
+                                       Gap_initiatorAddrType_t initiatorAddrType,
+                                       uint8_t *initiatorAddr,
+                                       Gap_channelMap_t channelMap,
+                                       Gap_filterPolicy_t filterPolicy)
+{
+    uint8_t pData[10];
+
+    pData[0] = eventType;
+    pData[1] = initiatorAddrType;
+    if (initiatorAddr) {
+        memcpy(&pData[2], initiatorAddr, 6);
+    }
+    else {
+        memset(&pData[2], 0, 6);
+    }
+    pData[8] = channelMap;
+    pData[9] = filterPolicy;
+
+    return HCI_sendHCICommand(GAP_MAKE_DISCOVERABLE, pData, 10);
+}
+
+HCI_StatusCodes_t GAP_endDiscoverable()
+{
+    return HCI_sendHCICommand(GAP_END_DISCOVERABLE, NULL, 0);
+}
+
+HCI_StatusCodes_t GAP_updateAdvertistigData(Gap_adType_t adType, uint8_t dataLen,
+                                            uint8_t *advertData)
+{
+    uint8_t pData[33]; // dataLen must be 1 to 31
+
+    pData[0] = adType;
+    pData[1] = dataLen;
+    memcpy(&pData[2], advertData, dataLen);
+
+    return HCI_sendHCICommand(GAP_UPDATE_ADVERTISING_DATA, pData, 2 + dataLen);
 }
 
 HCI_StatusCodes_t GapScan_Enable(uint16_t period, uint16_t duration,
@@ -507,4 +552,16 @@ HCI_StatusCodes_t GAP_SendSlaveSecurityRequest(uint16_t connectionHandle,
     status = HCI_sendHCICommand(GAP_SENDSLAVESECURITYREQUEST, pData, 3);
 
     return status;
+}
+
+HCI_StatusCodes_t GAP_BondMgrSetParameter(uint16_t paramID, uint8_t paramDataLen, uint8_t *paramData)
+{
+    uint8_t pData[32];
+
+    pData[0] = LO_UINT16(paramID);
+    pData[1] = HI_UINT16(paramID);
+    pData[2] = paramDataLen;
+    memcpy(&pData[3], paramData, paramDataLen);
+
+    return HCI_sendHCICommand(GAP_BOND_MGR_SET_PARAMETER, pData, paramDataLen + 3);
 }

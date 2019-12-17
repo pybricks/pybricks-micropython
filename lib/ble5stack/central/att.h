@@ -75,30 +75,30 @@ extern "C"
 /**
  * ATT Vendor Specific APIs - ATT Command Opcodes
  */
-#define ATT_CMD_ERRORRSP                0xFD01
+#define ATT_CMD_ERROR_RSP               0xFD01
 #define ATT_CMD_EXCHANGEMTUREQ          0xFD02
-#define ATT_CMD_EXCHANGEMTURSP          0xFD03
+#define ATT_CMD_EXCHANGE_MTU_RSP        0xFD03
 #define ATT_CMD_FINDINFOREQ             0xFD04
 #define ATT_CMD_FINDINFORSP             0xFD05
 #define ATT_CMD_FINDBYTYPEVALUEREQ      0xFD06
 #define ATT_CMD_FINDBYTYPEVALUERSP      0xFD07
 #define ATT_CMD_READBYTYPEVALUEREQ      0xFD08
-#define ATT_CMD_READBYTYPEVALUERSP      0xFD09
+#define ATT_CMD_READ_BY_TYPE_VALUE_RSP  0xFD09
 #define ATT_CMD_READREQ                 0xFD0A
-#define ATT_CMD_READRSP                 0xFD0B
+#define ATT_CMD_READ_RSP                0xFD0B
 #define ATT_CMD_READBLOBREQ             0xFD0C
 #define ATT_CMD_READBLOBRSP             0xFD0D
 #define ATT_CMD_READMULTIREQ            0xFD0E
 #define ATT_CMD_READMULTIRSP            0xFD0F
 #define ATT_CMD_READBYGRPTYPEREQ        0xFD10
-#define ATT_CMD_READBYGRPTYPERSP        0xFD11
+#define ATT_CMD_READ_BY_GRP_TYPE_RSP    0xFD11
 #define ATT_CMD_WRITEREQ                0xFD12
-#define ATT_CMD_WRITERSP                0xFD13
+#define ATT_CMD_WRITE_RSP               0xFD13
 #define ATT_CMD_PREPAREWRITEREQ         0xFD16
 #define ATT_CMD_PREPAREWRITERSP         0xFD17
 #define ATT_CMD_EXECUTEWRITEREQ         0xFD18
 #define ATT_CMD_EXECUTEWRITERSP         0xFD19
-#define ATT_CMD_HANDLEVALUENOTI         0xFD1B
+#define ATT_CMD_HANDLE_VALUE_NOTI       0xFD1B
 #define ATT_CMD_HANDLEVALUEIND          0xFD1D
 #define ATT_CMD_HANDLEVALUECFM          0xFD1E
 
@@ -107,23 +107,23 @@ extern "C"
  * ATT Vendor Specific APIs - ATT Event Opcodes
  */
 #define ATT_EVENT_ERRORRSP                0x0501
-#define ATT_EVENT_EXCHANGEMTUREQ          0x0502
+#define ATT_EVENT_EXCHANGE_MTU_REQ        0x0502
 #define ATT_EVENT_EXCHANGEMTURSP          0x0503
 #define ATT_EVENT_FINDINFOREQ             0x0504
 #define ATT_EVENT_FINDINFORSP             0x0505
 #define ATT_EVENT_FINDBYTYPEVALUEREQ      0x0506
 #define ATT_EVENT_FINDBYTYPEVALUERSP      0x0507
-#define ATT_EVENT_READBYTYPEREQ           0x0508
+#define ATT_EVENT_READ_BY_TYPE_REQ        0x0508
 #define ATT_EVENT_READBYTYPERSP           0x0509
-#define ATT_EVENT_READREQ                 0x050A
+#define ATT_EVENT_READ_REQ                0x050A
 #define ATT_EVENT_READRSP                 0x050B
 #define ATT_EVENT_READBLOBREQ             0x050C
 #define ATT_EVENT_READBLOBRSP             0x050D
 #define ATT_EVENT_READMULTIREQ            0x050E
 #define ATT_EVENT_READMULTIRSP            0x050F
-#define ATT_EVENT_READBYGRPTYPEREQ        0x0510
-#define ATT_EVENT_READBYGRPTYPERSP        0x0511
-#define ATT_EVENT_WRITEREQ                0x0512
+#define ATT_EVENT_READ_BY_GRP_TYPE_REQ    0x0510
+#define ATT_EVENT_READ_BY_GRP_TYPE_RSP    0x0511
+#define ATT_EVENT_WRITE_REQ               0x0512
 #define ATT_EVENT_WRITERSP                0x0513
 #define ATT_EVENT_PREPAREWRITEREQ         0x0516
 #define ATT_EVENT_PREPAREWRITERSP         0x0517
@@ -150,7 +150,7 @@ extern "C"
  * the range 23 to 251 inclusive.
  * Refer to ble_user_config.h for the device-specific maximum MTU value.
  */
-//#define ATT_MTU_SIZE                     L2CAP_MTU_SIZE //!< Minimum ATT MTU size
+#define ATT_MTU_SIZE                     23 //L2CAP_MTU_SIZE //!< Minimum ATT MTU size
 //#define ATT_MAX_MTU_SIZE                 (255-L2CAP_HDR_SIZE) //!< Maximum ATT MTU size
 /** @} End ATT_MTU_Sizes */
 
@@ -532,8 +532,8 @@ typedef struct
  */
 typedef struct
 {
-  uint16_t numPairs;  //!< Number of attribute handle-UUID pairs found
-  uint16_t len;       //!< Size of each attribute handle-value pair
+//   uint16_t numPairs;  //!< Number of attribute handle-UUID pairs found
+//   uint16_t len;       //!< Size of each attribute handle-value pair
   uint8_t *pDataList; //!< List of 1 or more attribute handle-value pairs (2 to ATT_MTU_SIZE-2)
   uint16_t dataLen;   //!< Length of data written into pDataList. Not part of actual ATT Response
 } attReadByTypeRsp_t;
@@ -622,9 +622,10 @@ typedef struct
  */
 typedef struct
 {
-  uint16_t numGrps;   //!< Number of attribute handle, end group handle and value sets found
-  uint16_t len;       //!< Length of each attribute handle, end group handle and value set
+//   uint16_t numGrps;   //!< Number of attribute handle, end group handle and value sets found
+//   uint16_t len;       //!< Length of each attribute handle, end group handle and value set
   uint8_t *pDataList; //!< List of 1 or more attribute handle, end group handle and value (4 to ATT_MTU_SIZE-2)
+  uint16_t dataLen;   //!< Length of data written into pDataList. Not part of actual ATT Response
 } attReadByGrpTypeRsp_t;
 
 /**

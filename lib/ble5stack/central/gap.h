@@ -53,14 +53,15 @@
 /**
  * GAP Vendor Specific APIs - GAP Command Opcodes
  */
-#define GAP_DEVICEINIT                  0xFE00
+#define GAP_DEVICE_INIT                 0xFE00
 #define GAP_TERMINATELINKREQUEST        0xFE0A
 #define GAP_AUTHENTICATE                0xFE0B
 #define GAP_TERMINATEAUTH               0xFE10
 #define GAP_UPDATELINKPARAMREQ          0xFE11
 #define GAP_DEVICEDISCOVERYREQUEST      0xFE04
-#define GAP_MAKEDISCOVERABLE            0xFE06
-#define GAP_UPDATEADVERTISINGDATA       0xFE07
+#define GAP_MAKE_DISCOVERABLE           0xFE06
+#define GAP_UPDATE_ADVERTISING_DATA     0xFE07
+#define GAP_END_DISCOVERABLE            0xFE08
 #define GAP_ESTABLISHLINKREQUEST        0xFE09
 #define GAP_UPDATELINKPARAMREQREPLY     0xFFFE
 #define GAP_REGISTERCONNEVENT           0xFE13
@@ -71,6 +72,7 @@
 #define GAPCONFIG_SETPARAMETER          0xFE2F
 #define GAP_SETPARAMVALUE               0xFE30
 #define GAP_GETPARAMVALUE               0xFE31
+#define GAP_BOND_MGR_SET_PARAMETER      0xFE36
 #define GAPSCAN_ENABLE                  0xFE51
 #define GAPSCAN_DISABLE                 0xFE52
 #define GAPSCAN_SETPHYPARAMS            0xFE53
@@ -89,10 +91,14 @@
 /**
  * GAP Vendor Specific APIs - GAP Event Opcodes
  */
-#define GAP_DEVICEINITDONE              0x0600
-#define GAP_LINKESTABLISHED             0x0605
-#define GAP_LINKTERMINATED              0x0606
-#define GAP_LINKPARAMUPDATE             0x0607
+#define GAP_DEVICE_INIT_DONE            0x0600
+#define GAP_DEVICE_DISCOVERY_DONE       0x0601
+#define GAP_ADVERT_DATA_UPDATE_DONE     0x0602
+#define GAP_MAKE_DISCOVERABLE_DONE      0x0603
+#define GAP_END_DISCOVERABLE_DONE       0x0604
+#define GAP_LINK_ESTABLISHED            0x0605
+#define GAP_LINK_TERMINATED             0x0606
+#define GAP_LINK_PARAM_UPDATE           0x0607
 #define GAP_SIGNATUREUPDATED            0x0609
 #define GAP_PASSKEYNEEDED               0x0609
 #define GAP_AUTHENTICATIONCOMPLETE      0x0609
@@ -104,8 +110,6 @@
 #define SM_GETECCKEYS                   0x0609
 #define SM_GETDHKEY                     0x0609
 #define GAP_LINKPARAMUPDATEREQEST       0x0609
-#define GAP_DEVICEDISCOVERYDONE         0x0601
-#define GAP_ADVERTDATAUPDATEDONE        0x0602
 #define GAP_ADVERTISERSCANNEREVENT      0x0613
 
 /**
@@ -118,6 +122,38 @@
 
 #define DEFAULT_PASSKEY_SIZE            0x06
 
+// Parameter types for GAP_BOND_MGR_SET_PARAMETER
+
+#define GAPBOND_PAIRING_MODE            0x400
+#define GAPBOND_MITM_PROTECTION         0x402
+#define GAPBOND_IO_CAPABILITIES         0x403
+#define GAPBOND_OOB_ENABLED             0x404
+#define GAPBOND_OOB_DATA                0x405
+#define GAPBOND_BONDING_ENABLED         0x406
+#define GAPBOND_KEY_DIST_LIST           0x407
+#define GAPBOND_DEFAULT_PASSCODE        0x408
+#define GAPBOND_ERASE_ALLBONDS          0x409
+#define GAPBOND_AUTO_FAIL_PAIRING       0x40A
+#define GAPBOND_AUTO_FAIL_REASON        0x40B
+#define GAPBOND_KEYSIZE                 0x40C
+#define GAPBOND_AUTO_SYNC_WL            0x40D
+#define GAPBOND_BOND_FAIL_ACTION        0x40F
+#define GAPBOND_ERASE_SINGLEBOND        0x410
+#define GAPBOND_SECURE_CONNECTION       0x411
+#define GAPBOND_ECCKEY_REGEN_POLICY     0x412
+#define GAPBOND_GAPBOND_ECC_KEYS        0x413
+#define GAPBOND_LRU_BOND_REPLACEMENT    0x418
+#define GAPBOND_ERASE_LOCAL_INFO        0x41A
+
+#define GAPBOND_PAIRING_MODE_NO_PAIRING     0x00
+#define GAPBOND_PAIRING_MODE_WAIT_FOR_REQ   0x01
+#define GAPBOND_PAIRING_MODE_INITIATE       0x02
+
+#define GAPBOND_IO_CAP_DISPLAY_YES_NO       0x01
+#define GAPBOND_IO_CAP_DISPLAY_ONLY         0x00
+#define GAPBOND_IO_CAP_KEYBOARD_ONLY        0x02
+#define GAPBOND_IO_CAP_NO_INPUT_NO_OUTPUT   0x03
+#define GAPBOND_IO_CAP_KEYBOARD_DISPLAY     0x04
 
 /*-------------------------------------------------------------------
  * MACROS
@@ -581,6 +617,58 @@ typedef enum
  *
  * Parameters set via @ref GAP_SetParamValue
  */
+
+// Values from http://dev.ti.com/tirex/content/simplelink_cc2640r2_sdk_1_35_00_33/docs/blestack/TI_BLE_Vendor_Specific_HCI_Guide.pdf
+enum {
+    TGAP_GEN_DISC_ADV_MIN,
+    TGAP_LIM_ADV_TIMEOUT,
+    TGAP_GEN_DISC_SCAN,
+    TGAP_LIM_DISC_SCAN,
+    TGAP_CONN_EST_ADV_TIMEOUT,
+    TGAP_CONN_PARAM_TIMEOUT,
+    TGAP_LIM_DISC_ADV_INT_MIN,
+    TGAP_LIM_DISC_ADV_INT_MAX,
+    TGAP_GEN_DISC_ADV_INT_MIN,
+    TGAP_GEN_DISC_ADV_INT_MAX,
+    TGAP_CONN_ADV_INT_MIN,
+    TGAP_CONN_ADV_INT_MAX,
+    TGAP_CONN_SCAN_INT,
+    TGAP_CONN_SCAN_WIND,
+    TGAP_CONN_HIGH_SCAN_INT,
+    TGAP_CONN_HIGH_SCAN_WIND,
+    TGAP_GEN_DISC_SCAN_INT,
+    TGAP_GEN_DISC_SCAN_WIND,
+    TGAP_LIM_DISC_SCAN_INT,
+    TGAP_LIM_DISC_SCAN_WIND,
+    TGAP_CONN_EST_ADV,
+    TGAP_CONN_EST_INT_MIN,
+    TGAP_CONN_EST_INT_MAX,
+    TGAP_CONN_EST_SCAN_INT,
+    TGAP_CONN_EST_SCAN_WIND,
+    TGAP_CONN_EST_SUPERV_TIMEOUT,
+    TGAP_CONN_EST_LATENCY,
+    TGAP_CONN_EST_MIN_CE_LEN,
+    TGAP_CONN_EST_MAX_CE_LEN,
+    TGAP_PRIVATE_ADDR_INT,
+    TGAP_CONN_PAUSE_CENTRAL,
+    TGAP_CONN_PAUSE_PERIPHERAL,
+    TGAP_SM_TIMEOUT,
+    TGAP_SM_MIN_KEY_LEN,
+    TGAP_SM_MAX_KEY_LEN,
+    TGAP_FILTER_ADV_REPORTS,
+    TGAP_SCAN_RSP_RSSI_MIN,
+    TGAP_REJECT_CONN_PARAMS,
+#if defined TESTMODES
+    TGAP_GAP_TESTCODE,
+    TGAP_SM_TESTCODE,
+    TGAP_GATT_TESTCODE = 100,
+    TGAP_ATT_TESTCODE,
+    TGAP_GGS_TESTCODE,
+    TGAP_L2CAP_TESTCODE,
+#endif
+};
+
+// Alternate values?
 enum Gap_ParamIDs_t
 {
   /**
@@ -730,6 +818,47 @@ enum Gap_ParamIDs_t
  */
 #define GAP_PROFILE_CENTRAL       0x08
 /** @} End GAP_Profile_Roles */
+
+/**
+ * Used by GAP_UPDATEADVERTISINGDATA adData parameter.
+ */
+typedef enum
+{
+    GAP_AD_TYPE_SCAN_RSP_DATA,
+    GAP_AD_TYPE_ADVERTISEMNT_DATA,
+} Gap_adType_t;
+
+typedef enum
+{
+    ADV_IND,
+    ADV_DIRECT_IND,
+    ADV_SCAN_IND,
+    ADV_NONCONN_IND,
+} Gap_eventType_t;
+
+typedef enum
+{
+    GAP_INITIATOR_ADDR_TYPE_PUBLIC,
+    GAP_INITIATOR_ADDR_TYPE_STATIC,
+    GAP_INITIATOR_ADDR_TYPE_PRIVATE_NON_RESOLVE,
+    GAP_INITIATOR_ADDR_TYPE_PRIVATE_RESOLVE,
+} Gap_initiatorAddrType_t;
+
+typedef enum
+{
+    GAP_CHANNEL_MAP_CH_37 = 1 << 0,
+    GAP_CHANNEL_MAP_CH_38 = 1 << 1,
+    GAP_CHANNEL_MAP_CH_39 = 1 << 2,
+    GAP_CHANNEL_MAP_ALL = GAP_CHANNEL_MAP_CH_37 | GAP_CHANNEL_MAP_CH_38 | GAP_CHANNEL_MAP_CH_39
+} Gap_channelMap_t;
+
+typedef enum
+{
+    GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY,
+    GAP_FILTER_POLICY_SCAN_WHITELIST_CONNECT_ANY,
+    GAP_FILTER_POLICY_SCAN_ANY_CONNECT_WHITELIST,
+    GAP_FILTER_POLICY_SCAN_WHITELIST_CONNECT_WHITELIST,
+} Gap_filterPolicy_t;
 
 /**
  * Options for responding to connection parameter update requests
@@ -1432,11 +1561,25 @@ typedef void (*pfnGapConnEvtCB_t)
 /**
  * GAP Device Initialization
  *
- * Setup the device. Can only be called once per reset. In order to change
- * the address mode / random address, it is necessary to reset the device
- * and call this API again. In the case where the address mode or random address
- * is different than it was for the last initialization, all bonds and local
- * information stored in NV will be erased.
+ * This command is used to setup the device in a GAP Role and should only be
+ * called once per reboot.Toenable multiple combinations setup multiple GAP
+ * Roles (profileRole parameter).
+ *
+ * Multiple Role settings examples:
+ *
+ * - GAP_PROFILE_PERIPHERAL and GAP_PROFILE_BROADCASTER - allows a connection
+ *   and advertising (non-connectable) at the same time.
+ * - GAP_PROFILE_PERIPHERAL and GAP_PROFILE_OBSERVER - allows a connection (with
+ *   master) and scanning at the same time.
+ * - GAP_PROFILE_PERIPHERAL, GAP_PROFILE_OBSERVER and GAP_PROFILE_BROADCASTER -
+ *   allows a connection (with master) and scanning or advertising at the same
+ *   time.
+ * - GAP_PROFILE_CENTRAL and GAP_PROFILE_BROADCASTER - allows connections and
+ *   advertising (non-connectable) at the same time.
+ *
+ * Note: If the device’s BLE address (BDADDR) is to be set then this command
+ * must be executed after HCI_EXT_SetBDADDRCmd for the generated security keys
+ * to be valid.
  *
  * @par Corresponding Events:
  * @ref GAP_DEVICE_INIT_DONE_EVENT of type @ref gapDeviceInitDoneEvent_t
@@ -1452,23 +1595,68 @@ typedef void (*pfnGapConnEvtCB_t)
  * @ref bleInternalError : error erasing NV
  *
  * @param profileRole GAP Profile Roles: @ref GAP_Profile_Roles
- * @param addrMode Own address mode. If always using Resolvable Private Address,
- *        set this to either @ref ADDRMODE_RP_WITH_PUBLIC_ID or
- *        @ref ADDRMODE_RP_WITH_RANDOM_ID. If always using Identity
- *        Address, set this to either @ref ADDRMODE_PUBLIC or
- *        @ref ADDRMODE_RANDOM.
- * @param pRandomAddr Pointer to 6-byte Random Static Address of this device
- *        that will be copied to the stack. Valid only if addrMode
- *        is @ref ADDRMODE_RANDOM or @ref ADDRMODE_RP_WITH_RANDOM_ID and can
- *        not be NULL in these cases. Ignored for other address types.
- *
+ * @param maxScanResponses Central or Observer only: The device will allocate
+ *        buffer space for received advertisement packets. The default is 3.
+ *        The larger the number, the more RAM that is needed and maintained.
+ * @param irk 16 byte Identity Resolving Key (IRK). If this value is all 0’s,
+ *        the GAP will randomly generate all 16 bytes. This key is used to
+ *        generate Resolvable Private Addresses
+ * @param csrk 16 byte Connection Signature Resolving Key (CSRK). If this value
+ *        is all 0’s, the GAP will randomly generate all 16 bytes. This key is
+ *        used to generate data Signature.
+ * @param signCounter 32 bit Signature Counter. Initial signature counter.
  * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
  * @return @ref bleFAILURE : command failed to send over HCI transport layer
  *
  */
 extern HCI_StatusCodes_t GAP_deviceInit(uint8_t profileRole,
-                                GAP_Addr_Modes_t addrMode,
-                                uint8_t* pRandomAddr);
+                                 uint8_t maxScanResponses,
+                                 uint8_t *irk, uint8_t *csrk,
+                                 uint32_t signCounter);
+
+/**
+ * Send this command to start the device advertising.
+ *
+ * When this command is received, the host will send the HCI Ext Command Status
+ * Event with the Statusparameter, then, when the device starts advertising
+ * the GAP Make Discoverable Done Event is generated. When advertising is
+ * completed (limited mode advertising has a time limit), the GAPEnd Discoverable
+ * Event is generated.
+ *
+ * @param eventType
+ * @param initiatorAddrType
+ * @param initiatorAddr
+ * @param channelMap
+ * @param filterPolicy
+ */
+extern HCI_StatusCodes_t GAP_makeDiscoverable(Gap_eventType_t eventType,
+                                Gap_initiatorAddrType_t initiatorAddrType,
+                                uint8_t *initiatorAddr,
+                                Gap_channelMap_t channelMap,
+                                Gap_filterPolicy_t filterPolicy);
+
+/**
+ * Send this command to end advertising.
+ *
+ * When this command is received, the host will send the HCI Ext Command Status
+ * Event with the Statusparameter, then issue a GAP End Discoverable Done Event
+ * advertising has stopped
+ */
+extern HCI_StatusCodes_t GAP_endDiscoverable();
+
+/**
+ * Send this command to set the raw advertising or scan response data.
+ *
+ * When this command is received, the host will send the HCI Ext Command Status
+ * Event with the Statusparameter, then,when the task is complete the GAP Advert
+ * Data UpdateDoneEvent is generated.
+ *
+ * @param adType        the type of @ref advertData
+ * @param dataLen       the size of @ref advertData in bytes
+ * @param advertData    raw advertisting data
+ */
+extern HCI_StatusCodes_t GAP_updateAdvertistigData(Gap_adType_t adType,
+                                         uint8_t dataLen, uint8_t *advertData);
 
 /**
  * Set a GAP Parameter value
@@ -1759,5 +1947,14 @@ extern HCI_StatusCodes_t GAP_Signable(uint16_t connectionHandle, uint8_t authent
 extern HCI_StatusCodes_t GAP_Bond(uint16_t connectionHandle, uint8_t authenticated,
                           uint8_t secureConnections, smSecurityInfo_t *pParams,
                           uint8_t startEncryption);
+
+/**
+ * Set a bond manager parameter
+ *
+ * @param paramID one of the GAPBOND_* constants
+ * @param paramDataLen length of paramData in bytes
+ * @param paramData parameter-specific data (value/size depends on paramID)
+ */
+extern HCI_StatusCodes_t GAP_BondMgrSetParameter(uint16_t paramID, uint8_t paramDataLen, uint8_t *paramData);
 
 #endif /* GAP_H_ */

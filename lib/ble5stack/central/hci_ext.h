@@ -56,6 +56,10 @@ extern "C"
  * INCLUDES
  */
 
+#include <stdint.h>
+
+#include "hci_tl.h"
+
 /*********************************************************************
  * CONSTANTS
  */
@@ -200,6 +204,87 @@ extern "C"
 #define HCI_EXT_L2CAP_PSM_CHANNELS              0x74
 #define HCI_EXT_L2CAP_CHANNEL_INFO              0x75
 
+
+// LE Vendor Specific LL Extension Commands
+#define HCI_EXT_SET_RX_GAIN                            0xFC00
+#define HCI_EXT_SET_TX_POWER                           0xFC01
+#define HCI_EXT_ONE_PKT_PER_EVT                        0xFC02
+#define HCI_EXT_CLK_DIVIDE_ON_HALT                     0xFC03
+#define HCI_EXT_DECLARE_NV_USAGE                       0xFC04
+#define HCI_EXT_DECRYPT                                0xFC05
+#define HCI_EXT_SET_LOCAL_SUPPORTED_FEATURES           0xFC06
+#define HCI_EXT_SET_FAST_TX_RESP_TIME                  0xFC07
+#define HCI_EXT_MODEM_TEST_TX                          0xFC08
+#define HCI_EXT_MODEM_HOP_TEST_TX                      0xFC09
+#define HCI_EXT_MODEM_TEST_RX                          0xFC0A
+#define HCI_EXT_END_MODEM_TEST                         0xFC0B
+#define HCI_EXT_SET_BDADDR                             0xFC0C
+#define HCI_EXT_SET_SCA                                0xFC0D
+#define HCI_EXT_ENABLE_PTM                             0xFC0E // Not a supported HCI command! Application only.
+#define HCI_EXT_SET_FREQ_TUNE                          0xFC0F
+#define HCI_EXT_SAVE_FREQ_TUNE                         0xFC10
+#define HCI_EXT_SET_MAX_DTM_TX_POWER                   0xFC11
+#define HCI_EXT_MAP_PM_IO_PORT                         0xFC12
+#define HCI_EXT_DISCONNECT_IMMED                       0xFC13
+#define HCI_EXT_PER                                    0xFC14
+#define HCI_EXT_PER_BY_CHAN                            0xFC15 // Not a supported HCI command! Application only.
+#define HCI_EXT_EXTEND_RF_RANGE                        0xFC16
+#define HCI_EXT_ADV_EVENT_NOTICE                       0xFC17 // Not a supported HCI command! Application only.
+#define HCI_EXT_CONN_EVENT_NOTICE                      0xFC18 // Not a supported HCI command! Application only.
+#define HCI_EXT_HALT_DURING_RF                         0xFC19
+#define HCI_EXT_OVERRIDE_SL                            0xFC1A
+#define HCI_EXT_BUILD_REVISION                         0xFC1B
+#define HCI_EXT_DELAY_SLEEP                            0xFC1C
+#define HCI_EXT_RESET_SYSTEM                           0xFC1D
+#define HCI_EXT_OVERLAPPED_PROCESSING                  0xFC1E
+#define HCI_EXT_NUM_COMPLETED_PKTS_LIMIT               0xFC1F
+#define HCI_EXT_GET_CONNECTION_INFO                    0xFC20
+#
+#define HCI_EXT_LL_TEST_MODE                           0xFC70
+
+// parameters for HCI_EXT_SET_TX_POWER
+
+#define HCI_EXT_CC254X_TX_POWER_N23_DBM     0   // -23 dBm
+#define HCI_EXT_CC254X_TX_POWER_N6_DBM      1   //  -6 dBm
+#define HCI_EXT_CC254X_TX_POWER_0_DBM       2   //   0 dBm
+#define HCI_EXT_CC254X_TX_POWER_4_DBM       3   //   4 dBm
+
+#define HCI_EXT_CC26XX_TX_POWER_N21_DBM     0   // -21 dBm
+#define HCI_EXT_CC26XX_TX_POWER_N18_DBM     1   // -18 dBm
+#define HCI_EXT_CC26XX_TX_POWER_N15_DBM     2   // -15 dBm
+#define HCI_EXT_CC26XX_TX_POWER_N12_DBM     3   // -12 dBm
+#define HCI_EXT_CC26XX_TX_POWER_N9_DBM      4   //  -9 dBm
+#define HCI_EXT_CC26XX_TX_POWER_N6_DBM      5   //  -6 dBm
+#define HCI_EXT_CC26XX_TX_POWER_N3_DBM      6   //  -3 dBm
+#define HCI_EXT_CC26XX_TX_POWER_0_DBM       7   //   0 dBm
+#define HCI_EXT_CC26XX_TX_POWER_1_DBM       8   //   1 dBm
+#define HCI_EXT_CC26XX_TX_POWER_2_DBM       9   //   2 dBm
+#define HCI_EXT_CC26XX_TX_POWER_3_DBM       10  //   3 dBm
+#define HCI_EXT_CC26XX_TX_POWER_4_DBM       11  //   4 dBm
+#define HCI_EXT_CC26XX_TX_POWER_5_DBM       12  //   5 dBm
+
+// parameters for HCI_EXT_SET_LOCAL_SUPPORTED_FEATURES
+// NB: technically, these are 64-bit flags, but all fit in 32-bits for now
+
+#define HCI_EXT_LOCAL_FEATURE_NONE                      0x00000000UL
+#define HCI_EXT_LOCAL_FEATURE_ENCRYTION                 0x00000001UL
+#define HCI_EXT_LOCAL_FEATURE_CONNECTION_PARAM_REQ      0x00000002UL
+#define HCI_EXT_LOCAL_FEATURE_REJECT_EXT_INDICATION     0x00000004UL
+#define HCI_EXT_LOCAL_FEATURE_SLAVE_FEATURE_EXCHANGE    0x00000008UL
+#define HCI_EXT_LOCAL_FEATURE_PING                      0x00000010UL
+#define HCI_EXT_LOCAL_FEATURE_DATA_PACKET_LENGTH_EXT    0x00000020UL
+#define HCI_EXT_LOCAL_FEATURE_PRIVACY                   0x00000040UL
+#define HCI_EXT_LOCAL_FEATURE_EXT_SCANNER_FILTER_POLICY 0x00000080UL
+#define HCI_EXT_LOCAL_FEATURE_2M_PHY                    0x00000100UL
+#define HCI_EXT_LOCAL_FEATURE_STABLE_MOD_INDEX_TX       0x00000200UL
+#define HCI_EXT_LOCAL_FEATURE_STABLE_MOD_INDEX_RX       0x00000400UL
+#define HCI_EXT_LOCAL_FEATURE_CODED_PHY                 0x00000800UL
+#define HCI_EXT_LOCAL_FEATURE_EXT_ADVERTISING           0x00001000UL
+#define HCI_EXT_LOCAL_FEATURE_PERIODIC_ADVERTISING      0x00002000UL
+#define HCI_EXT_LOCAL_FEATURE_CHAN_SELECT_ALGO_2        0x00004000UL
+#define HCI_EXT_LOCAL_FEATURE_LE_POWER_CLASS_1          0x00008000UL
+#define HCI_EXT_LOCAL_FEATURE_MIN_NUM_USED_CHAN         0x00010000UL
+
 /*** HCI Extension Events ***/
 
 // HCI extension events must start from 0x0400. The upper 6 bits of all
@@ -219,6 +304,7 @@ extern "C"
 // GAP Events
 #define HCI_EXT_GAP_DEVICE_INIT_DONE_EVENT          ( HCI_EXT_GAP_EVENT | 0x00 )
 #define HCI_EXT_GAP_ADV_DATA_UPDATE_DONE_EVENT      ( HCI_EXT_GAP_EVENT | 0x02 )
+#define HCI_EXT_GAP_MAKE_DISCOVERABLE_DONE_EVENT    ( HCI_EXT_GAP_EVENT | 0x03 )
 #define HCI_EXT_GAP_LINK_ESTABLISHED_EVENT          ( HCI_EXT_GAP_EVENT | 0x05 )
 #define HCI_EXT_GAP_LINK_TERMINATED_EVENT           ( HCI_EXT_GAP_EVENT | 0x06 )
 #define HCI_EXT_GAP_LINK_PARAM_UPDATE_EVENT         ( HCI_EXT_GAP_EVENT | 0x07 )
@@ -244,6 +330,43 @@ extern "C"
 // Command Status Events
 #define HCI_EXT_GAP_CMD_STATUS_EVENT                ( HCI_EXT_GAP_EVENT | 0x7F )
 
+// LE Vendor Specific LL Extension Events
+#define HCI_EXT_SET_RX_GAIN_EVENT                      0x0400
+#define HCI_EXT_SET_TX_POWER_EVENT                     0x0401
+#define HCI_EXT_ONE_PKT_PER_EVT_EVENT                  0x0402
+#define HCI_EXT_CLK_DIVIDE_ON_HALT_EVENT               0x0403
+#define HCI_EXT_DECLARE_NV_USAGE_EVENT                 0x0404
+#define HCI_EXT_DECRYPT_EVENT                          0x0405
+#define HCI_EXT_SET_LOCAL_SUPPORTED_FEATURES_EVENT     0x0406
+#define HCI_EXT_SET_FAST_TX_RESP_TIME_EVENT            0x0407
+#define HCI_EXT_MODEM_TEST_TX_EVENT                    0x0408
+#define HCI_EXT_MODEM_HOP_TEST_TX_EVENT                0x0409
+#define HCI_EXT_MODEM_TEST_RX_EVENT                    0x040A
+#define HCI_EXT_END_MODEM_TEST_EVENT                   0x040B
+#define HCI_EXT_SET_BDADDR_EVENT                       0x040C
+#define HCI_EXT_SET_SCA_EVENT                          0x040D
+#define HCI_EXT_ENABLE_PTM_EVENT                       0x040E // Not a supported HCI command! Application only.
+#define HCI_EXT_SET_FREQ_TUNE_EVENT                    0x040F
+#define HCI_EXT_SAVE_FREQ_TUNE_EVENT                   0x0410
+#define HCI_EXT_SET_MAX_DTM_TX_POWER_EVENT             0x0411
+#define HCI_EXT_MAP_PM_IO_PORT_EVENT                   0x0412
+#define HCI_EXT_DISCONNECT_IMMED_EVENT                 0x0413
+#define HCI_EXT_PER_EVENT                              0x0414
+#define HCI_EXT_PER_BY_CHAN_EVENT                      0x0415 // Not a supported HCI command! Application only.
+#define HCI_EXT_EXTEND_RF_RANGE_EVENT                  0x0416
+#define HCI_EXT_ADV_EVENT_NOTICE_EVENT                 0x0417 // Not a supported HCI command! Application only.
+#define HCI_EXT_CONN_EVENT_NOTICE_EVENT                0x0418 // Not a supported HCI command! Application only.
+#define HCI_EXT_HALT_DURING_RF_EVENT                   0x0419
+#define HCI_EXT_OVERRIDE_SL_EVENT                      0x041A
+#define HCI_EXT_BUILD_REVISION_EVENT                   0x041B
+#define HCI_EXT_DELAY_SLEEP_EVENT                      0x041C
+#define HCI_EXT_RESET_SYSTEM_EVENT                     0x041D
+#define HCI_EXT_OVERLAPPED_PROCESSING_EVENT            0x041E
+#define HCI_EXT_NUM_COMPLETED_PKTS_LIMIT_EVENT         0x041F
+#define HCI_EXT_GET_CONNECTION_INFO_EVENT              0x0420
+#
+#define HCI_EXT_LL_TEST_MODE_EVENT                     0x0470
+
 /*********************************************************************
  * MACROS
  */
@@ -251,6 +374,10 @@ extern "C"
 /*********************************************************************
  * FUNCTIONS
  */
+
+HCI_StatusCodes_t HCI_EXT_setTxPower(uint8_t power);
+HCI_StatusCodes_t HCI_EXT_setBdaddr(const uint8_t *bdaddr);
+HCI_StatusCodes_t HCI_EXT_setLocalSupportedFeatures(const uint32_t localFeatures);
 
 /*********************************************************************
 *********************************************************************/

@@ -35,6 +35,49 @@
 #include "att.h"
 #include "hci_tl.h"
 
+/*
+ * WARNING: The 16-bit UUIDs are assigned by the Bluetooth SIG and published
+ *          in the Bluetooth Assigned Numbers page. Do not change these values.
+ *          Changing them will cause Bluetooth interoperability issues.
+ */
+
+/**
+ * GATT Services
+ */
+#define GAP_SERVICE_UUID                           0x1800 // Generic Access Profile
+#define GATT_SERVICE_UUID                          0x1801 // Generic Attribute Profile
+
+/**
+ * GATT Declarations
+ */
+#define GATT_PRIMARY_SERVICE_UUID                  0x2800 // Primary Service
+#define GATT_SECONDARY_SERVICE_UUID                0x2801 // Secondary Service
+#define GATT_INCLUDE_UUID                          0x2802 // Include
+#define GATT_CHARACTER_UUID                        0x2803 // Characteristic
+
+/**
+ * GATT Descriptors
+ */
+#define GATT_CHAR_EXT_PROPS_UUID                   0x2900 // Characteristic Extended Properties
+#define GATT_CHAR_USER_DESC_UUID                   0x2901 // Characteristic User Description
+#define GATT_CLIENT_CHAR_CFG_UUID                  0x2902 // Client Characteristic Configuration
+#define GATT_SERV_CHAR_CFG_UUID                    0x2903 // Server Characteristic Configuration
+#define GATT_CHAR_FORMAT_UUID                      0x2904 // Characteristic Presentation Format
+#define GATT_CHAR_AGG_FORMAT_UUID                  0x2905 // Characteristic Aggregate Format
+#define GATT_VALID_RANGE_UUID                      0x2906 // Valid Range
+#define GATT_EXT_REPORT_REF_UUID                   0x2907 // External Report Reference Descriptor
+#define GATT_REPORT_REF_UUID                       0x2908 // Report Reference Descriptor
+
+/**
+ * GATT Characteristics
+ */
+#define DEVICE_NAME_UUID                           0x2A00 // Device Name
+#define APPEARANCE_UUID                            0x2A01 // Appearance
+#define PERI_PRIVACY_FLAG_UUID                     0x2A02 // Peripheral Privacy Flag
+#define RECONNECT_ADDR_UUID                        0x2A03 // Reconnection Address
+#define PERI_CONN_PARAM_UUID                       0x2A04 // Peripheral Preferred Connection Parameters
+#define SERVICE_CHANGED_UUID                       0x2A05 // Service Changed
+
 /**
  * GATT Vendor Specific APIs - GATT Command Opcodes
  */
@@ -1271,5 +1314,25 @@ extern HCI_StatusCodes_t GATT_AddService( uint16_t uuid, uint16_t numAttrs,
  */
 extern HCI_StatusCodes_t GATT_DelService(uint16_t handle);
 
+/**
+ * This command is used to add a new attribute to the service being added to
+ * the GATT Server on the Network Processor when the GATT Database is implemented
+ * on the Application Processor. The service will be automatically registered with
+ * the GATT Server when its last attribute is added. Note: The Command Status Event
+ * will have the Start Handle and End Handle for the service registered with the
+ * GATT Server.
+ *
+ * @param   uuid            The type of the attribute to be added
+ * @param   permissions     Attribute access permissions
+ */
+extern HCI_StatusCodes_t GATT_AddAttribute(uint16_t uuid, uint8_t permissions);
+
+/**
+ * Same as GATT_AddAttribute except takes 128-bit UUID as parameter
+ *
+ * @param   uuid            The type of the attribute to be added
+ * @param   permissions     Attribute access permissions
+ */
+extern HCI_StatusCodes_t GATT_AddAttribute2(const uint8_t *uuid128, uint8_t permissions);
 
 #endif /* GATT_H */

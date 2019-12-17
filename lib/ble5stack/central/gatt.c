@@ -639,6 +639,19 @@ HCI_StatusCodes_t GATT_AddAttribute( uint16_t uuid, uint8_t permissions )
     return status;
 }
 
+HCI_StatusCodes_t GATT_AddAttribute2(const uint8_t *uuid128, uint8_t permissions)
+{
+    HCI_StatusCodes_t status;
+    uint8_t pData[17];
+
+    memcpy(pData, uuid128, 16);
+    pData[16] = permissions;
+
+    status = HCI_sendHCICommand(GATT_ADDATTRIBUTE, pData, 17);
+
+    return status;
+}
+
 HCI_StatusCodes_t GATT_UpdateMTU(uint16_t connHandle, uint16_t mtuSize)
 {
     HCI_StatusCodes_t status;
