@@ -7,15 +7,15 @@
 #include <inttypes.h>
 #include <fixmath.h>
 
-int32_t int_fix16_div(int32_t a, fix16_t b) {
+int32_t pbio_math_div_i32_fix16(int32_t a, fix16_t b) {
     return fix16_to_int(fix16_div(fix16_from_int(a), b));
 }
 
-int32_t int_fix16_mul(int32_t a, fix16_t b) {
+int32_t pbio_math_mul_i32_fix16(int32_t a, fix16_t b) {
     return fix16_to_int(fix16_mul(fix16_from_int(a), b));
 }
 
-int32_t int_sqrt(int32_t n) {
+int32_t pbio_math_sqrt(int32_t n) {
     if (n < 0) {
         return 0;
     }
@@ -25,7 +25,7 @@ int32_t int_sqrt(int32_t n) {
     while (true) {
         x1 = (x0 + n/x0)/2;
         if (x1 == x0 || x1 == x0 + 1) {
-            return x0; 
+            return x0;
         }
         x0 = x1;
     }

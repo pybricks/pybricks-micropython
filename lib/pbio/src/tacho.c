@@ -8,7 +8,7 @@
 
 #include <inttypes.h>
 
-#include <pbio/fixmath.h>
+#include <pbio/math.h>
 #include <pbio/port.h>
 #include <pbio/tacho.h>
 
@@ -97,13 +97,13 @@ pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, int32_t *angle) {
         return err;
     }
 
-    *angle = int_fix16_div(encoder_count, tacho->counts_per_output_unit);
+    *angle = pbio_math_div_i32_fix16(encoder_count, tacho->counts_per_output_unit);
 
     return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t reset_angle) {
-    return pbio_tacho_reset_count(tacho, int_fix16_mul(reset_angle, tacho->counts_per_output_unit));
+    return pbio_tacho_reset_count(tacho, pbio_math_mul_i32_fix16(reset_angle, tacho->counts_per_output_unit));
 }
 
 
@@ -131,7 +131,7 @@ pbio_error_t pbio_tacho_get_angular_rate(pbio_tacho_t *tacho, int32_t *angular_r
         return err;
     }
 
-    *angular_rate = int_fix16_div(encoder_rate, tacho->counts_per_output_unit);
+    *angular_rate = pbio_math_div_i32_fix16(encoder_rate, tacho->counts_per_output_unit);
 
     return PBIO_SUCCESS;
 }

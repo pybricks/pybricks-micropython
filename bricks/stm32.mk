@@ -189,8 +189,8 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	drv/$(PBIO_PLATFORM)/bluetooth.c \
 	drv/$(PBIO_PLATFORM)/light.c \
 	drv/$(PBIO_PLATFORM)/motor.c \
-	drv/adc/adc_stm32f0.c \
 	drv/adc/adc_stm32_hal.c \
+	drv/adc/adc_stm32f0.c \
 	drv/battery/battery_adc.c \
 	drv/button/button_gpio.c \
 	drv/counter/counter_core.c \
@@ -199,23 +199,23 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	drv/gpio/gpio_stm32f4.c \
 	drv/gpio/gpio_stm32l4.c \
 	drv/ioport/ioport_lpf2.c \
-	drv/uart/uart_stm32f0.c \
 	drv/uart/uart_stm32_hal.c \
+	drv/uart/uart_stm32f0.c \
 	platform/$(PBIO_PLATFORM)/clock.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	platform/$(PBIO_PLATFORM)/sys.c \
+	src/control.c \
+	src/drivebase.c \
 	src/error.c \
+	src/hbridge.c \
 	src/iodev.c \
 	src/light.c \
-	src/main.c \
-	src/hbridge.c \
-	src/tacho.c \
 	src/logger.c \
+	src/main.c \
+	src/math.c \
 	src/servo.c \
-	src/drivebase.c \
-	src/control.c \
+	src/tacho.c \
 	src/trajectory.c \
-	src/fixmath.c \
 	src/uartdev.c \
 	)
 

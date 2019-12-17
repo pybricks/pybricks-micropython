@@ -153,10 +153,10 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	src/control.c \
 	src/drivebase.c \
 	src/error.c \
-	src/fixmath.c \
 	src/hbridge.c \
 	src/logger.c \
 	src/main.c \
+	src/math.c \
 	src/servo.c \
 	src/tacho.c \
 	src/trajectory.c \

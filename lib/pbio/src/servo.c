@@ -7,9 +7,9 @@
 
 #include <contiki.h>
 
-#include <pbio/fixmath.h>
 #include <pbdrv/counter.h>
 #include <pbdrv/motor.h>
+#include <pbio/math.h>
 #include <pbio/servo.h>
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
@@ -151,7 +151,8 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_servo_set_run_settings(srv, int_fix16_div(max_speed, srv->tacho->counts_per_output_unit), int_fix16_div(acceleration, srv->tacho->counts_per_output_unit));
+    err = pbio_servo_set_run_settings(srv, pbio_math_div_i32_fix16(max_speed, srv->tacho->counts_per_output_unit),
+                                           pbio_math_div_i32_fix16(acceleration, srv->tacho->counts_per_output_unit));
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -251,7 +252,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle) {
         err = pbio_tacho_get_count(srv->tacho, &angle_old);
         if (err != PBIO_SUCCESS) { return err; }
         // Get the old target
-        int32_t target_old = int_fix16_div(srv->control.trajectory.th3, srv->tacho->counts_per_output_unit);
+        int32_t target_old = pbio_math_div_i32_fix16(srv->control.trajectory.th3, srv->tacho->counts_per_output_unit);
         // Reset the angle
         err = pbio_tacho_reset_angle(srv->tacho, reset_angle);
         if (err != PBIO_SUCCESS) { return err; }
@@ -306,7 +307,7 @@ static pbio_error_t control_update_actuate(pbio_servo_t *srv, pbio_actuation_t a
         srv->state = PBIO_CONTROL_PASSIVE;
         break;
     case PBIO_ACTUATION_HOLD:
-        err = pbio_servo_track_target(srv, int_fix16_div(control, srv->tacho->counts_per_output_unit));
+        err = pbio_servo_track_target(srv, pbio_math_div_i32_fix16(control, srv->tacho->counts_per_output_unit));
         break;
     case PBIO_ACTUATION_DUTY:
         err = pbio_hbridge_set_duty_cycle_sys(srv->hbridge, control);
@@ -445,7 +446,7 @@ pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled) {
 pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     if (srv->state == PBIO_CONTROL_TIME_BACKGROUND &&
         srv->control.action == RUN &&
-        int_fix16_mul(speed, srv->tacho->counts_per_output_unit) == srv->control.trajectory.w1) {
+        pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit) == srv->control.trajectory.w1) {
         // If the exact same command is already running, there is nothing we need to do
         return PBIO_SUCCESS;
     }
@@ -467,7 +468,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
         time_start,
         count_start,
         rate_start,
-        int_fix16_mul(speed, srv->tacho->counts_per_output_unit),
+        pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit),
         srv->control.settings.max_rate,
         srv->control.settings.abs_acceleration,
         &srv->control.trajectory);
@@ -534,7 +535,7 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
         time_start + duration*US_PER_MS,
         count_start,
         rate_start,
-        int_fix16_mul(speed, srv->tacho->counts_per_output_unit),
+        pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit),
         srv->control.settings.max_rate,
         srv->control.settings.abs_acceleration,
         &srv->control.trajectory);
@@ -570,7 +571,7 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
         time_start,
         count_start,
         rate_start,
-        int_fix16_mul(speed, srv->tacho->counts_per_output_unit),
+        pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit),
         srv->control.settings.max_rate,
         srv->control.settings.abs_acceleration,
         &srv->control.trajectory);
@@ -606,9 +607,9 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
     err = make_trajectory_angle_based(
         time_start,
         count_start,
-        int_fix16_mul(target, srv->tacho->counts_per_output_unit),
+        pbio_math_mul_i32_fix16(target, srv->tacho->counts_per_output_unit),
         rate_start,
-        int_fix16_mul(speed, srv->tacho->counts_per_output_unit),
+        pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit),
         srv->control.settings.max_rate,
         srv->control.settings.abs_acceleration,
         &srv->control.trajectory);
@@ -661,7 +662,7 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     if (err != PBIO_SUCCESS) { return err; }
 
     // Compute new maneuver based on user argument, starting from the initial state
-    make_trajectory_none(time_start, int_fix16_mul(target, srv->tacho->counts_per_output_unit), 0, &srv->control.trajectory);
+    make_trajectory_none(time_start, pbio_math_mul_i32_fix16(target, srv->tacho->counts_per_output_unit), 0, &srv->control.trajectory);
 
     // Initialize or reset the PID control status for the given maneuver
     control_init_angle_target(&srv->control);

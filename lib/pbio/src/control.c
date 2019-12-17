@@ -4,8 +4,8 @@
 
 #include <stdlib.h>
 
-#include <pbio/fixmath.h>
 #include <pbio/control.h>
+#include <pbio/math.h>
 #include <pbio/trajectory.h>
 
 // If the controller reach the maximum duty cycle value, this shortcut sets the stalled flag when the speed is below the stall limit.
@@ -305,8 +305,8 @@ pbio_error_t pbio_control_get_limits(pbio_control_settings_t *settings,
                                      fix16_t counts_per_output_unit,
                                      int32_t *max_speed,
                                      int32_t *acceleration) {
-    *max_speed = int_fix16_div(settings->max_rate, counts_per_output_unit);
-    *acceleration = int_fix16_div(settings->abs_acceleration, counts_per_output_unit);
+    *max_speed = pbio_math_div_i32_fix16(settings->max_rate, counts_per_output_unit);
+    *acceleration = pbio_math_div_i32_fix16(settings->abs_acceleration, counts_per_output_unit);
     return PBIO_SUCCESS;
 }
 
@@ -314,8 +314,8 @@ pbio_error_t pbio_control_set_limits(pbio_control_settings_t *settings,
                                      fix16_t counts_per_output_unit,
                                      int32_t max_speed,
                                      int32_t acceleration) {
-    settings->max_rate = int_fix16_mul(max_speed, counts_per_output_unit);
-    settings->abs_acceleration = int_fix16_mul(acceleration, counts_per_output_unit);
+    settings->max_rate = pbio_math_mul_i32_fix16(max_speed, counts_per_output_unit);
+    settings->abs_acceleration = pbio_math_mul_i32_fix16(acceleration, counts_per_output_unit);
     // TODO: Add getter for max control
     return PBIO_SUCCESS;
 }
@@ -335,9 +335,9 @@ pbio_error_t pbio_control_get_pid_settings(pbio_control_settings_t *settings,
     *pid_ki = settings->pid_ki;
     *pid_kd = settings->pid_kd;
     *tight_loop_time = settings->tight_loop_time / US_PER_MS;
-    *position_tolerance = int_fix16_div(settings->count_tolerance, counts_per_output_unit);
-    *speed_tolerance = int_fix16_div(settings->rate_tolerance, counts_per_output_unit);
-    *stall_speed_limit = int_fix16_div(settings->stall_rate_limit, counts_per_output_unit);
+    *position_tolerance = pbio_math_div_i32_fix16(settings->count_tolerance, counts_per_output_unit);
+    *speed_tolerance = pbio_math_div_i32_fix16(settings->rate_tolerance, counts_per_output_unit);
+    *stall_speed_limit = pbio_math_div_i32_fix16(settings->stall_rate_limit, counts_per_output_unit);
     *stall_time = settings->stall_time / US_PER_MS;
     return PBIO_SUCCESS;
 }
@@ -364,9 +364,9 @@ pbio_error_t pbio_control_set_pid_settings(pbio_control_settings_t *settings,
     settings->pid_ki = pid_ki;
     settings->pid_kd = pid_kd;
     settings->tight_loop_time = tight_loop_time * US_PER_MS;
-    settings->count_tolerance = int_fix16_mul(position_tolerance, counts_per_output_unit);
-    settings->rate_tolerance = int_fix16_mul(speed_tolerance, counts_per_output_unit);
-    settings->stall_rate_limit = int_fix16_mul(stall_speed_limit, counts_per_output_unit);
+    settings->count_tolerance = pbio_math_mul_i32_fix16(position_tolerance, counts_per_output_unit);
+    settings->rate_tolerance = pbio_math_mul_i32_fix16(speed_tolerance, counts_per_output_unit);
+    settings->stall_rate_limit = pbio_math_mul_i32_fix16(stall_speed_limit, counts_per_output_unit);
     settings->stall_time = stall_time * US_PER_MS;
     settings->max_control = 10000; // TODO: Add setter
     return PBIO_SUCCESS;

@@ -2,9 +2,9 @@
 // Copyright (c) 2019 Laurens Valk
 
 
-#include <pbio/fixmath.h>
-#include <pbio/servo.h>
 #include <pbio/drivebase.h>
+#include <pbio/math.h>
+#include <pbio/servo.h>
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
@@ -82,8 +82,8 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *drivebase, int32_t speed, in
     pbio_error_t err_l, err_r;
 
     // FIXME: This is a fake drivebase without synchronization
-    int32_t sum = 180*int_fix16_mul(int_fix16_div(speed, drivebase->wheel_diameter), FOUR_DIV_PI);
-    int32_t dif = 2*int_fix16_div(int_fix16_mul(turn_rate, drivebase->axle_track), drivebase->wheel_diameter);
+    int32_t sum = 180 * pbio_math_mul_i32_fix16(pbio_math_div_i32_fix16(speed, drivebase->wheel_diameter), FOUR_DIV_PI);
+    int32_t dif = 2 * pbio_math_div_i32_fix16(pbio_math_mul_i32_fix16(turn_rate, drivebase->axle_track), drivebase->wheel_diameter);
 
     err_l = pbio_servo_run(drivebase->left, (sum+dif)/2);
     err_r = pbio_servo_run(drivebase->right, (sum-dif)/2);

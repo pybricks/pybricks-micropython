@@ -8,7 +8,7 @@
 
 #include <contiki.h>
 
-#include <pbio/fixmath.h>
+#include <pbio/math.h>
 #include <pbio/trajectory.h>
 
 void reverse_trajectory(pbio_control_trajectory_t *ref) {
@@ -172,7 +172,7 @@ pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, 
 
     // Limit initial speed, but evaluate square root only if necessary (usually not)
     if (w0 > 0 && (w0*w0)/(2*a) > th3 - th0) {
-        w0 = int_sqrt(2*a*(th3 - th0));
+        w0 = pbio_math_sqrt(2*a*(th3 - th0));
     }
 
     // Initial speed is less than the target speed
@@ -195,7 +195,7 @@ pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, 
             // Otherwise, intersect halfway between accelerating and decelerating square root arcs
             ref->th1 = (th3+thf)/2;
             ref->th2 = ref->th1;
-            ref->w1 = int_sqrt(2*a*(ref->th1 - thf));
+            ref->w1 = pbio_math_sqrt(2*a*(ref->th1 - thf));
         }
     }
     // Initial speed is equal to or more than the target speed
