@@ -50,7 +50,12 @@ INC += -I$(TOP)/ports/pybricks/lib/libfixmath/libfixmath
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)
 INC += -I$(TOP)/ports/pybricks/lib/pbio
+ifeq ($(PB_LIB_BLUENRG),1)
 INC += -I$(TOP)/ports/pybricks/lib/BlueNRG-MS/includes
+endif
+ifeq ($(PB_LIB_BLE5STACK),1)
+INC += -I$(TOP)/ports/pybricks/lib/ble5stack/central
+endif
 INC += -I$(TOP)/ports/pybricks/extmod
 INC += -I$(TOP)/ports/pybricks/py
 INC += -I$(BUILD)
@@ -156,6 +161,15 @@ BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\
 	hci_le.c \
 	)
 
+BLE5STACK_SRC_C = $(addprefix ports/pybricks/lib/ble5stack/central/,\
+	att.c \
+	gap.c \
+	gatt.c \
+	hci_ext.c \
+	hci.c \
+	util.c \
+	)
+
 HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_adc_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_adc.c \
@@ -164,6 +178,7 @@ HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_gpio.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_pwr_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_rcc.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_spi.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_tim_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_tim.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_uart_ex.c \
@@ -253,6 +268,9 @@ OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PY_SRC_C:.c=.o))
 ifeq ($(PB_LIB_BLUENRG),1)
 OBJ += $(addprefix $(BUILD)/, $(BLUENRG_SRC_C:.c=.o))
+endif
+ifeq ($(PB_LIB_BLE5STACK),1)
+OBJ += $(addprefix $(BUILD)/, $(BLE5STACK_SRC_C:.c=.o))
 endif
 ifeq ($(PB_USE_HAL),1)
 OBJ += $(addprefix $(BUILD)/, $(HAL_SRC_C:.c=.o))

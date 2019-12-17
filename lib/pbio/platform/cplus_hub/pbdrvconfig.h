@@ -25,6 +25,8 @@
 #define PBDRV_CONFIG_BATTERY_ADC_CURRENT_RAW_MAX    4095
 #define PBDRV_CONFIG_BATTERY_ADC_CURRENT_SCALED_MAX 4175
 
+#define PBDRV_CONFIG_BLUETOOTH                      (1)
+
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)
 #define PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON         (1)
