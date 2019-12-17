@@ -16,6 +16,8 @@
 #include "py/obj.h"
 #include "py/mperrno.h"
 
+#include "../py/modenum.h"
+#include "modparameters.h"
 #include "pberror.h"
 #include "pbiodevice.h"
 #include "pbthread.h"
@@ -45,7 +47,7 @@ STATIC mp_obj_t advanced_IODevice_make_new(const mp_obj_type_t *type, size_t n_a
     mp_arg_check_num(n_args, n_kw, 1, 1, false);
     advanced_IODevice_obj_t *self = m_new_obj(advanced_IODevice_obj_t);
     self->base.type = (mp_obj_type_t *)type;
-    pbio_port_t port = mp_obj_get_int(args[0]);
+    pbio_port_t port = enum_get_value_maybe(args[0], &pb_enum_type_Port);
     pb_assert(pbdrv_ioport_get_iodev(port, &self->iodev));
 
 #if PBIO_CONFIG_HBRIDGE
