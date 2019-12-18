@@ -217,8 +217,11 @@ PROCESS_THREAD(pbdrv_uart_process, ev, data) {
         const pbdrv_uart_stm32_hal_platform_data_t *pdata = &pbdrv_uart_stm32_hal_platform_data[i];
         pbdrv_uart_t *uart = &pbdrv_uart[i];
 
+        // NB: have to init with 115200 on STM32L4 LPUART1, otherwise
+        // HAL_UART_Init() will fail because it has limited baud rate
+        // (minimum speed is 19200 with 80MHz clock).
         uart->huart.Instance = pdata->uart,
-        uart->huart.Init.BaudRate = 2400,
+        uart->huart.Init.BaudRate = 115200,
         uart->huart.Init.WordLength = UART_WORDLENGTH_8B,
         uart->huart.Init.StopBits = UART_STOPBITS_1,
         uart->huart.Init.Parity = UART_PARITY_NONE,
