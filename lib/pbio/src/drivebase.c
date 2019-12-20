@@ -45,6 +45,10 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *drivebase,
     drivebase->wheel_diameter = wheel_diameter;
     drivebase->axle_track = axle_track;
 
+    // Claim servos
+    drivebase->left->state = PBIO_SERVO_STATE_CLAIMED;
+    drivebase->right->state = PBIO_SERVO_STATE_CLAIMED;
+
     return PBIO_SUCCESS;
 }
 
@@ -85,8 +89,8 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *drivebase, int32_t speed, in
     int32_t sum = 180 * pbio_math_mul_i32_fix16(pbio_math_div_i32_fix16(speed, drivebase->wheel_diameter), FOUR_DIV_PI);
     int32_t dif = 2 * pbio_math_div_i32_fix16(pbio_math_mul_i32_fix16(rate, drivebase->axle_track), drivebase->wheel_diameter);
 
-    err_l = pbio_servo_run(drivebase->left, (sum+dif)/2);
-    err_r = pbio_servo_run(drivebase->right, (sum-dif)/2);
+    err_l = pbio_hbridge_set_duty_cycle_sys(drivebase->left->hbridge, ((sum+dif)/2)*10);
+    err_r = pbio_hbridge_set_duty_cycle_sys(drivebase->right->hbridge, ((sum-dif)/2)*10);
 
     return error_or(err_l, err_r);
 }
