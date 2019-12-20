@@ -128,6 +128,15 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
     // Initialize log
     db->log.num_values = DRIVEBASE_LOG_NUM_VALUES;
 
+    // Configure heading controller
+    err = pbio_control_set_limits(&db->control_heading.settings, fix16_from_int(COUNTS_PER_DEGREE), 45, 20);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = pbio_control_set_pid_settings(&db->control_heading.settings, fix16_from_int(COUNTS_PER_DEGREE), 1, 1, 1, 100, 2, 5, 5, 200);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
     return PBIO_SUCCESS;
 }
 
