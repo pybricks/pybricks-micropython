@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019 Laurens Valk
 
+#include <contiki.h>
+
 #include <pbio/error.h>
 #include <pbio/drivebase.h>
 #include <pbio/math.h>
@@ -13,6 +15,52 @@
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
 static pbio_drivebase_t __db;
+
+// Get the physical state of a single motor
+static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
+                                        int32_t *time_now,
+                                        int32_t *distance_count,
+                                        int32_t *distance_rate_count,
+                                        int32_t *heading_count,
+                                        int32_t *heading_rate_count) {
+
+    pbio_error_t err;
+
+    // Read current state of this motor: current time, speed, and position
+    *time_now = clock_usecs();
+
+    int32_t angle_left;
+    err = pbio_tacho_get_angle(db->left->tacho, &angle_left);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    int32_t angle_right;
+    err = pbio_tacho_get_angle(db->left->tacho, &angle_right);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    int32_t rate_left;
+    err = pbio_tacho_get_angular_rate(db->left->tacho, &rate_left);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    int32_t rate_right;
+    err = pbio_tacho_get_angular_rate(db->left->tacho, &rate_right);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    *distance_count = db->drive_counts_per_sum*(angle_left + angle_right);
+    *distance_rate_count = db->drive_counts_per_sum*(rate_left + rate_right);
+
+    *heading_count = db->turn_counts_per_diff*(angle_left - angle_right);
+    *heading_rate_count = db->turn_counts_per_diff*(rate_left - rate_right);
+
+    return PBIO_SUCCESS;
+}
 
 static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
                                          pbio_servo_t *left,
