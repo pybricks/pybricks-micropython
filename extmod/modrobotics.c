@@ -18,7 +18,7 @@
 
 #if PYBRICKS_PY_ROBOTICS
 
-// Class structure for DriveBase
+// pybricks.robotics.DriveBase class object
 typedef struct _robotics_DriveBase_obj_t {
     mp_obj_base_t base;
     pbio_drivebase_t *drivebase;
@@ -26,6 +26,7 @@ typedef struct _robotics_DriveBase_obj_t {
     motor_Motor_obj_t *right;
 } robotics_DriveBase_obj_t;
 
+// pybricks.robotics.DriveBase.__init__
 STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
 
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
@@ -60,6 +61,7 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     return MP_OBJ_FROM_PTR(self);
 }
 
+// pybricks.robotics.DriveBase.start
 STATIC mp_obj_t robotics_DriveBase_start(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         PB_ARG_REQUIRED(speed),
@@ -81,6 +83,7 @@ STATIC mp_obj_t robotics_DriveBase_start(size_t n_args, const mp_obj_t *pos_args
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_start_obj, 0, robotics_DriveBase_start);
 
+// pybricks.robotics.DriveBase.stop
 STATIC mp_obj_t robotics_DriveBase_stop(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         PB_ARG_DEFAULT_INT(stop_type, PBIO_ACTUATION_COAST)
@@ -97,9 +100,8 @@ STATIC mp_obj_t robotics_DriveBase_stop(size_t n_args, const mp_obj_t *pos_args,
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_stop_obj, 0, robotics_DriveBase_stop);
-/*
-DriveBase class tables
-*/
+
+// dir(pybricks.robotics.DriveBase)
 STATIC const mp_rom_map_elem_t robotics_DriveBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_left), MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, left) },
     { MP_ROM_QSTR(MP_QSTR_right), MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, right) },
@@ -108,6 +110,7 @@ STATIC const mp_rom_map_elem_t robotics_DriveBase_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(robotics_DriveBase_locals_dict, robotics_DriveBase_locals_dict_table);
 
+// type(pybricks.robotics.DriveBase)
 STATIC const mp_obj_type_t robotics_DriveBase_type = {
     { &mp_type_type },
     .name = MP_QSTR_DriveBase,
@@ -115,10 +118,7 @@ STATIC const mp_obj_type_t robotics_DriveBase_type = {
     .locals_dict = (mp_obj_dict_t*)&robotics_DriveBase_locals_dict,
 };
 
-/*
-robotics module tables
-*/
-
+// dir(pybricks.robotics)
 STATIC const mp_rom_map_elem_t robotics_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_robotics)         },
     { MP_ROM_QSTR(MP_QSTR_DriveBase),   MP_ROM_PTR(&robotics_DriveBase_type)  },
