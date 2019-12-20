@@ -12,7 +12,7 @@
 #define COUNTS_PER_DEGREE (10)
 #define COUNTS_PER_MM (10)
 
-#define DRIVEBASE_LOG_NUM_VALUES (5 + NUM_DEFAULT_LOG_VALUES)
+#define DRIVEBASE_LOG_NUM_VALUES (7 + NUM_DEFAULT_LOG_VALUES)
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
@@ -87,15 +87,19 @@ static pbio_error_t drivebase_log_update(pbio_drivebase_t *db,
                                          int32_t time_now,
                                          int32_t distance_count,
                                          int32_t distance_rate_count,
+                                         int32_t distance_control,
                                          int32_t heading_count,
-                                         int32_t heading_rate_count) {
+                                         int32_t heading_rate_count,
+                                         int32_t heading_control) {
 
     int32_t buf[DRIVEBASE_LOG_NUM_VALUES];
     buf[0] = time_now;
     buf[1] = distance_count;
     buf[2] = distance_rate_count;
-    buf[3] = heading_count;
-    buf[4] = heading_rate_count;
+    buf[3] = distance_control;
+    buf[4] = heading_count;
+    buf[5] = heading_rate_count;
+    buf[6] = heading_control;
     return pbio_logger_update(&db->log, buf);
 }
 
@@ -239,8 +243,8 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     // Actuate
     err = drivebase_actuate(db, distance_control, heading_control);
 
-    // No control for now, just logging
-    return drivebase_log_update(db, time_now, distance_count, distance_rate_count, heading_count, heading_rate_count);
+    // Log state and control
+    return drivebase_log_update(db, time_now, distance_count, distance_rate_count, distance_control, heading_count, heading_rate_count, heading_control);
 }
 
 // TODO: Convert to Contiki process
