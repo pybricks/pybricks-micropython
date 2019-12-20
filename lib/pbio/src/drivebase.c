@@ -200,33 +200,28 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
             if (err != PBIO_SUCCESS) {
                 return err;
             }
-            return pbio_hbridge_coast(db->right->hbridge);
+            err = pbio_hbridge_coast(db->right->hbridge);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
+            db->state = PBIO_DRIVEBASE_STATE_PASSIVE;
+            return PBIO_SUCCESS;
         case PBIO_ACTUATION_BRAKE:
             // Stop by braking
             err = pbio_hbridge_brake(db->left->hbridge);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
-            return pbio_hbridge_brake(db->right->hbridge);
+            err = pbio_hbridge_brake(db->right->hbridge);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
+            db->state = PBIO_DRIVEBASE_STATE_PASSIVE;
+            return PBIO_SUCCESS;
         default:
             // HOLD is not implemented
             return PBIO_ERROR_INVALID_ARG;
     }
-}
-
-pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t rate) {
-
-    pbio_error_t err;
-
-    // FIXME: This is a fake drivebase without synchronization
-    int32_t sum = 180 * pbio_math_mul_i32_fix16(pbio_math_div_i32_fix16(speed, db->wheel_diameter), FOUR_DIV_PI);
-    int32_t dif = 2 * pbio_math_div_i32_fix16(pbio_math_mul_i32_fix16(rate, db->axle_track), db->wheel_diameter);
-
-    err = pbio_hbridge_set_duty_cycle_sys(db->left->hbridge, ((sum+dif)/2)*10);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    return pbio_hbridge_set_duty_cycle_sys(db->right->hbridge, ((sum-dif)/2)*10);
 }
 
 static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
@@ -256,6 +251,62 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 
     // Log state and control
     return drivebase_log_update(db, time_now, distance_count, distance_rate_count, distance_control, heading_count, heading_rate_count, heading_control);
+}
+
+pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t rate) {
+
+    pbio_error_t err;
+
+    // Get the physical initial state
+    int32_t time_now, distance_count, distance_rate_count, heading_count, heading_rate_count;
+    err = drivebase_get_state(db, &time_now, &distance_count, &distance_rate_count, &heading_count, &heading_rate_count);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Set heading maneuver action and stop type
+    db->control_heading.action = RUN;
+    db->control_heading.after_stop = PBIO_ACTUATION_COAST;
+    err = make_trajectory_time_based_forever(
+        time_now,
+        heading_count,
+        heading_rate_count,
+        pbio_math_mul_i32_fix16(rate, fix16_from_int(COUNTS_PER_DEGREE)),
+        db->control_heading.settings.max_rate,
+        db->control_heading.settings.abs_acceleration,
+        &db->control_heading.trajectory);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Set distance maneuver action and stop type
+    db->control_distance.action = RUN;
+    db->control_distance.after_stop = PBIO_ACTUATION_COAST;
+    err = make_trajectory_time_based_forever(
+        time_now,
+        distance_count,
+        distance_rate_count,
+        pbio_math_mul_i32_fix16(speed, fix16_from_int(COUNTS_PER_MM)),
+        db->control_distance.settings.max_rate,
+        db->control_distance.settings.abs_acceleration,
+        &db->control_distance.trajectory);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Initialize or reset the PID control status for the given maneuver
+    control_init_time_target(&db->control_heading);
+    control_init_time_target(&db->control_distance);
+
+    db->state = PBIO_DRIVEBASE_STATE_TIME_BACKGROUND;
+
+    // Run one control update synchronously with user command.
+    err = pbio_drivebase_update(db);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    return PBIO_SUCCESS;
 }
 
 // TODO: Convert to Contiki process
