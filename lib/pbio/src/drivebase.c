@@ -12,6 +12,8 @@
 #define COUNTS_PER_DEGREE (10)
 #define COUNTS_PER_MM (10)
 
+#define DRIVEBASE_LOG_NUM_VALUES (5 + NUM_DEFAULT_LOG_VALUES)
+
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
 static pbio_drivebase_t __db;
@@ -62,6 +64,23 @@ static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
     return PBIO_SUCCESS;
 }
 
+// Log motor data for a motor that is being actively controlled
+static pbio_error_t drivebase_log_update(pbio_drivebase_t *db, 
+                                         int32_t time_now,
+                                         int32_t distance_count,
+                                         int32_t distance_rate_count,
+                                         int32_t heading_count,
+                                         int32_t heading_rate_count) {
+
+    int32_t buf[DRIVEBASE_LOG_NUM_VALUES];
+    buf[0] = time_now;
+    buf[1] = distance_count;
+    buf[2] = distance_rate_count;
+    buf[3] = heading_count;
+    buf[4] = heading_rate_count;
+    return pbio_logger_update(&db->log, buf);
+}
+
 static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
                                          pbio_servo_t *left,
                                          pbio_servo_t *right,
@@ -105,6 +124,9 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
     // Claim servos
     db->left->state = PBIO_SERVO_STATE_CLAIMED;
     db->right->state = PBIO_SERVO_STATE_CLAIMED;
+
+    // Initialize log
+    db->log.num_values = DRIVEBASE_LOG_NUM_VALUES;
 
     return PBIO_SUCCESS;
 }
@@ -166,7 +188,16 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t r
 }
 
 static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
-    return PBIO_SUCCESS;
+
+    int32_t time_now, distance_count, distance_rate_count, heading_count, heading_rate_count;
+
+    pbio_error_t err = drivebase_get_state(db, &time_now, &distance_count, &distance_rate_count, &heading_count, &heading_rate_count);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // No control for now, just logging
+    return drivebase_log_update(db, time_now, distance_count, distance_rate_count, heading_count, heading_rate_count);
 }
 
 // TODO: Convert to Contiki process

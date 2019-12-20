@@ -14,6 +14,7 @@
 #include "pbobj.h"
 #include "pbkwarg.h"
 #include "modmotor.h"
+#include "modlogger.h"
 #include "pbthread.h"
 
 #if PYBRICKS_PY_ROBOTICS
@@ -24,6 +25,7 @@ typedef struct _robotics_DriveBase_obj_t {
     pbio_drivebase_t *db;
     motor_Motor_obj_t *left;
     motor_Motor_obj_t *right;
+    mp_obj_t logger;
 } robotics_DriveBase_obj_t;
 
 // pybricks.robotics.DriveBase.__init__
@@ -57,6 +59,9 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     pbio_error_t err = pbio_drivebase_get(&self->db, self->left->srv, self->right->srv, wheel_diameter_val, axle_track_val);
     pb_thread_exit();
     pb_assert(err);
+
+    // Create an instance of the Logger class
+    self->logger = logger_obj_make_new(&self->db->log);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -168,6 +173,7 @@ STATIC const mp_rom_map_elem_t robotics_DriveBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_right), MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, right) },
     { MP_ROM_QSTR(MP_QSTR_start), MP_ROM_PTR(&robotics_DriveBase_start_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&robotics_DriveBase_stop_obj) },
+    { MP_ROM_QSTR(MP_QSTR_log), MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, logger) },
 #if PYBRICKS_PY_EV3DEVICES // LEGACY METHODS AVAILABLE ON EV3 ONLY
     { MP_ROM_QSTR(MP_QSTR_drive), MP_ROM_PTR(&robotics_DriveBase_drive_obj) },
     { MP_ROM_QSTR(MP_QSTR_drive_time), MP_ROM_PTR(&robotics_DriveBase_drive_time_obj) },
