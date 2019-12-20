@@ -21,7 +21,7 @@
 // pybricks.robotics.DriveBase class object
 typedef struct _robotics_DriveBase_obj_t {
     mp_obj_base_t base;
-    pbio_drivebase_t *drivebase;
+    pbio_drivebase_t *db;
     motor_Motor_obj_t *left;
     motor_Motor_obj_t *right;
 } robotics_DriveBase_obj_t;
@@ -54,7 +54,7 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
 
     // Create drivebase
     pb_thread_enter();
-    pbio_error_t err = pbio_drivebase_get(&self->drivebase, self->left->srv, self->right->srv, wheel_diameter_val, axle_track_val);
+    pbio_error_t err = pbio_drivebase_get(&self->db, self->left->srv, self->right->srv, wheel_diameter_val, axle_track_val);
     pb_thread_exit();
     pb_assert(err);
 
@@ -75,7 +75,7 @@ STATIC mp_obj_t robotics_DriveBase_start(size_t n_args, const mp_obj_t *pos_args
 
     pbio_error_t err;
     pb_thread_enter();    
-    err = pbio_drivebase_start(self->drivebase, speed_val, turn_rate_val);
+    err = pbio_drivebase_start(self->db, speed_val, turn_rate_val);
     pb_thread_exit();
     pb_assert(err);
 
@@ -100,7 +100,7 @@ STATIC mp_obj_t robotics_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args
 
     pbio_error_t err;
     pb_thread_enter();    
-    err = pbio_drivebase_start(self->drivebase, speed_val, turn_rate_val);
+    err = pbio_drivebase_start(self->db, speed_val, turn_rate_val);
     pb_thread_exit();
     pb_assert(err);
 
@@ -127,14 +127,14 @@ STATIC mp_obj_t robotics_DriveBase_drive_time(size_t n_args, const mp_obj_t *pos
 
     pbio_error_t err;
     pb_thread_enter();    
-    err = pbio_drivebase_start(self->drivebase, speed_val, turn_rate_val);
+    err = pbio_drivebase_start(self->db, speed_val, turn_rate_val);
     pb_thread_exit();
     pb_assert(err);
 
     mp_hal_delay_ms(duration);
 
     pb_thread_enter();    
-    err = pbio_drivebase_stop(self->drivebase, PBIO_ACTUATION_COAST);
+    err = pbio_drivebase_stop(self->db, PBIO_ACTUATION_COAST);
     pb_thread_exit();
     pb_assert(err);
 
@@ -154,7 +154,7 @@ STATIC mp_obj_t robotics_DriveBase_stop(size_t n_args, const mp_obj_t *pos_args,
 
     pbio_error_t err;
     pb_thread_enter();    
-    err = pbio_drivebase_stop(self->drivebase, after_stop);
+    err = pbio_drivebase_stop(self->db, after_stop);
     pb_thread_exit();
     pb_assert(err);
 
