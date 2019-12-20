@@ -223,8 +223,21 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
         return err;
     }
 
+    int32_t distance_control, heading_control;
+
+    if (db->state == PBIO_DRIVEBASE_STATE_PASSIVE) {
+        // When passive, zero control
+        distance_control = 0;
+        heading_control = 0;
+    }
+    else {
+        // Otherwise, calculate control signal
+        distance_control = 0;
+        heading_control = 0;
+    }
+
     // Actuate
-    err = drivebase_actuate(db, 0, 0);
+    err = drivebase_actuate(db, distance_control, heading_control);
 
     // No control for now, just logging
     return drivebase_log_update(db, time_now, distance_count, distance_rate_count, heading_count, heading_rate_count);

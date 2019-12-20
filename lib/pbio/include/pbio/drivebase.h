@@ -8,9 +8,21 @@
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
+/**
+ * Drivebase states
+ */
+typedef enum {
+    /* Passive control statuses: No PID Control Active */
+    PBIO_DRIVEBASE_STATE_PASSIVE,
+    PBIO_DRIVEBASE_STATE_ERRORED,
+    /* Active control statuses: PID Control Active in non-blocking manner */   
+    PBIO_DRIVEBASE_STATE_TIME_BACKGROUND,
+} pbio_drivebase_state_t;
+
 typedef struct _pbio_drivebase_t {
     pbio_servo_t *left;
     pbio_servo_t *right;
+    pbio_drivebase_state_t state;
     fix16_t wheel_diameter;
     fix16_t axle_track;
     fix16_t turn_counts_per_diff;
