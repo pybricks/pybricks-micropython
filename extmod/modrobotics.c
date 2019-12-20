@@ -60,7 +60,7 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t robotics_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t robotics_DriveBase_start(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(turn_rate)
@@ -73,13 +73,13 @@ STATIC mp_obj_t robotics_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args
 
     pbio_error_t err;
     pb_thread_enter();    
-    err = pbio_drivebase_drive(self->drivebase, speed_val, turn_rate_val);
+    err = pbio_drivebase_start(self->drivebase, speed_val, turn_rate_val);
     pb_thread_exit();
     pb_assert(err);
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_drive_obj, 0, robotics_DriveBase_drive);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_start_obj, 0, robotics_DriveBase_start);
 
 STATIC mp_obj_t robotics_DriveBase_stop(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -103,7 +103,7 @@ DriveBase class tables
 STATIC const mp_rom_map_elem_t robotics_DriveBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_left), MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, left) },
     { MP_ROM_QSTR(MP_QSTR_right), MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, right) },
-    { MP_ROM_QSTR(MP_QSTR_drive), MP_ROM_PTR(&robotics_DriveBase_drive_obj) },
+    { MP_ROM_QSTR(MP_QSTR_start), MP_ROM_PTR(&robotics_DriveBase_start_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&robotics_DriveBase_stop_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(robotics_DriveBase_locals_dict, robotics_DriveBase_locals_dict_table);

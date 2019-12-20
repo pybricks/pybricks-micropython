@@ -77,13 +77,13 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *drivebase, pbio_actuation_t a
     }
 }
 
-pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *drivebase, int32_t speed, int32_t turn_rate) {
+pbio_error_t pbio_drivebase_start(pbio_drivebase_t *drivebase, int32_t speed, int32_t rate) {
 
     pbio_error_t err_l, err_r;
 
     // FIXME: This is a fake drivebase without synchronization
     int32_t sum = 180 * pbio_math_mul_i32_fix16(pbio_math_div_i32_fix16(speed, drivebase->wheel_diameter), FOUR_DIV_PI);
-    int32_t dif = 2 * pbio_math_div_i32_fix16(pbio_math_mul_i32_fix16(turn_rate, drivebase->axle_track), drivebase->wheel_diameter);
+    int32_t dif = 2 * pbio_math_div_i32_fix16(pbio_math_mul_i32_fix16(rate, drivebase->axle_track), drivebase->wheel_diameter);
 
     err_l = pbio_servo_run(drivebase->left, (sum+dif)/2);
     err_r = pbio_servo_run(drivebase->right, (sum-dif)/2);
