@@ -38,7 +38,7 @@ static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
     }
 
     int32_t angle_right;
-    err = pbio_tacho_get_angle(db->left->tacho, &angle_right);
+    err = pbio_tacho_get_angle(db->right->tacho, &angle_right);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -50,16 +50,16 @@ static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
     }
 
     int32_t rate_right;
-    err = pbio_tacho_get_angular_rate(db->left->tacho, &rate_right);
+    err = pbio_tacho_get_angular_rate(db->right->tacho, &rate_right);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    *distance_count = db->drive_counts_per_sum*(angle_left + angle_right);
-    *distance_rate_count = db->drive_counts_per_sum*(rate_left + rate_right);
+    *distance_count = pbio_math_mul_i32_fix16(angle_left + angle_right, db->drive_counts_per_sum);
+    *distance_rate_count = pbio_math_mul_i32_fix16(rate_left + rate_right, db->drive_counts_per_sum);
 
-    *heading_count = db->turn_counts_per_diff*(angle_left - angle_right);
-    *heading_rate_count = db->turn_counts_per_diff*(rate_left - rate_right);
+    *heading_count = pbio_math_mul_i32_fix16(angle_left - angle_right, db->turn_counts_per_diff);
+    *heading_rate_count = pbio_math_mul_i32_fix16(rate_left - rate_right, db->turn_counts_per_diff);
 
     return PBIO_SUCCESS;
 }
