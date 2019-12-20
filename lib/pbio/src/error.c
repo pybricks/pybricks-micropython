@@ -11,7 +11,7 @@
 #include <pbio/error.h>
 
 /**
- * Gets a string descirbing an error.
+ * Gets a string describing an error.
  * @param [in]  err     The error code
  * @return              A string describing the error or *NULL*
  */

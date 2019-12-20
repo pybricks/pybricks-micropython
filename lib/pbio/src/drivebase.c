@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019 Laurens Valk
 
-
+#include <pbio/error.h>
 #include <pbio/drivebase.h>
 #include <pbio/math.h>
 #include <pbio/servo.h>
@@ -9,13 +9,6 @@
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
 static pbio_drivebase_t base;
-
-static pbio_error_t error_or(pbio_error_t left, pbio_error_t right) {
-    if (left != PBIO_SUCCESS) {
-        return left;
-    }
-    return right;
-}
 
 static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *drivebase,
                                          pbio_servo_t *left,
@@ -62,19 +55,23 @@ pbio_error_t pbio_drivebase_get(pbio_drivebase_t **drivebase, pbio_servo_t *left
 
 pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *drivebase, pbio_actuation_t after_stop) {
 
-    pbio_error_t err_l, err_r;
+    pbio_error_t err;
 
     switch (after_stop) {
         case PBIO_ACTUATION_COAST:
             // Stop by coasting
-            err_l = pbio_hbridge_coast(drivebase->left->hbridge);
-            err_r = pbio_hbridge_coast(drivebase->right->hbridge);
-            return error_or(err_l, err_r);
+            err = pbio_hbridge_coast(drivebase->left->hbridge);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
+            return pbio_hbridge_coast(drivebase->right->hbridge);
         case PBIO_ACTUATION_BRAKE:
             // Stop by braking
-            err_l = pbio_hbridge_brake(drivebase->left->hbridge);
-            err_r = pbio_hbridge_brake(drivebase->right->hbridge);
-            return error_or(err_l, err_r);
+            err = pbio_hbridge_brake(drivebase->left->hbridge);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
+            return pbio_hbridge_brake(drivebase->right->hbridge);
         default:
             // HOLD is not implemented
             return PBIO_ERROR_INVALID_ARG;
@@ -83,16 +80,17 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *drivebase, pbio_actuation_t a
 
 pbio_error_t pbio_drivebase_start(pbio_drivebase_t *drivebase, int32_t speed, int32_t rate) {
 
-    pbio_error_t err_l, err_r;
+    pbio_error_t err;
 
     // FIXME: This is a fake drivebase without synchronization
     int32_t sum = 180 * pbio_math_mul_i32_fix16(pbio_math_div_i32_fix16(speed, drivebase->wheel_diameter), FOUR_DIV_PI);
     int32_t dif = 2 * pbio_math_div_i32_fix16(pbio_math_mul_i32_fix16(rate, drivebase->axle_track), drivebase->wheel_diameter);
 
-    err_l = pbio_hbridge_set_duty_cycle_sys(drivebase->left->hbridge, ((sum+dif)/2)*10);
-    err_r = pbio_hbridge_set_duty_cycle_sys(drivebase->right->hbridge, ((sum-dif)/2)*10);
-
-    return error_or(err_l, err_r);
+    err = pbio_hbridge_set_duty_cycle_sys(drivebase->left->hbridge, ((sum+dif)/2)*10);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    return pbio_hbridge_set_duty_cycle_sys(drivebase->right->hbridge, ((sum-dif)/2)*10);
 }
 
 static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *drivebase) {
