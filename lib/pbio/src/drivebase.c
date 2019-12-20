@@ -6,6 +6,10 @@
 #include <pbio/math.h>
 #include <pbio/servo.h>
 
+// Number of resolution counts per degree and mm drivebase motion 
+#define COUNTS_PER_DEGREE (10)
+#define COUNTS_PER_MM (10)
+
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
 static pbio_drivebase_t base;
@@ -37,6 +41,18 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *drivebase,
     }
     drivebase->wheel_diameter = wheel_diameter;
     drivebase->axle_track = axle_track;
+
+    // Turn counts for every degree difference between the servo motors
+    db->turn_counts_per_diff = fix16_div(
+        fix16_mul(db->wheel_diameter, fix16_from_int(COUNTS_PER_DEGREE)),
+        fix16_mul(db->axle_track, fix16_from_int(2))
+    );
+
+    // Forward drive counts for every summed degree of the servo motors
+    db->drive_counts_per_sum = fix16_div(
+        fix16_mul(fix16_mul(db->wheel_diameter, fix16_pi), fix16_from_int(COUNTS_PER_MM)),
+        fix16_from_int(720)
+    );
 
     // Claim servos
     drivebase->left->state = PBIO_SERVO_STATE_CLAIMED;

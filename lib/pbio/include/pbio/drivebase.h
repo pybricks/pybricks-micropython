@@ -13,6 +13,8 @@ typedef struct _pbio_drivebase_t {
     pbio_servo_t *right;
     fix16_t wheel_diameter;
     fix16_t axle_track;
+    fix16_t turn_counts_per_diff;
+    fix16_t drive_counts_per_sum;
 } pbio_drivebase_t;
 
 pbio_error_t pbio_drivebase_get(pbio_drivebase_t **drivebase, pbio_servo_t *left, pbio_servo_t *right, fix16_t wheel_diameter, fix16_t axle_track);
