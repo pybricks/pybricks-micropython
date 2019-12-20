@@ -18,7 +18,7 @@
 
 static pbio_drivebase_t __db;
 
-// Get the physical state of a single motor
+// Get the physical state of a drivebase
 static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
                                         int32_t *time_now,
                                         int32_t *distance_count,
@@ -61,6 +61,24 @@ static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
     *heading_count = pbio_math_mul_i32_fix16(angle_left - angle_right, db->turn_counts_per_diff);
     *heading_rate_count = pbio_math_mul_i32_fix16(rate_left - rate_right, db->turn_counts_per_diff);
 
+    return PBIO_SUCCESS;
+}
+
+// Get the physical state of a drivebase
+static pbio_error_t drivebase_actuate(pbio_drivebase_t *db, int32_t distance_control, int32_t heading_control) {
+    pbio_error_t err;
+
+    int32_t dif = pbio_math_mul_i32_fix16(heading_control, db->turn_counts_per_diff);
+    int32_t sum = pbio_math_mul_i32_fix16(distance_control, db->drive_counts_per_sum);
+    
+    err = pbio_hbridge_set_duty_cycle_sys(db->left->hbridge, sum + dif);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = pbio_hbridge_set_duty_cycle_sys(db->right->hbridge, sum - dif);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
     return PBIO_SUCCESS;
 }
 
@@ -198,12 +216,15 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t r
 
 static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 
+    // Get the physical state
     int32_t time_now, distance_count, distance_rate_count, heading_count, heading_rate_count;
-
     pbio_error_t err = drivebase_get_state(db, &time_now, &distance_count, &distance_rate_count, &heading_count, &heading_rate_count);
     if (err != PBIO_SUCCESS) {
         return err;
     }
+
+    // Actuate
+    err = drivebase_actuate(db, 0, 0);
 
     // No control for now, just logging
     return drivebase_log_update(db, time_now, distance_count, distance_rate_count, heading_count, heading_rate_count);
