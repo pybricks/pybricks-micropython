@@ -155,7 +155,7 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_control_set_pid_settings(&db->control_heading.settings, fix16_from_int(COUNTS_PER_DEGREE), 1, 1, 1, 100, 2, 5, 5, 200);
+    err = pbio_control_set_pid_settings(&db->control_heading.settings, fix16_from_int(COUNTS_PER_DEGREE), 100, 1, 1, 100, 2, 5, 5, 200);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -165,7 +165,7 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_control_set_pid_settings(&db->control_distance.settings, fix16_from_int(COUNTS_PER_MM), 1, 1, 1, 100, 2, 5, 5, 200);
+    err = pbio_control_set_pid_settings(&db->control_distance.settings, fix16_from_int(COUNTS_PER_MM), 100, 1, 1, 100, 2, 5, 5, 200);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -242,8 +242,15 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     }
     else {
         // Otherwise, calculate control signal
-        distance_control = 0;
-        heading_control = 0;
+        pbio_actuation_t __todo; // FIXME: add other control types
+        err = control_update_time_target(&db->control_distance, time_now, distance_count, distance_rate_count, &__todo, &distance_control);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        err = control_update_time_target(&db->control_heading, time_now, heading_count, heading_rate_count, &__todo, &heading_control);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
     }
 
     // Actuate
