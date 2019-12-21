@@ -8,10 +8,6 @@
 #include <pbio/math.h>
 #include <pbio/servo.h>
 
-// Number of resolution counts per degree and mm drivebase motion
-#define COUNTS_PER_DEGREE (10)
-#define COUNTS_PER_MM (10)
-
 #define DRIVEBASE_LOG_NUM_VALUES (7 + NUM_DEFAULT_LOG_VALUES)
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
@@ -21,10 +17,10 @@ static pbio_drivebase_t __db;
 // Get the physical state of a drivebase
 static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
                                         int32_t *time_now,
-                                        int32_t *distance_count,
-                                        int32_t *distance_rate_count,
-                                        int32_t *heading_count,
-                                        int32_t *heading_rate_count) {
+                                        int32_t *sum,
+                                        int32_t *sum_rate,
+                                        int32_t *dif,
+                                        int32_t *dif_rate) {
 
     pbio_error_t err;
 
@@ -43,39 +39,39 @@ static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
         return err;
     }
 
-    int32_t rate_left;
-    err = pbio_tacho_get_angular_rate(db->left->tacho, &rate_left);
+    int32_t angular_rate_left;
+    err = pbio_tacho_get_angular_rate(db->left->tacho, &angular_rate_left);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    int32_t rate_right;
-    err = pbio_tacho_get_angular_rate(db->right->tacho, &rate_right);
+    int32_t angular_rate_right;
+    err = pbio_tacho_get_angular_rate(db->right->tacho, &angular_rate_right);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    *distance_count = pbio_math_mul_i32_fix16(angle_left + angle_right, db->drive_counts_per_sum);
-    *distance_rate_count = pbio_math_mul_i32_fix16(rate_left + rate_right, db->drive_counts_per_sum);
-
-    *heading_count = pbio_math_mul_i32_fix16(angle_left - angle_right, db->turn_counts_per_diff);
-    *heading_rate_count = pbio_math_mul_i32_fix16(rate_left - rate_right, db->turn_counts_per_diff);
+    *sum = angle_left + angle_right;
+    *sum_rate = angular_rate_left + angular_rate_right;
+    *dif = angle_left - angle_right;
+    *dif_rate = angular_rate_left - angular_rate_right;
 
     return PBIO_SUCCESS;
 }
 
 // Get the physical state of a drivebase
-static pbio_error_t drivebase_actuate(pbio_drivebase_t *db, int32_t distance_control, int32_t heading_control) {
+static pbio_error_t drivebase_actuate(pbio_drivebase_t *db, int32_t sum_control, int32_t dif_control) {
     pbio_error_t err;
 
-    int32_t dif = pbio_math_mul_i32_fix16(heading_control, db->turn_counts_per_diff);
-    int32_t sum = pbio_math_mul_i32_fix16(distance_control, db->drive_counts_per_sum);
-    
-    err = pbio_hbridge_set_duty_cycle_sys(db->left->hbridge, sum + dif);
+    // FIXME: scale only once, embed max control in prescaler
+    int32_t sum_duty = 4*(sum_control*100)/pbio_math_mul_i32_fix16(100, db->sum_per_mm);
+    int32_t dif_duty = 4*(dif_control*100)/pbio_math_mul_i32_fix16(100, db->dif_per_deg);
+
+    err = pbio_hbridge_set_duty_cycle_sys(db->left->hbridge, sum_duty + dif_duty);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_hbridge_set_duty_cycle_sys(db->right->hbridge, sum - dif);
+    err = pbio_hbridge_set_duty_cycle_sys(db->right->hbridge, sum_duty - dif_duty);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -85,21 +81,21 @@ static pbio_error_t drivebase_actuate(pbio_drivebase_t *db, int32_t distance_con
 // Log motor data for a motor that is being actively controlled
 static pbio_error_t drivebase_log_update(pbio_drivebase_t *db, 
                                          int32_t time_now,
-                                         int32_t distance_count,
-                                         int32_t distance_rate_count,
-                                         int32_t distance_control,
-                                         int32_t heading_count,
-                                         int32_t heading_rate_count,
-                                         int32_t heading_control) {
+                                         int32_t sum,
+                                         int32_t sum_rate,
+                                         int32_t sum_control,
+                                         int32_t dif,
+                                         int32_t dif_rate,
+                                         int32_t dif_control) {
 
     int32_t buf[DRIVEBASE_LOG_NUM_VALUES];
     buf[0] = time_now;
-    buf[1] = distance_count;
-    buf[2] = distance_rate_count;
-    buf[3] = distance_control;
-    buf[4] = heading_count;
-    buf[5] = heading_rate_count;
-    buf[6] = heading_control;
+    buf[1] = sum;
+    buf[2] = sum_rate;
+    buf[3] = sum_control;
+    buf[4] = dif;
+    buf[5] = dif_rate;
+    buf[6] = dif_control;
     return pbio_logger_update(&db->log, buf);
 }
 
@@ -131,17 +127,23 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
     db->wheel_diameter = wheel_diameter;
     db->axle_track = axle_track;
 
-    // Turn counts for every degree difference between the servo motors
-    db->turn_counts_per_diff = fix16_div(
-        fix16_mul(db->wheel_diameter, fix16_from_int(COUNTS_PER_DEGREE)),
-        fix16_mul(db->axle_track, fix16_from_int(2))
+    // Difference between the motors for every 1 degree drivebase rotation
+    db->dif_per_deg = fix16_div(
+        fix16_mul(db->axle_track, fix16_from_int(2)),
+        db->wheel_diameter
     );
 
-    // Forward drive counts for every summed degree of the servo motors
-    db->drive_counts_per_sum = fix16_div(
-        fix16_mul(fix16_mul(db->wheel_diameter, fix16_pi), fix16_from_int(COUNTS_PER_MM)),
-        fix16_from_int(720)
+    // Sum of motors for every mm forward
+    db->sum_per_mm = fix16_div(
+        fix16_mul(fix16_from_int(180), FOUR_DIV_PI),
+        db->wheel_diameter
     );
+
+    char buf[13];
+    fix16_to_str(db->dif_per_deg, buf, 3);
+    printf("dif_per_deg: %s\n", buf);
+    fix16_to_str(db->sum_per_mm, buf, 3);
+    printf("sum_per_mm: %s\n", buf);
 
     // Claim servos
     db->left->state = PBIO_SERVO_STATE_CLAIMED;
@@ -151,21 +153,21 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
     db->log.num_values = DRIVEBASE_LOG_NUM_VALUES;
 
     // Configure heading controller
-    err = pbio_control_set_limits(&db->control_heading.settings, fix16_from_int(COUNTS_PER_DEGREE), 45, 20);
+    err = pbio_control_set_limits(&db->control_heading.settings, db->dif_per_deg, 45, 20);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_control_set_pid_settings(&db->control_heading.settings, fix16_from_int(COUNTS_PER_DEGREE), 100, 1, 1, 100, 2, 5, 5, 200);
+    err = pbio_control_set_pid_settings(&db->control_heading.settings, db->dif_per_deg, 100, 0, 5, 100, 2, 5, 5, 200);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Configure distance controller
-    err = pbio_control_set_limits(&db->control_distance.settings, fix16_from_int(COUNTS_PER_MM), 100, 50);
+    err = pbio_control_set_limits(&db->control_distance.settings, db->sum_per_mm, 100, 50);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_control_set_pid_settings(&db->control_distance.settings, fix16_from_int(COUNTS_PER_MM), 100, 1, 1, 100, 2, 5, 5, 200);
+    err = pbio_control_set_pid_settings(&db->control_distance.settings, db->sum_per_mm, 100, 0, 5, 100, 2, 5, 5, 200);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -227,46 +229,46 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
 static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 
     // Get the physical state
-    int32_t time_now, distance_count, distance_rate_count, heading_count, heading_rate_count;
-    pbio_error_t err = drivebase_get_state(db, &time_now, &distance_count, &distance_rate_count, &heading_count, &heading_rate_count);
+    int32_t time_now, sum, sum_rate, dif, dif_rate;
+    pbio_error_t err = drivebase_get_state(db, &time_now, &sum, &sum_rate, &dif, &dif_rate);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    int32_t distance_control, heading_control;
+    int32_t sum_control, dif_control;
 
     if (db->state == PBIO_DRIVEBASE_STATE_PASSIVE) {
         // When passive, zero control
-        distance_control = 0;
-        heading_control = 0;
+        sum_control = 0;
+        dif_control = 0;
     }
     else {
         // Otherwise, calculate control signal
         pbio_actuation_t __todo; // FIXME: add other control types
-        err = control_update_time_target(&db->control_distance, time_now, distance_count, distance_rate_count, &__todo, &distance_control);
+        err = control_update_time_target(&db->control_distance, time_now, sum, sum_rate, &__todo, &sum_control);
         if (err != PBIO_SUCCESS) {
             return err;
         }
-        err = control_update_time_target(&db->control_heading, time_now, heading_count, heading_rate_count, &__todo, &heading_control);
+        err = control_update_time_target(&db->control_heading, time_now, dif, dif_rate, &__todo, &dif_control);
         if (err != PBIO_SUCCESS) {
             return err;
         }
     }
 
     // Actuate
-    err = drivebase_actuate(db, distance_control, heading_control);
+    err = drivebase_actuate(db, sum_control, dif_control);
 
     // Log state and control
-    return drivebase_log_update(db, time_now, distance_count, distance_rate_count, distance_control, heading_count, heading_rate_count, heading_control);
+    return drivebase_log_update(db, time_now, sum, sum_rate, sum_control, dif, dif_rate, dif_control);
 }
 
-pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t rate) {
+pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate) {
 
     pbio_error_t err;
 
     // Get the physical initial state
-    int32_t time_now, distance_count, distance_rate_count, heading_count, heading_rate_count;
-    err = drivebase_get_state(db, &time_now, &distance_count, &distance_rate_count, &heading_count, &heading_rate_count);
+    int32_t time_now, sum, sum_rate, dif, dif_rate;
+    err = drivebase_get_state(db, &time_now, &sum, &sum_rate, &dif, &dif_rate);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -276,9 +278,9 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t r
     db->control_heading.after_stop = PBIO_ACTUATION_COAST;
     err = make_trajectory_time_based_forever(
         time_now,
-        heading_count,
-        heading_rate_count,
-        pbio_math_mul_i32_fix16(rate, fix16_from_int(COUNTS_PER_DEGREE)),
+        dif,
+        dif_rate,
+        pbio_math_mul_i32_fix16(turn_rate, db->dif_per_deg),
         db->control_heading.settings.max_rate,
         db->control_heading.settings.abs_acceleration,
         &db->control_heading.trajectory);
@@ -291,9 +293,9 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t r
     db->control_distance.after_stop = PBIO_ACTUATION_COAST;
     err = make_trajectory_time_based_forever(
         time_now,
-        distance_count,
-        distance_rate_count,
-        pbio_math_mul_i32_fix16(speed, fix16_from_int(COUNTS_PER_MM)),
+        sum,
+        sum_rate,
+        pbio_math_mul_i32_fix16(speed, db->sum_per_mm),
         db->control_distance.settings.max_rate,
         db->control_distance.settings.abs_acceleration,
         &db->control_distance.trajectory);

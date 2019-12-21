@@ -25,8 +25,8 @@ typedef struct _pbio_drivebase_t {
     pbio_drivebase_state_t state;
     fix16_t wheel_diameter;
     fix16_t axle_track;
-    fix16_t turn_counts_per_diff;
-    fix16_t drive_counts_per_sum;
+    fix16_t dif_per_deg;
+    fix16_t sum_per_mm;
     pbio_log_t log;
     pbio_control_t control_heading;
     pbio_control_t control_distance;
