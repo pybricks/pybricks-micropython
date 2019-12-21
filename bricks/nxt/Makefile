@@ -160,6 +160,7 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	src/servo.c \
 	src/tacho.c \
 	src/trajectory.c \
+	src/integrator.c \
 	)
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
