@@ -193,6 +193,10 @@ CONTIKI_SRC_C = $(addprefix ports/pybricks/lib/contiki-core/,\
 	sys/timer.c \
 	)
 
+ifeq ($(PB_MCU_SERIES),F4)
+HAL_SRC_C := $(filter-out %xx_hal_uart_ex.c, $(HAL_SRC_C))
+endif
+
 LIBFIXMATH_SRC_C = $(addprefix ports/pybricks/lib/libfixmath/libfixmath/,\
 	fix16_sqrt.c \
 	fix16_str.c \
