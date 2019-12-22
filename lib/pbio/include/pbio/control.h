@@ -33,16 +33,6 @@ typedef struct _pbio_control_settings_t {
     int32_t max_control;            /**< Upper limit on control output */
 } pbio_control_settings_t;
 
-
-typedef enum {
-    /**< Motor is not stalled */
-    STALLED_NONE = 0x00,
-    /**< The proportional duty control term is larger than the maximum and still the motor moves slower than specified limit */
-    STALLED_PROPORTIONAL = 0x01,
-    /**< The integral duty control term is larger than the maximum and still the motor moves slower than specified limit */
-    STALLED_INTEGRAL = 0x02,
-} pbio_control_stalled_t;
-
 typedef enum {
     PBIO_ACTUATION_COAST,      /**< Coast the motor */
     PBIO_ACTUATION_BRAKE,      /**< Brake the motor */
@@ -65,7 +55,7 @@ typedef struct _pbio_control_t {
     pbio_control_trajectory_t trajectory;
     pbio_rate_integrator_t rate_integrator;
     pbio_count_integrator_t count_integrator;
-    pbio_control_stalled_t stalled;
+    bool stalled;
 } pbio_control_t;
 
 pbio_error_t pbio_control_get_limits(pbio_control_settings_t *settings,
