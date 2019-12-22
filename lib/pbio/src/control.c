@@ -7,6 +7,7 @@
 #include <pbio/control.h>
 #include <pbio/math.h>
 #include <pbio/trajectory.h>
+#include <pbio/integrator.h>
 
 // If the controller reach the maximum duty cycle value, this shortcut sets the stalled flag when the speed is below the stall limit.
 static void stall_set_flag_if_slow(pbio_control_stalled_t *stalled,
@@ -164,7 +165,7 @@ pbio_error_t control_update_time_target(pbio_control_t *ctl, ustime_t time_now, 
     duty_t max_duty = ctl->settings.max_control;
 
     // Declare time, positions, rates, and their reference value and error
-    count_t count_ref, count_err;
+    count_t count_ref, rate_err_integral;
     rate_t rate_ref, rate_err;
     duty_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative;
 
@@ -174,21 +175,11 @@ pbio_error_t control_update_time_target(pbio_control_t *ctl, ustime_t time_now, 
     // For time based commands, we do not aim to drive to a specific position, but we use the
     // "proportional position control" as an exact way to implement "integral speed control".
     // The speed integral is simply the position, but the speed reference should stop integrating
-    // while stalled, to prevent windup.
-    if (status->speed_integrator_running) {
-        // If integrator is active, it is the previously accumulated sum, plus the integral since its last restart
-        count_err = status->speed_integrator + (count_ref - status->integrator_ref_start) - (count_now - status->integrator_start);
-    }
-    else {
-        // Otherwise, it is just the previously accumulated sum and it doesn't integrate further
-        count_err = status->speed_integrator;
-    }
-
-    // For all commands, the speed error is simply the reference speed minus the current speed
-    rate_err = rate_ref - rate_now;
+    // while stalled, to prevent windup. This is built into the integrator.
+    pbio_rate_integrator_get_errors(&ctl->rate_integrator, rate_now, rate_ref, count_now, count_ref, &rate_err, &rate_err_integral);
 
     // Corresponding PD control signal
-    duty_due_to_proportional = ctl->settings.pid_kp*count_err;
+    duty_due_to_proportional = ctl->settings.pid_kp*rate_err_integral;
     duty_due_to_derivative = ctl->settings.pid_kd*rate_err;
 
     // Position anti-windup
@@ -196,26 +187,14 @@ pbio_error_t control_update_time_target(pbio_control_t *ctl, ustime_t time_now, 
     if ((duty_due_to_proportional >= max_duty && rate_err > 0) || (duty_due_to_proportional <= -max_duty && rate_err < 0)) {
         // If we are additionally also running slower than the specified stall speed limit, set status to stalled
         stall_set_flag_if_slow(&ctl->stalled, rate_now, ctl->settings.stall_rate_limit, time_now - status->integrator_time_stopped, ctl->settings.stall_time, STALLED_PROPORTIONAL);
-        // The integrator should NOT run.
-        if (status->speed_integrator_running) {
-            // If it is running, disable it
-            status->speed_integrator_running = false;
-            // Save the integrator state reached now, to continue when no longer stalled
-            status->speed_integrator += count_ref - status->integrator_ref_start - count_now + status->integrator_start;
-            // Store time at which speed integration is disabled
-            status->integrator_time_stopped = time_now;
-        }
+
+        pbio_rate_integrator_pause(&ctl->rate_integrator, time_now, count_now, count_ref);
     }
     else {
         stall_clear_flag(&ctl->stalled, STALLED_PROPORTIONAL);
+        
         // The integrator SHOULD RUN.
-        if (!status->speed_integrator_running) {
-            // If it isn't running, enable it
-            status->speed_integrator_running = true;
-            // Begin integrating again from the current point
-            status->integrator_ref_start = count_ref;
-            status->integrator_start = count_now;
-        }
+        pbio_rate_integrator_resume(&ctl->rate_integrator, time_now, count_now, count_ref);
     }
 
     // RUN || RUN_TIME || RUN_STALLED have no position integral control
@@ -299,6 +278,8 @@ void control_init_time_target(pbio_control_t *ctl) {
         status->integrator_start = trajectory->th0;
         status->integrator_ref_start = trajectory->th0;
     }
+    // FIXME: use correct initial time & state
+    pbio_rate_integrator_reset(&ctl->rate_integrator, 0, trajectory->th0, trajectory->th0);
 }
 
 pbio_error_t pbio_control_get_limits(pbio_control_settings_t *settings,
