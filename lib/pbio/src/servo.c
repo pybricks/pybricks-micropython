@@ -443,9 +443,7 @@ static pbio_error_t pbio_motor_get_initial_state(pbio_servo_t *srv, count_t *cou
 /* pbio user functions */
 
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled) {
-    *stalled = srv->control.stalled > STALLED_NONE &&
-               srv->state >= PBIO_SERVO_STATE_ANGLE_BACKGROUND;
-    return PBIO_SUCCESS;
+    return PBIO_ERROR_NOT_IMPLEMENTED;
 }
 
 pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {

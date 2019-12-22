@@ -84,7 +84,6 @@ typedef struct _pbio_control_t {
     pbio_actuation_t after_stop;
     pbio_control_trajectory_t trajectory;
     pbio_control_status_angular_t status_angular;
-    pbio_control_status_timed_t status_timed;
     pbio_rate_integrator_t rate_integrator;
     pbio_control_stalled_t stalled;
 } pbio_control_t;

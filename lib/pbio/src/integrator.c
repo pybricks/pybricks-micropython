@@ -75,7 +75,22 @@ void pbio_rate_integrator_get_errors(pbio_rate_integrator_t *itg,
     }
 }
 
-bool pbio_rate_integrator_stalled(pbio_rate_integrator_t *itg, int32_t time_now, int32_t time_stall) {
-    // The integrator is stalled if it has been paused more than a given amount of time
-    return !itg->running && time_now - itg->time_paused > time_stall;
+bool pbio_rate_integrator_stalled(pbio_rate_integrator_t *itg, int32_t time_now, int32_t rate, int32_t time_stall, int32_t rate_stall) {
+    // If were running, we're not stalled
+    if (itg->running) {
+        return false;
+    }
+
+    // If we're still running faster than the stall limit, we're certainly not stalled.
+    if (abs(rate) > rate_stall) {
+        return false;
+    }
+
+    // If the integrator is paused for less than the stall time, we're still not stalled for now.
+    if (time_now - itg->time_paused < time_stall) {
+        return false;
+    }
+
+    // All checks have failed, so we are stalled
+    return true; 
 }

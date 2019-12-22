@@ -30,6 +30,6 @@ void pbio_rate_integrator_get_errors(pbio_rate_integrator_t *itg,
                                 int32_t *rate_err,
                                 int32_t *rate_err_integral);
 
-bool pbio_rate_integrator_stalled(pbio_rate_integrator_t *itg, int32_t time_now, int32_t time_stall);
+bool pbio_rate_integrator_stalled(pbio_rate_integrator_t *itg, int32_t time_now, int32_t rate, int32_t time_stall, int32_t rate_stall);
 
 #endif // _PBIO_INTEGRATOR_H_
