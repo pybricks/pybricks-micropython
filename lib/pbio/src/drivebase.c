@@ -139,12 +139,6 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
         db->wheel_diameter
     );
 
-    char buf[13];
-    fix16_to_str(db->dif_per_deg, buf, 3);
-    printf("dif_per_deg: %s\n", buf);
-    fix16_to_str(db->sum_per_mm, buf, 3);
-    printf("sum_per_mm: %s\n", buf);
-
     // Claim servos
     db->left->state = PBIO_SERVO_STATE_CLAIMED;
     db->right->state = PBIO_SERVO_STATE_CLAIMED;
