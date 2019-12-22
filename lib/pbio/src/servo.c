@@ -410,20 +410,22 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
 
 static pbio_error_t pbio_motor_get_initial_state(pbio_servo_t *srv, count_t *count_start, rate_t *rate_start) {
 
-    ustime_t time_now = clock_usecs();
+    // ustime_t time_now = clock_usecs();
     pbio_error_t err;
 
-    if (srv->state == PBIO_SERVO_STATE_TIME_FOREGROUND || srv->state == PBIO_SERVO_STATE_TIME_BACKGROUND) {
-        get_reference(time_now, &srv->control.trajectory, count_start, rate_start);
-    }
-    else if (srv->state == PBIO_SERVO_STATE_ANGLE_FOREGROUND || srv->state == PBIO_SERVO_STATE_ANGLE_BACKGROUND) {
-        pbio_control_status_angular_t status = srv->control.status_angular;
-        ustime_t time_ref = status.ref_time_running ?
-            time_now - status.time_paused :
-            status.time_stopped - status.time_paused;
-        get_reference(time_ref, &srv->control.trajectory, count_start, rate_start);
-    }
-    else {
+    // FIXME: transitions
+
+    // if (srv->state == PBIO_SERVO_STATE_TIME_FOREGROUND || srv->state == PBIO_SERVO_STATE_TIME_BACKGROUND) {
+    //     get_reference(time_now, &srv->control.trajectory, count_start, rate_start);
+    // }
+    // else if (srv->state == PBIO_SERVO_STATE_ANGLE_FOREGROUND || srv->state == PBIO_SERVO_STATE_ANGLE_BACKGROUND) {
+    //     pbio_control_status_angular_t status = srv->control.status_angular;
+    //     ustime_t time_ref = status.ref_time_running ?
+    //         time_now - status.time_paused :
+    //         status.time_stopped - status.time_paused;
+    //     get_reference(time_ref, &srv->control.trajectory, count_start, rate_start);
+    // }
+    // else {
         // TODO: use generic get state functions
 
         // Otherwise, we are not currently in a control mode, and we start from the instantaneous motor state
@@ -436,7 +438,7 @@ static pbio_error_t pbio_motor_get_initial_state(pbio_servo_t *srv, count_t *cou
         if (err != PBIO_SUCCESS) {
             return err;
         }
-    }
+    // }
     return PBIO_SUCCESS;
 }
 
