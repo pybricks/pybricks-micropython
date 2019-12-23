@@ -238,14 +238,8 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     else {
         // Otherwise, calculate control signal
         pbio_actuation_t __todo; // FIXME: add other control types
-        err = control_update_time_target(&db->control_distance, time_now, sum, sum_rate, &__todo, &sum_control);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-        err = control_update_time_target(&db->control_heading, time_now, dif, dif_rate, &__todo, &dif_control);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
+        control_update_time_target(&db->control_distance, time_now, sum, sum_rate, &__todo, &sum_control);
+        control_update_time_target(&db->control_heading, time_now, dif, dif_rate, &__todo, &dif_control);
     }
 
     // Actuate

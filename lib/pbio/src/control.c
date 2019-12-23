@@ -10,7 +10,7 @@
 #include <pbio/integrator.h>
 
 
-pbio_error_t control_update_angle_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
+void control_update_angle_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
     // Trajectory and setting shortcuts for this motor
     duty_t max_duty = ctl->settings.max_control;
 
@@ -56,32 +56,22 @@ pbio_error_t control_update_angle_target(pbio_control_t *ctl, ustime_t time_now,
     // Check if rate controller is stalled
     ctl->stalled = pbio_count_integrator_stalled(&ctl->count_integrator, time_now, rate_now, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
 
-    // Check if we are at the target and standing still, with slightly different end conditions for each mode
-    if (ctl->is_done(&ctl->trajectory, &ctl->settings, time_ref, count_now, rate_now, ctl->stalled)) 
-    {
-        // If so, we have reached our goal. So the action is the after_stop:
-        *actuation_type = ctl->after_stop;
-
-        // The payload of that action is:
-        if (ctl->after_stop == PBIO_ACTUATION_HOLD) {
-            // Hold at the final angle
-            *control = ctl->trajectory.th3;
-        }
-        else {
-            // no payload for coast or brake
-            *control = 0;
-        }
-    }
-    else {
-        // We are not stopping, so the actuation is to apply the calculated
-        // control signal
+    // If the end point is not reached, all there is left to do is return the calculated duty for actuation
+    if (!ctl->is_done(&ctl->trajectory, &ctl->settings, time_ref, count_now, rate_now, ctl->stalled)) {
         *actuation_type = PBIO_ACTUATION_DUTY;
         *control = duty;
+        return;
     }
-    return PBIO_SUCCESS;
+
+    // Otherwise, the end point is reached and we have to decide what to do next
+    *actuation_type = ctl->after_stop;
+    // In case of hold, the payload is the final trajectory count (th3), else 0
+    *control = ctl->after_stop == PBIO_ACTUATION_HOLD ? ctl->trajectory.th3: 0;
+
+    return;
 }
 
-pbio_error_t control_update_time_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
+void control_update_time_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
 
     // Trajectory and setting shortcuts for this motor
     duty_t max_duty = ctl->settings.max_control;
@@ -119,28 +109,19 @@ pbio_error_t control_update_time_target(pbio_control_t *ctl, ustime_t time_now, 
     // Check if rate controller is stalled
     ctl->stalled = pbio_rate_integrator_stalled(&ctl->rate_integrator, time_now, rate_now, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
 
-    // Check if objective is completed
-    if (ctl->is_done(&ctl->trajectory, &ctl->settings, time_now, count_now, rate_now, ctl->stalled)) {
-        // Since we are stopping, the actuation is the after_stop action.
-        *actuation_type = ctl->after_stop;
-
-        // If that next action is holding, the corresponding signal is the
-        // target position that must be held, which is the current position.
-        if (*actuation_type == PBIO_ACTUATION_HOLD) {
-            *control = count_now;
-        }
-        // Otherwise, for coasting or braking, there is no further control signal.
-        else {
-            *control = 0;
-        }
-    }
-    else {
-        // We are not stopping, so the actuation is to apply the calculated
-        // control signal
+    // If the end point is not reached, all there is left to do is return the calculated duty for actuation
+    if (!ctl->is_done(&ctl->trajectory, &ctl->settings, time_now, count_now, rate_now, ctl->stalled)) {
         *actuation_type = PBIO_ACTUATION_DUTY;
         *control = duty;
+        return;
     }
-    return PBIO_SUCCESS;
+
+    // Otherwise, the end point is reached and we have to decide what to do next
+    *actuation_type = ctl->after_stop;
+    // In case of hold, the payload is current count, else 0
+    *control = ctl->after_stop == PBIO_ACTUATION_HOLD ? count_now: 0;
+
+    return;
 }
 
 void control_init_angle_target(pbio_control_t *ctl) {
