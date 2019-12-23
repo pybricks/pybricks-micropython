@@ -176,26 +176,40 @@ static pbio_error_t ev3_sensor_init(pbdrv_ev3_sensor_t *sensor, pbio_port_t port
     pbio_error_t err;
 
     err = sysfs_get_number(port, "/sys/class/lego-sensor", &sensor->n_sensor);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     err = sysfs_open_sensor_attr(&sensor->f_driver_name, sensor->n_sensor, "driver_name", "r");
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     err = sysfs_open_sensor_attr(&sensor->f_mode, sensor->n_sensor, "mode", "r+");
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     err = sysfs_open_sensor_attr(&sensor->f_bin_data_format, sensor->n_sensor, "bin_data_format", "r");
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     err = sysfs_open_sensor_attr(&sensor->f_num_values, sensor->n_sensor, "num_values", "r");
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     err = sysfs_open_sensor_attr(&sensor->f_bin_data, sensor->n_sensor, "bin_data", "rb");
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     FILE *f_modes;
     err = sysfs_open_sensor_attr(&f_modes, sensor->n_sensor, "modes", "r");
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     sensor->n_modes = 0;
     while (fscanf(f_modes, " %16s", sensor->modes[sensor->n_modes++]) == 1);
@@ -211,7 +225,9 @@ static pbio_error_t ev3_sensor_assert_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_
     char driver_name[MAX_PATH_LENGTH];
 
     pbio_error_t err = sysfs_read_str(sensor->f_driver_name, driver_name);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     pbio_iodev_type_id_t id;
 
@@ -313,13 +329,17 @@ pbio_error_t pbdrv_ev3_sensor_get_info(pbdrv_ev3_sensor_t *sensor, uint8_t *data
     // Read data length attribute
     int data_len_int;
     err = sysfs_read_int(sensor->f_num_values, &data_len_int);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
     *data_len = data_len_int;
 
     // Read data type attribute
     char s_data_type[10];
     err = sysfs_read_str(sensor->f_bin_data_format, s_data_type);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Convert data type identifier
     if (!strcmp(s_data_type, "s8")) {
