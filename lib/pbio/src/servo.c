@@ -250,12 +250,16 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle) {
         // Get the old angle
         int32_t angle_old;
         err = pbio_tacho_get_count(srv->tacho, &angle_old);
-        if (err != PBIO_SUCCESS) { return err; }
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
         // Get the old target
         int32_t target_old = pbio_math_div_i32_fix16(srv->control.trajectory.th3, srv->tacho->counts_per_output_unit);
         // Reset the angle
         err = pbio_tacho_reset_angle(srv->tacho, reset_angle);
-        if (err != PBIO_SUCCESS) { return err; }
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
         // Set the new target based on the old angle and the old target, after the angle reset
         int32_t new_target = reset_angle + target_old - angle_old;
         return pbio_servo_track_target(srv, new_target);
@@ -267,7 +271,9 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle) {
     // In all other cases, stop the ongoing maneuver by coasting and then reset the angle
     else {
         err = pbio_hbridge_coast(srv->hbridge);
-        if (err != PBIO_SUCCESS) { return err; }
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
         return pbio_tacho_reset_angle(srv->tacho, reset_angle);
     }
 }
@@ -468,8 +474,9 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     rate_t rate_start;
     pbio_error_t err;
     err = pbio_motor_get_initial_state(srv, &count_start, &rate_start);
-    if (err != PBIO_SUCCESS) { return err; }
-
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
     // Compute new maneuver based on user argument, starting from the initial state
     err = make_trajectory_time_based_forever(
         time_start,
@@ -479,7 +486,9 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
         srv->control.settings.max_rate,
         srv->control.settings.abs_acceleration,
         &srv->control.trajectory);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Initialize or reset the PID control status for the given maneuver
     control_init_time_target(&srv->control);
@@ -489,7 +498,9 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
 
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(srv);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     return PBIO_SUCCESS;
 }
@@ -527,7 +538,9 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
     rate_t rate_start;
     pbio_error_t err;
     err = pbio_motor_get_initial_state(srv, &count_start, &rate_start);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Compute new maneuver based on user argument, starting from the initial state
     err = make_trajectory_time_based(
@@ -539,7 +552,9 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
         srv->control.settings.max_rate,
         srv->control.settings.abs_acceleration,
         &srv->control.trajectory);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Initialize or reset the PID control status for the given maneuver
     control_init_time_target(&srv->control);
@@ -564,7 +579,9 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
     rate_t rate_start;
     pbio_error_t err;
     err = pbio_motor_get_initial_state(srv, &count_start, &rate_start);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Compute new maneuver based on user argument, starting from the initial state
     err = make_trajectory_time_based_forever(
@@ -575,7 +592,9 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
         srv->control.settings.max_rate,
         srv->control.settings.abs_acceleration,
         &srv->control.trajectory);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Initialize or reset the PID control status for the given maneuver
     control_init_time_target(&srv->control);
@@ -585,7 +604,9 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
 
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(srv);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     return PBIO_SUCCESS;
 }
@@ -601,7 +622,9 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
     rate_t rate_start;
     pbio_error_t err;
     err = pbio_motor_get_initial_state(srv, &count_start, &rate_start);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Compute new maneuver based on user argument, starting from the initial state
     err = make_trajectory_angle_based(
@@ -613,7 +636,9 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
         srv->control.settings.max_rate,
         srv->control.settings.abs_acceleration,
         &srv->control.trajectory);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Initialize or reset the PID control status for the given maneuver
     control_init_angle_target(&srv->control);
@@ -623,7 +648,9 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
 
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(srv);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     return PBIO_SUCCESS;
 }
@@ -639,7 +666,9 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
     // Read the instantaneous angle
     int32_t angle_now;
     pbio_error_t err = pbio_tacho_get_angle(srv->tacho, &angle_now);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // The angle target is the instantaneous angle plus the angle to be traveled
     int32_t angle_target = angle_now + (speed < 0 ? -angle: angle);
@@ -659,7 +688,9 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     rate_t rate_start;
     pbio_error_t err;
     err = pbio_motor_get_initial_state(srv, &count_start, &rate_start);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Compute new maneuver based on user argument, starting from the initial state
     make_trajectory_none(time_start, pbio_math_mul_i32_fix16(target, srv->tacho->counts_per_output_unit), 0, &srv->control.trajectory);
@@ -672,7 +703,9 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
 
     // Run one control update synchronously with user command
     err = pbio_servo_control_update(srv);
-    if (err != PBIO_SUCCESS) { return err; }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     return PBIO_SUCCESS;
 }
