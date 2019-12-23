@@ -245,11 +245,10 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle) {
     pbio_error_t err;
 
     // Perform angle reset in case of tracking / holding
-    // FIXME: This does not currently capture hold after run_target
-    if (srv->state == PBIO_SERVO_STATE_ANGLE_BACKGROUND && srv->control.action == TRACK_TARGET) {
+    if (srv->state == PBIO_SERVO_STATE_ANGLE_BACKGROUND) {
         // Get the old angle
         int32_t angle_old;
-        err = pbio_tacho_get_count(srv->tacho, &angle_old);
+        err = pbio_tacho_get_angle(srv->tacho, &angle_old);
         if (err != PBIO_SUCCESS) {
             return err;
         }
