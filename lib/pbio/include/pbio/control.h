@@ -40,21 +40,18 @@ typedef enum {
     PBIO_ACTUATION_DUTY,
 } pbio_actuation_t;
 
-typedef enum {
-    RUN,
-    RUN_TIME,
-    RUN_STALLED,
-    RUN_TARGET,
-    TRACK_TARGET,
-} pbio_control_action_t;
-
 typedef struct _pbio_control_t {
     pbio_control_settings_t settings;
-    pbio_control_action_t action;
     pbio_actuation_t after_stop;
     pbio_control_trajectory_t trajectory;
     pbio_rate_integrator_t rate_integrator;
     pbio_count_integrator_t count_integrator;
+    bool (*is_done)(pbio_control_trajectory_t *trajectory,
+                    pbio_control_settings_t *settings,
+                    int32_t time,
+                    int32_t count,
+                    int32_t rate,
+                    bool stalled);
     bool stalled;
 } pbio_control_t;
 

@@ -57,15 +57,7 @@ pbio_error_t control_update_angle_target(pbio_control_t *ctl, ustime_t time_now,
     ctl->stalled = pbio_count_integrator_stalled(&ctl->count_integrator, time_now, rate_now, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
 
     // Check if we are at the target and standing still, with slightly different end conditions for each mode
-    if (ctl->action == RUN_TARGET &&
-        // Maneuver is complete, time wise
-        time_ref - ctl->trajectory.t3 >= 0 &&
-        // Position is within the lower tolerated bound ...
-        ctl->trajectory.th3 - ctl->settings.count_tolerance <= count_now &&
-        // ... and the upper tolerated bound
-        count_now <= ctl->trajectory.th3 + ctl->settings.count_tolerance &&
-        // And the motor stands still.
-        abs(rate_now) < ctl->settings.rate_tolerance)
+    if (ctl->is_done(&ctl->trajectory, &ctl->settings, time_ref, count_now, rate_now, ctl->stalled)) 
     {
         // If so, we have reached our goal. So the action is the after_stop:
         *actuation_type = ctl->after_stop;
@@ -128,8 +120,7 @@ pbio_error_t control_update_time_target(pbio_control_t *ctl, ustime_t time_now, 
     ctl->stalled = pbio_rate_integrator_stalled(&ctl->rate_integrator, time_now, rate_now, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
 
     // Check if objective is completed
-    if ((ctl->action == RUN_TIME && time_now >= ctl->trajectory.t3) ||
-        (ctl->action == RUN_STALLED && ctl->stalled)) {
+    if (ctl->is_done(&ctl->trajectory, &ctl->settings, time_now, count_now, rate_now, ctl->stalled)) {
         // Since we are stopping, the actuation is the after_stop action.
         *actuation_type = ctl->after_stop;
 

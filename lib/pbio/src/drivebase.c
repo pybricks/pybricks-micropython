@@ -221,7 +221,6 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
 }
 
 static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
-
     // Get the physical state
     int32_t time_now, sum, sum_rate, dif, dif_rate;
     pbio_error_t err = drivebase_get_state(db, &time_now, &sum, &sum_rate, &dif, &dif_rate);
@@ -256,6 +255,11 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     return drivebase_log_update(db, time_now, sum, sum_rate, sum_control, dif, dif_rate, dif_control);
 }
 
+// The start command makes it drive forever, so it is never done;
+static bool drivebase_never_done(pbio_control_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+    return false;
+}
+
 pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate) {
 
     pbio_error_t err;
@@ -268,8 +272,9 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t t
     }
 
     // Set heading maneuver action and stop type
-    db->control_heading.action = RUN;
     db->control_heading.after_stop = PBIO_ACTUATION_COAST;
+    db->control_heading.is_done = drivebase_never_done;
+
     err = make_trajectory_time_based_forever(
         time_now,
         dif,
@@ -281,10 +286,10 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t t
     if (err != PBIO_SUCCESS) {
         return err;
     }
-
     // Set distance maneuver action and stop type
-    db->control_distance.action = RUN;
     db->control_distance.after_stop = PBIO_ACTUATION_COAST;
+    db->control_distance.is_done = drivebase_never_done;
+
     err = make_trajectory_time_based_forever(
         time_now,
         sum,

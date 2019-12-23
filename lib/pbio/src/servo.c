@@ -455,17 +455,21 @@ pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled) {
     return PBIO_SUCCESS;
 }
 
+static bool run_is_done(pbio_control_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+    return false;
+}
+
 pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
-    if (srv->state == PBIO_SERVO_STATE_TIME_BACKGROUND &&
-        srv->control.action == RUN &&
-        pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit) == srv->control.trajectory.w1) {
-        // If the exact same command is already running, there is nothing we need to do
-        return PBIO_SUCCESS;
-    }
+    // if (srv->state == PBIO_SERVO_STATE_TIME_BACKGROUND &&
+    //     srv->control.action == RUN &&
+    //     pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit) == srv->control.trajectory.w1) {
+    //     // If the exact same command is already running, there is nothing we need to do
+    //     return PBIO_SUCCESS;
+    // }
 
     // Set new maneuver action and stop type
-    srv->control.action = RUN;
     srv->control.after_stop = PBIO_ACTUATION_COAST;
+    srv->control.is_done = run_is_done;
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
     ustime_t time_start = clock_usecs();
@@ -526,10 +530,14 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
     return pbio_servo_actuate(srv, after_stop, control);
 }
 
+static bool run_time_is_done(pbio_control_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+    return time >= trajectory->t3;
+}
+
 pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop, bool foreground) {
     // Set new maneuver action and stop type
-    srv->control.action = RUN_TIME;
     srv->control.after_stop = after_stop;
+    srv->control.is_done = run_time_is_done;
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
     ustime_t time_start = clock_usecs();
@@ -567,10 +575,14 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
     return err;
 }
 
+static bool run_until_stalled_is_done(pbio_control_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+    return stalled;
+}
+
 pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio_actuation_t after_stop) {
     // Set new maneuver action and stop type
-    srv->control.action = RUN_STALLED;
     srv->control.after_stop = after_stop;
+    srv->control.is_done = run_until_stalled_is_done;
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
     ustime_t time_start = clock_usecs();
@@ -610,10 +622,35 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
     return PBIO_SUCCESS;
 }
 
+static bool run_target_is_done(pbio_control_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+    // if not enough time has expired to be done even in the ideal case, we are certainly not done
+    if (time - trajectory->t3 < 0) {
+        return false;
+    }
+
+    // If position is still less than the end point minus the tolerance, we are not there yet
+    if (count < trajectory->th3 - settings->count_tolerance) {
+        return false;
+    }
+
+    // If position is more than the end point plus the tolerance, we are too far, so not there yet
+    if (count > trajectory->th3 + settings->count_tolerance) {
+        return false;
+    }
+
+    // If the motor is not standing still, we are not there yet
+    if (abs(rate) >= settings->rate_tolerance) {
+        return false;
+    }
+
+    // There's nothing left to do, so we must be on target
+    return true;
+}
+
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop, bool foreground) {
     // Set new maneuver action and stop type
-    srv->control.action = RUN_TARGET;
     srv->control.after_stop = after_stop;
+    srv->control.is_done = run_target_is_done; 
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
     ustime_t time_start = clock_usecs();
@@ -675,11 +712,14 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
     return pbio_servo_run_target(srv, speed, angle_target, after_stop, foreground);
 }
 
+static bool track_target_is_done(pbio_control_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+    return false;
+}
 
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     // Set new maneuver action and stop type
-    srv->control.action = TRACK_TARGET;
     srv->control.after_stop = PBIO_ACTUATION_COAST;
+    srv->control.is_done = track_target_is_done; 
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
     ustime_t time_start = clock_usecs();
