@@ -308,8 +308,7 @@ static inline bool test_and_set_bit(uint8_t bit, uint32_t *flags) {
 static uint8_t ev3_uart_get_msg_size(uint8_t header) {
     uint8_t size;
 
-    if (!(header & EV3_UART_MSG_TYPE_MASK)) {
-        // this is a SYS message (i.e. SYNC, NACK, ACK)
+    if ((header & EV3_UART_MSG_TYPE_MASK) == EV3_UART_MSG_TYPE_SYS) {
         return 1;
     }
 
