@@ -278,7 +278,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
 }
 
 // Get the physical state of a single motor
-static pbio_error_t control_get_state(pbio_servo_t *srv, ustime_t *time_now, count_t *count_now, rate_t *rate_now) {
+static pbio_error_t control_get_state(pbio_servo_t *srv, int32_t *time_now, int32_t *count_now, int32_t *rate_now) {
 
     pbio_error_t err;
 
@@ -331,7 +331,7 @@ static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actua
 }
 
 // Log motor data for a motor that is being actively controlled
-static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_actuation_t actuation, int32_t control) {
+static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t actuation, int32_t control) {
 
     int32_t buf[SERVO_LOG_NUM_VALUES];
 
@@ -363,9 +363,9 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     }
 
     // Read the physical state
-    ustime_t time_now;
-    count_t count_now;
-    rate_t rate_now;
+    int32_t time_now;
+    int32_t count_now;
+    int32_t rate_now;
     pbio_error_t err = control_get_state(srv, &time_now, &count_now, &rate_now);
     if (err != PBIO_SUCCESS) {
         return err;
@@ -410,9 +410,9 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     return pbio_servo_log_update(srv, time_now, count_now, rate_now, actuation, control);
 }
 
-static pbio_error_t pbio_motor_get_initial_state(pbio_servo_t *srv, count_t *count_start, rate_t *rate_start) {
+static pbio_error_t pbio_motor_get_initial_state(pbio_servo_t *srv, int32_t *count_start, int32_t *rate_start) {
 
-    // ustime_t time_now = clock_usecs();
+    // int32_t time_now = clock_usecs();
     pbio_error_t err;
 
     // FIXME: transitions
@@ -422,7 +422,7 @@ static pbio_error_t pbio_motor_get_initial_state(pbio_servo_t *srv, count_t *cou
     // }
     // else if (srv->state == PBIO_SERVO_STATE_ANGLE_FOREGROUND || srv->state == PBIO_SERVO_STATE_ANGLE_BACKGROUND) {
     //     pbio_control_status_angular_t status = srv->control.status_angular;
-    //     ustime_t time_ref = status.ref_time_running ?
+    //     int32_t time_ref = status.ref_time_running ?
     //         time_now - status.time_paused :
     //         status.time_stopped - status.time_paused;
     //     get_reference(time_ref, &srv->control.trajectory, count_start, rate_start);
@@ -465,9 +465,9 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     srv->control.is_done_func = pbio_control_never_done;
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
-    ustime_t time_start = clock_usecs();
-    count_t count_start;
-    rate_t rate_start;
+    int32_t time_start = clock_usecs();
+    int32_t count_start;
+    int32_t rate_start;
     pbio_error_t err;
     err = pbio_motor_get_initial_state(srv, &count_start, &rate_start);
     if (err != PBIO_SUCCESS) {
@@ -533,9 +533,9 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
     srv->control.is_done_func = run_time_is_done_func;
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
-    ustime_t time_start = clock_usecs();
-    count_t count_start;
-    rate_t rate_start;
+    int32_t time_start = clock_usecs();
+    int32_t count_start;
+    int32_t rate_start;
     pbio_error_t err;
     err = pbio_motor_get_initial_state(srv, &count_start, &rate_start);
     if (err != PBIO_SUCCESS) {
@@ -578,9 +578,9 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
     srv->control.is_done_func = run_until_stalled_is_done_func;
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
-    ustime_t time_start = clock_usecs();
-    count_t count_start;
-    rate_t rate_start;
+    int32_t time_start = clock_usecs();
+    int32_t count_start;
+    int32_t rate_start;
     pbio_error_t err;
     err = pbio_motor_get_initial_state(srv, &count_start, &rate_start);
     if (err != PBIO_SUCCESS) {
@@ -646,9 +646,9 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
     srv->control.is_done_func = run_target_is_done_func; 
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
-    ustime_t time_start = clock_usecs();
-    count_t count_start;
-    rate_t rate_start;
+    int32_t time_start = clock_usecs();
+    int32_t count_start;
+    int32_t rate_start;
     pbio_error_t err;
     err = pbio_motor_get_initial_state(srv, &count_start, &rate_start);
     if (err != PBIO_SUCCESS) {
@@ -712,9 +712,9 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     srv->control.is_done_func = pbio_control_never_done; 
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
-    ustime_t time_start = clock_usecs();
-    count_t count_start;
-    rate_t rate_start;
+    int32_t time_start = clock_usecs();
+    int32_t count_start;
+    int32_t rate_start;
     pbio_error_t err;
     err = pbio_motor_get_initial_state(srv, &count_start, &rate_start);
     if (err != PBIO_SUCCESS) {

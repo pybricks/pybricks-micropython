@@ -36,8 +36,8 @@ typedef struct _pbio_count_integrator_t {
     bool running; // Whether the integrator is running (1) or paused (0)
     int32_t time_paused; // Time at which we began pausing most recently, stopping integration
     int32_t time_waited; // Total time we spent in a paused state
-    count_t count_err_prev; // Position error in the previous control iteration
-    ustime_t time_prev; // Time at the previous control iteratiom
+    int32_t count_err_prev; // Position error in the previous control iteration
+    int32_t time_prev; // Time at the previous control iteratiom
     int32_t count_err_integral; // Ongoing integral of position error
     int32_t count_err_integral_max; // Maximum value of integrator
 } pbio_count_integrator_t;

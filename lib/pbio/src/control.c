@@ -10,15 +10,15 @@
 #include <pbio/integrator.h>
 
 
-void control_update_angle_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
+void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
     // Trajectory and setting shortcuts for this motor
-    duty_t max_duty = ctl->settings.max_control;
+    int32_t max_duty = ctl->settings.max_control;
 
     // Declare current time, positions, rates, and their reference value and error
-    ustime_t time_ref;
-    count_t count_ref, count_err, count_err_integral;
-    rate_t rate_ref, rate_err;
-    duty_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative;
+    int32_t time_ref;
+    int32_t count_ref, count_err, count_err_integral;
+    int32_t rate_ref, rate_err;
+    int32_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative;
 
     // Get the time at which we want to evaluate the reference position/velocities, for position based commands
     // This compensates for any time we may have spent pausing when the motor was stalled.
@@ -71,15 +71,15 @@ void control_update_angle_target(pbio_control_t *ctl, ustime_t time_now, count_t
     return;
 }
 
-void control_update_time_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
+void control_update_time_target(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
 
     // Trajectory and setting shortcuts for this motor
-    duty_t max_duty = ctl->settings.max_control;
+    int32_t max_duty = ctl->settings.max_control;
 
     // Declare time, positions, rates, and their reference value and error
-    count_t count_ref, rate_err_integral;
-    rate_t rate_ref, rate_err;
-    duty_t duty, duty_due_to_proportional, duty_due_to_derivative;
+    int32_t count_ref, rate_err_integral;
+    int32_t rate_ref, rate_err;
+    int32_t duty, duty_due_to_proportional, duty_due_to_derivative;
 
     // Get reference signals
     get_reference(time_now, &ctl->trajectory, &count_ref, &rate_ref);

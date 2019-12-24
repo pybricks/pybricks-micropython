@@ -24,7 +24,7 @@ void reverse_trajectory(pbio_control_trajectory_t *ref) {
     ref->a2 *= -1;
 }
 
-void make_trajectory_none(ustime_t t0, count_t th0, rate_t w1, pbio_control_trajectory_t *ref) {
+void make_trajectory_none(int32_t t0, int32_t th0, int32_t w1, pbio_control_trajectory_t *ref) {
     // All times equal to initial time:
     ref->t0 = t0;
     ref->t1 = t0;
@@ -47,13 +47,13 @@ void make_trajectory_none(ustime_t t0, count_t th0, rate_t w1, pbio_control_traj
     ref->forever = false;
 }
 
-pbio_error_t make_trajectory_time_based(ustime_t t0, ustime_t t3, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_control_trajectory_t *ref) {
+pbio_error_t make_trajectory_time_based(int32_t t0, int32_t t3, int32_t th0, int32_t w0, int32_t wt, int32_t wmax, int32_t a, pbio_control_trajectory_t *ref) {
 
     // Work with time intervals instead of absolute time. Read 'm' as '-'.
-    ustime_t t3mt0 = t3-t0;
-    ustime_t t3mt2;
-    ustime_t t2mt1;
-    ustime_t t1mt0;
+    int32_t t3mt0 = t3-t0;
+    int32_t t3mt2;
+    int32_t t2mt1;
+    int32_t t1mt0;
 
     // Return error for negative user-specified duration
     if (t3mt0 < 0) {
@@ -70,8 +70,8 @@ pbio_error_t make_trajectory_time_based(ustime_t t0, ustime_t t3, count_t th0, r
     }
 
     // Limit initial speed
-    rate_t max_init = timest(a, t3mt0);
-    rate_t abs_max = min(wmax, max_init);
+    int32_t max_init = timest(a, t3mt0);
+    int32_t abs_max = min(wmax, max_init);
     w0 = max(-abs_max, min(w0, abs_max));
 
     // Initial speed is less than the target speed
@@ -134,7 +134,7 @@ pbio_error_t make_trajectory_time_based(ustime_t t0, ustime_t t3, count_t th0, r
 }
 
 
-pbio_error_t make_trajectory_time_based_forever(ustime_t t0, count_t th0, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_control_trajectory_t *ref) {
+pbio_error_t make_trajectory_time_based_forever(int32_t t0, int32_t th0, int32_t w0, int32_t wt, int32_t wmax, int32_t a, pbio_control_trajectory_t *ref) {
     // For infinite maneuvers like RUN and RUN_STALLED, no end time is specified, so we take a
     // fictitious 60 seconds. This allows us to use the same code to get the trajectory for the
     // initial acceleration phase and the constant speed phase. Setting the forever flag allows
@@ -147,7 +147,7 @@ pbio_error_t make_trajectory_time_based_forever(ustime_t t0, count_t th0, rate_t
     return err;
 }
 
-pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, rate_t w0, rate_t wt, rate_t wmax, accl_t a, pbio_control_trajectory_t *ref) {
+pbio_error_t make_trajectory_angle_based(int32_t t0, int32_t th0, int32_t th3, int32_t w0, int32_t wt, int32_t wmax, int32_t a, pbio_control_trajectory_t *ref) {
 
     // Return error for zero speed
     if (wt == 0) {
@@ -182,7 +182,7 @@ pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, 
         ref->a0 = a;
 
         // Fictitious zero speed angle (ahead of us if we have negative initial speed; behind us if we have initial positive speed)
-        count_t thf = th0 - (w0*w0)/(2*a);
+        int32_t thf = th0 - (w0*w0)/(2*a);
 
         // Test if we can get to ref speed
         if (th3-thf >= (wt*wt)/a) {
@@ -207,9 +207,9 @@ pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, 
         ref->w1 = wt;
     }
     // Corresponding time intervals
-    ustime_t t1mt0 = wdiva(ref->w1-w0, ref->a0);
-    ustime_t t2mt1 = ref->th2 == ref->th1 ? 0 : wdiva(ref->th2-ref->th1, ref->w1);
-    ustime_t t3mt2 = wdiva(ref->w1, a);
+    int32_t t1mt0 = wdiva(ref->w1-w0, ref->a0);
+    int32_t t2mt1 = ref->th2 == ref->th1 ? 0 : wdiva(ref->th2-ref->th1, ref->w1);
+    int32_t t3mt2 = wdiva(ref->w1, a);
 
     // Store other results/arguments
     ref->w0 = w0;
@@ -233,7 +233,7 @@ pbio_error_t make_trajectory_angle_based(ustime_t t0, count_t th0, count_t th3, 
 }
 
 // Evaluate the reference speed and velocity at the (shifted) time
-void get_reference(ustime_t time_ref, pbio_control_trajectory_t *traject, count_t *count_ref, rate_t *rate_ref){
+void get_reference(int32_t time_ref, pbio_control_trajectory_t *traject, int32_t *count_ref, int32_t *rate_ref){
     // For RUN and RUN_STALLED, the end time is infinite, meaning that the reference signals do not have a deceleration phase
     if (time_ref - traject->t1 < 0) {
         // If we are here, then we are still in the acceleration phase. Includes conversion from microseconds to seconds, in two steps to avoid overflows and round off errors
