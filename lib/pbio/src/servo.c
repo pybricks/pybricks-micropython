@@ -356,6 +356,15 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, int32_t time_now, i
     buf[3] = actuation;
     buf[4] = control;
 
+    // Log reference signals. These values are only meaningful for time based commands
+    int32_t count_ref, rate_ref, rate_err, rate_err_integral;
+    get_reference(time_now, &srv->control.trajectory, &count_ref, &rate_ref);
+    pbio_rate_integrator_get_errors(&srv->control.rate_integrator, rate_now, rate_ref, count_now, count_ref, &rate_err, &rate_err_integral);
+    buf[5] = count_ref;
+    buf[6] = rate_err_integral;
+    buf[7] = rate_ref;
+    buf[8] = rate_err_integral;
+
     return pbio_logger_update(&srv->log, buf);
 }
 
