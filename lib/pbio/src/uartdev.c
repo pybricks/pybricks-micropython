@@ -697,21 +697,14 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 DBG_ERR(data->last_err = "Invalid mode received");
                 goto err;
             }
-            if (mode != data->iodev.mode) {
-                if (mode == data->new_mode) {
-                    data->iodev.mode = mode;
-                    // TODO: notify that mode has changed
-                } else {
-                    DBG_ERR(data->last_err = "Unexpected mode");
-                    goto err;
+            data->iodev.mode = mode;
+            if (mode == data->new_mode) {
+                memcpy(data->iodev.bin_data, data->rx_msg + 1, msg_size - 2);
+                data->data_rec = 1;
+                if (data->num_data_err) {
+                    data->num_data_err--;
                 }
             }
-            memcpy(data->iodev.bin_data, data->rx_msg + 1, msg_size - 2);
-        }
-
-        data->data_rec = 1;
-        if (data->num_data_err) {
-            data->num_data_err--;
         }
         break;
     }
