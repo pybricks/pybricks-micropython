@@ -423,12 +423,25 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
 
     // Get the intitial state based on physical motor state.
     int32_t time_start;
-    int32_t count_start;
-    int32_t rate_start;
+    int32_t count_now, count_start;
+    int32_t rate_now, rate_start;
     pbio_error_t err;
-    err = servo_get_state(srv, &time_start, &count_start, &rate_start);
+    err = servo_get_state(srv, &time_start, &count_now, &rate_now);
     if (err != PBIO_SUCCESS) {
         return err;
+    }
+
+    // Check if a maneuver is in progress
+    bool busy = srv->state == PBIO_SERVO_STATE_TIME_FOREGROUND || srv->state == PBIO_SERVO_STATE_TIME_BACKGROUND;
+
+    if (busy) {
+        // If a maneuver is ongoing, we start from the current reference
+        get_reference(time_start, &srv->control.trajectory, &count_start, &rate_start);
+    }
+    else {
+        // Otherwise, start from the physical state
+        count_start = count_now;
+        rate_start = rate_now;
     }
 
     // Set new maneuver action and stop type
