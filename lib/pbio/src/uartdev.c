@@ -25,6 +25,7 @@
 
 #define DEBUG 0
 #if DEBUG
+#include <inttypes.h>
 #define debug_pr(fmt, ...)   printf((fmt), __VA_ARGS__)
 #define DBG_ERR(expr) expr
 #else
@@ -432,7 +433,7 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
             }
             data->new_baud_rate = speed;
 
-            debug_pr("speed: %lu\n", speed);
+            debug_pr("speed: %" PRIu32 "\n", speed);
 
             break;
         case EV3_UART_CMD_WRITE:
@@ -461,9 +462,8 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 goto err;
             }
             // TODO: this might be useful someday
-
-            debug_pr("version: %08lx\n", uint32_le(data->rx_msg + 1));
-
+            debug_pr("fw version: %08" PRIx32 "\n", uint32_le(data->rx_msg + 1));
+            debug_pr("hw version: %08" PRIx32 "\n", uint32_le(data->rx_msg + 5));
             break;
         default:
             DBG_ERR(data->last_err = "Unknown command");
@@ -496,6 +496,7 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
             data->new_mode = mode;
             data->info_flags |= EV3_UART_INFO_FLAG_INFO_NAME;
 
+            debug_pr("new_mode: %d\n", data->new_mode);
             debug_pr("name: %s\n", data->info->mode_info[mode].name);
 
             break;
@@ -581,7 +582,7 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
             data->info->mode_info[mode].input_flags = data->rx_msg[2];
             data->info->mode_info[mode].output_flags = data->rx_msg[3];
 
-            debug_pr("mapping: %02x %02x\n", data->rx_msg[2], data->rx_msg[3]);
+            debug_pr("mapping: in %02x out %02x\n", data->rx_msg[2], data->rx_msg[3]);
 
             break;
         case EV3_UART_INFO_UNK2:
@@ -880,6 +881,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t *data)) {
     data->data_rec = 0;
     data->num_data_err = 0;
     data->status = PBIO_UARTDEV_STATUS_INFO;
+    debug_pr("type id: %d\n", data->type_id);
 
     while (data->status == PBIO_UARTDEV_STATUS_INFO) {
         // read the message header
