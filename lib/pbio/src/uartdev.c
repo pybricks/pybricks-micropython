@@ -214,6 +214,8 @@ typedef enum {
  * @data_rec: Flag that indicates that good DATA data->msg has been received
  * 	since last watchdog timeout.
  * @tx_busy: mutex that protects tx_msg
+ * @mode_change_tx_done: Flag to keep ev3_uart_set_mode_end() blocked until
+ * mode has actually changed
  */
 typedef struct {
     pbio_iodev_t iodev;
@@ -241,6 +243,7 @@ typedef struct {
     uint32_t num_data_err;
     bool data_rec;
     bool tx_busy;
+    bool mode_change_tx_done;
 } uartdev_port_data_t;
 
 enum {
@@ -737,7 +740,7 @@ static pbio_error_t ev3_uart_begin_tx_msg(uartdev_port_data_t *port_data, enum e
         return PBIO_ERROR_NO_DEV;
     }
 
-    if (port_data->tx_busy) {
+    if (port_data->tx_busy || port_data->mode_change_tx_done) {
         return PBIO_ERROR_AGAIN;
     }
 
@@ -1083,6 +1086,7 @@ static pbio_error_t ev3_uart_set_mode_begin(pbio_iodev_t *iodev, uint8_t mode) {
     }
 
     port_data->new_mode = mode;
+    port_data->mode_change_tx_done = false;
 
     return PBIO_SUCCESS;
 }
@@ -1091,15 +1095,28 @@ static pbio_error_t ev3_uart_set_mode_end(pbio_iodev_t *iodev) {
     uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
     pbio_error_t err;
 
-    err = pbdrv_uart_write_end(port_data->uart);
-    if (err != PBIO_ERROR_AGAIN) {
-        port_data->tx_busy = false;
-        // TODO: should wait until we receive at least one data message to
-        // ensure that the mode has actually changed (also ensures that we have
-        // a new data value in the case of single shot modes)
+    if (!port_data->mode_change_tx_done) {
+        err = pbdrv_uart_write_end(port_data->uart);
+        if (err != PBIO_ERROR_AGAIN) {
+            port_data->tx_busy = false;
+            port_data->mode_change_tx_done = true;
+        }
+
+        if (err == PBIO_SUCCESS) {
+            port_data->data_rec = 0;
+            return PBIO_ERROR_AGAIN;
+        }
+
+        return err;
     }
 
-    return err;
+    if (!port_data->data_rec) {
+        return PBIO_ERROR_AGAIN;
+    }
+
+    port_data->mode_change_tx_done = false;
+
+    return PBIO_SUCCESS;
 }
 
 static pbio_error_t ev3_uart_set_data_begin(pbio_iodev_t *iodev, const uint8_t *data) {
