@@ -9,6 +9,18 @@ BUILD_DIR = build
 endif
 PROG = $(BUILD_DIR)/test-pbio
 
+# verbose
+ifeq ("$(origin V)", "command line")
+BUILD_VERBOSE=$(V)
+endif
+ifndef BUILD_VERBOSE
+BUILD_VERBOSE = 0
+endif
+ifeq ($(BUILD_VERBOSE),0)
+Q = @
+else
+Q =
+endif
 
 # using tinytest from upstream MicroPython
 TINY_TEST_DIR = ../../../../../lib/tinytest
@@ -56,26 +68,30 @@ OBJ = $(addprefix $(BUILD_PREFIX)/,$(SRC:.c=.o))
 all: $(PROG)
 
 clean:
-	rm -rf $(BUILD_DIR)
+	$(Q)rm -rf $(BUILD_DIR)
+ifneq ($(COVERAGE),1)
+	$(Q)$(MAKE) COVERAGE=1 clean
+endif
 
 $(BUILD_PREFIX)/%.d: %.c
-	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -MM -MT $(patsubst %.d,%.o,$@) $< > $@
+	$(Q)mkdir -p $(dir $@)
+	$(Q)$(CC) $(CFLAGS) -MM -MT $(patsubst %.d,%.o,$@) $< > $@
 
 -include $(DEP)
 
-$(BUILD_PREFIX)/%.o: %.c $(BUILD_PREFIX)/%.d
-	mkdir -p $(dir $@)
-	$(CC) -c $(CFLAGS) -o $@ $<
+$(BUILD_PREFIX)/%.o: %.c $(BUILD_PREFIX)/%.d Makefile
+	$(Q)mkdir -p $(dir $@)
+	@echo CC $<
+	$(Q)$(CC) -c $(CFLAGS) -o $@ $<
 
 $(PROG): $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(Q)$(CC) $(CFLAGS) -o $@ $^ -lrt
 
 build-coverage/coverage.info: Makefile $(SRC)
-	$(MAKE) COVERAGE=1
+	$(Q)$(MAKE) COVERAGE=1
 	./build-coverage/test-pbio
 	lcov --capture --output-file $@ \
 		--directory build-coverage/ports/pybricks/lib/pbio/src
 
 coverage-html: build-coverage/coverage.info
-	genhtml $^ --output-directory build-coverage/html
+	$(Q)genhtml $^ --output-directory build-coverage/html
