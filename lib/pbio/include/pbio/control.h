@@ -40,18 +40,21 @@ typedef enum {
     PBIO_ACTUATION_DUTY,
 } pbio_actuation_t;
 
+// Maneuver-specific function that returns true if maneuver is done, based on current state
+typedef bool (*pbio_control_done_t)(pbio_control_trajectory_t *trajectory,
+                                    pbio_control_settings_t *settings,
+                                    int32_t time,
+                                    int32_t count,
+                                    int32_t rate,
+                                    bool stalled);
+
 typedef struct _pbio_control_t {
     pbio_control_settings_t settings;
     pbio_actuation_t after_stop;
     pbio_control_trajectory_t trajectory;
     pbio_rate_integrator_t rate_integrator;
     pbio_count_integrator_t count_integrator;
-    bool (*is_done)(pbio_control_trajectory_t *trajectory,
-                    pbio_control_settings_t *settings,
-                    int32_t time,
-                    int32_t count,
-                    int32_t rate,
-                    bool stalled);
+    pbio_control_done_t is_done;
     bool stalled;
 } pbio_control_t;
 
