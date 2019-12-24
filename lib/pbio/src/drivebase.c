@@ -264,6 +264,7 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t t
     db->control_heading.after_stop = PBIO_ACTUATION_COAST;
     db->control_heading.is_done_func = pbio_control_never_done;
 
+    pbio_control_trajectory_t *heading_traj = &db->control_heading.trajectory;
     err = make_trajectory_time_based_forever(
         time_now,
         dif,
@@ -271,7 +272,7 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t t
         pbio_math_mul_i32_fix16(turn_rate, db->dif_per_deg),
         db->control_heading.settings.max_rate,
         db->control_heading.settings.abs_acceleration,
-        &db->control_heading.trajectory);
+        heading_traj);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -279,6 +280,7 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t t
     db->control_distance.after_stop = PBIO_ACTUATION_COAST;
     db->control_distance.is_done_func = pbio_control_never_done;
 
+    pbio_control_trajectory_t *distance_traj = &db->control_distance.trajectory;
     err = make_trajectory_time_based_forever(
         time_now,
         sum,
@@ -286,14 +288,14 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t t
         pbio_math_mul_i32_fix16(speed, db->sum_per_mm),
         db->control_distance.settings.max_rate,
         db->control_distance.settings.abs_acceleration,
-        &db->control_distance.trajectory);
+        distance_traj);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Initialize or reset the PID control status for the given maneuver
-    control_init_time_target(&db->control_heading);
-    control_init_time_target(&db->control_distance);
+    pbio_rate_integrator_reset(&db->control_distance.rate_integrator, 0, distance_traj->th0, distance_traj->th0);
+    pbio_rate_integrator_reset(&db->control_heading.rate_integrator, 0, heading_traj->th0, heading_traj->th0);
 
     db->state = PBIO_DRIVEBASE_STATE_TIME_BACKGROUND;
 

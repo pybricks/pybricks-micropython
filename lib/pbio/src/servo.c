@@ -487,7 +487,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     }
 
     // Initialize or reset the PID control status for the given maneuver
-    control_init_time_target(&srv->control);
+    pbio_rate_integrator_reset(&srv->control.rate_integrator, 0, srv->control.trajectory.th0, srv->control.trajectory.th0);
 
     // Run is always in the background
     srv->state = PBIO_SERVO_STATE_TIME_BACKGROUND;
@@ -557,7 +557,7 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
     }
 
     // Initialize or reset the PID control status for the given maneuver
-    control_init_time_target(&srv->control);
+    pbio_rate_integrator_reset(&srv->control.rate_integrator, 0, srv->control.trajectory.th0, srv->control.trajectory.th0);
 
     // Set user specified foreground or background state
     srv->state = foreground ? PBIO_SERVO_STATE_TIME_FOREGROUND : PBIO_SERVO_STATE_TIME_BACKGROUND;
@@ -601,7 +601,7 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
     }
 
     // Initialize or reset the PID control status for the given maneuver
-    control_init_time_target(&srv->control);
+    pbio_rate_integrator_reset(&srv->control.rate_integrator, 0, srv->control.trajectory.th0, srv->control.trajectory.th0);
 
     // Run until stalled is always in the foreground
     srv->state = PBIO_SERVO_STATE_TIME_FOREGROUND;
@@ -670,7 +670,8 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
     }
 
     // Initialize or reset the PID control status for the given maneuver
-    control_init_angle_target(&srv->control);
+    int32_t integrator_max = (US_PER_SECOND/srv->control.settings.pid_ki)*srv->control.settings.max_control;
+    pbio_count_integrator_reset(&srv->control.count_integrator, srv->control.trajectory.t0, srv->control.trajectory.th0, srv->control.trajectory.th0, integrator_max);
 
     // Set user specified foreground or background state
     srv->state = foreground ? PBIO_SERVO_STATE_ANGLE_FOREGROUND : PBIO_SERVO_STATE_ANGLE_BACKGROUND;
@@ -724,7 +725,8 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     make_trajectory_none(time_start, pbio_math_mul_i32_fix16(target, srv->tacho->counts_per_output_unit), 0, &srv->control.trajectory);
 
     // Initialize or reset the PID control status for the given maneuver
-    control_init_angle_target(&srv->control);
+    int32_t integrator_max = (US_PER_SECOND/srv->control.settings.pid_ki)*srv->control.settings.max_control;
+    pbio_count_integrator_reset(&srv->control.count_integrator, srv->control.trajectory.t0, srv->control.trajectory.th0, srv->control.trajectory.th0, integrator_max);
 
     // Tracking a target is always a background action
     srv->state = PBIO_SERVO_STATE_ANGLE_BACKGROUND;

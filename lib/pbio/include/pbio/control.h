@@ -100,8 +100,6 @@ pbio_error_t pbio_control_set_pid_settings(pbio_control_settings_t *settings,
                                            int32_t stall_speed_limit,
                                            int32_t stall_time);
 
-void control_init_angle_target(pbio_control_t *ctl);
-void control_init_time_target(pbio_control_t *ctl);
 void control_update_angle_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_actuation_t *actuation_type, int32_t *control);
 void control_update_time_target(pbio_control_t *ctl, ustime_t time_now, count_t count_now, rate_t rate_now, pbio_actuation_t *actuation_type, int32_t *control);
 

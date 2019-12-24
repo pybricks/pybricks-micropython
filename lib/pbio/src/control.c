@@ -124,21 +124,6 @@ void control_update_time_target(pbio_control_t *ctl, ustime_t time_now, count_t 
     return;
 }
 
-void control_init_angle_target(pbio_control_t *ctl) {
-    // TODO If already running, start from ref + set flag of original state
-
-    int32_t integrator_max = (US_PER_SECOND/ctl->settings.pid_ki)*ctl->settings.max_control;
-
-    pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max);
-}
-
-void control_init_time_target(pbio_control_t *ctl) {
-    pbio_control_trajectory_t *trajectory = &ctl->trajectory;
-
-    // FIXME: use correct initial time & state
-    pbio_rate_integrator_reset(&ctl->rate_integrator, 0, trajectory->th0, trajectory->th0);
-}
-
 pbio_error_t pbio_control_get_limits(pbio_control_settings_t *settings,
                                      fix16_t counts_per_output_unit,
                                      int32_t *max_speed,
