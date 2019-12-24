@@ -82,9 +82,17 @@ static struct testcase_t pbio_math_tests[] = {
     END_OF_TESTCASES
 };
 
+PBIO_TEST_FUNC(pbio_uartdev_test);
+
+static struct testcase_t pbio_uartdev_tests[] = {
+    PBIO_PT_THREAD_TEST(pbio_uartdev_test),
+    END_OF_TESTCASES
+};
+
 static struct testgroup_t test_groups[] = {
     { "example/", example_tests },
     { "math/", pbio_math_tests },
+    { "uartdev/", pbio_uartdev_tests, },
     END_OF_GROUPS
 };
 
