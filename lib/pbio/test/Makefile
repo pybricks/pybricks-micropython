@@ -33,7 +33,7 @@ FIXMATH_SRC = $(shell find $(FIXMATH_DIR)/libfixmath -name "*.c")
 # pbio library
 PBIO_DIR = ..
 PBIO_INC = -I$(PBIO_DIR)/include -I$(PBIO_DIR)
-PBIO_SRC = $(shell find $(PBIO_DIR)/src -name "*.c") $(PBIO_DIR)/platform/ev3dev_stretch/clock.c
+PBIO_SRC = $(shell find $(PBIO_DIR)/src -name "*.c")
 
 # tests
 TEST_INC = -I.

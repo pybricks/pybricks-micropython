@@ -10,7 +10,6 @@
 #define CLIF
 #define AUTOSTART_ENABLE 0
 
-// TODO: could use 64-bit time struct
 typedef uint32_t clock_time_t;
 #define CLOCK_CONF_SECOND 1000
 
