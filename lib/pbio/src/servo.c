@@ -11,8 +11,11 @@
 #include <pbdrv/motor.h>
 #include <pbio/math.h>
 #include <pbio/servo.h>
+#include <pbio/logger.h>
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
+
+#define SERVO_LOG_NUM_VALUES (12 + NUM_DEFAULT_LOG_VALUES)
 
 // TODO: Generalize and move to config:
 pbio_error_t pbio_config_get_defaults_servo(pbio_iodev_type_id_t id,

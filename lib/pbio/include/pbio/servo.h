@@ -26,8 +26,6 @@
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
-#define SERVO_LOG_NUM_VALUES (5 + NUM_DEFAULT_LOG_VALUES)
-
 /**
  * Servo states
  */
