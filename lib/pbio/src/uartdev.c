@@ -1051,8 +1051,11 @@ static PT_THREAD(pbio_uartdev_receive_data(uartdev_port_data_t *data)) {
             DBG_ERR(data->last_err = "Bad data message size");
             continue;
         }
-        if ((data->rx_msg[0] & EV3_UART_MSG_TYPE_MASK) != EV3_UART_MSG_TYPE_DATA &&
-            (data->rx_msg[0] & (EV3_UART_MSG_TYPE_MASK | EV3_UART_MSG_CMD_MASK)) != (EV3_UART_MSG_TYPE_CMD | EV3_UART_CMD_WRITE)) {
+
+        uint8_t msg_type = data->rx_msg[0] & EV3_UART_MSG_TYPE_MASK;
+        uint8_t cmd =  data->rx_msg[0] & EV3_UART_MSG_CMD_MASK;
+        if (msg_type != EV3_UART_MSG_TYPE_DATA && (msg_type != EV3_UART_MSG_TYPE_CMD ||
+                                                   (cmd != EV3_UART_CMD_WRITE && cmd != EV3_UART_CMD_EXT_MODE))) {
             DBG_ERR(data->last_err = "Bad msg type");
             continue;
         }
