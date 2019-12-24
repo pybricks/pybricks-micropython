@@ -524,8 +524,8 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 DBG_ERR(data->last_err = "Received duplicate percent scaling INFO");
                 goto err;
             }
-            data->info->mode_info[mode].pct_min = uint32_le(data->rx_msg + 2);
-            data->info->mode_info[mode].pct_max = uint32_le(data->rx_msg + 6);
+            data->info->mode_info[mode].pct_min = float_le(data->rx_msg + 2);
+            data->info->mode_info[mode].pct_max = float_le(data->rx_msg + 6);
 
             debug_pr("pct: %f %f\n", (double)data->info->mode_info[mode].pct_min,
                                      (double)data->info->mode_info[mode].pct_max);
