@@ -109,7 +109,7 @@ enum ev3_uart_info {
     EV3_UART_INFO_SI            = 0x03,
     EV3_UART_INFO_UNITS         = 0x04,
     EV3_UART_INFO_MAPPING       = 0x05,    // Powered Up only
-    EV3_UART_INFO_UNK2          = 0x06,    // Powered Up only
+    EV3_UART_INFO_MODE_COMBOS   = 0x06,    // Powered Up only
     EV3_UART_INFO_MOTOR_BIAS    = 0x07,    // Powered Up only
     EV3_UART_INFO_CAPABILITY    = 0x08,    // Powered Up only
     EV3_UART_INFO_MODE_PLUS_8   = 0x20,    // Powered Up only
@@ -127,7 +127,7 @@ enum ev3_uart_info_bit {
     EV3_UART_INFO_BIT_INFO_SI,
     EV3_UART_INFO_BIT_INFO_UNITS,
     EV3_UART_INFO_BIT_INFO_MAPPING,
-    EV3_UART_INFO_BIT_INFO_UNK2,
+    EV3_UART_INFO_BIT_INFO_MODE_COMBOS,
     EV3_UART_INFO_BIT_INFO_MOTOR_BIAS,
     EV3_UART_INFO_BIT_INFO_CAPABILITY,
     EV3_UART_INFO_BIT_INFO_FORMAT,
@@ -144,7 +144,7 @@ enum ev3_uart_info_flags {
     EV3_UART_INFO_FLAG_INFO_SI                  = 1 << EV3_UART_INFO_BIT_INFO_SI,
     EV3_UART_INFO_FLAG_INFO_UNITS               = 1 << EV3_UART_INFO_BIT_INFO_UNITS,
     EV3_UART_INFO_FLAG_INFO_MAPPING             = 1 << EV3_UART_INFO_BIT_INFO_MAPPING,
-    EV3_UART_INFO_FLAG_INFO_UNK2                = 1 << EV3_UART_INFO_BIT_INFO_UNK2,
+    EV3_UART_INFO_FLAG_INFO_MODE_COMBOS         = 1 << EV3_UART_INFO_BIT_INFO_MODE_COMBOS,
     EV3_UART_INFO_FLAG_INFO_MOTOR_BIAS          = 1 << EV3_UART_INFO_BIT_INFO_MOTOR_BIAS,
     EV3_UART_INFO_FLAG_INFO_MOTOR_CAPABILITY    = 1 << EV3_UART_INFO_BIT_INFO_CAPABILITY,
     EV3_UART_INFO_FLAG_INFO_FORMAT              = 1 << EV3_UART_INFO_BIT_INFO_FORMAT,
@@ -155,7 +155,7 @@ enum ev3_uart_info_flags {
                                     | EV3_UART_INFO_FLAG_INFO_SI
                                     | EV3_UART_INFO_FLAG_INFO_UNITS
                                     | EV3_UART_INFO_FLAG_INFO_MAPPING
-                                    | EV3_UART_INFO_FLAG_INFO_UNK2
+                                    | EV3_UART_INFO_FLAG_INFO_MODE_COMBOS
                                     | EV3_UART_INFO_FLAG_INFO_MOTOR_BIAS
                                     | EV3_UART_INFO_FLAG_INFO_MOTOR_CAPABILITY
                                     | EV3_UART_INFO_FLAG_INFO_FORMAT,
@@ -585,18 +585,17 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
             debug_pr("mapping: in %02x out %02x\n", data->rx_msg[2], data->rx_msg[3]);
 
             break;
-        case EV3_UART_INFO_UNK2:
+        case EV3_UART_INFO_MODE_COMBOS:
             if (data->new_mode != mode) {
                 DBG_ERR(data->last_err = "Received INFO for incorrect mode");
                 goto err;
             }
-            if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_UNK2, &data->info_flags)) {
-                DBG_ERR(data->last_err = "Received duplicate UNK2 INFO");
+            if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_MODE_COMBOS, &data->info_flags)) {
+                DBG_ERR(data->last_err = "Received duplicate mode combos INFO");
                 goto err;
             }
-            // TODO: what does this info tell us?
-
-            debug_pr("UNK2: %02x %02x\n", data->rx_msg[2], data->rx_msg[3]);
+            debug_pr("mode combos: %04x\n", data->rx_msg[3] << 8 | data->rx_msg[2]);
+            // TODO: this is actually array of values
 
             break;
         case EV3_UART_INFO_MOTOR_BIAS:
