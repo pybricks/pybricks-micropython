@@ -54,7 +54,7 @@ typedef struct _pbio_control_t {
     pbio_control_trajectory_t trajectory;
     pbio_rate_integrator_t rate_integrator;
     pbio_count_integrator_t count_integrator;
-    pbio_control_done_t is_done;
+    pbio_control_done_t is_done_func;
     bool stalled;
 } pbio_control_t;
 

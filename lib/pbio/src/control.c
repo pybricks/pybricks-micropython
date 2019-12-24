@@ -57,7 +57,7 @@ void control_update_angle_target(pbio_control_t *ctl, ustime_t time_now, count_t
     ctl->stalled = pbio_count_integrator_stalled(&ctl->count_integrator, time_now, rate_now, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
 
     // If the end point is not reached, all there is left to do is return the calculated duty for actuation
-    if (!ctl->is_done(&ctl->trajectory, &ctl->settings, time_ref, count_now, rate_now, ctl->stalled)) {
+    if (!ctl->is_done_func(&ctl->trajectory, &ctl->settings, time_ref, count_now, rate_now, ctl->stalled)) {
         *actuation_type = PBIO_ACTUATION_DUTY;
         *control = duty;
         return;
@@ -110,7 +110,7 @@ void control_update_time_target(pbio_control_t *ctl, ustime_t time_now, count_t 
     ctl->stalled = pbio_rate_integrator_stalled(&ctl->rate_integrator, time_now, rate_now, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
 
     // If the end point is not reached, all there is left to do is return the calculated duty for actuation
-    if (!ctl->is_done(&ctl->trajectory, &ctl->settings, time_now, count_now, rate_now, ctl->stalled)) {
+    if (!ctl->is_done_func(&ctl->trajectory, &ctl->settings, time_now, count_now, rate_now, ctl->stalled)) {
         *actuation_type = PBIO_ACTUATION_DUTY;
         *control = duty;
         return;
