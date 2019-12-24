@@ -48,6 +48,16 @@ typedef bool (*pbio_control_done_t)(pbio_control_trajectory_t *trajectory,
                                     int32_t rate,
                                     bool stalled);
 
+// Shortcut for a done function that says it is never done
+static inline bool pbio_control_never_done(pbio_control_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+    return false;
+}
+
+// Shortcut for a done function that says it is always done
+static inline bool pbio_control_always_done(pbio_control_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+    return true;
+}
+
 typedef struct _pbio_control_t {
     pbio_control_settings_t settings;
     pbio_actuation_t after_stop;

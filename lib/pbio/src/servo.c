@@ -452,10 +452,6 @@ pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled) {
     return PBIO_SUCCESS;
 }
 
-static bool run_is_done_func(pbio_control_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
-    return false;
-}
-
 pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     // if (srv->state == PBIO_SERVO_STATE_TIME_BACKGROUND &&
     //     srv->control.action == RUN &&
@@ -466,7 +462,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
 
     // Set new maneuver action and stop type
     srv->control.after_stop = PBIO_ACTUATION_COAST;
-    srv->control.is_done_func = run_is_done_func;
+    srv->control.is_done_func = pbio_control_never_done;
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
     ustime_t time_start = clock_usecs();
@@ -709,14 +705,10 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
     return pbio_servo_run_target(srv, speed, angle_target, after_stop, foreground);
 }
 
-static bool track_target_is_done_func(pbio_control_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
-    return false;
-}
-
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     // Set new maneuver action and stop type
     srv->control.after_stop = PBIO_ACTUATION_COAST;
-    srv->control.is_done_func = track_target_is_done_func; 
+    srv->control.is_done_func = pbio_control_never_done; 
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
     ustime_t time_start = clock_usecs();
