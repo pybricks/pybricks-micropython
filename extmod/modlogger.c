@@ -51,7 +51,6 @@ STATIC mp_obj_t tools_Logger_get(size_t n_args, const mp_obj_t *pos_args, mp_map
     mp_int_t index_val = pb_obj_get_default_int(index, -1);
 
     // Data buffer for this sample
-    // FIXME: Set upper limit in logger.h
     mp_obj_t ret[MAX_LOG_VALUES];
     int32_t data[MAX_LOG_VALUES];
 
@@ -66,7 +65,7 @@ STATIC mp_obj_t tools_Logger_get(size_t n_args, const mp_obj_t *pos_args, mp_map
     pb_assert(err);
 
     // Convert data to user objects
-    for (uint8_t i = 0; i < MAX_LOG_VALUES; i++) {
+    for (uint8_t i = 0; i < self->log->num_values; i++) {
         ret[i] = mp_obj_new_int(data[i]);
     }
     return mp_obj_new_tuple(num_values, ret);
