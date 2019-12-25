@@ -87,6 +87,84 @@ STATIC mp_obj_t tools_Logger_stop(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(tools_Logger_stop_obj, tools_Logger_stop);
 
+STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        PB_ARG_DEFAULT_NONE(path)
+    );
+    tools_Logger_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
+    // Create an empty log file
+    const char *file_path = path == mp_const_none ? "log.txt" : mp_obj_str_get_str(path);
+    FILE *log_file;
+    
+    log_file = fopen(file_path, "w");
+    if (log_file == NULL) {
+        pb_assert(PBIO_ERROR_IO);
+    }
+    if (fclose(log_file) != 0) {
+        pb_assert(PBIO_ERROR_IO);
+    }
+
+    // Read log size information
+    int32_t data[MAX_LOG_VALUES];
+    pb_thread_enter();
+    uint8_t num_values = self->log->num_values;
+    int32_t samples =  self->log->sampled;
+    pb_thread_exit();
+
+    pbio_error_t err = PBIO_SUCCESS;
+    
+    // Write data to file line by line
+    for (int32_t i = 0; i < samples; i++) {
+
+        // Read one line inside lock
+        pb_thread_enter();
+        err = pbio_logger_read(self->log, i, data);
+        pb_thread_exit();
+
+        if (err != PBIO_SUCCESS) {
+            break;
+        }
+
+        // Open file for appending
+        log_file = fopen(file_path, "a");
+        if (log_file == NULL) {
+            err = PBIO_ERROR_IO;
+            break;
+        }
+
+        // Append sample at one time interval to file
+        for (uint8_t v = 0; v < num_values; v++) {
+            if (fprintf(log_file, "%d,", data[v]) < 0) {
+                err = PBIO_ERROR_IO;
+                break;
+            }
+        }
+        if (err != PBIO_SUCCESS) {
+            break;
+        }
+
+        // Finish sample with line break
+        if (fprintf(log_file, "\n") < 0) {
+            err = PBIO_ERROR_IO;
+            break;
+        }
+
+        // Close the file
+        if (fclose(log_file) != 0) {
+            err = PBIO_ERROR_IO;
+            break;
+        }
+    }
+    pb_assert(err);
+#else
+    pb_assert(PBIO_ERROR_NOT_SUPPORTED);
+#endif
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_save_obj, 0, tools_Logger_save);
+
 STATIC mp_obj_t tools_Logger_unary_op(mp_unary_op_t op, mp_obj_t self_in) {
     tools_Logger_obj_t *self = MP_OBJ_TO_PTR(self_in);
     switch (op) {
@@ -105,6 +183,7 @@ STATIC const mp_rom_map_elem_t tools_Logger_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_start), MP_ROM_PTR(&tools_Logger_start_obj) },
     { MP_ROM_QSTR(MP_QSTR_get), MP_ROM_PTR(&tools_Logger_get_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&tools_Logger_stop_obj) },
+    { MP_ROM_QSTR(MP_QSTR_save), MP_ROM_PTR(&tools_Logger_save_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(tools_Logger_locals_dict, tools_Logger_locals_dict_table);
 
