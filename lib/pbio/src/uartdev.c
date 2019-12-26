@@ -752,11 +752,12 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
             data->iodev.mode = mode;
             if (mode == data->new_mode) {
                 memcpy(data->iodev.bin_data, data->rx_msg + 1, msg_size - 2);
-                data->data_rec = 1;
-                if (data->num_data_err) {
-                    data->num_data_err--;
-                }
             }
+        }
+
+        data->data_rec = true;
+        if (data->num_data_err) {
+            data->num_data_err--;
         }
         break;
     }
@@ -922,7 +923,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t *data)) {
 
     data->type_id = data->rx_msg[1];
     data->info_flags = EV3_UART_INFO_FLAG_CMD_TYPE;
-    data->data_rec = 0;
+    data->data_rec = false;
     data->num_data_err = 0;
     data->status = PBIO_UARTDEV_STATUS_INFO;
     debug_pr("type id: %d\n", data->type_id);
@@ -1039,7 +1040,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t *data)) {
                 data->status = PBIO_UARTDEV_STATUS_ERR;
             }
         }
-        data->data_rec = 0;
+        data->data_rec = false;
 
         // send keepalive
         PT_WAIT_WHILE(&data->pt, data->tx_busy);
@@ -1154,14 +1155,14 @@ static pbio_error_t ev3_uart_set_mode_end(pbio_iodev_t *iodev) {
         }
 
         if (err == PBIO_SUCCESS) {
-            port_data->data_rec = 0;
+            port_data->data_rec = false;
             return PBIO_ERROR_AGAIN;
         }
 
         return err;
     }
 
-    if (!port_data->data_rec) {
+    if (!port_data->data_rec || port_data->iodev.mode != port_data->new_mode) {
         return PBIO_ERROR_AGAIN;
     }
 
