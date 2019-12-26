@@ -317,9 +317,14 @@ PT_THREAD(pbio_uartdev_test(struct pt *pt)) {
     tt_want_uint_op(iodev->info->num_view_modes, ==, 8);
     // TODO: verify fw/hw versions
     // TODO: verify mode combinations
+    tt_want_uint_op(iodev->motor_flags, ==, PBIO_IODEV_MOTOR_FLAG_NONE);
     tt_want_uint_op(iodev->mode, ==, 0);
 
     tt_want_str_op(iodev->info->mode_info[0].name, ==, "COLOR");
+    tt_want_uint_op(iodev->info->mode_info[0].flags.flags0, ==, LPF2_MODE_FLAGS0_NONE);
+    tt_want_uint_op(iodev->info->mode_info[0].flags.flags1, ==, LPF2_MODE_FLAGS1_NONE);
+    tt_want_uint_op(iodev->info->mode_info[0].flags.flags4, ==, LPF2_MODE_FLAGS4_NONE);
+    tt_want_uint_op(iodev->info->mode_info[0].flags.flags5, ==, LPF2_MODE_FLAGS5_NONE);
     tt_want_float_op(iodev->info->mode_info[0].raw_min, ==, 0.0);
     tt_want_float_op(iodev->info->mode_info[0].raw_max, ==, 10.0);
     tt_want_float_op(iodev->info->mode_info[0].pct_min, ==, 0.0);
@@ -336,6 +341,10 @@ PT_THREAD(pbio_uartdev_test(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[0].decimals, ==, 0);
 
     tt_want_str_op(iodev->info->mode_info[1].name, ==, "PROX");
+    tt_want_uint_op(iodev->info->mode_info[1].flags.flags0, ==, LPF2_MODE_FLAGS0_NONE);
+    tt_want_uint_op(iodev->info->mode_info[1].flags.flags1, ==, LPF2_MODE_FLAGS1_NONE);
+    tt_want_uint_op(iodev->info->mode_info[1].flags.flags4, ==, LPF2_MODE_FLAGS4_NONE);
+    tt_want_uint_op(iodev->info->mode_info[1].flags.flags5, ==, LPF2_MODE_FLAGS5_NONE);
     tt_want_float_op(iodev->info->mode_info[1].raw_min, ==, 0.0);
     tt_want_float_op(iodev->info->mode_info[1].raw_max, ==, 10.0);
     tt_want_float_op(iodev->info->mode_info[1].pct_min, ==, 0.0);
@@ -352,6 +361,10 @@ PT_THREAD(pbio_uartdev_test(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[1].decimals, ==, 0);
 
     tt_want_str_op(iodev->info->mode_info[2].name, ==, "COUNT");
+    tt_want_uint_op(iodev->info->mode_info[2].flags.flags0, ==, LPF2_MODE_FLAGS0_NONE);
+    tt_want_uint_op(iodev->info->mode_info[2].flags.flags1, ==, LPF2_MODE_FLAGS1_NONE);
+    tt_want_uint_op(iodev->info->mode_info[2].flags.flags4, ==, LPF2_MODE_FLAGS4_NONE);
+    tt_want_uint_op(iodev->info->mode_info[2].flags.flags5, ==, LPF2_MODE_FLAGS5_NONE);
     tt_want_float_op(iodev->info->mode_info[2].raw_min, ==, 0.0);
     tt_want_float_op(iodev->info->mode_info[2].raw_max, ==, 100.0);
     tt_want_float_op(iodev->info->mode_info[2].pct_min, ==, 0.0);
@@ -367,6 +380,10 @@ PT_THREAD(pbio_uartdev_test(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[2].decimals, ==, 0);
 
     tt_want_str_op(iodev->info->mode_info[3].name, ==, "REFLT");
+    tt_want_uint_op(iodev->info->mode_info[3].flags.flags0, ==, LPF2_MODE_FLAGS0_NONE);
+    tt_want_uint_op(iodev->info->mode_info[3].flags.flags1, ==, LPF2_MODE_FLAGS1_NONE);
+    tt_want_uint_op(iodev->info->mode_info[3].flags.flags4, ==, LPF2_MODE_FLAGS4_NONE);
+    tt_want_uint_op(iodev->info->mode_info[3].flags.flags5, ==, LPF2_MODE_FLAGS5_NONE);
     tt_want_float_op(iodev->info->mode_info[3].raw_min, ==, 0.0);
     tt_want_float_op(iodev->info->mode_info[3].raw_max, ==, 100.0);
     tt_want_float_op(iodev->info->mode_info[3].pct_min, ==, 0.0);
@@ -382,6 +399,10 @@ PT_THREAD(pbio_uartdev_test(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[3].decimals, ==, 0);
 
     tt_want_str_op(iodev->info->mode_info[4].name, ==, "AMBI");
+    tt_want_uint_op(iodev->info->mode_info[4].flags.flags0, ==, LPF2_MODE_FLAGS0_NONE);
+    tt_want_uint_op(iodev->info->mode_info[4].flags.flags1, ==, LPF2_MODE_FLAGS1_NONE);
+    tt_want_uint_op(iodev->info->mode_info[4].flags.flags4, ==, LPF2_MODE_FLAGS4_NONE);
+    tt_want_uint_op(iodev->info->mode_info[4].flags.flags5, ==, LPF2_MODE_FLAGS5_NONE);
     tt_want_float_op(iodev->info->mode_info[4].raw_min, ==, 0.0);
     tt_want_float_op(iodev->info->mode_info[4].raw_max, ==, 100.0);
     tt_want_float_op(iodev->info->mode_info[4].pct_min, ==, 0.0);
@@ -397,6 +418,10 @@ PT_THREAD(pbio_uartdev_test(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[4].decimals, ==, 0);
 
     tt_want_str_op(iodev->info->mode_info[5].name, ==, "COL O");
+    tt_want_uint_op(iodev->info->mode_info[5].flags.flags0, ==, LPF2_MODE_FLAGS0_NONE);
+    tt_want_uint_op(iodev->info->mode_info[5].flags.flags1, ==, LPF2_MODE_FLAGS1_NONE);
+    tt_want_uint_op(iodev->info->mode_info[5].flags.flags4, ==, LPF2_MODE_FLAGS4_NONE);
+    tt_want_uint_op(iodev->info->mode_info[5].flags.flags5, ==, LPF2_MODE_FLAGS5_NONE);
     tt_want_float_op(iodev->info->mode_info[5].raw_min, ==, 0.0);
     tt_want_float_op(iodev->info->mode_info[5].raw_max, ==, 10.0);
     tt_want_float_op(iodev->info->mode_info[5].pct_min, ==, 0.0);
@@ -412,6 +437,10 @@ PT_THREAD(pbio_uartdev_test(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[5].decimals, ==, 0);
 
     tt_want_str_op(iodev->info->mode_info[6].name, ==, "RGB I");
+    tt_want_uint_op(iodev->info->mode_info[6].flags.flags0, ==, LPF2_MODE_FLAGS0_NONE);
+    tt_want_uint_op(iodev->info->mode_info[6].flags.flags1, ==, LPF2_MODE_FLAGS1_NONE);
+    tt_want_uint_op(iodev->info->mode_info[6].flags.flags4, ==, LPF2_MODE_FLAGS4_NONE);
+    tt_want_uint_op(iodev->info->mode_info[6].flags.flags5, ==, LPF2_MODE_FLAGS5_NONE);
     tt_want_float_op(iodev->info->mode_info[6].raw_min, ==, 0.0);
     tt_want_float_op(iodev->info->mode_info[6].raw_max, ==, 1023.0);
     tt_want_float_op(iodev->info->mode_info[6].pct_min, ==, 0.0);
@@ -427,6 +456,10 @@ PT_THREAD(pbio_uartdev_test(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[6].decimals, ==, 0);
 
     tt_want_str_op(iodev->info->mode_info[7].name, ==, "IR Tx");
+    tt_want_uint_op(iodev->info->mode_info[7].flags.flags0, ==, LPF2_MODE_FLAGS0_NONE);
+    tt_want_uint_op(iodev->info->mode_info[7].flags.flags1, ==, LPF2_MODE_FLAGS1_NONE);
+    tt_want_uint_op(iodev->info->mode_info[7].flags.flags4, ==, LPF2_MODE_FLAGS4_NONE);
+    tt_want_uint_op(iodev->info->mode_info[7].flags.flags5, ==, LPF2_MODE_FLAGS5_NONE);
     tt_want_float_op(iodev->info->mode_info[7].raw_min, ==, 0.0);
     tt_want_float_op(iodev->info->mode_info[7].raw_max, ==, 65535.0);
     tt_want_float_op(iodev->info->mode_info[7].pct_min, ==, 0.0);
@@ -442,6 +475,10 @@ PT_THREAD(pbio_uartdev_test(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[7].decimals, ==, 0);
 
     tt_want_str_op(iodev->info->mode_info[8].name, ==, "SPEC 1");
+    tt_want_uint_op(iodev->info->mode_info[8].flags.flags0, ==, LPF2_MODE_FLAGS0_NONE);
+    tt_want_uint_op(iodev->info->mode_info[8].flags.flags1, ==, LPF2_MODE_FLAGS1_NONE);
+    tt_want_uint_op(iodev->info->mode_info[8].flags.flags4, ==, LPF2_MODE_FLAGS4_NONE);
+    tt_want_uint_op(iodev->info->mode_info[8].flags.flags5, ==, LPF2_MODE_FLAGS5_NONE);
     tt_want_float_op(iodev->info->mode_info[8].raw_min, ==, 0.0);
     tt_want_float_op(iodev->info->mode_info[8].raw_max, ==, 255.0);
     tt_want_float_op(iodev->info->mode_info[8].pct_min, ==, 0.0);
@@ -457,6 +494,10 @@ PT_THREAD(pbio_uartdev_test(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[8].decimals, ==, 0);
 
     tt_want_str_op(iodev->info->mode_info[9].name, ==, "DEBUG");
+    tt_want_uint_op(iodev->info->mode_info[9].flags.flags0, ==, LPF2_MODE_FLAGS0_NONE);
+    tt_want_uint_op(iodev->info->mode_info[9].flags.flags1, ==, LPF2_MODE_FLAGS1_NONE);
+    tt_want_uint_op(iodev->info->mode_info[9].flags.flags4, ==, LPF2_MODE_FLAGS4_NONE);
+    tt_want_uint_op(iodev->info->mode_info[9].flags.flags5, ==, LPF2_MODE_FLAGS5_NONE);
     tt_want_float_op(iodev->info->mode_info[9].raw_min, ==, 0.0);
     tt_want_float_op(iodev->info->mode_info[9].raw_max, ==, 1023.0);
     tt_want_float_op(iodev->info->mode_info[9].pct_min, ==, 0.0);
@@ -472,6 +513,10 @@ PT_THREAD(pbio_uartdev_test(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[9].decimals, ==, 0);
 
     tt_want_str_op(iodev->info->mode_info[10].name, ==, "CALIB");
+    tt_want_uint_op(iodev->info->mode_info[10].flags.flags0, ==, LPF2_MODE_FLAGS0_NONE);
+    tt_want_uint_op(iodev->info->mode_info[10].flags.flags1, ==, LPF2_MODE_FLAGS1_NONE);
+    tt_want_uint_op(iodev->info->mode_info[10].flags.flags4, ==, LPF2_MODE_FLAGS4_NONE);
+    tt_want_uint_op(iodev->info->mode_info[10].flags.flags5, ==, LPF2_MODE_FLAGS5_NONE);
     tt_want_float_op(iodev->info->mode_info[10].raw_min, ==, 0.0);
     tt_want_float_op(iodev->info->mode_info[10].raw_max, ==, 65535.0);
     tt_want_float_op(iodev->info->mode_info[10].pct_min, ==, 0.0);

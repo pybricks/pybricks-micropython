@@ -146,8 +146,41 @@ typedef enum {
  * I/O device capability flags.
  */
 typedef enum {
-    PBIO_IODEV_FLAG_IS_MOTOR = 0x01,
-} pbio_iodev_flag_t;
+    /**
+     * Convience value for no flags set.
+     */
+    PBIO_IODEV_MOTOR_FLAG_NONE = 0,
+    /**
+     * Indicates that this device is motor.
+     */
+    PBIO_IODEV_MOTOR_FLAG_IS_MOTOR = 1 << 0,
+    /**
+     * Indicates that the motor provides speed feedback.
+     */
+    PBIO_IODEV_MOTOR_FLAG_HAS_SPEED = 1 << 1,
+    /**
+     * Indicates that the motor provides relative position feedback.
+     */
+    PBIO_IODEV_MOTOR_FLAG_HAS_REL_POS = 1 << 2,
+    /**
+     * Indicates that the motor provides absolute position feedback.
+     */
+    PBIO_IODEV_MOTOR_FLAG_HAS_ABS_POS = 1 << 3,
+} pbio_iodev_motor_flags_t;
+
+/**
+ * Macro for testing if I/O device is a motor.
+ *
+ * @param [in] d    Pointer to pbio_iodev_t.
+ */
+#define PBIO_IODEV_IS_MOTOR(d) ((d)->motor_flags & PBIO_IODEV_MOTOR_FLAG_IS_MOTOR)
+
+/**
+ * Macro for testing if I/O device is a motor with speed/position feedback.
+ *
+ * @param [in] d    Pointer to pbio_iodev_t.
+ */
+#define PBIO_IODEV_IS_FEEDBACK_MOTOR(d) ((d)->motor_flags > PBIO_IODEV_MOTOR_FLAG_IS_MOTOR)
 
 /**
  * Mapping flags that describe the input and output values of an I/O device.
@@ -165,14 +198,57 @@ typedef enum {
     LPF2_MAPPING_FLAG_NULL      = 1 << 7,
 } pbio_iodev_mapping_flag_t;
 
+// These flags are sent from UART devices. There is currently no documentation
+// from LEGO about this, so these are guesses as to the meanings.
+
+typedef enum {
+    LPF2_MODE_FLAGS0_NONE           = 0,
+    LPF2_MODE_FLAGS0_MOTOR_SPEED    = 1 << 0,
+    LPF2_MODE_FLAGS0_MOTOR_ABS_POS  = 1 << 1,
+    LPF2_MODE_FLAGS0_MOTOR_REL_POS  = 1 << 2,
+    LPF2_MODE_FLAGS0_MOTOR_POWER    = 1 << 4,
+    LPF2_MODE_FLAGS0_MOTOR          = 1 << 5,
+} pbio_mode_flags0_t;
+
+typedef enum {
+    LPF2_MODE_FLAGS1_NONE           = 0,
+    LPF2_MODE_FLAGS1_CALIB          = 1 << 6,
+} pbio_mode_flags1_t;
+
+typedef enum {
+    LPF2_MODE_FLAGS4_NONE           = 0,
+    LPF2_MODE_FLAGS4_USES_HBRIDGE   = 1 << 0,
+} pbio_mode_flags4_t;
+
+typedef enum {
+    LPF2_MODE_FLAGS5_NONE           = 0,
+    LPF2_MODE_FLAGS5_UNKNOWN_BIT1   = 1 << 1,
+} pbio_mode_flags5_t;
+
+/**
+ * Mode flags as sent from newer LPF2 UART devices.
+ */
+typedef struct {
+    pbio_mode_flags0_t flags0;
+    pbio_mode_flags1_t flags1;
+    uint8_t flags2; // always 0?
+    uint8_t flags3; // always 0?
+    pbio_mode_flags4_t flags4;
+    pbio_mode_flags5_t flags5;
+} pbio_iodev_mode_flags_t;
+
 /**
  * Information about one mode of an I/O device.
  */
 typedef struct {
     /**
-     * The name of the mode
+     * The name of the mode.
      */
     char name[PBIO_IODEV_MODE_NAME_SIZE + 1];
+    /**
+     * Mode flags.
+     */
+    pbio_iodev_mode_flags_t flags;
     /**
      * The number of data values for this mode.
      */
@@ -295,9 +371,9 @@ struct _pbio_iodev_t {
      */
     uint8_t mode;
     /**
-     * Capability flags.
+     * Motor capability flags.
      */
-    pbio_iodev_flag_t flags;
+    pbio_iodev_motor_flags_t motor_flags;
     /**
      * Most recent binary data read from the device. How to interpret this data
      * is determined by the ::pbio_iodev_mode_t info associated with the current

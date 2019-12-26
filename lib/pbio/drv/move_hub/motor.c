@@ -110,7 +110,7 @@ static pbio_iodev_t *get_iodev(pbio_port_t port) {
         return NULL;
     }
 
-    if (!(iodev->flags & PBIO_IODEV_FLAG_IS_MOTOR)) {
+    if (!PBIO_IODEV_IS_MOTOR(iodev)) {
         return NULL;
     }
 

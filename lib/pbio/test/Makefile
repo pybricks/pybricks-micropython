@@ -52,7 +52,7 @@ TEST_INC = -I.
 TEST_SRC = $(shell find . -name "*.c")
 
 
-CFLAGS += -std=gnu99 -g -O0 -Wall -Werror
+CFLAGS += -std=gnu99 -g -O0 -Wall -Werror -fshort-enums
 CFLAGS += -fdata-sections -ffunction-sections -Wl,--gc-sections
 CFLAGS += $(TINY_TEST_INC) $(CONTIKI_INC) $(FIXMATH_INC) $(PBIO_INC) $(TEST_INC)
 

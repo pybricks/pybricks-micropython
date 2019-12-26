@@ -323,6 +323,30 @@ static uint8_t ev3_uart_get_msg_size(uint8_t header) {
     return size;
 }
 
+static void pbio_uartdev_set_mode_flags(pbio_iodev_type_id_t type_id, uint8_t mode, pbio_iodev_mode_flags_t *flags) {
+    memset(flags, 0, sizeof(*flags));
+
+    switch (type_id) {
+    case PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR:
+        switch (mode) {
+        case 0: // POWER
+            flags->flags0 = LPF2_MODE_FLAGS0_MOTOR_POWER | LPF2_MODE_FLAGS0_MOTOR;
+            break;
+        case 1: // SPEED
+            flags->flags0 = LPF2_MODE_FLAGS0_MOTOR_SPEED | LPF2_MODE_FLAGS0_MOTOR;
+            break;
+        case 2: // POS
+            flags->flags0 = LPF2_MODE_FLAGS0_MOTOR_REL_POS | LPF2_MODE_FLAGS0_MOTOR;
+            break;
+        }
+        flags->flags4 = LPF2_MODE_FLAGS4_USES_HBRIDGE;
+        flags->flags5 = LPF2_MODE_FLAGS5_UNKNOWN_BIT1; // TODO: figure out what this flag means
+        break;
+    default:
+        break;
+    }
+}
+
 static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
     uint32_t speed;
     uint8_t msg_type, cmd, msg_size, mode, cmd2;
@@ -441,12 +465,8 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
         case EV3_UART_CMD_WRITE:
             if (cmd2 & 0x20) {
                 data->write_cmd_size = cmd2 & 0x3;
-                if (data->type_id == PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR ||
-                    data->type_id == PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR ||
-                    data->type_id == PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR) {
+                if (PBIO_IODEV_IS_FEEDBACK_MOTOR(&data->iodev)) {
                     // TODO: msg[3] and msg[4] probably give us useful information
-                    data->iodev.flags |= PBIO_IODEV_FLAG_IS_MOTOR;
-                    // FIXME: clear this flag when device disconnects
                 }
                 else {
                     // TODO: handle other write commands
@@ -475,32 +495,63 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
     case EV3_UART_MSG_TYPE_INFO:
         switch (cmd2) {
         case EV3_UART_INFO_NAME:
-            data->info_flags &= ~EV3_UART_INFO_FLAG_ALL_INFO;
-            if (data->rx_msg[2] < 'A' || data->rx_msg[2] > 'z') {
-                DBG_ERR(data->last_err = "Invalid name INFO");
-                goto err;
-            }
-            /*
-             * Name may not have null terminator and we
-             * are done with the checksum at this point
-             * so we are writing 0 over the checksum to
-             * ensure a null terminator for the string
-             * functions.
-             */
-            data->rx_msg[msg_size - 1] = 0;
-            if (strlen((char *)data->rx_msg + 2) > PBIO_IODEV_MODE_NAME_SIZE) {
-                DBG_ERR(data->last_err = "Name is too long");
-                goto err;
-            }
-            snprintf(data->info->mode_info[mode].name,
-                        PBIO_IODEV_MODE_NAME_SIZE + 1, "%s",
-                        data->rx_msg + 2);
-            data->new_mode = mode;
-            data->info_flags |= EV3_UART_INFO_FLAG_INFO_NAME;
+            {
+                data->info_flags &= ~EV3_UART_INFO_FLAG_ALL_INFO;
+                if (data->rx_msg[2] < 'A' || data->rx_msg[2] > 'z') {
+                    DBG_ERR(data->last_err = "Invalid name INFO");
+                    goto err;
+                }
+                /*
+                * Name may not have null terminator and we
+                * are done with the checksum at this point
+                * so we are writing 0 over the checksum to
+                * ensure a null terminator for the string
+                * functions.
+                */
+                data->rx_msg[msg_size - 1] = 0;
+                size_t name_len = strlen((char *)(data->rx_msg + 2));
+                if (name_len > PBIO_IODEV_MODE_NAME_SIZE) {
+                    DBG_ERR(data->last_err = "Name is too long");
+                    goto err;
+                }
+                snprintf(data->info->mode_info[mode].name,
+                         PBIO_IODEV_MODE_NAME_SIZE + 1, "%s", data->rx_msg + 2);
+                data->new_mode = mode;
+                data->info_flags |= EV3_UART_INFO_FLAG_INFO_NAME;
 
-            debug_pr("new_mode: %d\n", data->new_mode);
-            debug_pr("name: %s\n", data->info->mode_info[mode].name);
+                pbio_iodev_mode_flags_t *flags = &data->info->mode_info[mode].flags;
+                if (name_len < 6 && msg_size > 11) {
+                    // newer LPF2 devices send additional mode flags along with the name
+                    memcpy(flags, data->rx_msg + 8, 6);
 
+                    // verify that we can get away with using memcpy here
+                    _Static_assert(sizeof(pbio_iodev_mode_flags_t) == 6,
+                        "pbio_iodev_mode_flags_t must match over-the wire size. Ensure that -fshort-enums compiler flag is set.");
+                }
+                else {
+                    // otherwise look up flags
+                    pbio_uartdev_set_mode_flags(data->type_id, mode, flags);
+                }
+
+                if (flags->flags0 & LPF2_MODE_FLAGS0_MOTOR_POWER) {
+                    data->iodev.motor_flags |= PBIO_IODEV_MOTOR_FLAG_IS_MOTOR;
+                }
+                else if (flags->flags0 & LPF2_MODE_FLAGS0_MOTOR_SPEED) {
+                    data->iodev.motor_flags |= PBIO_IODEV_MOTOR_FLAG_HAS_SPEED;
+                }
+                else if (flags->flags0 & LPF2_MODE_FLAGS0_MOTOR_REL_POS) {
+                    data->iodev.motor_flags |= PBIO_IODEV_MOTOR_FLAG_HAS_REL_POS;
+                }
+                else if (flags->flags0 & LPF2_MODE_FLAGS0_MOTOR_ABS_POS) {
+                    data->iodev.motor_flags |= PBIO_IODEV_MOTOR_FLAG_HAS_ABS_POS;
+                }
+
+                debug_pr("new_mode: %d\n", data->new_mode);
+                debug_pr("name: %s\n", data->info->mode_info[mode].name);
+                debug_pr("flags: %02X %02X %02X %02X %02X %02X\n",
+                    flags->flags0, flags->flags1, flags->flags2,
+                    flags->flags3, flags->flags4, flags->flags5);
+            }
             break;
         case EV3_UART_INFO_RAW:
             if (data->new_mode != mode) {
@@ -689,9 +740,7 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
             goto err;
         }
 
-        if ((data->type_id == PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR ||
-             data->type_id == PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR ||
-             data->type_id == PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR) && data->write_cmd_size > 0) {
+        if (PBIO_IODEV_IS_FEEDBACK_MOTOR(&data->iodev) && data->write_cmd_size > 0) {
             data->tacho_rate = data->rx_msg[1];
             data->tacho_count = uint32_le(data->rx_msg + 2);
         }
@@ -812,6 +861,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t *data)) {
 
     // reset state for new device
     data->info->type_id = PBIO_IODEV_TYPE_ID_NONE;
+    data->iodev.motor_flags = PBIO_IODEV_MOTOR_FLAG_NONE;
     data->ext_mode = 0;
     data->status = PBIO_UARTDEV_STATUS_SYNCING;
     PBIO_PT_WAIT_READY(&data->pt, pbdrv_uart_set_baud_rate(data->uart, EV3_UART_SPEED_MIN));
@@ -951,11 +1001,9 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t *data)) {
     // reset data rx thread
     PT_INIT(&data->data_pt);
 
-    if (data->type_id == PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR ||
-        data->type_id == PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR ||
-        data->type_id == PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR) {
+    if (PBIO_IODEV_IS_FEEDBACK_MOTOR(&data->iodev)) {
         static const uint8_t mode_1_and_2_combo[] = {
-            0x20 | 2,   // modo combo command, 2 modes
+            0x20 | 2,   // mode combo command, 2 modes
             0,          // combo index
             1 << 4 | 0, // mode 1, dataset 0
             2 << 4 | 0, // mode 2, dataset 0
@@ -1176,9 +1224,7 @@ static const pbio_iodev_ops_t pbio_uartdev_ops = {
 static pbio_error_t pbio_uartdev_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
     uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(dev, uartdev_port_data_t, counter_dev);
 
-    if (port_data->info->type_id != PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR &&
-        port_data->info->type_id != PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR &&
-        port_data->info->type_id != PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR) {
+    if (!PBIO_IODEV_IS_FEEDBACK_MOTOR(&port_data->iodev)) {
         return PBIO_ERROR_NO_DEV;
     }
 
@@ -1190,9 +1236,7 @@ static pbio_error_t pbio_uartdev_get_count(pbdrv_counter_dev_t *dev, int32_t *co
 static pbio_error_t pbio_uartdev_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
     uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(dev, uartdev_port_data_t, counter_dev);
 
-    if (port_data->info->type_id != PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR &&
-        port_data->info->type_id != PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR &&
-        port_data->info->type_id != PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR) {
+    if (!PBIO_IODEV_IS_FEEDBACK_MOTOR(&port_data->iodev)) {
         return PBIO_ERROR_NO_DEV;
     }
 
