@@ -83,9 +83,11 @@ static struct testcase_t pbio_math_tests[] = {
 };
 
 PBIO_TEST_FUNC(test_boost_color_distance_sensor);
+PBIO_TEST_FUNC(test_boost_interactive_motor);
 
 static struct testcase_t pbio_uartdev_tests[] = {
     PBIO_PT_THREAD_TEST(test_boost_color_distance_sensor),
+    PBIO_PT_THREAD_TEST(test_boost_interactive_motor),
     END_OF_TESTCASES
 };
 

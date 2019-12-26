@@ -583,6 +583,220 @@ end:
     PT_END(pt);
 }
 
+PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
+    // info messages captured from BOOST Interactive Motor with logic analyzer
+    static const uint8_t msg0[] = { 0x40, 0x26, 0x99 };
+    static const uint8_t msg1[] = { 0x49, 0x03, 0x02, 0xB7 };
+    static const uint8_t msg2[] = { 0x52, 0x00, 0xC2, 0x01, 0x00, 0x6E };
+    static const uint8_t msg3[] = { 0x5F, 0x00, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00, 0x10, 0xA0 };
+    static const uint8_t msg4[] = { 0x93, 0x00, 0x54, 0x45, 0x53, 0x54, 0x7A };
+    static const uint8_t msg5[] = { 0x9B, 0x01, 0x00, 0x00, 0xC8, 0xC2, 0x00, 0x00, 0xC8, 0x42, 0xE5 };
+    static const uint8_t msg6[] = { 0x9B, 0x02, 0x00, 0x00, 0xC8, 0xC2, 0x00, 0x00, 0xC8, 0x42, 0xE6 };
+    static const uint8_t msg7[] = { 0x9B, 0x03, 0x00, 0x00, 0xC8, 0xC2, 0x00, 0x00, 0xC8, 0x42, 0xE7 };
+    static const uint8_t msg8[] = { 0x93, 0x04, 0x54, 0x53, 0x54, 0x00, 0x3B };
+    static const uint8_t msg9[] = { 0x8B, 0x05, 0x00, 0x00, 0x71 };
+    static const uint8_t msg10[] = { 0x93, 0x80, 0x05, 0x01, 0x06, 0x00, 0xEE };
+    static const uint8_t msg11[] = { 0x92, 0x00, 0x50, 0x4F, 0x53, 0x00, 0x21 };
+    static const uint8_t msg12[] = { 0x9A, 0x01, 0x00, 0x00, 0xB4, 0xC3, 0x00, 0x00, 0xB4, 0x43, 0xE4 };
+    static const uint8_t msg13[] = { 0x9A, 0x02, 0x00, 0x00, 0xC8, 0xC2, 0x00, 0x00, 0xC8, 0x42, 0xE7 };
+    static const uint8_t msg14[] = { 0x9A, 0x03, 0x00, 0x00, 0xB4, 0xC3, 0x00, 0x00, 0xB4, 0x43, 0xE6 };
+    static const uint8_t msg15[] = { 0x92, 0x04, 0x44, 0x45, 0x47, 0x00, 0x2F };
+    static const uint8_t msg16[] = { 0x8A, 0x05, 0x08, 0x00, 0x78 };
+    static const uint8_t msg17[] = { 0x92, 0x80, 0x01, 0x02, 0x06, 0x00, 0xE8 };
+    static const uint8_t msg18[] = { 0x99, 0x00, 0x53, 0x50, 0x45, 0x45, 0x44, 0x00, 0x00, 0x00, 0x21 };
+    static const uint8_t msg19[] = { 0x99, 0x01, 0x00, 0x00, 0xC8, 0xC2, 0x00, 0x00, 0xC8, 0x42, 0xE7 };
+    static const uint8_t msg20[] = { 0x99, 0x02, 0x00, 0x00, 0xC8, 0xC2, 0x00, 0x00, 0xC8, 0x42, 0xE4 };
+    static const uint8_t msg21[] = { 0x99, 0x03, 0x00, 0x00, 0xC8, 0xC2, 0x00, 0x00, 0xC8, 0x42, 0xE5 };
+    static const uint8_t msg22[] = { 0x91, 0x04, 0x50, 0x43, 0x54, 0x00, 0x2D };
+    static const uint8_t msg23[] = { 0x89, 0x05, 0x10, 0x00, 0x63 };
+    static const uint8_t msg24[] = { 0x91, 0x80, 0x01, 0x00, 0x04, 0x00, 0xEB };
+    static const uint8_t msg25[] = { 0x98, 0x00, 0x50, 0x4F, 0x57, 0x45, 0x52, 0x00, 0x00, 0x00, 0x38 };
+    static const uint8_t msg26[] = { 0x98, 0x01, 0x00, 0x00, 0xC8, 0xC2, 0x00, 0x00, 0xC8, 0x42, 0xE6 };
+    static const uint8_t msg27[] = { 0x98, 0x02, 0x00, 0x00, 0xC8, 0xC2, 0x00, 0x00, 0xC8, 0x42, 0xE5 };
+    static const uint8_t msg28[] = { 0x98, 0x03, 0x00, 0x00, 0xC8, 0xC2, 0x00, 0x00, 0xC8, 0x42, 0xE4 };
+    static const uint8_t msg29[] = { 0x90, 0x04, 0x50, 0x43, 0x54, 0x00, 0x2C };
+    static const uint8_t msg30[] = { 0x88, 0x05, 0x00, 0x50, 0x22 };
+    static const uint8_t msg31[] = { 0x90, 0x80, 0x01, 0x00, 0x04, 0x00, 0xEA };
+    static const uint8_t msg32[] = { 0x88, 0x06, 0x06, 0x00, 0x77 };
+    static const uint8_t msg33[] = { 0x04 };
+
+    static const uint8_t msg34[] = { 0x04 }; // ACK
+
+    static const uint8_t msg35[] = { 0x54, 0x22, 0x00, 0x10, 0x20, 0xB9 }; // WRITE mode combo
+
+    static const uint8_t msg36[] = { 0xD8, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x27 }; // DATA speed and position combo
+
+    static const uint8_t msg37[] = { 0x02 }; // NACK
+
+    // used in SIMULATE_RX/TX_MSG macros
+    static struct pt child;
+    static bool ok;
+
+    PT_BEGIN(pt);
+
+    process_start(&pbio_uartdev_process, NULL);
+
+    // baud rate for sync messages
+    PT_WAIT_UNTIL(pt, test_uart_dev.baud == 2400);
+
+    // send BOOST Color and Distance sensor info
+    SIMULATE_RX_MSG(msg0);
+    SIMULATE_RX_MSG(msg1);
+    SIMULATE_RX_MSG(msg2);
+    SIMULATE_RX_MSG(msg3);
+    SIMULATE_RX_MSG(msg4);
+    SIMULATE_RX_MSG(msg5);
+    SIMULATE_RX_MSG(msg6);
+    SIMULATE_RX_MSG(msg7);
+    SIMULATE_RX_MSG(msg8);
+    SIMULATE_RX_MSG(msg9);
+    SIMULATE_RX_MSG(msg10);
+    SIMULATE_RX_MSG(msg11);
+    SIMULATE_RX_MSG(msg12);
+    SIMULATE_RX_MSG(msg13);
+    SIMULATE_RX_MSG(msg14);
+    SIMULATE_RX_MSG(msg15);
+    SIMULATE_RX_MSG(msg16);
+    SIMULATE_RX_MSG(msg17);
+    SIMULATE_RX_MSG(msg18);
+    SIMULATE_RX_MSG(msg19);
+    SIMULATE_RX_MSG(msg20);
+    SIMULATE_RX_MSG(msg21);
+    SIMULATE_RX_MSG(msg22);
+    SIMULATE_RX_MSG(msg23);
+    SIMULATE_RX_MSG(msg24);
+    SIMULATE_RX_MSG(msg25);
+    SIMULATE_RX_MSG(msg26);
+    SIMULATE_RX_MSG(msg27);
+    SIMULATE_RX_MSG(msg28);
+    SIMULATE_RX_MSG(msg29);
+    SIMULATE_RX_MSG(msg30);
+    SIMULATE_RX_MSG(msg31);
+    SIMULATE_RX_MSG(msg32);
+    SIMULATE_RX_MSG(msg33);
+
+    // wait for ACK
+    SIMULATE_TX_MSG(msg34);
+
+    // wait for baud rate change
+    PT_WAIT_UNTIL(pt, test_uart_dev.baud == 115200);
+
+    // motors get WRITE message to setup mode combos
+    SIMULATE_TX_MSG(msg35);
+
+    // same message is received in respose along with data message
+    SIMULATE_RX_MSG(msg35);
+    SIMULATE_RX_MSG(msg36);
+
+    // should be synced now are receive regular pings
+    static int i;
+    for (i = 0; i < 10; i++) {
+        // wait for NACK
+        SIMULATE_TX_MSG(msg37);
+
+        // reply with data
+        SIMULATE_RX_MSG(msg36);
+    }
+
+    static pbio_iodev_t *iodev;
+    tt_uint_op(pbio_uartdev_get(0, &iodev), ==, PBIO_SUCCESS);
+    tt_want_uint_op(iodev->info->type_id, ==, PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR);
+    tt_want_uint_op(iodev->info->num_modes, ==, 4);
+    tt_want_uint_op(iodev->info->num_view_modes, ==, 3);
+    // TODO: verify fw/hw versions
+    // TODO: verify mode combinations
+    tt_want_uint_op(iodev->motor_flags, ==, PBIO_IODEV_MOTOR_FLAG_IS_MOTOR |
+        PBIO_IODEV_MOTOR_FLAG_HAS_SPEED | PBIO_IODEV_MOTOR_FLAG_HAS_REL_POS);
+    tt_want_uint_op(iodev->mode, ==, 0);
+
+    tt_want_str_op(iodev->info->mode_info[0].name, ==, "POWER");
+    tt_want_uint_op(iodev->info->mode_info[0].flags.flags0, ==,
+        LPF2_MODE_FLAGS0_MOTOR | LPF2_MODE_FLAGS0_MOTOR_POWER);
+    tt_want_uint_op(iodev->info->mode_info[0].flags.flags1, ==, LPF2_MODE_FLAGS1_NONE);
+    tt_want_uint_op(iodev->info->mode_info[0].flags.flags4, ==, LPF2_MODE_FLAGS4_USES_HBRIDGE);
+    tt_want_uint_op(iodev->info->mode_info[0].flags.flags5, ==, LPF2_MODE_FLAGS5_UNKNOWN_BIT1);
+    tt_want_float_op(iodev->info->mode_info[0].raw_min, ==, -100.0);
+    tt_want_float_op(iodev->info->mode_info[0].raw_max, ==, 100.0);
+    tt_want_float_op(iodev->info->mode_info[0].pct_min, ==, -100.0);
+    tt_want_float_op(iodev->info->mode_info[0].pct_max, ==, 100.0);
+    tt_want_float_op(iodev->info->mode_info[0].si_min, ==, -100.0);
+    tt_want_float_op(iodev->info->mode_info[0].si_max, ==, 100.0);
+    tt_want_str_op(iodev->info->mode_info[0].uom, ==, "PCT");
+    tt_want_uint_op(iodev->info->mode_info[0].input_flags, ==, 0);
+    tt_want_uint_op(iodev->info->mode_info[0].output_flags, ==,
+        LPF2_MAPPING_FLAG_2_0 | LPF2_MAPPING_FLAG_ABSOLUTE);
+    tt_want_uint_op(iodev->info->mode_info[0].num_values, ==, 1);
+    tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(iodev->info->mode_info[0].digits, ==, 4);
+    tt_want_uint_op(iodev->info->mode_info[0].decimals, ==, 0);
+
+    tt_want_str_op(iodev->info->mode_info[1].name, ==, "SPEED");
+    tt_want_uint_op(iodev->info->mode_info[1].flags.flags0, ==,
+        LPF2_MODE_FLAGS0_MOTOR | LPF2_MODE_FLAGS0_MOTOR_SPEED);
+    tt_want_uint_op(iodev->info->mode_info[1].flags.flags1, ==, LPF2_MODE_FLAGS1_NONE);
+    tt_want_uint_op(iodev->info->mode_info[1].flags.flags4, ==, LPF2_MODE_FLAGS4_USES_HBRIDGE);
+    tt_want_uint_op(iodev->info->mode_info[1].flags.flags5, ==, LPF2_MODE_FLAGS5_UNKNOWN_BIT1);
+    tt_want_float_op(iodev->info->mode_info[1].raw_min, ==, -100.0);
+    tt_want_float_op(iodev->info->mode_info[1].raw_max, ==, 100.0);
+    tt_want_float_op(iodev->info->mode_info[1].pct_min, ==, -100.0);
+    tt_want_float_op(iodev->info->mode_info[1].pct_max, ==, 100.0);
+    tt_want_float_op(iodev->info->mode_info[1].si_min, ==, -100.0);
+    tt_want_float_op(iodev->info->mode_info[1].si_max, ==, 100.0);
+    tt_want_str_op(iodev->info->mode_info[1].uom, ==, "PCT");
+    tt_want_uint_op(iodev->info->mode_info[1].input_flags, ==, LPF2_MAPPING_FLAG_ABSOLUTE);
+    tt_want_uint_op(iodev->info->mode_info[1].output_flags, ==, 0);
+    tt_want_uint_op(iodev->info->mode_info[1].num_values, ==, 1);
+    tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(iodev->info->mode_info[1].digits, ==, 4);
+    tt_want_uint_op(iodev->info->mode_info[1].decimals, ==, 0);
+
+    tt_want_str_op(iodev->info->mode_info[2].name, ==, "POS");
+    tt_want_uint_op(iodev->info->mode_info[2].flags.flags0, ==,
+        LPF2_MODE_FLAGS0_MOTOR | LPF2_MODE_FLAGS0_MOTOR_REL_POS);
+    tt_want_uint_op(iodev->info->mode_info[2].flags.flags1, ==, LPF2_MODE_FLAGS1_NONE);
+    tt_want_uint_op(iodev->info->mode_info[2].flags.flags4, ==, LPF2_MODE_FLAGS4_USES_HBRIDGE);
+    tt_want_uint_op(iodev->info->mode_info[2].flags.flags5, ==, LPF2_MODE_FLAGS5_UNKNOWN_BIT1);
+    tt_want_float_op(iodev->info->mode_info[2].raw_min, ==, -360.0);
+    tt_want_float_op(iodev->info->mode_info[2].raw_max, ==, 360.0);
+    tt_want_float_op(iodev->info->mode_info[2].pct_min, ==, -100.0);
+    tt_want_float_op(iodev->info->mode_info[2].pct_max, ==, 100.0);
+    tt_want_float_op(iodev->info->mode_info[2].si_min, ==, -360.0);
+    tt_want_float_op(iodev->info->mode_info[2].si_max, ==, 360.0);
+    tt_want_str_op(iodev->info->mode_info[2].uom, ==, "DEG");
+    tt_want_uint_op(iodev->info->mode_info[2].input_flags, ==, LPF2_MAPPING_FLAG_RELATIVE);
+    tt_want_uint_op(iodev->info->mode_info[2].output_flags, ==, 0);
+    tt_want_uint_op(iodev->info->mode_info[2].num_values, ==, 1);
+    tt_want_uint_op(iodev->info->mode_info[2].data_type, ==, PBIO_IODEV_DATA_TYPE_INT32);
+    tt_want_uint_op(iodev->info->mode_info[2].digits, ==, 6);
+    tt_want_uint_op(iodev->info->mode_info[2].decimals, ==, 0);
+
+    tt_want_str_op(iodev->info->mode_info[3].name, ==, "TEST");
+    tt_want_uint_op(iodev->info->mode_info[3].flags.flags0, ==, LPF2_MODE_FLAGS0_NONE);
+    tt_want_uint_op(iodev->info->mode_info[3].flags.flags1, ==, LPF2_MODE_FLAGS1_NONE);
+    tt_want_uint_op(iodev->info->mode_info[3].flags.flags4, ==, LPF2_MODE_FLAGS4_USES_HBRIDGE);
+    tt_want_uint_op(iodev->info->mode_info[3].flags.flags5, ==, LPF2_MODE_FLAGS5_UNKNOWN_BIT1);
+    tt_want_float_op(iodev->info->mode_info[3].raw_min, ==, -100.0);
+    tt_want_float_op(iodev->info->mode_info[3].raw_max, ==, 100.0);
+    tt_want_float_op(iodev->info->mode_info[3].pct_min, ==, -100.0);
+    tt_want_float_op(iodev->info->mode_info[3].pct_max, ==, 100.0);
+    tt_want_float_op(iodev->info->mode_info[3].si_min, ==, -100.0);
+    tt_want_float_op(iodev->info->mode_info[3].si_max, ==, 100.0);
+    tt_want_str_op(iodev->info->mode_info[3].uom, ==, "TST");
+    tt_want_uint_op(iodev->info->mode_info[3].input_flags, ==, 0);
+    tt_want_uint_op(iodev->info->mode_info[3].output_flags, ==, 0);
+    tt_want_uint_op(iodev->info->mode_info[3].num_values, ==, 5);
+    tt_want_uint_op(iodev->info->mode_info[3].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(iodev->info->mode_info[3].digits, ==, 6);
+    tt_want_uint_op(iodev->info->mode_info[3].decimals, ==, 0);
+
+    PT_YIELD(pt);
+
+end:
+    process_exit(&pbio_uartdev_process);
+
+    PT_END(pt);
+}
+
 const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[] = {
     [0] = {
         .uart_id = 0,
