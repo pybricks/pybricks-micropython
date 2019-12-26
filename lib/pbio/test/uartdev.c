@@ -94,7 +94,7 @@ end:
     tt_assert_msg(ok, #msg); \
 } while (0)
 
-PT_THREAD(pbio_uartdev_test(struct pt *pt)) {
+PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     // info messages captured from BOOST Color Distance Sensor with logic analyzer
     static const uint8_t msg0[] = { 0x40, 0x25, 0x9A };
     static const uint8_t msg1[] = { 0x51, 0x07, 0x07, 0x0A, 0x07, 0xA3 };
