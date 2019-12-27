@@ -203,6 +203,7 @@ typedef enum {
  * @info_flags: Flags indicating what information has already been read
  * 	from the data.
  * @tacho_count: The tacho count received from an LPF2 motor
+ * @abs_pos: The absolute position received from an LPF2 motor
  * @tx_msg: Buffer to hold messages transmitted to the device
  * @rx_msg: Buffer to hold messages received from the device
  * @rx_msg_size: Size of the current message being received
@@ -237,6 +238,7 @@ typedef struct {
     uint32_t new_baud_rate;
     uint32_t info_flags;
     int32_t tacho_count;
+    int16_t abs_pos;
     uint8_t *tx_msg;
     uint8_t *rx_msg;
     uint8_t rx_msg_size;
@@ -751,6 +753,9 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
         if (PBIO_IODEV_IS_FEEDBACK_MOTOR(&data->iodev) && data->write_cmd_size > 0) {
             data->tacho_rate = data->rx_msg[1];
             data->tacho_count = uint32_le(data->rx_msg + 2);
+            if (data->iodev.motor_flags & PBIO_IODEV_MOTOR_FLAG_HAS_ABS_POS) {
+                data->abs_pos = data->rx_msg[7] << 8 | data->rx_msg[6];
+            }
         }
         else {
             if (mode >= data->info->num_modes) {
@@ -1297,6 +1302,22 @@ static pbio_error_t pbio_uartdev_get_count(pbdrv_counter_dev_t *dev, int32_t *co
     return PBIO_SUCCESS;
 }
 
+static pbio_error_t pbio_uartdev_get_abs_count(pbdrv_counter_dev_t *dev, int32_t *count) {
+    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(dev, uartdev_port_data_t, counter_dev);
+
+    if (!PBIO_IODEV_IS_FEEDBACK_MOTOR(&port_data->iodev)) {
+        return PBIO_ERROR_NO_DEV;
+    }
+
+    if (!(port_data->iodev.motor_flags & PBIO_IODEV_MOTOR_FLAG_HAS_ABS_POS)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    *count = port_data->abs_pos;
+
+    return PBIO_SUCCESS;
+}
+
 static pbio_error_t pbio_uartdev_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
     uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(dev, uartdev_port_data_t, counter_dev);
 
@@ -1323,6 +1344,7 @@ static PT_THREAD(pbio_uartdev_init(struct pt *pt, uint8_t id)) {
     port_data->iodev.info = &infos[id].info;
     port_data->iodev.ops = &pbio_uartdev_ops;
     port_data->counter_dev.get_count = pbio_uartdev_get_count;
+    port_data->counter_dev.get_abs_count = pbio_uartdev_get_abs_count;
     port_data->counter_dev.get_rate = pbio_uartdev_get_rate;
     port_data->counter_dev.initalized = true;
     port_data->info =  &infos[id].info;

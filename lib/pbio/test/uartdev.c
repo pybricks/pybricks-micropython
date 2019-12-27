@@ -8,6 +8,7 @@
 #include <tinytest.h>
 #include <tinytest_macros.h>
 
+#include <pbdrv/counter.h>
 #include <pbdrv/uart.h>
 #include <pbio/iodev.h>
 #include <pbio/main.h>
@@ -305,6 +306,14 @@ PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
 
     // wait for baud rate change
     PT_WAIT_UNTIL(pt, test_uart_dev.baud == 115200);
+
+    PT_YIELD(pt);
+
+    pbdrv_counter_dev_t *counter;
+    tt_want_uint_op(pbdrv_counter_get(0, &counter), ==, PBIO_SUCCESS);
+    int32_t count;
+    tt_want_uint_op(pbdrv_counter_get_count(counter, &count), ==, PBIO_ERROR_NO_DEV);
+    tt_want_uint_op(pbdrv_counter_get_abs_count(counter, &count), ==, PBIO_ERROR_NO_DEV);
 
     // should be synced now are receive regular pings
     static int i;
@@ -699,6 +708,15 @@ PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     SIMULATE_RX_MSG(msg35);
     SIMULATE_RX_MSG(msg36);
 
+    PT_YIELD(pt);
+
+    pbdrv_counter_dev_t *counter;
+    tt_want_uint_op(pbdrv_counter_get(0, &counter), ==, PBIO_SUCCESS);
+    int32_t count;
+    tt_want_uint_op(pbdrv_counter_get_count(counter, &count), ==, PBIO_SUCCESS);
+    tt_want_int_op(count, ==, -1);
+    tt_want_uint_op(pbdrv_counter_get_abs_count(counter, &count), ==, PBIO_ERROR_INVALID_OP);
+
     // should be synced now are receive regular pings
     static int i;
     for (i = 0; i < 10; i++) {
@@ -954,6 +972,16 @@ PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     // same message is received in respose along with data message
     SIMULATE_RX_MSG(msg56);
     SIMULATE_RX_MSG(msg57);
+
+    PT_YIELD(pt);
+
+    pbdrv_counter_dev_t *counter;
+    tt_want_uint_op(pbdrv_counter_get(0, &counter), ==, PBIO_SUCCESS);
+    int32_t count;
+    tt_want_uint_op(pbdrv_counter_get_count(counter, &count), ==, PBIO_SUCCESS);
+    tt_want_int_op(count, ==, 0);
+    tt_want_uint_op(pbdrv_counter_get_abs_count(counter, &count), ==, PBIO_SUCCESS);
+    tt_want_int_op(count, ==, 23);
 
     // should be synced now are receive regular pings
     static int i;
@@ -1262,6 +1290,16 @@ PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     // same message is received in respose along with data message
     SIMULATE_RX_MSG(msg56);
     SIMULATE_RX_MSG(msg57);
+
+    PT_YIELD(pt);
+
+    pbdrv_counter_dev_t *counter;
+    tt_want_uint_op(pbdrv_counter_get(0, &counter), ==, PBIO_SUCCESS);
+    int32_t count;
+    tt_want_uint_op(pbdrv_counter_get_count(counter, &count), ==, PBIO_SUCCESS);
+    tt_want_int_op(count, ==, 0);
+    tt_want_uint_op(pbdrv_counter_get_abs_count(counter, &count), ==, PBIO_SUCCESS);
+    tt_want_int_op(count, ==, 65);
 
     // should be synced now are receive regular pings
     static int i;
