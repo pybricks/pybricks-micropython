@@ -298,7 +298,7 @@ pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
         }
 
         *id = iodev->info->type_id;
-        printf("%d\n", *id);
+
         return PBIO_SUCCESS;
     }
 
