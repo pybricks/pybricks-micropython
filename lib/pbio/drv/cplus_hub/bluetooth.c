@@ -3,6 +3,10 @@
 
 // Bluetooth for STM32 MCU with TI CC2640
 
+#include <pbdrv/config.h>
+
+#if PBDRV_CONFIG_BLUETOOTH
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -1291,3 +1295,5 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
 
     PROCESS_END();
 }
+
+#endif // PBDRV_CONFIG_BLUETOOTH
