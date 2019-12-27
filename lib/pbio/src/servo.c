@@ -358,7 +358,7 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, int32_t time_now, i
 
     // Log reference signals. These values are only meaningful for time based commands
     int32_t count_ref, rate_ref, rate_err, rate_err_integral;
-    get_reference(time_now, &srv->control.trajectory, &count_ref, &rate_ref);
+    pbio_trajectory_get_reference(time_now, &srv->control.trajectory, &count_ref, &rate_ref);
     pbio_rate_integrator_get_errors(&srv->control.rate_integrator, rate_now, rate_ref, count_now, count_ref, &rate_err, &rate_err_integral);
     buf[5] = count_ref;
     buf[6] = rate_err_integral;
@@ -448,7 +448,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
 
     if (busy) {
         // If a maneuver is ongoing, we start from the current reference
-        get_reference(time_start, &srv->control.trajectory, &count_start, &rate_start);
+        pbio_trajectory_get_reference(time_start, &srv->control.trajectory, &count_start, &rate_start);
 
         // Pause and unpause the integrator. This saves the current state, so we can resume
         // with the newly activated trajectory. 
@@ -468,7 +468,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     srv->control.is_done_func = pbio_control_never_done;
 
     // Compute new maneuver based on user argument, starting from the initial state
-    err = make_trajectory_time_based_forever(
+    err = pbio_trajectory_make_forever(
         time_start,
         count_start,
         rate_start,
@@ -535,7 +535,7 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
     srv->control.is_done_func = run_time_is_done_func;
 
     // Compute new maneuver based on user argument, starting from the initial state
-    err = make_trajectory_time_based(
+    err = pbio_trajectory_make_time_based(
         time_start,
         time_start + duration*US_PER_MS,
         count_start,
@@ -625,7 +625,7 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
     srv->control.is_done_func = run_target_is_done_func; 
 
     // Compute new maneuver based on user argument, starting from the initial state
-    err = make_trajectory_angle_based(
+    err = pbio_trajectory_make_angle_based(
         time_start,
         count_start,
         pbio_math_mul_i32_fix16(target, srv->tacho->counts_per_output_unit),
@@ -692,7 +692,7 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     srv->control.is_done_func = pbio_control_never_done; 
 
     // Compute new maneuver based on user argument, starting from the initial state
-    make_trajectory_none(time_start, pbio_math_mul_i32_fix16(target, srv->tacho->counts_per_output_unit), 0, &srv->control.trajectory);
+    pbio_trajectory_make_stationary(time_start, pbio_math_mul_i32_fix16(target, srv->tacho->counts_per_output_unit), 0, &srv->control.trajectory);
 
     // Initialize or reset the PID control status for the given maneuver
     int32_t integrator_max = (US_PER_SECOND/srv->control.settings.pid_ki)*srv->control.settings.max_control;

@@ -46,14 +46,14 @@ typedef struct _pbio_control_trajectory_t {
     int32_t a2;                          /**<  Encoder acceleration during out-phase */
 } pbio_control_trajectory_t;
 
-void make_trajectory_none(int32_t t0, int32_t th0, int32_t w1, pbio_control_trajectory_t *ref);
+void pbio_trajectory_make_stationary(int32_t t0, int32_t th0, int32_t w1, pbio_control_trajectory_t *ref);
 
-pbio_error_t make_trajectory_time_based(int32_t t0, int32_t t3, int32_t th0, int32_t w0, int32_t wt, int32_t wmax, int32_t a, pbio_control_trajectory_t *ref);
+pbio_error_t pbio_trajectory_make_time_based(int32_t t0, int32_t t3, int32_t th0, int32_t w0, int32_t wt, int32_t wmax, int32_t a, pbio_control_trajectory_t *ref);
 
-pbio_error_t make_trajectory_time_based_forever(int32_t t0, int32_t th0, int32_t w0, int32_t wt, int32_t wmax, int32_t a, pbio_control_trajectory_t *ref);
+pbio_error_t pbio_trajectory_make_forever(int32_t t0, int32_t th0, int32_t w0, int32_t wt, int32_t wmax, int32_t a, pbio_control_trajectory_t *ref);
 
-pbio_error_t make_trajectory_angle_based(int32_t t0, int32_t th0, int32_t th3, int32_t w0, int32_t wt, int32_t wmax, int32_t a, pbio_control_trajectory_t *ref);
+pbio_error_t pbio_trajectory_make_angle_based(int32_t t0, int32_t th0, int32_t th3, int32_t w0, int32_t wt, int32_t wmax, int32_t a, pbio_control_trajectory_t *ref);
 
-void get_reference(int32_t time_ref, pbio_control_trajectory_t *traject, int32_t *count_ref, int32_t *rate_ref);
+void pbio_trajectory_get_reference(int32_t time_ref, pbio_control_trajectory_t *traject, int32_t *count_ref, int32_t *rate_ref);
 
 #endif // _PBIO_TRAJECTORY_H_

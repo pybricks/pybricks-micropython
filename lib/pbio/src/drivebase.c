@@ -265,7 +265,7 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t t
     db->control_heading.is_done_func = pbio_control_never_done;
 
     pbio_control_trajectory_t *heading_traj = &db->control_heading.trajectory;
-    err = make_trajectory_time_based_forever(
+    err = pbio_trajectory_make_forever(
         time_now,
         dif,
         dif_rate,
@@ -281,7 +281,7 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t t
     db->control_distance.is_done_func = pbio_control_never_done;
 
     pbio_control_trajectory_t *distance_traj = &db->control_distance.trajectory;
-    err = make_trajectory_time_based_forever(
+    err = pbio_trajectory_make_forever(
         time_now,
         sum,
         sum_rate,
