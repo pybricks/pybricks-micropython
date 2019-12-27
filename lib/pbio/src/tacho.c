@@ -32,10 +32,14 @@ static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pb
         return err;
     }
 
-    // Set the offset such that tacho output is 0.
-    return pbio_tacho_reset_angle(tacho, 0);
+    int32_t abs_count;
+    if (pbdrv_counter_get_abs_count(tacho->counter, &abs_count) != PBIO_SUCCESS) {
+        abs_count = 0;
+    }
 
-    // TODO: Enable reset to absolute value if available
+    // Set the offset such that tacho output is 0 or the current absolute
+    // count if the motor supports it.
+    return pbio_tacho_reset_count(tacho, abs_count);
 }
 
 pbio_error_t pbio_tacho_get(pbio_port_t port, pbio_tacho_t **tacho, pbio_direction_t direction, fix16_t counts_per_degree, fix16_t gear_ratio) {
