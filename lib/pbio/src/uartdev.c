@@ -1338,9 +1338,10 @@ PROCESS_THREAD(pbio_uartdev_process, ev, data) {
 
     while (true) {
         for (i = 0; i < PBIO_CONFIG_UARTDEV_NUM_DEV; i++) {
-            pbio_uartdev_update(&dev_data[i]);
-            if (dev_data[i].status == PBIO_UARTDEV_STATUS_DATA) {
-                pbio_uartdev_receive_data(&dev_data[i]);
+            uartdev_port_data_t *data = &dev_data[i];
+            pbio_uartdev_update(data);
+            if (data->status == PBIO_UARTDEV_STATUS_DATA) {
+                pbio_uartdev_receive_data(data);
             }
         }
         PROCESS_WAIT_EVENT();
