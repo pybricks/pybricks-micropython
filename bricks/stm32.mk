@@ -235,6 +235,7 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	src/servo.c \
 	src/tacho.c \
 	src/trajectory.c \
+	src/trajectory_ext.c \
 	src/integrator.c \
 	src/uartdev.c \
 	)

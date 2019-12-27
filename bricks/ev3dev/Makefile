@@ -263,6 +263,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	pbio/src/sound.c \
 	pbio/src/tacho.c \
 	pbio/src/trajectory.c \
+	pbio/src/trajectory_ext.c \
 	pbio/src/integrator.c \
 	)
 
