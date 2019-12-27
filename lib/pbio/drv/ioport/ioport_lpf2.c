@@ -305,8 +305,8 @@ static PT_THREAD(poll_dcm(ioport_dev_t *ioport)) {
     // set ID2 as input
     pbdrv_gpio_input(&pins.id2);
 
-    // set ID1 low
-    pbdrv_gpio_out_low(&pins.uart_tx);
+    // set ID1 high
+    pbdrv_gpio_out_high(&pins.uart_tx);
     pbdrv_gpio_out_low(&pins.uart_buf);
 
     if (data->type_id == data->prev_type_id) {
