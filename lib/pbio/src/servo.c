@@ -566,44 +566,19 @@ static bool run_until_stalled_is_done_func(pbio_control_trajectory_t *trajectory
 
 pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio_actuation_t after_stop) {
 
-    // Get the intitial state, either based on physical motor state or ongoing maneuver
-    int32_t time_start;
-    int32_t count_start;
-    int32_t rate_start;
-    pbio_error_t err;
-    err = servo_get_state(srv, &time_start, &count_start, &rate_start);
+    // This is almost the same as run forever...
+    pbio_error_t err = pbio_servo_run(srv, speed);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // Set new maneuver action and stop type
-    srv->control.after_stop = after_stop;
+    // ... just with a different stop condition
     srv->control.is_done_func = run_until_stalled_is_done_func;
+    srv->control.after_stop = after_stop;
 
-    // Compute new maneuver based on user argument, starting from the initial state
-    err = make_trajectory_time_based_forever(
-        time_start,
-        count_start,
-        rate_start,
-        pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit),
-        srv->control.settings.max_rate,
-        srv->control.settings.abs_acceleration,
-        &srv->control.trajectory);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Initialize or reset the PID control status for the given maneuver
-    pbio_rate_integrator_reset(&srv->control.rate_integrator, 0, srv->control.trajectory.th0, srv->control.trajectory.th0);
-
-    // Run until stalled is always in the foreground
+    // Run until stalled is always in the foreground, so we can return the
+    // final motor angle when we are done.
     srv->state = PBIO_SERVO_STATE_TIME_FOREGROUND;
-
-    // Run one control update synchronously with user command.
-    err = pbio_servo_control_update(srv);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
 
     return PBIO_SUCCESS;
 }
