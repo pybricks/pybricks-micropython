@@ -449,11 +449,18 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     if (busy) {
         // If a maneuver is ongoing, we start from the current reference
         get_reference(time_start, &srv->control.trajectory, &count_start, &rate_start);
+
+        // Pause and unpause the integrator. This saves the current state, so we can resume
+        // with the newly activated trajectory. 
+        pbio_rate_integrator_pause(&srv->control.rate_integrator, time_start, count_now, count_start);
+        pbio_rate_integrator_resume(&srv->control.rate_integrator, time_start, count_now, count_start);
     }
     else {
         // Otherwise, start from the physical state
         count_start = count_now;
         rate_start = rate_now;
+        // Reset the integrator to a clean state
+        pbio_rate_integrator_reset(&srv->control.rate_integrator, time_start, count_now, count_start);
     }
 
     // Set new maneuver action and stop type
@@ -472,9 +479,6 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     if (err != PBIO_SUCCESS) {
         return err;
     }
-
-    // Initialize or reset the PID control status for the given maneuver
-    pbio_rate_integrator_reset(&srv->control.rate_integrator, 0, srv->control.trajectory.th0, srv->control.trajectory.th0);
 
     // Run is always in the background
     srv->state = PBIO_SERVO_STATE_TIME_BACKGROUND;
