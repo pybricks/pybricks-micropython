@@ -443,10 +443,10 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
         return err;
     }
 
-    // Check if a maneuver is in progress
-    bool busy = srv->state == PBIO_SERVO_STATE_TIME_FOREGROUND || srv->state == PBIO_SERVO_STATE_TIME_BACKGROUND;
+    // Check if a maneuver is in progress so we can extend it
+    bool resume = srv->state == PBIO_SERVO_STATE_TIME_FOREGROUND || srv->state == PBIO_SERVO_STATE_TIME_BACKGROUND;
 
-    if (busy) {
+    if (resume) {
         // If a maneuver is ongoing, we start from the current reference
         pbio_trajectory_get_reference(time_start, &srv->control.trajectory, &count_start, &rate_start);
 
@@ -469,13 +469,14 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
 
     // Compute new maneuver based on user argument, starting from the initial state
     err = pbio_trajectory_make_forever(
+        &srv->control.trajectory,
         time_start,
         count_start,
         rate_start,
         pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit),
         srv->control.settings.max_rate,
         srv->control.settings.abs_acceleration,
-        &srv->control.trajectory);
+        resume);
     if (err != PBIO_SUCCESS) {
         return err;
     }

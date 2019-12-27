@@ -9,7 +9,7 @@
 #include <pbio/math.h>
 #include <pbio/trajectory.h>
 
-pbio_error_t pbio_trajectory_make_forever(int32_t t0, int32_t th0, int32_t w0, int32_t wt, int32_t wmax, int32_t a, pbio_control_trajectory_t *ref) {
+pbio_error_t pbio_trajectory_make_forever(pbio_control_trajectory_t *ref, int32_t t0, int32_t th0, int32_t w0, int32_t wt, int32_t wmax, int32_t a, bool resume) {
     // For infinite maneuvers like RUN and RUN_STALLED, no end time is specified, so we take a
     // fictitious 60 seconds. This allows us to use the same code to get the trajectory for the
     // initial acceleration phase and the constant speed phase. Setting the forever flag allows
