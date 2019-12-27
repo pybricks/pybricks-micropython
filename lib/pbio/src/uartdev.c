@@ -225,6 +225,8 @@ typedef struct {
     struct pt data_pt;
     struct pt speed_pt;
     uint8_t speed_payload[4];
+    uint8_t mode_combo_payload[5];
+    uint8_t mode_combo_size;
     struct etimer timer;
     pbdrv_uart_dev_t *uart;
     pbio_iodev_info_t *info;
@@ -1061,17 +1063,20 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t *data)) {
     PT_INIT(&data->data_pt);
 
     if (PBIO_IODEV_IS_FEEDBACK_MOTOR(&data->iodev)) {
-        static const uint8_t mode_1_and_2_combo[] = {
-            0x20 | 2,   // mode combo command, 2 modes
-            0,          // combo index
-            1 << 4 | 0, // mode 1, dataset 0
-            2 << 4 | 0, // mode 2, dataset 0
-        };
+        data->mode_combo_size = __builtin_popcount(data->info->mode_combos) + 2;
+        data->mode_combo_payload[0] = 0x20 | (data->mode_combo_size - 2); // mode combo command, x modes
+        data->mode_combo_payload[1] = 0; // combo index
+        data->mode_combo_payload[2] = 1 << 4 | 0; // mode 1, dataset 0
+        data->mode_combo_payload[3] = 2 << 4 | 0; // mode 2, dataset 0
+        data->mode_combo_payload[4] = 3 << 4 | 0; // mode 3, dataset 0
+        // HACK: we are cheating here and assuming that all mode combinations
+        // are consecutive, starting with mode 1 and data->mode_combo_size
+        // chops off any unused mode (i.e. APOS)
 
         // setup motor to send position and speed data
         PBIO_PT_WAIT_READY(&data->pt,
             err = ev3_uart_begin_tx_msg(data, EV3_UART_MSG_TYPE_CMD, EV3_UART_CMD_WRITE,
-                mode_1_and_2_combo, PBIO_ARRAY_SIZE(mode_1_and_2_combo)));
+                data->mode_combo_payload, data->mode_combo_size));
         if (err != PBIO_SUCCESS) {
             DBG_ERR(data->last_err = "UART Tx begin error during motor");
             goto err;

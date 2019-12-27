@@ -866,8 +866,7 @@ PT_THREAD(test_technic_large_motor(struct pt *pt)) {
 
     static const uint8_t msg55[] = { 0x04 }; // ACK
 
-    static const uint8_t msg56x[] = { 0x54, 0x22, 0x00, 0x10, 0x20, 0xB9 }; // WRITE mode combo
-    // static const uint8_t msg56[] = { 0x5C, 0x23, 0x00, 0x10, 0x20, 0x30, 0x00, 0x00, 0x00, 0x80 }; // WRITE mode combo
+    static const uint8_t msg56[] = { 0x5C, 0x23, 0x00, 0x10, 0x20, 0x30, 0x00, 0x00, 0x00, 0x80 }; // WRITE mode combo
 
     static const uint8_t msg57[] = { 0xD8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x17, 0x00, 0x00, 0x30 }; // DATA speed and position combo
 
@@ -950,10 +949,10 @@ PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     SIMULATE_TX_MSG(msg55);
 
     // motors get WRITE message to setup mode combos
-    SIMULATE_TX_MSG(msg56x);
+    SIMULATE_TX_MSG(msg56);
 
     // same message is received in respose along with data message
-    SIMULATE_RX_MSG(msg56x);
+    SIMULATE_RX_MSG(msg56);
     SIMULATE_RX_MSG(msg57);
 
     // should be synced now are receive regular pings
@@ -1175,8 +1174,7 @@ PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
 
     static const uint8_t msg55[] = { 0x04 }; // ACK
 
-    static const uint8_t msg56x[] = { 0x54, 0x22, 0x00, 0x10, 0x20, 0xB9 }; // WRITE mode combo
-    // static const uint8_t msg56[] = { 0x5C, 0x23, 0x00, 0x10, 0x20, 0x30, 0x00, 0x00, 0x00, 0x80 }; // WRITE mode combo
+    static const uint8_t msg56[] = { 0x5C, 0x23, 0x00, 0x10, 0x20, 0x30, 0x00, 0x00, 0x00, 0x80 }; // WRITE mode combo
 
     static const uint8_t msg57[] = { 0xD8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x41, 0x00, 0x00, 0x66 }; // DATA speed and position combo
 
@@ -1259,10 +1257,10 @@ PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     SIMULATE_TX_MSG(msg55);
 
     // motors get WRITE message to setup mode combos
-    SIMULATE_TX_MSG(msg56x);
+    SIMULATE_TX_MSG(msg56);
 
     // same message is received in respose along with data message
-    SIMULATE_RX_MSG(msg56x);
+    SIMULATE_RX_MSG(msg56);
     SIMULATE_RX_MSG(msg57);
 
     // should be synced now are receive regular pings
