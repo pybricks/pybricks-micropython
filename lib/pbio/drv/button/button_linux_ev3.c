@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 Laurens Valk
 
+#include <pbdrv/config.h>
+
+#if PBDRV_CONFIG_BUTTON_LINUX_EV3
+
 #include <linux/input.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -55,3 +59,5 @@ pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
 
     return PBIO_SUCCESS;
 }
+
+#endif // PBDRV_CONFIG_BUTTON_LINUX_EV3

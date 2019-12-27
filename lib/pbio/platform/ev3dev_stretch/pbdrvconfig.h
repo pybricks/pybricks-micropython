@@ -12,6 +12,7 @@
 #define PBDRV_CONFIG_BATTERY_LINUX_EV3                      (1)
 
 #define PBDRV_CONFIG_BUTTON                                 (1)
+#define PBDRV_CONFIG_BUTTON_LINUX_EV3                       (1)
 
 #define PBDRV_CONFIG_COUNTER                                (1)
 #define PBDRV_CONFIG_COUNTER_NUM_DEV                        (4)
