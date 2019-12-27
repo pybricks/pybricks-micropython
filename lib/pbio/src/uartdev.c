@@ -61,6 +61,7 @@
 #define EV3_UART_TYPE_MIN           29      // EV3 color sensor
 #define EV3_UART_TYPE_MAX           101
 #define EV3_UART_SPEED_MIN          2400
+#define EV3_UART_SPEED_LPF2         115200  // standard baud rate for Powered Up
 #define EV3_UART_SPEED_MAX          460800  // in practice 115200 is max
 #define EV3_UART_MODE_MAX           7       // Powered Up devices can have max of 15 modes
                                             // by using EV3_UART_INFO_MODE_PLUS_8
@@ -222,6 +223,8 @@ typedef struct {
     pbdrv_counter_dev_t counter_dev;
     struct pt pt;
     struct pt data_pt;
+    struct pt speed_pt;
+    uint8_t speed_payload[4];
     struct etimer timer;
     pbdrv_uart_dev_t *uart;
     pbio_iodev_info_t *info;
@@ -786,10 +789,6 @@ static pbio_error_t ev3_uart_begin_tx_msg(uartdev_port_data_t *port_data, enum e
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    if (port_data->status != PBIO_UARTDEV_STATUS_DATA) {
-        return PBIO_ERROR_NO_DEV;
-    }
-
     if (port_data->tx_busy || port_data->mode_change_tx_done) {
         return PBIO_ERROR_AGAIN;
     }
@@ -854,6 +853,40 @@ static pbio_error_t ev3_uart_begin_tx_msg(uartdev_port_data_t *port_data, enum e
     return err;
 }
 
+static PT_THREAD(pbio_uartdev_send_speed_msg(uartdev_port_data_t *data, uint32_t speed)) {
+    pbio_error_t err;
+
+    PT_BEGIN(&data->speed_pt);
+
+    PT_WAIT_WHILE(&data->speed_pt, data->tx_busy);
+
+    data->speed_payload[0] = speed & 0xFF;
+    data->speed_payload[1] = (speed >> 8) & 0xFF;
+    data->speed_payload[2] = (speed >> 16) & 0xFF;
+    data->speed_payload[3] = (speed >> 24) & 0xFF;
+    PBIO_PT_WAIT_READY(&data->speed_pt, err = ev3_uart_begin_tx_msg(data,
+        EV3_UART_MSG_TYPE_CMD, EV3_UART_CMD_SPEED,
+        data->speed_payload, PBIO_ARRAY_SIZE(data->speed_payload)));
+    if (err != PBIO_SUCCESS) {
+        DBG_ERR(data->last_err = "SPEED tx begin failed");
+        goto err;
+    }
+
+    PBIO_PT_WAIT_READY(&data->speed_pt, err = pbdrv_uart_write_end(data->uart));
+    if (err != PBIO_SUCCESS) {
+        data->tx_busy = false;
+        DBG_ERR(data->last_err = "SPEED tx end failed");
+        goto err;
+    }
+
+    data->tx_busy =false;
+
+    PT_END(&data->speed_pt);
+
+err:
+    PT_EXIT(&data->speed_pt);
+}
+
 static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t *data)) {
     pbio_error_t err;
     uint8_t checksum;
@@ -865,7 +898,29 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t *data)) {
     data->iodev.motor_flags = PBIO_IODEV_MOTOR_FLAG_NONE;
     data->ext_mode = 0;
     data->status = PBIO_UARTDEV_STATUS_SYNCING;
-    PBIO_PT_WAIT_READY(&data->pt, pbdrv_uart_set_baud_rate(data->uart, EV3_UART_SPEED_MIN));
+
+    // FIXME: need to flush UART read buffer here
+
+    // Send SPEED command at 115200 baud
+    PBIO_PT_WAIT_READY(&data->pt, pbdrv_uart_set_baud_rate(data->uart, EV3_UART_SPEED_LPF2));
+    PT_SPAWN(&data->pt, &data->speed_pt, pbio_uartdev_send_speed_msg(data, EV3_UART_SPEED_LPF2));
+
+    // read one byte to check for ACK
+    PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_read_begin(data->uart, data->rx_msg, 1, 100));
+    if (err != PBIO_SUCCESS) {
+        DBG_ERR(data->last_err = "UART Rx error during baud");
+        goto err;
+    }
+
+    PBIO_PT_WAIT_READY(&data->pt, err = pbdrv_uart_read_end(data->uart));
+    if ((err == PBIO_SUCCESS && data->rx_msg[0] != EV3_UART_SYS_ACK) ||  err == PBIO_ERROR_TIMEDOUT) {
+        // if we did not get ACK within 100ms, then switch to slow baud rate for sync
+        PBIO_PT_WAIT_READY(&data->pt, pbdrv_uart_set_baud_rate(data->uart, EV3_UART_SPEED_MIN));
+    }
+    else if (err != PBIO_SUCCESS) {
+        DBG_ERR(data->last_err = "UART Rx error during baud");
+        goto err;
+    }
 
     // To get in sync with the data stream from the sensor, we look for a valid TYPE command.
     for (;;) {

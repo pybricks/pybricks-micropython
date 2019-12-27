@@ -25,10 +25,12 @@
 static struct {
     pbdrv_uart_dev_t dev;
     int baud;
+    struct etimer rx_timer;
     uint8_t *rx_msg;
     uint8_t rx_msg_length;
     pbio_error_t rx_msg_result;
     uint8_t *tx_msg;
+    struct etimer tx_timer;
     uint8_t tx_msg_length;
     pbio_error_t tx_msg_result;
 } test_uart_dev;
@@ -93,6 +95,9 @@ end:
     PT_SPAWN(pt, &child, simulate_tx_msg(&child, (msg), PBIO_ARRAY_SIZE(msg), &ok)); \
     tt_assert_msg(ok, #msg); \
 } while (0)
+
+static const uint8_t msg_speed_115200[] = { 0x52, 0x00, 0xC2, 0x01, 0x00, 0x6E }; // SPEED 115200
+static const uint8_t msg_ack[] = { 0x04 }; // ACK
 
 PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     // info messages captured from BOOST Color Distance Sensor with logic analyzer
@@ -195,8 +200,6 @@ PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     static const uint8_t msg90[] = { 0x46, 0x08, 0xB1 }; // extened mode info
     static const uint8_t msg91[] = { 0xD0, 0x00, 0x00, 0x00, 0x00, 0x2F }; // mode 8 data
 
-    // static const uint8_t msg88[] = { 0x43, 0x08, 0xB4 }; // set mode 8
-
     // used in SIMULATE_RX/TX_MSG macros
     static struct pt child;
     static bool ok;
@@ -205,7 +208,11 @@ PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
 
     process_start(&pbio_uartdev_process, NULL);
 
-    // baud rate for sync messages
+    // starting baud rate of hub
+    PT_WAIT_UNTIL(pt, test_uart_dev.baud == 115200);
+
+    // this device does not support syncing at 115200
+    SIMULATE_TX_MSG(msg_speed_115200);
     PT_WAIT_UNTIL(pt, test_uart_dev.baud == 2400);
 
     // send BOOST Color and Distance sensor info
@@ -636,7 +643,11 @@ PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
 
     process_start(&pbio_uartdev_process, NULL);
 
-    // baud rate for sync messages
+    // starting baud rate of hub
+    PT_WAIT_UNTIL(pt, test_uart_dev.baud == 115200);
+
+    // this device does not support syncing at 115200
+    SIMULATE_TX_MSG(msg_speed_115200);
     PT_WAIT_UNTIL(pt, test_uart_dev.baud == 2400);
 
     // send BOOST Color and Distance sensor info
@@ -798,9 +809,6 @@ end:
 }
 
 PT_THREAD(test_technic_large_motor(struct pt *pt)) {
-    // static const uint8_t msg0[] = { 0x52, 0x00, 0xC2, 0x01, 0x00, 0x6E }; // set baud rate
-    // static const uint8_t msg1[] = { 0x04 }; // ACK
-
     // info messages captured from Technic Large Linear Motor with logic analyzer
     static const uint8_t msg2[] = { 0x40, 0x2E, 0x91 };
     static const uint8_t msg3[] = { 0x49, 0x05, 0x03, 0xB0 };
@@ -874,10 +882,11 @@ PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     process_start(&pbio_uartdev_process, NULL);
 
     // baud rate for sync messages
-    PT_WAIT_UNTIL(pt, test_uart_dev.baud == 2400);
+    PT_WAIT_UNTIL(pt, test_uart_dev.baud == 115200);
 
-    // SIMULATE_TX_MSG(msg0);
-    // SIMULATE_RX_MSG(msg1);
+    // this device supports syncing at 115200
+    SIMULATE_TX_MSG(msg_speed_115200);
+    SIMULATE_RX_MSG(msg_ack);
 
     // send BOOST Color and Distance sensor info
     SIMULATE_RX_MSG(msg2);
@@ -934,11 +943,11 @@ PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     SIMULATE_RX_MSG(msg53);
     SIMULATE_RX_MSG(msg54);
 
+    // ensure that baud rate didn't change during sync
+    tt_want_uint_op(test_uart_dev.baud, ==, 115200);
+
     // wait for ACK
     SIMULATE_TX_MSG(msg55);
-
-    // wait for baud rate change
-    PT_WAIT_UNTIL(pt, test_uart_dev.baud == 115200);
 
     // motors get WRITE message to setup mode combos
     SIMULATE_TX_MSG(msg56x);
@@ -1109,9 +1118,6 @@ end:
 }
 
 PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
-    // static const uint8_t msg0[] = { 0x52, 0x00, 0xC2, 0x01, 0x00, 0x6E }; // set baud rate
-    // static const uint8_t msg1[] = { 0x04 }; // ACK
-
     // info messages captured from Technic XL Linear Motor with logic analyzer
     static const uint8_t msg2[] = { 0x40, 0x2F, 0x90 };
     static const uint8_t msg3[] = { 0x49, 0x05, 0x03, 0xB0 };
@@ -1185,10 +1191,11 @@ PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     process_start(&pbio_uartdev_process, NULL);
 
     // baud rate for sync messages
-    PT_WAIT_UNTIL(pt, test_uart_dev.baud == 2400);
+    PT_WAIT_UNTIL(pt, test_uart_dev.baud == 115200);
 
-    // SIMULATE_TX_MSG(msg0);
-    // SIMULATE_RX_MSG(msg1);
+    // this device supports syncing at 115200
+    SIMULATE_TX_MSG(msg_speed_115200);
+    SIMULATE_RX_MSG(msg_ack);
 
     // send BOOST Color and Distance sensor info
     SIMULATE_RX_MSG(msg2);
@@ -1245,11 +1252,11 @@ PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     SIMULATE_RX_MSG(msg53);
     SIMULATE_RX_MSG(msg54);
 
+    // ensure that baud rate didn't change during sync
+    tt_want_uint_op(test_uart_dev.baud, ==, 115200);
+
     // wait for ACK
     SIMULATE_TX_MSG(msg55);
-
-    // wait for baud rate change
-    PT_WAIT_UNTIL(pt, test_uart_dev.baud == 115200);
 
     // motors get WRITE message to setup mode combos
     SIMULATE_TX_MSG(msg56x);
@@ -1444,6 +1451,7 @@ pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t
     test_uart_dev.rx_msg = msg;
     test_uart_dev.rx_msg_length = length;
     test_uart_dev.rx_msg_result = PBIO_ERROR_AGAIN;
+    etimer_set(&test_uart_dev.rx_timer, clock_from_msec(timeout));
 
     return PBIO_SUCCESS;
 }
@@ -1451,6 +1459,10 @@ pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t
 pbio_error_t pbdrv_uart_read_end(pbdrv_uart_dev_t *uart) {
     if (!test_uart_dev.rx_msg) {
         return PBIO_ERROR_INVALID_OP;
+    }
+
+    if (test_uart_dev.rx_msg_result == PBIO_ERROR_AGAIN && etimer_expired(&test_uart_dev.rx_timer)) {
+        test_uart_dev.rx_msg_result = PBIO_ERROR_TIMEDOUT;
     }
 
     if (test_uart_dev.rx_msg_result != PBIO_ERROR_AGAIN) {
@@ -1472,6 +1484,7 @@ pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_
     test_uart_dev.tx_msg = msg;
     test_uart_dev.tx_msg_length = length;
     test_uart_dev.tx_msg_result = PBIO_ERROR_AGAIN;
+    etimer_set(&test_uart_dev.tx_timer, clock_from_msec(timeout));
 
     return PBIO_SUCCESS;
 }
@@ -1479,6 +1492,10 @@ pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_
 pbio_error_t pbdrv_uart_write_end(pbdrv_uart_dev_t *uart) {
     if (!test_uart_dev.tx_msg) {
         return PBIO_ERROR_INVALID_OP;
+    }
+
+    if (test_uart_dev.tx_msg_result == PBIO_ERROR_AGAIN && etimer_expired(&test_uart_dev.tx_timer)) {
+        test_uart_dev.tx_msg_result = PBIO_ERROR_TIMEDOUT;
     }
 
     if (test_uart_dev.tx_msg_result != PBIO_ERROR_AGAIN) {
