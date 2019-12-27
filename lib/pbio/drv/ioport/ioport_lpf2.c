@@ -31,6 +31,7 @@ typedef struct _dcm_data_t {
     dev_id1_group_t dev_id1_group;
     pbio_iodev_type_id_t type_id;
     pbio_iodev_type_id_t prev_type_id;
+    uint8_t gpio_value;
     uint8_t prev_gpio_value;
     uint8_t dev_id_match_count;
 } dcm_data_t;
@@ -138,7 +139,6 @@ static PT_THREAD(poll_dcm(ioport_dev_t *ioport)) {
     struct pt *pt = &ioport->pt;
     dcm_data_t *data = &ioport->dcm;
     const pbdrv_ioport_lpf2_platform_port_t pins = *ioport->pins;
-    uint8_t gpio_input;
 
     PT_BEGIN(pt);
 
@@ -163,10 +163,10 @@ static PT_THREAD(poll_dcm(ioport_dev_t *ioport)) {
     PT_YIELD(pt);
 
     // read ID2
-    gpio_input = pbdrv_gpio_input(&pins.id2);
+    data->gpio_value = pbdrv_gpio_input(&pins.id2);
 
     // if ID2 changed from high to low
-    if (data->prev_gpio_value == 1 && gpio_input == 0) {
+    if (data->prev_gpio_value == 1 && data->gpio_value == 0) {
         // we have touch sensor
         data->type_id = PBIO_IODEV_TYPE_ID_LPF2_TOUCH;
 
@@ -181,7 +181,7 @@ static PT_THREAD(poll_dcm(ioport_dev_t *ioport)) {
         //sensor_data = !pbdrv_gpio_input(&pins.id1);
     }
     // if ID2 changed from low to high
-    else if (data->prev_gpio_value == 0 && gpio_input == 1) {
+    else if (data->prev_gpio_value == 0 && data->gpio_value == 1) {
         data->type_id = PBIO_IODEV_TYPE_ID_LPF2_TPOINT;
     }
     else {
@@ -194,15 +194,15 @@ static PT_THREAD(poll_dcm(ioport_dev_t *ioport)) {
         PT_YIELD(pt);
 
         // read ID1
-        gpio_input = pbdrv_gpio_input(&pins.id1);
+        data->gpio_value = pbdrv_gpio_input(&pins.id1);
 
         // if ID1 did not change and is high
-        if (data->prev_gpio_value == 1 && gpio_input == 1) {
+        if (data->prev_gpio_value == 1 && data->gpio_value == 1) {
             // we have ID1 == VCC
             data->dev_id1_group = DEV_ID1_GROUP_VCC;
         }
         // if ID1 did not change and is low
-        else if (data->prev_gpio_value == 0 && gpio_input == 0) {
+        else if (data->prev_gpio_value == 0 && data->gpio_value == 0) {
             // we have ID1 == GND
             data->dev_id1_group = DEV_ID1_GROUP_GND;
         }
@@ -244,10 +244,10 @@ static PT_THREAD(poll_dcm(ioport_dev_t *ioport)) {
         PT_YIELD(pt);
 
         // read ID1
-        gpio_input = pbdrv_gpio_input(&pins.id1);
+        data->gpio_value = pbdrv_gpio_input(&pins.id1);
 
         // if ID1 changed from high to low
-        if (data->prev_gpio_value == 1 && gpio_input == 0) {
+        if (data->prev_gpio_value == 1 && data->gpio_value == 0) {
             // if we have ID1 = open
             if (data->dev_id1_group == DEV_ID1_GROUP_OPEN) {
                 // then we have this
@@ -255,7 +255,7 @@ static PT_THREAD(poll_dcm(ioport_dev_t *ioport)) {
             }
         }
         // if ID1 changed from low to high
-        else if (data->prev_gpio_value == 0 && gpio_input == 1) {
+        else if (data->prev_gpio_value == 0 && data->gpio_value == 1) {
             // something might explode
             data->type_id = PBIO_IODEV_TYPE_ID_LPF2_EXPLOD;
         }
