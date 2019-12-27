@@ -282,7 +282,7 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
         NRF_CHAR_SIZE, CHAR_PROP_WRITE_WITHOUT_RESP | CHAR_PROP_NOTIFY, ATTR_PERMISSION_NONE,
         GATT_NOTIFY_ATTRIBUTE_WRITE, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_gatt_add_serv_end(&pybricks_char_handle);
+    aci_gatt_add_char_end(&pybricks_char_handle);
 
     PT_END(pt);
 }
@@ -572,14 +572,14 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
         NRF_CHAR_SIZE, CHAR_PROP_WRITE_WITHOUT_RESP, ATTR_PERMISSION_NONE,
         GATT_NOTIFY_ATTRIBUTE_WRITE, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_gatt_add_serv_end(&uart_rx_char_handle);
+    aci_gatt_add_char_end(&uart_rx_char_handle);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gatt_add_char_begin(uart_service_handle, UUID_TYPE_128, nrf_uart_tx_char_uuid,
         NRF_CHAR_SIZE, CHAR_PROP_NOTIFY, ATTR_PERMISSION_NONE,
         GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_gatt_add_serv_end(&uart_tx_char_handle);
+    aci_gatt_add_char_end(&uart_tx_char_handle);
 
     PT_END(pt);
 }
