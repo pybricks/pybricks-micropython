@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 Laurens Valk
 
+#include <pbdrv/config.h>
+
+#if PBDRV_CONFIG_LIGHT
+
 #include <stdio.h>
 
 #include <pbdrv/light.h>
@@ -112,3 +116,5 @@ pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t 
 
     return PBIO_SUCCESS;
 }
+
+#endif // PBDRV_CONFIG_LIGHT
