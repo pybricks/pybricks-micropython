@@ -2,6 +2,10 @@
 // Copyright (c) 2018 Laurens Valk
 // Copyright (c) 2019 David Lechner
 
+#include <pbdrv/config.h>
+
+#if PBDRV_CONFIG_BUTTON_NXT
+
 #include <pbio/button.h>
 #include <pbio/config.h>
 #include <pbio/error.h>
@@ -37,3 +41,5 @@ pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
 
     return PBIO_SUCCESS;
 }
+
+#endif // PBDRV_CONFIG_BUTTON_NXT

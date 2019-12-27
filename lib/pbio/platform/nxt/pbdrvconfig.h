@@ -14,6 +14,7 @@
 #define PBDRV_CONFIG_BATTERY_NXT                    (1)
 
 #define PBDRV_CONFIG_BUTTON                         (1)
+#define PBDRV_CONFIG_BUTTON_NXT                     (1)
 #define PBDRV_CONFIG_KEYPAD                         (1)
 
 #define PBDRV_CONFIG_BLUETOOTH                      (0)
