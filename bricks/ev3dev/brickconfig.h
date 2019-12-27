@@ -8,6 +8,7 @@
 #define MICROPY_HW_MCU_NAME               "Texas Instruments AM1808"
 
 // Pybricks modules
+#define PYBRICKS_PY_BUTTONS             (1)
 #define PYBRICKS_PY_ROBOTICS            (1)
 #define PYBRICKS_PY_PARAMETERS          (1)
 #define PYBRICKS_PY_PUPDEVICES          (0)

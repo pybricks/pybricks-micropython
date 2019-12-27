@@ -174,7 +174,7 @@ STATIC const mp_rom_map_elem_t pb_Color_enum_table[] = {
 PB_DEFINE_ENUM(pb_enum_type_Color, MP_QSTR_Color, pb_Color_enum_table);
 
 
-#if PBDRV_CONFIG_KEYPAD
+#if PYBRICKS_PY_BUTTONS
 
 /* Button enum */
 
@@ -252,7 +252,7 @@ STATIC const mp_rom_map_elem_t pb_enum_Button_table[] = {
 };
 PB_DEFINE_ENUM(pb_enum_type_Button, MP_QSTR_Button, pb_enum_Button_table);
 
-#endif // PBDRV_CONFIG_KEYPAD
+#endif // PYBRICKS_PY_BUTTONS
 
 /*
 parameters module tables

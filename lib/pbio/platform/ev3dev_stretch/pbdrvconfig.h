@@ -38,8 +38,6 @@
 
 #define PBDRV_CONFIG_LIGHT                                  (1)
 
-#define PBDRV_CONFIG_KEYPAD                                 (1)
-
 #define PBDRV_CONFIG_MOTOR                                  (1)
 
 #define PBDRV_CONFIG_FIRST_MOTOR_PORT PBIO_PORT_A
