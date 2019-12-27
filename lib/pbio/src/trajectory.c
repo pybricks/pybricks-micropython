@@ -89,11 +89,18 @@ pbio_error_t make_trajectory_time_based(int32_t t0, int32_t t3, int32_t th0, int
             ref->w1 = timest(a, t3mt0)/2+w0/2;
         }
     }
-    // Initial speed is equal to or more than the target speed
-    else {
+    // Initial speed is more than the target speed
+    else if (w0 > wt) {
         // Therefore decelerate
         ref->a0 = -a;
         t1mt0 = wdiva(w0-wt, a);
+        ref->w1 = wt;
+    }
+    // Initial speed is equal to the target speed
+    else {
+        // Therefore no acceleration
+        ref->a0 = 0;
+        t1mt0 = 0;
         ref->w1 = wt;
     }
 
