@@ -650,8 +650,11 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 DBG_ERR(data->last_err = "Received duplicate mode combos INFO");
                 goto err;
             }
-            debug_pr("mode combos: %04x\n", data->rx_msg[3] << 8 | data->rx_msg[2]);
-            // TODO: this is actually array of values
+
+            // REVISIT: this is potentially an array of combos
+            data->info->mode_combos =  data->rx_msg[3] << 8 | data->rx_msg[2];
+
+            debug_pr("mode combos: %04x\n", data->info->mode_combos);
 
             break;
         case EV3_UART_INFO_MOTOR_BIAS:

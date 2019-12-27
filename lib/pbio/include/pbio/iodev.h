@@ -331,6 +331,11 @@ typedef struct {
      */
     uint8_t num_view_modes;
     /**
+     * Bit flags indicating which combination of modes can be used at the same
+     * time. Each bit cooresponds to the mode of the same number (0 to 15).
+     */
+    uint16_t mode_combos;
+    /**
      * Array of mode info for all modes. Array size depends on the device.
      */
     pbio_iodev_mode_t mode_info[0];

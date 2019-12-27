@@ -323,7 +323,7 @@ PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->num_modes, ==, 11);
     tt_want_uint_op(iodev->info->num_view_modes, ==, 8);
     // TODO: verify fw/hw versions
-    // TODO: verify mode combinations
+    tt_want_uint_op(iodev->info->mode_combos, ==, 1 << 6 | 1 << 3 | 1 << 2 | 1 << 1 | 1 << 0);
     tt_want_uint_op(iodev->motor_flags, ==, PBIO_IODEV_MOTOR_FLAG_NONE);
     tt_want_uint_op(iodev->mode, ==, 0);
 
@@ -715,7 +715,7 @@ PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->num_modes, ==, 4);
     tt_want_uint_op(iodev->info->num_view_modes, ==, 3);
     // TODO: verify fw/hw versions
-    // TODO: verify mode combinations
+    tt_want_uint_op(iodev->info->mode_combos, ==, 1 << 2 | 1 << 1);
     tt_want_uint_op(iodev->motor_flags, ==, PBIO_IODEV_MOTOR_FLAG_IS_MOTOR |
         PBIO_IODEV_MOTOR_FLAG_HAS_SPEED | PBIO_IODEV_MOTOR_FLAG_HAS_REL_POS);
     tt_want_uint_op(iodev->mode, ==, 0);
@@ -972,7 +972,7 @@ PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->num_modes, ==, 6);
     tt_want_uint_op(iodev->info->num_view_modes, ==, 4);
     // TODO: verify fw/hw versions
-    // TODO: verify mode combinations
+    tt_want_uint_op(iodev->info->mode_combos, ==, 1 << 3 | 1 << 2 | 1 << 1);
     tt_want_uint_op(iodev->motor_flags, ==, PBIO_IODEV_MOTOR_FLAG_IS_MOTOR | PBIO_IODEV_MOTOR_FLAG_HAS_SPEED
          | PBIO_IODEV_MOTOR_FLAG_HAS_REL_POS | PBIO_IODEV_MOTOR_FLAG_HAS_ABS_POS);
     tt_want_uint_op(iodev->mode, ==, 0);
@@ -1281,7 +1281,7 @@ PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->num_modes, ==, 6);
     tt_want_uint_op(iodev->info->num_view_modes, ==, 4);
     // TODO: verify fw/hw versions
-    // TODO: verify mode combinations
+    tt_want_uint_op(iodev->info->mode_combos, ==, 1 << 3 | 1 << 2 | 1 << 1);
     tt_want_uint_op(iodev->motor_flags, ==, PBIO_IODEV_MOTOR_FLAG_IS_MOTOR | PBIO_IODEV_MOTOR_FLAG_HAS_SPEED
          | PBIO_IODEV_MOTOR_FLAG_HAS_REL_POS | PBIO_IODEV_MOTOR_FLAG_HAS_ABS_POS);
     tt_want_uint_op(iodev->mode, ==, 0);
