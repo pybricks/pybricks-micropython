@@ -96,9 +96,6 @@ PROCESS_THREAD(pbdrv_counter_process, ev, data) {
 #if PBDRV_CONFIG_COUNTER_NXT
     pbdrv_counter_nxt_drv.init();
 #endif
-#if PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
-    pbdrv_counter_stm32f0_gpio_quad_enc_drv.init();
-#endif
 #if PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO
     pbdrv_counter_ev3dev_stretch_iio_drv.init();
 #endif
