@@ -273,7 +273,7 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
     PT_BEGIN(pt);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gatt_add_serv_begin(UUID_TYPE_128, pybricks_service_uuid, PRIMARY_SERVICE, 7);
+    aci_gatt_add_serv_begin(UUID_TYPE_128, pybricks_service_uuid, PRIMARY_SERVICE, 4);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gatt_add_serv_end(&pybricks_service_handle);
 
