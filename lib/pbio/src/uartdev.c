@@ -277,15 +277,15 @@ static const pbio_iodev_mode_t ev3_uart_default_mode_info = {
 
 pbio_error_t pbio_uartdev_get(uint8_t id, pbio_iodev_t **iodev) {
     if (id >= PBIO_CONFIG_UARTDEV_NUM_DEV) {
-        return PBIO_ERROR_NO_DEV;
-    }
-
-    if (!dev_data[id].iodev.info) {
-        // device has not been initalized yet
-        return PBIO_ERROR_AGAIN;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     *iodev = &dev_data[id].iodev;
+
+    if (!(*iodev)->info) {
+        // device has not been initalized yet
+        return PBIO_ERROR_AGAIN;
+    }
 
     return PBIO_SUCCESS;
 }
