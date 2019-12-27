@@ -186,12 +186,14 @@ typedef enum {
  * Mapping flags that describe the input and output values of an I/O device.
  */
 typedef enum {
+    LPF2_MAPPING_FLAG_UNKNOWN_BIT1 = 1 << 1,
     /** The value is a discrete value, e.g. a color index. */
     LPF2_MAPPING_FLAG_DISCRETE  = 1 << 2,
     /** The value is a relative value, e.g. a motor position. */
     LPF2_MAPPING_FLAG_RELATIVE  = 1 << 3,
     /** The value is an absolute value, e.g. a distance measurement. */
     LPF2_MAPPING_FLAG_ABSOLUTE  = 1 << 4,
+    LPF2_MAPPING_FLAG_UNKNOWN_BIT5 = 1 << 5,
     /** Supports functional mapping 2.0+. */
     LPF2_MAPPING_FLAG_2_0       = 1 << 6,
     /** Supports NULL value. */
@@ -218,11 +220,14 @@ typedef enum {
 typedef enum {
     LPF2_MODE_FLAGS4_NONE           = 0,
     LPF2_MODE_FLAGS4_USES_HBRIDGE   = 1 << 0,
+    LPF2_MODE_FLAGS4_UNKNOWN_BIT2   = 1 << 2,
 } pbio_mode_flags4_t;
 
 typedef enum {
     LPF2_MODE_FLAGS5_NONE           = 0,
     LPF2_MODE_FLAGS5_UNKNOWN_BIT1   = 1 << 1,
+    LPF2_MODE_FLAGS5_UNKNOWN_BIT2   = 1 << 2,
+    LPF2_MODE_FLAGS5_UNKNOWN_BIT7   = 1 << 7,
 } pbio_mode_flags5_t;
 
 /**

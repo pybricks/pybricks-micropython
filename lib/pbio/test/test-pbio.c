@@ -84,10 +84,14 @@ static struct testcase_t pbio_math_tests[] = {
 
 PBIO_TEST_FUNC(test_boost_color_distance_sensor);
 PBIO_TEST_FUNC(test_boost_interactive_motor);
+PBIO_TEST_FUNC(test_technic_large_motor);
+PBIO_TEST_FUNC(test_technic_xl_motor);
 
 static struct testcase_t pbio_uartdev_tests[] = {
     PBIO_PT_THREAD_TEST(test_boost_color_distance_sensor),
     PBIO_PT_THREAD_TEST(test_boost_interactive_motor),
+    PBIO_PT_THREAD_TEST(test_technic_large_motor),
+    PBIO_PT_THREAD_TEST(test_technic_xl_motor),
     END_OF_TESTCASES
 };
 
