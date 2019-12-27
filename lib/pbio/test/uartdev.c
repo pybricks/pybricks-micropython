@@ -314,6 +314,7 @@ PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     int32_t count;
     tt_want_uint_op(pbdrv_counter_get_count(counter, &count), ==, PBIO_ERROR_NO_DEV);
     tt_want_uint_op(pbdrv_counter_get_abs_count(counter, &count), ==, PBIO_ERROR_NO_DEV);
+    tt_want_uint_op(pbdrv_counter_get_rate(counter, &count), ==, PBIO_ERROR_NO_DEV);
 
     // should be synced now are receive regular pings
     static int i;
@@ -640,7 +641,7 @@ PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
 
     static const uint8_t msg35[] = { 0x54, 0x22, 0x00, 0x10, 0x20, 0xB9 }; // WRITE mode combo
 
-    static const uint8_t msg36[] = { 0xD8, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x27 }; // DATA speed and position combo
+    static const uint8_t msg36[] = { 0xD8, 0x64, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x43 }; // DATA speed and position combo
 
     static const uint8_t msg37[] = { 0x02 }; // NACK
 
@@ -716,6 +717,8 @@ PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     tt_want_uint_op(pbdrv_counter_get_count(counter, &count), ==, PBIO_SUCCESS);
     tt_want_int_op(count, ==, -1);
     tt_want_uint_op(pbdrv_counter_get_abs_count(counter, &count), ==, PBIO_ERROR_INVALID_OP);
+    tt_want_uint_op(pbdrv_counter_get_rate(counter, &count), ==, PBIO_SUCCESS);
+    tt_want_int_op(count, ==, 1500);
 
     // should be synced now are receive regular pings
     static int i;
@@ -886,7 +889,7 @@ PT_THREAD(test_technic_large_motor(struct pt *pt)) {
 
     static const uint8_t msg56[] = { 0x5C, 0x23, 0x00, 0x10, 0x20, 0x30, 0x00, 0x00, 0x00, 0x80 }; // WRITE mode combo
 
-    static const uint8_t msg57[] = { 0xD8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x17, 0x00, 0x00, 0x30 }; // DATA speed and position combo
+    static const uint8_t msg57[] = { 0xD8, 0x64, 0xFF, 0xFF, 0xFF, 0xFF, 0x17, 0x00, 0x00, 0x54 }; // DATA speed and position combo
 
     static const uint8_t msg58[] = { 0x02 }; // NACK
 
@@ -979,9 +982,11 @@ PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(pbdrv_counter_get(0, &counter), ==, PBIO_SUCCESS);
     int32_t count;
     tt_want_uint_op(pbdrv_counter_get_count(counter, &count), ==, PBIO_SUCCESS);
-    tt_want_int_op(count, ==, 0);
+    tt_want_int_op(count, ==, -1);
     tt_want_uint_op(pbdrv_counter_get_abs_count(counter, &count), ==, PBIO_SUCCESS);
     tt_want_int_op(count, ==, 23);
+    tt_want_uint_op(pbdrv_counter_get_rate(counter, &count), ==, PBIO_SUCCESS);
+    tt_want_int_op(count, ==, 1470);
 
     // should be synced now are receive regular pings
     static int i;
@@ -1204,7 +1209,7 @@ PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
 
     static const uint8_t msg56[] = { 0x5C, 0x23, 0x00, 0x10, 0x20, 0x30, 0x00, 0x00, 0x00, 0x80 }; // WRITE mode combo
 
-    static const uint8_t msg57[] = { 0xD8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x41, 0x00, 0x00, 0x66 }; // DATA speed and position combo
+    static const uint8_t msg57[] = { 0xD8, 0x64, 0xFF, 0xFF, 0xFF, 0xFF, 0x41, 0x00, 0x00, 0x02 }; // DATA speed and position combo
 
     static const uint8_t msg58[] = { 0x02 }; // NACK
 
@@ -1297,9 +1302,11 @@ PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(pbdrv_counter_get(0, &counter), ==, PBIO_SUCCESS);
     int32_t count;
     tt_want_uint_op(pbdrv_counter_get_count(counter, &count), ==, PBIO_SUCCESS);
-    tt_want_int_op(count, ==, 0);
+    tt_want_int_op(count, ==, -1);
     tt_want_uint_op(pbdrv_counter_get_abs_count(counter, &count), ==, PBIO_SUCCESS);
     tt_want_int_op(count, ==, 65);
+    tt_want_uint_op(pbdrv_counter_get_rate(counter, &count), ==, PBIO_SUCCESS);
+    tt_want_int_op(count, ==, 1525);
 
     // should be synced now are receive regular pings
     static int i;

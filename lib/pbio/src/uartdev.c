@@ -113,6 +113,10 @@ enum ev3_uart_info {
     EV3_UART_INFO_MODE_COMBOS   = 0x06,    // Powered Up only
     EV3_UART_INFO_MOTOR_BIAS    = 0x07,    // Powered Up only
     EV3_UART_INFO_CAPABILITY    = 0x08,    // Powered Up only
+    EV3_UART_INFO_UNK9          = 0x09,    // Powered Up only
+    EV3_UART_INFO_UNK10         = 0x0A,    // Powered Up only
+    EV3_UART_INFO_UNK11         = 0x0B,    // Powered Up only
+    EV3_UART_INFO_UNK12         = 0x0C,    // Powered Up only
     EV3_UART_INFO_MODE_PLUS_8   = 0x20,    // Powered Up only
     EV3_UART_INFO_FORMAT        = 0x80,
 };
@@ -131,6 +135,7 @@ enum ev3_uart_info_bit {
     EV3_UART_INFO_BIT_INFO_MODE_COMBOS,
     EV3_UART_INFO_BIT_INFO_MOTOR_BIAS,
     EV3_UART_INFO_BIT_INFO_CAPABILITY,
+    EV3_UART_INFO_BIT_INFO_UNK9,
     EV3_UART_INFO_BIT_INFO_FORMAT,
 };
 
@@ -148,6 +153,7 @@ enum ev3_uart_info_flags {
     EV3_UART_INFO_FLAG_INFO_MODE_COMBOS         = 1 << EV3_UART_INFO_BIT_INFO_MODE_COMBOS,
     EV3_UART_INFO_FLAG_INFO_MOTOR_BIAS          = 1 << EV3_UART_INFO_BIT_INFO_MOTOR_BIAS,
     EV3_UART_INFO_FLAG_INFO_MOTOR_CAPABILITY    = 1 << EV3_UART_INFO_BIT_INFO_CAPABILITY,
+    EV3_UART_INFO_FLAG_INFO_UNK9                = 1 << EV3_UART_INFO_BIT_INFO_UNK9,
     EV3_UART_INFO_FLAG_INFO_FORMAT              = 1 << EV3_UART_INFO_BIT_INFO_FORMAT,
 
     EV3_UART_INFO_FLAG_ALL_INFO     = EV3_UART_INFO_FLAG_INFO_NAME
@@ -159,6 +165,7 @@ enum ev3_uart_info_flags {
                                     | EV3_UART_INFO_FLAG_INFO_MODE_COMBOS
                                     | EV3_UART_INFO_FLAG_INFO_MOTOR_BIAS
                                     | EV3_UART_INFO_FLAG_INFO_MOTOR_CAPABILITY
+                                    | EV3_UART_INFO_FLAG_INFO_UNK9
                                     | EV3_UART_INFO_FLAG_INFO_FORMAT,
     EV3_UART_INFO_FLAG_REQUIRED     = EV3_UART_INFO_FLAG_CMD_TYPE
                                     | EV3_UART_INFO_FLAG_CMD_MODES
@@ -210,6 +217,7 @@ typedef enum {
  * @ext_mode: Extra mode adder for Powered Up devices (for modes > EV3_UART_MODE_MAX)
  * @write_cmd_size: The size parameter received from a WRITE command
  * @tacho_rate: The tacho rate received from an LPF2 motor
+ * @max_tacho_rate: The "100%" rate received from an LPF2 motor
  * @last_err: data->msg to be printed in case of an error.
  * @err_count: Total number of errors that have occurred
  * @num_data_err: Number of bad reads when receiving DATA data->msgs.
@@ -245,6 +253,7 @@ typedef struct {
     uint8_t ext_mode;
     uint8_t write_cmd_size;
     int8_t tacho_rate;
+    uint32_t max_tacho_rate;
     DBG_ERR(const char *last_err);
     uint32_t err_count;
     uint32_t num_data_err;
@@ -691,6 +700,24 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 data->rx_msg[5], data->rx_msg[6], data->rx_msg[7]);
 
             break;
+        case EV3_UART_INFO_UNK9:
+            if (data->new_mode != mode) {
+                DBG_ERR(data->last_err = "Received INFO for incorrect mode");
+                goto err;
+            }
+            if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_UNK9, &data->info_flags)) {
+                DBG_ERR(data->last_err = "Received duplicate UNK9 INFO");
+                goto err;
+            }
+
+            // first 3 parameters look like PID constants
+            data->max_tacho_rate = uint32_le(data->rx_msg + 14);
+
+            debug_pr("motor parameters: %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 "\n",
+                uint32_le(data->rx_msg + 2), uint32_le(data->rx_msg + 6),
+                uint32_le(data->rx_msg + 10), data->max_tacho_rate);
+
+            break;
         case EV3_UART_INFO_FORMAT:
             if (data->new_mode != mode) {
                 DBG_ERR(data->last_err = "Received INFO for incorrect mode");
@@ -908,6 +935,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t *data)) {
     data->iodev.motor_flags = PBIO_IODEV_MOTOR_FLAG_NONE;
     data->ext_mode = 0;
     data->status = PBIO_UARTDEV_STATUS_SYNCING;
+    data->max_tacho_rate = 1500;
 
     // FIXME: need to flush UART read buffer here
 
@@ -1325,11 +1353,8 @@ static pbio_error_t pbio_uartdev_get_rate(pbdrv_counter_dev_t *dev, int32_t *rat
         return PBIO_ERROR_NO_DEV;
     }
 
-    // UART motors return speed in % of max speed, so we have to adjust it to
-    // counts per second.
-    // scaling factor of 14 determined empirically for BOOST Interactive motor
-    // TODO: scale rate based on individual motor type.
-    *rate = port_data->tacho_rate * 14;
+    // tacho_rate is in percent, so we need to convert it to counts per second
+    *rate = port_data->max_tacho_rate * port_data->tacho_rate / 100;
 
     return PBIO_SUCCESS;
 }
