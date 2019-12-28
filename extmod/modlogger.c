@@ -95,18 +95,20 @@ static const size_t max_val_strln = sizeof("−2147483648,");
 // Make a comma separated list of values
 static void make_data_row_str(char *row, int32_t *data, uint8_t n) {
 
-    // Set initial row to empty string so we can concat to its
-    row[0] = 0;
+    // Reset string index
+    size_t idx = 0;
 
     for (uint8_t v = 0; v < n; v++) {
-        // Convert value to string
-        if (snprintf(&row[strlen(row)], max_val_strln, "%" PRId32, data[v]) < 0) {
-            pb_assert(PBIO_ERROR_IO);
+        // Concatenate value, to the row
+        size_t s = snprintf(&row[idx], max_val_strln, "%" PRId32 ",", data[v]);
+        if (s < 2) {
+            pb_assert(PBIO_ERROR_FAILED);
         }
+        idx += s;
 
-        // Concatenate line break or comma separator
-        if (snprintf(&row[strlen(row)], 2, "%s", v == n-1 ? "\n" : ",") < 0) {
-            pb_assert(PBIO_ERROR_IO);
+        // For the last value, replace , by \n
+        if (v == n-1) {
+            row[idx-1] = '\n';
         }
     }
 }
@@ -153,7 +155,7 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
 
     pb_assert(err);
 
-    // Allocate space for one row of data
+    // Allocate space for one null-terminated row of data
     char row_str[max_val_strln*MAX_LOG_VALUES+1];
 
     // Write data to file line by line
