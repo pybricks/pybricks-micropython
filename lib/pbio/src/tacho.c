@@ -14,6 +14,39 @@
 
 static pbio_tacho_t tachos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
+static pbio_error_t pbio_tacho_reset_count(pbio_tacho_t *tacho, int32_t reset_count) {
+    int32_t count_no_offset;
+    pbio_error_t err;
+
+    // First get the counter value without any offsets, but with the appropriate polarity/sign.
+    err = pbio_tacho_get_count(tacho, &count_no_offset);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    count_no_offset += tacho->offset;
+
+    // Calculate the new offset
+    tacho->offset = count_no_offset - reset_count;
+
+    return PBIO_SUCCESS;
+}
+
+static pbio_error_t pbio_tacho_reset_count_to_abs(pbio_tacho_t *tacho) {
+    
+    int32_t abs_count;
+    pbio_error_t err = pbdrv_counter_get_abs_count(tacho->counter, &abs_count);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    if (tacho->direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
+        abs_count = -abs_count;
+    }
+
+    return pbio_tacho_reset_count(tacho, abs_count);
+}
+
 static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pbio_direction_t direction, fix16_t counts_per_degree, fix16_t gear_ratio) {
     // Assert that scaling factors are positive
     if (gear_ratio < 0 || counts_per_degree < 0) {
@@ -32,11 +65,11 @@ static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pb
         return err;
     }
 
-    // Reset angle to absolute value if supported
-    err = pbio_tacho_reset_angle_to_abs(tacho);
+    // Reset count to absolute value if supported
+    err = pbio_tacho_reset_count_to_abs(tacho);
     if (err == PBIO_ERROR_NOT_SUPPORTED) {
         // If not available, set it to 0
-        err = pbio_tacho_reset_angle(tacho, 0);
+        err = pbio_tacho_reset_count(tacho, 0);
     }
     return err;
 }
@@ -73,38 +106,7 @@ pbio_error_t pbio_tacho_get_count(pbio_tacho_t *tacho, int32_t *count) {
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t pbio_tacho_reset_count(pbio_tacho_t *tacho, int32_t reset_count) {
-    int32_t count_no_offset;
-    pbio_error_t err;
 
-    // First get the counter value without any offsets, but with the appropriate polarity/sign.
-    err = pbio_tacho_get_count(tacho, &count_no_offset);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    count_no_offset += tacho->offset;
-
-    // Calculate the new offset
-    tacho->offset = count_no_offset - reset_count;
-
-    return PBIO_SUCCESS;
-}
-
-static pbio_error_t pbio_tacho_reset_count_to_abs(pbio_tacho_t *tacho) {
-    
-    int32_t abs_count;
-    pbio_error_t err = pbdrv_counter_get_abs_count(tacho->counter, &abs_count);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    if (tacho->direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
-        abs_count = -abs_count;
-    }
-
-    return pbio_tacho_reset_count(tacho, abs_count);
-}
 
 pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, int32_t *angle) {
     int32_t encoder_count;
@@ -120,14 +122,14 @@ pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, int32_t *angle) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t reset_angle) {
-    return pbio_tacho_reset_count(tacho, pbio_math_mul_i32_fix16(reset_angle, tacho->counts_per_output_unit));
+pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t reset_angle, bool reset_to_abs) {
+    if (reset_to_abs) {
+        return pbio_tacho_reset_count_to_abs(tacho);
+    }
+    else {
+        return pbio_tacho_reset_count(tacho, pbio_math_mul_i32_fix16(reset_angle, tacho->counts_per_output_unit));
+    }
 }
-
-pbio_error_t pbio_tacho_reset_angle_to_abs(pbio_tacho_t *tacho) {
-    return pbio_tacho_reset_count_to_abs(tacho);
-}
-
 
 pbio_error_t pbio_tacho_get_rate(pbio_tacho_t *tacho, int32_t *rate) {
     pbio_error_t err;
