@@ -76,9 +76,9 @@ pbio_error_t pbio_config_get_defaults_servo(pbio_iodev_type_id_t id,
             *pid_kd = 5;
             break;
         default:
-            *pid_kp = 500;
-            *pid_ki = 800;
-            *pid_kd = 5;
+            *pid_kp = 200;
+            *pid_ki = 100;
+            *pid_kd = 0;
             break;
     }
 
