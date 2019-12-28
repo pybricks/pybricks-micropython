@@ -240,7 +240,7 @@ pbio_error_t pbio_servo_set_pid_settings(pbio_servo_t *srv,
                                           stall_time);
 }
 
-pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle) {
+pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool reset_to_abs) {
     // Load motor settings and status
     pbio_error_t err;
 
@@ -255,7 +255,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle) {
         // Get the old target
         int32_t target_old = pbio_math_div_i32_fix16(srv->control.trajectory.th3, srv->tacho->counts_per_output_unit);
         // Reset the angle
-        err = pbio_tacho_reset_angle(srv->tacho, reset_angle, false);
+        err = pbio_tacho_reset_angle(srv->tacho, reset_angle, reset_to_abs);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -265,7 +265,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle) {
     }
     // If the motor was in a passive mode (coast, brake, user duty), reset angle and leave state unchanged
     else if (srv->state == PBIO_SERVO_STATE_PASSIVE){
-        return pbio_tacho_reset_angle(srv->tacho, reset_angle, false);
+        return pbio_tacho_reset_angle(srv->tacho, reset_angle, reset_to_abs);
     }
     // In all other cases, stop the ongoing maneuver by coasting and then reset the angle
     else {
@@ -273,7 +273,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle) {
         if (err != PBIO_SUCCESS) {
             return err;
         }
-        return pbio_tacho_reset_angle(srv->tacho, reset_angle, false);
+        return pbio_tacho_reset_angle(srv->tacho, reset_angle, reset_to_abs);
     }
 }
 

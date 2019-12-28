@@ -80,7 +80,7 @@ pbio_error_t pbio_servo_set_pid_settings(pbio_servo_t *srv,
                                          int32_t stall_speed_limit,
                                          int32_t stall_time);
 
-pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle);
+pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool reset_to_abs);
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled);
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop);
 pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps);
