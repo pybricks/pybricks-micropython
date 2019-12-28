@@ -111,8 +111,8 @@ enum ev3_uart_info {
     EV3_UART_INFO_UNITS         = 0x04,
     EV3_UART_INFO_MAPPING       = 0x05,    // Powered Up only
     EV3_UART_INFO_MODE_COMBOS   = 0x06,    // Powered Up only
-    EV3_UART_INFO_MOTOR_BIAS    = 0x07,    // Powered Up only
-    EV3_UART_INFO_CAPABILITY    = 0x08,    // Powered Up only
+    EV3_UART_INFO_UNK7          = 0x07,    // Powered Up only
+    EV3_UART_INFO_UNK8          = 0x08,    // Powered Up only
     EV3_UART_INFO_UNK9          = 0x09,    // Powered Up only
     EV3_UART_INFO_UNK10         = 0x0A,    // Powered Up only
     EV3_UART_INFO_UNK11         = 0x0B,    // Powered Up only
@@ -133,8 +133,8 @@ enum ev3_uart_info_bit {
     EV3_UART_INFO_BIT_INFO_UNITS,
     EV3_UART_INFO_BIT_INFO_MAPPING,
     EV3_UART_INFO_BIT_INFO_MODE_COMBOS,
-    EV3_UART_INFO_BIT_INFO_MOTOR_BIAS,
-    EV3_UART_INFO_BIT_INFO_CAPABILITY,
+    EV3_UART_INFO_BIT_INFO_UNK7,
+    EV3_UART_INFO_BIT_INFO_UNK8,
     EV3_UART_INFO_BIT_INFO_UNK9,
     EV3_UART_INFO_BIT_INFO_FORMAT,
 };
@@ -151,8 +151,8 @@ enum ev3_uart_info_flags {
     EV3_UART_INFO_FLAG_INFO_UNITS               = 1 << EV3_UART_INFO_BIT_INFO_UNITS,
     EV3_UART_INFO_FLAG_INFO_MAPPING             = 1 << EV3_UART_INFO_BIT_INFO_MAPPING,
     EV3_UART_INFO_FLAG_INFO_MODE_COMBOS         = 1 << EV3_UART_INFO_BIT_INFO_MODE_COMBOS,
-    EV3_UART_INFO_FLAG_INFO_MOTOR_BIAS          = 1 << EV3_UART_INFO_BIT_INFO_MOTOR_BIAS,
-    EV3_UART_INFO_FLAG_INFO_MOTOR_CAPABILITY    = 1 << EV3_UART_INFO_BIT_INFO_CAPABILITY,
+    EV3_UART_INFO_FLAG_INFO_UNK7                = 1 << EV3_UART_INFO_BIT_INFO_UNK7,
+    EV3_UART_INFO_FLAG_INFO_UNK8                = 1 << EV3_UART_INFO_BIT_INFO_UNK8,
     EV3_UART_INFO_FLAG_INFO_UNK9                = 1 << EV3_UART_INFO_BIT_INFO_UNK9,
     EV3_UART_INFO_FLAG_INFO_FORMAT              = 1 << EV3_UART_INFO_BIT_INFO_FORMAT,
 
@@ -163,8 +163,8 @@ enum ev3_uart_info_flags {
                                     | EV3_UART_INFO_FLAG_INFO_UNITS
                                     | EV3_UART_INFO_FLAG_INFO_MAPPING
                                     | EV3_UART_INFO_FLAG_INFO_MODE_COMBOS
-                                    | EV3_UART_INFO_FLAG_INFO_MOTOR_BIAS
-                                    | EV3_UART_INFO_FLAG_INFO_MOTOR_CAPABILITY
+                                    | EV3_UART_INFO_FLAG_INFO_UNK7
+                                    | EV3_UART_INFO_FLAG_INFO_UNK8
                                     | EV3_UART_INFO_FLAG_INFO_UNK9
                                     | EV3_UART_INFO_FLAG_INFO_FORMAT,
     EV3_UART_INFO_FLAG_REQUIRED     = EV3_UART_INFO_FLAG_CMD_TYPE
@@ -668,36 +668,6 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
             data->info->mode_combos =  data->rx_msg[3] << 8 | data->rx_msg[2];
 
             debug_pr("mode combos: %04x\n", data->info->mode_combos);
-
-            break;
-        case EV3_UART_INFO_MOTOR_BIAS:
-            if (data->new_mode != mode) {
-                DBG_ERR(data->last_err = "Received INFO for incorrect mode");
-                goto err;
-            }
-            if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_MOTOR_BIAS, &data->info_flags)) {
-                DBG_ERR(data->last_err = "Received duplicate motor bias INFO");
-                goto err;
-            }
-            // TODO: do we need to store this info?
-
-            debug_pr("motor bias: %02x\n", data->rx_msg[2]);
-
-            break;
-        case EV3_UART_INFO_CAPABILITY:
-            if (data->new_mode != mode) {
-                DBG_ERR(data->last_err = "Received INFO for incorrect mode");
-                goto err;
-            }
-            if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_CAPABILITY, &data->info_flags)) {
-                DBG_ERR(data->last_err = "Received duplicate capability INFO");
-                goto err;
-            }
-            // TODO: do we need to store this info?
-
-            debug_pr("capability: %02x %02x %02x %02x %02x %02x\n",
-                data->rx_msg[2], data->rx_msg[3], data->rx_msg[4],
-                data->rx_msg[5], data->rx_msg[6], data->rx_msg[7]);
 
             break;
         case EV3_UART_INFO_UNK9:
