@@ -253,7 +253,7 @@ typedef struct {
     uint8_t ext_mode;
     uint8_t write_cmd_size;
     int8_t tacho_rate;
-    uint32_t max_tacho_rate;
+    int32_t max_tacho_rate;
     DBG_ERR(const char *last_err);
     uint32_t err_count;
     uint32_t num_data_err;

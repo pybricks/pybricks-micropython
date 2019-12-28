@@ -641,7 +641,7 @@ PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
 
     static const uint8_t msg35[] = { 0x54, 0x22, 0x00, 0x10, 0x20, 0xB9 }; // WRITE mode combo
 
-    static const uint8_t msg36[] = { 0xD8, 0x64, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x43 }; // DATA speed and position combo
+    static const uint8_t msg36[] = { 0xD8, 0x9C, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0xBB }; // DATA speed and position combo
 
     static const uint8_t msg37[] = { 0x02 }; // NACK
 
@@ -718,7 +718,7 @@ PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     tt_want_int_op(count, ==, -1);
     tt_want_uint_op(pbdrv_counter_get_abs_count(counter, &count), ==, PBIO_ERROR_INVALID_OP);
     tt_want_uint_op(pbdrv_counter_get_rate(counter, &count), ==, PBIO_SUCCESS);
-    tt_want_int_op(count, ==, 1500);
+    tt_want_int_op(count, ==, -1500);
 
     // should be synced now are receive regular pings
     static int i;
