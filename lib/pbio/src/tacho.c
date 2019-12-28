@@ -37,6 +37,10 @@ static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pb
         abs_count = 0;
     }
 
+    if (direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
+        abs_count = -abs_count;
+    }
+
     // Set the offset such that tacho output is 0 or the current absolute
     // count if the motor supports it.
     return pbio_tacho_reset_count(tacho, abs_count);
