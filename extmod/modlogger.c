@@ -92,7 +92,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(tools_Logger_stop_obj, tools_Logger_stop);
 static const size_t max_val_strln = sizeof("−2147483648,");
 
 // Make a comma separated list of values
-void make_data_row_str(char *row, int32_t *data, uint8_t n) {
+static void make_data_row_str(char *row, int32_t *data, uint8_t n) {
 
     // Set initial row to empty string so we can concat to its
     row[0] = 0;
@@ -111,11 +111,13 @@ void make_data_row_str(char *row, int32_t *data, uint8_t n) {
 }
 
 STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+
+    tools_Logger_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         PB_ARG_DEFAULT_NONE(path)
     );
-    tools_Logger_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     // Create an empty log file
     const char *file_path = path == mp_const_none ? "log.txt" : mp_obj_str_get_str(path);
@@ -134,6 +136,7 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     if (log_file == NULL) {
         pb_assert(PBIO_ERROR_IO);
     }
+#endif //PBDRV_CONFIG_HUB_EV3BRICK
 
     // Read log size information
     int32_t data[MAX_LOG_VALUES];
@@ -162,22 +165,26 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
         // Make one string of values
         make_data_row_str(row_str, data, num_values);
 
-        // Append the row
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+        // Append the row to file
         if (fprintf(log_file, "%s", row_str) < 0) {
             err = PBIO_ERROR_IO;
             break;
         }
+#else
+        // Print the row
+        mp_print_str(&mp_plat_print, row_str);
+#endif // PBDRV_CONFIG_HUB_EV3BRICK
     }
 
+#ifdef PBDRV_CONFIG_HUB_EV3BRICK
     // Close the file
     if (fclose(log_file) != 0) {
         err = PBIO_ERROR_IO;
     }
+#endif // PBDRV_CONFIG_HUB_EV3BRICK
 
     pb_assert(err);
-#else
-    pb_assert(PBIO_ERROR_NOT_SUPPORTED);
-#endif
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_save_obj, 0, tools_Logger_save);
