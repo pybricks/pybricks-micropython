@@ -97,19 +97,16 @@ void make_data_row_str(char *row, int32_t *data, uint8_t n) {
     // Set initial row to empty string so we can concat to its
     row[0] = 0;
 
-    // String representation of one integer
-    char value_str[max_val_strln];
     for (uint8_t v = 0; v < n; v++) {
         // Convert value to string
-        if (snprintf(value_str, max_val_strln, "%" PRId32, data[v]) < 0) {
+        if (snprintf(&row[strlen(row)], max_val_strln, "%" PRId32, data[v]) < 0) {
             pb_assert(PBIO_ERROR_IO);
         }
 
-        // Concatenate value
-        row = strncat(row, value_str, max_val_strln);
-
         // Concatenate line break or comma separator
-        row = strncat(row, v == n-1 ? "\n" : ", ", 1);
+        if (snprintf(&row[strlen(row)], 2, "%s", v == n-1 ? "\n" : ",") < 0) {
+            pb_assert(PBIO_ERROR_IO);
+        }
     }
 }
 
