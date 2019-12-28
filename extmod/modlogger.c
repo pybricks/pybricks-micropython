@@ -3,6 +3,8 @@
 // Copyright (c) 2019 LEGO System A/S
 
 #include <stdbool.h>
+#include <string.h>
+#include <inttypes.h>
 
 #include <pbio/logger.h>
 
@@ -56,7 +58,7 @@ STATIC mp_obj_t tools_Logger_get(size_t n_args, const mp_obj_t *pos_args, mp_map
 
     uint8_t num_values;
     pbio_error_t err;
-    
+
     // Get data for this sample
     pb_thread_enter();
     err = pbio_logger_read(self->log, index_val, data);
@@ -87,6 +89,30 @@ STATIC mp_obj_t tools_Logger_stop(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(tools_Logger_stop_obj, tools_Logger_stop);
 
+static const size_t max_val_strln = sizeof("−2147483648,");
+
+// Make a comma separated list of values
+void make_data_row_str(char *row, int32_t *data, uint8_t n) {
+
+    // Set initial row to empty string so we can concat to its
+    row[0] = 0;
+
+    // String representation of one integer
+    char value_str[max_val_strln];
+    for (uint8_t v = 0; v < n; v++) {
+        // Convert value to string
+        if (snprintf(value_str, max_val_strln, "%" PRId32, data[v]) < 0) {
+            pb_assert(PBIO_ERROR_IO);
+        }
+
+        // Concatenate value
+        row = strncat(row, value_str, max_val_strln);
+
+        // Concatenate line break or comma separator
+        row = strncat(row, v == n-1 ? "\n" : ", ", 1);
+    }
+}
+
 STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -97,12 +123,18 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     // Create an empty log file
     const char *file_path = path == mp_const_none ? "log.txt" : mp_obj_str_get_str(path);
     FILE *log_file;
-    
+
+    // Open file to erase it
     log_file = fopen(file_path, "w");
     if (log_file == NULL) {
         pb_assert(PBIO_ERROR_IO);
     }
     if (fclose(log_file) != 0) {
+        pb_assert(PBIO_ERROR_IO);
+    }
+    // Open file for appending
+    log_file = fopen(file_path, "a");
+    if (log_file == NULL) {
         pb_assert(PBIO_ERROR_IO);
     }
 
@@ -113,8 +145,11 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     int32_t samples =  self->log->sampled;
     pb_thread_exit();
 
+    // Allocate space for one row of data
+    char row_str[max_val_strln*MAX_LOG_VALUES+1];
+
     pbio_error_t err = PBIO_SUCCESS;
-    
+
     // Write data to file line by line
     for (int32_t i = 0; i < samples; i++) {
 
@@ -127,36 +162,21 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
             break;
         }
 
-        // Open file for appending
-        log_file = fopen(file_path, "a");
-        if (log_file == NULL) {
-            err = PBIO_ERROR_IO;
-            break;
-        }
+        // Make one string of values
+        make_data_row_str(row_str, data, num_values);
 
-        // Append sample at one time interval to file
-        for (uint8_t v = 0; v < num_values; v++) {
-            if (fprintf(log_file, "%d,", data[v]) < 0) {
-                err = PBIO_ERROR_IO;
-                break;
-            }
-        }
-        if (err != PBIO_SUCCESS) {
-            break;
-        }
-
-        // Finish sample with line break
-        if (fprintf(log_file, "\n") < 0) {
-            err = PBIO_ERROR_IO;
-            break;
-        }
-
-        // Close the file
-        if (fclose(log_file) != 0) {
+        // Append the row
+        if (fprintf(log_file, "%s", row_str) < 0) {
             err = PBIO_ERROR_IO;
             break;
         }
     }
+
+    // Close the file
+    if (fclose(log_file) != 0) {
+        err = PBIO_ERROR_IO;
+    }
+
     pb_assert(err);
 #else
     pb_assert(PBIO_ERROR_NOT_SUPPORTED);
