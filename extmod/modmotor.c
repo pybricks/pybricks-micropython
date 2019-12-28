@@ -240,16 +240,23 @@ MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_stalled_obj, motor_Motor_stalled);
 
 STATIC mp_obj_t motor_Motor_reset_angle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        PB_ARG_REQUIRED(angle)
+        PB_ARG_DEFAULT_NONE(angle)
     );
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-    mp_int_t reset_angle = pb_obj_get_int(angle);
-    pbio_error_t err;
 
+    // If no angle argument is given, reset to the absolute value
+    bool reset_to_abs = angle == mp_const_none;
+
+    // Otherwise reset to the given angle
+    mp_int_t reset_angle = reset_to_abs ? 0 : pb_obj_get_int(angle);
+
+    // Set the new angle
+    pbio_error_t err;
     pb_thread_enter();
-    err = pbio_servo_reset_angle(self->srv, reset_angle);
+    err = pbio_servo_reset_angle(self->srv, reset_angle, reset_to_abs);
     pb_thread_exit();
 
+    // Assert that no errors were raised
     pb_assert(err);
 
     return mp_const_none;
