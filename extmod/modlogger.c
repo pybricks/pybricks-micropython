@@ -142,15 +142,19 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
 
     // Read log size information
     int32_t data[MAX_LOG_VALUES];
+
+    pbio_error_t err;
+
     pb_thread_enter();
+    err = pbio_logger_stop(self->log);
     uint8_t num_values = self->log->num_values;
     int32_t samples =  self->log->sampled;
     pb_thread_exit();
 
+    pb_assert(err);
+
     // Allocate space for one row of data
     char row_str[max_val_strln*MAX_LOG_VALUES+1];
-
-    pbio_error_t err = PBIO_SUCCESS;
 
     // Write data to file line by line
     for (int32_t i = 0; i < samples; i++) {
