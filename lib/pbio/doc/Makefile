@@ -1,4 +1,4 @@
-# You ca set these variables from the command line.
+# You can set these variables from the command line.
 DOXYGEN       = doxygen
 DOXYGEN_CONF  = doxygen.conf
 
