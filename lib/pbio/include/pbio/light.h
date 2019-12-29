@@ -95,3 +95,5 @@ static inline pbio_error_t _pbio_light_on(pbio_port_t port, pbio_light_color_t c
 /** @endcond */
 
 #endif // _PBIO_LIGHT_H_
+
+/** @}*/
