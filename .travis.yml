@@ -239,6 +239,7 @@ jobs:
         - pyenv versions
         - sudo apt-get update -qq || true
       install:
+        - sudo apt-get install --yes doxygen
         - npm install -g jfrog-cli-go
         - pyenv shell 3.6
         - cd ${HOME}
@@ -250,6 +251,7 @@ jobs:
       script:
         - make ${MAKEOPTS} -C lib/pbio/test
         - ./lib/pbio/test/build/test-pbio
+        - make $(MAKEOPTS) -C lib/pbio/doc
         - make ${MAKEOPTS} -C lib/pbio/test COVERAGE=1
         - ./lib/pbio/test/build-coverage/test-pbio
         - # TODO: run coveralls
