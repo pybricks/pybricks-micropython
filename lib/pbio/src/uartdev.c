@@ -196,7 +196,8 @@ typedef enum {
  * @iodev: The I/O device state information struct
  * @counter_dev: A counter device to provide access to tacho counts
  * @pt: Protothread for main communication protocol
- * @pt_data: Protothread for receiving sensor data
+ * @data_pt: Protothread for receiving sensor data
+ * @speed_pt: Protothread for setting the baud rate
  * @timer: Timer for sending keepalive messages and other delays.
  * @uart: Pointer to the UART device to use for communications
  * @info: The I/O device information struct for the connected device
@@ -226,6 +227,9 @@ typedef enum {
  * @tx_busy: mutex that protects tx_msg
  * @mode_change_tx_done: Flag to keep ev3_uart_set_mode_end() blocked until
  * mode has actually changed
+ * @speed_payload: Buffer for holding baud rate change message data
+ * @mode_combo_payload: Buffer for holding mode combo message data
+ * @mode_combo_size: Actual size of mode combo message
  */
 typedef struct {
     pbio_iodev_t iodev;
@@ -233,9 +237,6 @@ typedef struct {
     struct pt pt;
     struct pt data_pt;
     struct pt speed_pt;
-    uint8_t speed_payload[4];
-    uint8_t mode_combo_payload[5];
-    uint8_t mode_combo_size;
     struct etimer timer;
     pbdrv_uart_dev_t *uart;
     pbio_iodev_info_t *info;
@@ -260,6 +261,9 @@ typedef struct {
     bool data_rec;
     bool tx_busy;
     bool mode_change_tx_done;
+    uint8_t speed_payload[4];
+    uint8_t mode_combo_payload[5];
+    uint8_t mode_combo_size;
 } uartdev_port_data_t;
 
 enum {
