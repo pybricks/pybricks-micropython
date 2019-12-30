@@ -5,6 +5,7 @@
 
 #if PBDRV_CONFIG_COUNTER
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -26,9 +27,7 @@ pbio_error_t pbdrv_counter_register(uint8_t id, pbdrv_counter_dev_t *dev) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    if (pbdrv_counters[id] != NULL) {
-        return PBIO_ERROR_INVALID_OP;
-    }
+    assert(pbdrv_counters[id] == NULL);
 
     pbdrv_counters[id] = dev;
 
