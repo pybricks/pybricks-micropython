@@ -1308,7 +1308,7 @@ static pbio_error_t pbio_uartdev_get_abs_count(pbdrv_counter_dev_t *dev, int32_t
     }
 
     if (!(port_data->iodev.motor_flags & PBIO_IODEV_MOTOR_FLAG_HAS_ABS_POS)) {
-        return PBIO_ERROR_INVALID_OP;
+        return PBIO_ERROR_NOT_SUPPORTED;
     }
 
     *count = port_data->abs_pos;

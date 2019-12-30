@@ -716,7 +716,7 @@ PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     int32_t count;
     tt_want_uint_op(pbdrv_counter_get_count(counter, &count), ==, PBIO_SUCCESS);
     tt_want_int_op(count, ==, -1);
-    tt_want_uint_op(pbdrv_counter_get_abs_count(counter, &count), ==, PBIO_ERROR_INVALID_OP);
+    tt_want_uint_op(pbdrv_counter_get_abs_count(counter, &count), ==, PBIO_ERROR_NOT_SUPPORTED);
     tt_want_uint_op(pbdrv_counter_get_rate(counter, &count), ==, PBIO_SUCCESS);
     tt_want_int_op(count, ==, -1500);
 
