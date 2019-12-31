@@ -382,8 +382,6 @@ pbio_error_t pbdrv_ev3_sensor_get_bin_data(pbdrv_ev3_sensor_t *sensor, char *bin
     if (fread(bin_data, 1, PBIO_IODEV_MAX_DATA_SIZE, sensor->f_bin_data) < PBIO_IODEV_MAX_DATA_SIZE) {
         return PBIO_ERROR_IO;
     }
-    if (fflush(sensor->f_bin_data) != 0) {
-        return PBIO_ERROR_IO;
-    }
+
     return PBIO_SUCCESS;
 }

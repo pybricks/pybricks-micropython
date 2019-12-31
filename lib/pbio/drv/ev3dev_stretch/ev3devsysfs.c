@@ -62,9 +62,16 @@ pbio_error_t sysfs_get_number(pbio_port_t port, const char *rdir, int *sysfs_num
 // Open a sysfs attribute
 pbio_error_t sysfs_open(FILE **file, const char *pathpat, int n, const char *attribute, const char *rw) {
     char path[MAX_PATH_LENGTH];
+
     snprintf(path, MAX_PATH_LENGTH, pathpat, n, attribute);
     *file = fopen(path, rw);
-    return file == NULL? PBIO_ERROR_IO : PBIO_SUCCESS; 
+    if (!*file) {
+        return PBIO_ERROR_IO;
+    }
+
+    setbuf(*file, NULL);
+
+    return PBIO_SUCCESS;
 }
 
 // Open a sensor sysfs attribute
@@ -95,10 +102,6 @@ pbio_error_t sysfs_write_str(FILE *file, const char *str) {
         return PBIO_ERROR_IO;
     }
 
-    if (fflush(file) != 0) {
-        return PBIO_ERROR_IO;
-    }
-
     return PBIO_SUCCESS;
 }
 
@@ -112,10 +115,6 @@ pbio_error_t sysfs_read_int(FILE *file, int *dest) {
         return PBIO_ERROR_IO;
     }
 
-    if (fflush(file) != 0) {
-        return PBIO_ERROR_IO;
-    }
-
     return PBIO_SUCCESS;
 }
 
@@ -126,10 +125,6 @@ pbio_error_t sysfs_write_int(FILE *file, int val) {
     }
 
     if (fprintf(file, "%d", val) <= 0) {
-        return PBIO_ERROR_IO;
-    }
-
-    if (fflush(file) != 0) {
         return PBIO_ERROR_IO;
     }
 
