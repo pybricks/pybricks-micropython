@@ -6,12 +6,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <pbdrv/ev3sensor.h>
 #include <pbdrv/ev3devsysfs.h>
+#include <pbdrv/ev3sensor.h>
 #include <pbio/ev3device.h>
-
-#include <pbio/port.h>
 #include <pbio/iodev.h>
+#include <pbio/port.h>
+#include <pbio/util.h>
 
 #define MAX_PATH_LENGTH 60
 #define MAX_READ_LENGTH "60"
@@ -81,7 +81,7 @@ static pbio_error_t ev3_sensor_get_port_mode(pbio_port_t port, pbdrv_ev3dev_port
     }
 
     // Find matching port mode string
-    for (int i = 0; i < sizeof(port_modes)/sizeof(port_modes[0]); i++) {
+    for (int i = 0; i < PBIO_ARRAY_SIZE(port_modes); i++) {
         if (!strcmp(mode, port_modes[i])) {
             *port_mode = i;
             return PBIO_SUCCESS;
