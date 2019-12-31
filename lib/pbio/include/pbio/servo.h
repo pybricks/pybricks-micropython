@@ -33,12 +33,9 @@ typedef enum {
     /* Passive control statuses: No PID Control Active */
     PBIO_SERVO_STATE_PASSIVE,
     PBIO_SERVO_STATE_ERRORED,
-    /* Active control statuses: PID Control Active in non-blocking manner */   
-    PBIO_SERVO_STATE_ANGLE_BACKGROUND,
-    PBIO_SERVO_STATE_TIME_BACKGROUND,
-    /* Active control statuses: PID Control Active which blocks user program */  
-    PBIO_SERVO_STATE_ANGLE_FOREGROUND,
-    PBIO_SERVO_STATE_TIME_FOREGROUND,
+    /* PID Control */   
+    PBIO_SERVO_STATE_CONTROL_ANGLE,
+    PBIO_SERVO_STATE_CONTROL_TIMED,
     /* Controlled/claimed by a higher level construct such as a drivebase */
     PBIO_SERVO_STATE_CLAIMED,
 } pbio_servo_state_t;
@@ -84,10 +81,10 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop);
 pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps);
 
 pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed);
-pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop, bool foreground);
+pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop);
 pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio_actuation_t after_stop);
-pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_actuation_t after_stop, bool foreground);
-pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop, bool foreground);
+pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_actuation_t after_stop);
+pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop);
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target);
 
 pbio_error_t pbio_servo_control_update(pbio_servo_t *srv);

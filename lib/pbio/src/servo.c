@@ -249,7 +249,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     pbio_error_t err;
 
     // Perform angle reset in case of tracking / holding
-    if (srv->state == PBIO_SERVO_STATE_ANGLE_BACKGROUND) {
+    if (srv->state == PBIO_SERVO_STATE_CONTROL_ANGLE) {
         // Get the old angle
         int32_t angle_old;
         err = pbio_tacho_get_angle(srv->tacho, &angle_old);
@@ -340,7 +340,7 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, int32_t time_now, i
     int32_t buf[SERVO_LOG_NUM_VALUES];
 
     // Log the time since start of control trajectory
-    if (srv->state >= PBIO_SERVO_STATE_ANGLE_BACKGROUND) {
+    if (srv->state >= PBIO_SERVO_STATE_CONTROL_ANGLE) {
         buf[0] = (time_now - srv->control.trajectory.t0) / 1000;
     }
     else {
@@ -400,13 +400,11 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     }
 
     // Calculate controls for position based control
-    if (srv->state == PBIO_SERVO_STATE_ANGLE_BACKGROUND ||
-        srv->state == PBIO_SERVO_STATE_ANGLE_FOREGROUND) {
+    if (srv->state == PBIO_SERVO_STATE_CONTROL_ANGLE) {
         control_update_angle_target(&srv->control, time_now, count_now, rate_now, &actuation, &control);
     }
     // Calculate controls for time based control
-    else if (srv->state == PBIO_SERVO_STATE_TIME_BACKGROUND ||
-             srv->state == PBIO_SERVO_STATE_TIME_FOREGROUND) {
+    else if (srv->state == PBIO_SERVO_STATE_CONTROL_TIMED) {
         // Get control type and signal for given state
         control_update_time_target(&srv->control, time_now, count_now, rate_now, &actuation, &control);
     }
@@ -427,7 +425,7 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
 
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled) {
     *stalled = srv->control.stalled &&
-               srv->state >= PBIO_SERVO_STATE_ANGLE_BACKGROUND;
+               srv->state >= PBIO_SERVO_STATE_CONTROL_ANGLE;
     return PBIO_SUCCESS;
 }
 
@@ -443,8 +441,8 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
         return err;
     }
 
-    // Check if a maneuver is in progress so we can extend it
-    bool resume = srv->state == PBIO_SERVO_STATE_TIME_FOREGROUND || srv->state == PBIO_SERVO_STATE_TIME_BACKGROUND;
+    // Check if a timed maneuver is in progress so we can extend it
+    bool resume = srv->state == PBIO_SERVO_STATE_CONTROL_TIMED;
 
     if (resume) {
         // If a maneuver is ongoing, we start from the current reference
@@ -482,7 +480,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     }
 
     // Run is always in the background
-    srv->state = PBIO_SERVO_STATE_TIME_BACKGROUND;
+    srv->state = PBIO_SERVO_STATE_CONTROL_TIMED;
 
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(srv);
@@ -519,7 +517,7 @@ static bool run_time_is_done_func(pbio_control_trajectory_t *trajectory, pbio_co
     return time >= trajectory->t3;
 }
 
-pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop, bool foreground) {
+pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop) {
 
     // Get the intitial state based on physical motor state.
     int32_t time_start;
@@ -552,8 +550,8 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
     // Initialize or reset the PID control status for the given maneuver
     pbio_rate_integrator_reset(&srv->control.rate_integrator, 0, srv->control.trajectory.th0, srv->control.trajectory.th0);
 
-    // Set user specified foreground or background state
-    srv->state = foreground ? PBIO_SERVO_STATE_TIME_FOREGROUND : PBIO_SERVO_STATE_TIME_BACKGROUND;
+    // This is a timed control maneuver
+    srv->state = PBIO_SERVO_STATE_CONTROL_TIMED;
 
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(srv);
@@ -576,10 +574,6 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
     // ... just with a different stop condition
     srv->control.is_done_func = run_until_stalled_is_done_func;
     srv->control.after_stop = after_stop;
-
-    // Run until stalled is always in the foreground, so we can return the
-    // final motor angle when we are done.
-    srv->state = PBIO_SERVO_STATE_TIME_FOREGROUND;
 
     return PBIO_SUCCESS;
 }
@@ -609,7 +603,7 @@ static bool run_target_is_done_func(pbio_control_trajectory_t *trajectory, pbio_
     return true;
 }
 
-pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop, bool foreground) {
+pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop) {
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
     int32_t time_start;
@@ -643,8 +637,8 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
     int32_t integrator_max = (US_PER_SECOND/srv->control.settings.pid_ki)*srv->control.settings.max_control;
     pbio_count_integrator_reset(&srv->control.count_integrator, srv->control.trajectory.t0, srv->control.trajectory.th0, srv->control.trajectory.th0, integrator_max);
 
-    // Set user specified foreground or background state
-    srv->state = foreground ? PBIO_SERVO_STATE_ANGLE_FOREGROUND : PBIO_SERVO_STATE_ANGLE_BACKGROUND;
+    // This is an angular control maneuver
+    srv->state = PBIO_SERVO_STATE_CONTROL_ANGLE;
 
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(srv);
@@ -655,7 +649,7 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_actuation_t after_stop, bool foreground) {
+pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_actuation_t after_stop) {
 
     // Speed  | Angle | End target  | Effect
     //  > 0   |  > 0  | now + angle | Forward
@@ -673,7 +667,7 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
     // The angle target is the instantaneous angle plus the angle to be traveled
     int32_t angle_target = angle_now + (speed < 0 ? -angle: angle);
 
-    return pbio_servo_run_target(srv, speed, angle_target, after_stop, foreground);
+    return pbio_servo_run_target(srv, speed, angle_target, after_stop);
 }
 
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
@@ -699,8 +693,8 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     int32_t integrator_max = (US_PER_SECOND/srv->control.settings.pid_ki)*srv->control.settings.max_control;
     pbio_count_integrator_reset(&srv->control.count_integrator, srv->control.trajectory.t0, srv->control.trajectory.th0, srv->control.trajectory.th0, integrator_max);
 
-    // Tracking a target is always a background action
-    srv->state = PBIO_SERVO_STATE_ANGLE_BACKGROUND;
+    // This is an angular control maneuver
+    srv->state = PBIO_SERVO_STATE_CONTROL_ANGLE;
 
     // Run one control update synchronously with user command
     err = pbio_servo_control_update(srv);

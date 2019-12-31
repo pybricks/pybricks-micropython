@@ -28,7 +28,7 @@
 
 // Must not be called while pybricks thread lock is held!
 STATIC void wait_for_completion(pbio_servo_t *srv) {
-    while (srv->state >= PBIO_SERVO_STATE_ANGLE_FOREGROUND && srv->state < PBIO_SERVO_STATE_CLAIMED) {
+    while (srv->state == PBIO_SERVO_STATE_CONTROL_ANGLE || srv->state == PBIO_SERVO_STATE_CONTROL_TIMED) {
         mp_hal_delay_ms(10);
     }
     if (srv->state == PBIO_SERVO_STATE_ERRORED) {
@@ -398,17 +398,19 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t time_arg = pb_obj_get_int(time);
     pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
-    bool foreground = mp_obj_is_true(wait);
     pbio_error_t err;
 
     pb_thread_enter();
     // Call pbio with parsed user/default arguments
-    err = pbio_servo_run_time(self->srv, speed_arg, time_arg, after_stop, foreground);
+    err = pbio_servo_run_time(self->srv, speed_arg, time_arg, after_stop);
     pb_thread_exit();
 
     pb_assert(err);
-    wait_for_completion(self->srv);
 
+    if (mp_obj_is_true(wait)) {
+        wait_for_completion(self->srv);
+    }
+    
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_run_time_obj, 0, motor_Motor_run_time);
@@ -450,6 +452,9 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
     pb_thread_exit();
 
     pb_assert(err);
+
+    // In this command we always wait for completion, so we can return the
+    // final angle below.
     wait_for_completion(self->srv);
 
     pb_thread_enter();
@@ -483,16 +488,18 @@ STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, m
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t angle_arg = pb_obj_get_int(rotation_angle);
     pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
-    bool foreground = mp_obj_is_true(wait);
     pbio_error_t err;
 
     pb_thread_enter();
     // Call pbio with parsed user/default arguments
-    err = pbio_servo_run_angle(self->srv, speed_arg, angle_arg, after_stop, foreground);
+    err = pbio_servo_run_angle(self->srv, speed_arg, angle_arg, after_stop);
     pb_thread_exit();
 
     pb_assert(err);
-    wait_for_completion(self->srv);
+
+    if (mp_obj_is_true(wait)) {
+        wait_for_completion(self->srv);
+    }
 
     return mp_const_none;
 }
@@ -511,16 +518,18 @@ STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *pos_args, 
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t angle_arg = pb_obj_get_int(target_angle);
     pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
-    bool foreground = mp_obj_is_true(wait);
     pbio_error_t err;
 
     // Call pbio with parsed user/default arguments
     pb_thread_enter();
-    err = pbio_servo_run_target(self->srv, speed_arg, angle_arg, after_stop, foreground);
+    err = pbio_servo_run_target(self->srv, speed_arg, angle_arg, after_stop);
     pb_thread_exit();
 
     pb_assert(err);
-    wait_for_completion(self->srv);
+
+    if (mp_obj_is_true(wait)) {
+        wait_for_completion(self->srv);
+    }
 
     return mp_const_none;
 }
