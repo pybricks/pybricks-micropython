@@ -193,9 +193,10 @@ void motor_Motor_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind
 
 STATIC mp_obj_t motor_Motor_duty(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        motor_Motor_obj_t, self,
         PB_ARG_REQUIRED(duty)
     );
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
     mp_int_t duty_cycle = pb_obj_get_int(duty);
     pbio_error_t err;
 
@@ -240,9 +241,9 @@ MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_stalled_obj, motor_Motor_stalled);
 
 STATIC mp_obj_t motor_Motor_reset_angle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        motor_Motor_obj_t, self,
         PB_ARG_DEFAULT_NONE(angle)
     );
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     // If no angle argument is given, reset to the absolute value
     bool reset_to_abs = angle == mp_const_none;
@@ -280,9 +281,10 @@ MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_speed_obj, motor_Motor_speed);
 
 STATIC mp_obj_t motor_Motor_run(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        motor_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed)
     );
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
     mp_int_t speed_arg = pb_obj_get_int(speed);
     pbio_error_t err;
 
@@ -298,9 +300,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_run_obj, 0, motor_Motor_run);
 
 STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        motor_Motor_obj_t, self,
         PB_ARG_DEFAULT_ENUM(stop_type, pb_const_coast)
     );
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
     pbio_actuation_t after_stop = enum_get_value_maybe(stop_type, &pb_enum_type_Stop);
     pbio_error_t err;
 
@@ -321,12 +324,13 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_stop_obj, 0, motor_Motor_stop);
 
 STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        motor_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(time),
         PB_ARG_DEFAULT_ENUM(stop_type, pb_const_coast),
         PB_ARG_DEFAULT_TRUE(wait)
     );
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t time_arg = pb_obj_get_int(time);
     pbio_actuation_t after_stop = enum_get_value_maybe(stop_type, &pb_enum_type_Stop);
@@ -347,11 +351,12 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_run_time_obj, 0, motor_Motor_run_t
 
 STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        motor_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_DEFAULT_ENUM(stop_type, pb_const_coast),
         PB_ARG_DEFAULT_INT(duty_limit, 100)
     );
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
     mp_int_t speed_arg = pb_obj_get_int(speed);
     pbio_actuation_t after_stop = enum_get_value_maybe(stop_type, &pb_enum_type_Stop);
 
@@ -402,12 +407,13 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_run_until_stalled_obj, 0, motor_Mo
 
 STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        motor_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(rotation_angle),
         PB_ARG_DEFAULT_ENUM(stop_type, pb_const_coast),
         PB_ARG_DEFAULT_TRUE(wait)
     );
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t angle_arg = pb_obj_get_int(rotation_angle);
     pbio_actuation_t after_stop = enum_get_value_maybe(stop_type, &pb_enum_type_Stop);
@@ -428,12 +434,13 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_run_angle_obj, 0, motor_Motor_run_
 
 STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        motor_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(target_angle),
         PB_ARG_DEFAULT_ENUM(stop_type, pb_const_coast),
         PB_ARG_DEFAULT_TRUE(wait)
     );
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t angle_arg = pb_obj_get_int(target_angle);
     pbio_actuation_t after_stop = enum_get_value_maybe(stop_type, &pb_enum_type_Stop);
@@ -454,9 +461,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_run_target_obj, 0, motor_Motor_run
 
 STATIC mp_obj_t motor_Motor_track_target(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        motor_Motor_obj_t, self,
         PB_ARG_REQUIRED(target_angle)
     );
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
     mp_int_t target = pb_obj_get_int(target_angle);
     pbio_error_t err;
 
@@ -472,10 +480,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_track_target_obj, 0, motor_Motor_t
 
 STATIC mp_obj_t motor_Motor_set_run_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        motor_Motor_obj_t, self,
         PB_ARG_DEFAULT_NONE(max_speed),
         PB_ARG_DEFAULT_NONE(acceleration)
     );
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     // Load original values
     pbio_error_t err;
@@ -503,10 +511,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_set_run_settings_obj, 0, motor_Mot
 
 STATIC mp_obj_t motor_Motor_set_dc_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        motor_Motor_obj_t, self,
         PB_ARG_DEFAULT_NONE(duty_limit),
         PB_ARG_DEFAULT_NONE(duty_offset)
     );
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     // Load original values
     pbio_error_t err;
@@ -535,6 +543,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_set_dc_settings_obj, 0, motor_Moto
 
 STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        motor_Motor_obj_t, self,
         PB_ARG_DEFAULT_NONE(kp),
         PB_ARG_DEFAULT_NONE(ki),
         PB_ARG_DEFAULT_NONE(kd),
@@ -544,7 +553,6 @@ STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *pos_
         PB_ARG_DEFAULT_NONE(stall_speed),
         PB_ARG_DEFAULT_NONE(stall_time)
     );
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     // Load original values
     pbio_error_t err;

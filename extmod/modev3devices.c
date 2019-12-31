@@ -107,10 +107,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_InfraredSensor_distance_obj, ev3devi
 STATIC mp_obj_t ev3devices_InfraredSensor_beacon(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        ev3devices_InfraredSensor_obj_t, self,
         PB_ARG_REQUIRED(channel)
     );
-
-    ev3devices_InfraredSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     mp_int_t channel_no = pb_obj_get_int(channel);
     if (channel_no < 1 || channel_no > 4) {
@@ -142,10 +141,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_InfraredSensor_beacon_obj, 0, ev3de
 STATIC mp_obj_t ev3devices_InfraredSensor_buttons(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        ev3devices_InfraredSensor_obj_t, self,
         PB_ARG_REQUIRED(channel)
     );
-
-    ev3devices_InfraredSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     mp_int_t channel_no = pb_obj_get_int(channel);
     if (channel_no < 1 || channel_no > 4) {
@@ -393,9 +391,9 @@ STATIC mp_obj_t ev3devices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
 STATIC mp_obj_t ev3devices_UltrasonicSensor_distance(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        ev3devices_UltrasonicSensor_obj_t, self,
         PB_ARG_DEFAULT_FALSE(silent)
     );
-    ev3devices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     int16_t distance;
     if (mp_obj_is_true(silent)) {
@@ -519,9 +517,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_GyroSensor_angle_obj, ev3devices_Gyr
 // pybricks.ev3devices.GyroSensor.reset_angle
 STATIC mp_obj_t ev3devices_GyroSensor_reset_angle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        ev3devices_GyroSensor_obj_t, self,
         PB_ARG_REQUIRED(angle)
     );
-    ev3devices_GyroSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
     self->offset = ev3devices_GyroSensor_get_angle_offset(self->iodev, self->direction, pb_obj_get_int(angle));
     return mp_const_none;
 }

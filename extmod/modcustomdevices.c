@@ -163,11 +163,10 @@ STATIC mp_obj_t customdevices_I2CDevice_make_new(const mp_obj_type_t *otype, siz
 STATIC mp_obj_t customdevices_I2CDevice_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        customdevices_I2CDevice_obj_t, self,
         PB_ARG_REQUIRED(reg),
         PB_ARG_REQUIRED(length)
     );
-
-    customdevices_I2CDevice_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     // Get requested data length
     mp_int_t len = mp_obj_get_int(length);
@@ -212,11 +211,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(customdevices_I2CDevice_read_obj, 0, customdev
 STATIC mp_obj_t customdevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        customdevices_I2CDevice_obj_t, self,
         PB_ARG_REQUIRED(reg),
         PB_ARG_REQUIRED(data)
     );
-
-    customdevices_I2CDevice_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     // Assert that data argument are bytes
     if (!mp_obj_is_str_or_bytes(data)) {
@@ -313,10 +311,9 @@ STATIC mp_obj_t customdevices_UARTDevice_make_new(const mp_obj_type_t *otype, si
 STATIC mp_obj_t customdevices_UARTDevice_write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        customdevices_UARTDevice_obj_t, self,
         PB_ARG_REQUIRED(data)
     );
-
-    customdevices_UARTDevice_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     // Assert that data argument are bytes
     if (!mp_obj_is_str_or_bytes(data)) {
@@ -381,10 +378,10 @@ STATIC mp_obj_t customdevices_UARTDevice_read_internal(customdevices_UARTDevice_
 STATIC mp_obj_t customdevices_UARTDevice_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        customdevices_UARTDevice_obj_t, self,
         PB_ARG_DEFAULT_INT(length, 1)
     );
 
-    customdevices_UARTDevice_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
     size_t len = mp_obj_get_int(length);
     return customdevices_UARTDevice_read_internal(self, len);
 }
@@ -459,10 +456,9 @@ STATIC mp_obj_t customdevices_Ev3devSensor_make_new(const mp_obj_type_t *otype, 
 STATIC mp_obj_t customdevices_Ev3devSensor_mode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        customdevices_Ev3devSensor_obj_t, self,
         PB_ARG_REQUIRED(mode)
     );
-
-    customdevices_Ev3devSensor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     uint8_t bin[PBIO_IODEV_MAX_DATA_SIZE];
 

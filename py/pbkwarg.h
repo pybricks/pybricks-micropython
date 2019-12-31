@@ -60,8 +60,9 @@
     PB_PARSE_GENERIC(n_args, pos_args, kw_args, 0, __VA_ARGS__)
 
 // Parse the arguments of a class method (like a function, except without parsing self)
-#define PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args, ...) \
-    PB_PARSE_GENERIC(n_args, pos_args, kw_args, 1, __VA_ARGS__)
+#define PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args, self_type, self_name, ...) \
+    PB_PARSE_GENERIC(n_args, pos_args, kw_args, 1, __VA_ARGS__) \
+    self_type *self_name = MP_OBJ_TO_PTR(pos_args[0]);
 
 // Parse the arguments of a __init__ (without parsing self)
 #define PB_PARSE_ARGS_CLASS(n_args, n_kw, pos_and_kw_args, ...) \

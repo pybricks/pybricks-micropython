@@ -27,9 +27,9 @@ typedef struct _tools_Logger_obj_t {
 
 STATIC mp_obj_t tools_Logger_start(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        tools_Logger_obj_t, self,
         PB_ARG_REQUIRED(duration)
     );
-    tools_Logger_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     mp_int_t duration_arg = pb_obj_get_int(duration);
 
@@ -47,9 +47,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_start_obj, 0, tools_Logger_start)
 
 STATIC mp_obj_t tools_Logger_get(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        tools_Logger_obj_t, self,
         PB_ARG_DEFAULT_NONE(index)
     );
-    tools_Logger_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
     mp_int_t index_val = pb_obj_get_default_int(index, -1);
 
     // Data buffer for this sample
@@ -112,10 +113,9 @@ static void make_data_row_str(char *row, int32_t *data, uint8_t n) {
 
 STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
-    tools_Logger_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        tools_Logger_obj_t, self,
         PB_ARG_DEFAULT_NONE(path)
     );
 
@@ -136,6 +136,8 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     if (log_file == NULL) {
         pb_assert(PBIO_ERROR_IO);
     }
+#else
+    tools_Logger_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 #endif //PBDRV_CONFIG_HUB_EV3BRICK
 
     // Read log size information

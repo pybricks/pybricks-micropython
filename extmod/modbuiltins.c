@@ -37,9 +37,9 @@ mp_obj_t builtins_Speaker_obj_make_new(uint8_t volume) {
 STATIC mp_obj_t builtins_Speaker_volume(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        builtins_Speaker_obj_t, self,
         PB_ARG_REQUIRED(volume)
     );
-    builtins_Speaker_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     mp_int_t vol_arg = pb_obj_get_int(volume);
     vol_arg = vol_arg > 100 ? 100 : vol_arg;
@@ -55,12 +55,16 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Speaker_volume_obj, 0, builtins_Speak
 STATIC mp_obj_t builtins_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        builtins_Speaker_obj_t, self,
         PB_ARG_REQUIRED(phrase)
     );
 
     const char *text = mp_obj_str_get_str(phrase);
 
     printf("The user wants to say (%s):\n", text);
+
+    // DELETEME: Dummy operation until we are using self in this method
+    pb_assert(pbio_sound_set_volume(self->sound, 50));
 
     return mp_const_none;
 }
@@ -70,10 +74,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Speaker_say_obj, 0, builtins_Speaker_
 STATIC mp_obj_t builtins_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        builtins_Speaker_obj_t, self,
         PB_ARG_DEFAULT_INT(frequency, 500),
         PB_ARG_DEFAULT_INT(duration, 100)
     );
-    builtins_Speaker_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     pbio_error_t err;
     mp_int_t freq = pb_obj_get_int(frequency);
@@ -92,9 +96,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Speaker_beep_obj, 0, builtins_Speaker
 STATIC mp_obj_t builtins_Speaker_play(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        builtins_Speaker_obj_t, self,
         PB_ARG_REQUIRED(file)
     );
-    builtins_Speaker_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     const char *path = mp_obj_str_get_str(file);
 

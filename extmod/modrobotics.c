@@ -69,10 +69,10 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
 // pybricks.robotics.DriveBase.start
 STATIC mp_obj_t robotics_DriveBase_start(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        robotics_DriveBase_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(turn_rate)
     );
-    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     // Get wheel diameter and axle track dimensions
     int32_t speed_val = pb_obj_get_int(speed);
@@ -94,10 +94,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_start_obj, 0, robotics_Driv
 // pybricks.robotics.DriveBase.drive (Legacy function for 1.0 API compatibility)
 STATIC mp_obj_t robotics_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        robotics_DriveBase_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(steering)
     );
-    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     // Get wheel diameter and axle track dimensions
     int32_t speed_val = pb_obj_get_int(speed);
@@ -116,11 +116,11 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_drive_obj, 0, robotics_Driv
 // pybricks.robotics.DriveBase.drive_time (Legacy function for 1.0 API compatibility)
 STATIC mp_obj_t robotics_DriveBase_drive_time(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        robotics_DriveBase_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(steering),
         PB_ARG_REQUIRED(time)
     );
-    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     // Get wheel diameter and axle track dimensions
     int32_t speed_val = pb_obj_get_int(speed);
@@ -152,9 +152,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_drive_time_obj, 0, robotics
 // pybricks.robotics.DriveBase.stop
 STATIC mp_obj_t robotics_DriveBase_stop(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        robotics_DriveBase_obj_t, self,
         PB_ARG_DEFAULT_INT(stop_type, PBIO_ACTUATION_COAST)
     );
-    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
     pbio_actuation_t after_stop = mp_obj_get_int(stop_type);
 
     pbio_error_t err;

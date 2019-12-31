@@ -35,10 +35,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(light_Light_on_obj, light_Light_on);
 STATIC mp_obj_t light_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     // Parse arguments
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        light_Light_obj_t, self,
         PB_ARG_REQUIRED(color),
         PB_ARG_DEFAULT_INT(brightness, 100)
     );
-    light_Light_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     if (color == mp_const_none) {
         color = MP_OBJ_FROM_PTR(&pb_const_black);
