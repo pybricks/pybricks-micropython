@@ -46,6 +46,7 @@ ifeq ($(PB_USE_HAL),1)
 INC += -I$(TOP)/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Inc
 endif
 INC += -I$(TOP)/ports/pybricks/lib/contiki-core
+INC += -I$(TOP)/ports/pybricks/lib/lego
 INC += -I$(TOP)/ports/pybricks/lib/libfixmath/libfixmath
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include
 INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)

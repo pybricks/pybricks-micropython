@@ -38,6 +38,11 @@ CONTIKI_SRC = $(addprefix $(CONTIKI_DIR)/, \
 	)
 
 # pbio depedency
+LEGO_DIR = ../../lego
+LEGO_INC = -I$(LEGO_DIR)
+LEGO_SRC =
+
+# pbio depedency
 FIXMATH_DIR = ../../libfixmath
 FIXMATH_INC = -I$(FIXMATH_DIR)/libfixmath
 FIXMATH_SRC = $(shell find $(FIXMATH_DIR)/libfixmath -name "*.c")
@@ -56,14 +61,14 @@ TEST_SRC = $(shell find . -name "*.c")
 
 CFLAGS += -std=gnu99 -g -O0 -Wall -Werror -fshort-enums
 CFLAGS += -fdata-sections -ffunction-sections -Wl,--gc-sections
-CFLAGS += $(TINY_TEST_INC) $(CONTIKI_INC) $(FIXMATH_INC) $(PBIO_INC) $(TEST_INC)
+CFLAGS += $(TINY_TEST_INC) $(CONTIKI_INC) $(LEGO_INC) $(FIXMATH_INC) $(PBIO_INC) $(TEST_INC)
 
 ifeq ($(COVERAGE),1)
 CFLAGS += --coverage
 endif
 
 BUILD_PREFIX = $(BUILD_DIR)/ports/pybricks/lib/pbio/test
-SRC = $(TINY_TEST_SRC) $(CONTIKI_SRC) $(FIXMATH_SRC) $(PBIO_SRC) $(TEST_SRC)
+SRC = $(TINY_TEST_SRC) $(CONTIKI_SRC) $(LEGO_SRC) $(FIXMATH_SRC) $(PBIO_SRC) $(TEST_SRC)
 DEP = $(addprefix $(BUILD_PREFIX)/,$(SRC:.c=.d))
 OBJ = $(addprefix $(BUILD_PREFIX)/,$(SRC:.c=.o))
 

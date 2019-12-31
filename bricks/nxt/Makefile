@@ -29,6 +29,7 @@ endif
 INC += -I.
 INC += -I$(TOP)
 INC += -I$(TOP)/ports/pybricks/lib/contiki-core
+INC += -I$(TOP)/ports/pybricks/lib/lego
 INC += -I$(TOP)/ports/pybricks/lib/libfixmath/libfixmath
 INC += -I$(TOP)/ports/pybricks/bricks/nxt/nxt-firmware-drivers
 INC += -I$(TOP)/ports/pybricks/lib/pbio/include

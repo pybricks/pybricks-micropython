@@ -7,6 +7,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <lego_uart.h>
+
 #include "pbio/port.h"
 
 /**
@@ -39,33 +41,74 @@ typedef enum {
     PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART        = 14,   /**< Temporary ID for UART devices until real ID is read from the device */
 
     // LEGO EV3 UART devices
-    PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR         = 29,   /**< MINDSTORMS EV3 Color Sensor */
-    PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR    = 30,   /**< MINDSTORMS EV3 Ultrasonic Sensor */
-    PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR          = 32,   /**< MINDSTORMS EV3 Gyro Sensor */
-    PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR            = 33,   /**< MINDSTORMS EV3 Infrared Sensor */
+
+    /** MINDSTORMS EV3 Color Sensor */
+    PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR = LUMP_TYPE_ID_EV3_COLOR_SENSOR,
+
+    /** MINDSTORMS EV3 Ultrasonic Sensor */
+    PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR = LUMP_TYPE_ID_EV3_ULTRASONIC_SENSOR,
+
+    /** MINDSTORMS EV3 Gyro Sensor */
+    PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR = LUMP_TYPE_ID_EV3_GYRO_SENSOR,
+
+    /** MINDSTORMS EV3 Infrared Sensor */
+    PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR = LUMP_TYPE_ID_EV3_IR_SENSOR,
+
 
     // WeDo 2.0 UART devices
-    PBIO_IODEV_TYPE_ID_WEDO2_TILT_SENSOR        = 34,   /**< WeDo 2.0 Tilt Sensor */
-    PBIO_IODEV_TYPE_ID_WEDO2_MOTION_SENSOR      = 35,   /**< WeDo 2.0 Motion Sensor */
-    PBIO_IODEV_TYPE_ID_WEDO2_GENERIC_SENSOR     = 36,
+
+    /** WeDo 2.0 Tilt Sensor */
+    PBIO_IODEV_TYPE_ID_WEDO2_TILT_SENSOR = LUMP_TYPE_ID_WEDO2_TILT_SENSOR,
+
+    /** WeDo 2.0 Motion Sensor */
+    PBIO_IODEV_TYPE_ID_WEDO2_MOTION_SENSOR = LUMP_TYPE_ID_WEDO2_MOTION_SENSOR,
+
+    PBIO_IODEV_TYPE_ID_WEDO2_GENERIC_SENSOR = 36,
+
 
     // BOOST UART devices and motors
-    PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR        = 37,   /**< BOOST Color and Distance Sensor */
-    PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR        = 38,   /**< BOOST Interactive Motor */
-    PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR           = 39,   /**< BOOST Move Hub built-in Motor */
+
+    /** BOOST Color and Distance Sensor */
+    PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR = LUMP_TYPE_ID_COLOR_DIST_SENSOR,
+
+    /** BOOST Interactive Motor */
+    PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR = LUMP_TYPE_ID_INTERACTIVE_MOTOR,
+
+    /** BOOST Move Hub built-in Motor */
+    PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR = 39,
 
     // TECHNIC Control+ motors
-    PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR            = 46,   /**< TECHNIC Control+ Large Motor */
-    PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR           = 47,   /**< TECHNIC Control+ XL Motor */
+
+    /** TECHNIC Control+ Large Motor */
+    PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR = LUMP_TYPE_ID_CPLUS_L_MOTOR,
+
+    /** TECHNIC Control+ XL Motor */
+    PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR = LUMP_TYPE_ID_CPLUS_XL_MOTOR,
+
 
     // FatcatLab EV3 UART devices
-    PBIO_IODEV_TYPE_ID_FCL_ADC                  = 71,   /**< FatcatLab A/DC Adapter */
-    PBIO_IODEV_TYPE_ID_FCL_GESTURE              = 72,   /**< FatcatLab Gesture Sensor */
-    PBIO_IODEV_TYPE_ID_FCL_LIGHT                = 73,   /**< FatcatLab Light Sensor */
-    PBIO_IODEV_TYPE_ID_FCL_ALTITUDE             = 74,   /**< FatcatLab Altitude Sensor */
-    PBIO_IODEV_TYPE_ID_FCL_IR                   = 75,   /**< FatcatLab IR Receiver */
-    PBIO_IODEV_TYPE_ID_FCL_9DOF                 = 76,   /**< FatcatLab 9DOF Sensor */
-    PBIO_IODEV_TYPE_ID_FCL_HUMIDITY             = 77,   /**< FatcatLab Humidity Sensor */
+
+    /** FatcatLab A/DC Adapter */
+    PBIO_IODEV_TYPE_ID_FCL_ADC = LUMP_TYPE_ID_FCL_ADC,
+
+    /** FatcatLab Gesture Sensor */
+    PBIO_IODEV_TYPE_ID_FCL_GESTURE = LUMP_TYPE_ID_FCL_GESTURE,
+
+    /** FatcatLab Light Sensor */
+    PBIO_IODEV_TYPE_ID_FCL_LIGHT = LUMP_TYPE_ID_FCL_LIGHT,
+
+    /** FatcatLab Altitude Sensor */
+    PBIO_IODEV_TYPE_ID_FCL_ALTITUDE = LUMP_TYPE_ID_FCL_ALTITUDE,
+
+    /** FatcatLab IR Receiver */
+    PBIO_IODEV_TYPE_ID_FCL_IR = LUMP_TYPE_ID_FCL_IR,
+
+    /** FatcatLab 9DOF Sensor */
+    PBIO_IODEV_TYPE_ID_FCL_9DOF = LUMP_TYPE_ID_FCL_9DOF,
+
+    /** FatcatLab Humidity Sensor */
+    PBIO_IODEV_TYPE_ID_FCL_HUMIDITY = LUMP_TYPE_ID_FCL_HUMIDITY,
+
 
     // NXT Devices
     PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR             ,   /**< MINDSTORMS NXT Touch Sensor */
@@ -97,24 +140,22 @@ typedef enum {
  * Data types used by I/O devices.
  */
 typedef enum {
-    /*** LPF2 DATA TYPES BELOW ***/
     /**
      * Signed 8-bit integer.
      */
-    PBIO_IODEV_DATA_TYPE_INT8,
+    PBIO_IODEV_DATA_TYPE_INT8 = LUMP_DATA_TYPE_DATA8,
     /**
      * Little-endian, signed 16-bit integer.
      */
-    PBIO_IODEV_DATA_TYPE_INT16,
+    PBIO_IODEV_DATA_TYPE_INT16 = LUMP_DATA_TYPE_DATA16,
     /**
      * Little-endian, signed 32-bit integer.
      */
-    PBIO_IODEV_DATA_TYPE_INT32,
+    PBIO_IODEV_DATA_TYPE_INT32 = LUMP_DATA_TYPE_DATA32,
     /**
      * Little endian 32-bit floating point.
      */
-    PBIO_IODEV_DATA_TYPE_FLOAT,
-    /*** LEGACY DATA TYPES BELOW***/
+    PBIO_IODEV_DATA_TYPE_FLOAT = LUMP_DATA_TYPE_DATAF,
     /**
      * Unsigned 8-bit integer.
      */
@@ -124,23 +165,23 @@ typedef enum {
 /**
  * The maximum number of modes a I/O device can have.
  */
-#define PBIO_IODEV_MAX_NUM_MODES    16
+#define PBIO_IODEV_MAX_NUM_MODES    (LUMP_MAX_EXT_MODE + 1)
 
 /**
  * Max size of mode name (not including null terminator)
  */
-#define PBIO_IODEV_MODE_NAME_SIZE   11
+#define PBIO_IODEV_MODE_NAME_SIZE   LUMP_MAX_NAME_SIZE
 
 /**
  * Max number of data bytes for I/O data. This means that 32 8-bit values, 16
  * 16-bit values or 8 32-bit values are possible.
  */
-#define PBIO_IODEV_MAX_DATA_SIZE    32
+#define PBIO_IODEV_MAX_DATA_SIZE    LUMP_MAX_MSG_SIZE
 
 /**
  * Max size of units of measurements (not including null terminator)
  */
-#define PBIO_IODEV_UOM_SIZE         4
+#define PBIO_IODEV_UOM_SIZE         LUMP_MAX_UOM_SIZE
 
 /**
  * I/O device capability flags.
@@ -200,48 +241,6 @@ typedef enum {
     LPF2_MAPPING_FLAG_NULL      = 1 << 7,
 } pbio_iodev_mapping_flag_t;
 
-// These flags are sent from UART devices. There is currently no documentation
-// from LEGO about this, so these are guesses as to the meanings.
-
-typedef enum {
-    LPF2_MODE_FLAGS0_NONE           = 0,
-    LPF2_MODE_FLAGS0_MOTOR_SPEED    = 1 << 0,
-    LPF2_MODE_FLAGS0_MOTOR_ABS_POS  = 1 << 1,
-    LPF2_MODE_FLAGS0_MOTOR_REL_POS  = 1 << 2,
-    LPF2_MODE_FLAGS0_MOTOR_POWER    = 1 << 4,
-    LPF2_MODE_FLAGS0_MOTOR          = 1 << 5,
-} pbio_mode_flags0_t;
-
-typedef enum {
-    LPF2_MODE_FLAGS1_NONE           = 0,
-    LPF2_MODE_FLAGS1_CALIB          = 1 << 6,
-} pbio_mode_flags1_t;
-
-typedef enum {
-    LPF2_MODE_FLAGS4_NONE           = 0,
-    LPF2_MODE_FLAGS4_USES_HBRIDGE   = 1 << 0,
-    LPF2_MODE_FLAGS4_UNKNOWN_BIT2   = 1 << 2,
-} pbio_mode_flags4_t;
-
-typedef enum {
-    LPF2_MODE_FLAGS5_NONE           = 0,
-    LPF2_MODE_FLAGS5_UNKNOWN_BIT1   = 1 << 1,
-    LPF2_MODE_FLAGS5_UNKNOWN_BIT2   = 1 << 2,
-    LPF2_MODE_FLAGS5_UNKNOWN_BIT7   = 1 << 7,
-} pbio_mode_flags5_t;
-
-/**
- * Mode flags as sent from newer LPF2 UART devices.
- */
-typedef struct {
-    pbio_mode_flags0_t flags0;
-    pbio_mode_flags1_t flags1;
-    uint8_t flags2; // always 0?
-    uint8_t flags3; // always 0?
-    pbio_mode_flags4_t flags4;
-    pbio_mode_flags5_t flags5;
-} pbio_iodev_mode_flags_t;
-
 /**
  * Information about one mode of an I/O device.
  */
@@ -253,7 +252,7 @@ typedef struct {
     /**
      * Mode flags.
      */
-    pbio_iodev_mode_flags_t flags;
+    lump_mode_flags_t flags;
     /**
      * The number of data values for this mode.
      */
