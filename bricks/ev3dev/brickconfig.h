@@ -16,6 +16,7 @@
 
 #define MICROPY_PORT_INIT_FUNC pybricks_init()
 #define MICROPY_PORT_DEINIT_FUNC pybricks_deinit()
+#define MICROPY_MPHALPORT_H "ev3dev_mphal.h"
 
 #define MICROPY_PY_SYS_PATH_DEFAULT (":~/.pybricks-micropython/lib:/usr/lib/pybricks-micropython")
 

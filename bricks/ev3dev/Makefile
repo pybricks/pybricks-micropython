@@ -173,7 +173,6 @@ LDFLAGS_MOD += $(shell pkg-config sndfile --libs)
 SRC_C = $(addprefix ports/unix/,\
 	main.c \
 	gccollect.c \
-	unix_mphal.c \
 	mpthreadport.c \
 	input.c \
 	file.c \
@@ -193,6 +192,7 @@ SRC_C += $(SRC_MOD)
 
 # Pybricks port core source files
 PYBRICKS_SRC_C += \
+	ev3dev_mphal.c \
 	pbinit.c \
 	pbsmbus.c \
 
