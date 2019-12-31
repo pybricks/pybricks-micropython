@@ -255,9 +255,6 @@ static pbio_error_t ev3_sensor_assert_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_
     else if (!strcmp(driver_name, "nxt-analog")) {
         id = PBIO_IODEV_TYPE_ID_NXT_ANALOG;
     }
-    else if (!strncmp(driver_name, "ev3-analog-", 11)) {
-        id = PBIO_IODEV_TYPE_ID_EV3_ANALOG;
-    }
     else if (!strcmp(driver_name, "lego-nxt-us")) {
         id = PBIO_IODEV_TYPE_ID_NXT_ULTRASONIC_SENSOR;
     }
