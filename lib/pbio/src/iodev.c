@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 David Lechner
 
+#include <assert.h>
 #include <stddef.h>
 
 #include "pbdrv/ioport.h"
@@ -23,6 +24,8 @@ size_t pbio_iodev_size_of(pbio_iodev_data_type_t type) {
     case PBIO_IODEV_DATA_TYPE_FLOAT:
         return 4;
     }
+
+    assert(0); // bug if reached
 
     return 0;
 }
