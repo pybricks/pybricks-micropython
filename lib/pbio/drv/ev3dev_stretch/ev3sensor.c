@@ -342,26 +342,24 @@ pbio_error_t pbdrv_ev3_sensor_get_info(pbdrv_ev3_sensor_t *sensor, uint8_t *data
     // Convert data type identifier
     if (!strcmp(s_data_type, "s8")) {
         *data_type = PBIO_IODEV_DATA_TYPE_INT8;
-        return PBIO_SUCCESS;
     }
     else if (!strcmp(s_data_type, "u8")) {
         *data_type = PBIO_IODEV_DATA_TYPE_UINT8;
-        return PBIO_SUCCESS;
     }
     else if (!strcmp(s_data_type, "s16")) {
         *data_type = PBIO_IODEV_DATA_TYPE_INT16;
-        return PBIO_SUCCESS;
     }
     else if (!strcmp(s_data_type, "s32")) {
         *data_type = PBIO_IODEV_DATA_TYPE_INT32;
-        return PBIO_SUCCESS;
     }
     else if (!strcmp(s_data_type, "float")) {
         *data_type = PBIO_IODEV_DATA_TYPE_FLOAT;
-        return PBIO_SUCCESS;
+    }
+    else {
+        return PBIO_ERROR_FAILED;
     }
 
-    return PBIO_ERROR_IO;
+    return PBIO_SUCCESS;
 }
 
 // Set the sensor mode
