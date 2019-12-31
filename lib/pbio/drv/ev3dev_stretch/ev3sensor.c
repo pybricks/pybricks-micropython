@@ -333,7 +333,7 @@ pbio_error_t pbdrv_ev3_sensor_get_info(pbdrv_ev3_sensor_t *sensor, uint8_t *data
     *data_len = data_len_int;
 
     // Read data type attribute
-    char s_data_type[10];
+    char s_data_type[MAX_PATH_LENGTH];
     err = sysfs_read_str(sensor->f_bin_data_format, s_data_type);
     if (err != PBIO_SUCCESS) {
         return err;
