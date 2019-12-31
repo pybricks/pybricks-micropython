@@ -15,6 +15,7 @@
 
 #define MAX_PATH_LENGTH 60
 #define MAX_READ_LENGTH "60"
+#define BIN_DATA_SIZE   32 // size of bin_data sysfs attribute
 
 typedef enum {
     AUTO,
@@ -379,7 +380,7 @@ pbio_error_t pbdrv_ev3_sensor_get_bin_data(pbdrv_ev3_sensor_t *sensor, char *bin
         return PBIO_ERROR_IO;
     }
 
-    if (fread(bin_data, 1, PBIO_IODEV_MAX_DATA_SIZE, sensor->f_bin_data) < PBIO_IODEV_MAX_DATA_SIZE) {
+    if (fread(bin_data, 1, BIN_DATA_SIZE, sensor->f_bin_data) < BIN_DATA_SIZE) {
         return PBIO_ERROR_IO;
     }
 
