@@ -306,6 +306,7 @@ EV3DEV_TEST_DIRS = $(addprefix ../ports/pybricks/tests/ev3dev/, \
 	brick \
 	motor \
 	uev3dev \
+	v1 \
 	)
 
 test-ev3dev: $(PROG) $(TOP)/tests/run-tests
