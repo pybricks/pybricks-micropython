@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 Laurens Valk
 
+#include <glib.h>
+
 #include <pbdrv/config.h>
 #include "pbinit.h"
 
@@ -17,6 +19,10 @@
 #define MICROPY_PORT_INIT_FUNC pybricks_init()
 #define MICROPY_PORT_DEINIT_FUNC pybricks_deinit()
 #define MICROPY_MPHALPORT_H "ev3dev_mphal.h"
+#define MICROPY_VM_HOOK_LOOP \
+    g_main_context_iteration(g_main_context_get_thread_default(), FALSE);
+#define MICROPY_EVENT_POLL_HOOK \
+    g_main_context_iteration(g_main_context_get_thread_default(), TRUE);
 
 #define MICROPY_PY_SYS_PATH_DEFAULT (":~/.pybricks-micropython/lib:/usr/lib/pybricks-micropython")
 

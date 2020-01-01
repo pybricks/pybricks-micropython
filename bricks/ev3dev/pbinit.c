@@ -12,6 +12,9 @@
 #include <sys/time.h>
 #include <sys/timerfd.h>
 
+#include <glib.h>
+#include <grx-3.0.h>
+
 #include <pbio/main.h>
 #include <pbio/light.h>
 
@@ -78,7 +81,15 @@ static void *task_caller(void *arg)
 }
 
 // Pybricks initialization tasks
-void pybricks_init(){
+void pybricks_init() {
+    GError *error = NULL;
+    if (!grx_set_mode_default_graphics(FALSE, &error)) {
+        fprintf(stderr, "Could not initialize graphics. Be sure to run using `brickrun -r -- pybricks-micropython`.\n");
+        exit(1);
+    }
+    grx_clear_screen(GRX_COLOR_WHITE);
+    // TODO: display "Starting <name of program>" in center of screen
+
     pb_thread_init();
     pbio_init();
     pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE); // TODO: define PBIO_LIGHT_PATTERN_EV3_RUN (Or, discuss if we want to use breathe for EV3, too)

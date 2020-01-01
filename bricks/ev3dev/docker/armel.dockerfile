@@ -3,14 +3,13 @@ RUN sudo apt-get update && \
     DEBIAN_FRONTEND=noninteractive sudo apt-get install --yes --no-install-recommends \
         build-essential \
         ev3dev-mocks \
-        libasound2-plugin-ev3dev:armel \
-        libasound2:armel \
         libasound2-dev:armel \
-        libsndfile1-dev:armel \
+        libasound2-plugin-ev3dev:armel \
         libffi-dev:armel \
+        libgrx-3.0-dev:armel \
         libi2c-dev \
         libmagickwand-6.q16-3:armel \
-        libsndfile1:armel \
+        libsndfile1-dev:armel \
         libudev-dev:armel \
         libumockdev0:armel \
         pkg-config \

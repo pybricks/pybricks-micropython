@@ -29,6 +29,8 @@
 #include <string.h>
 #include <sys/time.h>
 
+#include <glib.h>
+
 #include "py/mphal.h"
 #include "py/runtime.h"
 #include "extmod/misc.h"
@@ -159,7 +161,16 @@ int mp_hal_stdin_rx_chr(void) {
     } else {
         main_term:;
 #endif
-        int ret = read(0, &c, 1);
+        GPollFD fd = { .fd = STDIN_FILENO, .events = G_IO_IN };
+        g_main_context_add_poll(g_main_context_get_thread_default(), &fd, G_PRIORITY_DEFAULT);
+
+        do {
+            MICROPY_EVENT_POLL_HOOK
+        } while (!fd.revents);
+
+        g_main_context_remove_poll(g_main_context_get_thread_default(), &fd);
+
+        int ret = read(STDIN_FILENO, &c, 1);
         if (ret == 0) {
             c = 4; // EOF, ctrl-D
         } else if (c == '\n') {
@@ -196,4 +207,18 @@ mp_uint_t mp_hal_ticks_us(void) {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec * 1000000 + tv.tv_usec;
+}
+
+static gboolean end_delay_ms(gpointer user_data) {
+    gboolean *done = user_data;
+    *done = TRUE;
+    return G_SOURCE_REMOVE;
+}
+
+void mp_hal_delay_ms(mp_uint_t ms) {
+    gboolean done = FALSE;
+    g_timeout_add(ms, end_delay_ms, &done);
+    do {
+        MICROPY_EVENT_POLL_HOOK
+    } while (!done);
 }

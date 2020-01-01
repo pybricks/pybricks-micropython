@@ -156,6 +156,9 @@ endif
 CFLAGS_MOD += $(shell pkg-config --cflags libudev)
 LDFLAGS_MOD += $(shell pkg-config --libs libudev)
 
+CFLAGS_MOD += $(shell pkg-config --cflags grx-3.0)
+LDFLAGS_MOD += $(shell pkg-config --libs grx-3.0)
+
 # for pbsmbus
 ifneq ($(shell $(CC) -print-file-name=libi2c.a),libi2c.a)
 # in i2ctools v4, there is an acutal library and the header file has moved
@@ -309,13 +312,25 @@ EV3DEV_TEST_DIRS = $(addprefix ../ports/pybricks/tests/ev3dev/, \
 	v1 \
 	)
 
-test-ev3dev: $(PROG) $(TOP)/tests/run-tests
+GRX_TEST_PLUGIN_OBJ := $(BUILD)/grx-plugin.o
+GRX_TEST_PLUGIN_LIB := $(BUILD)/libgrx-3.0-vdriver-test.so
+
+$(GRX_TEST_PLUGIN_OBJ): ../../tests/ev3dev/grx-plugin.c
+	$(Q)$(CC) -c -fPIC -o $@ $^ $(CFLAGS)
+
+$(GRX_TEST_PLUGIN_LIB): $(GRX_TEST_PLUGIN_OBJ)
+	$(Q)$(CC) -shared -o $@ $^ $(LDFLAGS)
+
+test-ev3dev: $(PROG) $(TOP)/tests/run-tests $(GRX_TEST_PLUGIN_LIB)
 	cd $(TOP)/tests && MICROPY_MICROPYTHON="../ports/pybricks/tests/ev3dev/test-wrapper.sh" \
+		GRX_PLUGIN_PATH=$(realpath $(BUILD)) GRX_DRIVER=test \
 		./run-tests --test-dirs $(EV3DEV_TEST_DIRS)
 
-test: $(PROG) $(TOP)/tests/run-tests
+test: $(PROG) $(TOP)/tests/run-tests $(GRX_TEST_PLUGIN_LIB)
 	$(eval DIRNAME=ports/pybricks/bricks/$(notdir $(CURDIR)))
-	cd $(TOP)/tests && MICROPY_MICROPYTHON=../$(DIRNAME)/$(PROG) ./run-tests
+	cd $(TOP)/tests && MICROPY_MICROPYTHON=../$(DIRNAME)/$(PROG) \
+		GRX_PLUGIN_PATH=$(realpath $(BUILD)) GRX_DRIVER=test \
+		./run-tests
 
 # install micropython in /usr/local/bin
 TARGET = $(PROG)
