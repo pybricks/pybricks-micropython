@@ -12,6 +12,7 @@
 
 #include "pbobj.h"
 #include "pbkwarg.h"
+#include "modmotor.h"
 #include "modparameters.h"
 
 #include "pbsmbus.h"
@@ -504,6 +505,7 @@ STATIC const mp_rom_map_elem_t customdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Ev3devSensor),     MP_ROM_PTR(&customdevices_Ev3devSensor_type)    },
     { MP_ROM_QSTR(MP_QSTR_I2CDevice),        MP_ROM_PTR(&customdevices_I2CDevice_type   )    },
     { MP_ROM_QSTR(MP_QSTR_UARTDevice),       MP_ROM_PTR(&customdevices_UARTDevice_type  )    },
+    { MP_ROM_QSTR(MP_QSTR_DCMotor),          MP_ROM_PTR(&motor_DCMotor_type)                 },
 };
 
 STATIC MP_DEFINE_CONST_DICT(pb_module_customdevices_globals, customdevices_globals_table);
