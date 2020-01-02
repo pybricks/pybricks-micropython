@@ -10,6 +10,7 @@
 #include "py/runtime.h"
 #include "py/objstr.h"
 
+#include "pbdevice.h"
 #include "pbobj.h"
 #include "pbkwarg.h"
 #include "modmotor.h"
@@ -18,7 +19,6 @@
 #include "pbsmbus.h"
 
 #include <pbio/iodev.h>
-#include <ev3device.h>
 #include <pbio/serial.h>
 #include <pberror.h>
 

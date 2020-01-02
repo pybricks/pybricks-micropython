@@ -7,7 +7,6 @@
 #include <string.h>
 
 #include <ev3dev_stretch/lego_sensor.h>
-#include <ev3device.h>
 
 #include <pbio/port.h>
 #include <pbio/iodev.h>

@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019 Laurens Valk
+// Copyright (c) 2018 Laurens Valk
 
-#ifndef _PBIO_EV3DEVICE_H_
-#define _PBIO_EV3DEVICE_H_
+#ifndef _PBDEVICE_H_
+#define _PBDEVICE_H_
+
+#include <stdint.h>
+
 
 #include <stdint.h>
 
@@ -130,4 +133,4 @@ enum {
     PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE      = 1,
 };
 
-#endif // _PBIO_EV3DEVICE_H_
+#endif // _PBDEVICE_H_

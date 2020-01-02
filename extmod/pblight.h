@@ -4,7 +4,8 @@
 #ifndef _PYBRICKS_LIGHT_H_
 #define _PYBRICKS_LIGHT_H_
 
-#include <ev3device.h>
+#include "pbdevice.h"
+
 #include <pbio/light.h>
 
 // TODO: Ultimately, lights should be redesigned and moved to pbio

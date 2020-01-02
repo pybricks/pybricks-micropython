@@ -226,6 +226,7 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modrobotics.c \
 	modtools.c \
 	pblight.c \
+	pbdevice_ev3dev.c \
 	)
 
 PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/py/,\
@@ -240,7 +241,6 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	contiki-core/sys/etimer.c \
 	contiki-core/sys/process.c \
 	contiki-core/sys/timer.c \
-	ev3dev/src/ev3dev_stretch/ev3device.c \
 	ev3dev/src/ev3dev_stretch/lego_sensor.c \
 	ev3dev/src/ev3dev_stretch/sysfs.c \
 	ev3dev/src/ev3dev_stretch/nxtcolor.c \

@@ -4,7 +4,6 @@
 
 #include <pberror.h>
 #include <pbio/iodev.h>
-#include <ev3device.h>
 #include <pbio/light.h>
 
 #include "py/mpconfig.h"
@@ -12,6 +11,7 @@
 #include "py/runtime.h"
 #include "py/objtype.h"
 
+#include "pbdevice.h"
 #include "pbobj.h"
 #include "pbkwarg.h"
 

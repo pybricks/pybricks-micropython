@@ -4,8 +4,7 @@
 #ifndef _PYBRICKS_EXTMOD_MODLIGHT_H_
 #define _PYBRICKS_EXTMOD_MODLIGHT_H_
 
-#include <ev3device.h>
-
+#include "pbdevice.h"
 #include "pblight.h"
 
 #include "py/obj.h"

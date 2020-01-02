@@ -7,6 +7,7 @@
 #include "py/mphal.h"
 #include "py/runtime.h"
 
+#include "pbdevice.h"
 #include "pbobj.h"
 #include "pbkwarg.h"
 #include "modparameters.h"
@@ -15,7 +16,6 @@
 
 #include <pbio/iodev.h>
 #include <pbio/button.h>
-#include <ev3device.h>
 #include <pberror.h>
 
 // pybricks.ev3devices.TouchSensor class object

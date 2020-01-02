@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019 Laurens Valk
 
-// Object for interacting with LEGO MINDSTORMS EV3 input devices
+
+#include "pbdevice.h"
 
 #include <pbio/config.h>
-
-#if PBIO_CONFIG_EV3_INPUT_DEVICE
 
 #include <dirent.h>
 #include <stdbool.h>
@@ -15,7 +14,6 @@
 #include <pbio/port.h>
 #include <pbio/iodev.h>
 
-#include <ev3device.h>
 #include <ev3dev_stretch/nxtcolor.h>
 
 pbio_ev3iodev_t iodevices[4];
@@ -103,5 +101,3 @@ pbio_error_t ev3device_get_values_at_mode(pbio_ev3iodev_t *iodev, uint8_t mode, 
 
     return PBIO_SUCCESS;
 }
-
-#endif // PBIO_CONFIG_EV3_INPUT_DEVICE

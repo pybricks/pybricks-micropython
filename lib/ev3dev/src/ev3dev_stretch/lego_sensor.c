@@ -8,7 +8,6 @@
 
 #include <ev3dev_stretch/lego_sensor.h>
 #include <ev3dev_stretch/sysfs.h>
-#include <ev3device.h>
 
 #include <pbio/iodev.h>
 #include <pbio/port.h>

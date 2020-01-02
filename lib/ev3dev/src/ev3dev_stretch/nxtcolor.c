@@ -10,7 +10,6 @@
 
 #include <ev3dev_stretch/lego_sensor.h>
 #include <ev3dev_stretch/sysfs.h>
-#include <ev3device.h>
 
 #include <pbio/port.h>
 #include <pbio/iodev.h>
@@ -464,7 +463,7 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, void *v
     }
 
     // In lamp mode, just set the right color
-    if (mode == PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP) {
+    if (mode == 0) {
         nxtcolor->lamp = *((pbio_light_color_t*) values);
         return nxtcolor_set_light(nxtcolor, nxtcolor->lamp);
     }
