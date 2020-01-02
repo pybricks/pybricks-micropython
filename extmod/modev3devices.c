@@ -433,6 +433,7 @@ STATIC const mp_obj_type_t ev3devices_UltrasonicSensor_type = {
 // pybricks.ev3devices.GyroSensor class object
 typedef struct _ev3devices_GyroSensor_obj_t {
     mp_obj_base_t base;
+    pbio_port_t port; // FIXME: Shouldn't be here
     pbdevice_t *pbdev;
     pbio_direction_t direction;
     mp_int_t offset;
@@ -473,6 +474,7 @@ STATIC mp_obj_t ev3devices_GyroSensor_make_new(const mp_obj_type_t *type, size_t
     self->direction = pb_type_enum_get_value(direction, &pb_enum_type_Direction);
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+    self->port = port_num;
 
     pbio_error_t err;
     while ((err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
@@ -530,11 +532,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_GyroSensor_reset_angle_obj, 0, ev3d
 STATIC mp_obj_t ev3devices_GyroSensor_calibrate(mp_obj_t self_in) {
     ev3devices_GyroSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    pbio_port_t port = self->pbdev->port;
-
     // Trick the sensor into going into other uart mode mode
     pbio_error_t err;
-    while ((err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_CUSTOM_UART, port)) == PBIO_ERROR_AGAIN) {
+    while ((err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_CUSTOM_UART, self->port)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);
@@ -542,7 +542,7 @@ STATIC mp_obj_t ev3devices_GyroSensor_calibrate(mp_obj_t self_in) {
     // Wait until the sensor is back, up to a timeout
     mp_int_t time_start = mp_hal_ticks_ms();
     while (mp_hal_ticks_ms() - time_start < 10000) {
-        err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR, port);
+        err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR, self->port);
         if (err == PBIO_SUCCESS) {
             break;
         }
