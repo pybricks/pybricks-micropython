@@ -15,7 +15,7 @@
 
 #include <pbio/iodev.h>
 #include <pbio/button.h>
-#include <pbio/ev3device.h>
+#include <ev3device.h>
 #include <pberror.h>
 
 // pybricks.ev3devices.TouchSensor class object

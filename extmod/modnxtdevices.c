@@ -4,7 +4,7 @@
 
 #include <pberror.h>
 #include <pbio/iodev.h>
-#include <pbio/ev3device.h>
+#include <ev3device.h>
 #include <pbio/light.h>
 
 #include "py/mpconfig.h"

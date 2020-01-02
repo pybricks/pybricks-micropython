@@ -4,7 +4,7 @@
 #ifndef _PYBRICKS_EXTMOD_MODLIGHT_H_
 #define _PYBRICKS_EXTMOD_MODLIGHT_H_
 
-#include <pbio/ev3device.h>
+#include <ev3device.h>
 
 #include "pblight.h"
 

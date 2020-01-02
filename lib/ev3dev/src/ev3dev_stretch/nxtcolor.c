@@ -8,9 +8,9 @@
 
 #include <contiki.h>
 
-#include <pbdrv/ev3sensor.h>
-#include <pbdrv/ev3devsysfs.h>
-#include <pbio/ev3device.h>
+#include <ev3dev_stretch/lego_sensor.h>
+#include <ev3dev_stretch/sysfs.h>
+#include <ev3device.h>
 
 #include <pbio/port.h>
 #include <pbio/iodev.h>

@@ -6,9 +6,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <pbdrv/ev3devsysfs.h>
-#include <pbdrv/ev3sensor.h>
-#include <pbio/ev3device.h>
+#include <ev3dev_stretch/lego_sensor.h>
+#include <ev3dev_stretch/sysfs.h>
+#include <ev3device.h>
+
 #include <pbio/iodev.h>
 #include <pbio/port.h>
 #include <pbio/util.h>
@@ -41,7 +42,7 @@ static const char* const port_modes[] = {
     "raw"
 };
 
-struct _pbdrv_ev3_sensor_t {
+struct _lego_sensor_t {
     int n_sensor;
     int n_modes;
     FILE *f_mode;
@@ -173,7 +174,7 @@ static pbio_error_t ev3_sensor_configure_port(pbio_port_t port, pbio_iodev_type_
 }
 
 // Initialize an ev3dev sensor by opening the relevant sysfs attributes
-static pbio_error_t ev3_sensor_init(pbdrv_ev3_sensor_t *sensor, pbio_port_t port) {
+static pbio_error_t ev3_sensor_init(lego_sensor_t *sensor, pbio_port_t port) {
     pbio_error_t err;
 
     err = sysfs_get_number(port, "/sys/class/lego-sensor", &sensor->n_sensor);
@@ -222,7 +223,7 @@ static pbio_error_t ev3_sensor_init(pbdrv_ev3_sensor_t *sensor, pbio_port_t port
 }
 
 // Get the device ID
-static pbio_error_t ev3_sensor_assert_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_type_id_t valid_id) {
+static pbio_error_t ev3_sensor_assert_id(lego_sensor_t *sensor, pbio_iodev_type_id_t valid_id) {
     char driver_name[MAX_PATH_LENGTH];
 
     pbio_error_t err = sysfs_read_str(sensor->f_driver_name, driver_name);
@@ -279,10 +280,10 @@ static pbio_error_t ev3_sensor_assert_id(pbdrv_ev3_sensor_t *sensor, pbio_iodev_
     return PBIO_ERROR_NO_DEV;
 }
 
-struct _pbdrv_ev3_sensor_t sensors[4];
+struct _lego_sensor_t sensors[4];
 
 // Get an ev3dev sensor
-pbio_error_t pbdrv_ev3_sensor_get(pbdrv_ev3_sensor_t **sensor, pbio_port_t port, pbio_iodev_type_id_t valid_id) {
+pbio_error_t lego_sensor_get(lego_sensor_t **sensor, pbio_port_t port, pbio_iodev_type_id_t valid_id) {
     if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -320,7 +321,7 @@ pbio_error_t pbdrv_ev3_sensor_get(pbdrv_ev3_sensor_t **sensor, pbio_port_t port,
 }
 
 // Get the device info
-pbio_error_t pbdrv_ev3_sensor_get_info(pbdrv_ev3_sensor_t *sensor, uint8_t *data_len, pbio_iodev_data_type_t *data_type) {
+pbio_error_t lego_sensor_get_info(lego_sensor_t *sensor, uint8_t *data_len, pbio_iodev_data_type_t *data_type) {
 
     pbio_error_t err;
 
@@ -363,7 +364,7 @@ pbio_error_t pbdrv_ev3_sensor_get_info(pbdrv_ev3_sensor_t *sensor, uint8_t *data
 }
 
 // Set the sensor mode
-pbio_error_t pbdrv_ev3_sensor_set_mode(pbdrv_ev3_sensor_t *sensor, uint8_t mode) {
+pbio_error_t lego_sensor_set_mode(lego_sensor_t *sensor, uint8_t mode) {
 
     if (mode > sensor->n_modes) {
         return PBIO_ERROR_INVALID_ARG;
@@ -373,7 +374,7 @@ pbio_error_t pbdrv_ev3_sensor_set_mode(pbdrv_ev3_sensor_t *sensor, uint8_t mode)
 }
 
 // Read 32 bytes from bin_data attribute
-pbio_error_t pbdrv_ev3_sensor_get_bin_data(pbdrv_ev3_sensor_t *sensor, char *bin_data) {
+pbio_error_t lego_sensor_get_bin_data(lego_sensor_t *sensor, char *bin_data) {
     if (fseek(sensor->f_bin_data, 0, SEEK_SET) == -1) {
         return PBIO_ERROR_IO;
     }

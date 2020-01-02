@@ -28,6 +28,8 @@ INC +=  -I.
 INC +=  -I$(TOP)
 INC += -I$(BUILD)
 INC += -I$(TOP)/ports/pybricks/lib/contiki-core
+INC += -I$(TOP)/ports/pybricks/lib/ev3dev
+INC += -I$(TOP)/ports/pybricks/lib/ev3dev/include
 INC += -I$(TOP)/ports/pybricks/lib/lego
 INC += -I$(TOP)/ports/pybricks/lib/libfixmath/libfixmath
 INC += -I$(TOP)/ports/pybricks/lib/pbio
@@ -238,6 +240,10 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	contiki-core/sys/etimer.c \
 	contiki-core/sys/process.c \
 	contiki-core/sys/timer.c \
+	ev3dev/src/ev3dev_stretch/ev3device.c \
+	ev3dev/src/ev3dev_stretch/lego_sensor.c \
+	ev3dev/src/ev3dev_stretch/sysfs.c \
+	ev3dev/src/ev3dev_stretch/nxtcolor.c \
 	libfixmath/libfixmath/fix16_sqrt.c \
 	libfixmath/libfixmath/fix16_str.c \
 	libfixmath/libfixmath/fix16.c \
@@ -247,11 +253,8 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	pbio/drv/counter/counter_core.c \
 	pbio/drv/counter/counter_ev3dev_stretch_iio.c \
 	pbio/drv/ev3dev_stretch/beep.c \
-	pbio/drv/ev3dev_stretch/ev3devsysfs.c \
-	pbio/drv/ev3dev_stretch/ev3sensor.c \
 	pbio/drv/ev3dev_stretch/light.c \
 	pbio/drv/ev3dev_stretch/motor.c \
-	pbio/drv/ev3dev_stretch/nxtcolor.c \
 	pbio/drv/ev3dev_stretch/pcm.c \
 	pbio/drv/ev3dev_stretch/serial.c \
 	pbio/drv/ioport/ioport_ev3dev_stretch.c \
@@ -259,7 +262,6 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	pbio/src/control.c \
 	pbio/src/drivebase.c \
 	pbio/src/error.c \
-	pbio/src/ev3device.c \
 	pbio/src/hbridge.c \
 	pbio/src/light.c \
 	pbio/src/logger.c \

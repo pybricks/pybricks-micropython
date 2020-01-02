@@ -18,7 +18,7 @@
 #include "pbsmbus.h"
 
 #include <pbio/iodev.h>
-#include <pbio/ev3device.h>
+#include <ev3device.h>
 #include <pbio/serial.h>
 #include <pberror.h>
 

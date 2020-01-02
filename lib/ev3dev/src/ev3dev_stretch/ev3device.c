@@ -15,8 +15,8 @@
 #include <pbio/port.h>
 #include <pbio/iodev.h>
 
-#include <pbio/ev3device.h>
-#include <pbdrv/nxtcolor.h>
+#include <ev3device.h>
+#include <ev3dev_stretch/nxtcolor.h>
 
 pbio_ev3iodev_t iodevices[4];
 
@@ -36,7 +36,7 @@ pbio_error_t ev3device_get_device(pbio_ev3iodev_t **iodev, pbio_iodev_type_id_t 
     pbio_error_t err;
 
     // Get the device and assert that is has a valid id
-    err = pbdrv_ev3_sensor_get(&_iodev->sensor, _iodev->port, valid_id);
+    err = lego_sensor_get(&_iodev->sensor, _iodev->port, valid_id);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -59,13 +59,13 @@ pbio_error_t ev3device_get_values_at_mode(pbio_ev3iodev_t *iodev, uint8_t mode, 
         // and also if this sensor/mode requires setting it every time:
         iodev->type_id == PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR && mode >= PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__SI_CM
     )) {
-        err = pbdrv_ev3_sensor_set_mode(iodev->sensor, mode);
+        err = lego_sensor_set_mode(iodev->sensor, mode);
         if (err != PBIO_SUCCESS) {
             return err;
         }
         // Set the new mode and corresponding data info
         iodev->mode = mode;
-        err = pbdrv_ev3_sensor_get_info(iodev->sensor, &iodev->data_len, &iodev->data_type);
+        err = lego_sensor_get_info(iodev->sensor, &iodev->data_len, &iodev->data_type);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -74,7 +74,7 @@ pbio_error_t ev3device_get_values_at_mode(pbio_ev3iodev_t *iodev, uint8_t mode, 
     // Read raw data from device
     char data[PBIO_IODEV_MAX_DATA_SIZE];
 
-    err = pbdrv_ev3_sensor_get_bin_data(iodev->sensor, data);
+    err = lego_sensor_get_bin_data(iodev->sensor, data);
     if (err != PBIO_SUCCESS) {
         return err;
     }

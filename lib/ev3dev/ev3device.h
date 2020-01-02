@@ -9,7 +9,7 @@
 #include <pbio/error.h>
 #include <pbio/iodev.h>
 
-#include <pbdrv/ev3sensor.h>
+#include <ev3dev_stretch/lego_sensor.h>
 
 // TODO: Make structure like iodevice
 typedef struct _pbio_ev3iodev_t {
@@ -36,7 +36,7 @@ typedef struct _pbio_ev3iodev_t {
     /**
      * Platform specific low-level device abstraction
      */
-    pbdrv_ev3_sensor_t *sensor;
+    lego_sensor_t *sensor;
 } pbio_ev3iodev_t;
 
 pbio_error_t ev3device_get_device(pbio_ev3iodev_t **iodev, pbio_iodev_type_id_t valid_id, pbio_port_t port);
