@@ -14,6 +14,7 @@
 #include <pbio/port.h>
 #include <pbio/iodev.h>
 
+#include <ev3dev_stretch/lego_sensor.h>
 #include <ev3dev_stretch/nxtcolor.h>
 
 typedef struct _pbdevice_t {
@@ -30,11 +31,11 @@ typedef struct _pbdevice_t {
      */
     uint8_t mode;
     /**
-     * The current active mode.
+     * The number of values for current mode.
      */
     uint8_t data_len;
     /**
-     * The current active mode.
+     * Data type for current mode
      */
     pbio_iodev_data_type_t data_type;
     /**
@@ -129,6 +130,7 @@ pbio_error_t pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values) 
     return PBIO_SUCCESS;
 }
 
-pbio_iodev_type_id_t pbdevice_get_id(pbdevice_t *pbdev) {
-    return pbdev->type_id;
+pbio_error_t pbdevice_get_type_id(pbdevice_t *pbdev, pbio_iodev_type_id_t *id) {
+    *id = pbdev->type_id;
+    return PBIO_SUCCESS;
 }

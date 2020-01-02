@@ -20,14 +20,19 @@ pbio_error_t pb_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color) {
         // No external device, so assume command is for the internal light
         return pbio_light_on(PBIO_PORT_SELF, color);
     }
+    pbio_iodev_type_id_t id;
+    pbio_error_t err = pbdevice_get_type_id(pbdev, &id);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
 #if PYBRICKS_PY_EV3DEVICES
-    if (pbdevice_get_id(pbdev) == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
+    if (id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
         return pbdevice_get_values(pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP, &color);
     }
 #endif
 #if PYBRICKS_PY_PUPDEVICES
-    if (pbdevice_get_id(pbdev) == PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR) {
+    if (id == PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR) {
         uint8_t mode;
         switch (color) {
             case PBIO_LIGHT_COLOR_GREEN:
