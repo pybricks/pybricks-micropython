@@ -5,5 +5,5 @@
 SEP="------------------------------------------------------------------------"
 TEST_DIR=$(readlink -f $(dirname $(readlink -f $0))/../../../tests)
 
-find ${TEST_DIR} -name *.out -exec echo {} \; -exec echo ${SEP} \; \
+find ${TEST_DIR} -name "*.out" -exec echo {} \; -exec echo ${SEP} \; \
     -exec cat {} \; -exec echo \; -exec echo ${SEP} \; -exec echo \;
