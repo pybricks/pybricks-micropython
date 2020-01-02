@@ -18,12 +18,17 @@ static pbio_hbridge_t hbridges[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 static pbio_error_t pbio_hbridge_setup(pbio_hbridge_t *hbridge, pbio_port_t port, pbio_direction_t direction, int32_t duty_offset, int32_t max_duty_steps) {
 
-    // Set direction and offsets
+    // Set direction and state
     hbridge->direction = direction;
-    hbridge->duty_offset = duty_offset;
-    hbridge->max_duty_steps = max_duty_steps;
     hbridge->port = port;
     hbridge->state = PBIO_HBRIDGE_COAST;
+
+    // Set duty scaling and offsets
+    pbio_error_t err = pbio_hbridge_set_settings(hbridge, max_duty_steps, duty_offset);
+
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     return pbio_hbridge_coast(hbridge);
 }
