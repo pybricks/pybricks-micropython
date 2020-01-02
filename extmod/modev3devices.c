@@ -33,7 +33,7 @@ STATIC mp_obj_t ev3devices_TouchSensor_make_new(const mp_obj_type_t *type, size_
     ev3devices_TouchSensor_obj_t *self = m_new_obj(ev3devices_TouchSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
 
-    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     pbio_error_t err;
     while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
@@ -83,7 +83,7 @@ STATIC mp_obj_t ev3devices_InfraredSensor_make_new(const mp_obj_type_t *type, si
     ev3devices_InfraredSensor_obj_t *self = m_new_obj(ev3devices_InfraredSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
 
-    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     pbio_error_t err;
     while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
@@ -275,7 +275,7 @@ STATIC mp_obj_t ev3devices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     ev3devices_ColorSensor_obj_t *self = m_new_obj(ev3devices_ColorSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
 
-    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     pbio_error_t err;
     while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
@@ -376,7 +376,7 @@ STATIC mp_obj_t ev3devices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     ev3devices_UltrasonicSensor_obj_t *self = m_new_obj(ev3devices_UltrasonicSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
 
-    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     pbio_error_t err;
     while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
@@ -470,9 +470,9 @@ STATIC mp_obj_t ev3devices_GyroSensor_make_new(const mp_obj_type_t *type, size_t
 
     ev3devices_GyroSensor_obj_t *self = m_new_obj(ev3devices_GyroSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
-    self->direction = enum_get_value_maybe(direction, &pb_enum_type_Direction);
+    self->direction = pb_type_enum_get_value(direction, &pb_enum_type_Direction);
 
-    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     pbio_error_t err;
     while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {

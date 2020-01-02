@@ -35,7 +35,7 @@ STATIC mp_obj_t pupdevices_ColorAndDistSensor_make_new(const mp_obj_type_t *type
     pupdevices_ColorAndDistSensor_obj_t *self = m_new_obj(pupdevices_ColorAndDistSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
 
-    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
     pb_assert(pbdrv_ioport_get_iodev(port_num, &self->iodev));
     pb_iodevice_assert_type_id(self->iodev, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
     pb_iodevice_set_mode(self->iodev, 8);

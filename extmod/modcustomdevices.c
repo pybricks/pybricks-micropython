@@ -39,7 +39,7 @@ STATIC mp_obj_t customdevices_AnalogSensor_make_new(const mp_obj_type_t *otype, 
     customdevices_AnalogSensor_obj_t *self = m_new_obj(customdevices_AnalogSensor_obj_t);
     self->base.type = (mp_obj_type_t*) otype;
 
-    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     pbio_iodev_type_id_t id = mp_obj_is_true(verify_type) ? PBIO_IODEV_TYPE_ID_NXT_ANALOG : PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG;
 
@@ -138,7 +138,7 @@ STATIC mp_obj_t customdevices_I2CDevice_make_new(const mp_obj_type_t *otype, siz
     self->base.type = (mp_obj_type_t*) otype;
 
     // Get port number
-    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     // Get selected I2C Address
     mp_int_t addr = mp_obj_get_int(address);
@@ -287,7 +287,7 @@ STATIC mp_obj_t customdevices_UARTDevice_make_new(const mp_obj_type_t *otype, si
     self->base.type = (mp_obj_type_t*) otype;
 
     // Get port number
-    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     // Init UART port
     pbio_error_t err;
@@ -440,7 +440,7 @@ STATIC mp_obj_t customdevices_Ev3devSensor_make_new(const mp_obj_type_t *otype, 
     self->base.type = (mp_obj_type_t*) otype;
 
     // Get port number
-    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     // Get the device
     pbio_error_t err;

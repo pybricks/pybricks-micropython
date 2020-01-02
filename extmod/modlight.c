@@ -44,7 +44,7 @@ STATIC mp_obj_t light_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, mp_
         color = MP_OBJ_FROM_PTR(&pb_const_black);
     }
 
-    pbio_light_color_t color_id = enum_get_value_maybe(color, &pb_enum_type_Color);
+    pbio_light_color_t color_id = pb_type_enum_get_value(color, &pb_enum_type_Color);
 
     mp_int_t bright = pb_obj_get_int(brightness);
     bright = bright < 0 ? 0 : bright > 100 ? 100: bright;
@@ -66,7 +66,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(light_ColorLight_on_obj, 0, light_ColorLight_o
 STATIC mp_obj_t light_Light_off(mp_obj_t self_in) {
     light_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    // Turn the light off, using the command specific to the device. 
+    // Turn the light off, using the command specific to the device.
     pb_assert(pb_color_light_on(&self->dev, PBIO_LIGHT_COLOR_NONE));
 
     return mp_const_none;

@@ -45,7 +45,7 @@ STATIC mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     nxtdevices_UltrasonicSensor_obj_t *self = m_new_obj(nxtdevices_UltrasonicSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
 
-    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     pbio_error_t err;
     while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_ULTRASONIC_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
@@ -95,7 +95,7 @@ STATIC mp_obj_t nxtdevices_TouchSensor_make_new(const mp_obj_type_t *type, size_
     nxtdevices_TouchSensor_obj_t *self = m_new_obj(nxtdevices_TouchSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
 
-    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     pbio_iodev_type_id_t id = mp_obj_is_true(verify_type) ? PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR : PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG;
 
@@ -146,7 +146,7 @@ STATIC mp_obj_t nxtdevices_SoundSensor_make_new(const mp_obj_type_t *type, size_
     nxtdevices_SoundSensor_obj_t *self = m_new_obj(nxtdevices_SoundSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
 
-    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     pbio_error_t err;
     while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_ANALOG, port_num)) == PBIO_ERROR_AGAIN) {
@@ -205,7 +205,7 @@ STATIC mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_
     nxtdevices_LightSensor_obj_t *self = m_new_obj(nxtdevices_LightSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
 
-    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     pbio_error_t err;
     while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
@@ -265,7 +265,7 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     nxtdevices_ColorSensor_obj_t *self = m_new_obj(nxtdevices_ColorSensor_obj_t);
     self->base.type = (mp_obj_type_t*) type;
 
-    mp_int_t port_num = enum_get_value_maybe(port, &pb_enum_type_Port);
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     pbio_error_t err;
     while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {

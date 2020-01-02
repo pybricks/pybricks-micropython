@@ -82,8 +82,8 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
         }
     }
     // Configure the encoded motor with the selected arguments at pbio level
-    mp_int_t port_arg = enum_get_value_maybe(port, &pb_enum_type_Port);
-    pbio_direction_t direction_arg = enum_get_value_maybe(direction, &pb_enum_type_Direction);
+    mp_int_t port_arg = pb_type_enum_get_value(port, &pb_enum_type_Port);
+    pbio_direction_t direction_arg = pb_type_enum_get_value(direction, &pb_enum_type_Direction);
 
     pb_thread_enter();
     pb_assert(pbio_servo_get(port_arg, &self->srv, direction_arg, gear_ratio));
@@ -303,8 +303,7 @@ STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *pos_args, mp_map
         motor_Motor_obj_t, self,
         PB_ARG_DEFAULT_ENUM(stop_type, pb_const_coast)
     );
-
-    pbio_actuation_t after_stop = enum_get_value_maybe(stop_type, &pb_enum_type_Stop);
+    pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
     pbio_error_t err;
 
     pb_thread_enter();
@@ -333,7 +332,7 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp
 
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t time_arg = pb_obj_get_int(time);
-    pbio_actuation_t after_stop = enum_get_value_maybe(stop_type, &pb_enum_type_Stop);
+    pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
     bool foreground = mp_obj_is_true(wait);
     pbio_error_t err;
 
@@ -358,7 +357,7 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
     );
 
     mp_int_t speed_arg = pb_obj_get_int(speed);
-    pbio_actuation_t after_stop = enum_get_value_maybe(stop_type, &pb_enum_type_Stop);
+    pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
 
     int32_t temporary_stall_duty = 100;
     int32_t old_stall_duty;
@@ -416,7 +415,7 @@ STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, m
 
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t angle_arg = pb_obj_get_int(rotation_angle);
-    pbio_actuation_t after_stop = enum_get_value_maybe(stop_type, &pb_enum_type_Stop);
+    pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
     bool foreground = mp_obj_is_true(wait);
     pbio_error_t err;
 
@@ -443,7 +442,7 @@ STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *pos_args, 
 
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t angle_arg = pb_obj_get_int(target_angle);
-    pbio_actuation_t after_stop = enum_get_value_maybe(stop_type, &pb_enum_type_Stop);
+    pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
     bool foreground = mp_obj_is_true(wait);
     pbio_error_t err;
 
