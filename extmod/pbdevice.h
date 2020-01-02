@@ -14,44 +14,13 @@
 
 #include <ev3dev_stretch/lego_sensor.h>
 
-// TODO: Make structure like iodevice
-typedef struct _pbdevice_t {
-    /**
-     * The device ID
-     */
-    pbio_iodev_type_id_t type_id;
-    /**
-     * The port the device is attached to.
-     */
-    pbio_port_t port;
-    /**
-     * The current active mode.
-     */
-    uint8_t mode;
-    /**
-     * The current active mode.
-     */
-    uint8_t data_len;
-    /**
-     * The current active mode.
-     */
-    pbio_iodev_data_type_t data_type;
-    /**
-     * Platform specific low-level device abstraction
-     */
-    lego_sensor_t *sensor;
-} pbdevice_t;
+typedef struct _pbdevice_t pbdevice_t;
 
 pbio_error_t pbdevice_get_device(pbdevice_t **pbdev, pbio_iodev_type_id_t valid_id, pbio_port_t port);
 
 pbio_error_t pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values);
 
 pbio_iodev_type_id_t pbdevice_get_id(pbdevice_t *pbdev);
-
-
-/**
- * Mode identifiers for EV3 devices.
- */
 
 // LEGO MINDSTORMS EV3 Touch Sensor
 enum {

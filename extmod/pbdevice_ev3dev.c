@@ -16,6 +16,33 @@
 
 #include <ev3dev_stretch/nxtcolor.h>
 
+typedef struct _pbdevice_t {
+    /**
+     * The device ID
+     */
+    pbio_iodev_type_id_t type_id;
+    /**
+     * The port the device is attached to.
+     */
+    pbio_port_t port;
+    /**
+     * The current active mode.
+     */
+    uint8_t mode;
+    /**
+     * The current active mode.
+     */
+    uint8_t data_len;
+    /**
+     * The current active mode.
+     */
+    pbio_iodev_data_type_t data_type;
+    /**
+     * Platform specific low-level device abstraction
+     */
+    lego_sensor_t *sensor;
+} pbdevice_t;
+
 pbdevice_t iodevices[4];
 
 // Get an ev3dev sensor
