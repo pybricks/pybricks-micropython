@@ -299,7 +299,7 @@ STATIC mp_obj_t iodevices_UARTDevice_make_new(const mp_obj_type_t *otype, size_t
     // Get and init serial
     pb_assert(pbio_serial_get(
         &self->serial,
-        self->pbdev->port,
+        port_num,
         pb_obj_get_int(baudrate),
         timeout == mp_const_none ? -1 : pb_obj_get_int(timeout)
     ));
@@ -426,83 +426,10 @@ STATIC const mp_obj_type_t iodevices_UARTDevice_type = {
     .locals_dict = (mp_obj_dict_t*)&iodevices_UARTDevice_locals_dict,
 };
 
-// pybricks.iodevices.Ev3devSensor class object
-typedef struct _iodevices_Ev3devSensor_obj_t {
-    mp_obj_base_t base;
-    pbdevice_t *pbdev;
-} iodevices_Ev3devSensor_obj_t;
-
-// pybricks.iodevices.Ev3devSensor.__init__
-STATIC mp_obj_t iodevices_Ev3devSensor_make_new(const mp_obj_type_t *otype, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port)
-    );
-    iodevices_Ev3devSensor_obj_t *self = m_new_obj(iodevices_Ev3devSensor_obj_t);
-    self->base.type = (mp_obj_type_t*) otype;
-
-    // Get port number
-    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
-
-    // Get the device
-    pbio_error_t err;
-    while ((err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
-        mp_hal_delay_ms(1000);
-    }
-    pb_assert(err);
-
-    return MP_OBJ_FROM_PTR(self);
-}
-
-// pybricks.iodevices.Ev3devSensor.mode
-STATIC mp_obj_t iodevices_Ev3devSensor_mode(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        iodevices_Ev3devSensor_obj_t, self,
-        PB_ARG_REQUIRED(mode)
-    );
-
-    uint8_t bin[PBIO_IODEV_MAX_DATA_SIZE];
-
-    pb_assert(pbdevice_get_values(self->pbdev, mp_obj_get_int(mode), bin));
-
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_Ev3devSensor_mode_obj, 0, iodevices_Ev3devSensor_mode);
-
-// pybricks.iodevices.Ev3devSensor.bin
-STATIC mp_obj_t iodevices_Ev3devSensor_bin(mp_obj_t self_in) {
-
-    iodevices_Ev3devSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    uint8_t bin[PBIO_IODEV_MAX_DATA_SIZE];
-    memset(bin, 0, sizeof(bin));
-
-    pb_assert(pbdevice_get_values(self->pbdev, self->pbdev->mode, bin));
-
-    return mp_obj_new_bytes(bin, PBIO_IODEV_MAX_DATA_SIZE);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_Ev3devSensor_bin_obj, iodevices_Ev3devSensor_bin);
-
-// dir(pybricks.iodevices.Ev3devSensor)
-STATIC const mp_rom_map_elem_t iodevices_Ev3devSensor_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_mode),   MP_ROM_PTR(&iodevices_Ev3devSensor_mode_obj)   },
-    { MP_ROM_QSTR(MP_QSTR_bin),    MP_ROM_PTR(&iodevices_Ev3devSensor_bin_obj)    },
-};
-STATIC MP_DEFINE_CONST_DICT(iodevices_Ev3devSensor_locals_dict, iodevices_Ev3devSensor_locals_dict_table);
-
-// type(pybricks.iodevices.Ev3devSensor)
-STATIC const mp_obj_type_t iodevices_Ev3devSensor_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_Ev3devSensor,
-    .make_new = iodevices_Ev3devSensor_make_new,
-    .locals_dict = (mp_obj_dict_t*)&iodevices_Ev3devSensor_locals_dict,
-};
-
 // dir(pybricks.iodevices)
 STATIC const mp_rom_map_elem_t iodevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_iodevices)              },
     { MP_ROM_QSTR(MP_QSTR_AnalogSensor),     MP_ROM_PTR(&iodevices_AnalogSensor_type)    },
-    { MP_ROM_QSTR(MP_QSTR_Ev3devSensor),     MP_ROM_PTR(&iodevices_Ev3devSensor_type)    },
     { MP_ROM_QSTR(MP_QSTR_I2CDevice),        MP_ROM_PTR(&iodevices_I2CDevice_type   )    },
     { MP_ROM_QSTR(MP_QSTR_UARTDevice),       MP_ROM_PTR(&iodevices_UARTDevice_type  )    },
     { MP_ROM_QSTR(MP_QSTR_DCMotor),          MP_ROM_PTR(&motor_DCMotor_type)                 },
