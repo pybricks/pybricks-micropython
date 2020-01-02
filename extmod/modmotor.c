@@ -158,9 +158,7 @@ void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
 
     pb_thread_exit();
 
-    char settings_string[512];
-
-    snprintf(settings_string, sizeof(settings_string),
+    mp_printf(print,
         "Motor properties:\n"
         "------------------------\n"
         "Port\t\t %c\n"
@@ -205,8 +203,6 @@ void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
         stall_speed_limit,
         stall_time
     );
-
-    mp_printf(print, "%s\n", settings_string);
 }
 
 
