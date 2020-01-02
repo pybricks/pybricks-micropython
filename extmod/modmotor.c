@@ -45,12 +45,20 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
         PB_ARG_DEFAULT_NONE(gears)
     );
 
+    // Configure the motor with the selected arguments at pbio level
     mp_int_t port_arg = pb_type_enum_get_value(port, &pb_enum_type_Port);
     pbio_direction_t direction_arg = pb_type_enum_get_value(direction, &pb_enum_type_Direction);
+    pbio_error_t err;
 
     // Setup and return if type is DCMotor
     if (type != &motor_Motor_type) {
-        // TODO
+        motor_DCMotor_obj_t *dc_self = m_new_obj(motor_DCMotor_obj_t);
+        dc_self->base.type = (mp_obj_type_t*) type;
+        pb_thread_enter();
+        err = pbio_hbridge_get(port_arg, &dc_self->hbridge, direction_arg, 0, 100);
+        pb_thread_exit();
+        pb_assert(err);
+        return MP_OBJ_FROM_PTR(dc_self);
     }
    
     // Proceed for a regular motor
@@ -115,7 +123,7 @@ void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
     // Get the hbridge from self, which is either Motor or DCMotor
     pbio_hbridge_t *hbridge = is_servo ?
         ((motor_Motor_obj_t*) MP_OBJ_TO_PTR(self_in))->srv->hbridge :
-        NULL; // TODO
+        ((motor_DCMotor_obj_t*) MP_OBJ_TO_PTR(self_in))->hbridge;
 
     pbio_port_t port;
     pbio_direction_t direction;
@@ -232,8 +240,8 @@ STATIC mp_obj_t motor_Motor_duty(size_t n_args, const mp_obj_t *pos_args, mp_map
         err = pbio_servo_set_duty_cycle(self->srv, duty_cycle);
     }
     else {
-        // TODO: DC Motor
-        err = PBIO_ERROR_NOT_IMPLEMENTED;
+        motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+        err = pbio_hbridge_set_duty_cycle_usr(self->hbridge, duty_cycle);
     }
     
     pb_thread_exit();
@@ -351,19 +359,23 @@ STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *pos_args, mp_map
     // Object type is either Motor or DCMotor
     bool is_servo = mp_obj_is_type(pos_args[0], &motor_Motor_type);
 
-    // DCMotors don't support hold
-    if (!is_servo && after_stop == PBIO_ACTUATION_HOLD) {
-        pb_assert(PBIO_ERROR_NOT_SUPPORTED);
-    }
-
     pb_thread_enter();
     if (is_servo) {
         motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
         err = pbio_servo_stop(self->srv, after_stop);
     }
     else {
-        // TODO: DC Motor
-        err = PBIO_ERROR_NOT_IMPLEMENTED;
+        motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+        if (after_stop == PBIO_ACTUATION_COAST) {
+            err = pbio_hbridge_coast(self->hbridge);
+        }
+        else if (after_stop == PBIO_ACTUATION_BRAKE) {
+            err = pbio_hbridge_coast(self->hbridge);
+        }
+        else {
+            // DCMotors do not support hold
+            err = PBIO_ERROR_NOT_SUPPORTED;
+        }
     }
     pb_thread_exit();
 
@@ -579,7 +591,7 @@ STATIC mp_obj_t motor_Motor_set_dc_settings(size_t n_args, const mp_obj_t *pos_a
     // Get the hbridge from self, which is either Motor or DCMotor
     pbio_hbridge_t *hbridge = mp_obj_is_type(pos_args[0], &motor_Motor_type) ?
         ((motor_Motor_obj_t*) MP_OBJ_TO_PTR(pos_args[0]))->srv->hbridge :
-        NULL; // TODO
+        ((motor_DCMotor_obj_t*) MP_OBJ_TO_PTR(pos_args[0]))->hbridge;
 
     // Load original values
     pbio_error_t err;
@@ -724,6 +736,25 @@ const mp_obj_type_t motor_Motor_type = {
 #endif
     .make_new = motor_Motor_make_new,
     .locals_dict = (mp_obj_dict_t*)&motor_Motor_locals_dict,
+};
+
+// dir(pybricks.builtins.DCMotor)
+STATIC const mp_rom_map_elem_t motor_DCMotor_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_Motor_stop_obj) },
+    { MP_ROM_QSTR(MP_QSTR_dc), MP_ROM_PTR(&motor_Motor_duty_obj) },
+    { MP_ROM_QSTR(MP_QSTR_set_dc_settings), MP_ROM_PTR(&motor_Motor_set_dc_settings_obj) },
+};
+MP_DEFINE_CONST_DICT(motor_DCMotor_locals_dict, motor_DCMotor_locals_dict_table);
+
+// type(pybricks.builtins.DCMotor)
+const mp_obj_type_t motor_DCMotor_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_DCMotor,
+#if !PYBRICKS_HUB_MOVEHUB
+    .print = motor_Motor_print,
+#endif
+    .make_new = motor_Motor_make_new,
+    .locals_dict = (mp_obj_dict_t*)&motor_DCMotor_locals_dict,
 };
 
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
