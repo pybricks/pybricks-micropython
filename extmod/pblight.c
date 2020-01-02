@@ -18,7 +18,7 @@ pbio_error_t pb_light_on(pbio_lightdev_t *dev) {
 pbio_error_t pb_color_light_on(pbio_lightdev_t *dev, pbio_light_color_t color) {
 #if PYBRICKS_PY_EV3DEVICES
     if (dev->id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
-        return ev3device_get_values_at_mode(dev->ev3iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP, &color_id);
+        return pbdevice_get_values(dev->ev3iodev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP, &color_id);
     }
 #endif
 #if PYBRICKS_PY_PUPDEVICES

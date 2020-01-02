@@ -28,7 +28,7 @@
 typedef struct _iodevices_AnalogSensor_obj_t {
     mp_obj_base_t base;
     bool active;
-    pbio_ev3iodev_t *iodev;
+    pbdevice_t *pbdev;
 } iodevices_AnalogSensor_obj_t;
 
 // pybricks.iodevices.AnalogSensor.__init__
@@ -45,14 +45,14 @@ STATIC mp_obj_t iodevices_AnalogSensor_make_new(const mp_obj_type_t *otype, size
     pbio_iodev_type_id_t id = mp_obj_is_true(verify_type) ? PBIO_IODEV_TYPE_ID_NXT_ANALOG : PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG;
 
     pbio_error_t err;
-    while ((err = ev3device_get_device(&self->iodev, id, port_num)) == PBIO_ERROR_AGAIN) {
+    while ((err = pbdevice_get_device(&self->pbdev, id, port_num)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);
 
     // Initialize NXT sensors to passive state
     int32_t voltage;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &voltage));
+    pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &voltage));
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -62,7 +62,7 @@ STATIC mp_obj_t iodevices_AnalogSensor_voltage(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t voltage;
     uint8_t mode = self->active ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, mode, &voltage));
+    pb_assert(pbdevice_get_values(self->pbdev, mode, &voltage));
     return mp_obj_new_int(voltage);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_voltage_obj, iodevices_AnalogSensor_voltage);
@@ -72,7 +72,7 @@ STATIC mp_obj_t iodevices_AnalogSensor_resistance(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t voltage;
     uint8_t mode = self->active ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, mode, &voltage));
+    pb_assert(pbdevice_get_values(self->pbdev, mode, &voltage));
 
     // Open terminal/infinite resistance, return infinite resistance
     const int32_t vmax = 4972;
@@ -88,7 +88,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_resistance_obj, iodevice
 STATIC mp_obj_t iodevices_AnalogSensor_active(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t voltage;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE, &voltage));
+    pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE, &voltage));
     self->active = true;
     return mp_const_none;
 }
@@ -98,7 +98,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_active_obj, iodevices_An
 STATIC mp_obj_t iodevices_AnalogSensor_passive(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t voltage;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &voltage));
+    pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &voltage));
     self->active = false;
     return mp_const_none;
 }
@@ -124,7 +124,7 @@ STATIC const mp_obj_type_t iodevices_AnalogSensor_type = {
 // pybricks.iodevices.I2CDevice class object
 typedef struct _iodevices_I2CDevice_obj_t {
     mp_obj_base_t base;
-    pbio_ev3iodev_t *iodev;
+    pbdevice_t *pbdev;
     smbus_t *bus;
     int8_t address;
 } iodevices_I2CDevice_obj_t;
@@ -150,7 +150,7 @@ STATIC mp_obj_t iodevices_I2CDevice_make_new(const mp_obj_type_t *otype, size_t 
 
     // Init I2C port
     pbio_error_t err;
-    while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_CUSTOM_I2C, port_num)) == PBIO_ERROR_AGAIN) {
+    while ((err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_CUSTOM_I2C, port_num)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
 
@@ -273,7 +273,7 @@ STATIC const mp_obj_type_t iodevices_I2CDevice_type = {
 // pybricks.iodevices.UARTDevice class object
 typedef struct _iodevices_UARTDevice_obj_t {
     mp_obj_base_t base;
-    pbio_ev3iodev_t *iodev;
+    pbdevice_t *pbdev;
     pbio_serial_t *serial;
 } iodevices_UARTDevice_obj_t;
 
@@ -292,14 +292,14 @@ STATIC mp_obj_t iodevices_UARTDevice_make_new(const mp_obj_type_t *otype, size_t
 
     // Init UART port
     pbio_error_t err;
-    while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_CUSTOM_UART, port_num)) == PBIO_ERROR_AGAIN) {
+    while ((err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_CUSTOM_UART, port_num)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
 
     // Get and init serial
     pb_assert(pbio_serial_get(
         &self->serial,
-        self->iodev->port,
+        self->pbdev->port,
         pb_obj_get_int(baudrate),
         timeout == mp_const_none ? -1 : pb_obj_get_int(timeout)
     ));
@@ -429,7 +429,7 @@ STATIC const mp_obj_type_t iodevices_UARTDevice_type = {
 // pybricks.iodevices.Ev3devSensor class object
 typedef struct _iodevices_Ev3devSensor_obj_t {
     mp_obj_base_t base;
-    pbio_ev3iodev_t *iodev;
+    pbdevice_t *pbdev;
 } iodevices_Ev3devSensor_obj_t;
 
 // pybricks.iodevices.Ev3devSensor.__init__
@@ -445,7 +445,7 @@ STATIC mp_obj_t iodevices_Ev3devSensor_make_new(const mp_obj_type_t *otype, size
 
     // Get the device
     pbio_error_t err;
-    while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
+    while ((err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);
@@ -463,7 +463,7 @@ STATIC mp_obj_t iodevices_Ev3devSensor_mode(size_t n_args, const mp_obj_t *pos_a
 
     uint8_t bin[PBIO_IODEV_MAX_DATA_SIZE];
 
-    pb_assert(ev3device_get_values_at_mode(self->iodev, mp_obj_get_int(mode), bin));
+    pb_assert(pbdevice_get_values(self->pbdev, mp_obj_get_int(mode), bin));
 
     return mp_const_none;
 }
@@ -477,7 +477,7 @@ STATIC mp_obj_t iodevices_Ev3devSensor_bin(mp_obj_t self_in) {
     uint8_t bin[PBIO_IODEV_MAX_DATA_SIZE];
     memset(bin, 0, sizeof(bin));
 
-    pb_assert(ev3device_get_values_at_mode(self->iodev, self->iodev->mode, bin));
+    pb_assert(pbdevice_get_values(self->pbdev, self->pbdev->mode, bin));
 
     return mp_obj_new_bytes(bin, PBIO_IODEV_MAX_DATA_SIZE);
 }

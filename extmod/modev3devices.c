@@ -21,7 +21,7 @@
 // pybricks.ev3devices.TouchSensor class object
 typedef struct _ev3devices_TouchSensor_obj_t {
     mp_obj_base_t base;
-    pbio_ev3iodev_t *iodev;
+    pbdevice_t *pbdev;
 } ev3devices_TouchSensor_obj_t;
 
 // pybricks.ev3devices.TouchSensor.__init__
@@ -36,7 +36,7 @@ STATIC mp_obj_t ev3devices_TouchSensor_make_new(const mp_obj_type_t *type, size_
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     pbio_error_t err;
-    while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
+    while ((err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);
@@ -48,7 +48,7 @@ STATIC mp_obj_t ev3devices_TouchSensor_make_new(const mp_obj_type_t *type, size_
 STATIC mp_obj_t ev3devices_TouchSensor_pressed(mp_obj_t self_in) {
     ev3devices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t analog;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_TOUCH_SENSOR__TOUCH, &analog));
+    pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_TOUCH_SENSOR__TOUCH, &analog));
     return mp_obj_new_bool(analog > 250);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_TouchSensor_pressed_obj, ev3devices_TouchSensor_pressed);
@@ -71,7 +71,7 @@ STATIC const mp_obj_type_t ev3devices_TouchSensor_type = {
 // pybricks.ev3devices.InfraredSensor class object
 typedef struct _ev3devices_InfraredSensor_obj_t {
     mp_obj_base_t base;
-    pbio_ev3iodev_t *iodev;
+    pbdevice_t *pbdev;
 } ev3devices_InfraredSensor_obj_t;
 
 // pybricks.ev3devices.InfraredSensor.__init__
@@ -86,7 +86,7 @@ STATIC mp_obj_t ev3devices_InfraredSensor_make_new(const mp_obj_type_t *type, si
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     pbio_error_t err;
-    while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
+    while ((err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);
@@ -98,7 +98,7 @@ STATIC mp_obj_t ev3devices_InfraredSensor_make_new(const mp_obj_type_t *type, si
 STATIC mp_obj_t ev3devices_InfraredSensor_distance(mp_obj_t self_in) {
     ev3devices_InfraredSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int8_t distance;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_INFRARED_SENSOR__PROX, &distance));
+    pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_INFRARED_SENSOR__PROX, &distance));
     return mp_obj_new_int(distance);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_InfraredSensor_distance_obj, ev3devices_InfraredSensor_distance);
@@ -117,7 +117,7 @@ STATIC mp_obj_t ev3devices_InfraredSensor_beacon(size_t n_args, const mp_obj_t *
     }
 
     int8_t beacon_data[8];
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_INFRARED_SENSOR__SEEK, beacon_data));
+    pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_INFRARED_SENSOR__SEEK, beacon_data));
 
     mp_int_t heading = beacon_data[channel_no*2-2]*3;
     mp_int_t distance = beacon_data[channel_no*2-1];
@@ -151,7 +151,7 @@ STATIC mp_obj_t ev3devices_InfraredSensor_buttons(size_t n_args, const mp_obj_t 
     }
 
     int8_t buttons_data[4];
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_INFRARED_SENSOR__REMOTE, buttons_data));
+    pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_INFRARED_SENSOR__REMOTE, buttons_data));
 
     mp_int_t encoded = buttons_data[channel_no-1];
     mp_int_t pressed[2];
@@ -218,7 +218,7 @@ STATIC mp_obj_t ev3devices_InfraredSensor_keypad(mp_obj_t self_in) {
     ev3devices_InfraredSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     int16_t keypad_data;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_INFRARED_SENSOR__REM_A, &keypad_data));
+    pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_INFRARED_SENSOR__REM_A, &keypad_data));
 
     mp_obj_t pressed_obj[4];
     uint8_t len = 0;
@@ -264,7 +264,7 @@ STATIC const mp_obj_type_t ev3devices_InfraredSensor_type = {
 // pybricks.ev3devices.ColorSensor class object
 typedef struct _ev3devices_ColorSensor_obj_t {
     mp_obj_base_t base;
-    pbio_ev3iodev_t *iodev;
+    pbdevice_t *pbdev;
 } ev3devices_ColorSensor_obj_t;
 
 // pybricks.ev3devices.ColorSensor.__init__
@@ -278,7 +278,7 @@ STATIC mp_obj_t ev3devices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     pbio_error_t err;
-    while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
+    while ((err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);
@@ -290,7 +290,7 @@ STATIC mp_obj_t ev3devices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 STATIC mp_obj_t ev3devices_ColorSensor_color(mp_obj_t self_in) {
     ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int8_t color;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_COLOR_SENSOR__COLOR, &color));
+    pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_COLOR_SENSOR__COLOR, &color));
 
     switch(color) {
         case 1: return MP_OBJ_FROM_PTR(&pb_const_black);
@@ -309,7 +309,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_ColorSensor_color_obj, ev3devices_Co
 STATIC mp_obj_t ev3devices_ColorSensor_ambient(mp_obj_t self_in) {
     ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int8_t ambient;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_COLOR_SENSOR__AMBIENT, &ambient));
+    pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_COLOR_SENSOR__AMBIENT, &ambient));
     return mp_obj_new_int(ambient);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_ColorSensor_ambient_obj, ev3devices_ColorSensor_ambient);
@@ -318,7 +318,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_ColorSensor_ambient_obj, ev3devices_
 STATIC mp_obj_t ev3devices_ColorSensor_reflection(mp_obj_t self_in) {
     ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int8_t reflection;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_COLOR_SENSOR__REFLECT, &reflection));
+    pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_COLOR_SENSOR__REFLECT, &reflection));
     return mp_obj_new_int(reflection);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_ColorSensor_reflection_obj, ev3devices_ColorSensor_reflection);
@@ -327,7 +327,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_ColorSensor_reflection_obj, ev3devic
 STATIC mp_obj_t ev3devices_ColorSensor_rgb(mp_obj_t self_in) {
     ev3devices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int16_t rgb[3];
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_COLOR_SENSOR__RGB_RAW, rgb));
+    pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_COLOR_SENSOR__RGB_RAW, rgb));
     mp_obj_t tup[3];
 
     rgb[0] = (0.258*rgb[0])-0.3;
@@ -363,7 +363,7 @@ STATIC const mp_obj_type_t ev3devices_ColorSensor_type = {
 // pybricks.ev3devices.UltrasonicSensor class object
 typedef struct _ev3devices_UltrasonicSensor_obj_t {
     mp_obj_base_t base;
-    pbio_ev3iodev_t *iodev;
+    pbdevice_t *pbdev;
 } ev3devices_UltrasonicSensor_obj_t;
 
 
@@ -379,7 +379,7 @@ STATIC mp_obj_t ev3devices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     pbio_error_t err;
-    while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
+    while ((err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);
@@ -397,10 +397,10 @@ STATIC mp_obj_t ev3devices_UltrasonicSensor_distance(size_t n_args, const mp_obj
 
     int16_t distance;
     if (mp_obj_is_true(silent)) {
-        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__SI_CM, &distance));
+        pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__SI_CM, &distance));
     }
     else {
-        pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__DIST_CM, &distance));
+        pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__DIST_CM, &distance));
     }
     return mp_obj_new_int(distance);
 }
@@ -410,7 +410,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_UltrasonicSensor_distance_obj, 0, e
 STATIC mp_obj_t ev3devices_UltrasonicSensor_presence(mp_obj_t self_in) {
     ev3devices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int8_t presence;
-    pb_assert(ev3device_get_values_at_mode(self->iodev, PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__LISTEN, &presence));
+    pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__LISTEN, &presence));
     return mp_obj_new_bool(presence);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_UltrasonicSensor_presence_obj, ev3devices_UltrasonicSensor_presence);
@@ -433,24 +433,24 @@ STATIC const mp_obj_type_t ev3devices_UltrasonicSensor_type = {
 // pybricks.ev3devices.GyroSensor class object
 typedef struct _ev3devices_GyroSensor_obj_t {
     mp_obj_base_t base;
-    pbio_ev3iodev_t *iodev;
+    pbdevice_t *pbdev;
     pbio_direction_t direction;
     mp_int_t offset;
 } ev3devices_GyroSensor_obj_t;
 
 // pybricks.ev3devices.GyroSensor (internal) Get value0 and value1 for G&A mode
-STATIC void ev3devices_GyroSensor_raw(pbio_ev3iodev_t *iodev, mp_int_t *raw_angle, mp_int_t *raw_speed) {
+STATIC void ev3devices_GyroSensor_raw(pbdevice_t *pbdev, mp_int_t *raw_angle, mp_int_t *raw_speed) {
     int16_t angle_and_speed[2];
-    pb_assert(ev3device_get_values_at_mode(iodev, PBIO_IODEV_MODE_EV3_GYRO_SENSOR__G_A, angle_and_speed));
+    pb_assert(pbdevice_get_values(pbdev, PBIO_IODEV_MODE_EV3_GYRO_SENSOR__G_A, angle_and_speed));
     *raw_angle = (mp_int_t) angle_and_speed[0];
     *raw_speed = (mp_int_t) angle_and_speed[1];
 }
 
 // pybricks.ev3devices.GyroSensor (internal) Get new offset  for new reset angle
-STATIC mp_int_t ev3devices_GyroSensor_get_angle_offset(pbio_ev3iodev_t *iodev, pbio_direction_t direction, mp_int_t new_angle) {
+STATIC mp_int_t ev3devices_GyroSensor_get_angle_offset(pbdevice_t *pbdev, pbio_direction_t direction, mp_int_t new_angle) {
     // Read raw sensor values
     mp_int_t raw_angle, raw_speed;
-    ev3devices_GyroSensor_raw(iodev, &raw_angle, &raw_speed);
+    ev3devices_GyroSensor_raw(pbdev, &raw_angle, &raw_speed);
 
     // Get new offset using arguments and raw values
     if (direction == PBIO_DIRECTION_CLOCKWISE) {
@@ -475,12 +475,12 @@ STATIC mp_obj_t ev3devices_GyroSensor_make_new(const mp_obj_type_t *type, size_t
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     pbio_error_t err;
-    while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
+    while ((err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR, port_num)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);
 
-    self->offset = ev3devices_GyroSensor_get_angle_offset(self->iodev, self->direction, 0);
+    self->offset = ev3devices_GyroSensor_get_angle_offset(self->pbdev, self->direction, 0);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -488,7 +488,7 @@ STATIC mp_obj_t ev3devices_GyroSensor_make_new(const mp_obj_type_t *type, size_t
 STATIC mp_obj_t ev3devices_GyroSensor_speed(mp_obj_t self_in) {
     ev3devices_GyroSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_int_t raw_angle, raw_speed;
-    ev3devices_GyroSensor_raw(self->iodev, &raw_angle, &raw_speed);
+    ev3devices_GyroSensor_raw(self->pbdev, &raw_angle, &raw_speed);
 
     if (self->direction == PBIO_DIRECTION_CLOCKWISE) {
         return mp_obj_new_int(raw_speed);
@@ -503,7 +503,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_GyroSensor_speed_obj, ev3devices_Gyr
 STATIC mp_obj_t ev3devices_GyroSensor_angle(mp_obj_t self_in) {
     ev3devices_GyroSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_int_t raw_angle, raw_speed;
-    ev3devices_GyroSensor_raw(self->iodev, &raw_angle, &raw_speed);
+    ev3devices_GyroSensor_raw(self->pbdev, &raw_angle, &raw_speed);
 
     if (self->direction == PBIO_DIRECTION_CLOCKWISE) {
         return mp_obj_new_int(raw_angle - self->offset);
@@ -521,7 +521,7 @@ STATIC mp_obj_t ev3devices_GyroSensor_reset_angle(size_t n_args, const mp_obj_t 
         PB_ARG_REQUIRED(angle)
     );
 
-    self->offset = ev3devices_GyroSensor_get_angle_offset(self->iodev, self->direction, pb_obj_get_int(angle));
+    self->offset = ev3devices_GyroSensor_get_angle_offset(self->pbdev, self->direction, pb_obj_get_int(angle));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_GyroSensor_reset_angle_obj, 0, ev3devices_GyroSensor_reset_angle);
@@ -530,11 +530,11 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_GyroSensor_reset_angle_obj, 0, ev3d
 STATIC mp_obj_t ev3devices_GyroSensor_calibrate(mp_obj_t self_in) {
     ev3devices_GyroSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    pbio_port_t port = self->iodev->port;
+    pbio_port_t port = self->pbdev->port;
 
     // Trick the sensor into going into other uart mode mode
     pbio_error_t err;
-    while ((err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_CUSTOM_UART, port)) == PBIO_ERROR_AGAIN) {
+    while ((err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_CUSTOM_UART, port)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);
@@ -542,7 +542,7 @@ STATIC mp_obj_t ev3devices_GyroSensor_calibrate(mp_obj_t self_in) {
     // Wait until the sensor is back, up to a timeout
     mp_int_t time_start = mp_hal_ticks_ms();
     while (mp_hal_ticks_ms() - time_start < 10000) {
-        err = ev3device_get_device(&self->iodev, PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR, port);
+        err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR, port);
         if (err == PBIO_SUCCESS) {
             break;
         }
@@ -555,7 +555,7 @@ STATIC mp_obj_t ev3devices_GyroSensor_calibrate(mp_obj_t self_in) {
     }
 
     // Also reset the offset and get mode right
-    self->offset = ev3devices_GyroSensor_get_angle_offset(self->iodev, self->direction, 0);
+    self->offset = ev3devices_GyroSensor_get_angle_offset(self->pbdev, self->direction, 0);
 
     return mp_const_none;
 }

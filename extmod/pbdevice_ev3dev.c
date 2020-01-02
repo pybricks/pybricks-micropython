@@ -16,54 +16,54 @@
 
 #include <ev3dev_stretch/nxtcolor.h>
 
-pbio_ev3iodev_t iodevices[4];
+pbdevice_t iodevices[4];
 
 // Get an ev3dev sensor
-pbio_error_t ev3device_get_device(pbio_ev3iodev_t **iodev, pbio_iodev_type_id_t valid_id, pbio_port_t port) {
+pbio_error_t pbdevice_get_device(pbdevice_t **pbdev, pbio_iodev_type_id_t valid_id, pbio_port_t port) {
     if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    pbio_ev3iodev_t *_iodev = &iodevices[port - PBIO_PORT_1];
+    pbdevice_t *_pbdev = &iodevices[port - PBIO_PORT_1];
 
-    *iodev = _iodev;
+    *pbdev = _pbdev;
 
-    _iodev->port = port;
-    _iodev->mode = 255;
+    _pbdev->port = port;
+    _pbdev->mode = 255;
 
     pbio_error_t err;
 
     // Get the device and assert that is has a valid id
-    err = lego_sensor_get(&_iodev->sensor, _iodev->port, valid_id);
+    err = lego_sensor_get(&_pbdev->sensor, _pbdev->port, valid_id);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    _iodev->type_id = valid_id;
+    _pbdev->type_id = valid_id;
 
     return PBIO_SUCCESS;
 }
 
 
-pbio_error_t ev3device_get_values_at_mode(pbio_ev3iodev_t *iodev, uint8_t mode, void *values) {
+pbio_error_t pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values) {
 
     // The NXT Color Sensor is a special case, so deal with it accordingly
-    if (iodev->type_id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
-        return nxtcolor_get_values_at_mode(iodev->port, mode, values);
+    if (pbdev->type_id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
+        return nxtcolor_get_values_at_mode(pbdev->port, mode, values);
     }
 
     pbio_error_t err;
     // Set the mode if not already set
-    if (iodev->mode != mode || (
+    if (pbdev->mode != mode || (
         // and also if this sensor/mode requires setting it every time:
-        iodev->type_id == PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR && mode >= PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__SI_CM
+        pbdev->type_id == PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR && mode >= PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__SI_CM
     )) {
-        err = lego_sensor_set_mode(iodev->sensor, mode);
+        err = lego_sensor_set_mode(pbdev->sensor, mode);
         if (err != PBIO_SUCCESS) {
             return err;
         }
         // Set the new mode and corresponding data info
-        iodev->mode = mode;
-        err = lego_sensor_get_info(iodev->sensor, &iodev->data_len, &iodev->data_type);
+        pbdev->mode = mode;
+        err = lego_sensor_get_info(pbdev->sensor, &pbdev->data_len, &pbdev->data_type);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -72,13 +72,13 @@ pbio_error_t ev3device_get_values_at_mode(pbio_ev3iodev_t *iodev, uint8_t mode, 
     // Read raw data from device
     char data[PBIO_IODEV_MAX_DATA_SIZE];
 
-    err = lego_sensor_get_bin_data(iodev->sensor, data);
+    err = lego_sensor_get_bin_data(pbdev->sensor, data);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    for (uint8_t i = 0; i < iodev->data_len; i++) {
-        switch (iodev->data_type) {
+    for (uint8_t i = 0; i < pbdev->data_len; i++) {
+        switch (pbdev->data_type) {
             case PBIO_IODEV_DATA_TYPE_UINT8:
             memcpy((int8_t  *) values + i * 1, (uint8_t *)(data + i * 1), 1);
             break;

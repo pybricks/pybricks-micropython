@@ -15,7 +15,7 @@
 #include <ev3dev_stretch/lego_sensor.h>
 
 // TODO: Make structure like iodevice
-typedef struct _pbio_ev3iodev_t {
+typedef struct _pbdevice_t {
     /**
      * The device ID
      */
@@ -40,11 +40,11 @@ typedef struct _pbio_ev3iodev_t {
      * Platform specific low-level device abstraction
      */
     lego_sensor_t *sensor;
-} pbio_ev3iodev_t;
+} pbdevice_t;
 
-pbio_error_t ev3device_get_device(pbio_ev3iodev_t **iodev, pbio_iodev_type_id_t valid_id, pbio_port_t port);
+pbio_error_t pbdevice_get_device(pbdevice_t **pbdev, pbio_iodev_type_id_t valid_id, pbio_port_t port);
 
-pbio_error_t ev3device_get_values_at_mode(pbio_ev3iodev_t *iodev, uint8_t mode, void *values);
+pbio_error_t pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values);
 
 /**
  * Mode identifiers for EV3 devices.

@@ -12,7 +12,7 @@
 struct _pbio_lightdev_t {
     pbio_iodev_type_id_t id;
     pbio_iodev_t *pupiodev;
-    pbio_ev3iodev_t *ev3iodev;
+    pbdevice_t *ev3iodev;
 };
 
 typedef struct _pbio_lightdev_t pbio_lightdev_t;
