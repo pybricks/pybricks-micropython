@@ -17,18 +17,18 @@ Motor properties:
 ------------------------
 Port		 A
 Direction	 clockwise
-Counts per unit	 2.000
-Gear ratio	 1.000
-
-Run settings:
-------------------------
-Max speed	 400
-Acceleration	 800
 
 DC settings:
 ------------------------
 Duty limit	 100
 Duty offset	 0
+
+Run settings:
+------------------------
+Counts per deg.	 2.000
+Gear ratio	 1.000
+Max speed	 400
+Acceleration	 800
 
 PID settings:
 ------------------------
@@ -40,4 +40,3 @@ Angle tolerance	 3
 Speed tolerance	 5
 Stall speed	 2
 Stall time	 200
-

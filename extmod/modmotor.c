@@ -122,6 +122,21 @@ void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
     pb_thread_exit();
     pb_assert(err);
 
+    mp_printf(print,
+        "Motor properties:\n"
+        "------------------------\n"
+        "Port\t\t %c\n"
+        "Direction\t %s\n"
+        "\nDC settings:\n"
+        "------------------------\n"
+        "Duty limit\t %" PRId32 "\n"
+        "Duty offset\t %" PRId32 "\n",
+        port,
+        direction == PBIO_DIRECTION_CLOCKWISE ? "clockwise" : "counterclockwise",
+        stall_duty,
+        duty_offset
+    );
+
     // For DC motors, there is nothing left to do.
     if (!is_servo) {
         return;
@@ -159,20 +174,12 @@ void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
     pb_thread_exit();
 
     mp_printf(print,
-        "Motor properties:\n"
-        "------------------------\n"
-        "Port\t\t %c\n"
-        "Direction\t %s\n"
-        "Counts per unit\t %s\n"
-        "Gear ratio\t %s\n"
         "\nRun settings:\n"
         "------------------------\n"
+        "Counts per deg.\t %s\n"
+        "Gear ratio\t %s\n"
         "Max speed\t %" PRId32 "\n"
         "Acceleration\t %" PRId32 "\n"
-        "\nDC settings:\n"
-        "------------------------\n"
-        "Duty limit\t %" PRId32 "\n"
-        "Duty offset\t %" PRId32 "\n"
         "\nPID settings:\n"
         "------------------------\n"
         "kp\t\t %" PRId16 "\n"
@@ -183,16 +190,12 @@ void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
         "Speed tolerance\t %" PRId32 "\n"
         "Stall speed\t %" PRId32 "\n"
         "Stall time\t %" PRId32,
-        port,
-        direction == PBIO_DIRECTION_CLOCKWISE ? "clockwise" : "counterclockwise",
+        // Gearing settings
         counts_per_degree_str,
         gear_ratio_str,
         // Print run settings
         max_speed,
         acceleration,
-        // Print DC settings
-        stall_duty,
-        duty_offset,
         // Print PID settings
         pid_kp,
         pid_ki,
