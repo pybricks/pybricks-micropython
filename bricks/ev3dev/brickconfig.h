@@ -42,3 +42,8 @@ extern const struct _mp_obj_module_t pb_module_tools;
     { MP_ROM_QSTR(MP_QSTR_robotics_c),   MP_ROM_PTR(&pb_module_robotics)   }, \
     { MP_ROM_QSTR(MP_QSTR_parameters_c), MP_ROM_PTR(&pb_module_parameters) }, \
     { MP_ROM_QSTR(MP_QSTR_tools),        MP_ROM_PTR(&pb_module_tools)      },
+
+extern const struct _mp_obj_type_t pb_type_ev3dev_Screen;
+
+#define PBYRICKS_PORT_BUILTINS \
+    { MP_ROM_QSTR(MP_QSTR_Screen),       MP_ROM_PTR(&pb_type_ev3dev_Screen) }, // TODO: this is just for testing

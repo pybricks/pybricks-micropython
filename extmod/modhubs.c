@@ -16,20 +16,23 @@ extern const struct _mp_obj_module_t pb_module_battery;
 
 #ifdef PBDRV_CONFIG_HUB_EV3BRICK
 
+#include "pb_ev3dev_types.h"
+
 extern const struct _mp_obj_module_t pb_module_buttons;
 
 // Class structure for EV3Brick
 typedef struct _hubs_EV3Brick_obj_t {
     mp_obj_base_t base;
     mp_obj_t light;
+    mp_obj_t screen;
     mp_obj_t speaker;
 } hubs_EV3Brick_obj_t;
 
-STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     hubs_EV3Brick_obj_t *self = m_new_obj(hubs_EV3Brick_obj_t);
     self->base.type = (mp_obj_type_t*) type;
 
-    // Create an instance of a speaker
+    self->screen = pb_type_ev3dev_Screen.make_new(&pb_type_ev3dev_Screen, 0, 0, NULL);
     self->speaker = builtins_Speaker_obj_make_new(100);
 
     // Create an instance of the Light class, representing the brick status light
@@ -48,6 +51,7 @@ STATIC const mp_rom_map_elem_t hubs_EV3Brick_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_buttons),     MP_ROM_PTR(&pb_module_buttons)      },
     { MP_ROM_QSTR(MP_QSTR_Port),        MP_ROM_PTR(&pb_enum_type_Port)      },
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)      },
+    { MP_ROM_QSTR(MP_QSTR_screen),      MP_ROM_ATTRIBUTE_OFFSET(hubs_EV3Brick_obj_t, screen)  },
     { MP_ROM_QSTR(MP_QSTR_speaker),     MP_ROM_ATTRIBUTE_OFFSET(hubs_EV3Brick_obj_t, speaker) },
     { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_ATTRIBUTE_OFFSET(hubs_EV3Brick_obj_t, light  ) },
 };

@@ -196,6 +196,7 @@ SRC_C += $(SRC_MOD)
 # Pybricks port core source files
 PYBRICKS_SRC_C += \
 	ev3dev_mphal.c \
+	pb_type_ev3dev_screen.c \
 	pbinit.c \
 	pbsmbus.c \
 
@@ -286,7 +287,7 @@ OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_LIB_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(LIB_SRC_C) $(PYBRICKS_PY_SRC_C) $(PYBRICKS_EXTMOD_SRC_C)
+SRC_QSTR += $(SRC_C) $(LIB_SRC_C) $(PYBRICKS_SRC_C) $(PYBRICKS_PY_SRC_C) $(PYBRICKS_EXTMOD_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in
 # SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=

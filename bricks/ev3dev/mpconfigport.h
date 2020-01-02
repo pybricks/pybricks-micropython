@@ -320,6 +320,7 @@ void mp_unix_mark_exec(void);
 #endif
 
 #define MICROPY_PORT_BUILTINS \
+    PBYRICKS_PORT_BUILTINS \
     { MP_ROM_QSTR(MP_QSTR_open), MP_ROM_PTR(&mp_builtin_open_obj) },
 
 #define MP_STATE_PORT MP_STATE_VM
