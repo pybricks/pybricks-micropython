@@ -36,6 +36,8 @@ STATIC void wait_for_completion(pbio_servo_t *srv) {
     }
 }
 
+// pybricks.builtins.Motor.__init__
+// pybricks.builtins.DCMotor.__init__
 STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
@@ -101,6 +103,8 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
     return MP_OBJ_FROM_PTR(self);
 }
 
+// pybricks.builtins.Motor.__repr__
+// pybricks.builtins.DCMotor.__repr__
 void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -208,7 +212,8 @@ void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
     );
 }
 
-
+// pybricks.builtins.Motor.dc
+// pybricks.builtins.DCMotor.dc
 STATIC mp_obj_t motor_Motor_duty(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     // Parse all arguments except the first one (self)
     PB_PARSE_ARGS_METHOD_SKIP_SELF(n_args, pos_args, kw_args,
@@ -239,6 +244,7 @@ STATIC mp_obj_t motor_Motor_duty(size_t n_args, const mp_obj_t *pos_args, mp_map
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_duty_obj, 0, motor_Motor_duty);
 
+// pybricks.builtins.Motor.angle
 STATIC mp_obj_t motor_Motor_angle(mp_obj_t self_in) {
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t angle;
@@ -253,6 +259,7 @@ STATIC mp_obj_t motor_Motor_angle(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_angle_obj, motor_Motor_angle);
 
+// pybricks.builtins.Motor.stalled
 STATIC mp_obj_t motor_Motor_stalled(mp_obj_t self_in) {
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     bool stalled;
@@ -268,6 +275,7 @@ STATIC mp_obj_t motor_Motor_stalled(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_stalled_obj, motor_Motor_stalled);
 
+// pybricks.builtins.Motor.reset_angle
 STATIC mp_obj_t motor_Motor_reset_angle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         motor_Motor_obj_t, self,
@@ -293,6 +301,7 @@ STATIC mp_obj_t motor_Motor_reset_angle(size_t n_args, const mp_obj_t *pos_args,
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_reset_angle_obj, 0, motor_Motor_reset_angle);
 
+// pybricks.builtins.Motor.speed
 STATIC mp_obj_t motor_Motor_speed(mp_obj_t self_in) {
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t speed;
@@ -308,6 +317,7 @@ STATIC mp_obj_t motor_Motor_speed(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_speed_obj, motor_Motor_speed);
 
+// pybricks.builtins.Motor.run
 STATIC mp_obj_t motor_Motor_run(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         motor_Motor_obj_t, self,
@@ -327,6 +337,8 @@ STATIC mp_obj_t motor_Motor_run(size_t n_args, const mp_obj_t *pos_args, mp_map_
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_run_obj, 0, motor_Motor_run);
 
+// pybricks.builtins.Motor.stop
+// pybricks.builtins.DCMotor.stop
 STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     // Parse all arguments except the first one (self)
@@ -361,6 +373,7 @@ STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *pos_args, mp_map
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_stop_obj, 0, motor_Motor_stop);
 
+// pybricks.builtins.Motor.run_time
 STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         motor_Motor_obj_t, self,
@@ -388,6 +401,7 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_run_time_obj, 0, motor_Motor_run_time);
 
+// pybricks.builtins.Motor.run_until_stalled
 STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         motor_Motor_obj_t, self,
@@ -444,6 +458,7 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_run_until_stalled_obj, 0, motor_Motor_run_until_stalled);
 
+// pybricks.builtins.Motor.run_angle
 STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         motor_Motor_obj_t, self,
@@ -471,6 +486,7 @@ STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, m
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_run_angle_obj, 0, motor_Motor_run_angle);
 
+// pybricks.builtins.Motor.run_target
 STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         motor_Motor_obj_t, self,
@@ -498,6 +514,7 @@ STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *pos_args, 
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_run_target_obj, 0, motor_Motor_run_target);
 
+// pybricks.builtins.Motor.track_target
 STATIC mp_obj_t motor_Motor_track_target(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         motor_Motor_obj_t, self,
@@ -517,6 +534,7 @@ STATIC mp_obj_t motor_Motor_track_target(size_t n_args, const mp_obj_t *pos_args
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_track_target_obj, 0, motor_Motor_track_target);
 
+// pybricks.builtins.Motor.set_run_settings
 STATIC mp_obj_t motor_Motor_set_run_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         motor_Motor_obj_t, self,
@@ -548,6 +566,8 @@ STATIC mp_obj_t motor_Motor_set_run_settings(size_t n_args, const mp_obj_t *pos_
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_set_run_settings_obj, 0, motor_Motor_set_run_settings);
 
+// pybricks.builtins.Motor.set_dc_settings
+// pybricks.builtins.DCMotor.set_dc_settings
 STATIC mp_obj_t motor_Motor_set_dc_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     // Parse all arguments except the first one (self)
@@ -586,6 +606,7 @@ STATIC mp_obj_t motor_Motor_set_dc_settings(size_t n_args, const mp_obj_t *pos_a
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_set_dc_settings_obj, 0, motor_Motor_set_dc_settings);
 
+// pybricks.builtins.Motor.set_pid_settings
 STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         motor_Motor_obj_t, self,
@@ -635,6 +656,7 @@ STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *pos_
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_set_pid_settings_obj, 0, motor_Motor_set_pid_settings);
 
+// pybricks.builtins.Motor.trajectory
 STATIC mp_obj_t motor_Motor_trajectory(mp_obj_t self_in) {
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_control_trajectory_t trajectory;
@@ -665,22 +687,19 @@ STATIC mp_obj_t motor_Motor_trajectory(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_trajectory_obj, motor_Motor_trajectory);
 
-/*
-Motor Class tables
-*/
-
+// dir(pybricks.builtins.Motor)
 STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     //
     // Methods common to DC motors and encoded motors
     //
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_Motor_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_dc), MP_ROM_PTR(&motor_Motor_duty_obj) },
+    { MP_ROM_QSTR(MP_QSTR_set_dc_settings), MP_ROM_PTR(&motor_Motor_set_dc_settings_obj) },
     //
     // Methods specific to encoded motors
     //
     { MP_ROM_QSTR(MP_QSTR_set_run_settings), MP_ROM_PTR(&motor_Motor_set_run_settings_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_pid_settings), MP_ROM_PTR(&motor_Motor_set_pid_settings_obj) },
-    { MP_ROM_QSTR(MP_QSTR_set_dc_settings), MP_ROM_PTR(&motor_Motor_set_dc_settings_obj) },
     { MP_ROM_QSTR(MP_QSTR_angle), MP_ROM_PTR(&motor_Motor_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_speed), MP_ROM_PTR(&motor_Motor_speed_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_angle), MP_ROM_PTR(&motor_Motor_reset_angle_obj) },
@@ -696,6 +715,7 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
 };
 MP_DEFINE_CONST_DICT(motor_Motor_locals_dict, motor_Motor_locals_dict_table);
 
+// type(pybricks.builtins.Motor)
 const mp_obj_type_t motor_Motor_type = {
     { &mp_type_type },
     .name = MP_QSTR_Motor,
@@ -705,4 +725,5 @@ const mp_obj_type_t motor_Motor_type = {
     .make_new = motor_Motor_make_new,
     .locals_dict = (mp_obj_dict_t*)&motor_Motor_locals_dict,
 };
+
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER

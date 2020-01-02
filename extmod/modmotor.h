@@ -7,7 +7,7 @@
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
-// Class structure for Motors
+// pybricks.builtins.Motor class object
 typedef struct _motor_Motor_obj_t {
     mp_obj_base_t base;
     pbio_servo_t *srv;
