@@ -138,6 +138,7 @@ pupdevices module table
 STATIC const mp_rom_map_elem_t pupdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_devices) },
     { MP_ROM_QSTR(MP_QSTR_Motor),               MP_ROM_PTR(&motor_Motor_type)   },
+    { MP_ROM_QSTR(MP_QSTR_DCMotor),               MP_ROM_PTR(&motor_DCMotor_type)   },
     { MP_ROM_QSTR(MP_QSTR_ColorDistanceSensor), MP_ROM_PTR(&pupdevices_ColorAndDistSensor_type) },
 };
 
