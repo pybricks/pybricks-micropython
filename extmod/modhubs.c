@@ -37,10 +37,7 @@ STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
     self->speaker = builtins_Speaker_obj_make_new(100);
 
     // Create an instance of the Light class, representing the brick status light
-    pbio_lightdev_t dev = {
-        .id = PBIO_IODEV_TYPE_ID_NONE,
-    };
-    self->light = light_Light_obj_make_new(dev, &light_ColorLight_type);
+    self->light = light_Light_obj_make_new(NULL, &light_ColorLight_type);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -80,10 +77,7 @@ STATIC mp_obj_t hubs_MoveHub_make_new(const mp_obj_type_t *type, size_t n_args, 
     self->base.type = (mp_obj_type_t*) type;
 
     // Create an instance of the Light class, representing the hub light
-    pbio_lightdev_t dev = {
-        .id = PBIO_IODEV_TYPE_ID_NONE,
-    };
-    self->light = light_Light_obj_make_new(dev, &light_ColorLight_type);
+    self->light = light_Light_obj_make_new(NULL, &light_ColorLight_type);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -123,10 +117,7 @@ STATIC mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, 
     self->base.type = (mp_obj_type_t*) type;
 
     // Create an instance of the Light class, representing the hub light
-    pbio_lightdev_t dev = {
-        .id = PBIO_IODEV_TYPE_ID_NONE,
-    };
-    self->light = light_Light_obj_make_new(dev, &light_ColorLight_type);
+    self->light = light_Light_obj_make_new(NULL, &light_ColorLight_type);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -166,10 +157,7 @@ STATIC mp_obj_t hubs_CPlusHub_make_new(const mp_obj_type_t *type, size_t n_args,
     self->base.type = (mp_obj_type_t*) type;
 
     // Create an instance of the Light class, representing the hub light
-    pbio_lightdev_t dev = {
-        .id = PBIO_IODEV_TYPE_ID_NONE,
-    };
-    self->light = light_Light_obj_make_new(dev, &light_ColorLight_type);
+    self->light = light_Light_obj_make_new(NULL, &light_ColorLight_type);
 
     return MP_OBJ_FROM_PTR(self);
 }

@@ -283,11 +283,7 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     pb_assert(err);
 
     // Create an instance of the Light class
-    pbio_lightdev_t dev = {
-        .id = self->pbdev->type_id,
-        .ev3iodev = self->pbdev
-    };
-    self->light = light_Light_obj_make_new(dev, &light_ColorLight_type);
+    self->light = light_Light_obj_make_new(self->pbdev, &light_ColorLight_type);
     return MP_OBJ_FROM_PTR(self);
 }
 

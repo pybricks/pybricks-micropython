@@ -9,7 +9,7 @@
 #include "py/mpconfig.h"
 
 #include "modlight.h"
-#include "pbiodevice.h"
+#include "pbdevice.h"
 
 #include "modlight.h"
 #include "modparameters.h"
@@ -20,13 +20,13 @@
 // pybricks.builtins.Light class object
 typedef struct _light_Light_obj_t {
     mp_obj_base_t base;
-    pbio_lightdev_t dev;
+    pbdevice_t *pbdev;
 } light_Light_obj_t;
 
 // pybricks.builtins.Light.on
 STATIC mp_obj_t light_Light_on(mp_obj_t self_in) {
     light_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(pb_light_on(&self->dev));
+    pb_assert(pb_light_on(self->pbdev));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(light_Light_on_obj, light_Light_on);
@@ -54,7 +54,7 @@ STATIC mp_obj_t light_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, mp_
         pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
     }
 
-    pb_assert(pb_color_light_on(&self->dev, color_id));
+    pb_assert(pb_color_light_on(self->pbdev, color_id));
 
     return mp_const_none;
 }
@@ -66,8 +66,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(light_ColorLight_on_obj, 0, light_ColorLight_o
 STATIC mp_obj_t light_Light_off(mp_obj_t self_in) {
     light_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    // Turn the light off, using the command specific to the device.
-    pb_assert(pb_color_light_on(&self->dev, PBIO_LIGHT_COLOR_NONE));
+    // Turn the light off, using the command specific to the device. 
+    pb_assert(pb_color_light_on(self->pbdev, PBIO_LIGHT_COLOR_NONE));
 
     return mp_const_none;
 }
@@ -101,11 +101,11 @@ const mp_obj_type_t light_ColorLight_type = {
     .locals_dict = (mp_obj_dict_t*)&light_ColorLight_locals_dict,
 };
 
-mp_obj_t light_Light_obj_make_new(pbio_lightdev_t dev, const mp_obj_type_t *type) {
+mp_obj_t light_Light_obj_make_new(pbdevice_t *pbdev, const mp_obj_type_t *type) {
     // Create new light instance
     light_Light_obj_t *light = m_new_obj(light_Light_obj_t);
     // Set type and iodev
     light->base.type = type;
-    light->dev = dev;
+    light->pbdev = pbdev;
     return light;
 }

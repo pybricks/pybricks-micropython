@@ -46,6 +46,9 @@ pbio_error_t pbdevice_get_device(pbdevice_t **pbdev, pbio_iodev_type_id_t valid_
 
 pbio_error_t pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values);
 
+pbio_iodev_type_id_t pbdevice_get_id(pbdevice_t *pbdev);
+
+
 /**
  * Mode identifiers for EV3 devices.
  */

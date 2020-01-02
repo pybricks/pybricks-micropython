@@ -101,3 +101,7 @@ pbio_error_t pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values) 
 
     return PBIO_SUCCESS;
 }
+
+pbio_iodev_type_id_t pbdevice_get_id(pbdevice_t *pbdev) {
+    return pbdev->type_id;
+}

@@ -12,6 +12,6 @@
 const mp_obj_type_t light_Light_type;
 const mp_obj_type_t light_ColorLight_type;
 
-mp_obj_t light_Light_obj_make_new(pbio_lightdev_t dev, const mp_obj_type_t *type);
+mp_obj_t light_Light_obj_make_new(pbdevice_t *pbdev, const mp_obj_type_t *type);
 
 #endif // _PYBRICKS_EXTMOD_MODLIGHT_H_
