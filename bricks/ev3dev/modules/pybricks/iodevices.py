@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2018-2019 Laurens Valk
 
-"""Classes for custom devices."""
+"""Classes for generic I/O devices."""
 
-from customdevices_c import *
+from iodevices_c import *
