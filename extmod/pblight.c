@@ -48,9 +48,8 @@ pbio_error_t pb_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color) {
                 mode = 7;
                 break;
         }
-        pb_iodevice_set_mode(pbdev, mode);
-        uint8_t *data;
-        return pbio_iodev_get_data(pbdev, &data);
+        uint32_t *data;
+        return pbdevice_get_values(pbdev, mode, &data);
     }
 #endif
     return PBIO_SUCCESS;

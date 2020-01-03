@@ -17,7 +17,7 @@
 #include <ev3dev_stretch/lego_sensor.h>
 #include <ev3dev_stretch/nxtcolor.h>
 
-typedef struct _pbdevice_t {
+struct _pbdevice_t {
     /**
      * The device ID
      */
@@ -42,7 +42,7 @@ typedef struct _pbdevice_t {
      * Platform specific low-level device abstraction
      */
     lego_sensor_t *sensor;
-} pbdevice_t;
+};
 
 pbdevice_t iodevices[4];
 
