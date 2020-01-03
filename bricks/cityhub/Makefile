@@ -6,4 +6,4 @@ PB_MCU_SERIES = F0
 PB_CMSIS_MCU = STM32F030xC
 PB_FIRMWARE_MAX_SIZE = 237568
 
-include ../stm32.mk
+include ../stm32/stm32.mk

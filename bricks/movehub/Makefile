@@ -7,4 +7,4 @@ PB_CMSIS_MCU = STM32F070xB
 PB_FIRMWARE_MAX_SIZE = 108544
 PB_LIB_BLUENRG = 1
 
-include ../stm32.mk
+include ../stm32/stm32.mk

@@ -11,7 +11,7 @@ include ../check.mk
 include ../../../../py/mkenv.mk
 
 # qstr definitions (must come before including py.mk)
-QSTR_GLOBAL_DEPENDENCIES = $(TOP)/ports/pybricks/bricks/stm32configport.h
+QSTR_GLOBAL_DEPENDENCIES = $(TOP)/ports/pybricks/bricks/stm32/configport.h
 
 # Module included as mpy file in persistent user ROM
 # PYBRICKS_MPY_MAIN_MODULE ?= main.py
@@ -107,8 +107,8 @@ endif
 
 LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
-SRC_C = $(addprefix ports/pybricks/bricks/,\
-	stm32_main.c \
+SRC_C = $(addprefix ports/pybricks/bricks/stm32/,\
+	main.c \
 	systick.c \
 	uart_core.c \
 	)

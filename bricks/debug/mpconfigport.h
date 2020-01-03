@@ -14,4 +14,4 @@
 #define PYBRICKS_PY_PUPDEVICES          (0)
 #define PYBRICKS_PY_TOOLS               (0)
 
-#include "../stm32configport.h"
+#include "../stm32/configport.h"

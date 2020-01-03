@@ -28,4 +28,4 @@
 // Requires about 20K (21312) of flash
 #define MICROPY_FLOAT_IMPL              (MICROPY_FLOAT_IMPL_NONE)
 
-#include "../stm32configport.h"
+#include "../stm32/configport.h"

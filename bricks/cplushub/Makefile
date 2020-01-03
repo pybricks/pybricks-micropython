@@ -8,4 +8,4 @@ PB_FIRMWARE_MAX_SIZE = 225280
 PB_USE_HAL = 1
 PB_LIB_BLE5STACK = 1
 
-include ../stm32.mk
+include ../stm32/stm32.mk

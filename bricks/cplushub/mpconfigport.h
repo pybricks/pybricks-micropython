@@ -20,4 +20,4 @@
 #define MICROPY_ENABLE_COMPILER         (1)
 #define MICROPY_FLOAT_IMPL              (MICROPY_FLOAT_IMPL_FLOAT)
 
-#include "../stm32configport.h"
+#include "../stm32/configport.h"
