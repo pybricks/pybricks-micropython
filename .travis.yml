@@ -215,6 +215,7 @@ jobs:
           libumockdev0
           pkg-config
           uthash-dev
+          xfonts-100dpi
         - cd ${HOME}
         - git clone --depth=10 --branch=$(cat ${TRAVIS_BUILD_DIR}/micropython-tag) --recursive https://github.com/pybricks/micropython;
         - cd micropython/ports/pybricks

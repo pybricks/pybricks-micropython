@@ -15,7 +15,8 @@ RUN sudo apt-get update && \
         pkg-config \
         python \
         python3 \
-        uthash-dev:armel
+        uthash-dev:armel \
+        xfonts-100dpi
 RUN apt-get download umockdev:armel && \
     ar x umockdev*.deb data.tar.xz && \
     sudo tar -C / -xf data.tar.xz ./usr/lib/arm-linux-gnueabi/libumockdev-preload.so.0.0.0 && \
@@ -26,6 +27,7 @@ RUN apt-get download umockdev:armel && \
 # thanks https://stackoverflow.com/a/36287466/1976323
 RUN sudo mv /usr/arm-linux-gnueabi/include/linux/i2c-dev.h /usr/arm-linux-gnueabi/include/linux/i2c-dev.h.kernel && \
     sudo cp /usr/include/linux/i2c-dev.h /usr/arm-linux-gnueabi/include/linux/i2c-dev.h
+RUN sudo rm /etc/fonts/conf.d/70-no-bitmaps.conf
 ENV PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabi/pkgconfig
 ENV CROSS_COMPILE=arm-linux-gnueabi-
 ENV BUILD=build-armel
