@@ -6,6 +6,8 @@
 
 #define PYBRICKS_HEAP_KB                32 // half of RAM
 
+#define PYBRICKS_HUB_NXT                (1)
+
 // Pybricks modules
 #define PYBRICKS_PY_BUTTONS             (1)
 #define PYBRICKS_PY_NXTDEVICES          (1)

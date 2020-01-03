@@ -6,8 +6,6 @@
 
 // platform-specific configuration for LEGO MINDSTORMS NXT
 
-#define PBDRV_CONFIG_HUB_NXTBRICK
-
 #define PBDRV_CONFIG_ADC                            (0)
 
 #define PBDRV_CONFIG_BATTERY                        (1)

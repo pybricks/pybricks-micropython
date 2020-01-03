@@ -8,6 +8,8 @@
 
 #define PYBRICKS_HEAP_KB                16 // half of RAM
 
+#define PYBRICKS_HUB_CITYHUB            (1)
+
 // Pybricks modules
 #define PYBRICKS_PY_ADVANCED            (1)
 #define PYBRICKS_PY_PARAMETERS          (1)

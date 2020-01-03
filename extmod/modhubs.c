@@ -14,7 +14,7 @@
 
 extern const struct _mp_obj_module_t pb_module_battery;
 
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+#if PYBRICKS_HUB_EV3
 
 #include "pb_ev3dev_types.h"
 
@@ -64,9 +64,9 @@ STATIC const mp_obj_type_t hubs_EV3Brick_type = {
     .locals_dict = (mp_obj_dict_t*)&hubs_EV3Brick_locals_dict,
 };
 
-#endif // PBDRV_CONFIG_HUB_EV3BRICK
+#endif // PYBRICKS_HUB_EV3
 
-#ifdef PBDRV_CONFIG_HUB_MOVEHUB
+#if PYBRICKS_HUB_MOVEHUB
 
 // Class structure for MoveHub
 typedef struct _hubs_MoveHub_obj_t {
@@ -107,9 +107,9 @@ STATIC const mp_obj_type_t hubs_MoveHub_type = {
     .locals_dict = (mp_obj_dict_t*)&hubs_MoveHub_locals_dict,
 };
 
-#endif // PBDRV_CONFIG_HUB_MOVEHUB
+#endif // PYBRICKS_HUB_MOVEHUB
 
-#ifdef PBDRV_CONFIG_HUB_CITYHUB
+#if PYBRICKS_HUB_CITYHUB
 
 // Class structure for CityHub
 typedef struct _hubs_CityHub_obj_t {
@@ -150,9 +150,9 @@ STATIC const mp_obj_type_t hubs_CityHub_type = {
     .locals_dict = (mp_obj_dict_t*)&hubs_CityHub_locals_dict,
 };
 
-#endif // PBDRV_CONFIG_HUB_CITYHUB
+#endif // PYBRICKS_HUB_CITYHUB
 
-#ifdef PBDRV_CONFIG_HUB_CPLUSHUB
+#if PYBRICKS_HUB_CPLUSHUB
 
 // Class structure for CPlusHub
 typedef struct _hubs_CPlusHub_obj_t {
@@ -193,9 +193,9 @@ STATIC const mp_obj_type_t hubs_CPlusHub_type = {
     .locals_dict = (mp_obj_dict_t*)&hubs_CPlusHub_locals_dict,
 };
 
-#endif // PBDRV_CONFIG_HUB_CPLUSHUB
+#endif // PYBRICKS_HUB_CPLUSHUB
 
-#ifdef PBDRV_CONFIG_HUB_NXTBRICK
+#if PYBRICKS_HUB_NXT
 
 // Class structure for NXTBrick
 typedef struct _hubs_NXTBrick_obj_t {
@@ -224,25 +224,25 @@ STATIC const mp_obj_type_t hubs_NXTBrick_type = {
     .locals_dict = (mp_obj_dict_t*)&hubs_NXTBrick_locals_dict,
 };
 
-#endif // PBDRV_CONFIG_HUB_NXTBRICK
+#endif // PYBRICKS_HUB_NXT
 
 /* Module table */
 
 STATIC const mp_rom_map_elem_t hubs_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_hubs )      },
-#ifdef PBDRV_CONFIG_HUB_MOVEHUB
+#if PYBRICKS_HUB_MOVEHUB
     { MP_ROM_QSTR(MP_QSTR_MoveHub),    MP_ROM_PTR(&hubs_MoveHub_type) },
 #endif
-#ifdef PBDRV_CONFIG_HUB_CITYHUB
+#if PYBRICKS_HUB_CITYHUB
     { MP_ROM_QSTR(MP_QSTR_CityHub),    MP_ROM_PTR(&hubs_CityHub_type) },
 #endif
-#ifdef PBDRV_CONFIG_HUB_CPLUSHUB
+#if PYBRICKS_HUB_CPLUSHUB
     { MP_ROM_QSTR(MP_QSTR_CPlusHub),    MP_ROM_PTR(&hubs_CPlusHub_type) },
 #endif
-#ifdef PBDRV_CONFIG_HUB_NXTBRICK
+#if PYBRICKS_HUB_NXT
     { MP_ROM_QSTR(MP_QSTR_NXTBrick),    MP_ROM_PTR(&hubs_NXTBrick_type) },
 #endif
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+#if PYBRICKS_HUB_EV3
     { MP_ROM_QSTR(MP_QSTR_EV3Brick),    MP_ROM_PTR(&hubs_EV3Brick_type) },
 #endif
 };

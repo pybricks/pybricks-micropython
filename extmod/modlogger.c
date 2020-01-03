@@ -113,7 +113,7 @@ static void make_data_row_str(char *row, int32_t *data, uint8_t n) {
 
 STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+#if PYBRICKS_HUB_EV3
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         tools_Logger_obj_t, self,
         PB_ARG_DEFAULT_NONE(path)
@@ -138,7 +138,7 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     }
 #else
     tools_Logger_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-#endif //PBDRV_CONFIG_HUB_EV3BRICK
+#endif //PYBRICKS_HUB_EV3
 
     // Read log size information
     int32_t data[MAX_LOG_VALUES];
@@ -167,7 +167,7 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
         // Make one string of values
         make_data_row_str(row_str, data, num_values);
 
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+#if PYBRICKS_HUB_EV3
         // Append the row to file
         if (fprintf(log_file, "%s", row_str) < 0) {
             err = PBIO_ERROR_IO;
@@ -176,15 +176,15 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
 #else
         // Print the row
         mp_print_str(&mp_plat_print, row_str);
-#endif // PBDRV_CONFIG_HUB_EV3BRICK
+#endif // PYBRICKS_HUB_EV3
     }
 
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+#if PYBRICKS_HUB_EV3
     // Close the file
     if (fclose(log_file) != 0) {
         err = PBIO_ERROR_IO;
     }
-#endif // PBDRV_CONFIG_HUB_EV3BRICK
+#endif // PYBRICKS_HUB_EV3
 
     pb_assert(err);
     return mp_const_none;

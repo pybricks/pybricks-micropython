@@ -19,7 +19,7 @@
 #include "modlight.h"
 #include "modparameters.h"
 
-#ifdef PBDRV_CONFIG_HUB_EV3BRICK
+#if PYBRICKS_HUB_EV3
 
 // Generic linear scaling of an analog value between a known min and max to a percentage
 STATIC int32_t analog_scale(int32_t mvolts, int32_t mvolts_min, int32_t mvolts_max, bool invert) {
@@ -373,12 +373,12 @@ STATIC const mp_obj_type_t nxtdevices_ColorSensor_type = {
     .locals_dict = (mp_obj_dict_t*)&nxtdevices_ColorSensor_locals_dict,
 };
 
-#endif // PBDRV_CONFIG_HUB_EV3BRICK
+#endif // PYBRICKS_HUB_EV3
 
 // dir(pybricks.nxtdevices)
 STATIC const mp_rom_map_elem_t nxtdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_nxtdevices)              },
-#ifdef PBDRV_CONFIG_HUB_NXTBRICK
+#if PYBRICKS_HUB_NXT
     { MP_ROM_QSTR(MP_QSTR_Motor),            MP_ROM_PTR(&motor_Motor_type)                },
 #else
     { MP_ROM_QSTR(MP_QSTR_TouchSensor),      MP_ROM_PTR(&nxtdevices_TouchSensor_type)     },

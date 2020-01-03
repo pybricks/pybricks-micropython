@@ -6,8 +6,6 @@
 
 // platform-specific configuration for LEGO BOOST Move Hub
 
-#define PBDRV_CONFIG_HUB_MOVEHUB
-
 #define PBDRV_CONFIG_ADC                            (1)
 #define PBDRV_CONFIG_ADC_STM32F0                    (1)
 
