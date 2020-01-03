@@ -25,8 +25,7 @@ typedef struct _light_Light_obj_t {
 
 // pybricks.builtins.Light.on
 STATIC mp_obj_t light_Light_on(mp_obj_t self_in) {
-    light_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(pb_light_on(self->pbdev));
+    pb_assert(PBIO_ERROR_NOT_SUPPORTED);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(light_Light_on_obj, light_Light_on);
@@ -54,7 +53,7 @@ STATIC mp_obj_t light_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, mp_
         pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
     }
 
-    pb_assert(pb_color_light_on(self->pbdev, color_id));
+    pb_color_light_on(self->pbdev, color_id);
 
     return mp_const_none;
 }
@@ -67,7 +66,7 @@ STATIC mp_obj_t light_Light_off(mp_obj_t self_in) {
     light_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // Turn the light off, using the command specific to the device. 
-    pb_assert(pb_color_light_on(self->pbdev, PBIO_LIGHT_COLOR_NONE));
+    pb_color_light_on(self->pbdev, PBIO_LIGHT_COLOR_NONE);
 
     return mp_const_none;
 }

@@ -44,15 +44,11 @@ STATIC mp_obj_t iodevices_AnalogSensor_make_new(const mp_obj_type_t *otype, size
 
     pbio_iodev_type_id_t id = mp_obj_is_true(verify_type) ? PBIO_IODEV_TYPE_ID_NXT_ANALOG : PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG;
 
-    pbio_error_t err;
-    while ((err = pbdevice_get_device(&self->pbdev, id, port_num)) == PBIO_ERROR_AGAIN) {
-        mp_hal_delay_ms(1000);
-    }
-    pb_assert(err);
+    self->pbdev = pbdevice_get_device(port_num, id);
 
     // Initialize NXT sensors to passive state
     int32_t voltage;
-    pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &voltage));
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &voltage);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -62,7 +58,7 @@ STATIC mp_obj_t iodevices_AnalogSensor_voltage(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t voltage;
     uint8_t mode = self->active ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
-    pb_assert(pbdevice_get_values(self->pbdev, mode, &voltage));
+    pbdevice_get_values(self->pbdev, mode, &voltage);
     return mp_obj_new_int(voltage);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_voltage_obj, iodevices_AnalogSensor_voltage);
@@ -72,7 +68,7 @@ STATIC mp_obj_t iodevices_AnalogSensor_resistance(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t voltage;
     uint8_t mode = self->active ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
-    pb_assert(pbdevice_get_values(self->pbdev, mode, &voltage));
+    pbdevice_get_values(self->pbdev, mode, &voltage);
 
     // Open terminal/infinite resistance, return infinite resistance
     const int32_t vmax = 4972;
@@ -88,7 +84,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_resistance_obj, iodevice
 STATIC mp_obj_t iodevices_AnalogSensor_active(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t voltage;
-    pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE, &voltage));
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE, &voltage);
     self->active = true;
     return mp_const_none;
 }
@@ -98,7 +94,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_active_obj, iodevices_An
 STATIC mp_obj_t iodevices_AnalogSensor_passive(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t voltage;
-    pb_assert(pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &voltage));
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &voltage);
     self->active = false;
     return mp_const_none;
 }
@@ -149,10 +145,7 @@ STATIC mp_obj_t iodevices_I2CDevice_make_new(const mp_obj_type_t *otype, size_t 
     self->address = addr;
 
     // Init I2C port
-    pbio_error_t err;
-    while ((err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_CUSTOM_I2C, port_num)) == PBIO_ERROR_AGAIN) {
-        mp_hal_delay_ms(1000);
-    }
+    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_CUSTOM_I2C);
 
     // Get the smbus, which on ev3dev is zero based sensor port number + 3.
     pb_assert(pb_smbus_get(&self->bus, port_num - PBIO_PORT_1 + 3));
@@ -291,10 +284,7 @@ STATIC mp_obj_t iodevices_UARTDevice_make_new(const mp_obj_type_t *otype, size_t
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     // Init UART port
-    pbio_error_t err;
-    while ((err = pbdevice_get_device(&self->pbdev, PBIO_IODEV_TYPE_ID_CUSTOM_UART, port_num)) == PBIO_ERROR_AGAIN) {
-        mp_hal_delay_ms(1000);
-    }
+    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_CUSTOM_UART);
 
     // Get and init serial
     pb_assert(pbio_serial_get(

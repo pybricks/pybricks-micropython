@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2019 Laurens Valk
 
 #include <pbio/light.h>
-#include <pbio/error.h>
+#include "pberror.h"
 
 #include "py/mpconfig.h"
 
@@ -10,25 +10,17 @@
 
 #include "pblight.h"
 
-pbio_error_t pb_light_on(pbdevice_t *pbdev) {
-    // Turn the light on, using the command specific to the device.
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-pbio_error_t pb_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color) {
+void pb_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color) {
     if (!pbdev) {
         // No external device, so assume command is for the internal light
-        return pbio_light_on(PBIO_PORT_SELF, color);
+        pb_assert(pbio_light_on(PBIO_PORT_SELF, color));
+        return;
     }
-    pbio_iodev_type_id_t id;
-    pbio_error_t err = pbdevice_get_type_id(pbdev, &id);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
+    pbio_iodev_type_id_t id = pbdevice_get_type_id(pbdev);
 
 #if PYBRICKS_PY_EV3DEVICES
     if (id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
-        return pbdevice_get_values(pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP, &color);
+        pbdevice_get_values(pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP, &color);
     }
 #endif
 #if PYBRICKS_PY_PUPDEVICES
@@ -49,8 +41,7 @@ pbio_error_t pb_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color) {
                 break;
         }
         uint32_t *data;
-        return pbdevice_get_values(pbdev, mode, &data);
+        pbdevice_get_values(pbdev, mode, &data);
     }
 #endif
-    return PBIO_SUCCESS;
 }

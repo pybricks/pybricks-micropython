@@ -8,8 +8,6 @@
 
 #include <pbio/light.h>
 
-pbio_error_t pb_light_on(pbdevice_t *pbdev);
-
-pbio_error_t pb_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color);
+void pb_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color);
 
 #endif // _PYBRICKS_LIGHT_H_

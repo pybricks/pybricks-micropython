@@ -14,11 +14,11 @@
 
 typedef struct _pbdevice_t pbdevice_t;
 
-pbio_error_t pbdevice_get_device(pbdevice_t **pbdev, pbio_iodev_type_id_t valid_id, pbio_port_t port);
+pbdevice_t *pbdevice_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id);
 
-pbio_error_t pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values);
+void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values);
 
-pbio_error_t pbdevice_get_type_id(pbdevice_t *pbdev, pbio_iodev_type_id_t *id);
+pbio_iodev_type_id_t pbdevice_get_type_id(pbdevice_t *pbdev);
 
 // LEGO MINDSTORMS EV3 Touch Sensor
 enum {

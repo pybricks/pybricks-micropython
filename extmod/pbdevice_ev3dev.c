@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019 Laurens Valk
 
+#include "py/mphal.h"
 
+#include "pberror.h"
 #include "pbdevice.h"
 
 #include <pbio/config.h>
@@ -47,7 +49,7 @@ struct _pbdevice_t {
 pbdevice_t iodevices[4];
 
 // Get an ev3dev sensor
-pbio_error_t pbdevice_get_device(pbdevice_t **pbdev, pbio_iodev_type_id_t valid_id, pbio_port_t port) {
+static pbio_error_t get_device(pbdevice_t **pbdev, pbio_iodev_type_id_t valid_id, pbio_port_t port) {
     if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -72,7 +74,7 @@ pbio_error_t pbdevice_get_device(pbdevice_t **pbdev, pbio_iodev_type_id_t valid_
 }
 
 
-pbio_error_t pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values) {
+static pbio_error_t get_values(pbdevice_t *pbdev, uint8_t mode, void *values) {
 
     // The NXT Color Sensor is a special case, so deal with it accordingly
     if (pbdev->type_id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
@@ -130,7 +132,32 @@ pbio_error_t pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values) 
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdevice_get_type_id(pbdevice_t *pbdev, pbio_iodev_type_id_t *id) {
+static pbio_error_t get_type_id(pbdevice_t *pbdev, pbio_iodev_type_id_t *id) {
     *id = pbdev->type_id;
     return PBIO_SUCCESS;
+}
+
+pbdevice_t *pbdevice_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id) {
+    pbdevice_t *pbdev = NULL;
+    pbio_error_t err;
+
+    while ((err = get_device(&pbdev, valid_id, port)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(1000);
+    }
+    pb_assert(err);
+    return pbdev;
+}
+
+void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values) {
+    pbio_error_t err;
+    while ((err = get_values(pbdev, mode, values)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(10);
+    }
+    pb_assert(err);
+}
+
+pbio_iodev_type_id_t pbdevice_get_type_id(pbdevice_t *pbdev) {
+    pbio_iodev_type_id_t id;
+    pb_assert(get_type_id(pbdev, &id));
+    return id;
 }
