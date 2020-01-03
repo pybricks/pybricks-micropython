@@ -17,16 +17,15 @@
 #include "modlight.h"
 #include "modparameters.h"
 #include "modmotor.h"
-#include "pbiodevice.h"
 
-// Class structure for ColorAndDistSensor
+// Class structure for ColorDistanceSensor
 typedef struct _pupdevices_ColorAndDistSensor_obj_t {
     mp_obj_base_t base;
     mp_obj_t light;
-    pbio_iodev_t *iodev;
+    pbdevice_t *pbdev;
 } pupdevices_ColorAndDistSensor_obj_t;
 
-// pybricks.ev3devices.pupdevices_ColorAndDistSensor.__init__
+// pybricks.pupdevices_ColorDistanceSensor.__init__
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port)
@@ -36,9 +35,8 @@ STATIC mp_obj_t pupdevices_ColorAndDistSensor_make_new(const mp_obj_type_t *type
     self->base.type = (mp_obj_type_t*) type;
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
-    pb_assert(pbdrv_ioport_get_iodev(port_num, &self->iodev));
-    pb_iodevice_assert_type_id(self->iodev, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
-    pb_iodevice_set_mode(self->iodev, 8);
+
+    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
 
     // Create an instance of the Light class
     self->light = light_Light_obj_make_new(NULL, &light_ColorLight_type);//FIXME
@@ -46,19 +44,14 @@ STATIC mp_obj_t pupdevices_ColorAndDistSensor_make_new(const mp_obj_type_t *type
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC uint8_t pupdevices_ColorAndDistSensor_combined_mode(pbio_iodev_t *iodev, uint8_t idx) {
-    pb_iodevice_set_mode(iodev, 8);
-    uint8_t *data;
-    pb_assert(pbio_iodev_get_data(iodev, &data));
-    return data[idx];
-}
-
+// pybricks.pupdevices_ColorDistanceSensor.color
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_color(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    pb_iodevice_assert_type_id(self->iodev, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
+    int8_t data[4];
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__SPEC1, data);
 
-    switch(pupdevices_ColorAndDistSensor_combined_mode(self->iodev, 0)) {
+    switch(data[0]) {
         case 1: return MP_OBJ_FROM_PTR(&pb_const_black);
         case 3: return MP_OBJ_FROM_PTR(&pb_const_blue);
         case 5: return MP_OBJ_FROM_PTR(&pb_const_green);
@@ -71,37 +64,43 @@ STATIC mp_obj_t pupdevices_ColorAndDistSensor_color(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_color_obj, pupdevices_ColorAndDistSensor_color);
 
+// pybricks.pupdevices_ColorDistanceSensor.distance
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_distance(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_iodevice_assert_type_id(self->iodev, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
-    return mp_obj_new_int(pupdevices_ColorAndDistSensor_combined_mode(self->iodev, 1));
+    int8_t data[4];
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__SPEC1, data);
+    return mp_obj_new_int(data[1]*10);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_distance_obj, pupdevices_ColorAndDistSensor_distance);
 
+// pybricks.pupdevices_ColorDistanceSensor.reflection
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_reflection(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_iodevice_assert_type_id(self->iodev, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
-    return mp_obj_new_int(pupdevices_ColorAndDistSensor_combined_mode(self->iodev, 3));
+    int8_t data[4];
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__SPEC1, data);
+    return mp_obj_new_int(data[3]);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_reflection_obj, pupdevices_ColorAndDistSensor_reflection);
 
+// pybricks.pupdevices_ColorDistanceSensor.ambient
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_ambient(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_iodevice_assert_type_id(self->iodev, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
-    pb_iodevice_set_mode(self->iodev, 4);
-    return pb_iodevice_get_values(self->iodev);
+    int8_t ambient;
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI, &ambient);
+    return mp_obj_new_int(ambient);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorAndDistSensor_ambient_obj, pupdevices_ColorAndDistSensor_ambient);
 
+// pybricks.pupdevices_ColorDistanceSensor.rgb
 STATIC mp_obj_t pupdevices_ColorAndDistSensor_rgb(mp_obj_t self_in) {
     pupdevices_ColorAndDistSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_iodevice_assert_type_id(self->iodev, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
-    pb_iodevice_set_mode(self->iodev, 6);
-    uint8_t *data;
-    pb_assert(pbio_iodev_get_data(self->iodev, &data));
+
+    int16_t data[3];
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, data);
+
     mp_obj_t rgb[3];
     for (uint8_t col = 0; col < 3; col++) {
-        int16_t intensity = ((*(int16_t *)(data + col * 2))*10)/44;
+        int16_t intensity = (data[col]*10)/44;
         rgb[col] = mp_obj_new_int(intensity < 100 ? intensity : 100);
     }
     return mp_obj_new_tuple(3, rgb);

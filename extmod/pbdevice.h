@@ -6,9 +6,6 @@
 
 #include <stdint.h>
 
-
-#include <stdint.h>
-
 #include <pbio/error.h>
 #include <pbio/iodev.h>
 
@@ -72,10 +69,6 @@ enum {
     PBIO_IODEV_MODE_EV3_ANALOG__RAW                = 0,
 };
 
-/**
- * Mode identifiers for NXT devices.
- */
-
 // LEGO MINDSTORMS NXT Analog Sensor
 enum {
     PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE            = 0,
@@ -101,6 +94,21 @@ enum {
 enum {
     PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP         = 0,
     PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE      = 1,
+};
+
+// LEGO POWERED UP Color and Distance Sensor
+enum {
+    PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__COLOR = 0,  // read 1x int8_t
+    PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX  = 1,  // read 1x int8_t
+    PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__COUNT = 2,  // read 1x int32_t
+    PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__REFLT = 3,  // read 1x int8_t
+    PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI  = 4,  // read 1x int8_t
+    PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__COL_O = 5,  // writ 1x int8_t
+    PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I = 6,  // read 3x int16_t
+    PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX = 7,  // writ 1x int16_t 
+    PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__SPEC1 = 8,  // rrwr 4x int8_t
+    PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__DEBUG = 9,  // ?? 2x int16_t
+    PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__CALIB = 10, // ?? 8x int16_t
 };
 
 #endif // _PBDEVICE_H_
