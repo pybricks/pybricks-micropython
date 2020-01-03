@@ -109,6 +109,7 @@ LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
 SRC_C = $(addprefix ports/pybricks/bricks/stm32/,\
 	main.c \
+	pbdevice.c \
 	systick.c \
 	uart_core.c \
 	)
@@ -144,7 +145,6 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modlogger.c \
 	modrobotics.c \
 	pbhub.c \
-	pbdevice_stm32.c \
 	)
 
 PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/py/,\

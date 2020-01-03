@@ -202,6 +202,7 @@ PYBRICKS_SRC_C += \
 	pb_type_ev3dev_image.c \
 	pbinit.c \
 	pbsmbus.c \
+	pbdevice.c \
 
 LIB_SRC_C = $(addprefix lib/,\
 	$(LIB_SRC_C_EXTRA) \
@@ -226,7 +227,6 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modrobotics.c \
 	modtools.c \
 	pblight.c \
-	pbdevice_ev3dev.c \
 	)
 
 PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/py/,\
