@@ -28,6 +28,7 @@ STATIC const mp_rom_map_elem_t resources_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___init__),    MP_ROM_PTR(&resources___init___obj)    },
 #if PYBRICKS_HUB_EV3
     { MP_ROM_QSTR(MP_QSTR_Font),        MP_ROM_PTR(&pb_type_ev3dev_Font)       },
+    { MP_ROM_QSTR(MP_QSTR_Image),       MP_ROM_PTR(&pb_type_ev3dev_Image)      },
 #endif
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_resources_globals, resources_globals_table);

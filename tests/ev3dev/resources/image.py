@@ -1,0 +1,129 @@
+
+from pybricks.parameters import Color
+from pybricks.resources import Font, Image
+
+img = Image()
+
+# Test contants
+
+print(img.width)
+print(img.height)
+
+
+# Test clear()
+
+img.clear()
+
+
+# Test draw_pixel()
+
+# two required arguments
+img.draw_pixel(0, 0)
+img.draw_pixel(x=0, y=0)
+try:
+    img.draw_pixel(0)
+except TypeError:
+    pass
+
+# 3rd argument is kwarg
+img.draw_pixel(0, 0, Color.BLACK)
+img.draw_pixel(0, 0, color=Color.BLACK)
+
+
+# Test draw_line()
+
+# four required arguments
+img.draw_line(0, 0, 0, 0)
+img.draw_line(x1=0, y1=0, x2=0, y2=0)
+try:
+    img.draw_line(0, 0, 0)
+except TypeError:
+    pass
+
+# 5rd argument is kwarg
+img.draw_line(0, 0, 0, 0, Color.BLACK)
+img.draw_line(0, 0, 0, 0, color=Color.BLACK)
+
+
+# Test draw_box()
+
+# four required arguments
+img.draw_box(0, 0, 0, 0)
+img.draw_box(x1=0, y1=0, x2=0, y2=0)
+try:
+    img.draw_box(0, 0, 0)
+except TypeError:
+    pass
+
+# 5th argument is kwarg
+img.draw_box(0, 0, 0, 0, 0)
+img.draw_box(0, 0, 0, 0, r=0)
+
+# 6th argument is kwarg
+img.draw_box(0, 0, 0, 0, 0, False)
+img.draw_box(0, 0, 0, 0, fill=False)
+
+# 6th argument is kwarg
+img.draw_box(0, 0, 0, 0, 0, False, Color.BLACK)
+img.draw_box(0, 0, 0, 0, color=Color.BLACK)
+
+
+# Test draw_circle()
+
+# three required arguments
+img.draw_circle(0, 0, 0)
+img.draw_circle(x=0, y=0, r=0)
+try:
+    img.draw_circle(0, 0)
+except TypeError:
+    pass
+
+# 4th argument is kwarg
+img.draw_circle(0, 0, 0, False)
+img.draw_circle(0, 0, 0, fill=False)
+
+# 5th argument is kwarg
+img.draw_circle(0, 0, 0, False, Color.BLACK)
+img.draw_circle(0, 0, 0, color=Color.BLACK)
+
+
+# Test draw_text()
+
+# three required arguments
+img.draw_text(0, 0, '')
+img.draw_text(x=0, y=0, text='')
+try:
+    img.draw_text(0, 0)
+except TypeError:
+    pass
+
+# 4th argument is kwarg
+img.draw_text(0, 0, '', Color.BLACK)
+img.draw_text(0, 0, '', color=Color.BLACK)
+
+
+# Test set_font()
+
+# one required argument
+img.set_font(Font.DEFAULT)
+try:
+    img.set_font()
+except TypeError:
+    pass
+
+
+# Test print()
+
+# no required arguments
+img.print()
+
+# positional args take any object type
+img.print('', 0, False, img, {}, [])
+
+# keyword-only arg end
+img.print(end='\n')
+img.print('', end='\n')
+
+# keyword-only arg sep
+img.print(sep=' ')
+img.print('', sep=' ')

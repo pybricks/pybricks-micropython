@@ -2,7 +2,10 @@
 // Copyright (c) 2019 David Lechner
 // Copyright (c) 2013, 2014 Damien P. George
 
-// class Screen
+// class Image
+//
+// Image manipulation on ev3dev using the GRX3 graphics library. This can be
+// used for both in-memory images and writing directly to the screen.
 
 #include <string.h>
 
@@ -20,18 +23,16 @@
 #include "modparameters.h"
 #include "pbkwarg.h"
 
-typedef struct _ev3dev_Screen_obj_t {
+typedef struct _ev3dev_Image_obj_t {
     mp_obj_base_t base;
     mp_obj_t width;
     mp_obj_t height;
     gboolean cleared;
-    gboolean initialized;
+    GrxContext *context;
     GrxTextOptions *text_options;
     gint print_x;
     gint print_y;
-} ev3dev_Screen_obj_t;
-
-STATIC ev3dev_Screen_obj_t ev3dev_Screen_singleton;
+} ev3dev_Image_obj_t;
 
 // map Pybricks color enum to GRX color value using standard web CSS values
 STATIC GrxColor map_color(mp_obj_t *obj) {
@@ -62,60 +63,71 @@ STATIC GrxColor map_color(mp_obj_t *obj) {
     return grx_color_get_black();
 }
 
-STATIC mp_obj_t ev3dev_Screen_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    if (!ev3dev_Screen_singleton.initialized) {
-        ev3dev_Screen_singleton.base.type = &pb_type_ev3dev_Screen;
-        ev3dev_Screen_singleton.width = MP_OBJ_NEW_SMALL_INT(grx_get_screen_width());
-        ev3dev_Screen_singleton.height = MP_OBJ_NEW_SMALL_INT(grx_get_screen_height());
-        ev3dev_Screen_singleton.initialized = TRUE;
+STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    ev3dev_Image_obj_t *self = m_new_obj_with_finaliser(ev3dev_Image_obj_t);
 
-        pb_type_ev3dev_Font_init();
-        GrxFont *font = pb_ev3dev_Font_obj_get_font(pb_const_ev3dev_font_DEFAULT);
-        ev3dev_Screen_singleton.text_options = grx_text_options_new(font, GRX_COLOR_BLACK);
-    }
-    return &ev3dev_Screen_singleton;
+    self->base.type = &pb_type_ev3dev_Image;
+    // TODO: allow other context types based on args
+    self->context = grx_context_ref(grx_get_screen_context());
+    self->width = mp_obj_new_int(grx_context_get_width(self->context));
+    self->height = mp_obj_new_int(grx_context_get_height(self->context));
+
+    pb_type_ev3dev_Font_init();
+    GrxFont *font = pb_ev3dev_Font_obj_get_font(pb_const_ev3dev_font_DEFAULT);
+    self->text_options = grx_text_options_new(font, GRX_COLOR_BLACK);
+
+    return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t ev3dev_Screen_clear(mp_obj_t self_in) {
-    grx_clear_screen(GRX_COLOR_WHITE);
-    ev3dev_Screen_singleton.cleared = TRUE;
-    ev3dev_Screen_singleton.print_x = 0;
-    ev3dev_Screen_singleton.print_y = 0;
+STATIC mp_obj_t ev3dev_Image___del__(mp_obj_t self_in) {
+    ev3dev_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    grx_text_options_unref(self->text_options);
+    grx_context_unref(self->context);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3dev_Screen_clear_obj, ev3dev_Screen_clear);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3dev_Image___del___obj, ev3dev_Image___del__);
+
+STATIC mp_obj_t ev3dev_Image_clear(mp_obj_t self_in) {
+    ev3dev_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    grx_context_clear(self->context, GRX_COLOR_WHITE);
+    self->cleared = TRUE;
+    self->print_x = 0;
+    self->print_y = 0;
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3dev_Image_clear_obj, ev3dev_Image_clear);
 
 // Ensure that screen has been cleared before we start drawing anything else
-STATIC void clear_once(void) {
-    if (!ev3dev_Screen_singleton.cleared) {
-        grx_clear_screen(GRX_COLOR_WHITE);
-        ev3dev_Screen_singleton.cleared = TRUE;
+STATIC void clear_once(ev3dev_Image_obj_t *self) {
+    if (!self->cleared) {
+        grx_context_clear(self->context, GRX_COLOR_WHITE);
+        self->cleared = TRUE;
     }
 }
 
-STATIC mp_obj_t ev3dev_Screen_draw_pixel(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t ev3dev_Image_draw_pixel(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        ev3dev_Screen_obj_t, self,
+        ev3dev_Image_obj_t, self,
         PB_ARG_REQUIRED(x),
         PB_ARG_REQUIRED(y),
         PB_ARG_DEFAULT_ENUM(color, pb_const_black)
     );
 
-    (void)self; // unused
     mp_int_t _x = mp_obj_get_int(x);
     mp_int_t _y = mp_obj_get_int(y);
     GrxColor _color = map_color(color);
 
-    clear_once();
+    clear_once(self);
+    grx_set_current_context(self->context);
     grx_draw_pixel(_x, _y, _color);
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Screen_draw_pixel_obj, 0, ev3dev_Screen_draw_pixel);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_pixel_obj, 0, ev3dev_Image_draw_pixel);
 
-STATIC mp_obj_t ev3dev_Screen_draw_line(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t ev3dev_Image_draw_line(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        ev3dev_Screen_obj_t, self,
+        ev3dev_Image_obj_t, self,
         PB_ARG_REQUIRED(x1),
         PB_ARG_REQUIRED(y1),
         PB_ARG_REQUIRED(x2),
@@ -123,23 +135,23 @@ STATIC mp_obj_t ev3dev_Screen_draw_line(size_t n_args, const mp_obj_t *pos_args,
         PB_ARG_DEFAULT_ENUM(color, pb_const_black)
     );
 
-    (void)self; // unused
     mp_int_t _x1 = mp_obj_get_int(x1);
     mp_int_t _y1 = mp_obj_get_int(y1);
     mp_int_t _x2 = mp_obj_get_int(x2);
     mp_int_t _y2 = mp_obj_get_int(y2);
     GrxColor _color = map_color(color);
 
-    clear_once();
+    clear_once(self);
+    grx_set_current_context(self->context);
     grx_draw_line(_x1, _y1, _x2, _y2, _color);
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Screen_draw_line_obj, 0, ev3dev_Screen_draw_line);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_line_obj, 0, ev3dev_Image_draw_line);
 
-STATIC mp_obj_t ev3dev_Screen_draw_box(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t ev3dev_Image_draw_box(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        ev3dev_Screen_obj_t, self,
+        ev3dev_Image_obj_t, self,
         PB_ARG_REQUIRED(x1),
         PB_ARG_REQUIRED(y1),
         PB_ARG_REQUIRED(x2),
@@ -149,7 +161,6 @@ STATIC mp_obj_t ev3dev_Screen_draw_box(size_t n_args, const mp_obj_t *pos_args, 
         PB_ARG_DEFAULT_ENUM(color, pb_const_black)
     );
 
-    (void)self; // unused
     mp_int_t _x1 = mp_obj_get_int(x1);
     mp_int_t _y1 = mp_obj_get_int(y1);
     mp_int_t _x2 = mp_obj_get_int(x2);
@@ -157,7 +168,8 @@ STATIC mp_obj_t ev3dev_Screen_draw_box(size_t n_args, const mp_obj_t *pos_args, 
     mp_int_t _r = mp_obj_get_int(r);
     GrxColor _color = map_color(color);
 
-    clear_once();
+    clear_once(self);
+    grx_set_current_context(self->context);
     if (mp_obj_is_true(fill)) {
         if (_r > 0) {
             grx_draw_filled_rounded_box(_x1, _y1, _x2, _y2, _r, _color);
@@ -177,11 +189,11 @@ STATIC mp_obj_t ev3dev_Screen_draw_box(size_t n_args, const mp_obj_t *pos_args, 
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Screen_draw_box_obj, 0, ev3dev_Screen_draw_box);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_box_obj, 0, ev3dev_Image_draw_box);
 
-STATIC mp_obj_t ev3dev_Screen_draw_circle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t ev3dev_Image_draw_circle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        ev3dev_Screen_obj_t, self,
+        ev3dev_Image_obj_t, self,
         PB_ARG_REQUIRED(x),
         PB_ARG_REQUIRED(y),
         PB_ARG_DEFAULT_INT(r, 0),
@@ -189,13 +201,13 @@ STATIC mp_obj_t ev3dev_Screen_draw_circle(size_t n_args, const mp_obj_t *pos_arg
         PB_ARG_DEFAULT_ENUM(color, pb_const_black)
     );
 
-    (void)self; // unused
     mp_int_t _x = mp_obj_get_int(x);
     mp_int_t _y = mp_obj_get_int(y);
     mp_int_t _r = mp_obj_get_int(r);
     GrxColor _color = map_color(color);
 
-    clear_once();
+    clear_once(self);
+    grx_set_current_context(self->context);
     if (mp_obj_is_true(fill)) {
         grx_draw_filled_circle(_x, _y, _r, _color);
     }
@@ -205,11 +217,11 @@ STATIC mp_obj_t ev3dev_Screen_draw_circle(size_t n_args, const mp_obj_t *pos_arg
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Screen_draw_circle_obj, 0, ev3dev_Screen_draw_circle);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_circle_obj, 0, ev3dev_Image_draw_circle);
 
-STATIC mp_obj_t ev3dev_Screen_draw_text(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t ev3dev_Image_draw_text(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        ev3dev_Screen_obj_t, self,
+        ev3dev_Image_obj_t, self,
         PB_ARG_REQUIRED(x),
         PB_ARG_REQUIRED(y),
         PB_ARG_REQUIRED(text),
@@ -221,26 +233,27 @@ STATIC mp_obj_t ev3dev_Screen_draw_text(size_t n_args, const mp_obj_t *pos_args,
     const char *_text = mp_obj_str_get_str(text);
     GrxColor _color = map_color(color);
 
-    clear_once();
+    clear_once(self);
+    grx_set_current_context(self->context);
     grx_text_options_set_fg_color(self->text_options, _color);
     grx_draw_text(_text, _x, _y, self->text_options);
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Screen_draw_text_obj, 0, ev3dev_Screen_draw_text);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_text_obj, 0, ev3dev_Image_draw_text);
 
-STATIC mp_obj_t ev3dev_Screen_set_font(mp_obj_t self_in, mp_obj_t font_in) {
-    ev3dev_Screen_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_obj_t ev3dev_Image_set_font(mp_obj_t self_in, mp_obj_t font_in) {
+    ev3dev_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
     GrxFont *font = pb_ev3dev_Font_obj_get_font(font_in);
 
-    self->text_options = grx_text_options_new(font, GRX_COLOR_BLACK);
+    grx_text_options_set_font(self->text_options, font);
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Screen_set_font_obj, ev3dev_Screen_set_font);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Image_set_font_obj, ev3dev_Image_set_font);
 
 // copy of mp_builtin_print modified to print to vstr
-STATIC mp_obj_t ev3dev_Screen_print(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t ev3dev_Image_print(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     enum { ARG_sep, ARG_end };
     static const mp_arg_t allowed_args[] = {
         { MP_QSTR_sep, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_rom_obj = MP_ROM_QSTR(MP_QSTR__space_)} },
@@ -254,7 +267,7 @@ STATIC mp_obj_t ev3dev_Screen_print(size_t n_args, const mp_obj_t *pos_args, mp_
     } u;
     mp_arg_parse_all(0, NULL, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, u.args);
 
-    ev3dev_Screen_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+    ev3dev_Image_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     // extract the objects first because we are going to use the other part of the union
     mp_obj_t sep = u.args[ARG_sep].u_obj;
@@ -274,7 +287,8 @@ STATIC mp_obj_t ev3dev_Screen_print(size_t n_args, const mp_obj_t *pos_args, mp_
     }
     mp_print_strn(&print, end_data, u.len[1], 0, 0, 0);
 
-
+    clear_once(self);
+    grx_set_current_context(self->context);
     GrxFont *font = grx_text_options_get_font(self->text_options);
     gint font_height = grx_font_get_height(font);
     gchar **lines = g_strsplit(vstr_null_terminated_str(&vstr), "\n", -1);
@@ -308,25 +322,26 @@ STATIC mp_obj_t ev3dev_Screen_print(size_t n_args, const mp_obj_t *pos_args, mp_
 
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Screen_print_obj, 0, ev3dev_Screen_print);
+MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_print_obj, 0, ev3dev_Image_print);
 
-STATIC const mp_rom_map_elem_t ev3dev_Screen_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_clear),       MP_ROM_PTR(&ev3dev_Screen_clear_obj)                    },
-    { MP_ROM_QSTR(MP_QSTR_draw_pixel),  MP_ROM_PTR(&ev3dev_Screen_draw_pixel_obj)               },
-    { MP_ROM_QSTR(MP_QSTR_draw_line),   MP_ROM_PTR(&ev3dev_Screen_draw_line_obj)                },
-    { MP_ROM_QSTR(MP_QSTR_draw_box),    MP_ROM_PTR(&ev3dev_Screen_draw_box_obj)                 },
-    { MP_ROM_QSTR(MP_QSTR_draw_circle), MP_ROM_PTR(&ev3dev_Screen_draw_circle_obj)              },
-    { MP_ROM_QSTR(MP_QSTR_draw_text),   MP_ROM_PTR(&ev3dev_Screen_draw_text_obj)                },
-    { MP_ROM_QSTR(MP_QSTR_set_font),    MP_ROM_PTR(&ev3dev_Screen_set_font_obj)                 },
-    { MP_ROM_QSTR(MP_QSTR_print),       MP_ROM_PTR(&ev3dev_Screen_print_obj)                    },
-    { MP_ROM_QSTR(MP_QSTR_width),       MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Screen_obj_t, width)     },
-    { MP_ROM_QSTR(MP_QSTR_height),      MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Screen_obj_t, height)    },
+STATIC const mp_rom_map_elem_t ev3dev_Image_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR___del__),     MP_ROM_PTR(&ev3dev_Image___del___obj)                  },
+    { MP_ROM_QSTR(MP_QSTR_clear),       MP_ROM_PTR(&ev3dev_Image_clear_obj)                    },
+    { MP_ROM_QSTR(MP_QSTR_draw_pixel),  MP_ROM_PTR(&ev3dev_Image_draw_pixel_obj)               },
+    { MP_ROM_QSTR(MP_QSTR_draw_line),   MP_ROM_PTR(&ev3dev_Image_draw_line_obj)                },
+    { MP_ROM_QSTR(MP_QSTR_draw_box),    MP_ROM_PTR(&ev3dev_Image_draw_box_obj)                 },
+    { MP_ROM_QSTR(MP_QSTR_draw_circle), MP_ROM_PTR(&ev3dev_Image_draw_circle_obj)              },
+    { MP_ROM_QSTR(MP_QSTR_draw_text),   MP_ROM_PTR(&ev3dev_Image_draw_text_obj)                },
+    { MP_ROM_QSTR(MP_QSTR_set_font),    MP_ROM_PTR(&ev3dev_Image_set_font_obj)                 },
+    { MP_ROM_QSTR(MP_QSTR_print),       MP_ROM_PTR(&ev3dev_Image_print_obj)                    },
+    { MP_ROM_QSTR(MP_QSTR_width),       MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Image_obj_t, width)     },
+    { MP_ROM_QSTR(MP_QSTR_height),      MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Image_obj_t, height)    },
 };
-STATIC MP_DEFINE_CONST_DICT(ev3dev_Screen_locals_dict, ev3dev_Screen_locals_dict_table);
+STATIC MP_DEFINE_CONST_DICT(ev3dev_Image_locals_dict, ev3dev_Image_locals_dict_table);
 
-const mp_obj_type_t pb_type_ev3dev_Screen = {
+const mp_obj_type_t pb_type_ev3dev_Image = {
     { &mp_type_type },
     .name = MP_QSTR_Screen,
-    .make_new = ev3dev_Screen_make_new,
-    .locals_dict = (mp_obj_dict_t*)&ev3dev_Screen_locals_dict,
+    .make_new = ev3dev_Image_make_new,
+    .locals_dict = (mp_obj_dict_t*)&ev3dev_Image_locals_dict,
 };

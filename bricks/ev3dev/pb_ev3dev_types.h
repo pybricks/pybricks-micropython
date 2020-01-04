@@ -20,8 +20,8 @@ void pb_type_ev3dev_Font_init();
 GrxFont *pb_ev3dev_Font_obj_get_font(mp_const_obj_t obj);
 
 
-// class Screen
+// class Image
 
-const mp_obj_type_t pb_type_ev3dev_Screen;
+const mp_obj_type_t pb_type_ev3dev_Image;
 
 #endif // PYBRICKS_INCLUDED_BRICKS_EV3DEV_TYPES_H

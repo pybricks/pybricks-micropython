@@ -197,7 +197,7 @@ SRC_C += $(SRC_MOD)
 PYBRICKS_SRC_C += \
 	ev3dev_mphal.c \
 	pb_type_ev3dev_font.c \
-	pb_type_ev3dev_screen.c \
+	pb_type_ev3dev_image.c \
 	pbinit.c \
 	pbsmbus.c \
 

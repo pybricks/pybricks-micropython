@@ -2,4 +2,4 @@
 # Copyright (c) 2019 David Lechner
 
 """Pybricks resources module."""
-from resources_c import Font
+from resources_c import Font, Image
