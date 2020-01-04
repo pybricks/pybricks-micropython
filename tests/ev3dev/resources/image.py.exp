@@ -1,2 +1,4 @@
 178
 128
+function takes 2 positional arguments but 1 were given
+Failed to save image: Failed to open '/test.png'

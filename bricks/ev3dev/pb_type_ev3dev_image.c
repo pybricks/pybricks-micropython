@@ -324,6 +324,31 @@ STATIC mp_obj_t ev3dev_Image_print(size_t n_args, const mp_obj_t *pos_args, mp_m
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_print_obj, 0, ev3dev_Image_print);
 
+STATIC mp_obj_t ev3dev_Image_save(mp_obj_t self_in, mp_obj_t filename_in) {
+    ev3dev_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    const char *filename = mp_obj_str_get_str(filename_in);
+
+    // add file extension if missing
+    char *filename_ext = NULL;
+    if (!g_str_has_suffix(filename, ".png") && !g_str_has_suffix(filename, ".PNG")) {
+        filename_ext = g_strconcat(filename, ".png", NULL);
+        filename = filename_ext;
+    }
+
+    GError *error = NULL;
+    gboolean ok = grx_context_save_to_png(self->context, filename, &error);
+    g_free(filename_ext);
+    if (!ok) {
+        mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_OSError,
+            "Failed to save image: %s", error->message);
+        g_error_free(error);
+        nlr_raise(ex);
+    }
+
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Image_save_obj, ev3dev_Image_save);
+
 STATIC const mp_rom_map_elem_t ev3dev_Image_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR___del__),     MP_ROM_PTR(&ev3dev_Image___del___obj)                  },
     { MP_ROM_QSTR(MP_QSTR_clear),       MP_ROM_PTR(&ev3dev_Image_clear_obj)                    },
@@ -334,6 +359,7 @@ STATIC const mp_rom_map_elem_t ev3dev_Image_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_draw_text),   MP_ROM_PTR(&ev3dev_Image_draw_text_obj)                },
     { MP_ROM_QSTR(MP_QSTR_set_font),    MP_ROM_PTR(&ev3dev_Image_set_font_obj)                 },
     { MP_ROM_QSTR(MP_QSTR_print),       MP_ROM_PTR(&ev3dev_Image_print_obj)                    },
+    { MP_ROM_QSTR(MP_QSTR_save),        MP_ROM_PTR(&ev3dev_Image_save_obj)                     },
     { MP_ROM_QSTR(MP_QSTR_width),       MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Image_obj_t, width)     },
     { MP_ROM_QSTR(MP_QSTR_height),      MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Image_obj_t, height)    },
 };

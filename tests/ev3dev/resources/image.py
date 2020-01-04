@@ -1,3 +1,4 @@
+import uos
 
 from pybricks.parameters import Color
 from pybricks.resources import Font, Image
@@ -127,3 +128,34 @@ img.print('', end='\n')
 # keyword-only arg sep
 img.print(sep=' ')
 img.print('', sep=' ')
+
+
+# Test save()
+
+# one required argument
+try:
+    img.save()
+except TypeError as ex:
+    print(ex)
+
+# actually creates file on disk
+img.save('test.png')
+uos.stat('test.png')
+uos.remove('test.png')
+
+# automatically adds file extension if missing
+img.save('test')
+uos.stat('test.png')
+uos.remove('test.png')
+
+# upper-case is OK too
+img.save('TEST.PNG')
+uos.stat('TEST.PNG')
+uos.remove('TEST.PNG')
+
+# illegal name or permissions issue gives OSError
+try:
+    # this should fail because we are not root
+    img.save('/test.png')
+except OSError as ex:
+    print(ex)
