@@ -47,7 +47,7 @@ static gboolean mem_setmode(GrxVideoMode *mp, int noclear)
 }
 
 static GrxVideoModeExt ext = {
-    .mode   = GRX_FRAME_MODE_RAM_32BPP_LOW,
+    .mode   = GRX_FRAME_MODE_LFB_32BPP_LOW,
     .frame  = framebuffer,
     .cprec  = { 8, 8, 8 },
     .cpos   = { 0, 8, 16 },
