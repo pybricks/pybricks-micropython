@@ -25,7 +25,7 @@ typedef struct _ev3dev_Font_obj_t {
     mp_obj_t height;
 } ev3dev_Font_obj_t;
 
-STATIC ev3dev_Font_obj_t ev3dev_font_DEFAULT;
+const ev3dev_Font_obj_t pb_const_ev3dev_Font_DEFAULT_obj;
 
 STATIC void ev3dev_Font_init(ev3dev_Font_obj_t *self, GrxFont *font) {
     self->base.type = &pb_type_ev3dev_Font;
@@ -42,6 +42,11 @@ STATIC void ev3dev_Font_init(ev3dev_Font_obj_t *self, GrxFont *font) {
 // This must be called from module.__init__() of module that includes this type
 // otherwise we will crash when trying to access attributes!
 void pb_type_ev3dev_Font_init() {
+    if (pb_const_ev3dev_Font_DEFAULT_obj.font) {
+        // already intialized
+        return;
+    }
+
     GError *error = NULL;
     GrxFont *font = grx_font_load("Lucida", 12, &error);
     if (!font) {
@@ -50,7 +55,7 @@ void pb_type_ev3dev_Font_init() {
         g_error_free(error);
         nlr_raise(ex);
     }
-    ev3dev_Font_init(&ev3dev_font_DEFAULT, font);
+    ev3dev_Font_init((ev3dev_Font_obj_t *)&pb_const_ev3dev_Font_DEFAULT_obj, font);
 }
 
 STATIC mp_obj_t ev3dev_Font_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
@@ -129,7 +134,7 @@ STATIC mp_obj_t ev3dev_Font_text_height(mp_obj_t self_in, mp_obj_t text_in) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Font_text_height_obj, ev3dev_Font_text_height);
 
 STATIC const mp_rom_map_elem_t ev3dev_Font_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_DEFAULT), MP_ROM_PTR(&ev3dev_font_DEFAULT) },
+    { MP_ROM_QSTR(MP_QSTR_DEFAULT), MP_ROM_PTR(&pb_const_ev3dev_Font_DEFAULT_obj) },
     { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&ev3dev_Font___del___obj) },
     { MP_ROM_QSTR(MP_QSTR_family), MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Font_obj_t, family) },
     { MP_ROM_QSTR(MP_QSTR_style), MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Font_obj_t, style) },
@@ -146,3 +151,11 @@ const mp_obj_type_t pb_type_ev3dev_Font = {
     .make_new = ev3dev_Font_make_new,
     .locals_dict = (mp_obj_dict_t*)&ev3dev_Font_locals_dict,
 };
+
+GrxFont *pb_ev3dev_Font_obj_get_font(mp_const_obj_t obj) {
+    if (!mp_obj_is_type(obj, &pb_type_ev3dev_Font)) {
+        mp_raise_TypeError("Requires Font object");
+    }
+    ev3dev_Font_obj_t *self = MP_OBJ_TO_PTR(obj);
+    return self->font;
+}
