@@ -1,4 +1,6 @@
-178
-128
+Requires one argument
+'bad.png' is not a .png file
+160
+120
 function takes 2 positional arguments but 1 were given
 Failed to save image: Failed to open '/test.png'

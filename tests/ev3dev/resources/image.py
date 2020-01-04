@@ -3,9 +3,29 @@ import uos
 from pybricks.parameters import Color
 from pybricks.resources import Font, Image
 
-img = Image()
+# Working directory is top-level tests directory
+TEST_IMAGE = '../ports/pybricks/tests/ev3dev/resources/test.png'
 
-# Test contants
+# requires one argument
+try:
+    Image()
+except TypeError as ex:
+    print(ex)
+
+# if argument is string, load from file
+img = Image(TEST_IMAGE)
+
+# error if file does not exist
+try:
+    img = Image('bad.png')
+except OSError as ex:
+    print(ex)
+
+# omitting file extension is OK
+img = Image(TEST_IMAGE[:-4])
+
+
+# Test properties
 
 print(img.width)
 print(img.height)

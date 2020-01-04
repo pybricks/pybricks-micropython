@@ -64,11 +64,60 @@ STATIC GrxColor map_color(mp_obj_t *obj) {
 }
 
 STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    if (n_args < 1) {
+        mp_raise_TypeError("Requires one argument");
+    }
+
+    GrxContext *context = NULL;
+
+    if (mp_obj_is_qstr(args[0]) && MP_OBJ_QSTR_VALUE(args[0]) == MP_QSTR__screen_) {
+        // special case '_screen_' creates image that draws directly to screen
+        context = grx_context_ref(grx_get_screen_context());
+    }
+    else if (mp_obj_is_str(args[0])) {
+        const char *filename = mp_obj_str_get_str(args[0]);
+
+        // add file extension if missing
+        char *filename_ext = NULL;
+        if (!g_str_has_suffix(filename, ".png") && !g_str_has_suffix(filename, ".PNG")) {
+            filename_ext = g_strconcat(filename, ".png", NULL);
+            filename = filename_ext;
+        }
+
+        gint w, h;
+        if (!grx_query_png_file(filename, &w, &h)) {
+            mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_OSError,
+                "'%s' is not a .png file", filename);
+            g_free(filename_ext);
+            nlr_raise(ex);
+        }
+
+        context = grx_context_new(w, h, NULL, NULL);
+        if (!context) {
+            g_free(filename_ext);
+            mp_raise_msg(&mp_type_RuntimeError, "failed to allocate context for image");
+        }
+
+        GError *error = NULL;
+        if (!grx_context_load_from_png(context, filename, FALSE, &error)) {
+            mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_OSError,
+                "Failed to load '%s': %s", filename, error->message);
+            g_free(filename_ext);
+            g_error_free(error);
+            nlr_raise(ex);
+        }
+
+        g_free(filename_ext);
+    }
+
+    if (!context) {
+        mp_raise_TypeError("Argument must be str");
+    }
+
     ev3dev_Image_obj_t *self = m_new_obj_with_finaliser(ev3dev_Image_obj_t);
 
     self->base.type = &pb_type_ev3dev_Image;
-    // TODO: allow other context types based on args
-    self->context = grx_context_ref(grx_get_screen_context());
+    self->context = context;
     self->width = mp_obj_new_int(grx_context_get_width(self->context));
     self->height = mp_obj_new_int(grx_context_get_height(self->context));
 

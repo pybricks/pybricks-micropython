@@ -32,7 +32,8 @@ STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
     hubs_EV3Brick_obj_t *self = m_new_obj(hubs_EV3Brick_obj_t);
     self->base.type = (mp_obj_type_t*) type;
 
-    self->screen = pb_type_ev3dev_Image.make_new(&pb_type_ev3dev_Image, 0, 0, NULL);
+    mp_obj_t screen_args[] = { MP_ROM_QSTR(MP_QSTR__screen_) };
+    self->screen = pb_type_ev3dev_Image.make_new(&pb_type_ev3dev_Image, 1, 0, screen_args);
     self->speaker = builtins_Speaker_obj_make_new(100);
 
     // Create an instance of the Light class, representing the brick status light
