@@ -36,6 +36,10 @@ typedef struct _ev3dev_Image_obj_t {
 
 // map Pybricks color enum to GRX color value using standard web CSS values
 STATIC GrxColor map_color(mp_obj_t *obj) {
+    if (obj == mp_const_none) {
+        return GRX_COLOR_NONE;
+    }
+
     pbio_light_color_t color = pb_type_enum_get_value(obj, &pb_enum_type_Color);
 
     switch (color) {
@@ -294,6 +298,36 @@ STATIC mp_obj_t ev3dev_Image_draw_circle(size_t n_args, const mp_obj_t *pos_args
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_circle_obj, 0, ev3dev_Image_draw_circle);
 
+STATIC mp_obj_t ev3dev_Image_draw_image(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    enum { ARG_x, ARG_y, ARG_image, ARG_color };
+    static const mp_arg_t allowed_args[] = {
+        { MP_QSTR_x, MP_ARG_REQUIRED | MP_ARG_INT },
+        { MP_QSTR_y, MP_ARG_REQUIRED | MP_ARG_INT },
+        { MP_QSTR_image, MP_ARG_REQUIRED | MP_ARG_OBJ },
+        { MP_QSTR_color, MP_ARG_OBJ, {.u_rom_obj = mp_const_none} },
+    };
+    mp_arg_val_t arg_vals[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all(n_args - 1, pos_args + 1, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, arg_vals);
+
+    ev3dev_Image_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
+    mp_int_t x = arg_vals[ARG_x].u_int;
+    mp_int_t y = arg_vals[ARG_y].u_int;
+    if (!mp_obj_is_type(arg_vals[ARG_image].u_obj, &pb_type_ev3dev_Image)) {
+        mp_raise_TypeError("Image object is required");
+    }
+    ev3dev_Image_obj_t *image = MP_OBJ_TO_PTR(arg_vals[ARG_image].u_obj);
+    GrxColor color = map_color(arg_vals[ARG_color].u_obj);
+
+    clear_once(self);
+    grx_context_bit_blt(self->context, x, y, image->context, 0, 0,
+        grx_context_get_max_x(image->context), grx_context_get_max_y(image->context),
+        color == GRX_COLOR_NONE ? GRX_COLOR_MODE_WRITE : grx_color_to_image_mode(color));
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_image_obj, 1, ev3dev_Image_draw_image);
+
 STATIC mp_obj_t ev3dev_Image_draw_text(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Image_obj_t, self,
@@ -431,6 +465,7 @@ STATIC const mp_rom_map_elem_t ev3dev_Image_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_draw_line),   MP_ROM_PTR(&ev3dev_Image_draw_line_obj)                },
     { MP_ROM_QSTR(MP_QSTR_draw_box),    MP_ROM_PTR(&ev3dev_Image_draw_box_obj)                 },
     { MP_ROM_QSTR(MP_QSTR_draw_circle), MP_ROM_PTR(&ev3dev_Image_draw_circle_obj)              },
+    { MP_ROM_QSTR(MP_QSTR_draw_image),  MP_ROM_PTR(&ev3dev_Image_draw_image_obj)               },
     { MP_ROM_QSTR(MP_QSTR_draw_text),   MP_ROM_PTR(&ev3dev_Image_draw_text_obj)                },
     { MP_ROM_QSTR(MP_QSTR_set_font),    MP_ROM_PTR(&ev3dev_Image_set_font_obj)                 },
     { MP_ROM_QSTR(MP_QSTR_print),       MP_ROM_PTR(&ev3dev_Image_print_obj)                    },

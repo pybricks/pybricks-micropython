@@ -114,6 +114,23 @@ img.draw_circle(0, 0, 0, False, Color.BLACK)
 img.draw_circle(0, 0, 0, color=Color.BLACK)
 
 
+# Test draw_image()
+
+# three required arguments
+img.draw_image(0, 0, img)
+img.draw_image(x=0, y=0, image=img)
+try:
+    img.draw_image(0, 0)
+except TypeError:
+    pass
+
+# 4th argument is kwarg and can be Color or None
+img.draw_image(0, 0, img, None)
+img.draw_image(0, 0, img, Color.WHITE)
+img.draw_image(0, 0, img, color=None)
+img.draw_image(0, 0, img, color=Color.WHITE)
+
+
 # Test draw_text()
 
 # three required arguments
