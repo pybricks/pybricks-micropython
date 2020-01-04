@@ -196,6 +196,7 @@ SRC_C += $(SRC_MOD)
 # Pybricks port core source files
 PYBRICKS_SRC_C += \
 	ev3dev_mphal.c \
+	pb_type_ev3dev_font.c \
 	pb_type_ev3dev_screen.c \
 	pbinit.c \
 	pbsmbus.c \
@@ -208,20 +209,21 @@ LIB_SRC_C = $(addprefix lib/,\
 
 # Pybricks drivers and modules
 PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
-	modmotor.c \
-	modlight.c \
-	pblight.c \
 	modbattery.c \
-	modhubs.c \
-	modev3devices.c \
-	modcustomdevices.c \
 	modbuiltins.c \
-	modnxtdevices.c \
 	modbuttons.c \
-	modtools.c \
+	modcustomdevices.c \
+	modev3devices.c \
+	modhubs.c \
+	modlight.c \
 	modlogger.c \
+	modmotor.c \
+	modnxtdevices.c \
 	modparameters.c \
+	modresources.c \
 	modrobotics.c \
+	modtools.c \
+	pblight.c \
 	)
 
 PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/py/,\
@@ -309,6 +311,7 @@ include $(TOP)/py/mkrules.mk
 EV3DEV_TEST_DIRS = $(addprefix ../ports/pybricks/tests/ev3dev/, \
 	brick \
 	motor \
+	resources \
 	uev3dev \
 	v1 \
 	)
