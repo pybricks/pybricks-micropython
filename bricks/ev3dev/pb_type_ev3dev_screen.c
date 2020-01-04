@@ -319,8 +319,8 @@ STATIC const mp_rom_map_elem_t ev3dev_Screen_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_draw_text),   MP_ROM_PTR(&ev3dev_Screen_draw_text_obj)                },
     { MP_ROM_QSTR(MP_QSTR_set_font),    MP_ROM_PTR(&ev3dev_Screen_set_font_obj)                 },
     { MP_ROM_QSTR(MP_QSTR_print),       MP_ROM_PTR(&ev3dev_Screen_print_obj)                    },
-    { MP_ROM_QSTR(MP_QSTR_WIDTH),       MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Screen_obj_t, width)     },
-    { MP_ROM_QSTR(MP_QSTR_HEIGHT),      MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Screen_obj_t, height)    },
+    { MP_ROM_QSTR(MP_QSTR_width),       MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Screen_obj_t, width)     },
+    { MP_ROM_QSTR(MP_QSTR_height),      MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Screen_obj_t, height)    },
 };
 STATIC MP_DEFINE_CONST_DICT(ev3dev_Screen_locals_dict, ev3dev_Screen_locals_dict_table);
 
