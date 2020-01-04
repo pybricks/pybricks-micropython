@@ -27,6 +27,9 @@ img = Image(TEST_IMAGE[:-4])
 # if argument is Image, a copy is created
 img = Image(img)
 
+# if argument is Image and sub=True, a sub-image is created
+sub = Image(img, sub=True, x1=10, y1=10, x2=20, y2=20)
+print(sub.width, sub.height)
 
 # Test properties
 

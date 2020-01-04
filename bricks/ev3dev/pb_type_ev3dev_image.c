@@ -68,6 +68,18 @@ STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, 
         mp_raise_TypeError("Requires one argument");
     }
 
+    enum { ARG_sub, ARG_x1, ARG_y1, ARG_x2, ARG_y2 };
+    static const mp_arg_t allowed_args[] = {
+        { MP_QSTR_sub, MP_ARG_BOOL | MP_ARG_KW_ONLY, {.u_bool = FALSE} },
+        { MP_QSTR_x1, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int = 0} },
+        { MP_QSTR_y1, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int = 0} },
+        { MP_QSTR_x2, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int = 0} },
+        { MP_QSTR_y2, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int = 0} },
+    };
+
+    mp_arg_val_t arg_vals[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all_kw_array(n_args - 1, n_kw, &args[1], MP_ARRAY_SIZE(allowed_args), allowed_args, arg_vals);
+
     GrxContext *context = NULL;
 
     if (mp_obj_is_qstr(args[0]) && MP_OBJ_QSTR_VALUE(args[0]) == MP_QSTR__screen_) {
@@ -111,8 +123,17 @@ STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, 
     }
     else if (mp_obj_is_type(args[0], &pb_type_ev3dev_Image)) {
         ev3dev_Image_obj_t *image = MP_OBJ_TO_PTR(args[0]);
-        grx_set_current_context(image->context);
-        context = grx_save_current_context(NULL);
+        if (arg_vals[ARG_sub].u_bool) {
+            context = grx_context_new_subcontext(arg_vals[ARG_x1].u_int, arg_vals[ARG_y1].u_int,
+                arg_vals[ARG_x2].u_int, arg_vals[ARG_y2].u_int, image->context, NULL);
+        }
+        else {
+            gint w = grx_context_get_width(image->context);
+            gint h = grx_context_get_height(image->context);
+            context = grx_context_new(w, h, NULL, NULL);
+            grx_context_bit_blt(context, 0, 0, image->context, 0, 0,
+                w - 1, h - 1, GRX_COLOR_MODE_WRITE);
+        }
     }
 
     if (!context) {
