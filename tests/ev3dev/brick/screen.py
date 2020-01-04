@@ -7,8 +7,8 @@ ev3 = EV3Brick()
 
 # Test contants
 
-print(ev3.screen.WIDTH)
-print(ev3.screen.HEIGHT)
+print(ev3.screen.width)
+print(ev3.screen.height)
 
 
 # Test clear()
