@@ -11,7 +11,7 @@
 #define PYBRICKS_HUB_CPLUSHUB           (1)
 
 // Pybricks modules
-#define PYBRICKS_PY_ADVANCED            (1)
+#define PYBRICKS_PY_IODEVICES           (1)
 #define PYBRICKS_PY_PARAMETERS          (1)
 #define PYBRICKS_PY_PUPDEVICES          (1)
 #define PYBRICKS_PY_TOOLS               (1)

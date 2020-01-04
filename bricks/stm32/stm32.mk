@@ -132,19 +132,19 @@ endif
 
 # Pybricks modules
 PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
-	modadvanced.c \
 	modbattery.c \
 	moddebug.c \
-	modlight.c \
-	pblight.c \
-	modmotor.c \
 	modhubs.c \
+	modiodevices.c \
+	modlight.c \
+	modlogger.c \
+	modmotor.c \
 	modparameters.c \
 	modpupdevices.c \
-	modtools.c \
-	modlogger.c \
 	modrobotics.c \
+	modtools.c \
 	pbhub.c \
+	pblight.c \
 	)
 
 PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/py/,\

@@ -104,10 +104,10 @@ extern const struct _mp_obj_module_t pb_module_hubs;
 #define _PYBRICKS_MODULE_HUBS \
     { MP_OBJ_NEW_QSTR(MP_QSTR_hubs), (mp_obj_t)&pb_module_hubs},
 
-#if PYBRICKS_PY_ADVANCED
-extern const struct _mp_obj_module_t pb_module_advanced;
+#if PYBRICKS_PY_IODEVICES
+extern const struct _mp_obj_module_t pb_module_iodevices;
 #define _PYBRICKS_MODULE_ADVANCED \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_advanced), (mp_obj_t)&pb_module_advanced },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_iodevices), (mp_obj_t)&pb_module_iodevices },
 #else
 #define _PYBRICKS_MODULE_ADVANCED
 #endif

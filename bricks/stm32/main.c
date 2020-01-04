@@ -299,8 +299,8 @@ static void pb_imports() {
     PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_hubs);
 
     // Import other modules if enabled
-    #if PYBRICKS_PY_ADVANCED
-    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_advanced);
+    #if PYBRICKS_PY_IODEVICES
+    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_iodevices);
     #endif
     #if PYBRICKS_PY_PUPDEVICES
     PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_devices);

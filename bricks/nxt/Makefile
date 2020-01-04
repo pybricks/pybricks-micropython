@@ -111,7 +111,6 @@ SRC_S_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
 
 # Pybricks modules
 PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
-	modadvanced.c \
 	modbattery.c \
 	modlogger.c \
 	modmotor.c \

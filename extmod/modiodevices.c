@@ -16,11 +16,13 @@
 #include "modmotor.h"
 #include "modparameters.h"
 
-#include "pbsmbus.h"
-
 #include <pbio/iodev.h>
 #include <pbio/serial.h>
 #include <pberror.h>
+
+#if PYBRICKS_PY_EV3DEVICES
+
+#include "pbsmbus.h"
 
 #define UART_MAX_LEN (32*1024)
 
@@ -416,16 +418,20 @@ STATIC const mp_obj_type_t iodevices_UARTDevice_type = {
     .locals_dict = (mp_obj_dict_t*)&iodevices_UARTDevice_locals_dict,
 };
 
+#endif // PYBRICKS_PY_EV3DEVICES 
+
 // dir(pybricks.iodevices)
 STATIC const mp_rom_map_elem_t iodevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_iodevices)              },
+#if PYBRICKS_PY_EV3DEVICES
     { MP_ROM_QSTR(MP_QSTR_AnalogSensor),     MP_ROM_PTR(&iodevices_AnalogSensor_type)    },
     { MP_ROM_QSTR(MP_QSTR_I2CDevice),        MP_ROM_PTR(&iodevices_I2CDevice_type   )    },
     { MP_ROM_QSTR(MP_QSTR_UARTDevice),       MP_ROM_PTR(&iodevices_UARTDevice_type  )    },
-    { MP_ROM_QSTR(MP_QSTR_DCMotor),          MP_ROM_PTR(&motor_DCMotor_type)                 },
+    { MP_ROM_QSTR(MP_QSTR_DCMotor),          MP_ROM_PTR(&motor_DCMotor_type)             },
+#endif // PYBRICKS_PY_EV3DEVICES 
 };
-
 STATIC MP_DEFINE_CONST_DICT(pb_module_iodevices_globals, iodevices_globals_table);
+
 const mp_obj_module_t pb_module_iodevices = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t*)&pb_module_iodevices_globals,
