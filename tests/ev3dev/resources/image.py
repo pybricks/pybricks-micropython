@@ -24,6 +24,9 @@ except OSError as ex:
 # omitting file extension is OK
 img = Image(TEST_IMAGE[:-4])
 
+# if argument is Image, a copy is created
+img = Image(img)
+
 
 # Test properties
 

@@ -109,9 +109,14 @@ STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, 
 
         g_free(filename_ext);
     }
+    else if (mp_obj_is_type(args[0], &pb_type_ev3dev_Image)) {
+        ev3dev_Image_obj_t *image = MP_OBJ_TO_PTR(args[0]);
+        grx_set_current_context(image->context);
+        context = grx_save_current_context(NULL);
+    }
 
     if (!context) {
-        mp_raise_TypeError("Argument must be str");
+        mp_raise_TypeError("Argument must be str or Image");
     }
 
     ev3dev_Image_obj_t *self = m_new_obj_with_finaliser(ev3dev_Image_obj_t);
