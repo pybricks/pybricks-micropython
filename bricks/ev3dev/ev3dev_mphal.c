@@ -164,9 +164,17 @@ int mp_hal_stdin_rx_chr(void) {
         GPollFD fd = { .fd = STDIN_FILENO, .events = G_IO_IN };
         g_main_context_add_poll(g_main_context_get_thread_default(), &fd, G_PRIORITY_DEFAULT);
 
-        do {
-            MICROPY_EVENT_POLL_HOOK
-        } while (!fd.revents);
+        nlr_buf_t nlr;
+        if (nlr_push(&nlr) == 0) {
+            do {
+                MICROPY_EVENT_POLL_HOOK
+            } while (!fd.revents);
+            nlr_pop();
+        }
+        else {
+            g_main_context_remove_poll(g_main_context_get_thread_default(), &fd);
+            nlr_jump(nlr.ret_val);
+        }
 
         g_main_context_remove_poll(g_main_context_get_thread_default(), &fd);
 
@@ -217,8 +225,20 @@ static gboolean end_delay_ms(gpointer user_data) {
 
 void mp_hal_delay_ms(mp_uint_t ms) {
     gboolean done = FALSE;
-    g_timeout_add(ms, end_delay_ms, &done);
-    do {
-        MICROPY_EVENT_POLL_HOOK
-    } while (!done);
+    GSource *source = g_timeout_source_new(ms);
+    g_source_set_callback(source, end_delay_ms, &done, NULL);
+    g_source_attach(source, g_main_context_get_thread_default());
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        do {
+            MICROPY_EVENT_POLL_HOOK
+        } while (!done);
+        nlr_pop();
+    }
+    else {
+        g_source_destroy(source);
+        g_source_unref(source);
+        nlr_jump(nlr.ret_val);
+    }
+    g_source_unref(source);
 }

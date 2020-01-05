@@ -14,7 +14,6 @@
 
 #include "modlogger.h"
 
-#include "pbthread.h"
 #include "pberror.h"
 #include "pbobj.h"
 #include "pbkwarg.h"
@@ -32,14 +31,7 @@ STATIC mp_obj_t tools_Logger_start(size_t n_args, const mp_obj_t *pos_args, mp_m
     );
 
     mp_int_t duration_arg = pb_obj_get_int(duration);
-
-    pbio_error_t err;
-
-    pb_thread_enter();
-    err = pbio_logger_start(self->log, duration_arg);
-    pb_thread_exit();
-
-    pb_assert(err);
+    pb_assert(pbio_logger_start(self->log, duration_arg));
 
     return mp_const_none;
 }
@@ -57,15 +49,9 @@ STATIC mp_obj_t tools_Logger_get(size_t n_args, const mp_obj_t *pos_args, mp_map
     mp_obj_t ret[MAX_LOG_VALUES];
     int32_t data[MAX_LOG_VALUES];
 
-    uint8_t num_values;
-    pbio_error_t err;
-
     // Get data for this sample
-    pb_thread_enter();
-    err = pbio_logger_read(self->log, index_val, data);
-    num_values = self->log->num_values;
-    pb_thread_exit();
-    pb_assert(err);
+    pb_assert(pbio_logger_read(self->log, index_val, data));
+    uint8_t num_values = self->log->num_values;
 
     // Convert data to user objects
     for (uint8_t i = 0; i < self->log->num_values; i++) {
@@ -78,13 +64,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_get_obj, 0, tools_Logger_get);
 STATIC mp_obj_t tools_Logger_stop(mp_obj_t self_in) {
     tools_Logger_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    pbio_error_t err;
-
-    pb_thread_enter();
-    err = pbio_logger_stop(self->log);
-    pb_thread_exit();
-
-    pb_assert(err);
+    pb_assert(pbio_logger_stop(self->log));
 
     return mp_const_none;
 }
@@ -145,15 +125,11 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     // Read log size information
     int32_t data[MAX_LOG_VALUES];
 
-    pbio_error_t err;
+    pb_assert(pbio_logger_stop(self->log));
 
-    pb_thread_enter();
-    err = pbio_logger_stop(self->log);
     uint8_t num_values = self->log->num_values;
     int32_t samples =  self->log->sampled;
-    pb_thread_exit();
-
-    pb_assert(err);
+    pbio_error_t err;
 
     // Allocate space for one null-terminated row of data
     char row_str[max_val_strln*MAX_LOG_VALUES+1];
@@ -162,10 +138,7 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     for (int32_t i = 0; i < samples; i++) {
 
         // Read one line inside lock
-        pb_thread_enter();
         err = pbio_logger_read(self->log, i, data);
-        pb_thread_exit();
-
         if (err != PBIO_SUCCESS) {
             break;
         }
@@ -201,10 +174,7 @@ STATIC mp_obj_t tools_Logger_unary_op(mp_unary_op_t op, mp_obj_t self_in) {
     tools_Logger_obj_t *self = MP_OBJ_TO_PTR(self_in);
     switch (op) {
         case MP_UNARY_OP_LEN:
-            pb_thread_enter();
-            uint32_t len = self->log->sampled;
-            pb_thread_exit();
-            return MP_OBJ_NEW_SMALL_INT(len);
+            return MP_OBJ_NEW_SMALL_INT(self->log->sampled);
         default:
             return MP_OBJ_NULL;
     }

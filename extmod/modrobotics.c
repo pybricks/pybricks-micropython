@@ -15,7 +15,6 @@
 #include "pbkwarg.h"
 #include "modmotor.h"
 #include "modlogger.h"
-#include "pbthread.h"
 
 #if PYBRICKS_PY_ROBOTICS
 
@@ -45,7 +44,7 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     if (!MP_OBJ_IS_TYPE(left_motor, &motor_Motor_type) || !MP_OBJ_IS_TYPE(right_motor, &motor_Motor_type)) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
-    
+
     // Pointer to the Python (not pbio) Motor objects
     self->left = MP_OBJ_TO_PTR(left_motor);
     self->right = MP_OBJ_TO_PTR(right_motor);
@@ -55,10 +54,7 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     fix16_t axle_track_val = pb_obj_get_fix16(axle_track);
 
     // Create drivebase
-    pb_thread_enter();
-    pbio_error_t err = pbio_drivebase_get(&self->db, self->left->srv, self->right->srv, wheel_diameter_val, axle_track_val);
-    pb_thread_exit();
-    pb_assert(err);
+    pb_assert(pbio_drivebase_get(&self->db, self->left->srv, self->right->srv, wheel_diameter_val, axle_track_val));
 
     // Create an instance of the Logger class
     self->logger = logger_obj_make_new(&self->db->log);
@@ -78,18 +74,14 @@ STATIC mp_obj_t robotics_DriveBase_start(size_t n_args, const mp_obj_t *pos_args
     int32_t speed_val = pb_obj_get_int(speed);
     int32_t turn_rate_val = pb_obj_get_int(turn_rate);
 
-    pbio_error_t err;
-    pb_thread_enter();    
-    err = pbio_drivebase_start(self->db, speed_val, turn_rate_val);
-    pb_thread_exit();
-    pb_assert(err);
+    pb_assert(pbio_drivebase_start(self->db, speed_val, turn_rate_val));
 
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_start_obj, 0, robotics_DriveBase_start);
 
 // LEGACY METHODS AVAILABLE ON EV3 ONLY
-#if PYBRICKS_PY_EV3DEVICES 
+#if PYBRICKS_PY_EV3DEVICES
 
 // pybricks.robotics.DriveBase.drive (Legacy function for 1.0 API compatibility)
 STATIC mp_obj_t robotics_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -103,11 +95,7 @@ STATIC mp_obj_t robotics_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args
     int32_t speed_val = pb_obj_get_int(speed);
     int32_t turn_rate_val = pb_obj_get_int(steering);
 
-    pbio_error_t err;
-    pb_thread_enter();    
-    err = pbio_drivebase_start(self->db, speed_val, turn_rate_val);
-    pb_thread_exit();
-    pb_assert(err);
+    pb_assert(pbio_drivebase_start(self->db, speed_val, turn_rate_val));
 
     return mp_const_none;
 }
@@ -130,18 +118,9 @@ STATIC mp_obj_t robotics_DriveBase_drive_time(size_t n_args, const mp_obj_t *pos
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
-    pbio_error_t err;
-    pb_thread_enter();    
-    err = pbio_drivebase_start(self->db, speed_val, turn_rate_val);
-    pb_thread_exit();
-    pb_assert(err);
-
+    pb_assert(pbio_drivebase_start(self->db, speed_val, turn_rate_val));
     mp_hal_delay_ms(duration);
-
-    pb_thread_enter();    
-    err = pbio_drivebase_stop(self->db, PBIO_ACTUATION_COAST);
-    pb_thread_exit();
-    pb_assert(err);
+    pb_assert(pbio_drivebase_stop(self->db, PBIO_ACTUATION_COAST));
 
     return mp_const_none;
 }
@@ -157,12 +136,7 @@ STATIC mp_obj_t robotics_DriveBase_stop(size_t n_args, const mp_obj_t *pos_args,
     );
 
     pbio_actuation_t after_stop = mp_obj_get_int(stop_type);
-
-    pbio_error_t err;
-    pb_thread_enter();    
-    err = pbio_drivebase_stop(self->db, after_stop);
-    pb_thread_exit();
-    pb_assert(err);
+    pb_assert(pbio_drivebase_stop(self->db, after_stop));
 
     return mp_const_none;
 }

@@ -25,8 +25,13 @@
 #define MICROPY_MPHALPORT_H "ev3dev_mphal.h"
 #define MICROPY_VM_HOOK_LOOP \
     g_main_context_iteration(g_main_context_get_thread_default(), FALSE);
-#define MICROPY_EVENT_POLL_HOOK \
-    g_main_context_iteration(g_main_context_get_thread_default(), TRUE);
+#define MICROPY_EVENT_POLL_HOOK do { \
+    extern void mp_handle_pending(void); \
+    mp_handle_pending(); \
+    MP_THREAD_GIL_EXIT(); \
+    g_main_context_iteration(g_main_context_get_thread_default(), TRUE); \
+    MP_THREAD_GIL_ENTER(); \
+} while (0);
 
 #define MICROPY_PY_SYS_PATH_DEFAULT (":~/.pybricks-micropython/lib:/usr/lib/pybricks-micropython")
 

@@ -96,7 +96,7 @@ endif
 LDFLAGS = $(LDFLAGS_MOD) $(LDFLAGS_ARCH) -lm $(LDFLAGS_EXTRA)
 
 # Flags to link with pthread library
-LIBPTHREAD = -lpthread
+LDFLAGS += -lpthread
 
 ifeq ($(MICROPY_USE_READLINE),1)
 INC +=  -I$(TOP)/lib/mp-readline
@@ -110,10 +110,6 @@ endif
 ifeq ($(MICROPY_PY_SOCKET),1)
 CFLAGS_MOD += -DMICROPY_PY_SOCKET=1
 SRC_MOD += ports/unix/modusocket.c
-endif
-ifeq ($(MICROPY_PY_THREAD),1)
-CFLAGS_MOD += -DMICROPY_PY_THREAD=1 -DMICROPY_PY_THREAD_GIL=0
-LDFLAGS_MOD += $(LIBPTHREAD)
 endif
 
 ifeq ($(MICROPY_PY_FFI),1)
