@@ -226,7 +226,6 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modresources.c \
 	modrobotics.c \
 	modtools.c \
-	pblight.c \
 	)
 
 PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/py/,\

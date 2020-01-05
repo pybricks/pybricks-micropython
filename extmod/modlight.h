@@ -5,8 +5,6 @@
 #define _PYBRICKS_EXTMOD_MODLIGHT_H_
 
 #include "pbdevice.h"
-#include "pblight.h"
-
 #include "py/obj.h"
 
 const mp_obj_type_t light_Light_type;

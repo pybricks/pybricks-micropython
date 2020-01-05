@@ -53,7 +53,13 @@ STATIC mp_obj_t light_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, mp_
         pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
     }
 
-    pb_color_light_on(self->pbdev, color_id);
+    if (!self->pbdev) {
+        // No external device, so assume command is for the internal light
+        pb_assert(pbio_light_on(PBIO_PORT_SELF, color_id));
+    }
+    else {
+        pbdevice_color_light_on(self->pbdev, color_id);
+    }
 
     return mp_const_none;
 }
@@ -66,8 +72,13 @@ STATIC mp_obj_t light_Light_off(mp_obj_t self_in) {
     light_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // Turn the light off, using the command specific to the device. 
-    pb_color_light_on(self->pbdev, PBIO_LIGHT_COLOR_NONE);
-
+    if (!self->pbdev) {
+        // No external device, so assume command is for the internal light
+        pb_assert(pbio_light_off(PBIO_PORT_SELF));
+    }
+    else {
+        pbdevice_color_light_on(self->pbdev, PBIO_LIGHT_COLOR_NONE);
+    }
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(light_Light_off_obj, light_Light_off);
