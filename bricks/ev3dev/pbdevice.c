@@ -163,3 +163,10 @@ void pbdevice_get_info(pbdevice_t *pbdev,
     *data_type = pbdev->data_type;
     *num_values = pbdev->data_len;
 }
+
+void pbdevice_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color) {
+    switch(pbdev->type_id) {
+        default:
+            pb_assert(PBIO_ERROR_NOT_SUPPORTED);
+    }
+}

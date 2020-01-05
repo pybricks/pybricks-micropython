@@ -120,3 +120,30 @@ void pbdevice_get_info(pbdevice_t *pbdev,
     *data_type = pbdev->iodev.info->mode_info[*mode].data_type;
     *num_values = pbdev->iodev.info->mode_info[*mode].num_values;
 }
+
+void pbdevice_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color) {
+    // Turn on the light through device specific mode
+    uint8_t mode;
+    switch(pbdev->iodev.info->type_id) {
+        case PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR:
+            switch (color) {
+                case PBIO_LIGHT_COLOR_GREEN:
+                    mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX;
+                    break;
+                case PBIO_LIGHT_COLOR_RED:
+                    mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__REFLT;
+                    break;
+                case PBIO_LIGHT_COLOR_BLUE:
+                    mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI;
+                    break;
+                default:
+                    mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__SPEC1;
+                    break;
+            }
+            uint32_t *data;
+            pbdevice_get_values(pbdev, mode, &data);
+            break;
+        default:
+            pb_assert(PBIO_ERROR_NOT_SUPPORTED);
+    }
+}

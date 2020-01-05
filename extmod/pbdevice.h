@@ -8,6 +8,7 @@
 
 #include <pbio/error.h>
 #include <pbio/iodev.h>
+#include <pbio/light.h>
 
 typedef struct _pbdevice_t pbdevice_t;
 
@@ -21,6 +22,8 @@ void pbdevice_get_info(pbdevice_t *pbdev,
                        uint8_t *mode,
                        pbio_iodev_data_type_t *data_type,
                        uint8_t *num_values);
+
+void pbdevice_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color);
 
 // LEGO MINDSTORMS EV3 Touch Sensor
 enum {
