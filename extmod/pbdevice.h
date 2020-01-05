@@ -15,7 +15,12 @@ pbdevice_t *pbdevice_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id)
 
 void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values);
 
-pbio_iodev_type_id_t pbdevice_get_type_id(pbdevice_t *pbdev);
+void pbdevice_get_info(pbdevice_t *pbdev,
+                       pbio_port_t *port,
+                       pbio_iodev_type_id_t *id,
+                       uint8_t *mode,
+                       pbio_iodev_data_type_t *data_type,
+                       uint8_t *num_values);
 
 // LEGO MINDSTORMS EV3 Touch Sensor
 enum {

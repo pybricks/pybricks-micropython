@@ -132,11 +132,6 @@ static pbio_error_t get_values(pbdevice_t *pbdev, uint8_t mode, void *values) {
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t get_type_id(pbdevice_t *pbdev, pbio_iodev_type_id_t *id) {
-    *id = pbdev->type_id;
-    return PBIO_SUCCESS;
-}
-
 pbdevice_t *pbdevice_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id) {
     pbdevice_t *pbdev = NULL;
     pbio_error_t err;
@@ -156,8 +151,15 @@ void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values) {
     pb_assert(err);
 }
 
-pbio_iodev_type_id_t pbdevice_get_type_id(pbdevice_t *pbdev) {
-    pbio_iodev_type_id_t id;
-    pb_assert(get_type_id(pbdev, &id));
-    return id;
+void pbdevice_get_info(pbdevice_t *pbdev,
+                       pbio_port_t *port,
+                       pbio_iodev_type_id_t *id,
+                       uint8_t *mode,
+                       pbio_iodev_data_type_t *data_type,
+                       uint8_t *num_values) {
+    *port = pbdev->port;
+    *id = pbdev->type_id;
+    *mode = pbdev->mode;
+    *data_type = pbdev->data_type;
+    *num_values = pbdev->data_len;
 }

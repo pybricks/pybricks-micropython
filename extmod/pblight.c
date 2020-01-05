@@ -16,7 +16,15 @@ void pb_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color) {
         pb_assert(pbio_light_on(PBIO_PORT_SELF, color));
         return;
     }
-    pbio_iodev_type_id_t id = pbdevice_get_type_id(pbdev);
+
+    // FIXME: move light ops to pbdevice. For now do it by ID here.
+    pbio_port_t port;
+    pbio_iodev_type_id_t id;
+    uint8_t mode;
+    pbio_iodev_data_type_t data_type;
+    uint8_t num_values;
+    
+    pbdevice_get_info(pbdev, &port, &id, &mode, &data_type, &num_values);
 
 #if PYBRICKS_PY_EV3DEVICES
     if (id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
