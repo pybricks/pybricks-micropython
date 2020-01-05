@@ -75,11 +75,6 @@ pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t 
     }
 
     switch (color) {
-    case PBIO_LIGHT_COLOR_NONE:
-        *r = 0;
-        *g = 0;
-        *b = 0;
-        break;
     case PBIO_LIGHT_COLOR_WHITE:
         *r = 185;
         *g = 161;
@@ -116,7 +111,10 @@ pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t 
         *b = 110;
         break;
     default:
-        return PBIO_ERROR_INVALID_ARG;
+        *r = 0;
+        *g = 0;
+        *b = 0;
+        break;
     }
 
     return PBIO_SUCCESS;
