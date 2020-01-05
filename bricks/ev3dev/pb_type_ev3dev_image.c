@@ -271,27 +271,32 @@ STATIC mp_obj_t ev3dev_Image_draw_box(size_t n_args, const mp_obj_t *pos_args, m
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_box_obj, 1, ev3dev_Image_draw_box);
 
 STATIC mp_obj_t ev3dev_Image_draw_circle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        ev3dev_Image_obj_t, self,
-        PB_ARG_REQUIRED(x),
-        PB_ARG_REQUIRED(y),
-        PB_ARG_DEFAULT_INT(r, 0),
-        PB_ARG_DEFAULT_FALSE(fill),
-        PB_ARG_DEFAULT_ENUM(color, pb_const_black)
-    );
+    enum { ARG_x, ARG_y, ARG_r, ARG_fill, ARG_color };
+    static const mp_arg_t allowed_args[] = {
+        { MP_QSTR_x, MP_ARG_REQUIRED | MP_ARG_INT },
+        { MP_QSTR_y, MP_ARG_REQUIRED | MP_ARG_INT },
+        { MP_QSTR_r, MP_ARG_REQUIRED | MP_ARG_INT },
+        { MP_QSTR_fill, MP_ARG_BOOL, {.u_bool = FALSE} },
+        { MP_QSTR_color, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_PTR(&pb_const_black)} },
+    };
+    mp_arg_val_t arg_vals[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all(n_args - 1, pos_args + 1, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, arg_vals);
 
-    mp_int_t _x = mp_obj_get_int(x);
-    mp_int_t _y = mp_obj_get_int(y);
-    mp_int_t _r = mp_obj_get_int(r);
-    GrxColor _color = map_color(color);
+    ev3dev_Image_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+
+    mp_int_t x = arg_vals[ARG_x].u_int;
+    mp_int_t y = arg_vals[ARG_y].u_int;
+    mp_int_t r = arg_vals[ARG_r].u_int;
+    bool fill = arg_vals[ARG_fill].u_bool;
+    GrxColor color = map_color(arg_vals[ARG_color].u_obj);
 
     clear_once(self);
     grx_set_current_context(self->context);
-    if (mp_obj_is_true(fill)) {
-        grx_draw_filled_circle(_x, _y, _r, _color);
+    if (fill) {
+        grx_draw_filled_circle(x, y, r, color);
     }
     else {
-        grx_draw_circle(_x, _y, _r, _color);
+        grx_draw_circle(x, y, r, color);
     }
 
     return mp_const_none;
