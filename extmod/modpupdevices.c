@@ -107,9 +107,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_rgb(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_rgb_obj, pupdevices_ColorDistanceSensor_rgb);
 
-/*
-ColorDistanceSensor class tables
-*/
+// dir(pybricks.pupdevices.ColorDistanceSensor)
 STATIC const mp_rom_map_elem_t pupdevices_ColorDistanceSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_color),       MP_ROM_PTR(&pupdevices_ColorDistanceSensor_color_obj)                },
     { MP_ROM_QSTR(MP_QSTR_reflection),  MP_ROM_PTR(&pupdevices_ColorDistanceSensor_reflection_obj)           },
@@ -120,6 +118,7 @@ STATIC const mp_rom_map_elem_t pupdevices_ColorDistanceSensor_locals_dict_table[
 };
 STATIC MP_DEFINE_CONST_DICT(pupdevices_ColorDistanceSensor_locals_dict, pupdevices_ColorDistanceSensor_locals_dict_table);
 
+// type(pybricks.pupdevices.ColorDistanceSensor)
 STATIC const mp_obj_type_t pupdevices_ColorDistanceSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_ColorDistanceSensor,
@@ -127,13 +126,11 @@ STATIC const mp_obj_type_t pupdevices_ColorDistanceSensor_type = {
     .locals_dict = (mp_obj_dict_t*)&pupdevices_ColorDistanceSensor_locals_dict,
 };
 
-/*
-pupdevices module table
-*/
+// dir(pybricks.pupdevices)
 STATIC const mp_rom_map_elem_t pupdevices_globals_table[] = {
-    { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_devices) },
-    { MP_ROM_QSTR(MP_QSTR_Motor),               MP_ROM_PTR(&motor_Motor_type)   },
-    { MP_ROM_QSTR(MP_QSTR_DCMotor),               MP_ROM_PTR(&motor_DCMotor_type)   },
+    { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_pupdevices)                     },
+    { MP_ROM_QSTR(MP_QSTR_Motor),               MP_ROM_PTR(&motor_Motor_type)                    },
+    { MP_ROM_QSTR(MP_QSTR_DCMotor),             MP_ROM_PTR(&motor_DCMotor_type)                  },
     { MP_ROM_QSTR(MP_QSTR_ColorDistanceSensor), MP_ROM_PTR(&pupdevices_ColorDistanceSensor_type) },
 };
 

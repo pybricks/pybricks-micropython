@@ -303,7 +303,7 @@ static void pb_imports() {
     PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_iodevices);
     #endif
     #if PYBRICKS_PY_PUPDEVICES
-    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_devices);
+    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_pupdevices);
     #endif
     #if PYBRICKS_PY_PARAMETERS
     PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_parameters);
