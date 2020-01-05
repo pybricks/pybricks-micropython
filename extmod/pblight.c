@@ -28,16 +28,16 @@ void pb_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color) {
         uint8_t mode;
         switch (color) {
             case PBIO_LIGHT_COLOR_GREEN:
-                mode = 1;
+                mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX;
                 break;
             case PBIO_LIGHT_COLOR_RED:
-                mode = 3;
+                mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__REFLT;
                 break;
             case PBIO_LIGHT_COLOR_BLUE:
-                mode = 4;
+                mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI;
                 break;
             default:
-                mode = 7;
+                mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__SPEC1;
                 break;
         }
         uint32_t *data;

@@ -39,7 +39,7 @@ STATIC mp_obj_t pupdevices_ColorAndDistSensor_make_new(const mp_obj_type_t *type
     self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
 
     // Create an instance of the Light class
-    self->light = light_Light_obj_make_new(NULL, &light_ColorLight_type);//FIXME
+    self->light = light_Light_obj_make_new(self->pbdev, &light_ColorLight_type);
 
     return MP_OBJ_FROM_PTR(self);
 }
