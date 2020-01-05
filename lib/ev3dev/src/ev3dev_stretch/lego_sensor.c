@@ -50,6 +50,7 @@ struct _lego_sensor_t {
     FILE *f_num_values;
     FILE *f_bin_data_format;
     char modes[12][17];
+    uint8_t bin_data[PBIO_IODEV_MAX_DATA_SIZE]  __attribute__((aligned(32)));
 };
 
 // Get the port mode
@@ -373,14 +374,16 @@ pbio_error_t lego_sensor_set_mode(lego_sensor_t *sensor, uint8_t mode) {
 }
 
 // Read 32 bytes from bin_data attribute
-pbio_error_t lego_sensor_get_bin_data(lego_sensor_t *sensor, char *bin_data) {
+pbio_error_t lego_sensor_get_bin_data(lego_sensor_t *sensor, uint8_t **bin_data) {
     if (fseek(sensor->f_bin_data, 0, SEEK_SET) == -1) {
         return PBIO_ERROR_IO;
     }
 
-    if (fread(bin_data, 1, BIN_DATA_SIZE, sensor->f_bin_data) < BIN_DATA_SIZE) {
+    if (fread(sensor->bin_data, 1, BIN_DATA_SIZE, sensor->f_bin_data) < BIN_DATA_SIZE) {
         return PBIO_ERROR_IO;
     }
+
+    *bin_data = sensor->bin_data;
 
     return PBIO_SUCCESS;
 }

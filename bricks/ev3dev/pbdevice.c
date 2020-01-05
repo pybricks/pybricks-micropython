@@ -100,9 +100,9 @@ static pbio_error_t get_values(pbdevice_t *pbdev, uint8_t mode, void *values) {
     }
 
     // Read raw data from device
-    char data[PBIO_IODEV_MAX_DATA_SIZE];
+    uint8_t *data;
 
-    err = lego_sensor_get_bin_data(pbdev->sensor, data);
+    err = lego_sensor_get_bin_data(pbdev->sensor, &data);
     if (err != PBIO_SUCCESS) {
         return err;
     }
