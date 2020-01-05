@@ -79,6 +79,47 @@ static void *task_caller(void *arg)
     return NULL;
 }
 
+static guint startup_animation_source;
+
+static gboolean update_startup_animation(gpointer user_data) {
+    static GrxContext *context = NULL;
+    static gint angle = 0;
+
+    if (!context) {
+        context = grx_context_new(grx_get_screen_width(), grx_get_screen_height(), NULL, NULL);
+        if (!context) {
+            g_warning("Failed to create graphics context for animation");
+            startup_animation_source = 0;
+            return G_SOURCE_REMOVE;
+        }
+    }
+
+    grx_set_current_context(context);
+
+    gint x = grx_get_width() / 2;
+    gint y = grx_get_height() / 2;
+    gint r = 9 * MIN(x, y) / 10;
+    gint end = angle - 45;
+
+    grx_clear_context(GRX_COLOR_WHITE);
+    grx_draw_filled_circle_arc(x, y, r, angle * 10, end * 10,
+        GRX_ARC_STYLE_CLOSED_RADIUS, GRX_COLOR_BLACK);
+    grx_draw_filled_circle(x, y, 2 * r / 3, GRX_COLOR_WHITE);
+    grx_context_bit_blt(grx_get_screen_context(), 0, 0, NULL, 0, 0,
+        grx_get_max_x(), grx_get_max_y(), GRX_COLOR_MODE_WRITE);
+
+    angle += 5;
+
+    return G_SOURCE_CONTINUE;
+}
+
+void pbricks_end_startup_animation() {
+    if (startup_animation_source) {
+        g_source_remove(startup_animation_source);
+        startup_animation_source = 0;
+    }
+}
+
 // Pybricks initialization tasks
 void pybricks_init() {
     GError *error = NULL;
@@ -87,7 +128,8 @@ void pybricks_init() {
         exit(1);
     }
     grx_clear_screen(GRX_COLOR_WHITE);
-    // TODO: display "Starting <name of program>" in center of screen
+    update_startup_animation(NULL);
+    startup_animation_source = g_timeout_add(200, update_startup_animation, NULL);
 
     pbio_init();
     pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE); // TODO: define PBIO_LIGHT_PATTERN_EV3_RUN (Or, discuss if we want to use breathe for EV3, too)

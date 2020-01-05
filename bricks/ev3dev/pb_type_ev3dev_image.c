@@ -166,23 +166,32 @@ STATIC mp_obj_t ev3dev_Image___del__(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3dev_Image___del___obj, ev3dev_Image___del__);
 
-STATIC mp_obj_t ev3dev_Image_clear(mp_obj_t self_in) {
-    ev3dev_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
+// Ensure that screen has been cleared before we start drawing anything else
+STATIC void clear_once(ev3dev_Image_obj_t *self) {
+    if (self->cleared) {
+        return;
+    }
+
+    GrxContext *screen = grx_get_screen_context();
+    if (self->context == screen || self->context->root == screen) {
+        // HACK: stop the startup animation from pbinit
+        extern void pbricks_end_startup_animation();
+        pbricks_end_startup_animation();
+    }
+
     grx_context_clear(self->context, GRX_COLOR_WHITE);
     self->cleared = TRUE;
+}
+
+STATIC mp_obj_t ev3dev_Image_clear(mp_obj_t self_in) {
+    ev3dev_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    clear_once(self);
+    grx_context_clear(self->context, GRX_COLOR_WHITE);
     self->print_x = 0;
     self->print_y = 0;
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3dev_Image_clear_obj, ev3dev_Image_clear);
-
-// Ensure that screen has been cleared before we start drawing anything else
-STATIC void clear_once(ev3dev_Image_obj_t *self) {
-    if (!self->cleared) {
-        grx_context_clear(self->context, GRX_COLOR_WHITE);
-        self->cleared = TRUE;
-    }
-}
 
 STATIC mp_obj_t ev3dev_Image_draw_pixel(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
