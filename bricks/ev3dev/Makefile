@@ -276,12 +276,6 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	pbio/src/integrator.c \
 	)
 
-# FatFS VFS support
-LIB_SRC_C += $(addprefix lib/,\
-	oofatfs/ff.c \
-	oofatfs/ffunicode.c \
-	)
-
 OBJ = $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
