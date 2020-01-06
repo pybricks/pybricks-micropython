@@ -26,9 +26,9 @@ typedef struct {
     const int digi1; // GPIO on wire 6
     const int adc_val; // ADC on wire 6 for getting reflection data
     const int adc_con; // ADC on wire 1 for detecting sensor
-} pbdrv_nxtcolor_pininfo_t;
+} nxtcolor_pininfo_t;
 
-static const pbdrv_nxtcolor_pininfo_t pininfo[4] = {
+static const nxtcolor_pininfo_t pininfo[4] = {
     [PBIO_PORT_1 - PBIO_PORT_1] = {
         .digi0 = 2,
         .digi1 = 15,
@@ -62,7 +62,7 @@ static const pbio_light_color_t lamp_colors[] = {
     PBIO_LIGHT_COLOR_NONE,
 };
 
-typedef struct _pbdrv_nxtcolor_t {
+typedef struct _nxtcolor_t {
     bool ready;
     bool fs_initialized;
     bool waiting;
@@ -74,7 +74,7 @@ typedef struct _pbdrv_nxtcolor_t {
     uint32_t raw_max;
     uint16_t crc;
     uint32_t wait_start;
-    const pbdrv_nxtcolor_pininfo_t *pins;
+    const nxtcolor_pininfo_t *pins;
     FILE *f_digi0_val;
     FILE *f_digi0_dir;
     FILE *f_digi1_val;
@@ -82,12 +82,12 @@ typedef struct _pbdrv_nxtcolor_t {
     bool digi1_dir;
     FILE *f_adc_val;
     FILE *f_adc_con;
-} pbdrv_nxtcolor_t;
+} nxtcolor_t;
 
-pbdrv_nxtcolor_t nxtcolorsensors[4];
+nxtcolor_t nxtcolorsensors[4];
 
 // Simplistic nonbusy wait. May be called only once per blocking operation.
-pbio_error_t nxtcolor_wait(pbdrv_nxtcolor_t *nxtcolor, uint32_t ms) {
+pbio_error_t nxtcolor_wait(nxtcolor_t *nxtcolor, uint32_t ms) {
 
     uint32_t now = clock_usecs();
 
@@ -109,11 +109,11 @@ pbio_error_t nxtcolor_wait(pbdrv_nxtcolor_t *nxtcolor, uint32_t ms) {
     }
 }
 
-static pbio_error_t nxtcolor_set_digi0(pbdrv_nxtcolor_t *nxtcolor, bool val) {
+static pbio_error_t nxtcolor_set_digi0(nxtcolor_t *nxtcolor, bool val) {
     return sysfs_write_int(nxtcolor->f_digi0_val, val);
 }
 
-static pbio_error_t nxtcolor_set_digi1(pbdrv_nxtcolor_t *nxtcolor, bool val) {
+static pbio_error_t nxtcolor_set_digi1(nxtcolor_t *nxtcolor, bool val) {
 
     pbio_error_t err;
 
@@ -129,7 +129,7 @@ static pbio_error_t nxtcolor_set_digi1(pbdrv_nxtcolor_t *nxtcolor, bool val) {
     return sysfs_write_int(nxtcolor->f_digi1_val, val);
 }
 
-static pbio_error_t nxtcolor_get_digi1(pbdrv_nxtcolor_t *nxtcolor, bool *val) {
+static pbio_error_t nxtcolor_get_digi1(nxtcolor_t *nxtcolor, bool *val) {
 
     pbio_error_t err;
 
@@ -151,7 +151,7 @@ static pbio_error_t nxtcolor_get_digi1(pbdrv_nxtcolor_t *nxtcolor, bool *val) {
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t nxtcolor_get_adc(pbdrv_nxtcolor_t *nxtcolor, int32_t *analog) {
+static pbio_error_t nxtcolor_get_adc(nxtcolor_t *nxtcolor, int32_t *analog) {
 
     pbio_error_t err;
 
@@ -167,7 +167,7 @@ static pbio_error_t nxtcolor_get_adc(pbdrv_nxtcolor_t *nxtcolor, int32_t *analog
     return sysfs_read_int(nxtcolor->f_adc_val, analog);
 }
 
-static pbio_error_t nxtcolor_reset(pbdrv_nxtcolor_t *nxtcolor)
+static pbio_error_t nxtcolor_reset(nxtcolor_t *nxtcolor)
 {
     pbio_error_t err;
 
@@ -202,7 +202,7 @@ static pbio_error_t nxtcolor_reset(pbdrv_nxtcolor_t *nxtcolor)
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t nxtcolor_read_byte(pbdrv_nxtcolor_t *nxtcolor, uint8_t *msg)
+static pbio_error_t nxtcolor_read_byte(nxtcolor_t *nxtcolor, uint8_t *msg)
 {
     pbio_error_t err;
     *msg = 0;
@@ -236,7 +236,7 @@ static pbio_error_t nxtcolor_read_byte(pbdrv_nxtcolor_t *nxtcolor, uint8_t *msg)
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t nxtcolor_send_byte(pbdrv_nxtcolor_t *nxtcolor, uint8_t msg)
+static pbio_error_t nxtcolor_send_byte(nxtcolor_t *nxtcolor, uint8_t msg)
 {
     pbio_error_t err;
 
@@ -275,7 +275,7 @@ static pbio_error_t nxtcolor_send_byte(pbdrv_nxtcolor_t *nxtcolor, uint8_t msg)
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t nxtcolor_init_fs(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t port) {
+static pbio_error_t nxtcolor_init_fs(nxtcolor_t *nxtcolor, pbio_port_t port) {
 
     pbio_error_t err;
 
@@ -333,7 +333,7 @@ static pbio_error_t nxtcolor_init_fs(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t por
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t nxtcolor_init(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t port) {
+static pbio_error_t nxtcolor_init(nxtcolor_t *nxtcolor, pbio_port_t port) {
     pbio_error_t err;
 
     // Init the file system
@@ -399,7 +399,7 @@ static pbio_error_t nxtcolor_init(pbdrv_nxtcolor_t *nxtcolor, pbio_port_t port) 
     return PBIO_SUCCESS;
 }
 
-pbio_error_t nxtcolor_toggle_color(pbdrv_nxtcolor_t *nxtcolor) {
+pbio_error_t nxtcolor_toggle_color(nxtcolor_t *nxtcolor) {
     bool set = 0;
     switch(nxtcolor->state) {
         case PBIO_LIGHT_COLOR_NONE:
@@ -424,7 +424,7 @@ pbio_error_t nxtcolor_toggle_color(pbdrv_nxtcolor_t *nxtcolor) {
     return nxtcolor_set_digi0(nxtcolor, set);
 }
 
-pbio_error_t nxtcolor_set_light(pbdrv_nxtcolor_t *nxtcolor, pbio_light_color_t color) {
+pbio_error_t nxtcolor_set_light(nxtcolor_t *nxtcolor, pbio_light_color_t color) {
     pbio_error_t err;
 
     // Default unknown colors to no color
@@ -449,7 +449,7 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, int32_t
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    pbdrv_nxtcolor_t *nxtcolor = &nxtcolorsensors[port-PBIO_PORT_1];
+    nxtcolor_t *nxtcolor = &nxtcolorsensors[port-PBIO_PORT_1];
 
     // We don't have a formal "get" function since the higher level code
     // does not know about the color sensor being a special case. So instead
