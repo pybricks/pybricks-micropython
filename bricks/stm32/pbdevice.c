@@ -57,8 +57,13 @@ pbdevice_t *pbdevice_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id)
     pbio_iodev_t *iodev;
     pb_assert(pbdrv_ioport_get_iodev(port, &iodev));
 
-    // Verify the ID
-    if (!iodev->info || iodev->info->type_id != valid_id) {
+    // Is there an IO Device?
+    if (!iodev->info) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+
+    // Verify the ID or always allow generic LUMP device
+    if (iodev->info->type_id != valid_id && valid_id != PBIO_IODEV_TYPE_ID_LUMP_UART) {
         pb_assert(PBIO_ERROR_NO_DEV);
     }
 
