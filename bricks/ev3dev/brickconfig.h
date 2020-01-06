@@ -14,6 +14,7 @@
 // Pybricks modules
 #define PYBRICKS_PY_BUTTONS             (1)
 #define PYBRICKS_PY_EV3DEVICES          (1)
+#define PYBRICKS_PY_IODEVICES           (1)
 #define PYBRICKS_PY_PARAMETERS          (1)
 #define PYBRICKS_PY_PUPDEVICES          (0)
 #define PYBRICKS_PY_RESOURCES           (1)

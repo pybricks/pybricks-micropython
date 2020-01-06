@@ -20,6 +20,52 @@
 #include <pbio/serial.h>
 #include <pberror.h>
 
+#if PYBRICKS_PY_IODEVICES
+
+// Class structure for LUMPDevice
+typedef struct _iodevices_LUMPDevice_obj_t {
+    mp_obj_base_t base;
+    pbdevice_t *pbdev;
+} iodevices_LUMPDevice_obj_t;
+
+// pybricks.iodevices.LUMPDevice.__init__
+STATIC mp_obj_t iodevices_LUMPDevice_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port)
+    );
+
+    iodevices_LUMPDevice_obj_t *self = m_new_obj(iodevices_LUMPDevice_obj_t);
+    self->base.type = (mp_obj_type_t*) type;
+
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+
+    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NONE);
+
+    return MP_OBJ_FROM_PTR(self);
+}
+
+// pybricks.iodevices.LUMPDevice.read
+STATIC mp_obj_t iodevices_LUMPDevice_read(mp_obj_t self_in) {
+    iodevices_LUMPDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    (void)self;
+    return mp_obj_new_int(12345);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(iodevices_LUMPDevice_read_obj, iodevices_LUMPDevice_read);
+
+// dir(pybricks.iodevices.LUMPDevice)
+STATIC const mp_rom_map_elem_t iodevices_LUMPDevice_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_read),       MP_ROM_PTR(&iodevices_LUMPDevice_read_obj)                },
+};
+STATIC MP_DEFINE_CONST_DICT(iodevices_LUMPDevice_locals_dict, iodevices_LUMPDevice_locals_dict_table);
+
+// type(pybricks.iodevices.LUMPDevice)
+STATIC const mp_obj_type_t iodevices_LUMPDevice_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_LUMPDevice,
+    .make_new = iodevices_LUMPDevice_make_new,
+    .locals_dict = (mp_obj_dict_t*)&iodevices_LUMPDevice_locals_dict,
+};
+
 #if PYBRICKS_PY_EV3DEVICES
 
 #include "pbsmbus.h"
@@ -423,6 +469,7 @@ STATIC const mp_obj_type_t iodevices_UARTDevice_type = {
 // dir(pybricks.iodevices)
 STATIC const mp_rom_map_elem_t iodevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_iodevices)              },
+    { MP_ROM_QSTR(MP_QSTR_LUMPDevice),       MP_ROM_PTR(&iodevices_LUMPDevice_type)      },
 #if PYBRICKS_PY_EV3DEVICES
     { MP_ROM_QSTR(MP_QSTR_AnalogSensor),     MP_ROM_PTR(&iodevices_AnalogSensor_type)    },
     { MP_ROM_QSTR(MP_QSTR_I2CDevice),        MP_ROM_PTR(&iodevices_I2CDevice_type   )    },
@@ -436,3 +483,5 @@ const mp_obj_module_t pb_module_iodevices = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t*)&pb_module_iodevices_globals,
 };
+
+#endif //if PYBRICKS_PY_IODEVICES
