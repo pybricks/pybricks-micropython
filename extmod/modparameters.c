@@ -173,9 +173,6 @@ STATIC const mp_rom_map_elem_t pb_Color_enum_table[] = {
 };
 PB_DEFINE_ENUM(pb_enum_type_Color, MP_QSTR_Color, pb_Color_enum_table);
 
-
-#if PYBRICKS_PY_BUTTONS
-
 /* Button enum */
 
 const pb_obj_enum_member_t pb_const_btn_up = {
@@ -251,8 +248,6 @@ STATIC const mp_rom_map_elem_t pb_enum_Button_table[] = {
     { MP_ROM_QSTR(MP_QSTR_BEACON),     MP_ROM_PTR(&pb_const_btn_beacon)    },
 };
 PB_DEFINE_ENUM(pb_enum_type_Button, MP_QSTR_Button, pb_enum_Button_table);
-
-#endif // PYBRICKS_PY_BUTTONS
 
 /*
 parameters module tables
