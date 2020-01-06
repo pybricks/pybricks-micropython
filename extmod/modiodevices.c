@@ -73,9 +73,39 @@ STATIC mp_obj_t iodevices_LUMPDevice_read(size_t n_args, const mp_obj_t *pos_arg
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_LUMPDevice_read_obj, 0, iodevices_LUMPDevice_read);
 
+// pybricks.iodevices.LUMPDevice.write
+STATIC mp_obj_t iodevices_LUMPDevice_write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        iodevices_LUMPDevice_obj_t, self,
+        PB_ARG_REQUIRED(mode),
+        PB_ARG_REQUIRED(data)
+    );
+
+    // Unpack the user data tuple
+    mp_obj_t *objs;
+    size_t num_values;
+    mp_obj_get_array(data, &num_values, &objs);
+    if (num_values > PBIO_IODEV_MAX_DATA_SIZE) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // Pack user data to int32_t
+    int32_t _data[PBIO_IODEV_MAX_DATA_SIZE];
+    for (uint8_t i = 0; i < num_values; i++) {
+        _data[i] = mp_obj_get_int(objs[i]);
+    }
+
+    // Set the data
+    pbdevice_set_values(self->pbdev, mp_obj_get_int(mode), _data, num_values);
+
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_LUMPDevice_write_obj, 0, iodevices_LUMPDevice_write);
+
 // dir(pybricks.iodevices.LUMPDevice)
 STATIC const mp_rom_map_elem_t iodevices_LUMPDevice_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_read),       MP_ROM_PTR(&iodevices_LUMPDevice_read_obj)                },
+    { MP_ROM_QSTR(MP_QSTR_read),       MP_ROM_PTR(&iodevices_LUMPDevice_read_obj) },
+    { MP_ROM_QSTR(MP_QSTR_write),      MP_ROM_PTR(&iodevices_LUMPDevice_write_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(iodevices_LUMPDevice_locals_dict, iodevices_LUMPDevice_locals_dict_table);
 
