@@ -47,8 +47,45 @@ STATIC mp_obj_t iodevices_LUMPDevice_make_new(const mp_obj_type_t *type, size_t 
 // pybricks.iodevices.LUMPDevice.read
 STATIC mp_obj_t iodevices_LUMPDevice_read(mp_obj_t self_in) {
     iodevices_LUMPDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    (void)self;
-    return mp_obj_new_int(12345);
+
+    pbio_port_t port;
+    pbio_iodev_type_id_t id;
+    uint8_t mode;
+    pbio_iodev_data_type_t data_type;
+    uint8_t num_values;
+    
+    // Get info about the sensor and its mode
+    pbdevice_get_info(self->pbdev, &port, &id, &mode, &data_type, &num_values);
+
+    // Get data already in correct data format
+    uint8_t data[PBIO_IODEV_MAX_DATA_SIZE];
+    mp_obj_t objs[PBIO_IODEV_MAX_DATA_SIZE];
+    pbdevice_get_values(self->pbdev, mode, data);
+
+    // Return as MicroPython objects
+    for (uint8_t i = 0; i < num_values; i++) {
+        switch(data_type) {
+            case PBIO_IODEV_DATA_TYPE_UINT8:
+                objs[i] = mp_obj_new_int(data[i]);
+                break;
+            case PBIO_IODEV_DATA_TYPE_INT8:
+                objs[i] = mp_obj_new_int(((int8_t*) data)[i]);
+                break;
+            case PBIO_IODEV_DATA_TYPE_INT16:
+                objs[i] = mp_obj_new_int(((int16_t*) data)[i]);
+                break;
+            case PBIO_IODEV_DATA_TYPE_INT32:
+                objs[i] = mp_obj_new_int(((int32_t*) data)[i]);
+                break;
+            case PBIO_IODEV_DATA_TYPE_FLOAT:
+                objs[i] = mp_obj_new_float(((float*) data)[i]);
+                break;
+            default:
+                pb_assert(PBIO_ERROR_IO);
+        }
+    }
+
+    return mp_obj_new_tuple(num_values, objs);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(iodevices_LUMPDevice_read_obj, iodevices_LUMPDevice_read);
 
