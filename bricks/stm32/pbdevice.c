@@ -155,6 +155,10 @@ void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values, uint8
     wait(pbio_iodev_set_data_end, pbio_iodev_set_data_cancel, iodev);
 }
 
+void pbdevice_set_power_supply(pbdevice_t *pbdev, bool on) {
+    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
+}
+
 void pbdevice_get_info(pbdevice_t *pbdev,
                        pbio_port_t *port,
                        pbio_iodev_type_id_t *id,

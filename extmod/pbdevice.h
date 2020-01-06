@@ -18,6 +18,8 @@ void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values);
 
 void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values, uint8_t num_values);
 
+void pbdevice_set_power_supply(pbdevice_t *pbdev, bool on);
+
 void pbdevice_get_info(pbdevice_t *pbdev,
                        pbio_port_t *port,
                        pbio_iodev_type_id_t *id,
