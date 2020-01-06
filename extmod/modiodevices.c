@@ -45,22 +45,24 @@ STATIC mp_obj_t iodevices_LUMPDevice_make_new(const mp_obj_type_t *type, size_t 
 }
 
 // pybricks.iodevices.LUMPDevice.read
-STATIC mp_obj_t iodevices_LUMPDevice_read(mp_obj_t self_in) {
-    iodevices_LUMPDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    pbio_port_t port;
-    pbio_iodev_type_id_t id;
-    uint8_t mode;
-    pbio_iodev_data_type_t data_type;
-    uint8_t num_values;
-    
-    // Get info about the sensor and its mode
-    pbdevice_get_info(self->pbdev, &port, &id, &mode, &data_type, &num_values);
+STATIC mp_obj_t iodevices_LUMPDevice_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        iodevices_LUMPDevice_obj_t, self,
+        PB_ARG_REQUIRED(mode)
+    );
 
     // Get data already in correct data format
     uint8_t data[PBIO_IODEV_MAX_DATA_SIZE];
     mp_obj_t objs[PBIO_IODEV_MAX_DATA_SIZE];
-    pbdevice_get_values(self->pbdev, mode, data);
+    pbdevice_get_values(self->pbdev, mp_obj_get_int(mode), data);
+
+    // Get info about the sensor and its mode
+    pbio_port_t port;
+    pbio_iodev_type_id_t id;
+    uint8_t curr_mode;
+    pbio_iodev_data_type_t data_type;
+    uint8_t num_values;
+    pbdevice_get_info(self->pbdev, &port, &id, &curr_mode, &data_type, &num_values);
 
     // Return as MicroPython objects
     for (uint8_t i = 0; i < num_values; i++) {
@@ -87,7 +89,7 @@ STATIC mp_obj_t iodevices_LUMPDevice_read(mp_obj_t self_in) {
 
     return mp_obj_new_tuple(num_values, objs);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(iodevices_LUMPDevice_read_obj, iodevices_LUMPDevice_read);
+MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_LUMPDevice_read_obj, 0, iodevices_LUMPDevice_read);
 
 // dir(pybricks.iodevices.LUMPDevice)
 STATIC const mp_rom_map_elem_t iodevices_LUMPDevice_locals_dict_table[] = {
