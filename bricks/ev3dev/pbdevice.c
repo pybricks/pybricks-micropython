@@ -176,7 +176,7 @@ void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values) {
     pb_assert(err);
 }
 
-void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values) {
+void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values, uint8_t num_values) {
     pb_assert(PBIO_ERROR_NOT_SUPPORTED);
 }
 
