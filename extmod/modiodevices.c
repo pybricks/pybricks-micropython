@@ -102,10 +102,24 @@ STATIC mp_obj_t iodevices_LUMPDevice_write(size_t n_args, const mp_obj_t *pos_ar
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_LUMPDevice_write_obj, 0, iodevices_LUMPDevice_write);
 
+// pybricks.iodevices.LUMPDevice.power
+STATIC mp_obj_t iodevices_LUMPDevice_power(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        iodevices_LUMPDevice_obj_t, self,
+        PB_ARG_REQUIRED(on)
+    );
+
+    pbdevice_set_power_supply(self->pbdev, mp_obj_is_true(on));
+
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_LUMPDevice_power_obj, 0, iodevices_LUMPDevice_power);
+
 // dir(pybricks.iodevices.LUMPDevice)
 STATIC const mp_rom_map_elem_t iodevices_LUMPDevice_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_read),       MP_ROM_PTR(&iodevices_LUMPDevice_read_obj) },
-    { MP_ROM_QSTR(MP_QSTR_write),      MP_ROM_PTR(&iodevices_LUMPDevice_write_obj) },
+    { MP_ROM_QSTR(MP_QSTR_write),      MP_ROM_PTR(&iodevices_LUMPDevice_write_obj)},
+    { MP_ROM_QSTR(MP_QSTR_power),      MP_ROM_PTR(&iodevices_LUMPDevice_power_obj)},
 };
 STATIC MP_DEFINE_CONST_DICT(iodevices_LUMPDevice_locals_dict, iodevices_LUMPDevice_locals_dict_table);
 
