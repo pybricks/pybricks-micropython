@@ -39,7 +39,7 @@ STATIC mp_obj_t iodevices_LUMPDevice_make_new(const mp_obj_type_t *type, size_t 
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NONE);
+    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_LUMP_UART);
 
     return MP_OBJ_FROM_PTR(self);
 }
