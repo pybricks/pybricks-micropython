@@ -168,6 +168,10 @@ void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values) {
     pb_assert(err);
 }
 
+void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, void *values) {
+    pb_assert(PBIO_ERROR_NOT_SUPPORTED);
+}
+
 void pbdevice_get_info(pbdevice_t *pbdev,
                        pbio_port_t *port,
                        pbio_iodev_type_id_t *id,
