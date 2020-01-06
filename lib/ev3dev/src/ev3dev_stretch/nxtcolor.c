@@ -462,9 +462,21 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, int32_t
         nxtcolor->ready = true;
     }
 
-    // In lamp mode, just set the right color
-    if (mode == 0) {
-        nxtcolor->lamp = *((pbio_light_color_t*) values);
+    // In one of the lamp modes, just set the right color
+    if (mode > 0) {
+        switch(mode) {
+            case 1:
+                nxtcolor->lamp = PBIO_LIGHT_COLOR_RED;
+                break;
+            case 2:
+                nxtcolor->lamp = PBIO_LIGHT_COLOR_GREEN;
+                break;
+            case 3:
+                nxtcolor->lamp = PBIO_LIGHT_COLOR_BLUE;
+                break;
+            default:
+                return PBIO_ERROR_NOT_SUPPORTED;
+        }
         return nxtcolor_set_light(nxtcolor, nxtcolor->lamp);
     }
 
