@@ -114,7 +114,45 @@ void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values) {
 }
 
 void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values, uint8_t num_values) {
-    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
+
+    pbio_iodev_t *iodev = &pbdev->iodev;
+
+    uint8_t data[PBIO_IODEV_MAX_DATA_SIZE];
+    uint8_t len;
+    pbio_iodev_data_type_t type;
+
+    set_mode(iodev, mode);
+
+    pb_assert(pbio_iodev_get_data_format(iodev, iodev->mode, &len, &type));
+
+    if (len != num_values) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    for (uint8_t i = 0; i < len; i++) {
+        switch (type) {
+            case PBIO_IODEV_DATA_TYPE_INT8:
+                *(int8_t *)(data + i) = values[i];
+                break;
+            case PBIO_IODEV_DATA_TYPE_INT16:
+                *(int16_t *)(data + i * 2) = values[i];
+                break;
+            case PBIO_IODEV_DATA_TYPE_INT32:
+                *(int32_t *)(data + i * 4) = values[i];
+                break;
+#if MICROPY_PY_BUILTINS_FLOAT
+            case PBIO_IODEV_DATA_TYPE_FLOAT:
+                *(float *)(data + i * 4) = values[i];
+                break;
+#endif
+            default:
+                pb_assert(PBIO_ERROR_IO);
+        }
+    }
+    pbio_error_t err;
+    while ((err = pbio_iodev_set_data_begin(iodev, iodev->mode, data)) == PBIO_ERROR_AGAIN);
+    pb_assert(err);
+    wait(pbio_iodev_set_data_end, pbio_iodev_set_data_cancel, iodev);
 }
 
 void pbdevice_get_info(pbdevice_t *pbdev,
