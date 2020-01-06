@@ -70,6 +70,7 @@ pbdevice_t *pbdevice_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id)
     }
 
     // Return pointer to device
+    iodev->port = port;
     return (pbdevice_t *) iodev;
 }
 
