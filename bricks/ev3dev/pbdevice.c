@@ -56,10 +56,7 @@ static pbio_error_t get_device(pbdevice_t **pbdev, pbio_iodev_type_id_t valid_id
 
     pbdevice_t *_pbdev = &iodevices[port - PBIO_PORT_1];
 
-    *pbdev = _pbdev;
-
     _pbdev->port = port;
-    _pbdev->mode = 255;
 
     pbio_error_t err;
 
@@ -75,6 +72,20 @@ static pbio_error_t get_device(pbdevice_t **pbdev, pbio_iodev_type_id_t valid_id
         return err;
     }
     _pbdev->type_id = valid_id;
+
+    // Get mode
+    err = lego_sensor_get_mode(_pbdev->sensor, &_pbdev->mode);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    // Get corresponding data info
+    err = lego_sensor_get_info(_pbdev->sensor, &_pbdev->data_len, &_pbdev->data_type);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Return pointer to device on success
+    *pbdev = _pbdev;
 
     return PBIO_SUCCESS;
 }
