@@ -441,7 +441,7 @@ pbio_error_t nxtcolor_set_light(pbdrv_nxtcolor_t *nxtcolor, pbio_light_color_t c
     return PBIO_SUCCESS;
 }
 
-pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, void *values) {
+pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, int32_t *values) {
 
     pbio_error_t err;
 
@@ -493,18 +493,16 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, void *v
         row = 1;
     }
 
-    uint8_t rgba_pct[5];
-
     // Adjust analog to percentage for each color
     for (uint8_t i = 0; i < 3; i++) {
         if (rgba[i] < rgba[3]){
             // If rgb is less than ambient, assume zero
-            rgba_pct[i] = 0;
+            values[i] = 0;
         }
         else {
             // Otherwise, scale by calibration multiplier
-            rgba_pct[i] = ( ( (uint32_t) (rgba[i] - rgba[3])) * nxtcolor->calibration[row][i] ) / 111410;
-            rgba_pct[i] = rgba_pct[i] > 100 ? 100 : rgba_pct[i];
+            values[i] = ( ( (rgba[i] - rgba[3])) * nxtcolor->calibration[row][i] ) / 111410;
+            values[i] = values[i] > 100 ? 100 : values[i];
         }
     }
 
@@ -512,12 +510,12 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, void *v
     int32_t amb = max(nxtcolor->raw_min, min(rgba[3], nxtcolor->raw_max));
 
     // Scale ambient to percentage
-    rgba_pct[3] = ((amb-nxtcolor->raw_min)*100)/(nxtcolor->raw_max-nxtcolor->raw_min);
+    values[3] = ((amb-nxtcolor->raw_min)*100)/(nxtcolor->raw_max-nxtcolor->raw_min);
 
     // Calculate color index. Use HSV instead of LEGO if/else tree.
-    int32_t red = rgba_pct[0];
-    int32_t green = rgba_pct[1];
-    int32_t blue = rgba_pct[2];
+    int32_t red = values[0];
+    int32_t green = values[1];
+    int32_t blue = values[2];
 
     int32_t cmax = max(red, max(green, blue));
     int32_t cmin = min(red, min(green, blue));
@@ -568,8 +566,7 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, void *v
     }
 
     // Return RGB and Color data
-    rgba_pct[4] = color;
-    memcpy(values, rgba_pct, sizeof(rgba_pct));
+    values[4] = color;
 
     // Set the light back to the configured lamp status
     return nxtcolor_set_light(nxtcolor, nxtcolor->lamp);

@@ -55,7 +55,7 @@ STATIC mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
 // pybricks.nxtdevices.UltrasonicSensor.distance
 STATIC mp_obj_t nxtdevices_UltrasonicSensor_distance(mp_obj_t self_in) {
     nxtdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    uint8_t distance;
+    int32_t distance;
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ULTRASONIC_SENSOR__DIST_CM, &distance);
     return mp_obj_new_int(distance * 10);
 }
@@ -284,7 +284,7 @@ static mp_obj_t color_obj(pbio_light_color_t color) {
 // pybricks.nxtdevices.ColorSensor.all
 STATIC mp_obj_t nxtdevices_ColorSensor_all(mp_obj_t self_in) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    uint8_t all[5];
+    int32_t all[5];
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
     mp_obj_t ret[5];
     for (uint8_t i = 0; i < 4; i++) {
@@ -299,7 +299,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_all_obj, nxtdevices_Colo
 // pybricks.nxtdevices.ColorSensor.reflection
 STATIC mp_obj_t nxtdevices_ColorSensor_reflection(mp_obj_t self_in) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    uint8_t all[5];
+    int32_t all[5];
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
     // Return the average of red, green, and blue reflection
     return mp_obj_new_int((all[0]+all[1]+all[2])/3);
@@ -309,7 +309,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_reflection_obj, nxtdevic
 // pybricks.nxtdevices.ColorSensor.ambient
 STATIC mp_obj_t nxtdevices_ColorSensor_ambient(mp_obj_t self_in) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    uint8_t all[5];
+    int32_t all[5];
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
     // Return the ambient light
     return mp_obj_new_int(all[3]);
@@ -319,7 +319,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_ambient_obj, nxtdevices_
 // pybricks.nxtdevices.ColorSensor.color
 STATIC mp_obj_t nxtdevices_ColorSensor_color(mp_obj_t self_in) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    uint8_t all[5];
+    int32_t all[5];
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
     // Return the color ID
     return color_obj(all[4]);

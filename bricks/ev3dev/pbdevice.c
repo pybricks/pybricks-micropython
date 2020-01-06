@@ -91,7 +91,7 @@ static pbio_error_t get_device(pbdevice_t **pbdev, pbio_iodev_type_id_t valid_id
 }
 
 
-static pbio_error_t get_values(pbdevice_t *pbdev, uint8_t mode, void *values) {
+static pbio_error_t get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values) {
 
     // The NXT Color Sensor is a special case, so deal with it accordingly
     if (pbdev->type_id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
@@ -127,22 +127,22 @@ static pbio_error_t get_values(pbdevice_t *pbdev, uint8_t mode, void *values) {
     for (uint8_t i = 0; i < pbdev->data_len; i++) {
         switch (pbdev->data_type) {
             case PBIO_IODEV_DATA_TYPE_UINT8:
-            memcpy((int8_t  *) values + i * 1, (uint8_t *)(data + i * 1), 1);
-            break;
-        case PBIO_IODEV_DATA_TYPE_INT8:
-            memcpy((int8_t  *) values + i * 1, (int8_t  *)(data + i * 1), 1);
-            break;
-        case PBIO_IODEV_DATA_TYPE_INT16:
-            memcpy((int8_t  *) values + i * 2, (int16_t *)(data + i * 2), 2);
-            break;
-        case PBIO_IODEV_DATA_TYPE_INT32:
-            memcpy((int8_t  *) values + i * 4, (int32_t *)(data + i * 4), 4);
-            break;
-        case PBIO_IODEV_DATA_TYPE_FLOAT:
-            memcpy((int8_t  *) values + i * 4, (float   *)(data + i * 4), 4);
-            break;
-        default:
-            return PBIO_ERROR_IO;
+                values[i] = *((uint8_t *)(data + i * 1));
+                break;
+            case PBIO_IODEV_DATA_TYPE_INT8:
+                values[i] = *((int8_t *)(data + i * 1));
+                break;
+            case PBIO_IODEV_DATA_TYPE_INT16:
+                values[i] = *((int16_t *)(data + i * 2));
+                break;
+            case PBIO_IODEV_DATA_TYPE_INT32:
+                values[i] = *((int32_t *)(data + i * 4));
+                break;
+            case PBIO_IODEV_DATA_TYPE_FLOAT:
+                *(float *)(values + i) = *((float *)(data + i * 4));
+                break;
+            default:
+                return(PBIO_ERROR_IO);
         }
     }
 
@@ -160,7 +160,7 @@ pbdevice_t *pbdevice_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id)
     return pbdev;
 }
 
-void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values) {
+void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values) {
     pbio_error_t err;
     while ((err = get_values(pbdev, mode, values)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(10);
@@ -168,7 +168,7 @@ void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values) {
     pb_assert(err);
 }
 
-void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, void *values) {
+void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values) {
     pb_assert(PBIO_ERROR_NOT_SUPPORTED);
 }
 

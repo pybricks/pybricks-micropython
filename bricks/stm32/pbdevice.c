@@ -71,7 +71,7 @@ pbdevice_t *pbdevice_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id)
     return (pbdevice_t *) iodev;
 }
 
-void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values) {
+void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values) {
 
     pbio_iodev_t *iodev = &pbdev->iodev;
 
@@ -91,29 +91,29 @@ void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, void *values) {
     for (uint8_t i = 0; i < len; i++) {
         switch (type) {
             case PBIO_IODEV_DATA_TYPE_UINT8:
-            memcpy((int8_t  *) values + i * 1, (uint8_t *)(data + i * 1), 1);
-            break;
-        case PBIO_IODEV_DATA_TYPE_INT8:
-            memcpy((int8_t  *) values + i * 1, (int8_t  *)(data + i * 1), 1);
-            break;
-        case PBIO_IODEV_DATA_TYPE_INT16:
-            memcpy((int8_t  *) values + i * 2, (int16_t *)(data + i * 2), 2);
-            break;
-        case PBIO_IODEV_DATA_TYPE_INT32:
-            memcpy((int8_t  *) values + i * 4, (int32_t *)(data + i * 4), 4);
-            break;
-        #if MICROPY_PY_BUILTINS_FLOAT
-        case PBIO_IODEV_DATA_TYPE_FLOAT:
-            memcpy((int8_t  *) values + i * 4, (float   *)(data + i * 4), 4);
-            break;
-        #endif
-        default:
-            pb_assert(PBIO_ERROR_IO);
+                values[i] = *((uint8_t *)(data + i * 1));
+                break;
+            case PBIO_IODEV_DATA_TYPE_INT8:
+                values[i] = *((int8_t *)(data + i * 1));
+                break;
+            case PBIO_IODEV_DATA_TYPE_INT16:
+                values[i] = *((int16_t *)(data + i * 2));
+                break;
+            case PBIO_IODEV_DATA_TYPE_INT32:
+                values[i] = *((int32_t *)(data + i * 4));
+                break;
+#if MICROPY_PY_BUILTINS_FLOAT
+            case PBIO_IODEV_DATA_TYPE_FLOAT:
+                *(float *)(values + i) = *((float *)(data + i * 4));
+                break;
+#endif
+            default:
+                pb_assert(PBIO_ERROR_IO);
         }
     }
 }
 
-void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, void *values) {
+void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values) {
     pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
 }
 
@@ -149,8 +149,8 @@ void pbdevice_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color) {
                     mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__SPEC1;
                     break;
             }
-            uint32_t *data;
-            pbdevice_get_values(pbdev, mode, &data);
+            int32_t data[4];
+            pbdevice_get_values(pbdev, mode, data);
             break;
         default:
             pb_assert(PBIO_ERROR_NOT_SUPPORTED);

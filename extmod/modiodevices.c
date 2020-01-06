@@ -52,7 +52,7 @@ STATIC mp_obj_t iodevices_LUMPDevice_read(size_t n_args, const mp_obj_t *pos_arg
     );
 
     // Get data already in correct data format
-    uint8_t data[PBIO_IODEV_MAX_DATA_SIZE];
+    int32_t data[PBIO_IODEV_MAX_DATA_SIZE];
     mp_obj_t objs[PBIO_IODEV_MAX_DATA_SIZE];
     pbdevice_get_values(self->pbdev, mp_obj_get_int(mode), data);
 
@@ -66,25 +66,7 @@ STATIC mp_obj_t iodevices_LUMPDevice_read(size_t n_args, const mp_obj_t *pos_arg
 
     // Return as MicroPython objects
     for (uint8_t i = 0; i < num_values; i++) {
-        switch(data_type) {
-            case PBIO_IODEV_DATA_TYPE_UINT8:
-                objs[i] = mp_obj_new_int(data[i]);
-                break;
-            case PBIO_IODEV_DATA_TYPE_INT8:
-                objs[i] = mp_obj_new_int(((int8_t*) data)[i]);
-                break;
-            case PBIO_IODEV_DATA_TYPE_INT16:
-                objs[i] = mp_obj_new_int(((int16_t*) data)[i]);
-                break;
-            case PBIO_IODEV_DATA_TYPE_INT32:
-                objs[i] = mp_obj_new_int(((int32_t*) data)[i]);
-                break;
-            case PBIO_IODEV_DATA_TYPE_FLOAT:
-                objs[i] = mp_obj_new_float(((float*) data)[i]);
-                break;
-            default:
-                pb_assert(PBIO_ERROR_IO);
-        }
+        objs[i] = mp_obj_new_int(data[i]);
     }
 
     return mp_obj_new_tuple(num_values, objs);
