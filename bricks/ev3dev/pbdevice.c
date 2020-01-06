@@ -73,6 +73,14 @@ static pbio_error_t get_device(pbdevice_t **pbdev, pbio_iodev_type_id_t valid_id
     }
     _pbdev->type_id = valid_id;
 
+    // FIXME: make sure we proceed only for ev3dev sensors
+    if (valid_id == PBIO_IODEV_TYPE_ID_CUSTOM_I2C  ||
+        valid_id == PBIO_IODEV_TYPE_ID_CUSTOM_UART ||
+        valid_id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
+        *pbdev = _pbdev;
+        return PBIO_SUCCESS;
+    }
+
     // Get mode
     err = lego_sensor_get_mode(_pbdev->sensor, &_pbdev->mode);
     if (err != PBIO_SUCCESS) {
