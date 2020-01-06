@@ -5,6 +5,8 @@
 #include <string.h>
 
 #include <pbdrv/ioport.h>
+#include <pbdrv/motor.h>
+
 #include <pbio/iodev.h>
 
 #include "py/mphal.h"
@@ -156,7 +158,12 @@ void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values, uint8
 }
 
 void pbdevice_set_power_supply(pbdevice_t *pbdev, bool on) {
-    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
+    if (on) {
+        pb_assert(pbdrv_motor_set_duty_cycle(pbdev->iodev.port, -10000));
+    }
+    else {
+        pb_assert(pbdrv_motor_coast(pbdev->iodev.port));
+    }
 }
 
 void pbdevice_get_info(pbdevice_t *pbdev,
