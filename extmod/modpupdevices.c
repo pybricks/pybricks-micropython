@@ -93,71 +93,6 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_ambient(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_ambient_obj, pupdevices_ColorDistanceSensor_ambient);
 
-
-// Map button combination to standard EV3/PF1 0--11 key codes
-static int32_t ir_key_code_ordered(pbio_button_flags_t b1, pbio_button_flags_t b2) {
-    // Check all combinations with one button
-    if (b1 == 0 && b2 == 0) {
-        return 0;
-    }
-    if (b1 == PBIO_BUTTON_LEFT_UP && b2 == 0) {
-        return 1;
-    }
-    if (b1 == PBIO_BUTTON_LEFT_DOWN && b2 == 0) {
-        return 2;
-    }
-    if (b1 == PBIO_BUTTON_RIGHT_UP && b2 == 0) {
-        return 3;
-    }
-    if (b1 == PBIO_BUTTON_RIGHT_DOWN && b2 == 0) {
-        return 4;
-    }
-
-    // Check all combinations with two buttons
-    if (b1 == 0 && b2 == 0) {
-        return 5;
-    }
-    if (b1 == PBIO_BUTTON_LEFT_UP && b2 == PBIO_BUTTON_RIGHT_UP) {
-        return 6;
-    }
-    if (b1 == PBIO_BUTTON_LEFT_UP && b2 == PBIO_BUTTON_RIGHT_DOWN) {
-        return 7;
-    }
-    if (b1 == PBIO_BUTTON_LEFT_UP && b2 == PBIO_BUTTON_RIGHT_DOWN) {
-        return 8;
-    }
-    if (b1 == PBIO_BUTTON_LEFT_DOWN && b2 == PBIO_BUTTON_LEFT_UP) {
-        return 10;
-    }
-    if (b1 == PBIO_BUTTON_RIGHT_UP && b2 == PBIO_BUTTON_RIGHT_DOWN) {
-        return 11;
-    }
-
-    // Check beacon
-    if (b1 == PBIO_BUTTON_UP && b2 == 0) {
-        return 9;
-    }
-    // Not found so return -1
-    return -1;
-}
-
-static int32_t ir_key_code(pbio_button_flags_t b1, pbio_button_flags_t b2) {
-
-    // Get the code for buttons in order b1/b2
-    int32_t code = ir_key_code_ordered(b1, b2);
-    
-    // If not found, try again with opposite order
-    if (code == -1) {
-        code = ir_key_code_ordered(b2, b1);
-    }
-
-    // If still not found, then the arguments are not right
-    if (code == -1) {
-        pb_assert(PBIO_ERROR_INVALID_ARG);
-    }
-    return code;
-}
-
 // pybricks.pupdevices.ColorDistanceSensor.remote
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_remote(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -174,20 +109,23 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_remote(size_t n_args, const mp_ob
     }
 
     // Get individual button codes
-    pbio_button_flags_t b1, b2;
+    pbio_button_flags_t b1, b2, btn;
     b1 = button_1 == mp_const_none ? 0 : pb_type_enum_get_value(button_1, &pb_enum_type_Button);
     b2 = button_2 == mp_const_none ? 0 : pb_type_enum_get_value(button_2, &pb_enum_type_Button);
 
-    // Both the same means just one button is pressed
-    if (b1 == b2) {
-        b2 = 0;
-    }
+    // Full button mask
+    btn = b1 | b2;
 
-    // TX value is key combination code (0--11) plus channel offset
-    int32_t tx = ir_key_code(b1, b2) + 16 + ((ch - 1) >> 8);
+    // Power Functions 1.0 "Combo Direct Mode" without checksum
+    int32_t message = ((btn & PBIO_BUTTON_LEFT_UP)    != 0) << 0 |
+                      ((btn & PBIO_BUTTON_LEFT_DOWN)  != 0) << 1 |
+                      ((btn & PBIO_BUTTON_RIGHT_UP)   != 0) << 2 |
+                      ((btn & PBIO_BUTTON_RIGHT_DOWN) != 0) << 3 |
+                                                        (1) << 4 |
+                                                   (ch - 1) << 8;
 
     // Send the data to the device
-    pbdevice_set_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &tx, 1);
+    pbdevice_set_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &message, 1);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorDistanceSensor_remote_obj, 0, pupdevices_ColorDistanceSensor_remote);
