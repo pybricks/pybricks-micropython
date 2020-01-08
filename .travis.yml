@@ -38,6 +38,7 @@ jobs:
         - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
         - cd ../..
       script:
+        - export CFLAGS_EXTRA="-DPYBRICKS_VERSION_MAJOR=0 -DPYBRICKS_VERSION_MINOR=0 -DPYBRICKS_VERSION_MICRO=0 -DPYBRICKS_VERSION_LEVEL_HEX=0xA -DPYBRICKS_VERSION_LEVEL_STR=\\\"alpha\\\" -DPYBRICKS_VERSION_SERIAL=0 -DPYBRICKS_HEXVERSION=0x020000A0"
         - make ${MAKEOPTS} -C mpy-cross
         - make ${MAKEOPTS} -C ports/unix deplibs
         - make ${MAKEOPTS} -C ports/unix coverage
