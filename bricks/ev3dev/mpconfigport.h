@@ -358,3 +358,5 @@ void mp_unix_mark_exec(void);
 // For debugging purposes, make printf() available to any source file.
 #include <stdio.h>
 #endif
+
+#include "../pybricks_config.h"

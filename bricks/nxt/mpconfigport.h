@@ -155,3 +155,5 @@ extern const struct _mp_obj_module_t pb_module_nxtdevices;
 
 #define MICROPY_PORT_ROOT_POINTERS \
     const char *readline_hist[8];
+
+#include "../pybricks_config.h"

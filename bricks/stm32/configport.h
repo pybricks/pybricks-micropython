@@ -191,3 +191,5 @@ static inline mp_uint_t disable_irq(void) {
 
 #define MICROPY_PORT_ROOT_POINTERS \
     const char *readline_hist[8];
+
+#include "../pybricks_config.h"

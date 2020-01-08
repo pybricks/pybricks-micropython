@@ -136,3 +136,5 @@ typedef long mp_off_t;
 #else
 #include <alloca.h>
 #endif
+
+#include "../pybricks_config.h"
