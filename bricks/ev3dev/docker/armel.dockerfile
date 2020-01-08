@@ -3,6 +3,7 @@ RUN sudo apt-get update && \
     DEBIAN_FRONTEND=noninteractive sudo apt-get install --yes --no-install-recommends \
         build-essential \
         ev3dev-mocks \
+        git \
         libasound2-dev:armel \
         libasound2-plugin-ev3dev:armel \
         libffi-dev:armel \
