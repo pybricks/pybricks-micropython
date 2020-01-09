@@ -6,7 +6,10 @@ RUN sudo apt-get update && \
         git \
         libasound2-dev:armel \
         libasound2-plugin-ev3dev:armel \
+        libc6-dbg \
         libffi-dev:armel \
+        libglib2.0-0-dbg \
+        libgrx-3.0-2-dbg:armel \
         libgrx-3.0-dev:armel \
         libi2c-dev \
         libmagickwand-6.q16-3:armel \
