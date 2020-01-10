@@ -47,7 +47,6 @@ EV3Brick class tables
 */
 STATIC const mp_rom_map_elem_t hubs_EV3Brick_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_buttons),     MP_ROM_PTR(&pb_module_buttons)      },
-    { MP_ROM_QSTR(MP_QSTR_Port),        MP_ROM_PTR(&pb_enum_type_Port)      },
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)      },
     { MP_ROM_QSTR(MP_QSTR_screen),      MP_ROM_ATTRIBUTE_OFFSET(hubs_EV3Brick_obj_t, screen)  },
     { MP_ROM_QSTR(MP_QSTR_speaker),     MP_ROM_ATTRIBUTE_OFFSET(hubs_EV3Brick_obj_t, speaker) },
@@ -86,7 +85,6 @@ STATIC mp_obj_t hubs_MoveHub_make_new(const mp_obj_type_t *type, size_t n_args, 
 MoveHub class tables
 */
 STATIC const mp_rom_map_elem_t hubs_MoveHub_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_Port),        MP_ROM_PTR(&pb_enum_type_Port)    },
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)    },
     { MP_ROM_QSTR(MP_QSTR_shutdown),    MP_ROM_PTR(&hub_shutdown_obj)     },
     { MP_ROM_QSTR(MP_QSTR_reboot),      MP_ROM_PTR(&hub_reboot_obj)       },
@@ -126,7 +124,6 @@ STATIC mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, 
 CityHub class tables
 */
 STATIC const mp_rom_map_elem_t hubs_CityHub_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_Port),        MP_ROM_PTR(&pb_enum_type_Port)    },
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)    },
     { MP_ROM_QSTR(MP_QSTR_shutdown),    MP_ROM_PTR(&hub_shutdown_obj)     },
     { MP_ROM_QSTR(MP_QSTR_reboot),      MP_ROM_PTR(&hub_reboot_obj)       },
@@ -166,7 +163,6 @@ STATIC mp_obj_t hubs_CPlusHub_make_new(const mp_obj_type_t *type, size_t n_args,
 CPlusHub class tables
 */
 STATIC const mp_rom_map_elem_t hubs_CPlusHub_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_Port),        MP_ROM_PTR(&pb_enum_type_Port)    },
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)    },
     { MP_ROM_QSTR(MP_QSTR_shutdown),    MP_ROM_PTR(&hub_shutdown_obj)     },
     { MP_ROM_QSTR(MP_QSTR_reboot),      MP_ROM_PTR(&hub_reboot_obj)       },
@@ -201,7 +197,6 @@ STATIC mp_obj_t hubs_NXTBrick_make_new(const mp_obj_type_t *type, size_t n_args,
 NXTBrick class tables
 */
 STATIC const mp_rom_map_elem_t hubs_NXTBrick_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_Port),        MP_ROM_PTR(&pb_enum_type_Port)    },
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)    },
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_NXTBrick_locals_dict, hubs_NXTBrick_locals_dict_table);
