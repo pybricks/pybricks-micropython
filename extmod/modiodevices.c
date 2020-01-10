@@ -126,7 +126,6 @@ STATIC MP_DEFINE_CONST_DICT(iodevices_LUMPDevice_locals_dict, iodevices_LUMPDevi
 // type(pybricks.iodevices.LUMPDevice)
 STATIC const mp_obj_type_t iodevices_LUMPDevice_type = {
     { &mp_type_type },
-    .name = MP_QSTR_LUMPDevice,
     .make_new = iodevices_LUMPDevice_make_new,
     .locals_dict = (mp_obj_dict_t*)&iodevices_LUMPDevice_locals_dict,
 };
@@ -534,12 +533,15 @@ STATIC const mp_obj_type_t iodevices_UARTDevice_type = {
 // dir(pybricks.iodevices)
 STATIC const mp_rom_map_elem_t iodevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_iodevices)              },
+#if PYBRICKS_PY_PUPDEVICES
     { MP_ROM_QSTR(MP_QSTR_LUMPDevice),       MP_ROM_PTR(&iodevices_LUMPDevice_type)      },
+#endif // PYBRICKS_PY_PUPDEVICES
 #if PYBRICKS_PY_EV3DEVICES
     { MP_ROM_QSTR(MP_QSTR_AnalogSensor),     MP_ROM_PTR(&iodevices_AnalogSensor_type)    },
     { MP_ROM_QSTR(MP_QSTR_I2CDevice),        MP_ROM_PTR(&iodevices_I2CDevice_type   )    },
     { MP_ROM_QSTR(MP_QSTR_UARTDevice),       MP_ROM_PTR(&iodevices_UARTDevice_type  )    },
     { MP_ROM_QSTR(MP_QSTR_DCMotor),          MP_ROM_PTR(&motor_DCMotor_type)             },
+    { MP_ROM_QSTR(MP_QSTR_Ev3devSensor),     MP_ROM_PTR(&iodevices_LUMPDevice_type)      },
 #endif // PYBRICKS_PY_EV3DEVICES 
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_iodevices_globals, iodevices_globals_table);
