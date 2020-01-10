@@ -5,9 +5,11 @@
 
 #if PBDRV_CONFIG_BUTTON_LINUX_EV3
 
-#include <linux/input.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <unistd.h>
+
+#include <linux/input.h>
 
 #include <pbio/button.h>
 #include <pbio/config.h>
@@ -17,6 +19,9 @@ static uint8_t f_btn = -1; // Button file descriptor
 
 void _pbdrv_button_init(void) {
     f_btn = open("/dev/input/by-path/platform-gpio_keys-event", O_RDONLY);
+    if (f_btn == -1) {
+        perror("Failed to init buttons");
+    }
 }
 
 #if PBIO_CONFIG_ENABLE_DEINIT
