@@ -204,14 +204,15 @@ jobs:
         - pyenv shell 3.6
         - sudo apt-add-repository --update --yes ppa:ev3dev/tools
         - sudo apt-get install --no-install-recommends --yes
+          alsa-utils
+          espeak
+          ev3dev-media
           ev3dev-mocks
-          libasound2-dev
           libasound2-plugin-ev3dev
           libffi-dev
           libgrx-3.0-dev
           libi2c-dev
           libmagickwand-6.q16-3
-          libsndfile1-dev
           libudev-dev
           libumockdev0
           pkg-config

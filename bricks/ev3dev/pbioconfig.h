@@ -7,6 +7,4 @@
 
 #define PBIO_CONFIG_SERIAL                  (1)
 
-#define PBIO_CONFIG_SOUND                   (1)
-
 #define PBIO_CONFIG_TACHO                   (1)

@@ -144,12 +144,6 @@ CFLAGS_MOD += -DPB_HAVE_LIBI2C=1
 LDFLAGS_MOD += -li2c
 endif
 
-# for sound
-CFLAGS_MOD += $(shell pkg-config alsa --cflags)
-LDFLAGS_MOD += $(shell pkg-config alsa --libs)
-CFLAGS_MOD += $(shell pkg-config sndfile --cflags)
-LDFLAGS_MOD += $(shell pkg-config sndfile --libs)
-
 # source files
 SRC_C = $(addprefix ports/unix/,\
 	main.c \
@@ -176,6 +170,7 @@ PYBRICKS_SRC_C += \
 	ev3dev_mphal.c \
 	pb_type_ev3dev_font.c \
 	pb_type_ev3dev_image.c \
+	pb_type_ev3dev_speaker.c \
 	pbinit.c \
 	pbsmbus.c \
 	pbdevice.c \
@@ -228,10 +223,8 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	pbio/drv/button/button_linux_ev3.c \
 	pbio/drv/counter/counter_core.c \
 	pbio/drv/counter/counter_ev3dev_stretch_iio.c \
-	pbio/drv/ev3dev_stretch/beep.c \
 	pbio/drv/ev3dev_stretch/light.c \
 	pbio/drv/ev3dev_stretch/motor.c \
-	pbio/drv/ev3dev_stretch/pcm.c \
 	pbio/drv/ev3dev_stretch/serial.c \
 	pbio/drv/ioport/ioport_ev3dev_stretch.c \
 	pbio/platform/ev3dev_stretch/clock.c \

@@ -1,11 +1,15 @@
 FROM ev3dev/debian-stretch-cross
 RUN sudo apt-get update && \
     DEBIAN_FRONTEND=noninteractive sudo apt-get install --yes --no-install-recommends \
+        alsa-utils \
         build-essential \
+        espeak \
+        ev3dev-media \
         ev3dev-mocks \
         git \
-        libasound2-dev:armel \
+        libasound2-plugin-ev3dev \
         libasound2-plugin-ev3dev:armel \
+        libasound2:armel \
         libc6-dbg \
         libffi-dev:armel \
         libglib2.0-0-dbg \
@@ -13,7 +17,7 @@ RUN sudo apt-get update && \
         libgrx-3.0-dev:armel \
         libi2c-dev \
         libmagickwand-6.q16-3:armel \
-        libsndfile1-dev:armel \
+        libsndfile1:armel \
         libudev-dev:armel \
         libumockdev0:armel \
         pkg-config \
