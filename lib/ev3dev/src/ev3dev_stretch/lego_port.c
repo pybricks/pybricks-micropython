@@ -27,6 +27,9 @@ typedef enum {
     EV3_UART,
     OTHER_UART,
     RAW,
+    TACHO_MOTOR,
+    DC_MOTOR,
+    LED,
 } ev3dev_lego_port_t;
 
 static const char* const port_modes[] = {
@@ -38,7 +41,10 @@ static const char* const port_modes[] = {
     "ev3-analog",
     "ev3-uart",
     "other-uart",
-    "raw"
+    "raw",
+    "tacho-motor",
+    "dc-motor",
+    "led",
 };
 
 // Get the port mode
@@ -125,7 +131,9 @@ pbio_error_t ev3dev_lego_port_configure(pbio_port_t port, pbio_iodev_type_id_t i
     if ((id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR && mode_now == RAW       ) ||
         (id == PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG    && mode_now == NXT_ANALOG) ||
         (id == PBIO_IODEV_TYPE_ID_CUSTOM_I2C       && mode_now == OTHER_I2C ) ||
-        (id == PBIO_IODEV_TYPE_ID_CUSTOM_UART      && mode_now == OTHER_UART) ){
+        (id == PBIO_IODEV_TYPE_ID_CUSTOM_UART      && mode_now == OTHER_UART) ||
+        (id == PBIO_IODEV_TYPE_ID_EV3DEV_DC_MOTOR  && mode_now == DC_MOTOR)
+    ){
         return PBIO_SUCCESS;
     }
 
@@ -150,6 +158,12 @@ pbio_error_t ev3dev_lego_port_configure(pbio_port_t port, pbio_iodev_type_id_t i
     // For NXT 2.0 Color Sensor, port must be set to raw mode on first use
     if (id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
         err = ev3dev_lego_port_set_mode(port, RAW);
+        return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
+    }
+
+    // For DC Motors Sensor, port must be set to DC Motor on first use
+    if (id == PBIO_IODEV_TYPE_ID_EV3DEV_DC_MOTOR) {
+        err = ev3dev_lego_port_set_mode(port, DC_MOTOR);
         return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
     }
 
