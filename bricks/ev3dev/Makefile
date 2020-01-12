@@ -240,6 +240,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	contiki-core/sys/etimer.c \
 	contiki-core/sys/process.c \
 	contiki-core/sys/timer.c \
+	ev3dev/src/ev3dev_stretch/lego_port.c \
 	ev3dev/src/ev3dev_stretch/lego_sensor.c \
 	ev3dev/src/ev3dev_stretch/sysfs.c \
 	ev3dev/src/ev3dev_stretch/nxtcolor.c \

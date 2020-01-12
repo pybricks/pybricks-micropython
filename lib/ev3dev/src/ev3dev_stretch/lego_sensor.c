@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <ev3dev_stretch/lego_port.h>
 #include <ev3dev_stretch/lego_sensor.h>
 #include <ev3dev_stretch/sysfs.h>
 
@@ -16,30 +17,6 @@
 #define MAX_PATH_LENGTH 60
 #define MAX_READ_LENGTH "60"
 #define BIN_DATA_SIZE   32 // size of bin_data sysfs attribute
-
-typedef enum {
-    AUTO,
-    NXT_ANALOG,
-    NXT_COLOR,
-    NXT_I2C,
-    OTHER_I2C,
-    EV3_ANALOG,
-    EV3_UART,
-    OTHER_UART,
-    RAW,
-} pbdrv_ev3dev_port_t;
-
-static const char* const port_modes[] = {
-    "auto",
-    "nxt-analog",
-    "nxt-color",
-    "nxt-i2c",
-    "other-i2c",
-    "ev3-analog",
-    "ev3-uart",
-    "other-uart",
-    "raw"
-};
 
 struct _lego_sensor_t {
     int n_sensor;
@@ -52,127 +29,6 @@ struct _lego_sensor_t {
     char modes[12][17];
     uint8_t bin_data[PBIO_IODEV_MAX_DATA_SIZE]  __attribute__((aligned(32)));
 };
-
-// Get the port mode
-static pbio_error_t ev3_sensor_get_port_mode(pbio_port_t port, pbdrv_ev3dev_port_t *port_mode) {
-    // Read lego-port number
-    int n_lport;
-    pbio_error_t err;
-    err = sysfs_get_number(port, "/sys/class/lego-port", &n_lport);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Get mode file path
-    char path[MAX_PATH_LENGTH];
-    snprintf(path, MAX_PATH_LENGTH, "/sys/class/lego-port/port%d/mode", n_lport);
-
-    // Open mode file for reading
-    char mode[12];
-    FILE *f_mode = fopen(path, "r");
-    if (f_mode == NULL) {
-        return PBIO_ERROR_IO;
-    }
-    // Read the current mode
-    if (fscanf(f_mode, "%" MAX_READ_LENGTH "s", mode) < 1) {
-        return PBIO_ERROR_IO;
-    }
-    // Close the mode file
-    if (fclose(f_mode) != 0) {
-        return PBIO_ERROR_IO;
-    }
-
-    // Find matching port mode string
-    for (int i = 0; i < PBIO_ARRAY_SIZE(port_modes); i++) {
-        if (!strcmp(mode, port_modes[i])) {
-            *port_mode = i;
-            return PBIO_SUCCESS;
-        }
-    }
-    return PBIO_ERROR_IO;
-}
-
-// Write the port mode without questions
-static pbio_error_t ev3_sensor_write_port_mode(pbio_port_t port, pbdrv_ev3dev_port_t mode) {
-
-    // Read lego-port number
-    int n_lport;
-    pbio_error_t err;
-    err = sysfs_get_number(port, "/sys/class/lego-port", &n_lport);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Mode file path
-    char p_mode[MAX_PATH_LENGTH];
-    snprintf(p_mode, MAX_PATH_LENGTH, "/sys/class/lego-port/port%d/mode", n_lport);
-    // Open mode file for writing
-    FILE *f_port_mode = fopen(p_mode, "w");
-    if (f_port_mode == NULL) {
-        return PBIO_ERROR_IO;
-    }
-    // Write mode
-    if (fprintf(f_port_mode, "%s", port_modes[mode]) != strlen(port_modes[mode])) {
-        return PBIO_ERROR_IO;
-    }
-    // Close the mode file
-    if (fclose(f_port_mode) != 0) {
-        return PBIO_ERROR_IO;
-    }
-    return PBIO_SUCCESS;
-}
-
-// Set port configuration for some devices
-static pbio_error_t ev3_sensor_configure_port(pbio_port_t port, pbio_iodev_type_id_t id) {
-
-    // Get the current port mode
-    pbio_error_t err;
-    pbdrv_ev3dev_port_t mode_now;
-    err = ev3_sensor_get_port_mode(port, &mode_now);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // If special modes have been set previously and they're still good, we're done.
-    if ((id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR && mode_now == RAW       ) ||
-        (id == PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG    && mode_now == NXT_ANALOG) ||
-        (id == PBIO_IODEV_TYPE_ID_CUSTOM_I2C       && mode_now == OTHER_I2C ) ||
-        (id == PBIO_IODEV_TYPE_ID_CUSTOM_UART      && mode_now == OTHER_UART) ){
-        return PBIO_SUCCESS;
-    }
-
-    // For Custom Analog Sensors, port must be set on first use
-    if (id == PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG) {
-        err = ev3_sensor_write_port_mode(port, NXT_ANALOG);
-        return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
-    }
-
-    // For Custom UART Sensors, port must be set on first use
-    if (id == PBIO_IODEV_TYPE_ID_CUSTOM_UART) {
-        err = ev3_sensor_write_port_mode(port, OTHER_UART);
-        return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
-    }
-
-    // For Custom I2C Sensors, port must be set on first use
-    if (id == PBIO_IODEV_TYPE_ID_CUSTOM_I2C) {
-        err = ev3_sensor_write_port_mode(port, OTHER_I2C);
-        return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
-    }
-
-    // For NXT 2.0 Color Sensor, port must be set to raw mode on first use
-    if (id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
-        err = ev3_sensor_write_port_mode(port, RAW);
-        return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
-    }
-
-    // For all other devices, the port should be in auto mode.
-    if (mode_now != AUTO) {
-        err = ev3_sensor_write_port_mode(port, AUTO);
-        return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
-    }
-    return PBIO_SUCCESS;
-}
-
 // Initialize an ev3dev sensor by opening the relevant sysfs attributes
 static pbio_error_t ev3_sensor_init(lego_sensor_t *sensor, pbio_port_t port) {
     pbio_error_t err;
@@ -304,7 +160,7 @@ pbio_error_t lego_sensor_get(lego_sensor_t **sensor, pbio_port_t port, pbio_iode
     pbio_error_t err;
 
     // Initialize port if needed for this ID
-    err = ev3_sensor_configure_port(port, valid_id);
+    err = ev3dev_lego_port_configure(port, valid_id);
     if (err != PBIO_SUCCESS) {
         return err;
     }
