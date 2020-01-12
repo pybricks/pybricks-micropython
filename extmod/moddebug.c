@@ -67,7 +67,7 @@ STATIC mp_obj_t debug_uart_read(mp_obj_t id_obj, mp_obj_t size_obj) {
         while (pbdrv_uart_read_end(uart_dev) == PBIO_ERROR_AGAIN) {
             MICROPY_VM_HOOK_LOOP
         }
-        nlr_raise(nlr.ret_val);
+        nlr_jump(nlr.ret_val);
     }
     return mp_obj_new_bytearray_by_ref(size, buf);
 }
@@ -94,7 +94,7 @@ STATIC mp_obj_t debug_uart_write(mp_obj_t id_obj, mp_obj_t bytes_obj) {
         while (pbdrv_uart_write_end(uart_dev) == PBIO_ERROR_AGAIN) {
             MICROPY_VM_HOOK_LOOP
         }
-        nlr_raise(nlr.ret_val);
+        nlr_jump(nlr.ret_val);
     }
     return mp_const_none;
 }
