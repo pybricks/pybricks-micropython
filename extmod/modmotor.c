@@ -55,7 +55,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
         motor_DCMotor_obj_t *dc_self = m_new_obj(motor_DCMotor_obj_t);
         dc_self->base.type = (mp_obj_type_t*) type;
         pb_thread_enter();
-        err = pbio_hbridge_get(port_arg, &dc_self->hbridge, direction_arg);
+        err = pbio_dcmotor_get(port_arg, &dc_self->dcmotor, direction_arg);
         pb_thread_exit();
         pb_assert(err);
         return MP_OBJ_FROM_PTR(dc_self);
@@ -120,17 +120,17 @@ void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
 
     bool is_servo = mp_obj_is_type(self_in, &motor_Motor_type);
 
-    // Get the hbridge from self, which is either Motor or DCMotor
-    pbio_hbridge_t *hbridge = is_servo ?
-        ((motor_Motor_obj_t*) MP_OBJ_TO_PTR(self_in))->srv->hbridge :
-        ((motor_DCMotor_obj_t*) MP_OBJ_TO_PTR(self_in))->hbridge;
+    // Get the dcmotor from self, which is either Motor or DCMotor
+    pbio_dcmotor_t *dcmotor = is_servo ?
+        ((motor_Motor_obj_t*) MP_OBJ_TO_PTR(self_in))->srv->dcmotor :
+        ((motor_DCMotor_obj_t*) MP_OBJ_TO_PTR(self_in))->dcmotor;
 
     pbio_port_t port;
     pbio_direction_t direction;
     int32_t stall_duty, duty_offset;
     pb_thread_enter();
-    err = pbio_hbridge_get_settings(hbridge, &direction, &stall_duty, &duty_offset);
-    port = hbridge->port;
+    err = pbio_dcmotor_get_settings(dcmotor,  &direction, &stall_duty, &duty_offset);
+    port = dcmotor->port;
     pb_thread_exit();
     pb_assert(err);
 
@@ -241,7 +241,7 @@ STATIC mp_obj_t motor_Motor_duty(size_t n_args, const mp_obj_t *pos_args, mp_map
     }
     else {
         motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-        err = pbio_hbridge_set_duty_cycle_usr(self->hbridge, duty_cycle);
+        err = pbio_dcmotor_set_duty_cycle_usr(self->dcmotor, duty_cycle);
     }
     
     pb_thread_exit();
@@ -367,10 +367,10 @@ STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *pos_args, mp_map
     else {
         motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
         if (after_stop == PBIO_ACTUATION_COAST) {
-            err = pbio_hbridge_coast(self->hbridge);
+            err = pbio_dcmotor_coast(self->dcmotor);
         }
         else if (after_stop == PBIO_ACTUATION_BRAKE) {
-            err = pbio_hbridge_coast(self->hbridge);
+            err = pbio_dcmotor_coast(self->dcmotor);
         }
         else {
             // DCMotors do not support hold
@@ -442,8 +442,8 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
     pb_thread_enter();
 
     if (override_duty_limit) {
-        pbio_hbridge_get_settings(self->srv->hbridge, &direction, &old_stall_duty, &old_duty_offset);
-        pbio_hbridge_set_settings(self->srv->hbridge, temporary_stall_duty, old_duty_offset);
+        pbio_dcmotor_get_settings(self->srv->dcmotor, &direction, &old_stall_duty, &old_duty_offset);
+        pbio_dcmotor_set_settings(self->srv->dcmotor, temporary_stall_duty, old_duty_offset);
     }
 
     // Call pbio with parsed user/default arguments
@@ -465,7 +465,7 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
 
     if (override_duty_limit) {
         // Return stall settings to old values if they were changed
-        pbio_hbridge_set_settings(self->srv->hbridge, old_stall_duty, old_duty_offset);
+        pbio_dcmotor_set_settings(self->srv->dcmotor, old_stall_duty, old_duty_offset);
     }
 
     pb_thread_exit();
@@ -597,10 +597,10 @@ STATIC mp_obj_t motor_Motor_set_dc_settings(size_t n_args, const mp_obj_t *pos_a
         PB_ARG_DEFAULT_NONE(duty_offset)
     );
 
-    // Get the hbridge from self, which is either Motor or DCMotor
-    pbio_hbridge_t *hbridge = mp_obj_is_type(pos_args[0], &motor_Motor_type) ?
-        ((motor_Motor_obj_t*) MP_OBJ_TO_PTR(pos_args[0]))->srv->hbridge :
-        ((motor_DCMotor_obj_t*) MP_OBJ_TO_PTR(pos_args[0]))->hbridge;
+    // Get the dcmotor from self, which is either Motor or DCMotor
+    pbio_dcmotor_t *dcmotor = mp_obj_is_type(pos_args[0], &motor_Motor_type) ?
+        ((motor_Motor_obj_t*) MP_OBJ_TO_PTR(pos_args[0]))->srv->dcmotor :
+        ((motor_DCMotor_obj_t*) MP_OBJ_TO_PTR(pos_args[0]))->dcmotor;
 
     // Load original values
     pbio_error_t err;
@@ -609,7 +609,7 @@ STATIC mp_obj_t motor_Motor_set_dc_settings(size_t n_args, const mp_obj_t *pos_a
     int32_t duty_offset_pct;
 
     pb_thread_enter();
-    err = pbio_hbridge_get_settings(hbridge, &direction, &stall_torque_limit_pct, &duty_offset_pct);
+    err = pbio_dcmotor_get_settings(dcmotor,  &direction, &stall_torque_limit_pct, &duty_offset_pct);
     pb_thread_exit();
 
     // Set values if given by the user
@@ -618,7 +618,7 @@ STATIC mp_obj_t motor_Motor_set_dc_settings(size_t n_args, const mp_obj_t *pos_a
 
     // Write resulting values
     pb_thread_enter();
-    err = pbio_hbridge_set_settings(hbridge, stall_torque_limit_pct, duty_offset_pct);
+    err = pbio_dcmotor_set_settings(dcmotor,  stall_torque_limit_pct, duty_offset_pct);
     pb_thread_exit();
 
     pb_assert(err);

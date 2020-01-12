@@ -92,7 +92,7 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     pbio_error_t err;
 
     // Get, coast, and configure dc motor
-    err = pbio_hbridge_get(srv->port, &srv->hbridge, direction);
+    err = pbio_dcmotor_get(srv->port, &srv->dcmotor, direction);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -110,7 +110,7 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     int32_t stall_speed_limit;
     int32_t stall_time;
 
-    err = pbio_config_get_defaults_servo(srv->hbridge->id, &counts_per_degree,
+    err = pbio_config_get_defaults_servo(srv->dcmotor->id, &counts_per_degree,
                                         &max_speed, &acceleration,
                                         &pid_kp, &pid_ki, &pid_kd, &tight_loop_time,
                                         &position_tolerance, &speed_tolerance, &stall_speed_limit, &stall_time);
@@ -246,7 +246,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     }
     // In all other cases, stop the ongoing maneuver by coasting and then reset the angle
     else {
-        err = pbio_hbridge_coast(srv->hbridge);
+        err = pbio_dcmotor_coast(srv->dcmotor);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -281,18 +281,18 @@ static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actua
     switch (actuation_type)
     {
     case PBIO_ACTUATION_COAST:
-        err = pbio_hbridge_coast(srv->hbridge);
+        err = pbio_dcmotor_coast(srv->dcmotor);
         srv->state = PBIO_SERVO_STATE_PASSIVE;
         break;
     case PBIO_ACTUATION_BRAKE:
-        err = pbio_hbridge_brake(srv->hbridge);
+        err = pbio_dcmotor_brake(srv->dcmotor);
         srv->state = PBIO_SERVO_STATE_PASSIVE;
         break;
     case PBIO_ACTUATION_HOLD:
         err = pbio_servo_track_target(srv, pbio_math_div_i32_fix16(control, srv->tacho->counts_per_output_unit));
         break;
     case PBIO_ACTUATION_DUTY:
-        err = pbio_hbridge_set_duty_cycle_sys(srv->hbridge, control);
+        err = pbio_dcmotor_set_duty_cycle_sys(srv->dcmotor, control);
         break;
     }
 
@@ -365,7 +365,7 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     if (srv->state == PBIO_SERVO_STATE_PASSIVE) {
         // No control, but still log state data
         pbio_passivity_t state;
-        err = pbio_hbridge_get_state(srv->hbridge, &state, &control);
+        err = pbio_dcmotor_get_state(srv->dcmotor, &state, &control);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -466,7 +466,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
 
 pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps) {
     srv->state = PBIO_SERVO_STATE_PASSIVE;
-    return pbio_hbridge_set_duty_cycle_usr(srv->hbridge, duty_steps);
+    return pbio_dcmotor_set_duty_cycle_usr(srv->dcmotor, duty_steps);
 }
 
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {

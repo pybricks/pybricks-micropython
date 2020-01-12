@@ -67,11 +67,11 @@ static pbio_error_t drivebase_actuate(pbio_drivebase_t *db, int32_t sum_control,
     int32_t sum_duty = 4*(sum_control*100)/pbio_math_mul_i32_fix16(100, db->sum_per_mm);
     int32_t dif_duty = 4*(dif_control*100)/pbio_math_mul_i32_fix16(100, db->dif_per_deg);
 
-    err = pbio_hbridge_set_duty_cycle_sys(db->left->hbridge, sum_duty + dif_duty);
+    err = pbio_dcmotor_set_duty_cycle_sys(db->left->dcmotor, sum_duty + dif_duty);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_hbridge_set_duty_cycle_sys(db->right->hbridge, sum_duty - dif_duty);
+    err = pbio_dcmotor_set_duty_cycle_sys(db->right->dcmotor, sum_duty - dif_duty);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -192,11 +192,11 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
     switch (after_stop) {
         case PBIO_ACTUATION_COAST:
             // Stop by coasting
-            err = pbio_hbridge_coast(db->left->hbridge);
+            err = pbio_dcmotor_coast(db->left->dcmotor);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
-            err = pbio_hbridge_coast(db->right->hbridge);
+            err = pbio_dcmotor_coast(db->right->dcmotor);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
@@ -204,11 +204,11 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
             return PBIO_SUCCESS;
         case PBIO_ACTUATION_BRAKE:
             // Stop by braking
-            err = pbio_hbridge_brake(db->left->hbridge);
+            err = pbio_dcmotor_brake(db->left->dcmotor);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
-            err = pbio_hbridge_brake(db->right->hbridge);
+            err = pbio_dcmotor_brake(db->right->dcmotor);
             if (err != PBIO_SUCCESS) {
                 return err;
             }

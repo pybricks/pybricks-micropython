@@ -16,7 +16,7 @@
 
 #include <pbio/error.h>
 #include <pbio/port.h>
-#include <pbio/hbridge.h>
+#include <pbio/dcmotor.h>
 #include <pbio/tacho.h>
 #include <pbio/trajectory.h>
 #include <pbio/control.h>
@@ -42,7 +42,7 @@ typedef enum {
 
 typedef struct _pbio_servo_t {
     bool connected;
-    pbio_hbridge_t *hbridge;
+    pbio_dcmotor_t *dcmotor;
     pbio_tacho_t *tacho;
     pbio_servo_state_t state;
     pbio_control_t control;

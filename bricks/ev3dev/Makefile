@@ -262,7 +262,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
 	pbio/src/control.c \
 	pbio/src/drivebase.c \
 	pbio/src/error.c \
-	pbio/src/hbridge.c \
+	pbio/src/dcmotor.c \
 	pbio/src/light.c \
 	pbio/src/logger.c \
 	pbio/src/main.c \

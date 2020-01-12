@@ -11,7 +11,7 @@
 
 #include <pbio/config.h>
 #include <pbdrv/counter.h>
-#include <pbio/hbridge.h>
+#include <pbio/dcmotor.h>
 
 typedef struct _pbio_tacho_t {
     pbio_direction_t direction;

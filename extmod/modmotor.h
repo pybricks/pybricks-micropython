@@ -19,7 +19,7 @@ const mp_obj_type_t motor_Motor_type;
 // pybricks.builtins.DCMotor class object
 typedef struct _motor_DCMotor_obj_t {
     mp_obj_base_t base;
-    pbio_hbridge_t *hbridge;
+    pbio_dcmotor_t *dcmotor;
 } motor_DCMotor_obj_t;
 
 const mp_obj_type_t motor_DCMotor_type;
