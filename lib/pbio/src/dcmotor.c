@@ -16,7 +16,7 @@
 
 static pbio_dcmotor_t dcmotors[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-static pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_port_t port, pbio_direction_t direction) {
+static pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction) {
 
     pbio_error_t err;
 
@@ -27,14 +27,13 @@ static pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_port_t port
     }
 
     // Get device ID to ensure we are dealing with a supported device
-    err = pbdrv_motor_get_id(port, &dcmotor->id);
+    err = pbdrv_motor_get_id(dcmotor->port, &dcmotor->id);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Set direction and state
     dcmotor->direction = direction;
-    dcmotor->port = port;
     dcmotor->state = PBIO_DCMOTOR_COAST;
 
     // Set duty scaling and offsets
@@ -49,9 +48,10 @@ pbio_error_t pbio_dcmotor_get(pbio_port_t port, pbio_dcmotor_t **dcmotor, pbio_d
 
     // Get pointer to dcmotor
     *dcmotor = &dcmotors[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
+    (*dcmotor)->port = port;
 
     // Initialize and set up pwm properties
-    return pbio_dcmotor_setup(*dcmotor, port, direction);
+    return pbio_dcmotor_setup(*dcmotor, direction);
 }
 
 pbio_error_t pbio_dcmotor_set_settings(pbio_dcmotor_t *dcmotor, int32_t stall_torque_limit_pct, int32_t duty_offset_pct) {
