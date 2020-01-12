@@ -20,6 +20,12 @@ static pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_port_t port
 
     pbio_error_t err;
 
+    // Coast the device
+    err = pbio_dcmotor_coast(dcmotor);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     // Get device ID to ensure we are dealing with a supported device
     err = pbdrv_motor_get_id(port, &dcmotor->id);
     if (err != PBIO_SUCCESS) {
@@ -32,12 +38,7 @@ static pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_port_t port
     dcmotor->state = PBIO_DCMOTOR_COAST;
 
     // Set duty scaling and offsets
-    err = pbio_dcmotor_set_settings(dcmotor,  100, 0);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    return pbio_dcmotor_coast(dcmotor);
+    return pbio_dcmotor_set_settings(dcmotor,  100, 0);
 }
 
 pbio_error_t pbio_dcmotor_get(pbio_port_t port, pbio_dcmotor_t **dcmotor, pbio_direction_t direction) {
