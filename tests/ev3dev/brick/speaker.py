@@ -128,3 +128,27 @@ ev3.speaker.say('hi')
 
 # keyword argument OK
 ev3.speaker.say(text='hi')
+
+
+# set_volume method
+
+# Requires one argument
+try:
+    ev3.speaker.set_volume()
+except TypeError as ex:
+    print(ex)
+
+# one argument OK
+ev3.speaker.set_volume(0)
+
+# two arguments OK
+ev3.speaker.set_volume(0, 'Beep')
+
+# keyword argument OK
+ev3.speaker.set_volume(volume=0, which='Beep')
+
+# only certain values allowed for which=
+try:
+    ev3.speaker.set_volume(0, 'bad')
+except ValueError as ex:
+    print(ex)

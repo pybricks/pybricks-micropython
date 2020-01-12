@@ -11,3 +11,5 @@ notes iter error
 Playing file failed: bad: No such file or directory
 
 'text' argument required
+'volume' argument required
+which must be one of '_all_', 'Beep', 'PCM'

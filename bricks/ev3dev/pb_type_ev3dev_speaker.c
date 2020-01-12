@@ -16,6 +16,7 @@
 #include <fcntl.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <linux/input.h>
 #include <sys/stat.h>
@@ -61,6 +62,20 @@ STATIC mp_obj_t ev3dev_Speaker_make_new(const mp_obj_type_t *type, size_t n_args
         if (self->beep_fd == -1) {
             perror("Failed to open input dev for sound, beep will not work");
         }
+
+        nlr_buf_t nlr;
+        if (nlr_push(&nlr) == 0) {
+            mp_obj_t dest[4];
+            mp_load_method(self, MP_QSTR_set_volume, dest);
+            dest[2] = MP_OBJ_NEW_SMALL_INT(100);
+            dest[3] = MP_ROM_QSTR(MP_QSTR__default_);
+            mp_call_method_n_kw(2, 0, dest);
+            nlr_pop();
+        }
+        else {
+            // ignore error
+        }
+
         self->intialized = true;
     }
     return MP_OBJ_FROM_PTR(self);
@@ -541,11 +556,84 @@ STATIC mp_obj_t ev3dev_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_m
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_say_obj, 1, ev3dev_Speaker_say);
 
+STATIC mp_obj_t ev3dev_Speaker_set_volume(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        ev3dev_Speaker_obj_t, self,
+        PB_ARG_REQUIRED(volume),
+        PB_ARG_DEFAULT_QSTR(which, _all_)
+    );
+
+    (void)self; // unused
+
+    mp_int_t volume_ = pb_obj_get_int(volume);
+    const char *which_ = mp_obj_str_get_str(which);
+
+    if (volume_ > 100) {
+        volume_ = 100;
+    }
+    else if (volume_ < 0) {
+        volume_ = 0;
+    }
+
+    // EV3 sound driver uses 0-256 for volume
+    volume_ = 256 * volume_ / 100;
+
+    char amixer_stdin[32];
+
+    if (strcmp(which_, "_default_") == 0) {
+        // internal value to set sane defaults (PCM 70%, Beep 30%). volume parameter is ignored.
+        snprintf(amixer_stdin, sizeof(amixer_stdin), "sset PCM 179 \nsset Beep 77\n");
+    }
+    else if (strcmp(which_, "_all_") == 0) {
+        snprintf(amixer_stdin, sizeof(amixer_stdin), "sset PCM " INT_FMT " \nsset Beep " INT_FMT "\n",
+            volume_, volume_);
+    }
+    else if (strcmp(which_, "Beep") == 0) {
+        snprintf(amixer_stdin, sizeof(amixer_stdin), "sset Beep " INT_FMT "\n", volume_);
+    }
+    else if (strcmp(which_, "PCM") == 0) {
+        snprintf(amixer_stdin, sizeof(amixer_stdin), "sset PCM " INT_FMT "\n", volume_);
+    }
+    else {
+        // Note: '_default_' isn't listed since it is considered an internal option
+        mp_raise_ValueError("which must be one of '_all_', 'Beep', 'PCM'");
+    }
+
+    GError *error = NULL;
+    GSubprocess *amixer = g_subprocess_new(
+        G_SUBPROCESS_FLAGS_STDIN_PIPE | G_SUBPROCESS_FLAGS_STDOUT_SILENCE | G_SUBPROCESS_FLAGS_STDERR_PIPE,
+        &error, "amixer", "-q", "--stdin", NULL);
+    if (!amixer) {
+        // This error is unexpected, so doesn't need to be "user-friendly"
+        mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_RuntimeError,
+            "Failed to spawn amixer: %s", error->message);
+        g_error_free(error);
+        nlr_raise(ex);
+    }
+    char *amixer_stderr = NULL;
+    if (!g_subprocess_communicate_utf8(amixer, amixer_stdin, NULL, NULL, &amixer_stderr, &error)) {
+        const char *msg = amixer_stderr == NULL ? error->message : amixer_stderr;
+        mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_RuntimeError,
+            "Failed to set volume: %s", msg);
+        g_free(amixer_stderr);
+        g_error_free(error);
+        g_object_unref(amixer);
+        nlr_raise(ex);
+    }
+
+    g_free(amixer_stderr);
+    g_object_unref(amixer);
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_set_volume_obj, 1, ev3dev_Speaker_set_volume);
+
 STATIC const mp_rom_map_elem_t ev3dev_Speaker_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_beep),        MP_ROM_PTR(&ev3dev_Speaker_beep_obj)        },
     { MP_ROM_QSTR(MP_QSTR_play_notes),  MP_ROM_PTR(&ev3dev_Speaker_play_notes_obj)  },
     { MP_ROM_QSTR(MP_QSTR_play_file),   MP_ROM_PTR(&ev3dev_Speaker_play_file_obj)   },
     { MP_ROM_QSTR(MP_QSTR_say),         MP_ROM_PTR(&ev3dev_Speaker_say_obj)         },
+    { MP_ROM_QSTR(MP_QSTR_set_volume),  MP_ROM_PTR(&ev3dev_Speaker_set_volume_obj)  },
 };
 STATIC MP_DEFINE_CONST_DICT(ev3dev_Speaker_locals_dict, ev3dev_Speaker_locals_dict_table);
 
