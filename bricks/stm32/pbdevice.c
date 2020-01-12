@@ -37,7 +37,7 @@ static void wait(pbio_error_t (*end)(pbio_iodev_t *), void (*cancel)(pbio_iodev_
         while (end(iodev) == PBIO_ERROR_AGAIN) {
             MICROPY_VM_HOOK_LOOP
         }
-        nlr_raise(nlr.ret_val);
+        nlr_jump(nlr.ret_val);
     }
 }
 
