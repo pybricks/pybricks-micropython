@@ -55,7 +55,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
         motor_DCMotor_obj_t *dc_self = m_new_obj(motor_DCMotor_obj_t);
         dc_self->base.type = (mp_obj_type_t*) type;
         pb_thread_enter();
-        err = pbio_hbridge_get(port_arg, &dc_self->hbridge, direction_arg, 0, 100);
+        err = pbio_hbridge_get(port_arg, &dc_self->hbridge, direction_arg);
         pb_thread_exit();
         pb_assert(err);
         return MP_OBJ_FROM_PTR(dc_self);

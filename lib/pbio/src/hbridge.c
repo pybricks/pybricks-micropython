@@ -16,7 +16,7 @@
 
 static pbio_hbridge_t hbridges[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-static pbio_error_t pbio_hbridge_setup(pbio_hbridge_t *hbridge, pbio_port_t port, pbio_direction_t direction, int32_t duty_offset, int32_t max_duty_steps) {
+static pbio_error_t pbio_hbridge_setup(pbio_hbridge_t *hbridge, pbio_port_t port, pbio_direction_t direction) {
 
     pbio_error_t err;
 
@@ -32,8 +32,7 @@ static pbio_error_t pbio_hbridge_setup(pbio_hbridge_t *hbridge, pbio_port_t port
     hbridge->state = PBIO_HBRIDGE_COAST;
 
     // Set duty scaling and offsets
-    err = pbio_hbridge_set_settings(hbridge, max_duty_steps, duty_offset);
-
+    err = pbio_hbridge_set_settings(hbridge, 100, 0);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -41,7 +40,7 @@ static pbio_error_t pbio_hbridge_setup(pbio_hbridge_t *hbridge, pbio_port_t port
     return pbio_hbridge_coast(hbridge);
 }
 
-pbio_error_t pbio_hbridge_get(pbio_port_t port, pbio_hbridge_t **hbridge, pbio_direction_t direction, int32_t duty_offset, int32_t max_duty_steps) {
+pbio_error_t pbio_hbridge_get(pbio_port_t port, pbio_hbridge_t **hbridge, pbio_direction_t direction) {
     // Validate port
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
         return PBIO_ERROR_INVALID_PORT;
@@ -51,7 +50,7 @@ pbio_error_t pbio_hbridge_get(pbio_port_t port, pbio_hbridge_t **hbridge, pbio_d
     *hbridge = &hbridges[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
 
     // Initialize and set up pwm properties
-    return pbio_hbridge_setup(*hbridge, port, direction, duty_offset, max_duty_steps);
+    return pbio_hbridge_setup(*hbridge, port, direction);
 }
 
 pbio_error_t pbio_hbridge_set_settings(pbio_hbridge_t *hbridge, int32_t stall_torque_limit_pct, int32_t duty_offset_pct) {

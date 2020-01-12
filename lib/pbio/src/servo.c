@@ -20,8 +20,6 @@
 // TODO: Generalize and move to config:
 pbio_error_t pbio_config_get_defaults_servo(pbio_iodev_type_id_t id,
                                     fix16_t *counts_per_degree,
-                                    int32_t *stall_torque_limit_pct,
-                                    int32_t *duty_offset_pct,
                                     int32_t *max_speed,
                                     int32_t *acceleration,
                                     int16_t *pid_kp,
@@ -34,10 +32,6 @@ pbio_error_t pbio_config_get_defaults_servo(pbio_iodev_type_id_t id,
                                     int32_t *stall_time) {
     // Default counts per degree
     *counts_per_degree = F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0);
-
-    // Default dc motor settings
-    *stall_torque_limit_pct = 100;
-    *duty_offset_pct = 0;
 
     // Default max target run speed
     switch (id) {
@@ -98,15 +92,13 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     pbio_error_t err;
 
     // Get, coast, and configure dc motor
-    err = pbio_hbridge_get(srv->port, &srv->hbridge, direction, 0, 100);
+    err = pbio_hbridge_get(srv->port, &srv->hbridge, direction);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Get default servo parameters
     fix16_t counts_per_degree;
-    int32_t stall_torque_limit_pct;
-    int32_t duty_offset_pct;
     int32_t max_speed;
     int32_t acceleration;
     int16_t pid_kp;
@@ -119,7 +111,6 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     int32_t stall_time;
 
     err = pbio_config_get_defaults_servo(srv->hbridge->id, &counts_per_degree,
-                                        &stall_torque_limit_pct, &duty_offset_pct,
                                         &max_speed, &acceleration,
                                         &pid_kp, &pid_ki, &pid_kd, &tight_loop_time,
                                         &position_tolerance, &speed_tolerance, &stall_speed_limit, &stall_time);
@@ -137,10 +128,6 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     srv->control.is_done_func = pbio_control_always_done; // FIXME: merge state and done func
 
     // Set default settings for this device
-    err = pbio_hbridge_set_settings(srv->hbridge, stall_torque_limit_pct, duty_offset_pct);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
     err = pbio_servo_set_run_settings(srv, pbio_math_div_i32_fix16(max_speed, srv->tacho->counts_per_output_unit),
                                            pbio_math_div_i32_fix16(acceleration, srv->tacho->counts_per_output_unit));
     if (err != PBIO_SUCCESS) {
