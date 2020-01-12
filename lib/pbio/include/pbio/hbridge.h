@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include <pbio/config.h>
+#include <pbio/iodev.h>
 #include <pbio/port.h>
 
 typedef enum {
@@ -28,6 +29,7 @@ typedef enum {
 
 typedef struct _pbio_hbridge_t {
     pbio_port_t port;
+    pbio_iodev_type_id_t id;
     pbio_direction_t direction;
     int32_t duty_offset;
     int32_t max_duty_steps;
