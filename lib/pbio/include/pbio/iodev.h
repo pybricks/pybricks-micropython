@@ -155,10 +155,6 @@ typedef enum {
      * Little endian 32-bit floating point.
      */
     PBIO_IODEV_DATA_TYPE_FLOAT = LUMP_DATA_TYPE_DATAF,
-    /**
-     * Unsigned 8-bit integer.
-     */
-    PBIO_IODEV_DATA_TYPE_UINT8,
 } pbio_iodev_data_type_t;
 
 /**

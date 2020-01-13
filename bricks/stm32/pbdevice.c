@@ -93,9 +93,6 @@ void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values) {
 
     for (uint8_t i = 0; i < len; i++) {
         switch (type) {
-            case PBIO_IODEV_DATA_TYPE_UINT8:
-                values[i] = *((uint8_t *)(data + i * 1));
-                break;
             case PBIO_IODEV_DATA_TYPE_INT8:
                 values[i] = *((int8_t *)(data + i * 1));
                 break;
