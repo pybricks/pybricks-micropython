@@ -20,12 +20,7 @@ void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values, uint8
 
 void pbdevice_set_power_supply(pbdevice_t *pbdev, bool on);
 
-void pbdevice_get_info(pbdevice_t *pbdev,
-                       pbio_port_t *port,
-                       pbio_iodev_type_id_t *id,
-                       uint8_t *mode,
-                       pbio_iodev_data_type_t *data_type,
-                       uint8_t *num_values);
+void pbdevice_get_info(pbdevice_t *pbdev, pbio_port_t *port, pbio_iodev_type_id_t *id, uint8_t *mode, uint8_t *num_values);
 
 void pbdevice_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color);
 

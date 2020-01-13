@@ -60,9 +60,8 @@ STATIC mp_obj_t iodevices_LUMPDevice_read(size_t n_args, const mp_obj_t *pos_arg
     pbio_port_t port;
     pbio_iodev_type_id_t id;
     uint8_t curr_mode;
-    pbio_iodev_data_type_t data_type;
     uint8_t num_values;
-    pbdevice_get_info(self->pbdev, &port, &id, &curr_mode, &data_type, &num_values);
+    pbdevice_get_info(self->pbdev, &port, &id, &curr_mode, &num_values);
 
     // Return as MicroPython objects
     for (uint8_t i = 0; i < num_values; i++) {
