@@ -24,6 +24,12 @@
 #include "pbkwarg.h"
 #include "pbthread.h"
 
+// FIXME: Delete me once port mode itegrated in motor init
+#if PYBRICKS_PY_EV3DEVICES
+#include <pbio/iodev.h>
+#include <ev3dev_stretch/lego_port.h>
+#endif
+
 /* Wait for maneuver to complete */
 
 // Must not be called while pybricks thread lock is held!
@@ -52,14 +58,32 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
 
     // Setup and return if type is DCMotor
     if (type != &motor_Motor_type) {
+
+        // FIXME: Delete me once port mode itegrated in motor init
+        #if PYBRICKS_PY_EV3DEVICES
+        while ((err = ev3dev_lego_port_configure(port_arg, PBIO_IODEV_TYPE_ID_EV3DEV_DC_MOTOR)) == PBIO_ERROR_AGAIN) {
+            mp_hal_delay_ms(1000);
+        }
+        pb_assert(err);
+        #endif
+
         motor_DCMotor_obj_t *dc_self = m_new_obj(motor_DCMotor_obj_t);
         dc_self->base.type = (mp_obj_type_t*) type;
         pb_thread_enter();
         err = pbio_dcmotor_get(port_arg, &dc_self->dcmotor, direction_arg);
         pb_thread_exit();
         pb_assert(err);
+
         return MP_OBJ_FROM_PTR(dc_self);
     }
+
+    // FIXME: Delete me once port mode itegrated in motor init
+    #if PYBRICKS_PY_EV3DEVICES
+    while ((err = ev3dev_lego_port_configure(port_arg, PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(1000);
+    }
+    pb_assert(err);
+    #endif
    
     // Proceed for a regular motor
     motor_Motor_obj_t *self = m_new_obj(motor_Motor_obj_t);
