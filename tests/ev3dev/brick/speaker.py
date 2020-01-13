@@ -152,3 +152,21 @@ try:
     ev3.speaker.set_volume(0, 'bad')
 except ValueError as ex:
     print(ex)
+
+
+# set_speech_options method
+
+# No required arguments (although this is noop)
+ev3.speaker.set_speech_options()
+
+# one argument is OK
+ev3.speaker.set_speech_options('en')
+
+# two options are OK
+ev3.speaker.set_speech_options('en', 100)
+
+# three options are OK
+ev3.speaker.set_speech_options('en', 100, 50)
+
+# keyword args are OK
+ev3.speaker.set_speech_options(voice='en', speed=100, pitch=50)

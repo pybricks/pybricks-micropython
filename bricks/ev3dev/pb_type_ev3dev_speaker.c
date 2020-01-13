@@ -40,6 +40,10 @@ typedef struct _ev3dev_Speaker_obj_t {
     mp_obj_base_t base;
     bool intialized;
     int beep_fd;
+    const char *voice;
+    mp_obj_t voice_obj;
+    char speed[8];
+    char pitch[8];
     gboolean aplay_busy;
     gboolean aplay_result;
     GError *aplay_error;
@@ -62,6 +66,9 @@ STATIC mp_obj_t ev3dev_Speaker_make_new(const mp_obj_type_t *type, size_t n_args
         if (self->beep_fd == -1) {
             perror("Failed to open input dev for sound, beep will not work");
         }
+        self->voice = "en";
+        strncpy(self->speed, "100", sizeof(self->speed));
+        strncpy(self->pitch, "50", sizeof(self->pitch));
 
         nlr_buf_t nlr;
         if (nlr_push(&nlr) == 0) {
@@ -451,7 +458,8 @@ STATIC mp_obj_t ev3dev_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_m
     GError *error = NULL;
     GSubprocess *espeak = g_subprocess_new(
         G_SUBPROCESS_FLAGS_STDOUT_PIPE | G_SUBPROCESS_FLAGS_STDERR_PIPE,
-        &error, "espeak", "-a", "200", "-s", "100", "-v", "en", "--stdout", text_, NULL);
+        &error, "espeak", "-a", "200", "-v", self->voice, "-s", self->speed,
+        "-p", self->pitch, "--stdout", text_, NULL);
     if (!espeak) {
         // This error is unexpected, so doesn't need to be "user-friendly"
         mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_RuntimeError,
@@ -556,6 +564,32 @@ STATIC mp_obj_t ev3dev_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_m
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_say_obj, 1, ev3dev_Speaker_say);
 
+STATIC mp_obj_t ev3dev_Speaker_set_speech_options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        ev3dev_Speaker_obj_t, self,
+        PB_ARG_DEFAULT_NONE(voice),
+        PB_ARG_DEFAULT_NONE(speed),
+        PB_ARG_DEFAULT_NONE(pitch)
+    );
+
+    if (voice != mp_const_none) {
+        self->voice = mp_obj_str_get_str(voice);
+        // Need to keep object from being garbage collected, otherwise pointer
+        // to string could become invalid. But we still want to call
+        // mp_obj_str_get_str() now for type checking.
+        self->voice_obj = voice;
+    }
+    if (speed != mp_const_none) {
+        snprintf(self->speed, sizeof(self->speed), INT_FMT, pb_obj_get_int(speed));
+    }
+    if (pitch != mp_const_none) {
+        snprintf(self->pitch, sizeof(self->pitch), INT_FMT, pb_obj_get_int(pitch));
+    }
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_set_speech_options_obj, 1, ev3dev_Speaker_set_speech_options);
+
 STATIC mp_obj_t ev3dev_Speaker_set_volume(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Speaker_obj_t, self,
@@ -629,11 +663,12 @@ STATIC mp_obj_t ev3dev_Speaker_set_volume(size_t n_args, const mp_obj_t *pos_arg
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_set_volume_obj, 1, ev3dev_Speaker_set_volume);
 
 STATIC const mp_rom_map_elem_t ev3dev_Speaker_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_beep),        MP_ROM_PTR(&ev3dev_Speaker_beep_obj)        },
-    { MP_ROM_QSTR(MP_QSTR_play_notes),  MP_ROM_PTR(&ev3dev_Speaker_play_notes_obj)  },
-    { MP_ROM_QSTR(MP_QSTR_play_file),   MP_ROM_PTR(&ev3dev_Speaker_play_file_obj)   },
-    { MP_ROM_QSTR(MP_QSTR_say),         MP_ROM_PTR(&ev3dev_Speaker_say_obj)         },
-    { MP_ROM_QSTR(MP_QSTR_set_volume),  MP_ROM_PTR(&ev3dev_Speaker_set_volume_obj)  },
+    { MP_ROM_QSTR(MP_QSTR_beep),                MP_ROM_PTR(&ev3dev_Speaker_beep_obj)                },
+    { MP_ROM_QSTR(MP_QSTR_play_notes),          MP_ROM_PTR(&ev3dev_Speaker_play_notes_obj)          },
+    { MP_ROM_QSTR(MP_QSTR_play_file),           MP_ROM_PTR(&ev3dev_Speaker_play_file_obj)           },
+    { MP_ROM_QSTR(MP_QSTR_say),                 MP_ROM_PTR(&ev3dev_Speaker_say_obj)                 },
+    { MP_ROM_QSTR(MP_QSTR_set_speech_options),  MP_ROM_PTR(&ev3dev_Speaker_set_speech_options_obj)  },
+    { MP_ROM_QSTR(MP_QSTR_set_volume),          MP_ROM_PTR(&ev3dev_Speaker_set_volume_obj)          },
 };
 STATIC MP_DEFINE_CONST_DICT(ev3dev_Speaker_locals_dict, ev3dev_Speaker_locals_dict_table);
 
