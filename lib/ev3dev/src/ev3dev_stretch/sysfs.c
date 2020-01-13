@@ -41,9 +41,17 @@ pbio_error_t sysfs_get_number(pbio_port_t port, const char *rdir, int *sysfs_num
             }
 
             // Get the port from the address file
-            fseek(f_address, 12, SEEK_SET);
-            pbio_port_t port_found = fgetc(f_address);
-            fclose(f_address);
+            char address[MAX_PATH_LENGTH];
+            int len;
+            
+            if (fscanf(f_address, "%" MAX_READ_LENGTH "s%n", address, &len) < 1) {
+                return PBIO_ERROR_IO;
+            }
+            
+            pbio_port_t port_found = address[len-1];
+            if (fclose(f_address) != 0) {
+                return PBIO_ERROR_IO;
+            }
 
             // If the port matches the requested port, get where it was found.
             if (port_found == port) {
