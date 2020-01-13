@@ -440,6 +440,8 @@ STATIC mp_obj_t ev3dev_Image_print(size_t n_args, const mp_obj_t *pos_args, mp_m
 
     clear_once(self);
     grx_set_current_context(self->context);
+    grx_text_options_set_fg_color(self->text_options, GRX_COLOR_BLACK);
+    grx_text_options_set_bg_color(self->text_options, GRX_COLOR_WHITE);
     GrxFont *font = grx_text_options_get_font(self->text_options);
     gint font_height = grx_font_get_height(font);
     gchar **lines = g_strsplit(vstr_null_terminated_str(&vstr), "\n", -1);
@@ -466,8 +468,12 @@ STATIC mp_obj_t ev3dev_Image_print(size_t n_args, const mp_obj_t *pos_args, mp_m
             }
             self->print_y -= over;
         }
+        gint w = grx_font_get_text_width(font, *l);
+        gint h = grx_font_get_text_height(font, *l);
+        grx_draw_filled_box(self->print_x, self->print_y,
+            self->print_x + w - 1, self->print_y + h - 1, GRX_COLOR_WHITE);
         grx_draw_text(*l, self->print_x, self->print_y, self->text_options);
-        self->print_x += grx_font_get_text_width(font, *l);
+        self->print_x += w;
     }
     g_strfreev(lines);
 
