@@ -39,7 +39,7 @@ struct _pbdevice_t {
     /**
      * Data type for current mode
      */
-    pbio_iodev_data_type_t data_type;
+    lego_sensor_data_type_t data_type;
     /**
      * Platform specific low-level device abstraction
      */
@@ -134,19 +134,19 @@ static pbio_error_t get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values)
 
     for (uint8_t i = 0; i < pbdev->data_len; i++) {
         switch (pbdev->data_type) {
-            case PBIO_IODEV_DATA_TYPE_UINT8:
+            case LEGO_SENSOR_DATA_TYPE_UINT8:
                 values[i] = *((uint8_t *)(data + i * 1));
                 break;
-            case PBIO_IODEV_DATA_TYPE_INT8:
+            case LEGO_SENSOR_DATA_TYPE_INT8:
                 values[i] = *((int8_t *)(data + i * 1));
                 break;
-            case PBIO_IODEV_DATA_TYPE_INT16:
+            case LEGO_SENSOR_DATA_TYPE_INT16:
                 values[i] = *((int16_t *)(data + i * 2));
                 break;
-            case PBIO_IODEV_DATA_TYPE_INT32:
+            case LEGO_SENSOR_DATA_TYPE_INT32:
                 values[i] = *((int32_t *)(data + i * 4));
                 break;
-            case PBIO_IODEV_DATA_TYPE_FLOAT:
+            case LEGO_SENSOR_DATA_TYPE_FLOAT:
                 *(float *)(values + i) = *((float *)(data + i * 4));
                 break;
             default:

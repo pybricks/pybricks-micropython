@@ -188,7 +188,7 @@ pbio_error_t lego_sensor_get(lego_sensor_t **sensor, pbio_port_t port, pbio_iode
 }
 
 // Get the device info
-pbio_error_t lego_sensor_get_info(lego_sensor_t *sensor, uint8_t *data_len, pbio_iodev_data_type_t *data_type) {
+pbio_error_t lego_sensor_get_info(lego_sensor_t *sensor, uint8_t *data_len, lego_sensor_data_type_t *data_type) {
 
     pbio_error_t err;
 
@@ -209,19 +209,19 @@ pbio_error_t lego_sensor_get_info(lego_sensor_t *sensor, uint8_t *data_len, pbio
 
     // Convert data type identifier
     if (!strcmp(s_data_type, "s8")) {
-        *data_type = PBIO_IODEV_DATA_TYPE_INT8;
+        *data_type = LEGO_SENSOR_DATA_TYPE_INT8;
     }
     else if (!strcmp(s_data_type, "u8")) {
-        *data_type = PBIO_IODEV_DATA_TYPE_UINT8;
+        *data_type = LEGO_SENSOR_DATA_TYPE_UINT8;
     }
     else if (!strcmp(s_data_type, "s16")) {
-        *data_type = PBIO_IODEV_DATA_TYPE_INT16;
+        *data_type = LEGO_SENSOR_DATA_TYPE_INT16;
     }
     else if (!strcmp(s_data_type, "s32")) {
-        *data_type = PBIO_IODEV_DATA_TYPE_INT32;
+        *data_type = LEGO_SENSOR_DATA_TYPE_INT32;
     }
     else if (!strcmp(s_data_type, "float")) {
-        *data_type = PBIO_IODEV_DATA_TYPE_FLOAT;
+        *data_type = LEGO_SENSOR_DATA_TYPE_FLOAT;
     }
     else {
         return PBIO_ERROR_FAILED;
