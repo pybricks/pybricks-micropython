@@ -131,6 +131,21 @@ img.draw_image(0, 0, img, color=None)
 img.draw_image(0, 0, img, color=Color.WHITE)
 
 
+# Test show_image()
+
+# one required argument, Image or str
+img.show_image(img)
+img.show_image(TEST_IMAGE)
+try:
+    img.show_image()
+except TypeError as ex:
+    print(ex)
+try:
+    img.show_image(0)
+except TypeError as ex:
+    print(ex)
+
+
 # Test draw_text()
 
 # three required arguments

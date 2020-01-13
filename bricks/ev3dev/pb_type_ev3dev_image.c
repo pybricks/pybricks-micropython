@@ -342,6 +342,34 @@ STATIC mp_obj_t ev3dev_Image_draw_image(size_t n_args, const mp_obj_t *pos_args,
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_image_obj, 1, ev3dev_Image_draw_image);
 
+STATIC mp_obj_t ev3dev_Image_show_image(mp_obj_t self_in, mp_obj_t source_in) {
+    ev3dev_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    if (mp_obj_is_str(source_in)) {
+        mp_obj_t args[1] = { source_in };
+        source_in = ev3dev_Image_make_new(&pb_type_ev3dev_Image, 1, 0, args);
+    }
+
+    if (!mp_obj_is_type(source_in, &pb_type_ev3dev_Image)) {
+        mp_raise_TypeError("source must be Image or str");
+    }
+
+    ev3dev_Image_obj_t *source = MP_OBJ_TO_PTR(source_in);
+
+    mp_obj_t x = mp_obj_new_int((mp_obj_get_int(self->width) - mp_obj_get_int(source->width)) / 2);
+    mp_obj_t y = mp_obj_new_int((mp_obj_get_int(self->height) - mp_obj_get_int(source->height)) / 2);
+
+    ev3dev_Image_clear(self_in);
+
+    mp_obj_t args[4] = { self_in, x, y, source_in };
+    mp_map_t kw_args;
+    mp_map_init(&kw_args, 0);
+    ev3dev_Image_draw_image(MP_ARRAY_SIZE(args), args, &kw_args);
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Image_show_image_obj, ev3dev_Image_show_image);
+
 STATIC mp_obj_t ev3dev_Image_draw_text(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Image_obj_t, self,
@@ -480,6 +508,7 @@ STATIC const mp_rom_map_elem_t ev3dev_Image_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_draw_box),    MP_ROM_PTR(&ev3dev_Image_draw_box_obj)                 },
     { MP_ROM_QSTR(MP_QSTR_draw_circle), MP_ROM_PTR(&ev3dev_Image_draw_circle_obj)              },
     { MP_ROM_QSTR(MP_QSTR_draw_image),  MP_ROM_PTR(&ev3dev_Image_draw_image_obj)               },
+    { MP_ROM_QSTR(MP_QSTR_show_image),  MP_ROM_PTR(&ev3dev_Image_show_image_obj)               },
     { MP_ROM_QSTR(MP_QSTR_draw_text),   MP_ROM_PTR(&ev3dev_Image_draw_text_obj)                },
     { MP_ROM_QSTR(MP_QSTR_set_font),    MP_ROM_PTR(&ev3dev_Image_set_font_obj)                 },
     { MP_ROM_QSTR(MP_QSTR_print),       MP_ROM_PTR(&ev3dev_Image_print_obj)                    },

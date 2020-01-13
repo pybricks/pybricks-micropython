@@ -4,4 +4,6 @@ Requires one argument
 160
 120
 function takes 2 positional arguments but 1 were given
+source must be Image or str
+function takes 2 positional arguments but 1 were given
 Failed to save image: Failed to open '/test.png'
