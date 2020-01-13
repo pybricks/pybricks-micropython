@@ -31,7 +31,6 @@
 
 /* Wait for maneuver to complete */
 
-// Must not be called while pybricks thread lock is held!
 STATIC void wait_for_completion(pbio_servo_t *srv) {
     while (srv->state == PBIO_SERVO_STATE_CONTROL_ANGLE || srv->state == PBIO_SERVO_STATE_CONTROL_TIMED) {
         mp_hal_delay_ms(10);
