@@ -6,4 +6,4 @@ from pybricks.tools import print, wait, StopWatch
 from pybricks.robotics import DriveBase
 from pybricks.resources import Font, Image
 from pybricks.media.ev3dev import SoundFile, ImageFile
-from pybricks.nxtdevices import TemperatureSensor
+from pybricks.nxtdevices import TemperatureSensor, EnergyMeter

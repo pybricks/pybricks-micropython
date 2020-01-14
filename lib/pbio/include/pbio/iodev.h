@@ -116,6 +116,7 @@ typedef enum {
     PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR             ,   /**< MINDSTORMS NXT Color Sensor */
     PBIO_IODEV_TYPE_ID_NXT_ULTRASONIC_SENSOR        ,   /**< MINDSTORMS NXT Ultrasonic Sensor */
     PBIO_IODEV_TYPE_ID_NXT_TEMPERATURE_SENSOR       ,   /**< MINDSTORMS NXT Ultrasonic Sensor */
+    PBIO_IODEV_TYPE_ID_NXT_ENERGY_METER             ,   /**< MINDSTORMS NXT Energy Meter */
 
     // EV3 Devices
     PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR             ,   /**< MINDSTORMS EV3 Touch Sensor */

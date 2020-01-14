@@ -389,6 +389,51 @@ STATIC const mp_obj_type_t nxtdevices_TemperatureSensor_type = {
     .locals_dict = (mp_obj_dict_t*)&nxtdevices_TemperatureSensor_locals_dict,
 };
 
+// pybricks.nxtdevices.EnergyMeter class object
+typedef struct _nxtdevices_EnergyMeter_obj_t {
+    mp_obj_base_t base;
+    pbdevice_t *pbdev;
+} nxtdevices_EnergyMeter_obj_t;
+
+// pybricks.nxtdevices.EnergyMeter.__init__
+STATIC mp_obj_t nxtdevices_EnergyMeter_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port)
+    );
+
+    nxtdevices_EnergyMeter_obj_t *self = m_new_obj(nxtdevices_EnergyMeter_obj_t);
+    self->base.type = (mp_obj_type_t*) type;
+
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+
+    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_ENERGY_METER);
+
+    return MP_OBJ_FROM_PTR(self);
+}
+
+// pybricks.nxtdevices.EnergyMeter.storage
+STATIC mp_obj_t nxtdevices_EnergyMeter_storage(mp_obj_t self_in) {
+    nxtdevices_EnergyMeter_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t all[7];
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ENERGY_METER_ALL, all);
+    return mp_obj_new_int(all[4]);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_EnergyMeter_storage_obj, nxtdevices_EnergyMeter_storage);
+
+// dir(pybricks.ev3devices.EnergyMeter)
+STATIC const mp_rom_map_elem_t nxtdevices_EnergyMeter_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_storage),    MP_ROM_PTR(&nxtdevices_EnergyMeter_storage_obj) },
+};
+STATIC MP_DEFINE_CONST_DICT(nxtdevices_EnergyMeter_locals_dict, nxtdevices_EnergyMeter_locals_dict_table);
+
+// type(pybricks.nxtdevices.EnergyMeter)
+STATIC const mp_obj_type_t nxtdevices_EnergyMeter_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_EnergyMeter,
+    .make_new = nxtdevices_EnergyMeter_make_new,
+    .locals_dict = (mp_obj_dict_t*)&nxtdevices_EnergyMeter_locals_dict,
+};
+
 #endif // PYBRICKS_HUB_EV3
 
 // dir(pybricks.nxtdevices)
@@ -403,6 +448,7 @@ STATIC const mp_rom_map_elem_t nxtdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_UltrasonicSensor), MP_ROM_PTR(&nxtdevices_UltrasonicSensor_type)},
     { MP_ROM_QSTR(MP_QSTR_ColorSensor),      MP_ROM_PTR(&nxtdevices_ColorSensor_type)     },
     { MP_ROM_QSTR(MP_QSTR_TemperatureSensor),MP_ROM_PTR(&nxtdevices_TemperatureSensor_type)},
+    { MP_ROM_QSTR(MP_QSTR_EnergyMeter),      MP_ROM_PTR(&nxtdevices_EnergyMeter_type)     },
 #endif
 };
 

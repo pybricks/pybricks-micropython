@@ -110,6 +110,11 @@ enum {
     PBIO_IODEV_MODE_NXT_TEMPERATURE_SENSOR_CELCIUS = 0,
 };
 
+// LEGO MINDSTORMS NXT Energy Meter
+enum {
+    PBIO_IODEV_MODE_NXT_ENERGY_METER_ALL           = 7,
+};
+
 // LEGO POWERED UP Color and Distance Sensor
 enum {
     PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__COLOR = 0,  // read 1x int8_t
