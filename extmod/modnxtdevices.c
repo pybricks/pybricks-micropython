@@ -366,38 +366,18 @@ STATIC mp_obj_t nxtdevices_TemperatureSensor_make_new(const mp_obj_type_t *type,
     return MP_OBJ_FROM_PTR(self);
 }
 
-static float nxtdevices_TemperatureSensor_read(pbdevice_t *pbdev) {
-    int32_t celcius_scaled;
-    pbdevice_get_values(pbdev, PBIO_IODEV_MODE_NXT_TEMPERATURE_SENSOR_CELCIUS, &celcius_scaled);
-    return (celcius_scaled >> 4)/16.0; 
-}
-
-// pybricks.nxtdevices.TemperatureSensor.celcius
-STATIC mp_obj_t nxtdevices_TemperatureSensor_celcius(mp_obj_t self_in) {
+// pybricks.nxtdevices.TemperatureSensor.temperature
+STATIC mp_obj_t nxtdevices_TemperatureSensor_temperature(mp_obj_t self_in) {
     nxtdevices_TemperatureSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return mp_obj_new_float(nxtdevices_TemperatureSensor_read(self->pbdev));
+    int32_t temperature_scaled;
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_TEMPERATURE_SENSOR_CELCIUS, &temperature_scaled);
+    return mp_obj_new_float((temperature_scaled >> 4)/16.0);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TemperatureSensor_celcius_obj, nxtdevices_TemperatureSensor_celcius);
-
-// pybricks.nxtdevices.TemperatureSensor.fahrenheit
-STATIC mp_obj_t nxtdevices_TemperatureSensor_fahrenheit(mp_obj_t self_in) {
-    nxtdevices_TemperatureSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return mp_obj_new_float(nxtdevices_TemperatureSensor_read(self->pbdev)*1.8+32);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TemperatureSensor_fahrenheit_obj, nxtdevices_TemperatureSensor_fahrenheit);
-
-// pybricks.nxtdevices.TemperatureSensor.kelvin
-STATIC mp_obj_t nxtdevices_TemperatureSensor_kelvin(mp_obj_t self_in) {
-    nxtdevices_TemperatureSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return mp_obj_new_float(nxtdevices_TemperatureSensor_read(self->pbdev)+273.15);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TemperatureSensor_kelvin_obj, nxtdevices_TemperatureSensor_kelvin);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TemperatureSensor_temperature_obj, nxtdevices_TemperatureSensor_temperature);
 
 // dir(pybricks.ev3devices.TemperatureSensor)
 STATIC const mp_rom_map_elem_t nxtdevices_TemperatureSensor_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_celcius),    MP_ROM_PTR(&nxtdevices_TemperatureSensor_celcius_obj    ) },
-    { MP_ROM_QSTR(MP_QSTR_fahrenheit), MP_ROM_PTR(&nxtdevices_TemperatureSensor_fahrenheit_obj ) },
-    { MP_ROM_QSTR(MP_QSTR_kelvin),     MP_ROM_PTR(&nxtdevices_TemperatureSensor_kelvin_obj     ) },
+    { MP_ROM_QSTR(MP_QSTR_temperature),    MP_ROM_PTR(&nxtdevices_TemperatureSensor_temperature_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(nxtdevices_TemperatureSensor_locals_dict, nxtdevices_TemperatureSensor_locals_dict_table);
 
