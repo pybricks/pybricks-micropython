@@ -49,8 +49,8 @@ img.draw_pixel(0, 0)
 img.draw_pixel(x=0, y=0)
 try:
     img.draw_pixel(0)
-except TypeError:
-    pass
+except TypeError as ex:
+    print(ex)
 
 # 3rd argument is kwarg
 img.draw_pixel(0, 0, Color.BLACK)
@@ -64,8 +64,8 @@ img.draw_line(0, 0, 0, 0)
 img.draw_line(x1=0, y1=0, x2=0, y2=0)
 try:
     img.draw_line(0, 0, 0)
-except TypeError:
-    pass
+except TypeError as ex:
+    print(ex)
 
 # 5rd argument is kwarg
 img.draw_line(0, 0, 0, 0, Color.BLACK)
@@ -79,8 +79,8 @@ img.draw_box(0, 0, 0, 0)
 img.draw_box(x1=0, y1=0, x2=0, y2=0)
 try:
     img.draw_box(0, 0, 0)
-except TypeError:
-    pass
+except TypeError as ex:
+    print(ex)
 
 # 5th argument is kwarg
 img.draw_box(0, 0, 0, 0, 0)
@@ -102,8 +102,8 @@ img.draw_circle(0, 0, 0)
 img.draw_circle(x=0, y=0, r=0)
 try:
     img.draw_circle(0, 0)
-except TypeError:
-    pass
+except TypeError as ex:
+    print(ex)
 
 # 4th argument is kwarg
 img.draw_circle(0, 0, 0, False)
@@ -121,8 +121,8 @@ img.draw_image(0, 0, img)
 img.draw_image(x=0, y=0, image=img)
 try:
     img.draw_image(0, 0)
-except TypeError:
-    pass
+except TypeError as ex:
+    print(ex)
 
 # 4th argument is kwarg and can be Color or None
 img.draw_image(0, 0, img, None)
@@ -153,8 +153,8 @@ img.draw_text(0, 0, '')
 img.draw_text(x=0, y=0, text='')
 try:
     img.draw_text(0, 0)
-except TypeError:
-    pass
+except TypeError as ex:
+    print(ex)
 
 # 4th argument is kwarg
 img.draw_text(0, 0, '', Color.BLACK)
@@ -167,8 +167,8 @@ img.draw_text(0, 0, '', color=Color.BLACK)
 img.set_font(Font.DEFAULT)
 try:
     img.set_font()
-except TypeError:
-    pass
+except TypeError as ex:
+    print(ex)
 
 
 # Test print()

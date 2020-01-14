@@ -3,7 +3,14 @@
 11 11
 160
 120
+'y' argument required
+'y2' argument required
+'y2' argument required
+'r' argument required
+'image' argument required
 function takes 2 positional arguments but 1 were given
 source must be Image or str
+'text' argument required
+function takes 2 positional arguments but 1 were given
 function takes 2 positional arguments but 1 were given
 Failed to save image: Failed to open '/test.png'
