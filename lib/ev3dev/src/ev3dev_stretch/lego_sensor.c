@@ -220,6 +220,9 @@ pbio_error_t lego_sensor_get_info(lego_sensor_t *sensor, uint8_t *data_len, lego
     else if (!strcmp(s_data_type, "s32")) {
         *data_type = LEGO_SENSOR_DATA_TYPE_INT32;
     }
+    else if (!strcmp(s_data_type, "s16_be")) {
+        *data_type = LEGO_SENSOR_DATA_TYPE_INT16_BE;
+    }
     else if (!strcmp(s_data_type, "float")) {
         *data_type = LEGO_SENSOR_DATA_TYPE_FLOAT;
     }

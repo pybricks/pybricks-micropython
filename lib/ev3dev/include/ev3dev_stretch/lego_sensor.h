@@ -33,6 +33,10 @@ typedef enum {
      * Unsigned 8-bit integer.
      */
     LEGO_SENSOR_DATA_TYPE_UINT8,
+    /**
+     * Big-endian, signed 16-bit integer.
+     */
+    LEGO_SENSOR_DATA_TYPE_INT16_BE,
 } lego_sensor_data_type_t;
 
 typedef struct _lego_sensor_t lego_sensor_t;
