@@ -1,7 +1,7 @@
 
 from pybricks.hubs import EV3Brick
 from pybricks.parameters import Color
-from pybricks.resources import Font
+from pybricks.media.ev3dev import Font
 
 ev3 = EV3Brick()
 

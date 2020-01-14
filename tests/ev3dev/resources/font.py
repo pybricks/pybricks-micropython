@@ -1,4 +1,4 @@
-from pybricks.resources import Font
+from pybricks.media.ev3dev import Font
 
 print(Font.DEFAULT.family)
 print(Font.DEFAULT.style)

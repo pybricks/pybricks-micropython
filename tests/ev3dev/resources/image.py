@@ -1,7 +1,7 @@
 import uos
 
 from pybricks.parameters import Color
-from pybricks.resources import Font, Image
+from pybricks.media.ev3dev import Font, Image
 
 # Working directory is top-level tests directory
 TEST_IMAGE = '../ports/pybricks/tests/ev3dev/resources/test.png'

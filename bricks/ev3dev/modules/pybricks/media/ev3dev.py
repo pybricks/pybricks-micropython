@@ -1,3 +1,6 @@
+from media_ev3dev_c import Font, Image
+
+
 class SoundFile():
     _BASE_PATH = '/usr/share/sounds/ev3dev/'
     SHOUTING = _BASE_PATH + 'expressions/shouting.wav'
