@@ -40,15 +40,12 @@ pbio_error_t sysfs_get_number(pbio_port_t port, const char *rdir, int *sysfs_num
                 return PBIO_ERROR_IO;
             }
 
-            // Get the port from the address file
-            char address[MAX_PATH_LENGTH];
-            int len;
-            
-            if (fscanf(f_address, "%" MAX_READ_LENGTH "s%n", address, &len) < 1) {
+            char port_char;
+            if (fscanf(f_address, "ev3-ports:%*[a-z]%c", &port_char) < 1) {
                 return PBIO_ERROR_IO;
             }
-            
-            pbio_port_t port_found = address[len-1];
+            pbio_port_t port_found = port_char;
+
             if (fclose(f_address) != 0) {
                 return PBIO_ERROR_IO;
             }
