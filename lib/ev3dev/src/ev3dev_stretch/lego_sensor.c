@@ -114,6 +114,9 @@ static pbio_error_t ev3_sensor_get_id(lego_sensor_t *sensor, pbio_iodev_type_id_
     else if (!strcmp(driver_name, "lego-nxt-light")) {
         *id = PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR;
     }
+    else if (!strcmp(driver_name, "lego-nxt-temp")) {
+        *id = PBIO_IODEV_TYPE_ID_NXT_TEMPERATURE_SENSOR;
+    }
     else {
         *id = PBIO_IODEV_TYPE_ID_NONE;
     }

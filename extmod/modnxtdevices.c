@@ -344,6 +344,71 @@ STATIC const mp_obj_type_t nxtdevices_ColorSensor_type = {
     .locals_dict = (mp_obj_dict_t*)&nxtdevices_ColorSensor_locals_dict,
 };
 
+// pybricks.nxtdevices.TemperatureSensor class object
+typedef struct _nxtdevices_TemperatureSensor_obj_t {
+    mp_obj_base_t base;
+    pbdevice_t *pbdev;
+} nxtdevices_TemperatureSensor_obj_t;
+
+// pybricks.nxtdevices.TemperatureSensor.__init__
+STATIC mp_obj_t nxtdevices_TemperatureSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port)
+    );
+
+    nxtdevices_TemperatureSensor_obj_t *self = m_new_obj(nxtdevices_TemperatureSensor_obj_t);
+    self->base.type = (mp_obj_type_t*) type;
+
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+
+    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_TEMPERATURE_SENSOR);
+
+    return MP_OBJ_FROM_PTR(self);
+}
+
+static float nxtdevices_TemperatureSensor_read(pbdevice_t *pbdev) {
+    int32_t celcius_scaled;
+    pbdevice_get_values(pbdev, PBIO_IODEV_MODE_NXT_TEMPERATURE_SENSOR_CELCIUS, &celcius_scaled);
+    return (celcius_scaled >> 4)/16.0; 
+}
+
+// pybricks.nxtdevices.TemperatureSensor.celcius
+STATIC mp_obj_t nxtdevices_TemperatureSensor_celcius(mp_obj_t self_in) {
+    nxtdevices_TemperatureSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    return mp_obj_new_float(nxtdevices_TemperatureSensor_read(self->pbdev));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TemperatureSensor_celcius_obj, nxtdevices_TemperatureSensor_celcius);
+
+// pybricks.nxtdevices.TemperatureSensor.fahrenheit
+STATIC mp_obj_t nxtdevices_TemperatureSensor_fahrenheit(mp_obj_t self_in) {
+    nxtdevices_TemperatureSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    return mp_obj_new_float(nxtdevices_TemperatureSensor_read(self->pbdev)*1.8+32);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TemperatureSensor_fahrenheit_obj, nxtdevices_TemperatureSensor_fahrenheit);
+
+// pybricks.nxtdevices.TemperatureSensor.kelvin
+STATIC mp_obj_t nxtdevices_TemperatureSensor_kelvin(mp_obj_t self_in) {
+    nxtdevices_TemperatureSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    return mp_obj_new_float(nxtdevices_TemperatureSensor_read(self->pbdev)+273.15);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TemperatureSensor_kelvin_obj, nxtdevices_TemperatureSensor_kelvin);
+
+// dir(pybricks.ev3devices.TemperatureSensor)
+STATIC const mp_rom_map_elem_t nxtdevices_TemperatureSensor_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_celcius),    MP_ROM_PTR(&nxtdevices_TemperatureSensor_celcius_obj    ) },
+    { MP_ROM_QSTR(MP_QSTR_fahrenheit), MP_ROM_PTR(&nxtdevices_TemperatureSensor_fahrenheit_obj ) },
+    { MP_ROM_QSTR(MP_QSTR_kelvin),     MP_ROM_PTR(&nxtdevices_TemperatureSensor_kelvin_obj     ) },
+};
+STATIC MP_DEFINE_CONST_DICT(nxtdevices_TemperatureSensor_locals_dict, nxtdevices_TemperatureSensor_locals_dict_table);
+
+// type(pybricks.nxtdevices.TemperatureSensor)
+STATIC const mp_obj_type_t nxtdevices_TemperatureSensor_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_TemperatureSensor,
+    .make_new = nxtdevices_TemperatureSensor_make_new,
+    .locals_dict = (mp_obj_dict_t*)&nxtdevices_TemperatureSensor_locals_dict,
+};
+
 #endif // PYBRICKS_HUB_EV3
 
 // dir(pybricks.nxtdevices)
@@ -357,6 +422,7 @@ STATIC const mp_rom_map_elem_t nxtdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_LightSensor),      MP_ROM_PTR(&nxtdevices_LightSensor_type)     },
     { MP_ROM_QSTR(MP_QSTR_UltrasonicSensor), MP_ROM_PTR(&nxtdevices_UltrasonicSensor_type)},
     { MP_ROM_QSTR(MP_QSTR_ColorSensor),      MP_ROM_PTR(&nxtdevices_ColorSensor_type)     },
+    { MP_ROM_QSTR(MP_QSTR_TemperatureSensor),MP_ROM_PTR(&nxtdevices_TemperatureSensor_type)},
 #endif
 };
 
