@@ -163,10 +163,13 @@ ev3.speaker.set_speech_options()
 ev3.speaker.set_speech_options('en')
 
 # two options are OK
-ev3.speaker.set_speech_options('en', 100)
+ev3.speaker.set_speech_options('en', 'f1')
 
 # three options are OK
-ev3.speaker.set_speech_options('en', 100, 50)
+ev3.speaker.set_speech_options('en', 'f1', 100)
+
+# four options are OK
+ev3.speaker.set_speech_options('en', 'f1', 100, 50)
 
 # keyword args are OK
-ev3.speaker.set_speech_options(voice='en', speed=100, pitch=50)
+ev3.speaker.set_speech_options(language='en', voice='f1', speed=100, pitch=50)
