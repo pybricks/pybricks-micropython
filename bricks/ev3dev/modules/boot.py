@@ -4,6 +4,5 @@ from pybricks.iodevices import I2CDevice, UARTDevice, AnalogSensor, DCMotor, Ev3
 from pybricks.parameters import Port, Stop, Direction, Button, Color, Align
 from pybricks.tools import print, wait, StopWatch
 from pybricks.robotics import DriveBase
-from pybricks.resources import Font, Image
 from pybricks.media.ev3dev import Font, Image, ImageFile, SoundFile
 from pybricks.nxtdevices import TemperatureSensor, EnergyMeter
