@@ -69,7 +69,7 @@ STATIC mp_obj_t ev3dev_Speaker_make_new(const mp_obj_type_t *type, size_t n_args
         }
         strncpy(self->language, "en", sizeof(self->language));
         strncpy(self->voice, "m1", sizeof(self->voice));
-        strncpy(self->speed, "100", sizeof(self->speed));
+        strncpy(self->speed, "130", sizeof(self->speed));
         strncpy(self->pitch, "50", sizeof(self->pitch));
 
         nlr_buf_t nlr;
