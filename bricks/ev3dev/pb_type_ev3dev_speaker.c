@@ -40,8 +40,9 @@ typedef struct _ev3dev_Speaker_obj_t {
     mp_obj_base_t base;
     bool intialized;
     int beep_fd;
-    const char *voice;
-    mp_obj_t voice_obj;
+    char language[10];
+    char voice[10];
+    char voice_setting[21];
     char speed[8];
     char pitch[8];
     gboolean aplay_busy;
@@ -66,7 +67,8 @@ STATIC mp_obj_t ev3dev_Speaker_make_new(const mp_obj_type_t *type, size_t n_args
         if (self->beep_fd == -1) {
             perror("Failed to open input dev for sound, beep will not work");
         }
-        self->voice = "en";
+        strncpy(self->language, "en", sizeof(self->language));
+        strncpy(self->voice, "m1", sizeof(self->voice));
         strncpy(self->speed, "100", sizeof(self->speed));
         strncpy(self->pitch, "50", sizeof(self->pitch));
 
@@ -458,7 +460,7 @@ STATIC mp_obj_t ev3dev_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_m
     GError *error = NULL;
     GSubprocess *espeak = g_subprocess_new(
         G_SUBPROCESS_FLAGS_STDOUT_PIPE | G_SUBPROCESS_FLAGS_STDERR_PIPE,
-        &error, "espeak", "-a", "200", "-v", self->voice, "-s", self->speed,
+        &error, "espeak", "-a", "200", "-v", self->voice_setting, "-s", self->speed,
         "-p", self->pitch, "--stdout", text_, NULL);
     if (!espeak) {
         // This error is unexpected, so doesn't need to be "user-friendly"
@@ -567,18 +569,20 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Speaker_say_obj, 1, ev3dev_Speaker_say)
 STATIC mp_obj_t ev3dev_Speaker_set_speech_options(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Speaker_obj_t, self,
+        PB_ARG_DEFAULT_NONE(language),
         PB_ARG_DEFAULT_NONE(voice),
         PB_ARG_DEFAULT_NONE(speed),
         PB_ARG_DEFAULT_NONE(pitch)
     );
 
-    if (voice != mp_const_none) {
-        self->voice = mp_obj_str_get_str(voice);
-        // Need to keep object from being garbage collected, otherwise pointer
-        // to string could become invalid. But we still want to call
-        // mp_obj_str_get_str() now for type checking.
-        self->voice_obj = voice;
+    if (language != mp_const_none) {
+        strncpy(self->language, mp_obj_str_get_str(language), sizeof(self->language));
     }
+    if (voice != mp_const_none) {
+        strncpy(self->voice, mp_obj_str_get_str(voice), sizeof(self->voice));
+    }
+    snprintf(self->voice_setting, sizeof(self->voice_setting), "%s+%s", self->language, self->voice);
+
     if (speed != mp_const_none) {
         snprintf(self->speed, sizeof(self->speed), INT_FMT, pb_obj_get_int(speed));
     }
