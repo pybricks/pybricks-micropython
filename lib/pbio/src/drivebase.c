@@ -265,10 +265,9 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t t
     db->control_heading.is_done_func = pbio_control_never_done;
 
     // FIXME: add resume capability
-    bool resume;
 
     pbio_trajectory_t *heading_traj = &db->control_heading.trajectory;
-    err = pbio_trajectory_make_time_based_patched(
+    err = pbio_trajectory_make_time_based(
         heading_traj,
         true,
         time_now,
@@ -277,8 +276,7 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t t
         dif_rate,
         pbio_math_mul_i32_fix16(turn_rate, db->dif_per_deg),
         db->control_heading.settings.max_rate,
-        db->control_heading.settings.abs_acceleration,
-        &resume);
+        db->control_heading.settings.abs_acceleration);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -287,7 +285,7 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t t
     db->control_distance.is_done_func = pbio_control_never_done;
 
     pbio_trajectory_t *distance_traj = &db->control_distance.trajectory;
-    err = pbio_trajectory_make_time_based_patched(
+    err = pbio_trajectory_make_time_based(
         distance_traj,
         true,
         time_now,
@@ -296,8 +294,7 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t t
         sum_rate,
         pbio_math_mul_i32_fix16(speed, db->sum_per_mm),
         db->control_distance.settings.max_rate,
-        db->control_distance.settings.abs_acceleration,
-        &resume);
+        db->control_distance.settings.abs_acceleration);
     if (err != PBIO_SUCCESS) {
         return err;
     }

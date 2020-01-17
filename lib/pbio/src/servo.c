@@ -509,10 +509,8 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
     srv->control.after_stop = after_stop;
     srv->control.is_done_func = run_time_is_done_func;
 
-    bool resume;
-
     // Compute new maneuver based on user argument, starting from the initial state
-    err = pbio_trajectory_make_time_based_patched(
+    err = pbio_trajectory_make_time_based(
         &srv->control.trajectory,
         false,
         time_start,
@@ -521,8 +519,7 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
         rate_start,
         pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit),
         srv->control.settings.max_rate,
-        srv->control.settings.abs_acceleration,
-        &resume);
+        srv->control.settings.abs_acceleration);
     if (err != PBIO_SUCCESS) {
         return err;
     }
