@@ -330,8 +330,8 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, int32_t time_now, i
     buf[4] = control;
 
     // Log reference signals. These values are only meaningful for time based commands
-    int32_t count_ref, rate_ref, rate_err, rate_err_integral;
-    pbio_trajectory_get_reference(&srv->control.trajectory, time_now, &count_ref, &rate_ref);
+    int32_t count_ref, rate_ref, rate_err, rate_err_integral, acceleration_ref;
+    pbio_trajectory_get_reference(&srv->control.trajectory, time_now, &count_ref, &rate_ref, &acceleration_ref);
     pbio_rate_integrator_get_errors(&srv->control.rate_integrator, rate_now, rate_ref, count_now, count_ref, &rate_err, &rate_err_integral);
     buf[5] = count_ref;
     buf[6] = rate_err_integral;
@@ -408,6 +408,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     int32_t time_start;
     int32_t count_now, count_start;
     int32_t rate_now, rate_start;
+    int32_t acceleration_ref;
     pbio_error_t err;
     err = servo_get_state(srv, &time_start, &count_now, &rate_now);
     if (err != PBIO_SUCCESS) {
@@ -419,7 +420,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
 
     if (resume) {
         // If a maneuver is ongoing, we start from the current reference
-        pbio_trajectory_get_reference(&srv->control.trajectory, time_start, &count_start, &rate_start);
+        pbio_trajectory_get_reference(&srv->control.trajectory, time_start, &count_start, &rate_start, &acceleration_ref);
 
         // Pause and unpause the integrator. This saves the current state, so we can resume
         // with the newly activated trajectory. 

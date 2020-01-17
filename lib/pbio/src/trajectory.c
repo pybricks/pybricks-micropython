@@ -238,26 +238,29 @@ pbio_error_t pbio_trajectory_make_angle_based(pbio_trajectory_t *ref, int32_t t0
 }
 
 // Evaluate the reference speed and velocity at the (shifted) time
-void pbio_trajectory_get_reference(pbio_trajectory_t *traject, int32_t time_ref, int32_t *count_ref, int32_t *rate_ref){
-    // For RUN and RUN_STALLED, the end time is infinite, meaning that the reference signals do not have a deceleration phase
+void pbio_trajectory_get_reference(pbio_trajectory_t *traject, int32_t time_ref, int32_t *count_ref, int32_t *rate_ref, int32_t *acceleration_ref) {
     if (time_ref - traject->t1 < 0) {
         // If we are here, then we are still in the acceleration phase. Includes conversion from microseconds to seconds, in two steps to avoid overflows and round off errors
         *rate_ref = traject->w0   + timest(traject->a0, time_ref-traject->t0);
         *count_ref = traject->th0 + timest(traject->w0, time_ref-traject->t0) + timest2(traject->a0, time_ref-traject->t0);
+        *acceleration_ref = traject->a0;
     }
     else if (traject->forever || time_ref - traject->t2 <= 0) {
         // If we are here, then we are in the constant speed phase
         *rate_ref = traject->w1;
         *count_ref = traject->th1 + timest(traject->w1, time_ref-traject->t1);
+        *acceleration_ref = 0;
     }
     else if (time_ref - traject->t3 <= 0) {
         // If we are here, then we are in the deceleration phase
         *rate_ref = traject->w1 + timest(traject->a2,    time_ref-traject->t2);
         *count_ref = traject->th2  + timest(traject->w1, time_ref-traject->t2) + timest2(traject->a2, time_ref-traject->t2);
+        *acceleration_ref = traject->a2;
     }
     else {
         // If we are here, we are in the zero speed phase (relevant when holding position)
         *rate_ref = 0;
         *count_ref = traject->th3;
+        *acceleration_ref = 0;
     }
 }
