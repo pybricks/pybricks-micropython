@@ -415,47 +415,59 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
         return err;
     }
 
-    // Check if a timed maneuver is in progress so we can extend it
-    bool resume = srv->state == PBIO_SERVO_STATE_CONTROL_TIMED;
-
-    if (resume) {
-        // If a maneuver is ongoing, we start from the current reference
+    // Check if a maneuver is in progress so we can extend it
+    if (srv->state == PBIO_SERVO_STATE_CONTROL_TIMED || PBIO_SERVO_STATE_CONTROL_ANGLE) {
+        // If a maneuver is ongoing, we want to start from the current reference, maintaining continuity
         pbio_trajectory_get_reference(&srv->control.trajectory, time_start, &count_start, &rate_start, &acceleration_ref);
+    }
 
-        // Pause and unpause the integrator. This saves the current state, so we can resume
-        // with the newly activated trajectory. 
-        pbio_rate_integrator_pause(&srv->control.rate_integrator, time_start, count_now, count_start);
-        pbio_rate_integrator_resume(&srv->control.rate_integrator, time_start, count_now, count_start);
+    // If we are continuing a timed maneuver, we can try to patch the new command onto the existing one for better continuity
+    if (srv->state == PBIO_SERVO_STATE_CONTROL_TIMED) {
+        // Make the new trajectory and assess if it was patched
+        bool patch_success;
+        err = pbio_trajectory_make_time_based_patched(
+            &srv->control.trajectory,
+            true,
+            time_start,
+            time_start,
+            count_start,
+            rate_start,
+            pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit),
+            srv->control.settings.max_rate,
+            srv->control.settings.abs_acceleration,
+            &patch_success);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        // If we could not patch it, it is just a new nominal trajectory
+        // This means we must pause/resume the integrator to save its state.
+        if (!patch_success) {
+            pbio_rate_integrator_pause(&srv->control.rate_integrator, time_start, count_now, count_start);
+            pbio_rate_integrator_resume(&srv->control.rate_integrator, time_start, count_now, count_start);
+        }
     }
     else {
-        // Otherwise, start from the physical state
-        count_start = count_now;
-        rate_start = rate_now;
-        // Reset the integrator to a clean state
+        // If we came from a position based maneuver or no maneuver at all, we cannot patch and must make a new one.
+        err = pbio_trajectory_make_time_based(
+            &srv->control.trajectory,
+            true,
+            time_start,
+            time_start,
+            count_start,
+            rate_start,
+            pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit),
+            srv->control.settings.max_rate,
+            srv->control.settings.abs_acceleration);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        // For the new trajectory, reset the PID integrator to a clean state
         pbio_rate_integrator_reset(&srv->control.rate_integrator, time_start, count_now, count_start);
     }
 
-    // Set new maneuver action and stop type
+    // Set new maneuver action and stop type, and state
     srv->control.after_stop = PBIO_ACTUATION_COAST;
     srv->control.is_done_func = pbio_control_never_done;
-
-    // Compute new maneuver based on user argument, starting from the initial state
-    err = pbio_trajectory_make_time_based_patched(
-        &srv->control.trajectory,
-        true,
-        time_start,
-        time_start,
-        count_start,
-        rate_start,
-        pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit),
-        srv->control.settings.max_rate,
-        srv->control.settings.abs_acceleration,
-        &resume);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Run is always in the background
     srv->state = PBIO_SERVO_STATE_CONTROL_TIMED;
 
     // Run one control update synchronously with user command.
