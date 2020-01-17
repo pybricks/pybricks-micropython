@@ -47,13 +47,28 @@ void pbio_trajectory_make_stationary(pbio_trajectory_t *ref, int32_t t0, int32_t
     ref->forever = false;
 }
 
-pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *ref, int32_t t0, int32_t t3, int32_t th0, int32_t w0, int32_t wt, int32_t wmax, int32_t a) {
+pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t th0, int32_t w0, int32_t wt, int32_t wmax, int32_t a) {
 
     // Work with time intervals instead of absolute time. Read 'm' as '-'.
-    int32_t t3mt0 = t3-t0;
+    int32_t t3mt0;
     int32_t t3mt2;
     int32_t t2mt1;
     int32_t t1mt0;
+
+    // Duration of the maneuver
+    if (forever) {
+        // In case of forever, we set the duration to a fictitious 60 seconds.
+        t3mt0 = 60*US_PER_SECOND;
+        // This is an infinite maneuver. (This means we'll just ignore the deceleration
+        // phase when computing references later, so we keep going even after 60 seconds.)
+        ref->forever = true; 
+    }
+    else {
+        // Otherwise, the duration is just the end time minus start time
+        t3mt0 = t3-t0;
+        // This is a finite maneuver
+        ref->forever = false;
+    }
 
     // Return error for negative user-specified duration
     if (t3mt0 < 0) {
@@ -133,9 +148,6 @@ pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *ref, int32_t t0,
     if (backward) {
         reverse_trajectory(ref);
     }
-
-    // This is a finite maneuver
-    ref->forever = false;
 
     return PBIO_SUCCESS;
 }

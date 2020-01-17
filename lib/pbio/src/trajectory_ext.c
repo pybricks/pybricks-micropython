@@ -9,15 +9,7 @@
 #include <pbio/math.h>
 #include <pbio/trajectory.h>
 
-pbio_error_t pbio_trajectory_make_forever(pbio_trajectory_t *ref, int32_t t0, int32_t th0, int32_t w0, int32_t wt, int32_t wmax, int32_t a, bool resume) {
-    // For infinite maneuvers like RUN and RUN_STALLED, no end time is specified, so we take a
-    // fictitious 60 seconds. This allows us to use the same code to get the trajectory for the
-    // initial acceleration phase and the constant speed phase. Setting the forever flag allows
-    // us to ignore the deceleration phase while getting the reference, hence moving forever.
-    pbio_error_t err = pbio_trajectory_make_time_based(ref, t0, t0 + 60*US_PER_SECOND, th0, w0, wt, wmax, a);
-
-    // This is an infinite maneuver
-    ref->forever = true;
-
-    return err;
+pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t th0, int32_t w0, int32_t wt, int32_t wmax, int32_t a, bool *patched) {
+    // TODO: Patch new trajectory onto existing one when possible
+    return pbio_trajectory_make_time_based(ref, forever, t0, t3, th0, w0, wt, wmax, a);
 }
