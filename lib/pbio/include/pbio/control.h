@@ -41,7 +41,7 @@ typedef enum {
 } pbio_actuation_t;
 
 // Maneuver-specific function that returns true if maneuver is done, based on current state
-typedef bool (*pbio_control_done_t)(pbio_control_trajectory_t *trajectory,
+typedef bool (*pbio_control_done_t)(pbio_trajectory_t *trajectory,
                                     pbio_control_settings_t *settings,
                                     int32_t time,
                                     int32_t count,
@@ -49,19 +49,19 @@ typedef bool (*pbio_control_done_t)(pbio_control_trajectory_t *trajectory,
                                     bool stalled);
 
 // Shortcut for a done function that says it is never done
-static inline bool pbio_control_never_done(pbio_control_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+static inline bool pbio_control_never_done(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
     return false;
 }
 
 // Shortcut for a done function that says it is always done
-static inline bool pbio_control_always_done(pbio_control_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+static inline bool pbio_control_always_done(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
     return true;
 }
 
 typedef struct _pbio_control_t {
     pbio_control_settings_t settings;
     pbio_actuation_t after_stop;
-    pbio_control_trajectory_t trajectory;
+    pbio_trajectory_t trajectory;
     pbio_rate_integrator_t rate_integrator;
     pbio_count_integrator_t count_integrator;
     pbio_control_done_t is_done_func;

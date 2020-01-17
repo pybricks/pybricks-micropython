@@ -592,7 +592,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_set_pid_settings_obj, 0, motor_Mot
 // pybricks.builtins.Motor.trajectory
 STATIC mp_obj_t motor_Motor_trajectory(mp_obj_t self_in) {
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_control_trajectory_t trajectory;
+    pbio_trajectory_t trajectory;
 
     mp_obj_t parms[12];
 

@@ -267,7 +267,7 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t t
     // FIXME: add resume capability
     bool resume = false;
 
-    pbio_control_trajectory_t *heading_traj = &db->control_heading.trajectory;
+    pbio_trajectory_t *heading_traj = &db->control_heading.trajectory;
     err = pbio_trajectory_make_forever(
         heading_traj,
         time_now,
@@ -284,7 +284,7 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t t
     db->control_distance.after_stop = PBIO_ACTUATION_COAST;
     db->control_distance.is_done_func = pbio_control_never_done;
 
-    pbio_control_trajectory_t *distance_traj = &db->control_distance.trajectory;
+    pbio_trajectory_t *distance_traj = &db->control_distance.trajectory;
     err = pbio_trajectory_make_forever(
         distance_traj,
         time_now,

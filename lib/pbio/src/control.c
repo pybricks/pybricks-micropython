@@ -25,7 +25,7 @@ void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, int32_t 
     time_ref = pbio_count_integrator_get_ref_time(&ctl->count_integrator, time_now);
 
     // Get reference signals
-    pbio_trajectory_get_reference(time_ref, &ctl->trajectory, &count_ref, &rate_ref);
+    pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &count_ref, &rate_ref);
 
     // The speed error is the reference speed minus the current speed
     rate_err = rate_ref - rate_now;
@@ -82,7 +82,7 @@ void control_update_time_target(pbio_control_t *ctl, int32_t time_now, int32_t c
     int32_t duty, duty_due_to_proportional, duty_due_to_derivative;
 
     // Get reference signals
-    pbio_trajectory_get_reference(time_now, &ctl->trajectory, &count_ref, &rate_ref);
+    pbio_trajectory_get_reference(&ctl->trajectory, time_now, &count_ref, &rate_ref);
 
     // For time based commands, we do not aim to drive to a specific position, but we use the
     // "proportional position control" as an exact way to implement "integral speed control".
