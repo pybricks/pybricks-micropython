@@ -424,44 +424,28 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
         // Otherwise, start from the physical state
         count_start = count_now;
         rate_start = rate_now;
+
+        // For the new trajectory, reset the PID integrator to a clean state
+        pbio_rate_integrator_reset(&srv->control.rate_integrator, time_start, count_now, count_start);
     }
 
     // If we are continuing a timed maneuver, we can try to patch the new command onto the existing one for better continuity
-    if (srv->state == PBIO_SERVO_STATE_CONTROL_TIMED) {
-        // Make the new trajectory and assess if it was patched
-        bool patch_success;
-        err = pbio_trajectory_make_time_based_patched(
-            &srv->control.trajectory,
-            true,
-            time_start,
-            time_start,
-            count_start,
-            rate_start,
-            pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit),
-            srv->control.settings.max_rate,
-            srv->control.settings.abs_acceleration,
-            &patch_success);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-    }
-    else {
-        // If we came from a position based maneuver or no maneuver at all, we cannot patch and must make a new one.
-        err = pbio_trajectory_make_time_based(
-            &srv->control.trajectory,
-            true,
-            time_start,
-            time_start,
-            count_start,
-            rate_start,
-            pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit),
-            srv->control.settings.max_rate,
-            srv->control.settings.abs_acceleration);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-        // For the new trajectory, reset the PID integrator to a clean state
-        pbio_rate_integrator_reset(&srv->control.rate_integrator, time_start, count_now, count_start);
+    bool patch = srv->state == PBIO_SERVO_STATE_CONTROL_TIMED;
+
+    // Make the new trajectory and try to patch if requested
+    err = pbio_trajectory_make_time_based_patched(
+        &srv->control.trajectory,
+        true,
+        time_start,
+        time_start,
+        count_start,
+        rate_start,
+        pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit),
+        srv->control.settings.max_rate,
+        srv->control.settings.abs_acceleration,
+        patch);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     // Set new maneuver action and stop type, and state

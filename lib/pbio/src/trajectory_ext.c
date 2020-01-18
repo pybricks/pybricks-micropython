@@ -9,7 +9,7 @@
 #include <pbio/math.h>
 #include <pbio/trajectory.h>
 
-pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t th0, int32_t w0, int32_t wt, int32_t wmax, int32_t a, bool *patched) {
+pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t th0, int32_t w0, int32_t wt, int32_t wmax, int32_t a, bool patch) {
 
     // Get current reference point and acceleration
     int32_t count_ref;
@@ -23,6 +23,12 @@ pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, boo
     err = pbio_trajectory_make_time_based(&nominal, forever, t0, t3, th0, w0, wt, wmax, a);
     if (err != PBIO_SUCCESS) {
         return err;
+    }
+
+    // If we are not asked to patch it, just return the nominal trajectory.
+    if (!patch) {
+        *ref = nominal;
+        return PBIO_SUCCESS;
     }
 
     // If the reference acceleration equals the acceleration of the new nominal trajectory, 
@@ -55,12 +61,10 @@ pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, boo
         }
         // Now we can make the new trajectory with a starting point coincident
         // with a point on the existing trajectory
-        *patched = true;
         return pbio_trajectory_make_time_based(ref, forever, t0, t3, th0, w0, wt, wmax, a);
     }
     else {
         // Trajectories were not tangent, so just return the nominal, unpatched trajectory
-        *patched = false;
         *ref = nominal;
         return PBIO_SUCCESS;
     }
