@@ -444,12 +444,6 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
         if (err != PBIO_SUCCESS) {
             return err;
         }
-        // If we could not patch it, it is just a new nominal trajectory
-        // This means we must pause/resume the integrator to save its state.
-        if (!patch_success) {
-            pbio_rate_integrator_pause(&srv->control.rate_integrator, time_start, count_now, count_start);
-            pbio_rate_integrator_resume(&srv->control.rate_integrator, time_start, count_now, count_start);
-        }
     }
     else {
         // If we came from a position based maneuver or no maneuver at all, we cannot patch and must make a new one.
