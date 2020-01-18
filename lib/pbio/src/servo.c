@@ -420,6 +420,11 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
         // If a maneuver is ongoing, we want to start from the current reference, maintaining continuity
         pbio_trajectory_get_reference(&srv->control.trajectory, time_start, &count_start, &rate_start, &acceleration_ref);
     }
+    else {
+        // Otherwise, start from the physical state
+        count_start = count_now;
+        rate_start = rate_now;
+    }
 
     // If we are continuing a timed maneuver, we can try to patch the new command onto the existing one for better continuity
     if (srv->state == PBIO_SERVO_STATE_CONTROL_TIMED) {
