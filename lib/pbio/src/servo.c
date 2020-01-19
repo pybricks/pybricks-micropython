@@ -428,53 +428,58 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
 
     // Get the intitial state based on physical motor state.
     int32_t time_start;
-    int32_t count_now, count_start;
-    int32_t rate_now, rate_start;
-    int32_t acceleration_ref;
+    int32_t count_now;
+    int32_t rate_now;
     pbio_error_t err;
     err = servo_get_state(srv, &time_start, &count_now, &rate_now);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // Check if a maneuver is in progress so we can extend it
-    if (srv->state == PBIO_SERVO_STATE_CONTROL_TIMED || PBIO_SERVO_STATE_CONTROL_ANGLE) {
-        // If a maneuver is ongoing, we want to start from the current reference, maintaining continuity
-        pbio_trajectory_get_reference(&srv->control.trajectory, time_start, &count_start, &rate_start, &acceleration_ref);
-    }
-    else {
-        // Otherwise, start from the physical state
-        count_start = count_now;
-        rate_start = rate_now;
-
-        // For the new trajectory, reset the PID integrator to a clean state
-        pbio_rate_integrator_reset(&srv->control.rate_integrator, time_start, count_now, count_start);
-    }
+    // Get the target rate
+    int32_t rate_ref = pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit);
 
     // If we are continuing a timed maneuver, we can try to patch the new command onto the existing one for better continuity
-    bool patch = srv->state == PBIO_SERVO_STATE_CONTROL_TIMED;
+    if (srv->state == PBIO_SERVO_STATE_CONTROL_TIMED) {
 
-    // Make the new trajectory and try to patch if requested
-    err = pbio_trajectory_make_time_based_patched(
-        &srv->control.trajectory,
-        forever,
-        time_start,
-        time_start + duration,
-        count_start,
-        rate_start,
-        pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit),
-        srv->control.settings.max_rate,
-        srv->control.settings.abs_acceleration,
-        patch);
-    if (err != PBIO_SUCCESS) {
-        return err;
+        // Make the new trajectory and try to patch
+        err = pbio_trajectory_make_time_based_patched(
+            &srv->control.trajectory,
+            forever,
+            time_start,
+            time_start + duration,
+            rate_ref,
+            srv->control.settings.max_rate,
+            srv->control.settings.abs_acceleration);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
+    else {
+        // If angle based or no maneuver was ongoing, make a basic new trajectory
+        // Based on the current time and current state
+        err = pbio_trajectory_make_time_based(
+            &srv->control.trajectory,
+            forever,
+            time_start,
+            time_start + duration,
+            count_now,
+            rate_now,
+            rate_ref,
+            srv->control.settings.max_rate,
+            srv->control.settings.abs_acceleration);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+
+        // Set the new servo state
+        srv->state = PBIO_SERVO_STATE_CONTROL_TIMED;
     }
 
     // Set new maneuver action and stop type, and state
     srv->control.after_stop = after_stop;
     srv->control.is_done_func = stop_func;
-    srv->state = PBIO_SERVO_STATE_CONTROL_TIMED;
-
+    
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(srv);
     if (err != PBIO_SUCCESS) {

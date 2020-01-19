@@ -9,13 +9,13 @@
 #include <pbio/math.h>
 #include <pbio/trajectory.h>
 
-pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t th0, int32_t w0, int32_t wt, int32_t wmax, int32_t a, bool patch) {
+pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t wt, int32_t wmax, int32_t a) {
 
-    // Get current reference point and acceleration
-    int32_t count_ref;
-    int32_t rate_ref;
+    // Get current reference point and acceleration, which will be the 0-point for the new trajectory
+    int32_t th0;
+    int32_t w0;
     int32_t acceleration_ref;
-    pbio_trajectory_get_reference(ref, t0, &count_ref, &rate_ref, &acceleration_ref);
+    pbio_trajectory_get_reference(ref, t0, &th0, &w0, &acceleration_ref);
 
     // First get the nominal commanded trajectory. This will be our default if we can't patch onto the existing one.
     pbio_error_t err;
@@ -23,12 +23,6 @@ pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, boo
     err = pbio_trajectory_make_time_based(&nominal, forever, t0, t3, th0, w0, wt, wmax, a);
     if (err != PBIO_SUCCESS) {
         return err;
-    }
-
-    // If we are not asked to patch it, just return the nominal trajectory.
-    if (!patch) {
-        *ref = nominal;
-        return PBIO_SUCCESS;
     }
 
     // If the reference acceleration equals the acceleration of the new nominal trajectory, 
