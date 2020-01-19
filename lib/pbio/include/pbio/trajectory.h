@@ -17,6 +17,9 @@
 #define US_PER_MS (1000)
 #define US_PER_SECOND (1000000)
 
+#define to_mcount(count) (((int64_t) (count))*1000)
+#define to_count(mcount) ((int32_t)((mcount)/1000))
+
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
@@ -40,6 +43,10 @@ typedef struct _pbio_trajectory_t {
     int32_t th1;                        /**<  Encoder count after the acceleration in-phase */
     int32_t th2;                        /**<  Encoder count at start of acceleration out-phase */
     int32_t th3;                        /**<  Encoder count at end of maneuver */
+    int64_t mth0;                        /**<  As above, but millicounts */
+    int64_t mth1;                        /**<  As above, but millicounts */
+    int64_t mth2;                        /**<  As above, but millicounts */
+    int64_t mth3;                        /**<  As above, but millicounts */
     int32_t w0;                          /**<  Encoder rate at start of maneuver */
     int32_t w1;                          /**<  Encoder rate target when not accelerating */
     int32_t a0;                          /**<  Encoder acceleration during in-phase */
@@ -50,11 +57,11 @@ typedef struct _pbio_trajectory_t {
 
 void pbio_trajectory_make_stationary(pbio_trajectory_t *ref, int32_t t0, int32_t th0, int32_t w1);
 
-pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t th0, int32_t w0, int32_t wt, int32_t wmax, int32_t a);
+pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int64_t mth0, int32_t w0, int32_t wt, int32_t wmax, int32_t a);
 
 pbio_error_t pbio_trajectory_make_angle_based(pbio_trajectory_t *ref, int32_t t0, int32_t th0, int32_t th3, int32_t w0, int32_t wt, int32_t wmax, int32_t a);
 
-void pbio_trajectory_get_reference(pbio_trajectory_t *traject, int32_t time_ref, int32_t *count_ref, int32_t *rate_ref, int32_t *acceleration_ref);
+void pbio_trajectory_get_reference(pbio_trajectory_t *traject, int32_t time_ref, int32_t *count_ref, int64_t *mcount_ref, int32_t *rate_ref, int32_t *acceleration_ref);
 
 // Extended and patched trajectories
 pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t wt, int32_t wmax, int32_t a);

@@ -17,6 +17,7 @@ void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, int32_t 
     // Declare current time, positions, rates, and their reference value and error
     int32_t time_ref;
     int32_t count_ref, count_err, count_err_integral;
+    int64_t mcount_ref;
     int32_t rate_ref, rate_err;
     int32_t acceleration_ref;
     int32_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative;
@@ -26,7 +27,7 @@ void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, int32_t 
     time_ref = pbio_count_integrator_get_ref_time(&ctl->count_integrator, time_now);
 
     // Get reference signals
-    pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &count_ref, &rate_ref, &acceleration_ref);
+    pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &count_ref, &mcount_ref, &rate_ref, &acceleration_ref);
 
     // The speed error is the reference speed minus the current speed
     rate_err = rate_ref - rate_now;
@@ -79,12 +80,13 @@ void control_update_time_target(pbio_control_t *ctl, int32_t time_now, int32_t c
 
     // Declare time, positions, rates, and their reference value and error
     int32_t count_ref, rate_err_integral;
+    int64_t mcount_ref;
     int32_t rate_ref, rate_err;
     int32_t acceleration_ref;
     int32_t duty, duty_due_to_proportional, duty_due_to_derivative;
 
     // Get reference signals
-    pbio_trajectory_get_reference(&ctl->trajectory, time_now, &count_ref, &rate_ref, &acceleration_ref);
+    pbio_trajectory_get_reference(&ctl->trajectory, time_now, &count_ref, &mcount_ref, &rate_ref, &acceleration_ref);
 
     // For time based commands, we do not aim to drive to a specific position, but we use the
     // "proportional position control" as an exact way to implement "integral speed control".
