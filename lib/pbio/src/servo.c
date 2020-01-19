@@ -473,6 +473,9 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
             return err;
         }
 
+        // New maneuver, so reset the rate integrator
+        pbio_rate_integrator_reset(&srv->control.rate_integrator, time_start, count_now, count_now);
+
         // Set the new servo state
         srv->state = PBIO_SERVO_STATE_CONTROL_TIMED;
     }
