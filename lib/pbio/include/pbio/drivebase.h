@@ -16,7 +16,7 @@ typedef enum {
     PBIO_DRIVEBASE_STATE_PASSIVE,
     PBIO_DRIVEBASE_STATE_ERRORED,
     /* Active control statuses: PID Control Active in non-blocking manner */   
-    PBIO_DRIVEBASE_STATE_TIME_BACKGROUND,
+    PBIO_DRIVEBASE_STATE_TIMED,
 } pbio_drivebase_state_t;
 
 typedef struct _pbio_drivebase_t {
