@@ -9,7 +9,7 @@
 #include <pbio/math.h>
 #include <pbio/trajectory.h>
 
-pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t wt, int32_t wmax, int32_t a) {
+static pbio_error_t pbio_trajectory_patch(pbio_trajectory_t *ref, bool time_based, bool forever, int32_t t0, int32_t t3, int32_t th3, int32_t wt, int32_t wmax, int32_t a) {
 
     // Get current reference point and acceleration, which will be the 0-point for the new trajectory
     int32_t th0;
@@ -67,4 +67,8 @@ pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, boo
         *ref = nominal;
         return PBIO_SUCCESS;
     }
+}
+
+pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t wt, int32_t wmax, int32_t a) {
+    return pbio_trajectory_patch(ref, true, forever, t0, t3, 0, wt, wmax, a);
 }
