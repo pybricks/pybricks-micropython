@@ -266,6 +266,30 @@ pbio_error_t pbio_trajectory_make_angle_based(pbio_trajectory_t *ref, int32_t t0
     return PBIO_SUCCESS;
 }
 
+// Get the starting angle of a segment in counts and millicounts
+void pbio_trajectory_get_start(pbio_trajectory_t *traject, int8_t segment, int32_t *start_count, int32_t *start_count_ext) {
+    int64_t mstart;
+    switch (segment)
+    {
+    case 0:
+        mstart = traject->mth0;
+        break;
+    case 1:
+        mstart = traject->mth1;
+        break;
+    case 2:
+        mstart = traject->mth2;
+        break;
+    default:
+        mstart = traject->mth3;
+        break;
+    }
+    // Split high res angle into counts and millicounts
+    *start_count = to_count(mstart);
+    *start_count_ext = mstart - to_mcount(*start_count);
+}
+
+
 // Evaluate the reference speed and velocity at the (shifted) time
 void pbio_trajectory_get_reference(pbio_trajectory_t *traject, int32_t time_ref, int32_t *count_ref, int32_t *count_ref_ext, int32_t *rate_ref, int32_t *acceleration_ref) {
 

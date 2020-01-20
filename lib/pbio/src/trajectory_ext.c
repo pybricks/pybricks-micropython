@@ -14,7 +14,6 @@ pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, boo
     // Get current reference point and acceleration, which will be the 0-point for the new trajectory
     int32_t th0;
     int32_t th0_ext;
-    int64_t mth0;
     int32_t w0;
     int32_t acceleration_ref;
     pbio_trajectory_get_reference(ref, t0, &th0, &th0_ext, &w0, &acceleration_ref);
@@ -36,29 +35,27 @@ pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, boo
         if (t0 - ref->t1 < 0) {
             // We are still in the acceleration segment, so we can restart from its starting point
             t0 = ref->t0;
-            mth0 = ref->mth0;
             w0 = ref->w0;
+            pbio_trajectory_get_start(ref, 0, &th0, &th0_ext);
         } else if (ref->forever || t0 - ref->t2 < 0) {
             // We are in the constant speed phase, so we can restart from its starting point
             t0 = ref->t1;
-            mth0 = ref->mth1;
             w0 = ref->w1;
+            pbio_trajectory_get_start(ref, 1, &th0, &th0_ext);
         } else if (t0 - ref->t3 < 0) {
             // We are in the deceleration phase, so we can restart from its starting point
             t0 = ref->t2;
-            mth0 = ref->mth2;
             w0 = ref->w1;
+            pbio_trajectory_get_start(ref, 2, &th0, &th0_ext);
         }
         else {
             // We are in the zero speed phase, so we can restart from its starting point
             t0 = ref->t3;
-            mth0 = ref->mth3;
             w0 = 0;
+            pbio_trajectory_get_start(ref, 3, &th0, &th0_ext);
         }
         // Now we can make the new trajectory with a starting point coincident
         // with a point on the existing trajectory
-        th0 = to_count(mth0);
-        th0_ext = mth0 - to_mcount(th0);
         return pbio_trajectory_make_time_based(ref, forever, t0, t3, th0, th0_ext, w0, wt, wmax, a);
     }
     else {
