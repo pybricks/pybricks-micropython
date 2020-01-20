@@ -11,14 +11,33 @@
 #include <pbio/math.h>
 #include <pbio/trajectory.h>
 
+static int64_t as_mcount(int32_t count, int32_t count_ext) {
+    return ((int64_t) count)*1000 + count_ext;
+}
+
+static void as_count(int64_t mcount, int32_t *count, int32_t *count_ext) {
+    *count = (int32_t) (mcount/1000);
+    *count_ext = mcount - ((int64_t) *count)*1000;
+}
+
 void reverse_trajectory(pbio_trajectory_t *ref) {
     // Mirror angles about initial angle th0
-    ref->th1 = 2*ref->th0 - ref->th1;
-    ref->th2 = 2*ref->th0 - ref->th2;
-    ref->th3 = 2*ref->th0 - ref->th3;
-    ref->mth1 = 2*ref->mth0 - ref->mth1;
-    ref->mth2 = 2*ref->mth0 - ref->mth2;
-    ref->mth3 = 2*ref->mth0 - ref->mth3;
+
+    // First load as high res types    
+    int64_t mth0 = as_mcount(ref->th0, ref->th0_ext);
+    int64_t mth1 = as_mcount(ref->th1, ref->th1_ext);
+    int64_t mth2 = as_mcount(ref->th2, ref->th2_ext);
+    int64_t mth3 = as_mcount(ref->th3, ref->th3_ext);
+
+    // Perform the math
+    mth1 = 2*mth0 - mth1;
+    mth2 = 2*mth0 - mth2;
+    mth3 = 2*mth0 - mth3;
+
+    // Store as simple type again
+    as_count(mth1, &ref->th1, &ref->th1_ext);
+    as_count(mth2, &ref->th2, &ref->th2_ext);
+    as_count(mth3, &ref->th3, &ref->th3_ext);
 
     // Negate speeds and accelerations
     ref->w0 *= -1;
@@ -39,10 +58,12 @@ void pbio_trajectory_make_stationary(pbio_trajectory_t *ref, int32_t t0, int32_t
     ref->th1 = th0;
     ref->th2 = th0;
     ref->th3 = th0;
-    ref->mth0 = to_mcount(th0);
-    ref->mth1 = to_mcount(th0);
-    ref->mth2 = to_mcount(th0);
-    ref->mth3 = to_mcount(th0);
+
+    // FIXME: Angle based does not have high res yet
+    ref->th0_ext = 0;
+    ref->th1_ext = 0;
+    ref->th2_ext = 0;
+    ref->th3_ext = 0;
 
     // All speeds/accelerations zero:
     ref->w0 = 0;
@@ -63,8 +84,6 @@ static int64_t x_time2(int32_t b, int32_t t) {
 }
 
 pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t th0, int32_t th0_ext, int32_t w0, int32_t wt, int32_t wmax, int32_t a) {
-
-    int64_t mth0 = to_mcount(th0) + th0_ext;
 
     // Work with time intervals instead of absolute time. Read 'm' as '-'.
     int32_t t3mt0;
@@ -156,16 +175,16 @@ pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *ref, bool foreve
     ref->t3 = t3;
 
     // Corresponding angle values with millicount/millideg precision
-    ref->mth0 = mth0;
-    ref->mth1 = ref->mth0 + x_time(ref->w0, t1mt0) + x_time2(ref->a0, t1mt0);
-    ref->mth2 = ref->mth1 + x_time(ref->w1, t2mt1);
-    ref->mth3 = ref->mth2 + x_time(ref->w1, t3mt2) + x_time2(ref->a2, t3mt2);
+    int64_t mth0 = as_mcount(th0, th0_ext);
+    int64_t mth1 = mth0 + x_time(ref->w0, t1mt0) + x_time2(ref->a0, t1mt0);
+    int64_t mth2 = mth1 + x_time(ref->w1, t2mt1);
+    int64_t mth3 = mth2 + x_time(ref->w1, t3mt2) + x_time2(ref->a2, t3mt2);
 
-    // Keep regular count values for code that does not need mdeg precision
-    ref->th0 = to_count(ref->mth0);
-    ref->th1 = to_count(ref->mth1);
-    ref->th2 = to_count(ref->mth2);
-    ref->th3 = to_count(ref->mth3);
+    // Store as counts and millicount
+    as_count(mth0, &ref->th0, &ref->th0_ext);
+    as_count(mth1, &ref->th1, &ref->th1_ext);
+    as_count(mth2, &ref->th2, &ref->th2_ext);
+    as_count(mth3, &ref->th3, &ref->th3_ext);
 
     // Reverse the maneuver if the original arguments imposed backward motion
     if (backward) {
@@ -249,11 +268,11 @@ pbio_error_t pbio_trajectory_make_angle_based(pbio_trajectory_t *ref, int32_t t0
     ref->t3 = ref->t2 + t3mt2;
     ref->a2 = -a;
 
-    // Angle based does not use increased resolution yet, but keep scaled values for compatibility
-    ref->mth0 = to_mcount(ref->th0);
-    ref->mth1 = to_mcount(ref->th1);
-    ref->mth2 = to_mcount(ref->th2);
-    ref->mth3 = to_mcount(ref->th3);
+    // FIXME: Angle based does not have high res yet
+    ref->th0_ext = 0;
+    ref->th1_ext = 0;
+    ref->th2_ext = 0;
+    ref->th3_ext = 0;
 
     // Reverse the maneuver if the original arguments imposed backward motion
     if (backward) {
@@ -266,30 +285,6 @@ pbio_error_t pbio_trajectory_make_angle_based(pbio_trajectory_t *ref, int32_t t0
     return PBIO_SUCCESS;
 }
 
-// Get the starting angle of a segment in counts and millicounts
-void pbio_trajectory_get_start(pbio_trajectory_t *traject, int8_t segment, int32_t *start_count, int32_t *start_count_ext) {
-    int64_t mstart;
-    switch (segment)
-    {
-    case 0:
-        mstart = traject->mth0;
-        break;
-    case 1:
-        mstart = traject->mth1;
-        break;
-    case 2:
-        mstart = traject->mth2;
-        break;
-    default:
-        mstart = traject->mth3;
-        break;
-    }
-    // Split high res angle into counts and millicounts
-    *start_count = to_count(mstart);
-    *start_count_ext = mstart - to_mcount(*start_count);
-}
-
-
 // Evaluate the reference speed and velocity at the (shifted) time
 void pbio_trajectory_get_reference(pbio_trajectory_t *traject, int32_t time_ref, int32_t *count_ref, int32_t *count_ref_ext, int32_t *rate_ref, int32_t *acceleration_ref) {
 
@@ -298,29 +293,28 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *traject, int32_t time_ref,
     if (time_ref - traject->t1 < 0) {
         // If we are here, then we are still in the acceleration phase. Includes conversion from microseconds to seconds, in two steps to avoid overflows and round off errors
         *rate_ref = traject->w0   + timest(traject->a0, time_ref-traject->t0);
-        mcount_ref = traject->mth0 + x_time(traject->w0, time_ref-traject->t0) + x_time2(traject->a0, time_ref-traject->t0);
+        mcount_ref = as_mcount(traject->th0, traject->th0_ext) + x_time(traject->w0, time_ref-traject->t0) + x_time2(traject->a0, time_ref-traject->t0);
         *acceleration_ref = traject->a0;
     }
     else if (traject->forever || time_ref - traject->t2 <= 0) {
         // If we are here, then we are in the constant speed phase
         *rate_ref = traject->w1;
-        mcount_ref = traject->mth1 + x_time(traject->w1, time_ref-traject->t1);
+        mcount_ref = as_mcount(traject->th1, traject->th1_ext) + x_time(traject->w1, time_ref-traject->t1);
         *acceleration_ref = 0;
     }
     else if (time_ref - traject->t3 <= 0) {
         // If we are here, then we are in the deceleration phase
         *rate_ref = traject->w1 + timest(traject->a2,    time_ref-traject->t2);
-        mcount_ref = traject->mth2  + x_time(traject->w1, time_ref-traject->t2) + x_time2(traject->a2, time_ref-traject->t2);
+        mcount_ref = as_mcount(traject->th2, traject->th2_ext)  + x_time(traject->w1, time_ref-traject->t2) + x_time2(traject->a2, time_ref-traject->t2);
         *acceleration_ref = traject->a2;
     }
     else {
         // If we are here, we are in the zero speed phase (relevant when holding position)
         *rate_ref = 0;
-        mcount_ref = traject->mth3;
+        mcount_ref = as_mcount(traject->th3, traject->th3_ext);
         *acceleration_ref = 0;
     }
 
     // Split high res angle into counts and millicounts
-    *count_ref = to_count(mcount_ref);
-    *count_ref_ext = mcount_ref - to_mcount(*count_ref);
+    as_count(mcount_ref, count_ref, count_ref_ext);
 }
