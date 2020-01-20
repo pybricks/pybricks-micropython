@@ -624,12 +624,15 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     // Compute new maneuver based on user argument, starting from the initial state
     pbio_trajectory_make_stationary(&srv->control.trajectory, time_start, pbio_math_mul_i32_fix16(target, srv->tacho->counts_per_output_unit));
 
-    // Initialize or reset the PID control status for the given maneuver
-    int32_t integrator_max = (US_PER_SECOND/srv->control.settings.pid_ki)*srv->control.settings.max_control;
-    pbio_count_integrator_reset(&srv->control.count_integrator, srv->control.trajectory.t0, srv->control.trajectory.th0, srv->control.trajectory.th0, integrator_max);
+    // If called for the first time, set state and reset PID
+    if (srv->state != PBIO_SERVO_STATE_CONTROL_ANGLE) {
+        // Initialize or reset the PID control status for the given maneuver
+        int32_t integrator_max = (US_PER_SECOND/srv->control.settings.pid_ki)*srv->control.settings.max_control;
+        pbio_count_integrator_reset(&srv->control.count_integrator, srv->control.trajectory.t0, srv->control.trajectory.th0, srv->control.trajectory.th0, integrator_max);
 
-    // This is an angular control maneuver
-    srv->state = PBIO_SERVO_STATE_CONTROL_ANGLE;
+        // This is an angular control maneuver
+        srv->state = PBIO_SERVO_STATE_CONTROL_ANGLE;
+    }
 
     // Run one control update synchronously with user command
     err = pbio_servo_control_update(srv);
