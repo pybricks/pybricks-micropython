@@ -78,7 +78,7 @@ jobs:
       after_failure:
         - ./tests/dump-out-files.sh
       after_success:
-        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET --interactive false
+        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET --interactive=false
         - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
           "${HOME}/micropython/ports/pybricks/bricks/ev3dev/pybricks-micropython"
           pybricks-ev3dev/$TRAVIS_REPO_SLUG/build$TRAVIS_JOB_NUMBER/
@@ -106,7 +106,7 @@ jobs:
       script:
         - make ${MAKEOPTS} -C ports/pybricks/bricks/movehub
       after_success:
-        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET --interactive false
+        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET --interactive=false
         - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
           "${HOME}/micropython/ports/pybricks/bricks/movehub/build/firmware.bin"
           pybricks-firmware/pybricks-micropython-movehub-build$TRAVIS_BUILD_NUMBER-firmware.bin
@@ -134,7 +134,7 @@ jobs:
       script:
         - make ${MAKEOPTS} -C ports/pybricks/bricks/cityhub
       after_success:
-        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET --interactive false
+        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET --interactive=false
         - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
           "${HOME}/micropython/ports/pybricks/bricks/cityhub/build/firmware.bin"
           pybricks-firmware/pybricks-micropython-cityhub-build$TRAVIS_BUILD_NUMBER-firmware.bin
@@ -162,7 +162,7 @@ jobs:
       script:
         - make ${MAKEOPTS} -C ports/pybricks/bricks/cplushub
       after_success:
-        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET --interactive false
+        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET --interactive=false
         - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
           "${HOME}/micropython/ports/pybricks/bricks/cplushub/build/firmware.bin"
           pybricks-firmware/pybricks-micropython-cplushub-build$TRAVIS_BUILD_NUMBER-firmware.bin
@@ -190,7 +190,7 @@ jobs:
       script:
         - make ${MAKEOPTS} -C ports/pybricks/bricks/nxt
       after_success:
-        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET --interactive false
+        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET --interactive=false
         - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
           "${HOME}/micropython/ports/pybricks/bricks/nxt/build/firmware.bin"
           pybricks-firmware/pybricks-micropython-nxt-build$TRAVIS_BUILD_NUMBER-firmware.bin
@@ -238,7 +238,7 @@ jobs:
       after_failure:
         - ./tests/dump-out-files.sh
       after_success:
-        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET --interactive false
+        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET --interactive=false
         - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
         - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
         - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
@@ -268,7 +268,7 @@ jobs:
         - ./lib/pbio/test/build-coverage/test-pbio
         - # TODO: run coveralls
       after_success:
-        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET --interactive false
+        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET --interactive=false
         - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
         - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
         - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
