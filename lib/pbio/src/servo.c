@@ -312,9 +312,16 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, int32_t time_now, i
 
     int32_t buf[SERVO_LOG_NUM_VALUES];
 
+
+    // Get the time of reference evaluation
+    int32_t time_ref = time_now;
+    if (srv->state == PBIO_SERVO_STATE_CONTROL_ANGLE) {
+        time_ref = pbio_count_integrator_get_ref_time(&srv->control.count_integrator, time_now);
+    }
+
     // Log the time since start of control trajectory
     if (srv->state >= PBIO_SERVO_STATE_CONTROL_ANGLE) {
-        buf[0] = (time_now - srv->control.trajectory.t0) / 1000;
+        buf[0] = (time_ref - srv->control.trajectory.t0) / 1000;
     }
     else {
         // Not applicable for passive motors
@@ -331,7 +338,7 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, int32_t time_now, i
 
     // Log reference signals. These values are only meaningful for time based commands
     int32_t count_ref, count_ref_ext, rate_ref, rate_err, rate_err_integral, acceleration_ref;
-    pbio_trajectory_get_reference(&srv->control.trajectory, time_now, &count_ref, &count_ref_ext, &rate_ref, &acceleration_ref);
+    pbio_trajectory_get_reference(&srv->control.trajectory, time_ref, &count_ref, &count_ref_ext, &rate_ref, &acceleration_ref);
     pbio_rate_integrator_get_errors(&srv->control.rate_integrator, rate_now, rate_ref, count_now, count_ref, &rate_err, &rate_err_integral);
     buf[5] = count_ref;
     buf[6] = rate_err_integral;
@@ -558,10 +565,13 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
     // If we are continuing a angle based maneuver, we can try to patch the new command onto the existing one for better continuity
     if (srv->state == PBIO_SERVO_STATE_CONTROL_ANGLE) {
 
+        // The start time must account for time spent pausing while stalled
+        int32_t time_ref = pbio_count_integrator_get_ref_time(&srv->control.count_integrator, time_start);
+
         // Make the new trajectory and try to patch
         err = pbio_trajectory_make_angle_based_patched(
             &srv->control.trajectory,
-            time_start,
+            time_ref,
             target_count,
             target_rate,
             srv->control.settings.max_rate,
