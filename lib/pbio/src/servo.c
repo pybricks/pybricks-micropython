@@ -330,9 +330,8 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, int32_t time_now, i
     buf[4] = control;
 
     // Log reference signals. These values are only meaningful for time based commands
-    int32_t count_ref, rate_ref, rate_err, rate_err_integral, acceleration_ref;
-    int64_t mcount_ref;
-    pbio_trajectory_get_reference(&srv->control.trajectory, time_now, &count_ref, &mcount_ref, &rate_ref, &acceleration_ref);
+    int32_t count_ref, count_ref_ext, rate_ref, rate_err, rate_err_integral, acceleration_ref;
+    pbio_trajectory_get_reference(&srv->control.trajectory, time_now, &count_ref, &count_ref_ext, &rate_ref, &acceleration_ref);
     pbio_rate_integrator_get_errors(&srv->control.rate_integrator, rate_now, rate_ref, count_now, count_ref, &rate_err, &rate_err_integral);
     buf[5] = count_ref;
     buf[6] = rate_err_integral;
@@ -464,7 +463,8 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
             forever,
             time_start,
             time_start + duration,
-            to_mcount(count_now),
+            count_now,
+            0,
             rate_now,
             rate_ref,
             srv->control.settings.max_rate,

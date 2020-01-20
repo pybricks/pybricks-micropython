@@ -62,7 +62,9 @@ static int64_t x_time2(int32_t b, int32_t t) {
     return x_time(x_time(b, t), t)/(2*US_PER_MS);
 }
 
-pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int64_t mth0, int32_t w0, int32_t wt, int32_t wmax, int32_t a) {
+pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t th0, int32_t th0_ext, int32_t w0, int32_t wt, int32_t wmax, int32_t a) {
+
+    int64_t mth0 = to_mcount(th0) + th0_ext;
 
     // Work with time intervals instead of absolute time. Read 'm' as '-'.
     int32_t t3mt0;
@@ -247,6 +249,12 @@ pbio_error_t pbio_trajectory_make_angle_based(pbio_trajectory_t *ref, int32_t t0
     ref->t3 = ref->t2 + t3mt2;
     ref->a2 = -a;
 
+    // Angle based does not use increased resolution yet, but keep scaled values for compatibility
+    ref->mth0 = to_mcount(ref->th0);
+    ref->mth1 = to_mcount(ref->th1);
+    ref->mth2 = to_mcount(ref->th2);
+    ref->mth3 = to_mcount(ref->th3);
+
     // Reverse the maneuver if the original arguments imposed backward motion
     if (backward) {
         reverse_trajectory(ref);
@@ -255,40 +263,40 @@ pbio_error_t pbio_trajectory_make_angle_based(pbio_trajectory_t *ref, int32_t t0
     // This is a finite maneuver
     ref->forever = false;
 
-    // Angle based does not use increased resolution yet, but keep scaled values for compatibility
-    ref->mth0 = to_mcount(ref->th0);
-    ref->mth1 = to_mcount(ref->th1);
-    ref->mth2 = to_mcount(ref->th2);
-    ref->mth3 = to_mcount(ref->th3);
-
     return PBIO_SUCCESS;
 }
 
 // Evaluate the reference speed and velocity at the (shifted) time
-void pbio_trajectory_get_reference(pbio_trajectory_t *traject, int32_t time_ref, int32_t *count_ref, int64_t *mcount_ref, int32_t *rate_ref, int32_t *acceleration_ref) {
+void pbio_trajectory_get_reference(pbio_trajectory_t *traject, int32_t time_ref, int32_t *count_ref, int32_t *count_ref_ext, int32_t *rate_ref, int32_t *acceleration_ref) {
+
+    int64_t mcount_ref;
+
     if (time_ref - traject->t1 < 0) {
         // If we are here, then we are still in the acceleration phase. Includes conversion from microseconds to seconds, in two steps to avoid overflows and round off errors
         *rate_ref = traject->w0   + timest(traject->a0, time_ref-traject->t0);
-        *mcount_ref = traject->mth0 + x_time(traject->w0, time_ref-traject->t0) + x_time2(traject->a0, time_ref-traject->t0);
+        mcount_ref = traject->mth0 + x_time(traject->w0, time_ref-traject->t0) + x_time2(traject->a0, time_ref-traject->t0);
         *acceleration_ref = traject->a0;
     }
     else if (traject->forever || time_ref - traject->t2 <= 0) {
         // If we are here, then we are in the constant speed phase
         *rate_ref = traject->w1;
-        *mcount_ref = traject->mth1 + x_time(traject->w1, time_ref-traject->t1);
+        mcount_ref = traject->mth1 + x_time(traject->w1, time_ref-traject->t1);
         *acceleration_ref = 0;
     }
     else if (time_ref - traject->t3 <= 0) {
         // If we are here, then we are in the deceleration phase
         *rate_ref = traject->w1 + timest(traject->a2,    time_ref-traject->t2);
-        *mcount_ref = traject->mth2  + x_time(traject->w1, time_ref-traject->t2) + x_time2(traject->a2, time_ref-traject->t2);
+        mcount_ref = traject->mth2  + x_time(traject->w1, time_ref-traject->t2) + x_time2(traject->a2, time_ref-traject->t2);
         *acceleration_ref = traject->a2;
     }
     else {
         // If we are here, we are in the zero speed phase (relevant when holding position)
         *rate_ref = 0;
-        *mcount_ref = traject->mth3;
+        mcount_ref = traject->mth3;
         *acceleration_ref = 0;
     }
-    *count_ref = to_count(*mcount_ref);
+
+    // Split high res angle into counts and millicounts
+    *count_ref = to_count(mcount_ref);
+    *count_ref_ext = mcount_ref - to_mcount(*count_ref);
 }
