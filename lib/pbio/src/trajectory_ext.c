@@ -21,7 +21,12 @@ static pbio_error_t pbio_trajectory_patch(pbio_trajectory_t *ref, bool time_base
     // First get the nominal commanded trajectory. This will be our default if we can't patch onto the existing one.
     pbio_error_t err;
     pbio_trajectory_t nominal;
-    err = pbio_trajectory_make_time_based(&nominal, forever, t0, t3, th0, th0_ext, w0, wt, wmax, a);
+    if (time_based) {
+        err = pbio_trajectory_make_time_based(&nominal, forever, t0, t3, th0, th0_ext, w0, wt, wmax, a);    
+    }
+    else {
+        err = pbio_trajectory_make_angle_based(&nominal, t0, th0, th3, w0, wt, wmax, a);
+    }
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -60,7 +65,13 @@ static pbio_error_t pbio_trajectory_patch(pbio_trajectory_t *ref, bool time_base
         }
         // Now we can make the new trajectory with a starting point coincident
         // with a point on the existing trajectory
-        return pbio_trajectory_make_time_based(ref, forever, t0, t3, th0, th0_ext, w0, wt, wmax, a);
+        if (time_based) {
+            return pbio_trajectory_make_time_based(ref, forever, t0, t3, th0, th0_ext, w0, wt, wmax, a);
+        }
+        else {
+            return pbio_trajectory_make_angle_based(ref, t0, th0, th3, w0, wt, wmax, a);
+        }
+        
     }
     else {
         // Trajectories were not tangent, so just return the nominal, unpatched trajectory
@@ -71,4 +82,8 @@ static pbio_error_t pbio_trajectory_patch(pbio_trajectory_t *ref, bool time_base
 
 pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t wt, int32_t wmax, int32_t a) {
     return pbio_trajectory_patch(ref, true, forever, t0, t3, 0, wt, wmax, a);
+}
+
+pbio_error_t pbio_trajectory_make_angle_based_patched(pbio_trajectory_t *ref, int32_t t0, int32_t th3, int32_t wt, int32_t wmax, int32_t a) {
+    return pbio_trajectory_patch(ref, false, false, t0, 0, th3, wt, wmax, a);
 }

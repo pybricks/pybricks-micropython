@@ -538,9 +538,10 @@ static bool run_target_is_done_func(pbio_trajectory_t *trajectory, pbio_control_
     return true;
 }
 
+
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop) {
 
-    // Get the intitial state, either based on physical motor state or ongoing maneuver
+    // Get the intitial state based on physical motor state.
     int32_t time_start;
     int32_t count_start;
     int32_t rate_start;
@@ -550,31 +551,54 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
         return err;
     }
 
-    // Set new maneuver action and stop type
-    srv->control.after_stop = after_stop;
-    srv->control.is_done_func = run_target_is_done_func; 
+    // Get the target rate and angle
+    int32_t target_count = pbio_math_mul_i32_fix16(target, srv->tacho->counts_per_output_unit);
+    int32_t target_rate = pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit);
 
-    // Compute new maneuver based on user argument, starting from the initial state
-    err = pbio_trajectory_make_angle_based(
-        &srv->control.trajectory,
-        time_start,
-        count_start,
-        pbio_math_mul_i32_fix16(target, srv->tacho->counts_per_output_unit),
-        rate_start,
-        pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit),
-        srv->control.settings.max_rate,
-        srv->control.settings.abs_acceleration);
-    if (err != PBIO_SUCCESS) {
-        return err;
+    // If we are continuing a angle based maneuver, we can try to patch the new command onto the existing one for better continuity
+    if (srv->state == PBIO_SERVO_STATE_CONTROL_ANGLE) {
+
+        // Make the new trajectory and try to patch
+        err = pbio_trajectory_make_angle_based_patched(
+            &srv->control.trajectory,
+            time_start,
+            target_count,
+            target_rate,
+            srv->control.settings.max_rate,
+            srv->control.settings.abs_acceleration);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
+    else {
+        // If time based or no maneuver was ongoing, make a basic new trajectory
+        // Based on the current time and current state
+        err = pbio_trajectory_make_angle_based(
+            &srv->control.trajectory,
+            time_start,
+            count_start,
+            target_count,
+            rate_start,
+            target_rate,
+            srv->control.settings.max_rate,
+            srv->control.settings.abs_acceleration);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+
+        // New maneuver, so reset the rate integrator
+        // FIXME: remove KI dependency
+        int32_t integrator_max = (US_PER_SECOND/srv->control.settings.pid_ki)*srv->control.settings.max_control;
+        pbio_count_integrator_reset(&srv->control.count_integrator, srv->control.trajectory.t0, srv->control.trajectory.th0, srv->control.trajectory.th0, integrator_max);
+
+        // Set the new servo state
+        srv->state = PBIO_SERVO_STATE_CONTROL_ANGLE;
     }
 
-    // Initialize or reset the PID control status for the given maneuver
-    int32_t integrator_max = (US_PER_SECOND/srv->control.settings.pid_ki)*srv->control.settings.max_control;
-    pbio_count_integrator_reset(&srv->control.count_integrator, srv->control.trajectory.t0, srv->control.trajectory.th0, srv->control.trajectory.th0, integrator_max);
-
-    // This is an angular control maneuver
-    srv->state = PBIO_SERVO_STATE_CONTROL_ANGLE;
-
+    // Set new maneuver action and stop type, and state
+    srv->control.after_stop = after_stop;
+    srv->control.is_done_func = run_target_is_done_func;
+    
     // Run one control update synchronously with user command.
     err = pbio_servo_control_update(srv);
     if (err != PBIO_SUCCESS) {

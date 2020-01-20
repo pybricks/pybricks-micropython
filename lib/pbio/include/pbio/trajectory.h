@@ -64,4 +64,7 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *traject, int32_t time_ref,
 
 pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t wt, int32_t wmax, int32_t a);
 
+pbio_error_t pbio_trajectory_make_angle_based_patched(pbio_trajectory_t *ref, int32_t t0, int32_t th3, int32_t wt, int32_t wmax, int32_t a);
+
+
 #endif // _PBIO_TRAJECTORY_H_
