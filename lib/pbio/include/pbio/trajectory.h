@@ -52,7 +52,7 @@ typedef struct _pbio_trajectory_t {
 
 // Core trajectory generators
 
-void pbio_trajectory_make_stationary(pbio_trajectory_t *ref, int32_t t0, int32_t th0, int32_t w1);
+void pbio_trajectory_make_stationary(pbio_trajectory_t *ref, int32_t t0, int32_t th0);
 
 pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t th0, int32_t th0_ext, int32_t w0, int32_t wt, int32_t wmax, int32_t a);
 

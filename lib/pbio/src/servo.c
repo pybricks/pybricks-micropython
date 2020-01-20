@@ -622,7 +622,7 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     srv->control.is_done_func = pbio_control_never_done; 
 
     // Compute new maneuver based on user argument, starting from the initial state
-    pbio_trajectory_make_stationary(&srv->control.trajectory, time_start, pbio_math_mul_i32_fix16(target, srv->tacho->counts_per_output_unit), 0);
+    pbio_trajectory_make_stationary(&srv->control.trajectory, time_start, pbio_math_mul_i32_fix16(target, srv->tacho->counts_per_output_unit));
 
     // Initialize or reset the PID control status for the given maneuver
     int32_t integrator_max = (US_PER_SECOND/srv->control.settings.pid_ki)*srv->control.settings.max_control;

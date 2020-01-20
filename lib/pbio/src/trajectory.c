@@ -46,7 +46,7 @@ void reverse_trajectory(pbio_trajectory_t *ref) {
     ref->a2 *= -1;
 }
 
-void pbio_trajectory_make_stationary(pbio_trajectory_t *ref, int32_t t0, int32_t th0, int32_t w1) {
+void pbio_trajectory_make_stationary(pbio_trajectory_t *ref, int32_t t0, int32_t th0) {
     // All times equal to initial time:
     ref->t0 = t0;
     ref->t1 = t0;
@@ -67,7 +67,7 @@ void pbio_trajectory_make_stationary(pbio_trajectory_t *ref, int32_t t0, int32_t
 
     // All speeds/accelerations zero:
     ref->w0 = 0;
-    ref->w1 = w1;
+    ref->w1 = 0;
     ref->a0 = 0;
     ref->a2 = 0;
 
@@ -202,7 +202,7 @@ pbio_error_t pbio_trajectory_make_angle_based(pbio_trajectory_t *ref, int32_t t0
     }
     // Return empty maneuver for zero angle
     if (th3 == th0) {
-        pbio_trajectory_make_stationary(ref, t0, th0, 0);
+        pbio_trajectory_make_stationary(ref, t0, th0);
         return PBIO_SUCCESS;
     }
 
