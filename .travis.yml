@@ -63,6 +63,7 @@ jobs:
         - sudo apt-get update -qq || true
       install:
         - npm install -g jfrog-cli-go
+        - jfrog --version
         - pyenv shell 3.6
         - sudo apt-get install qemu-user-static
         - cd ${HOME}
@@ -93,6 +94,7 @@ jobs:
         - PATH="/opt/gcc-arm-none-eabi-7-2018-q2-update/bin:${PATH}"
       install:
         - npm install -g jfrog-cli-go
+        - jfrog --version
         - pyenv shell 3.6
         - cd ${HOME}
         - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
@@ -120,6 +122,7 @@ jobs:
         - PATH="/opt/gcc-arm-none-eabi-7-2018-q2-update/bin:${PATH}"
       install:
         - npm install -g jfrog-cli-go
+        - jfrog --version
         - pyenv shell 3.6
         - cd ${HOME}
         - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
@@ -147,6 +150,7 @@ jobs:
         - PATH="/opt/gcc-arm-none-eabi-7-2018-q2-update/bin:${PATH}"
       install:
         - npm install -g jfrog-cli-go
+        - jfrog --version
         - pyenv shell 3.6
         - cd ${HOME}
         - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
@@ -174,6 +178,7 @@ jobs:
         - PATH="/opt/gcc-arm-none-eabi-7-2018-q2-update/bin:${PATH}"
       install:
         - npm install -g jfrog-cli-go
+        - jfrog --version
         - pyenv shell 3.6
         - cd ${HOME}
         - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
@@ -202,6 +207,7 @@ jobs:
         - sudo apt-get update -qq || true
       install:
         - npm install -g jfrog-cli-go
+        - jfrog --version
         - pyenv shell 3.6
         - sudo apt-add-repository --update --yes ppa:ev3dev/tools
         - sudo apt-get install --no-install-recommends --yes
@@ -246,6 +252,7 @@ jobs:
       install:
         - sudo apt-get install --yes doxygen
         - npm install -g jfrog-cli-go
+        - jfrog --version
         - pyenv shell 3.6
         - cd ${HOME}
         - git clone --depth=10 --branch=$(cat ${TRAVIS_BUILD_DIR}/micropython-tag) --recursive https://github.com/pybricks/micropython;
