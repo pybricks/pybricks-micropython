@@ -16,7 +16,7 @@ int32_t pbio_math_mul_i32_fix16(int32_t a, fix16_t b) {
 }
 
 int32_t pbio_math_sqrt(int32_t n) {
-    if (n < 0) {
+    if (n <= 0) {
         return 0;
     }
     int32_t x0 = n;

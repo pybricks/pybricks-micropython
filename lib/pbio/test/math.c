@@ -7,6 +7,8 @@
 #include <tinytest_macros.h>
 
 void pbio_math_test_sqrt(void *env) {
+    tt_want(pbio_math_sqrt(0) == 0);
+    tt_want(pbio_math_sqrt(1) == 1);
     tt_want(pbio_math_sqrt(4) == 2);
     tt_want(pbio_math_sqrt(400) == 20);
     tt_want(pbio_math_sqrt(40000) == 200);
