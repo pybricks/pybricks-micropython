@@ -26,6 +26,6 @@
 // Set to MICROPY_FLOAT_IMPL_FLOAT to enable floating point support in user code or
 // set to MICROPY_FLOAT_IMPL_NONE to disable floating point support in user code
 // Requires about 20.1K (20620) of flash
-#define MICROPY_FLOAT_IMPL              (MICROPY_FLOAT_IMPL_FLOAT)
+#define MICROPY_FLOAT_IMPL              (MICROPY_FLOAT_IMPL_NONE)
 
 #include "../stm32/configport.h"
