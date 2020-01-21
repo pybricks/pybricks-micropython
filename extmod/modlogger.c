@@ -110,14 +110,6 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     if (log_file == NULL) {
         pb_assert(PBIO_ERROR_IO);
     }
-    if (fclose(log_file) != 0) {
-        pb_assert(PBIO_ERROR_IO);
-    }
-    // Open file for appending
-    log_file = fopen(file_path, "a");
-    if (log_file == NULL) {
-        pb_assert(PBIO_ERROR_IO);
-    }
 #else
     tools_Logger_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 #endif //PYBRICKS_HUB_EV3
