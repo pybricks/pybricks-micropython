@@ -3,7 +3,6 @@
 // Copyright (c) 2018 Laurens Valk
 // Copyright (c) 2020 David Lechner
 
-#include <errno.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
