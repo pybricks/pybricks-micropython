@@ -28,7 +28,8 @@
 #define PERIOD_MS 10
 
 // Flag that indicates whether we are busy stopping the thread
-volatile bool stopping_thread = false;
+static volatile bool stopping_thread = false;
+static pthread_t task_caller_thread;
 
 // The background thread that keeps firing the task handler
 static void *task_caller(void *arg) {
@@ -44,8 +45,6 @@ static void *task_caller(void *arg) {
         clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
     }
 
-    // Signal that shutdown is complete
-    stopping_thread = false;
     return NULL;
 }
 
@@ -103,7 +102,6 @@ void pybricks_init() {
 
     pbio_init();
     pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE); // TODO: define PBIO_LIGHT_PATTERN_EV3_RUN (Or, discuss if we want to use breathe for EV3, too)
-    pthread_t task_caller_thread;
     pthread_create(&task_caller_thread, NULL, task_caller, NULL);
 }
 
@@ -111,6 +109,6 @@ void pybricks_init() {
 void pybricks_deinit(){
     // Signal motor thread to stop and wait for it to do so.
     stopping_thread = true;
-    while (stopping_thread);
+    pthread_join(task_caller_thread, NULL);
     pbio_deinit();
 }
