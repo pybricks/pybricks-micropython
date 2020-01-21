@@ -1,12 +1,14 @@
 
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018 Laurens Valk
+// Copyright (c) 2020 David Lechner
 
+#include <errno.h>
+#include <pthread.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <pthread.h>
-#include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <sys/time.h>
@@ -18,62 +20,30 @@
 #include <pbio/main.h>
 #include <pbio/light.h>
 
+#include "py/mpconfig.h"
 #include "py/mpthread.h"
 
 #include "pbinit.h"
 
 #define PERIOD_MS 10
 
-struct periodic_info {
-    int timer_fd;
-    unsigned long long wakeups_missed;
-};
-
-// Configure timer at specified interval
-static int configure_timer_thread(unsigned int period_ms, struct periodic_info *info)
-{
-    struct itimerspec itval;
-    int fd = timerfd_create(CLOCK_MONOTONIC, 0);
-    info->wakeups_missed = 0;
-    info->timer_fd = fd;
-    if (fd == -1){
-        return fd;
-    }
-    itval.it_interval.tv_sec = 0;
-    itval.it_interval.tv_nsec = period_ms * 1000000;
-    itval.it_value.tv_sec = 0;
-    itval.it_value.tv_nsec = period_ms * 1000000;
-    return timerfd_settime(fd, 0, &itval, NULL);
-}
-
-// Wait for timer to complete period
-static void wait_period(struct periodic_info *info)
-{
-    unsigned long long missed;
-    int ret;
-    // Wait for the next timer event. If we have missed any the number is written to "missed".
-    ret = read(info->timer_fd, &missed, sizeof(missed));
-    if (ret == -1) {
-        perror("Unable to read timer");
-        return;
-    }
-    info->wakeups_missed += missed;
-}
-
 // Flag that indicates whether we are busy stopping the thread
 volatile bool stopping_thread = false;
 
 // The background thread that keeps firing the task handler
-static void *task_caller(void *arg)
-{
-    struct periodic_info info;
-    configure_timer_thread(PERIOD_MS, &info);
+static void *task_caller(void *arg) {
+    struct timespec ts;
+    ts.tv_sec = 0;
+    ts.tv_nsec = PERIOD_MS * 1000000;
+
     while (!stopping_thread) {
         MP_THREAD_GIL_ENTER();
         while (pbio_do_one_event()) { }
         MP_THREAD_GIL_EXIT();
-        wait_period(&info); // TODO: check if we should do any waiting here
+
+        clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
     }
+
     // Signal that shutdown is complete
     stopping_thread = false;
     return NULL;
