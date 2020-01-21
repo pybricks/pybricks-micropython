@@ -8,7 +8,7 @@
 #include <pbio/math.h>
 #include <pbio/servo.h>
 
-#define DRIVEBASE_LOG_NUM_VALUES (7 + NUM_DEFAULT_LOG_VALUES)
+#define DRIVEBASE_LOG_NUM_VALUES (15 + NUM_DEFAULT_LOG_VALUES)
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
@@ -96,6 +96,23 @@ static pbio_error_t drivebase_log_update(pbio_drivebase_t *db,
     buf[4] = dif;
     buf[5] = dif_rate;
     buf[6] = dif_control;
+
+    int32_t sum_ref, sum_ref_ext, sum_rate_ref, sum_rate_err, sum_rate_err_integral, sum_acceleration_ref;
+    pbio_trajectory_get_reference(&db->control_distance.trajectory, time_now, &sum_ref, &sum_ref_ext, &sum_rate_ref, &sum_acceleration_ref);
+    pbio_rate_integrator_get_errors(&db->control_distance.rate_integrator, time_now, sum_rate_ref, sum, sum_ref, &sum_rate_err, &sum_rate_err_integral);
+    buf[7] = sum_ref;
+    buf[8] = sum_rate_err_integral;
+    buf[9] = sum_rate_ref;
+    buf[10] = sum_rate_err_integral;
+
+    int32_t dif_ref, dif_ref_ext, dif_rate_ref, dif_rate_err, dif_rate_err_integral, dif_acceleration_ref;
+    pbio_trajectory_get_reference(&db->control_heading.trajectory, time_now, &dif_ref, &dif_ref_ext, &dif_rate_ref, &dif_acceleration_ref);
+    pbio_rate_integrator_get_errors(&db->control_heading.rate_integrator, time_now, dif_rate_ref, dif, dif_ref, &dif_rate_err, &dif_rate_err_integral);
+    buf[11] = dif_ref;
+    buf[12] = dif_rate_err_integral;
+    buf[13] = dif_rate_ref;
+    buf[14] = dif_rate_err_integral;
+
     return pbio_logger_update(&db->log, buf);
 }
 

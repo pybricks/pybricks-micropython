@@ -20,7 +20,7 @@
 #define NUM_DEFAULT_LOG_VALUES (1)
 
 // Maximum number of values to be logged per sample
-#define MAX_LOG_VALUES (12)
+#define MAX_LOG_VALUES (20)
 
 // Maximum length (index) of a log
 #define MAX_LOG_LEN ((MAX_LOG_MEM_KB*1024) / MAX_LOG_VALUES)
