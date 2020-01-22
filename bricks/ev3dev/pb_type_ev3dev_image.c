@@ -173,14 +173,6 @@ STATIC void clear_once(ev3dev_Image_obj_t *self) {
     if (self->cleared) {
         return;
     }
-
-    GrxContext *screen = grx_get_screen_context();
-    if (self->context == screen || self->context->root == screen) {
-        // HACK: stop the startup animation from pbinit
-        extern void pbricks_end_startup_animation();
-        pbricks_end_startup_animation();
-    }
-
     grx_context_clear(self->context, GRX_COLOR_WHITE);
     self->cleared = TRUE;
 }
