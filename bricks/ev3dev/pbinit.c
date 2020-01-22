@@ -24,7 +24,7 @@
 
 #include "pbinit.h"
 
-#define PERIOD_MS 10
+#define PERIOD_MS 1
 
 // Flag that indicates whether we are busy stopping the thread
 static volatile bool stopping_thread = false;
