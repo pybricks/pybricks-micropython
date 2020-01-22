@@ -67,8 +67,12 @@ try:
 except TypeError as ex:
     print(ex)
 
-# 5rd argument is kwarg
-img.draw_line(0, 0, 0, 0, Color.BLACK)
+# 5th argument is kwarg
+img.draw_line(0, 0, 0, 0, 1)
+img.draw_line(0, 0, 0, 0, width=1)
+
+# 6th argument is kwarg
+img.draw_line(0, 0, 0, 0, 1, Color.BLACK)
 img.draw_line(0, 0, 0, 0, color=Color.BLACK)
 
 

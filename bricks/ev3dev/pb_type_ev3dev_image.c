@@ -214,6 +214,7 @@ STATIC mp_obj_t ev3dev_Image_draw_line(size_t n_args, const mp_obj_t *pos_args, 
         PB_ARG_REQUIRED(y1),
         PB_ARG_REQUIRED(x2),
         PB_ARG_REQUIRED(y2),
+        PB_ARG_DEFAULT_INT(width, 1),
         PB_ARG_DEFAULT_ENUM(color, pb_const_black)
     );
 
@@ -221,11 +222,18 @@ STATIC mp_obj_t ev3dev_Image_draw_line(size_t n_args, const mp_obj_t *pos_args, 
     mp_int_t y1_ = pb_obj_get_int(y1);
     mp_int_t x2_ = pb_obj_get_int(x2);
     mp_int_t y2_ = pb_obj_get_int(y2);
+    mp_int_t width_ = pb_obj_get_int(width);
     GrxColor color_ = map_color(color);
 
     clear_once(self);
     grx_set_current_context(self->context);
-    grx_draw_line(x1_, y1_, x2_, y2_, color_);
+    if (width_ == 1) {
+        grx_draw_line(x1_, y1_, x2_, y2_, color_);
+    }
+    else {
+        GrxLineOptions options = { .color = color_, .width = width_ };
+        grx_draw_line_with_options(x1_, y1_, x2_, y2_, &options);
+    }
 
     return mp_const_none;
 }

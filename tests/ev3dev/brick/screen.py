@@ -41,8 +41,12 @@ try:
 except TypeError:
     pass
 
-# 5rd argument is kwarg
-ev3.screen.draw_line(0, 0, 0, 0, Color.BLACK)
+# 5th argument is kwarg
+ev3.screen.draw_line(0, 0, 0, 0, 1)
+ev3.screen.draw_line(0, 0, 0, 0, width=1)
+
+# 6th argument is kwarg
+ev3.screen.draw_line(0, 0, 0, 0, 1, Color.BLACK)
 ev3.screen.draw_line(0, 0, 0, 0, color=Color.BLACK)
 
 
