@@ -438,10 +438,6 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
     int32_t count_now;
     int32_t rate_now;
     pbio_error_t err;
-    err = servo_get_state(srv, &time_start, &count_now, &rate_now);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
 
     // Get the target rate
     int32_t rate_ref = pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit);
@@ -452,6 +448,9 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
 
     // If we are continuing a timed maneuver, we can try to patch the new command onto the existing one for better continuity
     if (srv->state == PBIO_SERVO_STATE_CONTROL_TIMED) {
+
+        // Current time
+        time_start = clock_usecs();
 
         // Make the new trajectory and try to patch
         err = pbio_trajectory_make_time_based_patched(
@@ -467,6 +466,12 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
         }
     }
     else {
+        // Get the current state and time
+        err = servo_get_state(srv, &time_start, &count_now, &rate_now);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+
         // If angle based or no maneuver was ongoing, make a basic new trajectory
         // Based on the current time and current state
         err = pbio_trajectory_make_time_based(
@@ -548,15 +553,10 @@ static bool run_target_is_done_func(pbio_trajectory_t *trajectory, pbio_control_
 
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop) {
 
-    // Get the intitial state based on physical motor state.
     int32_t time_start;
     int32_t count_start;
     int32_t rate_start;
     pbio_error_t err;
-    err = servo_get_state(srv, &time_start, &count_start, &rate_start);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
 
     // Get the target rate and angle
     int32_t target_count = pbio_math_mul_i32_fix16(target, srv->tacho->counts_per_output_unit);
@@ -568,6 +568,9 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
 
     // If we are continuing a angle based maneuver, we can try to patch the new command onto the existing one for better continuity
     if (srv->state == PBIO_SERVO_STATE_CONTROL_ANGLE) {
+
+        // Current time
+        time_start = clock_usecs();
 
         // The start time must account for time spent pausing while stalled
         int32_t time_ref = pbio_count_integrator_get_ref_time(&srv->control.count_integrator, time_start);
@@ -585,6 +588,13 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
         }
     }
     else {
+
+        // Get the current state and time
+        err = servo_get_state(srv, &time_start, &count_start, &rate_start);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+
         // If time based or no maneuver was ongoing, make a basic new trajectory
         // Based on the current time and current state
         err = pbio_trajectory_make_angle_based(
@@ -642,18 +652,12 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
-    int32_t time_start;
-    int32_t count_start;
-    int32_t rate_start;
+    int32_t time_start = clock_usecs();
     pbio_error_t err;
-    err = servo_get_state(srv, &time_start, &count_start, &rate_start);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
 
     // Set new maneuver action and stop type
     srv->control.after_stop = PBIO_ACTUATION_COAST;
-    srv->control.is_done_func = pbio_control_never_done; 
+    srv->control.is_done_func = pbio_control_never_done;
 
     // Compute new maneuver based on user argument, starting from the initial state
     pbio_trajectory_make_stationary(&srv->control.trajectory, time_start, pbio_math_mul_i32_fix16(target, srv->tacho->counts_per_output_unit));
