@@ -110,7 +110,6 @@ static const char pybricks_ev3dev_help_text[] =
 
 #define MICROPY_PY_THREAD           (1)
 #define MICROPY_PY_THREAD_GIL       (1)
-#define MICROPY_PY_THREAD_GIL_VM_DIVISOR (0)
 
 #ifndef MICROPY_STACKLESS
 #define MICROPY_STACKLESS           (0)
