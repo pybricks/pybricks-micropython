@@ -446,6 +446,10 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
     // Get the target rate
     int32_t rate_ref = pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit);
 
+    // Set new maneuver action and stop type, and state
+    srv->control.after_stop = after_stop;
+    srv->control.is_done_func = stop_func;
+
     // If we are continuing a timed maneuver, we can try to patch the new command onto the existing one for better continuity
     if (srv->state == PBIO_SERVO_STATE_CONTROL_TIMED) {
 
@@ -485,16 +489,12 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
 
         // Set the new servo state
         srv->state = PBIO_SERVO_STATE_CONTROL_TIMED;
-    }
 
-    // Set new maneuver action and stop type, and state
-    srv->control.after_stop = after_stop;
-    srv->control.is_done_func = stop_func;
-    
-    // Run one control update synchronously with user command.
-    err = pbio_servo_control_update(srv);
-    if (err != PBIO_SUCCESS) {
-        return err;
+        // Run one control update synchronously with user command.
+        err = pbio_servo_control_update(srv);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
     }
 
     return PBIO_SUCCESS;
@@ -562,6 +562,10 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
     int32_t target_count = pbio_math_mul_i32_fix16(target, srv->tacho->counts_per_output_unit);
     int32_t target_rate = pbio_math_mul_i32_fix16(speed, srv->tacho->counts_per_output_unit);
 
+    // Set new maneuver action and stop type, and state
+    srv->control.after_stop = after_stop;
+    srv->control.is_done_func = run_target_is_done_func;
+
     // If we are continuing a angle based maneuver, we can try to patch the new command onto the existing one for better continuity
     if (srv->state == PBIO_SERVO_STATE_CONTROL_ANGLE) {
 
@@ -603,16 +607,12 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
 
         // Set the new servo state
         srv->state = PBIO_SERVO_STATE_CONTROL_ANGLE;
-    }
 
-    // Set new maneuver action and stop type, and state
-    srv->control.after_stop = after_stop;
-    srv->control.is_done_func = run_target_is_done_func;
-    
-    // Run one control update synchronously with user command.
-    err = pbio_servo_control_update(srv);
-    if (err != PBIO_SUCCESS) {
-        return err;
+        // Run one control update synchronously with user command.
+        err = pbio_servo_control_update(srv);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
     }
 
     return PBIO_SUCCESS;
@@ -666,12 +666,12 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
 
         // This is an angular control maneuver
         srv->state = PBIO_SERVO_STATE_CONTROL_ANGLE;
-    }
 
-    // Run one control update synchronously with user command
-    err = pbio_servo_control_update(srv);
-    if (err != PBIO_SUCCESS) {
-        return err;
+        // Run one control update synchronously with user command
+        err = pbio_servo_control_update(srv);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
     }
 
     return PBIO_SUCCESS;
