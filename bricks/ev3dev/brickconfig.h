@@ -26,7 +26,6 @@
 #define MICROPY_VM_HOOK_LOOP do { \
     extern int pbio_do_one_event(void); \
     pbio_do_one_event(); \
-    g_main_context_iteration(g_main_context_get_thread_default(), FALSE); \
 } while (0);
 #define MICROPY_EVENT_POLL_HOOK do { \
     extern void mp_handle_pending(void); \
