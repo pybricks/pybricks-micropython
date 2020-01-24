@@ -49,12 +49,12 @@ STATIC void sighandler(int signum) {
         sigprocmask(SIG_SETMASK, &mask, NULL);
         nlr_raise(MP_OBJ_FROM_PTR(&MP_STATE_VM(mp_kbd_exception)));
         #else
-        if (MP_STATE_VM(mp_pending_exception) == MP_OBJ_FROM_PTR(&MP_STATE_VM(mp_kbd_exception))) {
+        if (MP_STATE_MAIN_THREAD(mp_pending_exception) == MP_OBJ_FROM_PTR(&MP_STATE_VM(mp_kbd_exception))) {
             // this is the second time we are called, so die straight away
             exit(1);
         }
         mp_obj_exception_clear_traceback(MP_OBJ_FROM_PTR(&MP_STATE_VM(mp_kbd_exception)));
-        MP_STATE_VM(mp_pending_exception) = MP_OBJ_FROM_PTR(&MP_STATE_VM(mp_kbd_exception));
+        MP_STATE_MAIN_THREAD(mp_pending_exception) = MP_OBJ_FROM_PTR(&MP_STATE_VM(mp_kbd_exception));
         #endif
     }
 }
@@ -191,7 +191,9 @@ int mp_hal_stdin_rx_chr(void) {
 }
 
 void mp_hal_stdout_tx_strn(const char *str, size_t len) {
+    MP_THREAD_GIL_EXIT();
     int ret = write(1, str, len);
+    MP_THREAD_GIL_ENTER();
     mp_uos_dupterm_tx_strn(str, len);
     (void)ret; // to suppress compiler warning
 }
