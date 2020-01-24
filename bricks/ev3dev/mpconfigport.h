@@ -95,7 +95,7 @@ static const char pybricks_ev3dev_help_text[] =
 #endif
 #define MICROPY_PY_SYS_MAXSIZE      (1)
 #define MICROPY_PY_SYS_STDFILES     (1)
-#define MICROPY_PY_SYS_EXC_INFO     (1)
+#define MICROPY_PY_SYS_EXC_INFO     (0)
 #define MICROPY_PY_COLLECTIONS_DEQUE (1)
 #define MICROPY_PY_COLLECTIONS_ORDEREDDICT (1)
 #ifndef MICROPY_PY_MATH_SPECIAL_FUNCTIONS
