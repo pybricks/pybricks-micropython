@@ -386,7 +386,7 @@ STATIC mp_obj_t ev3dev_Speaker_play_file(size_t n_args, const mp_obj_t *pos_args
     // we have to keep running the event loop until the async function has completed.
     // This means there is small chance that multiple exceptions could be caught
     // and only the last one will be re-raised.
-    gboolean exception = FALSE;
+    mp_obj_t exception = MP_OBJ_NULL;
     nlr_buf_t nlr;
     do {
         if (nlr_push(&nlr) == 0) {
@@ -394,13 +394,13 @@ STATIC mp_obj_t ev3dev_Speaker_play_file(size_t n_args, const mp_obj_t *pos_args
             nlr_pop();
         } else {
             g_subprocess_force_exit(aplay);
-            exception = TRUE;
+            exception = MP_OBJ_FROM_PTR(nlr.ret_val);
         }
     } while (self->aplay_busy);
 
-    if (exception) {
+    if (exception != MP_OBJ_NULL) {
         g_object_unref(aplay);
-        nlr_jump(nlr.ret_val);
+        nlr_raise(exception);
     }
 
     if (!self->aplay_result) {
@@ -496,7 +496,7 @@ STATIC mp_obj_t ev3dev_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_m
     // we have to keep running the event loop until the async function has completed.
     // This means there is small chance that multiple exceptions could be caught
     // and only the last one will be re-raised.
-    gboolean exception = FALSE;
+    mp_obj_t exception = MP_OBJ_NULL;
     nlr_buf_t nlr;
     do {
         if (nlr_push(&nlr) == 0) {
@@ -505,14 +505,14 @@ STATIC mp_obj_t ev3dev_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_m
         } else {
             g_subprocess_force_exit(espeak);
             g_subprocess_force_exit(aplay);
-            exception = TRUE;
+            exception = MP_OBJ_FROM_PTR(nlr.ret_val);
         }
     } while (self->espeak_busy || self->aplay_busy || self->splice_busy);
 
-    if (exception) {
+    if (exception != MP_OBJ_NULL) {
         g_object_unref(aplay);
         g_object_unref(espeak);
-        nlr_jump(nlr.ret_val);
+        nlr_raise(exception);
     }
 
     if (!self->aplay_result) {
