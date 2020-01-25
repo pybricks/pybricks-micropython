@@ -24,9 +24,10 @@
  * THE SOFTWARE.
  */
 
-#include <unistd.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <sys/time.h>
 
 #include <glib.h>
@@ -35,51 +36,34 @@
 #include "py/runtime.h"
 #include "extmod/misc.h"
 
-#ifndef _WIN32
-#include <signal.h>
 
 STATIC void sighandler(int signum) {
     if (signum == SIGINT) {
-        #if MICROPY_ASYNC_KBD_INTR
-        mp_obj_exception_clear_traceback(MP_OBJ_FROM_PTR(&MP_STATE_VM(mp_kbd_exception)));
-        sigset_t mask;
-        sigemptyset(&mask);
-        // On entry to handler, its signal is blocked, and unblocked on
-        // normal exit. As we instead perform longjmp, unblock it manually.
-        sigprocmask(SIG_SETMASK, &mask, NULL);
-        nlr_raise(MP_OBJ_FROM_PTR(&MP_STATE_VM(mp_kbd_exception)));
-        #else
         if (MP_STATE_MAIN_THREAD(mp_pending_exception) == MP_OBJ_FROM_PTR(&MP_STATE_VM(mp_kbd_exception))) {
             // this is the second time we are called, so die straight away
             exit(1);
         }
         mp_obj_exception_clear_traceback(MP_OBJ_FROM_PTR(&MP_STATE_VM(mp_kbd_exception)));
         MP_STATE_MAIN_THREAD(mp_pending_exception) = MP_OBJ_FROM_PTR(&MP_STATE_VM(mp_kbd_exception));
-        #endif
     }
 }
-#endif
 
 void mp_hal_set_interrupt_char(char c) {
     // configure terminal settings to (not) let ctrl-C through
     if (c == CHAR_CTRL_C) {
-        #ifndef _WIN32
         // enable signal handler
         struct sigaction sa;
         sa.sa_flags = 0;
         sa.sa_handler = sighandler;
         sigemptyset(&sa.sa_mask);
         sigaction(SIGINT, &sa, NULL);
-        #endif
     } else {
-        #ifndef _WIN32
         // disable signal handler
         struct sigaction sa;
         sa.sa_flags = 0;
         sa.sa_handler = SIG_DFL;
         sigemptyset(&sa.sa_mask);
         sigaction(SIGINT, &sa, NULL);
-        #endif
     }
 }
 
