@@ -109,8 +109,8 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     // Load default settings for this device type
     load_servo_settings(&srv->control.settings, srv->dcmotor->id);
 
-    // Set user specified count to output unit scaler
-    srv->control.settings.counts_per_unit = srv->tacho->counts_per_output_unit; // FIXME: use control setup
+    // For a servo, counts per output unit is just tacho counts per degree
+    srv->control.settings.counts_per_unit = srv->tacho->counts_per_degree;
 
     // Configure the logs for a servo
     srv->log.num_values = SERVO_LOG_NUM_VALUES;

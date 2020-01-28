@@ -53,7 +53,7 @@ static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pb
         return PBIO_ERROR_INVALID_ARG;
     }
     // Get overal ratio from counts to output variable, including gear train
-    tacho->counts_per_output_unit = fix16_mul(F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0), gear_ratio);
+    tacho->counts_per_degree = fix16_mul(F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0), gear_ratio);
 
     // Configure direction
     tacho->direction = direction;
@@ -116,7 +116,7 @@ pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, int32_t *angle) {
         return err;
     }
 
-    *angle = pbio_math_div_i32_fix16(encoder_count, tacho->counts_per_output_unit);
+    *angle = pbio_math_div_i32_fix16(encoder_count, tacho->counts_per_degree);
 
     return PBIO_SUCCESS;
 }
@@ -126,7 +126,7 @@ pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t reset_angle, bo
         return pbio_tacho_reset_count_to_abs(tacho);
     }
     else {
-        return pbio_tacho_reset_count(tacho, pbio_math_mul_i32_fix16(reset_angle, tacho->counts_per_output_unit));
+        return pbio_tacho_reset_count(tacho, pbio_math_mul_i32_fix16(reset_angle, tacho->counts_per_degree));
     }
 }
 
@@ -154,7 +154,7 @@ pbio_error_t pbio_tacho_get_angular_rate(pbio_tacho_t *tacho, int32_t *angular_r
         return err;
     }
 
-    *angular_rate = pbio_math_div_i32_fix16(encoder_rate, tacho->counts_per_output_unit);
+    *angular_rate = pbio_math_div_i32_fix16(encoder_rate, tacho->counts_per_degree);
 
     return PBIO_SUCCESS;
 }
