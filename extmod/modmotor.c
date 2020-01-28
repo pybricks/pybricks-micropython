@@ -465,103 +465,6 @@ STATIC mp_obj_t motor_Motor_track_target(size_t n_args, const mp_obj_t *pos_args
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_track_target_obj, 0, motor_Motor_track_target);
 
-// pybricks.builtins.Motor.set_run_settings
-STATIC mp_obj_t motor_Motor_set_run_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        motor_Motor_obj_t, self,
-        PB_ARG_DEFAULT_NONE(max_speed),
-        PB_ARG_DEFAULT_NONE(acceleration)
-    );
-
-    // Load original values
-    int32_t max_speed_val;
-    int32_t acceleration_val;
-    pb_assert(pbio_control_get_limits(&self->srv->control, &max_speed_val, &acceleration_val));
-
-    // Set values if given by the user
-    max_speed_val = pb_obj_get_default_int(max_speed, max_speed_val);
-    acceleration_val = pb_obj_get_default_int(acceleration, acceleration_val);
-
-    // Write resulting values
-    pb_assert(pbio_control_set_limits(&self->srv->control, max_speed_val, acceleration_val));
-
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_set_run_settings_obj, 0, motor_Motor_set_run_settings);
-
-// pybricks.builtins.Motor.set_pid_settings
-STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        motor_Motor_obj_t, self,
-        PB_ARG_DEFAULT_NONE(kp),
-        PB_ARG_DEFAULT_NONE(ki),
-        PB_ARG_DEFAULT_NONE(kd),
-        PB_ARG_DEFAULT_NONE(angle_tolerance),
-        PB_ARG_DEFAULT_NONE(speed_tolerance),
-        PB_ARG_DEFAULT_NONE(stall_speed),
-        PB_ARG_DEFAULT_NONE(stall_time)
-    );
-
-    // Load original values
-    int16_t kp_val;
-    int16_t ki_val;
-    int16_t kd_val;
-    int32_t pos_tolerance_val;
-    int32_t speed_tolerance_val;
-    int32_t stall_speed_limit_val;
-    int32_t stall_time_val;
-
-    pb_assert(pbio_control_get_pid_settings(&self->srv->control, &kp_val, &ki_val, &kd_val,
-        &pos_tolerance_val, &speed_tolerance_val,
-        &stall_speed_limit_val, &stall_time_val));
-
-    // Set values if given by the user
-    kp_val = pb_obj_get_default_int(kp, kp_val);
-    ki_val = pb_obj_get_default_int(ki, ki_val);
-    kd_val = pb_obj_get_default_int(kd, kd_val);
-    pos_tolerance_val = pb_obj_get_default_int(angle_tolerance, pos_tolerance_val);
-    speed_tolerance_val = pb_obj_get_default_int(speed_tolerance, speed_tolerance_val);
-    stall_speed_limit_val = pb_obj_get_default_int(stall_speed, stall_speed_limit_val);
-    stall_time_val = pb_obj_get_default_int(stall_time, stall_time_val);
-
-    // Write resulting values
-    pb_assert(pbio_control_set_pid_settings(&self->srv->control, kp_val, ki_val, kd_val,
-        pos_tolerance_val, speed_tolerance_val,
-        stall_speed_limit_val, stall_time_val));
-
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_set_pid_settings_obj, 0, motor_Motor_set_pid_settings);
-
-// pybricks.builtins.Motor.trajectory
-STATIC mp_obj_t motor_Motor_trajectory(mp_obj_t self_in) {
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbio_trajectory_t trajectory;
-
-    mp_obj_t parms[12];
-
-    bool active = self->srv->state > PBIO_SERVO_STATE_ERRORED;
-    trajectory = self->srv->control.trajectory;
-
-    if (active) {
-        parms[0] = mp_obj_new_int((trajectory.t0-trajectory.t0)/1000);
-        parms[1] = mp_obj_new_int((trajectory.t1-trajectory.t0)/1000);
-        parms[2] = mp_obj_new_int((trajectory.t2-trajectory.t0)/1000);
-        parms[3] = mp_obj_new_int((trajectory.t3-trajectory.t0)/1000);
-        parms[4] = mp_obj_new_int(trajectory.th0);
-        parms[5] = mp_obj_new_int(trajectory.th1);
-        parms[6] = mp_obj_new_int(trajectory.th2);
-        parms[7] = mp_obj_new_int(trajectory.th3);
-        parms[8] = mp_obj_new_int(trajectory.w0);
-        parms[9] = mp_obj_new_int(trajectory.w1);
-        parms[10] = mp_obj_new_int(trajectory.a0);
-        parms[11] = mp_obj_new_int(trajectory.a2);
-        return mp_obj_new_tuple(12, parms);
-    }
-    return mp_const_none;
-}
-MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_trajectory_obj, motor_Motor_trajectory);
-
 // dir(pybricks.builtins.Motor)
 STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     //
@@ -572,8 +475,6 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     //
     // Methods specific to encoded motors
     //
-    { MP_ROM_QSTR(MP_QSTR_set_run_settings), MP_ROM_PTR(&motor_Motor_set_run_settings_obj) },
-    { MP_ROM_QSTR(MP_QSTR_set_pid_settings), MP_ROM_PTR(&motor_Motor_set_pid_settings_obj) },
     { MP_ROM_QSTR(MP_QSTR_angle), MP_ROM_PTR(&motor_Motor_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_speed), MP_ROM_PTR(&motor_Motor_speed_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_angle), MP_ROM_PTR(&motor_Motor_reset_angle_obj) },
@@ -586,7 +487,6 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&motor_Motor_track_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_log), MP_ROM_ATTRIBUTE_OFFSET(motor_Motor_obj_t, logger) },
     { MP_ROM_QSTR(MP_QSTR_control), MP_ROM_ATTRIBUTE_OFFSET(motor_Motor_obj_t, control) },
-    { MP_ROM_QSTR(MP_QSTR_trajectory), MP_ROM_PTR(&motor_Motor_trajectory_obj) },
 };
 MP_DEFINE_CONST_DICT(motor_Motor_locals_dict, motor_Motor_locals_dict_table);
 
