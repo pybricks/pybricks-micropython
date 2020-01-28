@@ -127,20 +127,19 @@ void control_update_time_target(pbio_control_t *ctl, int32_t time_now, int32_t c
     return;
 }
 
-pbio_error_t pbio_control_get_limits(pbio_control_t *ctl,
-                                     int32_t *max_speed,
-                                     int32_t *acceleration) {
-    *max_speed = pbio_math_div_i32_fix16(ctl->settings.max_rate, ctl->settings.counts_per_unit);
-    *acceleration = pbio_math_div_i32_fix16(ctl->settings.abs_acceleration, ctl->settings.counts_per_unit);
-    return PBIO_SUCCESS;
+void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *actuation) {
+    *speed = pbio_math_div_i32_fix16(s->max_rate, s->counts_per_unit);
+    *acceleration = pbio_math_div_i32_fix16(s->abs_acceleration, s->counts_per_unit);
+    *actuation = s->max_control / 100; // TODO: Generalize scaler beyond duty
 }
 
-pbio_error_t pbio_control_set_limits(pbio_control_t *ctl,
-                                     int32_t max_speed,
-                                     int32_t acceleration) {
-    ctl->settings.max_rate = pbio_math_mul_i32_fix16(max_speed, ctl->settings.counts_per_unit);
-    ctl->settings.abs_acceleration = pbio_math_mul_i32_fix16(acceleration, ctl->settings.counts_per_unit);
-    // TODO: Add getter for max control
+pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t actuation) {
+    if (speed < 1 || acceleration < 1 || actuation < 1) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    s->max_rate = pbio_math_mul_i32_fix16(speed, s->counts_per_unit);
+    s->abs_acceleration = pbio_math_mul_i32_fix16(acceleration, s->counts_per_unit);
+    s->max_control = actuation * 100; // TODO: Generalize scaler beyond duty
     return PBIO_SUCCESS;
 }
 
@@ -186,7 +185,6 @@ pbio_error_t pbio_control_set_pid_settings(pbio_control_t *ctl,
     ctl->settings.rate_tolerance = pbio_math_mul_i32_fix16(speed_tolerance, ctl->settings.counts_per_unit);
     ctl->settings.stall_rate_limit = pbio_math_mul_i32_fix16(stall_speed_limit, ctl->settings.counts_per_unit);
     ctl->settings.stall_time = stall_time * US_PER_MS; 
-    ctl->settings.max_control = 10000; // TODO: Add setter
     return PBIO_SUCCESS;
 }
 

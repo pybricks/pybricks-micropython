@@ -70,13 +70,9 @@ typedef struct _pbio_control_t {
 
 pbio_error_t pbio_control_get_ratio_settings(pbio_control_t *ctl, char *gear_ratio_str, char *counts_per_degree_str);
 
-pbio_error_t pbio_control_get_limits(pbio_control_t *ctl,
-                                     int32_t *max_speed,
-                                     int32_t *acceleration);
+void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *actuation);
 
-pbio_error_t pbio_control_set_limits(pbio_control_t *ctl,
-                                     int32_t max_speed,
-                                     int32_t acceleration);
+pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *ctl, int32_t speed, int32_t acceleration, int32_t actuation);
 
 pbio_error_t pbio_control_get_pid_settings(pbio_control_t *ctl,
                                            int16_t *pid_kp,
