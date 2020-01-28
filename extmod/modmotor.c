@@ -16,6 +16,7 @@
 #include "py/builtin.h"
 #include "py/obj.h"
 
+#include "modbuiltins.h"
 #include "modmotor.h"
 #include "modlogger.h"
 #include "modparameters.h"
@@ -126,6 +127,9 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
 
     // Create an instance of the Logger class
     self->logger = logger_obj_make_new(&self->srv->log);
+
+    // Create an instance of the Control class
+    self->control = builtins_Control_obj_make_new(&self->srv->control);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -581,6 +585,7 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_run_target), MP_ROM_PTR(&motor_Motor_run_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&motor_Motor_track_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_log), MP_ROM_ATTRIBUTE_OFFSET(motor_Motor_obj_t, logger) },
+    { MP_ROM_QSTR(MP_QSTR_control), MP_ROM_ATTRIBUTE_OFFSET(motor_Motor_obj_t, control) },
     { MP_ROM_QSTR(MP_QSTR_trajectory), MP_ROM_PTR(&motor_Motor_trajectory_obj) },
 };
 MP_DEFINE_CONST_DICT(motor_Motor_locals_dict, motor_Motor_locals_dict_table);
