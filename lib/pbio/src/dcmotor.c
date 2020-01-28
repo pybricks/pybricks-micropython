@@ -36,8 +36,7 @@ static pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t
     dcmotor->direction = direction;
     dcmotor->state = PBIO_DCMOTOR_COAST;
 
-    // Set duty scaling and offsets
-    return pbio_dcmotor_set_settings(dcmotor,  100, 0);
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_dcmotor_get(pbio_port_t port, pbio_dcmotor_t **dcmotor, pbio_direction_t direction) {
@@ -52,22 +51,6 @@ pbio_error_t pbio_dcmotor_get(pbio_port_t port, pbio_dcmotor_t **dcmotor, pbio_d
 
     // Initialize and set up pwm properties
     return pbio_dcmotor_setup(*dcmotor, direction);
-}
-
-pbio_error_t pbio_dcmotor_set_settings(pbio_dcmotor_t *dcmotor, int32_t stall_torque_limit_pct, int32_t duty_offset_pct) {
-    if (stall_torque_limit_pct < 0 || duty_offset_pct < 0) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-    dcmotor->max_duty_steps = PBIO_DUTY_STEPS_PER_USER_STEP * stall_torque_limit_pct;
-    dcmotor->duty_offset = PBIO_DUTY_STEPS_PER_USER_STEP * duty_offset_pct;
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_dcmotor_get_settings(pbio_dcmotor_t *dcmotor, pbio_direction_t *direction, int32_t *stall_torque_limit_pct, int32_t *duty_offset_pct) {
-    *direction = dcmotor->direction;
-    *stall_torque_limit_pct = dcmotor->max_duty_steps/PBIO_DUTY_STEPS_PER_USER_STEP;
-    *duty_offset_pct = dcmotor->duty_offset/PBIO_DUTY_STEPS_PER_USER_STEP;
-    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_passivity_t *state, int32_t *duty_now) {
@@ -89,7 +72,7 @@ pbio_error_t pbio_dcmotor_brake(pbio_dcmotor_t *dcmotor) {
 pbio_error_t pbio_dcmotor_set_duty_cycle_sys(pbio_dcmotor_t *dcmotor, int32_t duty_steps) {
 
     // Limit the duty cycle value
-    int32_t limit = dcmotor->max_duty_steps;
+    int32_t limit = PBDRV_MAX_DUTY;
     if (duty_steps > limit) {
         duty_steps = limit;
     }
@@ -97,24 +80,14 @@ pbio_error_t pbio_dcmotor_set_duty_cycle_sys(pbio_dcmotor_t *dcmotor, int32_t du
         duty_steps = -limit;
     }
 
-    int32_t duty_cycle;
-    // Add the configured offset and scale remaining duty
-    if (duty_steps == 0) {
-        duty_cycle = 0;
-    }
-    else {
-        int32_t offset = dcmotor->duty_offset;
-        int32_t offset_signed = duty_steps > 0 ? offset : -offset;
-        duty_cycle = offset_signed + ((PBIO_DUTY_STEPS-offset)*duty_steps)/PBIO_DUTY_STEPS;
-    }
     // Signed duty cycle applied to bridge
-    dcmotor->duty_now = duty_cycle;
+    dcmotor->duty_now = duty_steps;
 
     // Flip sign if motor is inverted
     if (dcmotor->direction == PBIO_DIRECTION_COUNTERCLOCKWISE){
-        duty_cycle = -duty_cycle;
+        duty_steps = -duty_steps;
     }
-    pbio_error_t err = pbdrv_motor_set_duty_cycle(dcmotor->port, duty_cycle);
+    pbio_error_t err = pbdrv_motor_set_duty_cycle(dcmotor->port, duty_steps);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -123,7 +96,7 @@ pbio_error_t pbio_dcmotor_set_duty_cycle_sys(pbio_dcmotor_t *dcmotor, int32_t du
 }
 
 pbio_error_t pbio_dcmotor_set_duty_cycle_usr(pbio_dcmotor_t *dcmotor, int32_t duty_steps) {
-    pbio_error_t err = pbio_dcmotor_set_duty_cycle_sys(dcmotor,  PBIO_DUTY_STEPS * duty_steps / PBIO_DUTY_USER_STEPS);
+    pbio_error_t err = pbio_dcmotor_set_duty_cycle_sys(dcmotor,  duty_steps * PBDRV_MAX_DUTY / PBIO_DUTY_USER_STEPS);
     if (err != PBIO_SUCCESS) {
         return err;
     }

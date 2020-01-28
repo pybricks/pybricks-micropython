@@ -142,25 +142,13 @@ void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
         ((motor_Motor_obj_t*) MP_OBJ_TO_PTR(self_in))->srv->dcmotor :
         ((motor_DCMotor_obj_t*) MP_OBJ_TO_PTR(self_in))->dcmotor;
 
-    pbio_port_t port;
-    pbio_direction_t direction;
-    int32_t stall_duty, duty_offset;
-    pb_assert(pbio_dcmotor_get_settings(dcmotor,  &direction, &stall_duty, &duty_offset));
-    port = dcmotor->port;
-
     mp_printf(print,
         "Motor properties:\n"
         "------------------------\n"
         "Port\t\t %c\n"
-        "Direction\t %s\n"
-        "\nDC settings:\n"
-        "------------------------\n"
-        "Duty limit\t %" PRId32 "\n"
-        "Duty offset\t %" PRId32 "\n",
-        port,
-        direction == PBIO_DIRECTION_CLOCKWISE ? "clockwise" : "counterclockwise",
-        stall_duty,
-        duty_offset
+        "Direction\t %s\n",
+        dcmotor->port,
+        dcmotor->direction == PBIO_DIRECTION_CLOCKWISE ? "clockwise" : "counterclockwise"
     );
 
     // For DC motors, there is nothing left to do.
@@ -382,20 +370,12 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
     mp_int_t speed_arg = pb_obj_get_int(speed);
     pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
 
-    int32_t temporary_stall_duty = 100;
-    int32_t old_stall_duty;
-    pbio_direction_t direction;
-    int32_t old_duty_offset;
-
     bool override_duty_limit = n_args > 3;
+    // FIXME: Set max control instead
+    (void) duty_limit;
 
     if (override_duty_limit) {
-        temporary_stall_duty = pb_obj_get_int(duty_limit);
-    }
-
-    if (override_duty_limit) {
-        pbio_dcmotor_get_settings(self->srv->dcmotor, &direction, &old_stall_duty, &old_duty_offset);
-        pbio_dcmotor_set_settings(self->srv->dcmotor, temporary_stall_duty, old_duty_offset);
+        pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
     }
 
     // Call pbio with parsed user/default arguments
@@ -409,10 +389,8 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
     int32_t stall_point;
     pbio_tacho_get_angle(self->srv->tacho, &stall_point);
 
-    if (override_duty_limit) {
-        // Return stall settings to old values if they were changed
-        pbio_dcmotor_set_settings(self->srv->dcmotor, old_stall_duty, old_duty_offset);
-    }
+    // FIXME: Set max control instead
+
 
     // Return angle at which the motor stalled
     return mp_obj_new_int(stall_point);
@@ -507,39 +485,6 @@ STATIC mp_obj_t motor_Motor_set_run_settings(size_t n_args, const mp_obj_t *pos_
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_set_run_settings_obj, 0, motor_Motor_set_run_settings);
 
-// pybricks.builtins.Motor.set_dc_settings
-// pybricks.builtins.DCMotor.set_dc_settings
-STATIC mp_obj_t motor_Motor_set_dc_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-
-    // Parse all arguments except the first one (self)
-    PB_PARSE_ARGS_METHOD_SKIP_SELF(n_args, pos_args, kw_args,
-        PB_ARG_DEFAULT_NONE(duty_limit),
-        PB_ARG_DEFAULT_NONE(duty_offset)
-    );
-
-    // Get the dcmotor from self, which is either Motor or DCMotor
-    pbio_dcmotor_t *dcmotor = mp_obj_is_type(pos_args[0], &motor_Motor_type) ?
-        ((motor_Motor_obj_t*) MP_OBJ_TO_PTR(pos_args[0]))->srv->dcmotor :
-        ((motor_DCMotor_obj_t*) MP_OBJ_TO_PTR(pos_args[0]))->dcmotor;
-
-    // Load original values
-    pbio_direction_t direction;
-    int32_t stall_torque_limit_pct;
-    int32_t duty_offset_pct;
-
-    pb_assert(pbio_dcmotor_get_settings(dcmotor,  &direction, &stall_torque_limit_pct, &duty_offset_pct));
-
-    // Set values if given by the user
-    stall_torque_limit_pct = pb_obj_get_default_int(duty_limit, stall_torque_limit_pct);
-    duty_offset_pct = pb_obj_get_default_int(duty_offset, duty_offset_pct);
-
-    // Write resulting values
-    pb_assert(pbio_dcmotor_set_settings(dcmotor,  stall_torque_limit_pct, duty_offset_pct));
-
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_set_dc_settings_obj, 0, motor_Motor_set_dc_settings);
-
 // pybricks.builtins.Motor.set_pid_settings
 STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -620,7 +565,6 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     //
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_Motor_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_dc), MP_ROM_PTR(&motor_Motor_duty_obj) },
-    { MP_ROM_QSTR(MP_QSTR_set_dc_settings), MP_ROM_PTR(&motor_Motor_set_dc_settings_obj) },
     //
     // Methods specific to encoded motors
     //
@@ -656,7 +600,6 @@ const mp_obj_type_t motor_Motor_type = {
 STATIC const mp_rom_map_elem_t motor_DCMotor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_Motor_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_dc), MP_ROM_PTR(&motor_Motor_duty_obj) },
-    { MP_ROM_QSTR(MP_QSTR_set_dc_settings), MP_ROM_PTR(&motor_Motor_set_dc_settings_obj) },
 };
 MP_DEFINE_CONST_DICT(motor_DCMotor_locals_dict, motor_DCMotor_locals_dict_table);
 
