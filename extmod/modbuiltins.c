@@ -35,11 +35,30 @@ STATIC mp_obj_t builtins_Control_limits(size_t n_args, const mp_obj_t *pos_args,
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         builtins_Control_obj_t, self,
-        PB_ARG_REQUIRED(test)
+        PB_ARG_DEFAULT_NONE(speed),
+        PB_ARG_DEFAULT_NONE(acceleration),
+        PB_ARG_DEFAULT_NONE(actuation)
     );
 
-    (void) self;
-    (void) test;
+    // Read current values
+    int32_t _speed, _acceleration, _actuation;
+    pbio_control_settings_get_limits(&self->control->settings, &_speed, &_acceleration, &_actuation);
+
+    // If all given values are none, return current values
+    if (speed == mp_const_none && acceleration == mp_const_none && actuation == mp_const_none) {
+        mp_obj_t ret[3];
+        ret[0] = mp_obj_new_int(_speed);
+        ret[1] = mp_obj_new_int(_acceleration);
+        ret[2] = mp_obj_new_int(_actuation);
+        return mp_obj_new_tuple(3, ret);
+    }
+
+    // Set user settings
+    _speed = pb_obj_get_default_int(speed, _speed);
+    _acceleration = pb_obj_get_default_int(acceleration, _acceleration);
+    _actuation = pb_obj_get_default_int(actuation, _actuation);
+
+    pbio_control_settings_set_limits(&self->control->settings, _speed, _acceleration, _actuation);
 
     return mp_const_none;
 }
