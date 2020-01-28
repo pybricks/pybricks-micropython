@@ -169,7 +169,7 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_control_set_pid_settings(&db->control_heading, 200, 0, 12, 100, 2, 5, 5, 200);
+    err = pbio_control_set_pid_settings(&db->control_heading, 200, 0, 12, 2, 5, 5, 200);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -180,7 +180,7 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_control_set_pid_settings(&db->control_distance, 200, 0, 10, 100, 2, 5, 5, 200);
+    err = pbio_control_set_pid_settings(&db->control_distance, 200, 0, 10, 2, 5, 5, 200);
     if (err != PBIO_SUCCESS) {
         return err;
     }

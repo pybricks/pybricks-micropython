@@ -23,7 +23,6 @@ pbio_error_t pbio_config_get_defaults_servo(pbio_iodev_type_id_t id,
                                     int16_t *pid_kp,
                                     int16_t *pid_ki,
                                     int16_t *pid_kd,
-                                    int32_t *tight_loop_time,
                                     int32_t *position_tolerance,
                                     int32_t *speed_tolerance,
                                     int32_t *stall_speed_limit,
@@ -73,7 +72,6 @@ pbio_error_t pbio_config_get_defaults_servo(pbio_iodev_type_id_t id,
     }
 
     // Default tolerances for general purpose behavior
-    *tight_loop_time = 100;
     *position_tolerance = 3;
     *speed_tolerance = 5;
     *stall_speed_limit = 2;
@@ -99,7 +97,6 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     int16_t pid_kp;
     int16_t pid_ki;
     int16_t pid_kd;
-    int32_t tight_loop_time;
     int32_t position_tolerance;
     int32_t speed_tolerance;
     int32_t stall_speed_limit;
@@ -107,7 +104,7 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
 
     err = pbio_config_get_defaults_servo(srv->dcmotor->id,
                                         &max_speed, &acceleration,
-                                        &pid_kp, &pid_ki, &pid_kd, &tight_loop_time,
+                                        &pid_kp, &pid_ki, &pid_kd,
                                         &position_tolerance, &speed_tolerance, &stall_speed_limit, &stall_time);
     if (err != PBIO_SUCCESS) {
         return err;
@@ -128,7 +125,7 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_control_set_pid_settings(&srv->control, pid_kp, pid_ki, pid_kd, tight_loop_time, position_tolerance, speed_tolerance, stall_speed_limit, stall_time);
+    err = pbio_control_set_pid_settings(&srv->control, pid_kp, pid_ki, pid_kd, position_tolerance, speed_tolerance, stall_speed_limit, stall_time);
     if (err != PBIO_SUCCESS) {
         return err;
     }

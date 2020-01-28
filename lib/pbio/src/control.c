@@ -148,7 +148,6 @@ pbio_error_t pbio_control_get_pid_settings(pbio_control_t *ctl,
                                            int16_t *pid_kp,
                                            int16_t *pid_ki,
                                            int16_t *pid_kd,
-                                           int32_t *tight_loop_time,
                                            int32_t *position_tolerance,
                                            int32_t *speed_tolerance,
                                            int32_t *stall_speed_limit,
@@ -157,7 +156,6 @@ pbio_error_t pbio_control_get_pid_settings(pbio_control_t *ctl,
     *pid_kp = ctl->settings.pid_kp;
     *pid_ki = ctl->settings.pid_ki;
     *pid_kd = ctl->settings.pid_kd;
-    *tight_loop_time = ctl->settings.tight_loop_time / US_PER_MS;
     *position_tolerance = pbio_math_div_i32_fix16(ctl->settings.count_tolerance, ctl->settings.counts_per_unit);
     *speed_tolerance = pbio_math_div_i32_fix16(ctl->settings.rate_tolerance, ctl->settings.counts_per_unit);
     *stall_speed_limit = pbio_math_div_i32_fix16(ctl->settings.stall_rate_limit, ctl->settings.counts_per_unit);
@@ -169,13 +167,12 @@ pbio_error_t pbio_control_set_pid_settings(pbio_control_t *ctl,
                                            int16_t pid_kp,
                                            int16_t pid_ki,
                                            int16_t pid_kd,
-                                           int32_t tight_loop_time,
                                            int32_t position_tolerance,
                                            int32_t speed_tolerance,
                                            int32_t stall_speed_limit,
                                            int32_t stall_time) {
     // Assert that settings have positive sign
-    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || tight_loop_time < 0 ||
+    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 ||
         position_tolerance < 0 || speed_tolerance < 0 ||
         stall_speed_limit < 0 || stall_time < 0) {
         return PBIO_ERROR_INVALID_ARG;
@@ -185,11 +182,10 @@ pbio_error_t pbio_control_set_pid_settings(pbio_control_t *ctl,
     ctl->settings.pid_kp = pid_kp;
     ctl->settings.pid_ki = pid_ki;
     ctl->settings.pid_kd = pid_kd;
-    ctl->settings.tight_loop_time = tight_loop_time * US_PER_MS;
     ctl->settings.count_tolerance = pbio_math_mul_i32_fix16(position_tolerance, ctl->settings.counts_per_unit);
     ctl->settings.rate_tolerance = pbio_math_mul_i32_fix16(speed_tolerance, ctl->settings.counts_per_unit);
     ctl->settings.stall_rate_limit = pbio_math_mul_i32_fix16(stall_speed_limit, ctl->settings.counts_per_unit);
-    ctl->settings.stall_time = stall_time * US_PER_MS;
+    ctl->settings.stall_time = stall_time * US_PER_MS; 
     ctl->settings.max_control = 10000; // TODO: Add setter
     return PBIO_SUCCESS;
 }

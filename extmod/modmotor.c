@@ -176,12 +176,12 @@ void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
     pb_assert(pbio_control_get_limits(&self->srv->control, &max_speed, &acceleration));
 
     int16_t pid_kp, pid_ki, pid_kd;
-    int32_t tight_loop_time, stall_time;
+    int32_t stall_time;
     int32_t position_tolerance, speed_tolerance, stall_speed_limit;
     pb_assert(pbio_control_get_pid_settings(
         &self->srv->control,
         &pid_kp, &pid_ki, &pid_kd,
-        &tight_loop_time, &position_tolerance,
+        &position_tolerance,
         &speed_tolerance, &stall_speed_limit, &stall_time));
 
     mp_printf(print,
@@ -196,7 +196,6 @@ void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
         "kp\t\t %" PRId16 "\n"
         "ki\t\t %" PRId16 "\n"
         "kd\t\t %" PRId16 "\n"
-        "Tight Loop\t %" PRId32 "\n"
         "Angle tolerance\t %" PRId32 "\n"
         "Speed tolerance\t %" PRId32 "\n"
         "Stall speed\t %" PRId32 "\n"
@@ -211,7 +210,6 @@ void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
         pid_kp,
         pid_ki,
         pid_kd,
-        tight_loop_time,
         position_tolerance,
         speed_tolerance,
         stall_speed_limit,
@@ -549,7 +547,6 @@ STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *pos_
         PB_ARG_DEFAULT_NONE(kp),
         PB_ARG_DEFAULT_NONE(ki),
         PB_ARG_DEFAULT_NONE(kd),
-        PB_ARG_DEFAULT_NONE(tight_loop_limit),
         PB_ARG_DEFAULT_NONE(angle_tolerance),
         PB_ARG_DEFAULT_NONE(speed_tolerance),
         PB_ARG_DEFAULT_NONE(stall_speed),
@@ -560,21 +557,19 @@ STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *pos_
     int16_t kp_val;
     int16_t ki_val;
     int16_t kd_val;
-    int32_t loop_time_val;
     int32_t pos_tolerance_val;
     int32_t speed_tolerance_val;
     int32_t stall_speed_limit_val;
     int32_t stall_time_val;
 
     pb_assert(pbio_control_get_pid_settings(&self->srv->control, &kp_val, &ki_val, &kd_val,
-        &loop_time_val, &pos_tolerance_val, &speed_tolerance_val,
+        &pos_tolerance_val, &speed_tolerance_val,
         &stall_speed_limit_val, &stall_time_val));
 
     // Set values if given by the user
     kp_val = pb_obj_get_default_int(kp, kp_val);
     ki_val = pb_obj_get_default_int(ki, ki_val);
     kd_val = pb_obj_get_default_int(kd, kd_val);
-    loop_time_val = pb_obj_get_default_int(tight_loop_limit, loop_time_val);
     pos_tolerance_val = pb_obj_get_default_int(angle_tolerance, pos_tolerance_val);
     speed_tolerance_val = pb_obj_get_default_int(speed_tolerance, speed_tolerance_val);
     stall_speed_limit_val = pb_obj_get_default_int(stall_speed, stall_speed_limit_val);
@@ -582,7 +577,7 @@ STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *pos_
 
     // Write resulting values
     pb_assert(pbio_control_set_pid_settings(&self->srv->control, kp_val, ki_val, kd_val,
-        loop_time_val, pos_tolerance_val, speed_tolerance_val,
+        pos_tolerance_val, speed_tolerance_val,
         stall_speed_limit_val, stall_time_val));
 
     return mp_const_none;

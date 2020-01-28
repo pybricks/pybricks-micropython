@@ -27,7 +27,6 @@ typedef struct _pbio_control_settings_t {
     int32_t rate_tolerance;         /**< Allowed deviation (counts/s) from target speed. Hence, if speed target is zero, any speed below this tolerance is considered to be standstill. */
     int32_t count_tolerance;        /**< Allowed deviation (counts) from target before motion is considered complete */
     int32_t abs_acceleration;       /**< Encoder acceleration/deceleration rate when beginning to move or stopping. Positive value in counts per second per second */
-    int32_t tight_loop_time;        /**< When a run function is called twice in this interval, assume that the user is doing their own speed control.  */
     int16_t pid_kp;                 /**< Proportional position control constant (and integral speed control constant) */
     int16_t pid_ki;                 /**< Integral position control constant */
     int16_t pid_kd;                 /**< Derivative position control constant (and proportional speed control constant) */
@@ -83,7 +82,6 @@ pbio_error_t pbio_control_get_pid_settings(pbio_control_t *ctl,
                                            int16_t *pid_kp,
                                            int16_t *pid_ki,
                                            int16_t *pid_kd,
-                                           int32_t *tight_loop_time,
                                            int32_t *position_tolerance,
                                            int32_t *speed_tolerance,
                                            int32_t *stall_speed_limit,
@@ -93,7 +91,6 @@ pbio_error_t pbio_control_set_pid_settings(pbio_control_t *ctl,
                                            int16_t pid_kp,
                                            int16_t pid_ki,
                                            int16_t pid_kd,
-                                           int32_t tight_loop_time,
                                            int32_t position_tolerance,
                                            int32_t speed_tolerance,
                                            int32_t stall_speed_limit,
