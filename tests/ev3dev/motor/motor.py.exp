@@ -16,27 +16,6 @@ run-direct
 Motor properties:
 ------------------------
 Port		 A
-Direction	 clockwise
-
-DC settings:
-------------------------
-Duty limit	 100
-Duty offset	 0
-
-Run settings:
-------------------------
-Counts per deg.	 2.000
-Gear ratio	 1.000
-Max speed	 400
-Acceleration	 800
-
-PID settings:
-------------------------
-kp		 500
-ki		 800
-kd		 5
-Tight Loop	 100
-Angle tolerance	 3
-Speed tolerance	 5
-Stall speed	 2
-Stall time	 200
+Positive dir.	 clockwise
+Counts per deg.	 2
+Gear ratio	 1.0

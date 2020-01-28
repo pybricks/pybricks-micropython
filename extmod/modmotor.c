@@ -157,8 +157,8 @@ void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
 
     // For encoded motors, also print gear ratio
     if (is_servo) {
-        char counts_per_degree_str[9];
-        char gear_ratio_str[3];
+        char counts_per_degree_str[22];
+        char gear_ratio_str[11];
         pb_assert(pbio_control_get_ratio_settings(&self->srv->control, gear_ratio_str, counts_per_degree_str));
 
         mp_printf(print,
