@@ -98,10 +98,42 @@ STATIC mp_obj_t builtins_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Control_pid_obj, 0, builtins_Control_pid);
 
+// pybricks.builtins.Control.target_tolerances
+STATIC mp_obj_t builtins_Control_target_tolerances(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        builtins_Control_obj_t, self,
+        PB_ARG_DEFAULT_NONE(speed),
+        PB_ARG_DEFAULT_NONE(position)
+    );
+
+    // Read current values
+    int32_t _speed, _position;
+    pbio_control_settings_get_target_tolerances(&self->control->settings, &_speed, &_position);
+
+    // If all given values are none, return current values
+    if (speed == mp_const_none && position == mp_const_none) {
+        mp_obj_t ret[2];
+        ret[0] = mp_obj_new_int(_speed);
+        ret[1] = mp_obj_new_int(_position);
+        return mp_obj_new_tuple(2, ret);
+    }
+
+    // Set user settings
+    _speed = pb_obj_get_default_int(speed, _speed);
+    _position = pb_obj_get_default_int(position, _position);
+
+    pbio_control_settings_set_target_tolerances(&self->control->settings, _speed, _position);
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Control_target_tolerances_obj, 0, builtins_Control_target_tolerances);
+
 // dir(pybricks.builtins.Control)
 STATIC const mp_rom_map_elem_t builtins_Control_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_limits ), MP_ROM_PTR(&builtins_Control_limits_obj) },
-    { MP_ROM_QSTR(MP_QSTR_pid    ), MP_ROM_PTR(&builtins_Control_pid_obj   ) },
+    { MP_ROM_QSTR(MP_QSTR_limits           ), MP_ROM_PTR(&builtins_Control_limits_obj           ) },
+    { MP_ROM_QSTR(MP_QSTR_pid              ), MP_ROM_PTR(&builtins_Control_pid_obj              ) },
+    { MP_ROM_QSTR(MP_QSTR_target_tolerances), MP_ROM_PTR(&builtins_Control_target_tolerances_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(builtins_Control_locals_dict, builtins_Control_locals_dict_table);
 
