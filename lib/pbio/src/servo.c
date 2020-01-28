@@ -158,9 +158,19 @@ pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction
 }
 
 pbio_error_t pbio_servo_get_gear_settings(pbio_servo_t *srv, char *gear_ratio_str, char *counts_per_degree_str) {
-    fix16_t counts_per_degree = F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0);
-    fix16_to_str(counts_per_degree, counts_per_degree_str, 3);
-    fix16_to_str(fix16_div(srv->tacho->counts_per_output_unit, counts_per_degree), gear_ratio_str, 3);
+    // Compute overal gear ratio
+    fix16_t gear_ratio = fix16_div(srv->tacho->counts_per_output_unit, F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0));
+    
+    // Get integer part
+    int32_t ratio_int = gear_ratio >> 16;
+    ratio_int = ratio_int > 999 ? 999 : ratio_int;
+
+    // Get decimal part up to 3 digits
+    int32_t ratio_dec = ((((gear_ratio << 16) >> 16))*(1000000000/fix16_one))/1000000;
+
+    // Return as string 
+    snprintf(gear_ratio_str, 7, "%" PRId32 ".%" PRId32, ratio_int, ratio_dec);
+    snprintf(counts_per_degree_str, 1, "%" PRId32, (int32_t) PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE);
     return PBIO_SUCCESS;
 }
 
