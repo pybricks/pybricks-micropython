@@ -52,6 +52,8 @@ typedef struct _pbio_servo_t {
 
 pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction_t direction, fix16_t gear_ratio);
 
+pbio_error_t pbio_servo_get_ratio_settings(pbio_servo_t *srv, char *ratio_str, char *counts_per_degree_str);
+
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool reset_to_abs);
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled);
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop);

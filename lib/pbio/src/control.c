@@ -2,7 +2,6 @@
 // Copyright (c) 2018-2019 Laurens Valk
 // Copyright (c) 2019 LEGO System A/S
 
-#include <inttypes.h>
 #include <stdlib.h>
 
 #include <pbio/control.h>
@@ -190,19 +189,3 @@ pbio_error_t pbio_control_settings_set_stall_tolerances(pbio_control_settings_t 
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_control_get_ratio_settings(pbio_control_t *ctl, char *ratio_str, char *counts_per_degree_str) {
-    // Compute overal gear ratio
-    fix16_t gear_ratio = fix16_div(ctl->settings.counts_per_unit, F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0));
-    
-    // Get integer part
-    int32_t ratio_int = gear_ratio >> 16;
-    ratio_int = ratio_int > 999 ? 999 : ratio_int;
-
-    // Get decimal part up to 3 digits
-    int32_t ratio_dec = ((((gear_ratio << 16) >> 16))*(1000000000/fix16_one))/1000000;
-
-    // Return as string 
-    snprintf(ratio_str, 22, "%" PRId32 ".%" PRId32, ratio_int, ratio_dec);
-    snprintf(counts_per_degree_str, 11, "%" PRId32, (int32_t) PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE);
-    return PBIO_SUCCESS;
-}
