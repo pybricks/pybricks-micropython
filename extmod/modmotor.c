@@ -455,9 +455,7 @@ MP_DEFINE_CONST_DICT(motor_Motor_locals_dict, motor_Motor_locals_dict_table);
 const mp_obj_type_t motor_Motor_type = {
     { &mp_type_type },
     .name = MP_QSTR_Motor,
-#if !PYBRICKS_HUB_MOVEHUB
     .print = motor_Motor_print,
-#endif
     .make_new = motor_Motor_make_new,
     .locals_dict = (mp_obj_dict_t*)&motor_Motor_locals_dict,
 };
