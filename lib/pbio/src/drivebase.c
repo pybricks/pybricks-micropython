@@ -12,6 +12,32 @@
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
+static pbio_control_settings_t settings_drivebase_heading_default = {
+    .max_rate = 360,
+    .abs_acceleration = 720,
+    .rate_tolerance = 8,
+    .count_tolerance = 8,
+    .stall_rate_limit = 8,
+    .stall_time = 200,
+    .pid_kp = 200,
+    .pid_ki = 0,
+    .pid_kd = 12,
+    .max_control = 10000,
+};
+
+static pbio_control_settings_t settings_drivebase_distance_default = {
+    .max_rate = 800,
+    .abs_acceleration = 1600,
+    .rate_tolerance = 8,
+    .count_tolerance = 8,
+    .stall_rate_limit = 8,
+    .stall_time = 200,
+    .pid_kp = 200,
+    .pid_ki = 0,
+    .pid_kd = 10,
+    .max_control = 10000,
+};
+
 static pbio_drivebase_t __db;
 
 // Get the physical state of a drivebase
@@ -164,26 +190,12 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
     db->log.num_values = DRIVEBASE_LOG_NUM_VALUES;
 
     // Configure heading controller
-    db->control_heading.settings.counts_per_unit = db->dif_per_deg; //fixme, use setup
-    err = pbio_control_set_limits(&db->control_heading, 90, 180);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    err = pbio_control_set_pid_settings(&db->control_heading, 200, 0, 12, 2, 5, 5, 200);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
+    db->control_heading.settings = settings_drivebase_heading_default;
+    db->control_heading.settings.counts_per_unit = db->dif_per_deg;
 
     // Configure distance controller
-    db->control_distance.settings.counts_per_unit = db->sum_per_mm; //fixme, use setup
-    err = pbio_control_set_limits(&db->control_distance, 200, 400);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    err = pbio_control_set_pid_settings(&db->control_distance, 200, 0, 10, 2, 5, 5, 200);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
+    db->control_distance.settings = settings_drivebase_distance_default;
+    db->control_distance.settings.counts_per_unit = db->sum_per_mm;
 
     return PBIO_SUCCESS;
 }
