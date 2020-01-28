@@ -202,7 +202,7 @@ pbio_error_t pbio_control_get_ratio_settings(pbio_control_t *ctl, char *ratio_st
     int32_t ratio_dec = ((((gear_ratio << 16) >> 16))*(1000000000/fix16_one))/1000000;
 
     // Return as string 
-    snprintf(ratio_str, 7, "%" PRId32 ".%" PRId32, ratio_int, ratio_dec);
-    snprintf(counts_per_degree_str, 1, "%" PRId32, (int32_t) PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE);
+    snprintf(ratio_str, 8, "%" PRId32 ".%" PRId32, ratio_int, ratio_dec);
+    snprintf(counts_per_degree_str, 2, "%" PRId32, (int32_t) PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE);
     return PBIO_SUCCESS;
 }

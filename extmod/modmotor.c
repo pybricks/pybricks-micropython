@@ -168,8 +168,8 @@ void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
         return;
     }
 
-    char counts_per_degree_str[13];
-    char gear_ratio_str[7];
+    char counts_per_degree_str[9];
+    char gear_ratio_str[3];
     pb_assert(pbio_control_get_ratio_settings(&self->srv->control, gear_ratio_str, counts_per_degree_str));
 
     int32_t max_speed, acceleration;
