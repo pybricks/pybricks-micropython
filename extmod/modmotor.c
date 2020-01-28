@@ -150,63 +150,24 @@ void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
         "Motor properties:\n"
         "------------------------\n"
         "Port\t\t %c\n"
-        "Direction\t %s\n",
+        "Positive dir.\t %s\n",
         dcmotor->port,
         dcmotor->direction == PBIO_DIRECTION_CLOCKWISE ? "clockwise" : "counterclockwise"
     );
 
-    // For DC motors, there is nothing left to do.
-    if (!is_servo) {
-        return;
+    // For encoded motors, also print gear ratio
+    if (is_servo) {
+        char counts_per_degree_str[9];
+        char gear_ratio_str[3];
+        pb_assert(pbio_control_get_ratio_settings(&self->srv->control, gear_ratio_str, counts_per_degree_str));
+
+        mp_printf(print,
+            "Counts per deg.\t %s\n"
+            "Gear ratio\t %s",
+            counts_per_degree_str,
+            gear_ratio_str
+        );
     }
-
-    char counts_per_degree_str[9];
-    char gear_ratio_str[3];
-    pb_assert(pbio_control_get_ratio_settings(&self->srv->control, gear_ratio_str, counts_per_degree_str));
-
-    int32_t max_speed, acceleration;
-    pb_assert(pbio_control_get_limits(&self->srv->control, &max_speed, &acceleration));
-
-    int16_t pid_kp, pid_ki, pid_kd;
-    int32_t stall_time;
-    int32_t position_tolerance, speed_tolerance, stall_speed_limit;
-    pb_assert(pbio_control_get_pid_settings(
-        &self->srv->control,
-        &pid_kp, &pid_ki, &pid_kd,
-        &position_tolerance,
-        &speed_tolerance, &stall_speed_limit, &stall_time));
-
-    mp_printf(print,
-        "\nRun settings:\n"
-        "------------------------\n"
-        "Counts per deg.\t %s\n"
-        "Gear ratio\t %s\n"
-        "Max speed\t %" PRId32 "\n"
-        "Acceleration\t %" PRId32 "\n"
-        "\nPID settings:\n"
-        "------------------------\n"
-        "kp\t\t %" PRId16 "\n"
-        "ki\t\t %" PRId16 "\n"
-        "kd\t\t %" PRId16 "\n"
-        "Angle tolerance\t %" PRId32 "\n"
-        "Speed tolerance\t %" PRId32 "\n"
-        "Stall speed\t %" PRId32 "\n"
-        "Stall time\t %" PRId32,
-        // Gearing settings
-        counts_per_degree_str,
-        gear_ratio_str,
-        // Print run settings
-        max_speed,
-        acceleration,
-        // Print PID settings
-        pid_kp,
-        pid_ki,
-        pid_kd,
-        position_tolerance,
-        speed_tolerance,
-        stall_speed_limit,
-        stall_time
-    );
 }
 
 // pybricks.builtins.Motor.dc
