@@ -143,48 +143,50 @@ pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_control_get_pid_settings(pbio_control_t *ctl,
-                                           int16_t *pid_kp,
-                                           int16_t *pid_ki,
-                                           int16_t *pid_kd,
-                                           int32_t *position_tolerance,
-                                           int32_t *speed_tolerance,
-                                           int32_t *stall_speed_limit,
-                                           int32_t *stall_time) {
-    // Set parameters, scaled by output scaling and gear ratio as needed
-    *pid_kp = ctl->settings.pid_kp;
-    *pid_ki = ctl->settings.pid_ki;
-    *pid_kd = ctl->settings.pid_kd;
-    *position_tolerance = pbio_math_div_i32_fix16(ctl->settings.count_tolerance, ctl->settings.counts_per_unit);
-    *speed_tolerance = pbio_math_div_i32_fix16(ctl->settings.rate_tolerance, ctl->settings.counts_per_unit);
-    *stall_speed_limit = pbio_math_div_i32_fix16(ctl->settings.stall_rate_limit, ctl->settings.counts_per_unit);
-    *stall_time = ctl->settings.stall_time / US_PER_MS;
-    return PBIO_SUCCESS;
+void pbio_control_settings_get_pid(pbio_control_settings_t *s, int16_t *pid_kp, int16_t *pid_ki, int16_t *pid_kd) {
+    *pid_kp = s->pid_kp;
+    *pid_ki = s->pid_ki;
+    *pid_kd = s->pid_kd;
 }
 
-pbio_error_t pbio_control_set_pid_settings(pbio_control_t *ctl,
-                                           int16_t pid_kp,
-                                           int16_t pid_ki,
-                                           int16_t pid_kd,
-                                           int32_t position_tolerance,
-                                           int32_t speed_tolerance,
-                                           int32_t stall_speed_limit,
-                                           int32_t stall_time) {
-    // Assert that settings have positive sign
-    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 ||
-        position_tolerance < 0 || speed_tolerance < 0 ||
-        stall_speed_limit < 0 || stall_time < 0) {
+pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd) {
+    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    // Set parameters, scaled by output scaling and gear ratio as needed
-    ctl->settings.pid_kp = pid_kp;
-    ctl->settings.pid_ki = pid_ki;
-    ctl->settings.pid_kd = pid_kd;
-    ctl->settings.count_tolerance = pbio_math_mul_i32_fix16(position_tolerance, ctl->settings.counts_per_unit);
-    ctl->settings.rate_tolerance = pbio_math_mul_i32_fix16(speed_tolerance, ctl->settings.counts_per_unit);
-    ctl->settings.stall_rate_limit = pbio_math_mul_i32_fix16(stall_speed_limit, ctl->settings.counts_per_unit);
-    ctl->settings.stall_time = stall_time * US_PER_MS; 
+    s->pid_kp = pid_kp;
+    s->pid_ki = pid_ki;
+    s->pid_kd = pid_kd;
+    return PBIO_SUCCESS;
+}
+
+void pbio_control_settings_get_target_tolerances(pbio_control_settings_t *s, int32_t *speed, int32_t *position) {
+    *position = pbio_math_div_i32_fix16(s->count_tolerance, s->counts_per_unit);
+    *speed = pbio_math_div_i32_fix16(s->rate_tolerance, s->counts_per_unit);
+}
+
+pbio_error_t pbio_control_settings_set_target_tolerances(pbio_control_settings_t *s, int32_t speed, int32_t position) {
+    if (position < 0 || speed < 0) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    s->count_tolerance = pbio_math_mul_i32_fix16(position, s->counts_per_unit);
+    s->rate_tolerance = pbio_math_mul_i32_fix16(speed, s->counts_per_unit);
+    return PBIO_SUCCESS;
+}
+
+void pbio_control_settings_get_stall_tolerances(pbio_control_settings_t *s,  int32_t *speed, int32_t *time) {
+    *speed = pbio_math_div_i32_fix16(s->stall_rate_limit, s->counts_per_unit);
+    *time = s->stall_time / US_PER_MS;
+}
+
+pbio_error_t pbio_control_settings_set_stall_tolerances(pbio_control_settings_t *s, int32_t speed, int32_t time) {
+    if (speed < 0 || time < 0) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    s->stall_rate_limit = pbio_math_mul_i32_fix16(speed, s->counts_per_unit);
+    s->stall_time = time * US_PER_MS; 
     return PBIO_SUCCESS;
 }
 

@@ -74,23 +74,14 @@ void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed
 
 pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *ctl, int32_t speed, int32_t acceleration, int32_t actuation);
 
-pbio_error_t pbio_control_get_pid_settings(pbio_control_t *ctl,
-                                           int16_t *pid_kp,
-                                           int16_t *pid_ki,
-                                           int16_t *pid_kd,
-                                           int32_t *position_tolerance,
-                                           int32_t *speed_tolerance,
-                                           int32_t *stall_speed_limit,
-                                           int32_t *stall_time);
+void pbio_control_settings_get_pid(pbio_control_settings_t *s, int16_t *pid_kp, int16_t *pid_ki, int16_t *pid_kd);
+pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd);
 
-pbio_error_t pbio_control_set_pid_settings(pbio_control_t *ctl,
-                                           int16_t pid_kp,
-                                           int16_t pid_ki,
-                                           int16_t pid_kd,
-                                           int32_t position_tolerance,
-                                           int32_t speed_tolerance,
-                                           int32_t stall_speed_limit,
-                                           int32_t stall_time);
+void pbio_control_settings_get_target_tolerances(pbio_control_settings_t *s, int32_t *speed, int32_t *position);
+pbio_error_t pbio_control_settings_set_target_tolerances(pbio_control_settings_t *s, int32_t speed, int32_t position);
+
+void pbio_control_settings_get_stall_tolerances(pbio_control_settings_t *s,  int32_t *speed, int32_t *time);
+pbio_error_t pbio_control_settings_set_stall_tolerances(pbio_control_settings_t *s, int32_t speed, int32_t time);
 
 void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control);
 void control_update_time_target(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control);
