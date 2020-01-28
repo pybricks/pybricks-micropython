@@ -19,7 +19,6 @@
 
 // TODO: Generalize and move to config:
 pbio_error_t pbio_config_get_defaults_servo(pbio_iodev_type_id_t id,
-                                    fix16_t *counts_per_degree,
                                     int32_t *max_speed,
                                     int32_t *acceleration,
                                     int16_t *pid_kp,
@@ -30,8 +29,6 @@ pbio_error_t pbio_config_get_defaults_servo(pbio_iodev_type_id_t id,
                                     int32_t *speed_tolerance,
                                     int32_t *stall_speed_limit,
                                     int32_t *stall_time) {
-    // Default counts per degree
-    *counts_per_degree = F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0);
 
     // Default max target run speed
     switch (id) {
@@ -98,7 +95,6 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     }
 
     // Get default servo parameters
-    fix16_t counts_per_degree;
     int32_t max_speed;
     int32_t acceleration;
     int16_t pid_kp;
@@ -110,7 +106,7 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     int32_t stall_speed_limit;
     int32_t stall_time;
 
-    err = pbio_config_get_defaults_servo(srv->dcmotor->id, &counts_per_degree,
+    err = pbio_config_get_defaults_servo(srv->dcmotor->id,
                                         &max_speed, &acceleration,
                                         &pid_kp, &pid_ki, &pid_kd, &tight_loop_time,
                                         &position_tolerance, &speed_tolerance, &stall_speed_limit, &stall_time);
@@ -119,7 +115,7 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     }
 
     // Get and reset tacho
-    err = pbio_tacho_get(srv->port, &srv->tacho, direction, counts_per_degree, gear_ratio);
+    err = pbio_tacho_get(srv->port, &srv->tacho, direction, gear_ratio);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -162,8 +158,9 @@ pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction
 }
 
 pbio_error_t pbio_servo_get_gear_settings(pbio_servo_t *srv, char *gear_ratio_str, char *counts_per_degree_str) {
-    fix16_to_str(srv->tacho->counts_per_degree, counts_per_degree_str, 3);
-    fix16_to_str(fix16_div(srv->tacho->counts_per_output_unit, srv->tacho->counts_per_degree), gear_ratio_str, 3);
+    fix16_t counts_per_degree = F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0);
+    fix16_to_str(counts_per_degree, counts_per_degree_str, 3);
+    fix16_to_str(fix16_div(srv->tacho->counts_per_output_unit, counts_per_degree), gear_ratio_str, 3);
     return PBIO_SUCCESS;
 }
 

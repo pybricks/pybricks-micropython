@@ -47,14 +47,13 @@ static pbio_error_t pbio_tacho_reset_count_to_abs(pbio_tacho_t *tacho) {
     return pbio_tacho_reset_count(tacho, abs_count);
 }
 
-static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pbio_direction_t direction, fix16_t counts_per_degree, fix16_t gear_ratio) {
+static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pbio_direction_t direction, fix16_t gear_ratio) {
     // Assert that scaling factors are positive
-    if (gear_ratio < 0 || counts_per_degree < 0) {
+    if (gear_ratio < 0) {
         return PBIO_ERROR_INVALID_ARG;
     }
     // Get overal ratio from counts to output variable, including gear train
-    tacho->counts_per_degree = counts_per_degree;
-    tacho->counts_per_output_unit = fix16_mul(counts_per_degree, gear_ratio);
+    tacho->counts_per_output_unit = fix16_mul(F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0), gear_ratio);
 
     // Configure direction
     tacho->direction = direction;
@@ -74,7 +73,7 @@ static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pb
     return err;
 }
 
-pbio_error_t pbio_tacho_get(pbio_port_t port, pbio_tacho_t **tacho, pbio_direction_t direction, fix16_t counts_per_degree, fix16_t gear_ratio) {
+pbio_error_t pbio_tacho_get(pbio_port_t port, pbio_tacho_t **tacho, pbio_direction_t direction, fix16_t gear_ratio) {
     // Validate port
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
         return PBIO_ERROR_INVALID_PORT;
@@ -87,7 +86,7 @@ pbio_error_t pbio_tacho_get(pbio_port_t port, pbio_tacho_t **tacho, pbio_directi
     uint8_t counter_id = port - PBDRV_CONFIG_FIRST_MOTOR_PORT;
 
     // Initialize and set up tacho properties
-    return pbio_tacho_setup(*tacho, counter_id, direction, counts_per_degree, gear_ratio);
+    return pbio_tacho_setup(*tacho, counter_id, direction, gear_ratio);
 }
 
 pbio_error_t pbio_tacho_get_count(pbio_tacho_t *tacho, int32_t *count) {
