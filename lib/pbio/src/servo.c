@@ -16,59 +16,74 @@
 
 #define SERVO_LOG_NUM_VALUES (12 + NUM_DEFAULT_LOG_VALUES)
 
-// TODO: Generalize and move to config:
-pbio_error_t pbio_config_set_defaults_servo(pbio_control_settings_t *settings, pbio_iodev_type_id_t id) {
+// TODO: Move to config and enable only known motors for platform
+static pbio_control_settings_t settings_servo_ev3_medium = {
+    .max_rate = 2000,
+    .abs_acceleration = 4000,
+    .rate_tolerance = 10,
+    .count_tolerance = 6,
+    .stall_rate_limit = 4,
+    .stall_time = 200*US_PER_MS,
+    .pid_kp = 400,
+    .pid_ki = 600,
+    .pid_kd = 5,
+    .max_control = 10000,
+};
 
-    // Default max target run speed
+static pbio_control_settings_t settings_servo_ev3_large = {
+    .max_rate = 1600,
+    .abs_acceleration = 3200,
+    .rate_tolerance = 10,
+    .count_tolerance = 6,
+    .stall_rate_limit = 4,
+    .stall_time = 200*US_PER_MS,
+    .pid_kp = 400,
+    .pid_ki = 600,
+    .pid_kd = 5,
+    .max_control = 10000,
+};
+
+static pbio_control_settings_t settings_servo_move_hub = {
+    .max_rate = 1500,
+    .abs_acceleration = 3000,
+    .rate_tolerance = 5,
+    .count_tolerance = 3,
+    .stall_rate_limit = 2,
+    .stall_time = 200*US_PER_MS,
+    .pid_kp = 400,
+    .pid_ki = 600,
+    .pid_kd = 5,
+    .max_control = 10000,
+};
+
+static pbio_control_settings_t settings_servo_default = {
+    .max_rate = 1000,
+    .abs_acceleration = 2000,
+    .rate_tolerance = 5,
+    .count_tolerance = 3,
+    .stall_rate_limit = 2,
+    .stall_time = 200,
+    .pid_kp = 200,
+    .pid_ki = 100,
+    .pid_kd = 0,
+    .max_control = 10000,
+};
+
+static void load_servo_settings(pbio_control_settings_t *s, pbio_iodev_type_id_t id) {
     switch (id) {
         case PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR:
-            settings->max_rate = 1000;
+            *s = settings_servo_ev3_medium;
             break;
         case PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR:
-            settings->max_rate = 800;
+            *s = settings_servo_ev3_large;
             break;
         case PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR:
-            settings->max_rate = 1500;
+            *s = settings_servo_move_hub;
             break;
         default:
-            settings->max_rate = 1000;
+            *s = settings_servo_default;
             break;
     }
-
-    // Default acceleration is to reach max target speed in 500 ms
-    settings->abs_acceleration = 2*(settings->max_rate);
-
-    // Default PID settings for general purpose behavior
-    switch (id) {
-        case PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR:
-            settings->pid_kp = 400;
-            settings->pid_ki = 600;
-            settings->pid_kd = 5;
-            break;
-        case PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR:
-            settings->pid_kp = 500;
-            settings->pid_ki = 800;
-            settings->pid_kd = 5;
-            break;
-        case PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR:
-            settings->pid_kp = 400;
-            settings->pid_ki = 600;
-            settings->pid_kd = 5;
-            break;
-        default:
-            settings->pid_kp = 200;
-            settings->pid_ki = 100;
-            settings->pid_kd = 0;
-            break;
-    }
-
-    // Default tolerances for general purpose behavior
-    settings->count_tolerance = 3;
-    settings->rate_tolerance = 5;
-    settings->stall_rate_limit = 2;
-    settings->stall_time = 200;
-
-    return PBIO_SUCCESS;
 }
 
 static pbio_servo_t servo[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
@@ -91,13 +106,11 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     srv->state = PBIO_SERVO_STATE_PASSIVE;
     srv->control.is_done_func = pbio_control_always_done; // FIXME: merge state and done func
 
-    // Set default settings for this device
-    srv->control.settings.counts_per_unit = srv->tacho->counts_per_output_unit; // FIXME: use control setup
+    // Load default settings for this device type
+    load_servo_settings(&srv->control.settings, srv->dcmotor->id);
 
-    err = pbio_config_set_defaults_servo(&srv->control.settings, srv->dcmotor->id);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    } 
+    // Set user specified count to output unit scaler
+    srv->control.settings.counts_per_unit = srv->tacho->counts_per_output_unit; // FIXME: use control setup
 
     // Configure the logs for a servo
     srv->log.num_values = SERVO_LOG_NUM_VALUES;
