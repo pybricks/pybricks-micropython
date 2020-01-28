@@ -13,6 +13,8 @@
 #include "pberror.h"
 #include "pbobj.h"
 #include "pbkwarg.h"
+
+#include "modbuiltins.h"
 #include "modmotor.h"
 #include "modlogger.h"
 
@@ -25,6 +27,8 @@ typedef struct _robotics_DriveBase_obj_t {
     motor_Motor_obj_t *left;
     motor_Motor_obj_t *right;
     mp_obj_t logger;
+    mp_obj_t heading_control;
+    mp_obj_t distance_control;
 } robotics_DriveBase_obj_t;
 
 // pybricks.robotics.DriveBase.__init__
@@ -58,6 +62,10 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
 
     // Create an instance of the Logger class
     self->logger = logger_obj_make_new(&self->db->log);
+
+    // Create instances of the Control class
+    self->heading_control = builtins_Control_obj_make_new(&self->db->control_heading);
+    self->distance_control = builtins_Control_obj_make_new(&self->db->control_distance);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -101,6 +109,8 @@ STATIC const mp_rom_map_elem_t robotics_DriveBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_drive), MP_ROM_PTR(&robotics_DriveBase_drive_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&robotics_DriveBase_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_log), MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, logger) },
+    { MP_ROM_QSTR(MP_QSTR_heading_control), MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, heading_control) },
+    { MP_ROM_QSTR(MP_QSTR_distance_control), MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, distance_control) },
 };
 STATIC MP_DEFINE_CONST_DICT(robotics_DriveBase_locals_dict, robotics_DriveBase_locals_dict_table);
 
