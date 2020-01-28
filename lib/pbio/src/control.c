@@ -2,6 +2,7 @@
 // Copyright (c) 2018-2019 Laurens Valk
 // Copyright (c) 2019 LEGO System A/S
 
+#include <inttypes.h>
 #include <stdlib.h>
 
 #include <pbio/control.h>
@@ -126,27 +127,24 @@ void control_update_time_target(pbio_control_t *ctl, int32_t time_now, int32_t c
     return;
 }
 
-pbio_error_t pbio_control_get_limits(pbio_control_settings_t *settings,
-                                     fix16_t counts_per_output_unit,
+pbio_error_t pbio_control_get_limits(pbio_control_t *ctl,
                                      int32_t *max_speed,
                                      int32_t *acceleration) {
-    *max_speed = pbio_math_div_i32_fix16(settings->max_rate, counts_per_output_unit);
-    *acceleration = pbio_math_div_i32_fix16(settings->abs_acceleration, counts_per_output_unit);
+    *max_speed = pbio_math_div_i32_fix16(ctl->settings.max_rate, ctl->settings.counts_per_unit);
+    *acceleration = pbio_math_div_i32_fix16(ctl->settings.abs_acceleration, ctl->settings.counts_per_unit);
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_control_set_limits(pbio_control_settings_t *settings,
-                                     fix16_t counts_per_output_unit,
+pbio_error_t pbio_control_set_limits(pbio_control_t *ctl,
                                      int32_t max_speed,
                                      int32_t acceleration) {
-    settings->max_rate = pbio_math_mul_i32_fix16(max_speed, counts_per_output_unit);
-    settings->abs_acceleration = pbio_math_mul_i32_fix16(acceleration, counts_per_output_unit);
+    ctl->settings.max_rate = pbio_math_mul_i32_fix16(max_speed, ctl->settings.counts_per_unit);
+    ctl->settings.abs_acceleration = pbio_math_mul_i32_fix16(acceleration, ctl->settings.counts_per_unit);
     // TODO: Add getter for max control
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_control_get_pid_settings(pbio_control_settings_t *settings,
-                                           fix16_t counts_per_output_unit,
+pbio_error_t pbio_control_get_pid_settings(pbio_control_t *ctl,
                                            int16_t *pid_kp,
                                            int16_t *pid_ki,
                                            int16_t *pid_kd,
@@ -156,19 +154,18 @@ pbio_error_t pbio_control_get_pid_settings(pbio_control_settings_t *settings,
                                            int32_t *stall_speed_limit,
                                            int32_t *stall_time) {
     // Set parameters, scaled by output scaling and gear ratio as needed
-    *pid_kp = settings->pid_kp;
-    *pid_ki = settings->pid_ki;
-    *pid_kd = settings->pid_kd;
-    *tight_loop_time = settings->tight_loop_time / US_PER_MS;
-    *position_tolerance = pbio_math_div_i32_fix16(settings->count_tolerance, counts_per_output_unit);
-    *speed_tolerance = pbio_math_div_i32_fix16(settings->rate_tolerance, counts_per_output_unit);
-    *stall_speed_limit = pbio_math_div_i32_fix16(settings->stall_rate_limit, counts_per_output_unit);
-    *stall_time = settings->stall_time / US_PER_MS;
+    *pid_kp = ctl->settings.pid_kp;
+    *pid_ki = ctl->settings.pid_ki;
+    *pid_kd = ctl->settings.pid_kd;
+    *tight_loop_time = ctl->settings.tight_loop_time / US_PER_MS;
+    *position_tolerance = pbio_math_div_i32_fix16(ctl->settings.count_tolerance, ctl->settings.counts_per_unit);
+    *speed_tolerance = pbio_math_div_i32_fix16(ctl->settings.rate_tolerance, ctl->settings.counts_per_unit);
+    *stall_speed_limit = pbio_math_div_i32_fix16(ctl->settings.stall_rate_limit, ctl->settings.counts_per_unit);
+    *stall_time = ctl->settings.stall_time / US_PER_MS;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_control_set_pid_settings(pbio_control_settings_t *settings,
-                                           fix16_t counts_per_output_unit,
+pbio_error_t pbio_control_set_pid_settings(pbio_control_t *ctl,
                                            int16_t pid_kp,
                                            int16_t pid_ki,
                                            int16_t pid_kd,
@@ -185,14 +182,31 @@ pbio_error_t pbio_control_set_pid_settings(pbio_control_settings_t *settings,
     }
 
     // Set parameters, scaled by output scaling and gear ratio as needed
-    settings->pid_kp = pid_kp;
-    settings->pid_ki = pid_ki;
-    settings->pid_kd = pid_kd;
-    settings->tight_loop_time = tight_loop_time * US_PER_MS;
-    settings->count_tolerance = pbio_math_mul_i32_fix16(position_tolerance, counts_per_output_unit);
-    settings->rate_tolerance = pbio_math_mul_i32_fix16(speed_tolerance, counts_per_output_unit);
-    settings->stall_rate_limit = pbio_math_mul_i32_fix16(stall_speed_limit, counts_per_output_unit);
-    settings->stall_time = stall_time * US_PER_MS;
-    settings->max_control = 10000; // TODO: Add setter
+    ctl->settings.pid_kp = pid_kp;
+    ctl->settings.pid_ki = pid_ki;
+    ctl->settings.pid_kd = pid_kd;
+    ctl->settings.tight_loop_time = tight_loop_time * US_PER_MS;
+    ctl->settings.count_tolerance = pbio_math_mul_i32_fix16(position_tolerance, ctl->settings.counts_per_unit);
+    ctl->settings.rate_tolerance = pbio_math_mul_i32_fix16(speed_tolerance, ctl->settings.counts_per_unit);
+    ctl->settings.stall_rate_limit = pbio_math_mul_i32_fix16(stall_speed_limit, ctl->settings.counts_per_unit);
+    ctl->settings.stall_time = stall_time * US_PER_MS;
+    ctl->settings.max_control = 10000; // TODO: Add setter
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_control_get_ratio_settings(pbio_control_t *ctl, char *ratio_str, char *counts_per_degree_str) {
+    // Compute overal gear ratio
+    fix16_t gear_ratio = fix16_div(ctl->settings.counts_per_unit, F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0));
+    
+    // Get integer part
+    int32_t ratio_int = gear_ratio >> 16;
+    ratio_int = ratio_int > 999 ? 999 : ratio_int;
+
+    // Get decimal part up to 3 digits
+    int32_t ratio_dec = ((((gear_ratio << 16) >> 16))*(1000000000/fix16_one))/1000000;
+
+    // Return as string 
+    snprintf(ratio_str, 7, "%" PRId32 ".%" PRId32, ratio_int, ratio_dec);
+    snprintf(counts_per_degree_str, 1, "%" PRId32, (int32_t) PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE);
     return PBIO_SUCCESS;
 }

@@ -52,29 +52,6 @@ typedef struct _pbio_servo_t {
 
 pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction_t direction, fix16_t gear_ratio);
 
-pbio_error_t pbio_servo_get_gear_settings(pbio_servo_t *srv, char *gear_ratio_str, char *counts_per_degree_str);
-pbio_error_t pbio_servo_get_run_settings(pbio_servo_t *srv, int32_t *max_speed, int32_t *acceleration);
-pbio_error_t pbio_servo_set_run_settings(pbio_servo_t *srv, int32_t max_speed, int32_t acceleration);
-
-pbio_error_t pbio_servo_get_pid_settings(pbio_servo_t *srv,
-                                         int16_t *pid_kp,
-                                         int16_t *pid_ki,
-                                         int16_t *pid_kd,
-                                         int32_t *tight_loop_time,
-                                         int32_t *position_tolerance,
-                                         int32_t *speed_tolerance,
-                                         int32_t *stall_speed_limit,
-                                         int32_t *stall_time);
-pbio_error_t pbio_servo_set_pid_settings(pbio_servo_t *srv,
-                                         int16_t pid_kp,
-                                         int16_t pid_ki,
-                                         int16_t pid_kd,
-                                         int32_t tight_loop_time,
-                                         int32_t position_tolerance,
-                                         int32_t speed_tolerance,
-                                         int32_t stall_speed_limit,
-                                         int32_t stall_time);
-
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool reset_to_abs);
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled);
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop);

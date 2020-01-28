@@ -20,6 +20,7 @@
  * Control settings
  */
 typedef struct _pbio_control_settings_t {
+    fix16_t counts_per_unit;        /**< Conversion between user units (degree, mm, etc) and integer counts used internally by controller */
     int32_t stall_rate_limit;       /**< If this speed cannnot be reached even with the maximum duty value (equal to stall_torque_limit), the motor is considered to be stalled */
     int32_t stall_time;             /**< Minimum stall time before the run_stalled action completes */
     int32_t max_rate;               /**< Soft limit on the reference encoder rate in all run commands */
@@ -68,18 +69,17 @@ typedef struct _pbio_control_t {
     bool stalled;
 } pbio_control_t;
 
-pbio_error_t pbio_control_get_limits(pbio_control_settings_t *settings,
-                                     fix16_t counts_per_output_unit,
+pbio_error_t pbio_control_get_ratio_settings(pbio_control_t *ctl, char *gear_ratio_str, char *counts_per_degree_str);
+
+pbio_error_t pbio_control_get_limits(pbio_control_t *ctl,
                                      int32_t *max_speed,
                                      int32_t *acceleration);
 
-pbio_error_t pbio_control_set_limits(pbio_control_settings_t *settings,
-                                     fix16_t counts_per_output_unit,
+pbio_error_t pbio_control_set_limits(pbio_control_t *ctl,
                                      int32_t max_speed,
                                      int32_t acceleration);
 
-pbio_error_t pbio_control_get_pid_settings(pbio_control_settings_t *settings,
-                                           fix16_t counts_per_output_unit,
+pbio_error_t pbio_control_get_pid_settings(pbio_control_t *ctl,
                                            int16_t *pid_kp,
                                            int16_t *pid_ki,
                                            int16_t *pid_kd,
@@ -89,8 +89,7 @@ pbio_error_t pbio_control_get_pid_settings(pbio_control_settings_t *settings,
                                            int32_t *stall_speed_limit,
                                            int32_t *stall_time);
 
-pbio_error_t pbio_control_set_pid_settings(pbio_control_settings_t *settings,
-                                           fix16_t counts_per_output_unit,
+pbio_error_t pbio_control_set_pid_settings(pbio_control_t *ctl,
                                            int16_t pid_kp,
                                            int16_t pid_ki,
                                            int16_t pid_kd,

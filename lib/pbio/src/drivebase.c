@@ -164,21 +164,23 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
     db->log.num_values = DRIVEBASE_LOG_NUM_VALUES;
 
     // Configure heading controller
-    err = pbio_control_set_limits(&db->control_heading.settings, db->dif_per_deg, 90, 180);
+    db->control_heading.settings.counts_per_unit = db->dif_per_deg; //fixme, use setup
+    err = pbio_control_set_limits(&db->control_heading, 90, 180);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_control_set_pid_settings(&db->control_heading.settings, db->dif_per_deg, 200, 0, 12, 100, 2, 5, 5, 200);
+    err = pbio_control_set_pid_settings(&db->control_heading, 200, 0, 12, 100, 2, 5, 5, 200);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Configure distance controller
-    err = pbio_control_set_limits(&db->control_distance.settings, db->sum_per_mm, 200, 400);
+    db->control_distance.settings.counts_per_unit = db->sum_per_mm; //fixme, use setup
+    err = pbio_control_set_limits(&db->control_distance, 200, 400);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_control_set_pid_settings(&db->control_distance.settings, db->sum_per_mm, 200, 0, 10, 100, 2, 5, 5, 200);
+    err = pbio_control_set_pid_settings(&db->control_distance, 200, 0, 10, 100, 2, 5, 5, 200);
     if (err != PBIO_SUCCESS) {
         return err;
     }

@@ -169,17 +169,17 @@ void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
     }
 
     char counts_per_degree_str[13];
-    char gear_ratio_str[13];
-    pb_assert(pbio_servo_get_gear_settings(self->srv, gear_ratio_str, counts_per_degree_str));
+    char gear_ratio_str[7];
+    pb_assert(pbio_control_get_ratio_settings(&self->srv->control, gear_ratio_str, counts_per_degree_str));
 
     int32_t max_speed, acceleration;
-    pb_assert(pbio_servo_get_run_settings(self->srv, &max_speed, &acceleration));
+    pb_assert(pbio_control_get_limits(&self->srv->control, &max_speed, &acceleration));
 
     int16_t pid_kp, pid_ki, pid_kd;
     int32_t tight_loop_time, stall_time;
     int32_t position_tolerance, speed_tolerance, stall_speed_limit;
-    pb_assert(pbio_servo_get_pid_settings(
-        self->srv,
+    pb_assert(pbio_control_get_pid_settings(
+        &self->srv->control,
         &pid_kp, &pid_ki, &pid_kd,
         &tight_loop_time, &position_tolerance,
         &speed_tolerance, &stall_speed_limit, &stall_time));
@@ -496,14 +496,14 @@ STATIC mp_obj_t motor_Motor_set_run_settings(size_t n_args, const mp_obj_t *pos_
     // Load original values
     int32_t max_speed_val;
     int32_t acceleration_val;
-    pb_assert(pbio_servo_get_run_settings(self->srv, &max_speed_val, &acceleration_val));
+    pb_assert(pbio_control_get_limits(&self->srv->control, &max_speed_val, &acceleration_val));
 
     // Set values if given by the user
     max_speed_val = pb_obj_get_default_int(max_speed, max_speed_val);
     acceleration_val = pb_obj_get_default_int(acceleration, acceleration_val);
 
     // Write resulting values
-    pb_assert(pbio_servo_set_run_settings(self->srv, max_speed_val, acceleration_val));
+    pb_assert(pbio_control_set_limits(&self->srv->control, max_speed_val, acceleration_val));
 
     return mp_const_none;
 }
@@ -566,7 +566,7 @@ STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *pos_
     int32_t stall_speed_limit_val;
     int32_t stall_time_val;
 
-    pb_assert(pbio_servo_get_pid_settings(self->srv, &kp_val, &ki_val, &kd_val,
+    pb_assert(pbio_control_get_pid_settings(&self->srv->control, &kp_val, &ki_val, &kd_val,
         &loop_time_val, &pos_tolerance_val, &speed_tolerance_val,
         &stall_speed_limit_val, &stall_time_val));
 
@@ -581,7 +581,7 @@ STATIC mp_obj_t motor_Motor_set_pid_settings(size_t n_args, const mp_obj_t *pos_
     stall_time_val = pb_obj_get_default_int(stall_time, stall_time_val);
 
     // Write resulting values
-    pb_assert(pbio_servo_set_pid_settings(self->srv, kp_val, ki_val, kd_val,
+    pb_assert(pbio_control_set_pid_settings(&self->srv->control, kp_val, ki_val, kd_val,
         loop_time_val, pos_tolerance_val, speed_tolerance_val,
         stall_speed_limit_val, stall_time_val));
 
