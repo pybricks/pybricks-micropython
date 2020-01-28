@@ -13,12 +13,7 @@
 #include <pbdrv/counter.h>
 #include <pbio/dcmotor.h>
 
-typedef struct _pbio_tacho_t {
-    pbio_direction_t direction;
-    int32_t offset;
-    fix16_t counts_per_degree;
-    pbdrv_counter_dev_t *counter;
-} pbio_tacho_t;
+typedef struct _pbio_tacho_t pbio_tacho_t;
 
 #if PBIO_CONFIG_TACHO
 

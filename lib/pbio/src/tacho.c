@@ -12,6 +12,13 @@
 #include <pbio/port.h>
 #include <pbio/tacho.h>
 
+struct _pbio_tacho_t {
+    pbio_direction_t direction;
+    int32_t offset;
+    fix16_t counts_per_degree;
+    pbdrv_counter_dev_t *counter;
+};
+
 static pbio_tacho_t tachos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 static pbio_error_t pbio_tacho_reset_count(pbio_tacho_t *tacho, int32_t reset_count) {
