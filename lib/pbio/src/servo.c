@@ -547,8 +547,7 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
         }
 
         // New maneuver, so reset the rate integrator
-        // FIXME: remove KI dependency
-        int32_t integrator_max = (US_PER_SECOND/srv->control.settings.pid_ki)*srv->control.settings.max_control;
+        int32_t integrator_max = pbio_control_settings_get_max_integrator(&srv->control.settings);
         pbio_count_integrator_reset(&srv->control.count_integrator, srv->control.trajectory.t0, srv->control.trajectory.th0, srv->control.trajectory.th0, integrator_max);
 
         // Set the new servo state
@@ -601,7 +600,7 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     // If called for the first time, set state and reset PID
     if (srv->state != PBIO_SERVO_STATE_CONTROL_ANGLE) {
         // Initialize or reset the PID control status for the given maneuver
-        int32_t integrator_max = (US_PER_SECOND/srv->control.settings.pid_ki)*srv->control.settings.max_control;
+        int32_t integrator_max = pbio_control_settings_get_max_integrator(&srv->control.settings);
         pbio_count_integrator_reset(&srv->control.count_integrator, srv->control.trajectory.t0, srv->control.trajectory.th0, srv->control.trajectory.th0, integrator_max);
 
         // This is an angular control maneuver

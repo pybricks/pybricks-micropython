@@ -189,3 +189,11 @@ pbio_error_t pbio_control_settings_set_stall_tolerances(pbio_control_settings_t 
     return PBIO_SUCCESS;
 }
 
+int32_t pbio_control_settings_get_max_integrator(pbio_control_settings_t *s) {
+    // If ki is very small, then the integrator is "unlimited"
+    if (s->pid_ki <= 10) {
+        return 1000000000;
+    }
+    // Get the maximum integrator value for which ki*integrator does not exceed max_control
+    return ((s->max_control*US_PER_MS)/s->pid_ki)*MS_PER_SECOND;
+}
