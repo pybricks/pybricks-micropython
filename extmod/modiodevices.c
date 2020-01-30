@@ -327,7 +327,7 @@ STATIC mp_obj_t iodevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos_arg
     }
 
     // Assert that data argument are bytes
-    if (!mp_obj_is_str_or_bytes(data)) {
+    if (!(mp_obj_is_str_or_bytes(data) || mp_obj_is_type(data, &mp_type_bytearray))) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
@@ -424,7 +424,7 @@ STATIC mp_obj_t iodevices_UARTDevice_write(size_t n_args, const mp_obj_t *pos_ar
     );
 
     // Assert that data argument are bytes
-    if (!mp_obj_is_str_or_bytes(data)) {
+    if (!(mp_obj_is_str_or_bytes(data) || mp_obj_is_type(data, &mp_type_bytearray))) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
