@@ -335,12 +335,6 @@ STATIC mp_obj_t iodevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos_arg
         return mp_const_none;
     }
 
-    // Len 0 is not allowed in any other case
-    if (len == 0) {
-        pb_assert(PBIO_ERROR_INVALID_ARG);
-        return mp_const_none;
-    }
-
     // Len 1 with no register given
     if (len == 1 && reg == mp_const_none) {
         pb_smbus_write_no_reg(self->bus, self->address, bytes[0]);
@@ -353,6 +347,13 @@ STATIC mp_obj_t iodevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos_arg
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
+    // Len 0 and register given just means that register is the data
+    if (len == 0) {
+        pb_smbus_write_no_reg(self->bus, self->address, regist);
+        return mp_const_none;
+    }
+
+    // Otherwise send a block of data
     pb_assert(pb_smbus_write_bytes(self->bus, self->address, regist, len, bytes));
     return mp_const_none;
 }
