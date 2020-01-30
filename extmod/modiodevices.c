@@ -321,6 +321,11 @@ STATIC mp_obj_t iodevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos_arg
         PB_ARG_REQUIRED(data)
     );
 
+    // No data means an empty byte array
+    if (data == mp_const_none) {
+        data = mp_obj_new_bytes(NULL, 0);
+    }
+
     // Assert that data argument are bytes
     if (!mp_obj_is_str_or_bytes(data)) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
