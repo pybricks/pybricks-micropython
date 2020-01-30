@@ -270,7 +270,7 @@ STATIC mp_obj_t iodevices_I2CDevice_read(size_t n_args, const mp_obj_t *pos_args
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         iodevices_I2CDevice_obj_t, self,
         PB_ARG_REQUIRED(reg),
-        PB_ARG_REQUIRED(length)
+        PB_ARG_DEFAULT_INT(length, 1)
     );
 
     // Get requested data length
@@ -318,7 +318,7 @@ STATIC mp_obj_t iodevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos_arg
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         iodevices_I2CDevice_obj_t, self,
         PB_ARG_REQUIRED(reg),
-        PB_ARG_REQUIRED(data)
+        PB_ARG_DEFAULT_NONE(data)
     );
 
     // No data means an empty byte array
