@@ -55,9 +55,43 @@ void pybricks_init() {
         exit(1);
     }
     grx_clear_screen(GRX_COLOR_WHITE);
-    GrxLineOptions options = { .width = 10 };
-    gint margin = MIN(grx_get_width(), grx_get_height()) / 10;
-    grx_draw_box_with_options(margin, margin, grx_get_max_x() - margin, grx_get_max_y() - margin, &options);
+
+    // Screen center
+    gint cx = grx_get_width()/2;
+    gint cy = grx_get_height()/2;
+
+    // One side of the triangle
+    gint base = MIN(grx_get_width(), grx_get_height()) * 7 / 16;
+
+    // Perfect circle around triangle: r = base / (2*cos(30))
+    // Horizontal distance from center to circle: s = r  * sin(30)
+    gint r = (base * 100) / 173;
+    gint s = r / 2;
+
+    // Draw larger circle around triangle
+    gint width = 5;
+    gint cr = r * 3 / 2;
+    grx_draw_filled_circle(cx, cy, cr, GRX_COLOR_BLACK);
+    grx_draw_filled_circle(cx, cy, cr-width, GRX_COLOR_WHITE);
+
+    GrxPoint triangle[3] = {
+        {
+            // Upper left vertex
+            .x = cx - s,
+            .y = cy - base/2
+        },
+        {
+            // Bottom left vertex
+            .x = cx - s,
+            .y = cy + base/2
+        },
+        {
+            // Right vertex
+            .x = cx + r,
+            .y = cy
+        }
+    };
+    grx_draw_filled_convex_polygon(3, triangle, GRX_COLOR_BLACK);
 
     pbio_init();
     pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE); // TODO: define PBIO_LIGHT_PATTERN_EV3_RUN (Or, discuss if we want to use breathe for EV3, too)
