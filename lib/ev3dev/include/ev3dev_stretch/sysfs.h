@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019 Laurens Valk
 
-#ifndef _PBIO_EVDEVSYSFS_H_
-#define _PBIO_EVDEVSYSFS_H_
+#ifndef _PBIO_EV3DEVSYSFS_H_
+#define _PBIO_EV3DEVSYSFS_H_
 
 #include <stdint.h>
 
@@ -24,4 +24,4 @@ pbio_error_t sysfs_read_int(FILE *file, int *dest);
 pbio_error_t sysfs_write_int(FILE *file, int val);
 
 
-#endif // _PBIO_EVDEVSYSFS_H_
+#endif // _PBIO_EV3DEVSYSFS_H_
