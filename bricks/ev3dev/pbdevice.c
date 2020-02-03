@@ -60,12 +60,6 @@ static pbio_error_t get_device(pbdevice_t **pbdev, pbio_iodev_type_id_t valid_id
 
     pbio_error_t err;
 
-    // FIXME: Accept LUMP sensors only. For now, accept any
-    // ev3dev sensor.
-    if (valid_id == PBIO_IODEV_TYPE_ID_LUMP_UART) {
-        valid_id = PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR;
-    }
-
     // Get the device and assert that is has a valid id
     err = lego_sensor_get(&_pbdev->sensor, _pbdev->port, valid_id);
     if (err != PBIO_SUCCESS) {
@@ -73,7 +67,7 @@ static pbio_error_t get_device(pbdevice_t **pbdev, pbio_iodev_type_id_t valid_id
     }
     _pbdev->type_id = valid_id;
 
-    // FIXME: make sure we proceed only for ev3dev sensors
+    // For special sensor classes we are done. No need to read mode.
     if (valid_id == PBIO_IODEV_TYPE_ID_CUSTOM_I2C  ||
         valid_id == PBIO_IODEV_TYPE_ID_CUSTOM_UART ||
         valid_id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {

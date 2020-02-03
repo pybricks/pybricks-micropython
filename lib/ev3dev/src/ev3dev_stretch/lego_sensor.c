@@ -137,8 +137,9 @@ static pbio_error_t ev3_sensor_assert_id(lego_sensor_t *sensor, pbio_iodev_type_
     }
 
     // If we are here, we have already confirmed that a lego-sensor exists.
-    // So if the user asserts that this should be a lego-sensor, this passes.
-    if (valid_id == PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR) {
+    // So if the user asserts that this should be a LUMP or lego-sensor, this passes.
+    if (valid_id == PBIO_IODEV_TYPE_ID_LUMP_UART ||
+        valid_id == PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR) {
         return PBIO_SUCCESS;
     }
 

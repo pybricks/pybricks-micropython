@@ -132,6 +132,7 @@ pbio_error_t ev3dev_lego_port_configure(pbio_port_t port, pbio_iodev_type_id_t i
         (id == PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG    && mode_now == NXT_ANALOG) ||
         (id == PBIO_IODEV_TYPE_ID_CUSTOM_I2C       && mode_now == OTHER_I2C ) ||
         (id == PBIO_IODEV_TYPE_ID_CUSTOM_UART      && mode_now == OTHER_UART) ||
+        (id == PBIO_IODEV_TYPE_ID_LUMP_UART        && mode_now == EV3_UART)   ||
         (id == PBIO_IODEV_TYPE_ID_EV3DEV_DC_MOTOR  && mode_now == DC_MOTOR)
     ){
         return PBIO_SUCCESS;
@@ -164,6 +165,12 @@ pbio_error_t ev3dev_lego_port_configure(pbio_port_t port, pbio_iodev_type_id_t i
     // For DC Motors Sensor, port must be set to DC Motor on first use
     if (id == PBIO_IODEV_TYPE_ID_EV3DEV_DC_MOTOR) {
         err = ev3dev_lego_port_set_mode(port, DC_MOTOR);
+        return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
+    }
+
+    // For custom LUMP sensors, port must be set to EV3 UART on first use
+    if (id == PBIO_IODEV_TYPE_ID_LUMP_UART) {
+        err = ev3dev_lego_port_set_mode(port, EV3_UART);
         return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
     }
 
