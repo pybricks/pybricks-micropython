@@ -47,6 +47,8 @@ pbio_error_t lego_sensor_get_info(lego_sensor_t *sensor, uint8_t *data_len, lego
 
 pbio_error_t lego_sensor_get_bin_data(lego_sensor_t *sensor, uint8_t **bin_data);
 
+pbio_error_t lego_sensor_get_mode_id_from_str(lego_sensor_t *sensor, const char *mode_str, uint8_t *mode);
+
 pbio_error_t lego_sensor_get_mode(lego_sensor_t *sensor, uint8_t *mode);
 
 pbio_error_t lego_sensor_set_mode(lego_sensor_t *sensor, uint8_t mode);

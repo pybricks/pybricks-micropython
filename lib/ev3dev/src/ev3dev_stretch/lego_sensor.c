@@ -240,7 +240,22 @@ pbio_error_t lego_sensor_get_info(lego_sensor_t *sensor, uint8_t *data_len, lego
     return PBIO_SUCCESS;
 }
 
-// Get the sensor mode
+// Get the mode id from string
+pbio_error_t lego_sensor_get_mode_id_from_str(lego_sensor_t *sensor, const char *mode_str, uint8_t *mode) {
+
+    // Find matching port mode string
+    for (int i = 0; i < PBIO_ARRAY_SIZE(sensor->modes); i++) {
+        if (!strcmp(mode_str, sensor->modes[i])) {
+            *mode = i;
+            return PBIO_SUCCESS;
+        }
+    }
+
+    // Mode not found
+    return PBIO_ERROR_INVALID_ARG;
+}
+
+// Get the current sensor mode
 pbio_error_t lego_sensor_get_mode(lego_sensor_t *sensor, uint8_t *mode) {
 
     pbio_error_t err;
@@ -252,15 +267,8 @@ pbio_error_t lego_sensor_get_mode(lego_sensor_t *sensor, uint8_t *mode) {
         return err;
     }
 
-    // Find matching port mode string
-    for (int i = 0; i < PBIO_ARRAY_SIZE(sensor->modes); i++) {
-        if (!strcmp(mode_str, sensor->modes[i])) {
-            *mode = i;
-            return PBIO_SUCCESS;
-        }
-    }
-
-    return PBIO_ERROR_IO;
+    // Return matching mode id
+    return lego_sensor_get_mode_id_from_str(sensor, mode_str, mode);
 }
 
 // Set the sensor mode
