@@ -81,7 +81,7 @@ PROCESS_THREAD(pbdrv_battery_process, ev, data) {
 
     f_current = fopen("/sys/class/power_supply/lego-ev3-battery/current_now", "r");
     if (f_current) {
-        setbuf(f_voltage, NULL);
+        setbuf(f_current, NULL);
     }
 
     while (true) {
