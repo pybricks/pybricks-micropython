@@ -171,6 +171,11 @@ void pbdevice_get_info(pbdevice_t *pbdev, pbio_port_t *port, pbio_iodev_type_id_
     *num_values = pbdev->iodev.info->mode_info[*mode].num_values;
 }
 
+int8_t pbdevice_get_mode_id_from_str(pbdevice_t *pbdev, const char *mode_str) {
+    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
+    return 0;
+}
+
 void pbdevice_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color) {
     // Turn on the light through device specific mode
     uint8_t mode;
