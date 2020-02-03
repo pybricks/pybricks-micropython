@@ -189,8 +189,9 @@ void pbdevice_get_info(pbdevice_t *pbdev, pbio_port_t *port, pbio_iodev_type_id_
 }
 
 int8_t pbdevice_get_mode_id_from_str(pbdevice_t *pbdev, const char *mode_str) {
-    pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-    return 0;
+    uint8_t mode;
+    pb_assert(lego_sensor_get_mode_id_from_str(pbdev->sensor, mode_str, &mode));
+    return mode;
 }
 
 void pbdevice_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color) {

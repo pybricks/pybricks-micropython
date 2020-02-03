@@ -562,10 +562,13 @@ STATIC mp_obj_t iodevices_Ev3devSensor_read(size_t n_args, const mp_obj_t *pos_a
         PB_ARG_REQUIRED(mode)
     );
 
+    // Get mode index from mode string
+    uint8_t mode_idx = pbdevice_get_mode_id_from_str(self->pbdev, mp_obj_str_get_str(mode));
+
     // Get data already in correct data format
     int32_t data[PBIO_IODEV_MAX_DATA_SIZE];
     mp_obj_t objs[PBIO_IODEV_MAX_DATA_SIZE];
-    pbdevice_get_values(self->pbdev, mp_obj_get_int(mode), data);
+    pbdevice_get_values(self->pbdev, mode_idx, data);
 
     // Get info about the sensor and its mode
     pbio_port_t port;
