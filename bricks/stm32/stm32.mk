@@ -137,7 +137,6 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	moddebug.c \
 	modhubs.c \
 	modiodevices.c \
-	modlight.c \
 	modlogger.c \
 	modmotor.c \
 	modparameters.c \

@@ -5,7 +5,7 @@
 #include <pbio/button.h>
 
 #include "modparameters.h"
-#include "modlight.h"
+#include "modbuiltins.h"
 #include "modbuiltins.h"
 
 #include "pberror.h"
@@ -37,7 +37,7 @@ STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
     self->speaker = pb_type_ev3dev_Speaker.make_new(&pb_type_ev3dev_Speaker, 0, 0, NULL);
 
     // Create an instance of the Light class, representing the brick status light
-    self->light = light_Light_obj_make_new(NULL, &light_ColorLight_type);
+    self->light = builtins_Light_obj_make_new(NULL, &builtins_ColorLight_type);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -76,7 +76,7 @@ STATIC mp_obj_t hubs_MoveHub_make_new(const mp_obj_type_t *type, size_t n_args, 
     self->base.type = (mp_obj_type_t*) type;
 
     // Create an instance of the Light class, representing the hub light
-    self->light = light_Light_obj_make_new(NULL, &light_ColorLight_type);
+    self->light = builtins_Light_obj_make_new(NULL, &builtins_ColorLight_type);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -115,7 +115,7 @@ STATIC mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, 
     self->base.type = (mp_obj_type_t*) type;
 
     // Create an instance of the Light class, representing the hub light
-    self->light = light_Light_obj_make_new(NULL, &light_ColorLight_type);
+    self->light = builtins_Light_obj_make_new(NULL, &builtins_ColorLight_type);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -154,7 +154,7 @@ STATIC mp_obj_t hubs_CPlusHub_make_new(const mp_obj_type_t *type, size_t n_args,
     self->base.type = (mp_obj_type_t*) type;
 
     // Create an instance of the Light class, representing the hub light
-    self->light = light_Light_obj_make_new(NULL, &light_ColorLight_type);
+    self->light = builtins_Light_obj_make_new(NULL, &builtins_ColorLight_type);
 
     return MP_OBJ_FROM_PTR(self);
 }

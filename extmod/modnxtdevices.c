@@ -15,8 +15,8 @@
 #include "pbobj.h"
 #include "pbkwarg.h"
 
+#include "modbuiltins.h"
 #include "modmotor.h"
-#include "modlight.h"
 #include "modparameters.h"
 
 #if PYBRICKS_HUB_EV3
@@ -251,7 +251,7 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR);
 
     // Create an instance of the Light class
-    self->light = light_Light_obj_make_new(self->pbdev, &light_ColorLight_type);
+    self->light = builtins_Light_obj_make_new(self->pbdev, &builtins_ColorLight_type);
 
     // Set the light color to red
     pbdevice_color_light_on(self->pbdev, PBIO_LIGHT_COLOR_RED);
