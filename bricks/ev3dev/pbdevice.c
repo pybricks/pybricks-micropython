@@ -158,13 +158,24 @@ pbdevice_t *pbdevice_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id)
     pbdevice_t *pbdev = NULL;
     pbio_error_t err;
 
-    while ((err = get_device(&pbdev, valid_id, port)) == PBIO_ERROR_AGAIN) {
-        mp_hal_delay_ms(1000);
+    // Try to get the device
+    err = get_device(&pbdev, valid_id, port);
+
+    // FIXME: Reading port mode is not enough confirmation that we are done,
+    // So we cannot wait until PBIO_ERROR_AGAIN disappears. Use udev instead.
+    // For now, just wait a little longer before giving up.
+    if (err == PBIO_ERROR_AGAIN) {
+        for (uint8_t i = 0; i < 5; i++) {
+            err = get_device(&pbdev, valid_id, port);
+            if (err == PBIO_SUCCESS) {
+                break;
+            }
+            mp_hal_delay_ms(1000*(i+1));
+        }
     }
     pb_assert(err);
     return pbdev;
 }
-
 void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values) {
     pbio_error_t err;
     while ((err = get_values(pbdev, mode, values)) == PBIO_ERROR_AGAIN) {
