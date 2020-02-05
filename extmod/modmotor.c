@@ -46,13 +46,13 @@ STATIC void wait_for_completion(pbio_servo_t *srv) {
 STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
-        PB_ARG_DEFAULT_ENUM(direction, pb_const_clockwise),
+        PB_ARG_DEFAULT_ENUM(positive_direction, pb_const_clockwise),
         PB_ARG_DEFAULT_NONE(gears)
     );
 
     // Configure the motor with the selected arguments at pbio level
     mp_int_t port_arg = pb_type_enum_get_value(port, &pb_enum_type_Port);
-    pbio_direction_t direction_arg = pb_type_enum_get_value(direction, &pb_enum_type_Direction);
+    pbio_direction_t direction_arg = pb_type_enum_get_value(positive_direction, &pb_enum_type_Direction);
     #if PYBRICKS_PY_EV3DEVICES
     pbio_error_t err;
     #endif
