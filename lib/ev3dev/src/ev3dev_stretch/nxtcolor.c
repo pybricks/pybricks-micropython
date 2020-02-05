@@ -340,7 +340,7 @@ static pbio_error_t nxtcolor_init(nxtcolor_t *nxtcolor, pbio_port_t port) {
     if (!nxtcolor->fs_initialized) {
         err = nxtcolor_init_fs(nxtcolor, port);
         if (err != PBIO_SUCCESS) {
-            return err;
+            return PBIO_ERROR_AGAIN;
         }
         nxtcolor->fs_initialized = true;
 
