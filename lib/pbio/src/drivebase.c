@@ -381,15 +381,16 @@ pbio_error_t pbio_drivebase_get_state(pbio_drivebase_t *db, int32_t *distance, i
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    *distance = pbio_math_div_i32_fix16(sum, db->sum_per_mm);
+    *distance = pbio_math_div_i32_fix16(sum - db->sum_offset, db->sum_per_mm);
     *drive_speed = pbio_math_div_i32_fix16(sum_rate, db->sum_per_mm);
-    *angle = pbio_math_div_i32_fix16(dif, db->dif_per_deg);
+    *angle = pbio_math_div_i32_fix16(dif - db->dif_offset, db->dif_per_deg);
     *turn_rate = pbio_math_div_i32_fix16(dif_rate, db->dif_per_deg);
     return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_drivebase_reset(pbio_drivebase_t *db) {
-    return PBIO_ERROR_NOT_IMPLEMENTED;
+    int32_t time_now, sum_rate, dif_rate;
+    return drivebase_get_state(db, &time_now, &db->sum_offset, &sum_rate, &db->dif_offset, &dif_rate);
 }
 
 pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t drive_speed, int32_t drive_acceleration, int32_t turn_rate, int32_t turn_acceleration, pbio_actuation_t stop_type) {
