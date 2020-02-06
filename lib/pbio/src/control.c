@@ -10,7 +10,7 @@
 #include <pbio/integrator.h>
 
 
-void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
+static void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
     // Trajectory and setting shortcuts for this motor
     int32_t max_duty = ctl->settings.max_control;
 
@@ -72,7 +72,7 @@ void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, int32_t 
     return;
 }
 
-void control_update_time_target(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
+static void control_update_time_target(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
 
     // Trajectory and setting shortcuts for this motor
     int32_t max_duty = ctl->settings.max_control;
@@ -124,6 +124,18 @@ void control_update_time_target(pbio_control_t *ctl, int32_t time_now, int32_t c
     *control = ctl->after_stop == PBIO_ACTUATION_HOLD ? count_now: 0;
 
     return;
+}
+
+void control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
+    // Calculate controls for position based control
+    if (ctl->type == PBIO_CONTROL_ANGLE) {
+        control_update_angle_target(ctl, time_now, count_now, rate_now, actuation_type, control);
+    }
+    // Calculate controls for time based control
+    else {
+        // Get control type and signal for given state
+        control_update_time_target(ctl, time_now, count_now, rate_now, actuation_type, control);
+    }
 }
 
 int32_t pbio_control_counts_to_user(pbio_control_settings_t *s, int32_t counts) {

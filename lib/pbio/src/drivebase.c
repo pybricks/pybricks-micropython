@@ -263,8 +263,8 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     else {
         // Otherwise, calculate control signal
         pbio_actuation_t __todo; // FIXME: add other control types
-        control_update_time_target(&db->control_distance, time_now, sum, sum_rate, &__todo, &sum_control);
-        control_update_time_target(&db->control_heading, time_now, dif, dif_rate, &__todo, &dif_control);
+        control_update(&db->control_distance, time_now, sum, sum_rate, &__todo, &sum_control);
+        control_update(&db->control_heading, time_now, dif, dif_rate, &__todo, &dif_control);
     }
 
     // Actuate
@@ -319,6 +319,7 @@ static pbio_error_t pbio_drivebase_signal_run(pbio_control_t *ctl, pbio_drivebas
     // Set new maneuver action and stop type, and state
     ctl->after_stop = PBIO_ACTUATION_COAST;
     ctl->is_done_func = pbio_control_never_done;
+    ctl->type = PBIO_CONTROL_TIMED;
     
     return PBIO_SUCCESS;
 }

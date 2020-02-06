@@ -310,15 +310,8 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
         return pbio_servo_log_update(srv, time_now, count_now, rate_now, state, control);
     }
 
-    // Calculate controls for position based control
-    if (srv->control.type == PBIO_CONTROL_ANGLE) {
-        control_update_angle_target(&srv->control, time_now, count_now, rate_now, &actuation, &control);
-    }
-    // Calculate controls for time based control
-    else {
-        // Get control type and signal for given state
-        control_update_time_target(&srv->control, time_now, count_now, rate_now, &actuation, &control);
-    }
+    // Calculate control signal
+    control_update(&srv->control, time_now, count_now, rate_now, &actuation, &control);
 
     // Apply the control type and signal
     err = pbio_servo_actuate(srv, actuation, control);
