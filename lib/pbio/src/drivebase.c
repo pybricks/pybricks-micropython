@@ -329,7 +329,15 @@ static pbio_error_t pbio_drivebase_signal_run(pbio_control_t *ctl, pbio_drivebas
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate) {
+pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance) {
+    return PBIO_ERROR_NOT_IMPLEMENTED;
+}
+
+pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle) {
+    return PBIO_ERROR_NOT_IMPLEMENTED;
+}
+
+pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate) {
 
     pbio_error_t err;
 
@@ -365,6 +373,33 @@ pbio_error_t pbio_drivebase_start(pbio_drivebase_t *db, int32_t speed, int32_t t
     }
 
     return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_drivebase_get_distance(pbio_drivebase_t *db, int32_t *distance) {
+    *distance = 0;
+    return PBIO_ERROR_NOT_IMPLEMENTED;
+}
+
+pbio_error_t pbio_drivebase_get_angle(pbio_drivebase_t *db, int32_t *angle) {
+    *angle = 0;
+    return PBIO_ERROR_NOT_IMPLEMENTED;
+}
+
+pbio_error_t pbio_drivebase_reset(pbio_drivebase_t *db) {
+    return PBIO_ERROR_NOT_IMPLEMENTED;
+}
+
+pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t drive_speed, int32_t drive_acceleration, int32_t turn_rate, int32_t turn_acceleration, pbio_actuation_t stop_type) {
+    return PBIO_ERROR_NOT_IMPLEMENTED;
+}
+
+pbio_error_t pbio_drivebase_get_drive_settings(pbio_drivebase_t *db, int32_t *drive_speed, int32_t *drive_acceleration, int32_t *turn_rate, int32_t *turn_acceleration, pbio_actuation_t *stop_type) {
+    *drive_speed = 0;
+    *drive_acceleration = 0;
+    *turn_rate = 0;
+    *turn_acceleration = 0;
+    *stop_type = PBIO_ACTUATION_COAST;
+    return PBIO_ERROR_NOT_IMPLEMENTED;
 }
 
 // TODO: Convert to Contiki process
