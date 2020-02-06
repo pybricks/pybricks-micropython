@@ -89,18 +89,11 @@ static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
 static pbio_error_t drivebase_actuate(pbio_drivebase_t *db, int32_t sum_control, int32_t dif_control) {
     pbio_error_t err;
 
-    // FIXME: scale only once, embed max control in prescaler, drop geometry here
-    fix16_t sum_per_mm = db->control_distance.settings.counts_per_unit;
-    fix16_t dif_per_deg =  db->control_heading.settings.counts_per_unit;
-
-    int32_t sum_duty = 4*(sum_control*100)/pbio_math_mul_i32_fix16(100, sum_per_mm);
-    int32_t dif_duty = 4*(dif_control*100)/pbio_math_mul_i32_fix16(100, dif_per_deg);
-
-    err = pbio_dcmotor_set_duty_cycle_sys(db->left->dcmotor, sum_duty + dif_duty);
+    err = pbio_dcmotor_set_duty_cycle_sys(db->left->dcmotor, sum_control + dif_control);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_dcmotor_set_duty_cycle_sys(db->right->dcmotor, sum_duty - dif_duty);
+    err = pbio_dcmotor_set_duty_cycle_sys(db->right->dcmotor, sum_control - dif_control);
     if (err != PBIO_SUCCESS) {
         return err;
     }
