@@ -68,6 +68,10 @@ typedef struct _pbio_control_t {
     bool stalled;
 } pbio_control_t;
 
+// Convert control units (counts, rate) and physical user units (deg or mm, deg/s or mm/s)
+int32_t pbio_control_counts_to_user(pbio_control_settings_t *s, int32_t counts);
+int32_t pbio_control_user_to_counts(pbio_control_settings_t *s, int32_t user);
+
 void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *actuation);
 pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *ctl, int32_t speed, int32_t acceleration, int32_t actuation);
 
@@ -81,7 +85,6 @@ void pbio_control_settings_get_stall_tolerances(pbio_control_settings_t *s,  int
 pbio_error_t pbio_control_settings_set_stall_tolerances(pbio_control_settings_t *s, int32_t speed, int32_t time);
 
 int32_t pbio_control_settings_get_max_integrator(pbio_control_settings_t *s);
-
 void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control);
 void control_update_time_target(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control);
 

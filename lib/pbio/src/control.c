@@ -126,9 +126,17 @@ void control_update_time_target(pbio_control_t *ctl, int32_t time_now, int32_t c
     return;
 }
 
+int32_t pbio_control_counts_to_user(pbio_control_settings_t *s, int32_t counts) {
+    return pbio_math_div_i32_fix16(counts, s->counts_per_unit);
+}
+
+int32_t pbio_control_user_to_counts(pbio_control_settings_t *s, int32_t user) {
+    return pbio_math_mul_i32_fix16(user, s->counts_per_unit);
+}
+
 void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *actuation) {
-    *speed = pbio_math_div_i32_fix16(s->max_rate, s->counts_per_unit);
-    *acceleration = pbio_math_div_i32_fix16(s->abs_acceleration, s->counts_per_unit);
+    *speed = pbio_control_counts_to_user(s, s->max_rate);
+    *acceleration = pbio_control_counts_to_user(s, s->abs_acceleration);
     *actuation = s->max_control / 100; // TODO: Generalize scaler beyond duty
 }
 
@@ -136,8 +144,8 @@ pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_
     if (speed < 1 || acceleration < 1 || actuation < 1) {
         return PBIO_ERROR_INVALID_ARG;
     }
-    s->max_rate = pbio_math_mul_i32_fix16(speed, s->counts_per_unit);
-    s->abs_acceleration = pbio_math_mul_i32_fix16(acceleration, s->counts_per_unit);
+    s->max_rate = pbio_control_user_to_counts(s, speed);
+    s->abs_acceleration = pbio_control_user_to_counts(s, acceleration);
     s->max_control = actuation * 100; // TODO: Generalize scaler beyond duty
     return PBIO_SUCCESS;
 }
@@ -160,8 +168,8 @@ pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int16_t p
 }
 
 void pbio_control_settings_get_target_tolerances(pbio_control_settings_t *s, int32_t *speed, int32_t *position) {
-    *position = pbio_math_div_i32_fix16(s->count_tolerance, s->counts_per_unit);
-    *speed = pbio_math_div_i32_fix16(s->rate_tolerance, s->counts_per_unit);
+    *position = pbio_control_counts_to_user(s, s->count_tolerance);
+    *speed = pbio_control_counts_to_user(s, s->rate_tolerance);
 }
 
 pbio_error_t pbio_control_settings_set_target_tolerances(pbio_control_settings_t *s, int32_t speed, int32_t position) {
@@ -169,13 +177,13 @@ pbio_error_t pbio_control_settings_set_target_tolerances(pbio_control_settings_t
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    s->count_tolerance = pbio_math_mul_i32_fix16(position, s->counts_per_unit);
-    s->rate_tolerance = pbio_math_mul_i32_fix16(speed, s->counts_per_unit);
+    s->count_tolerance = pbio_control_user_to_counts(s, position);
+    s->rate_tolerance = pbio_control_user_to_counts(s, speed);
     return PBIO_SUCCESS;
 }
 
 void pbio_control_settings_get_stall_tolerances(pbio_control_settings_t *s,  int32_t *speed, int32_t *time) {
-    *speed = pbio_math_div_i32_fix16(s->stall_rate_limit, s->counts_per_unit);
+    *speed = pbio_control_counts_to_user(s, s->stall_rate_limit);
     *time = s->stall_time / US_PER_MS;
 }
 
@@ -184,7 +192,7 @@ pbio_error_t pbio_control_settings_set_stall_tolerances(pbio_control_settings_t 
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    s->stall_rate_limit = pbio_math_mul_i32_fix16(speed, s->counts_per_unit);
+    s->stall_rate_limit = pbio_control_user_to_counts(s, speed);
     s->stall_time = time * US_PER_MS; 
     return PBIO_SUCCESS;
 }
