@@ -158,7 +158,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     pbio_error_t err;
 
     // Perform angle reset in case of tracking / holding
-    if (srv->state == PBIO_SERVO_STATE_CONTROL_ANGLE) {
+    if (srv->state == PBIO_SERVO_STATE_CONTROL_ACTIVE && srv->control.type == PBIO_CONTROL_ANGLE) {
         // Get the old angle
         int32_t angle_old;
         err = pbio_tacho_get_angle(srv->tacho, &angle_old);
@@ -247,39 +247,34 @@ static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actua
 static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t actuation, int32_t control) {
 
     int32_t buf[SERVO_LOG_NUM_VALUES];
-
-
-    // Get the time of reference evaluation
-    int32_t time_ref = time_now;
-    if (srv->state == PBIO_SERVO_STATE_CONTROL_ANGLE) {
-        time_ref = pbio_count_integrator_get_ref_time(&srv->control.count_integrator, time_now);
-    }
-
-    // Log the time since start of control trajectory
-    if (srv->state >= PBIO_SERVO_STATE_CONTROL_ANGLE) {
-        buf[0] = (time_ref - srv->control.trajectory.t0) / 1000;
-    }
-    else {
-        // Not applicable for passive motors
-        buf[0] = 0;
-    }
-
+    
     // Log the physical state of the motor
     buf[1] = count_now;
     buf[2] = rate_now;
 
-    // Log the resulting control signal
+    // Log the applied control signal
     buf[3] = actuation;
     buf[4] = control;
 
-    // Log reference signals. These values are only meaningful for time based commands
-    int32_t count_ref, count_ref_ext, rate_ref, rate_err, rate_err_integral, acceleration_ref;
-    pbio_trajectory_get_reference(&srv->control.trajectory, time_ref, &count_ref, &count_ref_ext, &rate_ref, &acceleration_ref);
-    pbio_rate_integrator_get_errors(&srv->control.rate_integrator, rate_now, rate_ref, count_now, count_ref, &rate_err, &rate_err_integral);
-    buf[5] = count_ref;
-    buf[6] = rate_err_integral;
-    buf[7] = rate_ref;
-    buf[8] = rate_err_integral;
+    // If control is active, log additional data about the maneuver
+    if (srv->state == PBIO_SERVO_STATE_CONTROL_ACTIVE) {
+        int32_t time_ref = time_now;
+        // Get the time of reference evaluation
+        if (srv->control.type == PBIO_CONTROL_ANGLE) {
+            time_ref = pbio_count_integrator_get_ref_time(&srv->control.count_integrator, time_now);
+        }
+        // Log the time since start of control trajectory
+        buf[0] = (time_ref - srv->control.trajectory.t0) / 1000;
+
+        // Log reference signals. These values are only meaningful for time based commands
+        int32_t count_ref, count_ref_ext, rate_ref, rate_err, rate_err_integral, acceleration_ref;
+        pbio_trajectory_get_reference(&srv->control.trajectory, time_ref, &count_ref, &count_ref_ext, &rate_ref, &acceleration_ref);
+        pbio_rate_integrator_get_errors(&srv->control.rate_integrator, rate_now, rate_ref, count_now, count_ref, &rate_err, &rate_err_integral);
+        buf[5] = count_ref;
+        buf[6] = rate_err_integral;
+        buf[7] = rate_ref;
+        buf[8] = rate_err_integral;
+    }
 
     return pbio_logger_update(&srv->log, buf);
 }
@@ -316,17 +311,15 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     }
 
     // Calculate controls for position based control
-    if (srv->state == PBIO_SERVO_STATE_CONTROL_ANGLE) {
+    if (srv->control.type == PBIO_CONTROL_ANGLE) {
         control_update_angle_target(&srv->control, time_now, count_now, rate_now, &actuation, &control);
     }
     // Calculate controls for time based control
-    else if (srv->state == PBIO_SERVO_STATE_CONTROL_TIMED) {
+    else {
         // Get control type and signal for given state
         control_update_time_target(&srv->control, time_now, count_now, rate_now, &actuation, &control);
     }
-    else {
-        return PBIO_ERROR_INVALID_OP;
-    }
+
     // Apply the control type and signal
     err = pbio_servo_actuate(srv, actuation, control);
     if (err != PBIO_SUCCESS) {
@@ -340,8 +333,7 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
 /* pbio user functions */
 
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled) {
-    *stalled = srv->control.stalled &&
-               srv->state >= PBIO_SERVO_STATE_CONTROL_ANGLE;
+    *stalled = srv->state == PBIO_SERVO_STATE_CONTROL_ACTIVE && srv->control.stalled;
     return PBIO_SUCCESS;
 }
 
@@ -382,8 +374,8 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
     srv->control.after_stop = after_stop;
     srv->control.is_done_func = stop_func;
 
-    // If we are continuing a timed maneuver, we can try to patch the new command onto the existing one for better continuity
-    if (srv->state == PBIO_SERVO_STATE_CONTROL_TIMED) {
+    // If we are continuing a maneuver, we can try to patch the new command onto the existing one for better continuity
+    if (srv->state == PBIO_SERVO_STATE_CONTROL_ACTIVE  && srv->control.type == PBIO_CONTROL_TIMED) {
 
         // Current time
         time_start = clock_usecs();
@@ -429,7 +421,8 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
         pbio_rate_integrator_reset(&srv->control.rate_integrator, time_start, count_now, count_now);
 
         // Set the new servo state
-        srv->state = PBIO_SERVO_STATE_CONTROL_TIMED;
+        srv->state = PBIO_SERVO_STATE_CONTROL_ACTIVE;
+        srv->control.type = PBIO_CONTROL_TIMED;
 
         // Run one control update synchronously with user command.
         err = pbio_servo_control_update(srv);
@@ -503,7 +496,7 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
     srv->control.is_done_func = run_target_is_done_func;
 
     // If we are continuing a angle based maneuver, we can try to patch the new command onto the existing one for better continuity
-    if (srv->state == PBIO_SERVO_STATE_CONTROL_ANGLE) {
+    if (srv->state == PBIO_SERVO_STATE_CONTROL_ACTIVE && srv->control.type == PBIO_CONTROL_ANGLE) {
 
         // Current time
         time_start = clock_usecs();
@@ -551,7 +544,8 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
         pbio_count_integrator_reset(&srv->control.count_integrator, srv->control.trajectory.t0, srv->control.trajectory.th0, srv->control.trajectory.th0, integrator_max);
 
         // Set the new servo state
-        srv->state = PBIO_SERVO_STATE_CONTROL_ANGLE;
+        srv->state = PBIO_SERVO_STATE_CONTROL_ACTIVE;
+        srv->control.type = PBIO_CONTROL_ANGLE;
 
         // Run one control update synchronously with user command.
         err = pbio_servo_control_update(srv);
@@ -598,13 +592,14 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     pbio_trajectory_make_stationary(&srv->control.trajectory, time_start, pbio_math_mul_i32_fix16(target, srv->control.settings.counts_per_unit));
 
     // If called for the first time, set state and reset PID
-    if (srv->state != PBIO_SERVO_STATE_CONTROL_ANGLE) {
+    if (!(srv->state == PBIO_SERVO_STATE_CONTROL_ACTIVE && srv->control.type == PBIO_CONTROL_ANGLE)) {
         // Initialize or reset the PID control status for the given maneuver
         int32_t integrator_max = pbio_control_settings_get_max_integrator(&srv->control.settings);
         pbio_count_integrator_reset(&srv->control.count_integrator, srv->control.trajectory.t0, srv->control.trajectory.th0, srv->control.trajectory.th0, integrator_max);
 
         // This is an angular control maneuver
-        srv->state = PBIO_SERVO_STATE_CONTROL_ANGLE;
+        srv->state = PBIO_SERVO_STATE_CONTROL_ACTIVE;
+        srv->control.type = PBIO_CONTROL_ANGLE;
 
         // Run one control update synchronously with user command
         err = pbio_servo_control_update(srv);

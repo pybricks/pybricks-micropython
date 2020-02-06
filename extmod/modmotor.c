@@ -33,7 +33,7 @@
 /* Wait for maneuver to complete */
 
 STATIC void wait_for_completion(pbio_servo_t *srv) {
-    while (srv->state == PBIO_SERVO_STATE_CONTROL_ANGLE || srv->state == PBIO_SERVO_STATE_CONTROL_TIMED) {
+    while (srv->state == PBIO_SERVO_STATE_CONTROL_ACTIVE) {
         mp_hal_delay_ms(5);
     }
     if (srv->state == PBIO_SERVO_STATE_ERRORED) {

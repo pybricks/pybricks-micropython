@@ -34,8 +34,7 @@ typedef enum {
     PBIO_SERVO_STATE_PASSIVE,
     PBIO_SERVO_STATE_ERRORED,
     /* PID Control */   
-    PBIO_SERVO_STATE_CONTROL_ANGLE,
-    PBIO_SERVO_STATE_CONTROL_TIMED,
+    PBIO_SERVO_STATE_CONTROL_ACTIVE,
     /* Controlled/claimed by a higher level construct such as a drivebase */
     PBIO_SERVO_STATE_CLAIMED,
 } pbio_servo_state_t;

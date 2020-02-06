@@ -279,7 +279,7 @@ static pbio_error_t pbio_drivebase_signal_run(pbio_control_t *ctl, pbio_drivebas
     pbio_error_t err;
 
     // If we are continuing a timed maneuver, we can try to patch the new command onto the existing one for better continuity
-    if (state == PBIO_DRIVEBASE_STATE_TIMED) {
+    if (state == PBIO_DRIVEBASE_STATE_CONTROL_ACTIVE) {
 
         // Make the new trajectory and try to patch
         err = pbio_trajectory_make_time_based_patched(
@@ -358,7 +358,7 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t t
         return err;
     }
 
-    db->state = PBIO_DRIVEBASE_STATE_TIMED;
+    db->state = PBIO_DRIVEBASE_STATE_CONTROL_ACTIVE;
 
     // Run one control update synchronously with user command.
     err = pbio_drivebase_update(db);

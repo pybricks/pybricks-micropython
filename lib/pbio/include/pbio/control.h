@@ -58,7 +58,14 @@ static inline bool pbio_control_always_done(pbio_trajectory_t *trajectory, pbio_
     return true;
 }
 
+typedef enum {
+    PBIO_CONTROL_NONE,   /**< No control */
+    PBIO_CONTROL_TIMED,  /**< Run for a given amount of time */
+    PBIO_CONTROL_ANGLE,  /**< Run to an angle */
+} pbio_control_type_t;
+
 typedef struct _pbio_control_t {
+    pbio_control_type_t type;
     pbio_control_settings_t settings;
     pbio_actuation_t after_stop;
     pbio_trajectory_t trajectory;
