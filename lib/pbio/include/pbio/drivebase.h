@@ -25,8 +25,6 @@ typedef struct _pbio_drivebase_t {
     pbio_drivebase_state_t state;
     fix16_t wheel_diameter;
     fix16_t axle_track;
-    fix16_t dif_per_deg;
-    fix16_t sum_per_mm;
     int32_t sum_offset;
     int32_t dif_offset;
     pbio_log_t log;

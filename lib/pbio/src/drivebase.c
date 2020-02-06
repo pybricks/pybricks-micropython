@@ -89,9 +89,12 @@ static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
 static pbio_error_t drivebase_actuate(pbio_drivebase_t *db, int32_t sum_control, int32_t dif_control) {
     pbio_error_t err;
 
-    // FIXME: scale only once, embed max control in prescaler
-    int32_t sum_duty = 4*(sum_control*100)/pbio_math_mul_i32_fix16(100, db->sum_per_mm);
-    int32_t dif_duty = 4*(dif_control*100)/pbio_math_mul_i32_fix16(100, db->dif_per_deg);
+    // FIXME: scale only once, embed max control in prescaler, drop geometry here
+    fix16_t sum_per_mm = db->control_distance.settings.counts_per_unit;
+    fix16_t dif_per_deg =  db->control_heading.settings.counts_per_unit;
+
+    int32_t sum_duty = 4*(sum_control*100)/pbio_math_mul_i32_fix16(100, sum_per_mm);
+    int32_t dif_duty = 4*(dif_control*100)/pbio_math_mul_i32_fix16(100, dif_per_deg);
 
     err = pbio_dcmotor_set_duty_cycle_sys(db->left->dcmotor, sum_duty + dif_duty);
     if (err != PBIO_SUCCESS) {
@@ -170,18 +173,6 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
     db->wheel_diameter = wheel_diameter;
     db->axle_track = axle_track;
 
-    // Difference between the motors for every 1 degree drivebase rotation
-    db->dif_per_deg = fix16_div(
-        fix16_mul(db->axle_track, fix16_from_int(2)),
-        db->wheel_diameter
-    );
-
-    // Sum of motors for every mm forward
-    db->sum_per_mm = fix16_div(
-        fix16_mul(fix16_from_int(180), FOUR_DIV_PI),
-        db->wheel_diameter
-    );
-
     // Claim servos
     db->left->state = PBIO_SERVO_STATE_CLAIMED;
     db->right->state = PBIO_SERVO_STATE_CLAIMED;
@@ -191,11 +182,21 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
 
     // Configure heading controller
     db->control_heading.settings = settings_drivebase_heading_default;
-    db->control_heading.settings.counts_per_unit = db->dif_per_deg;
+
+    // Difference between the motors for every 1 degree drivebase rotation
+    db->control_heading.settings.counts_per_unit = fix16_div(
+        fix16_mul(db->axle_track, fix16_from_int(2)),
+        db->wheel_diameter
+    );
 
     // Configure distance controller
     db->control_distance.settings = settings_drivebase_distance_default;
-    db->control_distance.settings.counts_per_unit = db->sum_per_mm;
+
+    // Sum of motors for every mm forward
+    db->control_distance.settings.counts_per_unit = fix16_div(
+        fix16_mul(fix16_from_int(180), FOUR_DIV_PI),
+        db->wheel_diameter
+    );
 
     return PBIO_SUCCESS;
 }
@@ -353,12 +354,12 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t t
     db->control_heading.is_done_func = pbio_control_never_done;
 
     // Initialize both controllers
-    int32_t target_turn_rate = pbio_math_mul_i32_fix16(turn_rate, db->dif_per_deg);
+    int32_t target_turn_rate = pbio_control_user_to_counts(&db->control_heading.settings, turn_rate);
     err = pbio_drivebase_signal_run(&db->control_heading, db->state, target_turn_rate, time_now, dif, dif_rate);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    int32_t target_sum_rate = pbio_math_mul_i32_fix16(speed, db->sum_per_mm);
+    int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, speed);
     err = pbio_drivebase_signal_run(&db->control_distance, db->state, target_sum_rate, time_now, sum, sum_rate);
     if (err != PBIO_SUCCESS) {
         return err;
@@ -381,10 +382,10 @@ pbio_error_t pbio_drivebase_get_state(pbio_drivebase_t *db, int32_t *distance, i
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    *distance = pbio_math_div_i32_fix16(sum - db->sum_offset, db->sum_per_mm);
-    *drive_speed = pbio_math_div_i32_fix16(sum_rate, db->sum_per_mm);
-    *angle = pbio_math_div_i32_fix16(dif - db->dif_offset, db->dif_per_deg);
-    *turn_rate = pbio_math_div_i32_fix16(dif_rate, db->dif_per_deg);
+    *distance =    pbio_control_counts_to_user(&db->control_distance.settings, sum - db->sum_offset);
+    *drive_speed = pbio_control_counts_to_user(&db->control_distance.settings, sum_rate);
+    *angle =       pbio_control_counts_to_user(&db->control_heading.settings,  dif - db->dif_offset);
+    *turn_rate =   pbio_control_counts_to_user(&db->control_heading.settings,  dif_rate);
     return PBIO_SUCCESS;
 }
 
