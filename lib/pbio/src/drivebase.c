@@ -376,11 +376,16 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t t
 }
 
 pbio_error_t pbio_drivebase_get_state(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate) {
-    *distance = 0;
-    *drive_speed = 0;
-    *angle = 0;
-    *turn_rate = 0;
-    return PBIO_ERROR_NOT_IMPLEMENTED;
+    int32_t time_now, sum, sum_rate, dif, dif_rate;
+    pbio_error_t err = drivebase_get_state(db, &time_now, &sum, &sum_rate, &dif, &dif_rate);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    *distance = pbio_math_div_i32_fix16(sum, db->sum_per_mm);
+    *drive_speed = pbio_math_div_i32_fix16(sum_rate, db->sum_per_mm);
+    *angle = pbio_math_div_i32_fix16(dif, db->dif_per_deg);
+    *turn_rate = pbio_math_div_i32_fix16(dif_rate, db->dif_per_deg);
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_drivebase_reset(pbio_drivebase_t *db) {
