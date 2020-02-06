@@ -135,8 +135,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_stop_obj, 0, robotics_Drive
 STATIC mp_obj_t robotics_DriveBase_distance(mp_obj_t self_in) {
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    int32_t distance;
-    pb_assert(pbio_drivebase_get_distance(self->db, &distance));
+    int32_t distance, drive_speed, angle, turn_rate;
+    pb_assert(pbio_drivebase_get_state(self->db, &distance, &drive_speed, &angle, &turn_rate));
 
     return mp_obj_new_int(distance);
 }
@@ -146,12 +146,30 @@ MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_distance_obj, robotics_DriveBase_di
 STATIC mp_obj_t robotics_DriveBase_angle(mp_obj_t self_in) {
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    int32_t angle;
-    pb_assert(pbio_drivebase_get_angle(self->db, &angle));
+    int32_t distance, drive_speed, angle, turn_rate;
+    pb_assert(pbio_drivebase_get_state(self->db, &distance, &drive_speed, &angle, &turn_rate));
 
     return mp_obj_new_int(angle);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_angle_obj, robotics_DriveBase_angle);
+
+// pybricks.builtins.DriveBase.state
+STATIC mp_obj_t robotics_DriveBase_state(mp_obj_t self_in) {
+    robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    int32_t distance, drive_speed, angle, turn_rate;
+    pb_assert(pbio_drivebase_get_state(self->db, &distance, &drive_speed, &angle, &turn_rate));
+
+    mp_obj_t ret[4];
+    ret[0] = mp_obj_new_int(distance);
+    ret[1] = mp_obj_new_int(drive_speed);
+    ret[2] = mp_obj_new_int(angle);
+    ret[3] = mp_obj_new_int(turn_rate);
+
+    return mp_obj_new_tuple(4, ret);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_state_obj, robotics_DriveBase_state);
+
 
 // pybricks.builtins.DriveBase.reset
 STATIC mp_obj_t robotics_DriveBase_reset(mp_obj_t self_in) {
@@ -221,6 +239,7 @@ STATIC const mp_rom_map_elem_t robotics_DriveBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_stop),             MP_ROM_PTR(&robotics_DriveBase_stop_obj)     },
     { MP_ROM_QSTR(MP_QSTR_distance),         MP_ROM_PTR(&robotics_DriveBase_distance_obj) },
     { MP_ROM_QSTR(MP_QSTR_angle),            MP_ROM_PTR(&robotics_DriveBase_angle_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_state),            MP_ROM_PTR(&robotics_DriveBase_state_obj)    },
     { MP_ROM_QSTR(MP_QSTR_reset),            MP_ROM_PTR(&robotics_DriveBase_reset_obj)    },
     { MP_ROM_QSTR(MP_QSTR_settings),         MP_ROM_PTR(&robotics_DriveBase_settings_obj) },
     { MP_ROM_QSTR(MP_QSTR_left),             MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, left)            },

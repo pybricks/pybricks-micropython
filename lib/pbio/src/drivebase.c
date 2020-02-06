@@ -375,13 +375,11 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t t
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_drivebase_get_distance(pbio_drivebase_t *db, int32_t *distance) {
+pbio_error_t pbio_drivebase_get_state(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate) {
     *distance = 0;
-    return PBIO_ERROR_NOT_IMPLEMENTED;
-}
-
-pbio_error_t pbio_drivebase_get_angle(pbio_drivebase_t *db, int32_t *angle) {
+    *drive_speed = 0;
     *angle = 0;
+    *turn_rate = 0;
     return PBIO_ERROR_NOT_IMPLEMENTED;
 }
 
