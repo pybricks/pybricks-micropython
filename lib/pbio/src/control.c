@@ -263,13 +263,13 @@ static bool _pbio_control_angle_target_done(pbio_trajectory_t *trajectory, pbio_
         return false;
     }
 
-    // If position is still less than the end point minus the tolerance, we are not there yet
-    if (count < trajectory->th3 - settings->count_tolerance) {
+    // If distance to target is still bigger than the tolerance, we are not there yet.
+    if (trajectory->th3 - count > settings->count_tolerance) {
         return false;
     }
 
-    // If position is more than the end point plus the tolerance, we are too far, so not there yet
-    if (count > trajectory->th3 + settings->count_tolerance) {
+    // // If distance past target is still bigger than the tolerance, we are too far, so not there yet
+    if (count - trajectory->th3 > settings->count_tolerance) {
         return false;
     }
 
