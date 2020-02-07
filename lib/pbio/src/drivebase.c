@@ -269,54 +269,6 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     return drivebase_log_update(db, time_now, sum, sum_rate, sum_control, dif, dif_rate, dif_control);
 }
 
-static pbio_error_t pbio_drivebase_signal_run(pbio_control_t *ctl, int32_t target_rate, int32_t time_now, int32_t count_now, int32_t rate_now) {
-
-    pbio_error_t err;
-
-    // If we are continuing a timed maneuver, we can try to patch the new command onto the existing one for better continuity
-    if (ctl->type == PBIO_CONTROL_TIMED) {
-
-        // Make the new trajectory and try to patch
-        err = pbio_trajectory_make_time_based_patched(
-            &ctl->trajectory,
-            time_now,
-            DURATION_FOREVER,
-            target_rate,
-            ctl->settings.max_rate,
-            ctl->settings.abs_acceleration);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-    }
-    else {
-        // If angle based or no maneuver was ongoing, make a basic new trajectory
-        // Based on the current time and current state
-        err = pbio_trajectory_make_time_based(
-            &ctl->trajectory,
-            time_now,
-            DURATION_FOREVER,
-            count_now,
-            0,
-            rate_now,
-            target_rate,
-            ctl->settings.max_rate,
-            ctl->settings.abs_acceleration);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-
-        // New maneuver, so reset the rate integrator
-        pbio_rate_integrator_reset(&ctl->rate_integrator, time_now, count_now, count_now);
-    }
-
-    // Set new maneuver action and stop type, and state
-    ctl->after_stop = PBIO_ACTUATION_COAST;
-    ctl->is_done_func = pbio_control_never_done;
-    ctl->type = PBIO_CONTROL_TIMED;
-    
-    return PBIO_SUCCESS;
-}
-
 pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance) {
     return PBIO_ERROR_NOT_IMPLEMENTED;
 }
@@ -342,18 +294,12 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t t
 
     // Initialize both controllers
     int32_t target_turn_rate = pbio_control_user_to_counts(&db->control_heading.settings, turn_rate);
-    err = pbio_drivebase_signal_run(&db->control_heading, target_turn_rate, time_now, dif, dif_rate);
+    err = pbio_control_start_timed_control(&db->control_heading, time_now, DURATION_FOREVER, dif, dif_rate, target_turn_rate, pbio_control_never_done, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
     int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, speed);
-    err = pbio_drivebase_signal_run(&db->control_distance, target_sum_rate, time_now, sum, sum_rate);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Run one control update synchronously with user command.
-    err = pbio_drivebase_update(db);
+    err = pbio_control_start_timed_control(&db->control_distance, time_now, DURATION_FOREVER, sum, sum_rate, target_sum_rate, pbio_control_never_done, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
