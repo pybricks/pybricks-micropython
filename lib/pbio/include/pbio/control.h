@@ -48,15 +48,12 @@ typedef bool (*pbio_control_done_t)(pbio_trajectory_t *trajectory,
                                     int32_t rate,
                                     bool stalled);
 
-// Shortcut for a done function that says it is never done
-static inline bool pbio_control_never_done(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
-    return false;
-}
-
-// Shortcut for a done function that says it is always done
-static inline bool pbio_control_always_done(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
-    return true;
-}
+// Functions to check whether motion is done
+pbio_control_done_t pbio_control_never_done;
+pbio_control_done_t pbio_control_always_done;
+pbio_control_done_t pbio_control_angle_target_done;
+pbio_control_done_t pbio_control_time_target_done;
+pbio_control_done_t pbio_control_until_stalled_done;
 
 typedef enum {
     PBIO_CONTROL_NONE,   /**< No control */

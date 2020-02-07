@@ -247,6 +247,51 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
     return PBIO_SUCCESS;
 }
 
+static bool _pbio_control_never_done(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+    return false;
+}
+pbio_control_done_t pbio_control_never_done = _pbio_control_never_done;
+
+static bool _pbio_control_always_done(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+    return true;
+}
+pbio_control_done_t pbio_control_always_done = _pbio_control_always_done;
+
+static bool _pbio_control_angle_target_done(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+    // if not enough time has expired to be done even in the ideal case, we are certainly not done
+    if (time - trajectory->t3 < 0) {
+        return false;
+    }
+
+    // If position is still less than the end point minus the tolerance, we are not there yet
+    if (count < trajectory->th3 - settings->count_tolerance) {
+        return false;
+    }
+
+    // If position is more than the end point plus the tolerance, we are too far, so not there yet
+    if (count > trajectory->th3 + settings->count_tolerance) {
+        return false;
+    }
+
+    // If the motor is not standing still, we are not there yet
+    if (abs(rate) >= settings->rate_tolerance) {
+        return false;
+    }
+
+    // There's nothing left to do, so we must be on target
+    return true;
+}
+pbio_control_done_t pbio_control_angle_target_done = _pbio_control_angle_target_done;
+
+static bool _pbio_control_time_target_done(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+    return time >= trajectory->t3;
+}
+pbio_control_done_t pbio_control_time_target_done = _pbio_control_time_target_done;
+
+static bool _pbio_control_until_stalled_done(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+    return stalled;
+}
+pbio_control_done_t pbio_control_until_stalled_done = _pbio_control_until_stalled_done;
 
 int32_t pbio_control_counts_to_user(pbio_control_settings_t *s, int32_t counts) {
     return pbio_math_div_i32_fix16(counts, s->counts_per_unit);

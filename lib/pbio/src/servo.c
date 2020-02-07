@@ -376,10 +376,6 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     return pbio_control_start_timed_control(&srv->control, time_now, DURATION_FOREVER, count_now, rate_now, target_rate, pbio_control_never_done, PBIO_ACTUATION_COAST);
 }
 
-static bool run_time_is_done_func(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
-    return time >= trajectory->t3;
-}
-
 pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop) {
 
     pbio_error_t err;
@@ -395,11 +391,7 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
     }
 
     // Start a timed maneuver, duration finite
-    return pbio_control_start_timed_control(&srv->control, time_now, duration*US_PER_MS, count_now, rate_now, target_rate, run_time_is_done_func, after_stop);
-}
-
-static bool run_until_stalled_is_done_func(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
-    return stalled;
+    return pbio_control_start_timed_control(&srv->control, time_now, duration*US_PER_MS, count_now, rate_now, target_rate, pbio_control_time_target_done, after_stop);
 }
 
 pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio_actuation_t after_stop) {
@@ -417,32 +409,7 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
     }
 
     // Start a timed maneuver, duration forever and ending on stall
-    return pbio_control_start_timed_control(&srv->control, time_now, DURATION_FOREVER, count_now, rate_now, target_rate, run_until_stalled_is_done_func, after_stop);
-}
-
-static bool run_target_is_done_func(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
-    // if not enough time has expired to be done even in the ideal case, we are certainly not done
-    if (time - trajectory->t3 < 0) {
-        return false;
-    }
-
-    // If position is still less than the end point minus the tolerance, we are not there yet
-    if (count < trajectory->th3 - settings->count_tolerance) {
-        return false;
-    }
-
-    // If position is more than the end point plus the tolerance, we are too far, so not there yet
-    if (count > trajectory->th3 + settings->count_tolerance) {
-        return false;
-    }
-
-    // If the motor is not standing still, we are not there yet
-    if (abs(rate) >= settings->rate_tolerance) {
-        return false;
-    }
-
-    // There's nothing left to do, so we must be on target
-    return true;
+    return pbio_control_start_timed_control(&srv->control, time_now, DURATION_FOREVER, count_now, rate_now, target_rate, pbio_control_until_stalled_done, after_stop);
 }
 
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop) {
@@ -460,7 +427,7 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
         return err;
     }
 
-    return pbio_control_start_angle_control(&srv->control, time_now, count_now, target_count, rate_now, target_rate, run_target_is_done_func, after_stop);
+    return pbio_control_start_angle_control(&srv->control, time_now, count_now, target_count, rate_now, target_rate, pbio_control_angle_target_done, after_stop);
 }
 
 pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_actuation_t after_stop) {
