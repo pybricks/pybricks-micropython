@@ -403,7 +403,7 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_control_done_t stop_func, pbio_actuation_t after_stop) {
+pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
 
     pbio_error_t err;
 
@@ -417,12 +417,8 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
         return err;
     }
 
-    // Start a timed maneuver
-    return pbio_control_start_timed_control(&srv->control, time_now, duration, count_now, rate_now, target_rate, stop_func, after_stop);
-}
-
-pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
-    return pbio_servo_run_time_common(srv, speed, DURATION_FOREVER, pbio_control_never_done, PBIO_ACTUATION_COAST);
+    // Start a timed maneuver, duration forever
+    return pbio_control_start_timed_control(&srv->control, time_now, DURATION_FOREVER, count_now, rate_now, target_rate, pbio_control_never_done, PBIO_ACTUATION_COAST);
 }
 
 static bool run_time_is_done_func(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
@@ -430,7 +426,21 @@ static bool run_time_is_done_func(pbio_trajectory_t *trajectory, pbio_control_se
 }
 
 pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop) {
-    return pbio_servo_run_time_common(srv, speed, duration*US_PER_MS, run_time_is_done_func, after_stop);
+
+    pbio_error_t err;
+
+    // Get target rate in unit of counts
+    int32_t target_rate = pbio_control_user_to_counts(&srv->control.settings, speed);
+
+    // Get the initial physical motor state.
+    int32_t time_now, count_now, rate_now;
+    err = servo_get_state(srv, &time_now, &count_now, &rate_now);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Start a timed maneuver, duration finite
+    return pbio_control_start_timed_control(&srv->control, time_now, duration*US_PER_MS, count_now, rate_now, target_rate, run_time_is_done_func, after_stop);
 }
 
 static bool run_until_stalled_is_done_func(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
@@ -438,7 +448,21 @@ static bool run_until_stalled_is_done_func(pbio_trajectory_t *trajectory, pbio_c
 }
 
 pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio_actuation_t after_stop) {
-    return pbio_servo_run_time_common(srv, speed, DURATION_FOREVER, run_until_stalled_is_done_func, after_stop);
+
+    pbio_error_t err;
+
+    // Get target rate in unit of counts
+    int32_t target_rate = pbio_control_user_to_counts(&srv->control.settings, speed);
+
+    // Get the initial physical motor state.
+    int32_t time_now, count_now, rate_now;
+    err = servo_get_state(srv, &time_now, &count_now, &rate_now);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Start a timed maneuver, duration forever and ending on stall
+    return pbio_control_start_timed_control(&srv->control, time_now, DURATION_FOREVER, count_now, rate_now, target_rate, run_until_stalled_is_done_func, after_stop);
 }
 
 static bool run_target_is_done_func(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
