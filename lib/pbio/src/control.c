@@ -68,6 +68,8 @@ static void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, i
     *actuation_type = ctl->after_stop;
     // In case of hold, the payload is the final trajectory count (th3), else 0
     *control = ctl->after_stop == PBIO_ACTUATION_HOLD ? ctl->trajectory.th3: 0;
+    // Control is now done.
+    ctl->type = PBIO_CONTROL_NONE;
 
     return;
 }
@@ -122,6 +124,8 @@ static void control_update_time_target(pbio_control_t *ctl, int32_t time_now, in
     *actuation_type = ctl->after_stop;
     // In case of hold, the payload is current count, else 0
     *control = ctl->after_stop == PBIO_ACTUATION_HOLD ? count_now: 0;
+    // Control is now done.
+    ctl->type = PBIO_CONTROL_NONE;
 
     return;
 }

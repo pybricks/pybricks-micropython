@@ -223,11 +223,9 @@ static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actua
     {
     case PBIO_ACTUATION_COAST:
         err = pbio_dcmotor_coast(srv->dcmotor);
-        srv->control.type = PBIO_CONTROL_NONE;
         break;
     case PBIO_ACTUATION_BRAKE:
         err = pbio_dcmotor_brake(srv->dcmotor);
-        srv->control.type = PBIO_CONTROL_NONE;
         break;
     case PBIO_ACTUATION_HOLD:
         err = pbio_servo_track_target(srv, pbio_math_div_i32_fix16(control, srv->control.settings.counts_per_unit));
@@ -337,15 +335,21 @@ pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps) {
 
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
 
-    // For most stop methods, the actuation payload is 0
-    int32_t control = 0;
+    // Stop, so disable control
+    srv->control.type = PBIO_CONTROL_NONE;
 
-    // For hold, the actuation payload is the current count
+    // Get control payload
+    int32_t control;
     if (after_stop == PBIO_ACTUATION_HOLD) {
+        // For hold, the actuation payload is the current count
         pbio_error_t err = pbio_tacho_get_count(srv->tacho, &control);
         if (err != PBIO_SUCCESS) {
             return err;
         }
+    }
+    else {
+        // Otherwise the payload is zero
+        control = 0;
     }
 
     // Apply the actuation
