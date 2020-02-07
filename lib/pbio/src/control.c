@@ -274,7 +274,7 @@ static bool _pbio_control_angle_target_done(pbio_trajectory_t *trajectory, pbio_
     }
 
     // If the motor is not standing still, we are not there yet
-    if (abs(rate) >= settings->rate_tolerance) {
+    if (abs(rate) > settings->rate_tolerance) {
         return false;
     }
 
