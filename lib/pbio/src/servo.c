@@ -363,15 +363,18 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
     // Get the target rate
     int32_t rate_ref = pbio_math_mul_i32_fix16(speed, srv->control.settings.counts_per_unit);
 
+    // Get the current state and time
+    err = servo_get_state(srv, &time_start, &count_now, &rate_now);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     // Set new maneuver action and stop type, and state
     srv->control.after_stop = after_stop;
     srv->control.is_done_func = stop_func;
 
     // If we are continuing a maneuver, we can try to patch the new command onto the existing one for better continuity
     if (srv->control.type == PBIO_CONTROL_TIMED) {
-
-        // Current time
-        time_start = clock_usecs();
 
         // Make the new trajectory and try to patch
         err = pbio_trajectory_make_time_based_patched(
@@ -387,11 +390,6 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
         }
     }
     else {
-        // Get the current state and time
-        err = servo_get_state(srv, &time_start, &count_now, &rate_now);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
 
         // If angle based or no maneuver was ongoing, make a basic new trajectory
         // Based on the current time and current state
@@ -477,15 +475,18 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
     int32_t target_count = pbio_math_mul_i32_fix16(target, srv->control.settings.counts_per_unit);
     int32_t target_rate = pbio_math_mul_i32_fix16(speed, srv->control.settings.counts_per_unit);
 
+    // Get the current state and time
+    err = servo_get_state(srv, &time_start, &count_start, &rate_start);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     // Set new maneuver action and stop type, and state
     srv->control.after_stop = after_stop;
     srv->control.is_done_func = run_target_is_done_func;
 
     // If we are continuing a angle based maneuver, we can try to patch the new command onto the existing one for better continuity
     if (srv->control.type == PBIO_CONTROL_ANGLE) {
-
-        // Current time
-        time_start = clock_usecs();
 
         // The start time must account for time spent pausing while stalled
         int32_t time_ref = pbio_count_integrator_get_ref_time(&srv->control.count_integrator, time_start);
@@ -503,12 +504,6 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
         }
     }
     else {
-
-        // Get the current state and time
-        err = servo_get_state(srv, &time_start, &count_start, &rate_start);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
 
         // If time based or no maneuver was ongoing, make a basic new trajectory
         // Based on the current time and current state
