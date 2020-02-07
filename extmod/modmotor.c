@@ -307,6 +307,11 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp
 
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t time_arg = pb_obj_get_int(time);
+
+    if (time_arg < 0 || time_arg > 1800000) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
     pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
 
     // Call pbio with parsed user/default arguments
