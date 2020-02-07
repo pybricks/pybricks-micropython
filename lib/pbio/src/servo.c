@@ -158,15 +158,20 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     pbio_error_t err;
 
     // Perform angle reset in case of tracking / holding
-    if (srv->control.type == PBIO_CONTROL_ANGLE) { // FIXME: move special resets to user module level
+    if (srv->control.type == PBIO_CONTROL_ANGLE) {
         // Get the old angle
         int32_t angle_old;
         err = pbio_tacho_get_angle(srv->tacho, &angle_old);
         if (err != PBIO_SUCCESS) {
             return err;
         }
-        // Get the old target
-        int32_t target_old = pbio_math_div_i32_fix16(srv->control.trajectory.th3, srv->control.settings.counts_per_unit);
+
+        // Get the old target angle
+        int32_t time_ref = pbio_count_integrator_get_ref_time(&srv->control.count_integrator, clock_usecs());
+        int32_t count_ref, _;
+        pbio_trajectory_get_reference(&srv->control.trajectory, time_ref, &count_ref, &_, &_, &_);
+        int32_t target_old = pbio_control_counts_to_user(&srv->control.settings, count_ref);
+
         // Reset the angle
         err = pbio_tacho_reset_angle(srv->tacho, reset_angle, reset_to_abs);
         if (err != PBIO_SUCCESS) {
