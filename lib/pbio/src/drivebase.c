@@ -278,13 +278,62 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 }
 
 pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance) {
-    return PBIO_ERROR_NOT_IMPLEMENTED;
+
+    pbio_error_t err;
+
+    // Get the physical initial state
+    int32_t time_now, sum, sum_rate, dif, dif_rate;
+    err = drivebase_get_state(db, &time_now, &sum, &sum_rate, &dif, &dif_rate);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Targets in units of count
+    int32_t sum_target = sum + pbio_control_user_to_counts(&db->control_distance.settings, distance);
+    int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, db->control_distance.settings.max_rate);
+    int32_t target_turn_rate = 0;
+
+    // Initialize both controllers
+    err = pbio_control_start_angle_control(&db->control_distance, time_now, sum, sum_target, sum_rate, target_sum_rate, pbio_control_angle_target_done, PBIO_ACTUATION_COAST);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = pbio_control_start_timed_control(&db->control_heading, time_now, DURATION_FOREVER, dif, dif_rate, target_turn_rate, pbio_control_never_done, PBIO_ACTUATION_COAST);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle) {
-    return PBIO_ERROR_NOT_IMPLEMENTED;
-}
 
+    pbio_error_t err;
+
+    // Get the physical initial state
+    int32_t time_now, sum, sum_rate, dif, dif_rate;
+    err = drivebase_get_state(db, &time_now, &sum, &sum_rate, &dif, &dif_rate);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Targets in units of count
+    int32_t dif_target = dif + pbio_control_user_to_counts(&db->control_heading.settings, angle);
+    int32_t target_sum_rate = 0;
+    int32_t target_dif_rate = pbio_control_user_to_counts(&db->control_heading.settings, db->control_heading.settings.max_rate);
+
+    // Initialize both controllers
+    err = pbio_control_start_timed_control(&db->control_distance, time_now, DURATION_FOREVER, sum, sum_rate, target_sum_rate, pbio_control_never_done, PBIO_ACTUATION_COAST);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = pbio_control_start_angle_control(&db->control_heading, time_now, dif, dif_target, dif_rate, target_dif_rate, pbio_control_angle_target_done, PBIO_ACTUATION_COAST);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    return PBIO_SUCCESS;
+}
 pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate) {
 
     pbio_error_t err;
@@ -296,9 +345,7 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t t
         return err;
     }
 
-    // Set heading maneuver action and stop type
-    db->control_heading.after_stop = PBIO_ACTUATION_COAST;
-    db->control_heading.is_done_func = pbio_control_never_done;
+    // FIXME: RESOLVE STOP TYPE
 
     // Initialize both controllers
     int32_t target_turn_rate = pbio_control_user_to_counts(&db->control_heading.settings, turn_rate);
