@@ -71,6 +71,12 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     return MP_OBJ_FROM_PTR(self);
 }
 
+STATIC void wait_for_completion_drivebase(pbio_drivebase_t *db) {
+    while (!(db->control_distance.type == PBIO_CONTROL_NONE || db->control_heading.type == PBIO_CONTROL_NONE)) {
+        mp_hal_delay_ms(5);
+    }
+}
+
 // pybricks.robotics.DriveBase.straight
 STATIC mp_obj_t robotics_DriveBase_straight(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -80,6 +86,8 @@ STATIC mp_obj_t robotics_DriveBase_straight(size_t n_args, const mp_obj_t *pos_a
 
     int32_t distance_val = pb_obj_get_int(distance);
     pb_assert(pbio_drivebase_straight(self->db, distance_val));
+
+    wait_for_completion_drivebase(self->db);
 
     return mp_const_none;
 }
@@ -94,6 +102,8 @@ STATIC mp_obj_t robotics_DriveBase_turn(size_t n_args, const mp_obj_t *pos_args,
 
     int32_t angle_val = pb_obj_get_int(angle);
     pb_assert(pbio_drivebase_turn(self->db, angle_val));
+
+    wait_for_completion_drivebase(self->db);
 
     return mp_const_none;
 }
