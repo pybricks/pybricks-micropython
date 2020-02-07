@@ -352,57 +352,6 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
     return pbio_servo_actuate(srv, after_stop, control);
 }
 
-pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, int32_t duration, int32_t count_now, int32_t rate_now, int32_t target_rate, pbio_control_done_t stop_func, pbio_actuation_t after_stop) {
-
-    pbio_error_t err;
-
-    // Set new maneuver action and stop type, and state
-    ctl->after_stop = after_stop;
-    ctl->is_done_func = stop_func;
-
-    // If we are continuing a maneuver, we can try to patch the new command onto the existing one for better continuity
-    if (ctl->type == PBIO_CONTROL_TIMED) {
-
-        // Make the new trajectory and try to patch
-        err = pbio_trajectory_make_time_based_patched(
-            &ctl->trajectory,
-            time_now,
-            duration,
-            target_rate,
-            ctl->settings.max_rate,
-            ctl->settings.abs_acceleration);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-    }
-    else {
-
-        // If angle based or no maneuver was ongoing, make a basic new trajectory
-        // Based on the current time and current state
-        err = pbio_trajectory_make_time_based(
-            &ctl->trajectory,
-            time_now,
-            duration,
-            count_now,
-            0,
-            rate_now,
-            target_rate,
-            ctl->settings.max_rate,
-            ctl->settings.abs_acceleration);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-
-        // New maneuver, so reset the rate integrator
-        pbio_rate_integrator_reset(&ctl->rate_integrator, time_now, count_now, count_now);
-
-        // Set the new servo state
-        ctl->type = PBIO_CONTROL_TIMED;
-    }
-
-    return PBIO_SUCCESS;
-}
-
 pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
 
     pbio_error_t err;
@@ -488,60 +437,6 @@ static bool run_target_is_done_func(pbio_trajectory_t *trajectory, pbio_control_
 
     // There's nothing left to do, so we must be on target
     return true;
-}
-
-pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t target_count, int32_t rate_now, int32_t target_rate, pbio_control_done_t stop_func, pbio_actuation_t after_stop) {
-
-    pbio_error_t err;
-
-    // Set new maneuver action and stop type, and state
-    ctl->after_stop = after_stop;
-    ctl->is_done_func = run_target_is_done_func;
-
-    // If we are continuing a angle based maneuver, we can try to patch the new command onto the existing one for better continuity
-    if (ctl->type == PBIO_CONTROL_ANGLE) {
-
-        // The start time must account for time spent pausing while stalled
-        int32_t time_ref = pbio_count_integrator_get_ref_time(&ctl->count_integrator, time_now);
-
-        // Make the new trajectory and try to patch
-        err = pbio_trajectory_make_angle_based_patched(
-            &ctl->trajectory,
-            time_ref,
-            target_count,
-            target_rate,
-            ctl->settings.max_rate,
-            ctl->settings.abs_acceleration);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-    }
-    else {
-
-        // If time based or no maneuver was ongoing, make a basic new trajectory
-        // Based on the current time and current state
-        err = pbio_trajectory_make_angle_based(
-            &ctl->trajectory,
-            time_now,
-            count_now,
-            target_count,
-            rate_now,
-            target_rate,
-            ctl->settings.max_rate,
-            ctl->settings.abs_acceleration);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-
-        // New maneuver, so reset the rate integrator
-        int32_t integrator_max = pbio_control_settings_get_max_integrator(&ctl->settings);
-        pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max);
-
-        // Set the new servo state
-        ctl->type = PBIO_CONTROL_ANGLE;
-    }
-
-    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop) {
