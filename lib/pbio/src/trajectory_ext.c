@@ -63,10 +63,16 @@ static pbio_error_t pbio_trajectory_patch(pbio_trajectory_t *ref, bool time_base
             th0 = ref->th3;
             th0_ext = ref->th3_ext;
         }
+
+        // We shifted the start time into the past, so we must adjust duration accordingly. But forever remains forever.
+        if (duration != DURATION_FOREVER) {
+            duration += (nominal.t0 - t0);
+        }
+
         // Now we can make the new trajectory with a starting point coincident
         // with a point on the existing trajectory
         if (time_based) {
-            return pbio_trajectory_make_time_based(ref, t0, duration + (nominal.t0 - t0), th0, th0_ext, w0, wt, wmax, a);
+            return pbio_trajectory_make_time_based(ref, t0, duration, th0, th0_ext, w0, wt, wmax, a);
         }
         else {
             return pbio_trajectory_make_angle_based(ref, t0, th0, th3, w0, wt, wmax, a);
