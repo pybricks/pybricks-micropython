@@ -415,12 +415,6 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
 
         // Set the new servo state
         srv->control.type = PBIO_CONTROL_TIMED;
-
-        // Run one control update synchronously with user command.
-        err = pbio_servo_control_update(srv);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
     }
 
     return PBIO_SUCCESS;
@@ -537,12 +531,6 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
 
         // Set the new servo state
         srv->control.type = PBIO_CONTROL_ANGLE;
-
-        // Run one control update synchronously with user command.
-        err = pbio_servo_control_update(srv);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
     }
 
     return PBIO_SUCCESS;
@@ -573,7 +561,6 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
     int32_t time_start = clock_usecs();
-    pbio_error_t err;
 
     // Set new maneuver action and stop type
     srv->control.after_stop = PBIO_ACTUATION_COAST;
@@ -590,12 +577,6 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
 
         // This is an angular control maneuver
         srv->control.type = PBIO_CONTROL_ANGLE;
-
-        // Run one control update synchronously with user command
-        err = pbio_servo_control_update(srv);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
     }
 
     return PBIO_SUCCESS;
