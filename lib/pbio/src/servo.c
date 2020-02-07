@@ -169,8 +169,8 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
 
         // Get the old target angle
         int32_t time_ref = pbio_count_integrator_get_ref_time(&srv->control.count_integrator, clock_usecs());
-        int32_t count_ref, _;
-        pbio_trajectory_get_reference(&srv->control.trajectory, time_ref, &count_ref, &_, &_, &_);
+        int32_t count_ref, unused;
+        pbio_trajectory_get_reference(&srv->control.trajectory, time_ref, &count_ref, &unused, &unused, &unused);
         int32_t target_old = pbio_control_counts_to_user(&srv->control.settings, count_ref);
 
         // Reset the angle

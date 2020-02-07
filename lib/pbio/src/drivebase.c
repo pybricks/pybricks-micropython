@@ -86,9 +86,29 @@ static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
 }
 
 // Get the physical state of a drivebase
-static pbio_error_t drivebase_actuate(pbio_drivebase_t *db, int32_t sum_control, int32_t dif_control) {
+static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_t sum_actuation, int32_t sum_control, pbio_actuation_t dif_actuation, int32_t dif_control) {
     pbio_error_t err;
 
+    // If either signal coasts, both must coast
+    if (sum_actuation == PBIO_ACTUATION_COAST || dif_actuation == PBIO_ACTUATION_COAST) {
+        // Coast motors
+        err = pbio_dcmotor_coast(db->left->dcmotor);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        err = pbio_dcmotor_coast(db->left->dcmotor);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        return PBIO_SUCCESS;
+    }
+
+    // Hold is not yet implemented
+    if (sum_actuation == PBIO_ACTUATION_HOLD || dif_actuation == PBIO_ACTUATION_HOLD) {
+       return PBIO_ERROR_NOT_IMPLEMENTED;
+    }
+
+    // Brake is the same as duty, so just actuate
     err = pbio_dcmotor_set_duty_cycle_sys(db->left->dcmotor, sum_control + dif_control);
     if (err != PBIO_SUCCESS) {
         return err;
@@ -208,35 +228,26 @@ pbio_error_t pbio_drivebase_get(pbio_drivebase_t **_db, pbio_servo_t *left, pbio
 
 pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_stop) {
 
+    // Stop, so disable control
+    db->control_distance.type = PBIO_CONTROL_NONE;
+    db->control_heading.type = PBIO_CONTROL_NONE;
+
     pbio_error_t err;
 
-    switch (after_stop) {
-        case PBIO_ACTUATION_COAST:
-            // Stop by coasting
-            err = pbio_servo_stop(db->left, PBIO_ACTUATION_COAST);
-            if (err != PBIO_SUCCESS) {
-                return err;
-            }
-            err = pbio_servo_stop(db->right, PBIO_ACTUATION_COAST);
-            if (err != PBIO_SUCCESS) {
-                return err;
-            }
-            return PBIO_SUCCESS;
-        case PBIO_ACTUATION_BRAKE:
-            // Stop by braking
-            err = pbio_servo_stop(db->left, PBIO_ACTUATION_BRAKE);
-            if (err != PBIO_SUCCESS) {
-                return err;
-            }
-            err = pbio_servo_stop(db->right, PBIO_ACTUATION_BRAKE);
-            if (err != PBIO_SUCCESS) {
-                return err;
-            }
-            return PBIO_SUCCESS;
-        default:
-            // HOLD is not implemented
-            return PBIO_ERROR_INVALID_ARG;
+    int32_t sum_control = 0;
+    int32_t dif_control = 0;
+
+    // When holding, the control payload is the count to hold
+    if (after_stop == PBIO_ACTUATION_HOLD) {
+        // Get the physical initial state
+        int32_t unused;
+        err = drivebase_get_state(db, &unused, &sum_control, &unused, &dif_control, &unused);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
     }
+
+    return pbio_drivebase_actuate(db, after_stop, sum_control, after_stop, dif_control);
 }
 
 static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
@@ -247,25 +258,22 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
         return err;
     }
 
-    int32_t sum_control, dif_control;
+    // If passive, log and exit
+    if (db->control_heading.type == PBIO_CONTROL_NONE || db->control_distance.type == PBIO_CONTROL_NONE) {
+        return drivebase_log_update(db, time_now, sum, sum_rate, 0, dif, dif_rate, 0);
+    }
 
-    // FIXME: Use both controller states
-    if (db->control_heading.type == PBIO_CONTROL_NONE) {
-        // When passive, zero control
-        sum_control = 0;
-        dif_control = 0;
-    }
-    else {
-        // Otherwise, calculate control signal
-        pbio_actuation_t __todo; // FIXME: add other control types
-        control_update(&db->control_distance, time_now, sum, sum_rate, &__todo, &sum_control);
-        control_update(&db->control_heading, time_now, dif, dif_rate, &__todo, &dif_control);
-    }
+    // Get control signals
+    int32_t sum_control, dif_control;
+    pbio_actuation_t sum_actuation, dif_actuation;
+    control_update(&db->control_distance, time_now, sum, sum_rate, &sum_actuation, &sum_control);
+    control_update(&db->control_heading, time_now, dif, dif_rate, &dif_actuation, &dif_control);
 
     // Actuate
-    err = drivebase_actuate(db, sum_control, dif_control);
-
-    // Log state and control
+    err = pbio_drivebase_actuate(db, sum_actuation, sum_control, dif_actuation, dif_control);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
     return drivebase_log_update(db, time_now, sum, sum_rate, sum_control, dif, dif_rate, dif_control);
 }
 
