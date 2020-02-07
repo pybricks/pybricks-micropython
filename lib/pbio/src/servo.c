@@ -352,16 +352,13 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
     return pbio_servo_actuate(srv, after_stop, control);
 }
 
-static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed, bool forever, int32_t duration, pbio_control_done_t stop_func, pbio_actuation_t after_stop) {
+static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t rate_ref, int32_t duration, pbio_control_done_t stop_func, pbio_actuation_t after_stop) {
 
     // Get the intitial state based on physical motor state.
     int32_t time_start;
     int32_t count_now;
     int32_t rate_now;
     pbio_error_t err;
-
-    // Get the target rate
-    int32_t rate_ref = pbio_math_mul_i32_fix16(speed, srv->control.settings.counts_per_unit);
 
     // Get the current state and time
     err = servo_get_state(srv, &time_start, &count_now, &rate_now);
@@ -379,9 +376,8 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
         // Make the new trajectory and try to patch
         err = pbio_trajectory_make_time_based_patched(
             &srv->control.trajectory,
-            forever,
             time_start,
-            time_start + duration,
+            duration,
             rate_ref,
             srv->control.settings.max_rate,
             srv->control.settings.abs_acceleration);
@@ -395,9 +391,8 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
         // Based on the current time and current state
         err = pbio_trajectory_make_time_based(
             &srv->control.trajectory,
-            forever,
             time_start,
-            time_start + duration,
+            duration,
             count_now,
             0,
             rate_now,
@@ -419,7 +414,8 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
 }
 
 pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
-    return pbio_servo_run_time_common(srv, speed, true, 0, pbio_control_never_done, PBIO_ACTUATION_COAST);
+    int32_t target_rate = pbio_control_user_to_counts(&srv->control.settings, speed);
+    return pbio_servo_run_time_common(srv, target_rate, DURATION_FOREVER, pbio_control_never_done, PBIO_ACTUATION_COAST);
 }
 
 static bool run_time_is_done_func(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
@@ -427,7 +423,8 @@ static bool run_time_is_done_func(pbio_trajectory_t *trajectory, pbio_control_se
 }
 
 pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop) {
-    return pbio_servo_run_time_common(srv, speed, false, duration*US_PER_MS, run_time_is_done_func, after_stop);
+    int32_t target_rate = pbio_control_user_to_counts(&srv->control.settings, speed);
+    return pbio_servo_run_time_common(srv, target_rate, duration*US_PER_MS, run_time_is_done_func, after_stop);
 }
 
 static bool run_until_stalled_is_done_func(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
@@ -435,7 +432,8 @@ static bool run_until_stalled_is_done_func(pbio_trajectory_t *trajectory, pbio_c
 }
 
 pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio_actuation_t after_stop) {
-    return pbio_servo_run_time_common(srv, speed, true, 0, run_until_stalled_is_done_func, after_stop);
+    int32_t target_rate = pbio_control_user_to_counts(&srv->control.settings, speed);
+    return pbio_servo_run_time_common(srv, target_rate, DURATION_FOREVER, run_until_stalled_is_done_func, after_stop);
 }
 
 static bool run_target_is_done_func(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {

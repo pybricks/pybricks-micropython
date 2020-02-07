@@ -279,9 +279,8 @@ static pbio_error_t pbio_drivebase_signal_run(pbio_control_t *ctl, int32_t targe
         // Make the new trajectory and try to patch
         err = pbio_trajectory_make_time_based_patched(
             &ctl->trajectory,
-            true,
             time_now,
-            time_now,
+            DURATION_FOREVER,
             target_rate,
             ctl->settings.max_rate,
             ctl->settings.abs_acceleration);
@@ -294,9 +293,8 @@ static pbio_error_t pbio_drivebase_signal_run(pbio_control_t *ctl, int32_t targe
         // Based on the current time and current state
         err = pbio_trajectory_make_time_based(
             &ctl->trajectory,
-            true,
             time_now,
-            time_now,
+            DURATION_FOREVER,
             count_now,
             0,
             rate_now,

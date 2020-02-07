@@ -17,6 +17,8 @@
 #define US_PER_MS (1000)
 #define US_PER_SECOND (1000000)
 
+#define DURATION_FOREVER (-1)
+
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
@@ -54,7 +56,7 @@ typedef struct _pbio_trajectory_t {
 
 void pbio_trajectory_make_stationary(pbio_trajectory_t *ref, int32_t t0, int32_t th0);
 
-pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t th0, int32_t th0_ext, int32_t w0, int32_t wt, int32_t wmax, int32_t a);
+pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *ref, int32_t t0, int32_t duration, int32_t th0, int32_t th0_ext, int32_t w0, int32_t wt, int32_t wmax, int32_t a);
 
 pbio_error_t pbio_trajectory_make_angle_based(pbio_trajectory_t *ref, int32_t t0, int32_t th0, int32_t th3, int32_t w0, int32_t wt, int32_t wmax, int32_t a);
 
@@ -62,7 +64,7 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *traject, int32_t time_ref,
 
 // Extended and patched trajectories
 
-pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t wt, int32_t wmax, int32_t a);
+pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *ref, int32_t t0, int32_t t3, int32_t wt, int32_t wmax, int32_t a);
 
 pbio_error_t pbio_trajectory_make_angle_based_patched(pbio_trajectory_t *ref, int32_t t0, int32_t th3, int32_t wt, int32_t wmax, int32_t a);
 

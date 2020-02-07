@@ -83,7 +83,7 @@ static int64_t x_time2(int32_t b, int32_t t) {
     return x_time(x_time(b, t), t)/(2*US_PER_MS);
 }
 
-pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *ref, bool forever, int32_t t0, int32_t t3, int32_t th0, int32_t th0_ext, int32_t w0, int32_t wt, int32_t wmax, int32_t a) {
+pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *ref, int32_t t0, int32_t duration, int32_t th0, int32_t th0_ext, int32_t w0, int32_t wt, int32_t wmax, int32_t a) {
 
     // Work with time intervals instead of absolute time. Read 'm' as '-'.
     int32_t t3mt0;
@@ -92,7 +92,7 @@ pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *ref, bool foreve
     int32_t t1mt0;
 
     // Duration of the maneuver
-    if (forever) {
+    if (duration == DURATION_FOREVER) {
         // In case of forever, we set the duration to a fictitious 60 seconds.
         t3mt0 = 60*US_PER_SECOND;
         // This is an infinite maneuver. (This means we'll just ignore the deceleration
@@ -100,8 +100,8 @@ pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *ref, bool foreve
         ref->forever = true; 
     }
     else {
-        // Otherwise, the duration is just the end time minus start time
-        t3mt0 = t3-t0;
+        // Otherwise, the interval is just the duration
+        t3mt0 = duration;
         // This is a finite maneuver
         ref->forever = false;
     }
@@ -173,7 +173,7 @@ pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *ref, bool foreve
     ref->t0 = t0;
     ref->t1 = t0 + t1mt0;
     ref->t2 = t0 + t1mt0 + t2mt1;
-    ref->t3 = t3;
+    ref->t3 = t0 + t3mt0;
 
     // Corresponding angle values with millicount/millideg precision
     int64_t mth0 = as_mcount(th0, th0_ext);
