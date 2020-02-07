@@ -104,8 +104,8 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
         return err;
     }
     // Reset state
-    srv->state = PBIO_SERVO_STATE_PASSIVE;
-    srv->control.is_done_func = pbio_control_always_done; // FIXME: merge state and done func
+    srv->control.type = PBIO_CONTROL_NONE;
+    srv->control.is_done_func = pbio_control_always_done;
 
     // Load default settings for this device type
     load_servo_settings(&srv->control.settings, srv->dcmotor->id);
@@ -158,7 +158,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     pbio_error_t err;
 
     // Perform angle reset in case of tracking / holding
-    if (srv->state == PBIO_SERVO_STATE_CONTROL_ACTIVE && srv->control.type == PBIO_CONTROL_ANGLE) {
+    if (srv->control.type == PBIO_CONTROL_ANGLE) { // FIXME: move special resets to user module level
         // Get the old angle
         int32_t angle_old;
         err = pbio_tacho_get_angle(srv->tacho, &angle_old);
@@ -177,12 +177,12 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
         return pbio_servo_track_target(srv, new_target);
     }
     // If the motor was in a passive mode (coast, brake, user duty), reset angle and leave state unchanged
-    else if (srv->state == PBIO_SERVO_STATE_PASSIVE){
+    else if (srv->control.type == PBIO_CONTROL_NONE) {
         return pbio_tacho_reset_angle(srv->tacho, reset_angle, reset_to_abs);
     }
     // In all other cases, stop the ongoing maneuver by coasting and then reset the angle
     else {
-        err = pbio_dcmotor_coast(srv->dcmotor);
+        err = pbio_servo_stop(srv, PBIO_ACTUATION_COAST);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -218,11 +218,11 @@ static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actua
     {
     case PBIO_ACTUATION_COAST:
         err = pbio_dcmotor_coast(srv->dcmotor);
-        srv->state = PBIO_SERVO_STATE_PASSIVE;
+        srv->control.type = PBIO_CONTROL_NONE;
         break;
     case PBIO_ACTUATION_BRAKE:
         err = pbio_dcmotor_brake(srv->dcmotor);
-        srv->state = PBIO_SERVO_STATE_PASSIVE;
+        srv->control.type = PBIO_CONTROL_NONE;
         break;
     case PBIO_ACTUATION_HOLD:
         err = pbio_servo_track_target(srv, pbio_math_div_i32_fix16(control, srv->control.settings.counts_per_unit));
@@ -234,11 +234,11 @@ static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actua
 
     // Handle errors during actuation
     if (err != PBIO_SUCCESS) {
+        // Stop control loop
+        srv->control.type = PBIO_CONTROL_NONE;
+
         // Attempt lowest level coast: turn off power
         pbdrv_motor_coast(srv->port);
-
-        // Let foreground tasks know about error in order to stop blocking wait tasks
-        srv->state = PBIO_SERVO_STATE_ERRORED;
     }
     return err;
 }
@@ -257,7 +257,7 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, int32_t time_now, i
     buf[4] = control;
 
     // If control is active, log additional data about the maneuver
-    if (srv->state == PBIO_SERVO_STATE_CONTROL_ACTIVE) {
+    if (srv->control.type != PBIO_CONTROL_NONE) {
         int32_t time_ref = time_now;
         // Get the time of reference evaluation
         if (srv->control.type == PBIO_CONTROL_ANGLE) {
@@ -281,11 +281,6 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, int32_t time_now, i
 
 pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
 
-    // Do not service a motor claimed by a drivebase
-    if (srv->state == PBIO_SERVO_STATE_CLAIMED) {
-        return PBIO_SUCCESS;
-    }
-
     // Read the physical state
     int32_t time_now;
     int32_t count_now;
@@ -300,7 +295,7 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     int32_t control;
 
     // Do not service a passive motor
-    if (srv->state == PBIO_SERVO_STATE_PASSIVE) {
+    if (srv->control.type == PBIO_CONTROL_NONE) {
         // No control, but still log state data
         pbio_passivity_t state;
         err = pbio_dcmotor_get_state(srv->dcmotor, &state, &control);
@@ -326,12 +321,12 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
 /* pbio user functions */
 
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled) {
-    *stalled = srv->state == PBIO_SERVO_STATE_CONTROL_ACTIVE && srv->control.stalled;
+    *stalled = srv->control.type != PBIO_CONTROL_NONE && srv->control.stalled;
     return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps) {
-    srv->state = PBIO_SERVO_STATE_PASSIVE;
+    srv->control.type = PBIO_CONTROL_NONE;
     return pbio_dcmotor_set_duty_cycle_usr(srv->dcmotor, duty_steps);
 }
 
@@ -368,7 +363,7 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
     srv->control.is_done_func = stop_func;
 
     // If we are continuing a maneuver, we can try to patch the new command onto the existing one for better continuity
-    if (srv->state == PBIO_SERVO_STATE_CONTROL_ACTIVE  && srv->control.type == PBIO_CONTROL_TIMED) {
+    if (srv->control.type == PBIO_CONTROL_TIMED) {
 
         // Current time
         time_start = clock_usecs();
@@ -414,7 +409,6 @@ static pbio_error_t pbio_servo_run_time_common(pbio_servo_t *srv, int32_t speed,
         pbio_rate_integrator_reset(&srv->control.rate_integrator, time_start, count_now, count_now);
 
         // Set the new servo state
-        srv->state = PBIO_SERVO_STATE_CONTROL_ACTIVE;
         srv->control.type = PBIO_CONTROL_TIMED;
 
         // Run one control update synchronously with user command.
@@ -489,7 +483,7 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
     srv->control.is_done_func = run_target_is_done_func;
 
     // If we are continuing a angle based maneuver, we can try to patch the new command onto the existing one for better continuity
-    if (srv->state == PBIO_SERVO_STATE_CONTROL_ACTIVE && srv->control.type == PBIO_CONTROL_ANGLE) {
+    if (srv->control.type == PBIO_CONTROL_ANGLE) {
 
         // Current time
         time_start = clock_usecs();
@@ -537,7 +531,6 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
         pbio_count_integrator_reset(&srv->control.count_integrator, srv->control.trajectory.t0, srv->control.trajectory.th0, srv->control.trajectory.th0, integrator_max);
 
         // Set the new servo state
-        srv->state = PBIO_SERVO_STATE_CONTROL_ACTIVE;
         srv->control.type = PBIO_CONTROL_ANGLE;
 
         // Run one control update synchronously with user command.
@@ -585,13 +578,12 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     pbio_trajectory_make_stationary(&srv->control.trajectory, time_start, pbio_math_mul_i32_fix16(target, srv->control.settings.counts_per_unit));
 
     // If called for the first time, set state and reset PID
-    if (!(srv->state == PBIO_SERVO_STATE_CONTROL_ACTIVE && srv->control.type == PBIO_CONTROL_ANGLE)) {
+    if (srv->control.type != PBIO_CONTROL_ANGLE) {
         // Initialize or reset the PID control status for the given maneuver
         int32_t integrator_max = pbio_control_settings_get_max_integrator(&srv->control.settings);
         pbio_count_integrator_reset(&srv->control.count_integrator, srv->control.trajectory.t0, srv->control.trajectory.th0, srv->control.trajectory.th0, integrator_max);
 
         // This is an angular control maneuver
-        srv->state = PBIO_SERVO_STATE_CONTROL_ACTIVE;
         srv->control.type = PBIO_CONTROL_ANGLE;
 
         // Run one control update synchronously with user command

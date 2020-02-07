@@ -33,11 +33,8 @@
 /* Wait for maneuver to complete */
 
 STATIC void wait_for_completion(pbio_servo_t *srv) {
-    while (srv->state == PBIO_SERVO_STATE_CONTROL_ACTIVE) {
+    while (srv->control.type != PBIO_CONTROL_NONE) {
         mp_hal_delay_ms(5);
-    }
-    if (srv->state == PBIO_SERVO_STATE_ERRORED) {
-        pb_assert(PBIO_ERROR_IO);
     }
 }
 
@@ -429,7 +426,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_track_target_obj, 0, motor_Motor_t
 // pybricks.builtins.Motor._busy
 STATIC mp_obj_t motor_Motor__busy(mp_obj_t self_in) {
     motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return mp_obj_new_bool(self->srv->state > PBIO_SERVO_STATE_PASSIVE);
+    return mp_obj_new_bool(self->srv->control.type != PBIO_CONTROL_NONE);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor__busy_obj, motor_Motor__busy);
 

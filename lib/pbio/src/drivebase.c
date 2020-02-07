@@ -166,10 +166,6 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
     db->wheel_diameter = wheel_diameter;
     db->axle_track = axle_track;
 
-    // Claim servos
-    db->left->state = PBIO_SERVO_STATE_CLAIMED;
-    db->right->state = PBIO_SERVO_STATE_CLAIMED;
-
     // Initialize log
     db->log.num_values = DRIVEBASE_LOG_NUM_VALUES;
 
@@ -217,27 +213,25 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
     switch (after_stop) {
         case PBIO_ACTUATION_COAST:
             // Stop by coasting
-            err = pbio_dcmotor_coast(db->left->dcmotor);
+            err = pbio_servo_stop(db->left, PBIO_ACTUATION_COAST);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
-            err = pbio_dcmotor_coast(db->right->dcmotor);
+            err = pbio_servo_stop(db->right, PBIO_ACTUATION_COAST);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
-            db->state = PBIO_DRIVEBASE_STATE_PASSIVE;
             return PBIO_SUCCESS;
         case PBIO_ACTUATION_BRAKE:
             // Stop by braking
-            err = pbio_dcmotor_brake(db->left->dcmotor);
+            err = pbio_servo_stop(db->left, PBIO_ACTUATION_BRAKE);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
-            err = pbio_dcmotor_brake(db->right->dcmotor);
+            err = pbio_servo_stop(db->right, PBIO_ACTUATION_BRAKE);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
-            db->state = PBIO_DRIVEBASE_STATE_PASSIVE;
             return PBIO_SUCCESS;
         default:
             // HOLD is not implemented
@@ -255,7 +249,8 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 
     int32_t sum_control, dif_control;
 
-    if (db->state == PBIO_DRIVEBASE_STATE_PASSIVE) {
+    // FIXME: Use both controller states
+    if (db->control_heading.type == PBIO_CONTROL_NONE) {
         // When passive, zero control
         sum_control = 0;
         dif_control = 0;
@@ -274,12 +269,12 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     return drivebase_log_update(db, time_now, sum, sum_rate, sum_control, dif, dif_rate, dif_control);
 }
 
-static pbio_error_t pbio_drivebase_signal_run(pbio_control_t *ctl, pbio_drivebase_state_t state, int32_t target_rate, int32_t time_now, int32_t count_now, int32_t rate_now) {
+static pbio_error_t pbio_drivebase_signal_run(pbio_control_t *ctl, int32_t target_rate, int32_t time_now, int32_t count_now, int32_t rate_now) {
 
     pbio_error_t err;
 
     // If we are continuing a timed maneuver, we can try to patch the new command onto the existing one for better continuity
-    if (state == PBIO_DRIVEBASE_STATE_CONTROL_ACTIVE) {
+    if (ctl->type == PBIO_CONTROL_TIMED) {
 
         // Make the new trajectory and try to patch
         err = pbio_trajectory_make_time_based_patched(
@@ -349,17 +344,15 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t t
 
     // Initialize both controllers
     int32_t target_turn_rate = pbio_control_user_to_counts(&db->control_heading.settings, turn_rate);
-    err = pbio_drivebase_signal_run(&db->control_heading, db->state, target_turn_rate, time_now, dif, dif_rate);
+    err = pbio_drivebase_signal_run(&db->control_heading, target_turn_rate, time_now, dif, dif_rate);
     if (err != PBIO_SUCCESS) {
         return err;
     }
     int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, speed);
-    err = pbio_drivebase_signal_run(&db->control_distance, db->state, target_sum_rate, time_now, sum, sum_rate);
+    err = pbio_drivebase_signal_run(&db->control_distance, target_sum_rate, time_now, sum, sum_rate);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-
-    db->state = PBIO_DRIVEBASE_STATE_CONTROL_ACTIVE;
 
     // Run one control update synchronously with user command.
     err = pbio_drivebase_update(db);

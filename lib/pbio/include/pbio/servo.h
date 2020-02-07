@@ -26,24 +26,10 @@
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
-/**
- * Servo states
- */
-typedef enum {
-    /* Passive control statuses: No PID Control Active */
-    PBIO_SERVO_STATE_PASSIVE,
-    PBIO_SERVO_STATE_ERRORED,
-    /* PID Control */   
-    PBIO_SERVO_STATE_CONTROL_ACTIVE,
-    /* Controlled/claimed by a higher level construct such as a drivebase */
-    PBIO_SERVO_STATE_CLAIMED,
-} pbio_servo_state_t;
-
 typedef struct _pbio_servo_t {
     bool connected;
     pbio_dcmotor_t *dcmotor;
     pbio_tacho_t *tacho;
-    pbio_servo_state_t state;
     pbio_control_t control;
     pbio_port_t port;
     pbio_log_t log;
