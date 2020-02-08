@@ -21,8 +21,7 @@ from ustruct import pack, unpack
 # MicroPython doesn't support __all__ yet but this still documents the intended
 # public members
 __all__ = ['BDADDR_ANY', 'RFCOMMServer', 'ThreadingRFCOMMServer',
-           'StreamRequestHandler', 'ALL_BRICKS', 'EV3MailboxServer',
-           'EV3MailboxClient']
+           'StreamRequestHandler', 'EV3MailboxServer', 'EV3MailboxClient']
 
 # stuff from bluetooth/bluetooth.h
 
@@ -193,9 +192,6 @@ class EV3MailboxHandler(StreamRequestHandler):
                     update_lock.release()
 
 
-ALL_BRICKS = None
-
-
 class EV3MailboxMixIn:
     def __init__(self):
         self._lock = allocate_lock()
@@ -203,8 +199,8 @@ class EV3MailboxMixIn:
         self._clients = {}
         self._updates = {}
 
-    def get_raw_data(self, mbox):
-        """Gets the current raw data from a mailbox.
+    def read_from_mailbox(self, mbox):
+        """Reads the current raw data from a mailbox.
 
         Arguments:
             mbox (str):
@@ -218,87 +214,7 @@ class EV3MailboxMixIn:
         with self._lock:
             return self._mailboxes.get(mbox)
 
-    def get_packed_data(self, mbox, fmt):
-        """Gets the current packed data from a mailbox.
-
-        Arguments:
-            mbox (str):
-                The name of the mailbox.
-            fmt (str):
-                ``ustruct.unpack()`` format string used to decode the binary
-                data.
-
-        Returns:
-            tuple:
-                The result of ``ustruct.unpack()`` on the mailbox data.
-
-        Raises:
-            TypeError:
-                ``fmt`` is not a string.
-            RuntimeError:
-                ``mbox`` is empty.
-        """
-        raw = self.get_raw_data(mbox)
-        if raw is None:
-            raise RuntimeError('mailbox is empty')
-        return unpack(fmt, raw)
-
-    def get_logic(self, mbox):
-        """Gets the current value of the mailbox as a boolean value.
-
-        This is compatible with the "logic" mailbox type in EV3-G.
-
-        Arguments:
-            mbox (str):
-                The name of the mailbox.
-
-        Returns:
-            bool:
-                The current value or ``None`` if the mailbox is empty.
-        """
-        # ustruct does not support '?' format
-        try:
-            return bool(self.get_packed_data(mbox, 'b')[0])
-        except RuntimeError:
-            return None
-
-    def get_numeric(self, mbox):
-        """Gets the current value of the mailbox as a floating point value.
-
-        This is compatible with the "numeric" mailbox type in EV3-G.
-
-        Arguments:
-            mbox (str):
-                The name of the mailbox.
-
-        Returns:
-            float:
-                The current value or ``None`` if the mailbox is empty.
-        """
-        try:
-            return self.get_packed_data(mbox, '<f')[0]
-        except RuntimeError:
-            return None
-
-    def get_text(self, mbox):
-        """Gets the current value of the mailbox as a string value.
-
-        This is compatible with the "text" mailbox type in EV3-G.
-
-        Arguments:
-            mbox (str):
-                The name of the mailbox.
-
-        Returns:
-            str:
-                The current value or ``None`` if the mailbox is empty.
-        """
-        try:
-            return self.get_raw_data(mbox).decode().strip('\0')
-        except RuntimeError:
-            return None
-
-    def send_raw_data(self, brick, mbox, payload):
+    def send_to_mailbox(self, brick, mbox, payload):
         """Sends a mailbox value using raw bytes data.
 
         .. todo:: Currently the Bluetooth address must be used instead of the
@@ -306,7 +222,7 @@ class EV3MailboxMixIn:
 
         Arguments:
             brick (str):
-                The name of the brick or :data:`ALL_BRICKS` to broadcast
+                The name of the brick or ``None``` to broadcast
             mbox (str):
                 The name of the mailbox.
             payload (bytes):
@@ -319,79 +235,13 @@ class EV3MailboxMixIn:
         data = pack(fmt, send_len, 1, SYSTEM_COMMAND_NO_REPLY, WRITEMAILBOX,
                     mbox_len, mbox, payload_len, payload)
         with self._lock:
-            if brick is ALL_BRICKS:
+            if brick is None:
                 for client in self._clients.values():
                     client.send(data)
             else:
                 self._clients[brick].send(data)
 
-    def send_packed_data(self, brick, mbox, fmt, *args):
-        """Sends a mailbox value using packed values.
-
-        Arguments:
-            brick (str):
-                The name of the brick or :data:`ALL_BRICKS` to broadcast
-            mbox (str):
-                The name of the mailbox.
-            fmt (str):
-                Format string compatible with ``ustruct.pack()``
-            *:
-                Arguments for ``ustruct.pack()``
-        """
-        self.send_raw_data(brick, mbox, pack(fmt, *args))
-
-    def send_logic(self, brick, mbox, value):
-        """Sends a boolean mailbox value.
-
-        This is compatible with the "logic" mailbox type in EV3-G.
-
-        Arguments:
-            brick (str):
-                The name of the brick or :data:`ALL_BRICKS` to broadcast
-            mbox (str):
-                The name of the mailbox.
-            value (bool):
-                The value that will be delivered to the mailbox.
-        """
-        # ustruct does not support '?' format
-        self.send_packed_data(brick, mbox, 'b', 1 if value else 0)
-
-    def send_numeric(self, brick, mbox, value):
-        """Sends a float mailbox value.
-
-        This is compatible with the "numeric" mailbox type in EV3-G.
-
-        Arguments:
-            brick (str):
-                The name of the brick or :data:`ALL_BRICKS` to broadcast
-            mbox (str):
-                The name of the mailbox.
-            value (bool):
-                The value that will be delivered to the mailbox.
-        """
-        if not isinstance(value, float):
-            value = float(value)
-        self.send_packed_data(brick, mbox, '<f', value)
-
-    def send_text(self, brick, mbox, value):
-        """Sends a string mailbox value.
-
-        This is compatible with the "text" mailbox type in EV3-G.
-
-        Arguments:
-            brick (str):
-                The name of the brick or :data:`ALL_BRICKS` to broadcast
-            mbox (str):
-                The name of the mailbox.
-            value (bool):
-                The value that will be delivered to the mailbox.
-        """
-        if not isinstance(value, str):
-            value = str(value)
-        value += '\0'
-        self.send_raw_data(brick, mbox, value)
-
-    def wait_for_update(self, mbox):
+    def wait_for_mailbox_update(self, mbox):
         """Waits until ``mbox`` receives a value."""
         lock = allocate_lock()
         lock.acquire()

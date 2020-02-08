@@ -276,6 +276,7 @@ EV3DEV_TEST_DIRS = $(addprefix ../ports/pybricks/tests/ev3dev/, \
 	brick \
 	motor \
 	media \
+	messaging \
 	uev3dev \
 	v1 \
 	)
