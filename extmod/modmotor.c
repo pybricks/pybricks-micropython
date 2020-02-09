@@ -428,13 +428,6 @@ STATIC mp_obj_t motor_Motor_track_target(size_t n_args, const mp_obj_t *pos_args
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_track_target_obj, 0, motor_Motor_track_target);
 
-// pybricks.builtins.Motor._busy
-STATIC mp_obj_t motor_Motor__busy(mp_obj_t self_in) {
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return mp_obj_new_bool(self->srv->control.type != PBIO_CONTROL_NONE);
-}
-MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor__busy_obj, motor_Motor__busy);
-
 // dir(pybricks.builtins.Motor)
 STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     //
@@ -457,7 +450,6 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&motor_Motor_track_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_log), MP_ROM_ATTRIBUTE_OFFSET(motor_Motor_obj_t, logger) },
     { MP_ROM_QSTR(MP_QSTR_control), MP_ROM_ATTRIBUTE_OFFSET(motor_Motor_obj_t, control) },
-    { MP_ROM_QSTR(MP_QSTR__busy), MP_ROM_PTR(&motor_Motor__busy_obj) },
 };
 MP_DEFINE_CONST_DICT(motor_Motor_locals_dict, motor_Motor_locals_dict_table);
 

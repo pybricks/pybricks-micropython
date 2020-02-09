@@ -294,6 +294,13 @@ STATIC mp_obj_t builtins_Control_trajectory(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(builtins_Control_trajectory_obj, builtins_Control_trajectory);
 
+// pybricks.builtins.Control.done
+STATIC mp_obj_t builtins_Control_done(mp_obj_t self_in) {
+    builtins_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    return mp_obj_new_bool(self->control->on_target);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(builtins_Control_done_obj, builtins_Control_done);
+
 // dir(pybricks.builtins.Control)
 STATIC const mp_rom_map_elem_t builtins_Control_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_limits           ), MP_ROM_PTR(&builtins_Control_limits_obj           ) },
@@ -301,6 +308,7 @@ STATIC const mp_rom_map_elem_t builtins_Control_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_target_tolerances), MP_ROM_PTR(&builtins_Control_target_tolerances_obj) },
     { MP_ROM_QSTR(MP_QSTR_stall_tolerances ), MP_ROM_PTR(&builtins_Control_stall_tolerances_obj ) },
     { MP_ROM_QSTR(MP_QSTR_trajectory       ), MP_ROM_PTR(&builtins_Control_trajectory_obj       ) },
+    { MP_ROM_QSTR(MP_QSTR_done             ), MP_ROM_PTR(&builtins_Control_done_obj             ) },
 };
 STATIC MP_DEFINE_CONST_DICT(builtins_Control_locals_dict, builtins_Control_locals_dict_table);
 
