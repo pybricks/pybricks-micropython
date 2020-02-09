@@ -290,7 +290,7 @@ pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance) {
     int32_t target_turn_rate = 0;
 
     // Initialize both controllers
-    err = pbio_control_start_angle_control(&db->control_distance, time_now, sum, sum_target, sum_rate, target_sum_rate, pbio_control_on_target_angle, PBIO_ACTUATION_COAST);
+    err = pbio_control_start_angle_control(&db->control_distance, time_now, sum, sum_target, sum_rate, target_sum_rate, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -323,7 +323,7 @@ pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle) {
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_control_start_angle_control(&db->control_heading, time_now, dif, dif_target, dif_rate, target_dif_rate, pbio_control_on_target_angle, PBIO_ACTUATION_COAST);
+    err = pbio_control_start_angle_control(&db->control_heading, time_now, dif, dif_target, dif_rate, target_dif_rate, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }

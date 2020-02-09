@@ -61,18 +61,14 @@ static void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, i
     // Check if we are on target
     ctl->on_target = ctl->on_target_func(&ctl->trajectory, &ctl->settings, time_ref, count_now, rate_now, ctl->stalled);
 
-    if (ctl->on_target) {
-        // End point is reached, so we have to decide what to do next
+    // If we are done and the next action is passive then return zero actuation
+    if (ctl->on_target && ctl->after_stop != PBIO_ACTUATION_HOLD) {
         *actuation_type = ctl->after_stop;
-        // In case of hold, the payload is the final trajectory count (th3), else 0
-        *control = ctl->after_stop == PBIO_ACTUATION_HOLD ? ctl->trajectory.th3: 0;
-        // If selected actuation is passive, control is done
-        if (*actuation_type <= PBIO_ACTUATION_BRAKE) {
-            ctl->type = PBIO_CONTROL_NONE;
-        }
+        *control = 0;
+        ctl->type = PBIO_CONTROL_NONE;
     }
     else {
-        // End point not reached, so return the calculated duty for actuation
+        // The end point not reached, or we have to keep holding, so return the calculated duty for actuation
         *actuation_type = PBIO_ACTUATION_DUTY;
         *control = duty;
     }
@@ -120,18 +116,21 @@ static void control_update_time_target(pbio_control_t *ctl, int32_t time_now, in
     // Check if we are on target
     ctl->on_target = ctl->on_target_func(&ctl->trajectory, &ctl->settings, time_now, count_now, rate_now, ctl->stalled);
 
+    // If we are done, decide next action
     if (ctl->on_target) {
-        // End point is reached, so we have to decide what to do next
-        *actuation_type = ctl->after_stop;
-        // In case of hold, the payload is current count, else 0
-        *control = ctl->after_stop == PBIO_ACTUATION_HOLD ? count_now: 0;
-        // If selected actuation is passive, control is done
-        if (*actuation_type <= PBIO_ACTUATION_BRAKE) {
+        if (ctl->after_stop == PBIO_ACTUATION_HOLD) {
+            // In case of hold, we trigger a new maneuver from the current position
+            pbio_control_start_hold_control(ctl, time_now, count_now);
+        }
+        else {
+            // For passive after stop action, return zero actuation
+            *actuation_type = ctl->after_stop;
+            *control = 0;
             ctl->type = PBIO_CONTROL_NONE;
         }
     }
     else {
-        // End point not reached, so return the calculated duty for actuation
+        // The end point not reached, so return the calculated duty for actuation
         *actuation_type = PBIO_ACTUATION_DUTY;
         *control = duty;
     }
@@ -149,14 +148,14 @@ void control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, in
     }
 }
 
-pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t target_count, int32_t rate_now, int32_t target_rate, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
+pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t target_count, int32_t rate_now, int32_t target_rate, pbio_actuation_t after_stop) {
 
     pbio_error_t err;
 
     // Set new maneuver action and stop type, and state
     ctl->after_stop = after_stop;
-    ctl->on_target = 0;
-    ctl->on_target_func = stop_func;
+    ctl->on_target = false;
+    ctl->on_target_func = pbio_control_on_target_angle;
 
     // If we are continuing a angle based maneuver, we can try to patch the new command onto the existing one for better continuity
     if (ctl->type == PBIO_CONTROL_ANGLE) {
@@ -204,13 +203,36 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
     return PBIO_SUCCESS;
 }
 
+pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_now, int32_t target_count) {
+
+    // Set new maneuver action and stop type, and state
+    ctl->after_stop = PBIO_ACTUATION_HOLD;
+    ctl->on_target = false;
+    ctl->on_target_func = pbio_control_on_target_angle;
+
+    // Compute new maneuver based on user argument, starting from the initial state
+    pbio_trajectory_make_stationary(&ctl->trajectory, time_now, target_count);
+    // If called for the first time, set state and reset PID
+    if (ctl->type != PBIO_CONTROL_ANGLE) {
+        // Initialize or reset the PID control status for the given maneuver
+        int32_t integrator_max = pbio_control_settings_get_max_integrator(&ctl->settings);
+        pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max);
+
+        // This is an angular control maneuver
+        ctl->type = PBIO_CONTROL_ANGLE;
+    }
+
+    return PBIO_SUCCESS;
+}
+
+
 pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, int32_t duration, int32_t count_now, int32_t rate_now, int32_t target_rate, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
 
     pbio_error_t err;
 
     // Set new maneuver action and stop type, and state
     ctl->after_stop = after_stop;
-    ctl->on_target = 0;
+    ctl->on_target = false;
     ctl->on_target_func = stop_func;
 
     // If we are continuing a maneuver, we can try to patch the new command onto the existing one for better continuity

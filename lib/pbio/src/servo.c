@@ -230,7 +230,7 @@ static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actua
         err = pbio_dcmotor_brake(srv->dcmotor);
         break;
     case PBIO_ACTUATION_HOLD:
-        err = pbio_servo_track_target(srv, pbio_math_div_i32_fix16(control, srv->control.settings.counts_per_unit));
+        err = pbio_control_start_hold_control(&srv->control, clock_usecs(), control);
         break;
     case PBIO_ACTUATION_DUTY:
         err = pbio_dcmotor_set_duty_cycle_sys(srv->dcmotor, control);
@@ -432,7 +432,7 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
         return err;
     }
 
-    return pbio_control_start_angle_control(&srv->control, time_now, count_now, target_count, rate_now, target_rate, pbio_control_on_target_angle, after_stop);
+    return pbio_control_start_angle_control(&srv->control, time_now, count_now, target_count, rate_now, target_rate, after_stop);
 }
 
 pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_actuation_t after_stop) {
@@ -460,25 +460,9 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
     int32_t time_start = clock_usecs();
+    int32_t target_count = pbio_control_user_to_counts(&srv->control.settings, target);
 
-    // Set new maneuver action and stop type
-    srv->control.after_stop = PBIO_ACTUATION_COAST;
-    srv->control.on_target_func = pbio_control_on_target_never;
-
-    // Compute new maneuver based on user argument, starting from the initial state
-    pbio_trajectory_make_stationary(&srv->control.trajectory, time_start, pbio_math_mul_i32_fix16(target, srv->control.settings.counts_per_unit));
-
-    // If called for the first time, set state and reset PID
-    if (srv->control.type != PBIO_CONTROL_ANGLE) {
-        // Initialize or reset the PID control status for the given maneuver
-        int32_t integrator_max = pbio_control_settings_get_max_integrator(&srv->control.settings);
-        pbio_count_integrator_reset(&srv->control.count_integrator, srv->control.trajectory.t0, srv->control.trajectory.th0, srv->control.trajectory.th0, integrator_max);
-
-        // This is an angular control maneuver
-        srv->control.type = PBIO_CONTROL_ANGLE;
-    }
-
-    return PBIO_SUCCESS;
+    return pbio_control_start_hold_control(&srv->control, time_start, target_count);
 }
 
 void _pbio_servo_reset_all(void) {
