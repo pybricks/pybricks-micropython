@@ -40,7 +40,7 @@ typedef struct _pbio_count_integrator_t {
     int32_t time_prev; // Time at the previous control iteratiom
     int32_t count_err_integral; // Ongoing integral of position error
     int32_t count_err_integral_max; // Maximum value of integrator
-    int32_t integration_zone; // Zone around target angle within which integrator may grow
+    int32_t integral_range; // Zone around target angle within which integrator may grow
 } pbio_count_integrator_t;
 
 int32_t pbio_count_integrator_get_ref_time(pbio_count_integrator_t *itg, int32_t time_now);
@@ -49,7 +49,7 @@ void pbio_count_integrator_pause(pbio_count_integrator_t *itg, int32_t time_now,
 
 void pbio_count_integrator_resume(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref);
 
-void pbio_count_integrator_reset(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref, int32_t max);
+void pbio_count_integrator_reset(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref, int32_t max, int32_t integral_range);
 
 void pbio_count_integrator_update(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref, int32_t count_target);
 

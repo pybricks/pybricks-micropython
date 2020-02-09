@@ -29,6 +29,7 @@ static pbio_control_settings_t settings_servo_ev3_medium = {
     .pid_kp = 400,
     .pid_ki = 600,
     .pid_kd = 5,
+    .integral_range = 45,
     .max_control = 10000,
 };
 
@@ -42,6 +43,7 @@ static pbio_control_settings_t settings_servo_ev3_large = {
     .pid_kp = 400,
     .pid_ki = 600,
     .pid_kd = 5,
+    .integral_range = 45,
     .max_control = 10000,
 };
 
@@ -55,6 +57,7 @@ static pbio_control_settings_t settings_servo_move_hub = {
     .pid_kp = 400,
     .pid_ki = 600,
     .pid_kd = 5,
+    .integral_range = 45,
     .max_control = 10000,
 };
 
@@ -68,6 +71,7 @@ static pbio_control_settings_t settings_servo_default = {
     .pid_kp = 200,
     .pid_ki = 100,
     .pid_kd = 0,
+    .integral_range = 45,
     .max_control = 10000,
 };
 

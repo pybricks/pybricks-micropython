@@ -200,7 +200,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
 
         // New maneuver, so reset the rate integrator
         int32_t integrator_max = pbio_control_settings_get_max_integrator(&ctl->settings);
-        pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max);
+        pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max, ctl->settings.integral_range);
 
         // Set the new servo state
         ctl->type = PBIO_CONTROL_ANGLE;
@@ -222,7 +222,7 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
     if (ctl->type != PBIO_CONTROL_ANGLE) {
         // Initialize or reset the PID control status for the given maneuver
         int32_t integrator_max = pbio_control_settings_get_max_integrator(&ctl->settings);
-        pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max);
+        pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max, ctl->settings.integral_range);
 
         // This is an angular control maneuver
         ctl->type = PBIO_CONTROL_ANGLE;
@@ -349,20 +349,22 @@ pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_
     return PBIO_SUCCESS;
 }
 
-void pbio_control_settings_get_pid(pbio_control_settings_t *s, int16_t *pid_kp, int16_t *pid_ki, int16_t *pid_kd) {
+void pbio_control_settings_get_pid(pbio_control_settings_t *s, int16_t *pid_kp, int16_t *pid_ki, int16_t *pid_kd, int32_t *integral_range) {
     *pid_kp = s->pid_kp;
     *pid_ki = s->pid_ki;
     *pid_kd = s->pid_kd;
+    *integral_range = pbio_control_counts_to_user(s, s->integral_range);
 }
 
-pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd) {
-    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0) {
+pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd, int32_t integral_range) {
+    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || integral_range < 0) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
     s->pid_kp = pid_kp;
     s->pid_ki = pid_ki;
     s->pid_kd = pid_kd;
+    s->integral_range = pbio_control_user_to_counts(s, integral_range);
     return PBIO_SUCCESS;
 }
 

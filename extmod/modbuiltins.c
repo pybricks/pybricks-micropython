@@ -186,20 +186,23 @@ STATIC mp_obj_t builtins_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp
         builtins_Control_obj_t, self,
         PB_ARG_DEFAULT_NONE(kp),
         PB_ARG_DEFAULT_NONE(ki),
-        PB_ARG_DEFAULT_NONE(kd)
+        PB_ARG_DEFAULT_NONE(kd),
+        PB_ARG_DEFAULT_NONE(integral_range)
     );
 
     // Read current values
     int16_t _kp, _ki, _kd;
-    pbio_control_settings_get_pid(&self->control->settings, &_kp, &_ki, &_kd);
+    int32_t _integral_range;
+    pbio_control_settings_get_pid(&self->control->settings, &_kp, &_ki, &_kd, &_integral_range);
 
     // If all given values are none, return current values
-    if (kp == mp_const_none && ki == mp_const_none && kd == mp_const_none) {
-        mp_obj_t ret[3];
+    if (kp == mp_const_none && ki == mp_const_none && kd == mp_const_none && integral_range == mp_const_none) {
+        mp_obj_t ret[4];
         ret[0] = mp_obj_new_int(_kp);
         ret[1] = mp_obj_new_int(_ki);
         ret[2] = mp_obj_new_int(_kd);
-        return mp_obj_new_tuple(3, ret);
+        ret[3] = mp_obj_new_int(_integral_range);
+        return mp_obj_new_tuple(4, ret);
     }
 
     // Assert control is not active
@@ -209,8 +212,9 @@ STATIC mp_obj_t builtins_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp
     _kp = pb_obj_get_default_int(kp, _kp);
     _ki = pb_obj_get_default_int(ki, _ki);
     _kd = pb_obj_get_default_int(kd, _kd);
+    _integral_range = pb_obj_get_default_int(integral_range, _integral_range);
 
-    pbio_control_settings_set_pid(&self->control->settings, _kp, _ki, _kd);
+    pbio_control_settings_set_pid(&self->control->settings, _kp, _ki, _kd,_integral_range);
 
     return mp_const_none;
 }
