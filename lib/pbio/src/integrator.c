@@ -147,17 +147,26 @@ void pbio_count_integrator_reset(pbio_count_integrator_t *itg, int32_t time_now,
     itg->count_err_prev = 0;
     itg->trajectory_running = false;
     itg->count_err_integral_max = max;
+    itg->integration_zone = 45;
 
     // Resume integration
     pbio_count_integrator_resume(itg, time_now, count, count_ref);
 
 }
 
-void pbio_count_integrator_update(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref) {
+void pbio_count_integrator_update(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref, int32_t count_target) {
     // Integrate and update position error
     if (itg->trajectory_running) {
-        itg->count_err_integral += itg->count_err_prev*(time_now - itg->time_prev);
 
+        // Counts to be to integrator: previous error times time difference
+        int32_t change = itg->count_err_prev*(time_now - itg->time_prev);
+
+        // Add change if allowed to grow, or if it deflates the integral
+        if (abs(count_target - count_ref) <= itg->integration_zone || abs(itg->count_err_integral + change) < abs(itg->count_err_integral)) {
+            itg->count_err_integral += change;
+        }
+
+        // Limit integral to predefined bound
         if (itg->count_err_integral > itg->count_err_integral_max) {
             itg->count_err_integral = itg->count_err_integral_max;
         }

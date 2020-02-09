@@ -32,7 +32,7 @@ static void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, i
     rate_err = rate_ref - rate_now;
 
     // Update integral error and get current error state
-    pbio_count_integrator_update(&ctl->count_integrator, time_now, count_now, count_ref);
+    pbio_count_integrator_update(&ctl->count_integrator, time_now, count_now, count_ref, ctl->trajectory.th3);
     pbio_count_integrator_get_errors(&ctl->count_integrator, count_now, count_ref, &count_err, &count_err_integral);
 
     // Corresponding PD control signal
