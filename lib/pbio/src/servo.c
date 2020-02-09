@@ -272,13 +272,20 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, int32_t time_now, i
         buf[0] = (time_ref - srv->control.trajectory.t0) / 1000;
 
         // Log reference signals. These values are only meaningful for time based commands
-        int32_t count_ref, count_ref_ext, rate_ref, rate_err, rate_err_integral, acceleration_ref;
+        int32_t count_ref, count_ref_ext, rate_ref, err, err_integral, acceleration_ref;
         pbio_trajectory_get_reference(&srv->control.trajectory, time_ref, &count_ref, &count_ref_ext, &rate_ref, &acceleration_ref);
-        pbio_rate_integrator_get_errors(&srv->control.rate_integrator, rate_now, rate_ref, count_now, count_ref, &rate_err, &rate_err_integral);
+
+        if (srv->control.type == PBIO_CONTROL_ANGLE) {
+            pbio_count_integrator_get_errors(&srv->control.count_integrator, count_now, count_ref, &err, &err_integral);
+        }
+        else {
+            pbio_rate_integrator_get_errors(&srv->control.rate_integrator, rate_now, rate_ref, count_now, count_ref, &err, &err_integral);
+        }
+
         buf[5] = count_ref;
-        buf[6] = rate_err_integral;
-        buf[7] = rate_ref;
-        buf[8] = rate_err_integral;
+        buf[6] = rate_ref;
+        buf[7] = err; // count err for angle control, rate err for timed control
+        buf[8] = err_integral;
     }
 
     return pbio_logger_update(&srv->log, buf);
