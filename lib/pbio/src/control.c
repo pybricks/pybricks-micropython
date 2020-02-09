@@ -58,21 +58,22 @@ static void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, i
     // Check if rate controller is stalled
     ctl->stalled = pbio_count_integrator_stalled(&ctl->count_integrator, time_now, rate_now, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
 
-    // If the end point is not reached, all there is left to do is return the calculated duty for actuation
-    if (!ctl->on_target_func(&ctl->trajectory, &ctl->settings, time_ref, count_now, rate_now, ctl->stalled)) {
+    // Check if we are on target
+    ctl->on_target = ctl->on_target_func(&ctl->trajectory, &ctl->settings, time_ref, count_now, rate_now, ctl->stalled);
+
+    if (ctl->on_target) {
+        // End point is reached, so we have to decide what to do next
+        *actuation_type = ctl->after_stop;
+        // In case of hold, the payload is the final trajectory count (th3), else 0
+        *control = ctl->after_stop == PBIO_ACTUATION_HOLD ? ctl->trajectory.th3: 0;
+        // Control is now done.
+        ctl->type = PBIO_CONTROL_NONE;
+    }
+    else {
+        // End point not reached, so return the calculated duty for actuation
         *actuation_type = PBIO_ACTUATION_DUTY;
         *control = duty;
-        return;
     }
-
-    // Otherwise, the end point is reached and we have to decide what to do next
-    *actuation_type = ctl->after_stop;
-    // In case of hold, the payload is the final trajectory count (th3), else 0
-    *control = ctl->after_stop == PBIO_ACTUATION_HOLD ? ctl->trajectory.th3: 0;
-    // Control is now done.
-    ctl->type = PBIO_CONTROL_NONE;
-
-    return;
 }
 
 static void control_update_time_target(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
@@ -114,21 +115,22 @@ static void control_update_time_target(pbio_control_t *ctl, int32_t time_now, in
     // Check if rate controller is stalled
     ctl->stalled = pbio_rate_integrator_stalled(&ctl->rate_integrator, time_now, rate_now, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
 
-    // If the end point is not reached, all there is left to do is return the calculated duty for actuation
-    if (!ctl->on_target_func(&ctl->trajectory, &ctl->settings, time_now, count_now, rate_now, ctl->stalled)) {
+    // Check if we are on target
+    ctl->on_target = ctl->on_target_func(&ctl->trajectory, &ctl->settings, time_now, count_now, rate_now, ctl->stalled);
+
+    if (ctl->on_target) {
+        // End point is reached, so we have to decide what to do next
+        *actuation_type = ctl->after_stop;
+        // In case of hold, the payload is current count, else 0
+        *control = ctl->after_stop == PBIO_ACTUATION_HOLD ? count_now: 0;
+        // Control is now done.
+        ctl->type = PBIO_CONTROL_NONE;
+    }
+    else {
+        // End point not reached, so return the calculated duty for actuation
         *actuation_type = PBIO_ACTUATION_DUTY;
         *control = duty;
-        return;
     }
-
-    // Otherwise, the end point is reached and we have to decide what to do next
-    *actuation_type = ctl->after_stop;
-    // In case of hold, the payload is current count, else 0
-    *control = ctl->after_stop == PBIO_ACTUATION_HOLD ? count_now: 0;
-    // Control is now done.
-    ctl->type = PBIO_CONTROL_NONE;
-
-    return;
 }
 
 void control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {

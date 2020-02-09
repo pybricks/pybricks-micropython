@@ -69,6 +69,7 @@ typedef struct _pbio_control_t {
     pbio_count_integrator_t count_integrator;
     pbio_control_on_target_t on_target_func;
     bool stalled;
+    bool on_target;
 } pbio_control_t;
 
 // Convert control units (counts, rate) and physical user units (deg or mm, deg/s or mm/s)
