@@ -106,7 +106,7 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     }
     // Reset state
     srv->control.type = PBIO_CONTROL_NONE;
-    srv->control.is_done_func = pbio_control_never_done;
+    srv->control.on_target_func = pbio_control_on_target_never;
 
     // Load default settings for this device type
     load_servo_settings(&srv->control.settings, srv->dcmotor->id);
@@ -380,7 +380,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     }
 
     // Start a timed maneuver, duration forever
-    return pbio_control_start_timed_control(&srv->control, time_now, DURATION_FOREVER, count_now, rate_now, target_rate, pbio_control_never_done, PBIO_ACTUATION_COAST);
+    return pbio_control_start_timed_control(&srv->control, time_now, DURATION_FOREVER, count_now, rate_now, target_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
 }
 
 pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop) {
@@ -398,7 +398,7 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
     }
 
     // Start a timed maneuver, duration finite
-    return pbio_control_start_timed_control(&srv->control, time_now, duration*US_PER_MS, count_now, rate_now, target_rate, pbio_control_time_target_done, after_stop);
+    return pbio_control_start_timed_control(&srv->control, time_now, duration*US_PER_MS, count_now, rate_now, target_rate, pbio_control_on_target_time, after_stop);
 }
 
 pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio_actuation_t after_stop) {
@@ -416,7 +416,7 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
     }
 
     // Start a timed maneuver, duration forever and ending on stall
-    return pbio_control_start_timed_control(&srv->control, time_now, DURATION_FOREVER, count_now, rate_now, target_rate, pbio_control_until_stalled_done, after_stop);
+    return pbio_control_start_timed_control(&srv->control, time_now, DURATION_FOREVER, count_now, rate_now, target_rate, pbio_control_on_target_stalled, after_stop);
 }
 
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop) {
@@ -434,7 +434,7 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
         return err;
     }
 
-    return pbio_control_start_angle_control(&srv->control, time_now, count_now, target_count, rate_now, target_rate, pbio_control_angle_target_done, after_stop);
+    return pbio_control_start_angle_control(&srv->control, time_now, count_now, target_count, rate_now, target_rate, pbio_control_on_target_angle, after_stop);
 }
 
 pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_actuation_t after_stop) {
@@ -465,7 +465,7 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
 
     // Set new maneuver action and stop type
     srv->control.after_stop = PBIO_ACTUATION_COAST;
-    srv->control.is_done_func = pbio_control_never_done;
+    srv->control.on_target_func = pbio_control_on_target_never;
 
     // Compute new maneuver based on user argument, starting from the initial state
     pbio_trajectory_make_stationary(&srv->control.trajectory, time_start, pbio_math_mul_i32_fix16(target, srv->control.settings.counts_per_unit));

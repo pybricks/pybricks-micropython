@@ -294,11 +294,11 @@ pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance) {
     int32_t target_turn_rate = 0;
 
     // Initialize both controllers
-    err = pbio_control_start_angle_control(&db->control_distance, time_now, sum, sum_target, sum_rate, target_sum_rate, pbio_control_angle_target_done, PBIO_ACTUATION_COAST);
+    err = pbio_control_start_angle_control(&db->control_distance, time_now, sum, sum_target, sum_rate, target_sum_rate, pbio_control_on_target_angle, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_control_start_timed_control(&db->control_heading, time_now, DURATION_FOREVER, dif, dif_rate, target_turn_rate, pbio_control_never_done, PBIO_ACTUATION_COAST);
+    err = pbio_control_start_timed_control(&db->control_heading, time_now, DURATION_FOREVER, dif, dif_rate, target_turn_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -323,11 +323,11 @@ pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle) {
     int32_t target_dif_rate = pbio_control_user_to_counts(&db->control_heading.settings, db->control_heading.settings.max_rate);
 
     // Initialize both controllers
-    err = pbio_control_start_timed_control(&db->control_distance, time_now, DURATION_FOREVER, sum, sum_rate, target_sum_rate, pbio_control_never_done, PBIO_ACTUATION_COAST);
+    err = pbio_control_start_timed_control(&db->control_distance, time_now, DURATION_FOREVER, sum, sum_rate, target_sum_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_control_start_angle_control(&db->control_heading, time_now, dif, dif_target, dif_rate, target_dif_rate, pbio_control_angle_target_done, PBIO_ACTUATION_COAST);
+    err = pbio_control_start_angle_control(&db->control_heading, time_now, dif, dif_target, dif_rate, target_dif_rate, pbio_control_on_target_angle, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -349,12 +349,12 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t t
 
     // Initialize both controllers
     int32_t target_turn_rate = pbio_control_user_to_counts(&db->control_heading.settings, turn_rate);
-    err = pbio_control_start_timed_control(&db->control_heading, time_now, DURATION_FOREVER, dif, dif_rate, target_turn_rate, pbio_control_never_done, PBIO_ACTUATION_COAST);
+    err = pbio_control_start_timed_control(&db->control_heading, time_now, DURATION_FOREVER, dif, dif_rate, target_turn_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
     int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, speed);
-    err = pbio_control_start_timed_control(&db->control_distance, time_now, DURATION_FOREVER, sum, sum_rate, target_sum_rate, pbio_control_never_done, PBIO_ACTUATION_COAST);
+    err = pbio_control_start_timed_control(&db->control_distance, time_now, DURATION_FOREVER, sum, sum_rate, target_sum_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }

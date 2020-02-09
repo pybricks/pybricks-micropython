@@ -59,7 +59,7 @@ static void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, i
     ctl->stalled = pbio_count_integrator_stalled(&ctl->count_integrator, time_now, rate_now, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
 
     // If the end point is not reached, all there is left to do is return the calculated duty for actuation
-    if (!ctl->is_done_func(&ctl->trajectory, &ctl->settings, time_ref, count_now, rate_now, ctl->stalled)) {
+    if (!ctl->on_target_func(&ctl->trajectory, &ctl->settings, time_ref, count_now, rate_now, ctl->stalled)) {
         *actuation_type = PBIO_ACTUATION_DUTY;
         *control = duty;
         return;
@@ -115,7 +115,7 @@ static void control_update_time_target(pbio_control_t *ctl, int32_t time_now, in
     ctl->stalled = pbio_rate_integrator_stalled(&ctl->rate_integrator, time_now, rate_now, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
 
     // If the end point is not reached, all there is left to do is return the calculated duty for actuation
-    if (!ctl->is_done_func(&ctl->trajectory, &ctl->settings, time_now, count_now, rate_now, ctl->stalled)) {
+    if (!ctl->on_target_func(&ctl->trajectory, &ctl->settings, time_now, count_now, rate_now, ctl->stalled)) {
         *actuation_type = PBIO_ACTUATION_DUTY;
         *control = duty;
         return;
@@ -143,13 +143,13 @@ void control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, in
     }
 }
 
-pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t target_count, int32_t rate_now, int32_t target_rate, pbio_control_done_t stop_func, pbio_actuation_t after_stop) {
+pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t target_count, int32_t rate_now, int32_t target_rate, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
 
     pbio_error_t err;
 
     // Set new maneuver action and stop type, and state
     ctl->after_stop = after_stop;
-    ctl->is_done_func = stop_func;
+    ctl->on_target_func = stop_func;
 
     // If we are continuing a angle based maneuver, we can try to patch the new command onto the existing one for better continuity
     if (ctl->type == PBIO_CONTROL_ANGLE) {
@@ -197,13 +197,13 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, int32_t duration, int32_t count_now, int32_t rate_now, int32_t target_rate, pbio_control_done_t stop_func, pbio_actuation_t after_stop) {
+pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, int32_t duration, int32_t count_now, int32_t rate_now, int32_t target_rate, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
 
     pbio_error_t err;
 
     // Set new maneuver action and stop type, and state
     ctl->after_stop = after_stop;
-    ctl->is_done_func = stop_func;
+    ctl->on_target_func = stop_func;
 
     // If we are continuing a maneuver, we can try to patch the new command onto the existing one for better continuity
     if (ctl->type == PBIO_CONTROL_TIMED) {
@@ -248,12 +248,12 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
     return PBIO_SUCCESS;
 }
 
-static bool _pbio_control_never_done(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+static bool _pbio_control_on_target_never(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
     return false;
 }
-pbio_control_done_t pbio_control_never_done = _pbio_control_never_done;
+pbio_control_on_target_t pbio_control_on_target_never = _pbio_control_on_target_never;
 
-static bool _pbio_control_angle_target_done(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+static bool _pbio_control_on_target_angle(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
     // if not enough time has expired to be done even in the ideal case, we are certainly not done
     if (time - trajectory->t3 < 0) {
         return false;
@@ -277,17 +277,17 @@ static bool _pbio_control_angle_target_done(pbio_trajectory_t *trajectory, pbio_
     // There's nothing left to do, so we must be on target
     return true;
 }
-pbio_control_done_t pbio_control_angle_target_done = _pbio_control_angle_target_done;
+pbio_control_on_target_t pbio_control_on_target_angle = _pbio_control_on_target_angle;
 
-static bool _pbio_control_time_target_done(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+static bool _pbio_control_on_target_time(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
     return time >= trajectory->t3;
 }
-pbio_control_done_t pbio_control_time_target_done = _pbio_control_time_target_done;
+pbio_control_on_target_t pbio_control_on_target_time = _pbio_control_on_target_time;
 
-static bool _pbio_control_until_stalled_done(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+static bool _pbio_control_on_target_stalled(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
     return stalled;
 }
-pbio_control_done_t pbio_control_until_stalled_done = _pbio_control_until_stalled_done;
+pbio_control_on_target_t pbio_control_on_target_stalled = _pbio_control_on_target_stalled;
 
 int32_t pbio_control_counts_to_user(pbio_control_settings_t *s, int32_t counts) {
     return pbio_math_div_i32_fix16(counts, s->counts_per_unit);
