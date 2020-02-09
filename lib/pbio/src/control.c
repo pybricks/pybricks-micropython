@@ -31,8 +31,9 @@ static void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, i
     // The speed error is the reference speed minus the current speed
     rate_err = rate_ref - rate_now;
 
-    // Get the count error and its integral
-    pbio_count_integrator_update(&ctl->count_integrator, time_now, count_now, count_ref, &count_err, &count_err_integral);
+    // Update integral error and get current error state
+    pbio_count_integrator_update(&ctl->count_integrator, time_now, count_now, count_ref);
+    pbio_count_integrator_get_errors(&ctl->count_integrator, count_now, count_ref, &count_err, &count_err_integral);
 
     // Corresponding PD control signal
     duty_due_to_proportional = ctl->settings.pid_kp*count_err;

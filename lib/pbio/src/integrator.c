@@ -153,7 +153,7 @@ void pbio_count_integrator_reset(pbio_count_integrator_t *itg, int32_t time_now,
 
 }
 
-void pbio_count_integrator_update(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref, int32_t *count_err, int32_t *count_err_integral) {
+void pbio_count_integrator_update(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref) {
     // Integrate and update position error
     if (itg->trajectory_running) {
         itg->count_err_integral += itg->count_err_prev*(time_now - itg->time_prev);
@@ -166,13 +166,16 @@ void pbio_count_integrator_update(pbio_count_integrator_t *itg, int32_t time_now
         }
     }
 
+    // Keep the error and time for use in next update
+    itg->count_err_prev = count_ref - count;
+    itg->time_prev = time_now;
+}
+
+// Get reference errors and integrals
+void pbio_count_integrator_get_errors(pbio_count_integrator_t *itg, int32_t count, int32_t count_ref, int32_t *count_err, int32_t *count_err_integral) {
     // Calculate current error state
     *count_err = count_ref - count;
     *count_err_integral = itg->count_err_integral;
-
-    // Keep the error and time for use in next update
-    itg->count_err_prev = *count_err;
-    itg->time_prev = time_now;
 }
 
 bool pbio_count_integrator_stalled(pbio_count_integrator_t *itg, int32_t time_now, int32_t rate, int32_t time_stall, int32_t rate_stall) {
