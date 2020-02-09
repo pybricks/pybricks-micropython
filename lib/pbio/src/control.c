@@ -66,8 +66,10 @@ static void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, i
         *actuation_type = ctl->after_stop;
         // In case of hold, the payload is the final trajectory count (th3), else 0
         *control = ctl->after_stop == PBIO_ACTUATION_HOLD ? ctl->trajectory.th3: 0;
-        // Control is now done.
-        ctl->type = PBIO_CONTROL_NONE;
+        // If selected actuation is passive, control is done
+        if (*actuation_type <= PBIO_ACTUATION_BRAKE) {
+            ctl->type = PBIO_CONTROL_NONE;
+        }
     }
     else {
         // End point not reached, so return the calculated duty for actuation
@@ -123,8 +125,10 @@ static void control_update_time_target(pbio_control_t *ctl, int32_t time_now, in
         *actuation_type = ctl->after_stop;
         // In case of hold, the payload is current count, else 0
         *control = ctl->after_stop == PBIO_ACTUATION_HOLD ? count_now: 0;
-        // Control is now done.
-        ctl->type = PBIO_CONTROL_NONE;
+        // If selected actuation is passive, control is done
+        if (*actuation_type <= PBIO_ACTUATION_BRAKE) {
+            ctl->type = PBIO_CONTROL_NONE;
+        }
     }
     else {
         // End point not reached, so return the calculated duty for actuation
@@ -151,6 +155,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
 
     // Set new maneuver action and stop type, and state
     ctl->after_stop = after_stop;
+    ctl->on_target = 0;
     ctl->on_target_func = stop_func;
 
     // If we are continuing a angle based maneuver, we can try to patch the new command onto the existing one for better continuity
@@ -205,6 +210,7 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
 
     // Set new maneuver action and stop type, and state
     ctl->after_stop = after_stop;
+    ctl->on_target = 0;
     ctl->on_target_func = stop_func;
 
     // If we are continuing a maneuver, we can try to patch the new command onto the existing one for better continuity

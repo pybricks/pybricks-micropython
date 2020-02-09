@@ -106,6 +106,7 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     }
     // Reset state
     srv->control.type = PBIO_CONTROL_NONE;
+    srv->control.on_target = 0;
     srv->control.on_target_func = pbio_control_on_target_never;
 
     // Load default settings for this device type
@@ -159,7 +160,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     pbio_error_t err;
 
     // Perform angle reset in case of tracking / holding
-    if (srv->control.type == PBIO_CONTROL_ANGLE) {
+    if (srv->control.type == PBIO_CONTROL_ANGLE && srv->control.on_target) {
         // Get the old angle
         int32_t angle_old;
         err = pbio_tacho_get_angle(srv->tacho, &angle_old);
@@ -343,9 +344,6 @@ pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps) {
 }
 
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
-
-    // Stop, so disable control
-    srv->control.type = PBIO_CONTROL_NONE;
 
     // Get control payload
     int32_t control;

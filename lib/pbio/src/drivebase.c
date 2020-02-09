@@ -228,10 +228,6 @@ pbio_error_t pbio_drivebase_get(pbio_drivebase_t **_db, pbio_servo_t *left, pbio
 
 pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_stop) {
 
-    // Stop, so disable control
-    db->control_distance.type = PBIO_CONTROL_NONE;
-    db->control_heading.type = PBIO_CONTROL_NONE;
-
     pbio_error_t err;
 
     int32_t sum_control = 0;

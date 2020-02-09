@@ -33,7 +33,7 @@
 /* Wait for maneuver to complete */
 
 STATIC void wait_for_completion(pbio_servo_t *srv) {
-    while (srv->control.type != PBIO_CONTROL_NONE) {
+    while (!srv->control.on_target) {
         mp_hal_delay_ms(5);
     }
 }
