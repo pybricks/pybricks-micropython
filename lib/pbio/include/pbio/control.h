@@ -50,7 +50,6 @@ typedef bool (*pbio_control_done_t)(pbio_trajectory_t *trajectory,
 
 // Functions to check whether motion is done
 pbio_control_done_t pbio_control_never_done;
-pbio_control_done_t pbio_control_always_done;
 pbio_control_done_t pbio_control_angle_target_done;
 pbio_control_done_t pbio_control_time_target_done;
 pbio_control_done_t pbio_control_until_stalled_done;

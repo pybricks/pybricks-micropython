@@ -106,7 +106,7 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     }
     // Reset state
     srv->control.type = PBIO_CONTROL_NONE;
-    srv->control.is_done_func = pbio_control_always_done;
+    srv->control.is_done_func = pbio_control_never_done;
 
     // Load default settings for this device type
     load_servo_settings(&srv->control.settings, srv->dcmotor->id);

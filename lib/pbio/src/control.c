@@ -253,11 +253,6 @@ static bool _pbio_control_never_done(pbio_trajectory_t *trajectory, pbio_control
 }
 pbio_control_done_t pbio_control_never_done = _pbio_control_never_done;
 
-static bool _pbio_control_always_done(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
-    return true;
-}
-pbio_control_done_t pbio_control_always_done = _pbio_control_always_done;
-
 static bool _pbio_control_angle_target_done(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
     // if not enough time has expired to be done even in the ideal case, we are certainly not done
     if (time - trajectory->t3 < 0) {
