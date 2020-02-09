@@ -136,6 +136,12 @@ mp_obj_t builtins_Control_obj_make_new(pbio_control_t *control) {
     return self;
 }
 
+STATIC void raise_if_control_busy(pbio_control_t *ctl) {
+    if (ctl->type != PBIO_CONTROL_NONE) {
+        pb_assert(PBIO_ERROR_INVALID_OP);
+    }
+}
+
 // pybricks.builtins.Control.limits
 STATIC mp_obj_t builtins_Control_limits(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
@@ -158,6 +164,9 @@ STATIC mp_obj_t builtins_Control_limits(size_t n_args, const mp_obj_t *pos_args,
         ret[2] = mp_obj_new_int(_actuation);
         return mp_obj_new_tuple(3, ret);
     }
+
+    // Assert control is not active
+    raise_if_control_busy(self->control);
 
     // Set user settings
     _speed = pb_obj_get_default_int(speed, _speed);
@@ -193,6 +202,9 @@ STATIC mp_obj_t builtins_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp
         return mp_obj_new_tuple(3, ret);
     }
 
+    // Assert control is not active
+    raise_if_control_busy(self->control);
+
     // Set user settings
     _kp = pb_obj_get_default_int(kp, _kp);
     _ki = pb_obj_get_default_int(ki, _ki);
@@ -225,6 +237,9 @@ STATIC mp_obj_t builtins_Control_target_tolerances(size_t n_args, const mp_obj_t
         return mp_obj_new_tuple(2, ret);
     }
 
+    // Assert control is not active
+    raise_if_control_busy(self->control);
+
     // Set user settings
     _speed = pb_obj_get_default_int(speed, _speed);
     _position = pb_obj_get_default_int(position, _position);
@@ -255,6 +270,9 @@ STATIC mp_obj_t builtins_Control_stall_tolerances(size_t n_args, const mp_obj_t 
         ret[1] = mp_obj_new_int(_time);
         return mp_obj_new_tuple(2, ret);
     }
+
+    // Assert control is not active
+    raise_if_control_busy(self->control);
 
     // Set user settings
     _speed = pb_obj_get_default_int(speed, _speed);

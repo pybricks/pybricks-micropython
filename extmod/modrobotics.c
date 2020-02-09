@@ -229,6 +229,10 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
         return mp_obj_new_tuple(5, ret);
     }
 
+    if (self->db->control_distance.type != PBIO_CONTROL_NONE || self->db->control_heading.type != PBIO_CONTROL_NONE) {
+        pb_assert(PBIO_ERROR_INVALID_OP);
+    }
+
     // If some values are given, set them
     _drive_speed = pb_obj_get_default_int(drive_speed, _drive_speed);
     _drive_acceleration = pb_obj_get_default_int(drive_acceleration, _drive_acceleration);
