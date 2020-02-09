@@ -199,34 +199,25 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
         PB_ARG_DEFAULT_NONE(drive_speed),
         PB_ARG_DEFAULT_NONE(drive_acceleration),
         PB_ARG_DEFAULT_NONE(turn_rate),
-        PB_ARG_DEFAULT_NONE(turn_acceleration),
-        PB_ARG_DEFAULT_NONE(stop_type)
+        PB_ARG_DEFAULT_NONE(turn_acceleration)
     );
 
     // Read current values
     int32_t _drive_speed, _drive_acceleration, _turn_rate, _turn_acceleration;
-    pbio_actuation_t _stop_type;
-    pbio_drivebase_get_drive_settings(self->db, &_drive_speed, &_drive_acceleration, &_turn_rate, &_turn_acceleration, &_stop_type);
+    pbio_drivebase_get_drive_settings(self->db, &_drive_speed, &_drive_acceleration, &_turn_rate, &_turn_acceleration);
 
     // If all given values are none, return current values
     if (drive_speed == mp_const_none &&
         drive_acceleration == mp_const_none &&
         turn_rate == mp_const_none &&
-        turn_acceleration == mp_const_none &&
-        stop_type == mp_const_none
+        turn_acceleration == mp_const_none
     ) {
-        mp_obj_t ret[5];
+        mp_obj_t ret[4];
         ret[0] = mp_obj_new_int(_drive_speed);
         ret[1] = mp_obj_new_int(_drive_acceleration);
         ret[2] = mp_obj_new_int(_turn_rate);
         ret[3] = mp_obj_new_int(_turn_acceleration);
-
-        const pb_obj_enum_member_t *stop;
-        stop = _stop_type == PBIO_ACTUATION_BRAKE ? &pb_const_brake :
-               _stop_type == PBIO_ACTUATION_HOLD  ? &pb_const_hold  : &pb_const_coast;
-        ret[4] = MP_OBJ_FROM_PTR(stop);
-
-        return mp_obj_new_tuple(5, ret);
+        return mp_obj_new_tuple(4, ret);
     }
 
     if (self->db->control_distance.type != PBIO_CONTROL_NONE || self->db->control_heading.type != PBIO_CONTROL_NONE) {
@@ -238,8 +229,7 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
     _drive_acceleration = pb_obj_get_default_int(drive_acceleration, _drive_acceleration);
     _turn_rate = pb_obj_get_default_int(turn_rate, _turn_rate);
     _turn_acceleration = pb_obj_get_default_int(turn_rate, _turn_acceleration);
-    _stop_type = stop_type == mp_const_none ? _stop_type : pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
-    pbio_drivebase_set_drive_settings(self->db, _drive_speed, _drive_acceleration, _turn_rate, _turn_acceleration, _stop_type);
+    pbio_drivebase_set_drive_settings(self->db, _drive_speed, _drive_acceleration, _turn_rate, _turn_acceleration);
 
     return mp_const_none;
 }

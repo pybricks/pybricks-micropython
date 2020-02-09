@@ -382,7 +382,7 @@ pbio_error_t pbio_drivebase_reset(pbio_drivebase_t *db) {
     return drivebase_get_state(db, &time_now, &db->sum_offset, &sum_rate, &db->dif_offset, &dif_rate);
 }
 
-pbio_error_t pbio_drivebase_get_drive_settings(pbio_drivebase_t *db, int32_t *drive_speed, int32_t *drive_acceleration, int32_t *turn_rate, int32_t *turn_acceleration, pbio_actuation_t *stop_type) {
+pbio_error_t pbio_drivebase_get_drive_settings(pbio_drivebase_t *db, int32_t *drive_speed, int32_t *drive_acceleration, int32_t *turn_rate, int32_t *turn_acceleration) {
 
     pbio_control_settings_t *sd = &db->control_distance.settings;
     pbio_control_settings_t *sh = &db->control_heading.settings;
@@ -391,12 +391,11 @@ pbio_error_t pbio_drivebase_get_drive_settings(pbio_drivebase_t *db, int32_t *dr
     *drive_acceleration = pbio_control_counts_to_user(sd, sd->abs_acceleration);
     *turn_rate = pbio_control_counts_to_user(sh, sh->max_rate);
     *turn_acceleration = pbio_control_counts_to_user(sh, sh->abs_acceleration);
-    *stop_type = db->control_distance.after_stop;
 
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t drive_speed, int32_t drive_acceleration, int32_t turn_rate, int32_t turn_acceleration, pbio_actuation_t stop_type) {
+pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t drive_speed, int32_t drive_acceleration, int32_t turn_rate, int32_t turn_acceleration) {
 
     pbio_control_settings_t *sd = &db->control_distance.settings;
     pbio_control_settings_t *sh = &db->control_heading.settings;
@@ -405,9 +404,6 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
     sd->abs_acceleration = pbio_control_user_to_counts(sd, drive_acceleration);
     sh->max_rate = pbio_control_user_to_counts(sh, turn_rate);
     sh->abs_acceleration = pbio_control_user_to_counts(sh, turn_acceleration);
-
-    db->control_heading.after_stop = stop_type;
-    db->control_distance.after_stop = stop_type;
 
     return PBIO_SUCCESS;
 }
