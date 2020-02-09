@@ -331,18 +331,28 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
         motor_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_DEFAULT_ENUM(stop_type, pb_const_coast),
-        PB_ARG_DEFAULT_INT(duty_limit, 100)
+        PB_ARG_DEFAULT_NONE(duty_limit)
     );
 
     mp_int_t speed_arg = pb_obj_get_int(speed);
     pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
 
-    bool override_duty_limit = n_args > 3;
-    // FIXME: Set max control instead
-    (void) duty_limit;
+    // If duty_limit argument, given, limit actuation during this maneuver
+    bool override_duty_limit = duty_limit != mp_const_none;
+
+    int32_t _speed, _acceleration, _actuation, user_limit;
 
     if (override_duty_limit) {
-        pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
+        // Read original values so we can restore them when we're done
+        pbio_control_settings_get_limits(&self->srv->control.settings, &_speed, &_acceleration, &_actuation);
+
+        // Get user given limit
+        user_limit = pb_obj_get_int(duty_limit);
+        user_limit = user_limit < 0 ? -user_limit : user_limit;
+        user_limit = user_limit > 100 ? 100 : user_limit;
+
+        // Apply the user limit
+        pbio_control_settings_set_limits(&self->srv->control.settings, _speed, _acceleration, user_limit);
     }
 
     // Call pbio with parsed user/default arguments
@@ -356,8 +366,10 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
     int32_t stall_point;
     pbio_tacho_get_angle(self->srv->tacho, &stall_point);
 
-    // FIXME: Set max control instead
-
+    // Restore original settings
+    if (override_duty_limit) {
+        pbio_control_settings_set_limits(&self->srv->control.settings, _speed, _acceleration, _actuation);
+    }
 
     // Return angle at which the motor stalled
     return mp_obj_new_int(stall_point);
