@@ -230,17 +230,23 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
 
     pbio_error_t err;
 
-    int32_t sum_control = 0;
-    int32_t dif_control = 0;
+    int32_t sum_control;
+    int32_t dif_control;
 
-    // When holding, the control payload is the count to hold
     if (after_stop == PBIO_ACTUATION_HOLD) {
-        // Get the physical initial state
+        // When holding, the control payload is the count to hold
         int32_t unused;
         err = drivebase_get_state(db, &unused, &sum_control, &unused, &dif_control, &unused);
         if (err != PBIO_SUCCESS) {
             return err;
         }
+    }
+    else {
+        // Otherwise the payload is zero and control stops
+        pbio_control_stop(&db->control_distance);
+        pbio_control_stop(&db->control_heading);
+        sum_control = 0;
+        dif_control = 0;
     }
 
     return pbio_drivebase_actuate(db, after_stop, sum_control, after_stop, dif_control);

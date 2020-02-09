@@ -148,6 +148,12 @@ void control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, in
     }
 }
 
+void pbio_control_stop(pbio_control_t *ctl) {
+    ctl->type = PBIO_CONTROL_NONE;
+    ctl->on_target = true;
+    ctl->on_target_func = pbio_control_on_target_never;
+}
+
 pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t target_count, int32_t rate_now, int32_t target_rate, pbio_actuation_t after_stop) {
 
     pbio_error_t err;

@@ -105,9 +105,7 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
         return err;
     }
     // Reset state
-    srv->control.type = PBIO_CONTROL_NONE;
-    srv->control.on_target = 0;
-    srv->control.on_target_func = pbio_control_on_target_never;
+    pbio_control_stop(&srv->control);
 
     // Load default settings for this device type
     load_servo_settings(&srv->control.settings, srv->dcmotor->id);
@@ -240,7 +238,7 @@ static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actua
     // Handle errors during actuation
     if (err != PBIO_SUCCESS) {
         // Stop control loop
-        srv->control.type = PBIO_CONTROL_NONE;
+        pbio_control_stop(&srv->control);
 
         // Attempt lowest level coast: turn off power
         pbdrv_motor_coast(srv->port);
@@ -339,7 +337,7 @@ pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled) {
 }
 
 pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps) {
-    srv->control.type = PBIO_CONTROL_NONE;
+    pbio_control_stop(&srv->control);
     return pbio_dcmotor_set_duty_cycle_usr(srv->dcmotor, duty_steps);
 }
 
@@ -355,8 +353,9 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
         }
     }
     else {
-        // Otherwise the payload is zero
+        // Otherwise the payload is zero and control stops
         control = 0;
+        pbio_control_stop(&srv->control);
     }
 
     // Apply the actuation
