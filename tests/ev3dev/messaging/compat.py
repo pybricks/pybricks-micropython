@@ -1,7 +1,6 @@
 # Test classes used for EV3/NXT standard firmware compatibility
 
-from pybricks.messaging import (
-    EV3LogicMailbox, EV3NumericMailbox, EV3TextMailbox)
+from pybricks.messaging import LogicMailbox, NumericMailbox, TextMailbox
 
 
 class MockConnection:
@@ -37,15 +36,15 @@ TEXT = 'text'
 
 
 server = MockConnection(SERVER)
-server_logic = EV3LogicMailbox(LOGIC, server)
-server_numeric = EV3NumericMailbox(NUMERIC, server)
-server_text = EV3TextMailbox(TEXT, server)
+server_logic = LogicMailbox(LOGIC, server)
+server_numeric = NumericMailbox(NUMERIC, server)
+server_text = TextMailbox(TEXT, server)
 
 
 client = MockConnection(CLIENT)
-client_logic = EV3LogicMailbox(LOGIC, client)
-client_numeric = EV3NumericMailbox(NUMERIC, client)
-client_text = EV3TextMailbox(TEXT, client)
+client_logic = LogicMailbox(LOGIC, client)
+client_numeric = NumericMailbox(NUMERIC, client)
+client_text = TextMailbox(TEXT, client)
 
 
 # mailbox that has not received a value returns None

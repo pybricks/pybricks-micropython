@@ -1,27 +1,18 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2020 David Lechner
 
-"""This module provides :class`EV3MailboxServer` and :class:`EV3MailboxClient`
-which are compatible with the official EV3 firmware mailboxes.
+"""
+:class:`RFCOMMServer` can be used to communicate with other Bluetooth RFCOMM
+devices that don't support the EV3 mailbox protocol.
 
 It is based on the standard library ``socketserver`` module and attempts to
 remain a strict subset of that implementation when it comes to low-level
 implementation details.
-
-:class:`RFCOMMServer` can be used to communicate with other Bluetooth RFCOMM
-devices that don't support the EV3 mailbox protocol.
 """
 
-from _thread import start_new_thread, allocate_lock
-from uerrno import ECONNRESET
+from _thread import start_new_thread
 from uctypes import addressof, sizeof, struct, ARRAY, UINT8, UINT16
 from usocket import socket, SOCK_STREAM
-from ustruct import pack, unpack
-
-# MicroPython doesn't support __all__ yet but this still documents the intended
-# public members
-__all__ = ['BDADDR_ANY', 'RFCOMMServer', 'ThreadingRFCOMMServer',
-           'StreamRequestHandler', 'EV3MailboxServer', 'EV3MailboxClient']
 
 # stuff from bluetooth/bluetooth.h
 
@@ -92,11 +83,13 @@ class RFCOMMServer:
 
     def handle_request(self):
         try:
-            request, client_address = self.socket.accept()
+            request, addr_data = self.socket.accept()
         except OSError:
             return
 
         try:
+            addr = struct(addressof(addr_data), sockaddr_rc)
+            client_address = (ba2str(addr.rc_bdaddr), addr.rc_channel)
             self.process_request(request, client_address)
         except:
             request.close()
@@ -158,137 +151,11 @@ class StreamRequestHandler:
         pass
 
 
-EV3_RFCOMM_CHANNEL = 1  # EV3 standard firmware is hard-coded to use channel 1
-# EV3 VM bytecodes
-SYSTEM_COMMAND_NO_REPLY = 0x81
-WRITEMAILBOX = 0x9E
-
-
-class EV3MailboxHandler(StreamRequestHandler):
-    def handle(self):
-        with self.server._lock:
-            addr = struct(addressof(self.client_address), sockaddr_rc)
-            self.server._clients[ba2str(addr.rc_bdaddr)] = self.request
-        while True:
-            try:
-                buf = self.rfile.read(2)
-            except OSError as ex:
-                # The client disconnected the connection
-                if ex.args[0] == ECONNRESET:
-                    break
-                raise
-            size, = unpack('<H', buf)
-            buf = self.rfile.read(size)
-            msg_count, cmd_type, cmd, name_size = unpack('<HBBB', buf)
-            if cmd_type != SYSTEM_COMMAND_NO_REPLY:
-                raise ValueError('Bad message type')
-            if cmd != WRITEMAILBOX:
-                raise ValueError('Bad command')
-            mbox = buf[5:5+name_size].decode().strip('\0')
-            data_size, = unpack('<H', buf[5+name_size:7+name_size])
-            data = buf[7+name_size:7+name_size+data_size]
-
-            with self.server._lock:
-                self.server._mailboxes[mbox] = data
-                update_lock = self.server._updates.get(mbox)
-                if update_lock:
-                    update_lock.release()
-
-
-class EV3MailboxMixIn:
-    def __init__(self):
-        self._lock = allocate_lock()
-        self._mailboxes = {}
-        self._clients = {}
-        self._updates = {}
-
-    def read_from_mailbox(self, mbox):
-        """Reads the current raw data from a mailbox.
-
-        Arguments:
-            mbox (str):
-                The name of the mailbox.
-
-        Returns:
-            bytes:
-                The current mailbox raw data or ``None`` if nothing has ever
-                been delivered to the mailbox.
-        """
-        with self._lock:
-            return self._mailboxes.get(mbox)
-
-    def send_to_mailbox(self, brick, mbox, payload):
-        """Sends a mailbox value using raw bytes data.
-
-        .. todo:: Currently the Bluetooth address must be used instead of the
-                  the brick name.
-
-        Arguments:
-            brick (str):
-                The name of the brick or ``None``` to broadcast
-            mbox (str):
-                The name of the mailbox.
-            payload (bytes):
-                A bytes-like object that will be sent to the mailbox.
-        """
-        mbox_len = len(mbox) + 1
-        payload_len = len(payload)
-        send_len = 7 + mbox_len + payload_len
-        fmt = '<HHBBB{}sH{}s'.format(mbox_len, payload_len)
-        data = pack(fmt, send_len, 1, SYSTEM_COMMAND_NO_REPLY, WRITEMAILBOX,
-                    mbox_len, mbox, payload_len, payload)
-        with self._lock:
-            if brick is None:
-                for client in self._clients.values():
-                    client.send(data)
-            else:
-                self._clients[brick].send(data)
-
-    def wait_for_mailbox_update(self, mbox):
-        """Waits until ``mbox`` receives a value."""
-        lock = allocate_lock()
-        lock.acquire()
-        with self._lock:
-            self._updates[mbox] = lock
-        try:
-            return lock.acquire()
-        finally:
-            with self._lock:
-                del self._updates[mbox]
-
-
-class EV3MailboxServer(EV3MailboxMixIn, ThreadingRFCOMMServer):
-    def __init__(self):
-        """Object that represents an incoming Bluetooth connection from another
-        EV3.
-
-        The remote EV3 can either be running MicroPython or the standard EV3
-        firmare.
-        """
-        super().__init__()
-        super(ThreadingRFCOMMServer, self).__init__(
-            (BDADDR_ANY, EV3_RFCOMM_CHANNEL), EV3MailboxHandler)
-
-    def wait_for_connection(self, count=1):
-        """Waits for a :class:`EV3MailboxClient` on a remote device to connect.
-
-        Arguments:
-            count (int):
-                The number of remote connections to wait for.
-
-        Raises:
-            OSError:
-                There was a problem establishing the connection.
-        """
-        for _ in range(count):
-            self.handle_request()
-
-
 class RFCOMMClient:
-    def __init__(self, client_address):
-        self.client_address = (client_address, EV3_RFCOMM_CHANNEL)
+    def __init__(self, client_address, RequestHandlerClass):
+        self.client_address = client_address
+        self.RequestHandlerClass = RequestHandlerClass
         self.socket = socket(AF_BLUETOOTH, SOCK_STREAM, BTPROTO_RFCOMM)
-        self.RequestHandlerClass = EV3MailboxHandler
 
     def handle_request(self):
         addr_data = bytearray(sizeof(sockaddr_rc))
@@ -298,13 +165,10 @@ class RFCOMMClient:
         addr.rc_channel = self.client_address[1]
         self.socket.connect(addr_data)
         try:
-            self.process_request(self.socket, addr)
+            self.process_request(self.socket, self.client_address)
         except:
             self.socket.close()
             raise
-
-    def send(self, data):
-        self.socket.send(data)
 
     def process_request(self, request, client_address):
         self.finish_request(request, client_address)
@@ -313,68 +177,9 @@ class RFCOMMClient:
     def finish_request(self, request, client_address):
         self.RequestHandlerClass(request, client_address, self)
 
-    def close(self):
+    def client_close(self):
         self.socket.close()
 
 
 class ThreadingRFCOMMClient(ThreadingMixIn, RFCOMMClient):
     pass
-
-
-class EV3MailboxRFCOMMClient(ThreadingRFCOMMClient):
-    def __init__(self, parent, client_address):
-        self.parent = parent
-        super().__init__(client_address)
-
-    def finish_request(self, request, client_address):
-        self.RequestHandlerClass(request, client_address, self.parent)
-
-
-class EV3MailboxClient(EV3MailboxMixIn):
-    """Object that represents outgoing Bluetooth connections to one or more
-    remote EV3s.
-
-    The remote EV3s can either be running MicroPython or the standard EV3
-    firmare.
-    """
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self.close()
-
-    def connect(self, brick):
-        """Connects to a :class:`EV3MailboxServer` on another device.
-
-        The remote device must be paired and waiting for a connection. See
-        :meth:`EV3MailboxServer.wait_for_connection`.
-
-        .. todo:: Currently the Bluetooth address must be used instead of the
-                  the brick name.
-
-        Arguments:
-            brick (str):
-                The name or address of the remote EV3 to connect to.
-
-        Raises:
-            ValueError:
-                Connection to ``brick`` already exists.
-            OSError:
-                There was a problem establishing the connection.
-        """
-        addr = brick  # FIXME: resolve name to address
-        client = EV3MailboxRFCOMMClient(self, addr)
-        if self._clients.setdefault(brick, client) is not client:
-            raise ValueError('connection with this address already exists')
-        try:
-            client.handle_request()
-        except:
-            del self._clients[brick]
-            raise
-
-    def close(self):
-        """Closes the connections."""
-        for client in self._clients.values():
-            client.close()
-        self._clients.clear()
