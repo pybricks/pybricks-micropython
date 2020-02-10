@@ -167,7 +167,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
     if (ctl->type == PBIO_CONTROL_ANGLE) {
 
         // The start time must account for time spent pausing while stalled
-        int32_t time_ref = pbio_count_integrator_get_ref_time(&ctl->count_integrator, time_now);
+        int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
 
         // Make the new trajectory and try to patch
         err = pbio_trajectory_make_angle_based_patched(
@@ -220,7 +220,7 @@ pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int3
     }
     // Otherwise count from the current reference
     else {
-        int32_t time_ref = ctl->type == PBIO_CONTROL_TIMED ? time_now : pbio_count_integrator_get_ref_time(&ctl->count_integrator, time_now);
+        int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
         int32_t unused;
         pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &count_start, &unused, &unused, &unused);
     }
@@ -427,4 +427,15 @@ int32_t pbio_control_settings_get_max_integrator(pbio_control_settings_t *s) {
     }
     // Get the maximum integrator value for which ki*integrator does not exceed max_control
     return ((s->max_control*US_PER_MS)/s->pid_ki)*MS_PER_SECOND;
+}
+
+int32_t pbio_control_get_ref_time(pbio_control_t *ctl, int32_t time_now) {
+
+    if (ctl->type == PBIO_CONTROL_ANGLE) {
+        return pbio_count_integrator_get_ref_time(&ctl->count_integrator, time_now);
+    }
+    if (ctl->type == PBIO_CONTROL_TIMED) {
+        return time_now;
+    }
+    return 0;
 }
