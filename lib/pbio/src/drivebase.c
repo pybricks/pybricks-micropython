@@ -293,14 +293,14 @@ pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance) {
     // Targets in units of count
     int32_t relative_sum_target = pbio_control_user_to_counts(&db->control_distance.settings, distance);
     int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, db->control_distance.settings.max_rate);
-    int32_t target_turn_rate = 0;
+    int32_t target_dif_rate = pbio_control_user_to_counts(&db->control_heading.settings, db->control_heading.settings.max_rate);
 
     // Initialize both controllers
     err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, sum, relative_sum_target, sum_rate, target_sum_rate, PBIO_ACTUATION_HOLD);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_control_start_timed_control(&db->control_heading, time_now, DURATION_FOREVER, dif, dif_rate, target_turn_rate, pbio_control_on_target_never, PBIO_ACTUATION_HOLD);
+    err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, dif, 0, dif_rate, target_dif_rate, PBIO_ACTUATION_HOLD);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -321,11 +321,11 @@ pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle) {
 
     // Targets in units of count
     int32_t relative_dif_target = pbio_control_user_to_counts(&db->control_heading.settings, angle);
-    int32_t target_sum_rate = 0;
+    int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, db->control_distance.settings.max_rate);
     int32_t target_dif_rate = pbio_control_user_to_counts(&db->control_heading.settings, db->control_heading.settings.max_rate);
 
     // Initialize both controllers
-    err = pbio_control_start_timed_control(&db->control_distance, time_now, DURATION_FOREVER, sum, sum_rate, target_sum_rate, pbio_control_on_target_never, PBIO_ACTUATION_HOLD);
+    err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, sum, 0, sum_rate, target_sum_rate, PBIO_ACTUATION_HOLD);
     if (err != PBIO_SUCCESS) {
         return err;
     }
