@@ -316,7 +316,7 @@ STATIC mp_obj_t ev3dev_Image_draw_image(size_t n_args, const mp_obj_t *pos_args,
         PB_ARG_REQUIRED(x),
         PB_ARG_REQUIRED(y),
         PB_ARG_REQUIRED(image),
-        PB_ARG_DEFAULT_NONE(color)
+        PB_ARG_DEFAULT_NONE(transparent)
     );
 
     mp_int_t x_ = pb_obj_get_int(x);
@@ -325,12 +325,12 @@ STATIC mp_obj_t ev3dev_Image_draw_image(size_t n_args, const mp_obj_t *pos_args,
         mp_raise_TypeError("Image object is required");
     }
     ev3dev_Image_obj_t *image_ = MP_OBJ_TO_PTR(image);
-    GrxColor color_ = map_color(color);
+    GrxColor transparent_ = map_color(transparent);
 
     clear_once(self);
     grx_context_bit_blt(self->context, x_, y_, image_->context, 0, 0,
         grx_context_get_max_x(image_->context), grx_context_get_max_y(image_->context),
-        color_ == GRX_COLOR_NONE ? GRX_COLOR_MODE_WRITE : grx_color_to_image_mode(color_));
+        transparent_ == GRX_COLOR_NONE ? GRX_COLOR_MODE_WRITE : grx_color_to_image_mode(transparent_));
 
     return mp_const_none;
 }

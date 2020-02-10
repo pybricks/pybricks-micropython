@@ -131,8 +131,8 @@ except TypeError as ex:
 # 4th argument is kwarg and can be Color or None
 img.draw_image(0, 0, img, None)
 img.draw_image(0, 0, img, Color.WHITE)
-img.draw_image(0, 0, img, color=None)
-img.draw_image(0, 0, img, color=Color.WHITE)
+img.draw_image(0, 0, img, transparent=None)
+img.draw_image(0, 0, img, transparent=Color.WHITE)
 
 
 # Test show_image()
