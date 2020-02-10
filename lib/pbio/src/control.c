@@ -163,46 +163,32 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
     ctl->on_target = false;
     ctl->on_target_func = pbio_control_on_target_angle;
 
-    // If we are continuing a angle based maneuver, we can try to patch the new command onto the existing one for better continuity
-    if (ctl->type == PBIO_CONTROL_ANGLE) {
-
-        // The start time must account for time spent pausing while stalled
-        int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
-
-        // Make the new trajectory and try to patch
-        err = pbio_trajectory_make_angle_based_patched(
-            &ctl->trajectory,
-            time_ref,
-            target_count,
-            target_rate,
-            ctl->settings.max_rate,
-            ctl->settings.abs_acceleration);
+    // Compute the trajectory
+    if (ctl->type == PBIO_CONTROL_NONE) {
+        // If no control is ongoing, start from physical state
+        err = pbio_trajectory_make_angle_based(&ctl->trajectory, time_now, count_now, target_count, rate_now, target_rate, ctl->settings.max_rate, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
     }
     else {
+        // If control is ongoing, start from its current reference. First get time on current reference signal
+        int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
 
-        // If time based or no maneuver was ongoing, make a basic new trajectory
-        // Based on the current time and current state
-        err = pbio_trajectory_make_angle_based(
-            &ctl->trajectory,
-            time_now,
-            count_now,
-            target_count,
-            rate_now,
-            target_rate,
-            ctl->settings.max_rate,
-            ctl->settings.abs_acceleration);
+        // Make the new trajectory and try to patch to existing one
+        err = pbio_trajectory_make_angle_based_patched(&ctl->trajectory, time_ref, target_count, target_rate, ctl->settings.max_rate, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
+    }
 
-        // New maneuver, so reset the rate integrator
+    // Reset PID control if needed
+    if (ctl->type != PBIO_CONTROL_ANGLE) {
+        // New angle maneuver, so reset the rate integrator
         int32_t integrator_max = pbio_control_settings_get_max_integrator(&ctl->settings);
         pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max, ctl->settings.integral_range);
 
-        // Set the new servo state
+        // Set the new control state
         ctl->type = PBIO_CONTROL_ANGLE;
     }
 
@@ -263,43 +249,31 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
     ctl->on_target = false;
     ctl->on_target_func = stop_func;
 
-    // If we are continuing a maneuver, we can try to patch the new command onto the existing one for better continuity
-    if (ctl->type == PBIO_CONTROL_TIMED) {
-
-        // Make the new trajectory and try to patch
-        err = pbio_trajectory_make_time_based_patched(
-            &ctl->trajectory,
-            time_now,
-            duration,
-            target_rate,
-            ctl->settings.max_rate,
-            ctl->settings.abs_acceleration);
+    // Compute the trajectory
+    if (ctl->type == PBIO_CONTROL_NONE) {
+        // If no control is ongoing, start from physical state
+        err = pbio_trajectory_make_time_based(&ctl->trajectory, time_now, duration, count_now, 0, rate_now, target_rate, ctl->settings.max_rate, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
     }
     else {
+        // If control is ongoing, start from its current reference. First get time on current reference signal
+        int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
 
-        // If angle based or no maneuver was ongoing, make a basic new trajectory
-        // Based on the current time and current state
-        err = pbio_trajectory_make_time_based(
-            &ctl->trajectory,
-            time_now,
-            duration,
-            count_now,
-            0,
-            rate_now,
-            target_rate,
-            ctl->settings.max_rate,
-            ctl->settings.abs_acceleration);
+        // Make the new trajectory and try to patch to existing one
+        err = pbio_trajectory_make_time_based_patched(&ctl->trajectory, time_ref, duration, target_rate, ctl->settings.max_rate, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
+    }
 
+    // Reset PD control if needed
+    if (ctl->type != PBIO_CONTROL_TIMED) {
         // New maneuver, so reset the rate integrator
         pbio_rate_integrator_reset(&ctl->rate_integrator, time_now, count_now, count_now);
 
-        // Set the new servo state
+        // Set the new control state
         ctl->type = PBIO_CONTROL_TIMED;
     }
 
