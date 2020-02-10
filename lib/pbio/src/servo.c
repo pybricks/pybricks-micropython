@@ -440,23 +440,21 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
 
 pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_actuation_t after_stop) {
 
-    // Speed  | Angle | End target  | Effect
-    //  > 0   |  > 0  | now + angle | Forward
-    //  > 0   |  < 0  | now + angle | Backward
-    //  < 0   |  > 0  | now - angle | Backward
-    //  < 0   |  < 0  | now - angle | Forward
+    pbio_error_t err;
 
-    // Read the instantaneous angle
-    int32_t angle_now;
-    pbio_error_t err = pbio_tacho_get_angle(srv->tacho, &angle_now);
+    // Get targets in unit of counts
+    int32_t target_rate = pbio_control_user_to_counts(&srv->control.settings, speed);
+    int32_t relative_target_count = pbio_control_user_to_counts(&srv->control.settings, angle);
+
+    // Get the initial physical motor state.
+    int32_t time_now, count_now, rate_now;
+    err = servo_get_state(srv, &time_now, &count_now, &rate_now);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // The angle target is the instantaneous angle plus the angle to be traveled
-    int32_t angle_target = angle_now + (speed < 0 ? -angle: angle);
-
-    return pbio_servo_run_target(srv, speed, angle_target, after_stop);
+    // Start the relative angle control
+    return pbio_control_start_relative_angle_control(&srv->control, time_now, count_now, relative_target_count, rate_now, target_rate, after_stop);
 }
 
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
