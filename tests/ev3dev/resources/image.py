@@ -166,7 +166,11 @@ except TypeError as ex:
 
 # 4th argument is kwarg
 img.draw_text(0, 0, '', Color.BLACK)
-img.draw_text(0, 0, '', color=Color.BLACK)
+img.draw_text(0, 0, '', text_color=Color.BLACK)
+
+# 5th argument is kwarg
+img.draw_text(0, 0, '', Color.BLACK, Color.WHITE)
+img.draw_text(0, 0, '', background_color=Color.WHITE)
 
 
 # Test set_font()

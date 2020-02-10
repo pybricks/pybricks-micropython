@@ -391,7 +391,8 @@ STATIC mp_obj_t ev3dev_Image_draw_text(size_t n_args, const mp_obj_t *pos_args, 
         PB_ARG_REQUIRED(x),
         PB_ARG_REQUIRED(y),
         PB_ARG_REQUIRED(text),
-        PB_ARG_DEFAULT_ENUM(color, pb_const_black)
+        PB_ARG_DEFAULT_ENUM(text_color, pb_const_black),
+        PB_ARG_DEFAULT_NONE(background_color)
     );
 
     mp_int_t x_ = pb_obj_get_int(x);
@@ -404,11 +405,19 @@ STATIC mp_obj_t ev3dev_Image_draw_text(size_t n_args, const mp_obj_t *pos_args, 
         text = mp_obj_new_str_from_vstr(&mp_type_str, &vstr);
     }
     const char *text_ = mp_obj_str_get_str(text);
-    GrxColor color_ = map_color(color);
+    GrxColor text_color_ = map_color(text_color);
+    GrxColor background_color_ = map_color(background_color);
 
     clear_once(self);
     grx_set_current_context(self->context);
-    grx_text_options_set_fg_color(self->text_options, color_);
+    grx_text_options_set_fg_color(self->text_options, text_color_);
+    grx_text_options_set_bg_color(self->text_options, background_color_);
+    if (background_color_ != GRX_COLOR_NONE) {
+        GrxFont *font = grx_text_options_get_font(self->text_options);
+        gint w = grx_font_get_text_width(font, text_);
+        gint h = grx_font_get_text_height(font, text_);
+        grx_draw_filled_box(x_, y_, x_ + w - 1, y_ + h - 1, background_color_);
+    }
     grx_draw_text(text_, x_, y_, self->text_options);
 
     return mp_const_none;

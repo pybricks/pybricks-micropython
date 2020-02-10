@@ -104,7 +104,11 @@ except TypeError:
 
 # 4th argument is kwarg
 ev3.screen.draw_text(0, 0, '', Color.BLACK)
-ev3.screen.draw_text(0, 0, '', color=Color.BLACK)
+ev3.screen.draw_text(0, 0, '', text_color=Color.BLACK)
+
+# 5th argument is kwarg
+ev3.screen.draw_text(0, 0, '', Color.BLACK, Color.WHITE)
+ev3.screen.draw_text(0, 0, '', background_color=Color.WHITE)
 
 
 # Test set_font()
