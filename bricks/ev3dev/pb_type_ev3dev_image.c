@@ -69,6 +69,21 @@ STATIC GrxColor map_color(mp_obj_t *obj) {
     return grx_color_get_black();
 }
 
+STATIC mp_obj_t ev3dev_Image_new(GrxContext* context) {
+    ev3dev_Image_obj_t *self = m_new_obj_with_finaliser(ev3dev_Image_obj_t);
+
+    self->base.type = &pb_type_ev3dev_Image;
+    self->context = context;
+    self->width = mp_obj_new_int(grx_context_get_width(self->context));
+    self->height = mp_obj_new_int(grx_context_get_height(self->context));
+
+    pb_type_ev3dev_Font_init();
+    GrxFont *font = pb_ev3dev_Font_obj_get_font(pb_const_ev3dev_font_DEFAULT);
+    self->text_options = grx_text_options_new(font, GRX_COLOR_BLACK);
+
+    return MP_OBJ_FROM_PTR(self);
+}
+
 STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     enum { ARG_source, ARG_sub, ARG_x1, ARG_y1, ARG_x2, ARG_y2 };
     static const mp_arg_t allowed_args[] = {
@@ -147,19 +162,24 @@ STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, 
         mp_raise_TypeError("Argument must be str or Image");
     }
 
-    ev3dev_Image_obj_t *self = m_new_obj_with_finaliser(ev3dev_Image_obj_t);
-
-    self->base.type = &pb_type_ev3dev_Image;
-    self->context = context;
-    self->width = mp_obj_new_int(grx_context_get_width(self->context));
-    self->height = mp_obj_new_int(grx_context_get_height(self->context));
-
-    pb_type_ev3dev_Font_init();
-    GrxFont *font = pb_ev3dev_Font_obj_get_font(pb_const_ev3dev_font_DEFAULT);
-    self->text_options = grx_text_options_new(font, GRX_COLOR_BLACK);
-
-    return MP_OBJ_FROM_PTR(self);
+    return ev3dev_Image_new(context);
 }
+
+STATIC mp_obj_t ev3dev_Image_empty(mp_obj_t width_in, mp_obj_t height_in) {
+    mp_int_t width = pb_obj_get_int(width_in);
+    mp_int_t height = pb_obj_get_int(height_in);
+    if (width <= 0 || height <= 0) {
+        mp_raise_ValueError("width and height must be greater than 0");
+    }
+    GrxContext *context = grx_context_new(width, height, NULL, NULL);
+    if (!context) {
+        mp_raise_msg(&mp_type_RuntimeError, "Failed to create graphics context");
+    }
+    grx_context_clear(context, GRX_COLOR_WHITE);
+    return ev3dev_Image_new(context);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Image_empty_fun_obj, ev3dev_Image_empty);
+STATIC MP_DEFINE_CONST_STATICMETHOD_OBJ(ev3dev_Image_empty_obj, MP_ROM_PTR(&ev3dev_Image_empty_fun_obj));
 
 STATIC mp_obj_t ev3dev_Image___del__(mp_obj_t self_in) {
     ev3dev_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -509,6 +529,7 @@ STATIC mp_obj_t ev3dev_Image_save(mp_obj_t self_in, mp_obj_t filename_in) {
 MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Image_save_obj, ev3dev_Image_save);
 
 STATIC const mp_rom_map_elem_t ev3dev_Image_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_empty),       MP_ROM_PTR(&ev3dev_Image_empty_obj)                    },
     { MP_ROM_QSTR(MP_QSTR___del__),     MP_ROM_PTR(&ev3dev_Image___del___obj)                  },
     { MP_ROM_QSTR(MP_QSTR_clear),       MP_ROM_PTR(&ev3dev_Image_clear_obj)                    },
     { MP_ROM_QSTR(MP_QSTR_draw_pixel),  MP_ROM_PTR(&ev3dev_Image_draw_pixel_obj)               },

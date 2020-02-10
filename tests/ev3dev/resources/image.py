@@ -31,6 +31,10 @@ img = Image(img)
 sub = Image(img, sub=True, x1=10, y1=10, x2=20, y2=20)
 print(sub.width, sub.height)
 
+# static method for creating blank image
+img = Image.empty(160, 120)
+
+
 # Test properties
 
 print(img.width)
