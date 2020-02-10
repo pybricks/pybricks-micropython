@@ -17,6 +17,7 @@
 #include "py/misc.h"
 #include "py/mpprint.h"
 #include "py/obj.h"
+#include "py/objstr.h"
 #include "py/runtime.h"
 
 #include "modparameters.h"
@@ -375,6 +376,13 @@ STATIC mp_obj_t ev3dev_Image_draw_text(size_t n_args, const mp_obj_t *pos_args, 
 
     mp_int_t x_ = pb_obj_get_int(x);
     mp_int_t y_ = pb_obj_get_int(y);
+    if (!mp_obj_is_str_or_bytes(text)) {
+        vstr_t vstr;
+        mp_print_t print;
+        vstr_init_print(&vstr, 16, &print);
+        mp_obj_print_helper(&print, text, PRINT_STR);
+        text = mp_obj_new_str_from_vstr(&mp_type_str, &vstr);
+    }
     const char *text_ = mp_obj_str_get_str(text);
     GrxColor color_ = map_color(color);
 
