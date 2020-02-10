@@ -211,8 +211,22 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
 
 pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t relative_target_count, int32_t rate_now, int32_t target_rate, pbio_actuation_t after_stop) {
 
+    // Get the count from which the relative count is to be counted
+    int32_t count_start;
+
+    // If no control is active, count from the physical count
+    if (ctl->type == PBIO_CONTROL_NONE) {
+        count_start = count_now;
+    }
+    // Otherwise count from the current reference
+    else {
+        int32_t time_ref = ctl->type == PBIO_CONTROL_TIMED ? time_now : pbio_count_integrator_get_ref_time(&ctl->count_integrator, time_now);
+        int32_t unused;
+        pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &count_start, &unused, &unused, &unused);
+    }
+
     // The target count is the start count plus the count to be traveled.  If speed is negative, traveled count also flips.
-    int32_t target_count = count_now + (target_rate < 0 ? -relative_target_count: relative_target_count);
+    int32_t target_count = count_start + (target_rate < 0 ? -relative_target_count: relative_target_count);
 
     return pbio_control_start_angle_control(ctl, time_now, count_now, target_count, rate_now, target_rate, after_stop);
 }
