@@ -342,6 +342,10 @@ STATIC mp_obj_t ev3dev_Image_draw_image(size_t n_args, const mp_obj_t *pos_args,
 
     mp_int_t x_ = pb_obj_get_int(x);
     mp_int_t y_ = pb_obj_get_int(y);
+    if (mp_obj_is_str(image)) {
+        mp_obj_t args[1] = { image };
+        image = ev3dev_Image_make_new(&pb_type_ev3dev_Image, 1, 0, args);
+    }
     if (!mp_obj_is_type(image, &pb_type_ev3dev_Image)) {
         mp_raise_TypeError("Image object is required");
     }

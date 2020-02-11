@@ -126,6 +126,7 @@ img.draw_circle(0, 0, 0, color=Color.BLACK)
 
 # three required arguments
 img.draw_image(0, 0, img)
+img.draw_image(0, 0, TEST_IMAGE)
 img.draw_image(x=0, y=0, image=img)
 try:
     img.draw_image(0, 0)
