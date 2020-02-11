@@ -139,17 +139,17 @@ img.draw_image(0, 0, img, transparent=None)
 img.draw_image(0, 0, img, transparent=Color.WHITE)
 
 
-# Test show_image()
+# Test load_image()
 
 # one required argument, Image or str
-img.show_image(img)
-img.show_image(TEST_IMAGE)
+img.load_image(img)
+img.load_image(TEST_IMAGE)
 try:
-    img.show_image()
+    img.load_image()
 except TypeError as ex:
     print(ex)
 try:
-    img.show_image(0)
+    img.load_image(0)
 except TypeError as ex:
     print(ex)
 

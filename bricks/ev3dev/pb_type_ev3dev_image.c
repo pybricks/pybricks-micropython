@@ -357,7 +357,7 @@ STATIC mp_obj_t ev3dev_Image_draw_image(size_t n_args, const mp_obj_t *pos_args,
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_draw_image_obj, 1, ev3dev_Image_draw_image);
 
-STATIC mp_obj_t ev3dev_Image_show_image(mp_obj_t self_in, mp_obj_t source_in) {
+STATIC mp_obj_t ev3dev_Image_load_image(mp_obj_t self_in, mp_obj_t source_in) {
     ev3dev_Image_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     if (mp_obj_is_str(source_in)) {
@@ -383,7 +383,7 @@ STATIC mp_obj_t ev3dev_Image_show_image(mp_obj_t self_in, mp_obj_t source_in) {
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Image_show_image_obj, ev3dev_Image_show_image);
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Image_load_image_obj, ev3dev_Image_load_image);
 
 STATIC mp_obj_t ev3dev_Image_draw_text(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -546,7 +546,7 @@ STATIC const mp_rom_map_elem_t ev3dev_Image_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_draw_box),    MP_ROM_PTR(&ev3dev_Image_draw_box_obj)                 },
     { MP_ROM_QSTR(MP_QSTR_draw_circle), MP_ROM_PTR(&ev3dev_Image_draw_circle_obj)              },
     { MP_ROM_QSTR(MP_QSTR_draw_image),  MP_ROM_PTR(&ev3dev_Image_draw_image_obj)               },
-    { MP_ROM_QSTR(MP_QSTR_show_image),  MP_ROM_PTR(&ev3dev_Image_show_image_obj)               },
+    { MP_ROM_QSTR(MP_QSTR_load_image),  MP_ROM_PTR(&ev3dev_Image_load_image_obj)               },
     { MP_ROM_QSTR(MP_QSTR_draw_text),   MP_ROM_PTR(&ev3dev_Image_draw_text_obj)                },
     { MP_ROM_QSTR(MP_QSTR_set_font),    MP_ROM_PTR(&ev3dev_Image_set_font_obj)                 },
     { MP_ROM_QSTR(MP_QSTR_print),       MP_ROM_PTR(&ev3dev_Image_print_obj)                    },
