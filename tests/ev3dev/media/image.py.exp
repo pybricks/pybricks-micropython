@@ -7,7 +7,7 @@
 'y2' argument required
 'y2' argument required
 'r' argument required
-'image' argument required
+'source' argument required
 function takes 2 positional arguments but 1 were given
 source must be Image or str
 'text' argument required

@@ -336,25 +336,25 @@ STATIC mp_obj_t ev3dev_Image_draw_image(size_t n_args, const mp_obj_t *pos_args,
         ev3dev_Image_obj_t, self,
         PB_ARG_REQUIRED(x),
         PB_ARG_REQUIRED(y),
-        PB_ARG_REQUIRED(image),
+        PB_ARG_REQUIRED(source),
         PB_ARG_DEFAULT_NONE(transparent)
     );
 
     mp_int_t x_ = pb_obj_get_int(x);
     mp_int_t y_ = pb_obj_get_int(y);
-    if (mp_obj_is_str(image)) {
-        mp_obj_t args[1] = { image };
-        image = ev3dev_Image_make_new(&pb_type_ev3dev_Image, 1, 0, args);
+    if (mp_obj_is_str(source)) {
+        mp_obj_t args[1] = { source };
+        source = ev3dev_Image_make_new(&pb_type_ev3dev_Image, 1, 0, args);
     }
-    if (!mp_obj_is_type(image, &pb_type_ev3dev_Image)) {
+    if (!mp_obj_is_type(source, &pb_type_ev3dev_Image)) {
         mp_raise_TypeError("Image object is required");
     }
-    ev3dev_Image_obj_t *image_ = MP_OBJ_TO_PTR(image);
+    ev3dev_Image_obj_t *source_ = MP_OBJ_TO_PTR(source);
     GrxColor transparent_ = map_color(transparent);
 
     clear_once(self);
-    grx_context_bit_blt(self->context, x_, y_, image_->context, 0, 0,
-        grx_context_get_max_x(image_->context), grx_context_get_max_y(image_->context),
+    grx_context_bit_blt(self->context, x_, y_, source_->context, 0, 0,
+        grx_context_get_max_x(source_->context), grx_context_get_max_y(source_->context),
         transparent_ == GRX_COLOR_NONE ? GRX_COLOR_MODE_WRITE : grx_color_to_image_mode(transparent_));
 
     return mp_const_none;
