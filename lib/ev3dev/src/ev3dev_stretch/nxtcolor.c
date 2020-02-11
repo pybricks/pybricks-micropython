@@ -475,7 +475,8 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, int32_t
                 nxtcolor->lamp = PBIO_LIGHT_COLOR_BLUE;
                 break;
             default:
-                return PBIO_ERROR_NOT_SUPPORTED;
+                nxtcolor->lamp = PBIO_LIGHT_COLOR_NONE;
+                break;
         }
         return nxtcolor_set_light(nxtcolor, nxtcolor->lamp);
     }

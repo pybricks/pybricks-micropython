@@ -221,7 +221,7 @@ void pbdevice_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color) {
                     mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_B;
                     break;
                 default:
-                    mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__SPEC1;
+                    mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_OFF;
                     break;
             }
             int32_t unused;
