@@ -10,7 +10,7 @@ from pybricks.bluetooth import (BDADDR_ANY, ThreadingRFCOMMServer,
 
 
 class Mailbox:
-    def __init__(self, name, connection, encode=repr, decode=eval):
+    def __init__(self, name, connection, encode=None, decode=None):
         """Object that represents a mailbox for sending an receiving messages
         from other connected devices.
 
@@ -38,7 +38,9 @@ class Mailbox:
             a value.
         """
         data = self._connection.read_from_mailbox(self.name)
-        return None if data is None else self._decode(data)
+        if data is None:
+            return None
+        return self._decode(data) if self._decode else data
 
     def send(self, value, destination=None):
         """Sends a value to remote mailboxes with the same name as this
@@ -49,7 +51,7 @@ class Mailbox:
             destination: The name or address of a specific device or ``None``
                 to broadcast to all connected devices.
         """
-        data = self._encode(value)
+        data = self._encode(value) if self._encode else value
         self._connection.send_to_mailbox(destination, self.name, data)
 
     def wait(self):
