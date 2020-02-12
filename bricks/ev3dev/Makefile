@@ -302,17 +302,16 @@ test: $(PROG) $(TOP)/tests/run-tests $(GRX_TEST_PLUGIN_LIB)
 		./run-tests
 
 # install micropython in /usr/local/bin
-TARGET = $(PROG)
-PREFIX = $(DESTDIR)/usr/local
-BINDIR = $(PREFIX)/bin
+PREFIX = /usr/local
+BINDIR = $(DESTDIR)$(PREFIX)/bin
 
 install: $(PROG)
 	install -d $(BINDIR)
-	install $(TARGET) $(BINDIR)/$(TARGET)
+	install $(PROG) $(BINDIR)/$(PROG)
 
 # uninstall micropython
 uninstall:
-	-rm $(BINDIR)/$(TARGET)
+	-rm $(BINDIR)/$(PROG)
 
 # Value of configure's --host= option (required for cross-compilation).
 # Deduce it from CROSS_COMPILE by default, but can be overridden.
