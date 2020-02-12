@@ -33,11 +33,8 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#include <glib.h>
-
 #include "py/mphal.h"
 #include "py/runtime.h"
-#include "extmod/misc.h"
 
 
 STATIC void sighandler(int signum) {
@@ -96,92 +93,24 @@ void mp_hal_stdio_mode_orig(void) {
 
 #endif
 
-#if MICROPY_PY_OS_DUPTERM
-static int call_dupterm_read(size_t idx) {
-    nlr_buf_t nlr;
-    if (nlr_push(&nlr) == 0) {
-        mp_obj_t read_m[3];
-        mp_load_method(MP_STATE_VM(dupterm_objs[idx]), MP_QSTR_read, read_m);
-        read_m[2] = MP_OBJ_NEW_SMALL_INT(1);
-        mp_obj_t res = mp_call_method_n_kw(1, 0, read_m);
-        if (res == mp_const_none) {
-            return -2;
-        }
-        mp_buffer_info_t bufinfo;
-        mp_get_buffer_raise(res, &bufinfo, MP_BUFFER_READ);
-        if (bufinfo.len == 0) {
-            mp_printf(&mp_plat_print, "dupterm: EOF received, deactivating\n");
-            MP_STATE_VM(dupterm_objs[idx]) = MP_OBJ_NULL;
-            return -1;
-        }
-        nlr_pop();
-        return *(byte*)bufinfo.buf;
-    } else {
-        // Temporarily disable dupterm to avoid infinite recursion
-        mp_obj_t save_term = MP_STATE_VM(dupterm_objs[idx]);
-        MP_STATE_VM(dupterm_objs[idx]) = NULL;
-        mp_printf(&mp_plat_print, "dupterm: ");
-        mp_obj_print_exception(&mp_plat_print, nlr.ret_val);
-        MP_STATE_VM(dupterm_objs[idx]) = save_term;
-    }
-
-    return -1;
-}
-#endif
-
 int mp_hal_stdin_rx_chr(void) {
     unsigned char c;
-#if MICROPY_PY_OS_DUPTERM
-    // TODO only support dupterm one slot at the moment
-    if (MP_STATE_VM(dupterm_objs[0]) != MP_OBJ_NULL) {
-        int c;
-        do {
-             c = call_dupterm_read(0);
-        } while (c == -2);
-        if (c == -1) {
-            goto main_term;
-        }
-        if (c == '\n') {
-            c = '\r';
-        }
-        return c;
-    } else {
-        main_term:;
-#endif
-        GPollFD fd = { .fd = STDIN_FILENO, .events = G_IO_IN };
-        g_main_context_add_poll(g_main_context_get_thread_default(), &fd, G_PRIORITY_DEFAULT);
-
-        nlr_buf_t nlr;
-        if (nlr_push(&nlr) == 0) {
-            do {
-                MICROPY_EVENT_POLL_HOOK
-            } while (!fd.revents);
-            nlr_pop();
-        }
-        else {
-            g_main_context_remove_poll(g_main_context_get_thread_default(), &fd);
-            nlr_jump(nlr.ret_val);
-        }
-
-        g_main_context_remove_poll(g_main_context_get_thread_default(), &fd);
-
-        int ret = read(STDIN_FILENO, &c, 1);
-        if (ret == 0) {
-            c = 4; // EOF, ctrl-D
-        } else if (c == '\n') {
-            c = '\r';
-        }
-        return c;
-#if MICROPY_PY_OS_DUPTERM
+    int ret;
+    MP_THREAD_GIL_EXIT();
+    ret = read(STDIN_FILENO, &c, 1);
+    MP_THREAD_GIL_ENTER();
+    if (ret == 0) {
+        c = 4; // EOF, ctrl-D
+    } else if (c == '\n') {
+        c = '\r';
     }
-#endif
+    return c;
 }
 
 void mp_hal_stdout_tx_strn(const char *str, size_t len) {
     MP_THREAD_GIL_EXIT();
-    int ret = write(1, str, len);
+    int ret = write(STDOUT_FILENO, str, len);
     MP_THREAD_GIL_ENTER();
-    mp_uos_dupterm_tx_strn(str, len);
     (void)ret; // to suppress compiler warning
 }
 
