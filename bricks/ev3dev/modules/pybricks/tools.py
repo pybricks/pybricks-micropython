@@ -15,8 +15,7 @@ class DataLog():
             self.file.write('{0}\n'.format(header))
 
     def log(self, *args):
-        line = ', '.join(str(a) for a in args)
-        self.file.write('{0}\r\n'.format(line))
+        print(*args, sep=', ', file=self.file)
 
     def show(self):
         self.file.close()
