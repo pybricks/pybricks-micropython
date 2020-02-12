@@ -24,9 +24,12 @@
  * THE SOFTWARE.
  */
 
+#include <assert.h>
+#include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <sys/time.h>
 
@@ -203,28 +206,22 @@ mp_uint_t mp_hal_ticks_us(void) {
     return tv.tv_sec * 1000000 + tv.tv_usec;
 }
 
-static gboolean end_delay_ms(gpointer user_data) {
-    gboolean *done = user_data;
-    *done = TRUE;
-    return G_SOURCE_REMOVE;
-}
-
 void mp_hal_delay_ms(mp_uint_t ms) {
-    gboolean done = FALSE;
-    GSource *source = g_timeout_source_new(ms);
-    g_source_set_callback(source, end_delay_ms, &done, NULL);
-    g_source_attach(source, g_main_context_get_thread_default());
-    nlr_buf_t nlr;
-    if (nlr_push(&nlr) == 0) {
-        do {
-            MICROPY_EVENT_POLL_HOOK
-        } while (!done);
-        nlr_pop();
+    struct timespec ts = {
+        .tv_sec = ms / 1000,
+        .tv_nsec = ms % 1000 * 1000000,
+    };
+    struct timespec remain;
+    for(;;) {
+        MP_THREAD_GIL_EXIT();
+        int ret = clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, &remain);
+        MP_THREAD_GIL_EXIT();
+        if (ret == EINTR) {
+            mp_handle_pending();
+            ts = remain;
+            continue;
+        }
+        assert(ret == 0);
+        break;
     }
-    else {
-        g_source_destroy(source);
-        g_source_unref(source);
-        nlr_jump(nlr.ret_val);
-    }
-    g_source_unref(source);
 }
