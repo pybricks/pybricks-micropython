@@ -92,14 +92,15 @@ jobs:
     - stage: test
       env:
         - NAME="Pybricks Move Hub build"
-        - PATH="/opt/gcc-arm-none-eabi-7-2018-q2-update/bin:${PATH}"
+      before_install:
+        - sudo apt-add-repository --update --yes ppa:team-gcc-arm-embedded/ppa
       install:
+        - sudo apt-get install gcc-arm-embedded libnewlib-arm-none-eabi
+        - arm-none-eabi-gcc --version
         - npm install -g jfrog-cli-go
         - jfrog --version
         - pyenv shell 3.6
         - cd ${HOME}
-        - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
-        - sudo tar -C /opt -xf gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
         - git clone --depth=10 --branch=$(cat ${TRAVIS_BUILD_DIR}/micropython-tag) --recursive https://github.com/pybricks/micropython;
         - cd micropython/ports/pybricks
         - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
@@ -120,14 +121,15 @@ jobs:
     - stage: test
       env:
         - NAME="Pybricks City Hub build"
-        - PATH="/opt/gcc-arm-none-eabi-7-2018-q2-update/bin:${PATH}"
+      before_install:
+        - sudo apt-add-repository --update --yes ppa:team-gcc-arm-embedded/ppa
       install:
+        - sudo apt-get install gcc-arm-embedded libnewlib-arm-none-eabi
+        - arm-none-eabi-gcc --version
         - npm install -g jfrog-cli-go
         - jfrog --version
         - pyenv shell 3.6
         - cd ${HOME}
-        - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
-        - sudo tar -C /opt -xf gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
         - git clone --depth=10 --branch=$(cat ${TRAVIS_BUILD_DIR}/micropython-tag) --recursive https://github.com/pybricks/micropython;
         - cd micropython/ports/pybricks
         - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
@@ -148,14 +150,15 @@ jobs:
     - stage: test
       env:
         - NAME="Pybricks Technic Control+ Hub build"
-        - PATH="/opt/gcc-arm-none-eabi-7-2018-q2-update/bin:${PATH}"
+      before_install:
+        - sudo apt-add-repository --update --yes ppa:team-gcc-arm-embedded/ppa
       install:
+        - sudo apt-get install gcc-arm-embedded libnewlib-arm-none-eabi
+        - arm-none-eabi-gcc --version
         - npm install -g jfrog-cli-go
         - jfrog --version
         - pyenv shell 3.6
         - cd ${HOME}
-        - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
-        - sudo tar -C /opt -xf gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
         - git clone --depth=10 --branch=$(cat ${TRAVIS_BUILD_DIR}/micropython-tag) --recursive https://github.com/pybricks/micropython;
         - cd micropython/ports/pybricks
         - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
@@ -176,14 +179,15 @@ jobs:
     - stage: test
       env:
         - NAME="Pybricks NXT Brick build"
-        - PATH="/opt/gcc-arm-none-eabi-7-2018-q2-update/bin:${PATH}"
+      before_install:
+        - sudo apt-add-repository --update --yes ppa:team-gcc-arm-embedded/ppa
       install:
+        - sudo apt-get install gcc-arm-embedded libnewlib-arm-none-eabi
+        - arm-none-eabi-gcc --version
         - npm install -g jfrog-cli-go
         - jfrog --version
         - pyenv shell 3.6
         - cd ${HOME}
-        - wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/7-2018q2/gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
-        - sudo tar -C /opt -xf gcc-arm-none-eabi-7-2018-q2-update-linux.tar.bz2
         - git clone --depth=10 --branch=$(cat ${TRAVIS_BUILD_DIR}/micropython-tag) --recursive https://github.com/pybricks/micropython;
         - cd micropython/ports/pybricks
         - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
