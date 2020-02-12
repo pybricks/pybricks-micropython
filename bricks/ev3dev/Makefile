@@ -160,7 +160,6 @@ SRC_C = $(addprefix ports/unix/,\
 	moduselect.c \
 	alloc.c \
 	coverage.c \
-	fatfs_port.c \
 	)
 
 SRC_C += $(SRC_MOD)
