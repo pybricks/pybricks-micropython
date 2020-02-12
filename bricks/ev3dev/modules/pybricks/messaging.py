@@ -5,7 +5,7 @@ from _thread import allocate_lock
 from uerrno import ECONNRESET
 from ustruct import pack, unpack
 
-from pybricks.bluetooth import (BDADDR_ANY, ThreadingRFCOMMServer,
+from pybricks.bluetooth import (resolve, BDADDR_ANY, ThreadingRFCOMMServer,
                                 ThreadingRFCOMMClient, StreamRequestHandler)
 
 
@@ -196,6 +196,8 @@ class MailboxHandlerMixIn:
         self._clients = {}
         # map of mailbox name to mutex lock
         self._updates = {}
+        # map of names to addresses
+        self._addresses = {}
 
     def read_from_mailbox(self, mbox):
         """Reads the current raw data from a mailbox.
@@ -215,12 +217,10 @@ class MailboxHandlerMixIn:
     def send_to_mailbox(self, brick, mbox, payload):
         """Sends a mailbox value using raw bytes data.
 
-        .. todo:: Currently the Bluetooth address must be used instead of the
-                  the brick name.
-
         Arguments:
             brick (str):
-                The name of the brick or ``None``` to broadcast
+                The name or address of the brick or ``None``` to broadcast to
+                all connected devices
             mbox (str):
                 The name of the mailbox.
             payload (bytes):
@@ -237,7 +237,13 @@ class MailboxHandlerMixIn:
                 for client in self._clients.values():
                     client.send(data)
             else:
-                self._clients[brick].send(data)
+                addr = self._addresses.get(brick)
+                if addr is None:
+                    addr = resolve(brick)
+                    self._addresses[brick] = addr
+                if addr is None:
+                    raise ValueError('no paired devices matching "{}"'.format(brick))
+                self._clients[addr].send(data)
 
     def wait_for_mailbox_update(self, mbox):
         """Waits until ``mbox`` receives a value."""
@@ -312,27 +318,29 @@ class BluetoothMailboxClient(MailboxHandlerMixIn):
         The remote device must be paired and waiting for a connection. See
         :meth:`BluetoothMailboxServer.wait_for_connection`.
 
-        .. todo:: Currently the Bluetooth address must be used instead of the
-                  the brick name.
-
         Arguments:
             brick (str):
                 The name or address of the remote EV3 to connect to.
 
         Raises:
+            TypeError:
+                ``brick`` is not a string
             ValueError:
-                Connection to ``brick`` already exists.
+                There are no paired Bluetooth devices that match ``brick``
+                or connection to ``brick`` already exists.
             OSError:
                 There was a problem establishing the connection.
         """
-        addr = brick  # FIXME: resolve name to address
+        addr = resolve(brick)
+        if addr is None:
+            raise ValueError('no paired devices matching "{}"'.format(brick))
         client = MailboxRFCOMMClient(self, addr)
-        if self._clients.setdefault(brick, client) is not client:
+        if self._clients.setdefault(addr, client) is not client:
             raise ValueError('connection with this address already exists')
         try:
             client.handle_request()
         except:
-            del self._clients[brick]
+            del self._clients[addr]
             raise
 
     def close(self):

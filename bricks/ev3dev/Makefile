@@ -174,6 +174,7 @@ PYBRICKS_SRC_C += \
 	pbinit.c \
 	pbsmbus.c \
 	pbdevice.c \
+	modbluetooth.c \
 
 LIB_SRC_C = $(addprefix lib/,\
 	$(LIB_SRC_C_EXTRA) \

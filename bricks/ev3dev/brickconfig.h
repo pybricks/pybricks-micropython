@@ -39,6 +39,7 @@
 
 #define MICROPY_PY_SYS_PATH_DEFAULT (":~/.pybricks-micropython/lib:/usr/lib/pybricks-micropython")
 
+extern const struct _mp_obj_module_t pb_module_bluetooth;
 extern const struct _mp_obj_module_t pb_module_ev3devices;
 extern const struct _mp_obj_module_t pb_module_hubs;
 extern const struct _mp_obj_module_t pb_module_iodevices;
@@ -49,6 +50,7 @@ extern const struct _mp_obj_module_t pb_module_robotics;
 extern const struct _mp_obj_module_t pb_module_tools;
 
 #define PYBRICKS_PORT_BUILTIN_MODULES \
+    { MP_ROM_QSTR(MP_QSTR_bluetooth_c),     MP_ROM_PTR(&pb_module_bluetooth)        }, \
     { MP_ROM_QSTR(MP_QSTR_ev3devices_c),    MP_ROM_PTR(&pb_module_ev3devices)       }, \
     { MP_ROM_QSTR(MP_QSTR_hubs_c),          MP_ROM_PTR(&pb_module_hubs)             }, \
     { MP_ROM_QSTR(MP_QSTR_iodevices_c),     MP_ROM_PTR(&pb_module_iodevices)        }, \
