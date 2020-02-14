@@ -293,6 +293,19 @@ STATIC mp_obj_t nxtdevices_ColorSensor_all(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_all_obj, nxtdevices_ColorSensor_all);
 
+// pybricks.nxtdevices.ColorSensor.rgb
+STATIC mp_obj_t nxtdevices_ColorSensor_rgb(mp_obj_t self_in) {
+    nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t all[5];
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
+    mp_obj_t ret[3];
+    for (uint8_t i = 0; i < 3; i++) {
+        ret[i] = mp_obj_new_int(all[i]);
+    }
+    return mp_obj_new_tuple(3, ret);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_rgb_obj, nxtdevices_ColorSensor_rgb);
+
 // pybricks.nxtdevices.ColorSensor.reflection
 STATIC mp_obj_t nxtdevices_ColorSensor_reflection(mp_obj_t self_in) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -326,6 +339,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_color_obj, nxtdevices_Co
 // dir(pybricks.nxtdevices.ColorSensor)
 STATIC const mp_rom_map_elem_t nxtdevices_ColorSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_all),        MP_ROM_PTR(&nxtdevices_ColorSensor_all_obj)                  },
+    { MP_ROM_QSTR(MP_QSTR_rgb),        MP_ROM_PTR(&nxtdevices_ColorSensor_rgb_obj)                  },
     { MP_ROM_QSTR(MP_QSTR_ambient),    MP_ROM_PTR(&nxtdevices_ColorSensor_ambient_obj)              },
     { MP_ROM_QSTR(MP_QSTR_reflection), MP_ROM_PTR(&nxtdevices_ColorSensor_reflection_obj)           },
     { MP_ROM_QSTR(MP_QSTR_color),      MP_ROM_PTR(&nxtdevices_ColorSensor_color_obj)                },
