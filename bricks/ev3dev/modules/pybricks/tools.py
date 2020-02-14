@@ -8,7 +8,7 @@ from utime import localtime, ticks_us
 
 
 class DataLog():
-    def __init__(self, *headers, name='log', timestamp=True, ext='csv'):
+    def __init__(self, *headers, name='log', timestamp=True, extension='csv'):
 
         # Make timestamp of the form yyyy_mm_dd_hh_mm_ss_uuuuuu
         if timestamp:
@@ -25,8 +25,8 @@ class DataLog():
         if len(headers) > 0:
             print(*headers, sep=', ', file=self.file)
 
-    def log(self, *args):
-        print(*args, sep=', ', file=self.file)
+    def log(self, *values):
+        print(*values, sep=', ', file=self.file)
 
     def __repr__(self):
         self.file.seek(0, 0)
