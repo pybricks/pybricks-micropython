@@ -144,7 +144,7 @@ void mp_hal_delay_ms(mp_uint_t ms) {
     for(;;) {
         MP_THREAD_GIL_EXIT();
         int ret = clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, &remain);
-        MP_THREAD_GIL_EXIT();
+        MP_THREAD_GIL_ENTER();
         if (ret == EINTR) {
             mp_handle_pending();
             ts = remain;
