@@ -1,0 +1,8 @@
+'OK1'
+'OK2'
+An unhandled exception occurred in run_parallel
+SystemExit()
+Exception('oops',)
+'OK1'
+'OK2'
+SystemExit()

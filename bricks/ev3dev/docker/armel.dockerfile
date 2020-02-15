@@ -39,3 +39,4 @@ RUN sudo rm /etc/fonts/conf.d/70-no-bitmaps.conf
 ENV PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabi/pkgconfig
 ENV CROSS_COMPILE=arm-linux-gnueabi-
 ENV BUILD=build-armel
+ENV PYBRICKS_BUILD_ENV=docker-armel

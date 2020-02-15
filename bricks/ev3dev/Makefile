@@ -167,13 +167,14 @@ SRC_C += $(SRC_MOD)
 # Pybricks port core source files
 PYBRICKS_SRC_C += \
 	ev3dev_mphal.c \
+	modbluetooth.c \
+	modusignal.c \
 	pb_type_ev3dev_font.c \
 	pb_type_ev3dev_image.c \
 	pb_type_ev3dev_speaker.c \
+	pbdevice.c \
 	pbinit.c \
 	pbsmbus.c \
-	pbdevice.c \
-	modbluetooth.c \
 
 LIB_SRC_C = $(addprefix lib/,\
 	$(LIB_SRC_C_EXTRA) \
@@ -187,6 +188,7 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modbuiltins.c \
 	modbuttons.c \
 	modev3devices.c \
+	modexperimental.c \
 	modhubs.c \
 	modiodevices.c \
 	modlogger.c \
@@ -274,6 +276,7 @@ include $(TOP)/py/mkrules.mk
 
 EV3DEV_TEST_DIRS = $(addprefix ../ports/pybricks/tests/ev3dev/, \
 	brick \
+	experimental \
 	motor \
 	media \
 	messaging \
