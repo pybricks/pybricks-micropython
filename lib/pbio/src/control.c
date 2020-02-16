@@ -32,7 +32,7 @@ static void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, i
     rate_err = rate_ref - rate_now;
 
     // Update integral error and get current error state
-    pbio_count_integrator_update(&ctl->count_integrator, time_now, count_now, count_ref, ctl->trajectory.th3);
+    pbio_count_integrator_update(&ctl->count_integrator, time_now, count_now, count_ref, ctl->trajectory.th3, ctl->settings.integral_range);
     pbio_count_integrator_get_errors(&ctl->count_integrator, count_now, count_ref, &count_err, &count_err_integral);
 
     // Corresponding PD control signal
@@ -186,7 +186,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
     if (ctl->type != PBIO_CONTROL_ANGLE) {
         // New angle maneuver, so reset the rate integrator
         int32_t integrator_max = pbio_control_settings_get_max_integrator(&ctl->settings);
-        pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max, ctl->settings.integral_range);
+        pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max);
 
         // Set the new control state
         ctl->type = PBIO_CONTROL_ANGLE;
@@ -230,7 +230,7 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
     if (ctl->type != PBIO_CONTROL_ANGLE) {
         // Initialize or reset the PID control status for the given maneuver
         int32_t integrator_max = pbio_control_settings_get_max_integrator(&ctl->settings);
-        pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max, ctl->settings.integral_range);
+        pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max);
 
         // This is an angular control maneuver
         ctl->type = PBIO_CONTROL_ANGLE;
