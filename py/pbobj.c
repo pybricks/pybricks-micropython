@@ -6,6 +6,7 @@
 #include <fixmath.h>
 
 #include "pberror.h"
+#include "pbobj.h"
 
 #include "py/objstr.h"
 #include "py/mpconfig.h"
@@ -31,6 +32,6 @@ fix16_t pb_obj_get_fix16(mp_obj_t arg) {
 }
 
 mp_int_t pb_obj_get_default_int(mp_obj_t obj, mp_int_t default_val) {
-    return obj == mp_const_none ? default_val : mp_obj_get_int(obj);
+    return obj == mp_const_none ? default_val : pb_obj_get_int(obj);
 }
 
