@@ -19,10 +19,12 @@ static pbio_control_settings_t settings_drivebase_heading_default = {
     .count_tolerance = 8,
     .stall_rate_limit = 8,
     .stall_time = 200,
-    .pid_kp = 200,
-    .pid_ki = 0,
-    .pid_kd = 12,
-    .max_control = 10000,
+    .pid_kp = 400,
+    .pid_ki = 1500,
+    .pid_kd = 5,
+    .integral_range = 50,
+    .integral_rate = 6,
+    .max_control = 20000,
 };
 
 static pbio_control_settings_t settings_drivebase_distance_default = {
@@ -32,10 +34,12 @@ static pbio_control_settings_t settings_drivebase_distance_default = {
     .count_tolerance = 8,
     .stall_rate_limit = 8,
     .stall_time = 200,
-    .pid_kp = 200,
-    .pid_ki = 0,
-    .pid_kd = 10,
-    .max_control = 10000,
+    .pid_kp = 400,
+    .pid_ki = 1500,
+    .pid_kd = 5,
+    .integral_range = 50,
+    .integral_rate = 6,
+    .max_control = 20000,
 };
 
 static pbio_drivebase_t __db;
