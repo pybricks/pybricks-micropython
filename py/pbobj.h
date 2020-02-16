@@ -15,9 +15,6 @@ mp_store_global(name, mp_import_name(name, mp_const_none, MP_OBJ_NEW_SMALL_INT(0
 #define PB_FROM_MODULE_IMPORT_ALL(name) \
 mp_import_all(mp_import_name(name, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)))
 
-// Shortcut for defining attribute as address offset from base
-#define PB_ATTR(type, elem) &(mp_int_t){offsetof(type, elem)}
-
 // like mp_obj_get_int() but also allows float
 #if MICROPY_PY_BUILTINS_FLOAT
 mp_int_t pb_obj_get_int(mp_obj_t arg);
