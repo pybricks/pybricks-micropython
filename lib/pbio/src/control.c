@@ -32,7 +32,7 @@ static void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, i
     rate_err = rate_ref - rate_now;
 
     // Update integral error and get current error state
-    pbio_count_integrator_update(&ctl->count_integrator, time_now, count_now, count_ref, ctl->trajectory.th3, ctl->settings.integral_range);
+    pbio_count_integrator_update(&ctl->count_integrator, time_now, count_now, count_ref, ctl->trajectory.th3, ctl->settings.integral_range, ctl->settings.integral_rate);
     pbio_count_integrator_get_errors(&ctl->count_integrator, count_now, count_ref, &count_err, &count_err_integral);
 
     // Corresponding PD control signal
@@ -345,14 +345,15 @@ pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_
     return PBIO_SUCCESS;
 }
 
-void pbio_control_settings_get_pid(pbio_control_settings_t *s, int16_t *pid_kp, int16_t *pid_ki, int16_t *pid_kd, int32_t *integral_range) {
+void pbio_control_settings_get_pid(pbio_control_settings_t *s, int16_t *pid_kp, int16_t *pid_ki, int16_t *pid_kd, int32_t *integral_range, int32_t *integral_rate) {
     *pid_kp = s->pid_kp;
     *pid_ki = s->pid_ki;
     *pid_kd = s->pid_kd;
     *integral_range = pbio_control_counts_to_user(s, s->integral_range);
+    *integral_rate = pbio_control_counts_to_user(s, s->integral_rate);
 }
 
-pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd, int32_t integral_range) {
+pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd, int32_t integral_range, int32_t integral_rate) {
     if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || integral_range < 0) {
         return PBIO_ERROR_INVALID_ARG;
     }
@@ -361,6 +362,7 @@ pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int16_t p
     s->pid_ki = pid_ki;
     s->pid_kd = pid_kd;
     s->integral_range = pbio_control_user_to_counts(s, integral_range);
+    s->integral_rate = pbio_control_user_to_counts(s, integral_rate);
     return PBIO_SUCCESS;
 }
 

@@ -50,7 +50,7 @@ void pbio_count_integrator_resume(pbio_count_integrator_t *itg, int32_t time_now
 
 void pbio_count_integrator_reset(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref, int32_t max);
 
-void pbio_count_integrator_update(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref, int32_t count_target, int32_t integral_range);
+void pbio_count_integrator_update(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref, int32_t count_target, int32_t integral_range, int32_t integral_rate);
 
 void pbio_count_integrator_get_errors(pbio_count_integrator_t *itg, int32_t count, int32_t count_ref, int32_t *count_err, int32_t *count_err_integral);
 

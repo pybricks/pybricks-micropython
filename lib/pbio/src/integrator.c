@@ -153,12 +153,15 @@ void pbio_count_integrator_reset(pbio_count_integrator_t *itg, int32_t time_now,
 
 }
 
-void pbio_count_integrator_update(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref, int32_t count_target, int32_t integral_range) {
+void pbio_count_integrator_update(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref, int32_t count_target, int32_t integral_range, int32_t integral_rate) {
     // Integrate and update position error
     if (itg->trajectory_running) {
 
         // Counts to be to integrator: previous error times time difference
         int32_t change = itg->count_err_prev*(time_now - itg->time_prev);
+
+
+        // TODO: use integral_rate setting
 
         // Add change if allowed to grow, or if it deflates the integral
         if (abs(count_target - count_ref) <= integral_range || abs(itg->count_err_integral + change) < abs(itg->count_err_integral)) {
