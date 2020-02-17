@@ -7,7 +7,7 @@
 
 #include "py/obj.h"
 
-void pb_type_enum_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind);
+void pb_type_enum_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind);
 
 // returns enum->value if enum is of expected type, throws TypeError otherwise
 mp_int_t pb_type_enum_get_value(mp_obj_t obj, const mp_obj_type_t *type);
@@ -39,6 +39,7 @@ const mp_obj_type_t enum_type = { \
     { &mp_type_type }, \
     .name = enum_name, \
     .print = pb_type_enum_print, \
+    .unary_op = mp_generic_unary_op, \
     .locals_dict = (mp_obj_dict_t*)&(enum_type ## _locals_dict),\
 }
 
