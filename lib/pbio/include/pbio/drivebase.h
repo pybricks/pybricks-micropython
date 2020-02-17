@@ -24,9 +24,9 @@ pbio_error_t pbio_drivebase_get(pbio_drivebase_t **_db, pbio_servo_t *left, pbio
 
 // Finite point to point control
 
-pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance);
+pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int32_t straight_speed, int32_t straight_acceleration);
 
-pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle);
+pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle, int32_t turn_rate, int32_t turn_acceleration);
 
 // Ininite driving
 

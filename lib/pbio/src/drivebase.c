@@ -13,8 +13,8 @@
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
 static pbio_control_settings_t settings_drivebase_heading_default = {
-    .max_rate = 360,
-    .abs_acceleration = 720,
+    .max_rate = 1000,
+    .abs_acceleration = 2000,
     .rate_tolerance = 8,
     .count_tolerance = 8,
     .stall_rate_limit = 8,
@@ -28,8 +28,8 @@ static pbio_control_settings_t settings_drivebase_heading_default = {
 };
 
 static pbio_control_settings_t settings_drivebase_distance_default = {
-    .max_rate = 800,
-    .abs_acceleration = 1600,
+    .max_rate = 1000,
+    .abs_acceleration = 2000,
     .rate_tolerance = 8,
     .count_tolerance = 8,
     .stall_rate_limit = 8,
@@ -283,7 +283,7 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     return drivebase_log_update(db, time_now, sum, sum_rate, sum_control, dif, dif_rate, dif_control);
 }
 
-pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance) {
+pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int32_t drive_speed, int32_t drive_acceleration) {
 
     pbio_error_t err;
 
@@ -294,17 +294,22 @@ pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance) {
         return err;
     }
 
-    // Targets in units of count
+    // Sum controller performs a maneuver to drive a distance
     int32_t relative_sum_target = pbio_control_user_to_counts(&db->control_distance.settings, distance);
-    int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, db->control_distance.settings.max_rate);
-    int32_t target_dif_rate = pbio_control_user_to_counts(&db->control_heading.settings, db->control_heading.settings.max_rate);
+    int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, drive_speed);
+    int32_t sum_acceleration = pbio_control_user_to_counts(&db->control_distance.settings, drive_acceleration);
 
-    // Initialize both controllers
-    err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, sum, relative_sum_target, sum_rate, target_sum_rate, db->control_distance.settings.abs_acceleration, PBIO_ACTUATION_HOLD);
+    err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, sum, relative_sum_target, sum_rate, target_sum_rate, sum_acceleration, PBIO_ACTUATION_HOLD);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, dif, 0, dif_rate, target_dif_rate, db->control_heading.settings.abs_acceleration, PBIO_ACTUATION_HOLD);
+
+    // Dif controller just holds still
+    int32_t relative_dif_target = 0;
+    int32_t target_dif_rate = db->control_heading.settings.max_rate;
+    int32_t dif_acceleration = db->control_heading.settings.abs_acceleration;
+
+    err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, dif, relative_dif_target, dif_rate, target_dif_rate, dif_acceleration, PBIO_ACTUATION_HOLD);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -312,7 +317,7 @@ pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle) {
+pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle, int32_t turn_rate, int32_t turn_acceleration) {
 
     pbio_error_t err;
 
@@ -323,17 +328,23 @@ pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle) {
         return err;
     }
 
-    // Targets in units of count
-    int32_t relative_dif_target = pbio_control_user_to_counts(&db->control_heading.settings, angle);
-    int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, db->control_distance.settings.max_rate);
-    int32_t target_dif_rate = pbio_control_user_to_counts(&db->control_heading.settings, db->control_heading.settings.max_rate);
 
-    // Initialize both controllers
-    err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, sum, 0, sum_rate, target_sum_rate, db->control_distance.settings.abs_acceleration, PBIO_ACTUATION_HOLD);
+    // Sum controller just holds still
+    int32_t relative_sum_target = 0;
+    int32_t target_sum_rate = db->control_distance.settings.max_rate;
+    int32_t sum_acceleration = db->control_distance.settings.abs_acceleration;
+
+    err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, sum, relative_sum_target, sum_rate, target_sum_rate, sum_acceleration, PBIO_ACTUATION_HOLD);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, dif, relative_dif_target, dif_rate, target_dif_rate, db->control_heading.settings.abs_acceleration, PBIO_ACTUATION_HOLD);
+
+    // Dif controller performs a maneuver to make a turn
+    int32_t relative_dif_target = pbio_control_user_to_counts(&db->control_heading.settings, angle);
+    int32_t target_dif_rate = pbio_control_user_to_counts(&db->control_heading.settings, turn_rate);
+    int32_t dif_acceleration = pbio_control_user_to_counts(&db->control_heading.settings, turn_acceleration);
+
+    err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, dif, relative_dif_target, dif_rate, target_dif_rate, dif_acceleration, PBIO_ACTUATION_HOLD);
     if (err != PBIO_SUCCESS) {
         return err;
     }

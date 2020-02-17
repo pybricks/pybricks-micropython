@@ -95,7 +95,7 @@ STATIC mp_obj_t robotics_DriveBase_straight(size_t n_args, const mp_obj_t *pos_a
     );
 
     int32_t distance_val = pb_obj_get_int(distance);
-    pb_assert(pbio_drivebase_straight(self->db, distance_val));
+    pb_assert(pbio_drivebase_straight(self->db, distance_val, self->straight_speed, self->straight_acceleration));
 
     wait_for_completion_drivebase(self->db);
 
@@ -111,7 +111,7 @@ STATIC mp_obj_t robotics_DriveBase_turn(size_t n_args, const mp_obj_t *pos_args,
     );
 
     int32_t angle_val = pb_obj_get_int(angle);
-    pb_assert(pbio_drivebase_turn(self->db, angle_val));
+    pb_assert(pbio_drivebase_turn(self->db, angle_val, self->turn_rate, self->turn_acceleration));
 
     wait_for_completion_drivebase(self->db);
 
