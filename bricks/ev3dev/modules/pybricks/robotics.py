@@ -11,6 +11,6 @@ from tools import wait
 class DriveBase(DriveBase_c):
     # Add Legacy EV3 MicroPython 1.0 function
     def drive_time(self, speed, steering, time):
-        self.start(speed, steering)
+        self.drive(speed, steering)
         wait(time)
         self.stop()
