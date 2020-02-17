@@ -33,7 +33,7 @@
 /* Wait for maneuver to complete */
 
 STATIC void wait_for_completion(pbio_servo_t *srv) {
-    while (!srv->control.on_target) {
+    while (!pbio_control_is_done(&srv->control)) {
         mp_hal_delay_ms(5);
     }
 }
@@ -203,17 +203,6 @@ STATIC mp_obj_t motor_Motor_angle(mp_obj_t self_in) {
     return mp_obj_new_int(angle);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_angle_obj, motor_Motor_angle);
-
-// pybricks.builtins.Motor.stalled
-STATIC mp_obj_t motor_Motor_stalled(mp_obj_t self_in) {
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    bool stalled;
-
-    pb_assert(pbio_servo_is_stalled(self->srv, &stalled));
-
-    return mp_obj_new_bool(stalled);
-}
-MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_stalled_obj, motor_Motor_stalled);
 
 // pybricks.builtins.Motor.reset_angle
 STATIC mp_obj_t motor_Motor_reset_angle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -453,7 +442,6 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_angle), MP_ROM_PTR(&motor_Motor_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_speed), MP_ROM_PTR(&motor_Motor_speed_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_angle), MP_ROM_PTR(&motor_Motor_reset_angle_obj) },
-    { MP_ROM_QSTR(MP_QSTR_stalled), MP_ROM_PTR(&motor_Motor_stalled_obj) },
     { MP_ROM_QSTR(MP_QSTR_run), MP_ROM_PTR(&motor_Motor_run_obj) },
     { MP_ROM_QSTR(MP_QSTR_run_time), MP_ROM_PTR(&motor_Motor_run_time_obj) },
     { MP_ROM_QSTR(MP_QSTR_run_until_stalled), MP_ROM_PTR(&motor_Motor_run_until_stalled_obj) },

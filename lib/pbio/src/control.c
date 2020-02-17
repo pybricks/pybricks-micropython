@@ -415,3 +415,11 @@ int32_t pbio_control_get_ref_time(pbio_control_t *ctl, int32_t time_now) {
     }
     return 0;
 }
+
+bool pbio_control_is_stalled(pbio_control_t *ctl) {
+    return ctl->type != PBIO_CONTROL_NONE && ctl->stalled;
+}
+
+bool pbio_control_is_done(pbio_control_t *ctl) {
+    return ctl->type == PBIO_CONTROL_NONE || ctl->on_target;
+}

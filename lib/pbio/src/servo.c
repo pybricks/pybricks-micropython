@@ -338,11 +338,6 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
 
 /* pbio user functions */
 
-pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled) {
-    *stalled = srv->control.type != PBIO_CONTROL_NONE && srv->control.stalled;
-    return PBIO_SUCCESS;
-}
-
 pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps) {
     pbio_control_stop(&srv->control);
     return pbio_dcmotor_set_duty_cycle_usr(srv->dcmotor, duty_steps);

@@ -49,7 +49,7 @@ print(m.speed())  # expect 500
 
 # testing stalled
 
-print(m.stalled())  # expect False
+print(m.control.stalled())  # expect False
 
 
 # testing direct control of duty cycle
