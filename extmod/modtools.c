@@ -12,10 +12,9 @@ STATIC mp_obj_t tools_wait(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw
         PB_ARG_REQUIRED(time)
     );
     mp_int_t duration = pb_obj_get_int(time);
-    if (duration < 0) {
-        pb_assert(PBIO_ERROR_INVALID_ARG);
+    if (duration > 0) {
+        mp_hal_delay_ms(duration);
     }
-    mp_hal_delay_ms(duration);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_wait_obj, 0, tools_wait);
