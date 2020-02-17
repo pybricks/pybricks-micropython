@@ -10,9 +10,7 @@
 
 void pb_type_enum_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
     pb_obj_enum_member_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, qstr_str(self->base.type->name));
-    mp_printf(print, ".");
-    mp_printf(print, qstr_str(self->name));
+    mp_printf(print, "%q.%q", self->base.type->name, self->name);
 }
 
 mp_int_t pb_type_enum_get_value(mp_obj_t obj, const mp_obj_type_t *type) {
