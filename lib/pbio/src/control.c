@@ -154,7 +154,7 @@ void pbio_control_stop(pbio_control_t *ctl) {
     ctl->on_target_func = pbio_control_on_target_never;
 }
 
-pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t target_count, int32_t rate_now, int32_t target_rate, pbio_actuation_t after_stop) {
+pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t target_count, int32_t rate_now, int32_t target_rate, int32_t acceleration, pbio_actuation_t after_stop) {
 
     pbio_error_t err;
 
@@ -166,7 +166,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
     // Compute the trajectory
     if (ctl->type == PBIO_CONTROL_NONE) {
         // If no control is ongoing, start from physical state
-        err = pbio_trajectory_make_angle_based(&ctl->trajectory, time_now, count_now, target_count, rate_now, target_rate, ctl->settings.max_rate, ctl->settings.abs_acceleration);
+        err = pbio_trajectory_make_angle_based(&ctl->trajectory, time_now, count_now, target_count, rate_now, target_rate, ctl->settings.max_rate, acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -176,7 +176,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
         int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
 
         // Make the new trajectory and try to patch to existing one
-        err = pbio_trajectory_make_angle_based_patched(&ctl->trajectory, time_ref, target_count, target_rate, ctl->settings.max_rate, ctl->settings.abs_acceleration);
+        err = pbio_trajectory_make_angle_based_patched(&ctl->trajectory, time_ref, target_count, target_rate, ctl->settings.max_rate, acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -195,7 +195,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t relative_target_count, int32_t rate_now, int32_t target_rate, pbio_actuation_t after_stop) {
+pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t relative_target_count, int32_t rate_now, int32_t target_rate, int32_t acceleration, pbio_actuation_t after_stop) {
 
     // Get the count from which the relative count is to be counted
     int32_t count_start;
@@ -214,7 +214,7 @@ pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int3
     // The target count is the start count plus the count to be traveled.  If speed is negative, traveled count also flips.
     int32_t target_count = count_start + (target_rate < 0 ? -relative_target_count: relative_target_count);
 
-    return pbio_control_start_angle_control(ctl, time_now, count_now, target_count, rate_now, target_rate, after_stop);
+    return pbio_control_start_angle_control(ctl, time_now, count_now, target_count, rate_now, target_rate, acceleration, after_stop);
 }
 
 pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_now, int32_t target_count) {
@@ -240,7 +240,7 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
 }
 
 
-pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, int32_t duration, int32_t count_now, int32_t rate_now, int32_t target_rate, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
+pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, int32_t duration, int32_t count_now, int32_t rate_now, int32_t target_rate, int32_t acceleration, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
 
     pbio_error_t err;
 
@@ -252,7 +252,7 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
     // Compute the trajectory
     if (ctl->type == PBIO_CONTROL_NONE) {
         // If no control is ongoing, start from physical state
-        err = pbio_trajectory_make_time_based(&ctl->trajectory, time_now, duration, count_now, 0, rate_now, target_rate, ctl->settings.max_rate, ctl->settings.abs_acceleration);
+        err = pbio_trajectory_make_time_based(&ctl->trajectory, time_now, duration, count_now, 0, rate_now, target_rate, ctl->settings.max_rate, acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -262,7 +262,7 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
         int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
 
         // Make the new trajectory and try to patch to existing one
-        err = pbio_trajectory_make_time_based_patched(&ctl->trajectory, time_ref, duration, target_rate, ctl->settings.max_rate, ctl->settings.abs_acceleration);
+        err = pbio_trajectory_make_time_based_patched(&ctl->trajectory, time_ref, duration, target_rate, ctl->settings.max_rate, acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
