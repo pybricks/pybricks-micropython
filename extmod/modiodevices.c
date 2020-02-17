@@ -70,7 +70,7 @@ STATIC mp_obj_t iodevices_LUMPDevice_read(size_t n_args, const mp_obj_t *pos_arg
 
     return mp_obj_new_tuple(num_values, objs);
 }
-MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_LUMPDevice_read_obj, 0, iodevices_LUMPDevice_read);
+MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_LUMPDevice_read_obj, 1, iodevices_LUMPDevice_read);
 
 // pybricks.iodevices.LUMPDevice.write
 STATIC mp_obj_t iodevices_LUMPDevice_write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -99,7 +99,7 @@ STATIC mp_obj_t iodevices_LUMPDevice_write(size_t n_args, const mp_obj_t *pos_ar
 
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_LUMPDevice_write_obj, 0, iodevices_LUMPDevice_write);
+MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_LUMPDevice_write_obj, 1, iodevices_LUMPDevice_write);
 
 // pybricks.iodevices.LUMPDevice.power
 STATIC mp_obj_t iodevices_LUMPDevice_power(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -112,7 +112,7 @@ STATIC mp_obj_t iodevices_LUMPDevice_power(size_t n_args, const mp_obj_t *pos_ar
 
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_LUMPDevice_power_obj, 0, iodevices_LUMPDevice_power);
+MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_LUMPDevice_power_obj, 1, iodevices_LUMPDevice_power);
 
 // dir(pybricks.iodevices.LUMPDevice)
 STATIC const mp_rom_map_elem_t iodevices_LUMPDevice_locals_dict_table[] = {
@@ -310,7 +310,7 @@ STATIC mp_obj_t iodevices_I2CDevice_read(size_t n_args, const mp_obj_t *pos_args
 
     return mp_obj_new_bytes(buf, len);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_I2CDevice_read_obj, 0, iodevices_I2CDevice_read);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_I2CDevice_read_obj, 1, iodevices_I2CDevice_read);
 
 // pybricks.iodevices.I2CDevice.write
 STATIC mp_obj_t iodevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -362,7 +362,7 @@ STATIC mp_obj_t iodevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos_arg
     pb_assert(pb_smbus_write_bytes(self->bus, self->address, regist, len, bytes));
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_I2CDevice_write_obj, 0, iodevices_I2CDevice_write);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_I2CDevice_write_obj, 1, iodevices_I2CDevice_write);
 
 
 // dir(pybricks.iodevices.I2CDevice)
@@ -436,7 +436,7 @@ STATIC mp_obj_t iodevices_UARTDevice_write(size_t n_args, const mp_obj_t *pos_ar
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_UARTDevice_write_obj, 0, iodevices_UARTDevice_write);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_UARTDevice_write_obj, 1, iodevices_UARTDevice_write);
 
 // pybricks.iodevices.UARTDevice.waiting
 STATIC mp_obj_t iodevices_UARTDevice_waiting(mp_obj_t self_in) {
@@ -493,7 +493,7 @@ STATIC mp_obj_t iodevices_UARTDevice_read(size_t n_args, const mp_obj_t *pos_arg
     size_t len = mp_obj_get_int(length);
     return iodevices_UARTDevice_read_internal(self, len);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_UARTDevice_read_obj, 0, iodevices_UARTDevice_read);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_UARTDevice_read_obj, 1, iodevices_UARTDevice_read);
 
 // pybricks.iodevices.UARTDevice.read_all
 STATIC mp_obj_t iodevices_UARTDevice_read_all(mp_obj_t self_in) {
@@ -584,7 +584,7 @@ STATIC mp_obj_t iodevices_Ev3devSensor_read(size_t n_args, const mp_obj_t *pos_a
 
     return mp_obj_new_tuple(num_values, objs);
 }
-MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_Ev3devSensor_read_obj, 0, iodevices_Ev3devSensor_read);
+MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_Ev3devSensor_read_obj, 1, iodevices_Ev3devSensor_read);
 
 // dir(pybricks.iodevices.Ev3devSensor)
 STATIC const mp_rom_map_elem_t iodevices_Ev3devSensor_locals_dict_table[] = {
@@ -599,7 +599,7 @@ STATIC const mp_obj_type_t iodevices_Ev3devSensor_type = {
     .locals_dict = (mp_obj_dict_t*)&iodevices_Ev3devSensor_locals_dict,
 };
 
-#endif // PYBRICKS_PY_EV3DEVICES 
+#endif // PYBRICKS_PY_EV3DEVICES
 
 // dir(pybricks.iodevices)
 STATIC const mp_rom_map_elem_t iodevices_globals_table[] = {
@@ -611,7 +611,7 @@ STATIC const mp_rom_map_elem_t iodevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_UARTDevice),       MP_ROM_PTR(&iodevices_UARTDevice_type  )    },
     { MP_ROM_QSTR(MP_QSTR_DCMotor),          MP_ROM_PTR(&motor_DCMotor_type)             },
     { MP_ROM_QSTR(MP_QSTR_Ev3devSensor),     MP_ROM_PTR(&iodevices_Ev3devSensor_type)    },
-#endif // PYBRICKS_PY_EV3DEVICES 
+#endif // PYBRICKS_PY_EV3DEVICES
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_iodevices_globals, iodevices_globals_table);
 

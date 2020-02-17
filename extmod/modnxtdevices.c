@@ -152,14 +152,14 @@ STATIC mp_obj_t nxtdevices_SoundSensor_intensity(size_t n_args, const mp_obj_t *
         nxtdevices_SoundSensor_obj_t, self,
         PB_ARG_DEFAULT_TRUE(audible_only)
     );
-    
+
     uint8_t mode = mp_obj_is_true(audible_only) ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
     int32_t analog;
     pbdevice_get_values(self->pbdev, mode, &analog);
-    
+
     return mp_obj_new_int(analog_scale(analog, 650, 4860, true));
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_SoundSensor_intensity_obj, 0, nxtdevices_SoundSensor_intensity);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_SoundSensor_intensity_obj, 1, nxtdevices_SoundSensor_intensity);
 
 // dir(pybricks.ev3devices.SoundSensor)
 STATIC const mp_rom_map_elem_t nxtdevices_SoundSensor_locals_dict_table[] = {

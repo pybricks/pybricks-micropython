@@ -129,7 +129,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_remote(size_t n_args, const mp_ob
     pbdevice_set_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &message, 1);
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorDistanceSensor_remote_obj, 0, pupdevices_ColorDistanceSensor_remote);
+MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorDistanceSensor_remote_obj, 1, pupdevices_ColorDistanceSensor_remote);
 
 // pybricks.pupdevices.ColorDistanceSensor.rgb
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_rgb(mp_obj_t self_in) {

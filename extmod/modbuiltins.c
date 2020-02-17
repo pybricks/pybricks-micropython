@@ -62,7 +62,7 @@ STATIC mp_obj_t builtins_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, 
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_ColorLight_on_obj, 0, builtins_ColorLight_on);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_ColorLight_on_obj, 1, builtins_ColorLight_on);
 
 // pybricks.builtins.Light.off
 // pybricks.builtins.LightArray.off
@@ -70,7 +70,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_ColorLight_on_obj, 0, builtins_ColorL
 STATIC mp_obj_t builtins_Light_off(mp_obj_t self_in) {
     builtins_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    // Turn the light off, using the command specific to the device. 
+    // Turn the light off, using the command specific to the device.
     if (!self->pbdev) {
         // No external device, so assume command is for the internal light
         pb_assert(pbio_light_off(PBIO_PORT_SELF));
@@ -132,7 +132,7 @@ mp_obj_t builtins_Control_obj_make_new(pbio_control_t *control) {
     self->base.type = &builtins_Control_type;
 
     self->control = control;
-    
+
     return self;
 }
 
@@ -177,7 +177,7 @@ STATIC mp_obj_t builtins_Control_limits(size_t n_args, const mp_obj_t *pos_args,
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Control_limits_obj, 0, builtins_Control_limits);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Control_limits_obj, 1, builtins_Control_limits);
 
 // pybricks.builtins.Control.pid
 STATIC mp_obj_t builtins_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -221,7 +221,7 @@ STATIC mp_obj_t builtins_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Control_pid_obj, 0, builtins_Control_pid);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Control_pid_obj, 1, builtins_Control_pid);
 
 // pybricks.builtins.Control.target_tolerances
 STATIC mp_obj_t builtins_Control_target_tolerances(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -255,7 +255,7 @@ STATIC mp_obj_t builtins_Control_target_tolerances(size_t n_args, const mp_obj_t
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Control_target_tolerances_obj, 0, builtins_Control_target_tolerances);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Control_target_tolerances_obj, 1, builtins_Control_target_tolerances);
 
 // pybricks.builtins.Control.stall_tolerances
 STATIC mp_obj_t builtins_Control_stall_tolerances(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -289,7 +289,7 @@ STATIC mp_obj_t builtins_Control_stall_tolerances(size_t n_args, const mp_obj_t 
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Control_stall_tolerances_obj, 0, builtins_Control_stall_tolerances);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_Control_stall_tolerances_obj, 1, builtins_Control_stall_tolerances);
 
 // pybricks.builtins.Control.trajectory
 STATIC mp_obj_t builtins_Control_trajectory(mp_obj_t self_in) {

@@ -35,7 +35,7 @@ STATIC mp_obj_t tools_Logger_start(size_t n_args, const mp_obj_t *pos_args, mp_m
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_start_obj, 0, tools_Logger_start);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_start_obj, 1, tools_Logger_start);
 
 STATIC mp_obj_t tools_Logger_get(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -59,7 +59,7 @@ STATIC mp_obj_t tools_Logger_get(size_t n_args, const mp_obj_t *pos_args, mp_map
     }
     return mp_obj_new_tuple(num_values, ret);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_get_obj, 0, tools_Logger_get);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_get_obj, 1, tools_Logger_get);
 
 STATIC mp_obj_t tools_Logger_stop(mp_obj_t self_in) {
     tools_Logger_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -160,7 +160,7 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     pb_assert(err);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_save_obj, 0, tools_Logger_save);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_save_obj, 1, tools_Logger_save);
 
 STATIC mp_obj_t tools_Logger_unary_op(mp_unary_op_t op, mp_obj_t self_in) {
     tools_Logger_obj_t *self = MP_OBJ_TO_PTR(self_in);

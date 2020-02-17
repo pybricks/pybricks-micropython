@@ -127,7 +127,7 @@ STATIC mp_obj_t ev3devices_InfraredSensor_beacon(size_t n_args, const mp_obj_t *
 
     return mp_obj_new_tuple(2, ret);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_InfraredSensor_beacon_obj, 0, ev3devices_InfraredSensor_beacon);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_InfraredSensor_beacon_obj, 1, ev3devices_InfraredSensor_beacon);
 
 // pybricks.ev3devices.InfraredSensor.buttons
 STATIC mp_obj_t ev3devices_InfraredSensor_buttons(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -202,7 +202,7 @@ STATIC mp_obj_t ev3devices_InfraredSensor_buttons(size_t n_args, const mp_obj_t 
     }
     return mp_obj_new_list(len, pressed_obj);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_InfraredSensor_buttons_obj, 0, ev3devices_InfraredSensor_buttons);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_InfraredSensor_buttons_obj, 1, ev3devices_InfraredSensor_buttons);
 
 // pybricks.ev3devices.InfraredSensor.keypad
 STATIC mp_obj_t ev3devices_InfraredSensor_keypad(mp_obj_t self_in) {
@@ -388,7 +388,7 @@ STATIC mp_obj_t ev3devices_UltrasonicSensor_distance(size_t n_args, const mp_obj
     }
     return mp_obj_new_int(distance);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_UltrasonicSensor_distance_obj, 0, ev3devices_UltrasonicSensor_distance);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_UltrasonicSensor_distance_obj, 1, ev3devices_UltrasonicSensor_distance);
 
 // pybricks.ev3devices.UltrasonicSensor.presence
 STATIC mp_obj_t ev3devices_UltrasonicSensor_presence(mp_obj_t self_in) {
@@ -506,7 +506,7 @@ STATIC mp_obj_t ev3devices_GyroSensor_reset_angle(size_t n_args, const mp_obj_t 
     self->offset = ev3devices_GyroSensor_get_angle_offset(self->pbdev, self->direction, pb_obj_get_int(angle));
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_GyroSensor_reset_angle_obj, 0, ev3devices_GyroSensor_reset_angle);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_GyroSensor_reset_angle_obj, 1, ev3devices_GyroSensor_reset_angle);
 
 // dir(pybricks.ev3devices.GyroSensor)
 STATIC const mp_rom_map_elem_t ev3devices_GyroSensor_locals_dict_table[] = {
