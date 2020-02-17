@@ -39,7 +39,7 @@ STATIC mp_obj_t builtins_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, 
     );
 
     if (color == mp_const_none) {
-        color = MP_OBJ_FROM_PTR(&pb_const_black);
+        color = pb_const_color_black;
     }
 
     pbio_light_color_t color_id = pb_type_enum_get_value(color, &pb_enum_type_Color);

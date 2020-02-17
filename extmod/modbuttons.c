@@ -20,22 +20,22 @@ STATIC mp_obj_t buttons_pressed(void) {
     pb_assert(pbio_button_is_pressed(&pressed));
 
     if (pressed & PBIO_BUTTON_CENTER) {
-        button_list[size++] = MP_OBJ_FROM_PTR(&pb_const_btn_center);
+        button_list[size++] = pb_const_button_center;
     }
     if (pressed & PBIO_BUTTON_LEFT) {
-        button_list[size++] = MP_OBJ_FROM_PTR(&pb_const_btn_left);
+        button_list[size++] = pb_const_button_left;
     }
     if (pressed & PBIO_BUTTON_RIGHT) {
-        button_list[size++] = MP_OBJ_FROM_PTR(&pb_const_btn_right);
+        button_list[size++] = pb_const_button_right;
     }
     if (pressed & PBIO_BUTTON_UP) {
-        button_list[size++] = MP_OBJ_FROM_PTR(&pb_const_btn_up);
+        button_list[size++] = pb_const_button_up;
     }
     if (pressed & PBIO_BUTTON_DOWN) {
-        button_list[size++] = MP_OBJ_FROM_PTR(&pb_const_btn_down);
+        button_list[size++] = pb_const_button_down;
     }
     if (pressed & PBIO_BUTTON_LEFT_UP) {
-        button_list[size++] = MP_OBJ_FROM_PTR(&pb_const_btn_left_up);
+        button_list[size++] = pb_const_button_left_up;
     }
 
     return mp_obj_new_list(size, button_list);

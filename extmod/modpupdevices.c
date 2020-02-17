@@ -55,14 +55,22 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_color(mp_obj_t self_in) {
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__SPEC1, data);
 
     switch(data[0]) {
-        case 1: return MP_OBJ_FROM_PTR(&pb_const_black);
-        case 3: return MP_OBJ_FROM_PTR(&pb_const_blue);
-        case 5: return MP_OBJ_FROM_PTR(&pb_const_green);
-        case 7: return MP_OBJ_FROM_PTR(&pb_const_yellow);
-        case 8: return MP_OBJ_FROM_PTR(&pb_const_orange);
-        case 9: return MP_OBJ_FROM_PTR(&pb_const_red);
-        case 10: return MP_OBJ_FROM_PTR(&pb_const_white);
-        default: return mp_const_none;
+        case 1:
+            return pb_const_color_black;
+        case 3:
+            return pb_const_color_blue;
+        case 5:
+            return pb_const_color_green;
+        case 7:
+            return pb_const_color_yellow;
+        case 8:
+            return pb_const_color_orange;
+        case 9:
+            return pb_const_color_red;
+        case 10:
+            return pb_const_color_white;
+        default:
+            return mp_const_none;
     }
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_color_obj, pupdevices_ColorDistanceSensor_color);

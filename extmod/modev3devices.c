@@ -281,14 +281,22 @@ STATIC mp_obj_t ev3devices_ColorSensor_color(mp_obj_t self_in) {
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_COLOR_SENSOR__COLOR, &color);
 
     switch(color) {
-        case 1: return MP_OBJ_FROM_PTR(&pb_const_black);
-        case 2: return MP_OBJ_FROM_PTR(&pb_const_blue);
-        case 3: return MP_OBJ_FROM_PTR(&pb_const_green);
-        case 4: return MP_OBJ_FROM_PTR(&pb_const_yellow);
-        case 5: return MP_OBJ_FROM_PTR(&pb_const_red);
-        case 6: return MP_OBJ_FROM_PTR(&pb_const_white);
-        case 7: return MP_OBJ_FROM_PTR(&pb_const_brown);
-        default: return mp_const_none;
+        case 1:
+            return pb_const_color_black;
+        case 2:
+            return pb_const_color_blue;
+        case 3:
+            return pb_const_color_green;
+        case 4:
+            return pb_const_color_yellow;
+        case 5:
+            return pb_const_color_red;
+        case 6:
+            return pb_const_color_white;
+        case 7:
+            return pb_const_color_brown;
+        default:
+            return mp_const_none;
     }
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_ColorSensor_color_obj, ev3devices_ColorSensor_color);
@@ -442,7 +450,7 @@ STATIC mp_int_t ev3devices_GyroSensor_get_angle_offset(pbdevice_t *pbdev, pbio_d
 STATIC mp_obj_t ev3devices_GyroSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
-        PB_ARG_DEFAULT_ENUM(direction, pb_const_clockwise)
+        PB_ARG_DEFAULT_ENUM(direction, pb_Direction_CLOCKWISE_obj)
     );
 
     ev3devices_GyroSensor_obj_t *self = m_new_obj(ev3devices_GyroSensor_obj_t);

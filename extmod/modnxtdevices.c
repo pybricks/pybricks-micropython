@@ -262,17 +262,17 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 static mp_obj_t color_obj(pbio_light_color_t color) {
     switch(color) {
         case PBIO_LIGHT_COLOR_RED:
-            return MP_OBJ_FROM_PTR(&pb_const_red);
+            return pb_const_color_red;
         case PBIO_LIGHT_COLOR_GREEN:
-            return MP_OBJ_FROM_PTR(&pb_const_green);
+            return pb_const_color_green;
         case PBIO_LIGHT_COLOR_BLUE:
-            return MP_OBJ_FROM_PTR(&pb_const_blue);
+            return pb_const_color_blue;
         case PBIO_LIGHT_COLOR_YELLOW:
-            return MP_OBJ_FROM_PTR(&pb_const_yellow);
+            return pb_const_color_yellow;
         case PBIO_LIGHT_COLOR_BLACK:
-            return MP_OBJ_FROM_PTR(&pb_const_black);
+            return pb_const_color_black;
         case PBIO_LIGHT_COLOR_WHITE:
-            return MP_OBJ_FROM_PTR(&pb_const_white);
+            return pb_const_color_white;
         default:
             return mp_const_none;
     }

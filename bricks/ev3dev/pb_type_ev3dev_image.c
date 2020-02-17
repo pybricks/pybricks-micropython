@@ -213,7 +213,7 @@ STATIC mp_obj_t ev3dev_Image_draw_pixel(size_t n_args, const mp_obj_t *pos_args,
         ev3dev_Image_obj_t, self,
         PB_ARG_REQUIRED(x),
         PB_ARG_REQUIRED(y),
-        PB_ARG_DEFAULT_ENUM(color, pb_const_black)
+        PB_ARG_DEFAULT_ENUM(color, pb_Color_BLACK_obj)
     );
 
     mp_int_t x_ = pb_obj_get_int(x);
@@ -236,7 +236,7 @@ STATIC mp_obj_t ev3dev_Image_draw_line(size_t n_args, const mp_obj_t *pos_args, 
         PB_ARG_REQUIRED(x2),
         PB_ARG_REQUIRED(y2),
         PB_ARG_DEFAULT_INT(width, 1),
-        PB_ARG_DEFAULT_ENUM(color, pb_const_black)
+        PB_ARG_DEFAULT_ENUM(color, pb_Color_BLACK_obj)
     );
 
     mp_int_t x1_ = pb_obj_get_int(x1);
@@ -269,7 +269,7 @@ STATIC mp_obj_t ev3dev_Image_draw_box(size_t n_args, const mp_obj_t *pos_args, m
         PB_ARG_REQUIRED(y2),
         PB_ARG_DEFAULT_INT(r, 0),
         PB_ARG_DEFAULT_FALSE(fill),
-        PB_ARG_DEFAULT_ENUM(color, pb_const_black)
+        PB_ARG_DEFAULT_ENUM(color, pb_Color_BLACK_obj)
     );
 
     mp_int_t x1_ = pb_obj_get_int(x1);
@@ -309,7 +309,7 @@ STATIC mp_obj_t ev3dev_Image_draw_circle(size_t n_args, const mp_obj_t *pos_args
         PB_ARG_REQUIRED(y),
         PB_ARG_REQUIRED(r),
         PB_ARG_DEFAULT_FALSE(fill),
-        PB_ARG_DEFAULT_ENUM(color, pb_const_black)
+        PB_ARG_DEFAULT_ENUM(color, pb_Color_BLACK_obj)
     );
 
     mp_int_t x_ = pb_obj_get_int(x);
@@ -395,7 +395,7 @@ STATIC mp_obj_t ev3dev_Image_draw_text(size_t n_args, const mp_obj_t *pos_args, 
         PB_ARG_REQUIRED(x),
         PB_ARG_REQUIRED(y),
         PB_ARG_REQUIRED(text),
-        PB_ARG_DEFAULT_ENUM(text_color, pb_const_black),
+        PB_ARG_DEFAULT_ENUM(text_color, pb_Color_BLACK_obj),
         PB_ARG_DEFAULT_NONE(background_color)
     );
 
