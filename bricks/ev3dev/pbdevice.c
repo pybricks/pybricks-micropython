@@ -179,7 +179,7 @@ pbdevice_t *pbdevice_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id)
 void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values) {
     pbio_error_t err;
     while ((err = get_values(pbdev, mode, values)) == PBIO_ERROR_AGAIN) {
-        mp_hal_delay_ms(10);
+        mp_hal_delay_ms(1);
     }
     pb_assert(err);
 }
