@@ -423,19 +423,11 @@ typedef struct _ev3devices_GyroSensor_obj_t {
     mp_int_t offset;
 } ev3devices_GyroSensor_obj_t;
 
-// pybricks.ev3devices.GyroSensor (internal) Get value0 and value1 for G&A mode
-STATIC void ev3devices_GyroSensor_raw(pbdevice_t *pbdev, mp_int_t *raw_angle, mp_int_t *raw_speed) {
-    int32_t angle_and_speed[2];
-    pbdevice_get_values(pbdev, PBIO_IODEV_MODE_EV3_GYRO_SENSOR__G_A, angle_and_speed);
-    *raw_angle = (mp_int_t) angle_and_speed[0];
-    *raw_speed = (mp_int_t) angle_and_speed[1];
-}
-
 // pybricks.ev3devices.GyroSensor (internal) Get new offset  for new reset angle
 STATIC mp_int_t ev3devices_GyroSensor_get_angle_offset(pbdevice_t *pbdev, pbio_direction_t direction, mp_int_t new_angle) {
     // Read raw sensor values
-    mp_int_t raw_angle, raw_speed;
-    ev3devices_GyroSensor_raw(pbdev, &raw_angle, &raw_speed);
+    int32_t raw_angle;
+    pbdevice_get_values(pbdev, PBIO_IODEV_MODE_EV3_GYRO_SENSOR__ANG, &raw_angle);
 
     // Get new offset using arguments and raw values
     if (direction == PBIO_DIRECTION_CLOCKWISE) {
@@ -469,8 +461,11 @@ STATIC mp_obj_t ev3devices_GyroSensor_make_new(const mp_obj_type_t *type, size_t
 // pybricks.ev3devices.GyroSensor.speed
 STATIC mp_obj_t ev3devices_GyroSensor_speed(mp_obj_t self_in) {
     ev3devices_GyroSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_int_t raw_angle, raw_speed;
-    ev3devices_GyroSensor_raw(self->pbdev, &raw_angle, &raw_speed);
+    int32_t raw_speed;
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_GYRO_SENSOR__RATE, &raw_speed);
+
+    // changing modes resets angle to 0
+    self->offset = 0;
 
     if (self->direction == PBIO_DIRECTION_CLOCKWISE) {
         return mp_obj_new_int(raw_speed);
@@ -484,8 +479,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_GyroSensor_speed_obj, ev3devices_Gyr
 // pybricks.ev3devices.GyroSensor.angle
 STATIC mp_obj_t ev3devices_GyroSensor_angle(mp_obj_t self_in) {
     ev3devices_GyroSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_int_t raw_angle, raw_speed;
-    ev3devices_GyroSensor_raw(self->pbdev, &raw_angle, &raw_speed);
+    int32_t raw_angle;
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_GYRO_SENSOR__ANG, &raw_angle);
 
     if (self->direction == PBIO_DIRECTION_CLOCKWISE) {
         return mp_obj_new_int(raw_angle - self->offset);
