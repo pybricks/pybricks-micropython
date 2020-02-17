@@ -43,7 +43,7 @@ STATIC void wait_for_completion(pbio_servo_t *srv) {
 STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
-        PB_ARG_DEFAULT_ENUM(positive_direction, pb_Direction_CLOCKWISE_obj),
+        PB_ARG_DEFAULT_OBJ(positive_direction, pb_Direction_CLOCKWISE_obj),
         PB_ARG_DEFAULT_NONE(gears)
     );
 
@@ -255,7 +255,7 @@ STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *pos_args, mp_map
 
     // Parse all arguments except the first one (self)
     PB_PARSE_ARGS_METHOD_SKIP_SELF(n_args, pos_args, kw_args,
-        PB_ARG_DEFAULT_ENUM(stop_type, pb_Stop_COAST_obj)
+        PB_ARG_DEFAULT_OBJ(stop_type, pb_Stop_COAST_obj)
     );
     pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
 
@@ -290,7 +290,7 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp
         motor_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(time),
-        PB_ARG_DEFAULT_ENUM(stop_type, pb_Stop_COAST_obj),
+        PB_ARG_DEFAULT_OBJ(stop_type, pb_Stop_COAST_obj),
         PB_ARG_DEFAULT_TRUE(wait)
     );
 
@@ -319,7 +319,7 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         motor_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
-        PB_ARG_DEFAULT_ENUM(stop_type, pb_Stop_COAST_obj),
+        PB_ARG_DEFAULT_OBJ(stop_type, pb_Stop_COAST_obj),
         PB_ARG_DEFAULT_NONE(duty_limit)
     );
 
@@ -371,7 +371,7 @@ STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, m
         motor_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(rotation_angle),
-        PB_ARG_DEFAULT_ENUM(stop_type, pb_Stop_COAST_obj),
+        PB_ARG_DEFAULT_OBJ(stop_type, pb_Stop_COAST_obj),
         PB_ARG_DEFAULT_TRUE(wait)
     );
 
@@ -396,7 +396,7 @@ STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *pos_args, 
         motor_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(target_angle),
-        PB_ARG_DEFAULT_ENUM(stop_type, pb_Stop_COAST_obj),
+        PB_ARG_DEFAULT_OBJ(stop_type, pb_Stop_COAST_obj),
         PB_ARG_DEFAULT_TRUE(wait)
     );
 

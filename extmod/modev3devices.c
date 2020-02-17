@@ -450,7 +450,7 @@ STATIC mp_int_t ev3devices_GyroSensor_get_angle_offset(pbdevice_t *pbdev, pbio_d
 STATIC mp_obj_t ev3devices_GyroSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
-        PB_ARG_DEFAULT_ENUM(direction, pb_Direction_CLOCKWISE_obj)
+        PB_ARG_DEFAULT_OBJ(direction, pb_Direction_CLOCKWISE_obj)
     );
 
     ev3devices_GyroSensor_obj_t *self = m_new_obj(ev3devices_GyroSensor_obj_t);

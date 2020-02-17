@@ -81,7 +81,7 @@
 #define PB_ARG_DEFAULT_INT(name, value) (name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_INT(value)} )
 
 // Optional keyword argument with default enum value
-#define PB_ARG_DEFAULT_ENUM(name, value) (name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_PTR(&value)} )
+#define PB_ARG_DEFAULT_OBJ(name, value) (name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_PTR(&value)} )
 
 // Optional keyword argument with default qstr value
 #define PB_ARG_DEFAULT_QSTR(name, value) (name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_QSTR(MP_QSTR_##value)} )
