@@ -30,6 +30,10 @@ typedef struct _robotics_DriveBase_obj_t {
     mp_obj_t logger;
     mp_obj_t heading_control;
     mp_obj_t distance_control;
+    int32_t straight_speed;
+    int32_t straight_acceleration;
+    int32_t turn_rate;
+    int32_t turn_acceleration;
 } robotics_DriveBase_obj_t;
 
 // pybricks.robotics.DriveBase.__init__
@@ -67,6 +71,12 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     // Create instances of the Control class
     self->heading_control = builtins_Control_obj_make_new(&self->db->control_heading);
     self->distance_control = builtins_Control_obj_make_new(&self->db->control_distance);
+
+    // Set defaults for drivebase
+    self->straight_speed = 100;
+    self->straight_acceleration = 200;
+    self->turn_rate = 90;
+    self->turn_acceleration = 180;
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -196,27 +206,23 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         robotics_DriveBase_obj_t, self,
-        PB_ARG_DEFAULT_NONE(drive_speed),
-        PB_ARG_DEFAULT_NONE(drive_acceleration),
+        PB_ARG_DEFAULT_NONE(straight_speed),
+        PB_ARG_DEFAULT_NONE(straight_acceleration),
         PB_ARG_DEFAULT_NONE(turn_rate),
         PB_ARG_DEFAULT_NONE(turn_acceleration)
     );
 
-    // Read current values
-    int32_t _drive_speed, _drive_acceleration, _turn_rate, _turn_acceleration;
-    pbio_drivebase_get_drive_settings(self->db, &_drive_speed, &_drive_acceleration, &_turn_rate, &_turn_acceleration);
-
     // If all given values are none, return current values
-    if (drive_speed == mp_const_none &&
-        drive_acceleration == mp_const_none &&
+    if (straight_speed == mp_const_none &&
+        straight_acceleration == mp_const_none &&
         turn_rate == mp_const_none &&
         turn_acceleration == mp_const_none
     ) {
         mp_obj_t ret[4];
-        ret[0] = mp_obj_new_int(_drive_speed);
-        ret[1] = mp_obj_new_int(_drive_acceleration);
-        ret[2] = mp_obj_new_int(_turn_rate);
-        ret[3] = mp_obj_new_int(_turn_acceleration);
+        ret[0] = mp_obj_new_int(self->straight_speed);
+        ret[1] = mp_obj_new_int(self->straight_acceleration);
+        ret[2] = mp_obj_new_int(self->turn_rate);
+        ret[3] = mp_obj_new_int(self->turn_acceleration);
         return mp_obj_new_tuple(4, ret);
     }
 
@@ -225,11 +231,10 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
     }
 
     // If some values are given, set them
-    _drive_speed = pb_obj_get_default_int(drive_speed, _drive_speed);
-    _drive_acceleration = pb_obj_get_default_int(drive_acceleration, _drive_acceleration);
-    _turn_rate = pb_obj_get_default_int(turn_rate, _turn_rate);
-    _turn_acceleration = pb_obj_get_default_int(turn_rate, _turn_acceleration);
-    pbio_drivebase_set_drive_settings(self->db, _drive_speed, _drive_acceleration, _turn_rate, _turn_acceleration);
+    self->straight_speed = pb_obj_get_default_int(straight_speed, self->straight_speed);
+    self->straight_acceleration = pb_obj_get_default_int(straight_acceleration, self->straight_acceleration);
+    self->turn_rate = pb_obj_get_default_int(turn_rate, self->turn_rate);
+    self->turn_acceleration = pb_obj_get_default_int(turn_rate, self->turn_acceleration);
 
     return mp_const_none;
 }
