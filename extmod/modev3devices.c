@@ -146,61 +146,57 @@ STATIC mp_obj_t ev3devices_InfraredSensor_buttons(size_t n_args, const mp_obj_t 
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_INFRARED_SENSOR__REMOTE, buttons_data);
 
     mp_int_t encoded = buttons_data[channel_no-1];
-    mp_int_t pressed[2];
-    mp_obj_t pressed_obj[2];
+    mp_obj_t pressed[2];
     uint8_t len = 0;
 
     switch(encoded) {
         case 0:
             break;
         case 1:
-            pressed[len++] = PBIO_BUTTON_LEFT_UP;
+            pressed[len++] = pb_const_button_left_up;
             break;
         case 2:
-            pressed[len++] = PBIO_BUTTON_LEFT_DOWN;
+            pressed[len++] = pb_const_button_left_down;
             break;
         case 3:
-            pressed[len++] = PBIO_BUTTON_RIGHT_UP;
+            pressed[len++] = pb_const_button_right_up;
             break;
         case 4:
-            pressed[len++] = PBIO_BUTTON_RIGHT_DOWN;
+            pressed[len++] = pb_const_button_right_down;
             break;
         case 5:
-            pressed[len++] = PBIO_BUTTON_LEFT_UP;
-            pressed[len++] = PBIO_BUTTON_RIGHT_UP;
+            pressed[len++] = pb_const_button_left_up;
+            pressed[len++] = pb_const_button_right_up;
             break;
         case 6:
-            pressed[len++] = PBIO_BUTTON_LEFT_UP;
-            pressed[len++] = PBIO_BUTTON_RIGHT_DOWN;
+            pressed[len++] = pb_const_button_left_up;
+            pressed[len++] = pb_const_button_right_down;
             break;
         case 7:
-            pressed[len++] = PBIO_BUTTON_LEFT_DOWN;
-            pressed[len++] = PBIO_BUTTON_RIGHT_UP;
+            pressed[len++] = pb_const_button_left_down;
+            pressed[len++] = pb_const_button_right_up;
             break;
         case 8:
-            pressed[len++] = PBIO_BUTTON_LEFT_DOWN;
-            pressed[len++] = PBIO_BUTTON_RIGHT_DOWN;
-            break;
-        case 10:
-            pressed[len++] = PBIO_BUTTON_LEFT_UP;
-            pressed[len++] = PBIO_BUTTON_LEFT_DOWN;
-            break;
-        case 11:
-            pressed[len++] = PBIO_BUTTON_RIGHT_UP;
-            pressed[len++] = PBIO_BUTTON_RIGHT_DOWN;
+            pressed[len++] = pb_const_button_left_down;
+            pressed[len++] = pb_const_button_right_down;
             break;
         case 9:
-            pressed[len++] = PBIO_BUTTON_UP;
+            pressed[len++] = pb_const_button_beacon;
+            break;
+        case 10:
+            pressed[len++] = pb_const_button_left_up;
+            pressed[len++] = pb_const_button_left_down;
+            break;
+        case 11:
+            pressed[len++] = pb_const_button_right_up;
+            pressed[len++] = pb_const_button_right_down;
             break;
         default:
             pb_assert(PBIO_ERROR_IO);
             break;
     }
 
-    for (uint8_t i = 0; i < len; i++) {
-        pressed_obj[i] = MP_OBJ_NEW_SMALL_INT(pressed[i]);
-    }
-    return mp_obj_new_list(len, pressed_obj);
+    return mp_obj_new_list(len, pressed);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_InfraredSensor_buttons_obj, 1, ev3devices_InfraredSensor_buttons);
 
@@ -212,27 +208,27 @@ STATIC mp_obj_t ev3devices_InfraredSensor_keypad(mp_obj_t self_in) {
     int32_t keypad_data;
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_INFRARED_SENSOR__REM_A, &keypad_data);
 
-    mp_obj_t pressed_obj[4];
-    uint8_t len = 0;
-
     if (keypad_data == 384) {
-        return mp_obj_new_list(0, pressed_obj);
-    } else {
-        if (keypad_data & 0x10) {
-            pressed_obj[len++] = MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_LEFT_UP);
-        }
-        if (keypad_data & 0x20) {
-            pressed_obj[len++] = MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_LEFT_DOWN);
-        }
-        if (keypad_data & 0x40) {
-            pressed_obj[len++] = MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_RIGHT_UP);
-        }
-        if (keypad_data & 0x80) {
-            pressed_obj[len++] = MP_OBJ_NEW_SMALL_INT(PBIO_BUTTON_RIGHT_DOWN);
-        }
+        return mp_obj_new_list(0, NULL);
     }
 
-    return mp_obj_new_list(len, pressed_obj);
+    mp_obj_t pressed[4];
+    uint8_t len = 0;
+
+    if (keypad_data & 0x10) {
+        pressed[len++] = pb_const_button_left_up;
+    }
+    if (keypad_data & 0x20) {
+        pressed[len++] = pb_const_button_left_down;
+    }
+    if (keypad_data & 0x40) {
+        pressed[len++] = pb_const_button_right_up;
+    }
+    if (keypad_data & 0x80) {
+        pressed[len++] = pb_const_button_right_down;
+    }
+
+    return mp_obj_new_list(len, pressed);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(ev3devices_InfraredSensor_keypad_obj, ev3devices_InfraredSensor_keypad);
 
