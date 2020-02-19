@@ -11,8 +11,6 @@
 
 
 static void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
-    // Trajectory and setting shortcuts for this motor
-    int32_t max_duty = ctl->settings.max_control;
 
     // Declare current time, positions, rates, and their reference value and error
     int32_t time_ref;
@@ -39,8 +37,16 @@ static void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, i
     duty_due_to_proportional = ctl->settings.pid_kp*count_err;
     duty_due_to_derivative = ctl->settings.pid_kd*rate_err;
 
-    // Position anti-windup
-    if ((duty_due_to_proportional >= max_duty && rate_err > 0) || (duty_due_to_proportional <= -max_duty && rate_err < 0)) {
+    // FIXME: use project-wide value
+    int32_t LOOP_TIME = 6000;
+
+    // We want to stop building up further errors if we are at the proportional duty limit. So, we pause the trajectory
+    // if we get at this limit. We wait a little longer though, to make sure it does not fall back to below the limit
+    // within one sample, which we can predict using the current rate times the loop time, with a factor two tolerance.
+    int32_t windup_duty = ctl->settings.max_control + (ctl->settings.pid_kp * ((abs(rate_now) * LOOP_TIME * 2) / US_PER_MS))/MS_PER_SECOND;
+
+    // Position anti-windup: pause trajectory if falling behind despite using maximum duty
+    if (abs(duty_due_to_proportional) >= windup_duty) {
         // We are at the duty limit and we should prevent further position error "integration".
         pbio_count_integrator_pause(&ctl->count_integrator, time_now, count_now, count_ref);
     }
@@ -76,9 +82,6 @@ static void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, i
 
 static void control_update_time_target(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
 
-    // Trajectory and setting shortcuts for this motor
-    int32_t max_duty = ctl->settings.max_control;
-
     // Declare time, positions, rates, and their reference value and error
     int32_t count_ref, count_ref_ext, rate_err_integral;
     int32_t rate_ref, rate_err;
@@ -98,9 +101,16 @@ static void control_update_time_target(pbio_control_t *ctl, int32_t time_now, in
     duty_due_to_proportional = ctl->settings.pid_kp*rate_err_integral;
     duty_due_to_derivative = ctl->settings.pid_kd*rate_err;
 
-    // Position anti-windup
-    // Check if proportional control exceeds the duty limit
-    if ((duty_due_to_proportional >= max_duty && rate_err > 0) || (duty_due_to_proportional <= -max_duty && rate_err < 0)) {
+    // FIXME: use project-wide value
+    int32_t LOOP_TIME = 6000;
+
+    // We want to stop building up further errors if we are at the proportional duty limit. So, we pause the trajectory
+    // if we get at this limit. We wait a little longer though, to make sure it does not fall back to below the limit
+    // within one sample, which we can predict using the current rate times the loop time, with a few milliseconds of tolerance.
+    int32_t windup_duty = ctl->settings.max_control + (ctl->settings.pid_kp * ((abs(rate_now) * LOOP_TIME * 2) / US_PER_MS))/MS_PER_SECOND;
+
+    // Position anti-windup: pause trajectory if falling behind despite using maximum duty
+    if (abs(duty_due_to_proportional) >= windup_duty) {
         pbio_rate_integrator_pause(&ctl->rate_integrator, time_now, count_now, count_ref);
     }
     else {
