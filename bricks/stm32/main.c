@@ -96,7 +96,7 @@ bool wait_for_button_press(uint32_t time_out) {
 
 // Wait for data from an IDE
 pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, int32_t time_out) {
-    
+
     // Optionally clear existing buffer
     if (clear) {
         uint8_t c;
@@ -116,8 +116,8 @@ pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, int32_t time
     // Initialize
     uint8_t checksum = 0;
     uint32_t rx_count = 0;
-    int32_t time_start = mp_hal_ticks_ms();
-    int32_t time_now = time_start;
+    mp_uint_t time_start = mp_hal_ticks_ms();
+    mp_uint_t time_now;
 
     while (true) {
         // Current time
