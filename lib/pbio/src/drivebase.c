@@ -179,14 +179,19 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
         return err;
     }
 
-    // Individual servos
-    db->left = left;
-    db->right = right;
-
     // Drivebase geometry
     if (wheel_diameter <= 0 || axle_track <= 0) {
         return PBIO_ERROR_INVALID_ARG;
     }
+
+    // Assert that both motors have the same gearing
+    if (left->control.settings.counts_per_unit != right->control.settings.counts_per_unit) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Individual servos
+    db->left = left;
+    db->right = right;
 
     // Initialize log
     db->log.num_values = DRIVEBASE_LOG_NUM_VALUES;
@@ -194,19 +199,33 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
     // Configure heading controller
     db->control_heading.settings = settings_drivebase_heading_default;
 
-    // Difference between the motors for every 1 degree drivebase rotation
-    db->control_heading.settings.counts_per_unit = fix16_div(
-        fix16_mul(axle_track, fix16_from_int(2)),
-        wheel_diameter
+    // Count difference between the motors for every 1 degree drivebase rotation
+    db->control_heading.settings.counts_per_unit = 
+    fix16_mul(
+        left->control.settings.counts_per_unit,
+        fix16_div(
+            fix16_mul(
+                axle_track,
+                fix16_from_int(2)
+            ),
+            wheel_diameter
+        )
     );
 
     // Configure distance controller
     db->control_distance.settings = settings_drivebase_distance_default;
 
-    // Sum of motors for every mm forward
-    db->control_distance.settings.counts_per_unit = fix16_div(
-        fix16_mul(fix16_from_int(180), FOUR_DIV_PI),
-        wheel_diameter
+    // Sum of motor counts for every 1 mm forward
+    db->control_distance.settings.counts_per_unit =
+    fix16_mul(
+        left->control.settings.counts_per_unit,
+        fix16_div(
+            fix16_mul(
+                fix16_from_int(180),
+                FOUR_DIV_PI
+            ),
+            wheel_diameter
+        )
     );
 
     return PBIO_SUCCESS;
