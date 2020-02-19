@@ -8,6 +8,7 @@
 
 #include <contiki.h>
 
+#include <pbio/config.h>
 #include <pbio/error.h>
 #include <pbio/logger.h>
 
@@ -26,7 +27,7 @@ static pbio_error_t pbio_logger_empty(pbio_log_t *log, int32_t time_now, uint32_
     pbio_logger_delete(log);
 
     // Minimal log length
-    uint32_t len = duration / MIN_PERIOD;
+    uint32_t len = duration / PBIO_CONFIG_SERVO_PERIOD_MS;
 
     // Assert length is allowed
     if (len > MAX_LOG_LEN) {

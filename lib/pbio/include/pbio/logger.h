@@ -10,9 +10,6 @@
 
 #include <pbio/error.h>
 
-// FIXME: Move to port configuration
-#define MIN_PERIOD 6
-
 // FIXME: move upper limit to port config
 #define MAX_LOG_MEM_KB 2*1024 // 2 MB on EV3
 
