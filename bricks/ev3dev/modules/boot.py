@@ -6,3 +6,5 @@ from pybricks.tools import wait, StopWatch
 from pybricks.robotics import DriveBase
 from pybricks.media.ev3dev import Font, Image, ImageFile, SoundFile
 from pybricks.nxtdevices import TemperatureSensor, EnergyMeter
+
+ev3 = EV3Brick()
