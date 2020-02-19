@@ -134,12 +134,9 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
 // pybricks.builtins.Motor.__repr__
 // pybricks.builtins.DCMotor.__repr__
 void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
-    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-
-    bool is_servo = mp_obj_is_type(self_in, &motor_Motor_type);
 
     // Get the dcmotor from self, which is either Motor or DCMotor
-    pbio_dcmotor_t *dcmotor = is_servo ?
+    pbio_dcmotor_t *dcmotor = mp_obj_is_type(self_in, &motor_Motor_type) ?
         ((motor_Motor_obj_t*) MP_OBJ_TO_PTR(self_in))->srv->dcmotor :
         ((motor_DCMotor_obj_t*) MP_OBJ_TO_PTR(self_in))->dcmotor;
 
@@ -147,24 +144,10 @@ void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
         "Motor properties:\n"
         "------------------------\n"
         "Port\t\t %c\n"
-        "Positive dir.\t %s\n",
+        "Positive dir.\t %s",
         dcmotor->port,
         dcmotor->direction == PBIO_DIRECTION_CLOCKWISE ? "clockwise" : "counterclockwise"
     );
-
-    // For encoded motors, also print gear ratio
-    if (is_servo) {
-        char counts_per_degree_str[22];
-        char gear_ratio_str[11];
-        pb_assert(pbio_servo_get_ratio_settings(self->srv, gear_ratio_str, counts_per_degree_str));
-
-        mp_printf(print,
-            "Counts per deg.\t %s\n"
-            "Gear ratio\t %s",
-            counts_per_degree_str,
-            gear_ratio_str
-        );
-    }
 }
 
 // pybricks.builtins.Motor.dc
