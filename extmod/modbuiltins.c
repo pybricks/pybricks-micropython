@@ -123,6 +123,7 @@ mp_obj_t builtins_Light_obj_make_new(pbdevice_t *pbdev, const mp_obj_type_t *typ
 typedef struct _builtins_Control_obj_t {
     mp_obj_base_t base;
     pbio_control_t *control;
+    mp_obj_t scale;
 } builtins_Control_obj_t;
 
 // pybricks.builtins.Control.__init__/__new__
@@ -132,6 +133,12 @@ mp_obj_t builtins_Control_obj_make_new(pbio_control_t *control) {
     self->base.type = &builtins_Control_type;
 
     self->control = control;
+
+    #if MICROPY_PY_BUILTINS_FLOAT
+    self->scale = mp_obj_new_float(fix16_to_float(control->settings.counts_per_unit));
+    #else
+    self->scale = mp_obj_new_int(fix16_to_int(control->settings.counts_per_unit));
+    #endif
 
     return self;
 }
@@ -342,6 +349,7 @@ STATIC const mp_rom_map_elem_t builtins_Control_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_trajectory       ), MP_ROM_PTR(&builtins_Control_trajectory_obj       ) },
     { MP_ROM_QSTR(MP_QSTR_done             ), MP_ROM_PTR(&builtins_Control_done_obj             ) },
     { MP_ROM_QSTR(MP_QSTR_stalled          ), MP_ROM_PTR(&builtins_Control_stalled_obj          ) },
+    { MP_ROM_QSTR(MP_QSTR_scale            ), MP_ROM_ATTRIBUTE_OFFSET(builtins_Control_obj_t, scale) },
 };
 STATIC MP_DEFINE_CONST_DICT(builtins_Control_locals_dict, builtins_Control_locals_dict_table);
 
