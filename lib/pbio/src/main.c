@@ -84,7 +84,7 @@ int pbio_do_one_event(void) {
     // pbio_do_one_event() can be called quite frequently (e.g. in a tight loop) so we
     // don't want to call all of the subroutines unless enough time has
     // actually elapsed to do something useful.
-    if (now - prev_fast_poll_time >= 6) {
+    if (now - prev_fast_poll_time >= PBIO_CONFIG_SERVO_PERIOD_MS) {
         _pbio_servo_poll();
         _pbio_drivebase_poll();
         prev_fast_poll_time = now;

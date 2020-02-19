@@ -16,6 +16,7 @@
 #include <glib.h>
 #include <grx-3.0.h>
 
+#include <pbio/config.h>
 #include <pbio/main.h>
 #include <pbio/light.h>
 
@@ -23,8 +24,6 @@
 #include "py/mpthread.h"
 
 #include "pbinit.h"
-
-#define PERIOD_MS 10
 
 // Flag that indicates whether we are busy stopping the thread
 static volatile bool stopping_thread = false;
@@ -34,7 +33,7 @@ static pthread_t task_caller_thread;
 static void *task_caller(void *arg) {
     struct timespec ts;
     ts.tv_sec = 0;
-    ts.tv_nsec = PERIOD_MS * 1000000;
+    ts.tv_nsec = PBIO_CONFIG_SERVO_PERIOD_MS * 1000000;
 
     while (!stopping_thread) {
         MP_THREAD_GIL_ENTER();
