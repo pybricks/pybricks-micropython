@@ -31,6 +31,7 @@ typedef struct _pbio_control_settings_t {
     int16_t pid_ki;                 /**< Integral position control constant */
     int16_t pid_kd;                 /**< Derivative position control constant (and proportional speed control constant) */
     int32_t max_control;            /**< Upper limit on control output */
+    int32_t control_offset;         /**< Constant feedforward signal added in the reference direction */
     int32_t integral_range;         /**< Region around the target count in which integral errors are accumulated */
     int32_t integral_rate;          /**< Maximum rate at which the integrator is allowed to increase */
 } pbio_control_settings_t;

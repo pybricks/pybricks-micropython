@@ -17,7 +17,7 @@ void control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, in
     int32_t count_ref, count_ref_ext, count_err, count_err_integral, rate_err_integral;
     int32_t rate_ref, rate_err;
     int32_t acceleration_ref;
-    int32_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative;
+    int32_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative, duty_feedforward;
 
     // Get the time at which we want to evaluate the reference position/velocities.
     // This compensates for any time we may have spent pausing when the motor was stalled.
@@ -45,8 +45,9 @@ void control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, in
     duty_due_to_proportional = ctl->settings.pid_kp*count_err;
     duty_due_to_derivative = ctl->settings.pid_kd*rate_err;
     duty_due_to_integral = (ctl->settings.pid_ki*(count_err_integral/US_PER_MS))/MS_PER_SECOND;
+    duty_feedforward = pbio_math_sign(rate_ref)*ctl->settings.control_offset;
 
-    duty = duty_due_to_proportional + duty_due_to_integral + duty_due_to_derivative;
+    duty = duty_due_to_proportional + duty_due_to_integral + duty_due_to_derivative + duty_feedforward;
 
     // This completes the computation of the control signal.
     // The next steps take care of handling windup, or triggering a stop if we are on target.
