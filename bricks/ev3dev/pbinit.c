@@ -105,3 +105,10 @@ void pybricks_deinit(){
     pthread_join(task_caller_thread, NULL);
     pbio_deinit();
 }
+
+void pybricks_unhandled_exception() {
+    extern void _pbio_servo_reset_all();
+    _pbio_servo_reset_all();
+    extern void _pb_ev3dev_speaker_beep_off();
+    _pb_ev3dev_speaker_beep_off();
+}

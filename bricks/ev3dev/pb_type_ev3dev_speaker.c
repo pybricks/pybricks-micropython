@@ -105,6 +105,12 @@ static int set_beep_frequency(ev3dev_Speaker_obj_t *self, int32_t freq) {
     return ret;
 }
 
+// This is used when there is an unhandled exception in a program to make sure
+// we stop beeping.
+void _pb_ev3dev_speaker_beep_off() {
+    set_beep_frequency(&ev3dev_speaker_singleton, 0);
+}
+
 STATIC mp_obj_t ev3dev_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Speaker_obj_t, self,
