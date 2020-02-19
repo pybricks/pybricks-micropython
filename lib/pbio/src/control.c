@@ -9,33 +9,46 @@
 #include <pbio/trajectory.h>
 #include <pbio/integrator.h>
 
-
-static void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
+void control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
 
     // Declare current time, positions, rates, and their reference value and error
     int32_t time_ref;
-    int32_t count_ref, count_ref_ext, count_err, count_err_integral;
+    int32_t count_ref, count_ref_ext, count_err, count_err_integral, rate_err_integral;
     int32_t rate_ref, rate_err;
     int32_t acceleration_ref;
     int32_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative;
 
-    // Get the time at which we want to evaluate the reference position/velocities, for position based commands
+    // Get the time at which we want to evaluate the reference position/velocities.
     // This compensates for any time we may have spent pausing when the motor was stalled.
-    time_ref = pbio_count_integrator_get_ref_time(&ctl->count_integrator, time_now);
+    time_ref = pbio_control_get_ref_time(ctl, time_now);
 
     // Get reference signals
     pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &count_ref, &count_ref_ext, &rate_ref, &acceleration_ref);
 
-    // The speed error is the reference speed minus the current speed
-    rate_err = rate_ref - rate_now;
+    // Calculate control errors, depending on whether we do angle control or speed control
+    if (ctl->type == PBIO_CONTROL_ANGLE) {
+        // Update count integral error and get current error state
+        pbio_count_integrator_update(&ctl->count_integrator, time_now, count_now, count_ref, ctl->trajectory.th3, ctl->settings.integral_range, ctl->settings.integral_rate);
+        pbio_count_integrator_get_errors(&ctl->count_integrator, count_now, count_ref, &count_err, &count_err_integral);
+        rate_err = rate_ref - rate_now;
+    }
+    else {
+        // For time/speed based commands, the main error is speed. It integrates into a quantity with unit of position.
+        // There is no count integral control, because we do not need a second order integrator for speed control.
+        pbio_rate_integrator_get_errors(&ctl->rate_integrator, rate_now, rate_ref, count_now, count_ref, &rate_err, &rate_err_integral);
+        count_err = rate_err_integral;
+        count_err_integral = 0;
+    }
 
-    // Update integral error and get current error state
-    pbio_count_integrator_update(&ctl->count_integrator, time_now, count_now, count_ref, ctl->trajectory.th3, ctl->settings.integral_range, ctl->settings.integral_rate);
-    pbio_count_integrator_get_errors(&ctl->count_integrator, count_now, count_ref, &count_err, &count_err_integral);
-
-    // Corresponding PD control signal
+    // Corresponding PID control signal
     duty_due_to_proportional = ctl->settings.pid_kp*count_err;
     duty_due_to_derivative = ctl->settings.pid_kd*rate_err;
+    duty_due_to_integral = (ctl->settings.pid_ki*(count_err_integral/US_PER_MS))/MS_PER_SECOND;
+
+    duty = duty_due_to_proportional + duty_due_to_integral + duty_due_to_derivative;
+
+    // This completes the computation of the control signal.
+    // The next steps take care of handling windup, or triggering a stop if we are on target.
 
     // FIXME: use project-wide value
     int32_t LOOP_TIME = 6000;
@@ -43,26 +56,32 @@ static void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, i
     // We want to stop building up further errors if we are at the proportional duty limit. So, we pause the trajectory
     // if we get at this limit. We wait a little longer though, to make sure it does not fall back to below the limit
     // within one sample, which we can predict using the current rate times the loop time, with a factor two tolerance.
-    int32_t windup_duty = ctl->settings.max_control + (ctl->settings.pid_kp * ((abs(rate_now) * LOOP_TIME * 2) / US_PER_MS))/MS_PER_SECOND;
+    int32_t max_duty = ctl->settings.max_control + (ctl->settings.pid_kp * ((abs(rate_now) * LOOP_TIME * 2) / US_PER_MS))/MS_PER_SECOND;
 
-    // Position anti-windup: pause trajectory if falling behind despite using maximum duty
-    if (abs(duty_due_to_proportional) >= windup_duty) {
+    // Position anti-windup: pause trajectory or integration if falling behind despite using maximum duty
+    if (abs(duty_due_to_proportional) >= max_duty) {
         // We are at the duty limit and we should prevent further position error "integration".
-        pbio_count_integrator_pause(&ctl->count_integrator, time_now, count_now, count_ref);
+        if (ctl->type == PBIO_CONTROL_ANGLE) {
+            pbio_count_integrator_pause(&ctl->count_integrator, time_now, count_now, count_ref);
+        }
+        else {
+            pbio_rate_integrator_pause(&ctl->rate_integrator, time_now, count_now, count_ref);
+        }
     }
     else{
-        // Otherwise, the timer should be running
-        pbio_count_integrator_resume(&ctl->count_integrator, time_now, count_now, count_ref);
+        // Otherwise, the integrator should be running
+        if (ctl->type == PBIO_CONTROL_ANGLE) {
+            pbio_count_integrator_resume(&ctl->count_integrator, time_now, count_now, count_ref);
+        }
+        else {
+            pbio_rate_integrator_resume(&ctl->rate_integrator, time_now, count_now, count_ref);
+        }
     }
 
-    // Duty cycle component due to integral position control
-    duty_due_to_integral = (ctl->settings.pid_ki*(count_err_integral/US_PER_MS))/MS_PER_SECOND;
-
-    // Calculate duty signal
-    duty = duty_due_to_proportional + duty_due_to_integral + duty_due_to_derivative;
-
-    // Check if rate controller is stalled
-    ctl->stalled = pbio_count_integrator_stalled(&ctl->count_integrator, time_now, rate_now, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
+    // Check if controller is stalled
+    ctl->stalled = ctl->type == PBIO_CONTROL_ANGLE ? 
+                   pbio_count_integrator_stalled(&ctl->count_integrator, time_now, rate_now, ctl->settings.stall_time, ctl->settings.stall_rate_limit) :
+                   pbio_rate_integrator_stalled(&ctl->rate_integrator, time_now, rate_now, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
 
     // Check if we are on target
     ctl->on_target = ctl->on_target_func(&ctl->trajectory, &ctl->settings, time_ref, count_now, rate_now, ctl->stalled);
@@ -73,6 +92,11 @@ static void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, i
         *control = 0;
         ctl->type = PBIO_CONTROL_NONE;
     }
+    else if (ctl->on_target && ctl->after_stop == PBIO_ACTUATION_HOLD && ctl->type == PBIO_CONTROL_TIMED) {
+        // If we are going to hold and we are already doing angle control, there is nothing we need to do.
+        // But if we are going to hold when we are doing speed control right now, we must trigger a hold first.
+        pbio_control_start_hold_control(ctl, time_now, count_now);
+    }
     else {
         // The end point not reached, or we have to keep holding, so return the calculated duty for actuation
         *actuation_type = PBIO_ACTUATION_DUTY;
@@ -80,83 +104,6 @@ static void control_update_angle_target(pbio_control_t *ctl, int32_t time_now, i
     }
 }
 
-static void control_update_time_target(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
-
-    // Declare time, positions, rates, and their reference value and error
-    int32_t count_ref, count_ref_ext, rate_err_integral;
-    int32_t rate_ref, rate_err;
-    int32_t acceleration_ref;
-    int32_t duty, duty_due_to_proportional, duty_due_to_derivative;
-
-    // Get reference signals
-    pbio_trajectory_get_reference(&ctl->trajectory, time_now, &count_ref, &count_ref_ext, &rate_ref, &acceleration_ref);
-
-    // For time based commands, we do not aim to drive to a specific position, but we use the
-    // "proportional position control" as an exact way to implement "integral speed control".
-    // The speed integral is simply the position, but the speed reference should stop integrating
-    // while stalled, to prevent windup. This is built into the integrator.
-    pbio_rate_integrator_get_errors(&ctl->rate_integrator, rate_now, rate_ref, count_now, count_ref, &rate_err, &rate_err_integral);
-
-    // Corresponding PD control signal
-    duty_due_to_proportional = ctl->settings.pid_kp*rate_err_integral;
-    duty_due_to_derivative = ctl->settings.pid_kd*rate_err;
-
-    // FIXME: use project-wide value
-    int32_t LOOP_TIME = 6000;
-
-    // We want to stop building up further errors if we are at the proportional duty limit. So, we pause the trajectory
-    // if we get at this limit. We wait a little longer though, to make sure it does not fall back to below the limit
-    // within one sample, which we can predict using the current rate times the loop time, with a few milliseconds of tolerance.
-    int32_t windup_duty = ctl->settings.max_control + (ctl->settings.pid_kp * ((abs(rate_now) * LOOP_TIME * 2) / US_PER_MS))/MS_PER_SECOND;
-
-    // Position anti-windup: pause trajectory if falling behind despite using maximum duty
-    if (abs(duty_due_to_proportional) >= windup_duty) {
-        pbio_rate_integrator_pause(&ctl->rate_integrator, time_now, count_now, count_ref);
-    }
-    else {
-        pbio_rate_integrator_resume(&ctl->rate_integrator, time_now, count_now, count_ref);
-    }
-
-    // Calculate duty signal
-    duty = duty_due_to_proportional + duty_due_to_derivative;
-
-    // Check if rate controller is stalled
-    ctl->stalled = pbio_rate_integrator_stalled(&ctl->rate_integrator, time_now, rate_now, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
-
-    // Check if we are on target
-    ctl->on_target = ctl->on_target_func(&ctl->trajectory, &ctl->settings, time_now, count_now, rate_now, ctl->stalled);
-
-    // If we are done, decide next action
-    if (ctl->on_target) {
-        if (ctl->after_stop == PBIO_ACTUATION_HOLD) {
-            // In case of hold, we trigger a new maneuver from the current position
-            pbio_control_start_hold_control(ctl, time_now, count_now);
-        }
-        else {
-            // For passive after stop action, return zero actuation
-            *actuation_type = ctl->after_stop;
-            *control = 0;
-            ctl->type = PBIO_CONTROL_NONE;
-        }
-    }
-    else {
-        // The end point not reached, so return the calculated duty for actuation
-        *actuation_type = PBIO_ACTUATION_DUTY;
-        *control = duty;
-    }
-}
-
-void control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
-    // Calculate controls for position based control
-    if (ctl->type == PBIO_CONTROL_ANGLE) {
-        control_update_angle_target(ctl, time_now, count_now, rate_now, actuation_type, control);
-    }
-    // Calculate controls for time based control
-    else {
-        // Get control type and signal for given state
-        control_update_time_target(ctl, time_now, count_now, rate_now, actuation_type, control);
-    }
-}
 
 void pbio_control_stop(pbio_control_t *ctl) {
     ctl->type = PBIO_CONTROL_NONE;
