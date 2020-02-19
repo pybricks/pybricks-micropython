@@ -57,34 +57,34 @@ static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
     // Read current state of this motor: current time, speed, and position
     *time_now = clock_usecs();
 
-    int32_t angle_left;
-    err = pbio_tacho_get_angle(db->left->tacho, &angle_left);
+    int32_t count_left;
+    err = pbio_tacho_get_count(db->left->tacho, &count_left);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    int32_t angle_right;
-    err = pbio_tacho_get_angle(db->right->tacho, &angle_right);
+    int32_t count_right;
+    err = pbio_tacho_get_count(db->right->tacho, &count_right);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    int32_t angular_rate_left;
-    err = pbio_tacho_get_angular_rate(db->left->tacho, &angular_rate_left);
+    int32_t rate_left;
+    err = pbio_tacho_get_rate(db->left->tacho, &rate_left);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    int32_t angular_rate_right;
-    err = pbio_tacho_get_angular_rate(db->right->tacho, &angular_rate_right);
+    int32_t rate_right;
+    err = pbio_tacho_get_rate(db->right->tacho, &rate_right);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    *sum = angle_left + angle_right;
-    *sum_rate = angular_rate_left + angular_rate_right;
-    *dif = angle_left - angle_right;
-    *dif_rate = angular_rate_left - angular_rate_right;
+    *sum = count_left + count_right;
+    *sum_rate = rate_left + rate_right;
+    *dif = count_left - count_right;
+    *dif_rate = rate_left - rate_right;
 
     return PBIO_SUCCESS;
 }
