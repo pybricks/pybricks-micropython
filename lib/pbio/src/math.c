@@ -7,6 +7,13 @@
 #include <inttypes.h>
 #include <fixmath.h>
 
+int32_t pbio_math_sign(int32_t a) {
+    if (a == 0) {
+        return 0;
+    }
+    return a > 0 ? 1 : -1;
+}
+
 int32_t pbio_math_div_i32_fix16(int32_t a, fix16_t b) {
     return fix16_to_int(fix16_div(fix16_from_int(a), b));
 }

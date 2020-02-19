@@ -10,6 +10,7 @@
 
 #include <fixmath.h>
 
+int32_t pbio_math_sign(int32_t a);
 int32_t pbio_math_div_i32_fix16(int32_t a, fix16_t b);
 int32_t pbio_math_mul_i32_fix16(int32_t a, fix16_t b);
 int32_t pbio_math_sqrt(int32_t n);
