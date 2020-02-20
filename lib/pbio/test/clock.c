@@ -65,5 +65,5 @@ void clock_delay_usec(uint16_t duration) {
     struct timespec ts;
     ts.tv_sec = 0;
     ts.tv_nsec = duration * 1000;
-    clock_nanosleep(CLOCK_MONOTONIC_RAW, 0, &ts, NULL);
+    clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
 }

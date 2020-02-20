@@ -33,6 +33,8 @@
 #include <unistd.h>
 #include <sys/time.h>
 
+#include <contiki.h>
+
 #include "py/mphal.h"
 #include "py/runtime.h"
 
@@ -124,15 +126,11 @@ void mp_hal_stdout_tx_str(const char *str) {
 }
 
 mp_uint_t mp_hal_ticks_ms(void) {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+    return clock_to_msec(clock_time());
 }
 
 mp_uint_t mp_hal_ticks_us(void) {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec * 1000000 + tv.tv_usec;
+    return clock_usecs();
 }
 
 void mp_hal_delay_ms(mp_uint_t ms) {
