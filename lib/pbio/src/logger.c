@@ -26,8 +26,11 @@ static pbio_error_t pbio_logger_empty(pbio_log_t *log, int32_t time_now, uint32_
     // Free any existing log
     pbio_logger_delete(log);
 
+    // FIXME: Make as configurable setting
+    log->subsample_div = 1;
+
     // Minimal log length
-    uint32_t len = duration / PBIO_CONFIG_SERVO_PERIOD_MS;
+    uint32_t len = duration / PBIO_CONFIG_SERVO_PERIOD_MS / log->subsample_div;
 
     // Assert length is allowed
     if (len > MAX_LOG_LEN) {
@@ -62,6 +65,11 @@ pbio_error_t pbio_logger_update(pbio_log_t *log, int32_t *buf) {
 
     // Log nothing if logger is inactive
     if (!log->active) {
+        return PBIO_SUCCESS;
+    }
+
+    // Skip logging unless we are at a multiple of subsample_div
+    if (log->subsample_count++ % log->subsample_div != 0) {
         return PBIO_SUCCESS;
     }
 
