@@ -120,14 +120,14 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     pb_assert(pbio_logger_stop(self->log));
 
     uint8_t num_values = self->log->num_values;
-    int32_t samples =  self->log->sampled;
+    int32_t sampled = self->log->calls / self->log->sample_div;
     pbio_error_t err;
 
     // Allocate space for one null-terminated row of data
     char row_str[max_val_strln*MAX_LOG_VALUES+1];
 
     // Write data to file line by line
-    for (int32_t i = 0; i < samples; i++) {
+    for (int32_t i = 0; i < sampled; i++) {
 
         // Read one line inside lock
         err = pbio_logger_read(self->log, i, data);
@@ -166,7 +166,7 @@ STATIC mp_obj_t tools_Logger_unary_op(mp_unary_op_t op, mp_obj_t self_in) {
     tools_Logger_obj_t *self = MP_OBJ_TO_PTR(self_in);
     switch (op) {
         case MP_UNARY_OP_LEN:
-            return MP_OBJ_NEW_SMALL_INT(self->log->sampled);
+            return MP_OBJ_NEW_SMALL_INT(self->log->calls / self->log->sample_div);
         default:
             return MP_OBJ_NULL;
     }

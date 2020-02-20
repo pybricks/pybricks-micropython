@@ -24,13 +24,12 @@
 
 typedef struct _pbio_log_t {
     bool active;
-    uint32_t sampled;
+    uint32_t calls;
     uint32_t len;
     int32_t start;
     uint8_t num_values;
     int32_t *data;
-    uint32_t subsample_div;
-    uint32_t subsample_count;
+    uint32_t sample_div;
 } pbio_log_t;
 
 pbio_error_t pbio_logger_start(pbio_log_t *log, int32_t duration);

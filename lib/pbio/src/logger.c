@@ -17,7 +17,7 @@ static void pbio_logger_delete(pbio_log_t *log) {
     if (log->len > 0) {
         free(log->data);
     }
-    log->sampled = 0;
+    log->calls = 0;
     log->len = 0;
     log->active = false;
 }
@@ -27,10 +27,10 @@ static pbio_error_t pbio_logger_empty(pbio_log_t *log, int32_t time_now, uint32_
     pbio_logger_delete(log);
 
     // FIXME: Make as configurable setting
-    log->subsample_div = 1;
+    log->sample_div = 1;
 
     // Minimal log length
-    uint32_t len = duration / PBIO_CONFIG_SERVO_PERIOD_MS / log->subsample_div;
+    uint32_t len = duration / PBIO_CONFIG_SERVO_PERIOD_MS / log->sample_div;
 
     // Assert length is allowed
     if (len > MAX_LOG_LEN) {
@@ -69,32 +69,33 @@ pbio_error_t pbio_logger_update(pbio_log_t *log, int32_t *buf) {
     }
 
     // Skip logging unless we are at a multiple of subsample_div
-    if (log->subsample_count++ % log->subsample_div != 0) {
+    // and increment call counter.
+    if (log->calls++ % log->sample_div != 0) {
         return PBIO_SUCCESS;
     }
 
+    // Number of samples already logged so far
+    int32_t sampled = log->calls / log->sample_div;
+
     // Raise error if log is full, which should not happen
-    if (log->sampled > log->len) {
+    if (sampled > log->len) {
         log->active = false;
         return PBIO_ERROR_FAILED;
     }
 
     // Stop successfully when done
-    if (log->sampled == log->len) {
+    if (sampled == log->len) {
         log->active = false;
         return PBIO_SUCCESS;
     }
 
     // Write time of logging
-    log->data[log->sampled*log->num_values] = (clock_usecs() - log->start)/1000;
+    log->data[sampled*log->num_values] = (clock_usecs() - log->start)/1000;
 
     // Write the data
     for (uint8_t i = NUM_DEFAULT_LOG_VALUES; i < log->num_values; i++) {
-        log->data[log->sampled*log->num_values + i] = buf[i-NUM_DEFAULT_LOG_VALUES];
+        log->data[sampled*log->num_values + i] = buf[i-NUM_DEFAULT_LOG_VALUES];
     }
-
-    // Increment number of written samples
-    log->sampled++;
 
     return PBIO_SUCCESS;
 }
@@ -106,11 +107,14 @@ pbio_error_t pbio_logger_read(pbio_log_t *log, int32_t sindex, int32_t *buf) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
+    // Number of samples already logged so far
+    int32_t sampled = log->calls / log->sample_div;
+
     // Get index or latest sample if requested index is -1
-    uint32_t index = sindex == -1 ? log->sampled - 1 : sindex;
+    uint32_t index = sindex == -1 ? sampled - 1 : sindex;
 
     // Ensure index is within bounds
-    if (index >= log->sampled) {
+    if (index >= sampled) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
