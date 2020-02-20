@@ -22,12 +22,12 @@ static void pbio_logger_delete(pbio_log_t *log) {
     log->active = false;
 }
 
-pbio_error_t pbio_logger_start(pbio_log_t *log, int32_t duration) {
+pbio_error_t pbio_logger_start(pbio_log_t *log, int32_t duration, int32_t div) {
     // Free any existing log
     pbio_logger_delete(log);
 
-    // FIXME: Make as configurable setting
-    log->sample_div = 1;
+    // Set number of calls to the logger per sample actually logged
+    log->sample_div = div > 0 ? div : 1;
 
     // Minimal log length
     uint32_t len = duration / PBIO_CONFIG_SERVO_PERIOD_MS / log->sample_div;

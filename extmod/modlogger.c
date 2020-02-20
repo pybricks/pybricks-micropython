@@ -27,11 +27,11 @@ typedef struct _tools_Logger_obj_t {
 STATIC mp_obj_t tools_Logger_start(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         tools_Logger_obj_t, self,
-        PB_ARG_REQUIRED(duration)
+        PB_ARG_REQUIRED(duration),
+        PB_ARG_DEFAULT_INT(divisor, 1)
     );
 
-    mp_int_t duration_arg = pb_obj_get_int(duration);
-    pb_assert(pbio_logger_start(self->log, duration_arg));
+    pb_assert(pbio_logger_start(self->log, pb_obj_get_int(duration), mp_obj_get_int(divisor)));
 
     return mp_const_none;
 }

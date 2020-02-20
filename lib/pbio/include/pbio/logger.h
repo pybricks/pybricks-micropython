@@ -32,7 +32,7 @@ typedef struct _pbio_log_t {
     uint32_t sample_div;
 } pbio_log_t;
 
-pbio_error_t pbio_logger_start(pbio_log_t *log, int32_t duration);
+pbio_error_t pbio_logger_start(pbio_log_t *log, int32_t duration, int32_t div);
 pbio_error_t pbio_logger_read(pbio_log_t *log, int32_t sindex, int32_t *buf);
 pbio_error_t pbio_logger_update(pbio_log_t *log, int32_t *buf);
 pbio_error_t pbio_logger_stop(pbio_log_t *log);
