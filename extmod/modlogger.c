@@ -112,6 +112,7 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     }
 #else
     tools_Logger_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+    mp_print_str(&mp_plat_print, "PB_OF\n");
 #endif //PYBRICKS_HUB_EV3
 
     // Read log size information
@@ -155,6 +156,8 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     if (fclose(log_file) != 0) {
         err = PBIO_ERROR_IO;
     }
+#else
+    mp_print_str(&mp_plat_print, "PB_EOF\n");
 #endif // PYBRICKS_HUB_EV3
 
     pb_assert(err);
