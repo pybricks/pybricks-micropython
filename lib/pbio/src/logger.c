@@ -22,7 +22,7 @@ static void pbio_logger_delete(pbio_log_t *log) {
     log->active = false;
 }
 
-static pbio_error_t pbio_logger_empty(pbio_log_t *log, int32_t time_now, uint32_t duration) {
+pbio_error_t pbio_logger_start(pbio_log_t *log, int32_t duration) {
     // Free any existing log
     pbio_logger_delete(log);
 
@@ -45,14 +45,9 @@ static pbio_error_t pbio_logger_empty(pbio_log_t *log, int32_t time_now, uint32_
 
     // (re-)initialize logger status for this servo
     log->len = len;
-    log->start = time_now;
+    log->start = clock_usecs();
     log->active = true;
     return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_logger_start(pbio_log_t *log, int32_t duration) {
-    // Allocate memory for log
-    return pbio_logger_empty(log, clock_usecs(), duration);
 }
 
 pbio_error_t pbio_logger_stop(pbio_log_t *log) {
