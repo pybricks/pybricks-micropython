@@ -16,7 +16,7 @@
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
-#define SERVO_LOG_NUM_VALUES (12 + NUM_DEFAULT_LOG_VALUES)
+#define SERVO_LOG_NUM_VALUES (9 + NUM_DEFAULT_LOG_VALUES)
 
 // TODO: Move to config and enable only known motors for platform
 static pbio_control_settings_t settings_servo_ev3_medium = {
