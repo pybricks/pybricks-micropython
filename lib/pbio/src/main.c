@@ -22,8 +22,8 @@
 
 #include "processes.h"
 
-static uint32_t prev_fast_poll_time;
-static uint32_t prev_slow_poll_time;
+static clock_time_t prev_fast_poll_time;
+static clock_time_t prev_slow_poll_time;
 
 AUTOSTART_PROCESSES(
     &etimer_process
@@ -84,12 +84,12 @@ int pbio_do_one_event(void) {
     // pbio_do_one_event() can be called quite frequently (e.g. in a tight loop) so we
     // don't want to call all of the subroutines unless enough time has
     // actually elapsed to do something useful.
-    if (now - prev_fast_poll_time >= PBIO_CONFIG_SERVO_PERIOD_MS) {
+    if (now - prev_fast_poll_time >= clock_from_msec(PBIO_CONFIG_SERVO_PERIOD_MS)) {
         _pbio_servo_poll();
         _pbio_drivebase_poll();
-        prev_fast_poll_time = now;
+        prev_fast_poll_time = clock_time();
     }
-    if (now - prev_slow_poll_time >= 32) {
+    if (now - prev_slow_poll_time >= clock_from_msec(32)) {
         _pbio_light_poll(now);
         prev_slow_poll_time = now;
     }
