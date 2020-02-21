@@ -129,7 +129,6 @@ static const char pybricks_ev3dev_help_text[] =
 #define MICROPY_PY_BUILTINS_RANGE_BINOP         (1)
 #define MICROPY_PY_SYS_GETSIZEOF                (1)
 #define MICROPY_PY_MATH_FACTORIAL               (1)
-#define MICROPY_PY_URANDOM_EXTRA_FUNCS          (1)
 #define MICROPY_PY_IO_BUFFEREDWRITER            (1)
 #define MICROPY_PY_IO_RESOURCE_STREAM           (1)
 #define MICROPY_PY_URE_MATCH_GROUPS             (1)
@@ -208,6 +207,8 @@ static const char pybricks_ev3dev_help_text[] =
 #define MICROPY_PY_UBINASCII_CRC32  (1)
 #define MICROPY_PY_UFCNTL_POSIX     (1)
 #define MICROPY_PY_URANDOM          (1)
+#define MICROPY_PY_URANDOM_EXTRA_FUNCS      (1)
+#define MICROPY_PY_URANDOM_SEED_INIT_FUNC   { extern mp_uint_t mp_hal_ticks_us(void); mp_hal_ticks_us(); }
 #ifndef MICROPY_PY_USELECT_POSIX
 #define MICROPY_PY_USELECT_POSIX    (1)
 #endif
