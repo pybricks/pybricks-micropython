@@ -378,7 +378,24 @@ STATIC mp_obj_t ev3dev_Image_load_image(mp_obj_t self_in, mp_obj_t source_in) {
     mp_obj_t x = mp_obj_new_int((mp_obj_get_int(self->width) - mp_obj_get_int(source->width)) / 2);
     mp_obj_t y = mp_obj_new_int((mp_obj_get_int(self->height) - mp_obj_get_int(source->height)) / 2);
 
-    ev3dev_Image_clear(self_in);
+    // if the destination is the screen, then we double-buffer to prevent flicker
+    if (self->context == grx_get_screen_context()) {
+        STATIC mp_obj_t load_image_buffer_obj;
+        if (load_image_buffer_obj == MP_OBJ_NULL) {
+            load_image_buffer_obj = ev3dev_Image_empty(self->width, self->height);
+        }
+
+        mp_obj_t args[4] = { load_image_buffer_obj, x, y, source_in };
+        mp_map_t kw_args;
+        mp_map_init(&kw_args, 0);
+        ev3dev_Image_draw_image(MP_ARRAY_SIZE(args), args, &kw_args);
+
+        source_in = load_image_buffer_obj;
+        x = MP_OBJ_NEW_SMALL_INT(0);
+        y = MP_OBJ_NEW_SMALL_INT(0);
+    } else {
+        ev3dev_Image_clear(self_in);
+    }
 
     mp_obj_t args[4] = { self_in, x, y, source_in };
     mp_map_t kw_args;
