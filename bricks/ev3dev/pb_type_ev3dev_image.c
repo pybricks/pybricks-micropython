@@ -165,9 +165,18 @@ STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, 
     return ev3dev_Image_new(context);
 }
 
-STATIC mp_obj_t ev3dev_Image_empty(mp_obj_t width_in, mp_obj_t height_in) {
-    mp_int_t width = pb_obj_get_int(width_in);
-    mp_int_t height = pb_obj_get_int(height_in);
+STATIC mp_obj_t ev3dev_Image_empty(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    enum { ARG_width, ARG_height };
+    const mp_arg_t allowed_args[] = {
+        { MP_QSTR_width, MP_ARG_OBJ, { .u_obj = mp_obj_new_int(grx_get_screen_width())} },
+        { MP_QSTR_height, MP_ARG_OBJ, { .u_obj = mp_obj_new_int(grx_get_screen_height())} },
+    };
+
+    mp_arg_val_t arg_vals[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all(n_args, pos_args, kw_args, MP_ARRAY_SIZE(allowed_args), allowed_args, arg_vals);
+
+    mp_int_t width = pb_obj_get_int(arg_vals[ARG_width].u_obj);
+    mp_int_t height = pb_obj_get_int(arg_vals[ARG_height].u_obj);
     if (width <= 0 || height <= 0) {
         mp_raise_ValueError("width and height must be greater than 0");
     }
@@ -178,7 +187,7 @@ STATIC mp_obj_t ev3dev_Image_empty(mp_obj_t width_in, mp_obj_t height_in) {
     grx_context_clear(context, GRX_COLOR_WHITE);
     return ev3dev_Image_new(context);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Image_empty_fun_obj, ev3dev_Image_empty);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3dev_Image_empty_fun_obj, 0, ev3dev_Image_empty);
 STATIC MP_DEFINE_CONST_STATICMETHOD_OBJ(ev3dev_Image_empty_obj, MP_ROM_PTR(&ev3dev_Image_empty_fun_obj));
 
 STATIC mp_obj_t ev3dev_Image___del__(mp_obj_t self_in) {
@@ -382,7 +391,10 @@ STATIC mp_obj_t ev3dev_Image_load_image(mp_obj_t self_in, mp_obj_t source_in) {
     if (self->context == grx_get_screen_context()) {
         STATIC mp_obj_t load_image_buffer_obj;
         if (load_image_buffer_obj == MP_OBJ_NULL) {
-            load_image_buffer_obj = ev3dev_Image_empty(self->width, self->height);
+            mp_obj_t args[2] = { self->width, self->height };
+            mp_map_t kw_args;
+            mp_map_init(&kw_args, 0);
+            load_image_buffer_obj = ev3dev_Image_empty(MP_ARRAY_SIZE(args), args, &kw_args);
         }
 
         mp_obj_t args[4] = { load_image_buffer_obj, x, y, source_in };

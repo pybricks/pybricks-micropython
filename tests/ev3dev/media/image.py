@@ -34,6 +34,12 @@ print(sub.width, sub.height)
 # static method for creating blank image
 img = Image.empty(160, 120)
 
+# default args for empty are same size as screen
+empty = Image.empty()
+screen = Image('_screen_')
+print(empty.width == screen.width)
+print(empty.height == screen.height)
+
 
 # Test properties
 
