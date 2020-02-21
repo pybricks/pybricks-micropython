@@ -397,6 +397,8 @@ STATIC mp_obj_t ev3dev_Image_load_image(mp_obj_t self_in, mp_obj_t source_in) {
             load_image_buffer_obj = ev3dev_Image_empty(MP_ARRAY_SIZE(args), args, &kw_args);
         }
 
+        ev3dev_Image_clear(load_image_buffer_obj);
+
         mp_obj_t args[4] = { load_image_buffer_obj, x, y, source_in };
         mp_map_t kw_args;
         mp_map_init(&kw_args, 0);
