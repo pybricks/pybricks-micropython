@@ -147,8 +147,9 @@ static pbio_error_t ev3_sensor_assert_id(lego_sensor_t *sensor, pbio_iodev_type_
     if (id == valid_id) {
         return PBIO_SUCCESS;
     }
-    // Custom NXT Analog sensors work the same as regular NXT Analog sensors.
-    if (id == PBIO_IODEV_TYPE_ID_NXT_ANALOG && valid_id == PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG) {
+
+    // NXT Touch Sensors also pass as NXT Analog
+    if (valid_id == PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR && id == PBIO_IODEV_TYPE_ID_NXT_ANALOG) {
         return PBIO_SUCCESS;
     }
     return PBIO_ERROR_NO_DEV;

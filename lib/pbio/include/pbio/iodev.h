@@ -129,7 +129,6 @@ typedef enum {
 
     // Generic & Custom devices
     PBIO_IODEV_TYPE_ID_NXT_ANALOG                   ,   /**< MINDSTORMS NXT-style Analog Sensor */
-    PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG                ,   /**< Custom Analog Sensor */
     PBIO_IODEV_TYPE_ID_NXT_I2C                      ,   /**< MINDSTORMS NXT-style I2C Sensor */
     PBIO_IODEV_TYPE_ID_CUSTOM_I2C                   ,   /**< Custom I2C Sensor */
     PBIO_IODEV_TYPE_ID_LUMP_UART                    ,   /**< Device with LEGO UART Messaging Protocol */

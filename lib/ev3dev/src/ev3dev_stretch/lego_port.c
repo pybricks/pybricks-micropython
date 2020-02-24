@@ -18,6 +18,7 @@
 #define BIN_DATA_SIZE   32 // size of bin_data sysfs attribute
 
 typedef enum {
+    NO_SENSOR,
     AUTO,
     NXT_ANALOG,
     NXT_COLOR,
@@ -33,6 +34,7 @@ typedef enum {
 } ev3dev_lego_port_t;
 
 static const char* const port_modes[] = {
+    "no-sensor",
     "auto",
     "nxt-analog",
     "nxt-color",
@@ -48,7 +50,7 @@ static const char* const port_modes[] = {
 };
 
 // Get the port mode
-static pbio_error_t ev3dev_lego_port_get_mode(pbio_port_t port, ev3dev_lego_port_t *port_mode) {
+static pbio_error_t ev3dev_lego_port_get_mode(pbio_port_t port, const char *attribute, ev3dev_lego_port_t *port_mode) {
     // Read lego-port number
     int n_lport;
     pbio_error_t err;
@@ -59,7 +61,7 @@ static pbio_error_t ev3dev_lego_port_get_mode(pbio_port_t port, ev3dev_lego_port
 
     // Get mode file path
     char path[MAX_PATH_LENGTH];
-    snprintf(path, MAX_PATH_LENGTH, "/sys/class/lego-port/port%d/mode", n_lport);
+    snprintf(path, MAX_PATH_LENGTH, "/sys/class/lego-port/port%d/%s", n_lport, attribute);
 
     // Open mode file for reading
     char mode[12];
@@ -118,28 +120,34 @@ static pbio_error_t ev3dev_lego_port_set_mode(pbio_port_t port, ev3dev_lego_port
 
 // Set compatible port configuration for given device
 pbio_error_t ev3dev_lego_port_configure(pbio_port_t port, pbio_iodev_type_id_t id) {
-
-    // Get the current port mode
+    
     pbio_error_t err;
-    ev3dev_lego_port_t mode_now;
-    err = ev3dev_lego_port_get_mode(port, &mode_now);
+
+    // Get the current port mode and status
+    ev3dev_lego_port_t mode_now, status_now;
+    err = ev3dev_lego_port_get_mode(port, "mode", &mode_now);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    err = ev3dev_lego_port_get_mode(port, "status", &status_now);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // If special modes have been set previously and they're still good, we're done.
-    if ((id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR && mode_now == RAW       ) ||
-        (id == PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG    && mode_now == NXT_ANALOG) ||
-        (id == PBIO_IODEV_TYPE_ID_CUSTOM_I2C       && mode_now == OTHER_I2C ) ||
-        (id == PBIO_IODEV_TYPE_ID_CUSTOM_UART      && mode_now == OTHER_UART) ||
-        (id == PBIO_IODEV_TYPE_ID_LUMP_UART        && mode_now == EV3_UART)   ||
-        (id == PBIO_IODEV_TYPE_ID_EV3DEV_DC_MOTOR  && mode_now == DC_MOTOR)
+    if ((id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR && status_now == RAW       ) ||
+        (id == PBIO_IODEV_TYPE_ID_NXT_ANALOG       && status_now == NXT_ANALOG) ||
+        (id == PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR && status_now == NXT_ANALOG) ||
+        (id == PBIO_IODEV_TYPE_ID_CUSTOM_I2C       && status_now == OTHER_I2C ) ||
+        (id == PBIO_IODEV_TYPE_ID_CUSTOM_UART      && status_now == OTHER_UART) ||
+        (id == PBIO_IODEV_TYPE_ID_LUMP_UART        && status_now == EV3_UART)   ||
+        (id == PBIO_IODEV_TYPE_ID_EV3DEV_DC_MOTOR  && status_now == DC_MOTOR)
     ){
         return PBIO_SUCCESS;
     }
 
-    // For Custom Analog Sensors, port must be set on first use
-    if (id == PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG) {
+    // For undetected analog sensors, port must be set on first use
+    if (id == PBIO_IODEV_TYPE_ID_NXT_ANALOG || id == PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR) {
         err = ev3dev_lego_port_set_mode(port, NXT_ANALOG);
         return err == PBIO_SUCCESS ? PBIO_ERROR_AGAIN : err;
     }
