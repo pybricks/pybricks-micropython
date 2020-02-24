@@ -141,10 +141,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_drive_obj, 1, robotics_Driv
 STATIC mp_obj_t robotics_DriveBase_stop(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         robotics_DriveBase_obj_t, self,
-        PB_ARG_DEFAULT_INT(stop_type, PBIO_ACTUATION_COAST)
+        PB_ARG_DEFAULT_OBJ(stop_type, pb_Stop_COAST_obj)
     );
 
-    pbio_actuation_t after_stop = mp_obj_get_int(stop_type);
+    pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
     pb_assert(pbio_drivebase_stop(self->db, after_stop));
 
     return mp_const_none;
