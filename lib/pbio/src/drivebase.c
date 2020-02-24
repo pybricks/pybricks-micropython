@@ -111,7 +111,7 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
 
     // Hold is not yet implemented
     if (sum_actuation == PBIO_ACTUATION_HOLD || dif_actuation == PBIO_ACTUATION_HOLD) {
-       return PBIO_ERROR_NOT_IMPLEMENTED;
+        return pbio_drivebase_straight(db, 0, db->control_distance.settings.max_rate, db->control_distance.settings.max_rate);
     }
 
     // Brake is the same as duty, so just actuate
