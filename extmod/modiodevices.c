@@ -145,17 +145,14 @@ typedef struct _iodevices_AnalogSensor_obj_t {
 // pybricks.iodevices.AnalogSensor.__init__
 STATIC mp_obj_t iodevices_AnalogSensor_make_new(const mp_obj_type_t *otype, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port),
-        PB_ARG_DEFAULT_TRUE(verify_type)
+        PB_ARG_REQUIRED(port)
     );
     iodevices_AnalogSensor_obj_t *self = m_new_obj(iodevices_AnalogSensor_obj_t);
     self->base.type = (mp_obj_type_t*) otype;
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
-    pbio_iodev_type_id_t id = mp_obj_is_true(verify_type) ? PBIO_IODEV_TYPE_ID_NXT_ANALOG : PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG;
-
-    self->pbdev = pbdevice_get_device(port_num, id);
+    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_ANALOG);
 
     // Initialize NXT sensors to passive state
     int32_t voltage;
