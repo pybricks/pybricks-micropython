@@ -133,6 +133,8 @@ STATIC const mp_obj_type_t iodevices_LUMPDevice_type = {
 
 #include "pbsmbus.h"
 
+#include <ev3dev_stretch/sysfs.h>
+
 #define UART_MAX_LEN (32*1024)
 
 // pybricks.iodevices.AnalogSensor class object
@@ -534,6 +536,8 @@ STATIC const mp_obj_type_t iodevices_UARTDevice_type = {
 typedef struct _iodevices_Ev3devSensor_obj_t {
     mp_obj_base_t base;
     pbdevice_t *pbdev;
+    mp_obj_t sensor_index;
+    mp_obj_t port_index;
 } iodevices_Ev3devSensor_obj_t;
 
 // pybricks.iodevices.Ev3devSensor.__init__
@@ -548,6 +552,14 @@ STATIC mp_obj_t iodevices_Ev3devSensor_make_new(const mp_obj_type_t *type, size_
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR);
+
+    // Get the sysfs index. This is not currently exposed through pbdevice,
+    // so read it again by searching through the sysfs tree.
+    int32_t sensor_index, port_index;
+    pb_assert(sysfs_get_number(port_num, "/sys/class/lego-sensor", &sensor_index));
+    pb_assert(sysfs_get_number(port_num, "/sys/class/lego-port", &port_index));
+    self->sensor_index = mp_obj_new_int(sensor_index);
+    self->port_index = mp_obj_new_int(port_index);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -585,7 +597,9 @@ MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_Ev3devSensor_read_obj, 1, iodevices_Ev3devS
 
 // dir(pybricks.iodevices.Ev3devSensor)
 STATIC const mp_rom_map_elem_t iodevices_Ev3devSensor_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_read),       MP_ROM_PTR(&iodevices_Ev3devSensor_read_obj) },
+    { MP_ROM_QSTR(MP_QSTR_read),         MP_ROM_PTR(&iodevices_Ev3devSensor_read_obj)                        },
+    { MP_ROM_QSTR(MP_QSTR_sensor_index), MP_ROM_ATTRIBUTE_OFFSET(iodevices_Ev3devSensor_obj_t, sensor_index) },
+    { MP_ROM_QSTR(MP_QSTR_port_index),   MP_ROM_ATTRIBUTE_OFFSET(iodevices_Ev3devSensor_obj_t, port_index)   },
 };
 STATIC MP_DEFINE_CONST_DICT(iodevices_Ev3devSensor_locals_dict, iodevices_Ev3devSensor_locals_dict_table);
 
