@@ -84,8 +84,7 @@ typedef struct _nxtdevices_TouchSensor_obj_t {
 // pybricks.nxtdevices.TouchSensor.__init__
 STATIC mp_obj_t nxtdevices_TouchSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port),
-        PB_ARG_DEFAULT_TRUE(verify_type)
+        PB_ARG_REQUIRED(port)
     );
 
     nxtdevices_TouchSensor_obj_t *self = m_new_obj(nxtdevices_TouchSensor_obj_t);
@@ -93,9 +92,7 @@ STATIC mp_obj_t nxtdevices_TouchSensor_make_new(const mp_obj_type_t *type, size_
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
-    pbio_iodev_type_id_t id = mp_obj_is_true(verify_type) ? PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR : PBIO_IODEV_TYPE_ID_CUSTOM_ANALOG;
-
-    self->pbdev = pbdevice_get_device(port_num, id);
+    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR);
 
     return MP_OBJ_FROM_PTR(self);
 }
