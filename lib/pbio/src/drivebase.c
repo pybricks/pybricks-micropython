@@ -102,7 +102,7 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
         if (err != PBIO_SUCCESS) {
             return err;
         }
-        err = pbio_dcmotor_coast(db->left->dcmotor);
+        err = pbio_dcmotor_coast(db->right->dcmotor);
         if (err != PBIO_SUCCESS) {
             return err;
         }
