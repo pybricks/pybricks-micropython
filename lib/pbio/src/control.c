@@ -111,7 +111,7 @@ void control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, in
 void pbio_control_stop(pbio_control_t *ctl) {
     ctl->type = PBIO_CONTROL_NONE;
     ctl->on_target = true;
-    ctl->on_target_func = pbio_control_on_target_never;
+    ctl->on_target_func = pbio_control_on_target_always;
 }
 
 pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t target_count, int32_t rate_now, int32_t target_rate, int32_t acceleration, pbio_actuation_t after_stop) {
@@ -182,7 +182,7 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
     // Set new maneuver action and stop type, and state
     ctl->after_stop = PBIO_ACTUATION_HOLD;
     ctl->on_target = false;
-    ctl->on_target_func = pbio_control_on_target_angle;
+    ctl->on_target_func = pbio_control_on_target_always;
 
     // Compute new maneuver based on user argument, starting from the initial state
     pbio_trajectory_make_stationary(&ctl->trajectory, time_now, target_count);
@@ -239,6 +239,11 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
 
     return PBIO_SUCCESS;
 }
+
+static bool _pbio_control_on_target_always(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
+    return true;
+}
+pbio_control_on_target_t pbio_control_on_target_always = _pbio_control_on_target_always;
 
 static bool _pbio_control_on_target_never(pbio_trajectory_t *trajectory, pbio_control_settings_t *settings, int32_t time, int32_t count, int32_t rate, bool stalled) {
     return false;

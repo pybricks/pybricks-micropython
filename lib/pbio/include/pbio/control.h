@@ -52,6 +52,7 @@ typedef bool (*pbio_control_on_target_t)(pbio_trajectory_t *trajectory,
                                          bool stalled);
 
 // Functions to check whether motion is done
+pbio_control_on_target_t pbio_control_on_target_always;
 pbio_control_on_target_t pbio_control_on_target_never;
 pbio_control_on_target_t pbio_control_on_target_angle;
 pbio_control_on_target_t pbio_control_on_target_time;
