@@ -63,14 +63,14 @@ pbio_error_t pbio_logger_update(pbio_log_t *log, int32_t *buf) {
         return PBIO_SUCCESS;
     }
 
+    // Number of samples already logged previously
+    int32_t sampled = log->calls / log->sample_div;
+
     // Skip logging unless we are at a multiple of subsample_div
     // and increment call counter.
-    if (log->calls++ % log->sample_div != 0) {
+    if (log->calls++ % log->sample_div != log->sample_div - 1) {
         return PBIO_SUCCESS;
     }
-
-    // Number of samples already logged so far
-    int32_t sampled = log->calls / log->sample_div;
 
     // Raise error if log is full, which should not happen
     if (sampled > log->len) {
