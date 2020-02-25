@@ -75,11 +75,11 @@ static struct testcase_t example_tests[]  = {
     END_OF_TESTCASES
 };
 
-PBIO_TEST_FUNC(pbio_math_test_sqrt);
+PBIO_TEST_FUNC(test_sqrt);
 PBIO_TEST_FUNC(test_mul_i32_fix16);
 
 static struct testcase_t pbio_math_tests[] = {
-    PBIO_TEST(pbio_math_test_sqrt),
+    PBIO_TEST(test_sqrt),
     PBIO_TEST(test_mul_i32_fix16),
     END_OF_TESTCASES
 };
