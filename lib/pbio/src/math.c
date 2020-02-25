@@ -19,7 +19,15 @@ int32_t pbio_math_div_i32_fix16(int32_t a, fix16_t b) {
 }
 
 int32_t pbio_math_mul_i32_fix16(int32_t a, fix16_t b) {
-    return fix16_to_int(fix16_mul(fix16_from_int(a), b));
+    int64_t product = (int64_t)a * b;
+    if (product < 0) {
+        product--;
+    }
+
+    int32_t result = product >> 16;
+    result += (product & 0x8000) >> 15;
+
+    return result;
 }
 
 int32_t pbio_math_sqrt(int32_t n) {
