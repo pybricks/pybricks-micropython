@@ -95,6 +95,10 @@ void control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, in
         // If we are going to hold and we are already doing angle control, there is nothing we need to do.
         // But if we are going to hold when we are doing speed control right now, we must trigger a hold first.
         pbio_control_start_hold_control(ctl, time_now, count_now);
+
+        // The new hold control does not take effect until the next iteration, so keep actuating for now.
+        *actuation_type = PBIO_ACTUATION_DUTY;
+        *control = duty;
     }
     else {
         // The end point not reached, or we have to keep holding, so return the calculated duty for actuation
