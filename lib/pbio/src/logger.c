@@ -50,10 +50,20 @@ pbio_error_t pbio_logger_start(pbio_log_t *log, int32_t duration, int32_t div) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_logger_stop(pbio_log_t *log) {
+int32_t pbio_logger_rows(pbio_log_t *log) {
+    if (log->sample_div == 0) {
+        return 0;
+    }
+    return log->calls / log->sample_div;
+}
+
+int32_t pbio_logger_cols(pbio_log_t *log) {
+    return log->num_values;
+}
+
+void pbio_logger_stop(pbio_log_t *log) {
     // Release the logger for re-use
     log->active = false;
-    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_logger_update(pbio_log_t *log, int32_t *buf) {

@@ -35,6 +35,8 @@ typedef struct _pbio_log_t {
 pbio_error_t pbio_logger_start(pbio_log_t *log, int32_t duration, int32_t div);
 pbio_error_t pbio_logger_read(pbio_log_t *log, int32_t sindex, int32_t *buf);
 pbio_error_t pbio_logger_update(pbio_log_t *log, int32_t *buf);
-pbio_error_t pbio_logger_stop(pbio_log_t *log);
+int32_t pbio_logger_rows(pbio_log_t *log);
+int32_t pbio_logger_cols(pbio_log_t *log);
+void pbio_logger_stop(pbio_log_t *log);
 
 #endif // _PBIO_LOGGER_H_

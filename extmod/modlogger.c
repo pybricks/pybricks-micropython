@@ -51,10 +51,10 @@ STATIC mp_obj_t tools_Logger_get(size_t n_args, const mp_obj_t *pos_args, mp_map
 
     // Get data for this sample
     pb_assert(pbio_logger_read(self->log, index_val, data));
-    uint8_t num_values = self->log->num_values;
+    uint8_t num_values = pbio_logger_cols(self->log);
 
     // Convert data to user objects
-    for (uint8_t i = 0; i < self->log->num_values; i++) {
+    for (uint8_t i = 0; i < num_values; i++) {
         ret[i] = mp_obj_new_int(data[i]);
     }
     return mp_obj_new_tuple(num_values, ret);
@@ -64,7 +64,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_get_obj, 1, tools_Logger_get);
 STATIC mp_obj_t tools_Logger_stop(mp_obj_t self_in) {
     tools_Logger_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    pb_assert(pbio_logger_stop(self->log));
+    pbio_logger_stop(self->log);
 
     return mp_const_none;
 }
@@ -118,10 +118,10 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     // Read log size information
     int32_t data[MAX_LOG_VALUES];
 
-    pb_assert(pbio_logger_stop(self->log));
+    pbio_logger_stop(self->log);
 
-    uint8_t num_values = self->log->num_values;
-    int32_t sampled = self->log->calls / self->log->sample_div;
+    uint8_t num_values = pbio_logger_cols(self->log);
+    int32_t sampled = pbio_logger_rows(self->log);
     pbio_error_t err;
 
     // Allocate space for one null-terminated row of data
@@ -169,7 +169,7 @@ STATIC mp_obj_t tools_Logger_unary_op(mp_unary_op_t op, mp_obj_t self_in) {
     tools_Logger_obj_t *self = MP_OBJ_TO_PTR(self_in);
     switch (op) {
         case MP_UNARY_OP_LEN:
-            return MP_OBJ_NEW_SMALL_INT(self->log->calls / self->log->sample_div);
+            return MP_OBJ_NEW_SMALL_INT(pbio_logger_rows(self->log));
         default:
             return MP_OBJ_NULL;
     }
