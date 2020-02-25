@@ -24,7 +24,8 @@
 
 typedef struct _pbio_log_t {
     bool active;
-    uint32_t calls;
+    uint32_t skipped;
+    uint32_t sampled;
     uint32_t len;
     int32_t start;
     uint8_t num_values;
