@@ -14,6 +14,7 @@ static pbio_error_t servo_err[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 static pbio_drivebase_t drivebase;
 
+// Get pointer to servo by port index
 pbio_error_t pbio_motorpoll_get_servo(pbio_port_t port, pbio_servo_t **srv) {
     // Validate port
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
@@ -23,6 +24,17 @@ pbio_error_t pbio_motorpoll_get_servo(pbio_port_t port, pbio_servo_t **srv) {
     *srv = &servo[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
     (*srv)->port = port;
     return PBIO_SUCCESS;
+}
+
+// Set status of the servo, which tells us whether to poll or not
+pbio_error_t pbio_motorpoll_set_servo_status(pbio_servo_t *srv, pbio_error_t err) {
+    for (int i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
+        if (srv == &servo[i]) {
+            servo_err[i] = err;
+            return PBIO_SUCCESS;
+        }
+    }
+    return PBIO_ERROR_INVALID_ARG;
 }
 
 pbio_error_t pbio_motorpoll_get_drivebase(pbio_drivebase_t **db) {
@@ -43,19 +55,18 @@ void _pbio_motorpoll_reset_all(void) {
 
     // Physically stop the motors and set status to no device
     for (int i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        servo[i].port = PBIO_PORT_A + i; // FIXME: drop port dependency for getting get dc and tacho within setup below
-        servo_err[i] = pbio_servo_setup(&servo[i], PBIO_DIRECTION_CLOCKWISE, fix16_one);
+        pbdrv_motor_coast(PBIO_PORT_A + i);
+        servo_err[i] = PBIO_ERROR_NO_DEV;
     }    
 }
 
 void _pbio_motorpoll_poll(void) {
-    int i;
-    // Do the update for each motor
-    for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        pbio_servo_t *srv = &servo[i];
 
+    // Poll servos
+    for (int i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
+        // Poll servo if current status is success
         if (servo_err[i] == PBIO_SUCCESS) {
-            servo_err[i] = pbio_servo_control_update(srv);
+            servo_err[i] = pbio_servo_control_update(&servo[i]);
         }
     }
 
