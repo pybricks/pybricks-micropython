@@ -121,7 +121,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
         }
     }
 
-    pb_assert(pbio_servo_get(port_arg, &self->srv));
+    pb_assert(pbio_motorpoll_get_servo(port_arg, &self->srv));
     pb_assert(pbio_servo_setup(self->srv, direction_arg, gear_ratio));
 
     // Create an instance of the Logger class
