@@ -2,6 +2,7 @@
 // Copyright (c) 2018-2020 Laurens Valk
 // Copyright (c) 2020 LEGO System A/S
 
+#include <pbio/control.h>
 #include <pbio/drivebase.h>
 #include <pbio/motorpoll.h>
 #include <pbio/servo.h>
@@ -32,11 +33,19 @@ pbio_error_t pbio_motorpoll_get_drivebase(pbio_drivebase_t **db) {
 
 
 void _pbio_motorpoll_reset_all(void) {
-    int i;
-    for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        servo[i].port = PBIO_PORT_A + i;
-        servo_err[i] = pbio_servo_setup(&servo[i], PBIO_DIRECTION_CLOCKWISE, fix16_one);
+
+    // Set control status to passive
+    for (int i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
+        pbio_control_stop(&servo[i].control);
     }
+    pbio_control_stop(&drivebase.control_distance);
+    pbio_control_stop(&drivebase.control_heading);
+
+    // Physically stop the motors and set status to no device
+    for (int i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
+        servo[i].port = PBIO_PORT_A + i; // FIXME: drop port dependency for getting get dc and tacho within setup below
+        servo_err[i] = pbio_servo_setup(&servo[i], PBIO_DIRECTION_CLOCKWISE, fix16_one);
+    }    
 }
 
 void _pbio_motorpoll_poll(void) {
