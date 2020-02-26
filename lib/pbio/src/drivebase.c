@@ -103,6 +103,8 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
             if (err != PBIO_SUCCESS) {
                 return err;
             }
+            // Release claim on servos
+            pbio_drivebase_claim_servos(db, false);
             break;
         case PBIO_ACTUATION_BRAKE:
             err = pbio_dcmotor_brake(db->left->dcmotor);
@@ -113,6 +115,8 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
             if (err != PBIO_SUCCESS) {
                 return err;
             }
+            // Release claim on servos
+            pbio_drivebase_claim_servos(db, false);
             break;
         case PBIO_ACTUATION_HOLD:
             err = pbio_drivebase_straight(db, 0, db->control_distance.settings.max_rate, db->control_distance.settings.max_rate);
@@ -198,6 +202,7 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio
     // Individual servos
     db->left = left;
     db->right = right;
+    pbio_drivebase_claim_servos(db, false);
 
     // Initialize log
     db->log.num_values = DRIVEBASE_LOG_NUM_VALUES;
@@ -235,6 +240,16 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio
     );
 
     return PBIO_SUCCESS;
+}
+ 
+// Claim servos so that they cannot be used independently
+void pbio_drivebase_claim_servos(pbio_drivebase_t *db, bool claim) {
+    // Stop control
+    pbio_control_stop(&db->left->control);
+    pbio_control_stop(&db->right->control);
+    // Set claim status
+    db->left->claimed = claim;
+    db->right->claimed = claim;
 }
 
 pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_stop) {
@@ -299,6 +314,9 @@ pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int
 
     pbio_error_t err;
 
+    // Claim both servos for use by drivebase
+    pbio_drivebase_claim_servos(db, true);
+
     // Get the physical initial state
     int32_t time_now, sum, sum_rate, dif, dif_rate;
     err = drivebase_get_state(db, &time_now, &sum, &sum_rate, &dif, &dif_rate);
@@ -333,6 +351,9 @@ pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle, int32_t tu
 
     pbio_error_t err;
 
+    // Claim both servos for use by drivebase
+    pbio_drivebase_claim_servos(db, true);
+
     // Get the physical initial state
     int32_t time_now, sum, sum_rate, dif, dif_rate;
     err = drivebase_get_state(db, &time_now, &sum, &sum_rate, &dif, &dif_rate);
@@ -366,6 +387,9 @@ pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle, int32_t tu
 pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate) {
 
     pbio_error_t err;
+
+    // Claim both servos for use by drivebase
+    pbio_drivebase_claim_servos(db, true);
 
     // Get the physical initial state
     int32_t time_now, sum, sum_rate, dif, dif_rate;
