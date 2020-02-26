@@ -27,7 +27,6 @@
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
 typedef struct _pbio_servo_t {
-    bool connected;
     pbio_dcmotor_t *dcmotor;
     pbio_tacho_t *tacho;
     pbio_control_t control;

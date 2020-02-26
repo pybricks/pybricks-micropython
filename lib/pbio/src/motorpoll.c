@@ -9,6 +9,8 @@
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
 static pbio_servo_t servo[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+static pbio_error_t servo_err[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+
 static pbio_drivebase_t drivebase;
 
 pbio_error_t pbio_motorpoll_get_servo(pbio_port_t port, pbio_servo_t **srv) {
@@ -32,7 +34,8 @@ pbio_error_t pbio_motorpoll_get_drivebase(pbio_drivebase_t **db) {
 void _pbio_motorpoll_reset_all(void) {
     int i;
     for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        pbio_servo_setup(&servo[i], PBIO_DIRECTION_CLOCKWISE, fix16_one);
+        servo[i].port = PBIO_PORT_A + i;
+        servo_err[i] = pbio_servo_setup(&servo[i], PBIO_DIRECTION_CLOCKWISE, fix16_one);
     }
 }
 
@@ -42,16 +45,14 @@ void _pbio_motorpoll_poll(void) {
     for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
         pbio_servo_t *srv = &servo[i];
 
-        // FIXME: Use a better solution skip servicing disconnected connected servos.
-        if (!srv->connected) {
-            continue;
+        if (servo_err[i] == PBIO_SUCCESS) {
+            servo_err[i] = pbio_servo_control_update(srv);
         }
-        srv->connected = pbio_servo_control_update(srv) == PBIO_SUCCESS;
     }
 
     pbio_drivebase_t *db = &drivebase;
 
-    if (db->left && db->left->connected && db->right && db->right->connected) {
+    if (db->left && db->right) {
         pbio_drivebase_update(db);
     }
 }

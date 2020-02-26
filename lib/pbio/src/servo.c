@@ -126,9 +126,6 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     // Configure the logs for a servo
     srv->log.num_values = SERVO_LOG_NUM_VALUES;
 
-    // FIXME: drop connected flag
-    srv->connected = true;
-
     return PBIO_SUCCESS;
 }
 
