@@ -102,7 +102,7 @@ static void load_servo_settings(pbio_control_settings_t *s, pbio_iodev_type_id_t
 
 static pbio_servo_t servo[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio) {
+pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio) {
     pbio_error_t err;
 
     // Get, coast, and configure dc motor
@@ -128,10 +128,13 @@ static pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t directi
     // Configure the logs for a servo
     srv->log.num_values = SERVO_LOG_NUM_VALUES;
 
+    // FIXME: drop connected flag
+    srv->connected = true;
+
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction_t direction, fix16_t gear_ratio) {
+pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv) {
     // Validate port
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
         return PBIO_ERROR_INVALID_PORT;
@@ -139,13 +142,7 @@ pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv, pbio_direction
     // Get pointer to servo object
     *srv = &servo[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
     (*srv)->port = port;
-
-    // Initialize and onfigure the servo
-    pbio_error_t err = pbio_servo_setup(*srv, direction, gear_ratio);
-    if (err == PBIO_SUCCESS) {
-        (*srv)->connected = true;
-    }
-    return err;
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool reset_to_abs) {
@@ -454,8 +451,7 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
 void _pbio_servo_reset_all(void) {
     int i;
     for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        pbio_servo_t *srv;
-        pbio_servo_get(PBDRV_CONFIG_FIRST_MOTOR_PORT + i, &srv, PBIO_DIRECTION_CLOCKWISE, 1);
+        pbio_servo_setup(&servo[i], PBIO_DIRECTION_CLOCKWISE, fix16_one);
     }
 }
 
