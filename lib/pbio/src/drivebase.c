@@ -393,9 +393,20 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t t
 
     // Get the physical initial state
     int32_t time_now, sum, sum_rate, dif, dif_rate;
-    err = drivebase_get_state(db, &time_now, &sum, &sum_rate, &dif, &dif_rate);
-    if (err != PBIO_SUCCESS) {
-        return err;
+
+    // FIXME: Make state getter function a control property. That way, it can
+    // decide whether reading the state is needed, instead of checking control
+    // status here. We do it here for now anyway to reduce I/O if the initial
+    // state value is not actually used, like when control is already active.
+    if (db->control_heading.type == PBIO_CONTROL_NONE && db->control_distance.type == PBIO_CONTROL_NONE) {
+        // Get the current physical state.
+        err = drivebase_get_state(db, &time_now, &sum, &sum_rate, &dif, &dif_rate);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
+    else {
+        time_now = clock_usecs();
     }
 
     // Initialize both controllers
