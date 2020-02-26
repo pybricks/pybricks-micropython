@@ -18,6 +18,7 @@
 #define BIN_DATA_SIZE   32 // size of bin_data sysfs attribute
 
 typedef enum {
+    NO_MOTOR,
     NO_SENSOR,
     AUTO,
     NXT_ANALOG,
@@ -34,6 +35,7 @@ typedef enum {
 } ev3dev_lego_port_t;
 
 static const char* const port_modes[] = {
+    "no-motor",
     "no-sensor",
     "auto",
     "nxt-analog",
