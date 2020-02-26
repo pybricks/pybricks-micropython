@@ -90,38 +90,48 @@ static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
 }
 
 // Get the physical state of a drivebase
-static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_t sum_actuation, int32_t sum_control, pbio_actuation_t dif_actuation, int32_t dif_control) {
+static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_t actuation, int32_t sum_control, int32_t dif_control) {
     pbio_error_t err;
 
-    // If either signal coasts, both must coast
-    if (sum_actuation == PBIO_ACTUATION_COAST || dif_actuation == PBIO_ACTUATION_COAST) {
-        // Coast motors
-        err = pbio_dcmotor_coast(db->left->dcmotor);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-        err = pbio_dcmotor_coast(db->right->dcmotor);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-        return PBIO_SUCCESS;
+    switch (actuation) {
+        case PBIO_ACTUATION_COAST:
+            err = pbio_dcmotor_coast(db->left->dcmotor);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
+            err = pbio_dcmotor_coast(db->right->dcmotor);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
+            break;
+        case PBIO_ACTUATION_BRAKE:
+            err = pbio_dcmotor_brake(db->left->dcmotor);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
+            err = pbio_dcmotor_brake(db->right->dcmotor);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
+            break;
+        case PBIO_ACTUATION_HOLD:
+            err = pbio_drivebase_straight(db, 0, db->control_distance.settings.max_rate, db->control_distance.settings.max_rate);
+            break;
+        case PBIO_ACTUATION_DUTY:
+            err = pbio_dcmotor_set_duty_cycle_sys(db->left->dcmotor, sum_control + dif_control);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
+            err = pbio_dcmotor_set_duty_cycle_sys(db->right->dcmotor, sum_control - dif_control);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
+            break;
+        default:
+            err = PBIO_ERROR_INVALID_ARG;
+            break;
     }
-
-    // Hold is not yet implemented
-    if (sum_actuation == PBIO_ACTUATION_HOLD || dif_actuation == PBIO_ACTUATION_HOLD) {
-        return pbio_drivebase_straight(db, 0, db->control_distance.settings.max_rate, db->control_distance.settings.max_rate);
-    }
-
-    // Brake is the same as duty, so just actuate
-    err = pbio_dcmotor_set_duty_cycle_sys(db->left->dcmotor, sum_control + dif_control);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    err = pbio_dcmotor_set_duty_cycle_sys(db->right->dcmotor, sum_control - dif_control);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    return PBIO_SUCCESS;
+    return err;
 }
 
 // Log motor data for a motor that is being actively controlled
@@ -250,7 +260,7 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
         dif_control = 0;
     }
 
-    return pbio_drivebase_actuate(db, after_stop, sum_control, after_stop, dif_control);
+    return pbio_drivebase_actuate(db, after_stop, sum_control, dif_control);
 }
 
 pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
@@ -272,8 +282,13 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     control_update(&db->control_distance, time_now, sum, sum_rate, &sum_actuation, &sum_control);
     control_update(&db->control_heading, time_now, dif, dif_rate, &dif_actuation, &dif_control);
 
+    // Separate actuation types are not possible for now
+    if (sum_actuation != dif_actuation) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
     // Actuate
-    err = pbio_drivebase_actuate(db, sum_actuation, sum_control, dif_actuation, dif_control);
+    err = pbio_drivebase_actuate(db, sum_actuation, sum_control, dif_control);
     if (err != PBIO_SUCCESS) {
         return err;
     }
