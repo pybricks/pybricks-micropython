@@ -18,7 +18,9 @@ typedef struct _pbio_drivebase_t {
     pbio_control_t control_distance;
 } pbio_drivebase_t;
 
-pbio_error_t pbio_drivebase_get(pbio_drivebase_t **_db, pbio_servo_t *left, pbio_servo_t *right, fix16_t wheel_diameter, fix16_t axle_track);
+pbio_error_t pbio_drivebase_get(pbio_drivebase_t **db);
+pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio_servo_t *right, fix16_t wheel_diameter, fix16_t axle_track);
+
 
 // Finite point to point control
 

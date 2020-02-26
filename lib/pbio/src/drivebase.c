@@ -164,11 +164,7 @@ static pbio_error_t drivebase_log_update(pbio_drivebase_t *db,
     return pbio_logger_update(&db->log, buf);
 }
 
-static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
-                                         pbio_servo_t *left,
-                                         pbio_servo_t *right,
-                                         fix16_t wheel_diameter,
-                                         fix16_t axle_track) {
+pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio_servo_t *right, fix16_t wheel_diameter, fix16_t axle_track) {
     pbio_error_t err;
 
     // Reset both motors to a passive state
@@ -233,19 +229,9 @@ static pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db,
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_drivebase_get(pbio_drivebase_t **_db, pbio_servo_t *left, pbio_servo_t *right, fix16_t wheel_diameter, fix16_t axle_track) {
-
-    // Get pointer to device
-    pbio_drivebase_t *db = &__db;
-
-    // Configure drivebase and set properties
-    pbio_error_t err = pbio_drivebase_setup(db, left, right, wheel_diameter, axle_track);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // On success, return pointer to device
-    *_db = db;
+pbio_error_t pbio_drivebase_get(pbio_drivebase_t **db) {
+    // Get pointer to device (at the moment, there is only one drivebase)
+    *db = &__db;
     return PBIO_SUCCESS;
 }
 

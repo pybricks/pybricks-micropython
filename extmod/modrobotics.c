@@ -63,7 +63,8 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     fix16_t axle_track_val = pb_obj_get_fix16(axle_track);
 
     // Create drivebase
-    pb_assert(pbio_drivebase_get(&self->db, self->left->srv, self->right->srv, wheel_diameter_val, axle_track_val));
+    pb_assert(pbio_drivebase_get(&self->db));
+    pb_assert(pbio_drivebase_setup(self->db, self->left->srv, self->right->srv, wheel_diameter_val, axle_track_val));
 
     // Create an instance of the Logger class
     self->logger = logger_obj_make_new(&self->db->log);
