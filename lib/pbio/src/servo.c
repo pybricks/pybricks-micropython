@@ -100,8 +100,6 @@ static void load_servo_settings(pbio_control_settings_t *s, pbio_iodev_type_id_t
     }
 }
 
-static pbio_servo_t servo[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
-
 pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio) {
     pbio_error_t err;
 
@@ -131,17 +129,6 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     // FIXME: drop connected flag
     srv->connected = true;
 
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv) {
-    // Validate port
-    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
-    // Get pointer to servo object
-    *srv = &servo[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
-    (*srv)->port = port;
     return PBIO_SUCCESS;
 }
 
@@ -446,30 +433,6 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     int32_t target_count = pbio_control_user_to_counts(&srv->control.settings, target);
 
     return pbio_control_start_hold_control(&srv->control, time_start, target_count);
-}
-
-void _pbio_servo_reset_all(void) {
-    int i;
-    for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        pbio_servo_setup(&servo[i], PBIO_DIRECTION_CLOCKWISE, fix16_one);
-    }
-}
-
-// TODO: Convert to Contiki process
-
-// Service all the motors by calling this function at approximately constant intervals.
-void _pbio_servo_poll(void) {
-    int i;
-    // Do the update for each motor
-    for (i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        pbio_servo_t *srv = &servo[i];
-
-        // FIXME: Use a better solution skip servicing disconnected connected servos.
-        if (!srv->connected) {
-            continue;
-        }
-        srv->connected = pbio_servo_control_update(srv) == PBIO_SUCCESS;
-    }
 }
 
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER

@@ -8,9 +8,9 @@
 #include "pbdrv/config.h"
 
 #include "pbio/button.h"
-#include "pbio/servo.h"
 #include "pbio/event.h"
 #include "pbio/light.h"
+#include "pbio/motorpoll.h"
 
 #include "pbsys/sys.h"
 
@@ -73,7 +73,7 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
 void pbsys_unprepare_user_program(void) {
     user_stop_func = NULL;
     user_stdin_event_func = NULL;
-    // _pbio_servo_reset_all();
+    // _pbio_motorpoll_reset_all();
 }
 
 pbio_error_t pbsys_stdin_get_char(uint8_t *c) {

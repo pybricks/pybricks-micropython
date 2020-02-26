@@ -18,9 +18,8 @@ typedef struct _pbio_drivebase_t {
     pbio_control_t control_distance;
 } pbio_drivebase_t;
 
-pbio_error_t pbio_drivebase_get(pbio_drivebase_t **db);
 pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio_servo_t *right, fix16_t wheel_diameter, fix16_t axle_track);
-
+pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db);
 
 // Finite point to point control
 
@@ -45,12 +44,6 @@ pbio_error_t pbio_drivebase_reset(pbio_drivebase_t *db);
 pbio_error_t pbio_drivebase_get_drive_settings(pbio_drivebase_t *db, int32_t *drive_speed, int32_t *drive_acceleration, int32_t *turn_rate, int32_t *turn_acceleration);
 
 pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t drive_speed, int32_t drive_acceleration, int32_t turn_rate, int32_t turn_acceleration);
-
-void _pbio_drivebase_poll(void);
-
-#else
-
-static inline void _pbio_drivebase_poll(void) { }
 
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
 

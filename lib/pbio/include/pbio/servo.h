@@ -35,7 +35,6 @@ typedef struct _pbio_servo_t {
     pbio_log_t log;
 } pbio_servo_t;
 
-pbio_error_t pbio_servo_get(pbio_port_t port, pbio_servo_t **srv);
 pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio);
 
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool reset_to_abs);
@@ -51,14 +50,6 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target);
 
 pbio_error_t pbio_servo_control_update(pbio_servo_t *srv);
-
-void _pbio_servo_reset_all(void);
-void _pbio_servo_poll(void);
-
-#else
-
-static inline void _pbio_servo_reset_all(void) { }
-static inline void _pbio_servo_poll(void) { }
 
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
 

@@ -16,8 +16,7 @@
 #include "pbdrv/motor.h"
 #include "pbsys/sys.h"
 #include "pbio/config.h"
-#include "pbio/servo.h"
-#include "pbio/drivebase.h"
+#include "pbio/motorpoll.h"
 #include "pbio/uartdev.h"
 
 #include "processes.h"
@@ -69,7 +68,7 @@ void pbio_init(void) {
     _pbdrv_light_init();
     autostart_start(autostart_processes);
     _pbdrv_motor_init();
-    _pbio_servo_reset_all();
+    _pbio_motorpoll_reset_all();
 }
 
 /**
@@ -85,8 +84,7 @@ int pbio_do_one_event(void) {
     // don't want to call all of the subroutines unless enough time has
     // actually elapsed to do something useful.
     if (now - prev_fast_poll_time >= clock_from_msec(PBIO_CONFIG_SERVO_PERIOD_MS)) {
-        _pbio_servo_poll();
-        _pbio_drivebase_poll();
+        _pbio_motorpoll_poll();
         prev_fast_poll_time = clock_time();
     }
     if (now - prev_slow_poll_time >= clock_from_msec(32)) {

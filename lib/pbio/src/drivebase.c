@@ -44,8 +44,6 @@ static pbio_control_settings_t settings_drivebase_distance_default = {
     .control_offset = 0,
 };
 
-static pbio_drivebase_t __db;
-
 // Get the physical state of a drivebase
 static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
                                         int32_t *time_now,
@@ -229,12 +227,6 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_drivebase_get(pbio_drivebase_t **db) {
-    // Get pointer to device (at the moment, there is only one drivebase)
-    *db = &__db;
-    return PBIO_SUCCESS;
-}
-
 pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_stop) {
 
     pbio_error_t err;
@@ -261,7 +253,7 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
     return pbio_drivebase_actuate(db, after_stop, sum_control, after_stop, dif_control);
 }
 
-static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
+pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     // Get the physical state
     int32_t time_now, sum, sum_rate, dif, dif_rate;
     pbio_error_t err = drivebase_get_state(db, &time_now, &sum, &sum_rate, &dif, &dif_rate);
@@ -425,17 +417,6 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
     sh->abs_acceleration = pbio_control_user_to_counts(sh, turn_acceleration);
 
     return PBIO_SUCCESS;
-}
-
-// TODO: Convert to Contiki process
-
-// Service all drivebase motors by calling this function at approximately constant intervals.
-void _pbio_drivebase_poll(void) {
-    pbio_drivebase_t *db = &__db;
-
-    if (db->left && db->left->connected && db->right && db->right->connected) {
-        pbio_drivebase_update(db);
-    }
 }
 
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER

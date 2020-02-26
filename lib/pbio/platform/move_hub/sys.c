@@ -9,9 +9,9 @@
 #include "pbdrv/light.h"
 
 #include "pbio/button.h"
-#include "pbio/servo.h"
 #include "pbio/event.h"
 #include "pbio/light.h"
+#include "pbio/motorpoll.h"
 
 #include "pbsys/sys.h"
 
@@ -84,7 +84,7 @@ void pbsys_unprepare_user_program(void) {
     _pbio_light_set_user_mode(false);
     pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE, &r, &g, &b);
     pbdrv_light_set_rgb(PBIO_PORT_SELF, r, g, b);
-    _pbio_servo_reset_all();
+    _pbio_motorpoll_reset_all();
 }
 
 pbio_error_t pbsys_stdin_get_char(uint8_t *c) {

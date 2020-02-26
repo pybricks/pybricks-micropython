@@ -3,8 +3,8 @@
 
 #include <math.h>
 
-#include <pbio/servo.h>
 #include <pbio/drivebase.h>
+#include <pbio/motorpoll.h>
 
 #include "py/mphal.h"
 #include "py/runtime.h"
