@@ -297,7 +297,7 @@ int32_t pbio_control_user_to_counts(pbio_control_settings_t *s, int32_t user) {
 void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *actuation) {
     *speed = pbio_control_counts_to_user(s, s->max_rate);
     *acceleration = pbio_control_counts_to_user(s, s->abs_acceleration);
-    *actuation = s->max_control / 100; // TODO: Generalize scaler beyond duty
+    *actuation = s->max_control / s->actuation_scale;
 }
 
 pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t actuation) {
@@ -306,7 +306,7 @@ pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_
     }
     s->max_rate = pbio_control_user_to_counts(s, speed);
     s->abs_acceleration = pbio_control_user_to_counts(s, acceleration);
-    s->max_control = actuation * 100; // TODO: Generalize scaler beyond duty
+    s->max_control = actuation * s->actuation_scale;
     return PBIO_SUCCESS;
 }
 
@@ -316,7 +316,7 @@ void pbio_control_settings_get_pid(pbio_control_settings_t *s, int16_t *pid_kp, 
     *pid_kd = s->pid_kd;
     *integral_range = pbio_control_counts_to_user(s, s->integral_range);
     *integral_rate = pbio_control_counts_to_user(s, s->integral_rate);
-    *control_offset = s->control_offset / 100;
+    *control_offset = s->control_offset / s->actuation_scale;
 }
 
 pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd, int32_t integral_range, int32_t integral_rate, int32_t control_offset) {
@@ -329,7 +329,7 @@ pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int16_t p
     s->pid_kd = pid_kd;
     s->integral_range = pbio_control_user_to_counts(s, integral_range);
     s->integral_rate = pbio_control_user_to_counts(s, integral_rate);
-    s->control_offset = control_offset * 100;
+    s->control_offset = control_offset * s->actuation_scale;
     return PBIO_SUCCESS;
 }
 

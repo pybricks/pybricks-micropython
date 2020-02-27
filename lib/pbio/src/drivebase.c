@@ -25,6 +25,7 @@ static pbio_control_settings_t settings_drivebase_heading_default = {
     .integral_range = 100,
     .integral_rate = 12,
     .max_control = 20000,
+    .actuation_scale = 200,
     .control_offset = 0,
 };
 
@@ -41,6 +42,7 @@ static pbio_control_settings_t settings_drivebase_distance_default = {
     .integral_range = 100,
     .integral_rate = 12,
     .max_control = 20000,
+    .actuation_scale = 200,
     .control_offset = 0,
 };
 
