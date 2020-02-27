@@ -126,7 +126,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
     // Compute the trajectory
     if (ctl->type == PBIO_CONTROL_NONE) {
         // If no control is ongoing, start from physical state
-        err = pbio_trajectory_make_angle_based(&ctl->trajectory, time_now, count_now, target_count, rate_now, target_rate, ctl->settings.max_rate, acceleration);
+        err = pbio_trajectory_make_angle_based(&ctl->trajectory, time_now, count_now, target_count, rate_now, target_rate, ctl->settings.max_rate, acceleration, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -136,7 +136,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
         int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
 
         // Make the new trajectory and try to patch to existing one
-        err = pbio_trajectory_make_angle_based_patched(&ctl->trajectory, time_ref, target_count, target_rate, ctl->settings.max_rate, acceleration);
+        err = pbio_trajectory_make_angle_based_patched(&ctl->trajectory, time_ref, target_count, target_rate, ctl->settings.max_rate, acceleration, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -212,7 +212,7 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
     // Compute the trajectory
     if (ctl->type == PBIO_CONTROL_NONE) {
         // If no control is ongoing, start from physical state
-        err = pbio_trajectory_make_time_based(&ctl->trajectory, time_now, duration, count_now, 0, rate_now, target_rate, ctl->settings.max_rate, acceleration);
+        err = pbio_trajectory_make_time_based(&ctl->trajectory, time_now, duration, count_now, 0, rate_now, target_rate, ctl->settings.max_rate, acceleration, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -222,7 +222,7 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
         int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
 
         // Make the new trajectory and try to patch to existing one
-        err = pbio_trajectory_make_time_based_patched(&ctl->trajectory, time_ref, duration, target_rate, ctl->settings.max_rate, acceleration);
+        err = pbio_trajectory_make_time_based_patched(&ctl->trajectory, time_ref, duration, target_rate, ctl->settings.max_rate, acceleration, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
