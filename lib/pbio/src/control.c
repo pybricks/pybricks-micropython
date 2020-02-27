@@ -47,7 +47,9 @@ void control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, in
     duty_due_to_integral = (ctl->settings.pid_ki*(count_err_integral/US_PER_MS))/MS_PER_SECOND;
     duty_feedforward = pbio_math_sign(rate_ref)*ctl->settings.control_offset;
 
+    // Total duty signal, capped by the actuation limit
     duty = duty_due_to_proportional + duty_due_to_integral + duty_due_to_derivative + duty_feedforward;
+    duty = max(-ctl->settings.max_control, min(duty, ctl->settings.max_control));
 
     // This completes the computation of the control signal.
     // The next steps take care of handling windup, or triggering a stop if we are on target.
