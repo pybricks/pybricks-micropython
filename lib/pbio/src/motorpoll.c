@@ -59,6 +59,7 @@ void _pbio_motorpoll_reset_all(void) {
     // Set control status to passive
     for (int i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
         pbio_control_stop(&servo[i].control);
+        servo[i].claimed = false;
     }
     pbio_control_stop(&drivebase.control_distance);
     pbio_control_stop(&drivebase.control_heading);
