@@ -12,39 +12,38 @@
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
-static pbio_control_settings_t settings_drivebase_heading_default = {
-    .max_rate = 2000,
-    .abs_acceleration = 4000,
-    .rate_tolerance = 16,
-    .count_tolerance = 16,
-    .stall_rate_limit = 16,
-    .stall_time = 200*US_PER_MS,
-    .pid_kp = 200,
-    .pid_ki = 750,
-    .pid_kd = 2,
-    .integral_range = 100,
-    .integral_rate = 12,
-    .max_control = 20000,
-    .actuation_scale = 200,
-    .control_offset = 0,
-};
+static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_control_settings_t *s_heading, pbio_control_settings_t *s_left, pbio_control_settings_t *s_right) {
+    
+    // All rate/count acceleration limits add up, because distance state is two motors counts added
+    s_distance->max_rate = s_left->max_rate + s_right->max_rate;
+    s_distance->abs_acceleration = s_left->abs_acceleration + s_right->abs_acceleration;
+    s_distance->rate_tolerance = s_left->rate_tolerance + s_right->rate_tolerance;
+    s_distance->count_tolerance = s_left->count_tolerance + s_right->count_tolerance;
+    s_distance->stall_rate_limit = s_left->stall_rate_limit + s_right->stall_rate_limit;
+    s_distance->integral_range = s_left->integral_range + s_right->integral_range;
+    s_distance->integral_rate = s_left->integral_rate + s_right->integral_rate;
 
-static pbio_control_settings_t settings_drivebase_distance_default = {
-    .max_rate = 2000,
-    .abs_acceleration = 4000,
-    .rate_tolerance = 16,
-    .count_tolerance = 16,
-    .stall_rate_limit = 16,
-    .stall_time = 200*US_PER_MS,
-    .pid_kp = 200,
-    .pid_ki = 750,
-    .pid_kd = 2,
-    .integral_range = 100,
-    .integral_rate = 12,
-    .max_control = 20000,
-    .actuation_scale = 200,
-    .control_offset = 0,
-};
+    // Although counts/errors add up twice as fast, both motors actuate, so apply half of the average PID
+    s_distance->pid_kp = (s_left->pid_kp + s_right->pid_kp)/4;
+    s_distance->pid_ki = (s_left->pid_ki + s_right->pid_ki)/4;
+    s_distance->pid_kd = (s_left->pid_kd + s_right->pid_kd)/4;
+
+    // Maxima are bound by the least capable motor
+    s_distance->max_control = min(s_left->max_control, s_right->max_control);
+    s_distance->stall_time = min(s_left->stall_time, s_right->stall_time);
+
+    // We require that actuation scale and offsets are the same for either motor, and use as-is for drivebase
+    if (s_left->actuation_scale != s_right->actuation_scale || s_left->control_offset != s_right->control_offset) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    s_distance->actuation_scale = s_left->actuation_scale;
+    s_distance->control_offset = s_left->control_offset;
+
+    // By default, heading control is the same as distance control
+    *s_heading = *s_distance;
+
+    return PBIO_SUCCESS;
+}
 
 // Get the physical state of a drivebase
 static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
@@ -209,8 +208,11 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio
     // Initialize log
     db->log.num_values = DRIVEBASE_LOG_NUM_VALUES;
 
-    // Configure heading controller
-    db->control_heading.settings = settings_drivebase_heading_default;
+    // Adopt settings as the average or sum of both servos, except scaling
+    err = drivebase_adopt_settings(&db->control_distance.settings, &db->control_heading.settings, &db->left->control.settings, &db->right->control.settings);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Count difference between the motors for every 1 degree drivebase rotation
     db->control_heading.settings.counts_per_unit = 
@@ -224,9 +226,6 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio
             wheel_diameter
         )
     );
-
-    // Configure distance controller
-    db->control_distance.settings = settings_drivebase_distance_default;
 
     // Sum of motor counts for every 1 mm forward
     db->control_distance.settings.counts_per_unit =
