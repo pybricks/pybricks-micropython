@@ -81,6 +81,9 @@ STATIC mp_obj_t ev3dev_Image_new(GrxContext* context) {
     GrxFont *font = pb_ev3dev_Font_obj_get_font(pb_const_ev3dev_font_DEFAULT);
     self->text_options = grx_text_options_new(font, GRX_COLOR_BLACK);
 
+    // only the screen needs to be cleared on first use
+    self->cleared = context != grx_get_screen_context();
+
     return MP_OBJ_FROM_PTR(self);
 }
 
