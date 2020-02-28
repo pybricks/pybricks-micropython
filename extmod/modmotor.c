@@ -331,21 +331,33 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
         pbio_control_settings_set_limits(&self->srv->control.settings, _speed, _acceleration, user_limit);
     }
 
-    // Call pbio with parsed user/default arguments
-    pb_assert(pbio_servo_run_until_stalled(self->srv, speed_arg, after_stop));
+    mp_obj_t ex = MP_OBJ_NULL;
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        // Call pbio with parsed user/default arguments
+        pb_assert(pbio_servo_run_until_stalled(self->srv, speed_arg, after_stop));
 
-    // In this command we always wait for completion, so we can return the
-    // final angle below.
-    wait_for_completion(self->srv);
+        // In this command we always wait for completion, so we can return the
+        // final angle below.
+        wait_for_completion(self->srv);
 
-    // Read the angle upon completion of the stall maneuver
-    int32_t stall_point;
-    pbio_tacho_get_angle(self->srv->tacho, &stall_point);
+        nlr_pop();
+    } else {
+        ex = MP_OBJ_FROM_PTR(nlr.ret_val);
+    }
 
     // Restore original settings
     if (override_duty_limit) {
         pbio_control_settings_set_limits(&self->srv->control.settings, _speed, _acceleration, _actuation);
     }
+
+    if (ex != MP_OBJ_NULL) {
+        nlr_raise(ex);
+    }
+
+    // Read the angle upon completion of the stall maneuver
+    int32_t stall_point;
+    pbio_tacho_get_angle(self->srv->tacho, &stall_point);
 
     // Return angle at which the motor stalled
     return mp_obj_new_int(stall_point);
