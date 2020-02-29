@@ -357,6 +357,22 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
     return pbio_servo_actuate(srv, after_stop, control);
 }
 
+pbio_error_t pbio_servo_stop_force(pbio_servo_t *srv) {
+    // Set control status passive so poll won't call it again
+    pbio_control_stop(&srv->control);
+
+    // Release claim from drivebases or other classes
+    srv->claimed = false;
+
+    // Try to stop / coast motor whether or not initialized already
+    if (srv->dcmotor) {
+        return pbio_dcmotor_coast(srv->dcmotor);
+    }
+    else {
+        return pbdrv_motor_coast(srv->port);
+    }
+}
+
 pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
 
     pbio_error_t err;

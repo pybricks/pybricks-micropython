@@ -39,7 +39,10 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
 
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool reset_to_abs);
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled);
+
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop);
+pbio_error_t pbio_servo_stop_force(pbio_servo_t *srv);
+
 pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps);
 
 pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed);
