@@ -65,7 +65,7 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     // Create drivebase
     pb_assert(pbio_motorpoll_get_drivebase(&self->db));
     pb_assert(pbio_drivebase_setup(self->db, self->left->srv, self->right->srv, wheel_diameter_val, axle_track_val));
-    pb_assert(pbio_motorpoll_set_drivebase_status(self->db, PBIO_SUCCESS));
+    pb_assert(pbio_motorpoll_set_drivebase_status(self->db, PBIO_ERROR_AGAIN));
 
     // Create an instance of the Logger class
     self->logger = logger_obj_make_new(&self->db->log);

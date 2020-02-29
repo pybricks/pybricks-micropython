@@ -56,36 +56,51 @@ pbio_error_t pbio_motorpoll_set_drivebase_status(pbio_drivebase_t *db, pbio_erro
 
 void _pbio_motorpoll_reset_all(void) {
 
-    // Set control status to passive
+    // Set ports for all servos on init
     for (int i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
         servo[i].port = PBIO_PORT_A + i;
-        pbio_control_stop(&servo[i].control);
-        servo[i].claimed = false;
     }
-    pbio_control_stop(&drivebase.control_distance);
-    pbio_control_stop(&drivebase.control_heading);
 
-    // Physically stop the motors and set status to no device
-    for (int i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        pbdrv_motor_coast(PBIO_PORT_A + i);
-        servo_err[i] = PBIO_ERROR_NO_DEV;
+    pbio_error_t err;
+
+    // Force stop the drivebase
+    err = pbio_drivebase_stop_force(&drivebase);
+    if (err != PBIO_SUCCESS) {
+        drivebase_err = err;
     }
-    drivebase_err = PBIO_ERROR_NO_DEV;
+
+    // Force stop the servos
+    for (int i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
+        err = pbio_servo_stop_force(&servo[i]);
+        if (err != PBIO_SUCCESS) {
+            servo_err[i] = err;
+        }
+    }
 }
 
 void _pbio_motorpoll_poll(void) {
 
+    pbio_error_t err;
+
     // Poll servos
     for (int i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        // Poll servo if current status is success
-        if (servo_err[i] == PBIO_SUCCESS) {
-            servo_err[i] = pbio_servo_control_update(&servo[i]);
+        // Poll servo again if it says so, and save error if encountered
+        if (servo_err[i] == PBIO_ERROR_AGAIN) {
+            err = pbio_servo_control_update(&servo[i]);
+            if (err != PBIO_SUCCESS) {
+                servo_err[i] = err;
+                // TODO: Raise this error
+            }
         }
     }
 
-    // Poll drivebase if enabled
-    if (drivebase_err == PBIO_SUCCESS) {
-        drivebase_err = pbio_drivebase_update(&drivebase);
+    // Poll drivebase again if it says so, and save error if encountered
+    if (drivebase_err == PBIO_ERROR_AGAIN) {
+        err = pbio_drivebase_update(&drivebase);
+        if (err != PBIO_SUCCESS) {
+            drivebase_err = err;
+            // TODO: Raise this error
+        }
     }
 }
 
