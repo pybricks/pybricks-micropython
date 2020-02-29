@@ -38,7 +38,7 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
 
 pbio_error_t pbio_drivebase_get_state(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate);
 
-pbio_error_t pbio_drivebase_reset(pbio_drivebase_t *db);
+pbio_error_t pbio_drivebase_reset_state(pbio_drivebase_t *db);
 
 // Settings
 

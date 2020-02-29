@@ -197,7 +197,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_state_obj, robotics_DriveBase_state
 STATIC mp_obj_t robotics_DriveBase_reset(mp_obj_t self_in) {
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    pb_assert(pbio_drivebase_reset(self->db));
+    pb_assert(pbio_drivebase_reset_state(self->db));
 
     return mp_const_none;
 }

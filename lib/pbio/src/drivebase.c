@@ -439,7 +439,7 @@ pbio_error_t pbio_drivebase_get_state(pbio_drivebase_t *db, int32_t *distance, i
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_drivebase_reset(pbio_drivebase_t *db) {
+pbio_error_t pbio_drivebase_reset_state(pbio_drivebase_t *db) {
     int32_t time_now, sum_rate, dif_rate;
     return drivebase_get_state(db, &time_now, &db->sum_offset, &sum_rate, &db->dif_offset, &dif_rate);
 }
