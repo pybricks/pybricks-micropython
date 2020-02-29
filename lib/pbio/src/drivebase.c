@@ -279,6 +279,28 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
     return pbio_drivebase_actuate(db, after_stop, sum_control, dif_control);
 }
 
+pbio_error_t pbio_drivebase_stop_force(pbio_drivebase_t *db) {
+
+    // Stop control so polling will stop
+    pbio_control_stop(&db->control_distance);
+    pbio_control_stop(&db->control_heading);
+
+    pbio_error_t err;
+
+    if (!db->left || !db->right) {
+        return PBIO_ERROR_NO_DEV;
+    }
+
+    // Try to stop left servo
+    err = pbio_servo_stop_force(db->left);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Try to stop right servo
+    return pbio_servo_stop_force(db->right);
+}
+
 pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     // Get the physical state
     int32_t time_now, sum, sum_rate, dif, dif_rate;
