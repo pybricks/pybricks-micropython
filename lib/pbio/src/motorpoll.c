@@ -17,14 +17,14 @@ static pbio_error_t drivebase_err;
 
 // Get pointer to servo by port index
 pbio_error_t pbio_motorpoll_get_servo(pbio_port_t port, pbio_servo_t **srv) {
-    // Validate port
-    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
-        return PBIO_ERROR_INVALID_PORT;
+
+    for (uint8_t i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
+        if (servo[i].port == port) {
+            *srv = &servo[i];
+            return PBIO_SUCCESS;
+        }
     }
-    // Get pointer to servo object
-    *srv = &servo[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
-    (*srv)->port = port;
-    return PBIO_SUCCESS;
+    return PBIO_ERROR_INVALID_PORT;
 }
 
 // Set status of the servo, which tells us whether to poll or not
@@ -58,6 +58,7 @@ void _pbio_motorpoll_reset_all(void) {
 
     // Set control status to passive
     for (int i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
+        servo[i].port = PBIO_PORT_A + i;
         pbio_control_stop(&servo[i].control);
         servo[i].claimed = false;
     }
