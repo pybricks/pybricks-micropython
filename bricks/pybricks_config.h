@@ -7,7 +7,7 @@
 #define PYBRICKS_VERSION_MINOR 0
 #define PYBRICKS_VERSION_MICRO 0
 #define PYBRICKS_VERSION_LEVEL_HEX 0xB
-#define PYBRICKS_VERSION_SERIAL 1
+#define PYBRICKS_VERSION_SERIAL 2
 
 // strings come from https://docs.python.org/3/library/sys.html#sys.version_info
 #if PYBRICKS_VERSION_LEVEL_HEX == 0xA
