@@ -258,6 +258,9 @@ static void run_user_program(uint32_t len, uint8_t *buf) {
     uint32_t free_len = len;
     #endif
 
+    // Send a message to say we will run a program
+    mp_print_str(&mp_plat_print, "\n>>>> RUNNING\n");
+
     mp_reader_t reader;
     mp_reader_new_mem(&reader, buf, len, free_len);
 
@@ -351,9 +354,6 @@ soft_reset:
     // Initialize MicroPython and run default imports
     mp_init();
     pb_imports();
-
-    // Send a message to say we will run a program
-    mp_print_str(&mp_plat_print, "\n>>>> RUNNING\n");
 
     // Execute the user script
     run_user_program(len, program);
