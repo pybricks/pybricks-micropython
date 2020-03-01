@@ -46,7 +46,34 @@ def download_and_run(device, mpy_bytes):
     for chunk in chunks:
         send_message(ser, chunk)
 
-    # TODO: Parse output
+    # Give hub time to start program
+    time.sleep(0.2)
+
+    # Read first part of response
+    data = ser.read_all()
+    printed = 0
+
+    # Read status to see if program started
+    RUNNING = b'>>>> RUNNING'
+    IDLE = b'>>>> IDLE'
+    if RUNNING not in data:
+        raise OSError("Failed to run program")
+
+    # Read from serial until idle status
+    while True:
+        # Append new data
+        data += ser.read_all()
+
+        # Split into lines, printing anything new
+        text = data.decode().split('\r\n')
+        while printed < len(text):
+            print(text[printed-1])
+            printed += 1
+
+        # Sleep and exit when done
+        time.sleep(0.1)
+        if IDLE in data:
+            break
 
 
 if __name__ == "__main__":
