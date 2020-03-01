@@ -1,63 +1,88 @@
 #!/usr/bin/env python3
 import os
-import mpy_cross
 import argparse
-import tempfile
+import subprocess
+from pathlib import Path
 
 
-def get_bytes_from_file(path):
+BUILD_DIR = 'build'
+TMP_PY_SCRIPT = '_tmp.py'
+TMP_MPY_SCRIPT = '_tmp.mpy'
+
+
+def make_build_dir():
+    # Create build folder if it does not exist
+    if not os.path.exists(BUILD_DIR):
+        os.mkdir(BUILD_DIR)
+
+    # Raise error if there happens to be a file by this name
+    if os.path.isfile(BUILD_DIR):
+        raise OSError("A file named build already exists.")
+
+
+def mpy_bytes_from_file(mpy_cross, path):
     """Compile a Python file with mpy-cross and return as bytes."""
 
-    # Cross-compile Python file to .mpy
-    mpy_path = os.path.splitext(path)[0] + '.mpy'
-    proc = mpy_cross.run(path, '--version')
-    proc = mpy_cross.run(path, '-mno-unicode', '-o', mpy_path)
+    # Show mpy_cross version
+    proc = subprocess.Popen([mpy_cross, '--version'])
     proc.wait()
 
-    # Read the .mpy file
+    # Make the build directory
+    make_build_dir()
+
+    # Cross-compile Python file to .mpy and raise errors if any
+    mpy_path = os.path.join(BUILD_DIR, Path(path).stem + '.mpy')
+    proc = subprocess.run(
+        [mpy_cross, path, '-mno-unicode', '-o', mpy_path], check=True
+    )
+
+    # Read the .mpy file and return as bytes
     with open(mpy_path, 'rb') as mpy:
-        contents = mpy.read()
-
-    # Remove the temporary .mpy file and return the contents
-    os.remove(mpy_path)
-    return contents
+        return mpy.read()
 
 
-def get_bytes_from_str(string):
-    """Compile a Python command with mpy-cross and return as list of bytes."""
+def mpy_bytes_from_str(mpy_cross, string):
+    """Compile a Python command with mpy-cross and return as bytes."""
 
-    # Write Python command to a temporary file and convert as a regular script.
-    with tempfile.NamedTemporaryFile('w', suffix='.py', delete=False) as f:
+    # Make the build directory
+    make_build_dir()
+
+    # Path to temporary file
+    py_path = os.path.join(BUILD_DIR, TMP_PY_SCRIPT)
+
+    # Write Python command to a file and convert as if it is a regular script.
+    with open(py_path, 'w') as f:
         f.write(string + '\n')
-        f.flush()
-        mpy_bytes = get_bytes_from_file(f.name)
-    os.remove(f.name)
-    return mpy_bytes
+
+    # Convert to mpy and get the bytes
+    return mpy_bytes_from_file(mpy_cross, py_path)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='Convert Python scripts or commands to .mpy bytes.')
+        description='Convert Python scripts or commands to .mpy bytes.'
+    )
+    parser.add_argument(
+        '--mpy_cross', dest='mpy_cross',
+        nargs='?', type=str, required=True
+    )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--file', dest='file', nargs='?', const=1, type=str)
     group.add_argument('--string', dest='string', nargs='?', const=1, type=str)
     args = parser.parse_args()
 
     if args.file:
-        data = get_bytes_from_file(args.file)
+        data = mpy_bytes_from_file(args.mpy_cross, args.file)
 
     if args.string:
-        data = get_bytes_from_str(args.string)
+        data = mpy_bytes_from_str(args.mpy_cross, args.string)
 
-    # Print as string. Because strings in the Python script will be visible in
-    # this format, this may be used as a sanity check to make sure you are
-    # looking at the correct script.
+    # Print as string as a sanity check.
     print("\nBytes:")
     print(data)
 
-    # Print the bytes as a C byte array for visual inspection. May also be used
-    # to run Python scripts in experimental MicroPython ports that do not yet
-    # have a REPL or any other form of of input/output.
+    # Print the bytes as a C byte array for development of new MicroPython
+    # ports without usable I/O, REPL or otherwise.
     WIDTH = 8
     print("\n// MPY file. Version: {0}. Size: {1}".format(data[1], len(data)) +
           "\nconst uint8_t script[] = ")

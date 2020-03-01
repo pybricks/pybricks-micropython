@@ -2,39 +2,51 @@
 import argparse
 import serial
 import time
+from mpybytes import mpy_bytes_from_file, mpy_bytes_from_str
 
-from mpybytes import get_bytes_from_file, get_bytes_from_str
+
+def send_message(ser, data):
+    """Send bytes to the hub, and check if reply matches checksum."""
+
+    # Initial checksum
+    checksum = 0
+
+    # Send data with brief pause between each byte
+    for b in data:
+        checksum ^= b
+        ser.write(bytes([b]))
+        time.sleep(0.002)
+
+    # Give hub time to send its checksum, then read it
+    time.sleep(0.1)
+    reply = ser.read()
+
+    # Raise errors if we did not get the checksum we wanted
+    if not reply:
+        raise OSError("Did not receive reply.")
+
+    if checksum != reply[-1]:
+        raise ValueError("Did not receive expected checksum.")
 
 
 def download_and_run(device, mpy_bytes):
+    """Split bytes from an MPY file into chunks and send to the hub."""
+
     # Open serial port
-    ser = serial.Serial(device, baudrate=115200, interCharTimeout=1)
+    ser = serial.Serial(device, baudrate=115200, timeout=0)
 
-    # Get the mpy file size, divide into 4 bytes and send to hub
-    size = len(mpy_bytes)
-    sizebytes = [(size >> (3-i)*8) % 256 for i in range(4)]
-    for b in sizebytes:
-        ser.write(bytes([b]))
-        time.sleep(0.05)
-
-    # Wait/check ACK
-    ser.read_until(b'Ready to receive.')
-    time.sleep(0.1)
+    # Get the mpy file size as 4 bytes
+    send_message(ser, len(mpy_bytes).to_bytes(4, byteorder="big"))
 
     # Split binary up in digestable chunks
-    n = 1
+    n = 100
     chunks = [mpy_bytes[i:i+n] for i in range(0, len(mpy_bytes), n)]
-    print('Sending mpy of {0} bytes in {1} chunks of '
-          '{2} bytes each'.format(size, len(chunks), n))
 
     # Send the data
     for chunk in chunks:
-        ser.write(bytes(chunk))
-        time.sleep(n/500)
+        send_message(ser, chunk)
 
     # TODO: Parse output
-    time.sleep(0.5)
-    print(str(ser.read(ser.inWaiting())))
 
 
 if __name__ == "__main__":
@@ -50,6 +62,10 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser.add_argument(
+        '--mpy_cross', dest='mpy_cross',
+        nargs='?', type=str, required=True
+    )
+    parser.add_argument(
         '--dev', dest='device', nargs='?', type=str, required=True)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--file', dest='file', nargs='?', const=1, type=str)
@@ -57,9 +73,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.file:
-        bytearr = get_bytes_from_file(args.file)
+        bytearr = mpy_bytes_from_file(args.mpy_cross, args.file)
 
     if args.string:
-        bytearr = get_bytes_from_str(args.string)
+        bytearr = mpy_bytes_from_str(args.mpy_cross, args.string)
 
     download_and_run(args.device, bytearr)
