@@ -183,6 +183,11 @@ static uint32_t get_user_program(uint8_t **buf) {
 }
 #else // PYBRICKS_MPY_MAIN_MODULE
 
+// If user says they want to send an MPY file this big (19 MB),
+// assume they want REPL. This lets users get REPL by pressing
+// spacebar four times, so that no special tools are required.
+const uint32_t REPL_LEN = 0x20202020;
+
 // Get user program via serial/bluetooth
 static uint32_t get_user_program(uint8_t **buf) {
     pbio_error_t err;
@@ -199,6 +204,12 @@ static uint32_t get_user_program(uint8_t **buf) {
                    ((uint32_t) len_buf[1]) << 16 |
                    ((uint32_t) len_buf[2]) << 8 |
                    ((uint32_t) len_buf[3]);
+
+    // Four spaces triggers REPL
+    if (len == REPL_LEN) {
+        *buf = NULL;
+        return REPL_LEN;
+    }
 
     // Assert that the length is allowed
     if (len > MPY_MAX_BYTES) {
@@ -232,12 +243,11 @@ static void run_user_program(uint32_t len, uint8_t *buf) {
         return;
     }
 
-    if (len == 4 && !strcmp((char *) buf, "REPL")) {
-        m_free(buf);
+    if (len == REPL_LEN) {
         #if MICROPY_ENABLE_COMPILER
         pyexec_friendly_repl();
         #else
-        mp_print_str(&mp_plat_print, "Not supported!\n");
+        mp_print_str(&mp_plat_print, "REPL not supported!\n");
         #endif // MICROPY_ENABLE_COMPILER
         return;
     }
@@ -334,23 +344,6 @@ soft_reset:
     // Receive an mpy-cross compiled Python script
     uint8_t *program;
     uint32_t len = get_user_program(&program);
-
-    // If we have no bluetooth, make a fake message
-    // that would otherwise be sent by the IDE to get
-    // the hub into REPL. We can delete this once all
-    // stm32 hubs have bluetooth enabled. Then we can
-    // Use the IDE to send this message instead.
-    #ifndef PYBRICKS_MPY_MAIN_MODULE
-    #if !PBDRV_CONFIG_BLUETOOTH
-    // Mimic the otherwise dynamic read since we free it later
-    len = 4;
-    program = m_malloc(len);
-    program[0] = 'R';
-    program[1] = 'E';
-    program[2] = 'P';
-    program[3] = 'L';
-    #endif
-    #endif
 
     // Get system hardware ready
     pbsys_prepare_user_program(&user_program_callbacks);
