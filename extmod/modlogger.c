@@ -95,14 +95,14 @@ static void make_data_row_str(char *row, int32_t *data, uint8_t n) {
 
 STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
-#if PYBRICKS_HUB_EV3
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         tools_Logger_obj_t, self,
         PB_ARG_DEFAULT_NONE(path)
     );
-
-    // Create an empty log file
     const char *file_path = path == mp_const_none ? "log.txt" : mp_obj_str_get_str(path);
+
+#if PYBRICKS_HUB_EV3
+    // Create an empty log file
     FILE *log_file;
 
     // Open file to erase it
@@ -111,8 +111,7 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
         pb_assert(PBIO_ERROR_IO);
     }
 #else
-    tools_Logger_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-    mp_print_str(&mp_plat_print, "PB_OF\n");
+    mp_printf(&mp_plat_print, "PB_OF:%s\n", file_path);
 #endif //PYBRICKS_HUB_EV3
 
     // Read log size information
