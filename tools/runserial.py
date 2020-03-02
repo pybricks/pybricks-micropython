@@ -75,6 +75,21 @@ def download_and_run(device, mpy_bytes):
         if IDLE in data:
             break
 
+    # Save log if detected in output
+    start_key = b'PB_OF'
+    end_key = b'PB_EOF'
+    if start_key in data and end_key in data:
+
+        # Get data between keys
+        start = data.index(start_key)+len(start_key)+1
+        end = data.index(end_key)-2
+        log_data = data[start:end]
+
+        # Extract file name and data
+        lines = log_data.decode().split('\r\n')
+        with open(lines[0], 'w') as f:
+            print(*lines[1:], sep='\n', file=f)
+
 
 if __name__ == "__main__":
     examples = """Examples:
