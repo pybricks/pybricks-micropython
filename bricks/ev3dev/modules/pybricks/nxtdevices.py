@@ -12,7 +12,7 @@ class VernierAdapter(AnalogSensor):
 
     def __init__(self, port, conversion=None):
         # create AnalogSensor object
-        super().__init__(port, False)
+        super().__init__(port)
 
         # Store conversion function if given
         if conversion is not None:
