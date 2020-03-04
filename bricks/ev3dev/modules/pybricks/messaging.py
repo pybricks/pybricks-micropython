@@ -27,8 +27,18 @@ class Mailbox:
         """
         self.name = name
         self._connection = connection
-        self._encode = encode
-        self._decode = decode
+
+        if encode:
+            self.encode = encode
+
+        if decode:
+            self.decode = decode
+
+    def encode(self, value):
+        return value
+
+    def decode(self, payload):
+        return payload
 
     def read(self):
         """Reads the current value of the mailbox.
@@ -40,7 +50,7 @@ class Mailbox:
         data = self._connection.read_from_mailbox(self.name)
         if data is None:
             return None
-        return self._decode(data) if self._decode else data
+        return self.decode(data)
 
     def send(self, value, destination=None):
         """Sends a value to remote mailboxes with the same name as this
@@ -51,7 +61,7 @@ class Mailbox:
             destination: The name or address of a specific device or ``None``
                 to broadcast to all connected devices.
         """
-        data = self._encode(value) if self._encode else value
+        data = self.encode(value)
         self._connection.send_to_mailbox(destination, self.name, data)
 
     def wait(self):
@@ -73,79 +83,46 @@ class Mailbox:
                 return new
 
 
-def _encode_logic(value):
-    return b'\x01' if value else b'\x00'
-
-
-def _decode_logic(payload):
-    return bool(payload[0])
-
-
 class LogicMailbox(Mailbox):
-    def __init__(self, name, connection):
-        """:class:`Mailbox` that holds a logic or boolean value.
+    """:class:`Mailbox` that holds a logic or boolean value.
 
-        This is compatible with the "logic" message blocks in the standard
-        EV3 firmware.
+    This is compatible with the "logic" message blocks in the standard
+    EV3 firmware.
+    """
 
-        Arguments:
-            name (str):
-                The name of this mailbox.
-            connection:
-                A connection object that implements the mailbox connection
-                interface.
-        """
-        super().__init__(name, connection, _encode_logic, _decode_logic)
+    def encode(self, value):
+        return b'\x01' if value else b'\x00'
 
-
-def _encode_numeric(value):
-    return pack('<f', value)
-
-
-def _decode_numeric(payload):
-    return unpack('<f', payload)[0]
+    def decode(self, payload):
+        return bool(payload[0])
 
 
 class NumericMailbox(Mailbox):
-    def __init__(self, name, connection):
-        """:class:`Mailbox` that holds a numeric or floating point value.
+    """:class:`Mailbox` that holds a numeric or floating point value.
 
-        This is compatible with the "numeric" message blocks in the standard
-        EV3 firmware.
+    This is compatible with the "numeric" message blocks in the standard
+    EV3 firmware.
+    """
 
-        Arguments:
-            name (str):
-                The name of this mailbox.
-            connection:
-                A connection object that implements the mailbox connection
-                interface.
-        """
-        super().__init__(name, connection, _encode_numeric, _decode_numeric)
+    def encode(self, value):
+        return pack('<f', value)
 
-
-def _encode_text(value):
-    return '{}\0'.format(value)
-
-
-def _decode_text(payload):
-    return payload.decode().strip('\0')
+    def decode(self, payload):
+        return unpack('<f', payload)[0]
 
 
 class TextMailbox(Mailbox):
-    def __init__(self, name, connection):
-        """:class:`Text` that holds a text or string point value.
+    """:class:`Text` that holds a text or string point value.
 
-        This is compatible with the "text" message blocks in the standard
-        EV3 firmware.
+    This is compatible with the "text" message blocks in the standard
+    EV3 firmware.
+    """
 
-        Arguments:
-            name (str):
-                The name of this mailbox.
-            connection:
-                A connection object that implements the mailbox connection
-                interface.
-        """
-        super().__init__(name, connection, _encode_text, _decode_text)
+    def encode(self, value):
+        return '{}\0'.format(value)
+
+    def decode(self, payload):
+        return payload.decode().strip('\0')
 
 
 # EV3 standard firmware is hard-coded to use channel 1
