@@ -74,7 +74,7 @@ void control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, in
     }
     // Position anti-windup in case of timed speed control (speed integral may not get too high)
     else {
-        if (abs(duty_due_to_proportional) >= max_windup_duty) {
+        if (abs(duty_due_to_proportional) >= max_windup_duty && pbio_math_sign(duty_due_to_proportional) == pbio_math_sign(rate_err)) {
             // We are at the duty limit and we should prevent further speed error integration.
             pbio_rate_integrator_pause(&ctl->rate_integrator, time_now, count_now, count_ref);
         }
