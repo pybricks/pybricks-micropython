@@ -60,21 +60,26 @@ void control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, in
     int32_t max_windup_duty = (ctl->settings.max_control - ctl->settings.control_offset) + (ctl->settings.pid_kp * abs(rate_now) * PBIO_CONFIG_SERVO_PERIOD_MS * 2) / MS_PER_SECOND;
 
     // Position anti-windup: pause trajectory or integration if falling behind despite using maximum duty
-    if (abs(duty_due_to_proportional) >= max_windup_duty) {
-        // We are at the duty limit and we should prevent further position error "integration".
-        if (ctl->type == PBIO_CONTROL_ANGLE) {
+
+    // Position anti-windup in case of angle control (position error may not get too high)
+    if (ctl->type == PBIO_CONTROL_ANGLE) {
+        if (abs(duty_due_to_proportional) >= max_windup_duty) {
+            // We are at the duty limit and we should prevent further position error integration.
             pbio_count_integrator_pause(&ctl->count_integrator, time_now, count_now, count_ref);
         }
         else {
-            pbio_rate_integrator_pause(&ctl->rate_integrator, time_now, count_now, count_ref);
-        }
-    }
-    else{
-        // Otherwise, the integrator should be running
-        if (ctl->type == PBIO_CONTROL_ANGLE) {
+            // Not at the limitm so continue integrating errors
             pbio_count_integrator_resume(&ctl->count_integrator, time_now, count_now, count_ref);
         }
+    }
+    // Position anti-windup in case of timed speed control (speed integral may not get too high)
+    else {
+        if (abs(duty_due_to_proportional) >= max_windup_duty) {
+            // We are at the duty limit and we should prevent further speed error integration.
+            pbio_rate_integrator_pause(&ctl->rate_integrator, time_now, count_now, count_ref);
+        }
         else {
+            // Not at the limitm so continue integrating errors
             pbio_rate_integrator_resume(&ctl->rate_integrator, time_now, count_now, count_ref);
         }
     }
