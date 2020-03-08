@@ -237,39 +237,41 @@ STATIC mp_obj_t motor_Motor_run(size_t n_args, const mp_obj_t *pos_args, mp_map_
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_run_obj, 1, motor_Motor_run);
 
 // pybricks.builtins.Motor.stop
-// pybricks.builtins.DCMotor.stop
 STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-
-    // Parse all arguments except the first one (self)
-    PB_PARSE_ARGS_METHOD_SKIP_SELF(n_args, pos_args, kw_args,
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        motor_Motor_obj_t, self,
         PB_ARG_DEFAULT_OBJ(stop_type, pb_Stop_HOLD_obj)
     );
-    pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
+    pbio_actuation_t actuation = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
 
-    // Object type is either Motor or DCMotor
-    bool is_servo = mp_obj_is_type(pos_args[0], &motor_Motor_type);
-
-    if (is_servo) {
-        motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-        pb_assert(pbio_servo_stop(self->srv, after_stop));
-    }
-    else {
-        motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-        if (after_stop == PBIO_ACTUATION_COAST) {
-            pb_assert(pbio_dcmotor_coast(self->dcmotor));
-        }
-        else if (after_stop == PBIO_ACTUATION_BRAKE) {
-            pb_assert(pbio_dcmotor_coast(self->dcmotor));
-        }
-        else {
-            // DCMotors do not support hold
-            pb_assert(PBIO_ERROR_NOT_SUPPORTED);
-        }
-    }
+    pb_assert(pbio_servo_stop(self->srv, actuation));
 
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_stop_obj, 1, motor_Motor_stop);
+
+STATIC mp_obj_t motor_DCMotor_stop(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        motor_DCMotor_obj_t, self,
+        PB_ARG_DEFAULT_OBJ(stop_type, pb_Stop_COAST_obj)
+    );
+    pbio_actuation_t actuation = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
+
+    switch (actuation) {
+    case PBIO_ACTUATION_COAST:
+        pb_assert(pbio_dcmotor_coast(self->dcmotor));
+        break;
+    case PBIO_ACTUATION_BRAKE:
+        pb_assert(pbio_dcmotor_brake(self->dcmotor));
+        break;
+    default:
+        // DCMotors do not support hold
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_DCMotor_stop_obj, 1, motor_DCMotor_stop);
 
 // pybricks.builtins.Motor.run_time
 STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -463,7 +465,7 @@ const mp_obj_type_t motor_Motor_type = {
 
 // dir(pybricks.builtins.DCMotor)
 STATIC const mp_rom_map_elem_t motor_DCMotor_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_Motor_stop_obj) },
+    { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_DCMotor_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_dc), MP_ROM_PTR(&motor_Motor_duty_obj) },
 };
 MP_DEFINE_CONST_DICT(motor_DCMotor_locals_dict, motor_DCMotor_locals_dict_table);
