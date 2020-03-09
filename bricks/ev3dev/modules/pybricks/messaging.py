@@ -5,8 +5,13 @@ from _thread import allocate_lock
 from uerrno import ECONNRESET
 from ustruct import pack, unpack
 
-from pybricks.bluetooth import (resolve, BDADDR_ANY, ThreadingRFCOMMServer,
-                                ThreadingRFCOMMClient, StreamRequestHandler)
+from pybricks.bluetooth import (
+    resolve,
+    BDADDR_ANY,
+    ThreadingRFCOMMServer,
+    ThreadingRFCOMMClient,
+    StreamRequestHandler,
+)
 
 
 class Mailbox:
@@ -91,7 +96,7 @@ class LogicMailbox(Mailbox):
     """
 
     def encode(self, value):
-        return b'\x01' if value else b'\x00'
+        return b"\x01" if value else b"\x00"
 
     def decode(self, payload):
         return bool(payload[0])
@@ -105,10 +110,10 @@ class NumericMailbox(Mailbox):
     """
 
     def encode(self, value):
-        return pack('<f', value)
+        return pack("<f", value)
 
     def decode(self, payload):
-        return unpack('<f', payload)[0]
+        return unpack("<f", payload)[0]
 
 
 class TextMailbox(Mailbox):
@@ -119,10 +124,10 @@ class TextMailbox(Mailbox):
     """
 
     def encode(self, value):
-        return '{}\0'.format(value)
+        return "{}\0".format(value)
 
     def decode(self, payload):
-        return payload.decode().strip('\0')
+        return payload.decode().strip("\0")
 
 
 # EV3 standard firmware is hard-coded to use channel 1
@@ -145,16 +150,16 @@ class MailboxHandler(StreamRequestHandler):
                 if ex.args[0] == ECONNRESET:
                     break
                 raise
-            size, = unpack('<H', buf)
+            (size,) = unpack("<H", buf)
             buf = self.rfile.read(size)
-            msg_count, cmd_type, cmd, name_size = unpack('<HBBB', buf)
+            msg_count, cmd_type, cmd, name_size = unpack("<HBBB", buf)
             if cmd_type != SYSTEM_COMMAND_NO_REPLY:
-                raise ValueError('Bad message type')
+                raise ValueError("Bad message type")
             if cmd != WRITEMAILBOX:
-                raise ValueError('Bad command')
-            mbox = buf[5:5+name_size].decode().strip('\0')
-            data_size, = unpack('<H', buf[5+name_size:7+name_size])
-            data = buf[7+name_size:7+name_size+data_size]
+                raise ValueError("Bad command")
+            mbox = buf[5 : 5 + name_size].decode().strip("\0")
+            (data_size,) = unpack("<H", buf[5 + name_size : 7 + name_size])
+            data = buf[7 + name_size : 7 + name_size + data_size]
 
             with self.server._lock:
                 self.server._mailboxes[mbox] = data
@@ -206,9 +211,18 @@ class MailboxHandlerMixIn:
         mbox_len = len(mbox) + 1
         payload_len = len(payload)
         send_len = 7 + mbox_len + payload_len
-        fmt = '<HHBBB{}sH{}s'.format(mbox_len, payload_len)
-        data = pack(fmt, send_len, 1, SYSTEM_COMMAND_NO_REPLY, WRITEMAILBOX,
-                    mbox_len, mbox, payload_len, payload)
+        fmt = "<HHBBB{}sH{}s".format(mbox_len, payload_len)
+        data = pack(
+            fmt,
+            send_len,
+            1,
+            SYSTEM_COMMAND_NO_REPLY,
+            WRITEMAILBOX,
+            mbox_len,
+            mbox,
+            payload_len,
+            payload,
+        )
         with self._lock:
             if brick is None:
                 for client in self._clients.values():
@@ -245,7 +259,8 @@ class BluetoothMailboxServer(MailboxHandlerMixIn, ThreadingRFCOMMServer):
         """
         super().__init__()
         super(ThreadingRFCOMMServer, self).__init__(
-            (BDADDR_ANY, EV3_RFCOMM_CHANNEL), MailboxHandler)
+            (BDADDR_ANY, EV3_RFCOMM_CHANNEL), MailboxHandler
+        )
 
     def wait_for_connection(self, count=1):
         """Waits for a :class:`BluetoothMailboxClient` on a remote device to
@@ -313,7 +328,7 @@ class BluetoothMailboxClient(MailboxHandlerMixIn):
             raise ValueError('no paired devices matching "{}"'.format(brick))
         client = MailboxRFCOMMClient(self, addr)
         if self._clients.setdefault(addr, client) is not client:
-            raise ValueError('connection with this address already exists')
+            raise ValueError("connection with this address already exists")
         try:
             client.handle_request()
         except:

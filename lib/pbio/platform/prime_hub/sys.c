@@ -45,8 +45,7 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
     if (callbacks) {
         user_stop_func = callbacks->stop;
         user_stdin_event_func = callbacks->stdin_event;
-    }
-    else {
+    } else {
         user_stop_func = NULL;
         user_stdin_event_func = NULL;
     }
@@ -138,8 +137,7 @@ static void update_button(clock_time_t now) {
 
                 pbsys_power_off();
             }
-        }
-        else {
+        } else {
             button_press_start_time = now;
             button_pressed = true;
             led_status_flags |= LED_STATUS_BUTTON_PRESSED;
@@ -147,8 +145,7 @@ static void update_button(clock_time_t now) {
                 user_stop_func();
             }
         }
-    }
-    else {
+    } else {
         button_pressed = false;
         led_status_flags &= ~LED_STATUS_BUTTON_PRESSED;
     }
@@ -168,18 +165,17 @@ PROCESS_THREAD(pbsys_process, ev, data) {
             clock_time_t now = clock_time();
             etimer_reset(&timer);
             update_button(now);
-        }
-        else if (ev == PBIO_EVENT_COM_CMD) {
+        } else if (ev == PBIO_EVENT_COM_CMD) {
             pbio_com_cmd_t cmd = (uint32_t)data;
 
             switch (cmd) {
-            case PBIO_COM_CMD_START_USER_PROGRAM:
-                break;
-            case PBIO_COM_CMD_STOP_USER_PROGRAM:
-                if (user_stop_func) {
-                    user_stop_func();
-                }
-                break;
+                case PBIO_COM_CMD_START_USER_PROGRAM:
+                    break;
+                case PBIO_COM_CMD_STOP_USER_PROGRAM:
+                    if (user_stop_func) {
+                        user_stop_func();
+                    }
+                    break;
             }
         }
     }

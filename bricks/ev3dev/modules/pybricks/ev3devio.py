@@ -9,7 +9,7 @@ from .tools import wait, StopWatch
 def read_int(infile):
     """Read an integer from a previously opened file descriptor."""
     infile.seek(0)
-    return(int(infile.read().decode().strip()))
+    return int(infile.read().decode().strip())
 
 
 def write_int(outfile, value):
@@ -21,7 +21,7 @@ def write_int(outfile, value):
 def read_str(infile):
     """Read a string from a previously opened file descriptor."""
     infile.seek(0)
-    return(infile.read().decode().strip())
+    return infile.read().decode().strip()
 
 
 def write_str(outfile, value):
@@ -32,34 +32,34 @@ def write_str(outfile, value):
 
 def get_sensor_path(port, driver_name):
     """Get a path to a device based on port number."""
-    base_dir = '/sys/class/lego-sensor'
+    base_dir = "/sys/class/lego-sensor"
     # Iterate through ['sensor0', 'sensor1', 'sensor2', ...]
     for device_dir, _, _ in ilistdir(base_dir):
         # In each folder, open the address file
-        with open(base_dir + '/' + device_dir + '/address', 'r') as addr_file:
+        with open(base_dir + "/" + device_dir + "/address", "r") as addr_file:
             # Read the port string (e.g. 'outB')
-            port_found = addr_file.read().strip('\n')
+            port_found = addr_file.read().strip("\n")
             # If the port name matches, we are done searching and
             # we know the full path
-            if 'in' + chr(port) in port_found:
+            if "in" + chr(port) in port_found:
                 # Make the full path
-                full_dir = base_dir + '/' + device_dir + '/'
-                with open(full_dir + 'driver_name', 'r') as driver_file:
+                full_dir = base_dir + "/" + device_dir + "/"
+                with open(full_dir + "driver_name", "r") as driver_file:
                     if driver_name in driver_file.read():
                         return full_dir
-    raise OSError('No such sensor on Port S' + chr(port))
+    raise OSError("No such sensor on Port S" + chr(port))
 
 
-class Ev3devSensor():
+class Ev3devSensor:
     """Base class for ev3dev sensors operating through sysfs."""
 
-    _ev3dev_driver_name = 'none'
+    _ev3dev_driver_name = "none"
     _number_of_values = 1
     _default_mode = None
 
     def __init__(self, port):
         """Initialize the sensor."""
-        assert ord('1') <= port <= ord('4')
+        assert ord("1") <= port <= ord("4")
         self.port = port
         self._open_files()
         if self._default_mode:
@@ -68,9 +68,11 @@ class Ev3devSensor():
     def _open_files(self):
         """Open the sysfs files for this device."""
         self.path = get_sensor_path(self.port, self._ev3dev_driver_name)
-        self.mode_file = open(self.path + 'mode', 'r+b')
+        self.mode_file = open(self.path + "mode", "r+b")
         self.mode_now = read_str(self.mode_file)
-        self.value_files = [open(self.path + 'value' + str(num), 'rb') for num in range(self._number_of_values)]
+        self.value_files = [
+            open(self.path + "value" + str(num), "rb") for num in range(self._number_of_values)
+        ]
 
     def _close_files(self):
         """Close the sysfs files for this device."""
@@ -93,14 +95,14 @@ class Ev3devUartSensor(Ev3devSensor):
     """UART ev3dev sensor operating through sysfs."""
 
     def _reset_port(self):
-        path = '/sys/class/lego-port/port' + chr(self.port-1) + '/'
-        with open(path + 'mode', 'w') as rf:
-            rf.write('auto')
-        with open(path + 'mode', 'w') as rf:
-            rf.write('ev3-uart')
+        path = "/sys/class/lego-port/port" + chr(self.port - 1) + "/"
+        with open(path + "mode", "w") as rf:
+            rf.write("auto")
+        with open(path + "mode", "w") as rf:
+            rf.write("ev3-uart")
         watch = StopWatch()
         while True:
-            with open(path + 'status', 'r') as sf:
+            with open(path + "status", "r") as sf:
                 status = sf.read().strip()
                 if status != "no-sensor":
                     break

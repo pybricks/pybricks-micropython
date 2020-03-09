@@ -64,8 +64,8 @@ static pbio_error_t counter_nxt_exit() {
 }
 
 const pbdrv_counter_drv_t pbdrv_counter_nxt_drv = {
-    .init   = counter_nxt_init,
-    .exit   = counter_nxt_exit,
+    .init = counter_nxt_init,
+    .exit = counter_nxt_exit,
 };
 
 #endif // PBDRV_CONFIG_COUNTER_NXT

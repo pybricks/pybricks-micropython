@@ -13,7 +13,7 @@
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
 static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_control_settings_t *s_heading, pbio_control_settings_t *s_left, pbio_control_settings_t *s_right) {
-    
+
     // All rate/count acceleration limits add up, because distance state is two motors counts added
     s_distance->max_rate = s_left->max_rate + s_right->max_rate;
     s_distance->rate_tolerance = s_left->rate_tolerance + s_right->rate_tolerance;
@@ -24,12 +24,12 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
 
     // As acceleration, we take double the single motor amount, because drivebases are
     // usually expected to respond quickly to speed setpoint changes
-    s_distance->abs_acceleration = (s_left->abs_acceleration + s_right->abs_acceleration)*2;
+    s_distance->abs_acceleration = (s_left->abs_acceleration + s_right->abs_acceleration) * 2;
 
     // Although counts/errors add up twice as fast, both motors actuate, so apply half of the average PID
-    s_distance->pid_kp = (s_left->pid_kp + s_right->pid_kp)/4;
-    s_distance->pid_ki = (s_left->pid_ki + s_right->pid_ki)/4;
-    s_distance->pid_kd = (s_left->pid_kd + s_right->pid_kd)/4;
+    s_distance->pid_kp = (s_left->pid_kp + s_right->pid_kp) / 4;
+    s_distance->pid_ki = (s_left->pid_ki + s_right->pid_ki) / 4;
+    s_distance->pid_kd = (s_left->pid_kd + s_right->pid_kd) / 4;
 
     // Maxima are bound by the least capable motor
     s_distance->max_control = min(s_left->max_control, s_right->max_control);
@@ -50,11 +50,11 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
 
 // Get the physical state of a drivebase
 static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
-                                        int32_t *time_now,
-                                        int32_t *sum,
-                                        int32_t *sum_rate,
-                                        int32_t *dif,
-                                        int32_t *dif_rate) {
+    int32_t *time_now,
+    int32_t *sum,
+    int32_t *sum_rate,
+    int32_t *dif,
+    int32_t *dif_rate) {
 
     pbio_error_t err;
 
@@ -143,14 +143,14 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
 }
 
 // Log motor data for a motor that is being actively controlled
-static pbio_error_t drivebase_log_update(pbio_drivebase_t *db, 
-                                         int32_t time_now,
-                                         int32_t sum,
-                                         int32_t sum_rate,
-                                         int32_t sum_control,
-                                         int32_t dif,
-                                         int32_t dif_rate,
-                                         int32_t dif_control) {
+static pbio_error_t drivebase_log_update(pbio_drivebase_t *db,
+    int32_t time_now,
+    int32_t sum,
+    int32_t sum_rate,
+    int32_t sum_control,
+    int32_t dif,
+    int32_t dif_rate,
+    int32_t dif_control) {
 
     int32_t buf[DRIVEBASE_LOG_NUM_VALUES];
     buf[0] = time_now;
@@ -224,34 +224,34 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio
     }
 
     // Count difference between the motors for every 1 degree drivebase rotation
-    db->control_heading.settings.counts_per_unit = 
-    fix16_mul(
-        left->control.settings.counts_per_unit,
-        fix16_div(
-            fix16_mul(
-                axle_track,
-                fix16_from_int(2)
-            ),
-            wheel_diameter
-        )
-    );
+    db->control_heading.settings.counts_per_unit =
+        fix16_mul(
+            left->control.settings.counts_per_unit,
+            fix16_div(
+                fix16_mul(
+                    axle_track,
+                    fix16_from_int(2)
+                    ),
+                wheel_diameter
+                )
+            );
 
     // Sum of motor counts for every 1 mm forward
     db->control_distance.settings.counts_per_unit =
-    fix16_mul(
-        left->control.settings.counts_per_unit,
-        fix16_div(
-            fix16_mul(
-                fix16_from_int(180),
-                FOUR_DIV_PI
-            ),
-            wheel_diameter
-        )
-    );
+        fix16_mul(
+            left->control.settings.counts_per_unit,
+            fix16_div(
+                fix16_mul(
+                    fix16_from_int(180),
+                    FOUR_DIV_PI
+                    ),
+                wheel_diameter
+                )
+            );
 
     return PBIO_SUCCESS;
 }
- 
+
 // Claim servos so that they cannot be used independently
 void pbio_drivebase_claim_servos(pbio_drivebase_t *db, bool claim) {
     // Stop control
@@ -276,8 +276,7 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
         if (err != PBIO_SUCCESS) {
             return err;
         }
-    }
-    else {
+    } else {
         // Otherwise the payload is zero and control stops
         pbio_control_stop(&db->control_distance);
         pbio_control_stop(&db->control_heading);
@@ -436,8 +435,7 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t t
         if (err != PBIO_SUCCESS) {
             return err;
         }
-    }
-    else {
+    } else {
         time_now = clock_usecs();
     }
 
@@ -463,10 +461,10 @@ pbio_error_t pbio_drivebase_get_state(pbio_drivebase_t *db, int32_t *distance, i
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    *distance =    pbio_control_counts_to_user(&db->control_distance.settings, sum - db->sum_offset);
+    *distance = pbio_control_counts_to_user(&db->control_distance.settings, sum - db->sum_offset);
     *drive_speed = pbio_control_counts_to_user(&db->control_distance.settings, sum_rate);
-    *angle =       pbio_control_counts_to_user(&db->control_heading.settings,  dif - db->dif_offset);
-    *turn_rate =   pbio_control_counts_to_user(&db->control_heading.settings,  dif_rate);
+    *angle = pbio_control_counts_to_user(&db->control_heading.settings,  dif - db->dif_offset);
+    *turn_rate = pbio_control_counts_to_user(&db->control_heading.settings,  dif_rate);
     return PBIO_SUCCESS;
 }
 

@@ -70,7 +70,7 @@ pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uin
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
 
     if (!msg || !length) {
-      return PBIO_ERROR_INVALID_ARG;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     if (uart->rx_buf) {
@@ -101,8 +101,7 @@ pbio_error_t pbdrv_uart_read_end(pbdrv_uart_dev_t *uart_dev) {
     if (err != PBIO_ERROR_AGAIN) {
         etimer_stop(&uart->rx_timer);
         uart->rx_buf = NULL;
-    }
-    else if (etimer_expired(&uart->rx_timer)) {
+    } else if (etimer_expired(&uart->rx_timer)) {
         err = PBIO_ERROR_TIMEDOUT;
         uart->rx_buf = NULL;
     }
@@ -120,7 +119,7 @@ pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, ui
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
 
     if (!msg || !length) {
-      return PBIO_ERROR_INVALID_ARG;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     if (uart->tx_buf) {
@@ -151,8 +150,7 @@ pbio_error_t pbdrv_uart_write_end(pbdrv_uart_dev_t *uart_dev) {
     if (err != PBIO_ERROR_AGAIN) {
         etimer_stop(&uart->tx_timer);
         uart->tx_buf = NULL;
-    }
-    else if (etimer_expired(&uart->tx_timer)) {
+    } else if (etimer_expired(&uart->tx_timer)) {
         uart->USART->CR1 &= ~(USART_CR1_TXEIE | USART_CR1_TCIE);
         err = PBIO_ERROR_TIMEDOUT;
         uart->tx_buf = NULL;

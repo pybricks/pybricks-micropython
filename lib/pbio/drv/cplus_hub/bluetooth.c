@@ -38,12 +38,12 @@
 #if DEBUG
 #include <stdio.h>
 #define DBG(fmt, ...) { \
-    char dbg[64]; \
-    snprintf(dbg, 64, fmt "\r\n", ##__VA_ARGS__); \
-    for (char *d = dbg; *d; d++) { \
-        while (!(LPUART1->ISR & USART_ISR_TXE)) { } \
-        LPUART1->TDR = *d; \
-    } \
+        char dbg[64]; \
+        snprintf(dbg, 64, fmt "\r\n",##__VA_ARGS__); \
+        for (char *d = dbg; *d; d++) { \
+            while (!(LPUART1->ISR & USART_ISR_TXE)) { } \
+            LPUART1->TDR = *d; \
+        } \
 }
 #else
 #define DBG(...)
@@ -321,12 +321,11 @@ static void handle_event(uint8_t *packet) {
     UNUSED(size);
 
     switch (event) {
-    case HCI_COMMAND_COMPLETE_EVENT:
-        hci_command_complete = true;
-        break;
+        case HCI_COMMAND_COMPLETE_EVENT:
+            hci_command_complete = true;
+            break;
 
-    case HCI_LE_EXT_EVENT:
-        {
+        case HCI_LE_EXT_EVENT: {
             uint16_t event_code = (data[1] << 8) | data[0];
             HCI_StatusCodes_t status = data[2];
             uint16_t connection_handle = (data[4] << 8) | data[3];
@@ -336,16 +335,14 @@ static void handle_event(uint8_t *packet) {
             UNUSED(pdu_len);
 
             switch (event_code) {
-            case ATT_EVENT_EXCHANGE_MTU_REQ:
-                {
+                case ATT_EVENT_EXCHANGE_MTU_REQ: {
                     attExchangeMTURsp_t rsp;
 
                     rsp.serverRxMTU = 158;
                     ATT_ExchangeMTURsp(connection_handle, &rsp);
                 }
                 break;
-            case ATT_EVENT_READ_BY_TYPE_REQ:
-                {
+                case ATT_EVENT_READ_BY_TYPE_REQ: {
                     uint16_t start_handle = (data[7] << 8) | data[6];
                     uint16_t end_handle = (data[9] << 8) | data[8];
                     uint16_t type = (data[11] << 8) | data[10];
@@ -354,132 +351,124 @@ static void handle_event(uint8_t *packet) {
 
                     DBG("s %04X t %04X", start_handle, type);
                     switch (type) {
-                    case GATT_CHARACTER_UUID:
-                        if (start_handle <= gatt_service_handle) {
-                            uint16_t handle = gatt_service_handle + 1;
-                            attReadByTypeRsp_t rsp;
-                            uint8_t buf[ATT_MTU_SIZE-2];
+                        case GATT_CHARACTER_UUID:
+                            if (start_handle <= gatt_service_handle) {
+                                uint16_t handle = gatt_service_handle + 1;
+                                attReadByTypeRsp_t rsp;
+                                uint8_t buf[ATT_MTU_SIZE - 2];
 
-                            buf[0] = handle & 0xFF;
-                            buf[1] = (handle >> 8) & 0xFF;
-                            buf[2] = GATT_PROP_INDICATE;
-                            buf[3] = ++handle & 0xFF;
-                            buf[4] = (handle >> 8) & 0xFF;
-                            buf[5] = SERVICE_CHANGED_UUID & 0xFF;
-                            buf[6] = (SERVICE_CHANGED_UUID >> 8) & 0xFF;
+                                buf[0] = handle & 0xFF;
+                                buf[1] = (handle >> 8) & 0xFF;
+                                buf[2] = GATT_PROP_INDICATE;
+                                buf[3] = ++handle & 0xFF;
+                                buf[4] = (handle >> 8) & 0xFF;
+                                buf[5] = SERVICE_CHANGED_UUID & 0xFF;
+                                buf[6] = (SERVICE_CHANGED_UUID >> 8) & 0xFF;
 
-                            rsp.pDataList = buf;
-                            rsp.dataLen = 7;
-                            ATT_ReadByTypeRsp(connection_handle, &rsp);
-                        }
-                        else if (start_handle <= gap_service_handle) {
-                            uint16_t handle = gap_service_handle + 1;
-                            attReadByTypeRsp_t rsp;
-                            uint8_t buf[ATT_MTU_SIZE-2];
+                                rsp.pDataList = buf;
+                                rsp.dataLen = 7;
+                                ATT_ReadByTypeRsp(connection_handle, &rsp);
+                            } else if (start_handle <= gap_service_handle) {
+                                uint16_t handle = gap_service_handle + 1;
+                                attReadByTypeRsp_t rsp;
+                                uint8_t buf[ATT_MTU_SIZE - 2];
 
-                            buf[0] = handle & 0xFF;
-                            buf[1] = (handle >> 8) & 0xFF;
-                            buf[2] = GATT_PROP_READ;
-                            buf[3] = ++handle & 0xFF;
-                            buf[4] = (handle >> 8) & 0xFF;
-                            buf[5] = DEVICE_NAME_UUID & 0xFF;
-                            buf[6] = (DEVICE_NAME_UUID >> 8) & 0xFF;
+                                buf[0] = handle & 0xFF;
+                                buf[1] = (handle >> 8) & 0xFF;
+                                buf[2] = GATT_PROP_READ;
+                                buf[3] = ++handle & 0xFF;
+                                buf[4] = (handle >> 8) & 0xFF;
+                                buf[5] = DEVICE_NAME_UUID & 0xFF;
+                                buf[6] = (DEVICE_NAME_UUID >> 8) & 0xFF;
 
-                            rsp.pDataList = buf;
-                            rsp.dataLen = 7;
-                            ATT_ReadByTypeRsp(connection_handle, &rsp);
-                        }
-                        else if (start_handle <= pybricks_service_handle) {
-                            uint16_t handle = pybricks_service_handle + 1;
-                            attReadByTypeRsp_t rsp;
-                            uint8_t buf[ATT_MTU_SIZE-2];
+                                rsp.pDataList = buf;
+                                rsp.dataLen = 7;
+                                ATT_ReadByTypeRsp(connection_handle, &rsp);
+                            } else if (start_handle <= pybricks_service_handle) {
+                                uint16_t handle = pybricks_service_handle + 1;
+                                attReadByTypeRsp_t rsp;
+                                uint8_t buf[ATT_MTU_SIZE - 2];
 
-                            buf[0] = handle & 0xFF;
-                            buf[1] = (handle >> 8) & 0xFF;
-                            buf[2] = GATT_PROP_READ | GATT_PROP_WRITE |
-                                               GATT_PROP_WRITE_NO_RSP | GATT_PROP_NOTIFY;
-                            buf[3] = ++handle & 0xFF;
-                            buf[4] = (handle >> 8) & 0xFF;
-                            memcpy(&buf[5], pybricks_char_uuid, 16);
+                                buf[0] = handle & 0xFF;
+                                buf[1] = (handle >> 8) & 0xFF;
+                                buf[2] = GATT_PROP_READ | GATT_PROP_WRITE |
+                                    GATT_PROP_WRITE_NO_RSP | GATT_PROP_NOTIFY;
+                                buf[3] = ++handle & 0xFF;
+                                buf[4] = (handle >> 8) & 0xFF;
+                                memcpy(&buf[5], pybricks_char_uuid, 16);
 
-                            rsp.pDataList = buf;
-                            rsp.dataLen = 21;
-                            ATT_ReadByTypeRsp(connection_handle, &rsp);
-                        }
-                        else if (start_handle <= uart_service_handle) {
-                            uint16_t handle = uart_service_handle + 1;
-                            attReadByTypeRsp_t rsp;
-                            uint8_t buf[ATT_MTU_SIZE-2];
+                                rsp.pDataList = buf;
+                                rsp.dataLen = 21;
+                                ATT_ReadByTypeRsp(connection_handle, &rsp);
+                            } else if (start_handle <= uart_service_handle) {
+                                uint16_t handle = uart_service_handle + 1;
+                                attReadByTypeRsp_t rsp;
+                                uint8_t buf[ATT_MTU_SIZE - 2];
 
-                            buf[0] = handle & 0xFF;
-                            buf[1] = (handle >> 8) & 0xFF;
-                            buf[2] = GATT_PROP_WRITE | GATT_PROP_WRITE_NO_RSP;
-                            buf[3] = ++handle & 0xFF;
-                            buf[4] = (handle >> 8) & 0xFF;
-                            memcpy(&buf[5], nrf_uart_rx_char_uuid, 16);
+                                buf[0] = handle & 0xFF;
+                                buf[1] = (handle >> 8) & 0xFF;
+                                buf[2] = GATT_PROP_WRITE | GATT_PROP_WRITE_NO_RSP;
+                                buf[3] = ++handle & 0xFF;
+                                buf[4] = (handle >> 8) & 0xFF;
+                                memcpy(&buf[5], nrf_uart_rx_char_uuid, 16);
 
-                            rsp.pDataList = buf;
-                            rsp.dataLen = 21;
-                            ATT_ReadByTypeRsp(connection_handle, &rsp);
-                        }
-                        else if (start_handle <= uart_service_handle + 2) {
-                            uint16_t handle = uart_service_handle + 3;
-                            attReadByTypeRsp_t rsp;
-                            uint8_t buf[ATT_MTU_SIZE-2];
+                                rsp.pDataList = buf;
+                                rsp.dataLen = 21;
+                                ATT_ReadByTypeRsp(connection_handle, &rsp);
+                            } else if (start_handle <= uart_service_handle + 2) {
+                                uint16_t handle = uart_service_handle + 3;
+                                attReadByTypeRsp_t rsp;
+                                uint8_t buf[ATT_MTU_SIZE - 2];
 
-                            buf[0] = handle & 0xFF;
-                            buf[1] = (handle >> 8) & 0xFF;
-                            buf[2] = GATT_PROP_NOTIFY;
-                            buf[3] = ++handle & 0xFF;
-                            buf[4] = (handle >> 8) & 0xFF;
-                            memcpy(&buf[5], nrf_uart_tx_char_uuid, 16);
+                                buf[0] = handle & 0xFF;
+                                buf[1] = (handle >> 8) & 0xFF;
+                                buf[2] = GATT_PROP_NOTIFY;
+                                buf[3] = ++handle & 0xFF;
+                                buf[4] = (handle >> 8) & 0xFF;
+                                memcpy(&buf[5], nrf_uart_tx_char_uuid, 16);
 
-                            rsp.pDataList = buf;
-                            rsp.dataLen = 21;
-                            ATT_ReadByTypeRsp(connection_handle, &rsp);
-                        }
-                        else {
-                            attErrorRsp_t rsp;
+                                rsp.pDataList = buf;
+                                rsp.dataLen = 21;
+                                ATT_ReadByTypeRsp(connection_handle, &rsp);
+                            } else {
+                                attErrorRsp_t rsp;
 
-                            rsp.reqOpcode = ATT_READ_BY_TYPE_REQ;
-                            rsp.handle = start_handle;
-                            rsp.errCode = ATT_ERR_INVALID_VALUE;
-                            ATT_ErrorRsp(connection_handle, &rsp);
-                        }
-                        break;
-                    default:
-                        DBG("unhandled read by type req: %04X", type);
-                        break;
+                                rsp.reqOpcode = ATT_READ_BY_TYPE_REQ;
+                                rsp.handle = start_handle;
+                                rsp.errCode = ATT_ERR_INVALID_VALUE;
+                                ATT_ErrorRsp(connection_handle, &rsp);
+                            }
+                            break;
+                        default:
+                            DBG("unhandled read by type req: %04X", type);
+                            break;
                     }
                 }
                 break;
 
-            case ATT_EVENT_READ_REQ:
-                {
+                case ATT_EVENT_READ_REQ: {
                     uint16_t handle = (data[7] << 8) | data[6];
 
                     if (handle == gap_service_handle + 2) {
                         attReadRsp_t rsp;
-                        uint8_t buf[ATT_MTU_SIZE-1];
+                        uint8_t buf[ATT_MTU_SIZE - 1];
 
                         memcpy(&buf[0], DEV_NAME, sizeof(DEV_NAME));
                         rsp.len = sizeof(DEV_NAME) - 1;
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
-                    }
-                    else if (handle == gap_service_handle + 4) {
+                    } else if (handle == gap_service_handle + 4) {
                         attReadRsp_t rsp;
-                        uint8_t buf[ATT_MTU_SIZE-1];
+                        uint8_t buf[ATT_MTU_SIZE - 1];
 
                         buf[0] = GAP_APPEARE_UNKNOWN & 0xFF;
                         buf[1] = (GAP_APPEARE_UNKNOWN >> 8) & 0xFF;
                         rsp.len = 2;
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
-                    }
-                    else if (handle == gap_service_handle + 6) {
+                    } else if (handle == gap_service_handle + 6) {
                         attReadRsp_t rsp;
-                        uint8_t buf[ATT_MTU_SIZE-1];
+                        uint8_t buf[ATT_MTU_SIZE - 1];
 
                         // FIXME: what should these values be?
                         buf[0] = 0xFFFF & 0xFF; // intervalMin
@@ -493,25 +482,22 @@ static void handle_event(uint8_t *packet) {
                         rsp.len = 8;
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
-                    }
-                    else if (handle == uart_tx_char_handle + 1) {
+                    } else if (handle == uart_tx_char_handle + 1) {
                         attReadRsp_t rsp;
-                        uint8_t buf[ATT_MTU_SIZE-1];
+                        uint8_t buf[ATT_MTU_SIZE - 1];
 
                         buf[0] = uart_tx_notify_en;
                         buf[1] = 0;
                         rsp.len = 2;
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
-                    }
-                    else {
+                    } else {
                         DBG("unhandled read req: %04X", handle);
                     }
                 }
                 break;
 
-            case ATT_EVENT_READ_BY_GRP_TYPE_REQ:
-                {
+                case ATT_EVENT_READ_BY_GRP_TYPE_REQ: {
                     uint16_t start_handle = (data[7] << 8) | data[6];
                     uint16_t end_handle = (data[9] << 8) | data[8];
                     uint16_t group_type = (data[11] << 8) | data[10];
@@ -520,107 +506,99 @@ static void handle_event(uint8_t *packet) {
 
                     DBG("s %04X g %04X", start_handle, group_type);
                     switch (group_type) {
-                    case GATT_PRIMARY_SERVICE_UUID:
-                        if (start_handle == gatt_service_handle) {
-                            attReadByGrpTypeRsp_t rsp;
-                            uint8_t buf[ATT_MTU_SIZE-2];
+                        case GATT_PRIMARY_SERVICE_UUID:
+                            if (start_handle == gatt_service_handle) {
+                                attReadByGrpTypeRsp_t rsp;
+                                uint8_t buf[ATT_MTU_SIZE - 2];
 
-                            buf[0] = gatt_service_handle & 0xFF;
-                            buf[1] = (gatt_service_handle >> 8) & 0xFF;
-                            buf[2] = gatt_service_end_handle & 0xFF;
-                            buf[3] = (gatt_service_end_handle >> 8) & 0xFF;
-                            buf[4] = GATT_SERVICE_UUID & 0xFF;
-                            buf[5] = (GATT_SERVICE_UUID >> 8) & 0xFF;
+                                buf[0] = gatt_service_handle & 0xFF;
+                                buf[1] = (gatt_service_handle >> 8) & 0xFF;
+                                buf[2] = gatt_service_end_handle & 0xFF;
+                                buf[3] = (gatt_service_end_handle >> 8) & 0xFF;
+                                buf[4] = GATT_SERVICE_UUID & 0xFF;
+                                buf[5] = (GATT_SERVICE_UUID >> 8) & 0xFF;
 
-                            rsp.pDataList = buf;
-                            rsp.dataLen = 6;
-                            ATT_ReadByGrpTypeRsp(connection_handle, &rsp);
-                        }
-                        else if (start_handle == gap_service_handle) {
-                            attReadByGrpTypeRsp_t rsp;
-                            uint8_t buf[ATT_MTU_SIZE-2];
+                                rsp.pDataList = buf;
+                                rsp.dataLen = 6;
+                                ATT_ReadByGrpTypeRsp(connection_handle, &rsp);
+                            } else if (start_handle == gap_service_handle) {
+                                attReadByGrpTypeRsp_t rsp;
+                                uint8_t buf[ATT_MTU_SIZE - 2];
 
-                            buf[0] = gap_service_handle & 0xFF;
-                            buf[1] = (gap_service_handle >> 8) & 0xFF;
-                            buf[2] = gap_service_end_handle & 0xFF;
-                            buf[3] = (gap_service_end_handle >> 8) & 0xFF;
-                            buf[4] = GAP_SERVICE_UUID & 0xFF;
-                            buf[5] = (GAP_SERVICE_UUID >> 8) & 0xFF;
+                                buf[0] = gap_service_handle & 0xFF;
+                                buf[1] = (gap_service_handle >> 8) & 0xFF;
+                                buf[2] = gap_service_end_handle & 0xFF;
+                                buf[3] = (gap_service_end_handle >> 8) & 0xFF;
+                                buf[4] = GAP_SERVICE_UUID & 0xFF;
+                                buf[5] = (GAP_SERVICE_UUID >> 8) & 0xFF;
 
-                            rsp.pDataList = buf;
-                            rsp.dataLen = 6;
-                            ATT_ReadByGrpTypeRsp(connection_handle, &rsp);
-                        }
-                        else if (start_handle == pybricks_service_handle) {
-                            attReadByGrpTypeRsp_t rsp;
-                            uint8_t buf[ATT_MTU_SIZE-2];
+                                rsp.pDataList = buf;
+                                rsp.dataLen = 6;
+                                ATT_ReadByGrpTypeRsp(connection_handle, &rsp);
+                            } else if (start_handle == pybricks_service_handle) {
+                                attReadByGrpTypeRsp_t rsp;
+                                uint8_t buf[ATT_MTU_SIZE - 2];
 
-                            buf[0] = pybricks_service_handle & 0xFF;
-                            buf[1] = (pybricks_service_handle >> 8) & 0xFF;
-                            buf[2] = pybricks_service_end_handle & 0xFF;
-                            buf[3] = (pybricks_service_end_handle >> 8) & 0xFF;
-                            memcpy(&buf[4], pybricks_service_uuid, 16);
+                                buf[0] = pybricks_service_handle & 0xFF;
+                                buf[1] = (pybricks_service_handle >> 8) & 0xFF;
+                                buf[2] = pybricks_service_end_handle & 0xFF;
+                                buf[3] = (pybricks_service_end_handle >> 8) & 0xFF;
+                                memcpy(&buf[4], pybricks_service_uuid, 16);
 
-                            rsp.pDataList = buf;
-                            rsp.dataLen = 20;
-                            ATT_ReadByGrpTypeRsp(connection_handle, &rsp);
-                        }
-                        else if (start_handle == uart_service_handle) {
-                            attReadByGrpTypeRsp_t rsp;
-                            uint8_t buf[ATT_MTU_SIZE-2];
+                                rsp.pDataList = buf;
+                                rsp.dataLen = 20;
+                                ATT_ReadByGrpTypeRsp(connection_handle, &rsp);
+                            } else if (start_handle == uart_service_handle) {
+                                attReadByGrpTypeRsp_t rsp;
+                                uint8_t buf[ATT_MTU_SIZE - 2];
 
-                            buf[0] = uart_service_handle & 0xFF;
-                            buf[1] = (uart_service_handle >> 8) & 0xFF;
-                            buf[2] = uart_service_end_handle & 0xFF;
-                            buf[3] = (uart_service_end_handle >> 8) & 0xFF;
-                            memcpy(&buf[4], nrf_uart_service_uuid, 16);
+                                buf[0] = uart_service_handle & 0xFF;
+                                buf[1] = (uart_service_handle >> 8) & 0xFF;
+                                buf[2] = uart_service_end_handle & 0xFF;
+                                buf[3] = (uart_service_end_handle >> 8) & 0xFF;
+                                memcpy(&buf[4], nrf_uart_service_uuid, 16);
 
-                            rsp.pDataList = buf;
-                            rsp.dataLen = 20;
-                            ATT_ReadByGrpTypeRsp(connection_handle, &rsp);
-                        }
-                        else {
-                            attErrorRsp_t rsp;
+                                rsp.pDataList = buf;
+                                rsp.dataLen = 20;
+                                ATT_ReadByGrpTypeRsp(connection_handle, &rsp);
+                            } else {
+                                attErrorRsp_t rsp;
 
-                            rsp.reqOpcode = ATT_READ_BY_GRP_TYPE_REQ;
-                            rsp.handle = start_handle;
-                            rsp.errCode = ATT_ERR_INVALID_VALUE;
-                            ATT_ErrorRsp(connection_handle, &rsp);
-                        }
-                        break;
-                    default:
-                        DBG("unhandled read by grp type req: %05X", group_type);
-                        break;
+                                rsp.reqOpcode = ATT_READ_BY_GRP_TYPE_REQ;
+                                rsp.handle = start_handle;
+                                rsp.errCode = ATT_ERR_INVALID_VALUE;
+                                ATT_ErrorRsp(connection_handle, &rsp);
+                            }
+                            break;
+                        default:
+                            DBG("unhandled read by grp type req: %05X", group_type);
+                            break;
                     }
                 }
                 break;
 
-            case ATT_EVENT_WRITE_REQ:
-                {
+                case ATT_EVENT_WRITE_REQ: {
                     uint16_t char_handle = (data[9] << 8) | data[8];
 
                     DBG("w: %04X %04X %d", char_handle, uart_tx_char_handle, pdu_len - 4);
                     if (char_handle == uart_rx_char_handle) {
                         uart_rx_char_modified(&data[10], pdu_len - 4);
-                    }
-                    else if (char_handle == uart_tx_char_handle + 1) {
+                    } else if (char_handle == uart_tx_char_handle + 1) {
                         uart_tx_notify_en = data[10];
                         DBG("noti: %d", uart_tx_notify_en);
-                    }
-                    else {
+                    } else {
                         DBG("unhandled write req: %04X", char_handle);
                     }
                     ATT_WriteRsp(connection_handle);
                 }
                 break;
 
-            case GAP_LINK_ESTABLISHED:
-                conn_handle = (data[11] << 8) | data[10];
-                DBG("link: %04x", conn_handle);
-                break;
+                case GAP_LINK_ESTABLISHED:
+                    conn_handle = (data[11] << 8) | data[10];
+                    DBG("link: %04x", conn_handle);
+                    break;
 
-            case GAP_LINK_TERMINATED:
-                {
+                case GAP_LINK_TERMINATED: {
                     DBG("bye: %04x", connection_handle);
                     if (conn_handle == connection_handle) {
                         conn_handle = NO_CONNECTION;
@@ -629,22 +607,21 @@ static void handle_event(uint8_t *packet) {
                 }
                 break;
 
-            case GAP_LINK_PARAM_UPDATE:
-                // we get this event, but don't need to do anything about it
-                break;
+                case GAP_LINK_PARAM_UPDATE:
+                    // we get this event, but don't need to do anything about it
+                    break;
 
-            case HCI_EXT_SET_TX_POWER_EVENT:
-            case HCI_EXT_SET_LOCAL_SUPPORTED_FEATURES_EVENT:
-            case HCI_EXT_SET_BDADDR_EVENT:
-            case GAP_DEVICE_INIT_DONE:
-            case GAP_ADVERT_DATA_UPDATE_DONE:
-            case GAP_MAKE_DISCOVERABLE_DONE:
-            case GAP_END_DISCOVERABLE_DONE:
-                hci_command_complete = true;
-                break;
+                case HCI_EXT_SET_TX_POWER_EVENT:
+                case HCI_EXT_SET_LOCAL_SUPPORTED_FEATURES_EVENT:
+                case HCI_EXT_SET_BDADDR_EVENT:
+                case GAP_DEVICE_INIT_DONE:
+                case GAP_ADVERT_DATA_UPDATE_DONE:
+                case GAP_MAKE_DISCOVERABLE_DONE:
+                case GAP_END_DISCOVERABLE_DONE:
+                    hci_command_complete = true;
+                    break;
 
-            case HCI_COMMAND_STATUS:
-                {
+                case HCI_COMMAND_STATUS: {
                     uint16_t opcode = (data[4] << 8) | data[3];
                     // This filters out responses that were sent from commands
                     // initiated from here in the event handler.
@@ -657,9 +634,9 @@ static void handle_event(uint8_t *packet) {
                 }
                 break;
 
-            default:
-                DBG("unhandled: %04X", event_code);
-                break;
+                default:
+                    DBG("unhandled: %04X", event_code);
+                    break;
             }
         }
         break;
@@ -698,8 +675,7 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
         if (write_xfer_size) {
             // if we are writing only, we have to wait until SRDY is asserted
             PROCESS_WAIT_UNTIL(spi_srdy);
-        }
-        else {
+        } else {
             // if we are reading only, the write buffer has to be all 0s
             memset(write_buf, 0, PBIO_ARRAY_SIZE(write_buf));
         }
@@ -713,15 +689,14 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
         read_xfer_size = 0;
         if (get_npi_rx_size(&read_xfer_size) && read_xfer_size > write_xfer_size - 4) {
             xfer_size = read_xfer_size + 4;
-        }
-        else {
+        } else {
             xfer_size = write_xfer_size;
         }
 
         // read the remaining message
         spi_xfer_complete = false;
         HAL_SPI_TransmitReceive_DMA(&bt_spi, &write_buf[NPI_SPI_HEADER_LEN],
-                                    &read_buf[NPI_SPI_HEADER_LEN], xfer_size);
+            &read_buf[NPI_SPI_HEADER_LEN], xfer_size);
         PROCESS_WAIT_UNTIL(spi_xfer_complete);
 
         spi_set_mrdy(false);
@@ -812,7 +787,7 @@ static PT_THREAD(gatt_init(struct pt *pt)) {
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_WRITE | GATT_PERMIT_AUTHEN_READ |
-                                           GATT_PERMIT_AUTHEN_WRITE | GATT_PERMIT_ENCRYPT_READ);
+        GATT_PERMIT_AUTHEN_WRITE | GATT_PERMIT_ENCRYPT_READ);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
@@ -823,7 +798,7 @@ static PT_THREAD(gatt_init(struct pt *pt)) {
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_WRITE | GATT_PERMIT_AUTHEN_READ |
-                                           GATT_PERMIT_AUTHEN_WRITE | GATT_PERMIT_ENCRYPT_READ);
+        GATT_PERMIT_AUTHEN_WRITE | GATT_PERMIT_ENCRYPT_READ);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
@@ -1040,7 +1015,7 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_WRITE | GATT_PERMIT_AUTHEN_READ |
-                                           GATT_PERMIT_AUTHEN_WRITE | GATT_PERMIT_AUTHOR_READ);
+        GATT_PERMIT_AUTHEN_WRITE | GATT_PERMIT_AUTHOR_READ);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
@@ -1085,7 +1060,7 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_WRITE | GATT_PERMIT_AUTHEN_READ |
-                                           GATT_PERMIT_AUTHEN_WRITE | GATT_PERMIT_AUTHOR_READ);
+        GATT_PERMIT_AUTHEN_WRITE | GATT_PERMIT_AUTHOR_READ);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
@@ -1096,7 +1071,7 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_WRITE | GATT_PERMIT_AUTHEN_READ |
-                                           GATT_PERMIT_AUTHEN_WRITE | GATT_PERMIT_AUTHOR_READ);
+        GATT_PERMIT_AUTHEN_WRITE | GATT_PERMIT_AUTHOR_READ);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 

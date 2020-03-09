@@ -39,7 +39,7 @@ static pbio_error_t pbio_tacho_reset_count(pbio_tacho_t *tacho, int32_t reset_co
 }
 
 static pbio_error_t pbio_tacho_reset_count_to_abs(pbio_tacho_t *tacho) {
-    
+
     int32_t abs_count;
     pbio_error_t err = pbdrv_counter_get_abs_count(tacho->counter, &abs_count);
     if (err != PBIO_SUCCESS) {
@@ -130,8 +130,7 @@ pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, int32_t *angle) {
 pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t reset_angle, bool reset_to_abs) {
     if (reset_to_abs) {
         return pbio_tacho_reset_count_to_abs(tacho);
-    }
-    else {
+    } else {
         return pbio_tacho_reset_count(tacho, pbio_math_mul_i32_fix16(reset_angle, tacho->counts_per_degree));
     }
 }

@@ -36,7 +36,8 @@ static void *task_caller(void *arg) {
 
     while (!stopping_thread) {
         MP_THREAD_GIL_ENTER();
-        while (pbio_do_one_event()) { }
+        while (pbio_do_one_event()) {
+        }
         MP_THREAD_GIL_EXIT();
 
         clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
@@ -55,8 +56,8 @@ void pybricks_init() {
     grx_clear_screen(GRX_COLOR_WHITE);
 
     // Screen center
-    gint cx = grx_get_width()/2;
-    gint cy = grx_get_height()/2;
+    gint cx = grx_get_width() / 2;
+    gint cy = grx_get_height() / 2;
 
     // One side of the triangle
     gint base = MIN(grx_get_width(), grx_get_height()) * 7 / 16;
@@ -70,18 +71,18 @@ void pybricks_init() {
     gint width = 5;
     gint cr = r * 3 / 2;
     grx_draw_filled_circle(cx, cy, cr, GRX_COLOR_BLACK);
-    grx_draw_filled_circle(cx, cy, cr-width, GRX_COLOR_WHITE);
+    grx_draw_filled_circle(cx, cy, cr - width, GRX_COLOR_WHITE);
 
     GrxPoint triangle[3] = {
         {
             // Upper left vertex
             .x = cx - s,
-            .y = cy - base/2
+            .y = cy - base / 2
         },
         {
             // Bottom left vertex
             .x = cx - s,
-            .y = cy + base/2
+            .y = cy + base / 2
         },
         {
             // Right vertex
@@ -97,7 +98,7 @@ void pybricks_init() {
 }
 
 // Pybricks deinitialization tasks
-void pybricks_deinit(){
+void pybricks_deinit() {
     // Signal motor thread to stop and wait for it to do so.
     stopping_thread = true;
     pthread_join(task_caller_thread, NULL);

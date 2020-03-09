@@ -20,34 +20,32 @@ from bluetooth_c import resolve
 
 AF_BLUETOOTH = 31
 BTPROTO_RFCOMM = 3
-BDADDR_ANY = '00:00:00:00:00:00'
+BDADDR_ANY = "00:00:00:00:00:00"
 
 sa_family_t = UINT16
 
-bd_addr_t = {
-    'b': (ARRAY | 0, UINT8 | 6)
-}
+bd_addr_t = {"b": (ARRAY | 0, UINT8 | 6)}
 
 sockaddr_rc = {
-    'rc_family': sa_family_t | 0,
-    'rc_bdaddr': (2, bd_addr_t),
-    'rc_channel': UINT8 | 8,
+    "rc_family": sa_family_t | 0,
+    "rc_bdaddr": (2, bd_addr_t),
+    "rc_channel": UINT8 | 8,
 }
 
 
 def str2ba(string, ba):
     """Convert string to Bluetooth address"""
-    for i, v in enumerate(string.split(':')):
-        ba.b[5-i] = int(v, 16)
+    for i, v in enumerate(string.split(":")):
+        ba.b[5 - i] = int(v, 16)
 
 
 def ba2str(ba):
     """Convert Bluetooth address to string"""
     string = []
     for b in ba.b:
-        string.append('{:02X}'.format(b))
+        string.append("{:02X}".format(b))
     string.reverse()
-    return ':'.join(string).upper()
+    return ":".join(string).upper()
 
 
 class RFCOMMServer:
@@ -56,6 +54,7 @@ class RFCOMMServer:
     This is based on the ``socketserver.SocketServer`` class in the Python
     standard library.
     """
+
     request_queue_size = 1
 
     def __init__(self, server_address, RequestHandlerClass):
@@ -123,6 +122,7 @@ class ThreadingRFCOMMServer(ThreadingMixIn, RFCOMMServer):
     """Version of :class:`RFCOMMServer` that handles connections in a new
     thread.
     """
+
     pass
 
 
@@ -132,6 +132,7 @@ class StreamRequestHandler:
     This is based on ``socketserver.StreamRequestHandler`` from the Python
     standard library.
     """
+
     def __init__(self, request, client_address, server):
         self.request = request
         self.client_address = client_address

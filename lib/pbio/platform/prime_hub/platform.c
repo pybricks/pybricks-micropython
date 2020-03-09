@@ -27,68 +27,68 @@ extern const uint32_t _checksum;
 const boot_t __attribute__((section(".boot"))) boot = {
     .fw_ver = "v0.5.00.0020-2b83556",
     .checksum = &_checksum,
-    .magic = (const uint8_t[16]){1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4},
+    .magic = (const uint8_t[16]) {1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4},
 };
 
 
 // Port A - UART7
 const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_0 = {
-    .id1        = { .bank = GPIOD, .pin = 7  },
-    .id2        = { .bank = GPIOD, .pin = 8  },
-    .uart_buf   = { .bank = GPIOA, .pin = 10 },
-    .uart_tx    = { .bank = GPIOE, .pin = 8  },
-    .uart_rx    = { .bank = GPIOE, .pin = 7  },
-    .alt        = 8,
+    .id1 = { .bank = GPIOD, .pin = 7  },
+    .id2 = { .bank = GPIOD, .pin = 8  },
+    .uart_buf = { .bank = GPIOA, .pin = 10 },
+    .uart_tx = { .bank = GPIOE, .pin = 8  },
+    .uart_rx = { .bank = GPIOE, .pin = 7  },
+    .alt = 8,
 };
 
 // Port B - UART4
 const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_1 = {
-    .id1        = { .bank = GPIOD, .pin = 9  },
-    .id2        = { .bank = GPIOD, .pin = 10 },
-    .uart_buf   = { .bank = GPIOA, .pin = 8  },
-    .uart_tx    = { .bank = GPIOD, .pin = 1  },
-    .uart_rx    = { .bank = GPIOD, .pin = 0  },
-    .alt        = 11,
+    .id1 = { .bank = GPIOD, .pin = 9  },
+    .id2 = { .bank = GPIOD, .pin = 10 },
+    .uart_buf = { .bank = GPIOA, .pin = 8  },
+    .uart_tx = { .bank = GPIOD, .pin = 1  },
+    .uart_rx = { .bank = GPIOD, .pin = 0  },
+    .alt = 11,
 };
 
 // Port C - UART8
 const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_2 = {
-    .id1        = { .bank = GPIOD, .pin = 11 },
-    .id2        = { .bank = GPIOE, .pin = 4  },
-    .uart_buf   = { .bank = GPIOE, .pin = 5  },
-    .uart_tx    = { .bank = GPIOE, .pin = 1  },
-    .uart_rx    = { .bank = GPIOE, .pin = 0  },
-    .alt        = 8,
+    .id1 = { .bank = GPIOD, .pin = 11 },
+    .id2 = { .bank = GPIOE, .pin = 4  },
+    .uart_buf = { .bank = GPIOE, .pin = 5  },
+    .uart_tx = { .bank = GPIOE, .pin = 1  },
+    .uart_rx = { .bank = GPIOE, .pin = 0  },
+    .alt = 8,
 };
 
 // Port D - UART5
 const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_3 = {
-    .id1        = { .bank = GPIOC, .pin = 15 },
-    .id2        = { .bank = GPIOC, .pin = 14 },
-    .uart_buf   = { .bank = GPIOB, .pin = 2  },
-    .uart_tx    = { .bank = GPIOC, .pin = 12 },
-    .uart_rx    = { .bank = GPIOD, .pin = 2  },
-    .alt        = 8,
+    .id1 = { .bank = GPIOC, .pin = 15 },
+    .id2 = { .bank = GPIOC, .pin = 14 },
+    .uart_buf = { .bank = GPIOB, .pin = 2  },
+    .uart_tx = { .bank = GPIOC, .pin = 12 },
+    .uart_rx = { .bank = GPIOD, .pin = 2  },
+    .alt = 8,
 };
 
 // Port E - UART10
 const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_4 = {
-    .id1        = { .bank = GPIOC, .pin = 13 },
-    .id2        = { .bank = GPIOE, .pin = 12 },
-    .uart_buf   = { .bank = GPIOB, .pin = 5  },
-    .uart_tx    = { .bank = GPIOE, .pin = 3  },
-    .uart_rx    = { .bank = GPIOE, .pin = 2  },
-    .alt        = 11,
+    .id1 = { .bank = GPIOC, .pin = 13 },
+    .id2 = { .bank = GPIOE, .pin = 12 },
+    .uart_buf = { .bank = GPIOB, .pin = 5  },
+    .uart_tx = { .bank = GPIOE, .pin = 3  },
+    .uart_rx = { .bank = GPIOE, .pin = 2  },
+    .alt = 11,
 };
 
 // Port F - UART9
 const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_5 = {
-    .id1        = { .bank = GPIOC, .pin = 11 },
-    .id2        = { .bank = GPIOE, .pin = 6  },
-    .uart_buf   = { .bank = GPIOC, .pin = 5  },
-    .uart_tx    = { .bank = GPIOD, .pin = 15 },
-    .uart_rx    = { .bank = GPIOD, .pin = 14 },
-    .alt        = 11,
+    .id1 = { .bank = GPIOC, .pin = 11 },
+    .id2 = { .bank = GPIOE, .pin = 6  },
+    .uart_buf = { .bank = GPIOC, .pin = 5  },
+    .uart_tx = { .bank = GPIOD, .pin = 15 },
+    .uart_rx = { .bank = GPIOD, .pin = 14 },
+    .alt = 11,
 };
 
 enum {
@@ -101,26 +101,26 @@ enum {
 };
 
 const pbdrv_uart_stm32_hal_platform_data_t
-pbdrv_uart_stm32_hal_platform_data[PBDRV_CONFIG_UART_STM32_HAL_NUM_UART] = {
+    pbdrv_uart_stm32_hal_platform_data[PBDRV_CONFIG_UART_STM32_HAL_NUM_UART] = {
     [UART_PORT_A] = {
-        .uart   = UART7,
-        .irq    = UART7_IRQn,
+        .uart = UART7,
+        .irq = UART7_IRQn,
     },
     [UART_PORT_B] = {
-        .uart   = UART4,
-        .irq    = UART4_IRQn,
+        .uart = UART4,
+        .irq = UART4_IRQn,
     },
     [UART_PORT_C] = {
-        .uart   = UART8,
-        .irq    = UART8_IRQn,
+        .uart = UART8,
+        .irq = UART8_IRQn,
     },
     [UART_PORT_D] = {
-        .uart   = UART5,
-        .irq    = UART5_IRQn,
+        .uart = UART5,
+        .irq = UART5_IRQn,
     },
     [UART_PORT_E] = {
-        .uart   = UART10,
-        .irq    = UART10_IRQn,
+        .uart = UART10,
+        .irq = UART10_IRQn,
     },
     // [UART_PORT_F] = {
     //     .uart   = UART9,
@@ -169,23 +169,23 @@ enum {
 
 const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
     [COUNTER_PORT_A] = {
-        .uart_id    = UART_PORT_A,
+        .uart_id = UART_PORT_A,
         .counter_id = COUNTER_PORT_A,
     },
     [COUNTER_PORT_B] = {
-        .uart_id    = UART_PORT_B,
+        .uart_id = UART_PORT_B,
         .counter_id = COUNTER_PORT_B,
     },
     [COUNTER_PORT_C] = {
-        .uart_id    = UART_PORT_C,
+        .uart_id = UART_PORT_C,
         .counter_id = COUNTER_PORT_C,
     },
     [COUNTER_PORT_D] = {
-        .uart_id    = UART_PORT_D,
+        .uart_id = UART_PORT_D,
         .counter_id = COUNTER_PORT_D,
     },
     [COUNTER_PORT_E] = {
-        .uart_id    = UART_PORT_E,
+        .uart_id = UART_PORT_E,
         .counter_id = COUNTER_PORT_E,
     },
     // [COUNTER_PORT_F] = {
@@ -204,7 +204,7 @@ uint32_t SystemCoreClock = 16000000;
 const uint8_t AHBPrescTable[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9 };
 const uint8_t APBPrescTable[8] = { 0, 0, 0, 0, 1, 2, 3, 4 };
 
-void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc) {
+void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc) {
     GPIO_InitTypeDef gpio_init = { 0 };
     ADC_ChannelConfTypeDef adc_ch_config = { 0 };
 
@@ -323,7 +323,7 @@ void SystemInit(void) {
 
     clk_init.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     clk_init.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-    clk_init.AHBCLKDivider  = RCC_SYSCLK_DIV1; // HCLK 96MHz
+    clk_init.AHBCLKDivider = RCC_SYSCLK_DIV1;  // HCLK 96MHz
     clk_init.APB1CLKDivider = RCC_HCLK_DIV2; // changed from pyboard since max is 50MHz
     clk_init.APB2CLKDivider = RCC_HCLK_DIV1; // changed from pyboard since max is 100MHz
 
@@ -334,12 +334,12 @@ void SystemInit(void) {
 
     // enable clocks
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN |
-                    RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_DMA2EN;
+        RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_DMA2EN;
     RCC->APB1ENR |= RCC_APB1ENR_UART4EN | RCC_APB1ENR_UART5EN | RCC_APB1ENR_UART7EN |
-                    RCC_APB1ENR_UART8EN | RCC_APB1ENR_TIM2EN | RCC_APB1ENR_TIM3EN |
-                    RCC_APB1ENR_TIM4EN;
+        RCC_APB1ENR_UART8EN | RCC_APB1ENR_TIM2EN | RCC_APB1ENR_TIM3EN |
+        RCC_APB1ENR_TIM4EN;
     RCC->APB2ENR |= RCC_APB2ENR_TIM1EN | RCC_APB2ENR_UART9EN | RCC_APB2ENR_UART10EN |
-                    RCC_APB2ENR_ADC1EN | RCC_APB2ENR_SYSCFGEN;
+        RCC_APB2ENR_ADC1EN | RCC_APB2ENR_SYSCFGEN;
 
     // Keep main power on (PA13 == POWER_EN)
     GPIOA->BSRR = GPIO_BSRR_BS_13;

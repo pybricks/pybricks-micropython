@@ -18,17 +18,17 @@ from uctypes import struct
 from uctypes import UINT32
 from uctypes import UINT64
 
-_libc = ffi.open('libc.so.6')
+_libc = ffi.open("libc.so.6")
 
-_close = _libc.func('i', 'open', 'i')
-_eventfd = _libc.func('i', 'eventfd', 'ii')
-_errno = _libc.var('i', 'errno')
-_write = _libc.func('i', 'write', 'iPi')
+_close = _libc.func("i", "open", "i")
+_eventfd = _libc.func("i", "eventfd", "ii")
+_errno = _libc.var("i", "errno")
+_write = _libc.func("i", "write", "iPi")
 
 _EFD_CLOEXEC = 0o2000000
 
 
-def debug_print(*args, sep=' ', end='\n'):
+def debug_print(*args, sep=" ", end="\n"):
     """Print on stderr for debugging
 
     Parameters:
@@ -41,7 +41,7 @@ def debug_print(*args, sep=' ', end='\n'):
 
 def _thread_runner(lock, function):
     if not lock.locked():
-        raise RuntimeError('Must hold lock before starting thread')
+        raise RuntimeError("Must hold lock before starting thread")
     try:
         function()
     finally:
@@ -67,8 +67,9 @@ def fork(*functions):
         l.release()
 
 
-class Timer():
+class Timer:
     """Object that represents a timer"""
+
     def __init__(self):
         self._start_time = 0
         self.reset()
@@ -107,7 +108,7 @@ def write_at_index(array, index, value):
     return tuple(l)
 
 
-class Timeout():
+class Timeout:
     """Object for scheduling a callback.
 
     This is a pseudo replacement for ``threading.Timer``.
@@ -180,7 +181,7 @@ class Timeout():
         """Start running the timer"""
         with self._cancel_lock:
             if self._wait_lock.locked():
-                raise RuntimeError('already started')
+                raise RuntimeError("already started")
             self._canceled = False
             self._wait_lock.acquire()
             _thread.start_new_thread(self._run, ())

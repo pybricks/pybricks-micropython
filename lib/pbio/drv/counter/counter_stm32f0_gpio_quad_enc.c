@@ -64,7 +64,7 @@ static pbio_error_t pbdrv_counter_stm32f0_gpio_quad_enc_get_rate(pbdrv_counter_d
         return PBIO_SUCCESS;
     }
 
-     while (x++ < RING_BUF_SIZE) {
+    while (x++ < RING_BUF_SIZE) {
         tail = (head - x) & (RING_BUF_SIZE - 1);
 
         tail_count = data->counts[tail];
@@ -97,11 +97,10 @@ static pbio_error_t pbdrv_counter_stm32f0_gpio_quad_enc_get_rate(pbdrv_counter_d
 }
 
 static void pbdrv_motor_tacho_update_count(private_data_t *data,
-                                           bool int_pin_state, bool dir_pin_state, uint16_t timestamp) {
+    bool int_pin_state, bool dir_pin_state, uint16_t timestamp) {
     if (int_pin_state ^ dir_pin_state) {
         data->count--;
-    }
-    else {
+    } else {
         data->count++;
     }
 
@@ -211,8 +210,8 @@ static pbio_error_t counter_stm32f0_gpio_quad_enc_exit() {
 }
 
 const pbdrv_counter_drv_t pbdrv_counter_stm32f0_gpio_quad_enc_drv = {
-    .init   = counter_stm32f0_gpio_quad_enc_init,
-    .exit   = counter_stm32f0_gpio_quad_enc_exit,
+    .init = counter_stm32f0_gpio_quad_enc_init,
+    .exit = counter_stm32f0_gpio_quad_enc_exit,
 };
 
 #endif // PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC

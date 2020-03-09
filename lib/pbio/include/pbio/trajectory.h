@@ -17,17 +17,17 @@
 #define US_PER_SECOND (1000000)
 
 #define DURATION_FOREVER (-1)
-#define DURATION_MAX_S (30*60)
+#define DURATION_MAX_S (30 * 60)
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
 // Macro to evaluate b*t/US_PER_SECOND in two steps to avoid excessive round-off errors and overflows.
-#define timest(b, t) ((b * ((t)/US_PER_MS))/MS_PER_SECOND)
+#define timest(b, t) ((b * ((t) / US_PER_MS)) / MS_PER_SECOND)
 // Same trick to evaluate formulas of the form 1/2*b*t^2/US_PER_SECOND^2
-#define timest2(b, t) ((timest(timest(b, (t)),(t)))/2)
+#define timest2(b, t) ((timest(timest(b, (t)),(t))) / 2)
 // Macro to evaluate division of speed by acceleration (w/a), yielding time, in the appropriate units
-#define wdiva(w, a) ((((w)*US_PER_MS)/a)*MS_PER_SECOND)
+#define wdiva(w, a) ((((w) * US_PER_MS) / a) * MS_PER_SECOND)
 
 /**
  * Motor trajectory parameters for an ideal maneuver without disturbances

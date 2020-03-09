@@ -9,9 +9,9 @@ import subprocess
 from pathlib import Path
 
 
-BUILD_DIR = 'build'
-TMP_PY_SCRIPT = '_tmp.py'
-TMP_MPY_SCRIPT = '_tmp.mpy'
+BUILD_DIR = "build"
+TMP_PY_SCRIPT = "_tmp.py"
+TMP_MPY_SCRIPT = "_tmp.mpy"
 
 
 def make_build_dir():
@@ -28,20 +28,18 @@ def mpy_bytes_from_file(mpy_cross, path):
     """Compile a Python file with mpy-cross and return as bytes."""
 
     # Show mpy_cross version
-    proc = subprocess.Popen([mpy_cross, '--version'])
+    proc = subprocess.Popen([mpy_cross, "--version"])
     proc.wait()
 
     # Make the build directory
     make_build_dir()
 
     # Cross-compile Python file to .mpy and raise errors if any
-    mpy_path = os.path.join(BUILD_DIR, Path(path).stem + '.mpy')
-    proc = subprocess.run(
-        [mpy_cross, path, '-mno-unicode', '-o', mpy_path], check=True
-    )
+    mpy_path = os.path.join(BUILD_DIR, Path(path).stem + ".mpy")
+    proc = subprocess.run([mpy_cross, path, "-mno-unicode", "-o", mpy_path], check=True)
 
     # Read the .mpy file and return as bytes
-    with open(mpy_path, 'rb') as mpy:
+    with open(mpy_path, "rb") as mpy:
         return mpy.read()
 
 
@@ -55,8 +53,8 @@ def mpy_bytes_from_str(mpy_cross, string):
     py_path = os.path.join(BUILD_DIR, TMP_PY_SCRIPT)
 
     # Write Python command to a file and convert as if it is a regular script.
-    with open(py_path, 'w') as f:
-        f.write(string + '\n')
+    with open(py_path, "w") as f:
+        f.write(string + "\n")
 
     # Convert to mpy and get the bytes
     return mpy_bytes_from_file(mpy_cross, py_path)
@@ -64,15 +62,12 @@ def mpy_bytes_from_str(mpy_cross, string):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='Convert Python scripts or commands to .mpy bytes.'
+        description="Convert Python scripts or commands to .mpy bytes."
     )
-    parser.add_argument(
-        '--mpy_cross', dest='mpy_cross',
-        nargs='?', type=str, required=True
-    )
+    parser.add_argument("--mpy_cross", dest="mpy_cross", nargs="?", type=str, required=True)
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--file', dest='file', nargs='?', const=1, type=str)
-    group.add_argument('--string', dest='string', nargs='?', const=1, type=str)
+    group.add_argument("--file", dest="file", nargs="?", const=1, type=str)
+    group.add_argument("--string", dest="string", nargs="?", const=1, type=str)
     args = parser.parse_args()
 
     if args.file:
@@ -88,10 +83,12 @@ if __name__ == "__main__":
     # Print the bytes as a C byte array for development of new MicroPython
     # ports without usable I/O, REPL or otherwise.
     WIDTH = 8
-    print("\n// MPY file. Version: {0}. Size: {1}".format(data[1], len(data)) +
-          "\nconst uint8_t script[] = ")
+    print(
+        "\n// MPY file. Version: {0}. Size: {1}".format(data[1], len(data))
+        + "\nconst uint8_t script[] = "
+    )
     for i in range(0, len(data), WIDTH):
-        chunk = data[i:i+WIDTH]
+        chunk = data[i : i + WIDTH]
         hex_repr = ["0x{0}".format(hex(i)[2:].zfill(2).upper()) for i in chunk]
         print("    " + ", ".join(hex_repr) + ",")
     print("};")

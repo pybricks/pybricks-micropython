@@ -34,8 +34,7 @@ STATIC MP_DEFINE_ATTRTUPLE(
     MP_ROM_INT(PYBRICKS_VERSION_MINOR),
     MP_ROM_INT(PYBRICKS_VERSION_MICRO),
     MP_ROM_PTR(&pybricks_version_level_obj),
-    MP_ROM_INT(PYBRICKS_VERSION_SERIAL)
-);
+    MP_ROM_INT(PYBRICKS_VERSION_SERIAL));
 
 // Standard sys.implementation fields + custom fields (with leading underscore).
 
@@ -59,8 +58,7 @@ MP_DEFINE_ATTRTUPLE(
     MP_ROM_PTR(&git_tag_obj),
     MP_ROM_PTR(&build_date_obj),
     MP_ROM_INT(MPY_VERSION),
-    MP_ROM_PTR(&hub_name_obj)
-);
+    MP_ROM_PTR(&hub_name_obj));
 
 #else // MICROPY_PY_ATTRTUPLE
 

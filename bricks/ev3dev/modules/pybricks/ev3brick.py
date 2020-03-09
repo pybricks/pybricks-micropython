@@ -18,11 +18,10 @@ _brickobj = EV3Brick()
 
 try:
     # Initialize the EV3 speaker and display
-    sound = Speaker('EV3')
-    display = Display('EV3')
+    sound = Speaker("EV3")
+    display = Display("EV3")
 except Exception as exception:
-    print("Pybricks is already running on this device. Exiting...",
-            file=stderr)
+    print("Pybricks is already running on this device. Exiting...", file=stderr)
     exit(1)
 
 battery = _brickobj.battery

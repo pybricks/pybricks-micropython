@@ -1,4 +1,3 @@
-
 from pybricks.hubs import EV3Brick
 from pybricks.parameters import Color
 from pybricks.media.ev3dev import Font
@@ -95,20 +94,20 @@ ev3.screen.draw_circle(0, 0, 0, color=Color.BLACK)
 # Test draw_text()
 
 # three required arguments
-ev3.screen.draw_text(0, 0, '')
-ev3.screen.draw_text(x=0, y=0, text='')
+ev3.screen.draw_text(0, 0, "")
+ev3.screen.draw_text(x=0, y=0, text="")
 try:
     ev3.screen.draw_text(0, 0)
 except TypeError:
     pass
 
 # 4th argument is kwarg
-ev3.screen.draw_text(0, 0, '', Color.BLACK)
-ev3.screen.draw_text(0, 0, '', text_color=Color.BLACK)
+ev3.screen.draw_text(0, 0, "", Color.BLACK)
+ev3.screen.draw_text(0, 0, "", text_color=Color.BLACK)
 
 # 5th argument is kwarg
-ev3.screen.draw_text(0, 0, '', Color.BLACK, Color.WHITE)
-ev3.screen.draw_text(0, 0, '', background_color=Color.WHITE)
+ev3.screen.draw_text(0, 0, "", Color.BLACK, Color.WHITE)
+ev3.screen.draw_text(0, 0, "", background_color=Color.WHITE)
 
 
 # Test set_font()
@@ -127,12 +126,12 @@ except TypeError:
 ev3.screen.print()
 
 # positional args take any object type
-ev3.screen.print('', 0, False, ev3.screen, {}, [])
+ev3.screen.print("", 0, False, ev3.screen, {}, [])
 
 # keyword-only arg end
-ev3.screen.print(end='\n')
-ev3.screen.print('', end='\n')
+ev3.screen.print(end="\n")
+ev3.screen.print("", end="\n")
 
 # keyword-only arg sep
-ev3.screen.print(sep=' ')
-ev3.screen.print('', sep=' ')
+ev3.screen.print(sep=" ")
+ev3.screen.print("", sep=" ")

@@ -75,5 +75,5 @@ STATIC MP_DEFINE_CONST_DICT(ev3dev_bluetooth_globals, ev3dev_bluetooth_globals_t
 
 const mp_obj_module_t pb_module_bluetooth = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&ev3dev_bluetooth_globals,
+    .globals = (mp_obj_dict_t *)&ev3dev_bluetooth_globals,
 };

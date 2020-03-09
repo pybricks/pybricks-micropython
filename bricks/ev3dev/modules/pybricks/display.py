@@ -9,15 +9,16 @@ from .uev3dev.display import ImageFile
 from .parameters import Align
 
 
-class Display():
+class Display:
     """Show images or text on a display."""
-    _valid_devices = ['EV3']
-    _font_height = 8 # TODO: Update class when font no longer constant
+
+    _valid_devices = ["EV3"]
+    _font_height = 8  # TODO: Update class when font no longer constant
 
     def __init__(self, device_type):
         """Device specific display initialization."""
-        assert device_type in self._valid_devices, 'Selected device is not supported.'
-        if device_type == 'EV3':
+        assert device_type in self._valid_devices, "Selected device is not supported."
+        if device_type == "EV3":
             self._device = Ev3devDisplay()
         self._loaded_files = {}
         self._reset_text_history()

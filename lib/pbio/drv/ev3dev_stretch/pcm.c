@@ -63,9 +63,9 @@ static pbio_error_t configure_volume_control(pbdrv_pcm_dev_t *pcm_dev) {
         return PBIO_ERROR_FAILED;
     }
     if (snd_mixer_selem_get_playback_volume_range(
-            pcm_dev->pcm_elem,
-            &pcm_dev->pcm_vol_min,
-            &pcm_dev->pcm_vol_max) != 0) {
+        pcm_dev->pcm_elem,
+        &pcm_dev->pcm_vol_min,
+        &pcm_dev->pcm_vol_max) != 0) {
         return PBIO_ERROR_IO;
     }
 
@@ -77,9 +77,9 @@ static pbio_error_t configure_volume_control(pbdrv_pcm_dev_t *pcm_dev) {
         return PBIO_ERROR_FAILED;
     }
     if (snd_mixer_selem_get_playback_volume_range(
-            pcm_dev->beep_elem,
-            &pcm_dev->beep_vol_min,
-            &pcm_dev->beep_vol_max) != 0) {
+        pcm_dev->beep_elem,
+        &pcm_dev->beep_vol_min,
+        &pcm_dev->beep_vol_max) != 0) {
         return PBIO_ERROR_IO;
     }
 
@@ -96,10 +96,10 @@ static pbio_error_t configure_pcm(pbdrv_pcm_dev_t *pcm_dev) {
 
     // Open pcm
     if (snd_pcm_open(
-            &pcm_dev->pcm,
-            "default",
-            SND_PCM_STREAM_PLAYBACK,
-            SND_PCM_NONBLOCK) != 0) {
+        &pcm_dev->pcm,
+        "default",
+        SND_PCM_STREAM_PLAYBACK,
+        SND_PCM_NONBLOCK) != 0) {
         return PBIO_ERROR_IO;
     }
 
@@ -112,8 +112,8 @@ pbio_error_t pbdrv_pcm_set_volume(pbdrv_pcm_dev_t *pcm_dev, uint32_t volume) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    long pcm_vol = (volume*(pcm_dev->pcm_vol_max - pcm_dev->pcm_vol_min))/100 + pcm_dev->pcm_vol_min;
-    long beep_vol = (volume*(pcm_dev->beep_vol_max - pcm_dev->beep_vol_min))/100 + pcm_dev->beep_vol_min;
+    long pcm_vol = (volume * (pcm_dev->pcm_vol_max - pcm_dev->pcm_vol_min)) / 100 + pcm_dev->pcm_vol_min;
+    long beep_vol = (volume * (pcm_dev->beep_vol_max - pcm_dev->beep_vol_min)) / 100 + pcm_dev->beep_vol_min;
 
     if (snd_mixer_selem_set_playback_volume_all(pcm_dev->pcm_elem, pcm_vol) != 0) {
         return PBIO_ERROR_IO;
@@ -162,7 +162,7 @@ pbio_error_t pbdrv_pcm_play_file_start(pbdrv_pcm_dev_t *pcm_dev, const char *pat
     if (snd_pcm_hw_params_set_channels(pcm_dev->pcm, hp, pcm_dev->sf_info.channels) != 0) {
         return PBIO_ERROR_IO;
     }
-    
+
     // Set rate
     if (snd_pcm_hw_params_set_rate(pcm_dev->pcm, hp, pcm_dev->sf_info.samplerate, 0) != 0) {
         return PBIO_ERROR_IO;
@@ -215,7 +215,7 @@ pbio_error_t pbdrv_pcm_play_file_update(pbdrv_pcm_dev_t *pcm_dev) {
     if (count < 0) {
         return PBIO_ERROR_IO;
     }
-    
+
     // If there are no frames, we are done
     if (count == 0) {
         return PBIO_SUCCESS;

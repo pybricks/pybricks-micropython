@@ -27,7 +27,8 @@ static void pbdrv_adc_calibrate() {
 
     ADC1->CR |= ADC_CR_ADCAL;
 
-    while (ADC1->CR & ADC_CR_ADCAL) { }
+    while (ADC1->CR & ADC_CR_ADCAL) {
+    }
 }
 
 static void pbdrv_adc_init() {
@@ -47,7 +48,7 @@ static void pbdrv_adc_init() {
 
     do {
         ADC1->CR |= ADC_CR_ADEN;
-     } while (!(ADC1->ISR & ADC_ISR_ADRDY));
+    } while (!(ADC1->ISR & ADC_ISR_ADRDY));
 
     // set sampling time to 239.5 ADC clock cycles (longest possible)
     ADC1->SMPR = (ADC1->SMPR & ADC_SMPR_SMP_Msk) | (7 << ADC_SMPR_SMP_Pos);
@@ -68,7 +69,8 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     ADC1->CHSELR = 1 << ch;
 
     ADC1->CR |= ADC_CR_ADSTART;
-    while (!(ADC1->ISR & ADC_ISR_EOC)) { }
+    while (!(ADC1->ISR & ADC_ISR_EOC)) {
+    }
 
     *value = ADC1->DR;
 
@@ -79,19 +81,21 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
 static void pbdrv_adc_exit() {
     // REVISIT: do we need timeouts here?
     ADC1->CR |= ADC_CR_ADSTP;
-    while (ADC1->CR & ADC_CR_ADSTP) { }
+    while (ADC1->CR & ADC_CR_ADSTP) {
+    }
 
     ADC1->CR |= ADC_CR_ADDIS;
-    while (ADC1->CR & ADC_CR_ADEN) { }
+    while (ADC1->CR & ADC_CR_ADEN) {
+    }
 }
 #endif
 
 PROCESS_THREAD(pbdrv_adc_process, ev, data) {
     // TODO: use DMA for background updates and add filtering
     // PROCESS_POLLHANDLER(pbdrv_adc_poll());
-#if PBIO_CONFIG_ENABLE_DEINIT
+    #if PBIO_CONFIG_ENABLE_DEINIT
     PROCESS_EXITHANDLER(pbdrv_adc_exit());
-#endif
+    #endif
 
     PROCESS_BEGIN();
 

@@ -54,7 +54,7 @@ AUTOSTART_PROCESSES(
 #if PBIO_CONFIG_ENABLE_SYS
     ,&pbsys_process
 #endif
-);
+    );
 
 /**
  * Initialize the Pybricks I/O Library. This function must be called once,

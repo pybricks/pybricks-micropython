@@ -60,12 +60,12 @@ void pbio_rate_integrator_reset(pbio_rate_integrator_t *itg, int32_t time_now, i
 
 // Get reference errors and integrals
 void pbio_rate_integrator_get_errors(pbio_rate_integrator_t *itg,
-                                int32_t rate,
-                                int32_t rate_ref,
-                                int32_t count,
-                                int32_t count_ref,
-                                int32_t *rate_err,
-                                int32_t *rate_err_integral) {
+    int32_t rate,
+    int32_t rate_ref,
+    int32_t count,
+    int32_t count_ref,
+    int32_t *rate_err,
+    int32_t *rate_err_integral) {
 
     // The rate error is simply the instantaneous error
     *rate_err = rate_ref - rate;
@@ -96,7 +96,7 @@ bool pbio_rate_integrator_stalled(pbio_rate_integrator_t *itg, int32_t time_now,
     }
 
     // All checks have failed, so we are stalled
-    return true; 
+    return true;
 }
 
 /* Count integrator used for position-based control */
@@ -160,20 +160,20 @@ void pbio_count_integrator_update(pbio_count_integrator_t *itg, int32_t time_now
         int32_t cerr = itg->count_err_prev;
 
         // Check if integrator magnitude would decrease due to this error
-        bool decrease = abs(itg->count_err_integral + cerr*(time_now - itg->time_prev)) < abs(itg->count_err_integral);
-        
+        bool decrease = abs(itg->count_err_integral + cerr * (time_now - itg->time_prev)) < abs(itg->count_err_integral);
+
         // If not deceasing, so growing, limit error growth by maximum integral rate
         if (!decrease) {
-            cerr = cerr >  integral_rate ?  integral_rate : cerr;
+            cerr = cerr > integral_rate ?  integral_rate : cerr;
             cerr = cerr < -integral_rate ? -integral_rate : cerr;
 
             // It might be decreasing now after all (due to integral sign change), so re-evaluate
-            decrease = abs(itg->count_err_integral + cerr*(time_now - itg->time_prev)) < abs(itg->count_err_integral);
+            decrease = abs(itg->count_err_integral + cerr * (time_now - itg->time_prev)) < abs(itg->count_err_integral);
         }
 
         // Add change if we are near target, or always if it decreases the integral magnitude
         if (abs(count_target - count_ref) <= integral_range || decrease) {
-            itg->count_err_integral += cerr*(time_now - itg->time_prev);
+            itg->count_err_integral += cerr * (time_now - itg->time_prev);
         }
 
         // Limit integral to predefined bound
@@ -214,5 +214,5 @@ bool pbio_count_integrator_stalled(pbio_count_integrator_t *itg, int32_t time_no
     }
 
     // All checks have failed, so we are stalled
-    return true; 
+    return true;
 };

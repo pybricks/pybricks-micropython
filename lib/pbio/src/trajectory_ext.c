@@ -21,16 +21,15 @@ static pbio_error_t pbio_trajectory_patch(pbio_trajectory_t *ref, bool time_base
     pbio_error_t err;
     pbio_trajectory_t nominal;
     if (time_based) {
-        err = pbio_trajectory_make_time_based(&nominal, t0, duration, th0, th0_ext, w0, wt, wmax, a, amax);    
-    }
-    else {
+        err = pbio_trajectory_make_time_based(&nominal, t0, duration, th0, th0_ext, w0, wt, wmax, a, amax);
+    } else {
         err = pbio_trajectory_make_angle_based(&nominal, t0, th0, th3, w0, wt, wmax, a, amax);
     }
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // If the reference acceleration equals the acceleration of the new nominal trajectory, 
+    // If the reference acceleration equals the acceleration of the new nominal trajectory,
     // the trajectories are tangent at this point. Then we can patch the new trajectory
     // by letting its first segment be equal to the current segment of the ongoing trajectory.
     // This provides a seamless transition without having to resort to numerical tricks.
@@ -54,8 +53,7 @@ static pbio_error_t pbio_trajectory_patch(pbio_trajectory_t *ref, bool time_base
             w0 = ref->w1;
             th0 = ref->th2;
             th0_ext = ref->th2_ext;
-        }
-        else {
+        } else {
             // We are in the zero speed phase, so we can restart from its starting point
             t0 = ref->t3;
             w0 = 0;
@@ -72,13 +70,11 @@ static pbio_error_t pbio_trajectory_patch(pbio_trajectory_t *ref, bool time_base
         // with a point on the existing trajectory
         if (time_based) {
             return pbio_trajectory_make_time_based(ref, t0, duration, th0, th0_ext, w0, wt, wmax, a, amax);
-        }
-        else {
+        } else {
             return pbio_trajectory_make_angle_based(ref, t0, th0, th3, w0, wt, wmax, a, amax);
         }
-        
-    }
-    else {
+
+    } else {
         // Trajectories were not tangent, so just return the nominal, unpatched trajectory
         *ref = nominal;
         return PBIO_SUCCESS;

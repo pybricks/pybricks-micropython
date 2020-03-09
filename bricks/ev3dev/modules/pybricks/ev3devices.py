@@ -4,8 +4,7 @@
 """Classes for LEGO MINDSTORMS EV3 Devices."""
 
 # import those ev3devices that are already written in MicroPython-style C code.
-from ev3devices_c import (InfraredSensor, ColorSensor, TouchSensor,
-                          UltrasonicSensor, GyroSensor)
+from ev3devices_c import InfraredSensor, ColorSensor, TouchSensor, UltrasonicSensor, GyroSensor
 from ev3devices_c import Motor as CompatMotor
 from pybricks.parameters import Stop
 
@@ -37,8 +36,17 @@ class Motor(CompatMotor):
         """set_run_settings backwards-compatible with 1.0 EV3 release."""
         self.control.limits(max_speed, acceleration)
 
-    def set_pid_settings(self, kp, ki, kd, tight_loop_limit, angle_tolerance,
-                         speed_tolerance, stall_speed, stall_time):
+    def set_pid_settings(
+        self,
+        kp,
+        ki,
+        kd,
+        tight_loop_limit,
+        angle_tolerance,
+        speed_tolerance,
+        stall_speed,
+        stall_time,
+    ):
         """set_pid_settings backwards-compatible with 1.0 EV3 release."""
         self.control.pid(kp, ki, kd)
         self.control.target_tolerances(speed_tolerance, angle_tolerance)

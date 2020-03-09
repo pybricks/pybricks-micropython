@@ -16,8 +16,8 @@
 
 const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON] = {
     [0] = {
-        .gpio   = { .bank = GPIOC, .pin = 13 },
-        .pull   = PBDRV_GPIO_PULL_UP,
+        .gpio = { .bank = GPIOC, .pin = 13 },
+        .pull = PBDRV_GPIO_PULL_UP,
         .button = PBIO_BUTTON_CENTER,
         .active_low = true,
     },
@@ -33,37 +33,37 @@ enum {
 };
 
 const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t
-pbdrv_counter_stm32f0_gpio_quad_enc_platform_data[] = {
+    pbdrv_counter_stm32f0_gpio_quad_enc_platform_data[] = {
     [0] = {
-        .gpio_int     = { .bank = GPIOB, .pin = 1},
-        .gpio_dir     = { .bank = GPIOB, .pin = 9},
-        .counter_id   = COUNTER_PORT_A,
+        .gpio_int = { .bank = GPIOB, .pin = 1},
+        .gpio_dir = { .bank = GPIOB, .pin = 9},
+        .counter_id = COUNTER_PORT_A,
     },
     [1] = {
-        .gpio_int     = { .bank = GPIOA, .pin = 0},
-        .gpio_dir     = { .bank = GPIOA, .pin = 1},
-        .counter_id   = COUNTER_PORT_B,
+        .gpio_int = { .bank = GPIOA, .pin = 0},
+        .gpio_dir = { .bank = GPIOA, .pin = 1},
+        .counter_id = COUNTER_PORT_B,
     },
 };
 
 // Port C - USART4
 const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_0 = {
-    .id1        = { .bank = GPIOB, .pin = 7  },
-    .id2        = { .bank = GPIOC, .pin = 15 },
-    .uart_buf   = { .bank = GPIOB, .pin = 4  },
-    .uart_tx    = { .bank = GPIOC, .pin = 10 },
-    .uart_rx    = { .bank = GPIOC, .pin = 11 },
-    .alt        = 0,
+    .id1 = { .bank = GPIOB, .pin = 7  },
+    .id2 = { .bank = GPIOC, .pin = 15 },
+    .uart_buf = { .bank = GPIOB, .pin = 4  },
+    .uart_tx = { .bank = GPIOC, .pin = 10 },
+    .uart_rx = { .bank = GPIOC, .pin = 11 },
+    .alt = 0,
 };
 
 // Port D - USART3
 const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_1 = {
-    .id1        = { .bank = GPIOB, .pin = 10 },
-    .id2        = { .bank = GPIOA, .pin = 12 },
-    .uart_buf   = { .bank = GPIOB, .pin = 0  },
-    .uart_tx    = { .bank = GPIOC, .pin = 4  },
-    .uart_rx    = { .bank = GPIOC, .pin = 5  },
-    .alt        = 1,
+    .id1 = { .bank = GPIOB, .pin = 10 },
+    .id2 = { .bank = GPIOA, .pin = 12 },
+    .uart_buf = { .bank = GPIOB, .pin = 0  },
+    .uart_tx = { .bank = GPIOC, .pin = 4  },
+    .uart_rx = { .bank = GPIOC, .pin = 5  },
+    .alt = 1,
 };
 
 // UART
@@ -75,12 +75,12 @@ enum {
 
 const pbdrv_uart_stm32f0_platform_data_t pbdrv_uart_stm32f0_platform_data[PBDRV_CONFIG_UART_STM32F0_NUM_UART] = {
     [UART_ID_0] = {
-        .uart   = USART4,
-        .irq    = USART3_4_IRQn,
+        .uart = USART4,
+        .irq = USART3_4_IRQn,
     },
     [UART_ID_1] = {
-        .uart   = USART3,
-        .irq    = USART3_4_IRQn,
+        .uart = USART3,
+        .irq = USART3_4_IRQn,
     },
 };
 
@@ -93,11 +93,11 @@ void USART3_4_IRQHandler(void) {
 #if PBIO_CONFIG_UARTDEV
 const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
     [0] = {
-        .uart_id    = UART_ID_0,
+        .uart_id = UART_ID_0,
         .counter_id = COUNTER_PORT_C,
     },
     [1] = {
-        .uart_id    = UART_ID_1,
+        .uart_id = UART_ID_1,
         .counter_id = COUNTER_PORT_D,
     },
 };
@@ -120,7 +120,7 @@ void SystemInit(void) {
     // Enable all of the shared hardware modules we are using
 
     RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOCEN
-                |  RCC_AHBENR_GPIODEN | RCC_AHBENR_GPIOFEN;
+        | RCC_AHBENR_GPIODEN | RCC_AHBENR_GPIOFEN;
     RCC->APB1ENR |= RCC_APB1ENR_USART3EN | RCC_APB1ENR_USART4EN;
     RCC->APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN;
 

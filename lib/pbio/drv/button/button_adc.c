@@ -63,17 +63,13 @@ pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
 
     if (value > 3394) {
         // not a button
-    }
-    else if (value > 3009) {
+    } else if (value > 3009) {
         *pressed |= PBIO_BUTTON_CENTER;
-    }
-    else if (value > 2538) {
+    } else if (value > 2538) {
         // not a button
-    }
-    else if (value > 2141) {
+    } else if (value > 2141) {
         *pressed |= PBIO_BUTTON_CENTER;
-    }
-    else {
+    } else {
         // hardware failure?
         return PBIO_ERROR_IO;
     }
@@ -85,34 +81,26 @@ pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
 
     if (value > 3872) {
         // no buttons pressed
-    }
-    else if (value > 3394) {
+    } else if (value > 3394) {
         *pressed |= PBIO_BUTTON_RIGHT_UP; // Bluetooth
-    }
-    else if (value > 3009) {
+    } else if (value > 3009) {
         *pressed |= PBIO_BUTTON_RIGHT;
-    }
-    else if (value > 2755) {
+    } else if (value > 2755) {
         *pressed |= PBIO_BUTTON_RIGHT_UP; // Bluetooth
         *pressed |= PBIO_BUTTON_RIGHT;
-    }
-    else if (value > 2538) {
+    } else if (value > 2538) {
         *pressed |= PBIO_BUTTON_LEFT;
-    }
-    else if (value > 2327) {
+    } else if (value > 2327) {
         *pressed |= PBIO_BUTTON_RIGHT_UP; // Bluetooth
         *pressed |= PBIO_BUTTON_LEFT;
-    }
-    else if (value > 2141) {
+    } else if (value > 2141) {
         *pressed |= PBIO_BUTTON_RIGHT;
         *pressed |= PBIO_BUTTON_LEFT;
-    }
-    else if (value > 1969) {
+    } else if (value > 1969) {
         *pressed |= PBIO_BUTTON_RIGHT_UP; // Bluetooth
         *pressed |= PBIO_BUTTON_RIGHT;
         *pressed |= PBIO_BUTTON_LEFT;
-    }
-    else {
+    } else {
         // hardware failure?
         return PBIO_ERROR_IO;
     }

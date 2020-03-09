@@ -149,7 +149,7 @@ const mp_obj_type_t pb_type_ev3dev_Font = {
     { &mp_type_type },
     .name = MP_QSTR_Font,
     .make_new = ev3dev_Font_make_new,
-    .locals_dict = (mp_obj_dict_t*)&ev3dev_Font_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&ev3dev_Font_locals_dict,
 };
 
 GrxFont *pb_ev3dev_Font_obj_get_font(mp_const_obj_t obj) {

@@ -23,8 +23,10 @@ void _pbio_motorpoll_poll(void);
 
 #else
 
-static inline void _pbio_motorpoll_reset_all(void) { }
-static inline void _pbio_motorpoll_poll(void) { }
+static inline void _pbio_motorpoll_reset_all(void) {
+}
+static inline void _pbio_motorpoll_poll(void) {
+}
 
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
 

@@ -39,9 +39,9 @@ _I2C_FUNC_SMBUS_WRITE_I2C_BLOCK = 0x08000000
 _I2C_SMBUS_BLOCK_MAX = 32
 
 _i2c_smbus_data = {
-    'byte': uctypes.UINT8 | 0,
-    'word': uctypes.UINT16 | 0,
-    'block': (uctypes.ARRAY | 0, uctypes.UINT8 | (_I2C_SMBUS_BLOCK_MAX + 2))
+    "byte": uctypes.UINT8 | 0,
+    "word": uctypes.UINT16 | 0,
+    "block": (uctypes.ARRAY | 0, uctypes.UINT8 | (_I2C_SMBUS_BLOCK_MAX + 2)),
 }
 
 _size_of_i2c_smbus_data = uctypes.sizeof(_i2c_smbus_data)
@@ -72,16 +72,16 @@ _I2C_PEC = 0x0708
 _I2C_SMBUS = 0x0720
 
 _i2c_smbus_ioctl_data = {
-    'read_write': uctypes.UINT8 | 0,
-    'command': uctypes.UINT8 | 1,
-    'size': uctypes.UINT32 | 4,
-    'data': uctypes.PTR | 8
+    "read_write": uctypes.UINT8 | 0,
+    "command": uctypes.UINT8 | 1,
+    "size": uctypes.UINT32 | 4,
+    "data": uctypes.PTR | 8,
 }
 
 _size_of_i2c_smbus_ioctl_data = uctypes.sizeof(_i2c_smbus_ioctl_data)
 
 
-class SMBus():
+class SMBus:
     """Micropython implementation of SMBus"""
 
     _slave = 0
@@ -90,37 +90,31 @@ class SMBus():
         """Create a new SMBus instance
         :param string path: The path to the I2C device node, e.g. ``/dev/i2c0``.
         """
-        self._devnode = open(path, 'w+')
+        self._devnode = open(path, "w+")
         self._fd = self._devnode.fileno()
         flags = bytes(4)
         ioctl(self._fd, _I2C_FUNCS, flags)
-        flags = uctypes.struct(uctypes.addressof(flags), {
-            'flags': uctypes.UINT32  # unsigned long
-        }).flags
+        flags = uctypes.struct(
+            uctypes.addressof(flags), {"flags": uctypes.UINT32}  # unsigned long
+        ).flags
         self._func = {
-            'i2c': bool(flags & _I2C_FUNC_I2C),
-            'ten_bit_addr': bool(flags & _I2C_FUNC_10BIT_ADDR),
-            'protocol_mangling': bool(flags & _I2C_FUNC_PROTOCOL_MANGLING),
-            'smbus_pec': bool(flags & _I2C_FUNC_SMBUS_PEC),
-            'no_start': bool(flags & _I2C_FUNC_NOSTART),
-            'slave': bool(flags & _I2C_FUNC_SLAVE),
-            'smbus_block_proc_call': bool(flags &
-                                          _I2C_FUNC_SMBUS_BLOCK_PROC_CALL),
-            'smbus_quick': bool(flags & _I2C_FUNC_SMBUS_QUICK),
-            'smbus_read_byte': bool(flags & _I2C_FUNC_SMBUS_READ_BYTE),
-            'smbus_write_byte': bool(flags & _I2C_FUNC_SMBUS_WRITE_BYTE),
-            'smbus_write_data': bool(flags & _I2C_FUNC_SMBUS_WRITE_BYTE_DATA),
-            'smbus_read_word_data': bool(flags &
-                                         _I2C_FUNC_SMBUS_READ_WORD_DATA),
-            'smbus_write_word_data': bool(flags &
-                                          _I2C_FUNC_SMBUS_WRITE_WORD_DATA),
-            'smbus_proc_call': bool(flags & _I2C_FUNC_SMBUS_PROC_CALL),
-            'smbus_read_block_data': bool(flags &
-                                          _I2C_FUNC_SMBUS_READ_BLOCK_DATA),
-            'smbus_read_i2c_block': bool(flags &
-                                         _I2C_FUNC_SMBUS_READ_I2C_BLOCK),
-            'smbus_write_i2c_block': bool(flags &
-                                          _I2C_FUNC_SMBUS_WRITE_I2C_BLOCK),
+            "i2c": bool(flags & _I2C_FUNC_I2C),
+            "ten_bit_addr": bool(flags & _I2C_FUNC_10BIT_ADDR),
+            "protocol_mangling": bool(flags & _I2C_FUNC_PROTOCOL_MANGLING),
+            "smbus_pec": bool(flags & _I2C_FUNC_SMBUS_PEC),
+            "no_start": bool(flags & _I2C_FUNC_NOSTART),
+            "slave": bool(flags & _I2C_FUNC_SLAVE),
+            "smbus_block_proc_call": bool(flags & _I2C_FUNC_SMBUS_BLOCK_PROC_CALL),
+            "smbus_quick": bool(flags & _I2C_FUNC_SMBUS_QUICK),
+            "smbus_read_byte": bool(flags & _I2C_FUNC_SMBUS_READ_BYTE),
+            "smbus_write_byte": bool(flags & _I2C_FUNC_SMBUS_WRITE_BYTE),
+            "smbus_write_data": bool(flags & _I2C_FUNC_SMBUS_WRITE_BYTE_DATA),
+            "smbus_read_word_data": bool(flags & _I2C_FUNC_SMBUS_READ_WORD_DATA),
+            "smbus_write_word_data": bool(flags & _I2C_FUNC_SMBUS_WRITE_WORD_DATA),
+            "smbus_proc_call": bool(flags & _I2C_FUNC_SMBUS_PROC_CALL),
+            "smbus_read_block_data": bool(flags & _I2C_FUNC_SMBUS_READ_BLOCK_DATA),
+            "smbus_read_i2c_block": bool(flags & _I2C_FUNC_SMBUS_READ_I2C_BLOCK),
+            "smbus_write_i2c_block": bool(flags & _I2C_FUNC_SMBUS_WRITE_I2C_BLOCK),
         }
 
     def set_address(self, address):
@@ -201,21 +195,19 @@ class SMBus():
         else:
             size = _I2C_SMBUS_I2C_BLOCK_DATA
         self._access(_I2C_SMBUS_READ, command, size, data)
-        return data.block[1:][:data.block[0]]
+        return data.block[1:][: data.block[0]]
 
     def write_i2c_block_data(self, command, values):
         b = bytearray(_size_of_i2c_smbus_data)
         data = uctypes.struct(uctypes.addressof(b), _i2c_smbus_data)
         values = values[:32]
         data.block = [len(values)] + values
-        self._access(_I2C_SMBUS_WRITE, command, _I2C_SMBUS_I2C_BLOCK_BROKEN,
-                     data)
+        self._access(_I2C_SMBUS_WRITE, command, _I2C_SMBUS_I2C_BLOCK_BROKEN, data)
 
     def block_process_call(self, command, values):
         b = bytearray(_size_of_i2c_smbus_data)
         data = uctypes.struct(uctypes.addressof(b), _i2c_smbus_data)
         values = values[:32]
         data.block = [len(values)] + values
-        self._access(_I2C_SMBUS_WRITE, command, _I2C_SMBUS_BLOCK_PROC_CALL,
-                     data)
-        return data.block[1:][:data.block[0]]
+        self._access(_I2C_SMBUS_WRITE, command, _I2C_SMBUS_BLOCK_PROC_CALL, data)
+        return data.block[1:][: data.block[0]]

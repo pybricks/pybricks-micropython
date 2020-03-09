@@ -88,20 +88,20 @@ pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
 
     // set both port pins 1 and 2 to output low
     switch (port) {
-    case PBIO_PORT_B:
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
-        GPIOC->BRR = GPIO_BRR_BR_6;
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
-        GPIOC->BRR = GPIO_BRR_BR_8;
-        break;
-    case PBIO_PORT_A:
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
-        GPIOC->BRR = GPIO_BRR_BR_7;
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
-        GPIOC->BRR = GPIO_BRR_BR_9;
-        break;
-    default:
-        return PBIO_ERROR_INVALID_PORT;
+        case PBIO_PORT_B:
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
+            GPIOC->BRR = GPIO_BRR_BR_6;
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
+            GPIOC->BRR = GPIO_BRR_BR_8;
+            break;
+        case PBIO_PORT_A:
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
+            GPIOC->BRR = GPIO_BRR_BR_7;
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
+            GPIOC->BRR = GPIO_BRR_BR_9;
+            break;
+        default:
+            return PBIO_ERROR_INVALID_PORT;
     }
 
     return PBIO_SUCCESS;
@@ -110,60 +110,60 @@ pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
 static void pbdrv_motor_brake(pbio_port_t port) {
     // set both port pins 1 and 2 to output high
     switch (port) {
-    case PBIO_PORT_B:
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
-        GPIOC->BSRR = GPIO_BSRR_BS_6;
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
-        GPIOC->BSRR = GPIO_BSRR_BS_8;
-        break;
-    case PBIO_PORT_A:
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
-        GPIOC->BSRR = GPIO_BSRR_BS_7;
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
-        GPIOC->BSRR = GPIO_BSRR_BS_9;
-        break;
-    default:
-        break;
+        case PBIO_PORT_B:
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
+            GPIOC->BSRR = GPIO_BSRR_BS_6;
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
+            GPIOC->BSRR = GPIO_BSRR_BS_8;
+            break;
+        case PBIO_PORT_A:
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
+            GPIOC->BSRR = GPIO_BSRR_BS_7;
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
+            GPIOC->BSRR = GPIO_BSRR_BS_9;
+            break;
+        default:
+            break;
     }
 }
 
 static void pbdrv_motor_run_fwd(pbio_port_t port, int16_t duty_cycle) {
     // one pin as out, high and the other as PWM
     switch (port) {
-    case PBIO_PORT_B:
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
-        GPIOC->BSRR = GPIO_BSRR_BS_6;
-        TIM3->CCR3 = 10000 - duty_cycle;
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (2 << GPIO_MODER_MODER8_Pos);
-        break;
-    case PBIO_PORT_A:
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
-        GPIOC->BSRR = GPIO_BSRR_BS_9;
-        TIM3->CCR2 = 10000 - duty_cycle;
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (2 << GPIO_MODER_MODER7_Pos);
-        break;
-    default:
-        break;
+        case PBIO_PORT_B:
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
+            GPIOC->BSRR = GPIO_BSRR_BS_6;
+            TIM3->CCR3 = 10000 - duty_cycle;
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (2 << GPIO_MODER_MODER8_Pos);
+            break;
+        case PBIO_PORT_A:
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
+            GPIOC->BSRR = GPIO_BSRR_BS_9;
+            TIM3->CCR2 = 10000 - duty_cycle;
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (2 << GPIO_MODER_MODER7_Pos);
+            break;
+        default:
+            break;
     }
 }
 
 static void pbdrv_motor_run_rev(pbio_port_t port, int16_t duty_cycle) {
     // one pin as out, high and the other as PWM
     switch (port) {
-    case PBIO_PORT_B:
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
-        GPIOC->BSRR = GPIO_BSRR_BS_8;
-        TIM3->CCR1 = 10000 + duty_cycle;
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (2 << GPIO_MODER_MODER6_Pos);
-        break;
-    case PBIO_PORT_A:
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
-        GPIOC->BSRR = GPIO_BSRR_BS_7;
-        TIM3->CCR4 = 10000 + duty_cycle;
-        GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (2 << GPIO_MODER_MODER9_Pos);
-        break;
-    default:
-        break;
+        case PBIO_PORT_B:
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
+            GPIOC->BSRR = GPIO_BSRR_BS_8;
+            TIM3->CCR1 = 10000 + duty_cycle;
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (2 << GPIO_MODER_MODER6_Pos);
+            break;
+        case PBIO_PORT_A:
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
+            GPIOC->BSRR = GPIO_BSRR_BS_7;
+            TIM3->CCR4 = 10000 + duty_cycle;
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (2 << GPIO_MODER_MODER9_Pos);
+            break;
+        default:
+            break;
     }
 }
 

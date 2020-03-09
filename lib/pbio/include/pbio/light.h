@@ -82,9 +82,13 @@ void _pbio_light_set_user_mode(bool user_mode);
 /** @endcond */
 
 #else
-static inline void _pbio_light_poll(uint32_t now) { }
-static inline void _pbio_light_set_user_mode(bool user_mode) { }
-static inline pbio_error_t _pbio_light_on(pbio_port_t port, pbio_light_color_t color, pbio_light_pattern_t pattern) { return PBIO_SUCCESS; }
+static inline void _pbio_light_poll(uint32_t now) {
+}
+static inline void _pbio_light_set_user_mode(bool user_mode) {
+}
+static inline pbio_error_t _pbio_light_on(pbio_port_t port, pbio_light_color_t color, pbio_light_pattern_t pattern) {
+    return PBIO_SUCCESS;
+}
 #endif // PBDRV_CONFIG_LIGHT
 
 /** @cond */

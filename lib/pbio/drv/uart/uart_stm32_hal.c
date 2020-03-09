@@ -79,8 +79,7 @@ pbio_error_t pbdrv_uart_read_end(pbdrv_uart_dev_t *uart_dev) {
 
     if (err != PBIO_ERROR_AGAIN) {
         etimer_stop(&uart->rx_timer);
-    }
-    else if (etimer_expired(&uart->rx_timer)) {
+    } else if (etimer_expired(&uart->rx_timer)) {
         // NB: This function can be blocking when using DMA - if we switch to
         // DMA, the timout will need to be reworked.
         HAL_UART_AbortReceive(&uart->huart);
@@ -120,8 +119,7 @@ pbio_error_t pbdrv_uart_write_end(pbdrv_uart_dev_t *uart_dev) {
 
     if (err != PBIO_ERROR_AGAIN) {
         etimer_stop(&uart->tx_timer);
-    }
-    else if (etimer_expired(&uart->tx_timer)) {
+    } else if (etimer_expired(&uart->tx_timer)) {
         // NB: This function can be blocking when using DMA - if we switch to
         // DMA, the timout will need to be reworked.
         HAL_UART_AbortTransmit(&uart->huart);

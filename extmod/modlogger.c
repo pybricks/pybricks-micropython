@@ -30,8 +30,7 @@ STATIC mp_obj_t tools_Logger_start(size_t n_args, const mp_obj_t *pos_args, mp_m
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         tools_Logger_obj_t, self,
         PB_ARG_REQUIRED(duration),
-        PB_ARG_DEFAULT_INT(divisor, 1)
-    );
+        PB_ARG_DEFAULT_INT(divisor, 1));
 
     mp_int_t div = pb_obj_get_int(divisor);
     div = max(div, 1);
@@ -49,8 +48,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_Logger_start_obj, 1, tools_Logger_start)
 STATIC mp_obj_t tools_Logger_get(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         tools_Logger_obj_t, self,
-        PB_ARG_DEFAULT_NONE(index)
-    );
+        PB_ARG_DEFAULT_NONE(index));
 
     mp_int_t index_val = pb_obj_get_default_int(index, -1);
 
@@ -96,8 +94,8 @@ static void make_data_row_str(char *row, int32_t *data, uint8_t n) {
         idx += s;
 
         // For the last value, replace , by \n
-        if (v == n-1) {
-            row[idx-1] = '\n';
+        if (v == n - 1) {
+            row[idx - 1] = '\n';
         }
     }
 }
@@ -106,11 +104,10 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         tools_Logger_obj_t, self,
-        PB_ARG_DEFAULT_NONE(path)
-    );
+        PB_ARG_DEFAULT_NONE(path));
     const char *file_path = path == mp_const_none ? "log.txt" : mp_obj_str_get_str(path);
 
-#if PYBRICKS_HUB_EV3
+    #if PYBRICKS_HUB_EV3
     // Create an empty log file
     FILE *log_file;
 
@@ -119,9 +116,9 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     if (log_file == NULL) {
         pb_assert(PBIO_ERROR_IO);
     }
-#else
+    #else
     mp_printf(&mp_plat_print, "PB_OF:%s\n", file_path);
-#endif //PYBRICKS_HUB_EV3
+    #endif // PYBRICKS_HUB_EV3
 
     // Read log size information
     int32_t data[MAX_LOG_VALUES];
@@ -133,7 +130,7 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     pbio_error_t err;
 
     // Allocate space for one null-terminated row of data
-    char row_str[max_val_strln*MAX_LOG_VALUES+1];
+    char row_str[max_val_strln * MAX_LOG_VALUES + 1];
 
     // Write data to file line by line
     for (int32_t i = 0; i < sampled; i++) {
@@ -147,26 +144,26 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
         // Make one string of values
         make_data_row_str(row_str, data, num_values);
 
-#if PYBRICKS_HUB_EV3
+        #if PYBRICKS_HUB_EV3
         // Append the row to file
         if (fprintf(log_file, "%s", row_str) < 0) {
             err = PBIO_ERROR_IO;
             break;
         }
-#else
+        #else
         // Print the row
         mp_print_str(&mp_plat_print, row_str);
-#endif // PYBRICKS_HUB_EV3
+        #endif // PYBRICKS_HUB_EV3
     }
 
-#if PYBRICKS_HUB_EV3
+    #if PYBRICKS_HUB_EV3
     // Close the file
     if (fclose(log_file) != 0) {
         err = PBIO_ERROR_IO;
     }
-#else
+    #else
     mp_print_str(&mp_plat_print, "PB_EOF\n");
-#endif // PYBRICKS_HUB_EV3
+    #endif // PYBRICKS_HUB_EV3
 
     pb_assert(err);
     return mp_const_none;
@@ -195,7 +192,7 @@ STATIC MP_DEFINE_CONST_DICT(tools_Logger_locals_dict, tools_Logger_locals_dict_t
 // type(pybricks.tools.Logger)
 STATIC const mp_obj_type_t tools_Logger_type = {
     { &mp_type_type },
-    .locals_dict = (mp_obj_dict_t*)&tools_Logger_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&tools_Logger_locals_dict,
     .unary_op = tools_Logger_unary_op,
 };
 
@@ -203,7 +200,7 @@ mp_obj_t logger_obj_make_new(pbio_log_t *log) {
     // Create new light instance
     tools_Logger_obj_t *logger = m_new_obj(tools_Logger_obj_t);
     // Set type and iodev
-    logger->base.type = (mp_obj_type_t*) &tools_Logger_type;
+    logger->base.type = (mp_obj_type_t *)&tools_Logger_type;
     logger->log = log;
     return logger;
 }

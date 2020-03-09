@@ -54,7 +54,8 @@ static void accel_spi_read(uint8_t reg, uint8_t *value) {
 
     // busy wait
     do {
-        while (!(SPI1->SR & SPI_SR_RXNE)) { }
+        while (!(SPI1->SR & SPI_SR_RXNE)) {
+        }
     } while (SPI1->SR & SPI_SR_BSY);
 
     while (SPI1->SR & SPI_SR_RXNE) {
@@ -65,7 +66,8 @@ static void accel_spi_read(uint8_t reg, uint8_t *value) {
 
     // busy wait
     do {
-        while (!(SPI1->SR & SPI_SR_RXNE)) { }
+        while (!(SPI1->SR & SPI_SR_RXNE)) {
+        }
     } while (SPI1->SR & SPI_SR_BSY);
 
     *value = BYTE_ACCESS(SPI1->DR);
@@ -82,14 +84,16 @@ static void accel_spi_write(uint8_t reg, uint8_t value) {
 
     // busy wait
     do {
-        while (!(SPI1->SR & SPI_SR_RXNE)) { }
+        while (!(SPI1->SR & SPI_SR_RXNE)) {
+        }
     } while (SPI1->SR & SPI_SR_BSY);
 
     BYTE_ACCESS(SPI1->DR) = value;
 
     // busy wait
     do {
-        while (!(SPI1->SR & SPI_SR_RXNE)) { }
+        while (!(SPI1->SR & SPI_SR_RXNE)) {
+        }
     } while (SPI1->SR & SPI_SR_BSY);
 
     // clear chip select
@@ -129,6 +133,5 @@ void accel_init(void) {
 void accel_get_values(int *x, int *y, int *z) {
 }
 
-void accel_deinit(void)
-{
+void accel_deinit(void) {
 }

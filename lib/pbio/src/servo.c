@@ -24,7 +24,7 @@ static pbio_control_settings_t settings_servo_ev3_medium = {
     .rate_tolerance = 100,
     .count_tolerance = 10,
     .stall_rate_limit = 30,
-    .stall_time = 200*US_PER_MS,
+    .stall_time = 200 * US_PER_MS,
     .pid_kp = 300,
     .pid_ki = 400,
     .pid_kd = 3,
@@ -41,7 +41,7 @@ static pbio_control_settings_t settings_servo_ev3_large = {
     .rate_tolerance = 100,
     .count_tolerance = 10,
     .stall_rate_limit = 30,
-    .stall_time = 200*US_PER_MS,
+    .stall_time = 200 * US_PER_MS,
     .pid_kp = 400,
     .pid_ki = 1200,
     .pid_kd = 5,
@@ -58,7 +58,7 @@ static pbio_control_settings_t settings_servo_move_hub = {
     .rate_tolerance = 50,
     .count_tolerance = 6,
     .stall_rate_limit = 15,
-    .stall_time = 200*US_PER_MS,
+    .stall_time = 200 * US_PER_MS,
     .pid_kp = 400,
     .pid_ki = 600,
     .pid_kd = 5,
@@ -75,7 +75,7 @@ static pbio_control_settings_t settings_servo_boost_interactive = {
     .rate_tolerance = 50,
     .count_tolerance = 5,
     .stall_rate_limit = 15,
-    .stall_time = 200*US_PER_MS,
+    .stall_time = 200 * US_PER_MS,
     .pid_kp = 600,
     .pid_ki = 600,
     .pid_kd = 5,
@@ -92,7 +92,7 @@ static pbio_control_settings_t settings_servo_cplus_xl = {
     .rate_tolerance = 50,
     .count_tolerance = 10,
     .stall_rate_limit = 20,
-    .stall_time = 200*US_PER_MS,
+    .stall_time = 200 * US_PER_MS,
     .pid_kp = 250,
     .pid_ki = 350,
     .pid_kd = 0,
@@ -109,7 +109,7 @@ static pbio_control_settings_t settings_servo_default = {
     .rate_tolerance = 5,
     .count_tolerance = 3,
     .stall_rate_limit = 2,
-    .stall_time = 200*US_PER_MS,
+    .stall_time = 200 * US_PER_MS,
     .pid_kp = 200,
     .pid_ki = 100,
     .pid_kd = 0,
@@ -255,14 +255,14 @@ static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actua
     // Apply the calculated actuation, by type
     switch (actuation_type)
     {
-    case PBIO_ACTUATION_COAST:
-        return pbio_dcmotor_coast(srv->dcmotor);
-    case PBIO_ACTUATION_BRAKE:
-        return pbio_dcmotor_brake(srv->dcmotor);
-    case PBIO_ACTUATION_HOLD:
-        return pbio_control_start_hold_control(&srv->control, clock_usecs(), control);
-    case PBIO_ACTUATION_DUTY:
-        return pbio_dcmotor_set_duty_cycle_sys(srv->dcmotor, control);
+        case PBIO_ACTUATION_COAST:
+            return pbio_dcmotor_coast(srv->dcmotor);
+        case PBIO_ACTUATION_BRAKE:
+            return pbio_dcmotor_brake(srv->dcmotor);
+        case PBIO_ACTUATION_HOLD:
+            return pbio_control_start_hold_control(&srv->control, clock_usecs(), control);
+        case PBIO_ACTUATION_DUTY:
+            return pbio_dcmotor_set_duty_cycle_sys(srv->dcmotor, control);
     }
 
     return PBIO_SUCCESS;
@@ -273,7 +273,7 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, int32_t time_now, i
 
     int32_t buf[SERVO_LOG_NUM_VALUES];
     memset(buf, 0, sizeof(buf));
-    
+
     // Log the physical state of the motor
     buf[1] = count_now;
     buf[2] = rate_now;
@@ -284,7 +284,7 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, int32_t time_now, i
 
     // If control is active, log additional data about the maneuver
     if (srv->control.type != PBIO_CONTROL_NONE) {
-        
+
         // Get the time of reference evaluation
         int32_t time_ref = pbio_control_get_ref_time(&srv->control, time_now);
 
@@ -297,8 +297,7 @@ static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, int32_t time_now, i
 
         if (srv->control.type == PBIO_CONTROL_ANGLE) {
             pbio_count_integrator_get_errors(&srv->control.count_integrator, count_now, count_ref, &err, &err_integral);
-        }
-        else {
+        } else {
             pbio_rate_integrator_get_errors(&srv->control.rate_integrator, rate_now, rate_ref, count_now, count_ref, &err, &err_integral);
         }
 
@@ -378,8 +377,7 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
         if (err != PBIO_SUCCESS) {
             return err;
         }
-    }
-    else {
+    } else {
         // Otherwise the payload is zero and control stops
         control = 0;
         pbio_control_stop(&srv->control);
@@ -399,8 +397,7 @@ pbio_error_t pbio_servo_stop_force(pbio_servo_t *srv) {
     // Try to stop / coast motor whether or not initialized already
     if (srv->dcmotor) {
         return pbio_dcmotor_coast(srv->dcmotor);
-    }
-    else {
+    } else {
         return pbdrv_motor_coast(srv->port);
     }
 }
@@ -430,8 +427,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
         if (err != PBIO_SUCCESS) {
             return err;
         }
-    }
-    else {
+    } else {
         time_now = clock_usecs();
     }
 
@@ -459,7 +455,7 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
     }
 
     // Start a timed maneuver, duration finite
-    return pbio_control_start_timed_control(&srv->control, time_now, duration*US_PER_MS, count_now, rate_now, target_rate, srv->control.settings.abs_acceleration, pbio_control_on_target_time, after_stop);
+    return pbio_control_start_timed_control(&srv->control, time_now, duration * US_PER_MS, count_now, rate_now, target_rate, srv->control.settings.abs_acceleration, pbio_control_on_target_time, after_stop);
 }
 
 pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio_actuation_t after_stop) {

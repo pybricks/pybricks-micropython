@@ -39,7 +39,7 @@ int32_t pbio_math_sqrt(int32_t n) {
     int32_t x1 = x0;
 
     while (true) {
-        x1 = (x0 + n/x0)/2;
+        x1 = (x0 + n / x0) / 2;
         if (x1 == x0 || x1 == x0 + 1) {
             return x0;
         }

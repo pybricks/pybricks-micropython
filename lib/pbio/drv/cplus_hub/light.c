@@ -69,52 +69,52 @@ pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, uint8_t r, uint8_t g, uint8_t
 }
 
 pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t color,
-                                           uint8_t *r, uint8_t *g, uint8_t *b) {
+    uint8_t *r, uint8_t *g, uint8_t *b) {
     if (port != PBIO_PORT_SELF) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
     switch (color) {
-    case PBIO_LIGHT_COLOR_WHITE:
-        *r = 185;
-        *g = 161;
-        *b = 22;
-        break;
-    case PBIO_LIGHT_COLOR_RED:
-        *r = 255;
-        *g = 0;
-        *b = 0;
-        break;
-    case PBIO_LIGHT_COLOR_ORANGE:
-        *r = 255;
-        *g = 37;
-        *b = 0;
-        break;
-    case PBIO_LIGHT_COLOR_YELLOW:
-        *r = 255;
-        *g = 140;
-        *b = 0;
-        break;
-    case PBIO_LIGHT_COLOR_GREEN:
-        *r = 0;
-        *g = 255;
-        *b = 0;
-        break;
-    case PBIO_LIGHT_COLOR_BLUE:
-        *r = 0;
-        *g = 0;
-        *b = 180;
-        break;
-    case PBIO_LIGHT_COLOR_PURPLE:
-        *r = 220;
-        *g = 0;
-        *b = 110;
-        break;
-    default:
-        *r = 0;
-        *g = 0;
-        *b = 0;
-        break;
+        case PBIO_LIGHT_COLOR_WHITE:
+            *r = 185;
+            *g = 161;
+            *b = 22;
+            break;
+        case PBIO_LIGHT_COLOR_RED:
+            *r = 255;
+            *g = 0;
+            *b = 0;
+            break;
+        case PBIO_LIGHT_COLOR_ORANGE:
+            *r = 255;
+            *g = 37;
+            *b = 0;
+            break;
+        case PBIO_LIGHT_COLOR_YELLOW:
+            *r = 255;
+            *g = 140;
+            *b = 0;
+            break;
+        case PBIO_LIGHT_COLOR_GREEN:
+            *r = 0;
+            *g = 255;
+            *b = 0;
+            break;
+        case PBIO_LIGHT_COLOR_BLUE:
+            *r = 0;
+            *g = 0;
+            *b = 180;
+            break;
+        case PBIO_LIGHT_COLOR_PURPLE:
+            *r = 220;
+            *g = 0;
+            *b = 110;
+            break;
+        default:
+            *r = 0;
+            *g = 0;
+            *b = 0;
+            break;
     }
 
     return PBIO_SUCCESS;

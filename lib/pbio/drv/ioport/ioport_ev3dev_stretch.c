@@ -70,32 +70,32 @@ pbio_error_t pbdrv_ioport_ev3dev_get_syspath(pbio_port_t port, const char **sysp
     ev3dev_port_t *p;
 
     switch (port) {
-    case PBIO_PORT_1:
-        name = "ev3-ports:in1";
-        break;
-    case PBIO_PORT_2:
-        name = "ev3-ports:in2";
-        break;
-    case PBIO_PORT_3:
-        name = "ev3-ports:in3";
-        break;
-    case PBIO_PORT_4:
-        name = "ev3-ports:in4";
-        break;
-    case PBIO_PORT_A:
-        name = "ev3-ports:outA";
-        break;
-    case PBIO_PORT_B:
-        name = "ev3-ports:outB";
-        break;
-    case PBIO_PORT_C:
-        name = "ev3-ports:outC";
-        break;
-    case PBIO_PORT_D:
-        name = "ev3-ports:outD";
-        break;
-    default:
-        return PBIO_ERROR_INVALID_PORT;
+        case PBIO_PORT_1:
+            name = "ev3-ports:in1";
+            break;
+        case PBIO_PORT_2:
+            name = "ev3-ports:in2";
+            break;
+        case PBIO_PORT_3:
+            name = "ev3-ports:in3";
+            break;
+        case PBIO_PORT_4:
+            name = "ev3-ports:in4";
+            break;
+        case PBIO_PORT_A:
+            name = "ev3-ports:outA";
+            break;
+        case PBIO_PORT_B:
+            name = "ev3-ports:outB";
+            break;
+        case PBIO_PORT_C:
+            name = "ev3-ports:outC";
+            break;
+        case PBIO_PORT_D:
+            name = "ev3-ports:outD";
+            break;
+        default:
+            return PBIO_ERROR_INVALID_PORT;
     }
 
     p = find_port(name);

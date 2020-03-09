@@ -29,7 +29,9 @@ pbio_error_t pbdrv_bluetooth_tx(uint8_t c);
 
 #else // PBDRV_CONFIG_BLUETOOTH
 
-static inline pbio_error_t pbdrv_bluetooth_tx(uint8_t c) { return PBIO_ERROR_NOT_SUPPORTED; }
+static inline pbio_error_t pbdrv_bluetooth_tx(uint8_t c) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
 
 #endif // PBDRV_CONFIG_BLUETOOTH
 

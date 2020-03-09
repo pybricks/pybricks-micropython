@@ -28,13 +28,12 @@ typedef struct _iodevices_LUMPDevice_obj_t {
 } iodevices_LUMPDevice_obj_t;
 
 // pybricks.iodevices.LUMPDevice.__init__
-STATIC mp_obj_t iodevices_LUMPDevice_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+STATIC mp_obj_t iodevices_LUMPDevice_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port)
-    );
+        PB_ARG_REQUIRED(port));
 
     iodevices_LUMPDevice_obj_t *self = m_new_obj(iodevices_LUMPDevice_obj_t);
-    self->base.type = (mp_obj_type_t*) type;
+    self->base.type = (mp_obj_type_t *)type;
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
@@ -59,8 +58,7 @@ STATIC mp_obj_t iodevices_LUMPDevice_make_new(const mp_obj_type_t *type, size_t 
 STATIC mp_obj_t iodevices_LUMPDevice_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         iodevices_LUMPDevice_obj_t, self,
-        PB_ARG_REQUIRED(mode)
-    );
+        PB_ARG_REQUIRED(mode));
 
     // Get data already in correct data format
     int32_t data[PBIO_IODEV_MAX_DATA_SIZE];
@@ -88,8 +86,7 @@ STATIC mp_obj_t iodevices_LUMPDevice_write(size_t n_args, const mp_obj_t *pos_ar
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         iodevices_LUMPDevice_obj_t, self,
         PB_ARG_REQUIRED(mode),
-        PB_ARG_REQUIRED(data)
-    );
+        PB_ARG_REQUIRED(data));
 
     // Unpack the user data tuple
     mp_obj_t *objs;
@@ -123,7 +120,7 @@ STATIC MP_DEFINE_CONST_DICT(iodevices_LUMPDevice_locals_dict, iodevices_LUMPDevi
 STATIC const mp_obj_type_t iodevices_LUMPDevice_type = {
     { &mp_type_type },
     .make_new = iodevices_LUMPDevice_make_new,
-    .locals_dict = (mp_obj_dict_t*)&iodevices_LUMPDevice_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&iodevices_LUMPDevice_locals_dict,
 };
 
 #if PYBRICKS_PY_EV3DEVICES
@@ -132,7 +129,7 @@ STATIC const mp_obj_type_t iodevices_LUMPDevice_type = {
 
 #include <ev3dev_stretch/sysfs.h>
 
-#define UART_MAX_LEN (32*1024)
+#define UART_MAX_LEN (32 * 1024)
 
 // pybricks.iodevices.AnalogSensor class object
 typedef struct _iodevices_AnalogSensor_obj_t {
@@ -142,12 +139,11 @@ typedef struct _iodevices_AnalogSensor_obj_t {
 } iodevices_AnalogSensor_obj_t;
 
 // pybricks.iodevices.AnalogSensor.__init__
-STATIC mp_obj_t iodevices_AnalogSensor_make_new(const mp_obj_type_t *otype, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+STATIC mp_obj_t iodevices_AnalogSensor_make_new(const mp_obj_type_t *otype, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port)
-    );
+        PB_ARG_REQUIRED(port));
     iodevices_AnalogSensor_obj_t *self = m_new_obj(iodevices_AnalogSensor_obj_t);
-    self->base.type = (mp_obj_type_t*) otype;
+    self->base.type = (mp_obj_type_t *)otype;
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
@@ -183,7 +179,7 @@ STATIC mp_obj_t iodevices_AnalogSensor_resistance(mp_obj_t self_in) {
         return mp_obj_new_int(MP_SSIZE_MAX);
     }
     // Return as if a pure voltage divider between load and 10K internal resistor
-    return mp_obj_new_int((10000*voltage)/(vmax-voltage));
+    return mp_obj_new_int((10000 * voltage) / (vmax - voltage));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_resistance_obj, iodevices_AnalogSensor_resistance);
 
@@ -211,7 +207,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_passive_obj, iodevices_A
 STATIC const mp_rom_map_elem_t iodevices_AnalogSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_voltage),    MP_ROM_PTR(&iodevices_AnalogSensor_voltage_obj)    },
     { MP_ROM_QSTR(MP_QSTR_resistance), MP_ROM_PTR(&iodevices_AnalogSensor_resistance_obj) },
-    { MP_ROM_QSTR(MP_QSTR_active),     MP_ROM_PTR(&iodevices_AnalogSensor_active_obj )    },
+    { MP_ROM_QSTR(MP_QSTR_active),     MP_ROM_PTR(&iodevices_AnalogSensor_active_obj)    },
     { MP_ROM_QSTR(MP_QSTR_passive),    MP_ROM_PTR(&iodevices_AnalogSensor_passive_obj)    },
 };
 STATIC MP_DEFINE_CONST_DICT(iodevices_AnalogSensor_locals_dict, iodevices_AnalogSensor_locals_dict_table);
@@ -221,7 +217,7 @@ STATIC const mp_obj_type_t iodevices_AnalogSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_AnalogSensor,
     .make_new = iodevices_AnalogSensor_make_new,
-    .locals_dict = (mp_obj_dict_t*)&iodevices_AnalogSensor_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&iodevices_AnalogSensor_locals_dict,
 };
 
 // pybricks.iodevices.I2CDevice class object
@@ -233,13 +229,12 @@ typedef struct _iodevices_I2CDevice_obj_t {
 } iodevices_I2CDevice_obj_t;
 
 // pybricks.iodevices.I2CDevice.__init__
-STATIC mp_obj_t iodevices_I2CDevice_make_new(const mp_obj_type_t *otype, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+STATIC mp_obj_t iodevices_I2CDevice_make_new(const mp_obj_type_t *otype, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
-        PB_ARG_REQUIRED(address)
-    );
+        PB_ARG_REQUIRED(address));
     iodevices_I2CDevice_obj_t *self = m_new_obj(iodevices_I2CDevice_obj_t);
-    self->base.type = (mp_obj_type_t*) otype;
+    self->base.type = (mp_obj_type_t *)otype;
 
     // Get port number
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
@@ -266,8 +261,7 @@ STATIC mp_obj_t iodevices_I2CDevice_read(size_t n_args, const mp_obj_t *pos_args
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         iodevices_I2CDevice_obj_t, self,
         PB_ARG_REQUIRED(reg),
-        PB_ARG_DEFAULT_INT(length, 1)
-    );
+        PB_ARG_DEFAULT_INT(length, 1));
 
     // Get requested data length
     mp_int_t len = mp_obj_get_int(length);
@@ -314,8 +308,7 @@ STATIC mp_obj_t iodevices_I2CDevice_write(size_t n_args, const mp_obj_t *pos_arg
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         iodevices_I2CDevice_obj_t, self,
         PB_ARG_REQUIRED(reg),
-        PB_ARG_DEFAULT_NONE(data)
-    );
+        PB_ARG_DEFAULT_NONE(data));
 
     // No data means an empty byte array
     if (data == mp_const_none) {
@@ -373,7 +366,7 @@ STATIC const mp_obj_type_t iodevices_I2CDevice_type = {
     { &mp_type_type },
     .name = MP_QSTR_I2CDevice,
     .make_new = iodevices_I2CDevice_make_new,
-    .locals_dict = (mp_obj_dict_t*)&iodevices_I2CDevice_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&iodevices_I2CDevice_locals_dict,
 };
 
 // pybricks.iodevices.UARTDevice class object
@@ -384,14 +377,13 @@ typedef struct _iodevices_UARTDevice_obj_t {
 } iodevices_UARTDevice_obj_t;
 
 // pybricks.iodevices.UARTDevice.__init__
-STATIC mp_obj_t iodevices_UARTDevice_make_new(const mp_obj_type_t *otype, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+STATIC mp_obj_t iodevices_UARTDevice_make_new(const mp_obj_type_t *otype, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
         PB_ARG_REQUIRED(baudrate),
-        PB_ARG_DEFAULT_NONE(timeout)
-    );
+        PB_ARG_DEFAULT_NONE(timeout));
     iodevices_UARTDevice_obj_t *self = m_new_obj(iodevices_UARTDevice_obj_t);
-    self->base.type = (mp_obj_type_t*) otype;
+    self->base.type = (mp_obj_type_t *)otype;
 
     // Get port number
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
@@ -405,7 +397,7 @@ STATIC mp_obj_t iodevices_UARTDevice_make_new(const mp_obj_type_t *otype, size_t
         port_num,
         pb_obj_get_int(baudrate),
         timeout == mp_const_none ? -1 : pb_obj_get_int(timeout)
-    ));
+        ));
     pb_assert(pbio_serial_clear(self->serial));
 
     return MP_OBJ_FROM_PTR(self);
@@ -416,8 +408,7 @@ STATIC mp_obj_t iodevices_UARTDevice_write(size_t n_args, const mp_obj_t *pos_ar
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         iodevices_UARTDevice_obj_t, self,
-        PB_ARG_REQUIRED(data)
-    );
+        PB_ARG_REQUIRED(data));
 
     // Assert that data argument are bytes
     if (!(mp_obj_is_str_or_bytes(data) || mp_obj_is_type(data, &mp_type_bytearray))) {
@@ -483,8 +474,7 @@ STATIC mp_obj_t iodevices_UARTDevice_read(size_t n_args, const mp_obj_t *pos_arg
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         iodevices_UARTDevice_obj_t, self,
-        PB_ARG_DEFAULT_INT(length, 1)
-    );
+        PB_ARG_DEFAULT_INT(length, 1));
 
     size_t len = mp_obj_get_int(length);
     return iodevices_UARTDevice_read_internal(self, len);
@@ -526,7 +516,7 @@ STATIC const mp_obj_type_t iodevices_UARTDevice_type = {
     { &mp_type_type },
     .name = MP_QSTR_UARTDevice,
     .make_new = iodevices_UARTDevice_make_new,
-    .locals_dict = (mp_obj_dict_t*)&iodevices_UARTDevice_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&iodevices_UARTDevice_locals_dict,
 };
 
 // Class structure for Ev3devSensor
@@ -538,13 +528,12 @@ typedef struct _iodevices_Ev3devSensor_obj_t {
 } iodevices_Ev3devSensor_obj_t;
 
 // pybricks.iodevices.Ev3devSensor.__init__
-STATIC mp_obj_t iodevices_Ev3devSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+STATIC mp_obj_t iodevices_Ev3devSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port)
-    );
+        PB_ARG_REQUIRED(port));
 
     iodevices_Ev3devSensor_obj_t *self = m_new_obj(iodevices_Ev3devSensor_obj_t);
-    self->base.type = (mp_obj_type_t*) type;
+    self->base.type = (mp_obj_type_t *)type;
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
@@ -565,8 +554,7 @@ STATIC mp_obj_t iodevices_Ev3devSensor_make_new(const mp_obj_type_t *type, size_
 STATIC mp_obj_t iodevices_Ev3devSensor_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         iodevices_Ev3devSensor_obj_t, self,
-        PB_ARG_REQUIRED(mode)
-    );
+        PB_ARG_REQUIRED(mode));
 
     // Get mode index from mode string
     uint8_t mode_idx = pbdevice_get_mode_id_from_str(self->pbdev, mp_obj_str_get_str(mode));
@@ -604,7 +592,7 @@ STATIC MP_DEFINE_CONST_DICT(iodevices_Ev3devSensor_locals_dict, iodevices_Ev3dev
 STATIC const mp_obj_type_t iodevices_Ev3devSensor_type = {
     { &mp_type_type },
     .make_new = iodevices_Ev3devSensor_make_new,
-    .locals_dict = (mp_obj_dict_t*)&iodevices_Ev3devSensor_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&iodevices_Ev3devSensor_locals_dict,
 };
 
 #endif // PYBRICKS_PY_EV3DEVICES
@@ -613,19 +601,19 @@ STATIC const mp_obj_type_t iodevices_Ev3devSensor_type = {
 STATIC const mp_rom_map_elem_t iodevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_iodevices)              },
     { MP_ROM_QSTR(MP_QSTR_LUMPDevice),       MP_ROM_PTR(&iodevices_LUMPDevice_type)      },
-#if PYBRICKS_PY_EV3DEVICES
+    #if PYBRICKS_PY_EV3DEVICES
     { MP_ROM_QSTR(MP_QSTR_AnalogSensor),     MP_ROM_PTR(&iodevices_AnalogSensor_type)    },
-    { MP_ROM_QSTR(MP_QSTR_I2CDevice),        MP_ROM_PTR(&iodevices_I2CDevice_type   )    },
-    { MP_ROM_QSTR(MP_QSTR_UARTDevice),       MP_ROM_PTR(&iodevices_UARTDevice_type  )    },
+    { MP_ROM_QSTR(MP_QSTR_I2CDevice),        MP_ROM_PTR(&iodevices_I2CDevice_type)    },
+    { MP_ROM_QSTR(MP_QSTR_UARTDevice),       MP_ROM_PTR(&iodevices_UARTDevice_type)    },
     { MP_ROM_QSTR(MP_QSTR_DCMotor),          MP_ROM_PTR(&motor_DCMotor_type)             },
     { MP_ROM_QSTR(MP_QSTR_Ev3devSensor),     MP_ROM_PTR(&iodevices_Ev3devSensor_type)    },
-#endif // PYBRICKS_PY_EV3DEVICES
+    #endif // PYBRICKS_PY_EV3DEVICES
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_iodevices_globals, iodevices_globals_table);
 
 const mp_obj_module_t pb_module_iodevices = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&pb_module_iodevices_globals,
+    .globals = (mp_obj_dict_t *)&pb_module_iodevices_globals,
 };
 
-#endif //if PYBRICKS_PY_IODEVICES
+#endif // if PYBRICKS_PY_IODEVICES

@@ -34,7 +34,7 @@ STATIC MP_DEFINE_CONST_DICT(pb_module_battery_globals, battery_globals_table);
 
 const mp_obj_module_t pb_module_battery = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&pb_module_battery_globals,
+    .globals = (mp_obj_dict_t *)&pb_module_battery_globals,
 };
 
 #endif // PBDRV_CONFIG_BATTERY

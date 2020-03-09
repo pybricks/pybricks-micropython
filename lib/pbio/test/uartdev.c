@@ -21,7 +21,7 @@
 // TODO: submit this upstream
 #ifndef tt_want_float_op
 #define tt_want_float_op(a,op,b) \
-	tt_assert_test_type(a,b,#a" "#op" "#b,float,(val1_ op val2_),"%f",(void)0)
+    tt_assert_test_type(a,b,#a " "#op " "#b,float,(val1_ op val2_),"%f",(void)0)
 #endif
 
 static struct {
@@ -88,14 +88,14 @@ end:
     PT_EXIT(pt);
 }
 
-#define SIMULATE_RX_MSG(msg) do {\
-    PT_SPAWN(pt, &child, simulate_rx_msg(&child, (msg), PBIO_ARRAY_SIZE(msg), &ok)); \
-    tt_assert_msg(ok, #msg); \
+#define SIMULATE_RX_MSG(msg) do { \
+        PT_SPAWN(pt, &child, simulate_rx_msg(&child, (msg), PBIO_ARRAY_SIZE(msg), &ok)); \
+        tt_assert_msg(ok, #msg); \
 } while (0)
 
-#define SIMULATE_TX_MSG(msg) do {\
-    PT_SPAWN(pt, &child, simulate_tx_msg(&child, (msg), PBIO_ARRAY_SIZE(msg), &ok)); \
-    tt_assert_msg(ok, #msg); \
+#define SIMULATE_TX_MSG(msg) do { \
+        PT_SPAWN(pt, &child, simulate_tx_msg(&child, (msg), PBIO_ARRAY_SIZE(msg), &ok)); \
+        tt_assert_msg(ok, #msg); \
 } while (0)
 
 static const uint8_t msg_speed_115200[] = { 0x52, 0x00, 0xC2, 0x01, 0x00, 0x6E }; // SPEED 115200
@@ -1007,7 +1007,7 @@ PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     // TODO: verify fw/hw versions
     tt_want_uint_op(iodev->info->mode_combos, ==, 1 << 3 | 1 << 2 | 1 << 1);
     tt_want_uint_op(iodev->motor_flags, ==, PBIO_IODEV_MOTOR_FLAG_IS_MOTOR | PBIO_IODEV_MOTOR_FLAG_HAS_SPEED
-         | PBIO_IODEV_MOTOR_FLAG_HAS_REL_POS | PBIO_IODEV_MOTOR_FLAG_HAS_ABS_POS);
+        | PBIO_IODEV_MOTOR_FLAG_HAS_REL_POS | PBIO_IODEV_MOTOR_FLAG_HAS_ABS_POS);
     tt_want_uint_op(iodev->mode, ==, 0);
 
     tt_want_str_op(iodev->info->mode_info[0].name, ==, "POWER");
@@ -1327,7 +1327,7 @@ PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     // TODO: verify fw/hw versions
     tt_want_uint_op(iodev->info->mode_combos, ==, 1 << 3 | 1 << 2 | 1 << 1);
     tt_want_uint_op(iodev->motor_flags, ==, PBIO_IODEV_MOTOR_FLAG_IS_MOTOR | PBIO_IODEV_MOTOR_FLAG_HAS_SPEED
-         | PBIO_IODEV_MOTOR_FLAG_HAS_REL_POS | PBIO_IODEV_MOTOR_FLAG_HAS_ABS_POS);
+        | PBIO_IODEV_MOTOR_FLAG_HAS_REL_POS | PBIO_IODEV_MOTOR_FLAG_HAS_ABS_POS);
     tt_want_uint_op(iodev->mode, ==, 0);
 
     tt_want_str_op(iodev->info->mode_info[0].name, ==, "POWER");
@@ -1519,7 +1519,7 @@ void pbdrv_uart_read_cancel(pbdrv_uart_dev_t *uart) {
 }
 
 pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
-     if (test_uart_dev.tx_msg) {
+    if (test_uart_dev.tx_msg) {
         return PBIO_ERROR_AGAIN;
     }
 

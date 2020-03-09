@@ -51,10 +51,10 @@ def run_parallel(*args):
         # task2: 'OK2'
     """
     if len(args) < 2:
-        raise TypeError('requires at least 2 arguments')
+        raise TypeError("requires at least 2 arguments")
     for n, arg in enumerate(args):
         if not callable(arg):
-            raise TypeError('argument {} is not callable'.format(n))
+            raise TypeError("argument {} is not callable".format(n))
 
     ids = set()
     lock = allocate_lock()
@@ -84,6 +84,5 @@ def run_parallel(*args):
 
     lock.acquire()
     if any(isinstance(x, Exception) for x in results.values()):
-        raise RuntimeError("An unhandled exception occurred in run_parallel",
-                           results)
+        raise RuntimeError("An unhandled exception occurred in run_parallel", results)
     return results

@@ -96,15 +96,15 @@ pbio_error_t pbdrv_counter_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
 }
 
 static void pbdrv_counter_process_exit() {
-#if PBDRV_CONFIG_COUNTER_NXT
+    #if PBDRV_CONFIG_COUNTER_NXT
     pbdrv_counter_nxt_drv.exit();
-#endif
-#if PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO
+    #endif
+    #if PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO
     pbdrv_counter_ev3dev_stretch_iio_drv.exit();
-#endif
-#if PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
+    #endif
+    #if PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
     pbdrv_counter_stm32f0_gpio_quad_enc_drv.exit();
-#endif
+    #endif
 }
 
 PROCESS_THREAD(pbdrv_counter_process, ev, data) {
@@ -112,15 +112,15 @@ PROCESS_THREAD(pbdrv_counter_process, ev, data) {
 
     PROCESS_BEGIN();
 
-#if PBDRV_CONFIG_COUNTER_NXT
+    #if PBDRV_CONFIG_COUNTER_NXT
     pbdrv_counter_nxt_drv.init();
-#endif
-#if PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO
+    #endif
+    #if PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO
     pbdrv_counter_ev3dev_stretch_iio_drv.init();
-#endif
-#if PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
+    #endif
+    #if PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
     pbdrv_counter_stm32f0_gpio_quad_enc_drv.init();
-#endif
+    #endif
 
     while (true) {
         PROCESS_WAIT_EVENT();

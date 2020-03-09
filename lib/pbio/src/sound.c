@@ -64,7 +64,7 @@ static pbio_error_t beep_start(pbio_sound_t *sound, uint32_t freq, int32_t durat
 
     // Reset state variables
     sound->busy = true;
-    sound->time_start = clock_usecs()/1000;
+    sound->time_start = clock_usecs() / 1000;
     sound->time_duration = duration;
 
     // Start beeping by setting the frequency
@@ -97,7 +97,7 @@ pbio_error_t pbio_sound_beep(pbio_sound_t *sound, uint32_t freq, int32_t duratio
     }
 
     // If we are done, stop
-    if (clock_usecs()/1000 - sound->time_start > duration) {
+    if (clock_usecs() / 1000 - sound->time_start > duration) {
         return beep_stop(sound, PBIO_SUCCESS);
     }
 
@@ -119,7 +119,7 @@ static pbio_error_t file_start(pbio_sound_t *sound, const char *path) {
 
     // Reset state variables
     sound->busy = true;
-    sound->time_start = clock_usecs()/1000;
+    sound->time_start = clock_usecs() / 1000;
 
     // Init the sound
     return pbdrv_pcm_play_file_start(sound->pcm_dev, path, &sound->time_duration);
@@ -160,7 +160,7 @@ pbio_error_t pbio_sound_play_file(pbio_sound_t *sound, const char *path) {
         return file_stop(sound, err);
     }
     // If we are done and the timer is done too, stop
-    if (clock_usecs()/1000 - sound->time_start > sound->time_duration) {
+    if (clock_usecs() / 1000 - sound->time_start > sound->time_duration) {
         return file_stop(sound, PBIO_SUCCESS);
     }
 

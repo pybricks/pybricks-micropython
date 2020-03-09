@@ -45,7 +45,9 @@ mp_import_stat_t mp_import_stat(const char *path) {
 }
 
 void nlr_jump_fail(void *val) {
-    while (1);
+    while (1) {
+        ;
+    }
 }
 
 // cooked is same as uncooked because the terminal does some postprocessing

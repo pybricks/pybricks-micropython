@@ -24,15 +24,15 @@
 // TODO: response will eventually be removed from this struct
 struct hci_request {
     uint32_t event;   /**< HCI Event */
-    void     *cparam; /**< HCI Command from MCU to Host */
-    void     *rparam; /**< Response from Host to MCU */
+    void *cparam;     /**< HCI Command from MCU to Host */
+    void *rparam;     /**< Response from Host to MCU */
     uint16_t opcode;  /**< Opcode */
     uint8_t clen;     /**< Command Length */
     uint8_t rlen;     /**< Response Length */
 };
 
 struct hci_response {
-    void     *rparam; /**< Response from Host to MCU */
+    void *rparam;     /**< Response from Host to MCU */
     uint8_t rlen;     /**< Response Length */
 };
 

@@ -24,11 +24,10 @@
 #include "pbkwarg.h"
 
 // pybricks.builtins.DCMotor.__init__
-STATIC mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
+STATIC mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
-        PB_ARG_DEFAULT_OBJ(positive_direction, pb_Direction_CLOCKWISE_obj)
-    );
+        PB_ARG_DEFAULT_OBJ(positive_direction, pb_Direction_CLOCKWISE_obj));
 
     // Configure the motor with the selected arguments at pbio level
     mp_int_t port_arg = pb_type_enum_get_value(port, &pb_enum_type_Port);
@@ -44,7 +43,7 @@ STATIC mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args,
 
     // On success, create and return the MicroPython object
     motor_DCMotor_obj_t *self = m_new_obj(motor_DCMotor_obj_t);
-    self->base.type = (mp_obj_type_t*) type;
+    self->base.type = (mp_obj_type_t *)type;
     self->dcmotor = dc;
     return MP_OBJ_FROM_PTR(self);
 }
@@ -55,8 +54,8 @@ void motor_DCMotor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
 
     // Get the dcmotor from self, which is either Motor or DCMotor
     pbio_dcmotor_t *dcmotor = mp_obj_is_type(self_in, &motor_Motor_type) ?
-        ((motor_Motor_obj_t*) MP_OBJ_TO_PTR(self_in))->srv->dcmotor :
-        ((motor_DCMotor_obj_t*) MP_OBJ_TO_PTR(self_in))->dcmotor;
+        ((motor_Motor_obj_t *)MP_OBJ_TO_PTR(self_in))->srv->dcmotor :
+        ((motor_DCMotor_obj_t *)MP_OBJ_TO_PTR(self_in))->dcmotor;
 
     mp_printf(print,
         "Motor properties:\n"
@@ -64,8 +63,7 @@ void motor_DCMotor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
         "Port\t\t %c\n"
         "Positive dir.\t %s",
         dcmotor->port,
-        dcmotor->direction == PBIO_DIRECTION_CLOCKWISE ? "clockwise" : "counterclockwise"
-    );
+        dcmotor->direction == PBIO_DIRECTION_CLOCKWISE ? "clockwise" : "counterclockwise");
 }
 
 // pybricks.builtins.DCMotor.dc
@@ -73,8 +71,7 @@ void motor_DCMotor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
 STATIC mp_obj_t motor_DCMotor_duty(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     // Parse all arguments except the first one (self)
     PB_PARSE_ARGS_METHOD_SKIP_SELF(n_args, pos_args, kw_args,
-        PB_ARG_REQUIRED(duty)
-    );
+        PB_ARG_REQUIRED(duty));
 
     mp_int_t duty_cycle = pb_obj_get_int(duty);
 
@@ -84,8 +81,7 @@ STATIC mp_obj_t motor_DCMotor_duty(size_t n_args, const mp_obj_t *pos_args, mp_m
     if (is_servo) {
         motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
         pb_assert(pbio_servo_set_duty_cycle(self->srv, duty_cycle));
-    }
-    else {
+    } else {
         motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
         pb_assert(pbio_dcmotor_set_duty_cycle_usr(self->dcmotor, duty_cycle));
     }
@@ -104,8 +100,7 @@ STATIC mp_obj_t motor_DCMotor_stop(mp_obj_t self_in) {
     if (is_servo) {
         motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
         pb_assert(pbio_servo_stop(self->srv, PBIO_ACTUATION_COAST));
-    }
-    else {
+    } else {
         motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
         pb_assert(pbio_dcmotor_coast(self->dcmotor));
     }
@@ -123,8 +118,7 @@ STATIC mp_obj_t motor_DCMotor_brake(mp_obj_t self_in) {
     if (is_servo) {
         motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
         pb_assert(pbio_servo_stop(self->srv, PBIO_ACTUATION_BRAKE));
-    }
-    else {
+    } else {
         motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
         #if PYBRICKS_PY_EV3DEVICES
         // Workaround for ev3dev dc-motor not coasting on first try
@@ -151,7 +145,7 @@ const mp_obj_type_t motor_DCMotor_type = {
     .name = MP_QSTR_DCMotor,
     .print = motor_DCMotor_print,
     .make_new = motor_DCMotor_make_new,
-    .locals_dict = (mp_obj_dict_t*)&motor_DCMotor_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&motor_DCMotor_locals_dict,
 };
 
 /* Wait for servo maneuver to complete */
@@ -167,12 +161,11 @@ STATIC void wait_for_completion(pbio_servo_t *srv) {
 }
 
 // pybricks.builtins.Motor.__init__
-STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
+STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
         PB_ARG_DEFAULT_OBJ(positive_direction, pb_Direction_CLOCKWISE_obj),
-        PB_ARG_DEFAULT_NONE(gears)
-    );
+        PB_ARG_DEFAULT_NONE(gears));
 
     // Configure the motor with the selected arguments at pbio level
     mp_int_t port_arg = pb_type_enum_get_value(port, &pb_enum_type_Port);
@@ -191,7 +184,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
         mp_obj_get_array(gears, &n_trains, &trains);
 
         // If the first and last element is an integer, assume the user gave just one list of gears, i.e. [12, 20, 36]
-        bool is_one_train = MP_OBJ_IS_SMALL_INT(trains[0]) && MP_OBJ_IS_SMALL_INT(trains[n_trains-1]);
+        bool is_one_train = MP_OBJ_IS_SMALL_INT(trains[0]) && MP_OBJ_IS_SMALL_INT(trains[n_trains - 1]);
         // This means we don't have a list of gear trains, but just one gear train with a given number of gears
         if (is_one_train) {
             n_gears = n_trains;
@@ -207,7 +200,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
             }
             // For this gear train, compute the ratio from the first and last gear
             fix16_t first_gear = fix16_from_int(mp_obj_get_int(gear_list[0]));
-            fix16_t last_gear = fix16_from_int(mp_obj_get_int(gear_list[n_gears-1]));
+            fix16_t last_gear = fix16_from_int(mp_obj_get_int(gear_list[n_gears - 1]));
             if (first_gear < 1 || last_gear < 1) {
                 pb_assert(PBIO_ERROR_INVALID_ARG);
             }
@@ -233,7 +226,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
 
     // On success, proceed to create and return the MicroPython object
     motor_Motor_obj_t *self = m_new_obj(motor_Motor_obj_t);
-    self->base.type = (mp_obj_type_t*) type;
+    self->base.type = (mp_obj_type_t *)type;
     self->srv = srv;
 
     // Create an instance of the Logger class
@@ -260,8 +253,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_angle_obj, motor_Motor_angle);
 STATIC mp_obj_t motor_Motor_reset_angle(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         motor_Motor_obj_t, self,
-        PB_ARG_DEFAULT_NONE(angle)
-    );
+        PB_ARG_DEFAULT_NONE(angle));
 
     // If no angle argument is given, reset to the absolute value
     bool reset_to_abs = angle == mp_const_none;
@@ -291,8 +283,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_speed_obj, motor_Motor_speed);
 STATIC mp_obj_t motor_Motor_run(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         motor_Motor_obj_t, self,
-        PB_ARG_REQUIRED(speed)
-    );
+        PB_ARG_REQUIRED(speed));
 
     mp_int_t speed_arg = pb_obj_get_int(speed);
     pb_assert(pbio_servo_run(self->srv, speed_arg));
@@ -316,13 +307,12 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(time),
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
-        PB_ARG_DEFAULT_TRUE(wait)
-    );
+        PB_ARG_DEFAULT_TRUE(wait));
 
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t time_arg = pb_obj_get_int(time);
 
-    if (time_arg < 0 || time_arg > DURATION_MAX_S*MS_PER_SECOND) {
+    if (time_arg < 0 || time_arg > DURATION_MAX_S * MS_PER_SECOND) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
@@ -345,8 +335,7 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
         motor_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_COAST_obj),
-        PB_ARG_DEFAULT_NONE(duty_limit)
-    );
+        PB_ARG_DEFAULT_NONE(duty_limit));
 
     mp_int_t speed_arg = pb_obj_get_int(speed);
     pbio_actuation_t after_stop = pb_type_enum_get_value(then, &pb_enum_type_Stop);
@@ -409,8 +398,7 @@ STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, m
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(rotation_angle),
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
-        PB_ARG_DEFAULT_TRUE(wait)
-    );
+        PB_ARG_DEFAULT_TRUE(wait));
 
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t angle_arg = pb_obj_get_int(rotation_angle);
@@ -434,8 +422,7 @@ STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *pos_args, 
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(target_angle),
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
-        PB_ARG_DEFAULT_TRUE(wait)
-    );
+        PB_ARG_DEFAULT_TRUE(wait));
 
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t angle_arg = pb_obj_get_int(target_angle);
@@ -456,8 +443,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_run_target_obj, 1, motor_Motor_run
 STATIC mp_obj_t motor_Motor_track_target(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         motor_Motor_obj_t, self,
-        PB_ARG_REQUIRED(target_angle)
-    );
+        PB_ARG_REQUIRED(target_angle));
 
     mp_int_t target = pb_obj_get_int(target_angle);
     pb_assert(pbio_servo_track_target(self->srv, target));
@@ -498,7 +484,7 @@ const mp_obj_type_t motor_Motor_type = {
     .name = MP_QSTR_Motor,
     .print = motor_DCMotor_print,
     .make_new = motor_Motor_make_new,
-    .locals_dict = (mp_obj_dict_t*)&motor_Motor_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&motor_Motor_locals_dict,
 };
 
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER

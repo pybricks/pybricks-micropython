@@ -167,8 +167,8 @@ static pbio_error_t counter_ev3dev_stretch_iio_exit() {
 }
 
 const pbdrv_counter_drv_t pbdrv_counter_ev3dev_stretch_iio_drv = {
-    .init   = counter_ev3dev_stretch_iio_init,
-    .exit   = counter_ev3dev_stretch_iio_exit,
+    .init = counter_ev3dev_stretch_iio_init,
+    .exit = counter_ev3dev_stretch_iio_exit,
 };
 
 #endif // PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO

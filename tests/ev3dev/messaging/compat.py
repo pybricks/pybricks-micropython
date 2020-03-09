@@ -27,12 +27,12 @@ class MockConnection:
         print(self._bricks[self._name].get(mbox))
 
 
-SERVER = 'server'
-CLIENT = 'client'
+SERVER = "server"
+CLIENT = "client"
 
-LOGIC = 'logic'
-NUMERIC = 'numeric'
-TEXT = 'text'
+LOGIC = "logic"
+NUMERIC = "numeric"
+TEXT = "text"
 
 
 server = MockConnection(SERVER)
@@ -78,7 +78,7 @@ client.print_payload(NUMERIC)
 # mailbox that has not received a value returns None
 print(client_text.read())
 
-server_text.send('hi')
+server_text.send("hi")
 # should be hi
 print(client_text.read())
 client.print_payload(TEXT)

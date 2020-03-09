@@ -15,7 +15,7 @@
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/uart/uart_stm32_hal.h"
 
-void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc) {
+void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc) {
     GPIO_InitTypeDef gpio_init;
     ADC_ChannelConfTypeDef adc_ch_config;
 
@@ -115,7 +115,7 @@ void DMA2_Stream0_IRQHandler() {
 
 const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON] = {
     [0] = {
-        .gpio   = { .bank = GPIOC, .pin = 13 },
+        .gpio = { .bank = GPIOC, .pin = 13 },
         .button = PBIO_BUTTON_CENTER,
     }
 };
@@ -130,16 +130,16 @@ enum {
 };
 
 const pbdrv_uart_stm32_hal_platform_data_t
-pbdrv_uart_stm32_hal_platform_data[PBDRV_CONFIG_UART_STM32_HAL_NUM_UART] = {
+    pbdrv_uart_stm32_hal_platform_data[PBDRV_CONFIG_UART_STM32_HAL_NUM_UART] = {
     [UART_ID_0] = {
-        .uart   = USART2,
-        .irq    = USART2_IRQn,
+        .uart = USART2,
+        .irq = USART2_IRQn,
     },
 };
 
 const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
     [0] = {
-        .uart_id    = UART_ID_0,
+        .uart_id = UART_ID_0,
     },
 };
 
@@ -201,23 +201,23 @@ void SystemInit(void) {
 
     clk_init.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     clk_init.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-    clk_init.AHBCLKDivider  = RCC_SYSCLK_DIV1; // HCLK 48MHz (max 180MHz)
+    clk_init.AHBCLKDivider = RCC_SYSCLK_DIV1;  // HCLK 48MHz (max 180MHz)
     clk_init.APB1CLKDivider = RCC_HCLK_DIV1; // 48MHz (max 45MHz)
     clk_init.APB2CLKDivider = RCC_HCLK_DIV1; // 48MHz (max 90MHz)
 
     HAL_RCC_ClockConfig(&clk_init, FLASH_LATENCY_5);
 
-#if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
-    SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  /* set CP10 and CP11 Full Access */
-#endif
+    #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
+    SCB->CPACR |= ((3UL << 10 * 2) | (3UL << 11 * 2));  /* set CP10 and CP11 Full Access */
+    #endif
 
     // dpgeorge: enable 8-byte stack alignment for IRQ handlers, in accord with EABI
     SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 
     // enable GPIO clocks
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN |
-                    RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_GPIOFEN |
-                    RCC_AHB1ENR_GPIOGEN | RCC_AHB1ENR_DMA2EN;
+        RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_GPIOFEN |
+        RCC_AHB1ENR_GPIOGEN | RCC_AHB1ENR_DMA2EN;
     RCC->APB1ENR |= RCC_APB1ENR_TIM2EN | RCC_APB1ENR_USART2EN;
     RCC->APB2ENR |= RCC_APB2ENR_ADC3EN | RCC_APB2ENR_USART6EN;
 
@@ -230,6 +230,6 @@ void SystemInit(void) {
     USART6->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
 }
 
-void assert_failed(uint8_t* file, uint32_t line) {
+void assert_failed(uint8_t *file, uint32_t line) {
     // set a breakpoint here for debugging
 }

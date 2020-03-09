@@ -44,7 +44,7 @@ def download_and_run(device, mpy_bytes):
 
     # Split binary up in digestable chunks
     n = 100
-    chunks = [mpy_bytes[i:i+n] for i in range(0, len(mpy_bytes), n)]
+    chunks = [mpy_bytes[i : i + n] for i in range(0, len(mpy_bytes), n)]
 
     # Send the data
     for chunk in chunks:
@@ -58,8 +58,8 @@ def download_and_run(device, mpy_bytes):
     printed = 0
 
     # Read status to see if program started
-    RUNNING = b'>>>> RUNNING'
-    IDLE = b'>>>> IDLE'
+    RUNNING = b">>>> RUNNING"
+    IDLE = b">>>> IDLE"
     if RUNNING not in data:
         raise OSError("Failed to run program")
 
@@ -69,9 +69,9 @@ def download_and_run(device, mpy_bytes):
         data += ser.read_all()
 
         # Split into lines, printing anything new
-        text = data.decode().split('\r\n')
+        text = data.decode().split("\r\n")
         while printed < len(text):
-            print(text[printed-1])
+            print(text[printed - 1])
             printed += 1
 
         # Sleep and exit when done
@@ -80,19 +80,19 @@ def download_and_run(device, mpy_bytes):
             break
 
     # Save log if detected in output
-    start_key = b'PB_OF'
-    end_key = b'PB_EOF'
+    start_key = b"PB_OF"
+    end_key = b"PB_EOF"
     if start_key in data and end_key in data:
 
         # Get data between keys
-        start = data.index(start_key)+len(start_key)+1
-        end = data.index(end_key)-2
+        start = data.index(start_key) + len(start_key) + 1
+        end = data.index(end_key) - 2
         log_data = data[start:end]
 
         # Extract file name and data
-        lines = log_data.decode().split('\r\n')
-        with open(lines[0], 'w') as f:
-            print(*lines[1:], sep='\n', file=f)
+        lines = log_data.decode().split("\r\n")
+        with open(lines[0], "w") as f:
+            print(*lines[1:], sep="\n", file=f)
 
 
 if __name__ == "__main__":
@@ -103,19 +103,16 @@ if __name__ == "__main__":
     """
 
     parser = argparse.ArgumentParser(
-        description='Run Pybricks scripts or commands over serial port.',
+        description="Run Pybricks scripts or commands over serial port.",
         epilog=examples,
-        formatter_class=argparse.RawDescriptionHelpFormatter)
-
-    parser.add_argument(
-        '--mpy_cross', dest='mpy_cross',
-        nargs='?', type=str, required=True
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument(
-        '--dev', dest='device', nargs='?', type=str, required=True)
+
+    parser.add_argument("--mpy_cross", dest="mpy_cross", nargs="?", type=str, required=True)
+    parser.add_argument("--dev", dest="device", nargs="?", type=str, required=True)
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--file', dest='file', nargs='?', const=1, type=str)
-    group.add_argument('--string', dest='string', nargs='?', const=1, type=str)
+    group.add_argument("--file", dest="file", nargs="?", const=1, type=str)
+    group.add_argument("--string", dest="string", nargs="?", const=1, type=str)
     args = parser.parse_args()
 
     if args.file:

@@ -23,11 +23,11 @@
 #endif
 
 // hex value format comes from https://docs.python.org/3/c-api/apiabiversion.html#apiabiversion
-#define PYBRICKS_HEXVERSION (\
+#define PYBRICKS_HEXVERSION ( \
     ((PYBRICKS_VERSION_MAJOR & 0xFF) << 24) | \
     ((PYBRICKS_VERSION_MINOR & 0xFF) << 16) | \
-    ((PYBRICKS_VERSION_MICRO & 0xFF) <<  8) | \
-    ((PYBRICKS_VERSION_LEVEL_HEX & 0xF) <<  4) | \
+    ((PYBRICKS_VERSION_MICRO & 0xFF) << 8) | \
+    ((PYBRICKS_VERSION_LEVEL_HEX & 0xF) << 4) | \
     (PYBRICKS_VERSION_SERIAL & 0xF))
 
 // Hub name

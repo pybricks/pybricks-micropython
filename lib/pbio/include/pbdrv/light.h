@@ -35,7 +35,8 @@ void _pbdrv_light_init(void);
 #if PBIO_CONFIG_ENABLE_DEINIT
 void _pbdrv_light_deinit(void);
 #else
-static inline void _pbdrv_light_deinit(void) { }
+static inline void _pbdrv_light_deinit(void) {
+}
 #endif
 
 /** @endcond */
@@ -78,12 +79,14 @@ pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, uint8_t r, uint8_t g, uint8_t
  *                          ::PBIO_ERROR_NO_DEV if port is valid but light is not connected
  */
 pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t color,
-                                           uint8_t *r, uint8_t *g, uint8_t *b);
+    uint8_t *r, uint8_t *g, uint8_t *b);
 
 #else
 
-static inline void _pbdrv_light_init(void) { }
-static inline void _pbdrv_light_deinit(void) { }
+static inline void _pbdrv_light_init(void) {
+}
+static inline void _pbdrv_light_deinit(void) {
+}
 static inline pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, uint8_t r, uint8_t g, uint8_t b) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }

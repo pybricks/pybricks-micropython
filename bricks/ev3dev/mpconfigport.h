@@ -5,16 +5,16 @@
 #include "brickconfig.h"
 
 static const char pybricks_ev3dev_help_text[] =
-"Welcome to Pybricks MicroPython!\n"
-"\n"
-"For online docs please visit http://docs.pybricks.com/micropython\n"
-"\n"
-"Control commands:\n"
-"  CTRL-C        -- interrupt a running program\n"
-"  CTRL-D        -- on a blank line, exit\n"
-"  CTRL-E        -- on a blank line, enter paste mode\n"
-"\n"
-"For further help on a specific object, type help(obj)\n"
+    "Welcome to Pybricks MicroPython!\n"
+    "\n"
+    "For online docs please visit http://docs.pybricks.com/micropython\n"
+    "\n"
+    "Control commands:\n"
+    "  CTRL-C        -- interrupt a running program\n"
+    "  CTRL-D        -- on a blank line, exit\n"
+    "  CTRL-E        -- on a blank line, enter paste mode\n"
+    "\n"
+    "For further help on a specific object, type help(obj)\n"
 ;
 
 // options to control how MicroPython is built
@@ -29,7 +29,7 @@ static const char pybricks_ev3dev_help_text[] =
 #endif
 #if !defined(MICROPY_EMIT_THUMB) && defined(__thumb2__)
     #define MICROPY_EMIT_THUMB      (1)
-    #define MICROPY_MAKE_POINTER_CALLABLE(p) ((void*)((mp_uint_t)(p) | 1))
+    #define MICROPY_MAKE_POINTER_CALLABLE(p) ((void *)((mp_uint_t)(p) | 1))
 #endif
 // Some compilers define __thumb2__ and __arm__ at the same time, let
 // autodetected thumb2 emitter have priority.
@@ -335,7 +335,7 @@ typedef long long mp_off_t;
 typedef long mp_off_t;
 #endif
 
-void mp_unix_alloc_exec(size_t min_size, void** ptr, size_t *size);
+void mp_unix_alloc_exec(size_t min_size, void **ptr, size_t *size);
 void mp_unix_free_exec(void *ptr, size_t size);
 void mp_unix_mark_exec(void);
 #define MP_PLAT_ALLOC_EXEC(min_size, ptr, size) mp_unix_alloc_exec(min_size, ptr, size)
@@ -350,10 +350,10 @@ void mp_unix_mark_exec(void);
 #define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn_cooked(str, len)
 #else
 #define MP_PLAT_PRINT_STRN(str, len) do { \
-    MP_THREAD_GIL_EXIT(); \
-    ssize_t ret = write(1, str, len); \
-    MP_THREAD_GIL_ENTER(); \
-    (void)ret; \
+        MP_THREAD_GIL_EXIT(); \
+        ssize_t ret = write(1, str, len); \
+        MP_THREAD_GIL_ENTER(); \
+        (void)ret; \
 } while (0)
 #endif
 

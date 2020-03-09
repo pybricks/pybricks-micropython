@@ -23,7 +23,7 @@ static pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t
     err = pbdrv_motor_setup(dcmotor->port, is_servo);
     if (err != PBIO_SUCCESS) {
         return err;
-    }    
+    }
 
     // Coast the device
     err = pbio_dcmotor_coast(dcmotor);
@@ -89,7 +89,7 @@ pbio_error_t pbio_dcmotor_set_duty_cycle_sys(pbio_dcmotor_t *dcmotor, int32_t du
     dcmotor->duty_now = duty_steps;
 
     // Flip sign if motor is inverted
-    if (dcmotor->direction == PBIO_DIRECTION_COUNTERCLOCKWISE){
+    if (dcmotor->direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
         duty_steps = -duty_steps;
     }
     pbio_error_t err = pbdrv_motor_set_duty_cycle(dcmotor->port, duty_steps);

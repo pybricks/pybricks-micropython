@@ -39,25 +39,24 @@ typedef struct _robotics_DriveBase_obj_t {
 } robotics_DriveBase_obj_t;
 
 // pybricks.robotics.DriveBase.__init__
-STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(left_motor),
         PB_ARG_REQUIRED(right_motor),
         PB_ARG_REQUIRED(wheel_diameter),
-        PB_ARG_REQUIRED(axle_track)
-    );
+        PB_ARG_REQUIRED(axle_track));
 
     robotics_DriveBase_obj_t *self = m_new_obj(robotics_DriveBase_obj_t);
-    self->base.type = (mp_obj_type_t*) type;
+    self->base.type = (mp_obj_type_t *)type;
 
     // Pointer to the Python (not pbio) Motor objects
     self->left = left_motor;
     self->right = right_motor;
 
     // Pointers to servos
-    pbio_servo_t *srv_left = ((motor_Motor_obj_t*) pb_obj_get_base_class_obj(self->left, &motor_Motor_type))->srv;
-    pbio_servo_t *srv_right = ((motor_Motor_obj_t*) pb_obj_get_base_class_obj(self->right, &motor_Motor_type))->srv;
+    pbio_servo_t *srv_left = ((motor_Motor_obj_t *)pb_obj_get_base_class_obj(self->left, &motor_Motor_type))->srv;
+    pbio_servo_t *srv_right = ((motor_Motor_obj_t *)pb_obj_get_base_class_obj(self->right, &motor_Motor_type))->srv;
 
     // A DriveBase must have two distinct motors
     if (srv_left == srv_right) {
@@ -81,10 +80,10 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     pbio_control_settings_get_limits(&self->db->control_distance.settings, &straight_speed_limit, &straight_acceleration_limit, &_);
     pbio_control_settings_get_limits(&self->db->control_heading.settings, &turn_rate_limit, &turn_acceleration_limit, &_);
 
-    self->straight_speed = straight_speed_limit/3;
-    self->straight_acceleration = straight_acceleration_limit/3;
-    self->turn_rate = turn_rate_limit/3;
-    self->turn_acceleration = turn_acceleration_limit/3;
+    self->straight_speed = straight_speed_limit / 3;
+    self->straight_acceleration = straight_acceleration_limit / 3;
+    self->turn_rate = turn_rate_limit / 3;
+    self->turn_acceleration = turn_acceleration_limit / 3;
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -103,8 +102,7 @@ STATIC void wait_for_completion_drivebase(pbio_drivebase_t *db) {
 STATIC mp_obj_t robotics_DriveBase_straight(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         robotics_DriveBase_obj_t, self,
-        PB_ARG_REQUIRED(distance)
-    );
+        PB_ARG_REQUIRED(distance));
 
     int32_t distance_val = pb_obj_get_int(distance);
     pb_assert(pbio_drivebase_straight(self->db, distance_val, self->straight_speed, self->straight_acceleration));
@@ -119,8 +117,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_straight_obj, 1, robotics_D
 STATIC mp_obj_t robotics_DriveBase_turn(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         robotics_DriveBase_obj_t, self,
-        PB_ARG_REQUIRED(angle)
-    );
+        PB_ARG_REQUIRED(angle));
 
     int32_t angle_val = pb_obj_get_int(angle);
     pb_assert(pbio_drivebase_turn(self->db, angle_val, self->turn_rate, self->turn_acceleration));
@@ -136,8 +133,7 @@ STATIC mp_obj_t robotics_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         robotics_DriveBase_obj_t, self,
         PB_ARG_REQUIRED(speed),
-        PB_ARG_REQUIRED(turn_rate)
-    );
+        PB_ARG_REQUIRED(turn_rate));
 
     // Get wheel diameter and axle track dimensions
     int32_t speed_val = pb_obj_get_int(speed);
@@ -215,15 +211,14 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
         PB_ARG_DEFAULT_NONE(straight_speed),
         PB_ARG_DEFAULT_NONE(straight_acceleration),
         PB_ARG_DEFAULT_NONE(turn_rate),
-        PB_ARG_DEFAULT_NONE(turn_acceleration)
-    );
+        PB_ARG_DEFAULT_NONE(turn_acceleration));
 
     // If all given values are none, return current values
     if (straight_speed == mp_const_none &&
         straight_acceleration == mp_const_none &&
         turn_rate == mp_const_none &&
         turn_acceleration == mp_const_none
-    ) {
+        ) {
         mp_obj_t ret[4];
         ret[0] = mp_obj_new_int(self->straight_speed);
         ret[1] = mp_obj_new_int(self->straight_acceleration);
@@ -274,7 +269,7 @@ STATIC const mp_obj_type_t robotics_DriveBase_type = {
     { &mp_type_type },
     .name = MP_QSTR_DriveBase,
     .make_new = robotics_DriveBase_make_new,
-    .locals_dict = (mp_obj_dict_t*)&robotics_DriveBase_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&robotics_DriveBase_locals_dict,
 };
 
 // dir(pybricks.robotics)
@@ -286,7 +281,7 @@ STATIC MP_DEFINE_CONST_DICT(pb_module_robotics_globals, robotics_globals_table);
 
 const mp_obj_module_t pb_module_robotics = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&pb_module_robotics_globals,
+    .globals = (mp_obj_dict_t *)&pb_module_robotics_globals,
 };
 
 #endif // PYBRICKS_PY_ROBOTICS

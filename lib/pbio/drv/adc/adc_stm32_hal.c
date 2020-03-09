@@ -59,7 +59,7 @@ void pbdrv_adc_stm32_hal_handle_irq() {
     HAL_DMA_IRQHandler(&pbdrv_adc_hdma);
 }
 
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
     process_poll(&pbdrv_adc_process);
 }
 
@@ -105,11 +105,11 @@ PROCESS_THREAD(pbdrv_adc_process, ev, data) {
     // using DMA
 
     pbdrv_adc_hdma.Instance = PBDRV_CONFIG_ADC_STM32_HAL_DMA_INSTANCE;
-#ifdef STM32L4
+    #ifdef STM32L4
     pbdrv_adc_hdma.Init.Request = PBDRV_CONFIG_ADC_STM32_HAL_DMA_REQUEST;
-#else
+    #else
     pbdrv_adc_hdma.Init.Channel = PBDRV_CONFIG_ADC_STM32_HAL_DMA_CHANNEL;
-#endif
+    #endif
     pbdrv_adc_hdma.Init.Direction = DMA_PERIPH_TO_MEMORY;
     pbdrv_adc_hdma.Init.PeriphInc = DMA_PINC_DISABLE;
     pbdrv_adc_hdma.Init.MemInc = DMA_MINC_ENABLE;
@@ -136,9 +136,9 @@ PROCESS_THREAD(pbdrv_adc_process, ev, data) {
 
     HAL_ADC_Init(&pbdrv_adc_hadc);
 
-#ifdef STM32L4
+    #ifdef STM32L4
     HAL_ADCEx_Calibration_Start(&pbdrv_adc_hadc, ADC_SINGLE_ENDED);
-#endif
+    #endif
 
     __HAL_LINKDMA(&pbdrv_adc_hadc, DMA_Handle, pbdrv_adc_hdma);
     HAL_NVIC_SetPriority(PBDRV_CONFIG_ADC_STM32_HAL_DMA_IRQ, 1, 0);

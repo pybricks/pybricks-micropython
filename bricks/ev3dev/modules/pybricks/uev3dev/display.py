@@ -33,83 +33,81 @@ _FB_VISUAL_TRUECOLOR = 2
 _ALIGN1, _ALIGN2, _ALIGN3 = (0, 0, 0) if ULONG == UINT32 else (4, 8, 12)
 
 _fb_fix_screeninfo = {
-    'id_name': (ARRAY | 0, UINT8 | 16),
-    'smem_start': ULONG | 16,
-    'smem_len': UINT32 | 20 + _ALIGN1,
-    'type': UINT32 | 24 + _ALIGN1,
-    'type_aux': UINT32 | 28 + _ALIGN1,
-    'visual': UINT32 | 32 + _ALIGN1,
-    'xpanstep': UINT16 | 36 + _ALIGN1,
-    'ypanstep': UINT16 | 38 + _ALIGN1,
-    'ywrapstep': UINT16 | 40 + _ALIGN1,
-    'line_length': UINT32 | 44 + _ALIGN1,
-    'mmio_start': ULONG | 48 + _ALIGN2,
-    'mmio_len': UINT32 | 52 + _ALIGN3,
-    'accel': UINT32 | 56 + _ALIGN3,
-    'capabilities': UINT16 | 60 + _ALIGN3,
-    'reserved0': UINT16 | 62 + _ALIGN3,
-    'reserved1': UINT16 | 64 + _ALIGN3,
+    "id_name": (ARRAY | 0, UINT8 | 16),
+    "smem_start": ULONG | 16,
+    "smem_len": UINT32 | 20 + _ALIGN1,
+    "type": UINT32 | 24 + _ALIGN1,
+    "type_aux": UINT32 | 28 + _ALIGN1,
+    "visual": UINT32 | 32 + _ALIGN1,
+    "xpanstep": UINT16 | 36 + _ALIGN1,
+    "ypanstep": UINT16 | 38 + _ALIGN1,
+    "ywrapstep": UINT16 | 40 + _ALIGN1,
+    "line_length": UINT32 | 44 + _ALIGN1,
+    "mmio_start": ULONG | 48 + _ALIGN2,
+    "mmio_len": UINT32 | 52 + _ALIGN3,
+    "accel": UINT32 | 56 + _ALIGN3,
+    "capabilities": UINT16 | 60 + _ALIGN3,
+    "reserved0": UINT16 | 62 + _ALIGN3,
+    "reserved1": UINT16 | 64 + _ALIGN3,
 }
 
 _fb_bitfield = {
-    'offset': UINT32 | 0,
-    'length': UINT32 | 4,
-    'msb_right': UINT32 | 8,
+    "offset": UINT32 | 0,
+    "length": UINT32 | 4,
+    "msb_right": UINT32 | 8,
 }
 
 _fb_var_screeninfo = {
-    'xres': UINT32 | 0,
-    'yres': UINT32 | 4,
-    'xres_virtual': UINT32 | 8,
-    'yres_virtual': UINT32 | 12,
-    'xoffset': UINT32 | 16,
-    'yoffset': UINT32 | 20,
-    'bits_per_pixel': UINT32 | 24,
-    'grayscale': UINT32 | 28,
-    'red': (32, _fb_bitfield),
-    'green': (44, _fb_bitfield),
-    'blue': (56, _fb_bitfield),
-    'transp': (68, _fb_bitfield),
-    'nonstd': UINT32 | 80,
-    'activate': UINT32 | 84,
-    'height': UINT32 | 88,
-    'width': UINT32 | 92,
-    'accel_flags': UINT32 | 96,
-    'pixclock': UINT32 | 100,
-    'left_margin': UINT32 | 104,
-    'right_margin': UINT32 | 108,
-    'upper_margin': UINT32 | 112,
-    'lower_margin': UINT32 | 116,
-    'hsync_len': UINT32 | 120,
-    'vsync_len': UINT32 | 124,
-    'sync': UINT32 | 128,
-    'vmode': UINT32 | 132,
-    'rotate': UINT32 | 136,
-    'colorspace': UINT32 | 140,
-    'reserved0': UINT32 | 144,
-    'reserved1': UINT32 | 148,
-    'reserved2': UINT32 | 152,
-    'reserved3': UINT32 | 156,
+    "xres": UINT32 | 0,
+    "yres": UINT32 | 4,
+    "xres_virtual": UINT32 | 8,
+    "yres_virtual": UINT32 | 12,
+    "xoffset": UINT32 | 16,
+    "yoffset": UINT32 | 20,
+    "bits_per_pixel": UINT32 | 24,
+    "grayscale": UINT32 | 28,
+    "red": (32, _fb_bitfield),
+    "green": (44, _fb_bitfield),
+    "blue": (56, _fb_bitfield),
+    "transp": (68, _fb_bitfield),
+    "nonstd": UINT32 | 80,
+    "activate": UINT32 | 84,
+    "height": UINT32 | 88,
+    "width": UINT32 | 92,
+    "accel_flags": UINT32 | 96,
+    "pixclock": UINT32 | 100,
+    "left_margin": UINT32 | 104,
+    "right_margin": UINT32 | 108,
+    "upper_margin": UINT32 | 112,
+    "lower_margin": UINT32 | 116,
+    "hsync_len": UINT32 | 120,
+    "vsync_len": UINT32 | 124,
+    "sync": UINT32 | 128,
+    "vmode": UINT32 | 132,
+    "rotate": UINT32 | 136,
+    "colorspace": UINT32 | 140,
+    "reserved0": UINT32 | 144,
+    "reserved1": UINT32 | 148,
+    "reserved2": UINT32 | 152,
+    "reserved3": UINT32 | 156,
 }
 
 
-class _Screen():
+class _Screen:
     """Object that represents a screen"""
 
     BLACK = 0
     WHITE = ~0
 
     def __init__(self):
-        self._fbdev = open('/dev/fb0', 'r+b')
+        self._fbdev = open("/dev/fb0", "r+b")
         self._fix_info_data = bytearray(sizeof(_fb_fix_screeninfo))
         fd = self._fbdev.fileno()
         ioctl(fd, _FBIOGET_FSCREENINFO, self._fix_info_data)
-        self._fix_info = struct(addressof(self._fix_info_data),
-                                _fb_fix_screeninfo)
+        self._fix_info = struct(addressof(self._fix_info_data), _fb_fix_screeninfo)
         self._var_info_data = bytearray(sizeof(_fb_var_screeninfo))
         ioctl(fd, _FBIOGET_VSCREENINFO, self._var_info_data)
-        self._var_info = struct(addressof(self._var_info_data),
-                                _fb_var_screeninfo)
+        self._var_info = struct(addressof(self._var_info_data), _fb_var_screeninfo)
         self._fb_data = {}
         self._mmap = mmap(fd, self._fix_info.smem_len)
 
@@ -151,13 +149,15 @@ class _Screen():
             format = RGB565
         else:
             raise RuntimeError("Unsupported pixel depth")
-        fbuf = FrameBuffer(data, self.width, self.height, format,
-                           self._fix_info.line_length * 8 // self.bpp)
+        fbuf = FrameBuffer(
+            data, self.width, self.height, format, self._fix_info.line_length * 8 // self.bpp
+        )
         return fbuf, data
 
 
-class Display():
+class Display:
     """Object that represents a display screen."""
+
     def __init__(self):
         self._screen = _Screen()
         self._fb, self._data = self._screen.framebuffer()
@@ -181,7 +181,7 @@ class Display():
             color = _Screen.BLACK
         # TODO: micropython framebuf only has one font
         # TODO: Discuss where origin should be for text and pictures (micropython vs. EV3-G)
-        self._fb.text(str(text), x, y-7, color)
+        self._fb.text(str(text), x, y - 7, color)
         self._screen.update(self._data)
 
     def scroll(self, font=0):
@@ -225,12 +225,13 @@ class Display():
         self._screen.update(self._data)
 
 
-class ImageFile():
+class ImageFile:
     """Object that represents an image file
 
     Parameters:
         filename (str): The file path
     """
+
     def __init__(self, filename, display):
         with MagickWand() as wand:
             wand.read_image(filename)
@@ -243,10 +244,9 @@ class ImageFile():
                 # image
                 pass
 
-            wand.image_format = 'GRAY'
+            wand.image_format = "GRAY"
             wand.image_depth = 1
 
             # then convert to micropython framebuf so we can blit
             data = wand.image_blob
-            self._framebuf = FrameBuffer(data, wand.image_width,
-                                         wand.image_height, MONO_HLSB)
+            self._framebuf = FrameBuffer(data, wand.image_width, wand.image_height, MONO_HLSB)

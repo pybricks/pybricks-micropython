@@ -32,11 +32,11 @@ mp_int_t pb_obj_get_int(mp_obj_t arg) {
 #endif
 
 fix16_t pb_obj_get_fix16(mp_obj_t arg) {
-#if MICROPY_PY_BUILTINS_FLOAT
+    #if MICROPY_PY_BUILTINS_FLOAT
     if (mp_obj_is_float(arg)) {
-        return fix16_from_float((float) mp_obj_get_float(arg));
+        return fix16_from_float((float)mp_obj_get_float(arg));
     }
-#endif
+    #endif
     return fix16_from_int(mp_obj_get_int(arg));
 }
 
@@ -51,8 +51,8 @@ mp_obj_t pb_obj_get_base_class_obj(mp_obj_t obj, const mp_obj_type_t *type) {
         return obj;
     }
     // If it is an instance of a derived class, get base instance
-    if (mp_obj_is_obj(obj) && mp_obj_is_subclass_fast(MP_OBJ_FROM_PTR(((mp_obj_base_t*)MP_OBJ_TO_PTR(obj))->type), type)) {
-        return ((mp_obj_instance_t*)MP_OBJ_TO_PTR(obj))->subobj[0];
+    if (mp_obj_is_obj(obj) && mp_obj_is_subclass_fast(MP_OBJ_FROM_PTR(((mp_obj_base_t *)MP_OBJ_TO_PTR(obj))->type), type)) {
+        return ((mp_obj_instance_t *)MP_OBJ_TO_PTR(obj))->subobj[0];
     }
     // On failure, say why we could not do it
     pb_assert_type(obj, type);

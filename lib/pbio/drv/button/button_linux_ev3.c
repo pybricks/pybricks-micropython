@@ -28,11 +28,11 @@ void _pbdrv_button_init(void) {
 void _pbdrv_button_deinit(void) {
     close(f_btn);
     f_btn = -1;
- }
+}
 #endif
 
 static bool check(uint8_t *buffer, uint8_t key) {
-    return buffer[key>>3] & (1 << (key % 8));
+    return buffer[key >> 3] & (1 << (key % 8));
 }
 
 pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {

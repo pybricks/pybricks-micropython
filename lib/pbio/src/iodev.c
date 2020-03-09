@@ -15,13 +15,13 @@
  */
 size_t pbio_iodev_size_of(pbio_iodev_data_type_t type) {
     switch (type) {
-    case PBIO_IODEV_DATA_TYPE_INT8:
-        return 1;
-    case PBIO_IODEV_DATA_TYPE_INT16:
-        return 2;
-    case PBIO_IODEV_DATA_TYPE_INT32:
-    case PBIO_IODEV_DATA_TYPE_FLOAT:
-        return 4;
+        case PBIO_IODEV_DATA_TYPE_INT8:
+            return 1;
+        case PBIO_IODEV_DATA_TYPE_INT16:
+            return 2;
+        case PBIO_IODEV_DATA_TYPE_INT32:
+        case PBIO_IODEV_DATA_TYPE_FLOAT:
+            return 4;
     }
 
     assert(0); // bug if reached

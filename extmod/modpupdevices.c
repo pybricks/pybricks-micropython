@@ -29,13 +29,12 @@ typedef struct _pupdevices_ColorDistanceSensor_obj_t {
 } pupdevices_ColorDistanceSensor_obj_t;
 
 // pybricks.pupdevices.ColorDistanceSensor.__init__
-STATIC mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+STATIC mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port)
-    );
+        PB_ARG_REQUIRED(port));
 
     pupdevices_ColorDistanceSensor_obj_t *self = m_new_obj(pupdevices_ColorDistanceSensor_obj_t);
-    self->base.type = (mp_obj_type_t*) type;
+    self->base.type = (mp_obj_type_t *)type;
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
@@ -54,7 +53,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_color(mp_obj_t self_in) {
     int32_t data[4];
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__SPEC1, data);
 
-    switch(data[0]) {
+    switch (data[0]) {
         case 1:
             return pb_const_color_black;
         case 3:
@@ -80,7 +79,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_distance(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t data[4];
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__SPEC1, data);
-    return mp_obj_new_int(data[1]*10);
+    return mp_obj_new_int(data[1] * 10);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_distance_obj, pupdevices_ColorDistanceSensor_distance);
 
@@ -108,8 +107,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_remote(size_t n_args, const mp_ob
         pupdevices_ColorDistanceSensor_obj_t, self,
         PB_ARG_REQUIRED(channel),
         PB_ARG_DEFAULT_NONE(button_1),
-        PB_ARG_DEFAULT_NONE(button_2)
-    );
+        PB_ARG_DEFAULT_NONE(button_2));
 
     // Get channel
     mp_int_t ch = mp_obj_get_int(channel);
@@ -126,12 +124,12 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_remote(size_t n_args, const mp_ob
     btn = b1 | b2;
 
     // Power Functions 1.0 "Combo Direct Mode" without checksum
-    int32_t message = ((btn & PBIO_BUTTON_LEFT_UP)    != 0) << 0 |
-                      ((btn & PBIO_BUTTON_LEFT_DOWN)  != 0) << 1 |
-                      ((btn & PBIO_BUTTON_RIGHT_UP)   != 0) << 2 |
-                      ((btn & PBIO_BUTTON_RIGHT_DOWN) != 0) << 3 |
-                                                        (1) << 4 |
-                                                   (ch - 1) << 8;
+    int32_t message = ((btn & PBIO_BUTTON_LEFT_UP) != 0) << 0 |
+                ((btn & PBIO_BUTTON_LEFT_DOWN) != 0) << 1 |
+                ((btn & PBIO_BUTTON_RIGHT_UP) != 0) << 2 |
+                ((btn & PBIO_BUTTON_RIGHT_DOWN) != 0) << 3 |
+                (1) << 4 |
+                (ch - 1) << 8;
 
     // Send the data to the device
     pbdevice_set_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &message, 1);
@@ -148,7 +146,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_rgb(mp_obj_t self_in) {
 
     mp_obj_t rgb[3];
     for (uint8_t col = 0; col < 3; col++) {
-        int16_t intensity = (data[col]*10)/44;
+        int16_t intensity = (data[col] * 10) / 44;
         rgb[col] = mp_obj_new_int(intensity < 100 ? intensity : 100);
     }
     return mp_obj_new_tuple(3, rgb);
@@ -172,7 +170,7 @@ STATIC const mp_obj_type_t pupdevices_ColorDistanceSensor_type = {
     { &mp_type_type },
     .name = MP_QSTR_ColorDistanceSensor,
     .make_new = pupdevices_ColorDistanceSensor_make_new,
-    .locals_dict = (mp_obj_dict_t*)&pupdevices_ColorDistanceSensor_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&pupdevices_ColorDistanceSensor_locals_dict,
 };
 
 // dir(pybricks.pupdevices)
@@ -183,14 +181,13 @@ STATIC const mp_rom_map_elem_t pupdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_ColorDistanceSensor), MP_ROM_PTR(&pupdevices_ColorDistanceSensor_type) },
 };
 
-STATIC MP_DEFINE_CONST_DICT (
+STATIC MP_DEFINE_CONST_DICT(
     pb_module_pupdevices_globals,
-    pupdevices_globals_table
-);
+    pupdevices_globals_table);
 
 const mp_obj_module_t pb_module_pupdevices = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&pb_module_pupdevices_globals,
+    .globals = (mp_obj_dict_t *)&pb_module_pupdevices_globals,
 };
 
 #endif // PYBRICKS_PY_PUPDEVICES

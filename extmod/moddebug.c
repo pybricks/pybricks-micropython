@@ -112,5 +112,5 @@ STATIC MP_DEFINE_CONST_DICT(pb_module_debug_globals, debug_globals_table);
 
 const mp_obj_module_t pb_module_debug = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&pb_module_debug_globals,
+    .globals = (mp_obj_dict_t *)&pb_module_debug_globals,
 };

@@ -35,8 +35,7 @@ STATIC mp_obj_t builtins_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         builtins_Light_obj_t, self,
         PB_ARG_REQUIRED(color),
-        PB_ARG_DEFAULT_INT(brightness, 100)
-    );
+        PB_ARG_DEFAULT_INT(brightness, 100));
 
     if (color == mp_const_none) {
         color = pb_const_color_black;
@@ -45,7 +44,7 @@ STATIC mp_obj_t builtins_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, 
     pbio_light_color_t color_id = pb_type_enum_get_value(color, &pb_enum_type_Color);
 
     mp_int_t bright = pb_obj_get_int(brightness);
-    bright = bright < 0 ? 0 : bright > 100 ? 100: bright;
+    bright = bright < 0 ? 0 : bright > 100 ? 100 : bright;
 
     // TODO: Brightness control is not yet implemented
     if (bright != 100) {
@@ -55,8 +54,7 @@ STATIC mp_obj_t builtins_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, 
     if (!self->pbdev) {
         // No external device, so assume command is for the internal light
         pb_assert(pbio_light_on(PBIO_PORT_SELF, color_id));
-    }
-    else {
+    } else {
         pbdevice_color_light_on(self->pbdev, color_id);
     }
 
@@ -74,8 +72,7 @@ STATIC mp_obj_t builtins_Light_off(mp_obj_t self_in) {
     if (!self->pbdev) {
         // No external device, so assume command is for the internal light
         pb_assert(pbio_light_off(PBIO_PORT_SELF));
-    }
-    else {
+    } else {
         pbdevice_color_light_on(self->pbdev, PBIO_LIGHT_COLOR_NONE);
     }
     return mp_const_none;
@@ -84,8 +81,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(builtins_Light_off_obj, builtins_Light_off);
 
 // dir(pybricks.builtins.Light)
 STATIC const mp_rom_map_elem_t builtins_Light_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_on   ), MP_ROM_PTR(&builtins_Light_on_obj) },
-    { MP_ROM_QSTR(MP_QSTR_off  ), MP_ROM_PTR(&builtins_Light_off_obj) },
+    { MP_ROM_QSTR(MP_QSTR_on), MP_ROM_PTR(&builtins_Light_on_obj) },
+    { MP_ROM_QSTR(MP_QSTR_off), MP_ROM_PTR(&builtins_Light_off_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(builtins_Light_locals_dict, builtins_Light_locals_dict_table);
 
@@ -93,13 +90,13 @@ STATIC MP_DEFINE_CONST_DICT(builtins_Light_locals_dict, builtins_Light_locals_di
 const mp_obj_type_t builtins_Light_type = {
     { &mp_type_type },
     .name = MP_QSTR_Light,
-    .locals_dict = (mp_obj_dict_t*)&builtins_Light_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&builtins_Light_locals_dict,
 };
 
 // dir(pybricks.builtins.ColorLight)
 STATIC const mp_rom_map_elem_t builtins_ColorLight_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_on   ), MP_ROM_PTR(&builtins_ColorLight_on_obj) },
-    { MP_ROM_QSTR(MP_QSTR_off  ), MP_ROM_PTR(&builtins_Light_off_obj) },
+    { MP_ROM_QSTR(MP_QSTR_on), MP_ROM_PTR(&builtins_ColorLight_on_obj) },
+    { MP_ROM_QSTR(MP_QSTR_off), MP_ROM_PTR(&builtins_Light_off_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(builtins_ColorLight_locals_dict, builtins_ColorLight_locals_dict_table);
 
@@ -107,7 +104,7 @@ STATIC MP_DEFINE_CONST_DICT(builtins_ColorLight_locals_dict, builtins_ColorLight
 const mp_obj_type_t builtins_ColorLight_type = {
     { &mp_type_type },
     .name = MP_QSTR_ColorLight,
-    .locals_dict = (mp_obj_dict_t*)&builtins_ColorLight_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&builtins_ColorLight_locals_dict,
 };
 
 mp_obj_t builtins_Light_obj_make_new(pbdevice_t *pbdev, const mp_obj_type_t *type) {
@@ -156,8 +153,7 @@ STATIC mp_obj_t builtins_Control_limits(size_t n_args, const mp_obj_t *pos_args,
         builtins_Control_obj_t, self,
         PB_ARG_DEFAULT_NONE(speed),
         PB_ARG_DEFAULT_NONE(acceleration),
-        PB_ARG_DEFAULT_NONE(actuation)
-    );
+        PB_ARG_DEFAULT_NONE(actuation));
 
     // Read current values
     int32_t _speed, _acceleration, _actuation;
@@ -196,8 +192,7 @@ STATIC mp_obj_t builtins_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp
         PB_ARG_DEFAULT_NONE(kd),
         PB_ARG_DEFAULT_NONE(integral_range),
         PB_ARG_DEFAULT_NONE(integral_rate),
-        PB_ARG_DEFAULT_NONE(feed_forward)
-    );
+        PB_ARG_DEFAULT_NONE(feed_forward));
 
     // Read current values
     int16_t _kp, _ki, _kd;
@@ -240,8 +235,7 @@ STATIC mp_obj_t builtins_Control_target_tolerances(size_t n_args, const mp_obj_t
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         builtins_Control_obj_t, self,
         PB_ARG_DEFAULT_NONE(speed),
-        PB_ARG_DEFAULT_NONE(position)
-    );
+        PB_ARG_DEFAULT_NONE(position));
 
     // Read current values
     int32_t _speed, _position;
@@ -274,8 +268,7 @@ STATIC mp_obj_t builtins_Control_stall_tolerances(size_t n_args, const mp_obj_t 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         builtins_Control_obj_t, self,
         PB_ARG_DEFAULT_NONE(speed),
-        PB_ARG_DEFAULT_NONE(time)
-    );
+        PB_ARG_DEFAULT_NONE(time));
 
     // Read current values
     int32_t _speed, _time;
@@ -312,10 +305,10 @@ STATIC mp_obj_t builtins_Control_trajectory(mp_obj_t self_in) {
     trajectory = self->control->trajectory;
 
     if (self->control->type != PBIO_CONTROL_NONE) {
-        parms[0] = mp_obj_new_int((trajectory.t0-trajectory.t0)/1000);
-        parms[1] = mp_obj_new_int((trajectory.t1-trajectory.t0)/1000);
-        parms[2] = mp_obj_new_int((trajectory.t2-trajectory.t0)/1000);
-        parms[3] = mp_obj_new_int((trajectory.t3-trajectory.t0)/1000);
+        parms[0] = mp_obj_new_int((trajectory.t0 - trajectory.t0) / 1000);
+        parms[1] = mp_obj_new_int((trajectory.t1 - trajectory.t0) / 1000);
+        parms[2] = mp_obj_new_int((trajectory.t2 - trajectory.t0) / 1000);
+        parms[3] = mp_obj_new_int((trajectory.t3 - trajectory.t0) / 1000);
         parms[4] = mp_obj_new_int(trajectory.th0);
         parms[5] = mp_obj_new_int(trajectory.th1);
         parms[6] = mp_obj_new_int(trajectory.th2);
@@ -346,14 +339,14 @@ MP_DEFINE_CONST_FUN_OBJ_1(builtins_Control_stalled_obj, builtins_Control_stalled
 
 // dir(pybricks.builtins.Control)
 STATIC const mp_rom_map_elem_t builtins_Control_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_limits           ), MP_ROM_PTR(&builtins_Control_limits_obj           ) },
-    { MP_ROM_QSTR(MP_QSTR_pid              ), MP_ROM_PTR(&builtins_Control_pid_obj              ) },
+    { MP_ROM_QSTR(MP_QSTR_limits), MP_ROM_PTR(&builtins_Control_limits_obj) },
+    { MP_ROM_QSTR(MP_QSTR_pid), MP_ROM_PTR(&builtins_Control_pid_obj) },
     { MP_ROM_QSTR(MP_QSTR_target_tolerances), MP_ROM_PTR(&builtins_Control_target_tolerances_obj) },
-    { MP_ROM_QSTR(MP_QSTR_stall_tolerances ), MP_ROM_PTR(&builtins_Control_stall_tolerances_obj ) },
-    { MP_ROM_QSTR(MP_QSTR_trajectory       ), MP_ROM_PTR(&builtins_Control_trajectory_obj       ) },
-    { MP_ROM_QSTR(MP_QSTR_done             ), MP_ROM_PTR(&builtins_Control_done_obj             ) },
-    { MP_ROM_QSTR(MP_QSTR_stalled          ), MP_ROM_PTR(&builtins_Control_stalled_obj          ) },
-    { MP_ROM_QSTR(MP_QSTR_scale            ), MP_ROM_ATTRIBUTE_OFFSET(builtins_Control_obj_t, scale) },
+    { MP_ROM_QSTR(MP_QSTR_stall_tolerances), MP_ROM_PTR(&builtins_Control_stall_tolerances_obj) },
+    { MP_ROM_QSTR(MP_QSTR_trajectory), MP_ROM_PTR(&builtins_Control_trajectory_obj) },
+    { MP_ROM_QSTR(MP_QSTR_done), MP_ROM_PTR(&builtins_Control_done_obj) },
+    { MP_ROM_QSTR(MP_QSTR_stalled), MP_ROM_PTR(&builtins_Control_stalled_obj) },
+    { MP_ROM_QSTR(MP_QSTR_scale), MP_ROM_ATTRIBUTE_OFFSET(builtins_Control_obj_t, scale) },
 };
 STATIC MP_DEFINE_CONST_DICT(builtins_Control_locals_dict, builtins_Control_locals_dict_table);
 
@@ -361,5 +354,5 @@ STATIC MP_DEFINE_CONST_DICT(builtins_Control_locals_dict, builtins_Control_local
 const mp_obj_type_t builtins_Control_type = {
     { &mp_type_type },
     .name = MP_QSTR_Control,
-    .locals_dict = (mp_obj_dict_t*)&builtins_Control_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&builtins_Control_locals_dict,
 };

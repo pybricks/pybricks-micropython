@@ -29,7 +29,7 @@ STATIC MP_DEFINE_CONST_DICT(pb_module_media_ev3dev_globals, media_ev3dev_globals
 
 const mp_obj_module_t pb_module_media_ev3dev = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&pb_module_media_ev3dev_globals,
+    .globals = (mp_obj_dict_t *)&pb_module_media_ev3dev_globals,
 };
 
 #endif // PYBRICKS_PY_MEDIA_EV3DEV

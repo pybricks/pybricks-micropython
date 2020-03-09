@@ -79,8 +79,7 @@ STATIC mp_obj_t ev3dev_Speaker_make_new(const mp_obj_type_t *type, size_t n_args
             dest[3] = MP_ROM_QSTR(MP_QSTR__default_);
             mp_call_method_n_kw(2, 0, dest);
             nlr_pop();
-        }
-        else {
+        } else {
             // ignore error
         }
 
@@ -114,8 +113,7 @@ STATIC mp_obj_t ev3dev_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp_
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Speaker_obj_t, self,
         PB_ARG_DEFAULT_INT(frequency, 500),
-        PB_ARG_DEFAULT_INT(duration, 100)
-    );
+        PB_ARG_DEFAULT_INT(duration, 100));
 
     mp_int_t freq = pb_obj_get_int(frequency);
     mp_int_t ms = pb_obj_get_int(duration);
@@ -134,8 +132,7 @@ STATIC mp_obj_t ev3dev_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp_
         mp_hal_delay_ms(ms);
         set_beep_frequency(self, 0);
         nlr_pop();
-    }
-    else {
+    } else {
         set_beep_frequency(self, 0);
         nlr_jump(nlr.ret_val);
     }
@@ -152,110 +149,110 @@ STATIC void ev3dev_Speaker_play_note(ev3dev_Speaker_obj_t *self, mp_obj_t obj, i
 
     // Note names can be A-G followed by optional # (sharp) or b (flat) or R for rest
     switch (note[pos++]) {
-    case 'C':
-        switch (note[pos++]) {
-        case 'b':
-            mp_raise_ValueError("'Cb' is not allowed");
+        case 'C':
+            switch (note[pos++]) {
+                case 'b':
+                    mp_raise_ValueError("'Cb' is not allowed");
+                    break;
+                case '#':
+                    freq = 17.32;
+                    break;
+                default:
+                    pos--;
+                    freq = 16.35;
+                    break;
+            }
             break;
-        case '#':
-            freq = 17.32;
+        case 'D':
+            switch (note[pos++]) {
+                case 'b':
+                    freq = 17.32;
+                    break;
+                case '#':
+                    freq = 19.45;
+                    break;
+                default:
+                    pos--;
+                    freq = 18.35;
+                    break;
+            }
+            break;
+        case 'E':
+            switch (note[pos++]) {
+                case 'b':
+                    freq = 19.45;
+                    break;
+                case '#':
+                    mp_raise_ValueError("'E#' is not allowed");
+                    break;
+                default:
+                    pos--;
+                    freq = 20.60;
+                    break;
+            }
+            break;
+        case 'F':
+            switch (note[pos++]) {
+                case 'b':
+                    mp_raise_ValueError("'Fb' is not allowed");
+                    break;
+                case '#':
+                    freq = 23.12;
+                    break;
+                default:
+                    pos--;
+                    freq = 21.83;
+                    break;
+            }
+            break;
+        case 'G':
+            switch (note[pos++]) {
+                case 'b':
+                    freq = 23.12;
+                    break;
+                case '#':
+                    freq = 25.96;
+                    break;
+                default:
+                    pos--;
+                    freq = 24.50;
+                    break;
+            }
+            break;
+        case 'A':
+            switch (note[pos++]) {
+                case 'b':
+                    freq = 25.96;
+                    break;
+                case '#':
+                    freq = 29.14;
+                    break;
+                default:
+                    pos--;
+                    freq = 27.50;
+                    break;
+            }
+            break;
+        case 'B':
+            switch (note[pos++]) {
+                case 'b':
+                    freq = 29.14;
+                    break;
+                case '#':
+                    mp_raise_ValueError("'B#' is not allowed");
+                    break;
+                default:
+                    pos--;
+                    freq = 30.87;
+                    break;
+            }
+            break;
+        case 'R':
+            freq = 0;
             break;
         default:
-            pos--;
-            freq = 16.35;
+            mp_raise_ValueError("Missing note name A-G or R");
             break;
-        }
-        break;
-    case 'D':
-        switch (note[pos++]) {
-        case 'b':
-            freq = 17.32;
-            break;
-        case '#':
-            freq = 19.45;
-            break;
-        default:
-            pos--;
-            freq = 18.35;
-            break;
-        }
-        break;
-    case 'E':
-        switch (note[pos++]) {
-        case 'b':
-            freq = 19.45;
-            break;
-        case '#':
-            mp_raise_ValueError("'E#' is not allowed");
-            break;
-        default:
-            pos--;
-            freq = 20.60;
-            break;
-        }
-        break;
-    case 'F':
-        switch (note[pos++]) {
-        case 'b':
-            mp_raise_ValueError("'Fb' is not allowed");
-            break;
-        case '#':
-            freq = 23.12;
-            break;
-        default:
-            pos--;
-            freq = 21.83;
-            break;
-        }
-        break;
-    case 'G':
-        switch (note[pos++]) {
-        case 'b':
-            freq = 23.12;
-            break;
-        case '#':
-            freq = 25.96;
-            break;
-        default:
-            pos--;
-            freq = 24.50;
-            break;
-        }
-        break;
-    case 'A':
-        switch (note[pos++]) {
-        case 'b':
-            freq = 25.96;
-            break;
-        case '#':
-            freq = 29.14;
-            break;
-        default:
-            pos--;
-            freq = 27.50;
-            break;
-        }
-        break;
-    case 'B':
-        switch (note[pos++]) {
-        case 'b':
-            freq = 29.14;
-            break;
-        case '#':
-            mp_raise_ValueError("'B#' is not allowed");
-            break;
-        default:
-            pos--;
-            freq = 30.87;
-            break;
-        }
-        break;
-    case 'R':
-        freq = 0;
-        break;
-    default:
-        mp_raise_ValueError("Missing note name A-G or R");
-        break;
     }
 
     // Note name must be followed by the octave number
@@ -282,8 +279,7 @@ STATIC void ev3dev_Speaker_play_note(ev3dev_Speaker_obj_t *self, mp_obj_t obj, i
     int fraction2 = note[pos++] - '0';
     if (fraction2 < 0 || fraction2 > 9) {
         pos--;
-    }
-    else {
+    } else {
         fraction = fraction * 10 + fraction2;
     }
 
@@ -294,16 +290,14 @@ STATIC void ev3dev_Speaker_play_note(ev3dev_Speaker_obj_t *self, mp_obj_t obj, i
     if (note[pos++] == '.') {
         // dotted note has length extended by 1/2
         duration = 3 * duration / 2;
-    }
-    else {
+    } else {
         pos--;
     }
 
     if (note[pos++] == '_') {
         // note with tie/slur is not released
         release = false;
-    }
-    else {
+    } else {
         pos--;
     }
 
@@ -316,8 +310,7 @@ STATIC void ev3dev_Speaker_play_note(ev3dev_Speaker_obj_t *self, mp_obj_t obj, i
         mp_hal_delay_ms(7 * duration / 8);
         set_beep_frequency(self, 0);
         mp_hal_delay_ms(duration / 8);
-    }
-    else {
+    } else {
         mp_hal_delay_ms(duration);
     }
 }
@@ -326,8 +319,7 @@ STATIC mp_obj_t ev3dev_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_arg
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Speaker_obj_t, self,
         PB_ARG_REQUIRED(notes),
-        PB_ARG_DEFAULT_INT(tempo, 120)
-    );
+        PB_ARG_DEFAULT_INT(tempo, 120));
 
     // length of whole note in milliseconds = 4 quarter/whole * 60 s/min * 1000 ms/s / tempo quarter/min
     int duration = 4 * 60 * 1000 / pb_obj_get_int(tempo);
@@ -342,8 +334,7 @@ STATIC mp_obj_t ev3dev_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_arg
         // in case the last note has '_'
         set_beep_frequency(self, 0);
         nlr_pop();
-    }
-    else {
+    } else {
         // ensure that sound stops if an exception is raised
         set_beep_frequency(self, 0);
         nlr_jump(nlr.ret_val);
@@ -364,8 +355,7 @@ STATIC void ev3dev_Speaker_aplay_callback(GObject *source_object, GAsyncResult *
 STATIC mp_obj_t ev3dev_Speaker_play_file(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Speaker_obj_t, self,
-        PB_ARG_REQUIRED(file)
-    );
+        PB_ARG_REQUIRED(file));
 
     const char *path = mp_obj_str_get_str(file);
 
@@ -454,8 +444,7 @@ STATIC void ev3dev_Speaker_splice_callback(GObject *source_object, GAsyncResult 
 STATIC mp_obj_t ev3dev_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Speaker_obj_t, self,
-        PB_ARG_REQUIRED(text)
-    );
+        PB_ARG_REQUIRED(text));
 
     const char *text_ = mp_obj_str_get_str(text);
 
@@ -577,8 +566,7 @@ STATIC mp_obj_t ev3dev_Speaker_set_speech_options(size_t n_args, const mp_obj_t 
         PB_ARG_DEFAULT_NONE(language),
         PB_ARG_DEFAULT_NONE(voice),
         PB_ARG_DEFAULT_NONE(speed),
-        PB_ARG_DEFAULT_NONE(pitch)
-    );
+        PB_ARG_DEFAULT_NONE(pitch));
 
     if (language != mp_const_none) {
         strncpy(self->language, mp_obj_str_get_str(language), sizeof(self->language));
@@ -603,8 +591,7 @@ STATIC mp_obj_t ev3dev_Speaker_set_volume(size_t n_args, const mp_obj_t *pos_arg
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         ev3dev_Speaker_obj_t, self,
         PB_ARG_REQUIRED(volume),
-        PB_ARG_DEFAULT_QSTR(which, _all_)
-    );
+        PB_ARG_DEFAULT_QSTR(which, _all_));
 
     (void)self; // unused
 
@@ -613,8 +600,7 @@ STATIC mp_obj_t ev3dev_Speaker_set_volume(size_t n_args, const mp_obj_t *pos_arg
 
     if (volume_ > 100) {
         volume_ = 100;
-    }
-    else if (volume_ < 0) {
+    } else if (volume_ < 0) {
         volume_ = 0;
     }
 
@@ -626,18 +612,14 @@ STATIC mp_obj_t ev3dev_Speaker_set_volume(size_t n_args, const mp_obj_t *pos_arg
     if (strcmp(which_, "_default_") == 0) {
         // internal value to set sane defaults (PCM 70%, Beep 30%). volume parameter is ignored.
         snprintf(amixer_stdin, sizeof(amixer_stdin), "sset PCM 179 \nsset Beep 77\n");
-    }
-    else if (strcmp(which_, "_all_") == 0) {
+    } else if (strcmp(which_, "_all_") == 0) {
         snprintf(amixer_stdin, sizeof(amixer_stdin), "sset PCM " INT_FMT " \nsset Beep " INT_FMT "\n",
             volume_, volume_);
-    }
-    else if (strcmp(which_, "Beep") == 0) {
+    } else if (strcmp(which_, "Beep") == 0) {
         snprintf(amixer_stdin, sizeof(amixer_stdin), "sset Beep " INT_FMT "\n", volume_);
-    }
-    else if (strcmp(which_, "PCM") == 0) {
+    } else if (strcmp(which_, "PCM") == 0) {
         snprintf(amixer_stdin, sizeof(amixer_stdin), "sset PCM " INT_FMT "\n", volume_);
-    }
-    else {
+    } else {
         // Note: '_default_' isn't listed since it is considered an internal option
         mp_raise_ValueError("which must be one of '_all_', 'Beep', 'PCM'");
     }
@@ -685,5 +667,5 @@ const mp_obj_type_t pb_type_ev3dev_Speaker = {
     { &mp_type_type },
     .name = MP_QSTR_Speaker,
     .make_new = ev3dev_Speaker_make_new,
-    .locals_dict = (mp_obj_dict_t*)&ev3dev_Speaker_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&ev3dev_Speaker_locals_dict,
 };

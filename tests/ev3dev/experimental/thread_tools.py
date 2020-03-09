@@ -3,25 +3,25 @@ import uos
 from pybricks.experimental import run_parallel
 from pybricks.tools import wait
 
-if uos.getenv('PYBRICKS_BUILD_ENV') == 'docker-armel':
+if uos.getenv("PYBRICKS_BUILD_ENV") == "docker-armel":
     # qemu-user-static has issues with threads
-    print('SKIP')
+    print("SKIP")
     raise SystemExit
 
 
 def task1():
     wait(1000)
-    return 'OK1'
+    return "OK1"
 
 
 def task2():
     wait(500)
-    return 'OK2'
+    return "OK2"
 
 
 def task3():
     # Unhandled Exception should interrupt all other tasks
-    raise Exception('oops')
+    raise Exception("oops")
 
 
 def task4():

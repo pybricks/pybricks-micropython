@@ -21,10 +21,12 @@
 
 #define PORT_TO_IDX(p) ((p) - PBDRV_CONFIG_FIRST_MOTOR_PORT)
 
-inline void _pbdrv_motor_init(void) { }
+inline void _pbdrv_motor_init(void) {
+}
 
 #if PBIO_CONFIG_ENABLE_DEINIT
-void _pbdrv_motor_deinit(void) { }
+void _pbdrv_motor_deinit(void) {
+}
 #endif
 
 typedef struct _motor_t {
@@ -63,13 +65,12 @@ static pbio_error_t ev3dev_motor_init(motor_t *mtr, pbio_port_t port) {
         // Determine motor type ID
         if (!strcmp(driver_name, "lego-ev3-l-motor")) {
             mtr->id = PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR;
-        }
-        else {
+        } else {
             mtr->id = PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR;
         }
         // Close driver name file
         if (fclose(f_driver_name) != 0) {
-           return PBIO_ERROR_IO;
+            return PBIO_ERROR_IO;
         }
         // Open command file
         err = sysfs_open_tacho_motor_attr(&mtr->f_command, mtr->n_motor, "command", "w");
@@ -80,7 +81,7 @@ static pbio_error_t ev3dev_motor_init(motor_t *mtr, pbio_port_t port) {
         err = sysfs_open_tacho_motor_attr(&mtr->f_duty, mtr->n_motor, "duty_cycle_sp", "w");
         if (err != PBIO_SUCCESS) {
             return err;
-            
+
         }
     }
     // If tacho-motor was not found, look for dc-motor instead
@@ -102,8 +103,7 @@ static pbio_error_t ev3dev_motor_init(motor_t *mtr, pbio_port_t port) {
         if (err != PBIO_SUCCESS) {
             return err;
         }
-    }
-    else {
+    } else {
         // Could not find either type of motor, so return the error
         return err;
     }
@@ -175,7 +175,7 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
         mtr->coasting = false;
     }
     // Set the duty cycle value
-    err = sysfs_write_int(mtr->f_duty, duty_cycle/100);
+    err = sysfs_write_int(mtr->f_duty, duty_cycle / 100);
     return ev3dev_motor_connect_status(mtr, err);
 }
 

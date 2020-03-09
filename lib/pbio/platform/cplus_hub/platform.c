@@ -17,8 +17,8 @@
 
 const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON] = {
     [0] = {
-        .gpio   = { .bank = GPIOC, .pin = 14 },
-        .pull   = PBDRV_GPIO_PULL_NONE,
+        .gpio = { .bank = GPIOC, .pin = 14 },
+        .pull = PBDRV_GPIO_PULL_NONE,
         .button = PBIO_BUTTON_CENTER,
         .active_low = true,
     },
@@ -26,42 +26,42 @@ const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTO
 
 // Port A
 const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_0 = {
-    .id1        = { .bank = GPIOC, .pin = 5  },
-    .id2        = { .bank = GPIOB, .pin = 2  },
-    .uart_buf   = { .bank = GPIOH, .pin = 0  },
-    .uart_tx    = { .bank = GPIOB, .pin = 6  },
-    .uart_rx    = { .bank = GPIOB, .pin = 7  },
-    .alt        = GPIO_AF7_USART1,
+    .id1 = { .bank = GPIOC, .pin = 5  },
+    .id2 = { .bank = GPIOB, .pin = 2  },
+    .uart_buf = { .bank = GPIOH, .pin = 0  },
+    .uart_tx = { .bank = GPIOB, .pin = 6  },
+    .uart_rx = { .bank = GPIOB, .pin = 7  },
+    .alt = GPIO_AF7_USART1,
 };
 
 // Port B
 const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_1 = {
-    .id1        = { .bank = GPIOC, .pin = 3  },
-    .id2        = { .bank = GPIOC, .pin = 0  },
-    .uart_buf   = { .bank = GPIOH, .pin = 1  },
-    .uart_tx    = { .bank = GPIOA, .pin = 2  },
-    .uart_rx    = { .bank = GPIOA, .pin = 3  },
-    .alt        = GPIO_AF7_USART2,
+    .id1 = { .bank = GPIOC, .pin = 3  },
+    .id2 = { .bank = GPIOC, .pin = 0  },
+    .uart_buf = { .bank = GPIOH, .pin = 1  },
+    .uart_tx = { .bank = GPIOA, .pin = 2  },
+    .uart_rx = { .bank = GPIOA, .pin = 3  },
+    .alt = GPIO_AF7_USART2,
 };
 
 // Port C
 const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_2 = {
-    .id1        = { .bank = GPIOC, .pin = 4  },
-    .id2        = { .bank = GPIOA, .pin = 7  },
-    .uart_buf   = { .bank = GPIOC, .pin = 8  },
-    .uart_tx    = { .bank = GPIOC, .pin = 10 },
-    .uart_rx    = { .bank = GPIOC, .pin = 11 },
-    .alt        = GPIO_AF7_USART3,
+    .id1 = { .bank = GPIOC, .pin = 4  },
+    .id2 = { .bank = GPIOA, .pin = 7  },
+    .uart_buf = { .bank = GPIOC, .pin = 8  },
+    .uart_tx = { .bank = GPIOC, .pin = 10 },
+    .uart_rx = { .bank = GPIOC, .pin = 11 },
+    .alt = GPIO_AF7_USART3,
 };
 
 // Port D
 const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_3 = {
-    .id1        = { .bank = GPIOA, .pin = 4  },
-    .id2        = { .bank = GPIOA, .pin = 5  },
-    .uart_buf   = { .bank = GPIOC, .pin = 7  },
-    .uart_tx    = { .bank = GPIOB, .pin = 11 },
-    .uart_rx    = { .bank = GPIOB, .pin = 10  },
-    .alt        = GPIO_AF8_LPUART1,
+    .id1 = { .bank = GPIOA, .pin = 4  },
+    .id2 = { .bank = GPIOA, .pin = 5  },
+    .uart_buf = { .bank = GPIOC, .pin = 7  },
+    .uart_tx = { .bank = GPIOB, .pin = 11 },
+    .uart_rx = { .bank = GPIOB, .pin = 10  },
+    .alt = GPIO_AF8_LPUART1,
 };
 
 enum {
@@ -72,22 +72,22 @@ enum {
 };
 
 const pbdrv_uart_stm32_hal_platform_data_t
-pbdrv_uart_stm32_hal_platform_data[PBDRV_CONFIG_UART_STM32_HAL_NUM_UART] = {
+    pbdrv_uart_stm32_hal_platform_data[PBDRV_CONFIG_UART_STM32_HAL_NUM_UART] = {
     [UART_PORT_A] = {
-        .uart   = USART1,
-        .irq    = USART1_IRQn,
+        .uart = USART1,
+        .irq = USART1_IRQn,
     },
     [UART_PORT_B] = {
-        .uart   = USART2,
-        .irq    = USART2_IRQn,
+        .uart = USART2,
+        .irq = USART2_IRQn,
     },
     [UART_PORT_C] = {
-        .uart   = USART3,
-        .irq    = USART3_IRQn,
+        .uart = USART3,
+        .irq = USART3_IRQn,
     },
     [UART_PORT_D] = {
-        .uart   = LPUART1,
-        .irq    = LPUART1_IRQn,
+        .uart = LPUART1,
+        .irq = LPUART1_IRQn,
     },
 };
 
@@ -116,19 +116,19 @@ enum {
 
 const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
     [0] = {
-        .uart_id    = UART_PORT_A,
+        .uart_id = UART_PORT_A,
         .counter_id = COUNTER_PORT_A,
     },
     [1] = {
-        .uart_id    = UART_PORT_B,
+        .uart_id = UART_PORT_B,
         .counter_id = COUNTER_PORT_B,
     },
     [2] = {
-        .uart_id    = UART_PORT_C,
+        .uart_id = UART_PORT_C,
         .counter_id = COUNTER_PORT_C,
     },
     [3] = {
-        .uart_id    = UART_PORT_D,
+        .uart_id = UART_PORT_D,
         .counter_id = COUNTER_PORT_D,
     },
 };
@@ -140,14 +140,14 @@ const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDE
 uint32_t SystemCoreClock = 4000000;
 
 // copied from system_stm32.c in stm32 port
-const uint8_t  AHBPrescTable[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9 };
-const uint8_t  APBPrescTable[8] =  { 0, 0, 0, 0, 1, 2, 3, 4 };
+const uint8_t AHBPrescTable[16] = { 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9 };
+const uint8_t APBPrescTable[8] = { 0, 0, 0, 0, 1, 2, 3, 4 };
 const uint32_t MSIRangeTable[12] = {
     100000, 200000, 400000, 800000, 1000000, 2000000,
     4000000, 8000000, 16000000, 24000000, 32000000, 48000000
 };
 
-void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc) {
+void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc) {
     GPIO_InitTypeDef gpio_init = { 0 };
     ADC_ChannelConfTypeDef adc_ch_config = { 0 };
 
@@ -213,9 +213,9 @@ void SystemInit(void) {
     static TIM_HandleTypeDef htim15;
     static TIM_HandleTypeDef htim16;
 
-#if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
-    SCB->CPACR |= ((3UL << 10*2)|(3UL << 11*2));  /* set CP10 and CP11 Full Access */
-#endif
+    #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
+    SCB->CPACR |= ((3UL << 10 * 2) | (3UL << 11 * 2));  /* set CP10 and CP11 Full Access */
+    #endif
 
     // Using external 16Mhz oscillator
     osc_init.OscillatorType = RCC_OSCILLATORTYPE_MSI;
@@ -234,7 +234,7 @@ void SystemInit(void) {
 
     clk_init.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     clk_init.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-    clk_init.AHBCLKDivider  = RCC_SYSCLK_DIV1; // HCLK 80MHz
+    clk_init.AHBCLKDivider = RCC_SYSCLK_DIV1;  // HCLK 80MHz
     clk_init.APB1CLKDivider = RCC_HCLK_DIV1; // disassembly shows DIV16, but 80MHz is OK according to data sheet
     clk_init.APB2CLKDivider = RCC_HCLK_DIV1;
 
@@ -245,14 +245,14 @@ void SystemInit(void) {
 
     // enable clocks
     RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN | RCC_AHB1ENR_DMA2EN | RCC_AHB1ENR_FLASHEN |
-                    RCC_AHB1ENR_CRCEN;
+        RCC_AHB1ENR_CRCEN;
     RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN | RCC_AHB2ENR_GPIOBEN | RCC_AHB2ENR_GPIOCEN |
-                    RCC_AHB2ENR_GPIODEN | RCC_AHB2ENR_GPIOHEN | RCC_AHB2ENR_ADCEN;
+        RCC_AHB2ENR_GPIODEN | RCC_AHB2ENR_GPIOHEN | RCC_AHB2ENR_ADCEN;
     RCC->APB1ENR1 |= RCC_APB1ENR1_TIM2EN | RCC_APB1ENR1_WWDGEN | RCC_APB1ENR1_USART2EN |
-                     RCC_APB1ENR1_USART3EN | RCC_APB1ENR1_I2C1EN | RCC_APB1ENR1_PWREN;
+        RCC_APB1ENR1_USART3EN | RCC_APB1ENR1_I2C1EN | RCC_APB1ENR1_PWREN;
     RCC->APB1ENR2 |= RCC_APB1ENR2_LPUART1EN;
     RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN | RCC_APB2ENR_TIM1EN | RCC_APB2ENR_SPI1EN |
-                    RCC_APB2ENR_USART1EN | RCC_APB2ENR_TIM15EN | RCC_APB2ENR_TIM16EN;
+        RCC_APB2ENR_USART1EN | RCC_APB2ENR_TIM15EN | RCC_APB2ENR_TIM16EN;
 
 
     // Keep main power on (PC12)
@@ -270,17 +270,17 @@ void SystemInit(void) {
 
     htim1.Instance = TIM1;
     htim1.Init.Prescaler = 8 - 1;
-    htim1.Init.Period = 10000 -1;
+    htim1.Init.Period = 10000 - 1;
     HAL_TIM_Base_Init(&htim1);
 
     htim15.Instance = TIM15;
     htim15.Init.Prescaler = 8 - 1;
-    htim15.Init.Period = 10000 -1;
+    htim15.Init.Period = 10000 - 1;
     HAL_TIM_Base_Init(&htim15);
 
     htim16.Instance = TIM16;
     htim16.Init.Prescaler = 8 - 1;
-    htim16.Init.Period = 10000 -1;
+    htim16.Init.Period = 10000 - 1;
     HAL_TIM_Base_Init(&htim16);
 
     cplus_hub_htim1 = &htim1;

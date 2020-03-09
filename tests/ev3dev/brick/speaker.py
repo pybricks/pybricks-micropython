@@ -47,43 +47,43 @@ ev3.speaker.play_notes(notes=[], tempo=120)
 
 # String doesn't work because it iterates each character
 try:
-    ev3.speaker.play_notes('C4/4')
+    ev3.speaker.play_notes("C4/4")
 except ValueError as ex:
     print(ex)
 
 # First character must be A-G or R
 try:
-    ev3.speaker.play_notes(['X'])
+    ev3.speaker.play_notes(["X"])
 except ValueError as ex:
     print(ex)
 
 # Second character must be 2-8
 try:
-    ev3.speaker.play_notes(['C1'])
+    ev3.speaker.play_notes(["C1"])
 except ValueError as ex:
     print(ex)
 
 # Certain notes can't have sharp or flat
 try:
-    ev3.speaker.play_notes(['Cb'])
+    ev3.speaker.play_notes(["Cb"])
 except ValueError as ex:
     print(ex)
 
 # '/' delimiter is required
 try:
-    ev3.speaker.play_notes(['C#4'])
+    ev3.speaker.play_notes(["C#4"])
 except ValueError as ex:
     print(ex)
 
 # fraction is required
 try:
-    ev3.speaker.play_notes(['Db4/'])
+    ev3.speaker.play_notes(["Db4/"])
 except ValueError as ex:
     print(ex)
 
 
 def notes():
-    yield 'E4/4'
+    yield "E4/4"
     raise RuntimeError("notes iter error")
 
 
@@ -110,7 +110,7 @@ ev3.speaker.play_file(file=SoundFile.HELLO)
 
 # file not found gives RuntimeError
 try:
-    ev3.speaker.play_file('bad')
+    ev3.speaker.play_file("bad")
 except RuntimeError as ex:
     print(ex)
 
@@ -124,10 +124,10 @@ except TypeError as ex:
     print(ex)
 
 # one argument OK
-ev3.speaker.say('hi')
+ev3.speaker.say("hi")
 
 # keyword argument OK
-ev3.speaker.say(text='hi')
+ev3.speaker.say(text="hi")
 
 
 # set_volume method
@@ -142,14 +142,14 @@ except TypeError as ex:
 ev3.speaker.set_volume(0)
 
 # two arguments OK
-ev3.speaker.set_volume(0, 'Beep')
+ev3.speaker.set_volume(0, "Beep")
 
 # keyword argument OK
-ev3.speaker.set_volume(volume=0, which='Beep')
+ev3.speaker.set_volume(volume=0, which="Beep")
 
 # only certain values allowed for which=
 try:
-    ev3.speaker.set_volume(0, 'bad')
+    ev3.speaker.set_volume(0, "bad")
 except ValueError as ex:
     print(ex)
 
@@ -160,16 +160,16 @@ except ValueError as ex:
 ev3.speaker.set_speech_options()
 
 # one argument is OK
-ev3.speaker.set_speech_options('en')
+ev3.speaker.set_speech_options("en")
 
 # two options are OK
-ev3.speaker.set_speech_options('en', 'f1')
+ev3.speaker.set_speech_options("en", "f1")
 
 # three options are OK
-ev3.speaker.set_speech_options('en', 'f1', 100)
+ev3.speaker.set_speech_options("en", "f1", 100)
 
 # four options are OK
-ev3.speaker.set_speech_options('en', 'f1', 100, 50)
+ev3.speaker.set_speech_options("en", "f1", 100, 50)
 
 # keyword args are OK
-ev3.speaker.set_speech_options(language='en', voice='f1', speed=100, pitch=50)
+ev3.speaker.set_speech_options(language="en", voice="f1", speed=100, pitch=50)

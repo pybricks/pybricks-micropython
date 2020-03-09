@@ -68,7 +68,7 @@ static pbio_error_t get_device(pbdevice_t **pbdev, pbio_iodev_type_id_t valid_id
     _pbdev->type_id = valid_id;
 
     // For special sensor classes we are done. No need to read mode.
-    if (valid_id == PBIO_IODEV_TYPE_ID_CUSTOM_I2C  ||
+    if (valid_id == PBIO_IODEV_TYPE_ID_CUSTOM_I2C ||
         valid_id == PBIO_IODEV_TYPE_ID_CUSTOM_UART ||
         valid_id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR) {
         *pbdev = _pbdev;
@@ -94,7 +94,7 @@ static pbio_error_t get_device(pbdevice_t **pbdev, pbio_iodev_type_id_t valid_id
 
 // Get the required mode switch time delay for a given sensor type and/or mode
 static uint32_t get_mode_switch_delay(pbio_iodev_type_id_t id, uint8_t mode) {
-    switch(id) {
+    switch (id) {
         case PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR:
             return 30;
         case PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR:
@@ -123,7 +123,7 @@ static pbio_error_t get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values)
     if (pbdev->mode != mode || (
         // and also if this sensor/mode requires setting it every time:
         pbdev->type_id == PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR && mode >= PBIO_IODEV_MODE_EV3_ULTRASONIC_SENSOR__SI_CM
-    )) {
+        )) {
         err = lego_sensor_set_mode(pbdev->sensor, mode);
         if (err != PBIO_SUCCESS) {
             return err;
@@ -171,13 +171,13 @@ static pbio_error_t get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values)
                 values[i] = *((uint32_t *)(data + i * 4));
                 break;
             case LEGO_SENSOR_DATA_TYPE_INT16_BE:
-                values[i] = (int16_t) __builtin_bswap16(*(uint16_t *) (data + i * 2));
+                values[i] = (int16_t)__builtin_bswap16(*(uint16_t *)(data + i * 2));
                 break;
             case LEGO_SENSOR_DATA_TYPE_FLOAT:
                 *(float *)(values + i) = *((float *)(data + i * 4));
                 break;
             default:
-                return(PBIO_ERROR_IO);
+                return PBIO_ERROR_IO;
         }
     }
 
@@ -200,7 +200,7 @@ pbdevice_t *pbdevice_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id)
             if (err == PBIO_SUCCESS) {
                 break;
             }
-            mp_hal_delay_ms(1000*(i+1));
+            mp_hal_delay_ms(1000 * (i + 1));
         }
     }
     pb_assert(err);
@@ -238,7 +238,7 @@ int8_t pbdevice_get_mode_id_from_str(pbdevice_t *pbdev, const char *mode_str) {
 void pbdevice_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color) {
     // Turn on the light through device specific mode
     uint8_t mode;
-    switch(pbdev->type_id) {
+    switch (pbdev->type_id) {
         case PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR:
             switch (color) {
                 case PBIO_LIGHT_COLOR_GREEN:

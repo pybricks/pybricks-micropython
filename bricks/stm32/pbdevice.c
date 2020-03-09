@@ -21,7 +21,7 @@ struct _pbdevice_t {
     pbio_iodev_t iodev;
 };
 
-static void wait(pbio_error_t (*end)(pbio_iodev_t *), void (*cancel)(pbio_iodev_t *), pbio_iodev_t* iodev) {
+static void wait(pbio_error_t (*end)(pbio_iodev_t *), void (*cancel)(pbio_iodev_t *), pbio_iodev_t *iodev) {
     nlr_buf_t nlr;
     pbio_error_t err;
 
@@ -43,11 +43,13 @@ static void wait(pbio_error_t (*end)(pbio_iodev_t *), void (*cancel)(pbio_iodev_
 static void set_mode(pbio_iodev_t *iodev, uint8_t new_mode) {
     pbio_error_t err;
 
-    if (iodev->mode == new_mode){
+    if (iodev->mode == new_mode) {
         return;
     }
 
-    while ((err = pbio_iodev_set_mode_begin(iodev, new_mode)) == PBIO_ERROR_AGAIN);
+    while ((err = pbio_iodev_set_mode_begin(iodev, new_mode)) == PBIO_ERROR_AGAIN) {
+        ;
+    }
     pb_assert(err);
     wait(pbio_iodev_set_mode_end, pbio_iodev_set_mode_cancel, iodev);
 }
@@ -70,7 +72,7 @@ pbdevice_t *pbdevice_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id)
 
     // Return pointer to device
     iodev->port = port;
-    return (pbdevice_t *) iodev;
+    return (pbdevice_t *)iodev;
 }
 
 void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values) {
@@ -101,11 +103,11 @@ void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values) {
             case PBIO_IODEV_DATA_TYPE_INT32:
                 values[i] = *((int32_t *)(data + i * 4));
                 break;
-#if MICROPY_PY_BUILTINS_FLOAT
+            #if MICROPY_PY_BUILTINS_FLOAT
             case PBIO_IODEV_DATA_TYPE_FLOAT:
                 *(float *)(values + i) = *((float *)(data + i * 4));
                 break;
-#endif
+            #endif
             default:
                 pb_assert(PBIO_ERROR_IO);
         }
@@ -139,17 +141,19 @@ void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values, uint8
             case PBIO_IODEV_DATA_TYPE_INT32:
                 *(int32_t *)(data + i * 4) = values[i];
                 break;
-#if MICROPY_PY_BUILTINS_FLOAT
+            #if MICROPY_PY_BUILTINS_FLOAT
             case PBIO_IODEV_DATA_TYPE_FLOAT:
                 *(float *)(data + i * 4) = values[i];
                 break;
-#endif
+            #endif
             default:
                 pb_assert(PBIO_ERROR_IO);
         }
     }
     pbio_error_t err;
-    while ((err = pbio_iodev_set_data_begin(iodev, iodev->mode, data)) == PBIO_ERROR_AGAIN);
+    while ((err = pbio_iodev_set_data_begin(iodev, iodev->mode, data)) == PBIO_ERROR_AGAIN) {
+        ;
+    }
     pb_assert(err);
     wait(pbio_iodev_set_data_end, pbio_iodev_set_data_cancel, iodev);
 }
@@ -157,8 +161,7 @@ void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values, uint8
 void pbdevice_set_power_supply(pbdevice_t *pbdev, bool on) {
     if (on) {
         pb_assert(pbdrv_motor_set_duty_cycle(pbdev->iodev.port, -10000));
-    }
-    else {
+    } else {
         pb_assert(pbdrv_motor_coast(pbdev->iodev.port));
     }
 }
@@ -178,7 +181,7 @@ int8_t pbdevice_get_mode_id_from_str(pbdevice_t *pbdev, const char *mode_str) {
 void pbdevice_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color) {
     // Turn on the light through device specific mode
     uint8_t mode;
-    switch(pbdev->iodev.info->type_id) {
+    switch (pbdev->iodev.info->type_id) {
         case PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR:
             switch (color) {
                 case PBIO_LIGHT_COLOR_GREEN:

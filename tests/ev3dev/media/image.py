@@ -4,7 +4,7 @@ from pybricks.parameters import Color
 from pybricks.media.ev3dev import Font, Image
 
 # Working directory is top-level tests directory
-TEST_IMAGE = '../ports/pybricks/tests/ev3dev/media/test.png'
+TEST_IMAGE = "../ports/pybricks/tests/ev3dev/media/test.png"
 
 # requires one argument
 try:
@@ -17,7 +17,7 @@ img = Image(TEST_IMAGE)
 
 # error if file does not exist
 try:
-    img = Image('bad.png')
+    img = Image("bad.png")
 except OSError as ex:
     print(ex)
 
@@ -36,7 +36,7 @@ img = Image.empty(160, 120)
 
 # default args for empty are same size as screen
 empty = Image.empty()
-screen = Image('_screen_')
+screen = Image("_screen_")
 print(empty.width == screen.width)
 print(empty.height == screen.height)
 
@@ -164,20 +164,20 @@ except TypeError as ex:
 # Test draw_text()
 
 # three required arguments
-img.draw_text(0, 0, '')
-img.draw_text(x=0, y=0, text='')
+img.draw_text(0, 0, "")
+img.draw_text(x=0, y=0, text="")
 try:
     img.draw_text(0, 0)
 except TypeError as ex:
     print(ex)
 
 # 4th argument is kwarg
-img.draw_text(0, 0, '', Color.BLACK)
-img.draw_text(0, 0, '', text_color=Color.BLACK)
+img.draw_text(0, 0, "", Color.BLACK)
+img.draw_text(0, 0, "", text_color=Color.BLACK)
 
 # 5th argument is kwarg
-img.draw_text(0, 0, '', Color.BLACK, Color.WHITE)
-img.draw_text(0, 0, '', background_color=Color.WHITE)
+img.draw_text(0, 0, "", Color.BLACK, Color.WHITE)
+img.draw_text(0, 0, "", background_color=Color.WHITE)
 
 
 # Test set_font()
@@ -196,15 +196,15 @@ except TypeError as ex:
 img.print()
 
 # positional args take any object type
-img.print('', 0, False, img, {}, [])
+img.print("", 0, False, img, {}, [])
 
 # keyword-only arg end
-img.print(end='\n')
-img.print('', end='\n')
+img.print(end="\n")
+img.print("", end="\n")
 
 # keyword-only arg sep
-img.print(sep=' ')
-img.print('', sep=' ')
+img.print(sep=" ")
+img.print("", sep=" ")
 
 
 # Test save()
@@ -216,23 +216,23 @@ except TypeError as ex:
     print(ex)
 
 # actually creates file on disk
-img.save('test.png')
-uos.stat('test.png')
-uos.remove('test.png')
+img.save("test.png")
+uos.stat("test.png")
+uos.remove("test.png")
 
 # automatically adds file extension if missing
-img.save('test')
-uos.stat('test.png')
-uos.remove('test.png')
+img.save("test")
+uos.stat("test.png")
+uos.remove("test.png")
 
 # upper-case is OK too
-img.save('TEST.PNG')
-uos.stat('TEST.PNG')
-uos.remove('TEST.PNG')
+img.save("TEST.PNG")
+uos.stat("TEST.PNG")
+uos.remove("TEST.PNG")
 
 # illegal name or permissions issue gives OSError
 try:
     # this should fail because we are not root
-    img.save('/test.png')
+    img.save("/test.png")
 except OSError as ex:
     print(ex)

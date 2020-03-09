@@ -70,7 +70,7 @@ static struct testcase_setup_t pbio_test_setup = {
     .cleanup_fn = cleanup,
 };
 
-static struct testcase_t example_tests[]  = {
+static struct testcase_t example_tests[] = {
     PBIO_PT_THREAD_TEST(example_test),
     END_OF_TESTCASES
 };

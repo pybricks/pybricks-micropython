@@ -139,7 +139,7 @@ void mp_hal_delay_ms(mp_uint_t ms) {
         .tv_nsec = ms % 1000 * 1000000,
     };
     struct timespec remain;
-    for(;;) {
+    for (;;) {
         mp_handle_pending();
         MP_THREAD_GIL_EXIT();
         int ret = clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, &remain);

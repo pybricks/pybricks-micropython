@@ -57,7 +57,7 @@ STATIC MP_DEFINE_CONST_DICT(mod_experimental_globals, mod_experimental_globals_t
 
 const mp_obj_module_t pb_module_experimental = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mod_experimental_globals,
+    .globals = (mp_obj_dict_t *)&mod_experimental_globals,
 };
 
 #endif // PYBRICKS_PY_EXPERIMENTAL

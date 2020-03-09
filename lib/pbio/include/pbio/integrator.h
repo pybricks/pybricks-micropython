@@ -22,12 +22,12 @@ void pbio_rate_integrator_resume(pbio_rate_integrator_t *itg, int32_t time_now, 
 void pbio_rate_integrator_reset(pbio_rate_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref);
 
 void pbio_rate_integrator_get_errors(pbio_rate_integrator_t *itg,
-                                int32_t rate,
-                                int32_t rate_ref,
-                                int32_t count,
-                                int32_t count_ref,
-                                int32_t *rate_err,
-                                int32_t *rate_err_integral);
+    int32_t rate,
+    int32_t rate_ref,
+    int32_t count,
+    int32_t count_ref,
+    int32_t *rate_err,
+    int32_t *rate_err_integral);
 
 bool pbio_rate_integrator_stalled(pbio_rate_integrator_t *itg, int32_t time_now, int32_t rate, int32_t time_stall, int32_t rate_stall);
 

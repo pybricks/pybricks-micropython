@@ -130,29 +130,29 @@ typedef enum {
 
 
     // NXT Devices
-    PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR             ,   /**< MINDSTORMS NXT Touch Sensor */
-    PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR             ,   /**< MINDSTORMS NXT Light Sensor */
-    PBIO_IODEV_TYPE_ID_NXT_SOUND_SENSOR             ,   /**< MINDSTORMS NXT Sound Sensor */
-    PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR             ,   /**< MINDSTORMS NXT Color Sensor */
-    PBIO_IODEV_TYPE_ID_NXT_ULTRASONIC_SENSOR        ,   /**< MINDSTORMS NXT Ultrasonic Sensor */
-    PBIO_IODEV_TYPE_ID_NXT_TEMPERATURE_SENSOR       ,   /**< MINDSTORMS NXT Ultrasonic Sensor */
-    PBIO_IODEV_TYPE_ID_NXT_ENERGY_METER             ,   /**< MINDSTORMS NXT Energy Meter */
+    PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR,                /**< MINDSTORMS NXT Touch Sensor */
+    PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR,                /**< MINDSTORMS NXT Light Sensor */
+    PBIO_IODEV_TYPE_ID_NXT_SOUND_SENSOR,                /**< MINDSTORMS NXT Sound Sensor */
+    PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR,                /**< MINDSTORMS NXT Color Sensor */
+    PBIO_IODEV_TYPE_ID_NXT_ULTRASONIC_SENSOR,           /**< MINDSTORMS NXT Ultrasonic Sensor */
+    PBIO_IODEV_TYPE_ID_NXT_TEMPERATURE_SENSOR,          /**< MINDSTORMS NXT Ultrasonic Sensor */
+    PBIO_IODEV_TYPE_ID_NXT_ENERGY_METER,                /**< MINDSTORMS NXT Energy Meter */
 
     // EV3 Devices
-    PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR             ,   /**< MINDSTORMS EV3 Touch Sensor */
-    PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR              ,   /**< MINDSTORMS EV3 Large Motor */
-    PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR             ,   /**< MINDSTORMS EV3 Medium Motor */
+    PBIO_IODEV_TYPE_ID_EV3_TOUCH_SENSOR,                /**< MINDSTORMS EV3 Touch Sensor */
+    PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR,                 /**< MINDSTORMS EV3 Large Motor */
+    PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR,                /**< MINDSTORMS EV3 Medium Motor */
 
     // ev3dev devices
-    PBIO_IODEV_TYPE_ID_EV3DEV_DC_MOTOR              ,   /**< generic ev3dev rcx-motor */
-    PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR           ,   /**< generic ev3dev-supported sensor */
+    PBIO_IODEV_TYPE_ID_EV3DEV_DC_MOTOR,                 /**< generic ev3dev rcx-motor */
+    PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR,              /**< generic ev3dev-supported sensor */
 
     // Generic & Custom devices
-    PBIO_IODEV_TYPE_ID_NXT_ANALOG                   ,   /**< MINDSTORMS NXT-style Analog Sensor */
-    PBIO_IODEV_TYPE_ID_NXT_I2C                      ,   /**< MINDSTORMS NXT-style I2C Sensor */
-    PBIO_IODEV_TYPE_ID_CUSTOM_I2C                   ,   /**< Custom I2C Sensor */
-    PBIO_IODEV_TYPE_ID_LUMP_UART                    ,   /**< Device with LEGO UART Messaging Protocol */
-    PBIO_IODEV_TYPE_ID_CUSTOM_UART                  ,   /**< Custom UART Sensor */
+    PBIO_IODEV_TYPE_ID_NXT_ANALOG,                      /**< MINDSTORMS NXT-style Analog Sensor */
+    PBIO_IODEV_TYPE_ID_NXT_I2C,                         /**< MINDSTORMS NXT-style I2C Sensor */
+    PBIO_IODEV_TYPE_ID_CUSTOM_I2C,                      /**< Custom I2C Sensor */
+    PBIO_IODEV_TYPE_ID_LUMP_UART,                       /**< Device with LEGO UART Messaging Protocol */
+    PBIO_IODEV_TYPE_ID_CUSTOM_UART,                     /**< Custom UART Sensor */
 
 } pbio_iodev_type_id_t;
 

@@ -41,9 +41,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_2(usignal_pthread_kill_obj, usignal_pthread_kill)
 STATIC const mp_rom_map_elem_t usignal_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_usignal) },
     { MP_ROM_QSTR(MP_QSTR_pause), MP_ROM_PTR(&usignal_pause_obj) },
-#if MICROPY_PY_THREAD
+    #if MICROPY_PY_THREAD
     { MP_ROM_QSTR(MP_QSTR_pthread_kill), MP_ROM_PTR(&usignal_pthread_kill_obj) },
-#endif // MICROPY_PY_THREAD
+    #endif // MICROPY_PY_THREAD
     { MP_ROM_QSTR(MP_QSTR_SIGHUP), MP_ROM_INT(SIGHUP) },
     { MP_ROM_QSTR(MP_QSTR_SIGINT), MP_ROM_INT(SIGINT) },
     { MP_ROM_QSTR(MP_QSTR_SIGTERM), MP_ROM_INT(SIGTERM) },
@@ -54,7 +54,7 @@ STATIC MP_DEFINE_CONST_DICT(pb_module_usignal_globals, usignal_globals_table);
 
 const mp_obj_module_t pb_module_usignal = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&pb_module_usignal_globals,
+    .globals = (mp_obj_dict_t *)&pb_module_usignal_globals,
 };
 
 #endif // PYBRICKS_PY_USIGNAL

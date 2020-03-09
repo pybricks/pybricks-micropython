@@ -210,36 +210,36 @@ static const pbio_iodev_type_id_t ioport_type_id_lookup[3][3] = {
 PROCESS(pbdrv_ioport_lpf2_process, "I/O port");
 
 static ioport_dev_t ioport_devs[PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS] = {
-#if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 0
+    #if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 0
     [0] = {
         .pins = &pbdrv_ioport_lpf2_platform_port_0,
     },
-#endif
-#if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 1
+    #endif
+    #if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 1
     [1] = {
         .pins = &pbdrv_ioport_lpf2_platform_port_1,
     },
-#endif
-#if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 2
+    #endif
+    #if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 2
     [2] = {
         .pins = &pbdrv_ioport_lpf2_platform_port_2,
     },
-#endif
-#if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 3
+    #endif
+    #if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 3
     [3] = {
         .pins = &pbdrv_ioport_lpf2_platform_port_3,
     },
-#endif
-#if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 4
+    #endif
+    #if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 4
     [4] = {
         .pins = &pbdrv_ioport_lpf2_platform_port_4,
     },
-#endif
-#if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 5
+    #endif
+    #if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 5
     [5] = {
         .pins = &pbdrv_ioport_lpf2_platform_port_5,
     },
-#endif
+    #endif
 };
 
 static void ioport_enable_uart(ioport_dev_t *ioport) {
@@ -285,7 +285,7 @@ pbio_error_t pbdrv_ioport_get_iodev(pbio_port_t port, pbio_iodev_t **iodev) {
 // This is the device connection manager (dcm). It monitors the ID1 and ID2 pins
 // on the port to see when devices are connected or disconnected.
 // It is expected for there to be a 2ms delay between calls to this function.
-static PT_THREAD(poll_dcm(ioport_dev_t *ioport)) {
+static PT_THREAD(poll_dcm(ioport_dev_t * ioport)) {
     struct pt *pt = &ioport->pt;
     dcm_data_t *data = &ioport->dcm;
     const pbdrv_ioport_lpf2_platform_port_t pins = *ioport->pins;
@@ -328,13 +328,12 @@ static PT_THREAD(poll_dcm(ioport_dev_t *ioport)) {
 
         // ID1 is inverse of touch sensor value
         // TODO: save this value to sensor data
-        //sensor_data = !pbdrv_gpio_input(&pins.id1);
+        // sensor_data = !pbdrv_gpio_input(&pins.id1);
     }
     // if ID2 changed from low to high
     else if (data->prev_gpio_value == 0 && data->gpio_value == 1) {
         data->type_id = PBIO_IODEV_TYPE_ID_LPF2_TPOINT;
-    }
-    else {
+    } else {
         // read ID1
         data->prev_gpio_value = pbdrv_gpio_input(&pins.id1);
 
@@ -355,8 +354,7 @@ static PT_THREAD(poll_dcm(ioport_dev_t *ioport)) {
         else if (data->prev_gpio_value == 0 && data->gpio_value == 0) {
             // we have ID1 == GND
             data->dev_id1_group = DEV_ID1_GROUP_GND;
-        }
-        else {
+        } else {
             // set ID1 as input
             pbdrv_gpio_out_high(&pins.uart_buf);
             pbdrv_gpio_input(&pins.uart_tx);
@@ -367,8 +365,7 @@ static PT_THREAD(poll_dcm(ioport_dev_t *ioport)) {
             if (pbdrv_gpio_input(&pins.id1) == 1) {
                 // we have ID1 == open
                 data->dev_id1_group = DEV_ID1_GROUP_OPEN;
-            }
-            else {
+            } else {
                 // we have ID1 == pull down
                 data->dev_id1_group = DEV_ID1_GROUP_PULL_DOWN;
             }
@@ -408,8 +405,7 @@ static PT_THREAD(poll_dcm(ioport_dev_t *ioport)) {
         else if (data->prev_gpio_value == 0 && data->gpio_value == 1) {
             // something might explode
             data->type_id = PBIO_IODEV_TYPE_ID_LPF2_EXPLOD;
-        }
-        else {
+        } else {
             // set ID1 high
             pbdrv_gpio_out_high(&pins.uart_tx);
             pbdrv_gpio_out_low(&pins.uart_buf);
@@ -431,19 +427,16 @@ static PT_THREAD(poll_dcm(ioport_dev_t *ioport)) {
                     if (data->dev_id1_group < 3) {
                         data->type_id = ioport_type_id_lookup[data->dev_id1_group][2];
                     }
-                }
-                else {
+                } else {
                     if (data->dev_id1_group < 3) {
                         data->type_id = ioport_type_id_lookup[data->dev_id1_group][1];
                     }
                 }
-            }
-            else {
+            } else {
                 // we know the device now
                 if (data->dev_id1_group < 3) {
                     data->type_id = ioport_type_id_lookup[data->dev_id1_group][0];
-                }
-                else {
+                } else {
                     data->type_id = PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART;
                 }
             }

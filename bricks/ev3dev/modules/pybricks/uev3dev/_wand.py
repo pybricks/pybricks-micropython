@@ -10,31 +10,31 @@ from ustruct import unpack
 
 from uctypes import bytearray_at
 
-_wand = ffi.open('libMagickWand-6.Q16.so.3')
-_genisis = _wand.func('v', 'MagickWandGenesis', '')
-_terminus = _wand.func('v', 'MagickWandTerminus', '')
-_new = _wand.func('p', 'NewMagickWand', '')
-_destroy = _wand.func('p', 'DestroyMagickWand', 'p')
-_clear_exception = _wand.func('i', 'MagickClearException', 'p')
-_get_exception = _wand.func('s', 'MagickGetException', 'pp')
+_wand = ffi.open("libMagickWand-6.Q16.so.3")
+_genisis = _wand.func("v", "MagickWandGenesis", "")
+_terminus = _wand.func("v", "MagickWandTerminus", "")
+_new = _wand.func("p", "NewMagickWand", "")
+_destroy = _wand.func("p", "DestroyMagickWand", "p")
+_clear_exception = _wand.func("i", "MagickClearException", "p")
+_get_exception = _wand.func("s", "MagickGetException", "pp")
 # _get_exception_type = _wand.func('I', 'MagickGetExceptionType', 'p')
-_relinquish_memory = _wand.func('p', 'MagickRelinquishMemory', 'p')
-_read_image = _wand.func('I', 'MagickReadImage', 'pP')
-_write_image = _wand.func('I', 'MagickWriteImage', 'pP')
-_export_image_pixels = _wand.func('i', 'MagickExportImagePixels', 'pPPPPPIp')
-_reset_iterator = _wand.func('v', 'MagickResetIterator', 'p')
-_border_image = _wand.func('i', 'MagickBorderImage', 'pPPPI')
-_extent_image = _wand.func('i', 'MagickExtentImage', 'pPPPP')
+_relinquish_memory = _wand.func("p", "MagickRelinquishMemory", "p")
+_read_image = _wand.func("I", "MagickReadImage", "pP")
+_write_image = _wand.func("I", "MagickWriteImage", "pP")
+_export_image_pixels = _wand.func("i", "MagickExportImagePixels", "pPPPPPIp")
+_reset_iterator = _wand.func("v", "MagickResetIterator", "p")
+_border_image = _wand.func("i", "MagickBorderImage", "pPPPI")
+_extent_image = _wand.func("i", "MagickExtentImage", "pPPPP")
 
-_get_image_width = _wand.func('p', 'MagickGetImageWidth', 'p')
-_get_image_height = _wand.func('p', 'MagickGetImageHeight', 'p')
-_get_image_depth = _wand.func('p', 'MagickGetImageDepth', 'p')
-_set_image_depth = _wand.func('i', 'MagickSetImageDepth', 'pP')
-_get_image_format = _wand.func('s', 'MagickGetImageFormat', 'p')
-_set_image_format = _wand.func('i', 'MagickSetImageFormat', 'pP')
-_get_image_blob = _wand.func('p', 'MagickGetImageBlob', 'pp')
-_get_image_gravity = _wand.func('I', 'MagickGetImageGravity', 'p')
-_set_image_gravity = _wand.func('i', 'MagickSetImageGravity', 'pI')
+_get_image_width = _wand.func("p", "MagickGetImageWidth", "p")
+_get_image_height = _wand.func("p", "MagickGetImageHeight", "p")
+_get_image_depth = _wand.func("p", "MagickGetImageDepth", "p")
+_set_image_depth = _wand.func("i", "MagickSetImageDepth", "pP")
+_get_image_format = _wand.func("s", "MagickGetImageFormat", "p")
+_set_image_format = _wand.func("i", "MagickSetImageFormat", "pP")
+_get_image_blob = _wand.func("p", "MagickGetImageBlob", "pp")
+_get_image_gravity = _wand.func("I", "MagickGetImageGravity", "p")
+_set_image_gravity = _wand.func("i", "MagickSetImageGravity", "pI")
 
 # global library init (a well-mannered program would call _terminus() later)
 _genisis()
@@ -42,10 +42,10 @@ _genisis()
 
 class MagickWandError(Exception):
     def __init__(self, severity, desc):
-        super(MagickWandError, self).__init__('{}: {}'.format(severity, desc))
+        super(MagickWandError, self).__init__("{}: {}".format(severity, desc))
 
 
-class MagickWand():
+class MagickWand:
     """Object for image manipulation using ImageMagick
 
     .. note:: Since micropython does not support ``__del__()`` on user-defined
@@ -53,6 +53,7 @@ class MagickWand():
         to free the underlying resources.
 
     """
+
     def __init__(self):
         self._wand = _new()
 
@@ -69,11 +70,11 @@ class MagickWand():
         self.__del__()
 
     def _raise_error(self):
-        severity = bytearray(calcsize('I'))
+        severity = bytearray(calcsize("I"))
         desc = _get_exception(self._wand, severity)
         # FIXME: this leaks desc (need to call _relinquish_memory()) but not
         # sure how to marshal pointer to string
-        severity = unpack('I', severity)[0]
+        severity = unpack("I", severity)[0]
         _clear_exception(self._wand)
         raise MagickWandError(severity, desc)
 
@@ -145,10 +146,10 @@ class MagickWand():
     def image_blob(self):
         """Gets the image raw binary data"""
         _reset_iterator(self._wand)
-        length = bytearray(calcsize('P'))
+        length = bytearray(calcsize("P"))
         data = _get_image_blob(self._wand, length)
         try:
-            length = unpack('P', length)[0]
+            length = unpack("P", length)[0]
             # It is a bit inefficient to copy the data, but it is needed for
             # seamless memory management
             return bytearray_at(data, length)[:]
@@ -167,15 +168,13 @@ class MagickWand():
             storage (StorageType): the pixel data type
             pixels (bytearray): something big enough to hold all of the data
         """
-        ok = _export_image_pixels(self._wand, x, y, columns, rows, map_,
-                                  storage, pixels)
+        ok = _export_image_pixels(self._wand, x, y, columns, rows, map_, storage, pixels)
         if not ok:
             self._raise_error()
 
     def border_image(self, border_color, width, height, compose):
         """Surrounds the image with a border"""
-        ok = _border_image(self._wand, border_color._wand, int(width),
-                           int(height), int(compose))
+        ok = _border_image(self._wand, border_color._wand, int(width), int(height), int(compose))
         if not ok:
             self._raise_error()
 
@@ -193,21 +192,22 @@ class MagickWand():
         if not ok:
             self._raise_error()
 
-_new_pixel_wand = _wand.func('p', 'NewPixelWand', '')
-_destroy_pixel_wand = _wand.func('p', 'DestroyPixelWand', 'p')
-_pixel_get_exception = _wand.func('s', 'PixelGetException', 'pp')
-_pixel_clear_exception = _wand.func('i', 'PixelClearException', 'p')
 
-_pixel_get_color = _wand.func('s', 'PixelGetColorAsString', 'p')
-_pixel_set_color = _wand.func('i', 'PixelSetColor', 'pP')
+_new_pixel_wand = _wand.func("p", "NewPixelWand", "")
+_destroy_pixel_wand = _wand.func("p", "DestroyPixelWand", "p")
+_pixel_get_exception = _wand.func("s", "PixelGetException", "pp")
+_pixel_clear_exception = _wand.func("i", "PixelClearException", "p")
+
+_pixel_get_color = _wand.func("s", "PixelGetColorAsString", "p")
+_pixel_set_color = _wand.func("i", "PixelSetColor", "pP")
 
 
 class PixelError(Exception):
     def __init__(self, severity, desc):
-        super(PixelError, self).__init__('{}: {}'.format(severity, desc))
+        super(PixelError, self).__init__("{}: {}".format(severity, desc))
 
 
-class PixelWand():
+class PixelWand:
     def __init__(self):
         self._wand = _new_pixel_wand()
 
@@ -229,16 +229,16 @@ class PixelWand():
             self._raise_error()
 
     def _raise_error(self):
-        severity = bytearray(calcsize('I'))
+        severity = bytearray(calcsize("I"))
         desc = _pixel_get_exception(self._wand, severity)
         # TODO: we could be leaking desc here (the docs are not clear if it
         # needs to be freed or not)
-        severity = unpack('I', severity)[0]
+        severity = unpack("I", severity)[0]
         _pixel_clear_exception(self._wand)
         raise PixelError(severity, desc)
 
 
-class StorageType():
+class StorageType:
     UNDEFINED = 0
     CHAR = 1
     DOUBLE = 2
@@ -249,7 +249,7 @@ class StorageType():
     SHORT = 7
 
 
-class Gravity():
+class Gravity:
     UNDEFINED = 0
     FORGET = 1
     NORTH_WEST = 2
@@ -263,7 +263,7 @@ class Gravity():
     SOUTH_EAST = 10
 
 
-class CompositeOp():
+class CompositeOp:
     UNDEFINED = 0
     ALPHA = 1
     ATOP = 2

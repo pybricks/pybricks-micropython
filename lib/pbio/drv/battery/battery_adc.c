@@ -28,7 +28,7 @@ pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
     // REVISIT: do we want to take into account shunt resistor voltage drop
     // like on EV3? Probably only makes a difference of ~10mV at the most.
     *value = raw * PBDRV_CONFIG_BATTERY_ADC_VOLTAGE_SCALED_MAX /
-             PBDRV_CONFIG_BATTERY_ADC_VOLTAGE_RAW_MAX;
+        PBDRV_CONFIG_BATTERY_ADC_VOLTAGE_RAW_MAX;
 
     return PBIO_SUCCESS;
 }
@@ -45,7 +45,7 @@ pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
     }
 
     *value = raw * PBDRV_CONFIG_BATTERY_ADC_CURRENT_SCALED_MAX /
-             PBDRV_CONFIG_BATTERY_ADC_CURRENT_RAW_MAX;
+        PBDRV_CONFIG_BATTERY_ADC_CURRENT_RAW_MAX;
 
     return PBIO_SUCCESS;
 }

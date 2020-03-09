@@ -10,7 +10,7 @@ from parameters_c import Direction, Stop, Color, Button, Port
 from .media.ev3dev import ImageFile, SoundFile
 
 
-class Align():
+class Align:
     BOTTOM_LEFT = 1
     BOTTOM = 2
     BOTTOM_RIGHT = 3

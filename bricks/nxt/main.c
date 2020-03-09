@@ -65,8 +65,8 @@ static bool user_program_stdin_event_func(uint8_t c) {
 }
 
 static const pbsys_user_program_callbacks_t user_program_callbacks = {
-    .stop           = user_program_stop_func,
-    .stdin_event    = user_program_stdin_event_func,
+    .stop = user_program_stop_func,
+    .stdin_event = user_program_stdin_event_func,
 };
 
 static void pb_imports() {
@@ -87,7 +87,7 @@ static void pb_imports() {
 
 int main(int argc, char **argv) {
     int stack_dummy;
-    stack_top = (char*)&stack_dummy;
+    stack_top = (char *)&stack_dummy;
 
     pbio_init();
     nxt_init();
@@ -132,7 +132,7 @@ void gc_collect(void) {
     uintptr_t sp = gc_helper_get_regs_and_sp(regs);
 
     // trace the stack, including the registers (since they live on the stack in this function)
-    gc_collect_root((void**)sp, ((uint32_t)&_estack - sp) / sizeof(uint32_t));
+    gc_collect_root((void **)sp, ((uint32_t)&_estack - sp) / sizeof(uint32_t));
 
     // end the GC
     gc_collect_end();
@@ -150,11 +150,15 @@ mp_import_stat_t mp_import_stat(const char *path) {
 }
 
 void nlr_jump_fail(void *val) {
-    while (1);
+    while (1) {
+        ;
+    }
 }
 
 void NORETURN __fatal_error(const char *msg) {
-    while (1);
+    while (1) {
+        ;
+    }
 }
 
 #ifndef NDEBUG

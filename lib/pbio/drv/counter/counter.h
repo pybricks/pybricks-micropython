@@ -27,8 +27,12 @@ typedef struct {
 pbio_error_t pbdrv_counter_register(uint8_t id, pbdrv_counter_dev_t *dev);
 pbio_error_t pbdrv_counter_unregister(pbdrv_counter_dev_t *dev);
 #else // PBDRV_CONFIG_COUNTER
-static inline pbio_error_t pbdrv_counter_register(uint8_t id, pbdrv_counter_dev_t *dev) { return PBIO_ERROR_NOT_SUPPORTED; }
-static inline pbio_error_t pbdrv_counter_unregister(pbdrv_counter_dev_t *dev) { return PBIO_ERROR_NOT_SUPPORTED; }
+static inline pbio_error_t pbdrv_counter_register(uint8_t id, pbdrv_counter_dev_t *dev) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+static inline pbio_error_t pbdrv_counter_unregister(pbdrv_counter_dev_t *dev) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
 #endif // PBDRV_CONFIG_COUNTER
 
 #endif // _PBDRV_COUNTER_COUNTER_H_

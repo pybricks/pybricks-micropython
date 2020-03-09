@@ -72,24 +72,24 @@ void _pbio_light_poll(uint32_t now) {
     data = user_light_data;
 
     switch (data.pattern) {
-    case PBIO_LIGHT_PATTERN_NONE:
-        break;
-    case PBIO_LIGHT_PATTERN_BREATHE:
-        // breathe pattern has 64 values over the course of two seconds (2048ms)
-        idx = (now >> 5) & (64 - 1);
-        scale = breathe_pattern_data[idx] + 1;
-        data.r = data.r * scale / 256;
-        data.g = data.g * scale / 256;
-        data.b = data.b * scale / 256;
-        break;
-    case PBIO_LIGHT_PATTERN_FLASH:
-        // flash pattern has 8 value over the course of two seconds (2048ms)
-        idx = (now >> 8) & (8 - 1);
-        scale = flash_pattern_data[idx] + 1;
-        data.r = data.r * scale / 256;
-        data.g = data.g * scale / 256;
-        data.b = data.b * scale / 256;
-        break;
+        case PBIO_LIGHT_PATTERN_NONE:
+            break;
+        case PBIO_LIGHT_PATTERN_BREATHE:
+            // breathe pattern has 64 values over the course of two seconds (2048ms)
+            idx = (now >> 5) & (64 - 1);
+            scale = breathe_pattern_data[idx] + 1;
+            data.r = data.r * scale / 256;
+            data.g = data.g * scale / 256;
+            data.b = data.b * scale / 256;
+            break;
+        case PBIO_LIGHT_PATTERN_FLASH:
+            // flash pattern has 8 value over the course of two seconds (2048ms)
+            idx = (now >> 8) & (8 - 1);
+            scale = flash_pattern_data[idx] + 1;
+            data.r = data.r * scale / 256;
+            data.g = data.g * scale / 256;
+            data.b = data.b * scale / 256;
+            break;
     }
 
     pbdrv_light_set_rgb(PBIO_PORT_SELF, data.r, data.g, data.b);

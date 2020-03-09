@@ -18,14 +18,14 @@ static FILE *f_brightness[NLEDS];
 
 void _pbdrv_light_init(void) {
 
-    const char * const trigger_paths[NLEDS] = {
+    const char *const trigger_paths[NLEDS] = {
         "/sys/class/leds/led0:red:brick-status/trigger",
         "/sys/class/leds/led1:red:brick-status/trigger",
         "/sys/class/leds/led0:green:brick-status/trigger",
         "/sys/class/leds/led1:green:brick-status/trigger"
     };
 
-    const char * const brightness_paths[NLEDS] = {
+    const char *const brightness_paths[NLEDS] = {
         "/sys/class/leds/led0:red:brick-status/brightness",
         "/sys/class/leds/led1:red:brick-status/brightness",
         "/sys/class/leds/led0:green:brick-status/brightness",
@@ -33,7 +33,7 @@ void _pbdrv_light_init(void) {
     };
 
     for (int led = 0; led < NLEDS; led++) {
-        FILE* f_trigger = fopen(trigger_paths[led], "w");
+        FILE *f_trigger = fopen(trigger_paths[led], "w");
         if (!f_trigger) {
             continue;
         }
@@ -78,38 +78,38 @@ pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, uint8_t r, uint8_t g, uint8_t
 }
 
 pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t color,
-                                           uint8_t *r, uint8_t *g, uint8_t *b) {
+    uint8_t *r, uint8_t *g, uint8_t *b) {
 
     if (port != PBIO_PORT_SELF) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
     switch (color) {
-    case PBIO_LIGHT_COLOR_RED:
-        *r = 255;
-        *g = 0;
-        *b = 0;
-        break;
-    case PBIO_LIGHT_COLOR_ORANGE:
-        *r = 255;
-        *g = 255;
-        *b = 0;
-        break;
-    case PBIO_LIGHT_COLOR_YELLOW:
-        *r = 30;
-        *g = 255;
-        *b = 0;
-        break;
-    case PBIO_LIGHT_COLOR_GREEN:
-        *r = 0;
-        *g = 255;
-        *b = 0;
-        break;
-    default:
-        *r = 0;
-        *g = 0;
-        *b = 0;
-        break;
+        case PBIO_LIGHT_COLOR_RED:
+            *r = 255;
+            *g = 0;
+            *b = 0;
+            break;
+        case PBIO_LIGHT_COLOR_ORANGE:
+            *r = 255;
+            *g = 255;
+            *b = 0;
+            break;
+        case PBIO_LIGHT_COLOR_YELLOW:
+            *r = 30;
+            *g = 255;
+            *b = 0;
+            break;
+        case PBIO_LIGHT_COLOR_GREEN:
+            *r = 0;
+            *g = 255;
+            *b = 0;
+            break;
+        default:
+            *r = 0;
+            *g = 0;
+            *b = 0;
+            break;
     }
 
     return PBIO_SUCCESS;

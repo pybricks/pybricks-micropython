@@ -52,7 +52,7 @@ STATIC MP_DEFINE_CONST_DICT(pb_module_buttons_globals, buttons_globals_table);
 
 const mp_obj_module_t pb_module_buttons = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&pb_module_buttons_globals,
+    .globals = (mp_obj_dict_t *)&pb_module_buttons_globals,
 };
 
 #endif // PYBRICKS_PY_BUTTONS

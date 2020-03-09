@@ -36,16 +36,16 @@ def sum_complement(fw, max_size):
         word = fw.read(4)
         if not word:
             break
-        checksum += struct.unpack('I', word)[0]
+        checksum += struct.unpack("I", word)[0]
         size += 4
 
     if size > max_size:
         raise ValueError("File is too large")
 
     for _ in range(size, max_size, 4):
-        checksum += 0xffffffff
+        checksum += 0xFFFFFFFF
 
-    checksum &= 0xffffffff
+    checksum &= 0xFFFFFFFF
     correction = checksum and (1 << 32) - checksum or 0
 
     return correction
@@ -53,10 +53,24 @@ def sum_complement(fw, max_size):
 
 # thanks https://stackoverflow.com/a/33152544/1976323
 
-_CRC_TABLE = (0x00000000, 0x04C11DB7, 0x09823B6E, 0x0D4326D9,
-              0x130476DC, 0x17C56B6B, 0x1A864DB2, 0x1E475005,
-              0x2608EDB8, 0x22C9F00F, 0x2F8AD6D6, 0x2B4BCB61,
-              0x350C9B64, 0x31CD86D3, 0x3C8EA00A, 0x384FBDBD)
+_CRC_TABLE = (
+    0x00000000,
+    0x04C11DB7,
+    0x09823B6E,
+    0x0D4326D9,
+    0x130476DC,
+    0x17C56B6B,
+    0x1A864DB2,
+    0x1E475005,
+    0x2608EDB8,
+    0x22C9F00F,
+    0x2F8AD6D6,
+    0x2B4BCB61,
+    0x350C9B64,
+    0x31CD86D3,
+    0x3C8EA00A,
+    0x384FBDBD,
+)
 
 
 def _dword(value):
@@ -100,27 +114,26 @@ def crc32_checksum(fw, max_size):
         raise ValueError("File is too large")
 
     if len(fw) & 3:
-        raise ValueError('bytes_data length must be multiple of four')
+        raise ValueError("bytes_data length must be multiple of four")
 
-    crc = 0xffffffff
+    crc = 0xFFFFFFFF
     for index in range(0, len(fw), 4):
-        data = int.from_bytes(fw[index:index+4], 'little')
+        data = int.from_bytes(fw[index : index + 4], "little")
         crc = _crc32_fast(crc, data)
     return crc
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Compute checksum.')
-    parser.add_argument('checksum_type', metavar='type', choices=['xor', 'crc32'],
-                        help='checksum type')
-    parser.add_argument('fw_file', type=argparse.FileType('rb'),
-                        help='firmware file name')
-    parser.add_argument('max_size', type=int,
-                        help='max size of firmware file')
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Compute checksum.")
+    parser.add_argument(
+        "checksum_type", metavar="type", choices=["xor", "crc32"], help="checksum type"
+    )
+    parser.add_argument("fw_file", type=argparse.FileType("rb"), help="firmware file name")
+    parser.add_argument("max_size", type=int, help="max size of firmware file")
 
     args = parser.parse_args()
 
-    if args.checksum_type == 'xor':
+    if args.checksum_type == "xor":
         print(hex(sum_complement(args.fw_file, args.max_size)))
-    elif args.checksum_type == 'crc32':
+    elif args.checksum_type == "crc32":
         print(hex(crc32_checksum(args.fw_file, args.max_size)))

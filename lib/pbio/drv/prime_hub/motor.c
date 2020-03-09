@@ -25,7 +25,7 @@ typedef struct {
 } pbdrv_motor_data_t;
 
 static pbdrv_motor_data_t
-platform_data[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
+    platform_data[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
     {
         .pin1_gpio.bank = GPIOE,
         .pin1_gpio.pin = 9,
@@ -97,17 +97,17 @@ void _pbdrv_motor_init(void) {
 
     htim1.Instance = TIM1;
     htim1.Init.Prescaler = 8 - 1;
-    htim1.Init.Period = 10000 -1;
+    htim1.Init.Period = 10000 - 1;
     HAL_TIM_Base_Init(&htim1);
 
     htim3.Instance = TIM3;
     htim3.Init.Prescaler = 8 - 1;
-    htim3.Init.Period = 10000 -1;
+    htim3.Init.Period = 10000 - 1;
     HAL_TIM_Base_Init(&htim3);
 
     htim4.Instance = TIM4;
     htim4.Init.Prescaler = 8 - 1;
-    htim4.Init.Period = 10000 -1;
+    htim4.Init.Period = 10000 - 1;
     HAL_TIM_Base_Init(&htim4);
 
     tim_oc_init.OCMode = TIM_OCMODE_PWM1;

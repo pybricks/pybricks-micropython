@@ -84,7 +84,7 @@
 #endif
 
 // The maximum number of motor pairs
-#define PBDRV_CONFIG_NUM_MOTOR_PAIRS (PBDRV_CONFIG_NUM_MOTOR_CONTROLLER/2)
+#define PBDRV_CONFIG_NUM_MOTOR_PAIRS (PBDRV_CONFIG_NUM_MOTOR_CONTROLLER / 2)
 
 // the pbio_port_t enum value of the first motor port
 #ifndef PBDRV_CONFIG_FIRST_MOTOR_PORT

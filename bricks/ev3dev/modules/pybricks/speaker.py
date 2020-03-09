@@ -9,14 +9,15 @@ from .uev3dev.sound import SoundFile
 from .tools import wait
 
 
-class Speaker():
+class Speaker:
     """Play beeps and sound files using a speaker."""
-    _valid_devices = ['EV3']
+
+    _valid_devices = ["EV3"]
 
     def __init__(self, device_type):
         """Device specific speaker initialization."""
-        assert device_type in self._valid_devices, 'Selected device is not supported.'
-        if device_type == 'EV3':
+        assert device_type in self._valid_devices, "Selected device is not supported."
+        if device_type == "EV3":
             self._device = Ev3devSpeaker()
         self._loaded_files = {}
 

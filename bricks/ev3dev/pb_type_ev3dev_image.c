@@ -47,31 +47,31 @@ STATIC GrxColor map_color(mp_obj_t *obj) {
     pbio_light_color_t color = pb_type_enum_get_value(obj, &pb_enum_type_Color);
 
     switch (color) {
-    case PBIO_LIGHT_COLOR_NONE:
-        return GRX_COLOR_NONE;
-    case PBIO_LIGHT_COLOR_BLACK:
-        return GRX_COLOR_BLACK;
-    case PBIO_LIGHT_COLOR_BLUE:
-        return grx_color_get(0, 0, 255);
-    case PBIO_LIGHT_COLOR_GREEN:
-        return grx_color_get(0, 128, 0);
-    case PBIO_LIGHT_COLOR_YELLOW:
-        return grx_color_get(255, 255, 0);
-    case PBIO_LIGHT_COLOR_RED:
-        return grx_color_get(255, 0, 0);
-    case PBIO_LIGHT_COLOR_WHITE:
-        return GRX_COLOR_WHITE;
-    case PBIO_LIGHT_COLOR_BROWN:
-        return grx_color_get(165, 42, 42);
-    case PBIO_LIGHT_COLOR_ORANGE:
-        return grx_color_get(255, 165, 0);
-    case PBIO_LIGHT_COLOR_PURPLE:
-        return grx_color_get(128, 0, 128);
+        case PBIO_LIGHT_COLOR_NONE:
+            return GRX_COLOR_NONE;
+        case PBIO_LIGHT_COLOR_BLACK:
+            return GRX_COLOR_BLACK;
+        case PBIO_LIGHT_COLOR_BLUE:
+            return grx_color_get(0, 0, 255);
+        case PBIO_LIGHT_COLOR_GREEN:
+            return grx_color_get(0, 128, 0);
+        case PBIO_LIGHT_COLOR_YELLOW:
+            return grx_color_get(255, 255, 0);
+        case PBIO_LIGHT_COLOR_RED:
+            return grx_color_get(255, 0, 0);
+        case PBIO_LIGHT_COLOR_WHITE:
+            return GRX_COLOR_WHITE;
+        case PBIO_LIGHT_COLOR_BROWN:
+            return grx_color_get(165, 42, 42);
+        case PBIO_LIGHT_COLOR_ORANGE:
+            return grx_color_get(255, 165, 0);
+        case PBIO_LIGHT_COLOR_PURPLE:
+            return grx_color_get(128, 0, 128);
     }
     return grx_color_get_black();
 }
 
-STATIC mp_obj_t ev3dev_Image_new(GrxContext* context) {
+STATIC mp_obj_t ev3dev_Image_new(GrxContext *context) {
     ev3dev_Image_obj_t *self = m_new_obj_with_finaliser(ev3dev_Image_obj_t);
 
     self->base.type = &pb_type_ev3dev_Image;
@@ -110,8 +110,7 @@ STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, 
     if (mp_obj_is_qstr(source_in) && MP_OBJ_QSTR_VALUE(source_in) == MP_QSTR__screen_) {
         // special case '_screen_' creates image that draws directly to screen
         context = grx_context_ref(grx_get_screen_context());
-    }
-    else if (mp_obj_is_str(source_in)) {
+    } else if (mp_obj_is_str(source_in)) {
         const char *filename = mp_obj_str_get_str(source_in);
 
         // add file extension if missing
@@ -147,8 +146,7 @@ STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, 
         }
 
         g_free(filename_ext);
-    }
-    else if (mp_obj_is_type(source_in, &pb_type_ev3dev_Image)) {
+    } else if (mp_obj_is_type(source_in, &pb_type_ev3dev_Image)) {
         ev3dev_Image_obj_t *image = MP_OBJ_TO_PTR(source_in);
         if (arg_vals[ARG_sub].u_bool) {
             mp_int_t x1 = pb_obj_get_int(arg_vals[ARG_x1].u_obj);
@@ -156,8 +154,7 @@ STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, 
             mp_int_t x2 = pb_obj_get_int(arg_vals[ARG_x2].u_obj);
             mp_int_t y2 = pb_obj_get_int(arg_vals[ARG_y2].u_obj);
             context = grx_context_new_subcontext(x1, y1, x2, y2, image->context, NULL);
-        }
-        else {
+        } else {
             gint w = grx_context_get_width(image->context);
             gint h = grx_context_get_height(image->context);
             GrxFrameMemory mem;
@@ -234,8 +231,7 @@ STATIC mp_obj_t ev3dev_Image_draw_pixel(size_t n_args, const mp_obj_t *pos_args,
         ev3dev_Image_obj_t, self,
         PB_ARG_REQUIRED(x),
         PB_ARG_REQUIRED(y),
-        PB_ARG_DEFAULT_OBJ(color, pb_Color_BLACK_obj)
-    );
+        PB_ARG_DEFAULT_OBJ(color, pb_Color_BLACK_obj));
 
     mp_int_t x_ = pb_obj_get_int(x);
     mp_int_t y_ = pb_obj_get_int(y);
@@ -257,8 +253,7 @@ STATIC mp_obj_t ev3dev_Image_draw_line(size_t n_args, const mp_obj_t *pos_args, 
         PB_ARG_REQUIRED(x2),
         PB_ARG_REQUIRED(y2),
         PB_ARG_DEFAULT_INT(width, 1),
-        PB_ARG_DEFAULT_OBJ(color, pb_Color_BLACK_obj)
-    );
+        PB_ARG_DEFAULT_OBJ(color, pb_Color_BLACK_obj));
 
     mp_int_t x1_ = pb_obj_get_int(x1);
     mp_int_t y1_ = pb_obj_get_int(y1);
@@ -271,8 +266,7 @@ STATIC mp_obj_t ev3dev_Image_draw_line(size_t n_args, const mp_obj_t *pos_args, 
     grx_set_current_context(self->context);
     if (width_ == 1) {
         grx_draw_line(x1_, y1_, x2_, y2_, color_);
-    }
-    else {
+    } else {
         GrxLineOptions options = { .color = color_, .width = width_ };
         grx_draw_line_with_options(x1_, y1_, x2_, y2_, &options);
     }
@@ -290,8 +284,7 @@ STATIC mp_obj_t ev3dev_Image_draw_box(size_t n_args, const mp_obj_t *pos_args, m
         PB_ARG_REQUIRED(y2),
         PB_ARG_DEFAULT_INT(r, 0),
         PB_ARG_DEFAULT_FALSE(fill),
-        PB_ARG_DEFAULT_OBJ(color, pb_Color_BLACK_obj)
-    );
+        PB_ARG_DEFAULT_OBJ(color, pb_Color_BLACK_obj));
 
     mp_int_t x1_ = pb_obj_get_int(x1);
     mp_int_t y1_ = pb_obj_get_int(y1);
@@ -305,16 +298,13 @@ STATIC mp_obj_t ev3dev_Image_draw_box(size_t n_args, const mp_obj_t *pos_args, m
     if (mp_obj_is_true(fill)) {
         if (r_ > 0) {
             grx_draw_filled_rounded_box(x1_, y1_, x2_, y2_, r_, color_);
-        }
-        else {
+        } else {
             grx_draw_filled_box(x1_, y1_, x2_, y2_, color_);
         }
-    }
-    else {
+    } else {
         if (r_ > 0) {
             grx_draw_rounded_box(x1_, y1_, x2_, y2_, r_, color_);
-        }
-        else {
+        } else {
             grx_draw_box(x1_, y1_, x2_, y2_, color_);
         }
     }
@@ -330,8 +320,7 @@ STATIC mp_obj_t ev3dev_Image_draw_circle(size_t n_args, const mp_obj_t *pos_args
         PB_ARG_REQUIRED(y),
         PB_ARG_REQUIRED(r),
         PB_ARG_DEFAULT_FALSE(fill),
-        PB_ARG_DEFAULT_OBJ(color, pb_Color_BLACK_obj)
-    );
+        PB_ARG_DEFAULT_OBJ(color, pb_Color_BLACK_obj));
 
     mp_int_t x_ = pb_obj_get_int(x);
     mp_int_t y_ = pb_obj_get_int(y);
@@ -343,8 +332,7 @@ STATIC mp_obj_t ev3dev_Image_draw_circle(size_t n_args, const mp_obj_t *pos_args
     grx_set_current_context(self->context);
     if (fill_) {
         grx_draw_filled_circle(x_, y_, r_, color_);
-    }
-    else {
+    } else {
         grx_draw_circle(x_, y_, r_, color_);
     }
 
@@ -358,8 +346,7 @@ STATIC mp_obj_t ev3dev_Image_draw_image(size_t n_args, const mp_obj_t *pos_args,
         PB_ARG_REQUIRED(x),
         PB_ARG_REQUIRED(y),
         PB_ARG_REQUIRED(source),
-        PB_ARG_DEFAULT_NONE(transparent)
-    );
+        PB_ARG_DEFAULT_NONE(transparent));
 
     mp_int_t x_ = pb_obj_get_int(x);
     mp_int_t y_ = pb_obj_get_int(y);
@@ -438,8 +425,7 @@ STATIC mp_obj_t ev3dev_Image_draw_text(size_t n_args, const mp_obj_t *pos_args, 
         PB_ARG_REQUIRED(y),
         PB_ARG_REQUIRED(text),
         PB_ARG_DEFAULT_OBJ(text_color, pb_Color_BLACK_obj),
-        PB_ARG_DEFAULT_NONE(background_color)
-    );
+        PB_ARG_DEFAULT_NONE(background_color));
 
     mp_int_t x_ = pb_obj_get_int(x);
     mp_int_t y_ = pb_obj_get_int(y);
@@ -538,8 +524,7 @@ STATIC mp_obj_t ev3dev_Image_print(size_t n_args, const mp_obj_t *pos_args, mp_m
                 const GrxColor *scan_line = grx_get_scanline(0, max_x, y + over, NULL);
                 if (scan_line) {
                     grx_put_scanline(0, max_x, y, scan_line, GRX_COLOR_MODE_WRITE);
-                }
-                else {
+                } else {
                     grx_draw_hline(0, max_x, y, GRX_COLOR_WHITE);
                 }
             }
@@ -606,5 +591,5 @@ const mp_obj_type_t pb_type_ev3dev_Image = {
     { &mp_type_type },
     .name = MP_QSTR_Image,
     .make_new = ev3dev_Image_make_new,
-    .locals_dict = (mp_obj_dict_t*)&ev3dev_Image_locals_dict,
+    .locals_dict = (mp_obj_dict_t *)&ev3dev_Image_locals_dict,
 };

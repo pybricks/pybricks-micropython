@@ -34,7 +34,7 @@ pbio_error_t pbio_serial_get(pbio_serial_t **_ser, pbio_port_t port, int baudrat
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    pbio_serial_t *ser = &serials[port-PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT];
+    pbio_serial_t *ser = &serials[port - PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT];
 
     pbio_error_t err = pbdrv_serial_get(&ser->dev, port, baudrate);
 
@@ -65,7 +65,7 @@ static pbio_error_t pbio_serial_read_start(pbio_serial_t *ser, size_t count) {
 
     // Reset state variables
     ser->busy = true;
-    ser->time_start = clock_usecs()/1000;
+    ser->time_start = clock_usecs() / 1000;
     ser->remaining = count;
 
     return PBIO_SUCCESS;
@@ -105,7 +105,7 @@ pbio_error_t pbio_serial_read(pbio_serial_t *ser, uint8_t *buf, size_t count) {
     }
 
     // If we have timed out, let the user know
-    if (ser->timeout >= 0 && clock_usecs()/1000 - ser->time_start > ser->timeout) {
+    if (ser->timeout >= 0 && clock_usecs() / 1000 - ser->time_start > ser->timeout) {
         return pbio_serial_read_stop(ser, PBIO_ERROR_TIMEDOUT);
     }
 

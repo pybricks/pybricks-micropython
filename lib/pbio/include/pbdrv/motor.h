@@ -39,7 +39,8 @@ void _pbdrv_motor_init(void);
 #if PBIO_CONFIG_ENABLE_DEINIT
 void _pbdrv_motor_deinit(void);
 #else
-static inline void _pbdrv_motor_deinit(void) { }
+static inline void _pbdrv_motor_deinit(void) {
+}
 #endif
 
 /** @endcond */
@@ -91,8 +92,10 @@ pbio_error_t pbdrv_motor_setup(pbio_port_t port, bool is_servo);
 
 #else
 
-static inline void _pbdrv_motor_init(void) { }
-static inline void _pbdrv_motor_deinit(void) { }
+static inline void _pbdrv_motor_init(void) {
+}
+static inline void _pbdrv_motor_deinit(void) {
+}
 static inline pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }

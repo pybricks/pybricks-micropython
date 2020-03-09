@@ -27,7 +27,7 @@ typedef struct {
 } pbdrv_motor_data_t;
 
 static pbdrv_motor_data_t
-platform_data[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
+    platform_data[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
     {
         .pin1_gpio.bank = GPIOA,
         .pin1_gpio.pin = 1,

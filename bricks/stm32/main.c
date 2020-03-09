@@ -117,8 +117,7 @@ static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, int32_t time_out)
             if (time_out != -1 && time_now - time_start > time_out) {
                 return PBIO_ERROR_TIMEDOUT;
             }
-        }
-        else if (time_now - time_start > time_interval) {
+        } else if (time_now - time_start > time_interval) {
             // After the first byte, apply much shorter interval timeout
             return PBIO_ERROR_TIMEDOUT;
         }
@@ -144,7 +143,8 @@ static uint32_t get_user_program(uint8_t **buf, uint32_t *free_len) {
 
     // flush any buffered bytes from stdin
     uint8_t c;
-    while (pbsys_stdin_get_char(&c) == PBIO_SUCCESS) { }
+    while (pbsys_stdin_get_char(&c) == PBIO_SUCCESS) {
+    }
 
     // Get the program length
     uint32_t len;
@@ -284,13 +284,13 @@ static bool user_program_stdin_event_func(uint8_t c) {
 }
 
 static const pbsys_user_program_callbacks_t user_program_callbacks = {
-    .stop           = user_program_stop_func,
-    .stdin_event    = user_program_stdin_event_func,
+    .stop = user_program_stop_func,
+    .stdin_event = user_program_stdin_event_func,
 };
 
 int main(int argc, char **argv) {
     int stack_dummy;
-    stack_top = (char*)&stack_dummy;
+    stack_top = (char *)&stack_dummy;
 
     pbio_init();
 
@@ -347,7 +347,7 @@ void gc_collect(void) {
     uintptr_t sp = gc_helper_get_regs_and_sp(regs);
 
     // trace the stack, including the registers (since they live on the stack in this function)
-    gc_collect_root((void**)sp, ((uint32_t)&_estack - sp) / sizeof(uint32_t));
+    gc_collect_root((void **)sp, ((uint32_t)&_estack - sp) / sizeof(uint32_t));
 
     // end the GC
     gc_collect_end();
@@ -369,11 +369,15 @@ mp_import_stat_t mp_import_stat(const char *path) {
 }
 
 void nlr_jump_fail(void *val) {
-    while (1);
+    while (1) {
+        ;
+    }
 }
 
 void NORETURN __fatal_error(const char *msg) {
-    while (1);
+    while (1) {
+        ;
+    }
 }
 
 #ifndef NDEBUG

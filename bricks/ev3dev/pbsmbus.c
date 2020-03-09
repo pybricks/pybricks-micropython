@@ -27,7 +27,7 @@ struct _smbus_t {
     int address;
 };
 
-smbus_t buses[BUS_NUM_MAX-BUS_NUM_MIN+1];
+smbus_t buses[BUS_NUM_MAX - BUS_NUM_MIN + 1];
 
 static pbio_error_t pb_smbus_set_address(smbus_t *bus, int address) {
 
@@ -47,7 +47,7 @@ pbio_error_t pb_smbus_get(smbus_t **_bus, int bus_num) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    smbus_t *bus = &buses[bus_num-BUS_NUM_MIN];
+    smbus_t *bus = &buses[bus_num - BUS_NUM_MIN];
 
     char devpath[MAXDEVPATH];
 
@@ -103,12 +103,12 @@ pbio_error_t pb_smbus_read_no_reg(smbus_t *bus, uint8_t address, uint8_t *buf) {
         return err;
     }
 
-	int result = i2c_smbus_read_byte(bus->file);
+    int result = i2c_smbus_read_byte(bus->file);
 
     if (result < 0) {
         return PBIO_ERROR_IO;
     }
-    *buf = (uint8_t) result;
+    *buf = (uint8_t)result;
 
     return PBIO_SUCCESS;
 }

@@ -9,7 +9,6 @@ from pybricks.iodevices import AnalogSensor
 
 
 class VernierAdapter(AnalogSensor):
-
     def __init__(self, port, conversion=None):
         # create AnalogSensor object
         super().__init__(port)

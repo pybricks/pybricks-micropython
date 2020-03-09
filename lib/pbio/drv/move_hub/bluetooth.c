@@ -213,7 +213,8 @@ static void spi_start_xfer(const uint8_t *tx_buf, uint8_t *rx_buf, uint8_t xfer_
 
     // hopefully this shouldn't actually block, but we can't disable SPI while
     // it is busy, so just in case...
-    while (SPI2->SR & SPI_SR_BSY) { }
+    while (SPI2->SR & SPI_SR_BSY) {
+    }
 
     // disable the SPI so we can configure it
     SPI2->CR1 &= ~SPI_CR1_SPE;
@@ -255,9 +256,9 @@ static void pybricks_char_modified(uint8_t *data, uint8_t size) {
     }
 
     switch (data[0]) {
-    case PBIO_COM_MSG_TYPE_CMD:
-        process_post(&pbsys_process, PBIO_EVENT_COM_CMD, (process_data_t)(uint32_t)data[1]);
-        break;
+        case PBIO_COM_MSG_TYPE_CMD:
+            process_post(&pbsys_process, PBIO_EVENT_COM_CMD, (process_data_t)(uint32_t)data[1]);
+            break;
     }
 }
 
@@ -296,23 +297,20 @@ static void uart_rx_char_modified(uint8_t *data, uint8_t size);
 // processes an event received from the Bluetooth chip
 static void handle_event(hci_event_pckt *event) {
     switch (event->evt) {
-    case EVT_DISCONN_COMPLETE:
-        {
+        case EVT_DISCONN_COMPLETE: {
             evt_disconn_complete *evt = (evt_disconn_complete *)event->data;
             if (conn_handle == evt->handle) {
                 conn_handle = 0;
             }
         }
         break;
-    case EVT_CMD_COMPLETE:
-        hci_command_complete = true;
-        break;
-    case EVT_LE_META_EVENT:
-        {
+        case EVT_CMD_COMPLETE:
+            hci_command_complete = true;
+            break;
+        case EVT_LE_META_EVENT: {
             evt_le_meta_event *evt = (evt_le_meta_event *)event->data;
             switch (evt->subevent) {
-            case EVT_LE_CONN_COMPLETE:
-                {
+                case EVT_LE_CONN_COMPLETE: {
                     evt_le_connection_complete *subevt = (evt_le_connection_complete *)evt->data;
                     conn_handle = subevt->handle;
                 }
@@ -320,23 +318,19 @@ static void handle_event(hci_event_pckt *event) {
             }
         }
         break;
-    case EVT_VENDOR:
-        {
+        case EVT_VENDOR: {
             evt_blue_aci *evt = (evt_blue_aci *)event->data;
             switch (evt->ecode) {
-            case EVT_BLUE_HAL_INITIALIZED:
-                {
+                case EVT_BLUE_HAL_INITIALIZED: {
                     evt_hal_initialized *subevt = (evt_hal_initialized *)evt->data;
                     reset_reason = subevt->reason_code;
                 }
                 break;
-            case EVT_BLUE_GATT_ATTRIBUTE_MODIFIED:
-                {
+                case EVT_BLUE_GATT_ATTRIBUTE_MODIFIED: {
                     evt_gatt_attr_modified *subevt = (evt_gatt_attr_modified *)evt->data;
                     if (subevt->attr_handle == pybricks_char_handle + 1) {
                         pybricks_char_modified(subevt->att_data, subevt->data_length);
-                    }
-                    else if (subevt->attr_handle == uart_rx_char_handle + 1) {
+                    } else if (subevt->attr_handle == uart_rx_char_handle + 1) {
                         uart_rx_char_modified(subevt->att_data, subevt->data_length);
                     }
                 }
@@ -388,7 +382,7 @@ retry:
     }
     // TODO: do we need to handle ACL packets (HCI_ACLDATA_PKT)?
 
-end: ;
+end:;
     PT_END(pt);
 }
 

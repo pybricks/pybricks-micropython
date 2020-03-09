@@ -25,7 +25,7 @@ from .util import Timeout
 # TODO: os.SEEK_SET is not defined in micropython-lib
 _SEEK_SET = 0
 
-_BEEP_DEV = '/dev/input/by-path/platform-sound-event'
+_BEEP_DEV = "/dev/input/by-path/platform-sound-event"
 
 
 # stuff from linux/input.h and linux/input-event-codes.h
@@ -33,82 +33,83 @@ _BEEP_DEV = '/dev/input/by-path/platform-sound-event'
 _EV_SND = 0x12
 _SND_TONE = 0x02
 _input_event = {
-    'time': UINT64 | 0,  # struct timeval
-    'type': UINT16 | 8,
-    'code': UINT16 | 10,
-    'value': INT32 | 12,
+    "time": UINT64 | 0,  # struct timeval
+    "type": UINT16 | 8,
+    "code": UINT16 | 10,
+    "value": INT32 | 12,
 }
 
 
 # libsndfile
 
-_libsndfile = ffi.open('libsndfile.so.1')
+_libsndfile = ffi.open("libsndfile.so.1")
 
 _sf_count_t = UINT64
 
 _SF_INFO = {
-    'frames': _sf_count_t | 0,
-    'samplerate': INT32 | 8,
-    'channels': INT32 | 12,
-    'format': INT32 | 16,
-    'sections': INT32 | 20,
-    'seekable': INT32 | 24,
+    "frames": _sf_count_t | 0,
+    "samplerate": INT32 | 8,
+    "channels": INT32 | 12,
+    "format": INT32 | 16,
+    "sections": INT32 | 20,
+    "seekable": INT32 | 24,
 }
 
 _SMF_READ = 0x10
 
 # FIXME: micropython does not have 64-bit integer, using double for now
-_sf_open = _libsndfile.func('p', 'sf_open', 'Pip')
-_sf_close = _libsndfile.func('i', 'sf_close', 'p')
-_sf_seek = _libsndfile.func('d', 'sf_seek', 'pdi')
-_sf_readf_short = _libsndfile.func('d', 'sf_readf_short', 'ppd')
-_sf_strerror = _libsndfile.func('s', 'sf_strerror', 'p')
+_sf_open = _libsndfile.func("p", "sf_open", "Pip")
+_sf_close = _libsndfile.func("i", "sf_close", "p")
+_sf_seek = _libsndfile.func("d", "sf_seek", "pdi")
+_sf_readf_short = _libsndfile.func("d", "sf_readf_short", "ppd")
+_sf_strerror = _libsndfile.func("s", "sf_strerror", "p")
 
 
 # from lms2012
 
 _NOTES = {
-  'C4': 262,
-  'D4': 294,
-  'E4': 330,
-  'F4': 349,
-  'G4': 392,
-  'A4': 440,
-  'B4': 494,
-  'C5': 523,
-  'D5': 587,
-  'E5': 659,
-  'F5': 698,
-  'G5': 784,
-  'A5': 880,
-  'B5': 988,
-  'C6': 1047,
-  'D6': 1175,
-  'E6': 1319,
-  'F6': 1397,
-  'G6': 1568,
-  'A6': 1760,
-  'B6': 1976,
-  'C#4': 277,
-  'D#4': 311,
-  'F#4': 370,
-  'G#4': 415,
-  'A#4': 466,
-  'C#5': 554,
-  'D#5': 622,
-  'F#5': 740,
-  'G#5': 831,
-  'A#5': 932,
-  'C#6': 1109,
-  'D#6': 1245,
-  'F#6': 1480,
-  'G#6': 1661,
-  'A#6': 1865,
+    "C4": 262,
+    "D4": 294,
+    "E4": 330,
+    "F4": 349,
+    "G4": 392,
+    "A4": 440,
+    "B4": 494,
+    "C5": 523,
+    "D5": 587,
+    "E5": 659,
+    "F5": 698,
+    "G5": 784,
+    "A5": 880,
+    "B5": 988,
+    "C6": 1047,
+    "D6": 1175,
+    "E6": 1319,
+    "F6": 1397,
+    "G6": 1568,
+    "A6": 1760,
+    "B6": 1976,
+    "C#4": 277,
+    "D#4": 311,
+    "F#4": 370,
+    "G#4": 415,
+    "A#4": 466,
+    "C#5": 554,
+    "D#5": 622,
+    "F#5": 740,
+    "G#5": 831,
+    "A#5": 932,
+    "C#6": 1109,
+    "D#6": 1245,
+    "F#6": 1480,
+    "G#6": 1661,
+    "A#6": 1865,
 }
 
 
-class PlayType():
+class PlayType:
     """List of values for ``play_type`` in sound playback methods"""
+
     WAIT = 0
     """Play the sound once and wait until it is finished before returning"""
     ONCE = 1
@@ -117,10 +118,11 @@ class PlayType():
     """Play the sound repeating in the background"""
 
 
-class Sound():
+class Sound:
     """Object for making sounds"""
+
     def __init__(self):
-        self._beep_dev = open(_BEEP_DEV, 'b+')
+        self._beep_dev = open(_BEEP_DEV, "b+")
         self._mixer = Mixer()
         self._pcm = PCM()
         self._tone_data = bytearray(sizeof(_input_event))
@@ -230,12 +232,13 @@ class SoundFileError(Exception):
         super(SoundFileError, self).__init__(message)
 
 
-class SoundFile():
+class SoundFile:
     """Class that represents a sound file.
 
     Parameters:
         path (str): The path to a sound file
     """
+
     def __init__(self, path):
         info_data = bytearray(sizeof(_SF_INFO))
         info = struct(addressof(info_data), _SF_INFO)
@@ -256,18 +259,18 @@ class SoundFile():
 
     def _read(self, frames, cancel_token=None):
         if not self._file:
-            raise RuntimeError('SoundFile has been closed')
-        frames_ = unpack('d', pack('Q', 0))[0]
+            raise RuntimeError("SoundFile has been closed")
+        frames_ = unpack("d", pack("Q", 0))[0]
         _sf_seek(self._file, frames_, _SEEK_SET)
-        buf = bytearray(frames * self._channels * calcsize('h'))
+        buf = bytearray(frames * self._channels * calcsize("h"))
         while True:
             if cancel_token and cancel_token.canceled:
                 break
             # FIXME: micropython ffi doesn't have 64-bit integer type
             # double is the only 64-bit type, so using a hack to make it work
-            frames_ = unpack('d', pack('Q', frames))[0]
+            frames_ = unpack("d", pack("Q", frames))[0]
             readcount_ = _sf_readf_short(self._file, buf, frames_)
-            readcount = unpack('Q', pack('d', readcount_))[0]
+            readcount = unpack("Q", pack("d", readcount_))[0]
             if not readcount:
                 break
             yield buf, readcount
@@ -276,7 +279,7 @@ class SoundFile():
         return _CancelToken()
 
 
-class _CancelToken():
+class _CancelToken:
     def __init__(self):
         self.canceled = False
 

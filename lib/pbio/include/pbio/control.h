@@ -46,11 +46,11 @@ typedef enum {
 
 // Maneuver-specific function that returns true if maneuver is done, based on current state
 typedef bool (*pbio_control_on_target_t)(pbio_trajectory_t *trajectory,
-                                         pbio_control_settings_t *settings,
-                                         int32_t time,
-                                         int32_t count,
-                                         int32_t rate,
-                                         bool stalled);
+    pbio_control_settings_t *settings,
+    int32_t time,
+    int32_t count,
+    int32_t rate,
+    bool stalled);
 
 // Functions to check whether motion is done
 pbio_control_on_target_t pbio_control_on_target_always;

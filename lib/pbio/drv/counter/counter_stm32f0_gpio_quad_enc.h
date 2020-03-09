@@ -23,7 +23,7 @@ typedef struct {
 
 // defined in platform/*/platform.c
 extern const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t
-pbdrv_counter_stm32f0_gpio_quad_enc_platform_data[PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC_NUM_DEV];
+    pbdrv_counter_stm32f0_gpio_quad_enc_platform_data[PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC_NUM_DEV];
 
 // defined in counter_stm32f0_gpio_quad_enc.c
 extern const pbdrv_counter_drv_t pbdrv_counter_stm32f0_gpio_quad_enc_drv;
