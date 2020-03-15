@@ -13,9 +13,11 @@
 
 #include <pbdrv/motor.h>
 #include <pbio/config.h>
+#include <pbio/iodev.h>
 
 #include "../ioport/ioport_ev3dev_stretch.h"
 
+#include <ev3dev_stretch/lego_port.h>
 
 #define MAX_PATH_LENGTH 120
 
@@ -194,7 +196,10 @@ pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
 }
 
 pbio_error_t pbdrv_motor_setup(pbio_port_t port, bool is_servo) {
-    return PBIO_SUCCESS;
+    if (!is_servo) {
+        return ev3dev_lego_port_configure(port, PBIO_IODEV_TYPE_ID_EV3DEV_DC_MOTOR);
+    }
+    return ev3dev_lego_port_configure(port, PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR);
 }
 
 #endif // PBDRV_CONFIG_MOTOR
