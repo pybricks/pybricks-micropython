@@ -175,6 +175,10 @@ pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
     return PBIO_SUCCESS;
 }
 
+pbio_error_t pbdrv_motor_setup(pbio_port_t port, bool is_servo) {
+    return PBIO_SUCCESS;
+}
+
 #if PBIO_CONFIG_ENABLE_DEINIT
 void _pbdrv_motor_deinit(void) {
     HAL_TIMEx_PWMN_Stop(cplus_hub_htim1, TIM_CHANNEL_3);

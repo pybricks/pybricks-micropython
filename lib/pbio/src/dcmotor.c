@@ -20,6 +20,12 @@ static pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t
 
     pbio_error_t err;
 
+    // Configure up motor ports if needed
+    err = pbdrv_motor_setup(dcmotor->port, is_servo);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }    
+
     // Coast the device
     err = pbio_dcmotor_coast(dcmotor);
     if (err != PBIO_SUCCESS) {

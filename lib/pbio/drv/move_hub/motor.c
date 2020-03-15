@@ -334,4 +334,8 @@ void _pbdrv_motor_deinit(void) {
 }
 #endif
 
+pbio_error_t pbdrv_motor_setup(pbio_port_t port, bool is_servo) {
+    return PBIO_SUCCESS;
+}
+
 #endif // PBDRV_CONFIG_MOTOR
