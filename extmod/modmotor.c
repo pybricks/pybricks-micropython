@@ -68,7 +68,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
 
         motor_DCMotor_obj_t *dc_self = m_new_obj(motor_DCMotor_obj_t);
         dc_self->base.type = (mp_obj_type_t*) type;
-        pb_assert(pbio_dcmotor_get(port_arg, &dc_self->dcmotor, direction_arg));
+        pb_assert(pbio_dcmotor_get(port_arg, &dc_self->dcmotor, direction_arg, false));
 
         return MP_OBJ_FROM_PTR(dc_self);
     }
