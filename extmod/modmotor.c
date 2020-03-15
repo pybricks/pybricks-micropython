@@ -25,7 +25,117 @@
 #include "pbobj.h"
 #include "pbkwarg.h"
 
-/* Wait for maneuver to complete */
+// pybricks.builtins.DCMotor.__init__
+STATIC mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port),
+        PB_ARG_DEFAULT_OBJ(positive_direction, pb_Direction_CLOCKWISE_obj)
+    );
+
+    // Configure the motor with the selected arguments at pbio level
+    mp_int_t port_arg = pb_type_enum_get_value(port, &pb_enum_type_Port);
+    pbio_direction_t direction_arg = pb_type_enum_get_value(positive_direction, &pb_enum_type_Direction);
+
+    // Get and initialize DC Motor
+    pbio_dcmotor_t *dc;
+    pbio_error_t err;
+    while ((err = pbio_dcmotor_get(port_arg, &dc, direction_arg, false)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(1000);
+    }
+    pb_assert(err);
+
+    // On success, create and return the MicroPython object
+    motor_DCMotor_obj_t *self = m_new_obj(motor_DCMotor_obj_t);
+    self->base.type = (mp_obj_type_t*) type;
+    self->dcmotor = dc;
+    return MP_OBJ_FROM_PTR(self);
+}
+
+// pybricks.builtins.DCMotor.__repr__
+// pybricks.builtins.Motor.__repr__
+void motor_DCMotor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+
+    // Get the dcmotor from self, which is either Motor or DCMotor
+    pbio_dcmotor_t *dcmotor = mp_obj_is_type(self_in, &motor_Motor_type) ?
+        ((motor_Motor_obj_t*) MP_OBJ_TO_PTR(self_in))->srv->dcmotor :
+        ((motor_DCMotor_obj_t*) MP_OBJ_TO_PTR(self_in))->dcmotor;
+
+    mp_printf(print,
+        "Motor properties:\n"
+        "------------------------\n"
+        "Port\t\t %c\n"
+        "Positive dir.\t %s",
+        dcmotor->port,
+        dcmotor->direction == PBIO_DIRECTION_CLOCKWISE ? "clockwise" : "counterclockwise"
+    );
+}
+
+// pybricks.builtins.DCMotor.dc
+// pybricks.builtins.Motor.dc
+STATIC mp_obj_t motor_DCMotor_duty(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    // Parse all arguments except the first one (self)
+    PB_PARSE_ARGS_METHOD_SKIP_SELF(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(duty)
+    );
+
+    mp_int_t duty_cycle = pb_obj_get_int(duty);
+
+    // Object type is either Motor or DCMotor
+    bool is_servo = mp_obj_is_type(pos_args[0], &motor_Motor_type);
+
+    if (is_servo) {
+        motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+        pb_assert(pbio_servo_set_duty_cycle(self->srv, duty_cycle));
+    }
+    else {
+        motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+        pb_assert(pbio_dcmotor_set_duty_cycle_usr(self->dcmotor, duty_cycle));
+    }
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_DCMotor_duty_obj, 1, motor_DCMotor_duty);
+
+STATIC mp_obj_t motor_DCMotor_stop(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        motor_DCMotor_obj_t, self,
+        PB_ARG_DEFAULT_OBJ(stop_type, pb_Stop_COAST_obj)
+    );
+    pbio_actuation_t actuation = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
+
+    switch (actuation) {
+    case PBIO_ACTUATION_COAST:
+        pb_assert(pbio_dcmotor_coast(self->dcmotor));
+        break;
+    case PBIO_ACTUATION_BRAKE:
+        pb_assert(pbio_dcmotor_brake(self->dcmotor));
+        break;
+    default:
+        // DCMotors do not support other stop types
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_DCMotor_stop_obj, 1, motor_DCMotor_stop);
+
+// dir(pybricks.builtins.DCMotor)
+STATIC const mp_rom_map_elem_t motor_DCMotor_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_DCMotor_stop_obj) },
+    { MP_ROM_QSTR(MP_QSTR_dc), MP_ROM_PTR(&motor_DCMotor_duty_obj) },
+};
+MP_DEFINE_CONST_DICT(motor_DCMotor_locals_dict, motor_DCMotor_locals_dict_table);
+
+// type(pybricks.builtins.DCMotor)
+const mp_obj_type_t motor_DCMotor_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_DCMotor,
+    .print = motor_DCMotor_print,
+    .make_new = motor_DCMotor_make_new,
+    .locals_dict = (mp_obj_dict_t*)&motor_DCMotor_locals_dict,
+};
+
+/* Wait for servo maneuver to complete */
 
 STATIC void wait_for_completion(pbio_servo_t *srv) {
     while (!pbio_control_is_done(&srv->control)) {
@@ -34,7 +144,6 @@ STATIC void wait_for_completion(pbio_servo_t *srv) {
 }
 
 // pybricks.builtins.Motor.__init__
-// pybricks.builtins.DCMotor.__init__
 STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args){
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
@@ -46,23 +155,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
     mp_int_t port_arg = pb_type_enum_get_value(port, &pb_enum_type_Port);
     pbio_direction_t direction_arg = pb_type_enum_get_value(positive_direction, &pb_enum_type_Direction);
     pbio_error_t err;
-
-    // Setup and return if type is DCMotor
-    if (type != &motor_Motor_type) {
-
-        motor_DCMotor_obj_t *dc_self = m_new_obj(motor_DCMotor_obj_t);
-        dc_self->base.type = (mp_obj_type_t*) type;
-
-        while ((err = pbio_dcmotor_get(port_arg, &dc_self->dcmotor, direction_arg, false)) == PBIO_ERROR_AGAIN) {
-            mp_hal_delay_ms(1000);
-        }
-        pb_assert(err);
-        return MP_OBJ_FROM_PTR(dc_self);
-    }
-
-    // Proceed for a regular motor
-    motor_Motor_obj_t *self = m_new_obj(motor_Motor_obj_t);
-    self->base.type = (mp_obj_type_t*) type;
+    pbio_servo_t *srv;
 
     // Default gear ratio
     fix16_t gear_ratio = F16C(1, 0);
@@ -101,12 +194,17 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
     }
 
     // Get servo device, set it up, and tell the poller if we succeeded.
-    pb_assert(pbio_motorpoll_get_servo(port_arg, &self->srv));
-    while ((err = pbio_servo_setup(self->srv, direction_arg, gear_ratio)) == PBIO_ERROR_AGAIN) {
+    pb_assert(pbio_motorpoll_get_servo(port_arg, &srv));
+    while ((err = pbio_servo_setup(srv, direction_arg, gear_ratio)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);
-    pb_assert(pbio_motorpoll_set_servo_status(self->srv, PBIO_ERROR_AGAIN));
+    pb_assert(pbio_motorpoll_set_servo_status(srv, PBIO_ERROR_AGAIN));
+
+    // On success, proceed to create and return the MicroPython object
+    motor_Motor_obj_t *self = m_new_obj(motor_Motor_obj_t);
+    self->base.type = (mp_obj_type_t*) type;
+    self->srv = srv;
 
     // Create an instance of the Logger class
     self->logger = logger_obj_make_new(&self->srv->log);
@@ -116,51 +214,6 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
 
     return MP_OBJ_FROM_PTR(self);
 }
-
-// pybricks.builtins.Motor.__repr__
-// pybricks.builtins.DCMotor.__repr__
-void motor_Motor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
-
-    // Get the dcmotor from self, which is either Motor or DCMotor
-    pbio_dcmotor_t *dcmotor = mp_obj_is_type(self_in, &motor_Motor_type) ?
-        ((motor_Motor_obj_t*) MP_OBJ_TO_PTR(self_in))->srv->dcmotor :
-        ((motor_DCMotor_obj_t*) MP_OBJ_TO_PTR(self_in))->dcmotor;
-
-    mp_printf(print,
-        "Motor properties:\n"
-        "------------------------\n"
-        "Port\t\t %c\n"
-        "Positive dir.\t %s",
-        dcmotor->port,
-        dcmotor->direction == PBIO_DIRECTION_CLOCKWISE ? "clockwise" : "counterclockwise"
-    );
-}
-
-// pybricks.builtins.Motor.dc
-// pybricks.builtins.DCMotor.dc
-STATIC mp_obj_t motor_Motor_duty(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    // Parse all arguments except the first one (self)
-    PB_PARSE_ARGS_METHOD_SKIP_SELF(n_args, pos_args, kw_args,
-        PB_ARG_REQUIRED(duty)
-    );
-
-    mp_int_t duty_cycle = pb_obj_get_int(duty);
-
-    // Object type is either Motor or DCMotor
-    bool is_servo = mp_obj_is_type(pos_args[0], &motor_Motor_type);
-
-    if (is_servo) {
-        motor_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-        pb_assert(pbio_servo_set_duty_cycle(self->srv, duty_cycle));
-    }
-    else {
-        motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-        pb_assert(pbio_dcmotor_set_duty_cycle_usr(self->dcmotor, duty_cycle));
-    }
-
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_duty_obj, 1, motor_Motor_duty);
 
 // pybricks.builtins.Motor.angle
 STATIC mp_obj_t motor_Motor_angle(mp_obj_t self_in) {
@@ -231,29 +284,6 @@ STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *pos_args, mp_map
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_stop_obj, 1, motor_Motor_stop);
-
-STATIC mp_obj_t motor_DCMotor_stop(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        motor_DCMotor_obj_t, self,
-        PB_ARG_DEFAULT_OBJ(stop_type, pb_Stop_COAST_obj)
-    );
-    pbio_actuation_t actuation = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
-
-    switch (actuation) {
-    case PBIO_ACTUATION_COAST:
-        pb_assert(pbio_dcmotor_coast(self->dcmotor));
-        break;
-    case PBIO_ACTUATION_BRAKE:
-        pb_assert(pbio_dcmotor_brake(self->dcmotor));
-        break;
-    default:
-        // DCMotors do not support hold
-        pb_assert(PBIO_ERROR_INVALID_ARG);
-    }
-
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_DCMotor_stop_obj, 1, motor_DCMotor_stop);
 
 // pybricks.builtins.Motor.run_time
 STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -418,7 +448,7 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     // Methods common to DC motors and encoded motors
     //
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_Motor_stop_obj) },
-    { MP_ROM_QSTR(MP_QSTR_dc), MP_ROM_PTR(&motor_Motor_duty_obj) },
+    { MP_ROM_QSTR(MP_QSTR_dc), MP_ROM_PTR(&motor_DCMotor_duty_obj) },
     //
     // Methods specific to encoded motors
     //
@@ -440,27 +470,9 @@ MP_DEFINE_CONST_DICT(motor_Motor_locals_dict, motor_Motor_locals_dict_table);
 const mp_obj_type_t motor_Motor_type = {
     { &mp_type_type },
     .name = MP_QSTR_Motor,
-    .print = motor_Motor_print,
+    .print = motor_DCMotor_print,
     .make_new = motor_Motor_make_new,
     .locals_dict = (mp_obj_dict_t*)&motor_Motor_locals_dict,
-};
-
-// dir(pybricks.builtins.DCMotor)
-STATIC const mp_rom_map_elem_t motor_DCMotor_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_DCMotor_stop_obj) },
-    { MP_ROM_QSTR(MP_QSTR_dc), MP_ROM_PTR(&motor_Motor_duty_obj) },
-};
-MP_DEFINE_CONST_DICT(motor_DCMotor_locals_dict, motor_DCMotor_locals_dict_table);
-
-// type(pybricks.builtins.DCMotor)
-const mp_obj_type_t motor_DCMotor_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_DCMotor,
-#if !PYBRICKS_HUB_MOVEHUB
-    .print = motor_Motor_print,
-#endif
-    .make_new = motor_Motor_make_new,
-    .locals_dict = (mp_obj_dict_t*)&motor_DCMotor_locals_dict,
 };
 
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
