@@ -96,33 +96,49 @@ STATIC mp_obj_t motor_DCMotor_duty(size_t n_args, const mp_obj_t *pos_args, mp_m
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_DCMotor_duty_obj, 1, motor_DCMotor_duty);
 
-STATIC mp_obj_t motor_DCMotor_stop(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        motor_DCMotor_obj_t, self,
-        PB_ARG_DEFAULT_OBJ(stop_type, pb_Stop_COAST_obj)
-    );
-    pbio_actuation_t actuation = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
+// pybricks.builtins.DCMotor.stop
+// pybricks.builtins.Motor.stop
+STATIC mp_obj_t motor_DCMotor_stop(mp_obj_t self_in) {
 
-    switch (actuation) {
-    case PBIO_ACTUATION_COAST:
-        pb_assert(pbio_dcmotor_coast(self->dcmotor));
-        break;
-    case PBIO_ACTUATION_BRAKE:
-        pb_assert(pbio_dcmotor_brake(self->dcmotor));
-        break;
-    default:
-        // DCMotors do not support other stop types
-        pb_assert(PBIO_ERROR_INVALID_ARG);
+    // Object type is either Motor or DCMotor
+    bool is_servo = mp_obj_is_type(self_in, &motor_Motor_type);
+
+    if (is_servo) {
+        motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+        pb_assert(pbio_servo_stop(self->srv, PBIO_ACTUATION_COAST));
     }
-
+    else {
+        motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+        pb_assert(pbio_dcmotor_coast(self->dcmotor));
+    }
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_DCMotor_stop_obj, 1, motor_DCMotor_stop);
+MP_DEFINE_CONST_FUN_OBJ_1(motor_DCMotor_stop_obj, motor_DCMotor_stop);
+
+// pybricks.builtins.DCMotor.brake
+// pybricks.builtins.Motor.brake
+STATIC mp_obj_t motor_DCMotor_brake(mp_obj_t self_in) {
+
+    // Object type is either Motor or DCMotor
+    bool is_servo = mp_obj_is_type(self_in, &motor_Motor_type);
+
+    if (is_servo) {
+        motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+        pb_assert(pbio_servo_stop(self->srv, PBIO_ACTUATION_BRAKE));
+    }
+    else {
+        motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+        pb_assert(pbio_dcmotor_brake(self->dcmotor));
+    }
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(motor_DCMotor_brake_obj, motor_DCMotor_brake);
 
 // dir(pybricks.builtins.DCMotor)
 STATIC const mp_rom_map_elem_t motor_DCMotor_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_DCMotor_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_dc), MP_ROM_PTR(&motor_DCMotor_duty_obj) },
+    { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_DCMotor_stop_obj) },
+    { MP_ROM_QSTR(MP_QSTR_brake), MP_ROM_PTR(&motor_DCMotor_brake_obj) },
 };
 MP_DEFINE_CONST_DICT(motor_DCMotor_locals_dict, motor_DCMotor_locals_dict_table);
 
@@ -271,19 +287,13 @@ STATIC mp_obj_t motor_Motor_run(size_t n_args, const mp_obj_t *pos_args, mp_map_
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_run_obj, 1, motor_Motor_run);
 
-// pybricks.builtins.Motor.stop
-STATIC mp_obj_t motor_Motor_stop(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        motor_Motor_obj_t, self,
-        PB_ARG_DEFAULT_OBJ(stop_type, pb_Stop_HOLD_obj)
-    );
-    pbio_actuation_t actuation = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
-
-    pb_assert(pbio_servo_stop(self->srv, actuation));
-
+// pybricks.builtins.Motor.hold
+STATIC mp_obj_t motor_Motor_hold(mp_obj_t self_in) {
+    motor_Motor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_assert(pbio_servo_stop(self->srv, PBIO_ACTUATION_HOLD));
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(motor_Motor_stop_obj, 1, motor_Motor_stop);
+MP_DEFINE_CONST_FUN_OBJ_1(motor_Motor_hold_obj, motor_Motor_hold);
 
 // pybricks.builtins.Motor.run_time
 STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -447,11 +457,13 @@ STATIC const mp_rom_map_elem_t motor_Motor_locals_dict_table[] = {
     //
     // Methods common to DC motors and encoded motors
     //
-    { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_Motor_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_dc), MP_ROM_PTR(&motor_DCMotor_duty_obj) },
+    { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&motor_DCMotor_stop_obj) },
+    { MP_ROM_QSTR(MP_QSTR_brake), MP_ROM_PTR(&motor_DCMotor_brake_obj) },
     //
     // Methods specific to encoded motors
     //
+    { MP_ROM_QSTR(MP_QSTR_hold), MP_ROM_PTR(&motor_Motor_hold_obj) },
     { MP_ROM_QSTR(MP_QSTR_angle), MP_ROM_PTR(&motor_Motor_angle_obj) },
     { MP_ROM_QSTR(MP_QSTR_speed), MP_ROM_PTR(&motor_Motor_speed_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_angle), MP_ROM_PTR(&motor_Motor_reset_angle_obj) },
