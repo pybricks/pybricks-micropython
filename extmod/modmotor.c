@@ -128,6 +128,11 @@ STATIC mp_obj_t motor_DCMotor_brake(mp_obj_t self_in) {
     }
     else {
         motor_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+        #if PYBRICKS_PY_EV3DEVICES
+        // Workaround for ev3dev dc-motor not coasting on first try
+        pb_assert(pbio_dcmotor_set_duty_cycle_usr(self->dcmotor, 1));
+        mp_hal_delay_ms(1);
+        #endif
         pb_assert(pbio_dcmotor_brake(self->dcmotor));
     }
     return mp_const_none;
