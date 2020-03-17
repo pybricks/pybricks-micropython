@@ -25,8 +25,8 @@
 typedef struct _robotics_DriveBase_obj_t {
     mp_obj_base_t base;
     pbio_drivebase_t *db;
-    motor_Motor_obj_t *left;
-    motor_Motor_obj_t *right;
+    mp_obj_t left;
+    mp_obj_t right;
     mp_obj_t logger;
     mp_obj_t heading_control;
     mp_obj_t distance_control;
@@ -49,22 +49,17 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     robotics_DriveBase_obj_t *self = m_new_obj(robotics_DriveBase_obj_t);
     self->base.type = (mp_obj_type_t*) type;
 
-    // Argument must be two motors and two dimensions
-    if (!MP_OBJ_IS_TYPE(left_motor, &motor_Motor_type) || !MP_OBJ_IS_TYPE(right_motor, &motor_Motor_type)) {
-        pb_assert(PBIO_ERROR_INVALID_ARG);
-    }
-
     // Pointer to the Python (not pbio) Motor objects
-    self->left = MP_OBJ_TO_PTR(left_motor);
-    self->right = MP_OBJ_TO_PTR(right_motor);
+    self->left = left_motor;
+    self->right = right_motor;
 
-    // Get wheel diameter and axle track dimensions
-    fix16_t wheel_diameter_val = pb_obj_get_fix16(wheel_diameter);
-    fix16_t axle_track_val = pb_obj_get_fix16(axle_track);
+    // Pointers to servos
+    pbio_servo_t *srv_left = ((motor_Motor_obj_t*) pb_obj_get_base_class_obj(self->left, &motor_Motor_type))->srv;
+    pbio_servo_t *srv_right = ((motor_Motor_obj_t*) pb_obj_get_base_class_obj(self->right, &motor_Motor_type))->srv;
 
     // Create drivebase
     pb_assert(pbio_motorpoll_get_drivebase(&self->db));
-    pb_assert(pbio_drivebase_setup(self->db, self->left->srv, self->right->srv, wheel_diameter_val, axle_track_val));
+    pb_assert(pbio_drivebase_setup(self->db, srv_left, srv_right, pb_obj_get_fix16(wheel_diameter), pb_obj_get_fix16(axle_track)));
     pb_assert(pbio_motorpoll_set_drivebase_status(self->db, PBIO_ERROR_AGAIN));
 
     // Create an instance of the Logger class
