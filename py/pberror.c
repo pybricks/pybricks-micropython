@@ -72,3 +72,14 @@ void pb_assert(pbio_error_t error) {
 
     mp_raise_OSError(os_err);
 }
+
+void pb_assert_type(mp_obj_t obj, const mp_obj_type_t *type) {
+    if (!mp_obj_is_type(obj, type)) {
+        #if MICROPY_ERROR_REPORTING == MICROPY_ERROR_REPORTING_TERSE
+        mp_raise_TypeError(NULL);
+        #else
+        nlr_raise(mp_obj_new_exception_msg_varg(&mp_type_TypeError,
+            "can't convert %s to %s", mp_obj_get_type_str(obj), qstr_str(type->name)));
+        #endif
+    }
+}
