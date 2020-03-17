@@ -306,7 +306,7 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp
         motor_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(time),
-        PB_ARG_DEFAULT_OBJ(stop_type, pb_Stop_HOLD_obj),
+        PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
         PB_ARG_DEFAULT_TRUE(wait)
     );
 
@@ -317,7 +317,7 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
-    pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
+    pbio_actuation_t after_stop = pb_type_enum_get_value(then, &pb_enum_type_Stop);
 
     // Call pbio with parsed user/default arguments
     pb_assert(pbio_servo_run_time(self->srv, speed_arg, time_arg, after_stop));
@@ -335,12 +335,12 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         motor_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
-        PB_ARG_DEFAULT_OBJ(stop_type, pb_Stop_COAST_obj),
+        PB_ARG_DEFAULT_OBJ(then, pb_Stop_COAST_obj),
         PB_ARG_DEFAULT_NONE(duty_limit)
     );
 
     mp_int_t speed_arg = pb_obj_get_int(speed);
-    pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
+    pbio_actuation_t after_stop = pb_type_enum_get_value(then, &pb_enum_type_Stop);
 
     // If duty_limit argument, given, limit actuation during this maneuver
     bool override_duty_limit = duty_limit != mp_const_none;
@@ -399,13 +399,13 @@ STATIC mp_obj_t motor_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, m
         motor_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(rotation_angle),
-        PB_ARG_DEFAULT_OBJ(stop_type, pb_Stop_HOLD_obj),
+        PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
         PB_ARG_DEFAULT_TRUE(wait)
     );
 
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t angle_arg = pb_obj_get_int(rotation_angle);
-    pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
+    pbio_actuation_t after_stop = pb_type_enum_get_value(then, &pb_enum_type_Stop);
 
     // Call pbio with parsed user/default arguments
     pb_assert(pbio_servo_run_angle(self->srv, speed_arg, angle_arg, after_stop));
@@ -424,13 +424,13 @@ STATIC mp_obj_t motor_Motor_run_target(size_t n_args, const mp_obj_t *pos_args, 
         motor_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed),
         PB_ARG_REQUIRED(target_angle),
-        PB_ARG_DEFAULT_OBJ(stop_type, pb_Stop_HOLD_obj),
+        PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
         PB_ARG_DEFAULT_TRUE(wait)
     );
 
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t angle_arg = pb_obj_get_int(target_angle);
-    pbio_actuation_t after_stop = pb_type_enum_get_value(stop_type, &pb_enum_type_Stop);
+    pbio_actuation_t after_stop = pb_type_enum_get_value(then, &pb_enum_type_Stop);
 
     // Call pbio with parsed user/default arguments
     pb_assert(pbio_servo_run_target(self->srv, speed_arg, angle_arg, after_stop));
