@@ -24,7 +24,7 @@ static pbio_control_settings_t settings_servo_ev3_medium = {
     .abs_acceleration = 8000,
     .rate_tolerance = 100,
     .count_tolerance = 10,
-    .stall_rate_limit = 50,
+    .stall_rate_limit = 30,
     .stall_time = 200*US_PER_MS,
     .pid_kp = 300,
     .pid_ki = 400,
@@ -41,7 +41,7 @@ static pbio_control_settings_t settings_servo_ev3_large = {
     .abs_acceleration = 3200,
     .rate_tolerance = 100,
     .count_tolerance = 10,
-    .stall_rate_limit = 50,
+    .stall_rate_limit = 30,
     .stall_time = 200*US_PER_MS,
     .pid_kp = 400,
     .pid_ki = 1200,
@@ -55,18 +55,52 @@ static pbio_control_settings_t settings_servo_ev3_large = {
 
 static pbio_control_settings_t settings_servo_move_hub = {
     .max_rate = 1500,
-    .abs_acceleration = 3000,
-    .rate_tolerance = 5,
-    .count_tolerance = 3,
-    .stall_rate_limit = 2,
+    .abs_acceleration = 5000,
+    .rate_tolerance = 50,
+    .count_tolerance = 6,
+    .stall_rate_limit = 15,
     .stall_time = 200*US_PER_MS,
     .pid_kp = 400,
     .pid_ki = 600,
     .pid_kd = 5,
     .integral_range = 45,
+    .integral_rate = 5,
+    .max_control = 10000,
+    .control_offset = 2000,
+    .actuation_scale = 100,
+};
+
+static pbio_control_settings_t settings_servo_boost_interactive = {
+    .max_rate = 1000,
+    .abs_acceleration = 2000,
+    .rate_tolerance = 50,
+    .count_tolerance = 5,
+    .stall_rate_limit = 15,
+    .stall_time = 200*US_PER_MS,
+    .pid_kp = 600,
+    .pid_ki = 600,
+    .pid_kd = 5,
+    .integral_range = 45,
     .integral_rate = 3,
     .max_control = 10000,
-    .control_offset = 0,
+    .control_offset = 1000,
+    .actuation_scale = 100,
+};
+
+static pbio_control_settings_t settings_servo_cplus_xl = {
+    .max_rate = 1000,
+    .abs_acceleration = 4000,
+    .rate_tolerance = 50,
+    .count_tolerance = 10,
+    .stall_rate_limit = 20,
+    .stall_time = 200*US_PER_MS,
+    .pid_kp = 250,
+    .pid_ki = 350,
+    .pid_kd = 0,
+    .integral_range = 45,
+    .integral_rate = 5,
+    .max_control = 10000,
+    .control_offset = 1500,
     .actuation_scale = 100,
 };
 
@@ -97,6 +131,23 @@ static void load_servo_settings(pbio_control_settings_t *s, pbio_iodev_type_id_t
             break;
         case PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR:
             *s = settings_servo_move_hub;
+            break;
+        case PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR:
+            *s = settings_servo_boost_interactive;
+            break;
+        case PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR:
+            *s = settings_servo_cplus_xl;
+            s->control_offset = 2500;
+            break;
+        case PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR:
+            *s = settings_servo_cplus_xl;
+            break;
+        case PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR:
+            *s = settings_servo_cplus_xl;
+            s->control_offset = 2500;
+            break;
+        case PBIO_IODEV_TYPE_ID_SPIKE_L_MOTOR:
+            *s = settings_servo_cplus_xl;
             break;
         default:
             *s = settings_servo_default;
