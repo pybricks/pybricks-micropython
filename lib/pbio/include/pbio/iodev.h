@@ -86,6 +86,25 @@ typedef enum {
     PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR = LUMP_TYPE_ID_CPLUS_XL_MOTOR,
 
 
+    // SPIKE motors
+
+    /** SPIKE Medium Motor */
+    PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR            = 48,   
+
+    /** SPIKE Large Motor */
+    PBIO_IODEV_TYPE_ID_SPIKE_L_MOTOR            = 49,   
+
+    // SPIKE sensors
+
+    /** SPIKE Color Sensor */
+    PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR       = 61,   
+
+    /** SPIKE Ultrasonic Sensor */
+    PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR  = 62,   
+
+    /** SPIKE Prime Force Sensor */
+    PBIO_IODEV_TYPE_ID_SPIKE_FORCE_SENSOR       = 63,   
+
     // FatcatLab EV3 UART devices
 
     /** FatcatLab A/DC Adapter */
