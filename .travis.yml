@@ -277,3 +277,32 @@ jobs:
         - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
         - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
         - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
+
+    # Pybricks SPIKE Prime Hub
+    - stage: test
+      env:
+        - NAME="Pybricks SPIKE Prime Hub build"
+      before_install:
+        - sudo apt-add-repository --update --yes ppa:team-gcc-arm-embedded/ppa
+      install:
+        - sudo apt-get install gcc-arm-embedded libnewlib-arm-none-eabi
+        - arm-none-eabi-gcc --version
+        - npm install -g jfrog-cli-go
+        - jfrog --version
+        - pyenv shell 3.6
+        - cd ${HOME}
+        - git clone --depth=10 --branch=$(cat ${TRAVIS_BUILD_DIR}/micropython-tag) --recursive https://github.com/pybricks/micropython;
+        - cd micropython/ports/pybricks
+        - git checkout --recurse-submodules ${TRAVIS_PULL_REQUEST_BRANCH:-${TRAVIS_COMMIT}}
+        - cd ../..
+      script:
+        - make ${MAKEOPTS} -C ports/pybricks/bricks/primehub
+      after_success:
+        - jfrog rt config pybricks --url https://pybricks.jfrog.io/pybricks --access-token $JFROG_SECRET --interactive=false
+        - jfrog rt upload --build-name $TRAVIS_REPO_SLUG --build-number $TRAVIS_JOB_NUMBER
+          "${HOME}/micropython/ports/pybricks/bricks/primehub/build/firmware.bin"
+          pybricks-firmware/pybricks-micropython-primehub-build$TRAVIS_BUILD_NUMBER-firmware.bin
+        - jfrog rt build-collect-env $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
+        - jfrog rt build-add-git $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER $TRAVIS_BUILD_DIR
+        - jfrog rt build-publish --build-url $TRAVIS_JOB_WEB_URL $TRAVIS_REPO_SLUG $TRAVIS_JOB_NUMBER
+        - $TRAVIS_BUILD_DIR/.travis/upload-fw-size.sh primehub "${HOME}/micropython/ports/pybricks/bricks/primehub/build/firmware.bin"
