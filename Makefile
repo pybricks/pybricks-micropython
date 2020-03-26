@@ -4,9 +4,9 @@ help:
 
 .PHONY: doc
 
-all: movehub cityhub cplushub nxt ev3dev-armel
+all: movehub cityhub cplushub primehub nxt ev3dev-armel
 
-clean-all: clean-movehub clean-cityhub clean-cplushub clean-nxt clean-ev3dev-armel
+clean-all: clean-movehub clean-cityhub clean-cplushub clean-primehub clean-nxt clean-ev3dev-armel
 
 ev3dev-host:
 	@$(MAKE) -C bricks/ev3dev CROSS_COMPILE=
@@ -62,6 +62,12 @@ nxt:
 
 clean-nxt: clean-mpy-cross
 	@$(MAKE) -C bricks/nxt clean
+
+primehub:
+	@$(MAKE) -C bricks/primehub
+
+clean-primehub: clean-mpy-cross
+	@$(MAKE) -C bricks/primehub clean
 
 clean-mpy-cross:
 	@$(MAKE) -C ../../mpy-cross clean
