@@ -198,42 +198,38 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
         return PBIO_ERROR_INVALID_OP;
     }
 
-    // Perform angle reset in case of tracking / holding
-    if (srv->control.type == PBIO_CONTROL_ANGLE && srv->control.on_target) {
-        // Get the old angle
-        int32_t angle_old;
-        err = pbio_tacho_get_angle(srv->tacho, &angle_old);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-
-        // Get the old target angle
-        int32_t time_ref = pbio_control_get_ref_time(&srv->control, clock_usecs());
-        int32_t count_ref, unused;
-        pbio_trajectory_get_reference(&srv->control.trajectory, time_ref, &count_ref, &unused, &unused, &unused);
-        int32_t target_old = pbio_control_counts_to_user(&srv->control.settings, count_ref);
-
-        // Reset the angle
-        err = pbio_tacho_reset_angle(srv->tacho, reset_angle, reset_to_abs);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-        // Set the new target based on the old angle and the old target, after the angle reset
-        int32_t new_target = reset_angle + target_old - angle_old;
-        return pbio_servo_track_target(srv, new_target);
-    }
-    // If the motor was in a passive mode (coast, brake, user duty), reset angle and leave state unchanged
-    else if (srv->control.type == PBIO_CONTROL_NONE) {
+    // If the motor was in a passive mode (coast, brake, user duty),
+    // just reset angle and leave motor state unchanged.
+    if (srv->control.type == PBIO_CONTROL_NONE) {
         return pbio_tacho_reset_angle(srv->tacho, reset_angle, reset_to_abs);
     }
-    // In all other cases, stop the ongoing maneuver by coasting and then reset the angle
-    else {
-        err = pbio_servo_stop(srv, PBIO_ACTUATION_COAST);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-        return pbio_tacho_reset_angle(srv->tacho, reset_angle, reset_to_abs);
+
+    // If are were busy moving, that means the reset was called while a motor
+    // was running in the background. To avoid confusion as to where the motor
+    // must go after the reset, we'll make it stop and hold right here right now.
+
+    // Get the old angle
+    int32_t angle_old;
+    err = pbio_tacho_get_angle(srv->tacho, &angle_old);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
+
+    // Get the old target angle that we were tracking until now
+    int32_t time_ref = pbio_control_get_ref_time(&srv->control, clock_usecs());
+    int32_t count_ref, unused;
+    pbio_trajectory_get_reference(&srv->control.trajectory, time_ref, &count_ref, &unused, &unused, &unused);
+    int32_t target_old = pbio_control_counts_to_user(&srv->control.settings, count_ref);
+
+    // Reset the angle
+    err = pbio_tacho_reset_angle(srv->tacho, reset_angle, reset_to_abs);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Set the new target based on the old angle and the old target, after the angle reset
+    int32_t new_target = reset_angle + target_old - angle_old;
+    return pbio_servo_track_target(srv, new_target);
 }
 
 // Get the physical state of a single motor
