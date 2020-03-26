@@ -163,9 +163,11 @@ void pbio_count_integrator_update(pbio_count_integrator_t *itg, int32_t time_now
         // Check if integrator would grow due to this error, which is if it has same definite sign as integral
         bool growing = (cerr > 0 && itg->count_err_integral > 0) || (cerr < 0 && itg->count_err_integral < 0);
 
-        // If growing, limit error by maximum integral rate
-        cerr = cerr >  integral_rate ?  integral_rate : cerr;
-        cerr = cerr < -integral_rate ? -integral_rate : cerr;
+        // If growing, limit error growth by maximum integral rate
+        if (growing) {
+            cerr = cerr >  integral_rate ?  integral_rate : cerr;
+            cerr = cerr < -integral_rate ? -integral_rate : cerr;
+        }
 
         // Add change if allowed to grow, or if it deflates the integral
         if (abs(count_target - count_ref) <= integral_range || !growing) {
