@@ -140,6 +140,7 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	modlogger.c \
 	modmotor.c \
 	modparameters.c \
+	modbuttons.c \
 	modpupdevices.c \
 	modrobotics.c \
 	modtools.c \
@@ -211,6 +212,7 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	drv/adc/adc_stm32_hal.c \
 	drv/adc/adc_stm32f0.c \
 	drv/battery/battery_adc.c \
+	drv/button/button_adc.c \
 	drv/button/button_gpio.c \
 	drv/counter/counter_core.c \
 	drv/counter/counter_stm32f0_gpio_quad_enc.c \

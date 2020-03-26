@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2019 David Lechner
+
+PBIO_PLATFORM = prime_hub
+PB_MCU_SERIES = F4
+PB_CMSIS_MCU = STM32F413xx
+PB_FIRMWARE_MAX_SIZE = 524288
+PB_USE_HAL = 1
+PB_LIB_BLUENRG = 0
+CHECKSUM_TYPE = crc32
+TEXT0_ADDR = 0x8008000
+
+include ../stm32/stm32.mk
