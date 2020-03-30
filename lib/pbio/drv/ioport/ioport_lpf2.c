@@ -7,10 +7,12 @@
 
 #if PBDRV_CONFIG_IOPORT_LPF2
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 
 #include <contiki.h>
+#include <lego_uart.h>
 
 #include <pbdrv/gpio.h>
 #include <pbio/error.h>
@@ -44,6 +46,148 @@ typedef struct {
     pbio_iodev_type_id_t connected_type_id;
     pbio_iodev_type_id_t prev_type_id;
 } ioport_dev_t;
+
+typedef struct {
+    pbio_iodev_info_t info;
+    pbio_iodev_mode_t mode;
+} basic_info_t;
+
+static const basic_info_t basic_infos[] = {
+    [PBIO_IODEV_TYPE_ID_LPF2_MMOTOR] = {
+        .info = {
+            .type_id = PBIO_IODEV_TYPE_ID_LPF2_MMOTOR,
+            .num_modes = 1,
+        },
+        .mode = {
+            .name = "LPF2-MMOTOR",
+            .num_values = 1,
+            .flags = {
+                .flags0 = LUMP_MODE_FLAGS0_MOTOR_POWER,
+                .flags4 = LUMP_MODE_FLAGS4_USES_HBRIDGE,
+            },
+            .num_values = 1,
+            .data_type = PBIO_IODEV_DATA_TYPE_INT8,
+            .digits = 4,
+            .decimals = 0,
+            .raw_min = -100.0,
+            .raw_max = 100.0,
+            .pct_min = -100.0,
+            .pct_max = 100.0,
+            .si_min = -100.0,
+            .si_max = 100.0,
+            .uom = "",
+            .input_flags = 0,
+            .output_flags = LPF2_MAPPING_FLAG_ABSOLUTE,
+        },
+    },
+    [PBIO_IODEV_TYPE_ID_LPF2_TRAIN] = {
+        .info = {
+            .type_id = PBIO_IODEV_TYPE_ID_LPF2_TRAIN,
+            .num_modes = 1,
+        },
+        .mode = {
+            .name = "LPF2-TRAIN",
+            .num_values = 1,
+            .flags = {
+                .flags0 = LUMP_MODE_FLAGS0_MOTOR_POWER,
+                .flags4 = LUMP_MODE_FLAGS4_USES_HBRIDGE,
+            },
+            .num_values = 1,
+            .data_type = PBIO_IODEV_DATA_TYPE_INT8,
+            .digits = 4,
+            .decimals = 0,
+            .raw_min = -100.0,
+            .raw_max = 100.0,
+            .pct_min = -100.0,
+            .pct_max = 100.0,
+            .si_min = -100.0,
+            .si_max = 100.0,
+            .uom = "",
+            .input_flags = 0,
+            .output_flags = LPF2_MAPPING_FLAG_RELATIVE | LPF2_MAPPING_FLAG_ABSOLUTE,
+        },
+    },
+    [PBIO_IODEV_TYPE_ID_LPF2_LIGHT] = {
+        .info = {
+            .type_id = PBIO_IODEV_TYPE_ID_LPF2_LIGHT,
+            .num_modes = 1,
+        },
+        .mode = {
+            .name = "LPF2-LIGHT",
+            .num_values = 1,
+            .flags = {
+                .flags4 = LUMP_MODE_FLAGS4_USES_HBRIDGE,
+            },
+            .num_values = 1,
+            .data_type = PBIO_IODEV_DATA_TYPE_INT8,
+            .digits = 1,
+            .decimals = 0,
+            .raw_min = 0.0,
+            .raw_max = 1.0,
+            .pct_min = 0.0,
+            .pct_max = 100.0,
+            .si_min = 0.0,
+            .si_max = 1.0,
+            .uom = "",
+            .input_flags = 0,
+            .output_flags = LPF2_MAPPING_FLAG_DISCRETE | LPF2_MAPPING_FLAG_ABSOLUTE,
+        },
+    },
+    [PBIO_IODEV_TYPE_ID_LPF2_LIGHT1] = {
+        .info = {
+            .type_id = PBIO_IODEV_TYPE_ID_LPF2_LIGHT1,
+            .num_modes = 1,
+        },
+        .mode = {
+            .name = "LPF2-LIGHT1",
+            .num_values = 1,
+            .flags = {
+                .flags4 = LUMP_MODE_FLAGS4_USES_HBRIDGE,
+            },
+            .num_values = 1,
+            .data_type = PBIO_IODEV_DATA_TYPE_INT8,
+            .digits = 1,
+            .decimals = 0,
+            .raw_min = -100.0,
+            .raw_max = 100.0,
+            .pct_min = -100.0,
+            .pct_max = 100.0,
+            .si_min = -100.0,
+            .si_max = 100.0,
+            .uom = "",
+            .input_flags = 0,
+            .output_flags = LPF2_MAPPING_FLAG_DISCRETE | LPF2_MAPPING_FLAG_ABSOLUTE,
+        },
+    },
+    [PBIO_IODEV_TYPE_ID_LPF2_LIGHT2] = {
+        .info = {
+            .type_id = PBIO_IODEV_TYPE_ID_LPF2_LIGHT2,
+            .num_modes = 1,
+        },
+        .mode = {
+            .name = "LPF2-LIGHT2",
+            .num_values = 1,
+            .flags = {
+                .flags4 = LUMP_MODE_FLAGS4_USES_HBRIDGE,
+            },
+            .num_values = 1,
+            .data_type = PBIO_IODEV_DATA_TYPE_INT8,
+            .digits = 1,
+            .decimals = 0,
+            .raw_min = 0.0,
+            .raw_max = 1.0,
+            .pct_min = 0.0,
+            .pct_max = 100.0,
+            .si_min = 0.0,
+            .si_max = 1.0,
+            .uom = "",
+            .input_flags = 0,
+            .output_flags = LPF2_MAPPING_FLAG_DISCRETE | LPF2_MAPPING_FLAG_ABSOLUTE,
+        },
+    },
+};
+
+static pbio_iodev_t basic_devs[PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS];
 
 static const pbio_iodev_type_id_t ioport_type_id_lookup[3][3] = {
     [DEV_ID1_GROUP_GND] = {
@@ -106,6 +250,9 @@ static void ioport_enable_uart(ioport_dev_t *ioport) {
     pbdrv_gpio_out_low(&pins->uart_buf);
 }
 
+static const pbio_iodev_ops_t basic_dev_ops = {
+};
+
 static void init_one(uint8_t ioport) {
     const pbdrv_ioport_lpf2_platform_port_t *pins = ioport_devs[ioport].pins;
 
@@ -116,6 +263,9 @@ static void init_one(uint8_t ioport) {
     pbdrv_gpio_input(&pins->uart_buf);
     pbdrv_gpio_input(&pins->uart_tx);
     pbdrv_gpio_input(&pins->uart_rx);
+
+    basic_devs[ioport].port = PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT + ioport;
+    basic_devs[ioport].ops = &basic_dev_ops;
 }
 
 // TODO: This should be moved to a common ioport_core.c file or removed entirely
@@ -353,6 +503,20 @@ PROCESS_THREAD(pbdrv_ioport_lpf2_process, ev, data) {
                 if (ioport->connected_type_id == PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
                     ioport_enable_uart(ioport);
                     pbio_uartdev_get(i, &ioport->iodev);
+                } else if (ioport->connected_type_id == PBIO_IODEV_TYPE_ID_NONE) {
+                    ioport->iodev = NULL;
+                } else {
+                    assert(ioport->connected_type_id < PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART);
+                    pbio_iodev_t *iodev = &basic_devs[i];
+                    const pbio_iodev_info_t *info = &basic_infos[ioport->connected_type_id].info;
+                    iodev->info = info;
+
+                    const lump_mode_flags_t *flags = &info->mode_info[0].flags;
+                    iodev->motor_flags = PBIO_IODEV_MOTOR_FLAG_NONE;
+                    if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_POWER) {
+                        iodev->motor_flags |= PBIO_IODEV_MOTOR_FLAG_IS_MOTOR;
+                    }
+                    ioport->iodev = iodev;
                 }
             }
         }
