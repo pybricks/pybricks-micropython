@@ -488,13 +488,13 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_POWER) {
                     data->iodev.motor_flags |= PBIO_IODEV_MOTOR_FLAG_IS_MOTOR;
                 }
-                else if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_SPEED) {
+                if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_SPEED) {
                     data->iodev.motor_flags |= PBIO_IODEV_MOTOR_FLAG_HAS_SPEED;
                 }
-                else if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_REL_POS) {
+                if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_REL_POS) {
                     data->iodev.motor_flags |= PBIO_IODEV_MOTOR_FLAG_HAS_REL_POS;
                 }
-                else if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_ABS_POS) {
+                if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_ABS_POS) {
                     data->iodev.motor_flags |= PBIO_IODEV_MOTOR_FLAG_HAS_ABS_POS;
                 }
 
