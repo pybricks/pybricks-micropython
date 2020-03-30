@@ -825,6 +825,8 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t *data)) {
     data->iodev.motor_flags = PBIO_IODEV_MOTOR_FLAG_NONE;
     data->ext_mode = 0;
     data->status = PBIO_UARTDEV_STATUS_SYNCING;
+    // default max tacho rate for BOOST external motor since it is the only
+    // motor that does not send this info
     data->max_tacho_rate = 1500;
 
     // FIXME: need to flush UART read buffer here
