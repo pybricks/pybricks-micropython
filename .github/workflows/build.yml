@@ -1,0 +1,515 @@
+name: Build
+
+on: [push, pull_request]
+
+env:
+  MAKEOPTS: -j2
+
+jobs:
+  mpy_cross:
+    name: mpy-cross
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        path: tmp
+    - name: Get tag
+      id: get_tag
+      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
+    - name: Checkout MicroPython
+      uses: actions/checkout@v2
+      with:
+        repository: pybricks/micropython
+        ref: ${{ steps.get_tag.outputs.micropython_tag }}
+        submodules: recursive
+        path: micropython
+        token: ${{ secrets.GITHUB_TOKEN2 }}
+    - name: Build mpy-cross
+      run: make $MAKEOPTS -C micropython/mpy-cross
+    - name: Upload mpy-cross
+      if: success()
+      uses: actions/upload-artifact@v1
+      with:
+        name: pybricks-mpy-cross
+        path: micropython/mpy-cross/pybricks-mpy-cross
+
+  unix_coverage:
+    name: unix coverage
+    needs: mpy_cross
+    runs-on: ubuntu-latest
+    env:
+      PYBRICKS_NO_REDIRECT_STDOUT: 1
+      CFLAGS_EXTRA: -DPYBRICKS_VERSION_MAJOR=0 -DPYBRICKS_VERSION_MINOR=0 -DPYBRICKS_VERSION_MICRO=0 -DPYBRICKS_VERSION_LEVEL_HEX=0xA -DPYBRICKS_VERSION_LEVEL_STR=\"alpha\" -DPYBRICKS_VERSION_SERIAL=0 -DPYBRICKS_HEXVERSION=0x020000A0
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        path: tmp
+    - name: Get tag
+      id: get_tag
+      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
+    - name: Checkout MicroPython
+      uses: actions/checkout@v2
+      with:
+        repository: pybricks/micropython
+        ref: ${{ steps.get_tag.outputs.micropython_tag }}
+        submodules: recursive
+        path: micropython
+        token: ${{ secrets.GITHUB_TOKEN2 }}
+    - name: Download mpy-cross
+      uses: actions/download-artifact@v1
+      with:
+        name: pybricks-mpy-cross
+        path: micropython/mpy-cross
+    - name: Fix file permission
+      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+    - name: Build
+      run: |
+        cd micropython
+        make $MAKEOPTS -C ports/unix deplibs
+        make $MAKEOPTS -C ports/unix coverage
+    - name: Test
+      if: success()
+      run: |
+        cd micropython
+        (cd tests && MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/micropython_coverage ./run-tests)
+        (cd tests && MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/micropython_coverage ./run-tests -d thread)
+        (cd tests && MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/micropython_coverage ./run-tests --emit native)
+        (cd tests && MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/micropython_coverage ./run-tests --via-mpy -d basics float)
+        # test when input script comes from stdin
+        cat tests/basics/0prelim.py | ports/unix/micropython_coverage | grep -q 'abc'
+    - name: List failed tests
+      if: failure()
+      run: (cd micropython/tests && for exp in *.exp; do testbase=$(basename $exp .exp); echo -e "\nFAILURE $testbase"; diff -u $testbase.exp $testbase.out; done)
+
+  ev3dev_stretch:
+    name: ev3dev-stretch
+    needs: mpy_cross
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install QEMU
+      run: |
+        sudo apt-get update
+        sudo apt-get install qemu-user-static
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        path: tmp
+    - name: Get tag
+      id: get_tag
+      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
+    - name: Checkout MicroPython
+      uses: actions/checkout@v2
+      with:
+        repository: pybricks/micropython
+        ref: ${{ steps.get_tag.outputs.micropython_tag }}
+        submodules: recursive
+        path: micropython
+        token: ${{ secrets.GITHUB_TOKEN2 }}
+    - name: Checkout Pybricks
+      run: |
+        cd micropython/ports/pybricks
+        git fetch --depth=1 origin $GITHUB_SHA
+        git checkout --recurse-submodules $GITHUB_SHA
+    - name: Download mpy-cross
+      uses: actions/download-artifact@v1
+      with:
+        name: pybricks-mpy-cross
+        path: micropython/mpy-cross
+    - name: Fix file permission
+      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+    - name: Create docker container
+      run: micropython/ports/pybricks/bricks/ev3dev/docker/setup.sh armel
+    - name: Build
+      run: docker exec --tty pybricks-ev3dev_armel make
+    - name: Test
+      if: success()
+      run: |
+        docker exec --tty pybricks-ev3dev_armel make test
+        docker exec --tty pybricks-ev3dev_armel make test-ev3dev
+    - name: List failed tests
+      if: failure()
+      run: micropython/ports/pybricks/tests/dump-out-files.sh
+    - name: Upload pybricks-micropython
+      if: success()
+      uses: actions/upload-artifact@v1
+      with:
+        name: pybricks-micropython
+        path: micropython/ports/pybricks/bricks/ev3dev/pybricks-micropython
+
+  ev3dev_bionic:
+    name: ev3dev-bionic
+    needs: mpy_cross
+    runs-on: ubuntu-latest
+    env:
+      CROSS_COMPILE: ""
+    steps:
+    - name: Install rerequisites
+      run: |
+        sudo apt-add-repository --update --yes ppa:ev3dev/tools
+        sudo apt-get install --no-install-recommends --yes \
+        alsa-utils \
+        espeak \
+        ev3dev-media \
+        ev3dev-mocks \
+        libasound2-plugin-ev3dev \
+        libffi-dev \
+        libgrx-3.0-dev \
+        libi2c-dev \
+        libmagickwand-6.q16-3 \
+        libudev-dev \
+        libumockdev0 \
+        pkg-config \
+        uthash-dev \
+        xfonts-100dpi
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        path: tmp
+    - name: Get tag
+      id: get_tag
+      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
+    - name: Checkout MicroPython
+      uses: actions/checkout@v2
+      with:
+        repository: pybricks/micropython
+        ref: ${{ steps.get_tag.outputs.micropython_tag }}
+        submodules: recursive
+        path: micropython
+        token: ${{ secrets.GITHUB_TOKEN2 }}
+    - name: Checkout Pybricks
+      run: |
+        cd micropython/ports/pybricks
+        git fetch --depth=1 origin $GITHUB_SHA
+        git checkout --recurse-submodules $GITHUB_SHA
+    - name: Download mpy-cross
+      uses: actions/download-artifact@v1
+      with:
+        name: pybricks-mpy-cross
+        path: micropython/mpy-cross
+    - name: Fix file permission
+      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+    - name: Build
+      run: |
+        cd micropython/ports/pybricks
+        make $MAKEOPTS -C bricks/ev3dev
+    - name: Test
+      if: success()
+      run: |
+        cd micropython/ports/pybricks
+        make $MAKEOPTS -C bricks/ev3dev test
+        make $MAKEOPTS -C bricks/ev3dev test-ev3dev
+    - name: List failed tests
+      if: failure()
+      run: micropython/ports/pybricks/tests/dump-out-files.sh
+
+  cross_compiler:
+    name: download cross-compiler
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check cache
+      id: check-cache
+      uses: actions/cache@v1
+      with:
+        path: ${{ github.workspace }}/gcc-arm
+        key: gcc-arm
+    - name: Download
+      if: steps.check-cache.outputs.cache-hit != 'true'
+      uses: fiam/arm-none-eabi-gcc@v1
+      with:
+        release: '8-2019-q3'
+        directory: ${{ github.workspace }}/gcc-arm
+
+  cityhub_firmware:
+    name: cityhub firmware
+    needs: [cross_compiler, mpy_cross]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install cross-compiler
+      uses: actions/cache@v1
+      with:
+        path: ${{ github.workspace }}/gcc-arm
+        key: gcc-arm
+    - name: Add cross-compiler to path
+      run: echo ::add-path::${{ github.workspace }}/gcc-arm/bin
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        path: tmp
+    - name: Get tag
+      id: get_tag
+      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
+    - name: Checkout MicroPython
+      uses: actions/checkout@v2
+      with:
+        repository: pybricks/micropython
+        ref: ${{ steps.get_tag.outputs.micropython_tag }}
+        submodules: recursive
+        path: micropython
+        token: ${{ secrets.GITHUB_TOKEN2 }}
+    - name: Checkout Pybricks
+      run: |
+        cd micropython/ports/pybricks
+        git fetch --depth=1 origin $GITHUB_SHA
+        git checkout --recurse-submodules $GITHUB_SHA
+    - name: Download mpy-cross
+      uses: actions/download-artifact@v1
+      with:
+        name: pybricks-mpy-cross
+        path: micropython/mpy-cross
+    - name: Fix file permission
+      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+    - name: Build
+      run: |
+        cd micropython/ports/pybricks
+        make $MAKEOPTS -C bricks/cityhub
+    - name: Upload firmware
+      if: success()
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: cityhub-firmware
+        path: micropython/ports/pybricks/bricks/cityhub/build/firmware.bin
+
+  cplushub_firmware:
+    name: cplushub firmware
+    needs: [cross_compiler, mpy_cross]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install cross-compiler
+      uses: actions/cache@v1
+      with:
+        path: ${{ github.workspace }}/gcc-arm
+        key: gcc-arm
+    - name: Add cross-compiler to path
+      run: echo ::add-path::${{ github.workspace }}/gcc-arm/bin
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        path: tmp
+    - name: Get tag
+      id: get_tag
+      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
+    - name: Checkout MicroPython
+      uses: actions/checkout@v2
+      with:
+        repository: pybricks/micropython
+        ref: ${{ steps.get_tag.outputs.micropython_tag }}
+        submodules: recursive
+        path: micropython
+        token: ${{ secrets.GITHUB_TOKEN2 }}
+    - name: Checkout Pybricks
+      run: |
+        cd micropython/ports/pybricks
+        git fetch --depth=1 origin $GITHUB_SHA
+        git checkout --recurse-submodules $GITHUB_SHA
+    - name: Download mpy-cross
+      uses: actions/download-artifact@v1
+      with:
+        name: pybricks-mpy-cross
+        path: micropython/mpy-cross
+    - name: Fix file permission
+      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+    - name: Build
+      run: |
+        cd micropython/ports/pybricks
+        make $MAKEOPTS -C bricks/cplushub
+    - name: Upload firmware
+      if: success()
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: cplushub-firmware
+        path: micropython/ports/pybricks/bricks/cplushub/build/firmware.bin
+
+  movehub_firmware:
+    name: movehub firmware
+    needs: [cross_compiler, mpy_cross]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install cross-compiler
+      uses: actions/cache@v1
+      with:
+        path: ${{ github.workspace }}/gcc-arm
+        key: gcc-arm
+    - name: Add cross-compiler to path
+      run: echo ::add-path::${{ github.workspace }}/gcc-arm/bin
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        path: tmp
+    - name: Get tag
+      id: get_tag
+      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
+    - name: Checkout MicroPython
+      uses: actions/checkout@v2
+      with:
+        repository: pybricks/micropython
+        ref: ${{ steps.get_tag.outputs.micropython_tag }}
+        submodules: recursive
+        path: micropython
+        token: ${{ secrets.GITHUB_TOKEN2 }}
+    - name: Checkout Pybricks
+      run: |
+        cd micropython/ports/pybricks
+        git fetch --depth=1 origin $GITHUB_SHA
+        git checkout --recurse-submodules $GITHUB_SHA
+    - name: Download mpy-cross
+      uses: actions/download-artifact@v1
+      with:
+        name: pybricks-mpy-cross
+        path: micropython/mpy-cross
+    - name: Fix file permission
+      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+    - name: Build
+      run: |
+        cd micropython/ports/pybricks
+        make $MAKEOPTS -C bricks/movehub
+    - name: Upload firmware
+      if: success()
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: movehub-firmware
+        path: micropython/ports/pybricks/bricks/movehub/build/firmware.bin
+
+  primehub_firmware:
+    name: primehub firmware
+    needs: [cross_compiler, mpy_cross]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install cross-compiler
+      uses: actions/cache@v1
+      with:
+        path: ${{ github.workspace }}/gcc-arm
+        key: gcc-arm
+    - name: Add cross-compiler to path
+      run: echo ::add-path::${{ github.workspace }}/gcc-arm/bin
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        path: tmp
+    - name: Get tag
+      id: get_tag
+      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
+    - name: Checkout MicroPython
+      uses: actions/checkout@v2
+      with:
+        repository: pybricks/micropython
+        ref: ${{ steps.get_tag.outputs.micropython_tag }}
+        submodules: recursive
+        path: micropython
+        token: ${{ secrets.GITHUB_TOKEN2 }}
+    - name: Checkout Pybricks
+      run: |
+        cd micropython/ports/pybricks
+        git fetch --depth=1 origin $GITHUB_SHA
+        git checkout --recurse-submodules $GITHUB_SHA
+    - name: Download mpy-cross
+      uses: actions/download-artifact@v1
+      with:
+        name: pybricks-mpy-cross
+        path: micropython/mpy-cross
+    - name: Fix file permission
+      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+    - name: Build
+      run: |
+        cd micropython/ports/pybricks
+        make $MAKEOPTS -C bricks/primehub
+    - name: Upload firmware
+      if: success()
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: primehub-firmware
+        path: micropython/ports/pybricks/bricks/primehub/build/firmware.bin
+
+  nxt_firmware:
+    name: nxt firmware
+    needs: [cross_compiler, mpy_cross]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install cross-compiler
+      uses: actions/cache@v1
+      with:
+        path: ${{ github.workspace }}/gcc-arm
+        key: gcc-arm
+    - name: Add cross-compiler to path
+      run: echo ::add-path::${{ github.workspace }}/gcc-arm/bin
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        path: tmp
+    - name: Get tag
+      id: get_tag
+      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
+    - name: Checkout MicroPython
+      uses: actions/checkout@v2
+      with:
+        repository: pybricks/micropython
+        ref: ${{ steps.get_tag.outputs.micropython_tag }}
+        submodules: recursive
+        path: micropython
+        token: ${{ secrets.GITHUB_TOKEN2 }}
+    - name: Checkout Pybricks
+      run: |
+        cd micropython/ports/pybricks
+        git fetch --depth=1 origin $GITHUB_SHA
+        git checkout --recurse-submodules $GITHUB_SHA
+    - name: Download mpy-cross
+      uses: actions/download-artifact@v1
+      with:
+        name: pybricks-mpy-cross
+        path: micropython/mpy-cross
+    - name: Fix file permission
+      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+    - name: Build
+      run: |
+        cd micropython/ports/pybricks
+        make $MAKEOPTS -C bricks/nxt
+    - name: Upload firmware
+      if: success()
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: nxt-firmware
+        path: micropython/ports/pybricks/bricks/nxt/build/firmware.bin
+
+  pbio:
+    name: pbio tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install prerequisites
+      run: |
+        sudo apt-get update
+        sudo apt-get install --yes doxygen
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        path: tmp
+    - name: Get tag
+      id: get_tag
+      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
+    - name: Checkout MicroPython
+      uses: actions/checkout@v2
+      with:
+        repository: pybricks/micropython
+        ref: ${{ steps.get_tag.outputs.micropython_tag }}
+        submodules: recursive
+        path: micropython
+        token: ${{ secrets.GITHUB_TOKEN2 }}
+    - name: Checkout Pybricks
+      run: |
+        cd micropython/ports/pybricks
+        git fetch --depth=1 origin $GITHUB_SHA
+        git checkout --recurse-submodules $GITHUB_SHA
+    - name: Build
+      run: |
+        cd micropython/ports/pybricks
+        make $MAKEOPTS -C lib/pbio/test
+        ./lib/pbio/test/build/test-pbio
+    - name: Build docs
+      run: |
+        cd micropython/ports/pybricks
+        make $MAKEOPTS -C lib/pbio/doc
+    - name: Build coverage
+      run: |
+        cd micropython/ports/pybricks
+        make $MAKEOPTS -C lib/pbio/test COVERAGE=1
+        ./lib/pbio/test/build-coverage/test-pbio
