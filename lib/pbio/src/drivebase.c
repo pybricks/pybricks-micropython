@@ -180,6 +180,12 @@ static pbio_error_t drivebase_log_update(pbio_drivebase_t *db,
 pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio_servo_t *right, fix16_t wheel_diameter, fix16_t axle_track) {
     pbio_error_t err;
 
+    // Stop any existing drivebase motion
+    err = pbio_drivebase_stop_force(db);
+    if (!(err == PBIO_SUCCESS || err == PBIO_ERROR_NO_DEV)) {
+        return err;
+    }
+
     // Reset both motors to a passive state
     err = pbio_servo_stop(left, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
