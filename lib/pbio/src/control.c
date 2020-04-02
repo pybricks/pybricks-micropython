@@ -217,19 +217,28 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
     ctl->on_target_func = stop_func;
 
     // Compute the trajectory
-    if (ctl->type == PBIO_CONTROL_NONE) {
-        // If no control is ongoing, start from physical state
-        err = pbio_trajectory_make_time_based(&ctl->trajectory, time_now, duration, count_now, 0, rate_now, target_rate, ctl->settings.max_rate, acceleration, ctl->settings.abs_acceleration);
+    if (ctl->type == PBIO_CONTROL_TIMED) {
+        // If timed control is already ongoing make the new trajectory and try to patch to existing one
+        err = pbio_trajectory_make_time_based_patched(&ctl->trajectory, time_now, duration, target_rate, ctl->settings.max_rate, acceleration, ctl->settings.abs_acceleration);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
+    else if (ctl->type == PBIO_CONTROL_ANGLE) {
+        // If position based control is ongoing, start from its current reference. First get current reference signal.
+        int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
+        int32_t count_start, rate_start, unused;
+        pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &count_start, &unused, &rate_start, &unused);
+
+        // Now start the timed trajectory from there
+        err = pbio_trajectory_make_time_based(&ctl->trajectory, time_now, duration, count_start, 0, rate_start, target_rate, ctl->settings.max_rate, acceleration, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
     }
     else {
-        // If control is ongoing, start from its current reference. First get time on current reference signal
-        int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
-
-        // Make the new trajectory and try to patch to existing one
-        err = pbio_trajectory_make_time_based_patched(&ctl->trajectory, time_ref, duration, target_rate, ctl->settings.max_rate, acceleration, ctl->settings.abs_acceleration);
+        // If no control is ongoing, start from physical state
+        err = pbio_trajectory_make_time_based(&ctl->trajectory, time_now, duration, count_now, 0, rate_now, target_rate, ctl->settings.max_rate, acceleration, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
