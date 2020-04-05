@@ -39,59 +39,17 @@ static char *stack_top;
 static char heap[PYBRICKS_HEAP_KB * 1024];
 #endif
 
-typedef enum {
-    WAITING_FOR_FIRST_RELEASE,
-    WAITING_FOR_PRESS,
-    WAITING_FOR_SECOND_RELEASE
-} waiting_for_t;
-
-bool timed_out(uint32_t time_start, uint32_t time_out) {
-    // If time_out is zero, we say it never times out.
-    if (time_out == 0) {
-        return false;
-    }
-    // Return true if more than time_out ms have elapsed
-    // since time_start, otherwise return false.
-    return mp_hal_ticks_ms()- time_start > time_out;
-}
-
-// wait for button to be pressed/released before starting program
-bool wait_for_button_press(uint32_t time_out) {
-    pbio_button_flags_t btn;
-    waiting_for_t wait_for = WAITING_FOR_FIRST_RELEASE;
-    uint32_t time_start = mp_hal_ticks_ms();
-
-    // wait for button rising edge, then falling edge
-    while (!timed_out(time_start, time_out)) {
-        pbio_button_is_pressed(&btn);
-        if (btn & PBIO_BUTTON_CENTER) {
-            // step 2:
-            // once we are sure the button is released, we wait for it to be
-            // pressed (rising edge).
-            if (wait_for == WAITING_FOR_PRESS) {
-                wait_for = WAITING_FOR_SECOND_RELEASE;
-            }
+pbio_error_t wait_for_button_release () {
+    pbio_error_t err;
+    pbio_button_flags_t btn = PBIO_BUTTON_CENTER;
+    while (btn & PBIO_BUTTON_CENTER) {
+        err = pbio_button_is_pressed(&btn);
+        if (err != PBIO_SUCCESS) {
+            return err;
         }
-        else {
-            // step 1:
-            // we have to make sure the button is released before waiting for
-            // it to be pressed, otherwise programs would be restarted as soon
-            // as they are stopped because the button is already pressed.
-            if (wait_for == WAITING_FOR_FIRST_RELEASE) {
-                wait_for = WAITING_FOR_PRESS;
-            }
-            // step 3:
-            // after the button has been pressed, we need to wait for it to be
-            // released (falling edge), otherwise programs would stop as soon
-            // as they were started because the button is already pressed.
-            else if (wait_for == WAITING_FOR_SECOND_RELEASE) {
-                return !timed_out(time_start, time_out);
-            }
-        }
-        while (pbio_do_one_event()) { }
-        __WFI();
+        MICROPY_EVENT_POLL_HOOK
     }
-    return false;
+    return PBIO_SUCCESS;
 }
 
 // Wait for data from an IDE
@@ -118,8 +76,25 @@ pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, int32_t time
     uint32_t rx_count = 0;
     mp_uint_t time_start = mp_hal_ticks_ms();
     mp_uint_t time_now;
+    pbio_button_flags_t btn;
 
     while (true) {
+
+        // Check if button is pressed
+        err = pbio_button_is_pressed(&btn);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        if (btn & PBIO_BUTTON_CENTER) {
+            // If so, wait for release
+            err = wait_for_button_release();
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
+            // Cancel waiting for message
+            return PBIO_ERROR_CANCELED;
+        }
+
         // Current time
         time_now = mp_hal_ticks_ms();
 
@@ -167,21 +142,7 @@ pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, int32_t time
     }
 }
 
-#ifdef PYBRICKS_MPY_MAIN_MODULE
 extern uint32_t __user_flash_start;
-
-// Get user program stored in rom
-static uint32_t get_user_program(uint8_t **buf) {
-
-    wait_for_button_press(0);
-    mp_print_str(&mp_plat_print, "\nLoading program from flash.\n");
-
-    // Return .mpy size and location in rom
-    uint32_t *_mpy_size = ((uint32_t *) &__user_flash_start) + 1;
-    *buf = (uint8_t *)(_mpy_size + 1);
-    return *_mpy_size;
-}
-#else // PYBRICKS_MPY_MAIN_MODULE
 
 // If user says they want to send an MPY file this big (19 MB),
 // assume they want REPL. This lets users get REPL by pressing
@@ -189,13 +150,24 @@ static uint32_t get_user_program(uint8_t **buf) {
 const uint32_t REPL_LEN = 0x20202020;
 
 // Get user program via serial/bluetooth
-static uint32_t get_user_program(uint8_t **buf) {
+static uint32_t get_user_program(uint8_t **buf, bool *free_reader) {
     pbio_error_t err;
 
     // Get the program length
     uint8_t len_buf[4];
     err = get_message(len_buf, 4, true, -1);
+
+    // If button was pressed, return code to run script in flash
+    if (err == PBIO_ERROR_CANCELED) {
+        // Return .mpy size and location in rom
+        uint32_t *_mpy_size = ((uint32_t *) &__user_flash_start) + 1;
+        *buf = (uint8_t *)(_mpy_size + 1);
+        return *_mpy_size;
+    }
+    
+    // Handle other errors
     if (err != PBIO_SUCCESS) {
+        *buf = NULL;
         return 0;
     }
 
@@ -231,12 +203,13 @@ static uint32_t get_user_program(uint8_t **buf) {
         len = 0;
     }
 
+    // Success, so return script, length, and free reader
     *buf = mpy;
+    *free_reader = true;
     return len;
 }
-#endif // PYBRICKS_MPY_MAIN_MODULE
 
-static void run_user_program(uint32_t len, uint8_t *buf) {
+static void run_user_program(uint32_t len, uint8_t *buf, bool free_reader) {
 
     if (len == 0) {
         mp_print_str(&mp_plat_print, ">>>> ERROR\n");
@@ -252,16 +225,11 @@ static void run_user_program(uint32_t len, uint8_t *buf) {
         return;
     }
 
-    #ifdef PYBRICKS_MPY_MAIN_MODULE
-    uint32_t free_len = 0;
-    #else
-    uint32_t free_len = len;
-    #endif
-
     // Send a message to say we will run a program
     mp_print_str(&mp_plat_print, "\n>>>> RUNNING\n");
 
     mp_reader_t reader;
+    uint32_t free_len = free_reader ? len : 0;
     mp_reader_new_mem(&reader, buf, len, free_len);
 
     // Convert buf to raw code and do m_free(buf) in the process
@@ -341,12 +309,15 @@ soft_reset:
     gc_init(heap, heap + sizeof(heap));
     #endif
 
+    wait_for_button_release();
+
     // Send a message to say hub is idle
     mp_print_str(&mp_plat_print, ">>>> IDLE\n");
 
     // Receive an mpy-cross compiled Python script
     uint8_t *program;
-    uint32_t len = get_user_program(&program);
+    bool free_reader = false;
+    uint32_t len = get_user_program(&program, &free_reader);
 
     // Get system hardware ready
     pbsys_prepare_user_program(&user_program_callbacks);
@@ -356,7 +327,7 @@ soft_reset:
     pb_imports();
 
     // Execute the user script
-    run_user_program(len, program);
+    run_user_program(len, program, free_reader);
 
     // Uninitialize MicroPython and the system hardware
     mp_deinit();

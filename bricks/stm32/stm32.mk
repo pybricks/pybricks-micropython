@@ -14,7 +14,7 @@ include ../../../../py/mkenv.mk
 QSTR_GLOBAL_DEPENDENCIES = $(TOP)/ports/pybricks/bricks/stm32/configport.h
 
 # Module included as mpy file in persistent user ROM
-# PYBRICKS_MPY_MAIN_MODULE ?= main.py
+PYBRICKS_MPY_MAIN_MODULE ?= main.py
 
 # directory containing scripts to be frozen as bytecode
 FROZEN_MPY_DIR ?= modules
@@ -93,10 +93,6 @@ endif
 CFLAGS += -D$(PB_CMSIS_MCU)
 
 CFLAGS += -DSTM32_HAL_H='<stm32$(PB_MCU_SERIES_LCASE)xx_hal.h>'
-
-ifneq ($(PYBRICKS_MPY_MAIN_MODULE),)
-CFLAGS += -DPYBRICKS_MPY_MAIN_MODULE
-endif
 
 ifneq ($(FROZEN_MPY_DIR),)
 # To use frozen bytecode, put your .py files in a subdirectory (eg frozen/) and
@@ -289,14 +285,13 @@ OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 
-# Optionally append .mpy file specified by PYBRICKS_MPY_MAIN_MODULE to 2K free space after 106K firmware
-ifneq ($(PYBRICKS_MPY_MAIN_MODULE),)
+# Append .mpy file specified by PYBRICKS_MPY_MAIN_MODULE to 2K free space after 106K firmware
 OBJ += $(BUILD)/main_mpy.o
 
 MPY_CROSS_FLAGS += -mno-unicode
 
-$(BUILD)/main.mpy: $(PYBRICKS_MPY_MAIN_MODULE)
-	$(Q)$(MPY_CROSS) -o $@ $(MPY_CROSS_FLAGS)  $^
+$(BUILD)/main.mpy: $(PYBRICKS_MPY_MAIN_MODULE) $(TOP)/mpy-cross/pybricks-mpy-cross
+	$(Q)$(MPY_CROSS) -o $@ $(MPY_CROSS_FLAGS)  $<
 
 $(BUILD)/main_mpy.o: $(BUILD)/main.mpy
 	$(Q)$(OBJCOPY) -I binary -O elf32-littlearm -B arm --rename-section .data=.mpy,alloc,load,readonly,data,contents $^ $@
@@ -304,9 +299,6 @@ $(BUILD)/main_mpy.o: $(BUILD)/main.mpy
 MPYSIZE := $$(wc -c < "$(BUILD)/main.mpy")
 
 FIRMWARE_EXTRA_ARGS = -j .user --gap-fill=0xff
-else
-MPYSIZE := 0
-endif
 
 # List of sources for qstr extraction
 SRC_QSTR += $(SRC_C) $(PYBRICKS_PY_SRC_C) $(PYBRICKS_EXTMOD_SRC_C)
