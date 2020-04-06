@@ -10,7 +10,8 @@
 MEMORY
 {
     /* Flash size is 1M, bootloader resides in first 32K */
-    FLASH (rx)      : ORIGIN = 0x08008000, LENGTH = 992K
+    FLASH (rx)      : ORIGIN = 0x08008000, LENGTH = 960K
+    USER_FLASH (rx) : ORIGIN = 0x080F8000, LENGTH = 32K
     RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 320K
 }
 
@@ -45,6 +46,15 @@ SECTIONS
         _etext = .;        /* define a global symbol at end of code */
         _sidata = _etext;  /* This is used by the startup in order to initialize the .data section */
     } >FLASH
+
+    .user :
+    {
+        LONG(0);
+        LONG(MPYSIZE);
+        KEEP(*(.mpy));       /* Compiled main.mpy file. This section will be dropped once external flash is enabled */
+    } >USER_FLASH
+
+    __user_flash_start = ORIGIN(USER_FLASH);
 
     /* used by the startup to initialize data */
     _sidata = LOADADDR(.data);
