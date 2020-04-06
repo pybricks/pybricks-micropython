@@ -159,8 +159,12 @@ const mp_obj_type_t motor_DCMotor_type = {
 /* Wait for servo maneuver to complete */
 
 STATIC void wait_for_completion(pbio_servo_t *srv) {
-    while (!pbio_control_is_done(&srv->control)) {
+    pbio_error_t err;
+    while ((err = pbio_motorpoll_get_servo_status(srv)) == PBIO_ERROR_AGAIN && !pbio_control_is_done(&srv->control)) {
         mp_hal_delay_ms(5);
+    }
+    if (err != PBIO_ERROR_AGAIN) {
+        pb_assert(err);
     }
 }
 

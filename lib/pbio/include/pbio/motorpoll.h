@@ -12,9 +12,11 @@
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
 pbio_error_t pbio_motorpoll_get_servo(pbio_port_t port, pbio_servo_t **srv);
+pbio_error_t pbio_motorpoll_get_servo_status(pbio_servo_t *srv);
 pbio_error_t pbio_motorpoll_set_servo_status(pbio_servo_t *srv, pbio_error_t err);
 
 pbio_error_t pbio_motorpoll_get_drivebase(pbio_drivebase_t **db);
+pbio_error_t pbio_motorpoll_get_drivebase_status(pbio_drivebase_t *db);
 pbio_error_t pbio_motorpoll_set_drivebase_status(pbio_drivebase_t *db, pbio_error_t err);
 
 void _pbio_motorpoll_reset_all(void);

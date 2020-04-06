@@ -38,6 +38,16 @@ pbio_error_t pbio_motorpoll_set_servo_status(pbio_servo_t *srv, pbio_error_t err
     return PBIO_ERROR_INVALID_ARG;
 }
 
+// get status of the servo, which tells us whether to poll or not
+pbio_error_t pbio_motorpoll_get_servo_status(pbio_servo_t *srv) {
+    for (int i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
+        if (srv == &servo[i]) {
+            return servo_err[i];
+        }
+    }
+    return PBIO_ERROR_INVALID_ARG;
+}
+
 // Get pointer to drivebase
 pbio_error_t pbio_motorpoll_get_drivebase(pbio_drivebase_t **db) {
     // Get pointer to device (at the moment, there is only one drivebase)
@@ -53,6 +63,15 @@ pbio_error_t pbio_motorpoll_set_drivebase_status(pbio_drivebase_t *db, pbio_erro
     drivebase_err = err;
     return PBIO_SUCCESS;
 }
+
+// Get status of the drivebase, which tells us whether to poll or not
+pbio_error_t pbio_motorpoll_get_drivebase_status(pbio_drivebase_t *db) {
+    if (db != &drivebase) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    return drivebase_err;
+}
+
 
 void _pbio_motorpoll_reset_all(void) {
 
@@ -89,7 +108,6 @@ void _pbio_motorpoll_poll(void) {
             err = pbio_servo_control_update(&servo[i]);
             if (err != PBIO_SUCCESS) {
                 servo_err[i] = err;
-                // TODO: Raise this error
             }
         }
     }
@@ -99,7 +117,6 @@ void _pbio_motorpoll_poll(void) {
         err = pbio_drivebase_update(&drivebase);
         if (err != PBIO_SUCCESS) {
             drivebase_err = err;
-            // TODO: Raise this error
         }
     }
 }

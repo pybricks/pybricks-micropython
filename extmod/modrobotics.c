@@ -84,8 +84,12 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
 }
 
 STATIC void wait_for_completion_drivebase(pbio_drivebase_t *db) {
-    while (!pbio_control_is_done(&db->control_distance) || !pbio_control_is_done(&db->control_heading)) {
+    pbio_error_t err;
+    while ((err = pbio_motorpoll_get_drivebase_status(db)) == PBIO_ERROR_AGAIN && (!pbio_control_is_done(&db->control_distance) || !pbio_control_is_done(&db->control_heading))) {
         mp_hal_delay_ms(5);
+    }
+    if (err != PBIO_ERROR_AGAIN) {
+        pb_assert(err);
     }
 }
 
