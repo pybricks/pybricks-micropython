@@ -18,6 +18,7 @@
 #define US_PER_SECOND (1000000)
 
 #define DURATION_FOREVER (-1)
+#define DURATION_MAX_S (30*60)
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))

@@ -320,7 +320,7 @@ STATIC mp_obj_t motor_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, mp
     mp_int_t speed_arg = pb_obj_get_int(speed);
     mp_int_t time_arg = pb_obj_get_int(time);
 
-    if (time_arg < 0 || time_arg > 1800000) {
+    if (time_arg < 0 || time_arg > DURATION_MAX_S*MS_PER_SECOND) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
