@@ -253,34 +253,20 @@ static pbio_error_t servo_get_state(pbio_servo_t *srv, int32_t *time_now, int32_
 // Actuate a single motor
 static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_type, int32_t control) {
 
-    pbio_error_t err = PBIO_SUCCESS;
-
     // Apply the calculated actuation, by type
     switch (actuation_type)
     {
     case PBIO_ACTUATION_COAST:
-        err = pbio_dcmotor_coast(srv->dcmotor);
-        break;
+        return pbio_dcmotor_coast(srv->dcmotor);
     case PBIO_ACTUATION_BRAKE:
-        err = pbio_dcmotor_brake(srv->dcmotor);
-        break;
+        return pbio_dcmotor_brake(srv->dcmotor);
     case PBIO_ACTUATION_HOLD:
-        err = pbio_control_start_hold_control(&srv->control, clock_usecs(), control);
-        break;
+        return pbio_control_start_hold_control(&srv->control, clock_usecs(), control);
     case PBIO_ACTUATION_DUTY:
-        err = pbio_dcmotor_set_duty_cycle_sys(srv->dcmotor, control);
-        break;
+        return pbio_dcmotor_set_duty_cycle_sys(srv->dcmotor, control);
     }
 
-    // Handle errors during actuation
-    if (err != PBIO_SUCCESS) {
-        // Stop control loop
-        pbio_control_stop(&srv->control);
-
-        // Attempt lowest level coast: turn off power
-        pbdrv_motor_coast(srv->port);
-    }
-    return err;
+    return PBIO_SUCCESS;
 }
 
 // Log motor data for a motor that is being actively controlled
