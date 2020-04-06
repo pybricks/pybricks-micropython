@@ -15,6 +15,10 @@ pbio_error_t sysfs_open(FILE **file, const char *pathpat, int n, const char *att
 
 pbio_error_t sysfs_open_sensor_attr(FILE **file, int n, const char *attribute, const char *rw);
 
+pbio_error_t sysfs_open_tacho_motor_attr(FILE **file, int n, const char *attribute, const char *rw);
+
+pbio_error_t sysfs_open_dc_motor_attr(FILE **file, int n, const char *attribute, const char *rw);
+
 pbio_error_t sysfs_read_str(FILE *file, char *dest);
 
 pbio_error_t sysfs_write_str(FILE *file, const char *str);

@@ -83,6 +83,16 @@ pbio_error_t sysfs_open_sensor_attr(FILE **file, int n, const char *attribute, c
     return sysfs_open(file, "/sys/class/lego-sensor/sensor%d/%s", n, attribute, rw);
 }
 
+// Open a tacho-motor sysfs attribute
+pbio_error_t sysfs_open_tacho_motor_attr(FILE **file, int n, const char *attribute, const char *rw) {
+    return sysfs_open(file, "/sys/class/tacho-motor/motor%d/%s", n, attribute, rw);
+}
+
+// Open a dc-motor sysfs attribute
+pbio_error_t sysfs_open_dc_motor_attr(FILE **file, int n, const char *attribute, const char *rw) {
+    return sysfs_open(file, "/sys/class/dc-motor/motor%d/%s", n, attribute, rw);
+}
+
 // Read a string from a previously opened sysfs attribute
 pbio_error_t sysfs_read_str(FILE *file, char *dest) {
     if (fseek(file, 0, SEEK_SET) == -1) {
