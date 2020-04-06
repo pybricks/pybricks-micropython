@@ -329,4 +329,19 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *traject, int32_t time_ref,
 
     // Split high res angle into counts and millicounts
     as_count(mcount_ref, count_ref, count_ref_ext);
+
+    // Rebase the reference before it overflows after 35 minutes
+    if (time_ref - traject->t0 > 31*60*MS_PER_SECOND*US_PER_MS) {
+        // Infinite maneuvers just maintain the same reference speed, continuing again from current time
+        if (traject->forever) {
+            pbio_trajectory_make_time_based(traject, time_ref, DURATION_FOREVER, *count_ref, *count_ref_ext, traject->w1, traject->w1, traject->w1, abs(traject->a2), abs(traject->a2));
+        }
+        // All other maneuvers are considered complete and just stop. In practice, other maneuvers are not
+        // allowed to be this long. This just ensures that if a motor stops and holds, it will continue to
+        // do so forever, by rebasing the stationary trajectory before it overflows.
+        else {
+            pbio_trajectory_make_stationary(traject, time_ref, *count_ref);
+        }
+
+    }
 }
