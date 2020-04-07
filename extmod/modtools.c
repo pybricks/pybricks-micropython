@@ -22,9 +22,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(tools_wait_obj, 0, tools_wait);
 // Class structure for StopWatch
 typedef struct _tools_StopWatch_obj_t {
     mp_obj_base_t base;
-    int32_t time_start;
-    int32_t time_stop;
-    int32_t time_spent_pausing;
+    uint32_t time_start;
+    uint32_t time_stop;
+    uint32_t time_spent_pausing;
     bool running;
 } tools_StopWatch_obj_t;
 
@@ -39,7 +39,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(tools_StopWatch_reset_obj, tools_StopWatch_rese
 
 STATIC mp_obj_t tools_StopWatch_time(mp_obj_t self_in) {
     tools_StopWatch_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    return mp_obj_new_int(
+    return mp_obj_new_int_from_uint(
         self->running ?
         mp_hal_ticks_ms()- self->time_start - self->time_spent_pausing :
         self->time_stop  - self->time_start - self->time_spent_pausing
