@@ -160,17 +160,20 @@ void pbio_count_integrator_update(pbio_count_integrator_t *itg, int32_t time_now
         // Previous error will be multiplied by time delta and then added to integral (unless we limit growth)
         int32_t cerr = itg->count_err_prev;
 
-        // Check if integrator would grow due to this error, which is if it has same definite sign as integral
-        bool growing = (cerr > 0 && itg->count_err_integral > 0) || (cerr < 0 && itg->count_err_integral < 0);
-
-        // If growing, limit error growth by maximum integral rate
-        if (growing) {
+        // Check if integrator magnitude would decrease due to this error
+        bool decrease = abs(itg->count_err_integral + cerr*(time_now - itg->time_prev)) < abs(itg->count_err_integral);
+        
+        // If not deceasing, so growing, limit error growth by maximum integral rate
+        if (!decrease) {
             cerr = cerr >  integral_rate ?  integral_rate : cerr;
             cerr = cerr < -integral_rate ? -integral_rate : cerr;
+
+            // It might be decreasing now after all (due to integral sign change), so re-evaluate
+            decrease = abs(itg->count_err_integral + cerr*(time_now - itg->time_prev)) < abs(itg->count_err_integral);
         }
 
-        // Add change if allowed to grow, or if it deflates the integral
-        if (abs(count_target - count_ref) <= integral_range || !growing) {
+        // Add change if we are near target, or always if it decreases the integral magnitude
+        if (abs(count_target - count_ref) <= integral_range || decrease) {
             itg->count_err_integral += cerr*(time_now - itg->time_prev);
         }
 
