@@ -67,6 +67,12 @@ void pb_assert(pbio_error_t error) {
         "--> Check the line in your script that matches\n"
         "    the line number given in the 'Traceback' above.\n"
         "\n");
+    static const MP_DEFINE_STR_OBJ(msg_invalid_op_obj, "\n\n"
+        "The requested operation is not valid in the current state:\n"
+        "--> Check the documentation to for required conditions.\n"
+        "--> Check the line in your script that matches\n"
+        "    the line number given in the 'Traceback' above.\n"
+        "\n");
 
     mp_obj_t args[2];
 
@@ -101,7 +107,7 @@ void pb_assert(pbio_error_t error) {
         break;
     case PBIO_ERROR_INVALID_OP:
         args[0] = MP_OBJ_NEW_SMALL_INT(MP_EPERM);
-        args[1] = MP_OBJ_NEW_QSTR(qstr_from_str(pbio_error_str(error)));
+        args[1] = MP_OBJ_FROM_PTR(&msg_invalid_op_obj);
         break;
     case PBIO_ERROR_TIMEDOUT:
         args[0] = MP_OBJ_NEW_SMALL_INT(MP_ETIMEDOUT);
