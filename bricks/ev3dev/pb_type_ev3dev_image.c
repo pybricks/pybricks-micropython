@@ -32,6 +32,7 @@ typedef struct _ev3dev_Image_obj_t {
     mp_obj_t buffer; // only used by _screen_
     gboolean cleared; // only used by _screen_
     GrxContext *context;
+    void *mem; // don't touch - needed for GC pressure
     GrxTextOptions *text_options;
     gint print_x;
     gint print_y;
@@ -75,6 +76,7 @@ STATIC mp_obj_t ev3dev_Image_new(GrxContext* context) {
 
     self->base.type = &pb_type_ev3dev_Image;
     self->context = context;
+    self->mem = context->frame.base_address.plane0;
     self->width = mp_obj_new_int(grx_context_get_width(self->context));
     self->height = mp_obj_new_int(grx_context_get_height(self->context));
 
@@ -127,7 +129,9 @@ STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, 
             nlr_raise(ex);
         }
 
-        context = grx_context_new(w, h, NULL, NULL);
+        GrxFrameMemory mem;
+        mem.plane0 = m_malloc(grx_screen_get_context_size(w, h));
+        context = grx_context_new(w, h, &mem, NULL);
         if (!context) {
             g_free(filename_ext);
             mp_raise_msg(&mp_type_RuntimeError, "failed to allocate context for image");
@@ -156,7 +160,9 @@ STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, 
         else {
             gint w = grx_context_get_width(image->context);
             gint h = grx_context_get_height(image->context);
-            context = grx_context_new(w, h, NULL, NULL);
+            GrxFrameMemory mem;
+            mem.plane0 = m_malloc(grx_screen_get_context_size(w, h));
+            context = grx_context_new(w, h, &mem, NULL);
             grx_context_bit_blt(context, 0, 0, image->context, 0, 0,
                 w - 1, h - 1, GRX_COLOR_MODE_WRITE);
         }
@@ -184,7 +190,9 @@ STATIC mp_obj_t ev3dev_Image_empty(size_t n_args, const mp_obj_t *pos_args, mp_m
     if (width <= 0 || height <= 0) {
         mp_raise_ValueError("width and height must be greater than 0");
     }
-    GrxContext *context = grx_context_new(width, height, NULL, NULL);
+    GrxFrameMemory mem;
+    mem.plane0 = m_malloc(grx_screen_get_context_size(width, height));
+    GrxContext *context = grx_context_new(width, height, &mem, NULL);
     if (!context) {
         mp_raise_msg(&mp_type_RuntimeError, "Failed to create graphics context");
     }
