@@ -3,7 +3,11 @@
 
 #include <pberror.h>
 
+#include "py/mpconfig.h"
+
 #include "py/mperrno.h"
+#include "py/obj.h"
+#include "py/objstr.h"
 #include "py/runtime.h"
 
 /**
@@ -12,6 +16,7 @@
  * cases that use another built-in python exception when it is more appropriate.
  */
 void pb_assert(pbio_error_t error) {
+#if MICROPY_ERROR_REPORTING == MICROPY_ERROR_REPORTING_TERSE
     // using EINVAL to mean that the argument to this function was invalid.
     // since we raise ValueError for PBIO_ERROR_INVALID_ARG, there isn't a
     // possible conflict
@@ -34,19 +39,7 @@ void pb_assert(pbio_error_t error) {
         os_err = MP_EIO;
         break;
     case PBIO_ERROR_NO_DEV:
-#if MICROPY_ERROR_REPORTING == MICROPY_ERROR_REPORTING_TERSE
         os_err = MP_ENODEV;
-#else
-        mp_raise_msg(&mp_type_OSError,
-                "\n\n"
-               "A sensor or motor is not connected to the specified port:\n"
-               "--> Check the cables to each motor and sensor.\n"
-               "--> Check the port settings in your script.\n"
-               "--> Check the line in your script that matches\n"
-               "    the line number given in the 'Traceback' above."
-               "\n\n"
-        );
-#endif
         return;
     case PBIO_ERROR_NOT_SUPPORTED:
         os_err = MP_EOPNOTSUPP;
@@ -66,6 +59,62 @@ void pb_assert(pbio_error_t error) {
     }
 
     mp_raise_OSError(os_err);
+#else // MICROPY_ERROR_REPORTING == MICROPY_ERROR_REPORTING_TERSE
+    static const MP_DEFINE_STR_OBJ(msg_no_dev_obj, "\n\n"
+        "A sensor or motor is not connected to the specified port:\n"
+        "--> Check the cables to each motor and sensor.\n"
+        "--> Check the port settings in your script.\n"
+        "--> Check the line in your script that matches\n"
+        "    the line number given in the 'Traceback' above.\n"
+        "\n");
+
+    mp_obj_t args[2];
+
+    switch (error) {
+    case PBIO_SUCCESS:
+        return;
+    case PBIO_ERROR_FAILED:
+        mp_raise_msg(&mp_type_RuntimeError, pbio_error_str(error));
+        return;
+    case PBIO_ERROR_INVALID_ARG:
+    case PBIO_ERROR_INVALID_PORT:
+        mp_raise_ValueError(pbio_error_str(error));
+        return;
+    case PBIO_ERROR_NOT_IMPLEMENTED:
+        mp_raise_NotImplementedError(pbio_error_str(error));
+        return;
+    case PBIO_ERROR_IO:
+        args[0] = MP_OBJ_NEW_SMALL_INT(MP_EIO);
+        args[1] = MP_OBJ_NEW_QSTR(qstr_from_str(pbio_error_str(error)));
+        break;
+    case PBIO_ERROR_NO_DEV:
+        args[0] = MP_OBJ_NEW_SMALL_INT(MP_ENODEV);
+        args[1] = MP_OBJ_FROM_PTR(&msg_no_dev_obj);
+        break;
+    case PBIO_ERROR_NOT_SUPPORTED:
+        args[0] = MP_OBJ_NEW_SMALL_INT(MP_EOPNOTSUPP);
+        args[1] = MP_OBJ_NEW_QSTR(qstr_from_str(pbio_error_str(error)));
+        break;
+    case PBIO_ERROR_AGAIN:
+        args[0] = MP_OBJ_NEW_SMALL_INT(MP_EAGAIN);
+        args[1] = MP_OBJ_NEW_QSTR(qstr_from_str(pbio_error_str(error)));
+        break;
+    case PBIO_ERROR_INVALID_OP:
+        args[0] = MP_OBJ_NEW_SMALL_INT(MP_EPERM);
+        args[1] = MP_OBJ_NEW_QSTR(qstr_from_str(pbio_error_str(error)));
+        break;
+    case PBIO_ERROR_TIMEDOUT:
+        args[0] = MP_OBJ_NEW_SMALL_INT(MP_ETIMEDOUT);
+        args[1] = MP_OBJ_NEW_QSTR(qstr_from_str(pbio_error_str(error)));
+        break;
+    case PBIO_ERROR_CANCELED:
+        args[0] = MP_OBJ_NEW_SMALL_INT(MP_ECANCELED);
+        args[1] = MP_OBJ_NEW_QSTR(qstr_from_str(pbio_error_str(error)));
+        break;
+    }
+
+    nlr_raise(mp_obj_new_exception_args(&mp_type_OSError, 2, args));
+#endif // MICROPY_ERROR_REPORTING == MICROPY_ERROR_REPORTING_TERSE
 }
 
 void pb_assert_type(mp_obj_t obj, const mp_obj_type_t *type) {
