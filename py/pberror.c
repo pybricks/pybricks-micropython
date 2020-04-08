@@ -26,14 +26,14 @@ void pb_assert(pbio_error_t error) {
     case PBIO_SUCCESS:
         return;
     case PBIO_ERROR_FAILED:
-        mp_raise_msg(&mp_type_RuntimeError, pbio_error_str(error));
+        mp_raise_msg(&mp_type_RuntimeError, NULL);
         return;
     case PBIO_ERROR_INVALID_ARG:
     case PBIO_ERROR_INVALID_PORT:
-        mp_raise_ValueError(pbio_error_str(error));
+        mp_raise_ValueError(NULL);
         return;
     case PBIO_ERROR_NOT_IMPLEMENTED:
-        mp_raise_NotImplementedError(pbio_error_str(error));
+        mp_raise_NotImplementedError(NULL);
         return;
     case PBIO_ERROR_IO:
         os_err = MP_EIO;
