@@ -140,6 +140,7 @@ pbio_error_t ev3dev_lego_port_configure(pbio_port_t port, pbio_iodev_type_id_t i
     if ((id == PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR && mode_now == RAW       ) ||
         (id == PBIO_IODEV_TYPE_ID_NXT_ANALOG       && mode_now == NXT_ANALOG) ||
         (id == PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR && status_now == NXT_ANALOG) ||
+        (id == PBIO_IODEV_TYPE_ID_NXT_SOUND_SENSOR && status_now == NXT_ANALOG) ||
         (id == PBIO_IODEV_TYPE_ID_CUSTOM_I2C       && mode_now == OTHER_I2C ) ||
         (id == PBIO_IODEV_TYPE_ID_CUSTOM_UART      && mode_now == OTHER_UART) ||
         (id == PBIO_IODEV_TYPE_ID_LUMP_UART        && status_now == EV3_UART)   ||

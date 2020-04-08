@@ -150,8 +150,9 @@ static pbio_error_t ev3_sensor_assert_id(lego_sensor_t *sensor, pbio_iodev_type_
         return PBIO_SUCCESS;
     }
 
-    // NXT Touch Sensors also pass as NXT Analog
-    if (valid_id == PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR && id == PBIO_IODEV_TYPE_ID_NXT_ANALOG) {
+    // NXT Sound Sensors and NXT Touch Sensors without auto-id also pass as NXT Analog
+    if ((valid_id == PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR && id == PBIO_IODEV_TYPE_ID_NXT_ANALOG) ||
+        (valid_id == PBIO_IODEV_TYPE_ID_NXT_SOUND_SENSOR && id == PBIO_IODEV_TYPE_ID_NXT_ANALOG)) {
         return PBIO_SUCCESS;
     }
     return PBIO_ERROR_NO_DEV;

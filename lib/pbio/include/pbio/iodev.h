@@ -131,7 +131,8 @@ typedef enum {
 
     // NXT Devices
     PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR             ,   /**< MINDSTORMS NXT Touch Sensor */
-    PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR             ,   /**< MINDSTORMS NXT Lght Sensor */
+    PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR             ,   /**< MINDSTORMS NXT Light Sensor */
+    PBIO_IODEV_TYPE_ID_NXT_SOUND_SENSOR             ,   /**< MINDSTORMS NXT Sound Sensor */
     PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR             ,   /**< MINDSTORMS NXT Color Sensor */
     PBIO_IODEV_TYPE_ID_NXT_ULTRASONIC_SENSOR        ,   /**< MINDSTORMS NXT Ultrasonic Sensor */
     PBIO_IODEV_TYPE_ID_NXT_TEMPERATURE_SENSOR       ,   /**< MINDSTORMS NXT Ultrasonic Sensor */
