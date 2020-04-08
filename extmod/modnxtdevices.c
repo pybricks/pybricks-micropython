@@ -126,22 +126,6 @@ typedef struct _nxtdevices_SoundSensor_obj_t {
     pbdevice_t *pbdev;
 } nxtdevices_SoundSensor_obj_t;
 
-// pybricks.nxtdevices.SoundSensor.__init__
-STATIC mp_obj_t nxtdevices_SoundSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port)
-    );
-
-    nxtdevices_SoundSensor_obj_t *self = m_new_obj(nxtdevices_SoundSensor_obj_t);
-    self->base.type = (mp_obj_type_t*) type;
-
-    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
-
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_SOUND_SENSOR);
-
-    return MP_OBJ_FROM_PTR(self);
-}
-
 // pybricks.nxtdevices.SoundSensor.intensity
 STATIC mp_obj_t nxtdevices_SoundSensor_intensity(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
@@ -157,6 +141,22 @@ STATIC mp_obj_t nxtdevices_SoundSensor_intensity(size_t n_args, const mp_obj_t *
     return mp_obj_new_int(analog_scale(analog, 650, 4860, true));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(nxtdevices_SoundSensor_intensity_obj, 1, nxtdevices_SoundSensor_intensity);
+
+// pybricks.nxtdevices.SoundSensor.__init__
+STATIC mp_obj_t nxtdevices_SoundSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port)
+    );
+
+    nxtdevices_SoundSensor_obj_t *self = m_new_obj(nxtdevices_SoundSensor_obj_t);
+    self->base.type = (mp_obj_type_t*) type;
+
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+
+    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_SOUND_SENSOR);
+
+    return MP_OBJ_FROM_PTR(self);
+}
 
 // dir(pybricks.ev3devices.SoundSensor)
 STATIC const mp_rom_map_elem_t nxtdevices_SoundSensor_locals_dict_table[] = {
@@ -178,22 +178,6 @@ typedef struct _nxtdevices_LightSensor_obj_t {
     pbdevice_t *pbdev;
 } nxtdevices_LightSensor_obj_t;
 
-// pybricks.nxtdevices.LightSensor.__init__
-STATIC mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port)
-    );
-
-    nxtdevices_LightSensor_obj_t *self = m_new_obj(nxtdevices_LightSensor_obj_t);
-    self->base.type = (mp_obj_type_t*) type;
-
-    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
-
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR);
-
-    return MP_OBJ_FROM_PTR(self);
-}
-
 // pybricks.nxtdevices.LightSensor.ambient
 STATIC mp_obj_t nxtdevices_LightSensor_ambient(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -211,6 +195,22 @@ STATIC mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
     return mp_obj_new_int(analog_scale(analog, 1906, 3000, true));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_reflection_obj, nxtdevices_LightSensor_reflection);
+
+// pybricks.nxtdevices.LightSensor.__init__
+STATIC mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args ) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port)
+    );
+
+    nxtdevices_LightSensor_obj_t *self = m_new_obj(nxtdevices_LightSensor_obj_t);
+    self->base.type = (mp_obj_type_t*) type;
+
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+
+    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR);
+
+    return MP_OBJ_FROM_PTR(self);
+}
 
 // dir(pybricks.ev3devices.LightSensor)
 STATIC const mp_rom_map_elem_t nxtdevices_LightSensor_locals_dict_table[] = {
