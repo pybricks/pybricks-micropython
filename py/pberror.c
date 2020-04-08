@@ -67,6 +67,12 @@ void pb_assert(pbio_error_t error) {
         "--> Check the line in your script that matches\n"
         "    the line number given in the 'Traceback' above.\n"
         "\n");
+    static const MP_DEFINE_STR_OBJ(msg_not_supported_obj, "\n\n"
+        "The requested operation is not support on this device:\n"
+        "--> Check the documentation to for device compatibility.\n"
+        "--> Check the line in your script that matches\n"
+        "    the line number given in the 'Traceback' above.\n"
+        "\n");
     static const MP_DEFINE_STR_OBJ(msg_invalid_op_obj, "\n\n"
         "The requested operation is not valid in the current state:\n"
         "--> Check the documentation to for required conditions.\n"
@@ -99,7 +105,7 @@ void pb_assert(pbio_error_t error) {
         break;
     case PBIO_ERROR_NOT_SUPPORTED:
         args[0] = MP_OBJ_NEW_SMALL_INT(MP_EOPNOTSUPP);
-        args[1] = MP_OBJ_NEW_QSTR(qstr_from_str(pbio_error_str(error)));
+        args[1] = MP_OBJ_FROM_PTR(&msg_not_supported_obj);
         break;
     case PBIO_ERROR_AGAIN:
         args[0] = MP_OBJ_NEW_SMALL_INT(MP_EAGAIN);
