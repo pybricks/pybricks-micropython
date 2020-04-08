@@ -35,7 +35,7 @@ void pb_assert(pbio_error_t error) {
         break;
     case PBIO_ERROR_NO_DEV:
 #if MICROPY_ERROR_REPORTING == MICROPY_ERROR_REPORTING_TERSE
-        mp_raise_msg(&mp_type_OSError, pbio_error_str(error));
+        os_err = MP_ENODEV;
 #else
         mp_raise_msg(&mp_type_OSError,
                 "\n\n"
