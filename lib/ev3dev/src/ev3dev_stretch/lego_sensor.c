@@ -70,7 +70,9 @@ static pbio_error_t ev3_sensor_init(lego_sensor_t *sensor, pbio_port_t port) {
     }
 
     sensor->n_modes = 0;
-    while (fscanf(f_modes, " %16s", sensor->modes[sensor->n_modes++]) == 1);
+    while (fscanf(f_modes, " %16s", sensor->modes[sensor->n_modes]) == 1) {
+        sensor->n_modes++;
+    };
     if (fclose(f_modes) != 0) {
         return PBIO_ERROR_IO;
     }
@@ -275,7 +277,7 @@ pbio_error_t lego_sensor_get_mode(lego_sensor_t *sensor, uint8_t *mode) {
 // Set the sensor mode
 pbio_error_t lego_sensor_set_mode(lego_sensor_t *sensor, uint8_t mode) {
 
-    if (mode > sensor->n_modes) {
+    if (mode >= sensor->n_modes) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
