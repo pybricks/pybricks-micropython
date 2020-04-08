@@ -176,12 +176,21 @@ STATIC const mp_obj_type_t nxtdevices_SoundSensor_type = {
 typedef struct _nxtdevices_LightSensor_obj_t {
     mp_obj_base_t base;
     pbdevice_t *pbdev;
+    bool active;
 } nxtdevices_LightSensor_obj_t;
 
 // pybricks.nxtdevices.LightSensor.ambient
 STATIC mp_obj_t nxtdevices_LightSensor_ambient(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t analog;
+
+    // If the sensor is active, make it passive, then briefly pause to get a good measurement
+    if (self->active) {
+        pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__AMBIENT, &analog);
+        self->active = false;
+        mp_hal_delay_ms(20);
+    }
+
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__AMBIENT, &analog);
     return mp_obj_new_int(analog_scale(analog, 1906, 4164, true));
 }
@@ -191,6 +200,14 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_LightSensor_ambient_obj, nxtdevices_
 STATIC mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t analog;
+
+    // If the sensor is not already active, make it active, then briefly pause to get a good measurement
+    if (!self->active) {
+        pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__REFLECT, &analog);
+        self->active = true;
+        mp_hal_delay_ms(20);
+    }
+
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__REFLECT, &analog);
     return mp_obj_new_int(analog_scale(analog, 1906, 3000, true));
 }
@@ -208,6 +225,9 @@ STATIC mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR);
+
+    // Read one value to ensure a consistent initial mode
+    nxtdevices_LightSensor_reflection(self);
 
     return MP_OBJ_FROM_PTR(self);
 }
