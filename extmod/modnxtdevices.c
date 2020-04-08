@@ -124,6 +124,7 @@ STATIC const mp_obj_type_t nxtdevices_TouchSensor_type = {
 typedef struct _nxtdevices_SoundSensor_obj_t {
     mp_obj_base_t base;
     pbdevice_t *pbdev;
+    bool active;
 } nxtdevices_SoundSensor_obj_t;
 
 // pybricks.nxtdevices.SoundSensor.intensity
@@ -136,6 +137,14 @@ STATIC mp_obj_t nxtdevices_SoundSensor_intensity(size_t n_args, const mp_obj_t *
 
     uint8_t mode = mp_obj_is_true(audible_only) ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
     int32_t analog;
+
+    // If the mode changes, insert a considerable pause to let the sensor adapt
+    if (mode != self->active) {
+        pbdevice_get_values(self->pbdev, mode, &analog);
+        mp_hal_delay_ms(300);
+        self->active = mode;
+    }
+
     pbdevice_get_values(self->pbdev, mode, &analog);
 
     return mp_obj_new_int(analog_scale(analog, 650, 4860, true));
@@ -154,6 +163,12 @@ STATIC mp_obj_t nxtdevices_SoundSensor_make_new(const mp_obj_type_t *type, size_
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_SOUND_SENSOR);
+
+    // Do one reading for consistent initial mode
+    mp_obj_t pos_args[1] = { self };
+    mp_map_t kwd_args;
+    mp_map_init_fixed_table(&kwd_args, 0, NULL);
+    nxtdevices_SoundSensor_intensity(1, pos_args, &kwd_args);
 
     return MP_OBJ_FROM_PTR(self);
 }
