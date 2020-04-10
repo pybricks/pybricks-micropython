@@ -19,7 +19,7 @@ class DataLog():
             stamp = ''
 
         # Append extension and open
-        self.file = open('{0}{1}.{2}'.format(name, stamp, ext), 'w+')
+        self.file = open('{0}{1}.{2}'.format(name, stamp, extension), 'w+')
 
         # If column headers were given, print those as first line
         if len(headers) > 0:
