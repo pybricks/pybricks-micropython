@@ -61,11 +61,12 @@ void pb_assert(pbio_error_t error) {
     mp_raise_OSError(os_err);
 #else // MICROPY_ERROR_REPORTING == MICROPY_ERROR_REPORTING_TERSE
     static const MP_DEFINE_STR_OBJ(msg_io_obj, "\n\n"
-        "Unexpected hardware input/output error:\n"
-        "--> Try unplugging problem sensor or motor and plug it back in again.\n"
-        "--> Try rebooting the hub/brick if the problem persists.\n"
-        "--> Check the line in your script that matches\n"
+        "Unexpected hardware input/output error with a motor or sensor:\n"
+        "--> Try unplugging the sensor or motor and plug it back in again.\n"
+        "--> To see which sensor or motor is causing the problem,\n"
+        "    check the line in your script that matches\n"
         "    the line number given in the 'Traceback' above.\n"
+        "--> Try rebooting the hub/brick if the problem persists.\n"
         "\n");
     static const MP_DEFINE_STR_OBJ(msg_no_dev_obj, "\n\n"
         "A sensor or motor is not connected to the specified port:\n"
