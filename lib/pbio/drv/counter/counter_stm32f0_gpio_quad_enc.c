@@ -125,9 +125,13 @@ void EXTI0_1_IRQHandler(void) {
 
     timestamp = TIM7->CNT;
 
-    for (int i = 0; i < PBIO_ARRAY_SIZE(private_data); i++) {
-        private_data_t *data = &private_data[i];
+    if (exti_pr & EXTI_PR_PR1) {
+        private_data_t *data = &private_data[0];
+        pbdrv_motor_tacho_update_count(data, pbdrv_gpio_input(data->gpio_int), pbdrv_gpio_input(data->gpio_dir), timestamp);
+    }
 
+    if (exti_pr & EXTI_PR_PR0) {
+        private_data_t *data = &private_data[1];
         pbdrv_motor_tacho_update_count(data, pbdrv_gpio_input(data->gpio_int), pbdrv_gpio_input(data->gpio_dir), timestamp);
     }
 }
