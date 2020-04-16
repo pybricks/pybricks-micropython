@@ -105,7 +105,7 @@ static uint32_t get_mode_switch_delay(pbio_iodev_type_id_t id, uint8_t mode) {
             return 200;
         // Default delay for other sensors and modes:
         default:
-            return 50;
+            return 0;
     }
 }
 
@@ -134,7 +134,10 @@ static pbio_error_t get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values)
         }
 
         // Give some time for the mode to take effect and discard stale data
-        mp_hal_delay_ms(get_mode_switch_delay(pbdev->type_id, mode));
+        uint32_t delay = get_mode_switch_delay(pbdev->type_id, mode);
+        if (delay > 0) {
+            mp_hal_delay_ms(delay);
+        }
     }
 
     // Read raw data from device
