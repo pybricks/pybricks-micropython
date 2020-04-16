@@ -124,7 +124,6 @@ STATIC const mp_obj_type_t nxtdevices_TouchSensor_type = {
 typedef struct _nxtdevices_SoundSensor_obj_t {
     mp_obj_base_t base;
     pbdevice_t *pbdev;
-    bool active;
 } nxtdevices_SoundSensor_obj_t;
 
 // pybricks.nxtdevices.SoundSensor.intensity
@@ -137,14 +136,6 @@ STATIC mp_obj_t nxtdevices_SoundSensor_intensity(size_t n_args, const mp_obj_t *
 
     uint8_t mode = mp_obj_is_true(audible_only) ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
     int32_t analog;
-
-    // If the mode changes, insert a considerable pause to let the sensor adapt
-    if (mode != self->active) {
-        pbdevice_get_values(self->pbdev, mode, &analog);
-        mp_hal_delay_ms(300);
-        self->active = mode;
-    }
-
     pbdevice_get_values(self->pbdev, mode, &analog);
 
     return mp_obj_new_int(analog_scale(analog, 650, 4860, true));
