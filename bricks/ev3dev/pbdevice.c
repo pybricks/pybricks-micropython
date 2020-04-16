@@ -92,6 +92,16 @@ static pbio_error_t get_device(pbdevice_t **pbdev, pbio_iodev_type_id_t valid_id
     return PBIO_SUCCESS;
 }
 
+// Get the required mode switch time delay for a given sensor type and/or mode
+static uint32_t get_mode_switch_delay(pbio_iodev_type_id_t id, uint8_t mode) {
+    switch(id) {
+        case PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR:
+            return 30;
+        // Default delay for other sensors and modes:
+        default:
+            return 50;
+    }
+}
 
 static pbio_error_t get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values) {
 
@@ -116,6 +126,9 @@ static pbio_error_t get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values)
         if (err != PBIO_SUCCESS) {
             return err;
         }
+
+        // Give some time for the mode to take effect and discard stale data
+        mp_hal_delay_ms(get_mode_switch_delay(pbdev->type_id, mode));
     }
 
     // Read raw data from device
