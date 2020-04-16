@@ -97,6 +97,8 @@ static uint32_t get_mode_switch_delay(pbio_iodev_type_id_t id, uint8_t mode) {
     switch(id) {
         case PBIO_IODEV_TYPE_ID_EV3_COLOR_SENSOR:
             return 30;
+        case PBIO_IODEV_TYPE_ID_NXT_ENERGY_METER:
+            return 200;
         // Default delay for other sensors and modes:
         default:
             return 50;

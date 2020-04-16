@@ -451,13 +451,9 @@ STATIC mp_obj_t nxtdevices_EnergyMeter_make_new(const mp_obj_type_t *type, size_
 
     self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_ENERGY_METER);
 
-    // Need to set mode and wait for update, otherwise first read of values is
-    // all 0s. We are only using one mode for this device, so we can do this here.
+    // Read once so we are in the mode we'll be using for all methods, to avoid mode switch delays later
     int32_t all[7];
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ENERGY_METER_ALL, all);
-    // Default I2C poll rate on ev3dev is 10Hz, so we wait for double that to
-    // ensure that we have non-zero values.
-    mp_hal_delay_ms(200);
 
     return MP_OBJ_FROM_PTR(self);
 }
