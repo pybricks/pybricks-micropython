@@ -83,7 +83,7 @@ void pb_assert(pbio_error_t error) {
         "\n");
     static const MP_DEFINE_STR_OBJ(msg_invalid_op_obj, "\n\n"
         "The requested operation is not valid in the current state:\n"
-        "--> Check the documentation to for required conditions.\n"
+        "--> Check the documentation for required conditions.\n"
         "--> Check the line in your script that matches\n"
         "    the line number given in the 'Traceback' above.\n"
         "\n");
