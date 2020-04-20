@@ -234,7 +234,7 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
     self->straight_speed = pb_obj_get_default_int(straight_speed, self->straight_speed);
     self->straight_acceleration = pb_obj_get_default_int(straight_acceleration, self->straight_acceleration);
     self->turn_rate = pb_obj_get_default_int(turn_rate, self->turn_rate);
-    self->turn_acceleration = pb_obj_get_default_int(turn_rate, self->turn_acceleration);
+    self->turn_acceleration = pb_obj_get_default_int(turn_acceleration, self->turn_acceleration);
 
     return mp_const_none;
 }
