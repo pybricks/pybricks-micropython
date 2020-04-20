@@ -368,7 +368,7 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
         user_limit = user_limit > 100 ? 100 : user_limit;
 
         // Apply the user limit
-        pbio_control_settings_set_limits(&self->srv->control.settings, _speed, _acceleration, user_limit);
+        pb_assert(pbio_control_settings_set_limits(&self->srv->control.settings, _speed, _acceleration, user_limit));
     }
 
     mp_obj_t ex = MP_OBJ_NULL;
@@ -388,7 +388,7 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
 
     // Restore original settings
     if (override_duty_limit) {
-        pbio_control_settings_set_limits(&self->srv->control.settings, _speed, _acceleration, _actuation);
+        pb_assert(pbio_control_settings_set_limits(&self->srv->control.settings, _speed, _acceleration, _actuation));
     }
 
     if (ex != MP_OBJ_NULL) {
@@ -397,7 +397,7 @@ STATIC mp_obj_t motor_Motor_run_until_stalled(size_t n_args, const mp_obj_t *pos
 
     // Read the angle upon completion of the stall maneuver
     int32_t stall_point;
-    pbio_tacho_get_angle(self->srv->tacho, &stall_point);
+    pb_assert(pbio_tacho_get_angle(self->srv->tacho, &stall_point));
 
     // Return angle at which the motor stalled
     return mp_obj_new_int(stall_point);
