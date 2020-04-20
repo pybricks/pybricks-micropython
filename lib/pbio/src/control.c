@@ -317,8 +317,11 @@ void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed
 }
 
 pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t actuation) {
-    if (speed < 1 || acceleration < 1 || actuation < 1 || actuation * s->actuation_scale <= s->control_offset) {
+    if (speed < 1 || acceleration < 1 || actuation < 1) {
         return PBIO_ERROR_INVALID_ARG;
+    }
+    if (actuation * s->actuation_scale <= s->control_offset) {
+        return PBIO_ERROR_INVALID_OP;
     }
     s->max_rate = pbio_control_user_to_counts(s, speed);
     s->abs_acceleration = pbio_control_user_to_counts(s, acceleration);
@@ -336,8 +339,11 @@ void pbio_control_settings_get_pid(pbio_control_settings_t *s, int16_t *pid_kp, 
 }
 
 pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd, int32_t integral_range, int32_t integral_rate, int32_t control_offset) {
-    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || integral_range < 0 || integral_rate < 0 || control_offset < 0 || control_offset * s->actuation_scale >= s->max_control) {
+    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || integral_range < 0 || integral_rate < 0 || control_offset < 0) {
         return PBIO_ERROR_INVALID_ARG;
+    }
+    if (control_offset * s->actuation_scale >= s->max_control) {
+        return PBIO_ERROR_INVALID_OP;
     }
 
     s->pid_kp = pid_kp;
