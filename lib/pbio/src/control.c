@@ -96,7 +96,7 @@ void control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, in
     if (ctl->on_target && ctl->after_stop != PBIO_ACTUATION_HOLD) {
         *actuation_type = ctl->after_stop;
         *control = 0;
-        ctl->type = PBIO_CONTROL_NONE;
+        pbio_control_stop(ctl);
     }
     else if (ctl->on_target && ctl->after_stop == PBIO_ACTUATION_HOLD && ctl->type == PBIO_CONTROL_TIMED) {
         // If we are going to hold and we are already doing angle control, there is nothing we need to do.
