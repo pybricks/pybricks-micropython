@@ -182,6 +182,11 @@ pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int3
     // The target count is the start count plus the count to be traveled.  If speed is negative, traveled count also flips.
     int32_t target_count = count_start + (target_rate < 0 ? -relative_target_count: relative_target_count);
 
+    // FIXME: Enable 0 angle and angle > 0 with excess speed as standard case instead to decelerate & return.
+    if (target_count == count_start) {
+        return pbio_control_start_hold_control(ctl, time_now, target_count);
+    }
+
     return pbio_control_start_angle_control(ctl, time_now, count_now, target_count, rate_now, target_rate, acceleration, after_stop);
 }
 
