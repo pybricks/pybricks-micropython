@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2013, 2014 Damien P. George */
-/* Copyright (c) 2018 David Lechner */
+/* Copyright (c) 2018-2020 The Pybricks Authors */
 
 /*
     GNU linker script for LEGO BOOST Move Hub

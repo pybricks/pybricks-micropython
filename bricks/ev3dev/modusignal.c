@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 David Lechner
+// Copyright (c) 2020 The Pybricks Authors
 
 // This is a subset of the standard CPython signal module.
 

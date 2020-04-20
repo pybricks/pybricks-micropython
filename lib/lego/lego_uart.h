@@ -1,5 +1,5 @@
 // SPDX-License-Identifier
-// Copyright (c) 2019 David Lechner
+// Copyright (c) 2019-2020 The Pybricks Authors
 
 // LEGO UART Message Protocol (LUMP) for EV3 and Powered Up I/O devices
 //

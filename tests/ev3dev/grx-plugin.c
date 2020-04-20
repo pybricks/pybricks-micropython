@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019 David Lechner
+// Copyright (c) 2019-2020 The Pybricks Authors
 
 // GRX3 plugin to simulate LEGO MINDSTORMS EV3 screen for automated testing
 

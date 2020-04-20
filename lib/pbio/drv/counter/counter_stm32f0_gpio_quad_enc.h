@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019 David Lechner
+// Copyright (c) 2019-2020 The Pybricks Authors
 
 #ifndef _PVDRV_COUNTER_STM32F0_GPIO_QUAD_ENC_H_
 #define _PVDRV_COUNTER_STM32F0_GPIO_QUAD_ENC_H_

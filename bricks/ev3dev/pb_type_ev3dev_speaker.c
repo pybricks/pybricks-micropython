@@ -1,6 +1,6 @@
 // SPDX-License-Identifier
+// Copyright (c) 2018-2020 The Pybricks Authors
 // Copyright (c) 2018-2019 Laurens Valk
-// Copyright (c) 2019 David Lechner
 
 // class Speaker
 //

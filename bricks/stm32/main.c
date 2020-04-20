@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2019 David Lechner
+// Copyright (c) 2018-2020 The Pybricks Authors
 // Copyright (c) 2019 Laurens Valk
 
 #include <stdint.h>
@@ -164,7 +164,7 @@ static uint32_t get_user_program(uint8_t **buf, bool *free_reader) {
         *buf = (uint8_t *)(_mpy_size + 1);
         return *_mpy_size;
     }
-    
+
     // Handle other errors
     if (err != PBIO_SUCCESS) {
         *buf = NULL;

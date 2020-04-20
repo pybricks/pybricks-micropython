@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (C) 2020 David Lechner
+# Copyright (C) 2020 The Pybricks Authors
 
 from _thread import allocate_lock
 from uerrno import ECONNRESET

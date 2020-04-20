@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018 David Lechner
+// Copyright (c) 2018-2020 The Pybricks Authors
 
 /**
  * \addtogroup IOPortDriver I/O Port I/O driver

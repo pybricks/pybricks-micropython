@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2019 David Lechner
+// Copyright (c) 2018-2020 The Pybricks Authors
 
 #ifndef _IOPORT_LPF2_H_
 #define _IOPORT_LPF2_H_

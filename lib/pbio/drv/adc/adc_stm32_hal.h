@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019 David Lechner
+// Copyright (c) 2019-2020 The Pybricks Authors
 
 #ifndef _PBDRV_ADC_STM32_HAL_H_
 #define _PBDRV_ADC_STM32_HAL_H_

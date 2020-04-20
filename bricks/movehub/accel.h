@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018 David Lechner
+// Copyright (c) 2018-2020 The Pybricks Authors
 
 #ifndef _PYBRICKS_MOVEHUB_ACCEL_H_
 #define _PYBRICKS_MOVEHUB_ACCEL_H_

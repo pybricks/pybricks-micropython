@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019 David Lechner
+// Copyright (c) 2019-2020 The Pybricks Authors
 
 #define PBIO_CONFIG_IOPORT_LPF2             (1)
 

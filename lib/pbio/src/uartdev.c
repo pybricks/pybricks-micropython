@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT OR GPL-2.0-only
-// Copyright (c) 2018 David Lechner
+// Copyright (c) 2018-2020 The Pybricks Authors
 
 /*
  * Based on:

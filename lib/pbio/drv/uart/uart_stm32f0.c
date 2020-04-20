@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2019 David Lechner
+// Copyright (c) 2018-2020 The Pybricks Authors
 
 // This driver is for UARTs on STM32F0 MCUs. It provides async read and write
 // functions for sending and receive data and allows changing the baud rate.

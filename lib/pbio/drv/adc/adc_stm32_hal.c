@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019 David Lechner
+// Copyright (c) 2019-2020 The Pybricks Authors
 
 // Platform should override HAL_ADC_MspInit() to configure pin mux and ADC
 // channel mapping. Example:

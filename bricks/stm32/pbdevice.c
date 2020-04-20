@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
+// Copyright (c) 2019-2020 The Pybricks Authors
 // Copyright (c) 2019 Laurens Valk
-// Copyright (c) 2019 David Lechner
 
 #include <string.h>
 

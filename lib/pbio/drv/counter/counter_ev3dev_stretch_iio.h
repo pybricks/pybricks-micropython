@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019 David Lechner
+// Copyright (c) 2019-2020 The Pybricks Authors
 
 #ifndef _PVDRV_COUNTER_EV3DEV_STRETCH_IIO_H_
 #define _PVDRV_COUNTER_EV3DEV_STRETCH_IIO_H_

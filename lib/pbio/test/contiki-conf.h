@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018 David Lechner
+// Copyright (c) 2018-2020 The Pybricks Authors
 
 #ifndef _PBIO_CONF_H_
 #define _PBIO_CONF_H_

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 David Lechner
+// Copyright (c) 2020 The Pybricks Authors
 
 #include <glib.h>
 #include <gio/gio.h>

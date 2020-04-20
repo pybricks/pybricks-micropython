@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019 David Lechner
+// Copyright (c) 2019-2020 The Pybricks Authors
 
 #ifndef PYBRICKS_INCLUDED_BRICKS_EV3DEV_TYPES_H
 #define PYBRICKS_INCLUDED_BRICKS_EV3DEV_TYPES_H

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2019 David Lechner
+// Copyright (c) 2018-2020 The Pybricks Authors
 
 #ifndef _UART_STM32F0_H_
 #define _UART_STM32F0_H_

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (C) 2020 David Lechner
+# Copyright (C) 2020 The Pybricks Authors
 
 """
 :class:`RFCOMMServer` can be used to communicate with other Bluetooth RFCOMM

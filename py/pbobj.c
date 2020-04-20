@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019 David Lechner
+// Copyright (c) 2019-2020 The Pybricks Authors
 
 #include <pbio/error.h>
 
@@ -46,7 +46,7 @@ mp_obj_t pb_obj_get_base_class_obj(mp_obj_t obj, const mp_obj_type_t *type) {
     if (mp_obj_is_obj(obj) && mp_obj_is_subclass_fast(MP_OBJ_FROM_PTR(((mp_obj_base_t*)MP_OBJ_TO_PTR(obj))->type), type)) {
         return ((mp_obj_instance_t*)MP_OBJ_TO_PTR(obj))->subobj[0];
     }
-    // On failure, say why we could not do it 
+    // On failure, say why we could not do it
     pb_assert_type(obj, type);
     return MP_OBJ_NULL;
 }

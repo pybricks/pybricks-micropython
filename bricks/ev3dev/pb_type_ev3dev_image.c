@@ -1,6 +1,6 @@
 // SPDX-License-Identifier
-// Copyright (c) 2019 David Lechner
 // Copyright (c) 2013, 2014 Damien P. George
+// Copyright (c) 2019-2020 The Pybricks Authors
 
 // class Image
 //

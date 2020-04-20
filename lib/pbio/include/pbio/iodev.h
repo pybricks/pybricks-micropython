@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018 David Lechner
+// Copyright (c) 2018-2020 The Pybricks Authors
 
 #ifndef _PBIO_IODEV_H_
 #define _PBIO_IODEV_H_
@@ -89,21 +89,21 @@ typedef enum {
     // SPIKE motors
 
     /** SPIKE Medium Motor */
-    PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR            = 48,   
+    PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR            = 48,
 
     /** SPIKE Large Motor */
-    PBIO_IODEV_TYPE_ID_SPIKE_L_MOTOR            = 49,   
+    PBIO_IODEV_TYPE_ID_SPIKE_L_MOTOR            = 49,
 
     // SPIKE sensors
 
     /** SPIKE Color Sensor */
-    PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR       = 61,   
+    PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR       = 61,
 
     /** SPIKE Ultrasonic Sensor */
-    PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR  = 62,   
+    PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR  = 62,
 
     /** SPIKE Prime Force Sensor */
-    PBIO_IODEV_TYPE_ID_SPIKE_FORCE_SENSOR       = 63,   
+    PBIO_IODEV_TYPE_ID_SPIKE_FORCE_SENSOR       = 63,
 
     // FatcatLab EV3 UART devices
 
