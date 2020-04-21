@@ -76,11 +76,15 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     self->heading_control = builtins_Control_obj_make_new(&self->db->control_heading);
     self->distance_control = builtins_Control_obj_make_new(&self->db->control_distance);
 
-    // Set defaults for drivebase
-    self->straight_speed = 100;
-    self->straight_acceleration = 200;
-    self->turn_rate = 90;
-    self->turn_acceleration = 180;
+    // Get defaults for drivebase as 1/3 of maximum for the underlying motors
+    int32_t straight_speed_limit, straight_acceleration_limit, turn_rate_limit, turn_acceleration_limit, _;
+    pbio_control_settings_get_limits(&self->db->control_distance.settings, &straight_speed_limit, &straight_acceleration_limit, &_);
+    pbio_control_settings_get_limits(&self->db->control_heading.settings, &turn_rate_limit, &turn_acceleration_limit, &_);
+
+    self->straight_speed = straight_speed_limit/3;
+    self->straight_acceleration = straight_acceleration_limit/3;
+    self->turn_rate = turn_rate_limit/3;
+    self->turn_acceleration = turn_acceleration_limit/3;
 
     return MP_OBJ_FROM_PTR(self);
 }
