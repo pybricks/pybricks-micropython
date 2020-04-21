@@ -16,12 +16,15 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
     
     // All rate/count acceleration limits add up, because distance state is two motors counts added
     s_distance->max_rate = s_left->max_rate + s_right->max_rate;
-    s_distance->abs_acceleration = s_left->abs_acceleration + s_right->abs_acceleration;
     s_distance->rate_tolerance = s_left->rate_tolerance + s_right->rate_tolerance;
     s_distance->count_tolerance = s_left->count_tolerance + s_right->count_tolerance;
     s_distance->stall_rate_limit = s_left->stall_rate_limit + s_right->stall_rate_limit;
     s_distance->integral_range = s_left->integral_range + s_right->integral_range;
     s_distance->integral_rate = s_left->integral_rate + s_right->integral_rate;
+
+    // As acceleration, we take double the single motor amount, because drivebases are
+    // usually expected to respond quickly to speed setpoint changes
+    s_distance->abs_acceleration = (s_left->abs_acceleration + s_right->abs_acceleration)*2;
 
     // Although counts/errors add up twice as fast, both motors actuate, so apply half of the average PID
     s_distance->pid_kp = (s_left->pid_kp + s_right->pid_kp)/4;
