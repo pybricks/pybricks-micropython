@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019 Laurens Valk
 
+#include <stdlib.h>
+
 #include <math.h>
 
 #include <pbio/drivebase.h>
@@ -230,11 +232,15 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
         pb_assert(PBIO_ERROR_INVALID_OP);
     }
 
-    // If some values are given, set them
-    self->straight_speed = pb_obj_get_default_int(straight_speed, self->straight_speed);
-    self->straight_acceleration = pb_obj_get_default_int(straight_acceleration, self->straight_acceleration);
-    self->turn_rate = pb_obj_get_default_int(turn_rate, self->turn_rate);
-    self->turn_acceleration = pb_obj_get_default_int(turn_acceleration, self->turn_acceleration);
+    // If some values are given, set them, bound by the control limits
+    int32_t straight_speed_limit, straight_acceleration_limit, turn_rate_limit, turn_acceleration_limit, _;
+    pbio_control_settings_get_limits(&self->db->control_distance.settings, &straight_speed_limit, &straight_acceleration_limit, &_);
+    pbio_control_settings_get_limits(&self->db->control_heading.settings, &turn_rate_limit, &turn_acceleration_limit, &_);
+
+    self->straight_speed = min(straight_speed_limit, abs(pb_obj_get_default_int(straight_speed, self->straight_speed)));
+    self->straight_acceleration = min(straight_acceleration_limit, abs(pb_obj_get_default_int(straight_acceleration, self->straight_acceleration)));
+    self->turn_rate = min(turn_rate_limit, abs(pb_obj_get_default_int(turn_rate, self->turn_rate)));
+    self->turn_acceleration = min(turn_acceleration_limit, abs(pb_obj_get_default_int(turn_acceleration, self->turn_acceleration)));
 
     return mp_const_none;
 }
