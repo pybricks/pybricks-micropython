@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2019-2020 The Pybricks Authors
 
 help:
 	@echo "Use 'make <BRICK>' to build a brick."

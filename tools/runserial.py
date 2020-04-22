@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2019-2020 The Pybricks Authors
+
 import argparse
 import serial
 import time

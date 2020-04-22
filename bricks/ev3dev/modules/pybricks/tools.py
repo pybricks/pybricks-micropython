@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2018-2020 Laurens Valk
+# Copyright (c) 2018-2020 The Pybricks Authors
 
 # Import print for compatibility with 1.0 release
 from builtins import print

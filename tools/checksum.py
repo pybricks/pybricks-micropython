@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2019-2020 The Pybricks Authors
+
 """Calculate checksum of firmware file in the same way that the bootloader on
 the movehub does."""
 

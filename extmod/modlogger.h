@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2019 Laurens Valk
-// Copyright (c) 2019 LEGO System A/S
+// Copyright (c) 2018-2020 The Pybricks Authors
 
 #ifndef _PYBRICKS_EXTMOD_MODLOGGER_H_
 #define _PYBRICKS_EXTMOD_MODLOGGER_H_

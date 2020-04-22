@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019 Laurens Valk
-// Copyright (c) 2019 LEGO System A/S
+// Copyright (c) 2019-2020 The Pybricks Authors
 
 #ifndef _PBSMBUS_H_
 #define _PBSMBUS_H_

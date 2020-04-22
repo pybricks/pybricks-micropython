@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2018-2019 Laurens Valk
+# Copyright (c) 2018-2020 The Pybricks Authors
 
 """Classes for LEGO MINDSTORMS EV3 Devices."""
 

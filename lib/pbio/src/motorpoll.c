@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 Laurens Valk
-// Copyright (c) 2020 LEGO System A/S
+// Copyright (c) 2018-2020 The Pybricks Authors
 
 #include <pbio/control.h>
 #include <pbio/drivebase.h>

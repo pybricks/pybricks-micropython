@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019 Laurens Valk
+// Copyright (c) 2018-2020 The Pybricks Authors
 
 #ifndef _PBIO_DRIVEBASE_H_
 #define _PBIO_DRIVEBASE_H_

@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019 Laurens Valk
-// Copyright (c) 2019 LEGO System A/S
+// Copyright (c) 2019-2020 The Pybricks Authors
 
 #include <string.h>
 

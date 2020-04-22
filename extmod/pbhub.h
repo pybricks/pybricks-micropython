@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018 Laurens Valk
+// Copyright (c) 2018-2020 The Pybricks Authors
 
 #ifndef _PB_EXTMOD_PBHUB_H_
 #define _PB_EXTMOD_PBHUB_H_
