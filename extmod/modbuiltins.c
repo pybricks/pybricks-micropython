@@ -180,7 +180,7 @@ STATIC mp_obj_t builtins_Control_limits(size_t n_args, const mp_obj_t *pos_args,
     _acceleration = pb_obj_get_default_int(acceleration, _acceleration);
     _actuation = pb_obj_get_default_int(actuation, _actuation);
 
-    pbio_control_settings_set_limits(&self->control->settings, _speed, _acceleration, _actuation);
+    pb_assert(pbio_control_settings_set_limits(&self->control->settings, _speed, _acceleration, _actuation));
 
     return mp_const_none;
 }
@@ -228,7 +228,7 @@ STATIC mp_obj_t builtins_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp
     _integral_rate = pb_obj_get_default_int(integral_rate, _integral_rate);
     _feed_forward = pb_obj_get_default_int(feed_forward, _feed_forward);
 
-    pbio_control_settings_set_pid(&self->control->settings, _kp, _ki, _kd, _integral_range, _integral_rate, _feed_forward);
+    pb_assert(pbio_control_settings_set_pid(&self->control->settings, _kp, _ki, _kd, _integral_range, _integral_rate, _feed_forward));
 
     return mp_const_none;
 }
@@ -262,7 +262,7 @@ STATIC mp_obj_t builtins_Control_target_tolerances(size_t n_args, const mp_obj_t
     _speed = pb_obj_get_default_int(speed, _speed);
     _position = pb_obj_get_default_int(position, _position);
 
-    pbio_control_settings_set_target_tolerances(&self->control->settings, _speed, _position);
+    pb_assert(pbio_control_settings_set_target_tolerances(&self->control->settings, _speed, _position));
 
     return mp_const_none;
 }
@@ -296,7 +296,7 @@ STATIC mp_obj_t builtins_Control_stall_tolerances(size_t n_args, const mp_obj_t 
     _speed = pb_obj_get_default_int(speed, _speed);
     _time = pb_obj_get_default_int(time, _time);
 
-    pbio_control_settings_set_stall_tolerances(&self->control->settings, _speed, _time);
+    pb_assert(pbio_control_settings_set_stall_tolerances(&self->control->settings, _speed, _time));
 
     return mp_const_none;
 }
