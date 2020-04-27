@@ -191,6 +191,15 @@ pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
 }
 
 pbio_error_t pbdrv_motor_setup(pbio_port_t port, bool is_servo) {
+
+    // Verify port
+    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
+        return PBIO_ERROR_INVALID_PORT;
+    }
+    // Set connected status to false so we reinitialize later
+    motors[port - PBDRV_CONFIG_FIRST_MOTOR_PORT].connected = false;
+
+    // Set port mode to dc motor or servo
     if (!is_servo) {
         return ev3dev_lego_port_configure(port, PBIO_IODEV_TYPE_ID_EV3DEV_DC_MOTOR);
     }
