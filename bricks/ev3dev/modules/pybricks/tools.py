@@ -3,7 +3,11 @@
 
 # Import print for compatibility with 1.0 release
 from builtins import print
+
+# Expose method and class written in C
 from tools import wait, StopWatch
+
+# Imports for DataLog implementation
 from utime import localtime, ticks_us
 
 
@@ -24,8 +28,12 @@ class DataLog():
         # Append extension and open
         self.file = open('{0}{1}.{2}'.format(name, stamp, extension), mode)
 
-        # If column headers were given, print those as first line
-        if len(headers) > 0:
+        # Get length of existing contents
+        self.file.seek(0, 2)
+        length = self.file.tell()
+
+        # If column headers were given and we are at the start of the file, print headers as first line
+        if len(headers) > 0 and length == 0:
             print(*headers, sep=', ', file=self.file)
 
     def log(self, *values):
