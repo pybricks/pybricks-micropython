@@ -98,7 +98,7 @@ static pbio_error_t ev3dev_motor_init(motor_t *mtr, pbio_port_t port) {
             return err;
         }
         // Open duty
-        err = sysfs_open_dc_motor_attr(&mtr->f_command, mtr->n_motor, "duty_cycle_sp", "w");
+        err = sysfs_open_dc_motor_attr(&mtr->f_duty, mtr->n_motor, "duty_cycle_sp", "w");
         if (err != PBIO_SUCCESS) {
             return err;
         }
