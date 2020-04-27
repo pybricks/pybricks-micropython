@@ -8,7 +8,7 @@ from utime import localtime, ticks_us
 
 
 class DataLog():
-    def __init__(self, *headers, name='log', timestamp=True, extension='csv'):
+    def __init__(self, *headers, name='log', timestamp=True, extension='csv', append=False):
 
         # Make timestamp of the form yyyy_mm_dd_hh_mm_ss_uuuuuu
         if timestamp:
@@ -18,8 +18,11 @@ class DataLog():
         else:
             stamp = ''
 
+        # File write mode
+        mode = 'a+' if append else 'w+'
+
         # Append extension and open
-        self.file = open('{0}{1}.{2}'.format(name, stamp, extension), 'w+')
+        self.file = open('{0}{1}.{2}'.format(name, stamp, extension), mode)
 
         # If column headers were given, print those as first line
         if len(headers) > 0:
