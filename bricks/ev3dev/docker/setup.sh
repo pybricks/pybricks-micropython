@@ -28,7 +28,7 @@ fi
 
 src_dir="${script_dir}/../../../../.."
 build_dir="${script_dir}/../build-${arch}"
-image_name="${project}-${arch}"
+image_name="docker.pkg.github.com/pybricks/pybricks-micropython/${project}-${arch}:latest"
 container_name="${project}_${arch}"
 
 if [ -e ${build_dir} ]; then
@@ -47,11 +47,15 @@ if [ -e ${build_dir} ]; then
 fi
 mkdir -p ${build_dir}
 
-docker build \
-    --tag ${image_name} \
-    --no-cache \
-    --file "${script_dir}/${arch}.dockerfile" \
-    "${script_dir}/"
+if [ "${2}" == "rebuild" ]; then
+    docker build \
+        --tag "${image_name}" \
+        --no-cache \
+        --file "${script_dir}/${arch}.dockerfile" \
+        "${script_dir}/"
+else
+    docker pull "${image_name}"
+fi
 
 docker rm --force ${container_name} >/dev/null 2>&1 || true
 docker run \

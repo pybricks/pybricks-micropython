@@ -2,11 +2,12 @@ Using Docker to Cross-Compile Pybricks MicroPython for ev3dev
 -------------------------------------------------------------
 
 This assumes that you have already `docker` installed and that you have cloned
-our [MicroPython fork](https://github.com/pybricks/micropython) and its submodules.
+our [MicroPython fork](https://github.com/pybricks/micropython) and its
+submodules and have built `mpy-cross` for the host OS (`make -C mpy-cross`).
 
 1. Create the docker image and a docker container.
 
-        ./docker/setup.sh armel
+        bricks/ev3dev/docker/setup.sh armel
 
 2. Cross compile MicroPython.
 
@@ -19,3 +20,8 @@ our [MicroPython fork](https://github.com/pybricks/micropython) and its submodul
 4. Run it on the EV3.
 
         ssh -t robot@ev3dev "brickrun -r -- ./pybricks-micropython"
+
+
+If local changes are made to the dockerfile, the image can be rebuilt with:
+
+    bricks/ev3dev/docker/setup.sh armel rebuild
