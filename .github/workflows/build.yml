@@ -471,6 +471,50 @@ jobs:
         name: nxt-firmware
         path: micropython/ports/pybricks/bricks/nxt/build/firmware.bin
 
+  debug:
+    name: debug firmware
+    needs: [cross_compiler, mpy_cross]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install cross-compiler
+      uses: actions/cache@v1
+      with:
+        path: ${{ github.workspace }}/gcc-arm
+        key: gcc-arm
+    - name: Add cross-compiler to path
+      run: echo ::add-path::${{ github.workspace }}/gcc-arm/bin
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        path: tmp
+    - name: Get tag
+      id: get_tag
+      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
+    - name: Checkout MicroPython
+      uses: actions/checkout@v2
+      with:
+        repository: pybricks/micropython
+        ref: ${{ steps.get_tag.outputs.micropython_tag }}
+        submodules: recursive
+        path: micropython
+        token: ${{ secrets.GITHUB_TOKEN2 }}
+    - name: Checkout Pybricks
+      run: |
+        cd micropython/ports/pybricks
+        git fetch --depth=1 origin $GITHUB_SHA
+        git checkout --recurse-submodules $GITHUB_SHA
+    - name: Download mpy-cross
+      uses: actions/download-artifact@v1
+      with:
+        name: pybricks-mpy-cross
+        path: micropython/mpy-cross
+    - name: Fix file permission
+      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+    - name: Build
+      run: |
+        cd micropython/ports/pybricks
+        make $MAKEOPTS -C bricks/debug
+
   pbio:
     name: pbio tests
     runs-on: ubuntu-latest
