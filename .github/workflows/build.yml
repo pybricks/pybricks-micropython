@@ -276,6 +276,12 @@ jobs:
       with:
         name: cityhub-firmware
         path: micropython/ports/pybricks/bricks/cityhub/build/firmware.bin
+    - name: Upload firmware metadata
+      if: success()
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: cityhub-firmware
+        path: micropython/ports/pybricks/bricks/cityhub/build/firmware.metadata.json
 
   cplushub_firmware:
     name: cplushub firmware
@@ -326,6 +332,12 @@ jobs:
       with:
         name: cplushub-firmware
         path: micropython/ports/pybricks/bricks/cplushub/build/firmware.bin
+    - name: Upload firmware metadata
+      if: success()
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: cplushub-firmware
+        path: micropython/ports/pybricks/bricks/cplushub/build/firmware.metadata.json
 
   movehub_firmware:
     name: movehub firmware
@@ -376,6 +388,12 @@ jobs:
       with:
         name: movehub-firmware
         path: micropython/ports/pybricks/bricks/movehub/build/firmware.bin
+    - name: Upload firmware metadata
+      if: success()
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: movehub-firmware
+        path: micropython/ports/pybricks/bricks/movehub/build/firmware.metadata.json
 
   primehub_firmware:
     name: primehub firmware
@@ -426,6 +444,12 @@ jobs:
       with:
         name: primehub-firmware
         path: micropython/ports/pybricks/bricks/primehub/build/firmware.bin
+    - name: Upload firmware metadata
+      if: success()
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: primehub-firmware
+        path: micropython/ports/pybricks/bricks/primehub/build/firmware.metadata.json
 
   nxt_firmware:
     name: nxt firmware
@@ -519,7 +543,7 @@ jobs:
     - name: Build
       run: |
         cd micropython/ports/pybricks
-        make $MAKEOPTS -C bricks/debug
+        make $MAKEOPTS -C bricks/debug build/firmware.dfu
 
   pbio:
     name: pbio tests

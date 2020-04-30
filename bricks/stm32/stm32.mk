@@ -58,10 +58,13 @@ INC += -I$(TOP)/ports/pybricks/extmod
 INC += -I$(TOP)/ports/pybricks/py
 INC += -I$(BUILD)
 
+GIT = git
+ZIP = zip
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
 CHECKSUM = $(TOP)/ports/pybricks/tools/checksum.py
 CHECKSUM_TYPE ?= xor
+METADATA = $(TOP)/ports/pybricks/tools/metadata.py
 OPENOCD ?= openocd
 OPENOCD_CONFIG ?= openocd_stm32$(PB_MCU_SERIES_LCASE).cfg
 TEXT0_ADDR ?= 0x08000000
@@ -306,10 +309,11 @@ SRC_QSTR += $(SRC_C) $(PYBRICKS_PY_SRC_C) $(PYBRICKS_EXTMOD_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
 
-all: $(BUILD)/firmware.bin
+all: $(BUILD)/firmware.zip
 
 FW_MPYSIZE := $$(wc -c < "$(BUILD)/main.mpy")
 FW_CHECKSUM := $$($(CHECKSUM) $(CHECKSUM_TYPE) $(BUILD)/firmware-no-checksum.bin $(PB_FIRMWARE_MAX_SIZE))
+FW_VERSION := $(shell $(GIT) describe --tags --dirty --always)
 
 $(BUILD)/firmware-no-checksum.elf: $(LD_FILES) $(OBJ)
 	$(Q)$(LD) --defsym=MPYSIZE=$(FW_MPYSIZE) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
@@ -330,6 +334,14 @@ $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 $(BUILD)/firmware.dfu: $(BUILD)/firmware.bin
 	$(ECHO) "Create $@"
 	$(Q)$(PYTHON) $(DFU) -b $(TEXT0_ADDR):$< $@
+
+$(BUILD)/firmware.metadata.json: $(BUILD)/firmware.elf $(METADATA)
+	$(ECHO) "META creating firmware metadata"
+	$(Q)$(METADATA) $(FW_VERSION) $(PBIO_PLATFORM) $<.map $@
+
+$(BUILD)/firmware.zip: $(BUILD)/firmware.bin $(BUILD)/firmware.metadata.json
+	$(ECHO) "ZIP creating firmware package"
+	$(Q)$(ZIP) -j $@ $^
 
 deploy: $(BUILD)/firmware.dfu
 	$(ECHO) "Writing $< to the board"
