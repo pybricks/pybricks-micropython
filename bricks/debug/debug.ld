@@ -36,20 +36,22 @@ SECTIONS
         _sidata = _etext;  /* This is used by the startup in order to initialize the .data secion */
     } >FLASH
 
+    /* used by the startup to initialize data */
+    _sidata = LOADADDR(.data);
+
     /* This is the initialized data section
     The program executes knowing that the data is in the RAM
     but the loader puts the initial values in the FLASH (inidata).
     It is one task of the startup to copy the initial values from FLASH to RAM. */
-    .data : AT ( _sidata )
+    .data :
     {
         . = ALIGN(4);
         _sdata = .;        /* create a global symbol at data start; used by startup code in order to initialise the .data section in RAM */
-        *(.data)           /* .data sections */
         *(.data*)          /* .data* sections */
 
         . = ALIGN(4);
         _edata = .;        /* define a global symbol at data end; used by startup code in order to initialise the .data section in RAM */
-    } >RAM
+    } >RAM AT> FLASH
 
     /* Uninitialized data section */
     .bss :
@@ -63,6 +65,21 @@ SECTIONS
         . = ALIGN(4);
         _ebss = .;         /* define a global symbol at bss end; used by startup code */
     } >RAM
+
+    .user :
+    {
+        . = ALIGN(4);
+        _pb_user_mpy_size = .;
+        LONG(MPYSIZE);      /* Size of compiled main.mpy file in byte */
+        _pb_user_mpy_data = .;
+        KEEP(*(.mpy));       /* Compiled main.mpy file */
+    } >FLASH
+
+    .checksum :
+    {
+        . = ALIGN(4);
+        LONG(CHECKSUM)
+    } >FLASH
 
     .ARM.attributes 0 : { *(.ARM.attributes) }
 }
