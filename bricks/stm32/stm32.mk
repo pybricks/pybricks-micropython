@@ -72,8 +72,15 @@ CFLAGS_MCU_F0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
 CFLAGS_MCU_F4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS_MCU_L4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(PB_MCU_SERIES)) $(COPT)
-LDSCRIPT = $(PBIO_PLATFORM).ld
-LDFLAGS = -nostdlib -T $(LDSCRIPT) -Map=$@.map --cref --gc-sections
+
+# linker scripts
+LD_FILES = $(PBIO_PLATFORM).ld
+# not all hubs share common script
+ifeq ($(filter $(PBIO_PLATFORM),debug prime_hub),)
+LD_FILES += $(TOP)/ports/pybricks/bricks/stm32/common.ld
+endif
+
+LDFLAGS = -nostdlib $(addprefix -T,$(LD_FILES)) -Map=$@.map --cref --gc-sections
 
 # avoid doubles
 CFLAGS += -fsingle-precision-constant -Wdouble-promotion
@@ -304,7 +311,7 @@ all: $(BUILD)/firmware.bin
 FW_MPYSIZE := $$(wc -c < "$(BUILD)/main.mpy")
 FW_CHECKSUM := $$($(CHECKSUM) $(CHECKSUM_TYPE) $(BUILD)/firmware-no-checksum.bin $(PB_FIRMWARE_MAX_SIZE))
 
-$(BUILD)/firmware-no-checksum.elf: $(LDSCRIPT) $(OBJ)
+$(BUILD)/firmware-no-checksum.elf: $(LD_FILES) $(OBJ)
 	$(Q)$(LD) --defsym=MPYSIZE=$(FW_MPYSIZE) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 
 $(BUILD)/firmware-no-checksum.bin: $(BUILD)/firmware-no-checksum.elf
