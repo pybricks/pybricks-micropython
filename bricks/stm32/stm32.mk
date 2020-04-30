@@ -13,9 +13,6 @@ include ../../../../py/mkenv.mk
 # qstr definitions (must come before including py.mk)
 QSTR_GLOBAL_DEPENDENCIES = $(TOP)/ports/pybricks/bricks/stm32/configport.h
 
-# Module included as mpy file in persistent user ROM
-PYBRICKS_MPY_MAIN_MODULE ?= main.py
-
 # directory containing scripts to be frozen as bytecode
 FROZEN_MPY_DIR ?= modules
 FROZEN_MPY_TOOL_ARGS = -mlongint-impl=none
@@ -93,6 +90,9 @@ endif
 CFLAGS += -D$(PB_CMSIS_MCU)
 
 CFLAGS += -DSTM32_HAL_H='<stm32$(PB_MCU_SERIES_LCASE)xx_hal.h>'
+
+# TODO: probably only need no-unicode on movehub
+MPY_CROSS_FLAGS += -mno-unicode
 
 ifneq ($(FROZEN_MPY_DIR),)
 # To use frozen bytecode, put your .py files in a subdirectory (eg frozen/) and
@@ -284,21 +284,15 @@ OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
+OBJ += $(BUILD)/main.mpy.o
 
-# Append .mpy file specified by PYBRICKS_MPY_MAIN_MODULE to 2K free space after 106K firmware
-OBJ += $(BUILD)/main_mpy.o
+$(BUILD)/main.mpy: main.py
+	$(ECHO) "MPY $<"
+	$(Q)$(MPY_CROSS) -o $@ $(MPY_CROSS_FLAGS) $<
 
-MPY_CROSS_FLAGS += -mno-unicode
-
-$(BUILD)/main.mpy: $(PYBRICKS_MPY_MAIN_MODULE) $(TOP)/mpy-cross/pybricks-mpy-cross
-	$(Q)$(MPY_CROSS) -o $@ $(MPY_CROSS_FLAGS)  $<
-
-$(BUILD)/main_mpy.o: $(BUILD)/main.mpy
-	$(Q)$(OBJCOPY) -I binary -O elf32-littlearm -B arm --rename-section .data=.mpy,alloc,load,readonly,data,contents $^ $@
-
-MPYSIZE := $$(wc -c < "$(BUILD)/main.mpy")
-
-FIRMWARE_EXTRA_ARGS = -j .user --gap-fill=0xff
+$(BUILD)/main.mpy.o: $(BUILD)/main.mpy
+	$(Q)$(OBJCOPY) -I binary -O elf32-littlearm -B arm \
+		--rename-section .data=.mpy,alloc,load,readonly,data,contents $^ $@
 
 # List of sources for qstr extraction
 SRC_QSTR += $(SRC_C) $(PYBRICKS_PY_SRC_C) $(PYBRICKS_EXTMOD_SRC_C)
@@ -307,20 +301,23 @@ SRC_QSTR_AUTO_DEPS +=
 
 all: $(BUILD)/firmware.bin
 
+FW_MPYSIZE := $$(wc -c < "$(BUILD)/main.mpy")
+FW_CHECKSUM := $$($(CHECKSUM) $(CHECKSUM_TYPE) $(BUILD)/firmware-no-checksum.bin $(PB_FIRMWARE_MAX_SIZE))
+
 $(BUILD)/firmware-no-checksum.elf: $(LDSCRIPT) $(OBJ)
-	$(Q)$(LD) --defsym=MPYSIZE=$(MPYSIZE) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
+	$(Q)$(LD) --defsym=MPYSIZE=$(FW_MPYSIZE) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 
 $(BUILD)/firmware-no-checksum.bin: $(BUILD)/firmware-no-checksum.elf
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .checksum $^ $@
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .user -j .checksum $^ $@
 
 $(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(LD) --defsym=MPYSIZE=$(MPYSIZE) --defsym=CHECKSUM=`$(CHECKSUM) $(CHECKSUM_TYPE) $< $(PB_FIRMWARE_MAX_SIZE)` $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
+	$(Q)$(LD) --defsym=MPYSIZE=$(FW_MPYSIZE) --defsym=CHECKSUM=$(FW_CHECKSUM) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 	$(Q)$(SIZE) $@
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(ECHO) "BIN creating firmware file"
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .checksum $(FIRMWARE_EXTRA_ARGS) $^ $@
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .user -j .checksum $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
 $(BUILD)/firmware.dfu: $(BUILD)/firmware.bin

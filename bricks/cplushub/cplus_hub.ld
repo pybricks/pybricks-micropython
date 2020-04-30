@@ -39,17 +39,6 @@ SECTIONS
         _sidata = _etext;  /* This is used by the startup in order to initialize the .data section */
     } >FLASH
 
-    .user :
-    {
-        LONG(0);            /* In official LEGO firmware, this is where brick name is stored.
-                               It needs to be zeroed so that when the official firmware is
-                               reloaded, it will use the default name */
-        LONG(MPYSIZE);
-        KEEP(*(.mpy));       /* Compiled main.mpy file */
-    } >USER_FLASH
-
-    __user_flash_start = ORIGIN(USER_FLASH);
-
     /* This section is for special needs of the Move Hub firmware - must be first section in SRAM! */
     .magic :
     {
@@ -89,6 +78,15 @@ SECTIONS
         . = ALIGN(4);
         _ebss = .;         /* define a global symbol at bss end; used by startup code */
     } >RAM
+
+    .user :
+    {
+        . = ALIGN(4);
+        _pb_user_mpy_size = .;
+        LONG(MPYSIZE);      /* Size of compiled main.mpy file in byte */
+        _pb_user_mpy_data = .;
+        KEEP(*(.mpy));       /* Compiled main.mpy file */
+    } >FLASH
 
     .checksum :
     {

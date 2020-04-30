@@ -141,7 +141,9 @@ pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, int32_t time
     }
 }
 
-extern uint32_t __user_flash_start;
+// Defined in linker script
+extern uint32_t _pb_user_mpy_size;
+extern uint8_t _pb_user_mpy_data;
 
 // If user says they want to send an MPY file this big (19 MB),
 // assume they want REPL. This lets users get REPL by pressing
@@ -158,10 +160,8 @@ static uint32_t get_user_program(uint8_t **buf, bool *free_reader) {
 
     // If button was pressed, return code to run script in flash
     if (err == PBIO_ERROR_CANCELED) {
-        // Return .mpy size and location in rom
-        uint32_t *_mpy_size = ((uint32_t *) &__user_flash_start) + 1;
-        *buf = (uint8_t *)(_mpy_size + 1);
-        return *_mpy_size;
+        *buf = &_pb_user_mpy_data;
+        return _pb_user_mpy_size;
     }
 
     // Handle other errors

@@ -47,15 +47,6 @@ SECTIONS
         _sidata = _etext;  /* This is used by the startup in order to initialize the .data section */
     } >FLASH
 
-    .user :
-    {
-        LONG(0);
-        LONG(MPYSIZE);
-        KEEP(*(.mpy));       /* Compiled main.mpy file. This section will be dropped once external flash is enabled */
-    } >USER_FLASH
-
-    __user_flash_start = ORIGIN(USER_FLASH);
-
     /* used by the startup to initialize data */
     _sidata = LOADADDR(.data);
 
@@ -85,6 +76,15 @@ SECTIONS
         . = ALIGN(4);
         _ebss = .;         /* define a global symbol at bss end; used by startup code */
     } >RAM
+
+    .user :
+    {
+        . = ALIGN(4);
+        _pb_user_mpy_size = .;
+        LONG(MPYSIZE);      /* Size of compiled main.mpy file in byte */
+        _pb_user_mpy_data = .;
+        KEEP(*(.mpy));       /* Compiled main.mpy file */
+    } >FLASH
 
     .checksum :
     {
