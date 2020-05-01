@@ -151,8 +151,10 @@ extern uint8_t _pb_user_mpy_data;
 static const uint32_t REPL_LEN = 0x20202020;
 
 // Get user program via serial/bluetooth
-static uint32_t get_user_program(uint8_t **buf, bool *free_reader) {
+static uint32_t get_user_program(uint8_t **buf, uint32_t *free_len) {
     pbio_error_t err;
+    *buf = NULL;
+    *free_len = 0;
 
     // Get the program length
     uint8_t len_buf[4];
@@ -166,7 +168,6 @@ static uint32_t get_user_program(uint8_t **buf, bool *free_reader) {
 
     // Handle other errors
     if (err != PBIO_SUCCESS) {
-        *buf = NULL;
         return 0;
     }
 
@@ -178,7 +179,6 @@ static uint32_t get_user_program(uint8_t **buf, bool *free_reader) {
 
     // Four spaces triggers REPL
     if (len == REPL_LEN) {
-        *buf = NULL;
         return REPL_LEN;
     }
 
@@ -188,27 +188,25 @@ static uint32_t get_user_program(uint8_t **buf, bool *free_reader) {
     }
 
     // Allocate buffer for MPY file with known length
-    uint8_t *mpy = m_malloc(len);
-    if (mpy == NULL) {
+    *buf = m_malloc(len);
+    if (*buf == NULL) {
         return 0;
     }
 
     // Get the program
-    err = get_message(mpy, len, false, 500);
+    err = get_message(*buf, len, false, 500);
 
     // Did not receive a whole program, so discard it
     if (err != PBIO_SUCCESS) {
-        m_free(mpy);
-        len = 0;
+        m_free(*buf);
+        return 0;
     }
 
-    // Success, so return script, length, and free reader
-    *buf = mpy;
-    *free_reader = true;
+    *free_len = len;
     return len;
 }
 
-static void run_user_program(uint32_t len, uint8_t *buf, bool free_reader) {
+static void run_user_program(uint32_t len, uint8_t *buf, uint32_t free_len) {
 
     if (len == 0) {
         mp_print_str(&mp_plat_print, ">>>> ERROR\n");
@@ -228,7 +226,6 @@ static void run_user_program(uint32_t len, uint8_t *buf, bool free_reader) {
     mp_print_str(&mp_plat_print, "\n>>>> RUNNING\n");
 
     mp_reader_t reader;
-    uint32_t free_len = free_reader ? len : 0;
     mp_reader_new_mem(&reader, buf, len, free_len);
 
     // Convert buf to raw code and do m_free(buf) in the process
@@ -315,8 +312,8 @@ soft_reset:
 
     // Receive an mpy-cross compiled Python script
     uint8_t *program;
-    bool free_reader = false;
-    uint32_t len = get_user_program(&program, &free_reader);
+    uint32_t free_len;
+    uint32_t len = get_user_program(&program, &free_len);
 
     // Get system hardware ready
     pbsys_prepare_user_program(&user_program_callbacks);
@@ -326,7 +323,7 @@ soft_reset:
     pb_imports();
 
     // Execute the user script
-    run_user_program(len, program, free_reader);
+    run_user_program(len, program, free_len);
 
     // Uninitialize MicroPython and the system hardware
     mp_deinit();
