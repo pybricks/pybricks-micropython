@@ -8,12 +8,10 @@
 #include <fixmath.h>
 
 // Shortcut for the equivalent of: import name
-#define PB_IMPORT_MODULE(name) \
-mp_store_global(name, mp_import_name(name, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)))
+void pb_import_module(qstr name);
 
 // Shortcut for the equivalent of: from name import *
-#define PB_FROM_MODULE_IMPORT_ALL(name) \
-mp_import_all(mp_import_name(name, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)))
+void pb_from_module_import_all(qstr name);
 
 // like mp_obj_get_int() but also allows float
 #if MICROPY_PY_BUILTINS_FLOAT

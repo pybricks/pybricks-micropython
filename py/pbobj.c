@@ -12,7 +12,15 @@
 #include "py/obj.h"
 #include "py/objstr.h"
 #include "py/objtype.h"
+#include "py/runtime.h"
 
+void pb_import_module(qstr name) {
+    mp_store_global(name, mp_import_name(name, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
+}
+
+void pb_from_module_import_all(qstr name) {
+    mp_import_all(mp_import_name(name, mp_const_none, MP_OBJ_NEW_SMALL_INT(0)));
+}
 
 #if MICROPY_PY_BUILTINS_FLOAT
 mp_int_t pb_obj_get_int(mp_obj_t arg) {

@@ -276,23 +276,23 @@ static const pbsys_user_program_callbacks_t user_program_callbacks = {
 
 static void pb_imports() {
     // Import hubs module
-    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_hubs);
+    pb_from_module_import_all(MP_QSTR_hubs);
 
     // Import other modules if enabled
     #if PYBRICKS_PY_IODEVICES
-    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_iodevices);
+    pb_from_module_import_all(MP_QSTR_iodevices);
     #endif
     #if PYBRICKS_PY_PUPDEVICES
-    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_pupdevices);
+    pb_from_module_import_all(MP_QSTR_pupdevices);
     #endif
     #if PYBRICKS_PY_PARAMETERS
-    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_parameters);
+    pb_from_module_import_all(MP_QSTR_parameters);
     #endif
     #if PYBRICKS_PY_TOOLS
-    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_tools);
+    pb_from_module_import_all(MP_QSTR_tools);
     #endif
     #if PYBRICKS_PY_ROBOTICS
-    PB_FROM_MODULE_IMPORT_ALL(MP_QSTR_robotics);
+    pb_from_module_import_all(MP_QSTR_robotics);
     #endif
 }
 
