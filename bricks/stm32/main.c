@@ -38,7 +38,7 @@ static char *stack_top;
 static char heap[PYBRICKS_HEAP_KB * 1024];
 #endif
 
-pbio_error_t wait_for_button_release () {
+static pbio_error_t wait_for_button_release() {
     pbio_error_t err;
     pbio_button_flags_t btn = PBIO_BUTTON_CENTER;
     while (btn & PBIO_BUTTON_CENTER) {
@@ -52,7 +52,7 @@ pbio_error_t wait_for_button_release () {
 }
 
 // Wait for data from an IDE
-pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, int32_t time_out) {
+static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, int32_t time_out) {
 
     // Optionally clear existing buffer
     if (clear) {
@@ -148,7 +148,7 @@ extern uint8_t _pb_user_mpy_data;
 // If user says they want to send an MPY file this big (19 MB),
 // assume they want REPL. This lets users get REPL by pressing
 // spacebar four times, so that no special tools are required.
-const uint32_t REPL_LEN = 0x20202020;
+static const uint32_t REPL_LEN = 0x20202020;
 
 // Get user program via serial/bluetooth
 static uint32_t get_user_program(uint8_t **buf, bool *free_reader) {
