@@ -5,6 +5,7 @@
 #include <string.h>
 #include <inttypes.h>
 
+#include <pbio/config.h>
 #include <pbio/logger.h>
 
 #include "py/obj.h"
@@ -21,6 +22,8 @@
 typedef struct _tools_Logger_obj_t {
     mp_obj_base_t base;
     pbio_log_t *log;
+    int32_t *buf;
+    uint32_t size;
 } tools_Logger_obj_t;
 
 STATIC mp_obj_t tools_Logger_start(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -30,7 +33,14 @@ STATIC mp_obj_t tools_Logger_start(size_t n_args, const mp_obj_t *pos_args, mp_m
         PB_ARG_DEFAULT_INT(divisor, 1)
     );
 
-    pb_assert(pbio_logger_start(self->log, pb_obj_get_int(duration), mp_obj_get_int(divisor)));
+    mp_int_t div = pb_obj_get_int(divisor);
+    div = max(div, 1);
+    mp_int_t rows = pb_obj_get_int(duration) / PBIO_CONFIG_SERVO_PERIOD_MS / div;
+    mp_int_t size = rows * pbio_logger_cols(self->log);
+    self->buf = m_renew(int32_t, self->buf, self->size, size);
+    self->size = size;
+
+    pbio_logger_start(self->log, self->buf, rows, div);
 
     return mp_const_none;
 }

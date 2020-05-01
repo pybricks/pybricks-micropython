@@ -28,16 +28,6 @@
 #include <nxt/display.h>
 #include <nxt/maininit.h>
 
-// FIXME: Decide whether or not to pre-allocate
-// memory for logging instead or just disable
-// logging altogether on some constrained ports.
-void *malloc(size_t n) {
-    return m_malloc(n);
-}
-void free(void *p) {
-    m_free(p);
-}
-
 static char *stack_top;
 #if MICROPY_ENABLE_GC
 static char heap[PYBRICKS_HEAP_KB * 1024];

@@ -11,43 +11,22 @@
 #include <pbio/error.h>
 #include <pbio/logger.h>
 
-static void pbio_logger_delete(pbio_log_t *log) {
-    // Free log if any
-    if (log->len > 0) {
-        free(log->data);
-    }
+/**
+ * Starts logging in the background.
+ * @param [in]  log     pointer to log
+ * @param [in]  buf     array large enough to hold @p len rows of data
+ * @param [in]  len     maximum number of rows that can be logged
+ * @param [in]  div     clock divider to slow down sampling period
+ */
+void pbio_logger_start(pbio_log_t *log, int32_t *buf, uint32_t len, int32_t div) {
+    // (re-)initialize logger status for this servo
     log->sampled = 0;
     log->skipped = 0;
-    log->len = 0;
-    log->active = false;
-}
-
-pbio_error_t pbio_logger_start(pbio_log_t *log, int32_t duration, int32_t div) {
-    // Free any existing log
-    pbio_logger_delete(log);
-
-    // Set number of calls to the logger per sample actually logged
-    log->sample_div = div > 0 ? div : 1;
-
-    // Minimal log length
-    uint32_t len = duration / PBIO_CONFIG_SERVO_PERIOD_MS / log->sample_div;
-
-    // Assert length is allowed
-    if (len > MAX_LOG_LEN) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
-    // Allocate memory for the logs
-    log->data = malloc(len * log->num_values * sizeof(int32_t));
-    if (log->data == NULL) {
-        return PBIO_ERROR_FAILED;
-    }
-
-    // (re-)initialize logger status for this servo
+    log->data = buf;
     log->len = len;
+    log->sample_div = div;
     log->start = clock_usecs();
     log->active = true;
-    return PBIO_SUCCESS;
 }
 
 int32_t pbio_logger_rows(pbio_log_t *log) {
