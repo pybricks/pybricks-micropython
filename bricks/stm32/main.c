@@ -57,16 +57,7 @@ static pbio_error_t wait_for_button_release() {
 }
 
 // Wait for data from an IDE
-static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, bool clear, int32_t time_out) {
-
-    // Optionally clear existing buffer
-    if (clear) {
-        uint8_t c;
-        while (pbsys_stdin_get_char(&c) != PBIO_ERROR_AGAIN) {
-            MICROPY_EVENT_POLL_HOOK
-        }
-    }
-
+static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, int32_t time_out) {
     // Maximum time between two bytes/chunks
     const int32_t time_interval = 500;
 
@@ -161,9 +152,13 @@ static uint32_t get_user_program(uint8_t **buf, uint32_t *free_len) {
     *buf = NULL;
     *free_len = 0;
 
+    // flush any buffered bytes from stdin
+    uint8_t c;
+    while (pbsys_stdin_get_char(&c) == PBIO_SUCCESS) { }
+
     // Get the program length
     uint32_t len;
-    err = get_message((uint8_t *)&len, sizeof(len), true, -1);
+    err = get_message((uint8_t *)&len, sizeof(len), -1);
 
     // If button was pressed, return code to run script in flash
     if (err == PBIO_ERROR_CANCELED) {
@@ -193,7 +188,7 @@ static uint32_t get_user_program(uint8_t **buf, uint32_t *free_len) {
     }
 
     // Get the program
-    err = get_message(*buf, len, false, 500);
+    err = get_message(*buf, len, 500);
 
     // Did not receive a whole program, so discard it
     if (err != PBIO_SUCCESS) {
