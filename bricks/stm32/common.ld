@@ -69,7 +69,7 @@ SECTIONS
     {
         . = ALIGN(4);
         _pb_user_mpy_size = .;
-        LONG(MPYSIZE);      /* Size of compiled main.mpy file in byte */
+        LONG(SIZEOF(.user) - (. + 4 - LOADADDR(.user))); /* Size of compiled main.mpy file in bytes */
         _pb_user_mpy_data = .;
         KEEP(*(.mpy));       /* Compiled main.mpy file */
     } >FLASH

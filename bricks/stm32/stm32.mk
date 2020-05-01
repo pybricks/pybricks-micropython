@@ -299,6 +299,7 @@ OBJ += $(BUILD)/main.mpy.o
 $(BUILD)/main.mpy: main.py
 	$(ECHO) "MPY $<"
 	$(Q)$(MPY_CROSS) -o $@ $(MPY_CROSS_FLAGS) $<
+	$(ECHO) "`wc -c < $@` bytes"
 
 $(BUILD)/main.mpy.o: $(BUILD)/main.mpy
 	$(Q)$(OBJCOPY) -I binary -O elf32-littlearm -B arm \
@@ -311,35 +312,42 @@ SRC_QSTR_AUTO_DEPS +=
 
 all: $(BUILD)/firmware.zip
 
-FW_MPYSIZE := $$(wc -c < "$(BUILD)/main.mpy")
 FW_CHECKSUM := $$($(CHECKSUM) $(CHECKSUM_TYPE) $(BUILD)/firmware-no-checksum.bin $(PB_FIRMWARE_MAX_SIZE))
 FW_VERSION := $(shell $(GIT) describe --tags --dirty --always)
 
 $(BUILD)/firmware-no-checksum.elf: $(LD_FILES) $(OBJ)
-	$(Q)$(LD) --defsym=MPYSIZE=$(FW_MPYSIZE) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
+	$(Q)$(LD) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 
+# firmware blob used to calculate checksum
 $(BUILD)/firmware-no-checksum.bin: $(BUILD)/firmware-no-checksum.elf
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .user -j .checksum $^ $@
 
 $(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(LD) --defsym=MPYSIZE=$(FW_MPYSIZE) --defsym=CHECKSUM=$(FW_CHECKSUM) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
+	$(Q)$(LD) --defsym=CHECKSUM=$(FW_CHECKSUM) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 	$(Q)$(SIZE) $@
 
+# firmware blob with main.mpy and checksum appended - can be flashed to hub
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(ECHO) "BIN creating firmware file"
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .user -j .checksum $^ $@
+	$(ECHO) "`wc -c < $@` bytes"
+
+# firmware blob without main.mpy or checksum - use as base for appending other .mpy
+$(BUILD)/firmware-base.bin: $(BUILD)/firmware-no-checksum.elf
+	$(ECHO) "BIN creating firmware base file"
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
 $(BUILD)/firmware.dfu: $(BUILD)/firmware.bin
 	$(ECHO) "Create $@"
 	$(Q)$(PYTHON) $(DFU) -b $(TEXT0_ADDR):$< $@
 
-$(BUILD)/firmware.metadata.json: $(BUILD)/firmware.elf $(METADATA)
+$(BUILD)/firmware.metadata.json: $(BUILD)/firmware-no-checksum.elf $(METADATA)
 	$(ECHO) "META creating firmware metadata"
-	$(Q)$(METADATA) $(FW_VERSION) $(PBIO_PLATFORM) $<.map $@
+	$(Q)$(METADATA) $(FW_VERSION) $(PBIO_PLATFORM) $(MPY_CROSS_FLAGS) $<.map $@
 
-$(BUILD)/firmware.zip: $(BUILD)/firmware.bin $(BUILD)/firmware.metadata.json
+$(BUILD)/firmware.zip: $(BUILD)/firmware-base.bin $(BUILD)/firmware.metadata.json main.py
 	$(ECHO) "ZIP creating firmware package"
 	$(Q)$(ZIP) -j $@ $^
 

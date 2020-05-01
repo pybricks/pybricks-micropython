@@ -13,15 +13,27 @@ v1.0.0:
     firmware-version    output of `git describe --tags --dirty`
     device-id           one of 0x40, 0x41, 0x80, 0x00
     checksum-type       one of "xor", "crc32"
+    mpy-abi-version     number (MPY_VERSION)
+    mpy-cross-options   array of string
     user-mpy-offset     number
     max-firmware-size   number
 """
 
 import argparse
+import importlib
 import io
 import json
+import os
 import re
 import sys
+import typing
+
+# Path to repo top-level dir.
+TOP = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+sys.path.append(os.path.join(TOP, "py"))
+sys.path.append(os.path.join(TOP, "tools"))
+mpy_tool = importlib.import_module("mpy-tool")
+
 
 # metadata file format version
 VERSION = "1.0.0"
@@ -38,8 +50,19 @@ HUB_INFO = {
 }
 
 
-def generate(fw_version: str, hub_type: str, map_file: io.FileIO, out_file: io.FileIO):
-    metadata = {"metadata-version": VERSION, "firmware-version": fw_version}
+def generate(
+    fw_version: str,
+    hub_type: str,
+    mpy_options: typing.List[str],
+    map_file: io.FileIO,
+    out_file: io.FileIO,
+):
+    metadata = {
+        "metadata-version": VERSION,
+        "firmware-version": fw_version,
+        "mpy-abi-version": mpy_tool.config.MPY_VERSION,
+        "mpy-cross-options": mpy_options,
+    }
 
     if hub_type not in HUB_INFO:
         print("Unknown hub type", file=sys.stderr)
@@ -82,26 +105,44 @@ def generate(fw_version: str, hub_type: str, map_file: io.FileIO, out_file: io.F
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate firmware metadata.")
-    parser.add_argument(
-        "fw_version", metavar="<version>", type=str, help="firmware version",
+    # want to ignore "-"" prefix so we can pass mpy-cross options but prefix_chars
+    # cant be empty string so we use "+" as dummy value
+    parser = argparse.ArgumentParser(
+        description="Generate firmware metadata.", prefix_chars="+"
     )
     parser.add_argument(
-        "hub_type", metavar="<hub type>", choices=HUB_INFO.keys(), help="hub type",
+        "fw_version",
+        metavar="<firmware-version>",
+        type=str,
+        help="Pybricks firmware version",
+    )
+    parser.add_argument(
+        "hub_type",
+        metavar="<hub-type>",
+        choices=HUB_INFO.keys(),
+        help="hub type/device ID",
+    )
+    parser.add_argument(
+        "mpy_options",
+        metavar="<mpy-cross-option>",
+        nargs="*",
+        type=str,
+        help="mpy-cross option",
     )
     parser.add_argument(
         "map_file",
-        metavar="<map file>",
+        metavar="<map-file>",
         type=argparse.FileType("r"),
         help="firmware linker map file name",
     )
     parser.add_argument(
         "out_file",
-        metavar="<output file>",
+        metavar="<output-file>",
         type=argparse.FileType("w"),
         help="output file name",
     )
 
     args = parser.parse_args()
-
-    generate(args.fw_version, args.hub_type, args.map_file, args.out_file)
+    generate(
+        args.fw_version, args.hub_type, args.mpy_options, args.map_file, args.out_file
+    )

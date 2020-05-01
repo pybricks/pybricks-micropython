@@ -275,13 +275,19 @@ jobs:
       uses: actions/upload-artifact@v2-preview
       with:
         name: cityhub-firmware
-        path: micropython/ports/pybricks/bricks/cityhub/build/firmware.bin
+        path: micropython/ports/pybricks/bricks/cityhub/build/firmware-base.bin
     - name: Upload firmware metadata
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
         name: cityhub-firmware
         path: micropython/ports/pybricks/bricks/cityhub/build/firmware.metadata.json
+    - name: Upload main.py
+      if: success()
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: cityhub-firmware
+        path: micropython/ports/pybricks/bricks/cityhub/main.py
 
   cplushub_firmware:
     name: cplushub firmware
@@ -331,13 +337,19 @@ jobs:
       uses: actions/upload-artifact@v2-preview
       with:
         name: cplushub-firmware
-        path: micropython/ports/pybricks/bricks/cplushub/build/firmware.bin
+        path: micropython/ports/pybricks/bricks/cplushub/build/firmware-base.bin
     - name: Upload firmware metadata
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
         name: cplushub-firmware
         path: micropython/ports/pybricks/bricks/cplushub/build/firmware.metadata.json
+    - name: Upload main.py
+      if: success()
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: cplushub-firmware
+        path: micropython/ports/pybricks/bricks/cplushub/main.py
 
   movehub_firmware:
     name: movehub firmware
@@ -387,13 +399,19 @@ jobs:
       uses: actions/upload-artifact@v2-preview
       with:
         name: movehub-firmware
-        path: micropython/ports/pybricks/bricks/movehub/build/firmware.bin
+        path: micropython/ports/pybricks/bricks/movehub/build/firmware-base.bin
     - name: Upload firmware metadata
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
         name: movehub-firmware
         path: micropython/ports/pybricks/bricks/movehub/build/firmware.metadata.json
+    - name: Upload main.py
+      if: success()
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: movehub-firmware
+        path: micropython/ports/pybricks/bricks/movehub/main.py
 
   primehub_firmware:
     name: primehub firmware
@@ -443,13 +461,19 @@ jobs:
       uses: actions/upload-artifact@v2-preview
       with:
         name: primehub-firmware
-        path: micropython/ports/pybricks/bricks/primehub/build/firmware.bin
+        path: micropython/ports/pybricks/bricks/primehub/build/firmware-base.bin
     - name: Upload firmware metadata
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
         name: primehub-firmware
         path: micropython/ports/pybricks/bricks/primehub/build/firmware.metadata.json
+    - name: Upload main.py
+      if: success()
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: primehub-firmware
+        path: micropython/ports/pybricks/bricks/primehub/main.py
 
   nxt_firmware:
     name: nxt firmware
