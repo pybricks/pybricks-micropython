@@ -38,6 +38,11 @@ static char *stack_top;
 static char heap[PYBRICKS_HEAP_KB * 1024];
 #endif
 
+// User .mpy file can be up to 1/2 of heap size. The code loader makes a new
+// (slightly modified) copy, so we need at least this much free.
+// TODO: need to verify that loaded code can never be bigger that .mpy file.
+#define MPY_MAX_BYTES (PYBRICKS_HEAP_KB * 1024 / 2)
+
 static pbio_error_t wait_for_button_release() {
     pbio_error_t err;
     pbio_button_flags_t btn = PBIO_BUTTON_CENTER;
