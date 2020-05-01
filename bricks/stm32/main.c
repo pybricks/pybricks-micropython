@@ -224,22 +224,18 @@ static void run_user_program(uint32_t len, uint8_t *buf, uint32_t free_len) {
     // Send a message to say we will run a program
     mp_print_str(&mp_plat_print, "\n>>>> RUNNING\n");
 
-    mp_reader_t reader;
-    mp_reader_new_mem(&reader, buf, len, free_len);
-
-    // Convert buf to raw code and do m_free(buf) in the process
-    mp_raw_code_t *raw_code = mp_raw_code_load(&reader);
-
     // Allow script to be stopped with hub button
     mp_hal_set_interrupt_char(3);
 
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
+        mp_reader_t reader;
+        mp_reader_new_mem(&reader, buf, len, free_len);
+        mp_raw_code_t *raw_code = mp_raw_code_load(&reader);
         mp_obj_t module_fun = mp_make_function_from_raw_code(raw_code, MP_OBJ_NULL, MP_OBJ_NULL);
         mp_call_function_0(module_fun);
         nlr_pop();
     } else {
-        // nlr_jump(nlr.ret_val);
         mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
     }
 
