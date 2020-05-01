@@ -157,8 +157,8 @@ static uint32_t get_user_program(uint8_t **buf, uint32_t *free_len) {
     *free_len = 0;
 
     // Get the program length
-    uint8_t len_buf[4];
-    err = get_message(len_buf, 4, true, -1);
+    uint32_t len;
+    err = get_message((uint8_t *)&len, sizeof(len), true, -1);
 
     // If button was pressed, return code to run script in flash
     if (err == PBIO_ERROR_CANCELED) {
@@ -170,12 +170,6 @@ static uint32_t get_user_program(uint8_t **buf, uint32_t *free_len) {
     if (err != PBIO_SUCCESS) {
         return 0;
     }
-
-    // Convert to uint32
-    uint32_t len = ((uint32_t) len_buf[0]) << 24 |
-                   ((uint32_t) len_buf[1]) << 16 |
-                   ((uint32_t) len_buf[2]) << 8 |
-                   ((uint32_t) len_buf[3]);
 
     // Four spaces triggers REPL
     if (len == REPL_LEN) {
