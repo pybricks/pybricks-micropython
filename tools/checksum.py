@@ -12,9 +12,10 @@ import argparse
 import struct
 
 
-def xor_checksum(fw, max_size):
-    """Calculate the checksum of a firmware file using a simple xor of every
-    four bytes.
+def sum_complement(fw, max_size):
+    """Calculates the checksum of a firmware file using the sum complement
+    method of adding each 32-bit word and the returning the two's complement
+    as the checksum.
 
     Parameters
     ----------
@@ -120,6 +121,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.checksum_type == 'xor':
-        print(hex(xor_checksum(args.fw_file, args.max_size)))
+        print(hex(sum_complement(args.fw_file, args.max_size)))
     elif args.checksum_type == 'crc32':
         print(hex(crc32_checksum(args.fw_file, args.max_size)))

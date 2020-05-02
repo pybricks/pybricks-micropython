@@ -12,7 +12,7 @@ v1.0.0:
     metadata-version    "1.0.0"
     firmware-version    output of `git describe --tags --dirty`
     device-id           one of 0x40, 0x41, 0x80, 0x00
-    checksum-type       one of "xor", "crc32"
+    checksum-type       one of "sum", "crc32"
     mpy-abi-version     number (MPY_VERSION)
     mpy-cross-options   array of string
     user-mpy-offset     number
@@ -40,9 +40,9 @@ VERSION = "1.0.0"
 
 # hub-specific info
 HUB_INFO = {
-    "move_hub": {"device-id": 0x40, "checksum-type": "xor"},
-    "city_hub": {"device-id": 0x41, "checksum-type": "xor"},
-    "cplus_hub": {"device-id": 0x80, "checksum-type": "xor"},
+    "move_hub": {"device-id": 0x40, "checksum-type": "sum"},
+    "city_hub": {"device-id": 0x41, "checksum-type": "sum"},
+    "cplus_hub": {"device-id": 0x80, "checksum-type": "sum"},
     "prime_hub": {
         "device-id": 0x00,  # FIXME: this is not actual device id
         "checksum-type": "crc32",
