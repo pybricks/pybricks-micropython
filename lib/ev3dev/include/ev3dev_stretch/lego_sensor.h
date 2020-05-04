@@ -34,6 +34,14 @@ typedef enum {
      */
     LEGO_SENSOR_DATA_TYPE_UINT8,
     /**
+     * Unsigned 16-bit integer.
+     */
+    LEGO_SENSOR_DATA_TYPE_UINT16,
+    /**
+     * Unsigned 32-bit integer.
+     */
+    LEGO_SENSOR_DATA_TYPE_UINT32,
+    /**
      * Big-endian, signed 16-bit integer.
      */
     LEGO_SENSOR_DATA_TYPE_INT16_BE,

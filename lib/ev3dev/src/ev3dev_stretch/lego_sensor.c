@@ -228,8 +228,14 @@ pbio_error_t lego_sensor_get_info(lego_sensor_t *sensor, uint8_t *data_len, lego
     else if (!strcmp(s_data_type, "s16")) {
         *data_type = LEGO_SENSOR_DATA_TYPE_INT16;
     }
+    else if (!strcmp(s_data_type, "u16")) {
+        *data_type = LEGO_SENSOR_DATA_TYPE_UINT16;
+    }
     else if (!strcmp(s_data_type, "s32")) {
         *data_type = LEGO_SENSOR_DATA_TYPE_INT32;
+    }
+    else if (!strcmp(s_data_type, "u32")) {
+        *data_type = LEGO_SENSOR_DATA_TYPE_UINT32;
     }
     else if (!strcmp(s_data_type, "s16_be")) {
         *data_type = LEGO_SENSOR_DATA_TYPE_INT16_BE;

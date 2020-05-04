@@ -161,8 +161,14 @@ static pbio_error_t get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values)
             case LEGO_SENSOR_DATA_TYPE_INT16:
                 values[i] = *((int16_t *)(data + i * 2));
                 break;
+            case LEGO_SENSOR_DATA_TYPE_UINT16:
+                values[i] = *((uint16_t *)(data + i * 2));
+                break;
             case LEGO_SENSOR_DATA_TYPE_INT32:
                 values[i] = *((int32_t *)(data + i * 4));
+                break;
+            case LEGO_SENSOR_DATA_TYPE_UINT32:
+                values[i] = *((uint32_t *)(data + i * 4));
                 break;
             case LEGO_SENSOR_DATA_TYPE_INT16_BE:
                 values[i] = (int16_t) __builtin_bswap16(*(uint16_t *) (data + i * 2));
