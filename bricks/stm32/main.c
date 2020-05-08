@@ -239,6 +239,12 @@ static void run_user_program(uint32_t len, uint8_t *buf, uint32_t free_len) {
     // Send a message to say we will run a program
     mp_print_str(&mp_plat_print, "\n>>>> RUNNING\n");
 
+    // FIXME: Make sure to not gobble up first characters of user output
+    // in the web IDE. Instead for now, delineate subsequent program output.
+    // This is useful regardless, and in this case it's okay if a few dashes
+    // are gobbled up.
+    mp_print_str(&mp_plat_print, "--------------\n");
+
     // Allow script to be stopped with hub button
     mp_hal_set_interrupt_char(3);
 
@@ -303,6 +309,11 @@ soft_reset:
     uint8_t *program;
     uint32_t free_len;
     uint32_t len = get_user_program(&program, &free_len);
+
+    // FIXME: The WEB IDE currently confuses last checksum byte(s) with the
+    // status messaging sent when program begins. So for now, add a brief
+    // wait so WEB IDE can easily distinguish.
+    mp_hal_delay_ms(150);
 
     // Get system hardware ready
     pbsys_prepare_user_program(&user_program_callbacks);
