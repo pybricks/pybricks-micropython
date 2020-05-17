@@ -87,6 +87,7 @@ static const char pybricks_ev3dev_help_text[] =
 #define MICROPY_PY_ARRAY_SLICE_ASSIGN (1)
 #define MICROPY_PY_BUILTINS_SLICE_ATTRS (1)
 #define MICROPY_PY_INSTANCE_ATTRS   (1)
+#define MICROPY_PY_SYS_IMPLEMENTATION_CUSTOM (1)
 #define MICROPY_PY_SYS_EXIT         (1)
 #if defined(__APPLE__) && defined(__MACH__)
     #define MICROPY_PY_SYS_PLATFORM  "darwin"
