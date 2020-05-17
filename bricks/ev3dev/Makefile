@@ -134,6 +134,12 @@ endif
 CFLAGS_MOD += $(shell pkg-config --cflags libudev)
 LDFLAGS_MOD += $(shell pkg-config --libs libudev)
 
+CFLAGS_MOD += $(shell pkg-config --cflags glib-2.0)
+LDFLAGS_MOD += $(shell pkg-config --libs glib-2.0)
+
+CFLAGS_MOD += $(shell pkg-config --cflags gio-2.0)
+LDFLAGS_MOD += $(shell pkg-config --libs gio-2.0)
+
 CFLAGS_MOD += $(shell pkg-config --cflags grx-3.0)
 LDFLAGS_MOD += $(shell pkg-config --libs grx-3.0)
 
