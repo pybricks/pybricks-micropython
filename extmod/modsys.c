@@ -8,10 +8,12 @@
 #include "py/runtime.h"
 #include "py/objstr.h"
 #include "py/objtuple.h"
+#include "py/persistentcode.h"
 
 #include "genhdr/mpversion.h"
 
 // custom sys.implementation for Pybricks
+// See https://docs.python.org/3/library/sys.html#sys.implementation
 
 STATIC const MP_DEFINE_STR_OBJ(pybricks_micropython_obj, "pybricks-micropython");
 STATIC const MP_DEFINE_STR_OBJ(pybricks_version_level_obj, PYBRICKS_VERSION_LEVEL_STR);
@@ -34,19 +36,27 @@ STATIC MP_DEFINE_ATTRTUPLE(
     MP_ROM_INT(PYBRICKS_VERSION_SERIAL)
 );
 
+// Standard sys.implementation fields + custom fields (with leading underscore).
+
 STATIC const qstr impl_fields[] = {
-    MP_QSTR_name, MP_QSTR_version, MP_QSTR_hexversion, MP_QSTR__git, MP_QSTR__date
+    MP_QSTR_name,
+    MP_QSTR_version,
+    MP_QSTR_hexversion,
+    MP_QSTR__git,
+    MP_QSTR__date,
+    MP_QSTR__mpy,
 };
 
 MP_DEFINE_ATTRTUPLE(
     mp_sys_implementation_obj,
     impl_fields,
-    5,
+    6,
     MP_ROM_PTR(&pybricks_micropython_obj),
     MP_ROM_PTR(&pybricks_version_obj),
     MP_ROM_INT(PYBRICKS_HEXVERSION),
     MP_ROM_PTR(&git_tag_obj),
-    MP_ROM_PTR(&build_date_obj)
+    MP_ROM_PTR(&build_date_obj),
+    MP_ROM_INT(MPY_VERSION)
 );
 
 #else // MICROPY_PY_ATTRTUPLE
@@ -66,13 +76,14 @@ STATIC const mp_rom_obj_tuple_t pybricks_version_obj = {
 
 const mp_rom_obj_tuple_t mp_sys_implementation_obj = {
     {&mp_type_tuple},
-    5,
+    6,
     {
         MP_ROM_PTR(&pybricks_micropython_obj),
         MP_ROM_PTR(&pybricks_version_obj),
         MP_ROM_INT(PYBRICKS_HEXVERSION),
         MP_ROM_PTR(&git_tag_obj),
         MP_ROM_PTR(&build_date_obj),
+        MP_ROM_INT(MPY_VERSION),
     }
 };
 
