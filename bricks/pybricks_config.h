@@ -29,3 +29,22 @@
     ((PYBRICKS_VERSION_MICRO & 0xFF) <<  8) | \
     ((PYBRICKS_VERSION_LEVEL_HEX & 0xF) <<  4) | \
     (PYBRICKS_VERSION_SERIAL & 0xF))
+
+// Hub name
+#if PYBRICKS_HUB_CITYHUB
+#define PYBRICKS_HUB_NAME "cityhub"
+#elif PYBRICKS_HUB_CPLUSHUB
+#define PYBRICKS_HUB_NAME "cplushub"
+#elif PYBRICKS_HUB_DEBUG
+#define PYBRICKS_HUB_NAME "debug"
+#elif PYBRICKS_HUB_EV3
+#define PYBRICKS_HUB_NAME "ev3"
+#elif PYBRICKS_HUB_MOVEHUB
+#define PYBRICKS_HUB_NAME "movehub"
+#elif PYBRICKS_HUB_NXT
+#define PYBRICKS_HUB_NAME "nxt"
+#elif PYBRICKS_HUB_PRIMEHUB
+#define PYBRICKS_HUB_NAME "primehub"
+#elif !NO_QSTR // qstr generator runs preprocessor on this file directly
+#error "Unknown hub type"
+#endif

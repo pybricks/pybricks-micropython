@@ -8,6 +8,8 @@
 
 #define PYBRICKS_HEAP_KB                64 // half of RAM
 
+#define PYBRICKS_HUB_DEBUG              (1)
+
 // Pybricks modules
 #define PYBRICKS_PY_IODEVICES           (1)
 #define PYBRICKS_PY_PARAMETERS          (1)

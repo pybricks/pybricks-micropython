@@ -19,6 +19,7 @@ STATIC const MP_DEFINE_STR_OBJ(pybricks_micropython_obj, "pybricks-micropython")
 STATIC const MP_DEFINE_STR_OBJ(pybricks_version_level_obj, PYBRICKS_VERSION_LEVEL_STR);
 STATIC const MP_DEFINE_STR_OBJ(git_tag_obj, MICROPY_GIT_TAG);
 STATIC const MP_DEFINE_STR_OBJ(build_date_obj, MICROPY_BUILD_DATE);
+STATIC const MP_DEFINE_STR_OBJ(hub_name_obj, PYBRICKS_HUB_NAME);
 
 #if MICROPY_PY_ATTRTUPLE
 STATIC const qstr pybricks_version_fields[] = {
@@ -45,18 +46,20 @@ STATIC const qstr impl_fields[] = {
     MP_QSTR__git,
     MP_QSTR__date,
     MP_QSTR__mpy,
+    MP_QSTR__hub,
 };
 
 MP_DEFINE_ATTRTUPLE(
     mp_sys_implementation_obj,
     impl_fields,
-    6,
+    7,
     MP_ROM_PTR(&pybricks_micropython_obj),
     MP_ROM_PTR(&pybricks_version_obj),
     MP_ROM_INT(PYBRICKS_HEXVERSION),
     MP_ROM_PTR(&git_tag_obj),
     MP_ROM_PTR(&build_date_obj),
-    MP_ROM_INT(MPY_VERSION)
+    MP_ROM_INT(MPY_VERSION),
+    MP_ROM_PTR(&hub_name_obj)
 );
 
 #else // MICROPY_PY_ATTRTUPLE
@@ -76,7 +79,7 @@ STATIC const mp_rom_obj_tuple_t pybricks_version_obj = {
 
 const mp_rom_obj_tuple_t mp_sys_implementation_obj = {
     {&mp_type_tuple},
-    6,
+    7,
     {
         MP_ROM_PTR(&pybricks_micropython_obj),
         MP_ROM_PTR(&pybricks_version_obj),
@@ -84,6 +87,7 @@ const mp_rom_obj_tuple_t mp_sys_implementation_obj = {
         MP_ROM_PTR(&git_tag_obj),
         MP_ROM_PTR(&build_date_obj),
         MP_ROM_INT(MPY_VERSION),
+        MP_ROM_PTR(&hub_name_obj),
     }
 };
 
