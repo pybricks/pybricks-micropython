@@ -1,0 +1,46 @@
+name: Format
+
+# TODO: only do this on pull requests and add commit if there is a diff
+on: [push, pull_request]
+
+jobs:
+  format:
+    name: Check code formatting
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install uncrustify
+      run: |
+        sudo apt-add-repository --update --yes ppa:pybricks/ppa
+        sudo apt-get install uncrustify
+        uncrustify --version
+    - name: Install python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.6'
+    - name: Install black
+      run:  python -m pip install black
+    - name: Checkout repo
+      uses: actions/checkout@v2
+      with:
+        path: tmp
+    - name: Get tag
+      id: get_tag
+      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
+    - name: Checkout MicroPython
+      uses: actions/checkout@v2
+      with:
+        repository: pybricks/micropython
+        ref: ${{ steps.get_tag.outputs.micropython_tag }}
+        submodules: recursive
+        path: micropython
+        token: ${{ secrets.GITHUB_TOKEN2 }}
+    - name: Checkout Pybricks
+      run: |
+        cd micropython/ports/pybricks
+        git fetch --depth=1 origin $GITHUB_SHA
+        git checkout --recurse-submodules $GITHUB_SHA
+    - name: Run codeformat.py
+      run: |
+        cd micropython/ports/pybricks
+        ./tools/codeformat.py
+        git diff --exit-code
