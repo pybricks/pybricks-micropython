@@ -10,6 +10,16 @@ include ../check.mk
 
 include ../../../../py/mkenv.mk
 
+# ensure required git submodules checked out
+ifeq ("$(wildcard $(TOP)/lib/stm32lib/README.md)","")
+$(info GIT cloning stm32lib submodule)
+$(shell cd $(TOP) && git submodule update --init lib/stm32lib)
+endif
+ifeq ("$(wildcard $(TOP)/ports/pybricks/lib/libfixmath/README.md)","")
+$(info GIT cloning libfixmath submodule)
+$(shell cd $(TOP)/ports/pybricks && git submodule update --init lib/libfixmath)
+endif
+
 # qstr definitions (must come before including py.mk)
 QSTR_GLOBAL_DEPENDENCIES = $(TOP)/ports/pybricks/bricks/stm32/configport.h
 

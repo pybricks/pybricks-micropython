@@ -6,6 +6,16 @@ CROSS_COMPILE=arm-none-eabi-
 -include mpconfigport.mk
 include $(MPTOP)/py/mkenv.mk
 
+# ensure required git submodules checked out
+ifeq ("$(wildcard $(TOP)/ports/pybricks/lib/libfixmath/README.md)","")
+$(info GIT cloning libfixmath submodule)
+$(shell cd $(TOP)/ports/pybricks && git submodule update --init lib/libfixmath)
+endif
+ifeq ("$(wildcard $(TOP)/ports/pybricks/bricks/ev3rt/ev3rt-hrp2/README.md)","")
+$(info GIT cloning ev3rt-hrp2 submodules)
+$(shell cd $(TOP)/ports/pybricks && git submodule update --checkout --init --recursive bricks/ev3rt/ev3rt-hrp2)
+endif
+
 all: lib
 
 # OS name, for simple autoconfig

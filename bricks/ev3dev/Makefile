@@ -8,6 +8,20 @@ include ../check.mk
 -include mpconfigport.mk
 include ../../../../py/mkenv.mk
 
+# ensure required git submodules checked out
+ifeq ("$(wildcard $(TOP)/lib/axtls/README)","")
+$(info GIT cloning axtls submodule)
+$(shell cd $(TOP) && git submodule update --init lib/axtls)
+endif
+ifeq ("$(wildcard $(TOP)/lib/berkeley-db-1.xx/README)","")
+$(info GIT cloning berkeley-db-1.xx submodule)
+$(shell cd $(TOP) && git submodule update --init lib/berkeley-db-1.xx)
+endif
+ifeq ("$(wildcard $(TOP)/ports/pybricks/lib/libfixmath/README.md)","")
+$(info GIT cloning libfixmath submodule)
+$(shell cd $(TOP)/ports/pybricks && git submodule update --init lib/libfixmath)
+endif
+
 FROZEN_DIR = scripts
 FROZEN_MPY_DIR = modules
 QSTR_GLOBAL_DEPENDENCIES = brickconfig.h
@@ -332,11 +346,3 @@ CROSS_COMPILE_HOST = --host=$(patsubst %-,%,$(CROSS_COMPILE))
 else
 CROSS_COMPILE_HOST =
 endif
-
-deplibs: axtls
-
-axtls: $(TOP)/lib/axtls/README
-
-$(TOP)/lib/axtls/README:
-	@echo "You cloned without --recursive, fetching submodules for you."
-	(cd $(TOP); git submodule update --init --recursive)

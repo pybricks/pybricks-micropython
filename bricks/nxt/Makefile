@@ -9,6 +9,16 @@ include ../check.mk
 
 include ../../../../py/mkenv.mk
 
+# ensure required git submodules checked out
+ifeq ("$(wildcard $(TOP)/ports/pybricks/lib/libfixmath/README.md)","")
+$(info GIT cloning libfixmath submodule)
+$(shell cd $(TOP)/ports/pybricks && git submodule update --init lib/libfixmath)
+endif
+ifeq ("$(wildcard $(TOP)/ports/pybricks/bricks/nxt/nxt-firmware-drivers/README.md)","")
+$(info GIT cloning nxt-firmware-drivers submodule)
+$(shell cd $(TOP)/ports/pybricks && git submodule update --init bricks/nxt/nxt-firmware-drivers)
+endif
+
 # qstr definitions (must come before including py.mk)
 QSTR_GLOBAL_DEPENDENCIES = $(TOP)/ports/pybricks/bricks/nxt/mpconfigport.h
 

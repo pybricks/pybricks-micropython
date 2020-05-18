@@ -22,7 +22,6 @@ jobs:
       with:
         repository: pybricks/micropython
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        submodules: recursive
         path: micropython
         token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Build mpy-cross
@@ -53,7 +52,6 @@ jobs:
       with:
         repository: pybricks/micropython
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        submodules: recursive
         path: micropython
         token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Download mpy-cross
@@ -66,6 +64,9 @@ jobs:
     - name: Build
       run: |
         cd micropython
+        git submodule update --init --depth=1 lib/axtls
+        git submodule update --init --depth=1 lib/berkeley-db-1.xx
+        git submodule update --init --depth=1 lib/libffi
         make $MAKEOPTS -C ports/unix deplibs
         make $MAKEOPTS -C ports/unix coverage
     - name: Test
@@ -109,14 +110,21 @@ jobs:
       with:
         repository: pybricks/micropython
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        submodules: recursive
         path: micropython
         token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Checkout Pybricks
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
       run: |
-        cd micropython/ports/pybricks
+        cd micropython
+        git submodule update --init --depth=1 lib/axtls
+        git submodule update --init --depth=1 lib/berkeley-db-1.xx
+        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+        git submodule update --init --no-fetch ports/pybricks
+        cd ports/pybricks
         git fetch --depth=1 origin $GITHUB_SHA
-        git checkout --recurse-submodules $GITHUB_SHA
+        git checkout FETCH_HEAD
+        git submodule update --init --depth=1 lib/libfixmath
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
@@ -180,14 +188,21 @@ jobs:
       with:
         repository: pybricks/micropython
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        submodules: recursive
         path: micropython
         token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Checkout Pybricks
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
       run: |
-        cd micropython/ports/pybricks
+        cd micropython
+        git submodule update --init --depth=1 lib/axtls
+        git submodule update --init --depth=1 lib/berkeley-db-1.xx
+        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+        git submodule update --init --no-fetch ports/pybricks
+        cd ports/pybricks
         git fetch --depth=1 origin $GITHUB_SHA
-        git checkout --recurse-submodules $GITHUB_SHA
+        git checkout FETCH_HEAD
+        git submodule update --init --depth=1 lib/libfixmath
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
@@ -250,14 +265,20 @@ jobs:
       with:
         repository: pybricks/micropython
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        submodules: recursive
         path: micropython
         token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Checkout Pybricks
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
       run: |
-        cd micropython/ports/pybricks
+        cd micropython
+        git submodule update --init --depth=1 lib/stm32lib
+        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+        git submodule update --init --no-fetch ports/pybricks
+        cd ports/pybricks
         git fetch --depth=1 origin $GITHUB_SHA
-        git checkout --recurse-submodules $GITHUB_SHA
+        git checkout FETCH_HEAD
+        git submodule update --init --depth=1 lib/libfixmath
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
@@ -312,14 +333,20 @@ jobs:
       with:
         repository: pybricks/micropython
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        submodules: recursive
         path: micropython
         token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Checkout Pybricks
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
       run: |
-        cd micropython/ports/pybricks
+        cd micropython
+        git submodule update --init --depth=1 lib/stm32lib
+        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+        git submodule update --init --no-fetch ports/pybricks
+        cd ports/pybricks
         git fetch --depth=1 origin $GITHUB_SHA
-        git checkout --recurse-submodules $GITHUB_SHA
+        git checkout FETCH_HEAD
+        git submodule update --init --depth=1 lib/libfixmath
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
@@ -374,14 +401,20 @@ jobs:
       with:
         repository: pybricks/micropython
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        submodules: recursive
         path: micropython
         token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Checkout Pybricks
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
       run: |
-        cd micropython/ports/pybricks
+        cd micropython
+        git submodule update --init --depth=1 lib/stm32lib
+        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+        git submodule update --init --no-fetch ports/pybricks
+        cd ports/pybricks
         git fetch --depth=1 origin $GITHUB_SHA
-        git checkout --recurse-submodules $GITHUB_SHA
+        git checkout FETCH_HEAD
+        git submodule update --init --depth=1 lib/libfixmath
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
@@ -436,14 +469,20 @@ jobs:
       with:
         repository: pybricks/micropython
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        submodules: recursive
         path: micropython
         token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Checkout Pybricks
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
       run: |
-        cd micropython/ports/pybricks
+        cd micropython
+        git submodule update --init --depth=1 lib/stm32lib
+        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+        git submodule update --init --no-fetch ports/pybricks
+        cd ports/pybricks
         git fetch --depth=1 origin $GITHUB_SHA
-        git checkout --recurse-submodules $GITHUB_SHA
+        git checkout FETCH_HEAD
+        git submodule update --init --depth=1 lib/libfixmath
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
@@ -498,14 +537,21 @@ jobs:
       with:
         repository: pybricks/micropython
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        submodules: recursive
         path: micropython
         token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Checkout Pybricks
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
       run: |
-        cd micropython/ports/pybricks
+        cd micropython
+        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+        git submodule update --init --no-fetch ports/pybricks
+        cd ports/pybricks
         git fetch --depth=1 origin $GITHUB_SHA
-        git checkout --recurse-submodules $GITHUB_SHA
+        git checkout FETCH_HEAD
+        git config submodule.bricks/nxt/nxt-firmware-drivers.url https://${GITHUB_TOKEN}@github.com/pybricks/nxt-firmware-drivers.git
+        git submodule update --init --depth=1 bricks/nxt/nxt-firmware-drivers
+        git submodule update --init --depth=1 lib/libfixmath
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
@@ -548,14 +594,20 @@ jobs:
       with:
         repository: pybricks/micropython
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        submodules: recursive
         path: micropython
         token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Checkout Pybricks
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
       run: |
-        cd micropython/ports/pybricks
+        cd micropython
+        git submodule update --init --depth=1 lib/stm32lib
+        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+        git submodule update --init --no-fetch ports/pybricks
+        cd ports/pybricks
         git fetch --depth=1 origin $GITHUB_SHA
-        git checkout --recurse-submodules $GITHUB_SHA
+        git checkout FETCH_HEAD
+        git submodule update --init --depth=1 lib/libfixmath
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
@@ -588,14 +640,19 @@ jobs:
       with:
         repository: pybricks/micropython
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        submodules: recursive
         path: micropython
         token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Checkout Pybricks
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
       run: |
-        cd micropython/ports/pybricks
+        cd micropython
+        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+        git submodule update --init --no-fetch ports/pybricks
+        cd ports/pybricks
         git fetch --depth=1 origin $GITHUB_SHA
-        git checkout --recurse-submodules $GITHUB_SHA
+        git checkout FETCH_HEAD
+        git submodule update --init --depth=1 lib/libfixmath
     - name: Build
       run: |
         cd micropython/ports/pybricks
