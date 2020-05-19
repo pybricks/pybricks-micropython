@@ -26,7 +26,7 @@ if ! which docker >/dev/null; then
     exit 1
 fi
 
-src_dir="${script_dir}/../../../../.."
+src_dir="${script_dir}/../../.."
 build_dir="${script_dir}/../build-${arch}"
 image_name="docker.pkg.github.com/pybricks/pybricks-micropython/${project}-${arch}:latest"
 container_name="${project}_${arch}"
@@ -60,7 +60,7 @@ fi
 docker rm --force ${container_name} >/dev/null 2>&1 || true
 docker run \
     --volume "$(abs_path ${src_dir}):/src" \
-    --workdir /src/ports/pybricks/bricks/ev3dev \
+    --workdir /src/bricks/ev3dev \
     --name ${container_name} \
     --env "TERM=${TERM}" \
     --env "DESTDIR=/build/dist" \

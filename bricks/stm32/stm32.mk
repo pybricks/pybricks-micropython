@@ -5,23 +5,39 @@
 # This file is shared by all STM32-based Pybricks ports
 # Other ports should not use this file
 
-# Sanity check
-include ../check.mk
-
-include ../../../../py/mkenv.mk
+THIS_MAKEFILE := $(lastword $(MAKEFILE_LIST))
+PBTOP := ../$(patsubst %/stm32/stm32.mk,%,$(THIS_MAKEFILE))
 
 # ensure required git submodules checked out
-ifeq ("$(wildcard $(TOP)/lib/stm32lib/README.md)","")
-$(info GIT cloning stm32lib submodule)
-$(shell cd $(TOP) && git submodule update --init lib/stm32lib)
+ifeq ("$(wildcard $(PBTOP)/micropython/README.md)","")
+$(info GIT cloning micropython submodule)
+$(info $(shell cd $(PBTOP) && git submodule update --init micropython))
+ifeq ("$(wildcard $(PBTOP)/micropython/README.md)","")
+$(error failed)
 endif
-ifeq ("$(wildcard $(TOP)/ports/pybricks/lib/libfixmath/README.md)","")
+endif
+ifeq ("$(wildcard $(PBTOP)/micropython/lib/stm32lib/README.md)","")
+$(info GIT cloning stm32lib submodule)
+$(info $(shell cd $(PBTOP)/micropython && git submodule update --init lib/stm32lib))
+ifeq ("$(wildcard $(PBTOP)/micropython/lib/stm32lib/README.md)","")
+$(error failed)
+endif
+endif
+ifeq ("$(wildcard $(PBTOP)/lib/libfixmath/README.md)","")
 $(info GIT cloning libfixmath submodule)
-$(shell cd $(TOP)/ports/pybricks && git submodule update --init lib/libfixmath)
+$(info $(shell cd $(PBTOP) && git submodule update --init lib/libfixmath))
+ifeq ("$(wildcard $(PBTOP)/lib/libfixmath/README.md)","")
+$(error failed)
+endif
 endif
 
+# lets micropython make files work with external files
+USER_C_MODULES = $(PBTOP)
+
+include ../../micropython/py/mkenv.mk
+
 # qstr definitions (must come before including py.mk)
-QSTR_GLOBAL_DEPENDENCIES = $(TOP)/ports/pybricks/bricks/stm32/configport.h
+QSTR_GLOBAL_DEPENDENCIES = $(PBTOP)/bricks/stm32/configport.h
 
 # directory containing scripts to be frozen as bytecode
 FROZEN_MPY_DIR ?= modules
@@ -52,29 +68,29 @@ INC += -I$(TOP)/lib/stm32lib/CMSIS/STM32$(PB_MCU_SERIES)xx/Include
 ifeq ($(PB_USE_HAL),1)
 INC += -I$(TOP)/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Inc
 endif
-INC += -I$(TOP)/ports/pybricks/lib/contiki-core
-INC += -I$(TOP)/ports/pybricks/lib/lego
-INC += -I$(TOP)/ports/pybricks/lib/libfixmath/libfixmath
-INC += -I$(TOP)/ports/pybricks/lib/pbio/include
-INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)
-INC += -I$(TOP)/ports/pybricks/lib/pbio
+INC += -I$(PBTOP)/lib/contiki-core
+INC += -I$(PBTOP)/lib/lego
+INC += -I$(PBTOP)/lib/libfixmath/libfixmath
+INC += -I$(PBTOP)/lib/pbio/include
+INC += -I$(PBTOP)/lib/pbio/platform/$(PBIO_PLATFORM)
+INC += -I$(PBTOP)/lib/pbio
 ifeq ($(PB_LIB_BLUENRG),1)
-INC += -I$(TOP)/ports/pybricks/lib/BlueNRG-MS/includes
+INC += -I$(PBTOP)/lib/BlueNRG-MS/includes
 endif
 ifeq ($(PB_LIB_BLE5STACK),1)
-INC += -I$(TOP)/ports/pybricks/lib/ble5stack/central
+INC += -I$(PBTOP)/lib/ble5stack/central
 endif
-INC += -I$(TOP)/ports/pybricks/extmod
-INC += -I$(TOP)/ports/pybricks/py
+INC += -I$(PBTOP)/extmod
+INC += -I$(PBTOP)/py
 INC += -I$(BUILD)
 
 GIT = git
 ZIP = zip
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
-CHECKSUM = $(TOP)/ports/pybricks/tools/checksum.py
+CHECKSUM = $(PBTOP)/tools/checksum.py
 CHECKSUM_TYPE ?= xor
-METADATA = $(TOP)/ports/pybricks/tools/metadata.py
+METADATA = $(PBTOP)/tools/metadata.py
 OPENOCD ?= openocd
 OPENOCD_CONFIG ?= openocd_stm32$(PB_MCU_SERIES_LCASE).cfg
 TEXT0_ADDR ?= 0x08000000
@@ -90,7 +106,7 @@ CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(PB
 LD_FILES = $(PBIO_PLATFORM).ld
 # not all hubs share common script
 ifeq ($(filter $(PBIO_PLATFORM),debug prime_hub),)
-LD_FILES += $(TOP)/ports/pybricks/bricks/stm32/common.ld
+LD_FILES += $(PBTOP)/bricks/stm32/common.ld
 endif
 
 LDFLAGS = -nostdlib $(addprefix -T,$(LD_FILES)) -Map=$@.map --cref --gc-sections
@@ -123,31 +139,32 @@ endif
 
 LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
-SRC_C = $(addprefix ports/pybricks/bricks/stm32/,\
+SRC_C = $(addprefix bricks/stm32/,\
 	main.c \
 	pbdevice.c \
 	systick.c \
 	uart_core.c \
 	)
 
-SRC_C += \
-	lib/libc/string0.c \
-	lib/mp-readline/readline.c \
-	lib/utils/interrupt_char.c \
-	lib/utils/pyexec.c \
-	lib/utils/stdout_helpers.c \
+SRC_C += $(addprefix micropython/lib/,\
+	libc/string0.c \
+	mp-readline/readline.c \
+	utils/interrupt_char.c \
+	utils/pyexec.c \
+	utils/stdout_helpers.c \
+	)
 
 SRC_S = \
-	ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)/startup.s \
+	lib/pbio/platform/$(PBIO_PLATFORM)/startup.s \
 
 ifeq ($(PB_MCU_SERIES),F0)
-	SRC_S += $(TOP)/lib/utils/gchelper_m0.s
+	SRC_S += micropython/lib/utils/gchelper_m0.s
 else
-	SRC_S += $(TOP)/lib/utils/gchelper_m0.s
+	SRC_S += micropython/lib/utils/gchelper_m0.s
 endif
 
 # Pybricks modules
-PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
+PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modbattery.c \
 	modbuiltins.c \
 	modbuttons.c \
@@ -164,13 +181,13 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	pbhub.c \
 	)
 
-PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/py/,\
+PYBRICKS_PY_SRC_C = $(addprefix py/,\
 	pb_type_enum.c \
 	pberror.c \
 	pbobj.c \
 	)
 
-BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\
+BLUENRG_SRC_C = $(addprefix lib/BlueNRG-MS/hci/,\
 	controller/bluenrg_gap_aci.c \
 	controller/bluenrg_gatt_aci.c \
 	controller/bluenrg_hal_aci.c \
@@ -179,7 +196,7 @@ BLUENRG_SRC_C = $(addprefix ports/pybricks/lib/BlueNRG-MS/hci/,\
 	hci_le.c \
 	)
 
-BLE5STACK_SRC_C = $(addprefix ports/pybricks/lib/ble5stack/central/,\
+BLE5STACK_SRC_C = $(addprefix lib/ble5stack/central/,\
 	att.c \
 	gap.c \
 	gatt.c \
@@ -188,7 +205,7 @@ BLE5STACK_SRC_C = $(addprefix ports/pybricks/lib/ble5stack/central/,\
 	util.c \
 	)
 
-HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
+HAL_SRC_C = $(addprefix micropython/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_adc_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_adc.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_cortex.c \
@@ -204,7 +221,7 @@ HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal.c \
 	)
 
-CONTIKI_SRC_C = $(addprefix ports/pybricks/lib/contiki-core/,\
+CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
 	sys/autostart.c \
 	sys/etimer.c \
 	sys/process.c \
@@ -215,14 +232,14 @@ ifeq ($(PB_MCU_SERIES),F4)
 HAL_SRC_C := $(filter-out %xx_hal_uart_ex.c, $(HAL_SRC_C))
 endif
 
-LIBFIXMATH_SRC_C = $(addprefix ports/pybricks/lib/libfixmath/libfixmath/,\
+LIBFIXMATH_SRC_C = $(addprefix lib/libfixmath/libfixmath/,\
 	fix16_sqrt.c \
 	fix16_str.c \
 	fix16.c \
 	uint32.c \
 	)
 
-PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
+PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/$(PBIO_PLATFORM)/bluetooth.c \
 	drv/$(PBIO_PLATFORM)/light.c \
 	drv/$(PBIO_PLATFORM)/motor.c \
@@ -260,7 +277,7 @@ PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
 	src/uartdev.c \
 	)
 
-SRC_LIBM = $(addprefix lib/libm/,\
+SRC_LIBM = $(addprefix micropython/lib/libm/,\
 	acoshf.c \
 	asinfacosf.c \
 	asinhf.c \

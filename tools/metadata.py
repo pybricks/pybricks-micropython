@@ -29,7 +29,7 @@ import sys
 import typing
 
 # Path to repo top-level dir.
-TOP = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+TOP = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "micropython"))
 sys.path.append(os.path.join(TOP, "py"))
 sys.path.append(os.path.join(TOP, "tools"))
 mpy_tool = importlib.import_module("mpy-tool")

@@ -23,7 +23,7 @@ Q =
 endif
 
 # using tinytest from upstream MicroPython
-TINY_TEST_DIR = ../../../../../lib/tinytest
+TINY_TEST_DIR = ../../../micropython/lib/tinytest
 TINY_TEST_INC = -I$(TINY_TEST_DIR)
 TINY_TEST_SRC = $(TINY_TEST_DIR)/tinytest.c
 
@@ -67,7 +67,7 @@ ifeq ($(COVERAGE),1)
 CFLAGS += --coverage
 endif
 
-BUILD_PREFIX = $(BUILD_DIR)/ports/pybricks/lib/pbio/test
+BUILD_PREFIX = $(BUILD_DIR)/lib/pbio/test
 SRC = $(TINY_TEST_SRC) $(CONTIKI_SRC) $(LEGO_SRC) $(FIXMATH_SRC) $(PBIO_SRC) $(TEST_SRC)
 DEP = $(addprefix $(BUILD_PREFIX)/,$(SRC:.c=.d))
 OBJ = $(addprefix $(BUILD_PREFIX)/,$(SRC:.c=.o))
@@ -98,7 +98,7 @@ build-coverage/coverage.info: Makefile $(SRC)
 	$(Q)$(MAKE) COVERAGE=1
 	./build-coverage/test-pbio
 	lcov --capture --output-file $@ \
-		--directory build-coverage/ports/pybricks/lib/pbio/src
+		--directory build-coverage/lib/pbio/src
 
 coverage-html: build-coverage/coverage.info
 	$(Q)genhtml $^ --output-directory build-coverage/html

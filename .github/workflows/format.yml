@@ -22,29 +22,9 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
-        path: tmp
-    - name: Get tag
-      id: get_tag
-      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
-    - name: Checkout MicroPython
-      uses: actions/checkout@v2
-      with:
-        repository: pybricks/micropython
-        ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        path: micropython
+        submodules: true
         token: ${{ secrets.GITHUB_TOKEN2 }}
-    - name: Checkout Pybricks
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
-      run: |
-        cd micropython
-        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
-        git submodule update --init --no-fetch ports/pybricks
-        cd ports/pybricks
-        git fetch --depth=1 origin $GITHUB_SHA
-        git checkout FETCH_HEAD
     - name: Run codeformat.py
       run: |
-        cd micropython/ports/pybricks
         ./tools/codeformat.py
         git diff --exit-code

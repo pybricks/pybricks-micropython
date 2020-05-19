@@ -4,7 +4,7 @@ from pybricks.parameters import Color
 from pybricks.media.ev3dev import Font, Image
 
 # Working directory is top-level tests directory
-TEST_IMAGE = "../ports/pybricks/tests/ev3dev/media/test.png"
+TEST_IMAGE = "../../tests/ev3dev/media/test.png"
 
 # requires one argument
 try:

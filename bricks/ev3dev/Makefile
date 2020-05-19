@@ -1,26 +1,43 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2013, 2014 Damien P. George
+# Copyright (c) 2019-2020 The Pybricks Authors
 
-# Sanity check
-include ../check.mk
+# ensure required git submodules checked out
+ifeq ("$(wildcard ../../micropython/README.md)","")
+$(info GIT cloning micropython submodule)
+$(info $(shell cd ../.. && git submodule update --init micropython))
+ifeq ("$(wildcard ../../micropython/README.md)","")
+$(error failed)
+endif
+endif
+ifeq ("$(wildcard ../../micropython/lib/axtls/README)","")
+$(info GIT cloning axtls submodule)
+$(info $(shell cd ../../micropython && git submodule update --init lib/axtls))
+ifeq ("$(wildcard ../../micropython/lib/axtls/README)","")
+$(error failed)
+endif
+endif
+ifeq ("$(wildcard ../../micropython/lib/berkeley-db-1.xx/README)","")
+$(info GIT cloning berkeley-db-1.xx submodule)
+$(info $(shell cd ../../micropython && git submodule update --init lib/berkeley-db-1.xx))
+ifeq ("$(wildcard ../../micropython/lib/berkeley-db-1.xx/README)","")
+$(error failed)
+endif
+endif
+ifeq ("$(wildcard ../../lib/libfixmath/README.md)","")
+$(info GIT cloning libfixmath submodule)
+$(info $(shell cd ../.. && git submodule update --init lib/libfixmath))
+ifeq ("$(wildcard ../../lib/libfixmath/README.md)","")
+$(error failed)
+endif
+endif
+
+# lets micropython make files work with external files
+USER_C_MODULES = ../..
 
 # Environment
 -include mpconfigport.mk
-include ../../../../py/mkenv.mk
-
-# ensure required git submodules checked out
-ifeq ("$(wildcard $(TOP)/lib/axtls/README)","")
-$(info GIT cloning axtls submodule)
-$(shell cd $(TOP) && git submodule update --init lib/axtls)
-endif
-ifeq ("$(wildcard $(TOP)/lib/berkeley-db-1.xx/README)","")
-$(info GIT cloning berkeley-db-1.xx submodule)
-$(shell cd $(TOP) && git submodule update --init lib/berkeley-db-1.xx)
-endif
-ifeq ("$(wildcard $(TOP)/ports/pybricks/lib/libfixmath/README.md)","")
-$(info GIT cloning libfixmath submodule)
-$(shell cd $(TOP)/ports/pybricks && git submodule update --init lib/libfixmath)
-endif
+include ../../micropython/py/mkenv.mk
 
 FROZEN_DIR = scripts
 FROZEN_MPY_DIR = modules
@@ -38,19 +55,19 @@ UNAME_S := $(shell uname -s)
 # include py core make definitions
 include $(TOP)/py/py.mk
 
-INC +=  -I.
-INC +=  -I$(TOP)
+INC += -I.
+INC += -I$(TOP)
 INC += -I$(BUILD)
-INC += -I$(TOP)/ports/pybricks/lib/contiki-core
-INC += -I$(TOP)/ports/pybricks/lib/ev3dev
-INC += -I$(TOP)/ports/pybricks/lib/ev3dev/include
-INC += -I$(TOP)/ports/pybricks/lib/lego
-INC += -I$(TOP)/ports/pybricks/lib/libfixmath/libfixmath
-INC += -I$(TOP)/ports/pybricks/lib/pbio
-INC += -I$(TOP)/ports/pybricks/lib/pbio/include
-INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/ev3dev_stretch
-INC += -I$(TOP)/ports/pybricks/extmod
-INC += -I$(TOP)/ports/pybricks/py
+INC += -I../../lib/contiki-core
+INC += -I../../lib/ev3dev
+INC += -I../../lib/ev3dev/include
+INC += -I../../lib/lego
+INC += -I../../lib/libfixmath/libfixmath
+INC += -I../../lib/pbio
+INC += -I../../lib/pbio/include
+INC += -I../../lib/pbio/platform/ev3dev_stretch
+INC += -I../../extmod
+INC += -I../../py
 INC += -I$(TOP)/ports/unix
 
 # compiler settings
@@ -165,7 +182,7 @@ LDFLAGS_MOD += -li2c
 endif
 
 # source files
-SRC_C = $(addprefix ports/unix/,\
+SRC_C = $(addprefix micropython/ports/unix/,\
 	main.c \
 	gccollect.c \
 	mpthreadport.c \
@@ -196,14 +213,14 @@ PYBRICKS_SRC_C += \
 	pbinit.c \
 	pbsmbus.c \
 
-LIB_SRC_C = $(addprefix lib/,\
+LIB_SRC_C = $(addprefix micropython/lib/,\
 	$(LIB_SRC_C_EXTRA) \
 	timeutils/timeutils.c \
 	utils/pyexec.c \
 	)
 
 # Pybricks drivers and modules
-PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
+PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modbattery.c \
 	modbuiltins.c \
 	modbuttons.c \
@@ -221,14 +238,14 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	moduos.c \
 	)
 
-PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/py/,\
+PYBRICKS_PY_SRC_C = $(addprefix py/,\
 	pb_type_enum.c \
 	pberror.c \
 	pbobj.c \
 	pbthread.c \
 	)
 
-PYBRICKS_LIB_SRC_C = $(addprefix ports/pybricks/lib/,\
+PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 	contiki-core/sys/autostart.c \
 	contiki-core/sys/etimer.c \
 	contiki-core/sys/process.c \
@@ -296,7 +313,7 @@ include $(TOP)/py/mkrules.mk
 
 .PHONY: test
 
-EV3DEV_TEST_DIRS = $(addprefix ../ports/pybricks/tests/ev3dev/, \
+EV3DEV_TEST_DIRS = $(addprefix ../../tests/ev3dev/, \
 	brick \
 	experimental \
 	media \
@@ -317,12 +334,12 @@ $(GRX_TEST_PLUGIN_LIB): $(GRX_TEST_PLUGIN_OBJ)
 	$(Q)$(CC) -shared -o $@ $^ $(LDFLAGS)
 
 test-ev3dev: $(PROG) $(TOP)/tests/run-tests $(GRX_TEST_PLUGIN_LIB)
-	cd $(TOP)/tests && MICROPY_MICROPYTHON="../ports/pybricks/tests/ev3dev/test-wrapper.sh" \
+	cd $(TOP)/tests && MICROPY_MICROPYTHON="../../tests/ev3dev/test-wrapper.sh" \
 		GRX_PLUGIN_PATH=$(realpath $(BUILD)) GRX_DRIVER=test \
 		./run-tests --test-dirs $(EV3DEV_TEST_DIRS)
 
 test: $(PROG) $(TOP)/tests/run-tests $(GRX_TEST_PLUGIN_LIB)
-	$(eval DIRNAME=ports/pybricks/bricks/$(notdir $(CURDIR)))
+	$(eval DIRNAME=../bricks/$(notdir $(CURDIR)))
 	cd $(TOP)/tests && MICROPY_MICROPYTHON=../$(DIRNAME)/$(PROG) \
 		GRX_PLUGIN_PATH=$(realpath $(BUILD)) GRX_DRIVER=test \
 		./run-tests

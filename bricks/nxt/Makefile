@@ -4,23 +4,36 @@
 
 PBIO_PLATFORM = nxt
 
-# Sanity check
-include ../check.mk
-
-include ../../../../py/mkenv.mk
-
 # ensure required git submodules checked out
-ifeq ("$(wildcard $(TOP)/ports/pybricks/lib/libfixmath/README.md)","")
+ifeq ("$(wildcard ../../micropython/README.md)","")
+$(info GIT cloning micropython submodule)
+$(info $(shell cd ../.. && git submodule update --init micropython))
+ifeq ("$(wildcard ../../micropython/README.md)","")
+$(error failed)
+endif
+endif
+ifeq ("$(wildcard ../../lib/libfixmath/README.md)","")
 $(info GIT cloning libfixmath submodule)
-$(shell cd $(TOP)/ports/pybricks && git submodule update --init lib/libfixmath)
+$(info $(shell cd ../.. && git submodule update --init lib/libfixmath))
+ifeq ("$(wildcard ../../lib/libfixmath/README.md)","")
+$(error failed)
 endif
-ifeq ("$(wildcard $(TOP)/ports/pybricks/bricks/nxt/nxt-firmware-drivers/README.md)","")
+endif
+ifeq ("$(wildcard nxt-firmware-drivers/README.md)","")
 $(info GIT cloning nxt-firmware-drivers submodule)
-$(shell cd $(TOP)/ports/pybricks && git submodule update --init bricks/nxt/nxt-firmware-drivers)
+$(info $(shell cd ../.. && git submodule update --checkout --init bricks/nxt/nxt-firmware-drivers))
+ifeq ("$(wildcard nxt-firmware-drivers/README.md)","")
+$(error failed)
 endif
+endif
+
+# lets micropython make files work with external files
+USER_C_MODULES = ../..
+
+include ../../micropython/py/mkenv.mk
 
 # qstr definitions (must come before including py.mk)
-QSTR_GLOBAL_DEPENDENCIES = $(TOP)/ports/pybricks/bricks/nxt/mpconfigport.h
+QSTR_GLOBAL_DEPENDENCIES =
 
 # directory containing scripts to be frozen as bytecode
 FROZEN_MPY_DIR ?= modules
@@ -38,15 +51,15 @@ endif
 
 INC += -I.
 INC += -I$(TOP)
-INC += -I$(TOP)/ports/pybricks/lib/contiki-core
-INC += -I$(TOP)/ports/pybricks/lib/lego
-INC += -I$(TOP)/ports/pybricks/lib/libfixmath/libfixmath
-INC += -I$(TOP)/ports/pybricks/bricks/nxt/nxt-firmware-drivers
-INC += -I$(TOP)/ports/pybricks/lib/pbio/include
-INC += -I$(TOP)/ports/pybricks/lib/pbio/platform/$(PBIO_PLATFORM)
-INC += -I$(TOP)/ports/pybricks/lib/pbio
-INC += -I$(TOP)/ports/pybricks/extmod
-INC += -I$(TOP)/ports/pybricks/py
+INC += -I../../lib/contiki-core
+INC += -I../../lib/lego
+INC += -I../../lib/libfixmath/libfixmath
+INC += -Inxt-firmware-drivers
+INC += -I../../lib/pbio/include
+INC += -I../../lib/pbio/platform/$(PBIO_PLATFORM)
+INC += -I../../lib/pbio
+INC += -I../../extmod
+INC += -I../../py
 INC += -I$(BUILD)
 
 COPT += -DFIXMATH_NO_CTYPE
@@ -74,20 +87,20 @@ endif
 
 LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
-SRC_C = $(addprefix ports/pybricks/bricks/nxt/,\
+SRC_C = \
 	main.c \
 	systick.c \
+
+SRC_C += $(addprefix micropython/lib/,\
+	libc/string0.c \
+	mp-readline/readline.c \
+	utils/interrupt_char.c \
+	utils/pyexec.c \
+	utils/stdout_helpers.c \
 	)
 
-SRC_C += \
-	lib/libc/string0.c \
-	lib/mp-readline/readline.c \
-	lib/utils/interrupt_char.c \
-	lib/utils/pyexec.c \
-	lib/utils/stdout_helpers.c \
-
 SRC_S = \
-	$(TOP)/lib/utils/gchelper_arm7tdmi.s \
+	micropython/lib/utils/gchelper_arm7tdmi.s \
 
 SRC_C_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
 	aic.c \
@@ -120,7 +133,7 @@ SRC_S_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
 	)
 
 # Pybricks modules
-PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
+PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modbattery.c \
 	modbuiltins.c \
 	modlogger.c \
@@ -133,27 +146,27 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix ports/pybricks/extmod/,\
 	pbhub.c \
 	)
 
-PYBRICKS_PY_SRC_C = $(addprefix ports/pybricks/py/,\
+PYBRICKS_PY_SRC_C = $(addprefix py/,\
 	pb_type_enum.c \
 	pberror.c \
 	pbobj.c \
 	)
 
-CONTIKI_SRC_C = $(addprefix ports/pybricks/lib/contiki-core/,\
+CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
 	sys/autostart.c \
 	sys/etimer.c \
 	sys/process.c \
 	sys/timer.c \
 	)
 
-LIBFIXMATH_SRC_C = $(addprefix ports/pybricks/lib/libfixmath/libfixmath/,\
+LIBFIXMATH_SRC_C = $(addprefix lib/libfixmath/libfixmath/,\
 	fix16_sqrt.c \
 	fix16_str.c \
 	fix16.c \
 	uint32.c \
 	)
 
-PBIO_SRC_C = $(addprefix ports/pybricks/lib/pbio/,\
+PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/$(PBIO_PLATFORM)/motor.c \
 	drv/battery/battery_nxt.c \
 	drv/button/button_nxt.c \

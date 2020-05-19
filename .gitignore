@@ -2,6 +2,7 @@
 ###################
 *.o
 *.a
+*.P
 *.elf
 *.bin
 *.map
@@ -30,6 +31,10 @@ _build/
 ######################
 tests/*.exp
 tests/*.out
+
+# Python virtual environment
+############################
+.venv/
 
 # Python cache files
 ######################

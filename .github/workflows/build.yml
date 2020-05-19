@@ -13,16 +13,7 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
-        path: tmp
-    - name: Get tag
-      id: get_tag
-      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
-    - name: Checkout MicroPython
-      uses: actions/checkout@v2
-      with:
-        repository: pybricks/micropython
-        ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        path: micropython
+        submodules: true
         token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Build mpy-cross
       run: make $MAKEOPTS -C micropython/mpy-cross
@@ -43,16 +34,7 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
-        path: tmp
-    - name: Get tag
-      id: get_tag
-      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
-    - name: Checkout MicroPython
-      uses: actions/checkout@v2
-      with:
-        repository: pybricks/micropython
-        ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        path: micropython
+        submodules: true
         token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
@@ -101,30 +83,8 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
-        path: tmp
-    - name: Get tag
-      id: get_tag
-      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
-    - name: Checkout MicroPython
-      uses: actions/checkout@v2
-      with:
-        repository: pybricks/micropython
-        ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        path: micropython
+        submodules: true
         token: ${{ secrets.GITHUB_TOKEN2 }}
-    - name: Checkout Pybricks
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
-      run: |
-        cd micropython
-        git submodule update --init --depth=1 lib/axtls
-        git submodule update --init --depth=1 lib/berkeley-db-1.xx
-        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
-        git submodule update --init --no-fetch ports/pybricks
-        cd ports/pybricks
-        git fetch --depth=1 origin $GITHUB_SHA
-        git checkout FETCH_HEAD
-        git submodule update --init --depth=1 lib/libfixmath
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
@@ -133,7 +93,7 @@ jobs:
     - name: Fix file permission
       run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
     - name: Create docker container
-      run: micropython/ports/pybricks/bricks/ev3dev/docker/setup.sh armel
+      run: bricks/ev3dev/docker/setup.sh armel
     - name: Build
       run: docker exec --tty pybricks-ev3dev_armel make
     - name: Test
@@ -143,13 +103,13 @@ jobs:
         docker exec --tty pybricks-ev3dev_armel make test-ev3dev
     - name: List failed tests
       if: failure()
-      run: micropython/ports/pybricks/tests/dump-out-files.sh
+      run: tests/dump-out-files.sh
     - name: Upload pybricks-micropython
       if: success()
       uses: actions/upload-artifact@v1
       with:
         name: pybricks-micropython
-        path: micropython/ports/pybricks/bricks/ev3dev/pybricks-micropython
+        path: bricks/ev3dev/pybricks-micropython
 
   ev3dev_bionic:
     name: ev3dev-bionic
@@ -179,30 +139,8 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
-        path: tmp
-    - name: Get tag
-      id: get_tag
-      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
-    - name: Checkout MicroPython
-      uses: actions/checkout@v2
-      with:
-        repository: pybricks/micropython
-        ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        path: micropython
+        submodules: true
         token: ${{ secrets.GITHUB_TOKEN2 }}
-    - name: Checkout Pybricks
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
-      run: |
-        cd micropython
-        git submodule update --init --depth=1 lib/axtls
-        git submodule update --init --depth=1 lib/berkeley-db-1.xx
-        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
-        git submodule update --init --no-fetch ports/pybricks
-        cd ports/pybricks
-        git fetch --depth=1 origin $GITHUB_SHA
-        git checkout FETCH_HEAD
-        git submodule update --init --depth=1 lib/libfixmath
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
@@ -211,18 +149,15 @@ jobs:
     - name: Fix file permission
       run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
     - name: Build
-      run: |
-        cd micropython/ports/pybricks
-        make $MAKEOPTS -C bricks/ev3dev
+      run: make $MAKEOPTS -C bricks/ev3dev
     - name: Test
       if: success()
       run: |
-        cd micropython/ports/pybricks
         make $MAKEOPTS -C bricks/ev3dev test
         make $MAKEOPTS -C bricks/ev3dev test-ev3dev
     - name: List failed tests
       if: failure()
-      run: micropython/ports/pybricks/tests/dump-out-files.sh
+      run: tests/dump-out-files.sh
 
   cross_compiler:
     name: download cross-compiler
@@ -232,14 +167,14 @@ jobs:
       id: check-cache
       uses: actions/cache@v1
       with:
-        path: ${{ github.workspace }}/gcc-arm
+        path: ${{ runner.tool_cache }}/gcc-arm
         key: gcc-arm
     - name: Download
       if: steps.check-cache.outputs.cache-hit != 'true'
       uses: fiam/arm-none-eabi-gcc@v1
       with:
         release: '8-2019-q3'
-        directory: ${{ github.workspace }}/gcc-arm
+        directory: ${{ runner.tool_cache }}/gcc-arm
 
   cityhub_firmware:
     name: cityhub firmware
@@ -249,36 +184,15 @@ jobs:
     - name: Install cross-compiler
       uses: actions/cache@v1
       with:
-        path: ${{ github.workspace }}/gcc-arm
+        path: ${{ runner.tool_cache }}/gcc-arm
         key: gcc-arm
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ github.workspace }}/gcc-arm/bin
+      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm/bin
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
-        path: tmp
-    - name: Get tag
-      id: get_tag
-      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
-    - name: Checkout MicroPython
-      uses: actions/checkout@v2
-      with:
-        repository: pybricks/micropython
-        ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        path: micropython
+        submodules: true
         token: ${{ secrets.GITHUB_TOKEN2 }}
-    - name: Checkout Pybricks
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
-      run: |
-        cd micropython
-        git submodule update --init --depth=1 lib/stm32lib
-        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
-        git submodule update --init --no-fetch ports/pybricks
-        cd ports/pybricks
-        git fetch --depth=1 origin $GITHUB_SHA
-        git checkout FETCH_HEAD
-        git submodule update --init --depth=1 lib/libfixmath
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
@@ -287,27 +201,25 @@ jobs:
     - name: Fix file permission
       run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
     - name: Build
-      run: |
-        cd micropython/ports/pybricks
-        make $MAKEOPTS -C bricks/cityhub
+      run: make $MAKEOPTS -C bricks/cityhub
     - name: Upload firmware
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
         name: cityhub-firmware
-        path: micropython/ports/pybricks/bricks/cityhub/build/firmware-base.bin
+        path: bricks/cityhub/build/firmware-base.bin
     - name: Upload firmware metadata
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
         name: cityhub-firmware
-        path: micropython/ports/pybricks/bricks/cityhub/build/firmware.metadata.json
+        path: bricks/cityhub/build/firmware.metadata.json
     - name: Upload main.py
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
         name: cityhub-firmware
-        path: micropython/ports/pybricks/bricks/cityhub/main.py
+        path: bricks/cityhub/main.py
 
   cplushub_firmware:
     name: cplushub firmware
@@ -317,36 +229,15 @@ jobs:
     - name: Install cross-compiler
       uses: actions/cache@v1
       with:
-        path: ${{ github.workspace }}/gcc-arm
+        path: ${{ runner.tool_cache }}/gcc-arm
         key: gcc-arm
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ github.workspace }}/gcc-arm/bin
+      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm/bin
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
-        path: tmp
-    - name: Get tag
-      id: get_tag
-      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
-    - name: Checkout MicroPython
-      uses: actions/checkout@v2
-      with:
-        repository: pybricks/micropython
-        ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        path: micropython
+        submodules: true
         token: ${{ secrets.GITHUB_TOKEN2 }}
-    - name: Checkout Pybricks
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
-      run: |
-        cd micropython
-        git submodule update --init --depth=1 lib/stm32lib
-        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
-        git submodule update --init --no-fetch ports/pybricks
-        cd ports/pybricks
-        git fetch --depth=1 origin $GITHUB_SHA
-        git checkout FETCH_HEAD
-        git submodule update --init --depth=1 lib/libfixmath
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
@@ -355,27 +246,25 @@ jobs:
     - name: Fix file permission
       run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
     - name: Build
-      run: |
-        cd micropython/ports/pybricks
-        make $MAKEOPTS -C bricks/cplushub
+      run: make $MAKEOPTS -C bricks/cplushub
     - name: Upload firmware
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
         name: cplushub-firmware
-        path: micropython/ports/pybricks/bricks/cplushub/build/firmware-base.bin
+        path: bricks/cplushub/build/firmware-base.bin
     - name: Upload firmware metadata
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
         name: cplushub-firmware
-        path: micropython/ports/pybricks/bricks/cplushub/build/firmware.metadata.json
+        path: bricks/cplushub/build/firmware.metadata.json
     - name: Upload main.py
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
         name: cplushub-firmware
-        path: micropython/ports/pybricks/bricks/cplushub/main.py
+        path: bricks/cplushub/main.py
 
   movehub_firmware:
     name: movehub firmware
@@ -385,36 +274,15 @@ jobs:
     - name: Install cross-compiler
       uses: actions/cache@v1
       with:
-        path: ${{ github.workspace }}/gcc-arm
+        path: ${{ runner.tool_cache }}/gcc-arm
         key: gcc-arm
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ github.workspace }}/gcc-arm/bin
+      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm/bin
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
-        path: tmp
-    - name: Get tag
-      id: get_tag
-      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
-    - name: Checkout MicroPython
-      uses: actions/checkout@v2
-      with:
-        repository: pybricks/micropython
-        ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        path: micropython
+        submodules: true
         token: ${{ secrets.GITHUB_TOKEN2 }}
-    - name: Checkout Pybricks
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
-      run: |
-        cd micropython
-        git submodule update --init --depth=1 lib/stm32lib
-        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
-        git submodule update --init --no-fetch ports/pybricks
-        cd ports/pybricks
-        git fetch --depth=1 origin $GITHUB_SHA
-        git checkout FETCH_HEAD
-        git submodule update --init --depth=1 lib/libfixmath
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
@@ -423,27 +291,25 @@ jobs:
     - name: Fix file permission
       run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
     - name: Build
-      run: |
-        cd micropython/ports/pybricks
-        make $MAKEOPTS -C bricks/movehub
+      run: make $MAKEOPTS -C bricks/movehub
     - name: Upload firmware
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
         name: movehub-firmware
-        path: micropython/ports/pybricks/bricks/movehub/build/firmware-base.bin
+        path: bricks/movehub/build/firmware-base.bin
     - name: Upload firmware metadata
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
         name: movehub-firmware
-        path: micropython/ports/pybricks/bricks/movehub/build/firmware.metadata.json
+        path: bricks/movehub/build/firmware.metadata.json
     - name: Upload main.py
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
         name: movehub-firmware
-        path: micropython/ports/pybricks/bricks/movehub/main.py
+        path: bricks/movehub/main.py
 
   primehub_firmware:
     name: primehub firmware
@@ -453,36 +319,15 @@ jobs:
     - name: Install cross-compiler
       uses: actions/cache@v1
       with:
-        path: ${{ github.workspace }}/gcc-arm
+        path: ${{ runner.tool_cache }}/gcc-arm
         key: gcc-arm
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ github.workspace }}/gcc-arm/bin
+      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm/bin
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
-        path: tmp
-    - name: Get tag
-      id: get_tag
-      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
-    - name: Checkout MicroPython
-      uses: actions/checkout@v2
-      with:
-        repository: pybricks/micropython
-        ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        path: micropython
+        submodules: true
         token: ${{ secrets.GITHUB_TOKEN2 }}
-    - name: Checkout Pybricks
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
-      run: |
-        cd micropython
-        git submodule update --init --depth=1 lib/stm32lib
-        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
-        git submodule update --init --no-fetch ports/pybricks
-        cd ports/pybricks
-        git fetch --depth=1 origin $GITHUB_SHA
-        git checkout FETCH_HEAD
-        git submodule update --init --depth=1 lib/libfixmath
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
@@ -491,27 +336,25 @@ jobs:
     - name: Fix file permission
       run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
     - name: Build
-      run: |
-        cd micropython/ports/pybricks
-        make $MAKEOPTS -C bricks/primehub
+      run: make $MAKEOPTS -C bricks/primehub
     - name: Upload firmware
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
         name: primehub-firmware
-        path: micropython/ports/pybricks/bricks/primehub/build/firmware-base.bin
+        path: bricks/primehub/build/firmware-base.bin
     - name: Upload firmware metadata
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
         name: primehub-firmware
-        path: micropython/ports/pybricks/bricks/primehub/build/firmware.metadata.json
+        path: bricks/primehub/build/firmware.metadata.json
     - name: Upload main.py
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
         name: primehub-firmware
-        path: micropython/ports/pybricks/bricks/primehub/main.py
+        path: bricks/primehub/main.py
 
   nxt_firmware:
     name: nxt firmware
@@ -521,37 +364,20 @@ jobs:
     - name: Install cross-compiler
       uses: actions/cache@v1
       with:
-        path: ${{ github.workspace }}/gcc-arm
+        path: ${{ runner.tool_cache }}/gcc-arm
         key: gcc-arm
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ github.workspace }}/gcc-arm/bin
+      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm/bin
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
-        path: tmp
-    - name: Get tag
-      id: get_tag
-      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
-    - name: Checkout MicroPython
-      uses: actions/checkout@v2
-      with:
-        repository: pybricks/micropython
-        ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        path: micropython
+        submodules: true
         token: ${{ secrets.GITHUB_TOKEN2 }}
-    - name: Checkout Pybricks
+    - name: Fix submodule credetials
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
       run: |
-        cd micropython
-        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
-        git submodule update --init --no-fetch ports/pybricks
-        cd ports/pybricks
-        git fetch --depth=1 origin $GITHUB_SHA
-        git checkout FETCH_HEAD
         git config submodule.bricks/nxt/nxt-firmware-drivers.url https://${GITHUB_TOKEN}@github.com/pybricks/nxt-firmware-drivers.git
-        git submodule update --init --depth=1 bricks/nxt/nxt-firmware-drivers
-        git submodule update --init --depth=1 lib/libfixmath
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
@@ -560,15 +386,13 @@ jobs:
     - name: Fix file permission
       run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
     - name: Build
-      run: |
-        cd micropython/ports/pybricks
-        make $MAKEOPTS -C bricks/nxt
+      run:  make $MAKEOPTS -C bricks/nxt
     - name: Upload firmware
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
         name: nxt-firmware
-        path: micropython/ports/pybricks/bricks/nxt/build/firmware.bin
+        path: bricks/nxt/build/firmware.bin
 
   debug:
     name: debug firmware
@@ -578,36 +402,15 @@ jobs:
     - name: Install cross-compiler
       uses: actions/cache@v1
       with:
-        path: ${{ github.workspace }}/gcc-arm
+        path: ${{ runner.tool_cache }}/gcc-arm
         key: gcc-arm
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ github.workspace }}/gcc-arm/bin
+      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm/bin
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
-        path: tmp
-    - name: Get tag
-      id: get_tag
-      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
-    - name: Checkout MicroPython
-      uses: actions/checkout@v2
-      with:
-        repository: pybricks/micropython
-        ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        path: micropython
+        submodules: true
         token: ${{ secrets.GITHUB_TOKEN2 }}
-    - name: Checkout Pybricks
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
-      run: |
-        cd micropython
-        git submodule update --init --depth=1 lib/stm32lib
-        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
-        git submodule update --init --no-fetch ports/pybricks
-        cd ports/pybricks
-        git fetch --depth=1 origin $GITHUB_SHA
-        git checkout FETCH_HEAD
-        git submodule update --init --depth=1 lib/libfixmath
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
@@ -616,9 +419,7 @@ jobs:
     - name: Fix file permission
       run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
     - name: Build
-      run: |
-        cd micropython/ports/pybricks
-        make $MAKEOPTS -C bricks/debug build/firmware.dfu
+      run: make $MAKEOPTS -C bricks/debug build/firmware.dfu
 
   pbio:
     name: pbio tests
@@ -631,39 +432,16 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
-        path: tmp
-    - name: Get tag
-      id: get_tag
-      run: echo ::set-output name=micropython_tag::$(cat tmp/micropython-tag)
-    - name: Checkout MicroPython
-      uses: actions/checkout@v2
-      with:
-        repository: pybricks/micropython
-        ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        path: micropython
+        submodules: true
         token: ${{ secrets.GITHUB_TOKEN2 }}
-    - name: Checkout Pybricks
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN2 }}
-      run: |
-        cd micropython
-        git config submodule.ports/pybricks.url https://${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
-        git submodule update --init --no-fetch ports/pybricks
-        cd ports/pybricks
-        git fetch --depth=1 origin $GITHUB_SHA
-        git checkout FETCH_HEAD
-        git submodule update --init --depth=1 lib/libfixmath
     - name: Build
       run: |
-        cd micropython/ports/pybricks
         make $MAKEOPTS -C lib/pbio/test
         ./lib/pbio/test/build/test-pbio
     - name: Build docs
       run: |
-        cd micropython/ports/pybricks
         make $MAKEOPTS -C lib/pbio/doc
     - name: Build coverage
       run: |
-        cd micropython/ports/pybricks
         make $MAKEOPTS -C lib/pbio/test COVERAGE=1
         ./lib/pbio/test/build-coverage/test-pbio

@@ -4,7 +4,7 @@ import pybricks.ev3brick as ev3
 from pybricks.parameters import Align
 
 # Working directory is top-level tests directory
-TEST_IMAGE = "../ports/pybricks/tests/ev3dev/v1/test.png"
+TEST_IMAGE = "../../tests/ev3dev/v1/test.png"
 
 ev3.display.clear()
 

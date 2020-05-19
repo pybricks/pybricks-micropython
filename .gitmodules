@@ -8,3 +8,8 @@
 [submodule "bricks/nxt/nxt-firmware-drivers"]
 	path = bricks/nxt/nxt-firmware-drivers
 	url = https://github.com/pybricks/nxt-firmware-drivers.git
+	update = none
+[submodule "micropython"]
+	path = micropython
+	url = https://github.com/pybricks/micropython
+	branch = master

@@ -62,16 +62,12 @@ our site, [pybricks.com].
 
 But since you're reading this, you might be interested in building the code
 yourself, or start tweaking and hacking. We don't have step-by-step guides
-for installing all the developer tools just yet. But we build all targets
-from scratch using Travis CI, so you can get the complete recipes for each
-build in the [.travis file](.travis.yml).
+for installing all the developer tools just yet.
 
 ## Pybricks and Upstream MicroPython
 
 We are actively contributing to upstream MicroPython instead of forking it into
-a whole new project. We are adding Pybricks as a new family of ports. Similar
-to how MicroPython already has a `ports/stm32` folder with multiple
-`boards`, we add a `ports/pybricks` folder with multiple programmable `bricks`.
+a whole new project.
 
 To streamline development and releases, we do maintain a fork of `micropython`
 [here][pybricks/micropython]. It essentially just adds the repository that you
@@ -82,32 +78,20 @@ greatest that upstream [`micropython`][micropython/micropython] has to offer.
 Summing up:
 
 - [`pybricks/micropython`][pybricks/micropython]: fork of
-  [upstream MicroPython][micropython/micropython] that just adds the repo below
-  as a submodule at `ports/pybricks`. It does not have a continuous master
-  branch, just versioned tags. So, never do `git pull`, but do `git fetch` and
-  then check out the tag you want.
+  [upstream MicroPython][micropython/micropython] that is included as a
+  submodule in the main `pybricks/micropython` repository.
 - [`pybricks/pybricks-micropython`][pybricks-micropython]: Main repo for all
   Pybricks firmware. This has a continuous master branch that never breaks.
-  Always look at the [tag file](micropython-tag) to see which MicroPython tag
-  must be checked out to build successfully.
 
 
 ## Cloning
 
-As explained above, this
-repository ([`pybricks/pybricks-micropython`][pybricks-micropython])
-is a submodule to [our fork of MicroPython][pybricks/micropython]. So instead
-of cloning this repository directly, do this:
+This project uses submodules. However we don't recommend using the
+`--recursive` option of `git` since it will clone unnecessary dependencies.
+Instead, the required submodules will be automatically cloned the first time
+you run `make`.
 
-    git clone https://github.com/pybricks/micropython
-    cd micropython
-    git submodule update --init --remote ports/pybricks
-    cd ports/pybricks
-
-Then you will find this repo at `ports/pybricks` in the `micropython` directory
-that was just cloned. Almost all development is done in here.
-The [`micropython-tag`](micropython-tag) file tells you which tag to checkout
-in [`pybricks/micropython`][pybricks/micropython].
+    git clone https://github.com/pybricks/pybricks-micropython
 
 ## What about all the other repositories?
 Pybricks includes not just firmware for each LEGO hub, but also various tools,
