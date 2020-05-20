@@ -6,6 +6,8 @@
 
 // options to control how MicroPython is built
 
+#define MICROPY_ENABLE_COMPILER     (PYBRICKS_STM32_OPT_COMPILER)
+
 #define MICROPY_QSTR_BYTES_IN_HASH  (1)
 #define MICROPY_ALLOC_PATH_MAX      (256)
 #define MICROPY_ALLOC_PARSE_CHUNK_INIT (16)
@@ -49,7 +51,7 @@
 #define MICROPY_PY_CMATH            (0)
 #define MICROPY_PY_IO               (0)
 #define MICROPY_PY_STRUCT           (0)
-#define MICROPY_PY_SYS              (1)
+#define MICROPY_PY_SYS              (!(PYBRICKS_STM32_OPT_PB_SYS))
 #define MICROPY_PY_SYS_IMPLEMENTATION_CUSTOM (1)
 #define MICROPY_PY_SYS_EXIT         (0)
 #define MICROPY_PY_SYS_MODULES      (0)
@@ -57,6 +59,11 @@
 #define MICROPY_MODULE_WEAK_LINKS   (0)
 #define MICROPY_CPYTHON_COMPAT      (0)
 #define MICROPY_LONGINT_IMPL        (MICROPY_LONGINT_IMPL_NONE)
+#if PYBRICKS_STM32_OPT_FLOAT
+#define MICROPY_FLOAT_IMPL          (MICROPY_FLOAT_IMPL_FLOAT)
+#else
+#define MICROPY_FLOAT_IMPL          (MICROPY_FLOAT_IMPL_NONE)
+#endif
 #define MICROPY_KBD_EXCEPTION       (1)
 #define MICROPY_ENABLE_SCHEDULER    (0)
 #define MICROPY_PY_UERRNO           (1)
@@ -75,13 +82,6 @@
     X(ETIMEDOUT) \
     X(ECANCELED) \
 
-// Enable floating point support unless explicitly disabled
-#ifndef MICROPY_FLOAT_IMPL
-#define MICROPY_FLOAT_IMPL          (MICROPY_FLOAT_IMPL_FLOAT)
-#endif // MICROPY_FLOAT_IMPL
-
-
-
 // type definitions for the specific machine
 
 #define MICROPY_MAKE_POINTER_CALLABLE(p) ((void *)((mp_uint_t)(p) | 1))
@@ -99,7 +99,15 @@ typedef long mp_off_t;
 
 #define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn_cooked(str, len)
 
-#define PYBRICKS_PY_EV3DEVICES      (0)
+// Pybricks modules
+
+#if !MICROPY_PY_SYS
+extern const struct _mp_obj_module_t pb_module_sys;
+#define _PYBRICKS_MODULE_SYS \
+    { MP_ROM_QSTR(MP_QSTR_sys), MP_ROM_PTR(&pb_module_sys) },
+#else
+#define _PYBRICKS_MODULE_SYS
+#endif
 
 extern const struct _mp_obj_module_t pb_module_hubs;
 #define _PYBRICKS_MODULE_HUBS \
@@ -144,10 +152,12 @@ extern const struct _mp_obj_module_t pb_module_robotics;
 #define MICROPY_PORT_BUILTIN_MODULES \
     _PYBRICKS_MODULE_ADVANCED       \
     _PYBRICKS_MODULE_HUBS           \
-    _PYBRICKS_MODULE_PUPDEVICES     \
     _PYBRICKS_MODULE_PARAMETERS     \
-    _PYBRICKS_MODULE_TOOLS          \
+    _PYBRICKS_MODULE_PUPDEVICES     \
     _PYBRICKS_MODULE_ROBOTICS       \
+    _PYBRICKS_MODULE_SYS            \
+    _PYBRICKS_MODULE_TOOLS          \
+
 
 // We have inlined IRQ functions for efficiency (they are generally
 // 1 machine instruction).

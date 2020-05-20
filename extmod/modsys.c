@@ -90,3 +90,21 @@ const mp_rom_obj_tuple_t mp_sys_implementation_obj = {
 };
 
 #endif // MICROPY_PY_ATTRTUPLE
+
+#if !MICROPY_PY_SYS
+
+// minimal sys module implementation for small flash devices
+
+STATIC const mp_rom_map_elem_t pb_module_sys_globals_table[] = {
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_sys) },
+    { MP_ROM_QSTR(MP_QSTR_implementation), MP_ROM_PTR(&mp_sys_implementation_obj) },
+};
+
+STATIC MP_DEFINE_CONST_DICT(pb_module_sys_globals, pb_module_sys_globals_table);
+
+const mp_obj_module_t pb_module_sys = {
+    .base = { &mp_type_module },
+    .globals = (mp_obj_dict_t*)&pb_module_sys_globals,
+};
+
+#endif // !MICROPY_PY_SYS

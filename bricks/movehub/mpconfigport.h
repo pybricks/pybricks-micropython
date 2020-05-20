@@ -17,15 +17,9 @@
 #define PYBRICKS_PY_TOOLS               (1)
 #define PYBRICKS_PY_ROBOTICS            (1)
 
-// You can disable the built-in MicroPython compiler by setting the following
-// config option to 0.  If you do this then you won't get a REPL prompt, but you
-// will still be able to execute pre-compiled scripts, compiled with mpy-cross.
-// Requires about 21.5K (21952) of flash
-#define MICROPY_ENABLE_COMPILER         (0)
-
-// Set to MICROPY_FLOAT_IMPL_FLOAT to enable floating point support in user code or
-// set to MICROPY_FLOAT_IMPL_NONE to disable floating point support in user code
-// Requires about 20.1K (20620) of flash
-#define MICROPY_FLOAT_IMPL              (MICROPY_FLOAT_IMPL_NONE)
+// Pybricks STM32 options
+#define PYBRICKS_STM32_OPT_COMPILER     (0)
+#define PYBRICKS_STM32_OPT_FLOAT        (0)
+#define PYBRICKS_STM32_OPT_PB_SYS       (1)
 
 #include "../stm32/configport.h"
