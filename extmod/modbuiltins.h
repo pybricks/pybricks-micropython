@@ -11,6 +11,7 @@
 #include "py/obj.h"
 
 mp_obj_t builtins_ColorLight_obj_make_new(pbdevice_t *pbdev);
+mp_obj_t builtins_LightArray_obj_make_new(pbdevice_t *pbdev, uint8_t light_mode, uint8_t number_of_lights);
 
 const mp_obj_type_t builtins_Control_type;
 mp_obj_t builtins_Control_obj_make_new(pbio_control_t *control);

@@ -196,11 +196,15 @@ STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     // This sensor requires power, which iodevice does not do automatically yet
     pbdevice_set_power_supply(self->pbdev, true);
 
+    // Create an instance of the LightArray class
+    self->lights = builtins_LightArray_obj_make_new(self->pbdev, 3, 3);
+
     return MP_OBJ_FROM_PTR(self);
 }
 
 // dir(pybricks.pupdevices.ColorSensor)
 STATIC const mp_rom_map_elem_t pupdevices_ColorSensor_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_lights),       MP_ROM_ATTRIBUTE_OFFSET(pupdevices_ColorSensor_obj_t, lights) },
 };
 STATIC MP_DEFINE_CONST_DICT(pupdevices_ColorSensor_locals_dict, pupdevices_ColorSensor_locals_dict_table);
 
