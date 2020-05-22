@@ -259,6 +259,41 @@ STATIC const mp_obj_type_t pupdevices_UltrasonicSensor_type = {
     .locals_dict = (mp_obj_dict_t *)&pupdevices_UltrasonicSensor_locals_dict,
 };
 
+// Class structure for ForceSensor
+typedef struct _pupdevices_ForceSensor_obj_t {
+    mp_obj_base_t base;
+    pbdevice_t *pbdev;
+} pupdevices_ForceSensor_obj_t;
+
+// pybricks.pupdevices.ForceSensor.__init__
+STATIC mp_obj_t pupdevices_ForceSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port));
+
+    pupdevices_ForceSensor_obj_t *self = m_new_obj(pupdevices_ForceSensor_obj_t);
+    self->base.type = (mp_obj_type_t *)type;
+
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+
+    // Get iodevices
+    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_SPIKE_FORCE_SENSOR);
+
+    return MP_OBJ_FROM_PTR(self);
+}
+
+// dir(pybricks.pupdevices.ForceSensor)
+STATIC const mp_rom_map_elem_t pupdevices_ForceSensor_locals_dict_table[] = {
+};
+STATIC MP_DEFINE_CONST_DICT(pupdevices_ForceSensor_locals_dict, pupdevices_ForceSensor_locals_dict_table);
+
+// type(pybricks.pupdevices.ForceSensor)
+STATIC const mp_obj_type_t pupdevices_ForceSensor_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_ForceSensor,
+    .make_new = pupdevices_ForceSensor_make_new,
+    .locals_dict = (mp_obj_dict_t *)&pupdevices_ForceSensor_locals_dict,
+};
+
 // dir(pybricks.pupdevices)
 STATIC const mp_rom_map_elem_t pupdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_pupdevices)                  },
@@ -267,6 +302,7 @@ STATIC const mp_rom_map_elem_t pupdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_ColorDistanceSensor), MP_ROM_PTR(&pupdevices_ColorDistanceSensor_type) },
     { MP_ROM_QSTR(MP_QSTR_ColorSensor),         MP_ROM_PTR(&pupdevices_ColorSensor_type)         },
     { MP_ROM_QSTR(MP_QSTR_UltrasonicSensor),    MP_ROM_PTR(&pupdevices_UltrasonicSensor_type)    },
+    { MP_ROM_QSTR(MP_QSTR_ForceSensor),         MP_ROM_PTR(&pupdevices_ForceSensor_type)         },
 };
 
 STATIC MP_DEFINE_CONST_DICT(
