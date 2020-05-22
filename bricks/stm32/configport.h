@@ -51,8 +51,7 @@
 #define MICROPY_PY_CMATH            (0)
 #define MICROPY_PY_IO               (0)
 #define MICROPY_PY_STRUCT           (0)
-#define MICROPY_PY_SYS              (!(PYBRICKS_STM32_OPT_PB_SYS))
-#define MICROPY_PY_SYS_IMPLEMENTATION_CUSTOM (1)
+#define MICROPY_PY_SYS              (0)
 #define MICROPY_PY_SYS_EXIT         (0)
 #define MICROPY_PY_SYS_MODULES      (0)
 #define MICROPY_PY_UTIME_MP_HAL     (1)
@@ -101,14 +100,6 @@ typedef long mp_off_t;
 
 // Pybricks modules
 
-#if !MICROPY_PY_SYS
-extern const struct _mp_obj_module_t pb_module_sys;
-#define _PYBRICKS_MODULE_SYS \
-    { MP_ROM_QSTR(MP_QSTR_sys), MP_ROM_PTR(&pb_module_sys) },
-#else
-#define _PYBRICKS_MODULE_SYS
-#endif
-
 extern const struct _mp_obj_module_t pb_module_hubs;
 #define _PYBRICKS_MODULE_HUBS \
     { MP_OBJ_NEW_QSTR(MP_QSTR_hubs), (mp_obj_t)&pb_module_hubs},
@@ -148,6 +139,13 @@ extern const struct _mp_obj_module_t pb_module_robotics;
 #else
 #define _PYBRICKS_MODULE_ROBOTICS
 #endif
+#if PYBRICKS_PY_UOS
+extern const struct _mp_obj_module_t pb_module_uos;
+#define _PYBRICKS_MODULE_UOS \
+    { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&pb_module_uos) },
+#else
+#define _PYBRICKS_MODULE_UOS
+#endif
 
 #define MICROPY_PORT_BUILTIN_MODULES \
     _PYBRICKS_MODULE_ADVANCED       \
@@ -155,8 +153,8 @@ extern const struct _mp_obj_module_t pb_module_robotics;
     _PYBRICKS_MODULE_PARAMETERS     \
     _PYBRICKS_MODULE_PUPDEVICES     \
     _PYBRICKS_MODULE_ROBOTICS       \
-    _PYBRICKS_MODULE_SYS            \
     _PYBRICKS_MODULE_TOOLS          \
+    _PYBRICKS_MODULE_UOS            \
 
 
 // We have inlined IRQ functions for efficiency (they are generally

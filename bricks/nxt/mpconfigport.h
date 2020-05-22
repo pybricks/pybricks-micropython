@@ -14,6 +14,7 @@
 #define PYBRICKS_PY_PARAMETERS          (1)
 #define PYBRICKS_PY_TOOLS               (1)
 #define PYBRICKS_PY_ROBOTICS            (1)
+#define PYBRICKS_PY_UOS                 (1)
 
 // options to control how MicroPython is built
 
@@ -67,8 +68,7 @@
 #define MICROPY_PY_CMATH            (0)
 #define MICROPY_PY_IO               (0)
 #define MICROPY_PY_STRUCT           (0)
-#define MICROPY_PY_SYS              (1)
-#define MICROPY_PY_SYS_IMPLEMENTATION_CUSTOM (1)
+#define MICROPY_PY_SYS              (0)
 #define MICROPY_PY_SYS_EXIT         (0)
 #define MICROPY_PY_SYS_MODULES      (0)
 #define MICROPY_CPYTHON_COMPAT      (0)
