@@ -216,13 +216,57 @@ STATIC const mp_obj_type_t pupdevices_ColorSensor_type = {
     .locals_dict = (mp_obj_dict_t *)&pupdevices_ColorSensor_locals_dict,
 };
 
+// Class structure for UltrasonicSensor
+typedef struct _pupdevices_UltrasonicSensor_obj_t {
+    mp_obj_base_t base;
+    mp_obj_t lights;
+    pbdevice_t *pbdev;
+} pupdevices_UltrasonicSensor_obj_t;
+
+// pybricks.pupdevices.UltrasonicSensor.__init__
+STATIC mp_obj_t pupdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(port));
+
+    pupdevices_UltrasonicSensor_obj_t *self = m_new_obj(pupdevices_UltrasonicSensor_obj_t);
+    self->base.type = (mp_obj_type_t *)type;
+
+    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+
+    // Get iodevices
+    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR);
+
+    // This sensor requires power, which iodevice does not do automatically yet
+    pbdevice_set_power_supply(self->pbdev, true);
+
+    // Create an instance of the LightArray class
+    self->lights = builtins_LightArray_obj_make_new(self->pbdev, 5, 4);
+
+    return MP_OBJ_FROM_PTR(self);
+}
+
+// dir(pybricks.pupdevices.UltrasonicSensor)
+STATIC const mp_rom_map_elem_t pupdevices_UltrasonicSensor_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_lights),       MP_ROM_ATTRIBUTE_OFFSET(pupdevices_UltrasonicSensor_obj_t, lights) },
+};
+STATIC MP_DEFINE_CONST_DICT(pupdevices_UltrasonicSensor_locals_dict, pupdevices_UltrasonicSensor_locals_dict_table);
+
+// type(pybricks.pupdevices.UltrasonicSensor)
+STATIC const mp_obj_type_t pupdevices_UltrasonicSensor_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_UltrasonicSensor,
+    .make_new = pupdevices_UltrasonicSensor_make_new,
+    .locals_dict = (mp_obj_dict_t *)&pupdevices_UltrasonicSensor_locals_dict,
+};
+
 // dir(pybricks.pupdevices)
 STATIC const mp_rom_map_elem_t pupdevices_globals_table[] = {
-    { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_pupdevices)                     },
+    { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_pupdevices)                  },
     { MP_ROM_QSTR(MP_QSTR_Motor),               MP_ROM_PTR(&motor_Motor_type)                    },
     { MP_ROM_QSTR(MP_QSTR_DCMotor),             MP_ROM_PTR(&motor_DCMotor_type)                  },
     { MP_ROM_QSTR(MP_QSTR_ColorDistanceSensor), MP_ROM_PTR(&pupdevices_ColorDistanceSensor_type) },
     { MP_ROM_QSTR(MP_QSTR_ColorSensor),         MP_ROM_PTR(&pupdevices_ColorSensor_type)         },
+    { MP_ROM_QSTR(MP_QSTR_UltrasonicSensor),    MP_ROM_PTR(&pupdevices_UltrasonicSensor_type)    },
 };
 
 STATIC MP_DEFINE_CONST_DICT(
