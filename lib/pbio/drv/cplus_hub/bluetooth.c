@@ -407,7 +407,7 @@ static void handle_event(uint8_t *packet) {
 
                                 buf[0] = handle & 0xFF;
                                 buf[1] = (handle >> 8) & 0xFF;
-                                buf[2] = GATT_PROP_WRITE | GATT_PROP_WRITE_NO_RSP;
+                                buf[2] = GATT_PROP_WRITE_NO_RSP;
                                 buf[3] = ++handle & 0xFF;
                                 buf[4] = (handle >> 8) & 0xFF;
                                 memcpy(&buf[5], nrf_uart_rx_char_uuid, 16);
