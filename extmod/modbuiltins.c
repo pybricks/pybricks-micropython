@@ -17,23 +17,16 @@
 #include "pbkwarg.h"
 
 // pybricks.builtins.Light class object
-typedef struct _builtins_Light_obj_t {
+typedef struct _builtins_ColorLight_obj_t {
     mp_obj_base_t base;
     pbdevice_t *pbdev;
-} builtins_Light_obj_t;
-
-// pybricks.builtins.Light.on
-STATIC mp_obj_t builtins_Light_on(mp_obj_t self_in) {
-    pb_assert(PBIO_ERROR_NOT_SUPPORTED);
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(builtins_Light_on_obj, builtins_Light_on);
+} builtins_ColorLight_obj_t;
 
 // pybricks.builtins.ColorLight.on
 STATIC mp_obj_t builtins_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     // Parse arguments
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        builtins_Light_obj_t, self,
+        builtins_ColorLight_obj_t, self,
         PB_ARG_REQUIRED(color),
         PB_ARG_DEFAULT_INT(brightness, 100));
 
@@ -62,11 +55,9 @@ STATIC mp_obj_t builtins_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, 
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_ColorLight_on_obj, 1, builtins_ColorLight_on);
 
-// pybricks.builtins.Light.off
-// pybricks.builtins.LightArray.off
 // pybricks.builtins.ColorLight.off
-STATIC mp_obj_t builtins_Light_off(mp_obj_t self_in) {
-    builtins_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC mp_obj_t builtins_ColorLight_off(mp_obj_t self_in) {
+    builtins_ColorLight_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // Turn the light off, using the command specific to the device.
     if (!self->pbdev) {
@@ -77,26 +68,12 @@ STATIC mp_obj_t builtins_Light_off(mp_obj_t self_in) {
     }
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(builtins_Light_off_obj, builtins_Light_off);
-
-// dir(pybricks.builtins.Light)
-STATIC const mp_rom_map_elem_t builtins_Light_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_on), MP_ROM_PTR(&builtins_Light_on_obj) },
-    { MP_ROM_QSTR(MP_QSTR_off), MP_ROM_PTR(&builtins_Light_off_obj) },
-};
-STATIC MP_DEFINE_CONST_DICT(builtins_Light_locals_dict, builtins_Light_locals_dict_table);
-
-// type(pybricks.builtins.Light)
-const mp_obj_type_t builtins_Light_type = {
-    { &mp_type_type },
-    .name = MP_QSTR_Light,
-    .locals_dict = (mp_obj_dict_t *)&builtins_Light_locals_dict,
-};
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(builtins_ColorLight_off_obj, builtins_ColorLight_off);
 
 // dir(pybricks.builtins.ColorLight)
 STATIC const mp_rom_map_elem_t builtins_ColorLight_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_on), MP_ROM_PTR(&builtins_ColorLight_on_obj) },
-    { MP_ROM_QSTR(MP_QSTR_off), MP_ROM_PTR(&builtins_Light_off_obj) },
+    { MP_ROM_QSTR(MP_QSTR_off), MP_ROM_PTR(&builtins_ColorLight_off_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(builtins_ColorLight_locals_dict, builtins_ColorLight_locals_dict_table);
 
@@ -107,11 +84,11 @@ const mp_obj_type_t builtins_ColorLight_type = {
     .locals_dict = (mp_obj_dict_t *)&builtins_ColorLight_locals_dict,
 };
 
-mp_obj_t builtins_Light_obj_make_new(pbdevice_t *pbdev, const mp_obj_type_t *type) {
+mp_obj_t builtins_ColorLight_obj_make_new(pbdevice_t *pbdev) {
     // Create new light instance
-    builtins_Light_obj_t *light = m_new_obj(builtins_Light_obj_t);
+    builtins_ColorLight_obj_t *light = m_new_obj(builtins_ColorLight_obj_t);
     // Set type and iodev
-    light->base.type = type;
+    light->base.type = &builtins_ColorLight_type;
     light->pbdev = pbdev;
     return light;
 }
