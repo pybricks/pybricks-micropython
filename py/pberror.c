@@ -40,7 +40,7 @@ void pb_assert(pbio_error_t error) {
             break;
         case PBIO_ERROR_NO_DEV:
             os_err = MP_ENODEV;
-            return;
+            break;
         case PBIO_ERROR_NOT_SUPPORTED:
             os_err = MP_EOPNOTSUPP;
             break;
