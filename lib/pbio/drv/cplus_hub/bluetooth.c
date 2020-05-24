@@ -352,23 +352,7 @@ static void handle_event(uint8_t *packet) {
                     DBG("s %04X t %04X", start_handle, type);
                     switch (type) {
                         case GATT_CHARACTER_UUID:
-                            if (start_handle <= gatt_service_handle) {
-                                uint16_t handle = gatt_service_handle + 1;
-                                attReadByTypeRsp_t rsp;
-                                uint8_t buf[ATT_MTU_SIZE - 2];
-
-                                buf[0] = handle & 0xFF;
-                                buf[1] = (handle >> 8) & 0xFF;
-                                buf[2] = GATT_PROP_INDICATE;
-                                buf[3] = ++handle & 0xFF;
-                                buf[4] = (handle >> 8) & 0xFF;
-                                buf[5] = SERVICE_CHANGED_UUID & 0xFF;
-                                buf[6] = (SERVICE_CHANGED_UUID >> 8) & 0xFF;
-
-                                rsp.pDataList = buf;
-                                rsp.dataLen = 7;
-                                ATT_ReadByTypeRsp(connection_handle, &rsp);
-                            } else if (start_handle <= gap_service_handle) {
+                            if (start_handle <= gap_service_handle) {
                                 uint16_t handle = gap_service_handle + 1;
                                 attReadByTypeRsp_t rsp;
                                 uint8_t buf[ATT_MTU_SIZE - 2];
@@ -757,22 +741,7 @@ static PT_THREAD(gatt_init(struct pt *pt)) {
     PT_BEGIN(pt);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddService(GATT_PRIMARY_SERVICE_UUID, 4, GATT_MIN_ENCRYPT_KEY_SIZE);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_AUTHOR_WRITE);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(SERVICE_CHANGED_UUID, GATT_PERMIT_READ);
-    PT_WAIT_UNTIL(pt, hci_command_status);
-    // ignoring response data
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CLIENT_CHAR_CFG_UUID, GATT_PERMIT_READ);
+    GATT_AddService(GATT_PRIMARY_SERVICE_UUID, 1, GATT_MIN_ENCRYPT_KEY_SIZE);
     PT_WAIT_UNTIL(pt, hci_command_status);
 
     // the response to the last GATT_AddAttribute contains the first and last handles
