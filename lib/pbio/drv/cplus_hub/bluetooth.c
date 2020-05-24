@@ -789,8 +789,7 @@ static PT_THREAD(gatt_init(struct pt *pt)) {
     // ignoring response data
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_WRITE | GATT_PERMIT_AUTHEN_READ |
-        GATT_PERMIT_AUTHEN_WRITE | GATT_PERMIT_ENCRYPT_READ);
+    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
@@ -800,8 +799,7 @@ static PT_THREAD(gatt_init(struct pt *pt)) {
     // ignoring response data
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_WRITE | GATT_PERMIT_AUTHEN_READ |
-        GATT_PERMIT_AUTHEN_WRITE | GATT_PERMIT_ENCRYPT_READ);
+    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
@@ -811,7 +809,7 @@ static PT_THREAD(gatt_init(struct pt *pt)) {
     // ignoring response data
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_WRITE);
+    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
@@ -1017,8 +1015,7 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
     // ignoring response data
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_WRITE | GATT_PERMIT_AUTHEN_READ |
-        GATT_PERMIT_AUTHEN_WRITE | GATT_PERMIT_AUTHOR_READ);
+    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
@@ -1062,8 +1059,7 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
     // ignoring response data
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_WRITE | GATT_PERMIT_AUTHEN_READ |
-        GATT_PERMIT_AUTHEN_WRITE | GATT_PERMIT_AUTHOR_READ);
+    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
@@ -1073,8 +1069,7 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
     // ignoring response data
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_WRITE | GATT_PERMIT_AUTHEN_READ |
-        GATT_PERMIT_AUTHEN_WRITE | GATT_PERMIT_AUTHOR_READ);
+    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
