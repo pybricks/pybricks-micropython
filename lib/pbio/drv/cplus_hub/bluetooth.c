@@ -578,6 +578,7 @@ static void handle_event(uint8_t *packet) {
                 break;
 
                 case ATT_EVENT_WRITE_REQ: {
+                    uint8_t command = data[7]; // command = write without response
                     uint16_t char_handle = (data[9] << 8) | data[8];
 
                     DBG("w: %04X %04X %d", char_handle, uart_tx_char_handle, pdu_len - 4);
@@ -589,7 +590,9 @@ static void handle_event(uint8_t *packet) {
                     } else {
                         DBG("unhandled write req: %04X", char_handle);
                     }
-                    ATT_WriteRsp(connection_handle);
+                    if (!command) {
+                        ATT_WriteRsp(connection_handle);
+                    }
                 }
                 break;
 
