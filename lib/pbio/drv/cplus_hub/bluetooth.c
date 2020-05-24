@@ -312,6 +312,41 @@ static void spi_set_mrdy(bool mrdy) {
 
 static void uart_rx_char_modified(uint8_t *data, uint8_t size);
 
+static void read_by_type_response_uuid16(uint16_t connection_handle,
+    uint16_t attr_handle, uint8_t property_flags, uint16_t uuid) {
+    attReadByTypeRsp_t rsp;
+    uint8_t buf[ATT_MTU_SIZE - 2];
+
+    buf[0] = ++attr_handle & 0xFF;
+    buf[1] = (attr_handle >> 8) & 0xFF;
+    buf[2] = property_flags;
+    buf[3] = ++attr_handle & 0xFF;
+    buf[4] = (attr_handle >> 8) & 0xFF;
+    buf[5] = uuid & 0xFF;
+    buf[6] = (uuid >> 8) & 0xFF;
+
+    rsp.pDataList = buf;
+    rsp.dataLen = 7;
+    ATT_ReadByTypeRsp(connection_handle, &rsp);
+}
+
+static void read_by_type_response_uuid128(uint16_t connection_handle,
+    uint16_t attr_handle, uint8_t property_flags, const uint8_t *uuid) {
+    attReadByTypeRsp_t rsp;
+    uint8_t buf[ATT_MTU_SIZE - 2];
+
+    buf[0] = ++attr_handle & 0xFF;
+    buf[1] = (attr_handle >> 8) & 0xFF;
+    buf[2] = property_flags;
+    buf[3] = ++attr_handle & 0xFF;
+    buf[4] = (attr_handle >> 8) & 0xFF;
+    memcpy(&buf[5], uuid, 16);
+
+    rsp.pDataList = buf;
+    rsp.dataLen = 21;
+    ATT_ReadByTypeRsp(connection_handle, &rsp);
+}
+
 // processes an event received from the Bluetooth chip
 static void handle_event(uint8_t *packet) {
     uint8_t event = packet[0];
@@ -353,99 +388,25 @@ static void handle_event(uint8_t *packet) {
                     switch (type) {
                         case GATT_CHARACTER_UUID:
                             if (start_handle <= gap_service_handle) {
-                                uint16_t handle = gap_service_handle + 1;
-                                attReadByTypeRsp_t rsp;
-                                uint8_t buf[ATT_MTU_SIZE - 2];
-
-                                buf[0] = handle & 0xFF;
-                                buf[1] = (handle >> 8) & 0xFF;
-                                buf[2] = GATT_PROP_READ;
-                                buf[3] = ++handle & 0xFF;
-                                buf[4] = (handle >> 8) & 0xFF;
-                                buf[5] = DEVICE_NAME_UUID & 0xFF;
-                                buf[6] = (DEVICE_NAME_UUID >> 8) & 0xFF;
-
-                                rsp.pDataList = buf;
-                                rsp.dataLen = 7;
-                                ATT_ReadByTypeRsp(connection_handle, &rsp);
+                                read_by_type_response_uuid16(connection_handle, gap_service_handle,
+                                    GATT_PROP_READ, DEVICE_NAME_UUID);
                             } else if (start_handle <= gap_service_handle + 2) {
-                                uint16_t handle = gap_service_handle + 3;
-                                attReadByTypeRsp_t rsp;
-                                uint8_t buf[ATT_MTU_SIZE - 2];
-
-                                buf[0] = handle & 0xFF;
-                                buf[1] = (handle >> 8) & 0xFF;
-                                buf[2] = GATT_PROP_READ;
-                                buf[3] = ++handle & 0xFF;
-                                buf[4] = (handle >> 8) & 0xFF;
-                                buf[5] = APPEARANCE_UUID & 0xFF;
-                                buf[6] = (APPEARANCE_UUID >> 8) & 0xFF;
-
-                                rsp.pDataList = buf;
-                                rsp.dataLen = 7;
-                                ATT_ReadByTypeRsp(connection_handle, &rsp);
+                                read_by_type_response_uuid16(connection_handle, gap_service_handle + 2,
+                                    GATT_PROP_READ, APPEARANCE_UUID);
                             } else if (start_handle <= gap_service_handle + 4) {
-                                uint16_t handle = gap_service_handle + 5;
-                                attReadByTypeRsp_t rsp;
-                                uint8_t buf[ATT_MTU_SIZE - 2];
-
-                                buf[0] = handle & 0xFF;
-                                buf[1] = (handle >> 8) & 0xFF;
-                                buf[2] = GATT_PROP_READ;
-                                buf[3] = ++handle & 0xFF;
-                                buf[4] = (handle >> 8) & 0xFF;
-                                buf[5] = PERI_CONN_PARAM_UUID & 0xFF;
-                                buf[6] = (PERI_CONN_PARAM_UUID >> 8) & 0xFF;
-
-                                rsp.pDataList = buf;
-                                rsp.dataLen = 7;
-                                ATT_ReadByTypeRsp(connection_handle, &rsp);
+                                read_by_type_response_uuid16(connection_handle, gap_service_handle + 4,
+                                    GATT_PROP_READ, PERI_CONN_PARAM_UUID);
                             } else if (start_handle <= pybricks_service_handle) {
-                                uint16_t handle = pybricks_service_handle + 1;
-                                attReadByTypeRsp_t rsp;
-                                uint8_t buf[ATT_MTU_SIZE - 2];
-
-                                buf[0] = handle & 0xFF;
-                                buf[1] = (handle >> 8) & 0xFF;
-                                buf[2] = GATT_PROP_READ | GATT_PROP_WRITE |
-                                    GATT_PROP_WRITE_NO_RSP | GATT_PROP_NOTIFY;
-                                buf[3] = ++handle & 0xFF;
-                                buf[4] = (handle >> 8) & 0xFF;
-                                memcpy(&buf[5], pybricks_char_uuid, 16);
-
-                                rsp.pDataList = buf;
-                                rsp.dataLen = 21;
-                                ATT_ReadByTypeRsp(connection_handle, &rsp);
+                                read_by_type_response_uuid128(connection_handle, pybricks_service_handle,
+                                    GATT_PROP_READ | GATT_PROP_WRITE |
+                                    GATT_PROP_WRITE_NO_RSP | GATT_PROP_NOTIFY,
+                                    pybricks_char_uuid);
                             } else if (start_handle <= uart_service_handle) {
-                                uint16_t handle = uart_service_handle + 1;
-                                attReadByTypeRsp_t rsp;
-                                uint8_t buf[ATT_MTU_SIZE - 2];
-
-                                buf[0] = handle & 0xFF;
-                                buf[1] = (handle >> 8) & 0xFF;
-                                buf[2] = GATT_PROP_WRITE_NO_RSP;
-                                buf[3] = ++handle & 0xFF;
-                                buf[4] = (handle >> 8) & 0xFF;
-                                memcpy(&buf[5], nrf_uart_rx_char_uuid, 16);
-
-                                rsp.pDataList = buf;
-                                rsp.dataLen = 21;
-                                ATT_ReadByTypeRsp(connection_handle, &rsp);
+                                read_by_type_response_uuid128(connection_handle, uart_service_handle,
+                                    GATT_PROP_WRITE_NO_RSP, nrf_uart_rx_char_uuid);
                             } else if (start_handle <= uart_service_handle + 2) {
-                                uint16_t handle = uart_service_handle + 3;
-                                attReadByTypeRsp_t rsp;
-                                uint8_t buf[ATT_MTU_SIZE - 2];
-
-                                buf[0] = handle & 0xFF;
-                                buf[1] = (handle >> 8) & 0xFF;
-                                buf[2] = GATT_PROP_NOTIFY;
-                                buf[3] = ++handle & 0xFF;
-                                buf[4] = (handle >> 8) & 0xFF;
-                                memcpy(&buf[5], nrf_uart_tx_char_uuid, 16);
-
-                                rsp.pDataList = buf;
-                                rsp.dataLen = 21;
-                                ATT_ReadByTypeRsp(connection_handle, &rsp);
+                                read_by_type_response_uuid128(connection_handle, uart_service_handle + 2,
+                                    GATT_PROP_NOTIFY, nrf_uart_tx_char_uuid);
                             } else {
                                 attErrorRsp_t rsp;
 
