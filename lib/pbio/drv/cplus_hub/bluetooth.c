@@ -368,6 +368,38 @@ static void handle_event(uint8_t *packet) {
                                 rsp.pDataList = buf;
                                 rsp.dataLen = 7;
                                 ATT_ReadByTypeRsp(connection_handle, &rsp);
+                            } else if (start_handle <= gap_service_handle + 2) {
+                                uint16_t handle = gap_service_handle + 3;
+                                attReadByTypeRsp_t rsp;
+                                uint8_t buf[ATT_MTU_SIZE - 2];
+
+                                buf[0] = handle & 0xFF;
+                                buf[1] = (handle >> 8) & 0xFF;
+                                buf[2] = GATT_PROP_READ;
+                                buf[3] = ++handle & 0xFF;
+                                buf[4] = (handle >> 8) & 0xFF;
+                                buf[5] = APPEARANCE_UUID & 0xFF;
+                                buf[6] = (APPEARANCE_UUID >> 8) & 0xFF;
+
+                                rsp.pDataList = buf;
+                                rsp.dataLen = 7;
+                                ATT_ReadByTypeRsp(connection_handle, &rsp);
+                            } else if (start_handle <= gap_service_handle + 4) {
+                                uint16_t handle = gap_service_handle + 5;
+                                attReadByTypeRsp_t rsp;
+                                uint8_t buf[ATT_MTU_SIZE - 2];
+
+                                buf[0] = handle & 0xFF;
+                                buf[1] = (handle >> 8) & 0xFF;
+                                buf[2] = GATT_PROP_READ;
+                                buf[3] = ++handle & 0xFF;
+                                buf[4] = (handle >> 8) & 0xFF;
+                                buf[5] = PERI_CONN_PARAM_UUID & 0xFF;
+                                buf[6] = (PERI_CONN_PARAM_UUID >> 8) & 0xFF;
+
+                                rsp.pDataList = buf;
+                                rsp.dataLen = 7;
+                                ATT_ReadByTypeRsp(connection_handle, &rsp);
                             } else if (start_handle <= pybricks_service_handle) {
                                 uint16_t handle = pybricks_service_handle + 1;
                                 attReadByTypeRsp_t rsp;
