@@ -40,6 +40,18 @@ static void wait(pbio_error_t (*end)(pbio_iodev_t *), void (*cancel)(pbio_iodev_
     }
 }
 
+
+// Get the required mode switch time delay for a given sensor type and/or mode
+static uint32_t get_mode_switch_delay(pbio_iodev_type_id_t id, uint8_t mode) {
+    switch (id) {
+        case PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR:
+            return 30;
+        // Default delay for other sensors and modes:
+        default:
+            return 0;
+    }
+}
+
 static void set_mode(pbio_iodev_t *iodev, uint8_t new_mode) {
     pbio_error_t err;
 
@@ -52,6 +64,12 @@ static void set_mode(pbio_iodev_t *iodev, uint8_t new_mode) {
     }
     pb_assert(err);
     wait(pbio_iodev_set_mode_end, pbio_iodev_set_mode_cancel, iodev);
+
+    // Give some time for the mode to take effect and discard stale data
+    uint32_t delay = get_mode_switch_delay(iodev->info->type_id, new_mode);
+    if (delay > 0) {
+        mp_hal_delay_ms(delay);
+    }
 }
 
 pbdevice_t *pbdevice_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id) {
