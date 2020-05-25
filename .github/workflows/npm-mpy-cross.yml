@@ -1,0 +1,30 @@
+name: Publish mpy-cross web assembly package
+
+on:
+  push:
+    tags:
+    - '@pybricks/mpy-cross-**'
+
+jobs:
+  npm_mpy_cross:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: npm/mpy-cross
+    steps:
+    - uses: mymindstorm/setup-emsdk@v5
+      with:
+        version: 1.39.12
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+        token: ${{ secrets.GITHUB_TOKEN2 }}
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '10.x'
+        registry-url: 'https://npm.pkg.github.com'
+    - run: yarn install
+    - run: yarn build
+    - run: yarn publish
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
