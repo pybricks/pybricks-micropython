@@ -1,0 +1,71 @@
+on:
+  push:
+    tags:
+    - 'v3.*'
+
+name: Upload Release Assets
+
+env:
+  MAKEOPTS: -j2
+
+jobs:
+  upload_release:
+    name: Upload Release Assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check cache
+        id: check-cache
+        uses: actions/cache@v1
+        with:
+          path: ${{ runner.tool_cache }}/gcc-arm
+          key: gcc-arm
+      - name: Download
+        if: steps.check-cache.outputs.cache-hit != 'true'
+        uses: fiam/arm-none-eabi-gcc@v1
+        with:
+          release: '8-2019-q3'
+          directory: ${{ runner.tool_cache }}/gcc-arm
+      - name: Add cross-compiler to path
+        run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm/bin
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          token: ${{ secrets.GITHUB_TOKEN2 }}
+      - name: Build firmware
+        run: |
+          make $MAKEOPTS -C micropython/mpy-cross
+          make $MAKEOPTS -C bricks/movehub
+          make $MAKEOPTS -C bricks/cplushub
+      - name: Get tag
+        run: echo "::set-env name=GITHUB_TAG::${GITHUB_REF#*refs/tags/}"
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: ${{ contains(env.GITHUB_TAG, 'a') || contains(env.GITHUB_TAG, 'b') || contains(env.GITHUB_TAG, 'c') }}
+      - name: Upload movehub firmware
+        id: upload-movehub
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bricks/movehub/build/firmware.zip
+          asset_name: pybricks-movehub-${{ env.GITHUB_TAG }}.zip
+          asset_content_type: application/zip
+      - name: Upload cplushub firmware
+        id: upload-cplushub
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./bricks/cplushub/build/firmware.zip
+          asset_name: pybricks-cplushub-${{ env.GITHUB_TAG }}.zip
+          asset_content_type: application/zip
