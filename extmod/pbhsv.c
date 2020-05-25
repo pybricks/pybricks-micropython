@@ -52,6 +52,7 @@ static void update_error(int32_t value, int32_t *min_error, mp_obj_t *color_matc
     // Get error
     int32_t error = value - compare;
     error = error > 0 ? error: -error;
+    error = error > 180 ? 360 - error : error;
 
     // If this is the new minimum, update
     if (error < *min_error) {
@@ -91,8 +92,7 @@ mp_obj_t pack_color_map(pb_hsv_map_t *map) {
     // Pack hue dictionary
     mp_obj_dict_t *hues = mp_obj_new_dict(0);
     if (map->hue_red != NA) {
-        int32_t red = map->hue_red >= 0 ? map->hue_red : map->hue_red + 360;
-        mp_obj_dict_store(hues, pb_const_color_red, mp_obj_new_int(red));
+        mp_obj_dict_store(hues, pb_const_color_red, mp_obj_new_int(map->hue_red));
     }
     if (map->hue_orange != NA) {
         mp_obj_dict_store(hues, pb_const_color_orange, mp_obj_new_int(map->hue_orange));
@@ -181,15 +181,8 @@ void unpack_color_map(pb_hsv_map_t *map, mp_obj_t hues, mp_obj_t saturation, mp_
 
     // If given, red must be the lowest or the highest hue
     int32_t red = get_hue_or_value(hues, pb_const_color_red);
-    if (red != NA) {
-        // Red must be within the valid range, and either be minimum or maximum
-        if (red < 0 || red > 359 || (red >= min_hue && red <= max_hue)) {
-            pb_assert(PBIO_ERROR_INVALID_ARG);
-        }
-        // If it is the maximum, flip around circle to make subsequent comparisons easier
-        if (red > max_hue) {
-            red -= 360;
-        }
+    if (red != NA && (red < 0 || red > 359 || (red >= min_hue && red <= max_hue))) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
     // Get user specified saturation threshold
