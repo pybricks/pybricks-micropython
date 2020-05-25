@@ -17,12 +17,7 @@
 #include <pbio/util.h>
 #include <pbsys/sys.h>
 
-#include "sys/autostart.h"
-#include "sys/etimer.h"
-#include "sys/process.h"
-#include "sys/pt.h"
-#include "../../src/processes.h"
-
+#include <contiki.h>
 #include <stm32l4xx_hal.h>
 
 #include <att.h>
@@ -33,6 +28,8 @@
 #include <hci_tl.h>
 #include <hci.h>
 #include <util.h>
+
+#include "src/processes.h"
 
 #define DEBUG 0
 #if DEBUG
