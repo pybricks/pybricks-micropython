@@ -4,8 +4,6 @@
 #ifndef _PBHSV_H_
 #define _PBHSV_H_
 
-#define NA (-361)
-
 typedef struct _pb_hsv_map_t {
     int32_t saturation_threshold;
     int32_t hue_red;
@@ -20,6 +18,8 @@ typedef struct _pb_hsv_map_t {
 } pb_hsv_map_t;
 
 int32_t bound_percentage(int32_t value);
+
+mp_obj_t pb_hsv_get_color(pb_hsv_map_t *map, int32_t hue, int32_t saturation, int32_t value);
 
 void pb_hsv_map_save_default(pb_hsv_map_t *map);
 

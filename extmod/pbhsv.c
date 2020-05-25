@@ -14,6 +14,9 @@
 #include "pbhsv.h"
 #include "modparameters.h"
 
+// Hue or value not specified
+const int32_t NA = -361;
+
 // Bind a value to the range (0--100)
 int32_t bound_percentage(int32_t value) {
     if (value > 100) {
@@ -39,13 +42,56 @@ void pb_hsv_map_save_default(pb_hsv_map_t *map) {
     map->value_white = 90;
 }
 
+static void update_error(int32_t value, int32_t *min_error, mp_obj_t *color_match, int32_t compare, mp_obj_t color) {
+
+    // Do not process N/A colors
+    if (compare == NA) {
+        return;
+    }
+
+    // Get error
+    int32_t error = value - compare;
+    error = error > 0 ? error: -error;
+
+    // If this is the new minimum, update
+    if (error < *min_error) {
+        *min_error = error;
+        *color_match = color;
+    }
+}
+
+// Set initial default thresholds
+mp_obj_t pb_hsv_get_color(pb_hsv_map_t *map, int32_t hue, int32_t saturation, int32_t value) {
+
+    int32_t min_error = 1000;
+    mp_obj_t color_match = mp_const_none;
+
+    if (saturation >= map->saturation_threshold) {
+        // Pick a color based on hue, whichever is the nearest match
+        update_error(hue, &min_error, &color_match, map->hue_red, pb_const_color_red);
+        update_error(hue, &min_error, &color_match, map->hue_orange, pb_const_color_orange);
+        update_error(hue, &min_error, &color_match, map->hue_yellow, pb_const_color_yellow);
+        update_error(hue, &min_error, &color_match, map->hue_green, pb_const_color_green);
+        update_error(hue, &min_error, &color_match, map->hue_blue, pb_const_color_blue);
+        update_error(hue, &min_error, &color_match, map->hue_purple, pb_const_color_purple);
+    }
+    else {
+        // Pick a non-color depending on value, whichever is the nearest match
+        update_error(value, &min_error, &color_match, map->value_none, mp_const_none);
+        update_error(value, &min_error, &color_match, map->value_black, pb_const_color_black);
+        update_error(value, &min_error, &color_match, map->value_white, pb_const_color_white);
+    }
+
+    return color_match;
+}
+
 // Return the color map as MicroPython objects
 mp_obj_t pack_color_map(pb_hsv_map_t *map) {
 
     // Pack hue dictionary
     mp_obj_dict_t *hues = mp_obj_new_dict(0);
     if (map->hue_red != NA) {
-        int32_t red = map->hue_red > 0 ? map->hue_red : map->hue_red + 360;
+        int32_t red = map->hue_red >= 0 ? map->hue_red : map->hue_red + 360;
         mp_obj_dict_store(hues, pb_const_color_red, mp_obj_new_int(red));
     }
     if (map->hue_orange != NA) {
