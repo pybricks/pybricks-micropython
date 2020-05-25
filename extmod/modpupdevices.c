@@ -16,6 +16,7 @@
 #include "pbdevice.h"
 #include "pberror.h"
 #include "pbkwarg.h"
+#include "pbhsv.h"
 
 #include "modbuiltins.h"
 #include "modparameters.h"
@@ -178,17 +179,8 @@ typedef struct _pupdevices_ColorSensor_obj_t {
     mp_obj_base_t base;
     mp_obj_t lights;
     pbdevice_t *pbdev;
+    pb_hsv_map_t color_map;
 } pupdevices_ColorSensor_obj_t;
-
-static int32_t bound_percentage(int32_t value) {
-    if (value > 100) {
-        return 100;
-    }
-    if (value < 0) {
-        return 0;
-    }
-    return value;
-}
 
 // pybricks.pupdevices.ColorSensor.__init__
 STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
@@ -213,8 +205,31 @@ STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     int32_t hsv[3];
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__HSV, hsv);
 
+    // Save default settings
+    pb_hsv_map_save_default(&self->color_map);
+
     return MP_OBJ_FROM_PTR(self);
 }
+
+// pybricks.builtins.ColorSensor.color_map
+STATIC mp_obj_t pupdevices_ColorSensor_color_map(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pupdevices_ColorSensor_obj_t, self,
+        PB_ARG_DEFAULT_NONE(hues),
+        PB_ARG_DEFAULT_NONE(saturation),
+        PB_ARG_DEFAULT_NONE(values));
+
+    // If no arguments are given, return current map
+    if (hues == mp_const_none && saturation == mp_const_none && values == mp_const_none) {
+        return pack_color_map(&self->color_map);
+    }
+
+    // Otherwise, unpack given map
+    unpack_color_map(&self->color_map, hues, saturation, values);
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorSensor_color_map_obj, 1, pupdevices_ColorSensor_color_map);
 
 // pybricks.pupdevices.ColorSensor.reflection
 STATIC mp_obj_t pupdevices_ColorSensor_reflection(mp_obj_t self_in) {
@@ -240,6 +255,7 @@ STATIC const mp_rom_map_elem_t pupdevices_ColorSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_lights),      MP_ROM_ATTRIBUTE_OFFSET(pupdevices_ColorSensor_obj_t, lights)},
     { MP_ROM_QSTR(MP_QSTR_reflection),  MP_ROM_PTR(&pupdevices_ColorSensor_reflection_obj)           },
     { MP_ROM_QSTR(MP_QSTR_ambient),     MP_ROM_PTR(&pupdevices_ColorSensor_ambient_obj)              },
+    { MP_ROM_QSTR(MP_QSTR_color_map),   MP_ROM_PTR(&pupdevices_ColorSensor_color_map_obj)            },
 };
 STATIC MP_DEFINE_CONST_DICT(pupdevices_ColorSensor_locals_dict, pupdevices_ColorSensor_locals_dict_table);
 
