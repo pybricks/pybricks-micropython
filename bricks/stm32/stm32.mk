@@ -178,7 +178,6 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modrobotics.c \
 	modtools.c \
 	moduos.c \
-	pbhub.c \
 	)
 
 PYBRICKS_PY_SRC_C = $(addprefix py/,\

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
+#include <pbsys/sys.h>
+
 #include <pbio/port.h>
 #include <pbio/button.h>
 
@@ -10,7 +12,6 @@
 
 #include "pberror.h"
 #include "pbobj.h"
-#include "pbhub.h"
 
 extern const struct _mp_obj_module_t pb_module_battery;
 
@@ -62,6 +63,31 @@ STATIC const mp_obj_type_t hubs_EV3Brick_type = {
 };
 
 #endif // PYBRICKS_HUB_EV3
+
+#if (PYBRICKS_HUB_MOVEHUB || PYBRICKS_HUB_CITYHUB || PYBRICKS_HUB_CPLUSHUB || PYBRICKS_HUB_PRIMEHUB)
+
+// pybricks.builtins.HubClass.shutdown
+STATIC mp_obj_t hubs_HubClass_shutdown(mp_obj_t self_in) {
+    pbsys_power_off();
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(hub_shutdown_obj, hubs_HubClass_shutdown);
+
+// pybricks.builtins.HubClass.reboot
+STATIC mp_obj_t hubs_HubClass_reboot(mp_obj_t self_in) {
+    pbsys_reboot(0);
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(hub_reboot_obj, hubs_HubClass_reboot);
+
+// pybricks.builtins.HubClass.update
+STATIC mp_obj_t hubs_HubClass_update(mp_obj_t self_in) {
+    pbsys_reboot(1);
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(hub_update_obj, hubs_HubClass_update);
+
+#endif
 
 #if PYBRICKS_HUB_MOVEHUB
 
