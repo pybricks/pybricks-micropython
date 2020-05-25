@@ -30,16 +30,16 @@ int32_t bound_percentage(int32_t value) {
 
 // Set initial default thresholds
 void pb_hsv_map_save_default(pb_hsv_map_t *map) {
-    map->saturation_threshold = 50;
-    map->hue_red = 0;
+    map->saturation_threshold = 30;
+    map->hue_red = 350;
     map->hue_orange = NA;
-    map->hue_yellow = 60;
-    map->hue_green = 120;
-    map->hue_blue = 240;
+    map->hue_yellow = 30;
+    map->hue_green = 110;
+    map->hue_blue = 210;
     map->hue_purple = NA;
-    map->value_none = 10;
-    map->value_black = 20;
-    map->value_white = 90;
+    map->value_none = 0;
+    map->value_black = 10;
+    map->value_white = 60;
 }
 
 static void update_error(int32_t value, int32_t *min_error, mp_obj_t *color_match, int32_t compare, mp_obj_t color) {
@@ -51,7 +51,7 @@ static void update_error(int32_t value, int32_t *min_error, mp_obj_t *color_matc
 
     // Get error
     int32_t error = value - compare;
-    error = error > 0 ? error: -error;
+    error = error > 0 ? error : -error;
     error = error > 180 ? 360 - error : error;
 
     // If this is the new minimum, update
@@ -75,8 +75,7 @@ mp_obj_t pb_hsv_get_color(pb_hsv_map_t *map, int32_t hue, int32_t saturation, in
         update_error(hue, &min_error, &color_match, map->hue_green, pb_const_color_green);
         update_error(hue, &min_error, &color_match, map->hue_blue, pb_const_color_blue);
         update_error(hue, &min_error, &color_match, map->hue_purple, pb_const_color_purple);
-    }
-    else {
+    } else {
         // Pick a non-color depending on value, whichever is the nearest match
         update_error(value, &min_error, &color_match, map->value_none, mp_const_none);
         update_error(value, &min_error, &color_match, map->value_black, pb_const_color_black);
