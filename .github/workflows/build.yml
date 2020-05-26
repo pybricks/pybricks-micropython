@@ -2,8 +2,10 @@ name: Build
 
 on:
   push:
+    branches:
+    - '**'
     tags-ignore:
-      '@pybricks/**'
+    - '@pybricks/**'
   pull_request:
 
 env:
