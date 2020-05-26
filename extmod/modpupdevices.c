@@ -419,9 +419,67 @@ STATIC mp_obj_t pupdevices_ForceSensor_touched(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ForceSensor_touched_obj, pupdevices_ForceSensor_touched);
 
+// pybricks.pupdevices.ForceSensor.force
+STATIC mp_obj_t pupdevices_ForceSensor_force(mp_obj_t self_in) {
+    pupdevices_ForceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    // Force in hundreds of newtons
+    int32_t force = (1000 * (pupdevices_ForceSensor__raw(self->pbdev) - self->raw_released - self->raw_offset)) / (self->raw_end - self->raw_released);
+    force = force < 0 ? 0 : force;
+
+    // Return in newtons in the available format
+    #if MICROPY_FLOAT_IMPL == MICROPY_FLOAT_IMPL_NONE
+    return mp_obj_new_int(force / 100);
+    #else
+    return mp_obj_new_float(force / 100.0);
+    #endif
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ForceSensor_force_obj, pupdevices_ForceSensor_force);
+
+// pybricks.pupdevices.ForceSensor.distance
+STATIC mp_obj_t pupdevices_ForceSensor_distance(mp_obj_t self_in) {
+    pupdevices_ForceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    // Distance in hundreds of millimeters
+    int32_t distance = (667 * (pupdevices_ForceSensor__raw(self->pbdev) - self->raw_released)) / (self->raw_end - self->raw_released);
+    distance = distance < 0 ? 0 : distance;
+
+    // Return in newtons in the available format
+    #if MICROPY_FLOAT_IMPL == MICROPY_FLOAT_IMPL_NONE
+    return mp_obj_new_int(distance / 100);
+    #else
+    return mp_obj_new_float(distance / 100.0);
+    #endif
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ForceSensor_distance_obj, pupdevices_ForceSensor_distance);
+
+// pybricks.pupdevices.ForceSensor.pressed
+STATIC mp_obj_t pupdevices_ForceSensor_pressed(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pupdevices_ForceSensor_obj_t, self,
+        PB_ARG_DEFAULT_INT(force, 3));
+
+    // Get force threshold
+    #if MICROPY_FLOAT_IMPL == MICROPY_FLOAT_IMPL_NONE
+    int32_t f_arg = mp_obj_get_int(force) * 100;
+    #else
+    int32_t f_arg = mp_obj_get_float(force) * 100.0;
+    #endif
+
+    // FIXME: reuse from force method
+    int32_t f_val = (1000 * (pupdevices_ForceSensor__raw(self->pbdev) - self->raw_released - self->raw_offset)) / (self->raw_end - self->raw_released);
+
+    return mp_obj_new_bool(f_val >= f_arg);
+}
+MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ForceSensor_pressed_obj, 1, pupdevices_ForceSensor_pressed);
+
+
 // dir(pybricks.pupdevices.ForceSensor)
 STATIC const mp_rom_map_elem_t pupdevices_ForceSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_touched),     MP_ROM_PTR(&pupdevices_ForceSensor_touched_obj)              },
+    { MP_ROM_QSTR(MP_QSTR_force),       MP_ROM_PTR(&pupdevices_ForceSensor_force_obj)                },
+    { MP_ROM_QSTR(MP_QSTR_pressed),     MP_ROM_PTR(&pupdevices_ForceSensor_pressed_obj)              },
+    { MP_ROM_QSTR(MP_QSTR_distance),    MP_ROM_PTR(&pupdevices_ForceSensor_distance_obj)             },
 };
 STATIC MP_DEFINE_CONST_DICT(pupdevices_ForceSensor_locals_dict, pupdevices_ForceSensor_locals_dict_table);
 
