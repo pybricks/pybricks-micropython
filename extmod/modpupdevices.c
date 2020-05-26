@@ -332,8 +332,28 @@ STATIC mp_obj_t pupdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     return MP_OBJ_FROM_PTR(self);
 }
 
+// pybricks.pupdevices.UltrasonicSensor.distance
+STATIC mp_obj_t pupdevices_UltrasonicSensor_distance(mp_obj_t self_in) {
+    pupdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t distance;
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__DISTL, &distance);
+    return mp_obj_new_int(distance < 0 ? 3000 : distance);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_UltrasonicSensor_distance_obj, pupdevices_UltrasonicSensor_distance);
+
+// pybricks.pupdevices.UltrasonicSensor.presence
+STATIC mp_obj_t pupdevices_UltrasonicSensor_presence(mp_obj_t self_in) {
+    pupdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    int32_t presence;
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LISTN, &presence);
+    return mp_obj_new_bool(presence);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_UltrasonicSensor_presence_obj, pupdevices_UltrasonicSensor_presence);
+
 // dir(pybricks.pupdevices.UltrasonicSensor)
 STATIC const mp_rom_map_elem_t pupdevices_UltrasonicSensor_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_distance),     MP_ROM_PTR(&pupdevices_UltrasonicSensor_distance_obj)              },
+    { MP_ROM_QSTR(MP_QSTR_presence),     MP_ROM_PTR(&pupdevices_UltrasonicSensor_presence_obj)              },
     { MP_ROM_QSTR(MP_QSTR_lights),       MP_ROM_ATTRIBUTE_OFFSET(pupdevices_UltrasonicSensor_obj_t, lights) },
 };
 STATIC MP_DEFINE_CONST_DICT(pupdevices_UltrasonicSensor_locals_dict, pupdevices_UltrasonicSensor_locals_dict_table);
