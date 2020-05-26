@@ -370,7 +370,19 @@ STATIC const mp_obj_type_t pupdevices_UltrasonicSensor_type = {
 typedef struct _pupdevices_ForceSensor_obj_t {
     mp_obj_base_t base;
     pbdevice_t *pbdev;
+    int32_t raw_released;
+    int32_t raw_touched;
+    int32_t raw_offset;
+    int32_t raw_start;
+    int32_t raw_end;
 } pupdevices_ForceSensor_obj_t;
+
+// pybricks.pupdevices.ForceSensor._raw
+STATIC int32_t pupdevices_ForceSensor__raw(pbdevice_t *pbdev) {
+    int32_t raw;
+    pbdevice_get_values(pbdev, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__FRAW, &raw);
+    return raw;
+}
 
 // pybricks.pupdevices.ForceSensor.__init__
 STATIC mp_obj_t pupdevices_ForceSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
@@ -385,11 +397,31 @@ STATIC mp_obj_t pupdevices_ForceSensor_make_new(const mp_obj_type_t *type, size_
     // Get iodevices
     self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_SPIKE_FORCE_SENSOR);
 
+    // Read scaling factors
+    int32_t calib[8];
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__CALIB, calib);
+    self->raw_released = calib[0];
+    self->raw_offset = calib[1];
+    self->raw_touched = calib[2];
+    self->raw_end = calib[6];
+
+    // Do one read to verify everything works
+    pupdevices_ForceSensor__raw(self->pbdev);
+
     return MP_OBJ_FROM_PTR(self);
 }
 
+// pybricks.pupdevices.ForceSensor.touched
+STATIC mp_obj_t pupdevices_ForceSensor_touched(mp_obj_t self_in) {
+    pupdevices_ForceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    return mp_obj_new_bool(pupdevices_ForceSensor__raw(self->pbdev) > self->raw_touched);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ForceSensor_touched_obj, pupdevices_ForceSensor_touched);
+
 // dir(pybricks.pupdevices.ForceSensor)
 STATIC const mp_rom_map_elem_t pupdevices_ForceSensor_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_touched),     MP_ROM_PTR(&pupdevices_ForceSensor_touched_obj)              },
 };
 STATIC MP_DEFINE_CONST_DICT(pupdevices_ForceSensor_locals_dict, pupdevices_ForceSensor_locals_dict_table);
 

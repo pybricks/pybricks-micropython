@@ -160,4 +160,10 @@ enum {
     PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__CALIB = 8,  // ??   7x int16_t
 };
 
+// LEGO SPIKE Force Sensor
+enum {
+    PBIO_IODEV_MODE_PUP_FORCE_SENSOR__FRAW  = 4,  // read 1x int16_t
+    PBIO_IODEV_MODE_PUP_FORCE_SENSOR__CALIB = 6,  // ??   8x int16_t
+};
+
 #endif // _PBDEVICE_H_
