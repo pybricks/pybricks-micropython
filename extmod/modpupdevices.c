@@ -327,7 +327,7 @@ STATIC mp_obj_t pupdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     pbdevice_set_power_supply(self->pbdev, true);
 
     // Create an instance of the LightArray class
-    self->lights = builtins_LightArray_obj_make_new(self->pbdev, 5, 4);
+    self->lights = builtins_LightArray_obj_make_new(self->pbdev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LIGHT, 4);
 
     return MP_OBJ_FROM_PTR(self);
 }
