@@ -1,0 +1,27 @@
+{
+    "name": "@pybricks/firmware",
+    "version": "0.1.0",
+    "description": "Pybricks firmware",
+    "main": "./build/index.js",
+    "types": "./build/index.d.ts",
+    "files": [
+        "./build/"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/pybricks/pybricks-micropython",
+        "directory": "npm/firmware"
+    },
+    "publishConfig": {
+        "registry": "https://npm.pkg.github.com"
+    },
+    "author": "The Pybricks Authors",
+    "license": "MIT",
+    "scripts": {
+        "build": "make && tsc",
+        "clean": "make clean"
+    },
+    "devDependencies": {
+        "typescript": "^3.8.3"
+    }
+}

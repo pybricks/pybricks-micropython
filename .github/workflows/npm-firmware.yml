@@ -1,0 +1,42 @@
+name: Publish firmware package
+
+on:
+  push:
+    tags:
+    - '@pybricks/firmware/**'
+
+jobs:
+  npm_mpy_cross:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: npm/firmware
+    steps:
+    - name: Check cache
+      id: check-cache
+      uses: actions/cache@v1
+      with:
+        path: ${{ runner.tool_cache }}/gcc-arm
+        key: gcc-arm
+    - name: Download cross-compiler
+      if: steps.check-cache.outputs.cache-hit != 'true'
+      uses: fiam/arm-none-eabi-gcc@v1
+      with:
+        release: '8-2019-q3'
+        directory: ${{ runner.tool_cache }}/gcc-arm
+    - name: Add cross-compiler to path
+      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm/bin
+      working-directory: ${{ github.workspace }}
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+        token: ${{ secrets.GITHUB_TOKEN2 }}
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '10.x'
+        registry-url: 'https://npm.pkg.github.com'
+    - run: yarn install
+    - run: yarn build
+    - run: yarn publish
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
