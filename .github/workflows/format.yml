@@ -1,7 +1,26 @@
 name: Format
 
 # TODO: only do this on pull requests and add commit if there is a diff
-on: [push, pull_request]
+# NB: Paths should match paths defined in ./tools/codeformat.py
+on:
+  push:
+    paths:
+    - "bricks/**/*.[ch]"
+    - "extmod/*.[ch]"
+    - "lib/pbio/**/*.[ch]"
+    - "py/*.[ch]"
+    - "bricks/**/*.py"
+    - "tests/**/*.py"
+    - "tools/**/*.py"
+  pull_request:
+    paths:
+    - "bricks/**/*.[ch]"
+    - "extmod/*.[ch]"
+    - "lib/pbio/**/*.[ch]"
+    - "py/*.[ch]"
+    - "bricks/**/*.py"
+    - "tests/**/*.py"
+    - "tools/**/*.py"
 
 jobs:
   format:
