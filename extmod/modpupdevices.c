@@ -184,6 +184,23 @@ typedef struct _pupdevices_ColorSensor_obj_t {
     pb_hsv_map_t color_map;
 } pupdevices_ColorSensor_obj_t;
 
+// pybricks.builtins.ColorSensor._get_hsv
+STATIC void pupdevices_ColorSensor__get_hsv(pbdevice_t *pbdev, bool light_on, int32_t *hsv) {
+
+    // Read HSV (light on) or SHSV mode (light off)
+    pbdevice_get_values(pbdev, light_on ? PBIO_IODEV_MODE_PUP_COLOR_SENSOR__HSV : PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, hsv);
+
+    // Scale saturation and value to match 0-100% range in typical applications.
+    // However, do not cap to allow other applications as well. For example, full sunlight will exceed 100%.
+    if (light_on) {
+        hsv[1] /= 8;
+        hsv[2] /= 5;
+    } else {
+        hsv[1] /= 12;
+        hsv[2] /= 12;
+    }
+}
+
 // pybricks.pupdevices.ColorSensor.__init__
 STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
@@ -204,8 +221,8 @@ STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     self->lights = builtins_LightArray_obj_make_new(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__LIGHT, 3);
 
     // Do one reading to make sure everything is working and to set default mode
-    int32_t hsv[3];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__HSV, hsv);
+    int32_t hsv[4];
+    pupdevices_ColorSensor__get_hsv(self->pbdev, true, hsv);
 
     // Save default settings
     pb_hsv_map_save_default(&self->color_map);
@@ -219,20 +236,17 @@ STATIC mp_obj_t pupdevices_ColorSensor_hsv(size_t n_args, const mp_obj_t *pos_ar
         pupdevices_ColorSensor_obj_t, self,
         PB_ARG_DEFAULT_TRUE(illuminate));
 
-    bool light = mp_obj_is_true(illuminate);
-
+    // Read HSV, either with light on or off
     int32_t hsv[4];
-    pbdevice_get_values(self->pbdev, light ? PBIO_IODEV_MODE_PUP_COLOR_SENSOR__HSV : PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, hsv);
+    pupdevices_ColorSensor__get_hsv(self->pbdev, mp_obj_is_true(illuminate), hsv);
+
+    // Create tuple
     mp_obj_t ret[3];
     ret[0] = mp_obj_new_int(hsv[0]);
-    if (light) {
-        ret[1] = mp_obj_new_int(bound_percentage(hsv[1] >> 3));
-        ret[2] = mp_obj_new_int(bound_percentage(hsv[2] / 5));
-    } else {
-        ret[1] = mp_obj_new_int(hsv[1] / 12);
-        ret[2] = mp_obj_new_int(hsv[2] / 12);
-    }
+    ret[1] = mp_obj_new_int(hsv[1]);
+    ret[2] = mp_obj_new_int(hsv[2]);
 
+    // Return hsv tuple
     return mp_obj_new_tuple(3, ret);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorSensor_hsv_obj, 1, pupdevices_ColorSensor_hsv);
@@ -243,17 +257,12 @@ STATIC mp_obj_t pupdevices_ColorSensor_color(size_t n_args, const mp_obj_t *pos_
         pupdevices_ColorSensor_obj_t, self,
         PB_ARG_DEFAULT_TRUE(illuminate));
 
-    bool light = mp_obj_is_true(illuminate);
-
+    // Read HSV, either with light on or off
     int32_t hsv[4];
-    pbdevice_get_values(self->pbdev, light ? PBIO_IODEV_MODE_PUP_COLOR_SENSOR__HSV : PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, hsv);
-    if (light) {
-        return pb_hsv_get_color(&self->color_map, hsv[0], bound_percentage(hsv[1] >> 3), bound_percentage(hsv[2] / 5));
-    } else {
-        return pb_hsv_get_color(&self->color_map, hsv[0], hsv[1] / 12, hsv[2] / 12);
-    }
+    pupdevices_ColorSensor__get_hsv(self->pbdev, mp_obj_is_true(illuminate), hsv);
 
-    return mp_const_none;
+    // Get and return discretized color
+    return pb_hsv_get_color(&self->color_map, hsv[0], hsv[1], hsv[2]);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorSensor_color_obj, 1, pupdevices_ColorSensor_color);
 
@@ -280,19 +289,26 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorSensor_color_map_obj, 1, pupde
 // pybricks.pupdevices.ColorSensor.reflection
 STATIC mp_obj_t pupdevices_ColorSensor_reflection(mp_obj_t self_in) {
     pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t hsv[3];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__HSV, hsv);
-    return mp_obj_new_int(hsv[2] / 5);
+
+    // Read HSV with light on
+    int32_t hsv[4];
+    pupdevices_ColorSensor__get_hsv(self->pbdev, true, hsv);
+
+    // Return value as reflection
+    return mp_obj_new_int(hsv[2]);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorSensor_reflection_obj, pupdevices_ColorSensor_reflection);
 
 // pybricks.pupdevices.ColorSensor.ambient
 STATIC mp_obj_t pupdevices_ColorSensor_ambient(mp_obj_t self_in) {
     pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t shsv[4];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, shsv);
-    // FIXME: Use non-linear scaling so value matches the ambient-only mode better in the range 50--100 also.
-    return mp_obj_new_int(bound_percentage(shsv[2] / 120));
+
+    // Read HSV with light off
+    int32_t hsv[4];
+    pupdevices_ColorSensor__get_hsv(self->pbdev, false, hsv);
+
+    // Return value as reflection
+    return mp_obj_new_int(hsv[2]);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorSensor_ambient_obj, pupdevices_ColorSensor_ambient);
 
