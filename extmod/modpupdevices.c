@@ -437,6 +437,11 @@ STATIC mp_obj_t pupdevices_ForceSensor_make_new(const mp_obj_type_t *type, size_
     self->raw_touched = calib[2];
     self->raw_end = calib[6];
 
+    // Do sanity check on values to theoretically avoid zero division
+    if (self->raw_released >= self->raw_touched || self->raw_touched >= self->raw_end) {
+        pb_assert(PBIO_ERROR_FAILED);
+    }
+
     // Do one read to verify everything works
     pupdevices_ForceSensor__raw(self->pbdev);
 
