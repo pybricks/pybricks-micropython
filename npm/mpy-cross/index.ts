@@ -17,7 +17,7 @@ interface MpyCrossModule extends EmscriptenModule {
 
 const MpyCross = UntypedMpyCross as MpyCrossModule;
 
-interface CompileResult {
+export interface CompileResult {
     /**
      * The mpy-cross program exit code.
      */
