@@ -234,11 +234,11 @@ STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 STATIC mp_obj_t pupdevices_ColorSensor_hsv(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pupdevices_ColorSensor_obj_t, self,
-        PB_ARG_DEFAULT_TRUE(illuminate));
+        PB_ARG_DEFAULT_TRUE(surface));
 
     // Read HSV, either with light on or off
     int32_t hsv[4];
-    pupdevices_ColorSensor__get_hsv(self->pbdev, mp_obj_is_true(illuminate), hsv);
+    pupdevices_ColorSensor__get_hsv(self->pbdev, mp_obj_is_true(surface), hsv);
 
     // Create tuple
     mp_obj_t ret[3];
@@ -255,11 +255,11 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorSensor_hsv_obj, 1, pupdevices_
 STATIC mp_obj_t pupdevices_ColorSensor_color(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pupdevices_ColorSensor_obj_t, self,
-        PB_ARG_DEFAULT_TRUE(illuminate));
+        PB_ARG_DEFAULT_TRUE(surface));
 
     // Read HSV, either with light on or off
     int32_t hsv[4];
-    pupdevices_ColorSensor__get_hsv(self->pbdev, mp_obj_is_true(illuminate), hsv);
+    pupdevices_ColorSensor__get_hsv(self->pbdev, mp_obj_is_true(surface), hsv);
 
     // Get and return discretized color
     return pb_hsv_get_color(&self->color_map, hsv[0], hsv[1], hsv[2]);
