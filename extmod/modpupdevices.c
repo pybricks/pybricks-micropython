@@ -217,16 +217,21 @@ STATIC mp_obj_t pupdevices_ColorSensor_hsv(size_t n_args, const mp_obj_t *pos_ar
         pupdevices_ColorSensor_obj_t, self,
         PB_ARG_DEFAULT_TRUE(illuminate));
 
-    if (mp_obj_is_true(illuminate)) {
-        int32_t hsv[3];
-        pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__HSV, hsv);
-        mp_obj_t ret[3];
-        ret[0] = mp_obj_new_int(hsv[0]);
+    bool light = mp_obj_is_true(illuminate);
+
+    int32_t hsv[4];
+    pbdevice_get_values(self->pbdev, light ? PBIO_IODEV_MODE_PUP_COLOR_SENSOR__HSV : PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, hsv);
+    mp_obj_t ret[3];
+    ret[0] = mp_obj_new_int(hsv[0]);
+    if (light) {
         ret[1] = mp_obj_new_int(bound_percentage(hsv[1] >> 3));
         ret[2] = mp_obj_new_int(bound_percentage(hsv[2] / 5));
-        return mp_obj_new_tuple(3, ret);
+    } else {
+        ret[1] = mp_obj_new_int(hsv[1] / 12);
+        ret[2] = mp_obj_new_int(hsv[2] / 12);
     }
-    return mp_const_none;
+
+    return mp_obj_new_tuple(3, ret);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorSensor_hsv_obj, 1, pupdevices_ColorSensor_hsv);
 
@@ -236,11 +241,16 @@ STATIC mp_obj_t pupdevices_ColorSensor_color(size_t n_args, const mp_obj_t *pos_
         pupdevices_ColorSensor_obj_t, self,
         PB_ARG_DEFAULT_TRUE(illuminate));
 
-    if (mp_obj_is_true(illuminate)) {
-        int32_t hsv[3];
-        pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__HSV, hsv);
+    bool light = mp_obj_is_true(illuminate);
+
+    int32_t hsv[4];
+    pbdevice_get_values(self->pbdev, light ? PBIO_IODEV_MODE_PUP_COLOR_SENSOR__HSV : PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, hsv);
+    if (light) {
         return pb_hsv_get_color(&self->color_map, hsv[0], bound_percentage(hsv[1] >> 3), bound_percentage(hsv[2] / 5));
+    } else {
+        return pb_hsv_get_color(&self->color_map, hsv[0], hsv[1] / 12, hsv[2] / 12);
     }
+
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorSensor_color_obj, 1, pupdevices_ColorSensor_color);
@@ -280,7 +290,7 @@ STATIC mp_obj_t pupdevices_ColorSensor_ambient(mp_obj_t self_in) {
     int32_t shsv[4];
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, shsv);
     // FIXME: Use non-linear scaling so value matches the ambient-only mode better in the range 50--100 also.
-    return mp_obj_new_int(bound_percentage(shsv[2] / 140));
+    return mp_obj_new_int(bound_percentage(shsv[2] / 120));
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorSensor_ambient_obj, pupdevices_ColorSensor_ambient);
 
