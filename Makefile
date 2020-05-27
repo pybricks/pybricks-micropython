@@ -1,6 +1,15 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2019-2020 The Pybricks Authors
 
+# ensure micropython submodule is checked out for building mpy-cross
+ifeq ("$(wildcard micropython/README.md)","")
+$(info GIT cloning micropython submodule)
+$(info $(shell git submodule update --init micropython))
+ifeq ("$(wildcard micropython/README.md)","")
+$(error failed)
+endif
+endif
+
 help:
 	@echo "Use 'make <BRICK>' to build a brick."
 
