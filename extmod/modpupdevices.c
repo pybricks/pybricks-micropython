@@ -462,12 +462,8 @@ STATIC mp_obj_t pupdevices_ForceSensor_pressed(size_t n_args, const mp_obj_t *po
         pupdevices_ForceSensor_obj_t, self,
         PB_ARG_DEFAULT_INT(force, 3));
 
-    // Get force threshold
-    #if MICROPY_FLOAT_IMPL == MICROPY_FLOAT_IMPL_NONE
-    int32_t f_arg = mp_obj_get_int(force) * 100;
-    #else
-    int32_t f_arg = mp_obj_get_float(force) * 100.0;
-    #endif
+    // Get force threshold in hundreds of newtons
+    int32_t f_arg = pbio_math_mul_i32_fix16(100, pb_obj_get_fix16(force))
 
     // FIXME: reuse from force method
     int32_t f_val = (1000 * (pupdevices_ForceSensor__raw(self->pbdev) - self->raw_released - self->raw_offset)) / (self->raw_end - self->raw_released);
