@@ -20,6 +20,9 @@ mp_int_t pb_obj_get_int(mp_obj_t arg);
 #define pb_obj_get_int mp_obj_get_int
 #endif
 
+// like mp_obj_new_int / mp_obj_new_float to create object as a ratio of two integers
+mp_obj_t pb_obj_new_fraction(int32_t numerator, int32_t denominator);
+
 fix16_t pb_obj_get_fix16(mp_obj_t arg);
 
 // Get value if object is not none, else return default

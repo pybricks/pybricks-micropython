@@ -16,6 +16,7 @@
 #include "pbdevice.h"
 #include "pberror.h"
 #include "pbkwarg.h"
+#include "pbobj.h"
 #include "pbhsv.h"
 
 #include "modbuiltins.h"
@@ -437,12 +438,8 @@ STATIC mp_obj_t pupdevices_ForceSensor_force(mp_obj_t self_in) {
     int32_t force = (1000 * (pupdevices_ForceSensor__raw(self->pbdev) - self->raw_released - self->raw_offset)) / (self->raw_end - self->raw_released);
     force = force < 0 ? 0 : force;
 
-    // Return in newtons in the available format
-    #if MICROPY_FLOAT_IMPL == MICROPY_FLOAT_IMPL_NONE
-    return mp_obj_new_int(force / 100);
-    #else
-    return mp_obj_new_float(force / 100.0);
-    #endif
+    // Return in newtons
+    return pb_obj_new_fraction(force, 100);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ForceSensor_force_obj, pupdevices_ForceSensor_force);
 
@@ -454,12 +451,8 @@ STATIC mp_obj_t pupdevices_ForceSensor_distance(mp_obj_t self_in) {
     int32_t distance = (667 * (pupdevices_ForceSensor__raw(self->pbdev) - self->raw_released)) / (self->raw_end - self->raw_released);
     distance = distance < 0 ? 0 : distance;
 
-    // Return in newtons in the available format
-    #if MICROPY_FLOAT_IMPL == MICROPY_FLOAT_IMPL_NONE
-    return mp_obj_new_int(distance / 100);
-    #else
-    return mp_obj_new_float(distance / 100.0);
-    #endif
+    // Return in millimeters
+    return pb_obj_new_fraction(distance, 100);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ForceSensor_distance_obj, pupdevices_ForceSensor_distance);
 
