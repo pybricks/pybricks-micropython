@@ -28,3 +28,7 @@ Module['onExit'] = (status) => {
   const mpy = status === 0 ? FS.readFile(outputFileName, { encoding: 'binary' }) : undefined;
   Module['callback'](status, collectedOut.join(), collectedErr.join(), mpy);
 }
+
+Module['quit'] = () => {
+  // prevent node from calling process.exit()
+}
