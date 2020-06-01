@@ -17,6 +17,8 @@
 #ifndef _LEGO_UART_H_
 #define _LEGO_UART_H_
 
+#include <stdint.h>
+
 // Header byte
 
 /** Bit mask for ::lump_msg_type_t */
