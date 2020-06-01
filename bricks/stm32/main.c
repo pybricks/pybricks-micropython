@@ -351,9 +351,6 @@ void gc_collect(void) {
 
     // end the GC
     gc_collect_end();
-
-    // for debug during development
-    gc_dump_info();
 }
 
 mp_lexer_t *mp_lexer_new_from_file(const char *filename) {
