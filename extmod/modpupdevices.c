@@ -12,6 +12,7 @@
 #include <pbio/light.h>
 #include <pbio/math.h>
 
+#include "py/obj.h"
 #include "py/runtime.h"
 
 #include "pbdevice.h"
