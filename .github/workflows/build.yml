@@ -27,8 +27,8 @@ jobs:
       if: success()
       uses: actions/upload-artifact@v1
       with:
-        name: pybricks-mpy-cross
-        path: micropython/mpy-cross/pybricks-mpy-cross
+        name: mpy-cross
+        path: micropython/mpy-cross/mpy-cross
 
   unix_coverage:
     name: unix coverage
@@ -45,10 +45,10 @@ jobs:
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
-        name: pybricks-mpy-cross
+        name: mpy-cross
         path: micropython/mpy-cross
     - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+      run: chmod +x micropython/mpy-cross/mpy-cross
     - name: Build
       run: |
         cd micropython
@@ -94,10 +94,10 @@ jobs:
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
-        name: pybricks-mpy-cross
+        name: mpy-cross
         path: micropython/mpy-cross
     - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+      run: chmod +x micropython/mpy-cross/mpy-cross
     - name: Create docker container
       run: bricks/ev3dev/docker/setup.sh armel
     - name: Build
@@ -150,10 +150,10 @@ jobs:
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
-        name: pybricks-mpy-cross
+        name: mpy-cross
         path: micropython/mpy-cross
     - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+      run: chmod +x micropython/mpy-cross/mpy-cross
     - name: Build
       run: make $MAKEOPTS -C bricks/ev3dev
     - name: Test
@@ -202,10 +202,10 @@ jobs:
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
-        name: pybricks-mpy-cross
+        name: mpy-cross
         path: micropython/mpy-cross
     - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+      run: chmod +x micropython/mpy-cross/mpy-cross
     - name: Build
       run: make $MAKEOPTS -C bricks/cityhub
     - name: Upload firmware
@@ -247,10 +247,10 @@ jobs:
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
-        name: pybricks-mpy-cross
+        name: mpy-cross
         path: micropython/mpy-cross
     - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+      run: chmod +x micropython/mpy-cross/mpy-cross
     - name: Build
       run: make $MAKEOPTS -C bricks/cplushub
     - name: Upload firmware
@@ -292,10 +292,10 @@ jobs:
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
-        name: pybricks-mpy-cross
+        name: mpy-cross
         path: micropython/mpy-cross
     - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+      run: chmod +x micropython/mpy-cross/mpy-cross
     - name: Build
       run: make $MAKEOPTS -C bricks/movehub
     - name: Upload firmware
@@ -337,10 +337,10 @@ jobs:
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
-        name: pybricks-mpy-cross
+        name: mpy-cross
         path: micropython/mpy-cross
     - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+      run: chmod +x micropython/mpy-cross/mpy-cross
     - name: Build
       run: make $MAKEOPTS -C bricks/primehub
     - name: Upload firmware
@@ -387,10 +387,10 @@ jobs:
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
-        name: pybricks-mpy-cross
+        name: mpy-cross
         path: micropython/mpy-cross
     - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+      run: chmod +x micropython/mpy-cross/mpy-cross
     - name: Build
       run:  make $MAKEOPTS -C bricks/nxt
     - name: Upload firmware
@@ -420,10 +420,10 @@ jobs:
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
-        name: pybricks-mpy-cross
+        name: mpy-cross
         path: micropython/mpy-cross
     - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/pybricks-mpy-cross
+      run: chmod +x micropython/mpy-cross/mpy-cross
     - name: Build
       run: make $MAKEOPTS -C bricks/debug build/firmware.dfu
 
