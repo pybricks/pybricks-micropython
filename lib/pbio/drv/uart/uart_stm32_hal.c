@@ -172,6 +172,7 @@ void HAL_UART_AbortReceiveCpltCallback(UART_HandleTypeDef *huart) {
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(huart, pbdrv_uart_t, huart);
 
     uart->rx_result = PBIO_ERROR_CANCELED;
+    process_poll(&pbdrv_uart_process);
 }
 
 // overrides weak function in stm32f4xx_hal_uart.c
@@ -187,6 +188,7 @@ void HAL_UART_AbortTransmitCpltCallback(UART_HandleTypeDef *huart) {
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(huart, pbdrv_uart_t, huart);
 
     uart->tx_result = PBIO_ERROR_CANCELED;
+    process_poll(&pbdrv_uart_process);
 }
 
 void pbdrv_uart_stm32_hal_handle_irq(uint8_t id) {
