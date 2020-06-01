@@ -21,5 +21,6 @@
 // Pybricks STM32 options
 #define PYBRICKS_STM32_OPT_COMPILER     (0)
 #define PYBRICKS_STM32_OPT_FLOAT        (0)
+#define PYBRICKS_STM32_OPT_TERSE_ERR    (1)
 
 #include "../stm32/configport.h"
