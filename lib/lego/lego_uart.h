@@ -304,7 +304,7 @@ typedef enum {
 /**
  * Mode information message type.
  *
- * This byte is sent immediatly after the message header when ::lump_msg_type_t
+ * This byte is sent immediately after the message header when ::lump_msg_type_t
  * is ::LUMP_MSG_TYPE_INFO. It is not considered part of the message payload
  * size.
  */
