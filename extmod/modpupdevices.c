@@ -399,7 +399,6 @@ typedef struct _pupdevices_ForceSensor_obj_t {
     mp_obj_base_t base;
     pbdevice_t *pbdev;
     int32_t raw_released;
-    int32_t raw_touched;
     int32_t raw_offset;
     int32_t raw_start;
     int32_t raw_end;
@@ -448,17 +447,16 @@ STATIC mp_obj_t pupdevices_ForceSensor_make_new(const mp_obj_type_t *type, size_
     // Read scaling factors
     int32_t calib[8];
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__CALIB, calib);
-    self->raw_released = calib[0];
     self->raw_offset = calib[1];
-    self->raw_touched = calib[2];
+    self->raw_released = calib[2];
     self->raw_end = calib[6];
 
-    // Do sanity check on values to theoretically avoid zero division
-    if (self->raw_released >= self->raw_touched || self->raw_touched >= self->raw_end) {
+    // Do sanity check on values to verify calibration read succeeded
+    if (self->raw_released >= self->raw_end) {
         pb_assert(PBIO_ERROR_FAILED);
     }
 
-    // Do one read to verify everything works
+    // Do one read to verify everything works and put it in the right mode
     pupdevices_ForceSensor__raw(self->pbdev);
 
     return MP_OBJ_FROM_PTR(self);
@@ -468,8 +466,9 @@ STATIC mp_obj_t pupdevices_ForceSensor_make_new(const mp_obj_type_t *type, size_
 STATIC mp_obj_t pupdevices_ForceSensor_touched(mp_obj_t self_in) {
     pupdevices_ForceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    // Return true if raw value is just above detectable change
-    return mp_obj_new_bool(pupdevices_ForceSensor__raw(self->pbdev) > self->raw_touched);
+    // Return true if raw value is just above detectable change, with a small
+    // margin to account for small calibration tolerances.
+    return mp_obj_new_bool(pupdevices_ForceSensor__raw(self->pbdev) > self->raw_released + 4);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ForceSensor_touched_obj, pupdevices_ForceSensor_touched);
 
