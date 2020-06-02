@@ -95,8 +95,6 @@ OPENOCD ?= openocd
 OPENOCD_CONFIG ?= openocd_stm32$(PB_MCU_SERIES_LCASE).cfg
 TEXT0_ADDR ?= 0x08000000
 
-COPT += -DFIXMATH_NO_CTYPE
-
 CFLAGS_MCU_F0 = -mthumb -mtune=cortex-m0 -mcpu=cortex-m0  -msoft-float
 CFLAGS_MCU_F4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS_MCU_L4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
@@ -164,6 +162,7 @@ else
 endif
 
 # Pybricks modules
+
 PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modbattery.c \
 	modbuiltins.c \
@@ -181,11 +180,15 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	pbhsv.c \
 	)
 
+# Pybricks helpers
+
 PYBRICKS_PY_SRC_C = $(addprefix py/,\
 	pb_type_enum.c \
 	pberror.c \
 	pbobj.c \
 	)
+
+# STM32 Bluetooth stack
 
 BLUENRG_SRC_C = $(addprefix lib/BlueNRG-MS/hci/,\
 	controller/bluenrg_gap_aci.c \
@@ -196,6 +199,8 @@ BLUENRG_SRC_C = $(addprefix lib/BlueNRG-MS/hci/,\
 	hci_le.c \
 	)
 
+# TI Bluetooth stack
+
 BLE5STACK_SRC_C = $(addprefix lib/ble5stack/central/,\
 	att.c \
 	gap.c \
@@ -204,6 +209,17 @@ BLE5STACK_SRC_C = $(addprefix lib/ble5stack/central/,\
 	hci.c \
 	util.c \
 	)
+
+# Contiki
+
+CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
+	sys/autostart.c \
+	sys/etimer.c \
+	sys/process.c \
+	sys/timer.c \
+	)
+
+# STM32
 
 HAL_SRC_C = $(addprefix micropython/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_adc_ex.c \
@@ -221,16 +237,13 @@ HAL_SRC_C = $(addprefix micropython/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Dri
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal.c \
 	)
 
-CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
-	sys/autostart.c \
-	sys/etimer.c \
-	sys/process.c \
-	sys/timer.c \
-	)
-
 ifeq ($(PB_MCU_SERIES),F4)
 HAL_SRC_C := $(filter-out %xx_hal_uart_ex.c, $(HAL_SRC_C))
 endif
+
+# libfixmath
+
+COPT += -DFIXMATH_NO_CTYPE
 
 LIBFIXMATH_SRC_C = $(addprefix lib/libfixmath/libfixmath/,\
 	fix16_sqrt.c \
@@ -238,6 +251,8 @@ LIBFIXMATH_SRC_C = $(addprefix lib/libfixmath/libfixmath/,\
 	fix16.c \
 	uint32.c \
 	)
+
+# Pybricks I/O library
 
 PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/$(PBIO_PLATFORM)/bluetooth.c \
@@ -276,6 +291,8 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/integrator.c \
 	src/uartdev.c \
 	)
+
+# MicroPython math library
 
 SRC_LIBM = $(addprefix micropython/lib/libm/,\
 	acoshf.c \
