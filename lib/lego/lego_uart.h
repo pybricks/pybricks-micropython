@@ -479,20 +479,20 @@ typedef enum {
 } lump_type_id_t;
 
 /**
- * Maximum size of mode name (excluding zero-terimination character) sent in
+ * Maximum size of mode name (excluding zero-termination character) sent in
  * ::LUMP_INFO_NAME message.
  */
 #define LUMP_MAX_NAME_SIZE 11
 
 /**
- * Maximum size of mode name (excluding zero-terimination character) sent in
+ * Maximum size of mode name (excluding zero-termination character) sent in
  * ::LUMP_INFO_NAME message when ::lump_mode_flags_t is also included in the
  * same message.
  */
 #define LUMP_MAX_SHORT_NAME_SIZE 5
 
 /**
- * Maximum size of units of measurements (excluding zero-terimination character)
+ * Maximum size of units of measurements (excluding zero-termination character)
  * sent in ::LUMP_INFO_UNITS message.
  */
 #define LUMP_MAX_UOM_SIZE 4
