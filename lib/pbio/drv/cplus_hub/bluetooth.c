@@ -210,8 +210,8 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef *hspi) {
     gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;  // TODO: verify this against SPI clock speed
     HAL_GPIO_Init(GPIOB, &gpio_init);
 
-    tx_dma.Instance = DMA1_Channel3;
-    tx_dma.Init.Request = DMA_REQUEST_1;
+    tx_dma.Instance = DMA2_Channel4;
+    tx_dma.Init.Request = DMA_REQUEST_4;
     tx_dma.Init.Direction = DMA_MEMORY_TO_PERIPH;
     tx_dma.Init.PeriphInc = DMA_PINC_DISABLE;
     tx_dma.Init.MemInc = DMA_MINC_ENABLE;
@@ -222,11 +222,11 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef *hspi) {
     HAL_DMA_Init(&tx_dma);
     __HAL_LINKDMA(hspi, hdmatx, tx_dma);
 
-    HAL_NVIC_SetPriority(DMA1_Channel3_IRQn, 1, 1);
-    HAL_NVIC_EnableIRQ(DMA1_Channel3_IRQn);
+    HAL_NVIC_SetPriority(DMA2_Channel4_IRQn, 1, 1);
+    HAL_NVIC_EnableIRQ(DMA2_Channel4_IRQn);
 
-    rx_dma.Instance = DMA1_Channel2;
-    rx_dma.Init.Request = DMA_REQUEST_1;
+    rx_dma.Instance = DMA2_Channel3;
+    rx_dma.Init.Request = DMA_REQUEST_4;
     rx_dma.Init.Direction = DMA_PERIPH_TO_MEMORY;
     rx_dma.Init.PeriphInc = DMA_PINC_DISABLE;
     rx_dma.Init.MemInc = DMA_MINC_ENABLE;
@@ -237,22 +237,22 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef *hspi) {
     HAL_DMA_Init(&rx_dma);
     __HAL_LINKDMA(hspi, hdmarx, rx_dma);
 
-    HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 1, 0);
-    HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
+    HAL_NVIC_SetPriority(DMA2_Channel3_IRQn, 1, 0);
+    HAL_NVIC_EnableIRQ(DMA2_Channel3_IRQn);
 }
 
 void HAL_SPI_MspDeInit(SPI_HandleTypeDef *hspi) {
-    HAL_NVIC_DisableIRQ(DMA1_Channel2_IRQn);
-    HAL_NVIC_DisableIRQ(DMA1_Channel3_IRQn);
+    HAL_NVIC_DisableIRQ(DMA2_Channel3_IRQn);
+    HAL_NVIC_DisableIRQ(DMA2_Channel4_IRQn);
     HAL_DMA_DeInit(hspi->hdmarx);
     HAL_DMA_DeInit(hspi->hdmatx);
 }
 
-void DMA1_Channel2_IRQHandler(void) {
+void DMA2_Channel3_IRQHandler(void) {
     HAL_DMA_IRQHandler(bt_spi.hdmarx);
 }
 
-void DMA1_Channel3_IRQHandler(void) {
+void DMA2_Channel4_IRQHandler(void) {
     HAL_DMA_IRQHandler(bt_spi.hdmatx);
 }
 
