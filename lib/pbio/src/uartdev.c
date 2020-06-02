@@ -872,7 +872,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
         goto err;
     }
 
-    if (data->rx_msg[0] < EV3_UART_TYPE_MIN || data->rx_msg[0] > EV3_UART_TYPE_MAX) {
+    if (data->rx_msg[1] < EV3_UART_TYPE_MIN || data->rx_msg[1] > EV3_UART_TYPE_MAX) {
         DBG_ERR(data->last_err = "Bad device type id");
         goto err;
     }
