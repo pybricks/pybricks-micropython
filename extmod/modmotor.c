@@ -193,7 +193,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
         }
 
         // Iterate through each of the n_trains lists
-        for (int16_t train = 0; train < n_trains; train++) {
+        for (size_t train = 0; train < n_trains; train++) {
             // Unless we have just one list of gears, unpack the list of gears for this train
             if (!is_one_train) {
                 mp_obj_get_array(trains[train], &n_gears, &gear_list);

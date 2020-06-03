@@ -107,7 +107,7 @@ STATIC mp_obj_t builtins_LightArray_on(size_t n_args, const mp_obj_t *pos_args, 
     builtins_LightArray_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
 
     // We may either have one brightness or all brightness values
-    if (!(n_args == 2 || n_args == self->number_of_lights + 1)) {
+    if (!(n_args == 2 || n_args == (size_t)self->number_of_lights + 1)) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 

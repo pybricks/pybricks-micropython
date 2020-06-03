@@ -112,7 +112,7 @@ pbio_error_t sysfs_write_str(FILE *file, const char *str) {
         return PBIO_ERROR_IO;
     }
 
-    if (fprintf(file, "%s", str) != strlen(str)) {
+    if (fprintf(file, "%s", str) != (int)strlen(str)) {
         return PBIO_ERROR_IO;
     }
 

@@ -316,9 +316,9 @@ STATIC mp_obj_t ev3devices_ColorSensor_rgb(mp_obj_t self_in) {
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_COLOR_SENSOR__RGB_RAW, rgb);
     mp_obj_t tup[3];
 
-    rgb[0] = (0.258 * rgb[0]) - 0.3;
-    rgb[1] = (0.280 * rgb[1]) - 0.8;
-    rgb[2] = (0.523 * rgb[2]) - 3.7;
+    rgb[0] = (int)((0.258 * rgb[0]) - 0.3);
+    rgb[1] = (int)((0.280 * rgb[1]) - 0.8);
+    rgb[2] = (int)((0.523 * rgb[2]) - 3.7);
 
     for (uint8_t i = 0; i < 3; i++) {
         rgb[i] = (rgb[i] > 100 ? 100 : rgb[i]);

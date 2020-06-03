@@ -167,7 +167,7 @@ pbio_error_t pbdrv_serial_get(pbdrv_serial_t **_ser, pbio_port_t port, int baudr
 }
 
 pbio_error_t pbdrv_serial_write(pbdrv_serial_t *ser, const void *buf, size_t count) {
-    if (write(ser->file, buf, count) != count) {
+    if (write(ser->file, buf, count) != (int)count) {
         return PBIO_ERROR_IO;
     }
     return PBIO_SUCCESS;

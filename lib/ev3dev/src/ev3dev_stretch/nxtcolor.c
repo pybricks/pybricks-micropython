@@ -151,7 +151,7 @@ static pbio_error_t nxtcolor_get_digi1(nxtcolor_t *nxtcolor, bool *val) {
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t nxtcolor_get_adc(nxtcolor_t *nxtcolor, int32_t *analog) {
+static pbio_error_t nxtcolor_get_adc(nxtcolor_t *nxtcolor, uint32_t *analog) {
 
     pbio_error_t err;
 
@@ -164,7 +164,7 @@ static pbio_error_t nxtcolor_get_adc(nxtcolor_t *nxtcolor, int32_t *analog) {
         nxtcolor->digi1_dir = IN;
     }
     // Get the state
-    return sysfs_read_int(nxtcolor->f_adc_val, analog);
+    return sysfs_read_int(nxtcolor->f_adc_val, (int *)analog);
 }
 
 static pbio_error_t nxtcolor_reset(nxtcolor_t *nxtcolor)
@@ -482,7 +482,7 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, int32_t
     }
 
     // In measure mode, cycle through the colors and calculate color id
-    int32_t rgba[4];
+    uint32_t rgba[4];
 
     // Read analog for each color
     for (uint8_t i = 0; i < 4; i++) {

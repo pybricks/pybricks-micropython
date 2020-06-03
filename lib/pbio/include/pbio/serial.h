@@ -12,7 +12,7 @@ typedef struct _pbio_serial_t pbio_serial_t;
 
 #if PBIO_CONFIG_SERIAL
 
-pbio_error_t pbio_serial_get(pbio_serial_t **_ser, pbio_port_t port, int baudrate, int timeout);
+pbio_error_t pbio_serial_get(pbio_serial_t **_ser, pbio_port_t port, uint32_t baudrate, int32_t timeout);
 
 pbio_error_t pbio_serial_write(pbio_serial_t *ser, const void *buf, size_t count);
 
@@ -24,7 +24,7 @@ pbio_error_t pbio_serial_clear(pbio_serial_t *ser);
 
 #else // PBIO_CONFIG_SERIAL
 
-static inline pbio_error_t pbio_serial_get(pbio_serial_t **_ser, pbio_port_t port, int baudrate, int timeout) {
+static inline pbio_error_t pbio_serial_get(pbio_serial_t **_ser, pbio_port_t port, uint32_t baudrate, int32_t timeout) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline pbio_error_t pbio_serial_write(pbio_serial_t *ser, const void *buf, size_t count) {

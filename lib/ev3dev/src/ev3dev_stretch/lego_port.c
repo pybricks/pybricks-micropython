@@ -81,7 +81,7 @@ static pbio_error_t ev3dev_lego_port_get_mode(pbio_port_t port, const char *attr
     }
 
     // Find matching port mode string
-    for (int i = 0; i < PBIO_ARRAY_SIZE(port_modes); i++) {
+    for (size_t i = 0; i < PBIO_ARRAY_SIZE(port_modes); i++) {
         if (!strcmp(mode, port_modes[i])) {
             *port_mode = i;
             return PBIO_SUCCESS;
@@ -110,7 +110,7 @@ static pbio_error_t ev3dev_lego_port_set_mode(pbio_port_t port, ev3dev_lego_port
         return PBIO_ERROR_IO;
     }
     // Write mode
-    if (fprintf(f_port_mode, "%s", port_modes[mode]) != strlen(port_modes[mode])) {
+    if (fprintf(f_port_mode, "%s", port_modes[mode]) != (int)strlen(port_modes[mode])) {
         return PBIO_ERROR_IO;
     }
     // Close the mode file
@@ -122,7 +122,6 @@ static pbio_error_t ev3dev_lego_port_set_mode(pbio_port_t port, ev3dev_lego_port
 
 // Set compatible port configuration for given device
 pbio_error_t ev3dev_lego_port_configure(pbio_port_t port, pbio_iodev_type_id_t id) {
-    
     pbio_error_t err;
 
     // Get the current port mode and status

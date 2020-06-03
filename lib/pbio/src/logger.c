@@ -89,7 +89,7 @@ pbio_error_t pbio_logger_read(pbio_log_t *log, int32_t sindex, int32_t *buf) {
     }
 
     // Get index or latest sample if requested index is -1
-    uint32_t index = sindex == -1 ? log->sampled - 1 : sindex;
+    uint32_t index = sindex < 0 ? log->sampled - 1 : (uint32_t)sindex;
 
     // Ensure index is within bounds
     if (index >= log->sampled) {

@@ -254,7 +254,7 @@ pbio_error_t lego_sensor_get_info(lego_sensor_t *sensor, uint8_t *data_len, lego
 pbio_error_t lego_sensor_get_mode_id_from_str(lego_sensor_t *sensor, const char *mode_str, uint8_t *mode) {
 
     // Find matching port mode string
-    for (int i = 0; i < PBIO_ARRAY_SIZE(sensor->modes); i++) {
+    for (size_t i = 0; i < PBIO_ARRAY_SIZE(sensor->modes); i++) {
         if (!strcmp(mode_str, sensor->modes[i])) {
             *mode = i;
             return PBIO_SUCCESS;

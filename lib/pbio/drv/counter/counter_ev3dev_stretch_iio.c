@@ -110,10 +110,10 @@ static pbio_error_t counter_ev3dev_stretch_iio_init() {
     }
 
 
-    for (int i = 0; i < PBIO_ARRAY_SIZE(private_data); i++) {
+    for (size_t i = 0; i < PBIO_ARRAY_SIZE(private_data); i++) {
         private_data_t *data = &private_data[i];
 
-        snprintf(buf, sizeof(buf), "%s/in_count%d_raw", udev_list_entry_get_name(entry), i);
+        snprintf(buf, sizeof(buf), "%s/in_count%d_raw", udev_list_entry_get_name(entry), (int)i);
         data->count = fopen(buf, "r");
         if (!data->count) {
             dbg_err("failed to open count attribute");
@@ -122,7 +122,7 @@ static pbio_error_t counter_ev3dev_stretch_iio_init() {
 
         setbuf(data->count, NULL);
 
-        snprintf(buf, sizeof(buf), "%s/in_frequency%d_input", udev_list_entry_get_name(entry), i);
+        snprintf(buf, sizeof(buf), "%s/in_frequency%d_input", udev_list_entry_get_name(entry), (int)i);
         data->rate = fopen(buf, "r");
         if (!data->rate) {
             dbg_err("failed to open rate attribute");
@@ -151,7 +151,7 @@ free_udev:
 }
 
 static pbio_error_t counter_ev3dev_stretch_iio_exit() {
-    for (int i = 0; i < PBIO_ARRAY_SIZE(private_data); i++) {
+    for (size_t i = 0; i < PBIO_ARRAY_SIZE(private_data); i++) {
         private_data_t *data = &private_data[i];
 
         data->dev.initalized = false;

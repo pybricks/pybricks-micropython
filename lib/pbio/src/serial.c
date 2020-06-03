@@ -20,15 +20,15 @@
 
 struct _pbio_serial_t {
     pbdrv_serial_t *dev;
-    int timeout;
+    int32_t timeout;
     bool busy;
-    int time_start;
+    unsigned long time_start;
     size_t remaining;
 };
 
 pbio_serial_t serials[PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT - PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT + 1];
 
-pbio_error_t pbio_serial_get(pbio_serial_t **_ser, pbio_port_t port, int baudrate, int timeout) {
+pbio_error_t pbio_serial_get(pbio_serial_t **_ser, pbio_port_t port, uint32_t baudrate, int32_t timeout) {
 
     if (port < PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT || port > PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT) {
         return PBIO_ERROR_INVALID_PORT;
@@ -105,7 +105,7 @@ pbio_error_t pbio_serial_read(pbio_serial_t *ser, uint8_t *buf, size_t count) {
     }
 
     // If we have timed out, let the user know
-    if (ser->timeout >= 0 && clock_usecs() / 1000 - ser->time_start > ser->timeout) {
+    if (ser->timeout >= 0 && clock_usecs() / 1000 - ser->time_start > (unsigned long)ser->timeout) {
         return pbio_serial_read_stop(ser, PBIO_ERROR_TIMEDOUT);
     }
 
