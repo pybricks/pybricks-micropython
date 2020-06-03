@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
     pb_imports();
 
     // Run a program
-    pyexec_frozen_module("frozen.py");
+    // TODO
 
     // Uninitialize MicroPython and the system hardware
     mp_deinit();

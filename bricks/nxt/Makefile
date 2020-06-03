@@ -35,8 +35,6 @@ include ../../micropython/py/mkenv.mk
 # qstr definitions (must come before including py.mk)
 QSTR_GLOBAL_DEPENDENCIES =
 
-# directory containing scripts to be frozen as bytecode
-FROZEN_MPY_DIR ?= modules
 FROZEN_MPY_TOOL_ARGS = -mlongint-impl=none
 
 # include py core make definitions
@@ -78,11 +76,6 @@ CFLAGS += -O0 -ggdb
 else
 CFLAGS += -Os -DNDEBUG
 CFLAGS += -fdata-sections -ffunction-sections
-endif
-
-ifneq ($(FROZEN_MPY_DIR),)
-CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
-CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
 endif
 
 LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
