@@ -320,8 +320,6 @@ EV3DEV_TEST_DIRS = $(addprefix ../../tests/ev3dev/, \
 	messaging \
 	motor \
 	parameters \
-	uev3dev \
-	v1 \
 	)
 
 GRX_TEST_PLUGIN_OBJ := $(BUILD)/grx-plugin.o

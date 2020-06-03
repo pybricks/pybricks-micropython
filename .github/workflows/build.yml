@@ -136,7 +136,6 @@ jobs:
         libffi-dev \
         libgrx-3.0-dev \
         libi2c-dev \
-        libmagickwand-6.q16-3 \
         libudev-dev \
         libumockdev0 \
         pkg-config \

@@ -16,8 +16,6 @@ RUN sudo apt-get update && \
         libgrx-3.0-2-dbgsym:armel \
         libgrx-3.0-dev:armel \
         libi2c-dev \
-        libmagickwand-6.q16-3:armel \
-        libsndfile1:armel \
         libudev-dev:armel \
         libumockdev0:armel \
         pkg-config \
