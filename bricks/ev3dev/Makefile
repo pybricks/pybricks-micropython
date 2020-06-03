@@ -39,15 +39,17 @@ USER_C_MODULES = ../..
 -include mpconfigport.mk
 include ../../micropython/py/mkenv.mk
 
-FROZEN_DIR = scripts
-FROZEN_MPY_DIR = modules
-QSTR_GLOBAL_DEPENDENCIES = brickconfig.h
+# use FROZEN_MANIFEST for new projects, others are legacy
+FROZEN_MANIFEST ?= manifest.py
+FROZEN_DIR =
+FROZEN_MPY_DIR =
 
 # define main target
 PROG = pybricks-micropython
 
 # qstr definitions (must come before including py.mk)
 #QSTR_DEFS = qstrdefsport.h
+QSTR_GLOBAL_DEPENDENCIES =
 
 # OS name, for simple autoconfig
 UNAME_S := $(shell uname -s)
@@ -72,15 +74,23 @@ INC += -I$(TOP)/ports/unix
 
 # compiler settings
 CWARN = -Wall -Werror
-CWARN += -Wpointer-arith -Wuninitialized
-CFLAGS = $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA)
+CWARN += -Wpointer-arith -Wuninitialized -Wdouble-promotion -Wsign-compare -Wfloat-conversion
+CFLAGS += $(INC) $(CWARN) -std=gnu99 -DUNIX $(CFLAGS_MOD) $(COPT) $(CFLAGS_EXTRA)
 
 # Debugging/Optimization
 ifdef DEBUG
-CFLAGS += -g
-COPT = -O0
+COPT ?= -O0
 else
-COPT = -Os -fdata-sections -ffunction-sections -DNDEBUG
+COPT ?= -Os
+COPT += -fdata-sections -ffunction-sections
+COPT += -DNDEBUG
+endif
+
+# Always enable symbols -- They're occasionally useful, and don't make it into the
+# final .bin/.hex/.dfu so the extra size doesn't matter.
+CFLAGS += -g
+
+ifndef DEBUG
 # _FORTIFY_SOURCE is a feature in gcc/glibc which is intended to provide extra
 # security for detecting buffer overflows. Some distros (Ubuntu at the very least)
 # have it enabled by default.
@@ -124,7 +134,7 @@ else
 # Use gcc syntax for map file
 LDFLAGS_ARCH = -Wl,-Map=$@.map,--cref -Wl,--gc-sections
 endif
-LDFLAGS = $(LDFLAGS_MOD) $(LDFLAGS_ARCH) -lm $(LDFLAGS_EXTRA)
+LDFLAGS += $(LDFLAGS_MOD) $(LDFLAGS_ARCH) -lm $(LDFLAGS_EXTRA)
 
 # Flags to link with pthread library
 LDFLAGS += -lpthread
@@ -183,20 +193,19 @@ endif
 
 # source files
 SRC_C = $(addprefix micropython/ports/unix/,\
-	main.c \
-	gccollect.c \
-	mpthreadport.c \
-	input.c \
-	file.c \
-	modmachine.c \
-	modos.c \
-	modmmap.c \
-	moduos_vfs.c \
-	modtime.c \
-	modufcntl.c \
-	moduselect.c \
 	alloc.c \
 	coverage.c \
+	gccollect.c \
+	input.c \
+	main.c \
+	modmachine.c \
+	modos.c \
+	modtime.c \
+	modufcntl.c \
+	modummap.c \
+	moduos_vfs.c \
+	moduselect.c \
+	mpthreadport.c \
 	)
 
 SRC_C += $(SRC_MOD)
@@ -216,6 +225,7 @@ PYBRICKS_SRC_C += \
 LIB_SRC_C = $(addprefix micropython/lib/,\
 	$(LIB_SRC_C_EXTRA) \
 	timeutils/timeutils.c \
+	utils/gchelper_generic.c \
 	utils/pyexec.c \
 	)
 
@@ -288,26 +298,32 @@ PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 OBJ = $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PY_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_LIB_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(LIB_SRC_C) $(PYBRICKS_SRC_C) $(PYBRICKS_PY_SRC_C) $(PYBRICKS_EXTMOD_SRC_C)
+SRC_QSTR += $(SRC_C) $(LIB_SRC_C) $(EXTMOD_SRC_C) $(PYBRICKS_SRC_C) $(PYBRICKS_PY_SRC_C) $(PYBRICKS_EXTMOD_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in
 # SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
 
-ifneq ($(FROZEN_MPY_DIR),)
-# To use frozen bytecode, put your .py files in a subdirectory (eg frozen/) and
-# then invoke make with FROZEN_MPY_DIR=frozen (be sure to build from scratch).
+ifneq ($(FROZEN_MANIFEST)$(FROZEN_MPY_DIR),)
+# To use frozen code create a manifest.py file with a description of files to
+# freeze, then invoke make with FROZEN_MANIFEST=manifest.py (be sure to build from scratch).
 CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
 CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
 CFLAGS += -DMPZ_DIG_SIZE=16 # force 16 bits to work on both 32 and 64 bit archs
 MPY_CROSS_FLAGS += -mcache-lookup-bc
 endif
 
+ifneq ($(FROZEN_MANIFEST)$(FROZEN_DIR),)
+CFLAGS += -DMICROPY_MODULE_FROZEN_STR
+endif
+
+RUN_TESTS_MPY_CROSS_FLAGS = --mpy-cross-flags='-mcache-lookup-bc'
 
 include $(TOP)/py/mkrules.mk
 
@@ -342,7 +358,6 @@ test: $(PROG) $(TOP)/tests/run-tests $(GRX_TEST_PLUGIN_LIB)
 		GRX_PLUGIN_PATH=$(realpath $(BUILD)) GRX_DRIVER=test \
 		./run-tests
 
-# install micropython in /usr/local/bin
 PREFIX = /usr/local
 BINDIR = $(DESTDIR)$(PREFIX)/bin
 
@@ -350,7 +365,6 @@ install: $(PROG)
 	install -d $(BINDIR)
 	install $(PROG) $(BINDIR)/$(PROG)
 
-# uninstall micropython
 uninstall:
 	-rm $(BINDIR)/$(PROG)
 

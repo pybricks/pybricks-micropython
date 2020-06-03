@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
-#include <glib.h>
-
 #include <pbdrv/config.h>
 #include "pbinit.h"
 
@@ -25,20 +23,6 @@
 #define MICROPY_PORT_INIT_FUNC pybricks_init()
 #define MICROPY_PORT_DEINIT_FUNC pybricks_deinit()
 #define MICROPY_MPHALPORT_H "ev3dev_mphal.h"
-#define MICROPY_VM_HOOK_LOOP do { \
-        extern int pbio_do_one_event(void); \
-        pbio_do_one_event(); \
-} while (0);
-#define MICROPY_EVENT_POLL_HOOK do { \
-        extern void mp_handle_pending(bool); \
-        mp_handle_pending(true); \
-        extern int pbio_do_one_event(void); \
-        while (pbio_do_one_event()) { } \
-        MP_THREAD_GIL_EXIT(); \
-        g_main_context_iteration(g_main_context_get_thread_default(), TRUE); \
-        MP_THREAD_GIL_ENTER(); \
-} while (0);
-
 #define MICROPY_PY_SYS_PATH_DEFAULT (":~/.pybricks-micropython/lib:/usr/lib/pybricks-micropython")
 
 extern const struct _mp_obj_module_t pb_module_bluetooth;

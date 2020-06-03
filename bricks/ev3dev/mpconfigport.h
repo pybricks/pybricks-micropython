@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2013, 2014 Damien P. George
+// Copyright (c) 2018-2020 The Pybricks Authors
 
 // Pybricks brick specific definitions
 #include "brickconfig.h"
@@ -64,7 +65,9 @@ static const char pybricks_ev3dev_help_text[] =
 #ifndef MICROPY_OPT_CACHE_MAP_LOOKUP_IN_BYTECODE
 #define MICROPY_OPT_CACHE_MAP_LOOKUP_IN_BYTECODE (1)
 #endif
+#define MICROPY_MODULE_WEAK_LINKS   (1)
 #define MICROPY_CAN_OVERRIDE_BUILTINS (1)
+#define MICROPY_VFS_POSIX_FILE      (1)
 #define MICROPY_PY_FUNCTION_ATTRS   (1)
 #define MICROPY_PY_DESCRIPTORS      (1)
 #define MICROPY_PY_BUILTINS_STR_UNICODE (1)
@@ -86,12 +89,20 @@ static const char pybricks_ev3dev_help_text[] =
 #define MICROPY_PY_REVERSE_SPECIAL_METHODS (1)
 #define MICROPY_PY_ARRAY_SLICE_ASSIGN (1)
 #define MICROPY_PY_BUILTINS_SLICE_ATTRS (1)
+#define MICROPY_PY_BUILTINS_SLICE_INDICES (1)
 #define MICROPY_PY_INSTANCE_ATTRS   (1)
 #define MICROPY_PY_SYS_EXIT         (1)
+#define MICROPY_PY_SYS_ATEXIT       (1)
+#if MICROPY_PY_SYS_SETTRACE
+#define MICROPY_PERSISTENT_CODE_SAVE (1)
+#define MICROPY_COMP_CONST (0)
+#endif
+#ifndef MICROPY_PY_SYS_PLATFORM
 #if defined(__APPLE__) && defined(__MACH__)
     #define MICROPY_PY_SYS_PLATFORM  "darwin"
 #else
     #define MICROPY_PY_SYS_PLATFORM  "linux"
+#endif
 #endif
 #define MICROPY_PY_SYS_MAXSIZE      (1)
 #define MICROPY_PY_SYS_STDFILES     (1)
@@ -105,7 +116,6 @@ static const char pybricks_ev3dev_help_text[] =
 #define MICROPY_PY_IO_IOBASE        (1)
 #define MICROPY_PY_IO_FILEIO        (1)
 #define MICROPY_PY_GC_COLLECT_RETVAL (1)
-#define MICROPY_MODULE_FROZEN_STR   (1)
 #define MICROPY_MODULE_BUILTIN_INIT (1)
 
 #define MICROPY_PY_THREAD           (1)
@@ -200,6 +210,7 @@ static const char pybricks_ev3dev_help_text[] =
 #define MICROPY_PY_UTIMEQ           (1)
 #define MICROPY_PY_UHASHLIB         (1)
 #if MICROPY_PY_USSL
+#define MICROPY_PY_UHASHLIB_MD5     (1)
 #define MICROPY_PY_UHASHLIB_SHA1    (1)
 #define MICROPY_PY_UCRYPTOLIB       (1)
 #endif
@@ -233,14 +244,9 @@ static const char pybricks_ev3dev_help_text[] =
 
 extern const struct _mp_print_t mp_stderr_print;
 
-// Define to 1 to use undertested inefficient GC helper implementation
-// (if more efficient arch-specific one is not available).
-#ifndef MICROPY_GCREGS_SETJMP
-    #ifdef __mips__
-        #define MICROPY_GCREGS_SETJMP (1)
-    #else
-        #define MICROPY_GCREGS_SETJMP (0)
-    #endif
+#if !(defined(MICROPY_GCREGS_SETJMP) || defined(__x86_64__) || defined(__i386__) || defined(__thumb2__) || defined(__thumb__) || defined(__arm__))
+// Fall back to setjmp() implementation for discovery of GC pointers in registers.
+#define MICROPY_GCREGS_SETJMP (1)
 #endif
 
 #define MICROPY_ENABLE_EMERGENCY_EXCEPTION_BUF   (1)
@@ -248,8 +254,10 @@ extern const struct _mp_print_t mp_stderr_print;
 #define MICROPY_KBD_EXCEPTION       (1)
 #define MICROPY_ASYNC_KBD_INTR      (0)
 
+#define mp_type_fileio mp_type_vfs_posix_fileio
+#define mp_type_textio mp_type_vfs_posix_textio
+
 extern const struct _mp_obj_module_t mp_module_machine;
-extern const struct _mp_obj_module_t mp_module_mmap;
 extern const struct _mp_obj_module_t mp_module_os;
 extern const struct _mp_obj_module_t mp_module_uos_vfs;
 extern const struct _mp_obj_module_t mp_module_uselect;
@@ -259,6 +267,7 @@ extern const struct _mp_obj_module_t mp_module_socket;
 extern const struct _mp_obj_module_t mp_module_ffi;
 extern const struct _mp_obj_module_t mp_module_jni;
 extern const struct _mp_obj_module_t mp_module_ufcntl;
+extern const struct _mp_obj_module_t mp_module_ummap;
 
 #if MICROPY_PY_UOS_VFS
 #define MICROPY_PY_UOS_DEF { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&mp_module_uos_vfs) },
@@ -306,8 +315,8 @@ extern const struct _mp_obj_module_t mp_module_ufcntl;
     MICROPY_PY_UOS_DEF \
     MICROPY_PY_USELECT_DEF \
     MICROPY_PY_TERMIOS_DEF \
-    { MP_ROM_QSTR(MP_QSTR_mmap), MP_ROM_PTR(&mp_module_mmap) }, \
     { MP_ROM_QSTR(MP_QSTR_ufcntl), MP_ROM_PTR(&mp_module_ufcntl) }, \
+    { MP_ROM_QSTR(MP_QSTR_ummap), MP_ROM_PTR(&mp_module_ummap) }, \
 
 // type definitions for the specific machine
 
@@ -345,17 +354,6 @@ void mp_unix_mark_exec(void);
 #define MICROPY_FORCE_PLAT_ALLOC_EXEC (1)
 #endif
 
-#if MICROPY_PY_OS_DUPTERM
-#define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn_cooked(str, len)
-#else
-#define MP_PLAT_PRINT_STRN(str, len) do { \
-        MP_THREAD_GIL_EXIT(); \
-        ssize_t ret = write(1, str, len); \
-        MP_THREAD_GIL_ENTER(); \
-        (void)ret; \
-} while (0)
-#endif
-
 #ifdef __linux__
 // Can access physical memory using /dev/mem
 #define MICROPY_PLAT_DEV_MEM  (1)
@@ -380,9 +378,17 @@ void mp_unix_mark_exec(void);
 
 #define MP_STATE_PORT MP_STATE_VM
 
+#if MICROPY_PY_BLUETOOTH && MICROPY_BLUETOOTH_BTSTACK
+struct _mp_bluetooth_btstack_root_pointers_t;
+#define MICROPY_BLUETOOTH_ROOT_POINTERS struct _mp_bluetooth_btstack_root_pointers_t *bluetooth_btstack_root_pointers;
+#else
+#define MICROPY_BLUETOOTH_ROOT_POINTERS
+#endif
+
 #define MICROPY_PORT_ROOT_POINTERS \
     const char *readline_hist[50]; \
     void *mmap_region_head; \
+    MICROPY_BLUETOOTH_ROOT_POINTERS \
 
 // We need to provide a declaration/definition of alloca()
 // unless support for it is disabled.
@@ -412,5 +418,31 @@ void mp_unix_mark_exec(void);
 // For debugging purposes, make printf() available to any source file.
 #include <stdio.h>
 #endif
+
+#if MICROPY_PY_THREAD
+#define MICROPY_BEGIN_ATOMIC_SECTION() (mp_thread_unix_begin_atomic_section(), 0)
+#define MICROPY_END_ATOMIC_SECTION(x) (void)x; mp_thread_unix_end_atomic_section()
+#endif
+
+#define MICROPY_VM_HOOK_LOOP do { \
+        extern int pbio_do_one_event(void); \
+        pbio_do_one_event(); \
+} while (0);
+
+#include <glib.h>
+
+#define MICROPY_EVENT_POLL_HOOK do { \
+        extern void mp_handle_pending(bool); \
+        mp_handle_pending(true); \
+        extern int pbio_do_one_event(void); \
+        while (pbio_do_one_event()) { } \
+        MP_THREAD_GIL_EXIT(); \
+        g_main_context_iteration(g_main_context_get_thread_default(), TRUE); \
+        MP_THREAD_GIL_ENTER(); \
+} while (0);
+
+
+#include <sched.h>
+#define MICROPY_UNIX_MACHINE_IDLE sched_yield();
 
 #include "../pybricks_config.h"
