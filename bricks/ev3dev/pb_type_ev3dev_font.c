@@ -61,12 +61,12 @@ void pb_type_ev3dev_Font_init() {
 STATIC mp_obj_t ev3dev_Font_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     enum { ARG_family, ARG_size, ARG_bold, ARG_monospace, ARG_lang, ARG_script };
     static const mp_arg_t allowed_args[] = {
-        { MP_QSTR_family, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_PTR(&mp_const_none_obj)} },
+        { MP_QSTR_family, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_NONE} },
         { MP_QSTR_size, MP_ARG_INT, {.u_int = 12} },
         { MP_QSTR_bold, MP_ARG_BOOL, {.u_bool = FALSE} },
         { MP_QSTR_monospace, MP_ARG_BOOL, {.u_bool = FALSE} },
-        { MP_QSTR_lang, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_PTR(&mp_const_none_obj)} },
-        { MP_QSTR_script, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_PTR(&mp_const_none_obj)} },
+        { MP_QSTR_lang, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_NONE} },
+        { MP_QSTR_script, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_NONE} },
     };
 
     mp_arg_val_t arg_vals[MP_ARRAY_SIZE(allowed_args)];

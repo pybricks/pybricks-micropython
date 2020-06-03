@@ -93,6 +93,6 @@
 #define PB_ARG_DEFAULT_TRUE(name)(name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_TRUE})
 
 // Optional keyword argument with default true value
-#define PB_ARG_DEFAULT_NONE(name)(name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_PTR(&mp_const_none_obj)})
+#define PB_ARG_DEFAULT_NONE(name)(name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_NONE})
 
 #endif // PYBRICKS_INCLUDED_PBKWARG_H
