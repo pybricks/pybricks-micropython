@@ -87,10 +87,10 @@
 #define PB_ARG_DEFAULT_QSTR(name, value) (name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_QSTR(MP_QSTR_##value)})
 
 // Optional keyword argument with default false value
-#define PB_ARG_DEFAULT_FALSE(name)(name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_PTR(&mp_const_false_obj)})
+#define PB_ARG_DEFAULT_FALSE(name)(name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_FALSE})
 
 // Optional keyword argument with default true value
-#define PB_ARG_DEFAULT_TRUE(name)(name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_PTR(&mp_const_true_obj)})
+#define PB_ARG_DEFAULT_TRUE(name)(name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_TRUE})
 
 // Optional keyword argument with default true value
 #define PB_ARG_DEFAULT_NONE(name)(name, MP_ARG_OBJ, {.u_rom_obj = MP_ROM_PTR(&mp_const_none_obj)})
