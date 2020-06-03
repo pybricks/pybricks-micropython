@@ -46,8 +46,8 @@
 #define PBDRV_CONFIG_MOTOR                          (1)
 
 #define PBDRV_CONFIG_UART                           (1)
-#define PBDRV_CONFIG_UART_STM32_HAL                 (1)
-#define PBDRV_CONFIG_UART_STM32_HAL_NUM_UART        (4)
+#define PBDRV_CONFIG_UART_STM32L4_LL                (1)
+#define PBDRV_CONFIG_UART_STM32L4_LL_NUM_UART       (4)
 
 #define PBDRV_CONFIG_HAS_PORT_A (1)
 #define PBDRV_CONFIG_HAS_PORT_B (1)

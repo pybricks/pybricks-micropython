@@ -221,6 +221,8 @@ CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
 
 # STM32
 
+COPT += -DUSE_FULL_LL_DRIVER
+
 HAL_SRC_C = $(addprefix micropython/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_adc_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_adc.c \
@@ -235,10 +237,16 @@ HAL_SRC_C = $(addprefix micropython/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Dri
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_uart_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_uart.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_ll_lpuart.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_ll_rcc.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_ll_usart.c \
 	)
 
 ifeq ($(PB_MCU_SERIES),F4)
 HAL_SRC_C := $(filter-out %xx_hal_uart_ex.c, $(HAL_SRC_C))
+endif
+ifneq ($(PB_MCU_SERIES),L4)
+HAL_SRC_C := $(filter-out %xx_ll_lpuart.c, $(HAL_SRC_C))
 endif
 
 # libfixmath
@@ -271,13 +279,15 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/ioport/ioport_lpf2.c \
 	drv/uart/uart_stm32_hal.c \
 	drv/uart/uart_stm32f0.c \
+	drv/uart/uart_stm32l4_ll.c \
 	platform/$(PBIO_PLATFORM)/clock.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	platform/$(PBIO_PLATFORM)/sys.c \
 	src/control.c \
+	src/dcmotor.c \
 	src/drivebase.c \
 	src/error.c \
-	src/dcmotor.c \
+	src/integrator.c \
 	src/iodev.c \
 	src/light.c \
 	src/logger.c \
@@ -286,9 +296,8 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/motorpoll.c \
 	src/servo.c \
 	src/tacho.c \
-	src/trajectory.c \
 	src/trajectory_ext.c \
-	src/integrator.c \
+	src/trajectory.c \
 	src/uartdev.c \
 	)
 

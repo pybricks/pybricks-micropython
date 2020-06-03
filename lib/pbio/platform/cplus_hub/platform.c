@@ -8,9 +8,10 @@
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/ioport/ioport_lpf2.h"
-#include "../../drv/uart/uart_stm32_hal.h"
+#include "../../drv/uart/uart_stm32l4_ll.h"
 
 #include "stm32l4xx_hal.h"
+#include "stm32l4xx_ll_dma.h"
 #include "stm32l4xx_ll_rcc.h"
 
 // PBIO driver data
@@ -71,40 +72,136 @@ enum {
     UART_PORT_D,
 };
 
-const pbdrv_uart_stm32_hal_platform_data_t
-    pbdrv_uart_stm32_hal_platform_data[PBDRV_CONFIG_UART_STM32_HAL_NUM_UART] = {
+const pbdrv_uart_stm32l4_ll_platform_data_t
+    pbdrv_uart_stm32l4_ll_platform_data[PBDRV_CONFIG_UART_STM32L4_LL_NUM_UART] = {
     [UART_PORT_A] = {
+        .tx_dma = DMA1,
+        .tx_dma_clear_tc_fn = LL_DMA_ClearFlag_TC4,
+        .tx_dma_clear_ht_fn = LL_DMA_ClearFlag_HT4,
+        .tx_dma_clear_te_fn = LL_DMA_ClearFlag_TE4,
+        .tx_dma_is_tc_fn = LL_DMA_IsActiveFlag_TC4,
+        .tx_dma_ch = 4,
+        .tx_dma_req = 2,
+        .tx_dma_irq = DMA1_Channel4_IRQn,
+        .rx_dma = DMA1,
+        .rx_dma_clear_tc_fn = LL_DMA_ClearFlag_TC5,
+        .rx_dma_clear_ht_fn = LL_DMA_ClearFlag_HT5,
+        .rx_dma_is_tc_fn = LL_DMA_IsActiveFlag_TC5,
+        .rx_dma_is_ht_fn = LL_DMA_IsActiveFlag_HT5,
+        .rx_dma_ch = 5,
+        .rx_dma_req = 2,
+        .rx_dma_irq = DMA1_Channel5_IRQn,
         .uart = USART1,
-        .irq = USART1_IRQn,
+        .uart_irq = USART1_IRQn,
     },
     [UART_PORT_B] = {
+        .tx_dma = DMA1,
+        .tx_dma_clear_tc_fn = LL_DMA_ClearFlag_TC7,
+        .tx_dma_clear_ht_fn = LL_DMA_ClearFlag_HT7,
+        .tx_dma_clear_te_fn = LL_DMA_ClearFlag_TE7,
+        .tx_dma_is_tc_fn = LL_DMA_IsActiveFlag_TC7,
+        .tx_dma_ch = 7,
+        .tx_dma_req = 2,
+        .tx_dma_irq = DMA1_Channel7_IRQn,
+        .rx_dma = DMA1,
+        .rx_dma_clear_tc_fn = LL_DMA_ClearFlag_TC6,
+        .rx_dma_clear_ht_fn = LL_DMA_ClearFlag_HT6,
+        .rx_dma_is_tc_fn = LL_DMA_IsActiveFlag_TC6,
+        .rx_dma_is_ht_fn = LL_DMA_IsActiveFlag_HT6,
+        .rx_dma_ch = 6,
+        .rx_dma_req = 2,
+        .rx_dma_irq = DMA1_Channel6_IRQn,
         .uart = USART2,
-        .irq = USART2_IRQn,
+        .uart_irq = USART2_IRQn,
     },
     [UART_PORT_C] = {
+        .tx_dma = DMA1,
+        .tx_dma_clear_tc_fn = LL_DMA_ClearFlag_TC2,
+        .tx_dma_clear_ht_fn = LL_DMA_ClearFlag_HT2,
+        .tx_dma_clear_te_fn = LL_DMA_ClearFlag_TE2,
+        .tx_dma_is_tc_fn = LL_DMA_IsActiveFlag_TC2,
+        .tx_dma_ch = 2,
+        .tx_dma_req = 2,
+        .tx_dma_irq = DMA1_Channel2_IRQn,
+        .rx_dma = DMA1,
+        .rx_dma_clear_tc_fn = LL_DMA_ClearFlag_TC3,
+        .rx_dma_clear_ht_fn = LL_DMA_ClearFlag_HT3,
+        .rx_dma_is_tc_fn = LL_DMA_IsActiveFlag_TC3,
+        .rx_dma_is_ht_fn = LL_DMA_IsActiveFlag_HT3,
+        .rx_dma_ch = 3,
+        .rx_dma_req = 2,
+        .rx_dma_irq = DMA1_Channel3_IRQn,
         .uart = USART3,
-        .irq = USART3_IRQn,
+        .uart_irq = USART3_IRQn,
     },
     [UART_PORT_D] = {
+        .tx_dma = DMA2,
+        .tx_dma_clear_tc_fn = LL_DMA_ClearFlag_TC6,
+        .tx_dma_clear_ht_fn = LL_DMA_ClearFlag_HT6,
+        .tx_dma_clear_te_fn = LL_DMA_ClearFlag_TE6,
+        .tx_dma_is_tc_fn = LL_DMA_IsActiveFlag_TC6,
+        .tx_dma_ch = 6,
+        .tx_dma_req = 4,
+        .tx_dma_irq = DMA2_Channel6_IRQn,
+        .rx_dma = DMA2,
+        .rx_dma_clear_tc_fn = LL_DMA_ClearFlag_TC7,
+        .rx_dma_clear_ht_fn = LL_DMA_ClearFlag_HT7,
+        .rx_dma_is_tc_fn = LL_DMA_IsActiveFlag_TC7,
+        .rx_dma_is_ht_fn = LL_DMA_IsActiveFlag_HT7,
+        .rx_dma_ch = 7,
+        .rx_dma_req = 4,
+        .rx_dma_irq = DMA2_Channel7_IRQn,
         .uart = LPUART1,
-        .irq = LPUART1_IRQn,
+        .uart_irq = LPUART1_IRQn,
     },
 };
 
+void DMA1_Channel2_IRQHandler() {
+    pbdrv_uart_stm32l4_ll_handle_tx_dma_irq(UART_PORT_C);
+}
+
+void DMA1_Channel3_IRQHandler() {
+    pbdrv_uart_stm32l4_ll_handle_rx_dma_irq(UART_PORT_C);
+}
+
+void DMA1_Channel4_IRQHandler() {
+    pbdrv_uart_stm32l4_ll_handle_tx_dma_irq(UART_PORT_A);
+}
+
+void DMA1_Channel5_IRQHandler() {
+    pbdrv_uart_stm32l4_ll_handle_rx_dma_irq(UART_PORT_A);
+}
+
+void DMA1_Channel6_IRQHandler() {
+    pbdrv_uart_stm32l4_ll_handle_rx_dma_irq(UART_PORT_B);
+}
+
+void DMA1_Channel7_IRQHandler() {
+    pbdrv_uart_stm32l4_ll_handle_tx_dma_irq(UART_PORT_B);
+}
+
+void DMA2_Channel6_IRQHandler() {
+    pbdrv_uart_stm32l4_ll_handle_tx_dma_irq(UART_PORT_D);
+}
+
+void DMA2_Channel7_IRQHandler() {
+    pbdrv_uart_stm32l4_ll_handle_rx_dma_irq(UART_PORT_D);
+}
+
 void USART1_IRQHandler() {
-    pbdrv_uart_stm32_hal_handle_irq(UART_PORT_A);
+    pbdrv_uart_stm32l4_ll_handle_uart_irq(UART_PORT_A);
 }
 
 void USART2_IRQHandler() {
-    pbdrv_uart_stm32_hal_handle_irq(UART_PORT_B);
+    pbdrv_uart_stm32l4_ll_handle_uart_irq(UART_PORT_B);
 }
 
 void USART3_IRQHandler() {
-    pbdrv_uart_stm32_hal_handle_irq(UART_PORT_C);
+    pbdrv_uart_stm32l4_ll_handle_uart_irq(UART_PORT_C);
 }
 
 void LPUART1_IRQHandler() {
-    pbdrv_uart_stm32_hal_handle_irq(UART_PORT_D);
+    pbdrv_uart_stm32l4_ll_handle_uart_irq(UART_PORT_D);
 }
 
 enum {
@@ -235,8 +332,9 @@ void SystemInit(void) {
     clk_init.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     clk_init.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
     clk_init.AHBCLKDivider = RCC_SYSCLK_DIV1;  // HCLK 80MHz
-    clk_init.APB1CLKDivider = RCC_HCLK_DIV1; // disassembly shows DIV16, but 80MHz is OK according to data sheet
-    clk_init.APB2CLKDivider = RCC_HCLK_DIV1;
+    // PCLK1 is less than max allowed (80MHz) so that LPUART1 can operate at 2400 baud.
+    clk_init.APB1CLKDivider = RCC_HCLK_DIV16; // PCLK1 5Mhz
+    clk_init.APB2CLKDivider = RCC_HCLK_DIV1; // PCLK2 80Mhz
 
     HAL_RCC_ClockConfig(&clk_init, FLASH_LATENCY_4);
 
