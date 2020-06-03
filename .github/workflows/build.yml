@@ -52,21 +52,15 @@ jobs:
     - name: Build
       run: |
         cd micropython
-        git submodule update --init --depth=1 lib/axtls
-        git submodule update --init --depth=1 lib/berkeley-db-1.xx
-        git submodule update --init --depth=1 lib/libffi
-        make $MAKEOPTS -C ports/unix deplibs
-        make $MAKEOPTS -C ports/unix coverage
+        make ${MAKEOPTS} -C ports/unix VARIANT=coverage submodules
+        make ${MAKEOPTS} -C ports/unix VARIANT=coverage deplibs
+        make ${MAKEOPTS} -C ports/unix VARIANT=coverage
     - name: Test
       if: success()
       run: |
         cd micropython
-        (cd tests && MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/micropython_coverage ./run-tests)
-        (cd tests && MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/micropython_coverage ./run-tests -d thread)
-        (cd tests && MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/micropython_coverage ./run-tests --emit native)
-        (cd tests && MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/micropython_coverage ./run-tests --via-mpy -d basics float)
-        # test when input script comes from stdin
-        cat tests/basics/0prelim.py | ports/unix/micropython_coverage | grep -q 'abc'
+        make -C ports/unix VARIANT=coverage test_full
+        (cd tests && MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/micropython-coverage ./run-multitests.py multi_net/*.py)
     - name: List failed tests
       if: failure()
       run: (cd micropython/tests && for exp in *.exp; do testbase=$(basename $exp .exp); echo -e "\nFAILURE $testbase"; diff -u $testbase.exp $testbase.out; done)
