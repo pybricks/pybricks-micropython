@@ -39,8 +39,6 @@ include ../../micropython/py/mkenv.mk
 # qstr definitions (must come before including py.mk)
 QSTR_GLOBAL_DEPENDENCIES = $(PBTOP)/bricks/stm32/configport.h
 
-# directory containing scripts to be frozen as bytecode
-FROZEN_MPY_DIR ?= modules
 FROZEN_MPY_TOOL_ARGS = -mlongint-impl=none
 
 # include py core make definitions
@@ -128,12 +126,6 @@ CFLAGS += -DSTM32_HAL_H='<stm32$(PB_MCU_SERIES_LCASE)xx_hal.h>'
 # TODO: probably only need no-unicode on movehub
 MPY_CROSS_FLAGS += -mno-unicode
 
-ifneq ($(FROZEN_MPY_DIR),)
-# To use frozen bytecode, put your .py files in a subdirectory (eg frozen/) and
-# then invoke make with FROZEN_MPY_DIR=frozen (be sure to build from scratch).
-CFLAGS += -DMICROPY_QSTR_EXTRA_POOL=mp_qstr_frozen_const_pool
-CFLAGS += -DMICROPY_MODULE_FROZEN_MPY
-endif
 
 LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
