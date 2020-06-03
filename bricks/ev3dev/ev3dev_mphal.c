@@ -140,7 +140,7 @@ void mp_hal_delay_ms(mp_uint_t ms) {
     };
     struct timespec remain;
     for (;;) {
-        mp_handle_pending();
+        mp_handle_pending(true);
         MP_THREAD_GIL_EXIT();
         int ret = clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, &remain);
         MP_THREAD_GIL_ENTER();

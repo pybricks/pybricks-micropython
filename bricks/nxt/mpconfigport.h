@@ -148,8 +148,8 @@ extern const struct _mp_obj_module_t pb_module_nxtdevices;
 
 #define MICROPY_EVENT_POLL_HOOK \
     do { \
-        extern void mp_handle_pending(void); \
-        mp_handle_pending(); \
+        extern void mp_handle_pending(bool); \
+        mp_handle_pending(true); \
         extern int pbio_do_one_event(void); \
         while (pbio_do_one_event()) { } \
     } while (0);

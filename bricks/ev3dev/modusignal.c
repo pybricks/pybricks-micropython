@@ -19,7 +19,7 @@ STATIC mp_obj_t usignal_pause(void) {
     MP_THREAD_GIL_EXIT();
     pause();
     MP_THREAD_GIL_ENTER();
-    mp_handle_pending();
+    mp_handle_pending(true);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(usignal_pause_obj, usignal_pause);
