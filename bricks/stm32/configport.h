@@ -111,10 +111,10 @@ extern const struct _mp_obj_module_t pb_module_hubs;
 
 #if PYBRICKS_PY_IODEVICES
 extern const struct _mp_obj_module_t pb_module_iodevices;
-#define _PYBRICKS_MODULE_ADVANCED \
+#define _PYBRICKS_MODULE_IODEVICES \
     { MP_OBJ_NEW_QSTR(MP_QSTR_iodevices), (mp_obj_t)&pb_module_iodevices },
 #else
-#define _PYBRICKS_MODULE_ADVANCED
+#define _PYBRICKS_MODULE_IODEVICES
 #endif
 #if PYBRICKS_PY_PUPDEVICES
 extern const struct _mp_obj_module_t pb_module_pupdevices;
@@ -153,8 +153,8 @@ extern const struct _mp_obj_module_t pb_module_uos;
 #endif
 
 #define MICROPY_PORT_BUILTIN_MODULES \
-    _PYBRICKS_MODULE_ADVANCED       \
     _PYBRICKS_MODULE_HUBS           \
+    _PYBRICKS_MODULE_IODEVICES      \
     _PYBRICKS_MODULE_PARAMETERS     \
     _PYBRICKS_MODULE_PUPDEVICES     \
     _PYBRICKS_MODULE_ROBOTICS       \
