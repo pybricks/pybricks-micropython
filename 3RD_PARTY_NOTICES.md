@@ -80,6 +80,21 @@ subdirectories.
 - Conditions: License and copyright notice
 - Restrictions: Liability, warranty
 
+
+### STMems_Standard_C_drivers
+
+**path**: `lib/lsm6ds3tr_c_STdC/`
+
+**origin**: Git commit 5a189f9ccb81615c87d9ad2fb0f394cffb5853d6
+
+**url**: https://github.com/STMicroelectronics/STMems_Standard_C_drivers
+
+**terms**:
+- License: BSD-3-Clause
+- Permissions: Commercial use, distribution, modification, private use
+- Conditions: License and copyright notice
+- Restrictions: Liability, warranty
+
 ---
 
 Explanation of license terms can be found at <https://choosealicense.com/appendix/>.
