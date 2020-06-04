@@ -152,7 +152,7 @@ STATIC void ev3dev_Speaker_play_note(ev3dev_Speaker_obj_t *self, mp_obj_t obj, i
         case 'C':
             switch (note[pos++]) {
                 case 'b':
-                    mp_raise_ValueError("'Cb' is not allowed");
+                    mp_raise_ValueError(MP_ERROR_TEXT("'Cb' is not allowed"));
                     break;
                 case '#':
                     freq = 17.32;
@@ -183,7 +183,7 @@ STATIC void ev3dev_Speaker_play_note(ev3dev_Speaker_obj_t *self, mp_obj_t obj, i
                     freq = 19.45;
                     break;
                 case '#':
-                    mp_raise_ValueError("'E#' is not allowed");
+                    mp_raise_ValueError(MP_ERROR_TEXT("'E#' is not allowed"));
                     break;
                 default:
                     pos--;
@@ -194,7 +194,7 @@ STATIC void ev3dev_Speaker_play_note(ev3dev_Speaker_obj_t *self, mp_obj_t obj, i
         case 'F':
             switch (note[pos++]) {
                 case 'b':
-                    mp_raise_ValueError("'Fb' is not allowed");
+                    mp_raise_ValueError(MP_ERROR_TEXT("'Fb' is not allowed"));
                     break;
                 case '#':
                     freq = 23.12;
@@ -239,7 +239,7 @@ STATIC void ev3dev_Speaker_play_note(ev3dev_Speaker_obj_t *self, mp_obj_t obj, i
                     freq = 29.14;
                     break;
                 case '#':
-                    mp_raise_ValueError("'B#' is not allowed");
+                    mp_raise_ValueError(MP_ERROR_TEXT("'B#' is not allowed"));
                     break;
                 default:
                     pos--;
@@ -251,7 +251,7 @@ STATIC void ev3dev_Speaker_play_note(ev3dev_Speaker_obj_t *self, mp_obj_t obj, i
             freq = 0;
             break;
         default:
-            mp_raise_ValueError("Missing note name A-G or R");
+            mp_raise_ValueError(MP_ERROR_TEXT("Missing note name A-G or R"));
             break;
     }
 
@@ -259,20 +259,20 @@ STATIC void ev3dev_Speaker_play_note(ev3dev_Speaker_obj_t *self, mp_obj_t obj, i
     if (freq != 0) {
         int octave = note[pos++] - '0';
         if (octave < 2 || octave > 8) {
-            mp_raise_ValueError("Missing octave number 2-8");
+            mp_raise_ValueError(MP_ERROR_TEXT("Missing octave number 2-8"));
         }
         freq *= 2 << octave;
     }
 
     // '/' delimiter is required between octave and fraction
     if (note[pos++] != '/') {
-        mp_raise_ValueError("Missing '/'");
+        mp_raise_ValueError(MP_ERROR_TEXT("Missing '/'"));
     }
 
     // The fractional size of the note, e.g. 4 = quarter note
     int fraction = note[pos++] - '0';
     if (fraction < 0 || fraction > 9) {
-        mp_raise_ValueError("Missing fractional value 1, 2, 4, 8, etc.");
+        mp_raise_ValueError(MP_ERROR_TEXT("Missing fractional value 1, 2, 4, 8, etc."));
     }
 
     // optional second digit
@@ -621,7 +621,7 @@ STATIC mp_obj_t ev3dev_Speaker_set_volume(size_t n_args, const mp_obj_t *pos_arg
         snprintf(amixer_stdin, sizeof(amixer_stdin), "sset PCM " INT_FMT "\n", volume_);
     } else {
         // Note: '_default_' isn't listed since it is considered an internal option
-        mp_raise_ValueError("which must be one of '_all_', 'Beep', 'PCM'");
+        mp_raise_ValueError(MP_ERROR_TEXT("which must be one of '_all_', 'Beep', 'PCM'"));
     }
 
     GError *error = NULL;

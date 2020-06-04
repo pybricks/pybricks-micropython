@@ -50,7 +50,7 @@ STATIC mp_obj_t debug_uart_read(mp_obj_t id_obj, mp_obj_t size_obj) {
     mp_int_t id = mp_obj_get_int(id_obj);
     mp_int_t size = mp_obj_get_int(size_obj);
     if (size < 1) {
-        mp_raise_ValueError("size < 1");
+        mp_raise_ValueError(MP_ERROR_TEXT("size < 1"));
     }
     buf = m_new(uint8_t, size);
 

@@ -133,7 +133,7 @@ STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, 
         context = grx_context_new(w, h, &mem, NULL);
         if (!context) {
             g_free(filename_ext);
-            mp_raise_msg(&mp_type_RuntimeError, "failed to allocate context for image");
+            mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("failed to allocate context for image"));
         }
 
         GError *error = NULL;
@@ -166,7 +166,7 @@ STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, 
     }
 
     if (!context) {
-        mp_raise_TypeError("Argument must be str or Image");
+        mp_raise_TypeError(MP_ERROR_TEXT("Argument must be str or Image"));
     }
 
     return ev3dev_Image_new(context);
@@ -185,13 +185,13 @@ STATIC mp_obj_t ev3dev_Image_empty(size_t n_args, const mp_obj_t *pos_args, mp_m
     mp_int_t width = pb_obj_get_int(arg_vals[ARG_width].u_obj);
     mp_int_t height = pb_obj_get_int(arg_vals[ARG_height].u_obj);
     if (width <= 0 || height <= 0) {
-        mp_raise_ValueError("width and height must be greater than 0");
+        mp_raise_ValueError(MP_ERROR_TEXT("width and height must be greater than 0"));
     }
     GrxFrameMemory mem;
     mem.plane0 = m_malloc(grx_screen_get_context_size(width, height));
     GrxContext *context = grx_context_new(width, height, &mem, NULL);
     if (!context) {
-        mp_raise_msg(&mp_type_RuntimeError, "Failed to create graphics context");
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("Failed to create graphics context"));
     }
     grx_context_clear(context, GRX_COLOR_WHITE);
     return ev3dev_Image_new(context);
@@ -355,7 +355,7 @@ STATIC mp_obj_t ev3dev_Image_draw_image(size_t n_args, const mp_obj_t *pos_args,
         source = ev3dev_Image_make_new(&pb_type_ev3dev_Image, 1, 0, args);
     }
     if (!mp_obj_is_type(source, &pb_type_ev3dev_Image)) {
-        mp_raise_TypeError("Image object is required");
+        mp_raise_TypeError(MP_ERROR_TEXT("Image object is required"));
     }
     ev3dev_Image_obj_t *source_ = MP_OBJ_TO_PTR(source);
     GrxColor transparent_ = map_color(transparent);
@@ -378,7 +378,7 @@ STATIC mp_obj_t ev3dev_Image_load_image(mp_obj_t self_in, mp_obj_t source_in) {
     }
 
     if (!mp_obj_is_type(source_in, &pb_type_ev3dev_Image)) {
-        mp_raise_TypeError("source must be Image or str");
+        mp_raise_TypeError(MP_ERROR_TEXT("source must be Image or str"));
     }
 
     ev3dev_Image_obj_t *source = MP_OBJ_TO_PTR(source_in);

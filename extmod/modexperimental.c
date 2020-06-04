@@ -42,7 +42,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(mod_experimental___init___obj, mod_experimental
 STATIC mp_obj_t mod_experimental_pthread_raise(mp_obj_t thread_id_in, mp_obj_t ex_in) {
     mp_uint_t thread_id = mp_obj_int_get_truncated(thread_id_in);
     if (ex_in != mp_const_none && !mp_obj_is_exception_instance(ex_in)) {
-        mp_raise_TypeError("must be an exception or None");
+        mp_raise_TypeError(MP_ERROR_TEXT("must be an exception or None"));
     }
     return mp_obj_new_int(mp_thread_schedule_exception(thread_id, ex_in));
 }

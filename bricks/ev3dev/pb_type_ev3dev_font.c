@@ -93,7 +93,7 @@ STATIC mp_obj_t ev3dev_Font_make_new(const mp_obj_type_t *type, size_t n_args, s
     if (arg_vals[ARG_script].u_obj != mp_const_none) {
         script = mp_obj_str_get_str(arg_vals[ARG_script].u_obj);
         if (strlen(script) != 4) {
-            mp_raise_ValueError("script code must have 4 characters");
+            mp_raise_ValueError(MP_ERROR_TEXT("script code must have 4 characters"));
         }
     }
 
@@ -154,7 +154,7 @@ const mp_obj_type_t pb_type_ev3dev_Font = {
 
 GrxFont *pb_ev3dev_Font_obj_get_font(mp_const_obj_t obj) {
     if (!mp_obj_is_type(obj, &pb_type_ev3dev_Font)) {
-        mp_raise_TypeError("Requires Font object");
+        mp_raise_TypeError(MP_ERROR_TEXT("Requires Font object"));
     }
     ev3dev_Font_obj_t *self = MP_OBJ_TO_PTR(obj);
     return self->font;
