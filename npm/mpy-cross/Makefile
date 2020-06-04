@@ -8,6 +8,7 @@ SRC = $(addprefix $(MICROPYTHON_DIR)/, \
 	py/nlrx86.c \
 	py/nlrx64.c \
 	py/nlrthumb.c \
+	py/nlrpowerpc.c \
 	py/nlrxtensa.c \
 	py/nlrsetjmp.c \
 	py/malloc.c \
@@ -38,6 +39,7 @@ SRC = $(addprefix $(MICROPYTHON_DIR)/, \
 	py/asmxtensa.c \
 	py/emitnxtensa.c \
 	py/emitinlinextensa.c \
+	py/emitnxtensawin.c \
 	py/formatfloat.c \
 	py/parsenumbase.c \
 	py/parsenum.c \
@@ -47,9 +49,12 @@ SRC = $(addprefix $(MICROPYTHON_DIR)/, \
 	py/runtime_utils.c \
 	py/scheduler.c \
 	py/nativeglue.c \
+	py/pairheap.c \
+	py/ringbuf.c \
 	py/stackctrl.c \
 	py/argcheck.c \
 	py/warning.c \
+	py/profile.c \
 	py/map.c \
 	py/obj.c \
 	py/objarray.c \
@@ -117,6 +122,7 @@ SRC = $(addprefix $(MICROPYTHON_DIR)/, \
 	py/frozenmod.c \
 	mpy-cross/main.c \
 	mpy-cross/gccollect.c \
+	lib/utils/gchelper_generic.c \
 	)
 
 MPY_CROSS_BUILD := $(MICROPYTHON_DIR)/mpy-cross/build
