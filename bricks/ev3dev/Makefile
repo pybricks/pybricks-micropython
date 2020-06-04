@@ -252,7 +252,6 @@ PYBRICKS_PY_SRC_C = $(addprefix py/,\
 	pb_type_enum.c \
 	pberror.c \
 	pbobj.c \
-	pbthread.c \
 	)
 
 PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
