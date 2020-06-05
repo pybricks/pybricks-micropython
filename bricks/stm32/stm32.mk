@@ -78,6 +78,9 @@ endif
 ifeq ($(PB_LIB_BLE5STACK),1)
 INC += -I$(PBTOP)/lib/ble5stack/central
 endif
+ifeq ($(PB_USE_LSM6DS3TR_C),1)
+INC += -I$(PBTOP)/lib/lsm6ds3tr_c_STdC/driver
+endif
 INC += -I$(PBTOP)/extmod
 INC += -I$(PBTOP)/py
 INC += -I$(BUILD)
@@ -160,6 +163,7 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modbuiltins.c \
 	modbuttons.c \
 	moddebug.c \
+	modexperimental.c \
 	modhubs.c \
 	modiodevices.c \
 	modlogger.c \
@@ -221,6 +225,7 @@ HAL_SRC_C = $(addprefix micropython/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Dri
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_cortex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dma.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_gpio.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_i2c.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_pwr_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_rcc.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_spi.c \
@@ -293,6 +298,10 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/uartdev.c \
 	)
 
+# STM32 IMU Library
+
+LSM6DS3TR_C_SRC_C = lib/lsm6ds3tr_c_STdC/driver/lsm6ds3tr_c_reg.c
+
 # MicroPython math library
 
 SRC_LIBM = $(addprefix micropython/lib/libm/,\
@@ -335,6 +344,9 @@ OBJ += $(addprefix $(BUILD)/, $(BLE5STACK_SRC_C:.c=.o))
 endif
 ifeq ($(PB_USE_HAL),1)
 OBJ += $(addprefix $(BUILD)/, $(HAL_SRC_C:.c=.o))
+endif
+ifeq ($(PB_USE_LSM6DS3TR_C),1)
+OBJ += $(addprefix $(BUILD)/, $(LSM6DS3TR_C_SRC_C:.c=.o))
 endif
 OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))

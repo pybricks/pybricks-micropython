@@ -291,6 +291,34 @@ void DMA1_Channel1_IRQHandler() {
     pbdrv_adc_stm32_hal_handle_irq();
 }
 
+void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
+    GPIO_InitTypeDef gpio_init = { 0 };
+
+    gpio_init.Mode = GPIO_MODE_AF_OD;
+    gpio_init.Pull = GPIO_NOPULL;
+    gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    gpio_init.Alternate = GPIO_AF4_I2C1;
+
+    gpio_init.Pin = GPIO_PIN_8;
+    HAL_GPIO_Init(GPIOB, &gpio_init);
+    gpio_init.Pin = GPIO_PIN_9;
+    HAL_GPIO_Init(GPIOB, &gpio_init);
+
+    HAL_NVIC_SetPriority(I2C1_ER_IRQn, 0, 1);
+    HAL_NVIC_EnableIRQ(I2C1_ER_IRQn);
+    HAL_NVIC_SetPriority(I2C1_EV_IRQn, 0, 2);
+    HAL_NVIC_EnableIRQ(I2C1_EV_IRQn);
+}
+
+void I2C1_ER_IRQHandler(void) {
+    extern void mod_experimental_IMU_handle_i2c_er_irq();
+    mod_experimental_IMU_handle_i2c_er_irq();
+}
+
+void I2C1_EV_IRQHandler(void) {
+    extern void mod_experimental_IMU_handle_i2c_ev_irq();
+    mod_experimental_IMU_handle_i2c_ev_irq();
+}
 
 // Early initialization
 
