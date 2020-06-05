@@ -68,22 +68,17 @@ STATIC mp_obj_t mod_experimental_IMU_make_new(const mp_obj_type_t *otype, size_t
         HAL_StatusTypeDef ret = HAL_I2C_Init(&hi2c);
         if (ret != HAL_OK) {
             hi2c.Instance = NULL;
-            mp_raise_msg(&mp_type_RuntimeError, "failed to init I2C");
+            mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("failed to init I2C"));
         }
-    }
-
-    HAL_StatusTypeDef ret = HAL_I2C_IsDeviceReady(&hi2c, LSM6DS3TR_C_I2C_ADD_L, 10, 200);
-    if (ret != HAL_OK) {
-        mp_raise_msg(&mp_type_RuntimeError, "device is not ready");
     }
 
     uint8_t id;
     if (lsm6ds3tr_c_device_id_get(&self->ctx, &id) != 0) {
-        mp_raise_msg(&mp_type_RuntimeError, "failed to get device id");
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("failed to get device id"));
     }
 
     if (id != LSM6DS3TR_C_ID) {
-        mp_raise_msg(&mp_type_RuntimeError, "incorrect device id");
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("incorrect device id"));
     }
 
     // Init based on data polling example
@@ -138,7 +133,7 @@ STATIC mp_obj_t mod_experimental_IMU_accel(mp_obj_t self_in) {
     int16_t data[3];
 
     if (lsm6ds3tr_c_acceleration_raw_get(&self->ctx, (uint8_t *)data) != 0) {
-        mp_raise_msg(&mp_type_RuntimeError, "failed to read data");
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("failed to read data"));
     }
 
     mp_obj_t values[3];
@@ -155,7 +150,7 @@ STATIC mp_obj_t mod_experimental_IMU_gyro(mp_obj_t self_in) {
     int16_t data[3];
 
     if (lsm6ds3tr_c_angular_rate_raw_get(&self->ctx, (uint8_t *)data) != 0) {
-        mp_raise_msg(&mp_type_RuntimeError, "failed to read data");
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("failed to read data"));
     }
 
     mp_obj_t values[3];
