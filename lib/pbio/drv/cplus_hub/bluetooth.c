@@ -314,7 +314,7 @@ static void read_by_type_response_uuid16(uint16_t connection_handle,
     attReadByTypeRsp_t rsp;
     uint8_t buf[ATT_MTU_SIZE - 2];
 
-    buf[0] = ++attr_handle & 0xFF;
+    buf[0] = attr_handle & 0xFF;
     buf[1] = (attr_handle >> 8) & 0xFF;
     buf[2] = property_flags;
     buf[3] = ++attr_handle & 0xFF;
@@ -332,7 +332,7 @@ static void read_by_type_response_uuid128(uint16_t connection_handle,
     attReadByTypeRsp_t rsp;
     uint8_t buf[ATT_MTU_SIZE - 2];
 
-    buf[0] = ++attr_handle & 0xFF;
+    buf[0] = attr_handle & 0xFF;
     buf[1] = (attr_handle >> 8) & 0xFF;
     buf[2] = property_flags;
     buf[3] = ++attr_handle & 0xFF;
@@ -384,25 +384,25 @@ static void handle_event(uint8_t *packet) {
                     DBG("s %04X t %04X", start_handle, type);
                     switch (type) {
                         case GATT_CHARACTER_UUID:
-                            if (start_handle <= gap_service_handle) {
-                                read_by_type_response_uuid16(connection_handle, gap_service_handle,
+                            if (start_handle <= gap_service_handle + 1) {
+                                read_by_type_response_uuid16(connection_handle, gap_service_handle + 1,
                                     GATT_PROP_READ, DEVICE_NAME_UUID);
-                            } else if (start_handle <= gap_service_handle + 2) {
-                                read_by_type_response_uuid16(connection_handle, gap_service_handle + 2,
+                            } else if (start_handle <= gap_service_handle + 3) {
+                                read_by_type_response_uuid16(connection_handle, gap_service_handle + 3,
                                     GATT_PROP_READ, APPEARANCE_UUID);
-                            } else if (start_handle <= gap_service_handle + 4) {
-                                read_by_type_response_uuid16(connection_handle, gap_service_handle + 4,
+                            } else if (start_handle <= gap_service_handle + 5) {
+                                read_by_type_response_uuid16(connection_handle, gap_service_handle + 5,
                                     GATT_PROP_READ, PERI_CONN_PARAM_UUID);
-                            } else if (start_handle <= pybricks_service_handle) {
-                                read_by_type_response_uuid128(connection_handle, pybricks_service_handle,
+                            } else if (start_handle <= pybricks_service_handle + 1) {
+                                read_by_type_response_uuid128(connection_handle, pybricks_service_handle + 1,
                                     GATT_PROP_READ | GATT_PROP_WRITE |
                                     GATT_PROP_WRITE_NO_RSP | GATT_PROP_NOTIFY,
                                     pybricks_char_uuid);
-                            } else if (start_handle <= uart_service_handle) {
-                                read_by_type_response_uuid128(connection_handle, uart_service_handle,
+                            } else if (start_handle <= uart_service_handle + 1) {
+                                read_by_type_response_uuid128(connection_handle, uart_service_handle + 1,
                                     GATT_PROP_WRITE_NO_RSP, nrf_uart_rx_char_uuid);
-                            } else if (start_handle <= uart_service_handle + 2) {
-                                read_by_type_response_uuid128(connection_handle, uart_service_handle + 2,
+                            } else if (start_handle <= uart_service_handle + 3) {
+                                read_by_type_response_uuid128(connection_handle, uart_service_handle + 3,
                                     GATT_PROP_NOTIFY, nrf_uart_tx_char_uuid);
                             } else {
                                 attErrorRsp_t rsp;
