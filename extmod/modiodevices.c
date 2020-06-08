@@ -25,6 +25,7 @@
 typedef struct _iodevices_LUMPDevice_obj_t {
     mp_obj_base_t base;
     pbdevice_t *pbdev;
+    mp_obj_t id;
 } iodevices_LUMPDevice_obj_t;
 
 // pybricks.iodevices.LUMPDevice.__init__
@@ -39,14 +40,16 @@ STATIC mp_obj_t iodevices_LUMPDevice_make_new(const mp_obj_type_t *type, size_t 
 
     self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_LUMP_UART);
 
-    #if PYBRICKS_PY_PUPDEVICES
-    // FIXME: Read sensor capability flag to see which sensor uses power. As
-    // a precaution, only enable power for selected known sensors for now.
     pbio_port_t _port;
     pbio_iodev_type_id_t id;
     uint8_t curr_mode;
     uint8_t num_values;
     pbdevice_get_info(self->pbdev, &_port, &id, &curr_mode, &num_values);
+    self->id = mp_obj_new_int(id);
+
+    #if PYBRICKS_PY_PUPDEVICES
+    // FIXME: Read sensor capability flag to see which sensor uses power. As
+    // a precaution, only enable power for selected known sensors for now.
     bool power = (id == PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR || id == PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR);
     pbdevice_set_power_supply(self->pbdev, power);
     #endif // PYBRICKS_PY_PUPDEVICES
@@ -113,6 +116,7 @@ MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_LUMPDevice_write_obj, 1, iodevices_LUMPDevi
 STATIC const mp_rom_map_elem_t iodevices_LUMPDevice_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_read),       MP_ROM_PTR(&iodevices_LUMPDevice_read_obj) },
     { MP_ROM_QSTR(MP_QSTR_write),      MP_ROM_PTR(&iodevices_LUMPDevice_write_obj)},
+    { MP_ROM_QSTR(MP_QSTR_ID),         MP_ROM_ATTRIBUTE_OFFSET(iodevices_LUMPDevice_obj_t, id) },
 };
 STATIC MP_DEFINE_CONST_DICT(iodevices_LUMPDevice_locals_dict, iodevices_LUMPDevice_locals_dict_table);
 
