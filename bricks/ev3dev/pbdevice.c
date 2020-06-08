@@ -218,7 +218,7 @@ void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values, uint8
     pb_assert(PBIO_ERROR_NOT_SUPPORTED);
 }
 
-void pbdevice_set_power_supply(pbdevice_t *pbdev, bool on) {
+void pbdevice_set_power_supply(pbdevice_t *pbdev, int32_t duty) {
     pb_assert(PBIO_ERROR_NOT_SUPPORTED);
 }
 

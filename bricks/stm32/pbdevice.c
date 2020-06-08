@@ -178,14 +178,15 @@ void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values, uint8
     wait(pbio_iodev_set_data_end, pbio_iodev_set_data_cancel, iodev);
 }
 
-// FIXME: iodev should take care of this based on device data
-void pbdevice_set_power_supply(pbdevice_t *pbdev, bool on) {
-    if (on) {
-        pb_assert(pbdrv_motor_set_duty_cycle(pbdev->iodev.port, -10000));
-        mp_hal_delay_ms(1000);
-    } else {
-        pb_assert(pbdrv_motor_coast(pbdev->iodev.port));
+void pbdevice_set_power_supply(pbdevice_t *pbdev, int32_t duty) {
+    // Bind user input to percentage
+    if (duty < 0) {
+        duty = 0;
+    } else if (duty > 100) {
+        duty = 100;
     }
+    // Apply duty cycle in reverse to activate power
+    pb_assert(pbdrv_motor_set_duty_cycle(pbdev->iodev.port, -100 * duty));
 }
 
 void pbdevice_get_info(pbdevice_t *pbdev, pbio_port_t *port, pbio_iodev_type_id_t *id, uint8_t *mode, uint8_t *num_values) {

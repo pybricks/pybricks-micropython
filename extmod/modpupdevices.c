@@ -2,6 +2,7 @@
 // Copyright (c) 2018-2020 The Pybricks Authors
 
 #include "py/mpconfig.h"
+#include "py/mphal.h"
 
 #if PYBRICKS_PY_PUPDEVICES
 
@@ -216,7 +217,7 @@ STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR);
 
     // This sensor requires power, which iodevice does not do automatically yet
-    pbdevice_set_power_supply(self->pbdev, true);
+    pbdevice_set_power_supply(self->pbdev, 100);
 
     // Create an instance of the LightArray class
     self->lights = builtins_LightArray_obj_make_new(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__LIGHT, 3);
@@ -227,6 +228,9 @@ STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 
     // Save default settings
     pb_hsv_map_save_default(&self->color_map);
+
+    // This sensor needs some time to get values right after turning power on
+    mp_hal_delay_ms(1000);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -353,7 +357,7 @@ STATIC mp_obj_t pupdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR);
 
     // This sensor requires power, which iodevice does not do automatically yet
-    pbdevice_set_power_supply(self->pbdev, true);
+    pbdevice_set_power_supply(self->pbdev, 100);
 
     // Create an instance of the LightArray class
     self->lights = builtins_LightArray_obj_make_new(self->pbdev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LIGHT, 4);
