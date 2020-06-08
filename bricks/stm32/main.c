@@ -190,28 +190,6 @@ static uint32_t get_user_program(uint8_t **buf, uint32_t *free_len) {
     return len;
 }
 
-static void import_modules() {
-    // Import hubs module
-    pb_from_module_import_all(MP_QSTR_hubs);
-
-    // Import other modules if enabled
-    #if PYBRICKS_PY_IODEVICES
-    pb_from_module_import_all(MP_QSTR_iodevices);
-    #endif
-    #if PYBRICKS_PY_PUPDEVICES
-    pb_from_module_import_all(MP_QSTR_pupdevices);
-    #endif
-    #if PYBRICKS_PY_PARAMETERS
-    pb_from_module_import_all(MP_QSTR_parameters);
-    #endif
-    #if PYBRICKS_PY_TOOLS
-    pb_from_module_import_all(MP_QSTR_tools);
-    #endif
-    #if PYBRICKS_PY_ROBOTICS
-    pb_from_module_import_all(MP_QSTR_robotics);
-    #endif
-}
-
 static void run_user_program(uint32_t len, uint8_t *buf, uint32_t free_len) {
 
     if (len == 0) {
@@ -221,14 +199,6 @@ static void run_user_program(uint32_t len, uint8_t *buf, uint32_t free_len) {
 
     if (len == REPL_LEN) {
         #if MICROPY_ENABLE_COMPILER
-        nlr_buf_t nlr;
-        if (nlr_push(&nlr) == 0) {
-            import_modules();
-            nlr_pop();
-        } else {
-            mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
-            return;
-        }
         pyexec_friendly_repl();
         #else
         mp_print_str(&mp_plat_print, "REPL not supported!\n");
@@ -254,7 +224,6 @@ static void run_user_program(uint32_t len, uint8_t *buf, uint32_t free_len) {
         mp_reader_new_mem(&reader, buf, len, free_len);
         mp_raw_code_t *raw_code = mp_raw_code_load(&reader);
         mp_obj_t module_fun = mp_make_function_from_raw_code(raw_code, MP_OBJ_NULL, MP_OBJ_NULL);
-        import_modules();
         mp_call_function_0(module_fun);
         nlr_pop();
     } else {
