@@ -116,63 +116,9 @@ more than just the bricks above. But getting to a point where it is easy to
 use for everyday users takes quite a bit more work,
 so not all bricks in `/bricks` will be supported officially for now.
 
-# There are so many (Micro)Pythons!
+## Differences with other LEGO MicroPython Implementations
 
-We agree, and that's why we do not fork, but expand and help improve
-MicroPython. Check out [the development section](#development) to
-see what this means in terms of source code.
-
-This section instead aims to clarify the differences with other
-LEGO-compatible MicroPython variants.
-
-Combined, these aspects make Pybricks truly unique:
-
-1. Pybricks can run on **all** upgradeable bricks and smart hubs.
-2. Pybricks has the **same end-user [API][docs]** across all platforms.
-3. Pybricks user scripts run **autonomously** on all hubs, instead of being
-  remote-controlled by an external device. This is about **100x faster**.
-4. Pybricks device drivers are written in C and built into the MicroPython
-  firmware, instead of being written in Python user-space. This makes them
-  memory efficient and **much faster**.
-5. Pybricks comes with precise motor control and drive base **synchronization
-  tools**, and easy ways to use them.
-6. Pybricks makes sensors and motors **cross-platform compatible**. If the
-   cable fits, then it should just work.
-
-The following sections go into some more detail of other solutions for various
-platforms.
-
-## Differences with the official LEGO Education EV3 MicroPython
-
-This one's easy, because it's the same: The official
-[LEGO Education EV3 MicroPython solution][lego-education-ev3-micropython]
-uses the Pybricks library running on ev3dev.
-
-## Differences with other ev3dev-based implementations
-
-[ev3dev][ev3dev.org] is based on Debian Linux, which lets you access LEGO
-motors and sensors by reading from and writing to system files. This has
-spurred many developers to create language-specific libraries that do this for
-you.
-
-The main differences between these implementations compared to Pybricks are
-points 1, 2, 4, 5, and 6 listed above. However, they let you use the
-EV3 with other programming languages, notably including Python 3
-using [ev3dev lang Python][ev3dev-lang]. This can be beneficial if your
-project requires libraries that MicroPython does not have.
-
-## Differences with LEGO Education SPIKE PRIME MicroPython
-
-We think it's super exciting that LEGO is also working on MicroPython.
-
-A Pybricks version for SPIKE Prime is under consideration as well. It would
-work just like our other Pybricks firmwares. Notable differences with the
-official firmware would be points 1, 2, and 6 listed above. At the same time,
-this means that not all SPIKE Prime features will initially be supported.
-
-We recommend that especially teachers and students start with the official apps
-and MicroPython solutions provided by LEGO. Anyone who wants to take the next
-step is welcome to try Pybricks.
+Read more on the Pybricks [about page][about page].
 
 # How can I help?
 If you've got an EV3 Brick, the best way to help right now is to try out the
@@ -199,3 +145,4 @@ for all hubs at once, including for the ones that are not released yet!
 [lego-education-ev3-micropython]: https://education.lego.com/en-us/support/mindstorms-ev3/python-for-ev3
 
 [Pybricks Code]: https://code.pybricks.com
+[about page]: https://pybricks.com/about/
