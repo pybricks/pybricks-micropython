@@ -66,22 +66,22 @@ for installing all the developer tools just yet.
 
 ## Pybricks and Upstream MicroPython
 
-We are actively contributing to upstream MicroPython instead of forking it into
-a whole new project.
+The Pybricks authors are actively contributing to upstream MicroPython instead of forking it into
+a whole new project. In essence, Pybricks just adds a family of `ports`.
 
 To streamline development and releases, we do maintain a fork of `micropython`
-[here][pybricks/micropython]. It essentially just adds the repository that you
-are reading right now, as a git submodule. It also adds a few minor patches.
-Every once in a while, that repository gets updated with all the latest and
-greatest that upstream [`micropython`][micropython/micropython] has to offer.
+[here][pybricks/micropython]. This adds a few minor patches that haven't made
+it upstream yet. Every once in a while, that repository gets rebased with all
+the latest and greatest that upstream [`micropython`][micropython/micropython]
+has to offer.
 
 Summing up:
 
+- [`pybricks/pybricks-micropython`][pybricks-micropython]: Main repo for all
+  Pybricks firmware. This has a continuous master branch.
 - [`pybricks/micropython`][pybricks/micropython]: fork of
   [upstream MicroPython][micropython/micropython] that is included as a
-  submodule in the main `pybricks/micropython` repository.
-- [`pybricks/pybricks-micropython`][pybricks-micropython]: Main repo for all
-  Pybricks firmware. This has a continuous master branch that never breaks.
+  submodule in the main `pybricks-micropython` repository. This gets occasionally rebased.
 
 
 ## Cloning
