@@ -21,12 +21,13 @@ Read on!
 
 # Supported Programmable Bricks & Hubs
 
-## Ready for beta users
-- LEGO MINDSTORMS EV3: You can get the community-supported 2.0 beta version as
-  part of the latest ev3dev [snapshot][ev3dev-snapshot]. The [docs] reveal
-  tons of exciting new features. LEGO Education has also
-  tested and approved version 1.0, which is available through
+## Released
+
+- *LEGO MINDSTORMS EV3*: The community-supported version comes preinstalled with the latest [ev3dev][ev3dev-snapshot] image. LEGO Education has also
+  tested and approved the 2.0 release, which is available through
   [their website][lego-education-ev3-micropython].
+
+## Ready for beta users
 
 ## In progress
 
