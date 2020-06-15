@@ -50,6 +50,20 @@ subdirectories.
 - Restrictions: Liability, trademark use, warranty
 
 
+### STM32 USB Device Library
+
+**path**: `lib/STM32_USB_Device_Library/`
+
+**origin**: Git commit 5d01400afd60410f6e049cbd19179a67d44d53fd
+
+**url**: https://github.com/STMicroelectronics/STM32CubeF4
+
+**terms**:
+- License: proprietary
+- Permissions: Commercial use, distribution, modification, private use
+- Conditions: Compiled code can only be executed on STM32 products
+- Restrictions: Liability, trademark use, warranty
+
 
 ### Contiki OS
 
