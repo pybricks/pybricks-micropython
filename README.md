@@ -23,21 +23,21 @@ Read on!
 
 ## Released
 
-- *LEGO MINDSTORMS EV3*: The community-supported version comes preinstalled with the latest [ev3dev][ev3dev-snapshot] image. LEGO Education has also
+- *LEGO MINDSTORMS EV3*: The community-supported version comes preinstalled
+with the latest [ev3dev][ev3dev-snapshot] image. LEGO Education has also
   tested and approved the 2.0 release, which is available through
   [their website][lego-education-ev3-micropython].
 
 ## Ready for beta users
+- *LEGO Technic Control+ Hub* (`CPlusHub`): Try it now
+with [Pybricks Code][Pybricks Code].
 
 ## In progress
 
 - LEGO BOOST Move Hub (`MoveHub`): Although not all hub features are supported
-  yet, this firmware already works very well. We're just working on getting the
-  PC app ready too, so you can start writing code.
-- LEGO Technic Control+ Hub (`CPlusHub`): This hub works just as well as the
- `MoveHub`, but we haven't finished implementing Bluetooth support yet, which
-  means that it's not ready for everyday users yet.
-- LEGO City Train Hub / Powered Up (`CityHub`): Same progress as `CPlusHub`.
+  yet, this firmware already runs well. External sensors are not yet supported.
+- LEGO City Hub (`CityHub`): Same as `MoveHub`. Bluetooth is not enabled yet,
+which means that it's not ready for everyday users yet.
 
 ## Under consideration
 
@@ -148,10 +148,6 @@ This one's easy, because it's the same: The official
 [LEGO Education EV3 MicroPython solution][lego-education-ev3-micropython]
 uses the Pybricks library running on ev3dev.
 
-LEGO Education has tested and approved version 1.0, to make sure it works well
-for teachers, students, and hobbyists. We hope that version 2.0 will eventually
-also be approved. It is currently in [community beta](#ready-for-beta-users).
-
 ## Differences with other ev3dev-based implementations
 
 [ev3dev][ev3dev.org] is based on Debian Linux, which lets you access LEGO
@@ -202,3 +198,4 @@ for all hubs at once, including for the ones that are not released yet!
 
 [lego-education-ev3-micropython]: https://education.lego.com/en-us/support/mindstorms-ev3/python-for-ev3
 
+[Pybricks Code]: https://code.pybricks.com
