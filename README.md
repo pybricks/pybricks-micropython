@@ -121,8 +121,8 @@ so not all bricks in `/bricks` will be supported officially for now.
 Read more on the Pybricks [about page][about page].
 
 # How can I help?
-If you've got an EV3 Brick, the best way to help right now is to try out the
-new 2.0 [community beta](#ready-for-beta-users). Much of its code is shared
+If you've got a Control+ Hub, the best way to help right now is to try out the
+beta release of [Pybricks Code][Pybricks Code]. Much of its code is shared
 with the other hubs. So if you share your findings or issues, we can fix them
 for all hubs at once, including for the ones that are not released yet!
 
