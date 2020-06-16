@@ -21,11 +21,9 @@
 #ifndef __USBD_DEF_H
 #define __USBD_DEF_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Includes ------------------------------------------------------------------*/
+#include <stdint.h>
+
 #include "usbd_conf.h"
 
 /** @addtogroup STM32_USBD_DEVICE_LIBRARY
@@ -319,8 +317,12 @@ __STATIC_INLINE uint16_t SWAPBYTE(uint8_t *addr)
 
 #define LOBYTE(x)  ((uint8_t)((x) & 0x00FFU))
 #define HIBYTE(x)  ((uint8_t)(((x) & 0xFF00U) >> 8U))
+#ifndef MIN
 #define MIN(a, b)  (((a) < (b)) ? (a) : (b))
+#endif
+#ifndef MAX
 #define MAX(a, b)  (((a) > (b)) ? (a) : (b))
+#endif
 
 
 #if  defined ( __GNUC__ )
@@ -376,10 +378,6 @@ __STATIC_INLINE uint16_t SWAPBYTE(uint8_t *addr)
 /**
   * @}
   */
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* __USBD_DEF_H */
 
