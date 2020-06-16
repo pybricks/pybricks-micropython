@@ -25,9 +25,9 @@ codeformat.PATHS = [
 ]
 
 codeformat.EXCLUSIONS = [
-    "bricks/nxt/nxt-firmware-drivers/**/*.[ch]",
-    "bricks/*/build*/**/*.[ch]",
-    "micropython/**/*",
+    "bricks/nxt/nxt-firmware-drivers/**",
+    "bricks/**/build*/**",
+    "micropython/**",
 ]
 
 codeformat.TOP = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
