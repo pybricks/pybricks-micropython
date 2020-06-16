@@ -80,3 +80,30 @@ void SysTick_Handler(void) {
 
     etimer_request_poll();
 }
+
+uint32_t HAL_GetTick(void) {
+    return clock_time_ticks;
+}
+
+// We provide our own version of HAL_Delay that calls __WFI while waiting,
+// and works when interrupts are disabled.  This function is intended to be
+// used only by the ST HAL functions.
+void HAL_Delay(uint32_t Delay) {
+    if (__get_PRIMASK() == 0) {
+        // IRQs enabled, so can use systick counter to do the delay
+        uint32_t start = clock_time_ticks;
+        // Wraparound of tick is taken care of by 2's complement arithmetic.
+        while (clock_time_ticks - start < Delay) {
+            // Enter sleep mode, waiting for (at least) the SysTick interrupt.
+            __WFI();
+        }
+    } else {
+        // IRQs disabled, so need to use a busy loop for the delay.
+        // To prevent possible overflow of the counter we use a double loop.
+        const uint32_t count_1ms = PBDRV_CONFIG_SYS_CLOCK_RATE / 4000;
+        for (int i = 0; i < Delay; i++) {
+            for (uint32_t count = 0; ++count <= count_1ms;) {
+            }
+        }
+    }
+}
