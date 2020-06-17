@@ -30,22 +30,20 @@
 #define PBDRV_CONFIG_BUTTON_ADC                     (1)
 
 #define PBDRV_CONFIG_COUNTER                        (1)
-#define PBDRV_CONFIG_COUNTER_NUM_DEV                (5)
-// #define PBDRV_CONFIG_COUNTER_NUM_DEV                (6)
+#define PBDRV_CONFIG_COUNTER_NUM_DEV                (6)
 
 #define PBDRV_CONFIG_GPIO                           (1)
 #define PBDRV_CONFIG_GPIO_STM32F4                   (1)
 
 #define PBDRV_CONFIG_IOPORT                         (1)
 #define PBDRV_CONFIG_IOPORT_LPF2                    (1)
-#define PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS          (5)
-// #define PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS          (6)
+#define PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS          (6)
 #define PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT         PBIO_PORT_A
-#define PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT          PBIO_PORT_E
-// #define PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT          PBIO_PORT_F
+#define PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT          PBIO_PORT_F
 
 #define PBDRV_CONFIG_UART                           (1)
 #define PBDRV_CONFIG_UART_STM32_HAL                 (1)
+#define PBDRV_CONFIG_UART_STM32_HAL_NUM_UART        (6)
 
 #define PBDRV_CONFIG_USB                            (1)
 #define PBDRV_CONFIG_USB_STM32F4_CDC                (1)
@@ -59,19 +57,15 @@
 #define PBDRV_CONFIG_HAS_PORT_C (1)
 #define PBDRV_CONFIG_HAS_PORT_D (1)
 #define PBDRV_CONFIG_HAS_PORT_E (1)
-// #define PBDRV_CONFIG_HAS_PORT_F (1)
+#define PBDRV_CONFIG_HAS_PORT_F (1)
 
 #define PBDRV_CONFIG_FIRST_IO_PORT          PBIO_PORT_A
-#define PBDRV_CONFIG_LAST_IO_PORT           PBIO_PORT_E
-// #define PBDRV_CONFIG_LAST_IO_PORT           PBIO_PORT_F
-#define PBDRV_CONFIG_NUM_IO_PORT            (5)
-// #define PBDRV_CONFIG_NUM_IO_PORT            (6)
+#define PBDRV_CONFIG_LAST_IO_PORT           PBIO_PORT_F
+#define PBDRV_CONFIG_NUM_IO_PORT            (6)
 
 #define PBDRV_CONFIG_FIRST_MOTOR_PORT       PBIO_PORT_A
-#define PBDRV_CONFIG_LAST_MOTOR_PORT        PBIO_PORT_E
-// #define PBDRV_CONFIG_LAST_MOTOR_PORT        PBIO_PORT_F
-#define PBDRV_CONFIG_NUM_MOTOR_CONTROLLER   (5)
-// #define PBDRV_CONFIG_NUM_MOTOR_CONTROLLER   (6)
+#define PBDRV_CONFIG_LAST_MOTOR_PORT        PBIO_PORT_F
+#define PBDRV_CONFIG_NUM_MOTOR_CONTROLLER   (6)
 
 #define PBDRV_CONFIG_SYS_CLOCK_RATE 96000000
 

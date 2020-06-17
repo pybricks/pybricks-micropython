@@ -76,16 +76,16 @@ static pbdrv_motor_data_t
         .pin2_alt = GPIO_AF2_TIM3,
         .pin2_tim_ccr = &TIM3->CCR2,
     },
-    // {
-    //     .pin1_gpio.bank = GPIOC,
-    //     .pin1_gpio.pin = 8,
-    //     .pin1_alt = GPIO_AF2_TIM3,
-    //     .pin1_tim_ccr = &TIM3->CCR3,
-    //     .pin2_gpio.bank = GPIOB,
-    //     .pin2_gpio.pin = 1,
-    //     .pin2_alt = GPIO_AF2_TIM3,
-    //     .pin2_tim_ccr = &TIM3->CCR4,
-    // },
+    {
+        .pin1_gpio.bank = GPIOC,
+        .pin1_gpio.pin = 8,
+        .pin1_alt = GPIO_AF2_TIM3,
+        .pin1_tim_ccr = &TIM3->CCR3,
+        .pin2_gpio.bank = GPIOB,
+        .pin2_gpio.pin = 1,
+        .pin2_alt = GPIO_AF2_TIM3,
+        .pin2_tim_ccr = &TIM3->CCR4,
+    },
 };
 
 static TIM_HandleTypeDef htim1;
@@ -143,11 +143,11 @@ void _pbdrv_motor_init(void) {
     HAL_TIM_PWM_ConfigChannel(&htim3, &tim_oc_init, TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
 
-    // pbdrv_motor_coast(PBIO_PORT_F);
-    // HAL_TIM_PWM_ConfigChannel(&htim3, &tim_oc_init, TIM_CHANNEL_3);
-    // HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
-    // HAL_TIM_PWM_ConfigChannel(&htim3, &tim_oc_init, TIM_CHANNEL_4);
-    // HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+    pbdrv_motor_coast(PBIO_PORT_F);
+    HAL_TIM_PWM_ConfigChannel(&htim3, &tim_oc_init, TIM_CHANNEL_3);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+    HAL_TIM_PWM_ConfigChannel(&htim3, &tim_oc_init, TIM_CHANNEL_4);
+    HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
 }
 
 static pbio_iodev_t *get_iodev(pbio_port_t port) {
@@ -238,8 +238,8 @@ pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
 
 #if PBIO_CONFIG_ENABLE_DEINIT
 void _pbdrv_motor_deinit(void) {
-    // HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_4);
-    // HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_3);
+    HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_4);
+    HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_3);
     HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_2);
     HAL_TIM_PWM_Stop(&htim3, TIM_CHANNEL_1);
 

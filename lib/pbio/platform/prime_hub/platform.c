@@ -122,10 +122,10 @@ const pbdrv_uart_stm32_hal_platform_data_t
         .uart = UART10,
         .irq = UART10_IRQn,
     },
-    // [UART_PORT_F] = {
-    //     .uart   = UART9,
-    //     .irq    = UART9_IRQn,
-    // },
+    [UART_PORT_F] = {
+        .uart = UART9,
+        .irq = UART9_IRQn,
+    },
 };
 
 // overrides weak function in setup.m
@@ -188,10 +188,10 @@ const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDE
         .uart_id = UART_PORT_E,
         .counter_id = COUNTER_PORT_E,
     },
-    // [COUNTER_PORT_F] = {
-    //     .uart_id    = UART_PORT_F,
-    //     .counter_id = COUNTER_PORT_F,
-    // },
+    [COUNTER_PORT_F] = {
+        .uart_id = UART_PORT_F,
+        .counter_id = COUNTER_PORT_F,
+    },
 };
 
 
@@ -381,17 +381,6 @@ void SystemInit(void) {
     // Turn VCC_PORT on (PA14 == PORTCE)
     GPIOA->BSRR = GPIO_BSRR_BS_14;
     GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER14_Msk) | (1 << GPIO_MODER_MODER14_Pos);
-
-    // UART for terminal
-    // FIXME: temporarily using port F for terminal until we get USB working
-    GPIOD->MODER = (GPIOD->MODER & ~GPIO_MODER_MODER14_Msk) | (2 << GPIO_MODER_MODER14_Pos);
-    GPIOD->AFR[1] = (GPIOD->AFR[1] & ~GPIO_AFRH_AFSEL14_Msk) | (11 << GPIO_AFRH_AFSEL14_Pos);
-    GPIOD->MODER = (GPIOD->MODER & ~GPIO_MODER_MODER15_Msk) | (2 << GPIO_MODER_MODER15_Pos);
-    GPIOD->AFR[1] = (GPIOD->AFR[1] & ~GPIO_AFRH_AFSEL15_Msk) | (11 << GPIO_AFRH_AFSEL15_Pos);
-    UART9->BRR = HAL_RCC_GetPCLK2Freq() / 115200;
-    UART9->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
-    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER5_Msk) | (1 << GPIO_MODER_MODER5_Pos);
-    GPIOC->BSRR = GPIO_BSRR_BR_5; // TXPORT_F_EN
 
     // since the firmware starts at 0x08008000, we need to set the vector table offset
     SCB->VTOR = (uint32_t)&_fw_isr_vector_src;
