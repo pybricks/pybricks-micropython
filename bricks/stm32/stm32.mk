@@ -81,6 +81,10 @@ endif
 ifeq ($(PB_USE_LSM6DS3TR_C),1)
 INC += -I$(PBTOP)/lib/lsm6ds3tr_c_STdC/driver
 endif
+ifeq ($(PB_LIB_STM32_USB_DEVICE),1)
+INC += -I$(PBTOP)/lib/STM32_USB_Device_Library/Class/CDC/Inc/
+INC += -I$(PBTOP)/lib/STM32_USB_Device_Library/Core/Inc/
+endif
 INC += -I$(PBTOP)/extmod
 INC += -I$(PBTOP)/py
 INC += -I$(BUILD)
@@ -209,6 +213,7 @@ BLE5STACK_SRC_C = $(addprefix lib/ble5stack/central/,\
 # Contiki
 
 CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
+	lib/ringbuf.c \
 	sys/autostart.c \
 	sys/etimer.c \
 	sys/process.c \
@@ -226,6 +231,8 @@ HAL_SRC_C = $(addprefix micropython/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Dri
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dma.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_gpio.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_i2c.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_pcd_ex.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_pcd.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_pwr_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_rcc.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_spi.c \
@@ -237,6 +244,7 @@ HAL_SRC_C = $(addprefix micropython/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Dri
 	stm32$(PB_MCU_SERIES_LCASE)xx_ll_lpuart.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_ll_rcc.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_ll_usart.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_ll_usb.c \
 	)
 
 ifeq ($(PB_MCU_SERIES),F4)
@@ -245,7 +253,11 @@ endif
 ifneq ($(PB_MCU_SERIES),L4)
 HAL_SRC_C := $(filter-out %xx_ll_lpuart.c, $(HAL_SRC_C))
 endif
-
+ifneq ($(PB_LIB_STM32_USB_DEVICE),1)
+HAL_SRC_C := $(filter-out %xx_hal_pcd_ex.c, $(HAL_SRC_C))
+HAL_SRC_C := $(filter-out %xx_hal_pcd.c, $(HAL_SRC_C))
+HAL_SRC_C := $(filter-out %xx_ll_usb.c, $(HAL_SRC_C))
+endif
 # libfixmath
 
 COPT += -DFIXMATH_NO_CTYPE
@@ -277,6 +289,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/uart/uart_stm32_hal.c \
 	drv/uart/uart_stm32f0.c \
 	drv/uart/uart_stm32l4_ll.c \
+	drv/usb/stm32_usb_serial.c \
 	platform/$(PBIO_PLATFORM)/clock.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	platform/$(PBIO_PLATFORM)/sys.c \
@@ -333,6 +346,20 @@ SRC_LIBM = $(addprefix micropython/lib/libm/,\
 	wf_tgamma.c \
 	)
 
+# STM32 USB Device library
+
+SRC_STM32_USB_DEV = $(addprefix lib/STM32_USB_Device_Library/,\
+	Class/CDC/Src/usbd_cdc.c \
+	Core/Src/usbd_core.c \
+	Core/Src/usbd_ctlreq.c \
+	Core/Src/usbd_ioreq.c \
+	)
+
+SRC_STM32_USB_DEV += $(addprefix lib/pbio/platform/$(PBIO_PLATFORM)/,\
+	usbd_conf.c \
+	usbd_desc.c \
+	)
+
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PY_SRC_C:.c=.o))
@@ -352,6 +379,9 @@ OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
+ifeq ($(PB_LIB_STM32_USB_DEVICE),1)
+OBJ += $(addprefix $(BUILD)/, $(SRC_STM32_USB_DEV:.c=.o))
+endif
 OBJ += $(BUILD)/main.mpy.o
 
 $(BUILD)/main.mpy: main.py
@@ -411,7 +441,7 @@ $(BUILD)/firmware.zip: $(BUILD)/firmware-base.bin $(BUILD)/firmware.metadata.jso
 
 deploy: $(BUILD)/firmware.dfu
 	$(ECHO) "Writing $< to the board"
-	$(Q)$(PYTHON) $(PYDFU) -u $<
+	$(Q)$(PYTHON) $(PYDFU) -u $< $(if $(DFU_VID),--vid $(DFU_VID)) $(if $(DFU_PID),--pid $(DFU_PID))
 
 deploy-openocd: $(BUILD)/firmware-no-checksum.bin
 	$(ECHO) "Writing $< to the board via ST-LINK using OpenOCD"

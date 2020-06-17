@@ -297,6 +297,38 @@ void DMA2_Stream0_IRQHandler() {
     pbdrv_adc_stm32_hal_handle_irq();
 }
 
+// USB
+
+void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd) {
+    GPIO_InitTypeDef GPIO_InitStruct;
+
+    // Data pins
+    GPIO_InitStruct.Pin = (GPIO_PIN_11 | GPIO_PIN_12);
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+    GPIO_InitStruct.Alternate = GPIO_AF10_OTG_FS;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    // VBUS pin
+    GPIO_InitStruct.Pin = GPIO_PIN_9;
+    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+    HAL_NVIC_SetPriority(OTG_FS_IRQn, 6, 0);
+    HAL_NVIC_EnableIRQ(OTG_FS_IRQn);
+}
+
+void HAL_PCD_MspDeInit(PCD_HandleTypeDef *hpcd) {
+    HAL_NVIC_DisableIRQ(OTG_FS_IRQn);
+}
+
+void OTG_FS_IRQHandler(void) {
+    extern PCD_HandleTypeDef hpcd;
+    HAL_PCD_IRQHandler(&hpcd);
+}
+
 
 // Early initialization
 
@@ -340,6 +372,7 @@ void SystemInit(void) {
         RCC_APB1ENR_TIM4EN;
     RCC->APB2ENR |= RCC_APB2ENR_TIM1EN | RCC_APB2ENR_UART9EN | RCC_APB2ENR_UART10EN |
         RCC_APB2ENR_ADC1EN | RCC_APB2ENR_SYSCFGEN;
+    RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
 
     // Keep main power on (PA13 == POWER_EN)
     GPIOA->BSRR = GPIO_BSRR_BS_13;

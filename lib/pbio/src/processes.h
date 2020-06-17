@@ -39,6 +39,10 @@ PROCESS_NAME(pbdrv_ioport_lpf2_process);
 PROCESS_NAME(pbdrv_uart_process);
 #endif
 
+#if PBDRV_CONFIG_USB
+PROCESS_NAME(pbdrv_usb_process);
+#endif
+
 #if PBIO_CONFIG_UARTDEV
 PROCESS_NAME(pbio_uartdev_process);
 #endif

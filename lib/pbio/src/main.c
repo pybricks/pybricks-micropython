@@ -48,6 +48,9 @@ AUTOSTART_PROCESSES(
 #if PBDRV_CONFIG_UART
     ,&pbdrv_uart_process
 #endif
+#if PBDRV_CONFIG_USB
+    ,&pbdrv_usb_process
+#endif
 #if PBIO_CONFIG_UARTDEV
     ,&pbio_uartdev_process
 #endif

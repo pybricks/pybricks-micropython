@@ -64,25 +64,6 @@ void pbsys_unprepare_user_program(void) {
     _pbio_motorpoll_reset_all();
 }
 
-pbio_error_t pbsys_stdin_get_char(uint8_t *c) {
-    if (!(UART9->SR & USART_SR_RXNE)) {
-        return PBIO_ERROR_AGAIN;
-    }
-
-    *c = UART9->DR;
-
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbsys_stdout_put_char(uint8_t c) {
-    if (!(UART9->SR & USART_SR_TXE)) {
-        return PBIO_ERROR_AGAIN;
-    }
-    UART9->DR = c;
-
-    return PBIO_SUCCESS;
-}
-
 void pbsys_reboot(bool fw_update) {
     // this function never returns
     NVIC_SystemReset();

@@ -46,8 +46,9 @@
 
 #define PBDRV_CONFIG_UART                           (1)
 #define PBDRV_CONFIG_UART_STM32_HAL                 (1)
-#define PBDRV_CONFIG_UART_STM32_HAL_NUM_UART        (5)
-// #define PBDRV_CONFIG_UART_STM32_HAL_NUM_UART        (6)
+
+#define PBDRV_CONFIG_USB                            (1)
+#define PBDRV_CONFIG_USB_STM32F4_CDC                (1)
 
 #define PBDRV_CONFIG_BLUETOOTH      (0)
 #define PBDRV_CONFIG_LIGHT          (0)
