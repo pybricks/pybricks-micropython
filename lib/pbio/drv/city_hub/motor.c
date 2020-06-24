@@ -15,13 +15,6 @@
 #include <pbio/config.h>
 
 void _pbdrv_motor_init(void) {
-    // it isn't clear what PB2 does yet, but tacho doesn't work without setting it high.
-    // maybe it switches power to the IR LEDs? plus more?
-
-    // PB2 output, high
-    GPIOB->BSRR = GPIO_BSRR_BS_2;
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER2_Msk) | (1 << GPIO_MODER_MODER2_Pos);
-
     // TIM3 is used for port C PWM
     RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
     TIM3->PSC = 3;      // divide by 4 (= 3 + 1), so ticks are 12MHz
