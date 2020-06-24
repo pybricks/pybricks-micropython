@@ -109,16 +109,6 @@
 // Return the 32bit little-endian formatted value pointed to by pBuf, and increment pBuf by 4
 #define BUF_TO_UINT32_LITTLE_ENDIAN(pBuf) (((pBuf) += 4), BUILD_UINT32((pBuf)[-4], (pBuf)[-3], (pBuf)[-2], (pBuf)[-1]))
 
-#ifndef GET_BIT
-#define GET_BIT(DISCS, IDX)  (((DISCS)[((IDX) / 8)] & BV((IDX) % 8)) ? TRUE : FALSE)
-#endif
-#ifndef SET_BIT
-#define SET_BIT(DISCS, IDX)  (((DISCS)[((IDX) / 8)] |= BV((IDX) % 8)))
-#endif
-#ifndef CLR_BIT
-#define CLR_BIT(DISCS, IDX)  (((DISCS)[((IDX) / 8)] &= (BV((IDX) % 8) ^ 0xFF)))
-#endif
-
 /*
  *  This macro is for use by other macros to form a fully valid C statement.
  *  Without this, the if/else conditionals could show unexpected behavior.
