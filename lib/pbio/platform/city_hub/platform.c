@@ -114,6 +114,10 @@ void SystemInit(void) {
 
     // not sure what the rest of these pins do
 
+    // PA5 output, low
+    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER5_Msk) | (1 << GPIO_MODER_MODER5_Pos);
+    GPIOA->BSRR = GPIO_BSRR_BR_5;
+
     // PA15 output, low
     GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER15_Msk) | (1 << GPIO_MODER_MODER15_Pos);
     GPIOA->BSRR = GPIO_BSRR_BR_15;
