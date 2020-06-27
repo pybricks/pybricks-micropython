@@ -23,7 +23,7 @@
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)
 #define PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON         (1)
 
-#define PBDRV_CONFIG_BLUETOOTH                      (0)
+#define PBDRV_CONFIG_BLUETOOTH                      (1)
 
 #define PBDRV_CONFIG_COUNTER                        (1)
 #define PBDRV_CONFIG_COUNTER_NUM_DEV                (2)
