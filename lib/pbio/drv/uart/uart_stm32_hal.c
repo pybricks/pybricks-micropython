@@ -230,7 +230,7 @@ PROCESS_THREAD(pbdrv_uart_process, ev, data) {
         uart->huart.Init.OverSampling = UART_OVERSAMPLING_16,
         uart->irq = pdata->irq,
         HAL_UART_Init(&pbdrv_uart[i].huart);
-        HAL_NVIC_SetPriority(uart->irq, 1, 0);
+        HAL_NVIC_SetPriority(uart->irq, 0, 0);
         HAL_NVIC_EnableIRQ(uart->irq);
     }
 

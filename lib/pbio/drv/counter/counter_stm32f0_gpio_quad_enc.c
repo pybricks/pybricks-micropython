@@ -183,7 +183,7 @@ static pbio_error_t counter_stm32f0_gpio_quad_enc_init() {
     EXTI->RTSR |= EXTI_RTSR_RT0 | EXTI_RTSR_RT1;
     EXTI->FTSR |= EXTI_FTSR_FT0 | EXTI_FTSR_FT1;
 
-    NVIC_SetPriority(EXTI0_1_IRQn, 5);
+    NVIC_SetPriority(EXTI0_1_IRQn, 1);
     NVIC_EnableIRQ(EXTI0_1_IRQn);
 
     // TIM7 is used for clock in speed measurement
@@ -191,8 +191,8 @@ static pbio_error_t counter_stm32f0_gpio_quad_enc_init() {
     TIM7->PSC = (PBDRV_CONFIG_SYS_CLOCK_RATE / 100000) - 1; // 100kHz
     TIM7->CR1 = TIM_CR1_CEN;
     TIM7->DIER = TIM_DIER_UIE;
+    NVIC_SetPriority(TIM7_IRQn, 1);
     NVIC_EnableIRQ(TIM7_IRQn);
-    NVIC_SetPriority(TIM7_IRQn, 128);
 
     return PBIO_SUCCESS;
 }

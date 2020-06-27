@@ -282,7 +282,7 @@ PROCESS_THREAD(pbdrv_uart_process, ev, data) {
 
         LL_DMA_EnableIT_TC(pdata->tx_dma, pdata->tx_dma_ch);
 
-        NVIC_SetPriority(pdata->tx_dma_irq, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 1, 0));
+        NVIC_SetPriority(pdata->tx_dma_irq, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 2, 1));
         NVIC_EnableIRQ(pdata->tx_dma_irq);
 
         // Configure Rx DMA
@@ -302,7 +302,7 @@ PROCESS_THREAD(pbdrv_uart_process, ev, data) {
         LL_DMA_EnableIT_HT(pdata->rx_dma, pdata->rx_dma_ch);
         LL_DMA_EnableIT_TC(pdata->rx_dma, pdata->rx_dma_ch);
 
-        NVIC_SetPriority(pdata->rx_dma_irq, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 1, 0));
+        NVIC_SetPriority(pdata->rx_dma_irq, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 2, 0));
         NVIC_EnableIRQ(pdata->rx_dma_irq);
 
         // configure UART
@@ -333,7 +333,7 @@ PROCESS_THREAD(pbdrv_uart_process, ev, data) {
             LL_USART_EnableIT_IDLE(pdata->uart);
         }
 
-        NVIC_SetPriority(pdata->uart_irq, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 1, 1));
+        NVIC_SetPriority(pdata->uart_irq, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 1, 0));
         NVIC_EnableIRQ(pdata->uart_irq);
 
         // start receiving as soon as everything is configured

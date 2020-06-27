@@ -179,7 +179,7 @@ static void spi_init() {
     gpio_init.Mode = GPIO_MODE_IT_RISING_FALLING;
     gpio_init.Pull = GPIO_PULLUP;
     HAL_GPIO_Init(GPIOC, &gpio_init);
-    HAL_NVIC_SetPriority(EXTI15_10_IRQn, 2, 0);
+    HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 2);
     HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
     bt_spi.Instance = SPI1;
@@ -222,7 +222,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef *hspi) {
     HAL_DMA_Init(&tx_dma);
     __HAL_LINKDMA(hspi, hdmatx, tx_dma);
 
-    HAL_NVIC_SetPriority(DMA2_Channel4_IRQn, 1, 1);
+    HAL_NVIC_SetPriority(DMA2_Channel4_IRQn, 5, 1);
     HAL_NVIC_EnableIRQ(DMA2_Channel4_IRQn);
 
     rx_dma.Instance = DMA2_Channel3;
@@ -237,7 +237,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef *hspi) {
     HAL_DMA_Init(&rx_dma);
     __HAL_LINKDMA(hspi, hdmarx, rx_dma);
 
-    HAL_NVIC_SetPriority(DMA2_Channel3_IRQn, 1, 0);
+    HAL_NVIC_SetPriority(DMA2_Channel3_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(DMA2_Channel3_IRQn);
 }
 

@@ -130,7 +130,7 @@ static void spi_init() {
     DMA1_Channel4->CPAR = (uint32_t)&SPI2->DR;
     DMA1_Channel5->CPAR = (uint32_t)&SPI2->DR;
 
-    NVIC_SetPriority(DMA1_Channel4_5_IRQn, 4);
+    NVIC_SetPriority(DMA1_Channel4_5_IRQn, 3);
     NVIC_EnableIRQ(DMA1_Channel4_5_IRQn);
 
     // SPI2
@@ -151,7 +151,7 @@ static void spi_init() {
     EXTI->IMR |= EXTI_EMR_MR2;
     EXTI->RTSR |= EXTI_RTSR_RT2;
     EXTI->FTSR |= EXTI_FTSR_FT2;
-    NVIC_SetPriority(EXTI2_3_IRQn, 128);
+    NVIC_SetPriority(EXTI2_3_IRQn, 3);
     NVIC_EnableIRQ(EXTI2_3_IRQn);
 }
 
