@@ -37,11 +37,13 @@ const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t
     [0] = {
         .gpio_int = { .bank = GPIOB, .pin = 1},
         .gpio_dir = { .bank = GPIOB, .pin = 9},
+        .invert = true,
         .counter_id = COUNTER_PORT_A,
     },
     [1] = {
         .gpio_int = { .bank = GPIOA, .pin = 0},
         .gpio_dir = { .bank = GPIOA, .pin = 1},
+        .invert = false,
         .counter_id = COUNTER_PORT_B,
     },
 };

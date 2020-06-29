@@ -33,14 +33,15 @@ typedef struct {
     volatile uint8_t head;
     const pbdrv_gpio_t *gpio_int;
     const pbdrv_gpio_t *gpio_dir;
+    bool invert;
 } private_data_t;
 
 static private_data_t private_data[PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC_NUM_DEV];
 
 static pbio_error_t pbdrv_counter_stm32f0_gpio_quad_enc_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
     private_data_t *data = PBIO_CONTAINER_OF(dev, private_data_t, dev);
-
-    *count = data->count;
+    
+    *count = data->invert ? -data->count : data->count;
 
     return PBIO_SUCCESS;
 }
@@ -93,6 +94,9 @@ static pbio_error_t pbdrv_counter_stm32f0_gpio_quad_enc_get_rate(pbdrv_counter_d
 
     /* timer is 100000kHz */
     *rate = (head_count - tail_count) * 100000 / (uint16_t)(head_time - tail_time);
+    if (data->invert) {
+        *rate = -*rate;
+    }
     return PBIO_SUCCESS;
 }
 
@@ -168,6 +172,7 @@ static pbio_error_t counter_stm32f0_gpio_quad_enc_init() {
         data->gpio_dir = &pdata->gpio_dir;
         pbdrv_gpio_set_pull(data->gpio_dir, PBDRV_GPIO_PULL_DOWN);
         pbdrv_gpio_input(data->gpio_dir);
+        data->invert = pdata->invert;
         data->dev.get_count = pbdrv_counter_stm32f0_gpio_quad_enc_get_count;
         data->dev.get_rate = pbdrv_counter_stm32f0_gpio_quad_enc_get_rate;
         data->dev.initalized = true;

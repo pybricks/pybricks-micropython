@@ -14,6 +14,7 @@
 typedef struct {
     pbdrv_gpio_t gpio_int;
     pbdrv_gpio_t gpio_dir;
+    bool invert;
     uint8_t counter_id;
 } pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t;
 
