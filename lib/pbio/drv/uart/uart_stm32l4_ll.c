@@ -7,6 +7,7 @@
 
 #if PBDRV_CONFIG_UART_STM32L4_LL
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -78,6 +79,126 @@ static void volatile_copy(volatile uint8_t *src, uint8_t *dst, uint8_t size) {
     }
 }
 
+static void dma_clear_tc(DMA_TypeDef *DMAx, uint32_t channel) {
+    switch (channel) {
+        case LL_DMA_CHANNEL_1:
+            LL_DMA_ClearFlag_TC1(DMAx);
+            break;
+        case LL_DMA_CHANNEL_2:
+            LL_DMA_ClearFlag_TC2(DMAx);
+            break;
+        case LL_DMA_CHANNEL_3:
+            LL_DMA_ClearFlag_TC3(DMAx);
+            break;
+        case LL_DMA_CHANNEL_4:
+            LL_DMA_ClearFlag_TC4(DMAx);
+            break;
+        case LL_DMA_CHANNEL_5:
+            LL_DMA_ClearFlag_TC5(DMAx);
+            break;
+        case LL_DMA_CHANNEL_6:
+            LL_DMA_ClearFlag_TC6(DMAx);
+            break;
+        case LL_DMA_CHANNEL_7:
+            LL_DMA_ClearFlag_TC7(DMAx);
+            break;
+    }
+}
+
+static void dma_clear_ht(DMA_TypeDef *DMAx, uint32_t channel) {
+    switch (channel) {
+        case LL_DMA_CHANNEL_1:
+            LL_DMA_ClearFlag_HT1(DMAx);
+            break;
+        case LL_DMA_CHANNEL_2:
+            LL_DMA_ClearFlag_HT2(DMAx);
+            break;
+        case LL_DMA_CHANNEL_3:
+            LL_DMA_ClearFlag_HT3(DMAx);
+            break;
+        case LL_DMA_CHANNEL_4:
+            LL_DMA_ClearFlag_HT4(DMAx);
+            break;
+        case LL_DMA_CHANNEL_5:
+            LL_DMA_ClearFlag_HT5(DMAx);
+            break;
+        case LL_DMA_CHANNEL_6:
+            LL_DMA_ClearFlag_HT6(DMAx);
+            break;
+        case LL_DMA_CHANNEL_7:
+            LL_DMA_ClearFlag_HT7(DMAx);
+            break;
+    }
+}
+
+static void dma_clear_te(DMA_TypeDef *DMAx, uint32_t channel) {
+    switch (channel) {
+        case LL_DMA_CHANNEL_1:
+            LL_DMA_ClearFlag_TE1(DMAx);
+            break;
+        case LL_DMA_CHANNEL_2:
+            LL_DMA_ClearFlag_TE2(DMAx);
+            break;
+        case LL_DMA_CHANNEL_3:
+            LL_DMA_ClearFlag_TE3(DMAx);
+            break;
+        case LL_DMA_CHANNEL_4:
+            LL_DMA_ClearFlag_TE4(DMAx);
+            break;
+        case LL_DMA_CHANNEL_5:
+            LL_DMA_ClearFlag_TE5(DMAx);
+            break;
+        case LL_DMA_CHANNEL_6:
+            LL_DMA_ClearFlag_TE6(DMAx);
+            break;
+        case LL_DMA_CHANNEL_7:
+            LL_DMA_ClearFlag_TE7(DMAx);
+            break;
+    }
+}
+
+static bool dma_is_tc(DMA_TypeDef *DMAx, uint32_t channel) {
+    switch (channel) {
+        case LL_DMA_CHANNEL_1:
+            return LL_DMA_IsActiveFlag_TC1(DMAx);
+        case LL_DMA_CHANNEL_2:
+            return LL_DMA_IsActiveFlag_TC2(DMAx);
+        case LL_DMA_CHANNEL_3:
+            return LL_DMA_IsActiveFlag_TC3(DMAx);
+        case LL_DMA_CHANNEL_4:
+            return LL_DMA_IsActiveFlag_TC4(DMAx);
+        case LL_DMA_CHANNEL_5:
+            return LL_DMA_IsActiveFlag_TC5(DMAx);
+        case LL_DMA_CHANNEL_6:
+            return LL_DMA_IsActiveFlag_TC6(DMAx);
+        case LL_DMA_CHANNEL_7:
+            return LL_DMA_IsActiveFlag_TC7(DMAx);
+        default:
+            return false;
+    }
+}
+
+static bool dma_is_ht(DMA_TypeDef *DMAx, uint32_t channel) {
+    switch (channel) {
+        case LL_DMA_CHANNEL_1:
+            return LL_DMA_IsActiveFlag_HT1(DMAx);
+        case LL_DMA_CHANNEL_2:
+            return LL_DMA_IsActiveFlag_HT2(DMAx);
+        case LL_DMA_CHANNEL_3:
+            return LL_DMA_IsActiveFlag_HT3(DMAx);
+        case LL_DMA_CHANNEL_4:
+            return LL_DMA_IsActiveFlag_HT4(DMAx);
+        case LL_DMA_CHANNEL_5:
+            return LL_DMA_IsActiveFlag_HT5(DMAx);
+        case LL_DMA_CHANNEL_6:
+            return LL_DMA_IsActiveFlag_HT6(DMAx);
+        case LL_DMA_CHANNEL_7:
+            return LL_DMA_IsActiveFlag_HT7(DMAx);
+        default:
+            return false;
+    }
+}
+
 pbio_error_t pbdrv_uart_read_end(pbdrv_uart_dev_t *uart_dev) {
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
     const pbdrv_uart_stm32l4_ll_platform_data_t *pdata = uart->pdata;
@@ -128,9 +249,9 @@ pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, ui
     LL_DMA_DisableChannel(pdata->tx_dma, pdata->tx_dma_ch);
     LL_DMA_SetMemoryAddress(pdata->tx_dma, pdata->tx_dma_ch, (uint32_t)msg);
     LL_DMA_SetDataLength(pdata->tx_dma, pdata->tx_dma_ch, length);
-    pdata->tx_dma_clear_tc_fn(pdata->tx_dma);
-    pdata->tx_dma_clear_ht_fn(pdata->tx_dma);
-    pdata->tx_dma_clear_te_fn(pdata->tx_dma);
+    dma_clear_tc(pdata->tx_dma, pdata->tx_dma_ch);
+    dma_clear_ht(pdata->tx_dma, pdata->tx_dma_ch);
+    dma_clear_te(pdata->tx_dma, pdata->tx_dma_ch);
     LL_DMA_EnableChannel(pdata->tx_dma, pdata->tx_dma_ch);
     LL_USART_ClearFlag_TC(pdata->uart);
     LL_USART_EnableDMAReq_TX(pdata->uart);
@@ -202,8 +323,8 @@ pbio_error_t pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud)
 
 void pbdrv_uart_stm32l4_ll_handle_tx_dma_irq(uint8_t id) {
     const pbdrv_uart_stm32l4_ll_platform_data_t *pdata = &pbdrv_uart_stm32l4_ll_platform_data[id];
-    if (LL_DMA_IsEnabledIT_TC(pdata->tx_dma, pdata->tx_dma_ch) && pdata->tx_dma_is_tc_fn(pdata->tx_dma)) {
-        pdata->tx_dma_clear_tc_fn(pdata->tx_dma);
+    if (LL_DMA_IsEnabledIT_TC(pdata->tx_dma, pdata->tx_dma_ch) && dma_is_tc(pdata->tx_dma, pdata->tx_dma_ch)) {
+        dma_clear_tc(pdata->tx_dma, pdata->tx_dma_ch);
         LL_USART_DisableDMAReq_TX(pdata->uart);
         process_poll(&pbdrv_uart_process);
     }
@@ -212,13 +333,13 @@ void pbdrv_uart_stm32l4_ll_handle_tx_dma_irq(uint8_t id) {
 void pbdrv_uart_stm32l4_ll_handle_rx_dma_irq(uint8_t id) {
     const pbdrv_uart_stm32l4_ll_platform_data_t *pdata = &pbdrv_uart_stm32l4_ll_platform_data[id];
 
-    if (LL_DMA_IsEnabledIT_HT(pdata->rx_dma, pdata->rx_dma_ch) && pdata->rx_dma_is_ht_fn(pdata->rx_dma)) {
-        pdata->rx_dma_clear_ht_fn(pdata->rx_dma);
+    if (LL_DMA_IsEnabledIT_HT(pdata->rx_dma, pdata->rx_dma_ch) && dma_is_ht(pdata->rx_dma, pdata->rx_dma_ch)) {
+        dma_clear_ht(pdata->rx_dma, pdata->rx_dma_ch);
         process_poll(&pbdrv_uart_process);
     }
 
-    if (LL_DMA_IsEnabledIT_TC(pdata->rx_dma, pdata->rx_dma_ch) && pdata->rx_dma_is_tc_fn(pdata->rx_dma)) {
-        pdata->rx_dma_clear_tc_fn(pdata->rx_dma);
+    if (LL_DMA_IsEnabledIT_TC(pdata->rx_dma, pdata->rx_dma_ch) && dma_is_tc(pdata->rx_dma, pdata->rx_dma_ch)) {
+        dma_clear_tc(pdata->rx_dma, pdata->rx_dma_ch);
         process_poll(&pbdrv_uart_process);
     }
 }
