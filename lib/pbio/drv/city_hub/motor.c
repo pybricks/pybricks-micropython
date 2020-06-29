@@ -21,7 +21,7 @@ void _pbdrv_motor_init(void) {
     TIM3->ARR = 10000;  // 12MHz divided by 10k makes 1.2kHz PWM
     TIM3->BDTR |= TIM_BDTR_MOE;
 
-    // port C
+    // port B
     // init PWM pins as gpio out low (coasting) and prepare alternate function
     GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
     GPIOC->BRR = GPIO_BRR_BR_6;
@@ -36,7 +36,7 @@ void _pbdrv_motor_init(void) {
     TIM3->CCMR2 |= (6 << TIM_CCMR2_OC3M_Pos) | TIM_CCMR2_OC3PE; // PWM mode 1
     TIM3->CCER |= TIM_CCER_CC3E;
 
-    // port D
+    // port A
     // init PWM pins as gpio out low (coasting) and prepare alternate function
     GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
     GPIOC->BRR = GPIO_BRR_BR_7;
@@ -73,11 +73,6 @@ static pbio_iodev_t *get_iodev(pbio_port_t port) {
 }
 
 pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
-    // if (port == PBIO_PORT_B || port == PBIO_PORT_A) {
-    //     if (!get_iodev(port)) {
-    //         return PBIO_ERROR_NO_DEV;
-    //     }
-    // }
 
     // set both port pins 1 and 2 to output low
     switch (port) {
@@ -120,7 +115,7 @@ static void pbdrv_motor_brake(pbio_port_t port) {
     }
 }
 
-static void pbdrv_motor_run_fwd(pbio_port_t port, int16_t duty_cycle) {
+static void pbdrv_motor_run_fwd(pbio_port_t port, int16_t duty_cycle) { // duty is pos
     // one pin as out, high and the other as PWM
     switch (port) {
         case PBIO_PORT_B:
@@ -130,17 +125,17 @@ static void pbdrv_motor_run_fwd(pbio_port_t port, int16_t duty_cycle) {
             GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (2 << GPIO_MODER_MODER8_Pos);
             break;
         case PBIO_PORT_A:
-            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
-            GPIOC->BSRR = GPIO_BSRR_BS_9;
-            TIM3->CCR2 = 10000 - duty_cycle;
-            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (2 << GPIO_MODER_MODER7_Pos);
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
+            GPIOC->BSRR = GPIO_BSRR_BS_7;
+            TIM3->CCR4 = 10000 - duty_cycle;
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (2 << GPIO_MODER_MODER9_Pos);
             break;
         default:
             break;
     }
 }
 
-static void pbdrv_motor_run_rev(pbio_port_t port, int16_t duty_cycle) {
+static void pbdrv_motor_run_rev(pbio_port_t port, int16_t duty_cycle) { // duty is neg
     // one pin as out, high and the other as PWM
     switch (port) {
         case PBIO_PORT_B:
@@ -150,10 +145,10 @@ static void pbdrv_motor_run_rev(pbio_port_t port, int16_t duty_cycle) {
             GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (2 << GPIO_MODER_MODER6_Pos);
             break;
         case PBIO_PORT_A:
-            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
-            GPIOC->BSRR = GPIO_BSRR_BS_7;
-            TIM3->CCR4 = 10000 + duty_cycle;
-            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (2 << GPIO_MODER_MODER9_Pos);
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
+            GPIOC->BSRR = GPIO_BSRR_BS_9;
+            TIM3->CCR2 = 10000 + duty_cycle;
+            GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (2 << GPIO_MODER_MODER7_Pos);
             break;
         default:
             break;
@@ -164,16 +159,6 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
     if (port < PBIO_PORT_A || port > PBIO_PORT_B) {
         return PBIO_ERROR_INVALID_PORT;
     }
-
-    // if (port == PBIO_PORT_B || port == PBIO_PORT_A) {
-    //     pbio_iodev_t *iodev;
-
-    //     iodev = get_iodev(port);
-
-    //     if (!iodev) {
-    //         return PBIO_ERROR_NO_DEV;
-    //     }
-    // }
 
     if (duty_cycle < -10000 || duty_cycle > 10000) {
         return PBIO_ERROR_INVALID_ARG;
