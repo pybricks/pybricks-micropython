@@ -3,6 +3,8 @@
 // Copyright (c) 2020 Tilen MAJERLE
 // https://github.com/MaJerle/stm32-usart-uart-dma-rx-tx/blob/master/projects/usart_rx_idle_line_irq_rtos_L4_multi_instance/Src/main.c
 
+// UART driver for STM32L4x using DMA.
+
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_UART_STM32L4_LL
