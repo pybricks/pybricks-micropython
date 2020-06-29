@@ -209,13 +209,6 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
         }
     }
 
-    #if PYBRICKS_HUB_MOVEHUB
-    // FIXME: Update direction in pwm and counter driver instead
-    if (port_arg == PBIO_PORT_A) {
-        direction_arg = !direction_arg;
-    }
-    #endif
-
     // Get servo device, set it up, and tell the poller if we succeeded.
     pb_assert(pbio_motorpoll_get_servo(port_arg, &srv));
     while ((err = pbio_servo_setup(srv, direction_arg, gear_ratio)) == PBIO_ERROR_AGAIN) {

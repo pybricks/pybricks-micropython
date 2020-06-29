@@ -118,11 +118,6 @@ static pbio_iodev_t *get_iodev(pbio_port_t port) {
 }
 
 pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
-    // if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
-    //     if (!get_iodev(port)) {
-    //         return PBIO_ERROR_NO_DEV;
-    //     }
-    // }
 
     // set both port pins 1 and 2 to output low
     switch (port) {
@@ -193,10 +188,10 @@ static void pbdrv_motor_run_fwd(pbio_port_t port, int16_t duty_cycle) {
     // one pin as out, high and the other as PWM
     switch (port) {
         case PBIO_PORT_A:
-            GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
-            GPIOA->BSRR = GPIO_BSRR_BS_8;
-            TIM1->CCR3 = 10000 - duty_cycle;
-            GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10_Msk) | (2 << GPIO_MODER_MODER10_Pos);
+            GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10_Msk) | (1 << GPIO_MODER_MODER10_Pos);
+            GPIOA->BSRR = GPIO_BSRR_BS_10;
+            TIM1->CCR1 = 10000 - duty_cycle;
+            GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER8_Msk) | (2 << GPIO_MODER_MODER8_Pos);
             break;
         case PBIO_PORT_B:
             GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
@@ -225,10 +220,10 @@ static void pbdrv_motor_run_rev(pbio_port_t port, int16_t duty_cycle) {
     // one pin as out, high and the other as PWM
     switch (port) {
         case PBIO_PORT_A:
-            GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10_Msk) | (1 << GPIO_MODER_MODER10_Pos);
-            GPIOA->BSRR = GPIO_BSRR_BS_10;
-            TIM1->CCR1 = 10000 + duty_cycle;
-            GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER8_Msk) | (2 << GPIO_MODER_MODER8_Pos);
+            GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
+            GPIOA->BSRR = GPIO_BSRR_BS_8;
+            TIM1->CCR3 = 10000 + duty_cycle;
+            GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10_Msk) | (2 << GPIO_MODER_MODER10_Pos);
             break;
         case PBIO_PORT_B:
             GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
