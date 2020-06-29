@@ -8,7 +8,7 @@
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/ioport/ioport_lpf2.h"
-#include "../../drv/uart/uart_stm32l4_ll.h"
+#include "../../drv/uart/uart_stm32l4_ll_dma.h"
 
 #include "stm32l4xx_hal.h"
 #include "stm32l4xx_ll_dma.h"
@@ -72,8 +72,8 @@ enum {
     UART_PORT_D,
 };
 
-const pbdrv_uart_stm32l4_ll_platform_data_t
-    pbdrv_uart_stm32l4_ll_platform_data[PBDRV_CONFIG_UART_STM32L4_LL_NUM_UART] = {
+const pbdrv_uart_stm32l4_ll_dma_platform_data_t
+    pbdrv_uart_stm32l4_ll_dma_platform_data[PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART] = {
     [UART_PORT_A] = {
         .tx_dma = DMA1,
         .tx_dma_ch = LL_DMA_CHANNEL_4,
@@ -125,51 +125,51 @@ const pbdrv_uart_stm32l4_ll_platform_data_t
 };
 
 void DMA1_Channel2_IRQHandler() {
-    pbdrv_uart_stm32l4_ll_handle_tx_dma_irq(UART_PORT_C);
+    pbdrv_uart_stm32l4_ll_dma_handle_tx_dma_irq(UART_PORT_C);
 }
 
 void DMA1_Channel3_IRQHandler() {
-    pbdrv_uart_stm32l4_ll_handle_rx_dma_irq(UART_PORT_C);
+    pbdrv_uart_stm32l4_ll_dma_handle_rx_dma_irq(UART_PORT_C);
 }
 
 void DMA1_Channel4_IRQHandler() {
-    pbdrv_uart_stm32l4_ll_handle_tx_dma_irq(UART_PORT_A);
+    pbdrv_uart_stm32l4_ll_dma_handle_tx_dma_irq(UART_PORT_A);
 }
 
 void DMA1_Channel5_IRQHandler() {
-    pbdrv_uart_stm32l4_ll_handle_rx_dma_irq(UART_PORT_A);
+    pbdrv_uart_stm32l4_ll_dma_handle_rx_dma_irq(UART_PORT_A);
 }
 
 void DMA1_Channel6_IRQHandler() {
-    pbdrv_uart_stm32l4_ll_handle_rx_dma_irq(UART_PORT_B);
+    pbdrv_uart_stm32l4_ll_dma_handle_rx_dma_irq(UART_PORT_B);
 }
 
 void DMA1_Channel7_IRQHandler() {
-    pbdrv_uart_stm32l4_ll_handle_tx_dma_irq(UART_PORT_B);
+    pbdrv_uart_stm32l4_ll_dma_handle_tx_dma_irq(UART_PORT_B);
 }
 
 void DMA2_Channel6_IRQHandler() {
-    pbdrv_uart_stm32l4_ll_handle_tx_dma_irq(UART_PORT_D);
+    pbdrv_uart_stm32l4_ll_dma_handle_tx_dma_irq(UART_PORT_D);
 }
 
 void DMA2_Channel7_IRQHandler() {
-    pbdrv_uart_stm32l4_ll_handle_rx_dma_irq(UART_PORT_D);
+    pbdrv_uart_stm32l4_ll_dma_handle_rx_dma_irq(UART_PORT_D);
 }
 
 void USART1_IRQHandler() {
-    pbdrv_uart_stm32l4_ll_handle_uart_irq(UART_PORT_A);
+    pbdrv_uart_stm32l4_ll_dma_handle_uart_irq(UART_PORT_A);
 }
 
 void USART2_IRQHandler() {
-    pbdrv_uart_stm32l4_ll_handle_uart_irq(UART_PORT_B);
+    pbdrv_uart_stm32l4_ll_dma_handle_uart_irq(UART_PORT_B);
 }
 
 void USART3_IRQHandler() {
-    pbdrv_uart_stm32l4_ll_handle_uart_irq(UART_PORT_C);
+    pbdrv_uart_stm32l4_ll_dma_handle_uart_irq(UART_PORT_C);
 }
 
 void LPUART1_IRQHandler() {
-    pbdrv_uart_stm32l4_ll_handle_uart_irq(UART_PORT_D);
+    pbdrv_uart_stm32l4_ll_dma_handle_uart_irq(UART_PORT_D);
 }
 
 enum {

@@ -3,8 +3,8 @@
 
 // UART driver for STM32L4x using DMA.
 
-#ifndef _UART_STM32L4_LL_H_
-#define _UART_STM32L4_LL_H_
+#ifndef _UART_STM32L4_LL_DMA_H_
+#define _UART_STM32L4_LL_DMA_H_
 
 #include <stdint.h>
 
@@ -34,28 +34,28 @@ typedef struct {
     USART_TypeDef *uart;
     /** The UART interupt number. */
     IRQn_Type uart_irq;
-} pbdrv_uart_stm32l4_ll_platform_data_t;
+} pbdrv_uart_stm32l4_ll_dma_platform_data_t;
 
 /**
  * Array of UART platform data to be defined in platform.c.
  */
-extern const pbdrv_uart_stm32l4_ll_platform_data_t
-    pbdrv_uart_stm32l4_ll_platform_data[PBDRV_CONFIG_UART_STM32L4_LL_NUM_UART];
+extern const pbdrv_uart_stm32l4_ll_dma_platform_data_t
+    pbdrv_uart_stm32l4_ll_dma_platform_data[PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART];
 
 /**
  * Callback to be called by the Tx DMA IRQ handler.
  * @param id [in]   The UART instance ID.
  */
-void pbdrv_uart_stm32l4_ll_handle_tx_dma_irq(uint8_t id);
+void pbdrv_uart_stm32l4_ll_dma_handle_tx_dma_irq(uint8_t id);
 
 /**
  * Callback to be called by the Rx DMA IRQ handler.
  * @param id [in]   The UART instance ID.
- */void pbdrv_uart_stm32l4_ll_handle_rx_dma_irq(uint8_t id);
+ */void pbdrv_uart_stm32l4_ll_dma_handle_rx_dma_irq(uint8_t id);
 
 /**
  * Callback to be called by the UART IRQ handler.
  * @param id [in]   The UART instance ID.
- */void pbdrv_uart_stm32l4_ll_handle_uart_irq(uint8_t id);
+ */void pbdrv_uart_stm32l4_ll_dma_handle_uart_irq(uint8_t id);
 
-#endif // _UART_STM32L4_LL_H_
+#endif // _UART_STM32L4_LL_DMA_H_

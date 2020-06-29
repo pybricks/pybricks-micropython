@@ -7,7 +7,7 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_UART_STM32L4_LL
+#if PBDRV_CONFIG_UART_STM32L4_LL_DMA
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -19,7 +19,7 @@
 #include <pbio/error.h>
 #include <pbio/util.h>
 
-#include "./uart_stm32l4_ll.h"
+#include "./uart_stm32l4_ll_dma.h"
 #include "../../src/processes.h"
 
 #include "stm32l4xx_ll_dma.h"
@@ -31,7 +31,7 @@
 
 typedef struct {
     pbdrv_uart_dev_t uart_dev;
-    const pbdrv_uart_stm32l4_ll_platform_data_t *pdata;
+    const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata;
     struct etimer rx_timer;
     struct etimer tx_timer;
     volatile uint8_t *rx_data;
@@ -40,13 +40,13 @@ typedef struct {
     uint8_t read_length;
 } pbdrv_uart_t;
 
-static pbdrv_uart_t pbdrv_uart[PBDRV_CONFIG_UART_STM32L4_LL_NUM_UART];
-static volatile uint8_t pbdrv_uart_rx_data[PBDRV_CONFIG_UART_STM32L4_LL_NUM_UART][RX_DATA_SIZE];
+static pbdrv_uart_t pbdrv_uart[PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART];
+static volatile uint8_t pbdrv_uart_rx_data[PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART][RX_DATA_SIZE];
 
 PROCESS(pbdrv_uart_process, "UART");
 
 pbio_error_t pbdrv_uart_get(uint8_t id, pbdrv_uart_dev_t **uart_dev) {
-    if (id >= PBDRV_CONFIG_UART_STM32L4_LL_NUM_UART) {
+    if (id >= PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
@@ -203,7 +203,7 @@ static bool dma_is_ht(DMA_TypeDef *DMAx, uint32_t channel) {
 
 pbio_error_t pbdrv_uart_read_end(pbdrv_uart_dev_t *uart_dev) {
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
-    const pbdrv_uart_stm32l4_ll_platform_data_t *pdata = uart->pdata;
+    const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = uart->pdata;
     uint32_t rx_head;
 
     // head is the last position that DMA wrote to
@@ -242,7 +242,7 @@ void pbdrv_uart_read_cancel(pbdrv_uart_dev_t *uart_dev) {
 
 pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uint8_t length, uint32_t timeout) {
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
-    const pbdrv_uart_stm32l4_ll_platform_data_t *pdata = uart->pdata;
+    const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = uart->pdata;
 
     if (LL_USART_IsEnabledDMAReq_TX(pdata->uart)) {
         return PBIO_ERROR_AGAIN;
@@ -265,7 +265,7 @@ pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, ui
 
 pbio_error_t pbdrv_uart_write_end(pbdrv_uart_dev_t *uart_dev) {
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
-    const pbdrv_uart_stm32l4_ll_platform_data_t *pdata = uart->pdata;
+    const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = uart->pdata;
 
     if (LL_USART_IsEnabledDMAReq_TX(pdata->uart)) {
         if (etimer_expired(&uart->tx_timer)) {
@@ -323,8 +323,8 @@ pbio_error_t pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud)
     return PBIO_SUCCESS;
 }
 
-void pbdrv_uart_stm32l4_ll_handle_tx_dma_irq(uint8_t id) {
-    const pbdrv_uart_stm32l4_ll_platform_data_t *pdata = &pbdrv_uart_stm32l4_ll_platform_data[id];
+void pbdrv_uart_stm32l4_ll_dma_handle_tx_dma_irq(uint8_t id) {
+    const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = &pbdrv_uart_stm32l4_ll_dma_platform_data[id];
     if (LL_DMA_IsEnabledIT_TC(pdata->tx_dma, pdata->tx_dma_ch) && dma_is_tc(pdata->tx_dma, pdata->tx_dma_ch)) {
         dma_clear_tc(pdata->tx_dma, pdata->tx_dma_ch);
         LL_USART_DisableDMAReq_TX(pdata->uart);
@@ -332,8 +332,8 @@ void pbdrv_uart_stm32l4_ll_handle_tx_dma_irq(uint8_t id) {
     }
 }
 
-void pbdrv_uart_stm32l4_ll_handle_rx_dma_irq(uint8_t id) {
-    const pbdrv_uart_stm32l4_ll_platform_data_t *pdata = &pbdrv_uart_stm32l4_ll_platform_data[id];
+void pbdrv_uart_stm32l4_ll_dma_handle_rx_dma_irq(uint8_t id) {
+    const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = &pbdrv_uart_stm32l4_ll_dma_platform_data[id];
 
     if (LL_DMA_IsEnabledIT_HT(pdata->rx_dma, pdata->rx_dma_ch) && dma_is_ht(pdata->rx_dma, pdata->rx_dma_ch)) {
         dma_clear_ht(pdata->rx_dma, pdata->rx_dma_ch);
@@ -346,8 +346,8 @@ void pbdrv_uart_stm32l4_ll_handle_rx_dma_irq(uint8_t id) {
     }
 }
 
-void pbdrv_uart_stm32l4_ll_handle_uart_irq(uint8_t id) {
-    const pbdrv_uart_stm32l4_ll_platform_data_t *pdata = &pbdrv_uart_stm32l4_ll_platform_data[id];
+void pbdrv_uart_stm32l4_ll_dma_handle_uart_irq(uint8_t id) {
+    const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = &pbdrv_uart_stm32l4_ll_dma_platform_data[id];
 
     if (LL_USART_IsEnabledIT_TC(pdata->uart) && LL_USART_IsActiveFlag_TC(pdata->uart)) {
         LL_USART_DisableIT_TC(pdata->uart);
@@ -367,8 +367,8 @@ static void handle_poll() {
 }
 
 static void handle_exit() {
-    for (int i = 0; i < PBDRV_CONFIG_UART_STM32L4_LL_NUM_UART; i++) {
-        const pbdrv_uart_stm32l4_ll_platform_data_t *pdata = &pbdrv_uart_stm32l4_ll_platform_data[i];
+    for (int i = 0; i < PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART; i++) {
+        const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = &pbdrv_uart_stm32l4_ll_dma_platform_data[i];
         LL_USART_Disable(pdata->uart);
         LL_DMA_DisableChannel(pdata->rx_dma, pdata->rx_dma_ch);
         LL_DMA_DisableChannel(pdata->tx_dma, pdata->tx_dma_ch);
@@ -384,8 +384,8 @@ PROCESS_THREAD(pbdrv_uart_process, ev, data) {
 
     PROCESS_BEGIN();
 
-    for (int i = 0; i < PBDRV_CONFIG_UART_STM32L4_LL_NUM_UART; i++) {
-        const pbdrv_uart_stm32l4_ll_platform_data_t *pdata = &pbdrv_uart_stm32l4_ll_platform_data[i];
+    for (int i = 0; i < PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART; i++) {
+        const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = &pbdrv_uart_stm32l4_ll_dma_platform_data[i];
         volatile uint8_t *rx_data = pbdrv_uart_rx_data[i];
         pbdrv_uart_t *uart = &pbdrv_uart[i];
         uart->pdata = pdata;
@@ -472,4 +472,4 @@ PROCESS_THREAD(pbdrv_uart_process, ev, data) {
     PROCESS_END();
 }
 
-#endif // PBDRV_CONFIG_UART_STM32L4_LL
+#endif // PBDRV_CONFIG_UART_STM32L4_LL_DMA

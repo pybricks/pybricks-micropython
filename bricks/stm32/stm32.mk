@@ -288,7 +288,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/ioport/ioport_lpf2.c \
 	drv/uart/uart_stm32_hal.c \
 	drv/uart/uart_stm32f0.c \
-	drv/uart/uart_stm32l4_ll.c \
+	drv/uart/uart_stm32l4_ll_dma.c \
 	drv/usb/stm32_usb_serial.c \
 	platform/$(PBIO_PLATFORM)/clock.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
