@@ -40,7 +40,7 @@ static private_data_t private_data[PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC_NU
 
 static pbio_error_t pbdrv_counter_stm32f0_gpio_quad_enc_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
     private_data_t *data = PBIO_CONTAINER_OF(dev, private_data_t, dev);
-    
+
     *count = data->invert ? -data->count : data->count;
 
     return PBIO_SUCCESS;
