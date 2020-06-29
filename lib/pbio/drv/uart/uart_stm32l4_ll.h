@@ -19,7 +19,9 @@ typedef struct {
     pbdrv_uart_stm32l4_ll_dma_clear_flag_t tx_dma_clear_ht_fn;
     pbdrv_uart_stm32l4_ll_dma_clear_flag_t tx_dma_clear_te_fn;
     pbdrv_uart_stm32l4_ll_dma_is_active_flag_t tx_dma_is_tc_fn;
+    /** The UART Tx DMA channel (LL_DMA_CHANNEL_x) */
     uint8_t tx_dma_ch;
+    /** The UART Tx DMA request (LL_DMA_REQUEST_x) */
     uint8_t tx_dma_req;
     IRQn_Type tx_dma_irq;
     DMA_TypeDef *rx_dma;
@@ -27,7 +29,9 @@ typedef struct {
     pbdrv_uart_stm32l4_ll_dma_clear_flag_t rx_dma_clear_ht_fn;
     pbdrv_uart_stm32l4_ll_dma_is_active_flag_t rx_dma_is_tc_fn;
     pbdrv_uart_stm32l4_ll_dma_is_active_flag_t rx_dma_is_ht_fn;
+    /** The UART Rx DMA channel (LL_DMA_CHANNEL_x) */
     uint8_t rx_dma_ch;
+    /** The UART Rx DMA request (LL_DMA_REQUEST_x) */
     uint8_t rx_dma_req;
     IRQn_Type rx_dma_irq;
     USART_TypeDef *uart;
