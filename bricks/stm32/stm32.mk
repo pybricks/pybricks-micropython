@@ -105,6 +105,9 @@ CFLAGS_MCU_F4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mflo
 CFLAGS_MCU_L4 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(PB_MCU_SERIES)) $(COPT)
 
+# define external oscillator frequency
+CFLAGS += -DHSE_VALUE=$(PB_MCU_EXT_OSC_HZ)
+
 # linker scripts
 LD_FILES = $(PBIO_PLATFORM).ld
 # not all hubs share common script
@@ -288,6 +291,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/ioport/ioport_lpf2.c \
 	drv/uart/uart_stm32_hal.c \
 	drv/uart/uart_stm32f0.c \
+	drv/uart/uart_stm32f4_ll_irq.c \
 	drv/uart/uart_stm32l4_ll_dma.c \
 	drv/usb/stm32_usb_serial.c \
 	platform/$(PBIO_PLATFORM)/clock.c \
