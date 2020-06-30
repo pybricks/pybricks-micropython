@@ -7,7 +7,7 @@
 
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/ioport/ioport_lpf2.h"
-#include "../../drv/uart/uart_stm32_hal.h"
+#include "../../drv/uart/uart_stm32f4_ll_irq.h"
 
 #include "stm32f4xx_hal.h"
 
@@ -100,8 +100,8 @@ enum {
     UART_PORT_F,
 };
 
-const pbdrv_uart_stm32_hal_platform_data_t
-    pbdrv_uart_stm32_hal_platform_data[PBDRV_CONFIG_UART_STM32_HAL_NUM_UART] = {
+const pbdrv_uart_stm32f4_ll_irq_platform_data_t
+    pbdrv_uart_stm32f4_ll_irq_platform_data[PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART] = {
     [UART_PORT_A] = {
         .uart = UART7,
         .irq = UART7_IRQn,
@@ -130,32 +130,32 @@ const pbdrv_uart_stm32_hal_platform_data_t
 
 // overrides weak function in setup.m
 void UART4_IRQHandler(void) {
-    pbdrv_uart_stm32_hal_handle_irq(UART_PORT_B);
+    pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_PORT_B);
 }
 
 // overrides weak function in setup.m
 void UART5_IRQHandler(void) {
-    pbdrv_uart_stm32_hal_handle_irq(UART_PORT_D);
+    pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_PORT_D);
 }
 
 // overrides weak function in setup.m
 void UART7_IRQHandler(void) {
-    pbdrv_uart_stm32_hal_handle_irq(UART_PORT_A);
+    pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_PORT_A);
 }
 
 // overrides weak function in setup.m
 void UART8_IRQHandler(void) {
-    pbdrv_uart_stm32_hal_handle_irq(UART_PORT_C);
+    pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_PORT_C);
 }
 
 // overrides weak function in setup.m
 void UART9_IRQHandler(void) {
-    pbdrv_uart_stm32_hal_handle_irq(UART_PORT_F);
+    pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_PORT_F);
 }
 
 // overrides weak function in setup.m
 void UART10_IRQHandler(void) {
-    pbdrv_uart_stm32_hal_handle_irq(UART_PORT_E);
+    pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_PORT_E);
 }
 
 enum {

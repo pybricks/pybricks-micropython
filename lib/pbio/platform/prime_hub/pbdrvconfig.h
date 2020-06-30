@@ -42,8 +42,8 @@
 #define PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT          PBIO_PORT_F
 
 #define PBDRV_CONFIG_UART                           (1)
-#define PBDRV_CONFIG_UART_STM32_HAL                 (1)
-#define PBDRV_CONFIG_UART_STM32_HAL_NUM_UART        (6)
+#define PBDRV_CONFIG_UART_STM32F4_LL_IRQ            (1)
+#define PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART   (6)
 
 #define PBDRV_CONFIG_USB                            (1)
 #define PBDRV_CONFIG_USB_STM32F4_CDC                (1)
