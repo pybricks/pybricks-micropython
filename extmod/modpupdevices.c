@@ -573,7 +573,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_InfraredSensor_count_obj, pupdevices
 STATIC mp_obj_t pupdevices_InfraredSensor_reflection(mp_obj_t self_in) {
     pupdevices_InfraredSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t raw = pupdevices_InfraredSensor__raw(self->pbdev);
-    return mp_obj_new_int(raw / 5);
+    return pb_obj_new_fraction(raw, 5);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_InfraredSensor_reflection_obj, pupdevices_InfraredSensor_reflection);
 
