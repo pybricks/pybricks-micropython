@@ -55,19 +55,21 @@ pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
         return err;
     }
 
-    // NOTE: the raw values here were calculated based on the circut above.
-    // Disassembly of LEGO firmware shows slightly lower values and unique
-    // values for each channel. However, we are using a larger clock prescalar
-    // on the ADC, so it actually has time to fully charge the capacitor to
-    // get a more accurate voltage reading.
-
-    if (value > 3394) {
+    if (value > 3642) {
         // not a button
-    } else if (value > 3009) {
+    } else if (value > 3142) {
+        // not a button
+    } else if (value > 2879) {
         *pressed |= PBIO_BUTTON_CENTER;
-    } else if (value > 2538) {
+    } else if (value > 2634) {
+        *pressed |= PBIO_BUTTON_CENTER;
+    } else if (value > 2449) {
         // not a button
-    } else if (value > 2141) {
+    } else if (value > 2209) {
+        // not a button
+    } else if (value > 2072) {
+        *pressed |= PBIO_BUTTON_CENTER;
+    } else if (value > 1800) {
         *pressed |= PBIO_BUTTON_CENTER;
     } else {
         // hardware failure?
@@ -79,24 +81,24 @@ pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
         return err;
     }
 
-    if (value > 3872) {
+    if (value > 3654) {
         // no buttons pressed
-    } else if (value > 3394) {
+    } else if (value > 3155) {
         *pressed |= PBIO_BUTTON_RIGHT_UP; // Bluetooth
-    } else if (value > 3009) {
+    } else if (value > 2885) {
         *pressed |= PBIO_BUTTON_RIGHT;
-    } else if (value > 2755) {
+    } else if (value > 2645) {
         *pressed |= PBIO_BUTTON_RIGHT_UP; // Bluetooth
         *pressed |= PBIO_BUTTON_RIGHT;
-    } else if (value > 2538) {
+    } else if (value > 2454) {
         *pressed |= PBIO_BUTTON_LEFT;
-    } else if (value > 2327) {
+    } else if (value > 2218) {
         *pressed |= PBIO_BUTTON_RIGHT_UP; // Bluetooth
         *pressed |= PBIO_BUTTON_LEFT;
-    } else if (value > 2141) {
+    } else if (value > 2084) {
         *pressed |= PBIO_BUTTON_RIGHT;
         *pressed |= PBIO_BUTTON_LEFT;
-    } else if (value > 1969) {
+    } else if (value > 1800) {
         *pressed |= PBIO_BUTTON_RIGHT_UP; // Bluetooth
         *pressed |= PBIO_BUTTON_RIGHT;
         *pressed |= PBIO_BUTTON_LEFT;
