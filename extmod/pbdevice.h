@@ -118,6 +118,13 @@ enum {
     PBIO_IODEV_MODE_NXT_ENERGY_METER_ALL           = 7,
 };
 
+// LEGO POWERED UP WEDO 2.0 Infrared "Motion" sensor
+enum {
+    PBIO_IODEV_MODE_PUP_WEDO2_MOTION_SENSOR__DETECT = 0,  // read 1x int8_t
+    PBIO_IODEV_MODE_PUP_WEDO2_MOTION_SENSOR__COUNT  = 1,  // read 1x int32_t
+    PBIO_IODEV_MODE_PUP_WEDO2_MOTION_SENSOR__CAL    = 2,  // read 3x int16_t
+};
+
 // LEGO POWERED UP Color and Distance Sensor
 enum {
     PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__COLOR = 0,  // read 1x int8_t
