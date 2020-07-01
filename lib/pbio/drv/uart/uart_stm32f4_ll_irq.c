@@ -158,15 +158,21 @@ pbio_error_t pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud)
     LL_RCC_ClocksTypeDef rcc_clocks;
 
     LL_RCC_GetSystemClocksFreq(&rcc_clocks);
-    #ifdef UART10
-    if (USARTx == USART1 || USARTx == USART6 || USARTx == UART9 || USARTx == UART10) {
+    if (USARTx == USART1
+        #if defined(USART6)
+        || USARTx == USART6
+        #endif
+        #if defined(UART9)
+        || USARTx == UART9
+        #endif
+        #if defined(UART10)
+        || USARTx == UART10
+        #endif
+        ) {
         periphclk = rcc_clocks.PCLK2_Frequency;
     } else {
         periphclk = rcc_clocks.PCLK1_Frequency;
     }
-    #else
-    #error "Unsupported MCU"
-    #endif
 
     LL_USART_SetBaudRate(USARTx, periphclk, LL_USART_OVERSAMPLING_16, baud);
 

@@ -13,7 +13,7 @@
 
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/button/button_gpio.h"
-#include "../../drv/uart/uart_stm32_hal.h"
+#include "../../drv/uart/uart_stm32f4_ll_irq.h"
 
 void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc) {
     GPIO_InitTypeDef gpio_init;
@@ -129,8 +129,8 @@ enum {
     UART_ID_0,
 };
 
-const pbdrv_uart_stm32_hal_platform_data_t
-    pbdrv_uart_stm32_hal_platform_data[PBDRV_CONFIG_UART_STM32_HAL_NUM_UART] = {
+const pbdrv_uart_stm32f4_ll_irq_platform_data_t
+    pbdrv_uart_stm32f4_ll_irq_platform_data[PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART] = {
     [UART_ID_0] = {
         .uart = USART2,
         .irq = USART2_IRQn,
@@ -163,7 +163,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef *huart) {
 
 // overrides weak function in setup.m
 void USART2_IRQHandler(void) {
-    pbdrv_uart_stm32_hal_handle_irq(UART_ID_0);
+    pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_ID_0);
 }
 
 // HACK: we don't have a generic ioport interface yet so defining this function
