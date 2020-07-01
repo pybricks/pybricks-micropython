@@ -118,6 +118,14 @@ enum {
     PBIO_IODEV_MODE_NXT_ENERGY_METER_ALL           = 7,
 };
 
+// LEGO POWERED UP WEDO 2.0 Tilt sensor
+enum {
+    PBIO_IODEV_MODE_PUP_WEDO2_TILT_SENSOR__ANGLE  = 0,  // read 2x int8_t
+    PBIO_IODEV_MODE_PUP_WEDO2_TILT_SENSOR__DIR    = 1,  // read 1x int8_t
+    PBIO_IODEV_MODE_PUP_WEDO2_TILT_SENSOR__CNT    = 2,  // read 3x int8_t
+    PBIO_IODEV_MODE_PUP_WEDO2_TILT_SENSOR__CAL    = 2,  // read 3x int8_t
+};
+
 // LEGO POWERED UP WEDO 2.0 Infrared "Motion" sensor
 enum {
     PBIO_IODEV_MODE_PUP_WEDO2_MOTION_SENSOR__DETECT = 0,  // read 1x int8_t
