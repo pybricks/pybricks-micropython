@@ -95,16 +95,10 @@ pbio_error_t pbdrv_uart_read_end(pbdrv_uart_dev_t *uart_dev) {
     if (uart->read_pos < uart->read_length) {
         if (etimer_expired(&uart->read_timer)) {
             uart->read_buf = NULL;
-            uart->read_length = 0;
-            uart->read_pos = 0;
             return PBIO_ERROR_TIMEDOUT;
         }
         return PBIO_ERROR_AGAIN;
     }
-
-    uart->read_buf = NULL;
-    uart->read_length = 0;
-    uart->read_pos = 0;
 
     etimer_stop(&uart->read_timer);
 
@@ -143,16 +137,10 @@ pbio_error_t pbdrv_uart_write_end(pbdrv_uart_dev_t *uart_dev) {
             LL_USART_DisableIT_TXE(uart->pdata->uart);
             LL_USART_DisableIT_TC(uart->pdata->uart);
             uart->write_buf = NULL;
-            uart->write_length = 0;
-            uart->write_pos = 0;
             return PBIO_ERROR_TIMEDOUT;
         }
         return PBIO_ERROR_AGAIN;
     }
-
-    uart->write_buf = NULL;
-    uart->write_length = 0;
-    uart->write_pos = 0;
 
     etimer_stop(&uart->write_timer);
 
@@ -224,11 +212,15 @@ static void handle_poll() {
 
         // broadcast when read_buf is full
         if (uart->read_buf && uart->read_pos == uart->read_length) {
+            // clearing read_buf to prevent multiple broadcasts
+            uart->read_buf = NULL;
             process_post(PROCESS_BROADCAST, PROCESS_EVENT_COM, NULL);
         }
 
         // broadcast when write_buf is drained
         if (uart->write_buf && uart->write_pos == uart->write_length) {
+            // clearing write_buf to prevent multiple broadcasts
+            uart->write_buf = NULL;
             process_post(PROCESS_BROADCAST, PROCESS_EVENT_COM, NULL);
         }
     }
