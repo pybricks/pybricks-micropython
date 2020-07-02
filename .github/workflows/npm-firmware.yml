@@ -12,30 +12,21 @@ jobs:
       run:
         working-directory: npm/firmware
     steps:
-    - name: Check cache
-      id: check-cache
-      uses: actions/cache@v1
-      with:
-        path: ${{ runner.tool_cache }}/gcc-arm
-        key: gcc-arm
-    - name: Download cross-compiler
-      if: steps.check-cache.outputs.cache-hit != 'true'
-      uses: fiam/arm-none-eabi-gcc@v1
-      with:
-        release: '8-2019-q3'
-        directory: ${{ runner.tool_cache }}/gcc-arm
-    - name: Add cross-compiler to path
-      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm/bin
-      working-directory: ${{ github.workspace }}
     - uses: actions/checkout@v2
       with:
         submodules: true
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+    - run: python -m pip install PyGithub
     - uses: actions/setup-node@v1
       with:
         node-version: '10.x'
         registry-url: 'https://npm.pkg.github.com'
     - run: yarn install
     - run: yarn build
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - run: yarn publish
       env:
         NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

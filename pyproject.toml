@@ -11,6 +11,8 @@ python = "^3.8"
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"
 pyusb = "^1.0.2"
+PyGithub = "^1.51"
+flake8 = "^3.8.3"
 
 [build-system]
 requires = ["poetry>=0.12"]
