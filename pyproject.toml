@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "pybricks-micropython"
+version = "0.1.0"
+description = "Development dependencies for pybricks-micropython"
+authors = ["The Pybricks Authors <dev@pybricks.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.dev-dependencies]
+black = "^19.10b0"
+pyusb = "^1.0.2"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
