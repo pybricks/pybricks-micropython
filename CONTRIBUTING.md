@@ -13,8 +13,13 @@ This is the recommended development environment used by the Pybricks maintainers
 - [Poetry][poetry] v1.x
 - [Uncrustify][uncrustify] v0.71.x
 - [GNU ARM Embedded Toolchain][arm-gcc] v8-2019-q3
+- [GNU GCC][gcc] for host operating system
 - [GNU Make][make]
+
+Optional:
 - [Docker][docker] (only needed if building for ev3dev)
+- [Emscripten][emsdk] v1.39.x (only needed if building mpy-cross JavaScript package)
+- [Yarn][yarn] v1.x (only needed if building JavaScript packages)
 
 [git]: https://git-scm.com/downloads
 [vscode]: https://code.visualstudio.com/Download
@@ -22,8 +27,11 @@ This is the recommended development environment used by the Pybricks maintainers
 [poetry]: https://python-poetry.org/docs/
 [uncrustify]: http://uncrustify.sourceforge.net/
 [arm-gcc]: https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads
+[gcc]: https://gcc.gnu.org/
 [make]: https://www.gnu.org/software/make/
 [docker]: https://docs.docker.com/engine/install/ubuntu/
+[emsdk]: https://emscripten.org/docs/getting_started/downloads.html
+[yarn]: https://classic.yarnpkg.com/en/docs/install
 
 
 ### Installation tips
@@ -196,3 +204,44 @@ Please follow the recommendations below to write a *useful* commit message.
 
 
 [commits]: https://github.com/pybricks/pybricks-micropython/commits/master
+
+
+Building JavaScript packages
+----------------------------
+
+This is not needed in the course of normal development, but we have several
+JavaScript packages that are build from this repository.
+
+
+### firmware
+
+This package is for distributing the Pybricks firmware.
+
+
+In the `pybricks-micropython` directory:
+
+    cd npm/firmware
+    yarn install
+    yarn build
+
+
+### mpy-cross
+
+This package is for distributing `mpy-cross` as a [Web Assembly][wasm] binary.
+To build it, we need [Emscripten][emsdk] v1.39.12 installed. Then make sure to
+activate the environment:
+
+    source $emsdk_path/emsdk_env.sh
+
+...where `$emsdk_path` is the folder where the Emscripten SDK is installed.
+
+Then in the `pybricks-micropython` directory:
+
+    # ensure that mpy-cross has been built - we need the generated files
+    make -C micropython/mpy-cross
+
+    cd npm/mpy-cross
+    yarn install
+    yarn build:debug
+
+[wasm]: https://webassembly.org/
