@@ -6,7 +6,7 @@ on:
     - '@pybricks/firmware/**'
 
 jobs:
-  npm_mpy_cross:
+  npm_firmware:
     runs-on: ubuntu-latest
     defaults:
       run:
