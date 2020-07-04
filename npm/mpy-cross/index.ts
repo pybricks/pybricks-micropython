@@ -11,6 +11,7 @@ interface MpyCrossModule extends EmscriptenModule {
             err: string,
             mpy?: Uint8Array
         ) => void;
+        locateFile(path: string, scriptDirectory: string): string;
     }): this;
     fileContents: string;
 }
@@ -41,11 +42,13 @@ export interface CompileResult {
  * @param fileContents The contents of the .py file to be compile.
  * @param fileName The name of the .py file (including file extension).
  * @param options Command line arguments for mpy-cross.
+ * @param wasmPath Path to location of `mpy-cross.wasm`.
  */
 export function compile(
     fileName: string,
     fileContents: string,
-    options?: string[]
+    options?: string[],
+    wasmPath?: string
 ): Promise<CompileResult> {
     return new Promise<CompileResult>((resolve, reject) => {
         try {
@@ -58,6 +61,12 @@ export function compile(
                 inputFileContents: fileContents,
                 callback: (status, out, err, mpy) =>
                     resolve({ status, mpy, out, err }),
+                locateFile: (path, scriptDirectory) => {
+                    if (path === 'mpy-cross.wasm' && wasmPath !== undefined) {
+                        return wasmPath;
+                    }
+                    return scriptDirectory + path;
+                },
             });
         } catch (err) {
             reject(err);
