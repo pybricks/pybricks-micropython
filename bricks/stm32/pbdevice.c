@@ -44,6 +44,8 @@ static void wait(pbio_error_t (*end)(pbio_iodev_t *), void (*cancel)(pbio_iodev_
 // Get the required mode switch time delay for a given sensor type and/or mode
 static uint32_t get_mode_switch_delay(pbio_iodev_type_id_t id, uint8_t mode) {
     switch (id) {
+        case PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR:
+            return 30;
         case PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR:
             return 30;
         case PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR:

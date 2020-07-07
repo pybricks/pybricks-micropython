@@ -82,9 +82,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_color_obj, pupde
 // pybricks.pupdevices.ColorDistanceSensor.distance
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_distance(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    int32_t data[4];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__SPEC1, data);
-    return mp_obj_new_int(data[1] * 10);
+    int32_t distance;
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX, &distance);
+    return mp_obj_new_int(distance * 10);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_distance_obj, pupdevices_ColorDistanceSensor_distance);
 
