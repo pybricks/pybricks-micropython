@@ -32,7 +32,7 @@ void pb_hsv_from_rgb(int32_t r, int32_t g, int32_t b, int32_t *h, int32_t *s, in
     *v = max / div;
 
     // Compute hue and saturation only if chroma is big enough
-    if (chroma < (4 * div)) {
+    if (chroma < (div)) {
         *h = 0;
         *s = 0;
     } else {

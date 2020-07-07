@@ -51,6 +51,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *typ
 
     // Save default color settings
     pb_hsv_map_save_default(&self->color_map);
+    self->color_map.saturation_threshold = 50;
 
     return MP_OBJ_FROM_PTR(self);
 }
