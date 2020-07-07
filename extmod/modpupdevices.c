@@ -142,21 +142,65 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_remote(size_t n_args, const mp_ob
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorDistanceSensor_remote_obj, 1, pupdevices_ColorDistanceSensor_remote);
 
-// pybricks.pupdevices.ColorDistanceSensor.rgb
-STATIC mp_obj_t pupdevices_ColorDistanceSensor_rgb(mp_obj_t self_in) {
+// pybricks.pupdevices.ColorDistanceSensor.hsv
+STATIC mp_obj_t pupdevices_ColorDistanceSensor_hsv(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    int32_t data[3];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, data);
+    int32_t rgb[3];
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, rgb);
 
-    mp_obj_t rgb[3];
-    for (uint8_t col = 0; col < 3; col++) {
-        int16_t intensity = (data[col] * 10) / 44;
-        rgb[col] = mp_obj_new_int(intensity < 100 ? intensity : 100);
+    // Make the algorithm below a bit easier to read
+    #define COL_R (rgb[0])
+    #define COL_G (rgb[1])
+    #define COL_B (rgb[2])
+
+    // Get maximum intensity
+    int32_t max = COL_R > COL_G ? COL_R : COL_G;
+    max = COL_B > max ? COL_B : max;
+
+    // Get minimum intensity
+    int32_t min = COL_R < COL_G ? COL_R : COL_G;
+    min = COL_B < min ? COL_B : min;
+
+    // Chroma
+    int32_t chroma = max - min;
+    int32_t hue = 0;
+
+    // Get saturation as approximate percentage
+    int32_t value = max/4;
+    int32_t saturation;
+
+    // Compute hue and saturation only if chroma is big enough
+    if (chroma < 30) {
+        hue = 0;
+        saturation = 0;
     }
-    return mp_obj_new_tuple(3, rgb);
+    else {
+        // Get hue; chroma is always > 0 if we are here
+        if (max == COL_R) {
+            hue = (60*(COL_G - COL_B)) / chroma;
+        }   
+        else if (max == COL_G) {
+            hue = (60*(COL_B - COL_R)) / chroma + 120;   
+        }
+        else if (max == COL_B) {
+            hue = (60*(COL_R - COL_G)) / chroma + 240;
+        }
+        if (hue < 0) {
+            hue += 360;
+        }
+        // Get saturation; max is always > 0 if we are here
+        saturation = (100 * chroma) / max;
+    }
+
+    // Return hsv
+    mp_obj_t hsv[3];
+    hsv[0] = mp_obj_new_int(hue);
+    hsv[1] = mp_obj_new_int(saturation);
+    hsv[2] = mp_obj_new_int(value);
+    return mp_obj_new_tuple(3, hsv);
 }
-MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_rgb_obj, pupdevices_ColorDistanceSensor_rgb);
+MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_hsv_obj, pupdevices_ColorDistanceSensor_hsv);
 
 // dir(pybricks.pupdevices.ColorDistanceSensor)
 STATIC const mp_rom_map_elem_t pupdevices_ColorDistanceSensor_locals_dict_table[] = {
@@ -165,7 +209,7 @@ STATIC const mp_rom_map_elem_t pupdevices_ColorDistanceSensor_locals_dict_table[
     { MP_ROM_QSTR(MP_QSTR_ambient),     MP_ROM_PTR(&pupdevices_ColorDistanceSensor_ambient_obj)              },
     { MP_ROM_QSTR(MP_QSTR_distance),    MP_ROM_PTR(&pupdevices_ColorDistanceSensor_distance_obj)             },
     { MP_ROM_QSTR(MP_QSTR_remote),      MP_ROM_PTR(&pupdevices_ColorDistanceSensor_remote_obj)               },
-    { MP_ROM_QSTR(MP_QSTR_rgb),         MP_ROM_PTR(&pupdevices_ColorDistanceSensor_rgb_obj)                  },
+    { MP_ROM_QSTR(MP_QSTR_hsv),         MP_ROM_PTR(&pupdevices_ColorDistanceSensor_hsv_obj)                  },
     { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_ATTRIBUTE_OFFSET(pupdevices_ColorDistanceSensor_obj_t, light) },
 };
 STATIC MP_DEFINE_CONST_DICT(pupdevices_ColorDistanceSensor_locals_dict, pupdevices_ColorDistanceSensor_locals_dict_table);
