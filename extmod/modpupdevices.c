@@ -148,50 +148,10 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_hsv(mp_obj_t self_in) {
 
     int32_t rgb[3];
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, rgb);
-
-    // Make the algorithm below a bit easier to read
-    #define COL_R (rgb[0])
-    #define COL_G (rgb[1])
-    #define COL_B (rgb[2])
-
-    // Get maximum intensity
-    int32_t max = COL_R > COL_G ? COL_R : COL_G;
-    max = COL_B > max ? COL_B : max;
-
-    // Get minimum intensity
-    int32_t min = COL_R < COL_G ? COL_R : COL_G;
-    min = COL_B < min ? COL_B : min;
-
-    // Chroma
-    int32_t chroma = max - min;
-    int32_t hue = 0;
-
-    // Get saturation as approximate percentage
-    int32_t value = max/4;
+    int32_t hue;
+    int32_t value;
     int32_t saturation;
-
-    // Compute hue and saturation only if chroma is big enough
-    if (chroma < 30) {
-        hue = 0;
-        saturation = 0;
-    }
-    else {
-        // Get hue; chroma is always > 0 if we are here
-        if (max == COL_R) {
-            hue = (60*(COL_G - COL_B)) / chroma;
-        }   
-        else if (max == COL_G) {
-            hue = (60*(COL_B - COL_R)) / chroma + 120;   
-        }
-        else if (max == COL_B) {
-            hue = (60*(COL_R - COL_G)) / chroma + 240;
-        }
-        if (hue < 0) {
-            hue += 360;
-        }
-        // Get saturation; max is always > 0 if we are here
-        saturation = (100 * chroma) / max;
-    }
+    pb_hsv_from_rgb(rgb[0], rgb[1], rgb[2], &hue, &saturation, &value, 4);
 
     // Return hsv
     mp_obj_t hsv[3];
