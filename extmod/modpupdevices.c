@@ -31,6 +31,7 @@ typedef struct _pupdevices_ColorDistanceSensor_obj_t {
     mp_obj_base_t base;
     mp_obj_t light;
     pbdevice_t *pbdev;
+    pb_hsv_map_t color_map;
 } pupdevices_ColorDistanceSensor_obj_t;
 
 // pybricks.pupdevices.ColorDistanceSensor.__init__
@@ -48,6 +49,9 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *typ
     // Create an instance of the Light class
     self->light = builtins_ColorLight_obj_make_new(self->pbdev);
 
+    // Save default color settings
+    pb_hsv_map_save_default(&self->color_map);
+
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -55,27 +59,16 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *typ
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_color(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    int32_t data[4];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__SPEC1, data);
+    // Get RGB and convert to HSV
+    int32_t rgb[3];
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, rgb);
+    int32_t hue;
+    int32_t value;
+    int32_t saturation;
+    pb_hsv_from_rgb(rgb[0], rgb[1], rgb[2], &hue, &saturation, &value, 4);
 
-    switch (data[0]) {
-        case 1:
-            return pb_const_color_black;
-        case 3:
-            return pb_const_color_blue;
-        case 5:
-            return pb_const_color_green;
-        case 7:
-            return pb_const_color_yellow;
-        case 8:
-            return pb_const_color_orange;
-        case 9:
-            return pb_const_color_red;
-        case 10:
-            return pb_const_color_white;
-        default:
-            return mp_const_none;
-    }
+    // Get and return discretized color based on HSV
+    return pb_hsv_get_color(&self->color_map, hue, saturation, value);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_color_obj, pupdevices_ColorDistanceSensor_color);
 

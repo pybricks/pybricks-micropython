@@ -29,23 +29,20 @@ void pb_hsv_from_rgb(int32_t r, int32_t g, int32_t b, int32_t *h, int32_t *s, in
     int32_t chroma = max - min;
 
     // Get saturation as approximate percentage
-    *v = max/div;
+    *v = max / div;
 
     // Compute hue and saturation only if chroma is big enough
-    if (chroma < (8 * div)) {
+    if (chroma < (4 * div)) {
         *h = 0;
         *s = 0;
-    }
-    else {
+    } else {
         // Get hue; chroma is always > 0 if we are here
         if (max == r) {
-            *h = (60*(g - b)) / chroma;
-        }   
-        else if (max == g) {
-            *h = (60*(b - r)) / chroma + 120;   
-        }
-        else {
-            *h = (60*(r - g)) / chroma + 240;
+            *h = (60 * (g - b)) / chroma;
+        } else if (max == g) {
+            *h = (60 * (b - r)) / chroma + 120;
+        } else {
+            *h = (60 * (r - g)) / chroma + 240;
         }
         if (*h < 0) {
             *h += 360;
