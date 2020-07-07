@@ -12,7 +12,7 @@ This is the recommended development environment used by the Pybricks maintainers
 - [Python][python] v3.8.x
 - [Poetry][poetry] v1.x
 - [Uncrustify][uncrustify] v0.71.x
-- [GNU ARM Embedded Toolchain][arm-gcc] v8-2019-q3
+- [GNU ARM Embedded Toolchain][arm-gcc] v9-2020-q2
 - [GNU GCC][gcc] for host operating system
 - [GNU Make][make]
 

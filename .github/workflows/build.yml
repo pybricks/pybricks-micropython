@@ -162,14 +162,14 @@ jobs:
       id: check-cache
       uses: actions/cache@v1
       with:
-        path: ${{ runner.tool_cache }}/gcc-arm
-        key: gcc-arm
+        path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
+        key: gcc-arm-9-2020-q2
     - name: Download
       if: steps.check-cache.outputs.cache-hit != 'true'
-      uses: fiam/arm-none-eabi-gcc@v1
+      uses: fiam/arm-none-eabi-gcc@v1.0.2
       with:
-        release: '8-2019-q3'
-        directory: ${{ runner.tool_cache }}/gcc-arm
+        release: '9-2020-q2'
+        directory: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
 
   cityhub_firmware:
     name: cityhub firmware
@@ -179,10 +179,10 @@ jobs:
     - name: Install cross-compiler
       uses: actions/cache@v1
       with:
-        path: ${{ runner.tool_cache }}/gcc-arm
-        key: gcc-arm
+        path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
+        key: gcc-arm-9-2020-q2
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm/bin
+      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
@@ -223,10 +223,10 @@ jobs:
     - name: Install cross-compiler
       uses: actions/cache@v1
       with:
-        path: ${{ runner.tool_cache }}/gcc-arm
-        key: gcc-arm
+        path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
+        key: gcc-arm-9-2020-q2
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm/bin
+      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
@@ -267,10 +267,10 @@ jobs:
     - name: Install cross-compiler
       uses: actions/cache@v1
       with:
-        path: ${{ runner.tool_cache }}/gcc-arm
-        key: gcc-arm
+        path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
+        key: gcc-arm-9-2020-q2
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm/bin
+      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
@@ -311,10 +311,10 @@ jobs:
     - name: Install cross-compiler
       uses: actions/cache@v1
       with:
-        path: ${{ runner.tool_cache }}/gcc-arm
-        key: gcc-arm
+        path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
+        key: gcc-arm-9-2020-q2
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm/bin
+      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
@@ -355,10 +355,10 @@ jobs:
     - name: Install cross-compiler
       uses: actions/cache@v1
       with:
-        path: ${{ runner.tool_cache }}/gcc-arm
-        key: gcc-arm
+        path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
+        key: gcc-arm-9-2020-q2
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm/bin
+      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
@@ -387,10 +387,10 @@ jobs:
     - name: Install cross-compiler
       uses: actions/cache@v1
       with:
-        path: ${{ runner.tool_cache }}/gcc-arm
-        key: gcc-arm
+        path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
+        key: gcc-arm-9-2020-q2
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm/bin
+      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
