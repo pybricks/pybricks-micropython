@@ -29,9 +29,9 @@
 // Class structure for ColorDistanceSensor
 typedef struct _pupdevices_ColorDistanceSensor_obj_t {
     mp_obj_base_t base;
-    mp_obj_t light;
     pbdevice_t *pbdev;
     pb_hsv_map_t color_map;
+    mp_obj_t light;
 } pupdevices_ColorDistanceSensor_obj_t;
 
 // pybricks.pupdevices.ColorDistanceSensor.__init__
@@ -136,6 +136,27 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_remote(size_t n_args, const mp_ob
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorDistanceSensor_remote_obj, 1, pupdevices_ColorDistanceSensor_remote);
 
+// pybricks.builtins.ColorDistanceSensor.color_map
+STATIC mp_obj_t pupdevices_ColorDistanceSensor_color_map(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pupdevices_ColorDistanceSensor_obj_t, self,
+        PB_ARG_DEFAULT_NONE(hues),
+        PB_ARG_DEFAULT_NONE(saturation),
+        PB_ARG_DEFAULT_NONE(values));
+
+    // If no arguments are given, return current map
+    if (hues == mp_const_none && saturation == mp_const_none && values == mp_const_none) {
+        return pack_color_map(&self->color_map);
+    }
+
+    // Otherwise, unpack given map
+    unpack_color_map(&self->color_map, hues, saturation, values);
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorDistanceSensor_color_map_obj, 1, pupdevices_ColorDistanceSensor_color_map);
+
+
 // pybricks.pupdevices.ColorDistanceSensor.hsv
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_hsv(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -165,6 +186,7 @@ STATIC const mp_rom_map_elem_t pupdevices_ColorDistanceSensor_locals_dict_table[
     { MP_ROM_QSTR(MP_QSTR_remote),      MP_ROM_PTR(&pupdevices_ColorDistanceSensor_remote_obj)               },
     { MP_ROM_QSTR(MP_QSTR_hsv),         MP_ROM_PTR(&pupdevices_ColorDistanceSensor_hsv_obj)                  },
     { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_ATTRIBUTE_OFFSET(pupdevices_ColorDistanceSensor_obj_t, light) },
+    { MP_ROM_QSTR(MP_QSTR_color_map),   MP_ROM_PTR(&pupdevices_ColorDistanceSensor_color_map_obj)            },
 };
 STATIC MP_DEFINE_CONST_DICT(pupdevices_ColorDistanceSensor_locals_dict, pupdevices_ColorDistanceSensor_locals_dict_table);
 
@@ -176,12 +198,12 @@ STATIC const mp_obj_type_t pupdevices_ColorDistanceSensor_type = {
     .locals_dict = (mp_obj_dict_t *)&pupdevices_ColorDistanceSensor_locals_dict,
 };
 
-// Class structure for ColorSensor
+// Class structure for ColorSensor. NOTE: Must match ColorDistanceSensor up to color_map
 typedef struct _pupdevices_ColorSensor_obj_t {
     mp_obj_base_t base;
-    mp_obj_t lights;
     pbdevice_t *pbdev;
     pb_hsv_map_t color_map;
+    mp_obj_t lights;
 } pupdevices_ColorSensor_obj_t;
 
 // pybricks.builtins.ColorSensor._get_hsv
@@ -269,26 +291,6 @@ STATIC mp_obj_t pupdevices_ColorSensor_color(size_t n_args, const mp_obj_t *pos_
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorSensor_color_obj, 1, pupdevices_ColorSensor_color);
 
-// pybricks.builtins.ColorSensor.color_map
-STATIC mp_obj_t pupdevices_ColorSensor_color_map(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        pupdevices_ColorSensor_obj_t, self,
-        PB_ARG_DEFAULT_NONE(hues),
-        PB_ARG_DEFAULT_NONE(saturation),
-        PB_ARG_DEFAULT_NONE(values));
-
-    // If no arguments are given, return current map
-    if (hues == mp_const_none && saturation == mp_const_none && values == mp_const_none) {
-        return pack_color_map(&self->color_map);
-    }
-
-    // Otherwise, unpack given map
-    unpack_color_map(&self->color_map, hues, saturation, values);
-
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorSensor_color_map_obj, 1, pupdevices_ColorSensor_color_map);
-
 // pybricks.pupdevices.ColorSensor.reflection
 STATIC mp_obj_t pupdevices_ColorSensor_reflection(mp_obj_t self_in) {
     pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -322,7 +324,7 @@ STATIC const mp_rom_map_elem_t pupdevices_ColorSensor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_color),       MP_ROM_PTR(&pupdevices_ColorSensor_color_obj)                },
     { MP_ROM_QSTR(MP_QSTR_reflection),  MP_ROM_PTR(&pupdevices_ColorSensor_reflection_obj)           },
     { MP_ROM_QSTR(MP_QSTR_ambient),     MP_ROM_PTR(&pupdevices_ColorSensor_ambient_obj)              },
-    { MP_ROM_QSTR(MP_QSTR_color_map),   MP_ROM_PTR(&pupdevices_ColorSensor_color_map_obj)            },
+    { MP_ROM_QSTR(MP_QSTR_color_map),   MP_ROM_PTR(&pupdevices_ColorDistanceSensor_color_map_obj)    },
 };
 STATIC MP_DEFINE_CONST_DICT(pupdevices_ColorSensor_locals_dict, pupdevices_ColorSensor_locals_dict_table);
 
