@@ -205,9 +205,6 @@ void _pbdrv_motor_deinit(void) {
     GPIOC->BRR = GPIO_BRR_BR_7;
     GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
     GPIOC->BRR = GPIO_BRR_BR_9;
-
-    // disable tacho irq
-    NVIC_DisableIRQ(EXTI0_1_IRQn);
 }
 #endif
 
