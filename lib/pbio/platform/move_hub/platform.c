@@ -119,12 +119,12 @@ void SystemInit(void) {
     // dpgeorge: enable 8-byte stack alignment for IRQ handlers, in accord with EABI
     SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 
-    // Enable all of the shared hardware modules we are using
-
+    // Enable all of the hardware modules we are using
     RCC->AHBENR |= RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN | RCC_AHBENR_GPIOCEN
         | RCC_AHBENR_GPIODEN | RCC_AHBENR_GPIOFEN;
-    RCC->APB1ENR |= RCC_APB1ENR_USART3EN | RCC_APB1ENR_USART4EN;
-    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN | RCC_APB2ENR_TIM16EN | RCC_APB2ENR_TIM15EN;
+    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN | RCC_APB1ENR_USART3EN | RCC_APB1ENR_USART4EN;
+    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN | RCC_APB2ENR_TIM1EN
+        | RCC_APB2ENR_TIM15EN | RCC_APB2ENR_TIM16EN;
 
     // Keep BOOST alive
     GPIOB->BSRR = GPIO_BSRR_BS_11;

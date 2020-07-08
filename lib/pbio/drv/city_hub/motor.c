@@ -16,7 +16,6 @@
 
 void _pbdrv_motor_init(void) {
     // TIM3 is used for port C PWM
-    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
     TIM3->PSC = 3;      // divide by 4 (= 3 + 1), so ticks are 12MHz
     TIM3->ARR = 10000;  // 12MHz divided by 10k makes 1.2kHz PWM
     TIM3->BDTR |= TIM_BDTR_MOE;
