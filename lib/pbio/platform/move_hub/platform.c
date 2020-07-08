@@ -130,6 +130,10 @@ void SystemInit(void) {
     GPIOB->BSRR = GPIO_BSRR_BS_11;
     GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
 
+    // PB2 controls I/O port VCC
+    GPIOB->BSRR = GPIO_BSRR_BS_2;
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER2_Msk) | (1 << GPIO_MODER_MODER2_Pos);
+
     // not sure what the rest of these pins do
 
     // PF0 output, high
