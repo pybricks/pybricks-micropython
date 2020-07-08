@@ -14,8 +14,6 @@
 
 // setup LED PWMs and pins
 void _pbdrv_light_init(void) {
-    RCC->APB2ENR |= RCC_APB2ENR_TIM16EN | RCC_APB2ENR_TIM15EN;
-
     // RGB values are 0-255, so multiplying by 5 here to limit brightness to
     // 1/5 of max possible without having to do division later. It should also
     // give use smoother steps than the official LEGO firmware since we aren't

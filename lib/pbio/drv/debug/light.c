@@ -14,8 +14,6 @@
 
 // setup LED PWMs and pins
 void _pbdrv_light_init(void) {
-    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN | RCC_APB1ENR_TIM4EN | RCC_APB1ENR_TIM12EN;
-
     // RGB values are 0-255, so setup timer to allow using those values
     // directly in TIMx->CCRx
     TIM12->PSC = 187;
