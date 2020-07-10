@@ -370,7 +370,7 @@ STATIC mp_obj_t pupdevices_UltrasonicSensor_distance(mp_obj_t self_in) {
     pupdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t distance;
     pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__DISTL, &distance);
-    return mp_obj_new_int(distance < 0 ? 3000 : distance);
+    return mp_obj_new_int(distance < 0 || distance >= 2000 ? 2000 : distance);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_UltrasonicSensor_distance_obj, pupdevices_UltrasonicSensor_distance);
 
