@@ -7,6 +7,7 @@
 
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/ioport/ioport_lpf2.h"
+#include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
 
 #include "stm32f4xx_hal.h"
@@ -30,6 +31,62 @@ const boot_t __attribute__((section(".boot"))) boot = {
     .magic = (const uint8_t[16]) {1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4},
 };
 
+
+// PWM
+
+enum {
+    PWM_DEV_0,
+    PWM_DEV_1,
+    PWM_DEV_2,
+};
+
+static void pwm_dev_0_platform_init() {
+}
+
+static void pwm_dev_1_platform_init() {
+}
+
+static void pwm_dev_2_platform_init() {
+}
+
+const pbdrv_pwm_stm32_tim_platform_data_t
+    pbdrv_pwm_stm32_tim_platform_data[PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV] = {
+    {
+        .platform_init = pwm_dev_0_platform_init,
+        .TIMx = TIM1,
+        .prescalar = 8, // results in 12 MHz clock
+        .period = 10000, // 12MHz divided by 10k makes 1.2 kHz PWM
+        .id = PWM_DEV_0,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
+            | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE
+            | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_2_INVERT
+            | PBDRV_PWM_STM32_TIM_CHANNEL_3_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_4_INVERT,
+    },
+    {
+        .platform_init = pwm_dev_1_platform_init,
+        .TIMx = TIM3,
+        .prescalar = 8, // results in 12 MHz clock
+        .period = 10000, // 12MHz divided by 10k makes 1.2 kHz PWM
+        .id = PWM_DEV_1,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
+            | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE
+            | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_2_INVERT
+            | PBDRV_PWM_STM32_TIM_CHANNEL_3_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_4_INVERT,
+    },
+    {
+        .platform_init = pwm_dev_2_platform_init,
+        .TIMx = TIM4,
+        .prescalar = 8, // results in 12 MHz clock
+        .period = 10000, // 12MHz divided by 10k makes 1.2 kHz PWM
+        .id = PWM_DEV_2,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
+            | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE
+            | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_2_INVERT
+            | PBDRV_PWM_STM32_TIM_CHANNEL_3_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_4_INVERT,
+    },
+};
+
+// UART
 
 // Port A - UART7
 const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_0 = {

@@ -12,6 +12,7 @@
 
 #include "pbdrv/button.h"
 #include "pbdrv/config.h"
+#include "pbdrv/core.h"
 #include "pbdrv/light.h"
 #include "pbdrv/motor.h"
 #include "pbsys/sys.h"
@@ -67,10 +68,9 @@ AUTOSTART_PROCESSES(
 void pbio_init(void) {
     clock_init();
     process_init();
+    pbdrv_init();
     _pbdrv_button_init();
-    _pbdrv_light_init();
     autostart_start(autostart_processes);
-    _pbdrv_motor_init();
     _pbio_motorpoll_reset_all();
 }
 
@@ -105,8 +105,6 @@ int pbio_do_one_event(void) {
  */
 void pbio_deinit(void) {
     autostart_exit(autostart_processes);
-    _pbdrv_motor_deinit();
-    _pbdrv_light_deinit();
     _pbdrv_button_deinit();
 }
 #endif

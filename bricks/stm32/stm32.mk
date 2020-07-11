@@ -131,6 +131,7 @@ endif
 # Required for STM32 library
 CFLAGS += -D$(PB_CMSIS_MCU)
 
+CFLAGS += -DSTM32_H='<stm32$(PB_MCU_SERIES_LCASE)xx.h>'
 CFLAGS += -DSTM32_HAL_H='<stm32$(PB_MCU_SERIES_LCASE)xx_hal.h>'
 
 # TODO: probably only need no-unicode on movehub
@@ -283,12 +284,15 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/battery/battery_adc.c \
 	drv/button/button_adc.c \
 	drv/button/button_gpio.c \
+	drv/core.c \
 	drv/counter/counter_core.c \
 	drv/counter/counter_stm32f0_gpio_quad_enc.c \
 	drv/gpio/gpio_stm32f0.c \
 	drv/gpio/gpio_stm32f4.c \
 	drv/gpio/gpio_stm32l4.c \
 	drv/ioport/ioport_lpf2.c \
+	drv/pwm/pwm_core.c \
+	drv/pwm/pwm_stm32_tim.c \
 	drv/uart/uart_stm32f0.c \
 	drv/uart/uart_stm32f4_ll_irq.c \
 	drv/uart/uart_stm32l4_ll_dma.c \

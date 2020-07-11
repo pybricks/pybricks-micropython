@@ -86,6 +86,15 @@ static struct testcase_t pbio_math_tests[] = {
     END_OF_TESTCASES
 };
 
+PBIO_TEST_FUNC(test_pwm_get);
+PBIO_TEST_FUNC(test_pwm_set_duty);
+
+static struct testcase_t pbio_pwm_tests[] = {
+    PBIO_TEST(test_pwm_get),
+    PBIO_TEST(test_pwm_set_duty),
+    END_OF_TESTCASES
+};
+
 PBIO_TEST_FUNC(test_boost_color_distance_sensor);
 PBIO_TEST_FUNC(test_boost_interactive_motor);
 PBIO_TEST_FUNC(test_technic_large_motor);
@@ -102,6 +111,7 @@ static struct testcase_t pbio_uartdev_tests[] = {
 static struct testgroup_t test_groups[] = {
     { "example/", example_tests },
     { "math/", pbio_math_tests },
+    { "pwm/", pbio_pwm_tests },
     { "uartdev/", pbio_uartdev_tests, },
     END_OF_GROUPS
 };

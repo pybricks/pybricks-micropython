@@ -24,27 +24,6 @@
 
 #if PBDRV_CONFIG_MOTOR
 
-/** @cond INTERNAL */
-
-/**
- * Initializes the low level motor driver. This should be called only once and
- * must be called before using any other motor functions.
- */
-void _pbdrv_motor_init(void);
-
-/**
- * Releases the low level motor driver. No motor functions can be called after
- * calling this function.
- */
-#if PBIO_CONFIG_ENABLE_DEINIT
-void _pbdrv_motor_deinit(void);
-#else
-static inline void _pbdrv_motor_deinit(void) {
-}
-#endif
-
-/** @endcond */
-
 /**
  * Instructs the motor to coast freely.
  * @param [in]  port    The motor port
@@ -92,10 +71,6 @@ pbio_error_t pbdrv_motor_setup(pbio_port_t port, bool is_servo);
 
 #else
 
-static inline void _pbdrv_motor_init(void) {
-}
-static inline void _pbdrv_motor_deinit(void) {
-}
 static inline pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }

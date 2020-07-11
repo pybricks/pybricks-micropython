@@ -21,14 +21,6 @@
 
 #define PORT_TO_IDX(p) ((p) - PBDRV_CONFIG_FIRST_MOTOR_PORT)
 
-inline void _pbdrv_motor_init(void) {
-}
-
-#if PBIO_CONFIG_ENABLE_DEINIT
-void _pbdrv_motor_deinit(void) {
-}
-#endif
-
 typedef struct _motor_t {
     int n_motor;
     bool connected;
@@ -38,7 +30,7 @@ typedef struct _motor_t {
     FILE *f_duty;
 } motor_t;
 
-motor_t motors[4];
+static motor_t motors[4];
 
 static pbio_error_t ev3dev_motor_init(motor_t *mtr, pbio_port_t port) {
 

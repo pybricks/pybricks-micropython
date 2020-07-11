@@ -10,6 +10,7 @@
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/counter/counter_stm32f0_gpio_quad_enc.h"
 #include "../../drv/ioport/ioport_lpf2.h"
+#include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/uart/uart_stm32f0.h"
 
 #include "stm32f070xb.h"
@@ -45,6 +46,113 @@ const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t
         .gpio_dir = { .bank = GPIOA, .pin = 1},
         .invert = false,
         .counter_id = COUNTER_PORT_B,
+    },
+};
+
+// PWM
+
+enum {
+    PWM_DEV_0,
+    PWM_DEV_1,
+    PWM_DEV_2,
+    PWM_DEV_3,
+};
+
+static void pwm_dev_0_platform_init() {
+    // port A
+    // init PWM pins as gpio out low (coasting) and prepare alternate function
+    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
+    GPIOA->BRR = GPIO_BRR_BR_8;
+    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10_Msk) | (1 << GPIO_MODER_MODER10_Pos);
+    GPIOA->BRR = GPIO_BRR_BR_10;
+    GPIOA->AFR[1] = (GPIOA->AFR[1] & ~GPIO_AFRH_AFSEL8_Msk) | (2 << GPIO_AFRH_AFSEL8_Pos);
+    GPIOA->AFR[1] = (GPIOA->AFR[1] & ~GPIO_AFRH_AFSEL10_Msk) | (2 << GPIO_AFRH_AFSEL10_Pos);
+
+    // port B
+    // init PWM pins as gpio out low (coasting) and prepare alternate function
+    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
+    GPIOA->BRR = GPIO_BRR_BR_9;
+    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
+    GPIOA->BRR = GPIO_BRR_BR_11;
+    GPIOA->AFR[1] = (GPIOA->AFR[1] & ~GPIO_AFRH_AFSEL9_Msk) | (2 << GPIO_AFRH_AFSEL9_Pos);
+    GPIOA->AFR[1] = (GPIOA->AFR[1] & ~GPIO_AFRH_AFSEL11_Msk) | (2 << GPIO_AFRH_AFSEL11_Pos);
+}
+
+static void pwm_dev_1_platform_init() {
+    // port C
+    // init PWM pins as gpio out low (coasting) and prepare alternate function
+    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
+    GPIOC->BRR = GPIO_BRR_BR_6;
+    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
+    GPIOC->BRR = GPIO_BRR_BR_8;
+    GPIOC->AFR[0] = (GPIOC->AFR[0] & ~GPIO_AFRL_AFSEL6_Msk) | (0 << GPIO_AFRL_AFSEL6_Pos);
+    GPIOC->AFR[1] = (GPIOC->AFR[1] & ~GPIO_AFRH_AFSEL8_Msk) | (0 << GPIO_AFRH_AFSEL8_Pos);
+
+    // port D
+    // init PWM pins as gpio out low (coasting) and prepare alternate function
+    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
+    GPIOC->BRR = GPIO_BRR_BR_7;
+    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
+    GPIOC->BRR = GPIO_BRR_BR_9;
+    GPIOC->AFR[0] = (GPIOC->AFR[0] & ~GPIO_AFRL_AFSEL7_Msk) | (0 << GPIO_AFRL_AFSEL7_Pos);
+    GPIOC->AFR[1] = (GPIOC->AFR[1] & ~GPIO_AFRH_AFSEL9_Msk) | (0 << GPIO_AFRH_AFSEL9_Pos);
+}
+
+static void pwm_dev_2_platform_init() {
+    // green LED on PB14 using TIM15 CH1
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER14_Msk) | (2 << GPIO_MODER_MODER14_Pos);
+    GPIOB->AFR[1] = (GPIOB->AFR[1] & ~GPIO_AFRH_AFSEL14_Msk) | (1 << GPIO_AFRH_AFSEL14_Pos);
+
+    // blue LED on PB15 using TIM15 CH2
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER15_Msk) | (2 << GPIO_MODER_MODER15_Pos);
+    GPIOB->AFR[1] = (GPIOB->AFR[1] & ~GPIO_AFRH_AFSEL15_Msk) | (1 << GPIO_AFRH_AFSEL15_Pos);
+}
+
+static void pwm_dev_3_platform_init() {
+    // red LED on PB8 using TIM16 CH1
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER8_Msk) | (2 << GPIO_MODER_MODER8_Pos);
+    GPIOB->AFR[1] = (GPIOB->AFR[1] & ~GPIO_AFRH_AFSEL8_Msk) | (2 << GPIO_AFRH_AFSEL8_Pos);
+}
+
+const pbdrv_pwm_stm32_tim_platform_data_t
+    pbdrv_pwm_stm32_tim_platform_data[PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV] = {
+    {
+        .platform_init = pwm_dev_0_platform_init,
+        .TIMx = TIM1,
+        .prescalar = 4, // results in 12 MHz clock
+        .period = 10000, // 12MHz divided by 10k makes 1.2 kHz PWM
+        .id = PWM_DEV_0,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
+            | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE,
+    },
+    {
+        .platform_init = pwm_dev_1_platform_init,
+        .TIMx = TIM3,
+        .prescalar = 4, // results in 12 MHz clock
+        .period = 10000, // 12MHz divided by 10k makes 1.2 kHz PWM
+        .id = PWM_DEV_1,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
+            | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE,
+    },
+    {
+        .platform_init = pwm_dev_2_platform_init,
+        .TIMx = TIM15,
+        // RGB values are 0-255, so multiplying by 5 here to limit brightness to
+        // 1/5 of max possible without having to do division later. It should also
+        // give us smoother steps than the official LEGO firmware since we aren't
+        // jumping by 5s.
+        .prescalar = 188, // results in 255 kHz clock
+        .period = 256 * 5, // 199 Hz PWM
+        .id = PWM_DEV_2,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE,
+    },
+    {
+        .platform_init = pwm_dev_3_platform_init,
+        .TIMx = TIM16,
+        .prescalar = 188, // results in 255 kHz clock
+        .period = 256 * 5, // 199 Hz PWM
+        .id = PWM_DEV_3,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE,
     },
 };
 

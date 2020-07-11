@@ -162,24 +162,25 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/$(PBIO_PLATFORM)/motor.c \
 	drv/battery/battery_nxt.c \
 	drv/button/button_nxt.c \
+	drv/core.c \
 	drv/counter/counter_core.c \
 	drv/counter/counter_nxt.c \
 	platform/$(PBIO_PLATFORM)/clock.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	platform/$(PBIO_PLATFORM)/sys.c \
 	src/control.c \
+	src/dcmotor.c \
 	src/drivebase.c \
 	src/error.c \
-	src/dcmotor.c \
+	src/integrator.c \
 	src/logger.c \
 	src/main.c \
 	src/math.c \
 	src/motorpoll.c \
 	src/servo.c \
 	src/tacho.c \
-	src/trajectory.c \
 	src/trajectory_ext.c \
-	src/integrator.c \
+	src/trajectory.c \
 	)
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))

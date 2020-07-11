@@ -98,6 +98,7 @@ build-coverage/coverage.info: Makefile $(SRC)
 	$(Q)$(MAKE) COVERAGE=1
 	./build-coverage/test-pbio
 	lcov --capture --output-file $@ \
+		--directory build-coverage/lib/pbio/drv \
 		--directory build-coverage/lib/pbio/src
 
 coverage-html: build-coverage/coverage.info

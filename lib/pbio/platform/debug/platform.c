@@ -13,6 +13,7 @@
 
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/button/button_gpio.h"
+#include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
 
 void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc) {
@@ -118,6 +119,60 @@ const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTO
         .gpio = { .bank = GPIOC, .pin = 13 },
         .button = PBIO_BUTTON_CENTER,
     }
+};
+
+// PWM
+
+enum {
+    PWM_DEV_0,
+    PWM_DEV_1,
+    PWM_DEV_2,
+};
+
+static void pwm_dev_0_platform_init() {
+    // green LED LD1 on PB0 using TIM3 CH3
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER0_Msk) | (2 << GPIO_MODER_MODER0_Pos);
+    GPIOB->AFR[0] = (GPIOB->AFR[0] & ~GPIO_AFRL_AFSEL0_Msk) | (2 << GPIO_AFRL_AFSEL0_Pos);
+}
+
+static void pwm_dev_1_platform_init() {
+    // blue LED LD2 on PB7 using TIM4 CH2
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER7_Msk) | (2 << GPIO_MODER_MODER7_Pos);
+    GPIOB->AFR[0] = (GPIOB->AFR[0] & ~GPIO_AFRL_AFSEL7_Msk) | (2 << GPIO_AFRL_AFSEL7_Pos);
+}
+
+static void pwm_dev_2_platform_init() {
+    // red LED LD3 on PB14 using TIM12 CH1
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER14_Msk) | (2 << GPIO_MODER_MODER14_Pos);
+    GPIOB->AFR[1] = (GPIOB->AFR[1] & ~GPIO_AFRH_AFSEL14_Msk) | (9 << GPIO_AFRH_AFSEL14_Pos);
+}
+
+const pbdrv_pwm_stm32_tim_platform_data_t
+    pbdrv_pwm_stm32_tim_platform_data[PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV] = {
+    {
+        .platform_init = pwm_dev_0_platform_init,
+        .TIMx = TIM3,
+        .prescalar = 188,
+        .period = 256,
+        .id = PWM_DEV_0,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE,
+    },
+    {
+        .platform_init = pwm_dev_1_platform_init,
+        .TIMx = TIM4,
+        .prescalar = 188,
+        .period = 256,
+        .id = PWM_DEV_1,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE,
+    },
+    {
+        .platform_init = pwm_dev_2_platform_init,
+        .TIMx = TIM12,
+        .prescalar = 188,
+        .period = 256,
+        .id = PWM_DEV_2,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE,
+    },
 };
 
 // UART Config

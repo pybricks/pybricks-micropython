@@ -45,6 +45,12 @@
 
 #define PBDRV_CONFIG_MOTOR                          (1)
 
+#define PBDRV_CONFIG_PWM                            (1)
+#define PBDRV_CONFIG_PWM_NUM_DEV                    (3)
+#define PBDRV_CONFIG_PWM_STM32_TIM                  (1)
+#define PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV          (3)
+#define PBDRV_CONFIG_PWM_STM32_TIM_EXTRA_FLAGS      (1)
+
 #define PBDRV_CONFIG_UART                           (1)
 #define PBDRV_CONFIG_UART_STM32L4_LL_DMA                (1)
 #define PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART       (4)

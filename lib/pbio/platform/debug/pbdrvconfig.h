@@ -27,6 +27,12 @@
 
 #define PBDRV_CONFIG_LIGHT                          (1)
 
+#define PBDRV_CONFIG_PWM                            (1)
+#define PBDRV_CONFIG_PWM_NUM_DEV                    (3)
+#define PBDRV_CONFIG_PWM_STM32_TIM                  (1)
+#define PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV          (3)
+#define PBDRV_CONFIG_PWM_STM32_TIM_EXTRA_FLAGS      (0)
+
 #define PBDRV_CONFIG_UART                           (1)
 #define PBDRV_CONFIG_UART_STM32F4_LL_IRQ            (1)
 #define PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART   (1)

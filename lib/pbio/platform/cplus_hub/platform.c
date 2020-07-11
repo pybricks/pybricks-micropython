@@ -8,6 +8,7 @@
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/ioport/ioport_lpf2.h"
+#include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/uart/uart_stm32l4_ll_dma.h"
 
 #include "stm32l4xx_hal.h"
@@ -64,6 +65,69 @@ const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_3 = {
     .uart_rx = { .bank = GPIOB, .pin = 10  },
     .alt = GPIO_AF8_LPUART1,
 };
+
+// PWM
+
+enum {
+    PWM_DEV_0,
+    PWM_DEV_1,
+    PWM_DEV_2,
+};
+
+static void pwm_dev_0_platform_init() {
+    // green LED on PA11 using TIM1 CH4
+    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODE11_Msk) | (2 << GPIO_MODER_MODE11_Pos);
+    GPIOA->AFR[1] = (GPIOA->AFR[1] & ~GPIO_AFRH_AFSEL11_Msk) | (1 << GPIO_AFRH_AFSEL11_Pos);
+}
+
+static void pwm_dev_1_platform_init() {
+    // red LED on PB15 using TIM15 CH2
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODE15_Msk) | (2 << GPIO_MODER_MODE15_Pos);
+    GPIOB->AFR[1] = (GPIOB->AFR[1] & ~GPIO_AFRH_AFSEL15_Msk) | (14 << GPIO_AFRH_AFSEL15_Pos);
+}
+
+static void pwm_dev_2_platform_init() {
+    // blue LED on PA6 using TIM16 CH1
+    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODE6_Msk) | (2 << GPIO_MODER_MODE6_Pos);
+    GPIOA->AFR[0] = (GPIOA->AFR[0] & ~GPIO_AFRL_AFSEL6_Msk) | (14 << GPIO_AFRL_AFSEL6_Pos);
+}
+
+const pbdrv_pwm_stm32_tim_platform_data_t
+    pbdrv_pwm_stm32_tim_platform_data[PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV] = {
+    {
+        .platform_init = pwm_dev_0_platform_init,
+        .TIMx = TIM1,
+        .prescalar = 8, // results in 10 MHz clock
+        .period = 10000, // 12MHz divided by 10k makes 1 kHz PWM
+        .id = PWM_DEV_0,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
+            | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE
+            | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_2_INVERT
+            | PBDRV_PWM_STM32_TIM_CHANNEL_3_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_4_INVERT
+            | PBDRV_PWM_STM32_TIM_CHANNEL_1_COMPLEMENT | PBDRV_PWM_STM32_TIM_CHANNEL_2_COMPLEMENT
+            | PBDRV_PWM_STM32_TIM_CHANNEL_3_COMPLEMENT,
+    },
+    {
+        .platform_init = pwm_dev_1_platform_init,
+        .TIMx = TIM15,
+        .prescalar = 8, // results in 10 MHz clock
+        .period = 10000, // 12MHz divided by 10k makes 1 kHz PWM
+        .id = PWM_DEV_1,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
+            | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_2_INVERT
+            | PBDRV_PWM_STM32_TIM_CHANNEL_1_COMPLEMENT,
+    },
+    {
+        .platform_init = pwm_dev_2_platform_init,
+        .TIMx = TIM16,
+        .prescalar = 8, // results in 10 MHz clock
+        .period = 10000, // 12MHz divided by 10k makes 1 kHz PWM
+        .id = PWM_DEV_2,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT,
+    },
+};
+
+// UART
 
 enum {
     UART_PORT_A,
@@ -293,18 +357,11 @@ void I2C1_EV_IRQHandler(void) {
 // special memory addresses defined in linker script
 extern uint32_t *_fw_isr_vector_src;
 
-TIM_HandleTypeDef *cplus_hub_htim1;
-TIM_HandleTypeDef *cplus_hub_htim15;
-TIM_HandleTypeDef *cplus_hub_htim16;
-
 // Called from assembly code in startup.s
 void SystemInit(void) {
     RCC_OscInitTypeDef osc_init = { 0 };
     RCC_ClkInitTypeDef clk_init = { 0 };
     GPIO_InitTypeDef gpio_init = { 0 };
-    static TIM_HandleTypeDef htim1;
-    static TIM_HandleTypeDef htim15;
-    static TIM_HandleTypeDef htim16;
 
     #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
     SCB->CPACR |= ((3UL << 10 * 2) | (3UL << 11 * 2));  /* set CP10 and CP11 Full Access */
@@ -358,28 +415,6 @@ void SystemInit(void) {
     // Turn VCC_PORT on (PB12)
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
     HAL_GPIO_Init(GPIOB, &gpio_init);
-
-
-    // shared timers
-
-    htim1.Instance = TIM1;
-    htim1.Init.Prescaler = 8 - 1;
-    htim1.Init.Period = 10000 - 1;
-    HAL_TIM_Base_Init(&htim1);
-
-    htim15.Instance = TIM15;
-    htim15.Init.Prescaler = 8 - 1;
-    htim15.Init.Period = 10000 - 1;
-    HAL_TIM_Base_Init(&htim15);
-
-    htim16.Instance = TIM16;
-    htim16.Init.Prescaler = 8 - 1;
-    htim16.Init.Period = 10000 - 1;
-    HAL_TIM_Base_Init(&htim16);
-
-    cplus_hub_htim1 = &htim1;
-    cplus_hub_htim15 = &htim15;
-    cplus_hub_htim16 = &htim16;
 
     // since the firmware starts at 0x08008000, we need to set the vector table offset
     SCB->VTOR = (uint32_t)&_fw_isr_vector_src;

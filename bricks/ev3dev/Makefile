@@ -261,14 +261,15 @@ PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 	contiki-core/sys/timer.c \
 	ev3dev/src/ev3dev_stretch/lego_port.c \
 	ev3dev/src/ev3dev_stretch/lego_sensor.c \
-	ev3dev/src/ev3dev_stretch/sysfs.c \
 	ev3dev/src/ev3dev_stretch/nxtcolor.c \
+	ev3dev/src/ev3dev_stretch/sysfs.c \
 	libfixmath/libfixmath/fix16_sqrt.c \
 	libfixmath/libfixmath/fix16_str.c \
 	libfixmath/libfixmath/fix16.c \
 	libfixmath/libfixmath/uint32.c \
 	pbio/drv/battery/battery_linux_ev3.c \
 	pbio/drv/button/button_linux_ev3.c \
+	pbio/drv/core.c \
 	pbio/drv/counter/counter_core.c \
 	pbio/drv/counter/counter_ev3dev_stretch_iio.c \
 	pbio/drv/ev3dev_stretch/light.c \
@@ -277,9 +278,10 @@ PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 	pbio/drv/ioport/ioport_ev3dev_stretch.c \
 	pbio/platform/ev3dev_stretch/clock.c \
 	pbio/src/control.c \
+	pbio/src/dcmotor.c \
 	pbio/src/drivebase.c \
 	pbio/src/error.c \
-	pbio/src/dcmotor.c \
+	pbio/src/integrator.c \
 	pbio/src/light.c \
 	pbio/src/logger.c \
 	pbio/src/main.c \
@@ -289,9 +291,8 @@ PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 	pbio/src/servo.c \
 	pbio/src/sound.c \
 	pbio/src/tacho.c \
-	pbio/src/trajectory.c \
 	pbio/src/trajectory_ext.c \
-	pbio/src/integrator.c \
+	pbio/src/trajectory.c \
 	)
 
 OBJ = $(PY_O)
