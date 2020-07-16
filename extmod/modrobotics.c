@@ -277,6 +277,10 @@ STATIC const mp_obj_type_t robotics_DriveBase_type = {
 // Class structure for Matrix
 typedef struct _robotics_Matrix_obj_t {
     mp_obj_base_t base;
+    float_t *data;
+    int32_t rows;
+    int32_t cols;
+    bool is_transposed;
 } robotics_Matrix_obj_t;
 
 
@@ -289,8 +293,37 @@ STATIC mp_obj_t robotics_Matrix_make_new(const mp_obj_type_t *type, size_t n_arg
     self->base.type = (mp_obj_type_t *)type;
 
     (void) arg;
+    self->rows = 3;
+    self->cols = 4;
+
+    self->data = m_new(float_t, self->rows*self->cols);
+    self->data[1] = (float_t) 3.14;
+
+    self->is_transposed = true;
 
     return MP_OBJ_FROM_PTR(self);
+}
+
+// pybricks.robotics.Matrix.__repr__
+void robotics_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+
+    // This can be printed much more efficiently, but this does the job while
+    // developing the class.
+    robotics_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    for (int32_t r = 0; r < self->rows; r++) {
+        mp_printf(print, r == 0 ? "[[" : " [");
+        for (int32_t c = 0; c < self->cols; c++) {
+            int32_t idx = self->is_transposed ? c*self->rows + r : r*self->cols + c;
+            mp_printf(print, "%f", (double_t) self->data[idx]);
+            if (c < self->cols - 1) {
+                mp_printf(print, ", ");
+            }
+            else {
+                mp_printf(print, r == self->rows - 1 ? "]" : "]\n");
+            }
+        }
+    }
+    mp_printf(print, "]");
 }
 
 // pybricks.robotics.Matrix.T
@@ -314,6 +347,7 @@ STATIC MP_DEFINE_CONST_DICT(robotics_Matrix_locals_dict, robotics_Matrix_locals_
 STATIC const mp_obj_type_t robotics_Matrix_type = {
     { &mp_type_type },
     .name = MP_QSTR_Matrix,
+    .print = robotics_Matrix_print,
     .make_new = robotics_Matrix_make_new,
     .locals_dict = (mp_obj_dict_t *)&robotics_Matrix_locals_dict,
 };
