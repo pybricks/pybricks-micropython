@@ -272,10 +272,62 @@ STATIC const mp_obj_type_t robotics_DriveBase_type = {
     .locals_dict = (mp_obj_dict_t *)&robotics_DriveBase_locals_dict,
 };
 
+#if MICROPY_PY_BUILTINS_FLOAT
+
+// Class structure for Matrix
+typedef struct _robotics_Matrix_obj_t {
+    mp_obj_base_t base;
+} robotics_Matrix_obj_t;
+
+
+// pybricks.robotics.Matrix.__init__
+STATIC mp_obj_t robotics_Matrix_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(arg));
+
+    robotics_Matrix_obj_t *self = m_new_obj(robotics_Matrix_obj_t);
+    self->base.type = (mp_obj_type_t *)type;
+
+    (void) arg;
+
+    return MP_OBJ_FROM_PTR(self);
+}
+
+// pybricks.robotics.Matrix.T
+STATIC mp_obj_t robotics_Matrix_T(mp_obj_t self_in) {
+    robotics_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    (void) self;
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(robotics_Matrix_T_obj, robotics_Matrix_T);
+
+
+// dir(pybricks.robotics.Matrix)
+STATIC const mp_rom_map_elem_t robotics_Matrix_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_T),     MP_ROM_PTR(&robotics_Matrix_T_obj)              },
+};
+STATIC MP_DEFINE_CONST_DICT(robotics_Matrix_locals_dict, robotics_Matrix_locals_dict_table);
+
+// type(pybricks.robotics.Matrix)
+STATIC const mp_obj_type_t robotics_Matrix_type = {
+    { &mp_type_type },
+    .name = MP_QSTR_Matrix,
+    .make_new = robotics_Matrix_make_new,
+    .locals_dict = (mp_obj_dict_t *)&robotics_Matrix_locals_dict,
+};
+
+
+#endif
+
 // dir(pybricks.robotics)
 STATIC const mp_rom_map_elem_t robotics_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_robotics)         },
     { MP_ROM_QSTR(MP_QSTR_DriveBase),   MP_ROM_PTR(&robotics_DriveBase_type)  },
+    #if MICROPY_PY_BUILTINS_FLOAT
+    { MP_ROM_QSTR(MP_QSTR_Matrix),   MP_ROM_PTR(&robotics_Matrix_type)  },
+    #endif // MICROPY_PY_BUILTINS_FLOAT
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_robotics_globals, robotics_globals_table);
 
