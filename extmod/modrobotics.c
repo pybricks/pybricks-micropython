@@ -278,8 +278,8 @@ STATIC const mp_obj_type_t robotics_DriveBase_type = {
 typedef struct _robotics_Matrix_obj_t {
     mp_obj_base_t base;
     float_t *data;
-    int32_t rows;
-    int32_t cols;
+    size_t m;
+    size_t n;
     bool is_transposed;
 } robotics_Matrix_obj_t;
 
@@ -287,19 +287,46 @@ typedef struct _robotics_Matrix_obj_t {
 // pybricks.robotics.Matrix.__init__
 STATIC mp_obj_t robotics_Matrix_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(arg));
+        PB_ARG_REQUIRED(rows));
 
     robotics_Matrix_obj_t *self = m_new_obj(robotics_Matrix_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    (void) arg;
-    self->rows = 3;
-    self->cols = 4;
+    // Unpack the main list of rows
+    mp_obj_t *row_objs, *scalar_objs;
+    mp_obj_get_array(rows, &self->m, &row_objs);
 
-    self->data = m_new(float_t, self->rows*self->cols);
-    self->data[1] = (float_t) 3.14;
+    if (self->m == 0) {
+        // TODO: raise dimension error, m >= 1
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
 
-    self->is_transposed = true;
+    // Iterate through each of the rows to get the scalars
+    for (size_t r = 0; r < self->m; r++) {
+
+        size_t n;
+        mp_obj_get_array(row_objs[r], &n, &scalar_objs);
+
+        if (r == 0) {
+            if (n == 0) {
+                // TODO: raise dimension error, n >= 1
+                pb_assert(PBIO_ERROR_INVALID_ARG);
+            }
+
+            self->n = n;
+            self->data = m_new(float_t, self->m * self->n);
+        } else { // other rows
+            if (n != self->n) {
+                // TODO: raise dimension error
+                pb_assert(PBIO_ERROR_INVALID_ARG);
+            }
+        }
+
+        // Unpack the scalars
+        for (size_t c = 0; c < self->n; c++) {
+            self->data[r * self->n + c] = mp_obj_get_float_to_f(scalar_objs[c]);
+        }
+    }
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -310,16 +337,15 @@ void robotics_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_k
     // This can be printed much more efficiently, but this does the job while
     // developing the class.
     robotics_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    for (int32_t r = 0; r < self->rows; r++) {
+    for (size_t r = 0; r < self->m; r++) {
         mp_printf(print, r == 0 ? "[[" : " [");
-        for (int32_t c = 0; c < self->cols; c++) {
-            int32_t idx = self->is_transposed ? c*self->rows + r : r*self->cols + c;
-            mp_printf(print, "%f", (double_t) self->data[idx]);
-            if (c < self->cols - 1) {
+        for (size_t c = 0; c < self->n; c++) {
+            size_t idx = self->is_transposed ? c * self->m + r : r * self->n + c;
+            mp_printf(print, "%f", (double_t)self->data[idx]);
+            if (c < self->n - 1) {
                 mp_printf(print, ", ");
-            }
-            else {
-                mp_printf(print, r == self->rows - 1 ? "]" : "]\n");
+            } else {
+                mp_printf(print, r == self->m - 1 ? "]" : "]\n");
             }
         }
     }
@@ -330,7 +356,7 @@ void robotics_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_k
 STATIC mp_obj_t robotics_Matrix_T(mp_obj_t self_in) {
     robotics_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    (void) self;
+    (void)self;
 
     return mp_const_none;
 }
