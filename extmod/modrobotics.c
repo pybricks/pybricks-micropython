@@ -280,7 +280,7 @@ typedef struct _robotics_Matrix_obj_t {
     float_t *data;
     size_t m;
     size_t n;
-    bool is_transposed;
+    bool transposed;
 } robotics_Matrix_obj_t;
 
 
@@ -327,9 +327,12 @@ STATIC mp_obj_t robotics_Matrix_make_new(const mp_obj_type_t *type, size_t n_arg
             self->data[r * self->n + c] = mp_obj_get_float_to_f(scalar_objs[c]);
         }
     }
+    self->transposed = false;
 
     return MP_OBJ_FROM_PTR(self);
 }
+
+const mp_obj_type_t robotics_Matrix_type;
 
 // pybricks.robotics.Matrix.__repr__
 void robotics_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
@@ -340,7 +343,7 @@ void robotics_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_k
     for (size_t r = 0; r < self->m; r++) {
         mp_printf(print, r == 0 ? "[[" : " [");
         for (size_t c = 0; c < self->n; c++) {
-            size_t idx = self->is_transposed ? c * self->m + r : r * self->n + c;
+            size_t idx = self->transposed ? c * self->m + r : r * self->n + c;
             mp_printf(print, "%f", (double_t)self->data[idx]);
             if (c < self->n - 1) {
                 mp_printf(print, ", ");
@@ -356,9 +359,16 @@ void robotics_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_k
 STATIC mp_obj_t robotics_Matrix_T(mp_obj_t self_in) {
     robotics_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    (void)self;
+    robotics_Matrix_obj_t *copy = m_new_obj(robotics_Matrix_obj_t);
+    copy->base.type = &robotics_Matrix_type;
 
-    return mp_const_none;
+    // Point to the same data instead of copying
+    copy->data = self->data;
+    copy->n = self->m;
+    copy->m = self->n;
+    copy->transposed = !self->transposed;
+
+    return MP_OBJ_FROM_PTR(copy);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(robotics_Matrix_T_obj, robotics_Matrix_T);
 
@@ -370,7 +380,7 @@ STATIC const mp_rom_map_elem_t robotics_Matrix_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(robotics_Matrix_locals_dict, robotics_Matrix_locals_dict_table);
 
 // type(pybricks.robotics.Matrix)
-STATIC const mp_obj_type_t robotics_Matrix_type = {
+const mp_obj_type_t robotics_Matrix_type = {
     { &mp_type_type },
     .name = MP_QSTR_Matrix,
     .print = robotics_Matrix_print,
