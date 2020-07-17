@@ -515,6 +515,11 @@ STATIC mp_obj_t robotics_Matrix__mul(mp_obj_t lhs_obj, mp_obj_t rhs_obj) {
         }
     }
 
+    // If the result is a 1x1, return as scalar.
+    if (ret->m == 1 && ret->n == 1) {
+        return mp_obj_new_float_from_f(ret->data[0] * ret->scale);
+    }
+
     return MP_OBJ_FROM_PTR(ret);
 }
 
