@@ -435,7 +435,7 @@ void robotics_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_k
 }
 
 // pybricks.robotics.Matrix._add
-STATIC mp_obj_t robotics_Matrix__add(mp_obj_t lhs_obj, mp_obj_t rhs_obj) {
+STATIC mp_obj_t robotics_Matrix__add(mp_obj_t lhs_obj, mp_obj_t rhs_obj, bool add) {
 
     // Get left and right matrices
     robotics_Matrix_obj_t *lhs = MP_OBJ_TO_PTR(lhs_obj);
@@ -458,7 +458,13 @@ STATIC mp_obj_t robotics_Matrix__add(mp_obj_t lhs_obj, mp_obj_t rhs_obj) {
         for (size_t c = 0; c < ret->n; c++) {
             // This entry is obtained as the sum of scalars of both matrices
             size_t idx = lhs->transposed ? c * lhs->m + r : r * lhs->n + c;
-            ret->data[idx] = lhs->data[idx]*lhs->scale + rhs->data[idx]*rhs->scale;
+            if (add) {
+                ret->data[idx] = lhs->data[idx]*lhs->scale + rhs->data[idx]*rhs->scale;
+            }
+            else {
+                ret->data[idx] = lhs->data[idx]*lhs->scale - rhs->data[idx]*rhs->scale;
+            }
+            
         }
     }
 
@@ -594,7 +600,10 @@ STATIC mp_obj_t robotics_Matrix_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp
     switch (op) {
         case MP_BINARY_OP_ADD:
         case MP_BINARY_OP_INPLACE_ADD:
-            return robotics_Matrix__add(lhs_in, rhs_in);
+            return robotics_Matrix__add(lhs_in, rhs_in, true);
+        case MP_BINARY_OP_SUBTRACT:
+        case MP_BINARY_OP_INPLACE_SUBTRACT:
+            return robotics_Matrix__add(lhs_in, rhs_in, false);
         case MP_BINARY_OP_MULTIPLY:
         case MP_BINARY_OP_INPLACE_MULTIPLY:
             return robotics_Matrix__mul(lhs_in, rhs_in);
