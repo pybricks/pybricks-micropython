@@ -445,6 +445,44 @@ STATIC mp_obj_t robotics_Matrix_T(mp_obj_t self_in) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(robotics_Matrix_T_obj, robotics_Matrix_T);
 
 
+STATIC mp_obj_t robotics_Matrix_unary_op(mp_unary_op_t op, mp_obj_t o_in) {
+
+    robotics_Matrix_obj_t *self = MP_OBJ_TO_PTR(o_in);
+
+    switch (op) {
+        // len returns the size of the matrix: (m, n)
+        case MP_UNARY_OP_LEN: {
+            mp_obj_t shape[2];
+            shape[0] = MP_OBJ_NEW_SMALL_INT(self->m);
+            shape[1] = MP_OBJ_NEW_SMALL_INT(self->n);
+            return mp_obj_new_tuple(2, shape);
+        }
+        // Hash is the same as in generic unary op
+        case MP_UNARY_OP_HASH:
+            return MP_OBJ_NEW_SMALL_INT((mp_uint_t)o_in);
+        // Positive just returns the original object
+        case MP_UNARY_OP_POSITIVE:
+            return o_in;
+        // Negative returns a scaled copy
+        case MP_UNARY_OP_NEGATIVE:
+            // TODO
+            return o_in;
+        // Get absolute vale (magnitude)
+        case MP_UNARY_OP_ABS: {
+            // For vectors, this is the norm
+            if (self->m == 1 || self->n == 1) {
+                // TODO: Calculate norm and return it
+                return mp_obj_new_float(0.5);
+            }
+            // Determinant not implemented
+            return MP_OBJ_NULL;
+        }
+        default:
+            // Other operations are not supported
+            return MP_OBJ_NULL;
+    }
+}
+
 // dir(pybricks.robotics.Matrix)
 STATIC const mp_rom_map_elem_t robotics_Matrix_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_T),     MP_ROM_PTR(&robotics_Matrix_T_obj)              },
@@ -457,6 +495,8 @@ const mp_obj_type_t robotics_Matrix_type = {
     .name = MP_QSTR_Matrix,
     .print = robotics_Matrix_print,
     .make_new = robotics_Matrix_make_new,
+    .unary_op = robotics_Matrix_unary_op,
+    // .binary_op = robotics_Matrix_binary_op,
     .locals_dict = (mp_obj_dict_t *)&robotics_Matrix_locals_dict,
 };
 
