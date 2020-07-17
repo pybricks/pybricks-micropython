@@ -657,20 +657,34 @@ const mp_obj_type_t robotics_Matrix_type = {
     .locals_dict = (mp_obj_dict_t *)&robotics_Matrix_locals_dict,
 };
 
-// pybricks.robotics.Vector
-STATIC mp_obj_t robotics_Vector(size_t n_args, const mp_obj_t *args) {
+// pybricks.robotics._vector
+STATIC mp_obj_t robotics__vector(size_t n_args, const mp_obj_t *args, bool normalize) {
     robotics_Matrix_obj_t *mat = m_new_obj(robotics_Matrix_obj_t);
     mat->base.type = &robotics_Matrix_type;
     mat->data = m_new(float_t, n_args);
     mat->m = n_args;
     mat->n = 1;
-    mat->scale = 1;
+    float_t squares = 0;
     for (size_t i = 0; i < n_args; i++) {
         mat->data[i] = mp_obj_get_float_to_f(args[i]);
+        squares += mat->data[i] * mat->data[i];
     }
+    mat->scale = normalize ? 1 / sqrtf(squares) : 1;
+
     return MP_OBJ_FROM_PTR(mat);
 }
+
+// pybricks.robotics.Vector
+STATIC mp_obj_t robotics_Vector(size_t n_args, const mp_obj_t *args) {
+    return robotics__vector(n_args, args, false);
+}
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(robotics_Vector_obj, 2, 4, robotics_Vector);
+
+// pybricks.robotics.UnitVector
+STATIC mp_obj_t robotics_UnitVector(size_t n_args, const mp_obj_t *args) {
+    return robotics__vector(n_args, args, true);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(robotics_UnitVector_obj, 2, 4, robotics_UnitVector);
 
 #endif
 
@@ -681,6 +695,7 @@ STATIC const mp_rom_map_elem_t robotics_globals_table[] = {
     #if MICROPY_PY_BUILTINS_FLOAT
     { MP_ROM_QSTR(MP_QSTR_Matrix),      MP_ROM_PTR(&robotics_Matrix_type)     },
     { MP_ROM_QSTR(MP_QSTR_Vector),      MP_ROM_PTR(&robotics_Vector_obj)      },
+    { MP_ROM_QSTR(MP_QSTR_UnitVector),  MP_ROM_PTR(&robotics_UnitVector_obj)  },
     #endif // MICROPY_PY_BUILTINS_FL OAT
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_robotics_globals, robotics_globals_table);
