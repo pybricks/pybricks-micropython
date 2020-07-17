@@ -279,6 +279,7 @@ STATIC const mp_obj_type_t robotics_DriveBase_type = {
 typedef struct _robotics_Matrix_obj_t {
     mp_obj_base_t base;
     float_t *data;
+    float_t scale;
     size_t m;
     size_t n;
     bool transposed;
@@ -328,6 +329,9 @@ STATIC mp_obj_t robotics_Matrix_make_new(const mp_obj_type_t *type, size_t n_arg
             self->data[r * self->n + c] = mp_obj_get_float_to_f(scalar_objs[c]);
         }
     }
+
+    // Modifiers that allow basic modifications without moving data around
+    self->scale = 1;
     self->transposed = false;
 
     return MP_OBJ_FROM_PTR(self);
@@ -407,7 +411,7 @@ void robotics_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_k
             size_t idx = self->transposed ? c * self->m + r : r * self->n + c;
 
             // Get character representation of said value
-            print_float(buf + col_start, self->data[idx]);
+            print_float(buf + col_start, self->data[idx] * self->scale);
 
             // Append ", " or "]\n" after the last value
             if (c < self->n - 1) {
@@ -427,6 +431,23 @@ void robotics_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_k
     mp_print_str(print, buf);
 }
 
+// pybricks.robotics.Matrix._scale
+STATIC mp_obj_t robotics_Matrix__scale(mp_obj_t self_in, float_t scale) {
+    robotics_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    robotics_Matrix_obj_t *copy = m_new_obj(robotics_Matrix_obj_t);
+    copy->base.type = &robotics_Matrix_type;
+
+    // Point to the same data instead of copying
+    copy->data = self->data;
+    copy->n = self->n;
+    copy->m = self->m;
+    copy->scale = self->scale * scale;
+    copy->transposed = self->transposed;
+
+    return MP_OBJ_FROM_PTR(copy);
+}
+
 // pybricks.robotics.Matrix.T
 STATIC mp_obj_t robotics_Matrix_T(mp_obj_t self_in) {
     robotics_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -438,6 +459,7 @@ STATIC mp_obj_t robotics_Matrix_T(mp_obj_t self_in) {
     copy->data = self->data;
     copy->n = self->m;
     copy->m = self->n;
+    copy->scale = self->scale;
     copy->transposed = !self->transposed;
 
     return MP_OBJ_FROM_PTR(copy);
@@ -465,8 +487,7 @@ STATIC mp_obj_t robotics_Matrix_unary_op(mp_unary_op_t op, mp_obj_t o_in) {
             return o_in;
         // Negative returns a scaled copy
         case MP_UNARY_OP_NEGATIVE:
-            // TODO
-            return o_in;
+            return robotics_Matrix__scale(o_in, -1);
         // Get absolute vale (magnitude)
         case MP_UNARY_OP_ABS: {
             // For vectors, this is the norm
