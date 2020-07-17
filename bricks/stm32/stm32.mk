@@ -182,6 +182,7 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modtools.c \
 	moduos.c \
 	pbhsv.c \
+	pb_type_matrix.c \
 	)
 
 # Pybricks helpers

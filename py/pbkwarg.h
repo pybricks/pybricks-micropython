@@ -5,6 +5,7 @@
 #define PYBRICKS_INCLUDED_PBKWARG_H
 
 #include "py/obj.h"
+#include "py/runtime.h"
 
 // The following macro is a direct copy of https://stackoverflow.com/a/50371430/11744630
 #define EXPAND(x) x
