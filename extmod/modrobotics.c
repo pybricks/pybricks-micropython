@@ -599,7 +599,7 @@ STATIC mp_obj_t robotics_Matrix_unary_op(mp_unary_op_t op, mp_obj_t o_in) {
                 for (size_t i = 0; i < len; i++) {
                     squares += self->data[i] * self->data[i];
                 }
-                return mp_obj_new_float(sqrtf(squares));
+                return mp_obj_new_float(sqrtf(squares) * self->scale);
             }
             // Determinant not implemented
             return MP_OBJ_NULL;
