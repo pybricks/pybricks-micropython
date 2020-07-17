@@ -340,7 +340,7 @@ const mp_obj_type_t robotics_Matrix_type;
 static void print_float(char *buf, float_t x) {
 
     // Convert to positive int
-    int32_t val = (int32_t) (x * 1000);   
+    int32_t val = (int32_t)(x * 1000);
     bool negative = val < 0;
     if (negative) {
         val = -val;
@@ -355,11 +355,11 @@ static void print_float(char *buf, float_t x) {
     int32_t c = snprintf(NULL, 0, "%" PRId32, val);
 
     // Print the integer
-    snprintf(buf, 8, "%7" PRId32,val);
+    snprintf(buf, 8, "%7" PRId32, val);
 
     // If the number was negative, add minus sign in the right place
     if (negative) {
-        buf[6-c <= 2 ? 6-c : 2] = '-';
+        buf[6 - c <= 2 ? 6 - c : 2] = '-';
     }
 
     // If there is nothing before the decimal, ensure there is a zero
@@ -372,31 +372,59 @@ static void print_float(char *buf, float_t x) {
 
     // Terminate and add decimal separator
     buf[4] = '.';
-    buf[8] = '\0';
 }
-
 
 // pybricks.robotics.Matrix.__repr__
 void robotics_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
 
-    // This can be printed much more efficiently, but this does the job while
-    // developing the class.
     robotics_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    // Each "-123.456" is 8. Each digit is appended with ", " or "]\n", so 10 per digit
+    // Also each row starts with "[[" or " [" so we add 2*rows. Finally we add \0, so +1.
+    size_t len = self->m * self->n * 10 + self->m * 2 + 1;
+
+    // Allocate the buffer
+    char *buf = m_new(char, len);
+
+    // Loop through the rows
     for (size_t r = 0; r < self->m; r++) {
-        mp_printf(print, r == 0 ? "[[" : " [");
+
+        // Character starting index for this row
+        size_t row_start = r * (self->n * 10 + 2);
+
+        // Prepend "[[" on first row, else " ["
+        buf[row_start] = r == 0 ? '[' : ' ';
+        buf[row_start + 1] = '[';
+
+        // Loop through the colums, so the scalars in each row
         for (size_t c = 0; c < self->n; c++) {
+
+            // Starting character index for this column
+            size_t col_start = row_start + c * 10 + 2;
+
+            // Get data index of the scalar we will print. Transposed attribute
+            // tells us whether data is stored row by row or column by column.
             size_t idx = self->transposed ? c * self->m + r : r * self->n + c;
-            char buf[9];
-            print_float(buf, self->data[idx]);
-            mp_printf(print, "%s", buf);
+
+            // Get character representation of said value
+            print_float(buf + col_start, self->data[idx]);
+
+            // Append ", " or "]\n" after the last value
             if (c < self->n - 1) {
-                mp_printf(print, ", ");
+                buf[col_start + 8] = ',';
+                buf[col_start + 9] = ' ';
             } else {
-                mp_printf(print, r == self->m - 1 ? "]" : "]\n");
+                buf[col_start + 8] = ']';
+                buf[col_start + 9] = '\n';
             }
         }
     }
-    mp_printf(print, "]\n");
+    // Close the group of rows with "]"
+    buf[len - 2 ] = ']';
+    buf[len - 1 ] = '\0';
+
+    // Send the bufer to MicroPython
+    mp_print_str(print, buf);
 }
 
 // pybricks.robotics.Matrix.T
