@@ -2,6 +2,7 @@
 // Copyright (c) 2018-2020 The Pybricks Authors
 
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include <math.h>
 
@@ -334,6 +335,47 @@ STATIC mp_obj_t robotics_Matrix_make_new(const mp_obj_type_t *type, size_t n_arg
 
 const mp_obj_type_t robotics_Matrix_type;
 
+
+// Get string representation of the form -123.456
+static void print_float(char *buf, float_t x) {
+
+    // Convert to positive int
+    int32_t val = (int32_t) (x * 1000);   
+    bool negative = val < 0;
+    if (negative) {
+        val = -val;
+    }
+
+    // Limit to 999.999
+    if (val >= 999999) {
+        val = 999999;
+    }
+
+    // Get number of printed digits so we know where to add minus sign later
+    int32_t c = snprintf(NULL, 0, "%" PRId32, val);
+
+    // Print the integer
+    snprintf(buf, 8, "%7" PRId32,val);
+
+    // If the number was negative, add minus sign in the right place
+    if (negative) {
+        buf[6-c <= 2 ? 6-c : 2] = '-';
+    }
+
+    // If there is nothing before the decimal, ensure there is a zero
+    buf[3] = buf[3] == ' ' ? '0' : buf[3];
+
+    // Shift last 3 digits to make room for decimal point and insert 0 if empty
+    buf[7] = buf[6] == ' ' ? '0' : buf[6];
+    buf[6] = buf[5] == ' ' ? '0' : buf[5];
+    buf[5] = buf[4] == ' ' ? '0' : buf[4];
+
+    // Terminate and add decimal separator
+    buf[4] = '.';
+    buf[8] = '\0';
+}
+
+
 // pybricks.robotics.Matrix.__repr__
 void robotics_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
 
@@ -344,7 +386,9 @@ void robotics_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_k
         mp_printf(print, r == 0 ? "[[" : " [");
         for (size_t c = 0; c < self->n; c++) {
             size_t idx = self->transposed ? c * self->m + r : r * self->n + c;
-            mp_printf(print, "%f", (double_t)self->data[idx]);
+            char buf[9];
+            print_float(buf, self->data[idx]);
+            mp_printf(print, "%s", buf);
             if (c < self->n - 1) {
                 mp_printf(print, ", ");
             } else {
@@ -352,7 +396,7 @@ void robotics_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_k
             }
         }
     }
-    mp_printf(print, "]");
+    mp_printf(print, "]\n");
 }
 
 // pybricks.robotics.Matrix.T
