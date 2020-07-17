@@ -606,7 +606,15 @@ STATIC mp_obj_t robotics_Matrix_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp
             return robotics_Matrix__add(lhs_in, rhs_in, false);
         case MP_BINARY_OP_MULTIPLY:
         case MP_BINARY_OP_INPLACE_MULTIPLY:
+            // If right of the operands is a number, just scale.
+            if (mp_obj_is_float(rhs_in) || mp_obj_is_int(rhs_in)) {
+                return robotics_Matrix__scale(lhs_in, mp_obj_get_float_to_f(rhs_in));
+            }
+            // Otherwise we have to do full multiplication.
             return robotics_Matrix__mul(lhs_in, rhs_in);
+        case MP_BINARY_OP_REVERSE_MULTIPLY:
+            // This gets called for c*A, so scale A by c (rhs/lhs is meaningless here)
+            return robotics_Matrix__scale(lhs_in, mp_obj_get_float_to_f(rhs_in));
         default:
             // Other operations not supported
             return MP_OBJ_NULL;
