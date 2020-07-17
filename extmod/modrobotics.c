@@ -291,39 +291,44 @@ STATIC mp_obj_t robotics_Matrix_make_new(const mp_obj_type_t *type, size_t n_arg
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(rows));
 
-    robotics_Matrix_obj_t *self = m_new_obj(robotics_Matrix_obj_t);
-    self->base.type = (mp_obj_type_t *)type;
+    // Before we allocate the object, check if it's a 1x1 matrix: C = [[c]],
+    // in which case we should just return c as a float.
 
-    // Unpack the main list of rows
+    // Unpack the main list of rows and get the requested sizes
+    size_t m, n;
     mp_obj_t *row_objs, *scalar_objs;
-    mp_obj_get_array(rows, &self->m, &row_objs);
+    mp_obj_get_array(rows, &m, &row_objs);
+    mp_obj_get_array(row_objs[0], &n, &scalar_objs);
 
-    if (self->m == 0) {
-        // TODO: raise dimension error, m >= 1
+    // It's a 1x1 object, assert type and just return it
+    if (m == 1 && n == 1) {
+        mp_obj_get_float_to_f(scalar_objs[0]);
+        return scalar_objs[0];
+    }
+
+    // Dimensions must be nonzero
+    if (m == 0 || n == 0) {
+        // TODO: raise dimension error, m >= 1, n >= 1
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
+
+
+    // Create objects and save dimensions
+    robotics_Matrix_obj_t *self = m_new_obj(robotics_Matrix_obj_t);
+    self->base.type = (mp_obj_type_t *)type;
+    self->m = m;
+    self->n = n;
+    self->data = m_new(float_t, self->m * self->n);
 
     // Iterate through each of the rows to get the scalars
     for (size_t r = 0; r < self->m; r++) {
 
         size_t n;
         mp_obj_get_array(row_objs[r], &n, &scalar_objs);
-
-        if (r == 0) {
-            if (n == 0) {
-                // TODO: raise dimension error, n >= 1
-                pb_assert(PBIO_ERROR_INVALID_ARG);
-            }
-
-            self->n = n;
-            self->data = m_new(float_t, self->m * self->n);
-        } else { // other rows
-            if (n != self->n) {
-                // TODO: raise dimension error
-                pb_assert(PBIO_ERROR_INVALID_ARG);
-            }
+        if (n != self->n) {
+            // TODO: raise dimension error, all rows must have same length
+            pb_assert(PBIO_ERROR_INVALID_ARG);
         }
-
         // Unpack the scalars
         for (size_t c = 0; c < self->n; c++) {
             self->data[r * self->n + c] = mp_obj_get_float_to_f(scalar_objs[c]);
@@ -459,12 +464,11 @@ STATIC mp_obj_t robotics_Matrix__add(mp_obj_t lhs_obj, mp_obj_t rhs_obj, bool ad
             // This entry is obtained as the sum of scalars of both matrices
             size_t idx = lhs->transposed ? c * lhs->m + r : r * lhs->n + c;
             if (add) {
-                ret->data[idx] = lhs->data[idx]*lhs->scale + rhs->data[idx]*rhs->scale;
+                ret->data[idx] = lhs->data[idx] * lhs->scale + rhs->data[idx] * rhs->scale;
+            } else {
+                ret->data[idx] = lhs->data[idx] * lhs->scale - rhs->data[idx] * rhs->scale;
             }
-            else {
-                ret->data[idx] = lhs->data[idx]*lhs->scale - rhs->data[idx]*rhs->scale;
-            }
-            
+
         }
     }
 
@@ -515,7 +519,10 @@ STATIC mp_obj_t robotics_Matrix__mul(mp_obj_t lhs_obj, mp_obj_t rhs_obj) {
         }
     }
 
-    // If the result is a 1x1, return as scalar.
+    // If the result is a 1x1, return as scalar. This solves all the
+    // usual matrix library problems where you have to type things like
+    // C[0][0] just to get the scalar, such as for the inner product of two
+    // vectors. The same is done for 1x1 initialization above.
     if (ret->m == 1 && ret->n == 1) {
         return mp_obj_new_float_from_f(ret->data[0] * ret->scale);
     }
