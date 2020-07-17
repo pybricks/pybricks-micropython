@@ -285,11 +285,17 @@ typedef struct _robotics_Matrix_obj_t {
     bool transposed;
 } robotics_Matrix_obj_t;
 
+const mp_obj_type_t robotics_Matrix_type;
 
 // pybricks.robotics.Matrix.__init__
 STATIC mp_obj_t robotics_Matrix_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(rows));
+
+    // If the input is already a matrix, just return it
+    if (mp_obj_is_type(rows, &robotics_Matrix_type)) {
+        return rows;
+    }
 
     // Before we allocate the object, check if it's a 1x1 matrix: C = [[c]],
     // in which case we should just return c as a float.
@@ -341,9 +347,6 @@ STATIC mp_obj_t robotics_Matrix_make_new(const mp_obj_type_t *type, size_t n_arg
 
     return MP_OBJ_FROM_PTR(self);
 }
-
-const mp_obj_type_t robotics_Matrix_type;
-
 
 // Get string representation of the form -123.456
 static void print_float(char *buf, float_t x) {
