@@ -492,8 +492,12 @@ STATIC mp_obj_t robotics_Matrix_unary_op(mp_unary_op_t op, mp_obj_t o_in) {
         case MP_UNARY_OP_ABS: {
             // For vectors, this is the norm
             if (self->m == 1 || self->n == 1) {
-                // TODO: Calculate norm and return it
-                return mp_obj_new_float(0.5);
+                size_t len = self->m * self->n;
+                float squares = 0;
+                for (size_t i = 0; i < len; i++) {
+                    squares += self->data[i] * self->data[i];
+                }
+                return mp_obj_new_float(sqrtf(squares));
             }
             // Determinant not implemented
             return MP_OBJ_NULL;
