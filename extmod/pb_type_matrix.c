@@ -375,6 +375,67 @@ STATIC mp_obj_t pb_type_Matrix_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_
     }
 }
 
+STATIC mp_obj_t pb_type_subscr(mp_obj_t self_in, mp_obj_t index_in, mp_obj_t value) {
+
+    pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    if (value == MP_OBJ_SENTINEL) {
+        // Integer index is just reading straight from self->data[idx].
+        // But we need to do some checks to make sure we read within bounds.
+        mp_int_t len = self->m * self->n;
+        mp_int_t idx = -1;
+
+        if (mp_obj_is_int(index_in)) {
+            // Get requested index as int
+            idx = mp_obj_get_int(index_in);
+
+            // This is Python, so allow for negative index
+            if (idx < 0) {
+                idx += len;
+            }
+
+            // Data may be stored as transposed for efficiency reasons,
+            // but the user will still expect a consistent value by index.
+            if (self->transposed) {
+                idx = idx / self->n + (idx % self->n) * self->m;
+            }
+        } else {
+            // Get requested value at (row, col) pair
+            size_t s;
+            mp_obj_t *shape;
+            mp_obj_get_array(index_in, &s, &shape);
+
+            // Only proceed if the index is indeed of shape (row, col)
+            if (s == 2) {
+                // Get row index, allowing for negative
+                mp_int_t r = mp_obj_get_int(shape[0]);
+                if (r < 0) {
+                    r += self->m;
+                }
+                // Get col index, allowing for negative
+                mp_int_t c = mp_obj_get_int(shape[1]);
+                if (c < 0) {
+                    c += self->n;
+                }
+                // Make sure requested row/col exist within (m, n)
+                if (c >= 0 && r >= 0 && (size_t)c < self->n && (size_t)r < self->m) {
+                    idx = self->transposed ? c * self->m + r : r * self->n + c;
+                }
+            }
+        }
+
+        // Make sure we have meanwhile a valid index by now
+        if (idx < 0 || idx >= len) {
+            // FIXME: raise dimension error
+            mp_raise_msg(&mp_type_IndexError, MP_ERROR_TEXT("index out of range"));
+        }
+
+        // Return result
+        return mp_obj_new_float_from_f(self->data[idx]);
+    }
+    return MP_OBJ_NULL;
+}
+
 // dir(pybricks.robotics.Matrix)
 STATIC const mp_rom_map_elem_t pb_type_Matrix_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_T),     MP_ROM_PTR(&pb_type_Matrix_T_obj)              },
@@ -389,6 +450,7 @@ const mp_obj_type_t pb_type_Matrix_type = {
     .make_new = pb_type_Matrix_make_new,
     .unary_op = pb_type_Matrix_unary_op,
     .binary_op = pb_type_Matrix_binary_op,
+    .subscr = pb_type_subscr,
     .locals_dict = (mp_obj_dict_t *)&pb_type_Matrix_locals_dict,
 };
 
