@@ -434,6 +434,41 @@ void robotics_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_k
     mp_print_str(print, buf);
 }
 
+// pybricks.robotics.Matrix._add
+STATIC mp_obj_t robotics_Matrix__add(mp_obj_t lhs_obj, mp_obj_t rhs_obj) {
+
+    // Get left and right matrices
+    robotics_Matrix_obj_t *lhs = MP_OBJ_TO_PTR(lhs_obj);
+    robotics_Matrix_obj_t *rhs = MP_OBJ_TO_PTR(rhs_obj);
+
+    // Verify matching dimensions else raise error
+    if (lhs->n != rhs->n || lhs->m != rhs->m) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // Result has same shape as both sides
+    robotics_Matrix_obj_t *ret = m_new_obj(robotics_Matrix_obj_t);
+    ret->base.type = &robotics_Matrix_type;
+    ret->m = lhs->m;
+    ret->n = rhs->n;
+    ret->data = m_new(float_t, ret->m * ret->n);
+
+    // Add the matrices by looping over rows and columns
+    for (size_t r = 0; r < ret->m; r++) {
+        for (size_t c = 0; c < ret->n; c++) {
+            // This entry is obtained as the sum of scalars of both matrices
+            size_t idx = lhs->transposed ? c * lhs->m + r : r * lhs->n + c;
+            ret->data[idx] = lhs->data[idx]*lhs->scale + rhs->data[idx]*rhs->scale;
+        }
+    }
+
+    // Scale must be reset; it has been and multiplied out above
+    ret->scale = 1;
+    ret->transposed = false;
+
+    return MP_OBJ_FROM_PTR(ret);
+}
+
 // pybricks.robotics.Matrix._mul
 STATIC mp_obj_t robotics_Matrix__mul(mp_obj_t lhs_obj, mp_obj_t rhs_obj) {
 
@@ -442,6 +477,9 @@ STATIC mp_obj_t robotics_Matrix__mul(mp_obj_t lhs_obj, mp_obj_t rhs_obj) {
     robotics_Matrix_obj_t *rhs = MP_OBJ_TO_PTR(rhs_obj);
 
     // Verify matching dimensions else raise error
+    if (lhs->n != rhs->m) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
 
     // Result has as many rows as left hand side and as many columns as right hand side.
     robotics_Matrix_obj_t *ret = m_new_obj(robotics_Matrix_obj_t);
@@ -456,7 +494,7 @@ STATIC mp_obj_t robotics_Matrix__mul(mp_obj_t lhs_obj, mp_obj_t rhs_obj) {
 
     // Multiply the matrices by looping over rows and columns
     for (size_t r = 0; r < ret->m; r++) {
-        for (size_t c = 0; c < ret->m; c++) {
+        for (size_t c = 0; c < ret->n; c++) {
             // This entry is obtained as the sum of the products of the entries
             // of the r'th row of lhs and the c'th column of rhs, so size lhs->n.
             float_t sum = 0;
@@ -554,6 +592,9 @@ STATIC mp_obj_t robotics_Matrix_unary_op(mp_unary_op_t op, mp_obj_t o_in) {
 STATIC mp_obj_t robotics_Matrix_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs_in) {
 
     switch (op) {
+        case MP_BINARY_OP_ADD:
+        case MP_BINARY_OP_INPLACE_ADD:
+            return robotics_Matrix__add(lhs_in, rhs_in);
         case MP_BINARY_OP_MULTIPLY:
         case MP_BINARY_OP_INPLACE_MULTIPLY:
             return robotics_Matrix__mul(lhs_in, rhs_in);
