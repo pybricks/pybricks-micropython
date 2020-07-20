@@ -62,6 +62,13 @@ static struct testcase_setup_t pbio_test_setup = {
     .cleanup_fn = cleanup,
 };
 
+PBIO_TEST_FUNC(test_rgb_to_hsv);
+
+static struct testcase_t color_tests[] = {
+    PBIO_TEST(test_rgb_to_hsv),
+    END_OF_TESTCASES
+};
+
 PBIO_TEST_FUNC(test_sqrt);
 PBIO_TEST_FUNC(test_mul_i32_fix16);
 PBIO_TEST_FUNC(test_div_i32_fix16);
@@ -96,6 +103,7 @@ static struct testcase_t pbio_uartdev_tests[] = {
 };
 
 static struct testgroup_t test_groups[] = {
+    { "color/", color_tests },
     { "math/", pbio_math_tests },
     { "pwm/", pbio_pwm_tests },
     { "uartdev/", pbio_uartdev_tests, },
