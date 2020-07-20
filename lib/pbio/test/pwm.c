@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright 2020 The Pybricks Authors
 
 #include <stdio.h>
 
