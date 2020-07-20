@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019-2020 The Pybricks Authors
 
-#include <pberror.h>
+#include <pbio/color.h>
 #include <pbio/iodev.h>
-#include <pbio/light.h>
 
 #include "py/mpconfig.h"
 #include "py/mphal.h"
@@ -11,6 +10,7 @@
 #include "py/objtype.h"
 
 #include "pbdevice.h"
+#include "pberror.h"
 #include "pbobj.h"
 #include "pbkwarg.h"
 
@@ -257,24 +257,24 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     self->light = builtins_ColorLight_obj_make_new(self->pbdev);
 
     // Set the light color to red
-    pbdevice_color_light_on(self->pbdev, PBIO_LIGHT_COLOR_RED);
+    pbdevice_color_light_on(self->pbdev, PBIO_COLOR_RED);
 
     return MP_OBJ_FROM_PTR(self);
 }
 
-static mp_obj_t color_obj(pbio_light_color_t color) {
+static mp_obj_t color_obj(pbio_color_t color) {
     switch (color) {
-        case PBIO_LIGHT_COLOR_RED:
+        case PBIO_COLOR_RED:
             return pb_const_color_red;
-        case PBIO_LIGHT_COLOR_GREEN:
+        case PBIO_COLOR_GREEN:
             return pb_const_color_green;
-        case PBIO_LIGHT_COLOR_BLUE:
+        case PBIO_COLOR_BLUE:
             return pb_const_color_blue;
-        case PBIO_LIGHT_COLOR_YELLOW:
+        case PBIO_COLOR_YELLOW:
             return pb_const_color_yellow;
-        case PBIO_LIGHT_COLOR_BLACK:
+        case PBIO_COLOR_BLACK:
             return pb_const_color_black;
-        case PBIO_LIGHT_COLOR_WHITE:
+        case PBIO_COLOR_WHITE:
             return pb_const_color_white;
         default:
             return mp_const_none;

@@ -6,6 +6,7 @@
 #include <pbdrv/ioport.h>
 #include <pbdrv/motor.h>
 
+#include <pbio/color.h>
 #include <pbio/iodev.h>
 
 #include "py/mphal.h"
@@ -203,19 +204,19 @@ int8_t pbdevice_get_mode_id_from_str(pbdevice_t *pbdev, const char *mode_str) {
     return 0;
 }
 
-void pbdevice_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color) {
+void pbdevice_color_light_on(pbdevice_t *pbdev, pbio_color_t color) {
     // Turn on the light through device specific mode
     uint8_t mode;
     switch (pbdev->iodev.info->type_id) {
         case PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR:
             switch (color) {
-                case PBIO_LIGHT_COLOR_GREEN:
+                case PBIO_COLOR_GREEN:
                     mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX;
                     break;
-                case PBIO_LIGHT_COLOR_RED:
+                case PBIO_COLOR_RED:
                     mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__REFLT;
                     break;
-                case PBIO_LIGHT_COLOR_BLUE:
+                case PBIO_COLOR_BLUE:
                     mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI;
                     break;
                 default:

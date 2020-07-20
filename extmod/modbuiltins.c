@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
+#include <pbio/color.h>
 #include <pbio/control.h>
+#include <pbio/light.h>
 
 #include "py/obj.h"
 #include "py/runtime.h"
@@ -34,7 +36,7 @@ STATIC mp_obj_t builtins_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, 
         color = pb_const_color_black;
     }
 
-    pbio_light_color_t color_id = pb_type_enum_get_value(color, &pb_enum_type_Color);
+    pbio_color_t color_id = pb_type_enum_get_value(color, &pb_enum_type_Color);
 
     mp_int_t bright = pb_obj_get_int(brightness);
     bright = bright < 0 ? 0 : bright > 100 ? 100 : bright;
@@ -64,7 +66,7 @@ STATIC mp_obj_t builtins_ColorLight_off(mp_obj_t self_in) {
         // No external device, so assume command is for the internal light
         pb_assert(pbio_light_off(PBIO_PORT_SELF));
     } else {
-        pbdevice_color_light_on(self->pbdev, PBIO_LIGHT_COLOR_NONE);
+        pbdevice_color_light_on(self->pbdev, PBIO_COLOR_NONE);
     }
     return mp_const_none;
 }

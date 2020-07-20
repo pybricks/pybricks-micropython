@@ -11,9 +11,9 @@
 #include <ev3dev_stretch/lego_sensor.h>
 #include <ev3dev_stretch/sysfs.h>
 
+#include <pbio/color.h>
 #include <pbio/port.h>
 #include <pbio/iodev.h>
-#include <pbio/light.h>
 
 #define IN (0)
 #define OUT (1)
@@ -55,19 +55,19 @@ static const nxtcolor_pininfo_t pininfo[4] = {
     },
 };
 
-static const pbio_light_color_t lamp_colors[] = {
-    PBIO_LIGHT_COLOR_RED,
-    PBIO_LIGHT_COLOR_GREEN,
-    PBIO_LIGHT_COLOR_BLUE,
-    PBIO_LIGHT_COLOR_NONE,
+static const pbio_color_t lamp_colors[] = {
+    PBIO_COLOR_RED,
+    PBIO_COLOR_GREEN,
+    PBIO_COLOR_BLUE,
+    PBIO_COLOR_NONE,
 };
 
 typedef struct _nxtcolor_t {
     bool ready;
     bool fs_initialized;
     bool waiting;
-    pbio_light_color_t state;
-    pbio_light_color_t lamp;
+    pbio_color_t state;
+    pbio_color_t lamp;
     uint32_t calibration[3][4];
     uint16_t threshold[2];
     uint32_t raw_min;
@@ -394,7 +394,7 @@ static pbio_error_t nxtcolor_init(nxtcolor_t *nxtcolor, pbio_port_t port) {
     nxtcolor->raw_min = 50;
 
     // The sensor is now in the full-color-ambient state
-    nxtcolor->state = PBIO_LIGHT_COLOR_NONE;
+    nxtcolor->state = PBIO_COLOR_NONE;
 
     return PBIO_SUCCESS;
 }
@@ -402,21 +402,21 @@ static pbio_error_t nxtcolor_init(nxtcolor_t *nxtcolor, pbio_port_t port) {
 pbio_error_t nxtcolor_toggle_color(nxtcolor_t *nxtcolor) {
     bool set = 0;
     switch(nxtcolor->state) {
-        case PBIO_LIGHT_COLOR_NONE:
-            nxtcolor->state = PBIO_LIGHT_COLOR_RED;
+        case PBIO_COLOR_NONE:
+            nxtcolor->state = PBIO_COLOR_RED;
             set = 1;
             break;
-        case PBIO_LIGHT_COLOR_RED:
-            nxtcolor->state = PBIO_LIGHT_COLOR_GREEN;
+        case PBIO_COLOR_RED:
+            nxtcolor->state = PBIO_COLOR_GREEN;
             set = 0;
             break;
-        case PBIO_LIGHT_COLOR_GREEN:
-            nxtcolor->state = PBIO_LIGHT_COLOR_BLUE;
+        case PBIO_COLOR_GREEN:
+            nxtcolor->state = PBIO_COLOR_BLUE;
             set = 1;
             break;
-        case PBIO_LIGHT_COLOR_BLUE:
+        case PBIO_COLOR_BLUE:
             set = 0;
-            nxtcolor->state = PBIO_LIGHT_COLOR_NONE;
+            nxtcolor->state = PBIO_COLOR_NONE;
             break;
         default:
             return PBIO_ERROR_FAILED;
@@ -424,12 +424,12 @@ pbio_error_t nxtcolor_toggle_color(nxtcolor_t *nxtcolor) {
     return nxtcolor_set_digi0(nxtcolor, set);
 }
 
-pbio_error_t nxtcolor_set_light(nxtcolor_t *nxtcolor, pbio_light_color_t color) {
+pbio_error_t nxtcolor_set_light(nxtcolor_t *nxtcolor, pbio_color_t color) {
     pbio_error_t err;
 
     // Default unknown colors to no color
-    if (color != PBIO_LIGHT_COLOR_RED && color != PBIO_LIGHT_COLOR_GREEN && color != PBIO_LIGHT_COLOR_BLUE) {
-        color = PBIO_LIGHT_COLOR_NONE;
+    if (color != PBIO_COLOR_RED && color != PBIO_COLOR_GREEN && color != PBIO_COLOR_BLUE) {
+        color = PBIO_COLOR_NONE;
     }
 
     while (nxtcolor->state != color) {
@@ -466,16 +466,16 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, int32_t
     if (mode > 0) {
         switch(mode) {
             case 1:
-                nxtcolor->lamp = PBIO_LIGHT_COLOR_RED;
+                nxtcolor->lamp = PBIO_COLOR_RED;
                 break;
             case 2:
-                nxtcolor->lamp = PBIO_LIGHT_COLOR_GREEN;
+                nxtcolor->lamp = PBIO_COLOR_GREEN;
                 break;
             case 3:
-                nxtcolor->lamp = PBIO_LIGHT_COLOR_BLUE;
+                nxtcolor->lamp = PBIO_COLOR_BLUE;
                 break;
             default:
-                nxtcolor->lamp = PBIO_LIGHT_COLOR_NONE;
+                nxtcolor->lamp = PBIO_COLOR_NONE;
                 break;
         }
         return nxtcolor_set_light(nxtcolor, nxtcolor->lamp);
@@ -551,31 +551,31 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, int32_t
     }
     int32_t saturation = cmax == 0 ? 0 : (100*(cmax-cmin))/cmax;
 
-    pbio_light_color_t color;
+    pbio_color_t color;
 
     if (cmax < 8) {
-         color = PBIO_LIGHT_COLOR_NONE;
+         color = PBIO_COLOR_NONE;
     }
     else if (red > 25 && green > 25 && blue > 25) {
-        color = PBIO_LIGHT_COLOR_WHITE;
+        color = PBIO_COLOR_WHITE;
     }
     // If the color is saturated enough, discretize hue
     else if (saturation > 35) {
         if (hue >= 20 && hue < 80) {
-            color = PBIO_LIGHT_COLOR_YELLOW;
+            color = PBIO_COLOR_YELLOW;
         }
         else if (hue >= 80 && hue < 180) {
-            color = PBIO_LIGHT_COLOR_GREEN;
+            color = PBIO_COLOR_GREEN;
         }
         else if (hue >= 180 && hue < 300) {
-            color = PBIO_LIGHT_COLOR_BLUE;
+            color = PBIO_COLOR_BLUE;
         }
         else {
-            color = PBIO_LIGHT_COLOR_RED;
+            color = PBIO_COLOR_RED;
         }
     }
     else {
-        color = PBIO_LIGHT_COLOR_BLACK;
+        color = PBIO_COLOR_BLACK;
     }
 
     // Return RGB and Color data

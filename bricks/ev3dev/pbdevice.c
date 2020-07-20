@@ -6,13 +6,14 @@
 #include "pberror.h"
 #include "pbdevice.h"
 
-#include <pbio/config.h>
 
 #include <dirent.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 
+#include <pbio/color.h>
+#include <pbio/config.h>
 #include <pbio/port.h>
 #include <pbio/iodev.h>
 
@@ -235,19 +236,19 @@ int8_t pbdevice_get_mode_id_from_str(pbdevice_t *pbdev, const char *mode_str) {
     return mode;
 }
 
-void pbdevice_color_light_on(pbdevice_t *pbdev, pbio_light_color_t color) {
+void pbdevice_color_light_on(pbdevice_t *pbdev, pbio_color_t color) {
     // Turn on the light through device specific mode
     uint8_t mode;
     switch (pbdev->type_id) {
         case PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR:
             switch (color) {
-                case PBIO_LIGHT_COLOR_GREEN:
+                case PBIO_COLOR_GREEN:
                     mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_G;
                     break;
-                case PBIO_LIGHT_COLOR_RED:
+                case PBIO_COLOR_RED:
                     mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_R;
                     break;
-                case PBIO_LIGHT_COLOR_BLUE:
+                case PBIO_COLOR_BLUE:
                     mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_B;
                     break;
                 default:

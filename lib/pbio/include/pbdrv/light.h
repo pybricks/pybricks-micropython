@@ -13,6 +13,7 @@
 
 #include <pbdrv/config.h>
 
+#include <pbio/color.h>
 #include <pbio/config.h>
 #include <pbio/error.h>
 #include <pbio/light.h>
@@ -70,7 +71,7 @@ pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, const pbdrv_light_raw_rgb_t *
  *                          ::PBIO_ERROR_INVALID_ARG if the color value is not valid
  *                          ::PBIO_ERROR_NO_DEV if port is valid but light is not connected
  */
-pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t color,
+pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_color_t color,
     pbdrv_light_raw_rgb_t *raw);
 
 #else
@@ -79,7 +80,7 @@ static inline pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, const pbdrv_lig
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline pbio_error_t
-pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t color, pbdrv_light_raw_rgb_t *raw) {
+pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_color_t color, pbdrv_light_raw_rgb_t *raw) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

@@ -9,6 +9,7 @@
 #include "pbdrv/light.h"
 
 #include "pbio/button.h"
+#include "pbio/color.h"
 #include "pbio/event.h"
 #include "pbio/light.h"
 #include "pbio/motorpoll.h"
@@ -72,7 +73,7 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
         user_stdin_event_func = NULL;
     }
     _pbio_light_set_user_mode(true);
-    pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE);
+    pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE);
 }
 
 void pbsys_unprepare_user_program(void) {
@@ -80,7 +81,7 @@ void pbsys_unprepare_user_program(void) {
     user_stdin_event_func = NULL;
     _pbio_light_set_user_mode(false);
     pbdrv_light_raw_rgb_t raw;
-    pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE, &raw);
+    pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_COLOR_BLUE, &raw);
     pbdrv_light_set_rgb(PBIO_PORT_SELF, &raw);
     _pbio_motorpoll_reset_all();
 }
@@ -156,7 +157,7 @@ static void init(void) {
     _pbio_light_set_user_mode(false);
 
     pbdrv_light_raw_rgb_t raw;
-    pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE, &raw);
+    pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_COLOR_BLUE, &raw);
     pbdrv_light_set_rgb(PBIO_PORT_SELF, &raw);
 }
 
@@ -172,7 +173,7 @@ static void update_button(clock_time_t now) {
             if (now - button_press_start_time > clock_from_msec(5000)) {
                 // turn off light briefly like official LEGO firmware
                 pbdrv_light_raw_rgb_t raw;
-                pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_NONE, &raw);
+                pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_COLOR_NONE, &raw);
                 pbdrv_light_set_rgb(PBIO_PORT_SELF, &raw);
                 for (int i = 0; i < 10; i++) {
                     clock_delay_usec(58000);

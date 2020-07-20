@@ -15,6 +15,7 @@
 #include <glib.h>
 #include <grx-3.0.h>
 
+#include <pbio/color.h>
 #include <pbio/config.h>
 #include <pbio/main.h>
 #include <pbio/light.h>
@@ -93,7 +94,7 @@ void pybricks_init() {
     grx_draw_filled_convex_polygon(3, triangle, GRX_COLOR_BLACK);
 
     pbio_init();
-    pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE); // TODO: define PBIO_LIGHT_PATTERN_EV3_RUN (Or, discuss if we want to use breathe for EV3, too)
+    pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE); // TODO: define PBIO_LIGHT_PATTERN_EV3_RUN (Or, discuss if we want to use breathe for EV3, too)
     pthread_create(&task_caller_thread, NULL, task_caller, NULL);
 }
 

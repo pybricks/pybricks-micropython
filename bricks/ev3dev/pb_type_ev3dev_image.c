@@ -11,7 +11,7 @@
 
 #include <grx-3.0.h>
 
-#include <pbio/light.h>
+#include <pbio/color.h>
 
 #include "py/mpconfig.h"
 #include "py/misc.h"
@@ -44,28 +44,28 @@ STATIC GrxColor map_color(mp_obj_t *obj) {
         return GRX_COLOR_NONE;
     }
 
-    pbio_light_color_t color = pb_type_enum_get_value(obj, &pb_enum_type_Color);
+    pbio_color_t color = pb_type_enum_get_value(obj, &pb_enum_type_Color);
 
     switch (color) {
-        case PBIO_LIGHT_COLOR_NONE:
+        case PBIO_COLOR_NONE:
             return GRX_COLOR_NONE;
-        case PBIO_LIGHT_COLOR_BLACK:
+        case PBIO_COLOR_BLACK:
             return GRX_COLOR_BLACK;
-        case PBIO_LIGHT_COLOR_BLUE:
+        case PBIO_COLOR_BLUE:
             return grx_color_get(0, 0, 255);
-        case PBIO_LIGHT_COLOR_GREEN:
+        case PBIO_COLOR_GREEN:
             return grx_color_get(0, 128, 0);
-        case PBIO_LIGHT_COLOR_YELLOW:
+        case PBIO_COLOR_YELLOW:
             return grx_color_get(255, 255, 0);
-        case PBIO_LIGHT_COLOR_RED:
+        case PBIO_COLOR_RED:
             return grx_color_get(255, 0, 0);
-        case PBIO_LIGHT_COLOR_WHITE:
+        case PBIO_COLOR_WHITE:
             return GRX_COLOR_WHITE;
-        case PBIO_LIGHT_COLOR_BROWN:
+        case PBIO_COLOR_BROWN:
             return grx_color_get(165, 42, 42);
-        case PBIO_LIGHT_COLOR_ORANGE:
+        case PBIO_COLOR_ORANGE:
             return grx_color_get(255, 165, 0);
-        case PBIO_LIGHT_COLOR_PURPLE:
+        case PBIO_COLOR_PURPLE:
             return grx_color_get(128, 0, 128);
     }
     return grx_color_get_black();

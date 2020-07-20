@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 
+#include <pbio/color.h>
 #include <pbio/error.h>
 #include <pbio/light.h>
 #include <pbio/port.h>
@@ -33,7 +34,7 @@ static const uint8_t breathe_pattern_data[64] = {
     119, 110, 102, 94, 87, 81, 76, 71, 66, 63, 59, 57, 55, 53, 52, 51
 };
 
-pbio_error_t _pbio_light_on(pbio_port_t port, pbio_light_color_t color, pbio_light_pattern_t pattern) {
+pbio_error_t _pbio_light_on(pbio_port_t port, pbio_color_t color, pbio_light_pattern_t pattern) {
     user_data_t data;
     pbio_error_t err;
 

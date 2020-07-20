@@ -7,6 +7,7 @@
 
 #include <pbdrv/light.h>
 #include <pbdrv/pwm.h>
+#include <pbio/color.h>
 #include <pbio/config.h>
 #include <pbio/error.h>
 #include <pbio/port.h>
@@ -32,44 +33,44 @@ pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, const pbdrv_light_raw_rgb_t *
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t color,
+pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_color_t color,
     pbdrv_light_raw_rgb_t *raw) {
     if (port != PBIO_PORT_SELF) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
     switch (color) {
-        case PBIO_LIGHT_COLOR_WHITE:
+        case PBIO_COLOR_WHITE:
             raw->r = 185;
             raw->g = 161;
             raw->b = 22;
             break;
-        case PBIO_LIGHT_COLOR_RED:
+        case PBIO_COLOR_RED:
             raw->r = 255;
             raw->g = 0;
             raw->b = 0;
             break;
-        case PBIO_LIGHT_COLOR_ORANGE:
+        case PBIO_COLOR_ORANGE:
             raw->r = 255;
             raw->g = 37;
             raw->b = 0;
             break;
-        case PBIO_LIGHT_COLOR_YELLOW:
+        case PBIO_COLOR_YELLOW:
             raw->r = 255;
             raw->g = 140;
             raw->b = 0;
             break;
-        case PBIO_LIGHT_COLOR_GREEN:
+        case PBIO_COLOR_GREEN:
             raw->r = 0;
             raw->g = 255;
             raw->b = 0;
             break;
-        case PBIO_LIGHT_COLOR_BLUE:
+        case PBIO_COLOR_BLUE:
             raw->r = 0;
             raw->g = 0;
             raw->b = 180;
             break;
-        case PBIO_LIGHT_COLOR_PURPLE:
+        case PBIO_COLOR_PURPLE:
             raw->r = 220;
             raw->g = 0;
             raw->b = 110;

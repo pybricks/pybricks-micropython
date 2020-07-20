@@ -3,8 +3,8 @@
 
 
 #include <pbdrv/config.h>
-#include <pbio/light.h>
 #include <pbio/button.h>
+#include <pbio/color.h>
 #include <pbio/servo.h>
 
 #include "py/obj.h"
@@ -107,55 +107,55 @@ PB_DEFINE_ENUM(pb_enum_type_Direction, MP_QSTR_Direction, pb_enum_Direction_tabl
 const pb_obj_enum_member_t pb_Color_BLACK_obj = {
     {&pb_enum_type_Color},
     .name = MP_QSTR_BLACK,
-    .value = PBIO_LIGHT_COLOR_BLACK
+    .value = PBIO_COLOR_BLACK
 };
 
 const pb_obj_enum_member_t pb_Color_PURPLE_obj = {
     {&pb_enum_type_Color},
     .name = MP_QSTR_PURPLE,
-    .value = PBIO_LIGHT_COLOR_PURPLE
+    .value = PBIO_COLOR_PURPLE
 };
 
 const pb_obj_enum_member_t pb_Color_BLUE_obj = {
     {&pb_enum_type_Color},
     .name = MP_QSTR_BLUE,
-    .value = PBIO_LIGHT_COLOR_BLUE
+    .value = PBIO_COLOR_BLUE
 };
 
 const pb_obj_enum_member_t pb_Color_GREEN_obj = {
     {&pb_enum_type_Color},
     .name = MP_QSTR_GREEN,
-    .value = PBIO_LIGHT_COLOR_GREEN
+    .value = PBIO_COLOR_GREEN
 };
 
 const pb_obj_enum_member_t pb_Color_YELLOW_obj = {
     {&pb_enum_type_Color},
     .name = MP_QSTR_YELLOW,
-    .value = PBIO_LIGHT_COLOR_YELLOW
+    .value = PBIO_COLOR_YELLOW
 };
 
 const pb_obj_enum_member_t pb_Color_ORANGE_obj = {
     {&pb_enum_type_Color},
     .name = MP_QSTR_ORANGE,
-    .value = PBIO_LIGHT_COLOR_ORANGE
+    .value = PBIO_COLOR_ORANGE
 };
 
 const pb_obj_enum_member_t pb_Color_RED_obj = {
     {&pb_enum_type_Color},
     .name = MP_QSTR_RED,
-    .value = PBIO_LIGHT_COLOR_RED
+    .value = PBIO_COLOR_RED
 };
 
 const pb_obj_enum_member_t pb_Color_WHITE_obj = {
     {&pb_enum_type_Color},
     .name = MP_QSTR_WHITE,
-    .value = PBIO_LIGHT_COLOR_WHITE
+    .value = PBIO_COLOR_WHITE
 };
 
 const pb_obj_enum_member_t pb_Color_BROWN_obj = {
     {&pb_enum_type_Color},
     .name = MP_QSTR_BROWN,
-    .value = PBIO_LIGHT_COLOR_BROWN
+    .value = PBIO_COLOR_BROWN
 };
 
 STATIC const mp_rom_map_elem_t pb_Color_enum_table[] = {

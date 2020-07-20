@@ -13,6 +13,22 @@
 
 #include <stdint.h>
 
+/**
+ * Color names.
+ */
+typedef enum {
+    PBIO_COLOR_NONE   = 0,   /**< no color */
+    PBIO_COLOR_BLACK  = 1,   /**< black */
+    PBIO_COLOR_BLUE   = 2,   /**< blue */
+    PBIO_COLOR_GREEN  = 3,   /**< green */
+    PBIO_COLOR_YELLOW = 4,   /**< yellow */
+    PBIO_COLOR_RED    = 5,   /**< red */
+    PBIO_COLOR_WHITE  = 6,   /**< white */
+    PBIO_COLOR_BROWN  = 7,   /**< brown */
+    PBIO_COLOR_ORANGE = 8,   /**< orange */
+    PBIO_COLOR_PURPLE = 9,   /**< purple */
+} pbio_color_t;
+
 /** 24-bit RGB color. */
 typedef struct {
     /** The red component. 0 to 255. */
