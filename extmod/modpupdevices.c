@@ -9,6 +9,7 @@
 #include <pbdrv/ioport.h>
 
 #include <pbio/button.h>
+#include <pbio/color.h>
 #include <pbio/iodev.h>
 #include <pbio/light.h>
 #include <pbio/math.h>
@@ -33,6 +34,24 @@ typedef struct _pupdevices_ColorDistanceSensor_obj_t {
     pb_hsv_map_t color_map;
     mp_obj_t light;
 } pupdevices_ColorDistanceSensor_obj_t;
+
+STATIC void raw_to_rgb(int32_t *raw, pbio_color_rgb_t *rgb) {
+    // Max observed value is ~440 so we scale to get a range of 0..255.
+    rgb->r = 1187 * raw[0] / 2048;
+    rgb->g = 1187 * raw[1] / 2048;
+    rgb->b = 1187 * raw[2] / 2048;
+}
+
+// Ensures sensor is in RGB mode then converts the measured raw RGB value to HSV.
+STATIC void pupdevices_ColorDistanceSensor__hsv(pupdevices_ColorDistanceSensor_obj_t *self, pbio_color_hsv_t *hsv) {
+    int32_t raw[3];
+    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, raw);
+
+    pbio_color_rgb_t rgb;
+    raw_to_rgb(raw, &rgb);
+
+    pbio_color_rgb_to_hsv(&rgb, hsv);
+}
 
 // pybricks.pupdevices.ColorDistanceSensor.__init__
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
@@ -60,16 +79,11 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *typ
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_color(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    // Get RGB and convert to HSV
-    int32_t rgb[3];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, rgb);
-    int32_t hue;
-    int32_t value;
-    int32_t saturation;
-    pb_hsv_from_rgb(rgb[0], rgb[1], rgb[2], &hue, &saturation, &value, 4);
+    pbio_color_hsv_t hsv;
+    pupdevices_ColorDistanceSensor__hsv(self, &hsv);
 
     // Get and return discretized color based on HSV
-    return pb_hsv_get_color(&self->color_map, hue, saturation, value);
+    return pb_hsv_get_color(&self->color_map, hsv.h, hsv.s, hsv.v);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_color_obj, pupdevices_ColorDistanceSensor_color);
 
@@ -161,19 +175,14 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorDistanceSensor_color_map_obj, 
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_hsv(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    int32_t rgb[3];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, rgb);
-    int32_t hue;
-    int32_t value;
-    int32_t saturation;
-    pb_hsv_from_rgb(rgb[0], rgb[1], rgb[2], &hue, &saturation, &value, 4);
+    pbio_color_hsv_t hsv;
+    pupdevices_ColorDistanceSensor__hsv(self, &hsv);
 
-    // Return hsv
-    mp_obj_t hsv[3];
-    hsv[0] = mp_obj_new_int(hue);
-    hsv[1] = mp_obj_new_int(saturation);
-    hsv[2] = mp_obj_new_int(value);
-    return mp_obj_new_tuple(3, hsv);
+    mp_obj_t ret[3];
+    ret[0] = mp_obj_new_int(hsv.h);
+    ret[1] = mp_obj_new_int(hsv.s);
+    ret[2] = mp_obj_new_int(hsv.v);
+    return mp_obj_new_tuple(MP_ARRAY_SIZE(ret), ret);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_hsv_obj, pupdevices_ColorDistanceSensor_hsv);
 

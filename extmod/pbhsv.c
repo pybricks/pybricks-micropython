@@ -14,44 +14,6 @@
 #include "pbhsv.h"
 #include "modparameters.h"
 
-// Convert calibrated RGB values to HSV
-void pb_hsv_from_rgb(int32_t r, int32_t g, int32_t b, int32_t *h, int32_t *s, int32_t *v, int32_t div) {
-
-    // Get maximum intensity
-    int32_t max = r > g ? r : g;
-    max = b > max ? b : max;
-
-    // Get minimum intensity
-    int32_t min = r < g ? r : g;
-    min = b < min ? b : min;
-
-    // Chroma
-    int32_t chroma = max - min;
-
-    // Get saturation as approximate percentage
-    *v = max / div;
-
-    // Compute hue and saturation only if chroma is big enough
-    if (chroma < (div)) {
-        *h = 0;
-        *s = 0;
-    } else {
-        // Get hue; chroma is always > 0 if we are here
-        if (max == r) {
-            *h = (60 * (g - b)) / chroma;
-        } else if (max == g) {
-            *h = (60 * (b - r)) / chroma + 120;
-        } else {
-            *h = (60 * (r - g)) / chroma + 240;
-        }
-        if (*h < 0) {
-            *h += 360;
-        }
-        // Get saturation; max is always > 0 if we are here
-        *s = (100 * chroma) / max;
-    }
-}
-
 
 // Hue or value not specified
 const int32_t NA = -361;

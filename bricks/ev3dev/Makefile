@@ -278,6 +278,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 	pbio/drv/ev3dev_stretch/serial.c \
 	pbio/drv/ioport/ioport_ev3dev_stretch.c \
 	pbio/platform/ev3dev_stretch/clock.c \
+	pbio/src/color/conversion.c \
 	pbio/src/control.c \
 	pbio/src/dcmotor.c \
 	pbio/src/drivebase.c \

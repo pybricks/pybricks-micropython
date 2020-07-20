@@ -301,6 +301,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	platform/$(PBIO_PLATFORM)/clock.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	platform/$(PBIO_PLATFORM)/sys.c \
+	src/color/conversion.c \
 	src/control.c \
 	src/dcmotor.c \
 	src/drivebase.c \
