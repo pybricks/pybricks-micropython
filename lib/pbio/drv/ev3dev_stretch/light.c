@@ -56,7 +56,7 @@ void _pbdrv_light_deinit(void) {
 }
 #endif
 
-pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, uint8_t r, uint8_t g, uint8_t b) {
+pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, const pbdrv_light_raw_rgb_t *raw) {
     if (port != PBIO_PORT_SELF) {
         return PBIO_ERROR_INVALID_PORT;
     }
@@ -68,7 +68,7 @@ pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, uint8_t r, uint8_t g, uint8_t
             if (ret == -1) {
                 return PBIO_ERROR_IO;
             }
-            ret = fprintf(f_brightness[led], "%d", led < 2 ? r : g);
+            ret = fprintf(f_brightness[led], "%d", led < 2 ? raw->r : raw->g);
             if (ret < 0) {
                 return PBIO_ERROR_IO;
             }
@@ -78,7 +78,7 @@ pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, uint8_t r, uint8_t g, uint8_t
 }
 
 pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t color,
-    uint8_t *r, uint8_t *g, uint8_t *b) {
+    pbdrv_light_raw_rgb_t *raw) {
 
     if (port != PBIO_PORT_SELF) {
         return PBIO_ERROR_INVALID_PORT;
@@ -86,29 +86,29 @@ pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t 
 
     switch (color) {
         case PBIO_LIGHT_COLOR_RED:
-            *r = 255;
-            *g = 0;
-            *b = 0;
+            raw->r = 255;
+            raw->g = 0;
+            raw->b = 0;
             break;
         case PBIO_LIGHT_COLOR_ORANGE:
-            *r = 255;
-            *g = 255;
-            *b = 0;
+            raw->r = 255;
+            raw->g = 255;
+            raw->b = 0;
             break;
         case PBIO_LIGHT_COLOR_YELLOW:
-            *r = 30;
-            *g = 255;
-            *b = 0;
+            raw->r = 30;
+            raw->g = 255;
+            raw->b = 0;
             break;
         case PBIO_LIGHT_COLOR_GREEN:
-            *r = 0;
-            *g = 255;
-            *b = 0;
+            raw->r = 0;
+            raw->g = 255;
+            raw->b = 0;
             break;
         default:
-            *r = 0;
-            *g = 0;
-            *b = 0;
+            raw->r = 0;
+            raw->g = 0;
+            raw->b = 0;
             break;
     }
 

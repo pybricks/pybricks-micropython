@@ -13,9 +13,7 @@
 
 typedef struct {
     pbio_light_pattern_t pattern;
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
+    pbdrv_light_raw_rgb_t raw;
 } user_data_t;
 
 static user_data_t user_light_data;
@@ -48,7 +46,7 @@ pbio_error_t _pbio_light_on(pbio_port_t port, pbio_light_color_t color, pbio_lig
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    err = pbdrv_light_get_rgb_for_color(port, color, &data.r, &data.g, &data.b);
+    err = pbdrv_light_get_rgb_for_color(port, color, &data.raw);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -78,21 +76,21 @@ void _pbio_light_poll(uint32_t now) {
             // breathe pattern has 64 values over the course of two seconds (2048ms)
             idx = (now >> 5) & (64 - 1);
             scale = breathe_pattern_data[idx] + 1;
-            data.r = data.r * scale / 256;
-            data.g = data.g * scale / 256;
-            data.b = data.b * scale / 256;
+            data.raw.r = data.raw.r * scale / 256;
+            data.raw.g = data.raw.g * scale / 256;
+            data.raw.b = data.raw.b * scale / 256;
             break;
         case PBIO_LIGHT_PATTERN_FLASH:
             // flash pattern has 8 value over the course of two seconds (2048ms)
             idx = (now >> 8) & (8 - 1);
             scale = flash_pattern_data[idx] + 1;
-            data.r = data.r * scale / 256;
-            data.g = data.g * scale / 256;
-            data.b = data.b * scale / 256;
+            data.raw.r = data.raw.r * scale / 256;
+            data.raw.g = data.raw.g * scale / 256;
+            data.raw.b = data.raw.b * scale / 256;
             break;
     }
 
-    pbdrv_light_set_rgb(PBIO_PORT_SELF, data.r, data.g, data.b);
+    pbdrv_light_set_rgb(PBIO_PORT_SELF, &data.raw);
 }
 
 /**

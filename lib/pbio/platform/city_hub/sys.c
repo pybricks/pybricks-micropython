@@ -76,13 +76,12 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
 }
 
 void pbsys_unprepare_user_program(void) {
-    uint8_t r, g, b;
-
     user_stop_func = NULL;
     user_stdin_event_func = NULL;
     _pbio_light_set_user_mode(false);
-    pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE, &r, &g, &b);
-    pbdrv_light_set_rgb(PBIO_PORT_SELF, r, g, b);
+    pbdrv_light_raw_rgb_t raw;
+    pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE, &raw);
+    pbdrv_light_set_rgb(PBIO_PORT_SELF, &raw);
     _pbio_motorpoll_reset_all();
 }
 
@@ -110,13 +109,23 @@ void pbsys_reboot(bool fw_update) {
 }
 
 void pbsys_power_off(void) {
+    pbdrv_light_raw_rgb_t raw;
     int i;
 
     // blink pattern like LEGO firmware
     for (i = 0; i < 3; i++) {
-        pbdrv_light_set_rgb(PBIO_PORT_SELF, 255, 140, 60); // white
+        // white
+        raw.r = 255;
+        raw.g = 140;
+        raw.b = 60;
+        pbdrv_light_set_rgb(PBIO_PORT_SELF, &raw);
         clock_delay_usec(50000);
-        pbdrv_light_set_rgb(PBIO_PORT_SELF, 0, 0, 0);
+
+        // off
+        raw.r = 0;
+        raw.g = 0;
+        raw.b = 0;
+        pbdrv_light_set_rgb(PBIO_PORT_SELF, &raw);
         clock_delay_usec(30000);
     }
 
@@ -134,7 +143,6 @@ void pbsys_power_off(void) {
 
 static void init(void) {
     uint16_t battery_voltage;
-    uint8_t r, g, b;
 
     IWDG->KR = 0x5555; // enable register access
     IWDG->PR = IWDG_PR_PR_2; // divide by 64
@@ -146,8 +154,10 @@ static void init(void) {
     avg_battery_voltage = battery_voltage;
 
     _pbio_light_set_user_mode(false);
-    pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE, &r, &g, &b);
-    pbdrv_light_set_rgb(PBIO_PORT_SELF, r, g, b);
+
+    pbdrv_light_raw_rgb_t raw;
+    pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_BLUE, &raw);
+    pbdrv_light_set_rgb(PBIO_PORT_SELF, &raw);
 }
 
 static void update_button(clock_time_t now) {
@@ -161,7 +171,9 @@ static void update_button(clock_time_t now) {
             // if the button is held down for 5 seconds, power off
             if (now - button_press_start_time > clock_from_msec(5000)) {
                 // turn off light briefly like official LEGO firmware
-                pbdrv_light_set_rgb(PBIO_PORT_SELF, 0, 0, 0);
+                pbdrv_light_raw_rgb_t raw;
+                pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_LIGHT_COLOR_NONE, &raw);
+                pbdrv_light_set_rgb(PBIO_PORT_SELF, &raw);
                 for (int i = 0; i < 10; i++) {
                     clock_delay_usec(58000);
                 }

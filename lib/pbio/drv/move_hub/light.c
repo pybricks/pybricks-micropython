@@ -11,7 +11,7 @@
 #include <pbio/error.h>
 #include <pbio/port.h>
 
-pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, uint8_t r, uint8_t g, uint8_t b) {
+pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, const pbdrv_light_raw_rgb_t *rgb) {
     if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
         // TODO: check for Powered UP Lights connected to ports C/D
         return PBIO_ERROR_NO_DEV;
@@ -23,18 +23,18 @@ pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, uint8_t r, uint8_t g, uint8_t
 
     pbdrv_pwm_dev_t *dev;
     if (pbdrv_pwm_get_dev(3, &dev) == PBIO_SUCCESS) {
-        pbdrv_pwm_set_duty(dev, 1, r);
+        pbdrv_pwm_set_duty(dev, 1, rgb->r);
     }
     if (pbdrv_pwm_get_dev(2, &dev) == PBIO_SUCCESS) {
-        pbdrv_pwm_set_duty(dev, 1, g);
-        pbdrv_pwm_set_duty(dev, 2, b);
+        pbdrv_pwm_set_duty(dev, 1, rgb->g);
+        pbdrv_pwm_set_duty(dev, 2, rgb->b);
     }
 
     return PBIO_SUCCESS;
 }
 
 pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t color,
-    uint8_t *r, uint8_t *g, uint8_t *b) {
+    pbdrv_light_raw_rgb_t *raw) {
     if (port == PBIO_PORT_C || port == PBIO_PORT_D) {
         // TODO: check for Powered UP Lights connected to ports C/D
         return PBIO_ERROR_NO_DEV;
@@ -46,44 +46,44 @@ pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_light_color_t 
 
     switch (color) {
         case PBIO_LIGHT_COLOR_WHITE:
-            *r = 255;
-            *g = 140;
-            *b = 60;
+            raw->r = 205;
+            raw->g = 35;
+            raw->b = 23;
             break;
         case PBIO_LIGHT_COLOR_RED:
-            *r = 255;
-            *g = 0;
-            *b = 0;
+            raw->r = 733;
+            raw->g = 7;
+            raw->b = 1;
             break;
         case PBIO_LIGHT_COLOR_ORANGE:
-            *r = 255;
-            *g = 25;
-            *b = 0;
+            raw->r = 426;
+            raw->g = 26;
+            raw->b = 1;
             break;
         case PBIO_LIGHT_COLOR_YELLOW:
-            *r = 255;
-            *g = 70;
-            *b = 0;
+            raw->r = 227;
+            raw->g = 38;
+            raw->b = 1;
             break;
         case PBIO_LIGHT_COLOR_GREEN:
-            *r = 0;
-            *g = 200;
-            *b = 0;
+            raw->r = 6;
+            raw->g = 52;
+            raw->b = 1;
             break;
         case PBIO_LIGHT_COLOR_BLUE:
-            *r = 0;
-            *g = 0;
-            *b = 255;
+            raw->r = 42;
+            raw->g = 0;
+            raw->b = 243;
             break;
         case PBIO_LIGHT_COLOR_PURPLE:
-            *r = 220;
-            *g = 0;
-            *b = 120;
+            raw->r = 370;
+            raw->g = 3;
+            raw->b = 130;
             break;
         default:
-            *r = 0;
-            *g = 0;
-            *b = 0;
+            raw->r = 0;
+            raw->g = 0;
+            raw->b = 0;
             break;
     }
 
