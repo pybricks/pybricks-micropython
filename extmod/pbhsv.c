@@ -18,17 +18,6 @@
 // Hue or value not specified
 const int32_t NA = -361;
 
-// Bind a value to the range (0--100)
-int32_t bound_percentage(int32_t value) {
-    if (value > 100) {
-        return 100;
-    }
-    if (value < 0) {
-        return 0;
-    }
-    return value;
-}
-
 // Set initial default thresholds
 void pb_hsv_map_save_default(pb_hsv_map_t *map) {
     map->saturation_threshold = 30;

@@ -17,8 +17,6 @@ typedef struct _pb_hsv_map_t {
     int32_t value_white;
 } pb_hsv_map_t;
 
-int32_t bound_percentage(int32_t value);
-
 mp_obj_t pb_hsv_get_color(pb_hsv_map_t *map, int32_t hue, int32_t saturation, int32_t value);
 
 void pb_hsv_map_save_default(pb_hsv_map_t *map);
