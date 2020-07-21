@@ -25,14 +25,6 @@
 #define PBIO_TEST_FUNC(name) void name(void *env)
 
 
-// TODO: this can go away once we have real tests that use pbio_test_run_thread()
-static PT_THREAD(example_test(struct pt *pt)) {
-    PT_BEGIN(pt);
-
-    PT_END(pt);
-}
-
-
 static void pbio_test_run_thread(void *env) {
     char (*test_thread)(struct pt *pt) = env;
     struct pt pt;
@@ -70,11 +62,6 @@ static struct testcase_setup_t pbio_test_setup = {
     .cleanup_fn = cleanup,
 };
 
-static struct testcase_t example_tests[] = {
-    PBIO_PT_THREAD_TEST(example_test),
-    END_OF_TESTCASES
-};
-
 PBIO_TEST_FUNC(test_sqrt);
 PBIO_TEST_FUNC(test_mul_i32_fix16);
 PBIO_TEST_FUNC(test_div_i32_fix16);
@@ -109,7 +96,6 @@ static struct testcase_t pbio_uartdev_tests[] = {
 };
 
 static struct testgroup_t test_groups[] = {
-    { "example/", example_tests },
     { "math/", pbio_math_tests },
     { "pwm/", pbio_pwm_tests },
     { "uartdev/", pbio_uartdev_tests, },
