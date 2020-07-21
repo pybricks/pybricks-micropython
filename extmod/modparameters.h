@@ -61,6 +61,9 @@ const pb_obj_enum_member_t pb_Color_ORANGE_obj;
 const pb_obj_enum_member_t pb_Color_RED_obj;
 const pb_obj_enum_member_t pb_Color_WHITE_obj;
 const pb_obj_enum_member_t pb_Color_BROWN_obj;
+const pb_obj_enum_member_t pb_Color_GRAY_obj;
+const pb_obj_enum_member_t pb_Color_CYAN_obj;
+const pb_obj_enum_member_t pb_Color_MAGENTA_obj;
 #define pb_const_color_black    MP_OBJ_FROM_PTR(&pb_Color_BLACK_obj)
 #define pb_const_color_purple   MP_OBJ_FROM_PTR(&pb_Color_PURPLE_obj)
 #define pb_const_color_blue     MP_OBJ_FROM_PTR(&pb_Color_BLUE_obj)
@@ -70,6 +73,9 @@ const pb_obj_enum_member_t pb_Color_BROWN_obj;
 #define pb_const_color_red      MP_OBJ_FROM_PTR(&pb_Color_RED_obj)
 #define pb_const_color_white    MP_OBJ_FROM_PTR(&pb_Color_WHITE_obj)
 #define pb_const_color_brown    MP_OBJ_FROM_PTR(&pb_Color_BROWN_obj)
+#define pb_const_color_gray     MP_OBJ_FROM_PTR(&pb_Color_GRAY_obj)
+#define pb_const_color_cyan     MP_OBJ_FROM_PTR(&pb_Color_CYAN_obj)
+#define pb_const_color_magenta  MP_OBJ_FROM_PTR(&pb_Color_MAGENTA_obj)
 
 #endif // PYBRICKS_PY_PARAMETERS
 

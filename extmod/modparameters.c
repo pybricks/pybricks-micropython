@@ -158,6 +158,24 @@ const pb_obj_enum_member_t pb_Color_BROWN_obj = {
     .value = PBIO_COLOR_BROWN
 };
 
+const pb_obj_enum_member_t pb_Color_GRAY_obj = {
+    {&pb_enum_type_Color},
+    .name = MP_QSTR_GRAY,
+    .value = PBIO_COLOR_GRAY
+};
+
+const pb_obj_enum_member_t pb_Color_CYAN_obj = {
+    {&pb_enum_type_Color},
+    .name = MP_QSTR_CYAN,
+    .value = PBIO_COLOR_CYAN
+};
+
+const pb_obj_enum_member_t pb_Color_MAGENTA_obj = {
+    {&pb_enum_type_Color},
+    .name = MP_QSTR_MAGENTA,
+    .value = PBIO_COLOR_MAGENTA
+};
+
 STATIC const mp_rom_map_elem_t pb_Color_enum_table[] = {
     { MP_ROM_QSTR(MP_QSTR_BLACK),   MP_ROM_PTR(&pb_Color_BLACK_obj)  },
     { MP_ROM_QSTR(MP_QSTR_PURPLE),  MP_ROM_PTR(&pb_Color_PURPLE_obj) },
@@ -168,6 +186,9 @@ STATIC const mp_rom_map_elem_t pb_Color_enum_table[] = {
     { MP_ROM_QSTR(MP_QSTR_RED),     MP_ROM_PTR(&pb_Color_RED_obj)    },
     { MP_ROM_QSTR(MP_QSTR_WHITE),   MP_ROM_PTR(&pb_Color_WHITE_obj)  },
     { MP_ROM_QSTR(MP_QSTR_BROWN),   MP_ROM_PTR(&pb_Color_BROWN_obj)  },
+    { MP_ROM_QSTR(MP_QSTR_GRAY),    MP_ROM_PTR(&pb_Color_GRAY_obj)   },
+    { MP_ROM_QSTR(MP_QSTR_CYAN),    MP_ROM_PTR(&pb_Color_CYAN_obj)   },
+    { MP_ROM_QSTR(MP_QSTR_MAGENTA), MP_ROM_PTR(&pb_Color_MAGENTA_obj)},
 };
 PB_DEFINE_ENUM(pb_enum_type_Color, MP_QSTR_Color, pb_Color_enum_table);
 
