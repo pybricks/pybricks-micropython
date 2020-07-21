@@ -103,6 +103,100 @@ void test_rgb_to_hsv(void *env) {
     tt_want_int_op(hsv.v, ==, 100);
 }
 
+void test_hsv_to_rgb(void *env) {
+    pbio_color_hsv_t hsv;
+    pbio_color_rgb_t rgb;
+
+    // black
+    hsv.h = 0;
+    hsv.s = 0;
+    hsv.v = 0;
+    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    tt_want_int_op(rgb.r, ==, 0);
+    tt_want_int_op(rgb.g, ==, 0);
+    tt_want_int_op(rgb.b, ==, 0);
+
+    // white
+    hsv.h = 0;
+    hsv.s = 0;
+    hsv.v = 100;
+    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    tt_want_int_op(rgb.r, >, 250);
+    tt_want_int_op(rgb.g, >, 250);
+    tt_want_int_op(rgb.b, >, 250);
+
+    // red
+    hsv.h = 0;
+    hsv.s = 100;
+    hsv.v = 100;
+    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    tt_want_int_op(rgb.r, >, 250);
+    tt_want_int_op(rgb.g, ==, 0);
+    tt_want_int_op(rgb.b, ==, 0);
+
+    // green
+    hsv.h = 120;
+    hsv.s = 100;
+    hsv.v = 100;
+    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    tt_want_int_op(rgb.r, ==, 0);
+    tt_want_int_op(rgb.g, >, 250);
+    tt_want_int_op(rgb.b, ==, 0);
+
+    // blue
+    hsv.h = 240;
+    hsv.s = 100;
+    hsv.v = 100;
+    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    tt_want_int_op(rgb.r, ==, 0);
+    tt_want_int_op(rgb.g, ==, 0);
+    tt_want_int_op(rgb.b, >, 250);
+
+    // yellow
+    hsv.h = 60;
+    hsv.s = 100;
+    hsv.v = 100;
+    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    tt_want_int_op(rgb.r, >, 120);
+    tt_want_int_op(rgb.r, <, 130);
+    tt_want_int_op(rgb.g, >, 120);
+    tt_want_int_op(rgb.g, <, 130);
+    tt_want_int_op(rgb.b, ==, 0);
+
+    // cyan
+    hsv.h = 180;
+    hsv.s = 100;
+    hsv.v = 100;
+    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    tt_want_int_op(rgb.r, ==, 0);
+    tt_want_int_op(rgb.g, >, 120);
+    tt_want_int_op(rgb.g, <, 130);
+    tt_want_int_op(rgb.b, >, 120);
+    tt_want_int_op(rgb.b, <, 130);
+
+    // magenta
+    hsv.h = 300;
+    hsv.s = 100;
+    hsv.v = 100;
+    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    tt_want_int_op(rgb.r, >, 120);
+    tt_want_int_op(rgb.r, <, 130);
+    tt_want_int_op(rgb.g, ==, 0);
+    tt_want_int_op(rgb.b, >, 120);
+    tt_want_int_op(rgb.b, <, 130);
+
+    // orange
+    hsv.h = 30;
+    hsv.s = 100;
+    hsv.v = 100;
+    pbio_color_hsv_to_rgb(&hsv, &rgb);
+    tt_want_int_op(rgb.r, >, 185);
+    tt_want_int_op(rgb.r, <, 195);
+    tt_want_int_op(rgb.g, >, 55);
+    tt_want_int_op(rgb.g, <, 65);
+    tt_want_int_op(rgb.b, ==, 0);
+}
+
 void test_color_to_hsv(void *env) {
     pbio_color_hsv_t hsv;
 

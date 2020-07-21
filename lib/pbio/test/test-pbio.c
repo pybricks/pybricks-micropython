@@ -63,10 +63,12 @@ static struct testcase_setup_t pbio_test_setup = {
 };
 
 PBIO_TEST_FUNC(test_rgb_to_hsv);
+PBIO_TEST_FUNC(test_hsv_to_rgb);
 PBIO_TEST_FUNC(test_color_to_hsv);
 
 static struct testcase_t color_tests[] = {
     PBIO_TEST(test_rgb_to_hsv),
+    PBIO_TEST(test_hsv_to_rgb),
     PBIO_TEST(test_color_to_hsv),
     END_OF_TESTCASES
 };
