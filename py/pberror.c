@@ -76,7 +76,7 @@ void pb_assert(pbio_error_t error) {
         "    the line number given in the 'Traceback' above.\n"
         "\n");
     static const MP_DEFINE_STR_OBJ(msg_not_supported_obj, "\n\n"
-        "The requested operation is not support on this device:\n"
+        "The requested operation is not supported on this device:\n"
         "--> Check the documentation for device compatibility.\n"
         "--> Check the line in your script that matches\n"
         "    the line number given in the 'Traceback' above.\n"
