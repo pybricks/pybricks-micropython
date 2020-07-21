@@ -80,3 +80,16 @@ void pbio_color_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv) {
     // by 100 and dividing by 255 but results in smaller binary code size.
     hsv->v = 101 * max / 256;
 }
+
+/**
+ * Converts color name to HSV color value.
+ *
+ * @param [in]  color       The the source color.
+ * @param [out] hsv         The destination HSV color value.
+ */
+void pbio_color_to_hsv(pbio_color_t color, pbio_color_hsv_t *hsv) {
+    // See PBIO_COLOR_ENCODE in color.h for encoding scheme
+    hsv->h = (color >> 3) * 30;
+    hsv->s = (color & (0x1 << 2)) ? 100 : 0;
+    hsv->v = (color & 0x2) ? 100 : ((color & 0x1) ? 50 : 0);
+}
