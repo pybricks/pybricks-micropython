@@ -116,6 +116,11 @@ void test_color_to_hsv(void *env) {
     tt_want_int_op(hsv.s, ==, 0);
     tt_want_int_op(hsv.v, ==, 0);
 
+    pbio_color_to_hsv(PBIO_COLOR_GRAY, &hsv);
+    tt_want_int_op(hsv.h, ==, 0);
+    tt_want_int_op(hsv.s, ==, 0);
+    tt_want_int_op(hsv.v, ==, 50);
+
     pbio_color_to_hsv(PBIO_COLOR_WHITE, &hsv);
     tt_want_int_op(hsv.h, ==, 0);
     tt_want_int_op(hsv.s, ==, 0);
@@ -146,6 +151,11 @@ void test_color_to_hsv(void *env) {
     tt_want_int_op(hsv.s, ==, 100);
     tt_want_int_op(hsv.v, ==, 100);
 
+    pbio_color_to_hsv(PBIO_COLOR_CYAN, &hsv);
+    tt_want_int_op(hsv.h, ==, 180);
+    tt_want_int_op(hsv.s, ==, 100);
+    tt_want_int_op(hsv.v, ==, 100);
+
     pbio_color_to_hsv(PBIO_COLOR_BLUE, &hsv);
     tt_want_int_op(hsv.h, ==, 240);
     tt_want_int_op(hsv.s, ==, 100);
@@ -153,6 +163,11 @@ void test_color_to_hsv(void *env) {
 
     pbio_color_to_hsv(PBIO_COLOR_PURPLE, &hsv);
     tt_want_int_op(hsv.h, ==, 270);
+    tt_want_int_op(hsv.s, ==, 100);
+    tt_want_int_op(hsv.v, ==, 100);
+
+    pbio_color_to_hsv(PBIO_COLOR_MAGENTA, &hsv);
+    tt_want_int_op(hsv.h, ==, 300);
     tt_want_int_op(hsv.s, ==, 100);
     tt_want_int_op(hsv.v, ==, 100);
 }
