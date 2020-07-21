@@ -265,3 +265,65 @@ void test_color_to_hsv(void *env) {
     tt_want_int_op(hsv.s, ==, 100);
     tt_want_int_op(hsv.v, ==, 100);
 }
+
+void test_color_to_rgb(void *env) {
+    pbio_color_rgb_t rgb;
+
+    pbio_color_to_rgb(PBIO_COLOR_NONE, &rgb);
+    tt_want_int_op(rgb.r, ==, 0);
+    tt_want_int_op(rgb.g, ==, 0);
+    tt_want_int_op(rgb.b, ==, 0);
+
+    pbio_color_to_rgb(PBIO_COLOR_BLACK, &rgb);
+    tt_want_int_op(rgb.r, ==, 0);
+    tt_want_int_op(rgb.g, ==, 0);
+    tt_want_int_op(rgb.b, ==, 0);
+
+    pbio_color_to_rgb(PBIO_COLOR_WHITE, &rgb);
+    tt_want_int_op(rgb.r, >, 250);
+    tt_want_int_op(rgb.g, >, 250);
+    tt_want_int_op(rgb.b, >, 250);
+
+    pbio_color_to_rgb(PBIO_COLOR_RED, &rgb);
+    tt_want_int_op(rgb.r, >, 250);
+    tt_want_int_op(rgb.g, ==, 0);
+    tt_want_int_op(rgb.b, ==, 0);
+
+    pbio_color_to_rgb(PBIO_COLOR_GREEN, &rgb);
+    tt_want_int_op(rgb.r, ==, 0);
+    tt_want_int_op(rgb.g, >, 250);
+    tt_want_int_op(rgb.b, ==, 0);
+
+    pbio_color_to_rgb(PBIO_COLOR_BLUE, &rgb);
+    tt_want_int_op(rgb.r, ==, 0);
+    tt_want_int_op(rgb.g, ==, 0);
+    tt_want_int_op(rgb.b, >, 250);
+
+    pbio_color_to_rgb(PBIO_COLOR_YELLOW, &rgb);
+    tt_want_int_op(rgb.r, >, 120);
+    tt_want_int_op(rgb.r, <, 130);
+    tt_want_int_op(rgb.g, >, 120);
+    tt_want_int_op(rgb.g, <, 130);
+    tt_want_int_op(rgb.b, ==, 0);
+
+    pbio_color_to_rgb(PBIO_COLOR_CYAN, &rgb);
+    tt_want_int_op(rgb.r, ==, 0);
+    tt_want_int_op(rgb.g, >, 120);
+    tt_want_int_op(rgb.g, <, 130);
+    tt_want_int_op(rgb.b, >, 120);
+    tt_want_int_op(rgb.b, <, 130);
+
+    pbio_color_to_rgb(PBIO_COLOR_MAGENTA, &rgb);
+    tt_want_int_op(rgb.r, >, 120);
+    tt_want_int_op(rgb.r, <, 130);
+    tt_want_int_op(rgb.g, ==, 0);
+    tt_want_int_op(rgb.b, >, 120);
+    tt_want_int_op(rgb.b, <, 130);
+
+    pbio_color_to_rgb(PBIO_COLOR_ORANGE, &rgb);
+    tt_want_int_op(rgb.r, >, 185);
+    tt_want_int_op(rgb.r, <, 195);
+    tt_want_int_op(rgb.g, >, 55);
+    tt_want_int_op(rgb.g, <, 65);
+    tt_want_int_op(rgb.b, ==, 0);
+}

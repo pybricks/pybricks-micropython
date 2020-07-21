@@ -195,3 +195,17 @@ void pbio_color_to_hsv(pbio_color_t color, pbio_color_hsv_t *hsv) {
     hsv->s = (color & (0x1 << 2)) ? 100 : 0;
     hsv->v = (color & 0x2) ? 100 : ((color & 0x1) ? 50 : 0);
 }
+
+/**
+ * Converts color name to RGB color value.
+ *
+ * See pbio_color_hsv_to_rgb() for more information.
+ *
+ * @param [in]  color       The the source color.
+ * @param [out] rgb         The destination RGB color value.
+ */
+void pbio_color_to_rgb(pbio_color_t color, pbio_color_rgb_t *rgb) {
+    pbio_color_hsv_t hsv;
+    pbio_color_to_hsv(color, &hsv);
+    pbio_color_hsv_to_rgb(&hsv, rgb);
+}

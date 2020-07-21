@@ -74,6 +74,7 @@ typedef struct {
 void pbio_color_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv);
 void pbio_color_hsv_to_rgb(const pbio_color_hsv_t *hsv, pbio_color_rgb_t *rgb);
 void pbio_color_to_hsv(pbio_color_t color, pbio_color_hsv_t *hsv);
+void pbio_color_to_rgb(pbio_color_t color, pbio_color_rgb_t *rgb);
 
 #endif // _PBIO_COLOR_H_
 
