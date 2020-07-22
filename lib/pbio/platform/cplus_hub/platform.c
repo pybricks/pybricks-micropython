@@ -103,7 +103,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
             | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE
             | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_2_INVERT
-            | PBDRV_PWM_STM32_TIM_CHANNEL_3_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_4_INVERT
+            | PBDRV_PWM_STM32_TIM_CHANNEL_3_INVERT
             | PBDRV_PWM_STM32_TIM_CHANNEL_1_COMPLEMENT | PBDRV_PWM_STM32_TIM_CHANNEL_2_COMPLEMENT
             | PBDRV_PWM_STM32_TIM_CHANNEL_3_COMPLEMENT,
     },
@@ -114,8 +114,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .period = 10000, // 12MHz divided by 10k makes 1 kHz PWM
         .id = PWM_DEV_1,
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
-            | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_2_INVERT
-            | PBDRV_PWM_STM32_TIM_CHANNEL_1_COMPLEMENT,
+            | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_1_COMPLEMENT,
     },
     {
         .platform_init = pwm_dev_2_platform_init,
@@ -123,7 +122,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .prescalar = 8, // results in 10 MHz clock
         .period = 10000, // 12MHz divided by 10k makes 1 kHz PWM
         .id = PWM_DEV_2,
-        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE,
     },
 };
 

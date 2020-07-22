@@ -21,13 +21,13 @@ pbio_error_t pbdrv_light_set_rgb(pbio_port_t port, const pbdrv_light_raw_rgb_t *
 
     pbdrv_pwm_dev_t *dev;
     if (pbdrv_pwm_get_dev(1, &dev) == PBIO_SUCCESS) {
-        pbdrv_pwm_set_duty(dev, 2, 10000 - raw->r * 2000 / 255);
+        pbdrv_pwm_set_duty(dev, 2, raw->r * 2000 / 256);
     }
     if (pbdrv_pwm_get_dev(0, &dev) == PBIO_SUCCESS) {
-        pbdrv_pwm_set_duty(dev, 4, 10000 - raw->g * 2000 / 255);
+        pbdrv_pwm_set_duty(dev, 4, raw->g * 2000 / 256);
     }
     if (pbdrv_pwm_get_dev(2, &dev) == PBIO_SUCCESS) {
-        pbdrv_pwm_set_duty(dev, 1, 10000 - raw->b * 2000 / 255);
+        pbdrv_pwm_set_duty(dev, 1, raw->b * 2000 / 256);
     }
 
     return PBIO_SUCCESS;
