@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
+#include <pbio/config.h>
+
+#if PBIO_CONFIG_LIGHT
+
 #include <stdbool.h>
 
 #include <pbio/color.h>
@@ -9,8 +13,6 @@
 #include <pbio/port.h>
 
 #include <pbdrv/light.h>
-
-#if PBDRV_CONFIG_LIGHT
 
 typedef struct {
     pbio_light_pattern_t pattern;
@@ -104,4 +106,4 @@ void _pbio_light_set_user_mode(bool user_mode) {
     user_mode_active = user_mode;
 }
 
-#endif // PBDRV_CONFIG_LIGHT
+#endif // PBIO_CONFIG_LIGHT

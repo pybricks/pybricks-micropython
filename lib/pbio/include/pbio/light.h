@@ -12,6 +12,7 @@
 #include <stdbool.h>
 
 #include <pbio/color.h>
+#include <pbio/config.h>
 #include <pbio/error.h>
 #include <pbio/port.h>
 
@@ -24,7 +25,7 @@ typedef enum {
     PBIO_LIGHT_PATTERN_BREATHE, /**< The light breathes */
 } pbio_light_pattern_t;
 
-#if PBDRV_CONFIG_LIGHT
+#if PBIO_CONFIG_LIGHT
 
 /**
  * Turns the light on. Some lights may not be capable of display all colors or
@@ -74,7 +75,7 @@ static inline void _pbio_light_set_user_mode(bool user_mode) {
 static inline pbio_error_t _pbio_light_on(pbio_port_t port, pbio_color_t color, pbio_light_pattern_t pattern) {
     return PBIO_SUCCESS;
 }
-#endif // PBDRV_CONFIG_LIGHT
+#endif // PBIO_CONFIG_LIGHT
 
 /** @cond */
 // using macros for reduced code size
