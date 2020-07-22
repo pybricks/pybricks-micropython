@@ -99,12 +99,12 @@ STATIC mp_obj_t mod_experimental_IMU_make_new(const mp_obj_type_t *otype, size_t
      * Set Output Data Rate
      */
     lsm6ds3tr_c_xl_data_rate_set(&self->ctx, LSM6DS3TR_C_XL_ODR_12Hz5);
-    lsm6ds3tr_c_gy_data_rate_set(&self->ctx, LSM6DS3TR_C_GY_ODR_12Hz5);
+    lsm6ds3tr_c_gy_data_rate_set(&self->ctx, LSM6DS3TR_C_GY_ODR_833Hz);
     /*
      * Set full scale
      */
     lsm6ds3tr_c_xl_full_scale_set(&self->ctx, LSM6DS3TR_C_2g);
-    lsm6ds3tr_c_gy_full_scale_set(&self->ctx, LSM6DS3TR_C_2000dps);
+    lsm6ds3tr_c_gy_full_scale_set(&self->ctx, LSM6DS3TR_C_250dps);
 
     /*
      * Configure filtering chain(No aux interface)
@@ -123,7 +123,7 @@ STATIC mp_obj_t mod_experimental_IMU_make_new(const mp_obj_type_t *otype, size_t
     // lsm6ds3tr_c_xl_hp_bandwidth_set(&self->ctx, LSM6DS3TR_C_XL_HP_ODR_DIV_100);
 
     /* Gyroscope - filtering chain */
-    lsm6ds3tr_c_gy_band_pass_set(&self->ctx, LSM6DS3TR_C_HP_260mHz_LP1_STRONG);
+    lsm6ds3tr_c_gy_band_pass_set(&self->ctx, LSM6DS3TR_C_HP_16mHz_LP1_LIGHT);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -154,9 +154,9 @@ STATIC mp_obj_t mod_experimental_IMU_gyro(mp_obj_t self_in) {
     }
 
     mp_obj_t values[3];
-    values[0] = mp_obj_new_float_from_f(lsm6ds3tr_c_from_fs2000dps_to_mdps(data[0]) / 1000.0f);
-    values[1] = mp_obj_new_float_from_f(lsm6ds3tr_c_from_fs2000dps_to_mdps(data[1]) / 1000.0f);
-    values[2] = mp_obj_new_float_from_f(lsm6ds3tr_c_from_fs2000dps_to_mdps(data[2]) / 1000.0f);
+    values[0] = mp_obj_new_float_from_f(lsm6ds3tr_c_from_fs250dps_to_mdps(data[0]) / 1000.0f);
+    values[1] = mp_obj_new_float_from_f(lsm6ds3tr_c_from_fs250dps_to_mdps(data[1]) / 1000.0f);
+    values[2] = mp_obj_new_float_from_f(lsm6ds3tr_c_from_fs250dps_to_mdps(data[2]) / 1000.0f);
 
     return mp_obj_new_tuple(3, values);
 }
