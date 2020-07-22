@@ -85,33 +85,20 @@ pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_color_t color,
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    switch (color) {
-        case PBIO_COLOR_RED:
-            raw->r = 255;
-            raw->g = 0;
-            raw->b = 0;
-            break;
-        case PBIO_COLOR_ORANGE:
-            raw->r = 255;
-            raw->g = 255;
-            raw->b = 0;
-            break;
-        case PBIO_COLOR_YELLOW:
-            raw->r = 30;
-            raw->g = 255;
-            raw->b = 0;
-            break;
-        case PBIO_COLOR_GREEN:
-            raw->r = 0;
-            raw->g = 255;
-            raw->b = 0;
-            break;
-        default:
-            raw->r = 0;
-            raw->g = 0;
-            raw->b = 0;
-            break;
-    }
+    pbio_color_rgb_t rgb;
+    pbio_color_to_rgb(color, &rgb);
+
+    // Adjust for chromacity
+    uint32_t r = rgb.r * 1000;
+    uint32_t g = rgb.g * 270;
+    uint32_t b = rgb.b * 200;
+
+    // Adjust for apparent brightness
+    // + 1 protects against division by zero
+    uint32_t Y = ((174 * r + 1590 * g + 327 * b) >> 16) + 1;
+    raw->r = r / Y;
+    raw->g = g / Y;
+    raw->b = b / Y;
 
     return PBIO_SUCCESS;
 }

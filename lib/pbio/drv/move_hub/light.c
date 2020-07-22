@@ -45,48 +45,22 @@ pbio_error_t pbdrv_light_get_rgb_for_color(pbio_port_t port, pbio_color_t color,
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    switch (color) {
-        case PBIO_COLOR_WHITE:
-            raw->r = 205;
-            raw->g = 35;
-            raw->b = 23;
-            break;
-        case PBIO_COLOR_RED:
-            raw->r = 733;
-            raw->g = 7;
-            raw->b = 1;
-            break;
-        case PBIO_COLOR_ORANGE:
-            raw->r = 426;
-            raw->g = 26;
-            raw->b = 1;
-            break;
-        case PBIO_COLOR_YELLOW:
-            raw->r = 227;
-            raw->g = 38;
-            raw->b = 1;
-            break;
-        case PBIO_COLOR_GREEN:
-            raw->r = 6;
-            raw->g = 52;
-            raw->b = 1;
-            break;
-        case PBIO_COLOR_BLUE:
-            raw->r = 42;
-            raw->g = 0;
-            raw->b = 243;
-            break;
-        case PBIO_COLOR_PURPLE:
-            raw->r = 370;
-            raw->g = 3;
-            raw->b = 130;
-            break;
-        default:
-            raw->r = 0;
-            raw->g = 0;
-            raw->b = 0;
-            break;
-    }
+    pbio_color_rgb_t rgb;
+    pbio_color_to_rgb(color, &rgb);
+
+    // Adjust for chromacity
+    uint32_t r = rgb.r * 1000;
+    uint32_t g = rgb.g * 270;
+    uint32_t b = rgb.b * 200;
+
+    // Adjust for apparent brightness
+    // These are basically the luminous intensity values from the datasheet
+    // with red multiplied by 0.35 (it has different resistor and voltage drop)
+    // + 1 protects against division by zero
+    uint32_t Y = ((174 * r + 1590 * g + 327 * b) >> 16) + 1;
+    raw->r = r / Y;
+    raw->g = g / Y;
+    raw->b = b / Y;
 
     return PBIO_SUCCESS;
 }
