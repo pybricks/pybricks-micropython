@@ -20,8 +20,6 @@
 #include "modmotor.h"
 #include "modlogger.h"
 
-#include "pb_type_matrix.h"
-
 #if PYBRICKS_PY_ROBOTICS
 
 // pybricks.robotics.DriveBase class object
@@ -277,11 +275,6 @@ STATIC const mp_obj_type_t robotics_DriveBase_type = {
 STATIC const mp_rom_map_elem_t robotics_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_robotics)         },
     { MP_ROM_QSTR(MP_QSTR_DriveBase),   MP_ROM_PTR(&robotics_DriveBase_type)  },
-    #if MICROPY_PY_BUILTINS_FLOAT
-    { MP_ROM_QSTR(MP_QSTR_Matrix),      MP_ROM_PTR(&pb_type_Matrix_type)     },
-    { MP_ROM_QSTR(MP_QSTR_Vector),      MP_ROM_PTR(&robotics_Vector_obj)      },
-    { MP_ROM_QSTR(MP_QSTR_UnitVector),  MP_ROM_PTR(&robotics_UnitVector_obj)  },
-    #endif // MICROPY_PY_BUILTINS_FL OAT
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_robotics_globals, robotics_globals_table);
 

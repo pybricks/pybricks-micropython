@@ -11,6 +11,8 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 
+#include "pb_type_matrix.h"
+
 #if PYBRICKS_HUB_CPLUSHUB
 
 #include <lsm6ds3tr_c_reg.h>
@@ -413,6 +415,11 @@ STATIC const mp_rom_map_elem_t mod_experimental_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&mod_experimental___init___obj) },
     { MP_ROM_QSTR(MP_QSTR_pthread_raise), MP_ROM_PTR(&mod_experimental_pthread_raise_obj) },
     #endif // PYBRICKS_HUB_EV3
+    #if MICROPY_PY_BUILTINS_FLOAT
+    { MP_ROM_QSTR(MP_QSTR_Matrix),      MP_ROM_PTR(&pb_type_Matrix_type)     },
+    { MP_ROM_QSTR(MP_QSTR_Vector),      MP_ROM_PTR(&robotics_Vector_obj)      },
+    { MP_ROM_QSTR(MP_QSTR_UnitVector),  MP_ROM_PTR(&robotics_UnitVector_obj)  },
+    #endif // MICROPY_PY_BUILTINS_FLOAT
 };
 STATIC MP_DEFINE_CONST_DICT(mod_experimental_globals, mod_experimental_globals_table);
 
