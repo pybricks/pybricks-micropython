@@ -113,6 +113,10 @@ typedef long mp_off_t;
 
 // Pybricks modules
 
+extern const struct _mp_obj_module_t pb_package_pybricks;
+#define _PYBRICKS_PACKAGE_PYBRICKS \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_pybricks), (mp_obj_t)&pb_package_pybricks },
+
 extern const struct _mp_obj_module_t pb_module_hubs;
 #define _PYBRICKS_MODULE_HUBS \
     { MP_OBJ_NEW_QSTR(MP_QSTR_hubs), (mp_obj_t)&pb_module_hubs},
@@ -168,6 +172,7 @@ extern const struct _mp_obj_module_t pb_module_uos;
 #endif
 
 #define MICROPY_PORT_BUILTIN_MODULES \
+    _PYBRICKS_PACKAGE_PYBRICKS      \
     _PYBRICKS_MODULE_EXPERIMENTAL   \
     _PYBRICKS_MODULE_HUBS           \
     _PYBRICKS_MODULE_IODEVICES      \

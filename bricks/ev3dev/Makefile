@@ -69,6 +69,7 @@ INC += -I../../lib/pbio
 INC += -I../../lib/pbio/include
 INC += -I../../lib/pbio/platform/ev3dev_stretch
 INC += -I../../extmod
+INC += -I../../pybricks
 INC += -I../../py
 INC += -I$(TOP)/ports/unix
 
@@ -230,6 +231,10 @@ LIB_SRC_C = $(addprefix micropython/lib/,\
 	)
 
 # Pybricks drivers and modules
+PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
+    pybricks.c \
+	)
+
 PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modbattery.c \
 	modbuiltins.c \
@@ -301,13 +306,14 @@ OBJ = $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PYBRICKS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PY_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_LIB_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(LIB_SRC_C) $(EXTMOD_SRC_C) $(PYBRICKS_SRC_C) $(PYBRICKS_PY_SRC_C) $(PYBRICKS_EXTMOD_SRC_C)
+SRC_QSTR += $(SRC_C) $(LIB_SRC_C) $(EXTMOD_SRC_C) $(PYBRICKS_SRC_C) $(PYBRICKS_PY_SRC_C) $(PYBRICKS_EXTMOD_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in
 # SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=

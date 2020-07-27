@@ -25,6 +25,10 @@
 #define MICROPY_MPHALPORT_H "ev3dev_mphal.h"
 #define MICROPY_PY_SYS_PATH_DEFAULT (":~/.pybricks-micropython/lib:/usr/lib/pybricks-micropython")
 
+extern const struct _mp_obj_module_t pb_package_pybricks;
+#define _PYBRICKS_PACKAGE_PYBRICKS \
+    { MP_OBJ_NEW_QSTR(MP_QSTR__pybricks), (mp_obj_t)&pb_package_pybricks },
+
 extern const struct _mp_obj_module_t pb_module_bluetooth;
 extern const struct _mp_obj_module_t pb_module_ev3devices;
 extern const struct _mp_obj_module_t pb_module_experimental;
@@ -38,6 +42,7 @@ extern const struct _mp_obj_module_t pb_module_tools;
 extern const struct _mp_obj_module_t pb_module_usignal;
 
 #define PYBRICKS_PORT_BUILTIN_MODULES \
+    _PYBRICKS_PACKAGE_PYBRICKS        \
     { MP_ROM_QSTR(MP_QSTR_bluetooth_c),     MP_ROM_PTR(&pb_module_bluetooth)        }, \
     { MP_ROM_QSTR(MP_QSTR_ev3devices_c),    MP_ROM_PTR(&pb_module_ev3devices)       }, \
     { MP_ROM_QSTR(MP_QSTR_experimental_c),  MP_ROM_PTR(&pb_module_experimental)     }, \

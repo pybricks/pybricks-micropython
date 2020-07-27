@@ -94,6 +94,10 @@ typedef long mp_off_t;
 
 #define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn(str, len)
 
+extern const struct _mp_obj_module_t pb_package_pybricks;
+#define _PYBRICKS_PACKAGE_PYBRICKS \
+    { MP_OBJ_NEW_QSTR(MP_QSTR_pybricks), (mp_obj_t)&pb_package_pybricks },
+
 #if PYBRICKS_PY_PARAMETERS
 extern const struct _mp_obj_module_t pb_module_parameters;
 #define _PYBRICKS_MODULE_PARAMETERS \
@@ -124,6 +128,7 @@ extern const struct _mp_obj_module_t pb_module_nxtdevices;
 #endif
 
 #define MICROPY_PORT_BUILTIN_MODULES \
+    _PYBRICKS_PACKAGE_PYBRICKS      \
     _PYBRICKS_MODULE_PARAMETERS     \
     _PYBRICKS_MODULE_NXTDEVICES     \
     _PYBRICKS_MODULE_TOOLS          \

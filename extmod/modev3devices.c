@@ -512,6 +512,7 @@ STATIC const mp_obj_type_t ev3devices_GyroSensor_type = {
 // dir(pybricks.ev3devices)
 STATIC const mp_rom_map_elem_t ev3devices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_ev3devices)              },
+    { MP_ROM_QSTR(MP_QSTR__pybricks),        MP_ROM_QSTR(MP_QSTR__pybricks)               }, // hack: make sure MP_QSTR__pybricks exists on ev3dev
     { MP_ROM_QSTR(MP_QSTR_Motor),            MP_ROM_PTR(&motor_Motor_type)                },
     { MP_ROM_QSTR(MP_QSTR_TouchSensor),      MP_ROM_PTR(&ev3devices_TouchSensor_type)     },
     { MP_ROM_QSTR(MP_QSTR_InfraredSensor),   MP_ROM_PTR(&ev3devices_InfraredSensor_type)  },

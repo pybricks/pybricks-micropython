@@ -86,6 +86,7 @@ INC += -I$(PBTOP)/lib/STM32_USB_Device_Library/Class/CDC/Inc/
 INC += -I$(PBTOP)/lib/STM32_USB_Device_Library/Core/Inc/
 endif
 INC += -I$(PBTOP)/extmod
+INC += -I$(PBTOP)/pybricks
 INC += -I$(PBTOP)/py
 INC += -I$(BUILD)
 
@@ -165,6 +166,10 @@ else
 endif
 
 # Pybricks modules
+
+PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
+    pybricks.c \
+	)
 
 PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modbattery.c \
@@ -371,6 +376,7 @@ SRC_STM32_USB_DEV += $(addprefix lib/pbio/platform/$(PBIO_PLATFORM)/,\
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PYBRICKS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PY_SRC_C:.c=.o))
 ifeq ($(PB_LIB_BLUENRG),1)
 OBJ += $(addprefix $(BUILD)/, $(BLUENRG_SRC_C:.c=.o))
@@ -403,7 +409,7 @@ $(BUILD)/main.mpy.o: $(BUILD)/main.mpy
 		--rename-section .data=.mpy,alloc,load,readonly,data,contents $^ $@
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(PYBRICKS_PY_SRC_C) $(PYBRICKS_EXTMOD_SRC_C)
+SRC_QSTR += $(SRC_C) $(PYBRICKS_PY_SRC_C) $(PYBRICKS_EXTMOD_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
 

@@ -57,6 +57,7 @@ INC += -I../../lib/pbio/include
 INC += -I../../lib/pbio/platform/$(PBIO_PLATFORM)
 INC += -I../../lib/pbio
 INC += -I../../extmod
+INC += -I../../pybricks
 INC += -I../../py
 INC += -I$(BUILD)
 
@@ -126,6 +127,10 @@ SRC_S_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
 	)
 
 # Pybricks modules
+PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
+    pybricks.c \
+	)
+
 PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modbattery.c \
 	modbuiltins.c \
@@ -190,11 +195,12 @@ OBJ += $(addprefix $(BUILD)/, $(SRC_S_NXT:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PY_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PYBRICKS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(PYBRICKS_PY_SRC_C) $(PYBRICKS_EXTMOD_SRC_C)
+SRC_QSTR += $(SRC_C) $(PYBRICKS_PY_SRC_C) $(PYBRICKS_EXTMOD_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
 
