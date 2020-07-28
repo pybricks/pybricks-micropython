@@ -129,6 +129,8 @@ SRC_S_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
 # Pybricks modules
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
     pybricks.c \
+	tools/pb_type_stopwatch.c \
+	tools/pb_module_tools.c \
 	)
 
 PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
@@ -139,7 +141,6 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modnxtdevices.c \
 	modparameters.c \
 	modrobotics.c \
-	modtools.c \
 	moduos.c \
 	)
 

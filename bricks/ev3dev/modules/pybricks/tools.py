@@ -2,7 +2,7 @@
 # Copyright (c) 2018-2020 The Pybricks Authors
 
 # Expose method and class written in C
-from tools import wait, StopWatch
+from _pybricks.tools import wait, StopWatch
 
 # Imports for DataLog implementation
 from utime import localtime, ticks_us

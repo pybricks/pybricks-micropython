@@ -14,6 +14,7 @@
 #define PYBRICKS_PY_PARAMETERS          (1)
 #define PYBRICKS_PY_TOOLS               (1)
 #define PYBRICKS_PY_ROBOTICS            (1)
+#define PYBRICKS_PY_TOOLS               (1)
 #define PYBRICKS_PY_UOS                 (1)
 
 // options to control how MicroPython is built
@@ -105,13 +106,6 @@ extern const struct _mp_obj_module_t pb_module_parameters;
 #else
 #define _PYBRICKS_MODULE_PARAMETERS
 #endif
-#if PYBRICKS_PY_TOOLS
-extern const struct _mp_obj_module_t pb_module_tools;
-#define _PYBRICKS_MODULE_TOOLS \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_tools), (mp_obj_t)&pb_module_tools },
-#else
-#define _PYBRICKS_MODULE_TOOLS
-#endif
 #if PYBRICKS_PY_ROBOTICS
 extern const struct _mp_obj_module_t pb_module_robotics;
 #define _PYBRICKS_MODULE_ROBOTICS \
@@ -131,7 +125,6 @@ extern const struct _mp_obj_module_t pb_module_nxtdevices;
     _PYBRICKS_PACKAGE_PYBRICKS      \
     _PYBRICKS_MODULE_PARAMETERS     \
     _PYBRICKS_MODULE_NXTDEVICES     \
-    _PYBRICKS_MODULE_TOOLS          \
     _PYBRICKS_MODULE_ROBOTICS       \
 
 

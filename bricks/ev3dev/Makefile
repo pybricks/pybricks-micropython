@@ -233,6 +233,8 @@ LIB_SRC_C = $(addprefix micropython/lib/,\
 # Pybricks drivers and modules
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
     pybricks.c \
+	tools/pb_type_stopwatch.c \
+	tools/pb_module_tools.c \
 	)
 
 PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
@@ -249,7 +251,6 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modnxtdevices.c \
 	modparameters.c \
 	modrobotics.c \
-	modtools.c \
 	moduos.c \
 	pb_type_matrix.c \
 	)
