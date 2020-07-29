@@ -3,7 +3,9 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_BUTTONS
+#if PYBRICKS_PY_COMMON
+
+#include "common.h"
 
 #include "py/obj.h"
 
@@ -11,6 +13,10 @@
 
 #include "util/pberror.h"
 #include "modparameters.h"
+
+// TODO: buttons are currently a module due to the legacy C API, but should be
+// an instance of a KeyPad type. That would make it consistent with the other C
+// types and the high level Python API.
 
 STATIC mp_obj_t buttons_pressed(void) {
     mp_obj_t button_list[10];
@@ -42,8 +48,6 @@ STATIC mp_obj_t buttons_pressed(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(buttons_pressed_obj, buttons_pressed);
 
-/* buttons module tables */
-
 STATIC const mp_rom_map_elem_t buttons_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_buttons)        },
     { MP_ROM_QSTR(MP_QSTR_pressed),     MP_ROM_PTR(&buttons_pressed_obj)    },
@@ -55,4 +59,4 @@ const mp_obj_module_t pb_module_buttons = {
     .globals = (mp_obj_dict_t *)&pb_module_buttons_globals,
 };
 
-#endif // PYBRICKS_PY_BUTTONS
+#endif // PYBRICKS_PY_COMMON

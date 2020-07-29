@@ -19,8 +19,6 @@ extern const struct _mp_obj_module_t pb_module_battery;
 
 #include "pb_ev3dev_types.h"
 
-extern const struct _mp_obj_module_t pb_module_buttons;
-
 // Class structure for EV3Brick
 typedef struct _hubs_EV3Brick_obj_t {
     mp_obj_base_t base;
