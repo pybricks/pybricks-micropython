@@ -138,7 +138,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 
 PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modbattery.c \
-	modbuiltins.c \
 	modlogger.c \
 	modmotor.c \
 	modnxtdevices.c \

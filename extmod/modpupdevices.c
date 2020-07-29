@@ -23,7 +23,8 @@
 #include "pbobj.h"
 #include "pbhsv.h"
 
-#include "modbuiltins.h"
+#include "common/common.h"
+
 #include "modparameters.h"
 #include "modmotor.h"
 
@@ -66,7 +67,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *typ
     self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
 
     // Create an instance of the Light class
-    self->light = builtins_ColorLight_obj_make_new(self->pbdev);
+    self->light = common_ColorLight_obj_make_new(self->pbdev);
 
     // Save default color settings
     pb_hsv_map_save_default(&self->color_map);
@@ -249,7 +250,7 @@ STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     pbdevice_set_power_supply(self->pbdev, 100);
 
     // Create an instance of the LightArray class
-    self->lights = builtins_LightArray_obj_make_new(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__LIGHT, 3);
+    self->lights = common_LightArray_obj_make_new(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__LIGHT, 3);
 
     // Do one reading to make sure everything is working and to set default mode
     int32_t hsv[4];
@@ -369,7 +370,7 @@ STATIC mp_obj_t pupdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     pbdevice_set_power_supply(self->pbdev, 100);
 
     // Create an instance of the LightArray class
-    self->lights = builtins_LightArray_obj_make_new(self->pbdev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LIGHT, 4);
+    self->lights = common_LightArray_obj_make_new(self->pbdev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LIGHT, 4);
 
     return MP_OBJ_FROM_PTR(self);
 }

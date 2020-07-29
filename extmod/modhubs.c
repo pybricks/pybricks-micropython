@@ -7,8 +7,8 @@
 #include <pbio/button.h>
 
 #include "modparameters.h"
-#include "modbuiltins.h"
-#include "modbuiltins.h"
+
+#include "common/common.h"
 
 #include "pberror.h"
 #include "pbobj.h"
@@ -38,7 +38,7 @@ STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
     self->speaker = pb_type_ev3dev_Speaker.make_new(&pb_type_ev3dev_Speaker, 0, 0, NULL);
 
     // Create an instance of the Light class, representing the brick status light
-    self->light = builtins_ColorLight_obj_make_new(NULL);
+    self->light = common_ColorLight_obj_make_new(NULL);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -102,7 +102,7 @@ STATIC mp_obj_t hubs_MoveHub_make_new(const mp_obj_type_t *type, size_t n_args, 
     self->base.type = (mp_obj_type_t *)type;
 
     // Create an instance of the Light class, representing the hub light
-    self->light = builtins_ColorLight_obj_make_new(NULL);
+    self->light = common_ColorLight_obj_make_new(NULL);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -141,7 +141,7 @@ STATIC mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, 
     self->base.type = (mp_obj_type_t *)type;
 
     // Create an instance of the Light class, representing the hub light
-    self->light = builtins_ColorLight_obj_make_new(NULL);
+    self->light = common_ColorLight_obj_make_new(NULL);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -180,7 +180,7 @@ STATIC mp_obj_t hubs_CPlusHub_make_new(const mp_obj_type_t *type, size_t n_args,
     self->base.type = (mp_obj_type_t *)type;
 
     // Create an instance of the Light class, representing the hub light
-    self->light = builtins_ColorLight_obj_make_new(NULL);
+    self->light = common_ColorLight_obj_make_new(NULL);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -223,7 +223,7 @@ STATIC mp_obj_t hubs_PrimeHub_make_new(const mp_obj_type_t *type, size_t n_args,
     self->base.type = (mp_obj_type_t *)type;
 
     // Create an instance of the Light class, representing the hub light
-    self->light = builtins_ColorLight_obj_make_new(NULL);
+    self->light = common_ColorLight_obj_make_new(NULL);
 
     return MP_OBJ_FROM_PTR(self);
 }

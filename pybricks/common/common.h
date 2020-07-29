@@ -10,10 +10,18 @@
 
 #include <pbio/control.h>
 
+#include "pbdevice.h"
+
 #include "py/obj.h"
 
 const mp_obj_type_t pb_type_Control;
 mp_obj_t common_Control_obj_make_new(pbio_control_t *control);
+
+const mp_obj_type_t pb_type_ColorLight;
+mp_obj_t common_ColorLight_obj_make_new(pbdevice_t *pbdev);
+
+const mp_obj_type_t pb_type_LightArray;
+mp_obj_t common_LightArray_obj_make_new(pbdevice_t *pbdev, uint8_t light_mode, uint8_t number_of_lights);
 
 #endif // PYBRICKS_PY_COMMON
 
