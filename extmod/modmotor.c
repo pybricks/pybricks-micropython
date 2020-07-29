@@ -20,10 +20,9 @@
 #include "modmotor.h"
 #include "modlogger.h"
 #include "modparameters.h"
-#include "pberror.h"
-#include "pbobj.h"
-#include "pbkwarg.h"
-
+#include "util/pberror.h"
+#include "util/pbobj.h"
+#include "util/pbkwarg.h"
 // pybricks.builtins.DCMotor.__init__
 STATIC mp_obj_t motor_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,

@@ -10,14 +10,14 @@
 #include "py/objstr.h"
 
 #include "pbdevice.h"
-#include "pbobj.h"
-#include "pbkwarg.h"
+#include "util/pbobj.h"
+#include "util/pbkwarg.h"
 #include "modmotor.h"
 #include "modparameters.h"
 
 #include <pbio/iodev.h>
 #include <pbio/serial.h>
-#include <pberror.h>
+#include "util/pberror.h"
 
 #if PYBRICKS_PY_IODEVICES
 

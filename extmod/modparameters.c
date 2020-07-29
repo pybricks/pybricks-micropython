@@ -11,9 +11,10 @@
 #include "py/runtime.h"
 
 #include "modparameters.h"
-#include "pb_type_enum.h"
-#include "pberror.h"
-#include "pbobj.h"
+
+#include "util/pb_type_enum.h"
+#include "util/pberror.h"
+#include "util/pbobj.h"
 
 #if PYBRICKS_PY_PARAMETERS
 

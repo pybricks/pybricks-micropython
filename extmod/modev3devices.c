@@ -8,15 +8,15 @@
 #include "py/runtime.h"
 
 #include "pbdevice.h"
-#include "pbobj.h"
-#include "pbkwarg.h"
+#include "util/pbobj.h"
+#include "util/pbkwarg.h"
 #include "modparameters.h"
 
 #include "py/objtype.h"
 
 #include <pbio/iodev.h>
 #include <pbio/button.h>
-#include <pberror.h>
+#include "util/pberror.h"
 
 // pybricks.ev3devices.TouchSensor class object
 typedef struct _ev3devices_TouchSensor_obj_t {

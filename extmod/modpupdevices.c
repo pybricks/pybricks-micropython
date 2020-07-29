@@ -18,9 +18,9 @@
 #include "py/runtime.h"
 
 #include "pbdevice.h"
-#include "pberror.h"
-#include "pbkwarg.h"
-#include "pbobj.h"
+#include "util/pberror.h"
+#include "util/pbkwarg.h"
+#include "util/pbobj.h"
 #include "pbhsv.h"
 
 #include "common/common.h"

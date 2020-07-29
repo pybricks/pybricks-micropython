@@ -15,7 +15,7 @@
 #include "py/mperrno.h"
 #include "py/mphal.h"
 
-#include "pberror.h"
+#include "util/pberror.h"
 #include "pbdevice.h"
 
 struct _pbdevice_t {

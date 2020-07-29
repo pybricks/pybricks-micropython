@@ -87,7 +87,6 @@ INC += -I$(PBTOP)/lib/STM32_USB_Device_Library/Core/Inc/
 endif
 INC += -I$(PBTOP)/extmod
 INC += -I$(PBTOP)/pybricks
-INC += -I$(PBTOP)/py
 INC += -I$(BUILD)
 
 GIT = git
@@ -177,6 +176,9 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	robotics/pb_type_matrix.c \
 	tools/pb_module_tools.c \
 	tools/pb_type_stopwatch.c \
+	util/pb_type_enum.c \
+	util/pberror.c \
+	util/pbobj.c \
 	)
 
 PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
@@ -192,14 +194,6 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modpupdevices.c \
 	moduos.c \
 	pbhsv.c \
-	)
-
-# Pybricks helpers
-
-PYBRICKS_PY_SRC_C = $(addprefix py/,\
-	pb_type_enum.c \
-	pberror.c \
-	pbobj.c \
 	)
 
 # STM32 Bluetooth stack
@@ -381,7 +375,6 @@ SRC_STM32_USB_DEV += $(addprefix lib/pbio/platform/$(PBIO_PLATFORM)/,\
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PYBRICKS_SRC_C:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PY_SRC_C:.c=.o))
 ifeq ($(PB_LIB_BLUENRG),1)
 OBJ += $(addprefix $(BUILD)/, $(BLUENRG_SRC_C:.c=.o))
 endif
@@ -413,7 +406,7 @@ $(BUILD)/main.mpy.o: $(BUILD)/main.mpy
 		--rename-section .data=.mpy,alloc,load,readonly,data,contents $^ $@
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(PYBRICKS_PY_SRC_C) $(PYBRICKS_EXTMOD_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
+SRC_QSTR += $(SRC_C) $(PYBRICKS_EXTMOD_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
 

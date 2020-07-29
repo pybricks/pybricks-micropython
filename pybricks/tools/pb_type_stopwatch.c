@@ -7,10 +7,9 @@
 
 #include "py/mphal.h"
 #include "py/runtime.h"
-#include "pberror.h"
-#include "pbobj.h"
-#include "pbkwarg.h"
-
+#include "util/pberror.h"
+#include "util/pbobj.h"
+#include "util/pbkwarg.h"
 #include "tools.h"
 
 typedef struct _tools_StopWatch_obj_t {

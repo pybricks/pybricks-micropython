@@ -11,10 +11,9 @@
 
 #include "py/obj.h"
 
-#include "pberror.h"
-#include "pbobj.h"
-#include "pbkwarg.h"
-
+#include "util/pberror.h"
+#include "util/pbobj.h"
+#include "util/pbkwarg.h"
 #include "robotics/robotics.h"
 
 #if MICROPY_PY_BUILTINS_FLOAT

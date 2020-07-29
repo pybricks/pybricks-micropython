@@ -22,8 +22,8 @@
 
 #include "modparameters.h"
 #include "pb_ev3dev_types.h"
-#include "pbkwarg.h"
-#include "pbobj.h"
+#include "util/pbkwarg.h"
+#include "util/pbobj.h"
 
 typedef struct _ev3dev_Image_obj_t {
     mp_obj_base_t base;

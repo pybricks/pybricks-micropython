@@ -11,10 +11,9 @@
 
 #include "py/obj.h"
 
-#include "pberror.h"
-#include "pbobj.h"
-#include "pbkwarg.h"
-
+#include "util/pberror.h"
+#include "util/pbobj.h"
+#include "util/pbkwarg.h"
 // pybricks.common.Control class object structure
 typedef struct _common_Control_obj_t {
     mp_obj_base_t base;

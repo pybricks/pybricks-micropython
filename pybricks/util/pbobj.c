@@ -5,8 +5,8 @@
 
 #include <fixmath.h>
 
-#include "pberror.h"
-#include "pbobj.h"
+#include "util/pberror.h"
+#include "util/pbobj.h"
 
 #include "py/mpconfig.h"
 #include "py/obj.h"

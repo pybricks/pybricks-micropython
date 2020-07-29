@@ -6,7 +6,7 @@
 #if PBDRV_CONFIG_BATTERY
 
 #include "py/obj.h"
-#include <pberror.h>
+#include "util/pberror.h"
 #include <pbdrv/battery.h>
 
 STATIC mp_obj_t battery_voltage(void) {

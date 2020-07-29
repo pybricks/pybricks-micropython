@@ -14,10 +14,9 @@
 
 #include "py/obj.h"
 
-#include "pberror.h"
-#include "pbobj.h"
-#include "pbkwarg.h"
-
+#include "util/pberror.h"
+#include "util/pbobj.h"
+#include "util/pbkwarg.h"
 // pybricks.builtins.ColorLight class object
 typedef struct _builtins_ColorLight_obj_t {
     mp_obj_base_t base;

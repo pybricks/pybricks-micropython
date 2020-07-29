@@ -9,7 +9,7 @@
 
 #include <pbio/button.h>
 
-#include "pberror.h"
+#include "util/pberror.h"
 #include "modparameters.h"
 
 STATIC mp_obj_t buttons_pressed(void) {

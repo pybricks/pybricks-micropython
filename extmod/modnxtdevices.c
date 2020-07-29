@@ -2,6 +2,7 @@
 // Copyright (c) 2019-2020 The Pybricks Authors
 
 #include <pbio/color.h>
+
 #include <pbio/iodev.h>
 
 #include "py/mpconfig.h"
@@ -10,9 +11,10 @@
 #include "py/objtype.h"
 
 #include "pbdevice.h"
-#include "pberror.h"
-#include "pbobj.h"
-#include "pbkwarg.h"
+
+#include "util/pbobj.h"
+#include "util/pbkwarg.h"
+#include "util/pberror.h"
 
 #include "common/common.h"
 

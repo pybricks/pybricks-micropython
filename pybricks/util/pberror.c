@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
-#include <pberror.h>
+#include "util/pberror.h"
 
 #include "py/mpconfig.h"
 

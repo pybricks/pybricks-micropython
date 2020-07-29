@@ -10,8 +10,8 @@
 
 #include "common/common.h"
 
-#include "pberror.h"
-#include "pbobj.h"
+#include "util/pberror.h"
+#include "util/pbobj.h"
 
 extern const struct _mp_obj_module_t pb_module_battery;
 

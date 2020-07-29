@@ -9,8 +9,8 @@
 #include "py/obj.h"
 
 
-#include "pberror.h"
-#include "pbobj.h"
+#include "util/pberror.h"
+#include "util/pbobj.h"
 #include "pbhsv.h"
 #include "modparameters.h"
 

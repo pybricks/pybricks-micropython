@@ -3,7 +3,7 @@
 
 #include "py/mphal.h"
 
-#include "pberror.h"
+#include "util/pberror.h"
 #include "pbdevice.h"
 
 

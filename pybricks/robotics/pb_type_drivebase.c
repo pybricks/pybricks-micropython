@@ -15,10 +15,9 @@
 #include "py/runtime.h"
 #include "py/obj.h"
 
-#include "pberror.h"
-#include "pbobj.h"
-#include "pbkwarg.h"
-
+#include "util/pberror.h"
+#include "util/pbobj.h"
+#include "util/pbkwarg.h"
 #include "common/common.h"
 
 #include "modparameters.h"
