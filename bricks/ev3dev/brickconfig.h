@@ -10,6 +10,7 @@
 #define PYBRICKS_HUB_EV3                (1)
 
 // Pybricks modules
+#define PYBRICKS_PY_COMMON              (1)
 #define PYBRICKS_PY_BUTTONS             (1)
 #define PYBRICKS_PY_EV3DEVICES          (1)
 #define PYBRICKS_PY_EXPERIMENTAL        (1)

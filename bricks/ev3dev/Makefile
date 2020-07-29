@@ -233,6 +233,7 @@ LIB_SRC_C = $(addprefix micropython/lib/,\
 # Pybricks drivers and modules
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
     pybricks.c \
+	common/pb_type_control.c \
 	robotics/pb_module_robotics.c \
 	robotics/pb_type_drivebase.c \
 	tools/pb_module_tools.c \

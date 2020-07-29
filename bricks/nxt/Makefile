@@ -129,6 +129,7 @@ SRC_S_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
 # Pybricks modules
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
     pybricks.c \
+	common/pb_type_control.c \
 	robotics/pb_module_robotics.c \
 	robotics/pb_type_drivebase.c \
 	tools/pb_module_tools.c \

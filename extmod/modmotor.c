@@ -15,6 +15,8 @@
 #include "py/builtin.h"
 #include "py/obj.h"
 
+#include "common/common.h"
+
 #include "modbuiltins.h"
 #include "modmotor.h"
 #include "modlogger.h"
@@ -226,7 +228,7 @@ STATIC mp_obj_t motor_Motor_make_new(const mp_obj_type_t *type, size_t n_args, s
     self->logger = logger_obj_make_new(&self->srv->log);
 
     // Create an instance of the Control class
-    self->control = builtins_Control_obj_make_new(&self->srv->control);
+    self->control = common_Control_obj_make_new(&self->srv->control);
 
     return MP_OBJ_FROM_PTR(self);
 }
