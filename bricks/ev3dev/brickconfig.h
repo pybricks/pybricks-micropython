@@ -38,7 +38,6 @@ extern const struct _mp_obj_module_t pb_module_iodevices;
 extern const struct _mp_obj_module_t pb_module_media_ev3dev;
 extern const struct _mp_obj_module_t pb_module_nxtdevices;
 extern const struct _mp_obj_module_t pb_module_parameters;
-extern const struct _mp_obj_module_t pb_module_robotics;
 extern const struct _mp_obj_module_t pb_module_usignal;
 
 #define PYBRICKS_PORT_BUILTIN_MODULES \
@@ -51,7 +50,6 @@ extern const struct _mp_obj_module_t pb_module_usignal;
     { MP_ROM_QSTR(MP_QSTR_media_ev3dev_c),  MP_ROM_PTR(&pb_module_media_ev3dev)     }, \
     { MP_ROM_QSTR(MP_QSTR_nxtdevices_c),    MP_ROM_PTR(&pb_module_nxtdevices)       }, \
     { MP_ROM_QSTR(MP_QSTR_parameters_c),    MP_ROM_PTR(&pb_module_parameters)       }, \
-    { MP_ROM_QSTR(MP_QSTR_robotics_c),      MP_ROM_PTR(&pb_module_robotics)         }, \
     { MP_ROM_QSTR(MP_QSTR_usignal),         MP_ROM_PTR(&pb_module_usignal)          },
 
 #define PBYRICKS_PORT_BUILTINS

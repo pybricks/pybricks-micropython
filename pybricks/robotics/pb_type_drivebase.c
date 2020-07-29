@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
+#include "py/mpconfig.h"
+
+#if PYBRICKS_PY_ROBOTICS
+
 #include <stdlib.h>
 #include <math.h>
 
@@ -19,8 +23,6 @@
 #include "modbuiltins.h"
 #include "modmotor.h"
 #include "modlogger.h"
-
-#if PYBRICKS_PY_ROBOTICS
 
 // pybricks.robotics.DriveBase class object
 typedef struct _robotics_DriveBase_obj_t {
@@ -264,23 +266,11 @@ STATIC const mp_rom_map_elem_t robotics_DriveBase_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(robotics_DriveBase_locals_dict, robotics_DriveBase_locals_dict_table);
 
 // type(pybricks.robotics.DriveBase)
-STATIC const mp_obj_type_t robotics_DriveBase_type = {
+const mp_obj_type_t pb_type_drivebase = {
     { &mp_type_type },
     .name = MP_QSTR_DriveBase,
     .make_new = robotics_DriveBase_make_new,
     .locals_dict = (mp_obj_dict_t *)&robotics_DriveBase_locals_dict,
-};
-
-// dir(pybricks.robotics)
-STATIC const mp_rom_map_elem_t robotics_globals_table[] = {
-    { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_robotics)         },
-    { MP_ROM_QSTR(MP_QSTR_DriveBase),   MP_ROM_PTR(&robotics_DriveBase_type)  },
-};
-STATIC MP_DEFINE_CONST_DICT(pb_module_robotics_globals, robotics_globals_table);
-
-const mp_obj_module_t pb_module_robotics = {
-    .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t *)&pb_module_robotics_globals,
 };
 
 #endif // PYBRICKS_PY_ROBOTICS

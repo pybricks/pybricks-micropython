@@ -149,13 +149,6 @@ extern const struct _mp_obj_module_t pb_module_parameters;
 #else
 #define _PYBRICKS_MODULE_PARAMETERS
 #endif
-#if PYBRICKS_PY_ROBOTICS
-extern const struct _mp_obj_module_t pb_module_robotics;
-#define _PYBRICKS_MODULE_ROBOTICS \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_robotics), (mp_obj_t)&pb_module_robotics },
-#else
-#define _PYBRICKS_MODULE_ROBOTICS
-#endif
 #if PYBRICKS_PY_UOS
 extern const struct _mp_obj_module_t pb_module_uos;
 #define _PYBRICKS_MODULE_UOS \
@@ -171,7 +164,6 @@ extern const struct _mp_obj_module_t pb_module_uos;
     _PYBRICKS_MODULE_IODEVICES      \
     _PYBRICKS_MODULE_PARAMETERS     \
     _PYBRICKS_MODULE_PUPDEVICES     \
-    _PYBRICKS_MODULE_ROBOTICS       \
     _PYBRICKS_MODULE_UOS            \
 
 

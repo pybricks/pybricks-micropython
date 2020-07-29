@@ -169,8 +169,10 @@ endif
 
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
     pybricks.c \
-	tools/pb_type_stopwatch.c \
+	robotics/pb_module_robotics.c \
+	robotics/pb_type_drivebase.c \
 	tools/pb_module_tools.c \
+	tools/pb_type_stopwatch.c \
 	)
 
 PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
@@ -185,7 +187,6 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modmotor.c \
 	modparameters.c \
 	modpupdevices.c \
-	modrobotics.c \
 	moduos.c \
 	pbhsv.c \
 	pb_type_matrix.c \
