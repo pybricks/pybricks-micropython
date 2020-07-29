@@ -25,6 +25,8 @@ mp_obj_t common_LightArray_obj_make_new(pbdevice_t *pbdev, uint8_t light_mode, u
 
 const mp_obj_module_t pb_module_buttons;
 
+const mp_obj_module_t pb_module_battery;
+
 #endif // PYBRICKS_PY_COMMON
 
 #endif // PYBRICKS_INCLUDED_PYBRICKS_COMMON_H

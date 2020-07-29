@@ -3,9 +3,21 @@
 
 #include "py/mpconfig.h"
 
-#if PBDRV_CONFIG_BATTERY
+#if PYBRICKS_PY_COMMON
+
+#include "common.h"
 
 #include "py/obj.h"
+
+#include <pbio/button.h>
+
+#include "util/pberror.h"
+#include "modparameters.h"
+
+// TODO: battery is currently a module due to the legacy C API, but should be
+// an instance of a Battery type. That would make it consistent with the other
+// C types and the high level Python API.
+
 #include "util/pberror.h"
 #include <pbdrv/battery.h>
 
@@ -37,4 +49,4 @@ const mp_obj_module_t pb_module_battery = {
     .globals = (mp_obj_dict_t *)&pb_module_battery_globals,
 };
 
-#endif // PBDRV_CONFIG_BATTERY
+#endif // PYBRICKS_PY_COMMON

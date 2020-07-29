@@ -13,8 +13,6 @@
 #include "util/pberror.h"
 #include "util/pbobj.h"
 
-extern const struct _mp_obj_module_t pb_module_battery;
-
 #if PYBRICKS_HUB_EV3
 
 #include "pb_ev3dev_types.h"

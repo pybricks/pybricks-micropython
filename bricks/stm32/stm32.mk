@@ -168,6 +168,7 @@ endif
 
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
     pybricks.c \
+	common/pb_type_battery.c \
 	common/pb_type_colorlight.c \
 	common/pb_type_control.c \
 	common/pb_type_lightarray.c \
@@ -182,7 +183,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	)
 
 PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
-	modbattery.c \
 	moddebug.c \
 	modexperimental.c \
 	modhubs.c \
