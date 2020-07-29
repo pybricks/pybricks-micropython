@@ -1,3 +1,10 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2018-2020 The Pybricks Authors
+
+#include "py/mpconfig.h"
+
+#if PYBRICKS_PY_ROBOTICS
+
 #include <inttypes.h>
 #include <math.h>
 #include <stdio.h>
@@ -8,7 +15,7 @@
 #include "pbobj.h"
 #include "pbkwarg.h"
 
-#include "pb_type_matrix.h"
+#include "robotics/robotics.h"
 
 #if MICROPY_PY_BUILTINS_FLOAT
 
@@ -475,12 +482,14 @@ STATIC mp_obj_t robotics__vector(size_t n_args, const mp_obj_t *args, bool norma
 STATIC mp_obj_t robotics_Vector(size_t n_args, const mp_obj_t *args) {
     return robotics__vector(n_args, args, false);
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(robotics_Vector_obj, 2, 4, robotics_Vector);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_func_Vector, 2, 4, robotics_Vector);
 
 // pybricks.robotics.UnitVector
 STATIC mp_obj_t robotics_UnitVector(size_t n_args, const mp_obj_t *args) {
     return robotics__vector(n_args, args, true);
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(robotics_UnitVector_obj, 2, 4, robotics_UnitVector);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_func_UnitVector, 2, 4, robotics_UnitVector);
 
 #endif // MICROPY_PY_BUILTINS_FLOAT
+
+#endif // PYBRICKS_PY_ROBOTICS
