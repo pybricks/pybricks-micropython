@@ -10,7 +10,7 @@
 #include <pbio/light.h>
 #include <pbsys/sys.h>
 
-#include "util/pbobj.h"
+#include "util_mp/pb_obj_helper.h"
 
 #include "py/compile.h"
 #include "py/runtime.h"

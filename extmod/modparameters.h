@@ -4,7 +4,7 @@
 #ifndef PYBRICKS_INCLUDED_MODPARAMETERS_H
 #define PYBRICKS_INCLUDED_MODPARAMETERS_H
 
-#include "util/pb_type_enum.h"
+#include "util_mp/pb_type_enum.h"
 
 #if PYBRICKS_PY_PARAMETERS
 

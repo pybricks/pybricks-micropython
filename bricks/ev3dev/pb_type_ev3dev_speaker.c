@@ -30,8 +30,8 @@
 #include "py/runtime.h"
 
 #include "pb_ev3dev_types.h"
-#include "util/pbkwarg.h"
-#include "util/pbobj.h"
+#include "util_mp/pb_kwarg_helper.h"
+#include "util_mp/pb_obj_helper.h"
 
 #define EV3DEV_EV3_INPUT_DEV_PATH "/dev/input/by-path/platform-sound-event"
 

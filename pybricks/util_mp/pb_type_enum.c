@@ -4,8 +4,8 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 
-#include "util/pb_type_enum.h"
-#include "util/pberror.h"
+#include "util_mp/pb_type_enum.h"
+#include "util_pb/pb_error.h"
 
 void pb_type_enum_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
     pb_obj_enum_member_t *self = MP_OBJ_TO_PTR(self_in);

@@ -138,9 +138,9 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	robotics/pb_type_matrix.c \
 	tools/pb_module_tools.c \
 	tools/pb_type_stopwatch.c \
-	util/pb_type_enum.c \
-	util/pberror.c \
-	util/pbobj.c \
+	util_mp/pb_type_enum.c \
+	util_mp/pb_obj_helper.c \
+	util_pb/pb_error.c \
 	)
 
 PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\

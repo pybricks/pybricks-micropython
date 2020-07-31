@@ -11,14 +11,14 @@
 
 #include <pbio/button.h>
 
-#include "util/pberror.h"
+#include "util_pb/pb_error.h"
 #include "modparameters.h"
 
 // TODO: battery is currently a module due to the legacy C API, but should be
 // an instance of a Battery type. That would make it consistent with the other
 // C types and the high level Python API.
 
-#include "util/pberror.h"
+#include "util_pb/pb_error.h"
 #include <pbdrv/battery.h>
 
 STATIC mp_obj_t battery_voltage(void) {

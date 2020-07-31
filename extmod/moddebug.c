@@ -10,7 +10,7 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 
-#include "util/pberror.h"
+#include "util_pb/pb_error.h"
 
 
 STATIC mp_obj_t debug_read_adc(mp_obj_t ch) {

@@ -10,14 +10,14 @@
 #include "py/objstr.h"
 
 #include "pbdevice.h"
-#include "util/pbobj.h"
-#include "util/pbkwarg.h"
+#include "util_mp/pb_obj_helper.h"
+#include "util_mp/pb_kwarg_helper.h"
 #include "modparameters.h"
 
 #include <pbio/iodev.h>
 #include <pbio/serial.h>
 
-#include "util/pberror.h"
+#include "util_pb/pb_error.h"
 
 #include "common/common.h"
 #include "common/common_motors.h"

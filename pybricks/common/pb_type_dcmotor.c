@@ -13,9 +13,9 @@
 
 #include "modparameters.h"
 
-#include "util/pberror.h"
-#include "util/pbobj.h"
-#include "util/pbkwarg.h"
+#include "util_pb/pb_error.h"
+#include "util_mp/pb_obj_helper.h"
+#include "util_mp/pb_kwarg_helper.h"
 
 // pybricks._common.DCMotor.__init__
 STATIC mp_obj_t common_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {

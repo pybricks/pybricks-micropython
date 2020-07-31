@@ -3,7 +3,7 @@
 
 #include "py/mphal.h"
 
-#include "util/pberror.h"
+#include "util_pb/pb_error.h"
 #include "pbdevice.h"
 
 

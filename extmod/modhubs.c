@@ -10,8 +10,8 @@
 
 #include "common/common.h"
 
-#include "util/pberror.h"
-#include "util/pbobj.h"
+#include "util_pb/pb_error.h"
+#include "util_mp/pb_obj_helper.h"
 
 #if PYBRICKS_HUB_EV3
 

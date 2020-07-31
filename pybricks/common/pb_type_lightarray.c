@@ -9,9 +9,9 @@
 
 #include "py/obj.h"
 
-#include "util/pberror.h"
-#include "util/pbobj.h"
-#include "util/pbkwarg.h"
+#include "util_pb/pb_error.h"
+#include "util_mp/pb_obj_helper.h"
+#include "util_mp/pb_kwarg_helper.h"
 
 // pybricks._common.Light class object
 typedef struct _builtins_LightArray_obj_t {
