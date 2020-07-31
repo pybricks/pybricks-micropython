@@ -66,3 +66,14 @@ mp_obj_t pb_obj_get_base_class_obj(mp_obj_t obj, const mp_obj_type_t *type) {
     pb_assert_type(obj, type);
     return MP_OBJ_NULL;
 }
+
+void pb_assert_type(mp_obj_t obj, const mp_obj_type_t *type) {
+    if (!mp_obj_is_type(obj, type)) {
+        #if MICROPY_ERROR_REPORTING == MICROPY_ERROR_REPORTING_TERSE
+        mp_raise_TypeError(NULL);
+        #else
+        mp_raise_msg_varg(&mp_type_TypeError, "can't convert %s to %s",
+            mp_obj_get_type_str(obj), qstr_str(type->name));
+        #endif
+    }
+}

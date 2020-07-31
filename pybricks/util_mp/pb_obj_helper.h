@@ -31,4 +31,7 @@ mp_int_t pb_obj_get_default_int(mp_obj_t obj, mp_int_t default_val);
 // Get base instance if object is instance of subclass of type
 mp_obj_t pb_obj_get_base_class_obj(mp_obj_t obj, const mp_obj_type_t *type);
 
+// Raise error on unexpected type
+void pb_assert_type(mp_obj_t obj, const mp_obj_type_t *type);
+
 #endif // PYBRICKS_INCLUDED_PBOBJ_H
