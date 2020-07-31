@@ -28,10 +28,13 @@ void pb_hsv_map_save_default(pb_hsv_map_t *map) {
     map->hue_orange = NA;
     map->hue_yellow = 30;
     map->hue_green = 110;
+    map->hue_cyan = NA;
     map->hue_blue = 210;
     map->hue_purple = NA;
+    map->hue_magenta = NA;
     map->value_none = 0;
     map->value_black = 10;
+    map->value_gray = NA;
     map->value_white = 60;
 }
 
@@ -54,7 +57,7 @@ static void update_error(int32_t value, int32_t *min_error, mp_obj_t *color_matc
     }
 }
 
-// Set initial default thresholds
+// Get a discrete color that matches the given hsv values most closely
 mp_obj_t pb_hsv_get_color(pb_hsv_map_t *map, int32_t hue, int32_t saturation, int32_t value) {
 
     int32_t min_error = 1000;
@@ -66,12 +69,15 @@ mp_obj_t pb_hsv_get_color(pb_hsv_map_t *map, int32_t hue, int32_t saturation, in
         update_error(hue, &min_error, &color_match, map->hue_orange, pb_const_color_orange);
         update_error(hue, &min_error, &color_match, map->hue_yellow, pb_const_color_yellow);
         update_error(hue, &min_error, &color_match, map->hue_green, pb_const_color_green);
+        update_error(hue, &min_error, &color_match, map->hue_cyan, pb_const_color_cyan);
         update_error(hue, &min_error, &color_match, map->hue_blue, pb_const_color_blue);
         update_error(hue, &min_error, &color_match, map->hue_purple, pb_const_color_purple);
+        update_error(hue, &min_error, &color_match, map->hue_magenta, pb_const_color_magenta);
     } else {
         // Pick a non-color depending on value, whichever is the nearest match
         update_error(value, &min_error, &color_match, map->value_none, mp_const_none);
         update_error(value, &min_error, &color_match, map->value_black, pb_const_color_black);
+        update_error(value, &min_error, &color_match, map->value_gray, pb_const_color_gray);
         update_error(value, &min_error, &color_match, map->value_white, pb_const_color_white);
     }
 
@@ -98,8 +104,14 @@ mp_obj_t pack_color_map(pb_hsv_map_t *map) {
     if (map->hue_blue != NA) {
         mp_obj_dict_store(hues, pb_const_color_blue, mp_obj_new_int(map->hue_blue));
     }
+    if (map->hue_cyan != NA) {
+        mp_obj_dict_store(hues, pb_const_color_cyan, mp_obj_new_int(map->hue_cyan));
+    }
     if (map->hue_purple != NA) {
         mp_obj_dict_store(hues, pb_const_color_purple, mp_obj_new_int(map->hue_purple));
+    }
+    if (map->hue_magenta != NA) {
+        mp_obj_dict_store(hues, pb_const_color_magenta, mp_obj_new_int(map->hue_magenta));
     }
 
     // Pack saturation threshold
@@ -112,6 +124,9 @@ mp_obj_t pack_color_map(pb_hsv_map_t *map) {
     }
     if (map->value_black != NA) {
         mp_obj_dict_store(values, pb_const_color_black, mp_obj_new_int(map->value_black));
+    }
+    if (map->value_gray != NA) {
+        mp_obj_dict_store(values, pb_const_color_gray, mp_obj_new_int(map->value_gray));
     }
     if (map->value_white != NA) {
         mp_obj_dict_store(values, pb_const_color_white, mp_obj_new_int(map->value_white));
@@ -166,10 +181,14 @@ void unpack_color_map(pb_hsv_map_t *map, mp_obj_t hues, mp_obj_t saturation, mp_
     assert_greater(yellow, &min_hue, &max_hue, 359);
     int32_t green = get_hue_or_value(hues, pb_const_color_green);
     assert_greater(green, &min_hue, &max_hue, 359);
+    int32_t cyan = get_hue_or_value(hues, pb_const_color_cyan);
+    assert_greater(cyan, &min_hue, &max_hue, 359);
     int32_t blue = get_hue_or_value(hues, pb_const_color_blue);
     assert_greater(blue, &min_hue, &max_hue, 359);
     int32_t purple = get_hue_or_value(hues, pb_const_color_purple);
     assert_greater(purple, &min_hue, &max_hue, 359);
+    int32_t magenta = get_hue_or_value(hues, pb_const_color_magenta);
+    assert_greater(magenta, &min_hue, &max_hue, 359);
 
     // If given, red must be the lowest or the highest hue
     int32_t red = get_hue_or_value(hues, pb_const_color_red);
@@ -187,6 +206,8 @@ void unpack_color_map(pb_hsv_map_t *map, mp_obj_t hues, mp_obj_t saturation, mp_
     assert_greater(none, &min_value, &max_value, 100);
     int32_t black = get_hue_or_value(values, pb_const_color_black);
     assert_greater(black, &min_value, &max_value, 100);
+    int32_t gray = get_hue_or_value(values, pb_const_color_gray);
+    assert_greater(gray, &min_value, &max_value, 100);
     int32_t white = get_hue_or_value(values, pb_const_color_white);
     assert_greater(white, &min_value, &max_value, 100);
 
@@ -195,11 +216,14 @@ void unpack_color_map(pb_hsv_map_t *map, mp_obj_t hues, mp_obj_t saturation, mp_
     map->hue_orange = orange;
     map->hue_yellow = yellow;
     map->hue_green = green;
+    map->hue_cyan = cyan;
     map->hue_blue = blue;
     map->hue_purple = purple;
+    map->hue_magenta = magenta;
     map->saturation_threshold = saturation_threshold;
     map->value_none = none;
     map->value_black = black;
+    map->value_gray = gray;
     map->value_white = white;
 }
 

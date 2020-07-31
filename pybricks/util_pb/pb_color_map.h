@@ -10,10 +10,13 @@ typedef struct _pb_hsv_map_t {
     int32_t hue_orange;
     int32_t hue_yellow;
     int32_t hue_green;
+    int32_t hue_cyan;
     int32_t hue_blue;
     int32_t hue_purple;
+    int32_t hue_magenta;
     int32_t value_none;
     int32_t value_black;
+    int32_t value_gray;
     int32_t value_white;
 } pb_hsv_map_t;
 
