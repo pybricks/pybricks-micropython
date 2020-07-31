@@ -21,7 +21,6 @@ mp_obj_t pb_hsv_get_color(pb_hsv_map_t *map, int32_t hue, int32_t saturation, in
 
 void pb_hsv_map_save_default(pb_hsv_map_t *map);
 
-mp_obj_t pack_color_map(pb_hsv_map_t *map);
-void unpack_color_map(pb_hsv_map_t *map, mp_obj_t hues, mp_obj_t saturation, mp_obj_t values);
+const mp_obj_fun_builtin_var_t pb_ColorSensor_color_map_obj;
 
 #endif // _PBHSV_H_

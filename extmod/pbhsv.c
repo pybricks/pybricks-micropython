@@ -10,7 +10,9 @@
 
 
 #include "util_pb/pb_error.h"
+#include "util_mp/pb_kwarg_helper.h"
 #include "util_mp/pb_obj_helper.h"
+
 #include "pbhsv.h"
 #include "modparameters.h"
 
@@ -200,3 +202,30 @@ void unpack_color_map(pb_hsv_map_t *map, mp_obj_t hues, mp_obj_t saturation, mp_
     map->value_white = white;
 }
 
+// Generic class structure for ColorDistanceSensor
+// Any color sensor structure with a color_map
+// must have base and color_map as the first two members.
+typedef struct _pb_ColorSensor_obj_t {
+    mp_obj_base_t base;
+    pb_hsv_map_t color_map;
+} pb_ColorSensor_obj_t;
+
+// pybricks._common.ColorDistanceSensor.color_map
+STATIC mp_obj_t pupdevices_ColorDistanceSensor_color_map(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        pb_ColorSensor_obj_t, self,
+        PB_ARG_DEFAULT_NONE(hues),
+        PB_ARG_DEFAULT_NONE(saturation),
+        PB_ARG_DEFAULT_NONE(values));
+
+    // If no arguments are given, return current map
+    if (hues == mp_const_none && saturation == mp_const_none && values == mp_const_none) {
+        return pack_color_map(&self->color_map);
+    }
+
+    // Otherwise, unpack given map
+    unpack_color_map(&self->color_map, hues, saturation, values);
+
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_KW(pb_ColorSensor_color_map_obj, 1, pupdevices_ColorDistanceSensor_color_map);
