@@ -142,7 +142,6 @@ LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
 SRC_C = $(addprefix bricks/stm32/,\
 	main.c \
-	pbdevice.c \
 	systick.c \
 	uart_core.c \
 	)
@@ -180,8 +179,9 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	robotics/pb_type_matrix.c \
 	tools/pb_module_tools.c \
 	tools/pb_type_stopwatch.c \
-	util_mp/pb_type_enum.c \
 	util_mp/pb_obj_helper.c \
+	util_mp/pb_type_enum.c \
+	util_pb/pb_device_stm32.c \
 	util_pb/pb_error.c \
 	)
 

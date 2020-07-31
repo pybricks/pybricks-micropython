@@ -16,13 +16,13 @@
 // pybricks._common.Light class object
 typedef struct _builtins_LightArray_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
     uint8_t light_mode;
     uint8_t number_of_lights;
 } builtins_LightArray_obj_t;
 
 // pybricks._common.LightArray.__init__
-mp_obj_t common_LightArray_obj_make_new(pbdevice_t *pbdev, uint8_t light_mode, uint8_t number_of_lights) {
+mp_obj_t common_LightArray_obj_make_new(pb_device_t *pbdev, uint8_t light_mode, uint8_t number_of_lights) {
     // Create new light instance
     builtins_LightArray_obj_t *light = m_new_obj(builtins_LightArray_obj_t);
     // Set type and iodev
@@ -59,7 +59,7 @@ STATIC mp_obj_t builtins_LightArray_on(size_t n_args, const mp_obj_t *pos_args, 
     }
 
     // Set the brightness values
-    pbdevice_set_values(self->pbdev, self->light_mode, brightness, self->number_of_lights);
+    pb_device_set_values(self->pbdev, self->light_mode, brightness, self->number_of_lights);
 
     return mp_const_none;
 }
@@ -70,7 +70,7 @@ STATIC mp_obj_t builtins_LightArray_off(mp_obj_t self_in) {
     builtins_LightArray_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     int32_t brightness[4] = {0};
-    pbdevice_set_values(self->pbdev, self->light_mode, brightness, self->number_of_lights);
+    pb_device_set_values(self->pbdev, self->light_mode, brightness, self->number_of_lights);
 
     return mp_const_none;
 }

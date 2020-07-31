@@ -16,9 +16,9 @@
 #include "py/mphal.h"
 
 #include "util_pb/pb_error.h"
-#include "pbdevice.h"
+#include "util_pb/pb_device.h"
 
-struct _pbdevice_t {
+struct _pb_device_t {
     pbio_iodev_t iodev;
 };
 
@@ -77,7 +77,7 @@ static void set_mode(pbio_iodev_t *iodev, uint8_t new_mode) {
     }
 }
 
-pbdevice_t *pbdevice_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id) {
+pb_device_t *pb_device_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id) {
 
     // Get the iodevice
     pbio_iodev_t *iodev;
@@ -95,10 +95,10 @@ pbdevice_t *pbdevice_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id)
 
     // Return pointer to device
     iodev->port = port;
-    return (pbdevice_t *)iodev;
+    return (pb_device_t *)iodev;
 }
 
-void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values) {
+void pb_device_get_values(pb_device_t *pbdev, uint8_t mode, int32_t *values) {
 
     pbio_iodev_t *iodev = &pbdev->iodev;
 
@@ -137,7 +137,7 @@ void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values) {
     }
 }
 
-void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values, uint8_t num_values) {
+void pb_device_set_values(pb_device_t *pbdev, uint8_t mode, int32_t *values, uint8_t num_values) {
 
     pbio_iodev_t *iodev = &pbdev->iodev;
 
@@ -181,7 +181,7 @@ void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values, uint8
     wait(pbio_iodev_set_data_end, pbio_iodev_set_data_cancel, iodev);
 }
 
-void pbdevice_set_power_supply(pbdevice_t *pbdev, int32_t duty) {
+void pb_device_set_power_supply(pb_device_t *pbdev, int32_t duty) {
     // Bind user input to percentage
     if (duty < 0) {
         duty = 0;
@@ -192,19 +192,19 @@ void pbdevice_set_power_supply(pbdevice_t *pbdev, int32_t duty) {
     pb_assert(pbdrv_motor_set_duty_cycle(pbdev->iodev.port, -100 * duty));
 }
 
-void pbdevice_get_info(pbdevice_t *pbdev, pbio_port_t *port, pbio_iodev_type_id_t *id, uint8_t *mode, uint8_t *num_values) {
+void pb_device_get_info(pb_device_t *pbdev, pbio_port_t *port, pbio_iodev_type_id_t *id, uint8_t *mode, uint8_t *num_values) {
     *port = pbdev->iodev.port;
     *id = pbdev->iodev.info->type_id;
     *mode = pbdev->iodev.mode;
     *num_values = pbdev->iodev.info->mode_info[*mode].num_values;
 }
 
-int8_t pbdevice_get_mode_id_from_str(pbdevice_t *pbdev, const char *mode_str) {
+int8_t pb_device_get_mode_id_from_str(pb_device_t *pbdev, const char *mode_str) {
     pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
     return 0;
 }
 
-void pbdevice_color_light_on(pbdevice_t *pbdev, pbio_color_t color) {
+void pb_device_color_light_on(pb_device_t *pbdev, pbio_color_t color) {
     // Turn on the light through device specific mode
     uint8_t mode;
     switch (pbdev->iodev.info->type_id) {
@@ -224,7 +224,7 @@ void pbdevice_color_light_on(pbdevice_t *pbdev, pbio_color_t color) {
                     break;
             }
             int32_t data[4];
-            pbdevice_get_values(pbdev, mode, data);
+            pb_device_get_values(pbdev, mode, data);
             break;
         default:
             pb_assert(PBIO_ERROR_NOT_SUPPORTED);

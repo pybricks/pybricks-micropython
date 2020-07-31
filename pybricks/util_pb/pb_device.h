@@ -10,21 +10,21 @@
 #include <pbio/error.h>
 #include <pbio/iodev.h>
 
-typedef struct _pbdevice_t pbdevice_t;
+typedef struct _pb_device_t pb_device_t;
 
-pbdevice_t *pbdevice_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id);
+pb_device_t *pb_device_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id);
 
-void pbdevice_get_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values);
+void pb_device_get_values(pb_device_t *pbdev, uint8_t mode, int32_t *values);
 
-void pbdevice_set_values(pbdevice_t *pbdev, uint8_t mode, int32_t *values, uint8_t num_values);
+void pb_device_set_values(pb_device_t *pbdev, uint8_t mode, int32_t *values, uint8_t num_values);
 
-void pbdevice_set_power_supply(pbdevice_t *pbdev, int32_t duty);
+void pb_device_set_power_supply(pb_device_t *pbdev, int32_t duty);
 
-void pbdevice_get_info(pbdevice_t *pbdev, pbio_port_t *port, pbio_iodev_type_id_t *id, uint8_t *mode, uint8_t *num_values);
+void pb_device_get_info(pb_device_t *pbdev, pbio_port_t *port, pbio_iodev_type_id_t *id, uint8_t *mode, uint8_t *num_values);
 
-int8_t pbdevice_get_mode_id_from_str(pbdevice_t *pbdev, const char *mode_str);
+int8_t pb_device_get_mode_id_from_str(pb_device_t *pbdev, const char *mode_str);
 
-void pbdevice_color_light_on(pbdevice_t *pbdev, pbio_color_t color);
+void pb_device_color_light_on(pb_device_t *pbdev, pbio_color_t color);
 
 // LEGO MINDSTORMS EV3 Touch Sensor
 enum {

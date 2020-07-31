@@ -9,7 +9,7 @@
 #include "py/runtime.h"
 #include "py/objstr.h"
 
-#include "pbdevice.h"
+#include "util_pb/pb_device.h"
 #include "util_mp/pb_obj_helper.h"
 #include "util_mp/pb_kwarg_helper.h"
 #include "modparameters.h"
@@ -27,7 +27,7 @@
 // Class structure for LUMPDevice
 typedef struct _iodevices_LUMPDevice_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
     mp_obj_t id;
 } iodevices_LUMPDevice_obj_t;
 
@@ -41,20 +41,20 @@ STATIC mp_obj_t iodevices_LUMPDevice_make_new(const mp_obj_type_t *type, size_t 
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_LUMP_UART);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_LUMP_UART);
 
     pbio_port_t _port;
     pbio_iodev_type_id_t id;
     uint8_t curr_mode;
     uint8_t num_values;
-    pbdevice_get_info(self->pbdev, &_port, &id, &curr_mode, &num_values);
+    pb_device_get_info(self->pbdev, &_port, &id, &curr_mode, &num_values);
     self->id = mp_obj_new_int(id);
 
     #if PYBRICKS_PY_PUPDEVICES
     // FIXME: Read sensor capability flag to see which sensor uses power. As
     // a precaution, only enable power for selected known sensors for now.
     int32_t duty = (id == PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR || id == PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR) ? 100 : 0;
-    pbdevice_set_power_supply(self->pbdev, duty);
+    pb_device_set_power_supply(self->pbdev, duty);
     #endif // PYBRICKS_PY_PUPDEVICES
 
     return MP_OBJ_FROM_PTR(self);
@@ -69,14 +69,14 @@ STATIC mp_obj_t iodevices_LUMPDevice_read(size_t n_args, const mp_obj_t *pos_arg
     // Get data already in correct data format
     int32_t data[PBIO_IODEV_MAX_DATA_SIZE];
     mp_obj_t objs[PBIO_IODEV_MAX_DATA_SIZE];
-    pbdevice_get_values(self->pbdev, mp_obj_get_int(mode), data);
+    pb_device_get_values(self->pbdev, mp_obj_get_int(mode), data);
 
     // Get info about the sensor and its mode
     pbio_port_t port;
     pbio_iodev_type_id_t id;
     uint8_t curr_mode;
     uint8_t num_values;
-    pbdevice_get_info(self->pbdev, &port, &id, &curr_mode, &num_values);
+    pb_device_get_info(self->pbdev, &port, &id, &curr_mode, &num_values);
 
     // Return as MicroPython objects
     for (uint8_t i = 0; i < num_values; i++) {
@@ -109,7 +109,7 @@ STATIC mp_obj_t iodevices_LUMPDevice_write(size_t n_args, const mp_obj_t *pos_ar
     }
 
     // Set the data
-    pbdevice_set_values(self->pbdev, mp_obj_get_int(mode), _data, num_values);
+    pb_device_set_values(self->pbdev, mp_obj_get_int(mode), _data, num_values);
 
     return mp_const_none;
 }
@@ -142,7 +142,7 @@ STATIC const mp_obj_type_t iodevices_LUMPDevice_type = {
 typedef struct _iodevices_AnalogSensor_obj_t {
     mp_obj_base_t base;
     bool active;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
 } iodevices_AnalogSensor_obj_t;
 
 // pybricks.iodevices.AnalogSensor.__init__
@@ -154,11 +154,11 @@ STATIC mp_obj_t iodevices_AnalogSensor_make_new(const mp_obj_type_t *otype, size
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_ANALOG);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_ANALOG);
 
     // Initialize NXT sensors to passive state
     int32_t voltage;
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &voltage);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &voltage);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -168,7 +168,7 @@ STATIC mp_obj_t iodevices_AnalogSensor_voltage(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t voltage;
     uint8_t mode = self->active ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
-    pbdevice_get_values(self->pbdev, mode, &voltage);
+    pb_device_get_values(self->pbdev, mode, &voltage);
     return mp_obj_new_int(voltage);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_voltage_obj, iodevices_AnalogSensor_voltage);
@@ -178,7 +178,7 @@ STATIC mp_obj_t iodevices_AnalogSensor_resistance(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t voltage;
     uint8_t mode = self->active ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
-    pbdevice_get_values(self->pbdev, mode, &voltage);
+    pb_device_get_values(self->pbdev, mode, &voltage);
 
     // Open terminal/infinite resistance, return infinite resistance
     const int32_t vmax = 4972;
@@ -194,7 +194,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_resistance_obj, iodevice
 STATIC mp_obj_t iodevices_AnalogSensor_active(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t voltage;
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE, &voltage);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE, &voltage);
     self->active = true;
     return mp_const_none;
 }
@@ -204,7 +204,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_AnalogSensor_active_obj, iodevices_An
 STATIC mp_obj_t iodevices_AnalogSensor_passive(mp_obj_t self_in) {
     iodevices_AnalogSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t voltage;
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &voltage);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE, &voltage);
     self->active = false;
     return mp_const_none;
 }
@@ -230,7 +230,7 @@ STATIC const mp_obj_type_t iodevices_AnalogSensor_type = {
 // pybricks.iodevices.I2CDevice class object
 typedef struct _iodevices_I2CDevice_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
     smbus_t *bus;
     int8_t address;
 } iodevices_I2CDevice_obj_t;
@@ -254,7 +254,7 @@ STATIC mp_obj_t iodevices_I2CDevice_make_new(const mp_obj_type_t *otype, size_t 
     self->address = addr;
 
     // Init I2C port
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_CUSTOM_I2C);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_CUSTOM_I2C);
 
     // Get the smbus, which on ev3dev is zero based sensor port number + 3.
     pb_assert(pb_smbus_get(&self->bus, port_num - PBIO_PORT_1 + 3));
@@ -379,7 +379,7 @@ STATIC const mp_obj_type_t iodevices_I2CDevice_type = {
 // pybricks.iodevices.UARTDevice class object
 typedef struct _iodevices_UARTDevice_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
     pbio_serial_t *serial;
 } iodevices_UARTDevice_obj_t;
 
@@ -396,7 +396,7 @@ STATIC mp_obj_t iodevices_UARTDevice_make_new(const mp_obj_type_t *otype, size_t
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     // Init UART port
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_CUSTOM_UART);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_CUSTOM_UART);
 
     // Get and init serial
     pb_assert(pbio_serial_get(
@@ -529,7 +529,7 @@ STATIC const mp_obj_type_t iodevices_UARTDevice_type = {
 // Class structure for Ev3devSensor
 typedef struct _iodevices_Ev3devSensor_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
     mp_obj_t sensor_index;
     mp_obj_t port_index;
 } iodevices_Ev3devSensor_obj_t;
@@ -544,9 +544,9 @@ STATIC mp_obj_t iodevices_Ev3devSensor_make_new(const mp_obj_type_t *type, size_
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR);
 
-    // Get the sysfs index. This is not currently exposed through pbdevice,
+    // Get the sysfs index. This is not currently exposed through pb_device,
     // so read it again by searching through the sysfs tree.
     int32_t sensor_index, port_index;
     pb_assert(sysfs_get_number(port_num, "/sys/class/lego-sensor", &sensor_index));
@@ -564,19 +564,19 @@ STATIC mp_obj_t iodevices_Ev3devSensor_read(size_t n_args, const mp_obj_t *pos_a
         PB_ARG_REQUIRED(mode));
 
     // Get mode index from mode string
-    uint8_t mode_idx = pbdevice_get_mode_id_from_str(self->pbdev, mp_obj_str_get_str(mode));
+    uint8_t mode_idx = pb_device_get_mode_id_from_str(self->pbdev, mp_obj_str_get_str(mode));
 
     // Get data already in correct data format
     int32_t data[PBIO_IODEV_MAX_DATA_SIZE];
     mp_obj_t objs[PBIO_IODEV_MAX_DATA_SIZE];
-    pbdevice_get_values(self->pbdev, mode_idx, data);
+    pb_device_get_values(self->pbdev, mode_idx, data);
 
     // Get info about the sensor and its mode
     pbio_port_t port;
     pbio_iodev_type_id_t id;
     uint8_t curr_mode;
     uint8_t num_values;
-    pbdevice_get_info(self->pbdev, &port, &id, &curr_mode, &num_values);
+    pb_device_get_info(self->pbdev, &port, &id, &curr_mode, &num_values);
 
     // Return as MicroPython objects
     for (uint8_t i = 0; i < num_values; i++) {

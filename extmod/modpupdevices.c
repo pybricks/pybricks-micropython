@@ -17,7 +17,7 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 
-#include "pbdevice.h"
+#include "util_pb/pb_device.h"
 #include "util_pb/pb_error.h"
 #include "util_mp/pb_kwarg_helper.h"
 #include "util_mp/pb_obj_helper.h"
@@ -31,7 +31,7 @@
 // Class structure for ColorDistanceSensor
 typedef struct _pupdevices_ColorDistanceSensor_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
     pb_hsv_map_t color_map;
     mp_obj_t light;
 } pupdevices_ColorDistanceSensor_obj_t;
@@ -46,7 +46,7 @@ STATIC void raw_to_rgb(int32_t *raw, pbio_color_rgb_t *rgb) {
 // Ensures sensor is in RGB mode then converts the measured raw RGB value to HSV.
 STATIC void pupdevices_ColorDistanceSensor__hsv(pupdevices_ColorDistanceSensor_obj_t *self, pbio_color_hsv_t *hsv) {
     int32_t raw[3];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, raw);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, raw);
 
     pbio_color_rgb_t rgb;
     raw_to_rgb(raw, &rgb);
@@ -64,7 +64,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *typ
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
 
     // Create an instance of the Light class
     self->light = common_ColorLight_obj_make_new(self->pbdev);
@@ -92,7 +92,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_color_obj, pupde
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_distance(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t distance;
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX, &distance);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX, &distance);
     return mp_obj_new_int(distance * 10);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_distance_obj, pupdevices_ColorDistanceSensor_distance);
@@ -101,7 +101,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_distance_obj, pupdevice
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_reflection(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t rgb[3];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, rgb);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__RGB_I, rgb);
     return mp_obj_new_int((rgb[0] + rgb[1] + rgb[2]) / 12);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_reflection_obj, pupdevices_ColorDistanceSensor_reflection);
@@ -110,7 +110,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_reflection_obj, pupdevi
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_ambient(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t ambient;
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI, &ambient);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI, &ambient);
     return mp_obj_new_int(ambient);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_ambient_obj, pupdevices_ColorDistanceSensor_ambient);
@@ -146,7 +146,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_remote(size_t n_args, const mp_ob
                 (ch - 1) << 8;
 
     // Send the data to the device
-    pbdevice_set_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &message, 1);
+    pb_device_set_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &message, 1);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorDistanceSensor_remote_obj, 1, pupdevices_ColorDistanceSensor_remote);
@@ -211,16 +211,16 @@ STATIC const mp_obj_type_t pupdevices_ColorDistanceSensor_type = {
 // Class structure for ColorSensor. NOTE: Must match ColorDistanceSensor up to color_map
 typedef struct _pupdevices_ColorSensor_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
     pb_hsv_map_t color_map;
     mp_obj_t lights;
 } pupdevices_ColorSensor_obj_t;
 
 // pybricks._common.ColorSensor._get_hsv
-STATIC void pupdevices_ColorSensor__get_hsv(pbdevice_t *pbdev, bool light_on, int32_t *hsv) {
+STATIC void pupdevices_ColorSensor__get_hsv(pb_device_t *pbdev, bool light_on, int32_t *hsv) {
 
     // Read HSV (light on) or SHSV mode (light off)
-    pbdevice_get_values(pbdev, light_on ? PBIO_IODEV_MODE_PUP_COLOR_SENSOR__HSV : PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, hsv);
+    pb_device_get_values(pbdev, light_on ? PBIO_IODEV_MODE_PUP_COLOR_SENSOR__HSV : PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, hsv);
 
     // Scale saturation and value to match 0-100% range in typical applications.
     // However, do not cap to allow other applications as well. For example, full sunlight will exceed 100%.
@@ -244,10 +244,10 @@ STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     // Get iodevices
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR);
 
     // This sensor requires power, which iodevice does not do automatically yet
-    pbdevice_set_power_supply(self->pbdev, 100);
+    pb_device_set_power_supply(self->pbdev, 100);
 
     // Create an instance of the LightArray class
     self->lights = common_LightArray_obj_make_new(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__LIGHT, 3);
@@ -350,7 +350,7 @@ STATIC const mp_obj_type_t pupdevices_ColorSensor_type = {
 typedef struct _pupdevices_UltrasonicSensor_obj_t {
     mp_obj_base_t base;
     mp_obj_t lights;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
 } pupdevices_UltrasonicSensor_obj_t;
 
 // pybricks.pupdevices.UltrasonicSensor.__init__
@@ -364,10 +364,10 @@ STATIC mp_obj_t pupdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     // Get iodevices
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR);
 
     // This sensor requires power, which iodevice does not do automatically yet
-    pbdevice_set_power_supply(self->pbdev, 100);
+    pb_device_set_power_supply(self->pbdev, 100);
 
     // Create an instance of the LightArray class
     self->lights = common_LightArray_obj_make_new(self->pbdev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LIGHT, 4);
@@ -379,7 +379,7 @@ STATIC mp_obj_t pupdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
 STATIC mp_obj_t pupdevices_UltrasonicSensor_distance(mp_obj_t self_in) {
     pupdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t distance;
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__DISTL, &distance);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__DISTL, &distance);
     return mp_obj_new_int(distance < 0 || distance >= 2000 ? 2000 : distance);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_UltrasonicSensor_distance_obj, pupdevices_UltrasonicSensor_distance);
@@ -388,7 +388,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_UltrasonicSensor_distance_obj, pupde
 STATIC mp_obj_t pupdevices_UltrasonicSensor_presence(mp_obj_t self_in) {
     pupdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t presence;
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LISTN, &presence);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LISTN, &presence);
     return mp_obj_new_bool(presence);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_UltrasonicSensor_presence_obj, pupdevices_UltrasonicSensor_presence);
@@ -412,7 +412,7 @@ STATIC const mp_obj_type_t pupdevices_UltrasonicSensor_type = {
 // Class structure for ForceSensor
 typedef struct _pupdevices_ForceSensor_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
     int32_t raw_released;
     int32_t raw_offset;
     int32_t raw_start;
@@ -420,9 +420,9 @@ typedef struct _pupdevices_ForceSensor_obj_t {
 } pupdevices_ForceSensor_obj_t;
 
 // pybricks.pupdevices.ForceSensor._raw
-STATIC int32_t pupdevices_ForceSensor__raw(pbdevice_t *pbdev) {
+STATIC int32_t pupdevices_ForceSensor__raw(pb_device_t *pbdev) {
     int32_t raw;
-    pbdevice_get_values(pbdev, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__FRAW, &raw);
+    pb_device_get_values(pbdev, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__FRAW, &raw);
     return raw;
 }
 
@@ -457,11 +457,11 @@ STATIC mp_obj_t pupdevices_ForceSensor_make_new(const mp_obj_type_t *type, size_
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     // Get iodevices
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_SPIKE_FORCE_SENSOR);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_SPIKE_FORCE_SENSOR);
 
     // Read scaling factors
     int32_t calib[8];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__CALIB, calib);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_FORCE_SENSOR__CALIB, calib);
     self->raw_offset = calib[1];
     self->raw_released = calib[2];
     self->raw_end = calib[6];
@@ -539,14 +539,14 @@ STATIC const mp_obj_type_t pupdevices_ForceSensor_type = {
 // Class structure for InfraredSensor
 typedef struct _pupdevices_InfraredSensor_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
     int32_t count_offset;
 } pupdevices_InfraredSensor_obj_t;
 
 // pybricks.pupdevices.InfraredSensor._raw
-STATIC int32_t pupdevices_InfraredSensor__raw(pbdevice_t *pbdev) {
+STATIC int32_t pupdevices_InfraredSensor__raw(pb_device_t *pbdev) {
     int32_t raw[3];
-    pbdevice_get_values(pbdev, PBIO_IODEV_MODE_PUP_WEDO2_MOTION_SENSOR__CAL, raw);
+    pb_device_get_values(pbdev, PBIO_IODEV_MODE_PUP_WEDO2_MOTION_SENSOR__CAL, raw);
     return raw[0];
 }
 
@@ -561,10 +561,10 @@ STATIC mp_obj_t pupdevices_InfraredSensor_make_new(const mp_obj_type_t *type, si
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     // Get iodevice
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_WEDO2_MOTION_SENSOR);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_WEDO2_MOTION_SENSOR);
 
     // Reset sensor counter and get sensor back in sensing mode
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_WEDO2_MOTION_SENSOR__COUNT, &self->count_offset);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_WEDO2_MOTION_SENSOR__COUNT, &self->count_offset);
     pupdevices_InfraredSensor__raw(self->pbdev);
 
     return MP_OBJ_FROM_PTR(self);
@@ -574,7 +574,7 @@ STATIC mp_obj_t pupdevices_InfraredSensor_make_new(const mp_obj_type_t *type, si
 STATIC mp_obj_t pupdevices_InfraredSensor_count(mp_obj_t self_in) {
     pupdevices_InfraredSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t count;
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_WEDO2_MOTION_SENSOR__COUNT, &count);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_WEDO2_MOTION_SENSOR__COUNT, &count);
     return mp_obj_new_int(count - self->count_offset);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_InfraredSensor_count_obj, pupdevices_InfraredSensor_count);
@@ -614,7 +614,7 @@ STATIC const mp_obj_type_t pupdevices_InfraredSensor_type = {
 // Class structure for TiltSensor
 typedef struct _pupdevices_TiltSensor_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
 } pupdevices_TiltSensor_obj_t;
 
 // pybricks.pupdevices.TiltSensor.__init__
@@ -628,7 +628,7 @@ STATIC mp_obj_t pupdevices_TiltSensor_make_new(const mp_obj_type_t *type, size_t
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     // Get iodevice
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_WEDO2_TILT_SENSOR);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_WEDO2_TILT_SENSOR);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -637,7 +637,7 @@ STATIC mp_obj_t pupdevices_TiltSensor_make_new(const mp_obj_type_t *type, size_t
 STATIC mp_obj_t pupdevices_TiltSensor_tilt(mp_obj_t self_in) {
     pupdevices_TiltSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t tilt[2];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_WEDO2_TILT_SENSOR__ANGLE, tilt);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_WEDO2_TILT_SENSOR__ANGLE, tilt);
     mp_obj_t ret[2];
     ret[0] = mp_obj_new_int(tilt[1]);
     ret[1] = mp_obj_new_int(tilt[0]);
@@ -663,7 +663,7 @@ STATIC const mp_obj_type_t pupdevices_TiltSensor_type = {
 // Class structure for Light
 typedef struct _pupdevices_Light_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
 } pupdevices_Light_obj_t;
 
 // pybricks.pupdevices.Light.__init__
@@ -677,7 +677,7 @@ STATIC mp_obj_t pupdevices_Light_make_new(const mp_obj_type_t *type, size_t n_ar
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     // Get iodevices
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_LPF2_LIGHT);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_LPF2_LIGHT);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -689,7 +689,7 @@ STATIC mp_obj_t pupdevices_Light_on(size_t n_args, const mp_obj_t *pos_args, mp_
         PB_ARG_DEFAULT_INT(brightness, 100));
 
     // Set the brightness
-    pbdevice_set_power_supply(self->pbdev, pb_obj_get_int(brightness));
+    pb_device_set_power_supply(self->pbdev, pb_obj_get_int(brightness));
 
     return mp_const_none;
 }
@@ -698,7 +698,7 @@ MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_Light_on_obj, 1, pupdevices_Light_on);
 // pybricks.pupdevices.Light.off
 STATIC mp_obj_t pupdevices_Light_off(mp_obj_t self_in) {
     pupdevices_Light_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pbdevice_set_power_supply(self->pbdev, 0);
+    pb_device_set_power_supply(self->pbdev, 0);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_Light_off_obj, pupdevices_Light_off);

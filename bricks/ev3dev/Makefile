@@ -218,7 +218,6 @@ PYBRICKS_SRC_C += \
 	pb_type_ev3dev_font.c \
 	pb_type_ev3dev_image.c \
 	pb_type_ev3dev_speaker.c \
-	pbdevice.c \
 	pbinit.c \
 	pbsmbus.c \
 
@@ -245,8 +244,9 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	robotics/pb_type_matrix.c \
 	tools/pb_module_tools.c \
 	tools/pb_type_stopwatch.c \
-	util_mp/pb_type_enum.c \
 	util_mp/pb_obj_helper.c \
+	util_mp/pb_type_enum.c \
+	util_pb/pb_device_ev3dev.c \
 	util_pb/pb_error.c \
 	)
 

@@ -10,7 +10,7 @@
 #include "py/runtime.h"
 #include "py/objtype.h"
 
-#include "pbdevice.h"
+#include "util_pb/pb_device.h"
 
 #include "util_mp/pb_obj_helper.h"
 #include "util_mp/pb_kwarg_helper.h"
@@ -35,7 +35,7 @@ STATIC int32_t analog_scale(int32_t mvolts, int32_t mvolts_min, int32_t mvolts_m
 // pybricks.nxtdevices.UltrasonicSensor class object
 typedef struct _nxtdevices_UltrasonicSensor_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
 } nxtdevices_UltrasonicSensor_obj_t;
 
 // pybricks.nxtdevices.UltrasonicSensor.__init__
@@ -48,7 +48,7 @@ STATIC mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_ULTRASONIC_SENSOR);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_ULTRASONIC_SENSOR);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -57,7 +57,7 @@ STATIC mp_obj_t nxtdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
 STATIC mp_obj_t nxtdevices_UltrasonicSensor_distance(mp_obj_t self_in) {
     nxtdevices_UltrasonicSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t distance;
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ULTRASONIC_SENSOR__DIST_CM, &distance);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ULTRASONIC_SENSOR__DIST_CM, &distance);
     return mp_obj_new_int(distance * 10);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_UltrasonicSensor_distance_obj, nxtdevices_UltrasonicSensor_distance);
@@ -79,7 +79,7 @@ STATIC const mp_obj_type_t nxtdevices_UltrasonicSensor_type = {
 // pybricks.nxtdevices.TouchSensor class object
 typedef struct _nxtdevices_TouchSensor_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
 } nxtdevices_TouchSensor_obj_t;
 
 // pybricks.nxtdevices.TouchSensor.__init__
@@ -92,7 +92,7 @@ STATIC mp_obj_t nxtdevices_TouchSensor_make_new(const mp_obj_type_t *type, size_
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -101,7 +101,7 @@ STATIC mp_obj_t nxtdevices_TouchSensor_make_new(const mp_obj_type_t *type, size_
 STATIC mp_obj_t nxtdevices_TouchSensor_pressed(mp_obj_t self_in) {
     nxtdevices_TouchSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t analog;
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_TOUCH_SENSOR__TOUCH, &analog);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_TOUCH_SENSOR__TOUCH, &analog);
     return mp_obj_new_bool(analog < 2500);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TouchSensor_pressed_obj, nxtdevices_TouchSensor_pressed);
@@ -123,7 +123,7 @@ STATIC const mp_obj_type_t nxtdevices_TouchSensor_type = {
 // pybricks.nxtdevices.SoundSensor class object
 typedef struct _nxtdevices_SoundSensor_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
 } nxtdevices_SoundSensor_obj_t;
 
 // pybricks.nxtdevices.SoundSensor.intensity
@@ -135,7 +135,7 @@ STATIC mp_obj_t nxtdevices_SoundSensor_intensity(size_t n_args, const mp_obj_t *
 
     uint8_t mode = mp_obj_is_true(audible_only) ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
     int32_t analog;
-    pbdevice_get_values(self->pbdev, mode, &analog);
+    pb_device_get_values(self->pbdev, mode, &analog);
 
     return mp_obj_new_int(analog_scale(analog, 650, 4860, true));
 }
@@ -151,7 +151,7 @@ STATIC mp_obj_t nxtdevices_SoundSensor_make_new(const mp_obj_type_t *type, size_
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_SOUND_SENSOR);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_SOUND_SENSOR);
 
     // Do one reading for consistent initial mode
     mp_obj_t pos_args[1] = { self };
@@ -179,7 +179,7 @@ STATIC const mp_obj_type_t nxtdevices_SoundSensor_type = {
 // pybricks.nxtdevices.LightSensor class object
 typedef struct _nxtdevices_LightSensor_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
 } nxtdevices_LightSensor_obj_t;
 
 // pybricks.nxtdevices.LightSensor.ambient
@@ -187,7 +187,7 @@ STATIC mp_obj_t nxtdevices_LightSensor_ambient(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t analog;
 
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__AMBIENT, &analog);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__AMBIENT, &analog);
 
     return mp_obj_new_int(analog_scale(analog, 1906, 4164, true));
 }
@@ -198,7 +198,7 @@ STATIC mp_obj_t nxtdevices_LightSensor_reflection(mp_obj_t self_in) {
     nxtdevices_LightSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t analog;
 
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__REFLECT, &analog);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_LIGHT_SENSOR__REFLECT, &analog);
 
     return mp_obj_new_int(analog_scale(analog, 1906, 3000, true));
 }
@@ -214,7 +214,7 @@ STATIC mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR);
 
     // Read one value to ensure a consistent initial mode
     nxtdevices_LightSensor_reflection(self);
@@ -241,7 +241,7 @@ STATIC const mp_obj_type_t nxtdevices_LightSensor_type = {
 typedef struct _nxtdevices_ColorSensor_obj_t {
     mp_obj_base_t base;
     mp_obj_t light;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
 } nxtdevices_ColorSensor_obj_t;
 
 // pybricks.nxtdevices.ColorSensor.__init__
@@ -254,13 +254,13 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR);
 
     // Create an instance of the Light class
     self->light = common_ColorLight_obj_make_new(self->pbdev);
 
     // Set the light color to red
-    pbdevice_color_light_on(self->pbdev, PBIO_COLOR_RED);
+    pb_device_color_light_on(self->pbdev, PBIO_COLOR_RED);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -288,7 +288,7 @@ static mp_obj_t color_obj(pbio_color_t color) {
 STATIC mp_obj_t nxtdevices_ColorSensor_all(mp_obj_t self_in) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t all[5];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
     mp_obj_t ret[5];
     for (uint8_t i = 0; i < 4; i++) {
         ret[i] = mp_obj_new_int(all[i]);
@@ -303,7 +303,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_all_obj, nxtdevices_Colo
 STATIC mp_obj_t nxtdevices_ColorSensor_rgb(mp_obj_t self_in) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t all[5];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
     mp_obj_t ret[3];
     for (uint8_t i = 0; i < 3; i++) {
         ret[i] = mp_obj_new_int(all[i]);
@@ -316,7 +316,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_rgb_obj, nxtdevices_Colo
 STATIC mp_obj_t nxtdevices_ColorSensor_reflection(mp_obj_t self_in) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t all[5];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
     // Return the average of red, green, and blue reflection
     return mp_obj_new_int((all[0] + all[1] + all[2]) / 3);
 }
@@ -326,7 +326,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_reflection_obj, nxtdevic
 STATIC mp_obj_t nxtdevices_ColorSensor_ambient(mp_obj_t self_in) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t all[5];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
     // Return the ambient light
     return mp_obj_new_int(all[3]);
 }
@@ -336,7 +336,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_ambient_obj, nxtdevices_
 STATIC mp_obj_t nxtdevices_ColorSensor_color(mp_obj_t self_in) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t all[5];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
     // Return the color ID
     return color_obj(all[4]);
 }
@@ -364,7 +364,7 @@ STATIC const mp_obj_type_t nxtdevices_ColorSensor_type = {
 // pybricks.nxtdevices.TemperatureSensor class object
 typedef struct _nxtdevices_TemperatureSensor_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
 } nxtdevices_TemperatureSensor_obj_t;
 
 // pybricks.nxtdevices.TemperatureSensor.__init__
@@ -377,7 +377,7 @@ STATIC mp_obj_t nxtdevices_TemperatureSensor_make_new(const mp_obj_type_t *type,
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_TEMPERATURE_SENSOR);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_TEMPERATURE_SENSOR);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -386,7 +386,7 @@ STATIC mp_obj_t nxtdevices_TemperatureSensor_make_new(const mp_obj_type_t *type,
 STATIC mp_obj_t nxtdevices_TemperatureSensor_temperature(mp_obj_t self_in) {
     nxtdevices_TemperatureSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t temperature_scaled;
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_TEMPERATURE_SENSOR_CELCIUS, &temperature_scaled);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_TEMPERATURE_SENSOR_CELCIUS, &temperature_scaled);
     return mp_obj_new_float((temperature_scaled >> 4) / 16.0);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_TemperatureSensor_temperature_obj, nxtdevices_TemperatureSensor_temperature);
@@ -408,7 +408,7 @@ STATIC const mp_obj_type_t nxtdevices_TemperatureSensor_type = {
 // pybricks.nxtdevices.EnergyMeter class object
 typedef struct _nxtdevices_EnergyMeter_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
 } nxtdevices_EnergyMeter_obj_t;
 
 // pybricks.nxtdevices.EnergyMeter.__init__
@@ -421,11 +421,11 @@ STATIC mp_obj_t nxtdevices_EnergyMeter_make_new(const mp_obj_type_t *type, size_
 
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
-    self->pbdev = pbdevice_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_ENERGY_METER);
+    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_ENERGY_METER);
 
     // Read once so we are in the mode we'll be using for all methods, to avoid mode switch delays later
     int32_t all[7];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ENERGY_METER_ALL, all);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ENERGY_METER_ALL, all);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -434,7 +434,7 @@ STATIC mp_obj_t nxtdevices_EnergyMeter_make_new(const mp_obj_type_t *type, size_
 STATIC mp_obj_t nxtdevices_EnergyMeter_storage(mp_obj_t self_in) {
     nxtdevices_EnergyMeter_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t all[7];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ENERGY_METER_ALL, all);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ENERGY_METER_ALL, all);
     return mp_obj_new_int(all[4]);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_EnergyMeter_storage_obj, nxtdevices_EnergyMeter_storage);
@@ -443,7 +443,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_EnergyMeter_storage_obj, nxtdevices_
 STATIC mp_obj_t nxtdevices_EnergyMeter_input(mp_obj_t self_in) {
     nxtdevices_EnergyMeter_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t all[7];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ENERGY_METER_ALL, all);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ENERGY_METER_ALL, all);
     mp_obj_t dat[3];
     dat[0] = mp_obj_new_int(all[0]);
     dat[1] = mp_obj_new_int(all[1]);
@@ -456,7 +456,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_EnergyMeter_input_obj, nxtdevices_En
 STATIC mp_obj_t nxtdevices_EnergyMeter_output(mp_obj_t self_in) {
     nxtdevices_EnergyMeter_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int32_t all[7];
-    pbdevice_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ENERGY_METER_ALL, all);
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_ENERGY_METER_ALL, all);
     mp_obj_t dat[3];
     dat[0] = mp_obj_new_int(all[2]);
     dat[1] = mp_obj_new_int(all[3]);

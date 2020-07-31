@@ -21,11 +21,11 @@
 // pybricks._common.ColorLight class object
 typedef struct _builtins_ColorLight_obj_t {
     mp_obj_base_t base;
-    pbdevice_t *pbdev;
+    pb_device_t *pbdev;
 } builtins_ColorLight_obj_t;
 
 // pybricks._common.ColorLight.__init__
-mp_obj_t common_ColorLight_obj_make_new(pbdevice_t *pbdev) {
+mp_obj_t common_ColorLight_obj_make_new(pb_device_t *pbdev) {
     // Create new light instance
     builtins_ColorLight_obj_t *light = m_new_obj(builtins_ColorLight_obj_t);
     // Set type and iodev
@@ -60,7 +60,7 @@ STATIC mp_obj_t builtins_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, 
         // No external device, so assume command is for the internal light
         pb_assert(pbio_light_on(PBIO_PORT_SELF, color_id));
     } else {
-        pbdevice_color_light_on(self->pbdev, color_id);
+        pb_device_color_light_on(self->pbdev, color_id);
     }
 
     return mp_const_none;
@@ -76,7 +76,7 @@ STATIC mp_obj_t builtins_ColorLight_off(mp_obj_t self_in) {
         // No external device, so assume command is for the internal light
         pb_assert(pbio_light_off(PBIO_PORT_SELF));
     } else {
-        pbdevice_color_light_on(self->pbdev, PBIO_COLOR_NONE);
+        pb_device_color_light_on(self->pbdev, PBIO_COLOR_NONE);
     }
     return mp_const_none;
 }

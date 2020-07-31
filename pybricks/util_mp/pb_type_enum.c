@@ -5,6 +5,7 @@
 #include "py/runtime.h"
 
 #include "util_mp/pb_type_enum.h"
+#include "util_mp/pb_obj_helper.h"
 #include "util_pb/pb_error.h"
 
 void pb_type_enum_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {

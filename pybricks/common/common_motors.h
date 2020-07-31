@@ -11,7 +11,7 @@
 #include <pbio/control.h>
 #include <pbio/servo.h>
 
-#include "pbdevice.h"
+#include "util_pb/pb_device.h"
 
 #include "py/obj.h"
 
