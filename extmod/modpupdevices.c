@@ -17,11 +17,11 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 
+#include "util_pb/pb_color_map.h"
 #include "util_pb/pb_device.h"
 #include "util_pb/pb_error.h"
 #include "util_mp/pb_kwarg_helper.h"
 #include "util_mp/pb_obj_helper.h"
-#include "pbhsv.h"
 
 #include "common/common.h"
 #include "common/common_motors.h"
