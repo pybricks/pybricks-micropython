@@ -1,22 +1,26 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
+#include "py/mpconfig.h"
+
+#if PYBRICKS_PY_COMMON_MOTORS
+
 #include <stdbool.h>
 #include <string.h>
 #include <inttypes.h>
 
 #include <pbio/config.h>
 #include <pbio/logger.h>
+#include <pbio/servo.h>
 
 #include "py/obj.h"
 #include "py/runtime.h"
 #include "py/mpconfig.h"
 
-#include "modlogger.h"
-
 #include "util/pberror.h"
 #include "util/pbobj.h"
 #include "util/pbkwarg.h"
+
 // pybricks.tools.Logger class object
 typedef struct _tools_Logger_obj_t {
     mp_obj_base_t base;
@@ -203,3 +207,5 @@ mp_obj_t logger_obj_make_new(pbio_log_t *log) {
     logger->log = log;
     return logger;
 }
+
+#endif // PYBRICKS_PY_COMMON_MOTORS

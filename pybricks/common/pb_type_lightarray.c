@@ -12,7 +12,8 @@
 #include "util/pberror.h"
 #include "util/pbobj.h"
 #include "util/pbkwarg.h"
-// pybricks.builtins.Light class object
+
+// pybricks._common.Light class object
 typedef struct _builtins_LightArray_obj_t {
     mp_obj_base_t base;
     pbdevice_t *pbdev;
@@ -20,7 +21,7 @@ typedef struct _builtins_LightArray_obj_t {
     uint8_t number_of_lights;
 } builtins_LightArray_obj_t;
 
-// pybricks.builtins.LightArray.__init__
+// pybricks._common.LightArray.__init__
 mp_obj_t common_LightArray_obj_make_new(pbdevice_t *pbdev, uint8_t light_mode, uint8_t number_of_lights) {
     // Create new light instance
     builtins_LightArray_obj_t *light = m_new_obj(builtins_LightArray_obj_t);
@@ -32,7 +33,7 @@ mp_obj_t common_LightArray_obj_make_new(pbdevice_t *pbdev, uint8_t light_mode, u
     return light;
 }
 
-// pybricks.builtins.LightArray.on
+// pybricks._common.LightArray.on
 STATIC mp_obj_t builtins_LightArray_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     // Parse arguments
     builtins_LightArray_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
@@ -64,7 +65,7 @@ STATIC mp_obj_t builtins_LightArray_on(size_t n_args, const mp_obj_t *pos_args, 
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_LightArray_on_obj, 1, builtins_LightArray_on);
 
-// pybricks.builtins.LightArray.off
+// pybricks._common.LightArray.off
 STATIC mp_obj_t builtins_LightArray_off(mp_obj_t self_in) {
     builtins_LightArray_obj_t *self = MP_OBJ_TO_PTR(self_in);
 

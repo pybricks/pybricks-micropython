@@ -12,12 +12,15 @@
 #include "pbdevice.h"
 #include "util/pbobj.h"
 #include "util/pbkwarg.h"
-#include "modmotor.h"
 #include "modparameters.h"
 
 #include <pbio/iodev.h>
 #include <pbio/serial.h>
+
 #include "util/pberror.h"
+
+#include "common/common.h"
+#include "common/common_motors.h"
 
 #if PYBRICKS_PY_IODEVICES
 
@@ -609,7 +612,9 @@ STATIC const mp_rom_map_elem_t iodevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_AnalogSensor),     MP_ROM_PTR(&iodevices_AnalogSensor_type)    },
     { MP_ROM_QSTR(MP_QSTR_I2CDevice),        MP_ROM_PTR(&iodevices_I2CDevice_type)    },
     { MP_ROM_QSTR(MP_QSTR_UARTDevice),       MP_ROM_PTR(&iodevices_UARTDevice_type)    },
-    { MP_ROM_QSTR(MP_QSTR_DCMotor),          MP_ROM_PTR(&motor_DCMotor_type)             },
+    #if PYBRICKS_PY_COMMON_MOTORS
+    { MP_ROM_QSTR(MP_QSTR_DCMotor),          MP_ROM_PTR(&pb_type_DCMotor)             },
+    #endif
     { MP_ROM_QSTR(MP_QSTR_Ev3devSensor),     MP_ROM_PTR(&iodevices_Ev3devSensor_type)    },
     #endif // PYBRICKS_PY_EV3DEVICES
 };

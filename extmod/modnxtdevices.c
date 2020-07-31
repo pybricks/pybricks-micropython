@@ -17,8 +17,8 @@
 #include "util/pberror.h"
 
 #include "common/common.h"
+#include "common/common_motors.h"
 
-#include "modmotor.h"
 #include "modparameters.h"
 
 #if PYBRICKS_HUB_EV3
@@ -487,7 +487,7 @@ STATIC const mp_obj_type_t nxtdevices_EnergyMeter_type = {
 STATIC const mp_rom_map_elem_t nxtdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_nxtdevices)              },
     #if PYBRICKS_HUB_NXT
-    { MP_ROM_QSTR(MP_QSTR_Motor),            MP_ROM_PTR(&motor_Motor_type)                },
+    { MP_ROM_QSTR(MP_QSTR_Motor),            MP_ROM_PTR(&pb_type_Motor)                },
     #else
     { MP_ROM_QSTR(MP_QSTR_TouchSensor),      MP_ROM_PTR(&nxtdevices_TouchSensor_type)     },
     { MP_ROM_QSTR(MP_QSTR_SoundSensor),      MP_ROM_PTR(&nxtdevices_SoundSensor_type)     },

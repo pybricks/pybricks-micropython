@@ -24,9 +24,9 @@
 #include "pbhsv.h"
 
 #include "common/common.h"
+#include "common/common_motors.h"
 
 #include "modparameters.h"
-#include "modmotor.h"
 
 // Class structure for ColorDistanceSensor
 typedef struct _pupdevices_ColorDistanceSensor_obj_t {
@@ -151,7 +151,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_remote(size_t n_args, const mp_ob
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorDistanceSensor_remote_obj, 1, pupdevices_ColorDistanceSensor_remote);
 
-// pybricks.builtins.ColorDistanceSensor.color_map
+// pybricks._common.ColorDistanceSensor.color_map
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_color_map(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pupdevices_ColorDistanceSensor_obj_t, self,
@@ -216,7 +216,7 @@ typedef struct _pupdevices_ColorSensor_obj_t {
     mp_obj_t lights;
 } pupdevices_ColorSensor_obj_t;
 
-// pybricks.builtins.ColorSensor._get_hsv
+// pybricks._common.ColorSensor._get_hsv
 STATIC void pupdevices_ColorSensor__get_hsv(pbdevice_t *pbdev, bool light_on, int32_t *hsv) {
 
     // Read HSV (light on) or SHSV mode (light off)
@@ -265,7 +265,7 @@ STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     return MP_OBJ_FROM_PTR(self);
 }
 
-// pybricks.builtins.ColorSensor.hsv
+// pybricks._common.ColorSensor.hsv
 STATIC mp_obj_t pupdevices_ColorSensor_hsv(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pupdevices_ColorSensor_obj_t, self,
@@ -286,7 +286,7 @@ STATIC mp_obj_t pupdevices_ColorSensor_hsv(size_t n_args, const mp_obj_t *pos_ar
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorSensor_hsv_obj, 1, pupdevices_ColorSensor_hsv);
 
-// pybricks.builtins.ColorSensor.color
+// pybricks._common.ColorSensor.color
 STATIC mp_obj_t pupdevices_ColorSensor_color(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pupdevices_ColorSensor_obj_t, self,
@@ -721,8 +721,10 @@ STATIC const mp_obj_type_t pupdevices_Light_type = {
 // dir(pybricks.pupdevices)
 STATIC const mp_rom_map_elem_t pupdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_pupdevices)                  },
-    { MP_ROM_QSTR(MP_QSTR_Motor),               MP_ROM_PTR(&motor_Motor_type)                    },
-    { MP_ROM_QSTR(MP_QSTR_DCMotor),             MP_ROM_PTR(&motor_DCMotor_type)                  },
+    #if PYBRICKS_PY_COMMON_MOTORS
+    { MP_ROM_QSTR(MP_QSTR_Motor),               MP_ROM_PTR(&pb_type_Motor)                    },
+    { MP_ROM_QSTR(MP_QSTR_DCMotor),             MP_ROM_PTR(&pb_type_DCMotor)                  },
+    #endif
     { MP_ROM_QSTR(MP_QSTR_ColorDistanceSensor), MP_ROM_PTR(&pupdevices_ColorDistanceSensor_type) },
     { MP_ROM_QSTR(MP_QSTR_ColorSensor),         MP_ROM_PTR(&pupdevices_ColorSensor_type)         },
     { MP_ROM_QSTR(MP_QSTR_UltrasonicSensor),    MP_ROM_PTR(&pupdevices_UltrasonicSensor_type)    },

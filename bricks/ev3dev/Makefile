@@ -235,8 +235,11 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	common/pb_type_battery.c \
 	common/pb_type_colorlight.c \
 	common/pb_type_control.c \
+	common/pb_type_dcmotor.c \
 	common/pb_type_keypad.c \
 	common/pb_type_lightarray.c \
+	common/pb_type_logger.c \
+	common/pb_type_motor.c \
 	robotics/pb_module_robotics.c \
 	robotics/pb_type_drivebase.c \
 	robotics/pb_type_matrix.c \
@@ -252,9 +255,7 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modexperimental.c \
 	modhubs.c \
 	modiodevices.c \
-	modlogger.c \
 	modmedia_ev3dev.c \
-	modmotor.c \
 	modnxtdevices.c \
 	modparameters.c \
 	moduos.c \

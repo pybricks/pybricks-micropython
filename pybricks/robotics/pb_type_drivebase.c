@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_ROBOTICS
+#if PYBRICKS_PY_ROBOTICS && PYBRICKS_PY_COMMON_MOTORS
 
 #include <stdlib.h>
 #include <math.h>
@@ -18,12 +18,10 @@
 #include "util/pberror.h"
 #include "util/pbobj.h"
 #include "util/pbkwarg.h"
-#include "common/common.h"
+
+#include "common/common_motors.h"
 
 #include "modparameters.h"
-
-#include "modmotor.h"
-#include "modlogger.h"
 
 // pybricks.robotics.DriveBase class object
 typedef struct _robotics_DriveBase_obj_t {
@@ -57,8 +55,8 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     self->right = right_motor;
 
     // Pointers to servos
-    pbio_servo_t *srv_left = ((motor_Motor_obj_t *)pb_obj_get_base_class_obj(self->left, &motor_Motor_type))->srv;
-    pbio_servo_t *srv_right = ((motor_Motor_obj_t *)pb_obj_get_base_class_obj(self->right, &motor_Motor_type))->srv;
+    pbio_servo_t *srv_left = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->left, &pb_type_Motor))->srv;
+    pbio_servo_t *srv_right = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->right, &pb_type_Motor))->srv;
 
     // A DriveBase must have two distinct motors
     if (srv_left == srv_right) {
@@ -147,7 +145,7 @@ STATIC mp_obj_t robotics_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_drive_obj, 1, robotics_DriveBase_drive);
 
-// pybricks.builtins.DriveBase.stop
+// pybricks._common.DriveBase.stop
 STATIC mp_obj_t robotics_DriveBase_stop(mp_obj_t self_in) {
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pb_assert(pbio_drivebase_stop(self->db, PBIO_ACTUATION_COAST));
@@ -155,7 +153,7 @@ STATIC mp_obj_t robotics_DriveBase_stop(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_stop_obj, robotics_DriveBase_stop);
 
-// pybricks.builtins.DriveBase.distance
+// pybricks._common.DriveBase.distance
 STATIC mp_obj_t robotics_DriveBase_distance(mp_obj_t self_in) {
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -166,7 +164,7 @@ STATIC mp_obj_t robotics_DriveBase_distance(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_distance_obj, robotics_DriveBase_distance);
 
-// pybricks.builtins.DriveBase.angle
+// pybricks._common.DriveBase.angle
 STATIC mp_obj_t robotics_DriveBase_angle(mp_obj_t self_in) {
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -177,7 +175,7 @@ STATIC mp_obj_t robotics_DriveBase_angle(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_angle_obj, robotics_DriveBase_angle);
 
-// pybricks.builtins.DriveBase.state
+// pybricks._common.DriveBase.state
 STATIC mp_obj_t robotics_DriveBase_state(mp_obj_t self_in) {
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -195,7 +193,7 @@ STATIC mp_obj_t robotics_DriveBase_state(mp_obj_t self_in) {
 MP_DEFINE_CONST_FUN_OBJ_1(robotics_DriveBase_state_obj, robotics_DriveBase_state);
 
 
-// pybricks.builtins.DriveBase.reset
+// pybricks._common.DriveBase.reset
 STATIC mp_obj_t robotics_DriveBase_reset(mp_obj_t self_in) {
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -274,4 +272,4 @@ const mp_obj_type_t pb_type_drivebase = {
     .locals_dict = (mp_obj_dict_t *)&robotics_DriveBase_locals_dict,
 };
 
-#endif // PYBRICKS_PY_ROBOTICS
+#endif // PYBRICKS_PY_ROBOTICS && PYBRICKS_PY_COMMON_MOTORS

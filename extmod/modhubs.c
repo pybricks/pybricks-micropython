@@ -62,21 +62,21 @@ STATIC const mp_obj_type_t hubs_EV3Brick_type = {
 
 #if (PYBRICKS_HUB_MOVEHUB || PYBRICKS_HUB_CITYHUB || PYBRICKS_HUB_CPLUSHUB || PYBRICKS_HUB_PRIMEHUB)
 
-// pybricks.builtins.HubClass.shutdown
+// pybricks._common.HubClass.shutdown
 STATIC mp_obj_t hubs_HubClass_shutdown(mp_obj_t self_in) {
     pbsys_power_off();
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(hub_shutdown_obj, hubs_HubClass_shutdown);
 
-// pybricks.builtins.HubClass.reboot
+// pybricks._common.HubClass.reboot
 STATIC mp_obj_t hubs_HubClass_reboot(mp_obj_t self_in) {
     pbsys_reboot(0);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(hub_reboot_obj, hubs_HubClass_reboot);
 
-// pybricks.builtins.HubClass.update
+// pybricks._common.HubClass.update
 STATIC mp_obj_t hubs_HubClass_update(mp_obj_t self_in) {
     pbsys_reboot(1);
     return mp_const_none;

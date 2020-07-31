@@ -3,9 +3,9 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_COMMON
+#if PYBRICKS_PY_COMMON_MOTORS
 
-#include "common.h"
+#include "common/common_motors.h"
 
 #include <pbio/control.h>
 
@@ -14,14 +14,15 @@
 #include "util/pberror.h"
 #include "util/pbobj.h"
 #include "util/pbkwarg.h"
-// pybricks.common.Control class object structure
+
+// pybricks._common.Control class object structure
 typedef struct _common_Control_obj_t {
     mp_obj_base_t base;
     pbio_control_t *control;
     mp_obj_t scale;
 } common_Control_obj_t;
 
-// pybricks.common.Control.__init__/__new__
+// pybricks._common.Control.__init__/__new__
 mp_obj_t common_Control_obj_make_new(pbio_control_t *control) {
 
     common_Control_obj_t *self = m_new_obj(common_Control_obj_t);
@@ -44,7 +45,7 @@ STATIC void raise_if_control_busy(pbio_control_t *ctl) {
     }
 }
 
-// pybricks.common.Control.limits
+// pybricks._common.Control.limits
 STATIC mp_obj_t common_Control_limits(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -80,7 +81,7 @@ STATIC mp_obj_t common_Control_limits(size_t n_args, const mp_obj_t *pos_args, m
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Control_limits_obj, 1, common_Control_limits);
 
-// pybricks.common.Control.pid
+// pybricks._common.Control.pid
 STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -127,7 +128,7 @@ STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_m
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Control_pid_obj, 1, common_Control_pid);
 
-// pybricks.common.Control.target_tolerances
+// pybricks._common.Control.target_tolerances
 STATIC mp_obj_t common_Control_target_tolerances(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -160,7 +161,7 @@ STATIC mp_obj_t common_Control_target_tolerances(size_t n_args, const mp_obj_t *
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Control_target_tolerances_obj, 1, common_Control_target_tolerances);
 
-// pybricks.common.Control.stall_tolerances
+// pybricks._common.Control.stall_tolerances
 STATIC mp_obj_t common_Control_stall_tolerances(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -193,7 +194,7 @@ STATIC mp_obj_t common_Control_stall_tolerances(size_t n_args, const mp_obj_t *p
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Control_stall_tolerances_obj, 1, common_Control_stall_tolerances);
 
-// pybricks.common.Control.trajectory
+// pybricks._common.Control.trajectory
 STATIC mp_obj_t common_Control_trajectory(mp_obj_t self_in) {
     common_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
     pbio_trajectory_t trajectory;
@@ -221,14 +222,14 @@ STATIC mp_obj_t common_Control_trajectory(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Control_trajectory_obj, common_Control_trajectory);
 
-// pybricks.common.Control.done
+// pybricks._common.Control.done
 STATIC mp_obj_t common_Control_done(mp_obj_t self_in) {
     common_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return mp_obj_new_bool(pbio_control_is_done(self->control));
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Control_done_obj, common_Control_done);
 
-// pybricks.common.Control.stalled
+// pybricks._common.Control.stalled
 STATIC mp_obj_t common_Control_stalled(mp_obj_t self_in) {
     common_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
     return mp_obj_new_bool(pbio_control_is_stalled(self->control));
@@ -255,4 +256,4 @@ const mp_obj_type_t pb_type_Control = {
     .locals_dict = (mp_obj_dict_t *)&common_Control_locals_dict,
 };
 
-#endif // PYBRICKS_PY_COMMON
+#endif // PYBRICKS_PY_COMMON_MOTORS

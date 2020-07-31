@@ -9,22 +9,24 @@
 #if PYBRICKS_PY_COMMON
 
 #include <pbio/control.h>
+#include <pbio/servo.h>
 
 #include "pbdevice.h"
 
 #include "py/obj.h"
 
-const mp_obj_type_t pb_type_Control;
-mp_obj_t common_Control_obj_make_new(pbio_control_t *control);
-
+// pybricks._common.ColorLight()
 const mp_obj_type_t pb_type_ColorLight;
 mp_obj_t common_ColorLight_obj_make_new(pbdevice_t *pbdev);
 
+// pybricks._common.LightArray()
 const mp_obj_type_t pb_type_LightArray;
 mp_obj_t common_LightArray_obj_make_new(pbdevice_t *pbdev, uint8_t light_mode, uint8_t number_of_lights);
 
+// pybricks._common.KeyPad()
 const mp_obj_module_t pb_module_buttons;
 
+// pybricks._common.Battery()
 const mp_obj_module_t pb_module_battery;
 
 #endif // PYBRICKS_PY_COMMON

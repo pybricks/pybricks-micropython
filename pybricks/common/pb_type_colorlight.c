@@ -17,13 +17,14 @@
 #include "util/pberror.h"
 #include "util/pbobj.h"
 #include "util/pbkwarg.h"
-// pybricks.builtins.ColorLight class object
+
+// pybricks._common.ColorLight class object
 typedef struct _builtins_ColorLight_obj_t {
     mp_obj_base_t base;
     pbdevice_t *pbdev;
 } builtins_ColorLight_obj_t;
 
-// pybricks.builtins.ColorLight.__init__
+// pybricks._common.ColorLight.__init__
 mp_obj_t common_ColorLight_obj_make_new(pbdevice_t *pbdev) {
     // Create new light instance
     builtins_ColorLight_obj_t *light = m_new_obj(builtins_ColorLight_obj_t);
@@ -33,7 +34,7 @@ mp_obj_t common_ColorLight_obj_make_new(pbdevice_t *pbdev) {
     return light;
 }
 
-// pybricks.builtins.ColorLight.on
+// pybricks._common.ColorLight.on
 STATIC mp_obj_t builtins_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     // Parse arguments
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -66,7 +67,7 @@ STATIC mp_obj_t builtins_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, 
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(builtins_ColorLight_on_obj, 1, builtins_ColorLight_on);
 
-// pybricks.builtins.ColorLight.off
+// pybricks._common.ColorLight.off
 STATIC mp_obj_t builtins_ColorLight_off(mp_obj_t self_in) {
     builtins_ColorLight_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
