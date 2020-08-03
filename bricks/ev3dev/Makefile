@@ -258,7 +258,6 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modmedia_ev3dev.c \
 	modnxtdevices.c \
 	modparameters.c \
-	moduos.c \
 	)
 
 PYBRICKS_LIB_SRC_C = $(addprefix lib/,\

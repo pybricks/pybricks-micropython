@@ -18,7 +18,6 @@
 #define PYBRICKS_PY_PUPDEVICES          (1)
 #define PYBRICKS_PY_TOOLS               (1)
 #define PYBRICKS_PY_ROBOTICS            (1)
-#define PYBRICKS_PY_UOS                 (1)
 
 // Pybricks STM32 options
 #define PYBRICKS_STM32_OPT_COMPILER     (1)

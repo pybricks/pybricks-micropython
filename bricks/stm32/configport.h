@@ -149,13 +149,6 @@ extern const struct _mp_obj_module_t pb_module_parameters;
 #else
 #define _PYBRICKS_MODULE_PARAMETERS
 #endif
-#if PYBRICKS_PY_UOS
-extern const struct _mp_obj_module_t pb_module_uos;
-#define _PYBRICKS_MODULE_UOS \
-    { MP_ROM_QSTR(MP_QSTR_uos), MP_ROM_PTR(&pb_module_uos) },
-#else
-#define _PYBRICKS_MODULE_UOS
-#endif
 
 #define MICROPY_PORT_BUILTIN_MODULES \
     _PYBRICKS_PACKAGE_PYBRICKS      \
@@ -164,7 +157,6 @@ extern const struct _mp_obj_module_t pb_module_uos;
     _PYBRICKS_MODULE_IODEVICES      \
     _PYBRICKS_MODULE_PARAMETERS     \
     _PYBRICKS_MODULE_PUPDEVICES     \
-    _PYBRICKS_MODULE_UOS            \
 
 
 // We have inlined IRQ functions for efficiency (they are generally

@@ -146,7 +146,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modnxtdevices.c \
 	modparameters.c \
-	moduos.c \
 	)
 
 CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\

@@ -193,7 +193,6 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modiodevices.c \
 	modparameters.c \
 	modpupdevices.c \
-	moduos.c \
 	)
 
 # STM32 Bluetooth stack

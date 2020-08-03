@@ -16,7 +16,6 @@
 #define PYBRICKS_PY_TOOLS               (1)
 #define PYBRICKS_PY_ROBOTICS            (1)
 #define PYBRICKS_PY_TOOLS               (1)
-#define PYBRICKS_PY_UOS                 (1)
 
 // options to control how MicroPython is built
 
