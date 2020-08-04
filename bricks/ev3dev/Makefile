@@ -215,6 +215,7 @@ PYBRICKS_SRC_C += \
 	ev3dev_mphal.c \
 	modbluetooth.c \
 	modusignal.c \
+	modmedia_ev3dev.c \
 	pb_type_ev3dev_font.c \
 	pb_type_ev3dev_image.c \
 	pb_type_ev3dev_speaker.c \
@@ -261,7 +262,6 @@ PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modev3devices.c \
 	modhubs.c \
 	modiodevices.c \
-	modmedia_ev3dev.c \
 	modnxtdevices.c \
 	)
 
