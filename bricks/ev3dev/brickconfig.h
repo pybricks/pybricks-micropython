@@ -33,7 +33,6 @@ extern const struct _mp_obj_module_t pb_package_pybricks;
 
 extern const struct _mp_obj_module_t pb_module_bluetooth;
 extern const struct _mp_obj_module_t pb_module_ev3devices;
-extern const struct _mp_obj_module_t pb_module_experimental;
 extern const struct _mp_obj_module_t pb_module_hubs;
 extern const struct _mp_obj_module_t pb_module_iodevices;
 extern const struct _mp_obj_module_t pb_module_media_ev3dev;
@@ -44,7 +43,6 @@ extern const struct _mp_obj_module_t pb_module_usignal;
     _PYBRICKS_PACKAGE_PYBRICKS        \
     { MP_ROM_QSTR(MP_QSTR_bluetooth_c),     MP_ROM_PTR(&pb_module_bluetooth)        }, \
     { MP_ROM_QSTR(MP_QSTR_ev3devices_c),    MP_ROM_PTR(&pb_module_ev3devices)       }, \
-    { MP_ROM_QSTR(MP_QSTR_experimental_c),  MP_ROM_PTR(&pb_module_experimental)     }, \
     { MP_ROM_QSTR(MP_QSTR_hubs_c),          MP_ROM_PTR(&pb_module_hubs)             }, \
     { MP_ROM_QSTR(MP_QSTR_iodevices_c),     MP_ROM_PTR(&pb_module_iodevices)        }, \
     { MP_ROM_QSTR(MP_QSTR_media_ev3dev_c),  MP_ROM_PTR(&pb_module_media_ev3dev)     }, \

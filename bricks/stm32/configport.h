@@ -120,14 +120,6 @@ extern const struct _mp_obj_module_t pb_package_pybricks;
 extern const struct _mp_obj_module_t pb_module_hubs;
 #define _PYBRICKS_MODULE_HUBS \
     { MP_OBJ_NEW_QSTR(MP_QSTR_hubs), (mp_obj_t)&pb_module_hubs},
-
-#if PYBRICKS_PY_EXPERIMENTAL
-extern const struct _mp_obj_module_t pb_module_experimental;
-#define _PYBRICKS_MODULE_EXPERIMENTAL \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_experimental), (mp_obj_t)&pb_module_experimental },
-#else
-#define _PYBRICKS_MODULE_EXPERIMENTAL
-#endif
 #if PYBRICKS_PY_IODEVICES
 extern const struct _mp_obj_module_t pb_module_iodevices;
 #define _PYBRICKS_MODULE_IODEVICES \
@@ -145,7 +137,6 @@ extern const struct _mp_obj_module_t pb_module_pupdevices;
 
 #define MICROPY_PORT_BUILTIN_MODULES \
     _PYBRICKS_PACKAGE_PYBRICKS      \
-    _PYBRICKS_MODULE_EXPERIMENTAL   \
     _PYBRICKS_MODULE_HUBS           \
     _PYBRICKS_MODULE_IODEVICES      \
     _PYBRICKS_MODULE_PUPDEVICES     \

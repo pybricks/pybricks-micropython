@@ -6,6 +6,7 @@
 #include "py/objstr.h"
 #include "py/objtuple.h"
 
+#include "experimental/experimental.h"
 #include "parameters/parameters.h"
 #include "robotics/robotics.h"
 #include "tools/tools.h"
@@ -29,6 +30,9 @@ STATIC const mp_rom_obj_tuple_t pybricks_info_obj = {
 STATIC const mp_rom_map_elem_t pybricks_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_pybricks) },
     { MP_ROM_QSTR(MP_QSTR_version),             MP_ROM_PTR(&pybricks_info_obj)},
+    #if PYBRICKS_PY_EXPERIMENTAL
+    { MP_ROM_QSTR(MP_QSTR_experimental),        MP_ROM_PTR(&pb_module_experimental)},
+    #endif
     #if PYBRICKS_PY_PARAMETERS
     { MP_ROM_QSTR(MP_QSTR_parameters),          MP_ROM_PTR(&pb_module_parameters)  },
     #endif

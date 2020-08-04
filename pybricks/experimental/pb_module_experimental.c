@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
-
-// C implementation of Pybricks experimental module.
-// Also see pybricks/experimental.py.
+// Copyright (c) 2018-2020 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
 #if PYBRICKS_PY_EXPERIMENTAL
+
+#include "py/mphal.h"
+#include "py/runtime.h"
+
+#include "experimental/experimental.h"
 
 #include "py/obj.h"
 #include "py/runtime.h"
@@ -403,7 +405,7 @@ STATIC mp_obj_t mod_experimental_pthread_raise(mp_obj_t thread_id_in, mp_obj_t e
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_experimental_pthread_raise_obj, mod_experimental_pthread_raise);
 #endif // PYBRICKS_HUB_EV3
 
-STATIC const mp_rom_map_elem_t mod_experimental_globals_table[] = {
+STATIC const mp_rom_map_elem_t experimental_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental_c) },
     #if PYBRICKS_HUB_CPLUSHUB
     { MP_ROM_QSTR(MP_QSTR_IMU), MP_ROM_PTR(&mod_experimental_IMU_type) },
@@ -421,11 +423,11 @@ STATIC const mp_rom_map_elem_t mod_experimental_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_UnitVector),  MP_ROM_PTR(&pb_func_UnitVector)      },
     #endif // MICROPY_PY_BUILTINS_FLOAT
 };
-STATIC MP_DEFINE_CONST_DICT(mod_experimental_globals, mod_experimental_globals_table);
+STATIC MP_DEFINE_CONST_DICT(pb_module_experimental_globals, experimental_globals_table);
 
 const mp_obj_module_t pb_module_experimental = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t *)&mod_experimental_globals,
+    .globals = (mp_obj_dict_t *)&pb_module_experimental_globals,
 };
 
 #endif // PYBRICKS_PY_EXPERIMENTAL

@@ -174,6 +174,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	common/pb_type_lightarray.c \
 	common/pb_type_logger.c \
 	common/pb_type_motor.c \
+	experimental/pb_module_experimental.c \
 	parameters/pb_module_parameters.c \
 	parameters/pb_type_button.c \
 	parameters/pb_type_color.c \
@@ -193,7 +194,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	)
 
 PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
-	modexperimental.c \
 	modhubs.c \
 	modiodevices.c \
 	modpupdevices.c \
