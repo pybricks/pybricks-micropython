@@ -5,9 +5,8 @@
 
 #include <pbio/button.h>
 
-#include "modparameters.h"
-
 #include "common/common.h"
+#include "parameters/parameters.h"
 
 #include "util_pb/pb_error.h"
 #include "util_mp/pb_obj_helper.h"

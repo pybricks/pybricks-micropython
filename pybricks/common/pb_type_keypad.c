@@ -5,14 +5,13 @@
 
 #if PYBRICKS_PY_COMMON
 
-#include "common.h"
-
 #include "py/obj.h"
 
 #include <pbio/button.h>
 
+#include "common/common.h"
+#include "parameters/parameters.h"
 #include "util_pb/pb_error.h"
-#include "modparameters.h"
 
 // TODO: buttons are currently a module due to the legacy C API, but should be
 // an instance of a KeyPad type. That would make it consistent with the other C

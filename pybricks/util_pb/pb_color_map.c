@@ -15,7 +15,7 @@
 #include "util_mp/pb_kwarg_helper.h"
 #include "util_mp/pb_obj_helper.h"
 
-#include "modparameters.h"
+#include "parameters/parameters.h"
 
 
 // Hue or value not specified

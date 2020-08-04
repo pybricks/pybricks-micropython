@@ -133,6 +133,12 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	common/pb_type_dcmotor.c \
 	common/pb_type_logger.c \
 	common/pb_type_motor.c \
+	parameters/pb_module_parameters.c \
+	parameters/pb_type_button.c \
+	parameters/pb_type_color.c \
+	parameters/pb_type_direction.c \
+	parameters/pb_type_port.c \
+	parameters/pb_type_stop.c \
 	robotics/pb_module_robotics.c \
 	robotics/pb_type_drivebase.c \
 	robotics/pb_type_matrix.c \
@@ -145,7 +151,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 
 PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modnxtdevices.c \
-	modparameters.c \
 	)
 
 CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\

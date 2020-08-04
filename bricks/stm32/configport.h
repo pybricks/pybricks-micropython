@@ -142,20 +142,12 @@ extern const struct _mp_obj_module_t pb_module_pupdevices;
 #else
 #define _PYBRICKS_MODULE_PUPDEVICES
 #endif
-#if PYBRICKS_PY_PARAMETERS
-extern const struct _mp_obj_module_t pb_module_parameters;
-#define _PYBRICKS_MODULE_PARAMETERS \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_parameters), (mp_obj_t)&pb_module_parameters },
-#else
-#define _PYBRICKS_MODULE_PARAMETERS
-#endif
 
 #define MICROPY_PORT_BUILTIN_MODULES \
     _PYBRICKS_PACKAGE_PYBRICKS      \
     _PYBRICKS_MODULE_EXPERIMENTAL   \
     _PYBRICKS_MODULE_HUBS           \
     _PYBRICKS_MODULE_IODEVICES      \
-    _PYBRICKS_MODULE_PARAMETERS     \
     _PYBRICKS_MODULE_PUPDEVICES     \
 
 

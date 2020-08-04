@@ -98,14 +98,6 @@ typedef long mp_off_t;
 extern const struct _mp_obj_module_t pb_package_pybricks;
 #define _PYBRICKS_PACKAGE_PYBRICKS \
     { MP_OBJ_NEW_QSTR(MP_QSTR_pybricks), (mp_obj_t)&pb_package_pybricks },
-
-#if PYBRICKS_PY_PARAMETERS
-extern const struct _mp_obj_module_t pb_module_parameters;
-#define _PYBRICKS_MODULE_PARAMETERS \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_parameters), (mp_obj_t)&pb_module_parameters },
-#else
-#define _PYBRICKS_MODULE_PARAMETERS
-#endif
 #if PYBRICKS_PY_NXTDEVICES
 extern const struct _mp_obj_module_t pb_module_nxtdevices;
 #define _PYBRICKS_MODULE_NXTDEVICES \
@@ -116,7 +108,6 @@ extern const struct _mp_obj_module_t pb_module_nxtdevices;
 
 #define MICROPY_PORT_BUILTIN_MODULES \
     _PYBRICKS_PACKAGE_PYBRICKS      \
-    _PYBRICKS_MODULE_PARAMETERS     \
     _PYBRICKS_MODULE_NXTDEVICES     \
 
 

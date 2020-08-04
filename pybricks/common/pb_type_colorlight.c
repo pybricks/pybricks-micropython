@@ -8,9 +8,8 @@
 #include <pbio/light.h>
 #include <pbio/color.h>
 
-#include "modparameters.h"
-
-#include "common.h"
+#include "common/common.h"
+#include "parameters/parameters.h"
 
 #include "py/obj.h"
 

@@ -9,17 +9,16 @@
 #include "util_pb/pb_device.h"
 #include "util_mp/pb_obj_helper.h"
 #include "util_mp/pb_kwarg_helper.h"
-#include "modparameters.h"
 
 #include "py/objtype.h"
 
 #include <pbio/iodev.h>
 #include <pbio/button.h>
 
-#include "util_pb/pb_error.h"
-
 #include "common/common.h"
 #include "common/common_motors.h"
+#include "parameters/parameters.h"
+#include "util_pb/pb_error.h"
 
 // pybricks.ev3devices.TouchSensor class object
 typedef struct _ev3devices_TouchSensor_obj_t {

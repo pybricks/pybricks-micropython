@@ -3,6 +3,9 @@
 
 #include <string.h>
 
+#include <pbio/iodev.h>
+#include <pbio/serial.h>
+
 #include "py/mpconfig.h"
 
 #include "py/mphal.h"
@@ -12,15 +15,13 @@
 #include "util_pb/pb_device.h"
 #include "util_mp/pb_obj_helper.h"
 #include "util_mp/pb_kwarg_helper.h"
-#include "modparameters.h"
-
-#include <pbio/iodev.h>
-#include <pbio/serial.h>
-
 #include "util_pb/pb_error.h"
+
 
 #include "common/common.h"
 #include "common/common_motors.h"
+#include "parameters/parameters.h"
+
 
 #if PYBRICKS_PY_IODEVICES
 

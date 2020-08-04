@@ -20,8 +20,7 @@
 #include "util_mp/pb_kwarg_helper.h"
 
 #include "common/common_motors.h"
-
-#include "modparameters.h"
+#include "parameters/parameters.h"
 
 // pybricks.robotics.DriveBase class object
 typedef struct _robotics_DriveBase_obj_t {

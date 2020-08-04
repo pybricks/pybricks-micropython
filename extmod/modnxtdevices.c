@@ -18,8 +18,7 @@
 
 #include "common/common.h"
 #include "common/common_motors.h"
-
-#include "modparameters.h"
+#include "parameters/parameters.h"
 
 #if PYBRICKS_HUB_EV3
 

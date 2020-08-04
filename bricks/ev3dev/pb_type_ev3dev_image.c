@@ -20,8 +20,9 @@
 #include "py/objstr.h"
 #include "py/runtime.h"
 
-#include "modparameters.h"
 #include "pb_ev3dev_types.h"
+
+#include "parameters/parameters.h"
 #include "util_mp/pb_kwarg_helper.h"
 #include "util_mp/pb_obj_helper.h"
 
