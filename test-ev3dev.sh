@@ -9,7 +9,7 @@ set -e
 
 SCRIPT_DIR=$(dirname "$0")
 BRICK_DIR="$SCRIPT_DIR/bricks/ev3dev"
-MP_TEST_DIR="$SCRIPT_DIR/../../tests"
+MP_TEST_DIR="$SCRIPT_DIR/micropython/tests"
 PB_TEST_DIR=$(readlink -f "$SCRIPT_DIR/tests")
 BUILD_DIR=$(readlink -f "$BRICK_DIR/build")
 
