@@ -69,22 +69,6 @@ static const pbsys_user_program_callbacks_t user_program_callbacks = {
     .stdin_event = user_program_stdin_event_func,
 };
 
-static void pb_imports() {
-    // Import generic modules
-    #if PYBRICKS_PY_PARAMETERS
-    pb_from_module_import_all(MP_QSTR_parameters);
-    #endif
-    #if PYBRICKS_PY_TOOLS
-    pb_from_module_import_all(MP_QSTR_tools);
-    #endif
-    #if PYBRICKS_PY_ROBOTICS
-    pb_from_module_import_all(MP_QSTR_robotics);
-    #endif
-    #if PYBRICKS_PY_NXTDEVICES
-    pb_from_module_import_all(MP_QSTR_nxtdevices);
-    #endif
-}
-
 int main(int argc, char **argv) {
     int stack_dummy;
     stack_top = (char *)&stack_dummy;
@@ -104,7 +88,6 @@ int main(int argc, char **argv) {
 
     // Initialize MicroPython and run default imports
     mp_init();
-    pb_imports();
 
     // Run a program
     // TODO
