@@ -7,13 +7,14 @@
 #define MICROPY_HW_BOARD_NAME             "LEGO MINDSTORMS EV3 Intelligent Brick"
 #define MICROPY_HW_MCU_NAME               "Texas Instruments AM1808"
 
-#define PYBRICKS_HUB_EV3                (1)
+#define PYBRICKS_HUB_EV3BRICK                (1)
 
 // Pybricks modules
 #define PYBRICKS_PY_COMMON              (1)
 #define PYBRICKS_PY_COMMON_MOTORS       (1)
 #define PYBRICKS_PY_EV3DEVICES          (1)
 #define PYBRICKS_PY_EXPERIMENTAL        (1)
+#define PYBRICKS_PY_HUBS                (1)
 #define PYBRICKS_PY_IODEVICES           (1)
 #define PYBRICKS_PY_MEDIA_EV3DEV        (1)
 #define PYBRICKS_PY_PARAMETERS          (1)
@@ -33,7 +34,6 @@ extern const struct _mp_obj_module_t pb_package_pybricks;
 
 extern const struct _mp_obj_module_t pb_module_bluetooth;
 extern const struct _mp_obj_module_t pb_module_ev3devices;
-extern const struct _mp_obj_module_t pb_module_hubs;
 extern const struct _mp_obj_module_t pb_module_iodevices;
 extern const struct _mp_obj_module_t pb_module_media_ev3dev;
 extern const struct _mp_obj_module_t pb_module_nxtdevices;
@@ -43,7 +43,6 @@ extern const struct _mp_obj_module_t pb_module_usignal;
     _PYBRICKS_PACKAGE_PYBRICKS        \
     { MP_ROM_QSTR(MP_QSTR_bluetooth_c),     MP_ROM_PTR(&pb_module_bluetooth)        }, \
     { MP_ROM_QSTR(MP_QSTR_ev3devices_c),    MP_ROM_PTR(&pb_module_ev3devices)       }, \
-    { MP_ROM_QSTR(MP_QSTR_hubs_c),          MP_ROM_PTR(&pb_module_hubs)             }, \
     { MP_ROM_QSTR(MP_QSTR_iodevices_c),     MP_ROM_PTR(&pb_module_iodevices)        }, \
     { MP_ROM_QSTR(MP_QSTR_media_ev3dev_c),  MP_ROM_PTR(&pb_module_media_ev3dev)     }, \
     { MP_ROM_QSTR(MP_QSTR_nxtdevices_c),    MP_ROM_PTR(&pb_module_nxtdevices)       }, \

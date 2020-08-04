@@ -110,7 +110,7 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
         PB_ARG_DEFAULT_NONE(path));
     const char *file_path = path == mp_const_none ? "log.txt" : mp_obj_str_get_str(path);
 
-    #if PYBRICKS_HUB_EV3
+    #if PYBRICKS_HUB_EV3BRICK
     // Create an empty log file
     FILE *log_file;
 
@@ -121,7 +121,7 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     }
     #else
     mp_printf(&mp_plat_print, "PB_OF:%s\n", file_path);
-    #endif // PYBRICKS_HUB_EV3
+    #endif // PYBRICKS_HUB_EV3BRICK
 
     // Read log size information
     int32_t data[MAX_LOG_VALUES];
@@ -147,7 +147,7 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
         // Make one string of values
         make_data_row_str(row_str, data, num_values);
 
-        #if PYBRICKS_HUB_EV3
+        #if PYBRICKS_HUB_EV3BRICK
         // Append the row to file
         if (fprintf(log_file, "%s", row_str) < 0) {
             err = PBIO_ERROR_IO;
@@ -156,17 +156,17 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
         #else
         // Print the row
         mp_print_str(&mp_plat_print, row_str);
-        #endif // PYBRICKS_HUB_EV3
+        #endif // PYBRICKS_HUB_EV3BRICK
     }
 
-    #if PYBRICKS_HUB_EV3
+    #if PYBRICKS_HUB_EV3BRICK
     // Close the file
     if (fclose(log_file) != 0) {
         err = PBIO_ERROR_IO;
     }
     #else
     mp_print_str(&mp_plat_print, "PB_EOF\n");
-    #endif // PYBRICKS_HUB_EV3
+    #endif // PYBRICKS_HUB_EV3BRICK
 
     pb_assert(err);
     return mp_const_none;

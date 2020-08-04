@@ -371,7 +371,7 @@ STATIC const mp_obj_type_t mod_experimental_Motion_type = {
 
 #endif // PYBRICKS_HUB_MOVEHUB
 
-#if PYBRICKS_HUB_EV3
+#if PYBRICKS_HUB_EV3BRICK
 #if !MICROPY_MODULE_BUILTIN_INIT
 #error "pybricks.experimental module requires that MICROPY_MODULE_BUILTIN_INIT is enabled"
 #endif
@@ -403,7 +403,7 @@ STATIC mp_obj_t mod_experimental_pthread_raise(mp_obj_t thread_id_in, mp_obj_t e
     return mp_obj_new_int(mp_thread_schedule_exception(thread_id, ex_in));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_experimental_pthread_raise_obj, mod_experimental_pthread_raise);
-#endif // PYBRICKS_HUB_EV3
+#endif // PYBRICKS_HUB_EV3BRICK
 
 STATIC const mp_rom_map_elem_t experimental_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental_c) },
@@ -413,10 +413,10 @@ STATIC const mp_rom_map_elem_t experimental_globals_table[] = {
     #if PYBRICKS_HUB_MOVEHUB
     { MP_ROM_QSTR(MP_QSTR_Motion), MP_ROM_PTR(&mod_experimental_Motion_type) },
     #endif // PYBRICKS_HUB_MOVEHUB
-    #if PYBRICKS_HUB_EV3
+    #if PYBRICKS_HUB_EV3BRICK
     { MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&mod_experimental___init___obj) },
     { MP_ROM_QSTR(MP_QSTR_pthread_raise), MP_ROM_PTR(&mod_experimental_pthread_raise_obj) },
-    #endif // PYBRICKS_HUB_EV3
+    #endif // PYBRICKS_HUB_EV3BRICK
     #if MICROPY_PY_BUILTINS_FLOAT
     { MP_ROM_QSTR(MP_QSTR_Matrix),      MP_ROM_PTR(&pb_type_Matrix_type)     },
     { MP_ROM_QSTR(MP_QSTR_Vector),      MP_ROM_PTR(&pb_func_Vector)          },

@@ -20,7 +20,7 @@
 #include "common/common_motors.h"
 #include "parameters/parameters.h"
 
-#if PYBRICKS_HUB_EV3
+#if PYBRICKS_HUB_EV3BRICK
 
 // Generic linear scaling of an analog value between a known min and max to a percentage
 STATIC int32_t analog_scale(int32_t mvolts, int32_t mvolts_min, int32_t mvolts_max, bool invert) {
@@ -480,12 +480,12 @@ STATIC const mp_obj_type_t nxtdevices_EnergyMeter_type = {
     .locals_dict = (mp_obj_dict_t *)&nxtdevices_EnergyMeter_locals_dict,
 };
 
-#endif // PYBRICKS_HUB_EV3
+#endif // PYBRICKS_HUB_EV3BRICK
 
 // dir(pybricks.nxtdevices)
 STATIC const mp_rom_map_elem_t nxtdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_nxtdevices)              },
-    #if PYBRICKS_HUB_NXT
+    #if PYBRICKS_HUB_NXTBRICK
     { MP_ROM_QSTR(MP_QSTR_Motor),            MP_ROM_PTR(&pb_type_Motor)                },
     #else
     { MP_ROM_QSTR(MP_QSTR_TouchSensor),      MP_ROM_PTR(&nxtdevices_TouchSensor_type)     },
