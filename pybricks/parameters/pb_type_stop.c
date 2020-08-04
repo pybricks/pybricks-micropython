@@ -33,6 +33,13 @@ STATIC const mp_rom_map_elem_t pb_enum_Stop_table[] = {
     { MP_ROM_QSTR(MP_QSTR_BRAKE),   MP_ROM_PTR(&pb_Stop_BRAKE_obj) },
     { MP_ROM_QSTR(MP_QSTR_HOLD),    MP_ROM_PTR(&pb_Stop_HOLD_obj)  },
 };
-PB_DEFINE_ENUM(pb_enum_type_Stop, MP_QSTR_Stop, pb_enum_Stop_table);
+STATIC MP_DEFINE_CONST_DICT(pb_enum_type_Stop_locals_dict, pb_enum_Stop_table);
 
+const mp_obj_type_t pb_enum_type_Stop = {
+    { &mp_type_type },
+    .name = MP_QSTR_Stop,
+    .print = pb_type_enum_print,
+    .unary_op = mp_generic_unary_op,
+    .locals_dict = (mp_obj_dict_t *)&(pb_enum_type_Stop_locals_dict),
+};
 #endif // PYBRICKS_PY_PARAMETERS

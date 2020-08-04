@@ -82,7 +82,7 @@ const pb_obj_enum_member_t pb_Color_MAGENTA_obj = {
     .value = PBIO_COLOR_MAGENTA
 };
 
-STATIC const mp_rom_map_elem_t pb_Color_enum_table[] = {
+STATIC const mp_rom_map_elem_t pb_enum_Color_table[] = {
     { MP_ROM_QSTR(MP_QSTR_BLACK),   MP_ROM_PTR(&pb_Color_BLACK_obj)  },
     { MP_ROM_QSTR(MP_QSTR_PURPLE),  MP_ROM_PTR(&pb_Color_PURPLE_obj) },
     { MP_ROM_QSTR(MP_QSTR_BLUE),    MP_ROM_PTR(&pb_Color_BLUE_obj)   },
@@ -96,6 +96,14 @@ STATIC const mp_rom_map_elem_t pb_Color_enum_table[] = {
     { MP_ROM_QSTR(MP_QSTR_CYAN),    MP_ROM_PTR(&pb_Color_CYAN_obj)   },
     { MP_ROM_QSTR(MP_QSTR_MAGENTA), MP_ROM_PTR(&pb_Color_MAGENTA_obj)},
 };
-PB_DEFINE_ENUM(pb_enum_type_Color, MP_QSTR_Color, pb_Color_enum_table);
+STATIC MP_DEFINE_CONST_DICT(pb_enum_type_Color_locals_dict, pb_enum_Color_table);
+
+const mp_obj_type_t pb_enum_type_Color = {
+    { &mp_type_type },
+    .name = MP_QSTR_Color,
+    .print = pb_type_enum_print,
+    .unary_op = mp_generic_unary_op,
+    .locals_dict = (mp_obj_dict_t *)&(pb_enum_type_Color_locals_dict),
+};
 
 #endif // PYBRICKS_PY_PARAMETERS

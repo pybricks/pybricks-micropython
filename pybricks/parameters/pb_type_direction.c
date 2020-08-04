@@ -26,6 +26,14 @@ STATIC const mp_rom_map_elem_t pb_enum_Direction_table[] = {
     { MP_ROM_QSTR(MP_QSTR_CLOCKWISE),         MP_ROM_PTR(&pb_Direction_CLOCKWISE_obj)        },
     { MP_ROM_QSTR(MP_QSTR_COUNTERCLOCKWISE),  MP_ROM_PTR(&pb_Direction_COUNTERCLOCKWISE_obj) },
 };
-PB_DEFINE_ENUM(pb_enum_type_Direction, MP_QSTR_Direction, pb_enum_Direction_table);
+STATIC MP_DEFINE_CONST_DICT(pb_enum_type_Direction_locals_dict, pb_enum_Direction_table);
+
+const mp_obj_type_t pb_enum_type_Direction = {
+    { &mp_type_type },
+    .name = MP_QSTR_Direction,
+    .print = pb_type_enum_print,
+    .unary_op = mp_generic_unary_op,
+    .locals_dict = (mp_obj_dict_t *)&(pb_enum_type_Direction_locals_dict),
+};
 
 #endif // PYBRICKS_PY_PARAMETERS

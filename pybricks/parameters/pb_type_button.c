@@ -85,6 +85,14 @@ STATIC const mp_rom_map_elem_t pb_enum_Button_table[] = {
     { MP_ROM_QSTR(MP_QSTR_RIGHT_DOWN), MP_ROM_PTR(&pb_Button_RIGHT_DOWN_obj)},
     { MP_ROM_QSTR(MP_QSTR_BEACON),     MP_ROM_PTR(&pb_Button_BEACON_obj)    },
 };
-PB_DEFINE_ENUM(pb_enum_type_Button, MP_QSTR_Button, pb_enum_Button_table);
+STATIC MP_DEFINE_CONST_DICT(pb_enum_type_Button_locals_dict, pb_enum_Button_table);
+
+const mp_obj_type_t pb_enum_type_Button = {
+    { &mp_type_type },
+    .name = MP_QSTR_Button,
+    .print = pb_type_enum_print,
+    .unary_op = mp_generic_unary_op,
+    .locals_dict = (mp_obj_dict_t *)&(pb_enum_type_Button_locals_dict),
+};
 
 #endif // PYBRICKS_PY_PARAMETERS
