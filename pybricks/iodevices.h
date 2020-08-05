@@ -5,9 +5,10 @@
 #define PYBRICKS_INCLUDED_PYBRICKS_IODEVICES_H
 
 #include "py/mpconfig.h"
-#include "py/obj.h"
 
 #if PYBRICKS_PY_IODEVICES
+
+#include "py/obj.h"
 
 const mp_obj_module_t pb_module_iodevices;
 

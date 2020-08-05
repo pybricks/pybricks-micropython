@@ -5,8 +5,6 @@
 
 #if PYBRICKS_PY_PARAMETERS
 
-#include "py/obj.h"
-
 #include <pybricks/parameters.h>
 
 STATIC const mp_rom_map_elem_t parameters_globals_table[] = {

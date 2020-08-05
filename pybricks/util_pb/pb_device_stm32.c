@@ -5,18 +5,16 @@
 
 #include <pbdrv/ioport.h>
 #include <pbdrv/motor.h>
-
 #include <pbio/color.h>
 #include <pbio/iodev.h>
 
 #include "py/mphal.h"
-#include "py/runtime.h"
-#include "py/obj.h"
-#include "py/mperrno.h"
 #include "py/mphal.h"
+#include "py/obj.h"
+#include "py/runtime.h"
 
-#include <pybricks/util_pb/pb_error.h>
 #include <pybricks/util_pb/pb_device.h>
+#include <pybricks/util_pb/pb_error.h>
 
 struct _pb_device_t {
     pbio_iodev_t iodev;

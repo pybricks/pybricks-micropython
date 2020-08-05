@@ -5,24 +5,13 @@
 
 #if PYBRICKS_PY_NXTDEVICES && PYBRICKS_PY_EV3DEVICES
 
-#include <pbio/color.h>
-
-#include <pbio/iodev.h>
-
-#include "py/mpconfig.h"
-#include "py/mphal.h"
-#include "py/runtime.h"
-#include "py/objtype.h"
-
-#include <pybricks/util_pb/pb_device.h>
-
-#include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_mp/pb_kwarg_helper.h>
-#include <pybricks/util_pb/pb_error.h>
-
 #include <pybricks/common.h>
 #include <pybricks/nxtdevices.h>
 #include <pybricks/parameters.h>
+
+#include <pybricks/util_mp/pb_kwarg_helper.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_pb/pb_device.h>
 
 // pybricks.nxtdevices.UltrasonicSensor class object
 typedef struct _nxtdevices_UltrasonicSensor_obj_t {

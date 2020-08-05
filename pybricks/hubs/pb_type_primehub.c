@@ -7,9 +7,6 @@
 
 #include <pbsys/sys.h>
 
-#include "py/mphal.h"
-#include "py/runtime.h"
-
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
 

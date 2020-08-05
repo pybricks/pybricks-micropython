@@ -5,8 +5,6 @@
 
 #if PYBRICKS_PY_IODEVICES
 
-#include "py/runtime.h"
-
 #include <pybricks/common.h>
 #include <pybricks/iodevices.h>
 

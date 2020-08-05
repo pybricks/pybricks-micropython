@@ -5,10 +5,11 @@
 
 #if PYBRICKS_PY_COMMON_MOTORS
 
-#include <pybricks/common.h>
 #include <pbio/control.h>
 
 #include "py/obj.h"
+
+#include <pybricks/common.h>
 
 #include <pybricks/util_pb/pb_error.h>
 #include <pybricks/util_mp/pb_obj_helper.h>

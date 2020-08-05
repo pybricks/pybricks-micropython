@@ -5,8 +5,6 @@
 
 #if PYBRICKS_PY_COMMON_MOTORS
 
-#include <inttypes.h>
-
 #include "py/mphal.h"
 
 #include <pybricks/common.h>

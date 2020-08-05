@@ -5,8 +5,6 @@
 
 #if PYBRICKS_PY_PUPDEVICES
 
-#include "py/runtime.h"
-
 #include <pybricks/common.h>
 #include <pybricks/pupdevices.h>
 

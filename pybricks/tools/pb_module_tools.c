@@ -7,10 +7,12 @@
 
 #include "py/mphal.h"
 #include "py/runtime.h"
-#include <pybricks/util_pb/pb_error.h>
-#include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_mp/pb_kwarg_helper.h>
+
 #include <pybricks/tools.h>
+
+#include <pybricks/util_mp/pb_kwarg_helper.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_pb/pb_error.h>
 
 STATIC mp_obj_t tools_wait(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,

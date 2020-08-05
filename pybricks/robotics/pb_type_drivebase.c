@@ -5,22 +5,20 @@
 
 #if PYBRICKS_PY_ROBOTICS && PYBRICKS_PY_COMMON_MOTORS
 
-#include <stdlib.h>
 #include <math.h>
+#include <stdlib.h>
 
 #include <pbio/drivebase.h>
 #include <pbio/motorpoll.h>
 
 #include "py/mphal.h"
-#include "py/runtime.h"
-#include "py/obj.h"
-
-#include <pybricks/util_pb/pb_error.h>
-#include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_mp/pb_kwarg_helper.h>
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
+
+#include <pybricks/util_mp/pb_kwarg_helper.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_pb/pb_error.h>
 
 // pybricks.robotics.DriveBase class object
 typedef struct _robotics_DriveBase_obj_t {

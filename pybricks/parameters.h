@@ -9,6 +9,7 @@
 #if PYBRICKS_PY_PARAMETERS
 
 #include "py/obj.h"
+
 #include <pybricks/util_mp/pb_type_enum.h>
 
 const mp_obj_type_t pb_enum_type_Button;

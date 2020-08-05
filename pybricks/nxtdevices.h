@@ -5,9 +5,10 @@
 #define PYBRICKS_INCLUDED_PYBRICKS_NXTDEVICES_H
 
 #include "py/mpconfig.h"
-#include "py/obj.h"
 
 #if PYBRICKS_PY_NXTDEVICES
+
+#include "py/obj.h"
 
 const mp_obj_module_t pb_module_nxtdevices;
 

@@ -11,6 +11,7 @@
 #include "py/runtime.h"
 
 #include <pybricks/parameters.h>
+
 #include <pybricks/util_mp/pb_type_enum.h>
 
 const pb_obj_enum_member_t pb_Button_UP_obj = {

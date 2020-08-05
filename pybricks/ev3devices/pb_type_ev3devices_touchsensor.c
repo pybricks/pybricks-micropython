@@ -5,23 +5,13 @@
 
 #if PYBRICKS_PY_EV3DEVICES
 
-#include "py/mphal.h"
-#include "py/runtime.h"
-
-#include <pybricks/util_pb/pb_device.h>
-#include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_mp/pb_kwarg_helper.h>
-
-#include "py/objtype.h"
-
-#include <pbio/iodev.h>
-#include <pbio/button.h>
-
 #include <pybricks/common.h>
 #include <pybricks/ev3devices.h>
-
 #include <pybricks/parameters.h>
-#include <pybricks/util_pb/pb_error.h>
+
+#include <pybricks/util_mp/pb_kwarg_helper.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_pb/pb_device.h>
 
 // pybricks.ev3devices.TouchSensor class object
 typedef struct _ev3devices_TouchSensor_obj_t {

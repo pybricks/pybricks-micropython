@@ -4,9 +4,8 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 
-#include <pybricks/util_mp/pb_type_enum.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_pb/pb_error.h>
+#include <pybricks/util_mp/pb_type_enum.h>
 
 void pb_type_enum_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kind_t kind) {
     pb_obj_enum_member_t *self = MP_OBJ_TO_PTR(self_in);

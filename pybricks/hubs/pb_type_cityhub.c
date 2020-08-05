@@ -7,12 +7,8 @@
 
 #include <pbsys/sys.h>
 
-#include "py/mphal.h"
-#include "py/runtime.h"
-
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
-
 
 typedef struct _hubs_CityHub_obj_t {
     mp_obj_base_t base;

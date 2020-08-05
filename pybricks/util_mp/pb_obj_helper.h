@@ -4,8 +4,9 @@
 #ifndef PYBRICKS_INCLUDED_PBOBJ_H
 #define PYBRICKS_INCLUDED_PBOBJ_H
 
-#include "py/obj.h"
 #include <fixmath.h>
+
+#include "py/obj.h"
 
 // like mp_obj_get_int() but also allows float
 #if MICROPY_PY_BUILTINS_FLOAT

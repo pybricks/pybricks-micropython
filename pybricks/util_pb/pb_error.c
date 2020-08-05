@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
-#include <pybricks/util_pb/pb_error.h>
-
 #include "py/mpconfig.h"
-
 #include "py/mperrno.h"
 #include "py/obj.h"
 #include "py/objstr.h"
 #include "py/runtime.h"
+
+#include <pybricks/util_pb/pb_error.h>
 
 /**
  * Raise an exception if *error* is not *PBIO_SUCCESS*. Most errors translate

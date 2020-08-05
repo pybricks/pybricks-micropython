@@ -5,8 +5,6 @@
 
 #if PYBRICKS_PY_HUBS
 
-#include "py/mphal.h"
-#include "py/runtime.h"
 #include <pybricks/hubs.h>
 
 STATIC const mp_rom_map_elem_t hubs_globals_table[] = {

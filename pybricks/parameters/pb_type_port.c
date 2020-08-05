@@ -10,6 +10,7 @@
 #include <pbio/port.h>
 
 #include <pybricks/parameters.h>
+
 #include <pybricks/util_mp/pb_type_enum.h>
 
 #if PBDRV_CONFIG_HAS_PORT_A

@@ -5,28 +5,13 @@
 
 #if PYBRICKS_PY_PUPDEVICES
 
-#include "py/mphal.h"
-
-#include <pbdrv/ioport.h>
-
-#include <pbio/button.h>
-#include <pbio/color.h>
-#include <pbio/iodev.h>
-#include <pbio/light.h>
-#include <pbio/math.h>
-
-#include "py/obj.h"
-#include "py/runtime.h"
-
-
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
+#include <pybricks/pupdevices.h>
 
-#include <pybricks/util_pb/pb_color_map.h>
-#include <pybricks/util_pb/pb_device.h>
-#include <pybricks/util_pb/pb_error.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_pb/pb_device.h>
 
 // Class structure for UltrasonicSensor
 typedef struct _pupdevices_UltrasonicSensor_obj_t {

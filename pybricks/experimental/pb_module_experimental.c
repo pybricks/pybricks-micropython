@@ -6,13 +6,10 @@
 #if PYBRICKS_PY_EXPERIMENTAL
 
 #include "py/mphal.h"
-#include "py/runtime.h"
-
-#include <pybricks/experimental.h>
-
 #include "py/obj.h"
 #include "py/runtime.h"
 
+#include <pybricks/experimental.h>
 #include <pybricks/robotics.h>
 
 #if PYBRICKS_HUB_CPLUSHUB

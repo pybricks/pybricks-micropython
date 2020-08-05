@@ -5,14 +5,14 @@
 
 #include <fixmath.h>
 
-#include <pybricks/util_pb/pb_error.h>
-#include <pybricks/util_mp/pb_obj_helper.h>
-
 #include "py/mpconfig.h"
 #include "py/obj.h"
 #include "py/objstr.h"
 #include "py/objtype.h"
 #include "py/runtime.h"
+
+#include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_pb/pb_error.h>
 
 #if MICROPY_PY_BUILTINS_FLOAT
 mp_int_t pb_obj_get_int(mp_obj_t arg) {

@@ -8,9 +8,9 @@
 
 #if PYBRICKS_PY_COMMON
 
-#include <pybricks/util_pb/pb_device.h>
-
 #include "py/obj.h"
+
+#include <pybricks/util_pb/pb_device.h>
 
 // pybricks._common.ColorLight()
 const mp_obj_type_t pb_type_ColorLight;

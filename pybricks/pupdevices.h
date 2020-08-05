@@ -5,9 +5,10 @@
 #define PYBRICKS_INCLUDED_PYBRICKS_PUPDEVICES_H
 
 #include "py/mpconfig.h"
-#include "py/obj.h"
 
 #if PYBRICKS_PY_PUPDEVICES
+
+#include "py/obj.h"
 
 const mp_obj_module_t pb_module_pupdevices;
 

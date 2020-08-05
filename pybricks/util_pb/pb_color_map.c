@@ -8,14 +8,14 @@
 
 #include "py/obj.h"
 
-
-#include <pybricks/util_pb/pb_color_map.h>
-#include <pybricks/util_pb/pb_error.h>
+#include <pybricks/parameters.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_pb/pb_color_map.h>
+#include <pybricks/util_pb/pb_error.h>
 
-#include <pybricks/parameters.h>
+
 
 
 // Hue or value not specified

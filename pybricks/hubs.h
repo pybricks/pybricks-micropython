@@ -5,9 +5,10 @@
 #define PYBRICKS_INCLUDED_PYBRICKS_HUBS_H
 
 #include "py/mpconfig.h"
-#include "py/obj.h"
 
 #if PYBRICKS_PY_HUBS
+
+#include "py/obj.h"
 
 #if PYBRICKS_HUB_MOVEHUB
 const mp_obj_type_t pb_type_MoveHub;

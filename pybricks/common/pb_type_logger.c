@@ -5,9 +5,9 @@
 
 #if PYBRICKS_PY_COMMON_MOTORS
 
+#include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
-#include <inttypes.h>
 
 #include <pbio/config.h>
 #include <pbio/logger.h>

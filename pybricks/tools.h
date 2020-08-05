@@ -5,9 +5,10 @@
 #define PYBRICKS_INCLUDED_PYBRICKS_TOOLS_H
 
 #include "py/mpconfig.h"
-#include "py/obj.h"
 
 #if PYBRICKS_PY_TOOLS
+
+#include "py/obj.h"
 
 const mp_obj_type_t pb_type_StopWatch;
 

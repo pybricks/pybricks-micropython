@@ -8,10 +8,10 @@
 #include <pbio/light.h>
 #include <pbio/color.h>
 
+#include "py/obj.h"
+
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
-
-#include "py/obj.h"
 
 #include <pybricks/util_pb/pb_error.h>
 #include <pybricks/util_mp/pb_obj_helper.h>

@@ -5,12 +5,13 @@
 
 #if PYBRICKS_PY_COMMON
 
-#include "py/obj.h"
-
 #include <pbio/button.h>
+
+#include "py/obj.h"
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
+
 #include <pybricks/util_pb/pb_error.h>
 
 // TODO: buttons are currently a module due to the legacy C API, but should be

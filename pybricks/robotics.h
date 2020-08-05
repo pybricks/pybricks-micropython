@@ -5,9 +5,10 @@
 #define PYBRICKS_INCLUDED_PYBRICKS_ROBOTICS_H
 
 #include "py/mpconfig.h"
-#include "py/obj.h"
 
 #if PYBRICKS_PY_ROBOTICS
+
+#include "py/obj.h"
 
 #if MICROPY_PY_BUILTINS_FLOAT
 

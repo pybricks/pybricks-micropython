@@ -6,11 +6,12 @@
 #if PYBRICKS_PY_TOOLS
 
 #include "py/mphal.h"
-#include "py/runtime.h"
-#include <pybricks/util_pb/pb_error.h>
-#include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_mp/pb_kwarg_helper.h>
+
 #include <pybricks/tools.h>
+
+#include <pybricks/util_mp/pb_kwarg_helper.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_pb/pb_error.h>
 
 typedef struct _tools_StopWatch_obj_t {
     mp_obj_base_t base;

@@ -5,24 +5,15 @@
 
 #if PYBRICKS_PY_IODEVICES
 
-#include <string.h>
-
 #include <pbio/iodev.h>
-#include <pbio/serial.h>
-
-#include "py/mpconfig.h"
-
-#include "py/mphal.h"
-#include "py/runtime.h"
-#include "py/objstr.h"
-
-#include <pybricks/util_pb/pb_device.h>
-#include <pybricks/util_mp/pb_obj_helper.h>
-#include <pybricks/util_mp/pb_kwarg_helper.h>
-#include <pybricks/util_pb/pb_error.h>
 
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
+
+#include <pybricks/util_mp/pb_kwarg_helper.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_pb/pb_device.h>
+#include <pybricks/util_pb/pb_error.h>
 
 // pybricks.iodevices.AnalogSensor class object
 typedef struct _iodevices_AnalogSensor_obj_t {

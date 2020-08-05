@@ -6,8 +6,6 @@
 
 #include <pbio/error.h>
 
-#include "py/obj.h"
-
 void pb_assert(pbio_error_t error);
 
 #endif // _PYBRICKS_EXTMOD_PBERROR_H_

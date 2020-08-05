@@ -1,12 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019-2020 The Pybricks Authors
 
-#include "py/mphal.h"
-
-#include <pybricks/util_pb/pb_error.h>
-#include <pybricks/util_pb/pb_device.h>
-
-
 #include <dirent.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -14,11 +8,16 @@
 
 #include <pbio/color.h>
 #include <pbio/config.h>
-#include <pbio/port.h>
 #include <pbio/iodev.h>
+#include <pbio/port.h>
 
 #include <ev3dev_stretch/lego_sensor.h>
 #include <ev3dev_stretch/nxtcolor.h>
+
+#include "py/mphal.h"
+
+#include <pybricks/util_pb/pb_error.h>
+#include <pybricks/util_pb/pb_device.h>
 
 struct _pb_device_t {
     /**

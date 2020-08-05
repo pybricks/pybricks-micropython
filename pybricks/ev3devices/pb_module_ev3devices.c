@@ -5,9 +5,6 @@
 
 #if PYBRICKS_PY_EV3DEVICES
 
-#include "py/mphal.h"
-#include "py/runtime.h"
-
 #include <pybricks/common.h>
 #include <pybricks/ev3devices.h>
 
