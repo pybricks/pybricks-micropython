@@ -297,10 +297,11 @@ PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 	pbio/drv/core.c \
 	pbio/drv/counter/counter_core.c \
 	pbio/drv/counter/counter_ev3dev_stretch_iio.c \
-	pbio/drv/ev3dev_stretch/light.c \
 	pbio/drv/ev3dev_stretch/motor.c \
 	pbio/drv/ev3dev_stretch/serial.c \
 	pbio/drv/ioport/ioport_ev3dev_stretch.c \
+	pbio/drv/led/led_core.c \
+	pbio/drv/led/led_ev3dev.c \
 	pbio/platform/ev3dev_stretch/clock.c \
 	pbio/src/color/conversion.c \
 	pbio/src/control.c \

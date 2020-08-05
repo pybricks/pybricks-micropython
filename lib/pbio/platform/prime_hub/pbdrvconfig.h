@@ -41,6 +41,8 @@
 #define PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT         PBIO_PORT_A
 #define PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT          PBIO_PORT_F
 
+#define PBDRV_CONFIG_LED                            (0)
+
 #define PBDRV_CONFIG_PWM                            (1)
 #define PBDRV_CONFIG_PWM_NUM_DEV                    (3)
 #define PBDRV_CONFIG_PWM_STM32_TIM                  (1)
@@ -55,7 +57,6 @@
 #define PBDRV_CONFIG_USB_STM32F4_CDC                (1)
 
 #define PBDRV_CONFIG_BLUETOOTH      (0)
-#define PBDRV_CONFIG_LIGHT          (0)
 #define PBDRV_CONFIG_MOTOR          (1)
 
 #define PBDRV_CONFIG_HAS_PORT_A (1)

@@ -293,7 +293,6 @@ LIBFIXMATH_SRC_C = $(addprefix lib/libfixmath/libfixmath/,\
 
 PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/$(PBIO_PLATFORM)/bluetooth.c \
-	drv/$(PBIO_PLATFORM)/light.c \
 	drv/$(PBIO_PLATFORM)/motor.c \
 	drv/adc/adc_stm32_hal.c \
 	drv/adc/adc_stm32f0.c \
@@ -307,6 +306,8 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/gpio/gpio_stm32f4.c \
 	drv/gpio/gpio_stm32l4.c \
 	drv/ioport/ioport_lpf2.c \
+	drv/led/led_core.c \
+	drv/led/led_pwm.c \
 	drv/pwm/pwm_core.c \
 	drv/pwm/pwm_stm32_tim.c \
 	drv/uart/uart_stm32f0.c \

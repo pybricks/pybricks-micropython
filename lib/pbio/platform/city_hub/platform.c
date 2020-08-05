@@ -9,10 +9,31 @@
 
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/ioport/ioport_lpf2.h"
+#include "../../drv/led/led_pwm.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/uart/uart_stm32f0.h"
 
 #include "stm32f030xc.h"
+
+enum {
+    COUNTER_PORT_A,
+    COUNTER_PORT_B,
+};
+
+enum {
+    LED_DEV_0,
+};
+
+enum {
+    PWM_DEV_0,
+    PWM_DEV_1,
+    PWM_DEV_2,
+};
+
+enum {
+    UART_ID_0,
+    UART_ID_1,
+};
 
 const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON] = {
     [0] = {
@@ -23,13 +44,21 @@ const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTO
     }
 };
 
-// PWM
+// LED
 
-enum {
-    PWM_DEV_0,
-    PWM_DEV_1,
-    PWM_DEV_2,
+const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV] = {
+    {
+        .id = LED_DEV_0,
+        .r_id = PWM_DEV_2,
+        .r_ch = 1,
+        .g_id = PWM_DEV_1,
+        .g_ch = 1,
+        .b_id = PWM_DEV_1,
+        .b_ch = 2,
+    }
 };
+
+// PWM
 
 static void pwm_dev_0_platform_init() {
     // port A motor PWM on TIM3 CH2/4
@@ -81,20 +110,16 @@ const pbdrv_pwm_stm32_tim_platform_data_t
     {
         .platform_init = pwm_dev_1_platform_init,
         .TIMx = TIM15,
-        // RGB values are 0-255, so multiplying by 5 here to limit brightness to
-        // 1/5 of max possible without having to do division later. It should also
-        // give us smoother steps than the official LEGO firmware since we aren't
-        // jumping by 5s.
-        .prescalar = 188, // results in 255 kHz clock
-        .period = 256 * 5, // 199 Hz PWM
+        .prescalar = 4, // results in 12 MHz clock
+        .period = 10000, // 12MHz divided by 10k makes 1.2 kHz PWM
         .id = PWM_DEV_1,
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE,
     },
     {
         .platform_init = pwm_dev_2_platform_init,
         .TIMx = TIM16,
-        .prescalar = 188, // results in 255 kHz clock
-        .period = 256 * 5, // 199 Hz PWM
+        .prescalar = 4, // results in 12 MHz clock
+        .period = 10000, // 12MHz divided by 10k makes 1.2 kHz PWM
         .id = PWM_DEV_2,
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE,
     },
@@ -122,11 +147,6 @@ const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_1 = {
 
 // UART
 
-enum {
-    UART_ID_0,
-    UART_ID_1,
-};
-
 const pbdrv_uart_stm32f0_platform_data_t pbdrv_uart_stm32f0_platform_data[PBDRV_CONFIG_UART_STM32F0_NUM_UART] = {
     [UART_ID_0] = {
         .uart = USART3,
@@ -143,11 +163,6 @@ void USART3_6_IRQHandler(void) {
     pbdrv_uart_stm32f0_handle_irq(UART_ID_0);
     pbdrv_uart_stm32f0_handle_irq(UART_ID_1);
 }
-
-enum {
-    COUNTER_PORT_A,
-    COUNTER_PORT_B,
-};
 
 const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
     [0] = {

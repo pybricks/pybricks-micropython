@@ -8,12 +8,37 @@
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/ioport/ioport_lpf2.h"
+#include "../../drv/led/led_pwm.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/uart/uart_stm32l4_ll_dma.h"
 
 #include "stm32l4xx_hal.h"
 #include "stm32l4xx_ll_dma.h"
 #include "stm32l4xx_ll_rcc.h"
+
+enum {
+    COUNTER_PORT_A,
+    COUNTER_PORT_B,
+    COUNTER_PORT_C,
+    COUNTER_PORT_D,
+};
+
+enum {
+    LED_DEV_0,
+};
+
+enum {
+    PWM_DEV_0,
+    PWM_DEV_1,
+    PWM_DEV_2,
+};
+
+enum {
+    UART_PORT_A,
+    UART_PORT_B,
+    UART_PORT_C,
+    UART_PORT_D,
+};
 
 // PBIO driver data
 
@@ -66,13 +91,21 @@ const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_3 = {
     .alt = GPIO_AF8_LPUART1,
 };
 
-// PWM
+// LED
 
-enum {
-    PWM_DEV_0,
-    PWM_DEV_1,
-    PWM_DEV_2,
+const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV] = {
+    {
+        .id = LED_DEV_0,
+        .r_id = PWM_DEV_1,
+        .r_ch = 2,
+        .g_id = PWM_DEV_0,
+        .g_ch = 4,
+        .b_id = PWM_DEV_2,
+        .b_ch = 1,
+    }
 };
+
+// PWM
 
 static void pwm_dev_0_platform_init() {
     // green LED on PA11 using TIM1 CH4
@@ -127,13 +160,6 @@ const pbdrv_pwm_stm32_tim_platform_data_t
 };
 
 // UART
-
-enum {
-    UART_PORT_A,
-    UART_PORT_B,
-    UART_PORT_C,
-    UART_PORT_D,
-};
 
 const pbdrv_uart_stm32l4_ll_dma_platform_data_t
     pbdrv_uart_stm32l4_ll_dma_platform_data[PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART] = {
@@ -234,13 +260,6 @@ void USART3_IRQHandler() {
 void LPUART1_IRQHandler() {
     pbdrv_uart_stm32l4_ll_dma_handle_uart_irq(UART_PORT_D);
 }
-
-enum {
-    COUNTER_PORT_A,
-    COUNTER_PORT_B,
-    COUNTER_PORT_C,
-    COUNTER_PORT_D,
-};
 
 const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
     [0] = {

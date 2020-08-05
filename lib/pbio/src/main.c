@@ -13,10 +13,10 @@
 #include "pbdrv/button.h"
 #include "pbdrv/config.h"
 #include "pbdrv/core.h"
-#include "pbdrv/light.h"
 #include "pbdrv/motor.h"
 #include "pbsys/sys.h"
 #include "pbio/config.h"
+#include "pbio/light.h"
 #include "pbio/motorpoll.h"
 #include "pbio/uartdev.h"
 

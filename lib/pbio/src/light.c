@@ -7,16 +7,16 @@
 
 #include <stdbool.h>
 
+#include <pbdrv/led.h>
+
 #include <pbio/color.h>
 #include <pbio/error.h>
 #include <pbio/light.h>
 #include <pbio/port.h>
 
-#include <pbdrv/light.h>
-
 typedef struct {
     pbio_light_pattern_t pattern;
-    pbdrv_light_raw_rgb_t raw;
+    pbio_color_t color;
 } user_data_t;
 
 static user_data_t user_light_data;
@@ -38,7 +38,6 @@ static const uint8_t breathe_pattern_data[64] = {
 
 pbio_error_t _pbio_light_on(pbio_port_t port, pbio_color_t color, pbio_light_pattern_t pattern) {
     user_data_t data;
-    pbio_error_t err;
 
     if (port != PBIO_PORT_SELF) {
         // TODO: handle lights on I/O ports
@@ -49,11 +48,7 @@ pbio_error_t _pbio_light_on(pbio_port_t port, pbio_color_t color, pbio_light_pat
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    err = pbdrv_light_get_rgb_for_color(port, color, &data.raw);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
+    data.color = color;
     data.pattern = pattern;
 
     user_light_data = data;
@@ -72,6 +67,9 @@ void _pbio_light_poll(uint32_t now) {
 
     data = user_light_data;
 
+    pbio_color_hsv_t hsv;
+    pbio_color_to_hsv(data.color, &hsv);
+
     switch (data.pattern) {
         case PBIO_LIGHT_PATTERN_NONE:
             break;
@@ -79,21 +77,20 @@ void _pbio_light_poll(uint32_t now) {
             // breathe pattern has 64 values over the course of two seconds (2048ms)
             idx = (now >> 5) & (64 - 1);
             scale = breathe_pattern_data[idx] + 1;
-            data.raw.r = data.raw.r * scale / 256;
-            data.raw.g = data.raw.g * scale / 256;
-            data.raw.b = data.raw.b * scale / 256;
+            hsv.v = 101 * scale / 256;
             break;
         case PBIO_LIGHT_PATTERN_FLASH:
             // flash pattern has 8 value over the course of two seconds (2048ms)
             idx = (now >> 8) & (8 - 1);
-            scale = flash_pattern_data[idx] + 1;
-            data.raw.r = data.raw.r * scale / 256;
-            data.raw.g = data.raw.g * scale / 256;
-            data.raw.b = data.raw.b * scale / 256;
+            scale = flash_pattern_data[idx];
+            hsv.v = 100 * scale;
             break;
     }
 
-    pbdrv_light_set_rgb(PBIO_PORT_SELF, &data.raw);
+    pbdrv_led_dev_t *led;
+    if (pbdrv_led_get_dev(0, &led) == PBIO_SUCCESS) {
+        pbdrv_led_set_hsv(led, &hsv);
+    }
 }
 
 /**

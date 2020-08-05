@@ -6,7 +6,7 @@
 #include "pbdrv/battery.h"
 #include "pbdrv/bluetooth.h"
 #include "pbdrv/config.h"
-#include "pbdrv/light.h"
+#include "pbdrv/led.h"
 
 #include "pbio/button.h"
 #include "pbio/color.h"
@@ -80,9 +80,9 @@ void pbsys_unprepare_user_program(void) {
     user_stop_func = NULL;
     user_stdin_event_func = NULL;
     _pbio_light_set_user_mode(false);
-    pbdrv_light_raw_rgb_t raw;
-    pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_COLOR_BLUE, &raw);
-    pbdrv_light_set_rgb(PBIO_PORT_SELF, &raw);
+    pbdrv_led_dev_t *led;
+    pbdrv_led_get_dev(0, &led);
+    pbdrv_led_on(led, PBIO_COLOR_BLUE);
     _pbio_motorpoll_reset_all();
 }
 
@@ -110,23 +110,14 @@ void pbsys_reboot(bool fw_update) {
 }
 
 void pbsys_power_off(void) {
-    pbdrv_light_raw_rgb_t raw;
-    int i;
+    pbdrv_led_dev_t *led;
+    pbdrv_led_get_dev(0, &led);
 
     // blink pattern like LEGO firmware
-    for (i = 0; i < 3; i++) {
-        // white
-        raw.r = 255;
-        raw.g = 140;
-        raw.b = 60;
-        pbdrv_light_set_rgb(PBIO_PORT_SELF, &raw);
+    for (int i = 0; i < 3; i++) {
+        pbdrv_led_on(led, PBIO_COLOR_WHITE);
         clock_delay_usec(50000);
-
-        // off
-        raw.r = 0;
-        raw.g = 0;
-        raw.b = 0;
-        pbdrv_light_set_rgb(PBIO_PORT_SELF, &raw);
+        pbdrv_led_off(led);
         clock_delay_usec(30000);
     }
 
@@ -155,10 +146,9 @@ static void init(void) {
     avg_battery_voltage = battery_voltage;
 
     _pbio_light_set_user_mode(false);
-
-    pbdrv_light_raw_rgb_t raw;
-    pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_COLOR_BLUE, &raw);
-    pbdrv_light_set_rgb(PBIO_PORT_SELF, &raw);
+    pbdrv_led_dev_t *led;
+    pbdrv_led_get_dev(0, &led);
+    pbdrv_led_on(led, PBIO_COLOR_BLUE);
 }
 
 static void update_button(clock_time_t now) {
@@ -172,9 +162,9 @@ static void update_button(clock_time_t now) {
             // if the button is held down for 5 seconds, power off
             if (now - button_press_start_time > clock_from_msec(5000)) {
                 // turn off light briefly like official LEGO firmware
-                pbdrv_light_raw_rgb_t raw;
-                pbdrv_light_get_rgb_for_color(PBIO_PORT_SELF, PBIO_COLOR_NONE, &raw);
-                pbdrv_light_set_rgb(PBIO_PORT_SELF, &raw);
+                pbdrv_led_dev_t *led;
+                pbdrv_led_get_dev(0, &led);
+                pbdrv_led_off(led);
                 for (int i = 0; i < 10; i++) {
                     clock_delay_usec(58000);
                 }

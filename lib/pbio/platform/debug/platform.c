@@ -13,8 +13,24 @@
 
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/button/button_gpio.h"
+#include "../../drv/led/led_pwm.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
+
+
+enum {
+    LED_DEV_0,
+};
+
+enum {
+    PWM_DEV_0,
+    PWM_DEV_1,
+    PWM_DEV_2,
+};
+
+enum {
+    UART_ID_0,
+};
 
 void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc) {
     GPIO_InitTypeDef gpio_init;
@@ -121,13 +137,21 @@ const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTO
     }
 };
 
-// PWM
+// LED
 
-enum {
-    PWM_DEV_0,
-    PWM_DEV_1,
-    PWM_DEV_2,
+const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV] = {
+    {
+        .id = LED_DEV_0,
+        .r_id = PWM_DEV_2,
+        .r_ch = 1,
+        .g_id = PWM_DEV_0,
+        .g_ch = 3,
+        .b_id = PWM_DEV_1,
+        .b_ch = 2,
+    }
 };
+
+// PWM
 
 static void pwm_dev_0_platform_init() {
     // green LED LD1 on PB0 using TIM3 CH3
@@ -152,24 +176,24 @@ const pbdrv_pwm_stm32_tim_platform_data_t
     {
         .platform_init = pwm_dev_0_platform_init,
         .TIMx = TIM3,
-        .prescalar = 188,
-        .period = 256,
+        .prescalar = 4, // results in 12 MHz clock
+        .period = 10000, // 12MHz divided by 10k makes 1.2 kHz PWM
         .id = PWM_DEV_0,
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE,
     },
     {
         .platform_init = pwm_dev_1_platform_init,
         .TIMx = TIM4,
-        .prescalar = 188,
-        .period = 256,
+        .prescalar = 4, // results in 12 MHz clock
+        .period = 10000, // 12MHz divided by 10k makes 1.2 kHz PWM
         .id = PWM_DEV_1,
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE,
     },
     {
         .platform_init = pwm_dev_2_platform_init,
         .TIMx = TIM12,
-        .prescalar = 188,
-        .period = 256,
+        .prescalar = 4, // results in 12 MHz clock
+        .period = 10000, // 12MHz divided by 10k makes 1.2 kHz PWM
         .id = PWM_DEV_2,
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE,
     },
@@ -179,10 +203,6 @@ const pbdrv_pwm_stm32_tim_platform_data_t
 //
 // Currently using pins labeled USART on the Nucleo board as a UART sensor port.
 // UART sensors can be wired to the port with 22Ω series resistors on Tx and Rx.
-
-enum {
-    UART_ID_0,
-};
 
 const pbdrv_uart_stm32f4_ll_irq_platform_data_t
     pbdrv_uart_stm32f4_ll_irq_platform_data[PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART] = {
