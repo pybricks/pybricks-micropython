@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_HUBS 
+#if PYBRICKS_PY_HUBS
 
 #include "py/mphal.h"
 #include "py/runtime.h"

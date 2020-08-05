@@ -68,7 +68,6 @@ INC += -I../../lib/libfixmath/libfixmath
 INC += -I../../lib/pbio
 INC += -I../../lib/pbio/include
 INC += -I../../lib/pbio/platform/ev3dev_stretch
-INC += -I../../extmod
 INC += -I../../pybricks
 INC += -I$(TOP)/ports/unix
 
@@ -249,6 +248,12 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	ev3devices/pb_type_ev3devices_ultrasonicsensor.c \
 	hubs/pb_module_hubs.c \
 	hubs/pb_type_ev3brick.c \
+	iodevices/pb_module_iodevices.c \
+	iodevices/pb_type_iodevices_analogsensor.c \
+	iodevices/pb_type_iodevices_ev3devsensor.c \
+	iodevices/pb_type_iodevices_i2cdevice.c \
+	iodevices/pb_type_iodevices_lumpdevice.c \
+	iodevices/pb_type_iodevices_uartdevice.c \
 	nxtdevices/pb_module_nxtdevices.c \
 	nxtdevices/pb_type_nxtdevices_colorsensor.c \
     nxtdevices/pb_type_nxtdevices_energymeter.c \
@@ -272,10 +277,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	util_mp/pb_type_enum.c \
 	util_pb/pb_device_ev3dev.c \
 	util_pb/pb_error.c \
-	)
-
-PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
-	modiodevices.c \
 	)
 
 PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
@@ -326,11 +327,10 @@ OBJ += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PYBRICKS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_SRC_C:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_LIB_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(LIB_SRC_C) $(EXTMOD_SRC_C) $(PYBRICKS_SRC_C) $(PYBRICKS_EXTMOD_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
+SRC_QSTR += $(SRC_C) $(LIB_SRC_C) $(EXTMOD_SRC_C) $(PYBRICKS_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in
 # SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=

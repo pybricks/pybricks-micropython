@@ -116,16 +116,9 @@ typedef long mp_off_t;
 extern const struct _mp_obj_module_t pb_package_pybricks;
 #define _PYBRICKS_PACKAGE_PYBRICKS \
     { MP_OBJ_NEW_QSTR(MP_QSTR_pybricks), (mp_obj_t)&pb_package_pybricks },
-#if PYBRICKS_PY_IODEVICES
-extern const struct _mp_obj_module_t pb_module_iodevices;
-#define _PYBRICKS_MODULE_IODEVICES \
-    { MP_OBJ_NEW_QSTR(MP_QSTR_iodevices), (mp_obj_t)&pb_module_iodevices },
-#else
-#define _PYBRICKS_MODULE_IODEVICES
-#endif
+
 #define MICROPY_PORT_BUILTIN_MODULES \
     _PYBRICKS_PACKAGE_PYBRICKS      \
-    _PYBRICKS_MODULE_IODEVICES      \
 
 
 // We have inlined IRQ functions for efficiency (they are generally

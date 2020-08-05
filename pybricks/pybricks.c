@@ -7,6 +7,7 @@
 #include "py/objtuple.h"
 
 #include "hubs/hubs.h"
+#include "iodevices/iodevices.h"
 #include "ev3devices/ev3devices.h"
 #include "experimental/experimental.h"
 #include "nxtdevices/nxtdevices.h"
@@ -43,14 +44,17 @@ STATIC const mp_rom_map_elem_t pybricks_globals_table[] = {
     #if PYBRICKS_PY_HUBS
     { MP_ROM_QSTR(MP_QSTR_hubs),                MP_ROM_PTR(&pb_module_hubs)        },
     #endif
+    #if PYBRICKS_PY_IODEVICES
+    { MP_ROM_QSTR(MP_QSTR_iodevices),           MP_ROM_PTR(&pb_module_iodevices)},
+    #endif
     #if PYBRICKS_PY_NXTDEVICES
-    { MP_ROM_QSTR(MP_QSTR_nxtdevices),          MP_ROM_PTR(&pb_module_nxtdevices  )},
+    { MP_ROM_QSTR(MP_QSTR_nxtdevices),          MP_ROM_PTR(&pb_module_nxtdevices)},
     #endif
     #if PYBRICKS_PY_PARAMETERS
     { MP_ROM_QSTR(MP_QSTR_parameters),          MP_ROM_PTR(&pb_module_parameters)  },
     #endif
     #if PYBRICKS_PY_PUPDEVICES
-    { MP_ROM_QSTR(MP_QSTR_pupdevices),          MP_ROM_PTR(&pb_module_pupdevices  )},
+    { MP_ROM_QSTR(MP_QSTR_pupdevices),          MP_ROM_PTR(&pb_module_pupdevices)},
     #endif
     #if PYBRICKS_PY_TOOLS
     { MP_ROM_QSTR(MP_QSTR_tools),               MP_ROM_PTR(&pb_module_tools)  },

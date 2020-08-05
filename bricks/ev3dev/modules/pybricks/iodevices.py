@@ -3,4 +3,4 @@
 
 """Classes for generic I/O devices."""
 
-from iodevices_c import *
+from _pybricks.iodevices import *
