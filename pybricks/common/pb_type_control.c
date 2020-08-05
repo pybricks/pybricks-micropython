@@ -5,8 +5,7 @@
 
 #if PYBRICKS_PY_COMMON_MOTORS
 
-#include "common/common_motors.h"
-
+#include "common/common.h"
 #include <pbio/control.h>
 
 #include "py/obj.h"

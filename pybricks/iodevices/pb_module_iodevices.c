@@ -7,7 +7,7 @@
 
 #include "py/runtime.h"
 
-#include "common/common_motors.h"
+#include "common/common.h"
 #include "iodevices/iodevices.h"
 
 STATIC const mp_rom_map_elem_t iodevices_globals_table[] = {

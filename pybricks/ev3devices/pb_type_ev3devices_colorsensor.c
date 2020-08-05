@@ -18,7 +18,6 @@
 #include <pbio/button.h>
 
 #include "common/common.h"
-#include "common/common_motors.h"
 #include "ev3devices/ev3devices.h"
 
 #include "parameters/parameters.h"

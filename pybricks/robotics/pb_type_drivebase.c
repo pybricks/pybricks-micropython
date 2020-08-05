@@ -19,7 +19,7 @@
 #include "util_mp/pb_obj_helper.h"
 #include "util_mp/pb_kwarg_helper.h"
 
-#include "common/common_motors.h"
+#include "common/common.h"
 #include "parameters/parameters.h"
 
 // pybricks.robotics.DriveBase class object

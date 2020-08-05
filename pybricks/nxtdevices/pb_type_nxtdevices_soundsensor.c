@@ -21,7 +21,6 @@
 #include "util_pb/pb_error.h"
 
 #include "common/common.h"
-#include "common/common_motors.h"
 #include "nxtdevices/nxtdevices.h"
 #include "parameters/parameters.h"
 

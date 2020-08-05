@@ -23,7 +23,6 @@
 
 
 #include "common/common.h"
-#include "common/common_motors.h"
 #include "parameters/parameters.h"
 
 // Class structure for LUMPDevice

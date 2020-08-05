@@ -8,7 +8,7 @@
 #include "py/mphal.h"
 #include "py/runtime.h"
 
-#include "common/common_motors.h"
+#include "common/common.h"
 #include "nxtdevices/nxtdevices.h"
 
 STATIC const mp_rom_map_elem_t nxtdevices_globals_table[] = {

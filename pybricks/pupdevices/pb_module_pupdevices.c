@@ -7,7 +7,7 @@
 
 #include "py/runtime.h"
 
-#include "common/common_motors.h"
+#include "common/common.h"
 #include "pupdevices/pupdevices.h"
 
 STATIC const mp_rom_map_elem_t pupdevices_globals_table[] = {

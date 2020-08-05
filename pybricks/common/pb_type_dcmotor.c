@@ -9,7 +9,7 @@
 
 #include "py/mphal.h"
 
-#include "common/common_motors.h"
+#include "common/common.h"
 #include "parameters/parameters.h"
 
 #include "util_pb/pb_error.h"

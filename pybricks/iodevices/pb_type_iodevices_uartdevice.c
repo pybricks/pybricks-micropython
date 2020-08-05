@@ -23,7 +23,6 @@
 
 
 #include "common/common.h"
-#include "common/common_motors.h"
 #include "parameters/parameters.h"
 
 #define UART_MAX_LEN (32 * 1024)
