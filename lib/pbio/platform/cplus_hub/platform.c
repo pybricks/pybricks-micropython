@@ -131,7 +131,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .platform_init = pwm_dev_0_platform_init,
         .TIMx = TIM1,
         .prescalar = 8, // results in 10 MHz clock
-        .period = 10000, // 12MHz divided by 10k makes 1 kHz PWM
+        .period = 10000, // 10 MHz divided by 10k makes 1 kHz PWM
         .id = PWM_DEV_0,
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
             | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE
@@ -144,7 +144,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .platform_init = pwm_dev_1_platform_init,
         .TIMx = TIM15,
         .prescalar = 8, // results in 10 MHz clock
-        .period = 10000, // 12MHz divided by 10k makes 1 kHz PWM
+        .period = 10000, // 10 MHz divided by 10k makes 1 kHz PWM
         .id = PWM_DEV_1,
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
             | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_1_COMPLEMENT,
@@ -153,7 +153,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .platform_init = pwm_dev_2_platform_init,
         .TIMx = TIM16,
         .prescalar = 8, // results in 10 MHz clock
-        .period = 10000, // 12MHz divided by 10k makes 1 kHz PWM
+        .period = 10000, // 10 MHz divided by 10k makes 1 kHz PWM
         .id = PWM_DEV_2,
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE,
     },
