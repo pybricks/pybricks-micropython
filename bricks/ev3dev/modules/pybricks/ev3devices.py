@@ -4,7 +4,7 @@
 """Classes for LEGO MINDSTORMS EV3 Devices."""
 
 # import those ev3devices that are already written in MicroPython-style C code.
-from ev3devices_c import (
+from _pybricks.ev3devices import (
     InfraredSensor,
     ColorSensor,
     TouchSensor,

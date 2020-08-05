@@ -7,6 +7,7 @@
 #include "py/objtuple.h"
 
 #include "hubs/hubs.h"
+#include "ev3devices/ev3devices.h"
 #include "experimental/experimental.h"
 #include "parameters/parameters.h"
 #include "robotics/robotics.h"
@@ -31,6 +32,9 @@ STATIC const mp_rom_obj_tuple_t pybricks_info_obj = {
 STATIC const mp_rom_map_elem_t pybricks_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_pybricks) },
     { MP_ROM_QSTR(MP_QSTR_version),             MP_ROM_PTR(&pybricks_info_obj)},
+    #if PYBRICKS_PY_EV3DEVICES
+    { MP_ROM_QSTR(MP_QSTR_ev3devices),          MP_ROM_PTR(&pb_module_ev3devices)},
+    #endif
     #if PYBRICKS_PY_EXPERIMENTAL
     { MP_ROM_QSTR(MP_QSTR_experimental),        MP_ROM_PTR(&pb_module_experimental)},
     #endif
