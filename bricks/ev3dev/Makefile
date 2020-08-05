@@ -249,6 +249,14 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	ev3devices/pb_type_ev3devices_ultrasonicsensor.c \
 	hubs/pb_module_hubs.c \
 	hubs/pb_type_ev3brick.c \
+	nxtdevices/pb_module_nxtdevices.c \
+	nxtdevices/pb_type_nxtdevices_colorsensor.c \
+    nxtdevices/pb_type_nxtdevices_energymeter.c \
+    nxtdevices/pb_type_nxtdevices_lightsensor.c \
+    nxtdevices/pb_type_nxtdevices_soundsensor.c \
+    nxtdevices/pb_type_nxtdevices_temperaturesensor.c \
+    nxtdevices/pb_type_nxtdevices_touchsensor.c \
+    nxtdevices/pb_type_nxtdevices_ultrasonicsensor.c \
 	parameters/pb_module_parameters.c \
 	parameters/pb_type_button.c \
 	parameters/pb_type_color.c \
@@ -268,7 +276,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 
 PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modiodevices.c \
-	modnxtdevices.c \
 	)
 
 PYBRICKS_LIB_SRC_C = $(addprefix lib/,\

@@ -4,7 +4,7 @@
 """Classes for LEGO MINDSTORMS NXT Devices."""
 
 
-from nxtdevices_c import *
+from _pybricks.nxtdevices import *
 from pybricks.iodevices import AnalogSensor
 
 

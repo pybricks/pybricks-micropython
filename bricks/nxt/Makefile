@@ -56,7 +56,6 @@ INC += -Inxt-firmware-drivers
 INC += -I../../lib/pbio/include
 INC += -I../../lib/pbio/platform/$(PBIO_PLATFORM)
 INC += -I../../lib/pbio
-INC += -I../../extmod
 INC += -I../../pybricks
 INC += -I$(BUILD)
 
@@ -136,6 +135,14 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	experimental/pb_module_experimental.c \
 	hubs/pb_module_hubs.c \
 	hubs/pb_type_nxtbrick.c \
+	nxtdevices/pb_module_nxtdevices.c \
+	nxtdevices/pb_type_nxtdevices_colorsensor.c \
+    nxtdevices/pb_type_nxtdevices_energymeter.c \
+    nxtdevices/pb_type_nxtdevices_lightsensor.c \
+    nxtdevices/pb_type_nxtdevices_soundsensor.c \
+    nxtdevices/pb_type_nxtdevices_temperaturesensor.c \
+    nxtdevices/pb_type_nxtdevices_touchsensor.c \
+    nxtdevices/pb_type_nxtdevices_ultrasonicsensor.c \
 	parameters/pb_module_parameters.c \
 	parameters/pb_type_button.c \
 	parameters/pb_type_color.c \
@@ -150,10 +157,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	util_mp/pb_obj_helper.c \
 	util_mp/pb_type_enum.c \
 	util_pb/pb_error.c \
-	)
-
-PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
-	modnxtdevices.c \
 	)
 
 CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
@@ -200,13 +203,12 @@ OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_C_NXT:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_S_NXT:.s=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PYBRICKS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(PYBRICKS_EXTMOD_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
+SRC_QSTR += $(SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
 
