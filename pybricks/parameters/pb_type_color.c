@@ -17,10 +17,10 @@ const pb_obj_enum_member_t pb_Color_BLACK_obj = {
     .value = PBIO_COLOR_BLACK
 };
 
-const pb_obj_enum_member_t pb_Color_PURPLE_obj = {
+const pb_obj_enum_member_t pb_Color_VIOLET_obj = {
     {&pb_enum_type_Color},
-    .name = MP_QSTR_PURPLE,
-    .value = PBIO_COLOR_PURPLE
+    .name = MP_QSTR_VIOLET,
+    .value = PBIO_COLOR_VIOLET
 };
 
 const pb_obj_enum_member_t pb_Color_BLUE_obj = {
@@ -85,7 +85,7 @@ const pb_obj_enum_member_t pb_Color_MAGENTA_obj = {
 
 STATIC const mp_rom_map_elem_t pb_enum_Color_table[] = {
     { MP_ROM_QSTR(MP_QSTR_BLACK),   MP_ROM_PTR(&pb_Color_BLACK_obj)  },
-    { MP_ROM_QSTR(MP_QSTR_PURPLE),  MP_ROM_PTR(&pb_Color_PURPLE_obj) },
+    { MP_ROM_QSTR(MP_QSTR_VIOLET),  MP_ROM_PTR(&pb_Color_VIOLET_obj) },
     { MP_ROM_QSTR(MP_QSTR_BLUE),    MP_ROM_PTR(&pb_Color_BLUE_obj)   },
     { MP_ROM_QSTR(MP_QSTR_GREEN),   MP_ROM_PTR(&pb_Color_GREEN_obj)  },
     { MP_ROM_QSTR(MP_QSTR_YELLOW),  MP_ROM_PTR(&pb_Color_YELLOW_obj) },

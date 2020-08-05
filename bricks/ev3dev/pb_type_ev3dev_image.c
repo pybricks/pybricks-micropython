@@ -72,8 +72,8 @@ STATIC GrxColor map_color(mp_obj_t *obj) {
             return grx_color_get(165, 42, 42);
         case PBIO_COLOR_ORANGE:
             return grx_color_get(255, 165, 0);
-        case PBIO_COLOR_PURPLE:
-            return grx_color_get(128, 0, 128);
+        case PBIO_COLOR_VIOLET:
+            return grx_color_get(238, 130, 238);
     }
     return grx_color_get_black();
 }

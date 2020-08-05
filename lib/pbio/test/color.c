@@ -255,7 +255,7 @@ void test_color_to_hsv(void *env) {
     tt_want_int_op(hsv.s, ==, 100);
     tt_want_int_op(hsv.v, ==, 100);
 
-    pbio_color_to_hsv(PBIO_COLOR_PURPLE, &hsv);
+    pbio_color_to_hsv(PBIO_COLOR_VIOLET, &hsv);
     tt_want_int_op(hsv.h, ==, 270);
     tt_want_int_op(hsv.s, ==, 100);
     tt_want_int_op(hsv.v, ==, 100);

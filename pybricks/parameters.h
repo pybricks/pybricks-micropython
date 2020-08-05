@@ -39,7 +39,7 @@ const pb_obj_enum_member_t pb_Button_BEACON_obj;
 const mp_obj_type_t pb_enum_type_Color;
 
 const pb_obj_enum_member_t pb_Color_BLACK_obj;
-const pb_obj_enum_member_t pb_Color_PURPLE_obj;
+const pb_obj_enum_member_t pb_Color_VIOLET_obj;
 const pb_obj_enum_member_t pb_Color_BLUE_obj;
 const pb_obj_enum_member_t pb_Color_GREEN_obj;
 const pb_obj_enum_member_t pb_Color_YELLOW_obj;
@@ -52,7 +52,7 @@ const pb_obj_enum_member_t pb_Color_CYAN_obj;
 const pb_obj_enum_member_t pb_Color_MAGENTA_obj;
 
 #define pb_const_color_black    MP_OBJ_FROM_PTR(&pb_Color_BLACK_obj)
-#define pb_const_color_purple   MP_OBJ_FROM_PTR(&pb_Color_PURPLE_obj)
+#define pb_const_color_purple   MP_OBJ_FROM_PTR(&pb_Color_VIOLET_obj)
 #define pb_const_color_blue     MP_OBJ_FROM_PTR(&pb_Color_BLUE_obj)
 #define pb_const_color_green    MP_OBJ_FROM_PTR(&pb_Color_GREEN_obj)
 #define pb_const_color_yellow   MP_OBJ_FROM_PTR(&pb_Color_YELLOW_obj)
