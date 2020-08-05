@@ -6,18 +6,18 @@ on:
   push:
     paths:
     - "bricks/**/*.[ch]"
-    - "extmod/*.[ch]"
     - "lib/pbio/**/*.[ch]"
     - "py/*.[ch]"
+    - "pybricks/**/*.[ch]"
     - "bricks/**/*.py"
     - "tests/**/*.py"
     - "tools/**/*.py"
   pull_request:
     paths:
     - "bricks/**/*.[ch]"
-    - "extmod/*.[ch]"
     - "lib/pbio/**/*.[ch]"
     - "py/*.[ch]"
+    - "pybricks/**/*.[ch]"
     - "bricks/**/*.py"
     - "tests/**/*.py"
     - "tools/**/*.py"
