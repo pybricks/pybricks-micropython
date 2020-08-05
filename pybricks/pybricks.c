@@ -6,15 +6,15 @@
 #include "py/objstr.h"
 #include "py/objtuple.h"
 
-#include "hubs/hubs.h"
-#include "iodevices/iodevices.h"
-#include "ev3devices/ev3devices.h"
-#include "experimental/experimental.h"
-#include "nxtdevices/nxtdevices.h"
-#include "parameters/parameters.h"
-#include "pupdevices/pupdevices.h"
-#include "robotics/robotics.h"
-#include "tools/tools.h"
+#include <pybricks/hubs.h>
+#include <pybricks/iodevices.h>
+#include <pybricks/ev3devices.h>
+#include <pybricks/experimental.h>
+#include <pybricks/nxtdevices.h>
+#include <pybricks/parameters.h>
+#include <pybricks/pupdevices.h>
+#include <pybricks/robotics.h>
+#include <pybricks/tools.h>
 
 #include "genhdr/mpversion.h"
 

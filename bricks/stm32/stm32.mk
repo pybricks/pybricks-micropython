@@ -85,7 +85,7 @@ ifeq ($(PB_LIB_STM32_USB_DEVICE),1)
 INC += -I$(PBTOP)/lib/STM32_USB_Device_Library/Class/CDC/Inc/
 INC += -I$(PBTOP)/lib/STM32_USB_Device_Library/Core/Inc/
 endif
-INC += -I$(PBTOP)/pybricks
+INC += -I$(PBTOP)
 INC += -I$(BUILD)
 
 GIT = git

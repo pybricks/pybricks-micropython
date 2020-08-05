@@ -16,14 +16,14 @@
 #include "py/runtime.h"
 #include "py/objstr.h"
 
-#include "util_pb/pb_device.h"
-#include "util_mp/pb_obj_helper.h"
-#include "util_mp/pb_kwarg_helper.h"
-#include "util_pb/pb_error.h"
+#include <pybricks/util_pb/pb_device.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_mp/pb_kwarg_helper.h>
+#include <pybricks/util_pb/pb_error.h>
 
 
-#include "common/common.h"
-#include "parameters/parameters.h"
+#include <pybricks/common.h>
+#include <pybricks/parameters.h>
 
 // Class structure for LUMPDevice
 typedef struct _iodevices_LUMPDevice_obj_t {

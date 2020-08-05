@@ -17,9 +17,9 @@
 #include "py/runtime.h"
 #include "py/mpconfig.h"
 
-#include "util_pb/pb_error.h"
-#include "util_mp/pb_obj_helper.h"
-#include "util_mp/pb_kwarg_helper.h"
+#include <pybricks/util_pb/pb_error.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_mp/pb_kwarg_helper.h>
 
 // pybricks.tools.Logger class object
 typedef struct _tools_Logger_obj_t {

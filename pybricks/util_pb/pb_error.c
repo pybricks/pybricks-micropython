@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
-#include "util_pb/pb_error.h"
+#include <pybricks/util_pb/pb_error.h>
 
 #include "py/mpconfig.h"
 

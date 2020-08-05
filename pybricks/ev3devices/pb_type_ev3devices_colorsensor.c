@@ -8,20 +8,20 @@
 #include "py/mphal.h"
 #include "py/runtime.h"
 
-#include "util_pb/pb_device.h"
-#include "util_mp/pb_obj_helper.h"
-#include "util_mp/pb_kwarg_helper.h"
+#include <pybricks/util_pb/pb_device.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_mp/pb_kwarg_helper.h>
 
 #include "py/objtype.h"
 
 #include <pbio/iodev.h>
 #include <pbio/button.h>
 
-#include "common/common.h"
-#include "ev3devices/ev3devices.h"
+#include <pybricks/common.h>
+#include <pybricks/ev3devices.h>
 
-#include "parameters/parameters.h"
-#include "util_pb/pb_error.h"
+#include <pybricks/parameters.h>
+#include <pybricks/util_pb/pb_error.h>
 
 // pybricks.ev3devices.ColorSensor class object
 typedef struct _ev3devices_ColorSensor_obj_t {

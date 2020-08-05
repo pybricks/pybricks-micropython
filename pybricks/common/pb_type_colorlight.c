@@ -8,14 +8,14 @@
 #include <pbio/light.h>
 #include <pbio/color.h>
 
-#include "common/common.h"
-#include "parameters/parameters.h"
+#include <pybricks/common.h>
+#include <pybricks/parameters.h>
 
 #include "py/obj.h"
 
-#include "util_pb/pb_error.h"
-#include "util_mp/pb_obj_helper.h"
-#include "util_mp/pb_kwarg_helper.h"
+#include <pybricks/util_pb/pb_error.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_mp/pb_kwarg_helper.h>
 
 // pybricks._common.ColorLight class object
 typedef struct _builtins_ColorLight_obj_t {

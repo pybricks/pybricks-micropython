@@ -22,9 +22,9 @@
 
 #include "pb_ev3dev_types.h"
 
-#include "parameters/parameters.h"
-#include "util_mp/pb_kwarg_helper.h"
-#include "util_mp/pb_obj_helper.h"
+#include <pybricks/parameters.h>
+#include <pybricks/util_mp/pb_kwarg_helper.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
 
 typedef struct _ev3dev_Image_obj_t {
     mp_obj_base_t base;

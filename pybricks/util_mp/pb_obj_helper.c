@@ -5,8 +5,8 @@
 
 #include <fixmath.h>
 
-#include "util_pb/pb_error.h"
-#include "util_mp/pb_obj_helper.h"
+#include <pybricks/util_pb/pb_error.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
 
 #include "py/mpconfig.h"
 #include "py/obj.h"

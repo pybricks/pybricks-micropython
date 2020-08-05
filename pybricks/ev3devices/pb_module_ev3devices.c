@@ -8,8 +8,8 @@
 #include "py/mphal.h"
 #include "py/runtime.h"
 
-#include "common/common.h"
-#include "ev3devices/ev3devices.h"
+#include <pybricks/common.h>
+#include <pybricks/ev3devices.h>
 
 STATIC const mp_rom_map_elem_t ev3devices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_ev3devices)              },

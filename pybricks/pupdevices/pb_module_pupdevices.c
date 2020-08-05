@@ -7,8 +7,8 @@
 
 #include "py/runtime.h"
 
-#include "common/common.h"
-#include "pupdevices/pupdevices.h"
+#include <pybricks/common.h>
+#include <pybricks/pupdevices.h>
 
 STATIC const mp_rom_map_elem_t pupdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_pupdevices)                    },

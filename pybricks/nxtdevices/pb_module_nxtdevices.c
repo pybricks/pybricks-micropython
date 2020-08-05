@@ -8,8 +8,8 @@
 #include "py/mphal.h"
 #include "py/runtime.h"
 
-#include "common/common.h"
-#include "nxtdevices/nxtdevices.h"
+#include <pybricks/common.h>
+#include <pybricks/nxtdevices.h>
 
 STATIC const mp_rom_map_elem_t nxtdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),          MP_ROM_QSTR(MP_QSTR_nxtdevices)                  },

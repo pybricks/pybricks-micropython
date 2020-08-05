@@ -8,7 +8,7 @@
 
 #if PYBRICKS_PY_COMMON
 
-#include "util_pb/pb_device.h"
+#include <pybricks/util_pb/pb_device.h>
 
 #include "py/obj.h"
 

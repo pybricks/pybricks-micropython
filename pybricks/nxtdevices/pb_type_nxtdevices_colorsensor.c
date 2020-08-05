@@ -14,15 +14,15 @@
 #include "py/runtime.h"
 #include "py/objtype.h"
 
-#include "util_pb/pb_device.h"
+#include <pybricks/util_pb/pb_device.h>
 
-#include "util_mp/pb_obj_helper.h"
-#include "util_mp/pb_kwarg_helper.h"
-#include "util_pb/pb_error.h"
+#include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_mp/pb_kwarg_helper.h>
+#include <pybricks/util_pb/pb_error.h>
 
-#include "common/common.h"
-#include "nxtdevices/nxtdevices.h"
-#include "parameters/parameters.h"
+#include <pybricks/common.h>
+#include <pybricks/nxtdevices.h>
+#include <pybricks/parameters.h>
 
 // pybricks.nxtdevices.ColorSensor class object
 typedef struct _nxtdevices_ColorSensor_obj_t {

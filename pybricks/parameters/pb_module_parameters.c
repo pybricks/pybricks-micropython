@@ -7,7 +7,7 @@
 
 #include "py/obj.h"
 
-#include "parameters/parameters.h"
+#include <pybricks/parameters.h>
 
 STATIC const mp_rom_map_elem_t parameters_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_parameters)     },

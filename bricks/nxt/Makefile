@@ -56,7 +56,7 @@ INC += -Inxt-firmware-drivers
 INC += -I../../lib/pbio/include
 INC += -I../../lib/pbio/platform/$(PBIO_PLATFORM)
 INC += -I../../lib/pbio
-INC += -I../../pybricks
+INC += -I../..
 INC += -I$(BUILD)
 
 COPT += -DFIXMATH_NO_CTYPE

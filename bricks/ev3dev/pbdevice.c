@@ -3,8 +3,8 @@
 
 #include "py/mphal.h"
 
-#include "util_pb/pb_error.h"
-#include "util_pb/pb_device.h"
+#include <pybricks/util_pb/pb_error.h>
+#include <pybricks/util_pb/pb_device.h>
 
 
 #include <dirent.h>

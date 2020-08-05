@@ -9,13 +9,13 @@
 #include "py/obj.h"
 
 
-#include "util_pb/pb_color_map.h"
-#include "util_pb/pb_error.h"
+#include <pybricks/util_pb/pb_color_map.h>
+#include <pybricks/util_pb/pb_error.h>
 
-#include "util_mp/pb_kwarg_helper.h"
-#include "util_mp/pb_obj_helper.h"
+#include <pybricks/util_mp/pb_kwarg_helper.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
 
-#include "parameters/parameters.h"
+#include <pybricks/parameters.h>
 
 
 // Hue or value not specified

@@ -9,9 +9,9 @@
 
 #include <pbio/button.h>
 
-#include "common/common.h"
-#include "parameters/parameters.h"
-#include "util_pb/pb_error.h"
+#include <pybricks/common.h>
+#include <pybricks/parameters.h>
+#include <pybricks/util_pb/pb_error.h>
 
 // TODO: buttons are currently a module due to the legacy C API, but should be
 // an instance of a KeyPad type. That would make it consistent with the other C

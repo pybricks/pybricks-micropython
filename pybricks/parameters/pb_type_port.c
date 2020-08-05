@@ -9,8 +9,8 @@
 
 #include <pbio/port.h>
 
-#include "parameters/parameters.h"
-#include "util_mp/pb_type_enum.h"
+#include <pybricks/parameters.h>
+#include <pybricks/util_mp/pb_type_enum.h>
 
 #if PBDRV_CONFIG_HAS_PORT_A
 const pb_obj_enum_member_t pb_Port_A_obj = {

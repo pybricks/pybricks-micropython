@@ -68,7 +68,7 @@ INC += -I../../lib/libfixmath/libfixmath
 INC += -I../../lib/pbio
 INC += -I../../lib/pbio/include
 INC += -I../../lib/pbio/platform/ev3dev_stretch
-INC += -I../../pybricks
+INC += -I../..
 INC += -I$(TOP)/ports/unix
 
 # compiler settings

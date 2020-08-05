@@ -11,10 +11,10 @@
 
 #include "py/obj.h"
 
-#include "util_pb/pb_error.h"
-#include "util_mp/pb_obj_helper.h"
-#include "util_mp/pb_kwarg_helper.h"
-#include "robotics/robotics.h"
+#include <pybricks/util_pb/pb_error.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_mp/pb_kwarg_helper.h>
+#include <pybricks/robotics.h>
 
 #if MICROPY_PY_BUILTINS_FLOAT
 

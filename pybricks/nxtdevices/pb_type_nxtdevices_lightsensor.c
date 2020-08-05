@@ -14,15 +14,15 @@
 #include "py/runtime.h"
 #include "py/objtype.h"
 
-#include "util_pb/pb_device.h"
+#include <pybricks/util_pb/pb_device.h>
 
-#include "util_mp/pb_obj_helper.h"
-#include "util_mp/pb_kwarg_helper.h"
-#include "util_pb/pb_error.h"
+#include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_mp/pb_kwarg_helper.h>
+#include <pybricks/util_pb/pb_error.h>
 
-#include "common/common.h"
-#include "nxtdevices/nxtdevices.h"
-#include "parameters/parameters.h"
+#include <pybricks/common.h>
+#include <pybricks/nxtdevices.h>
+#include <pybricks/parameters.h>
 
 // Generic linear scaling of an analog value between a known min and max to a percentage
 int32_t analog_scale(int32_t mvolts, int32_t mvolts_min, int32_t mvolts_max, bool invert) {

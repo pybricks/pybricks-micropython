@@ -7,7 +7,7 @@
 
 #include "py/mphal.h"
 #include "py/runtime.h"
-#include "hubs/hubs.h"
+#include <pybricks/hubs.h>
 
 STATIC const mp_rom_map_elem_t hubs_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_hubs)      },

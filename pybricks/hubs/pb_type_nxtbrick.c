@@ -10,8 +10,8 @@
 #include "py/mphal.h"
 #include "py/runtime.h"
 
-#include "common/common.h"
-#include "hubs/hubs.h"
+#include <pybricks/common.h>
+#include <pybricks/hubs.h>
 
 
 typedef struct _hubs_NXTBrick_obj_t {
