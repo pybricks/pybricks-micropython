@@ -186,6 +186,14 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	parameters/pb_type_direction.c \
 	parameters/pb_type_port.c \
 	parameters/pb_type_stop.c \
+	pupdevices/pb_module_pupdevices.c \
+	pupdevices/pb_type_pupdevices_colordistancesensor.c \
+	pupdevices/pb_type_pupdevices_colorsensor.c \
+	pupdevices/pb_type_pupdevices_forcesensor.c \
+	pupdevices/pb_type_pupdevices_infraredsensor.c \
+	pupdevices/pb_type_pupdevices_light.c \
+	pupdevices/pb_type_pupdevices_tiltsensor.c \
+	pupdevices/pb_type_pupdevices_ultrasonicsensor.c \
 	robotics/pb_module_robotics.c \
 	robotics/pb_type_drivebase.c \
 	robotics/pb_type_matrix.c \
@@ -200,7 +208,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 
 PYBRICKS_EXTMOD_SRC_C = $(addprefix extmod/,\
 	modiodevices.c \
-	modpupdevices.c \
 	)
 
 # STM32 Bluetooth stack

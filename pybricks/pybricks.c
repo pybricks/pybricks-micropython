@@ -11,6 +11,7 @@
 #include "experimental/experimental.h"
 #include "nxtdevices/nxtdevices.h"
 #include "parameters/parameters.h"
+#include "pupdevices/pupdevices.h"
 #include "robotics/robotics.h"
 #include "tools/tools.h"
 
@@ -47,6 +48,9 @@ STATIC const mp_rom_map_elem_t pybricks_globals_table[] = {
     #endif
     #if PYBRICKS_PY_PARAMETERS
     { MP_ROM_QSTR(MP_QSTR_parameters),          MP_ROM_PTR(&pb_module_parameters)  },
+    #endif
+    #if PYBRICKS_PY_PUPDEVICES
+    { MP_ROM_QSTR(MP_QSTR_pupdevices),          MP_ROM_PTR(&pb_module_pupdevices  )},
     #endif
     #if PYBRICKS_PY_TOOLS
     { MP_ROM_QSTR(MP_QSTR_tools),               MP_ROM_PTR(&pb_module_tools)  },
