@@ -34,6 +34,14 @@ mp_int_t pb_obj_get_pct(mp_obj_t arg) {
     return unbounded;
 }
 
+mp_int_t pb_obj_get_hue(mp_obj_t arg) {
+    mp_int_t hue = pb_obj_get_int(arg) % 360;
+    if (hue < 0) {
+        return hue + 360;
+    }
+    return hue;
+}
+
 mp_obj_t pb_obj_new_fraction(int32_t numerator, int32_t denominator) {
     #if MICROPY_PY_BUILTINS_FLOAT
     return mp_obj_new_float(((mp_float_t)numerator) / ((mp_float_t)denominator));
