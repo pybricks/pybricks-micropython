@@ -47,8 +47,7 @@ STATIC mp_obj_t common_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, mp
 
     pbio_color_t color_id = pb_type_enum_get_value(color, &pb_enum_type_Color);
 
-    mp_int_t bright = pb_obj_get_int(brightness);
-    bright = bright < 0 ? 0 : bright > 100 ? 100 : bright;
+    mp_int_t bright = pb_obj_get_pct(brightness);
 
     // TODO: Brightness control is not yet implemented
     if (bright != 100) {

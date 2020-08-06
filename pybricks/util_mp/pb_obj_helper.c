@@ -23,6 +23,17 @@ mp_int_t pb_obj_get_int(mp_obj_t arg) {
 }
 #endif
 
+mp_int_t pb_obj_get_pct(mp_obj_t arg) {
+    mp_int_t unbounded = pb_obj_get_int(arg);
+    if (unbounded > 100) {
+        return 100;
+    }
+    if (unbounded < 0) {
+        return 0;
+    }
+    return unbounded;
+}
+
 mp_obj_t pb_obj_new_fraction(int32_t numerator, int32_t denominator) {
     #if MICROPY_PY_BUILTINS_FLOAT
     return mp_obj_new_float(((mp_float_t)numerator) / ((mp_float_t)denominator));
