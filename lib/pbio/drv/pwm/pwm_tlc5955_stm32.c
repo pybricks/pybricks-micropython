@@ -115,8 +115,8 @@ static pbdrv_pwm_tlc5955_stm32_priv_t dev_priv[PBDRV_CONFIG_PWM_TLC5955_STM32_NU
 
 // Control latch data setting dot correction to 100%, max current to 19.1 mA,
 // global brightness to 100%, auto repeat enabled, display timing reset disabled,
-// auto refresh disabled, ES-PWM mode disabled, LSD detection voltage 90%.
-static const CONTROL_DATA(control_latch_3mA, 127, 4, 127, 1, 0, 0, 0, 1);
+// auto refresh disabled, ES-PWM mode enabled, LSD detection voltage 90%.
+static const CONTROL_DATA(control_latch_3mA, 127, 4, 127, 1, 0, 0, 1, 1);
 
 static uint8_t grayscale_latch[PBDRV_CONFIG_PWM_TLC5955_STM32_NUM_DEV][DATA_SIZE];
 
