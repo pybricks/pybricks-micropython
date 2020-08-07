@@ -307,6 +307,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/gpio/gpio_stm32l4.c \
 	drv/ioport/ioport_lpf2.c \
 	drv/led/led_core.c \
+	drv/led/led_dual.c \
 	drv/led/led_pwm.c \
 	drv/pwm/pwm_core.c \
 	drv/pwm/pwm_stm32_tim.c \

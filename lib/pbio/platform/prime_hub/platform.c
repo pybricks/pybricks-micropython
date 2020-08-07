@@ -7,6 +7,8 @@
 
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/ioport/ioport_lpf2.h"
+#include "../../drv/led/led_dual.h"
+#include "../../drv/led/led_pwm.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/pwm/pwm_tlc5955_stm32.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
@@ -32,8 +34,22 @@ const boot_t __attribute__((section(".boot"))) boot = {
     .magic = (const uint8_t[16]) {1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4},
 };
 
+enum {
+    COUNTER_PORT_A,
+    COUNTER_PORT_B,
+    COUNTER_PORT_C,
+    COUNTER_PORT_D,
+    COUNTER_PORT_E,
+    COUNTER_PORT_F,
+};
 
-// PWM
+enum {
+    LED_DEV_0_STATUS,
+    LED_DEV_1_STATUS_TOP,
+    LED_DEV_2_STATUS_BOTTOM,
+    LED_DEV_3_BATTERY,
+    LED_DEV_4_BLUETOOTH,
+};
 
 enum {
     PWM_DEV_0_TIM1,
@@ -42,6 +58,66 @@ enum {
     PWM_DEV_3_TIM12,
     PWM_DEV_4_TLC5955,
 };
+
+enum {
+    UART_PORT_A,
+    UART_PORT_B,
+    UART_PORT_C,
+    UART_PORT_D,
+    UART_PORT_E,
+    UART_PORT_F,
+};
+
+// LED
+
+const pbdrv_led_dual_platform_data_t pbdrv_led_dual_platform_data[PBDRV_CONFIG_LED_DUAL_NUM_DEV] = {
+    {
+        .id = LED_DEV_0_STATUS,
+        .id1 = LED_DEV_1_STATUS_TOP,
+        .id2 = LED_DEV_2_STATUS_BOTTOM,
+    },
+};
+
+const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV] = {
+    {
+        .id = LED_DEV_1_STATUS_TOP,
+        .r_id = PWM_DEV_4_TLC5955,
+        .r_ch = 5,
+        .g_id = PWM_DEV_4_TLC5955,
+        .g_ch = 4,
+        .b_id = PWM_DEV_4_TLC5955,
+        .b_ch = 3,
+    },
+    {
+        .id = LED_DEV_2_STATUS_BOTTOM,
+        .r_id = PWM_DEV_4_TLC5955,
+        .r_ch = 8,
+        .g_id = PWM_DEV_4_TLC5955,
+        .g_ch = 7,
+        .b_id = PWM_DEV_4_TLC5955,
+        .b_ch = 6,
+    },
+    {
+        .id = LED_DEV_3_BATTERY,
+        .r_id = PWM_DEV_4_TLC5955,
+        .r_ch = 2,
+        .g_id = PWM_DEV_4_TLC5955,
+        .g_ch = 1,
+        .b_id = PWM_DEV_4_TLC5955,
+        .b_ch = 0,
+    },
+    {
+        .id = LED_DEV_4_BLUETOOTH,
+        .r_id = PWM_DEV_4_TLC5955,
+        .r_ch = 20,
+        .g_id = PWM_DEV_4_TLC5955,
+        .g_ch = 19,
+        .b_id = PWM_DEV_4_TLC5955,
+        .b_ch = 18,
+    },
+};
+
+// PWM
 
 static void pwm_dev_0_platform_init() {
 }
@@ -184,15 +260,6 @@ const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_5 = {
     .alt = 11,
 };
 
-enum {
-    UART_PORT_A,
-    UART_PORT_B,
-    UART_PORT_C,
-    UART_PORT_D,
-    UART_PORT_E,
-    UART_PORT_F,
-};
-
 const pbdrv_uart_stm32f4_ll_irq_platform_data_t
     pbdrv_uart_stm32f4_ll_irq_platform_data[PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART] = {
     [UART_PORT_A] = {
@@ -250,15 +317,6 @@ void UART9_IRQHandler(void) {
 void UART10_IRQHandler(void) {
     pbdrv_uart_stm32f4_ll_irq_handle_irq(UART_PORT_E);
 }
-
-enum {
-    COUNTER_PORT_A,
-    COUNTER_PORT_B,
-    COUNTER_PORT_C,
-    COUNTER_PORT_D,
-    COUNTER_PORT_E,
-    COUNTER_PORT_F,
-};
 
 const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
     [COUNTER_PORT_A] = {

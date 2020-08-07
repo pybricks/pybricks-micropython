@@ -12,6 +12,7 @@
 #include <pbio/color.h>
 #include <pbio/error.h>
 
+#include "led_dual.h"
 #include "led_ev3dev.h"
 #include "led_pwm.h"
 
@@ -22,6 +23,7 @@
 static pbdrv_led_dev_t pbdrv_led_dev[PBDRV_CONFIG_LED_NUM_DEV];
 
 void pbdrv_led_init() {
+    pbdrv_led_dual_init(pbdrv_led_dev);
     pbdrv_led_ev3dev_init(pbdrv_led_dev);
     pbdrv_led_pwm_init(pbdrv_led_dev);
 }
