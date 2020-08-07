@@ -30,6 +30,8 @@ typedef struct {
     uint8_t b_id;
     /** Blue LED PWM channel. */
     uint8_t b_ch;
+    /** Scaling factor used to adjust max brightness to match PWM period. */
+    uint8_t scale_factor;
 } pbdrv_led_pwm_platform_data_t;
 
 void pbdrv_led_pwm_init(pbdrv_led_dev_t *devs);

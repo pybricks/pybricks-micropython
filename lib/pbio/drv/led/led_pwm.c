@@ -26,8 +26,16 @@
 extern const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV];
 
 static pbio_error_t pbdrv_led_pwm_set_hsv(pbdrv_led_dev_t *dev, const pbio_color_hsv_t *hsv) {
+    const pbdrv_led_pwm_platform_data_t *pdata = dev->pdata;
+
+    // copy of HSV with max V for best color match
+    pbio_color_hsv_t hsv2 = {
+        .h = hsv->h,
+        .s = hsv->s,
+        .v = 100,
+    };
     pbio_color_rgb_t rgb;
-    pbio_color_hsv_to_rgb(hsv, &rgb);
+    pbio_color_hsv_to_rgb(&hsv2, &rgb);
 
     // REVISIT: The constants below are derived from the SunLED XZM2CRKM2DGFBB45SCCB
     // datasheet parameters. This is probably the LED used on the Move hub and
@@ -44,18 +52,17 @@ static pbio_error_t pbdrv_led_pwm_set_hsv(pbdrv_led_dev_t *dev, const pbio_color
 
     // These are basically the luminous intensity values from the datasheet
     // with red multiplied by 0.35 (it has different resistor and voltage drop).
-    // The right shift basically sets max brightness.
-    uint32_t Y = (174 * r + 1590 * g + 327 * b) >> 12;
+    // Right-shift avoids need for large scale factor that would overflow 32-bit
+    // integer. Plus 1 avoids divide by 0.
+    uint32_t Y = ((174 * r + 1590 * g + 327 * b) >> 12) + 1;
 
     // Reapply V from HSV for brightness.
     // TODO: probably need to adjust for gamma as well.
-    uint32_t adjust = Y / (hsv->v + 1) + 1;
+    uint32_t scale_factor = hsv->v * pdata->scale_factor;
 
-    r /= adjust;
-    g /= adjust;
-    b /= adjust;
-
-    const pbdrv_led_pwm_platform_data_t *pdata = dev->pdata;
+    r = r * scale_factor / Y;
+    g = g * scale_factor / Y;
+    b = b * scale_factor / Y;
 
     pbdrv_pwm_dev_t *pwm;
     if (pbdrv_pwm_get_dev(pdata->r_id, &pwm) == PBIO_SUCCESS) {

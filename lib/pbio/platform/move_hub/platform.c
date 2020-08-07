@@ -77,6 +77,7 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
         .g_ch = 1,
         .b_id = PWM_DEV_2,
         .b_ch = 2,
+        .scale_factor = 4,
     }
 };
 
