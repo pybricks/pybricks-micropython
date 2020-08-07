@@ -13,6 +13,7 @@
 
 #include "./pwm_stm32_tim.h"
 #include "./pwm_test.h"
+#include "./pwm_tlc5955_stm32.h"
 
 
 static pbdrv_pwm_dev_t pbdrv_pwm_dev[PBDRV_CONFIG_PWM_NUM_DEV];
@@ -25,6 +26,7 @@ static pbdrv_pwm_dev_t pbdrv_pwm_dev[PBDRV_CONFIG_PWM_NUM_DEV];
 void pbdrv_pwm_init() {
     pbdrv_pwm_stm32_tim_init(pbdrv_pwm_dev);
     pbdrv_pwm_test_init(pbdrv_pwm_dev);
+    pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev);
 }
 
 /** @endcond */

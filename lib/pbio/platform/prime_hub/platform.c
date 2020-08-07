@@ -8,6 +8,7 @@
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
+#include "../../drv/pwm/pwm_tlc5955_stm32.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
 
 #include "stm32f4xx_hal.h"
@@ -35,9 +36,11 @@ const boot_t __attribute__((section(".boot"))) boot = {
 // PWM
 
 enum {
-    PWM_DEV_0,
-    PWM_DEV_1,
-    PWM_DEV_2,
+    PWM_DEV_0_TIM1,
+    PWM_DEV_1_TIM3,
+    PWM_DEV_2_TIM4,
+    PWM_DEV_3_TIM12,
+    PWM_DEV_4_TLC5955,
 };
 
 static void pwm_dev_0_platform_init() {
@@ -49,6 +52,20 @@ static void pwm_dev_1_platform_init() {
 static void pwm_dev_2_platform_init() {
 }
 
+static void pwm_dev_3_platform_init() {
+    GPIO_InitTypeDef gpio_init;
+
+    gpio_init.Pin = GPIO_PIN_15;
+    gpio_init.Mode = GPIO_MODE_AF_PP;
+    gpio_init.Pull = GPIO_NOPULL;
+    gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
+    gpio_init.Alternate = GPIO_AF9_TIM12;
+    HAL_GPIO_Init(GPIOB, &gpio_init);
+
+    // channel 2 has constant 50% duty cycle
+    TIM12->CCR2 = 5;
+}
+
 const pbdrv_pwm_stm32_tim_platform_data_t
     pbdrv_pwm_stm32_tim_platform_data[PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV] = {
     {
@@ -56,7 +73,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .TIMx = TIM1,
         .prescalar = 8, // results in 12 MHz clock
         .period = 10000, // 12MHz divided by 10k makes 1.2 kHz PWM
-        .id = PWM_DEV_0,
+        .id = PWM_DEV_0_TIM1,
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
             | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE
             | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_2_INVERT
@@ -67,7 +84,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .TIMx = TIM3,
         .prescalar = 8, // results in 12 MHz clock
         .period = 10000, // 12MHz divided by 10k makes 1.2 kHz PWM
-        .id = PWM_DEV_1,
+        .id = PWM_DEV_1_TIM3,
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
             | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE
             | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_2_INVERT
@@ -78,11 +95,30 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .TIMx = TIM4,
         .prescalar = 8, // results in 12 MHz clock
         .period = 10000, // 12MHz divided by 10k makes 1.2 kHz PWM
-        .id = PWM_DEV_2,
+        .id = PWM_DEV_2_TIM4,
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
             | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE
             | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_2_INVERT
             | PBDRV_PWM_STM32_TIM_CHANNEL_3_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_4_INVERT,
+    },
+    {
+        .platform_init = pwm_dev_3_platform_init,
+        .TIMx = TIM12,
+        .prescalar = 1, // results in 96 MHz clock
+        .period = 10, // 96 MHz divided by 10 makes 9.6 MHz PWM
+        .id = PWM_DEV_3_TIM12,
+        // channel 2: TLC5955 GSCLK signal
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE,
+    },
+};
+
+const pbdrv_pwm_tlc5955_stm32_platform_data_t
+    pbdrv_pwm_tlc5955_stm32_platform_data[PBDRV_CONFIG_PWM_TLC5955_STM32_NUM_DEV] = {
+    {
+        .SPIx = SPI1,
+        .lat_gpio = GPIOA,
+        .lat_gpio_pin = GPIO_PIN_15,
+        .id = PWM_DEV_4_TLC5955,
     },
 };
 
@@ -354,6 +390,24 @@ void DMA2_Stream0_IRQHandler() {
     pbdrv_adc_stm32_hal_handle_irq();
 }
 
+void HAL_SPI_MspInit(SPI_HandleTypeDef *hspi) {
+    if (hspi->Instance == SPI1) {
+        // TLC5955 LED driver
+        GPIO_InitTypeDef gpio_init;
+
+        gpio_init.Pin = GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
+        gpio_init.Mode = GPIO_MODE_AF_PP;
+        gpio_init.Pull = GPIO_NOPULL;
+        gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+        gpio_init.Alternate = GPIO_AF5_SPI1;
+        HAL_GPIO_Init(GPIOA, &gpio_init);
+    }
+}
+
+void SPI1_IRQHandler(void) {
+    pbdrv_pwm_tlc5955_irq(0);
+}
+
 // USB
 
 void HAL_PCD_MspInit(PCD_HandleTypeDef *hpcd) {
@@ -426,9 +480,9 @@ void SystemInit(void) {
         RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_DMA2EN;
     RCC->APB1ENR |= RCC_APB1ENR_UART4EN | RCC_APB1ENR_UART5EN | RCC_APB1ENR_UART7EN |
         RCC_APB1ENR_UART8EN | RCC_APB1ENR_TIM2EN | RCC_APB1ENR_TIM3EN |
-        RCC_APB1ENR_TIM4EN;
+        RCC_APB1ENR_TIM4EN | RCC_APB1ENR_TIM12EN;
     RCC->APB2ENR |= RCC_APB2ENR_TIM1EN | RCC_APB2ENR_UART9EN | RCC_APB2ENR_UART10EN |
-        RCC_APB2ENR_ADC1EN | RCC_APB2ENR_SYSCFGEN;
+        RCC_APB2ENR_ADC1EN | RCC_APB2ENR_SPI1EN | RCC_APB2ENR_SYSCFGEN;
     RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
 
     // Keep main power on (PA13 == POWER_EN)
