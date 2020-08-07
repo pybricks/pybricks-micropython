@@ -76,7 +76,7 @@ static const pbdrv_led_funcs_t pbdrv_led_pwm_funcs = {
 };
 
 void pbdrv_led_pwm_init(pbdrv_led_dev_t *devs) {
-    for (int i = 0; i < PBDRV_CONFIG_LED_NUM_DEV; i++) {
+    for (int i = 0; i < PBDRV_CONFIG_LED_PWM_NUM_DEV; i++) {
         const pbdrv_led_pwm_platform_data_t *pdata = &pbdrv_led_pwm_platform_data[i];
         devs[pdata->id].pdata = pdata;
         devs[pdata->id].funcs = &pbdrv_led_pwm_funcs;
