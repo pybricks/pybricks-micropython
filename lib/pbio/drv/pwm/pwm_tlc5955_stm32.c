@@ -154,7 +154,7 @@ void pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev_t *devs) {
         gpio_init.Speed = GPIO_SPEED_LOW;
         HAL_GPIO_Init(pdata->lat_gpio, &gpio_init);
 
-        priv->hspi.Instance = pdata->SPIx;
+        priv->hspi.Instance = pdata->spi;
         priv->hspi.Init.Mode = SPI_MODE_MASTER;
         priv->hspi.Init.Direction = SPI_DIRECTION_2LINES;
         priv->hspi.Init.DataSize = SPI_DATASIZE_8BIT;
@@ -168,8 +168,8 @@ void pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev_t *devs) {
         priv->hspi.Init.CRCPolynomial = 0;
         HAL_SPI_Init(&priv->hspi);
 
-        HAL_NVIC_SetPriority(SPI1_IRQn, 7, 0);
-        HAL_NVIC_EnableIRQ(SPI1_IRQn);
+        HAL_NVIC_SetPriority(pdata->spi_irq, 7, 0);
+        HAL_NVIC_EnableIRQ(pdata->spi_irq);
 
         PT_INIT(&priv->pt);
         priv->pwm = pwm;

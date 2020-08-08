@@ -19,7 +19,9 @@
 /** Platform-specific device information. */
 typedef struct {
     /** The SPI peripheral to use. */
-    SPI_TypeDef *SPIx;
+    SPI_TypeDef *spi;
+    /** Interrupt number for SPI IRQ. */
+    IRQn_Type spi_irq;
     /** LAT signal GPIO bank. */
     GPIO_TypeDef *lat_gpio;
     /** LAT signal GPIO pin. */

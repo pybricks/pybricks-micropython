@@ -195,7 +195,8 @@ const pbdrv_pwm_stm32_tim_platform_data_t
 const pbdrv_pwm_tlc5955_stm32_platform_data_t
     pbdrv_pwm_tlc5955_stm32_platform_data[PBDRV_CONFIG_PWM_TLC5955_STM32_NUM_DEV] = {
     {
-        .SPIx = SPI1,
+        .spi = SPI1,
+        .spi_irq = SPI1_IRQn,
         .lat_gpio = GPIOA,
         .lat_gpio_pin = GPIO_PIN_15,
         .id = PWM_DEV_4_TLC5955,
