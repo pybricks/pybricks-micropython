@@ -15,7 +15,7 @@
 
 #include "stm32f4xx_hal.h"
 
-// bootlaoder magic
+// bootloader magic
 
 typedef struct {
     const char *fw_ver;
@@ -518,6 +518,37 @@ void OTG_FS_IRQHandler(void) {
 }
 
 
+void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
+    GPIO_InitTypeDef gpio_init = { 0 };
+
+    gpio_init.Mode = GPIO_MODE_AF_OD;
+    gpio_init.Pull = GPIO_NOPULL;
+    gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    gpio_init.Alternate = GPIO_AF4_I2C2;
+
+    gpio_init.Pin = GPIO_PIN_10;
+    HAL_GPIO_Init(GPIOB, &gpio_init);
+
+    gpio_init.Pin = GPIO_PIN_3;
+    gpio_init.Alternate = GPIO_AF9_I2C2;
+    HAL_GPIO_Init(GPIOB, &gpio_init);
+
+    HAL_NVIC_SetPriority(I2C2_ER_IRQn, 3, 1);
+    HAL_NVIC_EnableIRQ(I2C2_ER_IRQn);
+    HAL_NVIC_SetPriority(I2C2_EV_IRQn, 3, 2);
+    HAL_NVIC_EnableIRQ(I2C2_EV_IRQn);
+}
+
+void I2C2_ER_IRQHandler(void) {
+    extern void mod_experimental_IMU_handle_i2c_er_irq();
+    mod_experimental_IMU_handle_i2c_er_irq();
+}
+
+void I2C2_EV_IRQHandler(void) {
+    extern void mod_experimental_IMU_handle_i2c_ev_irq();
+    mod_experimental_IMU_handle_i2c_ev_irq();
+}
+
 // Early initialization
 
 // special memory addresses defined in linker script
@@ -557,7 +588,7 @@ void SystemInit(void) {
         RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_DMA2EN;
     RCC->APB1ENR |= RCC_APB1ENR_UART4EN | RCC_APB1ENR_UART5EN | RCC_APB1ENR_UART7EN |
         RCC_APB1ENR_UART8EN | RCC_APB1ENR_TIM2EN | RCC_APB1ENR_TIM3EN |
-        RCC_APB1ENR_TIM4EN | RCC_APB1ENR_TIM12EN;
+        RCC_APB1ENR_TIM4EN | RCC_APB1ENR_TIM12EN | RCC_APB1ENR_I2C2EN;
     RCC->APB2ENR |= RCC_APB2ENR_TIM1EN | RCC_APB2ENR_UART9EN | RCC_APB2ENR_UART10EN |
         RCC_APB2ENR_ADC1EN | RCC_APB2ENR_SPI1EN | RCC_APB2ENR_SYSCFGEN;
     RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;

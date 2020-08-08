@@ -12,11 +12,17 @@
 #include <pybricks/experimental.h>
 #include <pybricks/robotics.h>
 
-#if PYBRICKS_HUB_CPLUSHUB
+#if PYBRICKS_HUB_PRIMEHUB || PYBRICKS_HUB_CPLUSHUB
 
 #include <lsm6ds3tr_c_reg.h>
+
+#if PYBRICKS_HUB_CPLUSHUB
 #include <stm32l4xx_hal.h>
 #include <stm32l4xx_ll_i2c.h>
+#else
+#include <stm32f4xx_hal.h>
+#include <stm32f4xx_hal_i2c.h>
+#endif
 
 typedef struct {
     mp_obj_base_t base;
@@ -57,10 +63,16 @@ STATIC mp_obj_t mod_experimental_IMU_make_new(const mp_obj_type_t *otype, size_t
     self->ctx.read_reg = mod_experimental_IMU_read_reg;
 
     if (hi2c.Instance == NULL) {
+        #if PYBRICKS_HUB_CPLUSHUB
         hi2c.Instance = I2C1;
         // Clock is 5MHz, so these timing come out to 1 usec. When combined with
         // internal delays, this is slightly slower than 400kHz
         hi2c.Init.Timing = __LL_I2C_CONVERT_TIMINGS(0, 0, 0, 4, 4);
+        #else
+        // On PrimeHub (STM32F4), we set clock speed directly
+        hi2c.Instance = I2C2;
+        hi2c.Init.ClockSpeed = 400000;
+        #endif // PYBRICKS_HUB_CPLUSHUB
         hi2c.Init.OwnAddress1 = 0;
         hi2c.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
         hi2c.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -176,7 +188,7 @@ STATIC const mp_obj_type_t mod_experimental_IMU_type = {
     .locals_dict = (mp_obj_dict_t *)&mod_experimental_IMU_locals_dict,
 };
 
-#endif // PYBRICKS_HUB_CPLUSHUB
+#endif // PYBRICKS_HUB_CPLUSHUB || PYBRICKS_HUB_CPLUSHUB
 
 #if PYBRICKS_HUB_MOVEHUB
 
@@ -404,9 +416,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_experimental_pthread_raise_obj, mod_experim
 
 STATIC const mp_rom_map_elem_t experimental_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental_c) },
-    #if PYBRICKS_HUB_CPLUSHUB
+    #if PYBRICKS_HUB_CPLUSHUB || PYBRICKS_HUB_PRIMEHUB
     { MP_ROM_QSTR(MP_QSTR_IMU), MP_ROM_PTR(&mod_experimental_IMU_type) },
-    #endif // PYBRICKS_HUB_CPLUSHUB
+    #endif // PYBRICKS_HUB_CPLUSHUB || PYBRICKS_HUB_PRIMEHUB
     #if PYBRICKS_HUB_MOVEHUB
     { MP_ROM_QSTR(MP_QSTR_Motion), MP_ROM_PTR(&mod_experimental_Motion_type) },
     #endif // PYBRICKS_HUB_MOVEHUB
