@@ -100,6 +100,10 @@
 typedef struct {
     /** HAL SPI data */
     SPI_HandleTypeDef hspi;
+    /** HAL Rx DMA data */
+    DMA_HandleTypeDef hdma_rx;
+    /** HAL Tx DMA data */
+    DMA_HandleTypeDef hdma_tx;
     /** Protothread */
     struct pt pt;
     /** Pointer to generic PWM device instance */
@@ -154,6 +158,40 @@ void pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev_t *devs) {
         gpio_init.Speed = GPIO_SPEED_LOW;
         HAL_GPIO_Init(pdata->lat_gpio, &gpio_init);
 
+        priv->hdma_rx.Instance = pdata->rx_dma;
+        priv->hdma_rx.Init.Channel = pdata->rx_dma_ch;
+        priv->hdma_rx.Init.Direction = DMA_PERIPH_TO_MEMORY;
+        priv->hdma_rx.Init.PeriphInc = DMA_PINC_DISABLE;
+        priv->hdma_rx.Init.MemInc = DMA_MINC_ENABLE;
+        priv->hdma_rx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+        priv->hdma_rx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+        priv->hdma_rx.Init.Mode = DMA_NORMAL;
+        priv->hdma_rx.Init.Priority = DMA_PRIORITY_LOW;
+        priv->hdma_rx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+        priv->hdma_rx.Init.MemBurst = DMA_MBURST_SINGLE;
+        priv->hdma_rx.Init.PeriphBurst = DMA_PBURST_SINGLE;
+        HAL_DMA_Init(&priv->hdma_rx);
+
+        HAL_NVIC_SetPriority(pdata->rx_dma_irq, 7, 0);
+        HAL_NVIC_EnableIRQ(pdata->rx_dma_irq);
+
+        priv->hdma_tx.Instance = pdata->tx_dma;
+        priv->hdma_tx.Init.Channel = pdata->tx_dma_ch;
+        priv->hdma_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+        priv->hdma_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+        priv->hdma_tx.Init.MemInc = DMA_MINC_ENABLE;
+        priv->hdma_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+        priv->hdma_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+        priv->hdma_tx.Init.Mode = DMA_NORMAL;
+        priv->hdma_tx.Init.Priority = DMA_PRIORITY_LOW;
+        priv->hdma_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+        priv->hdma_tx.Init.MemBurst = DMA_MBURST_SINGLE;
+        priv->hdma_tx.Init.PeriphBurst = DMA_PBURST_SINGLE;
+        HAL_DMA_Init(&priv->hdma_tx);
+
+        HAL_NVIC_SetPriority(pdata->tx_dma_irq, 7, 1);
+        HAL_NVIC_EnableIRQ(pdata->tx_dma_irq);
+
         priv->hspi.Instance = pdata->spi;
         priv->hspi.Init.Mode = SPI_MODE_MASTER;
         priv->hspi.Init.Direction = SPI_DIRECTION_2LINES;
@@ -168,7 +206,10 @@ void pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev_t *devs) {
         priv->hspi.Init.CRCPolynomial = 0;
         HAL_SPI_Init(&priv->hspi);
 
-        HAL_NVIC_SetPriority(pdata->spi_irq, 7, 0);
+        __HAL_LINKDMA(&priv->hspi, hdmarx, priv->hdma_rx);
+        __HAL_LINKDMA(&priv->hspi, hdmatx, priv->hdma_tx);
+
+        HAL_NVIC_SetPriority(pdata->spi_irq, 7, 2);
         HAL_NVIC_EnableIRQ(pdata->spi_irq);
 
         PT_INIT(&priv->pt);
@@ -192,12 +233,12 @@ static void pbdrv_pwm_tlc5955_toggle_latch(pbdrv_pwm_tlc5955_stm32_priv_t *priv)
 static PT_THREAD(pbdrv_pwm_tlc5955_stm32_handle_event(pbdrv_pwm_tlc5955_stm32_priv_t * priv, process_event_t ev)) {
     PT_BEGIN(&priv->pt);
 
-    HAL_SPI_Transmit_IT(&priv->hspi, (uint8_t *)control_latch_3mA, DATA_SIZE);
+    HAL_SPI_Transmit_DMA(&priv->hspi, (uint8_t *)control_latch_3mA, DATA_SIZE);
     PT_WAIT_UNTIL(&priv->pt, priv->hspi.State == HAL_SPI_STATE_READY);
     pbdrv_pwm_tlc5955_toggle_latch(priv);
 
     // have to send twice for max current to take effect
-    HAL_SPI_Transmit_IT(&priv->hspi, (uint8_t *)control_latch_3mA, DATA_SIZE);
+    HAL_SPI_Transmit_DMA(&priv->hspi, (uint8_t *)control_latch_3mA, DATA_SIZE);
     PT_WAIT_UNTIL(&priv->pt, priv->hspi.State == HAL_SPI_STATE_READY);
     pbdrv_pwm_tlc5955_toggle_latch(priv);
 
@@ -206,7 +247,7 @@ static PT_THREAD(pbdrv_pwm_tlc5955_stm32_handle_event(pbdrv_pwm_tlc5955_stm32_pr
 
     for (;;) {
         PT_WAIT_UNTIL(&priv->pt, priv->changed);
-        HAL_SPI_Transmit_IT(&priv->hspi, priv->grayscale_latch, DATA_SIZE);
+        HAL_SPI_Transmit_DMA(&priv->hspi, priv->grayscale_latch, DATA_SIZE);
         priv->changed = false;
         PT_WAIT_UNTIL(&priv->pt, priv->hspi.State == HAL_SPI_STATE_READY);
         pbdrv_pwm_tlc5955_toggle_latch(priv);
@@ -215,7 +256,28 @@ static PT_THREAD(pbdrv_pwm_tlc5955_stm32_handle_event(pbdrv_pwm_tlc5955_stm32_pr
     PT_END(&priv->pt);
 }
 
-void pbdrv_pwm_tlc5955_irq(uint8_t index) {
+/**
+ * Interupt handler for Rx DMA IRQ. Needs to be called from IRQ handler in platform.c.
+ */
+void pbdrv_pwm_tlc5955_stm32_rx_dma_irq(uint8_t index) {
+    pbdrv_pwm_tlc5955_stm32_priv_t *priv = &dev_priv[index];
+
+    HAL_DMA_IRQHandler(&priv->hdma_rx);
+}
+
+/**
+ * Interupt handler for Tx DMA IRQ. Needs to be called from IRQ handler in platform.c.
+ */
+void pbdrv_pwm_tlc5955_stm32_tx_dma_irq(uint8_t index) {
+    pbdrv_pwm_tlc5955_stm32_priv_t *priv = &dev_priv[index];
+
+    HAL_DMA_IRQHandler(&priv->hdma_tx);
+}
+
+/**
+ * Interupt handler for SPI IRQ. Needs to be called from IRQ handler in platform.c.
+ */
+void pbdrv_pwm_tlc5955_stm32_spi_irq(uint8_t index) {
     pbdrv_pwm_tlc5955_stm32_priv_t *priv = &dev_priv[index];
 
     HAL_SPI_IRQHandler(&priv->hspi);

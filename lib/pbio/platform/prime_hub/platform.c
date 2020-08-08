@@ -197,6 +197,12 @@ const pbdrv_pwm_tlc5955_stm32_platform_data_t
     {
         .spi = SPI1,
         .spi_irq = SPI1_IRQn,
+        .rx_dma = DMA2_Stream2,
+        .rx_dma_ch = DMA_CHANNEL_3,
+        .rx_dma_irq = DMA2_Stream2_IRQn,
+        .tx_dma = DMA2_Stream3,
+        .tx_dma_ch = DMA_CHANNEL_3,
+        .tx_dma_irq = DMA2_Stream3_IRQn,
         .lat_gpio = GPIOA,
         .lat_gpio_pin = GPIO_PIN_15,
         .id = PWM_DEV_4_TLC5955,
@@ -453,6 +459,14 @@ void DMA2_Stream0_IRQHandler() {
     pbdrv_adc_stm32_hal_handle_irq();
 }
 
+void DMA2_Stream2_IRQHandler() {
+    pbdrv_pwm_tlc5955_stm32_rx_dma_irq(0);
+}
+
+void DMA2_Stream3_IRQHandler() {
+    pbdrv_pwm_tlc5955_stm32_tx_dma_irq(0);
+}
+
 void HAL_SPI_MspInit(SPI_HandleTypeDef *hspi) {
     if (hspi->Instance == SPI1) {
         // TLC5955 LED driver
@@ -468,7 +482,7 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef *hspi) {
 }
 
 void SPI1_IRQHandler(void) {
-    pbdrv_pwm_tlc5955_irq(0);
+    pbdrv_pwm_tlc5955_stm32_spi_irq(0);
 }
 
 // USB
