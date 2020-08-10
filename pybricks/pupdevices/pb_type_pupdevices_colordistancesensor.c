@@ -32,6 +32,16 @@ STATIC void raw_to_rgb(int32_t *raw, pbio_color_rgb_t *rgb) {
     rgb->b = 1187 * raw[2] / 2048;
 }
 
+pb_device_t *pupdevices_ColorDistanceSensor__get_device(mp_obj_t obj) {
+
+    // Assert that this is a ColorDistanceSensor
+    pb_assert_type(obj, &pb_type_pupdevices_ColorDistanceSensor);
+
+    // Get and return device pointer
+    pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(obj);
+    return self->pbdev;
+}
+
 // Ensures sensor is in RGB mode then converts the measured raw RGB value to HSV.
 STATIC void pupdevices_ColorDistanceSensor__hsv(pupdevices_ColorDistanceSensor_obj_t *self, pbio_color_hsv_t *hsv) {
     int32_t raw[3];
@@ -104,42 +114,6 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_ambient(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_ambient_obj, pupdevices_ColorDistanceSensor_ambient);
 
-// pybricks.pupdevices.ColorDistanceSensor.remote
-STATIC mp_obj_t pupdevices_ColorDistanceSensor_remote(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
-        pupdevices_ColorDistanceSensor_obj_t, self,
-        PB_ARG_REQUIRED(channel),
-        PB_ARG_DEFAULT_NONE(button_1),
-        PB_ARG_DEFAULT_NONE(button_2));
-
-    // Get channel
-    mp_int_t ch = mp_obj_get_int(channel);
-    if (ch < 1 || ch > 4) {
-        pb_assert(PBIO_ERROR_INVALID_ARG);
-    }
-
-    // Get individual button codes
-    pbio_button_flags_t b1, b2, btn;
-    b1 = button_1 == mp_const_none ? 0 : pb_type_enum_get_value(button_1, &pb_enum_type_Button);
-    b2 = button_2 == mp_const_none ? 0 : pb_type_enum_get_value(button_2, &pb_enum_type_Button);
-
-    // Full button mask
-    btn = b1 | b2;
-
-    // Power Functions 1.0 "Combo Direct Mode" without checksum
-    int32_t message = ((btn & PBIO_BUTTON_LEFT_UP) != 0) << 0 |
-                ((btn & PBIO_BUTTON_LEFT_DOWN) != 0) << 1 |
-                ((btn & PBIO_BUTTON_RIGHT_UP) != 0) << 2 |
-                ((btn & PBIO_BUTTON_RIGHT_DOWN) != 0) << 3 |
-                (1) << 4 |
-                (ch - 1) << 8;
-
-    // Send the data to the device
-    pb_device_set_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &message, 1);
-    return mp_const_none;
-}
-MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorDistanceSensor_remote_obj, 1, pupdevices_ColorDistanceSensor_remote);
-
 // pybricks.pupdevices.ColorDistanceSensor.hsv
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_hsv(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -161,7 +135,6 @@ STATIC const mp_rom_map_elem_t pupdevices_ColorDistanceSensor_locals_dict_table[
     { MP_ROM_QSTR(MP_QSTR_reflection),  MP_ROM_PTR(&pupdevices_ColorDistanceSensor_reflection_obj)           },
     { MP_ROM_QSTR(MP_QSTR_ambient),     MP_ROM_PTR(&pupdevices_ColorDistanceSensor_ambient_obj)              },
     { MP_ROM_QSTR(MP_QSTR_distance),    MP_ROM_PTR(&pupdevices_ColorDistanceSensor_distance_obj)             },
-    { MP_ROM_QSTR(MP_QSTR_remote),      MP_ROM_PTR(&pupdevices_ColorDistanceSensor_remote_obj)               },
     { MP_ROM_QSTR(MP_QSTR_hsv),         MP_ROM_PTR(&pupdevices_ColorDistanceSensor_hsv_obj)                  },
     { MP_ROM_QSTR(MP_QSTR_color_map),   MP_ROM_PTR(&pb_ColorSensor_color_map_obj)                            },
     { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_ATTRIBUTE_OFFSET(pupdevices_ColorDistanceSensor_obj_t, light) },
