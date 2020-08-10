@@ -88,7 +88,7 @@ STATIC mp_obj_t pupdevices_PFMotor_dc(size_t n_args, const mp_obj_t *pos_args, m
     uint8_t pwm = duty_cycle / 15;
 
     // // For forward, PWM steps 1--7 are binary 1 to 7, backward is 15--9
-    int32_t message = forward ? pwm : 16 - pwm;
+    int32_t message = (forward || pwm == 0) ? pwm : 16 - pwm;
 
     // Choose blue or red output
     message |= (self->color == PBIO_COLOR_BLUE) << 4;
@@ -102,8 +102,16 @@ STATIC mp_obj_t pupdevices_PFMotor_dc(size_t n_args, const mp_obj_t *pos_args, m
     // Send the data to the device
     pb_device_set_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &message, 1);
 
-    // We need about 20 ms delay for decent enough signal transmission
-    mp_hal_delay_ms(20);
+    // Wait until values have really been set
+    int32_t check = message + 1;
+    while (check != message) {
+        pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &check);
+        mp_hal_delay_ms(10);
+    }
+
+    // We need about 200 ms delay for decent enough signal transmission
+    mp_hal_delay_ms(200);
+
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_PFMotor_dc_obj, 1, pupdevices_PFMotor_dc);
