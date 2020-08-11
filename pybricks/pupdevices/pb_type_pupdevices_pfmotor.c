@@ -129,10 +129,25 @@ STATIC mp_obj_t pupdevices_PFMotor_dc(size_t n_args, const mp_obj_t *pos_args, m
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_PFMotor_dc_obj, 1, pupdevices_PFMotor_dc);
 
+// pybricks.pupdevices.PFMotor.stop
+STATIC mp_obj_t pupdevices_PFMotor_stop(mp_obj_t self_in) {
+    pupdevices_PFMotor__send(MP_OBJ_TO_PTR(self_in), 0);
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_PFMotor_stop_obj, pupdevices_PFMotor_stop);
+
+// pybricks.pupdevices.PFMotor.brake
+STATIC mp_obj_t pupdevices_PFMotor_brake(mp_obj_t self_in) {
+    pupdevices_PFMotor__send(MP_OBJ_TO_PTR(self_in), 8);
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_PFMotor_brake_obj, pupdevices_PFMotor_brake);
 
 // dir(pybricks.pupdevices.PFMotor)
 STATIC const mp_rom_map_elem_t pupdevices_PFMotor_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_dc),      MP_ROM_PTR(&pupdevices_PFMotor_dc_obj)},
+    { MP_ROM_QSTR(MP_QSTR_dc),      MP_ROM_PTR(&pupdevices_PFMotor_dc_obj   )},
+    { MP_ROM_QSTR(MP_QSTR_stop),    MP_ROM_PTR(&pupdevices_PFMotor_stop_obj )},
+    { MP_ROM_QSTR(MP_QSTR_brake),   MP_ROM_PTR(&pupdevices_PFMotor_brake_obj)},
 };
 STATIC MP_DEFINE_CONST_DICT(pupdevices_PFMotor_locals_dict, pupdevices_PFMotor_locals_dict_table);
 
