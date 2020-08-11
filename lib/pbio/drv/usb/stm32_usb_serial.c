@@ -1,4 +1,7 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2020 The Pybricks Authors
 
+// USB serial port driver (CDC/ACM) for STM32 MCUs.
 
 #include <pbdrv/config.h>
 
