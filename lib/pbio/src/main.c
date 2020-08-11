@@ -74,7 +74,7 @@ void pbio_init(void) {
 
 /**
  * Checks for and performs pending background tasks. This function is meant to
- * be called as frequently as possible. To conserve power, you an wait for an
+ * be called as frequently as possible. To conserve power, you can wait for an
  * interrupt after all events have been processed (i.e. return value is 0).
  * @return      The number of still-pending events.
  */
