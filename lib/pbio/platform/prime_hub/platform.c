@@ -517,26 +517,30 @@ void OTG_FS_IRQHandler(void) {
     HAL_PCD_IRQHandler(&hpcd);
 }
 
-
 void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
-    GPIO_InitTypeDef gpio_init = { 0 };
+    GPIO_InitTypeDef gpio_init;
 
-    gpio_init.Mode = GPIO_MODE_AF_OD;
-    gpio_init.Pull = GPIO_NOPULL;
-    gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    gpio_init.Alternate = GPIO_AF4_I2C2;
+    // IMU
+    if (hi2c->Instance == I2C2) {
+        gpio_init.Mode = GPIO_MODE_AF_OD;
+        gpio_init.Pull = GPIO_NOPULL;
+        gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 
-    gpio_init.Pin = GPIO_PIN_10;
-    HAL_GPIO_Init(GPIOB, &gpio_init);
+        // SCL
+        gpio_init.Pin = GPIO_PIN_10;
+        gpio_init.Alternate = GPIO_AF4_I2C2;
+        HAL_GPIO_Init(GPIOB, &gpio_init);
 
-    gpio_init.Pin = GPIO_PIN_3;
-    gpio_init.Alternate = GPIO_AF9_I2C2;
-    HAL_GPIO_Init(GPIOB, &gpio_init);
+        // SDA
+        gpio_init.Pin = GPIO_PIN_3;
+        gpio_init.Alternate = GPIO_AF9_I2C2;
+        HAL_GPIO_Init(GPIOB, &gpio_init);
 
-    HAL_NVIC_SetPriority(I2C2_ER_IRQn, 3, 1);
-    HAL_NVIC_EnableIRQ(I2C2_ER_IRQn);
-    HAL_NVIC_SetPriority(I2C2_EV_IRQn, 3, 2);
-    HAL_NVIC_EnableIRQ(I2C2_EV_IRQn);
+        HAL_NVIC_SetPriority(I2C2_ER_IRQn, 3, 1);
+        HAL_NVIC_EnableIRQ(I2C2_ER_IRQn);
+        HAL_NVIC_SetPriority(I2C2_EV_IRQn, 3, 2);
+        HAL_NVIC_EnableIRQ(I2C2_EV_IRQn);
+    }
 }
 
 void I2C2_ER_IRQHandler(void) {
