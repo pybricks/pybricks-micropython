@@ -12,6 +12,8 @@
 
 #include <pybricks/util_mp/pb_type_enum.h>
 
+#if PYBRICKS_PY_PARAMETERS_BUTTON
+
 const mp_obj_type_t pb_enum_type_Button;
 
 const pb_obj_enum_member_t pb_Button_UP_obj;
@@ -35,6 +37,8 @@ const pb_obj_enum_member_t pb_Button_BEACON_obj;
 #define pb_const_button_right_up    MP_OBJ_FROM_PTR(&pb_Button_RIGHT_UP_obj)
 #define pb_const_button_right_down  MP_OBJ_FROM_PTR(&pb_Button_RIGHT_DOWN_obj)
 #define pb_const_button_beacon      MP_OBJ_FROM_PTR(&pb_Button_BEACON_obj)
+
+#endif // PYBRICKS_PY_PARAMETERS_BUTTON
 
 const mp_obj_type_t pb_enum_type_Color;
 

@@ -17,6 +17,7 @@
 #define PYBRICKS_PY_HUBS                (1)
 #define PYBRICKS_PY_IODEVICES           (1)
 #define PYBRICKS_PY_PARAMETERS          (1)
+#define PYBRICKS_PY_PARAMETERS_BUTTON   (1)
 #define PYBRICKS_PY_PUPDEVICES          (1)
 #define PYBRICKS_PY_TOOLS               (1)
 #define PYBRICKS_PY_ROBOTICS            (1)

@@ -5,6 +5,8 @@
 
 #if PYBRICKS_PY_PARAMETERS
 
+#if PYBRICKS_PY_PARAMETERS_BUTTON
+
 #include <pbio/button.h>
 
 #include "py/obj.h"
@@ -95,5 +97,7 @@ const mp_obj_type_t pb_enum_type_Button = {
     .unary_op = mp_generic_unary_op,
     .locals_dict = (mp_obj_dict_t *)&(pb_enum_type_Button_locals_dict),
 };
+
+#endif // PYBRICKS_PY_PARAMETERS_BUTTON
 
 #endif // PYBRICKS_PY_PARAMETERS
