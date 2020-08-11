@@ -67,6 +67,39 @@ STATIC mp_obj_t pupdevices_PFMotor_make_new(const mp_obj_type_t *type, size_t n_
     return MP_OBJ_FROM_PTR(self);
 }
 
+// Experimental value setter that waits for success. This may be generalized
+// with generic modes/values, and moved to pbdevice if helpful for other
+// sensors as well. A timeout could be added as well.
+STATIC void set_and_wait(pb_device_t *pbdev, int32_t data) {
+    // Set the values
+    pb_device_set_values(pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &data, 1);
+
+    // Wait until we read back the same values
+    int32_t get = -1;
+    while (get != data) {
+        pb_device_get_values(pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &get);
+        mp_hal_delay_ms(5);
+    }
+}
+
+STATIC void pupdevices_PFMotor__send(pupdevices_PFMotor_obj_t *self, int32_t message) {
+    // Choose blue or red output
+    message |= (self->color == PBIO_COLOR_BLUE) << 4;
+
+    // Choose single output Mode
+    message |= 1 << 6;
+
+    // Choose channel (1--4)
+    message |= (self->channel - 1) << 8;
+
+    // Send the data to the device. Then set 0 to force resend.
+    for (uint8_t i = 0; i < 2; i++) {
+        set_and_wait(self->pbdev, message);
+        mp_hal_delay_ms(75);
+        set_and_wait(self->pbdev, 0);
+    }
+}
+
 // pybricks.pupdevices.PFMotor.dc
 STATIC mp_obj_t pupdevices_PFMotor_dc(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -90,27 +123,7 @@ STATIC mp_obj_t pupdevices_PFMotor_dc(size_t n_args, const mp_obj_t *pos_args, m
     // // For forward, PWM steps 1--7 are binary 1 to 7, backward is 15--9
     int32_t message = (forward || pwm == 0) ? pwm : 16 - pwm;
 
-    // Choose blue or red output
-    message |= (self->color == PBIO_COLOR_BLUE) << 4;
-
-    // Choose single output Mode
-    message |= 1 << 6;
-
-    // Choose channel (1--4)
-    message |= (self->channel - 1) << 8;
-
-    // Send the data to the device
-    pb_device_set_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &message, 1);
-
-    // Wait until values have really been set
-    int32_t check = message + 1;
-    while (check != message) {
-        pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX, &check);
-        mp_hal_delay_ms(10);
-    }
-
-    // We need about 200 ms delay for decent enough signal transmission
-    mp_hal_delay_ms(200);
+    pupdevices_PFMotor__send(self, message);
 
     return mp_const_none;
 }
