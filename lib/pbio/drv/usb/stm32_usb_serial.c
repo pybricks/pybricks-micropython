@@ -197,7 +197,7 @@ static void pbdrv_stm32_usb_serial_transmit() {
     }
 }
 
-void pbdrv_stm32_usb_serial_receive() {
+static void pbdrv_stm32_usb_serial_receive() {
     if (usb_in_busy) {
         return;
     }
