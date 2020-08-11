@@ -16,12 +16,10 @@
 
 #include <lsm6ds3tr_c_reg.h>
 
+#include STM32_HAL_H
+
 #if PYBRICKS_HUB_CPLUSHUB
-#include <stm32l4xx_hal.h>
 #include <stm32l4xx_ll_i2c.h>
-#else
-#include <stm32f4xx_hal.h>
-#include <stm32f4xx_hal_i2c.h>
 #endif
 
 typedef struct {
