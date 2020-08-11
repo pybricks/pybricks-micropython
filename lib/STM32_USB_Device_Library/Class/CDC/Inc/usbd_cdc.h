@@ -78,6 +78,16 @@ extern "C" {
 #define CDC_SET_CONTROL_LINE_STATE                  0x22U
 #define CDC_SEND_BREAK                              0x23U
 
+#define CDC_STOP_BITS_1     0x00
+#define CDC_STOP_BITS_1_5   0x01
+#define CDC_STOP_BITS_2     0x02
+
+#define CDC_PARITY_NONE     0x00
+#define CDC_PARITY_ODD      0x01
+#define CDC_PARITY_EVEN     0x02
+#define CDC_PARITY_MARK     0x03
+#define CDC_PARITY_SPACE    0x04
+
 /**
   * @}
   */

@@ -32,16 +32,15 @@ static uint8_t stdin_data[128];
 static struct ringbuf stdout_buf;
 static struct ringbuf stdin_buf;
 
-USBD_CDC_LineCodingTypeDef LineCoding = {
-    115200, /* baud rate*/
-    0x00,   /* stop bits-1*/
-    0x00,   /* parity - none*/
-    0x08    /* nb. of bits 8*/
+static USBD_CDC_LineCodingTypeDef LineCoding = {
+    .bitrate = 115200,
+    .format = CDC_STOP_BITS_1,
+    .paritytype = CDC_PARITY_NONE,
+    .datatype = 8,
 };
 
-USBD_HandleTypeDef USBD_Device;
+static USBD_HandleTypeDef USBD_Device;
 extern USBD_DescriptorsTypeDef VCP_Desc;
-extern USBD_CDC_ItfTypeDef USBD_CDC_fops;
 
 /**
   * @brief  CDC_Itf_Init
@@ -155,12 +154,12 @@ static int8_t CDC_Itf_TransmitCplt(uint8_t *Buf, uint32_t *Len, uint8_t epnum) {
     return USBD_OK;
 }
 
-USBD_CDC_ItfTypeDef USBD_CDC_fops = {
-    CDC_Itf_Init,
-    CDC_Itf_DeInit,
-    CDC_Itf_Control,
-    CDC_Itf_Receive,
-    CDC_Itf_TransmitCplt
+static USBD_CDC_ItfTypeDef USBD_CDC_fops = {
+    .Init = CDC_Itf_Init,
+    .DeInit = CDC_Itf_DeInit,
+    .Control = CDC_Itf_Control,
+    .Receive = CDC_Itf_Receive,
+    .TransmitCplt = CDC_Itf_TransmitCplt,
 };
 
 static void pbdrv_stm32_usb_serial_init() {
