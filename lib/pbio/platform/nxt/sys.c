@@ -14,12 +14,6 @@
 
 #include "pbsys/sys.h"
 
-// workaround upstream NVIC_SystemReset() not decorated with noreturn
-void NVIC_SystemReset(void) __attribute__((noreturn));
-void NVIC_SystemReset(void) {
-    __builtin_unreachable();
-};
-
 typedef enum {
     LED_STATUS_BUTTON_PRESSED   = 1 << 0,
     LED_STATUS_BATTERY_LOW      = 1 << 1,
@@ -92,14 +86,12 @@ pbio_error_t pbsys_stdout_put_char(uint8_t c) {
 
 void pbsys_reboot(bool fw_update) {
     // TODO RESET
-    // this function never returns
-    NVIC_SystemReset();
+    __builtin_unreachable();
 }
 
 void pbsys_power_off(void) {
     // TODO: NXT Power Off
-    // this function never returns
-    NVIC_SystemReset();
+    __builtin_unreachable();
 }
 
 static void init(void) {

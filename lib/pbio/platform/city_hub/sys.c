@@ -18,9 +18,6 @@
 
 #include "stm32f030xc.h"
 
-// workaround upstream NVIC_SystemReset() not decorated with noreturn
-void NVIC_SystemReset(void) __attribute__((noreturn));
-
 typedef enum {
     LED_STATUS_BUTTON_PRESSED   = 1 << 0,
     LED_STATUS_BATTERY_LOW      = 1 << 1,

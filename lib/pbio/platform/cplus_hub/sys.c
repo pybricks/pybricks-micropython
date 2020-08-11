@@ -17,9 +17,6 @@
 
 #include "stm32l4xx.h"
 
-// workaround upstream NVIC_SystemReset() not decorated with noreturn
-void NVIC_SystemReset(void) __attribute__((noreturn));
-
 // Bootloader reads this address to know if firmware loader should run
 uint32_t bootloader_magic_addr __attribute__((section(".magic")));
 #define BOOTLOADER_MAGIC_VALUE  0xAAAAAAAA
