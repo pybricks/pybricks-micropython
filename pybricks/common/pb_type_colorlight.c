@@ -23,16 +23,6 @@ typedef struct _common_ColorLight_obj_t {
     pb_device_t *pbdev;
 } common_ColorLight_obj_t;
 
-// pybricks._common.ColorLight.__init__
-mp_obj_t common_ColorLight_obj_make_new(pb_device_t *pbdev) {
-    // Create new light instance
-    common_ColorLight_obj_t *light = m_new_obj(common_ColorLight_obj_t);
-    // Set type and iodev
-    light->base.type = &pb_type_ColorLight;
-    light->pbdev = pbdev;
-    return light;
-}
-
 // pybricks._common.ColorLight.on
 STATIC mp_obj_t common_ColorLight_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     // Parse arguments
@@ -88,10 +78,20 @@ STATIC const mp_rom_map_elem_t common_ColorLight_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(common_ColorLight_locals_dict, common_ColorLight_locals_dict_table);
 
 // type(pybricks.builtins.ColorLight)
-const mp_obj_type_t pb_type_ColorLight = {
+STATIC const mp_obj_type_t pb_type_ColorLight = {
     { &mp_type_type },
     .name = MP_QSTR_ColorLight,
     .locals_dict = (mp_obj_dict_t *)&common_ColorLight_locals_dict,
 };
+
+// pybricks._common.ColorLight.__init__
+mp_obj_t common_ColorLight_obj_make_new(pb_device_t *pbdev) {
+    // Create new light instance
+    common_ColorLight_obj_t *light = m_new_obj(common_ColorLight_obj_t);
+    // Set type and iodev
+    light->base.type = &pb_type_ColorLight;
+    light->pbdev = pbdev;
+    return light;
+}
 
 #endif // PYBRICKS_PY_COMMON

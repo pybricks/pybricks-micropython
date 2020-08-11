@@ -13,7 +13,6 @@
 #include <pybricks/util_pb/pb_device.h>
 
 // pybricks._common.ColorLight()
-const mp_obj_type_t pb_type_ColorLight;
 mp_obj_t common_ColorLight_obj_make_new(pb_device_t *pbdev);
 
 // pybricks._common.LightArray()
