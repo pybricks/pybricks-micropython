@@ -66,8 +66,6 @@ AUTOSTART_PROCESSES(
  * the library.
  */
 void pbio_init(void) {
-    clock_init();
-    process_init();
     pbdrv_init();
     _pbdrv_button_init();
     autostart_start(autostart_processes);
