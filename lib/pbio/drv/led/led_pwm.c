@@ -22,9 +22,6 @@
 #error "Must define PBDRV_CONFIG_LED_PWM_NUM_DEV"
 #endif
 
-// defined in platform.c
-extern const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV];
-
 static pbio_error_t pbdrv_led_pwm_set_hsv(pbdrv_led_dev_t *dev, const pbio_color_hsv_t *hsv) {
     const pbdrv_led_pwm_platform_data_t *pdata = dev->pdata;
 

@@ -34,6 +34,9 @@ typedef struct {
     uint8_t scale_factor;
 } pbdrv_led_pwm_platform_data_t;
 
+// defined in platform/*/platform.c
+extern const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV];
+
 void pbdrv_led_pwm_init(pbdrv_led_dev_t *devs);
 
 #else // PBDRV_CONFIG_LED_PWM

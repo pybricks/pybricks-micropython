@@ -24,6 +24,9 @@ typedef struct {
     uint8_t id2;
 } pbdrv_led_dual_platform_data_t;
 
+// defined in platform/*/platform.c
+extern const pbdrv_led_dual_platform_data_t pbdrv_led_dual_platform_data[PBDRV_CONFIG_LED_DUAL_NUM_DEV];
+
 void pbdrv_led_dual_init(pbdrv_led_dev_t *devs);
 
 #else // PBDRV_CONFIG_LED_DUAL
