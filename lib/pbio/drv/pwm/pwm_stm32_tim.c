@@ -9,11 +9,7 @@
 
 #include <stdint.h>
 
-#if defined(STM32F0)
-#include <stm32f0xx.h>
-#elif defined(STM32F4)
-#include <stm32f4xx.h>
-#endif
+#include STM32_H
 
 #include <pbdrv/pwm.h>
 #include <pbio/error.h>
