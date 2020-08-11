@@ -21,18 +21,6 @@ typedef struct _common_LightArray_obj_t {
     uint8_t number_of_lights;
 } common_LightArray_obj_t;
 
-// pybricks._common.LightArray.__init__
-mp_obj_t common_LightArray_obj_make_new(pb_device_t *pbdev, uint8_t light_mode, uint8_t number_of_lights) {
-    // Create new light instance
-    common_LightArray_obj_t *light = m_new_obj(common_LightArray_obj_t);
-    // Set type and iodev
-    light->base.type = &pb_type_LightArray;
-    light->pbdev = pbdev;
-    light->light_mode = light_mode;
-    light->number_of_lights = number_of_lights;
-    return light;
-}
-
 // pybricks._common.LightArray.on
 STATIC mp_obj_t common_LightArray_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     // Parse arguments
@@ -84,10 +72,22 @@ STATIC const mp_rom_map_elem_t common_LightArray_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(common_LightArray_locals_dict, common_LightArray_locals_dict_table);
 
 // type(pybricks.builtins.LightArray)
-const mp_obj_type_t pb_type_LightArray = {
+STATIC const mp_obj_type_t pb_type_LightArray = {
     { &mp_type_type },
     .name = MP_QSTR_LightArray,
     .locals_dict = (mp_obj_dict_t *)&common_LightArray_locals_dict,
 };
+
+// pybricks._common.LightArray.__init__
+mp_obj_t common_LightArray_obj_make_new(pb_device_t *pbdev, uint8_t light_mode, uint8_t number_of_lights) {
+    // Create new light instance
+    common_LightArray_obj_t *light = m_new_obj(common_LightArray_obj_t);
+    // Set type and iodev
+    light->base.type = &pb_type_LightArray;
+    light->pbdev = pbdev;
+    light->light_mode = light_mode;
+    light->number_of_lights = number_of_lights;
+    return light;
+}
 
 #endif // PYBRICKS_PY_COMMON

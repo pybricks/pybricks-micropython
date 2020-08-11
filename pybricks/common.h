@@ -16,7 +16,6 @@
 mp_obj_t common_ColorLight_obj_make_new(pb_device_t *pbdev);
 
 // pybricks._common.LightArray()
-const mp_obj_type_t pb_type_LightArray;
 mp_obj_t common_LightArray_obj_make_new(pb_device_t *pbdev, uint8_t light_mode, uint8_t number_of_lights);
 
 // pybricks._common.KeyPad()
