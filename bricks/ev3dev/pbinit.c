@@ -74,7 +74,7 @@ void pybricks_init() {
     grx_draw_filled_circle(cx, cy, cr, GRX_COLOR_BLACK);
     grx_draw_filled_circle(cx, cy, cr - width, GRX_COLOR_WHITE);
 
-    GrxPoint triangle[3] = {
+    GrxPoint triangle[] = {
         {
             // Upper left vertex
             .x = cx - s,
@@ -91,7 +91,7 @@ void pybricks_init() {
             .y = cy
         }
     };
-    grx_draw_filled_convex_polygon(3, triangle, GRX_COLOR_BLACK);
+    grx_draw_filled_convex_polygon(G_N_ELEMENTS(triangle), triangle, GRX_COLOR_BLACK);
 
     pbio_init();
     pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE); // TODO: define PBIO_LIGHT_PATTERN_EV3_RUN (Or, discuss if we want to use breathe for EV3, too)
