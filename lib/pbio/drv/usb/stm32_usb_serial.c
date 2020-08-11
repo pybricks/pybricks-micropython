@@ -26,6 +26,8 @@ static uint8_t usb_out_buf[CDC_DATA_FS_MAX_PACKET_SIZE - 1];
 static volatile bool usb_in_busy;
 static volatile bool usb_out_busy;
 
+static volatile bool usb_connected;
+
 // size must be power of 2 for ringbuf! also can't be > 255!
 static uint8_t stdout_data[128];
 static uint8_t stdin_data[128];
@@ -53,6 +55,9 @@ static int8_t CDC_Itf_Init(void) {
     ringbuf_init(&stdout_buf, stdout_data, (uint8_t)PBIO_ARRAY_SIZE(stdout_data));
     USBD_CDC_SetTxBuffer(&USBD_Device, usb_out_buf, 0);
     USBD_CDC_SetRxBuffer(&USBD_Device, usb_in_buf);
+    usb_in_busy = false;
+    usb_out_busy = false;
+    usb_connected = false;
 
     return USBD_OK;
 }
@@ -64,6 +69,7 @@ static int8_t CDC_Itf_Init(void) {
   * @retval Result of the operation: USBD_OK if all operations are OK else USBD_FAIL
   */
 static int8_t CDC_Itf_DeInit(void) {
+    usb_connected = false;
     return USBD_OK;
 }
 
@@ -109,9 +115,13 @@ static int8_t CDC_Itf_Control(uint8_t cmd, uint8_t *pbuf, uint16_t length) {
             pbuf[6] = LineCoding.datatype;
             break;
 
-        case CDC_SET_CONTROL_LINE_STATE:
+        case CDC_SET_CONTROL_LINE_STATE: {
+            USBD_SetupReqTypedef *req = (void *)pbuf;
+            // REVISIT: MicroPython defers the connection state here to allow
+            // some time to disable local echo on the remote terminal
+            usb_connected = !!(req->wValue & CDC_CONTROL_LINE_DTR);
             break;
-
+        }
         case CDC_SEND_BREAK:
             break;
     }
@@ -210,6 +220,10 @@ static void pbdrv_stm32_usb_serial_receive() {
 }
 
 pbio_error_t pbsys_stdout_put_char(uint8_t c) {
+    if (!usb_connected) {
+        // don't lock up print() when USB not connected - data is discarded
+        return PBIO_SUCCESS;
+    }
     if (ringbuf_put(&stdout_buf, c) == 0) {
         return PBIO_ERROR_AGAIN;
     }

@@ -88,6 +88,9 @@ extern "C" {
 #define CDC_PARITY_MARK     0x03
 #define CDC_PARITY_SPACE    0x04
 
+#define CDC_CONTROL_LINE_DTR    0x0001
+#define CDC_CONTROL_LINE_RTS    0x0002
+
 /**
   * @}
   */
