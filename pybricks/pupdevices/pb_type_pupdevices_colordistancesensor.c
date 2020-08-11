@@ -66,7 +66,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *typ
     self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
 
     // Create an instance of the Light class
-    self->light = common_ColorLight_obj_make_new(self->pbdev);
+    self->light = common_ColorLight_external_obj_make_new(self->pbdev);
 
     // Save default color settings
     pb_hsv_map_save_default(&self->color_map);

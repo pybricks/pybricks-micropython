@@ -13,7 +13,8 @@
 #include <pybricks/util_pb/pb_device.h>
 
 // pybricks._common.ColorLight()
-mp_obj_t common_ColorLight_obj_make_new(pb_device_t *pbdev);
+mp_obj_t common_ColorLight_external_obj_make_new(pb_device_t *pbdev);
+mp_obj_t common_ColorLight_internal_obj_make_new();
 
 // pybricks._common.LightArray()
 mp_obj_t common_LightArray_obj_make_new(pb_device_t *pbdev, uint8_t light_mode, uint8_t number_of_lights);

@@ -33,7 +33,7 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR);
 
     // Create an instance of the Light class
-    self->light = common_ColorLight_obj_make_new(self->pbdev);
+    self->light = common_ColorLight_external_obj_make_new(self->pbdev);
 
     // Set the light color to red
     pb_device_color_light_on(self->pbdev, PBIO_COLOR_RED);

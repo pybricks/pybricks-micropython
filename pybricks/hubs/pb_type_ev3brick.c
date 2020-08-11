@@ -28,7 +28,7 @@ STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
 
     self->speaker = pb_type_ev3dev_Speaker.make_new(&pb_type_ev3dev_Speaker, 0, 0, NULL);
 
-    self->light = common_ColorLight_obj_make_new(NULL);
+    self->light = common_ColorLight_internal_obj_make_new(NULL);
     return MP_OBJ_FROM_PTR(self);
 }
 

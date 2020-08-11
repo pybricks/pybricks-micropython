@@ -18,7 +18,7 @@ typedef struct _hubs_CityHub_obj_t {
 STATIC mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     hubs_CityHub_obj_t *self = m_new_obj(hubs_CityHub_obj_t);
     self->base.type = (mp_obj_type_t *)type;
-    self->light = common_ColorLight_obj_make_new(NULL);
+    self->light = common_ColorLight_internal_obj_make_new(NULL);
     return MP_OBJ_FROM_PTR(self);
 }
 
