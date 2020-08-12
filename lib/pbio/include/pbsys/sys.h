@@ -113,8 +113,6 @@ static inline pbio_error_t pbsys_stdin_get_char(uint8_t *c) {
 static inline pbio_error_t pbsys_stdout_put_char(uint8_t c) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline void pbsys_reset(void) {
-}
 static inline void pbsys_reboot(bool fw_update) {
 }
 static inline void pbsys_power_off(void) {
