@@ -25,16 +25,18 @@ ev3dev-host: mpy-cross
 clean-ev3dev-host: clean-mpy-cross
 	@$(MAKE) -C bricks/ev3dev clean CROSS_COMPILE=
 
-ev3dev-armel: mpy-cross
+ev3dev-armel:
 	@if [ ! -d bricks/ev3dev/build-armel/ports ]; then \
 		bricks/ev3dev/docker/setup.sh armel; \
 	fi
 	@docker start pybricks-ev3dev_armel
+	@docker exec --tty pybricks-ev3dev_armel make -C ../../micropython/mpy-cross
 	@docker exec --tty pybricks-ev3dev_armel make
 
-clean-ev3dev-armel: clean-mpy-cross
+clean-ev3dev-armel:
 	@if [ -d bricks/ev3dev/build-armel/ports ]; then \
 		@docker start pybricks-ev3dev_armel; \
+		docker exec --tty pybricks-ev3dev_armel make -C ../../micropython/mpy-cross clean; \
 		docker exec --tty pybricks-ev3dev_armel make clean; \
 	fi
 
