@@ -8,7 +8,7 @@
  * where the Pybricks I/O library also acts as the operating system for a
  * programmable brick.
  *
- * These functions have no effect on systems with an independant operating
+ * These functions have no effect on systems with an independent operating
  * system, e.g. ev3dev on LEGO MINDSTORMS EV3.
  * @{
  */
