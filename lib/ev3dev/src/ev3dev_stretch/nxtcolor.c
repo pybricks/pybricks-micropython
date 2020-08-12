@@ -514,14 +514,14 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, int32_t
         }
         else {
             // Otherwise, scale by calibration multiplier
-            values[i] = ( ( (rgba[i] - rgba[3])) * nxtcolor->calibration[row][i] ) / 111410;
+            values[i] = ( ( (rgba[i] - rgba[3])) * nxtcolor->calibration[row][i] ) / 38000;
 
             // On most sensors, red is about 10% too high on gray/white surfaces
             if (i == 0) {
                 values[i] = values[i] * 100 / 110;
             }
 
-            values[i] = values[i] > 100 ? 100 : values[i];
+            values[i] = values[i] > 255 ? 255 : values[i];
         }
     }
 
@@ -530,62 +530,6 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, int32_t
 
     // Scale ambient to percentage
     values[3] = ((amb-nxtcolor->raw_min)*100)/(nxtcolor->raw_max-nxtcolor->raw_min);
-
-    // Calculate color index. Use HSV instead of LEGO if/else tree.
-    int32_t red = values[0];
-    int32_t green = values[1];
-    int32_t blue = values[2];
-
-    int32_t cmax = max(red, max(green, blue));
-    int32_t cmin = min(red, min(green, blue));
-
-    int32_t hue = 0;
-    if (cmax == cmin) {
-        hue = 0;
-    }
-    else if (cmax == red) {
-        hue = 0   + (60 * (green - blue))/(cmax-cmin);
-    }
-    else if (cmax == green) {
-        hue = 120 + (60 * (blue - red  ))/(cmax-cmin);
-    }
-    else if (cmax == blue) {
-        hue = 240 + (60 * (red - green ))/(cmax-cmin);
-    }
-    if (hue < 0) {
-        hue += 360;
-    }
-    int32_t saturation = cmax == 0 ? 0 : (100*(cmax-cmin))/cmax;
-
-    pbio_color_t color;
-
-    if (cmax < 8) {
-         color = PBIO_COLOR_NONE;
-    }
-    else if (red > 25 && green > 25 && blue > 25) {
-        color = PBIO_COLOR_WHITE;
-    }
-    // If the color is saturated enough, discretize hue
-    else if (saturation > 35) {
-        if (hue >= 20 && hue < 80) {
-            color = PBIO_COLOR_YELLOW;
-        }
-        else if (hue >= 80 && hue < 180) {
-            color = PBIO_COLOR_GREEN;
-        }
-        else if (hue >= 180 && hue < 300) {
-            color = PBIO_COLOR_BLUE;
-        }
-        else {
-            color = PBIO_COLOR_RED;
-        }
-    }
-    else {
-        color = PBIO_COLOR_BLACK;
-    }
-
-    // Return RGB and Color data
-    values[4] = color;
 
     // Set the light back to the configured lamp status
     return nxtcolor_set_light(nxtcolor, nxtcolor->lamp);
