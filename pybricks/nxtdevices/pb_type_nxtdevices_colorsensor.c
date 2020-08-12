@@ -11,11 +11,13 @@
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_pb/pb_color_map.h>
 #include <pybricks/util_pb/pb_device.h>
 
-// pybricks.nxtdevices.ColorSensor class object
+// pybricks.nxtdevices.ColorSensor class object. Note: first two members must match pb_ColorSensor_obj_t
 typedef struct _nxtdevices_ColorSensor_obj_t {
     mp_obj_base_t base;
+    pb_hsv_map_t color_map;
     mp_obj_t light;
     pb_device_t *pbdev;
 } nxtdevices_ColorSensor_obj_t;
@@ -37,6 +39,10 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 
     // Set the light color to red
     pb_device_color_light_on(self->pbdev, PBIO_COLOR_RED);
+
+    // Save default color settings
+    pb_hsv_map_save_default(&self->color_map);
+    self->color_map.saturation_threshold = 30;
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -75,23 +81,57 @@ STATIC mp_obj_t nxtdevices_ColorSensor_ambient(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_ambient_obj, nxtdevices_ColorSensor_ambient);
 
+// pybricks.nxtdevices.ColorSensor.hsv
+STATIC mp_obj_t nxtdevices_ColorSensor_hsv(mp_obj_t self_in) {
+    nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    int32_t all[4];
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
+
+    pbio_color_hsv_t hsv;
+    pbio_color_rgb_t rgb = {
+        .r = all[0],
+        .g = all[1],
+        .b = all[2],
+    };
+    pbio_color_rgb_to_hsv(&rgb, &hsv);
+
+    mp_obj_t ret[3];
+    ret[0] = mp_obj_new_int(hsv.h);
+    ret[1] = mp_obj_new_int(hsv.s);
+    ret[2] = mp_obj_new_int(hsv.v);
+    return mp_obj_new_tuple(MP_ARRAY_SIZE(ret), ret);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_hsv_obj, nxtdevices_ColorSensor_hsv);
+
 // pybricks.nxtdevices.ColorSensor.color
 STATIC mp_obj_t nxtdevices_ColorSensor_color(mp_obj_t self_in) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    (void)self;
 
-    // TODO: Read RGB then pass through color map
+    int32_t all[4];
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
 
-    return mp_const_none;
+    pbio_color_hsv_t hsv;
+    pbio_color_rgb_t rgb = {
+        .r = all[0],
+        .g = all[1],
+        .b = all[2],
+    };
+    pbio_color_rgb_to_hsv(&rgb, &hsv);
+
+    // Get and return discretized color based on HSV
+    return pb_hsv_get_color(&self->color_map, hsv.h, hsv.s, hsv.v);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_color_obj, nxtdevices_ColorSensor_color);
 
 // dir(pybricks.nxtdevices.ColorSensor)
 STATIC const mp_rom_map_elem_t nxtdevices_ColorSensor_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_hsv),        MP_ROM_PTR(&nxtdevices_ColorSensor_hsv_obj)                  },
     { MP_ROM_QSTR(MP_QSTR_rgb),        MP_ROM_PTR(&nxtdevices_ColorSensor_rgb_obj)                  },
     { MP_ROM_QSTR(MP_QSTR_ambient),    MP_ROM_PTR(&nxtdevices_ColorSensor_ambient_obj)              },
     { MP_ROM_QSTR(MP_QSTR_reflection), MP_ROM_PTR(&nxtdevices_ColorSensor_reflection_obj)           },
     { MP_ROM_QSTR(MP_QSTR_color),      MP_ROM_PTR(&nxtdevices_ColorSensor_color_obj)                },
+    { MP_ROM_QSTR(MP_QSTR_color_map),  MP_ROM_PTR(&pb_ColorSensor_color_map_obj)                    },
     { MP_ROM_QSTR(MP_QSTR_light),      MP_ROM_ATTRIBUTE_OFFSET(nxtdevices_ColorSensor_obj_t, light) },
 };
 STATIC MP_DEFINE_CONST_DICT(nxtdevices_ColorSensor_locals_dict, nxtdevices_ColorSensor_locals_dict_table);
