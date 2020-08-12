@@ -13,20 +13,23 @@ Directory Structure
 The `doc` directory contains the doxygen build configuration. TODO: post doc
 build output online somewhere.
 
-The `drv` directory contains subdirectories with platform-specific
-implementations of the common API.
+The `drv` directory contains "drivers" that act as a hardware abstraction layer
+for the various platform-specific hardware.
 
-The `include/pbiodrv` directory contains the common I/O driver API that must be
-implemented for each platform. These header files are not intended to be used
-outside of this library.
+The `include/pbdrv` directory contains the public header files for the drivers
+(`drv` directory). Generally, these header files should not be used outside of
+this library.
 
-The `include/pbio` directory contains the public header files for the main library.
+The `include/pbio` directory contains the public header files for the main
+library (`src` directory). This is the API for user programs.
 
-The `include/pbsys` directory contains the public header files for the
-system-level library functions.
+The `include/pbsys` directory contains the public header files for the operating
+system-level library functions (`sys` directory).
 
 The `platform` directory contains platform-specific code.
 
 The `src` directory contains the main library source code.
 
 The `sys` directory contains the core "operating system" code.
+
+The `test` directory contains unit tests for the library.
