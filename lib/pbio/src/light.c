@@ -76,7 +76,7 @@ void _pbio_light_poll(uint32_t now) {
         case PBIO_LIGHT_PATTERN_BREATHE:
             // breathe pattern has 64 values over the course of two seconds (2048ms)
             idx = (now >> 5) & (64 - 1);
-            scale = breathe_pattern_data[idx] + 1;
+            scale = breathe_pattern_data[idx];
             hsv.v = 101 * scale / 256;
             break;
         case PBIO_LIGHT_PATTERN_FLASH:
