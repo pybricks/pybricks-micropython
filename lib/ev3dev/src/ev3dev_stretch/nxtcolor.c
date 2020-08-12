@@ -515,6 +515,12 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, int32_t
         else {
             // Otherwise, scale by calibration multiplier
             values[i] = ( ( (rgba[i] - rgba[3])) * nxtcolor->calibration[row][i] ) / 111410;
+
+            // On most sensors, red is about 10% too high on gray/white surfaces
+            if (i == 0) {
+                values[i] = values[i] * 100 / 110;
+            }
+
             values[i] = values[i] > 100 ? 100 : values[i];
         }
     }
