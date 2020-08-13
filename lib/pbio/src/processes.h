@@ -14,10 +14,6 @@
 PROCESS_NAME(pbdrv_adc_process);
 #endif
 
-#if PBDRV_CONFIG_BATTERY
-PROCESS_NAME(pbdrv_battery_process);
-#endif
-
 #if PBDRV_CONFIG_BLUETOOTH
 PROCESS_NAME(pbdrv_bluetooth_hci_process);
 PROCESS_NAME(pbdrv_bluetooth_spi_process);

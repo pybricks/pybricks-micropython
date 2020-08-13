@@ -3,6 +3,7 @@
 
 #include <contiki.h>
 
+#include <pbdrv/battery.h>
 #include <pbdrv/led.h>
 #include <pbdrv/pwm.h>
 
@@ -10,6 +11,7 @@
 void pbdrv_init() {
     clock_init();
     process_init();
+    pbdrv_battery_init();
     pbdrv_led_init();
     pbdrv_pwm_init();
 }

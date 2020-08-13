@@ -14,7 +14,8 @@
 #include <pbdrv/adc.h>
 #include <pbio/error.h>
 
-PROCESS(pbdrv_battery_process, "battery");
+void pbdrv_battery_init() {
+}
 
 pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
     uint16_t raw;
@@ -48,16 +49,6 @@ pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
         PBDRV_CONFIG_BATTERY_ADC_CURRENT_RAW_MAX;
 
     return PBIO_SUCCESS;
-}
-
-PROCESS_THREAD(pbdrv_battery_process, ev, data) {
-    PROCESS_BEGIN();
-
-    while (true) {
-        PROCESS_WAIT_EVENT();
-    }
-
-    PROCESS_END();
 }
 
 #endif // PBDRV_CONFIG_BATTERY_ADC

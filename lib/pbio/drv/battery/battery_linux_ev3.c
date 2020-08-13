@@ -15,10 +15,20 @@
 
 #include <pbio/error.h>
 
-PROCESS(pbdrv_battery_process, "battery");
-
 static FILE *f_voltage;
 static FILE *f_current;
+
+void pbdrv_battery_init() {
+    f_voltage = fopen("/sys/class/power_supply/lego-ev3-battery/voltage_now", "r");
+    if (f_voltage) {
+        setbuf(f_voltage, NULL);
+    }
+
+    f_current = fopen("/sys/class/power_supply/lego-ev3-battery/current_now", "r");
+    if (f_current) {
+        setbuf(f_current, NULL);
+    }
+}
 
 pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
     int32_t microvolt;
@@ -58,37 +68,6 @@ pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
     *value = microamp / 1000;
 
     return PBIO_SUCCESS;
-}
-
-static void pbdrv_battery_exit(void) {
-    if (f_voltage != NULL) {
-        fclose(f_voltage);
-    }
-    if (f_current != NULL) {
-        fclose(f_current);
-    }
-}
-
-PROCESS_THREAD(pbdrv_battery_process, ev, data) {
-    PROCESS_EXITHANDLER(pbdrv_battery_exit());
-
-    PROCESS_BEGIN();
-
-    f_voltage = fopen("/sys/class/power_supply/lego-ev3-battery/voltage_now", "r");
-    if (f_voltage) {
-        setbuf(f_voltage, NULL);
-    }
-
-    f_current = fopen("/sys/class/power_supply/lego-ev3-battery/current_now", "r");
-    if (f_current) {
-        setbuf(f_current, NULL);
-    }
-
-    while (true) {
-        PROCESS_WAIT_EVENT();
-    }
-
-    PROCESS_END();
 }
 
 #endif // PBDRV_CONFIG_BATTERY_LINUX_EV3

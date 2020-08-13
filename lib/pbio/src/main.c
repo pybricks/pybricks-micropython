@@ -30,9 +30,6 @@ AUTOSTART_PROCESSES(
 #if PBDRV_CONFIG_ADC
     ,&pbdrv_adc_process
 #endif
-#if PBDRV_CONFIG_BATTERY
-    ,&pbdrv_battery_process
-#endif
 #if PBDRV_CONFIG_BLUETOOTH
     ,&pbdrv_bluetooth_hci_process
     ,&pbdrv_bluetooth_spi_process

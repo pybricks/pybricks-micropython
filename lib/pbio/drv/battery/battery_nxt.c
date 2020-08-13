@@ -15,8 +15,8 @@
 
 #include <pbio/error.h>
 
-
-PROCESS(pbdrv_battery_process, "battery");
+void pbdrv_battery_init() {
+}
 
 pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
     *value = battery_voltage() & 0x7FFF;
@@ -26,21 +26,6 @@ pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
 pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
     *value = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static void pbdrv_battery_exit(void) {
-}
-
-PROCESS_THREAD(pbdrv_battery_process, ev, data) {
-    PROCESS_EXITHANDLER(pbdrv_battery_exit());
-
-    PROCESS_BEGIN();
-
-    while (true) {
-        PROCESS_WAIT_EVENT();
-    }
-
-    PROCESS_END();
 }
 
 #endif // PBDRV_CONFIG_BATTERY_NXT

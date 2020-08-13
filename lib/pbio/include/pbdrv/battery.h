@@ -16,6 +16,11 @@
 
 #if PBDRV_CONFIG_BATTERY
 
+
+/** @cond INTERNAL */
+void pbdrv_battery_init();
+/** @endcond */
+
 /**
  * Gets the battery voltage.
  * @param [out] value   The voltage in millivolts
@@ -36,14 +41,13 @@ pbio_error_t pbdrv_battery_get_current_now(uint16_t *value);
 
 #else // PBDRV_CONFIG_BATTERY
 
-static inline void _pbdrv_battery_poll(uint32_t now) {
-}
-static inline void _pbdrv_battery_deinit(void) {
-}
+#define pbdrv_battery_init()
+
 static inline pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
     *value = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
+
 static inline pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
     *value = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
