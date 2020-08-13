@@ -4,7 +4,7 @@
 // Button driver using analog inputs.
 //
 // For now, this is hard-coded for SPIKE Prime. If more platforms that use
-// analog input for buttons are added, ths could be made generic.
+// analog input for buttons are added, this could be made generic.
 
 #include <pbdrv/config.h>
 
