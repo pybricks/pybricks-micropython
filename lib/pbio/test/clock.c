@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
+#include <errno.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -58,6 +59,20 @@ unsigned long clock_usecs() {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
     return ts.tv_sec * 1000000L + ts.tv_nsec / 1000L;
+}
+
+void clock_wait(clock_time_t t) {
+    struct timespec ts, remain;
+    ts.tv_sec = clock_to_msec(t) / 1000;
+    ts.tv_nsec = clock_to_msec(t) % 1000 * 1000000;
+    for (;;) {
+        int ret = clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, &remain);
+        if (ret == EINTR) {
+            ts = remain;
+            continue;
+        }
+        break;
+    }
 }
 
 void clock_delay_usec(uint16_t duration) {
