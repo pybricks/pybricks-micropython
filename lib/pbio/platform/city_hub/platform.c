@@ -126,6 +126,15 @@ const pbdrv_pwm_stm32_tim_platform_data_t
     },
 };
 
+// RESET
+
+void pbdrv_reset_stm32_power_off() {
+    // setting PB11 low cuts the power
+    GPIOB->BRR = GPIO_BRR_BR_11;
+    // prevent watchdog from resetting MCU
+    IWDG->KR = 0xaaaa;
+}
+
 // Port A - USART3
 const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_0 = {
     .id1 = { .bank = GPIOA, .pin = 1  },

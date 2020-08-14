@@ -87,19 +87,6 @@ pbio_error_t pbsys_stdin_get_char(uint8_t *c);
  */
 pbio_error_t pbsys_stdout_put_char(uint8_t c);
 
-/**
- * Reboots the brick. This could also be considered a "hard" reset. This
- * function never returns.
- * @param fw_update     If *true*, system will reboot into firmware update mode,
- *                      otherise it will reboot normally.
- */
-void pbsys_reboot(bool fw_update) __attribute__((noreturn));
-
-/**
- * Powers off the brick. This function never returns.
- */
-void pbsys_power_off(void) __attribute__((noreturn));
-
 #else // PBIO_CONFIG_ENABLE_SYS
 
 static inline void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks) {
@@ -112,10 +99,6 @@ static inline pbio_error_t pbsys_stdin_get_char(uint8_t *c) {
 }
 static inline pbio_error_t pbsys_stdout_put_char(uint8_t c) {
     return PBIO_ERROR_NOT_SUPPORTED;
-}
-static inline void pbsys_reboot(bool fw_update) {
-}
-static inline void pbsys_power_off(void) {
 }
 
 #endif // PBIO_CONFIG_ENABLE_SYS

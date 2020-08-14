@@ -36,6 +36,10 @@
 #define PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV          (3)
 #define PBDRV_CONFIG_PWM_STM32_TIM_EXTRA_FLAGS      (0)
 
+#define PBDRV_CONFIG_RESET                          (1)
+#define PBDRV_CONFIG_RESET_STM32                    (1)
+#define PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER (0)
+
 #define PBDRV_CONFIG_UART                           (1)
 #define PBDRV_CONFIG_UART_STM32F4_LL_IRQ            (1)
 #define PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART   (1)

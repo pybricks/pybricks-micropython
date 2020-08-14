@@ -31,4 +31,7 @@
 #define PBDRV_CONFIG_LAST_MOTOR_PORT        PBIO_PORT_C
 #define PBDRV_CONFIG_NUM_MOTOR_CONTROLLER   (3)
 
+#define PBDRV_CONFIG_RESET                          (1)
+#define PBDRV_CONFIG_RESET_NXT                      (1)
+
 #endif // _PBDRVCONFIG_H_

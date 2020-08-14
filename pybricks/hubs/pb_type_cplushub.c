@@ -5,7 +5,7 @@
 
 #if PYBRICKS_PY_HUBS && PYBRICKS_HUB_CPLUSHUB
 
-#include <pbsys/sys.h>
+#include <pbdrv/reset.h>
 
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
@@ -23,19 +23,19 @@ STATIC mp_obj_t hubs_CPlusHub_make_new(const mp_obj_type_t *type, size_t n_args,
 }
 
 STATIC mp_obj_t hubs_CPlusHub_shutdown(mp_obj_t self_in) {
-    pbsys_power_off();
+    pbdrv_reset(PBDRV_RESET_ACTION_POWER_OFF);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(hubs_cityhub_shutdown_obj, hubs_CPlusHub_shutdown);
 
 STATIC mp_obj_t hubs_CPlusHub_reboot(mp_obj_t self_in) {
-    pbsys_reboot(0);
+    pbdrv_reset(PBDRV_RESET_ACTION_RESET);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(hubs_cityhub_reboot_obj, hubs_CPlusHub_reboot);
 
 STATIC mp_obj_t hubs_CPlusHub_update(mp_obj_t self_in) {
-    pbsys_reboot(1);
+    pbdrv_reset(PBDRV_RESET_ACTION_RESET_IN_UPDATE_MODE);
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(hubs_cityhub_update_obj, hubs_CPlusHub_update);

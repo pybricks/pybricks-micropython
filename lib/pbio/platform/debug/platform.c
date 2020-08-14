@@ -200,6 +200,12 @@ const pbdrv_pwm_stm32_tim_platform_data_t
     },
 };
 
+// RESET
+
+void pbdrv_reset_stm32_power_off() {
+    // don't have any control over power on this board
+}
+
 // UART Config
 //
 // Currently using pins labeled USART on the Nucleo board as a UART sensor port.

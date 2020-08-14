@@ -160,6 +160,13 @@ const pbdrv_pwm_stm32_tim_platform_data_t
     },
 };
 
+// RESET
+
+void pbdrv_reset_stm32_power_off() {
+    // setting PC12 low cuts the power
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+}
+
 // UART
 
 const pbdrv_uart_stm32l4_ll_dma_platform_data_t

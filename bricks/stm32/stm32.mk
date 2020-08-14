@@ -314,6 +314,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/pwm/pwm_core.c \
 	drv/pwm/pwm_stm32_tim.c \
 	drv/pwm/pwm_tlc5955_stm32.c \
+	drv/reset/reset_stm32.c \
 	drv/uart/uart_stm32f0.c \
 	drv/uart/uart_stm32f4_ll_irq.c \
 	drv/uart/uart_stm32l4_ll_dma.c \

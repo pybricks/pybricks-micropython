@@ -5,6 +5,7 @@
 
 #include "pbdrv/config.h"
 #include "pbdrv/led.h"
+#include "pbdrv/reset.h"
 
 #include "pbio/button.h"
 #include "pbio/color.h"
@@ -17,9 +18,6 @@
 #include "sys/clock.h"
 #include "sys/etimer.h"
 #include "sys/process.h"
-
-#define USE_HAL_DRIVER
-#include "stm32f4xx.h"
 
 typedef enum {
     LED_STATUS_BUTTON_PRESSED   = 1 << 0,
@@ -62,33 +60,6 @@ void pbsys_unprepare_user_program(void) {
     _pbio_motorpoll_reset_all();
 }
 
-void pbsys_reboot(bool fw_update) {
-    // this function never returns
-    NVIC_SystemReset();
-}
-
-void pbsys_power_off(void) {
-    pbdrv_led_dev_t *led;
-
-    if (pbdrv_led_get_dev(0, &led) == PBIO_SUCCESS) {
-        // blink pattern like LEGO firmware
-        for (int i = 0; i < 3; i++) {
-            pbdrv_led_on(led, PBIO_COLOR_WHITE);
-            clock_delay_usec(50000);
-            pbdrv_led_off(led);
-            clock_delay_usec(30000);
-        }
-    }
-
-    // PWM doesn't work while IRQs are disabled? so this needs to be after
-    __disable_irq();
-
-    // need to loop because power will stay on as long as button is pressed
-    while (true) {
-        GPIOA->BSRR = GPIO_BSRR_BR_13;
-    }
-}
-
 static void init(void) {
     _pbio_light_set_user_mode(false);
     pbdrv_led_dev_t *led;
@@ -116,7 +87,7 @@ static void update_button(clock_time_t now) {
                     clock_delay_usec(58000);
                 }
 
-                pbsys_power_off();
+                pbdrv_reset(PBDRV_RESET_ACTION_POWER_OFF);
             }
         } else {
             button_press_start_time = now;

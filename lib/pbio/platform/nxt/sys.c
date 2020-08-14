@@ -5,6 +5,7 @@
 
 #include "pbdrv/bluetooth.h"
 #include "pbdrv/config.h"
+#include "pbdrv/reset.h"
 
 #include "pbio/button.h"
 #include "pbio/event.h"
@@ -70,16 +71,6 @@ pbio_error_t pbsys_stdout_put_char(uint8_t c) {
     return pbdrv_bluetooth_tx(c);
 }
 
-void pbsys_reboot(bool fw_update) {
-    // TODO RESET
-    __builtin_unreachable();
-}
-
-void pbsys_power_off(void) {
-    // TODO: NXT Power Off
-    __builtin_unreachable();
-}
-
 static void update_button(clock_time_t now) {
     pbio_button_flags_t btn;
 
@@ -91,7 +82,7 @@ static void update_button(clock_time_t now) {
 
             // if the button is held down for 5 seconds, power off
             if (now - button_press_start_time > clock_from_msec(5000)) {
-                pbsys_power_off();
+                pbdrv_reset(PBDRV_RESET_ACTION_POWER_OFF);
             }
         } else {
             button_press_start_time = now;

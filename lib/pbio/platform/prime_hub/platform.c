@@ -209,6 +209,13 @@ const pbdrv_pwm_tlc5955_stm32_platform_data_t
     },
 };
 
+// RESET
+
+void pbdrv_reset_stm32_power_off() {
+    // setting PA13 low cuts the power
+    GPIOA->BSRR = GPIO_BSRR_BR_13;
+}
+
 // UART
 
 // Port A - UART7

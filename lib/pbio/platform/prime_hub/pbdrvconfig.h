@@ -56,6 +56,10 @@
 #define PBDRV_CONFIG_PWM_TLC5955_STM32              (1)
 #define PBDRV_CONFIG_PWM_TLC5955_STM32_NUM_DEV      (1)
 
+#define PBDRV_CONFIG_RESET                          (1)
+#define PBDRV_CONFIG_RESET_STM32                    (1)
+#define PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER (0)
+
 #define PBDRV_CONFIG_UART                           (1)
 #define PBDRV_CONFIG_UART_STM32F4_LL_IRQ            (1)
 #define PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART   (6)

@@ -180,6 +180,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/core.c \
 	drv/counter/counter_core.c \
 	drv/counter/counter_nxt.c \
+	drv/reset/reset_nxt.c \
 	platform/$(PBIO_PLATFORM)/clock.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	platform/$(PBIO_PLATFORM)/sys.c \
