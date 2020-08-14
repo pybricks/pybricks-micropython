@@ -10,30 +10,34 @@
 #define _PBSYS_STATUS_H_
 
 #include <stdbool.h>
+#include <stdint.h>
 
 /**
- * System-wide status indication flags.
+ * System-wide status indications.
  */
 typedef enum {
     /** Battery voltage is low. */
-    PBSYS_STATUS_BATTERY_LOW_VOLTAGE = 1 << 0,
+    PBSYS_STATUS_BATTERY_LOW_VOLTAGE,
     /** Battery current is too high. */
-    PBSYS_STATUS_BATTERY_HIGH_CURRENT = 1 << 1,
+    PBSYS_STATUS_BATTERY_HIGH_CURRENT,
     /** Bluetooth Low Energy is advertising/discoverable. */
-    PBSYS_STATUS_BLE_ADVERTISING = 1 << 2,
+    PBSYS_STATUS_BLE_ADVERTISING,
     /** Bluetooth Low Energy has low signal. */
-    PBSYS_STATUS_BLE_LOW_SIGNAL = 1 << 3,
+    PBSYS_STATUS_BLE_LOW_SIGNAL,
     /** I/O port is busy syncing up with UART device. */
-    PBSYS_STATUS_IO_PORT_BUSY = 1 << 4,
+    PBSYS_STATUS_IO_PORT_BUSY,
     /** User program is currently running. */
-    PBSYS_STATUS_USER_PROGRAM_RUNNING = 1 << 5,
+    PBSYS_STATUS_USER_PROGRAM_RUNNING,
     /** System power will turn off soon. */
-    PBSYS_STATUS_POWER_DOWN_PENDING = 1 << 6,
-} pbsys_status_flag_t;
+    PBSYS_STATUS_POWER_DOWN_PENDING,
+    /** Total number of indications. */
+    NUM_PBSYS_STATUS,
+} pbsys_status_t;
 
-void pbsys_status_set_flag(pbsys_status_flag_t flag);
-void pbsys_status_clear_flag(pbsys_status_flag_t flag);
-bool pbsys_status_test_flags(pbsys_status_flag_t flags);
+void pbsys_status_set(pbsys_status_t status);
+void pbsys_status_clear(pbsys_status_t status);
+bool pbsys_status_test(pbsys_status_t status);
+bool pbsys_status_test_debounce(pbsys_status_t status, bool state, uint32_t ms);
 
 #endif // _PBSYS_STATUS_H_
 

@@ -62,12 +62,25 @@ static struct testcase_setup_t pbio_test_setup = {
     .cleanup_fn = cleanup,
 };
 
+// PBDRV
+
+PBIO_TEST_FUNC(test_pwm_get);
+PBIO_TEST_FUNC(test_pwm_set_duty);
+
+static struct testcase_t pbdrv_pwm_tests[] = {
+    PBIO_TEST(test_pwm_get),
+    PBIO_TEST(test_pwm_set_duty),
+    END_OF_TESTCASES
+};
+
+// PBIO
+
 PBIO_TEST_FUNC(test_rgb_to_hsv);
 PBIO_TEST_FUNC(test_hsv_to_rgb);
 PBIO_TEST_FUNC(test_color_to_hsv);
 PBIO_TEST_FUNC(test_color_to_rgb);
 
-static struct testcase_t color_tests[] = {
+static struct testcase_t pbio_color_tests[] = {
     PBIO_TEST(test_rgb_to_hsv),
     PBIO_TEST(test_hsv_to_rgb),
     PBIO_TEST(test_color_to_hsv),
@@ -86,15 +99,6 @@ static struct testcase_t pbio_math_tests[] = {
     END_OF_TESTCASES
 };
 
-PBIO_TEST_FUNC(test_pwm_get);
-PBIO_TEST_FUNC(test_pwm_set_duty);
-
-static struct testcase_t pbio_pwm_tests[] = {
-    PBIO_TEST(test_pwm_get),
-    PBIO_TEST(test_pwm_set_duty),
-    END_OF_TESTCASES
-};
-
 PBIO_TEST_FUNC(test_boost_color_distance_sensor);
 PBIO_TEST_FUNC(test_boost_interactive_motor);
 PBIO_TEST_FUNC(test_technic_large_motor);
@@ -108,11 +112,21 @@ static struct testcase_t pbio_uartdev_tests[] = {
     END_OF_TESTCASES
 };
 
+// PBSYS
+
+PBIO_TEST_FUNC(test_status);
+
+static struct testcase_t pbsys_status_tests[] = {
+    PBIO_TEST(test_status),
+    END_OF_TESTCASES
+};
+
 static struct testgroup_t test_groups[] = {
-    { "color/", color_tests },
-    { "math/", pbio_math_tests },
-    { "pwm/", pbio_pwm_tests },
-    { "uartdev/", pbio_uartdev_tests, },
+    { "drv/pwm/", pbdrv_pwm_tests },
+    { "src/color/", pbio_color_tests },
+    { "src/math/", pbio_math_tests },
+    { "src/uartdev/", pbio_uartdev_tests, },
+    { "sys/status/", pbsys_status_tests, },
     END_OF_GROUPS
 };
 

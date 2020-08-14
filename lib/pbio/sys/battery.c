@@ -67,8 +67,8 @@ void pbsys_battery_poll() {
     }
 
     if (avg_battery_voltage <= BATTERY_LOW_MV) {
-        pbsys_status_set_flag(PBSYS_STATUS_BATTERY_LOW_VOLTAGE);
+        pbsys_status_set(PBSYS_STATUS_BATTERY_LOW_VOLTAGE);
     } else if (avg_battery_voltage >= BATTERY_OK_MV) {
-        pbsys_status_clear_flag(PBSYS_STATUS_BATTERY_LOW_VOLTAGE);
+        pbsys_status_clear(PBSYS_STATUS_BATTERY_LOW_VOLTAGE);
     }
 }

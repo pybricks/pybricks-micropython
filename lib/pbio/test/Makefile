@@ -53,6 +53,7 @@ PBIO_INC = -I$(PBIO_DIR)/include -I$(PBIO_DIR)
 PBIO_SRC = \
 	$(shell find $(PBIO_DIR)/drv/ ! -wholename "*/ev3dev_stretch/*" -and -name "*.c") \
 	$(shell find $(PBIO_DIR)/src -name "*.c") \
+	$(shell find $(PBIO_DIR)/sys -name "*.c") \
 
 # tests
 TEST_INC = -I.
@@ -99,7 +100,8 @@ build-coverage/coverage.info: Makefile $(SRC)
 	./build-coverage/test-pbio
 	lcov --capture --output-file $@ \
 		--directory build-coverage/lib/pbio/drv \
-		--directory build-coverage/lib/pbio/src
+		--directory build-coverage/lib/pbio/src \
+		--directory build-coverage/lib/pbio/sys
 
 coverage-html: build-coverage/coverage.info
 	$(Q)genhtml $^ --output-directory build-coverage/html
