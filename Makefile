@@ -15,9 +15,15 @@ help:
 
 .PHONY: doc
 
-all: movehub cityhub cplushub primehub nxt ev3dev-armel
+doc:
+	@$(MAKE) -C lib/pbio/doc
 
-clean-all: clean-movehub clean-cityhub clean-cplushub clean-primehub clean-nxt clean-ev3dev-armel
+clean-doc:
+	@$(MAKE) -C lib/pbio/doc clean
+
+all: movehub cityhub cplushub primehub nxt ev3dev-armel doc
+
+clean-all: clean-movehub clean-cityhub clean-cplushub clean-primehub clean-nxt clean-ev3dev-armel clean-doc
 
 ev3dev-host: mpy-cross
 	@$(MAKE) -C bricks/ev3dev CROSS_COMPILE=
