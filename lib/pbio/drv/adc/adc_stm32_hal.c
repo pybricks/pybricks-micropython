@@ -99,6 +99,9 @@ PROCESS_THREAD(pbdrv_adc_process, ev, data) {
 
     TIM_MasterConfigTypeDef tim_master_config;
     tim_master_config.MasterOutputTrigger = TIM_TRGO_UPDATE;
+    #ifdef STM32L4
+    tim_master_config.MasterOutputTrigger2 = TIM_TRGO2_RESET;
+    #endif
     tim_master_config.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
     HAL_TIMEx_MasterConfigSynchronization(&pbdrv_adc_htim, &tim_master_config);
 
