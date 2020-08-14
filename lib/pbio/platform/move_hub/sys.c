@@ -14,25 +14,18 @@
 #include "pbio/light.h"
 #include "pbio/motorpoll.h"
 
-#include "pbsys/sys.h"
+#include <pbsys/battery.h>
+#include <pbsys/sys.h>
 
 #include "stm32f070xb.h"
 
 typedef enum {
     LED_STATUS_BUTTON_PRESSED   = 1 << 0,
-    LED_STATUS_BATTERY_LOW      = 1 << 1,
 } led_status_flags_t;
 
 // Bootloader reads this address to know if firmware loader should run
 uint32_t bootloader_magic_addr __attribute__((section(".magic")));
 #define BOOTLOADER_MAGIC_VALUE  0xAAAAAAAA
-
-// period over which the battery voltage is averaged (in milliseconds)
-#define BATTERY_PERIOD_MS       2500
-
-#define BATTERY_OK_MV           6000    // 1.0V per cell
-#define BATTERY_LOW_MV          5400    // 0.9V per cell
-#define BATTERY_CRITICAL_MV     4800    // 0.8V per cell
 
 // ring buffer size for stdin data - must be power of 2!
 #define STDIN_BUF_SIZE 128
@@ -40,15 +33,9 @@ uint32_t bootloader_magic_addr __attribute__((section(".magic")));
 // Bitmask of status indicators
 static led_status_flags_t led_status_flags;
 
-// the previous timestamp from when _pbsys_poll() was called
-static clock_time_t prev_poll_time;
-
 // values for keeping track of how long button has been pressed
 static bool button_pressed;
 static clock_time_t button_press_start_time;
-
-// the battery voltage averaged over BATTERY_PERIOD_MS
-static uint16_t avg_battery_voltage;
 
 // user program stop function
 static pbsys_stop_callback_t user_stop_func;
@@ -130,11 +117,6 @@ void pbsys_power_off(void) {
 }
 
 static void init(void) {
-    uint16_t battery_voltage;
-
-    pbdrv_battery_get_voltage_now(&battery_voltage);
-    avg_battery_voltage = battery_voltage;
-
     _pbio_light_set_user_mode(false);
     pbdrv_led_dev_t *led;
     pbdrv_led_get_dev(0, &led);
@@ -175,30 +157,6 @@ static void update_button(clock_time_t now) {
     }
 }
 
-static void update_battery(clock_time_t now) {
-    uint32_t poll_interval;
-    uint16_t battery_voltage;
-
-    poll_interval = clock_to_msec(now - prev_poll_time);
-    prev_poll_time = now;
-
-    pbdrv_battery_get_voltage_now(&battery_voltage);
-
-    avg_battery_voltage = (avg_battery_voltage * (BATTERY_PERIOD_MS - poll_interval)
-        + battery_voltage * poll_interval) / BATTERY_PERIOD_MS;
-
-    if (avg_battery_voltage <= BATTERY_CRITICAL_MV) {
-        // don't want to damage rechargeable batteries
-        pbsys_power_off();
-    }
-
-    if (avg_battery_voltage <= BATTERY_LOW_MV) {
-        led_status_flags |= LED_STATUS_BATTERY_LOW;
-    } else if (avg_battery_voltage >= BATTERY_OK_MV) {
-        led_status_flags &= ~LED_STATUS_BATTERY_LOW;
-    }
-}
-
 static void handle_stdin_char(uint8_t c) {
     uint8_t new_head = (stdin_buf_head + 1) & (STDIN_BUF_SIZE - 1);
 
@@ -223,6 +181,7 @@ PROCESS_THREAD(pbsys_process, ev, data) {
     PROCESS_BEGIN();
 
     init();
+    pbsys_battery_init();
     etimer_set(&timer, clock_from_msec(50));
 
     while (true) {
@@ -231,7 +190,7 @@ PROCESS_THREAD(pbsys_process, ev, data) {
             clock_time_t now = clock_time();
             etimer_reset(&timer);
             update_button(now);
-            update_battery(now);
+            pbsys_battery_poll();
         } else if (ev == PBIO_EVENT_UART_RX) {
             pbio_event_uart_rx_data_t *rx = data;
             handle_stdin_char(rx->byte);

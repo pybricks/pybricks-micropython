@@ -197,6 +197,8 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/tacho.c \
 	src/trajectory_ext.c \
 	src/trajectory.c \
+	sys/battery.c \
+	sys/status.c \
 	)
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))

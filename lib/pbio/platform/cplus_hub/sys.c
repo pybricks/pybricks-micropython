@@ -13,7 +13,8 @@
 #include "pbio/light.h"
 #include "pbio/motorpoll.h"
 
-#include "pbsys/sys.h"
+#include <pbsys/battery.h>
+#include <pbsys/sys.h>
 
 #include "stm32l4xx.h"
 
@@ -179,6 +180,7 @@ PROCESS_THREAD(pbsys_process, ev, data) {
     PROCESS_BEGIN();
 
     init();
+    pbsys_battery_init();
     etimer_set(&timer, clock_from_msec(50));
 
     while (true) {
@@ -187,6 +189,7 @@ PROCESS_THREAD(pbsys_process, ev, data) {
             clock_time_t now = clock_time();
             etimer_reset(&timer);
             update_button(now);
+            pbsys_battery_poll();
         } else if (ev == PBIO_EVENT_UART_RX) {
             pbio_event_uart_rx_data_t *rx = data;
             handle_stdin_char(rx->byte);

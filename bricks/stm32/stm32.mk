@@ -338,6 +338,8 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/trajectory_ext.c \
 	src/trajectory.c \
 	src/uartdev.c \
+	sys/battery.c \
+	sys/status.c \
 	)
 
 # STM32 IMU Library
