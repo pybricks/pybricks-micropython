@@ -36,7 +36,7 @@ ev3dev-armel:
 clean-ev3dev-armel:
 	@if [ -d bricks/ev3dev/build-armel/ports ]; then \
 		@docker start pybricks-ev3dev_armel; \
-		docker exec --tty pybricks-ev3dev_armel make -C ../../micropython/mpy-cross clean; \
+		docker exec --tty pybricks-ev3dev_armel make -C ../../micropython/mpy-cross clean CROSS_COMPILE=; \
 		docker exec --tty pybricks-ev3dev_armel make clean; \
 	fi
 
