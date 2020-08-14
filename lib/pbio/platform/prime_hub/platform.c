@@ -591,7 +591,7 @@ void SystemInit(void) {
 
     HAL_RCC_ClockConfig(&clk_init, FLASH_LATENCY_5);
 
-    // dpgeorge: enable 8-byte stack alignment for IRQ handlers, in accord with EABI
+    // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
     SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 
     // enable clocks

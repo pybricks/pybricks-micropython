@@ -293,7 +293,7 @@ void SystemInit(void) {
     SCB->CPACR |= ((3UL << 10 * 2) | (3UL << 11 * 2));  /* set CP10 and CP11 Full Access */
     #endif
 
-    // dpgeorge: enable 8-byte stack alignment for IRQ handlers, in accord with EABI
+    // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
     SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 
     // enable all of the hardware modules we are using

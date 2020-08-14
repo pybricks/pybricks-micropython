@@ -247,7 +247,7 @@ void SystemInit(void) {
     // normally, the system clock would be setup here, but it is already
     // configured by the bootloader, so no need to do it again.
 
-    // dpgeorge: enable 8-byte stack alignment for IRQ handlers, in accord with EABI
+    // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
     SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 
     // Enable all of the hardware modules we are using
