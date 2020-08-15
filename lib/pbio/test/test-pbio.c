@@ -14,15 +14,15 @@
 
 #define PBIO_TEST_TIMEOUT 10000 // milliseconds
 
-// Use this macro to define tests that _don't_ require a Contiki event loop
+// Use these macros to define tests that _don't_ require a Contiki event loop
+#define PBIO_TEST_FUNC(name) void name(void *env)
 #define PBIO_TEST(name) \
     { #name, name, TT_FORK, NULL, NULL }
 
-// Use this macro to define tests that _do_ require a Contiki event loop
+// Use these macros to define tests that _do_ require a Contiki event loop
+#define PBIO_TP_THREAD_TEST_FUNC(name) PT_THREAD(name(struct pt *pt))
 #define PBIO_PT_THREAD_TEST(name) \
     { #name, pbio_test_run_thread, TT_FORK, &pbio_test_setup, name }
-
-#define PBIO_TEST_FUNC(name) void name(void *env)
 
 
 static void pbio_test_run_thread(void *env) {
@@ -99,10 +99,10 @@ static struct testcase_t pbio_math_tests[] = {
     END_OF_TESTCASES
 };
 
-PBIO_TEST_FUNC(test_boost_color_distance_sensor);
-PBIO_TEST_FUNC(test_boost_interactive_motor);
-PBIO_TEST_FUNC(test_technic_large_motor);
-PBIO_TEST_FUNC(test_technic_xl_motor);
+PBIO_TP_THREAD_TEST_FUNC(test_boost_color_distance_sensor);
+PBIO_TP_THREAD_TEST_FUNC(test_boost_interactive_motor);
+PBIO_TP_THREAD_TEST_FUNC(test_technic_large_motor);
+PBIO_TP_THREAD_TEST_FUNC(test_technic_xl_motor);
 
 static struct testcase_t pbio_uartdev_tests[] = {
     PBIO_PT_THREAD_TEST(test_boost_color_distance_sensor),
