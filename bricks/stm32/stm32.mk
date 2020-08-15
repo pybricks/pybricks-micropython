@@ -303,6 +303,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/battery/battery_adc.c \
 	drv/button/button_adc.c \
 	drv/button/button_gpio.c \
+	drv/clock/clock_stm32.c \
 	drv/core.c \
 	drv/counter/counter_core.c \
 	drv/counter/counter_stm32f0_gpio_quad_enc.c \
@@ -321,7 +322,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/uart/uart_stm32f4_ll_irq.c \
 	drv/uart/uart_stm32l4_ll_dma.c \
 	drv/usb/stm32_usb_serial.c \
-	platform/$(PBIO_PLATFORM)/clock.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	platform/$(PBIO_PLATFORM)/sys.c \
 	src/color/conversion.c \

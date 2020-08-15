@@ -247,6 +247,9 @@ void SystemInit(void) {
     // normally, the system clock would be setup here, but it is already
     // configured by the bootloader, so no need to do it again.
 
+    // SysTick set for 1ms ticks
+    SysTick_Config(PBDRV_CONFIG_SYS_CLOCK_RATE / 1000);
+
     // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
     SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 

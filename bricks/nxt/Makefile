@@ -177,11 +177,11 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/$(PBIO_PLATFORM)/motor.c \
 	drv/battery/battery_nxt.c \
 	drv/button/button_nxt.c \
+	drv/clock/clock_nxt.c \
 	drv/core.c \
 	drv/counter/counter_core.c \
 	drv/counter/counter_nxt.c \
 	drv/reset/reset_nxt.c \
-	platform/$(PBIO_PLATFORM)/clock.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	platform/$(PBIO_PLATFORM)/sys.c \
 	src/color/conversion.c \

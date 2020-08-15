@@ -29,6 +29,9 @@
 #define PBDRV_CONFIG_KEYPAD                         (1)
 #define PBDRV_CONFIG_BUTTON_ADC                     (1)
 
+#define PBDRV_CONFIG_CLOCK                          (1)
+#define PBDRV_CONFIG_CLOCK_STM32                    (1)
+
 #define PBDRV_CONFIG_COUNTER                        (1)
 #define PBDRV_CONFIG_COUNTER_NUM_DEV                (6)
 

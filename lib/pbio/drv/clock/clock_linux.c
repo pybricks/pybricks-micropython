@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
+#include <pbdrv/config.h>
+
+#if PBDRV_CONFIG_CLOCK_LINUX
+
+// TODO: replace this with test/clock.c - this probably requires reworking ev3dev-stretch background thread
+
 #include <time.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -26,3 +32,5 @@ void clock_delay_usec(uint16_t duration) {
     // FIXME: is there a way to busy-wait on Linux? maybe call clock_gettime() in a loop?
     usleep(duration);
 }
+
+#endif // PBDRV_CONFIG_CLOCK_LINUX

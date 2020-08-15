@@ -25,6 +25,9 @@
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)
 #define PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON         (1)
 
+#define PBDRV_CONFIG_CLOCK                          (1)
+#define PBDRV_CONFIG_CLOCK_STM32                    (1)
+
 #define PBDRV_CONFIG_COUNTER                        (1)
 #define PBDRV_CONFIG_COUNTER_NUM_DEV                (4)
 #define PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC  (1)

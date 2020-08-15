@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2013, 2014 Damien P. George
-
-#include <contiki.h>
+// Copyright (c) 2018-2020 The Pybricks Authors
 
 #include <pbdrv/config.h>
 
-#include "stm32l431xx.h"
+#if PBDRV_CONFIG_CLOCK_STM32
+
+#include <contiki.h>
+
+#include STM32_H
 
 #if CLOCK_CONF_SECOND != 1000
 #error Clock must be set to 1 msec ticks
@@ -14,7 +17,7 @@
 volatile clock_time_t clock_time_ticks;
 
 void clock_init(void) {
-    // SysTick is configured in platform.c
+    // STM32 does platform-specific clock init early in SystemInit()
 }
 
 clock_time_t clock_time() {
@@ -107,3 +110,5 @@ void HAL_Delay(uint32_t Delay) {
         }
     }
 }
+
+#endif // PBDRV_CONFIG_CLOCK_STM32

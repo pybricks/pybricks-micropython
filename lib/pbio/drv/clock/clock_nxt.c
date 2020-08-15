@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2013, 2014 Damien P. George
+// Copyright (c) 2019-2020 The Pybricks Authors
+
+#include <pbdrv/config.h>
+
+#if PBDRV_CONFIG_CLOCK_NXT
 
 #include <contiki.h>
 
 #include <nxt/at91sam7.h>
 #include <nxt/systick.h>
-
-#include <pbdrv/config.h>
 
 #if CLOCK_CONF_SECOND != 1000
 #error Clock must be set to 1 msec ticks
@@ -42,3 +44,5 @@ void clock_delay_usec(uint16_t t) {
     #error Must be compiled in thumb mode
     #endif
 }
+
+#endif // PBDRV_CONFIG_CLOCK_NXT
