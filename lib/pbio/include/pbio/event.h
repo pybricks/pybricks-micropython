@@ -14,6 +14,10 @@
 typedef enum {
     PBIO_EVENT_UART_RX,         /**< Character was received on a UART port. *data* is ::pbio_event_uart_rx_data_t. */
     PBIO_EVENT_COM_CMD,         /**< Command received from Pybricks BLE service */
+    /** System status indicator was set. Data is pbsys_status_t. */
+    PBIO_EVENT_STATUS_SET,
+    /** System status indicator was cleared. Data is pbsys_status_t. */
+    PBIO_EVENT_STATUS_CLEARED,
 } pbio_event_t;
 
 /**

@@ -114,10 +114,10 @@ static struct testcase_t pbio_uartdev_tests[] = {
 
 // PBSYS
 
-PBIO_TEST_FUNC(test_status);
+PBIO_TP_THREAD_TEST_FUNC(test_status);
 
 static struct testcase_t pbsys_status_tests[] = {
-    PBIO_TEST(test_status),
+    PBIO_PT_THREAD_TEST(test_status),
     END_OF_TESTCASES
 };
 

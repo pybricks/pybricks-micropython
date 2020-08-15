@@ -8,6 +8,7 @@
 
 #include <contiki.h>
 
+#include <pbio/event.h>
 #include <pbsys/status.h>
 
 static struct {
@@ -20,7 +21,9 @@ static struct {
 _Static_assert(NUM_PBSYS_STATUS <= sizeof(pbsys_status.flags) * 8,
     "need to increase size of pbsys_status.flags to fit all pbsys_status_t");
 
-static void pbsys_status_update_flag(pbsys_status_t status, uint32_t new_flags) {
+static void pbsys_status_update_flag(pbsys_status_t status, bool set) {
+    uint32_t new_flags = set ? pbsys_status.flags | (1 << status) : pbsys_status.flags & ~(1 << status);
+
     if (pbsys_status.flags == new_flags) {
         // If flags have not changed, there is nothing to do.
         return;
@@ -28,6 +31,9 @@ static void pbsys_status_update_flag(pbsys_status_t status, uint32_t new_flags) 
 
     pbsys_status.flags = new_flags;
     pbsys_status.changed_time[status] = clock_time();
+    // REVISIT: this can drop events if event queue is full
+    process_post(PROCESS_BROADCAST, set ? PBIO_EVENT_STATUS_SET : PBIO_EVENT_STATUS_CLEARED,
+        (process_data_t)status);
 }
 
 /**
@@ -36,7 +42,7 @@ static void pbsys_status_update_flag(pbsys_status_t status, uint32_t new_flags) 
  */
 void pbsys_status_set(pbsys_status_t status) {
     assert(status < NUM_PBSYS_STATUS);
-    pbsys_status_update_flag(status, pbsys_status.flags | (1 << status));
+    pbsys_status_update_flag(status, true);
 }
 
 /**
@@ -45,7 +51,7 @@ void pbsys_status_set(pbsys_status_t status) {
  */
 void pbsys_status_clear(pbsys_status_t status) {
     assert(status < NUM_PBSYS_STATUS);
-    pbsys_status_update_flag(status, pbsys_status.flags & ~(1 << status));
+    pbsys_status_update_flag(status, false);
 }
 
 /**
