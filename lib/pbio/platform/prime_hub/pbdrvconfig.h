@@ -26,7 +26,6 @@
 #define PBDRV_CONFIG_BATTERY_ADC_CURRENT_SCALED_MAX 4175
 
 #define PBDRV_CONFIG_BUTTON                         (1)
-#define PBDRV_CONFIG_KEYPAD                         (1)
 #define PBDRV_CONFIG_BUTTON_ADC                     (1)
 
 #define PBDRV_CONFIG_CLOCK                          (1)
