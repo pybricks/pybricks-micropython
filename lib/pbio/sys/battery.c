@@ -30,6 +30,12 @@ static clock_time_t prev_poll_time;
  */
 void pbsys_battery_init() {
     pbdrv_battery_get_voltage_now(&avg_battery_voltage);
+    // This is mainly for Control+ hub. It seems that the first battery voltage
+    // read is always low and causes the hub to shut down because of low battery
+    // voltage even though the batter isn't that low.
+    if (avg_battery_voltage < BATTERY_CRITICAL_MV) {
+        avg_battery_voltage = BATTERY_CRITICAL_MV;
+    }
     prev_poll_time = clock_time();
 }
 
