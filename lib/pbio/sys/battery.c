@@ -10,7 +10,6 @@
 #include <contiki.h>
 
 #include <pbdrv/battery.h>
-#include <pbdrv/reset.h>
 
 #include <pbsys/status.h>
 #include <pbsys/sys.h>
@@ -59,16 +58,15 @@ void pbsys_battery_poll() {
     avg_battery_voltage = (avg_battery_voltage * (BATTERY_PERIOD_MS - poll_interval)
         + battery_voltage * poll_interval) / BATTERY_PERIOD_MS;
 
-    // Shut down on low voltage so we don't damage rechargeable batteries
     if (avg_battery_voltage <= BATTERY_CRITICAL_MV) {
-        // TODO: set PBSYS_STATUS_POWER_DOWN_PENDING and delay power off to give
-        // some warning that power down is imminent.
-        pbdrv_reset(PBDRV_RESET_ACTION_POWER_OFF);
+        pbsys_status_set(PBSYS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN);
+    } else if (avg_battery_voltage >= BATTERY_LOW_MV) {
+        pbsys_status_clear(PBSYS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN);
     }
 
     if (avg_battery_voltage <= BATTERY_LOW_MV) {
-        pbsys_status_set(PBSYS_STATUS_BATTERY_LOW_VOLTAGE);
+        pbsys_status_set(PBSYS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
     } else if (avg_battery_voltage >= BATTERY_OK_MV) {
-        pbsys_status_clear(PBSYS_STATUS_BATTERY_LOW_VOLTAGE);
+        pbsys_status_clear(PBSYS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
     }
 }

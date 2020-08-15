@@ -341,6 +341,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/uartdev.c \
 	sys/battery.c \
 	sys/status.c \
+	sys/supervisor.c \
 	)
 
 # STM32 IMU Library

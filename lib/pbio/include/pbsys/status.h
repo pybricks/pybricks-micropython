@@ -17,7 +17,9 @@
  */
 typedef enum {
     /** Battery voltage is low. */
-    PBSYS_STATUS_BATTERY_LOW_VOLTAGE,
+    PBSYS_STATUS_BATTERY_LOW_VOLTAGE_WARNING,
+    /** Battery voltage is critically low. */
+    PBSYS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN,
     /** Battery current is too high. */
     PBSYS_STATUS_BATTERY_HIGH_CURRENT,
     /** Bluetooth Low Energy is advertising/discoverable. */
@@ -26,10 +28,10 @@ typedef enum {
     PBSYS_STATUS_BLE_LOW_SIGNAL,
     /** I/O port is busy syncing up with UART device. */
     PBSYS_STATUS_IO_PORT_BUSY,
+    /** Power button is currently pressed. */
+    PBSYS_STATUS_POWER_BUTTON_PRESSED,
     /** User program is currently running. */
     PBSYS_STATUS_USER_PROGRAM_RUNNING,
-    /** System power will turn off soon. */
-    PBSYS_STATUS_POWER_DOWN_PENDING,
     /** Total number of indications. */
     NUM_PBSYS_STATUS,
 } pbsys_status_t;
