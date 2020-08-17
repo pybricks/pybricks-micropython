@@ -19,6 +19,12 @@ mp_obj_t common_ColorLight_internal_obj_make_new();
 // pybricks._common.LightArray()
 mp_obj_t common_LightArray_obj_make_new(pb_device_t *pbdev, uint8_t light_mode, uint8_t number_of_lights);
 
+#ifdef PYBRICKS_PY_COMMON_LIGHTGRID
+// pybricks._common.LightGrid()
+const uint8_t pb_font_5x5[95][5];
+mp_obj_t common_LightGrid_obj_make_new(uint8_t size);
+#endif
+
 // pybricks._common.KeyPad()
 const mp_obj_module_t pb_module_buttons;
 
