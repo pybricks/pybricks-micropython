@@ -64,9 +64,14 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightGrid_char_obj, 1, common_LightGrid
 
 // pybricks._common.LightGrid.on
 STATIC mp_obj_t common_LightGrid_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    common_LightGrid_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        common_LightGrid_obj_t, self,
+        PB_ARG_DEFAULT_INT(brightness, 100));
 
-    set_light_grid_full(self->pwm, pb_font_5x5['H' - 32]);
+    mp_int_t b = pb_obj_get_pct(brightness);
+    for (uint8_t i = 0; i < 25; i++) {
+        set_pixel_brightness(self->pwm, i / 5, i % 5, b);
+    }
 
     return mp_const_none;
 }
