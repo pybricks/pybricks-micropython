@@ -137,10 +137,10 @@ typedef struct {
 PROCESS(pwm_tlc5955_stm32, "pwm_tlc5955_stm32");
 static pbdrv_pwm_tlc5955_stm32_priv_t dev_priv[PBDRV_CONFIG_PWM_TLC5955_STM32_NUM_DEV];
 
-// Control latch data setting dot correction to 100%, max current to 19.1 mA,
+// Control latch data setting dot correction to 100%, max current to 3.2 mA,
 // global brightness to 100%, auto repeat enabled, display timing reset disabled,
 // auto refresh disabled, ES-PWM mode enabled, LSD detection voltage 90%.
-static const TLC5955_CONTROL_DATA(control_latch_3mA, 127, TLC5955_MC_19_1, 127, 1, 0, 0, 1, 1);
+static const TLC5955_CONTROL_DATA(control_latch_3mA, 127, TLC5955_MC_3_2, 127, 1, 0, 0, 1, 1);
 
 static uint8_t grayscale_latch[PBDRV_CONFIG_PWM_TLC5955_STM32_NUM_DEV][TLC5955_DATA_SIZE];
 
