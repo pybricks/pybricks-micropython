@@ -35,6 +35,11 @@ static void set_light_grid_full(pbdrv_pwm_dev_t *pwm, const uint8_t *image) {
     }
 }
 
+// FIXME: pbio will have a light grid interface. Use that when ready.
+static void set_pixel_brightness(pbdrv_pwm_dev_t *pwm, uint8_t row, uint8_t col, int32_t brightness) {
+    pb_assert(pwm->funcs->set_duty(pwm, channels[row][col], brightness * brightness * UINT16_MAX / 10000));
+}
+
 // pybricks._common.LightGrid class object
 typedef struct _common_LightGrid_obj_t {
     mp_obj_base_t base;
@@ -47,7 +52,7 @@ STATIC mp_obj_t common_LightGrid_char(size_t n_args, const mp_obj_t *pos_args, m
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         common_LightGrid_obj_t, self,
         PB_ARG_REQUIRED(character));
-    
+
     GET_STR_DATA_LEN(character, str, len);
     if (len != 1 || str[0] < 32 || str[0] > 126) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
@@ -105,7 +110,7 @@ STATIC mp_obj_t common_LightGrid_number(size_t n_args, const mp_obj_t *pos_args,
     }
 
     // Compose number as two digits
-    uint8_t composite[5];    
+    uint8_t composite[5];
     for (uint8_t i = 0; i < 5; i++) {
         composite[i] = pb_digits_5x2[value / 10][i] << 3 | pb_digits_5x2[value % 10][i];
     }
@@ -123,12 +128,39 @@ STATIC mp_obj_t common_LightGrid_number(size_t n_args, const mp_obj_t *pos_args,
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightGrid_number_obj, 1, common_LightGrid_number);
 
+// pybricks._common.LightGrid.pixel
+STATIC mp_obj_t common_LightGrid_pixel(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        common_LightGrid_obj_t, self,
+        PB_ARG_REQUIRED(row),
+        PB_ARG_REQUIRED(column),
+        PB_ARG_DEFAULT_INT(brightness, 100));
+
+    // Get the position
+    mp_int_t r = mp_obj_get_int(row);
+    mp_int_t c = mp_obj_get_int(column);
+    if (r < 0 || r > self->size || c < 0 || c > self->size) {
+        // Print outsize of canvas, so return
+        return mp_const_none;
+    }
+
+    // Get the brightness
+    mp_int_t b = pb_obj_get_pct(brightness);
+
+    // Set pixel
+    set_pixel_brightness(self->pwm, r, c, b);
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightGrid_pixel_obj, 1, common_LightGrid_pixel);
+
 // dir(pybricks.builtins.LightGrid)
 STATIC const mp_rom_map_elem_t common_LightGrid_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_char),   MP_ROM_PTR(&common_LightGrid_char_obj)   },
     { MP_ROM_QSTR(MP_QSTR_on),     MP_ROM_PTR(&common_LightGrid_on_obj)     },
     { MP_ROM_QSTR(MP_QSTR_off),    MP_ROM_PTR(&common_LightGrid_off_obj)    },
     { MP_ROM_QSTR(MP_QSTR_number), MP_ROM_PTR(&common_LightGrid_number_obj) },
+    { MP_ROM_QSTR(MP_QSTR_pixel),  MP_ROM_PTR(&common_LightGrid_pixel_obj)  },
 };
 STATIC MP_DEFINE_CONST_DICT(common_LightGrid_locals_dict, common_LightGrid_locals_dict_table);
 
