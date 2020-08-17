@@ -29,7 +29,7 @@ static uint8_t channels[5][5] = {
 static void set_light_grid_full(pbdrv_pwm_dev_t *pwm, const uint8_t *image) {
     for (uint8_t i = 0; i < 5; i++) {
         for (uint8_t j = 0; j < 5; j++) {
-            pwm->funcs->set_duty(pwm, channels[i][j], image[i] & (1 << (4 - j)) ? UINT16_MAX: 0);
+            pb_assert(pwm->funcs->set_duty(pwm, channels[i][j], image[i] & (1 << (4 - j)) ? UINT16_MAX: 0));
         }
     }
 }
@@ -61,10 +61,57 @@ STATIC mp_obj_t common_LightGrid_off(mp_obj_t self_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_LightGrid_off_obj, common_LightGrid_off);
 
+// pybricks._common.LightGrid.number
+STATIC mp_obj_t common_LightGrid_number(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        common_LightGrid_obj_t, self,
+        PB_ARG_REQUIRED(number));
+
+    // Get the number
+    mp_int_t value = pb_obj_get_int(number);
+
+    // > 99 gets displayed as >
+    if (value > 99) {
+        set_light_grid_full(self->pwm, pb_font_5x5['>' - 32]);
+        return mp_const_none;
+    }
+
+    // < -99 gets displayed as <
+    if (value < -99) {
+        set_light_grid_full(self->pwm, pb_font_5x5['<' - 32]);
+        return mp_const_none;
+    }
+
+    // Remember sign but make value positive
+    bool negative = value < 0;
+    if (negative) {
+        value = -value;
+    }
+
+    // Compose number as two digits
+    uint8_t composite[5];    
+    for (uint8_t i = 0; i < 5; i++) {
+        composite[i] = pb_digits_5x2[value / 10][i] << 3 | pb_digits_5x2[value % 10][i];
+    }
+
+    // Display one dot to indicate negative
+    // FIXME: Display faintly to distinguish from digits
+    if (negative) {
+        composite[3] |= 0b00100;
+    }
+
+    // Display the result
+    set_light_grid_full(self->pwm, composite);
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightGrid_number_obj, 1, common_LightGrid_number);
+
 // dir(pybricks.builtins.LightGrid)
 STATIC const mp_rom_map_elem_t common_LightGrid_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_on), MP_ROM_PTR(&common_LightGrid_on_obj) },
-    { MP_ROM_QSTR(MP_QSTR_off), MP_ROM_PTR(&common_LightGrid_off_obj) },
+    { MP_ROM_QSTR(MP_QSTR_on),     MP_ROM_PTR(&common_LightGrid_on_obj)     },
+    { MP_ROM_QSTR(MP_QSTR_off),    MP_ROM_PTR(&common_LightGrid_off_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_number), MP_ROM_PTR(&common_LightGrid_number_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(common_LightGrid_locals_dict, common_LightGrid_locals_dict_table);
 
