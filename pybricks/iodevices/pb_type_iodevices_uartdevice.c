@@ -35,27 +35,6 @@ typedef struct _pbio_serial_t {
 
 pbio_serial_t serials[PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT - PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT + 1];
 
-pbio_error_t pbio_serial_get(pbio_serial_t **_ser, pbio_port_t port, uint32_t baudrate, int32_t timeout) {
-
-    if (port < PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT || port > PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
-
-    pbio_serial_t *ser = &serials[port - PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT];
-
-    pbio_error_t err = pb_serial_get(&ser->dev, port, baudrate);
-
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    ser->timeout = timeout >= 0 ? timeout : -1;
-
-    *_ser = ser;
-
-    return PBIO_SUCCESS;
-}
-
 pbio_error_t pbio_serial_read(pbio_serial_t *ser, uint8_t *buf, size_t count) {
 
     pbio_error_t err;
@@ -116,13 +95,10 @@ STATIC mp_obj_t iodevices_UARTDevice_make_new(const mp_obj_type_t *otype, size_t
     // Init UART port
     self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_CUSTOM_UART);
 
-    // Get and init serial
-    pb_assert(pbio_serial_get(
-        &self->serial,
-        port_num,
-        pb_obj_get_int(baudrate),
-        timeout == mp_const_none ? -1 : pb_obj_get_int(timeout)
-        ));
+    // Initialize serial
+    self->serial = &serials[port_num - PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT];
+    self->serial->timeout = timeout == mp_const_none ? -1 : pb_obj_get_int(timeout);
+    pb_assert(pb_serial_get(&self->serial->dev, port_num, pb_obj_get_int(baudrate)));
     pb_assert(pb_serial_clear(self->serial->dev));
 
     return MP_OBJ_FROM_PTR(self);
