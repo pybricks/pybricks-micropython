@@ -22,8 +22,6 @@
 
 #define UART_MAX_LEN (32 * 1024)
 
-#include <contiki.h>
-
 // pybricks.iodevices.UARTDevice class object
 typedef struct _iodevices_UARTDevice_obj_t {
     mp_obj_base_t base;
@@ -42,7 +40,7 @@ pbio_error_t serial_read(iodevices_UARTDevice_obj_t *self, uint8_t *buf, size_t 
     if (!self->busy) {
         // Reset state variables if we are yet to start
         self->busy = true;
-        self->time_start = clock_usecs() / 1000;
+        self->time_start = mp_hal_ticks_ms();
         self->remaining = count;
     }
 
@@ -64,7 +62,7 @@ pbio_error_t serial_read(iodevices_UARTDevice_obj_t *self, uint8_t *buf, size_t 
     }
 
     // If we have timed out, let the user know
-    if (self->timeout >= 0 && clock_usecs() / 1000 - self->time_start > (unsigned long)self->timeout) {
+    if (self->timeout >= 0 && mp_hal_ticks_ms() - self->time_start > (unsigned long)self->timeout) {
         self->busy = false;
         return PBIO_ERROR_TIMEDOUT;
     }
