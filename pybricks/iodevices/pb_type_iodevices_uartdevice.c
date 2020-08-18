@@ -56,14 +56,6 @@ pbio_error_t pbio_serial_get(pbio_serial_t **_ser, pbio_port_t port, uint32_t ba
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_serial_write(pbio_serial_t *ser, const void *buf, size_t count) {
-    return pb_serial_write(ser->dev, buf, count);
-}
-
-pbio_error_t pbio_serial_in_waiting(pbio_serial_t *ser, size_t *waiting) {
-    return pb_serial_in_waiting(ser->dev, waiting);
-}
-
 static pbio_error_t pbio_serial_read_start(pbio_serial_t *ser, size_t count) {
     // Already started, so return
     if (ser->busy) {
@@ -120,10 +112,6 @@ pbio_error_t pbio_serial_read(pbio_serial_t *ser, uint8_t *buf, size_t count) {
     return PBIO_ERROR_AGAIN;
 }
 
-pbio_error_t pbio_serial_clear(pbio_serial_t *ser) {
-    return pb_serial_clear(ser->dev);
-}
-
 // pybricks.iodevices.UARTDevice class object
 typedef struct _iodevices_UARTDevice_obj_t {
     mp_obj_base_t base;
@@ -153,7 +141,7 @@ STATIC mp_obj_t iodevices_UARTDevice_make_new(const mp_obj_type_t *otype, size_t
         pb_obj_get_int(baudrate),
         timeout == mp_const_none ? -1 : pb_obj_get_int(timeout)
         ));
-    pb_assert(pbio_serial_clear(self->serial));
+    pb_assert(pb_serial_clear(self->serial->dev));
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -174,7 +162,7 @@ STATIC mp_obj_t iodevices_UARTDevice_write(size_t n_args, const mp_obj_t *pos_ar
     GET_STR_DATA_LEN(data, bytes, len);
 
     // Write data to serial
-    pb_assert(pbio_serial_write(self->serial, bytes, len));
+    pb_assert(pb_serial_write(self->serial->dev, bytes, len));
 
     return mp_const_none;
 }
@@ -184,7 +172,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_UARTDevice_write_obj, 1, iodevices_U
 STATIC mp_obj_t iodevices_UARTDevice_waiting(mp_obj_t self_in) {
     iodevices_UARTDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
     size_t waiting;
-    pb_assert(pbio_serial_in_waiting(self->serial, &waiting));
+    pb_assert(pb_serial_in_waiting(self->serial->dev, &waiting));
     return mp_obj_new_int(waiting);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_UARTDevice_waiting_obj, iodevices_UARTDevice_waiting);
@@ -242,7 +230,7 @@ STATIC mp_obj_t iodevices_UARTDevice_read_all(mp_obj_t self_in) {
     iodevices_UARTDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     size_t len;
-    pb_assert(pbio_serial_in_waiting(self->serial, &len));
+    pb_assert(pb_serial_in_waiting(self->serial->dev, &len));
 
     return iodevices_UARTDevice_read_internal(self, len);
 }
@@ -251,7 +239,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_UARTDevice_read_all_obj, iodevices_UA
 // pybricks.iodevices.UARTDevice.clear
 STATIC mp_obj_t iodevices_UARTDevice_clear(mp_obj_t self_in) {
     iodevices_UARTDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_assert(pbio_serial_clear(self->serial));
+    pb_assert(pb_serial_clear(self->serial->dev));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(iodevices_UARTDevice_clear_obj, iodevices_UARTDevice_clear);
