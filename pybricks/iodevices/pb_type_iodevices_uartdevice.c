@@ -56,43 +56,23 @@ pbio_error_t pbio_serial_get(pbio_serial_t **_ser, pbio_port_t port, uint32_t ba
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t pbio_serial_read_start(pbio_serial_t *ser, size_t count) {
-    // Already started, so return
-    if (ser->busy) {
-        return PBIO_SUCCESS;
-    }
-
-    // Reset state variables
-    ser->busy = true;
-    ser->time_start = clock_usecs() / 1000;
-    ser->remaining = count;
-
-    return PBIO_SUCCESS;
-}
-
-static pbio_error_t pbio_serial_read_stop(pbio_serial_t *ser, pbio_error_t err) {
-    // Return to default state
-    ser->busy = false;
-
-    // Return the error that was raised on stopping
-    return err;
-}
-
 pbio_error_t pbio_serial_read(pbio_serial_t *ser, uint8_t *buf, size_t count) {
 
     pbio_error_t err;
 
-    // If this is called for the first time, init:
-    err = pbio_serial_read_start(ser, count);
-    if (err != PBIO_SUCCESS) {
-        return pbio_serial_read_stop(ser, err);
+    if (!ser->busy) {
+        // Reset state variables if we are yet to start
+        ser->busy = true;
+        ser->time_start = clock_usecs() / 1000;
+        ser->remaining = count;
     }
 
     // Read and keep track of how much was read
     size_t read_now;
     err = pb_serial_read(ser->dev, &buf[count - ser->remaining], count, &read_now);
     if (err != PBIO_SUCCESS) {
-        return pbio_serial_read_stop(ser, err);
+        ser->busy = false;
+        return err;
     }
 
     // Decrement remaining count
@@ -100,12 +80,14 @@ pbio_error_t pbio_serial_read(pbio_serial_t *ser, uint8_t *buf, size_t count) {
 
     // If there is nothing remaining, we are done
     if (ser->remaining == 0) {
-        return pbio_serial_read_stop(ser, PBIO_SUCCESS);
+        ser->busy = false;
+        return PBIO_SUCCESS;
     }
 
     // If we have timed out, let the user know
     if (ser->timeout >= 0 && clock_usecs() / 1000 - ser->time_start > (unsigned long)ser->timeout) {
-        return pbio_serial_read_stop(ser, PBIO_ERROR_TIMEDOUT);
+        ser->busy = false;
+        return PBIO_ERROR_TIMEDOUT;
     }
 
     // If we are here, we need to call this again
