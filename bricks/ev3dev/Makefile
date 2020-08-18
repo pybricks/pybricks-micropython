@@ -316,7 +316,6 @@ PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 	pbio/src/main.c \
 	pbio/src/math.c \
 	pbio/src/motorpoll.c \
-	pbio/src/serial.c \
 	pbio/src/servo.c \
 	pbio/src/sound.c \
 	pbio/src/tacho.c \
