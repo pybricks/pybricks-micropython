@@ -13,7 +13,7 @@
 #include <pbio/error.h>
 #include <pbio/util.h>
 
-#include <pbdrv/serial.h>
+#include <pybricks/util_pb/pb_serial.h>
 
 static const char *const TTY_PATH[] = {
     "/dev/tty_ev3-ports:in1",
@@ -22,14 +22,14 @@ static const char *const TTY_PATH[] = {
     "/dev/tty_ev3-ports:in4",
 };
 
-struct _pbdrv_serial_t {
+struct _pb_serial_t {
     int file;
     int timeout;
 };
 
-pbdrv_serial_t pbdrv_serials[PBIO_ARRAY_SIZE(TTY_PATH)];
+pb_serial_t pb_serials[PBIO_ARRAY_SIZE(TTY_PATH)];
 
-static pbio_error_t pbdrv_serial_open(pbdrv_serial_t *ser, const char *path) {
+static pbio_error_t pb_serial_open(pb_serial_t *ser, const char *path) {
 
     ser->file = open(path, O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (ser->file == -1) {
@@ -39,7 +39,7 @@ static pbio_error_t pbdrv_serial_open(pbdrv_serial_t *ser, const char *path) {
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t pbdrv_serial_config(pbdrv_serial_t *ser, int baudrate) {
+static pbio_error_t pb_serial_config(pb_serial_t *ser, int baudrate) {
 
     // Convert to termios baudrate
     speed_t speed;
@@ -138,7 +138,7 @@ static pbio_error_t pbdrv_serial_config(pbdrv_serial_t *ser, int baudrate) {
 }
 
 
-pbio_error_t pbdrv_serial_get(pbdrv_serial_t **_ser, pbio_port_t port, int baudrate) {
+pbio_error_t pb_serial_get(pb_serial_t **_ser, pbio_port_t port, int baudrate) {
 
     if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
         return PBIO_ERROR_INVALID_PORT;
@@ -146,16 +146,16 @@ pbio_error_t pbdrv_serial_get(pbdrv_serial_t **_ser, pbio_port_t port, int baudr
 
     // Get device pointer
     pbio_error_t err;
-    pbdrv_serial_t *ser = &pbdrv_serials[port - PBIO_PORT_1];
+    pb_serial_t *ser = &pb_serials[port - PBIO_PORT_1];
 
-    // Open pbdrv_serial port
-    err = pbdrv_serial_open(ser, TTY_PATH[port - PBIO_PORT_1]);
+    // Open pb_serial port
+    err = pb_serial_open(ser, TTY_PATH[port - PBIO_PORT_1]);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // Config pbdrv_serial port
-    err = pbdrv_serial_config(ser, baudrate);
+    // Config pb_serial port
+    err = pb_serial_config(ser, baudrate);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -166,21 +166,21 @@ pbio_error_t pbdrv_serial_get(pbdrv_serial_t **_ser, pbio_port_t port, int baudr
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_serial_write(pbdrv_serial_t *ser, const void *buf, size_t count) {
+pbio_error_t pb_serial_write(pb_serial_t *ser, const void *buf, size_t count) {
     if (write(ser->file, buf, count) != (int)count) {
         return PBIO_ERROR_IO;
     }
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_serial_in_waiting(pbdrv_serial_t *ser, size_t *waiting) {
+pbio_error_t pb_serial_in_waiting(pb_serial_t *ser, size_t *waiting) {
     if (ioctl(ser->file, FIONREAD, waiting) == -1) {
         return PBIO_ERROR_IO;
     }
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_serial_read(pbdrv_serial_t *ser, uint8_t *buf, size_t count, size_t *received) {
+pbio_error_t pb_serial_read(pb_serial_t *ser, uint8_t *buf, size_t count, size_t *received) {
     int ret = read(ser->file, buf, count);
     if (ret < 0) {
         if (errno == EAGAIN) {
@@ -194,7 +194,7 @@ pbio_error_t pbdrv_serial_read(pbdrv_serial_t *ser, uint8_t *buf, size_t count, 
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_serial_clear(pbdrv_serial_t *ser) {
+pbio_error_t pb_serial_clear(pb_serial_t *ser) {
     if (tcflush(ser->file, TCIOFLUSH) != 0) {
         return PBIO_ERROR_IO;
     }

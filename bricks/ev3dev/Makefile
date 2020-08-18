@@ -279,6 +279,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	util_pb/pb_color_map.c \
 	util_pb/pb_device_ev3dev.c \
 	util_pb/pb_error.c \
+	util_pb/pb_serial_ev3dev.c \
 	)
 
 PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
@@ -301,7 +302,6 @@ PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 	pbio/drv/counter/counter_core.c \
 	pbio/drv/counter/counter_ev3dev_stretch_iio.c \
 	pbio/drv/ev3dev_stretch/motor.c \
-	pbio/drv/ev3dev_stretch/serial.c \
 	pbio/drv/ioport/ioport_ev3dev_stretch.c \
 	pbio/drv/led/led_core.c \
 	pbio/drv/led/led_ev3dev.c \
