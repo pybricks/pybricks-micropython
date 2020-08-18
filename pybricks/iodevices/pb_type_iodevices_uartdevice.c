@@ -25,7 +25,6 @@
 // pybricks.iodevices.UARTDevice class object
 typedef struct _iodevices_UARTDevice_obj_t {
     mp_obj_base_t base;
-    pb_device_t *pbdev;
     pb_serial_t *dev;
     int32_t timeout;
     bool busy;
@@ -84,7 +83,7 @@ STATIC mp_obj_t iodevices_UARTDevice_make_new(const mp_obj_type_t *otype, size_t
     mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
 
     // Init UART port
-    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_CUSTOM_UART);
+    pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_CUSTOM_UART);
 
     // Initialize serial
     self->timeout = timeout == mp_const_none ? -1 : pb_obj_get_int(timeout);
