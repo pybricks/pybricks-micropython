@@ -23,7 +23,21 @@
 typedef struct _common_LightGrid_obj_t {
     mp_obj_base_t base;
     pbio_lightgrid_t *lightgrid;
+    uint8_t *data;
+    uint8_t frames;
 } common_LightGrid_obj_t;
+
+// Renews memory for a given number of frames
+STATIC void common_LightGrid__renew(common_LightGrid_obj_t *self, uint8_t frames) {
+    // Grid with/height
+    size_t size = pbio_lightgrid_get_size(self->lightgrid);
+
+    // Renew buffer for new number of frames
+    self->data = m_renew(uint8_t, self->data, size * size * self->frames, size * size * frames);
+
+    // Save new number of frames
+    self->frames = frames;
+}
 
 // pybricks._common.LightGrid.char
 STATIC mp_obj_t common_LightGrid_char(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -88,18 +102,15 @@ STATIC mp_obj_t common_LightGrid_image(size_t n_args, const mp_obj_t *pos_args, 
 
     // Allocate and extract image data
     size_t size = pbio_lightgrid_get_size(self->lightgrid);
-    uint8_t *data = m_malloc(size * size);
-    common_LightGrid_image__extract(image, size, data);
+    common_LightGrid__renew(self, 1);
+    common_LightGrid_image__extract(image, size, self->data);
 
     // Set all the pixels
     for (size_t r = 0; r < size; r++) {
         for (size_t c = 0; c < size; c++) {
-            pbio_lightgrid_set_pixel(self->lightgrid, r, c, data[r * size + c]);
+            pbio_lightgrid_set_pixel(self->lightgrid, r, c, self->data[r * size + c]);
         }
     }
-
-    // free allocated data
-    m_free(data);
 
     return mp_const_none;
 }
