@@ -204,6 +204,45 @@ STATIC mp_obj_t common_LightGrid_number(size_t n_args, const mp_obj_t *pos_args,
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightGrid_number_obj, 1, common_LightGrid_number);
 
+// pybricks._common.LightGrid.pattern
+STATIC mp_obj_t common_LightGrid_pattern(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        common_LightGrid_obj_t, self,
+        PB_ARG_REQUIRED(images),
+        PB_ARG_REQUIRED(interval)
+    );
+
+    // Time between frames
+    mp_int_t dt = pb_obj_get_int(interval);
+
+    // Unpack the list of images
+    mp_obj_t *image_objs;
+    size_t n;
+    mp_obj_get_array(images, &n, &image_objs);
+    if (n > UINT8_MAX) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // Allocate and extract pattern data
+    size_t size = pbio_lightgrid_get_size(self->lightgrid);
+    common_LightGrid__renew(self, n);
+
+    for (uint8_t i = 0; i < n; i++) {
+        common_LightGrid_image__extract(image_objs[i], size, self->data + size * size * i);
+        uint8_t *test = self->data + size * size * i;
+
+        // Set all the pixels
+        for (size_t r = 0; r < size; r++) {
+            for (size_t c = 0; c < size; c++) {
+                pbio_lightgrid_set_pixel(self->lightgrid, r, c, test[r * size + c]);
+            }
+        }
+        mp_hal_delay_ms(dt);
+    }
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightGrid_pattern_obj, 1, common_LightGrid_pattern);
+
 // pybricks._common.LightGrid.pixel
 STATIC mp_obj_t common_LightGrid_pixel(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -269,6 +308,7 @@ STATIC const mp_rom_map_elem_t common_LightGrid_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_off),    MP_ROM_PTR(&common_LightGrid_off_obj)    },
     { MP_ROM_QSTR(MP_QSTR_number), MP_ROM_PTR(&common_LightGrid_number_obj) },
     { MP_ROM_QSTR(MP_QSTR_pixel),  MP_ROM_PTR(&common_LightGrid_pixel_obj)  },
+    { MP_ROM_QSTR(MP_QSTR_pattern),MP_ROM_PTR(&common_LightGrid_pattern_obj)},
     { MP_ROM_QSTR(MP_QSTR_text),   MP_ROM_PTR(&common_LightGrid_text_obj)   },
 };
 STATIC MP_DEFINE_CONST_DICT(common_LightGrid_locals_dict, common_LightGrid_locals_dict_table);
