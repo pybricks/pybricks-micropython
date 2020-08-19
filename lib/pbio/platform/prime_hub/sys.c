@@ -9,6 +9,7 @@
 #include "pbio/color.h"
 #include "pbio/event.h"
 #include "pbio/light.h"
+#include "pbio/lightgrid.h"
 #include "pbio/motorpoll.h"
 
 #include <pbsys/hmi.h>
@@ -36,6 +37,15 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
     }
     _pbio_light_set_user_mode(true);
     pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE);
+
+    // TODO: Make this a progress bar that smoothly fades right
+    // using a system pattern process. For now just display a
+    // static line.
+    pbio_lightgrid_t *lightgrid;
+    pbio_lightgrid_get_dev(&lightgrid);
+    uint8_t rows[5] = {0};
+    rows[1] = 0b01110;
+    pbio_lightgrid_set_rows(lightgrid, rows);
 }
 
 void pbsys_unprepare_user_program(void) {
@@ -47,6 +57,14 @@ void pbsys_unprepare_user_program(void) {
         pbdrv_led_on(led, PBIO_COLOR_BLUE);
     }
     _pbio_motorpoll_reset_all();
+
+    pbio_lightgrid_t *lightgrid;
+    pbio_lightgrid_get_dev(&lightgrid);
+    uint8_t rows[5] = {0};
+    rows[0] = 0b01110;
+    rows[1] = rows[0];
+    rows[2] = rows[0];
+    pbio_lightgrid_set_rows(lightgrid, rows);
 }
 
 static void init(void) {
