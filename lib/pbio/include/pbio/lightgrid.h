@@ -16,6 +16,8 @@ typedef struct _pbio_lightgrid_t pbio_lightgrid_t;
 
 #if PBIO_CONFIG_LIGHTGRID
 
+const uint8_t pbio_lightgrid_sys_pattern[1000];
+
 /** Platform-specific data for light grid devices. */
 typedef struct {
     /** PWM device id. */
