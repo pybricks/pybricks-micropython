@@ -162,14 +162,13 @@ STATIC mp_obj_t common_LightGrid_number(size_t n_args, const mp_obj_t *pos_args,
         composite[i] = pb_digits_5x2[value / 10][i] << 3 | pb_digits_5x2[value % 10][i];
     }
 
-    // Display one dot to indicate negative
-    // FIXME: Display faintly to distinguish from digits
-    if (negative) {
-        composite[3] |= 0b00100;
-    }
-
     // Display the result
     light_grid_set_rows_binary(self, composite);
+
+    // Display one faint dot in the middle to indicate negative
+    if (negative) {
+        set_pixel_brightness(self, 2, 2, 50);
+    }
 
     return mp_const_none;
 }
