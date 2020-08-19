@@ -60,6 +60,7 @@ void pbsys_unprepare_user_program(void) {
 
     pbio_lightgrid_t *lightgrid;
     pbio_lightgrid_get_dev(&lightgrid);
+    pbio_lightgrid_stop_pattern(lightgrid);
     uint8_t rows[5] = {0};
     rows[0] = 0b01110;
     rows[1] = rows[0];

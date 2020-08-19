@@ -51,6 +51,9 @@ STATIC mp_obj_t common_LightGrid_char(size_t n_args, const mp_obj_t *pos_args, m
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
+    // Stop any ongoing pattern
+    pbio_lightgrid_stop_pattern(self->lightgrid);
+
     // Pick corresponding image and display it
     pbio_lightgrid_set_rows(self->lightgrid, pb_font_5x5[str[0] - 32]);
 
@@ -105,6 +108,9 @@ STATIC mp_obj_t common_LightGrid_image(size_t n_args, const mp_obj_t *pos_args, 
     common_LightGrid__renew(self, 1);
     common_LightGrid_image__extract(image, size, self->data);
 
+    // Stop any ongoing pattern
+    pbio_lightgrid_stop_pattern(self->lightgrid);
+
     // Display the image
     pb_assert(pbio_lightgrid_set_image(self->lightgrid, self->data));
 
@@ -119,6 +125,9 @@ STATIC mp_obj_t common_LightGrid_on(size_t n_args, const mp_obj_t *pos_args, mp_
         PB_ARG_DEFAULT_INT(brightness, 100));
 
     uint8_t size = pbio_lightgrid_get_size(self->lightgrid);
+
+    // Stop any ongoing pattern
+    pbio_lightgrid_stop_pattern(self->lightgrid);
 
     mp_int_t b = pb_obj_get_pct(brightness);
     for (uint8_t i = 0; i < size; i++) {
@@ -136,6 +145,9 @@ STATIC mp_obj_t common_LightGrid_off(mp_obj_t self_in) {
     common_LightGrid_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     uint8_t size = pbio_lightgrid_get_size(self->lightgrid);
+
+    // Stop any ongoing pattern
+    pbio_lightgrid_stop_pattern(self->lightgrid);
 
     for (uint8_t i = 0; i < size; i++) {
         for (uint8_t j = 0; j < size; j++) {
@@ -155,6 +167,9 @@ STATIC mp_obj_t common_LightGrid_number(size_t n_args, const mp_obj_t *pos_args,
 
 
     uint8_t size = pbio_lightgrid_get_size(self->lightgrid);
+
+    // Stop any ongoing pattern
+    pbio_lightgrid_stop_pattern(self->lightgrid);
 
     // Currently numbers are only implemented for 5x5 grids
     if (size != 5) {
@@ -214,7 +229,7 @@ STATIC mp_obj_t common_LightGrid_pattern(size_t n_args, const mp_obj_t *pos_args
     mp_obj_t *image_objs;
     size_t n;
     mp_obj_get_array(images, &n, &image_objs);
-    if (n > UINT8_MAX) {
+    if (n > UINT8_MAX || n < 2) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
@@ -227,12 +242,8 @@ STATIC mp_obj_t common_LightGrid_pattern(size_t n_args, const mp_obj_t *pos_args
         common_LightGrid_image__extract(image_objs[i], size, self->data + size * size * i);
     }
 
-    // Display the image (blocking for now for testing purposes)
-    for (uint8_t i = 0; i < n; i++) {
-        common_LightGrid_image__extract(image_objs[i], size, self->data + size * size * i);
-        pbio_lightgrid_set_image(self->lightgrid, self->data + size * size * i);
-        mp_hal_delay_ms(dt);
-    }
+    // Activate the pattern
+    pbio_lightgrid_start_pattern(self->lightgrid, self->data, self->frames, dt);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightGrid_pattern_obj, 1, common_LightGrid_pattern);
@@ -244,6 +255,9 @@ STATIC mp_obj_t common_LightGrid_pixel(size_t n_args, const mp_obj_t *pos_args, 
         PB_ARG_REQUIRED(row),
         PB_ARG_REQUIRED(column),
         PB_ARG_DEFAULT_INT(brightness, 100));
+
+    // Stop any ongoing pattern
+    pbio_lightgrid_stop_pattern(self->lightgrid);
 
     // Set pixel at the given brightness
     pbio_lightgrid_set_pixel(self->lightgrid, mp_obj_get_int(row), mp_obj_get_int(column), pb_obj_get_pct(brightness));
@@ -272,6 +286,9 @@ STATIC mp_obj_t common_LightGrid_text(size_t n_args, const mp_obj_t *pos_args, m
 
     mp_int_t on_time = pb_obj_get_int(on);
     mp_int_t off_time = pb_obj_get_int(off);
+
+    // Stop any ongoing pattern
+    pbio_lightgrid_stop_pattern(self->lightgrid);
 
     // Display all characters one by one
     for (size_t i = 0; i < len; i++) {

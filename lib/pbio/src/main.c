@@ -17,6 +17,7 @@
 #include "pbsys/sys.h"
 #include "pbio/config.h"
 #include "pbio/light.h"
+#include "pbio/lightgrid.h"
 #include "pbio/motorpoll.h"
 #include "pbio/uartdev.h"
 
@@ -87,6 +88,7 @@ int pbio_do_one_event(void) {
     }
     if (now - prev_slow_poll_time >= clock_from_msec(32)) {
         _pbio_light_poll(now);
+        _pbio_lightgrid_poll(now);
         prev_slow_poll_time = now;
     }
     return process_run();
