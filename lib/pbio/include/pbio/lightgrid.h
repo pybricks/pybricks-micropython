@@ -61,7 +61,16 @@ pbio_error_t pbio_lightgrid_set_rows(pbio_lightgrid_t *lightgrid, const uint8_t 
  * @return                  ::PBIO_SUCCESS on success or
  *                          ::PBIO_ERROR_NOT_SUPPORTED if the PWM driver is disabled.
  */
-pbio_error_t pbio_lightgrid_set_pixel(pbio_lightgrid_t *lightgrid, uint8_t row, uint8_t col, int32_t brightness);
+pbio_error_t pbio_lightgrid_set_pixel(pbio_lightgrid_t *lightgrid, uint8_t row, uint8_t col, uint8_t brightness);
+
+/**
+ * Sets the pixel to a given brightness.
+ * @param [in]  lightgrid   The lightgrid object
+ * @param [in]  image       Buffer of brightness values (0--100)
+ * @return                  ::PBIO_SUCCESS on success or
+ *                          ::PBIO_ERROR_NOT_SUPPORTED if the PWM driver is disabled.
+ */
+pbio_error_t pbio_lightgrid_set_image(pbio_lightgrid_t *lightgrid, uint8_t *image);
 
 #else
 
@@ -75,6 +84,9 @@ static inline pbio_error_t pbio_lightgrid_set_rows(pbio_lightgrid_t *lightgrid, 
     return PBIO_SUCCESS;
 }
 static inline pbio_error_t pbio_lightgrid_set_pixel(pbio_lightgrid_t *lightgrid, uint8_t row, uint8_t col, int32_t brightness) {
+    return PBIO_SUCCESS;
+}
+static inline pbio_error_t pbio_lightgrid_set_image(pbio_lightgrid_t *lightgrid, uint8_t *image) {
     return PBIO_SUCCESS;
 }
 

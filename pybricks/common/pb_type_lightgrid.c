@@ -105,12 +105,8 @@ STATIC mp_obj_t common_LightGrid_image(size_t n_args, const mp_obj_t *pos_args, 
     common_LightGrid__renew(self, 1);
     common_LightGrid_image__extract(image, size, self->data);
 
-    // Set all the pixels
-    for (size_t r = 0; r < size; r++) {
-        for (size_t c = 0; c < size; c++) {
-            pbio_lightgrid_set_pixel(self->lightgrid, r, c, self->data[r * size + c]);
-        }
-    }
+    // Display the image
+    pb_assert(pbio_lightgrid_set_image(self->lightgrid, self->data));
 
     return mp_const_none;
 }
@@ -209,8 +205,7 @@ STATIC mp_obj_t common_LightGrid_pattern(size_t n_args, const mp_obj_t *pos_args
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         common_LightGrid_obj_t, self,
         PB_ARG_REQUIRED(images),
-        PB_ARG_REQUIRED(interval)
-    );
+        PB_ARG_REQUIRED(interval));
 
     // Time between frames
     mp_int_t dt = pb_obj_get_int(interval);
@@ -223,20 +218,19 @@ STATIC mp_obj_t common_LightGrid_pattern(size_t n_args, const mp_obj_t *pos_args
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
-    // Allocate and extract pattern data
+    // Allocate pattern data
     size_t size = pbio_lightgrid_get_size(self->lightgrid);
     common_LightGrid__renew(self, n);
 
+    // Extract pattern data
     for (uint8_t i = 0; i < n; i++) {
         common_LightGrid_image__extract(image_objs[i], size, self->data + size * size * i);
-        uint8_t *test = self->data + size * size * i;
+    }
 
-        // Set all the pixels
-        for (size_t r = 0; r < size; r++) {
-            for (size_t c = 0; c < size; c++) {
-                pbio_lightgrid_set_pixel(self->lightgrid, r, c, test[r * size + c]);
-            }
-        }
+    // Display the image (blocking for now for testing purposes)
+    for (uint8_t i = 0; i < n; i++) {
+        common_LightGrid_image__extract(image_objs[i], size, self->data + size * size * i);
+        pbio_lightgrid_set_image(self->lightgrid, self->data + size * size * i);
         mp_hal_delay_ms(dt);
     }
     return mp_const_none;

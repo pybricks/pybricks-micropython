@@ -66,9 +66,8 @@ pbio_error_t pbio_lightgrid_set_rows(pbio_lightgrid_t *lightgrid, const uint8_t 
 }
 
 // Sets one pixel to an approximately perceived brightness of 0--100%
-pbio_error_t pbio_lightgrid_set_pixel(pbio_lightgrid_t *lightgrid, uint8_t row, uint8_t col, int32_t brightness) {
+pbio_error_t pbio_lightgrid_set_pixel(pbio_lightgrid_t *lightgrid, uint8_t row, uint8_t col, uint8_t brightness) {
 
-    pbio_error_t err;
     uint8_t size = lightgrid->data->size;
 
     // Return early if the requested pixel is out of bounds
@@ -77,9 +76,26 @@ pbio_error_t pbio_lightgrid_set_pixel(pbio_lightgrid_t *lightgrid, uint8_t row, 
     }
 
     // Scale brightness quadratically from 0 to UINT16_MAX
-    int32_t duty = brightness * brightness * UINT16_MAX / 10000;
+    int32_t duty = ((int32_t)brightness) * brightness * UINT16_MAX / 10000;
 
-    return err = pbdrv_pwm_set_duty(lightgrid->pwm, lightgrid->data->channels[row * size + col], duty);
+    return pbdrv_pwm_set_duty(lightgrid->pwm, lightgrid->data->channels[row * size + col], duty);
+}
+
+// Displays an image on the screen
+pbio_error_t pbio_lightgrid_set_image(pbio_lightgrid_t *lightgrid, uint8_t *image) {
+
+    pbio_error_t err;
+    uint8_t size = lightgrid->data->size;
+
+    for (uint8_t r = 0; r < size; r++) {
+        for (uint8_t c = 0; c < size; c++) {
+            err = pbio_lightgrid_set_pixel(lightgrid, r, c, image[r * size + c]);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
+        }
+    }
+    return PBIO_SUCCESS;
 }
 
 #endif // PBIO_CONFIG_LIGHTGRID
