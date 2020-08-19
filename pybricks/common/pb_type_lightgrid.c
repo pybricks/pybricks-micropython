@@ -12,6 +12,7 @@
 #include "py/objstr.h"
 
 #include <pybricks/common.h>
+#include <pybricks/robotics.h>
 
 #include <pybricks/util_pb/pb_error.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -44,6 +45,19 @@ STATIC mp_obj_t common_LightGrid_char(size_t n_args, const mp_obj_t *pos_args, m
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightGrid_char_obj, 1, common_LightGrid_char);
 
 static void common_LightGrid_image__extract(mp_obj_t image, size_t size, uint8_t *data) {
+
+    #if MICROPY_PY_BUILTINS_FLOAT
+    // If image is a matrix, copy data from there
+    if (mp_obj_is_type(image, &pb_type_Matrix_type)) {
+        for (size_t r = 0; r < size; r++) {
+            for (size_t c = 0; c < size; c++) {
+                data[r * size + c] = pb_type_Matrix__get_scalar(image, r, c);
+            }
+        }
+        return;
+    }
+    #endif // MICROPY_PY_BUILTINS_FLOAT
+
     // Unpack the main list of rows and get the requested sizes
     mp_obj_t *row_objs, *scalar_objs;
     size_t m;
@@ -74,7 +88,7 @@ STATIC mp_obj_t common_LightGrid_image(size_t n_args, const mp_obj_t *pos_args, 
 
     // Allocate and extract image data
     size_t size = pbio_lightgrid_get_size(self->lightgrid);
-    uint8_t *data = m_malloc(size*size);
+    uint8_t *data = m_malloc(size * size);
     common_LightGrid_image__extract(image, size, data);
 
     // Set all the pixels
