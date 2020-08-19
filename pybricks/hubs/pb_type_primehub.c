@@ -14,14 +14,6 @@
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
 
-static uint8_t spike_prime_tlc5955_pwm_channel_map[] = {
-    38, 36, 41, 46, 33,
-    37, 28, 39, 47, 21,
-    24, 29, 31, 45, 23,
-    26, 27, 32, 34, 22,
-    25, 40, 30, 35, 9,
-};
-
 typedef struct _hubs_PrimeHub_obj_t {
     mp_obj_base_t base;
     mp_obj_t light;
@@ -32,7 +24,7 @@ STATIC mp_obj_t hubs_PrimeHub_make_new(const mp_obj_type_t *type, size_t n_args,
     hubs_PrimeHub_obj_t *self = m_new_obj(hubs_PrimeHub_obj_t);
     self->base.type = (mp_obj_type_t *)type;
     self->light = common_ColorLight_internal_obj_make_new();
-    self->grid = common_LightGrid_obj_make_new(4, spike_prime_tlc5955_pwm_channel_map, 5);
+    self->grid = common_LightGrid_obj_make_new();
     return MP_OBJ_FROM_PTR(self);
 }
 

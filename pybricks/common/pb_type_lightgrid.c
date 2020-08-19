@@ -5,7 +5,7 @@
 
 #if PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_LIGHTGRID
 
-#include <pbdrv/pwm.h>
+#include <pbio/lightgrid.h>
 
 #include "py/mphal.h"
 #include "py/obj.h"
@@ -18,61 +18,17 @@
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
 
-
 // pybricks._common.LightGrid class object
 typedef struct _common_LightGrid_obj_t {
     mp_obj_base_t base;
-    pbdrv_pwm_dev_t *pwm;
-    uint8_t size;
-    uint8_t *channels;
+    pbio_lightgrid_t *lightgrid;
 } common_LightGrid_obj_t;
-
-// Each byte sets a row, where 1 means a pixel is on and 0 is off. Least significant bit is on the right.
-// This is the same format as used by the micro:bit.
-static void light_grid_set_rows_binary(common_LightGrid_obj_t *self, const uint8_t *rows) {
-    // Loop through all rows i, starting at row 0 at the top.
-    for (uint8_t i = 0; i < self->size; i++) {
-        // Loop through all columns j, starting at col 0 on the left.
-        for (uint8_t j = 0; j < self->size; j++) {
-            // The pixel is on of the bit is high.
-            bool on = rows[i] & (1 << (self->size - 1 - j));
-            // Set the pixel.
-            pb_assert(
-                self->pwm->funcs->set_duty(self->pwm, self->channels[i * self->size + j], on * UINT16_MAX)
-                );
-        }
-    }
-}
-
-// Sets one pixel to an approximately perceived brightness of 0--100%
-static void set_pixel_brightness(common_LightGrid_obj_t *self, uint8_t row, uint8_t col, int32_t brightness) {
-
-    // Return if the requested pixel is out of bounds
-    if (row >= self->size || col >= self->size) {
-        return;
-    }
-
-    // Scale brightness quadratically from 0 to UINT16_MAX
-    int32_t duty = brightness * brightness * UINT16_MAX / 10000;
-
-    // Set the duty cycle for this pixel
-    pb_assert(
-        self->pwm->funcs->set_duty(
-            self->pwm, self->channels[row * self->size + col], duty
-            )
-        );
-}
 
 // pybricks._common.LightGrid.char
 STATIC mp_obj_t common_LightGrid_char(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         common_LightGrid_obj_t, self,
         PB_ARG_REQUIRED(character));
-
-    // Currently characters are only implemented for 5x5 grids
-    if (self->size != 5) {
-        pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-    }
 
     // Assert that the input is a single character
     GET_STR_DATA_LEN(character, str, len);
@@ -81,7 +37,7 @@ STATIC mp_obj_t common_LightGrid_char(size_t n_args, const mp_obj_t *pos_args, m
     }
 
     // Pick corresponding image and display it
-    light_grid_set_rows_binary(self, pb_font_5x5[str[0] - 32]);
+    pbio_lightgrid_set_rows(self->lightgrid, pb_font_5x5[str[0] - 32]);
 
     return mp_const_none;
 }
@@ -93,10 +49,12 @@ STATIC mp_obj_t common_LightGrid_on(size_t n_args, const mp_obj_t *pos_args, mp_
         common_LightGrid_obj_t, self,
         PB_ARG_DEFAULT_INT(brightness, 100));
 
+    uint8_t size = pbio_lightgrid_get_size(self->lightgrid);
+
     mp_int_t b = pb_obj_get_pct(brightness);
-    for (uint8_t i = 0; i < self->size; i++) {
-        for (uint8_t j = 0; j < self->size; j++) {
-            set_pixel_brightness(self, i, j, b);
+    for (uint8_t i = 0; i < size; i++) {
+        for (uint8_t j = 0; j < size; j++) {
+            pbio_lightgrid_set_pixel(self->lightgrid, i, j, b);
         }
     }
 
@@ -108,9 +66,11 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightGrid_on_obj, 1, common_LightGrid_o
 STATIC mp_obj_t common_LightGrid_off(mp_obj_t self_in) {
     common_LightGrid_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    for (uint8_t i = 0; i < self->size; i++) {
-        for (uint8_t j = 0; j < self->size; j++) {
-            set_pixel_brightness(self, i, j, 0);
+    uint8_t size = pbio_lightgrid_get_size(self->lightgrid);
+
+    for (uint8_t i = 0; i < size; i++) {
+        for (uint8_t j = 0; j < size; j++) {
+            pbio_lightgrid_set_pixel(self->lightgrid, i, j, 0);
         }
     }
 
@@ -124,8 +84,11 @@ STATIC mp_obj_t common_LightGrid_number(size_t n_args, const mp_obj_t *pos_args,
         common_LightGrid_obj_t, self,
         PB_ARG_REQUIRED(number));
 
+
+    uint8_t size = pbio_lightgrid_get_size(self->lightgrid);
+
     // Currently numbers are only implemented for 5x5 grids
-    if (self->size != 5) {
+    if (size != 5) {
         pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
     }
 
@@ -134,13 +97,13 @@ STATIC mp_obj_t common_LightGrid_number(size_t n_args, const mp_obj_t *pos_args,
 
     // > 99 gets displayed as >
     if (value > 99) {
-        light_grid_set_rows_binary(self, pb_font_5x5['>' - 32]);
+        pbio_lightgrid_set_rows(self->lightgrid, pb_font_5x5['>' - 32]);
         return mp_const_none;
     }
 
     // < -99 gets displayed as <
     if (value < -99) {
-        light_grid_set_rows_binary(self, pb_font_5x5['<' - 32]);
+        pbio_lightgrid_set_rows(self->lightgrid, pb_font_5x5['<' - 32]);
         return mp_const_none;
     }
 
@@ -157,11 +120,11 @@ STATIC mp_obj_t common_LightGrid_number(size_t n_args, const mp_obj_t *pos_args,
     }
 
     // Display the result
-    light_grid_set_rows_binary(self, composite);
+    pbio_lightgrid_set_rows(self->lightgrid, composite);
 
     // Display one faint dot in the middle to indicate negative
     if (negative) {
-        set_pixel_brightness(self, 2, 2, 50);
+        pbio_lightgrid_set_pixel(self->lightgrid, 2, 2, 50);
     }
 
     return mp_const_none;
@@ -177,7 +140,7 @@ STATIC mp_obj_t common_LightGrid_pixel(size_t n_args, const mp_obj_t *pos_args, 
         PB_ARG_DEFAULT_INT(brightness, 100));
 
     // Set pixel at the given brightness
-    set_pixel_brightness(self, mp_obj_get_int(row), mp_obj_get_int(column), pb_obj_get_pct(brightness));
+    pbio_lightgrid_set_pixel(self->lightgrid, mp_obj_get_int(row), mp_obj_get_int(column), pb_obj_get_pct(brightness));
 
     return mp_const_none;
 }
@@ -201,15 +164,13 @@ STATIC const mp_obj_type_t pb_type_LightGrid = {
 };
 
 // pybricks._common.LightGrid.__init__
-mp_obj_t common_LightGrid_obj_make_new(uint8_t id, uint8_t *channel_map, uint8_t size) {
+mp_obj_t common_LightGrid_obj_make_new() {
     // Create new light instance
-    common_LightGrid_obj_t *grid = m_new_obj(common_LightGrid_obj_t);
+    common_LightGrid_obj_t *self = m_new_obj(common_LightGrid_obj_t);
     // Set type and iodev
-    grid->base.type = &pb_type_LightGrid;
-    grid->size = size;
-    grid->channels = channel_map;
-    pb_assert(pbdrv_pwm_get_dev(id, &grid->pwm));
-    return grid;
+    self->base.type = &pb_type_LightGrid;
+    pb_assert(pbio_lightgrid_get_dev(&self->lightgrid));
+    return self;
 }
 
 #endif // PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_LIGHTGRID

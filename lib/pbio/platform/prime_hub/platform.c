@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "pbio/uartdev.h"
+#include "pbio/lightgrid.h"
 
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/ioport/ioport_lpf2.h"
@@ -206,6 +207,18 @@ const pbdrv_pwm_tlc5955_stm32_platform_data_t
         .lat_gpio = GPIOA,
         .lat_gpio_pin = GPIO_PIN_15,
         .id = PWM_DEV_4_TLC5955,
+    },
+};
+
+const pbdrv_lightgrid_platform_data_t pbdrv_lightgrid_platform_data = {
+    .id = PWM_DEV_4_TLC5955,
+    .size = 5,
+    .channels = {
+        38, 36, 41, 46, 33,
+        37, 28, 39, 47, 21,
+        24, 29, 31, 45, 23,
+        26, 27, 32, 34, 22,
+        25, 40, 30, 35, 9
     },
 };
 

@@ -332,6 +332,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/integrator.c \
 	src/iodev.c \
 	src/light.c \
+	src/lightgrid.c \
 	src/logger.c \
 	src/main.c \
 	src/math.c \
