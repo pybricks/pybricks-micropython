@@ -43,6 +43,54 @@ STATIC mp_obj_t common_LightGrid_char(size_t n_args, const mp_obj_t *pos_args, m
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightGrid_char_obj, 1, common_LightGrid_char);
 
+static void common_LightGrid_image__extract(mp_obj_t image, size_t size, uint8_t *data) {
+    // Unpack the main list of rows and get the requested sizes
+    mp_obj_t *row_objs, *scalar_objs;
+    size_t m;
+    mp_obj_get_array(image, &m, &row_objs);
+    if (m != size) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // Iterate through each of the rows to get the scalars
+    for (size_t r = 0; r < size; r++) {
+        size_t n;
+        mp_obj_get_array(row_objs[r], &n, &scalar_objs);
+        if (n != size) {
+            pb_assert(PBIO_ERROR_INVALID_ARG);
+        }
+        // Unpack the scalars
+        for (size_t c = 0; c < size; c++) {
+            data[r * size + c] = pb_obj_get_pct(scalar_objs[c]);
+        }
+    }
+}
+
+// pybricks._common.LightGrid.image
+STATIC mp_obj_t common_LightGrid_image(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        common_LightGrid_obj_t, self,
+        PB_ARG_REQUIRED(image));
+
+    // Allocate and extract image data
+    size_t size = pbio_lightgrid_get_size(self->lightgrid);
+    uint8_t *data = m_malloc(size*size);
+    common_LightGrid_image__extract(image, size, data);
+
+    // Set all the pixels
+    for (size_t r = 0; r < size; r++) {
+        for (size_t c = 0; c < size; c++) {
+            pbio_lightgrid_set_pixel(self->lightgrid, r, c, data[r * size + c]);
+        }
+    }
+
+    // free allocated data
+    m_free(data);
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightGrid_image_obj, 1, common_LightGrid_image);
+
 // pybricks._common.LightGrid.on
 STATIC mp_obj_t common_LightGrid_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -191,6 +239,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightGrid_text_obj, 1, common_LightGrid
 // dir(pybricks.builtins.LightGrid)
 STATIC const mp_rom_map_elem_t common_LightGrid_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_char),   MP_ROM_PTR(&common_LightGrid_char_obj)   },
+    { MP_ROM_QSTR(MP_QSTR_image),  MP_ROM_PTR(&common_LightGrid_image_obj)  },
     { MP_ROM_QSTR(MP_QSTR_on),     MP_ROM_PTR(&common_LightGrid_on_obj)     },
     { MP_ROM_QSTR(MP_QSTR_off),    MP_ROM_PTR(&common_LightGrid_off_obj)    },
     { MP_ROM_QSTR(MP_QSTR_number), MP_ROM_PTR(&common_LightGrid_number_obj) },
