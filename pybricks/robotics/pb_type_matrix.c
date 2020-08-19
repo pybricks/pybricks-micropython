@@ -290,6 +290,18 @@ STATIC mp_obj_t pb_type_Matrix__scale(mp_obj_t self_in, float_t scale) {
     return MP_OBJ_FROM_PTR(copy);
 }
 
+// pybricks.robotics.Matrix._get_scalar
+float_t pb_type_Matrix__get_scalar(mp_obj_t self_in, size_t r, size_t c) {
+    pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    if (r >= self->m || c >= self->n) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    size_t idx = self->transposed ? c * self->m + r : r * self->n + c;
+    return self->data[idx] * self->scale;
+}
+
 // pybricks.robotics.Matrix.T
 STATIC mp_obj_t pb_type_Matrix_T(mp_obj_t self_in) {
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
