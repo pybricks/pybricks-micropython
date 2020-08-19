@@ -17,13 +17,7 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
-static uint8_t spike_prime_tlc5955_pwm_channel_map[] = {
-    38, 36, 41, 46, 33,
-    37, 28, 39, 47, 21,
-    24, 29, 31, 45, 23,
-    26, 27, 32, 34, 22,
-    25, 40, 30, 35, 9,
-};
+
 
 // pybricks._common.LightGrid class object
 typedef struct _common_LightGrid_obj_t {
@@ -207,14 +201,14 @@ STATIC const mp_obj_type_t pb_type_LightGrid = {
 };
 
 // pybricks._common.LightGrid.__init__
-mp_obj_t common_LightGrid_obj_make_new(uint8_t size) {
+mp_obj_t common_LightGrid_obj_make_new(uint8_t id, uint8_t *channel_map, uint8_t size) {
     // Create new light instance
     common_LightGrid_obj_t *grid = m_new_obj(common_LightGrid_obj_t);
     // Set type and iodev
     grid->base.type = &pb_type_LightGrid;
     grid->size = size;
-    grid->channels = spike_prime_tlc5955_pwm_channel_map;
-    pb_assert(pbdrv_pwm_get_dev(4, &grid->pwm));
+    grid->channels = channel_map;
+    pb_assert(pbdrv_pwm_get_dev(id, &grid->pwm));
     return grid;
 }
 

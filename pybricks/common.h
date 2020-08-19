@@ -23,7 +23,7 @@ mp_obj_t common_LightArray_obj_make_new(pb_device_t *pbdev, uint8_t light_mode, 
 // pybricks._common.LightGrid()
 const uint8_t pb_digits_5x2[10][5];
 const uint8_t pb_font_5x5[95][5];
-mp_obj_t common_LightGrid_obj_make_new(uint8_t size);
+mp_obj_t common_LightGrid_obj_make_new(uint8_t id, uint8_t *channel_map, uint8_t size);
 #endif
 
 // pybricks._common.KeyPad()
