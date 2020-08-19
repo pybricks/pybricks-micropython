@@ -258,12 +258,7 @@ STATIC mp_obj_t common_LightGrid_text(size_t n_args, const mp_obj_t *pos_args, m
         common_LightGrid_obj_t, self,
         PB_ARG_REQUIRED(text),
         PB_ARG_DEFAULT_INT(on, 500),
-        PB_ARG_DEFAULT_INT(off, 50),
-        PB_ARG_DEFAULT_TRUE(wait));
-
-    if (!mp_obj_is_true(wait)) {
-        pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-    }
+        PB_ARG_DEFAULT_INT(off, 50));
 
     // Assert that the input is a single text
     GET_STR_DATA_LEN(text, str, len);
