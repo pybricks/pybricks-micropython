@@ -97,30 +97,8 @@ void pbio_lightgrid_stop_pattern(pbio_lightgrid_t *lightgrid);
 void _pbio_lightgrid_poll(uint32_t now);
 
 #else
-
-static inline pbio_error_t pbio_lightgrid_get_dev(pbio_lightgrid_t **lightgrid) {
-    return PBIO_SUCCESS;
-}
-static inline uint8_t pbio_lightgrid_get_size(pbio_lightgrid_t *lightgrid) {
-    return 0;
-}
-static inline pbio_error_t pbio_lightgrid_set_rows(pbio_lightgrid_t *lightgrid, const uint8_t *rows) {
-    return PBIO_SUCCESS;
-}
-static inline pbio_error_t pbio_lightgrid_set_pixel(pbio_lightgrid_t *lightgrid, uint8_t row, uint8_t col, int32_t brightness) {
-    return PBIO_SUCCESS;
-}
-static inline pbio_error_t pbio_lightgrid_set_image(pbio_lightgrid_t *lightgrid, uint8_t *image) {
-    return PBIO_SUCCESS;
-}
-static inline pbio_error_t pbio_lightgrid_start_pattern(pbio_lightgrid_t *lightgrid, uint8_t *images, uint8_t frames, uint32_t interval) {
-    return PBIO_SUCCESS;
-}
-static inline void pbio_lightgrid_stop_pattern(pbio_lightgrid_t *lightgrid) {
-}
 static inline void _pbio_lightgrid_poll(uint32_t now) {
 }
-
 #endif // PBIO_CONFIG_LIGHTGRID
 
 #endif // _PBIO_LIGHTGRID_H_
