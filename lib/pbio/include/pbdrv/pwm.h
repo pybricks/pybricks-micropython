@@ -2,7 +2,7 @@
 // Copyright (c) 2020 The Pybricks Authors
 
 /**
- * \addtogroup PWMDriver Pulse width modulation (PWM) I/O driver
+ * @addtogroup PWMDriver Pulse width modulation (PWM) I/O driver
  * @{
  */
 

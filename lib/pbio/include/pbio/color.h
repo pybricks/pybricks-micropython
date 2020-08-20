@@ -2,7 +2,7 @@
 // Copyright (c) 2020 The Pybricks Authors
 
 /**
- * \addtogroup Color Color Conversion Functions.
+ * @addtogroup Color Color Conversion Functions.
  *
  * Provides generic functions to manipulate colors.
  * @{

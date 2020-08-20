@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2020 The Pybricks Authors
 
 /**
- * \addtogroup AnalogDriver Analog/digital converter I/O driver
+ * @addtogroup AnalogDriver Analog/digital converter I/O driver
  * @{
  */
 

@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2020 The Pybricks Authors
 
 /**
- * \addtogroup UARTDriver UART I/O driver
+ * @addtogroup UARTDriver UART I/O driver
  * @{
  */
 

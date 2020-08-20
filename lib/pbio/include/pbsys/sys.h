@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2020 The Pybricks Authors
 
 /**
- * \addtogroup Sys System-level Functions
+ * @addtogroup Sys System-level Functions
  *
  * This module provides platform-specific system-level functions for platforms
  * where the Pybricks I/O library also acts as the operating system for a

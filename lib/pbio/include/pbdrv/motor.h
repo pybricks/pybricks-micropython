@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2020 The Pybricks Authors
 
 /**
- * \addtogroup MotorDriver Motor I/O driver
+ * @addtogroup MotorDriver Motor I/O driver
  * @{
  */
 

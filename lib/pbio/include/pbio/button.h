@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2020 The Pybricks Authors
 
 /**
- * \addtogroup Button Brick and Remote Control Buttons
+ * @addtogroup Button Brick and Remote Control Buttons
  *
  * Provides functions to test when a button is pressed.
  * @{

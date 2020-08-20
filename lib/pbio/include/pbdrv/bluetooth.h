@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2020 The Pybricks Authors
 
 /**
- * \addtogroup ButtonDriver Button I/O driver
+ * @addtogroup ButtonDriver Button I/O driver
  * @{
  */
 

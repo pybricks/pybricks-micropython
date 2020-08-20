@@ -11,7 +11,7 @@
 #include <pbio/error.h>
 
 /**
- * \addtogroup Port I/O ports
+ * @addtogroup Port I/O ports
  * @{
  */
 

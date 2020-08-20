@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2020 The Pybricks Authors
 
 /**
- * \addtogroup IOPortDriver I/O Port I/O driver
+ * @addtogroup IOPortDriver I/O Port I/O driver
  * @{
  */
 

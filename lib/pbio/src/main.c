@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2020 The Pybricks Authors
 
 /**
- * \addtogroup Main Library initialization and events
+ * @addtogroup Main Library initialization and events
  * @{
  */
 

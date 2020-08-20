@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2020 The Pybricks Authors
 
 /**
- * \addtogroup Light Light control functions
+ * @addtogroup Light Light control functions
  * @{
  */
 
