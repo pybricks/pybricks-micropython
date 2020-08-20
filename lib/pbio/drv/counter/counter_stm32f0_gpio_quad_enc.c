@@ -26,36 +26,35 @@
 #define RING_BUF_SIZE 32 // must be power of 2!
 
 typedef struct {
-    pbdrv_counter_dev_t dev;
+    pbdrv_counter_dev_t *dev;
     int32_t counts[RING_BUF_SIZE];
     uint16_t timestamps[RING_BUF_SIZE];
     int32_t count;
     volatile uint8_t head;
-    const pbdrv_gpio_t *gpio_int;
-    const pbdrv_gpio_t *gpio_dir;
-    bool invert;
 } private_data_t;
 
 static private_data_t private_data[PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC_NUM_DEV];
 
 static pbio_error_t pbdrv_counter_stm32f0_gpio_quad_enc_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
-    private_data_t *data = PBIO_CONTAINER_OF(dev, private_data_t, dev);
+    const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t *pdata = dev->pdata;
+    private_data_t *priv = dev->priv;
 
-    *count = data->invert ? -data->count : data->count;
+    *count = pdata->invert ? -priv->count : priv->count;
 
     return PBIO_SUCCESS;
 }
 
 static pbio_error_t pbdrv_counter_stm32f0_gpio_quad_enc_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
-    private_data_t *data = PBIO_CONTAINER_OF(dev, private_data_t, dev);
+    const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t *pdata = dev->pdata;
+    private_data_t *priv = dev->priv;
     int32_t head_count, tail_count = 0;
     uint16_t now, head_time, tail_time = 0;
     uint8_t head, tail, x = 0;
 
     // head can be updated in interrupt, so only read it once
-    head = data->head;
-    head_count = data->counts[head];
-    head_time = data->timestamps[head];
+    head = priv->head;
+    head_count = priv->counts[head];
+    head_time = priv->timestamps[head];
 
     now = TIM7->CNT;
 
@@ -68,8 +67,8 @@ static pbio_error_t pbdrv_counter_stm32f0_gpio_quad_enc_get_rate(pbdrv_counter_d
     while (x++ < RING_BUF_SIZE) {
         tail = (head - x) & (RING_BUF_SIZE - 1);
 
-        tail_count = data->counts[tail];
-        tail_time = data->timestamps[tail];
+        tail_count = priv->counts[tail];
+        tail_time = priv->timestamps[tail];
 
         // if count hasn't changed, then we are not moving
         if (head_count == tail_count) {
@@ -94,27 +93,27 @@ static pbio_error_t pbdrv_counter_stm32f0_gpio_quad_enc_get_rate(pbdrv_counter_d
 
     /* timer is 100000kHz */
     *rate = (head_count - tail_count) * 100000 / (uint16_t)(head_time - tail_time);
-    if (data->invert) {
+    if (pdata->invert) {
         *rate = -*rate;
     }
     return PBIO_SUCCESS;
 }
 
-static void pbdrv_motor_tacho_update_count(private_data_t *data,
+static void pbdrv_motor_tacho_update_count(private_data_t *priv,
     bool int_pin_state, bool dir_pin_state, uint16_t timestamp) {
     if (int_pin_state ^ dir_pin_state) {
-        data->count--;
+        priv->count--;
     } else {
-        data->count++;
+        priv->count++;
     }
 
     // log timestamp on rising edge for rate calculation
     if (int_pin_state) {
-        uint8_t new_head = (data->head + 1) & (RING_BUF_SIZE - 1);
+        uint8_t new_head = (priv->head + 1) & (RING_BUF_SIZE - 1);
 
-        data->counts[new_head] = data->count;
-        data->timestamps[new_head] = timestamp;
-        data->head = new_head;
+        priv->counts[new_head] = priv->count;
+        priv->timestamps[new_head] = timestamp;
+        priv->head = new_head;
     }
 }
 
@@ -129,13 +128,15 @@ void EXTI0_1_IRQHandler(void) {
     timestamp = TIM7->CNT;
 
     if (exti_pr & EXTI_PR_PR1) {
-        private_data_t *data = &private_data[0];
-        pbdrv_motor_tacho_update_count(data, pbdrv_gpio_input(data->gpio_int), pbdrv_gpio_input(data->gpio_dir), timestamp);
+        private_data_t *priv = &private_data[0];
+        const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t *pdata = priv->dev->pdata;
+        pbdrv_motor_tacho_update_count(priv, pbdrv_gpio_input(&pdata->gpio_int), pbdrv_gpio_input(&pdata->gpio_dir), timestamp);
     }
 
     if (exti_pr & EXTI_PR_PR0) {
-        private_data_t *data = &private_data[1];
-        pbdrv_motor_tacho_update_count(data, pbdrv_gpio_input(data->gpio_int), pbdrv_gpio_input(data->gpio_dir), timestamp);
+        private_data_t *priv = &private_data[1];
+        const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t *pdata = priv->dev->pdata;
+        pbdrv_motor_tacho_update_count(priv, pbdrv_gpio_input(&pdata->gpio_int), pbdrv_gpio_input(&pdata->gpio_dir), timestamp);
     }
 }
 
@@ -150,33 +151,36 @@ void TIM7_IRQHandler(void) {
     // log a new timestamp when the timer recycles to avoid rate calculation
     // problems when the motor is not moving
     for (i = 0; i < PBIO_ARRAY_SIZE(private_data); i++) {
-        private_data_t *data = &private_data[i];
-        new_head = (data->head + 1) & (RING_BUF_SIZE - 1);
-        data->counts[new_head] = data->count;
-        data->timestamps[new_head] = timestamp;
-        data->head = new_head;
+        private_data_t *priv = &private_data[i];
+        new_head = (priv->head + 1) & (RING_BUF_SIZE - 1);
+        priv->counts[new_head] = priv->count;
+        priv->timestamps[new_head] = timestamp;
+        priv->head = new_head;
     }
 }
 
-static pbio_error_t counter_stm32f0_gpio_quad_enc_init() {
+static const pbdrv_counter_funcs_t pbdrv_counter_stm32f0_gpio_quad_enc_funcs = {
+    .get_count = pbdrv_counter_stm32f0_gpio_quad_enc_get_count,
+    .get_rate = pbdrv_counter_stm32f0_gpio_quad_enc_get_rate,
+};
+
+void pbdrv_counter_stm32f0_gpio_quad_enc_init(pbdrv_counter_dev_t *devs) {
     for (int i = 0; i < PBIO_ARRAY_SIZE(private_data); i++) {
         const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t *pdata =
             &pbdrv_counter_stm32f0_gpio_quad_enc_platform_data[i];
-        private_data_t *data = &private_data[i];
+        private_data_t *priv = &private_data[i];
 
         // TODO: may need to add pull to platform data if we add more platforms
         // that use this driver.
 
-        data->gpio_int = &pdata->gpio_int;
-        pbdrv_gpio_input(data->gpio_int);
-        data->gpio_dir = &pdata->gpio_dir;
-        pbdrv_gpio_set_pull(data->gpio_dir, PBDRV_GPIO_PULL_DOWN);
-        pbdrv_gpio_input(data->gpio_dir);
-        data->invert = pdata->invert;
-        data->dev.get_count = pbdrv_counter_stm32f0_gpio_quad_enc_get_count;
-        data->dev.get_rate = pbdrv_counter_stm32f0_gpio_quad_enc_get_rate;
-        data->dev.initalized = true;
-        pbdrv_counter_register(pdata->counter_id, &data->dev);
+        pbdrv_gpio_input(&pdata->gpio_int);
+        pbdrv_gpio_set_pull(&pdata->gpio_dir, PBDRV_GPIO_PULL_DOWN);
+        pbdrv_gpio_input(&pdata->gpio_dir);
+
+        priv->dev = &devs[pdata->counter_id];
+        priv->dev->pdata = pdata;
+        priv->dev->funcs = &pbdrv_counter_stm32f0_gpio_quad_enc_funcs;
+        priv->dev->priv = priv;
     }
 
     // TODO: IRQ support should be added to gpio driver
@@ -198,25 +202,6 @@ static pbio_error_t counter_stm32f0_gpio_quad_enc_init() {
     TIM7->DIER = TIM_DIER_UIE;
     NVIC_SetPriority(TIM7_IRQn, 1);
     NVIC_EnableIRQ(TIM7_IRQn);
-
-    return PBIO_SUCCESS;
 }
-
-static pbio_error_t counter_stm32f0_gpio_quad_enc_exit() {
-    for (int i = 0; i < PBIO_ARRAY_SIZE(private_data); i++) {
-        private_data_t *data = &private_data[i];
-
-        data->dev.initalized = false;
-        pbdrv_counter_unregister(&data->dev);
-        NVIC_DisableIRQ(TIM7_IRQn);
-        NVIC_DisableIRQ(EXTI0_1_IRQn);
-    }
-    return PBIO_SUCCESS;
-}
-
-const pbdrv_counter_drv_t pbdrv_counter_stm32f0_gpio_quad_enc_drv = {
-    .init = counter_stm32f0_gpio_quad_enc_init,
-    .exit = counter_stm32f0_gpio_quad_enc_exit,
-};
 
 #endif // PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC

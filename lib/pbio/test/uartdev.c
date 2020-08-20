@@ -311,7 +311,7 @@ PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     PT_YIELD(pt);
 
     pbdrv_counter_dev_t *counter;
-    tt_want_uint_op(pbdrv_counter_get(0, &counter), ==, PBIO_SUCCESS);
+    tt_want_uint_op(pbdrv_counter_get_dev(0, &counter), ==, PBIO_SUCCESS);
     int32_t count;
     tt_want_uint_op(pbdrv_counter_get_count(counter, &count), ==, PBIO_ERROR_NO_DEV);
     tt_want_uint_op(pbdrv_counter_get_abs_count(counter, &count), ==, PBIO_ERROR_NO_DEV);
@@ -713,7 +713,7 @@ PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     PT_YIELD(pt);
 
     pbdrv_counter_dev_t *counter;
-    tt_want_uint_op(pbdrv_counter_get(0, &counter), ==, PBIO_SUCCESS);
+    tt_want_uint_op(pbdrv_counter_get_dev(0, &counter), ==, PBIO_SUCCESS);
     int32_t count;
     tt_want_uint_op(pbdrv_counter_get_count(counter, &count), ==, PBIO_SUCCESS);
     tt_want_int_op(count, ==, -1);
@@ -980,7 +980,7 @@ PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     PT_YIELD(pt);
 
     pbdrv_counter_dev_t *counter;
-    tt_want_uint_op(pbdrv_counter_get(0, &counter), ==, PBIO_SUCCESS);
+    tt_want_uint_op(pbdrv_counter_get_dev(0, &counter), ==, PBIO_SUCCESS);
     int32_t count;
     tt_want_uint_op(pbdrv_counter_get_count(counter, &count), ==, PBIO_SUCCESS);
     tt_want_int_op(count, ==, -1);
@@ -1300,7 +1300,7 @@ PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     PT_YIELD(pt);
 
     pbdrv_counter_dev_t *counter;
-    tt_want_uint_op(pbdrv_counter_get(0, &counter), ==, PBIO_SUCCESS);
+    tt_want_uint_op(pbdrv_counter_get_dev(0, &counter), ==, PBIO_SUCCESS);
     int32_t count;
     tt_want_uint_op(pbdrv_counter_get_count(counter, &count), ==, PBIO_SUCCESS);
     tt_want_int_op(count, ==, -1);

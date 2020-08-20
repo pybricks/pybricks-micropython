@@ -26,7 +26,7 @@
 #endif
 
 typedef struct {
-    pbdrv_counter_dev_t dev;
+    pbdrv_counter_dev_t *dev;
     FILE *count;
     FILE *rate;
 } private_data_t;
@@ -34,17 +34,17 @@ typedef struct {
 static private_data_t private_data[PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO_NUM_DEV];
 
 static pbio_error_t pbdrv_counter_ev3dev_stretch_iio_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
-    private_data_t *data = PBIO_CONTAINER_OF(dev, private_data_t, dev);
+    private_data_t *priv = dev->priv;
 
-    if (!data->count) {
+    if (!priv->count) {
         return PBIO_ERROR_NO_DEV;
     }
 
-    if (fseek(data->count, 0, SEEK_SET) == -1) {
+    if (fseek(priv->count, 0, SEEK_SET) == -1) {
         return PBIO_ERROR_IO;
     }
 
-    if (fscanf(data->count, "%d", count) == EOF) {
+    if (fscanf(priv->count, "%d", count) == EOF) {
         return PBIO_ERROR_IO;
     }
 
@@ -52,34 +52,38 @@ static pbio_error_t pbdrv_counter_ev3dev_stretch_iio_get_count(pbdrv_counter_dev
 }
 
 static pbio_error_t pbdrv_counter_ev3dev_stretch_iio_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
-    private_data_t *data = PBIO_CONTAINER_OF(dev, private_data_t, dev);
+    private_data_t *priv = dev->priv;
 
-    if (!data->rate) {
+    if (!priv->rate) {
         return PBIO_ERROR_NO_DEV;
     }
 
-    if (fseek(data->rate, 0, SEEK_SET) == -1) {
+    if (fseek(priv->rate, 0, SEEK_SET) == -1) {
         return PBIO_ERROR_IO;
     }
 
-    if (fscanf(data->rate, "%d", rate) == EOF) {
+    if (fscanf(priv->rate, "%d", rate) == EOF) {
         return PBIO_ERROR_IO;
     }
 
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t counter_ev3dev_stretch_iio_init() {
+static const pbdrv_counter_funcs_t pbdrv_counter_ev3dev_stretch_iio_funcs = {
+    .get_count = pbdrv_counter_ev3dev_stretch_iio_get_count,
+    .get_rate = pbdrv_counter_ev3dev_stretch_iio_get_rate,
+};
+
+void pbdrv_counter_ev3dev_stretch_iio_init(pbdrv_counter_dev_t *devs) {
     char buf[256];
     struct udev *udev;
     struct udev_enumerate *enumerate;
     struct udev_list_entry *entry;
-    pbio_error_t err = PBIO_ERROR_FAILED;
 
     udev = udev_new();
     if (!udev) {
         dbg_err("Failed to get udev context");
-        return err;
+        return;
     }
 
     enumerate = udev_enumerate_new(udev);
@@ -111,64 +115,39 @@ static pbio_error_t counter_ev3dev_stretch_iio_init() {
 
 
     for (size_t i = 0; i < PBIO_ARRAY_SIZE(private_data); i++) {
-        private_data_t *data = &private_data[i];
+        private_data_t *priv = &private_data[i];
 
         snprintf(buf, sizeof(buf), "%s/in_count%d_raw", udev_list_entry_get_name(entry), (int)i);
-        data->count = fopen(buf, "r");
-        if (!data->count) {
+        priv->count = fopen(buf, "r");
+        if (!priv->count) {
             dbg_err("failed to open count attribute");
             continue;
         }
 
-        setbuf(data->count, NULL);
+        setbuf(priv->count, NULL);
 
         snprintf(buf, sizeof(buf), "%s/in_frequency%d_input", udev_list_entry_get_name(entry), (int)i);
-        data->rate = fopen(buf, "r");
-        if (!data->rate) {
+        priv->rate = fopen(buf, "r");
+        if (!priv->rate) {
             dbg_err("failed to open rate attribute");
             continue;
         }
 
-        setbuf(data->rate, NULL);
-
-        data->dev.get_count = pbdrv_counter_ev3dev_stretch_iio_get_count;
-        data->dev.get_rate = pbdrv_counter_ev3dev_stretch_iio_get_rate;
-        data->dev.initalized = true;
+        setbuf(priv->rate, NULL);
 
         // FIXME: assuming that these are the only counter devices
         // counter_id should be passed from platform data instead
-        pbdrv_counter_register(i, &data->dev);
+        _Static_assert(PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO_NUM_DEV == PBDRV_CONFIG_COUNTER_NUM_DEV,
+            "need to fix counter_ev3dev_stretch_iio implementation to allow other counter devices");
+        priv->dev = &devs[i];
+        priv->dev->funcs = &pbdrv_counter_ev3dev_stretch_iio_funcs;
+        priv->dev->priv = priv;
     }
-
-    err = PBIO_SUCCESS;
 
 free_enumerate:
     udev_enumerate_unref(enumerate);
 free_udev:
     udev_unref(udev);
-
-    return err;
 }
-
-static pbio_error_t counter_ev3dev_stretch_iio_exit() {
-    for (size_t i = 0; i < PBIO_ARRAY_SIZE(private_data); i++) {
-        private_data_t *data = &private_data[i];
-
-        data->dev.initalized = false;
-        if (data->count) {
-            fclose(data->count);
-        }
-        if (data->rate) {
-            fclose(data->rate);
-        }
-        pbdrv_counter_unregister(&data->dev);
-    }
-    return PBIO_SUCCESS;
-}
-
-const pbdrv_counter_drv_t pbdrv_counter_ev3dev_stretch_iio_drv = {
-    .init = counter_ev3dev_stretch_iio_init,
-    .exit = counter_ev3dev_stretch_iio_exit,
-};
 
 #endif // PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO

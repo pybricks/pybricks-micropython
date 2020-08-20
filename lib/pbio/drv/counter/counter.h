@@ -4,35 +4,35 @@
 #ifndef _PBDRV_COUNTER_COUNTER_H_
 #define _PBDRV_COUNTER_COUNTER_H_
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include <pbdrv/config.h>
 #include <pbdrv/counter.h>
 #include <pbio/error.h>
 
-struct _pbdrv_counter_dev_t {
+typedef struct {
     pbio_error_t (*get_count)(pbdrv_counter_dev_t *dev, int32_t *count);
     pbio_error_t (*get_abs_count)(pbdrv_counter_dev_t *dev, int32_t *count);
     pbio_error_t (*get_rate)(pbdrv_counter_dev_t *dev, int32_t *rate);
-    bool initalized;
+} pbdrv_counter_funcs_t;
+
+struct _pbdrv_counter_dev_t {
+    /** Platform-specific data. */
+    const void *pdata;
+    /** Driver-specific callback functions. */
+    const pbdrv_counter_funcs_t *funcs;
+    /** Private instance-specific state. */
+    void *priv;
 };
 
-typedef struct {
-    pbio_error_t (*init)();
-    pbio_error_t (*exit)();
-} pbdrv_counter_drv_t;
-
 #if PBDRV_CONFIG_COUNTER
-pbio_error_t pbdrv_counter_register(uint8_t id, pbdrv_counter_dev_t *dev);
-pbio_error_t pbdrv_counter_unregister(pbdrv_counter_dev_t *dev);
+
+void pbdrv_counter_init();
+
 #else // PBDRV_CONFIG_COUNTER
-static inline pbio_error_t pbdrv_counter_register(uint8_t id, pbdrv_counter_dev_t *dev) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-static inline pbio_error_t pbdrv_counter_unregister(pbdrv_counter_dev_t *dev) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
+
+#define pbdrv_counter_init()
+
 #endif // PBDRV_CONFIG_COUNTER
 
 #endif // _PBDRV_COUNTER_COUNTER_H_

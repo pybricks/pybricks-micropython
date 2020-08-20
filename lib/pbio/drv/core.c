@@ -7,11 +7,14 @@
 #include <pbdrv/led.h>
 #include <pbdrv/pwm.h>
 
+#include "counter/counter.h"
+
 /** Initializes all enabled drivers. */
 void pbdrv_init() {
     clock_init();
     process_init();
     pbdrv_battery_init();
+    pbdrv_counter_init();
     pbdrv_led_init();
     pbdrv_pwm_init();
 }

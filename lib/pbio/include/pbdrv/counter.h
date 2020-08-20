@@ -19,7 +19,7 @@ typedef struct _pbdrv_counter_dev_t pbdrv_counter_dev_t;
 
 #if PBDRV_CONFIG_COUNTER
 
-pbio_error_t pbdrv_counter_get(uint8_t id, pbdrv_counter_dev_t **dev);
+pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev);
 pbio_error_t pbdrv_counter_get_count(pbdrv_counter_dev_t *dev, int32_t *count);
 pbio_error_t pbdrv_counter_get_abs_count(pbdrv_counter_dev_t *dev, int32_t *count);
 pbio_error_t pbdrv_counter_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate);
@@ -30,7 +30,7 @@ pbio_error_t pbdrv_counter_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate);
 
 #else // PBDRV_CONFIG_COUNTER
 
-static inline pbio_error_t pbdrv_counter_get(uint8_t id, pbdrv_counter_dev_t **dev) {
+static inline pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
     *dev = NULL;
     return PBIO_ERROR_NOT_SUPPORTED;
 }

@@ -8,14 +8,17 @@
 
 #if PBDRV_CONFIG_COUNTER_NXT
 
-#include "counter.h"
-
 #if !PBDRV_CONFIG_COUNTER_NXT_NUM_DEV
 #error Platform must define PBDRV_CONFIG_COUNTER_NXT_NUM_DEV
 #endif
 
-// defined in counter_nxt.c
-extern const pbdrv_counter_drv_t pbdrv_counter_nxt_drv;
+#include <pbdrv/counter.h>
+
+void pbdrv_counter_nxt_init(pbdrv_counter_dev_t *devs);
+
+#else // PBDRV_CONFIG_COUNTER_NXT
+
+#define pbdrv_counter_nxt_init(devs)
 
 #endif // PBDRV_CONFIG_COUNTER_NXT
 

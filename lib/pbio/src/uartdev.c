@@ -130,7 +130,6 @@ typedef enum {
 /**
  * struct ev3_uart_port_data - Data for EV3/LPF2 UART Sensor communication
  * @iodev: The I/O device state information struct
- * @counter_dev: A counter device to provide access to tacho counts
  * @pt: Protothread for main communication protocol
  * @data_pt: Protothread for receiving sensor data
  * @speed_pt: Protothread for setting the baud rate
@@ -169,7 +168,6 @@ typedef enum {
  */
 typedef struct {
     pbio_iodev_t iodev;
-    pbdrv_counter_dev_t counter_dev;
     struct pt pt;
     struct pt data_pt;
     struct pt speed_pt;
@@ -218,6 +216,8 @@ static struct {
 static uint8_t bufs[PBIO_CONFIG_UARTDEV_NUM_DEV][NUM_BUF][EV3_UART_MAX_MESSAGE_SIZE];
 
 static uartdev_port_data_t dev_data[PBIO_CONFIG_UARTDEV_NUM_DEV];
+
+static pbdrv_counter_dev_t *counter_devs;
 
 static const pbio_iodev_mode_t ev3_uart_default_mode_info = {
     .raw_max = 1023,
@@ -1197,7 +1197,7 @@ static const pbio_iodev_ops_t pbio_uartdev_ops = {
 };
 
 static pbio_error_t pbio_uartdev_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
-    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(dev, uartdev_port_data_t, counter_dev);
+    uartdev_port_data_t *port_data = dev->priv;
 
     if (!PBIO_IODEV_IS_FEEDBACK_MOTOR(&port_data->iodev)) {
         return PBIO_ERROR_NO_DEV;
@@ -1209,7 +1209,7 @@ static pbio_error_t pbio_uartdev_get_count(pbdrv_counter_dev_t *dev, int32_t *co
 }
 
 static pbio_error_t pbio_uartdev_get_abs_count(pbdrv_counter_dev_t *dev, int32_t *count) {
-    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(dev, uartdev_port_data_t, counter_dev);
+    uartdev_port_data_t *port_data = dev->priv;
 
     if (!PBIO_IODEV_IS_FEEDBACK_MOTOR(&port_data->iodev)) {
         return PBIO_ERROR_NO_DEV;
@@ -1225,7 +1225,7 @@ static pbio_error_t pbio_uartdev_get_abs_count(pbdrv_counter_dev_t *dev, int32_t
 }
 
 static pbio_error_t pbio_uartdev_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
-    uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(dev, uartdev_port_data_t, counter_dev);
+    uartdev_port_data_t *port_data = dev->priv;
 
     if (!PBIO_IODEV_IS_FEEDBACK_MOTOR(&port_data->iodev)) {
         return PBIO_ERROR_NO_DEV;
@@ -1237,6 +1237,18 @@ static pbio_error_t pbio_uartdev_get_rate(pbdrv_counter_dev_t *dev, int32_t *rat
     return PBIO_SUCCESS;
 }
 
+static const pbdrv_counter_funcs_t pbio_uartdev_counter_funcs = {
+    .get_count = pbio_uartdev_get_count,
+    .get_abs_count = pbio_uartdev_get_abs_count,
+    .get_rate = pbio_uartdev_get_rate,
+};
+
+void pbio_uartdev_counter_init(pbdrv_counter_dev_t *devs) {
+    // Since this has async init via contiki process, we need to save this
+    // pointer for later.
+    counter_devs = devs;
+}
+
 static PT_THREAD(pbio_uartdev_init(struct pt *pt, uint8_t id)) {
     const pbio_uartdev_platform_data_t *pdata = &pbio_uartdev_platform_data[id];
     uartdev_port_data_t *port_data = &dev_data[id];
@@ -1246,15 +1258,15 @@ static PT_THREAD(pbio_uartdev_init(struct pt *pt, uint8_t id)) {
     PT_WAIT_UNTIL(pt, pbdrv_uart_get(pdata->uart_id, &port_data->uart) == PBIO_SUCCESS);
     port_data->iodev.info = &infos[id].info;
     port_data->iodev.ops = &pbio_uartdev_ops;
-    port_data->counter_dev.get_count = pbio_uartdev_get_count;
-    port_data->counter_dev.get_abs_count = pbio_uartdev_get_abs_count;
-    port_data->counter_dev.get_rate = pbio_uartdev_get_rate;
-    port_data->counter_dev.initalized = true;
     port_data->info = &infos[id].info;
     port_data->tx_msg = &bufs[id][BUF_TX_MSG][0];
     port_data->rx_msg = &bufs[id][BUF_RX_MSG][0];
 
-    pbdrv_counter_register(pdata->counter_id, &port_data->counter_dev);
+    // It is not guaranteed that pbio_uartdev_counter_init() is called before pbio_uartdev_init()
+    PT_WAIT_UNTIL(pt, counter_devs != NULL);
+    pbdrv_counter_dev_t *counter = &counter_devs[pdata->counter_id];
+    counter->funcs = &pbio_uartdev_counter_funcs;
+    counter->priv = port_data;
 
     PT_END(pt);
 }
