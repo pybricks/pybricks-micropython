@@ -5,8 +5,8 @@
 
 #if PYBRICKS_PY_HUBS && PYBRICKS_HUB_PRIMEHUB
 
-#if !PYBRICKS_PY_COMMON_LIGHTGRID
-#error "PYBRICKS_PY_COMMON_LIGHTGRID must be enabled if PYBRICKS_HUB_PRIMEHUB is enabled."
+#if !PYBRICKS_PY_COMMON_LIGHTGRID || !PYBRICKS_PY_PARAMETERS_BUTTON
+#error "PYBRICKS_PY_COMMON_LIGHTGRID and PYBRICKS_PY_PARAMETERS_BUTTON must be enabled."
 #endif
 
 #include <pbsys/sys.h>
@@ -30,6 +30,7 @@ STATIC mp_obj_t hubs_PrimeHub_make_new(const mp_obj_type_t *type, size_t n_args,
 
 STATIC const mp_rom_map_elem_t hubs_PrimeHub_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)    },
+    { MP_ROM_QSTR(MP_QSTR_buttons),     MP_ROM_PTR(&pb_module_buttons)    },
     { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_ATTRIBUTE_OFFSET(hubs_PrimeHub_obj_t, light) },
     { MP_ROM_QSTR(MP_QSTR_grid),        MP_ROM_ATTRIBUTE_OFFSET(hubs_PrimeHub_obj_t, grid)  },
 };

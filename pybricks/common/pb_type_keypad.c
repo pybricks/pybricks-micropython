@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_COMMON
+#if PYBRICKS_PY_COMMON && PYBRICKS_PY_PARAMETERS_BUTTON
 
 #include <pbio/button.h>
 
@@ -34,6 +34,9 @@ STATIC mp_obj_t buttons_pressed(void) {
     if (pressed & PBIO_BUTTON_RIGHT) {
         button_list[size++] = pb_const_button_right;
     }
+    if (pressed & PBIO_BUTTON_RIGHT_UP) {
+        button_list[size++] = pb_const_button_right_up;
+    }
     if (pressed & PBIO_BUTTON_UP) {
         button_list[size++] = pb_const_button_up;
     }
@@ -59,4 +62,4 @@ const mp_obj_module_t pb_module_buttons = {
     .globals = (mp_obj_dict_t *)&pb_module_buttons_globals,
 };
 
-#endif // PYBRICKS_PY_COMMON
+#endif // PYBRICKS_PY_COMMON && PYBRICKS_PY_PARAMETERS_BUTTON

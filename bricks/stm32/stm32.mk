@@ -171,6 +171,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	common/pb_type_colorlight_internal.c \
 	common/pb_type_control.c \
 	common/pb_type_dcmotor.c \
+	common/pb_type_keypad.c \
 	common/pb_type_lightarray.c \
 	common/pb_type_lightgrid.c \
 	common/pb_type_lightgrid_fonts.c \
