@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2020 The Pybricks Authors
 
 /**
- * \addtogroup Lightgrid functions
+ * \addtogroup Lightgrid Light grid functions
  * @{
  */
 
@@ -41,7 +41,7 @@ pbio_error_t pbio_lightgrid_get_dev(pbio_lightgrid_t **lightgrid);
 /**
  * Get the size of the lightgrid
  * @param [in]  lightgrid   The lightgrid object
- * @return                  ::grid size
+ * @return                  grid size
  */
 uint8_t pbio_lightgrid_get_size(pbio_lightgrid_t *lightgrid);
 
@@ -58,7 +58,7 @@ pbio_error_t pbio_lightgrid_set_rows(pbio_lightgrid_t *lightgrid, const uint8_t 
  * Sets the pixel to a given brightness.
  * @param [in]  lightgrid   The lightgrid object
  * @param [in]  row         Row index (0--m)
- * @param [in]  row         Column index (0--n)
+ * @param [in]  col         Column index (0--n)
  * @param [in]  brightness  Brightness (0--100)
  * @return                  ::PBIO_SUCCESS on success or
  *                          ::PBIO_ERROR_NOT_SUPPORTED if the PWM driver is disabled.
@@ -88,7 +88,6 @@ pbio_error_t pbio_lightgrid_start_pattern(pbio_lightgrid_t *lightgrid, const uin
 /**
  * Stops the pattern from updating further
  * @param [in]  lightgrid   The lightgrid object
- * @return                  ::PBIO_SUCCESS
  */
 void pbio_lightgrid_stop_pattern(pbio_lightgrid_t *lightgrid);
 
