@@ -155,24 +155,6 @@ static void spi_init() {
     NVIC_EnableIRQ(EXTI2_3_IRQn);
 }
 
-#if PBIO_CONFIG_ENABLE_DEINIT
-static void bluetooth_deinit() {
-    // nRESET
-    // set PB6 output low
-    GPIOB->BRR = GPIO_BRR_BR_6;
-}
-
-static void spi_deinit() {
-    NVIC_DisableIRQ(EXTI2_3_IRQn);
-
-    // TODO: need to make sure SPI2 is not busy
-    NVIC_DisableIRQ(DMA1_Channel4_5_IRQn);
-}
-#else // PBIO_CONFIG_ENABLE_DEINIT
-#undef PROCESS_EXITHANDLER
-#define PROCESS_EXITHANDLER(x)
-#endif // PBIO_CONFIG_ENABLE_DEINIT
-
 // overrides weak function in start_*.S
 void DMA1_Channel4_5_IRQHandler(void) {
     // if CH4 transfer complete
@@ -422,8 +404,6 @@ retry:
 PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
     static struct pt child_pt;
 
-    PROCESS_EXITHANDLER(spi_deinit());
-
     PROCESS_BEGIN();
 
     spi_init();
@@ -661,8 +641,6 @@ retry:
 PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
     static struct etimer timer;
     static struct pt child_pt;
-
-    PROCESS_EXITHANDLER(bluetooth_deinit());
 
     PROCESS_BEGIN();
 

@@ -45,7 +45,6 @@ static void pbio_test_run_thread(void *env) {
 
 end:
     process_exit(&etimer_process);
-    pbio_deinit();
 }
 
 static void *setup(const struct testcase_t *test_case) {

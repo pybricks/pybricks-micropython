@@ -77,25 +77,9 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     return PBIO_SUCCESS;
 }
 
-#if PBIO_CONFIG_ENABLE_DEINIT
-static void pbdrv_adc_exit() {
-    // REVISIT: do we need timeouts here?
-    ADC1->CR |= ADC_CR_ADSTP;
-    while (ADC1->CR & ADC_CR_ADSTP) {
-    }
-
-    ADC1->CR |= ADC_CR_ADDIS;
-    while (ADC1->CR & ADC_CR_ADEN) {
-    }
-}
-#endif
-
 PROCESS_THREAD(pbdrv_adc_process, ev, data) {
     // TODO: use DMA for background updates and add filtering
     // PROCESS_POLLHANDLER(pbdrv_adc_poll());
-    #if PBIO_CONFIG_ENABLE_DEINIT
-    PROCESS_EXITHANDLER(pbdrv_adc_exit());
-    #endif
 
     PROCESS_BEGIN();
 

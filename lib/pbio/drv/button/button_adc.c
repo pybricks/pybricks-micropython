@@ -19,11 +19,6 @@
 void _pbdrv_button_init(void) {
 }
 
-#if PBIO_CONFIG_ENABLE_DEINIT
-void _pbdrv_button_deinit(void) {
-}
-#endif
-
 // SPIKE Prime buttons use analog inputs - 3 "buttons" are connected to a
 // single pin in the following arrangement:
 //

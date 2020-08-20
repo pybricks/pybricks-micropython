@@ -297,8 +297,6 @@ soft_reset:
 
     goto soft_reset;
 
-    pbio_deinit();
-
     return 0;
 }
 

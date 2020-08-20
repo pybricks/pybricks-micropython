@@ -96,7 +96,6 @@ int main(int argc, char **argv) {
     mp_deinit();
     pbsys_unprepare_user_program();
 
-    pbio_deinit();
     nxt_deinit();
     return 0;
 }

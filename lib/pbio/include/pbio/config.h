@@ -11,10 +11,6 @@
 #define PBIO_CONFIG_ENABLE_SYS (0)
 #endif
 
-#ifndef PBIO_CONFIG_ENABLE_DEINIT
-#define PBIO_CONFIG_ENABLE_DEINIT (1)
-#endif
-
 // polling interval for updating servo controller
 #ifndef PBIO_CONFIG_SERVO_PERIOD_MS
 #define PBIO_CONFIG_SERVO_PERIOD_MS (6)

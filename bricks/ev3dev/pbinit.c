@@ -103,7 +103,6 @@ void pybricks_deinit() {
     // Signal motor thread to stop and wait for it to do so.
     stopping_thread = true;
     pthread_join(task_caller_thread, NULL);
-    pbio_deinit();
 }
 
 void pybricks_unhandled_exception() {

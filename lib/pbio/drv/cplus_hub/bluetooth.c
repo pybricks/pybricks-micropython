@@ -272,22 +272,6 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
     process_poll(&pbdrv_bluetooth_spi_process);
 }
 
-#if PBIO_CONFIG_ENABLE_DEINIT
-static void bluetooth_deinit() {
-    bluetooth_reset(RESET_STATE_OUT_LOW);
-}
-
-static void spi_deinit() {
-    NVIC_DisableIRQ(EXTI15_10_IRQn);
-
-    HAL_SPI_Abort(&bt_spi);
-    HAL_SPI_DeInit(&bt_spi);
-}
-#else // PBIO_CONFIG_ENABLE_DEINIT
-#undef PROCESS_EXITHANDLER
-#define PROCESS_EXITHANDLER(x)
-#endif // PBIO_CONFIG_ENABLE_DEINIT
-
 /**
  * Sets the MRDY signal.
  */
@@ -635,8 +619,6 @@ static bool get_npi_rx_size(uint8_t *rx_size) {
 
 PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
     static uint8_t read_xfer_size, xfer_size;
-
-    PROCESS_EXITHANDLER(spi_deinit());
 
     PROCESS_BEGIN();
 
@@ -1150,8 +1132,6 @@ retry:
 PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
     static struct etimer timer;
     static struct pt child_pt;
-
-    PROCESS_EXITHANDLER(bluetooth_deinit());
 
     PROCESS_BEGIN();
 

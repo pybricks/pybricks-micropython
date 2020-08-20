@@ -93,16 +93,4 @@ int pbio_do_one_event(void) {
     return process_run();
 }
 
-#if PBIO_CONFIG_ENABLE_DEINIT
-/**
- * Releases all resources used by the library. Calling this function is
- * optional. It should be called once at the end of a program. No other
- * functions may be called after this.
- */
-void pbio_deinit(void) {
-    autostart_exit(autostart_processes);
-    _pbdrv_button_deinit();
-}
-#endif
-
 /** @}*/

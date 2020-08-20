@@ -220,22 +220,6 @@ static void spi_init() {
     NVIC_EnableIRQ(EXTI2_3_IRQn);
 }
 
-#if PBIO_CONFIG_ENABLE_DEINIT
-static void bluetooth_deinit() {
-    bluetooth_reset(RESET_STATE_OUT_LOW);
-}
-
-static void spi_deinit() {
-    NVIC_DisableIRQ(EXTI2_3_IRQn);
-
-    // TODO: need to make sure SPI2 is not busy
-    NVIC_DisableIRQ(DMA1_Channel4_5_IRQn);
-}
-#else // PBIO_CONFIG_ENABLE_DEINIT
-#undef PROCESS_EXITHANDLER
-#define PROCESS_EXITHANDLER(x)
-#endif // PBIO_CONFIG_ENABLE_DEINIT
-
 void DMA1_Channel4_5_IRQHandler(void) {
     // if CH4 transfer complete
     if (DMA1->ISR & DMA_ISR_TCIF4) {
@@ -639,8 +623,6 @@ static bool get_npi_rx_size(uint8_t *rx_size) {
 
 PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
     static uint8_t read_xfer_size, xfer_size;
-
-    PROCESS_EXITHANDLER(spi_deinit());
 
     PROCESS_BEGIN();
 
@@ -1153,8 +1135,6 @@ retry:
 PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
     static struct etimer timer;
     static struct pt child_pt;
-
-    PROCESS_EXITHANDLER(bluetooth_deinit());
 
     PROCESS_BEGIN();
 
