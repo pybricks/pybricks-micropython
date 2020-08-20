@@ -40,7 +40,7 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
 
     pbio_lightgrid_t *lightgrid;
     pbio_lightgrid_get_dev(&lightgrid);
-    pbio_lightgrid_start_pattern(lightgrid, (uint8_t *)pbio_lightgrid_sys_pattern, 40, 25);
+    pbio_lightgrid_start_pattern(lightgrid, pbio_lightgrid_sys_pattern, 40, 25);
 }
 
 void pbsys_unprepare_user_program(void) {

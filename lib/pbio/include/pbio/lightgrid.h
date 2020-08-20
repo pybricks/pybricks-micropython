@@ -72,18 +72,18 @@ pbio_error_t pbio_lightgrid_set_pixel(pbio_lightgrid_t *lightgrid, uint8_t row, 
  * @return                  ::PBIO_SUCCESS on success or
  *                          ::PBIO_ERROR_NOT_SUPPORTED if the PWM driver is disabled.
  */
-pbio_error_t pbio_lightgrid_set_image(pbio_lightgrid_t *lightgrid, uint8_t *image);
+pbio_error_t pbio_lightgrid_set_image(pbio_lightgrid_t *lightgrid, const uint8_t *image);
 
 /**
  * Sets up the poller to display a series of frames
  * @param [in]  lightgrid   The lightgrid object
- * @param [in]  image       Buffer of buffer of brightness values (0--100)
+ * @param [in]  images      Buffer of buffer of brightness values (0--100)
  * @param [in]  frames      Number of images
  * @param [in]  interval    Time between subsequent images
  * @return                  ::PBIO_SUCCESS on success or
  *                          ::PBIO_ERROR_NOT_SUPPORTED if the PWM driver is disabled.
  */
-pbio_error_t pbio_lightgrid_start_pattern(pbio_lightgrid_t *lightgrid, uint8_t *images, uint8_t frames, uint32_t interval);
+pbio_error_t pbio_lightgrid_start_pattern(pbio_lightgrid_t *lightgrid, const uint8_t *images, uint8_t frames, uint32_t interval);
 
 /**
  * Stops the pattern from updating further

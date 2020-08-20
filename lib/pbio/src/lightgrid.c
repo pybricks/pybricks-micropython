@@ -21,7 +21,7 @@ struct _pbio_lightgrid_t {
     uint8_t number_of_frames;
     uint8_t frame_index;
     uint8_t interval;
-    uint8_t *frame_data;
+    const uint8_t *frame_data;
 };
 
 static pbio_lightgrid_t _lightgrid;
@@ -89,7 +89,7 @@ pbio_error_t pbio_lightgrid_set_pixel(pbio_lightgrid_t *lightgrid, uint8_t row, 
 }
 
 // Displays an image on the screen
-pbio_error_t pbio_lightgrid_set_image(pbio_lightgrid_t *lightgrid, uint8_t *image) {
+pbio_error_t pbio_lightgrid_set_image(pbio_lightgrid_t *lightgrid, const uint8_t *image) {
 
     pbio_error_t err;
     uint8_t size = lightgrid->data->size;
@@ -109,7 +109,7 @@ void pbio_lightgrid_stop_pattern(pbio_lightgrid_t *lightgrid) {
     lightgrid->number_of_frames = 0;
 }
 
-pbio_error_t pbio_lightgrid_start_pattern(pbio_lightgrid_t *lightgrid, uint8_t *images, uint8_t frames, uint32_t interval) {
+pbio_error_t pbio_lightgrid_start_pattern(pbio_lightgrid_t *lightgrid, const uint8_t *images, uint8_t frames, uint32_t interval) {
     lightgrid->number_of_frames = frames;
     lightgrid->frame_index = 0;
     lightgrid->interval = interval;
@@ -180,7 +180,7 @@ void _pbio_lightgrid_poll(uint32_t now) {
             lightgrid->frame_index = (lightgrid->frame_index + 1) % lightgrid->number_of_frames;
 
             // Current frame
-            uint8_t *frame = lightgrid->frame_data + lightgrid->data->size * lightgrid->data->size * lightgrid->frame_index;
+            const uint8_t *frame = lightgrid->frame_data + lightgrid->data->size * lightgrid->data->size * lightgrid->frame_index;
 
             // Display the frame
             pbio_lightgrid_set_image(lightgrid, frame);
