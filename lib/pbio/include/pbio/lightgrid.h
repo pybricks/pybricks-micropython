@@ -16,7 +16,7 @@ typedef struct _pbio_lightgrid_t pbio_lightgrid_t;
 
 #if PBIO_CONFIG_LIGHTGRID
 
-const uint8_t pbio_lightgrid_sys_pattern[1000];
+extern const uint8_t pbio_lightgrid_sys_pattern[1000];
 
 /** Platform-specific data for light grid devices. */
 typedef struct {
@@ -28,7 +28,7 @@ typedef struct {
     uint8_t channels[25];
 } pbdrv_lightgrid_platform_data_t;
 
-const pbdrv_lightgrid_platform_data_t pbdrv_lightgrid_platform_data;
+extern const pbdrv_lightgrid_platform_data_t pbdrv_lightgrid_platform_data;
 
 /**
  * Get the lightgrid device
