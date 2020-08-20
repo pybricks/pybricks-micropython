@@ -33,7 +33,8 @@ extern const pbdrv_lightgrid_platform_data_t pbdrv_lightgrid_platform_data;
 /**
  * Get the lightgrid device
  * @param [out] lightgrid   The lightgrid object
- * @return                  ::PBIO_SUCCESS on success or
+ * @return                  ::PBIO_SUCCESS on success ::PBIO_ERROR_AGAIN if the
+ *                          light grid is not ready for use yet or
  *                          ::PBIO_ERROR_NOT_SUPPORTED if the PWM driver is disabled.
  */
 pbio_error_t pbio_lightgrid_get_dev(pbio_lightgrid_t **lightgrid);
