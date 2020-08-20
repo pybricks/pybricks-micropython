@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
-/**
- * @addtogroup Error Error handling
- * @{
- */
-
 #include <stddef.h>
 
 #include <pbio/error.h>
@@ -45,5 +40,3 @@ const char *pbio_error_str(pbio_error_t err) {
 
     return NULL;
 }
-
-/** @}*/
