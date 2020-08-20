@@ -242,6 +242,9 @@ STATIC mp_obj_t common_LightGrid_pattern(size_t n_args, const mp_obj_t *pos_args
         common_LightGrid_image__extract(image_objs[i], size, self->data + size * size * i);
     }
 
+    // Stop any ongoing pattern
+    pbio_lightgrid_stop_pattern(self->lightgrid);
+
     // Activate the pattern
     pbio_lightgrid_start_pattern(self->lightgrid, self->data, self->frames, dt);
     return mp_const_none;

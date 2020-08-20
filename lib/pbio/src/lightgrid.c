@@ -17,13 +17,13 @@
 struct _pbio_lightgrid_t {
     pbdrv_pwm_dev_t *pwm;
     const pbdrv_lightgrid_platform_data_t *data;
-    uint32_t last_poll;
     uint8_t number_of_frames;
     uint8_t frame_index;
     uint8_t interval;
     const uint8_t *frame_data;
 };
 
+PROCESS(pbio_lightgrid_process, "light grid");
 static pbio_lightgrid_t _lightgrid;
 
 pbio_error_t pbio_lightgrid_get_dev(pbio_lightgrid_t **lightgrid) {
@@ -106,18 +106,16 @@ pbio_error_t pbio_lightgrid_set_image(pbio_lightgrid_t *lightgrid, const uint8_t
 }
 
 void pbio_lightgrid_stop_pattern(pbio_lightgrid_t *lightgrid) {
-    lightgrid->number_of_frames = 0;
+    process_exit(&pbio_lightgrid_process);
 }
 
-pbio_error_t pbio_lightgrid_start_pattern(pbio_lightgrid_t *lightgrid, const uint8_t *images, uint8_t frames, uint32_t interval) {
+void pbio_lightgrid_start_pattern(pbio_lightgrid_t *lightgrid, const uint8_t *images, uint8_t frames, uint32_t interval) {
     lightgrid->number_of_frames = frames;
     lightgrid->frame_index = 0;
     lightgrid->interval = interval;
     lightgrid->frame_data = images;
-    lightgrid->last_poll = clock_time();
 
-    // Start with the first frame
-    return pbio_lightgrid_set_image(lightgrid, images);
+    process_start(&pbio_lightgrid_process, NULL);
 }
 
 // FIXME: compress / implement differently
@@ -164,29 +162,30 @@ const uint8_t pbio_lightgrid_sys_pattern[1000] = {
     0, 0, 0, 0, 0, 15, 68, 100, 72, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
-// TODO: Convert to contiki process
-void _pbio_lightgrid_poll(uint32_t now) {
+PROCESS_THREAD(pbio_lightgrid_process, ev, data) {
+    static pbio_lightgrid_t *lightgrid = &_lightgrid;
+    static struct etimer timer;
 
-    pbio_lightgrid_t *lightgrid = &_lightgrid;
+    PROCESS_BEGIN();
 
-    // Poll only if there are frames to do
-    if (lightgrid->number_of_frames > 1) {
+    etimer_set(&timer, clock_from_msec(lightgrid->interval));
 
-        // Check if we are past the next sample yet
-        if (now - lightgrid->last_poll >= lightgrid->interval) {
+    for (;;) {
+        // Current frame data
+        uint8_t size = lightgrid->data->size;
+        const uint8_t *frame = lightgrid->frame_data + size * size * lightgrid->frame_index;
 
-            // Bump the poll time and frame index
-            lightgrid->last_poll += lightgrid->interval;
-            lightgrid->frame_index = (lightgrid->frame_index + 1) % lightgrid->number_of_frames;
+        // Display the frame
+        pbio_lightgrid_set_image(lightgrid, frame);
 
-            // Current frame
-            const uint8_t *frame = lightgrid->frame_data + lightgrid->data->size * lightgrid->data->size * lightgrid->frame_index;
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+        etimer_reset(&timer);
 
-            // Display the frame
-            pbio_lightgrid_set_image(lightgrid, frame);
-        }
+        // Move to next frame
+        lightgrid->frame_index = (lightgrid->frame_index + 1) % lightgrid->number_of_frames;
     }
 
+    PROCESS_END();
 }
 
 #endif // PBIO_CONFIG_LIGHTGRID
