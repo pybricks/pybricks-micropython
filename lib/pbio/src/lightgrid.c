@@ -83,7 +83,7 @@ pbio_error_t pbio_lightgrid_set_pixel(pbio_lightgrid_t *lightgrid, uint8_t row, 
     }
 
     // Scale brightness quadratically from 0 to UINT16_MAX
-    int32_t duty = ((int32_t)brightness) * brightness * UINT16_MAX / 10000;
+    int32_t duty = brightness * brightness * UINT16_MAX / 10000;
 
     return pbdrv_pwm_set_duty(lightgrid->pwm, lightgrid->data->channels[row * size + col], duty);
 }
