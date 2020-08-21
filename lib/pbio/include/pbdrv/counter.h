@@ -2,7 +2,7 @@
 // Copyright (c) 2019-2020 The Pybricks Authors
 
 /**
- * @addtogroup CounterDriver Counter driver
+ * @addtogroup CounterDriver Driver: Counter
  * @{
  */
 

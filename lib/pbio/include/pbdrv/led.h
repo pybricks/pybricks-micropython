@@ -2,7 +2,7 @@
 // Copyright (c) 2020 The Pybricks Authors
 
 /**
- * @addtogroup LEDDriver LED I/O driver
+ * @addtogroup LEDDriver Driver: Light Emitting Diode (LED)
  * @{
  */
 

@@ -2,7 +2,7 @@
 // Copyright (c) 2020 The Pybricks Authors
 
 /**
- * @addtogroup SystemStatus System-wide Status
+ * @addtogroup SystemStatus System: Status
  * @{
  */
 

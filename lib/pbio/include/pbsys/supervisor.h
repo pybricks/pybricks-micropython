@@ -2,7 +2,7 @@
 // Copyright (c) 2020 The Pybricks Authors
 
 /**
- * @addtogroup SystemSupervisor System Supervisor
+ * @addtogroup SystemSupervisor System: Supervisor
  * @{
  */
 

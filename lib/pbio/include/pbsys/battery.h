@@ -2,7 +2,7 @@
 // Copyright (c) 2020 The Pybricks Authors
 
 /**
- * @addtogroup SystemBattery System Battery Monitor
+ * @addtogroup SystemBattery System: Battery Monitor
  * @{
  */
 

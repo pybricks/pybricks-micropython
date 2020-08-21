@@ -2,7 +2,7 @@
 // Copyright (c) 2020 The Pybricks Authors
 
 /**
- * @addtogroup SystemHMI System Human Machine Interface (HMI)
+ * @addtogroup SystemHMI System: Human Machine Interface (HMI)
  * @{
  */
 

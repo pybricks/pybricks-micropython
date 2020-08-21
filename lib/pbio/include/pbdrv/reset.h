@@ -2,7 +2,7 @@
 // Copyright (c) 2018-2020 The Pybricks Authors
 
 /**
- * @addtogroup ResetDriver System Power and Reset Driver
+ * @addtogroup ResetDriver Driver: System Power and Reset
  * @{
  */
 
