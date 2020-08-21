@@ -15,6 +15,7 @@
 #include "led_dual.h"
 #include "led_ev3dev.h"
 #include "led_pwm.h"
+#include "led.h"
 
 #ifndef PBDRV_CONFIG_LED_NUM_DEV
 #error "Must define PBDRV_CONFIG_LED_NUM_DEV"

@@ -17,6 +17,7 @@
 #include <pbio/math.h>
 
 #include "led_pwm.h"
+#include "led.h"
 
 #ifndef PBDRV_CONFIG_LED_PWM_NUM_DEV
 #error "Must define PBDRV_CONFIG_LED_PWM_NUM_DEV"

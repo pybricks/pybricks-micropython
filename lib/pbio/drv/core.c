@@ -4,9 +4,9 @@
 #include <contiki.h>
 
 #include <pbdrv/battery.h>
-#include <pbdrv/led.h>
 
 #include "counter/counter.h"
+#include "led/led.h"
 #include "pwm/pwm.h"
 
 /** Initializes all enabled drivers. */

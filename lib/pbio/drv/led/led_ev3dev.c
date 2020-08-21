@@ -15,6 +15,7 @@
 #include <pbio/error.h>
 
 #include "led_ev3dev.h"
+#include "led.h"
 
 #define NUM_LEDS 4
 

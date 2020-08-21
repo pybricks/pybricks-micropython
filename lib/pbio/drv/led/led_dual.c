@@ -17,6 +17,7 @@
 #include <pbio/math.h>
 
 #include "led_dual.h"
+#include "led.h"
 
 #ifndef PBDRV_CONFIG_LED_DUAL_NUM_DEV
 #error "Must define PBDRV_CONFIG_LED_DUAL_NUM_DEV"
