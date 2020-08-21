@@ -3,10 +3,7 @@
 
 #include <contiki.h>
 
-#include "pbdrv/battery.h"
 #include "pbdrv/bluetooth.h"
-#include "pbdrv/config.h"
-#include "pbdrv/led.h"
 
 #include "pbio/color.h"
 #include "pbio/event.h"
@@ -41,18 +38,14 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
         user_stop_func = NULL;
         user_stdin_event_func = NULL;
     }
-    _pbio_light_set_user_mode(true);
     pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE);
+    pbsys_status_set(PBSYS_STATUS_USER_PROGRAM_RUNNING);
 }
 
 void pbsys_unprepare_user_program(void) {
+    pbsys_status_clear(PBSYS_STATUS_USER_PROGRAM_RUNNING);
     user_stop_func = NULL;
     user_stdin_event_func = NULL;
-
-    _pbio_light_set_user_mode(false);
-    pbdrv_led_dev_t *led;
-    pbdrv_led_get_dev(0, &led);
-    pbdrv_led_on(led, PBIO_COLOR_BLUE);
     _pbio_motorpoll_reset_all();
 }
 
@@ -69,13 +62,6 @@ pbio_error_t pbsys_stdin_get_char(uint8_t *c) {
 
 pbio_error_t pbsys_stdout_put_char(uint8_t c) {
     return pbdrv_bluetooth_tx(c);
-}
-
-static void init(void) {
-    _pbio_light_set_user_mode(false);
-    pbdrv_led_dev_t *led;
-    pbdrv_led_get_dev(0, &led);
-    pbdrv_led_on(led, PBIO_COLOR_BLUE);
 }
 
 static void handle_stdin_char(uint8_t c) {
@@ -101,7 +87,6 @@ PROCESS_THREAD(pbsys_process, ev, data) {
 
     PROCESS_BEGIN();
 
-    init();
     pbsys_battery_init();
     etimer_set(&timer, clock_from_msec(50));
 

@@ -4,8 +4,6 @@
 #include <contiki.h>
 
 #include "pbdrv/bluetooth.h"
-#include "pbdrv/config.h"
-#include "pbdrv/led.h"
 
 #include "pbio/color.h"
 #include "pbio/event.h"
@@ -42,17 +40,14 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
         user_stop_func = NULL;
         user_stdin_event_func = NULL;
     }
-    _pbio_light_set_user_mode(true);
     pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE);
+    pbsys_status_set(PBSYS_STATUS_USER_PROGRAM_RUNNING);
 }
 
 void pbsys_unprepare_user_program(void) {
+    pbsys_status_clear(PBSYS_STATUS_USER_PROGRAM_RUNNING);
     user_stop_func = NULL;
     user_stdin_event_func = NULL;
-    _pbio_light_set_user_mode(false);
-    pbdrv_led_dev_t *led;
-    pbdrv_led_get_dev(0, &led);
-    pbdrv_led_on(led, PBIO_COLOR_BLUE);
     _pbio_motorpoll_reset_all();
 }
 
@@ -77,11 +72,6 @@ static void init(void) {
     IWDG->RLR = 1875; // 40kHz / 64 / 1875 = 0.33.. Hz => 3 second timeout
     IWDG->KR = 0xaaaa; // refresh counter
     IWDG->KR = 0xcccc; // start watchdog timer
-
-    _pbio_light_set_user_mode(false);
-    pbdrv_led_dev_t *led;
-    pbdrv_led_get_dev(0, &led);
-    pbdrv_led_on(led, PBIO_COLOR_BLUE);
 }
 
 static void handle_stdin_char(uint8_t c) {

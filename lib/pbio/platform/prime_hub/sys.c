@@ -3,9 +3,6 @@
 
 #include <string.h>
 
-#include "pbdrv/config.h"
-#include "pbdrv/led.h"
-
 #include "pbio/color.h"
 #include "pbio/event.h"
 #include "pbio/light.h"
@@ -35,23 +32,19 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
         user_stop_func = NULL;
         user_stdin_event_func = NULL;
     }
-    _pbio_light_set_user_mode(true);
     pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE);
 
     pbio_lightgrid_t *lightgrid;
     if (pbio_lightgrid_get_dev(&lightgrid) == PBIO_SUCCESS) {
         pbio_lightgrid_start_pattern(lightgrid, pbio_lightgrid_sys_pattern, 40, 25);
     }
+    pbsys_status_set(PBSYS_STATUS_USER_PROGRAM_RUNNING);
 }
 
 void pbsys_unprepare_user_program(void) {
+    pbsys_status_clear(PBSYS_STATUS_USER_PROGRAM_RUNNING);
     user_stop_func = NULL;
     user_stdin_event_func = NULL;
-    _pbio_light_set_user_mode(false);
-    pbdrv_led_dev_t *led;
-    if (pbdrv_led_get_dev(0, &led) == PBIO_SUCCESS) {
-        pbdrv_led_on(led, PBIO_COLOR_BLUE);
-    }
     _pbio_motorpoll_reset_all();
 
     pbio_lightgrid_t *lightgrid;
@@ -64,20 +57,11 @@ void pbsys_unprepare_user_program(void) {
     }
 }
 
-static void init(void) {
-    _pbio_light_set_user_mode(false);
-    pbdrv_led_dev_t *led;
-    if (pbdrv_led_get_dev(0, &led) == PBIO_SUCCESS) {
-        pbdrv_led_on(led, PBIO_COLOR_BLUE);
-    }
-}
-
 PROCESS_THREAD(pbsys_process, ev, data) {
     static struct etimer timer;
 
     PROCESS_BEGIN();
 
-    init();
     etimer_set(&timer, clock_from_msec(50));
 
     while (true) {

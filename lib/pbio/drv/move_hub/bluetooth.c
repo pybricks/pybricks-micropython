@@ -15,6 +15,7 @@
 #include "pbio/config.h"
 #include "pbio/error.h"
 #include "pbio/event.h"
+#include "pbsys/status.h"
 #include "pbsys/sys.h"
 #include "../../src/processes.h"
 
@@ -663,7 +664,9 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
         PROCESS_PT_SPAWN(&child_pt, set_discoverable(&child_pt));
 
         // TODO: we should have a timeout and stop scanning eventually
+        pbsys_status_set(PBSYS_STATUS_BLE_ADVERTISING);
         PROCESS_WAIT_UNTIL(conn_handle);
+        pbsys_status_clear(PBSYS_STATUS_BLE_ADVERTISING);
 
         etimer_set(&timer, clock_from_msec(500));
 

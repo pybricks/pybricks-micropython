@@ -38,9 +38,11 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
         user_stop_func = NULL;
         user_stdin_event_func = NULL;
     }
+    pbsys_status_set(PBSYS_STATUS_USER_PROGRAM_RUNNING);
 }
 
 void pbsys_unprepare_user_program(void) {
+    pbsys_status_clear(PBSYS_STATUS_USER_PROGRAM_RUNNING);
     user_stop_func = NULL;
     user_stdin_event_func = NULL;
     // _pbio_motorpoll_reset_all();
