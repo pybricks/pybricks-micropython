@@ -3,11 +3,13 @@
 
 #include <stdio.h>
 
+#include <tinytest.h>
+#include <tinytest_macros.h>
+
 #include <pbdrv/pwm.h>
 #include <pbio/error.h>
 
-#include <tinytest.h>
-#include <tinytest_macros.h>
+#include "../drv/pwm/pwm.h"
 
 typedef struct {
     uint32_t duty_channel;

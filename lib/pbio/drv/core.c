@@ -5,9 +5,9 @@
 
 #include <pbdrv/battery.h>
 #include <pbdrv/led.h>
-#include <pbdrv/pwm.h>
 
 #include "counter/counter.h"
+#include "pwm/pwm.h"
 
 /** Initializes all enabled drivers. */
 void pbdrv_init() {

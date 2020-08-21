@@ -20,7 +20,8 @@
 #include <pbio/error.h>
 #include <pbio/util.h>
 
-#include "./pwm_tlc5955_stm32.h"
+#include "pwm_tlc5955_stm32.h"
+#include "pwm.h"
 
 // size in bytes to hold 769-bit shift register data
 #define TLC5955_DATA_SIZE ((769 + 7) / 8)

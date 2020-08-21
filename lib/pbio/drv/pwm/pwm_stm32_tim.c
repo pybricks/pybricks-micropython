@@ -14,7 +14,8 @@
 #include <pbdrv/pwm.h>
 #include <pbio/error.h>
 
-#include "./pwm_stm32_tim.h"
+#include "pwm_stm32_tim.h"
+#include "pwm.h"
 
 static pbio_error_t pbdrv_pwm_stm32_tim_set_duty(pbdrv_pwm_dev_t *dev, uint32_t ch, uint32_t value) {
     const pbdrv_pwm_stm32_tim_platform_data_t *pdata = dev->pdata;

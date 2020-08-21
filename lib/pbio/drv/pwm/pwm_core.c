@@ -11,14 +11,13 @@
 #include <pbdrv/pwm.h>
 #include <pbio/error.h>
 
-#include "./pwm_stm32_tim.h"
-#include "./pwm_test.h"
-#include "./pwm_tlc5955_stm32.h"
+#include "pwm_stm32_tim.h"
+#include "pwm_test.h"
+#include "pwm_tlc5955_stm32.h"
+#include "pwm.h"
 
 
 static pbdrv_pwm_dev_t pbdrv_pwm_dev[PBDRV_CONFIG_PWM_NUM_DEV];
-
-/** @cond INTERNAL */
 
 /**
  * Initializes all PWM drivers.
@@ -28,8 +27,6 @@ void pbdrv_pwm_init() {
     pbdrv_pwm_test_init(pbdrv_pwm_dev);
     pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev);
 }
-
-/** @endcond */
 
 /**
  * Gets the PWM device with the given ID.
