@@ -41,12 +41,12 @@ pbio_error_t pbdrv_counter_get_dev(uint8_t id, pbdrv_counter_dev_t **dev) {
 }
 
 /**
- * Gets the absolute count if the counter supports it.
+ * Gets the current count.
  * @param [in]  dev     Pointer to the counter device
  * @param [out] count   Returns the count on success
  * @return              ::PBIO_SUCCESS on success, ::PBIO_ERROR_NO_DEV if the
  *                      counter has not been initialized, ::PBIO_ERROR_NOT_SUPPORTED
- *                      if this counter does not support reading the absolute count.
+ *                      if the counter driver is disabled.
  */
 pbio_error_t pbdrv_counter_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
     return dev->funcs->get_count(dev, count);
@@ -58,7 +58,8 @@ pbio_error_t pbdrv_counter_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
  * @param [out] count   Returns the count on success
  * @return              ::PBIO_SUCCESS on success, ::PBIO_ERROR_NO_DEV if the
  *                      counter has not been initialized, ::PBIO_ERROR_NOT_SUPPORTED
- *                      if this counter does not support reading the absolute count.
+ *                      if this counter does not support reading the absolute count
+ *                      or the counter driver is disabled.
  */
 pbio_error_t pbdrv_counter_get_abs_count(pbdrv_counter_dev_t *dev, int32_t *count) {
     if (!dev->funcs->get_abs_count) {
@@ -74,7 +75,7 @@ pbio_error_t pbdrv_counter_get_abs_count(pbdrv_counter_dev_t *dev, int32_t *coun
  * @param [out] rate    Returns the rate on success
  * @return              ::PBIO_SUCCESS on success, ::PBIO_ERROR_NO_DEV if the
  *                      counter has not been initialized, ::PBIO_ERROR_NOT_SUPPORTED
- *                      if this counter does not support reading the rate.
+ *                      if the counter driver is disabled.
  */
 pbio_error_t pbdrv_counter_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
     return dev->funcs->get_rate(dev, rate);
