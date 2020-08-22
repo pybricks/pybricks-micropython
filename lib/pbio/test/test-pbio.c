@@ -31,7 +31,6 @@ static void pbio_test_run_thread(void *env) {
     struct timer timer;
 
     pbio_init();
-    process_start(&etimer_process, NULL);
 
     PT_INIT(&pt)
     timer_set(&timer, clock_from_msec(PBIO_TEST_TIMEOUT));
@@ -43,8 +42,7 @@ static void pbio_test_run_thread(void *env) {
         }
     }
 
-end:
-    process_exit(&etimer_process);
+end:;
 }
 
 static void *setup(const struct testcase_t *test_case) {

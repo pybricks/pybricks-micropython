@@ -27,33 +27,32 @@ static clock_time_t prev_fast_poll_time;
 static clock_time_t prev_slow_poll_time;
 
 AUTOSTART_PROCESSES(
-    &etimer_process
 #if PBDRV_CONFIG_ADC
-    ,&pbdrv_adc_process
+    &pbdrv_adc_process,
 #endif
 #if PBDRV_CONFIG_BLUETOOTH
-    ,&pbdrv_bluetooth_hci_process
-    ,&pbdrv_bluetooth_spi_process
+    &pbdrv_bluetooth_hci_process,
+    &pbdrv_bluetooth_spi_process,
 #endif
 #if PBDRV_CONFIG_IOPORT_EV3DEV_STRETCH
-    ,&pbdrv_ioport_ev3dev_stretch_process
+    &pbdrv_ioport_ev3dev_stretch_process,
 #endif
 #if PBDRV_CONFIG_IOPORT_LPF2
-    ,&pbdrv_ioport_lpf2_process
+    &pbdrv_ioport_lpf2_process,
 #endif
 #if PBDRV_CONFIG_UART
-    ,&pbdrv_uart_process
+    &pbdrv_uart_process,
 #endif
 #if PBDRV_CONFIG_USB
-    ,&pbdrv_usb_process
+    &pbdrv_usb_process,
 #endif
 #if PBIO_CONFIG_UARTDEV
-    ,&pbio_uartdev_process
+    &pbio_uartdev_process,
 #endif
 #if PBIO_CONFIG_ENABLE_SYS
-    ,&pbsys_process
+    &pbsys_process,
 #endif
-    );
+    NULL);
 
 /**
  * Initialize the Pybricks I/O Library. This function must be called once,

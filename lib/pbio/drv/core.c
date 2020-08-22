@@ -13,6 +13,7 @@
 void pbdrv_init() {
     clock_init();
     process_init();
+    process_start(&etimer_process, NULL);
     pbdrv_battery_init();
     pbdrv_counter_init();
     pbdrv_led_init();
