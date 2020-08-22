@@ -60,7 +60,7 @@ pbio_error_t pbdrv_led_get_dev(uint8_t id, pbdrv_led_dev_t **dev) {
  * The V in HSV will be the brightness of the LED. Colors like brown and gray
  * are not possible since LEDs emit light rather than reflect it.
  *
- * The light may not be capabile of displaying all colors or may not have
+ * The light may not be capable of displaying all colors or may not have
  * adjustable brightness. If a light is only white, the color values
  * will be averaged to give the final intensity. If the light only has one or
  * two of the possible three colors, the other color values will be ignored.
