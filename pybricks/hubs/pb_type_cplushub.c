@@ -6,6 +6,7 @@
 #if PYBRICKS_PY_HUBS && PYBRICKS_HUB_CPLUSHUB
 
 #include <pbdrv/reset.h>
+#include <pbsys/light.h>
 
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
@@ -18,7 +19,7 @@ typedef struct _hubs_CPlusHub_obj_t {
 STATIC mp_obj_t hubs_CPlusHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     hubs_CPlusHub_obj_t *self = m_new_obj(hubs_CPlusHub_obj_t);
     self->base.type = (mp_obj_type_t *)type;
-    self->light = common_ColorLight_internal_obj_make_new();
+    self->light = common_ColorLight_internal_obj_new(pbsys_status_light);
     return MP_OBJ_FROM_PTR(self);
 }
 

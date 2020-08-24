@@ -5,12 +5,13 @@
 
 #if PYBRICKS_PY_HUBS && PYBRICKS_HUB_EV3BRICK
 
-#include <pbsys/sys.h>
-
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
 
 #include "pb_ev3dev_types.h"
+
+// defined in pbio/platform/ev3dev_stretch/status_light.c
+extern pbio_color_light_t *ev3dev_status_light;
 
 typedef struct _hubs_EV3Brick_obj_t {
     mp_obj_base_t base;
@@ -28,7 +29,7 @@ STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
 
     self->speaker = pb_type_ev3dev_Speaker.make_new(&pb_type_ev3dev_Speaker, 0, 0, NULL);
 
-    self->light = common_ColorLight_internal_obj_make_new(NULL);
+    self->light = common_ColorLight_internal_obj_new(ev3dev_status_light);
     return MP_OBJ_FROM_PTR(self);
 }
 

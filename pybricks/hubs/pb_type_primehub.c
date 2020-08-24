@@ -9,7 +9,7 @@
 #error "PYBRICKS_PY_COMMON_LIGHTGRID and PYBRICKS_PY_PARAMETERS_BUTTON must be enabled."
 #endif
 
-#include <pbsys/sys.h>
+#include <pbsys/light.h>
 
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
@@ -23,7 +23,7 @@ typedef struct _hubs_PrimeHub_obj_t {
 STATIC mp_obj_t hubs_PrimeHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     hubs_PrimeHub_obj_t *self = m_new_obj(hubs_PrimeHub_obj_t);
     self->base.type = (mp_obj_type_t *)type;
-    self->light = common_ColorLight_internal_obj_make_new();
+    self->light = common_ColorLight_internal_obj_new(pbsys_status_light);
     self->grid = common_LightGrid_obj_make_new();
     return MP_OBJ_FROM_PTR(self);
 }

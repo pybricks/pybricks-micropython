@@ -303,15 +303,15 @@ PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 	pbio/drv/counter/counter_ev3dev_stretch_iio.c \
 	pbio/drv/ev3dev_stretch/motor.c \
 	pbio/drv/ioport/ioport_ev3dev_stretch.c \
-	pbio/drv/led/led_core.c \
-	pbio/drv/led/led_ev3dev.c \
+	pbio/platform/ev3dev_stretch/status_light.c \
 	pbio/src/color/conversion.c \
 	pbio/src/control.c \
 	pbio/src/dcmotor.c \
 	pbio/src/drivebase.c \
 	pbio/src/error.c \
 	pbio/src/integrator.c \
-	pbio/src/light.c \
+	pbio/src/light/animation.c \
+	pbio/src/light/color_light.c \
 	pbio/src/logger.c \
 	pbio/src/main.c \
 	pbio/src/math.c \

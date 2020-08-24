@@ -85,6 +85,15 @@ static struct testcase_t pbio_color_tests[] = {
     END_OF_TESTCASES
 };
 
+PBIO_TP_THREAD_TEST_FUNC(test_light_animation);
+PBIO_TP_THREAD_TEST_FUNC(test_color_light);
+
+static struct testcase_t pbio_light_tests[] = {
+    PBIO_PT_THREAD_TEST(test_light_animation),
+    PBIO_PT_THREAD_TEST(test_color_light),
+    END_OF_TESTCASES
+};
+
 PBIO_TEST_FUNC(test_sqrt);
 PBIO_TEST_FUNC(test_mul_i32_fix16);
 PBIO_TEST_FUNC(test_div_i32_fix16);
@@ -121,6 +130,7 @@ static struct testcase_t pbsys_status_tests[] = {
 static struct testgroup_t test_groups[] = {
     { "drv/pwm/", pbdrv_pwm_tests },
     { "src/color/", pbio_color_tests },
+    { "src/light/", pbio_light_tests },
     { "src/math/", pbio_math_tests },
     { "src/uartdev/", pbio_uartdev_tests, },
     { "sys/status/", pbsys_status_tests, },

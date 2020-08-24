@@ -94,7 +94,8 @@ void pybricks_init() {
     grx_draw_filled_convex_polygon(G_N_ELEMENTS(triangle), triangle, GRX_COLOR_BLACK);
 
     pbio_init();
-    pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE); // TODO: define PBIO_LIGHT_PATTERN_EV3_RUN (Or, discuss if we want to use breathe for EV3, too)
+    extern void ev3dev_status_light_init();
+    ev3dev_status_light_init();
     pthread_create(&task_caller_thread, NULL, task_caller, NULL);
 }
 

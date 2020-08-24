@@ -23,8 +23,6 @@ typedef struct _pbdrv_led_dev_t pbdrv_led_dev_t;
 
 pbio_error_t pbdrv_led_get_dev(uint8_t id, pbdrv_led_dev_t **dev);
 pbio_error_t pbdrv_led_set_hsv(pbdrv_led_dev_t *dev, const pbio_color_hsv_t *hsv);
-pbio_error_t pbdrv_led_on(pbdrv_led_dev_t *dev, pbio_color_t color);
-pbio_error_t pbdrv_led_off(pbdrv_led_dev_t *dev);
 
 #else // PBDRV_CONFIG_LED
 
@@ -34,14 +32,6 @@ static inline pbio_error_t pbdrv_led_get_dev(uint8_t id, pbdrv_led_dev_t **dev) 
 }
 
 static inline pbio_error_t pbdrv_led_set_hsv(pbdrv_led_dev_t *dev, const pbio_color_hsv_t *hsv) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbdrv_led_on(pbdrv_led_dev_t *dev, pbio_color_t color) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-static inline pbio_error_t pbdrv_led_off(pbdrv_led_dev_t *dev) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

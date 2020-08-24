@@ -11,10 +11,11 @@
 #include "pbio/motorpoll.h"
 
 #include <pbsys/battery.h>
-#include <pbsys/hmi.h>
 #include <pbsys/status.h>
 #include <pbsys/supervisor.h>
 #include <pbsys/sys.h>
+
+#include "../sys/hmi.h"
 
 // ring buffer size for stdin data - must be power of 2!
 #define STDIN_BUF_SIZE 128
@@ -87,10 +88,12 @@ PROCESS_THREAD(pbsys_process, ev, data) {
     PROCESS_BEGIN();
 
     pbsys_battery_init();
+    pbsys_hmi_init();
     etimer_set(&timer, clock_from_msec(50));
 
     while (true) {
         PROCESS_WAIT_EVENT();
+        pbsys_hmi_handle_event(ev, data);
         if (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)) {
             etimer_reset(&timer);
             pbsys_battery_poll();

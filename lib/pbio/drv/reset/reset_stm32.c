@@ -13,10 +13,7 @@
 #include <contiki.h>
 #include STM32_H
 
-#include <pbdrv/led.h>
 #include <pbdrv/reset.h>
-
-#include <pbio/color.h>
 
 #if PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER
 
@@ -45,18 +42,6 @@ void pbdrv_reset(pbdrv_reset_action_t action) {
 
         default:
             break;
-    }
-
-    pbdrv_led_dev_t *led;
-    pbdrv_led_get_dev(0, &led);
-
-    // blink pattern like LEGO firmware
-    // FIXME: this is not working on any hub
-    for (int i = 0; i < 3; i++) {
-        pbdrv_led_on(led, PBIO_COLOR_WHITE);
-        clock_delay_usec(50000);
-        pbdrv_led_off(led);
-        clock_delay_usec(30000);
     }
 
     __disable_irq();

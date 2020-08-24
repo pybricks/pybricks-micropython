@@ -37,10 +37,6 @@
 #define PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT PBIO_PORT_1
 #define PBDRV_CONFIG_IOPORT_LPF2_LAST_PORT PBIO_PORT_4
 
-#define PBDRV_CONFIG_LED                                    (1)
-#define PBDRV_CONFIG_LED_NUM_DEV                            (1)
-#define PBDRV_CONFIG_LED_EV3DEV                             (1)
-
 #define PBDRV_CONFIG_MOTOR                                  (1)
 
 #define PBDRV_CONFIG_FIRST_MOTOR_PORT PBIO_PORT_A

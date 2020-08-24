@@ -24,7 +24,6 @@
 #include "processes.h"
 
 static clock_time_t prev_fast_poll_time;
-static clock_time_t prev_slow_poll_time;
 
 AUTOSTART_PROCESSES(
 #if PBDRV_CONFIG_ADC
@@ -81,10 +80,6 @@ int pbio_do_one_event(void) {
     if (now - prev_fast_poll_time >= clock_from_msec(PBIO_CONFIG_SERVO_PERIOD_MS)) {
         _pbio_motorpoll_poll();
         prev_fast_poll_time = clock_time();
-    }
-    if (now - prev_slow_poll_time >= clock_from_msec(32)) {
-        _pbio_light_poll(now);
-        prev_slow_poll_time = now;
     }
     return process_run();
 }

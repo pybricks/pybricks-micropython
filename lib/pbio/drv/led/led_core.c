@@ -13,7 +13,6 @@
 #include <pbio/error.h>
 
 #include "led_dual.h"
-#include "led_ev3dev.h"
 #include "led_pwm.h"
 #include "led.h"
 
@@ -25,7 +24,6 @@ static pbdrv_led_dev_t pbdrv_led_dev[PBDRV_CONFIG_LED_NUM_DEV];
 
 void pbdrv_led_init() {
     pbdrv_led_dual_init(pbdrv_led_dev);
-    pbdrv_led_ev3dev_init(pbdrv_led_dev);
     pbdrv_led_pwm_init(pbdrv_led_dev);
 }
 
@@ -73,33 +71,6 @@ pbio_error_t pbdrv_led_get_dev(uint8_t id, pbdrv_led_dev_t **dev) {
  */
 pbio_error_t pbdrv_led_set_hsv(pbdrv_led_dev_t *dev, const pbio_color_hsv_t *hsv) {
     return dev->funcs->set_hsv(dev, hsv);
-}
-
-/**
- * Turn on LED and sets the color.
- *
- * See pbdrv_led_set_hsv() for additional information.
- * @param [in]  dev         The LED device instance
- * @param [in]  color       The color
- * @return                  ::PBIO_SUCCESS if the call was successful,
- *                          ::PBIO_ERROR_IO if there was an I/O error
- */
-pbio_error_t pbdrv_led_on(pbdrv_led_dev_t *dev, pbio_color_t color) {
-    pbio_color_hsv_t hsv;
-    pbio_color_to_hsv(color, &hsv);
-    return pbdrv_led_set_hsv(dev, &hsv);
-}
-
-/**
- * Turn off LED.
- *
- * @param [in]  dev         The LED device instance
- * @return                  ::PBIO_SUCCESS if the call was successful,
- *                          ::PBIO_ERROR_IO if there was an I/O error
- */
-pbio_error_t pbdrv_led_off(pbdrv_led_dev_t *dev) {
-    pbio_color_hsv_t hsv = { 0 };
-    return pbdrv_led_set_hsv(dev, &hsv);
 }
 
 #endif // PBDRV_CONFIG_LED

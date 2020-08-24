@@ -9,11 +9,12 @@
 #include "pbio/event.h"
 #include "pbio/light.h"
 
-#include <pbsys/hmi.h>
 #include <pbsys/status.h>
 #include <pbsys/sys.h>
 
 #include "stm32f4xx.h"
+
+#include "../sys/hmi.h"
 
 // user program stop function
 static pbsys_stop_callback_t user_stop_func;
@@ -30,7 +31,6 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
         user_stop_func = NULL;
         user_stdin_event_func = NULL;
     }
-    pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE);
     pbsys_status_set(PBSYS_STATUS_USER_PROGRAM_RUNNING);
 }
 
@@ -64,10 +64,12 @@ PROCESS_THREAD(pbsys_process, ev, data) {
 
     PROCESS_BEGIN();
 
+    pbsys_hmi_init();
     etimer_set(&timer, clock_from_msec(50));
 
     while (true) {
         PROCESS_WAIT_EVENT();
+        pbsys_hmi_handle_event(ev, data);
         if (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)) {
             etimer_reset(&timer);
             pbsys_hmi_poll();

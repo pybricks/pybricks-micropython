@@ -9,80 +9,63 @@
 #ifndef _PBIO_LIGHT_H_
 #define _PBIO_LIGHT_H_
 
-#include <stdbool.h>
-
 #include <pbio/color.h>
 #include <pbio/config.h>
 #include <pbio/error.h>
-#include <pbio/port.h>
+
+/** Color light instance. */
+typedef struct _pbio_color_light_t pbio_color_light_t;
+
+/** Single element of a color light animation. */
+typedef struct {
+    /** The color and brightness for this cell. See pbio_color_light_on_hsv(). */
+    pbio_color_hsv_t hsv;
+    /** The duration of this cell in milliseconds. */
+    uint32_t duration;
+} pbio_color_light_animation_cell_t;
 
 /**
- * Light patterns.
+ * Convience macro for defining ::pbio_color_light_animation_cell_t cells.
+ * @param [in]  h_  The hue (0 to 360)
+ * @param [in]  s_  The saturation (0 to 100)
+ * @param [in]  v_  The brightness (0 to 100)
+ * @param [in]  d   The duration in milliseconds (> 0)
  */
-typedef enum {
-    PBIO_LIGHT_PATTERN_NONE,    /**< The light does not change */
-    PBIO_LIGHT_PATTERN_FLASH,   /**< The light flashes */
-    PBIO_LIGHT_PATTERN_BREATHE, /**< The light breathes */
-} pbio_light_pattern_t;
+#define PBIO_COLOR_LIGHT_ANIMATION_CELL(h_, s_, v_, d) \
+    { .hsv = { .h = (h_), .s = (s_), .v = (v_) }, .duration = (d) }
+
+/** Sentinel value for a color light animation array. */
+#define PBIO_COLOR_LIGHT_ANIMATION_END { .duration = 0 }
 
 #if PBIO_CONFIG_LIGHT
 
-/**
- * Turns the light on. Some lights may not be capable of display all colors or
- * any colors at all. Some lights may not have adjustable brightness.
- * @param [in]  port        The light port
- * @param [in]  color       The color
- * @return                  ::PBIO_SUCCESS if the call was successful,
- *                          ::PBIO_ERROR_INVALID_PORT if port is not a valid port
- *                          ::PBIO_ERROR_INVALID_ARG if the color value is not valid
- *                          ::PBIO_ERROR_NO_DEV if port is valid but light is not connected
- */
-pbio_error_t pbio_light_on(pbio_port_t port, pbio_color_t color);
+pbio_error_t pbio_color_light_on_hsv(pbio_color_light_t *light, const pbio_color_hsv_t *hsv);
+pbio_error_t pbio_color_light_on(pbio_color_light_t *light, pbio_color_t color);
+pbio_error_t pbio_color_light_off(pbio_color_light_t *light);
+void pbio_color_light_start_animation(pbio_color_light_t *light, const pbio_color_light_animation_cell_t *cells);
+void pbio_color_light_stop_animation(pbio_color_light_t *light);
 
-/**
- * Turns the light on. Some lights may not be capable of display all colors or
- * any colors at all. Some lights may not have adjustable brightness.
- * @param [in]  port        The light port
- * @param [in]  color       The color
- * @param [in]  pattern     The pattern
- * @return                  ::PBIO_SUCCESS if the call was successful,
- *                          ::PBIO_ERROR_INVALID_PORT if port is not a valid port
- *                          ::PBIO_ERROR_INVALID_ARG if the color value or pattern value is not valid
- *                          ::PBIO_ERROR_NO_DEV if port is valid but light is not connected
- */
-pbio_error_t pbio_light_on_with_pattern(pbio_port_t port, pbio_color_t color, pbio_light_pattern_t pattern);
+#else // PBIO_CONFIG_LIGHT
 
-/**
- * Turns the light off.
- * @param [in]  port        The light port
- * @return                  ::PBIO_SUCCESS if the call was successful,
- *                          ::PBIO_ERROR_INVALID_PORT if port is not a valid port
- *                          ::PBIO_ERROR_NO_DEV if port is valid but light is not connected
- */
-pbio_error_t pbio_light_off(pbio_port_t port);
-
-/** @cond INTERNAL */
-pbio_error_t _pbio_light_on(pbio_port_t port, pbio_color_t color, pbio_light_pattern_t pattern);
-void _pbio_light_poll(uint32_t now);
-void _pbio_light_set_user_mode(bool user_mode);
-/** @endcond */
-
-#else
-static inline void _pbio_light_poll(uint32_t now) {
+static inline pbio_error_t pbio_color_light_on_hsv(pbio_color_light_t *light, const pbio_color_hsv_t *hsv) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline void _pbio_light_set_user_mode(bool user_mode) {
+
+static inline pbio_error_t pbio_color_light_on(pbio_color_light_t *light, pbio_color_t color) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline pbio_error_t _pbio_light_on(pbio_port_t port, pbio_color_t color, pbio_light_pattern_t pattern) {
-    return PBIO_SUCCESS;
+
+static inline pbio_error_t pbio_color_light_off(pbio_color_light_t *light) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
+
+static inline void pbio_color_light_start_animation(pbio_color_light_t *light, const pbio_color_light_animation_cell_t *cells) {
+}
+
+static inline void pbio_color_light_stop_animation(pbio_color_light_t *light) {
+}
+
 #endif // PBIO_CONFIG_LIGHT
-
-/** @cond */
-// using macros for reduced code size
-#define pbio_light_on(p, c) _pbio_light_on((p), (c), PBIO_LIGHT_PATTERN_NONE)
-#define pbio_light_on_with_pattern(p, c, t) _pbio_light_on((p), (c), (t))
-#define pbio_light_off(p) _pbio_light_on((p), PBIO_COLOR_NONE, PBIO_LIGHT_PATTERN_NONE)
-/** @endcond */
 
 #endif // _PBIO_LIGHT_H_
 

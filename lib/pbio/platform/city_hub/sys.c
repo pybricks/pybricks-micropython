@@ -11,12 +11,13 @@
 #include "pbio/motorpoll.h"
 
 #include <pbsys/battery.h>
-#include <pbsys/hmi.h>
 #include <pbsys/status.h>
 #include <pbsys/supervisor.h>
 #include <pbsys/sys.h>
 
 #include "stm32f030xc.h"
+
+#include "../sys/hmi.h"
 
 // ring buffer size for stdin data - must be power of 2!
 #define STDIN_BUF_SIZE 128
@@ -40,7 +41,6 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
         user_stop_func = NULL;
         user_stdin_event_func = NULL;
     }
-    pbio_light_on_with_pattern(PBIO_PORT_SELF, PBIO_COLOR_GREEN, PBIO_LIGHT_PATTERN_BREATHE);
     pbsys_status_set(PBSYS_STATUS_USER_PROGRAM_RUNNING);
 }
 
@@ -99,10 +99,12 @@ PROCESS_THREAD(pbsys_process, ev, data) {
 
     init();
     pbsys_battery_init();
+    pbsys_hmi_init();
     etimer_set(&timer, clock_from_msec(50));
 
     while (true) {
         PROCESS_WAIT_EVENT();
+        pbsys_hmi_handle_event(ev, data);
         if (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)) {
             etimer_reset(&timer);
             pbsys_battery_poll();

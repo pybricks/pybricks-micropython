@@ -20,6 +20,7 @@
 // pybricks._common.ColorLight class object
 typedef struct _common_ColorLight_internal_obj_t {
     mp_obj_base_t base;
+    pbio_color_light_t *light;
 } common_ColorLight_internal_obj_t;
 
 // pybricks._common.ColorLight.on
@@ -29,8 +30,6 @@ STATIC mp_obj_t common_ColorLight_internal_on(size_t n_args, const mp_obj_t *pos
         common_ColorLight_internal_obj_t, self,
         PB_ARG_REQUIRED(color),
         PB_ARG_DEFAULT_INT(brightness, 100));
-
-    (void)self;
 
     if (color == mp_const_none) {
         color = pb_const_color_black;
@@ -44,7 +43,7 @@ STATIC mp_obj_t common_ColorLight_internal_on(size_t n_args, const mp_obj_t *pos
         pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
     }
 
-    pb_assert(pbio_light_on(PBIO_PORT_SELF, color_id));
+    pb_assert(pbio_color_light_on(self->light, color_id));
 
     return mp_const_none;
 }
@@ -53,8 +52,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_ColorLight_internal_on_obj, 1, common_C
 // pybricks._common.ColorLight.off
 STATIC mp_obj_t common_ColorLight_internal_off(mp_obj_t self_in) {
     common_ColorLight_internal_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    (void)self;
-    pb_assert(pbio_light_off(PBIO_PORT_SELF));
+
+    pb_assert(pbio_color_light_off(self->light));
 
     return mp_const_none;
 }
@@ -75,11 +74,12 @@ STATIC const mp_obj_type_t pb_type_ColorLight_internal = {
 };
 
 // pybricks._common.ColorLight.__init__
-mp_obj_t common_ColorLight_internal_obj_make_new() {
+mp_obj_t common_ColorLight_internal_obj_new(pbio_color_light_t *light) {
     // Create new light instance
-    common_ColorLight_internal_obj_t *light = m_new_obj(common_ColorLight_internal_obj_t);
-    light->base.type = &pb_type_ColorLight_internal;
-    return light;
+    common_ColorLight_internal_obj_t *self = m_new_obj(common_ColorLight_internal_obj_t);
+    self->base.type = &pb_type_ColorLight_internal;
+    self->light = light;
+    return self;
 }
 
 #endif // PYBRICKS_PY_COMMON
