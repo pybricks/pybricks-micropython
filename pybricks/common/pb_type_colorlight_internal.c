@@ -39,11 +39,10 @@ STATIC mp_obj_t common_ColorLight_internal_on(size_t n_args, const mp_obj_t *pos
 
     mp_int_t bright = pb_obj_get_pct(brightness);
 
-    if (bright != 100) {
-        pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
-    }
-
-    pb_assert(pbio_color_light_on(self->light, color_id));
+    pbio_color_hsv_t hsv;
+    pbio_color_to_hsv(color_id, &hsv);
+    hsv.v = bright;
+    pb_assert(pbio_color_light_on_hsv(self->light, &hsv));
 
     return mp_const_none;
 }
