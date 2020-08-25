@@ -20,8 +20,8 @@
 // Class structure for Matrix
 typedef struct _pb_type_Matrix_obj_t {
     mp_obj_base_t base;
-    float_t *data;
-    float_t scale;
+    float *data;
+    float scale;
     size_t m;
     size_t n;
     bool transposed;
@@ -64,7 +64,7 @@ STATIC mp_obj_t pb_type_Matrix_make_new(const mp_obj_type_t *type, size_t n_args
     self->base.type = (mp_obj_type_t *)type;
     self->m = m;
     self->n = n;
-    self->data = m_new(float_t, self->m * self->n);
+    self->data = m_new(float, self->m * self->n);
 
     // Iterate through each of the rows to get the scalars
     for (size_t r = 0; r < self->m; r++) {
@@ -89,7 +89,7 @@ STATIC mp_obj_t pb_type_Matrix_make_new(const mp_obj_type_t *type, size_t n_args
 }
 
 // Get string representation of the form -123.456
-static void print_float(char *buf, float_t x) {
+static void print_float(char *buf, float x) {
 
     // Convert to positive int
     int32_t val = (int32_t)(x * 1000);
@@ -199,7 +199,7 @@ STATIC mp_obj_t pb_type_Matrix__add(mp_obj_t lhs_obj, mp_obj_t rhs_obj, bool add
     ret->base.type = &pb_type_Matrix_type;
     ret->m = lhs->m;
     ret->n = rhs->n;
-    ret->data = m_new(float_t, ret->m * ret->n);
+    ret->data = m_new(float, ret->m * ret->n);
 
     // Add the matrices by looping over rows and columns
     for (size_t r = 0; r < ret->m; r++) {
@@ -223,11 +223,11 @@ STATIC mp_obj_t pb_type_Matrix__add(mp_obj_t lhs_obj, mp_obj_t rhs_obj, bool add
 }
 
 // pybricks.robotics.Matrix._mul
-STATIC mp_obj_t pb_type_Matrix__mul(mp_obj_t lhs_obj, mp_obj_t rhs_obj) {
+STATIC mp_obj_t pb_type_Matrix__mul(mp_obj_t lhs_in, mp_obj_t rhs_in) {
 
     // Get left and right matrices
-    pb_type_Matrix_obj_t *lhs = MP_OBJ_TO_PTR(lhs_obj);
-    pb_type_Matrix_obj_t *rhs = MP_OBJ_TO_PTR(rhs_obj);
+    pb_type_Matrix_obj_t *lhs = MP_OBJ_TO_PTR(lhs_in);
+    pb_type_Matrix_obj_t *rhs = MP_OBJ_TO_PTR(rhs_in);
 
     // Verify matching dimensions else raise error
     if (lhs->n != rhs->m) {
@@ -239,7 +239,7 @@ STATIC mp_obj_t pb_type_Matrix__mul(mp_obj_t lhs_obj, mp_obj_t rhs_obj) {
     ret->base.type = &pb_type_Matrix_type;
     ret->m = lhs->m;
     ret->n = rhs->n;
-    ret->data = m_new(float_t, ret->m * ret->n);
+    ret->data = m_new(float, ret->m * ret->n);
 
     // Scale is commutative, so we can do it separately
     ret->scale = lhs->scale * rhs->scale;
@@ -250,7 +250,7 @@ STATIC mp_obj_t pb_type_Matrix__mul(mp_obj_t lhs_obj, mp_obj_t rhs_obj) {
         for (size_t c = 0; c < ret->n; c++) {
             // This entry is obtained as the sum of the products of the entries
             // of the r'th row of lhs and the c'th column of rhs, so size lhs->n.
-            float_t sum = 0;
+            float sum = 0;
             for (size_t k = 0; k < lhs->n; k++) {
                 // k'th entry on the r'th row (i = r, j = k)
                 size_t lhs_idx = lhs->transposed ? k * lhs->m + r : r * lhs->n + k;
@@ -274,7 +274,7 @@ STATIC mp_obj_t pb_type_Matrix__mul(mp_obj_t lhs_obj, mp_obj_t rhs_obj) {
 }
 
 // pybricks.robotics.Matrix._scale
-STATIC mp_obj_t pb_type_Matrix__scale(mp_obj_t self_in, float_t scale) {
+STATIC mp_obj_t pb_type_Matrix__scale(mp_obj_t self_in, float scale) {
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     pb_type_Matrix_obj_t *copy = m_new_obj(pb_type_Matrix_obj_t);
@@ -291,7 +291,7 @@ STATIC mp_obj_t pb_type_Matrix__scale(mp_obj_t self_in, float_t scale) {
 }
 
 // pybricks.robotics.Matrix._get_scalar
-float_t pb_type_Matrix__get_scalar(mp_obj_t self_in, size_t r, size_t c) {
+float pb_type_Matrix__get_scalar(mp_obj_t self_in, size_t r, size_t c) {
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     if (r >= self->m || c >= self->n) {
@@ -351,7 +351,7 @@ STATIC mp_obj_t pb_type_Matrix_unary_op(mp_unary_op_t op, mp_obj_t o_in) {
                 for (size_t i = 0; i < len; i++) {
                     squares += self->data[i] * self->data[i];
                 }
-                return mp_obj_new_float(sqrtf(squares) * self->scale);
+                return mp_obj_new_float_from_f(sqrtf(squares) * self->scale);
             }
             // Determinant not implemented
             return MP_OBJ_NULL;
@@ -392,11 +392,11 @@ STATIC mp_obj_t pb_type_Matrix_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_
     }
 }
 
-STATIC mp_obj_t pb_type_subscr(mp_obj_t self_in, mp_obj_t index_in, mp_obj_t value) {
+STATIC mp_obj_t pb_type_Matrix_subscr(mp_obj_t self_in, mp_obj_t index_in, mp_obj_t value_in) {
 
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    if (value == MP_OBJ_SENTINEL) {
+    if (value_in == MP_OBJ_SENTINEL) {
         // Integer index is just reading straight from self->data[idx].
         // But we need to do some checks to make sure we read within bounds.
         mp_int_t len = self->m * self->n;
@@ -467,7 +467,7 @@ const mp_obj_type_t pb_type_Matrix_type = {
     .make_new = pb_type_Matrix_make_new,
     .unary_op = pb_type_Matrix_unary_op,
     .binary_op = pb_type_Matrix_binary_op,
-    .subscr = pb_type_subscr,
+    .subscr = pb_type_Matrix_subscr,
     .locals_dict = (mp_obj_dict_t *)&pb_type_Matrix_locals_dict,
 };
 
@@ -475,10 +475,10 @@ const mp_obj_type_t pb_type_Matrix_type = {
 STATIC mp_obj_t robotics__vector(size_t n_args, const mp_obj_t *args, bool normalize) {
     pb_type_Matrix_obj_t *mat = m_new_obj(pb_type_Matrix_obj_t);
     mat->base.type = &pb_type_Matrix_type;
-    mat->data = m_new(float_t, n_args);
+    mat->data = m_new(float, n_args);
     mat->m = n_args;
     mat->n = 1;
-    float_t squares = 0;
+    float squares = 0;
     for (size_t i = 0; i < n_args; i++) {
         mat->data[i] = mp_obj_get_float_to_f(args[i]);
         squares += mat->data[i] * mat->data[i];

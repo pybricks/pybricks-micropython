@@ -68,7 +68,7 @@ static void common_LightGrid_image__extract(mp_obj_t image_in, size_t size, uint
     if (mp_obj_is_type(image_in, &pb_type_Matrix_type)) {
         for (size_t r = 0; r < size; r++) {
             for (size_t c = 0; c < size; c++) {
-                data[r * size + c] = pb_type_Matrix__get_scalar(image_in, r, c);
+                data[r * size + c] = (uint8_t)pb_type_Matrix__get_scalar(image_in, r, c);
             }
         }
         return;

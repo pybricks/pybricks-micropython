@@ -15,7 +15,7 @@
 #if MICROPY_PY_BUILTINS_FLOAT
 
 const mp_obj_type_t pb_type_Matrix_type;
-float_t pb_type_Matrix__get_scalar(mp_obj_t self_in, size_t r, size_t c);
+float pb_type_Matrix__get_scalar(mp_obj_t self_in, size_t r, size_t c);
 
 const mp_obj_fun_builtin_var_t pb_func_Vector;
 const mp_obj_fun_builtin_var_t pb_func_UnitVector;
