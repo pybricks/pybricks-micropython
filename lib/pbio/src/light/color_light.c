@@ -78,10 +78,10 @@ pbio_error_t pbio_color_light_off(pbio_color_light_t *light) {
     return pbio_color_light_on_hsv(light, &hsv);
 }
 
-static clock_time_t pbio_color_light_animation_next(pbio_light_animation_t *animation) {
+static clock_time_t pbio_color_light_blink_next(pbio_light_animation_t *animation) {
     pbio_color_light_t *light = PBIO_CONTAINER_OF(animation, pbio_color_light_t, animation);
 
-    const pbio_color_light_animation_cell_t *cell = &light->cells[light->current_cell++];
+    const pbio_color_light_blink_cell_t *cell = &light->cells[light->current_cell++];
 
     // if we have reached the array terminator, start back at the beginning
     if (cell->duration == 0) {
@@ -89,39 +89,39 @@ static clock_time_t pbio_color_light_animation_next(pbio_light_animation_t *anim
         light->current_cell = 1;
     }
 
-    pbio_color_light_on_hsv(light, &cell->hsv);
+    pbio_color_light_on(light, cell->color);
     return clock_from_msec(cell->duration);
 }
 
 /**
- * Starts animating the light.
+ * Starts blinking the light.
  *
- * This will start a background timer to animate the lights using the information
- * in @p cells. The data in @p cells must remain valid until pbio_color_light_stop_animation()
+ * This will start a background timer to blink the lights using the information
+ * in @p cells. The data in @p cells must remain valid until pbio_color_light_stop_blink()
  * is called.
  *
- * The animation must be stopped by calling pbio_color_light_stop_animation()
- * before using other color light functions including calling pbio_color_light_start_animation()
- * again, otherwise the animation will continue to update the light.
+ * The blinking must be stopped by calling pbio_color_light_stop_blink()
+ * before using other color light functions including calling pbio_color_light_start_blink()
+ * again, otherwise the background timer will continue to update the light.
  *
  * @param [in]  light       The light instance
- * @param [in]  cells       Array of up to 256 animation cells ending with ::PBIO_COLOR_LIGHT_ANIMATION_END
+ * @param [in]  cells       Array of up to 256 blink animation cells ending with ::PBIO_COLOR_LIGHT_BLINK_END
  */
-void pbio_color_light_start_animation(pbio_color_light_t *light, const pbio_color_light_animation_cell_t *cells) {
-    pbio_light_animation_init(&light->animation, pbio_color_light_animation_next);
+void pbio_color_light_start_blink(pbio_color_light_t *light, const pbio_color_light_blink_cell_t *cells) {
+    pbio_light_animation_init(&light->animation, pbio_color_light_blink_next);
     light->cells = cells;
     light->current_cell = 0;
     pbio_light_animation_start(&light->animation);
 }
 
 /**
- * Stops animating the light.
+ * Stops blinking the light.
  *
- * See pbio_color_light_start_animation().
+ * See pbio_color_light_start_blink().
  *
  * @param [in]  light       The light instance
  */
-void pbio_color_light_stop_animation(pbio_color_light_t *light) {
+void pbio_color_light_stop_blink(pbio_color_light_t *light) {
     pbio_light_animation_stop(&light->animation);
 }
 

@@ -24,7 +24,7 @@ typedef struct {
 struct _pbio_color_light_t {
     pbio_light_animation_t animation;
     const pbio_color_light_funcs_t *funcs;
-    const pbio_color_light_animation_cell_t *cells;
+    const pbio_color_light_blink_cell_t *cells;
     uint8_t current_cell;
 };
 

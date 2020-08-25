@@ -16,34 +16,32 @@
 /** Color light instance. */
 typedef struct _pbio_color_light_t pbio_color_light_t;
 
-/** Single element of a color light animation. */
+/** Single element of a color light blink animation. */
 typedef struct {
-    /** The color and brightness for this cell. See pbio_color_light_on_hsv(). */
-    pbio_color_hsv_t hsv;
+    /** The color for this cell. See pbio_color_light_on(). */
+    pbio_color_t color;
     /** The duration of this cell in milliseconds. */
     uint32_t duration;
-} pbio_color_light_animation_cell_t;
+} pbio_color_light_blink_cell_t;
 
 /**
- * Convience macro for defining ::pbio_color_light_animation_cell_t cells.
- * @param [in]  h_  The hue (0 to 360)
- * @param [in]  s_  The saturation (0 to 100)
- * @param [in]  v_  The brightness (0 to 100)
+ * Convience macro for defining ::pbio_color_light_blink_cell_t cells.
+ * @param [in]  c   The color
  * @param [in]  d   The duration in milliseconds (> 0)
  */
-#define PBIO_COLOR_LIGHT_ANIMATION_CELL(h_, s_, v_, d) \
-    { .hsv = { .h = (h_), .s = (s_), .v = (v_) }, .duration = (d) }
+#define PBIO_COLOR_LIGHT_BLINK_CELL(c, d) \
+    { .color = (c), .duration = (d) }
 
-/** Sentinel value for a color light animation array. */
-#define PBIO_COLOR_LIGHT_ANIMATION_END { .duration = 0 }
+/** Sentinel value for a color light blink array. */
+#define PBIO_COLOR_LIGHT_BLINK_END { .duration = 0 }
 
 #if PBIO_CONFIG_LIGHT
 
 pbio_error_t pbio_color_light_on_hsv(pbio_color_light_t *light, const pbio_color_hsv_t *hsv);
 pbio_error_t pbio_color_light_on(pbio_color_light_t *light, pbio_color_t color);
 pbio_error_t pbio_color_light_off(pbio_color_light_t *light);
-void pbio_color_light_start_animation(pbio_color_light_t *light, const pbio_color_light_animation_cell_t *cells);
-void pbio_color_light_stop_animation(pbio_color_light_t *light);
+void pbio_color_light_start_blink(pbio_color_light_t *light, const pbio_color_light_blink_cell_t *cells);
+void pbio_color_light_stop_blink(pbio_color_light_t *light);
 
 #else // PBIO_CONFIG_LIGHT
 
@@ -59,10 +57,10 @@ static inline pbio_error_t pbio_color_light_off(pbio_color_light_t *light) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbio_color_light_start_animation(pbio_color_light_t *light, const pbio_color_light_animation_cell_t *cells) {
+static inline void pbio_color_light_start_blink(pbio_color_light_t *light, const pbio_color_light_blink_cell_t *cells) {
 }
 
-static inline void pbio_color_light_stop_animation(pbio_color_light_t *light) {
+static inline void pbio_color_light_stop_blink(pbio_color_light_t *light) {
 }
 
 #endif // PBIO_CONFIG_LIGHT
