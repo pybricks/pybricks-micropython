@@ -29,6 +29,12 @@ static const pbio_color_light_blink_cell_t test_blink[] = {
     PBIO_COLOR_LIGHT_BLINK_END
 };
 
+static const pbio_color_hsv_t test_animation[] = {
+    PBIO_COLOR_LIGHT_ANIMATION_CELL(GREEN_HUE, 100, 100),
+    PBIO_COLOR_LIGHT_ANIMATION_CELL(BLUE_HUE, 100, 100),
+    PBIO_COLOR_LIGHT_ANIMATION_END
+};
+
 static pbio_error_t test_light_set_hsv(pbio_color_light_t *light, const pbio_color_hsv_t *hsv) {
     test_light_set_hsv_call_count++;
     test_light_set_hsv_last_hue = hsv->h;
@@ -78,6 +84,29 @@ PT_THREAD(test_color_light(struct pt *pt)) {
     tt_want(timer_expired(&timer));
 
     pbio_color_light_stop_blink(&test_light);
+
+    // reset call count for next series of tests
+    test_light_set_hsv_call_count = 0;
+
+    // starting animation should call set_hsv() synchonously
+    pbio_color_light_start_animation(&test_light, TEST_ANIMATION_TIME, test_animation);
+    tt_want_uint_op(test_light_set_hsv_call_count, ==, 1);
+    tt_want_uint_op(test_light_set_hsv_last_hue, ==, GREEN_HUE);
+
+    // set_hsv() should not be called again until after a delay and it should
+    // receive the next hue in the list
+    timer_set(&timer, TEST_ANIMATION_TIME);
+    PT_WAIT_UNTIL(pt, test_light_set_hsv_call_count == 2);
+    tt_want_uint_op(test_light_set_hsv_last_hue, ==, BLUE_HUE);
+    tt_want(timer_expired(&timer));
+
+    // then the next animation update should wrap back to the start of the list
+    timer_set(&timer, TEST_ANIMATION_TIME);
+    PT_WAIT_UNTIL(pt, test_light_set_hsv_call_count == 3);
+    tt_want_uint_op(test_light_set_hsv_last_hue, ==, GREEN_HUE);
+    tt_want(timer_expired(&timer));
+
+    pbio_color_light_stop_animation(&test_light);
 
     PT_END(pt);
 }

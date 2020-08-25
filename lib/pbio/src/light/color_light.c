@@ -81,11 +81,12 @@ pbio_error_t pbio_color_light_off(pbio_color_light_t *light) {
 static clock_time_t pbio_color_light_blink_next(pbio_light_animation_t *animation) {
     pbio_color_light_t *light = PBIO_CONTAINER_OF(animation, pbio_color_light_t, animation);
 
-    const pbio_color_light_blink_cell_t *cell = &light->cells[light->current_cell++];
+    const pbio_color_light_blink_cell_t *cells = light->cells;
+    const pbio_color_light_blink_cell_t *cell = &cells[light->current_cell++];
 
     // if we have reached the array terminator, start back at the beginning
     if (cell->duration == 0) {
-        cell = &light->cells[0];
+        cell = &cells[0];
         light->current_cell = 1;
     }
 
@@ -122,6 +123,56 @@ void pbio_color_light_start_blink(pbio_color_light_t *light, const pbio_color_li
  * @param [in]  light       The light instance
  */
 void pbio_color_light_stop_blink(pbio_color_light_t *light) {
+    pbio_light_animation_stop(&light->animation);
+}
+
+static clock_time_t pbio_color_light_animate_next(pbio_light_animation_t *animation) {
+    pbio_color_light_t *light = PBIO_CONTAINER_OF(animation, pbio_color_light_t, animation);
+
+    const pbio_color_hsv_t *cells = light->cells;
+    const pbio_color_hsv_t *cell = &cells[light->current_cell++];
+
+    // if we have reached the array terminator, start back at the beginning
+    if (cell->h == UINT16_MAX) {
+        cell = &cells[0];
+        light->current_cell = 1;
+    }
+
+    pbio_color_light_on_hsv(light, cell);
+    return clock_from_msec(light->interval);
+}
+
+/**
+ * Starts animating the light.
+ *
+ * This will start a background timer to animate the lights using the information
+ * in @p cells. The data in @p cells must remain valid until pbio_color_light_stop_animation()
+ * is called.
+ *
+ * The animation must be stopped by calling pbio_color_light_stop_animation()
+ * before using other color light functions including calling pbio_color_light_start_animation()
+ * again, otherwise the background timer will continue to update the light.
+ *
+ * @param [in]  light       The light instance
+ * @param [in]  interval    The the time intervale between animaction cells in milliseconds
+ * @param [in]  cells       Array of up to 256 animation cells ending with ::PBIO_COLOR_LIGHT_ANIMATION_END
+ */
+void pbio_color_light_start_animation(pbio_color_light_t *light, uint16_t interval, const pbio_color_hsv_t *cells) {
+    pbio_light_animation_init(&light->animation, pbio_color_light_animate_next);
+    light->interval = interval;
+    light->cells = cells;
+    light->current_cell = 0;
+    pbio_light_animation_start(&light->animation);
+}
+
+/**
+ * Stops animation the light.
+ *
+ * See pbio_color_light_start_animation().
+ *
+ * @param [in]  light       The light instance
+ */
+void pbio_color_light_stop_animation(pbio_color_light_t *light) {
     pbio_light_animation_stop(&light->animation);
 }
 
