@@ -106,7 +106,7 @@ static clock_time_t pbio_color_light_blink_next(pbio_light_animation_t *animatio
  * again, otherwise the background timer will continue to update the light.
  *
  * @param [in]  light       The light instance
- * @param [in]  cells       Array of up to 256 blink animation cells ending with ::PBIO_COLOR_LIGHT_BLINK_END
+ * @param [in]  cells       Array of up to 65536 blink animation cells ending with ::PBIO_COLOR_LIGHT_BLINK_END
  */
 void pbio_color_light_start_blink_animation(pbio_color_light_t *light, const pbio_color_light_blink_cell_t *cells) {
     pbio_light_animation_init(&light->animation, pbio_color_light_blink_next);
@@ -144,7 +144,7 @@ static clock_time_t pbio_color_light_animate_next(pbio_light_animation_t *animat
  *
  * @param [in]  light       The light instance
  * @param [in]  interval    The the time intervale between animaction cells in milliseconds
- * @param [in]  cells       Array of up to 256 animation cells ending with ::PBIO_COLOR_LIGHT_ANIMATION_END
+ * @param [in]  cells       Array of up to 65536 animation cells ending with ::PBIO_COLOR_LIGHT_ANIMATION_END
  */
 void pbio_color_light_start_animation(pbio_color_light_t *light, uint16_t interval, const pbio_color_hsv_t *cells) {
     pbio_light_animation_init(&light->animation, pbio_color_light_animate_next);

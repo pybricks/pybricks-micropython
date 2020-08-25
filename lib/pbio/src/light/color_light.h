@@ -26,7 +26,7 @@ struct _pbio_color_light_t {
     const pbio_color_light_funcs_t *funcs;
     const void *cells;
     uint16_t interval;
-    uint8_t current_cell;
+    uint16_t current_cell;
 };
 
 void pbio_color_light_init(pbio_color_light_t *light, const pbio_color_light_funcs_t *funcs);
