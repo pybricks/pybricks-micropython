@@ -41,7 +41,7 @@ void pbio_light_animation_start(pbio_light_animation_t *animation) {
         process_start(&pbio_light_animation_process, NULL);
     }
     // HACK: init timer since we don't call etimer_set()
-    timer_restart(&animation->timer.timer);
+    timer_set(&animation->timer.timer, 0);
     // fake a timer event to load the first cell and start the timer
     process_post_synch(&pbio_light_animation_process, PROCESS_EVENT_TIMER, &animation->timer);
 }
