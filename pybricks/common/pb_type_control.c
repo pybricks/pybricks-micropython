@@ -55,15 +55,15 @@ STATIC mp_obj_t common_Control_limits(size_t n_args, const mp_obj_t *pos_args, m
         PB_ARG_DEFAULT_NONE(actuation));
 
     // Read current values
-    int32_t _speed, _acceleration, _actuation;
-    pbio_control_settings_get_limits(&self->control->settings, &_speed, &_acceleration, &_actuation);
+    int32_t speed, acceleration, actuation;
+    pbio_control_settings_get_limits(&self->control->settings, &speed, &acceleration, &actuation);
 
     // If all given values are none, return current values
-    if (speed == mp_const_none && acceleration == mp_const_none && actuation == mp_const_none) {
+    if (speed_in == mp_const_none && acceleration_in == mp_const_none && actuation_in == mp_const_none) {
         mp_obj_t ret[3];
-        ret[0] = mp_obj_new_int(_speed);
-        ret[1] = mp_obj_new_int(_acceleration);
-        ret[2] = mp_obj_new_int(_actuation);
+        ret[0] = mp_obj_new_int(speed);
+        ret[1] = mp_obj_new_int(acceleration);
+        ret[2] = mp_obj_new_int(actuation);
         return mp_obj_new_tuple(3, ret);
     }
 
@@ -71,11 +71,11 @@ STATIC mp_obj_t common_Control_limits(size_t n_args, const mp_obj_t *pos_args, m
     raise_if_control_busy(self->control);
 
     // Set user settings
-    _speed = pb_obj_get_default_int(speed, _speed);
-    _acceleration = pb_obj_get_default_int(acceleration, _acceleration);
-    _actuation = pb_obj_get_default_int(actuation, _actuation);
+    speed = pb_obj_get_default_int(speed_in, speed);
+    acceleration = pb_obj_get_default_int(acceleration_in, acceleration);
+    actuation = pb_obj_get_default_int(actuation_in, actuation);
 
-    pb_assert(pbio_control_settings_set_limits(&self->control->settings, _speed, _acceleration, _actuation));
+    pb_assert(pbio_control_settings_set_limits(&self->control->settings, speed, acceleration, actuation));
 
     return mp_const_none;
 }
@@ -94,20 +94,20 @@ STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_m
         PB_ARG_DEFAULT_NONE(feed_forward));
 
     // Read current values
-    int16_t _kp, _ki, _kd;
-    int32_t _integral_range, _integral_rate, _feed_forward;
-    pbio_control_settings_get_pid(&self->control->settings, &_kp, &_ki, &_kd, &_integral_range, &_integral_rate, &_feed_forward);
+    int16_t kp, ki, kd;
+    int32_t integral_range, integral_rate, feed_forward;
+    pbio_control_settings_get_pid(&self->control->settings, &kp, &ki, &kd, &integral_range, &integral_rate, &feed_forward);
 
     // If all given values are none, return current values
-    if (kp == mp_const_none && ki == mp_const_none && kd == mp_const_none &&
-        integral_range == mp_const_none && integral_rate == mp_const_none && feed_forward == mp_const_none) {
+    if (kp_in == mp_const_none && ki_in == mp_const_none && kd_in == mp_const_none &&
+        integral_range_in == mp_const_none && integral_rate_in == mp_const_none && feed_forward_in == mp_const_none) {
         mp_obj_t ret[6];
-        ret[0] = mp_obj_new_int(_kp);
-        ret[1] = mp_obj_new_int(_ki);
-        ret[2] = mp_obj_new_int(_kd);
-        ret[3] = mp_obj_new_int(_integral_range);
-        ret[4] = mp_obj_new_int(_integral_rate);
-        ret[5] = mp_obj_new_int(_feed_forward);
+        ret[0] = mp_obj_new_int(kp);
+        ret[1] = mp_obj_new_int(ki);
+        ret[2] = mp_obj_new_int(kd);
+        ret[3] = mp_obj_new_int(integral_range);
+        ret[4] = mp_obj_new_int(integral_rate);
+        ret[5] = mp_obj_new_int(feed_forward);
         return mp_obj_new_tuple(6, ret);
     }
 
@@ -115,14 +115,14 @@ STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_m
     raise_if_control_busy(self->control);
 
     // Set user settings
-    _kp = pb_obj_get_default_int(kp, _kp);
-    _ki = pb_obj_get_default_int(ki, _ki);
-    _kd = pb_obj_get_default_int(kd, _kd);
-    _integral_range = pb_obj_get_default_int(integral_range, _integral_range);
-    _integral_rate = pb_obj_get_default_int(integral_rate, _integral_rate);
-    _feed_forward = pb_obj_get_default_int(feed_forward, _feed_forward);
+    kp = pb_obj_get_default_int(kp_in, kp);
+    ki = pb_obj_get_default_int(ki_in, ki);
+    kd = pb_obj_get_default_int(kd_in, kd);
+    integral_range = pb_obj_get_default_int(integral_range_in, integral_range);
+    integral_rate = pb_obj_get_default_int(integral_rate_in, integral_rate);
+    feed_forward = pb_obj_get_default_int(feed_forward_in, feed_forward);
 
-    pb_assert(pbio_control_settings_set_pid(&self->control->settings, _kp, _ki, _kd, _integral_range, _integral_rate, _feed_forward));
+    pb_assert(pbio_control_settings_set_pid(&self->control->settings, kp, ki, kd, integral_range, integral_rate, feed_forward));
 
     return mp_const_none;
 }
@@ -137,14 +137,14 @@ STATIC mp_obj_t common_Control_target_tolerances(size_t n_args, const mp_obj_t *
         PB_ARG_DEFAULT_NONE(position));
 
     // Read current values
-    int32_t _speed, _position;
-    pbio_control_settings_get_target_tolerances(&self->control->settings, &_speed, &_position);
+    int32_t speed, position;
+    pbio_control_settings_get_target_tolerances(&self->control->settings, &speed, &position);
 
     // If all given values are none, return current values
-    if (speed == mp_const_none && position == mp_const_none) {
+    if (speed_in == mp_const_none && position_in == mp_const_none) {
         mp_obj_t ret[2];
-        ret[0] = mp_obj_new_int(_speed);
-        ret[1] = mp_obj_new_int(_position);
+        ret[0] = mp_obj_new_int(speed);
+        ret[1] = mp_obj_new_int(position);
         return mp_obj_new_tuple(2, ret);
     }
 
@@ -152,10 +152,10 @@ STATIC mp_obj_t common_Control_target_tolerances(size_t n_args, const mp_obj_t *
     raise_if_control_busy(self->control);
 
     // Set user settings
-    _speed = pb_obj_get_default_int(speed, _speed);
-    _position = pb_obj_get_default_int(position, _position);
+    speed = pb_obj_get_default_int(speed_in, speed);
+    position = pb_obj_get_default_int(position_in, position);
 
-    pb_assert(pbio_control_settings_set_target_tolerances(&self->control->settings, _speed, _position));
+    pb_assert(pbio_control_settings_set_target_tolerances(&self->control->settings, speed, position));
 
     return mp_const_none;
 }
@@ -170,14 +170,14 @@ STATIC mp_obj_t common_Control_stall_tolerances(size_t n_args, const mp_obj_t *p
         PB_ARG_DEFAULT_NONE(time));
 
     // Read current values
-    int32_t _speed, _time;
-    pbio_control_settings_get_stall_tolerances(&self->control->settings, &_speed, &_time);
+    int32_t speed, time;
+    pbio_control_settings_get_stall_tolerances(&self->control->settings, &speed, &time);
 
     // If all given values are none, return current values
-    if (speed == mp_const_none && time == mp_const_none) {
+    if (speed_in == mp_const_none && time_in == mp_const_none) {
         mp_obj_t ret[2];
-        ret[0] = mp_obj_new_int(_speed);
-        ret[1] = mp_obj_new_int(_time);
+        ret[0] = mp_obj_new_int(speed);
+        ret[1] = mp_obj_new_int(time);
         return mp_obj_new_tuple(2, ret);
     }
 
@@ -185,10 +185,10 @@ STATIC mp_obj_t common_Control_stall_tolerances(size_t n_args, const mp_obj_t *p
     raise_if_control_busy(self->control);
 
     // Set user settings
-    _speed = pb_obj_get_default_int(speed, _speed);
-    _time = pb_obj_get_default_int(time, _time);
+    speed = pb_obj_get_default_int(speed_in, speed);
+    time = pb_obj_get_default_int(time_in, time);
 
-    pb_assert(pbio_control_settings_set_stall_tolerances(&self->control->settings, _speed, _time));
+    pb_assert(pbio_control_settings_set_stall_tolerances(&self->control->settings, speed, time));
 
     return mp_const_none;
 }

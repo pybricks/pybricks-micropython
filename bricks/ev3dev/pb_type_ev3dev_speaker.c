@@ -115,21 +115,21 @@ STATIC mp_obj_t ev3dev_Speaker_beep(size_t n_args, const mp_obj_t *pos_args, mp_
         PB_ARG_DEFAULT_INT(frequency, 500),
         PB_ARG_DEFAULT_INT(duration, 100));
 
-    mp_int_t freq = pb_obj_get_int(frequency);
-    mp_int_t ms = pb_obj_get_int(duration);
+    mp_int_t frequency = pb_obj_get_int(frequency_in);
+    mp_int_t duration = pb_obj_get_int(duration_in);
 
-    int ret = set_beep_frequency(self, freq);
+    int ret = set_beep_frequency(self, frequency);
     if (ret == -1) {
         mp_raise_OSError(errno);
     }
 
-    if (ms < 0) {
+    if (duration < 0) {
         return mp_const_none;
     }
 
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
-        mp_hal_delay_ms(ms);
+        mp_hal_delay_ms(duration);
         set_beep_frequency(self, 0);
         nlr_pop();
     } else {
@@ -322,11 +322,11 @@ STATIC mp_obj_t ev3dev_Speaker_play_notes(size_t n_args, const mp_obj_t *pos_arg
         PB_ARG_DEFAULT_INT(tempo, 120));
 
     // length of whole note in milliseconds = 4 quarter/whole * 60 s/min * 1000 ms/s / tempo quarter/min
-    int duration = 4 * 60 * 1000 / pb_obj_get_int(tempo);
+    int duration = 4 * 60 * 1000 / pb_obj_get_int(tempo_in);
 
     nlr_buf_t nlr;
     mp_obj_t item;
-    mp_obj_t iterable = mp_getiter(notes, NULL);
+    mp_obj_t iterable = mp_getiter(notes_in, NULL);
     if (nlr_push(&nlr) == 0) {
         while ((item = mp_iternext(iterable)) != MP_OBJ_STOP_ITERATION) {
             ev3dev_Speaker_play_note(self, item, duration);
@@ -357,7 +357,7 @@ STATIC mp_obj_t ev3dev_Speaker_play_file(size_t n_args, const mp_obj_t *pos_args
         ev3dev_Speaker_obj_t, self,
         PB_ARG_REQUIRED(file));
 
-    const char *path = mp_obj_str_get_str(file);
+    const char *file = mp_obj_str_get_str(file_in);
 
     // FIXME: This function needs to be protected agains re-entrancy to make it
     // thread-safe.
@@ -365,7 +365,7 @@ STATIC mp_obj_t ev3dev_Speaker_play_file(size_t n_args, const mp_obj_t *pos_args
     GError *error = NULL;
     GSubprocess *aplay = g_subprocess_new(
         G_SUBPROCESS_FLAGS_STDOUT_SILENCE | G_SUBPROCESS_FLAGS_STDERR_PIPE,
-        &error, "aplay", "-q", path, NULL);
+        &error, "aplay", "-q", file, NULL);
     if (!aplay) {
         // This error is unexpected, so doesn't need to be "user-friendly"
         mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_RuntimeError,
@@ -446,7 +446,7 @@ STATIC mp_obj_t ev3dev_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_m
         ev3dev_Speaker_obj_t, self,
         PB_ARG_REQUIRED(text));
 
-    const char *text_ = mp_obj_str_get_str(text);
+    const char *text = mp_obj_str_get_str(text_in);
 
     // FIXME: This function needs to be protected agains re-entrancy to make it
     // thread-safe.
@@ -455,7 +455,7 @@ STATIC mp_obj_t ev3dev_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_m
     GSubprocess *espeak = g_subprocess_new(
         G_SUBPROCESS_FLAGS_STDOUT_PIPE | G_SUBPROCESS_FLAGS_STDERR_PIPE,
         &error, "espeak", "-a", "200", "-v", self->voice_setting, "-s", self->speed,
-        "-p", self->pitch, "--stdout", text_, NULL);
+        "-p", self->pitch, "--stdout", text, NULL);
     if (!espeak) {
         // This error is unexpected, so doesn't need to be "user-friendly"
         mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_RuntimeError,
@@ -568,19 +568,19 @@ STATIC mp_obj_t ev3dev_Speaker_set_speech_options(size_t n_args, const mp_obj_t 
         PB_ARG_DEFAULT_NONE(speed),
         PB_ARG_DEFAULT_NONE(pitch));
 
-    if (language != mp_const_none) {
-        strncpy(self->language, mp_obj_str_get_str(language), sizeof(self->language));
+    if (language_in != mp_const_none) {
+        strncpy(self->language, mp_obj_str_get_str(language_in), sizeof(self->language));
     }
-    if (voice != mp_const_none) {
-        strncpy(self->voice, mp_obj_str_get_str(voice), sizeof(self->voice));
+    if (voice_in != mp_const_none) {
+        strncpy(self->voice, mp_obj_str_get_str(voice_in), sizeof(self->voice));
     }
     snprintf(self->voice_setting, sizeof(self->voice_setting), "%s+%s", self->language, self->voice);
 
-    if (speed != mp_const_none) {
-        snprintf(self->speed, sizeof(self->speed), INT_FMT, pb_obj_get_int(speed));
+    if (speed_in != mp_const_none) {
+        snprintf(self->speed, sizeof(self->speed), INT_FMT, pb_obj_get_int(speed_in));
     }
-    if (pitch != mp_const_none) {
-        snprintf(self->pitch, sizeof(self->pitch), INT_FMT, pb_obj_get_int(pitch));
+    if (pitch_in != mp_const_none) {
+        snprintf(self->pitch, sizeof(self->pitch), INT_FMT, pb_obj_get_int(pitch_in));
     }
 
     return mp_const_none;
@@ -595,30 +595,30 @@ STATIC mp_obj_t ev3dev_Speaker_set_volume(size_t n_args, const mp_obj_t *pos_arg
 
     (void)self; // unused
 
-    mp_int_t volume_ = pb_obj_get_int(volume);
-    const char *which_ = mp_obj_str_get_str(which);
+    mp_int_t volume = pb_obj_get_int(volume_in);
+    const char *which = mp_obj_str_get_str(which_in);
 
-    if (volume_ > 100) {
-        volume_ = 100;
-    } else if (volume_ < 0) {
-        volume_ = 0;
+    if (volume > 100) {
+        volume = 100;
+    } else if (volume < 0) {
+        volume = 0;
     }
 
     // EV3 sound driver uses 0-256 for volume
-    volume_ = 256 * volume_ / 100;
+    volume = 256 * volume / 100;
 
     char amixer_stdin[32];
 
-    if (strcmp(which_, "_default_") == 0) {
+    if (strcmp(which, "_default_") == 0) {
         // internal value to set sane defaults (PCM 70%, Beep 30%). volume parameter is ignored.
         snprintf(amixer_stdin, sizeof(amixer_stdin), "sset PCM 179 \nsset Beep 77\n");
-    } else if (strcmp(which_, "_all_") == 0) {
+    } else if (strcmp(which, "_all_") == 0) {
         snprintf(amixer_stdin, sizeof(amixer_stdin), "sset PCM " INT_FMT " \nsset Beep " INT_FMT "\n",
-            volume_, volume_);
-    } else if (strcmp(which_, "Beep") == 0) {
-        snprintf(amixer_stdin, sizeof(amixer_stdin), "sset Beep " INT_FMT "\n", volume_);
-    } else if (strcmp(which_, "PCM") == 0) {
-        snprintf(amixer_stdin, sizeof(amixer_stdin), "sset PCM " INT_FMT "\n", volume_);
+            volume, volume);
+    } else if (strcmp(which, "Beep") == 0) {
+        snprintf(amixer_stdin, sizeof(amixer_stdin), "sset Beep " INT_FMT "\n", volume);
+    } else if (strcmp(which, "PCM") == 0) {
+        snprintf(amixer_stdin, sizeof(amixer_stdin), "sset PCM " INT_FMT "\n", volume);
     } else {
         // Note: '_default_' isn't listed since it is considered an internal option
         mp_raise_ValueError(MP_ERROR_TEXT("which must be one of '_all_', 'Beep', 'PCM'"));

@@ -21,13 +21,13 @@ STATIC mp_obj_t common_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args
         PB_ARG_DEFAULT_OBJ(positive_direction, pb_Direction_CLOCKWISE_obj));
 
     // Configure the motor with the selected arguments at pbio level
-    mp_int_t port_arg = pb_type_enum_get_value(port, &pb_enum_type_Port);
-    pbio_direction_t direction_arg = pb_type_enum_get_value(positive_direction, &pb_enum_type_Direction);
+    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pbio_direction_t direction = pb_type_enum_get_value(positive_direction_in, &pb_enum_type_Direction);
 
     // Get and initialize DC Motor
     pbio_dcmotor_t *dc;
     pbio_error_t err;
-    while ((err = pbio_dcmotor_get(port_arg, &dc, direction_arg, false)) == PBIO_ERROR_AGAIN) {
+    while ((err = pbio_dcmotor_get(port, &dc, direction, false)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);
@@ -64,17 +64,17 @@ STATIC mp_obj_t common_DCMotor_duty(size_t n_args, const mp_obj_t *pos_args, mp_
     PB_PARSE_ARGS_METHOD_SKIP_SELF(n_args, pos_args, kw_args,
         PB_ARG_REQUIRED(duty));
 
-    mp_int_t duty_cycle = pb_obj_get_int(duty);
+    mp_int_t duty = pb_obj_get_int(duty_in);
 
     // Object type is either Motor or DCMotor
     bool is_servo = mp_obj_is_type(pos_args[0], &pb_type_Motor);
 
     if (is_servo) {
         common_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-        pb_assert(pbio_servo_set_duty_cycle(self->srv, duty_cycle));
+        pb_assert(pbio_servo_set_duty_cycle(self->srv, duty));
     } else {
         common_DCMotor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-        pb_assert(pbio_dcmotor_set_duty_cycle_usr(self->dcmotor, duty_cycle));
+        pb_assert(pbio_dcmotor_set_duty_cycle_usr(self->dcmotor, duty));
     }
 
     return mp_const_none;

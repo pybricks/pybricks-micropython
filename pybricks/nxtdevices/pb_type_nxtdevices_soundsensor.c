@@ -26,7 +26,7 @@ STATIC mp_obj_t nxtdevices_SoundSensor_intensity(size_t n_args, const mp_obj_t *
         nxtdevices_SoundSensor_obj_t, self,
         PB_ARG_DEFAULT_TRUE(audible_only));
 
-    uint8_t mode = mp_obj_is_true(audible_only) ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
+    uint8_t mode = mp_obj_is_true(audible_only_in) ? PBIO_IODEV_MODE_NXT_ANALOG__ACTIVE : PBIO_IODEV_MODE_NXT_ANALOG__PASSIVE;
     int32_t analog;
     pb_device_get_values(self->pbdev, mode, &analog);
 
@@ -42,9 +42,9 @@ STATIC mp_obj_t nxtdevices_SoundSensor_make_new(const mp_obj_type_t *type, size_
     nxtdevices_SoundSensor_obj_t *self = m_new_obj(nxtdevices_SoundSensor_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
-    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_SOUND_SENSOR);
+    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_NXT_SOUND_SENSOR);
 
     // Do one reading for consistent initial mode
     mp_obj_t pos_args[1] = { self };

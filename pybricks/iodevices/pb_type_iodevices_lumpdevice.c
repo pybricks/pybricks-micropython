@@ -32,9 +32,9 @@ STATIC mp_obj_t iodevices_LUMPDevice_make_new(const mp_obj_type_t *type, size_t 
     iodevices_LUMPDevice_obj_t *self = m_new_obj(iodevices_LUMPDevice_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
-    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_LUMP_UART);
+    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_LUMP_UART);
 
     pbio_port_t _port;
     pbio_iodev_type_id_t id;
@@ -62,7 +62,7 @@ STATIC mp_obj_t iodevices_LUMPDevice_read(size_t n_args, const mp_obj_t *pos_arg
     // Get data already in correct data format
     int32_t data[PBIO_IODEV_MAX_DATA_SIZE];
     mp_obj_t objs[PBIO_IODEV_MAX_DATA_SIZE];
-    pb_device_get_values(self->pbdev, mp_obj_get_int(mode), data);
+    pb_device_get_values(self->pbdev, mp_obj_get_int(mode_in), data);
 
     // Get info about the sensor and its mode
     pbio_port_t port;
@@ -90,7 +90,7 @@ STATIC mp_obj_t iodevices_LUMPDevice_write(size_t n_args, const mp_obj_t *pos_ar
     // Unpack the user data tuple
     mp_obj_t *objs;
     size_t num_values;
-    mp_obj_get_array(data, &num_values, &objs);
+    mp_obj_get_array(data_in, &num_values, &objs);
     if (num_values > PBIO_IODEV_MAX_DATA_SIZE) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
@@ -102,7 +102,7 @@ STATIC mp_obj_t iodevices_LUMPDevice_write(size_t n_args, const mp_obj_t *pos_ar
     }
 
     // Set the data
-    pb_device_set_values(self->pbdev, mp_obj_get_int(mode), _data, num_values);
+    pb_device_set_values(self->pbdev, mp_obj_get_int(mode_in), _data, num_values);
 
     return mp_const_none;
 }

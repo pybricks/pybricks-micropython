@@ -38,8 +38,8 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
         PB_ARG_DEFAULT_NONE(gears));
 
     // Configure the motor with the selected arguments at pbio level
-    mp_int_t port_arg = pb_type_enum_get_value(port, &pb_enum_type_Port);
-    pbio_direction_t direction_arg = pb_type_enum_get_value(positive_direction, &pb_enum_type_Direction);
+    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pbio_direction_t positive_direction = pb_type_enum_get_value(positive_direction_in, &pb_enum_type_Direction);
     pbio_error_t err;
     pbio_servo_t *srv;
 
@@ -47,11 +47,11 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     fix16_t gear_ratio = F16C(1, 0);
 
     // Parse gear argument of the form [[12, 20, 36], [20, 40]] or [12, 20, 36]
-    if (gears != mp_const_none) {
+    if (gears_in != mp_const_none) {
         // Unpack the main list
         mp_obj_t *trains, *gear_list;
         size_t n_trains, n_gears;
-        mp_obj_get_array(gears, &n_trains, &trains);
+        mp_obj_get_array(gears_in, &n_trains, &trains);
 
         // If the first and last element is an integer, assume the user gave just one list of gears, i.e. [12, 20, 36]
         bool is_one_train = MP_OBJ_IS_SMALL_INT(trains[0]) && MP_OBJ_IS_SMALL_INT(trains[n_trains - 1]);
@@ -80,8 +80,8 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     }
 
     // Get servo device, set it up, and tell the poller if we succeeded.
-    pb_assert(pbio_motorpoll_get_servo(port_arg, &srv));
-    while ((err = pbio_servo_setup(srv, direction_arg, gear_ratio)) == PBIO_ERROR_AGAIN) {
+    pb_assert(pbio_motorpoll_get_servo(port, &srv));
+    while ((err = pbio_servo_setup(srv, positive_direction, gear_ratio)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);
@@ -119,10 +119,10 @@ STATIC mp_obj_t common_Motor_reset_angle(size_t n_args, const mp_obj_t *pos_args
         PB_ARG_DEFAULT_NONE(angle));
 
     // If no angle argument is given, reset to the absolute value
-    bool reset_to_abs = angle == mp_const_none;
+    bool reset_to_abs = angle_in == mp_const_none;
 
     // Otherwise reset to the given angle
-    mp_int_t reset_angle = reset_to_abs ? 0 : pb_obj_get_int(angle);
+    mp_int_t reset_angle = reset_to_abs ? 0 : pb_obj_get_int(angle_in);
 
     // Set the new angle
     pb_assert(pbio_servo_reset_angle(self->srv, reset_angle, reset_to_abs));
@@ -148,8 +148,8 @@ STATIC mp_obj_t common_Motor_run(size_t n_args, const mp_obj_t *pos_args, mp_map
         common_Motor_obj_t, self,
         PB_ARG_REQUIRED(speed));
 
-    mp_int_t speed_arg = pb_obj_get_int(speed);
-    pb_assert(pbio_servo_run(self->srv, speed_arg));
+    mp_int_t speed = pb_obj_get_int(speed_in);
+    pb_assert(pbio_servo_run(self->srv, speed));
 
     return mp_const_none;
 }
@@ -172,19 +172,19 @@ STATIC mp_obj_t common_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, m
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
         PB_ARG_DEFAULT_TRUE(wait));
 
-    mp_int_t speed_arg = pb_obj_get_int(speed);
-    mp_int_t time_arg = pb_obj_get_int(time);
+    mp_int_t speed = pb_obj_get_int(speed_in);
+    mp_int_t time = pb_obj_get_int(time_in);
 
-    if (time_arg < 0 || time_arg > DURATION_MAX_S * MS_PER_SECOND) {
+    if (time < 0 || time > DURATION_MAX_S * MS_PER_SECOND) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
-    pbio_actuation_t after_stop = pb_type_enum_get_value(then, &pb_enum_type_Stop);
+    pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     // Call pbio with parsed user/default arguments
-    pb_assert(pbio_servo_run_time(self->srv, speed_arg, time_arg, after_stop));
+    pb_assert(pbio_servo_run_time(self->srv, speed, time, then));
 
-    if (mp_obj_is_true(wait)) {
+    if (mp_obj_is_true(wait_in)) {
         wait_for_completion(self->srv);
     }
 
@@ -200,32 +200,32 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_COAST_obj),
         PB_ARG_DEFAULT_NONE(duty_limit));
 
-    mp_int_t speed_arg = pb_obj_get_int(speed);
-    pbio_actuation_t after_stop = pb_type_enum_get_value(then, &pb_enum_type_Stop);
+    mp_int_t speed = pb_obj_get_int(speed_in);
+    pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     // If duty_limit argument, given, limit actuation during this maneuver
-    bool override_duty_limit = duty_limit != mp_const_none;
+    bool override_duty_limit = duty_limit_in != mp_const_none;
 
-    int32_t _speed, _acceleration, _actuation, user_limit;
+    int32_t orig_speed, acceleration, actuation;
 
     if (override_duty_limit) {
         // Read original values so we can restore them when we're done
-        pbio_control_settings_get_limits(&self->srv->control.settings, &_speed, &_acceleration, &_actuation);
+        pbio_control_settings_get_limits(&self->srv->control.settings, &orig_speed, &acceleration, &actuation);
 
         // Get user given limit
-        user_limit = pb_obj_get_int(duty_limit);
-        user_limit = user_limit < 0 ? -user_limit : user_limit;
-        user_limit = user_limit > 100 ? 100 : user_limit;
+        mp_int_t duty_limit = pb_obj_get_int(duty_limit_in);
+        duty_limit = duty_limit < 0 ? -duty_limit : duty_limit;
+        duty_limit = duty_limit > 100 ? 100 : duty_limit;
 
         // Apply the user limit
-        pb_assert(pbio_control_settings_set_limits(&self->srv->control.settings, _speed, _acceleration, user_limit));
+        pb_assert(pbio_control_settings_set_limits(&self->srv->control.settings, orig_speed, acceleration, duty_limit));
     }
 
     mp_obj_t ex = MP_OBJ_NULL;
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
         // Call pbio with parsed user/default arguments
-        pb_assert(pbio_servo_run_until_stalled(self->srv, speed_arg, after_stop));
+        pb_assert(pbio_servo_run_until_stalled(self->srv, speed, then));
 
         // In this command we always wait for completion, so we can return the
         // final angle below.
@@ -238,7 +238,7 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
 
     // Restore original settings
     if (override_duty_limit) {
-        pb_assert(pbio_control_settings_set_limits(&self->srv->control.settings, _speed, _acceleration, _actuation));
+        pb_assert(pbio_control_settings_set_limits(&self->srv->control.settings, orig_speed, acceleration, actuation));
     }
 
     if (ex != MP_OBJ_NULL) {
@@ -263,14 +263,14 @@ STATIC mp_obj_t common_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, 
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
         PB_ARG_DEFAULT_TRUE(wait));
 
-    mp_int_t speed_arg = pb_obj_get_int(speed);
-    mp_int_t angle_arg = pb_obj_get_int(rotation_angle);
-    pbio_actuation_t after_stop = pb_type_enum_get_value(then, &pb_enum_type_Stop);
+    mp_int_t speed = pb_obj_get_int(speed_in);
+    mp_int_t angle = pb_obj_get_int(rotation_angle_in);
+    pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     // Call pbio with parsed user/default arguments
-    pb_assert(pbio_servo_run_angle(self->srv, speed_arg, angle_arg, after_stop));
+    pb_assert(pbio_servo_run_angle(self->srv, speed, angle, then));
 
-    if (mp_obj_is_true(wait)) {
+    if (mp_obj_is_true(wait_in)) {
         wait_for_completion(self->srv);
     }
 
@@ -287,14 +287,14 @@ STATIC mp_obj_t common_Motor_run_target(size_t n_args, const mp_obj_t *pos_args,
         PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
         PB_ARG_DEFAULT_TRUE(wait));
 
-    mp_int_t speed_arg = pb_obj_get_int(speed);
-    mp_int_t angle_arg = pb_obj_get_int(target_angle);
-    pbio_actuation_t after_stop = pb_type_enum_get_value(then, &pb_enum_type_Stop);
+    mp_int_t speed = pb_obj_get_int(speed_in);
+    mp_int_t target_angle = pb_obj_get_int(target_angle_in);
+    pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     // Call pbio with parsed user/default arguments
-    pb_assert(pbio_servo_run_target(self->srv, speed_arg, angle_arg, after_stop));
+    pb_assert(pbio_servo_run_target(self->srv, speed, target_angle, then));
 
-    if (mp_obj_is_true(wait)) {
+    if (mp_obj_is_true(wait_in)) {
         wait_for_completion(self->srv);
     }
 
@@ -308,8 +308,8 @@ STATIC mp_obj_t common_Motor_track_target(size_t n_args, const mp_obj_t *pos_arg
         common_Motor_obj_t, self,
         PB_ARG_REQUIRED(target_angle));
 
-    mp_int_t target = pb_obj_get_int(target_angle);
-    pb_assert(pbio_servo_track_target(self->srv, target));
+    mp_int_t target_angle = pb_obj_get_int(target_angle_in);
+    pb_assert(pbio_servo_track_target(self->srv, target_angle));
 
     return mp_const_none;
 }

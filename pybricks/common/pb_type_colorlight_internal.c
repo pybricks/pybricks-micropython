@@ -31,17 +31,16 @@ STATIC mp_obj_t common_ColorLight_internal_on(size_t n_args, const mp_obj_t *pos
         PB_ARG_REQUIRED(color),
         PB_ARG_DEFAULT_INT(brightness, 100));
 
-    if (color == mp_const_none) {
-        color = pb_const_color_black;
+    if (color_in == mp_const_none) {
+        color_in = pb_const_color_black;
     }
 
-    pbio_color_t color_id = pb_type_enum_get_value(color, &pb_enum_type_Color);
-
-    mp_int_t bright = pb_obj_get_pct(brightness);
+    pbio_color_t color = pb_type_enum_get_value(color_in, &pb_enum_type_Color);
+    mp_int_t brightness = pb_obj_get_pct(brightness_in);
 
     pbio_color_hsv_t hsv;
-    pbio_color_to_hsv(color_id, &hsv);
-    hsv.v = bright;
+    pbio_color_to_hsv(color, &hsv);
+    hsv.v = brightness;
     pb_assert(pbio_color_light_on_hsv(self->light, &hsv));
 
     return mp_const_none;

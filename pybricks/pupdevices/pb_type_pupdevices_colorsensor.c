@@ -50,10 +50,10 @@ STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     pupdevices_ColorSensor_obj_t *self = m_new_obj(pupdevices_ColorSensor_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     // Get iodevices
-    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR);
+    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR);
 
     // This sensor requires power, which iodevice does not do automatically yet
     pb_device_set_power_supply(self->pbdev, 100);
@@ -82,7 +82,7 @@ STATIC mp_obj_t pupdevices_ColorSensor_hsv(size_t n_args, const mp_obj_t *pos_ar
 
     // Read HSV, either with light on or off
     int32_t hsv[4];
-    pupdevices_ColorSensor__get_hsv(self->pbdev, mp_obj_is_true(surface), hsv);
+    pupdevices_ColorSensor__get_hsv(self->pbdev, mp_obj_is_true(surface_in), hsv);
 
     // Create tuple
     mp_obj_t ret[3];
@@ -103,7 +103,7 @@ STATIC mp_obj_t pupdevices_ColorSensor_color(size_t n_args, const mp_obj_t *pos_
 
     // Read HSV, either with light on or off
     int32_t hsv[4];
-    pupdevices_ColorSensor__get_hsv(self->pbdev, mp_obj_is_true(surface), hsv);
+    pupdevices_ColorSensor__get_hsv(self->pbdev, mp_obj_is_true(surface_in), hsv);
 
     // Get and return discretized color
     return pb_hsv_get_color(&self->color_map, hsv[0], hsv[1], hsv[2]);

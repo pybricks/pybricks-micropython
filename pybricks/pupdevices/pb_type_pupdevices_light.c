@@ -27,10 +27,10 @@ STATIC mp_obj_t pupdevices_Light_make_new(const mp_obj_type_t *type, size_t n_ar
     pupdevices_Light_obj_t *self = m_new_obj(pupdevices_Light_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     // Get iodevices
-    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_LPF2_LIGHT);
+    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_LPF2_LIGHT);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -42,7 +42,7 @@ STATIC mp_obj_t pupdevices_Light_on(size_t n_args, const mp_obj_t *pos_args, mp_
         PB_ARG_DEFAULT_INT(brightness, 100));
 
     // Set the brightness
-    pb_device_set_power_supply(self->pbdev, pb_obj_get_int(brightness));
+    pb_device_set_power_supply(self->pbdev, pb_obj_get_int(brightness_in));
 
     return mp_const_none;
 }

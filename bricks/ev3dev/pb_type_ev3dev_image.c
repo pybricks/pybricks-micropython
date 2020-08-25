@@ -240,13 +240,13 @@ STATIC mp_obj_t ev3dev_Image_draw_pixel(size_t n_args, const mp_obj_t *pos_args,
         PB_ARG_REQUIRED(y),
         PB_ARG_DEFAULT_OBJ(color, pb_Color_BLACK_obj));
 
-    mp_int_t x_ = pb_obj_get_int(x);
-    mp_int_t y_ = pb_obj_get_int(y);
-    GrxColor color_ = map_color(color);
+    mp_int_t x = pb_obj_get_int(x_in);
+    mp_int_t y = pb_obj_get_int(y_in);
+    GrxColor color = map_color(color_in);
 
     clear_once(self);
     grx_set_current_context(self->context);
-    grx_draw_pixel(x_, y_, color_);
+    grx_draw_pixel(x, y, color);
 
     return mp_const_none;
 }
@@ -262,20 +262,20 @@ STATIC mp_obj_t ev3dev_Image_draw_line(size_t n_args, const mp_obj_t *pos_args, 
         PB_ARG_DEFAULT_INT(width, 1),
         PB_ARG_DEFAULT_OBJ(color, pb_Color_BLACK_obj));
 
-    mp_int_t x1_ = pb_obj_get_int(x1);
-    mp_int_t y1_ = pb_obj_get_int(y1);
-    mp_int_t x2_ = pb_obj_get_int(x2);
-    mp_int_t y2_ = pb_obj_get_int(y2);
-    mp_int_t width_ = pb_obj_get_int(width);
-    GrxColor color_ = map_color(color);
+    mp_int_t x1 = pb_obj_get_int(x1_in);
+    mp_int_t y1 = pb_obj_get_int(y1_in);
+    mp_int_t x2 = pb_obj_get_int(x2_in);
+    mp_int_t y2 = pb_obj_get_int(y2_in);
+    mp_int_t width = pb_obj_get_int(width_in);
+    GrxColor color = map_color(color_in);
 
     clear_once(self);
     grx_set_current_context(self->context);
-    if (width_ == 1) {
-        grx_draw_line(x1_, y1_, x2_, y2_, color_);
+    if (width == 1) {
+        grx_draw_line(x1, y1, x2, y2, color);
     } else {
-        GrxLineOptions options = { .color = color_, .width = width_ };
-        grx_draw_line_with_options(x1_, y1_, x2_, y2_, &options);
+        GrxLineOptions options = { .color = color, .width = width };
+        grx_draw_line_with_options(x1, y1, x2, y2, &options);
     }
 
     return mp_const_none;
@@ -293,26 +293,26 @@ STATIC mp_obj_t ev3dev_Image_draw_box(size_t n_args, const mp_obj_t *pos_args, m
         PB_ARG_DEFAULT_FALSE(fill),
         PB_ARG_DEFAULT_OBJ(color, pb_Color_BLACK_obj));
 
-    mp_int_t x1_ = pb_obj_get_int(x1);
-    mp_int_t y1_ = pb_obj_get_int(y1);
-    mp_int_t x2_ = pb_obj_get_int(x2);
-    mp_int_t y2_ = pb_obj_get_int(y2);
-    mp_int_t r_ = pb_obj_get_int(r);
-    GrxColor color_ = map_color(color);
+    mp_int_t x1 = pb_obj_get_int(x1_in);
+    mp_int_t y1 = pb_obj_get_int(y1_in);
+    mp_int_t x2 = pb_obj_get_int(x2_in);
+    mp_int_t y2 = pb_obj_get_int(y2_in);
+    mp_int_t r = pb_obj_get_int(r_in);
+    GrxColor color = map_color(color_in);
 
     clear_once(self);
     grx_set_current_context(self->context);
-    if (mp_obj_is_true(fill)) {
-        if (r_ > 0) {
-            grx_draw_filled_rounded_box(x1_, y1_, x2_, y2_, r_, color_);
+    if (mp_obj_is_true(fill_in)) {
+        if (r > 0) {
+            grx_draw_filled_rounded_box(x1, y1, x2, y2, r, color);
         } else {
-            grx_draw_filled_box(x1_, y1_, x2_, y2_, color_);
+            grx_draw_filled_box(x1, y1, x2, y2, color);
         }
     } else {
-        if (r_ > 0) {
-            grx_draw_rounded_box(x1_, y1_, x2_, y2_, r_, color_);
+        if (r > 0) {
+            grx_draw_rounded_box(x1, y1, x2, y2, r, color);
         } else {
-            grx_draw_box(x1_, y1_, x2_, y2_, color_);
+            grx_draw_box(x1, y1, x2, y2, color);
         }
     }
 
@@ -329,18 +329,18 @@ STATIC mp_obj_t ev3dev_Image_draw_circle(size_t n_args, const mp_obj_t *pos_args
         PB_ARG_DEFAULT_FALSE(fill),
         PB_ARG_DEFAULT_OBJ(color, pb_Color_BLACK_obj));
 
-    mp_int_t x_ = pb_obj_get_int(x);
-    mp_int_t y_ = pb_obj_get_int(y);
-    mp_int_t r_ = pb_obj_get_int(r);
-    bool fill_ = mp_obj_is_true(fill);
-    GrxColor color_ = map_color(color);
+    mp_int_t x = pb_obj_get_int(x_in);
+    mp_int_t y = pb_obj_get_int(y_in);
+    mp_int_t r = pb_obj_get_int(r_in);
+    bool fill = mp_obj_is_true(fill_in);
+    GrxColor color = map_color(color_in);
 
     clear_once(self);
     grx_set_current_context(self->context);
-    if (fill_) {
-        grx_draw_filled_circle(x_, y_, r_, color_);
+    if (fill) {
+        grx_draw_filled_circle(x, y, r, color);
     } else {
-        grx_draw_circle(x_, y_, r_, color_);
+        grx_draw_circle(x, y, r, color);
     }
 
     return mp_const_none;
@@ -355,22 +355,22 @@ STATIC mp_obj_t ev3dev_Image_draw_image(size_t n_args, const mp_obj_t *pos_args,
         PB_ARG_REQUIRED(source),
         PB_ARG_DEFAULT_NONE(transparent));
 
-    mp_int_t x_ = pb_obj_get_int(x);
-    mp_int_t y_ = pb_obj_get_int(y);
-    if (mp_obj_is_str(source)) {
-        mp_obj_t args[1] = { source };
-        source = ev3dev_Image_make_new(&pb_type_ev3dev_Image, 1, 0, args);
+    mp_int_t x = pb_obj_get_int(x_in);
+    mp_int_t y = pb_obj_get_int(y_in);
+    if (mp_obj_is_str(source_in)) {
+        mp_obj_t args[1] = { source_in };
+        source_in = ev3dev_Image_make_new(&pb_type_ev3dev_Image, 1, 0, args);
     }
-    if (!mp_obj_is_type(source, &pb_type_ev3dev_Image)) {
+    if (!mp_obj_is_type(source_in, &pb_type_ev3dev_Image)) {
         mp_raise_TypeError(MP_ERROR_TEXT("Image object is required"));
     }
-    ev3dev_Image_obj_t *source_ = MP_OBJ_TO_PTR(source);
-    GrxColor transparent_ = map_color(transparent);
+    ev3dev_Image_obj_t *source = MP_OBJ_TO_PTR(source_in);
+    GrxColor transparent = map_color(transparent_in);
 
     clear_once(self);
-    grx_context_bit_blt(self->context, x_, y_, source_->context, 0, 0,
-        grx_context_get_max_x(source_->context), grx_context_get_max_y(source_->context),
-        transparent_ == GRX_COLOR_NONE ? GRX_COLOR_MODE_WRITE : grx_color_to_image_mode(transparent_));
+    grx_context_bit_blt(self->context, x, y, source->context, 0, 0,
+        grx_context_get_max_x(source->context), grx_context_get_max_y(source->context),
+        transparent == GRX_COLOR_NONE ? GRX_COLOR_MODE_WRITE : grx_color_to_image_mode(transparent));
 
     return mp_const_none;
 }
@@ -434,30 +434,30 @@ STATIC mp_obj_t ev3dev_Image_draw_text(size_t n_args, const mp_obj_t *pos_args, 
         PB_ARG_DEFAULT_OBJ(text_color, pb_Color_BLACK_obj),
         PB_ARG_DEFAULT_NONE(background_color));
 
-    mp_int_t x_ = pb_obj_get_int(x);
-    mp_int_t y_ = pb_obj_get_int(y);
-    if (!mp_obj_is_str_or_bytes(text)) {
+    mp_int_t x = pb_obj_get_int(x_in);
+    mp_int_t y = pb_obj_get_int(y_in);
+    if (!mp_obj_is_str_or_bytes(text_in)) {
         vstr_t vstr;
         mp_print_t print;
         vstr_init_print(&vstr, 16, &print);
-        mp_obj_print_helper(&print, text, PRINT_STR);
-        text = mp_obj_new_str_from_vstr(&mp_type_str, &vstr);
+        mp_obj_print_helper(&print, text_in, PRINT_STR);
+        text_in = mp_obj_new_str_from_vstr(&mp_type_str, &vstr);
     }
-    const char *text_ = mp_obj_str_get_str(text);
-    GrxColor text_color_ = map_color(text_color);
-    GrxColor background_color_ = map_color(background_color);
+    const char *text = mp_obj_str_get_str(text_in);
+    GrxColor text_color = map_color(text_color_in);
+    GrxColor background_color = map_color(background_color_in);
 
     clear_once(self);
     grx_set_current_context(self->context);
-    grx_text_options_set_fg_color(self->text_options, text_color_);
-    grx_text_options_set_bg_color(self->text_options, background_color_);
-    if (background_color_ != GRX_COLOR_NONE) {
+    grx_text_options_set_fg_color(self->text_options, text_color);
+    grx_text_options_set_bg_color(self->text_options, background_color);
+    if (background_color != GRX_COLOR_NONE) {
         GrxFont *font = grx_text_options_get_font(self->text_options);
-        gint w = grx_font_get_text_width(font, text_);
-        gint h = grx_font_get_text_height(font, text_);
-        grx_draw_filled_box(x_, y_, x_ + w - 1, y_ + h - 1, background_color_);
+        gint w = grx_font_get_text_width(font, text);
+        gint h = grx_font_get_text_height(font, text);
+        grx_draw_filled_box(x, y, x + w - 1, y + h - 1, background_color);
     }
-    grx_draw_text(text_, x_, y_, self->text_options);
+    grx_draw_text(text, x, y, self->text_options);
 
     return mp_const_none;
 }

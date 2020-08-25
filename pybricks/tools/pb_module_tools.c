@@ -18,9 +18,9 @@ STATIC mp_obj_t tools_wait(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw
     PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
         PB_ARG_REQUIRED(time));
 
-    mp_int_t duration = pb_obj_get_int(time);
-    if (duration > 0) {
-        mp_hal_delay_ms(duration);
+    mp_int_t time = pb_obj_get_int(time_in);
+    if (time > 0) {
+        mp_hal_delay_ms(time);
     }
     return mp_const_none;
 }

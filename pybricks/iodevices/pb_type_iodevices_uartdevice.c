@@ -39,14 +39,14 @@ STATIC mp_obj_t iodevices_UARTDevice_make_new(const mp_obj_type_t *otype, size_t
     self->base.type = (mp_obj_type_t *)otype;
 
     // Get port number
-    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     // Init UART port
-    pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_CUSTOM_UART);
+    pb_device_get_device(port, PBIO_IODEV_TYPE_ID_CUSTOM_UART);
 
     // Initialize serial
-    self->timeout = timeout == mp_const_none ? -1 : pb_obj_get_int(timeout);
-    pb_assert(pb_serial_get(&self->serial, port_num, pb_obj_get_int(baudrate)));
+    self->timeout = timeout_in == mp_const_none ? -1 : pb_obj_get_int(timeout_in);
+    pb_assert(pb_serial_get(&self->serial, port, pb_obj_get_int(baudrate_in)));
     pb_assert(pb_serial_clear(self->serial));
 
     return MP_OBJ_FROM_PTR(self);
@@ -60,15 +60,15 @@ STATIC mp_obj_t iodevices_UARTDevice_write(size_t n_args, const mp_obj_t *pos_ar
         PB_ARG_REQUIRED(data));
 
     // Assert that data argument are bytes
-    if (!(mp_obj_is_str_or_bytes(data) || mp_obj_is_type(data, &mp_type_bytearray))) {
+    if (!(mp_obj_is_str_or_bytes(data_in) || mp_obj_is_type(data_in, &mp_type_bytearray))) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
     // Get data and length
-    GET_STR_DATA_LEN(data, bytes, len);
+    GET_STR_DATA_LEN(data_in, data, data_len);
 
     // Write data to serial
-    pb_assert(pb_serial_write(self->serial, bytes, len));
+    pb_assert(pb_serial_write(self->serial, data, data_len));
 
     return mp_const_none;
 }
@@ -145,8 +145,8 @@ STATIC mp_obj_t iodevices_UARTDevice_read(size_t n_args, const mp_obj_t *pos_arg
         iodevices_UARTDevice_obj_t, self,
         PB_ARG_DEFAULT_INT(length, 1));
 
-    size_t len = mp_obj_get_int(length);
-    return iodevices_UARTDevice_read_internal(self, len);
+    size_t length = mp_obj_get_int(length_in);
+    return iodevices_UARTDevice_read_internal(self, length);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_UARTDevice_read_obj, 1, iodevices_UARTDevice_read);
 

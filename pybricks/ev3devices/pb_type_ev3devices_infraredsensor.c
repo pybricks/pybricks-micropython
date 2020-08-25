@@ -28,9 +28,9 @@ STATIC mp_obj_t ev3devices_InfraredSensor_make_new(const mp_obj_type_t *type, si
     ev3devices_InfraredSensor_obj_t *self = m_new_obj(ev3devices_InfraredSensor_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
-    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR);
+    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_EV3_IR_SENSOR);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -51,16 +51,16 @@ STATIC mp_obj_t ev3devices_InfraredSensor_beacon(size_t n_args, const mp_obj_t *
         ev3devices_InfraredSensor_obj_t, self,
         PB_ARG_REQUIRED(channel));
 
-    mp_int_t channel_no = pb_obj_get_int(channel);
-    if (channel_no < 1 || channel_no > 4) {
+    mp_int_t channel = pb_obj_get_int(channel_in);
+    if (channel < 1 || channel > 4) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
     int32_t beacon_data[8];
     pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_INFRARED_SENSOR__SEEK, beacon_data);
 
-    mp_int_t heading = beacon_data[channel_no * 2 - 2] * 3;
-    mp_int_t distance = beacon_data[channel_no * 2 - 1];
+    mp_int_t heading = beacon_data[channel * 2 - 2] * 3;
+    mp_int_t distance = beacon_data[channel * 2 - 1];
 
     mp_obj_t ret[2];
 
@@ -83,15 +83,15 @@ STATIC mp_obj_t ev3devices_InfraredSensor_buttons(size_t n_args, const mp_obj_t 
         ev3devices_InfraredSensor_obj_t, self,
         PB_ARG_REQUIRED(channel));
 
-    mp_int_t channel_no = pb_obj_get_int(channel);
-    if (channel_no < 1 || channel_no > 4) {
+    mp_int_t channel = pb_obj_get_int(channel_in);
+    if (channel < 1 || channel > 4) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
     int32_t buttons_data[4];
     pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_EV3_INFRARED_SENSOR__REMOTE, buttons_data);
 
-    mp_int_t encoded = buttons_data[channel_no - 1];
+    mp_int_t encoded = buttons_data[channel - 1];
     mp_obj_t pressed[2];
     uint8_t len = 0;
 

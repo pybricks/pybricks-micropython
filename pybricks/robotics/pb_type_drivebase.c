@@ -47,9 +47,8 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     robotics_DriveBase_obj_t *self = m_new_obj(robotics_DriveBase_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    // Pointer to the Python (not pbio) Motor objects
-    self->left = left_motor;
-    self->right = right_motor;
+    self->left = left_motor_in;
+    self->right = right_motor_in;
 
     // Pointers to servos
     pbio_servo_t *srv_left = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->left, &pb_type_Motor))->srv;
@@ -62,7 +61,7 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
 
     // Create drivebase
     pb_assert(pbio_motorpoll_get_drivebase(&self->db));
-    pb_assert(pbio_drivebase_setup(self->db, srv_left, srv_right, pb_obj_get_fix16(wheel_diameter), pb_obj_get_fix16(axle_track)));
+    pb_assert(pbio_drivebase_setup(self->db, srv_left, srv_right, pb_obj_get_fix16(wheel_diameter_in), pb_obj_get_fix16(axle_track_in)));
     pb_assert(pbio_motorpoll_set_drivebase_status(self->db, PBIO_ERROR_AGAIN));
 
     // Create an instance of the Logger class
@@ -101,8 +100,8 @@ STATIC mp_obj_t robotics_DriveBase_straight(size_t n_args, const mp_obj_t *pos_a
         robotics_DriveBase_obj_t, self,
         PB_ARG_REQUIRED(distance));
 
-    int32_t distance_val = pb_obj_get_int(distance);
-    pb_assert(pbio_drivebase_straight(self->db, distance_val, self->straight_speed, self->straight_acceleration));
+    mp_int_t distance = pb_obj_get_int(distance_in);
+    pb_assert(pbio_drivebase_straight(self->db, distance, self->straight_speed, self->straight_acceleration));
 
     wait_for_completion_drivebase(self->db);
 
@@ -116,7 +115,7 @@ STATIC mp_obj_t robotics_DriveBase_turn(size_t n_args, const mp_obj_t *pos_args,
         robotics_DriveBase_obj_t, self,
         PB_ARG_REQUIRED(angle));
 
-    int32_t angle_val = pb_obj_get_int(angle);
+    mp_int_t angle_val = pb_obj_get_int(angle_in);
     pb_assert(pbio_drivebase_turn(self->db, angle_val, self->turn_rate, self->turn_acceleration));
 
     wait_for_completion_drivebase(self->db);
@@ -133,10 +132,10 @@ STATIC mp_obj_t robotics_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args
         PB_ARG_REQUIRED(turn_rate));
 
     // Get wheel diameter and axle track dimensions
-    int32_t speed_val = pb_obj_get_int(speed);
-    int32_t turn_rate_val = pb_obj_get_int(turn_rate);
+    mp_int_t speed = pb_obj_get_int(speed_in);
+    mp_int_t turn_rate = pb_obj_get_int(turn_rate_in);
 
-    pb_assert(pbio_drivebase_drive(self->db, speed_val, turn_rate_val));
+    pb_assert(pbio_drivebase_drive(self->db, speed, turn_rate));
 
     return mp_const_none;
 }
@@ -211,10 +210,10 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
         PB_ARG_DEFAULT_NONE(turn_acceleration));
 
     // If all given values are none, return current values
-    if (straight_speed == mp_const_none &&
-        straight_acceleration == mp_const_none &&
-        turn_rate == mp_const_none &&
-        turn_acceleration == mp_const_none
+    if (straight_speed_in == mp_const_none &&
+        straight_acceleration_in == mp_const_none &&
+        turn_rate_in == mp_const_none &&
+        turn_acceleration_in == mp_const_none
         ) {
         mp_obj_t ret[4];
         ret[0] = mp_obj_new_int(self->straight_speed);
@@ -233,10 +232,10 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
     pbio_control_settings_get_limits(&self->db->control_distance.settings, &straight_speed_limit, &straight_acceleration_limit, &_);
     pbio_control_settings_get_limits(&self->db->control_heading.settings, &turn_rate_limit, &turn_acceleration_limit, &_);
 
-    self->straight_speed = min(straight_speed_limit, abs(pb_obj_get_default_int(straight_speed, self->straight_speed)));
-    self->straight_acceleration = min(straight_acceleration_limit, abs(pb_obj_get_default_int(straight_acceleration, self->straight_acceleration)));
-    self->turn_rate = min(turn_rate_limit, abs(pb_obj_get_default_int(turn_rate, self->turn_rate)));
-    self->turn_acceleration = min(turn_acceleration_limit, abs(pb_obj_get_default_int(turn_acceleration, self->turn_acceleration)));
+    self->straight_speed = min(straight_speed_limit, abs(pb_obj_get_default_int(straight_speed_in, self->straight_speed)));
+    self->straight_acceleration = min(straight_acceleration_limit, abs(pb_obj_get_default_int(straight_acceleration_in, self->straight_acceleration)));
+    self->turn_rate = min(turn_rate_limit, abs(pb_obj_get_default_int(turn_rate_in, self->turn_rate)));
+    self->turn_acceleration = min(turn_acceleration_limit, abs(pb_obj_get_default_int(turn_acceleration_in, self->turn_acceleration)));
 
     return mp_const_none;
 }

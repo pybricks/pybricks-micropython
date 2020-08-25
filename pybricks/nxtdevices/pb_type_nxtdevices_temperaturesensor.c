@@ -27,9 +27,9 @@ STATIC mp_obj_t nxtdevices_TemperatureSensor_make_new(const mp_obj_type_t *type,
     nxtdevices_TemperatureSensor_obj_t *self = m_new_obj(nxtdevices_TemperatureSensor_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
-    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_TEMPERATURE_SENSOR);
+    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_NXT_TEMPERATURE_SENSOR);
 
     return MP_OBJ_FROM_PTR(self);
 }

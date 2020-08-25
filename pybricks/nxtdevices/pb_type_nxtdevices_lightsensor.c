@@ -58,9 +58,9 @@ STATIC mp_obj_t nxtdevices_LightSensor_make_new(const mp_obj_type_t *type, size_
     nxtdevices_LightSensor_obj_t *self = m_new_obj(nxtdevices_LightSensor_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
-    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR);
+    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR);
 
     // Read one value to ensure a consistent initial mode
     nxtdevices_LightSensor_reflection(self);

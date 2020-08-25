@@ -35,10 +35,10 @@ STATIC mp_obj_t pupdevices_InfraredSensor_make_new(const mp_obj_type_t *type, si
     pupdevices_InfraredSensor_obj_t *self = m_new_obj(pupdevices_InfraredSensor_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     // Get iodevice
-    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_WEDO2_MOTION_SENSOR);
+    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_WEDO2_MOTION_SENSOR);
 
     // Reset sensor counter and get sensor back in sensing mode
     pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_WEDO2_MOTION_SENSOR__COUNT, &self->count_offset);

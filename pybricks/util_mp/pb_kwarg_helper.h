@@ -40,7 +40,7 @@
 // auto-generate the allowed_args table to simplify notation in the pybricks modules.
 
 // Generate table entry from an argument name, its requirements, and its default value
-#define GET_ARG_NAME(name, required, value) name
+#define GET_ARG_NAME(name, required, value) name##_in
 #define GET_ARG_SPEC(name, required, value) {MAKE_QSTR(name), required, value}
 
 // Unpack a table entry into three arguments

@@ -35,14 +35,14 @@ STATIC mp_obj_t tools_Logger_start(size_t n_args, const mp_obj_t *pos_args, mp_m
         PB_ARG_REQUIRED(duration),
         PB_ARG_DEFAULT_INT(divisor, 1));
 
-    mp_int_t div = pb_obj_get_int(divisor);
-    div = max(div, 1);
-    mp_int_t rows = pb_obj_get_int(duration) / PBIO_CONFIG_SERVO_PERIOD_MS / div;
+    mp_int_t divisor = pb_obj_get_int(divisor_in);
+    divisor = max(divisor, 1);
+    mp_int_t rows = pb_obj_get_int(duration_in) / PBIO_CONFIG_SERVO_PERIOD_MS / divisor;
     mp_int_t size = rows * pbio_logger_cols(self->log);
     self->buf = m_renew(int32_t, self->buf, self->size, size);
     self->size = size;
 
-    pbio_logger_start(self->log, self->buf, rows, div);
+    pbio_logger_start(self->log, self->buf, rows, divisor);
 
     return mp_const_none;
 }
@@ -53,14 +53,14 @@ STATIC mp_obj_t tools_Logger_get(size_t n_args, const mp_obj_t *pos_args, mp_map
         tools_Logger_obj_t, self,
         PB_ARG_DEFAULT_NONE(index));
 
-    mp_int_t index_val = pb_obj_get_default_int(index, -1);
+    mp_int_t index = pb_obj_get_default_int(index_in, -1);
 
     // Data buffer for this sample
     mp_obj_t ret[MAX_LOG_VALUES];
     int32_t data[MAX_LOG_VALUES];
 
     // Get data for this sample
-    pb_assert(pbio_logger_read(self->log, index_val, data));
+    pb_assert(pbio_logger_read(self->log, index, data));
     uint8_t num_values = pbio_logger_cols(self->log);
 
     // Convert data to user objects
@@ -108,19 +108,19 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         tools_Logger_obj_t, self,
         PB_ARG_DEFAULT_NONE(path));
-    const char *file_path = path == mp_const_none ? "log.txt" : mp_obj_str_get_str(path);
+    const char *path = path_in == mp_const_none ? "log.txt" : mp_obj_str_get_str(path_in);
 
     #if PYBRICKS_HUB_EV3BRICK
     // Create an empty log file
     FILE *log_file;
 
     // Open file to erase it
-    log_file = fopen(file_path, "w");
+    log_file = fopen(path, "w");
     if (log_file == NULL) {
         pb_assert(PBIO_ERROR_IO);
     }
     #else
-    mp_printf(&mp_plat_print, "PB_OF:%s\n", file_path);
+    mp_printf(&mp_plat_print, "PB_OF:%s\n", path);
     #endif // PYBRICKS_HUB_EV3BRICK
 
     // Read log size information

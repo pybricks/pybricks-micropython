@@ -33,8 +33,8 @@ STATIC mp_obj_t pb_type_Matrix_make_new(const mp_obj_type_t *type, size_t n_args
         PB_ARG_REQUIRED(rows));
 
     // If the input is already a matrix, just return it
-    if (mp_obj_is_type(rows, &pb_type_Matrix_type)) {
-        return rows;
+    if (mp_obj_is_type(rows_in, &pb_type_Matrix_type)) {
+        return rows_in;
     }
 
     // Before we allocate the object, check if it's a 1x1 matrix: C = [[c]],
@@ -43,7 +43,7 @@ STATIC mp_obj_t pb_type_Matrix_make_new(const mp_obj_type_t *type, size_t n_args
     // Unpack the main list of rows and get the requested sizes
     size_t m, n;
     mp_obj_t *row_objs, *scalar_objs;
-    mp_obj_get_array(rows, &m, &row_objs);
+    mp_obj_get_array(rows_in, &m, &row_objs);
     mp_obj_get_array(row_objs[0], &n, &scalar_objs);
 
     // It's a 1x1 object, assert type and just return it

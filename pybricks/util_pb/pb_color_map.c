@@ -244,12 +244,12 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_color_map(size_t n_args, const mp
         PB_ARG_DEFAULT_NONE(values));
 
     // If no arguments are given, return current map
-    if (hues == mp_const_none && saturation == mp_const_none && values == mp_const_none) {
+    if (hues_in == mp_const_none && saturation_in == mp_const_none && values_in == mp_const_none) {
         return pack_color_map(&self->color_map);
     }
 
     // Otherwise, unpack given map
-    unpack_color_map(&self->color_map, hues, saturation, values);
+    unpack_color_map(&self->color_map, hues_in, saturation_in, values_in);
 
     return mp_const_none;
 }

@@ -61,10 +61,10 @@ STATIC mp_obj_t pupdevices_ForceSensor_make_new(const mp_obj_type_t *type, size_
     pupdevices_ForceSensor_obj_t *self = m_new_obj(pupdevices_ForceSensor_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     // Get iodevices
-    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_SPIKE_FORCE_SENSOR);
+    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_SPIKE_FORCE_SENSOR);
 
     // Read scaling factors
     int32_t calib[8];
@@ -119,7 +119,7 @@ STATIC mp_obj_t pupdevices_ForceSensor_pressed(size_t n_args, const mp_obj_t *po
         PB_ARG_DEFAULT_INT(force, 3));
 
     // Get force threshold in hundreds of newtons
-    int32_t f_arg = pbio_math_mul_i32_fix16(1000, pb_obj_get_fix16(force));
+    int32_t f_arg = pbio_math_mul_i32_fix16(1000, pb_obj_get_fix16(force_in));
 
     // Return true if the force is bigger than given threshold
     return mp_obj_new_bool(pupdevices_ForceSensor__force(self) >= f_arg);

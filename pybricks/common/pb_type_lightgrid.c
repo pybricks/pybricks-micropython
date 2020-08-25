@@ -46,8 +46,8 @@ STATIC mp_obj_t common_LightGrid_char(size_t n_args, const mp_obj_t *pos_args, m
         PB_ARG_REQUIRED(character));
 
     // Assert that the input is a single character
-    GET_STR_DATA_LEN(character, str, len);
-    if (len != 1 || str[0] < 32 || str[0] > 126) {
+    GET_STR_DATA_LEN(character_in, character, character_len);
+    if (character_len != 1 || character[0] < 32 || character[0] > 126) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
@@ -55,20 +55,20 @@ STATIC mp_obj_t common_LightGrid_char(size_t n_args, const mp_obj_t *pos_args, m
     pbio_lightgrid_stop_pattern(self->lightgrid);
 
     // Pick corresponding image and display it
-    pbio_lightgrid_set_rows(self->lightgrid, pb_font_5x5[str[0] - 32]);
+    pbio_lightgrid_set_rows(self->lightgrid, pb_font_5x5[character[0] - 32]);
 
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightGrid_char_obj, 1, common_LightGrid_char);
 
-static void common_LightGrid_image__extract(mp_obj_t image, size_t size, uint8_t *data) {
+static void common_LightGrid_image__extract(mp_obj_t image_in, size_t size, uint8_t *data) {
 
     #if MICROPY_PY_BUILTINS_FLOAT
     // If image is a matrix, copy data from there
-    if (mp_obj_is_type(image, &pb_type_Matrix_type)) {
+    if (mp_obj_is_type(image_in, &pb_type_Matrix_type)) {
         for (size_t r = 0; r < size; r++) {
             for (size_t c = 0; c < size; c++) {
-                data[r * size + c] = pb_type_Matrix__get_scalar(image, r, c);
+                data[r * size + c] = pb_type_Matrix__get_scalar(image_in, r, c);
             }
         }
         return;
@@ -78,7 +78,7 @@ static void common_LightGrid_image__extract(mp_obj_t image, size_t size, uint8_t
     // Unpack the main list of rows and get the requested sizes
     mp_obj_t *row_objs, *scalar_objs;
     size_t m;
-    mp_obj_get_array(image, &m, &row_objs);
+    mp_obj_get_array(image_in, &m, &row_objs);
     if (m != size) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
@@ -106,7 +106,7 @@ STATIC mp_obj_t common_LightGrid_image(size_t n_args, const mp_obj_t *pos_args, 
     // Allocate and extract image data
     size_t size = pbio_lightgrid_get_size(self->lightgrid);
     common_LightGrid__renew(self, 1);
-    common_LightGrid_image__extract(image, size, self->data);
+    common_LightGrid_image__extract(image_in, size, self->data);
 
     // Stop any ongoing pattern
     pbio_lightgrid_stop_pattern(self->lightgrid);
@@ -129,10 +129,11 @@ STATIC mp_obj_t common_LightGrid_on(size_t n_args, const mp_obj_t *pos_args, mp_
     // Stop any ongoing pattern
     pbio_lightgrid_stop_pattern(self->lightgrid);
 
-    mp_int_t b = pb_obj_get_pct(brightness);
+    mp_int_t brightness = pb_obj_get_pct(brightness_in);
+
     for (uint8_t i = 0; i < size; i++) {
         for (uint8_t j = 0; j < size; j++) {
-            pbio_lightgrid_set_pixel(self->lightgrid, i, j, b);
+            pbio_lightgrid_set_pixel(self->lightgrid, i, j, brightness);
         }
     }
 
@@ -177,30 +178,30 @@ STATIC mp_obj_t common_LightGrid_number(size_t n_args, const mp_obj_t *pos_args,
     }
 
     // Get the number
-    mp_int_t value = pb_obj_get_int(number);
+    mp_int_t number = pb_obj_get_int(number_in);
 
     // > 99 gets displayed as >
-    if (value > 99) {
+    if (number > 99) {
         pbio_lightgrid_set_rows(self->lightgrid, pb_font_5x5['>' - 32]);
         return mp_const_none;
     }
 
     // < -99 gets displayed as <
-    if (value < -99) {
+    if (number < -99) {
         pbio_lightgrid_set_rows(self->lightgrid, pb_font_5x5['<' - 32]);
         return mp_const_none;
     }
 
     // Remember sign but make value positive
-    bool negative = value < 0;
+    bool negative = number < 0;
     if (negative) {
-        value = -value;
+        number = -number;
     }
 
     // Compose number as two digits
     uint8_t composite[5];
     for (uint8_t i = 0; i < 5; i++) {
-        composite[i] = pb_digits_5x2[value / 10][i] << 3 | pb_digits_5x2[value % 10][i];
+        composite[i] = pb_digits_5x2[number / 10][i] << 3 | pb_digits_5x2[number % 10][i];
     }
 
     // Display the result
@@ -223,12 +224,12 @@ STATIC mp_obj_t common_LightGrid_pattern(size_t n_args, const mp_obj_t *pos_args
         PB_ARG_REQUIRED(interval));
 
     // Time between frames
-    mp_int_t dt = pb_obj_get_int(interval);
+    mp_int_t interval = pb_obj_get_int(interval_in);
 
     // Unpack the list of images
     mp_obj_t *image_objs;
     size_t n;
-    mp_obj_get_array(images, &n, &image_objs);
+    mp_obj_get_array(images_in, &n, &image_objs);
     if (n > UINT8_MAX || n < 2) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
@@ -246,7 +247,7 @@ STATIC mp_obj_t common_LightGrid_pattern(size_t n_args, const mp_obj_t *pos_args
     pbio_lightgrid_stop_pattern(self->lightgrid);
 
     // Activate the pattern
-    pbio_lightgrid_start_pattern(self->lightgrid, self->data, self->frames, dt);
+    pbio_lightgrid_start_pattern(self->lightgrid, self->data, self->frames, interval);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightGrid_pattern_obj, 1, common_LightGrid_pattern);
@@ -263,7 +264,7 @@ STATIC mp_obj_t common_LightGrid_pixel(size_t n_args, const mp_obj_t *pos_args, 
     pbio_lightgrid_stop_pattern(self->lightgrid);
 
     // Set pixel at the given brightness
-    pbio_lightgrid_set_pixel(self->lightgrid, mp_obj_get_int(row), mp_obj_get_int(column), pb_obj_get_pct(brightness));
+    pbio_lightgrid_set_pixel(self->lightgrid, mp_obj_get_int(row_in), mp_obj_get_int(column_in), pb_obj_get_pct(brightness_in));
 
     return mp_const_none;
 }
@@ -278,30 +279,30 @@ STATIC mp_obj_t common_LightGrid_text(size_t n_args, const mp_obj_t *pos_args, m
         PB_ARG_DEFAULT_INT(off, 50));
 
     // Assert that the input is a single text
-    GET_STR_DATA_LEN(text, str, len);
+    GET_STR_DATA_LEN(text_in, text, text_len);
 
     // Make sure all characters are valid
-    for (size_t i = 0; i < len; i++) {
-        if (str[0] < 32 || str[0] > 126) {
+    for (size_t i = 0; i < text_len; i++) {
+        if (text[0] < 32 || text[0] > 126) {
             pb_assert(PBIO_ERROR_INVALID_ARG);
         }
     }
 
-    mp_int_t on_time = pb_obj_get_int(on);
-    mp_int_t off_time = pb_obj_get_int(off);
+    mp_int_t on = pb_obj_get_int(on_in);
+    mp_int_t off = pb_obj_get_int(off_in);
 
     // Stop any ongoing pattern
     pbio_lightgrid_stop_pattern(self->lightgrid);
 
     // Display all characters one by one
-    for (size_t i = 0; i < len; i++) {
-        pbio_lightgrid_set_rows(self->lightgrid, pb_font_5x5[str[i] - 32]);
-        mp_hal_delay_ms(on_time);
+    for (size_t i = 0; i < text_len; i++) {
+        pbio_lightgrid_set_rows(self->lightgrid, pb_font_5x5[text[i] - 32]);
+        mp_hal_delay_ms(on);
 
         // Some off time so we can see multiple of the same characters
-        if (off_time > 0 || i == len - 1) {
+        if (off > 0 || i == text_len - 1) {
             pbio_lightgrid_set_rows(self->lightgrid, pb_font_5x5[' ' - 32]);
-            mp_hal_delay_ms(off_time);
+            mp_hal_delay_ms(off);
         }
     }
 

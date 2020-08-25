@@ -33,15 +33,15 @@ STATIC mp_obj_t iodevices_Ev3devSensor_make_new(const mp_obj_type_t *type, size_
     iodevices_Ev3devSensor_obj_t *self = m_new_obj(iodevices_Ev3devSensor_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
+    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
-    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR);
+    self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_EV3DEV_LEGO_SENSOR);
 
     // Get the sysfs index. This is not currently exposed through pb_device,
     // so read it again by searching through the sysfs tree.
     int32_t sensor_index, port_index;
-    pb_assert(sysfs_get_number(port_num, "/sys/class/lego-sensor", &sensor_index));
-    pb_assert(sysfs_get_number(port_num, "/sys/class/lego-port", &port_index));
+    pb_assert(sysfs_get_number(port, "/sys/class/lego-sensor", &sensor_index));
+    pb_assert(sysfs_get_number(port, "/sys/class/lego-port", &port_index));
     self->sensor_index = mp_obj_new_int(sensor_index);
     self->port_index = mp_obj_new_int(port_index);
 
@@ -55,7 +55,7 @@ STATIC mp_obj_t iodevices_Ev3devSensor_read(size_t n_args, const mp_obj_t *pos_a
         PB_ARG_REQUIRED(mode));
 
     // Get mode index from mode string
-    uint8_t mode_idx = pb_device_get_mode_id_from_str(self->pbdev, mp_obj_str_get_str(mode));
+    uint8_t mode_idx = pb_device_get_mode_id_from_str(self->pbdev, mp_obj_str_get_str(mode_in));
 
     // Get data already in correct data format
     int32_t data[PBIO_IODEV_MAX_DATA_SIZE];

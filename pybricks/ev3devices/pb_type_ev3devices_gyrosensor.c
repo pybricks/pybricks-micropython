@@ -44,12 +44,11 @@ STATIC mp_obj_t ev3devices_GyroSensor_make_new(const mp_obj_type_t *type, size_t
 
     ev3devices_GyroSensor_obj_t *self = m_new_obj(ev3devices_GyroSensor_obj_t);
     self->base.type = (mp_obj_type_t *)type;
-    self->direction = pb_type_enum_get_value(direction, &pb_enum_type_Direction);
+    self->direction = pb_type_enum_get_value(direction_in, &pb_enum_type_Direction);
 
-    mp_int_t port_num = pb_type_enum_get_value(port, &pb_enum_type_Port);
-    self->port = port_num;
+    self->port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
-    self->pbdev = pb_device_get_device(port_num, PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR);
+    self->pbdev = pb_device_get_device(self->port, PBIO_IODEV_TYPE_ID_EV3_GYRO_SENSOR);
 
     self->offset = ev3devices_GyroSensor_get_angle_offset(self->pbdev, self->direction, 0);
     return MP_OBJ_FROM_PTR(self);
@@ -92,7 +91,7 @@ STATIC mp_obj_t ev3devices_GyroSensor_reset_angle(size_t n_args, const mp_obj_t 
         ev3devices_GyroSensor_obj_t, self,
         PB_ARG_REQUIRED(angle));
 
-    self->offset = ev3devices_GyroSensor_get_angle_offset(self->pbdev, self->direction, pb_obj_get_int(angle));
+    self->offset = ev3devices_GyroSensor_get_angle_offset(self->pbdev, self->direction, pb_obj_get_int(angle_in));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(ev3devices_GyroSensor_reset_angle_obj, 1, ev3devices_GyroSensor_reset_angle);

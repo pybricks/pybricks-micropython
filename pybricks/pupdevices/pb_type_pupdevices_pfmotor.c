@@ -37,32 +37,32 @@ STATIC mp_obj_t pupdevices_PFMotor_make_new(const mp_obj_type_t *type, size_t n_
         PB_ARG_DEFAULT_OBJ(positive_direction, pb_Direction_CLOCKWISE_obj));
 
     // Get device
-    pb_device_t *pbdev = pupdevices_ColorDistanceSensor__get_device(sensor);
+    pb_device_t *sensor = pupdevices_ColorDistanceSensor__get_device(sensor_in);
 
     // Get channel
-    mp_int_t _channel = mp_obj_get_int(channel);
-    if (_channel < 1 || _channel > 4) {
+    mp_int_t channel = mp_obj_get_int(channel_in);
+    if (channel < 1 || channel > 4) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
     // Get port color indicator (blue or red)
-    pbio_color_t _color = pb_type_enum_get_value(color, &pb_enum_type_Color);
-    if (_color != PBIO_COLOR_BLUE && _color != PBIO_COLOR_RED) {
+    pbio_color_t color = pb_type_enum_get_value(color_in, &pb_enum_type_Color);
+    if (color != PBIO_COLOR_BLUE && color != PBIO_COLOR_RED) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
     // Get positive direction.
-    pbio_direction_t _direction = pb_type_enum_get_value(positive_direction, &pb_enum_type_Direction);
+    pbio_direction_t positive_direction = pb_type_enum_get_value(positive_direction_in, &pb_enum_type_Direction);
 
     // All checks have passed, so create the object
     pupdevices_PFMotor_obj_t *self = m_new_obj(pupdevices_PFMotor_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
     // Save init arguments
-    self->pbdev = pbdev;
-    self->channel = _channel;
-    self->color = _color;
-    self->direction = _direction;
+    self->pbdev = sensor;
+    self->channel = channel;
+    self->color = color;
+    self->direction = positive_direction;
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -106,19 +106,19 @@ STATIC mp_obj_t pupdevices_PFMotor_dc(size_t n_args, const mp_obj_t *pos_args, m
         pupdevices_PFMotor_obj_t, self,
         PB_ARG_REQUIRED(duty));
 
-    mp_int_t duty_cycle = pb_obj_get_int(duty);
-    bool forward = (duty_cycle > 0) == (self->direction == PBIO_DIRECTION_CLOCKWISE);
+    mp_int_t duty = pb_obj_get_int(duty_in);
+    bool forward = (duty > 0) == (self->direction == PBIO_DIRECTION_CLOCKWISE);
 
     // Make duty cycle positive and bounded
-    if (duty_cycle < 0) {
-        duty_cycle = -duty_cycle;
+    if (duty < 0) {
+        duty = -duty;
     }
-    if (duty_cycle > 99) {
-        duty_cycle = 105;
+    if (duty > 99) {
+        duty = 105;
     }
 
     // Scale 100% duty to 7 PWM steps
-    uint8_t pwm = duty_cycle / 15;
+    uint8_t pwm = duty / 15;
 
     // // For forward, PWM steps 1--7 are binary 1 to 7, backward is 15--9
     int32_t message = (forward || pwm == 0) ? pwm : 16 - pwm;
