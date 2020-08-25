@@ -595,19 +595,13 @@ STATIC mp_obj_t ev3dev_Speaker_set_volume(size_t n_args, const mp_obj_t *pos_arg
 
     (void)self; // unused
 
-    mp_int_t volume = pb_obj_get_int(volume_in);
+    mp_int_t volume = pb_obj_get_pct(volume_in);
     const char *which = mp_obj_str_get_str(which_in);
-
-    if (volume > 100) {
-        volume = 100;
-    } else if (volume < 0) {
-        volume = 0;
-    }
 
     // EV3 sound driver uses 0-256 for volume
     volume = 256 * volume / 100;
 
-    char amixer_stdin[32];
+    char amixer_stdin[64];
 
     if (strcmp(which, "_default_") == 0) {
         // internal value to set sane defaults (PCM 70%, Beep 30%). volume parameter is ignored.
