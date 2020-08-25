@@ -65,7 +65,7 @@ PT_THREAD(test_color_light(struct pt *pt)) {
     test_light_set_hsv_call_count = 0;
 
     // starting animation should call set_hsv() synchonously
-    pbio_color_light_start_blink(&test_light, test_blink);
+    pbio_color_light_start_blink_animation(&test_light, test_blink);
     tt_want_uint_op(test_light_set_hsv_call_count, ==, 1);
     tt_want_uint_op(test_light_set_hsv_last_hue, ==, BLUE_HUE);
 
@@ -83,7 +83,7 @@ PT_THREAD(test_color_light(struct pt *pt)) {
     tt_want_uint_op(test_light_set_hsv_last_hue, ==, BLUE_HUE);
     tt_want(timer_expired(&timer));
 
-    pbio_color_light_stop_blink(&test_light);
+    pbio_color_light_stop_animation(&test_light);
 
     // reset call count for next series of tests
     test_light_set_hsv_call_count = 0;

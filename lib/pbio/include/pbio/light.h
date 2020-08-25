@@ -52,8 +52,7 @@ typedef struct {
 pbio_error_t pbio_color_light_on_hsv(pbio_color_light_t *light, const pbio_color_hsv_t *hsv);
 pbio_error_t pbio_color_light_on(pbio_color_light_t *light, pbio_color_t color);
 pbio_error_t pbio_color_light_off(pbio_color_light_t *light);
-void pbio_color_light_start_blink(pbio_color_light_t *light, const pbio_color_light_blink_cell_t *cells);
-void pbio_color_light_stop_blink(pbio_color_light_t *light);
+void pbio_color_light_start_blink_animation(pbio_color_light_t *light, const pbio_color_light_blink_cell_t *cells);
 void pbio_color_light_start_animation(pbio_color_light_t *light, uint16_t interval, const pbio_color_hsv_t *cells);
 void pbio_color_light_stop_animation(pbio_color_light_t *light);
 
@@ -71,10 +70,7 @@ static inline pbio_error_t pbio_color_light_off(pbio_color_light_t *light) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbio_color_light_start_blink(pbio_color_light_t *light, const pbio_color_light_blink_cell_t *cells) {
-}
-
-static inline void pbio_color_light_stop_blink(pbio_color_light_t *light) {
+static inline void pbio_color_light_start_blink_animation(pbio_color_light_t *light, const pbio_color_light_blink_cell_t *cells) {
 }
 
 static inline void pbio_color_light_start_animation(pbio_color_light_t *light, uint16_t interval, const pbio_color_hsv_t *cells) {
