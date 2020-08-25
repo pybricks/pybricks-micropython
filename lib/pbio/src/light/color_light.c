@@ -27,7 +27,7 @@ void pbio_color_light_init(pbio_color_light_t *light, const pbio_color_light_fun
 }
 
 /**
- * Turns the light on with specifed color and brightness.
+ * Turns the light on with specified color and brightness.
  *
  * Some lights may not be capable of displaying all colors. Some lights may not
  * have adjustable brightness.
