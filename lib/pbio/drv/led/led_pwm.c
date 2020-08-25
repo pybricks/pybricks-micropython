@@ -54,9 +54,8 @@ static pbio_error_t pbdrv_led_pwm_set_hsv(pbdrv_led_dev_t *dev, const pbio_color
     // integer. Plus 1 avoids divide by 0.
     uint32_t Y = ((174 * r + 1590 * g + 327 * b) >> 12) + 1;
 
-    // Reapply V from HSV for brightness.
-    // TODO: probably need to adjust for gamma as well.
-    uint32_t scale_factor = hsv->v * pdata->scale_factor;
+    // Reapply V from HSV for brightness. V is squared for gamma correction.
+    uint32_t scale_factor = hsv->v * hsv->v * pdata->scale_factor / 128;
 
     r = r * scale_factor / Y;
     g = g * scale_factor / Y;

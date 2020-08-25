@@ -88,7 +88,7 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
         .g_ch = 4,
         .b_id = PWM_DEV_4_TLC5955,
         .b_ch = 3,
-        .scale_factor = 27,
+        .scale_factor = 35,
     },
     {
         .id = LED_DEV_2_STATUS_BOTTOM,
@@ -98,7 +98,7 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
         .g_ch = 7,
         .b_id = PWM_DEV_4_TLC5955,
         .b_ch = 6,
-        .scale_factor = 27,
+        .scale_factor = 35,
     },
     {
         .id = LED_DEV_3_BATTERY,
@@ -108,7 +108,7 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
         .g_ch = 1,
         .b_id = PWM_DEV_4_TLC5955,
         .b_ch = 0,
-        .scale_factor = 27,
+        .scale_factor = 35,
     },
     {
         .id = LED_DEV_4_BLUETOOTH,
@@ -118,7 +118,7 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
         .g_ch = 19,
         .b_id = PWM_DEV_4_TLC5955,
         .b_ch = 18,
-        .scale_factor = 27,
+        .scale_factor = 35,
     },
 };
 
