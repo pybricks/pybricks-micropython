@@ -6,6 +6,8 @@
 
 #include <fixmath.h>
 
+#include <pbio/color.h>
+
 #include "py/obj.h"
 
 // like mp_obj_get_int() but also allows float
@@ -17,9 +19,8 @@ mp_int_t pb_obj_get_int(mp_obj_t arg);
 
 mp_int_t pb_obj_get_positive_int(mp_obj_t arg);
 mp_int_t pb_obj_get_pct(mp_obj_t arg);
-
-// Get integer bounded by 0 <= arg <= 359
 mp_int_t pb_obj_get_hue(mp_obj_t arg);
+void pb_obj_get_hsv(mp_obj_t arg, pbio_color_hsv_t *hsv);
 
 // like mp_obj_new_int / mp_obj_new_float to create object as a ratio of two integers
 mp_obj_t pb_obj_new_fraction(int32_t numerator, int32_t denominator);

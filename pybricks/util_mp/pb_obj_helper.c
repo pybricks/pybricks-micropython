@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019-2020 The Pybricks Authors
 
+#include <pbio/color.h>
 #include <pbio/error.h>
 
 #include <fixmath.h>
@@ -58,12 +59,36 @@ mp_int_t pb_obj_get_pct(mp_obj_t arg) {
     return val;
 }
 
+/**
+ * Gets a HSV colorspace hue value.
+ *
+ * If @p arg cannot be converted to an integer, an exception is raised.
+ * If @p arg is outside of the range of 0 to 359, it is treated as an angle
+ * and is reduced to the matching angle between 0 and 359.
+ *
+ * @param arg [in]  A MicroPython object
+ * @return          An integer in the range of 0 to 359.
+ */
 mp_int_t pb_obj_get_hue(mp_obj_t arg) {
     mp_int_t hue = pb_obj_get_int(arg) % 360;
     if (hue < 0) {
         return hue + 360;
     }
     return hue;
+}
+
+/**
+ * Unpacks an object into a HSV struct.
+ *
+ * Raises an exception if @p arg is not subscriptable or does not have 3 elements.
+ *
+ * @param arg [in]  A MicroPython object
+ * @param hsv [out] The HSV value
+ */
+void pb_obj_get_hsv(mp_obj_t arg, pbio_color_hsv_t *hsv) {
+    hsv->h = pb_obj_get_hue(mp_obj_subscr(arg, MP_OBJ_NEW_SMALL_INT(0), MP_OBJ_SENTINEL));
+    hsv->s = pb_obj_get_pct(mp_obj_subscr(arg, MP_OBJ_NEW_SMALL_INT(1), MP_OBJ_SENTINEL));
+    hsv->v = pb_obj_get_pct(mp_obj_subscr(arg, MP_OBJ_NEW_SMALL_INT(2), MP_OBJ_SENTINEL));
 }
 
 mp_obj_t pb_obj_new_fraction(int32_t numerator, int32_t denominator) {
