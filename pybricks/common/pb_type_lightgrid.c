@@ -43,11 +43,11 @@ STATIC void common_LightGrid__renew(common_LightGrid_obj_t *self, uint8_t frames
 STATIC mp_obj_t common_LightGrid_char(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         common_LightGrid_obj_t, self,
-        PB_ARG_REQUIRED(character));
+        PB_ARG_REQUIRED(char));
 
     // Assert that the input is a single character
-    GET_STR_DATA_LEN(character_in, character, character_len);
-    if (character_len != 1 || character[0] < 32 || character[0] > 126) {
+    GET_STR_DATA_LEN(char_in, text, text_len);
+    if (text_len != 1 || text[0] < 32 || text[0] > 126) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
@@ -55,7 +55,7 @@ STATIC mp_obj_t common_LightGrid_char(size_t n_args, const mp_obj_t *pos_args, m
     pbio_lightgrid_stop_pattern(self->lightgrid);
 
     // Pick corresponding image and display it
-    pbio_lightgrid_set_rows(self->lightgrid, pb_font_5x5[character[0] - 32]);
+    pbio_lightgrid_set_rows(self->lightgrid, pb_font_5x5[text[0] - 32]);
 
     return mp_const_none;
 }
