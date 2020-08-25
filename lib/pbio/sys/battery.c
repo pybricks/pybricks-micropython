@@ -34,7 +34,7 @@ void pbsys_battery_init() {
     // read is always low and causes the hub to shut down because of low battery
     // voltage even though the batter isn't that low.
     if (avg_battery_voltage < BATTERY_CRITICAL_MV) {
-        avg_battery_voltage = BATTERY_CRITICAL_MV;
+        avg_battery_voltage = BATTERY_OK_MV;
     }
     prev_poll_time = clock_time();
 }
