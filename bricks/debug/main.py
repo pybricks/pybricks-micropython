@@ -1,2 +1,6 @@
-motor = Motor(Port.B)
-motor.run_angle(1000, 90)
+from pybricks import version
+from pybricks.tools import wait
+
+print(version)
+wait(5000)
+print("Hello, World!")
