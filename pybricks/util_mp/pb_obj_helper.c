@@ -23,15 +23,39 @@ mp_int_t pb_obj_get_int(mp_obj_t arg) {
 }
 #endif
 
-mp_int_t pb_obj_get_pct(mp_obj_t arg) {
-    mp_int_t unbounded = pb_obj_get_int(arg);
-    if (unbounded > 100) {
-        return 100;
-    }
-    if (unbounded < 0) {
+/**
+ * Gets a positive integer value.
+ *
+ * If @p arg cannot be converted to an integer, an exception is raised.
+ * If @p arg is less than 0, it is truncated to 0.
+ *
+ * @param arg [in]  A MicroPython object
+ * @return          A positive integer
+ */
+mp_int_t pb_obj_get_positive_int(mp_obj_t arg) {
+    mp_int_t val = pb_obj_get_int(arg);
+    if (val < 0) {
         return 0;
     }
-    return unbounded;
+    return val;
+}
+
+/**
+ * Gets a percentage value.
+ *
+ * If @p arg cannot be converted to an integer, an exception is raised.
+ * If @p arg is less than 0, it is truncated to 0.
+ * If @p arg is greater than 100, it is truncated to 100.
+ *
+ * @param arg [in]  A MicroPython object
+ * @return          An integer in the range 0 to 100
+ */
+mp_int_t pb_obj_get_pct(mp_obj_t arg) {
+    mp_int_t val = pb_obj_get_positive_int(arg);
+    if (val > 100) {
+        return 100;
+    }
+    return val;
 }
 
 mp_int_t pb_obj_get_hue(mp_obj_t arg) {

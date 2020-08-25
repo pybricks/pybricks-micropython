@@ -15,7 +15,7 @@ mp_int_t pb_obj_get_int(mp_obj_t arg);
 #define pb_obj_get_int mp_obj_get_int
 #endif
 
-// Get integer bounded by 0 <= arg <= 100
+mp_int_t pb_obj_get_positive_int(mp_obj_t arg);
 mp_int_t pb_obj_get_pct(mp_obj_t arg);
 
 // Get integer bounded by 0 <= arg <= 359
