@@ -107,6 +107,18 @@ STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, m
     #endif
 
     switch (op) {
+        case MP_BINARY_OP_EQUAL:
+            if (!mp_obj_is_type(rhs_in, &pb_type_Color)) {
+                return mp_const_false;
+            }
+            parameters_Color_obj_t *other = MP_OBJ_TO_PTR(rhs_in);
+            if (self->hsv.h == other->hsv.h &&
+                self->hsv.s == other->hsv.s &&
+                self->hsv.v == other->hsv.v) {
+                return mp_const_true;
+            } else {
+                return mp_const_false;
+            }
         case MP_BINARY_OP_MULTIPLY:
         case MP_BINARY_OP_REVERSE_MULTIPLY:
             #if MICROPY_PY_BUILTINS_FLOAT
