@@ -96,6 +96,49 @@ STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     dest[1] = MP_OBJ_SENTINEL;
 }
 
+STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs_in) {
+
+    parameters_Color_obj_t *self = MP_OBJ_TO_PTR(lhs_in);
+
+    #if MICROPY_PY_BUILTINS_FLOAT
+    mp_float_t value;
+    #else
+    mp_int_t value;
+    #endif
+
+    switch (op) {
+        case MP_BINARY_OP_MULTIPLY:
+        case MP_BINARY_OP_REVERSE_MULTIPLY:
+            #if MICROPY_PY_BUILTINS_FLOAT
+            value = mp_obj_get_float(rhs_in) * self->hsv.v;
+            #else
+            value = pb_obj_get_int(rhs_in) * self->hsv.v;
+            #endif
+            break;
+        case MP_BINARY_OP_FLOOR_DIVIDE:
+            value = self->hsv.v / pb_obj_get_int(rhs_in);
+            break;
+        #if MICROPY_PY_BUILTINS_FLOAT
+        case MP_BINARY_OP_TRUE_DIVIDE:
+            value = self->hsv.v / mp_obj_get_float(rhs_in);
+            break;
+        #endif
+        default:
+            // Other operations not supported
+            return MP_OBJ_NULL;
+    }
+
+    // Scale value
+    if (value > 100) {
+        value = 100;
+    }
+    if (value < 0) {
+        value = 0;
+    }
+
+    // Create and return a new Color
+    return parameters_Color_make_new_helper(self->hsv.h, self->hsv.s, (uint8_t)value, self->name);
+}
 
 STATIC const mp_rom_map_elem_t pb_type_Color_table[] = {
     { MP_ROM_QSTR(MP_QSTR_RED),            MP_ROM_PTR(&_pb_Color_RED_obj)},
@@ -109,6 +152,7 @@ const mp_obj_type_t pb_type_Color = {
     .print = pb_type_Color_print,
     .unary_op = mp_generic_unary_op,
     .make_new = parameters_Color_make_new,
+    .binary_op = parameters_Color_binary_op,
     .locals_dict = (mp_obj_dict_t *)&(pb_type_Color_locals_dict),
 };
 
