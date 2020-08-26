@@ -109,13 +109,23 @@ if __name__ == "__main__":
     # cant be empty string so we use "+" as dummy value
     parser = argparse.ArgumentParser(description="Generate firmware metadata.", prefix_chars="+")
     parser.add_argument(
-        "fw_version", metavar="<firmware-version>", type=str, help="Pybricks firmware version",
+        "fw_version",
+        metavar="<firmware-version>",
+        type=str,
+        help="Pybricks firmware version",
     )
     parser.add_argument(
-        "hub_type", metavar="<hub-type>", choices=HUB_INFO.keys(), help="hub type/device ID",
+        "hub_type",
+        metavar="<hub-type>",
+        choices=HUB_INFO.keys(),
+        help="hub type/device ID",
     )
     parser.add_argument(
-        "mpy_options", metavar="<mpy-cross-option>", nargs="*", type=str, help="mpy-cross option",
+        "mpy_options",
+        metavar="<mpy-cross-option>",
+        nargs="*",
+        type=str,
+        help="mpy-cross option",
     )
     parser.add_argument(
         "map_file",
@@ -124,7 +134,10 @@ if __name__ == "__main__":
         help="firmware linker map file name",
     )
     parser.add_argument(
-        "out_file", metavar="<output-file>", type=argparse.FileType("w"), help="output file name",
+        "out_file",
+        metavar="<output-file>",
+        type=argparse.FileType("w"),
+        help="output file name",
     )
 
     args = parser.parse_args()
