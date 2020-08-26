@@ -7,8 +7,7 @@
 #include "pbdrv/config.h"
 
 #include "pbio/event.h"
-#include "pbio/light.h"
-#include "pbio/motorpoll.h"
+#include "pbio/main.h"
 
 #include <pbsys/battery.h>
 #include <pbsys/status.h>
@@ -44,9 +43,9 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
 
 void pbsys_unprepare_user_program(void) {
     pbsys_status_clear(PBSYS_STATUS_USER_PROGRAM_RUNNING);
+    pbio_stop_all();
     user_stop_func = NULL;
     user_stdin_event_func = NULL;
-    // _pbio_motorpoll_reset_all();
 }
 
 pbio_error_t pbsys_stdin_get_char(uint8_t *c) {

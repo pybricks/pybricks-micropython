@@ -27,11 +27,13 @@ PT_THREAD(test_light_animation(struct pt *pt)) {
     pbio_light_animation_init(&test_animation, test_animation_next);
 
     // process should not be running yet
-    tt_want(!process_is_running(&pbio_light_animation_process))
+    tt_want(!process_is_running(&pbio_light_animation_process));
+    tt_want(!pbio_light_animation_is_started(&test_animation));
 
     // starting animation should start process and call next() once synchonously
     pbio_light_animation_start(&test_animation);
-    tt_want(process_is_running(&pbio_light_animation_process))
+    tt_want(pbio_light_animation_is_started(&test_animation));
+    tt_want(process_is_running(&pbio_light_animation_process));
     tt_want_uint_op(test_animation_set_hsv_call_count, ==, 1);
 
     // next() should not be called again until after a delay
@@ -42,7 +44,35 @@ PT_THREAD(test_light_animation(struct pt *pt)) {
 
     // stopping the animation stops the process
     pbio_light_animation_stop(&test_animation);
-    tt_want(!process_is_running(&pbio_light_animation_process))
+    tt_want(!pbio_light_animation_is_started(&test_animation));
+    tt_want(!process_is_running(&pbio_light_animation_process));
+
+    // exercise multiple animations for code coverage
+    static pbio_light_animation_t test_animation2;
+    pbio_light_animation_init(&test_animation2, test_animation_next);
+    pbio_light_animation_start(&test_animation);
+    pbio_light_animation_start(&test_animation2);
+    tt_want(pbio_light_animation_is_started(&test_animation));
+    tt_want(pbio_light_animation_is_started(&test_animation2));
+    pbio_light_animation_stop(&test_animation);
+    tt_want(!pbio_light_animation_is_started(&test_animation));
+    tt_want(pbio_light_animation_is_started(&test_animation2));
+    tt_want(process_is_running(&pbio_light_animation_process));
+    pbio_light_animation_stop(&test_animation2);
+    tt_want(!pbio_light_animation_is_started(&test_animation));
+    tt_want(!pbio_light_animation_is_started(&test_animation2));
+    tt_want(!process_is_running(&pbio_light_animation_process));
+
+    // stopping all animations stops the process
+    pbio_light_animation_start(&test_animation);
+    pbio_light_animation_start(&test_animation2);
+    tt_want(pbio_light_animation_is_started(&test_animation));
+    tt_want(pbio_light_animation_is_started(&test_animation2));
+    tt_want(process_is_running(&pbio_light_animation_process));
+    pbio_light_animation_stop_all();
+    tt_want(!pbio_light_animation_is_started(&test_animation));
+    tt_want(!pbio_light_animation_is_started(&test_animation2));
+    tt_want(!process_is_running(&pbio_light_animation_process));
 
     PT_END(pt);
 }

@@ -24,6 +24,18 @@
  */
 void pbio_color_light_init(pbio_color_light_t *light, const pbio_color_light_funcs_t *funcs) {
     light->funcs = funcs;
+    pbio_light_animation_init(&light->animation, NULL);
+}
+
+/**
+ * Stops animating the light. Has no effect if animation is not started.
+ *
+ * @param [in]  light       The light instance
+ */
+static void pbio_color_light_stop_animation(pbio_color_light_t *light) {
+    if (pbio_light_animation_is_started(&light->animation)) {
+        pbio_light_animation_stop(&light->animation);
+    }
 }
 
 /**
@@ -35,12 +47,15 @@ void pbio_color_light_init(pbio_color_light_t *light, const pbio_color_light_fun
  * The V in HSV will be the brightness of the LED. Colors like brown and gray
  * are not possible since lights emit light rather than reflect it.
  *
+ * If an animation is running in the background, it will be stopped.
+ *
  * @param [in]  light       The light instance
  * @param [in]  hsv         The color and brightness
  * @return                  ::PBIO_SUCCESS if the call was successful,
  *                          ::PBIO_ERROR_NO_DEV if the light is not connected
  */
 pbio_error_t pbio_color_light_on_hsv(pbio_color_light_t *light, const pbio_color_hsv_t *hsv) {
+    pbio_color_light_stop_animation(light);
     return light->funcs->set_hsv(light, hsv);
 }
 
@@ -55,6 +70,8 @@ pbio_error_t pbio_color_light_on_hsv(pbio_color_light_t *light, const pbio_color
  * lights emit light rather than reflect it and will appear as dim orange and
  * dim white instead.
  *
+ * If an animation is running in the background, it will be stopped.
+ *
  * @param [in]  light       The light instance
  * @param [in]  color       The color
  * @return                  ::PBIO_SUCCESS if the call was successful,
@@ -68,6 +85,9 @@ pbio_error_t pbio_color_light_on(pbio_color_light_t *light, pbio_color_t color) 
 
 /**
  * Turns the light off.
+ *
+ * If an animation is running in the background, it will be stopped.
+ *
  * @param [in]  light       The light instance
  * @return                  ::PBIO_SUCCESS if the call was successful,
  *                          ::PBIO_ERROR_INVALID_PORT if port is not a valid port
@@ -90,7 +110,9 @@ static clock_time_t pbio_color_light_blink_next(pbio_light_animation_t *animatio
         light->current_cell = 1;
     }
 
-    pbio_color_light_on(light, cell->color);
+    pbio_color_hsv_t hsv;
+    pbio_color_to_hsv(cell->color, &hsv);
+    light->funcs->set_hsv(light, &hsv);
     return clock_from_msec(cell->duration);
 }
 
@@ -98,17 +120,16 @@ static clock_time_t pbio_color_light_blink_next(pbio_light_animation_t *animatio
  * Starts blinking the light.
  *
  * This will start a background timer to blink the lights using the information
- * in @p cells. The data in @p cells must remain valid until pbio_color_light_stop_animation()
- * is called.
+ * in @p cells. The data in @p cells must remain valid until animation is stopped.
  *
- * The blinking must be stopped by calling pbio_color_light_stop_animation()
- * before using other color light functions including calling pbio_color_light_start_blink_animation()
- * again, otherwise the background timer will continue to update the light.
+ * If another animation is running in the background, it will be stopped and
+ * replaced with this one.
  *
  * @param [in]  light       The light instance
  * @param [in]  cells       Array of up to 65536 blink animation cells ending with ::PBIO_COLOR_LIGHT_BLINK_END
  */
 void pbio_color_light_start_blink_animation(pbio_color_light_t *light, const pbio_color_light_blink_cell_t *cells) {
+    pbio_color_light_stop_animation(light);
     pbio_light_animation_init(&light->animation, pbio_color_light_blink_next);
     light->cells = cells;
     light->current_cell = 0;
@@ -127,7 +148,7 @@ static clock_time_t pbio_color_light_animate_next(pbio_light_animation_t *animat
         light->current_cell = 1;
     }
 
-    pbio_color_light_on_hsv(light, cell);
+    light->funcs->set_hsv(light, cell);
     return clock_from_msec(light->interval);
 }
 
@@ -135,34 +156,22 @@ static clock_time_t pbio_color_light_animate_next(pbio_light_animation_t *animat
  * Starts animating the light.
  *
  * This will start a background timer to animate the lights using the information
- * in @p cells. The data in @p cells must remain valid until pbio_color_light_stop_animation()
- * is called.
+ * in @p cells. The data in @p cells must remain valid until animation is stopped.
  *
- * The animation must be stopped by calling pbio_color_light_stop_animation()
- * before using other color light functions including calling pbio_color_light_start_animation()
- * again, otherwise the background timer will continue to update the light.
+ * If another animation is running in the background, it will be stopped and
+ * replaced with this one.
  *
  * @param [in]  light       The light instance
  * @param [in]  interval    The the time intervale between animaction cells in milliseconds
  * @param [in]  cells       Array of up to 65536 animation cells ending with ::PBIO_COLOR_LIGHT_ANIMATION_END
  */
 void pbio_color_light_start_animation(pbio_color_light_t *light, uint16_t interval, const pbio_color_hsv_t *cells) {
+    pbio_color_light_stop_animation(light);
     pbio_light_animation_init(&light->animation, pbio_color_light_animate_next);
     light->interval = interval;
     light->cells = cells;
     light->current_cell = 0;
     pbio_light_animation_start(&light->animation);
-}
-
-/**
- * Stops animation the light.
- *
- * See pbio_color_light_start_animation() and pbio_color_light_start_blink_animation_animation().
- *
- * @param [in]  light       The light instance
- */
-void pbio_color_light_stop_animation(pbio_color_light_t *light) {
-    pbio_light_animation_stop(&light->animation);
 }
 
 #endif // PBIO_CONFIG_LIGHT

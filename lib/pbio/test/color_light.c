@@ -83,8 +83,6 @@ PT_THREAD(test_color_light(struct pt *pt)) {
     tt_want_uint_op(test_light_set_hsv_last_hue, ==, BLUE_HUE);
     tt_want(timer_expired(&timer));
 
-    pbio_color_light_stop_animation(&test_light);
-
     // reset call count for next series of tests
     test_light_set_hsv_call_count = 0;
 
@@ -105,8 +103,6 @@ PT_THREAD(test_color_light(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, test_light_set_hsv_call_count == 3);
     tt_want_uint_op(test_light_set_hsv_last_hue, ==, GREEN_HUE);
     tt_want(timer_expired(&timer));
-
-    pbio_color_light_stop_animation(&test_light);
 
     PT_END(pt);
 }

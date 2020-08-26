@@ -7,9 +7,8 @@
 
 #include "pbio/color.h"
 #include "pbio/event.h"
-#include "pbio/light.h"
 #include "pbio/lightgrid.h"
-#include "pbio/motorpoll.h"
+#include "pbio/main.h"
 
 #include <pbsys/status.h>
 #include <pbsys/sys.h>
@@ -41,9 +40,9 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
 
 void pbsys_unprepare_user_program(void) {
     pbsys_status_clear(PBSYS_STATUS_USER_PROGRAM_RUNNING);
+    pbio_stop_all();
     user_stop_func = NULL;
     user_stdin_event_func = NULL;
-    _pbio_motorpoll_reset_all();
 
     pbio_lightgrid_t *lightgrid;
     if (pbio_lightgrid_get_dev(&lightgrid) == PBIO_SUCCESS) {

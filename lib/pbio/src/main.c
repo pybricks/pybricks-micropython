@@ -21,6 +21,7 @@
 #include "pbio/motorpoll.h"
 #include "pbio/uartdev.h"
 
+#include "light/animation.h"
 #include "processes.h"
 
 static clock_time_t prev_fast_poll_time;
@@ -62,6 +63,17 @@ void pbio_init(void) {
     pbdrv_init();
     _pbdrv_button_init();
     autostart_start(autostart_processes);
+    _pbio_motorpoll_reset_all();
+}
+
+/**
+ * Stops all user-level background processes. Drivers and OS-level processes
+ * continue running.
+ */
+void pbio_stop_all(void) {
+    #if PBIO_CONFIG_LIGHT
+    pbio_light_animation_stop_all();
+    #endif
     _pbio_motorpoll_reset_all();
 }
 

@@ -4,6 +4,7 @@
 #ifndef _PBIO_LIGHT_ANIMATION_H_
 #define _PBIO_LIGHT_ANIMATION_H_
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include <contiki.h>
@@ -26,10 +27,14 @@ struct _pbio_light_animation_t {
     struct etimer timer;
     /** Animation iterator callback. */
     pbio_light_animation_next_t next;
+    /** Linked list */
+    pbio_light_animation_t *next_animation;
 };
 
 void pbio_light_animation_init(pbio_light_animation_t *animation, pbio_light_animation_next_t next);
 void pbio_light_animation_start(pbio_light_animation_t *animation);
 void pbio_light_animation_stop(pbio_light_animation_t *animation);
+void pbio_light_animation_stop_all();
+bool pbio_light_animation_is_started(pbio_light_animation_t *animation);
 
 #endif // _PBIO_LIGHT_ANIMATION_H_

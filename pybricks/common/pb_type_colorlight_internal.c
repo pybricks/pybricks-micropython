@@ -26,18 +26,10 @@ typedef struct _common_ColorLight_internal_obj_t {
     mp_obj_base_t base;
     pbio_color_light_t *light;
     void *animation_cells;
-    bool animation_started;
     #if MICROPY_MALLOC_USES_ALLOCATED_SIZE
     size_t cells_size;
     #endif
 } common_ColorLight_internal_obj_t;
-
-STATIC void common_ColorLight_internal_stop_animation(common_ColorLight_internal_obj_t *self) {
-    if (self->animation_started) {
-        pbio_color_light_stop_animation(self->light);
-        self->animation_started = false;
-    }
-}
 
 // pybricks._common.ColorLight.on
 STATIC mp_obj_t common_ColorLight_internal_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -54,8 +46,6 @@ STATIC mp_obj_t common_ColorLight_internal_on(size_t n_args, const mp_obj_t *pos
     pbio_color_t color = pb_type_enum_get_value(color_in, &pb_enum_type_Color);
     mp_int_t brightness = pb_obj_get_pct(brightness_in);
 
-    common_ColorLight_internal_stop_animation(self);
-
     pbio_color_hsv_t hsv;
     pbio_color_to_hsv(color, &hsv);
     hsv.v = brightness;
@@ -69,7 +59,6 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_ColorLight_internal_on_obj, 1, common_C
 STATIC mp_obj_t common_ColorLight_internal_off(mp_obj_t self_in) {
     common_ColorLight_internal_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    common_ColorLight_internal_stop_animation(self);
     pb_assert(pbio_color_light_off(self->light));
 
     return mp_const_none;
@@ -106,10 +95,7 @@ STATIC mp_obj_t common_ColorLight_internal_blink(size_t n_args, const mp_obj_t *
     // sentinel value
     cells[durations_len].duration = 0;
 
-    common_ColorLight_internal_stop_animation(self);
     pbio_color_light_start_blink_animation(self->light, cells);
-
-    self->animation_started = true;
 
     return mp_const_none;
 }
@@ -144,10 +130,7 @@ STATIC mp_obj_t common_ColorLight_internal_animate(size_t n_args, const mp_obj_t
 
     mp_int_t interval = pb_obj_get_int(interval_in);
 
-    common_ColorLight_internal_stop_animation(self);
     pbio_color_light_start_animation(self->light, interval, cells);
-
-    self->animation_started = true;
 
     return mp_const_none;
 }
@@ -176,7 +159,6 @@ mp_obj_t common_ColorLight_internal_obj_new(pbio_color_light_t *light) {
 
     self->base.type = &pb_type_ColorLight_internal;
     self->light = light;
-    self->animation_started = false;
     #if MICROPY_MALLOC_USES_ALLOCATED_SIZE
     self->cells_size = 0;
     #endif
