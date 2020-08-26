@@ -265,7 +265,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
     nxtdevices/pb_type_nxtdevices_ultrasonicsensor.c \
 	parameters/pb_module_parameters.c \
 	parameters/pb_type_button.c \
-	parameters/pb_type_color.c \
+	parameters/pb_type_color_legacy.c \
 	parameters/pb_type_direction.c \
 	parameters/pb_type_port.c \
 	parameters/pb_type_stop.c \
