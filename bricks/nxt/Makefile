@@ -126,7 +126,7 @@ SRC_S_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
 
 # Pybricks modules
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
-    pybricks.c \
+	pybricks.c \
 	common/pb_type_battery.c \
 	common/pb_type_control.c \
 	common/pb_type_dcmotor.c \
@@ -137,12 +137,12 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	hubs/pb_type_nxtbrick.c \
 	nxtdevices/pb_module_nxtdevices.c \
 	nxtdevices/pb_type_nxtdevices_colorsensor.c \
-    nxtdevices/pb_type_nxtdevices_energymeter.c \
-    nxtdevices/pb_type_nxtdevices_lightsensor.c \
-    nxtdevices/pb_type_nxtdevices_soundsensor.c \
-    nxtdevices/pb_type_nxtdevices_temperaturesensor.c \
-    nxtdevices/pb_type_nxtdevices_touchsensor.c \
-    nxtdevices/pb_type_nxtdevices_ultrasonicsensor.c \
+	nxtdevices/pb_type_nxtdevices_energymeter.c \
+	nxtdevices/pb_type_nxtdevices_lightsensor.c \
+	nxtdevices/pb_type_nxtdevices_soundsensor.c \
+	nxtdevices/pb_type_nxtdevices_temperaturesensor.c \
+	nxtdevices/pb_type_nxtdevices_touchsensor.c \
+	nxtdevices/pb_type_nxtdevices_ultrasonicsensor.c \
 	parameters/pb_module_parameters.c \
 	parameters/pb_type_button.c \
 	parameters/pb_type_color.c \
