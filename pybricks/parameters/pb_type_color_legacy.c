@@ -5,6 +5,8 @@
 
 #if PYBRICKS_PY_PARAMETERS
 
+// FIXME: Delete file when new color implementation is done
+
 #include <pbio/color.h>
 
 #include <pybricks/parameters.h>

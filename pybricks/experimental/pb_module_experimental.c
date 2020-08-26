@@ -9,6 +9,7 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 
+#include <pybricks/parameters.h>
 #include <pybricks/experimental.h>
 #include <pybricks/robotics.h>
 
@@ -414,6 +415,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_experimental_pthread_raise_obj, mod_experim
 
 STATIC const mp_rom_map_elem_t experimental_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental_c) },
+    { MP_ROM_QSTR(MP_QSTR_Color),      MP_ROM_PTR(&pb_type_Color)        },
     #if PYBRICKS_HUB_CPLUSHUB || PYBRICKS_HUB_PRIMEHUB
     { MP_ROM_QSTR(MP_QSTR_IMU), MP_ROM_PTR(&mod_experimental_IMU_type) },
     #endif // PYBRICKS_HUB_CPLUSHUB || PYBRICKS_HUB_PRIMEHUB
