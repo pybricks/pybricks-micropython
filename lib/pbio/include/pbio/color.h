@@ -50,6 +50,26 @@ typedef enum {
 
 #undef PBIO_COLOR_ENCODE
 
+/** Color hues for HSV color space. Values are in degrees (0 to 359). */
+typedef enum {
+    /** Red. */
+    PBIO_COLOR_HUE_RED = 0,
+    /** Orange. */
+    PBIO_COLOR_HUE_ORANGE = 30,
+    /** Yellow. */
+    PBIO_COLOR_HUE_YELLOW = 60,
+    /** Green. */
+    PBIO_COLOR_HUE_GREEN = 120,
+    /** Cyan. */
+    PBIO_COLOR_HUE_CYAN = 180,
+    /** Blue. */
+    PBIO_COLOR_HUE_BLUE = 240,
+    /** Violet. */
+    PBIO_COLOR_HUE_VIOLET = 270,
+    /** Magenta. */
+    PBIO_COLOR_HUE_MAGENTA = 300,
+} pbio_color_hue_t;
+
 /** 24-bit RGB color. */
 typedef struct {
     /** The red component. 0 to 255. */

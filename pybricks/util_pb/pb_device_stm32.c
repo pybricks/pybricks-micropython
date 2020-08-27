@@ -207,11 +207,11 @@ void pb_device_color_light_on(pb_device_t *pbdev, const pbio_color_hsv_t *hsv) {
     uint8_t mode;
     switch (pbdev->iodev.info->type_id) {
         case PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR:
-            if (hsv->h == 0) {
+            if (hsv->h == PBIO_COLOR_HUE_RED) {
                 mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__REFLT;
-            } else if (hsv->h == 120) {
+            } else if (hsv->h == PBIO_COLOR_HUE_GREEN) {
                 mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX;
-            } else if (hsv->h == 240) {
+            } else if (hsv->h == PBIO_COLOR_HUE_BLUE) {
                 mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI;
             } else {
                 mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX;
