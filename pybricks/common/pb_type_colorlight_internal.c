@@ -88,7 +88,7 @@ STATIC mp_obj_t common_ColorLight_internal_blink(size_t n_args, const mp_obj_t *
     mp_obj_iter_buf_t iter_buf;
     mp_obj_t durations_iter = mp_getiter(durations_in, &iter_buf);
     for (int i = 0; i < durations_len; i++) {
-        cells[i].color = i % 2 ? color : PBIO_COLOR_BLACK;
+        cells[i].color = i % 2 ? PBIO_COLOR_BLACK : color;
         cells[i].duration = pb_obj_get_positive_int(mp_iternext(durations_iter));
     }
 
