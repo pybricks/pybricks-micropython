@@ -12,6 +12,8 @@
 #include <sys/time.h>
 #include <sys/timerfd.h>
 
+#include <contiki.h>
+
 #include <glib.h>
 #include <grx-3.0.h>
 
@@ -42,6 +44,7 @@ static void *task_caller(void *arg) {
         MP_THREAD_GIL_EXIT();
 
         clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL);
+        etimer_request_poll();
     }
 
     return NULL;
