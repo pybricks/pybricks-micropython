@@ -29,12 +29,23 @@ const parameters_Color_obj_t _pb_Color_RED_obj = {
     .hsv = {0, 100, 100}
 };
 
-mp_obj_t parameters_Color_make_new_helper(uint16_t h, uint8_t s, uint8_t v, mp_obj_t name) {
+mp_obj_t parameters_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v, mp_obj_t name) {
     parameters_Color_obj_t *self = m_new_obj(parameters_Color_obj_t);
     self->base.type = &pb_type_Color;
-    self->hsv.h = h;
-    self->hsv.s = s;
-    self->hsv.v = v;
+
+    // Bind h to 0--360
+    h = h % 360;
+    self->hsv.h = h < 0 ? h + 360 : h;
+
+    // Bind s to 0--100
+    s = s < 0 ? 0 : s;
+    self->hsv.s = s > 100 ? 100 : s;
+
+    // Bind v to 0--100
+    v = v < 0 ? 0 : v;
+    self->hsv.v = v > 100 ? 100 : v;
+
+    // Store name as is
     self->name = name;
     return MP_OBJ_FROM_PTR(self);
 }
@@ -52,7 +63,7 @@ STATIC mp_obj_t parameters_Color_make_new(const mp_obj_type_t *type, size_t n_ar
         pb_assert_type(name_in, &mp_type_str);
     }
 
-    return parameters_Color_make_new_helper(pb_obj_get_hue(h_in), pb_obj_get_pct(s_in), pb_obj_get_pct(v_in), name_in);
+    return parameters_Color_make_new_helper(pb_obj_get_int(h_in), pb_obj_get_int(s_in), pb_obj_get_int(v_in), name_in);
 }
 
 void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
@@ -100,12 +111,6 @@ STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, m
 
     parameters_Color_obj_t *self = MP_OBJ_TO_PTR(lhs_in);
 
-    #if MICROPY_PY_BUILTINS_FLOAT
-    mp_float_t value;
-    #else
-    mp_int_t value;
-    #endif
-
     switch (op) {
         case MP_BINARY_OP_EQUAL:
             if (!mp_obj_is_type(rhs_in, &pb_type_Color)) {
@@ -120,36 +125,37 @@ STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, m
                 return mp_const_false;
             }
         case MP_BINARY_OP_MULTIPLY:
-        case MP_BINARY_OP_REVERSE_MULTIPLY:
+        case MP_BINARY_OP_REVERSE_MULTIPLY: {
             #if MICROPY_PY_BUILTINS_FLOAT
-            value = mp_obj_get_float(rhs_in) * self->hsv.v;
+            mp_int_t value = (mp_int_t) (mp_obj_get_float(rhs_in) * self->hsv.v);
             #else
-            value = pb_obj_get_int(rhs_in) * self->hsv.v;
+            mp_int_t value = mp_obj_get_int(rhs_in) * self->hsv.v;
             #endif
-            break;
+            return parameters_Color_make_new_helper(
+                self->hsv.h,
+                self->hsv.s,
+                value,
+                self->name
+            );
+        }
         case MP_BINARY_OP_FLOOR_DIVIDE:
-            value = self->hsv.v / pb_obj_get_int(rhs_in);
-            break;
-        #if MICROPY_PY_BUILTINS_FLOAT
-        case MP_BINARY_OP_TRUE_DIVIDE:
-            value = self->hsv.v / mp_obj_get_float(rhs_in);
-            break;
-        #endif
+        case MP_BINARY_OP_TRUE_DIVIDE: {
+            #if MICROPY_PY_BUILTINS_FLOAT
+            mp_int_t value = (mp_int_t) (self->hsv.v / mp_obj_get_float(rhs_in));
+            #else
+            mp_int_t value = self->hsv.v / mp_obj_get_int(rhs_in);
+            #endif
+            return parameters_Color_make_new_helper(
+                self->hsv.h,
+                self->hsv.s,
+                value,
+                self->name
+            );
+        }
         default:
             // Other operations not supported
             return MP_OBJ_NULL;
     }
-
-    // Scale value
-    if (value > 100) {
-        value = 100;
-    }
-    if (value < 0) {
-        value = 0;
-    }
-
-    // Create and return a new Color
-    return parameters_Color_make_new_helper(self->hsv.h, self->hsv.s, (uint8_t)value, self->name);
 }
 
 STATIC const mp_rom_map_elem_t pb_type_Color_table[] = {
