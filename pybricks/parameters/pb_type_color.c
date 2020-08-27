@@ -134,7 +134,7 @@ STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, m
                 self->hsv.h + pb_obj_get_int(rhs_in),
                 self->hsv.s,
                 self->hsv.v,
-                self->name
+                mp_const_none
                 );
         case MP_BINARY_OP_MULTIPLY:
             // For both A*c and c*A, MicroPython calls c the rhs_in,
@@ -150,7 +150,7 @@ STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, m
                 self->hsv.h,
                 self->hsv.s,
                 value,
-                self->name
+                mp_const_none
                 );
         }
         case MP_BINARY_OP_FLOOR_DIVIDE:
@@ -167,7 +167,7 @@ STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, m
                 self->hsv.h,
                 self->hsv.s,
                 value,
-                self->name
+                mp_const_none
                 );
         }
         default:
