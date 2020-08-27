@@ -89,4 +89,4 @@ static inline pbio_error_t pbdrv_motor_setup(pbio_port_t port, bool is_servo) {
 
 #endif // _PBDRV_MOTOR_H_
 
-/** @}*/
+/** @} */

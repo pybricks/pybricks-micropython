@@ -27,6 +27,4 @@ void pbdrv_reset(pbdrv_reset_action_t action) __attribute__((noreturn));
 
 #endif // _PBDRV_RESET_H_
 
-/**
- * @}
- */
+/** @} */

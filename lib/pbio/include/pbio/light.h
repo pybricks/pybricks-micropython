@@ -81,4 +81,4 @@ static inline void pbio_color_light_start_animation(pbio_color_light_t *light, u
 
 #endif // _PBIO_LIGHT_H_
 
-/** @}*/
+/** @} */

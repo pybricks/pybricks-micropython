@@ -70,4 +70,4 @@ static inline void pbdrv_uart_write_cancel(pbdrv_uart_dev_t *uart) {
 
 #endif // _PBDRV_UART_H_
 
-/** @}*/
+/** @} */

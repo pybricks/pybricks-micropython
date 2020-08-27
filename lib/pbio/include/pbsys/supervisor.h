@@ -13,6 +13,4 @@ void pbsys_supervisor_poll();
 
 #endif // _PBSYS_SUPERVISOR_H_
 
-/**
- * @}
- */
+/** @} */

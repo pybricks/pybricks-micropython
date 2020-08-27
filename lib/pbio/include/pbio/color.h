@@ -78,6 +78,4 @@ void pbio_color_to_rgb(pbio_color_t color, pbio_color_rgb_t *rgb);
 
 #endif // _PBIO_COLOR_H_
 
-/**
- * @}
- */
+/** @} */

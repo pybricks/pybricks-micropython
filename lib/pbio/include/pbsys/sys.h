@@ -105,4 +105,4 @@ static inline pbio_error_t pbsys_stdout_put_char(uint8_t c) {
 
 #endif // _PBSYS_SYS_H_
 
-/** @}*/
+/** @} */

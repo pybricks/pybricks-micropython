@@ -31,4 +31,4 @@ static inline pbio_error_t pbdrv_ioport_get_iodev(pbio_port_t port, pbio_iodev_t
 
 #endif // _PBDRV_IOPORT_H_
 
-/** @}*/
+/** @} */

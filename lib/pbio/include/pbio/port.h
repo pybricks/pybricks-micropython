@@ -55,6 +55,6 @@ typedef enum {
     #endif
 } pbio_port_t;
 
-/** @}*/
+/** @} */
 
 #endif // _PBIO_PORT_H_

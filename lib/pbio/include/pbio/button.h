@@ -117,4 +117,4 @@ pbio_error_t pbio_button_is_pressed(pbio_button_flags_t *pressed);
 
 #endif // _PBIO_BUTTON_H_
 
-/** @}*/
+/** @} */

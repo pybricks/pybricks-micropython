@@ -94,4 +94,4 @@ void pbio_lightgrid_stop_pattern(pbio_lightgrid_t *lightgrid);
 
 #endif // _PBIO_LIGHTGRID_H_
 
-/** @}*/
+/** @} */

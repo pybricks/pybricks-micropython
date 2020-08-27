@@ -32,4 +32,4 @@ const char *pbio_error_str(pbio_error_t err);
 
 #endif // _PBIO_ERROR_H_
 
-/** @}*/
+/** @} */

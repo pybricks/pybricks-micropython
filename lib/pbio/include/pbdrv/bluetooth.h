@@ -37,4 +37,4 @@ static inline pbio_error_t pbdrv_bluetooth_tx(uint8_t c) {
 
 #endif // _PBDRV_BLUETOOTH_H_
 
-/** @}*/
+/** @} */

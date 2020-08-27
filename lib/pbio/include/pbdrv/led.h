@@ -39,4 +39,4 @@ static inline pbio_error_t pbdrv_led_set_hsv(pbdrv_led_dev_t *dev, const pbio_co
 
 #endif // _PBDRV_LED_H_
 
-/** @}*/
+/** @} */

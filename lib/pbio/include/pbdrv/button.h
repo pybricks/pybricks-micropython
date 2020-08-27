@@ -54,4 +54,4 @@ static inline pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed)
 
 #endif // _PBDRV_BUTTON_H_
 
-/** @}*/
+/** @} */
