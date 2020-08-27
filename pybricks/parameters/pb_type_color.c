@@ -113,6 +113,7 @@ STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, m
 
     switch (op) {
         case MP_BINARY_OP_EQUAL:
+            // Two colors are equal if their h, s, and v are equal
             if (!mp_obj_is_type(rhs_in, &pb_type_Color)) {
                 return mp_const_false;
             }
@@ -124,10 +125,24 @@ STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, m
             } else {
                 return mp_const_false;
             }
+        case MP_BINARY_OP_LSHIFT:
+            // lshift is negative rshift, so negate and fall through to rshift
+            rhs_in = mp_obj_new_int(-pb_obj_get_int(rhs_in));
+        case MP_BINARY_OP_RSHIFT:
+            // Color shifting shifts the hue
+            return parameters_Color_make_new_helper(
+                self->hsv.h + pb_obj_get_int(rhs_in),
+                self->hsv.s,
+                self->hsv.v,
+                self->name
+                );
         case MP_BINARY_OP_MULTIPLY:
+            // For both A*c and c*A, MicroPython calls c the rhs_in,
+            // so we can just fall through and treat both the same here.
         case MP_BINARY_OP_REVERSE_MULTIPLY: {
+            // Multiply multiplies the value.
             #if MICROPY_PY_BUILTINS_FLOAT
-            mp_int_t value = (mp_int_t) (mp_obj_get_float(rhs_in) * self->hsv.v);
+            mp_int_t value = (mp_int_t)(mp_obj_get_float(rhs_in) * self->hsv.v);
             #else
             mp_int_t value = mp_obj_get_int(rhs_in) * self->hsv.v;
             #endif
@@ -136,12 +151,15 @@ STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, m
                 self->hsv.s,
                 value,
                 self->name
-            );
+                );
         }
         case MP_BINARY_OP_FLOOR_DIVIDE:
+            // Fall through since both floor and true divide eventually
+            // truncate value to integer, which is stored in the hsv type.
         case MP_BINARY_OP_TRUE_DIVIDE: {
+            // Divide divides the value
             #if MICROPY_PY_BUILTINS_FLOAT
-            mp_int_t value = (mp_int_t) (self->hsv.v / mp_obj_get_float(rhs_in));
+            mp_int_t value = (mp_int_t)(self->hsv.v / mp_obj_get_float(rhs_in));
             #else
             mp_int_t value = self->hsv.v / mp_obj_get_int(rhs_in);
             #endif
@@ -150,7 +168,7 @@ STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, m
                 self->hsv.s,
                 value,
                 self->name
-            );
+                );
         }
         default:
             // Other operations not supported
