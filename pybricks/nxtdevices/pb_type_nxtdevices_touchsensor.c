@@ -13,13 +13,6 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_device.h>
 
-// pybricks.nxtdevices.ColorSensor class object
-typedef struct _nxtdevices_ColorSensor_obj_t {
-    mp_obj_base_t base;
-    mp_obj_t light;
-    pb_device_t *pbdev;
-} nxtdevices_ColorSensor_obj_t;
-
 // pybricks.nxtdevices.TouchSensor class object
 typedef struct _nxtdevices_TouchSensor_obj_t {
     mp_obj_base_t base;
