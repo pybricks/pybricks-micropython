@@ -39,43 +39,15 @@ typedef struct _ev3dev_Image_obj_t {
     gint print_y;
 } ev3dev_Image_obj_t;
 
-// map Pybricks color enum to GRX color value using standard web CSS values
-STATIC GrxColor map_color(mp_obj_t *obj) {
+// map Pybricks color type to GRX color value.
+STATIC GrxColor map_color(mp_obj_t obj) {
     if (obj == mp_const_none) {
         return GRX_COLOR_NONE;
     }
 
-    pbio_color_t color = pb_type_enum_get_value(obj, &pb_enum_type_Color);
-
-    switch (color) {
-        case PBIO_COLOR_NONE:
-            return GRX_COLOR_NONE;
-        case PBIO_COLOR_BLACK:
-            return GRX_COLOR_BLACK;
-        case PBIO_COLOR_WHITE:
-            return GRX_COLOR_WHITE;
-        case PBIO_COLOR_GRAY:
-            return grx_color_get(128, 128, 128);
-        case PBIO_COLOR_RED:
-            return grx_color_get(255, 0, 0);
-        case PBIO_COLOR_GREEN:
-            return grx_color_get(0, 128, 0);
-        case PBIO_COLOR_BLUE:
-            return grx_color_get(0, 0, 255);
-        case PBIO_COLOR_YELLOW:
-            return grx_color_get(255, 255, 0);
-        case PBIO_COLOR_CYAN:
-            return grx_color_get(0, 255, 255);
-        case PBIO_COLOR_MAGENTA:
-            return grx_color_get(255, 0, 255);
-        case PBIO_COLOR_BROWN:
-            return grx_color_get(165, 42, 42);
-        case PBIO_COLOR_ORANGE:
-            return grx_color_get(255, 165, 0);
-        case PBIO_COLOR_VIOLET:
-            return grx_color_get(238, 130, 238);
-    }
-    return grx_color_get_black();
+    pbio_color_rgb_t rgb;
+    pbio_color_hsv_to_rgb(pb_type_Color_get_hsv(obj), &rgb);
+    return grx_color_get(rgb.r, rgb.g, rgb.b);
 }
 
 STATIC mp_obj_t ev3dev_Image_new(GrxContext *context) {
