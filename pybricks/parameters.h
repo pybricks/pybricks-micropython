@@ -32,7 +32,7 @@ const pb_obj_enum_member_t pb_Button_BEACON_obj;
 #endif // PYBRICKS_PY_PARAMETERS_BUTTON
 
 const mp_obj_type_t pb_type_Color;
-pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj);
+const pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj);
 
 const mp_obj_type_t pb_enum_type_Color; // FIXME: Delete when new color implementation is done
 

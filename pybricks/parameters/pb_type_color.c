@@ -44,11 +44,11 @@ const parameters_Color_obj_t _pb_Color_BLACK_obj = {
  * @param obj [in]  A MicroPython object of pb_type_Color
  * @return          Pointer to hsv structure
  */
-pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj) {
+const pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj) {
 
     // For none, return HSV of black
     if (obj == mp_const_none) {
-        return (pbio_color_hsv_t *)&_pb_Color_BLACK_obj.hsv;
+        return &_pb_Color_BLACK_obj.hsv;
     }
 
     // Assert type and extract hsv
