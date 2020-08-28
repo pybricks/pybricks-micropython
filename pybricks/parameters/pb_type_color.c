@@ -22,6 +22,19 @@ typedef struct _parameters_Color_obj_t {
     pbio_color_hsv_t hsv;
 } parameters_Color_obj_t;
 
+/**
+ * Gets the pointer to the hsv type from a Color type.
+ *
+ * If @p obj is not a Color type, a TypeError is raised.
+ *
+ * @param obj [in]  A MicroPython object of pb_type_Color
+ * @return          Pointer to hsv structure
+ */
+pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj) {
+    pb_assert_type(obj, &pb_type_Color);
+    return &((parameters_Color_obj_t *)obj)->hsv;
+}
+
 // FIXME: Drop leading underscore once the legacy pb_Color_NAME_obj are all removed
 const parameters_Color_obj_t _pb_Color_RED_obj = {
     {&pb_type_Color},
@@ -137,8 +150,8 @@ STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, m
                 mp_const_none
                 );
         case MP_BINARY_OP_MULTIPLY:
-            // For both A*c and c*A, MicroPython calls c the rhs_in,
-            // so we can just fall through and treat both the same here.
+        // For both A*c and c*A, MicroPython calls c the rhs_in,
+        // so we can just fall through and treat both the same here.
         case MP_BINARY_OP_REVERSE_MULTIPLY: {
             // Multiply multiplies the value.
             #if MICROPY_PY_BUILTINS_FLOAT
@@ -154,8 +167,8 @@ STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, m
                 );
         }
         case MP_BINARY_OP_FLOOR_DIVIDE:
-            // Fall through since both floor and true divide eventually
-            // truncate value to integer, which is stored in the hsv type.
+        // Fall through since both floor and true divide eventually
+        // truncate value to integer, which is stored in the hsv type.
         case MP_BINARY_OP_TRUE_DIVIDE: {
             // Divide divides the value
             #if MICROPY_PY_BUILTINS_FLOAT
