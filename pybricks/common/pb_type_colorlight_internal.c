@@ -36,20 +36,9 @@ STATIC mp_obj_t common_ColorLight_internal_on(size_t n_args, const mp_obj_t *pos
     // Parse arguments
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         common_ColorLight_internal_obj_t, self,
-        PB_ARG_REQUIRED(color),
-        PB_ARG_DEFAULT_INT(brightness, 100));
+        PB_ARG_REQUIRED(color));
 
-    if (color_in == mp_const_none) {
-        color_in = pb_const_color_black;
-    }
-
-    pbio_color_t color = pb_type_enum_get_value(color_in, &pb_enum_type_Color);
-    mp_int_t brightness = pb_obj_get_pct(brightness_in);
-
-    pbio_color_hsv_t hsv;
-    pbio_color_to_hsv(color, &hsv);
-    hsv.v = brightness;
-    pb_assert(pbio_color_light_on_hsv(self->light, &hsv));
+    pb_assert(pbio_color_light_on_hsv(self->light, pb_type_Color_get_hsv(color_in)));
 
     return mp_const_none;
 }
