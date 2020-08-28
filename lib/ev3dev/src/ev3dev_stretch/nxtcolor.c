@@ -55,19 +55,19 @@ static const nxtcolor_pininfo_t pininfo[4] = {
     },
 };
 
-static const pbio_color_t lamp_colors[] = {
-    PBIO_COLOR_RED,
-    PBIO_COLOR_GREEN,
-    PBIO_COLOR_BLUE,
-    PBIO_COLOR_NONE,
-};
+typedef enum {
+    NXT_LAMP_RED,
+    NXT_LAMP_GREEN,
+    NXT_LAMP_BLUE,
+    NXT_LAMP_OFF
+} nxtcolor_color_state;
 
 typedef struct _nxtcolor_t {
     bool ready;
     bool fs_initialized;
     bool waiting;
-    pbio_color_t state;
-    pbio_color_t lamp;
+    nxtcolor_color_state state;
+    nxtcolor_color_state lamp;
     uint32_t calibration[3][4];
     uint16_t threshold[2];
     uint32_t raw_min;
@@ -394,7 +394,7 @@ static pbio_error_t nxtcolor_init(nxtcolor_t *nxtcolor, pbio_port_t port) {
     nxtcolor->raw_min = 50;
 
     // The sensor is now in the full-color-ambient state
-    nxtcolor->state = PBIO_COLOR_NONE;
+    nxtcolor->state = NXT_LAMP_OFF;
 
     return PBIO_SUCCESS;
 }
@@ -402,21 +402,21 @@ static pbio_error_t nxtcolor_init(nxtcolor_t *nxtcolor, pbio_port_t port) {
 pbio_error_t nxtcolor_toggle_color(nxtcolor_t *nxtcolor) {
     bool set = 0;
     switch(nxtcolor->state) {
-        case PBIO_COLOR_NONE:
-            nxtcolor->state = PBIO_COLOR_RED;
+        case NXT_LAMP_OFF:
+            nxtcolor->state = NXT_LAMP_RED;
             set = 1;
             break;
-        case PBIO_COLOR_RED:
-            nxtcolor->state = PBIO_COLOR_GREEN;
+        case NXT_LAMP_RED:
+            nxtcolor->state = NXT_LAMP_GREEN;
             set = 0;
             break;
-        case PBIO_COLOR_GREEN:
-            nxtcolor->state = PBIO_COLOR_BLUE;
+        case NXT_LAMP_GREEN:
+            nxtcolor->state = NXT_LAMP_BLUE;
             set = 1;
             break;
-        case PBIO_COLOR_BLUE:
+        case NXT_LAMP_BLUE:
             set = 0;
-            nxtcolor->state = PBIO_COLOR_NONE;
+            nxtcolor->state = NXT_LAMP_OFF;
             break;
         default:
             return PBIO_ERROR_FAILED;
@@ -424,12 +424,12 @@ pbio_error_t nxtcolor_toggle_color(nxtcolor_t *nxtcolor) {
     return nxtcolor_set_digi0(nxtcolor, set);
 }
 
-pbio_error_t nxtcolor_set_light(nxtcolor_t *nxtcolor, pbio_color_t color) {
+pbio_error_t nxtcolor_set_light(nxtcolor_t *nxtcolor, nxtcolor_color_state color) {
     pbio_error_t err;
 
     // Default unknown colors to no color
-    if (color != PBIO_COLOR_RED && color != PBIO_COLOR_GREEN && color != PBIO_COLOR_BLUE) {
-        color = PBIO_COLOR_NONE;
+    if (color > NXT_LAMP_OFF) {
+        color = NXT_LAMP_OFF;
     }
 
     while (nxtcolor->state != color) {
@@ -466,16 +466,16 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, int32_t
     if (mode > 0) {
         switch(mode) {
             case 1:
-                nxtcolor->lamp = PBIO_COLOR_RED;
+                nxtcolor->lamp = NXT_LAMP_RED;
                 break;
             case 2:
-                nxtcolor->lamp = PBIO_COLOR_GREEN;
+                nxtcolor->lamp = NXT_LAMP_GREEN;
                 break;
             case 3:
-                nxtcolor->lamp = PBIO_COLOR_BLUE;
+                nxtcolor->lamp = NXT_LAMP_BLUE;
                 break;
             default:
-                nxtcolor->lamp = PBIO_COLOR_NONE;
+                nxtcolor->lamp = NXT_LAMP_OFF;
                 break;
         }
         return nxtcolor_set_light(nxtcolor, nxtcolor->lamp);
@@ -487,7 +487,7 @@ pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, int32_t
     // Read analog for each color
     for (uint8_t i = 0; i < 4; i++) {
         // Set the light
-        err = nxtcolor_set_light(nxtcolor, lamp_colors[i]);
+        err = nxtcolor_set_light(nxtcolor, i);
         if (err != PBIO_SUCCESS) {
             return err;
         }
