@@ -31,23 +31,32 @@ const pb_obj_enum_member_t pb_Button_BEACON_obj;
 
 #endif // PYBRICKS_PY_PARAMETERS_BUTTON
 
+typedef struct _parameters_Color_obj_t {
+    mp_obj_base_t base;
+    mp_obj_t name;
+    pbio_color_hsv_t hsv;
+} parameters_Color_obj_t;
+
 const mp_obj_type_t pb_type_Color;
+
+
+
+typedef struct _parameters_Color_obj_t parameters_Color_obj_t;
 const pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj);
 
-const mp_obj_type_t pb_enum_type_Color; // FIXME: Delete when new color implementation is done
-
-const pb_obj_enum_member_t pb_Color_BLACK_obj;
-const pb_obj_enum_member_t pb_Color_VIOLET_obj;
-const pb_obj_enum_member_t pb_Color_BLUE_obj;
-const pb_obj_enum_member_t pb_Color_GREEN_obj;
-const pb_obj_enum_member_t pb_Color_YELLOW_obj;
-const pb_obj_enum_member_t pb_Color_ORANGE_obj;
-const pb_obj_enum_member_t pb_Color_RED_obj;
-const pb_obj_enum_member_t pb_Color_WHITE_obj;
-const pb_obj_enum_member_t pb_Color_BROWN_obj;
-const pb_obj_enum_member_t pb_Color_GRAY_obj;
-const pb_obj_enum_member_t pb_Color_CYAN_obj;
-const pb_obj_enum_member_t pb_Color_MAGENTA_obj;
+const parameters_Color_obj_t pb_Color_RED_obj;
+const parameters_Color_obj_t pb_Color_BROWN_obj;
+const parameters_Color_obj_t pb_Color_ORANGE_obj;
+const parameters_Color_obj_t pb_Color_YELLOW_obj;
+const parameters_Color_obj_t pb_Color_GREEN_obj;
+const parameters_Color_obj_t pb_Color_CYAN_obj;
+const parameters_Color_obj_t pb_Color_BLUE_obj;
+const parameters_Color_obj_t pb_Color_VIOLET_obj;
+const parameters_Color_obj_t pb_Color_MAGENTA_obj;
+const parameters_Color_obj_t pb_Color_NONE_obj;
+const parameters_Color_obj_t pb_Color_BLACK_obj;
+const parameters_Color_obj_t pb_Color_GRAY_obj;
+const parameters_Color_obj_t pb_Color_WHITE_obj;
 
 const mp_obj_type_t pb_enum_type_Direction;
 

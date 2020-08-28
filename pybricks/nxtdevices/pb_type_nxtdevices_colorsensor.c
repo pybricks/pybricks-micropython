@@ -38,11 +38,7 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     self->light = common_ColorLight_external_obj_make_new(self->pbdev);
 
     // Set the light color to red
-
-    // FIXME: use parameters.Color when ready
-    pbio_color_hsv_t red = {0, 100, 100};
-
-    pb_device_color_light_on(self->pbdev, &red);
+    pb_device_color_light_on(self->pbdev, &pb_Color_RED_obj.hsv);
 
     // Save default color settings
     pb_hsv_map_save_default(&self->color_map);

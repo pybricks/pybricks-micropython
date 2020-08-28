@@ -16,23 +16,82 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
-typedef struct _parameters_Color_obj_t {
-    mp_obj_base_t base;
-    mp_obj_t name;
-    pbio_color_hsv_t hsv;
-} parameters_Color_obj_t;
-
-// FIXME: Drop leading underscore once the legacy pb_Color_NAME_obj are all removed
-const parameters_Color_obj_t _pb_Color_RED_obj = {
+const parameters_Color_obj_t pb_Color_RED_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_RED),
     .hsv = {0, 100, 100}
 };
 
-const parameters_Color_obj_t _pb_Color_BLACK_obj = {
+const parameters_Color_obj_t pb_Color_BROWN_obj = {
+    {&pb_type_Color},
+    .name = MP_OBJ_NEW_QSTR(MP_QSTR_BROWN),
+    .hsv = {30, 100, 50}
+};
+
+const parameters_Color_obj_t pb_Color_ORANGE_obj = {
+    {&pb_type_Color},
+    .name = MP_OBJ_NEW_QSTR(MP_QSTR_ORANGE),
+    .hsv = {30, 100, 100}
+};
+
+const parameters_Color_obj_t pb_Color_YELLOW_obj = {
+    {&pb_type_Color},
+    .name = MP_OBJ_NEW_QSTR(MP_QSTR_YELLOW),
+    .hsv = {60, 100, 100}
+};
+
+const parameters_Color_obj_t pb_Color_GREEN_obj = {
+    {&pb_type_Color},
+    .name = MP_OBJ_NEW_QSTR(MP_QSTR_GREEN),
+    .hsv = {120, 100, 100}
+};
+
+const parameters_Color_obj_t pb_Color_CYAN_obj = {
+    {&pb_type_Color},
+    .name = MP_OBJ_NEW_QSTR(MP_QSTR_CYAN),
+    .hsv = {180, 100, 100}
+};
+
+const parameters_Color_obj_t pb_Color_BLUE_obj = {
+    {&pb_type_Color},
+    .name = MP_OBJ_NEW_QSTR(MP_QSTR_BLUE),
+    .hsv = {240, 100, 100}
+};
+
+const parameters_Color_obj_t pb_Color_VIOLET_obj = {
+    {&pb_type_Color},
+    .name = MP_OBJ_NEW_QSTR(MP_QSTR_VIOLET),
+    .hsv = {270, 100, 100}
+};
+
+const parameters_Color_obj_t pb_Color_MAGENTA_obj = {
+    {&pb_type_Color},
+    .name = MP_OBJ_NEW_QSTR(MP_QSTR_MAGENTA),
+    .hsv = {300, 100, 100}
+};
+
+const parameters_Color_obj_t pb_Color_NONE_obj = {
+    {&pb_type_Color},
+    .name = mp_const_none,
+    .hsv = {0, 0, 0}
+};
+
+const parameters_Color_obj_t pb_Color_BLACK_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_BLACK),
-    .hsv = {0, 0, 0}
+    .hsv = {0, 0, 10}
+};
+
+const parameters_Color_obj_t pb_Color_GRAY_obj = {
+    {&pb_type_Color},
+    .name = MP_OBJ_NEW_QSTR(MP_QSTR_GRAY),
+    .hsv = {0, 0, 50}
+};
+
+const parameters_Color_obj_t pb_Color_WHITE_obj = {
+    {&pb_type_Color},
+    .name = MP_OBJ_NEW_QSTR(MP_QSTR_WHITE),
+    .hsv = {0, 0, 100}
 };
 
 /**
@@ -48,7 +107,7 @@ const pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj) {
 
     // For none, return HSV of black
     if (obj == mp_const_none) {
-        return &_pb_Color_BLACK_obj.hsv;
+        return &pb_Color_NONE_obj.hsv;
     }
 
     // Assert type and extract hsv
@@ -204,7 +263,18 @@ STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, m
 }
 
 STATIC const mp_rom_map_elem_t pb_type_Color_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_RED),            MP_ROM_PTR(&_pb_Color_RED_obj)},
+    { MP_ROM_QSTR(MP_QSTR_RED),     MP_ROM_PTR(&pb_Color_RED_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_BROWN),   MP_ROM_PTR(&pb_Color_BROWN_obj)  },
+    { MP_ROM_QSTR(MP_QSTR_ORANGE),  MP_ROM_PTR(&pb_Color_ORANGE_obj) },
+    { MP_ROM_QSTR(MP_QSTR_YELLOW),  MP_ROM_PTR(&pb_Color_YELLOW_obj) },
+    { MP_ROM_QSTR(MP_QSTR_GREEN),   MP_ROM_PTR(&pb_Color_GREEN_obj)  },
+    { MP_ROM_QSTR(MP_QSTR_CYAN),    MP_ROM_PTR(&pb_Color_CYAN_obj)   },
+    { MP_ROM_QSTR(MP_QSTR_BLUE),    MP_ROM_PTR(&pb_Color_BLUE_obj)   },
+    { MP_ROM_QSTR(MP_QSTR_MAGENTA), MP_ROM_PTR(&pb_Color_MAGENTA_obj)},
+    { MP_ROM_QSTR(MP_QSTR_VIOLET),  MP_ROM_PTR(&pb_Color_VIOLET_obj) },
+    { MP_ROM_QSTR(MP_QSTR_BLACK),   MP_ROM_PTR(&pb_Color_BLACK_obj)  },
+    { MP_ROM_QSTR(MP_QSTR_GRAY),    MP_ROM_PTR(&pb_Color_GRAY_obj)   },
+    { MP_ROM_QSTR(MP_QSTR_WHITE),   MP_ROM_PTR(&pb_Color_WHITE_obj)  },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_type_Color_locals_dict, pb_type_Color_table);
 
