@@ -24,7 +24,7 @@ typedef struct _pupdevices_PFMotor_obj_t {
     mp_obj_base_t base;
     pb_device_t *pbdev;
     uint8_t channel;
-    pbio_color_t color;
+    bool use_blue_port;
     pbio_direction_t direction;
 } pupdevices_PFMotor_obj_t;
 
@@ -46,10 +46,11 @@ STATIC mp_obj_t pupdevices_PFMotor_make_new(const mp_obj_type_t *type, size_t n_
     }
 
     // Get port color indicator (blue or red)
-    pbio_color_t color = pb_type_enum_get_value(color_in, &pb_enum_type_Color);
-    if (color != PBIO_COLOR_BLUE && color != PBIO_COLOR_RED) {
+    uint16_t hue = pb_type_Color_get_hsv(color_in)->h;
+    if (hue != pb_Color_BLUE_obj.hsv.h && hue != pb_Color_RED_obj.hsv.h) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
+    bool use_blue_port = hue == pb_Color_BLUE_obj.hsv.h;
 
     // Get positive direction.
     pbio_direction_t positive_direction = pb_type_enum_get_value(positive_direction_in, &pb_enum_type_Direction);
@@ -61,7 +62,7 @@ STATIC mp_obj_t pupdevices_PFMotor_make_new(const mp_obj_type_t *type, size_t n_
     // Save init arguments
     self->pbdev = sensor;
     self->channel = channel;
-    self->color = color;
+    self->use_blue_port = use_blue_port;
     self->direction = positive_direction;
 
     return MP_OBJ_FROM_PTR(self);
@@ -84,7 +85,7 @@ STATIC void set_and_wait(pb_device_t *pbdev, int32_t data) {
 
 STATIC void pupdevices_PFMotor__send(pupdevices_PFMotor_obj_t *self, int32_t message) {
     // Choose blue or red output
-    message |= (self->color == PBIO_COLOR_BLUE) << 4;
+    message |= (self->use_blue_port) << 4;
 
     // Choose single output Mode
     message |= 1 << 6;
