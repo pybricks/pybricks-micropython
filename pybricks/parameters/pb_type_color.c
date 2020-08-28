@@ -22,25 +22,39 @@ typedef struct _parameters_Color_obj_t {
     pbio_color_hsv_t hsv;
 } parameters_Color_obj_t;
 
-/**
- * Gets the pointer to the hsv type from a Color type.
- *
- * If @p obj is not a Color type, a TypeError is raised.
- *
- * @param obj [in]  A MicroPython object of pb_type_Color
- * @return          Pointer to hsv structure
- */
-pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj) {
-    pb_assert_type(obj, &pb_type_Color);
-    return &((parameters_Color_obj_t *)obj)->hsv;
-}
-
 // FIXME: Drop leading underscore once the legacy pb_Color_NAME_obj are all removed
 const parameters_Color_obj_t _pb_Color_RED_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_RED),
     .hsv = {0, 100, 100}
 };
+
+const parameters_Color_obj_t _pb_Color_BLACK_obj = {
+    {&pb_type_Color},
+    .name = MP_OBJ_NEW_QSTR(MP_QSTR_BLACK),
+    .hsv = {0, 0, 0}
+};
+
+/**
+ * Gets the pointer to the hsv type from a Color type.
+ *
+ * If @p obj is not a Color type, a TypeError is raised.
+ * If @p obj is None, it is treated as Color.BLACK.
+ *
+ * @param obj [in]  A MicroPython object of pb_type_Color
+ * @return          Pointer to hsv structure
+ */
+pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj) {
+
+    // For none, return HSV of black
+    if (obj == mp_const_none) {
+        return (pbio_color_hsv_t *)&_pb_Color_BLACK_obj.hsv;
+    }
+
+    // Assert type and extract hsv
+    pb_assert_type(obj, &pb_type_Color);
+    return &((parameters_Color_obj_t *)obj)->hsv;
+}
 
 mp_obj_t parameters_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v, mp_obj_t name) {
     parameters_Color_obj_t *self = m_new_obj(parameters_Color_obj_t);
