@@ -24,7 +24,7 @@ void pb_device_get_info(pb_device_t *pbdev, pbio_port_t *port, pbio_iodev_type_i
 
 int8_t pb_device_get_mode_id_from_str(pb_device_t *pbdev, const char *mode_str);
 
-void pb_device_color_light_on(pb_device_t *pbdev, pbio_color_t color);
+void pb_device_color_light_on(pb_device_t *pbdev, const pbio_color_hsv_t *hsv);
 
 // LEGO MINDSTORMS EV3 Touch Sensor
 enum {

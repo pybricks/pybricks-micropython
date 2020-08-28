@@ -235,24 +235,19 @@ int8_t pb_device_get_mode_id_from_str(pb_device_t *pbdev, const char *mode_str) 
     return mode;
 }
 
-void pb_device_color_light_on(pb_device_t *pbdev, pbio_color_t color) {
+void pb_device_color_light_on(pb_device_t *pbdev, const pbio_color_hsv_t *hsv) {
     // Turn on the light through device specific mode
     uint8_t mode;
     switch (pbdev->type_id) {
         case PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR:
-            switch (color) {
-                case PBIO_COLOR_GREEN:
-                    mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_G;
-                    break;
-                case PBIO_COLOR_RED:
-                    mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_R;
-                    break;
-                case PBIO_COLOR_BLUE:
-                    mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_B;
-                    break;
-                default:
-                    mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_OFF;
-                    break;
+            if (hsv->h == 0) {
+                mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_R;
+            } else if (hsv->h == 120) {
+                mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_G;
+            } else if (hsv->h == 240) {
+                mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_B;
+            } else {
+                mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_OFF;
             }
             int32_t unused;
             pb_device_get_values(pbdev, mode, &unused);

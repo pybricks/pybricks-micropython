@@ -30,11 +30,7 @@ STATIC mp_obj_t common_ColorLight_external_on(size_t n_args, const mp_obj_t *pos
         common_ColorLight_external_obj_t, self,
         PB_ARG_REQUIRED(color));
 
-    if (color_in == mp_const_none) {
-        color_in = MP_OBJ_FROM_PTR(&pb_Color_BLACK_obj);
-    }
-
-    pb_device_color_light_on(self->pbdev, pb_type_enum_get_value(color_in, &pb_enum_type_Color));
+    pb_device_color_light_on(self->pbdev, pb_type_Color_get_hsv(color_in));
 
     return mp_const_none;
 }
@@ -43,7 +39,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_ColorLight_external_on_obj, 1, common_C
 // pybricks._common.ColorLight.off
 STATIC mp_obj_t common_ColorLight_external_off(mp_obj_t self_in) {
     common_ColorLight_external_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    pb_device_color_light_on(self->pbdev, PBIO_COLOR_NONE);
+
+    // FIXME: use parameters.Color when ready
+    pbio_color_hsv_t off = {0, 0, 0};
+    pb_device_color_light_on(self->pbdev, &off);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_ColorLight_external_off_obj, common_ColorLight_external_off);
