@@ -31,7 +31,7 @@ STATIC mp_obj_t common_ColorLight_external_on(size_t n_args, const mp_obj_t *pos
         PB_ARG_REQUIRED(color));
 
     if (color_in == mp_const_none) {
-        color_in = pb_const_color_black;
+        color_in = MP_OBJ_FROM_PTR(&pb_Color_BLACK_obj);
     }
 
     pb_device_color_light_on(self->pbdev, pb_type_enum_get_value(color_in, &pb_enum_type_Color));

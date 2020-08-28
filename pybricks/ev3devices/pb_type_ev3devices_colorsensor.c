@@ -41,19 +41,19 @@ STATIC mp_obj_t ev3devices_ColorSensor_color(mp_obj_t self_in) {
 
     switch (color) {
         case 1:
-            return pb_const_color_black;
+            return MP_OBJ_FROM_PTR(&pb_Color_BLACK_obj);
         case 2:
-            return pb_const_color_blue;
+            return MP_OBJ_FROM_PTR(&pb_Color_BLUE_obj);
         case 3:
-            return pb_const_color_green;
+            return MP_OBJ_FROM_PTR(&pb_Color_GREEN_obj);
         case 4:
-            return pb_const_color_yellow;
+            return MP_OBJ_FROM_PTR(&pb_Color_YELLOW_obj);
         case 5:
-            return pb_const_color_red;
+            return MP_OBJ_FROM_PTR(&pb_Color_RED_obj);
         case 6:
-            return pb_const_color_white;
+            return MP_OBJ_FROM_PTR(&pb_Color_WHITE_obj);
         case 7:
-            return pb_const_color_brown;
+            return MP_OBJ_FROM_PTR(&pb_Color_BROWN_obj);
         default:
             return mp_const_none;
     }
