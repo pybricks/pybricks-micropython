@@ -105,7 +105,7 @@ const parameters_Color_obj_t pb_Color_WHITE_obj = {
  */
 const pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj) {
 
-    // For none, return HSV of black
+    // For none, return HSV (0, 0, 0), corresponding to off
     if (obj == mp_const_none) {
         return &pb_Color_NONE_obj.hsv;
     }
