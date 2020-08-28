@@ -111,7 +111,7 @@ STATIC mp_obj_t common_ColorLight_internal_animate(size_t n_args, const mp_obj_t
     mp_obj_iter_buf_t iter_buf;
     mp_obj_t colors_iter = mp_getiter(colors_in, &iter_buf);
     for (int i = 0; i < colors_len; i++) {
-        pb_obj_get_hsv(mp_iternext(colors_iter), &cells[i]);
+        cells[i] = *pb_type_Color_get_hsv(mp_iternext(colors_iter));
     }
 
     // sentinel value
