@@ -24,8 +24,8 @@ static uint16_t test_light_set_hsv_last_hue;
 static uint16_t test_light_set_hsv_last_brightness;
 
 static const pbio_color_light_blink_cell_t test_blink[] = {
-    PBIO_COLOR_LIGHT_BLINK_CELL(PBIO_COLOR_BLUE, TEST_ANIMATION_TIME),
-    PBIO_COLOR_LIGHT_BLINK_CELL(PBIO_COLOR_GREEN, TEST_ANIMATION_TIME),
+    PBIO_COLOR_LIGHT_BLINK_CELL(BLUE_HUE, 100, 100, TEST_ANIMATION_TIME),
+    PBIO_COLOR_LIGHT_BLINK_CELL(GREEN_HUE, 100, 100, TEST_ANIMATION_TIME),
     PBIO_COLOR_LIGHT_BLINK_END
 };
 

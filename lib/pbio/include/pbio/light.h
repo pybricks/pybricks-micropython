@@ -18,19 +18,21 @@ typedef struct _pbio_color_light_t pbio_color_light_t;
 
 /** Single element of a color light blink animation. */
 typedef struct {
-    /** The color for this cell. See pbio_color_light_on(). */
-    pbio_color_t color;
+    /** The hsv color for this cell. See pbio_color_light_on_hsv(). */
+    pbio_color_hsv_t hsv;
     /** The duration of this cell in milliseconds. */
     uint32_t duration;
 } pbio_color_light_blink_cell_t;
 
 /**
  * Convience macro for defining ::pbio_color_light_blink_cell_t cells.
- * @param [in]  c   The color
- * @param [in]  d   The duration in milliseconds (> 0)
+ * @param [in]  hue         The hue (0 to 359)
+ * @param [in]  saturation  The saturation (0 to 100)
+ * @param [in]  value       The brightness (0 to 100)
+ * @param [in]  d           The duration in milliseconds (> 0)
  */
-#define PBIO_COLOR_LIGHT_BLINK_CELL(c, d) \
-    { .color = (c), .duration = (d) }
+#define PBIO_COLOR_LIGHT_BLINK_CELL(hue, saturation, value, d) \
+    { .hsv = { .h = (hue), .s = (saturation), .v = (value) }, .duration = (d) }
 
 /** Sentinel value for a color light blink array. */
 #define PBIO_COLOR_LIGHT_BLINK_END { .duration = 0 }

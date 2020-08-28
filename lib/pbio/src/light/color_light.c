@@ -110,9 +110,7 @@ static clock_time_t pbio_color_light_blink_next(pbio_light_animation_t *animatio
         light->current_cell = 1;
     }
 
-    pbio_color_hsv_t hsv;
-    pbio_color_to_hsv(cell->color, &hsv);
-    light->funcs->set_hsv(light, &hsv);
+    light->funcs->set_hsv(light, &cell->hsv);
     return clock_from_msec(cell->duration);
 }
 

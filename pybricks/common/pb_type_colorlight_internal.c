@@ -61,8 +61,6 @@ STATIC mp_obj_t common_ColorLight_internal_blink(size_t n_args, const mp_obj_t *
         PB_ARG_REQUIRED(color),
         PB_ARG_REQUIRED(durations));
 
-    pbio_color_t color = pb_type_enum_get_value(color_in, &pb_enum_type_Color);
-
     mp_int_t durations_len = mp_obj_get_int(mp_obj_len(durations_in));
 
     size_t cells_size = sizeof(pbio_color_light_blink_cell_t) * (durations_len + 1);
@@ -77,7 +75,7 @@ STATIC mp_obj_t common_ColorLight_internal_blink(size_t n_args, const mp_obj_t *
     mp_obj_iter_buf_t iter_buf;
     mp_obj_t durations_iter = mp_getiter(durations_in, &iter_buf);
     for (int i = 0; i < durations_len; i++) {
-        cells[i].color = i % 2 ? PBIO_COLOR_BLACK : color;
+        cells[i].hsv = i % 2 ? *pb_type_Color_get_hsv(mp_const_none) : *pb_type_Color_get_hsv(color_in);
         cells[i].duration = pb_obj_get_positive_int(mp_iternext(durations_iter));
     }
 
