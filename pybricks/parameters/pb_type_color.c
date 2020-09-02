@@ -156,11 +156,7 @@ void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
     parameters_Color_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, "Color(%" PRIu16 ", %" PRIu8 ", %" PRIu8, self->hsv.h, self->hsv.s, self->hsv.v);
     if (self->name != mp_const_none) {
-        if (MP_OBJ_IS_QSTR(self->name)) {
-            mp_printf(print, ", '%q'", MP_OBJ_QSTR_VALUE(self->name));
-        } else {
-            mp_printf(print, ", '%s'", ((mp_obj_str_t *)MP_OBJ_TO_PTR(self->name))->data);
-        }
+        mp_printf(print, ", '%s'", mp_obj_str_get_str(self->name));
     }
     mp_printf(print, ")");
 }
