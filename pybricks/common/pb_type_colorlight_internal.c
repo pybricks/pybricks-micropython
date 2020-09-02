@@ -63,7 +63,7 @@ STATIC mp_obj_t common_ColorLight_internal_blink(size_t n_args, const mp_obj_t *
 
     mp_int_t durations_len = mp_obj_get_int(mp_obj_len(durations_in));
 
-    size_t cells_size = sizeof(pbio_color_light_blink_cell_t) * (durations_len + 1);
+    size_t cells_size = sizeof(uint16_t) * (durations_len + 1);
     #if MICROPY_MALLOC_USES_ALLOCATED_SIZE
     self->animation_cells = m_realloc(self->animation_cells, self->cells_size, cells_size);
     self->cells_size = cells_size;
@@ -71,18 +71,17 @@ STATIC mp_obj_t common_ColorLight_internal_blink(size_t n_args, const mp_obj_t *
     self->animation_cells = m_realloc(self->animation_cells, cells_size);
     #endif
 
-    pbio_color_light_blink_cell_t *cells = self->animation_cells;
+    uint16_t *cells = self->animation_cells;
     mp_obj_iter_buf_t iter_buf;
     mp_obj_t durations_iter = mp_getiter(durations_in, &iter_buf);
     for (int i = 0; i < durations_len; i++) {
-        cells[i].hsv = i % 2 ? *pb_type_Color_get_hsv(mp_const_none) : *pb_type_Color_get_hsv(color_in);
-        cells[i].duration = pb_obj_get_positive_int(mp_iternext(durations_iter));
+        cells[i] = pb_obj_get_positive_int(mp_iternext(durations_iter));
     }
 
     // sentinel value
-    cells[durations_len].duration = 0;
+    cells[durations_len] = 0;
 
-    pbio_color_light_start_blink_animation(self->light, cells);
+    pbio_color_light_start_blink_animation(self->light, pb_type_Color_get_hsv(color_in), cells);
 
     return mp_const_none;
 }

@@ -24,8 +24,14 @@ typedef struct {
 struct _pbio_color_light_t {
     pbio_light_animation_t animation;
     const pbio_color_light_funcs_t *funcs;
-    const void *cells;
-    uint16_t interval;
+    union {
+        const uint16_t *interval_cells;
+        const pbio_color_hsv_t *hsv_cells;
+    };
+    union {
+        pbio_color_hsv_t hsv;
+        uint16_t interval;
+    };
     uint16_t current_cell;
 };
 

@@ -20,9 +20,9 @@ static uint8_t test_light_set_hsv_call_count;
 static uint16_t test_light_set_hsv_last_hue;
 static uint16_t test_light_set_hsv_last_brightness;
 
-static const pbio_color_light_blink_cell_t test_blink[] = {
-    PBIO_COLOR_LIGHT_BLINK_CELL(PBIO_COLOR_HUE_BLUE, 100, 100, TEST_ANIMATION_TIME),
-    PBIO_COLOR_LIGHT_BLINK_CELL(PBIO_COLOR_HUE_GREEN, 100, 100, TEST_ANIMATION_TIME),
+static const uint16_t test_blink[] = {
+    TEST_ANIMATION_TIME,
+    TEST_ANIMATION_TIME,
     PBIO_COLOR_LIGHT_BLINK_END
 };
 
@@ -62,22 +62,27 @@ PT_THREAD(test_color_light(struct pt *pt)) {
     test_light_set_hsv_call_count = 0;
 
     // starting animation should call set_hsv() synchonously
-    pbio_color_light_start_blink_animation(&test_light, test_blink);
+    static const pbio_color_hsv_t hsv = { .h = PBIO_COLOR_HUE_BLUE, .s = 100, .v = 100 };
+    pbio_color_light_start_blink_animation(&test_light, &hsv, test_blink);
     tt_want_uint_op(test_light_set_hsv_call_count, ==, 1);
+    // even blink cells turns the light on
     tt_want_uint_op(test_light_set_hsv_last_hue, ==, PBIO_COLOR_HUE_BLUE);
+    tt_want_uint_op(test_light_set_hsv_last_brightness, ==, 100);
 
     // set_hsv() should not be called again until after a delay and it should
     // receive the next hue in the list
     static struct timer timer;
     timer_set(&timer, TEST_ANIMATION_TIME);
     PT_WAIT_UNTIL(pt, test_light_set_hsv_call_count == 2);
-    tt_want_uint_op(test_light_set_hsv_last_hue, ==, PBIO_COLOR_HUE_GREEN);
+    // odd blink cells turns the light off (so hue doesn't matter here)
+    tt_want_uint_op(test_light_set_hsv_last_brightness, ==, 0);
     tt_want(timer_expired(&timer));
 
     // then the next animation update should wrap back to the start of the list
     timer_set(&timer, TEST_ANIMATION_TIME);
     PT_WAIT_UNTIL(pt, test_light_set_hsv_call_count == 3);
     tt_want_uint_op(test_light_set_hsv_last_hue, ==, PBIO_COLOR_HUE_BLUE);
+    tt_want_uint_op(test_light_set_hsv_last_brightness, ==, 100);
     tt_want(timer_expired(&timer));
 
     // reset call count for next series of tests
