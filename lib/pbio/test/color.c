@@ -327,3 +327,22 @@ void test_color_to_rgb(void *env) {
     tt_want_int_op(rgb.g, <, 65);
     tt_want_int_op(rgb.b, ==, 0);
 }
+
+void test_color_hsv_compression(void *env) {
+    // if this isn't true, we aren't compressing anything
+    tt_want_int_op(sizeof(pbio_color_compressed_hsv_t), <, sizeof(pbio_color_hsv_t));
+
+    const pbio_color_hsv_t hsv = { .h = PBIO_COLOR_HUE_CYAN, .s = 100, .v = 75 };
+
+    pbio_color_compressed_hsv_t compressed;
+    pbio_color_hsv_compress(&hsv, &compressed);
+    tt_want_int_op(hsv.h, ==, compressed.h);
+    tt_want_int_op(hsv.s, ==, compressed.s);
+    tt_want_int_op(hsv.v, ==, compressed.v);
+
+    pbio_color_hsv_t expanded;
+    pbio_color_hsv_expand(&compressed, &expanded);
+    tt_want_int_op(hsv.h, ==, expanded.h);
+    tt_want_int_op(hsv.s, ==, expanded.s);
+    tt_want_int_op(hsv.v, ==, expanded.v);
+}

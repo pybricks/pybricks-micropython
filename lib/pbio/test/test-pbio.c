@@ -76,12 +76,14 @@ PBIO_TEST_FUNC(test_rgb_to_hsv);
 PBIO_TEST_FUNC(test_hsv_to_rgb);
 PBIO_TEST_FUNC(test_color_to_hsv);
 PBIO_TEST_FUNC(test_color_to_rgb);
+PBIO_TEST_FUNC(test_color_hsv_compression);
 
 static struct testcase_t pbio_color_tests[] = {
     PBIO_TEST(test_rgb_to_hsv),
     PBIO_TEST(test_hsv_to_rgb),
     PBIO_TEST(test_color_to_hsv),
     PBIO_TEST(test_color_to_rgb),
+    PBIO_TEST(test_color_hsv_compression),
     END_OF_TESTCASES
 };
 

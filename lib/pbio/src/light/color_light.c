@@ -144,16 +144,18 @@ void pbio_color_light_start_blink_animation(pbio_color_light_t *light, const pbi
 static clock_time_t pbio_color_light_animate_next(pbio_light_animation_t *animation) {
     pbio_color_light_t *light = PBIO_CONTAINER_OF(animation, pbio_color_light_t, animation);
 
-    const pbio_color_hsv_t *cells = light->hsv_cells;
-    const pbio_color_hsv_t *cell = &cells[light->current_cell++];
+    const pbio_color_compressed_hsv_t *cells = light->hsv_cells;
+    const pbio_color_compressed_hsv_t *cell = &cells[light->current_cell++];
 
     // if we have reached the array terminator, start back at the beginning
-    if (cell->h == UINT16_MAX) {
+    if (cell->v == UINT8_MAX) {
         cell = &cells[0];
         light->current_cell = 1;
     }
 
-    light->funcs->set_hsv(light, cell);
+    pbio_color_hsv_t hsv;
+    pbio_color_hsv_expand(cell, &hsv);
+    light->funcs->set_hsv(light, &hsv);
     return clock_from_msec(light->interval);
 }
 
@@ -170,7 +172,7 @@ static clock_time_t pbio_color_light_animate_next(pbio_light_animation_t *animat
  * @param [in]  interval    The the time intervale between animaction cells in milliseconds
  * @param [in]  cells       Array of up to 65536 animation cells ending with ::PBIO_COLOR_LIGHT_ANIMATION_END
  */
-void pbio_color_light_start_animation(pbio_color_light_t *light, uint16_t interval, const pbio_color_hsv_t *cells) {
+void pbio_color_light_start_animation(pbio_color_light_t *light, uint16_t interval, const pbio_color_compressed_hsv_t *cells) {
     pbio_color_light_stop_animation(light);
     pbio_light_animation_init(&light->animation, pbio_color_light_animate_next);
     light->interval = interval;

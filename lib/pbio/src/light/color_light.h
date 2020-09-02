@@ -26,7 +26,7 @@ struct _pbio_color_light_t {
     const pbio_color_light_funcs_t *funcs;
     union {
         const uint16_t *interval_cells;
-        const pbio_color_hsv_t *hsv_cells;
+        const pbio_color_compressed_hsv_t *hsv_cells;
     };
     union {
         pbio_color_hsv_t hsv;

@@ -96,7 +96,7 @@ STATIC mp_obj_t common_ColorLight_internal_animate(size_t n_args, const mp_obj_t
 
     mp_int_t colors_len = mp_obj_get_int(mp_obj_len(colors_in));
 
-    size_t cells_size = sizeof(pbio_color_hsv_t) * (colors_len + 1);
+    size_t cells_size = sizeof(pbio_color_compressed_hsv_t) * (colors_len + 1);
     #if MICROPY_MALLOC_USES_ALLOCATED_SIZE
     self->animation_cells = m_realloc(self->animation_cells, self->cells_size, cells_size);
     self->cells_size = cells_size;
@@ -104,15 +104,15 @@ STATIC mp_obj_t common_ColorLight_internal_animate(size_t n_args, const mp_obj_t
     self->animation_cells = m_realloc(self->animation_cells, cells_size);
     #endif
 
-    pbio_color_hsv_t *cells = self->animation_cells;
+    pbio_color_compressed_hsv_t *cells = self->animation_cells;
     mp_obj_iter_buf_t iter_buf;
     mp_obj_t colors_iter = mp_getiter(colors_in, &iter_buf);
     for (int i = 0; i < colors_len; i++) {
-        cells[i] = *pb_type_Color_get_hsv(mp_iternext(colors_iter));
+        pbio_color_hsv_compress(pb_type_Color_get_hsv(mp_iternext(colors_iter)), &cells[i]);
     }
 
     // sentinel value
-    cells[colors_len].h = UINT16_MAX;
+    cells[colors_len].v = UINT8_MAX;
 
     mp_int_t interval = pb_obj_get_int(interval_in);
 

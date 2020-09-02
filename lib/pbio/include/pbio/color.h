@@ -90,11 +90,22 @@ typedef struct {
     uint8_t v;
 } pbio_color_hsv_t;
 
+/** Compressed HSV color. Stores data in 24 bytes instead of 32. */
+typedef struct __attribute__((__packed__)) {
+    /** The hue component. 0 to 359 degrees. */
+    uint16_t h : 9;
+    /** The saturation component. 0 to 100 percent. */
+    uint8_t s : 7;
+    /** The value component. 0 to 100 percent. */
+    uint8_t v;
+} pbio_color_compressed_hsv_t;
 
 void pbio_color_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv);
 void pbio_color_hsv_to_rgb(const pbio_color_hsv_t *hsv, pbio_color_rgb_t *rgb);
 void pbio_color_to_hsv(pbio_color_t color, pbio_color_hsv_t *hsv);
 void pbio_color_to_rgb(pbio_color_t color, pbio_color_rgb_t *rgb);
+void pbio_color_hsv_compress(const pbio_color_hsv_t *hsv, pbio_color_compressed_hsv_t *compressed);
+void pbio_color_hsv_expand(const pbio_color_compressed_hsv_t *compressed, pbio_color_hsv_t *hsv);
 
 #endif // _PBIO_COLOR_H_
 

@@ -26,7 +26,7 @@ static const uint16_t test_blink[] = {
     PBIO_COLOR_LIGHT_BLINK_END
 };
 
-static const pbio_color_hsv_t test_animation[] = {
+static const pbio_color_compressed_hsv_t test_animation[] = {
     PBIO_COLOR_LIGHT_ANIMATION_CELL(PBIO_COLOR_HUE_CYAN, 100, 100),
     PBIO_COLOR_LIGHT_ANIMATION_CELL(PBIO_COLOR_HUE_MAGENTA, 100, 100),
     PBIO_COLOR_LIGHT_ANIMATION_END
