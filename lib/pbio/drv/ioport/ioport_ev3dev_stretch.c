@@ -149,7 +149,7 @@ PROCESS_THREAD(pbdrv_ioport_ev3dev_stretch_process, ev, data) {
     ret = udev_enumerate_scan_devices(enumerate);
     if (ret < 0) {
         errno = -ret;
-        perror("udev_enumerate_add_match_subsystem failed");
+        perror("udev_enumerate_scan_devices failed");
         PROCESS_EXIT();
     }
 
