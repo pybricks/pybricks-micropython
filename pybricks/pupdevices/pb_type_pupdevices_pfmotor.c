@@ -93,11 +93,13 @@ STATIC void pupdevices_PFMotor__send(pupdevices_PFMotor_obj_t *self, int32_t mes
     // Choose channel (1--4)
     message |= (self->channel - 1) << 8;
 
-    // Send the data to the device. Then set 0 to force resend.
+    // Send the data to the device twice. In between messages, set the sensor
+    // to a meaningless value (e.g. INT16_MAX) so that the sensor won't try to
+    // be smart and suppress two subsequent identical values.
     for (uint8_t i = 0; i < 2; i++) {
         set_and_wait(self->pbdev, message);
         mp_hal_delay_ms(75);
-        set_and_wait(self->pbdev, 0);
+        set_and_wait(self->pbdev, INT16_MAX);
     }
 }
 
