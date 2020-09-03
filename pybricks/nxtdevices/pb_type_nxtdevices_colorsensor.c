@@ -85,22 +85,23 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_ambient_obj, nxtdevices_
 STATIC mp_obj_t nxtdevices_ColorSensor_hsv(mp_obj_t self_in) {
     nxtdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
+    // Read sensor data
     int32_t all[4];
     pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_NXT_COLOR_SENSOR__MEASURE, all);
-
-    pbio_color_hsv_t hsv;
     pbio_color_rgb_t rgb = {
         .r = all[0],
         .g = all[1],
         .b = all[2],
     };
-    pbio_color_rgb_to_hsv(&rgb, &hsv);
 
-    mp_obj_t ret[3];
-    ret[0] = mp_obj_new_int(hsv.h);
-    ret[1] = mp_obj_new_int(hsv.s);
-    ret[2] = mp_obj_new_int(hsv.v);
-    return mp_obj_new_tuple(MP_ARRAY_SIZE(ret), ret);
+    // Create color object
+    pb_type_Color_obj_t *color = pb_type_Color_new_empty();
+
+    // Convert and store RGB as HSV
+    pbio_color_rgb_to_hsv(&rgb, &color->hsv);
+
+    // Return color
+    return MP_OBJ_FROM_PTR(color);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_hsv_obj, nxtdevices_ColorSensor_hsv);
 
