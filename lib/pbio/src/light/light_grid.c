@@ -27,6 +27,13 @@ struct _pbio_light_grid_t {
 PROCESS(pbio_light_grid_process, "light grid");
 static pbio_light_grid_t _light_grid;
 
+/**
+ * Gets the light grid device.
+ * @param [out] light_grid  The light grid instance.
+ * @return                  ::PBIO_SUCCESS on success ::PBIO_ERROR_AGAIN if the
+ *                          light grid is not ready for use yet or
+ *                          ::PBIO_ERROR_NOT_SUPPORTED if the PWM driver is disabled.
+ */
 pbio_error_t pbio_light_grid_get_dev(pbio_light_grid_t **light_grid) {
     // REVISIT: currently only one known light grid
     pbio_light_grid_t *grid = &_light_grid;
@@ -44,14 +51,28 @@ pbio_error_t pbio_light_grid_get_dev(pbio_light_grid_t **light_grid) {
     return PBIO_SUCCESS;
 }
 
+/**
+ * Get the size of the light grid.
+ * @param [in]  light_grid  The light grid instance.
+ * @return                  The grid size.
+ */
 uint8_t pbio_light_grid_get_size(pbio_light_grid_t *light_grid) {
     return light_grid->size;
 }
 
-// Each byte sets a row, where 1 means a pixel is on and 0 is off. Least significant bit is on the right.
-// This is the same format as used by the micro:bit.
+/**
+ * Sets the pixels of all rows bitwise.
+ *
+ * Each bit in a byte sets a pixel in a row, where 1 means a pixel is on and 0
+ * is off. The least significant bit is the right-most pixel. This is the same
+ * format as used by the micro:bit.
+ *
+ * @param [in]  light_grid  The light grid instance
+ * @param [in]  rows        Array of size bytes. Each byte is one row, LSB right.
+ * @return                  ::PBIO_SUCCESS on success or implementation-specific
+ *                          error on failure.
+ */
 pbio_error_t pbio_light_grid_set_rows(pbio_light_grid_t *light_grid, const uint8_t *rows) {
-
     pbio_error_t err;
     uint8_t size = light_grid->size;
 
@@ -71,9 +92,16 @@ pbio_error_t pbio_light_grid_set_rows(pbio_light_grid_t *light_grid, const uint8
     return PBIO_SUCCESS;
 }
 
-// Sets one pixel to an approximately perceived brightness of 0--100%
+/**
+ * Sets the pixel to a given brightness.
+ * @param [in]  light_grid  The light grid instance
+ * @param [in]  row         Row index (0 to size-1)
+ * @param [in]  col         Column index (0 to size-1)
+ * @param [in]  brightness  Brightness (0 to 100)
+ * @return                  ::PBIO_SUCCESS on success or implementation-specific
+ *                          error on failure.
+ */
 pbio_error_t pbio_light_grid_set_pixel(pbio_light_grid_t *light_grid, uint8_t row, uint8_t col, uint8_t brightness) {
-
     uint8_t size = light_grid->size;
 
     // Return early if the requested pixel is out of bounds
@@ -84,9 +112,14 @@ pbio_error_t pbio_light_grid_set_pixel(pbio_light_grid_t *light_grid, uint8_t ro
     return pbdrv_led_array_set_brightness(light_grid->led_array, row * size + col, brightness);
 }
 
-// Displays an image on the screen
+/**
+ * Sets the pixel to a given brightness.
+ * @param [in]  light_grid  The light grid instance
+ * @param [in]  image       Buffer of brightness values (0 to 100)
+ * @return                  ::PBIO_SUCCESS on success or implementation-specific
+ *                          error on failure.
+ */
 pbio_error_t pbio_light_grid_set_image(pbio_light_grid_t *light_grid, const uint8_t *image) {
-
     pbio_error_t err;
     uint8_t size = light_grid->size;
 
@@ -101,10 +134,13 @@ pbio_error_t pbio_light_grid_set_image(pbio_light_grid_t *light_grid, const uint
     return PBIO_SUCCESS;
 }
 
-void pbio_light_grid_stop_pattern(pbio_light_grid_t *light_grid) {
-    process_exit(&pbio_light_grid_process);
-}
-
+/**
+ * Sets up the poller to display a series of frames
+ * @param [in]  light_grid  The light grid instance
+ * @param [in]  images      Buffer of buffer of brightness values (0 to 100)
+ * @param [in]  frames      Number of images
+ * @param [in]  interval    Time between subsequent images
+ */
 void pbio_light_grid_start_pattern(pbio_light_grid_t *light_grid, const uint8_t *images, uint8_t frames, uint32_t interval) {
     light_grid->number_of_frames = frames;
     light_grid->frame_index = 0;
@@ -112,6 +148,14 @@ void pbio_light_grid_start_pattern(pbio_light_grid_t *light_grid, const uint8_t 
     light_grid->frame_data = images;
 
     process_start(&pbio_light_grid_process, NULL);
+}
+
+/**
+ * Stops the pattern from updating further
+ * @param [in]  light_grid  The light grid instance
+ */
+void pbio_light_grid_stop_pattern(pbio_light_grid_t *light_grid) {
+    process_exit(&pbio_light_grid_process);
 }
 
 // FIXME: compress / implement differently
