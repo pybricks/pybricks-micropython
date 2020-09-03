@@ -19,55 +19,55 @@
 const parameters_Color_obj_t pb_Color_RED_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_RED),
-    .hsv = {0, 100, 100}
+    .hsv = {PBIO_COLOR_HUE_RED, 100, 100}
 };
 
 const parameters_Color_obj_t pb_Color_BROWN_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_BROWN),
-    .hsv = {30, 100, 50}
+    .hsv = {PBIO_COLOR_HUE_ORANGE, 100, 50}
 };
 
 const parameters_Color_obj_t pb_Color_ORANGE_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_ORANGE),
-    .hsv = {30, 100, 100}
+    .hsv = {PBIO_COLOR_HUE_ORANGE, 100, 100}
 };
 
 const parameters_Color_obj_t pb_Color_YELLOW_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_YELLOW),
-    .hsv = {60, 100, 100}
+    .hsv = {PBIO_COLOR_HUE_YELLOW, 100, 100}
 };
 
 const parameters_Color_obj_t pb_Color_GREEN_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_GREEN),
-    .hsv = {120, 100, 100}
+    .hsv = {PBIO_COLOR_HUE_GREEN, 100, 100}
 };
 
 const parameters_Color_obj_t pb_Color_CYAN_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_CYAN),
-    .hsv = {180, 100, 100}
+    .hsv = {PBIO_COLOR_HUE_CYAN, 100, 100}
 };
 
 const parameters_Color_obj_t pb_Color_BLUE_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_BLUE),
-    .hsv = {240, 100, 100}
+    .hsv = {PBIO_COLOR_HUE_BLUE, 100, 100}
 };
 
 const parameters_Color_obj_t pb_Color_VIOLET_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_VIOLET),
-    .hsv = {270, 100, 100}
+    .hsv = {PBIO_COLOR_HUE_VIOLET, 100, 100}
 };
 
 const parameters_Color_obj_t pb_Color_MAGENTA_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_MAGENTA),
-    .hsv = {300, 100, 100}
+    .hsv = {PBIO_COLOR_HUE_MAGENTA, 100, 100}
 };
 
 const parameters_Color_obj_t pb_Color_NONE_obj = {
