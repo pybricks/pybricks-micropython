@@ -47,10 +47,10 @@ STATIC mp_obj_t pupdevices_PFMotor_make_new(const mp_obj_type_t *type, size_t n_
 
     // Get port color indicator (blue or red)
     uint16_t hue = pb_type_Color_get_hsv(color_in)->h;
-    if (hue != pb_Color_BLUE_obj.hsv.h && hue != pb_Color_RED_obj.hsv.h) {
+    if (hue != PBIO_COLOR_HUE_BLUE && hue != PBIO_COLOR_HUE_RED) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
-    bool use_blue_port = hue == pb_Color_BLUE_obj.hsv.h;
+    bool use_blue_port = hue == PBIO_COLOR_HUE_BLUE;
 
     // Get positive direction.
     pbio_direction_t positive_direction = pb_type_enum_get_value(positive_direction_in, &pb_enum_type_Direction);
