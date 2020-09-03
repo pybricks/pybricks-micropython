@@ -20,7 +20,7 @@
 // Class structure for ColorDistanceSensor. Note: first two members must match pb_ColorSensor_obj_t
 typedef struct _pupdevices_ColorDistanceSensor_obj_t {
     mp_obj_base_t base;
-    pb_hsv_map_t color_map;
+    mp_obj_t color_map;
     pb_device_t *pbdev;
     mp_obj_t light;
 } pupdevices_ColorDistanceSensor_obj_t;
@@ -69,8 +69,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *typ
     self->light = common_ColorLight_external_obj_make_new(self->pbdev);
 
     // Save default color settings
-    pb_hsv_map_save_default(&self->color_map);
-    self->color_map.saturation_threshold = 50;
+    pb_color_map_save_default(&self->color_map);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -83,7 +82,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_color(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor__hsv(self, &hsv);
 
     // Get and return discretized color based on HSV
-    return pb_hsv_get_color(&self->color_map, hsv.h, hsv.s, hsv.v);
+    return pb_color_map_get_color(&self->color_map, &hsv);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_color_obj, pupdevices_ColorDistanceSensor_color);
 

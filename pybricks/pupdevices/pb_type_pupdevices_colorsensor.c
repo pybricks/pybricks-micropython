@@ -20,7 +20,7 @@
 // Class structure for ColorSensor. Note: first two members must match pb_ColorSensor_obj_t
 typedef struct _pupdevices_ColorSensor_obj_t {
     mp_obj_base_t base;
-    pb_hsv_map_t color_map;
+    mp_obj_t color_map;
     pb_device_t *pbdev;
     mp_obj_t lights;
 } pupdevices_ColorSensor_obj_t;
@@ -68,7 +68,7 @@ STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     pupdevices_ColorSensor__get_hsv(self->pbdev, true, &hsv);
 
     // Save default settings
-    pb_hsv_map_save_default(&self->color_map);
+    pb_color_map_save_default(&self->color_map);
 
     // This sensor needs some time to get values right after turning power on
     mp_hal_delay_ms(1000);
@@ -104,7 +104,7 @@ STATIC mp_obj_t pupdevices_ColorSensor_color(size_t n_args, const mp_obj_t *pos_
     pupdevices_ColorSensor__get_hsv(self->pbdev, mp_obj_is_true(surface_in), &hsv);
 
     // Get and return discretized color
-    return pb_hsv_get_color(&self->color_map, hsv.h, hsv.s, hsv.v);
+    return pb_color_map_get_color(&self->color_map, &hsv);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorSensor_color_obj, 1, pupdevices_ColorSensor_color);
 

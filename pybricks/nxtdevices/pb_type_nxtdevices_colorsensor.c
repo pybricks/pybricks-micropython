@@ -17,7 +17,7 @@
 // pybricks.nxtdevices.ColorSensor class object. Note: first two members must match pb_ColorSensor_obj_t
 typedef struct _nxtdevices_ColorSensor_obj_t {
     mp_obj_base_t base;
-    pb_hsv_map_t color_map;
+    mp_obj_t color_map;
     mp_obj_t light;
     pb_device_t *pbdev;
 } nxtdevices_ColorSensor_obj_t;
@@ -41,8 +41,7 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     pb_device_color_light_on(self->pbdev, &pb_Color_RED_obj.hsv);
 
     // Save default color settings
-    pb_hsv_map_save_default(&self->color_map);
-    self->color_map.saturation_threshold = 30;
+    pb_color_map_save_default(&self->color_map);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -121,7 +120,7 @@ STATIC mp_obj_t nxtdevices_ColorSensor_color(mp_obj_t self_in) {
     pbio_color_rgb_to_hsv(&rgb, &hsv);
 
     // Get and return discretized color based on HSV
-    return pb_hsv_get_color(&self->color_map, hsv.h, hsv.s, hsv.v);
+    return pb_color_map_get_color(&self->color_map, &hsv);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(nxtdevices_ColorSensor_color_obj, nxtdevices_ColorSensor_color);
 
