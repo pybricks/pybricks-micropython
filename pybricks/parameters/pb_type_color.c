@@ -5,8 +5,6 @@
 
 #if PYBRICKS_PY_PARAMETERS
 
-#include <inttypes.h>
-
 #include <pbio/color.h>
 
 #include "py/objstr.h"
@@ -160,7 +158,7 @@ STATIC mp_obj_t pb_type_Color_make_new(const mp_obj_type_t *type, size_t n_args,
 
 void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     pb_type_Color_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, "Color(%" PRIu16 ", %" PRIu8 ", %" PRIu8, self->hsv.h, self->hsv.s, self->hsv.v);
+    mp_printf(print, "Color(%u, %u, %u", self->hsv.h, self->hsv.s, self->hsv.v);
     if (self->name != mp_const_none) {
         mp_printf(print, ", '%s'", mp_obj_str_get_str(self->name));
     }
