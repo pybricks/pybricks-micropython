@@ -16,79 +16,79 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
-const parameters_Color_obj_t pb_Color_RED_obj = {
+const pb_type_Color_obj_t pb_Color_RED_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_RED),
     .hsv = {PBIO_COLOR_HUE_RED, 100, 100}
 };
 
-const parameters_Color_obj_t pb_Color_BROWN_obj = {
+const pb_type_Color_obj_t pb_Color_BROWN_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_BROWN),
     .hsv = {PBIO_COLOR_HUE_ORANGE, 100, 50}
 };
 
-const parameters_Color_obj_t pb_Color_ORANGE_obj = {
+const pb_type_Color_obj_t pb_Color_ORANGE_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_ORANGE),
     .hsv = {PBIO_COLOR_HUE_ORANGE, 100, 100}
 };
 
-const parameters_Color_obj_t pb_Color_YELLOW_obj = {
+const pb_type_Color_obj_t pb_Color_YELLOW_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_YELLOW),
     .hsv = {PBIO_COLOR_HUE_YELLOW, 100, 100}
 };
 
-const parameters_Color_obj_t pb_Color_GREEN_obj = {
+const pb_type_Color_obj_t pb_Color_GREEN_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_GREEN),
     .hsv = {PBIO_COLOR_HUE_GREEN, 100, 100}
 };
 
-const parameters_Color_obj_t pb_Color_CYAN_obj = {
+const pb_type_Color_obj_t pb_Color_CYAN_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_CYAN),
     .hsv = {PBIO_COLOR_HUE_CYAN, 100, 100}
 };
 
-const parameters_Color_obj_t pb_Color_BLUE_obj = {
+const pb_type_Color_obj_t pb_Color_BLUE_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_BLUE),
     .hsv = {PBIO_COLOR_HUE_BLUE, 100, 100}
 };
 
-const parameters_Color_obj_t pb_Color_VIOLET_obj = {
+const pb_type_Color_obj_t pb_Color_VIOLET_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_VIOLET),
     .hsv = {PBIO_COLOR_HUE_VIOLET, 100, 100}
 };
 
-const parameters_Color_obj_t pb_Color_MAGENTA_obj = {
+const pb_type_Color_obj_t pb_Color_MAGENTA_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_MAGENTA),
     .hsv = {PBIO_COLOR_HUE_MAGENTA, 100, 100}
 };
 
-const parameters_Color_obj_t pb_Color_NONE_obj = {
+const pb_type_Color_obj_t pb_Color_NONE_obj = {
     {&pb_type_Color},
     .name = mp_const_none,
     .hsv = {0, 0, 0}
 };
 
-const parameters_Color_obj_t pb_Color_BLACK_obj = {
+const pb_type_Color_obj_t pb_Color_BLACK_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_BLACK),
     .hsv = {0, 0, 10}
 };
 
-const parameters_Color_obj_t pb_Color_GRAY_obj = {
+const pb_type_Color_obj_t pb_Color_GRAY_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_GRAY),
     .hsv = {0, 0, 50}
 };
 
-const parameters_Color_obj_t pb_Color_WHITE_obj = {
+const pb_type_Color_obj_t pb_Color_WHITE_obj = {
     {&pb_type_Color},
     .name = MP_OBJ_NEW_QSTR(MP_QSTR_WHITE),
     .hsv = {0, 0, 100}
@@ -112,11 +112,11 @@ const pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj) {
 
     // Assert type and extract hsv
     pb_assert_type(obj, &pb_type_Color);
-    return &((parameters_Color_obj_t *)obj)->hsv;
+    return &((pb_type_Color_obj_t *)obj)->hsv;
 }
 
-mp_obj_t parameters_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v, mp_obj_t name) {
-    parameters_Color_obj_t *self = m_new_obj(parameters_Color_obj_t);
+mp_obj_t pb_type_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v, mp_obj_t name) {
+    pb_type_Color_obj_t *self = m_new_obj(pb_type_Color_obj_t);
     self->base.type = &pb_type_Color;
 
     // Bind h to 0--360
@@ -136,7 +136,7 @@ mp_obj_t parameters_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v, mp
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t parameters_Color_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t pb_type_Color_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(h),
@@ -149,11 +149,11 @@ STATIC mp_obj_t parameters_Color_make_new(const mp_obj_type_t *type, size_t n_ar
         pb_assert_type(name_in, &mp_type_str);
     }
 
-    return parameters_Color_make_new_helper(pb_obj_get_int(h_in), pb_obj_get_int(s_in), pb_obj_get_int(v_in), name_in);
+    return pb_type_Color_make_new_helper(pb_obj_get_int(h_in), pb_obj_get_int(s_in), pb_obj_get_int(v_in), name_in);
 }
 
 void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
-    parameters_Color_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_type_Color_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, "Color(%" PRIu16 ", %" PRIu8 ", %" PRIu8, self->hsv.h, self->hsv.s, self->hsv.v);
     if (self->name != mp_const_none) {
         mp_printf(print, ", '%s'", mp_obj_str_get_str(self->name));
@@ -162,7 +162,7 @@ void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
 }
 
 STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
-    parameters_Color_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    pb_type_Color_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // Return the requested object, read only
     if (dest[0] == MP_OBJ_NULL) {
@@ -189,9 +189,9 @@ STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     dest[1] = MP_OBJ_SENTINEL;
 }
 
-STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs_in) {
+STATIC mp_obj_t pb_type_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs_in) {
 
-    parameters_Color_obj_t *self = MP_OBJ_TO_PTR(lhs_in);
+    pb_type_Color_obj_t *self = MP_OBJ_TO_PTR(lhs_in);
 
     switch (op) {
         case MP_BINARY_OP_EQUAL:
@@ -199,7 +199,7 @@ STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, m
             if (!mp_obj_is_type(rhs_in, &pb_type_Color)) {
                 return mp_const_false;
             }
-            parameters_Color_obj_t *other = MP_OBJ_TO_PTR(rhs_in);
+            pb_type_Color_obj_t *other = MP_OBJ_TO_PTR(rhs_in);
             if (self->hsv.h == other->hsv.h &&
                 self->hsv.s == other->hsv.s &&
                 self->hsv.v == other->hsv.v) {
@@ -212,7 +212,7 @@ STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, m
             rhs_in = mp_obj_new_int(-pb_obj_get_int(rhs_in));
         case MP_BINARY_OP_RSHIFT:
             // Color shifting shifts the hue
-            return parameters_Color_make_new_helper(
+            return pb_type_Color_make_new_helper(
                 self->hsv.h + pb_obj_get_int(rhs_in),
                 self->hsv.s,
                 self->hsv.v,
@@ -228,7 +228,7 @@ STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, m
             #else
             mp_int_t value = mp_obj_get_int(rhs_in) * self->hsv.v;
             #endif
-            return parameters_Color_make_new_helper(
+            return pb_type_Color_make_new_helper(
                 self->hsv.h,
                 self->hsv.s,
                 value,
@@ -245,7 +245,7 @@ STATIC mp_obj_t parameters_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, m
             #else
             mp_int_t value = self->hsv.v / mp_obj_get_int(rhs_in);
             #endif
-            return parameters_Color_make_new_helper(
+            return pb_type_Color_make_new_helper(
                 self->hsv.h,
                 self->hsv.s,
                 value,
@@ -280,8 +280,8 @@ const mp_obj_type_t pb_type_Color = {
     .attr = pb_type_Color_attr,
     .print = pb_type_Color_print,
     .unary_op = mp_generic_unary_op,
-    .make_new = parameters_Color_make_new,
-    .binary_op = parameters_Color_binary_op,
+    .make_new = pb_type_Color_make_new,
+    .binary_op = pb_type_Color_binary_op,
     .locals_dict = (mp_obj_dict_t *)&(pb_type_Color_locals_dict),
 };
 
