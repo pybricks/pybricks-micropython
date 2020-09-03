@@ -127,12 +127,15 @@ PROCESS_THREAD(pbdrv_ioport_ev3dev_stretch_process, ev, data) {
     monitor = udev_monitor_new_from_netlink(udev, "udev");
     if (!monitor) {
         perror("Failed to get udev monitor");
+        udev = udev_unref(udev);
         PROCESS_EXIT();
     }
 
     enumerate = udev_enumerate_new(udev);
     if (!enumerate) {
         perror("Failed to get udev enumerate");
+        monitor = udev_monitor_unref(monitor);
+        udev = udev_unref(udev);
         PROCESS_EXIT();
     }
 
@@ -140,6 +143,9 @@ PROCESS_THREAD(pbdrv_ioport_ev3dev_stretch_process, ev, data) {
     if (ret < 0) {
         errno = -ret;
         perror("udev_enumerate_add_match_subsystem failed");
+        enumerate = udev_enumerate_unref(enumerate);
+        monitor = udev_monitor_unref(monitor);
+        udev = udev_unref(udev);
         PROCESS_EXIT();
     }
 
@@ -150,6 +156,9 @@ PROCESS_THREAD(pbdrv_ioport_ev3dev_stretch_process, ev, data) {
     if (ret < 0) {
         errno = -ret;
         perror("udev_enumerate_scan_devices failed");
+        enumerate = udev_enumerate_unref(enumerate);
+        monitor = udev_monitor_unref(monitor);
+        udev = udev_unref(udev);
         PROCESS_EXIT();
     }
 
@@ -167,6 +176,8 @@ PROCESS_THREAD(pbdrv_ioport_ev3dev_stretch_process, ev, data) {
         add_port(device);
         udev_device_unref(device);
     }
+
+    enumerate = udev_enumerate_unref(enumerate);
 
     // poll for added/removed devices every 100 milliseconds
     etimer_set(&timer, clock_from_msec(100));
