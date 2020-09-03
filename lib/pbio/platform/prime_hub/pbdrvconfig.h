@@ -50,6 +50,11 @@
 #define PBDRV_CONFIG_LED_PWM                        (1)
 #define PBDRV_CONFIG_LED_PWM_NUM_DEV                (4)
 
+#define PBDRV_CONFIG_LED_ARRAY                      (1)
+#define PBDRV_CONFIG_LED_ARRAY_NUM_DEV              (1)
+#define PBDRV_CONFIG_LED_ARRAY_PWM                  (1)
+#define PBDRV_CONFIG_LED_ARRAY_PWM_NUM_DEV          (1)
+
 #define PBDRV_CONFIG_PWM                            (1)
 #define PBDRV_CONFIG_PWM_NUM_DEV                    (5)
 #define PBDRV_CONFIG_PWM_STM32_TIM                  (1)

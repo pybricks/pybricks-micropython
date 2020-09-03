@@ -5,18 +5,19 @@
 
 #if PBIO_CONFIG_LIGHTGRID
 
-#include <contiki.h>
-
 #include <stdbool.h>
 
-#include <pbdrv/pwm.h>
+#include <contiki.h>
+
+#include <pbdrv/led.h>
 
 #include <pbio/error.h>
 #include <pbio/lightgrid.h>
 
 struct _pbio_lightgrid_t {
-    pbdrv_pwm_dev_t *pwm;
-    const pbdrv_lightgrid_platform_data_t *data;
+    pbdrv_led_array_dev_t *led_array;
+    /** Size of the grid (assumes grid is square) */
+    uint8_t size;
     uint8_t number_of_frames;
     uint8_t frame_index;
     uint8_t interval;
@@ -27,17 +28,15 @@ PROCESS(pbio_lightgrid_process, "light grid");
 static pbio_lightgrid_t _lightgrid;
 
 pbio_error_t pbio_lightgrid_get_dev(pbio_lightgrid_t **lightgrid) {
-
+    // REVISIT: currently only one known light grid
     pbio_lightgrid_t *grid = &_lightgrid;
 
-    // Get data
-    grid->data = &pbdrv_lightgrid_platform_data;
-
-    // Get PWM device
-    pbio_error_t err = pbdrv_pwm_get_dev(grid->data->id, &grid->pwm);
+    pbio_error_t err = pbdrv_led_array_get_dev(0, &grid->led_array);
     if (err != PBIO_SUCCESS) {
         return err;
     }
+
+    grid->size = 5;
 
     // Return device on success
     *lightgrid = grid;
@@ -46,7 +45,7 @@ pbio_error_t pbio_lightgrid_get_dev(pbio_lightgrid_t **lightgrid) {
 }
 
 uint8_t pbio_lightgrid_get_size(pbio_lightgrid_t *lightgrid) {
-    return lightgrid->data->size;
+    return lightgrid->size;
 }
 
 // Each byte sets a row, where 1 means a pixel is on and 0 is off. Least significant bit is on the right.
@@ -54,7 +53,7 @@ uint8_t pbio_lightgrid_get_size(pbio_lightgrid_t *lightgrid) {
 pbio_error_t pbio_lightgrid_set_rows(pbio_lightgrid_t *lightgrid, const uint8_t *rows) {
 
     pbio_error_t err;
-    uint8_t size = lightgrid->data->size;
+    uint8_t size = lightgrid->size;
 
     // Loop through all rows i, starting at row 0 at the top.
     for (uint8_t i = 0; i < size; i++) {
@@ -63,7 +62,7 @@ pbio_error_t pbio_lightgrid_set_rows(pbio_lightgrid_t *lightgrid, const uint8_t 
             // The pixel is on of the bit is high.
             bool on = rows[i] & (1 << (size - 1 - j));
             // Set the pixel.
-            err = pbdrv_pwm_set_duty(lightgrid->pwm, lightgrid->data->channels[i * size + j], on * UINT16_MAX);
+            err = pbdrv_led_array_set_brightness(lightgrid->led_array, i * size + j, on * 100);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
@@ -75,24 +74,21 @@ pbio_error_t pbio_lightgrid_set_rows(pbio_lightgrid_t *lightgrid, const uint8_t 
 // Sets one pixel to an approximately perceived brightness of 0--100%
 pbio_error_t pbio_lightgrid_set_pixel(pbio_lightgrid_t *lightgrid, uint8_t row, uint8_t col, uint8_t brightness) {
 
-    uint8_t size = lightgrid->data->size;
+    uint8_t size = lightgrid->size;
 
     // Return early if the requested pixel is out of bounds
     if (row >= size || col >= size) {
         return PBIO_SUCCESS;
     }
 
-    // Scale brightness quadratically from 0 to UINT16_MAX
-    int32_t duty = brightness * brightness * UINT16_MAX / 10000;
-
-    return pbdrv_pwm_set_duty(lightgrid->pwm, lightgrid->data->channels[row * size + col], duty);
+    return pbdrv_led_array_set_brightness(lightgrid->led_array, row * size + col, brightness);
 }
 
 // Displays an image on the screen
 pbio_error_t pbio_lightgrid_set_image(pbio_lightgrid_t *lightgrid, const uint8_t *image) {
 
     pbio_error_t err;
-    uint8_t size = lightgrid->data->size;
+    uint8_t size = lightgrid->size;
 
     for (uint8_t r = 0; r < size; r++) {
         for (uint8_t c = 0; c < size; c++) {
@@ -172,7 +168,7 @@ PROCESS_THREAD(pbio_lightgrid_process, ev, data) {
 
     for (;;) {
         // Current frame data
-        uint8_t size = lightgrid->data->size;
+        uint8_t size = lightgrid->size;
         const uint8_t *frame = lightgrid->frame_data + size * size * lightgrid->frame_index;
 
         // Display the frame

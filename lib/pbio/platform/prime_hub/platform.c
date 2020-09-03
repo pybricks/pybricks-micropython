@@ -8,6 +8,7 @@
 
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/ioport/ioport_lpf2.h"
+#include "../../drv/led/led_array_pwm.h"
 #include "../../drv/led/led_dual.h"
 #include "../../drv/led/led_pwm.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
@@ -50,6 +51,10 @@ enum {
     LED_DEV_2_STATUS_BOTTOM,
     LED_DEV_3_BATTERY,
     LED_DEV_4_BLUETOOTH,
+};
+
+enum {
+    LED_ARRAY_DEV_0_LIGHT_MATRIX,
 };
 
 enum {
@@ -119,6 +124,21 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
         .b_id = PWM_DEV_4_TLC5955,
         .b_ch = 18,
         .scale_factor = 35,
+    },
+};
+
+const pbdrv_led_array_pwm_platform_data_t pbdrv_led_array_pwm_platform_data[PBDRV_CONFIG_LED_ARRAY_PWM_NUM_DEV] = {
+    {
+        .pwm_chs = (const uint8_t[]) {
+            38, 36, 41, 46, 33,
+            37, 28, 39, 47, 21,
+            24, 29, 31, 45, 23,
+            26, 27, 32, 34, 22,
+            25, 40, 30, 35, 9
+        },
+        .num_pwm_chs = 25,
+        .pwm_id = PWM_DEV_4_TLC5955,
+        .id = LED_ARRAY_DEV_0_LIGHT_MATRIX,
     },
 };
 
@@ -207,18 +227,6 @@ const pbdrv_pwm_tlc5955_stm32_platform_data_t
         .lat_gpio = GPIOA,
         .lat_gpio_pin = GPIO_PIN_15,
         .id = PWM_DEV_4_TLC5955,
-    },
-};
-
-const pbdrv_lightgrid_platform_data_t pbdrv_lightgrid_platform_data = {
-    .id = PWM_DEV_4_TLC5955,
-    .size = 5,
-    .channels = {
-        38, 36, 41, 46, 33,
-        37, 28, 39, 47, 21,
-        24, 29, 31, 45, 23,
-        26, 27, 32, 34, 22,
-        25, 40, 30, 35, 9
     },
 };
 

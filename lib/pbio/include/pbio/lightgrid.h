@@ -18,18 +18,6 @@ typedef struct _pbio_lightgrid_t pbio_lightgrid_t;
 
 extern const uint8_t pbio_lightgrid_sys_pattern[1000];
 
-/** Platform-specific data for light grid devices. */
-typedef struct {
-    /** PWM device id. */
-    uint8_t id;
-    /** The grid has size * size pixels. */
-    uint8_t size;
-    /** PWM channel ordered by pixel index r0c0, r0c1, .... */
-    uint8_t channels[25];
-} pbdrv_lightgrid_platform_data_t;
-
-extern const pbdrv_lightgrid_platform_data_t pbdrv_lightgrid_platform_data;
-
 /**
  * Get the lightgrid device
  * @param [out] lightgrid   The lightgrid object
