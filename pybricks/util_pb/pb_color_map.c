@@ -34,10 +34,61 @@ void pb_color_map_save_default(mp_obj_t *color_map) {
     *color_map = MP_OBJ_FROM_PTR(&pb_color_map_default);
 }
 
+// Cost function between two colors a and b. The lower, the closer they are.
+static int32_t get_hsv_cost(const pbio_color_hsv_t *x, const pbio_color_hsv_t *c) {
+
+    // TODO: Actual 3D cost. For now, use the simplified threshold-based
+    // mapping we used to have.
+
+    // For low saturation, pick the closest value among unsaturated colors
+    if (x->s < 40 || x->v <= 5) {
+        // Ignore comparison to saturated colors
+        if (c->s == 100) {
+            return INT32_MAX;
+        }
+        // Return absolute value error
+        return x->v > c->v ? x->v - c->v : c->v - x->v;
+    }
+    // Otherwise, return the hue error
+    int32_t hue_error = c->h > x->h ? c->h - x->h : x->h - c->h;
+    return hue_error <= 180 ? hue_error : 360 - hue_error;
+}
+
 // Get a discrete color that matches the given hsv values most closely
 mp_obj_t pb_color_map_get_color(mp_obj_t *color_map, pbio_color_hsv_t *hsv) {
-    // TODO
-    return mp_const_none;
+
+    // Unpack the main list
+    mp_obj_t *colors;
+    size_t n;
+    mp_obj_get_array(*color_map, &n, &colors);
+
+    // Initialize minimal cost to maximum
+    mp_obj_t match = mp_const_none;
+    int32_t cost_now = INT32_MAX;
+    int32_t cost_min = INT32_MAX;
+
+    // Compute cost for each candidate
+    for (size_t i = 0; i < n; i++) {
+
+        // Get HSV of the candidate discrete color
+        const pbio_color_hsv_t *compare;
+        if (colors[i] == mp_const_none) {
+            compare = &pb_Color_NONE_obj.hsv;
+        } else {
+            pb_type_Color_obj_t *color = MP_OBJ_TO_PTR(colors[i]);
+            compare = &color->hsv;
+        }
+
+        // Evaluate the cost function
+        cost_now = get_hsv_cost(hsv, compare);
+
+        // If cost is less than before, update the minimum and the match
+        if (cost_now < cost_min) {
+            cost_min = cost_now;
+            match = colors[i];
+        }
+    }
+    return match;
 }
 
 // Generic class structure for ColorDistanceSensor
