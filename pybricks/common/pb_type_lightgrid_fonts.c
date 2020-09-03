@@ -4,7 +4,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_LIGHTGRID
+#if PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_LIGHT_GRID
 
 // Slim digits 0--9
 const uint8_t pb_digits_5x2[10][5] = {
@@ -750,4 +750,4 @@ const uint8_t pb_font_5x5[95][5] = {
     },
 };
 
-#endif // PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_LIGHTGRID
+#endif // PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_LIGHT_GRID

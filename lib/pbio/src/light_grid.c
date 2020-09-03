@@ -3,7 +3,7 @@
 
 #include <pbio/config.h>
 
-#if PBIO_CONFIG_LIGHTGRID
+#if PBIO_CONFIG_LIGHT_GRID
 
 #include <stdbool.h>
 
@@ -12,9 +12,9 @@
 #include <pbdrv/led.h>
 
 #include <pbio/error.h>
-#include <pbio/lightgrid.h>
+#include <pbio/light_grid.h>
 
-struct _pbio_lightgrid_t {
+struct _pbio_light_grid_t {
     pbdrv_led_array_dev_t *led_array;
     /** Size of the grid (assumes grid is square) */
     uint8_t size;
@@ -24,12 +24,12 @@ struct _pbio_lightgrid_t {
     const uint8_t *frame_data;
 };
 
-PROCESS(pbio_lightgrid_process, "light grid");
-static pbio_lightgrid_t _lightgrid;
+PROCESS(pbio_light_grid_process, "light grid");
+static pbio_light_grid_t _light_grid;
 
-pbio_error_t pbio_lightgrid_get_dev(pbio_lightgrid_t **lightgrid) {
+pbio_error_t pbio_light_grid_get_dev(pbio_light_grid_t **light_grid) {
     // REVISIT: currently only one known light grid
-    pbio_lightgrid_t *grid = &_lightgrid;
+    pbio_light_grid_t *grid = &_light_grid;
 
     pbio_error_t err = pbdrv_led_array_get_dev(0, &grid->led_array);
     if (err != PBIO_SUCCESS) {
@@ -39,21 +39,21 @@ pbio_error_t pbio_lightgrid_get_dev(pbio_lightgrid_t **lightgrid) {
     grid->size = 5;
 
     // Return device on success
-    *lightgrid = grid;
+    *light_grid = grid;
 
     return PBIO_SUCCESS;
 }
 
-uint8_t pbio_lightgrid_get_size(pbio_lightgrid_t *lightgrid) {
-    return lightgrid->size;
+uint8_t pbio_light_grid_get_size(pbio_light_grid_t *light_grid) {
+    return light_grid->size;
 }
 
 // Each byte sets a row, where 1 means a pixel is on and 0 is off. Least significant bit is on the right.
 // This is the same format as used by the micro:bit.
-pbio_error_t pbio_lightgrid_set_rows(pbio_lightgrid_t *lightgrid, const uint8_t *rows) {
+pbio_error_t pbio_light_grid_set_rows(pbio_light_grid_t *light_grid, const uint8_t *rows) {
 
     pbio_error_t err;
-    uint8_t size = lightgrid->size;
+    uint8_t size = light_grid->size;
 
     // Loop through all rows i, starting at row 0 at the top.
     for (uint8_t i = 0; i < size; i++) {
@@ -62,7 +62,7 @@ pbio_error_t pbio_lightgrid_set_rows(pbio_lightgrid_t *lightgrid, const uint8_t 
             // The pixel is on of the bit is high.
             bool on = rows[i] & (1 << (size - 1 - j));
             // Set the pixel.
-            err = pbdrv_led_array_set_brightness(lightgrid->led_array, i * size + j, on * 100);
+            err = pbdrv_led_array_set_brightness(light_grid->led_array, i * size + j, on * 100);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
@@ -72,27 +72,27 @@ pbio_error_t pbio_lightgrid_set_rows(pbio_lightgrid_t *lightgrid, const uint8_t 
 }
 
 // Sets one pixel to an approximately perceived brightness of 0--100%
-pbio_error_t pbio_lightgrid_set_pixel(pbio_lightgrid_t *lightgrid, uint8_t row, uint8_t col, uint8_t brightness) {
+pbio_error_t pbio_light_grid_set_pixel(pbio_light_grid_t *light_grid, uint8_t row, uint8_t col, uint8_t brightness) {
 
-    uint8_t size = lightgrid->size;
+    uint8_t size = light_grid->size;
 
     // Return early if the requested pixel is out of bounds
     if (row >= size || col >= size) {
         return PBIO_SUCCESS;
     }
 
-    return pbdrv_led_array_set_brightness(lightgrid->led_array, row * size + col, brightness);
+    return pbdrv_led_array_set_brightness(light_grid->led_array, row * size + col, brightness);
 }
 
 // Displays an image on the screen
-pbio_error_t pbio_lightgrid_set_image(pbio_lightgrid_t *lightgrid, const uint8_t *image) {
+pbio_error_t pbio_light_grid_set_image(pbio_light_grid_t *light_grid, const uint8_t *image) {
 
     pbio_error_t err;
-    uint8_t size = lightgrid->size;
+    uint8_t size = light_grid->size;
 
     for (uint8_t r = 0; r < size; r++) {
         for (uint8_t c = 0; c < size; c++) {
-            err = pbio_lightgrid_set_pixel(lightgrid, r, c, image[r * size + c]);
+            err = pbio_light_grid_set_pixel(light_grid, r, c, image[r * size + c]);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
@@ -101,21 +101,21 @@ pbio_error_t pbio_lightgrid_set_image(pbio_lightgrid_t *lightgrid, const uint8_t
     return PBIO_SUCCESS;
 }
 
-void pbio_lightgrid_stop_pattern(pbio_lightgrid_t *lightgrid) {
-    process_exit(&pbio_lightgrid_process);
+void pbio_light_grid_stop_pattern(pbio_light_grid_t *light_grid) {
+    process_exit(&pbio_light_grid_process);
 }
 
-void pbio_lightgrid_start_pattern(pbio_lightgrid_t *lightgrid, const uint8_t *images, uint8_t frames, uint32_t interval) {
-    lightgrid->number_of_frames = frames;
-    lightgrid->frame_index = 0;
-    lightgrid->interval = interval;
-    lightgrid->frame_data = images;
+void pbio_light_grid_start_pattern(pbio_light_grid_t *light_grid, const uint8_t *images, uint8_t frames, uint32_t interval) {
+    light_grid->number_of_frames = frames;
+    light_grid->frame_index = 0;
+    light_grid->interval = interval;
+    light_grid->frame_data = images;
 
-    process_start(&pbio_lightgrid_process, NULL);
+    process_start(&pbio_light_grid_process, NULL);
 }
 
 // FIXME: compress / implement differently
-const uint8_t pbio_lightgrid_sys_pattern[1000] = {
+const uint8_t pbio_light_grid_sys_pattern[1000] = {
     0, 0, 0, 0, 0, 10, 61, 99, 79, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 6, 53, 97, 85, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 3, 45, 94, 90, 39, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -158,30 +158,30 @@ const uint8_t pbio_lightgrid_sys_pattern[1000] = {
     0, 0, 0, 0, 0, 15, 68, 100, 72, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
-PROCESS_THREAD(pbio_lightgrid_process, ev, data) {
-    static pbio_lightgrid_t *lightgrid = &_lightgrid;
+PROCESS_THREAD(pbio_light_grid_process, ev, data) {
+    static pbio_light_grid_t *light_grid = &_light_grid;
     static struct etimer timer;
 
     PROCESS_BEGIN();
 
-    etimer_set(&timer, clock_from_msec(lightgrid->interval));
+    etimer_set(&timer, clock_from_msec(light_grid->interval));
 
     for (;;) {
         // Current frame data
-        uint8_t size = lightgrid->size;
-        const uint8_t *frame = lightgrid->frame_data + size * size * lightgrid->frame_index;
+        uint8_t size = light_grid->size;
+        const uint8_t *frame = light_grid->frame_data + size * size * light_grid->frame_index;
 
         // Display the frame
-        pbio_lightgrid_set_image(lightgrid, frame);
+        pbio_light_grid_set_image(light_grid, frame);
 
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
         etimer_reset(&timer);
 
         // Move to next frame
-        lightgrid->frame_index = (lightgrid->frame_index + 1) % lightgrid->number_of_frames;
+        light_grid->frame_index = (light_grid->frame_index + 1) % light_grid->number_of_frames;
     }
 
     PROCESS_END();
 }
 
-#endif // PBIO_CONFIG_LIGHTGRID
+#endif // PBIO_CONFIG_LIGHT_GRID

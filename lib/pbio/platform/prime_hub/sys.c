@@ -7,7 +7,7 @@
 
 #include "pbio/color.h"
 #include "pbio/event.h"
-#include "pbio/lightgrid.h"
+#include "pbio/light_grid.h"
 #include "pbio/main.h"
 
 #include <pbsys/status.h>
@@ -31,9 +31,9 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
         user_stdin_event_func = NULL;
     }
 
-    pbio_lightgrid_t *lightgrid;
-    if (pbio_lightgrid_get_dev(&lightgrid) == PBIO_SUCCESS) {
-        pbio_lightgrid_start_pattern(lightgrid, pbio_lightgrid_sys_pattern, 40, 25);
+    pbio_light_grid_t *light_grid;
+    if (pbio_light_grid_get_dev(&light_grid) == PBIO_SUCCESS) {
+        pbio_light_grid_start_pattern(light_grid, pbio_light_grid_sys_pattern, 40, 25);
     }
     pbsys_status_set(PBSYS_STATUS_USER_PROGRAM_RUNNING);
 }
@@ -44,13 +44,13 @@ void pbsys_unprepare_user_program(void) {
     user_stop_func = NULL;
     user_stdin_event_func = NULL;
 
-    pbio_lightgrid_t *lightgrid;
-    if (pbio_lightgrid_get_dev(&lightgrid) == PBIO_SUCCESS) {
-        pbio_lightgrid_stop_pattern(lightgrid);
+    pbio_light_grid_t *light_grid;
+    if (pbio_light_grid_get_dev(&light_grid) == PBIO_SUCCESS) {
+        pbio_light_grid_stop_pattern(light_grid);
         uint8_t rows[5] = {0};
         // 3x3 "stop sign" at top center of light grid
         rows[0] = rows[1] = rows[2] = 0b01110;
-        pbio_lightgrid_set_rows(lightgrid, rows);
+        pbio_light_grid_set_rows(light_grid, rows);
     }
 }
 

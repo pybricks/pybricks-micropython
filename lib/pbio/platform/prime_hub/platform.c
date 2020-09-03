@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "pbio/uartdev.h"
-#include "pbio/lightgrid.h"
+#include "pbio/light_grid.h"
 
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/ioport/ioport_lpf2.h"

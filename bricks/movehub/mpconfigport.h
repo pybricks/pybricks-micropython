@@ -12,7 +12,7 @@
 
 // Pybricks modules
 #define PYBRICKS_PY_COMMON              (1)
-#define PYBRICKS_PY_COMMON_LIGHTGRID    (0)
+#define PYBRICKS_PY_COMMON_LIGHT_GRID   (0)
 #define PYBRICKS_PY_COMMON_MOTORS       (1)
 #define PYBRICKS_PY_EXPERIMENTAL        (1)
 #define PYBRICKS_PY_HUBS                (1)
