@@ -31,17 +31,15 @@ const pb_obj_enum_member_t pb_Button_BEACON_obj;
 
 #endif // PYBRICKS_PY_PARAMETERS_BUTTON
 
+const mp_obj_type_t pb_type_Color;
+
 typedef struct _pb_type_Color_obj_t {
     mp_obj_base_t base;
     mp_obj_t name;
     pbio_color_hsv_t hsv;
 } pb_type_Color_obj_t;
 
-const mp_obj_type_t pb_type_Color;
-
-
-
-typedef struct _pb_type_Color_obj_t pb_type_Color_obj_t;
+pb_type_Color_obj_t *pb_type_Color_new_empty();
 const pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj);
 
 const pb_type_Color_obj_t pb_Color_RED_obj;

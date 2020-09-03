@@ -115,9 +115,15 @@ const pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj) {
     return &((pb_type_Color_obj_t *)obj)->hsv;
 }
 
-mp_obj_t pb_type_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v, mp_obj_t name) {
-    pb_type_Color_obj_t *self = m_new_obj(pb_type_Color_obj_t);
-    self->base.type = &pb_type_Color;
+pb_type_Color_obj_t *pb_type_Color_new_empty() {
+    pb_type_Color_obj_t *color = m_new_obj(pb_type_Color_obj_t);
+    color->base.type = &pb_type_Color;
+    color->name = mp_const_none;
+    return color;
+}
+
+static mp_obj_t pb_type_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v, mp_obj_t name) {
+    pb_type_Color_obj_t *self = pb_type_Color_new_empty();
 
     // Bind h to 0--360
     h = h % 360;
