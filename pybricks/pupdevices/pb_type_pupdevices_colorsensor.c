@@ -26,19 +26,21 @@ typedef struct _pupdevices_ColorSensor_obj_t {
 } pupdevices_ColorSensor_obj_t;
 
 // pybricks._common.ColorSensor._get_hsv
-STATIC void pupdevices_ColorSensor__get_hsv(pb_device_t *pbdev, bool light_on, int32_t *hsv) {
+STATIC void pupdevices_ColorSensor__get_hsv(pb_device_t *pbdev, bool light_on, pbio_color_hsv_t *hsv) {
 
     // Read HSV (light on) or SHSV mode (light off)
-    pb_device_get_values(pbdev, light_on ? PBIO_IODEV_MODE_PUP_COLOR_SENSOR__HSV : PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, hsv);
+    int32_t data[4];
+    pb_device_get_values(pbdev, light_on ? PBIO_IODEV_MODE_PUP_COLOR_SENSOR__HSV : PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, data);
 
     // Scale saturation and value to match 0-100% range in typical applications.
     // However, do not cap to allow other applications as well. For example, full sunlight will exceed 100%.
+    hsv->h = data[0];
     if (light_on) {
-        hsv[1] /= 8;
-        hsv[2] /= 5;
+        hsv->s = data[1] / 8;
+        hsv->v = data[2] / 5;
     } else {
-        hsv[1] /= 12;
-        hsv[2] /= 12;
+        hsv->s = data[1] / 12;
+        hsv->v = data[2] / 12;
     }
 }
 
@@ -62,8 +64,8 @@ STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     self->lights = common_LightArray_obj_make_new(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__LIGHT, 3);
 
     // Do one reading to make sure everything is working and to set default mode
-    int32_t hsv[4];
-    pupdevices_ColorSensor__get_hsv(self->pbdev, true, hsv);
+    pbio_color_hsv_t hsv;
+    pupdevices_ColorSensor__get_hsv(self->pbdev, true, &hsv);
 
     // Save default settings
     pb_hsv_map_save_default(&self->color_map);
@@ -80,18 +82,14 @@ STATIC mp_obj_t pupdevices_ColorSensor_hsv(size_t n_args, const mp_obj_t *pos_ar
         pupdevices_ColorSensor_obj_t, self,
         PB_ARG_DEFAULT_TRUE(surface));
 
+    // Create color object
+    pb_type_Color_obj_t *color = pb_type_Color_new_empty();
+
     // Read HSV, either with light on or off
-    int32_t hsv[4];
-    pupdevices_ColorSensor__get_hsv(self->pbdev, mp_obj_is_true(surface_in), hsv);
+    pupdevices_ColorSensor__get_hsv(self->pbdev, mp_obj_is_true(surface_in), &color->hsv);
 
-    // Create tuple
-    mp_obj_t ret[3];
-    ret[0] = mp_obj_new_int(hsv[0]);
-    ret[1] = mp_obj_new_int(hsv[1]);
-    ret[2] = mp_obj_new_int(hsv[2]);
-
-    // Return hsv tuple
-    return mp_obj_new_tuple(3, ret);
+    // Return color
+    return MP_OBJ_FROM_PTR(color);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorSensor_hsv_obj, 1, pupdevices_ColorSensor_hsv);
 
@@ -102,11 +100,11 @@ STATIC mp_obj_t pupdevices_ColorSensor_color(size_t n_args, const mp_obj_t *pos_
         PB_ARG_DEFAULT_TRUE(surface));
 
     // Read HSV, either with light on or off
-    int32_t hsv[4];
-    pupdevices_ColorSensor__get_hsv(self->pbdev, mp_obj_is_true(surface_in), hsv);
+    pbio_color_hsv_t hsv;
+    pupdevices_ColorSensor__get_hsv(self->pbdev, mp_obj_is_true(surface_in), &hsv);
 
     // Get and return discretized color
-    return pb_hsv_get_color(&self->color_map, hsv[0], hsv[1], hsv[2]);
+    return pb_hsv_get_color(&self->color_map, hsv.h, hsv.s, hsv.v);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorSensor_color_obj, 1, pupdevices_ColorSensor_color);
 
@@ -115,11 +113,11 @@ STATIC mp_obj_t pupdevices_ColorSensor_reflection(mp_obj_t self_in) {
     pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // Read HSV with light on
-    int32_t hsv[4];
-    pupdevices_ColorSensor__get_hsv(self->pbdev, true, hsv);
+    pbio_color_hsv_t hsv;
+    pupdevices_ColorSensor__get_hsv(self->pbdev, true, &hsv);
 
     // Return value as reflection
-    return mp_obj_new_int(hsv[2]);
+    return mp_obj_new_int(hsv.v);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorSensor_reflection_obj, pupdevices_ColorSensor_reflection);
 
@@ -128,11 +126,11 @@ STATIC mp_obj_t pupdevices_ColorSensor_ambient(mp_obj_t self_in) {
     pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // Read HSV with light off
-    int32_t hsv[4];
-    pupdevices_ColorSensor__get_hsv(self->pbdev, false, hsv);
+    pbio_color_hsv_t hsv;
+    pupdevices_ColorSensor__get_hsv(self->pbdev, false, &hsv);
 
-    // Return value as reflection
-    return mp_obj_new_int(hsv[2]);
+    // Return value as ambient intensity
+    return mp_obj_new_int(hsv.v);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorSensor_ambient_obj, pupdevices_ColorSensor_ambient);
 
