@@ -33,7 +33,7 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
 
     pbio_light_grid_t *light_grid;
     if (pbio_light_grid_get_dev(&light_grid) == PBIO_SUCCESS) {
-        pbio_light_grid_start_pattern(light_grid, pbio_light_grid_sys_pattern, 40, 25);
+        pbio_light_grid_start_animation(light_grid, pbio_light_grid_sys_pattern, 40, 25);
     }
     pbsys_status_set(PBSYS_STATUS_USER_PROGRAM_RUNNING);
 }
@@ -46,7 +46,6 @@ void pbsys_unprepare_user_program(void) {
 
     pbio_light_grid_t *light_grid;
     if (pbio_light_grid_get_dev(&light_grid) == PBIO_SUCCESS) {
-        pbio_light_grid_stop_pattern(light_grid);
         uint8_t rows[5] = {0};
         // 3x3 "stop sign" at top center of light grid
         rows[0] = rows[1] = rows[2] = 0b01110;

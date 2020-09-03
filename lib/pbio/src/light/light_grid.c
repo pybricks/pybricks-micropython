@@ -7,24 +7,30 @@
 
 #include <stdbool.h>
 
-#include <contiki.h>
-
 #include <pbdrv/led.h>
 
 #include <pbio/error.h>
 #include <pbio/light_grid.h>
+#include <pbio/util.h>
+
+#include "animation.h"
 
 struct _pbio_light_grid_t {
+    /** Animation instance for background animation. */
+    pbio_light_animation_t animation;
+    /** Animation cell data. */
+    const uint8_t *animation_cells;
+    /** The number of cells in @p animation_cells */
+    uint8_t num_animation_cells;
+    /** The index of the currently displayed animation cell. */
+    uint8_t current_cell;
+    /** Animation update rate in milliseconds. */
+    uint16_t interval;
     pbdrv_led_array_dev_t *led_array;
     /** Size of the grid (assumes grid is square) */
     uint8_t size;
-    uint8_t number_of_frames;
-    uint8_t frame_index;
-    uint8_t interval;
-    const uint8_t *frame_data;
 };
 
-PROCESS(pbio_light_grid_process, "light grid");
 static pbio_light_grid_t _light_grid;
 
 /**
@@ -53,6 +59,10 @@ pbio_error_t pbio_light_grid_get_dev(pbio_light_grid_t **light_grid) {
 
 /**
  * Get the size of the light grid.
+ *
+ * Light grids are square, so this is equal to both the number of rows and the
+ * number of columns in the grid.
+ *
  * @param [in]  light_grid  The light grid instance.
  * @return                  The grid size.
  */
@@ -67,23 +77,23 @@ uint8_t pbio_light_grid_get_size(pbio_light_grid_t *light_grid) {
  * is off. The least significant bit is the right-most pixel. This is the same
  * format as used by the micro:bit.
  *
+ * If an animation is running in the background, it will be stopped.
+ *
  * @param [in]  light_grid  The light grid instance
  * @param [in]  rows        Array of size bytes. Each byte is one row, LSB right.
  * @return                  ::PBIO_SUCCESS on success or implementation-specific
  *                          error on failure.
  */
 pbio_error_t pbio_light_grid_set_rows(pbio_light_grid_t *light_grid, const uint8_t *rows) {
-    pbio_error_t err;
-    uint8_t size = light_grid->size;
-
     // Loop through all rows i, starting at row 0 at the top.
+    uint8_t size = light_grid->size;
     for (uint8_t i = 0; i < size; i++) {
         // Loop through all columns j, starting at col 0 on the left.
         for (uint8_t j = 0; j < size; j++) {
             // The pixel is on of the bit is high.
             bool on = rows[i] & (1 << (size - 1 - j));
             // Set the pixel.
-            err = pbdrv_led_array_set_brightness(light_grid->led_array, i * size + j, on * 100);
+            pbio_error_t err = pbio_light_grid_set_pixel(light_grid, i, j, on * 100);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
@@ -94,19 +104,23 @@ pbio_error_t pbio_light_grid_set_rows(pbio_light_grid_t *light_grid, const uint8
 
 /**
  * Sets the pixel to a given brightness.
+ *
+ * If an animation is running in the background, it will be stopped.
+ *
  * @param [in]  light_grid  The light grid instance
  * @param [in]  row         Row index (0 to size-1)
  * @param [in]  col         Column index (0 to size-1)
  * @param [in]  brightness  Brightness (0 to 100)
- * @return                  ::PBIO_SUCCESS on success or implementation-specific
- *                          error on failure.
+ * @return                  ::PBIO_SUCCESS on success ::PBIO_ERROR_INVALID_ARG
+ *                          if @p row or @p col is out of range or
+ *                          implementation-specific error on failure.
  */
 pbio_error_t pbio_light_grid_set_pixel(pbio_light_grid_t *light_grid, uint8_t row, uint8_t col, uint8_t brightness) {
-    uint8_t size = light_grid->size;
+    pbio_light_grid_stop_animation(light_grid);
 
-    // Return early if the requested pixel is out of bounds
+    uint8_t size = light_grid->size;
     if (row >= size || col >= size) {
-        return PBIO_SUCCESS;
+        return PBIO_ERROR_INVALID_ARG;
     }
 
     return pbdrv_led_array_set_brightness(light_grid->led_array, row * size + col, brightness);
@@ -114,18 +128,19 @@ pbio_error_t pbio_light_grid_set_pixel(pbio_light_grid_t *light_grid, uint8_t ro
 
 /**
  * Sets the pixel to a given brightness.
+ *
+ * If an animation is running in the background, it will be stopped.
+ *
  * @param [in]  light_grid  The light grid instance
  * @param [in]  image       Buffer of brightness values (0 to 100)
  * @return                  ::PBIO_SUCCESS on success or implementation-specific
  *                          error on failure.
  */
 pbio_error_t pbio_light_grid_set_image(pbio_light_grid_t *light_grid, const uint8_t *image) {
-    pbio_error_t err;
     uint8_t size = light_grid->size;
-
     for (uint8_t r = 0; r < size; r++) {
         for (uint8_t c = 0; c < size; c++) {
-            err = pbio_light_grid_set_pixel(light_grid, r, c, image[r * size + c]);
+            pbio_error_t err = pbio_light_grid_set_pixel(light_grid, r, c, image[r * size + c]);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
@@ -134,28 +149,57 @@ pbio_error_t pbio_light_grid_set_image(pbio_light_grid_t *light_grid, const uint
     return PBIO_SUCCESS;
 }
 
-/**
- * Sets up the poller to display a series of frames
- * @param [in]  light_grid  The light grid instance
- * @param [in]  images      Buffer of buffer of brightness values (0 to 100)
- * @param [in]  frames      Number of images
- * @param [in]  interval    Time between subsequent images
- */
-void pbio_light_grid_start_pattern(pbio_light_grid_t *light_grid, const uint8_t *images, uint8_t frames, uint32_t interval) {
-    light_grid->number_of_frames = frames;
-    light_grid->frame_index = 0;
-    light_grid->interval = interval;
-    light_grid->frame_data = images;
+static uint32_t pbio_light_grid_animation_next(pbio_light_animation_t *animation) {
+    pbio_light_grid_t *light_grid = PBIO_CONTAINER_OF(animation, pbio_light_grid_t, animation);
 
-    process_start(&pbio_light_grid_process, NULL);
+    // display the current cell
+    uint8_t size = light_grid->size;
+    const uint8_t *cell = light_grid->animation_cells + size * size * light_grid->current_cell;
+
+    for (uint8_t r = 0; r < size; r++) {
+        for (uint8_t c = 0; c < size; c++) {
+            pbdrv_led_array_set_brightness(light_grid->led_array, r * size + c, cell[r * size + c]);
+        }
+    }
+
+    // move to the next cell
+    if (++light_grid->current_cell >= light_grid->num_animation_cells) {
+        light_grid->current_cell = 0;
+    }
+
+    return light_grid->interval;
 }
 
 /**
- * Stops the pattern from updating further
+ * Starts animating the light grid in the background.
+ *
+ * If another animation is already running in the background, it will be stopped.
+ *
+ * @param [in]  light_grid  The light grid instance
+ * @param [in]  cells       Array of size x size arrays of brightness values (0 to 100).
+ * @param [in]  num_cells   Number of @p cells
+ * @param [in]  interval    Time in milliseconds to wait between each cell.
+ */
+void pbio_light_grid_start_animation(pbio_light_grid_t *light_grid, const uint8_t *cells, uint8_t num_cells, uint16_t interval) {
+    pbio_light_grid_stop_animation(light_grid);
+
+    pbio_light_animation_init(&light_grid->animation, pbio_light_grid_animation_next);
+    light_grid->animation_cells = cells;
+    light_grid->num_animation_cells = num_cells;
+    light_grid->interval = interval;
+    light_grid->current_cell = 0;
+
+    pbio_light_animation_start(&light_grid->animation);
+}
+
+/**
+ * Stops the background animation.
  * @param [in]  light_grid  The light grid instance
  */
-void pbio_light_grid_stop_pattern(pbio_light_grid_t *light_grid) {
-    process_exit(&pbio_light_grid_process);
+void pbio_light_grid_stop_animation(pbio_light_grid_t *light_grid) {
+    if (pbio_light_animation_is_started(&light_grid->animation)) {
+        pbio_light_animation_stop(&light_grid->animation);
+    }
 }
 
 // FIXME: compress / implement differently
@@ -201,31 +245,5 @@ const uint8_t pbio_light_grid_sys_pattern[1000] = {
     0, 0, 0, 0, 0, 21, 76, 100, 65, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 15, 68, 100, 72, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
-
-PROCESS_THREAD(pbio_light_grid_process, ev, data) {
-    static pbio_light_grid_t *light_grid = &_light_grid;
-    static struct etimer timer;
-
-    PROCESS_BEGIN();
-
-    etimer_set(&timer, clock_from_msec(light_grid->interval));
-
-    for (;;) {
-        // Current frame data
-        uint8_t size = light_grid->size;
-        const uint8_t *frame = light_grid->frame_data + size * size * light_grid->frame_index;
-
-        // Display the frame
-        pbio_light_grid_set_image(light_grid, frame);
-
-        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
-        etimer_reset(&timer);
-
-        // Move to next frame
-        light_grid->frame_index = (light_grid->frame_index + 1) % light_grid->number_of_frames;
-    }
-
-    PROCESS_END();
-}
 
 #endif // PBIO_CONFIG_LIGHT_GRID

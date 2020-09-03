@@ -24,8 +24,8 @@ uint8_t pbio_light_grid_get_size(pbio_light_grid_t *light_grid);
 pbio_error_t pbio_light_grid_set_rows(pbio_light_grid_t *light_grid, const uint8_t *rows);
 pbio_error_t pbio_light_grid_set_pixel(pbio_light_grid_t *light_grid, uint8_t row, uint8_t col, uint8_t brightness);
 pbio_error_t pbio_light_grid_set_image(pbio_light_grid_t *light_grid, const uint8_t *image);
-void pbio_light_grid_start_pattern(pbio_light_grid_t *light_grid, const uint8_t *images, uint8_t frames, uint32_t interval);
-void pbio_light_grid_stop_pattern(pbio_light_grid_t *light_grid);
+void pbio_light_grid_start_animation(pbio_light_grid_t *light_grid, const uint8_t *cells, uint8_t num_cells, uint16_t interval);
+void pbio_light_grid_stop_animation(pbio_light_grid_t *light_grid);
 
 #endif // PBIO_CONFIG_LIGHT_GRID
 

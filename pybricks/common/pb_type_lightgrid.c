@@ -51,9 +51,6 @@ STATIC mp_obj_t common_LightGrid_char(size_t n_args, const mp_obj_t *pos_args, m
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
-    // Stop any ongoing pattern
-    pbio_light_grid_stop_pattern(self->light_grid);
-
     // Pick corresponding image and display it
     pbio_light_grid_set_rows(self->light_grid, pb_font_5x5[text[0] - 32]);
 
@@ -108,9 +105,6 @@ STATIC mp_obj_t common_LightGrid_image(size_t n_args, const mp_obj_t *pos_args, 
     common_LightGrid__renew(self, 1);
     common_LightGrid_image__extract(image_in, size, self->data);
 
-    // Stop any ongoing pattern
-    pbio_light_grid_stop_pattern(self->light_grid);
-
     // Display the image
     pb_assert(pbio_light_grid_set_image(self->light_grid, self->data));
 
@@ -125,9 +119,6 @@ STATIC mp_obj_t common_LightGrid_on(size_t n_args, const mp_obj_t *pos_args, mp_
         PB_ARG_DEFAULT_INT(brightness, 100));
 
     uint8_t size = pbio_light_grid_get_size(self->light_grid);
-
-    // Stop any ongoing pattern
-    pbio_light_grid_stop_pattern(self->light_grid);
 
     mp_int_t brightness = pb_obj_get_pct(brightness_in);
 
@@ -147,9 +138,6 @@ STATIC mp_obj_t common_LightGrid_off(mp_obj_t self_in) {
 
     uint8_t size = pbio_light_grid_get_size(self->light_grid);
 
-    // Stop any ongoing pattern
-    pbio_light_grid_stop_pattern(self->light_grid);
-
     for (uint8_t i = 0; i < size; i++) {
         for (uint8_t j = 0; j < size; j++) {
             pbio_light_grid_set_pixel(self->light_grid, i, j, 0);
@@ -168,9 +156,6 @@ STATIC mp_obj_t common_LightGrid_number(size_t n_args, const mp_obj_t *pos_args,
 
 
     uint8_t size = pbio_light_grid_get_size(self->light_grid);
-
-    // Stop any ongoing pattern
-    pbio_light_grid_stop_pattern(self->light_grid);
 
     // Currently numbers are only implemented for 5x5 grids
     if (size != 5) {
@@ -243,11 +228,8 @@ STATIC mp_obj_t common_LightGrid_pattern(size_t n_args, const mp_obj_t *pos_args
         common_LightGrid_image__extract(image_objs[i], size, self->data + size * size * i);
     }
 
-    // Stop any ongoing pattern
-    pbio_light_grid_stop_pattern(self->light_grid);
-
     // Activate the pattern
-    pbio_light_grid_start_pattern(self->light_grid, self->data, self->frames, interval);
+    pbio_light_grid_start_animation(self->light_grid, self->data, self->frames, interval);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightGrid_pattern_obj, 1, common_LightGrid_pattern);
@@ -259,9 +241,6 @@ STATIC mp_obj_t common_LightGrid_pixel(size_t n_args, const mp_obj_t *pos_args, 
         PB_ARG_REQUIRED(row),
         PB_ARG_REQUIRED(column),
         PB_ARG_DEFAULT_INT(brightness, 100));
-
-    // Stop any ongoing pattern
-    pbio_light_grid_stop_pattern(self->light_grid);
 
     // Set pixel at the given brightness
     pbio_light_grid_set_pixel(self->light_grid, mp_obj_get_int(row_in), mp_obj_get_int(column_in), pb_obj_get_pct(brightness_in));
@@ -290,9 +269,6 @@ STATIC mp_obj_t common_LightGrid_text(size_t n_args, const mp_obj_t *pos_args, m
 
     mp_int_t on = pb_obj_get_int(on_in);
     mp_int_t off = pb_obj_get_int(off_in);
-
-    // Stop any ongoing pattern
-    pbio_light_grid_stop_pattern(self->light_grid);
 
     // Display all characters one by one
     for (size_t i = 0; i < text_len; i++) {
