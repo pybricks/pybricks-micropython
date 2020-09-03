@@ -492,13 +492,13 @@ STATIC mp_obj_t robotics__vector(size_t n_args, const mp_obj_t *args, bool norma
 STATIC mp_obj_t robotics_Vector(size_t n_args, const mp_obj_t *args) {
     return robotics__vector(n_args, args, false);
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_func_Vector, 2, 4, robotics_Vector);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_func_Vector_obj, 2, 4, robotics_Vector);
 
 // pybricks.robotics.UnitVector
 STATIC mp_obj_t robotics_UnitVector(size_t n_args, const mp_obj_t *args) {
     return robotics__vector(n_args, args, true);
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_func_UnitVector, 2, 4, robotics_UnitVector);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_func_UnitVector_obj, 2, 4, robotics_UnitVector);
 
 #endif // MICROPY_PY_BUILTINS_FLOAT
 

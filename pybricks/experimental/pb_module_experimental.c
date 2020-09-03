@@ -426,8 +426,8 @@ STATIC const mp_rom_map_elem_t experimental_globals_table[] = {
     #endif // PYBRICKS_HUB_EV3BRICK
     #if MICROPY_PY_BUILTINS_FLOAT
     { MP_ROM_QSTR(MP_QSTR_Matrix),      MP_ROM_PTR(&pb_type_Matrix_type)     },
-    { MP_ROM_QSTR(MP_QSTR_Vector),      MP_ROM_PTR(&pb_func_Vector)          },
-    { MP_ROM_QSTR(MP_QSTR_UnitVector),  MP_ROM_PTR(&pb_func_UnitVector)      },
+    { MP_ROM_QSTR(MP_QSTR_Vector),      MP_ROM_PTR(&pb_func_Vector_obj)      },
+    { MP_ROM_QSTR(MP_QSTR_UnitVector),  MP_ROM_PTR(&pb_func_UnitVector_obj)  },
     #endif // MICROPY_PY_BUILTINS_FLOAT
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_experimental_globals, experimental_globals_table);

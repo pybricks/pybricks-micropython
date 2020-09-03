@@ -8,6 +8,8 @@
 
 #if PYBRICKS_PY_COMMON
 
+#include <stdint.h>
+
 #include <pbio/light.h>
 
 #include "py/obj.h"
@@ -67,9 +69,9 @@ const mp_obj_type_t pb_type_DCMotor;
 
 // Nonstatic objects shared between Motor and DCMotor
 void common_DCMotor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind);
-const mp_obj_fun_builtin_var_t common_DCMotor_duty_obj;
-const mp_obj_fun_builtin_fixed_t common_DCMotor_stop_obj;
-const mp_obj_fun_builtin_fixed_t common_DCMotor_brake_obj;
+MP_DECLARE_CONST_FUN_OBJ_KW(common_DCMotor_duty_obj);
+MP_DECLARE_CONST_FUN_OBJ_1(common_DCMotor_stop_obj);
+MP_DECLARE_CONST_FUN_OBJ_1(common_DCMotor_brake_obj);
 
 #endif // PYBRICKS_PY_COMMON_MOTORS
 
