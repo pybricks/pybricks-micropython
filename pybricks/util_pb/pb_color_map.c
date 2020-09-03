@@ -110,7 +110,17 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_color_map(size_t n_args, const mp
         return self->color_map;
     }
 
-    // Otherwise, verify and save given map TODO: verification
+    // If arguments given, ensure all tuple elements have the right type
+    mp_obj_t *color_objs;
+    size_t n;
+    mp_obj_get_array(colors_in, &n, &color_objs);
+    for (size_t i = 0; i < n; i++) {
+        if (color_objs[i] != mp_const_none) {
+            pb_assert_type(color_objs[i], &pb_type_Color);
+        }
+    }
+
+    // Save the given map
     self->color_map = colors_in;
 
     return mp_const_none;
