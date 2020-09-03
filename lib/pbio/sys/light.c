@@ -43,55 +43,55 @@ typedef struct {
 // with the exception that the BLE advertising color is blue in Pybricks instead
 // of white so that users can known which firmware is loaded when the hub is
 // powered on. Timing is slightly different in some cases since we use 50 ms
-// interval instead of 10 ms.
+// interval instead of 10 ms. Patterns are rotated compared to LEGO firmware
+// so that we don't have the light off at the beginning of the pattern.
 static const pbsys_status_light_indication_pattern_element_t *const
 pbsys_status_light_indication_pattern[] = {
     [PBSYS_STATUS_LIGHT_INDICATION_HIGH_CURRENT] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
-        { .color = PBIO_COLOR_BLACK, .duration = 1 },
         { .color = PBIO_COLOR_ORANGE, .duration = 1 },
         { .color = PBIO_COLOR_BLACK, .duration = 1 },
         { .color = PBIO_COLOR_ORANGE, .duration = 1 },
         { .color = PBIO_COLOR_BLACK, .duration = 1 },
         { .color = PBIO_COLOR_ORANGE, .duration = 1 },
         { .color = PBIO_COLOR_NONE, .duration = 22 },
+        { .color = PBIO_COLOR_BLACK, .duration = 1 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_END
     },
     [PBSYS_STATUS_LIGHT_INDICATION_LOW_VOLTAGE] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
-        { .color = PBIO_COLOR_BLACK, .duration = 4 },
         { .color = PBIO_COLOR_ORANGE, .duration = 6 },
         { .color = PBIO_COLOR_BLACK, .duration = 8 },
         { .color = PBIO_COLOR_ORANGE, .duration = 6 },
         { .color = PBIO_COLOR_BLACK, .duration = 4 },
         { .color = PBIO_COLOR_NONE, .duration = 16 },
+        { .color = PBIO_COLOR_BLACK, .duration = 4 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_END
     },
     [PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
-        { .color = PBIO_COLOR_BLACK, .duration = 22 },
         { .color = PBIO_COLOR_BLUE, .duration = 1 },
         { .color = PBIO_COLOR_BLACK, .duration = 2 },
         { .color = PBIO_COLOR_BLUE, .duration = 1 },
+        { .color = PBIO_COLOR_BLACK, .duration = 22 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_END
     },
     [PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING_AND_LOW_VOLTAGE] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
-        { .color = PBIO_COLOR_BLACK, .duration = 22 },
         { .color = PBIO_COLOR_ORANGE, .duration = 1 },
         { .color = PBIO_COLOR_BLACK, .duration = 2 },
         { .color = PBIO_COLOR_ORANGE, .duration = 1 },
+        { .color = PBIO_COLOR_BLACK, .duration = 22 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_END
     },
     [PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
-        { .color = PBIO_COLOR_WHITE, .duration = 1 },
         { .color = PBIO_COLOR_NONE, .duration = 8 },
+        { .color = PBIO_COLOR_WHITE, .duration = 1 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_END
     },
     [PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL_AND_LOW_VOLTAGE] =
         (const pbsys_status_light_indication_pattern_element_t[]) {
-        { .color = PBIO_COLOR_WHITE, .duration = 1 },
         { .color = PBIO_COLOR_NONE, .duration = 8 },
         { .color = PBIO_COLOR_BLACK, .duration = 4 },
         { .color = PBIO_COLOR_ORANGE, .duration = 6 },
@@ -99,6 +99,7 @@ pbsys_status_light_indication_pattern[] = {
         { .color = PBIO_COLOR_ORANGE, .duration = 6 },
         { .color = PBIO_COLOR_BLACK, .duration = 4 },
         { .color = PBIO_COLOR_NONE, .duration = 8 },
+        { .color = PBIO_COLOR_WHITE, .duration = 1 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_END
     },
 };
