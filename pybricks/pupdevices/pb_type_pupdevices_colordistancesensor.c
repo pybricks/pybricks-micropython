@@ -118,14 +118,14 @@ MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_ambient_obj, pupdevices
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_hsv(mp_obj_t self_in) {
     pupdevices_ColorDistanceSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    pbio_color_hsv_t hsv;
-    pupdevices_ColorDistanceSensor__hsv(self, &hsv);
+    // Create color object
+    pb_type_Color_obj_t *color = pb_type_Color_new_empty();
 
-    mp_obj_t ret[3];
-    ret[0] = mp_obj_new_int(hsv.h);
-    ret[1] = mp_obj_new_int(hsv.s);
-    ret[2] = mp_obj_new_int(hsv.v);
-    return mp_obj_new_tuple(MP_ARRAY_SIZE(ret), ret);
+    // Read HSV
+    pupdevices_ColorDistanceSensor__hsv(self, &color->hsv);
+
+    // Return color
+    return MP_OBJ_FROM_PTR(color);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorDistanceSensor_hsv_obj, pupdevices_ColorDistanceSensor_hsv);
 
