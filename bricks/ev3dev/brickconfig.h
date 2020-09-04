@@ -44,5 +44,3 @@ extern const struct _mp_obj_module_t pb_module_usignal;
     { MP_ROM_QSTR(MP_QSTR_bluetooth_c),     MP_ROM_PTR(&pb_module_bluetooth)        }, \
     { MP_ROM_QSTR(MP_QSTR_media_ev3dev_c),  MP_ROM_PTR(&pb_module_media_ev3dev)     }, \
     { MP_ROM_QSTR(MP_QSTR_usignal),         MP_ROM_PTR(&pb_module_usignal)          },
-
-#define PBYRICKS_PORT_BUILTINS
