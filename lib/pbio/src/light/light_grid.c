@@ -59,7 +59,7 @@ pbio_error_t pbio_light_grid_set_rows(pbio_light_grid_t *light_grid, const uint8
     for (uint8_t i = 0; i < size; i++) {
         // Loop through all columns j, starting at col 0 on the left.
         for (uint8_t j = 0; j < size; j++) {
-            // The pixel is on of the bit is high.
+            // The pixel is on if the bit is high.
             bool on = rows[i] & (1 << (size - 1 - j));
             // Set the pixel.
             pbio_error_t err = pbio_light_grid_set_pixel(light_grid, i, j, on * 100);
