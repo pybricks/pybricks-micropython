@@ -286,6 +286,10 @@ soft_reset:
 
     // Get system hardware ready
     pbsys_prepare_user_program(&user_program_callbacks);
+    // make sure any pending events are handled before starting MicroPython
+    while (pbio_do_one_event()) {
+    }
+
     mp_init();
 
     // Execute the user script

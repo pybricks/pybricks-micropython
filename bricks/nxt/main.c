@@ -85,6 +85,9 @@ int main(int argc, char **argv) {
 
     // Get system hardware ready
     pbsys_prepare_user_program(&user_program_callbacks);
+    // make sure any pending events are handled before starting MicroPython
+    while (pbio_do_one_event()) {
+    }
 
     // Initialize MicroPython and run default imports
     mp_init();
