@@ -48,54 +48,42 @@ void pbsys_hub_light_grid_init() {
     pbio_light_grid_init(pbsys_hub_light_grid, 5, &pbsys_hub_light_grid_funcs);
 }
 
-// FIXME: compress / implement differently
-static const uint8_t pbsys_hub_light_grid_user_program_animation_cells[] = {
-    0, 0, 0, 0, 0, 10, 61, 99, 79, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 6, 53, 97, 85, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 3, 45, 94, 90, 39, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 1, 38, 89, 94, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 30, 84, 97, 55, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 1, 23, 78, 99, 63, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 2, 17, 71, 100, 70, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 5, 12, 63, 99, 77, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 9, 7, 56, 98, 83, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 14, 4, 48, 95, 89, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 20, 1, 40, 91, 93, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 27, 0, 33, 86, 97, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 34, 0, 25, 80, 99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 42, 2, 19, 73, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 49, 4, 13, 66, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 57, 8, 8, 58, 98, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 65, 12, 5, 50, 96, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 72, 18, 2, 43, 92, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 79, 24, 0, 35, 87, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 85, 32, 0, 28, 82, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 90, 39, 1, 21, 75, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 94, 47, 3, 15, 68, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 97, 55, 6, 10, 61, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 99, 62, 11, 6, 53, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 100, 70, 16, 3, 45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 99, 77, 22, 1, 37, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 98, 83, 29, 0, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 95, 88, 37, 1, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 91, 93, 44, 2, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 86, 96, 52, 5, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 80, 99, 60, 9, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 73, 100, 67, 14, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 66, 100, 75, 20, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 58, 98, 81, 27, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 51, 96, 87, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 43, 92, 92, 42, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 35, 88, 95, 50, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 28, 82, 98, 57, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 21, 76, 100, 65, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 15, 68, 100, 72, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-};
+static uint32_t pbsys_hub_light_grid_user_program_animation_next(pbio_light_animation_t *animation) {
+    // The indexes of pixels to light up
+    static const uint8_t indexes[] = { 6, 7, 8, 13, 18, 17, 16, 11 };
+    // sine wave for brightness
+    static const uint8_t data[] = {
+        0, 1, 2, 3, 5, 7, 10, 13, 17, 21, 25, 30, 35, 40, 45, 50,
+        56, 61, 66, 71, 75, 80, 84, 88, 91, 94, 96, 98, 99, 100, 100, 100,
+        99, 98, 96, 94, 91, 88, 84, 80, 75, 71, 66, 61, 56, 50, 45, 40,
+        35, 30, 25, 21, 17, 13, 10, 7, 5, 3, 2, 1, 0, 0, 0, 0,
+    };
+    // keeps track of where we are in the animation
+    static uint8_t offset = 0;
+
+    pbdrv_led_array_dev_t *array;
+    if (pbdrv_led_array_get_dev(0, &array) == PBIO_SUCCESS) {
+        for (int i = 0; i < PBIO_ARRAY_SIZE(indexes); i++) {
+            // Pixels are offset equally from each other in the data array so that
+            // we get an animation that looks like the brightess is smoothly moving
+            // from pixel to pixel.
+            uint8_t brightness = data[(i * PBIO_ARRAY_SIZE(indexes) + offset++) % PBIO_ARRAY_SIZE(data)];
+            pbdrv_led_array_set_brightness(array, indexes[i], brightness);
+            // As long as PBIO_ARRAY_SIZE(data) is a multiple of the max offset (+1),
+            // offset wraps around correctly when the addition overflows.
+            _Static_assert((1 << (sizeof(offset) * 8)) % PBIO_ARRAY_SIZE(data) == 0, "needed for correct wraparound");
+        }
+    }
+
+    return 100;
+}
 
 void pbsys_hub_light_grid_handle_event(process_event_t event, process_data_t data) {
     if (event == PBIO_EVENT_STATUS_SET && (pbsys_status_t)data == PBSYS_STATUS_USER_PROGRAM_RUNNING) {
-        pbio_light_grid_start_animation(pbsys_hub_light_grid, pbsys_hub_light_grid_user_program_animation_cells,
-            PBIO_ARRAY_SIZE(pbsys_hub_light_grid_user_program_animation_cells) / 25, 25);
+        uint8_t rows[5] = {0};
+        pbio_light_grid_set_rows(pbsys_hub_light_grid, rows);
+        pbio_light_animation_init(&pbsys_hub_light_grid->animation, pbsys_hub_light_grid_user_program_animation_next);
+        pbio_light_animation_start(&pbsys_hub_light_grid->animation);
     }
     if (event == PBIO_EVENT_STATUS_CLEARED && (pbsys_status_t)data == PBSYS_STATUS_USER_PROGRAM_RUNNING) {
         uint8_t rows[5] = {0};
