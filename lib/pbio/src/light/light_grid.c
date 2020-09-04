@@ -7,54 +7,23 @@
 
 #include <stdbool.h>
 
-#include <pbdrv/led.h>
-
 #include <pbio/error.h>
 #include <pbio/light_grid.h>
 #include <pbio/util.h>
 
 #include "animation.h"
-
-struct _pbio_light_grid_t {
-    /** Animation instance for background animation. */
-    pbio_light_animation_t animation;
-    /** Animation cell data. */
-    const uint8_t *animation_cells;
-    /** The number of cells in @p animation_cells */
-    uint8_t num_animation_cells;
-    /** The index of the currently displayed animation cell. */
-    uint8_t current_cell;
-    /** Animation update rate in milliseconds. */
-    uint16_t interval;
-    pbdrv_led_array_dev_t *led_array;
-    /** Size of the grid (assumes grid is square) */
-    uint8_t size;
-};
-
-static pbio_light_grid_t _light_grid;
+#include "light_grid.h"
 
 /**
- * Gets the light grid device.
- * @param [out] light_grid  The light grid instance.
- * @return                  ::PBIO_SUCCESS on success ::PBIO_ERROR_AGAIN if the
- *                          light grid is not ready for use yet or
- *                          ::PBIO_ERROR_NOT_SUPPORTED if the PWM driver is disabled.
+ * Initializes the required fields in a ::pbio_light_grid_t.
+ * @param [in]  light_grid  The struct to initialize.
+ * @param [in]  size        The size of the light grid.
+ * @param [in]  funcs       The instance-specific callback functions.
  */
-pbio_error_t pbio_light_grid_get_dev(pbio_light_grid_t **light_grid) {
-    // REVISIT: currently only one known light grid
-    pbio_light_grid_t *grid = &_light_grid;
-
-    pbio_error_t err = pbdrv_led_array_get_dev(0, &grid->led_array);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    grid->size = 5;
-
-    // Return device on success
-    *light_grid = grid;
-
-    return PBIO_SUCCESS;
+void pbio_light_grid_init(pbio_light_grid_t *light_grid, uint8_t size, const pbio_light_grid_funcs_t *funcs) {
+    light_grid->size = size;
+    light_grid->funcs = funcs;
+    pbio_light_animation_init(&light_grid->animation, NULL);
 }
 
 /**
@@ -116,14 +85,14 @@ pbio_error_t pbio_light_grid_set_rows(pbio_light_grid_t *light_grid, const uint8
  *                          implementation-specific error on failure.
  */
 pbio_error_t pbio_light_grid_set_pixel(pbio_light_grid_t *light_grid, uint8_t row, uint8_t col, uint8_t brightness) {
-    pbio_light_grid_stop_animation(light_grid);
-
     uint8_t size = light_grid->size;
     if (row >= size || col >= size) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    return pbdrv_led_array_set_brightness(light_grid->led_array, row * size + col, brightness);
+    pbio_light_grid_stop_animation(light_grid);
+
+    return light_grid->funcs->set_pixel(light_grid, row, col, brightness);
 }
 
 /**
@@ -158,7 +127,7 @@ static uint32_t pbio_light_grid_animation_next(pbio_light_animation_t *animation
 
     for (uint8_t r = 0; r < size; r++) {
         for (uint8_t c = 0; c < size; c++) {
-            pbdrv_led_array_set_brightness(light_grid->led_array, r * size + c, cell[r * size + c]);
+            light_grid->funcs->set_pixel(light_grid, r, c, cell[r * size + c]);
         }
     }
 
@@ -201,49 +170,5 @@ void pbio_light_grid_stop_animation(pbio_light_grid_t *light_grid) {
         pbio_light_animation_stop(&light_grid->animation);
     }
 }
-
-// FIXME: compress / implement differently
-const uint8_t pbio_light_grid_sys_pattern[1000] = {
-    0, 0, 0, 0, 0, 10, 61, 99, 79, 25, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 6, 53, 97, 85, 32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 3, 45, 94, 90, 39, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 1, 38, 89, 94, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 30, 84, 97, 55, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 1, 23, 78, 99, 63, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 2, 17, 71, 100, 70, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 5, 12, 63, 99, 77, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 9, 7, 56, 98, 83, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 14, 4, 48, 95, 89, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 20, 1, 40, 91, 93, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 27, 0, 33, 86, 97, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 34, 0, 25, 80, 99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 42, 2, 19, 73, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 49, 4, 13, 66, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 57, 8, 8, 58, 98, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 65, 12, 5, 50, 96, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 72, 18, 2, 43, 92, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 79, 24, 0, 35, 87, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 85, 32, 0, 28, 82, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 90, 39, 1, 21, 75, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 94, 47, 3, 15, 68, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 97, 55, 6, 10, 61, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 99, 62, 11, 6, 53, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 100, 70, 16, 3, 45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 99, 77, 22, 1, 37, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 98, 83, 29, 0, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 95, 88, 37, 1, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 91, 93, 44, 2, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 86, 96, 52, 5, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 80, 99, 60, 9, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 73, 100, 67, 14, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 66, 100, 75, 20, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 58, 98, 81, 27, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 51, 96, 87, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 43, 92, 92, 42, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 35, 88, 95, 50, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 28, 82, 98, 57, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 21, 76, 100, 65, 13, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 15, 68, 100, 72, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-};
 
 #endif // PBIO_CONFIG_LIGHT_GRID

@@ -348,6 +348,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/uartdev.c \
 	sys/battery.c \
 	sys/hmi.c \
+	sys/light_grid.c \
 	sys/light.c \
 	sys/status.c \
 	sys/supervisor.c \

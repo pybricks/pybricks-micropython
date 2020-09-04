@@ -24,7 +24,7 @@ STATIC mp_obj_t hubs_PrimeHub_make_new(const mp_obj_type_t *type, size_t n_args,
     hubs_PrimeHub_obj_t *self = m_new_obj(hubs_PrimeHub_obj_t);
     self->base.type = (mp_obj_type_t *)type;
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light);
-    self->grid = common_LightGrid_obj_make_new();
+    self->grid = pb_type_LightGrid_obj_new(pbsys_hub_light_grid);
     return MP_OBJ_FROM_PTR(self);
 }
 

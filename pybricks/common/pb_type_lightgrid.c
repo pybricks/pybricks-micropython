@@ -307,12 +307,11 @@ STATIC const mp_obj_type_t pb_type_LightGrid = {
 };
 
 // pybricks._common.LightGrid.__init__
-mp_obj_t common_LightGrid_obj_make_new() {
+mp_obj_t pb_type_LightGrid_obj_new(pbio_light_grid_t *light_grid) {
     // Create new light instance
     common_LightGrid_obj_t *self = m_new_obj(common_LightGrid_obj_t);
-    // Set type and iodev
     self->base.type = &pb_type_LightGrid;
-    pb_assert(pbio_light_grid_get_dev(&self->light_grid));
+    self->light_grid = light_grid;
     return self;
 }
 

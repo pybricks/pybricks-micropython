@@ -24,10 +24,11 @@ mp_obj_t common_ColorLight_internal_obj_new(pbio_color_light_t *light);
 mp_obj_t common_LightArray_obj_make_new(pb_device_t *pbdev, uint8_t light_mode, uint8_t number_of_lights);
 
 #ifdef PYBRICKS_PY_COMMON_LIGHT_GRID
+#include <pbio/light_grid.h>
 // pybricks._common.LightGrid()
 const uint8_t pb_digits_5x2[10][5];
 const uint8_t pb_font_5x5[95][5];
-mp_obj_t common_LightGrid_obj_make_new();
+mp_obj_t pb_type_LightGrid_obj_new(pbio_light_grid_t *light_grid);
 #endif
 
 // pybricks._common.KeyPad()

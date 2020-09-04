@@ -21,14 +21,17 @@
 #include <pbsys/config.h>
 #include <pbsys/status.h>
 
+#include "light grid.h"
 #include "light.h"
 
 void pbsys_hmi_init() {
     pbsys_status_light_init();
+    pbsys_hub_light_grid_init();
 }
 
 void pbsys_hmi_handle_event(process_event_t event, process_data_t data) {
     pbsys_status_light_handle_event(event, data);
+    pbsys_hub_light_grid_handle_event(event, data);
 }
 
 /**

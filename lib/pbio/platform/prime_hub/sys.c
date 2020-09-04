@@ -5,9 +5,7 @@
 
 #include <contiki.h>
 
-#include "pbio/color.h"
 #include "pbio/event.h"
-#include "pbio/light_grid.h"
 #include "pbio/main.h"
 
 #include <pbsys/status.h>
@@ -30,11 +28,6 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
         user_stop_func = NULL;
         user_stdin_event_func = NULL;
     }
-
-    pbio_light_grid_t *light_grid;
-    if (pbio_light_grid_get_dev(&light_grid) == PBIO_SUCCESS) {
-        pbio_light_grid_start_animation(light_grid, pbio_light_grid_sys_pattern, 40, 25);
-    }
     pbsys_status_set(PBSYS_STATUS_USER_PROGRAM_RUNNING);
 }
 
@@ -43,14 +36,6 @@ void pbsys_unprepare_user_program(void) {
     pbio_stop_all();
     user_stop_func = NULL;
     user_stdin_event_func = NULL;
-
-    pbio_light_grid_t *light_grid;
-    if (pbio_light_grid_get_dev(&light_grid) == PBIO_SUCCESS) {
-        uint8_t rows[5] = {0};
-        // 3x3 "stop sign" at top center of light grid
-        rows[0] = rows[1] = rows[2] = 0b01110;
-        pbio_light_grid_set_rows(light_grid, rows);
-    }
 }
 
 PROCESS_THREAD(pbsys_process, ev, data) {
