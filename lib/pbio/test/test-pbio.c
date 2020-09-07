@@ -26,7 +26,7 @@
 
 
 static void pbio_test_run_thread(void *env) {
-    char (*test_thread)(struct pt *pt) = env;
+    PT_THREAD((*test_thread)(struct pt *pt)) = env;
     struct pt pt;
     struct timer timer;
 
