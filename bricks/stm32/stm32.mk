@@ -446,16 +446,17 @@ FW_CHECKSUM := $$($(CHECKSUM) $(CHECKSUM_TYPE) $(BUILD)/firmware-no-checksum.bin
 FW_VERSION := $(shell $(GIT) describe --tags --dirty --always)
 
 $(BUILD)/firmware-no-checksum.elf: $(LD_FILES) $(OBJ)
+	$(ECHO) "LINK $@"
 	$(Q)$(LD) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
+	$(Q)$(SIZE) $@
 
 # firmware blob used to calculate checksum
 $(BUILD)/firmware-no-checksum.bin: $(BUILD)/firmware-no-checksum.elf
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .user -j .checksum $^ $@
 
 $(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
-	$(ECHO) "LINK $@"
+	$(ECHO) "RELINK $@"
 	$(Q)$(LD) --defsym=CHECKSUM=$(FW_CHECKSUM) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
-	$(Q)$(SIZE) $@
 
 # firmware blob with main.mpy and checksum appended - can be flashed to hub
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
