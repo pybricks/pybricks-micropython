@@ -93,14 +93,14 @@ void pb_assert(pbio_error_t error) {
         case PBIO_SUCCESS:
             return;
         case PBIO_ERROR_FAILED:
-            mp_raise_msg(&mp_type_RuntimeError, pbio_error_str(error));
+            mp_raise_msg(&mp_type_RuntimeError, (mp_rom_error_text_t)pbio_error_str(error));
             return;
         case PBIO_ERROR_INVALID_ARG:
         case PBIO_ERROR_INVALID_PORT:
-            mp_raise_ValueError(pbio_error_str(error));
+            mp_raise_ValueError((mp_rom_error_text_t)pbio_error_str(error));
             return;
         case PBIO_ERROR_NOT_IMPLEMENTED:
-            mp_raise_NotImplementedError(pbio_error_str(error));
+            mp_raise_NotImplementedError((mp_rom_error_text_t)pbio_error_str(error));
             return;
         case PBIO_ERROR_IO:
             args[0] = MP_OBJ_NEW_SMALL_INT(MP_EIO);
