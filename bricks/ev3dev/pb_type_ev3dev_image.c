@@ -102,7 +102,7 @@ STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, 
         gint w, h;
         if (!grx_query_png_file(filename, &w, &h)) {
             mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_OSError,
-                "'%s' is not a .png file", filename);
+                MP_ERROR_TEXT("'%s' is not a .png file"), filename);
             g_free(filename_ext);
             nlr_raise(ex);
         }
@@ -118,7 +118,7 @@ STATIC mp_obj_t ev3dev_Image_make_new(const mp_obj_type_t *type, size_t n_args, 
         GError *error = NULL;
         if (!grx_context_load_from_png(context, filename, FALSE, &error)) {
             mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_OSError,
-                "Failed to load '%s': %s", filename, error->message);
+                MP_ERROR_TEXT("Failed to load '%s': %s"), filename, error->message);
             g_free(filename_ext);
             g_error_free(error);
             nlr_raise(ex);
@@ -538,7 +538,7 @@ STATIC mp_obj_t ev3dev_Image_save(mp_obj_t self_in, mp_obj_t filename_in) {
     g_free(filename_ext);
     if (!ok) {
         mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_OSError,
-            "Failed to save image: %s", error->message);
+            MP_ERROR_TEXT("Failed to save image: %s"), error->message);
         g_error_free(error);
         nlr_raise(ex);
     }

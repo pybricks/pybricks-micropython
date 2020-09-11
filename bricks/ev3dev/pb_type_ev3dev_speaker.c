@@ -369,7 +369,7 @@ STATIC mp_obj_t ev3dev_Speaker_play_file(size_t n_args, const mp_obj_t *pos_args
     if (!aplay) {
         // This error is unexpected, so doesn't need to be "user-friendly"
         mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_RuntimeError,
-            "Failed to spawn aplay: %s", error->message);
+            MP_ERROR_TEXT("Failed to spawn aplay: %s"), error->message);
         g_error_free(error);
         nlr_raise(ex);
     }
@@ -414,7 +414,7 @@ STATIC mp_obj_t ev3dev_Speaker_play_file(size_t n_args, const mp_obj_t *pos_args
         }
 
         mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_RuntimeError,
-            "Playing file failed: %s", err_msg);
+            MP_ERROR_TEXT("Playing file failed: %s"), err_msg);
         g_object_unref(aplay);
         nlr_raise(ex);
     }
@@ -459,7 +459,7 @@ STATIC mp_obj_t ev3dev_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_m
     if (!espeak) {
         // This error is unexpected, so doesn't need to be "user-friendly"
         mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_RuntimeError,
-            "Failed to spawn espeak: %s", error->message);
+            MP_ERROR_TEXT("Failed to spawn espeak: %s"), error->message);
         g_error_free(error);
         nlr_raise(ex);
     }
@@ -470,7 +470,7 @@ STATIC mp_obj_t ev3dev_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_m
     if (!aplay) {
         // This error is unexpected, so doesn't need to be "user-friendly"
         mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_RuntimeError,
-            "Failed to spawn aplay: %s", error->message);
+            MP_ERROR_TEXT("Failed to spawn aplay: %s"), error->message);
         g_error_free(error);
         g_object_unref(espeak);
         nlr_raise(ex);
@@ -525,7 +525,7 @@ STATIC mp_obj_t ev3dev_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_m
         }
 
         mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_RuntimeError,
-            "Saying text failed: %s", err_msg);
+            MP_ERROR_TEXT("Saying text failed: %s"), err_msg);
         g_object_unref(aplay);
         g_object_unref(espeak);
         nlr_raise(ex);
@@ -547,7 +547,7 @@ STATIC mp_obj_t ev3dev_Speaker_say(size_t n_args, const mp_obj_t *pos_args, mp_m
         }
 
         mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_RuntimeError,
-            "Saying text failed: %s", err_msg);
+            MP_ERROR_TEXT("Saying text failed: %s"), err_msg);
         g_object_unref(aplay);
         g_object_unref(espeak);
         nlr_raise(ex);
@@ -625,7 +625,7 @@ STATIC mp_obj_t ev3dev_Speaker_set_volume(size_t n_args, const mp_obj_t *pos_arg
     if (!amixer) {
         // This error is unexpected, so doesn't need to be "user-friendly"
         mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_RuntimeError,
-            "Failed to spawn amixer: %s", error->message);
+            MP_ERROR_TEXT("Failed to spawn amixer: %s"), error->message);
         g_error_free(error);
         nlr_raise(ex);
     }
@@ -633,7 +633,7 @@ STATIC mp_obj_t ev3dev_Speaker_set_volume(size_t n_args, const mp_obj_t *pos_arg
     if (!g_subprocess_communicate_utf8(amixer, amixer_stdin, NULL, NULL, &amixer_stderr, &error)) {
         const char *msg = amixer_stderr == NULL ? error->message : amixer_stderr;
         mp_obj_t ex = mp_obj_new_exception_msg_varg(&mp_type_RuntimeError,
-            "Failed to set volume: %s", msg);
+            MP_ERROR_TEXT("Failed to set volume: %s"), msg);
         g_free(amixer_stderr);
         g_error_free(error);
         g_object_unref(amixer);
