@@ -21,7 +21,7 @@
 #include <pbsys/config.h>
 #include <pbsys/status.h>
 
-#include "light grid.h"
+#include "light_grid.h"
 #include "light.h"
 
 void pbsys_hmi_init() {
