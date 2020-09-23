@@ -3,7 +3,7 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_MOTOR
+#if PBDRV_CONFIG_MOTOR && !PBIO_TEST_BUILD
 
 #include <stdbool.h>
 
