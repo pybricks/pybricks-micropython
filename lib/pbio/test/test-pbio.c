@@ -120,6 +120,13 @@ static struct testcase_t pbio_math_tests[] = {
     END_OF_TESTCASES
 };
 
+PBIO_PT_THREAD_TEST_FUNC(test_servo_run_angle);
+
+static struct testcase_t pbio_motor_tests[] = {
+    PBIO_PT_THREAD_TEST(test_servo_run_angle),
+    END_OF_TESTCASES
+};
+
 PBIO_PT_THREAD_TEST_FUNC(test_boost_color_distance_sensor);
 PBIO_PT_THREAD_TEST_FUNC(test_boost_interactive_motor);
 PBIO_PT_THREAD_TEST_FUNC(test_technic_large_motor);
@@ -148,6 +155,7 @@ static struct testgroup_t test_groups[] = {
     { "src/color/", pbio_color_tests },
     { "src/light/", pbio_light_tests },
     { "src/math/", pbio_math_tests },
+    { "src/motor/", pbio_motor_tests },
     { "src/uartdev/", pbio_uartdev_tests, },
     { "sys/status/", pbsys_status_tests, },
     END_OF_GROUPS
