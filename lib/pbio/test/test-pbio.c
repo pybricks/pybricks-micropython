@@ -2,6 +2,8 @@
 // Copyright 2019-2020 The Pybricks Authors
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include <tinytest.h>
 #include <tinytest_macros.h>
@@ -150,5 +152,12 @@ static struct testgroup_t test_groups[] = {
 };
 
 int main(int argc, const char **argv) {
+    const char *results_dir = getenv("PBIO_TEST_RESULTS_DIR");
+    if (results_dir) {
+        if (chdir(results_dir) == -1) {
+            perror("chdir failed");
+        }
+    }
+
     return tinytest_main(argc, argv, test_groups);
 }

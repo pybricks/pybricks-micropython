@@ -408,6 +408,8 @@ jobs:
   pbio:
     name: pbio tests
     runs-on: ubuntu-latest
+    env:
+      PBIO_TEST_RESULTS_DIR: lib/pbio/test/results
     steps:
     - name: Install prerequisites
       run: |
