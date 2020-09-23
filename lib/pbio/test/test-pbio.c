@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <tinytest.h>
@@ -14,7 +15,7 @@
 
 #include "src/processes.h"
 
-#define PBIO_TEST_TIMEOUT 10000 // milliseconds
+#define PBIO_TEST_TIMEOUT 10 // seconds
 
 // Use these macros to define tests that _don't_ require a Contiki event loop
 #define PBIO_TEST_FUNC(name) void name(void *env)
@@ -30,16 +31,17 @@
 static void pbio_test_run_thread(void *env) {
     PT_THREAD((*test_thread)(struct pt *pt)) = env;
     struct pt pt;
-    struct timer timer;
+    struct timespec start_time, now_time;
 
     pbio_init();
 
     PT_INIT(&pt)
-    timer_set(&timer, clock_from_msec(PBIO_TEST_TIMEOUT));
+    clock_gettime(CLOCK_MONOTONIC, &start_time);
 
     while (PT_SCHEDULE(test_thread(&pt))) {
         pbio_do_one_event();
-        if (timer_expired(&timer)) {
+        clock_gettime(CLOCK_MONOTONIC, &now_time);
+        if (difftime(now_time.tv_sec, start_time.tv_sec) > PBIO_TEST_TIMEOUT) {
             tt_abort_printf(("Test timed out on line %d", pt.lc));
         }
     }

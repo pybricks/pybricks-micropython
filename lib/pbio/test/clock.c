@@ -3,6 +3,7 @@
 
 #include <errno.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -13,6 +14,36 @@
 
 #define TIMER_SIGNAL SIGRTMIN
 
+static timer_t clock_timer;
+static bool clock_override_is_active;
+static clock_time_t clock_override_ticks;
+
+// Extra functions for controlling the clock in tests
+
+/**
+ * Override wall clock.
+ *
+ * This must only be called after clock_init().
+ */
+void clock_override() {
+    if (timer_delete(clock_timer) == -1) {
+        perror("timer_delete");
+    }
+    clock_override_is_active = true;
+}
+
+/**
+ * Increase the current clock ticks and poll etimers.
+ *
+ * This should only be called after clock_override().
+ */
+void clock_override_tick(clock_time_t ticks) {
+    clock_override_ticks += ticks;
+    etimer_request_poll();
+}
+
+// Contiki clock implementation
+
 static void handle_signal(int sig) {
     etimer_request_poll();
 }
@@ -21,7 +52,6 @@ void clock_init(void) {
     struct sigaction sa;
     struct sigevent se;
     struct itimerspec its;
-    timer_t timer;
     int err;
 
     // set up 1ms tick using signal
@@ -36,26 +66,34 @@ void clock_init(void) {
 
     se.sigev_notify = SIGEV_SIGNAL;
     se.sigev_signo = TIMER_SIGNAL;
-    err = timer_create(CLOCK_REALTIME, &se, &timer);
+    err = timer_create(CLOCK_REALTIME, &se, &clock_timer);
     if (err == -1) {
         perror("timer_create");
     }
 
     its.it_value.tv_sec = its.it_interval.tv_sec = 0;
     its.it_value.tv_nsec = its.it_interval.tv_nsec = 1000000;
-    err = timer_settime(timer, 0, &its, NULL);
+    err = timer_settime(clock_timer, 0, &its, NULL);
     if (err == -1) {
         perror("timer_settime");
     }
 }
 
 clock_time_t clock_time() {
+    if (clock_override_is_active) {
+        return clock_override_ticks;
+    }
+
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
     return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 }
 
 unsigned long clock_usecs() {
+    if (clock_override_is_active) {
+        return clock_to_msec(clock_override_ticks) * 1000UL;
+    }
+
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
     return ts.tv_sec * 1000000L + ts.tv_nsec / 1000L;
