@@ -96,7 +96,7 @@ $(BUILD_PREFIX)/%.o: %.c $(BUILD_PREFIX)/%.d Makefile
 $(PROG): $(OBJ)
 	$(Q)$(CC) $(CFLAGS) -o $@ $^ -lrt
 
-build-coverage/coverage.info: Makefile $(SRC)
+build-coverage/lcov.info: Makefile $(SRC)
 	$(Q)$(MAKE) COVERAGE=1
 	./build-coverage/test-pbio
 	lcov --capture --output-file $@ \
@@ -104,5 +104,5 @@ build-coverage/coverage.info: Makefile $(SRC)
 		--directory build-coverage/lib/pbio/src \
 		--directory build-coverage/lib/pbio/sys
 
-coverage-html: build-coverage/coverage.info
+coverage-html: build-coverage/lcov.info
 	$(Q)genhtml $^ --output-directory build-coverage/html
