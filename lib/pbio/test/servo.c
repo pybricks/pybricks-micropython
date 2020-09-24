@@ -91,20 +91,20 @@ PT_THREAD(test_servo_run_angle(struct pt *pt)) {
         tt_abort_perror("failed to open test_servo_run_angle.csv");
     }
 
-    fprintf(log_file, "clock time, ");
-    fprintf(log_file, "h-bridge, ");
-    fprintf(log_file, "duty cycle, ");
+    fprintf(log_file, "clock time,");
+    fprintf(log_file, "h-bridge,");
+    fprintf(log_file, "duty cycle,");
     // servo logger columns
-    fprintf(log_file, "timestamp, ");
-    fprintf(log_file, "time since start, ");
-    fprintf(log_file, "count_now, ");
-    fprintf(log_file, "rate_now, ");
-    fprintf(log_file, "actuation, ");
-    fprintf(log_file, "control, ");
-    fprintf(log_file, "count_ref, ");
-    fprintf(log_file, "rate_ref, ");
-    fprintf(log_file, "err, ");
-    fprintf(log_file, "err_integral, ");
+    fprintf(log_file, "timestamp,");
+    fprintf(log_file, "time since start,");
+    fprintf(log_file, "count_now,");
+    fprintf(log_file, "rate_now,");
+    fprintf(log_file, "actuation,");
+    fprintf(log_file, "control,");
+    fprintf(log_file, "count_ref,");
+    fprintf(log_file, "rate_ref,");
+    fprintf(log_file, "err,");
+    fprintf(log_file, "err_integral,");
     fprintf(log_file, "\n");
 
     for (;;) {
@@ -120,12 +120,12 @@ PT_THREAD(test_servo_run_angle(struct pt *pt)) {
             }
 
             if (pbio_logger_rows(&servo->log)) {
-                fprintf(log_file, "%d, ", clock_to_msec(clock_time()));
-                fprintf(log_file, "%d, ", test_motor_driver.output);
-                fprintf(log_file, "%d, ", test_motor_driver.duty_cycle);
+                fprintf(log_file, "%d,", clock_to_msec(clock_time()));
+                fprintf(log_file, "%d,", test_motor_driver.output);
+                fprintf(log_file, "%d,", test_motor_driver.duty_cycle);
 
                 for (int i = 0; i < pbio_logger_cols(&servo->log); i++) {
-                    fprintf(log_file, "%d, ", log_buf[i]);
+                    fprintf(log_file, "%d,", log_buf[i]);
                 }
 
                 fprintf(log_file, "\n");
