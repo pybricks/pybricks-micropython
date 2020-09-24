@@ -19,6 +19,22 @@ typedef struct {
 
 static test_private_data_t test_private_data;
 
+// Functions for tests to poke counter state
+
+void pbio_test_counter_set_count(int32_t count) {
+    test_private_data.count = count;
+}
+
+void pbio_test_counter_set_abs_count(int32_t count) {
+    test_private_data.abs_count = count;
+}
+
+void pbio_test_counter_set_rate(int32_t rate) {
+    test_private_data.rate = rate;
+}
+
+// Counter driver implementation
+
 static pbio_error_t test_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
     test_private_data_t *priv = dev->priv;
     *count = priv->count;
@@ -47,6 +63,8 @@ void pbdrv_counter_test_init(pbdrv_counter_dev_t *devs) {
     devs[0].funcs = &test_funcs;
     devs[0].priv = &test_private_data;
 }
+
+// Tests
 
 void test_counter_get(void *env) {
     pbdrv_counter_dev_t *dev;
