@@ -121,9 +121,11 @@ static struct testcase_t pbio_math_tests[] = {
 };
 
 PBIO_PT_THREAD_TEST_FUNC(test_servo_run_angle);
+PBIO_PT_THREAD_TEST_FUNC(test_servo_run_time);
 
 static struct testcase_t pbio_motor_tests[] = {
     PBIO_PT_THREAD_TEST(test_servo_run_angle),
+    PBIO_PT_THREAD_TEST(test_servo_run_time),
     END_OF_TESTCASES
 };
 

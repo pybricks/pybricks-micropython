@@ -70,7 +70,13 @@ pbio_error_t pbdrv_motor_setup(pbio_port_t port, bool is_servo) {
 
 // Tests
 
-PT_THREAD(test_servo_run_angle(struct pt *pt)) {
+/**
+ * Common test for pbio_servo_run_* functions.
+ * @param [in]  pt      The Contiki proto-thread
+ * @param [in]  name    The name of the test (i.e. __func__)
+ * @param [in]  func    Callback for invoking pbio_servo_run_*
+ */
+static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error_t (*func)(pbio_servo_t *servo))) {
     static pbio_servo_t *servo;
     static int32_t *log_buf = NULL;
     static FILE *log_file;
@@ -91,11 +97,13 @@ PT_THREAD(test_servo_run_angle(struct pt *pt)) {
 
     pbio_logger_start(&servo->log, log_buf, 1, 1);
 
-    tt_uint_op(pbio_servo_run_angle(servo, 500, 180, PBIO_ACTUATION_HOLD), ==, PBIO_SUCCESS);
+    tt_uint_op(func(servo), ==, PBIO_SUCCESS);
 
-    log_file = fopen("test_servo_run_angle.csv", "w");
+    char csv_file[FILENAME_MAX];
+    sprintf(csv_file, "%s.csv", name);
+    log_file = fopen(csv_file, "w");
     if (log_file == NULL) {
-        tt_abort_perror("failed to open test_servo_run_angle.csv");
+        tt_abort_perror("failed to open .csv file");
     }
 
     fprintf(log_file, "clock time,");
@@ -280,6 +288,34 @@ end:
     if (log_buf) {
         free(log_buf);
     }
+
+    PT_END(pt);
+}
+
+static pbio_error_t test_servo_run_angle_func(pbio_servo_t *servo) {
+    return pbio_servo_run_angle(servo, 500, 180, PBIO_ACTUATION_HOLD);
+}
+
+PT_THREAD(test_servo_run_angle(struct pt *pt)) {
+    static struct pt child;
+
+    PT_BEGIN(pt);
+
+    PT_SPAWN(pt, &child, test_servo_run_func(&child, __func__, test_servo_run_angle_func));
+
+    PT_END(pt);
+}
+
+static pbio_error_t test_servo_run_time_func(pbio_servo_t *servo) {
+    return pbio_servo_run_time(servo, 500, 1000, PBIO_ACTUATION_HOLD);
+}
+
+PT_THREAD(test_servo_run_time(struct pt *pt)) {
+    static struct pt child;
+
+    PT_BEGIN(pt);
+
+    PT_SPAWN(pt, &child, test_servo_run_func(&child, __func__, test_servo_run_time_func));
 
     PT_END(pt);
 }
