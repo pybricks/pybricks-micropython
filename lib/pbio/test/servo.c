@@ -59,7 +59,8 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
 }
 
 pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
-    *id = PBIO_IODEV_TYPE_ID_SPIKE_L_MOTOR;
+    const char *motor_id = getenv("PBIO_TEST_MOTOR_TYPE");
+    *id = motor_id == NULL ? PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR : atoi(motor_id);
     return PBIO_SUCCESS;
 }
 
