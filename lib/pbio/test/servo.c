@@ -21,6 +21,9 @@
 #include <pbio/motorpoll.h>
 #include <pbio/servo.h>
 
+// wait an additional 1 second before ending test
+#define TEST_END_COUNT 1000 // clock ticks
+
 void clock_override();
 void clock_override_tick(clock_time_t ticks);
 void pbio_test_counter_set_count(int32_t count);
@@ -80,6 +83,7 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
     static pbio_servo_t *servo;
     static int32_t *log_buf = NULL;
     static FILE *log_file;
+    static uint32_t control_done_count;
 
     PT_BEGIN(pt);
 
@@ -189,8 +193,13 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
     for (;;) {
         pbio_error_t err = pbio_motorpoll_get_servo_status(servo);
         if (err == PBIO_ERROR_AGAIN) {
+            // This is the expected exit point for a successful test. The manuever
+            // has completed. We wait some extra time to log the motor state after
+            // the completion before ending the test.
             if (pbio_control_is_done(&servo->control)) {
-                break;
+                if (++control_done_count >= TEST_END_COUNT) {
+                    break;
+                }
             }
 
             // if an external motor simulator program was provided, we can use
