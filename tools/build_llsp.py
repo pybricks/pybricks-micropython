@@ -10,7 +10,8 @@ from base64 import b64encode
 from os import path
 from json import dumps
 
-BUILD_PATH = "bricks/primehub/build"
+BUILD_PATH = "build"
+TOOLS_PATH = "../../tools"
 
 # User program slot
 SLOT = 0
@@ -135,5 +136,5 @@ with open(path.join(BUILD_PATH, "llsp_install_pybricks.py"), "r") as installer:
 llsp = ZipFile(path.join(BUILD_PATH, "install_pybricks.llsp"), "w")
 llsp.write(path.join(BUILD_PATH, "llsp_projectbody.json"), "projectbody.json")
 llsp.write(path.join(BUILD_PATH, "llsp_manifest.json"), "manifest.json")
-llsp.write(path.join("tools", "pybricks.svg"), "icon.svg")
+llsp.write(path.join(TOOLS_PATH, "pybricks.svg"), "icon.svg")
 llsp.close()

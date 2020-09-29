@@ -95,6 +95,7 @@ GIT = git
 ZIP = zip
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
+BUILD_LLSP = $(PBTOP)/tools/build_llsp.py
 CHECKSUM = $(PBTOP)/tools/checksum.py
 CHECKSUM_TYPE ?= xor
 METADATA = $(PBTOP)/tools/metadata.py
@@ -439,7 +440,15 @@ SRC_QSTR += $(SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=
 
-all: $(BUILD)/firmware.zip $(BUILD)/firmware.bin
+# Main firmware build targets
+TARGETS = $(BUILD)/firmware.zip $(BUILD)/firmware.bin
+
+# Optionally build LLSP project file
+ifeq ($(PB_BUILD_LLSP),1)
+TARGETS += $(BUILD)/install_pybricks.llsp
+endif
+
+all: $(TARGETS)
 
 FW_CHECKSUM := $$($(CHECKSUM) $(CHECKSUM_TYPE) $(BUILD)/firmware-no-checksum.bin $(PB_FIRMWARE_MAX_SIZE))
 FW_VERSION := $(shell $(GIT) describe --tags --dirty --always --exclude "@pybricks/*")
@@ -468,6 +477,11 @@ $(BUILD)/firmware-base.bin: $(BUILD)/firmware-no-checksum.elf
 	$(ECHO) "BIN creating firmware base file"
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
+
+# firmware wrapped in LLSP format so it can be installed with official programming apps
+$(BUILD)/install_pybricks.llsp: $(BUILD)/firmware.bin
+	$(ECHO) "LLSP creating firmware installer"
+	$(Q)$(PYTHON) $(BUILD_LLSP)
 
 $(BUILD)/firmware.dfu: $(BUILD)/firmware.bin
 	$(ECHO) "Create $@"
