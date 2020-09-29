@@ -351,6 +351,12 @@ jobs:
       with:
         name: primehub-firmware
         path: bricks/primehub/main.py
+    - name: Upload install_pybricks.llsp
+      if: success()
+      uses: actions/upload-artifact@v2-preview
+      with:
+        name: primehub-firmware
+        path: bricks/primehub/build/install_pybricks.llsp
 
   nxt_firmware:
     name: nxt firmware
