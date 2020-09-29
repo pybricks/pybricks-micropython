@@ -9,9 +9,13 @@ from zipfile import ZipFile
 from base64 import b64encode
 from os import path
 from json import dumps
+from sys import argv
 
 BUILD_PATH = "build"
 TOOLS_PATH = "../../tools"
+
+# Get release and git version
+version = argv[1]
 
 # User program slot
 SLOT = 0
@@ -40,6 +44,8 @@ with open(path.join(BUILD_PATH, "firmware.bin"), "rb") as firmware:
 
 # This is the main script that will be run inside the SPIKE Prime app.
 INSTALL_SCRIPT = """# Pybricks installer for SPIKE Prime
+
+# Version: {version}
 
 from firmware import appl_image_initialise, appl_image_store, info
 from ubinascii import a2b_base64
@@ -98,7 +104,7 @@ print(info())
 reset()
 
 """.format(
-    slot=SLOT, size=len(pybricks_bin)
+    slot=SLOT, size=len(pybricks_bin), version=version
 )
 
 # Write script to a Python file

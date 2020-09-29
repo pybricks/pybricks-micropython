@@ -481,7 +481,7 @@ $(BUILD)/firmware-base.bin: $(BUILD)/firmware-no-checksum.elf
 # firmware wrapped in LLSP format so it can be installed with official programming apps
 $(BUILD)/install_pybricks.llsp: $(BUILD)/firmware.bin
 	$(ECHO) "LLSP creating firmware installer"
-	$(Q)$(PYTHON) $(BUILD_LLSP)
+	$(Q)$(PYTHON) $(BUILD_LLSP) $(FW_VERSION)
 
 $(BUILD)/firmware.dfu: $(BUILD)/firmware.bin
 	$(ECHO) "Create $@"
