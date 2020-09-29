@@ -43,8 +43,11 @@ with open(path.join(BUILD_PATH, "firmware.bin"), "rb") as firmware:
     pybricks_bin = firmware.read()
 
 # This is the main script that will be run inside the SPIKE Prime app.
-INSTALL_SCRIPT = """# Pybricks installer for SPIKE Prime
+INSTALL_SCRIPT = """\
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2018-2020 The Pybricks Authors
 
+# Pybricks installer for SPIKE Prime
 # Version: {version}
 
 from firmware import appl_image_initialise, appl_image_store, info
