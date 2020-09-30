@@ -35,8 +35,8 @@ MANIFEST = {
     "state": {},
 }
 
-# How many bytes to write to external flash in one go.
-BLOCK_SIZE = 128
+# How many bytes to write to external flash in one go (multiple of 32).
+BLOCK_WRITE_SIZE = 128
 
 # Read the Pybricks firmware.
 with open(path.join(BUILD_PATH, "firmware.bin"), "rb") as firmware:
@@ -50,12 +50,94 @@ INSTALL_SCRIPT = """\
 # Pybricks installer for SPIKE Prime
 # Version: {version}
 
-from firmware import appl_image_initialise, appl_image_store, info
+from firmware import appl_image_initialise, appl_image_store, info, flash_read
 from ubinascii import a2b_base64
 from umachine import reset
 
 SLOT = {slot}
-SIZE = {size}
+PYBRICKS_SIZE = {size}
+BLOCK_WRITE = {block_write}
+BLOCK_READ = 32
+reads_per_write = BLOCK_WRITE // BLOCK_READ
+
+# Read boot data from the currently running firmware. This tells us which
+# sections to back up.
+OFFSET = 0x8008000
+boot_data = flash_read(0x200)
+firmware_version_address = int.from_bytes(boot_data[0:4], 'little') - OFFSET
+firmware_version = flash_read(firmware_version_address)[0:20]
+checksum_address = int.from_bytes(boot_data[4:8], 'little') - OFFSET
+checksum_value = int.from_bytes(flash_read(checksum_address)[0:4], 'little')
+firmware_end_address = checksum_address + 4
+
+# Original firmware starts directly after bootloader. This is where flash_read
+# has index 0.
+next_read_index = 0
+
+# Store Pybricks starting on final section of 256K free space
+pybricks_start = 0x80C0000 - OFFSET
+pybricks_end = pybricks_start + PYBRICKS_SIZE
+total_end = pybricks_end + 4
+
+print('Creating empty space for backup')
+
+# Initialize external flash up to the end of Pybricks
+appl_image_initialise(total_end)
+
+print('Begin backup of original firmware.')
+
+# Copy internal flash to external flash in order to back up original firmware.
+progress_print = None
+while next_read_index < checksum_address:
+    # Read several chunks of 32 bytes into one block to write
+    block = b''
+    for i in range(reads_per_write):
+        block += flash_read(next_read_index)
+        next_read_index += BLOCK_READ
+
+    # Write the whole block, except if at or beyond checksum
+    if next_read_index < checksum_address:
+        appl_image_store(block)
+    else:
+        block_end = BLOCK_WRITE - next_read_index + checksum_address
+        appl_image_store(block[0:block_end])
+        next_read_index = checksum_address    
+
+    # Display progress
+    progress = (next_read_index*100)//checksum_address
+    if progress != progress_print:
+        print(progress)
+        progress_print = progress
+
+# If we had kept track of CRC32 until this point, now would be the time
+# to compare it to the checksum
+
+# Finally we can write the original checksum itself
+appl_image_store(flash_read(checksum_address)[0:4])
+next_read_index += 4
+
+## FF
+FF = bytes([255])
+
+# Add padding to the next whole write block
+if (firmware_end_address % BLOCK_WRITE) != 0:
+    padding = BLOCK_WRITE - (firmware_end_address % BLOCK_WRITE)
+    next_read_index += padding
+    appl_image_store(FF*padding)
+print(info())
+
+print('Skipping empty space.')
+
+# Add padding up until the start of Pybricks
+ff_block = FF * BLOCK_WRITE
+
+while next_read_index != pybricks_start:
+    appl_image_store(ff_block)
+    next_read_index += BLOCK_WRITE
+
+print(info())
+
+print('Opening Pybricks firmware.')
 
 # Open the slots file to determine the name of the current script.
 with open('projects/.slots', 'r') as slots_file:
@@ -69,12 +151,7 @@ script = open(current_script_name, 'rb')
 while script.readline().strip() != b'# ___FIRMWARE_BEGIN___':
     pass
 
-print('Prepare copy')
-
-# Initialize external flash
-appl_image_initialise(SIZE)
-
-print('Begin copy')
+print('Begin backup of Pybricks firmware.')
 
 bytes_done = 0
 progress_print = None
@@ -97,17 +174,31 @@ while True:
 
     # Show progress
     bytes_done += len(decoded)
-    progress = (bytes_done*100)//SIZE
+    progress = (bytes_done*100)//PYBRICKS_SIZE
     if progress != progress_print:
         print(progress)
         progress_print = progress
 
-print('DONE. REBOOTING. DO NOT REMOVE BATTERIES.')
-print(info())
-reset()
+overall_checksum = info()['new_appl_image_calc_checksum']
+appl_image_store(overall_checksum.to_bytes(4, 'little'))
+result = info()
+
+if result['valid'] == 1:
+    print('Succes! The firmware will be installed after reboot.')
+    reset()
+else:
+    print('Could not back up the firmware. No changed will be made.')
+    print(result)
+
+if result['valid'] == 1:
+    print('Succes! The firmware will be installed after reboot.')
+    reset()
+else:
+    print('Could not back up the firmware. No changes will be made.')
+    print(result)
 
 """.format(
-    slot=SLOT, size=len(pybricks_bin), version=version
+    slot=SLOT, size=len(pybricks_bin), version=version, block_write=BLOCK_WRITE_SIZE
 )
 
 # Write script to a Python file
@@ -122,7 +213,7 @@ with open(path.join(BUILD_PATH, "llsp_install_pybricks.py"), "w") as installer:
     # Write binary segment in base64 format as a comment
     done = 0
     while done != len(pybricks_bin):
-        block = pybricks_bin[done : done + BLOCK_SIZE]
+        block = pybricks_bin[done : done + BLOCK_WRITE_SIZE]
         encoded = b64encode(block)
         installer.write("# {0}\n".format(encoded.decode("ascii")))
         done += len(block)
