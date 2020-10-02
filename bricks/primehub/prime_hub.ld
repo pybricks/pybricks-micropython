@@ -10,8 +10,8 @@
 MEMORY
 {
     /* Flash size is 1M, bootloader resides in first 32K */
-    FLASH (rx)      : ORIGIN = 0x08008000, LENGTH = 960K
-    USER_FLASH (rx) : ORIGIN = 0x080F8000, LENGTH = 32K
+    FLASH (rx)      : ORIGIN = 0x08008000, LENGTH = 992K
+    /* SRAM1 (256K) and SRAM2 (64K) are treated as one continuous block */
     RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 320K
 }
 
