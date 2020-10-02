@@ -10,6 +10,7 @@ from __future__ import print_function
 
 import argparse
 import struct
+import sys
 
 
 def sum_complement(fw, max_size):
@@ -132,6 +133,13 @@ if __name__ == "__main__":
     parser.add_argument("max_size", type=int, help="max size of firmware file")
 
     args = parser.parse_args()
+
+    # argparse doesn't know how to handle "rb" for stdin and gives us TextIO
+    # instead of BinaryIO
+    if args.fw_file == sys.stdin:
+        if sys.stdin.isatty():
+            raise RuntimeError("expecting data to be piped via stdin")
+        args.fw_file = sys.stdin.buffer
 
     if args.checksum_type == "xor":
         print(hex(sum_complement(args.fw_file, args.max_size)))
