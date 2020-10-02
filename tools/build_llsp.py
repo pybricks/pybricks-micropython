@@ -39,7 +39,7 @@ MANIFEST = {
 BLOCK_WRITE_SIZE = 128
 
 # Read the Pybricks firmware.
-with open(path.join(BUILD_PATH, "firmware.bin"), "rb") as firmware:
+with open(path.join(BUILD_PATH, "firmware-dual-boot-base.bin"), "rb") as firmware:
     pybricks_bin = firmware.read()
 
 # This is the main script that will be run inside the SPIKE Prime app.

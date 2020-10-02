@@ -478,8 +478,20 @@ $(BUILD)/firmware-base.bin: $(BUILD)/firmware-no-checksum.elf
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
+# firmware blob with diffent starting flash memory address for dual booting
+$(BUILD)/firmware-dual-boot-base.elf: $(LD_FILES) $(OBJ)
+	$(ECHO) "LINK $@"
+	$(Q)$(LD) --defsym=CHECKSUM=0 --defsym=DUAL_BOOT=1 $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
+	$(Q)$(SIZE) $@
+
+# firmware blob without main.mpy or checksum - use as base for appending other .mpy
+$(BUILD)/firmware-dual-boot-base.bin: $(BUILD)/firmware-dual-boot-base.elf
+	$(ECHO) "BIN creating dual-boot firmware base file"
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $@
+	$(ECHO) "`wc -c < $@` bytes"
+
 # firmware wrapped in LLSP format so it can be installed with official programming apps
-$(BUILD)/install_pybricks.llsp: $(BUILD)/firmware.bin
+$(BUILD)/install_pybricks.llsp: $(BUILD)/firmware-dual-boot-base.bin
 	$(ECHO) "LLSP creating firmware installer"
 	$(Q)$(PYTHON) $(BUILD_LLSP) $(FW_VERSION)
 
