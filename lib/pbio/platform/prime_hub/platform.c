@@ -26,16 +26,6 @@ typedef struct {
     const void *reserved;
 } boot_t;
 
-// defined in linker script
-extern const uint32_t _checksum;
-
-// special boot info table read by bootloader
-const boot_t __attribute__((section(".boot"))) boot = {
-    .fw_ver = "v0.5.00.0020-2b83556",
-    .checksum = &_checksum,
-    .magic = (const uint8_t[16]) {1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4},
-};
-
 enum {
     COUNTER_PORT_A,
     COUNTER_PORT_B,

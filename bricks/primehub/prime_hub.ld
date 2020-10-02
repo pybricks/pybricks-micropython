@@ -34,9 +34,6 @@ SECTIONS
         _fw_isr_vector_src = .;   /* The isr vector table must be copied to SRAM since the
                                      firmware doesn't start at the beginning of the flash memory */
         KEEP(*(.isr_vector)) /* isr vector table */
-        . = 0x200;
-        *(.boot)           /* .boot section for info read by bootloader */
-        KEEP(*(.boot))
         *(.text)           /* .text sections (code) */
         *(.text*)          /* .text* sections (code) */
         *(.rodata)         /* .rodata sections (constants, strings, etc.) */
@@ -89,7 +86,6 @@ SECTIONS
     .checksum :
     {
         . = ALIGN(4);
-        _checksum = .;
         LONG(CHECKSUM)
     } >FLASH
 
