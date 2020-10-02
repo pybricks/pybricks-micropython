@@ -57,6 +57,7 @@ from umachine import reset
 SLOT = {slot}
 PYBRICKS_SIZE = {size}
 BLOCK_WRITE = {block_write}
+PYBRICKS_VECTOR = {pybricks_vector}
 BLOCK_READ = 32
 reads_per_write = BLOCK_WRITE // BLOCK_READ
 
@@ -94,6 +95,10 @@ while next_read_index < checksum_address:
     for i in range(reads_per_write):
         block += flash_read(next_read_index)
         next_read_index += BLOCK_READ
+
+    # We modify the very first block to change the boot vector
+    if next_read_index == BLOCK_WRITE:
+        block = block[0:4] + PYBRICKS_VECTOR.to_bytes(4, 'little') + block[8:]
 
     # Write the whole block, except if at or beyond checksum
     if next_read_index < checksum_address:
@@ -198,7 +203,11 @@ else:
     print(result)
 
 """.format(
-    slot=SLOT, size=len(pybricks_bin), version=version, block_write=BLOCK_WRITE_SIZE
+    slot=SLOT,
+    size=len(pybricks_bin),
+    version=version,
+    block_write=BLOCK_WRITE_SIZE,
+    pybricks_vector=int.from_bytes(pybricks_bin[4:8], "little"),
 )
 
 # Write script to a Python file
