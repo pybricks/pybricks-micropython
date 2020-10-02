@@ -95,6 +95,7 @@ GIT = git
 ZIP = zip
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
+BUILD_DUAL_BOOT_BIN = $(PBTOP)/tools/build-dual-boot-bin.py
 BUILD_LLSP = $(PBTOP)/tools/build_llsp.py
 CHECKSUM = $(PBTOP)/tools/checksum.py
 CHECKSUM_TYPE ?= xor
@@ -490,14 +491,20 @@ $(BUILD)/firmware-dual-boot-base.bin: $(BUILD)/firmware-dual-boot-base.elf
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
+# firmware blob without main.mpy or checksum - use as base for appending other .mpy
+$(BUILD)/firmware-dual-boot.bin: $(BUILD)/firmware-dual-boot-base.bin $(BUILD_DUAL_BOOT_BIN) $(BASE_FW)
+	$(Q)if [ -z "$(BASE_FW)" ]; then \
+		echo "ERROR missing BASE_FW=... argument in make command"; \
+		exit 1; \
+	fi
+	$(ECHO) "BIN creating dual-boot firmware file"
+	$(Q)$(PYTHON) $(BUILD_DUAL_BOOT_BIN) $(BASE_FW) $< $@
+	$(ECHO) "`wc -c < $@` bytes"
+
 # firmware wrapped in LLSP format so it can be installed with official programming apps
 $(BUILD)/install_pybricks.llsp: $(BUILD)/firmware-dual-boot-base.bin
 	$(ECHO) "LLSP creating firmware installer"
 	$(Q)$(PYTHON) $(BUILD_LLSP) $(FW_VERSION)
-
-$(BUILD)/firmware.dfu: $(BUILD)/firmware.bin
-	$(ECHO) "Create $@"
-	$(Q)$(PYTHON) $(DFU) -b $(TEXT0_ADDR):$< $@
 
 $(BUILD)/firmware.metadata.json: $(BUILD)/firmware-no-checksum.elf $(METADATA)
 	$(ECHO) "META creating firmware metadata"
@@ -507,9 +514,17 @@ $(BUILD)/firmware.zip: $(BUILD)/firmware-base.bin $(BUILD)/firmware.metadata.jso
 	$(ECHO) "ZIP creating firmware package"
 	$(Q)$(ZIP) -j $@ $^
 
-deploy-dfu: $(BUILD)/firmware.dfu
+$(BUILD)/%.dfu: $(BUILD)/%.bin
+	$(ECHO) "DFU Create $@"
+	$(Q)$(PYTHON) $(DFU) -b $(TEXT0_ADDR):$< $@
+
+deploy-dfu-%: $(BUILD)/%.dfu
 	$(ECHO) "Writing $< to the board"
 	$(Q)$(PYTHON) $(PYDFU) -u $< $(if $(DFU_VID),--vid $(DFU_VID)) $(if $(DFU_PID),--pid $(DFU_PID))
+
+deploy-dfu: deploy-dfu-firmware
+
+deploy-dfu-dual-boot: deploy-dfu-firmware-dual-boot
 
 deploy-openocd: $(BUILD)/firmware-no-checksum.bin
 	$(ECHO) "Writing $< to the board via ST-LINK using OpenOCD"
