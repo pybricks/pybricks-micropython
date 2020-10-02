@@ -111,11 +111,7 @@ CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib -fshort-enums $(CFLAGS_MCU_$(PB
 CFLAGS += -DHSE_VALUE=$(PB_MCU_EXT_OSC_HZ)
 
 # linker scripts
-LD_FILES = $(PBIO_PLATFORM).ld
-# not all hubs share common script
-ifeq ($(filter $(PBIO_PLATFORM),debug prime_hub),)
-LD_FILES += $(PBTOP)/bricks/stm32/common.ld
-endif
+LD_FILES = $(PBIO_PLATFORM).ld $(PBTOP)/bricks/stm32/common.ld
 
 LDFLAGS = -nostdlib $(addprefix -T,$(LD_FILES)) -Map=$@.map --cref --gc-sections
 

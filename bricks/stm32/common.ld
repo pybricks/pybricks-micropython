@@ -30,7 +30,8 @@ SECTIONS
     {
         _fw_isr_vector_dst = .;     /* The firmware will copy isr_vector here */
         . = ALIGN(4);
-        . = MAGIC_OFFSET;           /* Offset of bootloader magic value. Also has the effect of
+        . = DEFINED(MAGIC_OFFSET) ? MAGIC_OFFSET : .;
+                                    /* Offset of bootloader magic value. Also has the effect of
                                        reserving more than enough space for the isr vector table copy */
         *(.magic)                   /* used for passing magic value from firmware to bootloader */
     } >RAM
