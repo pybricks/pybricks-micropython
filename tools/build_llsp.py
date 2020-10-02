@@ -56,20 +56,23 @@ from umachine import reset
 
 SLOT = {slot}
 PYBRICKS_SIZE = {size}
+EXTRA_SIZE = 8
 BLOCK_WRITE = {block_write}
 PYBRICKS_VECTOR = {pybricks_vector}
 BLOCK_READ = 32
 reads_per_write = BLOCK_WRITE // BLOCK_READ
 
-# Read boot data from the currently running firmware. This tells us which
-# sections to back up.
+# Read boot data from the currently running firmware.
 OFFSET = 0x8008000
+start_data = flash_read(0x000)
 boot_data = flash_read(0x200)
+
 firmware_version_address = int.from_bytes(boot_data[0:4], 'little') - OFFSET
 firmware_version = flash_read(firmware_version_address)[0:20]
 checksum_address = int.from_bytes(boot_data[4:8], 'little') - OFFSET
 checksum_value = int.from_bytes(flash_read(checksum_address)[0:4], 'little')
 firmware_end_address = checksum_address + 4
+firmware_boot_vector = start_data[4:8]
 
 # Original firmware starts directly after bootloader. This is where flash_read
 # has index 0.
@@ -78,7 +81,7 @@ next_read_index = 0
 # Store Pybricks starting on final section of 256K free space
 pybricks_start = 0x80C0000 - OFFSET
 pybricks_end = pybricks_start + PYBRICKS_SIZE
-total_end = pybricks_end + 4
+total_end = pybricks_end + EXTRA_SIZE
 
 print('Creating empty space for backup')
 
@@ -106,7 +109,7 @@ while next_read_index < checksum_address:
     else:
         block_end = BLOCK_WRITE - next_read_index + checksum_address
         appl_image_store(block[0:block_end])
-        next_read_index = checksum_address    
+        next_read_index = checksum_address
 
     # Display progress
     progress = (next_read_index*100)//checksum_address
@@ -183,6 +186,9 @@ while True:
     if progress != progress_print:
         print(progress)
         progress_print = progress
+
+# Save the original LEGO boot vector so Pybricks can boot it
+appl_image_store(firmware_boot_vector)
 
 overall_checksum = info()['new_appl_image_calc_checksum']
 appl_image_store(overall_checksum.to_bytes(4, 'little'))
