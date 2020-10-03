@@ -355,6 +355,10 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	sys/supervisor.c \
 	)
 
+PBIO_DUAL_BOOT_SRC_C = $(addprefix lib/pbio/,\
+	platform/$(PBIO_PLATFORM)/dual_boot.c \
+	)
+
 # STM32 IMU Library
 
 LSM6DS3TR_C_SRC_C = lib/lsm6ds3tr_c_STdC/driver/lsm6ds3tr_c_reg.c
@@ -421,6 +425,7 @@ endif
 OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
+DUAL_BOOT_OBJ += $(addprefix $(BUILD)/, $(PBIO_DUAL_BOOT_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 ifeq ($(PB_LIB_STM32_USB_DEVICE),1)
 OBJ += $(addprefix $(BUILD)/, $(SRC_STM32_USB_DEV:.c=.o))
@@ -480,9 +485,9 @@ $(BUILD)/firmware-base.bin: $(BUILD)/firmware-no-checksum.elf
 	$(ECHO) "`wc -c < $@` bytes"
 
 # firmware blob with diffent starting flash memory address for dual booting
-$(BUILD)/firmware-dual-boot-base.elf: $(LD_FILES) $(OBJ)
+$(BUILD)/firmware-dual-boot-base.elf: $(LD_FILES) $(OBJ) $(DUAL_BOOT_OBJ)
 	$(ECHO) "LINK $@"
-	$(Q)$(LD) --defsym=CHECKSUM=0 --defsym=DUAL_BOOT=1 $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
+	$(Q)$(LD) --defsym=CHECKSUM=0 --defsym=DUAL_BOOT=1 $(LDFLAGS) -o $@ $(OBJ) $(DUAL_BOOT_OBJ) $(LIBS)
 	$(Q)$(SIZE) $@
 
 # firmware blob without main.mpy or checksum - use as base for appending other .mpy

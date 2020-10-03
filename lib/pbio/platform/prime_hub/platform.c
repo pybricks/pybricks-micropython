@@ -573,11 +573,17 @@ void I2C2_EV_IRQHandler(void) {
 
 // Early initialization
 
+// optional handling for dual-boot firmware
+__WEAK void pbio_platform_dual_boot() {
+}
+
 // special memory addresses defined in linker script
 extern uint32_t *_fw_isr_vector_src;
 
 // Called from assembly code in startup.s
 void SystemInit(void) {
+    pbio_platform_dual_boot();
+
     RCC_OscInitTypeDef osc_init;
     RCC_ClkInitTypeDef clk_init;
 
