@@ -28,13 +28,17 @@ typedef struct _pupdevices_ColorSensor_obj_t {
 // pybricks._common.ColorSensor._get_hsv_reflected
 STATIC void pupdevices_ColorSensor__get_hsv_reflected(pb_device_t *pbdev, pbio_color_hsv_t *hsv) {
 
-    // Read HSV
+    // Read RGB
     int32_t data[4];
-    pb_device_get_values(pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__HSV, data);
+    pb_device_get_values(pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I, data);
+    const pbio_color_rgb_t rgb = {
+        .r = data[0] == 1024 ? 255 : data[0] >> 2,
+        .g = data[1] == 1024 ? 255 : data[1] >> 2,
+        .b = data[2] == 1024 ? 255 : data[2] >> 2,
+    };
 
-    hsv->h = data[0];
-    hsv->s = data[1] / 8;
-    hsv->v = data[2] / 5;
+    // Convert to HSV
+    pbio_color_rgb_to_hsv(&rgb, hsv);
 }
 
 // pybricks._common.ColorSensor._get_hsv_ambient
