@@ -125,12 +125,12 @@ MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorSensor_reflection_obj, pupdevices_Colo
 STATIC mp_obj_t pupdevices_ColorSensor_ambient(mp_obj_t self_in) {
     pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    // Read HSV with light off
-    pbio_color_hsv_t hsv;
-    pupdevices_ColorSensor__get_hsv(self->pbdev, false, &hsv);
+    // Get ambient from "V" in SHSV, which ranges from 0 to 10000
+    int32_t data[4];
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__SHSV, data);
 
-    // Return value as ambient intensity
-    return mp_obj_new_int(hsv.v);
+    // Return scaled to 100.
+    return pb_obj_new_fraction(data[2], 100);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorSensor_ambient_obj, pupdevices_ColorSensor_ambient);
 
