@@ -112,12 +112,12 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(pupdevices_ColorSensor_color_obj, 1, pupdevice
 STATIC mp_obj_t pupdevices_ColorSensor_reflection(mp_obj_t self_in) {
     pupdevices_ColorSensor_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    // Read HSV with light on
-    pbio_color_hsv_t hsv;
-    pupdevices_ColorSensor__get_hsv(self->pbdev, true, &hsv);
+    // Get reflection from average RGB reflection, which ranges from 0 to 3*1024
+    int32_t data[4];
+    pb_device_get_values(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__RGB_I, data);
 
     // Return value as reflection
-    return mp_obj_new_int(hsv.v);
+    return mp_obj_new_int((data[0] + data[1] + data[2])*100/3072);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(pupdevices_ColorSensor_reflection_obj, pupdevices_ColorSensor_reflection);
 
