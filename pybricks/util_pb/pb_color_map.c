@@ -23,6 +23,16 @@ void color_map_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv) {
     // Standard conversion
     pbio_color_rgb_to_hsv(rgb, hsv);
 
+    // For very low values, saturation is not reliable
+    if (hsv->v <= 3) {
+        hsv->s = 0;
+    }
+
+    // For very low values, hue is not reliable
+    if (hsv->s <= 3) {
+        hsv->h = 0;
+    }
+
     // Slight shift for lower hues to make yellow somewhat more accurate
     if (hsv->h < 40) {
         uint8_t offset = ((hsv->h - 20) << 8) / 20;
