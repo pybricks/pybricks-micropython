@@ -38,7 +38,7 @@ STATIC void pupdevices_ColorSensor__get_hsv_reflected(pb_device_t *pbdev, pbio_c
     };
 
     // Convert to HSV
-    pbio_color_rgb_to_hsv(&rgb, hsv);
+    color_map_rgb_to_hsv(&rgb, hsv);
 }
 
 // pybricks._common.ColorSensor._get_hsv_ambient

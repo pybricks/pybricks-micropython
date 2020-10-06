@@ -97,7 +97,7 @@ STATIC mp_obj_t nxtdevices_ColorSensor_hsv(mp_obj_t self_in) {
     pb_type_Color_obj_t *color = pb_type_Color_new_empty();
 
     // Convert and store RGB as HSV
-    pbio_color_rgb_to_hsv(&rgb, &color->hsv);
+    color_map_rgb_to_hsv(&rgb, &color->hsv);
 
     // Return color
     return MP_OBJ_FROM_PTR(color);
@@ -117,7 +117,7 @@ STATIC mp_obj_t nxtdevices_ColorSensor_color(mp_obj_t self_in) {
         .g = all[1],
         .b = all[2],
     };
-    pbio_color_rgb_to_hsv(&rgb, &hsv);
+    color_map_rgb_to_hsv(&rgb, &hsv);
 
     // Get and return discretized color based on HSV
     return pb_color_map_get_color(&self->color_map, &hsv);

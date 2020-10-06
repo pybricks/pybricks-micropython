@@ -50,7 +50,7 @@ STATIC void pupdevices_ColorDistanceSensor__hsv(pupdevices_ColorDistanceSensor_o
     pbio_color_rgb_t rgb;
     raw_to_rgb(raw, &rgb);
 
-    pbio_color_rgb_to_hsv(&rgb, hsv);
+    color_map_rgb_to_hsv(&rgb, hsv);
 }
 
 // pybricks.pupdevices.ColorDistanceSensor.__init__

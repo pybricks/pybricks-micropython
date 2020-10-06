@@ -15,6 +15,26 @@
 #include <pybricks/util_pb/pb_color_map.h>
 #include <pybricks/util_pb/pb_error.h>
 
+// This expands pbio_color_rgb_to_hsv with additional calibration steps that
+// ultimately must be properly done in pbio_color_rgb_to_hsv, just like
+// pbio_color_hsv_to_rgb, by adjusting RGB instead of hacking at the HSV value.
+void color_map_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv) {
+
+    // Standard conversion
+    pbio_color_rgb_to_hsv(rgb, hsv);
+
+    // Slight shift for lower hues to make yellow somewhat more accurate
+    if (hsv->h < 40) {
+        uint8_t offset = ((hsv->h - 20) << 8) / 20;
+        int32_t scale = 200 - ((100 * (offset * offset)) >> 16);
+        hsv->h = hsv->h * scale / 100;
+    }
+
+    // Value and saturation correction
+    hsv->s = hsv->s * (200 - hsv->s) / 100;
+    hsv->v = hsv->v * (200 - hsv->v) / 100;
+}
+
 STATIC const mp_rom_obj_tuple_t pb_color_map_default = {
     {&mp_type_tuple},
     7,
