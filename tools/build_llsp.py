@@ -201,13 +201,6 @@ else:
     print('Could not back up the firmware. No changed will be made.')
     print(result)
 
-if result['valid'] == 1:
-    print('Succes! The firmware will be installed after reboot.')
-    reset()
-else:
-    print('Could not back up the firmware. No changes will be made.')
-    print(result)
-
 """.format(
     slot=SLOT,
     size=len(pybricks_bin),
