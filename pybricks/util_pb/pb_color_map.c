@@ -67,21 +67,29 @@ void pb_color_map_save_default(mp_obj_t *color_map) {
 // Cost function between two colors a and b. The lower, the closer they are.
 static int32_t get_hsv_cost(const pbio_color_hsv_t *x, const pbio_color_hsv_t *c) {
 
-    // TODO: Actual 3D cost. For now, use the simplified threshold-based
-    // mapping we used to have.
+    // Calculate the hue error
+    int32_t hue_error;
 
-    // For low saturation, pick the closest value among unsaturated colors
-    if (x->s < 40 || x->v <= 5) {
-        // Ignore comparison to saturated colors
-        if (c->s == 100) {
-            return INT32_MAX;
+    if (c->s <= 5 || x->s <= 5) {
+        // When comparing against unsaturated colors,
+        // the hue error is not so relevant.
+        hue_error = 0;
+    } else {
+        hue_error = c->h > x->h ? c->h - x->h : x->h - c->h;
+        if (hue_error > 180) {
+            hue_error = 360 - hue_error;
         }
-        // Return absolute value error
-        return x->v > c->v ? x->v - c->v : c->v - x->v;
     }
-    // Otherwise, return the hue error
-    int32_t hue_error = c->h > x->h ? c->h - x->h : x->h - c->h;
-    return hue_error <= 180 ? hue_error : 360 - hue_error;
+
+    // Calculate the value error:
+    int32_t value_error = x->v > c->v ? x->v - c->v : c->v - x->v;
+
+    // Calculate the saturation error, with extra penalty for low saturation
+    int32_t saturation_error = x->s > c->s ? x->s - c->s : c->s - x->s;
+    saturation_error += (100 - c->s) / 2;
+
+    // Total error
+    return hue_error * hue_error + 5 * saturation_error * saturation_error + 2 * value_error * value_error;
 }
 
 // Get a discrete color that matches the given hsv values most closely
