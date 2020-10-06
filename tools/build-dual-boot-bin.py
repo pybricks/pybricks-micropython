@@ -26,8 +26,9 @@ def build_blob(bin1: FileIO, bin2: FileIO, out: FileIO) -> None:
     firmware blob and saves them in ``out``.
     """
     bin1_size = os.fstat(bin1.fileno()).st_size
+    bin2_size = os.fstat(bin2.fileno()).st_size
     bin2_offset = BIN2_BASE_OFFSET - BIN1_BASE_OFFSET
-    size = bin2_offset + os.fstat(bin2.fileno()).st_size
+    size = bin2_offset + bin2_size
     max_size = FLASH_SIZE - BIN1_BASE_OFFSET
 
     if bin1_size >= bin2_offset:
@@ -40,12 +41,14 @@ def build_blob(bin1: FileIO, bin2: FileIO, out: FileIO) -> None:
     bin1.readinto(blob)
     bin2.readinto(blob[bin2_offset:])
 
-    # Swap Reset_Handler pointers in vector tables. This will cause the second
-    # firmware to boot first. Can't use the usual Python swapping idiom since
-    # we are using a memoryview.
-    copy = blob[4:8].tobytes()
-    blob[4:8] = blob[bin2_offset + 4 : bin2_offset + 8]
-    blob[bin2_offset + 4 : bin2_offset + 8] = copy
+    # Read Reset_Handler pointers in vector tables.
+    bin1_reset_handler = blob[4:8].tobytes()
+    bin2_reset_handler = blob[bin2_offset + 4 : bin2_offset + 8]
+
+    # Swap Reset_Handler pointers. This will cause the second
+    # firmware to boot first.
+    blob[4:8] = bin2_reset_handler
+    blob[bin2_offset + 4 : bin2_offset + 8] = bin1_reset_handler
 
     # Fix the bin1 checksum since we changed the reset vector.
     blob[bin1_size - 4 : bin1_size] = crc32_checksum(
@@ -53,6 +56,7 @@ def build_blob(bin1: FileIO, bin2: FileIO, out: FileIO) -> None:
     ).to_bytes(4, "little")
 
     # The final checksum is for the entire new blob
+    # This overrides the checksum of the second firmware.
     blob[-4:] = crc32_checksum(BytesIO(blob), max_size).to_bytes(4, "little")
 
     out.write(blob)
