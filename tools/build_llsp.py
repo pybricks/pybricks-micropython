@@ -56,7 +56,7 @@ from umachine import reset
 
 SLOT = {slot}
 PYBRICKS_SIZE = {size}
-EXTRA_SIZE = 8
+EXTRA_SIZE = 4
 BLOCK_WRITE = {block_write}
 PYBRICKS_VECTOR = {pybricks_vector}
 BLOCK_READ = 32
@@ -139,9 +139,12 @@ print('Skipping empty space.')
 # Add padding up until the start of Pybricks
 ff_block = FF * BLOCK_WRITE
 
-while next_read_index != pybricks_start:
+while next_read_index != pybricks_start - BLOCK_WRITE:
     appl_image_store(ff_block)
     next_read_index += BLOCK_WRITE
+
+# In the last padding block, include a backup of the original reset vector
+appl_image_store(FF * (BLOCK_WRITE - 4) + firmware_boot_vector)
 
 print(info())
 
@@ -186,9 +189,6 @@ while True:
     if progress != progress_print:
         print(progress)
         progress_print = progress
-
-# Save the original LEGO boot vector so Pybricks can boot it
-appl_image_store(firmware_boot_vector)
 
 overall_checksum = info()['new_appl_image_calc_checksum']
 appl_image_store(overall_checksum.to_bytes(4, 'little'))
