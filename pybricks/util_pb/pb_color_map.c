@@ -47,13 +47,12 @@ void color_map_rgb_to_hsv(const pbio_color_rgb_t *rgb, pbio_color_hsv_t *hsv) {
 
 STATIC const mp_rom_obj_tuple_t pb_color_map_default = {
     {&mp_type_tuple},
-    7,
+    6,
     {
         MP_OBJ_FROM_PTR(&pb_Color_RED_obj),
         MP_OBJ_FROM_PTR(&pb_Color_YELLOW_obj),
         MP_OBJ_FROM_PTR(&pb_Color_GREEN_obj),
         MP_OBJ_FROM_PTR(&pb_Color_BLUE_obj),
-        MP_OBJ_FROM_PTR(&pb_Color_BLACK_obj),
         MP_OBJ_FROM_PTR(&pb_Color_WHITE_obj),
         mp_const_none,
     }
