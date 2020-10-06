@@ -136,8 +136,8 @@ typedef struct _pb_ColorSensor_obj_t {
     mp_obj_t color_map;
 } pb_ColorSensor_obj_t;
 
-// pybricks._common.ColorDistanceSensor.color_map
-STATIC mp_obj_t pupdevices_ColorDistanceSensor_color_map(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+// pybricks._common.ColorDistanceSensor.detectable_colors
+STATIC mp_obj_t pupdevices_ColorDistanceSensor_detectable_colors(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         pb_ColorSensor_obj_t, self,
         PB_ARG_DEFAULT_NONE(colors));
@@ -162,4 +162,4 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_color_map(size_t n_args, const mp
 
     return mp_const_none;
 }
-MP_DEFINE_CONST_FUN_OBJ_KW(pb_ColorSensor_color_map_obj, 1, pupdevices_ColorDistanceSensor_color_map);
+MP_DEFINE_CONST_FUN_OBJ_KW(pb_ColorSensor_detectable_colors_obj, 1, pupdevices_ColorDistanceSensor_detectable_colors);
