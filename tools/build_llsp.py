@@ -87,7 +87,7 @@ if int.from_bytes(firmware_boot_vector, 'little') > PYBRICKS_BASE:
     firmware_boot_vector = flash_read(pybricks_start - 4)[0:4]
 
 if firmware_boot_vector == FF*4:
-    raise ValueError("Could not find reset vector.")
+    raise ValueError('Could not find reset vector.')
 
 # Original firmware starts directly after bootloader. This is where flash_read
 # has index 0.
@@ -188,6 +188,11 @@ while True:
 
     # Decode and write
     decoded = a2b_base64(base64)
+
+    # In the first block, override the boot vector
+    if bytes_done == 0:
+        decoded = decoded[0:4] + firmware_boot_vector + decoded[8:]
+
     appl_image_store(decoded)
 
     # Show progress
