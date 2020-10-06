@@ -61,27 +61,37 @@ BLOCK_WRITE = {block_write}
 PYBRICKS_VECTOR = {pybricks_vector}
 BLOCK_READ = 32
 reads_per_write = BLOCK_WRITE // BLOCK_READ
+FF = bytes([255])
 
 # Read boot data from the currently running firmware.
+PYBRICKS_BASE = 0x80C0000
 OFFSET = 0x8008000
 start_data = flash_read(0x000)
 boot_data = flash_read(0x200)
+
+# Store Pybricks starting on final section of 256K free space
+pybricks_start = PYBRICKS_BASE - OFFSET
+pybricks_end = pybricks_start + PYBRICKS_SIZE
+total_end = pybricks_end + EXTRA_SIZE
 
 firmware_version_address = int.from_bytes(boot_data[0:4], 'little') - OFFSET
 firmware_version = flash_read(firmware_version_address)[0:20]
 checksum_address = int.from_bytes(boot_data[4:8], 'little') - OFFSET
 checksum_value = int.from_bytes(flash_read(checksum_address)[0:4], 'little')
 firmware_end_address = checksum_address + 4
+
+# Read boot vector
 firmware_boot_vector = start_data[4:8]
+if int.from_bytes(firmware_boot_vector, 'little') > PYBRICKS_BASE:
+    # Boot vector was pointing at Pybricks, so we need to read the backup
+    firmware_boot_vector = flash_read(pybricks_start - 4)[0:4]
+
+if firmware_boot_vector == FF*4:
+    raise ValueError("Could not find reset vector.")
 
 # Original firmware starts directly after bootloader. This is where flash_read
 # has index 0.
 next_read_index = 0
-
-# Store Pybricks starting on final section of 256K free space
-pybricks_start = 0x80C0000 - OFFSET
-pybricks_end = pybricks_start + PYBRICKS_SIZE
-total_end = pybricks_end + EXTRA_SIZE
 
 print('Creating empty space for backup')
 
@@ -123,9 +133,6 @@ while next_read_index < checksum_address:
 # Finally we can write the original checksum itself
 appl_image_store(flash_read(checksum_address)[0:4])
 next_read_index += 4
-
-## FF
-FF = bytes([255])
 
 # Add padding to the next whole write block
 if (firmware_end_address % BLOCK_WRITE) != 0:
