@@ -185,8 +185,10 @@ step towards the end goal. Each commit on its own should be able to be compiled 
 Please follow the recommendations below to write a *useful* commit message.
 
 1. Add a prefix to the subject line that gives the area of code that is changed.
-   Usually this will be the relative file path of the file being changed. (If
-   the change is to the pbio library, omit the `lib/pbio/` part of the path.)
+   Usually this will be the relative file path of the file being changed.
+    - If the change is to the pbio library, omit the `lib/` part of the path.
+    - For changes to the implementation of the `pybricks` package, use import path
+   instead of the file path, as in [this example](https://github.com/pybricks/pybricks-micropython/commit/f45333e76d3c946ea1a5932745fe76573263b9d6).
 
 2. The rest of the subject line describes *what* changed.
 
