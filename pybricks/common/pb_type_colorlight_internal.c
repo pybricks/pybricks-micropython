@@ -76,6 +76,10 @@ STATIC mp_obj_t common_ColorLight_internal_blink(size_t n_args, const mp_obj_t *
     mp_obj_t durations_iter = mp_getiter(durations_in, &iter_buf);
     for (int i = 0; i < durations_len; i++) {
         cells[i] = pb_obj_get_positive_int(mp_iternext(durations_iter));
+        // Duration less than event loop is not allowed
+        if (cells[i] == 0) {
+            pb_assert(PBIO_ERROR_INVALID_ARG);
+        }
     }
 
     // sentinel value
