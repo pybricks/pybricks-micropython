@@ -450,11 +450,11 @@ typedef enum {
     /** BOOST Interactive Motor */
     LUMP_TYPE_ID_INTERACTIVE_MOTOR        = 38,
 
-    /** Technic Control+ Large Motor */
-    LUMP_TYPE_ID_CPLUS_L_MOTOR            = 46,
+    /** Technic Large Motor */
+    LUMP_TYPE_ID_TECHNIC_L_MOTOR            = 46,
 
-    /** Technic Control+ XL Motor */
-    LUMP_TYPE_ID_CPLUS_XL_MOTOR           = 47,
+    /** Technic XL Motor */
+    LUMP_TYPE_ID_TECHNIC_XL_MOTOR           = 47,
 
     /** FatcatLab A/DC Adapter */
     LUMP_TYPE_ID_FCL_ADC                  = 71,
@@ -581,8 +581,8 @@ typedef enum {
 /**
  * Mode flags.
  *
- * These flags are sent from newer UART I/O devices (starting with Control+
- * motors) along with the ::LUMP_INFO_NAME message.
+ * These flags are sent from newer UART I/O devices (starting with
+ * Technic motors) along with the ::LUMP_INFO_NAME message.
  */
 typedef struct {
     /**

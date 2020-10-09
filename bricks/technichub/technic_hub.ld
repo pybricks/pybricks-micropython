@@ -3,7 +3,7 @@
 /* Copyright (c) 2019-2020 The Pybricks Authors */
 
 /*
-    GNU linker script for LEGO TECHNIC Control+ Hub
+    GNU linker script for LEGO Technic Hub
 */
 
 /* Specify the memory areas */

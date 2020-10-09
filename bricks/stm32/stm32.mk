@@ -182,7 +182,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	experimental/pb_module_experimental.c \
 	hubs/pb_module_hubs.c \
 	hubs/pb_type_cityhub.c \
-	hubs/pb_type_cplushub.c \
+	hubs/pb_type_technichub.c \
 	hubs/pb_type_movehub.c \
 	hubs/pb_type_primehub.c \
 	iodevices/pb_module_iodevices.c \

@@ -215,8 +215,8 @@ jobs:
         name: cityhub-firmware
         path: bricks/cityhub/main.py
 
-  cplushub_firmware:
-    name: cplushub firmware
+  technichub_firmware:
+    name: technichub firmware
     needs: [cross_compiler, mpy_cross]
     runs-on: ubuntu-latest
     steps:
@@ -239,25 +239,25 @@ jobs:
     - name: Fix file permission
       run: chmod +x micropython/mpy-cross/mpy-cross
     - name: Build
-      run: make $MAKEOPTS -C bricks/cplushub
+      run: make $MAKEOPTS -C bricks/technichub
     - name: Upload firmware
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
-        name: cplushub-firmware
-        path: bricks/cplushub/build/firmware-base.bin
+        name: technichub-firmware
+        path: bricks/technichub/build/firmware-base.bin
     - name: Upload firmware metadata
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
-        name: cplushub-firmware
-        path: bricks/cplushub/build/firmware.metadata.json
+        name: technichub-firmware
+        path: bricks/technichub/build/firmware.metadata.json
     - name: Upload main.py
       if: success()
       uses: actions/upload-artifact@v2-preview
       with:
-        name: cplushub-firmware
-        path: bricks/cplushub/main.py
+        name: technichub-firmware
+        path: bricks/technichub/main.py
 
   movehub_firmware:
     name: movehub firmware

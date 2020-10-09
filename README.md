@@ -29,7 +29,7 @@ with the latest [ev3dev][ev3dev-snapshot] image. LEGO Education has also
   [their website][lego-education-ev3-micropython].
 
 ## Ready for beta users
-- *LEGO Technic Control+ Hub* (`CPlusHub`): Try it now
+- *LEGO Technic Hub* (`TechnicHub`): Try it now
 with [Pybricks Code][Pybricks Code].
 
 ## In progress
@@ -121,7 +121,7 @@ so not all bricks in `/bricks` will be supported officially for now.
 Read more on the Pybricks [about page][about page].
 
 # How can I help?
-If you've got a Control+ Hub, the best way to help right now is to try out the
+If you've got a Technic Hub, the best way to help right now is to try out the
 beta release of [Pybricks Code][Pybricks Code]. Much of its code is shared
 with the other hubs. So if you share your findings or issues, we can fix them
 for all hubs at once, including for the ones that are not released yet!

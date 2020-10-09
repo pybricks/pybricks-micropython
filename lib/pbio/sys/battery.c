@@ -5,7 +5,7 @@
 
 // TODO: need to handle high battery current
 // TOOD: need to handle Li-ion batteries and charger for SPIKE Prime
-// TODO: need to handle battery pack switch and Li-ion batteries for Control+ and NXT
+// TODO: need to handle battery pack switch and Li-ion batteries for Technic Hub and NXT
 
 #include <contiki.h>
 
@@ -30,7 +30,7 @@ static clock_time_t prev_poll_time;
  */
 void pbsys_battery_init() {
     pbdrv_battery_get_voltage_now(&avg_battery_voltage);
-    // This is mainly for Control+ hub. It seems that the first battery voltage
+    // This is mainly for the Technic Hub. It seems that the first battery voltage
     // read is always low and causes the hub to shut down because of low battery
     // voltage even though the battery isn't that low.
     if (avg_battery_voltage < BATTERY_CRITICAL_MV) {

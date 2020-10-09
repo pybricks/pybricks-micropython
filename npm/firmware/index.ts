@@ -1,7 +1,7 @@
 /**
- * Name of the Technic Control+ hub firmware file.
+ * Name of the Technic hub firmware file.
  */
-export const cplushub = 'cplushub.zip'
+export const technichub = 'technichub.zip'
 
 /**
  * Name of the 2-port Powered Up hub firmware file.
