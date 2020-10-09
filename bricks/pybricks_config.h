@@ -52,8 +52,8 @@
 // Hub name
 #if PYBRICKS_HUB_CITYHUB
 #define PYBRICKS_HUB_NAME "cityhub"
-#elif PYBRICKS_HUB_CPLUSHUB
-#define PYBRICKS_HUB_NAME "cplushub"
+#elif PYBRICKS_HUB_TECHNICHUB
+#define PYBRICKS_HUB_NAME "technichub"
 #elif PYBRICKS_HUB_DEBUG
 #define PYBRICKS_HUB_NAME "debug"
 #elif PYBRICKS_HUB_EV3BRICK

@@ -36,7 +36,7 @@ jobs:
           make $MAKEOPTS -C micropython/mpy-cross
           make $MAKEOPTS -C bricks/movehub
           make $MAKEOPTS -C bricks/cityhub
-          make $MAKEOPTS -C bricks/cplushub
+          make $MAKEOPTS -C bricks/technichub
       - name: Get tag
         run: echo "::set-env name=GITHUB_TAG::${GITHUB_REF#*refs/tags/}"
       - name: Create Release
@@ -69,13 +69,13 @@ jobs:
           asset_path: ./bricks/cityhub/build/firmware.zip
           asset_name: pybricks-cityhub-${{ env.GITHUB_TAG }}.zip
           asset_content_type: application/zip
-      - name: Upload cplushub firmware
-        id: upload-cplushub
+      - name: Upload technichub firmware
+        id: upload-technichub
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bricks/cplushub/build/firmware.zip
-          asset_name: pybricks-cplushub-${{ env.GITHUB_TAG }}.zip
+          asset_path: ./bricks/technichub/build/firmware.zip
+          asset_name: pybricks-technichub-${{ env.GITHUB_TAG }}.zip
           asset_content_type: application/zip

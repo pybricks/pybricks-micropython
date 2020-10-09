@@ -16,8 +16,8 @@ const mp_obj_type_t pb_type_MoveHub;
 #if PYBRICKS_HUB_CITYHUB
 const mp_obj_type_t pb_type_CityHub;
 #endif
-#if PYBRICKS_HUB_CPLUSHUB
-const mp_obj_type_t pb_type_CPlusHub;
+#if PYBRICKS_HUB_TECHNICHUB
+const mp_obj_type_t pb_type_TechnicHub;
 #endif
 #ifdef PYBRICKS_HUB_PRIMEHUB
 const mp_obj_type_t pb_type_PrimeHub;

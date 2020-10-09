@@ -42,7 +42,7 @@ VERSION = "1.0.0"
 HUB_INFO = {
     "move_hub": {"device-id": 0x40, "checksum-type": "sum"},
     "city_hub": {"device-id": 0x41, "checksum-type": "sum"},
-    "cplus_hub": {"device-id": 0x80, "checksum-type": "sum"},
+    "technic_hub": {"device-id": 0x80, "checksum-type": "sum"},
     "prime_hub": {
         "device-id": 0x00,  # FIXME: this is not actual device id
         "checksum-type": "crc32",

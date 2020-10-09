@@ -15,8 +15,8 @@ STATIC const mp_rom_map_elem_t hubs_globals_table[] = {
     #if PYBRICKS_HUB_CITYHUB
     { MP_ROM_QSTR(MP_QSTR_CityHub),    MP_ROM_PTR(&pb_type_CityHub) },
     #endif
-    #if PYBRICKS_HUB_CPLUSHUB
-    { MP_ROM_QSTR(MP_QSTR_CPlusHub),    MP_ROM_PTR(&pb_type_CPlusHub) },
+    #if PYBRICKS_HUB_TECHNICHUB
+    { MP_ROM_QSTR(MP_QSTR_TechnicHub),    MP_ROM_PTR(&pb_type_TechnicHub) },
     #endif
     #ifdef PYBRICKS_HUB_PRIMEHUB
     { MP_ROM_QSTR(MP_QSTR_PrimeHub),    MP_ROM_PTR(&pb_type_PrimeHub) },

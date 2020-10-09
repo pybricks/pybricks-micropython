@@ -77,13 +77,13 @@ typedef enum {
     /** BOOST Move Hub built-in Motor */
     PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR = 39,
 
-    // TECHNIC Control+ motors
+    // Technic motors
 
-    /** TECHNIC Control+ Large Motor */
-    PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR = LUMP_TYPE_ID_CPLUS_L_MOTOR,
+    /** Technic Large Motor */
+    PBIO_IODEV_TYPE_ID_TECHNIC_L_MOTOR = LUMP_TYPE_ID_TECHNIC_L_MOTOR,
 
-    /** TECHNIC Control+ XL Motor */
-    PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR = LUMP_TYPE_ID_CPLUS_XL_MOTOR,
+    /** Technic XL Motor */
+    PBIO_IODEV_TYPE_ID_TECHNIC_XL_MOTOR = LUMP_TYPE_ID_TECHNIC_XL_MOTOR,
 
 
     // SPIKE motors

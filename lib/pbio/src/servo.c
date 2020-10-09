@@ -134,11 +134,11 @@ static void load_servo_settings(pbio_control_settings_t *s, pbio_iodev_type_id_t
         case PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR:
             *s = settings_servo_boost_interactive;
             break;
-        case PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR:
+        case PBIO_IODEV_TYPE_ID_TECHNIC_L_MOTOR:
             *s = settings_servo_cplus_xl;
             s->control_offset = 2500;
             break;
-        case PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR:
+        case PBIO_IODEV_TYPE_ID_TECHNIC_XL_MOTOR:
             *s = settings_servo_cplus_xl;
             break;
         case PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR:

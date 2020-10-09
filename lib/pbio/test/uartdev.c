@@ -1001,7 +1001,7 @@ PT_THREAD(test_technic_large_motor(struct pt *pt)) {
 
     static pbio_iodev_t *iodev;
     tt_uint_op(pbio_uartdev_get(0, &iodev), ==, PBIO_SUCCESS);
-    tt_want_uint_op(iodev->info->type_id, ==, PBIO_IODEV_TYPE_ID_CPLUS_L_MOTOR);
+    tt_want_uint_op(iodev->info->type_id, ==, PBIO_IODEV_TYPE_ID_TECHNIC_L_MOTOR);
     tt_want_uint_op(iodev->info->num_modes, ==, 6);
     tt_want_uint_op(iodev->info->num_view_modes, ==, 4);
     // TODO: verify fw/hw versions
@@ -1321,7 +1321,7 @@ PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
 
     static pbio_iodev_t *iodev;
     tt_uint_op(pbio_uartdev_get(0, &iodev), ==, PBIO_SUCCESS);
-    tt_want_uint_op(iodev->info->type_id, ==, PBIO_IODEV_TYPE_ID_CPLUS_XL_MOTOR);
+    tt_want_uint_op(iodev->info->type_id, ==, PBIO_IODEV_TYPE_ID_TECHNIC_XL_MOTOR);
     tt_want_uint_op(iodev->info->num_modes, ==, 6);
     tt_want_uint_op(iodev->info->num_view_modes, ==, 4);
     // TODO: verify fw/hw versions

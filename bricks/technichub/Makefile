@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2019-2020 The Pybricks Authors
 
-PBIO_PLATFORM = cplus_hub
+PBIO_PLATFORM = technic_hub
 PB_MCU_SERIES = L4
 PB_CMSIS_MCU = STM32L431xx
 PB_MCU_EXT_OSC_HZ = 8000000
