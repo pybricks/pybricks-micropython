@@ -363,6 +363,28 @@ static void handle_event(uint8_t *packet) {
                     ATT_ExchangeMTURsp(connection_handle, &rsp);
                 }
                 break;
+
+                case ATT_EVENT_FIND_BY_TYPE_VALUE_REQ: {
+                    uint16_t start_handle = (data[7] << 8) | data[6];
+                    uint16_t end_handle = (data[9] << 8) | data[8];
+                    uint16_t type = (data[11] << 8) | data[10];
+                    uint8_t *value = &data[12];
+
+                    (void)start_handle;
+                    (void)end_handle;
+                    (void)type;
+                    (void)value;
+
+                    DBG("s %04X t %04X", start_handle, type);
+                    attErrorRsp_t rsp;
+
+                    rsp.reqOpcode = ATT_FIND_BY_TYPE_VALUE_REQ;
+                    rsp.handle = start_handle;
+                    rsp.errCode = ATT_ERR_UNSUPPORTED_REQ;
+                    ATT_ErrorRsp(connection_handle, &rsp);
+                }
+                break;
+
                 case ATT_EVENT_READ_BY_TYPE_REQ: {
                     uint16_t start_handle = (data[7] << 8) | data[6];
                     uint16_t end_handle = (data[9] << 8) | data[8];
