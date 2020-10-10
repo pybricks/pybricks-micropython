@@ -29,6 +29,16 @@ bStatus_t ATT_ExchangeMTURsp(uint16_t connHandle, attExchangeMTURsp_t *pRsp) {
     return HCI_sendHCICommand(ATT_CMD_EXCHANGE_MTU_RSP, buf, 4);
 }
 
+bStatus_t ATT_FindByTypeValueRsp(uint16_t connHandle, attFindByTypeValueRsp_t *pRsp) {
+    uint8_t buf[32];
+
+    buf[0] = connHandle & 0xFF;
+    buf[1] = (connHandle >> 8) & 0xFF;
+    memcpy(&buf[2], pRsp->pHandlesInfo, pRsp->numInfo * 4);
+
+    return HCI_sendHCICommand(ATT_CMD_FIND_BY_TYPE_VALUE_RSP, buf, 2 + pRsp->numInfo * 4);
+}
+
 bStatus_t ATT_ReadByTypeRsp(uint16_t connHandle, attReadByTypeRsp_t *pRsp) {
     uint8_t buf[32];
 
