@@ -182,7 +182,7 @@ jobs:
         path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
         key: gcc-arm-9-2020-q2
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin
+      run: echo ${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin >> $GITHUB_PATH
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
@@ -226,7 +226,7 @@ jobs:
         path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
         key: gcc-arm-9-2020-q2
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin
+      run: echo ${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin >> $GITHUB_PATH
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
@@ -270,7 +270,7 @@ jobs:
         path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
         key: gcc-arm-9-2020-q2
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin
+      run: echo ${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin >> $GITHUB_PATH
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
@@ -314,7 +314,7 @@ jobs:
         path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
         key: gcc-arm-9-2020-q2
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin
+      run: echo ${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin >> $GITHUB_PATH
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
@@ -358,7 +358,7 @@ jobs:
         path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
         key: gcc-arm-9-2020-q2
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin
+      run: echo ${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin >> $GITHUB_PATH
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
@@ -390,7 +390,7 @@ jobs:
         path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
         key: gcc-arm-9-2020-q2
     - name: Add cross-compiler to path
-      run: echo ::add-path::${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin
+      run: echo ${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin >> $GITHUB_PATH
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
