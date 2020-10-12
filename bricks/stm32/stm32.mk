@@ -449,7 +449,7 @@ SRC_QSTR_AUTO_DEPS +=
 # Main firmware build targets
 TARGETS = $(BUILD)/firmware.zip $(BUILD)/firmware.bin
 
-# Optionally build LLSP project file
+# Optionally build project file for use with official LEGO app
 ifeq ($(PB_BUILD_DUAL_BOOT_INSTALLER),1)
 TARGETS += $(BUILD)/install_pybricks.llsp
 endif
@@ -506,9 +506,9 @@ $(BUILD)/firmware-dual-boot.bin: $(BUILD)/firmware-dual-boot-base.bin $(BUILD_DU
 	$(Q)$(PYTHON) $(BUILD_DUAL_BOOT_BIN) $(BASE_FW) $< $@
 	$(ECHO) "`wc -c < $@` bytes"
 
-# firmware wrapped in LLSP format so it can be installed with official programming apps
+# firmware wrapped in special format for install with official apps
 $(BUILD)/install_pybricks.llsp: $(BUILD)/firmware-dual-boot-base.bin
-	$(ECHO) "LLSP creating firmware installer"
+	$(ECHO) "Creating dual boot firmware installer"
 	$(Q)$(PYTHON) $(BUILD_DUAL_BOOT_INSTALLER) $(FW_VERSION)
 
 $(BUILD)/firmware.metadata.json: $(BUILD)/firmware-no-checksum.elf $(METADATA)

@@ -222,7 +222,7 @@ else:
 )
 
 # Write script to a Python file
-with open(path.join(BUILD_PATH, "llsp_install_pybricks.py"), "w") as installer:
+with open(path.join(BUILD_PATH, "dual_boot_install_pybricks.py"), "w") as installer:
 
     # Write the main code
     installer.write(INSTALL_SCRIPT)
@@ -242,19 +242,20 @@ with open(path.join(BUILD_PATH, "llsp_install_pybricks.py"), "w") as installer:
     installer.write("# ___FIRMWARE_END___\n")
 
 # Write the manifest to file
-with open(path.join(BUILD_PATH, "llsp_manifest.json"), "w") as manifest:
+with open(path.join(BUILD_PATH, "dual_boot_manifest.json"), "w") as manifest:
     manifest.write(dumps(MANIFEST))
 
 # Convert the Python script to JSON format. New line symbols get messy, so
 # that's why we avoid them in the user script above.
-with open(path.join(BUILD_PATH, "llsp_install_pybricks.py"), "r") as installer:
-    with open(path.join(BUILD_PATH, "llsp_projectbody.json"), "w") as body:
+with open(path.join(BUILD_PATH, "dual_boot_install_pybricks.py"), "r") as installer:
+    with open(path.join(BUILD_PATH, "dual_boot_projectbody.json"), "w") as body:
         blob = installer.read().replace("\n", "\\n")
         body.write('{{"program":"{0}"}}'.format(blob))
 
-# Combine all files in an LLSP archive
-llsp = ZipFile(path.join(BUILD_PATH, "install_pybricks.llsp"), "w")
-llsp.write(path.join(BUILD_PATH, "llsp_projectbody.json"), "projectbody.json")
-llsp.write(path.join(BUILD_PATH, "llsp_manifest.json"), "manifest.json")
-llsp.write(path.join(TOOLS_PATH, "pybricks.svg"), "icon.svg")
-llsp.close()
+# Combine all files in the project archive
+for ext in ("llsp", "lms"):
+    archive = ZipFile(path.join(BUILD_PATH, "install_pybricks." + ext), "w")
+    archive.write(path.join(BUILD_PATH, "dual_boot_projectbody.json"), "projectbody.json")
+    archive.write(path.join(BUILD_PATH, "dual_boot_manifest.json"), "manifest.json")
+    archive.write(path.join(TOOLS_PATH, "pybricks.svg"), "icon.svg")
+    archive.close()
