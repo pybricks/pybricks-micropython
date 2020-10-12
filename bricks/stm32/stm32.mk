@@ -442,7 +442,7 @@ SRC_QSTR_AUTO_DEPS +=
 all: $(BUILD)/firmware.zip $(BUILD)/firmware.bin
 
 FW_CHECKSUM := $$($(CHECKSUM) $(CHECKSUM_TYPE) $(BUILD)/firmware-no-checksum.bin $(PB_FIRMWARE_MAX_SIZE))
-FW_VERSION := $(shell $(GIT) describe --tags --dirty --always)
+FW_VERSION := $(shell $(GIT) describe --tags --dirty --always --exclude "@pybricks/*")
 
 $(BUILD)/firmware-no-checksum.elf: $(LD_FILES) $(OBJ)
 	$(ECHO) "LINK $@"
