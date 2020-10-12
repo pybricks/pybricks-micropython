@@ -24,7 +24,7 @@ jobs:
       run: make $MAKEOPTS -C micropython/mpy-cross
     - name: Upload mpy-cross
       if: success()
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: mpy-cross
         path: micropython/mpy-cross/mpy-cross
@@ -104,7 +104,7 @@ jobs:
       run: micropython/tests/run-tests --print-failures
     - name: Upload pybricks-micropython
       if: success()
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v2
       with:
         name: pybricks-micropython
         path: bricks/ev3dev/pybricks-micropython
@@ -200,19 +200,19 @@ jobs:
       run: make $MAKEOPTS -C bricks/cityhub
     - name: Upload firmware
       if: success()
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v2
       with:
         name: cityhub-firmware
         path: bricks/cityhub/build/firmware-base.bin
     - name: Upload firmware metadata
       if: success()
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v2
       with:
         name: cityhub-firmware
         path: bricks/cityhub/build/firmware.metadata.json
     - name: Upload main.py
       if: success()
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v2
       with:
         name: cityhub-firmware
         path: bricks/cityhub/main.py
@@ -245,19 +245,19 @@ jobs:
       run: make $MAKEOPTS -C bricks/technichub
     - name: Upload firmware
       if: success()
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v2
       with:
         name: technichub-firmware
         path: bricks/technichub/build/firmware-base.bin
     - name: Upload firmware metadata
       if: success()
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v2
       with:
         name: technichub-firmware
         path: bricks/technichub/build/firmware.metadata.json
     - name: Upload main.py
       if: success()
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v2
       with:
         name: technichub-firmware
         path: bricks/technichub/main.py
@@ -290,19 +290,19 @@ jobs:
       run: make $MAKEOPTS -C bricks/movehub
     - name: Upload firmware
       if: success()
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v2
       with:
         name: movehub-firmware
         path: bricks/movehub/build/firmware-base.bin
     - name: Upload firmware metadata
       if: success()
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v2
       with:
         name: movehub-firmware
         path: bricks/movehub/build/firmware.metadata.json
     - name: Upload main.py
       if: success()
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v2
       with:
         name: movehub-firmware
         path: bricks/movehub/main.py
@@ -335,19 +335,19 @@ jobs:
       run: make $MAKEOPTS -C bricks/primehub
     - name: Upload firmware
       if: success()
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v2
       with:
         name: primehub-firmware
         path: bricks/primehub/build/firmware-base.bin
     - name: Upload firmware metadata
       if: success()
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v2
       with:
         name: primehub-firmware
         path: bricks/primehub/build/firmware.metadata.json
     - name: Upload main.py
       if: success()
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v2
       with:
         name: primehub-firmware
         path: bricks/primehub/main.py
@@ -380,7 +380,7 @@ jobs:
       run:  make $MAKEOPTS -C bricks/nxt
     - name: Upload firmware
       if: success()
-      uses: actions/upload-artifact@v2-preview
+      uses: actions/upload-artifact@v2
       with:
         name: nxt-firmware
         path: bricks/nxt/build/firmware.bin
