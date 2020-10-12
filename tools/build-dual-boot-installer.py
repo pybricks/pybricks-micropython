@@ -18,7 +18,7 @@ TOOLS_PATH = "../../tools"
 version = argv[1]
 
 # User program slot
-SLOT = 0
+SLOT = 19
 
 # Manifest file that goes into the project zip
 MANIFEST = {
@@ -53,6 +53,7 @@ INSTALL_SCRIPT = """\
 from firmware import appl_image_initialise, appl_image_store, info, flash_read
 from ubinascii import a2b_base64
 from umachine import reset
+from util import storage
 
 SLOT = {slot}
 PYBRICKS_SIZE = {size}
@@ -153,17 +154,9 @@ while next_read_index != pybricks_start - BLOCK_WRITE:
 # In the last padding block, include a backup of the original reset vector
 appl_image_store(FF * (BLOCK_WRITE - 4) + firmware_boot_vector)
 
-print(info())
-
 print('Opening Pybricks firmware.')
-
-# Open the slots file to determine the name of the current script.
-with open('projects/.slots', 'r') as slots_file:
-    slot_info = eval(slots_file.read())
-    current_script_name = 'projects/' + str(slot_info[SLOT]['id']) + '.py'
-
 # Open the current script
-script = open(current_script_name, 'rb')
+script = open(storage.get_path(SLOT) + '.py', 'rb')
 
 # Set read index to start of binary
 while script.readline().strip() != b'# ___FIRMWARE_BEGIN___':
