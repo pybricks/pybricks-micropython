@@ -96,7 +96,7 @@ ZIP = zip
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
 BUILD_DUAL_BOOT_BIN = $(PBTOP)/tools/build-dual-boot-bin.py
-BUILD_LLSP = $(PBTOP)/tools/build_llsp.py
+BUILD_DUAL_BOOT_INSTALLER = $(PBTOP)/tools/build-dual-boot-installer.py
 CHECKSUM = $(PBTOP)/tools/checksum.py
 CHECKSUM_TYPE ?= xor
 METADATA = $(PBTOP)/tools/metadata.py
@@ -450,7 +450,7 @@ SRC_QSTR_AUTO_DEPS +=
 TARGETS = $(BUILD)/firmware.zip $(BUILD)/firmware.bin
 
 # Optionally build LLSP project file
-ifeq ($(PB_BUILD_LLSP),1)
+ifeq ($(PB_BUILD_DUAL_BOOT_INSTALLER),1)
 TARGETS += $(BUILD)/install_pybricks.llsp
 endif
 
@@ -509,7 +509,7 @@ $(BUILD)/firmware-dual-boot.bin: $(BUILD)/firmware-dual-boot-base.bin $(BUILD_DU
 # firmware wrapped in LLSP format so it can be installed with official programming apps
 $(BUILD)/install_pybricks.llsp: $(BUILD)/firmware-dual-boot-base.bin
 	$(ECHO) "LLSP creating firmware installer"
-	$(Q)$(PYTHON) $(BUILD_LLSP) $(FW_VERSION)
+	$(Q)$(PYTHON) $(BUILD_DUAL_BOOT_INSTALLER) $(FW_VERSION)
 
 $(BUILD)/firmware.metadata.json: $(BUILD)/firmware-no-checksum.elf $(METADATA)
 	$(ECHO) "META creating firmware metadata"
