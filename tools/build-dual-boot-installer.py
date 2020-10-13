@@ -54,6 +54,8 @@ from firmware import appl_image_initialise, appl_image_store, info, flash_read
 from ubinascii import a2b_base64
 from umachine import reset
 from util import storage
+from spike import LightMatrix
+from utime import sleep_ms
 
 SLOT = {slot}
 PYBRICKS_SIZE = {size}
@@ -63,6 +65,16 @@ PYBRICKS_VECTOR = {pybricks_vector}
 BLOCK_READ = 32
 reads_per_write = BLOCK_WRITE // BLOCK_READ
 FF = bytes([255])
+
+# Function to display progress
+lights = LightMatrix()
+progress_shown = [0, 0, 0, 0, 0]
+def show_progress(row, progress):
+    pixels = int(progress)//20
+    if pixels > progress_shown[row]:
+        progress_shown[row] = pixels
+        for col in range(pixels):
+            lights.set_pixel(col, row)
 
 # Read boot data from the currently running firmware.
 PYBRICKS_BASE = 0x80C0000
@@ -96,13 +108,19 @@ next_read_index = 0
 
 print('Creating empty space for backup')
 
+# Show initial progress to indicate we are on our way.
+for i in range(4):
+    show_progress(0, i*20+20)
+    sleep_ms(500)
+
 # Initialize external flash up to the end of Pybricks
+# This is blocking, so we cannot update progress.
 appl_image_initialise(total_end)
+show_progress(0, 100)
 
 print('Begin backup of original firmware.')
 
 # Copy internal flash to external flash in order to back up original firmware.
-progress_print = None
 while next_read_index < checksum_address:
     # Read several chunks of 32 bytes into one block to write
     block = b''
@@ -123,10 +141,7 @@ while next_read_index < checksum_address:
         next_read_index = checksum_address
 
     # Display progress
-    progress = (next_read_index*100)//checksum_address
-    if progress != progress_print:
-        print(progress)
-        progress_print = progress
+    show_progress(1, (next_read_index*100)//checksum_address)
 
 # If we had kept track of CRC32 until this point, now would be the time
 # to compare it to the checksum
@@ -165,7 +180,6 @@ while script.readline().strip() != b'# ___FIRMWARE_BEGIN___':
 print('Begin backup of Pybricks firmware.')
 
 bytes_done = 0
-progress_print = None
 
 # Save binary to external flash
 while True:
@@ -190,10 +204,7 @@ while True:
 
     # Show progress
     bytes_done += len(decoded)
-    progress = (bytes_done*100)//PYBRICKS_SIZE
-    if progress != progress_print:
-        print(progress)
-        progress_print = progress
+    show_progress(2, (bytes_done*100)//PYBRICKS_SIZE)
 
 overall_checksum = info()['new_appl_image_calc_checksum']
 appl_image_store(overall_checksum.to_bytes(4, 'little'))
@@ -203,7 +214,7 @@ if result['valid'] == 1:
     print('Succes! The firmware will be installed after reboot.')
     reset()
 else:
-    print('Could not back up the firmware. No changed will be made.')
+    print('Could not back up the firmware. No changes will be made.')
     print(result)
 
 """.format(
