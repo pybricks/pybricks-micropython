@@ -78,26 +78,26 @@ def show_progress(row, progress):
 
 # Read boot data from the currently running firmware.
 PYBRICKS_BASE = 0x80C0000
-OFFSET = 0x8008000
+FLASH_OFFSET = 0x8008000
 start_data = flash_read(0x000)
 boot_data = flash_read(0x200)
 
 # Store Pybricks starting on final section of 256K free space
-pybricks_start = PYBRICKS_BASE - OFFSET
-pybricks_end = pybricks_start + PYBRICKS_SIZE
-total_end = pybricks_end + EXTRA_SIZE
+pybricks_start_position = PYBRICKS_BASE - FLASH_OFFSET
+pybricks_end_position = pybricks_start_position + PYBRICKS_SIZE
+total_size = pybricks_end_position + EXTRA_SIZE
 
-firmware_version_address = int.from_bytes(boot_data[0:4], 'little') - OFFSET
-firmware_version = flash_read(firmware_version_address)[0:20]
-checksum_address = int.from_bytes(boot_data[4:8], 'little') - OFFSET
-checksum_value = int.from_bytes(flash_read(checksum_address)[0:4], 'little')
-firmware_end_address = checksum_address + 4
+firmware_version_position = int.from_bytes(boot_data[0:4], 'little') - FLASH_OFFSET
+firmware_version = flash_read(firmware_version_position)[0:20]
+checksum_position = int.from_bytes(boot_data[4:8], 'little') - FLASH_OFFSET
+checksum_value = int.from_bytes(flash_read(checksum_position)[0:4], 'little')
+firmware_size = checksum_position + 4
 
 # Read boot vector
 firmware_boot_vector = start_data[4:8]
 if int.from_bytes(firmware_boot_vector, 'little') > PYBRICKS_BASE:
     # Boot vector was pointing at Pybricks, so we need to read the backup
-    firmware_boot_vector = flash_read(pybricks_start - 4)[0:4]
+    firmware_boot_vector = flash_read(pybricks_start_position - 4)[0:4]
 
 if firmware_boot_vector == FF*4:
     raise ValueError('Could not find reset vector.')
@@ -115,13 +115,13 @@ for i in range(4):
 
 # Initialize external flash up to the end of Pybricks
 # This is blocking, so we cannot update progress.
-appl_image_initialise(total_end)
+appl_image_initialise(total_size)
 show_progress(0, 100)
 
 print('Begin backup of original firmware.')
 
 # Copy internal flash to external flash in order to back up original firmware.
-while next_read_index < checksum_address:
+while next_read_index < checksum_position:
     # Read several chunks of 32 bytes into one block to write
     block = b''
     for i in range(reads_per_write):
@@ -133,26 +133,26 @@ while next_read_index < checksum_address:
         block = block[0:4] + PYBRICKS_VECTOR.to_bytes(4, 'little') + block[8:]
 
     # Write the whole block, except if at or beyond checksum
-    if next_read_index < checksum_address:
+    if next_read_index < checksum_position:
         appl_image_store(block)
     else:
-        block_end = BLOCK_WRITE - next_read_index + checksum_address
+        block_end = BLOCK_WRITE - next_read_index + checksum_position
         appl_image_store(block[0:block_end])
-        next_read_index = checksum_address
+        next_read_index = checksum_position
 
     # Display progress
-    show_progress(1, (next_read_index*100)//checksum_address)
+    show_progress(1, (next_read_index*100)//checksum_position)
 
 # If we had kept track of CRC32 until this point, now would be the time
 # to compare it to the checksum
 
 # Finally we can write the original checksum itself
-appl_image_store(flash_read(checksum_address)[0:4])
+appl_image_store(flash_read(checksum_position)[0:4])
 next_read_index += 4
 
 # Add padding to the next whole write block
-if (firmware_end_address % BLOCK_WRITE) != 0:
-    padding = BLOCK_WRITE - (firmware_end_address % BLOCK_WRITE)
+if (firmware_size % BLOCK_WRITE) != 0:
+    padding = BLOCK_WRITE - (firmware_size % BLOCK_WRITE)
     next_read_index += padding
     appl_image_store(FF*padding)
 print(info())
@@ -162,7 +162,7 @@ print('Skipping empty space.')
 # Add padding up until the start of Pybricks
 ff_block = FF * BLOCK_WRITE
 
-while next_read_index != pybricks_start - BLOCK_WRITE:
+while next_read_index != pybricks_start_position - BLOCK_WRITE:
     appl_image_store(ff_block)
     next_read_index += BLOCK_WRITE
 
