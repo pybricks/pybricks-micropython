@@ -66,18 +66,19 @@ BLOCK_READ = 32
 PYBRICKS_BASE = 0x80C0000
 FLASH_OFFSET = 0x8008000
 reads_per_write = BLOCK_WRITE // BLOCK_READ
+total_fw_size = PYBRICKS_BASE + PYBRICKS_SIZE - FLASH_OFFSET + 4
 
 FF = bytes([255])
 
 # Function to display progress
 lights = LightMatrix()
-progress_shown = [0, 0, 0, 0, 0]
-def show_progress(row, progress):
-    pixels = int(progress)//20
-    if pixels > progress_shown[row]:
-        progress_shown[row] = pixels
-        for col in range(pixels):
-            lights.set_pixel(col, row)
+pixels_on = 0
+def show_progress(progress):
+    global pixels_on
+    pixels_now = int(progress) // 4
+    if pixels_now > pixels_on:
+        for i in range(pixels_on, pixels_now):
+            lights.set_pixel(i % 5, i // 5)
 
 
 def get_base_firmware_boot_vector():
@@ -108,14 +109,13 @@ def initialize_flash():
 
     # Show initial progress to indicate we are on our way.
     for i in range(4):
-        show_progress(0, i*20+20)
+        show_progress(i*4+4)
         sleep_ms(500)
 
     # Initialize external flash up to the end of Pybricks
-    # with four extra bytes for the overall checksum
     # This is blocking, so we cannot update progress.
-    appl_image_initialise(PYBRICKS_BASE + PYBRICKS_SIZE - FLASH_OFFSET + 4)
-    show_progress(0, 100)
+    appl_image_initialise(total_fw_size)
+    show_progress(20)
 
 
 # Gets the original firmware with the updated boot vector.
@@ -200,7 +200,7 @@ for block in get_combined_firmware():
 
     # Display progress
     bytes_written += len(block)
-    # show_progress(1, FIXME)
+    show_progress(bytes_written * 100 // total_fw_size)
 
 print('Opening Pybricks firmware.')
 # Open the current script
@@ -237,7 +237,7 @@ while True:
 
     # Show progress
     bytes_done += len(decoded)
-    show_progress(2, (bytes_done*100)//PYBRICKS_SIZE)
+    # show_progress(2, (bytes_done*100)//PYBRICKS_SIZE)
 
 overall_checksum = info()['new_appl_image_calc_checksum']
 appl_image_store(overall_checksum.to_bytes(4, 'little'))
