@@ -241,16 +241,24 @@ for block in get_combined_firmware():
     bytes_written += len(block)
     show_progress(bytes_written * 100 // total_fw_size)
 
+# Get the combined checksum and store it
 overall_checksum = info()['new_appl_image_calc_checksum']
 appl_image_store(overall_checksum.to_bytes(4, 'little'))
+
+# Verify that all is well and done
 result = info()
-show_progress(100)
-sleep_ms(1000)
 
 if result['valid'] == 1:
+    # Show final progress and then reboot
     print('Succes! The firmware will be installed after reboot.')
+    show_progress(100)
+    sleep_ms(1000)
     reset()
 else:
+    # Failure, so remove the new copy. This prevents any updates.
+    appl_image_initialise(0)
+
+    # Indicate failure and output the firmware status.
     print('Could not back up the firmware. No changes will be made.')
     print(result)
 
