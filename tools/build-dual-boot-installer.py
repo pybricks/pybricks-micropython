@@ -14,13 +14,13 @@ from sys import argv
 BUILD_PATH = "build"
 TOOLS_PATH = "../../tools"
 
-# Get release and git version
+# Get release and git version.
 version = argv[1]
 
-# User program slot
+# User program slot.
 SLOT = 19
 
-# Manifest file that goes into the project zip
+# Manifest file that goes into the project zip.
 MANIFEST = {
     "type": "python",
     "autoDelete": False,
@@ -39,15 +39,15 @@ MANIFEST = {
 BLOCK_WRITE_SIZE = 128
 
 # Read the Pybricks firmware.
-with open(path.join(BUILD_PATH, "firmware-dual-boot-base.bin"), "rb") as firmware:
-    pybricks_bin = firmware.read()
+with open(path.join(BUILD_PATH, "firmware-dual-boot-base.bin"), "rb") as fw:
+    pybricks_bin = fw.read()
 
 # This is the main script that will be run inside the SPIKE Prime app.
 INSTALL_SCRIPT = """\
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2018-2020 The Pybricks Authors
 
-# Pybricks installer for SPIKE Prime and MINDSTORMS Robot Inventor
+# Pybricks installer for SPIKE Prime and MINDSTORMS Robot Inventor.
 # Version: {version}
 
 from firmware import appl_image_initialise, appl_image_store, info, flash_read
@@ -57,23 +57,27 @@ from util import storage
 from spike import LightMatrix
 from utime import sleep_ms
 
+# Firmware information.
 SLOT = {slot}
 PYBRICKS_SIZE = {size}
 BLOCK_WRITE = {block_write}
 PYBRICKS_VECTOR = {pybricks_vector}
 
+# Settings for reading and writing to external storage.
 BLOCK_READ = 32
 PYBRICKS_BASE = 0x80C0000
 FLASH_OFFSET = 0x8008000
 reads_per_write = BLOCK_WRITE // BLOCK_READ
 total_fw_size = PYBRICKS_BASE + PYBRICKS_SIZE - FLASH_OFFSET + 4
-
 FF = bytes([255])
 
-# Function to display progress
+# Initialize light matrix.
 lights = LightMatrix()
 pixels_on = 0
+
+
 def show_progress(progress):
+    '''Shows installation progress on the light matrix.'''
     global pixels_on
     pixels_now = int(progress) // 4
     if pixels_now > pixels_on:
@@ -82,28 +86,31 @@ def show_progress(progress):
 
 
 def get_base_firmware_boot_vector():
-    # Read from base firmware location
+    '''Gets the boot vector of the original firmware.'''
+
+    # Read from base firmware location.
     firmware_boot_vector = flash_read(0x000)[4:8]
 
     # If it's not pointing at Pybricks, return as is.
     if int.from_bytes(firmware_boot_vector, 'little') < PYBRICKS_BASE:
         return firmware_boot_vector
 
-    # Otherwise read the boot vector in Pybricks
+    # Otherwise read the boot vector in Pybricks.
     pybricks_boot_vector = flash_read(PYBRICKS_BASE - FLASH_OFFSET - 4)[0:4]
 
-    # We also read it from the back up location as a safety check
-    backup_boot_vector = flash_read(PYBRICKS_BASE - FLASH_OFFSET + 4)[0:4]
+    # We also read it from the back up location as a safety check.
+    alt_boot_vector = flash_read(PYBRICKS_BASE - FLASH_OFFSET + 4)[0:4]
 
-    # They must be equal and not empty
-    if pybricks_boot_vector != backup_boot_vector or backup_boot_vector == 4 * FF:
+    # They must be equal and not empty.
+    if pybricks_boot_vector != alt_boot_vector or alt_boot_vector == 4 * FF:
         raise ValueError('Could not read boot vector.')
 
-    # Return result
+    # Return result.
     return pybricks_boot_vector
 
 
 def initialize_flash():
+    '''Creates empty space on external flash to store the combined firmware.'''
 
     print('Creating empty space for backup')
 
@@ -112,28 +119,28 @@ def initialize_flash():
         show_progress(i*4+4)
         sleep_ms(1000)
 
-    # Initialize external flash up to the end of Pybricks
+    # Initialize external flash up to the end of Pybricks.
     # This is blocking, so we cannot update progress.
     appl_image_initialise(total_fw_size)
     show_progress(20)
 
 
-# Gets the original firmware with the updated boot vector.
 def get_base_firmware():
+    '''Gets the original firmware with the updated Pybricks boot vector.'''
 
-    # Read current base firmware version
+    # Read current base firmware version.
     boot_data = flash_read(0x200)
-    firmware_version_position = int.from_bytes(boot_data[0:4], 'little') - FLASH_OFFSET
-    firmware_version = flash_read(firmware_version_position)[0:20]
-    print('Begin reading original firmware:', firmware_version)
+    version_position = int.from_bytes(boot_data[0:4], 'little') - FLASH_OFFSET
+    version = flash_read(version_position)[0:20]
+    print('Begin reading original firmware:', version)
 
-    # Read where the checksum is so we know the base firmware size
+    # Read where the checksum is so we know the base firmware size.
     checksum_position = int.from_bytes(boot_data[4:8], 'little') - FLASH_OFFSET
     base_firmware_size = checksum_position + 4
 
     bytes_read = 0
 
-    # Yield new blocks until done
+    # Yield new blocks until done.
     while bytes_read < base_firmware_size:
 
         # Read several chunks of 32 bytes into one block.
@@ -146,69 +153,72 @@ def get_base_firmware():
         if bytes_read == BLOCK_WRITE:
             block = block[0:4] + PYBRICKS_VECTOR.to_bytes(4, 'little') + block[8:]
 
-        # If we read past the end, cut off the extraneous bytes
+        # If we read past the end, cut off the extraneous bytes.
         if bytes_read > base_firmware_size:
             block = block[0 : base_firmware_size % BLOCK_WRITE]
 
-        # Yield the resulting block
+        # Yield the resulting block.
         yield block
 
 
-# Gets empty padding blocks with extra information put in at the end
 def get_padding(padding_length, extra_info):
+    '''Gets empty padding blocks with extra information put in at the end.'''
 
     if len(extra_info) > padding_length:
         raise ValueError('Padding not large enough for extra data.')
 
-    # Total padding size
+    # Total padding size.
     padding_ff = padding_length - len(extra_info)
 
-    # Pad whole blocks as far as we can
+    # Pad whole blocks as far as we can.
     for _ in range(padding_ff // BLOCK_WRITE):
         yield FF * BLOCK_WRITE
 
-    # Pad remaining FF as a partial block
+    # Pad remaining FF as a partial block.
     yield FF * (padding_ff % BLOCK_WRITE)
 
-    # Padd the extra info
+    # Padd the extra info.
     yield extra_info
 
 
-# Strips start and end to get the base64 string, and decodes it.
 def get_bytes_from_line(line):
+    '''Strips the firmware text lines and decodes base64 values to bytes.'''
     return a2b_base64(line[2:len(line)-1])
 
 
 def get_pybricks_firmware(base_firmware_boot_vector):
+    '''Reads the Pybricks firmware from the data strings in this file.'''
 
     print('Opening Pybricks firmware.')
-    # Open the current script
+    # Open the current script.
     script = open(storage.get_path(SLOT) + '.py', 'rb')
 
-    # Set read index to start of binary
+    # Set read index to start of binary.
     while script.readline().strip() != b'# ___FIRMWARE_BEGIN___':
         pass
 
-    # Read first line and decode it
+    # Read first line and decode it.
     decoded = get_bytes_from_line(script.readline())
     bytes_done = len(decoded)
 
-    # Return the first block with the updated boot vector
+    # Return the first block with the updated boot vector.
     yield decoded[0:4] + base_firmware_boot_vector + decoded[8:]
 
-    # Read Pybricks binary
+    # Read Pybricks binary.
     while bytes_done < PYBRICKS_SIZE:
 
-        # Read next line and decode it
+        # Read next line and decode it.
         decoded = get_bytes_from_line(script.readline())
 
-        # Track progress
+        # Track progress.
         bytes_done += len(decoded)
 
+        # Yield result.
         yield decoded
 
 
 def get_combined_firmware():
+    '''Glues the base firmware, padding, and Pybricks firmware to one blob.'''
 
     base_firmware_size = 0
     base_firmware_boot_vector = get_base_firmware_boot_vector()
@@ -217,39 +227,38 @@ def get_combined_firmware():
         base_firmware_size += len(block)
         yield block
 
-    for block in get_padding(PYBRICKS_BASE - FLASH_OFFSET - base_firmware_size, base_firmware_boot_vector):
+    padding_length = PYBRICKS_BASE - FLASH_OFFSET - base_firmware_size
+    for block in get_padding(padding_length, base_firmware_boot_vector):
         yield block
 
     for block in get_pybricks_firmware(base_firmware_boot_vector):
         yield block
 
 
-# Get external flash ready
+# The main script starts here. First, get external flash ready.
 initialize_flash()
-
-# Write the combined firmware to external flash
 bytes_written = 0
 
-# Read base firmware and copy it to external flash, including padding to next
+# Read base firmware and copy it to external flash, including padding to next.
 for block in get_combined_firmware():
 
-    # Store the block from internal flash on external flash
+    # Store the block from internal flash on external flash.
     if len(block) > 0:
         appl_image_store(block)
 
-    # Display progress
+    # Display progress.
     bytes_written += len(block)
     show_progress(bytes_written * 100 // total_fw_size)
 
-# Get the combined checksum and store it
+# Get the combined checksum and store it.
 overall_checksum = info()['new_appl_image_calc_checksum']
 appl_image_store(overall_checksum.to_bytes(4, 'little'))
 
-# Verify that all is well and done
+# Verify that all is well and done.
 result = info()
 
 if result['valid'] == 1:
-    # Show final progress and then reboot
+    # Show final progress and then reboot.
     print('Succes! The firmware will be installed after reboot.')
     show_progress(100)
     sleep_ms(1000)
@@ -270,16 +279,16 @@ else:
     pybricks_vector=int.from_bytes(pybricks_bin[4:8], "little"),
 )
 
-# Write script to a Python file
+# Write script to a Python file.
 with open(path.join(BUILD_PATH, "dual_boot_install_pybricks.py"), "w") as installer:
 
     # Write the main code
     installer.write(INSTALL_SCRIPT)
 
-    # Write flag to indicate firmware start
+    # Write flag to indicate firmware start.
     installer.write("# ___FIRMWARE_BEGIN___\n")
 
-    # Write binary segment in base64 format as a comment
+    # Write binary segment in base64 format as a comment.
     done = 0
     while done != len(pybricks_bin):
         block = pybricks_bin[done : done + BLOCK_WRITE_SIZE]
@@ -287,7 +296,7 @@ with open(path.join(BUILD_PATH, "dual_boot_install_pybricks.py"), "w") as instal
         installer.write("# {0}\n".format(encoded.decode("ascii")))
         done += len(block)
 
-# Write the manifest to file
+# Write the manifest to file.
 with open(path.join(BUILD_PATH, "dual_boot_manifest.json"), "w") as manifest:
     manifest.write(dumps(MANIFEST))
 
@@ -298,7 +307,7 @@ with open(path.join(BUILD_PATH, "dual_boot_install_pybricks.py"), "r") as instal
         blob = installer.read().replace("\n", "\\n")
         body.write('{{"program":"{0}"}}'.format(blob))
 
-# Combine all files in the project archive
+# Combine all files in the project archive.
 for ext in ("llsp", "lms"):
     archive = ZipFile(path.join(BUILD_PATH, "install_pybricks." + ext), "w")
     archive.write(path.join(BUILD_PATH, "dual_boot_projectbody.json"), "projectbody.json")
