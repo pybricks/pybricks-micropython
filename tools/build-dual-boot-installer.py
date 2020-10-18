@@ -90,14 +90,28 @@ checksum_position = int.from_bytes(boot_data[4:8], 'little') - FLASH_OFFSET
 checksum_value = int.from_bytes(flash_read(checksum_position)[0:4], 'little')
 firmware_size = checksum_position + 4
 
-# Read boot vector
-firmware_boot_vector = flash_read(0x000)[4:8]
-if int.from_bytes(firmware_boot_vector, 'little') > PYBRICKS_BASE:
-    # Boot vector was pointing at Pybricks, so we need to read the backup
-    firmware_boot_vector = flash_read(pybricks_start_position - 4)[0:4]
 
-if firmware_boot_vector == FF*4:
-    raise ValueError('Could not find reset vector.')
+def get_base_firmware_boot_vector():
+    # Read from base firmware location
+    firmware_boot_vector = flash_read(0x000)[4:8]
+
+    # If it's not pointing at Pybricks, return as is.
+    if int.from_bytes(firmware_boot_vector, 'little') < PYBRICKS_BASE:
+        return firmware_boot_vector
+
+    # Otherwise read the boot vector in Pybricks
+    pybricks_boot_vector = flash_read(pybricks_start_position - 4)[0:4]
+
+    # We also read it from the back up location as a safety check
+    backup_boot_vector = flash_read(pybricks_start_position + 4)[0:4]
+
+    # They must be equal and not empty
+    if pybricks_boot_vector != backup_boot_vector or backup_boot_vector == 4 * FF:
+        raise ValueError('Could not read boot vector.')
+
+    # Return result
+    return pybricks_boot_vector
+
 
 def initialize_flash():
 
@@ -164,12 +178,13 @@ def get_padding(padding_length, extra_info):
 def get_combined_firmware():
 
     base_firmware_size = 0
+    base_firmware_boot_vector = get_base_firmware_boot_vector()
 
     for block in get_base_firmware(firmware_size, PYBRICKS_VECTOR):
         base_firmware_size += len(block)
         yield block
 
-    for block in get_padding(pybricks_start_position - base_firmware_size, firmware_boot_vector):
+    for block in get_padding(pybricks_start_position - base_firmware_size, base_firmware_boot_vector):
         yield block
 
 # Get external flash ready
@@ -218,7 +233,7 @@ while True:
 
     # In the first block, override the boot vector
     if bytes_done == 0:
-        decoded = decoded[0:4] + firmware_boot_vector + decoded[8:]
+        decoded = decoded[0:4] + get_base_firmware_boot_vector() + decoded[8:]
 
     appl_image_store(decoded)
 
