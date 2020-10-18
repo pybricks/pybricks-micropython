@@ -143,27 +143,33 @@ def get_base_firmware(size, new_boot_vector):
 
 
 # Gets empty padding blocks with extra information put in at the end
-def get_padding(base_firmware_size, second_firmware_start, extra_info):
+def get_padding(padding_length, extra_info):
+
+    if len(extra_info) > padding_length:
+        raise ValueError('Padding not large enough for extra data.')
 
     # Total padding size
-    padding_size = second_firmware_start - len(extra_info) - base_firmware_size
+    padding_ff = padding_length - len(extra_info)
 
     # Pad whole blocks as far as we can
-    for _ in range(padding_size // BLOCK_WRITE):
+    for _ in range(padding_ff // BLOCK_WRITE):
         yield FF * BLOCK_WRITE
 
     # Pad remaining FF as a partial block
-    yield FF * (padding_size % BLOCK_WRITE)
+    yield FF * (padding_ff % BLOCK_WRITE)
 
     # Padd the extra info
     yield extra_info
 
 def get_combined_firmware():
 
+    base_firmware_size = 0
+
     for block in get_base_firmware(firmware_size, PYBRICKS_VECTOR):
+        base_firmware_size += len(block)
         yield block
 
-    for block in get_padding(firmware_size, pybricks_start_position, firmware_boot_vector):
+    for block in get_padding(pybricks_start_position - base_firmware_size, firmware_boot_vector):
         yield block
 
 # Get external flash ready
@@ -176,7 +182,8 @@ bytes_written = 0
 for block in get_combined_firmware():
 
     # Store the block from internal flash on external flash
-    appl_image_store(block)
+    if len(block) > 0:
+        appl_image_store(block)
 
     # Display progress
     bytes_written += len(block)
