@@ -102,22 +102,24 @@ if int.from_bytes(firmware_boot_vector, 'little') > PYBRICKS_BASE:
 if firmware_boot_vector == FF*4:
     raise ValueError('Could not find reset vector.')
 
-print('Creating empty space for backup')
+def initialize_flash():
 
-# Show initial progress to indicate we are on our way.
-for i in range(4):
-    show_progress(0, i*20+20)
-    sleep_ms(500)
+    print('Creating empty space for backup')
 
-# Initialize external flash up to the end of Pybricks
-# This is blocking, so we cannot update progress.
-appl_image_initialise(total_size)
-show_progress(0, 100)
+    # Show initial progress to indicate we are on our way.
+    for i in range(4):
+        show_progress(0, i*20+20)
+        sleep_ms(500)
 
-print('Begin backup of original firmware.')
+    # Initialize external flash up to the end of Pybricks
+    # This is blocking, so we cannot update progress.
+    appl_image_initialise(total_size)
+    show_progress(0, 100)
 
 # Gets the original firmware with the updated boot vector.
-def read_base_firmware(size, new_boot_vector):
+def get_base_firmware(size, new_boot_vector):
+
+    print('Begin reading original firmware.')
 
     bytes_read = 0
 
@@ -134,38 +136,53 @@ def read_base_firmware(size, new_boot_vector):
         if bytes_read == BLOCK_WRITE:
             block = block[0:4] + new_boot_vector.to_bytes(4, 'little') + block[8:]
 
-        # Pad last block with FF up to whole write size. We currently do not
-        # update the checksum to save time, since it is not checked on boot.
+        # If we read past the end, cut off the extraneous bytes
         if bytes_read > size:
-            rest = size - bytes_read
-            block = block[0 : rest] + bytes([255]) * (BLOCK_WRITE - rest)
+            block = block[0 : size % BLOCK_WRITE]
 
         # Yield the resulting block
         yield block
 
+
+# Gets empty padding blocks with extra information put in at the end
+def get_padding(base_firmware_size, second_firmware_start, extra_info):
+
+    # Total padding size
+    padding_size = second_firmware_start - len(extra_info) - base_firmware_size
+
+    # Pad whole blocks as far as we can
+    for _ in range(padding_size // BLOCK_WRITE):
+        yield FF * BLOCK_WRITE
+
+    # Pad remaining FF as a partial block
+    yield FF * (padding_size % BLOCK_WRITE)
+
+    # Padd the extra info
+    yield extra_info
+
+def get_combined_firmware():
+
+    for block in get_base_firmware(firmware_size, PYBRICKS_VECTOR):
+        yield block
+
+    for block in get_padding(firmware_size, pybricks_start_position, firmware_boot_vector):
+        yield block
+
+# Get external flash ready
+initialize_flash()
+
+# Write the combined firmware to external flash
 bytes_written = 0
 
-# Read base firmware and copy it to external flash
-for block in read_base_firmware(firmware_size, PYBRICKS_VECTOR):
+# Read base firmware and copy it to external flash, including padding to next
+for block in get_combined_firmware():
 
     # Store the block from internal flash on external flash
     appl_image_store(block)
 
     # Display progress
     bytes_written += len(block)
-    show_progress(1, bytes_written * 100 // firmware_size)
-
-print('Skipping empty space.')
-
-# Add padding up until the start of Pybricks
-ff_block = FF * BLOCK_WRITE
-
-while bytes_written != pybricks_start_position - BLOCK_WRITE:
-    appl_image_store(ff_block)
-    bytes_written += len(ff_block)
-
-# In the last padding block, include a backup of the original reset vector
-appl_image_store(FF * (BLOCK_WRITE - 4) + firmware_boot_vector)
+    show_progress(1, bytes_written * 100 // pybricks_start_position)
 
 print('Opening Pybricks firmware.')
 # Open the current script
