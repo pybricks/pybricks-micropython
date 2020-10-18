@@ -47,7 +47,7 @@ INSTALL_SCRIPT = """\
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2018-2020 The Pybricks Authors
 
-# Pybricks installer for SPIKE Prime
+# Pybricks installer for SPIKE Prime and MINDSTORMS Robot Inventor
 # Version: {version}
 
 from firmware import appl_image_initialise, appl_image_store, info, flash_read
@@ -110,7 +110,7 @@ def initialize_flash():
     # Show initial progress to indicate we are on our way.
     for i in range(4):
         show_progress(i*4+4)
-        sleep_ms(500)
+        sleep_ms(1000)
 
     # Initialize external flash up to the end of Pybricks
     # This is blocking, so we cannot update progress.
@@ -173,6 +173,41 @@ def get_padding(padding_length, extra_info):
     # Padd the extra info
     yield extra_info
 
+
+# Strips start and end to get the base64 string, and decodes it.
+def get_bytes_from_line(line):
+    return a2b_base64(line[2:len(line)-1])
+
+
+def get_pybricks_firmware(base_firmware_boot_vector):
+
+    print('Opening Pybricks firmware.')
+    # Open the current script
+    script = open(storage.get_path(SLOT) + '.py', 'rb')
+
+    # Set read index to start of binary
+    while script.readline().strip() != b'# ___FIRMWARE_BEGIN___':
+        pass
+
+    # Read first line and decode it
+    decoded = get_bytes_from_line(script.readline())
+    bytes_done = len(decoded)
+
+    # Return the first block with the updated boot vector
+    yield decoded[0:4] + base_firmware_boot_vector + decoded[8:]
+
+    # Read Pybricks binary
+    while bytes_done < PYBRICKS_SIZE:
+
+        # Read next line and decode it
+        decoded = get_bytes_from_line(script.readline())
+
+        # Track progress
+        bytes_done += len(decoded)
+
+        yield decoded
+
+
 def get_combined_firmware():
 
     base_firmware_size = 0
@@ -184,6 +219,10 @@ def get_combined_firmware():
 
     for block in get_padding(PYBRICKS_BASE - FLASH_OFFSET - base_firmware_size, base_firmware_boot_vector):
         yield block
+
+    for block in get_pybricks_firmware(base_firmware_boot_vector):
+        yield block
+
 
 # Get external flash ready
 initialize_flash()
@@ -202,46 +241,11 @@ for block in get_combined_firmware():
     bytes_written += len(block)
     show_progress(bytes_written * 100 // total_fw_size)
 
-print('Opening Pybricks firmware.')
-# Open the current script
-script = open(storage.get_path(SLOT) + '.py', 'rb')
-
-# Set read index to start of binary
-while script.readline().strip() != b'# ___FIRMWARE_BEGIN___':
-    pass
-
-print('Begin backup of Pybricks firmware.')
-
-bytes_done = 0
-
-# Save binary to external flash
-while True:
-    # Read next line
-    line = script.readline()
-
-    # Stop if we are at the end
-    if line.strip() == b'# ___FIRMWARE_END___':
-        break
-
-    # Get the base64 string
-    base64 = line[2:len(line)-1]
-
-    # Decode and write
-    decoded = a2b_base64(base64)
-
-    # In the first block, override the boot vector
-    if bytes_done == 0:
-        decoded = decoded[0:4] + get_base_firmware_boot_vector() + decoded[8:]
-
-    appl_image_store(decoded)
-
-    # Show progress
-    bytes_done += len(decoded)
-    # show_progress(2, (bytes_done*100)//PYBRICKS_SIZE)
-
 overall_checksum = info()['new_appl_image_calc_checksum']
 appl_image_store(overall_checksum.to_bytes(4, 'little'))
 result = info()
+show_progress(100)
+sleep_ms(1000)
 
 if result['valid'] == 1:
     print('Succes! The firmware will be installed after reboot.')
@@ -274,9 +278,6 @@ with open(path.join(BUILD_PATH, "dual_boot_install_pybricks.py"), "w") as instal
         encoded = b64encode(block)
         installer.write("# {0}\n".format(encoded.decode("ascii")))
         done += len(block)
-
-    # Write flag to indicate firmware end
-    installer.write("# ___FIRMWARE_END___\n")
 
 # Write the manifest to file
 with open(path.join(BUILD_PATH, "dual_boot_manifest.json"), "w") as manifest:
