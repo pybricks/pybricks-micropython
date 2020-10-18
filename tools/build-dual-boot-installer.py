@@ -59,7 +59,6 @@ from utime import sleep_ms
 
 SLOT = {slot}
 PYBRICKS_SIZE = {size}
-EXTRA_SIZE = 4
 BLOCK_WRITE = {block_write}
 PYBRICKS_VECTOR = {pybricks_vector}
 BLOCK_READ = 32
@@ -79,14 +78,12 @@ def show_progress(row, progress):
 # Read boot data from the currently running firmware.
 PYBRICKS_BASE = 0x80C0000
 FLASH_OFFSET = 0x8008000
-start_data = flash_read(0x000)
-boot_data = flash_read(0x200)
 
 # Store Pybricks starting on final section of 256K free space
 pybricks_start_position = PYBRICKS_BASE - FLASH_OFFSET
 pybricks_end_position = pybricks_start_position + PYBRICKS_SIZE
-total_size = pybricks_end_position + EXTRA_SIZE
 
+boot_data = flash_read(0x200)
 firmware_version_position = int.from_bytes(boot_data[0:4], 'little') - FLASH_OFFSET
 firmware_version = flash_read(firmware_version_position)[0:20]
 checksum_position = int.from_bytes(boot_data[4:8], 'little') - FLASH_OFFSET
@@ -94,7 +91,7 @@ checksum_value = int.from_bytes(flash_read(checksum_position)[0:4], 'little')
 firmware_size = checksum_position + 4
 
 # Read boot vector
-firmware_boot_vector = start_data[4:8]
+firmware_boot_vector = flash_read(0x000)[4:8]
 if int.from_bytes(firmware_boot_vector, 'little') > PYBRICKS_BASE:
     # Boot vector was pointing at Pybricks, so we need to read the backup
     firmware_boot_vector = flash_read(pybricks_start_position - 4)[0:4]
@@ -112,8 +109,9 @@ def initialize_flash():
         sleep_ms(500)
 
     # Initialize external flash up to the end of Pybricks
+    # with four extra bytes for the overall checksum
     # This is blocking, so we cannot update progress.
-    appl_image_initialise(total_size)
+    appl_image_initialise(pybricks_end_position + 4)
     show_progress(0, 100)
 
 # Gets the original firmware with the updated boot vector.
