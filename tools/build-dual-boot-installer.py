@@ -102,10 +102,6 @@ if int.from_bytes(firmware_boot_vector, 'little') > PYBRICKS_BASE:
 if firmware_boot_vector == FF*4:
     raise ValueError('Could not find reset vector.')
 
-# Original firmware starts directly after bootloader. This is where flash_read
-# has index 0.
-next_read_index = 0
-
 print('Creating empty space for backup')
 
 # Show initial progress to indicate we are on our way.
@@ -120,51 +116,53 @@ show_progress(0, 100)
 
 print('Begin backup of original firmware.')
 
-# Copy internal flash to external flash in order to back up original firmware.
-while next_read_index < checksum_position:
-    # Read several chunks of 32 bytes into one block to write
-    block = b''
-    for i in range(reads_per_write):
-        block += flash_read(next_read_index)
-        next_read_index += BLOCK_READ
+# Gets the original firmware with the updated boot vector.
+def read_base_firmware(size, new_boot_vector):
 
-    # We modify the very first block to change the boot vector
-    if next_read_index == BLOCK_WRITE:
-        block = block[0:4] + PYBRICKS_VECTOR.to_bytes(4, 'little') + block[8:]
+    bytes_read = 0
 
-    # Write the whole block, except if at or beyond checksum
-    if next_read_index < checksum_position:
-        appl_image_store(block)
-    else:
-        block_end = BLOCK_WRITE - next_read_index + checksum_position
-        appl_image_store(block[0:block_end])
-        next_read_index = checksum_position
+    # Yield new blocks until done
+    while bytes_read < size:
+
+        # Read several chunks of 32 bytes into one block.
+        block = b''
+        for i in range(reads_per_write):
+            block += flash_read(bytes_read)
+            bytes_read += BLOCK_READ
+
+        # The first block is updated with the desired boot vector.
+        if bytes_read == BLOCK_WRITE:
+            block = block[0:4] + new_boot_vector.to_bytes(4, 'little') + block[8:]
+
+        # Pad last block with FF up to whole write size. We currently do not
+        # update the checksum to save time, since it is not checked on boot.
+        if bytes_read > size:
+            rest = size - bytes_read
+            block = block[0 : rest] + bytes([255]) * (BLOCK_WRITE - rest)
+
+        # Yield the resulting block
+        yield block
+
+bytes_written = 0
+
+# Read base firmware and copy it to external flash
+for block in read_base_firmware(firmware_size, PYBRICKS_VECTOR):
+
+    # Store the block from internal flash on external flash
+    appl_image_store(block)
 
     # Display progress
-    show_progress(1, (next_read_index*100)//checksum_position)
-
-# If we had kept track of CRC32 until this point, now would be the time
-# to compare it to the checksum
-
-# Finally we can write the original checksum itself
-appl_image_store(flash_read(checksum_position)[0:4])
-next_read_index += 4
-
-# Add padding to the next whole write block
-if (firmware_size % BLOCK_WRITE) != 0:
-    padding = BLOCK_WRITE - (firmware_size % BLOCK_WRITE)
-    next_read_index += padding
-    appl_image_store(FF*padding)
-print(info())
+    bytes_written += len(block)
+    show_progress(1, bytes_written * 100 // firmware_size)
 
 print('Skipping empty space.')
 
 # Add padding up until the start of Pybricks
 ff_block = FF * BLOCK_WRITE
 
-while next_read_index != pybricks_start_position - BLOCK_WRITE:
+while bytes_written != pybricks_start_position - BLOCK_WRITE:
     appl_image_store(ff_block)
-    next_read_index += BLOCK_WRITE
+    bytes_written += len(ff_block)
 
 # In the last padding block, include a backup of the original reset vector
 appl_image_store(FF * (BLOCK_WRITE - 4) + firmware_boot_vector)
