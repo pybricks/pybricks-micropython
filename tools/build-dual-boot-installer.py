@@ -61,8 +61,12 @@ SLOT = {slot}
 PYBRICKS_SIZE = {size}
 BLOCK_WRITE = {block_write}
 PYBRICKS_VECTOR = {pybricks_vector}
+
 BLOCK_READ = 32
+PYBRICKS_BASE = 0x80C0000
+FLASH_OFFSET = 0x8008000
 reads_per_write = BLOCK_WRITE // BLOCK_READ
+
 FF = bytes([255])
 
 # Function to display progress
@@ -75,21 +79,6 @@ def show_progress(row, progress):
         for col in range(pixels):
             lights.set_pixel(col, row)
 
-# Read boot data from the currently running firmware.
-PYBRICKS_BASE = 0x80C0000
-FLASH_OFFSET = 0x8008000
-
-# Store Pybricks starting on final section of 256K free space
-pybricks_start_position = PYBRICKS_BASE - FLASH_OFFSET
-pybricks_end_position = pybricks_start_position + PYBRICKS_SIZE
-
-boot_data = flash_read(0x200)
-firmware_version_position = int.from_bytes(boot_data[0:4], 'little') - FLASH_OFFSET
-firmware_version = flash_read(firmware_version_position)[0:20]
-checksum_position = int.from_bytes(boot_data[4:8], 'little') - FLASH_OFFSET
-checksum_value = int.from_bytes(flash_read(checksum_position)[0:4], 'little')
-firmware_size = checksum_position + 4
-
 
 def get_base_firmware_boot_vector():
     # Read from base firmware location
@@ -100,10 +89,10 @@ def get_base_firmware_boot_vector():
         return firmware_boot_vector
 
     # Otherwise read the boot vector in Pybricks
-    pybricks_boot_vector = flash_read(pybricks_start_position - 4)[0:4]
+    pybricks_boot_vector = flash_read(PYBRICKS_BASE - FLASH_OFFSET - 4)[0:4]
 
     # We also read it from the back up location as a safety check
-    backup_boot_vector = flash_read(pybricks_start_position + 4)[0:4]
+    backup_boot_vector = flash_read(PYBRICKS_BASE - FLASH_OFFSET + 4)[0:4]
 
     # They must be equal and not empty
     if pybricks_boot_vector != backup_boot_vector or backup_boot_vector == 4 * FF:
@@ -125,18 +114,27 @@ def initialize_flash():
     # Initialize external flash up to the end of Pybricks
     # with four extra bytes for the overall checksum
     # This is blocking, so we cannot update progress.
-    appl_image_initialise(pybricks_end_position + 4)
+    appl_image_initialise(PYBRICKS_BASE + PYBRICKS_SIZE - FLASH_OFFSET + 4)
     show_progress(0, 100)
 
-# Gets the original firmware with the updated boot vector.
-def get_base_firmware(size, new_boot_vector):
 
-    print('Begin reading original firmware.')
+# Gets the original firmware with the updated boot vector.
+def get_base_firmware():
+
+    # Read current base firmware version
+    boot_data = flash_read(0x200)
+    firmware_version_position = int.from_bytes(boot_data[0:4], 'little') - FLASH_OFFSET
+    firmware_version = flash_read(firmware_version_position)[0:20]
+    print('Begin reading original firmware:', firmware_version)
+
+    # Read where the checksum is so we know the base firmware size
+    checksum_position = int.from_bytes(boot_data[4:8], 'little') - FLASH_OFFSET
+    base_firmware_size = checksum_position + 4
 
     bytes_read = 0
 
     # Yield new blocks until done
-    while bytes_read < size:
+    while bytes_read < base_firmware_size:
 
         # Read several chunks of 32 bytes into one block.
         block = b''
@@ -146,11 +144,11 @@ def get_base_firmware(size, new_boot_vector):
 
         # The first block is updated with the desired boot vector.
         if bytes_read == BLOCK_WRITE:
-            block = block[0:4] + new_boot_vector.to_bytes(4, 'little') + block[8:]
+            block = block[0:4] + PYBRICKS_VECTOR.to_bytes(4, 'little') + block[8:]
 
         # If we read past the end, cut off the extraneous bytes
-        if bytes_read > size:
-            block = block[0 : size % BLOCK_WRITE]
+        if bytes_read > base_firmware_size:
+            block = block[0 : base_firmware_size % BLOCK_WRITE]
 
         # Yield the resulting block
         yield block
@@ -180,11 +178,11 @@ def get_combined_firmware():
     base_firmware_size = 0
     base_firmware_boot_vector = get_base_firmware_boot_vector()
 
-    for block in get_base_firmware(firmware_size, PYBRICKS_VECTOR):
+    for block in get_base_firmware():
         base_firmware_size += len(block)
         yield block
 
-    for block in get_padding(pybricks_start_position - base_firmware_size, base_firmware_boot_vector):
+    for block in get_padding(PYBRICKS_BASE - FLASH_OFFSET - base_firmware_size, base_firmware_boot_vector):
         yield block
 
 # Get external flash ready
@@ -202,7 +200,7 @@ for block in get_combined_firmware():
 
     # Display progress
     bytes_written += len(block)
-    show_progress(1, bytes_written * 100 // pybricks_start_position)
+    # show_progress(1, FIXME)
 
 print('Opening Pybricks firmware.')
 # Open the current script
