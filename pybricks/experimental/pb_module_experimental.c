@@ -9,6 +9,8 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 
+#include <pbsys/sys.h>
+
 #include <pybricks/experimental.h>
 #include <pybricks/robotics.h>
 
@@ -412,8 +414,19 @@ STATIC mp_obj_t mod_experimental_pthread_raise(mp_obj_t thread_id_in, mp_obj_t e
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_experimental_pthread_raise_obj, mod_experimental_pthread_raise);
 #endif // PYBRICKS_HUB_EV3BRICK
 
+STATIC mp_obj_t experimental_getchar() {
+    uint8_t c;
+    pbio_error_t err = pbsys_stdin_get_char(&c);
+    if (err == PBIO_SUCCESS) {
+        return MP_OBJ_NEW_SMALL_INT(c);
+    }
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(experimental_getchar_obj, experimental_getchar);
+
 STATIC const mp_rom_map_elem_t experimental_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental_c) },
+    { MP_ROM_QSTR(MP_QSTR_getchar),  MP_ROM_PTR(&experimental_getchar_obj)},
     #if PYBRICKS_HUB_TECHNICHUB || PYBRICKS_HUB_PRIMEHUB
     { MP_ROM_QSTR(MP_QSTR_IMU), MP_ROM_PTR(&mod_experimental_IMU_type) },
     #endif // PYBRICKS_HUB_TECHNICHUB || PYBRICKS_HUB_PRIMEHUB
