@@ -75,13 +75,13 @@ def generate(
     user_start = None  # Starting address of user .mpy file
 
     for l in map_file.readlines():
-        match = re.match(r"^FLASH\s+(0x[0-9A-Fa-f]{16})\s+(0x[0-9A-Fa-f]{16})", l)
+        match = re.match(r"^FLASH\s+(0x[0-9A-Fa-f]{8,16})\s+(0x[0-9A-Fa-f]{8,16})", l)
         if match:
             flash_origin = int(match[1], base=0)
             flash_length = int(match[2], base=0)
             continue
 
-        match = re.match(r"^\.user\s+(0x[0-9A-Fa-f]{16})", l)
+        match = re.match(r"^\.user\s+(0x[0-9A-Fa-f]{8,16})", l)
         if match:
             user_start = int(match[1], base=0)
             continue
