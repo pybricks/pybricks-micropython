@@ -10,6 +10,10 @@ $(error failed)
 endif
 endif
 
+ifeq ("$(OS)","Windows_NT")
+HOST_CROSS_COMPILE = x86_64-w64-mingw32-
+endif
+
 help:
 	@echo "Use 'make <BRICK>' to build a brick."
 
@@ -89,7 +93,7 @@ clean-primehub: clean-mpy-cross
 	@$(MAKE) -C bricks/primehub clean
 
 mpy-cross:
-	@$(MAKE) -C micropython/mpy-cross CROSS_COMPILE=
+	@$(MAKE) -C micropython/mpy-cross CROSS_COMPILE=$(HOST_CROSS_COMPILE)
 
 clean-mpy-cross:
-	@$(MAKE) -C micropython/mpy-cross clean CROSS_COMPILE=
+	@$(MAKE) -C micropython/mpy-cross clean CROSS_COMPILE=$(HOST_CROSS_COMPILE)
