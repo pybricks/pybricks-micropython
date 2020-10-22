@@ -138,7 +138,7 @@ CFLAGS += -DSTM32_HAL_H='<stm32$(PB_MCU_SERIES_LCASE)xx_hal.h>'
 MPY_CROSS_FLAGS += -mno-unicode
 
 
-LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
+LIBS = "$(shell $(CC) $(CFLAGS) -print-libgcc-file-name)"
 
 SRC_C = $(addprefix bricks/stm32/,\
 	main.c \
