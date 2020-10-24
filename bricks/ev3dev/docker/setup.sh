@@ -9,6 +9,15 @@ abs_path() {
     echo "$(cd "$(dirname "$1")"; pwd -P)/$(basename "$1")"
 }
 
+real_path() {
+    # for Cygwin, get Windows path, otherwise pass through unchanged
+    if [ "$(uname -s | cut -b-9)" == "CYGWIN_NT" ]; then
+        echo "$(cygpath -w "$1")"
+    else
+        echo "$1"
+    fi
+}
+
 script_dir=$(dirname $(abs_path "${0}"))
 
 case ${1} in
@@ -32,7 +41,7 @@ image_name="docker.pkg.github.com/pybricks/pybricks-micropython/${project}-${arc
 container_name="${project}_${arch}"
 
 if [ -e ${build_dir} ]; then
-    read -r -n 1 -p "Delete existing build directory at '$(abs_path ${build_dir})'? (y/n/q) "
+    read -r -n 1 -p "Delete existing build directory at '$(real_path ${build_dir})'? (y/n/q) "
     echo
     case $REPLY in
         y|Y)
@@ -59,7 +68,7 @@ fi
 
 docker rm --force ${container_name} >/dev/null 2>&1 || true
 docker run \
-    --volume "$(abs_path ${src_dir}):/src" \
+    --volume "$(real_path ${src_dir}):/src" \
     --workdir /src/bricks/ev3dev \
     --name ${container_name} \
     --env "TERM=${TERM}" \
