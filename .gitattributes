@@ -1,5 +1,7 @@
 *   text=auto
 
+*.sh    eol=lf
+
 *.gif   binary
 *.jpg   binary
 *.png   binary
