@@ -80,7 +80,7 @@ CFLAGS += -Os -DNDEBUG
 CFLAGS += -fdata-sections -ffunction-sections
 endif
 
-LIBS = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
+LIBS = "$(shell $(CC) $(CFLAGS) -print-libgcc-file-name)"
 
 SRC_C = \
 	main.c \
