@@ -11,7 +11,10 @@ endif
 endif
 
 ifeq ("$(OS)","Windows_NT")
+HOST_OS = Windows
 HOST_CROSS_COMPILE = x86_64-w64-mingw32-
+else
+HOST_OS = $(shell uname -s)
 endif
 
 help:
@@ -29,11 +32,22 @@ all: movehub cityhub technichub primehub nxt ev3dev-armel doc
 
 clean-all: clean-movehub clean-cityhub clean-technichub clean-primehub clean-nxt clean-ev3dev-armel clean-doc
 
+ifeq ($(HOST_OS),Linux)
+
 ev3dev-host: mpy-cross
 	@$(MAKE) -C bricks/ev3dev CROSS_COMPILE=
 
 clean-ev3dev-host: clean-mpy-cross
 	@$(MAKE) -C bricks/ev3dev clean CROSS_COMPILE=
+
+else
+
+ev3dev-host:
+	$(error Building ev3dev for host OS only works on Linux)
+
+clean-ev3dev-host: ev3dev-host
+
+endif
 
 ev3dev-armel:
 	@if [ ! -d bricks/ev3dev/build-armel/ports ]; then \
