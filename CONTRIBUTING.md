@@ -36,6 +36,31 @@ Optional:
 
 ### Installation tips
 
+#### Pipx
+
+We recommend using [pipx][pipx] to install and manage python command line tools
+like Poetry.
+
+[pipx]: https://pipxproject.github.io/pipx/
+
+Linux (Ubuntu):
+
+    sudo apt update && sudo apt install python-pipx
+
+macOS:
+
+    brew install pipx
+
+Windows:
+
+    py -3 -m pip install pipx
+
+
+Then install tools like this:
+
+    pipx install poetry
+
+
 #### Ubuntu
 
 Some of the prerequisites are available as Debian packages. The correct version
@@ -51,11 +76,25 @@ via the recommended install methods found in the links above.
 
 #### Windows
 
-Use the [Windows Subsystem for Linux][wsl] and VS Code [remote development][rwsl]
-and follow the Ubuntu instructions.
+We use [Cygwin][cygwin] for building code on Windows. Download and install
+Cygwin from the link. Select the following packages during installation:
 
-[wsl]: https://docs.microsoft.com/en-us/windows/wsl/install-win10
-[rwsl]: https://code.visualstudio.com/docs/remote/wsl
+    doxygen
+    graphviz
+    make
+    mingw64-x86_64-gcc-core
+    python3
+    zip
+
+Cygwin and the [GNU ARM Embedded Toolchain][arm-gcc] need to be added to the
+`PATH` environment variable. We recommend doing this in the local terminal
+rather than globally via *System Properties*. For example using PowerShell:
+
+```powershell
+$env:PATH="C:\cygwin64\bin;C:\Program Files (x86)\GNU Arm Embedded Toolchain\9 2020-q2-update\bin;$env:PATH"
+```
+
+[cygwin]: https://www.cygwin.com/
 
 
 ### Get the code
@@ -97,13 +136,19 @@ virtual environment to isolate the installation so you don't break your main
 Python runtime.
 
 Open a terminal in the `pybricks-micropython` directory where you cloned the
-source code, then run the following commands:
+source code, then run:
 
-    poetry env use /usr/bin/python3.8
+    poetry env info
+
+Verify that the Python version listed is 3.8.x. If it is not, run:
+
+    poetry env use <path-to-python3.8>
+
+where `<path-to-python3.8>` is the full path to the Python 3.8 installation.
+
+Then run the following to set up the Python environment:
+
     poetry install
-
-You may need to replace `/usr/bin/python3.8` with a different path if the
-Python 3.8 executable is installed somewhere else.
 
 To activate the environment, run:
 
