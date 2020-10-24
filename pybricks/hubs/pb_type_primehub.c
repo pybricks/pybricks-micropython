@@ -43,4 +43,11 @@ const mp_obj_type_t pb_type_PrimeHub = {
     .locals_dict = (mp_obj_dict_t *)&hubs_PrimeHub_locals_dict,
 };
 
+const mp_obj_type_t pb_type_InventorHub = {
+    { &mp_type_type },
+    .name = MP_QSTR_InventorHub,
+    .make_new = hubs_PrimeHub_make_new,
+    .locals_dict = (mp_obj_dict_t *)&hubs_PrimeHub_locals_dict,
+};
+
 #endif // PYBRICKS_PY_HUBS && PYBRICKS_HUB_PRIMEHUB

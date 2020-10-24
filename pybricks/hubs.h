@@ -21,6 +21,7 @@ const mp_obj_type_t pb_type_TechnicHub;
 #endif
 #ifdef PYBRICKS_HUB_PRIMEHUB
 const mp_obj_type_t pb_type_PrimeHub;
+const mp_obj_type_t pb_type_InventorHub;
 #endif
 #if PYBRICKS_HUB_NXTBRICK
 const mp_obj_type_t pb_type_NXTBrick;

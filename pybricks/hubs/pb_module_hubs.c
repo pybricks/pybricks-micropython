@@ -20,6 +20,7 @@ STATIC const mp_rom_map_elem_t hubs_globals_table[] = {
     #endif
     #ifdef PYBRICKS_HUB_PRIMEHUB
     { MP_ROM_QSTR(MP_QSTR_PrimeHub),    MP_ROM_PTR(&pb_type_PrimeHub) },
+    { MP_ROM_QSTR(MP_QSTR_InventorHub), MP_ROM_PTR(&pb_type_InventorHub) },
     #endif
     #if PYBRICKS_HUB_NXTBRICK
     { MP_ROM_QSTR(MP_QSTR_NXTBrick),    MP_ROM_PTR(&pb_type_NXTBrick) },
