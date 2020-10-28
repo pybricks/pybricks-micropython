@@ -302,8 +302,8 @@ float pb_type_Matrix__get_scalar(mp_obj_t self_in, size_t r, size_t c) {
     return self->data[idx] * self->scale;
 }
 
-// pybricks.robotics.Matrix.T
-STATIC mp_obj_t pb_type_Matrix_T(mp_obj_t self_in) {
+// pybricks.robotics.Matrix._T
+STATIC mp_obj_t pb_type_Matrix__T(mp_obj_t self_in) {
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     pb_type_Matrix_obj_t *copy = m_new_obj(pb_type_Matrix_obj_t);
@@ -318,8 +318,15 @@ STATIC mp_obj_t pb_type_Matrix_T(mp_obj_t self_in) {
 
     return MP_OBJ_FROM_PTR(copy);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_Matrix_T_obj, pb_type_Matrix_T);
 
+STATIC void pb_type_Matrix_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+    // If the transpose is being read
+    if (dest[0] == MP_OBJ_NULL && attr == MP_QSTR_T) {
+        // Create and return transpose
+        dest[0] = pb_type_Matrix__T(self_in);
+        return;
+    }
+}
 
 STATIC mp_obj_t pb_type_Matrix_unary_op(mp_unary_op_t op, mp_obj_t o_in) {
 
@@ -453,22 +460,16 @@ STATIC mp_obj_t pb_type_Matrix_subscr(mp_obj_t self_in, mp_obj_t index_in, mp_ob
     return MP_OBJ_NULL;
 }
 
-// dir(pybricks.robotics.Matrix)
-STATIC const mp_rom_map_elem_t pb_type_Matrix_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_T),     MP_ROM_PTR(&pb_type_Matrix_T_obj)              },
-};
-STATIC MP_DEFINE_CONST_DICT(pb_type_Matrix_locals_dict, pb_type_Matrix_locals_dict_table);
-
 // type(pybricks.robotics.Matrix)
 const mp_obj_type_t pb_type_Matrix_type = {
     { &mp_type_type },
     .name = MP_QSTR_Matrix,
     .print = pb_type_Matrix_print,
     .make_new = pb_type_Matrix_make_new,
+    .attr = pb_type_Matrix_attr,
     .unary_op = pb_type_Matrix_unary_op,
     .binary_op = pb_type_Matrix_binary_op,
     .subscr = pb_type_Matrix_subscr,
-    .locals_dict = (mp_obj_dict_t *)&pb_type_Matrix_locals_dict,
 };
 
 // pybricks.robotics._vector
