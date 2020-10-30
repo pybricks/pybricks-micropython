@@ -207,23 +207,28 @@ STATIC mp_obj_t pb_type_Matrix__add(mp_obj_t lhs_obj, mp_obj_t rhs_obj, bool add
     ret->n = rhs->n;
     ret->data = m_new(float, ret->m * ret->n);
 
+    // Scale must be reset; it has been and multiplied out above
+    ret->scale = 1;
+    ret->transposed = false;
+
     // Add the matrices by looping over rows and columns
     for (size_t r = 0; r < ret->m; r++) {
         for (size_t c = 0; c < ret->n; c++) {
             // This entry is obtained as the sum of scalars of both matrices
-            size_t idx = lhs->transposed ? c * lhs->m + r : r * lhs->n + c;
+            // First find the index of sources and destination.
+            size_t ret_idx = r * ret->n + c;
+            size_t lhs_idx = lhs->transposed ? c * ret->m + r : ret_idx;
+            size_t rhs_idx = rhs->transposed ? c * ret->m + r : ret_idx;
+
+            // Either add or subtract to get result.
             if (add) {
-                ret->data[idx] = lhs->data[idx] * lhs->scale + rhs->data[idx] * rhs->scale;
+                ret->data[ret_idx] = lhs->data[lhs_idx] * lhs->scale + rhs->data[rhs_idx] * rhs->scale;
             } else {
-                ret->data[idx] = lhs->data[idx] * lhs->scale - rhs->data[idx] * rhs->scale;
+                ret->data[ret_idx] = lhs->data[lhs_idx] * lhs->scale - rhs->data[rhs_idx] * rhs->scale;
             }
 
         }
     }
-
-    // Scale must be reset; it has been and multiplied out above
-    ret->scale = 1;
-    ret->transposed = false;
 
     return MP_OBJ_FROM_PTR(ret);
 }
