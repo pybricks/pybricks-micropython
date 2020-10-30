@@ -131,9 +131,10 @@ void pb_type_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
 
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    // Each "-123.456" is 8. Each digit is appended with ", " or "]\n", so 10 per digit
-    // Also each row starts with "[[" or " [" so we add 2*rows. Finally we add \0, so +1.
-    size_t len = self->m * self->n * 10 + self->m * 2 + 1;
+    // Each "-123.456" is 8 chars. Each digit is appended with ", " or "]," so
+    // 10 per digit. Each row starts with "[[" or " [" and ends with "\n" so we
+    // add 3*rows. The last ",\n" is replaced with "]\0", so no extra null.
+    size_t len = self->m * self->n * 10 + self->m * 3;
 
     // Allocate the buffer
     char *buf = m_new(char, len);
@@ -142,7 +143,7 @@ void pb_type_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
     for (size_t r = 0; r < self->m; r++) {
 
         // Character starting index for this row
-        size_t row_start = r * (self->n * 10 + 2);
+        size_t row_start = r * (self->n * 10 + 3);
 
         // Prepend "[[" on first row, else " ["
         buf[row_start] = r == 0 ? '[' : ' ';
@@ -164,17 +165,19 @@ void pb_type_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
             // Get character representation of said value
             print_float(buf + col_start, self->data[idx] * self->scale);
 
-            // Append ", " or "]\n" after the last value
+            // Append ", " or "]," after the last value
             if (c < self->n - 1) {
                 buf[col_start + 8] = ',';
                 buf[col_start + 9] = ' ';
             } else {
                 buf[col_start + 8] = ']';
-                buf[col_start + 9] = '\n';
+                buf[col_start + 9] = ',';
             }
         }
+        // New line at end of row
+        buf[row_start + self->n * 10 + 2] = '\n';
     }
-    // Close the group of rows with "]"
+    // Replace the last ",\n" with "]\0" to close the matrix
     buf[len - 2 ] = ']';
     buf[len - 1 ] = '\0';
 
