@@ -17,25 +17,28 @@ print("A.T =", A.T)
 print("A + B =", A + B)
 print("C = A - A.T =", C)
 print("C + C.T =", C + C.T)
-print("A * A.T = ", A * A.T)
-print("len(A) = ", len(A))
+print("A * A.T =", A * A.T)
+print("len(A) =", len(A))
 print("A * 3 =", A * 3)
 print("3 * A =", 3 * A)
 
 # Vector basics
 b = Vector(3, 4, 0)
 c = b.T
-print("b =", b)
+print("b = Vector(3, 4, 0) =", b)
 print("len(b) =", len(b))
 print("abs(b) =", abs(b))
 print("c = b.T", c)
 print("A * b =", A * b)
+u = UnitVector(3, 4, 0)
+print("u = UnitVector(3, 4, 0) =", u)
+print("abs(u) =", abs(u))
 
 # Dealing with resulting scalar types
-print("b.T * b = ", b.T * b)
-print("type(b.T * b) = ", type(b.T * b))
-print("b.T * A * b = ", b.T * A * b)
-print("(b.T * A * b) * A / 2 = ", (b.T * A * b) * A / 2)
+print("b.T * b =", b.T * b)
+print("type(b.T * b) =", type(b.T * b))
+print("b.T * A * b =", b.T * A * b)
+print("(b.T * A * b) * A / 2 =", (b.T * A * b) * A / 2)
 
 # Nonsquare matrices
 D = Matrix(
