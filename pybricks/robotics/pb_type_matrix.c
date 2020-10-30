@@ -8,6 +8,7 @@
 #include <inttypes.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <pybricks/robotics.h>
 
@@ -129,12 +130,15 @@ static void print_float(char *buf, float x) {
 // pybricks.robotics.Matrix.__repr__
 void pb_type_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
 
+    // Print class name
+    mp_print_str(print, "Matrix([\n");
+
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // Each "-123.456" is 8 chars. Each digit is appended with ", " or "]," so
-    // 10 per digit. Each row starts with "[[" or " [" and ends with "\n" so we
-    // add 3*rows. The last ",\n" is replaced with "]\0", so no extra null.
-    size_t len = self->m * self->n * 10 + self->m * 3;
+    // 10 per digit. Each row starts with "    [" and ends with "\n" so we
+    // add 6*rows. Plus 1 for null terminator.
+    size_t len = self->m * self->n * 10 + self->m * 6 + 1;
 
     // Allocate the buffer
     char *buf = m_new(char, len);
@@ -143,17 +147,16 @@ void pb_type_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
     for (size_t r = 0; r < self->m; r++) {
 
         // Character starting index for this row
-        size_t row_start = r * (self->n * 10 + 3);
+        size_t row_start = r * (self->n * 10 + 6);
 
-        // Prepend "[[" on first row, else " ["
-        buf[row_start] = r == 0 ? '[' : ' ';
-        buf[row_start + 1] = '[';
+        // Start row with "    ["
+        strcpy(buf + row_start, "    [");
 
         // Loop through the colums, so the scalars in each row
         for (size_t c = 0; c < self->n; c++) {
 
             // Starting character index for this column
-            size_t col_start = row_start + c * 10 + 2;
+            size_t col_start = row_start + c * 10 + 5;
 
             // Get data index of the scalar we will print. Transposed attribute
             // tells us whether data is stored row by row or column by column.
@@ -175,14 +178,14 @@ void pb_type_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
             }
         }
         // New line at end of row
-        buf[row_start + self->n * 10 + 2] = '\n';
+        buf[row_start + self->n * 10 + 5] = '\n';
     }
-    // Replace the last ",\n" with "]\0" to close the matrix
-    buf[len - 2 ] = ']';
+    // Terminate string
     buf[len - 1 ] = '\0';
 
     // Send the bufer to MicroPython
     mp_print_str(print, buf);
+    mp_print_str(print, "])");
 }
 
 // pybricks.robotics.Matrix._add
