@@ -14,22 +14,15 @@
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
 
-// pybricks.geometry.Vector
-STATIC mp_obj_t robotics_Vector(size_t n_args, const mp_obj_t *args) {
+// pybricks.geometry.vector
+STATIC mp_obj_t vector(size_t n_args, const mp_obj_t *args) {
     return pb_type_Matrix_make_vector(n_args, args, false);
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_func_Vector_obj, 2, 4, robotics_Vector);
-
-// pybricks.geometry.UnitVector
-STATIC mp_obj_t robotics_UnitVector(size_t n_args, const mp_obj_t *args) {
-    return pb_type_Matrix_make_vector(n_args, args, true);
-}
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_func_UnitVector_obj, 2, 4, robotics_UnitVector);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_func_vector_obj, 2, 4, vector);
 
 STATIC const mp_rom_map_elem_t geometry_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Matrix),      MP_ROM_PTR(&pb_type_Matrix)        },
-    { MP_ROM_QSTR(MP_QSTR_Vector),      MP_ROM_PTR(&pb_func_Vector_obj)    },
-    { MP_ROM_QSTR(MP_QSTR_UnitVector),  MP_ROM_PTR(&pb_func_UnitVector_obj)},
+    { MP_ROM_QSTR(MP_QSTR_vector),      MP_ROM_PTR(&pb_func_vector_obj)    },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_geometry_globals, geometry_globals_table);
 

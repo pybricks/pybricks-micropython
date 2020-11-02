@@ -1,4 +1,4 @@
-from pybricks.geometry import Matrix, Vector, UnitVector
+from pybricks.geometry import Matrix, vector
 
 # Basic matrix algebra
 A = Matrix(
@@ -23,16 +23,13 @@ print("A * 3 =", A * 3)
 print("3 * A =", 3 * A)
 
 # Vector basics
-b = Vector(3, 4, 0)
+b = vector(3, 4, 0)
 c = b.T
-print("b = Vector(3, 4, 0) =", b)
+print("b = vector(3, 4, 0) =", b)
 print("b.shape =", b.shape)
 print("abs(b) =", abs(b))
 print("c = b.T", c)
 print("A * b =", A * b)
-u = UnitVector(3, 4, 0)
-print("u = UnitVector(3, 4, 0) =", u)
-print("abs(u) =", abs(u))
 
 # Dealing with resulting scalar types
 print("b.T * b =", b.T * b)
