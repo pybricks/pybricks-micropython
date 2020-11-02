@@ -130,13 +130,14 @@ SRC_S_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
 # Pybricks modules
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	pybricks.c \
-	geometry/pb_module_geometry.c \
 	common/pb_type_battery.c \
 	common/pb_type_control.c \
 	common/pb_type_dcmotor.c \
 	common/pb_type_logger.c \
 	common/pb_type_motor.c \
 	experimental/pb_module_experimental.c \
+	geometry/pb_module_geometry.c \
+	geometry/pb_type_matrix.c \
 	hubs/pb_module_hubs.c \
 	hubs/pb_type_nxtbrick.c \
 	nxtdevices/pb_module_nxtdevices.c \
@@ -155,7 +156,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	parameters/pb_type_stop.c \
 	robotics/pb_module_robotics.c \
 	robotics/pb_type_drivebase.c \
-	robotics/pb_type_matrix.c \
 	tools/pb_module_tools.c \
 	tools/pb_type_stopwatch.c \
 	util_mp/pb_obj_helper.c \

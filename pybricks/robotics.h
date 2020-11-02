@@ -12,15 +12,6 @@
 
 #include "py/obj.h"
 
-#if MICROPY_PY_BUILTINS_FLOAT
-
-const mp_obj_type_t pb_type_Matrix_type;
-float pb_type_Matrix__get_scalar(mp_obj_t self_in, size_t r, size_t c);
-
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(pb_func_Vector_obj);
-MP_DECLARE_CONST_FUN_OBJ_VAR_BETWEEN(pb_func_UnitVector_obj);
-
-#endif // MICROPY_PY_BUILTINS_FLOAT
 
 const mp_obj_type_t pb_type_drivebase;
 

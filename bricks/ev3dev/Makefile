@@ -231,7 +231,6 @@ LIB_SRC_C = $(addprefix micropython/lib/,\
 # Pybricks drivers and modules
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
     pybricks.c \
-	geometry/pb_module_geometry.c \
 	common/pb_type_battery.c \
 	common/pb_type_colorlight_external.c \
 	common/pb_type_colorlight_internal.c \
@@ -248,6 +247,8 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	ev3devices/pb_type_ev3devices_infraredsensor.c \
 	ev3devices/pb_type_ev3devices_touchsensor.c \
 	ev3devices/pb_type_ev3devices_ultrasonicsensor.c \
+	geometry/pb_module_geometry.c \
+	geometry/pb_type_matrix.c \
 	hubs/pb_module_hubs.c \
 	hubs/pb_type_ev3brick.c \
 	iodevices/pb_module_iodevices.c \
@@ -272,7 +273,6 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	parameters/pb_type_stop.c \
 	robotics/pb_module_robotics.c \
 	robotics/pb_type_drivebase.c \
-	robotics/pb_type_matrix.c \
 	tools/pb_module_tools.c \
 	tools/pb_type_stopwatch.c \
 	util_mp/pb_obj_helper.c \

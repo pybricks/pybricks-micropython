@@ -3,14 +3,14 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_ROBOTICS
+#if PYBRICKS_PY_GEOMETRY
 
 #include <inttypes.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
 
-#include <pybricks/robotics.h>
+#include <pybricks/geometry.h>
 
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -28,13 +28,13 @@ typedef struct _pb_type_Matrix_obj_t {
     bool transposed;
 } pb_type_Matrix_obj_t;
 
-// pybricks.robotics.Matrix.__init__
+// pybricks.geometry.Matrix.__init__
 STATIC mp_obj_t pb_type_Matrix_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(rows));
 
     // If the input is already a matrix, just return it
-    if (mp_obj_is_type(rows_in, &pb_type_Matrix_type)) {
+    if (mp_obj_is_type(rows_in, &pb_type_Matrix)) {
         return rows_in;
     }
 
@@ -127,7 +127,7 @@ static void print_float(char *buf, float x) {
     buf[4] = '.';
 }
 
-// pybricks.robotics.Matrix.__repr__
+// pybricks.geometry.Matrix.__repr__
 void pb_type_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
 
     // Print class name
@@ -188,7 +188,7 @@ void pb_type_Matrix_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
     mp_print_str(print, "])");
 }
 
-// pybricks.robotics.Matrix._add
+// pybricks.geometry.Matrix._add
 STATIC mp_obj_t pb_type_Matrix__add(mp_obj_t lhs_obj, mp_obj_t rhs_obj, bool add) {
 
     // Get left and right matrices
@@ -202,7 +202,7 @@ STATIC mp_obj_t pb_type_Matrix__add(mp_obj_t lhs_obj, mp_obj_t rhs_obj, bool add
 
     // Result has same shape as both sides
     pb_type_Matrix_obj_t *ret = m_new_obj(pb_type_Matrix_obj_t);
-    ret->base.type = &pb_type_Matrix_type;
+    ret->base.type = &pb_type_Matrix;
     ret->m = lhs->m;
     ret->n = rhs->n;
     ret->data = m_new(float, ret->m * ret->n);
@@ -233,7 +233,7 @@ STATIC mp_obj_t pb_type_Matrix__add(mp_obj_t lhs_obj, mp_obj_t rhs_obj, bool add
     return MP_OBJ_FROM_PTR(ret);
 }
 
-// pybricks.robotics.Matrix._mul
+// pybricks.geometry.Matrix._mul
 STATIC mp_obj_t pb_type_Matrix__mul(mp_obj_t lhs_in, mp_obj_t rhs_in) {
 
     // Get left and right matrices
@@ -247,7 +247,7 @@ STATIC mp_obj_t pb_type_Matrix__mul(mp_obj_t lhs_in, mp_obj_t rhs_in) {
 
     // Result has as many rows as left hand side and as many columns as right hand side.
     pb_type_Matrix_obj_t *ret = m_new_obj(pb_type_Matrix_obj_t);
-    ret->base.type = &pb_type_Matrix_type;
+    ret->base.type = &pb_type_Matrix;
     ret->m = lhs->m;
     ret->n = rhs->n;
     ret->data = m_new(float, ret->m * ret->n);
@@ -284,12 +284,12 @@ STATIC mp_obj_t pb_type_Matrix__mul(mp_obj_t lhs_in, mp_obj_t rhs_in) {
     return MP_OBJ_FROM_PTR(ret);
 }
 
-// pybricks.robotics.Matrix._scale
+// pybricks.geometry.Matrix._scale
 STATIC mp_obj_t pb_type_Matrix__scale(mp_obj_t self_in, float scale) {
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     pb_type_Matrix_obj_t *copy = m_new_obj(pb_type_Matrix_obj_t);
-    copy->base.type = &pb_type_Matrix_type;
+    copy->base.type = &pb_type_Matrix;
 
     // Point to the same data instead of copying
     copy->data = self->data;
@@ -301,8 +301,8 @@ STATIC mp_obj_t pb_type_Matrix__scale(mp_obj_t self_in, float scale) {
     return MP_OBJ_FROM_PTR(copy);
 }
 
-// pybricks.robotics.Matrix._get_scalar
-float pb_type_Matrix__get_scalar(mp_obj_t self_in, size_t r, size_t c) {
+// pybricks.geometry.Matrix._get_scalar
+float pb_type_Matrix_get_scalar(mp_obj_t self_in, size_t r, size_t c) {
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     if (r >= self->m || c >= self->n) {
@@ -313,12 +313,12 @@ float pb_type_Matrix__get_scalar(mp_obj_t self_in, size_t r, size_t c) {
     return self->data[idx] * self->scale;
 }
 
-// pybricks.robotics.Matrix._T
+// pybricks.geometry.Matrix._T
 STATIC mp_obj_t pb_type_Matrix__T(mp_obj_t self_in) {
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     pb_type_Matrix_obj_t *copy = m_new_obj(pb_type_Matrix_obj_t);
-    copy->base.type = &pb_type_Matrix_type;
+    copy->base.type = &pb_type_Matrix;
 
     // Point to the same data instead of copying
     copy->data = self->data;
@@ -478,8 +478,8 @@ STATIC mp_obj_t pb_type_Matrix_subscr(mp_obj_t self_in, mp_obj_t index_in, mp_ob
     return MP_OBJ_NULL;
 }
 
-// type(pybricks.robotics.Matrix)
-const mp_obj_type_t pb_type_Matrix_type = {
+// type(pybricks.geometry.Matrix)
+const mp_obj_type_t pb_type_Matrix = {
     { &mp_type_type },
     .name = MP_QSTR_Matrix,
     .print = pb_type_Matrix_print,
@@ -490,10 +490,10 @@ const mp_obj_type_t pb_type_Matrix_type = {
     .subscr = pb_type_Matrix_subscr,
 };
 
-// pybricks.robotics._vector
-STATIC mp_obj_t robotics__vector(size_t n_args, const mp_obj_t *args, bool normalize) {
+// pybricks.geometry._make_vector
+mp_obj_t pb_type_Matrix_make_vector(size_t n_args, const mp_obj_t *args, bool normalize) {
     pb_type_Matrix_obj_t *mat = m_new_obj(pb_type_Matrix_obj_t);
-    mat->base.type = &pb_type_Matrix_type;
+    mat->base.type = &pb_type_Matrix;
     mat->data = m_new(float, n_args);
     mat->m = n_args;
     mat->n = 1;
@@ -507,18 +507,6 @@ STATIC mp_obj_t robotics__vector(size_t n_args, const mp_obj_t *args, bool norma
     return MP_OBJ_FROM_PTR(mat);
 }
 
-// pybricks.robotics.Vector
-STATIC mp_obj_t robotics_Vector(size_t n_args, const mp_obj_t *args) {
-    return robotics__vector(n_args, args, false);
-}
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_func_Vector_obj, 2, 4, robotics_Vector);
-
-// pybricks.robotics.UnitVector
-STATIC mp_obj_t robotics_UnitVector(size_t n_args, const mp_obj_t *args) {
-    return robotics__vector(n_args, args, true);
-}
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_func_UnitVector_obj, 2, 4, robotics_UnitVector);
-
 #endif // MICROPY_PY_BUILTINS_FLOAT
 
-#endif // PYBRICKS_PY_ROBOTICS
+#endif // PYBRICKS_PY_GEOMETRY

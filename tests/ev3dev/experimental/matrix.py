@@ -1,4 +1,4 @@
-from pybricks.experimental import Matrix, Vector, UnitVector
+from pybricks.geometry import Matrix, Vector, UnitVector
 
 # Basic matrix algebra
 A = Matrix(

@@ -8,9 +8,18 @@
 
 #if PYBRICKS_PY_GEOMETRY
 
+#if MICROPY_PY_BUILTINS_FLOAT
+
 #include "py/obj.h"
 
 const mp_obj_module_t pb_module_geometry;
+
+const mp_obj_type_t pb_type_Matrix;
+
+mp_obj_t pb_type_Matrix_make_vector(size_t n_args, const mp_obj_t *args, bool normalize);
+float pb_type_Matrix_get_scalar(mp_obj_t self_in, size_t r, size_t c);
+
+#endif // MICROPY_PY_BUILTINS_FLOAT
 
 #endif // PYBRICKS_PY_GEOMETRY
 

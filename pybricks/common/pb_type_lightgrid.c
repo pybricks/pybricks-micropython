@@ -11,8 +11,8 @@
 #include "py/obj.h"
 #include "py/objstr.h"
 
+#include <pybricks/geometry.h>
 #include <pybricks/common.h>
-#include <pybricks/robotics.h>
 
 #include <pybricks/util_pb/pb_error.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -62,10 +62,10 @@ static void common_LightGrid_image__extract(mp_obj_t image_in, size_t size, uint
 
     #if MICROPY_PY_BUILTINS_FLOAT
     // If image is a matrix, copy data from there
-    if (mp_obj_is_type(image_in, &pb_type_Matrix_type)) {
+    if (mp_obj_is_type(image_in, &pb_type_Matrix)) {
         for (size_t r = 0; r < size; r++) {
             for (size_t c = 0; c < size; c++) {
-                data[r * size + c] = (uint8_t)pb_type_Matrix__get_scalar(image_in, r, c);
+                data[r * size + c] = (uint8_t)pb_type_Matrix_get_scalar(image_in, r, c);
             }
         }
         return;
