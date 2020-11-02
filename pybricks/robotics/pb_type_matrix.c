@@ -331,11 +331,25 @@ STATIC mp_obj_t pb_type_Matrix__T(mp_obj_t self_in) {
 }
 
 STATIC void pb_type_Matrix_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
-    // If the transpose is being read
-    if (dest[0] == MP_OBJ_NULL && attr == MP_QSTR_T) {
+    // Read only
+    if (dest[0] == MP_OBJ_NULL) {
         // Create and return transpose
-        dest[0] = pb_type_Matrix__T(self_in);
-        return;
+        if (attr == MP_QSTR_T) {
+            dest[0] = pb_type_Matrix__T(self_in);
+            return;
+        }
+        // Create and return shape tuple
+        if (attr == MP_QSTR_shape) {
+            pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+            mp_obj_t shape[] = {
+                MP_OBJ_NEW_SMALL_INT(self->m),
+                MP_OBJ_NEW_SMALL_INT(self->n)
+            };
+
+            dest[0] = mp_obj_new_tuple(2, shape);
+            return;
+        }
     }
 }
 
@@ -344,13 +358,6 @@ STATIC mp_obj_t pb_type_Matrix_unary_op(mp_unary_op_t op, mp_obj_t o_in) {
     pb_type_Matrix_obj_t *self = MP_OBJ_TO_PTR(o_in);
 
     switch (op) {
-        // len returns the size of the matrix: (m, n)
-        case MP_UNARY_OP_LEN: {
-            mp_obj_t shape[2];
-            shape[0] = MP_OBJ_NEW_SMALL_INT(self->m);
-            shape[1] = MP_OBJ_NEW_SMALL_INT(self->n);
-            return mp_obj_new_tuple(2, shape);
-        }
         // Hash is the same as in generic unary op
         case MP_UNARY_OP_HASH:
             return MP_OBJ_NEW_SMALL_INT((mp_uint_t)o_in);

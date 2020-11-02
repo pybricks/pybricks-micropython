@@ -18,7 +18,7 @@ print("A + B =", A + B)
 print("C = A - A.T =", C)
 print("C + C.T =", C + C.T)
 print("A * A.T =", A * A.T)
-print("len(A) =", len(A))
+print("A.shape =", A.shape)
 print("A * 3 =", A * 3)
 print("3 * A =", 3 * A)
 
@@ -26,7 +26,7 @@ print("3 * A =", 3 * A)
 b = Vector(3, 4, 0)
 c = b.T
 print("b = Vector(3, 4, 0) =", b)
-print("len(b) =", len(b))
+print("b.shape =", b.shape)
 print("abs(b) =", abs(b))
 print("c = b.T", c)
 print("A * b =", A * b)
@@ -48,8 +48,8 @@ D = Matrix(
     ]
 )
 print("D =", D)
-print("len(D) =", len(D))
-print("len(D.T) =", len(D.T))
+print("D.shape =", D.shape)
+print("D.T.shape =", D.T.shape)
 print("D.T * D =", D.T * D)
 print("D * D.T =", D * D.T)
 
