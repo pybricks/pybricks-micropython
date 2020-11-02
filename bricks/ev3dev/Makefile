@@ -231,6 +231,7 @@ LIB_SRC_C = $(addprefix micropython/lib/,\
 # Pybricks drivers and modules
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
     pybricks.c \
+	geometry/pb_module_geometry.c \
 	common/pb_type_battery.c \
 	common/pb_type_colorlight_external.c \
 	common/pb_type_colorlight_internal.c \

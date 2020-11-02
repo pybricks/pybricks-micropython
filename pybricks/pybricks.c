@@ -6,6 +6,7 @@
 #include "py/objstr.h"
 #include "py/objtuple.h"
 
+#include <pybricks/geometry.h>
 #include <pybricks/hubs.h>
 #include <pybricks/iodevices.h>
 #include <pybricks/ev3devices.h>
@@ -35,6 +36,9 @@ STATIC const mp_rom_obj_tuple_t pybricks_info_obj = {
 STATIC const mp_rom_map_elem_t pybricks_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_pybricks) },
     { MP_ROM_QSTR(MP_QSTR_version),             MP_ROM_PTR(&pybricks_info_obj)},
+    #if PYBRICKS_PY_GEOMETRY
+    { MP_ROM_QSTR(MP_QSTR_geometry),            MP_ROM_PTR(&pb_module_geometry)},
+    #endif
     #if PYBRICKS_PY_EV3DEVICES
     { MP_ROM_QSTR(MP_QSTR_ev3devices),          MP_ROM_PTR(&pb_module_ev3devices)},
     #endif

@@ -10,6 +10,7 @@
 #define PYBRICKS_HUB_EV3BRICK                (1)
 
 // Pybricks modules
+#define PYBRICKS_PY_GEOMETRY            (1)
 #define PYBRICKS_PY_COMMON              (1)
 #define PYBRICKS_PY_COMMON_LIGHT_GRID   (0)
 #define PYBRICKS_PY_COMMON_MOTORS       (1)
