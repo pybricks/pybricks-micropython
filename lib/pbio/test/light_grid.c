@@ -56,17 +56,17 @@ PT_THREAD(test_light_grid(struct pt *pt)) {
 
     // set pixel should only set one pixel
     test_light_grid_reset();
-    tt_want_uint_op(pbio_light_grid_set_pixel(&test_light_grid, 0, 0, 100), ==, PBIO_SUCCESS);
+    tt_want_uint_op(pbio_light_grid_set_pixel_user(&test_light_grid, 0, 0, 100), ==, PBIO_SUCCESS);
     tt_want_light_grid_data(100);
 
-    tt_want_uint_op(pbio_light_grid_set_pixel(&test_light_grid,
+    tt_want_uint_op(pbio_light_grid_set_pixel_user(&test_light_grid,
         GRID_SIZE - 1, GRID_SIZE - 1, 100), ==, PBIO_SUCCESS);
     tt_want_light_grid_data(100, 0, 0, 0, 0, 0, 0, 0, 100);
 
     // out of bounds checking
-    tt_want_uint_op(pbio_light_grid_set_pixel(&test_light_grid, GRID_SIZE, 0, 100), ==, PBIO_ERROR_INVALID_ARG);
+    tt_want_uint_op(pbio_light_grid_set_pixel_user(&test_light_grid, GRID_SIZE, 0, 100), ==, PBIO_SUCCESS);
     tt_want_light_grid_data(100, 0, 0, 0, 0, 0, 0, 0, 100);
-    tt_want_uint_op(pbio_light_grid_set_pixel(&test_light_grid, 0, GRID_SIZE, 100), ==, PBIO_ERROR_INVALID_ARG);
+    tt_want_uint_op(pbio_light_grid_set_pixel_user(&test_light_grid, 0, GRID_SIZE, 100), ==, PBIO_SUCCESS);
     tt_want_light_grid_data(100, 0, 0, 0, 0, 0, 0, 0, 100);
 
     // bitwise mapping

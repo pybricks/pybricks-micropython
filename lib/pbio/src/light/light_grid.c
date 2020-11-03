@@ -15,6 +15,27 @@
 #include "light_grid.h"
 
 /**
+ * Sets the pixel to a given brightness.
+ *
+ * @param [in]  light_grid  The light grid instance
+ * @param [in]  row         Row index (0 to size-1)
+ * @param [in]  col         Column index (0 to size-1)
+ * @param [in]  brightness  Brightness (0 to 100)
+ * @return                  ::PBIO_SUCCESS on success ::PBIO_ERROR_INVALID_ARG
+ *                          if @p row or @p col is out of range or
+ *                          implementation-specific error on failure.
+ */
+static pbio_error_t pbio_light_grid_set_pixel(pbio_light_grid_t *light_grid, uint8_t row, uint8_t col, uint8_t brightness) {
+    uint8_t size = light_grid->size;
+    if (row >= size || col >= size) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    return light_grid->funcs->set_pixel(light_grid, row, col, brightness);
+}
+
+
+/**
  * Initializes the required fields in a ::pbio_light_grid_t.
  * @param [in]  light_grid  The struct to initialize.
  * @param [in]  size        The size of the light grid.
@@ -72,27 +93,28 @@ pbio_error_t pbio_light_grid_set_rows(pbio_light_grid_t *light_grid, const uint8
 }
 
 /**
- * Sets the pixel to a given brightness.
+ * User function that sets the pixel to a given brightness.
  *
- * If an animation is running in the background, it will be stopped.
+ * If an animation is running in the background, it will be stopped. Out of
+ * range index values are ignored and intentionally raise no error.
  *
  * @param [in]  light_grid  The light grid instance
  * @param [in]  row         Row index (0 to size-1)
  * @param [in]  col         Column index (0 to size-1)
  * @param [in]  brightness  Brightness (0 to 100)
- * @return                  ::PBIO_SUCCESS on success ::PBIO_ERROR_INVALID_ARG
- *                          if @p row or @p col is out of range or
+ * @return                  ::PBIO_SUCCESS on success or
  *                          implementation-specific error on failure.
  */
-pbio_error_t pbio_light_grid_set_pixel(pbio_light_grid_t *light_grid, uint8_t row, uint8_t col, uint8_t brightness) {
-    uint8_t size = light_grid->size;
-    if (row >= size || col >= size) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
+pbio_error_t pbio_light_grid_set_pixel_user(pbio_light_grid_t *light_grid, uint8_t row, uint8_t col, uint8_t brightness) {
 
     pbio_light_grid_stop_animation(light_grid);
 
-    return light_grid->funcs->set_pixel(light_grid, row, col, brightness);
+    uint8_t size = light_grid->size;
+    if (row >= size || col >= size) {
+        return PBIO_SUCCESS;
+    }
+
+    return pbio_light_grid_set_pixel(light_grid, row, col, brightness);
 }
 
 /**
@@ -109,7 +131,7 @@ pbio_error_t pbio_light_grid_set_image(pbio_light_grid_t *light_grid, const uint
     uint8_t size = light_grid->size;
     for (uint8_t r = 0; r < size; r++) {
         for (uint8_t c = 0; c < size; c++) {
-            pbio_error_t err = pbio_light_grid_set_pixel(light_grid, r, c, image[r * size + c]);
+            pbio_error_t err = pbio_light_grid_set_pixel_user(light_grid, r, c, image[r * size + c]);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
@@ -127,7 +149,7 @@ static uint32_t pbio_light_grid_animation_next(pbio_light_animation_t *animation
 
     for (uint8_t r = 0; r < size; r++) {
         for (uint8_t c = 0; c < size; c++) {
-            light_grid->funcs->set_pixel(light_grid, r, c, cell[r * size + c]);
+            pbio_light_grid_set_pixel(light_grid, r, c, cell[r * size + c]);
         }
     }
 
