@@ -80,17 +80,22 @@ static uint32_t pbsys_hub_light_grid_user_program_animation_next(pbio_light_anim
 
 void pbsys_hub_light_grid_handle_event(process_event_t event, process_data_t data) {
     if (event == PBIO_EVENT_STATUS_SET && (pbsys_status_t)data == PBSYS_STATUS_USER_PROGRAM_RUNNING) {
-        uint8_t rows[5] = {0};
-        pbio_light_grid_set_rows(pbsys_hub_light_grid, rows);
+        for (uint8_t r = 0; r < pbsys_hub_light_grid->size; r++) {
+            for (uint8_t c = 0; c < pbsys_hub_light_grid->size; c++) {
+                pbsys_hub_light_grid_set_pixel(pbsys_hub_light_grid, r, c, 0);
+            }
+        }
         pbio_light_animation_init(&pbsys_hub_light_grid->animation, pbsys_hub_light_grid_user_program_animation_next);
         pbio_light_animation_start(&pbsys_hub_light_grid->animation);
     }
     if (event == PBIO_EVENT_STATUS_CLEARED && (pbsys_status_t)data == PBSYS_STATUS_USER_PROGRAM_RUNNING) {
-        uint8_t rows[5] = {0};
         // 3x3 "stop sign" at top center of light grid
-        rows[0] = rows[1] = rows[2] = 0b01110;
-        // FIXME: should not be calling pbio user functions from pbsys.
-        pbio_light_grid_set_rows(pbsys_hub_light_grid, rows);
+        for (uint8_t r = 0; r < pbsys_hub_light_grid->size; r++) {
+            for (uint8_t c = 0; c < pbsys_hub_light_grid->size; c++) {
+                uint8_t brightness = r < 3 && c > 0 && c < 4 ? 100: 0;
+                pbsys_hub_light_grid_set_pixel(pbsys_hub_light_grid, r, c, brightness);
+            }
+        }
     }
 }
 
