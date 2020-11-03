@@ -38,8 +38,10 @@ struct _pbio_light_grid_t {
     uint8_t current_cell;
     /** Animation update rate in milliseconds. */
     uint16_t interval;
-    /** Size of the grid (assumes grid is square) */
+    /** Size of the grid (assumes grid is square). */
     uint8_t size;
+    /** Orientation of the grid: which side is "up". */
+    pbio_side_t up_side;
 };
 
 void pbio_light_grid_init(pbio_light_grid_t *light_grid, uint8_t size, const pbio_light_grid_funcs_t *funcs);

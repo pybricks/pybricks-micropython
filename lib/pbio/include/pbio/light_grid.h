@@ -17,9 +17,20 @@
 /** A light grid instance. */
 typedef struct _pbio_light_grid_t pbio_light_grid_t;
 
+// FIXME: Move to a common location. This is also relevant for IMU orientation.
+typedef enum {
+    PBIO_SIDE_TOP,       /**< The top side of a rectangular box or screen */
+    PBIO_SIDE_LEFT,      /**< The left side of a rectangular box or screen */
+    PBIO_SIDE_BOTTOM,    /**< The bottom side of a rectangular box or screen */
+    PBIO_SIDE_RIGHT,     /**< The right side of a rectangular box or screen */
+    PBIO_SIDE_FRONT,     /**< The front side of a rectangular box */
+    PBIO_SIDE_BACK,      /**< The back side of a rectangular box */
+} pbio_side_t;
+
 #if PBIO_CONFIG_LIGHT_GRID
 
 uint8_t pbio_light_grid_get_size(pbio_light_grid_t *light_grid);
+void pbio_light_grid_set_orientation(pbio_light_grid_t *light_grid, pbio_side_t up_side);
 pbio_error_t pbio_light_grid_set_rows(pbio_light_grid_t *light_grid, const uint8_t *rows);
 pbio_error_t pbio_light_grid_set_pixel_user(pbio_light_grid_t *light_grid, uint8_t row, uint8_t col, uint8_t brightness);
 pbio_error_t pbio_light_grid_set_image(pbio_light_grid_t *light_grid, const uint8_t *image);

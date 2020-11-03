@@ -31,6 +31,31 @@ static pbio_error_t pbio_light_grid_set_pixel(pbio_light_grid_t *light_grid, uin
         return PBIO_ERROR_INVALID_ARG;
     }
 
+    // Rotate user input based on screen orientation
+    switch (light_grid->up_side) {
+        case PBIO_SIDE_TOP:
+        case PBIO_SIDE_FRONT:
+            break;
+        case PBIO_SIDE_LEFT: {
+            uint8_t _col = col;
+            col = row;
+            row = size - 1 - _col;
+            break;
+        }
+        case PBIO_SIDE_BOTTOM:
+        case PBIO_SIDE_BACK:
+            col = size - 1 - col;
+            row = size - 1 - row;
+            break;
+        case PBIO_SIDE_RIGHT: {
+            uint8_t _col = col;
+            col = size - 1 - row;
+            row = _col;
+            break;
+        }
+    }
+
+    // Set the pixel brightness
     return light_grid->funcs->set_pixel(light_grid, row, col, brightness);
 }
 
@@ -46,6 +71,16 @@ void pbio_light_grid_init(pbio_light_grid_t *light_grid, uint8_t size, const pbi
     light_grid->funcs = funcs;
     pbio_light_animation_init(&light_grid->animation, NULL);
 }
+
+/**
+ * Sets the light grid orientation
+ * @param [in]  light_grid  The light grid.
+ * @param [in]  up_side     Orientation of the light grid: which side is up.
+ */
+void pbio_light_grid_set_orientation(pbio_light_grid_t *light_grid, pbio_side_t up_side) {
+    light_grid->up_side = up_side;
+}
+
 
 /**
  * Get the size of the light grid.
