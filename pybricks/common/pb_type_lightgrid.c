@@ -11,12 +11,14 @@
 #include "py/obj.h"
 #include "py/objstr.h"
 
-#include <pybricks/geometry.h>
 #include <pybricks/common.h>
+#include <pybricks/geometry.h>
+#include <pybricks/parameters.h>
 
 #include <pybricks/util_pb/pb_error.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
+#include <pybricks/util_mp/pb_type_enum.h>
 
 
 // pybricks._common.LightGrid class object
@@ -38,6 +40,18 @@ STATIC void common_LightGrid__renew(common_LightGrid_obj_t *self, uint8_t frames
     // Save new number of frames
     self->frames = frames;
 }
+
+// pybricks._common.LightGrid.orientation
+STATIC mp_obj_t common_LightGrid_orientation(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        common_LightGrid_obj_t, self,
+        PB_ARG_REQUIRED(up));
+
+    pbio_light_grid_set_orientation(self->light_grid, pb_type_enum_get_value(up_in, &pb_enum_type_Side));
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightGrid_orientation_obj, 1, common_LightGrid_orientation);
 
 // pybricks._common.LightGrid.char
 STATIC mp_obj_t common_LightGrid_char(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -288,14 +302,15 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_LightGrid_text_obj, 1, common_LightGrid
 
 // dir(pybricks.builtins.LightGrid)
 STATIC const mp_rom_map_elem_t common_LightGrid_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_char),   MP_ROM_PTR(&common_LightGrid_char_obj)   },
-    { MP_ROM_QSTR(MP_QSTR_image),  MP_ROM_PTR(&common_LightGrid_image_obj)  },
-    { MP_ROM_QSTR(MP_QSTR_on),     MP_ROM_PTR(&common_LightGrid_on_obj)     },
-    { MP_ROM_QSTR(MP_QSTR_off),    MP_ROM_PTR(&common_LightGrid_off_obj)    },
-    { MP_ROM_QSTR(MP_QSTR_number), MP_ROM_PTR(&common_LightGrid_number_obj) },
-    { MP_ROM_QSTR(MP_QSTR_pixel),  MP_ROM_PTR(&common_LightGrid_pixel_obj)  },
-    { MP_ROM_QSTR(MP_QSTR_pattern),MP_ROM_PTR(&common_LightGrid_pattern_obj)},
-    { MP_ROM_QSTR(MP_QSTR_text),   MP_ROM_PTR(&common_LightGrid_text_obj)   },
+    { MP_ROM_QSTR(MP_QSTR_char),            MP_ROM_PTR(&common_LightGrid_char_obj)            },
+    { MP_ROM_QSTR(MP_QSTR_image),           MP_ROM_PTR(&common_LightGrid_image_obj)           },
+    { MP_ROM_QSTR(MP_QSTR_number),          MP_ROM_PTR(&common_LightGrid_number_obj)          },
+    { MP_ROM_QSTR(MP_QSTR_off),             MP_ROM_PTR(&common_LightGrid_off_obj)             },
+    { MP_ROM_QSTR(MP_QSTR_on),              MP_ROM_PTR(&common_LightGrid_on_obj)              },
+    { MP_ROM_QSTR(MP_QSTR_pattern),         MP_ROM_PTR(&common_LightGrid_pattern_obj)         },
+    { MP_ROM_QSTR(MP_QSTR_pixel),           MP_ROM_PTR(&common_LightGrid_pixel_obj)           },
+    { MP_ROM_QSTR(MP_QSTR_orientation),     MP_ROM_PTR(&common_LightGrid_orientation_obj)     },
+    { MP_ROM_QSTR(MP_QSTR_text),            MP_ROM_PTR(&common_LightGrid_text_obj)            },
 };
 STATIC MP_DEFINE_CONST_DICT(common_LightGrid_locals_dict, common_LightGrid_locals_dict_table);
 
