@@ -52,7 +52,7 @@ STATIC mp_obj_t common_LightGrid_char(size_t n_args, const mp_obj_t *pos_args, m
     }
 
     // Pick corresponding image and display it
-    pbio_light_grid_set_rows(self->light_grid, pb_font_5x5[text[0] - 32]);
+    pb_assert(pbio_light_grid_set_rows(self->light_grid, pb_font_5x5[text[0] - 32]));
 
     return mp_const_none;
 }
@@ -124,7 +124,7 @@ STATIC mp_obj_t common_LightGrid_on(size_t n_args, const mp_obj_t *pos_args, mp_
 
     for (uint8_t i = 0; i < size; i++) {
         for (uint8_t j = 0; j < size; j++) {
-            pbio_light_grid_set_pixel_user(self->light_grid, i, j, brightness);
+            pb_assert(pbio_light_grid_set_pixel_user(self->light_grid, i, j, brightness));
         }
     }
 
@@ -140,7 +140,7 @@ STATIC mp_obj_t common_LightGrid_off(mp_obj_t self_in) {
 
     for (uint8_t i = 0; i < size; i++) {
         for (uint8_t j = 0; j < size; j++) {
-            pbio_light_grid_set_pixel_user(self->light_grid, i, j, 0);
+            pb_assert(pbio_light_grid_set_pixel_user(self->light_grid, i, j, 0));
         }
     }
 
@@ -167,13 +167,13 @@ STATIC mp_obj_t common_LightGrid_number(size_t n_args, const mp_obj_t *pos_args,
 
     // > 99 gets displayed as >
     if (number > 99) {
-        pbio_light_grid_set_rows(self->light_grid, pb_font_5x5['>' - 32]);
+        pb_assert(pbio_light_grid_set_rows(self->light_grid, pb_font_5x5['>' - 32]));
         return mp_const_none;
     }
 
     // < -99 gets displayed as <
     if (number < -99) {
-        pbio_light_grid_set_rows(self->light_grid, pb_font_5x5['<' - 32]);
+        pb_assert(pbio_light_grid_set_rows(self->light_grid, pb_font_5x5['<' - 32]));
         return mp_const_none;
     }
 
@@ -190,11 +190,11 @@ STATIC mp_obj_t common_LightGrid_number(size_t n_args, const mp_obj_t *pos_args,
     }
 
     // Display the result
-    pbio_light_grid_set_rows(self->light_grid, composite);
+    pb_assert(pbio_light_grid_set_rows(self->light_grid, composite));
 
     // Display one faint dot in the middle to indicate negative
     if (negative) {
-        pbio_light_grid_set_pixel_user(self->light_grid, 2, 2, 50);
+        pb_assert(pbio_light_grid_set_pixel_user(self->light_grid, 2, 2, 50));
     }
 
     return mp_const_none;
@@ -243,7 +243,7 @@ STATIC mp_obj_t common_LightGrid_pixel(size_t n_args, const mp_obj_t *pos_args, 
         PB_ARG_DEFAULT_INT(brightness, 100));
 
     // Set pixel at the given brightness
-    pbio_light_grid_set_pixel_user(self->light_grid, mp_obj_get_int(row_in), mp_obj_get_int(column_in), pb_obj_get_pct(brightness_in));
+    pb_assert(pbio_light_grid_set_pixel_user(self->light_grid, mp_obj_get_int(row_in), mp_obj_get_int(column_in), pb_obj_get_pct(brightness_in)));
 
     return mp_const_none;
 }
@@ -272,12 +272,12 @@ STATIC mp_obj_t common_LightGrid_text(size_t n_args, const mp_obj_t *pos_args, m
 
     // Display all characters one by one
     for (size_t i = 0; i < text_len; i++) {
-        pbio_light_grid_set_rows(self->light_grid, pb_font_5x5[text[i] - 32]);
+        pb_assert(pbio_light_grid_set_rows(self->light_grid, pb_font_5x5[text[i] - 32]));
         mp_hal_delay_ms(on);
 
         // Some off time so we can see multiple of the same characters
         if (off > 0 || i == text_len - 1) {
-            pbio_light_grid_set_rows(self->light_grid, pb_font_5x5[' ' - 32]);
+            pb_assert(pbio_light_grid_set_rows(self->light_grid, pb_font_5x5[' ' - 32]));
             mp_hal_delay_ms(off);
         }
     }
