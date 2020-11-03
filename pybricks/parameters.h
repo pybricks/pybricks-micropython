@@ -69,6 +69,15 @@ const pb_obj_enum_member_t pb_Stop_COAST_obj;
 const pb_obj_enum_member_t pb_Stop_BRAKE_obj;
 const pb_obj_enum_member_t pb_Stop_HOLD_obj;
 
+const mp_obj_type_t pb_enum_type_Side;
+
+const pb_obj_enum_member_t pb_Side_BACK_obj;
+const pb_obj_enum_member_t pb_Side_BOTTOM_obj;
+const pb_obj_enum_member_t pb_Side_FRONT_obj;
+const pb_obj_enum_member_t pb_Side_LEFT_obj;
+const pb_obj_enum_member_t pb_Side_RIGHT_obj;
+const pb_obj_enum_member_t pb_Side_TOP_obj;
+
 const mp_obj_module_t pb_module_parameters;
 
 #endif // PYBRICKS_PY_PARAMETERS

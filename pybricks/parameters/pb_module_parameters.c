@@ -15,6 +15,7 @@ STATIC const mp_rom_map_elem_t parameters_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Color),       MP_ROM_PTR(&pb_type_Color)          },
     { MP_ROM_QSTR(MP_QSTR_Direction),   MP_ROM_PTR(&pb_enum_type_Direction) },
     { MP_ROM_QSTR(MP_QSTR_Port),        MP_ROM_PTR(&pb_enum_type_Port)      },
+    { MP_ROM_QSTR(MP_QSTR_Side),        MP_ROM_PTR(&pb_enum_type_Side)      },
     { MP_ROM_QSTR(MP_QSTR_Stop),        MP_ROM_PTR(&pb_enum_type_Stop)      },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_parameters_globals, parameters_globals_table);

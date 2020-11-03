@@ -270,6 +270,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	parameters/pb_type_color.c \
 	parameters/pb_type_direction.c \
 	parameters/pb_type_port.c \
+	parameters/pb_type_side.c \
 	parameters/pb_type_stop.c \
 	robotics/pb_module_robotics.c \
 	robotics/pb_type_drivebase.c \
