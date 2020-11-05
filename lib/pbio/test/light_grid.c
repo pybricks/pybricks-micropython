@@ -32,6 +32,9 @@ static const uint8_t test_animation[] = {
 
 static uint8_t test_light_grid_set_pixel_last_brightness[GRID_SIZE][GRID_SIZE];
 
+void clock_override();
+void clock_override_tick(clock_time_t ticks);
+
 static void test_light_grid_reset() {
     memset(test_light_grid_set_pixel_last_brightness, 0, DATA_SIZE);
 }
@@ -47,6 +50,8 @@ static const pbio_light_grid_funcs_t test_light_grid_funcs = {
 
 PT_THREAD(test_light_grid(struct pt *pt)) {
     PT_BEGIN(pt);
+
+    clock_override();
 
     static pbio_light_grid_t test_light_grid;
     pbio_light_grid_init(&test_light_grid, 3, &test_light_grid_funcs);
@@ -86,23 +91,28 @@ PT_THREAD(test_light_grid(struct pt *pt)) {
 
     // set_pixel() should not be called again until after a delay and it should
     // receive the next hue in the list
-    static struct timer timer;
-    timer_set(&timer, INTERVAL);
-    PT_WAIT_UNTIL(pt, test_light_grid_set_pixel_last_brightness[0][0] != 1);
+    clock_override_tick(INTERVAL - 1);
+    PT_YIELD(pt);
+    tt_want_int_op(test_light_grid_set_pixel_last_brightness[0][0], ==, 1);
+    clock_override_tick(1);
+    PT_YIELD(pt);
+    tt_want_int_op(test_light_grid_set_pixel_last_brightness[0][0], !=, 1);
     tt_want_light_grid_data(11, 12, 13, 14, 15, 16, 17, 18, 19);
-    tt_want(timer_expired(&timer));
 
     // then the next animation update should wrap back to the start of the list
-    timer_set(&timer, INTERVAL);
-    PT_WAIT_UNTIL(pt, test_light_grid_set_pixel_last_brightness[0][0] != 11);
+    clock_override_tick(INTERVAL - 1);
+    PT_YIELD(pt);
+    tt_want_int_op(test_light_grid_set_pixel_last_brightness[0][0], ==, 11);
+    clock_override_tick(1);
+    PT_YIELD(pt);
+    tt_want_int_op(test_light_grid_set_pixel_last_brightness[0][0], !=, 11);
     tt_want_light_grid_data(1, 2, 3, 4, 5, 6, 7, 8, 9);
-    tt_want(timer_expired(&timer));
 
     // stopping the animation should not change any pixels
     test_light_grid_reset();
     pbio_light_grid_stop_animation(&test_light_grid);
-    timer_set(&timer, INTERVAL * 2);
-    PT_WAIT_UNTIL(pt, timer_expired(&timer));
+    clock_override_tick(INTERVAL * 2);
+    PT_YIELD(pt);
     tt_want_light_grid_data(0);
 
     PT_END(pt);
