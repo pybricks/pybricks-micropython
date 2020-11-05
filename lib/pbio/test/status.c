@@ -16,6 +16,9 @@ PROCESS(status_test_process, "status test");
 static process_event_t last_event;
 static process_data_t last_data;
 
+void clock_override();
+void clock_override_tick(clock_time_t ticks);
+
 PROCESS_THREAD(status_test_process, ev, data) {
     PROCESS_BEGIN();
 
@@ -29,9 +32,9 @@ PROCESS_THREAD(status_test_process, ev, data) {
 }
 
 PT_THREAD(test_status(struct pt *pt)) {
-    static struct etimer timer;
-
     PT_BEGIN(pt);
+
+    clock_override();
 
     process_start(&status_test_process, NULL);
 
@@ -48,18 +51,18 @@ PT_THREAD(test_status(struct pt *pt)) {
     tt_want(!pbsys_status_test_debounce(test_flag, false, 10));
 
     // ensure that event was broadcast
-    etimer_set(&timer, clock_from_msec(1));
-    timer.p = &status_test_process;
     last_event = PROCESS_EVENT_NONE;
-    PT_WAIT_UNTIL(pt, last_event == PBIO_EVENT_STATUS_SET || (last_event == PROCESS_EVENT_TIMER && etimer_expired(&timer)));
+    PT_YIELD(pt);
     tt_want_uint_op(last_event, ==, PBIO_EVENT_STATUS_SET);
     tt_want_uint_op(last_data, ==, test_flag);
 
     // ensure that debounce works
-    etimer_set(&timer, clock_from_msec(10));
-    timer.p = &status_test_process;
-    last_event = PROCESS_EVENT_NONE;
-    PT_WAIT_UNTIL(pt, last_event == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+    clock_override_tick(clock_from_msec(9));
+    PT_YIELD(pt);
+    tt_want(!pbsys_status_test_debounce(test_flag, true, 10));
+    tt_want(!pbsys_status_test_debounce(test_flag, false, 10));
+    clock_override_tick(clock_from_msec(1));
+    PT_YIELD(pt);
     tt_want(pbsys_status_test_debounce(test_flag, true, 10));
     tt_want(!pbsys_status_test_debounce(test_flag, false, 10));
 
@@ -68,11 +71,9 @@ PT_THREAD(test_status(struct pt *pt)) {
     tt_want(pbsys_status_test_debounce(test_flag, true, 10));
     tt_want(!pbsys_status_test_debounce(test_flag, false, 10));
 
-    etimer_set(&timer, clock_from_msec(1));
-    timer.p = &status_test_process;
     last_event = PROCESS_EVENT_NONE;
-    PT_WAIT_UNTIL(pt, last_event == PBIO_EVENT_STATUS_SET || (last_event == PROCESS_EVENT_TIMER && etimer_expired(&timer)));
-    tt_want_uint_op(last_event, ==, PROCESS_EVENT_TIMER);
+    PT_YIELD(pt);
+    tt_want_uint_op(last_event, ==, PROCESS_EVENT_NONE);
 
     // ensure that clearing a flag works as expected
     pbsys_status_clear(test_flag);
@@ -81,18 +82,19 @@ PT_THREAD(test_status(struct pt *pt)) {
     tt_want(!pbsys_status_test_debounce(test_flag, false, 10));
 
     // ensure that event was broadcast
-    etimer_set(&timer, clock_from_msec(1));
-    timer.p = &status_test_process;
     last_event = PROCESS_EVENT_NONE;
-    PT_WAIT_UNTIL(pt, last_event == PBIO_EVENT_STATUS_CLEARED || (last_event == PROCESS_EVENT_TIMER && etimer_expired(&timer)));
+    PT_YIELD(pt);
     tt_want_uint_op(last_event, ==, PBIO_EVENT_STATUS_CLEARED);
     tt_want_uint_op(last_data, ==, test_flag);
 
     // ensure that debounce works
-    etimer_set(&timer, clock_from_msec(10));
-    timer.p = &status_test_process;
     last_event = PROCESS_EVENT_NONE;
-    PT_WAIT_UNTIL(pt, last_event == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+    clock_override_tick(clock_from_msec(9));
+    PT_YIELD(pt);
+    tt_want(!pbsys_status_test_debounce(test_flag, true, 10));
+    tt_want(!pbsys_status_test_debounce(test_flag, false, 10));
+    clock_override_tick(clock_from_msec(1));
+    PT_YIELD(pt);
     tt_want(!pbsys_status_test_debounce(test_flag, true, 10));
     tt_want(pbsys_status_test_debounce(test_flag, false, 10));
 
@@ -101,11 +103,9 @@ PT_THREAD(test_status(struct pt *pt)) {
     tt_want(!pbsys_status_test_debounce(test_flag, true, 10));
     tt_want(pbsys_status_test_debounce(test_flag, false, 10));
 
-    etimer_set(&timer, clock_from_msec(1));
-    timer.p = &status_test_process;
     last_event = PROCESS_EVENT_NONE;
-    PT_WAIT_UNTIL(pt, last_event == PBIO_EVENT_STATUS_CLEARED || (last_event == PROCESS_EVENT_TIMER && etimer_expired(&timer)));
-    tt_want_uint_op(last_event, ==, PROCESS_EVENT_TIMER);
+    PT_YIELD(pt);
+    tt_want_uint_op(last_event, ==, PROCESS_EVENT_NONE);
 
     PT_END(pt);
 }
