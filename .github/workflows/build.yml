@@ -426,7 +426,7 @@ jobs:
 
   pbio:
     name: pbio tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env:
       PBIO_TEST_RESULTS_DIR: lib/pbio/test/results
     steps:

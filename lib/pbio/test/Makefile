@@ -102,7 +102,9 @@ build-coverage/lcov.info: Makefile $(SRC)
 	lcov --capture --output-file $@ \
 		--directory build-coverage/lib/pbio/drv \
 		--directory build-coverage/lib/pbio/src \
-		--directory build-coverage/lib/pbio/sys
+		--directory build-coverage/lib/pbio/sys \
+		--exclude **/contiki-core/** \
+		--exclude **/libfixmath/**
 
 coverage-html: build-coverage/lcov.info
 	$(Q)genhtml $^ --output-directory build-coverage/html
