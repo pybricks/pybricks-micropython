@@ -15,6 +15,9 @@ PROCESS_NAME(pbio_light_animation_process);
 
 static uint8_t test_animation_set_hsv_call_count;
 
+void clock_override();
+void clock_override_tick(clock_time_t ticks);
+
 static clock_time_t test_animation_next(pbio_light_animation_t *animation) {
     test_animation_set_hsv_call_count++;
     return TEST_ANIMATION_TIME;
@@ -22,6 +25,8 @@ static clock_time_t test_animation_next(pbio_light_animation_t *animation) {
 
 PT_THREAD(test_light_animation(struct pt *pt)) {
     PT_BEGIN(pt);
+
+    clock_override();
 
     static pbio_light_animation_t test_animation;
     pbio_light_animation_init(&test_animation, test_animation_next);
@@ -37,10 +42,12 @@ PT_THREAD(test_light_animation(struct pt *pt)) {
     tt_want_uint_op(test_animation_set_hsv_call_count, ==, 1);
 
     // next() should not be called again until after a delay
-    static struct timer timer;
-    timer_set(&timer, TEST_ANIMATION_TIME);
-    PT_WAIT_UNTIL(pt, test_animation_set_hsv_call_count == 2);
-    tt_want(timer_expired(&timer));
+    clock_override_tick(TEST_ANIMATION_TIME - 1);
+    PT_YIELD(pt);
+    tt_want_uint_op(test_animation_set_hsv_call_count, ==, 1);
+    clock_override_tick(1);
+    PT_YIELD(pt);
+    tt_want_uint_op(test_animation_set_hsv_call_count, ==, 2);
 
     // stopping the animation stops the process
     pbio_light_animation_stop(&test_animation);
