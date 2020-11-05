@@ -32,6 +32,9 @@ static const pbio_color_compressed_hsv_t test_animation[] = {
     PBIO_COLOR_LIGHT_ANIMATION_END
 };
 
+void clock_override();
+void clock_override_tick(clock_time_t ticks);
+
 static pbio_error_t test_light_set_hsv(pbio_color_light_t *light, const pbio_color_hsv_t *hsv) {
     test_light_set_hsv_call_count++;
     test_light_set_hsv_last_hue = hsv->h;
@@ -45,6 +48,8 @@ static const pbio_color_light_funcs_t test_light_funcs = {
 
 PT_THREAD(test_color_light(struct pt *pt)) {
     PT_BEGIN(pt);
+
+    clock_override();
 
     static pbio_color_light_t test_light;
     pbio_color_light_init(&test_light, &test_light_funcs);
@@ -71,19 +76,21 @@ PT_THREAD(test_color_light(struct pt *pt)) {
 
     // set_hsv() should not be called again until after a delay and it should
     // receive the next hue in the list
-    static struct timer timer;
-    timer_set(&timer, TEST_ANIMATION_TIME);
-    PT_WAIT_UNTIL(pt, test_light_set_hsv_call_count == 2);
+    clock_override_tick(TEST_ANIMATION_TIME - 1);
+    PT_YIELD(pt);
+    tt_want_uint_op(test_light_set_hsv_call_count, ==, 1);
+    clock_override_tick(1);
+    PT_YIELD(pt);
+    tt_want_uint_op(test_light_set_hsv_call_count, ==, 2);
     // odd blink cells turns the light off (so hue doesn't matter here)
     tt_want_uint_op(test_light_set_hsv_last_brightness, ==, 0);
-    tt_want(timer_expired(&timer));
 
     // then the next animation update should wrap back to the start of the list
-    timer_set(&timer, TEST_ANIMATION_TIME);
-    PT_WAIT_UNTIL(pt, test_light_set_hsv_call_count == 3);
+    clock_override_tick(TEST_ANIMATION_TIME);
+    PT_YIELD(pt);
+    tt_want_uint_op(test_light_set_hsv_call_count, ==, 3);
     tt_want_uint_op(test_light_set_hsv_last_hue, ==, PBIO_COLOR_HUE_BLUE);
     tt_want_uint_op(test_light_set_hsv_last_brightness, ==, 100);
-    tt_want(timer_expired(&timer));
 
     // reset call count for next series of tests
     test_light_set_hsv_call_count = 0;
@@ -95,16 +102,16 @@ PT_THREAD(test_color_light(struct pt *pt)) {
 
     // set_hsv() should not be called again until after a delay and it should
     // receive the next hue in the list
-    timer_set(&timer, TEST_ANIMATION_TIME);
-    PT_WAIT_UNTIL(pt, test_light_set_hsv_call_count == 2);
+    clock_override_tick(TEST_ANIMATION_TIME);
+    PT_YIELD(pt);
+    tt_want_uint_op(test_light_set_hsv_call_count, ==, 2);
     tt_want_uint_op(test_light_set_hsv_last_hue, ==, PBIO_COLOR_HUE_MAGENTA);
-    tt_want(timer_expired(&timer));
 
     // then the next animation update should wrap back to the start of the list
-    timer_set(&timer, TEST_ANIMATION_TIME);
-    PT_WAIT_UNTIL(pt, test_light_set_hsv_call_count == 3);
+    clock_override_tick(TEST_ANIMATION_TIME);
+    PT_YIELD(pt);
+    tt_want_uint_op(test_light_set_hsv_call_count, ==, 3);
     tt_want_uint_op(test_light_set_hsv_last_hue, ==, PBIO_COLOR_HUE_CYAN);
-    tt_want(timer_expired(&timer));
 
     PT_END(pt);
 }
