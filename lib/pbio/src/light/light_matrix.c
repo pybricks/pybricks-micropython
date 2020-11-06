@@ -118,7 +118,7 @@ pbio_error_t pbio_light_matrix_set_rows(pbio_light_matrix_t *light_matrix, const
             // The pixel is on if the bit is high.
             bool on = rows[i] & (1 << (size - 1 - j));
             // Set the pixel.
-            pbio_error_t err = pbio_light_matrix_set_pixel(light_matrix, i, j, on * 100);
+            pbio_error_t err = pbio_light_matrix_set_pixel_user(light_matrix, i, j, on * 100);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
