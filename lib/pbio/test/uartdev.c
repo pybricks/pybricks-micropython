@@ -37,15 +37,12 @@ static struct {
     pbio_error_t tx_msg_result;
 } test_uart_dev;
 
-void clock_override();
-void clock_override_tick(clock_time_t ticks);
-
 PT_THREAD(simulate_rx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, bool *ok)) {
     PT_BEGIN(pt);
 
     // First uartdev reads one byte header
     PT_WAIT_UNTIL(pt, {
-        clock_override_tick(1);
+        clock_tick(1);
         test_uart_dev.rx_msg_result == PBIO_ERROR_AGAIN;
     });
     tt_uint_op(test_uart_dev.rx_msg_length, ==, 1);
@@ -60,7 +57,7 @@ PT_THREAD(simulate_rx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, boo
 
     // then read rest of message
     PT_WAIT_UNTIL(pt, {
-        clock_override_tick(1);
+        clock_tick(1);
         test_uart_dev.rx_msg_result == PBIO_ERROR_AGAIN;
     });
     tt_uint_op(test_uart_dev.rx_msg_length, ==, length - 1);
@@ -80,7 +77,7 @@ PT_THREAD(simulate_tx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, boo
     PT_BEGIN(pt);
 
     PT_WAIT_UNTIL(pt, {
-        clock_override_tick(1);
+        clock_tick(1);
         test_uart_dev.tx_msg_result == PBIO_ERROR_AGAIN;
     });
     tt_uint_op(test_uart_dev.tx_msg_length, ==, length);
@@ -114,8 +111,6 @@ static const uint8_t msg_speed_115200[] = { 0x52, 0x00, 0xC2, 0x01, 0x00, 0x6E }
 static const uint8_t msg_ack[] = { 0x04 }; // ACK
 
 PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
-    clock_override();
-
     // info messages captured from BOOST Color Distance Sensor with logic analyzer
     static const uint8_t msg0[] = { 0x40, 0x25, 0x9A };
     static const uint8_t msg1[] = { 0x51, 0x07, 0x07, 0x0A, 0x07, 0xA3 };
@@ -226,14 +221,14 @@ PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
 
     // starting baud rate of hub
     PT_WAIT_UNTIL(pt, {
-        clock_override_tick(1);
+        clock_tick(1);
         test_uart_dev.baud == 115200;
     });
 
     // this device does not support syncing at 115200
     SIMULATE_TX_MSG(msg_speed_115200);
     PT_WAIT_UNTIL(pt, {
-        clock_override_tick(1);
+        clock_tick(1);
         test_uart_dev.baud == 2400;
     });
 
@@ -327,7 +322,7 @@ PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
 
     // wait for baud rate change
     PT_WAIT_UNTIL(pt, {
-        clock_override_tick(1);
+        clock_tick(1);
         test_uart_dev.baud == 115200;
     });
 
@@ -579,7 +574,7 @@ PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     int err;
 
     PT_WAIT_WHILE(pt, {
-        clock_override_tick(1);
+        clock_tick(1);
         (err = pbio_iodev_set_mode_begin(iodev, 1)) == PBIO_ERROR_AGAIN;
     });
     tt_uint_op(err, ==, PBIO_SUCCESS);
@@ -595,7 +590,7 @@ PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     SIMULATE_RX_MSG(msg88);
 
     PT_WAIT_WHILE(pt, {
-        clock_override_tick(1);
+        clock_tick(1);
         (err = pbio_iodev_set_mode_end(iodev)) == PBIO_ERROR_AGAIN;
     });
     tt_uint_op(err, ==, PBIO_SUCCESS);
@@ -605,7 +600,7 @@ PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     // also do mode 8 since it requires the extended mode flag
 
     PT_WAIT_WHILE(pt, {
-        clock_override_tick(1);
+        clock_tick(1);
         (err = pbio_iodev_set_mode_begin(iodev, 8)) == PBIO_ERROR_AGAIN;
     });
     tt_uint_op(err, ==, PBIO_SUCCESS);
@@ -622,7 +617,7 @@ PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     SIMULATE_RX_MSG(msg91);
 
     PT_WAIT_WHILE(pt, {
-        clock_override_tick(1);
+        clock_tick(1);
         (err = pbio_iodev_set_mode_end(iodev)) == PBIO_ERROR_AGAIN;
     });
     tt_uint_op(err, ==, PBIO_SUCCESS);
@@ -637,8 +632,6 @@ end:
 }
 
 PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
-    clock_override();
-
     // info messages captured from BOOST Interactive Motor with logic analyzer
     static const uint8_t msg0[] = { 0x40, 0x26, 0x99 };
     static const uint8_t msg1[] = { 0x49, 0x03, 0x02, 0xB7 };
@@ -693,14 +686,14 @@ PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
 
     // starting baud rate of hub
     PT_WAIT_UNTIL(pt, {
-        clock_override_tick(1);
+        clock_tick(1);
         test_uart_dev.baud == 115200;
     });
 
     // this device does not support syncing at 115200
     SIMULATE_TX_MSG(msg_speed_115200);
     PT_WAIT_UNTIL(pt, {
-        clock_override_tick(1);
+        clock_tick(1);
         test_uart_dev.baud == 2400;
     });
 
@@ -745,7 +738,7 @@ PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
 
     // wait for baud rate change
     PT_WAIT_UNTIL(pt, {
-        clock_override_tick(1);
+        clock_tick(1);
         test_uart_dev.baud == 115200;
     });
 
@@ -877,8 +870,6 @@ end:
 }
 
 PT_THREAD(test_technic_large_motor(struct pt *pt)) {
-    clock_override();
-
     // info messages captured from Technic Large Linear Motor with logic analyzer
     static const uint8_t msg2[] = { 0x40, 0x2E, 0x91 };
     static const uint8_t msg3[] = { 0x49, 0x05, 0x03, 0xB0 };
@@ -952,7 +943,7 @@ PT_THREAD(test_technic_large_motor(struct pt *pt)) {
 
     // baud rate for sync messages
     PT_WAIT_UNTIL(pt, {
-        clock_override_tick(1);
+        clock_tick(1);
         test_uart_dev.baud == 115200;
     });
 
@@ -1202,8 +1193,6 @@ end:
 }
 
 PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
-    clock_override();
-
     // info messages captured from Technic XL Linear Motor with logic analyzer
     static const uint8_t msg2[] = { 0x40, 0x2F, 0x90 };
     static const uint8_t msg3[] = { 0x49, 0x05, 0x03, 0xB0 };
@@ -1277,7 +1266,7 @@ PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
 
     // baud rate for sync messages
     PT_WAIT_UNTIL(pt, {
-        clock_override_tick(1);
+        clock_tick(1);
         test_uart_dev.baud == 115200;
     });
 

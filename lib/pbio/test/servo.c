@@ -24,8 +24,6 @@
 // wait an additional 1 second before ending test
 #define TEST_END_COUNT 1000 // clock ticks
 
-void clock_override();
-void clock_override_tick(clock_time_t ticks);
 void pbio_test_counter_set_count(int32_t count);
 void pbio_test_counter_set_rate(int32_t rate);
 
@@ -86,8 +84,6 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
     static uint32_t control_done_count;
 
     PT_BEGIN(pt);
-
-    clock_override();
 
     tt_uint_op(pbio_motorpoll_get_servo(PBIO_PORT_A, &servo), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_servo_setup(servo, PBIO_DIRECTION_CLOCKWISE, F16C(1, 0)), ==, PBIO_SUCCESS);
@@ -271,7 +267,7 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
                 servo->log.sampled = 0;
             }
 
-            clock_override_tick(1);
+            clock_tick(1);
             PT_YIELD(pt);
             continue;
         }

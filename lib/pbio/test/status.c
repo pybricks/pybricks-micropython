@@ -16,9 +16,6 @@ PROCESS(status_test_process, "status test");
 static process_event_t last_event;
 static process_data_t last_data;
 
-void clock_override();
-void clock_override_tick(clock_time_t ticks);
-
 PROCESS_THREAD(status_test_process, ev, data) {
     PROCESS_BEGIN();
 
@@ -33,8 +30,6 @@ PROCESS_THREAD(status_test_process, ev, data) {
 
 PT_THREAD(test_status(struct pt *pt)) {
     PT_BEGIN(pt);
-
-    clock_override();
 
     process_start(&status_test_process, NULL);
 
@@ -57,11 +52,11 @@ PT_THREAD(test_status(struct pt *pt)) {
     tt_want_uint_op(last_data, ==, test_flag);
 
     // ensure that debounce works
-    clock_override_tick(clock_from_msec(9));
+    clock_tick(clock_from_msec(9));
     PT_YIELD(pt);
     tt_want(!pbsys_status_test_debounce(test_flag, true, 10));
     tt_want(!pbsys_status_test_debounce(test_flag, false, 10));
-    clock_override_tick(clock_from_msec(1));
+    clock_tick(clock_from_msec(1));
     PT_YIELD(pt);
     tt_want(pbsys_status_test_debounce(test_flag, true, 10));
     tt_want(!pbsys_status_test_debounce(test_flag, false, 10));
@@ -89,11 +84,11 @@ PT_THREAD(test_status(struct pt *pt)) {
 
     // ensure that debounce works
     last_event = PROCESS_EVENT_NONE;
-    clock_override_tick(clock_from_msec(9));
+    clock_tick(clock_from_msec(9));
     PT_YIELD(pt);
     tt_want(!pbsys_status_test_debounce(test_flag, true, 10));
     tt_want(!pbsys_status_test_debounce(test_flag, false, 10));
-    clock_override_tick(clock_from_msec(1));
+    clock_tick(clock_from_msec(1));
     PT_YIELD(pt);
     tt_want(!pbsys_status_test_debounce(test_flag, true, 10));
     tt_want(pbsys_status_test_debounce(test_flag, false, 10));
