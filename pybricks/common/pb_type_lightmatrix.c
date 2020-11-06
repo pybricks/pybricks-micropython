@@ -79,7 +79,9 @@ static void common_Lightmatrix_image__extract(mp_obj_t image_in, size_t size, ui
     if (mp_obj_is_type(image_in, &pb_type_Matrix)) {
         for (size_t r = 0; r < size; r++) {
             for (size_t c = 0; c < size; c++) {
-                data[r * size + c] = (uint8_t)pb_type_Matrix_get_scalar(image_in, r, c);
+                float scalar = pb_type_Matrix_get_scalar(image_in, r, c);
+                scalar = scalar > 100 ? 100 : (scalar < 0 ? 0: scalar);
+                data[r * size + c] = (uint8_t)scalar;
             }
         }
         return;
