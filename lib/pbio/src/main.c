@@ -15,7 +15,7 @@
 #include "pbdrv/core.h"
 #include "pbdrv/motor.h"
 #include "pbio/config.h"
-#include "pbio/light_grid.h"
+#include "pbio/light_matrix.h"
 #include "pbio/light.h"
 #include "pbio/motorpoll.h"
 #include "pbio/uartdev.h"

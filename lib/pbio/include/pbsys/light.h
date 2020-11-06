@@ -16,9 +16,9 @@
 extern pbio_color_light_t *pbsys_status_light;
 #endif
 
-#if PBSYS_CONFIG_HUB_LIGHT_GRID
-#include <pbio/light_grid.h>
-extern pbio_light_grid_t *pbsys_hub_light_grid;
+#if PBSYS_CONFIG_HUB_LIGHT_MATRIX
+#include <pbio/light_matrix.h>
+extern pbio_light_matrix_t *pbsys_hub_light_matrix;
 #endif
 
 #endif // _PBSYS_LIGHT_H_

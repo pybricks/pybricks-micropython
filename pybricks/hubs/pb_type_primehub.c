@@ -5,8 +5,8 @@
 
 #if PYBRICKS_PY_HUBS && PYBRICKS_HUB_PRIMEHUB
 
-#if !PYBRICKS_PY_COMMON_LIGHT_GRID || !PYBRICKS_PY_PARAMETERS_BUTTON
-#error "PYBRICKS_PY_COMMON_LIGHT_GRID and PYBRICKS_PY_PARAMETERS_BUTTON must be enabled."
+#if !PYBRICKS_PY_COMMON_LIGHT_MATRIX || !PYBRICKS_PY_PARAMETERS_BUTTON
+#error "PYBRICKS_PY_COMMON_LIGHT_MATRIX and PYBRICKS_PY_PARAMETERS_BUTTON must be enabled."
 #endif
 
 #include <pbsys/light.h>
@@ -24,7 +24,7 @@ STATIC mp_obj_t hubs_PrimeHub_make_new(const mp_obj_type_t *type, size_t n_args,
     hubs_PrimeHub_obj_t *self = m_new_obj(hubs_PrimeHub_obj_t);
     self->base.type = (mp_obj_type_t *)type;
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light);
-    self->display = pb_type_LightGrid_obj_new(pbsys_hub_light_grid);
+    self->display = pb_type_Lightmatrix_obj_new(pbsys_hub_light_matrix);
     return MP_OBJ_FROM_PTR(self);
 }
 

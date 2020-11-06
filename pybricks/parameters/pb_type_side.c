@@ -5,7 +5,7 @@
 
 #if PYBRICKS_PY_PARAMETERS
 
-#include <pbio/light_grid.h>
+#include <pbio/light_matrix.h>
 
 #include <pybricks/parameters.h>
 
