@@ -22,6 +22,10 @@ print("A.shape =", A.shape)
 print("A * 3 =", A * 3)
 print("3 * A =", 3 * A)
 
+# Reading elements
+print("B[0, 1] =", B[0, 1])
+print("B.T[0, 1] =", B.T[0, 1])
+
 # Vector basics
 b = vector(3, 4, 0)
 c = b.T

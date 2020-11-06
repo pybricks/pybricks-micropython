@@ -473,7 +473,7 @@ STATIC mp_obj_t pb_type_Matrix_subscr(mp_obj_t self_in, mp_obj_t index_in, mp_ob
         }
 
         // Return result
-        return mp_obj_new_float_from_f(self->data[idx]);
+        return mp_obj_new_float_from_f(self->scale * self->data[idx]);
     }
     return MP_OBJ_NULL;
 }
