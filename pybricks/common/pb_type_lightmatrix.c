@@ -217,8 +217,8 @@ STATIC mp_obj_t common_Lightmatrix_number(size_t n_args, const mp_obj_t *pos_arg
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Lightmatrix_number_obj, 1, common_Lightmatrix_number);
 
-// pybricks._common.LightMatrix.pattern
-STATIC mp_obj_t common_Lightmatrix_pattern(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+// pybricks._common.LightMatrix.animate
+STATIC mp_obj_t common_Lightmatrix_animate(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         common_Lightmatrix_obj_t, self,
         PB_ARG_REQUIRED(images),
@@ -235,20 +235,20 @@ STATIC mp_obj_t common_Lightmatrix_pattern(size_t n_args, const mp_obj_t *pos_ar
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
 
-    // Allocate pattern data
+    // Allocate animation data
     size_t size = pbio_light_matrix_get_size(self->light_matrix);
     common_Lightmatrix__renew(self, n);
 
-    // Extract pattern data
+    // Extract animation data
     for (uint8_t i = 0; i < n; i++) {
         common_Lightmatrix_image__extract(image_objs[i], size, self->data + size * size * i);
     }
 
-    // Activate the pattern
+    // Activate the animation
     pbio_light_matrix_start_animation(self->light_matrix, self->data, self->frames, interval);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Lightmatrix_pattern_obj, 1, common_Lightmatrix_pattern);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Lightmatrix_animate_obj, 1, common_Lightmatrix_animate);
 
 // pybricks._common.LightMatrix.pixel
 STATIC mp_obj_t common_Lightmatrix_pixel(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -309,7 +309,7 @@ STATIC const mp_rom_map_elem_t common_Lightmatrix_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_number),          MP_ROM_PTR(&common_Lightmatrix_number_obj)          },
     { MP_ROM_QSTR(MP_QSTR_off),             MP_ROM_PTR(&common_Lightmatrix_off_obj)             },
     { MP_ROM_QSTR(MP_QSTR_on),              MP_ROM_PTR(&common_Lightmatrix_on_obj)              },
-    { MP_ROM_QSTR(MP_QSTR_pattern),         MP_ROM_PTR(&common_Lightmatrix_pattern_obj)         },
+    { MP_ROM_QSTR(MP_QSTR_animate),         MP_ROM_PTR(&common_Lightmatrix_animate_obj)         },
     { MP_ROM_QSTR(MP_QSTR_pixel),           MP_ROM_PTR(&common_Lightmatrix_pixel_obj)           },
     { MP_ROM_QSTR(MP_QSTR_orientation),     MP_ROM_PTR(&common_Lightmatrix_orientation_obj)     },
     { MP_ROM_QSTR(MP_QSTR_text),            MP_ROM_PTR(&common_Lightmatrix_text_obj)            },
