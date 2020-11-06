@@ -16,7 +16,7 @@
 
 // TODO: buttons are currently a module due to the legacy C API, but should be
 // an instance of a KeyPad type. That would make it consistent with the other C
-// types and the high level Python API.
+// types and the high level Python API, and simplify device-specific buttons.
 
 STATIC mp_obj_t buttons_pressed(void) {
     mp_obj_t button_list[10];
@@ -35,7 +35,11 @@ STATIC mp_obj_t buttons_pressed(void) {
         button_list[size++] = MP_OBJ_FROM_PTR(&pb_Button_RIGHT_obj);
     }
     if (pressed & PBIO_BUTTON_RIGHT_UP) {
+        #ifdef PYBRICKS_HUB_PRIMEHUB
+        button_list[size++] = MP_OBJ_FROM_PTR(&pb_Button_BT_obj);
+        #else
         button_list[size++] = MP_OBJ_FROM_PTR(&pb_Button_RIGHT_UP_obj);
+        #endif
     }
     if (pressed & PBIO_BUTTON_UP) {
         button_list[size++] = MP_OBJ_FROM_PTR(&pb_Button_UP_obj);

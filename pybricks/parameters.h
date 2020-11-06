@@ -27,7 +27,12 @@ const pb_obj_enum_member_t pb_Button_LEFT_UP_obj;
 const pb_obj_enum_member_t pb_Button_LEFT_DOWN_obj;
 const pb_obj_enum_member_t pb_Button_RIGHT_UP_obj;
 const pb_obj_enum_member_t pb_Button_RIGHT_DOWN_obj;
+#if PYBRICKS_HUB_EV3BRICK
 const pb_obj_enum_member_t pb_Button_BEACON_obj;
+#endif
+#if PYBRICKS_HUB_PRIMEHUB
+const pb_obj_enum_member_t pb_Button_BT_obj;
+#endif
 
 #endif // PYBRICKS_PY_PARAMETERS_BUTTON
 
