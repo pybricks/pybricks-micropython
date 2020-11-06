@@ -360,6 +360,7 @@ include $(TOP)/py/mkrules.mk
 EV3DEV_TEST_DIRS = $(addprefix ../../tests/ev3dev/, \
 	brick \
 	experimental \
+	geometry \
 	media \
 	messaging \
 	motor \
