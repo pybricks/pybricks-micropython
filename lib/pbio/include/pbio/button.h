@@ -46,6 +46,7 @@ typedef enum _pbio_button_flags_t {
                                       *   |----------------------|---------------
                                       *   | Powered UP hub       | *invalid*
                                       *   | Powered UP remote    | Lefthand red button
+                                      *   | SPIKE Prime hub      | Left button
                                       *   | EV3 Brick            | Left button
                                       *   | EV3 IR remote        | *invalid*
                                       *   | NXT brick            | Left arrow button
@@ -54,6 +55,7 @@ typedef enum _pbio_button_flags_t {
                                       *   |----------------------|---------------
                                       *   | Powered UP hub       | Green button
                                       *   | Powered UP remote    | Green button
+                                      *   | SPIKE Prime hub      | Center button
                                       *   | EV3 Brick            | Center button
                                       *   | EV3 IR remote        | *invalid*
                                       *   | NXT brick            | Orange button
@@ -62,6 +64,7 @@ typedef enum _pbio_button_flags_t {
                                       *   |----------------------|---------------
                                       *   | Powered UP hub       | *invalid*
                                       *   | Powered UP remote    | Righthand red button
+                                      *   | SPIKE Prime hub      | Right button
                                       *   | EV3 Brick            | Right button
                                       *   | EV3 IR remote        | *invalid*
                                       *   | NXT brick            | Right arrow button
@@ -86,6 +89,7 @@ typedef enum _pbio_button_flags_t {
                                       *   |----------------------|---------------
                                       *   | Powered UP hub       | *invalid*
                                       *   | Powered UP remote    | Righthand '+' button
+                                      *   | SPIKE Prime hub      | Bluetooth button
                                       *   | EV3 Brick            | *invalid*
                                       *   | EV3 IR remote        | Righthand up button (blue bar)
                                       *   | NXT brick            | *invalid*
