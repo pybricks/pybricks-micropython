@@ -22,20 +22,49 @@
 #define BATTERY_LOW_MV          5400    // 0.9V per cell
 #define BATTERY_CRITICAL_MV     4800    // 0.8V per cell
 
-static uint16_t avg_battery_voltage;
+// These values are for LEGO rechargeable battery packs
+#define LIION_OK_MV             7000    // 3.5V per cell
+#define LIION_LOW_MV            6600    // 3.3V per cell
+#define LIION_CRITICAL_MV       6000    // 3.0V per cell
+
 static clock_time_t prev_poll_time;
+static uint16_t avg_battery_voltage;
+
+#if PBDRV_CONFIG_BATTERY_ADC_TYPE == 1
+// special case to reduce code size on Move hub
+#define battery_critical_mv BATTERY_CRITICAL_MV
+#define battery_low_mv BATTERY_LOW_MV
+#define battery_ok_mv BATTERY_OK_MV
+#else
+static uint16_t battery_critical_mv;
+static uint16_t battery_low_mv;
+static uint16_t battery_ok_mv;
+#endif
 
 /**
  * Initializes the system battery moitor.
  */
 void pbsys_battery_init() {
+    #if PBDRV_CONFIG_BATTERY_ADC_TYPE != 1
+    if (pbdrv_battery_get_type() == PBDRV_BATTERY_TYPE_LIION) {
+        battery_critical_mv = LIION_CRITICAL_MV;
+        battery_low_mv = LIION_LOW_MV;
+        battery_ok_mv = LIION_OK_MV;
+    } else {
+        battery_critical_mv = BATTERY_CRITICAL_MV;
+        battery_low_mv = BATTERY_LOW_MV;
+        battery_ok_mv = BATTERY_OK_MV;
+    }
+    #endif
+
     pbdrv_battery_get_voltage_now(&avg_battery_voltage);
     // This is mainly for the Technic Hub. It seems that the first battery voltage
     // read is always low and causes the hub to shut down because of low battery
     // voltage even though the battery isn't that low.
-    if (avg_battery_voltage < BATTERY_CRITICAL_MV) {
-        avg_battery_voltage = BATTERY_OK_MV;
+    if (avg_battery_voltage < battery_critical_mv) {
+        avg_battery_voltage = battery_ok_mv;
     }
+
     prev_poll_time = clock_time();
 }
 
@@ -58,15 +87,15 @@ void pbsys_battery_poll() {
     avg_battery_voltage = (avg_battery_voltage * (BATTERY_PERIOD_MS - poll_interval)
         + battery_voltage * poll_interval) / BATTERY_PERIOD_MS;
 
-    if (avg_battery_voltage <= BATTERY_CRITICAL_MV) {
+    if (avg_battery_voltage <= battery_critical_mv) {
         pbsys_status_set(PBSYS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN);
-    } else if (avg_battery_voltage >= BATTERY_LOW_MV) {
+    } else if (avg_battery_voltage >= battery_low_mv) {
         pbsys_status_clear(PBSYS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN);
     }
 
-    if (avg_battery_voltage <= BATTERY_LOW_MV) {
+    if (avg_battery_voltage <= battery_low_mv) {
         pbsys_status_set(PBSYS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
-    } else if (avg_battery_voltage >= BATTERY_OK_MV) {
+    } else if (avg_battery_voltage >= battery_ok_mv) {
         pbsys_status_clear(PBSYS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
     }
 }

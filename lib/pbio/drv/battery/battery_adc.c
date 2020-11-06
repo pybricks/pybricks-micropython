@@ -28,6 +28,10 @@
 // PBDRV_CONFIG_BATTERY_ADC_CURRENT_SCALED_MAX:
 //      The current in mA that corresponds that would result in the raw measured
 //      value PBDRV_CONFIG_BATTERY_ADC_CURRENT_RAW_MAX being read on the ADC.
+// PBDRV_CONFIG_BATTERY_ADC_TYPE:
+//      1 = PBDRV_BATTERY_TYPE_ALKALINE only
+//      2 = PBDRV_BATTERY_TYPE_LIION only
+//      3 = type indicated by GPIO button
 
 #include <pbdrv/config.h>
 
@@ -38,9 +42,23 @@
 #include <contiki.h>
 
 #include <pbdrv/adc.h>
+#include <pbdrv/battery.h>
+#include <pbdrv/gpio.h>
 #include <pbio/error.h>
 
+#include "battery_adc.h"
+
+#if PBDRV_CONFIG_BATTERY_ADC_TYPE == 3
+static pbdrv_battery_type_t pbdrv_battery_type;
+#endif
+
 void pbdrv_battery_init() {
+    #if PBDRV_CONFIG_BATTERY_ADC_TYPE == 3
+    const pbdrv_battery_adc_platform_data_t *pdata = &pbdrv_battery_adc_platform_data;
+    pbdrv_gpio_set_pull(&pdata->gpio, pdata->pull);
+    pbdrv_battery_type = pbdrv_gpio_input(&pdata->gpio) ?
+        PBDRV_BATTERY_TYPE_ALKALINE : PBDRV_BATTERY_TYPE_LIION;
+    #endif
 }
 
 pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
@@ -102,6 +120,18 @@ pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
         PBDRV_CONFIG_BATTERY_ADC_CURRENT_CORRECTION / 16;
 
     return PBIO_SUCCESS;
+}
+
+pbdrv_battery_type_t pbdrv_battery_get_type() {
+    #if PBDRV_CONFIG_BATTERY_ADC_TYPE == 1
+    return PBDRV_BATTERY_TYPE_ALKALINE;
+    #elif PBDRV_CONFIG_BATTERY_ADC_TYPE == 2
+    return PBDRV_BATTERY_TYPE_LIION;
+    #elif PBDRV_CONFIG_BATTERY_ADC_TYPE == 3
+    return pbdrv_battery_type;
+    #else
+    #error "Bad PBDRV_CONFIG_BATTERY_ADC_TYPE value"
+    #endif
 }
 
 #endif // PBDRV_CONFIG_BATTERY_ADC

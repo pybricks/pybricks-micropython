@@ -6,6 +6,7 @@
 #include "pbio/uartdev.h"
 
 #include "../../drv/adc/adc_stm32_hal.h"
+#include "../../drv/battery/battery_adc.h"
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_pwm.h"
@@ -41,6 +42,15 @@ enum {
 };
 
 // PBIO driver data
+
+// Battery
+
+const pbdrv_battery_adc_platform_data_t pbdrv_battery_adc_platform_data = {
+    .gpio = { .bank = GPIOA, .pin = 12 },
+    .pull = PBDRV_GPIO_PULL_NONE,
+};
+
+// Button
 
 const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON] = {
     [0] = {
