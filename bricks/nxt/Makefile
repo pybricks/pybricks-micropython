@@ -140,6 +140,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	geometry/pb_type_matrix.c \
 	hubs/pb_module_hubs.c \
 	hubs/pb_type_nxtbrick.c \
+	media/pb_module_media.c \
 	nxtdevices/pb_module_nxtdevices.c \
 	nxtdevices/pb_type_nxtdevices_colorsensor.c \
 	nxtdevices/pb_type_nxtdevices_energymeter.c \

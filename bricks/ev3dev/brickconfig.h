@@ -10,14 +10,15 @@
 #define PYBRICKS_HUB_EV3BRICK                (1)
 
 // Pybricks modules
-#define PYBRICKS_PY_GEOMETRY            (1)
 #define PYBRICKS_PY_COMMON              (1)
-#define PYBRICKS_PY_COMMON_LIGHT_MATRIX   (0)
+#define PYBRICKS_PY_COMMON_LIGHT_MATRIX (0)
 #define PYBRICKS_PY_COMMON_MOTORS       (1)
 #define PYBRICKS_PY_EV3DEVICES          (1)
 #define PYBRICKS_PY_EXPERIMENTAL        (1)
+#define PYBRICKS_PY_GEOMETRY            (1)
 #define PYBRICKS_PY_HUBS                (1)
 #define PYBRICKS_PY_IODEVICES           (1)
+#define PYBRICKS_PY_MEDIA               (0)
 #define PYBRICKS_PY_MEDIA_EV3DEV        (1)
 #define PYBRICKS_PY_NXTDEVICES          (1)
 #define PYBRICKS_PY_PARAMETERS          (1)

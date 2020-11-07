@@ -9,17 +9,18 @@
 #define PYBRICKS_HUB_NXTBRICK                (1)
 
 // Pybricks modules
-#define PYBRICKS_PY_GEOMETRY            (0)
 #define PYBRICKS_PY_COMMON              (1)
-#define PYBRICKS_PY_COMMON_LIGHT_MATRIX   (0)
+#define PYBRICKS_PY_COMMON_LIGHT_MATRIX (0)
 #define PYBRICKS_PY_COMMON_MOTORS       (1)
 #define PYBRICKS_PY_EXPERIMENTAL        (0)
+#define PYBRICKS_PY_GEOMETRY            (0)
 #define PYBRICKS_PY_HUBS                (1)
+#define PYBRICKS_PY_MEDIA               (0)
 #define PYBRICKS_PY_NXTDEVICES          (1)
 #define PYBRICKS_PY_PARAMETERS          (1)
 #define PYBRICKS_PY_PARAMETERS_BUTTON   (1)
-#define PYBRICKS_PY_TOOLS               (1)
 #define PYBRICKS_PY_ROBOTICS            (1)
+#define PYBRICKS_PY_TOOLS               (1)
 
 // options to control how MicroPython is built
 

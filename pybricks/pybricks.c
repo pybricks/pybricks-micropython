@@ -6,11 +6,12 @@
 #include "py/objstr.h"
 #include "py/objtuple.h"
 
+#include <pybricks/ev3devices.h>
+#include <pybricks/experimental.h>
 #include <pybricks/geometry.h>
 #include <pybricks/hubs.h>
 #include <pybricks/iodevices.h>
-#include <pybricks/ev3devices.h>
-#include <pybricks/experimental.h>
+#include <pybricks/media.h>
 #include <pybricks/nxtdevices.h>
 #include <pybricks/parameters.h>
 #include <pybricks/pupdevices.h>
@@ -50,6 +51,9 @@ STATIC const mp_rom_map_elem_t pybricks_globals_table[] = {
     #endif
     #if PYBRICKS_PY_IODEVICES
     { MP_ROM_QSTR(MP_QSTR_iodevices),           MP_ROM_PTR(&pb_module_iodevices)},
+    #endif
+    #if PYBRICKS_PY_MEDIA
+    { MP_ROM_QSTR(MP_QSTR_media),               MP_ROM_PTR(&pb_module_media)    },
     #endif
     #if PYBRICKS_PY_NXTDEVICES
     { MP_ROM_QSTR(MP_QSTR_nxtdevices),          MP_ROM_PTR(&pb_module_nxtdevices)},
