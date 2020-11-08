@@ -188,6 +188,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	iodevices/pb_module_iodevices.c \
 	iodevices/pb_type_iodevices_lumpdevice.c \
 	media/pb_module_media.c \
+	media/pb_type_imagematrix.c \
 	parameters/pb_module_parameters.c \
 	parameters/pb_type_button.c \
 	parameters/pb_type_color.c \

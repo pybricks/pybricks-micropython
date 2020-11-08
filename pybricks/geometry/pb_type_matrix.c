@@ -511,6 +511,24 @@ mp_obj_t pb_type_Matrix_make_vector(size_t m, float *data, bool normalize) {
     return MP_OBJ_FROM_PTR(mat);
 }
 
+// pybricks.geometry._make_bitmap
+mp_obj_t pb_type_Matrix_make_bitmap(size_t m, size_t n, float scale, uint32_t src) {
+
+    // Create object and save dimensions
+    pb_type_Matrix_obj_t *mat = m_new_obj(pb_type_Matrix_obj_t);
+    mat->base.type = &pb_type_Matrix;
+    mat->m = m;
+    mat->n = n;
+    mat->scale = scale;
+    mat->data = m_new(float, m * n);
+
+    for (size_t i = 0; i < m * n; i++) {
+        mat->data[m * n - i - 1] = (src & (1 << i)) != 0;
+    }
+
+    return MP_OBJ_FROM_PTR(mat);
+}
+
 #endif // MICROPY_PY_BUILTINS_FLOAT
 
 #endif // PYBRICKS_PY_GEOMETRY
