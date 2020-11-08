@@ -16,9 +16,17 @@
 
 // pybricks.geometry.vector
 STATIC mp_obj_t vector(size_t n_args, const mp_obj_t *args) {
-    return pb_type_Matrix_make_vector(n_args, args, false);
+
+    // Convert user object to floats
+    float data[3];
+    for (size_t i = 0; i < n_args; i++) {
+        data[i] = mp_obj_get_float_to_f(args[i]);
+    }
+
+    // Create and return Matrix object with vector shape
+    return pb_type_Matrix_make_vector(n_args, data, false);
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_func_vector_obj, 2, 4, vector);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(pb_func_vector_obj, 2, 3, vector);
 
 STATIC const mp_rom_map_elem_t geometry_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_Matrix),      MP_ROM_PTR(&pb_type_Matrix)        },

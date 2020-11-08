@@ -491,16 +491,20 @@ const mp_obj_type_t pb_type_Matrix = {
 };
 
 // pybricks.geometry._make_vector
-mp_obj_t pb_type_Matrix_make_vector(size_t n_args, const mp_obj_t *args, bool normalize) {
+mp_obj_t pb_type_Matrix_make_vector(size_t m, float *data, bool normalize) {
+
+    // Create object and save dimensions
     pb_type_Matrix_obj_t *mat = m_new_obj(pb_type_Matrix_obj_t);
     mat->base.type = &pb_type_Matrix;
-    mat->data = m_new(float, n_args);
-    mat->m = n_args;
+    mat->m = m;
     mat->n = 1;
+    mat->data = m_new(float, m);
+
+    // Copy data and compute norm
     float squares = 0;
-    for (size_t i = 0; i < n_args; i++) {
-        mat->data[i] = mp_obj_get_float_to_f(args[i]);
-        squares += mat->data[i] * mat->data[i];
+    for (size_t i = 0; i < m; i++) {
+        mat->data[i] = data[i];
+        squares += data[i] * data[i];
     }
     mat->scale = normalize ? 1 / sqrtf(squares) : 1;
 
