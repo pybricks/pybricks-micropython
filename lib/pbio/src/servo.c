@@ -9,7 +9,9 @@
 
 #include <pbdrv/counter.h>
 #include <pbdrv/motor.h>
+#include <pbdrv/battery.h>
 #include <pbio/math.h>
+#include <pbio/observer.h>
 #include <pbio/servo.h>
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
@@ -181,6 +183,14 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     // For a servo, counts per output unit is counts per degree at the gear train output
     srv->control.settings.counts_per_unit = fix16_mul(F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0), gear_ratio);
 
+    // Get current position and use it to reset the state observer
+    int32_t count_now;
+    err = pbio_tacho_get_count(srv->tacho, &count_now);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    pbio_observer_reset(&srv->observer, count_now, 0);
+
     return PBIO_SUCCESS;
 }
 
@@ -303,7 +313,22 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     control_update(&srv->control, time_now, count_now, rate_now, &actuation, &control);
 
     // Apply the control type and signal
-    return pbio_servo_actuate(srv, actuation, control);
+    err = pbio_servo_actuate(srv, actuation, control);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Get the battery voltage
+    uint16_t battery_voltage;
+    err = pbdrv_battery_get_voltage_now(&battery_voltage);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Update the state observer
+    pbio_observer_update(&srv->observer, count_now, actuation, control, battery_voltage);
+
+    return PBIO_SUCCESS;
 }
 
 /* pbio user functions */

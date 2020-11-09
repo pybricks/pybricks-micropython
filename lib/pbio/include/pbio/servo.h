@@ -19,6 +19,7 @@
 #include <pbio/tacho.h>
 #include <pbio/trajectory.h>
 #include <pbio/control.h>
+#include <pbio/observer.h>
 #include <pbio/logger.h>
 
 #include <pbio/iodev.h>
@@ -26,12 +27,13 @@
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
 typedef struct _pbio_servo_t {
+    pbio_port_t port;
     bool connected;
     bool claimed;
     pbio_dcmotor_t *dcmotor;
     pbio_tacho_t *tacho;
     pbio_control_t control;
-    pbio_port_t port;
+    pbio_observer_t observer;
 } pbio_servo_t;
 
 pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio);
