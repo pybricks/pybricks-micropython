@@ -101,11 +101,13 @@ static struct testcase_t pbio_color_tests[] = {
 PBIO_PT_THREAD_TEST_FUNC(test_light_animation);
 PBIO_PT_THREAD_TEST_FUNC(test_color_light);
 PBIO_PT_THREAD_TEST_FUNC(test_light_matrix);
+PBIO_TEST_FUNC(test_light_matrix_rotation);
 
 static struct testcase_t pbio_light_tests[] = {
     PBIO_PT_THREAD_TEST(test_light_animation),
     PBIO_PT_THREAD_TEST(test_color_light),
     PBIO_PT_THREAD_TEST(test_light_matrix),
+    PBIO_TEST(test_light_matrix_rotation),
     END_OF_TESTCASES
 };
 

@@ -21,14 +21,13 @@
  * @param [in]  row         Row index (0 to size-1)
  * @param [in]  col         Column index (0 to size-1)
  * @param [in]  brightness  Brightness (0 to 100)
- * @return                  ::PBIO_SUCCESS on success ::PBIO_ERROR_INVALID_ARG
- *                          if @p row or @p col is out of range or
+ * @return                  ::PBIO_SUCCESS on success or an
  *                          implementation-specific error on failure.
  */
-static pbio_error_t pbio_light_matrix_set_pixel(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightness) {
+static pbio_error_t _pbio_light_matrix_set_pixel(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightness) {
     uint8_t size = light_matrix->size;
     if (row >= size || col >= size) {
-        return PBIO_ERROR_INVALID_ARG;
+        return PBIO_SUCCESS;
     }
 
     // Rotate user input based on screen orientation
@@ -59,9 +58,11 @@ static pbio_error_t pbio_light_matrix_set_pixel(pbio_light_matrix_t *light_matri
     return light_matrix->funcs->set_pixel(light_matrix, row, col, brightness);
 }
 
-
 /**
  * Initializes the required fields in a ::pbio_light_matrix_t.
+ *
+ * This function must be called before using the ::pbio_light_matrix_t.
+ *
  * @param [in]  light_matrix  The struct to initialize.
  * @param [in]  size        The size of the light matrix.
  * @param [in]  funcs       The instance-specific callback functions.
@@ -73,19 +74,23 @@ void pbio_light_matrix_init(pbio_light_matrix_t *light_matrix, uint8_t size, con
 }
 
 /**
- * Sets the light matrix orientation
- * @param [in]  light_matrix  The light matrix.
- * @param [in]  up_side     Orientation of the light matrix: which side is up.
+ * Sets the light matrix orientation.
+ *
+ * The current display will not be affected. The new orientation will only be
+ * applied to subsequent commands. This includes the next frame of an animation
+ * if there is an animation currently running in the background.
+ *
+ * @param [in]  light_matrix    The light matrix.
+ * @param [in]  up_side         Orientation of the light matrix: which side is up.
  */
 void pbio_light_matrix_set_orientation(pbio_light_matrix_t *light_matrix, pbio_side_t up_side) {
     light_matrix->up_side = up_side;
 }
 
-
 /**
- * Get the size of the light matrix.
+ * Gets the size of the light matrix.
  *
- * Light matricces are square, so this is equal to both the number of rows and the
+ * Light matrices are square, so this is equal to both the number of rows and the
  * number of columns in the matrix.
  *
  * @param [in]  light_matrix  The light matrix instance.
@@ -102,6 +107,9 @@ uint8_t pbio_light_matrix_get_size(pbio_light_matrix_t *light_matrix) {
  * is off. The least significant bit is the right-most pixel. This is the same
  * format as used by the micro:bit.
  *
+ * @p row 0 is the top row and @p col 0 is the left-most column of the matrix
+ * according to the orientation set by pbio_light_matrix_set_orientation().
+ *
  * If an animation is running in the background, it will be stopped.
  *
  * @param [in]  light_matrix  The light matrix instance
@@ -110,6 +118,7 @@ uint8_t pbio_light_matrix_get_size(pbio_light_matrix_t *light_matrix) {
  *                          error on failure.
  */
 pbio_error_t pbio_light_matrix_set_rows(pbio_light_matrix_t *light_matrix, const uint8_t *rows) {
+    pbio_light_matrix_stop_animation(light_matrix);
     // Loop through all rows i, starting at row 0 at the top.
     uint8_t size = light_matrix->size;
     for (uint8_t i = 0; i < size; i++) {
@@ -118,7 +127,7 @@ pbio_error_t pbio_light_matrix_set_rows(pbio_light_matrix_t *light_matrix, const
             // The pixel is on if the bit is high.
             bool on = rows[i] & (1 << (size - 1 - j));
             // Set the pixel.
-            pbio_error_t err = pbio_light_matrix_set_pixel_user(light_matrix, i, j, on * 100);
+            pbio_error_t err = _pbio_light_matrix_set_pixel(light_matrix, i, j, on * 100);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
@@ -128,32 +137,35 @@ pbio_error_t pbio_light_matrix_set_rows(pbio_light_matrix_t *light_matrix, const
 }
 
 /**
- * User function that sets the pixel to a given brightness.
+ * Sets the pixel to a given brightness.
  *
- * If an animation is running in the background, it will be stopped. Out of
- * range index values are ignored and intentionally raise no error.
+ * @p row 0 is the top row and @p col 0 is the left-most column of the matrix
+ * according to the orientation set by pbio_light_matrix_set_orientation().
+ *
+ * If an animation is running in the background, it will be stopped.
+ *
+ * If @p row or @p col is out if range, nothing will happen (returns ::PBIO_SUCCESS).
  *
  * @param [in]  light_matrix  The light matrix instance
  * @param [in]  row         Row index (0 to size-1)
  * @param [in]  col         Column index (0 to size-1)
  * @param [in]  brightness  Brightness (0 to 100)
- * @return                  ::PBIO_SUCCESS on success or
+ * @return                  ::PBIO_SUCCESS on success or an
  *                          implementation-specific error on failure.
  */
-pbio_error_t pbio_light_matrix_set_pixel_user(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightness) {
-
+pbio_error_t pbio_light_matrix_set_pixel(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightness) {
     pbio_light_matrix_stop_animation(light_matrix);
-
-    uint8_t size = light_matrix->size;
-    if (row >= size || col >= size) {
-        return PBIO_SUCCESS;
-    }
-
-    return pbio_light_matrix_set_pixel(light_matrix, row, col, brightness);
+    return _pbio_light_matrix_set_pixel(light_matrix, row, col, brightness);
 }
 
 /**
- * Sets the pixel to a given brightness.
+ * Sets the brightness of all pixels in the matrix to display an image.
+ *
+ * The @p image buffer is a two dimensional array of pbio_light_matrix_get_size()
+ * rows and columns.
+ *
+ * @p row 0 is the top row and @p col 0 is the left-most column of the matrix
+ * according to the orientation set by pbio_light_matrix_set_orientation().
  *
  * If an animation is running in the background, it will be stopped.
  *
@@ -163,10 +175,11 @@ pbio_error_t pbio_light_matrix_set_pixel_user(pbio_light_matrix_t *light_matrix,
  *                          error on failure.
  */
 pbio_error_t pbio_light_matrix_set_image(pbio_light_matrix_t *light_matrix, const uint8_t *image) {
+    pbio_light_matrix_stop_animation(light_matrix);
     uint8_t size = light_matrix->size;
     for (uint8_t r = 0; r < size; r++) {
         for (uint8_t c = 0; c < size; c++) {
-            pbio_error_t err = pbio_light_matrix_set_pixel_user(light_matrix, r, c, image[r * size + c]);
+            pbio_error_t err = _pbio_light_matrix_set_pixel(light_matrix, r, c, image[r * size + c]);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
@@ -184,7 +197,7 @@ static uint32_t pbio_light_matrix_animation_next(pbio_light_animation_t *animati
 
     for (uint8_t r = 0; r < size; r++) {
         for (uint8_t c = 0; c < size; c++) {
-            pbio_light_matrix_set_pixel(light_matrix, r, c, cell[r * size + c]);
+            _pbio_light_matrix_set_pixel(light_matrix, r, c, cell[r * size + c]);
         }
     }
 

@@ -140,7 +140,7 @@ STATIC mp_obj_t common_Lightmatrix_on(size_t n_args, const mp_obj_t *pos_args, m
 
     for (uint8_t i = 0; i < size; i++) {
         for (uint8_t j = 0; j < size; j++) {
-            pb_assert(pbio_light_matrix_set_pixel_user(self->light_matrix, i, j, brightness));
+            pb_assert(pbio_light_matrix_set_pixel(self->light_matrix, i, j, brightness));
         }
     }
 
@@ -156,7 +156,7 @@ STATIC mp_obj_t common_Lightmatrix_off(mp_obj_t self_in) {
 
     for (uint8_t i = 0; i < size; i++) {
         for (uint8_t j = 0; j < size; j++) {
-            pb_assert(pbio_light_matrix_set_pixel_user(self->light_matrix, i, j, 0));
+            pb_assert(pbio_light_matrix_set_pixel(self->light_matrix, i, j, 0));
         }
     }
 
@@ -210,7 +210,7 @@ STATIC mp_obj_t common_Lightmatrix_number(size_t n_args, const mp_obj_t *pos_arg
 
     // Display one faint dot in the middle to indicate negative
     if (negative) {
-        pb_assert(pbio_light_matrix_set_pixel_user(self->light_matrix, 2, 2, 50));
+        pb_assert(pbio_light_matrix_set_pixel(self->light_matrix, 2, 2, 50));
     }
 
     return mp_const_none;
@@ -259,7 +259,7 @@ STATIC mp_obj_t common_Lightmatrix_pixel(size_t n_args, const mp_obj_t *pos_args
         PB_ARG_DEFAULT_INT(brightness, 100));
 
     // Set pixel at the given brightness
-    pb_assert(pbio_light_matrix_set_pixel_user(self->light_matrix, mp_obj_get_int(row_in), mp_obj_get_int(column_in), pb_obj_get_pct(brightness_in)));
+    pb_assert(pbio_light_matrix_set_pixel(self->light_matrix, mp_obj_get_int(row_in), mp_obj_get_int(column_in), pb_obj_get_pct(brightness_in)));
 
     return mp_const_none;
 }
