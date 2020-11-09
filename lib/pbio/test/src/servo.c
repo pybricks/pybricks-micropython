@@ -21,11 +21,10 @@
 #include <pbio/motorpoll.h>
 #include <pbio/servo.h>
 
+#include "../test-pbio.h"
+
 // wait an additional 1 second before ending test
 #define TEST_END_COUNT 1000 // clock ticks
-
-void pbio_test_counter_set_count(int32_t count);
-void pbio_test_counter_set_rate(int32_t rate);
 
 // Motor driver implementation
 
