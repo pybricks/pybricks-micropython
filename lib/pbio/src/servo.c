@@ -11,11 +11,8 @@
 #include <pbdrv/motor.h>
 #include <pbio/math.h>
 #include <pbio/servo.h>
-#include <pbio/logger.h>
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
-
-#define SERVO_LOG_NUM_VALUES (9 + NUM_DEFAULT_LOG_VALUES)
 
 // TODO: Move to config and enable only known motors for platform
 static pbio_control_settings_t settings_servo_ev3_medium = {
@@ -184,9 +181,6 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     // For a servo, counts per output unit is counts per degree at the gear train output
     srv->control.settings.counts_per_unit = fix16_mul(F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0), gear_ratio);
 
-    // Configure the logs for a servo
-    srv->log.num_values = SERVO_LOG_NUM_VALUES;
-
     return PBIO_SUCCESS;
 }
 
@@ -270,48 +264,6 @@ static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actua
     return PBIO_SUCCESS;
 }
 
-// Log motor data for a motor that is being actively controlled
-static pbio_error_t pbio_servo_log_update(pbio_servo_t *srv, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t actuation, int32_t control) {
-
-    int32_t buf[SERVO_LOG_NUM_VALUES];
-    memset(buf, 0, sizeof(buf));
-
-    // Log the physical state of the motor
-    buf[1] = count_now;
-    buf[2] = rate_now;
-
-    // Log the applied control signal
-    buf[3] = actuation;
-    buf[4] = control;
-
-    // If control is active, log additional data about the maneuver
-    if (srv->control.type != PBIO_CONTROL_NONE) {
-
-        // Get the time of reference evaluation
-        int32_t time_ref = pbio_control_get_ref_time(&srv->control, time_now);
-
-        // Log the time since start of control trajectory
-        buf[0] = (time_ref - srv->control.trajectory.t0) / 1000;
-
-        // Log reference signals. These values are only meaningful for time based commands
-        int32_t count_ref, count_ref_ext, rate_ref, err, err_integral, acceleration_ref;
-        pbio_trajectory_get_reference(&srv->control.trajectory, time_ref, &count_ref, &count_ref_ext, &rate_ref, &acceleration_ref);
-
-        if (srv->control.type == PBIO_CONTROL_ANGLE) {
-            pbio_count_integrator_get_errors(&srv->control.count_integrator, count_now, count_ref, &err, &err_integral);
-        } else {
-            pbio_rate_integrator_get_errors(&srv->control.rate_integrator, rate_now, rate_ref, count_now, count_ref, &err, &err_integral);
-        }
-
-        buf[5] = count_ref;
-        buf[6] = rate_ref;
-        buf[7] = err; // count err for angle control, rate err for timed control
-        buf[8] = err_integral;
-    }
-
-    return pbio_logger_update(&srv->log, buf);
-}
-
 pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
 
     // Read the physical state
@@ -335,20 +287,15 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
         if (err != PBIO_SUCCESS) {
             return err;
         }
-        return pbio_servo_log_update(srv, time_now, count_now, rate_now, state, control);
+        // Log control data
+        int32_t log_data[] = {time_now, count_now, rate_now, state, control};
+        return pbio_logger_update(&srv->control.log, log_data);
     }
-
     // Calculate control signal
     control_update(&srv->control, time_now, count_now, rate_now, &actuation, &control);
 
     // Apply the control type and signal
-    err = pbio_servo_actuate(srv, actuation, control);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Log data if logger enabled
-    return pbio_servo_log_update(srv, time_now, count_now, rate_now, actuation, control);
+    return pbio_servo_actuate(srv, actuation, control);
 }
 
 /* pbio user functions */

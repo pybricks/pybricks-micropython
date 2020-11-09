@@ -31,7 +31,6 @@ typedef struct _pbio_servo_t {
     pbio_tacho_t *tacho;
     pbio_control_t control;
     pbio_port_t port;
-    pbio_log_t log;
 } pbio_servo_t;
 
 pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio);

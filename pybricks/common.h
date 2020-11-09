@@ -54,7 +54,6 @@ mp_obj_t logger_obj_make_new(pbio_log_t *log);
 typedef struct _common_Motor_obj_t {
     mp_obj_base_t base;
     pbio_servo_t *srv;
-    mp_obj_t logger;
     mp_obj_t control;
 } common_Motor_obj_t;
 

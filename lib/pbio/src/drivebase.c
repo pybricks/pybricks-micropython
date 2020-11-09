@@ -8,8 +8,6 @@
 #include <pbio/math.h>
 #include <pbio/servo.h>
 
-#define DRIVEBASE_LOG_NUM_VALUES (15 + NUM_DEFAULT_LOG_VALUES)
-
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
 static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_control_settings_t *s_heading, pbio_control_settings_t *s_left, pbio_control_settings_t *s_right) {
@@ -142,44 +140,6 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
     return err;
 }
 
-// Log motor data for a motor that is being actively controlled
-static pbio_error_t drivebase_log_update(pbio_drivebase_t *db,
-    int32_t time_now,
-    int32_t sum,
-    int32_t sum_rate,
-    int32_t sum_control,
-    int32_t dif,
-    int32_t dif_rate,
-    int32_t dif_control) {
-
-    int32_t buf[DRIVEBASE_LOG_NUM_VALUES];
-    buf[0] = time_now;
-    buf[1] = sum;
-    buf[2] = sum_rate;
-    buf[3] = sum_control;
-    buf[4] = dif;
-    buf[5] = dif_rate;
-    buf[6] = dif_control;
-
-    int32_t sum_ref, sum_ref_ext, sum_rate_ref, sum_rate_err, sum_rate_err_integral, sum_acceleration_ref;
-    pbio_trajectory_get_reference(&db->control_distance.trajectory, time_now, &sum_ref, &sum_ref_ext, &sum_rate_ref, &sum_acceleration_ref);
-    pbio_rate_integrator_get_errors(&db->control_distance.rate_integrator, time_now, sum_rate_ref, sum, sum_ref, &sum_rate_err, &sum_rate_err_integral);
-    buf[7] = sum_ref;
-    buf[8] = sum_rate_err_integral;
-    buf[9] = sum_rate_ref;
-    buf[10] = sum_rate_err_integral;
-
-    int32_t dif_ref, dif_ref_ext, dif_rate_ref, dif_rate_err, dif_rate_err_integral, dif_acceleration_ref;
-    pbio_trajectory_get_reference(&db->control_heading.trajectory, time_now, &dif_ref, &dif_ref_ext, &dif_rate_ref, &dif_acceleration_ref);
-    pbio_rate_integrator_get_errors(&db->control_heading.rate_integrator, time_now, dif_rate_ref, dif, dif_ref, &dif_rate_err, &dif_rate_err_integral);
-    buf[11] = dif_ref;
-    buf[12] = dif_rate_err_integral;
-    buf[13] = dif_rate_ref;
-    buf[14] = dif_rate_err_integral;
-
-    return pbio_logger_update(&db->log, buf);
-}
-
 pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio_servo_t *right, fix16_t wheel_diameter, fix16_t axle_track) {
     pbio_error_t err;
 
@@ -213,9 +173,6 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio
     db->left = left;
     db->right = right;
     pbio_drivebase_claim_servos(db, false);
-
-    // Initialize log
-    db->log.num_values = DRIVEBASE_LOG_NUM_VALUES;
 
     // Adopt settings as the average or sum of both servos, except scaling
     err = drivebase_adopt_settings(&db->control_distance.settings, &db->control_heading.settings, &db->left->control.settings, &db->right->control.settings);
@@ -310,16 +267,17 @@ pbio_error_t pbio_drivebase_stop_force(pbio_drivebase_t *db) {
 }
 
 pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
+
+    // If passive, log and exit
+    if (db->control_heading.type == PBIO_CONTROL_NONE || db->control_distance.type == PBIO_CONTROL_NONE) {
+        return PBIO_SUCCESS;
+    }
+
     // Get the physical state
     int32_t time_now, sum, sum_rate, dif, dif_rate;
     pbio_error_t err = drivebase_get_state(db, &time_now, &sum, &sum_rate, &dif, &dif_rate);
     if (err != PBIO_SUCCESS) {
         return err;
-    }
-
-    // If passive, log and exit
-    if (db->control_heading.type == PBIO_CONTROL_NONE || db->control_distance.type == PBIO_CONTROL_NONE) {
-        return drivebase_log_update(db, time_now, sum, sum_rate, 0, dif, dif_rate, 0);
     }
 
     // Get control signals
@@ -334,11 +292,7 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     }
 
     // Actuate
-    err = pbio_drivebase_actuate(db, sum_actuation, sum_control, dif_control);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    return drivebase_log_update(db, time_now, sum, sum_rate, sum_control, dif, dif_rate, dif_control);
+    return pbio_drivebase_actuate(db, sum_actuation, sum_control, dif_control);
 }
 
 pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int32_t drive_speed, int32_t drive_acceleration) {

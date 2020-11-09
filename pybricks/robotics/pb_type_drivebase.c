@@ -26,7 +26,6 @@ typedef struct _robotics_DriveBase_obj_t {
     pbio_drivebase_t *db;
     mp_obj_t left;
     mp_obj_t right;
-    mp_obj_t logger;
     mp_obj_t heading_control;
     mp_obj_t distance_control;
     int32_t straight_speed;
@@ -63,9 +62,6 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     pb_assert(pbio_motorpoll_get_drivebase(&self->db));
     pb_assert(pbio_drivebase_setup(self->db, srv_left, srv_right, pb_obj_get_fix16(wheel_diameter_in), pb_obj_get_fix16(axle_track_in)));
     pb_assert(pbio_motorpoll_set_drivebase_status(self->db, PBIO_ERROR_AGAIN));
-
-    // Create an instance of the Logger class
-    self->logger = logger_obj_make_new(&self->db->log);
 
     // Create instances of the Control class
     self->heading_control = common_Control_obj_make_new(&self->db->control_heading);
@@ -254,7 +250,6 @@ STATIC const mp_rom_map_elem_t robotics_DriveBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_settings),         MP_ROM_PTR(&robotics_DriveBase_settings_obj) },
     { MP_ROM_QSTR(MP_QSTR_left),             MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, left)            },
     { MP_ROM_QSTR(MP_QSTR_right),            MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, right)           },
-    { MP_ROM_QSTR(MP_QSTR_log),              MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, logger)          },
     { MP_ROM_QSTR(MP_QSTR_heading_control),  MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, heading_control) },
     { MP_ROM_QSTR(MP_QSTR_distance_control), MP_ROM_ATTRIBUTE_OFFSET(robotics_DriveBase_obj_t, distance_control)},
 };

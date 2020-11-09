@@ -20,6 +20,7 @@ typedef struct _common_Control_obj_t {
     mp_obj_base_t base;
     pbio_control_t *control;
     mp_obj_t scale;
+    mp_obj_t logger;
 } common_Control_obj_t;
 
 // pybricks._common.Control.__init__/__new__
@@ -29,6 +30,10 @@ mp_obj_t common_Control_obj_make_new(pbio_control_t *control) {
     self->base.type = &pb_type_Control;
 
     self->control = control;
+
+    // Create an instance of the Logger class
+    self->logger = logger_obj_make_new(&self->control->log);
+    self->control->log.num_values = MAX_LOG_VALUES;
 
     #if MICROPY_PY_BUILTINS_FLOAT
     self->scale = mp_obj_new_float(fix16_to_float(control->settings.counts_per_unit));
@@ -246,6 +251,7 @@ STATIC const mp_rom_map_elem_t common_Control_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_done), MP_ROM_PTR(&common_Control_done_obj) },
     { MP_ROM_QSTR(MP_QSTR_stalled), MP_ROM_PTR(&common_Control_stalled_obj) },
     { MP_ROM_QSTR(MP_QSTR_scale), MP_ROM_ATTRIBUTE_OFFSET(common_Control_obj_t, scale) },
+    { MP_ROM_QSTR(MP_QSTR_log), MP_ROM_ATTRIBUTE_OFFSET(common_Control_obj_t, logger) },
 };
 STATIC MP_DEFINE_CONST_DICT(common_Control_locals_dict, common_Control_locals_dict_table);
 

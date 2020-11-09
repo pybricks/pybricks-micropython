@@ -106,6 +106,18 @@ void control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, in
         *actuation_type = PBIO_ACTUATION_DUTY;
         *control = duty;
     }
+
+    // Log control data
+    int32_t log_data[] = {
+        (time_ref - ctl->trajectory.t0) / 1000,
+        count_now,
+        rate_now,
+        PBIO_ACTUATION_DUTY,
+        *control,
+        count_ref,
+        rate_ref,
+    };
+    pbio_logger_update(&ctl->log, log_data);
 }
 
 

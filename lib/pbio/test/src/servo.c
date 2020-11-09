@@ -89,12 +89,12 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
     tt_uint_op(pbio_motorpoll_set_servo_status(servo, PBIO_ERROR_AGAIN), ==, PBIO_SUCCESS);
 
     // only logging one row since we read it after every iteration
-    log_buf = malloc(sizeof(*log_buf) * pbio_logger_cols(&servo->log));
+    log_buf = malloc(sizeof(*log_buf) * pbio_logger_cols(&servo->control.log));
     if (log_buf == NULL) {
         tt_abort_perror("failed to allocate log_buf");
     }
 
-    pbio_logger_start(&servo->log, log_buf, 1, 1);
+    pbio_logger_start(&servo->control.log, log_buf, 1, 1);
 
     tt_uint_op(func(servo), ==, PBIO_SUCCESS);
 
@@ -253,17 +253,17 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
             }
 
             // write current state to log file
-            if (pbio_logger_rows(&servo->log)) {
+            if (pbio_logger_rows(&servo->control.log)) {
                 fprintf(log_file, "%d,", clock_to_msec(clock_time()));
                 fprintf(log_file, "%d,", test_motor_driver.output);
                 fprintf(log_file, "%d,", test_motor_driver.duty_cycle);
 
-                for (int i = 0; i < pbio_logger_cols(&servo->log); i++) {
+                for (int i = 0; i < pbio_logger_cols(&servo->control.log); i++) {
                     fprintf(log_file, "%d,", log_buf[i]);
                 }
 
                 fprintf(log_file, "\n");
-                servo->log.sampled = 0;
+                servo->control.log.sampled = 0;
             }
 
             clock_tick(1);

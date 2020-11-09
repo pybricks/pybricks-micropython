@@ -13,7 +13,6 @@ typedef struct _pbio_drivebase_t {
     pbio_servo_t *right;
     int32_t sum_offset;
     int32_t dif_offset;
-    pbio_log_t log;
     pbio_control_t control_heading;
     pbio_control_t control_distance;
 } pbio_drivebase_t;

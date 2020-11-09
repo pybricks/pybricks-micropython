@@ -13,6 +13,7 @@
 #include <pbio/port.h>
 #include <pbio/trajectory.h>
 #include <pbio/integrator.h>
+#include <pbio/logger.h>
 
 #include <pbio/iodev.h>
 
@@ -73,6 +74,7 @@ typedef struct _pbio_control_t {
     pbio_rate_integrator_t rate_integrator;
     pbio_count_integrator_t count_integrator;
     pbio_control_on_target_t on_target_func;
+    pbio_log_t log;
     bool stalled;
     bool on_target;
 } pbio_control_t;
