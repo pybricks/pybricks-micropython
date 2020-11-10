@@ -18,6 +18,10 @@ extern uint32_t _fw_isr_vector_src[];
  * firmware in the flash memory.
  */
 static void jump_to_other_firmware() {
+    // Deinit HAL
+    HAL_RCC_DeInit();
+    HAL_DeInit();
+
     // Hint to compiler that variables should be saved in registers since
     // we are moving the stack pointer.
     register void (*reset)();

@@ -582,7 +582,6 @@ extern uint32_t *_fw_isr_vector_src;
 
 // Called from assembly code in startup.s
 void SystemInit(void) {
-    pbio_platform_dual_boot();
 
     RCC_OscInitTypeDef osc_init;
     RCC_ClkInitTypeDef clk_init;
@@ -607,6 +606,9 @@ void SystemInit(void) {
     clk_init.APB2CLKDivider = RCC_HCLK_DIV1; // changed from pyboard since max is 100MHz
 
     HAL_RCC_ClockConfig(&clk_init, FLASH_LATENCY_5);
+
+    // If we are running dual boot, jump to other firmware if right button is pressed
+    pbio_platform_dual_boot();
 
     // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
     SCB->CCR |= SCB_CCR_STKALIGN_Msk;
