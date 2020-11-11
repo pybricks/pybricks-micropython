@@ -66,6 +66,8 @@ const mp_obj_type_t pb_enum_type_Direction;
 const pb_obj_enum_member_t pb_Direction_CLOCKWISE_obj;
 const pb_obj_enum_member_t pb_Direction_COUNTERCLOCKWISE_obj;
 
+const mp_obj_base_t pb_Icon_obj;
+
 const mp_obj_type_t pb_enum_type_Port;
 
 const mp_obj_type_t pb_enum_type_Stop;

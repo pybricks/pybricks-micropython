@@ -18,6 +18,7 @@
 #define PYBRICKS_PY_MEDIA               (0)
 #define PYBRICKS_PY_PARAMETERS          (1)
 #define PYBRICKS_PY_PARAMETERS_BUTTON   (0)
+#define PYBRICKS_PY_PARAMETERS_ICON     (0)
 #define PYBRICKS_PY_PUPDEVICES          (0)
 #define PYBRICKS_PY_TOOLS               (0)
 

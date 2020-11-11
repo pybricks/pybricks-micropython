@@ -3,12 +3,14 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_MEDIA
+#if PYBRICKS_PY_PARAMETERS
+
+#if PYBRICKS_PY_PARAMETERS_ICON
 
 #include "py/mphal.h"
 #include "py/runtime.h"
 
-#include <pybricks/media.h>
+#include <pybricks/parameters.h>
 #include <pybricks/geometry.h>
 
 #include <pybricks/util_pb/pb_error.h>
@@ -46,10 +48,10 @@ static uint32_t get_bitmap(qstr attr) {
     }
 }
 
-// pybricks.media.ImageMatrix.ARROW_UP
-// pybricks.media.ImageMatrix.ARROW_LEFT
+// pybricks.parameters.Icon.ARROW_UP
+// pybricks.parameters.Icon.ARROW_LEFT
 // etc.
-STATIC void pb_type_ImageMatrix_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+STATIC void pb_type_Icon_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     if (dest[0] == MP_OBJ_NULL) {
         uint32_t bitmap = get_bitmap(attr);
         if (bitmap != UINT32_MAX) {
@@ -58,26 +60,28 @@ STATIC void pb_type_ImageMatrix_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest
     }
 }
 
-// pybricks.media.ImageMatrix(x)
-STATIC mp_obj_t pb_type_ImageMatrix_call(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+// pybricks.parameters.Icon(x)
+STATIC mp_obj_t pb_type_Icon_call(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     if (n_args != 1) {
         pb_assert(PBIO_ERROR_INVALID_ARG);
     }
     return pb_type_Matrix_make_bitmap(5, 5, 100, mp_obj_get_int(args[0]));
 }
 
-STATIC const mp_obj_type_t pb_type_ImageMatrix = {
+STATIC const mp_obj_type_t pb_type_Icon = {
     { &mp_type_type },
-    .name = MP_QSTR_ImageMatrix,
-    .call = pb_type_ImageMatrix_call,
-    .attr = pb_type_ImageMatrix_attr,
+    .name = MP_QSTR_Icon,
+    .call = pb_type_Icon_call,
+    .attr = pb_type_Icon_attr,
 };
 
 // We expose an instance instead of the type. This workaround allows
 // us to provide class attributes via the attribute handler, generating
 // the icons on the fly rather than storing them as 25 floats each.
-const mp_obj_base_t pb_ImageMatrix_obj = {
-    &pb_type_ImageMatrix
+const mp_obj_base_t pb_Icon_obj = {
+    &pb_type_Icon
 };
 
-#endif // PYBRICKS_PY_MEDIA
+#endif // PYBRICKS_PY_PARAMETERS_ICON
+
+#endif // PYBRICKS_PY_PARAMETERS

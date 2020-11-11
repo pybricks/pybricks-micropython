@@ -10,8 +10,6 @@
 
 #include "py/obj.h"
 
-const mp_obj_base_t pb_ImageMatrix_obj;
-
 const mp_obj_module_t pb_module_media;
 
 #endif // PYBRICKS_PY_MEDIA

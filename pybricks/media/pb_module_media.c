@@ -14,7 +14,6 @@
 
 STATIC const mp_rom_map_elem_t media_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_media)      },
-    { MP_ROM_QSTR(MP_QSTR_ImageMatrix), MP_ROM_PTR(&pb_ImageMatrix_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_media_globals, media_globals_table);
 
