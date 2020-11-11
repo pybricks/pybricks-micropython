@@ -607,7 +607,7 @@ void SystemInit(void) {
 
     HAL_RCC_ClockConfig(&clk_init, FLASH_LATENCY_5);
 
-    // If we are running dual boot, jump to other firmware if right button is pressed
+    // If we are running dual boot, jump to other firmware if no buttons are pressed
     pbio_platform_dual_boot();
 
     // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
