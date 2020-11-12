@@ -37,4 +37,9 @@ pbio_error_t pbdrv_battery_get_type(pbdrv_battery_type_t *value) {
     return PBIO_SUCCESS;
 }
 
+pbio_error_t pbdrv_battery_get_temperature(uint32_t *value) {
+    *value = 0;
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
 #endif // PBDRV_CONFIG_BATTERY_NXT

@@ -47,6 +47,13 @@ STATIC mp_obj_t battery_type(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_type_obj, battery_type);
 
+STATIC mp_obj_t battery_temperature(void) {
+    uint32_t temperature;
+    pb_assert(pbdrv_battery_get_temperature(&temperature));
+    return mp_obj_new_int(temperature);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_temperature_obj, battery_temperature);
+
 /* battery module tables */
 
 STATIC const mp_rom_map_elem_t battery_globals_table[] = {
@@ -54,6 +61,7 @@ STATIC const mp_rom_map_elem_t battery_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_voltage),     MP_ROM_PTR(&battery_voltage_obj)    },
     { MP_ROM_QSTR(MP_QSTR_current),     MP_ROM_PTR(&battery_current_obj)    },
     { MP_ROM_QSTR(MP_QSTR_type),        MP_ROM_PTR(&battery_type_obj)       },
+    { MP_ROM_QSTR(MP_QSTR_temperature), MP_ROM_PTR(&battery_temperature_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_battery_globals, battery_globals_table);
 

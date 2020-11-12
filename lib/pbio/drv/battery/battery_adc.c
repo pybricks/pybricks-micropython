@@ -135,4 +135,55 @@ pbio_error_t pbdrv_battery_get_type(pbdrv_battery_type_t *value) {
     return PBIO_SUCCESS;
 }
 
+#if PBDRV_CONFIG_BATTERY_ADC_TEMPERATURE
+
+#include <math.h>
+
+pbio_error_t pbdrv_battery_get_temperature(uint32_t *value) {
+    uint16_t raw;
+    pbio_error_t err = pbdrv_adc_get_ch(PBDRV_CONFIG_BATTERY_ADC_TEMPERATURE_CH, &raw);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // This is hard-coded for a 103AT thermistor as found in SPIKE Prime.
+    // Refer to MP2639A data sheet for more info on how circuit is configured.
+
+    // Measured resistance of the thermocouple (in Ohms):
+    // R_NTC = 1 / (((VNTC / NTC) - 1) / R_T1) - (1 / R_T2))
+    //
+    // VNTC: the reference voltage
+    // NTC: the measured voltage
+    // R_T1: 2.4k - resistor
+    // R_T2: 7.5k - resistor
+    //
+    // Voltages are relative so 4095 / raw == VNTC / NTC (assuming 12-bit ADC)
+
+    float r_ntc = 1.0f / (((4095.0f / raw - 1.0f) / 2400.0f) - 1.0f / 7500.0f);
+
+    // Measured temperature of the thermocouple (in Kelvin):
+    // T1 = B / (ln(R1 / R2) + B / T2)
+    //
+    // B: 3435 - temperature coefficient from 103AT data sheet
+    // R1: R_NTC - measured thermocouple resistance
+    // R2: 10k - 25°C resistance from 103AT data sheet
+    // T2: 298.15 - 25°C converted to Kelvin
+
+    float t = 3435.0f / (logf(r_ntc / 10000.0f) + 3435.0f / 298.15f);
+
+    // convert Kelvin to millidegrees C
+    *value = (t - 273.15f) * 1000.0f;
+
+    return PBIO_SUCCESS;
+}
+
+#else // PBDRV_CONFIG_BATTERY_ADC_TEMPERATURE
+
+pbio_error_t pbdrv_battery_get_temperature(uint32_t *value) {
+    *value = 0;
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+#endif // PBDRV_CONFIG_BATTERY_ADC_TEMPERATURE
+
 #endif // PBDRV_CONFIG_BATTERY_ADC
