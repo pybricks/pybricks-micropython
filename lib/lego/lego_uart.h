@@ -451,10 +451,25 @@ typedef enum {
     LUMP_TYPE_ID_INTERACTIVE_MOTOR        = 38,
 
     /** Technic Large Motor */
-    LUMP_TYPE_ID_TECHNIC_L_MOTOR            = 46,
+    LUMP_TYPE_ID_TECHNIC_L_MOTOR          = 46,
 
     /** Technic XL Motor */
-    LUMP_TYPE_ID_TECHNIC_XL_MOTOR           = 47,
+    LUMP_TYPE_ID_TECHNIC_XL_MOTOR         = 47,
+
+    /** SPIKE Medium Motor */
+    LUMP_TYPE_ID_SPIKE_M_MOTOR            = 48,
+
+    /** SPIKE Large Motor */
+    LUMP_TYPE_ID_SPIKE_L_MOTOR            = 49,
+
+    /** SPIKE Color Sensor */
+    LUMP_TYPE_ID_SPIKE_COLOR_SENSOR       = 61,
+
+    /** SPIKE Ultrasonic Sensor */
+    LUMP_TYPE_ID_SPIKE_ULTRASONIC_SENSOR  = 62,
+
+    /** SPIKE Prime Force Sensor */
+    LUMP_TYPE_ID_SPIKE_FORCE_SENSOR       = 63,
 
 } lump_type_id_t;
 
