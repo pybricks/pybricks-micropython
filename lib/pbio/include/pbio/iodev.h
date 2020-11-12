@@ -105,6 +105,10 @@ typedef enum {
     /** SPIKE Prime Force Sensor */
     PBIO_IODEV_TYPE_ID_SPIKE_FORCE_SENSOR = LUMP_TYPE_ID_SPIKE_FORCE_SENSOR,
 
+    // Technic Angular Motors
+    PBIO_IODEV_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR = LUMP_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR,
+
+
     // NXT Devices
     PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR,                /**< MINDSTORMS NXT Touch Sensor */
     PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR,                /**< MINDSTORMS NXT Light Sensor */
