@@ -6,8 +6,6 @@
 #include <pbio/button.h>
 #include <pbio/error.h>
 
-#include "../drv/counter/counter.h"
-
 static pbio_button_flags_t pbio_test_button_flags;
 
 void pbio_test_button_set_pressed(pbio_button_flags_t flags) {
