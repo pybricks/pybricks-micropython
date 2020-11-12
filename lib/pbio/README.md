@@ -10,8 +10,8 @@ could be made into a stand-alone project.
 Directory Structure
 -------------------
 
-The `doc` directory contains the doxygen build configuration. TODO: post doc
-build output online somewhere.
+The `doc` directory contains the documentation build configuration. Online docs
+are available at <https://docs.pybricks.com/projects/pbio/>.
 
 The `drv` directory contains "drivers" that act as a hardware abstraction layer
 for the various platform-specific hardware.
