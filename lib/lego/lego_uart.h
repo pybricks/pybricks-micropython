@@ -456,26 +456,6 @@ typedef enum {
     /** Technic XL Motor */
     LUMP_TYPE_ID_TECHNIC_XL_MOTOR           = 47,
 
-    /** FatcatLab A/DC Adapter */
-    LUMP_TYPE_ID_FCL_ADC                  = 71,
-
-    /** FatcatLab Gesture Sensor */
-    LUMP_TYPE_ID_FCL_GESTURE              = 72,
-
-    /** FatcatLab Light Sensor */
-    LUMP_TYPE_ID_FCL_LIGHT                = 73,
-
-    /** FatcatLab Altitude Sensor */
-    LUMP_TYPE_ID_FCL_ALTITUDE             = 74,
-
-    /** FatcatLab IR Receiver */
-    LUMP_TYPE_ID_FCL_IR                   = 75,
-
-    /** FatcatLab 9DOF Sensor */
-    LUMP_TYPE_ID_FCL_9DOF                 = 76,
-
-    /** FatcatLab Humidity Sensor */
-    LUMP_TYPE_ID_FCL_HUMIDITY             = 77,
 } lump_type_id_t;
 
 /**

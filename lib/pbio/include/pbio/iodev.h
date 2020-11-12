@@ -105,30 +105,6 @@ typedef enum {
     /** SPIKE Prime Force Sensor */
     PBIO_IODEV_TYPE_ID_SPIKE_FORCE_SENSOR       = 63,
 
-    // FatcatLab EV3 UART devices
-
-    /** FatcatLab A/DC Adapter */
-    PBIO_IODEV_TYPE_ID_FCL_ADC = LUMP_TYPE_ID_FCL_ADC,
-
-    /** FatcatLab Gesture Sensor */
-    PBIO_IODEV_TYPE_ID_FCL_GESTURE = LUMP_TYPE_ID_FCL_GESTURE,
-
-    /** FatcatLab Light Sensor */
-    PBIO_IODEV_TYPE_ID_FCL_LIGHT = LUMP_TYPE_ID_FCL_LIGHT,
-
-    /** FatcatLab Altitude Sensor */
-    PBIO_IODEV_TYPE_ID_FCL_ALTITUDE = LUMP_TYPE_ID_FCL_ALTITUDE,
-
-    /** FatcatLab IR Receiver */
-    PBIO_IODEV_TYPE_ID_FCL_IR = LUMP_TYPE_ID_FCL_IR,
-
-    /** FatcatLab 9DOF Sensor */
-    PBIO_IODEV_TYPE_ID_FCL_9DOF = LUMP_TYPE_ID_FCL_9DOF,
-
-    /** FatcatLab Humidity Sensor */
-    PBIO_IODEV_TYPE_ID_FCL_HUMIDITY = LUMP_TYPE_ID_FCL_HUMIDITY,
-
-
     // NXT Devices
     PBIO_IODEV_TYPE_ID_NXT_TOUCH_SENSOR,                /**< MINDSTORMS NXT Touch Sensor */
     PBIO_IODEV_TYPE_ID_NXT_LIGHT_SENSOR,                /**< MINDSTORMS NXT Light Sensor */
