@@ -46,7 +46,8 @@ static uint16_t battery_ok_mv;
  */
 void pbsys_battery_init() {
     #if PBDRV_CONFIG_BATTERY_ADC_TYPE != 1
-    if (pbdrv_battery_get_type() == PBDRV_BATTERY_TYPE_LIION) {
+    pbdrv_battery_type_t type;
+    if (pbdrv_battery_get_type(&type) == PBIO_SUCCESS && type == PBDRV_BATTERY_TYPE_LIION) {
         battery_critical_mv = LIION_CRITICAL_MV;
         battery_low_mv = LIION_LOW_MV;
         battery_ok_mv = LIION_OK_MV;

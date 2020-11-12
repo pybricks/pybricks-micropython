@@ -33,6 +33,7 @@ USER_C_MODULES = ../..
 include ../../micropython/py/mkenv.mk
 
 # qstr definitions (must come before including py.mk)
+QSTR_DEFS = ../pybricks_qstrdefs.h
 QSTR_GLOBAL_DEPENDENCIES =
 
 FROZEN_MPY_TOOL_ARGS = -mlongint-impl=none

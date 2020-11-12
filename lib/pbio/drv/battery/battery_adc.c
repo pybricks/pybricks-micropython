@@ -122,16 +122,17 @@ pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
     return PBIO_SUCCESS;
 }
 
-pbdrv_battery_type_t pbdrv_battery_get_type() {
+pbio_error_t pbdrv_battery_get_type(pbdrv_battery_type_t *value) {
     #if PBDRV_CONFIG_BATTERY_ADC_TYPE == 1
-    return PBDRV_BATTERY_TYPE_ALKALINE;
+    *value = PBDRV_BATTERY_TYPE_ALKALINE;
     #elif PBDRV_CONFIG_BATTERY_ADC_TYPE == 2
-    return PBDRV_BATTERY_TYPE_LIION;
+    *value = PBDRV_BATTERY_TYPE_LIION;
     #elif PBDRV_CONFIG_BATTERY_ADC_TYPE == 3
-    return pbdrv_battery_type;
+    *value = pbdrv_battery_type;
     #else
     #error "Bad PBDRV_CONFIG_BATTERY_ADC_TYPE value"
     #endif
+    return PBIO_SUCCESS;
 }
 
 #endif // PBDRV_CONFIG_BATTERY_ADC

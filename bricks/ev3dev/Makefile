@@ -48,7 +48,7 @@ FROZEN_MPY_DIR =
 PROG = pybricks-micropython
 
 # qstr definitions (must come before including py.mk)
-#QSTR_DEFS = qstrdefsport.h
+QSTR_DEFS = ../pybricks_qstrdefs.h
 QSTR_GLOBAL_DEPENDENCIES =
 
 # OS name, for simple autoconfig

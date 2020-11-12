@@ -33,12 +33,27 @@ STATIC mp_obj_t battery_current(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_current_obj, battery_current);
 
+STATIC mp_obj_t battery_type(void) {
+    pbdrv_battery_type_t type;
+    pb_assert(pbdrv_battery_get_type(&type));
+    switch (type) {
+        case PBDRV_BATTERY_TYPE_ALKALINE:
+            return MP_OBJ_NEW_QSTR(MP_QSTR_Alkaline);
+        case PBDRV_BATTERY_TYPE_LIION:
+            return MP_OBJ_NEW_QSTR(MP_QSTR_Li_hyphen_ion);
+        default:
+            return MP_OBJ_NEW_QSTR(MP_QSTR_Unknown);
+    }
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_type_obj, battery_type);
+
 /* battery module tables */
 
 STATIC const mp_rom_map_elem_t battery_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_battery)        },
     { MP_ROM_QSTR(MP_QSTR_voltage),     MP_ROM_PTR(&battery_voltage_obj)    },
     { MP_ROM_QSTR(MP_QSTR_current),     MP_ROM_PTR(&battery_current_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_type),        MP_ROM_PTR(&battery_type_obj)       },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_battery_globals, battery_globals_table);
 

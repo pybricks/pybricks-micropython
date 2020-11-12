@@ -30,10 +30,11 @@ pbio_error_t pbdrv_battery_get_current_now(uint16_t *value) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-pbdrv_battery_type_t pbdrv_battery_get_type() {
+pbio_error_t pbdrv_battery_get_type(pbdrv_battery_type_t *value) {
     // Battery voltage includes bit 0x8000 to indicate rechargeable battery
-    return (battery_voltage() & 0x8000) ? PBDRV_BATTERY_TYPE_LIION
-                                        : PBDRV_BATTERY_TYPE_ALKALINE;
+    *value = (battery_voltage() & 0x8000) ? PBDRV_BATTERY_TYPE_LIION
+                                          : PBDRV_BATTERY_TYPE_ALKALINE;
+    return PBIO_SUCCESS;
 }
 
 #endif // PBDRV_CONFIG_BATTERY_NXT
