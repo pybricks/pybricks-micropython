@@ -265,6 +265,7 @@ HAL_SRC_C = $(addprefix micropython/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Dri
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_pcd_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_pcd.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_pwr_ex.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_rcc_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_rcc.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_spi.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_tim_ex.c \
