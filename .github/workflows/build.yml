@@ -433,7 +433,7 @@ jobs:
     - name: Install prerequisites
       run: |
         sudo apt-get update
-        sudo apt-get install --yes doxygen lcov
+        sudo apt-get install --yes doxygen graphviz lcov
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
