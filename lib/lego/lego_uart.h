@@ -474,6 +474,9 @@ typedef enum {
     /** Technic Medium Angular Motor */
     LUMP_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR  = 75,
 
+    /** Technic Large Angular Motor */
+    LUMP_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR  = 76,    
+
 } lump_type_id_t;
 
 /**
