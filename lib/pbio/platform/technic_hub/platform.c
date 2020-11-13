@@ -32,6 +32,7 @@ enum {
     PWM_DEV_0,
     PWM_DEV_1,
     PWM_DEV_2,
+    PWM_DEV_3,
 };
 
 enum {
@@ -106,10 +107,10 @@ const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_3 = {
 const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV] = {
     {
         .id = LED_DEV_0,
-        .r_id = PWM_DEV_1,
+        .r_id = PWM_DEV_3,
         .r_ch = 2,
-        .g_id = PWM_DEV_0,
-        .g_ch = 4,
+        .g_id = PWM_DEV_3,
+        .g_ch = 1,
         .b_id = PWM_DEV_2,
         .b_ch = 1,
         .scale_factor = 5,
@@ -119,21 +120,27 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
 // PWM
 
 static void pwm_dev_0_platform_init() {
-    // green LED on PA11 using TIM1 CH4
-    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODE11_Msk) | (2 << GPIO_MODER_MODE11_Pos);
-    GPIOA->AFR[1] = (GPIOA->AFR[1] & ~GPIO_AFRH_AFSEL11_Msk) | (1 << GPIO_AFRH_AFSEL11_Pos);
 }
 
 static void pwm_dev_1_platform_init() {
-    // red LED on PB15 using TIM15 CH2
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODE15_Msk) | (2 << GPIO_MODER_MODE15_Pos);
-    GPIOB->AFR[1] = (GPIOB->AFR[1] & ~GPIO_AFRH_AFSEL15_Msk) | (14 << GPIO_AFRH_AFSEL15_Pos);
 }
 
 static void pwm_dev_2_platform_init() {
     // blue LED on PA6 using TIM16 CH1
     GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODE6_Msk) | (2 << GPIO_MODER_MODE6_Pos);
     GPIOA->AFR[0] = (GPIOA->AFR[0] & ~GPIO_AFRL_AFSEL6_Msk) | (14 << GPIO_AFRL_AFSEL6_Pos);
+}
+
+static void pwm_dev_3_platform_init() {
+    // green LED on PA11
+    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODE11_Msk) | (1 << GPIO_MODER_MODE11_Pos);
+    // red LED on PB15
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODE15_Msk) | (1 << GPIO_MODER_MODE15_Pos);
+
+    // channel 1: green LED; channel 2: red LED
+    TIM2->DIER |= TIM_DIER_CC1IE | TIM_DIER_CC2IE | TIM_DIER_UIE;
+    HAL_NVIC_SetPriority(TIM2_IRQn, 8, 0);
+    HAL_NVIC_EnableIRQ(TIM2_IRQn);
 }
 
 const pbdrv_pwm_stm32_tim_platform_data_t
@@ -145,7 +152,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .period = 10000, // 10 MHz divided by 10k makes 1 kHz PWM
         .id = PWM_DEV_0,
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
-            | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE
+            | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE
             | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_2_INVERT
             | PBDRV_PWM_STM32_TIM_CHANNEL_3_INVERT
             | PBDRV_PWM_STM32_TIM_CHANNEL_1_COMPLEMENT | PBDRV_PWM_STM32_TIM_CHANNEL_2_COMPLEMENT
@@ -157,7 +164,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .prescalar = 8, // results in 10 MHz clock
         .period = 10000, // 10 MHz divided by 10k makes 1 kHz PWM
         .id = PWM_DEV_1,
-        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE
             | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_1_COMPLEMENT,
     },
     {
@@ -168,7 +175,47 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .id = PWM_DEV_2,
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE,
     },
+    {
+        .platform_init = pwm_dev_3_platform_init,
+        .TIMx = TIM2,
+        .prescalar = 8, // results in 10 MHz clock
+        .period = 10000, // 10 MHz divided by 10k makes 1 kHz PWM
+        .id = PWM_DEV_3,
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE,
+    },
 };
+
+// HACK: Official LEGO firmware uses TIM1 and TIM15 for red and green LEDs.
+// However this requires that the PWM period is the same as the motors.
+// We want to control the two PWM periods independently. So we are using TIM2
+// for the LEDs. The pin mux doesn't work out, so we have to manually write
+// the GPIOs in the timer interrupt handler.
+void TIM2_IRQHandler() {
+    uint32_t sr = TIM2->SR;
+
+    // green LED
+    if (TIM2->CCR1 == 0 || sr & TIM_SR_CC1IF) {
+        // If channel 1 duty cycle is 0 or we have reached the CC1 count,
+        // turn the GPIO off
+        GPIOA->BRR = GPIO_BRR_BR11;
+    } else if (sr & TIM_SR_UIF) {
+        // otherwise if it is the start of the next PWM period turn the GPIO on
+        GPIOA->BSRR = GPIO_BSRR_BS11;
+    }
+
+    // red LED
+    if (TIM2->CCR2 == 0 || sr & TIM_SR_CC2IF) {
+        // If channel 2 duty cycle is 0 or we have reached the CC2 count,
+        // turn the GPIO off
+        GPIOB->BRR = GPIO_BRR_BR15;
+    } else if (sr & TIM_SR_UIF) {
+        // otherwise if it is the start of the next PWM period turn the GPIO on
+        GPIOB->BSRR = GPIO_BSRR_BS15;
+    }
+
+    // clear interrupts
+    TIM2->SR = 0;
+}
 
 // RESET
 
