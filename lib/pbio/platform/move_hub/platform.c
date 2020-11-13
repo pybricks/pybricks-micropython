@@ -139,14 +139,19 @@ static void pwm_dev_3_platform_init() {
     GPIOB->AFR[1] = (GPIOB->AFR[1] & ~GPIO_AFRH_AFSEL8_Msk) | (2 << GPIO_AFRH_AFSEL8_Pos);
 }
 
+// NOTE: Official LEGO firmware uses 1.2 kHz PWM for motors. We have changed to
+// 12 kHz to reduce the unpleasant noise (similar to the frequency used by the
+// official EV3 firmware).
+
 const pbdrv_pwm_stm32_tim_platform_data_t
     pbdrv_pwm_stm32_tim_platform_data[PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV] = {
     {
         .platform_init = pwm_dev_0_platform_init,
         .TIMx = TIM1,
         .prescalar = 4, // results in 12 MHz clock
-        .period = 10000, // 12MHz divided by 10k makes 1.2 kHz PWM
+        .period = 1000, // 12 MHz divided by 1k makes 12 kHz PWM
         .id = PWM_DEV_0,
+        // channel 1/3: Port A motor driver; channel 2/4: Port B motor driver
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
             | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE,
     },
@@ -154,8 +159,9 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .platform_init = pwm_dev_1_platform_init,
         .TIMx = TIM3,
         .prescalar = 4, // results in 12 MHz clock
-        .period = 10000, // 12MHz divided by 10k makes 1.2 kHz PWM
+        .period = 1000, // 12 MHz divided by 1k makes 12 kHz PWM
         .id = PWM_DEV_1,
+        // channel 1/3: Port C motor driver; channel 3/4: Port D motor driver
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
             | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE,
     },
@@ -163,16 +169,18 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .platform_init = pwm_dev_2_platform_init,
         .TIMx = TIM15,
         .prescalar = 4, // results in 12 MHz clock
-        .period = 10000, // 12MHz divided by 10k makes 1.2 kHz PWM
+        .period = 10000, // 12 MHz divided by 10k makes 1.2 kHz PWM
         .id = PWM_DEV_2,
+        // channel 1: Green LED; channel 2: Blue LED
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE,
     },
     {
         .platform_init = pwm_dev_3_platform_init,
         .TIMx = TIM16,
         .prescalar = 4, // results in 12 MHz clock
-        .period = 10000, // 12MHz divided by 10k makes 1.2 kHz PWM
+        .period = 10000, // 12 MHz divided by 10k makes 1.2 kHz PWM
         .id = PWM_DEV_3,
+        // channel 1: Red LED
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE,
     },
 };

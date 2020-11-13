@@ -109,7 +109,7 @@ static void pbdrv_motor_run_fwd(pbio_port_t port, int16_t duty_cycle) {
             GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10_Msk) | (1 << GPIO_MODER_MODER10_Pos);
             GPIOA->BSRR = GPIO_BSRR_BS_10;
             if (pbdrv_pwm_get_dev(0, &dev) == PBIO_SUCCESS) {
-                pbdrv_pwm_set_duty(dev, 1, 10000 - duty_cycle);
+                pbdrv_pwm_set_duty(dev, 1, 1000 - duty_cycle / 10);
             }
             GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER8_Msk) | (2 << GPIO_MODER_MODER8_Pos);
             break;
@@ -117,7 +117,7 @@ static void pbdrv_motor_run_fwd(pbio_port_t port, int16_t duty_cycle) {
             GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
             GPIOA->BSRR = GPIO_BSRR_BS_11;
             if (pbdrv_pwm_get_dev(0, &dev) == PBIO_SUCCESS) {
-                pbdrv_pwm_set_duty(dev, 2, 10000 - duty_cycle);
+                pbdrv_pwm_set_duty(dev, 2, 1000 - duty_cycle / 10);
             }
             GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER9_Msk) | (2 << GPIO_MODER_MODER9_Pos);
             break;
@@ -125,7 +125,7 @@ static void pbdrv_motor_run_fwd(pbio_port_t port, int16_t duty_cycle) {
             GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
             GPIOC->BSRR = GPIO_BSRR_BS_6;
             if (pbdrv_pwm_get_dev(1, &dev) == PBIO_SUCCESS) {
-                pbdrv_pwm_set_duty(dev, 3, 10000 - duty_cycle);
+                pbdrv_pwm_set_duty(dev, 3, 1000 - duty_cycle / 10);
             }
             GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (2 << GPIO_MODER_MODER8_Pos);
             break;
@@ -133,7 +133,7 @@ static void pbdrv_motor_run_fwd(pbio_port_t port, int16_t duty_cycle) {
             GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
             GPIOC->BSRR = GPIO_BSRR_BS_9;
             if (pbdrv_pwm_get_dev(1, &dev) == PBIO_SUCCESS) {
-                pbdrv_pwm_set_duty(dev, 2, 10000 - duty_cycle);
+                pbdrv_pwm_set_duty(dev, 2, 1000 - duty_cycle / 10);
             }
             GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (2 << GPIO_MODER_MODER7_Pos);
             break;
@@ -151,7 +151,7 @@ static void pbdrv_motor_run_rev(pbio_port_t port, int16_t duty_cycle) {
             GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
             GPIOA->BSRR = GPIO_BSRR_BS_8;
             if (pbdrv_pwm_get_dev(0, &dev) == PBIO_SUCCESS) {
-                pbdrv_pwm_set_duty(dev, 3, 10000 + duty_cycle);
+                pbdrv_pwm_set_duty(dev, 3, 1000 + duty_cycle / 10);
             }
             GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10_Msk) | (2 << GPIO_MODER_MODER10_Pos);
             break;
@@ -159,7 +159,7 @@ static void pbdrv_motor_run_rev(pbio_port_t port, int16_t duty_cycle) {
             GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
             GPIOA->BSRR = GPIO_BSRR_BS_9;
             if (pbdrv_pwm_get_dev(0, &dev) == PBIO_SUCCESS) {
-                pbdrv_pwm_set_duty(dev, 4, 10000 + duty_cycle);
+                pbdrv_pwm_set_duty(dev, 4, 1000 + duty_cycle / 10);
             }
             GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER11_Msk) | (2 << GPIO_MODER_MODER11_Pos);
             break;
@@ -167,7 +167,7 @@ static void pbdrv_motor_run_rev(pbio_port_t port, int16_t duty_cycle) {
             GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
             GPIOC->BSRR = GPIO_BSRR_BS_8;
             if (pbdrv_pwm_get_dev(1, &dev) == PBIO_SUCCESS) {
-                pbdrv_pwm_set_duty(dev, 1, 10000 + duty_cycle);
+                pbdrv_pwm_set_duty(dev, 1, 1000 + duty_cycle / 10);
             }
             GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (2 << GPIO_MODER_MODER6_Pos);
             break;
@@ -175,7 +175,7 @@ static void pbdrv_motor_run_rev(pbio_port_t port, int16_t duty_cycle) {
             GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
             GPIOC->BSRR = GPIO_BSRR_BS_7;
             if (pbdrv_pwm_get_dev(1, &dev) == PBIO_SUCCESS) {
-                pbdrv_pwm_set_duty(dev, 4, 10000 + duty_cycle);
+                pbdrv_pwm_set_duty(dev, 4, 1000 + duty_cycle / 10);
             }
             GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (2 << GPIO_MODER_MODER9_Pos);
             break;

@@ -143,14 +143,20 @@ static void pwm_dev_3_platform_init() {
     HAL_NVIC_EnableIRQ(TIM2_IRQn);
 }
 
+// NOTE: Official LEGO firmware uses 1 kHz PWM for motors. We have changed to
+// 10 kHz to reduce the unpleasant noise (similar to the frequency used by the
+// official EV3 firmware).
+
 const pbdrv_pwm_stm32_tim_platform_data_t
     pbdrv_pwm_stm32_tim_platform_data[PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV] = {
     {
         .platform_init = pwm_dev_0_platform_init,
         .TIMx = TIM1,
         .prescalar = 8, // results in 10 MHz clock
-        .period = 10000, // 10 MHz divided by 10k makes 1 kHz PWM
+        .period = 1000, // 10 MHz divided by 1k makes 10 kHz PWM
         .id = PWM_DEV_0,
+        // channel 1: Port C motor driver; channel 2: Port B motor driver
+        // channel 3: Port D motor driver
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE
             | PBDRV_PWM_STM32_TIM_CHANNEL_3_ENABLE
             | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_2_INVERT
@@ -162,8 +168,9 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .platform_init = pwm_dev_1_platform_init,
         .TIMx = TIM15,
         .prescalar = 8, // results in 10 MHz clock
-        .period = 10000, // 10 MHz divided by 10k makes 1 kHz PWM
+        .period = 1000, // 10 MHz divided by 1k makes 10 kHz PWM
         .id = PWM_DEV_1,
+        // channel 1: Port A motor driver
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE
             | PBDRV_PWM_STM32_TIM_CHANNEL_1_INVERT | PBDRV_PWM_STM32_TIM_CHANNEL_1_COMPLEMENT,
     },
@@ -173,6 +180,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .prescalar = 8, // results in 10 MHz clock
         .period = 10000, // 10 MHz divided by 10k makes 1 kHz PWM
         .id = PWM_DEV_2,
+        // channel 1: Blue LED
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE,
     },
     {
@@ -181,6 +189,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         .prescalar = 8, // results in 10 MHz clock
         .period = 10000, // 10 MHz divided by 10k makes 1 kHz PWM
         .id = PWM_DEV_3,
+        // channel 1: Green LED; channel 2: Red LED
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_1_ENABLE | PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE,
     },
 };

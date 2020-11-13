@@ -29,6 +29,7 @@ typedef struct {
 
 static const pbdrv_motor_data_t
     platform_data[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER] = {
+    // Port A
     {
         .pin1_gpio.bank = GPIOE,
         .pin1_gpio.pin = 9,
@@ -41,6 +42,7 @@ static const pbdrv_motor_data_t
         .pin2_pwm_id = 0,
         .pin2_pwm_ch = 2,
     },
+    // Port B
     {
         .pin1_gpio.bank = GPIOE,
         .pin1_gpio.pin = 13,
@@ -53,6 +55,7 @@ static const pbdrv_motor_data_t
         .pin2_pwm_id = 0,
         .pin2_pwm_ch = 4,
     },
+    // Port C
     {
         .pin1_gpio.bank = GPIOB,
         .pin1_gpio.pin = 6,
@@ -65,6 +68,7 @@ static const pbdrv_motor_data_t
         .pin2_pwm_id = 2,
         .pin2_pwm_ch = 2,
     },
+    // Port D
     {
         .pin1_gpio.bank = GPIOB,
         .pin1_gpio.pin = 8,
@@ -77,6 +81,7 @@ static const pbdrv_motor_data_t
         .pin2_pwm_id = 2,
         .pin2_pwm_ch = 4,
     },
+    // Port E
     {
         .pin1_gpio.bank = GPIOC,
         .pin1_gpio.pin = 6,
@@ -89,6 +94,7 @@ static const pbdrv_motor_data_t
         .pin2_pwm_id = 1,
         .pin2_pwm_ch = 2,
     },
+    // Port F
     {
         .pin1_gpio.bank = GPIOC,
         .pin1_gpio.pin = 8,
@@ -142,7 +148,7 @@ static void pbdrv_motor_brake(const pbdrv_motor_data_t *data) {
 static void pbdrv_motor_run_fwd(const pbdrv_motor_data_t *data, int16_t duty_cycle) {
     pbdrv_pwm_dev_t *pwm_dev;
     if (pbdrv_pwm_get_dev(data->pin1_pwm_id, &pwm_dev) == PBIO_SUCCESS) {
-        pbdrv_pwm_set_duty(pwm_dev, data->pin1_pwm_ch, duty_cycle);
+        pbdrv_pwm_set_duty(pwm_dev, data->pin1_pwm_ch, duty_cycle / 10);
     }
     pbdrv_gpio_alt(&data->pin1_gpio, data->pin1_alt);
     pbdrv_gpio_out_high(&data->pin2_gpio);
@@ -151,7 +157,7 @@ static void pbdrv_motor_run_fwd(const pbdrv_motor_data_t *data, int16_t duty_cyc
 static void pbdrv_motor_run_rev(const pbdrv_motor_data_t *data, int16_t duty_cycle) {
     pbdrv_pwm_dev_t *pwm_dev;
     if (pbdrv_pwm_get_dev(data->pin2_pwm_id, &pwm_dev) == PBIO_SUCCESS) {
-        pbdrv_pwm_set_duty(pwm_dev, data->pin2_pwm_ch, duty_cycle);
+        pbdrv_pwm_set_duty(pwm_dev, data->pin2_pwm_ch, duty_cycle / 10);
     }
     pbdrv_gpio_out_high(&data->pin1_gpio);
     pbdrv_gpio_alt(&data->pin2_gpio, data->pin2_alt);
