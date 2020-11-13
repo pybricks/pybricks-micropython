@@ -423,9 +423,7 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
     gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     gpio_init.Alternate = GPIO_AF4_I2C1;
 
-    gpio_init.Pin = GPIO_PIN_8;
-    HAL_GPIO_Init(GPIOB, &gpio_init);
-    gpio_init.Pin = GPIO_PIN_9;
+    gpio_init.Pin = GPIO_PIN_8 | GPIO_PIN_9;
     HAL_GPIO_Init(GPIOB, &gpio_init);
 
     HAL_NVIC_SetPriority(I2C1_ER_IRQn, 3, 1);
