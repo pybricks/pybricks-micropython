@@ -146,6 +146,7 @@ static void load_servo_settings(pbio_control_settings_t *s, pbio_iodev_type_id_t
             *s = settings_servo_cplus_xl;
             s->control_offset = 2500;
             break;
+        case PBIO_IODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR:
         case PBIO_IODEV_TYPE_ID_SPIKE_L_MOTOR:
             *s = settings_servo_cplus_xl;
             break;
