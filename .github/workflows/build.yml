@@ -6,7 +6,7 @@ on:
     - '**'
     tags-ignore:
     - '@pybricks/**'
-  pull_request:
+  pull_request_target:
 
 env:
   MAKEOPTS: -j2
@@ -172,8 +172,12 @@ jobs:
         release: '9-2020-q2'
         directory: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
 
-  cityhub_firmware:
-    name: cityhub firmware
+  firmware:
+    name: firmware
+    strategy:
+      fail-fast: false
+      matrix:
+        hub: [cityhub, movehub, nxt, primehub, technichub]
     needs: [cross_compiler, mpy_cross]
     runs-on: ubuntu-latest
     steps:
@@ -196,206 +200,36 @@ jobs:
         path: micropython/mpy-cross
     - name: Fix file permission
       run: chmod +x micropython/mpy-cross/mpy-cross
-    - name: Build
-      run: make $MAKEOPTS -C bricks/cityhub
+    - name: Install python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+    - name: Install Python packages
+      run:  python -m pip install azure-cosmosdb-table GitPython
+    - name: Build firmware
+      env:
+        STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
+        STORAGE_KEY: ${{ secrets.STORAGE_KEY }}
+        TABLE_NAME: ${{ secrets.TABLE_NAME }}
+      run: .github/build-each-commit.py ${{ matrix.hub }} origin/master ${{ github.ref }}
     - name: Upload firmware
       if: success()
       uses: actions/upload-artifact@v2
       with:
-        name: cityhub-firmware
-        path: bricks/cityhub/build/firmware-base.bin
+        name: ${{ matrix.hub }}-firmware
+        path: bricks/${{ matrix.hub }}/build/firmware-base.bin
     - name: Upload firmware metadata
       if: success()
       uses: actions/upload-artifact@v2
       with:
-        name: cityhub-firmware
-        path: bricks/cityhub/build/firmware.metadata.json
+        name: ${{ matrix.hub }}-firmware
+        path: bricks/${{ matrix.hub }}/build/firmware.metadata.json
     - name: Upload main.py
       if: success()
       uses: actions/upload-artifact@v2
       with:
-        name: cityhub-firmware
-        path: bricks/cityhub/main.py
-
-  technichub_firmware:
-    name: technichub firmware
-    needs: [cross_compiler, mpy_cross]
-    runs-on: ubuntu-latest
-    steps:
-    - name: Install cross-compiler
-      uses: actions/cache@v1
-      with:
-        path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
-        key: gcc-arm-9-2020-q2
-    - name: Add cross-compiler to path
-      run: echo ${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin >> $GITHUB_PATH
-    - name: Checkout repo
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-        fetch-depth: 0
-    - name: Download mpy-cross
-      uses: actions/download-artifact@v1
-      with:
-        name: mpy-cross
-        path: micropython/mpy-cross
-    - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/mpy-cross
-    - name: Build
-      run: make $MAKEOPTS -C bricks/technichub
-    - name: Upload firmware
-      if: success()
-      uses: actions/upload-artifact@v2
-      with:
-        name: technichub-firmware
-        path: bricks/technichub/build/firmware-base.bin
-    - name: Upload firmware metadata
-      if: success()
-      uses: actions/upload-artifact@v2
-      with:
-        name: technichub-firmware
-        path: bricks/technichub/build/firmware.metadata.json
-    - name: Upload main.py
-      if: success()
-      uses: actions/upload-artifact@v2
-      with:
-        name: technichub-firmware
-        path: bricks/technichub/main.py
-
-  movehub_firmware:
-    name: movehub firmware
-    needs: [cross_compiler, mpy_cross]
-    runs-on: ubuntu-latest
-    steps:
-    - name: Install cross-compiler
-      uses: actions/cache@v1
-      with:
-        path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
-        key: gcc-arm-9-2020-q2
-    - name: Add cross-compiler to path
-      run: echo ${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin >> $GITHUB_PATH
-    - name: Checkout repo
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-        fetch-depth: 0
-    - name: Download mpy-cross
-      uses: actions/download-artifact@v1
-      with:
-        name: mpy-cross
-        path: micropython/mpy-cross
-    - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/mpy-cross
-    - name: Build
-      run: make $MAKEOPTS -C bricks/movehub
-    - name: Upload firmware
-      if: success()
-      uses: actions/upload-artifact@v2
-      with:
-        name: movehub-firmware
-        path: bricks/movehub/build/firmware-base.bin
-    - name: Upload firmware metadata
-      if: success()
-      uses: actions/upload-artifact@v2
-      with:
-        name: movehub-firmware
-        path: bricks/movehub/build/firmware.metadata.json
-    - name: Upload main.py
-      if: success()
-      uses: actions/upload-artifact@v2
-      with:
-        name: movehub-firmware
-        path: bricks/movehub/main.py
-
-  primehub_firmware:
-    name: primehub firmware
-    needs: [cross_compiler, mpy_cross]
-    runs-on: ubuntu-latest
-    steps:
-    - name: Install cross-compiler
-      uses: actions/cache@v1
-      with:
-        path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
-        key: gcc-arm-9-2020-q2
-    - name: Add cross-compiler to path
-      run: echo ${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin >> $GITHUB_PATH
-    - name: Checkout repo
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-        fetch-depth: 0
-    - name: Download mpy-cross
-      uses: actions/download-artifact@v1
-      with:
-        name: mpy-cross
-        path: micropython/mpy-cross
-    - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/mpy-cross
-    - name: Build
-      run: make $MAKEOPTS -C bricks/primehub
-    - name: Upload firmware
-      if: success()
-      uses: actions/upload-artifact@v2
-      with:
-        name: primehub-firmware
-        path: bricks/primehub/build/firmware-base.bin
-    - name: Upload firmware metadata
-      if: success()
-      uses: actions/upload-artifact@v2
-      with:
-        name: primehub-firmware
-        path: bricks/primehub/build/firmware.metadata.json
-    - name: Upload main.py
-      if: success()
-      uses: actions/upload-artifact@v2
-      with:
-        name: primehub-firmware
-        path: bricks/primehub/main.py
-    - name: Upload install_pybricks.llsp
-      if: success()
-      uses: actions/upload-artifact@v2-preview
-      with:
-        name: primehub-firmware
-        path: bricks/primehub/build/install_pybricks.llsp
-    - name: Upload install_pybricks.lms
-      if: success()
-      uses: actions/upload-artifact@v2-preview
-      with:
-        name: primehub-firmware
-        path: bricks/primehub/build/install_pybricks.lms
-
-  nxt_firmware:
-    name: nxt firmware
-    needs: [cross_compiler, mpy_cross]
-    runs-on: ubuntu-latest
-    steps:
-    - name: Install cross-compiler
-      uses: actions/cache@v1
-      with:
-        path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
-        key: gcc-arm-9-2020-q2
-    - name: Add cross-compiler to path
-      run: echo ${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin >> $GITHUB_PATH
-    - name: Checkout repo
-      uses: actions/checkout@v2
-      with:
-        submodules: true
-        fetch-depth: 0
-    - name: Download mpy-cross
-      uses: actions/download-artifact@v1
-      with:
-        name: mpy-cross
-        path: micropython/mpy-cross
-    - name: Fix file permission
-      run: chmod +x micropython/mpy-cross/mpy-cross
-    - name: Build
-      run:  make $MAKEOPTS -C bricks/nxt
-    - name: Upload firmware
-      if: success()
-      uses: actions/upload-artifact@v2
-      with:
-        name: nxt-firmware
-        path: bricks/nxt/build/firmware.bin
+        name: ${{ matrix.hub }}-firmware
+        path: bricks/${{ matrix.hub }}/main.py
 
   debug:
     name: debug firmware
