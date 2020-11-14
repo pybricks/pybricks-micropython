@@ -27,7 +27,9 @@ assert not pybricks.bare, "Repository not found"
 
 service = TableService(STORAGE_ACCOUNT, STORAGE_KEY)
 
-for commit in pybricks.iter_commits(f"{args.start_commit}..{args.end_commit}"):
+# build each commit starting with the oldest
+for commit in reversed(list(pybricks.iter_commits(f"{args.start_commit}..{args.end_commit}"))):
+    print("Checking out", commit.hexsha)
     pybricks.git.checkout(commit.hexsha)
 
     # update only required submodules

@@ -23,7 +23,7 @@ jobs:
     - name: Build mpy-cross
       run: make $MAKEOPTS -C micropython/mpy-cross
     - name: Upload mpy-cross
-      if: success()
+      if: ${{ success() }}
       uses: actions/upload-artifact@v2
       with:
         name: mpy-cross
@@ -54,7 +54,7 @@ jobs:
         make ${MAKEOPTS} -C ports/unix VARIANT=coverage deplibs
         make ${MAKEOPTS} -C ports/unix VARIANT=coverage
     - name: Test
-      if: success()
+      if: ${{ success() }}
       run: |
         cd micropython
         make -C ports/unix VARIANT=coverage test_full
@@ -95,7 +95,7 @@ jobs:
     - name: Build
       run: docker exec --tty pybricks-ev3dev_armel make
     - name: Test
-      if: success()
+      if: ${{ success() }}
       run: |
         docker exec --tty pybricks-ev3dev_armel make test
         docker exec --tty pybricks-ev3dev_armel make test-ev3dev
@@ -103,7 +103,7 @@ jobs:
       if: failure()
       run: micropython/tests/run-tests --print-failures
     - name: Upload pybricks-micropython
-      if: success()
+      if: ${{ success() }}
       uses: actions/upload-artifact@v2
       with:
         name: pybricks-micropython
@@ -147,7 +147,7 @@ jobs:
     - name: Build
       run: make $MAKEOPTS -C bricks/ev3dev
     - name: Test
-      if: success()
+      if: ${{ success() }}
       run: |
         make $MAKEOPTS -C bricks/ev3dev test
         make $MAKEOPTS -C bricks/ev3dev test-ev3dev
@@ -207,25 +207,29 @@ jobs:
     - name: Install Python packages
       run:  python -m pip install azure-cosmosdb-table GitPython
     - name: Build firmware
+      if: ${{ github.ref != 'refs/heads/master' }}
       env:
         STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
         STORAGE_KEY: ${{ secrets.STORAGE_KEY }}
         TABLE_NAME: ${{ secrets.TABLE_NAME }}
       run: .github/build-each-commit.py ${{ matrix.hub }} origin/master ${{ github.ref }}
+    - name: Build firmware
+      if: ${{ github.ref == 'refs/heads/master' }}
+      run: make -C bricks/${{ matrix.hub }}
     - name: Upload firmware
-      if: success()
+      if: ${{ success() }}
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.hub }}-firmware
         path: bricks/${{ matrix.hub }}/build/firmware-base.bin
     - name: Upload firmware metadata
-      if: success()
+      if: ${{ success() }}
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.hub }}-firmware
         path: bricks/${{ matrix.hub }}/build/firmware.metadata.json
     - name: Upload main.py
-      if: success()
+      if: ${{ success() }}
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.hub }}-firmware
