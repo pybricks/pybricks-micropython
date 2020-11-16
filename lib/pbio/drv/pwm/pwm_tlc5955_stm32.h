@@ -47,6 +47,7 @@ extern const pbdrv_pwm_tlc5955_stm32_platform_data_t
     pbdrv_pwm_tlc5955_stm32_platform_data[PBDRV_CONFIG_PWM_TLC5955_STM32_NUM_DEV];
 
 void pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev_t *dev);
+void pbdrv_pwm_tlc5955_stm32_deinit(pbdrv_pwm_dev_t *dev);
 
 void pbdrv_pwm_tlc5955_stm32_rx_dma_irq(uint8_t index);
 void pbdrv_pwm_tlc5955_stm32_tx_dma_irq(uint8_t index);
@@ -55,6 +56,7 @@ void pbdrv_pwm_tlc5955_stm32_spi_irq(uint8_t index);
 #else // PBDRV_CONFIG_PWM_TLC5955_STM32
 
 #define pbdrv_pwm_tlc5955_stm32_init(dev)
+#define pbdrv_pwm_tlc5955_stm32_deinit(dev)
 
 #endif // PBDRV_CONFIG_PWM_TLC5955_STM32
 

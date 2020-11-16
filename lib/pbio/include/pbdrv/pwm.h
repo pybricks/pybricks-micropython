@@ -27,8 +27,6 @@ pbio_error_t pbdrv_pwm_set_duty(pbdrv_pwm_dev_t *dev, uint32_t ch, uint32_t valu
 
 #else
 
-#define pbdrv_pwm_init()
-
 static inline pbio_error_t pbdrv_pwm_get_dev(uint8_t id, pbdrv_pwm_dev_t **dev) {
     *dev = NULL;
     return PBIO_ERROR_NOT_SUPPORTED;

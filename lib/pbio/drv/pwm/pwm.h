@@ -32,10 +32,12 @@ struct _pbdrv_pwm_dev_t {
 #if PBDRV_CONFIG_PWM
 
 void pbdrv_pwm_init();
+void pbdrv_pwm_deinit();
 
 #else // PBDRV_CONFIG_PWM
 
 #define pbdrv_pwm_init()
+#define pbdrv_pwm_deinit()
 
 #endif // PBDRV_CONFIG_PWM
 

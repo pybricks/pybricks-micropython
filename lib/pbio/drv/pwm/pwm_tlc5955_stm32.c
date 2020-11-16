@@ -15,6 +15,7 @@
 
 #include STM32_HAL_H
 
+#include <pbdrv/core.h>
 #include <pbdrv/pwm.h>
 
 #include <pbio/error.h>
@@ -118,6 +119,12 @@ enum {
         /* bits 7-0 */     [96] = (((dc) << 7) | ((dc) >> 0)) & 0xff, \
     }
 
+typedef enum {
+    DEINIT_NOT_STARTED,
+    DEINIT_STARTED,
+    DEINIT_DONE,
+} deinit_t;
+
 typedef struct {
     /** HAL SPI data */
     SPI_HandleTypeDef hspi;
@@ -133,6 +140,8 @@ typedef struct {
     uint8_t *grayscale_latch;
     /** grayscale value has changed, update needed */
     bool changed;
+    /** syncronization state for deinit */
+    deinit_t deinit;
 } pbdrv_pwm_tlc5955_stm32_priv_t;
 
 PROCESS(pwm_tlc5955_stm32, "pwm_tlc5955_stm32");
@@ -239,9 +248,22 @@ void pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev_t *devs) {
         pwm->pdata = pdata;
         pwm->priv = priv;
         // don't set funcs yet since we are not fully intialized
+        pbdrv_init_busy_up();
     }
 
     process_start(&pwm_tlc5955_stm32, NULL);
+}
+
+void pbdrv_pwm_tlc5955_stm32_deinit(pbdrv_pwm_dev_t *devs) {
+
+    for (int i = 0; i < PBDRV_CONFIG_PWM_TLC5955_STM32_NUM_DEV; i++) {
+        pbdrv_pwm_tlc5955_stm32_priv_t *priv = &dev_priv[i];
+        for (int ch = 0; ch < TLC5955_NUM_CHANNEL; ch++) {
+            pbdrv_pwm_tlc5955_stm32_set_duty(priv->pwm, ch, 0);
+        }
+        priv->deinit = DEINIT_STARTED;
+        pbdrv_deinit_busy_up();
+    }
 }
 
 // toggles LAT signal on and off to latch data in shift register
@@ -265,6 +287,7 @@ static PT_THREAD(pbdrv_pwm_tlc5955_stm32_handle_event(pbdrv_pwm_tlc5955_stm32_pr
 
     // initialization is finished so consumers can use this PWM device now.
     priv->pwm->funcs = &pbdrv_pwm_tlc5955_stm32_funcs;
+    pbdrv_init_busy_down();
 
     for (;;) {
         PT_WAIT_UNTIL(&priv->pt, priv->changed);
@@ -272,6 +295,13 @@ static PT_THREAD(pbdrv_pwm_tlc5955_stm32_handle_event(pbdrv_pwm_tlc5955_stm32_pr
         priv->changed = false;
         PT_WAIT_UNTIL(&priv->pt, priv->hspi.State == HAL_SPI_STATE_READY);
         pbdrv_pwm_tlc5955_toggle_latch(priv);
+        if (priv->deinit == DEINIT_STARTED && !priv->changed) {
+            // if deinit has been requested and there are no more pending changes
+            // then we can say deint is done
+            priv->deinit = DEINIT_DONE;
+            pbdrv_deinit_busy_down();
+            break;
+        }
     }
 
     PT_END(&priv->pt);
@@ -317,7 +347,9 @@ PROCESS_THREAD(pwm_tlc5955_stm32, ev, data) {
     for (;;) {
         for (int i = 0; i < PBDRV_CONFIG_PWM_TLC5955_STM32_NUM_DEV; i++) {
             pbdrv_pwm_tlc5955_stm32_priv_t *priv = &dev_priv[i];
-            pbdrv_pwm_tlc5955_stm32_handle_event(priv, ev);
+            if (priv->deinit != DEINIT_DONE) {
+                pbdrv_pwm_tlc5955_stm32_handle_event(priv, ev);
+            }
         }
         PROCESS_WAIT_EVENT();
     }

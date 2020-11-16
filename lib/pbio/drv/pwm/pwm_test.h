@@ -13,10 +13,12 @@
 #include <pbdrv/pwm.h>
 
 void pbdrv_pwm_test_init(pbdrv_pwm_dev_t *devs);
+void pbdrv_pwm_test_deinit(pbdrv_pwm_dev_t *devs);
 
 #else // PBDRV_CONFIG_PWM_TEST
 
 #define pbdrv_pwm_test_init(dev)
+#define pbdrv_pwm_test_deinit(dev)
 
 #endif // PBDRV_CONFIG_PWM_TEST
 

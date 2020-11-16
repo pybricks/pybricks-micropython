@@ -19,6 +19,8 @@
 void pbsys_supervisor_poll() {
     // Shut down on low voltage so we don't damage rechargeable batteries
     if (pbsys_status_test_debounce(PBSYS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN, true, 3000)) {
+        // REVISIT: this assumes that the power button is not pressed and USB is
+        // not plugged in so that the power will actually turn off here
         pbdrv_reset(PBDRV_RESET_ACTION_POWER_OFF);
     }
 }

@@ -13,6 +13,7 @@
 
 #include <contiki.h>
 
+#include <pbdrv/core.h>
 #include <pbdrv/reset.h>
 #include <pbdrv/led.h>
 #include <pbio/button.h>
@@ -47,6 +48,10 @@ void pbsys_hmi_poll() {
         pbsys_status_set(PBSYS_STATUS_POWER_BUTTON_PRESSED);
         // power off when button is held down for 3 seconds
         if (pbsys_status_test_debounce(PBSYS_STATUS_POWER_BUTTON_PRESSED, true, 3000)) {
+            // TODO: need to do shutdown sequence here - play animation, sound, etc.
+            // then make sure all non-driver contiki processes are stopped so they
+            // don't try to use any drivers during pbdrv_deinit().
+            pbdrv_deinit();
             pbdrv_reset(PBDRV_RESET_ACTION_POWER_OFF);
         }
     } else {
