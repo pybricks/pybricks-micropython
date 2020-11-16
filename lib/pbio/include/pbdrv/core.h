@@ -1,6 +1,14 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
+/**
+ * @addtogroup CoreDriver Driver: Core
+ *
+ * Core driver framework functions.
+ *
+ * @{
+ */
+
 #ifndef _PBDRV_CORE_H_
 #define _PBDRV_CORE_H_
 
@@ -55,10 +63,11 @@ void pbdrv_deinit();
  */
 #define pbdrv_deinit_busy()         (pbdrv_deinit_busy_count)
 
-
 /** @cond INTERNAL */
 extern uint32_t pbdrv_init_busy_count;
 extern uint32_t pbdrv_deinit_busy_count;
 /** @endcond */
 
 #endif // _PBDRV_CORE_H_
+
+/** @} */
