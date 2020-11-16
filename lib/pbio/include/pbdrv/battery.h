@@ -26,10 +26,6 @@ typedef enum {
 
 #if PBDRV_CONFIG_BATTERY
 
-/** @cond INTERNAL */
-void pbdrv_battery_init();
-/** @endcond */
-
 /**
  * Gets the battery voltage.
  * @param [out] value   The voltage in millivolts.
@@ -67,8 +63,6 @@ pbio_error_t pbdrv_battery_get_type(pbdrv_battery_type_t *value);
 pbio_error_t pbdrv_battery_get_temperature(uint32_t *value);
 
 #else // PBDRV_CONFIG_BATTERY
-
-#define pbdrv_battery_init()
 
 static inline pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
     *value = 0;

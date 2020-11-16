@@ -3,9 +3,8 @@
 
 #include <contiki.h>
 
-#include <pbdrv/battery.h>
-
 #include "core.h"
+#include "battery/battery.h"
 #include "counter/counter.h"
 #include "led/led_array.h"
 #include "led/led.h"
