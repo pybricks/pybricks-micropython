@@ -3,8 +3,8 @@
 
 // LED array driver internal types and functions
 
-#ifndef _PBDRV_LED_LED_ARRAY_H_
-#define _PBDRV_LED_LED_ARRAY_H_
+#ifndef _INTERNAL_PBDRV_LED_LED_ARRAY_H_
+#define _INTERNAL_PBDRV_LED_LED_ARRAY_H_
 
 #include <stdio.h>
 
@@ -45,4 +45,4 @@ void pbdrv_led_array_init();
 
 #endif // PBDRV_CONFIG_LED_ARRAY
 
-#endif // _PBDRV_LED_LED_ARRAY_H_
+#endif // _INTERNAL_PBDRV_LED_LED_ARRAY_H_

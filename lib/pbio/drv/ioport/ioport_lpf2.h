@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
-#ifndef _IOPORT_LPF2_H_
-#define _IOPORT_LPF2_H_
+#ifndef _INTERNAL_PBDRV_IOPORT_LPF2_H_
+#define _INTERNAL_PBDRV_IOPORT_LPF2_H_
 
 #include <stdint.h>
 
@@ -50,4 +50,4 @@ extern const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_4
 extern const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_5;
 #endif
 
-#endif // _IOPORT_LPF2_H_
+#endif // _INTERNAL_PBDRV_IOPORT_LPF2_H_

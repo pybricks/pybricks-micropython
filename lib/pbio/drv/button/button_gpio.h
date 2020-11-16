@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019-2020 The Pybricks Authors
 
-#ifndef _BUTTON_GPIO_H_
-#define _BUTTON_GPIO_H_
+#ifndef _INTERNAL_PVDRV_BUTTON_GPIO_H_
+#define _INTERNAL_PVDRV_BUTTON_GPIO_H_
 
 #include <pbdrv/config.h>
 
@@ -26,4 +26,4 @@ extern const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFI
 
 #endif // PBDRV_CONFIG_BUTTON_GPIO
 
-#endif // _BUTTON_GPIO_H_
+#endif // _INTERNAL_PVDRV_BUTTON_GPIO_H_

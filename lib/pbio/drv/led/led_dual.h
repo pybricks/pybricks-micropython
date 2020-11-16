@@ -3,8 +3,8 @@
 
 // Driver for 2 individual RGB LEDs that function as a single LED.
 
-#ifndef _PBDRV_LED_DUAL_H_
-#define _PBDRV_LED_DUAL_H_
+#ifndef _INTERNAL_PBDRV_LED_DUAL_H_
+#define _INTERNAL_PBDRV_LED_DUAL_H_
 
 #include <pbdrv/config.h>
 
@@ -35,4 +35,4 @@ void pbdrv_led_dual_init(pbdrv_led_dev_t *devs);
 
 #endif // PBDRV_CONFIG_LED_DUAL
 
-#endif // _PBDRV_LED_DUAL_H_
+#endif // _INTERNAL_PBDRV_LED_DUAL_H_

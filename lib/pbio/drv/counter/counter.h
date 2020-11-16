@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019-2020 The Pybricks Authors
 
-#ifndef _PBDRV_COUNTER_COUNTER_H_
-#define _PBDRV_COUNTER_COUNTER_H_
+#ifndef _INTERNAL_PBDRV_COUNTER_H_
+#define _INTERNAL_PBDRV_COUNTER_H_
 
 #include <stdint.h>
 
@@ -35,4 +35,4 @@ void pbdrv_counter_init();
 
 #endif // PBDRV_CONFIG_COUNTER
 
-#endif // _PBDRV_COUNTER_COUNTER_H_
+#endif // _INTERNAL_PBDRV_COUNTER_H_

@@ -3,8 +3,8 @@
 
 // UART driver for STM32F4x using IRQ.
 
-#ifndef _UART_STM32F4_LL_IRQ_H_
-#define _UART_STM32F4_LL_IRQ_H_
+#ifndef _INTERNAL_PBDRV_UART_STM32F4_LL_IRQ_H_
+#define _INTERNAL_PBDRV_UART_STM32F4_LL_IRQ_H_
 
 #include <stdint.h>
 
@@ -32,4 +32,4 @@ extern const pbdrv_uart_stm32f4_ll_irq_platform_data_t
  */
 void pbdrv_uart_stm32f4_ll_irq_handle_irq(uint8_t id);
 
-#endif // _UART_STM32F4_LL_IRQ_H_
+#endif // _INTERNAL_PBDRV_UART_STM32F4_LL_IRQ_H_

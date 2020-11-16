@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
-#ifndef _UART_STM32F0_H_
-#define _UART_STM32F0_H_
+#ifndef _INTERNAL_PBDRV_UART_STM32F0_H_
+#define _INTERNAL_PBDRV_UART_STM32F0_H_
 
 #include <stdint.h>
 
@@ -17,4 +17,4 @@ extern const pbdrv_uart_stm32f0_platform_data_t pbdrv_uart_stm32f0_platform_data
 
 void pbdrv_uart_stm32f0_handle_irq(uint8_t id);
 
-#endif // _UART_STM32F0_H_
+#endif // _INTERNAL_PBDRV_UART_STM32F0_H_

@@ -3,8 +3,8 @@
 
 // UART driver for STM32L4x using DMA.
 
-#ifndef _UART_STM32L4_LL_DMA_H_
-#define _UART_STM32L4_LL_DMA_H_
+#ifndef _INTERNAL_PBDRV_UART_STM32L4_LL_DMA_H_
+#define _INTERNAL_PBDRV_UART_STM32L4_LL_DMA_H_
 
 #include <stdint.h>
 
@@ -58,4 +58,4 @@ void pbdrv_uart_stm32l4_ll_dma_handle_tx_dma_irq(uint8_t id);
  * @param id [in]   The UART instance ID.
  */void pbdrv_uart_stm32l4_ll_dma_handle_uart_irq(uint8_t id);
 
-#endif // _UART_STM32L4_LL_DMA_H_
+#endif // _INTERNAL_PBDRV_UART_STM32L4_LL_DMA_H_

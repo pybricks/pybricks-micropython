@@ -3,8 +3,8 @@
 
 // LED driver internal types and functions
 
-#ifndef _PBDRV_LED_LED_H_
-#define _PBDRV_LED_LED_H_
+#ifndef _INTERNAL_PBDRV_LED_H_
+#define _INTERNAL_PBDRV_LED_H_
 
 #include <pbdrv/config.h>
 #include <pbdrv/led.h>
@@ -33,4 +33,4 @@ void pbdrv_led_init();
 
 #endif // PBDRV_CONFIG_LED
 
-#endif // _PBDRV_LED_LED_H_
+#endif // _INTERNAL_PBDRV_LED_H_

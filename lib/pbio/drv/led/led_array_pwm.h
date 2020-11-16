@@ -3,8 +3,8 @@
 
 // Driver for PWM-driven LED arrays.
 
-#ifndef _PBDRV_LED_ARRAY_PWM_H_
-#define _PBDRV_LED_ARRAY_PWM_H_
+#ifndef _INTERNAL_PBDRV_LED_ARRAY_PWM_H_
+#define _INTERNAL_PBDRV_LED_ARRAY_PWM_H_
 
 #include <pbdrv/config.h>
 
@@ -37,4 +37,4 @@ void pbdrv_led_array_pwm_init(pbdrv_led_array_dev_t *devs);
 
 #endif // PBDRV_CONFIG_LED_ARRAY_PWM
 
-#endif // _PBDRV_LED_ARRAY_PWM_H_
+#endif // _INTERNAL_PBDRV_LED_ARRAY_PWM_H_

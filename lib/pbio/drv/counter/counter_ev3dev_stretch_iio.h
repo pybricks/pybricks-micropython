@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019-2020 The Pybricks Authors
 
-#ifndef _PVDRV_COUNTER_EV3DEV_STRETCH_IIO_H_
-#define _PVDRV_COUNTER_EV3DEV_STRETCH_IIO_H_
+#ifndef _INTERNAL_PVDRV_COUNTER_EV3DEV_STRETCH_IIO_H_
+#define _INTERNAL_PVDRV_COUNTER_EV3DEV_STRETCH_IIO_H_
 
 #include <pbdrv/config.h>
 
@@ -22,4 +22,4 @@ void pbdrv_counter_ev3dev_stretch_iio_init(pbdrv_counter_dev_t *devs);
 
 #endif // PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO
 
-#endif // _PVDRV_COUNTER_EV3DEV_STRETCH_IIO_H_
+#endif // _INTERNAL_PVDRV_COUNTER_EV3DEV_STRETCH_IIO_H_

@@ -3,8 +3,8 @@
 
 // Hooks for unit tests.
 
-#ifndef _PBDRV_PWM_TEST_H_
-#define _PBDRV_PWM_TEST_H_
+#ifndef _INTERNAL_PBDRV_PWM_TEST_H_
+#define _INTERNAL_PBDRV_PWM_TEST_H_
 
 #include <pbdrv/config.h>
 
@@ -22,4 +22,4 @@ void pbdrv_pwm_test_deinit(pbdrv_pwm_dev_t *devs);
 
 #endif // PBDRV_CONFIG_PWM_TEST
 
-#endif // _PBDRV_PWM_TEST_H_
+#endif // _INTERNAL_PBDRV_PWM_TEST_H_

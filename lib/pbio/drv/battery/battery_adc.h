@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2020 The Pybricks Authors
 
-#ifndef _PBDRV_BATTERY_ADC_H_
-#define _PBDRV_BATTERY_ADC_H_
+#ifndef _INTERNAL_PBDRV_BATTERY_ADC_H_
+#define _INTERNAL_PBDRV_BATTERY_ADC_H_
 
 #include <pbdrv/gpio.h>
 
@@ -22,4 +22,4 @@ typedef struct {
 // defined in platform.c
 const pbdrv_battery_adc_platform_data_t pbdrv_battery_adc_platform_data;
 
-#endif // _PBDRV_BATTERY_ADC_H_
+#endif // _INTERNAL_PBDRV_BATTERY_ADC_H_

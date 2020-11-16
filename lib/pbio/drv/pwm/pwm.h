@@ -3,8 +3,8 @@
 
 // Pulse width modulation (PWM) drivers
 
-#ifndef _PBDRV_PWM_PWM_H_
-#define _PBDRV_PWM_PWM_H_
+#ifndef _INTERNAL_PBDRV_PWM_H_
+#define _INTERNAL_PBDRV_PWM_H_
 
 #include <stdint.h>
 
@@ -41,4 +41,4 @@ void pbdrv_pwm_deinit();
 
 #endif // PBDRV_CONFIG_PWM
 
-#endif // _PBDRV_PWM_PWM_H_
+#endif // _INTERNAL_PBDRV_PWM_H_

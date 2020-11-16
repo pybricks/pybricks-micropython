@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2019-2020 The Pybricks Authors
 
-#ifndef _PVDRV_COUNTER_NXT_H_
-#define _PVDRV_COUNTER_NXT_H_
+#ifndef _INTERNAL_PVDRV_COUNTER_NXT_H_
+#define _INTERNAL_PVDRV_COUNTER_NXT_H_
 
 #include <pbdrv/config.h>
 
@@ -22,4 +22,4 @@ void pbdrv_counter_nxt_init(pbdrv_counter_dev_t *devs);
 
 #endif // PBDRV_CONFIG_COUNTER_NXT
 
-#endif // _PVDRV_COUNTER_NXT_H_
+#endif // _INTERNAL_PVDRV_COUNTER_NXT_H_
