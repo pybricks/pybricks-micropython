@@ -15,12 +15,12 @@
 
 #include STM32_HAL_H
 
-#include <pbdrv/core.h>
 #include <pbdrv/pwm.h>
 
 #include <pbio/error.h>
 #include <pbio/util.h>
 
+#include "../core.h"
 #include "pwm_tlc5955_stm32.h"
 #include "pwm.h"
 
