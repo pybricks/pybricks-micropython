@@ -21,6 +21,7 @@
 #include <pbio/motorpoll.h>
 #include <pbio/servo.h>
 
+#include "../src/processes.h"
 #include "../test-pbio.h"
 
 // wait an additional 1 second before ending test
@@ -83,6 +84,9 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
     static uint32_t control_done_count;
 
     PT_BEGIN(pt);
+
+    process_start(&pbio_servo_process, NULL);
+    tt_want(process_is_running(&pbio_servo_process));
 
     tt_uint_op(pbio_motorpoll_get_servo(PBIO_PORT_A, &servo), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_servo_setup(servo, PBIO_DIRECTION_CLOCKWISE, F16C(1, 0)), ==, PBIO_SUCCESS);

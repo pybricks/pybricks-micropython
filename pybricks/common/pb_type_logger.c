@@ -37,7 +37,7 @@ STATIC mp_obj_t tools_Logger_start(size_t n_args, const mp_obj_t *pos_args, mp_m
 
     mp_int_t divisor = pb_obj_get_int(divisor_in);
     divisor = max(divisor, 1);
-    mp_int_t rows = pb_obj_get_int(duration_in) / PBIO_CONFIG_SERVO_PERIOD_MS / divisor;
+    mp_int_t rows = pb_obj_get_int(duration_in) / PBIO_CONTROL_LOOP_TIME_MS / divisor;
     mp_int_t size = rows * pbio_logger_cols(self->log);
     self->buf = m_renew(int32_t, self->buf, self->size, size);
     self->size = size;

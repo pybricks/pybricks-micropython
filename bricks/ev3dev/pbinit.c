@@ -19,6 +19,7 @@
 
 #include <pbio/color.h>
 #include <pbio/config.h>
+#include <pbio/control.h>
 #include <pbio/main.h>
 #include <pbio/light.h>
 
@@ -35,7 +36,7 @@ static pthread_t task_caller_thread;
 static void *task_caller(void *arg) {
     struct timespec ts;
     ts.tv_sec = 0;
-    ts.tv_nsec = PBIO_CONFIG_SERVO_PERIOD_MS * 1000000;
+    ts.tv_nsec = PBIO_CONTROL_LOOP_TIME_MS * 1000000;
 
     while (!stopping_thread) {
         MP_THREAD_GIL_ENTER();

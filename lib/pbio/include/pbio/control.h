@@ -17,6 +17,8 @@
 
 #include <pbio/iodev.h>
 
+#define PBIO_CONTROL_LOOP_TIME_MS (5)
+
 /**
  * Control settings
  */

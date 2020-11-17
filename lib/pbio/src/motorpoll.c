@@ -6,7 +6,11 @@
 #include <pbio/motorpoll.h>
 #include <pbio/servo.h>
 
+#include <contiki.h>
+
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
+
+PROCESS(pbio_servo_process, "servo");
 
 static pbio_servo_t servo[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 static pbio_error_t servo_err[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
@@ -96,7 +100,7 @@ void _pbio_motorpoll_reset_all(void) {
     }
 }
 
-void _pbio_motorpoll_poll(void) {
+static void _pbio_motorpoll_poll(void) {
 
     pbio_error_t err;
 
@@ -118,6 +122,24 @@ void _pbio_motorpoll_poll(void) {
             drivebase_err = err;
         }
     }
+}
+
+PROCESS_THREAD(pbio_servo_process, ev, data) {
+    static struct etimer timer;
+
+    PROCESS_BEGIN();
+
+    _pbio_motorpoll_reset_all();
+
+    etimer_set(&timer, clock_from_msec(PBIO_CONTROL_LOOP_TIME_MS));
+
+    for (;;) {
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL || (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)));
+        _pbio_motorpoll_poll();
+        etimer_reset(&timer);
+    }
+
+    PROCESS_END();
 }
 
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER

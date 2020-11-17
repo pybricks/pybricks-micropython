@@ -25,8 +25,6 @@
 #include "light/animation.h"
 #include "processes.h"
 
-static clock_time_t prev_fast_poll_time;
-
 AUTOSTART_PROCESSES(
 #if PBDRV_CONFIG_ADC
     &pbdrv_adc_process,
@@ -49,6 +47,9 @@ AUTOSTART_PROCESSES(
 #if PBIO_CONFIG_ENABLE_SYS
     &pbsys_process,
 #endif
+#if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
+    &pbio_servo_process,
+#endif
     NULL);
 
 /**
@@ -60,7 +61,6 @@ void pbio_init(void) {
     pbdrv_init();
     _pbdrv_button_init();
     autostart_start(autostart_processes);
-    _pbio_motorpoll_reset_all();
 }
 
 /**
@@ -82,15 +82,6 @@ void pbio_stop_all(void) {
  * @return      The number of still-pending events.
  */
 int pbio_do_one_event(void) {
-    clock_time_t now = clock_time();
-
-    // pbio_do_one_event() can be called quite frequently (e.g. in a tight loop) so we
-    // don't want to call all of the subroutines unless enough time has
-    // actually elapsed to do something useful.
-    if (now - prev_fast_poll_time >= clock_from_msec(PBIO_CONFIG_SERVO_PERIOD_MS)) {
-        _pbio_motorpoll_poll();
-        prev_fast_poll_time = clock_time();
-    }
     return process_run();
 }
 
