@@ -184,6 +184,14 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     return PBIO_SUCCESS;
 }
 
+bool pbio_servo_is_connected(pbio_servo_t *srv) {
+    return srv->connected;
+}
+
+void pbio_servo_set_connected(pbio_servo_t *srv, bool connected) {
+    srv->connected = connected;
+}
+
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool reset_to_abs) {
 
     pbio_error_t err;

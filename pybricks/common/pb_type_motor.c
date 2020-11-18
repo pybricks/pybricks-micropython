@@ -5,7 +5,7 @@
 
 #if PYBRICKS_PY_COMMON_MOTORS
 
-#include <pbio/motorpoll.h>
+#include <pbio/motor_process.h>
 #include <pbio/servo.h>
 
 #include "py/mphal.h"
@@ -21,12 +21,11 @@
 /* Wait for servo maneuver to complete */
 
 STATIC void wait_for_completion(pbio_servo_t *srv) {
-    pbio_error_t err;
-    while ((err = pbio_motorpoll_get_servo_status(srv)) == PBIO_ERROR_AGAIN && !pbio_control_is_done(&srv->control)) {
+    while (pbio_servo_is_connected(srv) && !pbio_control_is_done(&srv->control)) {
         mp_hal_delay_ms(5);
     }
-    if (err != PBIO_ERROR_AGAIN) {
-        pb_assert(err);
+    if (!pbio_servo_is_connected(srv)) {
+        pb_assert(PBIO_ERROR_IO);
     }
 }
 
@@ -79,13 +78,17 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
         }
     }
 
-    // Get servo device, set it up, and tell the poller if we succeeded.
-    pb_assert(pbio_motorpoll_get_servo(port, &srv));
+    // Get pointer to servo
+    pb_assert(pbio_motor_process_get_servo(port, &srv));
+
+    // Set up servo
     while ((err = pbio_servo_setup(srv, positive_direction, gear_ratio)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);
-    pb_assert(pbio_motorpoll_set_servo_status(srv, PBIO_ERROR_AGAIN));
+
+    // Set connected state. This tells contiki process to update this motor.
+    pbio_servo_set_connected(srv, true);
 
     // On success, proceed to create and return the MicroPython object
     common_Motor_obj_t *self = m_new_obj(common_Motor_obj_t);

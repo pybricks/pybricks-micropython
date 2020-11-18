@@ -18,7 +18,7 @@
 #include <pbio/config.h>
 #include <pbio/light_matrix.h>
 #include <pbio/light.h>
-#include <pbio/motorpoll.h>
+#include "pbio/motor_process.h"
 #include <pbio/uartdev.h>
 #include <pbsys/sys.h>
 
@@ -48,7 +48,7 @@ AUTOSTART_PROCESSES(
     &pbsys_process,
 #endif
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
-    &pbio_servo_process,
+    &pbio_motor_process,
 #endif
     NULL);
 
@@ -71,7 +71,7 @@ void pbio_stop_all(void) {
     #if PBIO_CONFIG_LIGHT
     pbio_light_animation_stop_all();
     #endif
-    _pbio_motorpoll_reset_all();
+    pbio_motor_process_reset();
     pbdrv_sound_stop();
 }
 

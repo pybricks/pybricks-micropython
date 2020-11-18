@@ -111,8 +111,8 @@ void pybricks_deinit(void) {
 }
 
 void pybricks_unhandled_exception(void) {
-    extern void _pbio_motorpoll_reset_all(void);
-    _pbio_motorpoll_reset_all();
+    extern void pbio_motor_process_reset();
+    pbio_motor_process_reset();
     extern void _pb_ev3dev_speaker_beep_off(void);
     _pb_ev3dev_speaker_beep_off();
 }

@@ -9,7 +9,7 @@
 #include <stdlib.h>
 
 #include <pbio/drivebase.h>
-#include <pbio/motorpoll.h>
+#include <pbio/motor_process.h>
 
 #include "py/mphal.h"
 
@@ -59,9 +59,8 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     }
 
     // Create drivebase
-    pb_assert(pbio_motorpoll_get_drivebase(&self->db));
+    pb_assert(pbio_motor_process_get_drivebase(&self->db));
     pb_assert(pbio_drivebase_setup(self->db, srv_left, srv_right, pb_obj_get_fix16(wheel_diameter_in), pb_obj_get_fix16(axle_track_in)));
-    pb_assert(pbio_motorpoll_set_drivebase_status(self->db, PBIO_ERROR_AGAIN));
 
     // Create instances of the Control class
     self->heading_control = common_Control_obj_make_new(&self->db->control_heading);
@@ -81,12 +80,8 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
 }
 
 STATIC void wait_for_completion_drivebase(pbio_drivebase_t *db) {
-    pbio_error_t err;
-    while ((err = pbio_motorpoll_get_drivebase_status(db)) == PBIO_ERROR_AGAIN && (!pbio_control_is_done(&db->control_distance) || !pbio_control_is_done(&db->control_heading))) {
+    while (!pbio_control_is_done(&db->control_distance) || !pbio_control_is_done(&db->control_heading)) {
         mp_hal_delay_ms(5);
-    }
-    if (err != PBIO_ERROR_AGAIN) {
-        pb_assert(err);
     }
 }
 

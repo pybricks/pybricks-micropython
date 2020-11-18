@@ -18,7 +18,7 @@
 #include <pbio/control.h>
 #include <pbio/error.h>
 #include <pbio/logger.h>
-#include <pbio/motorpoll.h>
+#include <pbio/motor_process.h>
 #include <pbio/servo.h>
 
 #include "../src/processes.h"
@@ -85,12 +85,12 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
 
     PT_BEGIN(pt);
 
-    process_start(&pbio_servo_process, NULL);
-    tt_want(process_is_running(&pbio_servo_process));
+    process_start(&pbio_motor_process, NULL);
+    tt_want(process_is_running(&pbio_motor_process));
 
-    tt_uint_op(pbio_motorpoll_get_servo(PBIO_PORT_A, &servo), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_motor_process_get_servo(PBIO_PORT_A, &servo), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_servo_setup(servo, PBIO_DIRECTION_CLOCKWISE, F16C(1, 0)), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_motorpoll_set_servo_status(servo, PBIO_ERROR_AGAIN), ==, PBIO_SUCCESS);
+    pbio_servo_set_connected(servo, true);
 
     // only logging one row since we read it after every iteration
     log_buf = malloc(sizeof(*log_buf) * pbio_logger_cols(&servo->control.log));
@@ -190,8 +190,7 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
     }
 
     for (;;) {
-        pbio_error_t err = pbio_motorpoll_get_servo_status(servo);
-        if (err == PBIO_ERROR_AGAIN) {
+        if (pbio_servo_is_connected(servo)) {
             // This is the expected exit point for a successful test. The manuever
             // has completed. We wait some extra time to log the motor state after
             // the completion before ending the test.
@@ -274,7 +273,6 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
             PT_YIELD(pt);
             continue;
         }
-        tt_uint_op(err, ==, PBIO_SUCCESS);
         break;
     }
 
