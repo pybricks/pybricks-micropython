@@ -11,11 +11,12 @@
 
 void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, int32_t count_est, int32_t rate_est, pbio_actuation_t actuation_prev, int32_t control_prev, pbio_actuation_t *actuation_now, int32_t *control_now) {
 
-    // If control is not active, log only state data and exit
+    // If control is not active, next actuation is the same as now, so log and exit early.
     if (ctl->type == PBIO_CONTROL_NONE) {
-        // FIXME: log passive duty or coast state which we can currently not access
-        int32_t state[] = {0, count_now, rate_now, 0, 0, 0, 0, count_est, rate_est};
-        pbio_logger_update(&ctl->log, state);
+        *control_now = control_prev;
+        *actuation_now = actuation_prev;
+        int32_t log_data[] = {0, count_now, rate_now, *actuation_now, *control_now, 0, 0, count_est, rate_est};
+        pbio_logger_update(&ctl->log, log_data);
         return;
     }
 
@@ -120,7 +121,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
         (time_ref - ctl->trajectory.t0) / 1000,
         count_now,
         rate_now,
-        PBIO_ACTUATION_DUTY,
+        *actuation_now,
         *control_now,
         count_ref,
         rate_ref,
