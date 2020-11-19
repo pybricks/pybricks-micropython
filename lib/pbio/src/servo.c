@@ -211,6 +211,9 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
         return PBIO_ERROR_INVALID_OP;
     }
 
+    // Reset the state observer
+    pbio_observer_reset(&srv->observer, reset_angle, 0);
+
     // If the motor was in a passive mode (coast, brake, user duty),
     // just reset angle and leave motor state unchanged.
     if (srv->control.type == PBIO_CONTROL_NONE) {
@@ -286,19 +289,22 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
 
     // Read the physical state
     int32_t time_now;
-    int32_t count_now;
-    int32_t rate_now;
+    int32_t count_now, count_est;
+    int32_t rate_now, rate_est;
     pbio_error_t err = servo_get_state(srv, &time_now, &count_now, &rate_now);
     if (err != PBIO_SUCCESS) {
         return err;
     }
+
+    // Get estimated motor state
+    pbio_observer_get_estimated_state(&srv->observer, &count_est, &rate_est);
 
     // Control action to be calculated
     pbio_actuation_t actuation;
     int32_t control;
 
     // Calculate control signal
-    pbio_control_update(&srv->control, time_now, count_now, rate_now, &actuation, &control);
+    pbio_control_update(&srv->control, time_now, count_now, rate_now, count_est, rate_est, &actuation, &control);
 
     // Apply the control type and signal
     err = pbio_servo_actuate(srv, actuation, control);

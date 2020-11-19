@@ -9,11 +9,12 @@
 #include <pbio/trajectory.h>
 #include <pbio/integrator.h>
 
-void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
+void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, int32_t count_est, int32_t rate_est, pbio_actuation_t *actuation_type, int32_t *control) {
 
     // If control is not active, log only state data and exit
     if (ctl->type == PBIO_CONTROL_NONE) {
-        int32_t state[] = {time_now, count_now, rate_now};
+        // FIXME: log passive duty or coast state which we can currently not access
+        int32_t state[] = {0, count_now, rate_now, 0, 0, 0, 0, count_est, rate_est};
         pbio_logger_update(&ctl->log, state);
         return;
     }
@@ -123,6 +124,8 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
         *control,
         count_ref,
         rate_ref,
+        count_est,
+        rate_est,
     };
     pbio_logger_update(&ctl->log, log_data);
 }
