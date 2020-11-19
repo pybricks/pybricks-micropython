@@ -9,7 +9,7 @@
 #include <pbio/trajectory.h>
 #include <pbio/integrator.h>
 
-void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, int32_t count_est, int32_t rate_est, pbio_actuation_t *actuation_type, int32_t *control) {
+void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, int32_t count_est, int32_t rate_est, pbio_actuation_t actuation_prev, int32_t control_prev, pbio_actuation_t *actuation_now, int32_t *control_now) {
 
     // If control is not active, log only state data and exit
     if (ctl->type == PBIO_CONTROL_NONE) {
@@ -98,8 +98,8 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
 
     // If we are done and the next action is passive then return zero actuation
     if (ctl->on_target && ctl->after_stop != PBIO_ACTUATION_HOLD) {
-        *actuation_type = ctl->after_stop;
-        *control = 0;
+        *actuation_now = ctl->after_stop;
+        *control_now = 0;
         pbio_control_stop(ctl);
     } else if (ctl->on_target && ctl->after_stop == PBIO_ACTUATION_HOLD && ctl->type == PBIO_CONTROL_TIMED) {
         // If we are going to hold and we are already doing angle control, there is nothing we need to do.
@@ -107,12 +107,12 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
         pbio_control_start_hold_control(ctl, time_now, count_now);
 
         // The new hold control does not take effect until the next iteration, so keep actuating for now.
-        *actuation_type = PBIO_ACTUATION_DUTY;
-        *control = duty;
+        *actuation_now = PBIO_ACTUATION_DUTY;
+        *control_now = duty;
     } else {
         // The end point not reached, or we have to keep holding, so return the calculated duty for actuation
-        *actuation_type = PBIO_ACTUATION_DUTY;
-        *control = duty;
+        *actuation_now = PBIO_ACTUATION_DUTY;
+        *control_now = duty;
     }
 
     // Log control data
@@ -121,7 +121,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
         count_now,
         rate_now,
         PBIO_ACTUATION_DUTY,
-        *control,
+        *control_now,
         count_ref,
         rate_ref,
         count_est,

@@ -299,15 +299,23 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     // Get estimated motor state
     pbio_observer_get_estimated_state(&srv->observer, &count_est, &rate_est);
 
+    // Previous control action
+    pbio_actuation_t actuation_prev;
+    int32_t control_prev;
+    err = pbio_dcmotor_get_state(srv->dcmotor, (pbio_passivity_t *)&actuation_prev, &control_prev);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     // Control action to be calculated
-    pbio_actuation_t actuation;
-    int32_t control;
+    pbio_actuation_t actuation_now;
+    int32_t control_now;
 
     // Calculate control signal
-    pbio_control_update(&srv->control, time_now, count_now, rate_now, count_est, rate_est, &actuation, &control);
+    pbio_control_update(&srv->control, time_now, count_now, rate_now, count_est, rate_est, actuation_prev, control_prev, &actuation_now, &control_now);
 
     // Apply the control type and signal
-    err = pbio_servo_actuate(srv, actuation, control);
+    err = pbio_servo_actuate(srv, actuation_now, control_now);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -320,7 +328,7 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     }
 
     // Update the state observer
-    pbio_observer_update(&srv->observer, count_now, actuation, control, battery_voltage);
+    pbio_observer_update(&srv->observer, count_now, actuation_now, control_now, battery_voltage);
 
     return PBIO_SUCCESS;
 }
