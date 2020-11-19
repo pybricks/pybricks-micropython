@@ -9,7 +9,14 @@
 #include <pbio/trajectory.h>
 #include <pbio/integrator.h>
 
-void control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
+void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, pbio_actuation_t *actuation_type, int32_t *control) {
+
+    // If control is not active, log only state data and exit
+    if (ctl->type == PBIO_CONTROL_NONE) {
+        int32_t state[] = {time_now, count_now, rate_now};
+        pbio_logger_update(&ctl->log, state);
+        return;
+    }
 
     // Declare current time, positions, rates, and their reference value and error
     int32_t time_ref;

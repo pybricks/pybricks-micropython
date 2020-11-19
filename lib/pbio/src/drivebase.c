@@ -283,8 +283,8 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     // Get control signals
     int32_t sum_control, dif_control;
     pbio_actuation_t sum_actuation, dif_actuation;
-    control_update(&db->control_distance, time_now, sum, sum_rate, &sum_actuation, &sum_control);
-    control_update(&db->control_heading, time_now, dif, dif_rate, &dif_actuation, &dif_control);
+    pbio_control_update(&db->control_distance, time_now, sum, sum_rate, &sum_actuation, &sum_control);
+    pbio_control_update(&db->control_heading, time_now, dif, dif_rate, &dif_actuation, &dif_control);
 
     // Separate actuation types are not possible for now
     if (sum_actuation != dif_actuation) {

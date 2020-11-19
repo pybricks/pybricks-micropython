@@ -297,20 +297,8 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     pbio_actuation_t actuation;
     int32_t control;
 
-    // Do not service a passive motor
-    if (srv->control.type == PBIO_CONTROL_NONE) {
-        // No control, but still log state data
-        pbio_passivity_t state;
-        err = pbio_dcmotor_get_state(srv->dcmotor, &state, &control);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-        // Log control data
-        int32_t log_data[] = {time_now, count_now, rate_now, state, control};
-        return pbio_logger_update(&srv->control.log, log_data);
-    }
     // Calculate control signal
-    control_update(&srv->control, time_now, count_now, rate_now, &actuation, &control);
+    pbio_control_update(&srv->control, time_now, count_now, rate_now, &actuation, &control);
 
     // Apply the control type and signal
     err = pbio_servo_actuate(srv, actuation, control);
