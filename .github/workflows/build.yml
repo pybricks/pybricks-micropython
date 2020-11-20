@@ -234,6 +234,12 @@ jobs:
       with:
         name: ${{ matrix.hub }}-firmware
         path: bricks/${{ matrix.hub }}/main.py
+    - name: Upload ReadMe_OSS.txt
+      if: ${{ success() }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.hub }}-firmware
+        path: bricks/${{ matrix.hub }}/ReadMe_OSS.txt
 
   debug:
     name: debug firmware
