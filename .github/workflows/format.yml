@@ -25,7 +25,7 @@ on:
 jobs:
   format:
     name: Check code formatting
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - name: Install uncrustify
       run: |

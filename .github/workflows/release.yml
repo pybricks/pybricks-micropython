@@ -11,7 +11,7 @@ env:
 jobs:
   upload_release:
     name: Upload Release Assets
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Check cache
         id: check-cache
