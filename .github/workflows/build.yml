@@ -240,6 +240,12 @@ jobs:
       with:
         name: ${{ matrix.hub }}-firmware
         path: bricks/${{ matrix.hub }}/ReadMe_OSS.txt
+    - name: Upload install_pybricks.*
+      if: ${{ success() && matrix.hub == 'primehub' }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: ${{ matrix.hub }}-firmware
+        path: bricks/${{ matrix.hub }}/build/install_pybricks.*
 
   debug:
     name: debug firmware
