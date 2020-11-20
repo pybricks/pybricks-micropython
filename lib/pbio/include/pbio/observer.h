@@ -8,9 +8,20 @@
 
 #include <pbio/control.h>
 
+typedef struct _pbio_observer_settings_t {
+    float phi_01;
+    float phi_11;
+    float gam_0;
+    float gam_1;
+    float k_0;
+    float f_low;
+    float obs_gain;
+} pbio_observer_settings_t;
+
 typedef struct _pbio_observer_t {
     float est_count;
     float est_rate;
+    pbio_observer_settings_t settings;
 } pbio_observer_t;
 
 void pbio_observer_reset(pbio_observer_t *obs, int32_t count_now, int32_t rate_now);

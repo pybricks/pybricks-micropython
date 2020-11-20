@@ -24,22 +24,16 @@ void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t 
         // TODO
     }
 
-    float phi_01 = 0.00475829617417038f;
-    float phi_11 = 0.904902040212507f;
-    float gam_0 = 0.692925315153182f;
-    float gam_1 = 272.630288453209f;
-    float k_0 = 0.052359221241860474f;
-    float f_low = 0.011619602790697674f;
-    float obs_gain = 0.004f;
+    pbio_observer_settings_t *s = &obs->settings;
 
-    float tau_e = (control * battery_voltage) / 10000000 * k_0;
-    float tau_o = obs_gain * (count - obs->est_count);
-    float tau_f = obs->est_rate > 0 ? f_low: -f_low;
+    float tau_e = (control * battery_voltage) / 10000000 * s->k_0;
+    float tau_o = s->obs_gain * (count - obs->est_count);
+    float tau_f = obs->est_rate > 0 ? s->f_low: -s->f_low;
 
-    float next_count = obs->est_count + phi_01 * obs->est_rate + gam_0 * (tau_e + tau_o);
-    float next_rate = phi_11 * obs->est_rate + gam_1 * (tau_e + tau_o - tau_f);
+    float next_count = obs->est_count + s->phi_01 * obs->est_rate + s->gam_0 * (tau_e + tau_o);
+    float next_rate = s->phi_11 * obs->est_rate + s->gam_1 * (tau_e + tau_o - tau_f);
 
-    if ((next_rate < 0) != (next_rate + gam_1 * tau_f < 0)) {
+    if ((next_rate < 0) != (next_rate + s->gam_1 * tau_f < 0)) {
         next_rate = 0;
     }
 

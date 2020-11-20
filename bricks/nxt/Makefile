@@ -190,6 +190,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/counter/counter_core.c \
 	drv/counter/counter_nxt.c \
 	drv/reset/reset_nxt.c \
+	platform/motors/settings.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	platform/$(PBIO_PLATFORM)/sys.c \
 	src/color/conversion.c \
