@@ -39,6 +39,7 @@ typedef struct _pbio_control_settings_t {
     int32_t actuation_scale;        /**< Number of "duty steps" per "%" user-specified raw actuation value */
     int32_t integral_range;         /**< Region around the target count in which integral errors are accumulated */
     int32_t integral_rate;          /**< Maximum rate at which the integrator is allowed to increase */
+    bool use_estimated_speed;       /**< Whether to use the estimated speed (true) or the reported/measured speed (false) for feedback control */
 } pbio_control_settings_t;
 
 typedef enum {

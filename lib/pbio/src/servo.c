@@ -32,6 +32,7 @@ static pbio_control_settings_t settings_servo_ev3_medium = {
     .max_control = 10000,
     .control_offset = 2000,
     .actuation_scale = 100,
+    .use_estimated_speed = false,
 };
 
 static pbio_control_settings_t settings_servo_ev3_large = {
@@ -49,6 +50,7 @@ static pbio_control_settings_t settings_servo_ev3_large = {
     .max_control = 10000,
     .control_offset = 0,
     .actuation_scale = 100,
+    .use_estimated_speed = false,
 };
 
 static pbio_control_settings_t settings_servo_move_hub = {
@@ -66,6 +68,7 @@ static pbio_control_settings_t settings_servo_move_hub = {
     .max_control = 10000,
     .control_offset = 2000,
     .actuation_scale = 100,
+    .use_estimated_speed = false,
 };
 
 static pbio_control_settings_t settings_servo_boost_interactive = {
@@ -83,6 +86,7 @@ static pbio_control_settings_t settings_servo_boost_interactive = {
     .max_control = 10000,
     .control_offset = 1000,
     .actuation_scale = 100,
+    .use_estimated_speed = true,
 };
 
 static pbio_control_settings_t settings_servo_cplus_xl = {
@@ -100,6 +104,7 @@ static pbio_control_settings_t settings_servo_cplus_xl = {
     .max_control = 10000,
     .control_offset = 1500,
     .actuation_scale = 100,
+    .use_estimated_speed = true,
 };
 
 static pbio_control_settings_t settings_servo_default = {
@@ -117,6 +122,7 @@ static pbio_control_settings_t settings_servo_default = {
     .max_control = 10000,
     .control_offset = 0,
     .actuation_scale = 100,
+    .use_estimated_speed = false,
 };
 
 static void load_servo_settings(pbio_control_settings_t *s, pbio_iodev_type_id_t id) {
