@@ -221,25 +221,17 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.hub }}-firmware
-        path: bricks/${{ matrix.hub }}/build/firmware-base.bin
-    - name: Upload firmware metadata
-      if: ${{ success() && matrix.hub != 'nxt }}
+        path: |
+          bricks/${{ matrix.hub }}/build/firmware-base.bin
+          bricks/${{ matrix.hub }}/build/firmware.metadata.json
+    - name: Upload firmware extra
+      if: ${{ success() && matrix.hub != 'nxt' }}
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.hub }}-firmware
-        path: bricks/${{ matrix.hub }}/build/firmware.metadata.json
-    - name: Upload main.py
-      if: ${{ success() && matrix.hub != 'nxt }}
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{ matrix.hub }}-firmware
-        path: bricks/${{ matrix.hub }}/main.py
-    - name: Upload ReadMe_OSS.txt
-      if: ${{ success( && matrix.hub != 'nxt }}
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{ matrix.hub }}-firmware
-        path: bricks/${{ matrix.hub }}/ReadMe_OSS.txt
+        path: |
+          bricks/${{ matrix.hub }}/main.py
+          bricks/${{ matrix.hub }}/ReadMe_OSS.txt
     - name: Upload install_pybricks.*
       if: ${{ success() && matrix.hub == 'primehub' }}
       uses: actions/upload-artifact@v2
