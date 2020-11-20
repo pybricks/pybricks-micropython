@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: CC-BY-SA-4.0
 # Copyright (c) 2019-2020 The Pybricks Authors
 
 """Calculate checksum of firmware file in the same way that the bootloader on

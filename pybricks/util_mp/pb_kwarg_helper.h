@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: CC-BY-SA-4.0
 // Copyright (c) 2018-2020 The Pybricks Authors
 
 #ifndef PYBRICKS_INCLUDED_PBKWARG_H
