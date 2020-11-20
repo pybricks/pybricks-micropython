@@ -217,25 +217,25 @@ jobs:
       if: ${{ github.ref == 'refs/heads/master' }}
       run: make -C bricks/${{ matrix.hub }}
     - name: Upload firmware
-      if: ${{ success() }}
+      if: ${{ success() && matrix.hub != 'nxt' }}
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.hub }}-firmware
         path: bricks/${{ matrix.hub }}/build/firmware-base.bin
     - name: Upload firmware metadata
-      if: ${{ success() }}
+      if: ${{ success() && matrix.hub != 'nxt }}
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.hub }}-firmware
         path: bricks/${{ matrix.hub }}/build/firmware.metadata.json
     - name: Upload main.py
-      if: ${{ success() }}
+      if: ${{ success() && matrix.hub != 'nxt }}
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.hub }}-firmware
         path: bricks/${{ matrix.hub }}/main.py
     - name: Upload ReadMe_OSS.txt
-      if: ${{ success() }}
+      if: ${{ success( && matrix.hub != 'nxt }}
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.hub }}-firmware
