@@ -12,6 +12,7 @@
 
 # Packages
 ############
+*.tar.gz
 
 # Logs and Databases
 ######################
