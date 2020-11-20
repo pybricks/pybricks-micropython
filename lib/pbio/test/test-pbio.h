@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright 2020 The Pybricks Authors
+// Copyright (c) 2020 The Pybricks Authors
 
 #ifndef _TEST_PBIO_H_
 #define _TEST_PBIO_H_

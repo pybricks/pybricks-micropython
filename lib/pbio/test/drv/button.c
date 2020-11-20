@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright 2020 The Pybricks Authors
+// Copyright (c) 2020 The Pybricks Authors
 
 // Software button implementation for simulating buttons in tests
 
