@@ -1,4 +1,29 @@
 
+## 3.1.0 - 2020-11-09
+### Changed
+- Updated firmware to v3.0.0a10.
+
+## 3.0.0 - 2020-10-09
+### Changed
+- Renamed `cplushub` to `technichub`.
+- Updated firmware to v3.0.0a9.
+
+## 2.8.0 - 2020-09-04
+### Changed
+- Updated firmware to v3.0.0a8.
+
+## 2.7.0 - 2020-08-22
+### Changed
+- Updated firmware to v3.0.0a7.
+
+## 2.6.0 - 2020-08-05
+### Changed
+- Updated firmware to v3.0.0a6.
+
+## 2.5.0 - 2020-07-15
+### Changed
+- Updated firmware to v3.0.0a5.
+
 ## 2.4.0 - 2020-07-02
 ### Added
 - `cityhub` constant for City hub firmware zip file.
