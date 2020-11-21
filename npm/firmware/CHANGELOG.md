@@ -1,4 +1,8 @@
 
+## 4.1.0 - 2020-11-20
+### Added
+- Allow `ArrayBuffer` argument in `FirmwareReader.load()`.
+
 ## 4.0.0 - 2020-11-20
 ### Added
 - Added new `FirmwareMetadata` interface for strongly typing `firmware.metadata.json`.

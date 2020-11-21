@@ -131,7 +131,7 @@ export class FirmwareReader {
      * Loads data from a firmware.zip file and does a few sanity checks.
      * @param zipData The firmware.zip file binary data.
      */
-    public static async load(zipData: Uint8Array): Promise<FirmwareReader> {
+    public static async load(zipData: Uint8Array | ArrayBuffer | Blob): Promise<FirmwareReader> {
         const reader = new FirmwareReader();
         const zip = await wrapError(
             () => JSZip.loadAsync(zipData),
