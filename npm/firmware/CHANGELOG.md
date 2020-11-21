@@ -1,4 +1,11 @@
 
+## Unreleased
+### Added
+- Added new `FirmwareMetadata` interface for strongly typing `firmware.metadata.json`.
+- Added new `FirmwareReader` class for reading firmware.zip files.
+### Changed
+- Moved zip file names into `zipFileNameMap` and added `HubType` enum as lookup key.
+
 ## 3.1.0 - 2020-11-09
 ### Changed
 - Updated firmware to v3.0.0a10.
