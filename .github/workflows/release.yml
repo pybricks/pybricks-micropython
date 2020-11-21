@@ -38,7 +38,7 @@ jobs:
           make $MAKEOPTS -C bricks/cityhub
           make $MAKEOPTS -C bricks/technichub
       - name: Get tag
-        run: echo "::set-env name=GITHUB_TAG::${GITHUB_REF#*refs/tags/}"
+        run: echo "GITHUB_TAG=${GITHUB_REF#*refs/tags/}" >> $GITHUB_ENV
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
