@@ -54,10 +54,16 @@ def archive(hub: str) -> None:
             git_archive("micropython/lib/stm32lib", stm32lib_tar)
             archives.append(stm32lib_tar)
 
-        # every hub include libfixmath
+        # every hub includes libfixmath
         libfixmath_tar = pathlib.Path(d, "libfixmath.tar")
         git_archive("lib/libfixmath", libfixmath_tar)
         archives.append(libfixmath_tar)
+
+        # extra library for SPIKE Prime
+        if hub == "primehub":
+            btstack_tar = pathlib.Path(d, "btstack.tar")
+            git_archive("lib/btstack", btstack_tar)
+            archives.append(btstack_tar)
 
         # extra library for NXT
         if hub == "nxt":

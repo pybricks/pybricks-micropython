@@ -30,6 +30,15 @@ ifeq ("$(wildcard $(PBTOP)/lib/libfixmath/README.md)","")
 $(error failed)
 endif
 endif
+ifeq ($(PB_LIB_BTSTACK),1)
+ifeq ("$(wildcard ../../lib/btstack/README.md)","")
+$(info GIT cloning btstack submodule)
+$(info $(shell cd ../.. && git submodule update --checkout --init lib/btstack))
+ifeq ("$(wildcard ../../lib/btstack/README.md)","")
+$(error failed)
+endif
+endif
+endif
 
 # lets micropython make files work with external files
 USER_C_MODULES = $(PBTOP)
