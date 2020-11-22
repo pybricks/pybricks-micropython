@@ -15,7 +15,7 @@
 
 #include "src/processes.h"
 
-#define PBIO_TEST_TIMEOUT 10 // seconds
+#define PBIO_TEST_TIMEOUT 1 // seconds
 
 // Use these macros to define tests that _don't_ require a Contiki event loop
 #define PBIO_TEST_FUNC(name) void name(void *env)
@@ -32,6 +32,12 @@ static void pbio_test_run_thread(void *env) {
     PT_THREAD((*test_thread)(struct pt *pt)) = env;
     struct pt pt;
     struct timespec start_time, now_time;
+    int timeout = PBIO_TEST_TIMEOUT;
+
+    const char *pbio_test_timeout = getenv("PBIO_TEST_TIMEOUT");
+    if (pbio_test_timeout) {
+        timeout = atoi(pbio_test_timeout);
+    }
 
     pbio_init();
 
@@ -40,9 +46,11 @@ static void pbio_test_run_thread(void *env) {
 
     while (PT_SCHEDULE(test_thread(&pt))) {
         pbio_do_one_event();
-        clock_gettime(CLOCK_MONOTONIC, &now_time);
-        if (difftime(now_time.tv_sec, start_time.tv_sec) > PBIO_TEST_TIMEOUT) {
-            tt_abort_printf(("Test timed out on line %d", pt.lc));
+        if (timeout > 0) {
+            clock_gettime(CLOCK_MONOTONIC, &now_time);
+            if (difftime(now_time.tv_sec, start_time.tv_sec) > timeout) {
+                tt_abort_printf(("Test timed out on line %d", pt.lc));
+            }
         }
     }
 
