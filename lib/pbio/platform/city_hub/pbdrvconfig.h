@@ -26,6 +26,7 @@
 #define PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON         (1)
 
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
+#define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640         (1)
 
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_STM32                    (1)

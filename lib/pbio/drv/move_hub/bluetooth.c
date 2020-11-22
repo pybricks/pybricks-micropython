@@ -3,7 +3,7 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_BLUETOOTH
+#if PBDRV_CONFIG_BLUETOOTH_STM32_BLUENRG
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -693,4 +693,9 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
     PROCESS_END();
 }
 
-#endif // PBDRV_CONFIG_BLUETOOTH
+void pbdrv_bluetooth_init() {
+    process_start(&pbdrv_bluetooth_spi_process, NULL);
+    process_start(&pbdrv_bluetooth_hci_process, NULL);
+}
+
+#endif // PBDRV_CONFIG_BLUETOOTH_STM32_BLUENRG

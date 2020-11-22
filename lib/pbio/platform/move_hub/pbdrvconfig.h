@@ -22,6 +22,7 @@
 #define PBDRV_CONFIG_BATTERY_ADC_TYPE               (1)
 
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
+#define PBDRV_CONFIG_BLUETOOTH_STM32_BLUENRG        (1)
 
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)

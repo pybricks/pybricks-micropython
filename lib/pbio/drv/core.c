@@ -5,6 +5,7 @@
 
 #include "core.h"
 #include "battery/battery.h"
+#include "bluetooth/bluetooth.h"
 #include "counter/counter.h"
 #include "led/led_array.h"
 #include "led/led.h"
@@ -19,6 +20,7 @@ void pbdrv_init() {
     process_init();
     process_start(&etimer_process, NULL);
     pbdrv_battery_init();
+    pbdrv_bluetooth_init();
     pbdrv_counter_init();
     pbdrv_led_init();
     pbdrv_led_array_init();

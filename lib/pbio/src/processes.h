@@ -14,10 +14,6 @@
 PROCESS_NAME(pbdrv_adc_process);
 #endif
 
-#if PBDRV_CONFIG_BLUETOOTH
-PROCESS_NAME(pbdrv_bluetooth_hci_process);
-PROCESS_NAME(pbdrv_bluetooth_spi_process);
-#endif
 
 #if PBDRV_CONFIG_IOPORT_EV3DEV_STRETCH
 PROCESS_NAME(pbdrv_ioport_ev3dev_stretch_process);
