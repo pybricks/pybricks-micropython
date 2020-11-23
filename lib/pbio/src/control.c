@@ -9,12 +9,13 @@
 #include <pbio/trajectory.h>
 #include <pbio/integrator.h>
 
-void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, int32_t count_est, int32_t rate_est, pbio_actuation_t actuation_prev, int32_t control_prev, pbio_actuation_t *actuation_now, int32_t *control_now) {
+void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, int32_t count_est, int32_t rate_est, pbio_actuation_t actuation_prev, int32_t control_prev, pbio_actuation_t *actuation_now, int32_t *control_now, int32_t *acceleration_ref) {
 
     // If control is not active, next actuation is the same as now, so log and exit early.
     if (ctl->type == PBIO_CONTROL_NONE) {
         *control_now = control_prev;
         *actuation_now = actuation_prev;
+        *acceleration_ref = 0;
         int32_t log_data[] = {0, count_now, rate_now, *actuation_now, *control_now, 0, 0, count_est, rate_est};
         pbio_logger_update(&ctl->log, log_data);
         return;
@@ -24,7 +25,6 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
     int32_t time_ref;
     int32_t count_ref, count_ref_ext, count_err, count_err_integral, rate_err_integral;
     int32_t rate_ref, rate_err, rate_feedback;
-    int32_t acceleration_ref;
     int32_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative, duty_feedforward;
 
     // Get the time at which we want to evaluate the reference position/velocities.
@@ -32,7 +32,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
     time_ref = pbio_control_get_ref_time(ctl, time_now);
 
     // Get reference signals
-    pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &count_ref, &count_ref_ext, &rate_ref, &acceleration_ref);
+    pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &count_ref, &count_ref_ext, &rate_ref, acceleration_ref);
 
     // Select either the estimated speed or the reported/measured speed for use in feedback.
     rate_feedback = ctl->settings.use_estimated_speed ? rate_est : rate_now;
