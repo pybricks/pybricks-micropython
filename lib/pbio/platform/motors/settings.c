@@ -32,6 +32,8 @@ static pbio_observer_settings_t settings_observer_default = {
     .gam_0 = 0.692925315153182f,
     .gam_1 = 272.630288453209f,
     .k_0 = 0.052359221241860474f,
+    .k_1 = 0.000333337511635670f,
+    .k_2 = 0.00666198910636721f,
     .f_low = 0.011619602790697674f,
     .obs_gain = 0.004f,
 };
@@ -142,6 +144,8 @@ static pbio_observer_settings_t settings_observer_technic_m_angular = {
     .gam_0 = 1.39344831914273f,
     .gam_1 = 549.750242229303f,
     .k_0 = 0.02258435646747968f,
+    .k_1 = 0.000386402254699512f,
+    .k_2 = 0.00643543836108826f,
     .f_low = 0.01218641268292683f,
     .obs_gain = 0.002f,
 };
@@ -152,6 +156,8 @@ static pbio_observer_settings_t settings_observer_technic_l_angular = {
     .gam_0 = 0.692925315153182f,
     .gam_1 = 272.630288453209f,
     .k_0 = 0.052359221241860474f,
+    .k_1 = 0.000333337511635670f,
+    .k_2 = 0.00666198910636721f,
     .f_low = 0.011619602790697674f,
     .obs_gain = 0.004f,
 };

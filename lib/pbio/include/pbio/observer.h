@@ -14,6 +14,8 @@ typedef struct _pbio_observer_settings_t {
     float gam_0;
     float gam_1;
     float k_0;
+    float k_1;
+    float k_2;
     float f_low;
     float obs_gain;
 } pbio_observer_settings_t;
@@ -29,5 +31,7 @@ void pbio_observer_reset(pbio_observer_t *obs, int32_t count_now, int32_t rate_n
 void pbio_observer_get_estimated_state(pbio_observer_t *obs, int32_t *count, int32_t *rate);
 
 void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t actuation_type, int32_t control, int32_t battery_voltage);
+
+int32_t pbio_observer_get_feed_forward(pbio_observer_t *obs, int32_t acceleration_ref, int32_t battery_voltage);
 
 #endif // _PBIO_OBSERVER_H_

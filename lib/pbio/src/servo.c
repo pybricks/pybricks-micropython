@@ -177,15 +177,21 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     // Calculate control signal
     pbio_control_update(&srv->control, time_now, count_now, rate_now, count_est, rate_est, actuation_prev, control_prev, &actuation_now, &control_now, &acceleration_ref);
 
-    // Apply the control type and signal
-    err = pbio_servo_actuate(srv, actuation_now, control_now);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
 
     // Get the battery voltage
     uint16_t battery_voltage;
     err = pbdrv_battery_get_voltage_now(&battery_voltage);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Modify the feedback signal with additional feed forward terms
+    if (srv->control.settings.use_estimated_speed && actuation_now == PBIO_ACTUATION_DUTY) {
+        control_now += pbio_observer_get_feed_forward(&srv->observer, acceleration_ref, battery_voltage);
+    }
+
+    // Apply the control type and signal
+    err = pbio_servo_actuate(srv, actuation_now, control_now);
     if (err != PBIO_SUCCESS) {
         return err;
     }
