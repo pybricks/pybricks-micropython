@@ -138,13 +138,31 @@ static pbio_control_settings_t settings_servo_technic_xl = {
     .use_estimated_speed = true,
 };
 
+static pbio_control_settings_t settings_servo_technic_l_angular = {
+    .max_rate = 1000,
+    .abs_acceleration = 1500,
+    .rate_tolerance = 50,
+    .count_tolerance = 10,
+    .stall_rate_limit = 20,
+    .stall_time = 200 * US_PER_MS,
+    .pid_kp = 500,
+    .pid_ki = 350,
+    .pid_kd = 60,
+    .integral_range = 45,
+    .integral_rate = 5,
+    .max_control = 10000,
+    .control_offset = 1500,
+    .actuation_scale = 100,
+    .use_estimated_speed = true,
+};
+
 static pbio_observer_settings_t settings_observer_technic_m_angular = {
-    .phi_01 = 0.00479747589526887f,
-    .phi_11 = 0.920099171168609f,
-    .gam_0 = 1.39344831914273f,
-    .gam_1 = 549.750242229303f,
+    .phi_01 = 0.00471127825986593f,
+    .phi_11 = 0.886778220155195f,
+    .gam_0 = 1.98652315497896f,
+    .gam_1 = 779.011955265974f,
     .k_0 = 0.02258435646747968f,
-    .k_1 = 0.000386402254699512f,
+    .k_1 = 0.000267785410941794f,
     .k_2 = 0.00643543836108826f,
     .f_low = 0.01218641268292683f,
     .obs_gain = 0.002f,
@@ -199,13 +217,16 @@ void pbio_servo_load_settings(pbio_control_settings_t *control_settings, pbio_ob
             break;
         case PBIO_IODEV_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR:
         case PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR:
-            *control_settings = settings_servo_technic_xl;
-            control_settings->control_offset = 2500;
+            *control_settings = settings_servo_technic_l_angular;
+            control_settings->control_offset = 2000;
+            control_settings->pid_kp = 300;
+            control_settings->pid_kd = 40;
+            control_settings->abs_acceleration = 2500;
             *observer_settings = settings_observer_technic_m_angular;
             break;
         case PBIO_IODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR:
         case PBIO_IODEV_TYPE_ID_SPIKE_L_MOTOR:
-            *control_settings = settings_servo_technic_xl;
+            *control_settings = settings_servo_technic_l_angular;
             *observer_settings = settings_observer_technic_l_angular;
             break;
         #endif // PBDRV_CONFIG_IOPORT_LPF2
