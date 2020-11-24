@@ -6,7 +6,7 @@
 #define MICROPY_HW_BOARD_NAME           "BOOST Move Hub"
 #define MICROPY_HW_MCU_NAME             "STM32F070RB"
 
-#define PYBRICKS_HEAP_KB                8 // half of RAM
+#define PYBRICKS_HEAP_KB                (6)
 
 #define PYBRICKS_HUB_MOVEHUB            (1)
 
