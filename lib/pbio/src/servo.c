@@ -186,14 +186,16 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     }
 
     // Modify the feedback signal with additional feed forward terms
-    if (srv->control.settings.use_estimated_speed && actuation_now == PBIO_ACTUATION_DUTY) {
+    if (srv->control.settings.use_estimated_speed && srv->control.type != PBIO_CONTROL_NONE) {
         control_now += pbio_observer_get_feed_forward(&srv->observer, acceleration_ref, battery_voltage);
     }
 
-    // Apply the control type and signal
-    err = pbio_servo_actuate(srv, actuation_now, control_now);
-    if (err != PBIO_SUCCESS) {
-        return err;
+    // FIXME: Shouldn't need this check here, so refactor duty/torque application.
+    if (srv->control.type != PBIO_CONTROL_NONE) {
+        err = pbio_servo_actuate(srv, actuation_now, control_now);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
     }
 
     // Update the state observer
