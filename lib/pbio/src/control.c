@@ -16,7 +16,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
         *control_now = control_prev;
         *actuation_now = actuation_prev;
         *acceleration_ref = 0;
-        int32_t log_data[] = {0, count_now, rate_now, *actuation_now, *control_now, 0, 0, count_est, rate_est};
+        int32_t log_data[] = {0, count_now, rate_now, *actuation_now, *control_now, 0, 0, count_est, rate_est, 0, 0, 0, 0};
         pbio_logger_update(&ctl->log, log_data);
         return;
     }
@@ -130,6 +130,10 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
         rate_ref,
         count_est,
         rate_est,
+        duty_due_to_proportional,
+        duty_due_to_integral,
+        duty_due_to_derivative,
+        duty_feedforward,
     };
     pbio_logger_update(&ctl->log, log_data);
 }

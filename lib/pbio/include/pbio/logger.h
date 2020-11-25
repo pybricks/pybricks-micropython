@@ -13,7 +13,7 @@
 #define NUM_DEFAULT_LOG_VALUES (1)
 
 // Maximum number of values to be logged per sample
-#define MAX_LOG_VALUES (NUM_DEFAULT_LOG_VALUES + 9)
+#define MAX_LOG_VALUES (NUM_DEFAULT_LOG_VALUES + 15)
 
 typedef struct _pbio_log_t {
     bool active;
