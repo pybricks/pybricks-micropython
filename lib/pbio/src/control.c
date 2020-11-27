@@ -9,7 +9,7 @@
 #include <pbio/trajectory.h>
 #include <pbio/integrator.h>
 
-void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, int32_t count_est, int32_t rate_est, pbio_actuation_t actuation_prev, int32_t control_prev, pbio_actuation_t *actuation_now, int32_t *control_now, int32_t *acceleration_ref) {
+void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, int32_t count_est, int32_t rate_est, pbio_actuation_t actuation_prev, int32_t control_prev, pbio_actuation_t *actuation_now, int32_t *control_now, int32_t *rate_ref, int32_t *acceleration_ref) {
 
     // If control is not active, next actuation is the same as now, so log and exit early.
     if (ctl->type == PBIO_CONTROL_NONE) {
@@ -24,7 +24,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
     // Declare current time, positions, rates, and their reference value and error
     int32_t time_ref;
     int32_t count_ref, count_ref_ext, count_err, count_feedback, count_err_integral, rate_err_integral;
-    int32_t rate_ref, rate_err, rate_feedback;
+    int32_t rate_err, rate_feedback;
     int32_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative, duty_feedforward;
 
     // Get the time at which we want to evaluate the reference position/velocities.
@@ -32,7 +32,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
     time_ref = pbio_control_get_ref_time(ctl, time_now);
 
     // Get reference signals
-    pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &count_ref, &count_ref_ext, &rate_ref, acceleration_ref);
+    pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &count_ref, &count_ref_ext, rate_ref, acceleration_ref);
 
     // Select either the estimated speed or the reported/measured speed for use in feedback.
     rate_feedback = ctl->settings.use_estimated_rate ? rate_est : rate_now;
@@ -43,11 +43,11 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
         // Update count integral error and get current error state
         pbio_count_integrator_update(&ctl->count_integrator, time_now, count_now, count_ref, ctl->trajectory.th3, ctl->settings.integral_range, ctl->settings.integral_rate);
         pbio_count_integrator_get_errors(&ctl->count_integrator, count_feedback, count_ref, &count_err, &count_err_integral);
-        rate_err = rate_ref - rate_feedback;
+        rate_err = *rate_ref - rate_feedback;
     } else {
         // For time/speed based commands, the main error is speed. It integrates into a quantity with unit of position.
         // There is no count integral control, because we do not need a second order integrator for speed control.
-        pbio_rate_integrator_get_errors(&ctl->rate_integrator, rate_feedback, rate_ref, count_now, count_ref, &rate_err, &rate_err_integral);
+        pbio_rate_integrator_get_errors(&ctl->rate_integrator, rate_feedback, *rate_ref, count_now, count_ref, &rate_err, &rate_err_integral);
         count_err = rate_err_integral;
         count_err_integral = 0;
     }
@@ -56,7 +56,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
     duty_due_to_proportional = ctl->settings.pid_kp * count_err;
     duty_due_to_derivative = ctl->settings.pid_kd * rate_err;
     duty_due_to_integral = (ctl->settings.pid_ki * (count_err_integral / US_PER_MS)) / MS_PER_SECOND;
-    duty_feedforward = pbio_math_sign(rate_ref) * ctl->settings.control_offset;
+    duty_feedforward = pbio_math_sign(*rate_ref) * ctl->settings.control_offset;
 
     // Total duty signal, capped by the actuation limit
     duty = duty_due_to_proportional + duty_due_to_integral + duty_due_to_derivative + duty_feedforward;
@@ -128,7 +128,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
         *actuation_now,
         *control_now,
         count_ref,
-        rate_ref,
+        *rate_ref,
         count_est,
         rate_est,
         duty_due_to_proportional,

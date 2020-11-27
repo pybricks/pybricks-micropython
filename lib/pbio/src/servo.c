@@ -151,7 +151,7 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     // Read the physical state
     int32_t time_now;
     int32_t count_now, count_est;
-    int32_t rate_now, rate_est;
+    int32_t rate_now, rate_est, rate_ref;
     int32_t acceleration_ref;
 
     pbio_error_t err = servo_get_state(srv, &time_now, &count_now, &rate_now);
@@ -175,7 +175,7 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     int32_t control_now;
 
     // Calculate control signal
-    pbio_control_update(&srv->control, time_now, count_now, rate_now, count_est, rate_est, actuation_prev, control_prev, &actuation_now, &control_now, &acceleration_ref);
+    pbio_control_update(&srv->control, time_now, count_now, rate_now, count_est, rate_est, actuation_prev, control_prev, &actuation_now, &control_now, &rate_ref, &acceleration_ref);
 
 
     // Get the battery voltage
