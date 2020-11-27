@@ -199,12 +199,11 @@ STATIC const mp_obj_type_t tools_Logger_type = {
     .unary_op = tools_Logger_unary_op,
 };
 
-mp_obj_t logger_obj_make_new(pbio_log_t *log) {
-    // Create new light instance
+mp_obj_t common_Logger_obj_make_new(pbio_log_t *log, uint8_t num_values) {
     tools_Logger_obj_t *logger = m_new_obj(tools_Logger_obj_t);
-    // Set type and iodev
     logger->base.type = (mp_obj_type_t *)&tools_Logger_type;
     logger->log = log;
+    logger->log->num_values = num_values + NUM_DEFAULT_LOG_VALUES;
     return logger;
 }
 

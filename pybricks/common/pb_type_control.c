@@ -32,8 +32,7 @@ mp_obj_t common_Control_obj_make_new(pbio_control_t *control) {
     self->control = control;
 
     // Create an instance of the Logger class
-    self->logger = logger_obj_make_new(&self->control->log);
-    self->control->log.num_values = MAX_LOG_VALUES;
+    self->logger = common_Logger_obj_make_new(&self->control->log, PBIO_CONTROL_LOG_COLS);
 
     #if MICROPY_PY_BUILTINS_FLOAT
     self->scale = mp_obj_new_float(fix16_to_float(control->settings.counts_per_unit));

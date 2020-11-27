@@ -20,6 +20,8 @@
 
 #define PBIO_CONTROL_LOOP_TIME_MS (5)
 
+#define PBIO_CONTROL_LOG_COLS (13)
+
 /**
  * Control settings
  */
