@@ -26,7 +26,7 @@
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
-#define PBIO_SERVO_LOG_COLS (8)
+#define PBIO_SERVO_LOG_COLS (9)
 
 typedef struct _pbio_servo_t {
     pbio_port_t port;

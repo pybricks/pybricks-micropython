@@ -6,6 +6,7 @@
 #include <stdlib.h>
 
 #include <pbio/control.h>
+#include <pbio/math.h>
 #include <pbio/observer.h>
 
 void pbio_observer_reset(pbio_observer_t *obs, int32_t count_now, int32_t rate_now) {
@@ -41,8 +42,19 @@ void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t 
     obs->est_rate = next_rate;
 }
 
-int32_t pbio_observer_get_feed_forward(pbio_observer_t *obs, int32_t rate_ref, int32_t acceleration_ref, int32_t battery_voltage) {
-    // TODO: express all of control update in terms of torque, then convert to duty here.
+int32_t pbio_observer_get_feedforward_torque(pbio_observer_t *obs, int32_t rate_ref, int32_t acceleration_ref) {
     pbio_observer_settings_t *s = &obs->settings;
-    return ((s->k_1 * acceleration_ref + s->k_2 * rate_ref) * 1000 * 10000) / battery_voltage;
+
+    // Torque terms in micronewtons (TODO: Convert to integer math)
+    int32_t friction_compensation_torque = (int32_t)(s->f_low * pbio_math_sign(rate_ref) * 1000000);
+    int32_t back_emf_compensation_torque = (int32_t)(s->k_0 * s->k_2 * rate_ref * 1000000);
+    int32_t acceleration_torque = (int32_t)(s->k_0 * s->k_1 * acceleration_ref * 1000000);
+
+    // Scale micronewtons by battery voltage to duty (0--10000)
+    return (int32_t)(friction_compensation_torque + back_emf_compensation_torque + acceleration_torque);
+}
+
+
+int32_t pbio_observer_torque_to_duty(pbio_observer_t *obs, int32_t desired_torque, int32_t battery_voltage) {
+    return (int32_t)(desired_torque / obs->settings.k_0 * 10 / battery_voltage);
 }

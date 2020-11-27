@@ -15,7 +15,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
     int32_t time_ref;
     int32_t count_ref, count_ref_ext, count_err, count_feedback, count_err_integral, rate_err_integral;
     int32_t rate_err, rate_feedback;
-    int32_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative, duty_feedforward;
+    int32_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative;
 
     // Get the time at which we want to evaluate the reference position/velocities.
     // This compensates for any time we may have spent pausing when the motor was stalled.
@@ -46,10 +46,9 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
     duty_due_to_proportional = ctl->settings.pid_kp * count_err;
     duty_due_to_derivative = ctl->settings.pid_kd * rate_err;
     duty_due_to_integral = (ctl->settings.pid_ki * (count_err_integral / US_PER_MS)) / MS_PER_SECOND;
-    duty_feedforward = pbio_math_sign(*rate_ref) * ctl->settings.control_offset;
 
     // Total duty signal, capped by the actuation limit
-    duty = duty_due_to_proportional + duty_due_to_integral + duty_due_to_derivative + duty_feedforward;
+    duty = duty_due_to_proportional + duty_due_to_integral + duty_due_to_derivative;
     duty = max(-ctl->settings.max_control, min(duty, ctl->settings.max_control));
 
     // This completes the computation of the control signal.
@@ -58,17 +57,17 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
     // We want to stop building up further errors if we are at the proportional duty limit. So, we pause the trajectory
     // if we get at this limit. We wait a little longer though, to make sure it does not fall back to below the limit
     // within one sample, which we can predict using the current rate times the loop time, with a factor two tolerance.
-    int32_t max_windup_duty = (ctl->settings.max_control - ctl->settings.control_offset) + (ctl->settings.pid_kp * abs(rate_now) * PBIO_CONTROL_LOOP_TIME_MS * 2) / MS_PER_SECOND;
+    int32_t max_windup_duty = ctl->settings.max_control + (ctl->settings.pid_kp * abs(rate_now) * PBIO_CONTROL_LOOP_TIME_MS * 2) / MS_PER_SECOND;
 
     // Position anti-windup: pause trajectory or integration if falling behind despite using maximum duty
 
-    // Position anti-windup in case of angle control (position error may not get too high)
+    // Position anti-windup in case of angle control (accumulated position error may not get too high)
     if (ctl->type == PBIO_CONTROL_ANGLE) {
         if (abs(duty_due_to_proportional) >= max_windup_duty) {
             // We are at the duty limit and we should prevent further position error integration.
             pbio_count_integrator_pause(&ctl->count_integrator, time_now, count_now, count_ref);
         } else {
-            // Not at the limitm so continue integrating errors
+            // Not at the limit so continue integrating errors
             pbio_count_integrator_resume(&ctl->count_integrator, time_now, count_now, count_ref);
         }
     }
@@ -78,7 +77,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
             // We are at the duty limit and we should prevent further speed error integration.
             pbio_rate_integrator_pause(&ctl->rate_integrator, time_now, count_now, count_ref);
         } else {
-            // Not at the limitm so continue integrating errors
+            // Not at the limit so continue integrating errors
             pbio_rate_integrator_resume(&ctl->rate_integrator, time_now, count_now, count_ref);
         }
     }
@@ -124,7 +123,6 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
         duty_due_to_proportional,
         duty_due_to_integral,
         duty_due_to_derivative,
-        duty_feedforward,
     };
     pbio_logger_update(&ctl->log, log_data);
 }

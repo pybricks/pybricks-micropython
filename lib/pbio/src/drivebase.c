@@ -3,6 +3,8 @@
 
 #include <contiki.h>
 
+#include <pbdrv/battery.h>
+
 #include <pbio/error.h>
 #include <pbio/drivebase.h>
 #include <pbio/math.h>
@@ -24,10 +26,10 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
     // usually expected to respond quickly to speed setpoint changes
     s_distance->abs_acceleration = (s_left->abs_acceleration + s_right->abs_acceleration) * 2;
 
-    // Although counts/errors add up twice as fast, both motors actuate, so apply half of the average PID
-    s_distance->pid_kp = (s_left->pid_kp + s_right->pid_kp) / 4;
-    s_distance->pid_ki = (s_left->pid_ki + s_right->pid_ki) / 4;
-    s_distance->pid_kd = (s_left->pid_kd + s_right->pid_kd) / 4;
+    // Use the average PID of both motors
+    s_distance->pid_kp = (s_left->pid_kp + s_right->pid_kp) / 2;
+    s_distance->pid_ki = (s_left->pid_ki + s_right->pid_ki) / 2;
+    s_distance->pid_kd = (s_left->pid_kd + s_right->pid_kd) / 2;
 
     // Maxima are bound by the least capable motor
     s_distance->max_control = min(s_left->max_control, s_right->max_control);
@@ -39,6 +41,15 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
     }
     s_distance->actuation_scale = s_left->actuation_scale;
     s_distance->control_offset = s_left->control_offset;
+
+    // Copy rate estimator usage, required to be the same on both motors
+    if (s_left->use_estimated_rate != s_right->use_estimated_rate || s_left->use_estimated_count != s_right->use_estimated_count) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+    s_distance->use_estimated_rate = s_left->use_estimated_rate;
+
+    // Use estimated count if we use estimated rate
+    s_distance->use_estimated_count = s_distance->use_estimated_rate;
 
     // By default, heading control is the same as distance control
     *s_heading = *s_distance;
@@ -91,7 +102,26 @@ static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
     return PBIO_SUCCESS;
 }
 
-// Get the physical state of a drivebase
+// Get the estimated state of a drivebase
+static void drivebase_get_estimated_state(pbio_drivebase_t *db,
+    int32_t *sum,
+    int32_t *sum_rate,
+    int32_t *dif,
+    int32_t *dif_rate) {
+
+    int32_t count_left, rate_left;
+    pbio_observer_get_estimated_state(&db->left->observer, &count_left, &rate_left);
+
+    int32_t count_right, rate_right;
+    pbio_observer_get_estimated_state(&db->right->observer, &count_right, &rate_right);
+
+    *sum = count_left + count_right;
+    *sum_rate = rate_left + rate_right;
+    *dif = count_left - count_right;
+    *dif_rate = rate_left - rate_right;
+}
+
+// Actuate a drivebase
 static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_t actuation, int32_t sum_control, int32_t dif_control) {
     pbio_error_t err;
 
@@ -279,22 +309,48 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     if (err != PBIO_SUCCESS) {
         return err;
     }
+    int32_t sum_est, sum_rate_est, dif_est, dif_rate_est;
+    drivebase_get_estimated_state(db, &sum_est, &sum_rate_est, &dif_est, &dif_rate_est);
 
-    // Get control signals
-    int32_t sum_control, dif_control;
+    // Get torque signals
+    int32_t sum_torque, dif_torque;
     int32_t sum_rate_ref, dif_rate_ref;
     int32_t sum_acceleration_ref, dif_acceleration_ref;
     pbio_actuation_t sum_actuation, dif_actuation;
-    pbio_control_update(&db->control_distance, time_now, sum, sum_rate, 0, 0, &sum_actuation, &sum_control, &sum_rate_ref, &sum_acceleration_ref);
-    pbio_control_update(&db->control_heading, time_now, dif, dif_rate, 0, 0, &dif_actuation, &dif_control, &dif_rate_ref, &dif_acceleration_ref);
+    pbio_control_update(&db->control_distance, time_now, sum, sum_rate, sum_est, sum_rate_est, &sum_actuation, &sum_torque, &sum_rate_ref, &sum_acceleration_ref);
+    pbio_control_update(&db->control_heading, time_now, dif, dif_rate, dif_est, dif_rate_est, &dif_actuation, &dif_torque, &dif_rate_ref, &dif_acceleration_ref);
 
     // Separate actuation types are not possible for now
     if (sum_actuation != dif_actuation) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    // Actuate
-    return pbio_drivebase_actuate(db, sum_actuation, sum_control, dif_control);
+    // Get the battery voltage
+    uint16_t voltage;
+    err = pbdrv_battery_get_voltage_now(&voltage);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    int32_t battery_voltage = voltage;
+
+    // TODO: Use generic actuator with torque type.
+
+    // Left carries sum/2 + dif/2
+    int32_t torque_left = sum_torque / 2 + dif_torque / 2;
+    torque_left += pbio_observer_get_feedforward_torque(&db->left->observer, sum_rate_ref / 2 + dif_rate_ref / 2, sum_acceleration_ref / 2 + dif_acceleration_ref / 2);
+    int32_t duty_left = pbio_observer_torque_to_duty(&db->left->observer, torque_left, battery_voltage);
+
+    // Right carries sum/2 - dif/2
+    int32_t torque_right = sum_torque / 2 - dif_torque / 2;
+    torque_right += pbio_observer_get_feedforward_torque(&db->right->observer, sum_rate_ref / 2 - dif_rate_ref / 2, sum_acceleration_ref / 2 - dif_acceleration_ref / 2);
+    int32_t duty_right = pbio_observer_torque_to_duty(&db->right->observer, torque_right, battery_voltage);
+
+    // Apply the duty cycle values
+    err = pbio_dcmotor_set_duty_cycle_sys(db->left->dcmotor, duty_left);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    return pbio_dcmotor_set_duty_cycle_sys(db->right->dcmotor, duty_right);
 }
 
 pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int32_t drive_speed, int32_t drive_acceleration) {

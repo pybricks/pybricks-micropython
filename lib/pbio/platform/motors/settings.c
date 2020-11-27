@@ -151,13 +151,12 @@ static pbio_control_settings_t settings_servo_technic_l_angular = {
     .count_tolerance = 10,
     .stall_rate_limit = 20,
     .stall_time = 200 * US_PER_MS,
-    .pid_kp = 500,
-    .pid_ki = 350,
-    .pid_kd = 60,
+    .pid_kp = 17000,
+    .pid_ki = 12000,
+    .pid_kd = 2000,
     .integral_range = 45,
     .integral_rate = 5,
-    .max_control = 10000,
-    .control_offset = 1500,
+    .max_control = 330000,
     .actuation_scale = 100,
     .use_estimated_rate = true,
     .use_estimated_count = false,
@@ -225,10 +224,11 @@ void pbio_servo_load_settings(pbio_control_settings_t *control_settings, pbio_ob
         case PBIO_IODEV_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR:
         case PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR:
             *control_settings = settings_servo_technic_l_angular;
-            control_settings->control_offset = 2000;
-            control_settings->pid_kp = 300;
-            control_settings->pid_kd = 40;
+            control_settings->pid_kp /= 2;
+            control_settings->pid_ki /= 2;
+            control_settings->pid_kd /= 2;
             control_settings->abs_acceleration = 2500;
+            control_settings->max_control /= 2;
             *observer_settings = settings_observer_technic_m_angular;
             break;
         case PBIO_IODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR:

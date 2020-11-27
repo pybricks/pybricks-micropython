@@ -171,40 +171,41 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
 
     // Control action to be calculated
     pbio_actuation_t actuation;
-    int32_t duty_feedback;
-    int32_t duty_feedforward;
+    int32_t feedback_torque = 0;
+    int32_t feedforward_torque = 0;
+    int32_t duty_cycle;
 
     // Check if a control update is needed
     if (srv->control.type != PBIO_CONTROL_NONE) {
 
-        // Calculate control signal
-        pbio_control_update(&srv->control, time_now, count_now, rate_now, count_est, rate_est, &actuation, &duty_feedback, &rate_ref, &acceleration_ref);
+        // Calculate feedback control signal
+        pbio_control_update(&srv->control, time_now, count_now, rate_now, count_est, rate_est, &actuation, &feedback_torque, &rate_ref, &acceleration_ref);
 
-        // Add feed forward based on servo model
-        duty_feedforward = pbio_observer_get_feed_forward(&srv->observer, rate_ref, acceleration_ref, battery_voltage);
+        // Get required feedforward torque
+        feedforward_torque = pbio_observer_get_feedforward_torque(&srv->observer, rate_ref, acceleration_ref);
+
+        // Convert torques to duty cycle based on model
+        duty_cycle = pbio_observer_torque_to_duty(&srv->observer, feedback_torque + feedforward_torque, battery_voltage);
 
         // Actutate the servo
-        err = pbio_servo_actuate(srv, actuation, duty_feedback + duty_feedforward);
+        err = pbio_servo_actuate(srv, actuation, duty_cycle);
         if (err != PBIO_SUCCESS) {
             return err;
         }
     } else {
         // When there is no control, get the previous (ongoing) actuation state so we can log it.
-        err = pbio_dcmotor_get_state(srv->dcmotor, (pbio_passivity_t *)&actuation, &duty_feedback);
+        err = pbio_dcmotor_get_state(srv->dcmotor, (pbio_passivity_t *)&actuation, &duty_cycle);
         if (err != PBIO_SUCCESS) {
             return err;
         }
-
-        // There is no additional feed forward when the motor is passive
-        duty_feedforward = 0;
     }
 
     // Log servo state
-    int32_t log_data[] = {battery_voltage, count_now, rate_now, actuation, duty_feedback, duty_feedforward, count_est, rate_est};
+    int32_t log_data[] = {battery_voltage, count_now, rate_now, actuation, duty_cycle, count_est, rate_est, feedback_torque, feedforward_torque};
     pbio_logger_update(&srv->log, log_data);
 
     // Update the state observer
-    pbio_observer_update(&srv->observer, count_now, actuation, duty_feedback + duty_feedforward, battery_voltage);
+    pbio_observer_update(&srv->observer, count_now, actuation, duty_cycle, battery_voltage);
 
     return PBIO_SUCCESS;
 }
