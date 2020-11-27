@@ -148,12 +148,12 @@ static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actua
 
 pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
 
-    // Read the physical state
     int32_t time_now;
     int32_t count_now, count_est;
     int32_t rate_now, rate_est, rate_ref;
     int32_t acceleration_ref;
 
+    // Read the physical state
     pbio_error_t err = servo_get_state(srv, &time_now, &count_now, &rate_now);
     if (err != PBIO_SUCCESS) {
         return err;
@@ -162,22 +162,6 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     // Get estimated motor state
     pbio_observer_get_estimated_state(&srv->observer, &count_est, &rate_est);
 
-    // Previous control action
-    pbio_actuation_t actuation_prev;
-    int32_t control_prev;
-    err = pbio_dcmotor_get_state(srv->dcmotor, (pbio_passivity_t *)&actuation_prev, &control_prev);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Control action to be calculated
-    pbio_actuation_t actuation_now;
-    int32_t control_now;
-
-    // Calculate control signal
-    pbio_control_update(&srv->control, time_now, count_now, rate_now, count_est, rate_est, actuation_prev, control_prev, &actuation_now, &control_now, &rate_ref, &acceleration_ref);
-
-
     // Get the battery voltage
     uint16_t battery_voltage;
     err = pbdrv_battery_get_voltage_now(&battery_voltage);
@@ -185,21 +169,42 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
         return err;
     }
 
-    // Modify the feedback signal with additional feed forward terms
-    if (srv->control.settings.use_estimated_rate && srv->control.type != PBIO_CONTROL_NONE) {
-        control_now += pbio_observer_get_feed_forward(&srv->observer, rate_ref, acceleration_ref, battery_voltage);
-    }
+    // Control action to be calculated
+    pbio_actuation_t actuation;
+    int32_t duty_feedback;
+    int32_t duty_feedforward;
 
-    // FIXME: Shouldn't need this check here, so refactor duty/torque application.
+    // Check if a control update is needed
     if (srv->control.type != PBIO_CONTROL_NONE) {
-        err = pbio_servo_actuate(srv, actuation_now, control_now);
+
+        // Calculate control signal
+        pbio_control_update(&srv->control, time_now, count_now, rate_now, count_est, rate_est, &actuation, &duty_feedback, &rate_ref, &acceleration_ref);
+
+        // Add feed forward based on servo model
+        duty_feedforward = pbio_observer_get_feed_forward(&srv->observer, rate_ref, acceleration_ref, battery_voltage);
+
+        // Actutate the servo
+        err = pbio_servo_actuate(srv, actuation, duty_feedback + duty_feedforward);
         if (err != PBIO_SUCCESS) {
             return err;
         }
+    } else {
+        // When there is no control, get the previous (ongoing) actuation state so we can log it.
+        err = pbio_dcmotor_get_state(srv->dcmotor, (pbio_passivity_t *)&actuation, &duty_feedback);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+
+        // There is no additional feed forward when the motor is passive
+        duty_feedforward = 0;
     }
 
+    // Log servo state
+    int32_t log_data[] = {battery_voltage, count_now, rate_now, actuation, duty_feedback, duty_feedforward, count_est, rate_est};
+    pbio_logger_update(&srv->log, log_data);
+
     // Update the state observer
-    pbio_observer_update(&srv->observer, count_now, actuation_now, control_now, battery_voltage);
+    pbio_observer_update(&srv->observer, count_now, actuation, duty_feedback + duty_feedforward, battery_voltage);
 
     return PBIO_SUCCESS;
 }

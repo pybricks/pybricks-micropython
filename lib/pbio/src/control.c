@@ -9,17 +9,7 @@
 #include <pbio/trajectory.h>
 #include <pbio/integrator.h>
 
-void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, int32_t count_est, int32_t rate_est, pbio_actuation_t actuation_prev, int32_t control_prev, pbio_actuation_t *actuation_now, int32_t *control_now, int32_t *rate_ref, int32_t *acceleration_ref) {
-
-    // If control is not active, next actuation is the same as now, so log and exit early.
-    if (ctl->type == PBIO_CONTROL_NONE) {
-        *control_now = control_prev;
-        *actuation_now = actuation_prev;
-        *acceleration_ref = 0;
-        int32_t log_data[] = {0, count_now, rate_now, *actuation_now, *control_now, 0, 0, count_est, rate_est, 0, 0, 0, 0};
-        pbio_logger_update(&ctl->log, log_data);
-        return;
-    }
+void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, int32_t count_est, int32_t rate_est, pbio_actuation_t *actuation, int32_t *control, int32_t *rate_ref, int32_t *acceleration_ref) {
 
     // Declare current time, positions, rates, and their reference value and error
     int32_t time_ref;
@@ -103,8 +93,8 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
 
     // If we are done and the next action is passive then return zero actuation
     if (ctl->on_target && ctl->after_stop != PBIO_ACTUATION_HOLD) {
-        *actuation_now = ctl->after_stop;
-        *control_now = 0;
+        *actuation = ctl->after_stop;
+        *control = 0;
         pbio_control_stop(ctl);
     } else if (ctl->on_target && ctl->after_stop == PBIO_ACTUATION_HOLD && ctl->type == PBIO_CONTROL_TIMED) {
         // If we are going to hold and we are already doing angle control, there is nothing we need to do.
@@ -112,12 +102,12 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
         pbio_control_start_hold_control(ctl, time_now, count_now);
 
         // The new hold control does not take effect until the next iteration, so keep actuating for now.
-        *actuation_now = PBIO_ACTUATION_DUTY;
-        *control_now = duty;
+        *actuation = PBIO_ACTUATION_DUTY;
+        *control = duty;
     } else {
         // The end point not reached, or we have to keep holding, so return the calculated duty for actuation
-        *actuation_now = PBIO_ACTUATION_DUTY;
-        *control_now = duty;
+        *actuation = PBIO_ACTUATION_DUTY;
+        *control = duty;
     }
 
     // Log control data
@@ -125,8 +115,8 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
         (time_ref - ctl->trajectory.t0) / 1000,
         count_now,
         rate_now,
-        *actuation_now,
-        *control_now,
+        *actuation,
+        *control,
         count_ref,
         *rate_ref,
         count_est,

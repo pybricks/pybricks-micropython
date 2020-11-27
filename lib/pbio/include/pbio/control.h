@@ -115,6 +115,6 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
 bool pbio_control_is_stalled(pbio_control_t *ctl);
 bool pbio_control_is_done(pbio_control_t *ctl);
 
-void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, int32_t count_est, int32_t rate_est, pbio_actuation_t actuation_prev, int32_t control_prev, pbio_actuation_t *actuation_now, int32_t *control_now, int32_t *rate_ref, int32_t *acceleration_ref);
+void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, int32_t count_est, int32_t rate_est, pbio_actuation_t *actuation, int32_t *control, int32_t *rate_ref, int32_t *acceleration_ref);
 
 #endif // _PBIO_CONTROL_H_
