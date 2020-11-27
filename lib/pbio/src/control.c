@@ -23,7 +23,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
 
     // Declare current time, positions, rates, and their reference value and error
     int32_t time_ref;
-    int32_t count_ref, count_ref_ext, count_err, count_err_integral, rate_err_integral;
+    int32_t count_ref, count_ref_ext, count_err, count_feedback, count_err_integral, rate_err_integral;
     int32_t rate_ref, rate_err, rate_feedback;
     int32_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative, duty_feedforward;
 
@@ -35,13 +35,14 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
     pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &count_ref, &count_ref_ext, &rate_ref, acceleration_ref);
 
     // Select either the estimated speed or the reported/measured speed for use in feedback.
-    rate_feedback = ctl->settings.use_estimated_speed ? rate_est : rate_now;
+    rate_feedback = ctl->settings.use_estimated_rate ? rate_est : rate_now;
+    count_feedback = ctl->settings.use_estimated_count ? count_est : count_now;
 
     // Calculate control errors, depending on whether we do angle control or speed control
     if (ctl->type == PBIO_CONTROL_ANGLE) {
         // Update count integral error and get current error state
         pbio_count_integrator_update(&ctl->count_integrator, time_now, count_now, count_ref, ctl->trajectory.th3, ctl->settings.integral_range, ctl->settings.integral_rate);
-        pbio_count_integrator_get_errors(&ctl->count_integrator, count_now, count_ref, &count_err, &count_err_integral);
+        pbio_count_integrator_get_errors(&ctl->count_integrator, count_feedback, count_ref, &count_err, &count_err_integral);
         rate_err = rate_ref - rate_feedback;
     } else {
         // For time/speed based commands, the main error is speed. It integrates into a quantity with unit of position.

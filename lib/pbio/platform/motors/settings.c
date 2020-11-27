@@ -23,7 +23,8 @@ static pbio_control_settings_t settings_servo_default = {
     .max_control = 10000,
     .control_offset = 0,
     .actuation_scale = 100,
-    .use_estimated_speed = true,
+    .use_estimated_rate = true,
+    .use_estimated_count = false,
 };
 
 static pbio_observer_settings_t settings_observer_default = {
@@ -55,7 +56,8 @@ static pbio_control_settings_t settings_servo_ev3_medium = {
     .max_control = 10000,
     .control_offset = 2000,
     .actuation_scale = 100,
-    .use_estimated_speed = false,
+    .use_estimated_rate = false,
+    .use_estimated_count = false,
 };
 
 static pbio_control_settings_t settings_servo_ev3_large = {
@@ -73,7 +75,8 @@ static pbio_control_settings_t settings_servo_ev3_large = {
     .max_control = 10000,
     .control_offset = 0,
     .actuation_scale = 100,
-    .use_estimated_speed = false,
+    .use_estimated_rate = false,
+    .use_estimated_count = false,
 };
 
 #endif // PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO
@@ -95,7 +98,8 @@ static pbio_control_settings_t settings_servo_move_hub = {
     .max_control = 10000,
     .control_offset = 2000,
     .actuation_scale = 100,
-    .use_estimated_speed = false,
+    .use_estimated_rate = false,
+    .use_estimated_count = false,
 };
 
 #endif // PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
@@ -117,7 +121,8 @@ static pbio_control_settings_t settings_servo_boost_interactive = {
     .max_control = 10000,
     .control_offset = 1000,
     .actuation_scale = 100,
-    .use_estimated_speed = true,
+    .use_estimated_rate = true,
+    .use_estimated_count = false,
 };
 
 static pbio_control_settings_t settings_servo_technic_xl = {
@@ -135,7 +140,8 @@ static pbio_control_settings_t settings_servo_technic_xl = {
     .max_control = 10000,
     .control_offset = 1500,
     .actuation_scale = 100,
-    .use_estimated_speed = true,
+    .use_estimated_rate = true,
+    .use_estimated_count = false,
 };
 
 static pbio_control_settings_t settings_servo_technic_l_angular = {
@@ -153,7 +159,8 @@ static pbio_control_settings_t settings_servo_technic_l_angular = {
     .max_control = 10000,
     .control_offset = 1500,
     .actuation_scale = 100,
-    .use_estimated_speed = true,
+    .use_estimated_rate = true,
+    .use_estimated_count = false,
 };
 
 static pbio_observer_settings_t settings_observer_technic_m_angular = {
