@@ -187,7 +187,7 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
 
     // Modify the feedback signal with additional feed forward terms
     if (srv->control.settings.use_estimated_rate && srv->control.type != PBIO_CONTROL_NONE) {
-        control_now += pbio_observer_get_feed_forward(&srv->observer, acceleration_ref, battery_voltage);
+        control_now += pbio_observer_get_feed_forward(&srv->observer, rate_ref, acceleration_ref, battery_voltage);
     }
 
     // FIXME: Shouldn't need this check here, so refactor duty/torque application.

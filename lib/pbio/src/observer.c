@@ -41,8 +41,8 @@ void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t 
     obs->est_rate = next_rate;
 }
 
-int32_t pbio_observer_get_feed_forward(pbio_observer_t *obs, int32_t acceleration_ref, int32_t battery_voltage) {
+int32_t pbio_observer_get_feed_forward(pbio_observer_t *obs, int32_t rate_ref, int32_t acceleration_ref, int32_t battery_voltage) {
     // TODO: express all of control update in terms of torque, then convert to duty here.
     pbio_observer_settings_t *s = &obs->settings;
-    return ((s->k_1 * acceleration_ref + s->k_2 * obs->est_rate) * 10000) / battery_voltage;
+    return ((s->k_1 * acceleration_ref + s->k_2 * rate_ref) * 1000 * 10000) / battery_voltage;
 }
