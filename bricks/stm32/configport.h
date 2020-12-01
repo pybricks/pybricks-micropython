@@ -148,13 +148,24 @@ static inline mp_uint_t disable_irq(void) {
         pbio_do_one_event(); \
     } while (0);
 
+// There is a possible race condition where an interupt occurs and sets the
+// Coniki poll_requested flag after all events have been processed. So we
+// have a critical section where we disable interupts and check see if there
+// are any last second events. If not, we can call __WFI(), which still wakes
+// up the CPU on interrupt even though interrupts are otherwise disabled.
+
 #define MICROPY_EVENT_POLL_HOOK \
     do { \
-        extern void mp_handle_pending(bool); \
-        mp_handle_pending(true); \
         extern int pbio_do_one_event(void); \
         while (pbio_do_one_event()) { } \
-        __WFI(); \
+        extern void mp_handle_pending(bool); \
+        mp_handle_pending(true); \
+        mp_uint_t _state_ = disable_irq(); \
+        extern int process_nevents(); \
+        if (!process_nevents()) { \
+            __WFI(); \
+        } \
+        enable_irq(_state_); \
     } while (0);
 
 // We need to provide a declaration/definition of alloca()
