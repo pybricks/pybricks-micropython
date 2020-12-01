@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
+#include "py/mpconfig.h"
+
+#if PYBRICKS_PY_NXTDEVICES || PYBRICKS_PY_PUPDEVICES
+
 #include <stdint.h>
 #include <stdio.h>
 
@@ -163,3 +167,5 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_detectable_colors(size_t n_args, 
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(pb_ColorSensor_detectable_colors_obj, 1, pupdevices_ColorDistanceSensor_detectable_colors);
+
+#endif // PYBRICKS_PY_NXTDEVICES || PYBRICKS_PY_PUPDEVICES
