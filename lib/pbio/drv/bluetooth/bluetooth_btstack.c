@@ -176,7 +176,7 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
 
     for (;;) {
         // make sure the Bluetooth chip is in reset long enough to actually reset
-        etimer_set(&timer, clock_from_msec(10000));
+        etimer_set(&timer, clock_from_msec(5));
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
 
         // take Bluetooth chip out of reset
