@@ -157,7 +157,10 @@ void pbdrv_bluetooth_init() {
     // setup Nordic SPP service
     nordic_spp_service_server_init(&nordic_data_received);
 
-    // setup advertisements
+    process_start(&pbdrv_bluetooth_hci_process, NULL);
+}
+
+static void init_advertising_data() {
     uint16_t adv_int_min = 0x0030;
     uint16_t adv_int_max = 0x0030;
     uint8_t adv_type = 0;
@@ -165,8 +168,6 @@ void pbdrv_bluetooth_init() {
     gap_advertisements_set_params(adv_int_min, adv_int_max, adv_type, 0, null_addr, 0x07, 0x00);
     gap_advertisements_set_data(sizeof(adv_data), (uint8_t *)adv_data);
     gap_scan_response_set_data(sizeof(scan_resp_data), (uint8_t *)scan_resp_data);
-
-    process_start(&pbdrv_bluetooth_hci_process, NULL);
 }
 
 PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
@@ -181,6 +182,9 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
 
         // take Bluetooth chip out of reset
         hci_power_control(HCI_POWER_ON);
+
+        // queue advertising data setup
+        init_advertising_data();
 
         // TODO: we should have a timeout and stop scanning eventually
         pbsys_status_set(PBSYS_STATUS_BLE_ADVERTISING);
