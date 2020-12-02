@@ -82,9 +82,7 @@ pbio_error_t pbdrv_bluetooth_tx(uint8_t c) {
 
     // poke the process to start tx soon-ish. This way, we can accumulate up to
     // NRF_CHAR_SIZE bytes before actually transmitting
-    // TODO: it probably would be better to poll here instead of using events
-    // so that we don't fill up the event queue with 20 events
-    process_post(&pbdrv_bluetooth_hci_process, PROCESS_EVENT_MSG, NULL);
+    process_poll(&pbdrv_bluetooth_hci_process);
 
     return PBIO_SUCCESS;
 }
@@ -185,12 +183,11 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
 
         // queue advertising data setup
         init_advertising_data();
+        gap_advertisements_enable(true);
 
         // TODO: we should have a timeout and stop scanning eventually
         pbsys_status_set(PBSYS_STATUS_BLE_ADVERTISING);
-        gap_advertisements_enable(true);
         PROCESS_WAIT_UNTIL(con_handle != HCI_CON_HANDLE_INVALID);
-        gap_advertisements_enable(false);
         pbsys_status_clear(PBSYS_STATUS_BLE_ADVERTISING);
 
         etimer_set(&timer, clock_from_msec(500));
@@ -203,17 +200,16 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
                 // just occasionally checking to see if we are still connected
                 continue;
             }
-            if (ev == PROCESS_EVENT_MSG && uart_tx_buf_size) {
+            if (!uart_tx_busy && uart_tx_buf_size) {
                 uart_tx_busy = true;
                 send_request.callback = &nordic_can_send;
                 nordic_spp_service_server_request_can_send_now(&send_request, con_handle);
-                PROCESS_WAIT_WHILE(uart_tx_busy);
             }
-
         }
 
         // reset Bluetooth chip
         hci_power_control(HCI_POWER_OFF);
+        PROCESS_WAIT_UNTIL(hci_get_state() == HCI_STATE_OFF);
     }
 
     PROCESS_END();
