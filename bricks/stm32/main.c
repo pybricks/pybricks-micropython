@@ -62,7 +62,7 @@ static pbio_error_t wait_for_button_release() {
         if (err != PBIO_SUCCESS) {
             return err;
         }
-        MICROPY_EVENT_POLL_HOOK
+        pb_stm32_poll();
     }
     return PBIO_SUCCESS;
 }
@@ -143,7 +143,7 @@ static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, int32_t time_out)
             return PBIO_ERROR_TIMEDOUT;
         }
         // Keep polling
-        MICROPY_EVENT_POLL_HOOK
+        pb_stm32_poll();
     }
 }
 
