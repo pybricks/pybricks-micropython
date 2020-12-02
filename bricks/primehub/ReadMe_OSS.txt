@@ -66,6 +66,26 @@ Software classified as freeware is licensed at no cost and is either fully funct
 
 ------------------------------------------------------------------------------------------------------------------------
 
+BSD-4-Clause-BTStack
+
+Copyright (c) <year> BlueKitchen GmbH
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+   1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+   2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+   3. Neither the name of the copyright holders nor the names of contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+
+   4. Any redistribution, use, or modification is done solely for personal benefit and not for any commercial purpose or for monetary gain.
+
+THIS SOFTWARE IS PROVIDED BY BLUEKITCHEN GMBH AND CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL MATTHIAS RINGWALD OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Please inquire about commercial licensing options at contact@bluekitchen-gmbh.com
+
+------------------------------------------------------------------------------------------------------------------------
+
 BSD-3-Clause
 
 Copyright (c) <year> <owner>. All rights reserved.
@@ -196,17 +216,21 @@ Copyright (c) 2019 STMicroelectronics
 Copyright (c) 2019 Paul Sokolovsky
 Copyright (c) 2019 Jim Mussared
 Copyright (c) 2019 Damien P. George
+Copyright (c) 2019 BlueKitchen GmbH
 Copyright (c) 2018-2020 The Pybricks Authors
 Copyright (c) 2018 Paul Sokolovsky
+Copyright (c) 2018 BlueKitchen GmbH
 Copyright (c) 2018 Ayke van Laethem
 Copyright (c) 2017-2018 Damien P. George
 Copyright (c) 2017 STMicroelectronics
 Copyright (c) 2017 Damien P. George
+Copyright (c) 2017 BlueKitchen GmbH
 Copyright (c) 2016 STMicroelectronics
 Copyright (c) 2016 Paul Sokolovsky
 Copyright (c) 2016 Linaro Ltd.
 Copyright (c) 2016 Damien P. George on behalf of Pycom Ltd
 Copyright (c) 2016 Damien P. George
+Copyright (c) 2016 BlueKitchen GmbH
 Copyright (c) 2015-2019 Paul Sokolovsky
 Copyright (c) 2015-2018 Paul Sokolovsky
 Copyright (c) 2015-2017 Paul Sokolovsky
@@ -217,6 +241,7 @@ Copyright (c) 2015 Josef Gajdusek
 Copyright (c) 2015 Galen Hazelwood
 Copyright (c) 2015 Daniel Campora
 Copyright (c) 2015 Damien P. George
+Copyright (c) 2015 BlueKitchen GmbH
 Copyright (c) 2014-2019 Damien P. George
 Copyright (c) 2014-2018 Paul Sokolovsky
 Copyright (c) 2014-2017 Paul Sokolovsky
@@ -227,6 +252,7 @@ Copyright (c) 2014-2015 Paul Sokolovsky
 Copyright (c) 2014 Paul Sokolovsky
 Copyright (c) 2014 Fabian Vogt
 Copyright (c) 2014 Damien P. George
+Copyright (c) 2014 BlueKitchen GmbH
 Copyright (c) 2013-2020 Damien P. George
 Copyright (c) 2013-2019 Damien P. George
 Copyright (c) 2013-2018 Damien P. George

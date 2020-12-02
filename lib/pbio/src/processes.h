@@ -7,6 +7,7 @@
 #include <contiki.h>
 
 #include <pbdrv/config.h>
+#include <pbio/config.h>
 
 // All of the contiki processes
 

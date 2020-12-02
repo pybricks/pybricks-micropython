@@ -30,6 +30,10 @@
 #define PBDRV_CONFIG_BATTERY_ADC_TEMPERATURE        (1)
 #define PBDRV_CONFIG_BATTERY_ADC_TEMPERATURE_CH     2
 
+#define PBDRV_CONFIG_BLUETOOTH                      (1)
+#define PBDRV_CONFIG_BLUETOOTH_BTSTACK              (1)
+#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32_CC264X (1)
+
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_ADC                     (1)
 
@@ -61,9 +65,9 @@
 #define PBDRV_CONFIG_LED_ARRAY_PWM_NUM_DEV          (1)
 
 #define PBDRV_CONFIG_PWM                            (1)
-#define PBDRV_CONFIG_PWM_NUM_DEV                    (5)
+#define PBDRV_CONFIG_PWM_NUM_DEV                    (6)
 #define PBDRV_CONFIG_PWM_STM32_TIM                  (1)
-#define PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV          (4)
+#define PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV          (5)
 #define PBDRV_CONFIG_PWM_STM32_TIM_EXTRA_FLAGS      (1)
 #define PBDRV_CONFIG_PWM_TLC5955_STM32              (1)
 #define PBDRV_CONFIG_PWM_TLC5955_STM32_NUM_DEV      (1)
@@ -79,7 +83,6 @@
 #define PBDRV_CONFIG_USB                            (1)
 #define PBDRV_CONFIG_USB_STM32F4_CDC                (1)
 
-#define PBDRV_CONFIG_BLUETOOTH      (0)
 #define PBDRV_CONFIG_MOTOR          (1)
 
 #define PBDRV_CONFIG_HAS_PORT_A (1)

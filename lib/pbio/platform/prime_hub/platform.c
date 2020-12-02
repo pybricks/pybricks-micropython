@@ -3,10 +3,14 @@
 
 #include <stdbool.h>
 
+#include <stm32f4xx_hal.h>
+
 #include "pbio/uartdev.h"
 #include "pbio/light_matrix.h"
 
 #include "../../drv/adc/adc_stm32_hal.h"
+#include "../../drv/bluetooth/bluetooth_btstack_control_gpio.h"
+#include "../../drv/bluetooth/bluetooth_btstack_uart_block_stm32_hal.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_array_pwm.h"
 #include "../../drv/led/led_dual.h"
@@ -14,8 +18,6 @@
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/pwm/pwm_tlc5955_stm32.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
-
-#include "stm32f4xx_hal.h"
 
 // bootloader magic
 
@@ -52,7 +54,8 @@ enum {
     PWM_DEV_1_TIM3,
     PWM_DEV_2_TIM4,
     PWM_DEV_3_TIM12,
-    PWM_DEV_4_TLC5955,
+    PWM_DEV_4_TIM8,
+    PWM_DEV_5_TLC5955,
 };
 
 enum {
@@ -63,6 +66,58 @@ enum {
     UART_PORT_E,
     UART_PORT_F,
 };
+
+// Bluetooth
+
+const pbdrv_bluetooth_btstack_control_gpio_platform_data_t pbdrv_bluetooth_btstack_control_gpio_platform_data = {
+    .enable_gpio = {
+        .bank = GPIOA,
+        .pin = 2,
+    },
+};
+
+const pbdrv_bluetooth_btstack_uart_block_stm32_platform_data_t pbdrv_bluetooth_btstack_uart_block_stm32_platform_data = {
+    .uart = USART2,
+    .uart_irq = USART2_IRQn,
+    .tx_dma = DMA1_Stream6,
+    .tx_dma_ch = DMA_CHANNEL_4,
+    .tx_dma_irq = DMA1_Stream6_IRQn,
+    .rx_dma = DMA1_Stream7,
+    .rx_dma_ch = DMA_CHANNEL_6,
+    .rx_dma_irq = DMA1_Stream7_IRQn,
+};
+
+void HAL_UART_MspInit(UART_HandleTypeDef *huart) {
+    if (huart->Instance == USART2) {
+        GPIO_InitTypeDef gpio_init;
+
+        gpio_init.Mode = GPIO_MODE_AF_PP;
+        gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+        gpio_init.Alternate = GPIO_AF7_USART2;
+
+        // CTS/RTS
+        gpio_init.Pin = GPIO_PIN_3 | GPIO_PIN_4;
+        gpio_init.Pull = GPIO_NOPULL;
+        HAL_GPIO_Init(GPIOD, &gpio_init);
+
+        // TX/RX
+        gpio_init.Pin = GPIO_PIN_5 | GPIO_PIN_6;
+        gpio_init.Pull = GPIO_PULLUP;
+        HAL_GPIO_Init(GPIOD, &gpio_init);
+    }
+}
+
+void DMA1_Stream6_IRQHandler(void) {
+    pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_tx_dma_irq();
+}
+
+void DMA1_Stream7_IRQHandler(void) {
+    pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_rx_dma_irq();
+}
+
+void USART2_IRQHandler(void) {
+    pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_uart_irq();
+}
 
 // LED
 
@@ -77,41 +132,41 @@ const pbdrv_led_dual_platform_data_t pbdrv_led_dual_platform_data[PBDRV_CONFIG_L
 const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED_PWM_NUM_DEV] = {
     {
         .id = LED_DEV_1_STATUS_TOP,
-        .r_id = PWM_DEV_4_TLC5955,
+        .r_id = PWM_DEV_5_TLC5955,
         .r_ch = 5,
-        .g_id = PWM_DEV_4_TLC5955,
+        .g_id = PWM_DEV_5_TLC5955,
         .g_ch = 4,
-        .b_id = PWM_DEV_4_TLC5955,
+        .b_id = PWM_DEV_5_TLC5955,
         .b_ch = 3,
         .scale_factor = 35,
     },
     {
         .id = LED_DEV_2_STATUS_BOTTOM,
-        .r_id = PWM_DEV_4_TLC5955,
+        .r_id = PWM_DEV_5_TLC5955,
         .r_ch = 8,
-        .g_id = PWM_DEV_4_TLC5955,
+        .g_id = PWM_DEV_5_TLC5955,
         .g_ch = 7,
-        .b_id = PWM_DEV_4_TLC5955,
+        .b_id = PWM_DEV_5_TLC5955,
         .b_ch = 6,
         .scale_factor = 35,
     },
     {
         .id = LED_DEV_3_BATTERY,
-        .r_id = PWM_DEV_4_TLC5955,
+        .r_id = PWM_DEV_5_TLC5955,
         .r_ch = 2,
-        .g_id = PWM_DEV_4_TLC5955,
+        .g_id = PWM_DEV_5_TLC5955,
         .g_ch = 1,
-        .b_id = PWM_DEV_4_TLC5955,
+        .b_id = PWM_DEV_5_TLC5955,
         .b_ch = 0,
         .scale_factor = 35,
     },
     {
         .id = LED_DEV_4_BLUETOOTH,
-        .r_id = PWM_DEV_4_TLC5955,
+        .r_id = PWM_DEV_5_TLC5955,
         .r_ch = 20,
-        .g_id = PWM_DEV_4_TLC5955,
+        .g_id = PWM_DEV_5_TLC5955,
         .g_ch = 19,
-        .b_id = PWM_DEV_4_TLC5955,
+        .b_id = PWM_DEV_5_TLC5955,
         .b_ch = 18,
         .scale_factor = 35,
     },
@@ -127,7 +182,7 @@ const pbdrv_led_array_pwm_platform_data_t pbdrv_led_array_pwm_platform_data[PBDR
             25, 40, 30, 35, 9
         },
         .num_pwm_chs = 25,
-        .pwm_id = PWM_DEV_4_TLC5955,
+        .pwm_id = PWM_DEV_5_TLC5955,
         .id = LED_ARRAY_DEV_0_LIGHT_MATRIX,
     },
 };
@@ -153,8 +208,22 @@ static void pwm_dev_3_platform_init() {
     gpio_init.Alternate = GPIO_AF9_TIM12;
     HAL_GPIO_Init(GPIOB, &gpio_init);
 
-    // channel 2 has constant 50% duty cycle
-    TIM12->CCR2 = 5;
+    // channel 2 has constant 50% duty cycle since it acts as a clock
+    TIM12->CCR2 = TIM12->ARR / 2;
+}
+
+static void pwm_dev_4_platform_init() {
+    GPIO_InitTypeDef gpio_init;
+
+    gpio_init.Pin = GPIO_PIN_9;
+    gpio_init.Mode = GPIO_MODE_AF_PP;
+    gpio_init.Pull = GPIO_NOPULL;
+    gpio_init.Speed = GPIO_SPEED_FREQ_LOW;
+    gpio_init.Alternate = GPIO_AF3_TIM8;
+    HAL_GPIO_Init(GPIOC, &gpio_init);
+
+    // channel 4 has constant 50% duty cycle since it acts as a clock
+    TIM8->CCR4 = TIM8->ARR / 2;
 }
 
 // NOTE: Official LEGO firmware uses 1.2 kHz PWM for motors. We have changed to
@@ -208,6 +277,15 @@ const pbdrv_pwm_stm32_tim_platform_data_t
         // channel 2: TLC5955 GSCLK signal
         .channels = PBDRV_PWM_STM32_TIM_CHANNEL_2_ENABLE,
     },
+    {
+        .platform_init = pwm_dev_4_platform_init,
+        .TIMx = TIM8,
+        .prescalar = 1, // results in 96 MHz clock
+        .period = 2930, // 96 MHz divided by 2930 makes 32.765 kHz PWM
+        .id = PWM_DEV_4_TIM8,
+        // channel 4: Bluetooth 32.768 kHz clock
+        .channels = PBDRV_PWM_STM32_TIM_CHANNEL_4_ENABLE,
+    },
 };
 
 const pbdrv_pwm_tlc5955_stm32_platform_data_t
@@ -223,7 +301,7 @@ const pbdrv_pwm_tlc5955_stm32_platform_data_t
         .tx_dma_irq = DMA2_Stream3_IRQn,
         .lat_gpio = GPIOA,
         .lat_gpio_pin = GPIO_PIN_15,
-        .id = PWM_DEV_4_TLC5955,
+        .id = PWM_DEV_5_TLC5955,
     },
 };
 
@@ -622,12 +700,12 @@ void SystemInit(void) {
 
     // enable clocks
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN |
-        RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_DMA2EN;
-    RCC->APB1ENR |= RCC_APB1ENR_UART4EN | RCC_APB1ENR_UART5EN | RCC_APB1ENR_UART7EN |
-        RCC_APB1ENR_UART8EN | RCC_APB1ENR_TIM2EN | RCC_APB1ENR_TIM3EN |
+        RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_DMA1EN | RCC_AHB1ENR_DMA2EN;
+    RCC->APB1ENR |= RCC_APB1ENR_USART2EN | RCC_APB1ENR_UART4EN | RCC_APB1ENR_UART5EN |
+        RCC_APB1ENR_UART7EN | RCC_APB1ENR_UART8EN | RCC_APB1ENR_TIM2EN | RCC_APB1ENR_TIM3EN |
         RCC_APB1ENR_TIM4EN | RCC_APB1ENR_TIM12EN | RCC_APB1ENR_I2C2EN;
-    RCC->APB2ENR |= RCC_APB2ENR_TIM1EN | RCC_APB2ENR_UART9EN | RCC_APB2ENR_UART10EN |
-        RCC_APB2ENR_ADC1EN | RCC_APB2ENR_SPI1EN | RCC_APB2ENR_SYSCFGEN;
+    RCC->APB2ENR |= RCC_APB2ENR_TIM1EN | RCC_APB2ENR_TIM8EN | RCC_APB2ENR_UART9EN |
+        RCC_APB2ENR_UART10EN | RCC_APB2ENR_ADC1EN | RCC_APB2ENR_SPI1EN | RCC_APB2ENR_SYSCFGEN;
     RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
 
     // Keep main power on (PA13 == POWER_EN)

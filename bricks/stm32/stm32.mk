@@ -91,6 +91,10 @@ endif
 ifeq ($(PB_LIB_BLE5STACK),1)
 INC += -I$(PBTOP)/lib/ble5stack/central
 endif
+ifeq ($(PB_LIB_BTSTACK),1)
+INC += -I$(PBTOP)/lib/btstack/chipset/cc256x
+INC += -I$(PBTOP)/lib/btstack/src
+endif
 ifeq ($(PB_USE_LSM6DS3TR_C),1)
 INC += -I$(PBTOP)/lib/lsm6ds3tr_c_STdC/driver
 endif
@@ -250,6 +254,48 @@ BLE5STACK_SRC_C = $(addprefix lib/ble5stack/central/,\
 	util.c \
 	)
 
+# BlueKitchen Bluetooth stack
+
+BTSTACK_SRC_C = $(addprefix lib/btstack/src/,\
+	ad_parser.c \
+	btstack_audio.c \
+	btstack_base64_decoder.c \
+	btstack_crypto.c \
+	btstack_hid_parser.c \
+	btstack_linked_list.c \
+	btstack_memory.c \
+	btstack_memory_pool.c \
+	btstack_ring_buffer.c \
+	btstack_run_loop.c \
+	btstack_slip.c \
+	btstack_tlv.c \
+	btstack_util.c \
+	hci.c \
+	hci_cmd.c \
+	hci_dump.c \
+	hci_transport_em9304_spi.c \
+	hci_transport_h4.c \
+	hci_transport_h5.c \
+	l2cap.c \
+	l2cap_signaling.c \
+	)
+
+BTSTACK_SRC_C += $(addprefix lib/btstack/src/ble/,\
+	gatt-service/nordic_spp_service_server.c \
+	ancs_client.c \
+	att_db_util.c \
+	att_db.c \
+	att_dispatch.c \
+	att_server.c \
+	gatt_client.c \
+	le_device_db_memory.c \
+	sm.c \
+	)
+
+BTSTACK_SRC_C += $(addprefix lib/btstack/chipset/cc256x/,\
+	btstack_chipset_cc256x.c \
+	)
+
 # Contiki
 
 CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
@@ -318,6 +364,11 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/adc/adc_stm32_hal.c \
 	drv/adc/adc_stm32f0.c \
 	drv/battery/battery_adc.c \
+	drv/bluetooth/bluetooth_btstack_control_gpio.c \
+	drv/bluetooth/bluetooth_btstack_run_loop_contiki.c \
+	drv/bluetooth/bluetooth_btstack_uart_block_stm32_hal.c \
+	drv/bluetooth/bluetooth_btstack.c \
+	drv/bluetooth/bluetooth_init_cc2564C_1.4.c \
 	drv/button/button_adc.c \
 	drv/button/button_gpio.c \
 	drv/clock/clock_stm32.c \
@@ -431,6 +482,9 @@ endif
 ifeq ($(PB_LIB_BLE5STACK),1)
 OBJ += $(addprefix $(BUILD)/, $(BLE5STACK_SRC_C:.c=.o))
 endif
+ifeq ($(PB_LIB_BTSTACK),1)
+OBJ += $(addprefix $(BUILD)/, $(BTSTACK_SRC_C:.c=.o))
+endif
 ifeq ($(PB_USE_HAL),1)
 OBJ += $(addprefix $(BUILD)/, $(HAL_SRC_C:.c=.o))
 endif
@@ -470,6 +524,23 @@ TARGETS += $(BUILD)/install_pybricks.llsp
 endif
 
 all: $(TARGETS)
+
+# handle BTStack .gatt files
+
+ifeq ($(PB_LIB_BTSTACK),1)
+
+GATT_FILES := $(addprefix lib/pbio/drv/bluetooth/,\
+	pybricks_service.gatt \
+	)
+
+GATT_H_FILES := $(addprefix $(BUILD)/genhdr/, $(notdir $(GATT_FILES:.gatt=.h)))
+
+$(BUILD)/lib/pbio/drv/bluetooth/bluetooth_btstack.o: $(GATT_H_FILES)
+
+$(BUILD)/genhdr/%.h: $(PBTOP)/lib/pbio/drv/bluetooth/%.gatt
+	$(Q)$(PYTHON) $(PBTOP)/lib/btstack/tool/compile_gatt.py $< $@
+
+endif
 
 FW_CHECKSUM := $$($(CHECKSUM) $(CHECKSUM_TYPE) $(BUILD)/firmware-no-checksum.bin $(PB_FIRMWARE_MAX_SIZE))
 FW_VERSION := $(shell $(GIT) describe --tags --dirty --always --exclude "@pybricks/*")

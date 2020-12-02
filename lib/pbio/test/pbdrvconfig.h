@@ -3,6 +3,9 @@
 
 #define PBDRV_CONFIG_BUTTON                         (1)
 
+#define PBDRV_CONFIG_BLUETOOTH                      (1)
+#define PBDRV_CONFIG_BLUETOOTH_BTSTACK              (1)
+
 #define PBDRV_CONFIG_COUNTER                        (1)
 #define PBDRV_CONFIG_COUNTER_NUM_DEV                (1)
 #define PBDRV_CONFIG_COUNTER_TEST                   (1)

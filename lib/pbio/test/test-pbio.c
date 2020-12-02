@@ -73,6 +73,15 @@ static struct testcase_setup_t pbio_test_setup = {
 
 // PBDRV
 
+PBIO_PT_THREAD_TEST_FUNC(test_btstack_run_loop_contiki_timer);
+PBIO_PT_THREAD_TEST_FUNC(test_btstack_run_loop_contiki_poll);
+
+static struct testcase_t pbdrv_bluetooth_tests[] = {
+    PBIO_PT_THREAD_TEST(test_btstack_run_loop_contiki_timer),
+    PBIO_PT_THREAD_TEST(test_btstack_run_loop_contiki_poll),
+    END_OF_TESTCASES
+};
+
 PBIO_TEST_FUNC(test_counter_get);
 
 static struct testcase_t pbdrv_counter_tests[] = {
@@ -162,6 +171,7 @@ static struct testcase_t pbsys_status_tests[] = {
 };
 
 static struct testgroup_t test_groups[] = {
+    { "drv/bluetooth/", pbdrv_bluetooth_tests },
     { "drv/counter/", pbdrv_counter_tests },
     { "drv/pwm/", pbdrv_pwm_tests },
     { "src/color/", pbio_color_tests },

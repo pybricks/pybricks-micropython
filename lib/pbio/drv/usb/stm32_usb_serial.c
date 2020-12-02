@@ -219,24 +219,26 @@ static void pbdrv_stm32_usb_serial_receive() {
     }
 }
 
-pbio_error_t pbsys_stdout_put_char(uint8_t c) {
-    if (!usb_connected) {
-        // don't lock up print() when USB not connected - data is discarded
-        return PBIO_SUCCESS;
-    }
-    if (ringbuf_put(&stdout_buf, c) == 0) {
-        return PBIO_ERROR_AGAIN;
-    }
-    return PBIO_SUCCESS;
-}
+// TODO: need to multiplex stdin/stdout with Bluetooth or remove USB serial
 
-pbio_error_t pbsys_stdin_get_char(uint8_t *c) {
-    if (ringbuf_elements(&stdin_buf) == 0) {
-        return PBIO_ERROR_AGAIN;
-    }
-    *c = ringbuf_get(&stdin_buf);
-    return PBIO_SUCCESS;
-}
+// pbio_error_t pbsys_stdout_put_char(uint8_t c) {
+//     if (!usb_connected) {
+//         // don't lock up print() when USB not connected - data is discarded
+//         return PBIO_SUCCESS;
+//     }
+//     if (ringbuf_put(&stdout_buf, c) == 0) {
+//         return PBIO_SUCCESS;
+//     }
+//     return PBIO_SUCCESS;
+// }
+
+// pbio_error_t pbsys_stdin_get_char(uint8_t *c) {
+//     if (ringbuf_elements(&stdin_buf) == 0) {
+//         return PBIO_ERROR_AGAIN;
+//     }
+//     *c = ringbuf_get(&stdin_buf);
+//     return PBIO_SUCCESS;
+// }
 
 PROCESS_THREAD(pbdrv_usb_process, ev, data) {
     static struct etimer timer;
