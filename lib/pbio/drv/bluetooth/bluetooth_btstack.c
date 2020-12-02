@@ -190,16 +190,14 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
         PROCESS_WAIT_UNTIL(con_handle != HCI_CON_HANDLE_INVALID);
         pbsys_status_clear(PBSYS_STATUS_BLE_ADVERTISING);
 
-        etimer_set(&timer, clock_from_msec(500));
-
-        // con_handle is set to HCI_CON_HANDLE_INVALID upon disconnection
-        while (con_handle != HCI_CON_HANDLE_INVALID) {
+        for (;;) {
             PROCESS_WAIT_EVENT();
-            if (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)) {
-                etimer_reset(&timer);
-                // just occasionally checking to see if we are still connected
-                continue;
+
+            if (con_handle == HCI_CON_HANDLE_INVALID) {
+                // disconnected
+                break;
             }
+
             if (!uart_tx_busy && uart_tx_buf_size) {
                 uart_tx_busy = true;
                 send_request.callback = &nordic_can_send;
