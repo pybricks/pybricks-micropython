@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <contiki.h>
+
 #include <pbio/button.h>
 #include <pbio/main.h>
 #include <pbio/light.h>
@@ -27,6 +29,25 @@ static char *stack_top;
 #if MICROPY_ENABLE_GC
 static char heap[PYBRICKS_HEAP_KB * 1024];
 #endif
+
+// Implementation for MICROPY_EVENT_POLL_HOOK
+void pb_stm32_poll() {
+    while (pbio_do_one_event()) {
+    }
+
+    mp_handle_pending(true);
+
+    // There is a possible race condition where an interupt occurs and sets the
+    // Coniki poll_requested flag after all events have been processed. So we
+    // have a critical section where we disable interupts and check see if there
+    // are any last second events. If not, we can call __WFI(), which still wakes
+    // up the CPU on interrupt even though interrupts are otherwise disabled.
+    mp_uint_t state = disable_irq();
+    if (!process_nevents()) {
+        __WFI();
+    }
+    enable_irq(state);
+}
 
 // User .mpy file can be up to 1/2 of heap size. The code loader makes a new
 // (slightly modified) copy, so we need at least this much free.
