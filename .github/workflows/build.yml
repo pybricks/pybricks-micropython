@@ -161,7 +161,7 @@ jobs:
         key: gcc-arm-9-2020-q2
     - name: Download
       if: steps.check-cache.outputs.cache-hit != 'true'
-      uses: fiam/arm-none-eabi-gcc@v1.0.2
+      uses: fiam/arm-none-eabi-gcc@v1.0.3
       with:
         release: '9-2020-q2'
         directory: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
