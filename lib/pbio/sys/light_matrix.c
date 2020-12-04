@@ -50,7 +50,7 @@ void pbsys_hub_light_matrix_init() {
 
 static uint32_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_animation_t *animation) {
     // The indexes of pixels to light up
-    static const uint8_t indexes[] = { 6, 7, 8, 13, 18, 17, 16, 11 };
+    static const uint8_t indexes[] = { 1, 2, 3, 8, 13, 12, 11, 6 };
 
     // Each pixel has a repeating brightness pattern of the form /\_ through
     // which we can cycle in 256 steps.
