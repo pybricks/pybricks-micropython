@@ -51,31 +51,26 @@ void pbsys_hub_light_matrix_init() {
 static uint32_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_animation_t *animation) {
     // The indexes of pixels to light up
     static const uint8_t indexes[] = { 6, 7, 8, 13, 18, 17, 16, 11 };
-    // sine wave for brightness
-    static const uint8_t data[] = {
-        0, 1, 2, 3, 5, 7, 10, 13, 17, 21, 25, 30, 35, 40, 45, 50,
-        56, 61, 66, 71, 75, 80, 84, 88, 91, 94, 96, 98, 99, 100, 100, 100,
-        99, 98, 96, 94, 91, 88, 84, 80, 75, 71, 66, 61, 56, 50, 45, 40,
-        35, 30, 25, 21, 17, 13, 10, 7, 5, 3, 2, 1, 0, 0, 0, 0,
-    };
-    // keeps track of where we are in the animation
-    static uint8_t offset = 0;
+
+    // Each pixel has a repeating brightness pattern of the form /\_ through
+    // which we can cycle in 256 steps.
+    static uint8_t cycle = 0;
 
     pbdrv_led_array_dev_t *array;
     if (pbdrv_led_array_get_dev(0, &array) == PBIO_SUCCESS) {
         for (int i = 0; i < PBIO_ARRAY_SIZE(indexes); i++) {
-            // Pixels are offset equally from each other in the data array so that
-            // we get an animation that looks like the brightess is smoothly moving
-            // from pixel to pixel.
-            uint8_t brightness = data[(i * PBIO_ARRAY_SIZE(indexes) + offset++) % PBIO_ARRAY_SIZE(data)];
+            // The pixels are spread equally across the pattern.
+            uint8_t offset = cycle + i * (UINT8_MAX / PBIO_ARRAY_SIZE(indexes));
+            uint8_t brightness = offset > 200 ? 0 : (offset < 100 ? offset : 200 - offset);
+
+            // Set the brightness for this pixel
             pbdrv_led_array_set_brightness(array, indexes[i], brightness);
-            // As long as PBIO_ARRAY_SIZE(data) is a multiple of the max offset (+1),
-            // offset wraps around correctly when the addition overflows.
-            _Static_assert((1 << (sizeof(offset) * 8)) % PBIO_ARRAY_SIZE(data) == 0, "needed for correct wraparound");
         }
+        // This increment controls the speed of the pattern
+        cycle += 9;
     }
 
-    return 100;
+    return 40;
 }
 
 void pbsys_hub_light_matrix_handle_event(process_event_t event, process_data_t data) {
