@@ -41,7 +41,7 @@ static void pbio_test_run_thread(void *env) {
 
     pbio_init();
 
-    PT_INIT(&pt)
+    PT_INIT(&pt);
     clock_gettime(CLOCK_MONOTONIC, &start_time);
 
     while (PT_SCHEDULE(test_thread(&pt))) {
