@@ -758,7 +758,7 @@ PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     tt_want_int_op(count, ==, -1);
     tt_want_uint_op(pbdrv_counter_get_abs_count(counter, &count), ==, PBIO_ERROR_NOT_SUPPORTED);
     tt_want_uint_op(pbdrv_counter_get_rate(counter, &count), ==, PBIO_SUCCESS);
-    tt_want_int_op(count, ==, -1500);
+    tt_want_int_op(count, ==, -1400);
 
     // should be synced now are receive regular pings
     static int i;
