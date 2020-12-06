@@ -86,7 +86,7 @@ static int btstack_uart_block_stm32_hal_init(const btstack_uart_config_t *config
     btstack_huart.Init.Parity = UART_PARITY_NONE;
     btstack_huart.Init.Mode = UART_MODE_TX_RX;
     btstack_huart.Init.HwFlowCtl = config->flowcontrol ? UART_HWCONTROL_RTS_CTS : UART_HWCONTROL_NONE;
-    btstack_huart.Init.OverSampling = UART_OVERSAMPLING_8;
+    btstack_huart.Init.OverSampling = UART_OVERSAMPLING_16;
     HAL_UART_Init(&btstack_huart);
 
     __HAL_LINKDMA(&btstack_huart, hdmatx, btstack_tx_hdma);
@@ -146,7 +146,7 @@ static int btstack_uart_block_stm32_hal_set_baudrate(uint32_t baud) {
         periphclk = rcc_clocks.PCLK1_Frequency;
     }
 
-    LL_USART_SetBaudRate(usart, periphclk, LL_USART_OVERSAMPLING_8, baud);
+    LL_USART_SetBaudRate(usart, periphclk, LL_USART_OVERSAMPLING_16, baud);
 
     return 0;
 }

@@ -54,13 +54,14 @@ const uint8_t scan_resp_data[] = {
 
 _Static_assert(sizeof(scan_resp_data) <= 31, "31 octect max");
 
+// note on baud rate: with a 48MHz clock, 3000000 baud is the highest we can
+// go with LL_USART_OVERSAMPLING_16. With LL_USART_OVERSAMPLING_8 we could go
+// to 4000000, which is the max rating of the CC2564C.
+
 static const hci_transport_config_uart_t config = {
     .type = HCI_TRANSPORT_CONFIG_UART,
     .baudrate_init = 115200,
-    .baudrate_main = 115200,
-    // FIXME: Fails to receive valid data after baud rate change if we have a different rate here.
-    // ENABLE_CC256X_BAUDRATE_CHANGE_FLOWCONTROL_BUG_WORKAROUND doesn't seem to make a difference
-    // .baudrate_main = 921600,
+    .baudrate_main = 3000000,
     .flowcontrol = 1,
     .device_name = NULL,
 };

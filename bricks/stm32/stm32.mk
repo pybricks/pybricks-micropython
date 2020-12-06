@@ -345,6 +345,15 @@ HAL_SRC_C := $(filter-out %xx_hal_pcd_ex.c, $(HAL_SRC_C))
 HAL_SRC_C := $(filter-out %xx_hal_pcd.c, $(HAL_SRC_C))
 HAL_SRC_C := $(filter-out %xx_ll_usb.c, $(HAL_SRC_C))
 endif
+ifeq ($(PB_LIB_BTSTACK),1)
+# use patched version of HAL UART from BTStack instead of MicroPython version
+ifneq ($(PB_MCU_SERIES),F4)
+$(error "BTStack is only supported on STM32F4xx")
+endif
+HAL_SRC_C := $(filter-out %xx_hal_uart.c, $(HAL_SRC_C))
+HAL_SRC_C += lib/btstack/port/stm32-f4discovery-cc256x/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_uart.c
+endif
+
 # libfixmath
 
 COPT += -DFIXMATH_NO_CTYPE
