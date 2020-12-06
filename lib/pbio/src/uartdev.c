@@ -146,6 +146,7 @@ typedef enum {
  * @info_flags: Flags indicating what information has already been read
  *      from the data.
  * @tacho_count: The tacho count received from an LPF2 motor
+ * @tacho_offset: Tacho count offset to account for unexpected jumps in LPF2 tacho data
  * @abs_pos: The absolute position received from an LPF2 motor
  * @tx_msg: Buffer to hold messages transmitted to the device
  * @rx_msg: Buffer to hold messages received from the device
@@ -181,6 +182,7 @@ typedef struct {
     uint32_t new_baud_rate;
     uint32_t info_flags;
     int32_t tacho_count;
+    int32_t tacho_offset;
     int16_t abs_pos;
     uint8_t *tx_msg;
     uint8_t *rx_msg;
@@ -663,7 +665,21 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
 
             if (PBIO_IODEV_IS_FEEDBACK_MOTOR(&data->iodev) && data->write_cmd_size > 0) {
                 data->tacho_rate = data->rx_msg[1];
-                data->tacho_count = uint32_le(data->rx_msg + 2);
+
+                // Decode the tacho count data message
+                int32_t tacho_count_msg = uint32_le(data->rx_msg + 2);
+
+                // Sometimes, the incremental tacho data unexpectedly jumps by multiples
+                // of -/+360, so add a correction if an impossibly high change is detected.
+                while (tacho_count_msg - data->tacho_offset - data->tacho_count < -270) {
+                    data->tacho_offset -= 360;
+                }
+                while (tacho_count_msg - data->tacho_offset - data->tacho_count > 270) {
+                    data->tacho_offset += 360;
+                }
+                // The counter driver must return the corrected count
+                data->tacho_count = tacho_count_msg - data->tacho_offset;
+
                 if (data->iodev.motor_flags & PBIO_IODEV_MOTOR_FLAG_HAS_ABS_POS) {
                     data->abs_pos = data->rx_msg[7] << 8 | data->rx_msg[6];
                 }
@@ -999,6 +1015,9 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
             goto err;
         }
         data->tx_busy = false;
+
+        // Reset tacho offset
+        data->tacho_offset = 0;
     }
 
     while (data->status == PBIO_UARTDEV_STATUS_DATA) {
