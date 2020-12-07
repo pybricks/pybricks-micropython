@@ -218,15 +218,6 @@ static void run_user_program(uint32_t len, uint8_t *buf, uint32_t free_len) {
         return;
     }
 
-    if (len == REPL_LEN) {
-        #if MICROPY_ENABLE_COMPILER
-        pyexec_friendly_repl();
-        #else
-        mp_print_str(&mp_plat_print, "REPL not supported!\n");
-        #endif // MICROPY_ENABLE_COMPILER
-        return;
-    }
-
     // Send a message to say we will run a program
     mp_print_str(&mp_plat_print, "\n>>>> RUNNING\n");
 
@@ -235,6 +226,15 @@ static void run_user_program(uint32_t len, uint8_t *buf, uint32_t free_len) {
     // This is useful regardless, and in this case it's okay if a few dashes
     // are gobbled up.
     mp_print_str(&mp_plat_print, "--------------\n");
+
+    if (len == REPL_LEN) {
+        #if MICROPY_ENABLE_COMPILER
+        pyexec_friendly_repl();
+        #else
+        mp_print_str(&mp_plat_print, "REPL not supported!\n");
+        #endif // MICROPY_ENABLE_COMPILER
+        return;
+    }
 
     // Allow script to be stopped with hub button
     mp_hal_set_interrupt_char(3);
