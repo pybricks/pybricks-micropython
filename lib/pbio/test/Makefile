@@ -107,6 +107,7 @@ PBIO_SRC = \
 	$(shell find $(PBIO_DIR)/drv/ ! -wholename "*/ev3dev_stretch/*" -and -name "*.c") \
 	$(shell find $(PBIO_DIR)/src -name "*.c") \
 	$(shell find $(PBIO_DIR)/sys -name "*.c") \
+	$(shell find $(PBIO_DIR)/platform/motors -name "*.c") \
 
 # tests
 TEST_INC = -I.
