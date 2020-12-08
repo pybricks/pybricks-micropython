@@ -33,9 +33,9 @@ typedef struct _pbio_control_settings_t {
     int32_t rate_tolerance;         /**< Allowed deviation (counts/s) from target speed. Hence, if speed target is zero, any speed below this tolerance is considered to be standstill. */
     int32_t count_tolerance;        /**< Allowed deviation (counts) from target before motion is considered complete */
     int32_t abs_acceleration;       /**< Encoder acceleration/deceleration rate when beginning to move or stopping. Positive value in counts per second per second */
-    int16_t pid_kp;                 /**< Proportional position control constant (and integral speed control constant) */
-    int16_t pid_ki;                 /**< Integral position control constant */
-    int16_t pid_kd;                 /**< Derivative position control constant (and proportional speed control constant) */
+    int32_t pid_kp;                 /**< Proportional position control constant (and integral speed control constant) */
+    int32_t pid_ki;                 /**< Integral position control constant */
+    int32_t pid_kd;                 /**< Derivative position control constant (and proportional speed control constant) */
     int32_t max_control;            /**< Upper limit on control output */
     int32_t control_offset;         /**< Constant feedforward signal added in the reference direction */
     int32_t actuation_scale;        /**< Number of "duty steps" per "%" user-specified raw actuation value */
