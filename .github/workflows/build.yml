@@ -155,7 +155,7 @@ jobs:
     steps:
     - name: Check cache
       id: check-cache
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       with:
         path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
         key: gcc-arm-9-2020-q2
@@ -176,7 +176,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: Install cross-compiler
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       with:
         path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
         key: gcc-arm-9-2020-q2
@@ -239,7 +239,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - name: Install cross-compiler
-      uses: actions/cache@v1
+      uses: actions/cache@v2
       with:
         path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
         key: gcc-arm-9-2020-q2
