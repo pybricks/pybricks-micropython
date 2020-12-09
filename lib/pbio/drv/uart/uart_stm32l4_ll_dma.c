@@ -324,9 +324,6 @@ pbio_error_t pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud)
 }
 
 void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
-    pbdrv_uart_write_cancel(uart_dev);
-    pbdrv_uart_read_cancel(uart_dev);
-
     pbdrv_uart_t *uart = PBIO_CONTAINER_OF(uart_dev, pbdrv_uart_t, uart_dev);
     uart->read_buf = NULL;
     uart->read_length = 0;
