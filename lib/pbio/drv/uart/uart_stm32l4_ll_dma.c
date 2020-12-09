@@ -323,6 +323,9 @@ pbio_error_t pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud)
     return PBIO_SUCCESS;
 }
 
+void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
+}
+
 void pbdrv_uart_stm32l4_ll_dma_handle_tx_dma_irq(uint8_t id) {
     const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = &pbdrv_uart_stm32l4_ll_dma_platform_data[id];
     if (LL_DMA_IsEnabledIT_TC(pdata->tx_dma, pdata->tx_dma_ch) && dma_is_tc(pdata->tx_dma, pdata->tx_dma_ch)) {

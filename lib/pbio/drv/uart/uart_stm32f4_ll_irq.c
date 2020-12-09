@@ -179,6 +179,9 @@ pbio_error_t pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart_dev, uint32_t baud)
     return PBIO_SUCCESS;
 }
 
+void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
+}
+
 void pbdrv_uart_stm32f4_ll_irq_handle_irq(uint8_t id) {
     pbdrv_uart_t *uart = &pbdrv_uart[id];
     USART_TypeDef *USARTx = uart->pdata->uart;

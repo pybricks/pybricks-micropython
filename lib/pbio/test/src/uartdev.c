@@ -1532,6 +1532,9 @@ pbio_error_t pbdrv_uart_set_baud_rate(pbdrv_uart_dev_t *uart, uint32_t baud) {
     return PBIO_SUCCESS;
 }
 
+void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
+}
+
 pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t length, uint32_t timeout) {
     if (test_uart_dev.rx_msg) {
         return PBIO_ERROR_AGAIN;

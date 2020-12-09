@@ -832,7 +832,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
     // motor that does not send this info
     data->max_tacho_rate = 1400;
 
-    // FIXME: need to flush UART read buffer here
+    pbdrv_uart_flush(data->uart);
 
     // Send SPEED command at 115200 baud
     PBIO_PT_WAIT_READY(&data->pt, pbdrv_uart_set_baud_rate(data->uart, EV3_UART_SPEED_LPF2));
