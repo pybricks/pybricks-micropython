@@ -481,35 +481,48 @@ PROCESS_THREAD(pbdrv_ioport_lpf2_process, ev, data) {
     }
 
     while (true) {
-        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
-        etimer_reset(&timer);
+        PROCESS_WAIT_EVENT();
 
-        for (int i = 0; i < PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS; i++) {
-            ioport_dev_t *ioport = &ioport_devs[i];
+        // If pbio_uartdev_process tells us the uart device was removed, reset
+        // ioport id so the next timer event will take care of resetting the ioport
+        if (ev == PROCESS_EVENT_SERVICE_REMOVED) {
+            for (int i = 0; i < PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS; i++) {
+                ioport_dev_t *ioport = &ioport_devs[i];
 
-            if (ioport->connected_type_id != PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
-                poll_dcm(ioport);
+                if (ioport->iodev == (pbio_iodev_t *)data) {
+                    ioport->connected_type_id = PBIO_IODEV_TYPE_ID_NONE;
+                }
             }
+        } else if (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)) {
+            etimer_reset(&timer);
 
-            if (ioport->connected_type_id != ioport->prev_type_id) {
-                ioport->prev_type_id = ioport->connected_type_id;
-                if (ioport->connected_type_id == PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
-                    ioport_enable_uart(ioport);
-                    pbio_uartdev_get(i, &ioport->iodev);
-                } else if (ioport->connected_type_id == PBIO_IODEV_TYPE_ID_NONE) {
-                    ioport->iodev = NULL;
-                } else {
-                    assert(ioport->connected_type_id < PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART);
-                    pbio_iodev_t *iodev = &basic_devs[i];
-                    const pbio_iodev_info_t *info = &basic_infos[ioport->connected_type_id].info;
-                    iodev->info = info;
+            for (int i = 0; i < PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS; i++) {
+                ioport_dev_t *ioport = &ioport_devs[i];
 
-                    const lump_mode_flags_t *flags = &info->mode_info[0].flags;
-                    iodev->motor_flags = PBIO_IODEV_MOTOR_FLAG_NONE;
-                    if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_POWER) {
-                        iodev->motor_flags |= PBIO_IODEV_MOTOR_FLAG_IS_MOTOR;
+                if (ioport->connected_type_id != PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
+                    poll_dcm(ioport);
+                }
+
+                if (ioport->connected_type_id != ioport->prev_type_id) {
+                    ioport->prev_type_id = ioport->connected_type_id;
+                    if (ioport->connected_type_id == PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
+                        ioport_enable_uart(ioport);
+                        pbio_uartdev_get(i, &ioport->iodev);
+                    } else if (ioport->connected_type_id == PBIO_IODEV_TYPE_ID_NONE) {
+                        ioport->iodev = NULL;
+                    } else {
+                        assert(ioport->connected_type_id < PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART);
+                        pbio_iodev_t *iodev = &basic_devs[i];
+                        const pbio_iodev_info_t *info = &basic_infos[ioport->connected_type_id].info;
+                        iodev->info = info;
+
+                        const lump_mode_flags_t *flags = &info->mode_info[0].flags;
+                        iodev->motor_flags = PBIO_IODEV_MOTOR_FLAG_NONE;
+                        if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_POWER) {
+                            iodev->motor_flags |= PBIO_IODEV_MOTOR_FLAG_IS_MOTOR;
+                        }
+                        ioport->iodev = iodev;
                     }
-                    ioport->iodev = iodev;
                 }
             }
         }

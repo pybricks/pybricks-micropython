@@ -823,6 +823,8 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
 
     PT_BEGIN(&data->pt);
 
+    // TODO: wait for ioport to be ready for a uartdevice
+
     // reset state for new device
     data->info->type_id = PBIO_IODEV_TYPE_ID_NONE;
     data->iodev.motor_flags = PBIO_IODEV_MOTOR_FLAG_NONE;
@@ -1062,7 +1064,7 @@ err:
     debug_pr("%s\n", data->last_err);
     data->err_count++;
 
-    process_post(PROCESS_BROADCAST, PROCESS_EVENT_SERVICE_REMOVED, NULL);
+    process_post(PROCESS_BROADCAST, PROCESS_EVENT_SERVICE_REMOVED, &data->iodev);
 
     PT_END(&data->pt);
 }
