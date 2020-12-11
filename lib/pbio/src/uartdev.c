@@ -838,6 +838,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
 
     // Send SPEED command at 115200 baud
     PBIO_PT_WAIT_READY(&data->pt, pbdrv_uart_set_baud_rate(data->uart, EV3_UART_SPEED_LPF2));
+    debug_pr("set baud: %d\n", EV3_UART_SPEED_LPF2);
     PT_SPAWN(&data->pt, &data->speed_pt, pbio_uartdev_send_speed_msg(data, EV3_UART_SPEED_LPF2));
 
     // read one byte to check for ACK
@@ -851,6 +852,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
     if ((err == PBIO_SUCCESS && data->rx_msg[0] != LUMP_SYS_ACK) || err == PBIO_ERROR_TIMEDOUT) {
         // if we did not get ACK within 100ms, then switch to slow baud rate for sync
         PBIO_PT_WAIT_READY(&data->pt, pbdrv_uart_set_baud_rate(data->uart, EV3_UART_SPEED_MIN));
+        debug_pr("set baud: %d\n", EV3_UART_SPEED_MIN);
     } else if (err != PBIO_SUCCESS) {
         DBG_ERR(data->last_err = "UART Rx error during baud");
         goto err;
@@ -984,6 +986,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
 
     // change the baud rate
     PBIO_PT_WAIT_READY(&data->pt, pbdrv_uart_set_baud_rate(data->uart, data->new_baud_rate));
+    debug_pr("set baud: %" PRIu32 "\n", data->new_baud_rate);
 
     // setting type_id in info struct lets external modules know a device is connected
     data->info->type_id = data->type_id;
