@@ -7,6 +7,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <contiki.h>
+
 #include <pbdrv/led.h>
 #include <pbio/error.h>
 #include <pbio/event.h>
@@ -48,7 +50,7 @@ void pbsys_hub_light_matrix_init() {
     pbio_light_matrix_init(pbsys_hub_light_matrix, 5, &pbsys_hub_light_matrix_funcs);
 }
 
-static uint32_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_animation_t *animation) {
+static clock_time_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_animation_t *animation) {
     // The indexes of pixels to light up
     static const uint8_t indexes[] = { 1, 2, 3, 8, 13, 12, 11, 6 };
 
@@ -70,7 +72,7 @@ static uint32_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_an
         cycle += 9;
     }
 
-    return 40;
+    return clock_from_msec(40);
 }
 
 void pbsys_hub_light_matrix_handle_event(process_event_t event, process_data_t data) {
