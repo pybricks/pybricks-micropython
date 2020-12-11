@@ -1,0 +1,306 @@
+// https://code.visualstudio.com/docs/cpp/c-cpp-properties-schema-reference
+//
+// These configurations basically should say exactly what the makefiles do:
+// * include paths should be in same order as in makefiles
+// * defines are only needed for things defined in makefiles
+// * compiler options should match what is selected in the makefiles
+//
+// Note: to correctly find the cross compiler if it isn't in $PATH, add:
+//
+//    export GCC_9_ARM_NONE_EABI_BIN=/path/to/gcc-9-arm-none-eabi/bin/
+//
+// in .bashrc or .zshrc (trailing slash is required), then restart VS Code.
+
+{
+    "env": {
+        "gcc9ArmNoneEabi": "${env:GCC_9_ARM_NONE_EABI_BIN}arm-none-eabi-gcc"
+    },
+    "configurations": [
+        {
+            "name": "movehub",
+            "includePath": [
+                "${workspaceFolder}/micropython/lib/cmsis/inc",
+                "${workspaceFolder}/micropython/lib/stm32lib/CMSIS/STM32F0xx/Include",
+                "${workspaceFolder}/lib/contiki-core",
+                "${workspaceFolder}/lib/lego",
+                "${workspaceFolder}/lib/libfixmath/libfixmath",
+                "${workspaceFolder}/lib/pbio/include",
+                "${workspaceFolder}/lib/pbio/platform/move_hub",
+                "${workspaceFolder}/lib/pbio",
+                "${workspaceFolder}/lib/BlueNRG-MS/includes",
+                "${workspaceFolder}",
+                "${workspaceFolder}/bricks/movehub",
+                "${workspaceFolder}/bricks/movehub/build",
+                "${workspaceFolder}/micropython"
+            ],
+            "defines": [
+                "MICROPY_ROM_TEXT_COMPRESSION",
+                "STM32F070xB",
+                "STM32_H=<stm32f0xx.h>",
+                "STM32_HAL_H=<stm32f0xx_hal.h>",
+                "USE_FULL_LL_DRIVER",
+                "FIXMATH_NO_CTYPE"
+            ],
+            "compilerPath": "${gcc9ArmNoneEabi}",
+            "compilerArgs": [
+                "-Wall",
+                "-Werror",
+                "-nostdlib",
+                "-fshort-enums",
+                "-mthumb",
+                "-mtune=cortex-m0",
+                "-mcpu=cortex-m0",
+                "-msoft-float"
+            ],
+            "cStandard": "c11",
+            "intelliSenseMode": "gcc-arm"
+        },
+        {
+            "name": "cityhub",
+            "includePath": [
+                "${workspaceFolder}/micropython/lib/cmsis/inc",
+                "${workspaceFolder}/micropython/lib/stm32lib/CMSIS/STM32F0xx/Include",
+                "${workspaceFolder}/micropython/lib/stm32lib/STM32F0xx_HAL_Driver/Inc",
+                "${workspaceFolder}/lib/ble5stack/central",
+                "${workspaceFolder}/lib/contiki-core",
+                "${workspaceFolder}/lib/lego",
+                "${workspaceFolder}/lib/libfixmath/libfixmath",
+                "${workspaceFolder}/lib/pbio/include",
+                "${workspaceFolder}/lib/pbio/platform/city_hub",
+                "${workspaceFolder}/lib/pbio",
+                "${workspaceFolder}",
+                "${workspaceFolder}/bricks/cityhub",
+                "${workspaceFolder}/bricks/cityhub/build",
+                "${workspaceFolder}/micropython"
+            ],
+            "defines": [
+                "MICROPY_ROM_TEXT_COMPRESSION",
+                "STM32F030xC",
+                "STM32_H=<stm32f0xx.h>",
+                "STM32_HAL_H=<stm32f0xx_hal.h>",
+                "USE_FULL_LL_DRIVER",
+                "FIXMATH_NO_CTYPE"
+            ],
+            "compilerPath": "${gcc9ArmNoneEabi}",
+            "compilerArgs": [
+                "-Wall",
+                "-Werror",
+                "-nostdlib",
+                "-fshort-enums",
+                "-mthumb",
+                "-mtune=cortex-m0",
+                "-mcpu=cortex-m0",
+                "-msoft-float"
+            ],
+            "cStandard": "c11",
+            "intelliSenseMode": "gcc-arm"
+        },
+        {
+            "name": "technichub",
+            "includePath": [
+                "${workspaceFolder}/micropython/lib/cmsis/inc",
+                "${workspaceFolder}/micropython/lib/stm32lib/CMSIS/STM32L4xx/Include",
+                "${workspaceFolder}/micropython/lib/stm32lib/STM32L4xx_HAL_Driver/Inc",
+                "${workspaceFolder}/lib/ble5stack/central",
+                "${workspaceFolder}/lib/contiki-core",
+                "${workspaceFolder}/lib/lego",
+                "${workspaceFolder}/lib/libfixmath/libfixmath",
+                "${workspaceFolder}/lib/pbio/include",
+                "${workspaceFolder}/lib/pbio/platform/technic_hub",
+                "${workspaceFolder}/lib/pbio",
+                "${workspaceFolder}/lib/ble5stack/central",
+                "${workspaceFolder}/lib/lsm6ds3tr_c_STdC/driver",
+                "${workspaceFolder}",
+                "${workspaceFolder}/bricks/technichub",
+                "${workspaceFolder}/bricks/technichub/build",
+                "${workspaceFolder}/micropython",
+                "${workspaceFolder}/lib/pbio/include"
+            ],
+            "defines": [
+                "MICROPY_ROM_TEXT_COMPRESSION",
+                "HSE_VALUE=8000000",
+                "STM32L431xx",
+                "STM32_H=<stm32l4xx.h>",
+                "STM32_HAL_H=<stm32l4xx_hal.h>",
+                "USE_FULL_LL_DRIVER",
+                "FIXMATH_NO_CTYPE"
+            ],
+            "compilerPath": "${gcc9ArmNoneEabi}",
+            "compilerArgs": [
+                "-Wall",
+                "-Werror",
+                "-nostdlib",
+                "-fshort-enums",
+                "-mthumb",
+                "-mtune=cortex-m4",
+                "-mcpu=cortex-m4",
+                "-mfpu=fpv4-sp-d16",
+                "-mfloat-abi=hard",
+                "-fsingle-precision-constant",
+                "-Wdouble-promotion"
+            ],
+            "cStandard": "c11",
+            "intelliSenseMode": "gcc-arm"
+        },
+        {
+            "name": "primehub",
+            "includePath": [
+                "${workspaceFolder}/micropython/lib/cmsis/inc",
+                "${workspaceFolder}/micropython/lib/stm32lib/CMSIS/STM32F4xx/Include",
+                "${workspaceFolder}/micropython/lib/stm32lib/STM32F4xx_HAL_Driver/Inc",
+                "${workspaceFolder}/lib/STM32_USB_Device_Library/Core/Inc",
+                "${workspaceFolder}/lib/STM32_USB_Device_Library/Class/CDC/Inc",
+                "${workspaceFolder}/lib/btstack/chipset/cc256x",
+                "${workspaceFolder}/lib/btstack/src",
+                "${workspaceFolder}/lib/contiki-core",
+                "${workspaceFolder}/lib/lego",
+                "${workspaceFolder}/lib/libfixmath/libfixmath",
+                "${workspaceFolder}/lib/lsm6ds3tr_c_STdC/driver",
+                "${workspaceFolder}/lib/pbio/include",
+                "${workspaceFolder}/lib/pbio/platform/prime_hub",
+                "${workspaceFolder}",
+                "${workspaceFolder}/bricks/stm32",
+                "${workspaceFolder}/bricks/primehub",
+                "${workspaceFolder}/bricks/primehub/build",
+                "${workspaceFolder}/micropython"
+            ],
+            "defines": [
+                "MICROPY_ROM_TEXT_COMPRESSION",
+                "HSE_VALUE=16000000",
+                "STM32F413xx",
+                "STM32_H=<stm32f4xx.h>",
+                "STM32_HAL_H=<stm32f4xx_hal.h>",
+                "USE_FULL_LL_DRIVER",
+                "FIXMATH_NO_CTYPE"
+            ],
+            "compilerPath": "${gcc9ArmNoneEabi}",
+            "compilerArgs": [
+                "-Wall",
+                "-Werror",
+                "-nostdlib",
+                "-fshort-enums",
+                "-mthumb",
+                "-mtune=cortex-m4",
+                "-mcpu=cortex-m4",
+                "-mfpu=fpv4-sp-d16",
+                "-mfloat-abi=hard",
+                "-fsingle-precision-constant",
+                "-Wdouble-promotion"
+            ],
+            "cStandard": "c11",
+            "intelliSenseMode": "gcc-arm"
+        },
+        {
+            "name": "nxt",
+            "includePath": [
+                "${workspaceFolder}/bricks/nxt",
+                "${workspaceFolder}/lib/contiki-core",
+                "${workspaceFolder}/lib/lego",
+                "${workspaceFolder}/lib/libfixmath/libfixmath",
+                "${workspaceFolder}/bricks/nxt/nxt-firmware-drivers",
+                "${workspaceFolder}/lib/pbio/include",
+                "${workspaceFolder}/lib/pbio/platform/nxt",
+                "${workspaceFolder}/lib/pbio",
+                "${workspaceFolder}/bricks/nxt/build",
+                "${workspaceFolder}/lib/pbio/include",
+                "${workspaceFolder}"
+            ],
+            "defines": [
+                "MICROPY_ROM_TEXT_COMPRESSION",
+                "FIXMATH_NO_CTYPE"
+            ],
+            "compilerPath": "${gcc9ArmNoneEabi}",
+            "compilerArgs": [
+                "-mthumb",
+                "-mtune=arm7tdmi",
+                "-mcpu=arm7tdmi",
+                "-msoft-float"
+            ],
+            "cStandard": "c11",
+            "intelliSenseMode": "gcc-arm"
+        },
+        {
+            "name": "debug",
+            "includePath": [
+                "${workspaceFolder}/lib/cmsis/inc",
+                "${workspaceFolder}/lib/stm32lib/CMSIS/STM32F4xx/Include",
+                "${workspaceFolder}/ports/pybricks/lib/contiki-core",
+                "${workspaceFolder}/ports/pybricks/lib/lego",
+                "${workspaceFolder}/ports/pybricks/lib/libfixmath/libfixmath",
+                "${workspaceFolder}/ports/pybricks/lib/pbio/include",
+                "${workspaceFolder}/ports/pybricks/lib/pbio/platform/debug",
+                "${workspaceFolder}/ports/pybricks/lib/pbio",
+                "${workspaceFolder}/ports/pybricks/extmod",
+                "${workspaceFolder}/ports/pybricks/bricks/debug/build",
+                "${workspaceFolder}"
+            ],
+            "defines": [
+                "MICROPY_ROM_TEXT_COMPRESSION",
+                "HSE_VALUE=8000000",
+                "STM32F070xB",
+                "STM32_H=<stm32f4xx.h>",
+                "STM32_HAL_H=<stm32f4xx_hal.h>",
+                "FIXMATH_NO_CTYPE"
+            ],
+            "compilerPath": "${gcc9ArmNoneEabi}",
+            "compilerArgs": [
+                "-Wall",
+                "-Werror",
+                "-nostdlib",
+                "-fshort-enums",
+                "-mthumb",
+                "-mtune=cortex-m4",
+                "-mcpu=cortex-m4",
+                "-mfpu=fpv4-sp-d16",
+                "-mfloat-abi=hard",
+                "-fsingle-precision-constant",
+                "-Wdouble-promotion"
+            ],
+            "cStandard": "c11",
+            "intelliSenseMode": "gcc-arm"
+        },
+        {
+            "name": "ev3dev",
+            "includePath": [
+                "/usr/lib/x86_64-linux-gnu/glib-2.0/include",
+                "/usr/include/glib-2.0",
+                "${workspaceFolder}/bricks/ev3dev",
+                "${workspaceFolder}/bricks/ev3dev/build",
+                "${workspaceFolder}/lib/contiki-core",
+                "${workspaceFolder}/lib/lego",
+                "${workspaceFolder}/lib/libfixmath/libfixmath",
+                "${workspaceFolder}/lib/pbio",
+                "${workspaceFolder}/lib/pbio/include",
+                "${workspaceFolder}/lib/pbio/platform/ev3dev_stretch",
+                "${workspaceFolder}/micropython/ports/unix",
+                "${workspaceFolder}/micropython",
+                "${workspaceFolder}"
+            ],
+            "defines": [
+                "UNIX",
+                "MICROPY_USE_READLINE=1"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "intelliSenseMode": "gcc-x64"
+        },
+        {
+            "name": "pbio/test",
+            "includePath": [
+                "${workspaceFolder}/micropython/lib/tinytest",
+                "${workspaceFolder}/lib/btstack/src",
+                "${workspaceFolder}/lib/contiki-core",
+                "${workspaceFolder}/lib/lego",
+                "${workspaceFolder}/lib/libfixmath/libfixmath",
+                "${workspaceFolder}/lib/pbio",
+                "${workspaceFolder}/lib/pbio/include",
+                "${workspaceFolder}/lib/pbio/test"
+            ],
+            "defines": [
+                "UNIX"
+            ],
+            "cStandard": "c11"
+        }
+    ],
+    "version": 4
+}
