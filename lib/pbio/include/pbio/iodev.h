@@ -187,38 +187,38 @@ typedef enum {
     /**
      * Convience value for no flags set.
      */
-    PBIO_IODEV_MOTOR_FLAG_NONE = 0,
+    PBIO_IODEV_CAPABILITY_FLAG_NONE = 0,
     /**
-     * Indicates that this device is motor.
+     * Indicates that this device is a motor.
      */
-    PBIO_IODEV_MOTOR_FLAG_IS_MOTOR = 1 << 0,
+    PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR = 1 << 0,
     /**
      * Indicates that the motor provides speed feedback.
      */
-    PBIO_IODEV_MOTOR_FLAG_HAS_SPEED = 1 << 1,
+    PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED = 1 << 1,
     /**
      * Indicates that the motor provides relative position feedback.
      */
-    PBIO_IODEV_MOTOR_FLAG_HAS_REL_POS = 1 << 2,
+    PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS = 1 << 2,
     /**
      * Indicates that the motor provides absolute position feedback.
      */
-    PBIO_IODEV_MOTOR_FLAG_HAS_ABS_POS = 1 << 3,
-} pbio_iodev_motor_flags_t;
+    PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS = 1 << 3,
+} pbio_iodev_capability_flags_t;
 
 /**
  * Macro for testing if I/O device is a motor.
  *
  * @param [in] d    Pointer to pbio_iodev_t.
  */
-#define PBIO_IODEV_IS_MOTOR(d) ((d)->motor_flags & PBIO_IODEV_MOTOR_FLAG_IS_MOTOR)
+#define PBIO_IODEV_IS_MOTOR(d) ((d)->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR)
 
 /**
  * Macro for testing if I/O device is a motor with speed/position feedback.
  *
  * @param [in] d    Pointer to pbio_iodev_t.
  */
-#define PBIO_IODEV_IS_FEEDBACK_MOTOR(d) ((d)->motor_flags > PBIO_IODEV_MOTOR_FLAG_IS_MOTOR)
+#define PBIO_IODEV_IS_FEEDBACK_MOTOR(d) ((d)->capability_flags > PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR)
 
 /**
  * Mapping flags that describe the input and output values of an I/O device.
@@ -377,9 +377,9 @@ struct _pbio_iodev_t {
      */
     uint8_t mode;
     /**
-     * Motor capability flags.
+     * Device capability flags.
      */
-    pbio_iodev_motor_flags_t motor_flags;
+    pbio_iodev_capability_flags_t capability_flags;
     /**
      * Most recent binary data read from the device. How to interpret this data
      * is determined by the ::pbio_iodev_mode_t info associated with the current
