@@ -517,9 +517,9 @@ PROCESS_THREAD(pbdrv_ioport_lpf2_process, ev, data) {
                         iodev->info = info;
 
                         const lump_mode_flags_t *flags = &info->mode_info[0].flags;
-                        iodev->motor_flags = PBIO_IODEV_MOTOR_FLAG_NONE;
+                        iodev->capability_flags = PBIO_IODEV_CAPABILITY_FLAG_NONE;
                         if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_POWER) {
-                            iodev->motor_flags |= PBIO_IODEV_MOTOR_FLAG_IS_MOTOR;
+                            iodev->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR;
                         }
                         ioport->iodev = iodev;
                     }
