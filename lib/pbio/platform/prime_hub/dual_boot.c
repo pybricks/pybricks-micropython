@@ -44,9 +44,9 @@ static void jump_to_other_firmware() {
 }
 
 /**
- * Checks if the right button is pressed during early boot.
+ * Checks if the center button is pressed for a long time (~2 s) or just briefly (<< 2 s).
  */
-static bool check_for_right_button_pressed() {
+static bool check_for_long_press() {
     __HAL_RCC_ADC1_CLK_ENABLE();
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -57,6 +57,8 @@ static bool check_for_right_button_pressed() {
     // is the last channel (by rank) so we can do a single synchronous poll
     // and HAL_ADC_GetValue() will return the one value we need.
 
+    // FIXME: Fix comment above, or the implementation below.
+
     ADC_HandleTypeDef hadc;
     hadc.Instance = ADC1;
     hadc.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
@@ -65,7 +67,7 @@ static bool check_for_right_button_pressed() {
     hadc.Init.ScanConvMode = ENABLE;
     hadc.Init.EOCSelection = ADC_EOC_SEQ_CONV;
     hadc.Init.ContinuousConvMode = ENABLE;
-    hadc.Init.NbrOfConversion = 6;
+    hadc.Init.NbrOfConversion = 5;
     hadc.Init.DiscontinuousConvMode = DISABLE;
     hadc.Init.NbrOfDiscConversion = 0;
     hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
@@ -73,13 +75,11 @@ static bool check_for_right_button_pressed() {
     hadc.Init.DMAContinuousRequests = DISABLE;
     HAL_ADC_Init(&hadc);
 
-    uint32_t value = 0;
-    uint32_t retries = 5;
+    uint32_t value = 3000;
+    uint32_t iterations = 30000; // Approximately 2 seconds
 
-    // Sometimes we get a low reading (lower than what should be physically
-    // possible), so we retry a few times for reliability.
-
-    while (value < 1800 && --retries) {
+    // Keep reading ADC until center button is released or until fixed number of tries
+    while (--iterations && value > 2885 && value < 3155) {
         HAL_ADC_Start(&hadc);
         HAL_ADC_PollForConversion(&hadc, 100);
         value = HAL_ADC_GetValue(&hadc);
@@ -94,16 +94,15 @@ static bool check_for_right_button_pressed() {
     __HAL_RCC_GPIOA_CLK_DISABLE();
     __HAL_RCC_ADC1_CLK_DISABLE();
 
-    if (value < 3155 && value > 2885) {
-        // right button is pressed (and left and Bluetooth buttons are not pressed)
-        return true;
-    }
-
-    return false;
+    // If iterations ran out, return true to indicate a long press
+    return iterations == 0;
 }
 
 void pbio_platform_dual_boot() {
-    if (!check_for_right_button_pressed()) {
+    // FIXME: Invert me. It's currently the opposite because the stock firmware
+    // does not boot if the center button is not pressed, possibly because power
+    // is not yet on at that point.
+    if (check_for_long_press()) {
         jump_to_other_firmware();
     }
 }
