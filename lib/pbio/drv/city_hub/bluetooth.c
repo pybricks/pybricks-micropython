@@ -1155,6 +1155,7 @@ retry:
     PT_END(pt);
 }
 
+// TODO: high-level Bluetooth management needs to be moved to pbsys/
 PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
     static struct etimer timer;
     static struct pt child_pt;
@@ -1207,8 +1208,9 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
         PROCESS_PT_SPAWN(&child_pt, set_discoverable(&child_pt));
 
         // TODO: we should have a timeout and stop scanning eventually
+        // TODO: allow user programs to initiate BLE connections
         pbsys_status_set(PBSYS_STATUS_BLE_ADVERTISING);
-        PROCESS_WAIT_UNTIL(conn_handle != NO_CONNECTION);
+        PROCESS_WAIT_UNTIL(conn_handle != NO_CONNECTION || pbsys_status_test(PBSYS_STATUS_USER_PROGRAM_RUNNING));
         pbsys_status_clear(PBSYS_STATUS_BLE_ADVERTISING);
 
         etimer_set(&timer, clock_from_msec(500));
@@ -1231,6 +1233,7 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
 
         // reset Bluetooth chip
         bluetooth_reset(RESET_STATE_OUT_LOW);
+        PROCESS_WAIT_WHILE(pbsys_status_test(PBSYS_STATUS_USER_PROGRAM_RUNNING));
     }
 
     PROCESS_END();

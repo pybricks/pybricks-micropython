@@ -169,6 +169,7 @@ static void init_advertising_data() {
     gap_scan_response_set_data(sizeof(scan_resp_data), (uint8_t *)scan_resp_data);
 }
 
+// TODO: high-level Bluetooth management needs to be moved to pbsys/
 PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
     static struct etimer timer;
 
@@ -187,8 +188,9 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
         gap_advertisements_enable(true);
 
         // TODO: we should have a timeout and stop scanning eventually
+        // TODO: allow user programs to initiate BLE connections
         pbsys_status_set(PBSYS_STATUS_BLE_ADVERTISING);
-        PROCESS_WAIT_UNTIL(con_handle != HCI_CON_HANDLE_INVALID);
+        PROCESS_WAIT_UNTIL(con_handle != HCI_CON_HANDLE_INVALID || pbsys_status_test(PBSYS_STATUS_USER_PROGRAM_RUNNING));
         pbsys_status_clear(PBSYS_STATUS_BLE_ADVERTISING);
 
         for (;;) {
@@ -209,6 +211,7 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
         // reset Bluetooth chip
         hci_power_control(HCI_POWER_OFF);
         PROCESS_WAIT_UNTIL(hci_get_state() == HCI_STATE_OFF);
+        PROCESS_WAIT_WHILE(pbsys_status_test(PBSYS_STATUS_USER_PROGRAM_RUNNING));
     }
 
     PROCESS_END();
