@@ -1,4 +1,8 @@
 
+## 4.2.0 - 2020-12-11
+### Changed
+- Updated firmware to v3.0.0a12.
+
 ## 4.1.0 - 2020-11-20
 ### Added
 - Allow `ArrayBuffer` argument in `FirmwareReader.load()`.
