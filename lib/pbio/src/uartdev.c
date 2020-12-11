@@ -1130,6 +1130,11 @@ static pbio_error_t ev3_uart_set_mode_begin(pbio_iodev_t *iodev, uint8_t mode) {
     uartdev_port_data_t *port_data = PBIO_CONTAINER_OF(iodev, uartdev_port_data_t, iodev);
     pbio_error_t err;
 
+    // User mode change for motors is not supported
+    if (PBIO_IODEV_IS_FEEDBACK_MOTOR(iodev)) {
+        return PBIO_ERROR_NOT_SUPPORTED;
+    }
+
     err = ev3_uart_begin_tx_msg(port_data, LUMP_MSG_TYPE_CMD, LUMP_CMD_SELECT, &mode, 1);
     if (err != PBIO_SUCCESS) {
         return err;
