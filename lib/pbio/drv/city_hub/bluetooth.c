@@ -1207,7 +1207,6 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
         PROCESS_PT_SPAWN(&child_pt, init_uart_service(&child_pt));
         PROCESS_PT_SPAWN(&child_pt, set_discoverable(&child_pt));
 
-        // TODO: we should have a timeout and stop scanning eventually
         // TODO: allow user programs to initiate BLE connections
         pbsys_status_set(PBSYS_STATUS_BLE_ADVERTISING);
         PROCESS_WAIT_UNTIL(conn_handle != NO_CONNECTION || pbsys_status_test(PBSYS_STATUS_USER_PROGRAM_RUNNING));

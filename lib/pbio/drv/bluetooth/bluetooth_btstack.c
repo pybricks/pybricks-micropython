@@ -187,7 +187,6 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
         init_advertising_data();
         gap_advertisements_enable(true);
 
-        // TODO: we should have a timeout and stop scanning eventually
         // TODO: allow user programs to initiate BLE connections
         pbsys_status_set(PBSYS_STATUS_BLE_ADVERTISING);
         PROCESS_WAIT_UNTIL(con_handle != HCI_CON_HANDLE_INVALID || pbsys_status_test(PBSYS_STATUS_USER_PROGRAM_RUNNING));
