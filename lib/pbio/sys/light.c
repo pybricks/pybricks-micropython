@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <contiki.h>
+
 #include <pbdrv/led.h>
 #include <pbio/color.h>
 #include <pbio/error.h>
@@ -178,12 +180,33 @@ static void pbsys_status_light_handle_status_change() {
     }
 }
 
+static clock_time_t default_user_program_light_animation_next(pbio_light_animation_t *animation) {
+    // Each pixel has a repeating brightness pattern of the form /\_ through
+    // which we can cycle in 256 steps.
+    static uint8_t cycle = 0;
+
+    // The pixels are spread equally across the pattern with minimum brightness of 50.
+    pbio_color_hsv_t hsv = {
+        .h = PBIO_COLOR_HUE_GREEN,
+        .s = 100,
+        .v = (cycle > 200 ? 0 : (cycle < 100 ? cycle : 200 - cycle)) / 2 + 50,
+    };
+
+    pbsys_status_light->funcs->set_hsv(pbsys_status_light, &hsv);
+
+    // This increment controls the speed of the pattern
+    cycle += 4;
+
+    return clock_from_msec(40);
+}
+
 void pbsys_status_light_handle_event(process_event_t event, process_data_t data) {
     if (event == PBIO_EVENT_STATUS_SET || event == PBIO_EVENT_STATUS_CLEARED) {
         pbsys_status_light_handle_status_change();
     }
     if (event == PBIO_EVENT_STATUS_SET && (pbsys_status_t)data == PBSYS_STATUS_USER_PROGRAM_RUNNING) {
-        pbio_color_light_on(pbsys_status_light, PBIO_COLOR_GREEN);
+        pbio_light_animation_init(&pbsys_status_light->animation, default_user_program_light_animation_next);
+        pbio_light_animation_start(&pbsys_status_light->animation);
     }
 }
 
