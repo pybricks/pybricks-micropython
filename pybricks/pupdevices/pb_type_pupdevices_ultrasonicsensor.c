@@ -33,9 +33,6 @@ STATIC mp_obj_t pupdevices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     // Get iodevices
     self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR);
 
-    // This sensor requires power, which iodevice does not do automatically yet
-    pb_device_set_power_supply(self->pbdev, 100);
-
     // Create an instance of the LightArray class
     self->lights = common_LightArray_obj_make_new(self->pbdev, PBIO_IODEV_MODE_PUP_ULTRASONIC_SENSOR__LIGHT, 4);
 
