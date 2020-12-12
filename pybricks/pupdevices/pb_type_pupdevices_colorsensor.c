@@ -73,9 +73,6 @@ STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     // Get iodevices
     self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR);
 
-    // This sensor requires power, which iodevice does not do automatically yet
-    pb_device_set_power_supply(self->pbdev, 100);
-
     // Create an instance of the LightArray class
     self->lights = common_LightArray_obj_make_new(self->pbdev, PBIO_IODEV_MODE_PUP_COLOR_SENSOR__LIGHT, 3);
 
@@ -85,9 +82,6 @@ STATIC mp_obj_t pupdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
 
     // Save default settings
     pb_color_map_save_default(&self->color_map);
-
-    // This sensor needs some time to get values right after turning power on
-    mp_hal_delay_ms(1000);
 
     return MP_OBJ_FROM_PTR(self);
 }
