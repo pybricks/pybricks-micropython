@@ -43,13 +43,6 @@ STATIC mp_obj_t iodevices_LUMPDevice_make_new(const mp_obj_type_t *type, size_t 
     pb_device_get_info(self->pbdev, &_port, &id, &curr_mode, &num_values);
     self->id = mp_obj_new_int(id);
 
-    #if PYBRICKS_PY_PUPDEVICES
-    // FIXME: Read sensor capability flag to see which sensor uses power. As
-    // a precaution, only enable power for selected known sensors for now.
-    int32_t duty = (id == PBIO_IODEV_TYPE_ID_SPIKE_COLOR_SENSOR || id == PBIO_IODEV_TYPE_ID_SPIKE_ULTRASONIC_SENSOR) ? 100 : 0;
-    pb_device_set_power_supply(self->pbdev, duty);
-    #endif // PYBRICKS_PY_PUPDEVICES
-
     return MP_OBJ_FROM_PTR(self);
 }
 
