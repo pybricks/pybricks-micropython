@@ -494,6 +494,9 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                     if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_ABS_POS) {
                         data->iodev.capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS;
                     }
+                    if (flags->flags0 & LUMP_MODE_FLAGS0_REQUIRES_POWER) {
+                        data->iodev.capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_REQUIRES_POWER;
+                    }
 
                     debug_pr("new_mode: %d\n", data->new_mode);
                     debug_pr("name: %s\n", data->info->mode_info[mode].name);

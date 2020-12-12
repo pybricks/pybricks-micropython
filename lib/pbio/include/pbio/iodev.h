@@ -204,6 +204,10 @@ typedef enum {
      * Indicates that the motor provides absolute position feedback.
      */
     PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS = 1 << 3,
+    /**
+     * Indicates that a sensor requires permanent battery voltage, not just logic voltage.
+     */
+    PBIO_IODEV_CAPABILITY_FLAG_REQUIRES_POWER = 1 << 4,
 } pbio_iodev_capability_flags_t;
 
 /**
@@ -218,7 +222,15 @@ typedef enum {
  *
  * @param [in] d    Pointer to pbio_iodev_t.
  */
-#define PBIO_IODEV_IS_FEEDBACK_MOTOR(d) ((d)->capability_flags > PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR)
+#define PBIO_IODEV_IS_FEEDBACK_MOTOR(d) ((d)->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS)
+
+/**
+ * Macro for testing if I/O device requires battery power.
+ *
+ * @param [in] d    Pointer to pbio_iodev_t.
+ */
+#define PBIO_IODEV_REQUIRES_POWER(d) ((d)->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_REQUIRES_POWER)
+
 
 /**
  * Mapping flags that describe the input and output values of an I/O device.
