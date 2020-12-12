@@ -50,6 +50,7 @@
 #include "pbio/uartdev.h"
 #include "pbio/util.h"
 #include "../drv/counter/counter.h"
+#include <pbdrv/motor.h>
 
 #define EV3_UART_MAX_MESSAGE_SIZE   (LUMP_MAX_MSG_SIZE + 3)
 
@@ -1028,6 +1029,11 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
         data->tacho_offset = 0;
     }
 
+    // Turn on power for sensors that need it
+    if (PBIO_IODEV_REQUIRES_POWER(&data->iodev)) {
+        pbdrv_motor_set_duty_cycle(data->iodev.port, -10000);
+    }
+
     while (data->status == PBIO_UARTDEV_STATUS_DATA) {
         // setup keepalive timer
         etimer_reset_with_new_interval(&data->timer, clock_from_msec(EV3_UART_DATA_KEEP_ALIVE_TIMEOUT));
@@ -1069,6 +1075,11 @@ err:
     etimer_stop(&data->timer);
     debug_pr("%s\n", data->last_err);
     data->err_count++;
+
+    // Turn off power for sensors that used power
+    if (PBIO_IODEV_REQUIRES_POWER(&data->iodev)) {
+        pbdrv_motor_coast(data->iodev.port);
+    }
 
     process_post(PROCESS_BROADCAST, PROCESS_EVENT_SERVICE_REMOVED, &data->iodev);
 
