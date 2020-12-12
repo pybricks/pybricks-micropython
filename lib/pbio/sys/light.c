@@ -181,21 +181,20 @@ static void pbsys_status_light_handle_status_change() {
 }
 
 static clock_time_t default_user_program_light_animation_next(pbio_light_animation_t *animation) {
-    // Each pixel has a repeating brightness pattern of the form /\_ through
-    // which we can cycle in 256 steps.
+    // The brightness pattern has the form /\ through which we cycle in N steps.
     static uint8_t cycle = 0;
+    const uint8_t cycle_max = 200;
 
-    // The pixels are spread equally across the pattern with minimum brightness of 50.
     pbio_color_hsv_t hsv = {
-        .h = PBIO_COLOR_HUE_GREEN,
+        .h = PBIO_COLOR_HUE_BLUE,
         .s = 100,
-        .v = (cycle > 200 ? 0 : (cycle < 100 ? cycle : 200 - cycle)) / 2 + 50,
+        .v = cycle < cycle_max / 2 ? cycle : cycle_max - cycle,
     };
 
     pbsys_status_light->funcs->set_hsv(pbsys_status_light, &hsv);
 
-    // This increment controls the speed of the pattern
-    cycle += 4;
+    // This increment controls the speed of the pattern and wraps on completion
+    cycle = (cycle + 4) % cycle_max;
 
     return clock_from_msec(40);
 }
