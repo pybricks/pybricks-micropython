@@ -54,8 +54,8 @@ ev3dev-armel:
 		bricks/ev3dev/docker/setup.sh armel; \
 	fi
 	@docker start pybricks-ev3dev_armel
-	@docker exec --tty pybricks-ev3dev_armel make -C ../../micropython/mpy-cross CROSS_COMPILE=
-	@docker exec --tty pybricks-ev3dev_armel make
+	@docker exec --tty pybricks-ev3dev_armel make -C ../../micropython/mpy-cross CROSS_COMPILE= -j`nproc`
+	@docker exec --tty pybricks-ev3dev_armel make -j`nproc`
 
 clean-ev3dev-armel:
 	@if [ -d bricks/ev3dev/build-armel/ports ]; then \
