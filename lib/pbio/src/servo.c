@@ -24,17 +24,18 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
         return PBIO_ERROR_INVALID_OP;
     }
 
+    // Get and reset tacho
+    err = pbio_tacho_get(srv->port, &srv->tacho, direction, gear_ratio);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     // Get, coast, and configure dc motor
     err = pbio_dcmotor_get(srv->port, &srv->dcmotor, direction, true);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // Get and reset tacho
-    err = pbio_tacho_get(srv->port, &srv->tacho, direction, gear_ratio);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
     // Reset state
     pbio_control_stop(&srv->control);
 
@@ -255,12 +256,11 @@ pbio_error_t pbio_servo_stop_force(pbio_servo_t *srv) {
     // Release claim from drivebases or other classes
     srv->claimed = false;
 
-    // Try to stop / coast motor whether or not initialized already
+    // Try to stop / coast motor
     if (srv->dcmotor) {
         return pbio_dcmotor_coast(srv->dcmotor);
-    } else {
-        return pbdrv_motor_coast(srv->port);
     }
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
