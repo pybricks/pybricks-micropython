@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_IODEVICES
+#if PYBRICKS_PY_IODEVICES && PYBRICKS_PY_EV3DEVICES
 
 #include <pbio/iodev.h>
 
@@ -93,4 +93,4 @@ const mp_obj_type_t pb_type_iodevices_Ev3devSensor = {
     .locals_dict = (mp_obj_dict_t *)&iodevices_Ev3devSensor_locals_dict,
 };
 
-#endif // PYBRICKS_PY_IODEVICES
+#endif // PYBRICKS_PY_IODEVICES && PYBRICKS_PY_EV3DEVICES
