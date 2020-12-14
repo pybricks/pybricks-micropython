@@ -23,8 +23,8 @@
 #define BATTERY_CRITICAL_MV     4800    // 0.8V per cell
 
 // These values are for LEGO rechargeable battery packs
-#define LIION_OK_MV             7000    // 3.5V per cell
-#define LIION_LOW_MV            6600    // 3.3V per cell
+#define LIION_OK_MV             7200    // 3.6V per cell
+#define LIION_LOW_MV            6800    // 3.4V per cell
 #define LIION_CRITICAL_MV       6000    // 3.0V per cell
 
 static clock_time_t prev_poll_time;
