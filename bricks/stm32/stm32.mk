@@ -201,11 +201,12 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	hubs/pb_type_movehub.c \
 	hubs/pb_type_primehub.c \
 	iodevices/pb_module_iodevices.c \
-	iodevices/pb_type_iodevices_lumpdevice.c \
 	iodevices/pb_type_iodevices_analogsensor.c \
-	iodevices/pb_type_iodevices_i2cdevice.c \
-	iodevices/pb_type_iodevices_uartdevice.c \
 	iodevices/pb_type_iodevices_ev3devsensor.c \
+	iodevices/pb_type_iodevices_i2cdevice.c \
+	iodevices/pb_type_iodevices_lumpdevice.c \
+	iodevices/pb_type_iodevices_pupdevice.c \
+	iodevices/pb_type_iodevices_uartdevice.c \
 	media/pb_module_media.c \
 	parameters/pb_type_icon.c \
 	parameters/pb_module_parameters.c \

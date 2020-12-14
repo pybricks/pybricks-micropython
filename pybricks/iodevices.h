@@ -12,10 +12,15 @@
 
 const mp_obj_module_t pb_module_iodevices;
 
-const mp_obj_type_t pb_type_iodevices_LUMPDevice;
+#if PYBRICKS_PY_PUPDEVICES
+
+const mp_obj_type_t pb_type_iodevices_PUPDevice;
+
+#endif // PYBRICKS_PY_PUPDEVICES
 
 #if PYBRICKS_PY_EV3DEVICES
 
+const mp_obj_type_t pb_type_iodevices_LUMPDevice;
 const mp_obj_type_t pb_type_iodevices_AnalogSensor;
 const mp_obj_type_t pb_type_iodevices_Ev3devSensor;
 const mp_obj_type_t pb_type_iodevices_I2CDevice;

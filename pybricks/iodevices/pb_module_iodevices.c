@@ -10,8 +10,11 @@
 
 STATIC const mp_rom_map_elem_t iodevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),         MP_ROM_QSTR(MP_QSTR_iodevices)                },
-    { MP_ROM_QSTR(MP_QSTR_LUMPDevice),       MP_ROM_PTR(&pb_type_iodevices_LUMPDevice)     },
+    #if PYBRICKS_PY_PUPDEVICES
+    { MP_ROM_QSTR(MP_QSTR_PUPDevice),        MP_ROM_PTR(&pb_type_iodevices_PUPDevice)      },
+    #endif
     #if PYBRICKS_PY_EV3DEVICES
+    { MP_ROM_QSTR(MP_QSTR_LUMPDevice),       MP_ROM_PTR(&pb_type_iodevices_LUMPDevice)     },
     { MP_ROM_QSTR(MP_QSTR_AnalogSensor),     MP_ROM_PTR(&pb_type_iodevices_AnalogSensor)   },
     { MP_ROM_QSTR(MP_QSTR_Ev3devSensor),     MP_ROM_PTR(&pb_type_iodevices_Ev3devSensor)   },
     { MP_ROM_QSTR(MP_QSTR_I2CDevice),        MP_ROM_PTR(&pb_type_iodevices_I2CDevice)      },
