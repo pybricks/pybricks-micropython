@@ -3,7 +3,7 @@
 
 #include "py/mpconfig.h"
 
-#if PYBRICKS_PY_COMMON && PYBRICKS_PY_PARAMETERS_BUTTON
+#if PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_KEYPAD
 
 #include <pbio/button.h>
 
@@ -66,4 +66,4 @@ const mp_obj_module_t pb_module_buttons = {
     .globals = (mp_obj_dict_t *)&pb_module_buttons_globals,
 };
 
-#endif // PYBRICKS_PY_COMMON && PYBRICKS_PY_PARAMETERS_BUTTON
+#endif // PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_KEYPAD
