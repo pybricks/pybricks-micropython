@@ -46,8 +46,19 @@ static const pbio_light_matrix_funcs_t pbsys_hub_light_matrix_funcs = {
     .set_pixel = pbsys_hub_light_matrix_set_pixel,
 };
 
+static void pbsys_hub_light_matrix_show_stop_sign() {
+    // 3x3 "stop sign" at top center of light matrix
+    for (uint8_t r = 0; r < pbsys_hub_light_matrix->size; r++) {
+        for (uint8_t c = 0; c < pbsys_hub_light_matrix->size; c++) {
+            uint8_t brightness = r < 3 && c > 0 && c < 4 ? 100: 0;
+            pbsys_hub_light_matrix_set_pixel(pbsys_hub_light_matrix, r, c, brightness);
+        }
+    }
+}
+
 void pbsys_hub_light_matrix_init() {
     pbio_light_matrix_init(pbsys_hub_light_matrix, 5, &pbsys_hub_light_matrix_funcs);
+    pbsys_hub_light_matrix_show_stop_sign();
 }
 
 static clock_time_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_animation_t *animation) {
@@ -86,13 +97,7 @@ void pbsys_hub_light_matrix_handle_event(process_event_t event, process_data_t d
         pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
     }
     if (event == PBIO_EVENT_STATUS_CLEARED && (pbsys_status_t)data == PBSYS_STATUS_USER_PROGRAM_RUNNING) {
-        // 3x3 "stop sign" at top center of light matrix
-        for (uint8_t r = 0; r < pbsys_hub_light_matrix->size; r++) {
-            for (uint8_t c = 0; c < pbsys_hub_light_matrix->size; c++) {
-                uint8_t brightness = r < 3 && c > 0 && c < 4 ? 100: 0;
-                pbsys_hub_light_matrix_set_pixel(pbsys_hub_light_matrix, r, c, brightness);
-            }
-        }
+        pbsys_hub_light_matrix_show_stop_sign();
     }
 }
 
