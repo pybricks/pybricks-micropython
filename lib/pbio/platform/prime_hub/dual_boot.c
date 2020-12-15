@@ -18,13 +18,12 @@ extern uint32_t _fw_isr_vector_src[];
  * firmware in the flash memory.
  */
 static void jump_to_other_firmware() {
-    // Deinit HAL
-    HAL_RCC_DeInit();
-    HAL_DeInit();
-
     // Hint to compiler that variables should be saved in registers since
     // we are moving the stack pointer.
     register void (*reset)();
+
+    __disable_irq();
+    HAL_RCC_DeInit();
 
     // Reset the stack pointer to the stack pointer of the other firmware.
     // The official LEGO firmware doesn't do this by itself.
@@ -44,18 +43,22 @@ static void jump_to_other_firmware() {
 }
 
 /**
- * Checks if the right button is pressed during early boot.
+ * Checks if the center button is pressed for more than 2 seconds during early boot.
  */
-static bool check_for_right_button_pressed() {
+static bool check_for_long_press() {
     __HAL_RCC_ADC1_CLK_ENABLE();
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_GPIOC_CLK_ENABLE();
 
+    // Keep main power on (PA13 == POWER_EN)
+    GPIOA->BSRR = GPIO_BSRR_BS_13;
+    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER13_Msk) | (1 << GPIO_MODER_MODER13_Pos);
+
     // NB: HAL_ADC_MspInit() is shared with the PBIO ADC driver, so the ADC is
-    // configured for all 6 channels. Fortunately, the channel we need here
-    // is the last channel (by rank) so we can do a single synchronous poll
-    // and HAL_ADC_GetValue() will return the one value we need.
+    // configured for all 6 channels. We need channel 5 to get the center
+    // button reading so we set the number of conversions to 5 here. This way
+    // HAL_ADC_GetValue() will return the value for channel 5.
 
     ADC_HandleTypeDef hadc;
     hadc.Instance = ADC1;
@@ -65,7 +68,7 @@ static bool check_for_right_button_pressed() {
     hadc.Init.ScanConvMode = ENABLE;
     hadc.Init.EOCSelection = ADC_EOC_SEQ_CONV;
     hadc.Init.ContinuousConvMode = ENABLE;
-    hadc.Init.NbrOfConversion = 6;
+    hadc.Init.NbrOfConversion = 5;
     hadc.Init.DiscontinuousConvMode = DISABLE;
     hadc.Init.NbrOfDiscConversion = 0;
     hadc.Init.ExternalTrigConv = ADC_SOFTWARE_START;
@@ -73,37 +76,32 @@ static bool check_for_right_button_pressed() {
     hadc.Init.DMAContinuousRequests = DISABLE;
     HAL_ADC_Init(&hadc);
 
-    uint32_t value = 0;
-    uint32_t retries = 5;
 
-    // Sometimes we get a low reading (lower than what should be physically
-    // possible), so we retry a few times for reliability.
+    // at this point, the button should still be pressed, so we wait for it
+    // to be released
 
-    while (value < 1800 && --retries) {
+    bool pressed = true;
+    uint32_t start_time = HAL_GetTick();
+    while (HAL_GetTick() - start_time < 2000) {
         HAL_ADC_Start(&hadc);
         HAL_ADC_PollForConversion(&hadc, 100);
-        value = HAL_ADC_GetValue(&hadc);
-
+        uint32_t value = HAL_ADC_GetValue(&hadc);
         HAL_ADC_Stop(&hadc);
+
+        // if button was released, don't wait full two seconds
+        if ((value > 2209 && value < 2634) || value > 3142) {
+            pressed = false;
+            break;
+        }
     }
 
     HAL_ADC_DeInit(&hadc);
 
-    __HAL_RCC_GPIOC_CLK_DISABLE();
-    __HAL_RCC_GPIOB_CLK_DISABLE();
-    __HAL_RCC_GPIOA_CLK_DISABLE();
-    __HAL_RCC_ADC1_CLK_DISABLE();
-
-    if (value < 3155 && value > 2885) {
-        // right button is pressed (and left and Bluetooth buttons are not pressed)
-        return true;
-    }
-
-    return false;
+    return pressed;
 }
 
 void pbio_platform_dual_boot() {
-    if (!check_for_right_button_pressed()) {
+    if (!check_for_long_press()) {
         jump_to_other_firmware();
     }
 }

@@ -692,11 +692,17 @@ void SystemInit(void) {
 
     HAL_RCC_ClockConfig(&clk_init, FLASH_LATENCY_5);
 
-    // If we are running dual boot, jump to other firmware if no buttons are pressed
-    pbio_platform_dual_boot();
-
     // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
     SCB->CCR |= SCB_CCR_STKALIGN_Msk;
+
+    // since the firmware starts at 0x08008000, we need to set the vector table offset
+    SCB->VTOR = (uint32_t)&_fw_isr_vector_src;
+
+    // bootloader disables interrupts
+    __enable_irq();
+
+    // If we are running dual boot, jump to other firmware if no buttons are pressed
+    pbio_platform_dual_boot();
 
     // enable clocks
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN |
@@ -715,10 +721,4 @@ void SystemInit(void) {
     // Turn VCC_PORT on (PA14 == PORTCE)
     GPIOA->BSRR = GPIO_BSRR_BS_14;
     GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER14_Msk) | (1 << GPIO_MODER_MODER14_Pos);
-
-    // since the firmware starts at 0x08008000, we need to set the vector table offset
-    SCB->VTOR = (uint32_t)&_fw_isr_vector_src;
-
-    // bootloader disables interrupts
-    __enable_irq();
 }
