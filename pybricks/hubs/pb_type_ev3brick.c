@@ -18,6 +18,7 @@ typedef struct _hubs_EV3Brick_obj_t {
     mp_obj_t light;
     mp_obj_t screen;
     mp_obj_t speaker;
+    mp_obj_t buttons;
 } hubs_EV3Brick_obj_t;
 
 STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
@@ -30,12 +31,15 @@ STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
     self->speaker = pb_type_ev3dev_Speaker.make_new(&pb_type_ev3dev_Speaker, 0, 0, NULL);
 
     self->light = common_ColorLight_internal_obj_new(ev3dev_status_light);
+
+    self->buttons = pb_type_Keypad_obj_new();
+
     return MP_OBJ_FROM_PTR(self);
 }
 
 STATIC const mp_rom_map_elem_t hubs_EV3Brick_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)      },
-    { MP_ROM_QSTR(MP_QSTR_buttons),     MP_ROM_PTR(&pb_module_buttons)      },
+    { MP_ROM_QSTR(MP_QSTR_buttons),     MP_ROM_ATTRIBUTE_OFFSET(hubs_EV3Brick_obj_t, buttons) },
     { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_ATTRIBUTE_OFFSET(hubs_EV3Brick_obj_t, light)   },
     { MP_ROM_QSTR(MP_QSTR_screen),      MP_ROM_ATTRIBUTE_OFFSET(hubs_EV3Brick_obj_t, screen)  },
     { MP_ROM_QSTR(MP_QSTR_speaker),     MP_ROM_ATTRIBUTE_OFFSET(hubs_EV3Brick_obj_t, speaker) },

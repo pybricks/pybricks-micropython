@@ -14,11 +14,14 @@
 
 #include <pybricks/util_pb/pb_error.h>
 
-// TODO: buttons are currently a module due to the legacy C API, but should be
-// an instance of a KeyPad type. That would make it consistent with the other C
-// types and the high level Python API, and simplify device-specific buttons.
+// pybricks._common.Keypad class object
+typedef struct _common_Keypad_obj_t {
+    mp_obj_base_t base;
+} common_Keypad_obj_t;
 
-STATIC mp_obj_t buttons_pressed(void) {
+// pybricks._common.Keypad.pressed
+STATIC mp_obj_t common_Keypad_pressed(mp_obj_t self_in) {
+    // common_Keypad_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_obj_t button_list[10];
     pbio_button_flags_t pressed;
     uint8_t size = 0;
@@ -34,6 +37,7 @@ STATIC mp_obj_t buttons_pressed(void) {
     if (pressed & PBIO_BUTTON_RIGHT) {
         button_list[size++] = MP_OBJ_FROM_PTR(&pb_Button_RIGHT_obj);
     }
+    // FIXME: pass available buttons when initializing button object
     if (pressed & PBIO_BUTTON_RIGHT_UP) {
         #ifdef PYBRICKS_HUB_PRIMEHUB
         button_list[size++] = MP_OBJ_FROM_PTR(&pb_Button_BT_obj);
@@ -53,17 +57,27 @@ STATIC mp_obj_t buttons_pressed(void) {
 
     return mp_obj_new_list(size, button_list);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(buttons_pressed_obj, buttons_pressed);
+MP_DEFINE_CONST_FUN_OBJ_1(common_Keypad_pressed_obj, common_Keypad_pressed);
 
-STATIC const mp_rom_map_elem_t buttons_globals_table[] = {
-    { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_buttons)        },
-    { MP_ROM_QSTR(MP_QSTR_pressed),     MP_ROM_PTR(&buttons_pressed_obj)    },
+// dir(pybricks.common.Keypad)
+STATIC const mp_rom_map_elem_t common_Keypad_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_pressed),     MP_ROM_PTR(&common_Keypad_pressed_obj)     },
 };
-STATIC MP_DEFINE_CONST_DICT(pb_module_buttons_globals, buttons_globals_table);
+STATIC MP_DEFINE_CONST_DICT(common_Keypad_locals_dict, common_Keypad_locals_dict_table);
 
-const mp_obj_module_t pb_module_buttons = {
-    .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t *)&pb_module_buttons_globals,
+// type(pybricks.common.Keypad)
+STATIC const mp_obj_type_t pb_type_Keypad = {
+    { &mp_type_type },
+    .name = MP_QSTR_Keypad,
+    .locals_dict = (mp_obj_dict_t *)&common_Keypad_locals_dict,
 };
+
+// pybricks._common.Keypad.__init__
+mp_obj_t pb_type_Keypad_obj_new() {
+    // Create new light instance
+    common_Keypad_obj_t *self = m_new_obj(common_Keypad_obj_t);
+    self->base.type = &pb_type_Keypad;
+    return self;
+}
 
 #endif // PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_KEYPAD
