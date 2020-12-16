@@ -17,11 +17,12 @@
 // pybricks._common.Keypad class object
 typedef struct _common_Keypad_obj_t {
     mp_obj_base_t base;
+    mp_obj_t key_combinations;
 } common_Keypad_obj_t;
 
 // pybricks._common.Keypad.pressed
 STATIC mp_obj_t common_Keypad_pressed(mp_obj_t self_in) {
-    // common_Keypad_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    common_Keypad_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_obj_t button_list[10];
     pbio_button_flags_t pressed;
     uint8_t size = 0;
@@ -55,7 +56,19 @@ STATIC mp_obj_t common_Keypad_pressed(mp_obj_t self_in) {
         button_list[size++] = MP_OBJ_FROM_PTR(&pb_Button_LEFT_UP_obj);
     }
 
-    return mp_obj_new_list(size, button_list);
+    // Read dictionary of possible key combinations.
+    mp_obj_dict_t *dict = MP_OBJ_TO_PTR(self->key_combinations);
+    mp_obj_t key = MP_OBJ_NEW_SMALL_INT(pressed);
+    mp_map_elem_t *elem = mp_map_lookup(&dict->map, key, MP_MAP_LOOKUP);
+    if (elem != NULL) {
+        // If we have seen this button combination before, return its tuple.
+        return elem->value;
+    } else {
+        // Otherwise, make this combination tuple, and save it, and return it.
+        mp_obj_t combination = mp_obj_new_tuple(size, button_list);
+        mp_obj_dict_store(self->key_combinations, key, combination);
+        return combination;
+    }
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Keypad_pressed_obj, common_Keypad_pressed);
 
@@ -77,6 +90,7 @@ mp_obj_t pb_type_Keypad_obj_new() {
     // Create new light instance
     common_Keypad_obj_t *self = m_new_obj(common_Keypad_obj_t);
     self->base.type = &pb_type_Keypad;
+    self->key_combinations = mp_obj_new_dict(0);
     return self;
 }
 
