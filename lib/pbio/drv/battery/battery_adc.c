@@ -113,7 +113,7 @@ pbio_error_t pbdrv_battery_get_voltage_now(uint16_t *value) {
     // will be about 0.1V lower than it actually is when the current is low.
     // NOTE: On Prime and Inventor hubs, the voltage is measured on the same
     // resettable fuse as the lights. So when all of the lights are on at full
-    // brightness, the battery voltage will be reported as a few hunderdts of
+    // brightness, the battery voltage will be reported as a few hundredths of
     // a volt lower than it actually is, which is neglegable.
     *value = raw * PBDRV_CONFIG_BATTERY_ADC_VOLTAGE_SCALED_MAX /
         PBDRV_CONFIG_BATTERY_ADC_VOLTAGE_RAW_MAX + current *
