@@ -16,6 +16,8 @@
 
 #include <pybricks/util_pb/pb_device.h>
 
+#include <pybricks/parameters.h>
+
 // pybricks._common.ColorLight()
 mp_obj_t common_ColorLight_external_obj_make_new(pb_device_t *pbdev);
 mp_obj_t common_ColorLight_internal_obj_new(pbio_color_light_t *light);
@@ -33,7 +35,7 @@ mp_obj_t pb_type_Lightmatrix_obj_new(pbio_light_matrix_t *light_matrix);
 
 #if PYBRICKS_PY_COMMON_KEYPAD
 // pybricks._common.KeyPad()
-mp_obj_t pb_type_Keypad_obj_new();
+mp_obj_t pb_type_Keypad_obj_new(uint8_t number_of_buttons, const pb_obj_enum_member_t **buttons);
 #endif
 
 // pybricks._common.Battery()

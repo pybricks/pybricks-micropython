@@ -6,6 +6,7 @@
 #if PYBRICKS_PY_HUBS && PYBRICKS_HUB_NXTBRICK
 
 #include <pbsys/sys.h>
+#include <pbio/util.h>
 
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
@@ -15,10 +16,16 @@ typedef struct _hubs_NXTBrick_obj_t {
     mp_obj_t buttons;
 } hubs_NXTBrick_obj_t;
 
+static const pb_obj_enum_member_t *nxtbrick_buttons[] = {
+    &pb_Button_LEFT_obj,
+    &pb_Button_RIGHT_obj,
+    &pb_Button_CENTER_obj,
+};
+
 STATIC mp_obj_t hubs_NXTBrick_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     hubs_NXTBrick_obj_t *self = m_new_obj(hubs_NXTBrick_obj_t);
     self->base.type = (mp_obj_type_t *)type;
-    self->buttons = pb_type_Keypad_obj_new();
+    self->buttons = pb_type_Keypad_obj_new(PBIO_ARRAY_SIZE(nxtbrick_buttons), nxtbrick_buttons);
     return MP_OBJ_FROM_PTR(self);
 }
 

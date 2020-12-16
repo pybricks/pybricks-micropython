@@ -10,6 +10,7 @@
 #endif
 
 #include <pbsys/light.h>
+#include <pbio/util.h>
 
 #include "py/runtime.h"
 #include "py/obj.h"
@@ -25,13 +26,19 @@ typedef struct _hubs_PrimeHub_obj_t {
     mp_obj_t buttons;
 } hubs_PrimeHub_obj_t;
 
+static const pb_obj_enum_member_t *primehub_buttons[] = {
+    &pb_Button_LEFT_obj,
+    &pb_Button_RIGHT_obj,
+    &pb_Button_BT_obj,
+};
+
 STATIC mp_obj_t hubs_PrimeHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     hubs_PrimeHub_obj_t *self = m_new_obj(hubs_PrimeHub_obj_t);
     self->base.type = (mp_obj_type_t *)type;
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light);
     self->display = pb_type_Lightmatrix_obj_new(pbsys_hub_light_matrix);
     self->speaker = mp_call_function_0(MP_OBJ_FROM_PTR(&pb_type_Speaker));
-    self->buttons = pb_type_Keypad_obj_new();
+    self->buttons = pb_type_Keypad_obj_new(PBIO_ARRAY_SIZE(primehub_buttons), primehub_buttons);
     return MP_OBJ_FROM_PTR(self);
 }
 

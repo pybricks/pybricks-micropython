@@ -18,43 +18,17 @@
 typedef struct _common_Keypad_obj_t {
     mp_obj_base_t base;
     mp_obj_t key_combinations;
+    uint8_t number_of_buttons;
+    const pb_obj_enum_member_t **buttons;
 } common_Keypad_obj_t;
 
 // pybricks._common.Keypad.pressed
 STATIC mp_obj_t common_Keypad_pressed(mp_obj_t self_in) {
     common_Keypad_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_obj_t button_list[10];
+
+    // Read button combination code.
     pbio_button_flags_t pressed;
-    uint8_t size = 0;
-
     pb_assert(pbio_button_is_pressed(&pressed));
-
-    if (pressed & PBIO_BUTTON_CENTER) {
-        button_list[size++] = MP_OBJ_FROM_PTR(&pb_Button_CENTER_obj);
-    }
-    if (pressed & PBIO_BUTTON_LEFT) {
-        button_list[size++] = MP_OBJ_FROM_PTR(&pb_Button_LEFT_obj);
-    }
-    if (pressed & PBIO_BUTTON_RIGHT) {
-        button_list[size++] = MP_OBJ_FROM_PTR(&pb_Button_RIGHT_obj);
-    }
-    // FIXME: pass available buttons when initializing button object
-    if (pressed & PBIO_BUTTON_RIGHT_UP) {
-        #ifdef PYBRICKS_HUB_PRIMEHUB
-        button_list[size++] = MP_OBJ_FROM_PTR(&pb_Button_BT_obj);
-        #else
-        button_list[size++] = MP_OBJ_FROM_PTR(&pb_Button_RIGHT_UP_obj);
-        #endif
-    }
-    if (pressed & PBIO_BUTTON_UP) {
-        button_list[size++] = MP_OBJ_FROM_PTR(&pb_Button_UP_obj);
-    }
-    if (pressed & PBIO_BUTTON_DOWN) {
-        button_list[size++] = MP_OBJ_FROM_PTR(&pb_Button_DOWN_obj);
-    }
-    if (pressed & PBIO_BUTTON_LEFT_UP) {
-        button_list[size++] = MP_OBJ_FROM_PTR(&pb_Button_LEFT_UP_obj);
-    }
 
     // Read dictionary of possible key combinations.
     mp_obj_dict_t *dict = MP_OBJ_TO_PTR(self->key_combinations);
@@ -64,7 +38,17 @@ STATIC mp_obj_t common_Keypad_pressed(mp_obj_t self_in) {
         // If we have seen this button combination before, return its tuple.
         return elem->value;
     } else {
-        // Otherwise, make this combination tuple, and save it, and return it.
+        // If we haven't seen it, make this combination tuple.
+        mp_obj_t button_list[10];
+        uint8_t size = 0;
+
+        for (uint8_t i = 0; i < self->number_of_buttons; i++) {
+            if (pressed & self->buttons[i]->value) {
+                button_list[size++] = MP_OBJ_FROM_PTR(self->buttons[i]);
+            }
+        }
+
+        // Return new combination and save it the dictionary.
         mp_obj_t combination = mp_obj_new_tuple(size, button_list);
         mp_obj_dict_store(self->key_combinations, key, combination);
         return combination;
@@ -86,11 +70,16 @@ STATIC const mp_obj_type_t pb_type_Keypad = {
 };
 
 // pybricks._common.Keypad.__init__
-mp_obj_t pb_type_Keypad_obj_new() {
+mp_obj_t pb_type_Keypad_obj_new(uint8_t number_of_buttons, const pb_obj_enum_member_t **buttons) {
     // Create new light instance
     common_Keypad_obj_t *self = m_new_obj(common_Keypad_obj_t);
     self->base.type = &pb_type_Keypad;
     self->key_combinations = mp_obj_new_dict(0);
+
+    // Store hub specific button info
+    self->number_of_buttons = number_of_buttons;
+    self->buttons = buttons;
+
     return self;
 }
 

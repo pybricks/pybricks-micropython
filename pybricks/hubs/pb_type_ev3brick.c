@@ -7,6 +7,7 @@
 
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
+#include <pbio/util.h>
 
 #include "pb_ev3dev_types.h"
 
@@ -21,6 +22,14 @@ typedef struct _hubs_EV3Brick_obj_t {
     mp_obj_t buttons;
 } hubs_EV3Brick_obj_t;
 
+static const pb_obj_enum_member_t *ev3brick_buttons[] = {
+    &pb_Button_LEFT_obj,
+    &pb_Button_RIGHT_obj,
+    &pb_Button_UP_obj,
+    &pb_Button_DOWN_obj,
+    &pb_Button_CENTER_obj,
+};
+
 STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     hubs_EV3Brick_obj_t *self = m_new_obj(hubs_EV3Brick_obj_t);
     self->base.type = (mp_obj_type_t *)type;
@@ -32,7 +41,7 @@ STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
 
     self->light = common_ColorLight_internal_obj_new(ev3dev_status_light);
 
-    self->buttons = pb_type_Keypad_obj_new();
+    self->buttons = pb_type_Keypad_obj_new(PBIO_ARRAY_SIZE(ev3brick_buttons), ev3brick_buttons);
 
     return MP_OBJ_FROM_PTR(self);
 }
