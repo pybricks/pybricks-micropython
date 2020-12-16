@@ -129,7 +129,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
     process_poll(&pbdrv_bluetooth_hci_process);
 }
 
-void pbdrv_bluetooth_init() {
+void pbdrv_bluetooth_init(void) {
     btstack_memory_init();
     btstack_run_loop_init(pbdrv_bluetooth_btstack_run_loop_contiki_get_instance());
 
@@ -159,7 +159,7 @@ void pbdrv_bluetooth_init() {
     process_start(&pbdrv_bluetooth_hci_process, NULL);
 }
 
-static void init_advertising_data() {
+static void init_advertising_data(void) {
     uint16_t adv_int_min = 0x0030;
     uint16_t adv_int_max = 0x0030;
     uint8_t adv_type = 0;

@@ -119,19 +119,19 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
 
 // PWM
 
-static void pwm_dev_0_platform_init() {
+static void pwm_dev_0_platform_init(void) {
 }
 
-static void pwm_dev_1_platform_init() {
+static void pwm_dev_1_platform_init(void) {
 }
 
-static void pwm_dev_2_platform_init() {
+static void pwm_dev_2_platform_init(void) {
     // blue LED on PA6 using TIM16 CH1
     GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODE6_Msk) | (2 << GPIO_MODER_MODE6_Pos);
     GPIOA->AFR[0] = (GPIOA->AFR[0] & ~GPIO_AFRL_AFSEL6_Msk) | (14 << GPIO_AFRL_AFSEL6_Pos);
 }
 
-static void pwm_dev_3_platform_init() {
+static void pwm_dev_3_platform_init(void) {
     // green LED on PA11
     GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODE11_Msk) | (1 << GPIO_MODER_MODE11_Pos);
     // red LED on PB15
@@ -199,7 +199,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
 // We want to control the two PWM periods independently. So we are using TIM2
 // for the LEDs. The pin mux doesn't work out, so we have to manually write
 // the GPIOs in the timer interrupt handler.
-void TIM2_IRQHandler() {
+void TIM2_IRQHandler(void) {
     uint32_t sr = TIM2->SR;
 
     // green LED
@@ -228,7 +228,7 @@ void TIM2_IRQHandler() {
 
 // RESET
 
-void pbdrv_reset_stm32_power_off() {
+void pbdrv_reset_stm32_power_off(void) {
     // setting PC12 low cuts the power
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
 }
@@ -287,51 +287,51 @@ const pbdrv_uart_stm32l4_ll_dma_platform_data_t
     },
 };
 
-void DMA1_Channel2_IRQHandler() {
+void DMA1_Channel2_IRQHandler(void) {
     pbdrv_uart_stm32l4_ll_dma_handle_tx_dma_irq(UART_PORT_C);
 }
 
-void DMA1_Channel3_IRQHandler() {
+void DMA1_Channel3_IRQHandler(void) {
     pbdrv_uart_stm32l4_ll_dma_handle_rx_dma_irq(UART_PORT_C);
 }
 
-void DMA1_Channel4_IRQHandler() {
+void DMA1_Channel4_IRQHandler(void) {
     pbdrv_uart_stm32l4_ll_dma_handle_tx_dma_irq(UART_PORT_A);
 }
 
-void DMA1_Channel5_IRQHandler() {
+void DMA1_Channel5_IRQHandler(void) {
     pbdrv_uart_stm32l4_ll_dma_handle_rx_dma_irq(UART_PORT_A);
 }
 
-void DMA1_Channel6_IRQHandler() {
+void DMA1_Channel6_IRQHandler(void) {
     pbdrv_uart_stm32l4_ll_dma_handle_rx_dma_irq(UART_PORT_B);
 }
 
-void DMA1_Channel7_IRQHandler() {
+void DMA1_Channel7_IRQHandler(void) {
     pbdrv_uart_stm32l4_ll_dma_handle_tx_dma_irq(UART_PORT_B);
 }
 
-void DMA2_Channel6_IRQHandler() {
+void DMA2_Channel6_IRQHandler(void) {
     pbdrv_uart_stm32l4_ll_dma_handle_tx_dma_irq(UART_PORT_D);
 }
 
-void DMA2_Channel7_IRQHandler() {
+void DMA2_Channel7_IRQHandler(void) {
     pbdrv_uart_stm32l4_ll_dma_handle_rx_dma_irq(UART_PORT_D);
 }
 
-void USART1_IRQHandler() {
+void USART1_IRQHandler(void) {
     pbdrv_uart_stm32l4_ll_dma_handle_uart_irq(UART_PORT_A);
 }
 
-void USART2_IRQHandler() {
+void USART2_IRQHandler(void) {
     pbdrv_uart_stm32l4_ll_dma_handle_uart_irq(UART_PORT_B);
 }
 
-void USART3_IRQHandler() {
+void USART3_IRQHandler(void) {
     pbdrv_uart_stm32l4_ll_dma_handle_uart_irq(UART_PORT_C);
 }
 
-void LPUART1_IRQHandler() {
+void LPUART1_IRQHandler(void) {
     pbdrv_uart_stm32l4_ll_dma_handle_uart_irq(UART_PORT_D);
 }
 
@@ -411,7 +411,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc) {
     HAL_ADC_ConfigChannel(hadc, &adc_ch_config);
 }
 
-void DMA1_Channel1_IRQHandler() {
+void DMA1_Channel1_IRQHandler(void) {
     pbdrv_adc_stm32_hal_handle_irq();
 }
 
@@ -433,12 +433,12 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
 }
 
 void I2C1_ER_IRQHandler(void) {
-    extern void mod_experimental_IMU_handle_i2c_er_irq();
+    extern void mod_experimental_IMU_handle_i2c_er_irq(void);
     mod_experimental_IMU_handle_i2c_er_irq();
 }
 
 void I2C1_EV_IRQHandler(void) {
-    extern void mod_experimental_IMU_handle_i2c_ev_irq();
+    extern void mod_experimental_IMU_handle_i2c_ev_irq(void);
     mod_experimental_IMU_handle_i2c_ev_irq();
 }
 

@@ -113,7 +113,7 @@ const pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj) {
     return &((pb_type_Color_obj_t *)obj)->hsv;
 }
 
-pb_type_Color_obj_t *pb_type_Color_new_empty() {
+pb_type_Color_obj_t *pb_type_Color_new_empty(void) {
     pb_type_Color_obj_t *color = m_new_obj(pb_type_Color_obj_t);
     color->base.type = &pb_type_Color;
     color->name = mp_const_none;

@@ -9,7 +9,7 @@
 #ifndef _PBSYS_SUPERVISOR_H_
 #define _PBSYS_SUPERVISOR_H_
 
-void pbsys_supervisor_poll();
+void pbsys_supervisor_poll(void);
 
 #endif // _PBSYS_SUPERVISOR_H_
 

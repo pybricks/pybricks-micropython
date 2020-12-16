@@ -18,7 +18,7 @@ static FILE *brightness_sysfs_attr[NUM_LEDS];
 static pbio_color_light_t ev3dev_status_light_instance;
 pbio_color_light_t *ev3dev_status_light = &ev3dev_status_light_instance;
 
-static void ev3dev_status_light_set_trigger() {
+static void ev3dev_status_light_set_trigger(void) {
     static bool is_set = false;
 
     // only need to set trigger once
@@ -76,7 +76,7 @@ static const pbio_color_light_funcs_t ev3dev_status_light_funcs = {
     .set_hsv = ev3dev_status_light_set_hsv,
 };
 
-void ev3dev_status_light_init() {
+void ev3dev_status_light_init(void) {
     static const char *const brightness_paths[NUM_LEDS] = {
         "/sys/class/leds/led0:red:brick-status/brightness",
         "/sys/class/leds/led1:red:brick-status/brightness",

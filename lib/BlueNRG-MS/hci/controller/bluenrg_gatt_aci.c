@@ -970,7 +970,7 @@ tBleStatus aci_gatt_write_charac_value_begin(uint16_t conn_handle,
   return 0;
 }
 
-tBleStatus aci_gatt_write_charac_value_end()
+tBleStatus aci_gatt_write_charac_value_end(void)
 {
   struct hci_response rq;
   uint8_t status;

@@ -22,7 +22,7 @@ static btstack_linked_list_t data_sources;
 /**
  * Schedules event timer for the earliest timeout, if any.
  */
-static void schedule_timer() {
+static void schedule_timer(void) {
     btstack_timer_source_t *first_timer = (void *)timers;
 
     PROCESS_CONTEXT_BEGIN(&btstack_run_loop_contiki_process);
@@ -127,11 +127,11 @@ const btstack_run_loop_t *pbdrv_bluetooth_btstack_run_loop_contiki_get_instance(
 /**
  * Polls the BTStack Contiki process.
  */
-void pbdrv_bluetooth_btstack_run_loop_contiki_trigger() {
+void pbdrv_bluetooth_btstack_run_loop_contiki_trigger(void) {
     process_poll(&btstack_run_loop_contiki_process);
 }
 
-static void btstack_run_loop_contiki_poll_handler() {
+static void btstack_run_loop_contiki_poll_handler(void) {
     btstack_data_source_t *ds, *next;
     for (ds = (void *)data_sources; ds != NULL; ds = next) {
         // cache pointer to next data_source to allow data source to remove itself

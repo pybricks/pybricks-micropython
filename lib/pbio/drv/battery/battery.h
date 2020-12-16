@@ -10,7 +10,7 @@
 
 #if PBDRV_CONFIG_BATTERY
 
-void pbdrv_battery_init();
+void pbdrv_battery_init(void);
 
 #else // PBDRV_CONFIG_BATTERY
 

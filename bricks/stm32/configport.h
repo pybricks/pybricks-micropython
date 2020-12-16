@@ -64,7 +64,7 @@
 #define MICROPY_PY_SYS_MODULES      (0)
 #define MICROPY_PY_URANDOM                  (PYBRICKS_STM32_OPT_EXTRA_MOD)
 #define MICROPY_PY_URANDOM_EXTRA_FUNCS      (PYBRICKS_STM32_OPT_EXTRA_MOD)
-#define MICROPY_PY_URANDOM_SEED_INIT_FUNC   { extern unsigned long clock_usecs(); clock_usecs(); }
+#define MICROPY_PY_URANDOM_SEED_INIT_FUNC   { extern unsigned long clock_usecs(void); clock_usecs(); }
 #define MICROPY_PY_UTIME_MP_HAL             (0)
 // MICROPY_MODULE_BUILTIN_INIT is needed for urandom.__init__
 #define MICROPY_MODULE_BUILTIN_INIT         (PYBRICKS_STM32_OPT_EXTRA_MOD)
@@ -150,7 +150,7 @@ static inline mp_uint_t disable_irq(void) {
 
 #define MICROPY_EVENT_POLL_HOOK \
     do { \
-        extern void pb_stm32_poll(); \
+        extern void pb_stm32_poll(void); \
         pb_stm32_poll(); \
     } while (0);
 

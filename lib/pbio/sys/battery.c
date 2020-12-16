@@ -44,7 +44,7 @@ static uint16_t battery_ok_mv;
 /**
  * Initializes the system battery moitor.
  */
-void pbsys_battery_init() {
+void pbsys_battery_init(void) {
     #if PBDRV_CONFIG_BATTERY_ADC_TYPE != 1
     pbdrv_battery_type_t type;
     if (pbdrv_battery_get_type(&type) == PBIO_SUCCESS && type == PBDRV_BATTERY_TYPE_LIION) {
@@ -74,7 +74,7 @@ void pbsys_battery_init() {
  *
  * This is called periodically to update the current battery state.
  */
-void pbsys_battery_poll() {
+void pbsys_battery_poll(void) {
     clock_time_t now;
     uint32_t poll_interval;
     uint16_t battery_voltage;

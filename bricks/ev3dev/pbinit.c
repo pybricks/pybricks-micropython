@@ -51,7 +51,7 @@ static void *task_caller(void *arg) {
 }
 
 // Pybricks initialization tasks
-void pybricks_init() {
+void pybricks_init(void) {
     GError *error = NULL;
     if (!grx_set_mode_default_graphics(FALSE, &error)) {
         fprintf(stderr, "Could not initialize graphics. Be sure to run using `brickrun -r -- pybricks-micropython`.\n");
@@ -97,21 +97,21 @@ void pybricks_init() {
     grx_draw_filled_convex_polygon(G_N_ELEMENTS(triangle), triangle, GRX_COLOR_BLACK);
 
     pbio_init();
-    extern void ev3dev_status_light_init();
+    extern void ev3dev_status_light_init(void);
     ev3dev_status_light_init();
     pthread_create(&task_caller_thread, NULL, task_caller, NULL);
 }
 
 // Pybricks deinitialization tasks
-void pybricks_deinit() {
+void pybricks_deinit(void) {
     // Signal motor thread to stop and wait for it to do so.
     stopping_thread = true;
     pthread_join(task_caller_thread, NULL);
 }
 
-void pybricks_unhandled_exception() {
-    extern void _pbio_motorpoll_reset_all();
+void pybricks_unhandled_exception(void) {
+    extern void _pbio_motorpoll_reset_all(void);
     _pbio_motorpoll_reset_all();
-    extern void _pb_ev3dev_speaker_beep_off();
+    extern void _pb_ev3dev_speaker_beep_off(void);
     _pb_ev3dev_speaker_beep_off();
 }

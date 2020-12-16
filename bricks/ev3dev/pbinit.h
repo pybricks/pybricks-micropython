@@ -4,8 +4,8 @@
 #ifndef MICROPY_INCLUDED_PBINIT_H
 #define MICROPY_INCLUDED_PBINIT_H
 
-void pybricks_init();
+void pybricks_init(void);
 
-void pybricks_deinit();
+void pybricks_deinit(void);
 
 #endif // MICROPY_INCLUDED_PBINIT_H

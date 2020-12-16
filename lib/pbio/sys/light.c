@@ -145,11 +145,11 @@ static const pbio_color_light_funcs_t pbsys_status_light_funcs = {
     .set_hsv = pbsys_status_light_set_hsv,
 };
 
-void pbsys_status_light_init() {
+void pbsys_status_light_init(void) {
     pbio_color_light_init(pbsys_status_light, &pbsys_status_light_funcs);
 }
 
-static void pbsys_status_light_handle_status_change() {
+static void pbsys_status_light_handle_status_change(void) {
     pbsys_status_light_t *instance = &pbsys_status_light_instance;
     pbsys_status_light_indication_t new_indication = PBSYS_STATUS_LIGHT_INDICATION_NONE;
     bool ble_advertising = pbsys_status_test(PBSYS_STATUS_BLE_ADVERTISING);
@@ -209,7 +209,7 @@ void pbsys_status_light_handle_event(process_event_t event, process_data_t data)
     }
 }
 
-void pbsys_status_light_poll() {
+void pbsys_status_light_poll(void) {
     pbsys_status_light_t *instance = &pbsys_status_light_instance;
     const pbsys_status_light_indication_pattern_element_t *pattern =
         pbsys_status_light_indication_pattern[instance->indication];

@@ -41,7 +41,7 @@ STATIC void ev3dev_Font_init(ev3dev_Font_obj_t *self, GrxFont *font) {
 
 // This must be called from module.__init__() of module that includes this type
 // otherwise we will crash when trying to access attributes!
-void pb_type_ev3dev_Font_init() {
+void pb_type_ev3dev_Font_init(void) {
     if (pb_const_ev3dev_Font_DEFAULT_obj.font) {
         // already intialized
         return;

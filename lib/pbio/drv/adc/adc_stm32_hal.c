@@ -55,7 +55,7 @@ pbio_error_t pbdrv_adc_get_ch(uint8_t ch, uint16_t *value) {
     return PBIO_SUCCESS;
 }
 
-void pbdrv_adc_stm32_hal_handle_irq() {
+void pbdrv_adc_stm32_hal_handle_irq(void) {
     HAL_DMA_IRQHandler(&pbdrv_adc_hdma);
 }
 
@@ -68,11 +68,11 @@ void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc) {
     pbdrv_adc_last_error = hadc->ErrorCode;
 }
 
-static void pbdrv_adc_poll() {
+static void pbdrv_adc_poll(void) {
     // TODO: filter incoming analog values
 }
 
-static void pbdrv_adc_exit() {
+static void pbdrv_adc_exit(void) {
     HAL_NVIC_DisableIRQ(PBDRV_CONFIG_ADC_STM32_HAL_DMA_IRQ);
     HAL_TIM_Base_Stop(&pbdrv_adc_htim);
     HAL_TIM_Base_DeInit(&pbdrv_adc_htim);

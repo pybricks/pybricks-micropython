@@ -522,7 +522,7 @@ tBleStatus aci_gatt_write_charac_value_begin(uint16_t conn_handle,
                                              uint16_t attr_handle,
                                              uint8_t value_len,
                                              uint8_t *attr_value);
-tBleStatus aci_gatt_write_charac_value_end();
+tBleStatus aci_gatt_write_charac_value_end(void);
 
 /**
  * @brief Start the procedure to write a long characteristic value.

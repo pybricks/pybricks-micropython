@@ -31,11 +31,11 @@ typedef struct {
 
 STATIC I2C_HandleTypeDef hi2c;
 
-void mod_experimental_IMU_handle_i2c_er_irq() {
+void mod_experimental_IMU_handle_i2c_er_irq(void) {
     HAL_I2C_ER_IRQHandler(&hi2c);
 }
 
-void mod_experimental_IMU_handle_i2c_ev_irq() {
+void mod_experimental_IMU_handle_i2c_ev_irq(void) {
     HAL_I2C_EV_IRQHandler(&hi2c);
 }
 
@@ -389,11 +389,11 @@ STATIC const mp_obj_type_t mod_experimental_Motion_type = {
 
 #include "py/mpthread.h"
 
-STATIC void sighandler() {
+STATIC void sighandler(int signum) {
     // we just want the signal to interrupt system calls
 }
 
-STATIC mp_obj_t mod_experimental___init__() {
+STATIC mp_obj_t mod_experimental___init__(void) {
     struct sigaction sa;
     sa.sa_flags = 0;
     sa.sa_handler = sighandler;
@@ -414,7 +414,7 @@ STATIC mp_obj_t mod_experimental_pthread_raise(mp_obj_t thread_id_in, mp_obj_t e
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_experimental_pthread_raise_obj, mod_experimental_pthread_raise);
 #endif // PYBRICKS_HUB_EV3BRICK
 
-STATIC mp_obj_t experimental_getchar() {
+STATIC mp_obj_t experimental_getchar(void) {
     uint8_t c;
     pbio_error_t err = pbsys_stdin_get_char(&c);
     if (err == PBIO_SUCCESS) {

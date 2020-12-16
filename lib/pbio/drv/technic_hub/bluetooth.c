@@ -160,11 +160,11 @@ static void bluetooth_reset(reset_state_t reset) {
     }
 }
 
-static void bluetooth_init() {
+static void bluetooth_init(void) {
     bluetooth_reset(RESET_STATE_OUT_LOW);
 }
 
-static void spi_init() {
+static void spi_init(void) {
     GPIO_InitTypeDef gpio_init = { 0 };
 
     // Implied defaults: no pull, low speed, alternate function 0
@@ -1235,7 +1235,7 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
     PROCESS_END();
 }
 
-void pbdrv_bluetooth_init() {
+void pbdrv_bluetooth_init(void) {
     process_start(&pbdrv_bluetooth_spi_process, NULL);
     process_start(&pbdrv_bluetooth_hci_process, NULL);
 }

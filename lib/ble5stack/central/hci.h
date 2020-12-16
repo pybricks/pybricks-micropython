@@ -3,7 +3,7 @@
 
 #include "hci_tl.h"
 
-HCI_StatusCodes_t HCI_readBdaddr();
-HCI_StatusCodes_t HCI_readLocalVersionInfo();
+HCI_StatusCodes_t HCI_readBdaddr(void);
+HCI_StatusCodes_t HCI_readLocalVersionInfo(void);
 
 #endif // HCI_H

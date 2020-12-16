@@ -361,12 +361,12 @@ void pbdrv_uart_stm32l4_ll_dma_handle_uart_irq(uint8_t id) {
     }
 }
 
-static void handle_poll() {
+static void handle_poll(void) {
     // TODO: only broadcast when read or write is complete
     process_post(PROCESS_BROADCAST, PROCESS_EVENT_COM, NULL);
 }
 
-static void handle_exit() {
+static void handle_exit(void) {
     for (int i = 0; i < PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART; i++) {
         const pbdrv_uart_stm32l4_ll_dma_platform_data_t *pdata = &pbdrv_uart_stm32l4_ll_dma_platform_data[i];
         LL_USART_Disable(pdata->uart);

@@ -208,7 +208,7 @@ tBleStatus aci_gap_set_discoverable_begin(uint8_t AdvType,
   return 0;
 }
 
-tBleStatus aci_gap_set_discoverable_end()
+tBleStatus aci_gap_set_discoverable_end(void)
 {
   struct hci_response rq;
   uint8_t status;

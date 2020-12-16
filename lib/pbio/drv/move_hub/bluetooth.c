@@ -85,7 +85,7 @@ static uint8_t uart_tx_buf_size;
 PROCESS(pbdrv_bluetooth_hci_process, "Bluetooth HCI");
 PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
 
-static void bluetooth_init() {
+static void bluetooth_init(void) {
     // put Bluetooth chip into reset
 
     // nRESET
@@ -94,7 +94,7 @@ static void bluetooth_init() {
     GPIOB->BRR = GPIO_BRR_BR_6;
 }
 
-static void spi_init() {
+static void spi_init(void) {
     // SPI2 pin mux
 
     // SPI_CS
@@ -181,11 +181,11 @@ void EXTI2_3_IRQHandler(void) {
     process_poll(&pbdrv_bluetooth_spi_process);
 }
 
-static inline void spi_enable_cs() {
+static inline void spi_enable_cs(void) {
     GPIOB->BRR = GPIO_BRR_BR_12;
 }
 
-static inline void spi_disable_cs() {
+static inline void spi_disable_cs(void) {
     GPIOB->BSRR = GPIO_BSRR_BS_12;
 }
 
@@ -695,7 +695,7 @@ PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
     PROCESS_END();
 }
 
-void pbdrv_bluetooth_init() {
+void pbdrv_bluetooth_init(void) {
     process_start(&pbdrv_bluetooth_spi_process, NULL);
     process_start(&pbdrv_bluetooth_hci_process, NULL);
 }

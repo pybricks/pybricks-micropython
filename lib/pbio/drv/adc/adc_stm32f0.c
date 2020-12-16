@@ -17,7 +17,7 @@
 
 PROCESS(pbdrv_adc_process, "ADC");
 
-static void pbdrv_adc_calibrate() {
+static void pbdrv_adc_calibrate(void) {
     // NB: it takes more than this to make sure ADC is disabled
     // it should be OK though since we only calibrate at init when A/DC is
     // already disabled
@@ -31,7 +31,7 @@ static void pbdrv_adc_calibrate() {
     }
 }
 
-static void pbdrv_adc_init() {
+static void pbdrv_adc_init(void) {
     // enable power domain
     RCC->APB2ENR |= RCC_APB2ENR_ADCEN;
 

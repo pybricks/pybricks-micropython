@@ -32,7 +32,7 @@ static const uint8_t test_animation[] = {
 
 static uint8_t test_light_matrix_set_pixel_last_brightness[MATRIX_SIZE][MATRIX_SIZE];
 
-static void test_light_matrix_reset() {
+static void test_light_matrix_reset(void) {
     memset(test_light_matrix_set_pixel_last_brightness, 0, DATA_SIZE);
 }
 
@@ -114,7 +114,7 @@ PT_THREAD(test_light_matrix(struct pt *pt)) {
     PT_END(pt);
 }
 
-void test_light_matrix_rotation() {
+void test_light_matrix_rotation(void) {
     static pbio_light_matrix_t test_light_matrix;
     pbio_light_matrix_init(&test_light_matrix, MATRIX_SIZE, &test_light_matrix_funcs);
 

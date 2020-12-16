@@ -52,7 +52,7 @@
 static pbdrv_battery_type_t pbdrv_battery_type;
 #endif
 
-void pbdrv_battery_init() {
+void pbdrv_battery_init(void) {
     #if PBDRV_CONFIG_BATTERY_ADC_TYPE == 3
     const pbdrv_battery_adc_platform_data_t *pdata = &pbdrv_battery_adc_platform_data;
     pbdrv_gpio_set_pull(&pdata->gpio, pdata->pull);

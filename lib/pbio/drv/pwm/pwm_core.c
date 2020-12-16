@@ -22,7 +22,7 @@ static pbdrv_pwm_dev_t pbdrv_pwm_dev[PBDRV_CONFIG_PWM_NUM_DEV];
 /**
  * Initializes all PWM drivers.
  */
-void pbdrv_pwm_init() {
+void pbdrv_pwm_init(void) {
     pbdrv_pwm_stm32_tim_init(pbdrv_pwm_dev);
     pbdrv_pwm_test_init(pbdrv_pwm_dev);
     pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev);
@@ -33,7 +33,7 @@ void pbdrv_pwm_init() {
  *
  * This should turn off the output of each PWM.
  */
-void pbdrv_pwm_deinit() {
+void pbdrv_pwm_deinit(void) {
     pbdrv_pwm_stm32_tim_deinit(pbdrv_pwm_dev);
     pbdrv_pwm_test_deinit(pbdrv_pwm_dev);
     pbdrv_pwm_tlc5955_stm32_deinit(pbdrv_pwm_dev);

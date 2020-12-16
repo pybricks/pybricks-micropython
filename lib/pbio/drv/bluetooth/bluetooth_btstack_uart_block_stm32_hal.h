@@ -36,8 +36,8 @@ typedef struct {
 extern const pbdrv_bluetooth_btstack_uart_block_stm32_platform_data_t
     pbdrv_bluetooth_btstack_uart_block_stm32_platform_data;
 
-void pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_tx_dma_irq();
-void pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_rx_dma_irq();
-void pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_uart_irq();
+void pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_tx_dma_irq(void);
+void pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_rx_dma_irq(void);
+void pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_uart_irq(void);
 
 #endif // _INTERNAL_PBDRV_BLUETOOTH_BTSTACK_UART_BLOCK_STM32_HAL_H_

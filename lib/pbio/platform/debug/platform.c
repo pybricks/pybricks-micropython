@@ -126,7 +126,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc) {
     HAL_ADC_ConfigChannel(hadc, &adc_ch_config);
 }
 
-void DMA2_Stream0_IRQHandler() {
+void DMA2_Stream0_IRQHandler(void) {
     pbdrv_adc_stm32_hal_handle_irq();
 }
 
@@ -154,19 +154,19 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
 
 // PWM
 
-static void pwm_dev_0_platform_init() {
+static void pwm_dev_0_platform_init(void) {
     // green LED LD1 on PB0 using TIM3 CH3
     GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER0_Msk) | (2 << GPIO_MODER_MODER0_Pos);
     GPIOB->AFR[0] = (GPIOB->AFR[0] & ~GPIO_AFRL_AFSEL0_Msk) | (2 << GPIO_AFRL_AFSEL0_Pos);
 }
 
-static void pwm_dev_1_platform_init() {
+static void pwm_dev_1_platform_init(void) {
     // blue LED LD2 on PB7 using TIM4 CH2
     GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER7_Msk) | (2 << GPIO_MODER_MODER7_Pos);
     GPIOB->AFR[0] = (GPIOB->AFR[0] & ~GPIO_AFRL_AFSEL7_Msk) | (2 << GPIO_AFRL_AFSEL7_Pos);
 }
 
-static void pwm_dev_2_platform_init() {
+static void pwm_dev_2_platform_init(void) {
     // red LED LD3 on PB14 using TIM12 CH1
     GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER14_Msk) | (2 << GPIO_MODER_MODER14_Pos);
     GPIOB->AFR[1] = (GPIOB->AFR[1] & ~GPIO_AFRH_AFSEL14_Msk) | (9 << GPIO_AFRH_AFSEL14_Pos);
@@ -202,7 +202,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
 
 // RESET
 
-void pbdrv_reset_stm32_power_off() {
+void pbdrv_reset_stm32_power_off(void) {
     // don't have any control over power on this board
 }
 

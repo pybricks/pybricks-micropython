@@ -15,7 +15,7 @@ uint32_t pbdrv_init_busy_count;
 uint32_t pbdrv_deinit_busy_count;
 
 /** Initializes all enabled drivers. */
-void pbdrv_init() {
+void pbdrv_init(void) {
     clock_init();
     process_init();
     process_start(&etimer_process, NULL);
@@ -42,7 +42,7 @@ void pbdrv_init() {
  * Some drivers still need to be useable after this, like reset and battery
  * charger drivers.
  */
-void pbdrv_deinit() {
+void pbdrv_deinit(void) {
     // REVISIT: It probably makes more sense to have a pbio_deinit() that stops
     // things at a higher level instead of pbdrv_deinit(). But that isn't
     // possible right now, e.g. since pbio_light* isn't aware of the async nature

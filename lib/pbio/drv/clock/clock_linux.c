@@ -16,13 +16,13 @@
 void clock_init(void) {
 }
 
-clock_time_t clock_time() {
+clock_time_t clock_time(void) {
     struct timespec time_val;
     clock_gettime(CLOCK_MONOTONIC_RAW, &time_val);
     return time_val.tv_sec * 1000 + time_val.tv_nsec / 1000000;
 }
 
-unsigned long clock_usecs() {
+unsigned long clock_usecs(void) {
     struct timespec time_val;
     clock_gettime(CLOCK_MONOTONIC_RAW, &time_val);
     return time_val.tv_sec * 1000000 + time_val.tv_nsec / 1000;

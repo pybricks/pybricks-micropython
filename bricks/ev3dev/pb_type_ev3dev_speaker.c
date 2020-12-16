@@ -105,7 +105,7 @@ static int set_beep_frequency(ev3dev_Speaker_obj_t *self, int32_t freq) {
 
 // This is used when there is an unhandled exception in a program to make sure
 // we stop beeping.
-void _pb_ev3dev_speaker_beep_off() {
+void _pb_ev3dev_speaker_beep_off(void) {
     set_beep_frequency(&ev3dev_speaker_singleton, 0);
 }
 

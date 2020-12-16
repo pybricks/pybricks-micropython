@@ -276,7 +276,7 @@ tBleStatus aci_gap_set_discoverable_begin(uint8_t AdvType,
                                           const uint8_t* ServiceUUIDList,
                                           uint16_t SlaveConnIntervMin,
                                           uint16_t SlaveConnIntervMax);
-tBleStatus aci_gap_set_discoverable_end();
+tBleStatus aci_gap_set_discoverable_end(void);
 
 /**
  * @brief Set the Device in direct connectable mode (as defined in GAP specification Volume 3, Section 9.3.3).

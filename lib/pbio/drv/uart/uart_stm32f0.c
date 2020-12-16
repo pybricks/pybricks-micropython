@@ -207,7 +207,7 @@ void pbdrv_uart_stm32f0_handle_irq(uint8_t id) {
     }
 }
 
-static void handle_poll() {
+static void handle_poll(void) {
     for (int i = 0; i < PBDRV_CONFIG_UART_STM32F0_NUM_UART; i++) {
         pbdrv_uart_t *uart = &pbdrv_uart[i];
 
@@ -233,7 +233,7 @@ static void handle_poll() {
     }
 }
 
-static void handle_exit() {
+static void handle_exit(void) {
     for (int i = 0; i < PBDRV_CONFIG_UART_STM32F0_NUM_UART; i++) {
         pbdrv_uart_t *uart = &pbdrv_uart[i];
         NVIC_DisableIRQ(uart->irq);

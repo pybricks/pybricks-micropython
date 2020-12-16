@@ -16,7 +16,7 @@
  *
  * This is called periodically to handle any changes in the system state.
  */
-void pbsys_supervisor_poll() {
+void pbsys_supervisor_poll(void) {
     // Shut down on low voltage so we don't damage rechargeable batteries
     // or if there is no BLE connection made whithin 30 seconds
     if (pbsys_status_test_debounce(PBSYS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN, true, 3000)

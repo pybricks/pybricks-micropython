@@ -37,7 +37,7 @@ struct _pbdrv_led_array_dev_t {
 
 #if PBDRV_CONFIG_LED_ARRAY
 
-void pbdrv_led_array_init();
+void pbdrv_led_array_init(void);
 
 #else // PBDRV_CONFIG_LED_ARRAY
 

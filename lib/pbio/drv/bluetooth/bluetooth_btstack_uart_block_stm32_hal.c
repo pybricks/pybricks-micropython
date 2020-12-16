@@ -210,15 +210,15 @@ const btstack_uart_block_t *pbdrv_bluetooth_btstack_uart_block_stm32_hal_instanc
     return &btstack_uart_block_stm32_hal;
 }
 
-void pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_tx_dma_irq() {
+void pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_tx_dma_irq(void) {
     HAL_DMA_IRQHandler(&btstack_tx_hdma);
 }
 
-void pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_rx_dma_irq() {
+void pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_rx_dma_irq(void) {
     HAL_DMA_IRQHandler(&btstack_rx_hdma);
 }
 
-void pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_uart_irq() {
+void pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_uart_irq(void) {
     HAL_UART_IRQHandler(&btstack_huart);
 }
 

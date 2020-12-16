@@ -20,7 +20,7 @@
 
 static pbdrv_led_array_dev_t pbdrv_led_array_dev[PBDRV_CONFIG_LED_ARRAY_NUM_DEV];
 
-void pbdrv_led_array_init() {
+void pbdrv_led_array_init(void) {
     pbdrv_led_array_pwm_init(pbdrv_led_array_dev);
 }
 

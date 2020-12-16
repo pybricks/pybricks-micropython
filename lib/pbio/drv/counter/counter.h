@@ -27,7 +27,7 @@ struct _pbdrv_counter_dev_t {
 
 #if PBDRV_CONFIG_COUNTER
 
-void pbdrv_counter_init();
+void pbdrv_counter_init(void);
 
 #else // PBDRV_CONFIG_COUNTER
 

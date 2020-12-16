@@ -9,7 +9,7 @@
 #include <pbsys/config.h>
 
 #if PBSYS_CONFIG_HUB_LIGHT_MATRIX
-void pbsys_hub_light_matrix_init();
+void pbsys_hub_light_matrix_init(void);
 void pbsys_hub_light_matrix_handle_event(process_event_t event, process_data_t data);
 #else
 #define pbsys_hub_light_matrix_init()

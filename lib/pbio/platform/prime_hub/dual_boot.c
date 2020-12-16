@@ -17,7 +17,7 @@ extern uint32_t _fw_isr_vector_src[];
  * When this firmware is built as dual-boot, this will jump to the other
  * firmware in the flash memory.
  */
-static void jump_to_other_firmware() {
+static void jump_to_other_firmware(void) {
     // Hint to compiler that variables should be saved in registers since
     // we are moving the stack pointer.
     register void (*reset)();
@@ -45,7 +45,7 @@ static void jump_to_other_firmware() {
 /**
  * Checks if the center button is pressed for more than 2 seconds during early boot.
  */
-static bool check_for_long_press() {
+static bool check_for_long_press(void) {
     __HAL_RCC_ADC1_CLK_ENABLE();
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
@@ -100,7 +100,7 @@ static bool check_for_long_press() {
     return pressed;
 }
 
-void pbio_platform_dual_boot() {
+void pbio_platform_dual_boot(void) {
     if (!check_for_long_press()) {
         jump_to_other_firmware();
     }

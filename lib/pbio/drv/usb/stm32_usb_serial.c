@@ -172,14 +172,14 @@ static USBD_CDC_ItfTypeDef USBD_CDC_fops = {
     .TransmitCplt = CDC_Itf_TransmitCplt,
 };
 
-static void pbdrv_stm32_usb_serial_init() {
+static void pbdrv_stm32_usb_serial_init(void) {
     USBD_Init(&USBD_Device, &VCP_Desc, 0);
     USBD_RegisterClass(&USBD_Device, USBD_CDC_CLASS);
     USBD_CDC_RegisterInterface(&USBD_Device, &USBD_CDC_fops);
     USBD_Start(&USBD_Device);
 }
 
-static void pbdrv_stm32_usb_serial_transmit() {
+static void pbdrv_stm32_usb_serial_transmit(void) {
     static int tx_size = 0;
 
     if (usb_out_busy) {
@@ -209,7 +209,7 @@ static void pbdrv_stm32_usb_serial_transmit() {
     }
 }
 
-static void pbdrv_stm32_usb_serial_receive() {
+static void pbdrv_stm32_usb_serial_receive(void) {
     if (usb_in_busy) {
         return;
     }

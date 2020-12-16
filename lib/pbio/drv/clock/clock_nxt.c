@@ -14,11 +14,11 @@
 #error Clock must be set to 1 msec ticks
 #endif
 
-static void clock_systick_hook() {
+static void clock_systick_hook(void) {
     etimer_request_poll();
 }
 
-clock_time_t clock_time() {
+clock_time_t clock_time(void) {
     return systick_get_ms();
 }
 

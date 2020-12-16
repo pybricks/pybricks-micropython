@@ -14,7 +14,7 @@
 #include "bluetooth_btstack_control_gpio.h"
 
 
-static int btstack_control_gpio_on() {
+static int btstack_control_gpio_on(void) {
     const pbdrv_bluetooth_btstack_control_gpio_platform_data_t *pdata =
         &pbdrv_bluetooth_btstack_control_gpio_platform_data;
 
@@ -23,7 +23,7 @@ static int btstack_control_gpio_on() {
     return 0;
 }
 
-static int btstack_control_gpio_off() {
+static int btstack_control_gpio_off(void) {
     const pbdrv_bluetooth_btstack_control_gpio_platform_data_t *pdata =
         &pbdrv_bluetooth_btstack_control_gpio_platform_data;
 

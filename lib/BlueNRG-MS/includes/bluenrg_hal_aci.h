@@ -54,7 +54,7 @@ tBleStatus aci_hal_write_config_data_begin(uint8_t offset,
                                            uint8_t len,
                                            const uint8_t *val);
 
-tBleStatus aci_hal_write_config_data_end();
+tBleStatus aci_hal_write_config_data_end(void);
 
 /**
  * @brief This command requests the value in the low level configure data structure.
@@ -87,7 +87,7 @@ tBleStatus aci_hal_read_config_data(uint8_t offset, uint16_t data_len, uint8_t *
  * @return Value indicating success or error code.
  */
 tBleStatus aci_hal_set_tx_power_level_begin(uint8_t en_high_power, uint8_t pa_level);
-tBleStatus aci_hal_set_tx_power_level_end();
+tBleStatus aci_hal_set_tx_power_level_end(void);
 
 /**
  * @brief This command returns the number of packets sent in Direct Test Mode.

@@ -31,7 +31,7 @@ static char heap[PYBRICKS_HEAP_KB * 1024];
 #endif
 
 // Implementation for MICROPY_EVENT_POLL_HOOK
-void pb_stm32_poll() {
+void pb_stm32_poll(void) {
     while (pbio_do_one_event()) {
     }
 
@@ -54,7 +54,7 @@ void pb_stm32_poll() {
 // TODO: need to verify that loaded code can never be bigger that .mpy file.
 #define MPY_MAX_BYTES (PYBRICKS_HEAP_KB * 1024 / 2)
 
-static pbio_error_t wait_for_button_release() {
+static pbio_error_t wait_for_button_release(void) {
     pbio_error_t err;
     pbio_button_flags_t btn = PBIO_BUTTON_CENTER;
     while (btn & PBIO_BUTTON_CENTER) {

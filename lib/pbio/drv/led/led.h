@@ -25,7 +25,7 @@ struct _pbdrv_led_dev_t {
 
 #if PBDRV_CONFIG_LED
 
-void pbdrv_led_init();
+void pbdrv_led_init(void);
 
 #else // PBDRV_CONFIG_LED
 

@@ -76,7 +76,7 @@ tBleStatus aci_hal_write_config_data_begin(uint8_t offset,
   return 0;
 }
 
-tBleStatus aci_hal_write_config_data_end()
+tBleStatus aci_hal_write_config_data_end(void)
 {
   struct hci_response rq;
   uint8_t status;
@@ -133,7 +133,7 @@ tBleStatus aci_hal_set_tx_power_level_begin(uint8_t en_high_power, uint8_t pa_le
   return 0;
 }
 
-tBleStatus aci_hal_set_tx_power_level_end()
+tBleStatus aci_hal_set_tx_power_level_end(void)
 {
   struct hci_response rq;
   uint8_t status;

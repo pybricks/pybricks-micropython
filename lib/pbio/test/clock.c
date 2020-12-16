@@ -20,10 +20,10 @@ void clock_tick(clock_time_t ticks) {
 void clock_init(void) {
 }
 
-clock_time_t clock_time() {
+clock_time_t clock_time(void) {
     return clock_ticks;
 }
 
-unsigned long clock_usecs() {
+unsigned long clock_usecs(void) {
     return clock_to_msec(clock_ticks) * 1000UL;
 }

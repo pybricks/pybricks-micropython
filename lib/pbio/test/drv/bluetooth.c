@@ -11,7 +11,7 @@
 #include "../../drv/bluetooth/bluetooth_btstack_run_loop_contiki.h"
 #include "../../drv/core.h"
 
-void pbdrv_bluetooth_init() {
+void pbdrv_bluetooth_init(void) {
     btstack_run_loop_init(pbdrv_bluetooth_btstack_run_loop_contiki_get_instance());
 }
 

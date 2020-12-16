@@ -83,7 +83,7 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
 
 // PWM
 
-static void pwm_dev_0_platform_init() {
+static void pwm_dev_0_platform_init(void) {
     // port A
     // init PWM pins as gpio out low (coasting) and prepare alternate function
     GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
@@ -103,7 +103,7 @@ static void pwm_dev_0_platform_init() {
     GPIOA->AFR[1] = (GPIOA->AFR[1] & ~GPIO_AFRH_AFSEL11_Msk) | (2 << GPIO_AFRH_AFSEL11_Pos);
 }
 
-static void pwm_dev_1_platform_init() {
+static void pwm_dev_1_platform_init(void) {
     // port C
     // init PWM pins as gpio out low (coasting) and prepare alternate function
     GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
@@ -123,7 +123,7 @@ static void pwm_dev_1_platform_init() {
     GPIOC->AFR[1] = (GPIOC->AFR[1] & ~GPIO_AFRH_AFSEL9_Msk) | (0 << GPIO_AFRH_AFSEL9_Pos);
 }
 
-static void pwm_dev_2_platform_init() {
+static void pwm_dev_2_platform_init(void) {
     // green LED on PB14 using TIM15 CH1
     GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER14_Msk) | (2 << GPIO_MODER_MODER14_Pos);
     GPIOB->AFR[1] = (GPIOB->AFR[1] & ~GPIO_AFRH_AFSEL14_Msk) | (1 << GPIO_AFRH_AFSEL14_Pos);
@@ -133,7 +133,7 @@ static void pwm_dev_2_platform_init() {
     GPIOB->AFR[1] = (GPIOB->AFR[1] & ~GPIO_AFRH_AFSEL15_Msk) | (1 << GPIO_AFRH_AFSEL15_Pos);
 }
 
-static void pwm_dev_3_platform_init() {
+static void pwm_dev_3_platform_init(void) {
     // red LED on PB8 using TIM16 CH1
     GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER8_Msk) | (2 << GPIO_MODER_MODER8_Pos);
     GPIOB->AFR[1] = (GPIOB->AFR[1] & ~GPIO_AFRH_AFSEL8_Msk) | (2 << GPIO_AFRH_AFSEL8_Pos);
@@ -187,7 +187,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
 
 // RESET
 
-void pbdrv_reset_stm32_power_off() {
+void pbdrv_reset_stm32_power_off(void) {
     // setting PB11 low cuts the power
     GPIOB->BRR = GPIO_BRR_BR_11;
 }

@@ -87,7 +87,7 @@ HCI_StatusCodes_t GAP_makeDiscoverable(Gap_eventType_t eventType,
     return HCI_sendHCICommand(GAP_MAKE_DISCOVERABLE, pData, 10);
 }
 
-HCI_StatusCodes_t GAP_endDiscoverable()
+HCI_StatusCodes_t GAP_endDiscoverable(void)
 {
     return HCI_sendHCICommand(GAP_END_DISCOVERABLE, NULL, 0);
 }

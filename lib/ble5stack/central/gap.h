@@ -1642,7 +1642,7 @@ extern HCI_StatusCodes_t GAP_makeDiscoverable(Gap_eventType_t eventType,
  * Event with the Statusparameter, then issue a GAP End Discoverable Done Event
  * advertising has stopped
  */
-extern HCI_StatusCodes_t GAP_endDiscoverable();
+extern HCI_StatusCodes_t GAP_endDiscoverable(void);
 
 /**
  * Send this command to set the raw advertising or scan response data.

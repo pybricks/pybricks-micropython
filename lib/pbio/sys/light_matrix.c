@@ -46,7 +46,7 @@ static const pbio_light_matrix_funcs_t pbsys_hub_light_matrix_funcs = {
     .set_pixel = pbsys_hub_light_matrix_set_pixel,
 };
 
-static void pbsys_hub_light_matrix_show_stop_sign() {
+static void pbsys_hub_light_matrix_show_stop_sign(void) {
     // 3x3 "stop sign" at top center of light matrix
     for (uint8_t r = 0; r < pbsys_hub_light_matrix->size; r++) {
         for (uint8_t c = 0; c < pbsys_hub_light_matrix->size; c++) {
@@ -56,7 +56,7 @@ static void pbsys_hub_light_matrix_show_stop_sign() {
     }
 }
 
-void pbsys_hub_light_matrix_init() {
+void pbsys_hub_light_matrix_init(void) {
     pbio_light_matrix_init(pbsys_hub_light_matrix, 5, &pbsys_hub_light_matrix_funcs);
     pbsys_hub_light_matrix_show_stop_sign();
 }

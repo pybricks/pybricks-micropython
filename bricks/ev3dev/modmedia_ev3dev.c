@@ -13,7 +13,7 @@
 #error "media.ev3dev module requires that MICROPY_MODULE_BUILTIN_INIT is enabled"
 #endif
 
-STATIC mp_obj_t media_ev3dev___init__() {
+STATIC mp_obj_t media_ev3dev___init__(void) {
     pb_type_ev3dev_Font_init();
     return mp_const_none;
 }

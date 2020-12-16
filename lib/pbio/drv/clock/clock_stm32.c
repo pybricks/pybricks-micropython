@@ -20,7 +20,7 @@ void clock_init(void) {
     // STM32 does platform-specific clock init early in SystemInit()
 }
 
-clock_time_t clock_time() {
+clock_time_t clock_time(void) {
     return clock_time_ticks;
 }
 

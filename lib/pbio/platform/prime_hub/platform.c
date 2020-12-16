@@ -189,16 +189,16 @@ const pbdrv_led_array_pwm_platform_data_t pbdrv_led_array_pwm_platform_data[PBDR
 
 // PWM
 
-static void pwm_dev_0_platform_init() {
+static void pwm_dev_0_platform_init(void) {
 }
 
-static void pwm_dev_1_platform_init() {
+static void pwm_dev_1_platform_init(void) {
 }
 
-static void pwm_dev_2_platform_init() {
+static void pwm_dev_2_platform_init(void) {
 }
 
-static void pwm_dev_3_platform_init() {
+static void pwm_dev_3_platform_init(void) {
     GPIO_InitTypeDef gpio_init;
 
     gpio_init.Pin = GPIO_PIN_15;
@@ -212,7 +212,7 @@ static void pwm_dev_3_platform_init() {
     TIM12->CCR2 = TIM12->ARR / 2;
 }
 
-static void pwm_dev_4_platform_init() {
+static void pwm_dev_4_platform_init(void) {
     GPIO_InitTypeDef gpio_init;
 
     gpio_init.Pin = GPIO_PIN_9;
@@ -307,7 +307,7 @@ const pbdrv_pwm_tlc5955_stm32_platform_data_t
 
 // RESET
 
-void pbdrv_reset_stm32_power_off() {
+void pbdrv_reset_stm32_power_off(void) {
     // setting PA13 low cuts the power
     GPIOA->BSRR = GPIO_BSRR_BR_13;
 }
@@ -558,15 +558,15 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc) {
     HAL_ADC_ConfigChannel(hadc, &adc_ch_config);
 }
 
-void DMA2_Stream0_IRQHandler() {
+void DMA2_Stream0_IRQHandler(void) {
     pbdrv_adc_stm32_hal_handle_irq();
 }
 
-void DMA2_Stream2_IRQHandler() {
+void DMA2_Stream2_IRQHandler(void) {
     pbdrv_pwm_tlc5955_stm32_rx_dma_irq(0);
 }
 
-void DMA2_Stream3_IRQHandler() {
+void DMA2_Stream3_IRQHandler(void) {
     pbdrv_pwm_tlc5955_stm32_tx_dma_irq(0);
 }
 
@@ -647,19 +647,19 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
 }
 
 void I2C2_ER_IRQHandler(void) {
-    extern void mod_experimental_IMU_handle_i2c_er_irq();
+    extern void mod_experimental_IMU_handle_i2c_er_irq(void);
     mod_experimental_IMU_handle_i2c_er_irq();
 }
 
 void I2C2_EV_IRQHandler(void) {
-    extern void mod_experimental_IMU_handle_i2c_ev_irq();
+    extern void mod_experimental_IMU_handle_i2c_ev_irq(void);
     mod_experimental_IMU_handle_i2c_ev_irq();
 }
 
 // Early initialization
 
 // optional handling for dual-boot firmware
-__WEAK void pbio_platform_dual_boot() {
+__WEAK void pbio_platform_dual_boot(void) {
 }
 
 // special memory addresses defined in linker script

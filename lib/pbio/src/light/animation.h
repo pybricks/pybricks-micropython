@@ -34,7 +34,7 @@ struct _pbio_light_animation_t {
 void pbio_light_animation_init(pbio_light_animation_t *animation, pbio_light_animation_next_t next);
 void pbio_light_animation_start(pbio_light_animation_t *animation);
 void pbio_light_animation_stop(pbio_light_animation_t *animation);
-void pbio_light_animation_stop_all();
+void pbio_light_animation_stop_all(void);
 bool pbio_light_animation_is_started(pbio_light_animation_t *animation);
 
 #endif // _PBIO_LIGHT_ANIMATION_H_

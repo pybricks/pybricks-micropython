@@ -25,7 +25,7 @@
 #include "light_matrix.h"
 #include "light.h"
 
-void pbsys_hmi_init() {
+void pbsys_hmi_init(void) {
     pbsys_status_light_init();
     pbsys_hub_light_matrix_init();
 }
@@ -40,7 +40,7 @@ void pbsys_hmi_handle_event(process_event_t event, process_data_t data) {
  *
  * This is called periodically to update the current HMI state.
  */
-void pbsys_hmi_poll() {
+void pbsys_hmi_poll(void) {
     pbio_button_flags_t btn;
     pbio_button_is_pressed(&btn);
 

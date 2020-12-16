@@ -10,7 +10,7 @@
 
 #if PBDRV_CONFIG_BLUETOOTH
 
-void pbdrv_bluetooth_init();
+void pbdrv_bluetooth_init(void);
 
 #else // PBDRV_CONFIG_BLUETOOTH
 

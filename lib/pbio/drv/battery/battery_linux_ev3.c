@@ -22,7 +22,7 @@ static FILE *f_voltage;
 static FILE *f_current;
 static FILE *f_technology;
 
-void pbdrv_battery_init() {
+void pbdrv_battery_init(void) {
     f_voltage = fopen("/sys/class/power_supply/lego-ev3-battery/voltage_now", "r");
     if (f_voltage) {
         setbuf(f_voltage, NULL);
