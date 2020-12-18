@@ -36,13 +36,27 @@ STATIC void pb_type_Speaker_start_beep(uint32_t frequency) {
     // TODO: apply scaling for volume level
     // TODO: don't recreate waveform if it hasn't changed shape or volume
 
-    // create square wave
-    int i = 0;
-    for (; i < MP_ARRAY_SIZE(waveform_data) / 2; i++) {
-        waveform_data[i] = 0;
+    if (frequency == 0) {
+        // 0 frequency is just a flat line
+        for (int i = 0; i < MP_ARRAY_SIZE(waveform_data); i++) {
+            waveform_data[i] = INT16_MAX;
+        }
+    } else {
+        // create square wave
+        int i = 0;
+        for (; i < MP_ARRAY_SIZE(waveform_data) / 2; i++) {
+            waveform_data[i] = 0;
+        }
+        for (; i < MP_ARRAY_SIZE(waveform_data); i++) {
+            waveform_data[i] = UINT16_MAX;
+        }
     }
-    for (; i < MP_ARRAY_SIZE(waveform_data); i++) {
-        waveform_data[i] = UINT16_MAX;
+
+    if (frequency < 64) {
+        frequency = 64;
+    }
+    if (frequency > 24000) {
+        frequency = 24000;
     }
 
     pbdrv_sound_start(&waveform_data[0], MP_ARRAY_SIZE(waveform_data), frequency * MP_ARRAY_SIZE(waveform_data));
