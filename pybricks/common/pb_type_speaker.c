@@ -225,7 +225,7 @@ STATIC void pb_type_Speaker_play_note(pb_type_Speaker_obj_t *self, mp_obj_t obj,
         if (octave < 2 || octave > 8) {
             mp_raise_ValueError(MP_ERROR_TEXT("Missing octave number 2-8"));
         }
-        freq *= 2 << octave;
+        freq *= 2 << (octave - 1);
     }
 
     // '/' delimiter is required between octave and fraction
