@@ -21,7 +21,6 @@
 typedef struct _iodevices_PUPDevice_obj_t {
     mp_obj_base_t base;
     pb_device_t *pbdev;
-    mp_obj_t id;
 } iodevices_PUPDevice_obj_t;
 
 // pybricks.iodevices.PUPDevice.__init__
@@ -36,15 +35,25 @@ STATIC mp_obj_t iodevices_PUPDevice_make_new(const mp_obj_type_t *type, size_t n
 
     self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_LUMP_UART);
 
+    return MP_OBJ_FROM_PTR(self);
+}
+
+// pybricks.iodevices.PUPDevice.info
+STATIC mp_obj_t iodevices_PUPDevice_info(mp_obj_t self_in) {
+    iodevices_PUPDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
     pbio_port_t _port;
     pbio_iodev_type_id_t id;
     uint8_t curr_mode;
     uint8_t num_values;
     pb_device_get_info(self->pbdev, &_port, &id, &curr_mode, &num_values);
-    self->id = mp_obj_new_int(id);
 
-    return MP_OBJ_FROM_PTR(self);
+    mp_obj_t info_dict = mp_obj_new_dict(0);
+    mp_obj_dict_store(info_dict, MP_ROM_QSTR(MP_QSTR_id), MP_OBJ_NEW_SMALL_INT(id));
+
+    return info_dict;
 }
+MP_DEFINE_CONST_FUN_OBJ_1(iodevices_PUPDevice_info_obj, iodevices_PUPDevice_info);
 
 // pybricks.iodevices.PUPDevice.read
 STATIC mp_obj_t iodevices_PUPDevice_read(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -105,7 +114,7 @@ MP_DEFINE_CONST_FUN_OBJ_KW(iodevices_PUPDevice_write_obj, 1, iodevices_PUPDevice
 STATIC const mp_rom_map_elem_t iodevices_PUPDevice_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_read),       MP_ROM_PTR(&iodevices_PUPDevice_read_obj) },
     { MP_ROM_QSTR(MP_QSTR_write),      MP_ROM_PTR(&iodevices_PUPDevice_write_obj)},
-    { MP_ROM_QSTR(MP_QSTR_ID),         MP_ROM_ATTRIBUTE_OFFSET(iodevices_PUPDevice_obj_t, id) },
+    { MP_ROM_QSTR(MP_QSTR_info),       MP_ROM_PTR(&iodevices_PUPDevice_info_obj)},
 };
 STATIC MP_DEFINE_CONST_DICT(iodevices_PUPDevice_locals_dict, iodevices_PUPDevice_locals_dict_table);
 
