@@ -191,6 +191,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	common/pb_type_lightmatrix.c \
 	common/pb_type_logger.c \
 	common/pb_type_motor.c \
+	common/pb_type_speaker.c \
 	experimental/pb_module_experimental.c \
 	geometry/pb_module_geometry.c \
 	geometry/pb_type_matrix.c \
@@ -314,6 +315,8 @@ HAL_SRC_C = $(addprefix micropython/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Dri
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_adc_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_adc.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_cortex.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dac_ex.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dac.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dma.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_gpio.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_i2c.c \
@@ -397,6 +400,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/pwm/pwm_stm32_tim.c \
 	drv/pwm/pwm_tlc5955_stm32.c \
 	drv/reset/reset_stm32.c \
+	drv/sound/sound_stm32_hal_dac.c \
 	drv/uart/uart_stm32f0.c \
 	drv/uart/uart_stm32f4_ll_irq.c \
 	drv/uart/uart_stm32l4_ll_dma.c \

@@ -17,6 +17,7 @@
 #include "../../drv/led/led_pwm.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/pwm/pwm_tlc5955_stm32.h"
+#include "../../drv/sound/sound_stm32_hal_dac.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
 
 // bootloader magic
@@ -310,6 +311,34 @@ const pbdrv_pwm_tlc5955_stm32_platform_data_t
 void pbdrv_reset_stm32_power_off(void) {
     // setting PA13 low cuts the power
     GPIOA->BSRR = GPIO_BSRR_BR_13;
+}
+
+// SOUND
+
+const pbdrv_sound_stm32_hal_dac_platform_data_t pbdrv_sound_stm32_hal_dac_platform_data = {
+    .enable_gpio_bank = GPIOC,
+    .enable_gpio_pin = GPIO_PIN_10,
+    .dac = DAC1,
+    .dac_ch = DAC_CHANNEL_1,
+    .dac_trigger = DAC_TRIGGER_T6_TRGO,
+    .dma = DMA1_Stream5,
+    .dma_ch = DMA_CHANNEL_7,
+    .dma_irq = DMA1_Stream5_IRQn,
+    .tim = TIM6,
+    .tim_clock_rate = 48000000, // APB1: 48MHz
+};
+
+void HAL_DAC_MspInit(DAC_HandleTypeDef *hdac) {
+    GPIO_InitTypeDef gpio_init;
+
+    gpio_init.Pin = GPIO_PIN_4;
+    gpio_init.Mode = GPIO_MODE_ANALOG;
+    gpio_init.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &gpio_init);
+}
+
+void DMA1_Stream5_IRQHandler(void) {
+    pbdrv_sound_stm32_hal_dac_handle_dma_irq();
 }
 
 // UART
@@ -687,8 +716,8 @@ void SystemInit(void) {
     clk_init.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     clk_init.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
     clk_init.AHBCLKDivider = RCC_SYSCLK_DIV1;  // HCLK 96MHz
-    clk_init.APB1CLKDivider = RCC_HCLK_DIV2; // changed from pyboard since max is 50MHz
-    clk_init.APB2CLKDivider = RCC_HCLK_DIV1; // changed from pyboard since max is 100MHz
+    clk_init.APB1CLKDivider = RCC_HCLK_DIV2; // 48MHz
+    clk_init.APB2CLKDivider = RCC_HCLK_DIV1; // 96MHz
 
     HAL_RCC_ClockConfig(&clk_init, FLASH_LATENCY_5);
 
@@ -709,7 +738,8 @@ void SystemInit(void) {
         RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOEEN | RCC_AHB1ENR_DMA1EN | RCC_AHB1ENR_DMA2EN;
     RCC->APB1ENR |= RCC_APB1ENR_USART2EN | RCC_APB1ENR_UART4EN | RCC_APB1ENR_UART5EN |
         RCC_APB1ENR_UART7EN | RCC_APB1ENR_UART8EN | RCC_APB1ENR_TIM2EN | RCC_APB1ENR_TIM3EN |
-        RCC_APB1ENR_TIM4EN | RCC_APB1ENR_TIM12EN | RCC_APB1ENR_I2C2EN;
+        RCC_APB1ENR_TIM4EN | RCC_APB1ENR_TIM6EN | RCC_APB1ENR_TIM12EN | RCC_APB1ENR_I2C2EN |
+        RCC_APB1ENR_DACEN;
     RCC->APB2ENR |= RCC_APB2ENR_TIM1EN | RCC_APB2ENR_TIM8EN | RCC_APB2ENR_UART9EN |
         RCC_APB2ENR_UART10EN | RCC_APB2ENR_ADC1EN | RCC_APB2ENR_SPI1EN | RCC_APB2ENR_SYSCFGEN;
     RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;

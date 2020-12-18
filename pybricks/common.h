@@ -75,6 +75,12 @@ MP_DECLARE_CONST_FUN_OBJ_1(common_DCMotor_brake_obj);
 
 #endif // PYBRICKS_PY_COMMON_MOTORS
 
+#if PYBRICKS_PY_COMMON_SPEAKER
+
+const mp_obj_type_t pb_type_Speaker;
+
+#endif // PYBRICKS_PY_COMMON_SPEAKER
+
 #endif // PYBRICKS_PY_COMMON
 
 #endif // PYBRICKS_INCLUDED_PYBRICKS_COMMON_H

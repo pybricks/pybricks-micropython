@@ -10,16 +10,17 @@
 
 #include <contiki.h>
 
-#include "pbdrv/button.h"
-#include "pbdrv/config.h"
-#include "pbdrv/core.h"
-#include "pbdrv/motor.h"
-#include "pbio/config.h"
-#include "pbio/light_matrix.h"
-#include "pbio/light.h"
-#include "pbio/motorpoll.h"
-#include "pbio/uartdev.h"
-#include "pbsys/sys.h"
+#include <pbdrv/button.h>
+#include <pbdrv/config.h>
+#include <pbdrv/core.h>
+#include <pbdrv/motor.h>
+#include <pbdrv/sound.h>
+#include <pbio/config.h>
+#include <pbio/light_matrix.h>
+#include <pbio/light.h>
+#include <pbio/motorpoll.h>
+#include <pbio/uartdev.h>
+#include <pbsys/sys.h>
 
 #include "light/animation.h"
 #include "processes.h"
@@ -71,6 +72,7 @@ void pbio_stop_all(void) {
     pbio_light_animation_stop_all();
     #endif
     _pbio_motorpoll_reset_all();
+    pbdrv_sound_stop();
 }
 
 /**
