@@ -29,6 +29,7 @@ typedef struct {
     stmdev_ctx_t ctx;
 } mod_experimental_IMU_obj_t;
 
+STATIC mod_experimental_IMU_obj_t instance;
 STATIC I2C_HandleTypeDef hi2c;
 
 void mod_experimental_IMU_handle_i2c_er_irq(void) {
@@ -39,24 +40,92 @@ void mod_experimental_IMU_handle_i2c_ev_irq(void) {
     HAL_I2C_EV_IRQHandler(&hi2c);
 }
 
-STATIC int32_t mod_experimental_IMU_write_reg(void *handle, uint8_t reg, uint8_t *data, uint16_t len) {
-    HAL_StatusTypeDef ret;
-
-    ret = HAL_I2C_Mem_Write(&hi2c, LSM6DS3TR_C_I2C_ADD_L, reg, I2C_MEMADD_SIZE_8BIT, data, len, 500);
-
-    return ret;
+void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *hi2c) {
+    instance.ctx.read_write_done = true;
 }
 
-STATIC int32_t mod_experimental_IMU_read_reg(void *handle, uint8_t reg, uint8_t *data, uint16_t len) {
-    HAL_StatusTypeDef ret;
+void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c) {
+    instance.ctx.read_write_done = true;
+}
 
-    ret = HAL_I2C_Mem_Read(&hi2c, LSM6DS3TR_C_I2C_ADD_L, reg, I2C_MEMADD_SIZE_8BIT, data, len, 500);
+// REVISIT: if there is ever an error the PT threads will stall since we aren't
+// handling the error callbacks.
 
-    return ret;
+STATIC void mod_experimental_IMU_write_reg(void *handle, uint8_t reg, uint8_t *data, uint16_t len) {
+    HAL_I2C_Mem_Write_IT(&hi2c, LSM6DS3TR_C_I2C_ADD_L, reg, I2C_MEMADD_SIZE_8BIT, data, len);
+}
+
+STATIC void mod_experimental_IMU_read_reg(void *handle, uint8_t reg, uint8_t *data, uint16_t len) {
+    HAL_I2C_Mem_Read_IT(&hi2c, LSM6DS3TR_C_I2C_ADD_L, reg, I2C_MEMADD_SIZE_8BIT, data, len);
+}
+
+STATIC PT_THREAD(mod_experimental_IMU_init(struct pt *pt, stmdev_ctx_t *ctx)) {
+    static struct pt child;
+    static uint8_t id;
+    static uint8_t rst;
+
+    PT_BEGIN(pt);
+
+    PT_SPAWN(pt, &child, lsm6ds3tr_c_device_id_get(&child, ctx, &id));
+
+    if (id != LSM6DS3TR_C_ID) {
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("incorrect device id"));
+    }
+
+    // Init based on data polling example
+
+    /*
+     *  Restore default configuration
+     */
+    PT_SPAWN(pt, &child, lsm6ds3tr_c_reset_set(&child, ctx, PROPERTY_ENABLE));
+    do {
+        PT_SPAWN(pt, &child, lsm6ds3tr_c_reset_get(&child, ctx, &rst));
+    } while (rst);
+    /*
+     *  Enable Block Data Update
+     */
+    PT_SPAWN(pt, &child, lsm6ds3tr_c_block_data_update_set(&child, ctx, PROPERTY_ENABLE));
+    /*
+     * Set Output Data Rate
+     */
+    PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_data_rate_set(&child, ctx, LSM6DS3TR_C_XL_ODR_12Hz5));
+    PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_data_rate_set(&child, ctx, LSM6DS3TR_C_GY_ODR_833Hz));
+    /*
+     * Set full scale
+     */
+    PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_full_scale_set(&child, ctx, LSM6DS3TR_C_2g));
+    PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_full_scale_set(&child, ctx, LSM6DS3TR_C_250dps));
+
+    /*
+     * Configure filtering chain(No aux interface)
+     */
+    /* Accelerometer - analog filter */
+    PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_filter_analog_set(&child, ctx, LSM6DS3TR_C_XL_ANA_BW_400Hz));
+
+    /* Accelerometer - LPF1 path ( LPF2 not used )*/
+    // PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_lp1_bandwidth_set(&child, ctx, LSM6DS3TR_C_XL_LP1_ODR_DIV_4));
+
+    /* Accelerometer - LPF1 + LPF2 path */
+    PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_lp2_bandwidth_set(&child, ctx, LSM6DS3TR_C_XL_LOW_NOISE_LP_ODR_DIV_100));
+
+    /* Accelerometer - High Pass / Slope path */
+    // PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_reference_mode_set(&child, ctx, PROPERTY_DISABLE));
+    // PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_hp_bandwidth_set(&child, ctx, LSM6DS3TR_C_XL_HP_ODR_DIV_100));
+
+    /* Gyroscope - filtering chain */
+    PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_band_pass_set(&child, ctx, LSM6DS3TR_C_HP_16mHz_LP1_LIGHT));
+
+    PT_END(pt);
 }
 
 STATIC mp_obj_t mod_experimental_IMU_make_new(const mp_obj_type_t *otype, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-    mod_experimental_IMU_obj_t *self = m_new_obj(mod_experimental_IMU_obj_t);
+    mod_experimental_IMU_obj_t *self = &instance;
+    struct pt pt;
+
+    if (self->base.type) {
+        // already initalized
+        return MP_OBJ_FROM_PTR(self);
+    }
 
     self->base.type = (mp_obj_type_t *)otype;
     self->ctx.write_reg = mod_experimental_IMU_write_reg;
@@ -85,68 +154,36 @@ STATIC mp_obj_t mod_experimental_IMU_make_new(const mp_obj_type_t *otype, size_t
         }
     }
 
-    uint8_t id;
-    if (lsm6ds3tr_c_device_id_get(&self->ctx, &id) != 0) {
-        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("failed to get device id"));
+    PT_INIT(&pt);
+    while (PT_SCHEDULE(mod_experimental_IMU_init(&pt, &self->ctx))) {
+        nlr_buf_t nlr;
+        if (nlr_push(&nlr) == 0) {
+            MICROPY_EVENT_POLL_HOOK
+            nlr_pop();
+        } else {
+            HAL_I2C_Master_Abort_IT(&hi2c, LSM6DS3TR_C_I2C_ADD_L);
+            nlr_jump(nlr.ret_val);
+        }
     }
-
-    if (id != LSM6DS3TR_C_ID) {
-        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("incorrect device id"));
-    }
-
-    // Init based on data polling example
-
-    /*
-     *  Restore default configuration
-     */
-    uint8_t rst;
-    lsm6ds3tr_c_reset_set(&self->ctx, PROPERTY_ENABLE);
-    do {
-        lsm6ds3tr_c_reset_get(&self->ctx, &rst);
-    } while (rst);
-    /*
-     *  Enable Block Data Update
-     */
-    lsm6ds3tr_c_block_data_update_set(&self->ctx, PROPERTY_ENABLE);
-    /*
-     * Set Output Data Rate
-     */
-    lsm6ds3tr_c_xl_data_rate_set(&self->ctx, LSM6DS3TR_C_XL_ODR_12Hz5);
-    lsm6ds3tr_c_gy_data_rate_set(&self->ctx, LSM6DS3TR_C_GY_ODR_833Hz);
-    /*
-     * Set full scale
-     */
-    lsm6ds3tr_c_xl_full_scale_set(&self->ctx, LSM6DS3TR_C_2g);
-    lsm6ds3tr_c_gy_full_scale_set(&self->ctx, LSM6DS3TR_C_250dps);
-
-    /*
-     * Configure filtering chain(No aux interface)
-     */
-    /* Accelerometer - analog filter */
-    lsm6ds3tr_c_xl_filter_analog_set(&self->ctx, LSM6DS3TR_C_XL_ANA_BW_400Hz);
-
-    /* Accelerometer - LPF1 path ( LPF2 not used )*/
-    // lsm6ds3tr_c_xl_lp1_bandwidth_set(&self->ctx, LSM6DS3TR_C_XL_LP1_ODR_DIV_4);
-
-    /* Accelerometer - LPF1 + LPF2 path */
-    lsm6ds3tr_c_xl_lp2_bandwidth_set(&self->ctx, LSM6DS3TR_C_XL_LOW_NOISE_LP_ODR_DIV_100);
-
-    /* Accelerometer - High Pass / Slope path */
-    // lsm6ds3tr_c_xl_reference_mode_set(&self->ctx, PROPERTY_DISABLE);
-    // lsm6ds3tr_c_xl_hp_bandwidth_set(&self->ctx, LSM6DS3TR_C_XL_HP_ODR_DIV_100);
-
-    /* Gyroscope - filtering chain */
-    lsm6ds3tr_c_gy_band_pass_set(&self->ctx, LSM6DS3TR_C_HP_16mHz_LP1_LIGHT);
 
     return MP_OBJ_FROM_PTR(self);
 }
 
 STATIC mp_obj_t mod_experimental_IMU_accel(mp_obj_t self_in) {
     mod_experimental_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    struct pt pt;
     int16_t data[3];
 
-    if (lsm6ds3tr_c_acceleration_raw_get(&self->ctx, (uint8_t *)data) != 0) {
-        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("failed to read data"));
+    PT_INIT(&pt);
+    while (PT_SCHEDULE(lsm6ds3tr_c_acceleration_raw_get(&pt, &self->ctx, (uint8_t *)data))) {
+        nlr_buf_t nlr;
+        if (nlr_push(&nlr) == 0) {
+            MICROPY_EVENT_POLL_HOOK
+            nlr_pop();
+        } else {
+            HAL_I2C_Master_Abort_IT(&hi2c, LSM6DS3TR_C_I2C_ADD_L);
+            nlr_jump(nlr.ret_val);
+        }
     }
 
     mp_obj_t values[3];
@@ -160,10 +197,19 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(mod_experimental_IMU_accel_obj, mod_experimenta
 
 STATIC mp_obj_t mod_experimental_IMU_gyro(mp_obj_t self_in) {
     mod_experimental_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    struct pt pt;
     int16_t data[3];
 
-    if (lsm6ds3tr_c_angular_rate_raw_get(&self->ctx, (uint8_t *)data) != 0) {
-        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("failed to read data"));
+    PT_INIT(&pt);
+    while (PT_SCHEDULE(lsm6ds3tr_c_angular_rate_raw_get(&pt, &self->ctx, (uint8_t *)data))) {
+        nlr_buf_t nlr;
+        if (nlr_push(&nlr) == 0) {
+            MICROPY_EVENT_POLL_HOOK
+            nlr_pop();
+        } else {
+            HAL_I2C_Master_Abort_IT(&hi2c, LSM6DS3TR_C_I2C_ADD_L);
+            nlr_jump(nlr.ret_val);
+        }
     }
 
     mp_obj_t values[3];
