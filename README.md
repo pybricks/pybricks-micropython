@@ -19,6 +19,10 @@ the [documentation][docs].
 
 Read on!
 
+# Questions and Support
+
+We have a single [issue tracker][issue tracker] for all your questions and bug reports. If you try Pybricks, please let us know what you think.
+
 # Supported Programmable Bricks & Hubs
 
 ## Released
@@ -28,42 +32,31 @@ with the latest [ev3dev][ev3dev-snapshot] image. LEGO Education has also
   tested and approved the 2.0 release, which is available through
   [their website][lego-education-ev3-micropython].
 
-## Ready for beta users
-- *LEGO Technic Hub* (`TechnicHub`): Try it now
-with [Pybricks Code][Pybricks Code].
+## In beta
 
-## In progress
+You can try these hubs using [Pybricks Code][Pybricks Code], our online IDE. Just follow the instructions shown on the right hand side.
 
-- LEGO BOOST Move Hub (`MoveHub`): Although not all hub features are supported
-  yet, this firmware already runs well. External sensors are not yet supported.
-- LEGO City Hub (`CityHub`): Same as `MoveHub`. Bluetooth is not enabled yet,
-which means that it's not ready for everyday users yet.
+- LEGO Technic Hub (`TechnicHub`)
+- LEGO BOOST Move Hub (`MoveHub`)
+- LEGO City Hub (`CityHub`)
 
-## Under consideration
+## In alpha
 
-- LEGO Education SPIKE Prime Hub (`PrimeHub`): This hub is even more powerful
-than the other new hubs listed above. If we support it, we will first focus on
-functionality shared with the others, like motors and sensors. Other
-SPIKE-specific functionality like the light matrix or Bluetooth classic will be
-saved for later. We recommend that beginning users start with the official LEGO
-apps. Read more about the
-differences [here](#differences-with-lego-education-spike-prime-micropython).
+This is still in progress. An early [alpha version][alpha version] is ready for advanced users:
+
+- LEGO SPIKE Prime Hub (`PrimeHub`)
+- LEGO MINDSTORMS Robot Inventor Hub (`InventorHub`)
 
 ## What's next?
 
-We hope that LEGO continues to develop new smart hubs. As long as its firmware
-can be upgraded, there's a good chance that Pybricks will support that hub in
-the near future.
+Check out our [roadmap][roadmap]!
 
 # Development
 
-Most Pybricks users will not need to do anything with this source code. We
-provide pre-built firmware files with every release on
-our site, [pybricks.com].
+Most Pybricks users will not need to do anything with this source code. [Pybricks Code][Pybricks Code] always gives you the latest stable firmware.
 
-But since you're reading this, you might be interested in building the code
-yourself, or start tweaking and hacking. We don't have step-by-step guides
-for installing all the developer tools just yet.
+But since you're reading this, you might be interested to build the code
+yourself, or start tweaking and hacking. Check out the [contributor's guide](./CONTRIBUTING.md) to get started.
 
 ## Pybricks and Upstream MicroPython
 
@@ -115,16 +108,22 @@ you update the firmware. And we could not resist doing just that, so there's
 more than just the bricks above. But getting to a point where it is easy to
 use for everyday users takes quite a bit more work,
 so not all bricks in `/bricks` will be supported officially for now.
+Be sure to join the discussion on our [issue tracker][issue tracker] to
+share your thoughts on these new ports.
 
 ## Differences with other LEGO MicroPython Implementations
 
-Read more on the Pybricks [about page][about page].
+We recommend that beginning users start with the official LEGO Python
+apps. Read more about the differences on the Pybricks [about page][about page].
 
 # How can I help?
-If you've got a Technic Hub, the best way to help right now is to try out the
-beta release of [Pybricks Code][Pybricks Code]. Much of its code is shared
-with the other hubs. So if you share your findings or issues, we can fix them
-for all hubs at once, including for the ones that are not released yet!
+If you've got any of the hubs listed above, the best way to help right now is
+to try out the beta release of [Pybricks Code][Pybricks Code]. You may run into
+issues or bugs. Please let us know by opening an [issue][issue tracker].
+Thanks!
+
+If you enjoy using Pybricks, please
+consider [sponsoring the project][sponsors].
 
 [pybricks-micropython]: https://github.com/pybricks/pybricks-micropython
 [pybricks/micropython]: https://github.com/pybricks/micropython
@@ -146,3 +145,8 @@ for all hubs at once, including for the ones that are not released yet!
 
 [Pybricks Code]: https://code.pybricks.com
 [about page]: https://pybricks.com/about/
+
+[alpha version]: https://github.com/pybricks/support/issues/167
+[issue tracker]: https://github.com/pybricks/support/issues
+[roadmap]: https://github.com/pybricks/support/issues/29
+[sponsors]: https://github.com/sponsors/pybricks
