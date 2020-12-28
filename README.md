@@ -123,10 +123,6 @@ This one's easy, because it's the same: The official
 [LEGO Education EV3 MicroPython solution][lego-education-ev3-micropython]
 uses the Pybricks library running on ev3dev.
 
-LEGO Education has tested and approved version 1.0, to make sure it works well
-for teachers, students, and hobbyists. We hope that version 2.0 will eventually
-also be approved. It is currently in [community beta](#ready-for-beta-users).
-
 ## Differences with other ev3dev-based implementations
 
 [ev3dev][ev3dev.org] is based on Debian Linux, which lets you access LEGO
@@ -152,12 +148,6 @@ this means that not all SPIKE Prime features will initially be supported.
 We recommend that especially teachers and students start with the official apps
 and MicroPython solutions provided by LEGO. Anyone who wants to take the next
 step is welcome to try Pybricks.
-
-# How can I help?
-If you've got an EV3 Brick, the best way to help right now is to try out the
-new 2.0 [community beta](#ready-for-beta-users). Much of its code is shared
-with the other hubs. So if you share your findings or issues, we can fix them
-for all hubs at once, including for the ones that are not released yet!
 
 [pybricks-micropython]: https://github.com/pybricks/pybricks-micropython
 [pybricks/micropython]: https://github.com/pybricks/micropython
