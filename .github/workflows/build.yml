@@ -22,7 +22,6 @@ jobs:
       with:
         repository: pybricks/micropython
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
-        submodules: recursive
         path: micropython
     - name: Build mpy-cross
       run: make $MAKEOPTS -C micropython/mpy-cross
@@ -54,6 +53,7 @@ jobs:
         repository: pybricks/micropython
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
         submodules: recursive
+        fetch-depth: 0
         path: micropython
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
@@ -103,6 +103,7 @@ jobs:
         repository: pybricks/micropython
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
         submodules: recursive
+        fetch-depth: 0
         path: micropython
     - name: Checkout Pybricks
       run: |
@@ -173,6 +174,7 @@ jobs:
         repository: pybricks/micropython
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
         submodules: recursive
+        fetch-depth: 0
         path: micropython
     - name: Checkout Pybricks
       run: |
@@ -221,6 +223,7 @@ jobs:
         repository: pybricks/micropython
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
         submodules: recursive
+        fetch-depth: 0
         path: micropython
     - name: Checkout Pybricks
       run: |
