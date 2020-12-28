@@ -86,6 +86,12 @@ const mp_obj_type_t pb_type_Speaker;
 
 #endif // PYBRICKS_PY_COMMON_SPEAKER
 
+#if PYBRICKS_PY_COMMON_IMU
+
+mp_obj_t pb_type_IMU_obj_new(void);
+
+#endif // PYBRICKS_PY_COMMON_IMU
+
 #endif // PYBRICKS_PY_COMMON
 
 #endif // PYBRICKS_INCLUDED_PYBRICKS_COMMON_H

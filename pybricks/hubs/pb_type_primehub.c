@@ -20,10 +20,11 @@
 
 typedef struct _hubs_PrimeHub_obj_t {
     mp_obj_base_t base;
-    mp_obj_t light;
-    mp_obj_t display;
-    mp_obj_t speaker;
     mp_obj_t buttons;
+    mp_obj_t display;
+    mp_obj_t imu;
+    mp_obj_t light;
+    mp_obj_t speaker;
 } hubs_PrimeHub_obj_t;
 
 static const pb_obj_enum_member_t *primehub_buttons[] = {
@@ -35,18 +36,20 @@ static const pb_obj_enum_member_t *primehub_buttons[] = {
 STATIC mp_obj_t hubs_PrimeHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     hubs_PrimeHub_obj_t *self = m_new_obj(hubs_PrimeHub_obj_t);
     self->base.type = (mp_obj_type_t *)type;
-    self->light = common_ColorLight_internal_obj_new(pbsys_status_light);
-    self->display = pb_type_Lightmatrix_obj_new(pbsys_hub_light_matrix);
-    self->speaker = mp_call_function_0(MP_OBJ_FROM_PTR(&pb_type_Speaker));
     self->buttons = pb_type_Keypad_obj_new(PBIO_ARRAY_SIZE(primehub_buttons), primehub_buttons);
+    self->display = pb_type_Lightmatrix_obj_new(pbsys_hub_light_matrix);
+    self->imu = pb_type_IMU_obj_new();
+    self->light = common_ColorLight_internal_obj_new(pbsys_status_light);
+    self->speaker = mp_call_function_0(MP_OBJ_FROM_PTR(&pb_type_Speaker));
     return MP_OBJ_FROM_PTR(self);
 }
 
 STATIC const mp_rom_map_elem_t hubs_PrimeHub_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)    },
     { MP_ROM_QSTR(MP_QSTR_buttons),     MP_ROM_ATTRIBUTE_OFFSET(hubs_PrimeHub_obj_t, buttons) },
-    { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_ATTRIBUTE_OFFSET(hubs_PrimeHub_obj_t, light)   },
     { MP_ROM_QSTR(MP_QSTR_display),     MP_ROM_ATTRIBUTE_OFFSET(hubs_PrimeHub_obj_t, display) },
+    { MP_ROM_QSTR(MP_QSTR_imu),         MP_ROM_ATTRIBUTE_OFFSET(hubs_PrimeHub_obj_t, imu)     },
+    { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_ATTRIBUTE_OFFSET(hubs_PrimeHub_obj_t, light)   },
     { MP_ROM_QSTR(MP_QSTR_speaker),     MP_ROM_ATTRIBUTE_OFFSET(hubs_PrimeHub_obj_t, speaker) },
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_PrimeHub_locals_dict, hubs_PrimeHub_locals_dict_table);
