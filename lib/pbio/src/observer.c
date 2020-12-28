@@ -25,7 +25,7 @@ void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t 
         // TODO
     }
 
-    pbio_observer_settings_t *s = &obs->settings;
+    const pbio_observer_settings_t *s = obs->settings;
 
     float tau_e = (control * battery_voltage) / 10000000 * s->k_0;
     float tau_o = s->obs_gain * (count - obs->est_count);
@@ -43,7 +43,7 @@ void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t 
 }
 
 int32_t pbio_observer_get_feedforward_torque(pbio_observer_t *obs, int32_t rate_ref, int32_t acceleration_ref) {
-    pbio_observer_settings_t *s = &obs->settings;
+    const pbio_observer_settings_t *s = obs->settings;
 
     // Torque terms in micronewtons (TODO: Convert to integer math)
     int32_t friction_compensation_torque = (int32_t)(s->f_low * pbio_math_sign(rate_ref) * 1000000);
@@ -56,5 +56,5 @@ int32_t pbio_observer_get_feedforward_torque(pbio_observer_t *obs, int32_t rate_
 
 
 int32_t pbio_observer_torque_to_duty(pbio_observer_t *obs, int32_t desired_torque, int32_t battery_voltage) {
-    return (int32_t)(desired_torque / obs->settings.k_0 * 10 / battery_voltage);
+    return (int32_t)(desired_torque / obs->settings->k_0 * 10 / battery_voltage);
 }

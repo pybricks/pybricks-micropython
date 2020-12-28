@@ -23,7 +23,7 @@ typedef struct _pbio_observer_settings_t {
 typedef struct _pbio_observer_t {
     float est_count;
     float est_rate;
-    pbio_observer_settings_t settings;
+    const pbio_observer_settings_t *settings;
 } pbio_observer_t;
 
 void pbio_observer_reset(pbio_observer_t *obs, int32_t count_now, int32_t rate_now);

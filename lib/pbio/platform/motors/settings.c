@@ -10,7 +10,7 @@
 
 #if PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO || PBDRV_CONFIG_COUNTER_NXT
 
-static pbio_observer_settings_t settings_observer_ev3_m = {
+static const pbio_observer_settings_t settings_observer_ev3_m = {
     .phi_01 = 0.0f,
     .phi_11 = 0.0f,
     .gam_0 = 0.0f,
@@ -22,7 +22,7 @@ static pbio_observer_settings_t settings_observer_ev3_m = {
     .obs_gain = 0.0f,
 };
 
-static pbio_control_settings_t settings_servo_ev3_m = {
+static const pbio_control_settings_t settings_servo_ev3_m = {
     .max_rate = 2000,
     .abs_acceleration = 8000,
     .rate_tolerance = 100,
@@ -40,7 +40,7 @@ static pbio_control_settings_t settings_servo_ev3_m = {
     .use_estimated_count = false,
 };
 
-static pbio_observer_settings_t settings_observer_ev3_l = {
+static const pbio_observer_settings_t settings_observer_ev3_l = {
     .phi_01 = 0.0f,
     .phi_11 = 0.0f,
     .gam_0 = 0.0f,
@@ -52,7 +52,7 @@ static pbio_observer_settings_t settings_observer_ev3_l = {
     .obs_gain = 0.0f,
 };
 
-static pbio_control_settings_t settings_servo_ev3_l = {
+static const pbio_control_settings_t settings_servo_ev3_l = {
     .max_rate = 1600,
     .abs_acceleration = 3200,
     .rate_tolerance = 100,
@@ -74,7 +74,7 @@ static pbio_control_settings_t settings_servo_ev3_l = {
 
 #if PBDRV_CONFIG_IOPORT_LPF2 || PBDRV_CONFIG_COUNTER_TEST
 
-static pbio_observer_settings_t settings_observer_technic_m_angular = {
+static const pbio_observer_settings_t settings_observer_technic_m_angular = {
     .phi_01 = 0.00471127825986593f,
     .phi_11 = 0.886778220155195f,
     .gam_0 = 1.98652315497896f,
@@ -86,7 +86,7 @@ static pbio_observer_settings_t settings_observer_technic_m_angular = {
     .obs_gain = 0.002f,
 };
 
-static pbio_control_settings_t settings_servo_technic_m_angular = {
+static const pbio_control_settings_t settings_servo_technic_m_angular = {
     .max_rate = 1000,
     .abs_acceleration = 2000,
     .rate_tolerance = 50,
@@ -104,7 +104,7 @@ static pbio_control_settings_t settings_servo_technic_m_angular = {
     .use_estimated_count = false,
 };
 
-static pbio_observer_settings_t settings_observer_technic_l_angular = {
+static const pbio_observer_settings_t settings_observer_technic_l_angular = {
     .phi_01 = 0.00476139134919619f,
     .phi_11 = 0.906099484723787f,
     .gam_0 = 0.684051954862549f,
@@ -116,7 +116,7 @@ static pbio_observer_settings_t settings_observer_technic_l_angular = {
     .obs_gain = 0.004f,
 };
 
-static pbio_control_settings_t settings_servo_technic_l_angular = {
+static const pbio_control_settings_t settings_servo_technic_l_angular = {
     .max_rate = 1000,
     .abs_acceleration = 1500,
     .rate_tolerance = 50,
@@ -134,7 +134,7 @@ static pbio_control_settings_t settings_servo_technic_l_angular = {
     .use_estimated_count = false,
 };
 
-static pbio_observer_settings_t settings_observer_interactive = {
+static const pbio_observer_settings_t settings_observer_interactive = {
     .phi_01 = 0.00476271917080314f,
     .phi_11 = 0.906613349592095f,
     .gam_0 = 2.93111612537300f,
@@ -146,7 +146,7 @@ static pbio_observer_settings_t settings_observer_interactive = {
     .obs_gain = 0.002f,
 };
 
-static pbio_control_settings_t settings_servo_interactive = {
+static const pbio_control_settings_t settings_servo_interactive = {
     .max_rate = 1000,
     .abs_acceleration = 2000,
     .rate_tolerance = 50,
@@ -166,7 +166,7 @@ static pbio_control_settings_t settings_servo_interactive = {
 
 #if PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
 
-static pbio_observer_settings_t settings_observer_movehub = {
+static const pbio_observer_settings_t settings_observer_movehub = {
     .phi_01 = 0.00482560542071840f,
     .phi_11 = 0.931062779704023f,
     .gam_0 = 2.20557850267909f,
@@ -178,7 +178,7 @@ static pbio_observer_settings_t settings_observer_movehub = {
     .obs_gain = 0.002f,
 };
 
-static pbio_control_settings_t settings_servo_movehub = {
+static const pbio_control_settings_t settings_servo_movehub = {
     .max_rate = 1500,
     .abs_acceleration = 5000,
     .rate_tolerance = 50,
@@ -198,7 +198,7 @@ static pbio_control_settings_t settings_servo_movehub = {
 
 #endif // PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
 
-static pbio_observer_settings_t settings_observer_technic_l = {
+static const pbio_observer_settings_t settings_observer_technic_l = {
     .phi_01 = 0.00480673379919289f,
     .phi_11 = 0.923702638108050f,
     .gam_0 = 1.53998720733930f,
@@ -210,7 +210,7 @@ static pbio_observer_settings_t settings_observer_technic_l = {
     .obs_gain = 0.002f,
 };
 
-static pbio_control_settings_t settings_servo_technic_l = {
+static const pbio_control_settings_t settings_servo_technic_l = {
     .max_rate = 1000,
     .abs_acceleration = 1500,
     .rate_tolerance = 50,
@@ -228,7 +228,7 @@ static pbio_control_settings_t settings_servo_technic_l = {
     .use_estimated_count = false,
 };
 
-static pbio_observer_settings_t settings_observer_technic_xl = {
+static const pbio_observer_settings_t settings_observer_technic_xl = {
     .phi_01 = 0.00481529951016882f,
     .phi_11 = 0.927040916512593f,
     .gam_0 = 1.66041757033247f,
@@ -240,7 +240,7 @@ static pbio_observer_settings_t settings_observer_technic_xl = {
     .obs_gain = 0.002f,
 };
 
-static pbio_control_settings_t settings_servo_technic_xl = {
+static const pbio_control_settings_t settings_servo_technic_xl = {
     .max_rate = 1000,
     .abs_acceleration = 1500,
     .rate_tolerance = 50,
@@ -260,47 +260,47 @@ static pbio_control_settings_t settings_servo_technic_xl = {
 
 #endif // PBDRV_CONFIG_IOPORT_LPF2 || PBDRV_CONFIG_COUNTER_TEST
 
-void pbio_servo_load_settings(pbio_control_settings_t *control_settings, pbio_observer_settings_t *observer_settings, pbio_iodev_type_id_t id) {
+void pbio_servo_load_settings(pbio_control_settings_t *control_settings, const pbio_observer_settings_t **observer_settings, pbio_iodev_type_id_t id) {
     switch (id) {
         #if PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO || PBDRV_CONFIG_COUNTER_NXT
         case PBIO_IODEV_TYPE_ID_EV3_MEDIUM_MOTOR:
-            *observer_settings = settings_observer_ev3_m;
+            *observer_settings = &settings_observer_ev3_m;
             *control_settings = settings_servo_ev3_m;
             break;
         case PBIO_IODEV_TYPE_ID_EV3_LARGE_MOTOR:
         default:
-            *observer_settings = settings_observer_ev3_l;
+            *observer_settings = &settings_observer_ev3_l;
             *control_settings = settings_servo_ev3_l;
             break;
         #endif // PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO || PBDRV_CONFIG_COUNTER_NXT
         #if PBDRV_CONFIG_IOPORT_LPF2 || PBDRV_CONFIG_COUNTER_TEST
         case PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR:
-            *observer_settings = settings_observer_interactive;
+            *observer_settings = &settings_observer_interactive;
             *control_settings = settings_servo_interactive;
             break;
         #if PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
         case PBIO_IODEV_TYPE_ID_MOVE_HUB_MOTOR:
-            *observer_settings = settings_observer_movehub;
+            *observer_settings = &settings_observer_movehub;
             *control_settings = settings_servo_movehub;
             break;
         #endif // PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
         case PBIO_IODEV_TYPE_ID_TECHNIC_L_MOTOR:
-            *observer_settings = settings_observer_technic_l;
+            *observer_settings = &settings_observer_technic_l;
             *control_settings = settings_servo_technic_l;
             break;
         case PBIO_IODEV_TYPE_ID_TECHNIC_XL_MOTOR:
-            *observer_settings = settings_observer_technic_xl;
+            *observer_settings = &settings_observer_technic_xl;
             *control_settings = settings_servo_technic_xl;
             break;
         case PBIO_IODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR:
         case PBIO_IODEV_TYPE_ID_SPIKE_L_MOTOR:
-            *observer_settings = settings_observer_technic_l_angular;
+            *observer_settings = &settings_observer_technic_l_angular;
             *control_settings = settings_servo_technic_l_angular;
             break;
         case PBIO_IODEV_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR:
         case PBIO_IODEV_TYPE_ID_SPIKE_M_MOTOR:
         default:
-            *observer_settings = settings_observer_technic_m_angular;
+            *observer_settings = &settings_observer_technic_m_angular;
             *control_settings = settings_servo_technic_m_angular;
             break;
         #endif // PBDRV_CONFIG_IOPORT_LPF2 || PBDRV_CONFIG_COUNTER_TEST

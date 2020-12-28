@@ -41,7 +41,7 @@ typedef struct _pbio_servo_t {
 
 pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio);
 
-void pbio_servo_load_settings(pbio_control_settings_t *control_settings, pbio_observer_settings_t *observer_settings, pbio_iodev_type_id_t id);
+void pbio_servo_load_settings(pbio_control_settings_t *control_settings, const pbio_observer_settings_t **observer_settings, pbio_iodev_type_id_t id);
 
 bool pbio_servo_is_connected(pbio_servo_t *srv);
 void pbio_servo_set_connected(pbio_servo_t *srv, bool connected);
