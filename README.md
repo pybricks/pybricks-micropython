@@ -1,4 +1,4 @@
-# Pybricks
+# Pybricks v2
 
 Pybricks brings Python-like coding to programmable LEGO bricks, and transforms
 remote-controlled smart hubs into truly autonomous robots.
@@ -21,50 +21,13 @@ Read on!
 
 # Supported Programmable Bricks & Hubs
 
-## Ready for beta users
-- LEGO MINDSTORMS EV3: You can get the community-supported 2.0 beta version as
-  part of the latest ev3dev [snapshot][ev3dev-snapshot]. The [docs] reveal
-  tons of exciting new features. LEGO Education has also
-  tested and approved version 1.0, which is available through
-  [their website][lego-education-ev3-micropython].
+This branch is for Pybricks v2.x which only supports LEGO MINDSTORMS EV3. This
+is the version of Pybricks that is available in [ev3dev-stretch][ev3dev.org]
+and from [LEGO Education][lego-education-ev3-micropython].
 
-## In progress
+For Powered Up hubs, see the latest version of Pybricks
+[here][pybricks-micropython] instead.
 
-- LEGO BOOST Move Hub (`MoveHub`): Although not all hub features are supported
-  yet, this firmware already works very well. We're just working on getting the
-  PC app ready too, so you can start writing code.
-- LEGO Technic Control+ Hub (`CPlusHub`): This hub works just as well as the
- `MoveHub`, but we haven't finished implementing Bluetooth support yet, which
-  means that it's not ready for everyday users yet.
-- LEGO City Train Hub / Powered Up (`CityHub`): Same progress as `CPlusHub`.
-
-## Under consideration
-
-- LEGO Education SPIKE Prime Hub (`PrimeHub`): This hub is even more powerful
-than the other new hubs listed above. If we support it, we will first focus on
-functionality shared with the others, like motors and sensors. Other
-SPIKE-specific functionality like the light matrix or Bluetooth classic will be
-saved for later. We recommend that beginning users start with the official LEGO
-apps. Read more about the
-differences [here](#differences-with-lego-education-spike-prime-micropython).
-
-## What's next?
-
-We hope that LEGO continues to develop new smart hubs. As long as its firmware
-can be upgraded, there's a good chance that Pybricks will support that hub in
-the near future.
-
-# Development
-
-Most Pybricks users will not need to do anything with this source code. We
-provide pre-built firmware files with every release on
-our site, [pybricks.com].
-
-But since you're reading this, you might be interested in building the code
-yourself, or start tweaking and hacking. We don't have step-by-step guides
-for installing all the developer tools just yet. But we build all targets
-from scratch using Travis CI, so you can get the complete recipes for each
-build in the [.travis file](.travis.yml).
 
 ## Pybricks and Upstream MicroPython
 
@@ -205,9 +168,7 @@ for all hubs at once, including for the ones that are not released yet!
 [micropython/micropython]: https://github.com/micropython/micropython
 
 [pybricks.com]: https://pybricks.com
-[docs]: https://docs.pybricks.com
-
-[ev3dev-snapshot]: https://oss.jfrog.org/list/oss-snapshot-local/org/ev3dev/brickstrap/
+[docs]: https://pybricks.github.io/ev3-micropython/
 
 [ev3dev.org]: https://www.ev3dev.org/
 [ev3dev-lang]: https://github.com/ev3dev/ev3dev-lang-python
