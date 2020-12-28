@@ -82,7 +82,7 @@ STATIC PT_THREAD(common_IMU_configure(struct pt *pt, stmdev_ctx_t *ctx)) {
     /*
      * Set Output Data Rate
      */
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_data_rate_set(&child, ctx, LSM6DS3TR_C_XL_ODR_12Hz5));
+    PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_data_rate_set(&child, ctx, LSM6DS3TR_C_XL_ODR_833Hz));
     PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_data_rate_set(&child, ctx, LSM6DS3TR_C_GY_ODR_833Hz));
     /*
      * Set full scale
@@ -94,13 +94,13 @@ STATIC PT_THREAD(common_IMU_configure(struct pt *pt, stmdev_ctx_t *ctx)) {
      * Configure filtering chain(No aux interface)
      */
     /* Accelerometer - analog filter */
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_filter_analog_set(&child, ctx, LSM6DS3TR_C_XL_ANA_BW_400Hz));
+    // PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_filter_analog_set(&child, ctx, LSM6DS3TR_C_XL_ANA_BW_400Hz));
 
     /* Accelerometer - LPF1 path ( LPF2 not used )*/
     // PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_lp1_bandwidth_set(&child, ctx, LSM6DS3TR_C_XL_LP1_ODR_DIV_4));
 
     /* Accelerometer - LPF1 + LPF2 path */
-    PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_lp2_bandwidth_set(&child, ctx, LSM6DS3TR_C_XL_LOW_NOISE_LP_ODR_DIV_100));
+    // PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_lp2_bandwidth_set(&child, ctx, LSM6DS3TR_C_XL_LOW_NOISE_LP_ODR_DIV_100));
 
     /* Accelerometer - High Pass / Slope path */
     // PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_reference_mode_set(&child, ctx, PROPERTY_DISABLE));
