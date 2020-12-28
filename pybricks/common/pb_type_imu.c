@@ -10,6 +10,7 @@
 #include <lsm6ds3tr_c_reg.h>
 
 #include <pybricks/common.h>
+#include <pybricks/geometry.h>
 
 #include <pybricks/util_pb/pb_imu.h>
 
@@ -24,13 +25,7 @@ STATIC mp_obj_t common_IMU_acceleration(mp_obj_t self_in) {
     float_t values[3];
     pb_imu_accel_read(self->imu_dev, values);
 
-    mp_obj_t objs[3] = {
-        mp_obj_new_float_from_f(values[0]),
-        mp_obj_new_float_from_f(values[1]),
-        mp_obj_new_float_from_f(values[2]),
-    };
-
-    return mp_obj_new_tuple(3, objs);
+    return pb_type_Matrix_make_vector(3, values, false);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_acceleration_obj, common_IMU_acceleration);
 
@@ -40,12 +35,7 @@ STATIC mp_obj_t common_IMU_gyro(mp_obj_t self_in) {
     float_t values[3];
     pb_imu_gyro_read(self->imu_dev, values);
 
-    mp_obj_t objs[3] = {
-        mp_obj_new_float_from_f(values[0]),
-        mp_obj_new_float_from_f(values[1]),
-        mp_obj_new_float_from_f(values[2]),
-    };
-    return mp_obj_new_tuple(3, objs);
+    return pb_type_Matrix_make_vector(3, values, false);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_gyro_obj, common_IMU_gyro);
 
