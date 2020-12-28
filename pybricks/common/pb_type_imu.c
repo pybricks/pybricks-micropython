@@ -18,12 +18,11 @@
 
 #include <pybricks/common.h>
 
-typedef struct _common_IMU_obj_t {
-    mp_obj_base_t base;
+typedef struct _pb_imu_dev_t {
     stmdev_ctx_t ctx;
-} common_IMU_obj_t;
+} pb_imu_dev_t;
 
-STATIC common_IMU_obj_t instance;
+STATIC pb_imu_dev_t imu_dev;
 STATIC I2C_HandleTypeDef hi2c;
 
 void mod_experimental_IMU_handle_i2c_er_irq(void) {
@@ -35,11 +34,11 @@ void mod_experimental_IMU_handle_i2c_ev_irq(void) {
 }
 
 void HAL_I2C_MemTxCpltCallback(I2C_HandleTypeDef *hi2c) {
-    instance.ctx.read_write_done = true;
+    imu_dev.ctx.read_write_done = true;
 }
 
 void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c) {
-    instance.ctx.read_write_done = true;
+    imu_dev.ctx.read_write_done = true;
 }
 
 // REVISIT: if there is ever an error the PT threads will stall since we aren't
@@ -53,10 +52,13 @@ STATIC void mod_experimental_IMU_read_reg(void *handle, uint8_t reg, uint8_t *da
     HAL_I2C_Mem_Read_IT(&hi2c, LSM6DS3TR_C_I2C_ADD_L, reg, I2C_MEMADD_SIZE_8BIT, data, len);
 }
 
-STATIC PT_THREAD(common_IMU_configure(struct pt *pt, stmdev_ctx_t *ctx)) {
+STATIC PT_THREAD(pb_imu_configure(struct pt *pt, pb_imu_dev_t *imu_dev)) {
     static struct pt child;
     static uint8_t id;
     static uint8_t rst;
+    static stmdev_ctx_t *ctx;
+
+    ctx = &imu_dev->ctx;
 
     PT_BEGIN(pt);
 
@@ -112,12 +114,12 @@ STATIC PT_THREAD(common_IMU_configure(struct pt *pt, stmdev_ctx_t *ctx)) {
     PT_END(pt);
 }
 
-STATIC mp_obj_t common_IMU_init(mp_obj_t self_in) {
-    common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC void pb_imu_init(pb_imu_dev_t *imu_dev) {
+
     struct pt pt;
 
-    self->ctx.write_reg = mod_experimental_IMU_write_reg;
-    self->ctx.read_reg = mod_experimental_IMU_read_reg;
+    imu_dev->ctx.write_reg = mod_experimental_IMU_write_reg;
+    imu_dev->ctx.read_reg = mod_experimental_IMU_read_reg;
 
     if (hi2c.Instance == NULL) {
         #if PYBRICKS_HUB_TECHNICHUB
@@ -143,7 +145,7 @@ STATIC mp_obj_t common_IMU_init(mp_obj_t self_in) {
     }
 
     PT_INIT(&pt);
-    while (PT_SCHEDULE(common_IMU_configure(&pt, &self->ctx))) {
+    while (PT_SCHEDULE(pb_imu_configure(&pt, imu_dev))) {
         nlr_buf_t nlr;
         if (nlr_push(&nlr) == 0) {
             MICROPY_EVENT_POLL_HOOK
@@ -153,17 +155,13 @@ STATIC mp_obj_t common_IMU_init(mp_obj_t self_in) {
             nlr_jump(nlr.ret_val);
         }
     }
-
-    return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t mod_experimental_IMU_accel(mp_obj_t self_in) {
-    common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
+STATIC void pb_imu_accel_read(pb_imu_dev_t *imu_dev, int16_t *data) {
     struct pt pt;
-    int16_t data[3];
 
     PT_INIT(&pt);
-    while (PT_SCHEDULE(lsm6ds3tr_c_acceleration_raw_get(&pt, &self->ctx, (uint8_t *)data))) {
+    while (PT_SCHEDULE(lsm6ds3tr_c_acceleration_raw_get(&pt, &imu_dev->ctx, (uint8_t *)data))) {
         nlr_buf_t nlr;
         if (nlr_push(&nlr) == 0) {
             MICROPY_EVENT_POLL_HOOK
@@ -173,6 +171,36 @@ STATIC mp_obj_t mod_experimental_IMU_accel(mp_obj_t self_in) {
             nlr_jump(nlr.ret_val);
         }
     }
+}
+
+STATIC void pb_imu_gyro_read(pb_imu_dev_t *imu_dev, int16_t *data) {
+    struct pt pt;
+
+    PT_INIT(&pt);
+    while (PT_SCHEDULE(lsm6ds3tr_c_angular_rate_raw_get(&pt, &imu_dev->ctx, (uint8_t *)data))) {
+        nlr_buf_t nlr;
+        if (nlr_push(&nlr) == 0) {
+            MICROPY_EVENT_POLL_HOOK
+            nlr_pop();
+        } else {
+            HAL_I2C_Master_Abort_IT(&hi2c, LSM6DS3TR_C_I2C_ADD_L);
+            nlr_jump(nlr.ret_val);
+        }
+    }
+}
+
+// FIXME: Move all of the above to dedicated file or pbio
+
+typedef struct _common_IMU_obj_t {
+    mp_obj_base_t base;
+    pb_imu_dev_t *imu_dev;
+} common_IMU_obj_t;
+
+STATIC mp_obj_t common_IMU_acceleration(mp_obj_t self_in) {
+    common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    int16_t data[3];
+    pb_imu_accel_read(self->imu_dev, data);
 
     mp_obj_t values[3];
     values[0] = mp_obj_new_float_from_f(lsm6ds3tr_c_from_fs2g_to_mg(data[0]) / 1000.0f);
@@ -181,24 +209,13 @@ STATIC mp_obj_t mod_experimental_IMU_accel(mp_obj_t self_in) {
 
     return mp_obj_new_tuple(3, values);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mod_experimental_IMU_accel_obj, mod_experimental_IMU_accel);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_acceleration_obj, common_IMU_acceleration);
 
-STATIC mp_obj_t mod_experimental_IMU_gyro(mp_obj_t self_in) {
+STATIC mp_obj_t common_IMU_gyro(mp_obj_t self_in) {
     common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    struct pt pt;
-    int16_t data[3];
 
-    PT_INIT(&pt);
-    while (PT_SCHEDULE(lsm6ds3tr_c_angular_rate_raw_get(&pt, &self->ctx, (uint8_t *)data))) {
-        nlr_buf_t nlr;
-        if (nlr_push(&nlr) == 0) {
-            MICROPY_EVENT_POLL_HOOK
-            nlr_pop();
-        } else {
-            HAL_I2C_Master_Abort_IT(&hi2c, LSM6DS3TR_C_I2C_ADD_L);
-            nlr_jump(nlr.ret_val);
-        }
-    }
+    int16_t data[3];
+    pb_imu_gyro_read(self->imu_dev, data);
 
     mp_obj_t values[3];
     values[0] = mp_obj_new_float_from_f(lsm6ds3tr_c_from_fs250dps_to_mdps(data[0]) / 1000.0f);
@@ -207,13 +224,12 @@ STATIC mp_obj_t mod_experimental_IMU_gyro(mp_obj_t self_in) {
 
     return mp_obj_new_tuple(3, values);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mod_experimental_IMU_gyro_obj, mod_experimental_IMU_gyro);
-
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_gyro_obj, common_IMU_gyro);
 
 // dir(pybricks.common.IMU)
 STATIC const mp_rom_map_elem_t common_IMU_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_accel), MP_ROM_PTR(&mod_experimental_IMU_accel_obj) },
-    { MP_ROM_QSTR(MP_QSTR_gyro),  MP_ROM_PTR(&mod_experimental_IMU_gyro_obj)  },
+    { MP_ROM_QSTR(MP_QSTR_accel), MP_ROM_PTR(&common_IMU_acceleration_obj) },
+    { MP_ROM_QSTR(MP_QSTR_gyro),  MP_ROM_PTR(&common_IMU_gyro_obj)  },
 };
 STATIC MP_DEFINE_CONST_DICT(common_IMU_locals_dict, common_IMU_locals_dict_table);
 
@@ -224,18 +240,24 @@ STATIC const mp_obj_type_t pb_type_IMU = {
     .locals_dict = (mp_obj_dict_t *)&common_IMU_locals_dict,
 };
 
+STATIC common_IMU_obj_t singleton_obj;
+
 // pybricks._common.IMU.__init__
 mp_obj_t pb_type_IMU_obj_new(void) {
-    common_IMU_obj_t *self = &instance;
+
+    // Get singleton instance
+    common_IMU_obj_t *self = &singleton_obj;
 
     // Return if already initialized
-    if (self->base.type) {
-        return MP_OBJ_FROM_PTR(self);
+    if (self->imu_dev) {
+        return self;
     }
 
-    // Initialize IMU
     self->base.type = &pb_type_IMU;
-    common_IMU_init(self);
+    self->imu_dev = &imu_dev;
+
+    // Initialize IMU
+    pb_imu_init(self->imu_dev);
 
     return self;
 }
