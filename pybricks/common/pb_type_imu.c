@@ -41,8 +41,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_gyro_obj, common_IMU_gyro);
 
 // dir(pybricks.common.IMU)
 STATIC const mp_rom_map_elem_t common_IMU_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_accel), MP_ROM_PTR(&common_IMU_acceleration_obj) },
-    { MP_ROM_QSTR(MP_QSTR_gyro),  MP_ROM_PTR(&common_IMU_gyro_obj)  },
+    { MP_ROM_QSTR(MP_QSTR_acceleration), MP_ROM_PTR(&common_IMU_acceleration_obj) },
+    { MP_ROM_QSTR(MP_QSTR_gyro),         MP_ROM_PTR(&common_IMU_gyro_obj)         },
 };
 STATIC MP_DEFINE_CONST_DICT(common_IMU_locals_dict, common_IMU_locals_dict_table);
 
