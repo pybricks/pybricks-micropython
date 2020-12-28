@@ -24,7 +24,6 @@ jobs:
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
         submodules: recursive
         path: micropython
-        token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Build mpy-cross
       run: make $MAKEOPTS -C micropython/mpy-cross
     - name: Upload mpy-cross
@@ -56,7 +55,6 @@ jobs:
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
         submodules: recursive
         path: micropython
-        token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Download mpy-cross
       uses: actions/download-artifact@v1
       with:
@@ -106,7 +104,6 @@ jobs:
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
         submodules: recursive
         path: micropython
-        token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Checkout Pybricks
       run: |
         cd micropython/ports/pybricks
@@ -177,7 +174,6 @@ jobs:
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
         submodules: recursive
         path: micropython
-        token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Checkout Pybricks
       run: |
         cd micropython/ports/pybricks
@@ -226,7 +222,6 @@ jobs:
         ref: ${{ steps.get_tag.outputs.micropython_tag }}
         submodules: recursive
         path: micropython
-        token: ${{ secrets.GITHUB_TOKEN2 }}
     - name: Checkout Pybricks
       run: |
         cd micropython/ports/pybricks
