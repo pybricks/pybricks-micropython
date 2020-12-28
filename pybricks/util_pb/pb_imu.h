@@ -14,9 +14,9 @@ void pb_imu_get_imu(pb_imu_dev_t **imu_dev);
 
 void pb_imu_init(pb_imu_dev_t *imu_dev);
 
-void pb_imu_accel_read(pb_imu_dev_t *imu_dev, int16_t *data);
+void pb_imu_accel_read(pb_imu_dev_t *imu_dev, float_t *values);
 
-void pb_imu_gyro_read(pb_imu_dev_t *imu_dev, int16_t *data);
+void pb_imu_gyro_read(pb_imu_dev_t *imu_dev, float_t *values);
 
 #endif // PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_IMU
 

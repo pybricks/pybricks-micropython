@@ -21,30 +21,31 @@ typedef struct _common_IMU_obj_t {
 STATIC mp_obj_t common_IMU_acceleration(mp_obj_t self_in) {
     common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    int16_t data[3];
-    pb_imu_accel_read(self->imu_dev, data);
+    float_t values[3];
+    pb_imu_accel_read(self->imu_dev, values);
 
-    mp_obj_t values[3];
-    values[0] = mp_obj_new_float_from_f(lsm6ds3tr_c_from_fs2g_to_mg(data[0]) / 1000.0f);
-    values[1] = mp_obj_new_float_from_f(lsm6ds3tr_c_from_fs2g_to_mg(data[1]) / 1000.0f);
-    values[2] = mp_obj_new_float_from_f(lsm6ds3tr_c_from_fs2g_to_mg(data[2]) / 1000.0f);
+    mp_obj_t objs[3] = {
+        mp_obj_new_float_from_f(values[0]),
+        mp_obj_new_float_from_f(values[1]),
+        mp_obj_new_float_from_f(values[2]),
+    };
 
-    return mp_obj_new_tuple(3, values);
+    return mp_obj_new_tuple(3, objs);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_acceleration_obj, common_IMU_acceleration);
 
 STATIC mp_obj_t common_IMU_gyro(mp_obj_t self_in) {
     common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    int16_t data[3];
-    pb_imu_gyro_read(self->imu_dev, data);
+    float_t values[3];
+    pb_imu_gyro_read(self->imu_dev, values);
 
-    mp_obj_t values[3];
-    values[0] = mp_obj_new_float_from_f(lsm6ds3tr_c_from_fs250dps_to_mdps(data[0]) / 1000.0f);
-    values[1] = mp_obj_new_float_from_f(lsm6ds3tr_c_from_fs250dps_to_mdps(data[1]) / 1000.0f);
-    values[2] = mp_obj_new_float_from_f(lsm6ds3tr_c_from_fs250dps_to_mdps(data[2]) / 1000.0f);
-
-    return mp_obj_new_tuple(3, values);
+    mp_obj_t objs[3] = {
+        mp_obj_new_float_from_f(values[0]),
+        mp_obj_new_float_from_f(values[1]),
+        mp_obj_new_float_from_f(values[2]),
+    };
+    return mp_obj_new_tuple(3, objs);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_gyro_obj, common_IMU_gyro);
 

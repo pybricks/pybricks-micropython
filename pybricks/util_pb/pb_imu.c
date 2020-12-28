@@ -19,6 +19,8 @@
 
 struct _pb_imu_dev_t {
     stmdev_ctx_t ctx;
+    float_t gyro_scale; // mm/s^2 per device count
+    float_t accel_scale; // deg/s per device count
 };
 
 STATIC pb_imu_dev_t _imu_dev;
@@ -86,10 +88,13 @@ STATIC PT_THREAD(pb_imu_configure(struct pt *pt, pb_imu_dev_t *imu_dev)) {
     PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_data_rate_set(&child, ctx, LSM6DS3TR_C_XL_ODR_833Hz));
     PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_data_rate_set(&child, ctx, LSM6DS3TR_C_GY_ODR_833Hz));
     /*
-     * Set full scale
+     * Set scale
      */
     PT_SPAWN(pt, &child, lsm6ds3tr_c_xl_full_scale_set(&child, ctx, LSM6DS3TR_C_2g));
+    imu_dev->accel_scale = lsm6ds3tr_c_from_fs2g_to_mg(1) * 9.81f;
+
     PT_SPAWN(pt, &child, lsm6ds3tr_c_gy_full_scale_set(&child, ctx, LSM6DS3TR_C_250dps));
+    imu_dev->gyro_scale = lsm6ds3tr_c_from_fs250dps_to_mdps(1) / 1000.0f;
 
     /*
      * Configure filtering chain(No aux interface)
@@ -160,8 +165,9 @@ void pb_imu_init(pb_imu_dev_t *imu_dev) {
     }
 }
 
-void pb_imu_accel_read(pb_imu_dev_t *imu_dev, int16_t *data) {
+void pb_imu_accel_read(pb_imu_dev_t *imu_dev, float_t *values) {
     struct pt pt;
+    int16_t data[3];
 
     PT_INIT(&pt);
     while (PT_SCHEDULE(lsm6ds3tr_c_acceleration_raw_get(&pt, &imu_dev->ctx, (uint8_t *)data))) {
@@ -174,10 +180,14 @@ void pb_imu_accel_read(pb_imu_dev_t *imu_dev, int16_t *data) {
             nlr_jump(nlr.ret_val);
         }
     }
+    values[0] = data[0] * imu_dev->accel_scale;
+    values[1] = data[1] * imu_dev->accel_scale;
+    values[2] = data[2] * imu_dev->accel_scale;
 }
 
-void pb_imu_gyro_read(pb_imu_dev_t *imu_dev, int16_t *data) {
+void pb_imu_gyro_read(pb_imu_dev_t *imu_dev, float_t *values) {
     struct pt pt;
+    int16_t data[3];
 
     PT_INIT(&pt);
     while (PT_SCHEDULE(lsm6ds3tr_c_angular_rate_raw_get(&pt, &imu_dev->ctx, (uint8_t *)data))) {
@@ -190,6 +200,9 @@ void pb_imu_gyro_read(pb_imu_dev_t *imu_dev, int16_t *data) {
             nlr_jump(nlr.ret_val);
         }
     }
+    values[0] = data[0] * imu_dev->gyro_scale;
+    values[1] = data[1] * imu_dev->gyro_scale;
+    values[2] = data[2] * imu_dev->gyro_scale;
 }
 
 #endif // PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_IMU
