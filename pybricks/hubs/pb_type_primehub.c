@@ -30,7 +30,7 @@ typedef struct _hubs_PrimeHub_obj_t {
 static const pb_obj_enum_member_t *primehub_buttons[] = {
     &pb_Button_LEFT_obj,
     &pb_Button_RIGHT_obj,
-    &pb_Button_BT_obj,
+    &pb_Button_BLUETOOTH_obj,
 };
 
 STATIC mp_obj_t hubs_PrimeHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {

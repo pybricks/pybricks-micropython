@@ -31,7 +31,7 @@ const pb_obj_enum_member_t pb_Button_RIGHT_DOWN_obj;
 const pb_obj_enum_member_t pb_Button_BEACON_obj;
 #endif
 #if PYBRICKS_HUB_PRIMEHUB
-const pb_obj_enum_member_t pb_Button_BT_obj;
+const pb_obj_enum_member_t pb_Button_BLUETOOTH_obj;
 #endif
 
 #endif // PYBRICKS_PY_PARAMETERS_BUTTON

@@ -79,9 +79,9 @@ const pb_obj_enum_member_t pb_Button_BEACON_obj = {
 #endif
 
 #if PYBRICKS_HUB_PRIMEHUB
-const pb_obj_enum_member_t pb_Button_BT_obj = {
+const pb_obj_enum_member_t pb_Button_BLUETOOTH_obj = {
     {&pb_enum_type_Button},
-    .name = MP_QSTR_BT,
+    .name = MP_QSTR_BLUETOOTH,
     .value = PBIO_BUTTON_RIGHT_UP
 };
 #endif
@@ -100,7 +100,7 @@ STATIC const mp_rom_map_elem_t pb_enum_Button_table[] = {
     { MP_ROM_QSTR(MP_QSTR_BEACON),     MP_ROM_PTR(&pb_Button_BEACON_obj)    },
     #endif
     #ifdef PYBRICKS_HUB_PRIMEHUB
-    { MP_ROM_QSTR(MP_QSTR_BT),         MP_ROM_PTR(&pb_Button_BT_obj)        },
+    { MP_ROM_QSTR(MP_QSTR_BLUETOOTH),         MP_ROM_PTR(&pb_Button_BLUETOOTH_obj)        },
     #endif
 };
 STATIC MP_DEFINE_CONST_DICT(pb_enum_type_Button_locals_dict, pb_enum_Button_table);
