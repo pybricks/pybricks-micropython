@@ -16,6 +16,15 @@ const mp_obj_module_t pb_module_geometry;
 
 const mp_obj_type_t pb_type_Matrix;
 
+typedef struct _pb_type_Matrix_obj_t {
+    mp_obj_base_t base;
+    float *data;
+    float scale;
+    size_t m;
+    size_t n;
+    bool transposed;
+} pb_type_Matrix_obj_t;
+
 mp_obj_t pb_type_Matrix_make_vector(size_t m, float *data, bool normalize);
 
 mp_obj_t pb_type_Matrix_make_bitmap(size_t m, size_t n, float scale, uint32_t src);

@@ -18,16 +18,6 @@
 
 #if MICROPY_PY_BUILTINS_FLOAT
 
-// Class structure for Matrix
-typedef struct _pb_type_Matrix_obj_t {
-    mp_obj_base_t base;
-    float *data;
-    float scale;
-    size_t m;
-    size_t n;
-    bool transposed;
-} pb_type_Matrix_obj_t;
-
 // pybricks.geometry.Matrix.__init__
 STATIC mp_obj_t pb_type_Matrix_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
