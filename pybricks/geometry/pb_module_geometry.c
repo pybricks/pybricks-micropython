@@ -17,7 +17,7 @@
 
 STATIC const float pb_Axis_x_data[] = {1.0f, 0.0f, 0.0f};
 
-STATIC const pb_type_Matrix_obj_t pb_Axis_X_obj = {
+const pb_type_Matrix_obj_t pb_Axis_X_obj = {
     {&pb_type_Matrix},
     .data = (float *)pb_Axis_x_data,
     .scale = 1.0f,
@@ -27,7 +27,7 @@ STATIC const pb_type_Matrix_obj_t pb_Axis_X_obj = {
 
 STATIC const float pb_Axis_y_data[] = {0.0f, 1.0f, 0.0f};
 
-STATIC const pb_type_Matrix_obj_t pb_Axis_Y_obj = {
+const pb_type_Matrix_obj_t pb_Axis_Y_obj = {
     {&pb_type_Matrix},
     .data = (float *)pb_Axis_y_data,
     .scale = 1.0f,
@@ -37,7 +37,7 @@ STATIC const pb_type_Matrix_obj_t pb_Axis_Y_obj = {
 
 STATIC const float pb_Axis_z_data[] = {0.0f, 0.0f, 1.0f};
 
-STATIC const pb_type_Matrix_obj_t pb_Axis_Z_obj = {
+const pb_type_Matrix_obj_t pb_Axis_Z_obj = {
     {&pb_type_Matrix},
     .data = (float *)pb_Axis_z_data,
     .scale = 1.0f,

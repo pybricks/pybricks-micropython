@@ -25,6 +25,10 @@ typedef struct _pb_type_Matrix_obj_t {
     bool transposed;
 } pb_type_Matrix_obj_t;
 
+const pb_type_Matrix_obj_t pb_Axis_X_obj;
+const pb_type_Matrix_obj_t pb_Axis_Y_obj;
+const pb_type_Matrix_obj_t pb_Axis_Z_obj;
+
 mp_obj_t pb_type_Matrix_make_vector(size_t m, float *data, bool normalize);
 
 mp_obj_t pb_type_Matrix_make_bitmap(size_t m, size_t n, float scale, uint32_t src);

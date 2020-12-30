@@ -13,31 +13,62 @@
 #include <pybricks/geometry.h>
 
 #include <pybricks/util_pb/pb_imu.h>
+#include <pybricks/util_mp/pb_kwarg_helper.h>
 
 typedef struct _common_IMU_obj_t {
     mp_obj_base_t base;
     pb_imu_dev_t *imu_dev;
 } common_IMU_obj_t;
 
-STATIC mp_obj_t common_IMU_acceleration(mp_obj_t self_in) {
-    common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
+// pybricks._common.IMU.acceleration
+STATIC mp_obj_t common_IMU_acceleration(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        common_IMU_obj_t, self,
+        PB_ARG_DEFAULT_NONE(axis));
 
     float_t values[3];
     pb_imu_accel_read(self->imu_dev, values);
 
+    if (axis_in == &pb_Axis_X_obj) {
+        return mp_obj_new_float_from_f(values[0]);
+    }
+    if (axis_in == &pb_Axis_Y_obj) {
+        return mp_obj_new_float_from_f(values[1]);
+    }
+    if (axis_in == &pb_Axis_Z_obj) {
+        return mp_obj_new_float_from_f(values[2]);
+    }
+
+    // TODO: Handle other axes via projection and scale accordingly
+
     return pb_type_Matrix_make_vector(3, values, false);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_acceleration_obj, common_IMU_acceleration);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_acceleration_obj, 1, common_IMU_acceleration);
 
-STATIC mp_obj_t common_IMU_gyro(mp_obj_t self_in) {
-    common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
+// pybricks._common.IMU.gyro
+STATIC mp_obj_t common_IMU_gyro(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        common_IMU_obj_t, self,
+        PB_ARG_DEFAULT_NONE(axis));
 
     float_t values[3];
     pb_imu_gyro_read(self->imu_dev, values);
 
+    if (axis_in == &pb_Axis_X_obj) {
+        return mp_obj_new_float_from_f(values[0]);
+    }
+    if (axis_in == &pb_Axis_Y_obj) {
+        return mp_obj_new_float_from_f(values[1]);
+    }
+    if (axis_in == &pb_Axis_Z_obj) {
+        return mp_obj_new_float_from_f(values[2]);
+    }
+
+    // TODO: Handle other axes via projection and scale accordingly
+
     return pb_type_Matrix_make_vector(3, values, false);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_gyro_obj, common_IMU_gyro);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_gyro_obj, 1, common_IMU_gyro);
 
 // dir(pybricks.common.IMU)
 STATIC const mp_rom_map_elem_t common_IMU_locals_dict_table[] = {
