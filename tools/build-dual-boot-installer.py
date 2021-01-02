@@ -20,21 +20,6 @@ version = argv[1]
 # User program slot.
 SLOT = 19
 
-# Manifest file that goes into the project zip.
-MANIFEST = {
-    "type": "python",
-    "autoDelete": False,
-    "created": "2020-09-28T16:55:24.744Z",
-    "id": "PtOPQLLB94ax",
-    "lastsaved": "2020-09-28T19:48:11.098Z",
-    "size": 0,
-    "name": "test",
-    "slotIndex": SLOT,
-    "zoomLevel": 0.5,
-    "hardware": {"python": {}},
-    "state": {},
-}
-
 # How many bytes to write to external flash in one go (multiple of 32).
 BLOCK_WRITE_SIZE = 128
 
@@ -280,7 +265,7 @@ else:
 )
 
 # Write script to a Python file.
-with open(path.join(BUILD_PATH, "dual_boot_install_pybricks.py"), "w") as installer:
+with open(path.join(BUILD_PATH, "install_pybricks.py"), "w") as installer:
 
     # Write the main code
     installer.write(INSTALL_SCRIPT)
@@ -296,21 +281,53 @@ with open(path.join(BUILD_PATH, "dual_boot_install_pybricks.py"), "w") as instal
         installer.write("# {0}\n".format(encoded.decode("ascii")))
         done += len(block)
 
-# Write the manifest to file.
-with open(path.join(BUILD_PATH, "dual_boot_manifest.json"), "w") as manifest:
-    manifest.write(dumps(MANIFEST))
 
-# Convert the Python script to JSON format. New line symbols get messy, so
-# that's why we avoid them in the user script above.
-with open(path.join(BUILD_PATH, "dual_boot_install_pybricks.py"), "r") as installer:
-    with open(path.join(BUILD_PATH, "dual_boot_projectbody.json"), "w") as body:
-        blob = installer.read().replace("\n", "\\n")
-        body.write('{{"program":"{0}"}}'.format(blob))
+def make_project_files(script_path, slot):
+    """Converts a Python script to .llsp and .lms archive formats."""
 
-# Combine all files in the project archive.
-for ext in ("llsp", "lms"):
-    archive = ZipFile(path.join(BUILD_PATH, "install_pybricks." + ext), "w")
-    archive.write(path.join(BUILD_PATH, "dual_boot_projectbody.json"), "projectbody.json")
-    archive.write(path.join(BUILD_PATH, "dual_boot_manifest.json"), "manifest.json")
-    archive.write(path.join(TOOLS_PATH, "pybricks.svg"), "icon.svg")
-    archive.close()
+    dir_name, file_name = path.split(script_path)
+    base_name, ext_name = path.splitext(file_name)
+
+    manifest_path = path.join(dir_name, "manifest.json")
+    projectbody_path = path.join(dir_name, "projectbody.json")
+
+    # TODO: get time in this format
+    time_now = "2020-09-28T19:48:11.098Z"
+
+    # Manifest file that goes into the project zip.
+    manifest = {
+        "type": "python",
+        "autoDelete": False,
+        "created": time_now,
+        "id": "PtOPQLLB94ax",
+        "lastsaved": time_now,
+        "size": 0,
+        "name": base_name,
+        "slotIndex": slot,
+        "zoomLevel": 0.5,
+        "hardware": {"python": {}},
+        "state": {},
+    }
+
+    # TODO: use io module instead of physical files
+
+    # Write the manifest to file.
+    with open(manifest_path, "w") as manifest_file:
+        manifest_file.write(dumps(manifest))
+
+    # Convert the Python script to JSON format.
+    with open(script_path, "r") as script_file:
+        with open(projectbody_path, "w") as projectbody_file:
+            blob = script_file.read().replace("\n", "\\n")
+            projectbody_file.write('{{"program":"{0}"}}'.format(blob))
+
+    # Combine all files in the project archive.
+    for ext in (".llsp", ".lms"):
+        archive = ZipFile(path.join(dir_name, base_name + ext), "w")
+        archive.write(projectbody_path, path.split(projectbody_path)[1])
+        archive.write(manifest_path, path.split(manifest_path)[1])
+        archive.write(path.join(TOOLS_PATH, "pybricks.svg"), "icon.svg")
+        archive.close()
+
+
+make_project_files(path.join(BUILD_PATH, "install_pybricks.py"), SLOT)
