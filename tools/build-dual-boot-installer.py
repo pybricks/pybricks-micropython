@@ -264,32 +264,20 @@ else:
     pybricks_vector=int.from_bytes(pybricks_bin[4:8], "little"),
 )
 
-# Write script to a Python file.
-with open(path.join(BUILD_PATH, "install_pybricks.py"), "w") as installer:
+# Write the main code
+install_script = INSTALL_SCRIPT + "# ___FIRMWARE_BEGIN___\n"
 
-    # Write the main code
-    installer.write(INSTALL_SCRIPT)
-
-    # Write flag to indicate firmware start.
-    installer.write("# ___FIRMWARE_BEGIN___\n")
-
-    # Write binary segment in base64 format as a comment.
-    done = 0
-    while done != len(pybricks_bin):
-        block = pybricks_bin[done : done + BLOCK_WRITE_SIZE]
-        encoded = b64encode(block)
-        installer.write("# {0}\n".format(encoded.decode("ascii")))
-        done += len(block)
+# Write binary segment in base64 format as a comment.
+done = 0
+while done != len(pybricks_bin):
+    block = pybricks_bin[done : done + BLOCK_WRITE_SIZE]
+    encoded = b64encode(block)
+    install_script += "# {0}\n".format(encoded.decode("ascii"))
+    done += len(block)
 
 
-def make_project_files(script_path, slot):
+def make_project_files(build_dir, project_name, script, slot):
     """Converts a Python script to .llsp and .lms archive formats."""
-
-    dir_name, file_name = path.split(script_path)
-    base_name, ext_name = path.splitext(file_name)
-
-    manifest_path = path.join(dir_name, "manifest.json")
-    projectbody_path = path.join(dir_name, "projectbody.json")
 
     # TODO: get time in this format
     time_now = "2020-09-28T19:48:11.098Z"
@@ -302,32 +290,24 @@ def make_project_files(script_path, slot):
         "id": "PtOPQLLB94ax",
         "lastsaved": time_now,
         "size": 0,
-        "name": base_name,
+        "name": project_name,
         "slotIndex": slot,
         "zoomLevel": 0.5,
         "hardware": {"python": {}},
         "state": {},
     }
 
-    # TODO: use io module instead of physical files
-
-    # Write the manifest to file.
-    with open(manifest_path, "w") as manifest_file:
-        manifest_file.write(dumps(manifest))
-
-    # Convert the Python script to JSON format.
-    with open(script_path, "r") as script_file:
-        with open(projectbody_path, "w") as projectbody_file:
-            blob = script_file.read().replace("\n", "\\n")
-            projectbody_file.write('{{"program":"{0}"}}'.format(blob))
+    # Convert the Python script to the expected JSON format.
+    blob = script.replace("\n", "\\n")
+    projectbody = '{{"program":"{0}"}}'.format(blob)
 
     # Combine all files in the project archive.
     for ext in (".llsp", ".lms"):
-        archive = ZipFile(path.join(dir_name, base_name + ext), "w")
-        archive.write(projectbody_path, path.split(projectbody_path)[1])
-        archive.write(manifest_path, path.split(manifest_path)[1])
+        archive = ZipFile(path.join(build_dir, project_name + ext), "w")
+        archive.writestr("projectbody.json", projectbody)
+        archive.writestr("manifest.json", dumps(manifest))
         archive.write(path.join(TOOLS_PATH, "pybricks.svg"), "icon.svg")
         archive.close()
 
 
-make_project_files(path.join(BUILD_PATH, "install_pybricks.py"), SLOT)
+make_project_files(BUILD_PATH, "install_pybricks", install_script, SLOT)
