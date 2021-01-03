@@ -18,7 +18,8 @@ TOOLS_PATH = "../../tools"
 version = argv[1]
 
 # User program slot.
-SLOT = 19
+DOWNLOAD_SLOT = 18
+INSTALL_SLOT = 19
 
 # How many bytes to write to external flash in one go (multiple of 32).
 BLOCK_WRITE_SIZE = 128
@@ -31,7 +32,7 @@ with open(path.join(BUILD_PATH, "firmware-dual-boot-base.bin"), "rb") as fw:
 INSTALL_SCRIPT = """\
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2018-2020 The Pybricks Authors
-
+#
 # Pybricks installer for SPIKE Prime and MINDSTORMS Robot Inventor.
 # Version: {version}
 
@@ -47,6 +48,7 @@ SLOT = {slot}
 PYBRICKS_SIZE = {size}
 BLOCK_WRITE = {block_write}
 PYBRICKS_VECTOR = {pybricks_vector}
+VERSION = b'{version}'
 
 # Settings for reading and writing to external storage.
 BLOCK_READ = 32
@@ -168,19 +170,35 @@ def get_padding(padding_length, extra_info):
 
 def get_bytes_from_line(line):
     '''Strips the firmware text lines and decodes base64 values to bytes.'''
-    return a2b_base64(line[2:len(line)-1])
+    return a2b_base64(line[6:len(line)-2])
 
 
 def get_pybricks_firmware(base_firmware_boot_vector):
     '''Reads the Pybricks firmware from the data strings in this file.'''
 
     print('Opening Pybricks firmware.')
-    # Open the current script.
-    script = open(storage.get_path(SLOT) + '.py', 'rb')
+    download_project_path = storage.get_path(SLOT)
+    if download_project_path is None:
+        raise OSError('You must download the firmware before you can install it.')
+
+    # Try to find script either as standalone or as project file
+    try:
+        script = open(download_project_path + '.py', 'rb')
+    except OSError:
+        script = open(download_project_path + '/__init__.py', 'rb')
 
     # Set read index to start of binary.
-    while script.readline().strip() != b'# ___FIRMWARE_BEGIN___':
-        pass
+    for i in range(10):
+        line = script.readline().strip()
+        if b'# Version:' in line:
+            download_version = line[11:]
+            script.readline()
+            break
+
+    if download_version != VERSION:
+        raise OSError('Download and installation script do not match')
+
+    print('Firmware version:', VERSION)
 
     # Read first line and decode it.
     decoded = get_bytes_from_line(script.readline())
@@ -257,23 +275,12 @@ else:
     print(result)
 
 """.format(
-    slot=SLOT,
+    slot=DOWNLOAD_SLOT,
     size=len(pybricks_bin),
     version=version,
     block_write=BLOCK_WRITE_SIZE,
     pybricks_vector=int.from_bytes(pybricks_bin[4:8], "little"),
 )
-
-# Write the main code
-install_script = INSTALL_SCRIPT + "# ___FIRMWARE_BEGIN___\n"
-
-# Write binary segment in base64 format as a comment.
-done = 0
-while done != len(pybricks_bin):
-    block = pybricks_bin[done : done + BLOCK_WRITE_SIZE]
-    encoded = b64encode(block)
-    install_script += "# {0}\n".format(encoded.decode("ascii"))
-    done += len(block)
 
 
 def make_project_files(build_dir, project_name, script, slot):
@@ -310,4 +317,29 @@ def make_project_files(build_dir, project_name, script, slot):
         archive.close()
 
 
-make_project_files(BUILD_PATH, "install_pybricks", install_script, SLOT)
+make_project_files(BUILD_PATH, "install_pybricks", INSTALL_SCRIPT, INSTALL_SLOT)
+
+# This script contains the Pybricks binary
+DOWNLOAD_SCRIPT_HEADER = """\
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2018-2020 The Pybricks Authors
+#
+# Pybricks firmware for SPIKE Prime and MINDSTORMS Robot Inventor.
+# Version: {version}
+
+""".format(
+    version=version
+)
+
+# Script starts with header, then binary data
+download_script = DOWNLOAD_SCRIPT_HEADER
+
+# Write binary segment in base64 format as a comment.
+done = 0
+while done != len(pybricks_bin):
+    block = pybricks_bin[done : done + BLOCK_WRITE_SIZE]
+    encoded = b64encode(block)
+    download_script += "_d = '{0}'\n".format(encoded.decode("ascii"))
+    done += len(block)
+
+make_project_files(BUILD_PATH, "download_pybricks", download_script, DOWNLOAD_SLOT)
