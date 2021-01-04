@@ -23,7 +23,7 @@ INSTALL_SLOT = 19
 
 # How many bytes to write to external flash in one go (multiple of 32).
 BLOCK_WRITE_SIZE = 128
-BASE64_BLOCK_WRITE_SIZE = len(b64encode(b'a'*BLOCK_WRITE_SIZE))
+BASE64_BLOCK_WRITE_SIZE = len(b64encode(b"a" * BLOCK_WRITE_SIZE))
 
 # Read the Pybricks firmware.
 with open(path.join(BUILD_PATH, "firmware-dual-boot-base.bin"), "rb") as fw:
@@ -48,7 +48,7 @@ from utime import sleep_ms
 SLOT = {slot}
 PYBRICKS_SIZE = {size}
 BLOCK_WRITE = {block_write}
-BASE64_BLOCK_WRITE = {block_write}
+BASE64_BLOCK_WRITE = {base64_block_write}
 PYBRICKS_VECTOR = {pybricks_vector}
 VERSION = b'{version}'
 
@@ -176,29 +176,62 @@ def get_pybricks_firmware_lines():
     if download_project_path is None:
         raise OSError('You must download the firmware before you can install it.')
 
-    # Try to find script either as standalone or as project file
     try:
-        script = open(download_project_path + '.py', 'rb')
+        # Search for mpy file
+        mpy_file = open(download_project_path + '/__init__.mpy', 'rb')
+        print('Opened .mpy project')
+
+        # TODO: read version
+
+        TRIGGER = b'START_PYBRICKS_FIRMWARE_BINARY'
+        triger_size = len(TRIGGER)
+
+        # Search for start of binary
+        for i in range(30):
+            data = mpy_file.read(1000)
+            position = mpy_file.tell()
+
+            if TRIGGER not in data:
+                mpy_file.seek(position - triger_size)
+            else:
+                idx = data.index(TRIGGER)
+                mpy_file.seek(position - len(data) + idx + triger_size)
+                break
+
+        # Read all the raw strings
+        while True:
+            # Skip padding
+            if not mpy_file.read(3):
+                break
+            # Yield the string
+            yield mpy_file.read(BASE64_BLOCK_WRITE)
+
     except OSError:
-        script = open(download_project_path + '/__init__.py', 'rb')
+        # Search for plain Python file instead
+        try:
+            script = open(download_project_path + '.py', 'rb')
+            print('Opened plain .py file')
+        except OSError:
+            script = open(download_project_path + '/__init__.py', 'rb')
+            print('Opened plain .py project')
 
-    # Set read index to start of binary.
-    for i in range(10):
-        line = script.readline().strip()
-        if b'# Version:' in line:
-            download_version = line[11:]
-            script.readline()
-            break
+        # Set read index to start of binary.
+        for i in range(10):
+            line = script.readline().strip()
+            if b'# Version:' in line:
+                download_version = line[11:]
+                script.readline()
+                break
 
-    if download_version != VERSION:
-        raise OSError('Download and installation script do not match')
+        if download_version != VERSION:
+            raise OSError('Download and installation script do not match')
 
-    print('Firmware version:', VERSION)
+        print('Firmware version:', VERSION)
 
-    # Trim and yield all the lines
-    while line:
-        line = script.readline()
-        yield line[6:len(line)-2]
+        # Trim and yield all the lines
+        while line:
+            line = script.readline()
+            yield line[6:len(line)-2]
 
 
 def get_pybricks_firmware(base_firmware_boot_vector):
@@ -347,6 +380,7 @@ done = 0
 while done != len(pybricks_bin):
     block = pybricks_bin[done : done + BLOCK_WRITE_SIZE]
     encoded = b64encode(block)
+    encoded += b"=" * (BASE64_BLOCK_WRITE_SIZE - len(encoded))
     download_script += "_d = '{0}'\n".format(encoded.decode("ascii"))
     done += len(block)
 
