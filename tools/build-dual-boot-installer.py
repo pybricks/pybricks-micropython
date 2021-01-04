@@ -10,12 +10,13 @@ from base64 import b64encode
 from os import path
 from json import dumps
 from sys import argv
+from datetime import datetime
 
 BUILD_PATH = "build"
 TOOLS_PATH = "../../tools"
 
 # Get release and git version.
-version = argv[1]
+version = argv[1][0:22]
 
 # User program slot.
 DOWNLOAD_SLOT = 18
@@ -181,7 +182,10 @@ def get_pybricks_firmware_lines():
         mpy_file = open(download_project_path + '/__init__.mpy', 'rb')
         print('Opened .mpy project')
 
-        # TODO: read version
+        # Verify that this is a compatible mpy file
+        mpy_version = mpy_file.read(2)
+        if mpy_version != bytes((ord('M'), 5)):
+            raise OSError('Incompatible .mpy format')
 
         TRIGGER = b'START_PYBRICKS_FIRMWARE_BINARY'
         triger_size = len(TRIGGER)
@@ -196,7 +200,13 @@ def get_pybricks_firmware_lines():
             else:
                 idx = data.index(TRIGGER)
                 mpy_file.seek(position - len(data) + idx + triger_size)
+                download_version = mpy_file.read(len(VERSION))
                 break
+
+        if download_version != VERSION:
+            raise OSError('Download and installation script do not match')
+
+        print('Firmware version:', VERSION)
 
         # Read all the raw strings
         while True:
@@ -327,8 +337,8 @@ else:
 def make_project_files(build_dir, project_name, script, slot):
     """Converts a Python script to .llsp and .lms archive formats."""
 
-    # TODO: get time in this format
-    time_now = "2020-09-28T19:48:11.098Z"
+    # Get time in compatible format
+    time_now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
     # Manifest file that goes into the project zip.
     manifest = {
@@ -367,7 +377,7 @@ DOWNLOAD_SCRIPT_HEADER = """\
 #
 # Pybricks firmware for SPIKE Prime and MINDSTORMS Robot Inventor.
 # Version: {version}
-_d = 'START_PYBRICKS_FIRMWARE_BINARY'
+_d = 'START_PYBRICKS_FIRMWARE_BINARY{version}'
 """.format(
     version=version
 )
