@@ -23,6 +23,7 @@ INSTALL_SLOT = 19
 
 # How many bytes to write to external flash in one go (multiple of 32).
 BLOCK_WRITE_SIZE = 128
+BASE64_BLOCK_WRITE_SIZE = len(b64encode(b'a'*BLOCK_WRITE_SIZE))
 
 # Read the Pybricks firmware.
 with open(path.join(BUILD_PATH, "firmware-dual-boot-base.bin"), "rb") as fw:
@@ -47,6 +48,7 @@ from utime import sleep_ms
 SLOT = {slot}
 PYBRICKS_SIZE = {size}
 BLOCK_WRITE = {block_write}
+BASE64_BLOCK_WRITE = {block_write}
 PYBRICKS_VECTOR = {pybricks_vector}
 VERSION = b'{version}'
 
@@ -168,14 +170,7 @@ def get_padding(padding_length, extra_info):
     yield extra_info
 
 
-def get_bytes_from_line(line):
-    '''Strips the firmware text lines and decodes base64 values to bytes.'''
-    return a2b_base64(line[6:len(line)-2])
-
-
-def get_pybricks_firmware(base_firmware_boot_vector):
-    '''Reads the Pybricks firmware from the data strings in this file.'''
-
+def get_pybricks_firmware_lines():
     print('Opening Pybricks firmware.')
     download_project_path = storage.get_path(SLOT)
     if download_project_path is None:
@@ -200,8 +195,20 @@ def get_pybricks_firmware(base_firmware_boot_vector):
 
     print('Firmware version:', VERSION)
 
+    # Trim and yield all the lines
+    while line:
+        line = script.readline()
+        yield line[6:len(line)-2]
+
+
+def get_pybricks_firmware(base_firmware_boot_vector):
+    '''Reads the Pybricks firmware from the data strings in this file.'''
+
+    # Open script reader
+    lines = get_pybricks_firmware_lines()
+
     # Read first line and decode it.
-    decoded = get_bytes_from_line(script.readline())
+    decoded = a2b_base64(next(lines))
     bytes_done = len(decoded)
 
     # Return the first block with the updated boot vector.
@@ -211,7 +218,7 @@ def get_pybricks_firmware(base_firmware_boot_vector):
     while bytes_done < PYBRICKS_SIZE:
 
         # Read next line and decode it.
-        decoded = get_bytes_from_line(script.readline())
+        decoded = a2b_base64(next(lines))
 
         # Track progress.
         bytes_done += len(decoded)
@@ -279,6 +286,7 @@ else:
     size=len(pybricks_bin),
     version=version,
     block_write=BLOCK_WRITE_SIZE,
+    base64_block_write=BASE64_BLOCK_WRITE_SIZE,
     pybricks_vector=int.from_bytes(pybricks_bin[4:8], "little"),
 )
 
@@ -326,7 +334,7 @@ DOWNLOAD_SCRIPT_HEADER = """\
 #
 # Pybricks firmware for SPIKE Prime and MINDSTORMS Robot Inventor.
 # Version: {version}
-
+_d = 'START_PYBRICKS_FIRMWARE_BINARY'
 """.format(
     version=version
 )
