@@ -61,11 +61,11 @@ typedef bool (*pbio_control_on_target_t)(pbio_trajectory_t *trajectory,
     bool stalled);
 
 // Functions to check whether motion is done
-pbio_control_on_target_t pbio_control_on_target_always;
-pbio_control_on_target_t pbio_control_on_target_never;
-pbio_control_on_target_t pbio_control_on_target_angle;
-pbio_control_on_target_t pbio_control_on_target_time;
-pbio_control_on_target_t pbio_control_on_target_stalled;
+extern pbio_control_on_target_t pbio_control_on_target_always;
+extern pbio_control_on_target_t pbio_control_on_target_never;
+extern pbio_control_on_target_t pbio_control_on_target_angle;
+extern pbio_control_on_target_t pbio_control_on_target_time;
+extern pbio_control_on_target_t pbio_control_on_target_stalled;
 
 typedef enum {
     PBIO_CONTROL_NONE,   /**< No control */

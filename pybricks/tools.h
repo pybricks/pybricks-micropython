@@ -10,9 +10,9 @@
 
 #include "py/obj.h"
 
-const mp_obj_type_t pb_type_StopWatch;
+extern const mp_obj_type_t pb_type_StopWatch;
 
-const mp_obj_module_t pb_module_tools;
+extern const mp_obj_module_t pb_module_tools;
 
 #endif // PYBRICKS_PY_TOOLS
 

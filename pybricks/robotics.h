@@ -13,9 +13,9 @@
 #include "py/obj.h"
 
 
-const mp_obj_type_t pb_type_drivebase;
+extern const mp_obj_type_t pb_type_drivebase;
 
-const mp_obj_module_t pb_module_robotics;
+extern const mp_obj_module_t pb_module_robotics;
 
 #endif // PYBRICKS_PY_ROBOTICS
 

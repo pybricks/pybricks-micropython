@@ -10,15 +10,15 @@
 
 #include "py/obj.h"
 
-const mp_obj_module_t pb_module_nxtdevices;
+extern const mp_obj_module_t pb_module_nxtdevices;
 
-const mp_obj_type_t pb_type_nxtdevices_ColorSensor;
-const mp_obj_type_t pb_type_nxtdevices_EnergyMeter;
-const mp_obj_type_t pb_type_nxtdevices_LightSensor;
-const mp_obj_type_t pb_type_nxtdevices_SoundSensor;
-const mp_obj_type_t pb_type_nxtdevices_TemperatureSensor;
-const mp_obj_type_t pb_type_nxtdevices_TouchSensor;
-const mp_obj_type_t pb_type_nxtdevices_UltrasonicSensor;
+extern const mp_obj_type_t pb_type_nxtdevices_ColorSensor;
+extern const mp_obj_type_t pb_type_nxtdevices_EnergyMeter;
+extern const mp_obj_type_t pb_type_nxtdevices_LightSensor;
+extern const mp_obj_type_t pb_type_nxtdevices_SoundSensor;
+extern const mp_obj_type_t pb_type_nxtdevices_TemperatureSensor;
+extern const mp_obj_type_t pb_type_nxtdevices_TouchSensor;
+extern const mp_obj_type_t pb_type_nxtdevices_UltrasonicSensor;
 
 int32_t analog_scale(int32_t mvolts, int32_t mvolts_min, int32_t mvolts_max, bool invert);
 

@@ -10,7 +10,7 @@
 
 #include "py/obj.h"
 
-const mp_obj_module_t pb_module_experimental;
+extern const mp_obj_module_t pb_module_experimental;
 
 #endif // PYBRICKS_PY_EXPERIMENTAL
 

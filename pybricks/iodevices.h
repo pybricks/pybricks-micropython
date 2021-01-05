@@ -10,21 +10,21 @@
 
 #include "py/obj.h"
 
-const mp_obj_module_t pb_module_iodevices;
+extern const mp_obj_module_t pb_module_iodevices;
 
 #if PYBRICKS_PY_PUPDEVICES
 
-const mp_obj_type_t pb_type_iodevices_PUPDevice;
+extern const mp_obj_type_t pb_type_iodevices_PUPDevice;
 
 #endif // PYBRICKS_PY_PUPDEVICES
 
 #if PYBRICKS_PY_EV3DEVICES
 
-const mp_obj_type_t pb_type_iodevices_LUMPDevice;
-const mp_obj_type_t pb_type_iodevices_AnalogSensor;
-const mp_obj_type_t pb_type_iodevices_Ev3devSensor;
-const mp_obj_type_t pb_type_iodevices_I2CDevice;
-const mp_obj_type_t pb_type_iodevices_UARTDevice;
+extern const mp_obj_type_t pb_type_iodevices_LUMPDevice;
+extern const mp_obj_type_t pb_type_iodevices_AnalogSensor;
+extern const mp_obj_type_t pb_type_iodevices_Ev3devSensor;
+extern const mp_obj_type_t pb_type_iodevices_I2CDevice;
+extern const mp_obj_type_t pb_type_iodevices_UARTDevice;
 
 #endif // PYBRICKS_PY_EV3DEVICES
 

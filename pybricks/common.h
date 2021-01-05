@@ -28,8 +28,8 @@ mp_obj_t common_LightArray_obj_make_new(pb_device_t *pbdev, uint8_t light_mode, 
 #ifdef PYBRICKS_PY_COMMON_LIGHT_MATRIX
 #include <pbio/light_matrix.h>
 // pybricks._common.LightMatrix()
-const uint8_t pb_digits_5x2[10][5];
-const uint8_t pb_font_5x5[95][5];
+extern const uint8_t pb_digits_5x2[10][5];
+extern const uint8_t pb_font_5x5[95][5];
 mp_obj_t pb_type_Lightmatrix_obj_new(pbio_light_matrix_t *light_matrix);
 #endif
 
@@ -39,7 +39,7 @@ mp_obj_t pb_type_Keypad_obj_new(uint8_t number_of_buttons, const pb_obj_enum_mem
 #endif
 
 // pybricks._common.Battery()
-const mp_obj_module_t pb_module_battery;
+extern const mp_obj_module_t pb_module_battery;
 
 
 #if PYBRICKS_PY_COMMON_MOTORS
@@ -48,7 +48,7 @@ const mp_obj_module_t pb_module_battery;
 #include <pbio/servo.h>
 
 // pybricks._common.Control()
-const mp_obj_type_t pb_type_Control;
+extern const mp_obj_type_t pb_type_Control;
 mp_obj_t common_Control_obj_make_new(pbio_control_t *control);
 
 // pybricks._common.Logger()
@@ -62,7 +62,7 @@ typedef struct _common_Motor_obj_t {
     mp_obj_t logger;
 } common_Motor_obj_t;
 
-const mp_obj_type_t pb_type_Motor;
+extern const mp_obj_type_t pb_type_Motor;
 
 // pybricks._common.DCMotor()
 typedef struct _common_DCMotor_obj_t {
@@ -70,7 +70,7 @@ typedef struct _common_DCMotor_obj_t {
     pbio_dcmotor_t *dcmotor;
 } common_DCMotor_obj_t;
 
-const mp_obj_type_t pb_type_DCMotor;
+extern const mp_obj_type_t pb_type_DCMotor;
 
 // Nonstatic objects shared between Motor and DCMotor
 void common_DCMotor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind);
@@ -82,7 +82,7 @@ MP_DECLARE_CONST_FUN_OBJ_1(common_DCMotor_brake_obj);
 
 #if PYBRICKS_PY_COMMON_SPEAKER
 
-const mp_obj_type_t pb_type_Speaker;
+extern const mp_obj_type_t pb_type_Speaker;
 
 #endif // PYBRICKS_PY_COMMON_SPEAKER
 

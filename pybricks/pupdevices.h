@@ -12,16 +12,16 @@
 
 #include <pybricks/util_pb/pb_device.h>
 
-const mp_obj_module_t pb_module_pupdevices;
+extern const mp_obj_module_t pb_module_pupdevices;
 
-const mp_obj_type_t pb_type_pupdevices_ColorDistanceSensor;
-const mp_obj_type_t pb_type_pupdevices_ColorSensor;
-const mp_obj_type_t pb_type_pupdevices_ForceSensor;
-const mp_obj_type_t pb_type_pupdevices_InfraredSensor;
-const mp_obj_type_t pb_type_pupdevices_Light;
-const mp_obj_type_t pb_type_pupdevices_PFMotor;
-const mp_obj_type_t pb_type_pupdevices_TiltSensor;
-const mp_obj_type_t pb_type_pupdevices_UltrasonicSensor;
+extern const mp_obj_type_t pb_type_pupdevices_ColorDistanceSensor;
+extern const mp_obj_type_t pb_type_pupdevices_ColorSensor;
+extern const mp_obj_type_t pb_type_pupdevices_ForceSensor;
+extern const mp_obj_type_t pb_type_pupdevices_InfraredSensor;
+extern const mp_obj_type_t pb_type_pupdevices_Light;
+extern const mp_obj_type_t pb_type_pupdevices_PFMotor;
+extern const mp_obj_type_t pb_type_pupdevices_TiltSensor;
+extern const mp_obj_type_t pb_type_pupdevices_UltrasonicSensor;
 
 pb_device_t *pupdevices_ColorDistanceSensor__get_device(mp_obj_t obj);
 

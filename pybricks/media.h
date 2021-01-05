@@ -10,7 +10,7 @@
 
 #include "py/obj.h"
 
-const mp_obj_module_t pb_module_media;
+extern const mp_obj_module_t pb_module_media;
 
 #endif // PYBRICKS_PY_MEDIA
 

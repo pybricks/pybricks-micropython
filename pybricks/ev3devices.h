@@ -10,13 +10,13 @@
 
 #include "py/obj.h"
 
-const mp_obj_module_t pb_module_ev3devices;
+extern const mp_obj_module_t pb_module_ev3devices;
 
-const mp_obj_type_t pb_type_ev3devices_ColorSensor;
-const mp_obj_type_t pb_type_ev3devices_InfraredSensor;
-const mp_obj_type_t pb_type_ev3devices_GyroSensor;
-const mp_obj_type_t pb_type_ev3devices_TouchSensor;
-const mp_obj_type_t pb_type_ev3devices_UltrasonicSensor;
+extern const mp_obj_type_t pb_type_ev3devices_ColorSensor;
+extern const mp_obj_type_t pb_type_ev3devices_InfraredSensor;
+extern const mp_obj_type_t pb_type_ev3devices_GyroSensor;
+extern const mp_obj_type_t pb_type_ev3devices_TouchSensor;
+extern const mp_obj_type_t pb_type_ev3devices_UltrasonicSensor;
 
 #endif // PYBRICKS_PY_EV3DEVICES
 

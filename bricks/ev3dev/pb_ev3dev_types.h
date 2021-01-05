@@ -22,10 +22,10 @@ GrxFont *pb_ev3dev_Font_obj_get_font(mp_const_obj_t obj);
 
 // class Image
 
-const mp_obj_type_t pb_type_ev3dev_Image;
+extern const mp_obj_type_t pb_type_ev3dev_Image;
 
 // class Speaker
 
-const mp_obj_type_t pb_type_ev3dev_Speaker;
+extern const mp_obj_type_t pb_type_ev3dev_Speaker;
 
 #endif // PYBRICKS_INCLUDED_BRICKS_EV3DEV_TYPES_H

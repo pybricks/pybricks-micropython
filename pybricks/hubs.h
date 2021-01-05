@@ -11,26 +11,26 @@
 #include "py/obj.h"
 
 #if PYBRICKS_HUB_MOVEHUB
-const mp_obj_type_t pb_type_MoveHub;
+extern const mp_obj_type_t pb_type_MoveHub;
 #endif
 #if PYBRICKS_HUB_CITYHUB
-const mp_obj_type_t pb_type_CityHub;
+extern const mp_obj_type_t pb_type_CityHub;
 #endif
 #if PYBRICKS_HUB_TECHNICHUB
-const mp_obj_type_t pb_type_TechnicHub;
+extern const mp_obj_type_t pb_type_TechnicHub;
 #endif
 #ifdef PYBRICKS_HUB_PRIMEHUB
-const mp_obj_type_t pb_type_PrimeHub;
-const mp_obj_type_t pb_type_InventorHub;
+extern const mp_obj_type_t pb_type_PrimeHub;
+extern const mp_obj_type_t pb_type_InventorHub;
 #endif
 #if PYBRICKS_HUB_NXTBRICK
-const mp_obj_type_t pb_type_NXTBrick;
+extern const mp_obj_type_t pb_type_NXTBrick;
 #endif
 #if PYBRICKS_HUB_EV3BRICK
-const mp_obj_type_t pb_type_EV3Brick;
+extern const mp_obj_type_t pb_type_EV3Brick;
 #endif
 
-const mp_obj_module_t pb_module_hubs;
+extern const mp_obj_module_t pb_module_hubs;
 
 #endif // PYBRICKS_PY_HUBS
 
