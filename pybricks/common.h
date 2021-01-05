@@ -88,7 +88,7 @@ const mp_obj_type_t pb_type_Speaker;
 
 #if PYBRICKS_PY_COMMON_IMU
 
-mp_obj_t pb_type_IMU_obj_new(void);
+mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis, mp_obj_t front_side_axis);
 
 #endif // PYBRICKS_PY_COMMON_IMU
 

@@ -15,7 +15,10 @@
 #include "py/runtime.h"
 #include "py/obj.h"
 
+#include <pybricks/util_mp/pb_kwarg_helper.h>
+
 #include <pybricks/common.h>
+#include <pybricks/geometry.h>
 #include <pybricks/hubs.h>
 
 typedef struct _hubs_PrimeHub_obj_t {
@@ -34,11 +37,15 @@ static const pb_obj_enum_member_t *primehub_buttons[] = {
 };
 
 STATIC mp_obj_t hubs_PrimeHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_DEFAULT_OBJ(top_side, pb_Axis_Z_obj),
+        PB_ARG_DEFAULT_OBJ(front_side, pb_Axis_X_obj));
+
     hubs_PrimeHub_obj_t *self = m_new_obj(hubs_PrimeHub_obj_t);
     self->base.type = (mp_obj_type_t *)type;
     self->buttons = pb_type_Keypad_obj_new(PBIO_ARRAY_SIZE(primehub_buttons), primehub_buttons);
     self->display = pb_type_Lightmatrix_obj_new(pbsys_hub_light_matrix);
-    self->imu = pb_type_IMU_obj_new();
+    self->imu = pb_type_IMU_obj_new(top_side_in, front_side_in);
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light);
     self->speaker = mp_call_function_0(MP_OBJ_FROM_PTR(&pb_type_Speaker));
     return MP_OBJ_FROM_PTR(self);

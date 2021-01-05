@@ -99,7 +99,7 @@ STATIC const mp_obj_type_t pb_type_IMU = {
 STATIC common_IMU_obj_t singleton_obj;
 
 // pybricks._common.IMU.__init__
-mp_obj_t pb_type_IMU_obj_new(void) {
+mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis, mp_obj_t front_side_axis) {
 
     // Get singleton instance
     common_IMU_obj_t *self = &singleton_obj;
