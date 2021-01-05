@@ -183,6 +183,12 @@ void pb_imu_accel_read(pb_imu_dev_t *imu_dev, float_t *values) {
     values[0] = data[0] * imu_dev->accel_scale;
     values[1] = data[1] * imu_dev->accel_scale;
     values[2] = data[2] * imu_dev->accel_scale;
+
+    #if PYBRICKS_HUB_PRIMEHUB
+    // Sensor is upside down
+    values[0] = -values[0];
+    values[2] = -values[2];
+    #endif
 }
 
 void pb_imu_gyro_read(pb_imu_dev_t *imu_dev, float_t *values) {
@@ -203,6 +209,12 @@ void pb_imu_gyro_read(pb_imu_dev_t *imu_dev, float_t *values) {
     values[0] = data[0] * imu_dev->gyro_scale;
     values[1] = data[1] * imu_dev->gyro_scale;
     values[2] = data[2] * imu_dev->gyro_scale;
+
+    #if PYBRICKS_HUB_PRIMEHUB
+    // Sensor is upside down
+    values[0] = -values[0];
+    values[2] = -values[2];
+    #endif
 }
 
 #endif // PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_IMU
