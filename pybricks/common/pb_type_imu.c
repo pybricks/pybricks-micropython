@@ -18,6 +18,10 @@
 
 typedef struct _common_IMU_obj_t {
     mp_obj_base_t base;
+    bool use_default_placement;
+    float hub_x[3];
+    float hub_y[3];
+    float hub_z[3];
     pb_imu_dev_t *imu_dev;
 } common_IMU_obj_t;
 
@@ -56,6 +60,23 @@ STATIC mp_obj_t common_IMU_project_3d_axis(mp_obj_t axis_in, float *values) {
     return mp_obj_new_float_from_f(scalar / sqrtf(axis->data[0] * axis->data[0] + axis->data[1] * axis->data[1] + axis->data[2] * axis->data[2]));
 }
 
+STATIC void common_IMU_rotate_3d_axis(common_IMU_obj_t *self, float *values) {
+
+    // If we use default placement, don't do anything.
+    if (self->use_default_placement) {
+        return;
+    }
+
+    // Make a copy of the input before we override it.
+    float v[] = {values[0], values[1], values[2]};
+
+    // Evaluate the rotation.
+    values[0] = self->hub_x[0] * v[0] + self->hub_y[0] * v[1] + self->hub_z[0] * v[2];
+    values[1] = self->hub_x[1] * v[0] + self->hub_y[1] * v[1] + self->hub_z[1] * v[2];
+    values[2] = self->hub_x[2] * v[0] + self->hub_y[2] * v[1] + self->hub_z[2] * v[2];
+}
+
+
 // pybricks._common.IMU.acceleration
 STATIC mp_obj_t common_IMU_acceleration(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -64,6 +85,7 @@ STATIC mp_obj_t common_IMU_acceleration(size_t n_args, const mp_obj_t *pos_args,
 
     float_t values[3];
     pb_imu_accel_read(self->imu_dev, values);
+    common_IMU_rotate_3d_axis(self, values);
 
     return common_IMU_project_3d_axis(axis_in, values);
 }
@@ -77,6 +99,7 @@ STATIC mp_obj_t common_IMU_gyro(size_t n_args, const mp_obj_t *pos_args, mp_map_
 
     float_t values[3];
     pb_imu_gyro_read(self->imu_dev, values);
+    common_IMU_rotate_3d_axis(self, values);
 
     return common_IMU_project_3d_axis(axis_in, values);
 }
@@ -96,25 +119,74 @@ STATIC const mp_obj_type_t pb_type_IMU = {
     .locals_dict = (mp_obj_dict_t *)&common_IMU_locals_dict,
 };
 
-STATIC common_IMU_obj_t singleton_obj;
+// Extracts a (scaled) 3D vector object to a plain, normalized float array
+static void get_normal_axis(pb_type_Matrix_obj_t *vector, float *dest) {
+
+    // Assert we have a vector with 3 entries
+    if (vector->m * vector->n != 3) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // compute norm
+    float magnitude = sqrtf(
+        vector->data[0] * vector->data[0] +
+        vector->data[1] * vector->data[1] +
+        vector->data[2] * vector->data[2]);
+
+    // Assert we have a vector with nonzero length
+    if (magnitude < 0.001f) {
+        pb_assert(PBIO_ERROR_INVALID_ARG);
+    }
+
+    // Scale and sign magnitude by matrix scale
+    magnitude *= vector->scale;
+
+    // Set destination values
+    dest[0] = vector->data[0] / magnitude;
+    dest[1] = vector->data[1] / magnitude;
+    dest[2] = vector->data[2] / magnitude;
+}
+
+STATIC common_IMU_obj_t singleton_imu_obj;
 
 // pybricks._common.IMU.__init__
 mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis, mp_obj_t front_side_axis) {
 
     // Get singleton instance
-    common_IMU_obj_t *self = &singleton_obj;
+    common_IMU_obj_t *self = &singleton_imu_obj;
 
-    // Return if already initialized
-    if (self->imu_dev) {
-        return self;
+    // Initialized if not done so already
+    if (!self->imu_dev) {
+        pb_imu_get_imu(&self->imu_dev);
+        pb_imu_init(self->imu_dev);
+        self->base.type = &pb_type_IMU;
     }
 
-    self->base.type = &pb_type_IMU;
+    // Check if we use the default orientation.
+    if (MP_OBJ_TO_PTR(top_side_axis) == &pb_Axis_Z_obj && MP_OBJ_TO_PTR(front_side_axis) == &pb_Axis_X_obj) {
+        // If so, we can avoid math on every read.
+        self->use_default_placement = true;
+    } else {
+        // If not, compute the orientation and use it for reading data from now on.
+        self->use_default_placement = false;
 
-    pb_imu_get_imu(&self->imu_dev);
+        // Extract the body X axis
+        get_normal_axis(front_side_axis, self->hub_x);
 
-    // Initialize IMU
-    pb_imu_init(self->imu_dev);
+        // Extract the body Z axis
+        get_normal_axis(top_side_axis, self->hub_z);
+
+        // Assert that X and Z are orthogonal
+        float inner = self->hub_x[0] * self->hub_z[0] + self->hub_x[1] * self->hub_z[1] + self->hub_x[2] * self->hub_z[2];
+        if (inner > 0.001f || inner < -0.001f) {
+            pb_assert(PBIO_ERROR_INVALID_ARG);
+        }
+
+        // Make the body Y axis as Y = cross(Z, X)
+        self->hub_y[0] = self->hub_z[1] * self->hub_x[2] - self->hub_z[2] * self->hub_x[1];
+        self->hub_y[1] = self->hub_z[2] * self->hub_x[0] - self->hub_z[0] * self->hub_x[2];
+        self->hub_y[2] = self->hub_z[0] * self->hub_x[1] - self->hub_z[1] * self->hub_x[0];
+    }
 
     return self;
 }
