@@ -20,6 +20,6 @@ typedef struct {
 } pbdrv_battery_adc_platform_data_t;
 
 // defined in platform.c
-const pbdrv_battery_adc_platform_data_t pbdrv_battery_adc_platform_data;
+extern const pbdrv_battery_adc_platform_data_t pbdrv_battery_adc_platform_data;
 
 #endif // _INTERNAL_PBDRV_BATTERY_ADC_H_

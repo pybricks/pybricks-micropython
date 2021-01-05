@@ -25,10 +25,10 @@ typedef struct _pb_type_Matrix_obj_t {
     bool transposed;
 } pb_type_Matrix_obj_t;
 
-const pb_type_Matrix_obj_t pb_Axis_X_obj;
-const pb_type_Matrix_obj_t pb_Axis_Y_obj;
-const pb_type_Matrix_obj_t pb_Axis_Z_obj;
-const pb_type_Matrix_obj_t pb_Matrix_identity3_obj;
+extern const pb_type_Matrix_obj_t pb_Axis_X_obj;
+extern const pb_type_Matrix_obj_t pb_Axis_Y_obj;
+extern const pb_type_Matrix_obj_t pb_Axis_Z_obj;
+extern const pb_type_Matrix_obj_t pb_Matrix_identity3_obj;
 
 mp_obj_t pb_type_Matrix_make_vector(size_t m, float *data, bool normalize);
 
