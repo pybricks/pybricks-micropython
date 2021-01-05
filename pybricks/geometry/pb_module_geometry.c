@@ -45,6 +45,20 @@ const pb_type_Matrix_obj_t pb_Axis_Z_obj = {
     .n = 1,
 };
 
+STATIC const float pb_Matrix_identity3_data[] = {
+    1.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 1.0f,
+};
+
+const pb_type_Matrix_obj_t pb_Matrix_identity3_obj = {
+    {&pb_type_Matrix},
+    .data = (float *)pb_Matrix_identity3_data,
+    .scale = 1.0f,
+    .m = 3,
+    .n = 3,
+};
+
 STATIC const mp_rom_map_elem_t pb_Axis_table[] = {
     { MP_ROM_QSTR(MP_QSTR_X),     MP_ROM_PTR(&pb_Axis_X_obj)},
     { MP_ROM_QSTR(MP_QSTR_Y),     MP_ROM_PTR(&pb_Axis_Y_obj)},
