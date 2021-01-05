@@ -177,6 +177,12 @@ void pb_device_set_values(pb_device_t *pbdev, uint8_t mode, int32_t *values, uin
     }
     pb_assert(err);
     wait(pbio_iodev_set_data_end, pbio_iodev_set_data_cancel, iodev);
+
+    // Give some time for the set values to take effect
+    uint32_t delay = get_mode_switch_delay(iodev->info->type_id, mode);
+    if (delay > 0) {
+        mp_hal_delay_ms(delay / 10);
+    }
 }
 
 void pb_device_set_power_supply(pb_device_t *pbdev, int32_t duty) {
