@@ -35,7 +35,6 @@ static const pbio_control_settings_t settings_servo_ev3_m = {
     .integral_range = 45,
     .integral_rate = 10,
     .max_control = 150000,
-    .actuation_scale = 100,
     .use_estimated_rate = false,
     .use_estimated_count = false,
 };
@@ -65,7 +64,6 @@ static const pbio_control_settings_t settings_servo_ev3_l = {
     .integral_range = 45,
     .integral_rate = 10,
     .max_control = 430000,
-    .actuation_scale = 100,
     .use_estimated_rate = false,
     .use_estimated_count = false,
 };
@@ -99,7 +97,6 @@ static const pbio_control_settings_t settings_servo_technic_m_angular = {
     .integral_range = 45,
     .integral_rate = 5,
     .max_control = 160000,
-    .actuation_scale = 100,
     .use_estimated_rate = true,
     .use_estimated_count = false,
 };
@@ -129,7 +126,6 @@ static const pbio_control_settings_t settings_servo_technic_l_angular = {
     .integral_range = 45,
     .integral_rate = 5,
     .max_control = 330000,
-    .actuation_scale = 100,
     .use_estimated_rate = true,
     .use_estimated_count = false,
 };
@@ -159,7 +155,6 @@ static const pbio_control_settings_t settings_servo_interactive = {
     .integral_range = 45,
     .integral_rate = 3,
     .max_control = 100000,
-    .actuation_scale = 100,
     .use_estimated_rate = true,
     .use_estimated_count = false,
 };
@@ -191,7 +186,6 @@ static const pbio_control_settings_t settings_servo_movehub = {
     .integral_range = 45,
     .integral_rate = 5,
     .max_control = 150000,
-    .actuation_scale = 100,
     .use_estimated_rate = true,
     .use_estimated_count = false,
 };
@@ -223,7 +217,6 @@ static const pbio_control_settings_t settings_servo_technic_l = {
     .integral_range = 45,
     .integral_rate = 5,
     .max_control = 260000,
-    .actuation_scale = 100,
     .use_estimated_rate = true,
     .use_estimated_count = false,
 };
@@ -253,7 +246,6 @@ static const pbio_control_settings_t settings_servo_technic_xl = {
     .integral_range = 45,
     .integral_rate = 5,
     .max_control = 260000,
-    .actuation_scale = 100,
     .use_estimated_rate = true,
     .use_estimated_count = false,
 };

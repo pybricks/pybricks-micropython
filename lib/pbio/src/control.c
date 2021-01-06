@@ -329,7 +329,6 @@ int32_t pbio_control_user_to_counts(pbio_control_settings_t *s, int32_t user) {
 void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *actuation) {
     *speed = pbio_control_counts_to_user(s, s->max_rate);
     *acceleration = pbio_control_counts_to_user(s, s->abs_acceleration);
-    *actuation = s->max_control / s->actuation_scale;
 }
 
 pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t actuation) {
@@ -338,7 +337,6 @@ pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_
     }
     s->max_rate = pbio_control_user_to_counts(s, speed);
     s->abs_acceleration = pbio_control_user_to_counts(s, acceleration);
-    s->max_control = actuation * s->actuation_scale;
     return PBIO_SUCCESS;
 }
 
