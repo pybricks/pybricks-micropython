@@ -94,25 +94,23 @@ STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_m
         PB_ARG_DEFAULT_NONE(ki),
         PB_ARG_DEFAULT_NONE(kd),
         PB_ARG_DEFAULT_NONE(integral_range),
-        PB_ARG_DEFAULT_NONE(integral_rate),
-        PB_ARG_DEFAULT_NONE(feed_forward));
+        PB_ARG_DEFAULT_NONE(integral_rate));
 
     // Read current values
     int32_t kp, ki, kd;
-    int32_t integral_range, integral_rate, feed_forward;
-    pbio_control_settings_get_pid(&self->control->settings, &kp, &ki, &kd, &integral_range, &integral_rate, &feed_forward);
+    int32_t integral_range, integral_rate;
+    pbio_control_settings_get_pid(&self->control->settings, &kp, &ki, &kd, &integral_range, &integral_rate);
 
     // If all given values are none, return current values
     if (kp_in == mp_const_none && ki_in == mp_const_none && kd_in == mp_const_none &&
-        integral_range_in == mp_const_none && integral_rate_in == mp_const_none && feed_forward_in == mp_const_none) {
-        mp_obj_t ret[6];
+        integral_range_in == mp_const_none && integral_rate_in == mp_const_none) {
+        mp_obj_t ret[5];
         ret[0] = mp_obj_new_int(kp);
         ret[1] = mp_obj_new_int(ki);
         ret[2] = mp_obj_new_int(kd);
         ret[3] = mp_obj_new_int(integral_range);
         ret[4] = mp_obj_new_int(integral_rate);
-        ret[5] = mp_obj_new_int(feed_forward);
-        return mp_obj_new_tuple(6, ret);
+        return mp_obj_new_tuple(5, ret);
     }
 
     // Assert control is not active
@@ -124,9 +122,8 @@ STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_m
     kd = pb_obj_get_default_int(kd_in, kd);
     integral_range = pb_obj_get_default_int(integral_range_in, integral_range);
     integral_rate = pb_obj_get_default_int(integral_rate_in, integral_rate);
-    feed_forward = pb_obj_get_default_int(feed_forward_in, feed_forward);
 
-    pb_assert(pbio_control_settings_set_pid(&self->control->settings, kp, ki, kd, integral_range, integral_rate, feed_forward));
+    pb_assert(pbio_control_settings_set_pid(&self->control->settings, kp, ki, kd, integral_range, integral_rate));
 
     return mp_const_none;
 }

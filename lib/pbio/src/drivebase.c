@@ -36,11 +36,10 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
     s_distance->stall_time = min(s_left->stall_time, s_right->stall_time);
 
     // We require that actuation scale and offsets are the same for either motor, and use as-is for drivebase
-    if (s_left->actuation_scale != s_right->actuation_scale || s_left->control_offset != s_right->control_offset) {
+    if (s_left->actuation_scale != s_right->actuation_scale) {
         return PBIO_ERROR_INVALID_ARG;
     }
     s_distance->actuation_scale = s_left->actuation_scale;
-    s_distance->control_offset = s_left->control_offset;
 
     // Copy rate estimator usage, required to be the same on both motors
     if (s_left->use_estimated_rate != s_right->use_estimated_rate || s_left->use_estimated_count != s_right->use_estimated_count) {
