@@ -345,7 +345,7 @@ pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_
     return PBIO_SUCCESS;
 }
 
-void pbio_control_settings_get_pid(pbio_control_settings_t *s, int16_t *pid_kp, int16_t *pid_ki, int16_t *pid_kd, int32_t *integral_range, int32_t *integral_rate, int32_t *control_offset) {
+void pbio_control_settings_get_pid(pbio_control_settings_t *s, int32_t *pid_kp, int32_t *pid_ki, int32_t *pid_kd, int32_t *integral_range, int32_t *integral_rate, int32_t *control_offset) {
     *pid_kp = s->pid_kp;
     *pid_ki = s->pid_ki;
     *pid_kd = s->pid_kd;
@@ -354,7 +354,7 @@ void pbio_control_settings_get_pid(pbio_control_settings_t *s, int16_t *pid_kp, 
     *control_offset = s->control_offset / s->actuation_scale;
 }
 
-pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd, int32_t integral_range, int32_t integral_rate, int32_t control_offset) {
+pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int32_t pid_kp, int32_t pid_ki, int32_t pid_kd, int32_t integral_range, int32_t integral_rate, int32_t control_offset) {
     if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || integral_range < 0 || integral_rate < 0 || control_offset < 0) {
         return PBIO_ERROR_INVALID_ARG;
     }

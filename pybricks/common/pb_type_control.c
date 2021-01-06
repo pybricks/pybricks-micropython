@@ -98,7 +98,7 @@ STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_m
         PB_ARG_DEFAULT_NONE(feed_forward));
 
     // Read current values
-    int16_t kp, ki, kd;
+    int32_t kp, ki, kd;
     int32_t integral_range, integral_rate, feed_forward;
     pbio_control_settings_get_pid(&self->control->settings, &kp, &ki, &kd, &integral_range, &integral_rate, &feed_forward);
 

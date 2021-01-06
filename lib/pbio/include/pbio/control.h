@@ -93,8 +93,8 @@ int32_t pbio_control_user_to_counts(pbio_control_settings_t *s, int32_t user);
 void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *actuation);
 pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *ctl, int32_t speed, int32_t acceleration, int32_t actuation);
 
-void pbio_control_settings_get_pid(pbio_control_settings_t *s, int16_t *pid_kp, int16_t *pid_ki, int16_t *pid_kd, int32_t *integral_range, int32_t *integral_rate, int32_t *control_offset);
-pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int16_t pid_kp, int16_t pid_ki, int16_t pid_kd, int32_t integral_range, int32_t integral_rate, int32_t control_offset);
+void pbio_control_settings_get_pid(pbio_control_settings_t *s, int32_t *pid_kp, int32_t *pid_ki, int32_t *pid_kd, int32_t *integral_range, int32_t *integral_rate, int32_t *control_offset);
+pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int32_t pid_kp, int32_t pid_ki, int32_t pid_kd, int32_t integral_range, int32_t integral_rate, int32_t control_offset);
 
 void pbio_control_settings_get_target_tolerances(pbio_control_settings_t *s, int32_t *speed, int32_t *position);
 pbio_error_t pbio_control_settings_set_target_tolerances(pbio_control_settings_t *s, int32_t speed, int32_t position);
