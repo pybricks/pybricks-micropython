@@ -63,7 +63,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
 
     // Position anti-windup in case of angle control (accumulated position error may not get too high)
     if (ctl->type == PBIO_CONTROL_ANGLE) {
-        if (abs(duty_due_to_proportional) >= max_windup_duty) {
+        if (abs(duty_due_to_proportional) >= max_windup_duty && pbio_math_sign(duty_due_to_proportional) == pbio_math_sign(rate_err)) {
             // We are at the duty limit and we should prevent further position error integration.
             pbio_count_integrator_pause(&ctl->count_integrator, time_now, count_now, count_ref);
         } else {
