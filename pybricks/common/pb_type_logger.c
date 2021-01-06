@@ -157,6 +157,9 @@ STATIC mp_obj_t tools_Logger_save(size_t n_args, const mp_obj_t *pos_args, mp_ma
         // Print the row
         mp_print_str(&mp_plat_print, row_str);
         #endif // PYBRICKS_HUB_EV3BRICK
+
+        // Writing data can take a while, so give MicroPython some time too
+        mp_handle_pending(true);
     }
 
     #if PYBRICKS_HUB_EV3BRICK
