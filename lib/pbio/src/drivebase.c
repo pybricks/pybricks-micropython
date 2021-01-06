@@ -32,7 +32,7 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
     s_distance->pid_kd = (s_left->pid_kd + s_right->pid_kd) / 2;
 
     // Maxima are bound by the least capable motor
-    s_distance->max_control = min(s_left->max_control, s_right->max_control);
+    s_distance->max_torque = min(s_left->max_torque, s_right->max_torque);
     s_distance->stall_time = min(s_left->stall_time, s_right->stall_time);
 
     // Copy rate estimator usage, required to be the same on both motors

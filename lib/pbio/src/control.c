@@ -15,7 +15,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
     int32_t time_ref;
     int32_t count_ref, count_ref_ext, count_err, count_feedback, count_err_integral, rate_err_integral;
     int32_t rate_err, rate_feedback;
-    int32_t duty, duty_due_to_proportional, duty_due_to_integral, duty_due_to_derivative;
+    int32_t torque, torque_due_to_proportional, torque_due_to_integral, torque_due_to_derivative;
 
     // Get the time at which we want to evaluate the reference position/velocities.
     // This compensates for any time we may have spent pausing when the motor was stalled.
@@ -43,28 +43,28 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
     }
 
     // Corresponding PID control signal
-    duty_due_to_proportional = ctl->settings.pid_kp * count_err;
-    duty_due_to_derivative = ctl->settings.pid_kd * rate_err;
-    duty_due_to_integral = (ctl->settings.pid_ki * (count_err_integral / US_PER_MS)) / MS_PER_SECOND;
+    torque_due_to_proportional = ctl->settings.pid_kp * count_err;
+    torque_due_to_derivative = ctl->settings.pid_kd * rate_err;
+    torque_due_to_integral = (ctl->settings.pid_ki * (count_err_integral / US_PER_MS)) / MS_PER_SECOND;
 
-    // Total duty signal, capped by the actuation limit
-    duty = duty_due_to_proportional + duty_due_to_integral + duty_due_to_derivative;
-    duty = max(-ctl->settings.max_control, min(duty, ctl->settings.max_control));
+    // Total torque signal, capped by the actuation limit
+    torque = torque_due_to_proportional + torque_due_to_integral + torque_due_to_derivative;
+    torque = max(-ctl->settings.max_torque, min(torque, ctl->settings.max_torque));
 
     // This completes the computation of the control signal.
     // The next steps take care of handling windup, or triggering a stop if we are on target.
 
-    // We want to stop building up further errors if we are at the proportional duty limit. So, we pause the trajectory
+    // We want to stop building up further errors if we are at the proportional torque limit. So, we pause the trajectory
     // if we get at this limit. We wait a little longer though, to make sure it does not fall back to below the limit
     // within one sample, which we can predict using the current rate times the loop time, with a factor two tolerance.
-    int32_t max_windup_duty = ctl->settings.max_control + (ctl->settings.pid_kp * abs(rate_now) * PBIO_CONTROL_LOOP_TIME_MS * 2) / MS_PER_SECOND;
+    int32_t max_windup_torque = ctl->settings.max_torque + (ctl->settings.pid_kp * abs(rate_now) * PBIO_CONTROL_LOOP_TIME_MS * 2) / MS_PER_SECOND;
 
-    // Position anti-windup: pause trajectory or integration if falling behind despite using maximum duty
+    // Position anti-windup: pause trajectory or integration if falling behind despite using maximum torque
 
     // Position anti-windup in case of angle control (accumulated position error may not get too high)
     if (ctl->type == PBIO_CONTROL_ANGLE) {
-        if (abs(duty_due_to_proportional) >= max_windup_duty && pbio_math_sign(duty_due_to_proportional) == pbio_math_sign(rate_err)) {
-            // We are at the duty limit and we should prevent further position error integration.
+        if (abs(torque_due_to_proportional) >= max_windup_torque && pbio_math_sign(torque_due_to_proportional) == pbio_math_sign(rate_err)) {
+            // We are at the torque limit and we should prevent further position error integration.
             pbio_count_integrator_pause(&ctl->count_integrator, time_now, count_now, count_ref);
         } else {
             // Not at the limit so continue integrating errors
@@ -73,8 +73,8 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
     }
     // Position anti-windup in case of timed speed control (speed integral may not get too high)
     else {
-        if (abs(duty_due_to_proportional) >= max_windup_duty && pbio_math_sign(duty_due_to_proportional) == pbio_math_sign(rate_err)) {
-            // We are at the duty limit and we should prevent further speed error integration.
+        if (abs(torque_due_to_proportional) >= max_windup_torque && pbio_math_sign(torque_due_to_proportional) == pbio_math_sign(rate_err)) {
+            // We are at the torque limit and we should prevent further speed error integration.
             pbio_rate_integrator_pause(&ctl->rate_integrator, time_now, count_now, count_ref);
         } else {
             // Not at the limit so continue integrating errors
@@ -102,11 +102,11 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
 
         // The new hold control does not take effect until the next iteration, so keep actuating for now.
         *actuation = PBIO_ACTUATION_DUTY;
-        *control = duty;
+        *control = torque;
     } else {
-        // The end point not reached, or we have to keep holding, so return the calculated duty for actuation
+        // The end point not reached, or we have to keep holding, so return the calculated torque for actuation
         *actuation = PBIO_ACTUATION_DUTY;
-        *control = duty;
+        *control = torque;
     }
 
     // Log control data
@@ -120,9 +120,9 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
         *rate_ref,
         count_est,
         rate_est,
-        duty_due_to_proportional,
-        duty_due_to_integral,
-        duty_due_to_derivative,
+        torque_due_to_proportional,
+        torque_due_to_integral,
+        torque_due_to_derivative,
     };
     pbio_logger_update(&ctl->log, log_data);
 }
@@ -326,17 +326,21 @@ int32_t pbio_control_user_to_counts(pbio_control_settings_t *s, int32_t user) {
     return pbio_math_mul_i32_fix16(user, s->counts_per_unit);
 }
 
-void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *actuation) {
+void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *duty, int32_t *torque) {
     *speed = pbio_control_counts_to_user(s, s->max_rate);
     *acceleration = pbio_control_counts_to_user(s, s->abs_acceleration);
+    *duty = s->max_duty / 100;
+    *torque = s->max_torque;
 }
 
-pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t actuation) {
-    if (speed < 1 || acceleration < 1 || actuation < 1) {
+pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t duty, int32_t torque) {
+    if (speed < 1 || acceleration < 1 || duty < 1 || torque < 1 || duty > 100) {
         return PBIO_ERROR_INVALID_ARG;
     }
     s->max_rate = pbio_control_user_to_counts(s, speed);
     s->abs_acceleration = pbio_control_user_to_counts(s, acceleration);
+    s->max_duty = duty * 100;
+    s->max_torque = torque;
     return PBIO_SUCCESS;
 }
 
@@ -396,8 +400,8 @@ int32_t pbio_control_settings_get_max_integrator(pbio_control_settings_t *s) {
     if (s->pid_ki <= 10) {
         return 1000000000;
     }
-    // Get the maximum integrator value for which ki*integrator does not exceed max_control
-    return ((s->max_control * US_PER_MS) / s->pid_ki) * MS_PER_SECOND;
+    // Get the maximum integrator value for which ki*integrator does not exceed max_torque
+    return ((s->max_torque * US_PER_MS) / s->pid_ki) * MS_PER_SECOND;
 }
 
 int32_t pbio_control_get_ref_time(pbio_control_t *ctl, int32_t time_now) {

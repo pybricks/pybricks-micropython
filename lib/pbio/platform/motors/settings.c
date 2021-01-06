@@ -34,7 +34,8 @@ static const pbio_control_settings_t settings_servo_ev3_m = {
     .pid_kd = 30,
     .integral_range = 45,
     .integral_rate = 10,
-    .max_control = 150000,
+    .max_duty = 10000,
+    .max_torque = 150000,
     .use_estimated_rate = false,
     .use_estimated_count = false,
 };
@@ -63,7 +64,8 @@ static const pbio_control_settings_t settings_servo_ev3_l = {
     .pid_kd = 250,
     .integral_range = 45,
     .integral_rate = 10,
-    .max_control = 430000,
+    .max_duty = 10000,
+    .max_torque = 430000,
     .use_estimated_rate = false,
     .use_estimated_count = false,
 };
@@ -96,7 +98,8 @@ static const pbio_control_settings_t settings_servo_technic_m_angular = {
     .pid_kd = 1200,
     .integral_range = 45,
     .integral_rate = 5,
-    .max_control = 160000,
+    .max_duty = 10000,
+    .max_torque = 160000,
     .use_estimated_rate = true,
     .use_estimated_count = false,
 };
@@ -125,7 +128,8 @@ static const pbio_control_settings_t settings_servo_technic_l_angular = {
     .pid_kd = 4500,
     .integral_range = 45,
     .integral_rate = 5,
-    .max_control = 330000,
+    .max_duty = 10000,
+    .max_torque = 330000,
     .use_estimated_rate = true,
     .use_estimated_count = false,
 };
@@ -154,7 +158,8 @@ static const pbio_control_settings_t settings_servo_interactive = {
     .pid_kd = 1000,
     .integral_range = 45,
     .integral_rate = 3,
-    .max_control = 100000,
+    .max_duty = 10000,
+    .max_torque = 100000,
     .use_estimated_rate = true,
     .use_estimated_count = false,
 };
@@ -185,7 +190,8 @@ static const pbio_control_settings_t settings_servo_movehub = {
     .pid_kd = 500,
     .integral_range = 45,
     .integral_rate = 5,
-    .max_control = 150000,
+    .max_duty = 10000,
+    .max_torque = 150000,
     .use_estimated_rate = true,
     .use_estimated_count = false,
 };
@@ -216,7 +222,8 @@ static const pbio_control_settings_t settings_servo_technic_l = {
     .pid_kd = 1000,
     .integral_range = 45,
     .integral_rate = 5,
-    .max_control = 260000,
+    .max_duty = 10000,
+    .max_torque = 260000,
     .use_estimated_rate = true,
     .use_estimated_count = false,
 };
@@ -245,7 +252,8 @@ static const pbio_control_settings_t settings_servo_technic_xl = {
     .pid_kd = 2000,
     .integral_range = 45,
     .integral_rate = 5,
-    .max_control = 260000,
+    .max_duty = 10000,
+    .max_torque = 260000,
     .use_estimated_rate = true,
     .use_estimated_count = false,
 };

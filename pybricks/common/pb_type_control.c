@@ -56,19 +56,21 @@ STATIC mp_obj_t common_Control_limits(size_t n_args, const mp_obj_t *pos_args, m
         common_Control_obj_t, self,
         PB_ARG_DEFAULT_NONE(speed),
         PB_ARG_DEFAULT_NONE(acceleration),
-        PB_ARG_DEFAULT_NONE(actuation));
+        PB_ARG_DEFAULT_NONE(duty),
+        PB_ARG_DEFAULT_NONE(torque));
 
     // Read current values
-    int32_t speed, acceleration, actuation;
-    pbio_control_settings_get_limits(&self->control->settings, &speed, &acceleration, &actuation);
+    int32_t speed, acceleration, duty, torque;
+    pbio_control_settings_get_limits(&self->control->settings, &speed, &acceleration, &duty, &torque);
 
     // If all given values are none, return current values
-    if (speed_in == mp_const_none && acceleration_in == mp_const_none && actuation_in == mp_const_none) {
-        mp_obj_t ret[3];
+    if (speed_in == mp_const_none && acceleration_in == mp_const_none && duty_in == mp_const_none && torque_in == mp_const_none) {
+        mp_obj_t ret[4];
         ret[0] = mp_obj_new_int(speed);
         ret[1] = mp_obj_new_int(acceleration);
-        ret[2] = mp_obj_new_int(actuation);
-        return mp_obj_new_tuple(3, ret);
+        ret[2] = mp_obj_new_int(duty);
+        ret[3] = mp_obj_new_int(torque);
+        return mp_obj_new_tuple(4, ret);
     }
 
     // Assert control is not active
@@ -77,9 +79,10 @@ STATIC mp_obj_t common_Control_limits(size_t n_args, const mp_obj_t *pos_args, m
     // Set user settings
     speed = pb_obj_get_default_int(speed_in, speed);
     acceleration = pb_obj_get_default_int(acceleration_in, acceleration);
-    actuation = pb_obj_get_default_int(actuation_in, actuation);
+    duty = pb_obj_get_default_int(duty_in, duty);
+    torque = pb_obj_get_default_int(torque_in, torque);
 
-    pb_assert(pbio_control_settings_set_limits(&self->control->settings, speed, acceleration, actuation));
+    pb_assert(pbio_control_settings_set_limits(&self->control->settings, speed, acceleration, duty, torque));
 
     return mp_const_none;
 }
