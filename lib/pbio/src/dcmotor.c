@@ -101,7 +101,7 @@ pbio_error_t pbio_dcmotor_set_duty_cycle_sys(pbio_dcmotor_t *dcmotor, int32_t du
 }
 
 pbio_error_t pbio_dcmotor_set_duty_cycle_usr(pbio_dcmotor_t *dcmotor, int32_t duty_steps) {
-    pbio_error_t err = pbio_dcmotor_set_duty_cycle_sys(dcmotor,  duty_steps * PBDRV_MAX_DUTY / PBIO_DUTY_USER_STEPS);
+    pbio_error_t err = pbio_dcmotor_set_duty_cycle_sys(dcmotor, duty_steps);
     if (err != PBIO_SUCCESS) {
         return err;
     }

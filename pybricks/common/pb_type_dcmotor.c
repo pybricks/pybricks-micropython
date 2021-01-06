@@ -71,10 +71,10 @@ STATIC mp_obj_t common_DCMotor_duty(size_t n_args, const mp_obj_t *pos_args, mp_
 
     if (is_servo) {
         common_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-        pb_assert(pbio_servo_set_duty_cycle(self->srv, duty));
+        pb_assert(pbio_servo_set_duty_cycle(self->srv, duty * 100));
     } else {
         common_DCMotor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-        pb_assert(pbio_dcmotor_set_duty_cycle_usr(self->dcmotor, duty));
+        pb_assert(pbio_dcmotor_set_duty_cycle_usr(self->dcmotor, duty * 100));
     }
 
     return mp_const_none;
