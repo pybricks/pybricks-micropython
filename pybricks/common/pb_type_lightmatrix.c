@@ -259,7 +259,7 @@ STATIC mp_obj_t common_Lightmatrix_pixel(size_t n_args, const mp_obj_t *pos_args
         PB_ARG_DEFAULT_INT(brightness, 100));
 
     // Set pixel at the given brightness
-    pb_assert(pbio_light_matrix_set_pixel(self->light_matrix, mp_obj_get_int(row_in), mp_obj_get_int(column_in), pb_obj_get_pct(brightness_in)));
+    pb_assert(pbio_light_matrix_set_pixel(self->light_matrix, pb_obj_get_int(row_in), pb_obj_get_int(column_in), pb_obj_get_pct(brightness_in)));
 
     return mp_const_none;
 }
