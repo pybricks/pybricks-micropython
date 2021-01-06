@@ -157,14 +157,14 @@ jobs:
       id: check-cache
       uses: actions/cache@v2
       with:
-        path: ${{ runner.tool_cache }}/gcc-arm-10-2020-q4
-        key: gcc-arm-10-2020-q4
+        path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
+        key: gcc-arm-9-2020-q2
     - name: Download
       if: steps.check-cache.outputs.cache-hit != 'true'
-      uses: dlech/arm-none-eabi-gcc@master
+      uses: fiam/arm-none-eabi-gcc@v1.0.3
       with:
-        release: '10-2020-q4'
-        directory: ${{ runner.tool_cache }}/gcc-arm-10-2020-q4
+        release: '9-2020-q2'
+        directory: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
 
   firmware:
     name: firmware
@@ -178,10 +178,10 @@ jobs:
     - name: Install cross-compiler
       uses: actions/cache@v2
       with:
-        path: ${{ runner.tool_cache }}/gcc-arm-10-2020-q4
-        key: gcc-arm-10-2020-q4
+        path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
+        key: gcc-arm-9-2020-q2
     - name: Add cross-compiler to path
-      run: echo ${{ runner.tool_cache }}/gcc-arm-10-2020-q4/bin >> $GITHUB_PATH
+      run: echo ${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin >> $GITHUB_PATH
     - name: Checkout repo
       uses: actions/checkout@v2
       with:
@@ -241,10 +241,10 @@ jobs:
     - name: Install cross-compiler
       uses: actions/cache@v2
       with:
-        path: ${{ runner.tool_cache }}/gcc-arm-10-2020-q4
-        key: gcc-arm-10-2020-q4
+        path: ${{ runner.tool_cache }}/gcc-arm-9-2020-q2
+        key: gcc-arm-9-2020-q2
     - name: Add cross-compiler to path
-      run: echo ${{ runner.tool_cache }}/gcc-arm-10-2020-q4/bin >> $GITHUB_PATH
+      run: echo ${{ runner.tool_cache }}/gcc-arm-9-2020-q2/bin >> $GITHUB_PATH
     - name: Checkout repo
       uses: actions/checkout@v2
       with:

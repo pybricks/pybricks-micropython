@@ -7,13 +7,13 @@
 //
 // Note: to correctly find the cross compiler if it isn't in $PATH, add:
 //
-//    export GCC_10_ARM_NONE_EABI_BIN=/path/to/gcc-10-arm-none-eabi/bin/
+//    export GCC_9_ARM_NONE_EABI_BIN=/path/to/gcc-9-arm-none-eabi/bin/
 //
 // in .bashrc or .zshrc (trailing slash is required), then restart VS Code.
 
 {
     "env": {
-        "gcc10ArmNoneEabi": "${env:GCC_10_ARM_NONE_EABI_BIN}arm-none-eabi-gcc"
+        "gcc9ArmNoneEabi": "${env:GCC_9_ARM_NONE_EABI_BIN}arm-none-eabi-gcc"
     },
     "configurations": [
         {
@@ -41,7 +41,7 @@
                 "USE_FULL_LL_DRIVER",
                 "FIXMATH_NO_CTYPE"
             ],
-            "compilerPath": "${gcc10ArmNoneEabi}",
+            "compilerPath": "${gcc9ArmNoneEabi}",
             "compilerArgs": [
                 "-Wall",
                 "-Werror",
@@ -81,7 +81,7 @@
                 "USE_FULL_LL_DRIVER",
                 "FIXMATH_NO_CTYPE"
             ],
-            "compilerPath": "${gcc10ArmNoneEabi}",
+            "compilerPath": "${gcc9ArmNoneEabi}",
             "compilerArgs": [
                 "-Wall",
                 "-Werror",
@@ -125,7 +125,7 @@
                 "USE_FULL_LL_DRIVER",
                 "FIXMATH_NO_CTYPE"
             ],
-            "compilerPath": "${gcc10ArmNoneEabi}",
+            "compilerPath": "${gcc9ArmNoneEabi}",
             "compilerArgs": [
                 "-Wall",
                 "-Werror",
@@ -173,7 +173,7 @@
                 "USE_FULL_LL_DRIVER",
                 "FIXMATH_NO_CTYPE"
             ],
-            "compilerPath": "${gcc10ArmNoneEabi}",
+            "compilerPath": "${gcc9ArmNoneEabi}",
             "compilerArgs": [
                 "-Wall",
                 "-Werror",
@@ -209,7 +209,7 @@
                 "MICROPY_ROM_TEXT_COMPRESSION",
                 "FIXMATH_NO_CTYPE"
             ],
-            "compilerPath": "${gcc10ArmNoneEabi}",
+            "compilerPath": "${gcc9ArmNoneEabi}",
             "compilerArgs": [
                 "-mthumb",
                 "-mtune=arm7tdmi",
@@ -242,7 +242,7 @@
                 "STM32_HAL_H=<stm32f4xx_hal.h>",
                 "FIXMATH_NO_CTYPE"
             ],
-            "compilerPath": "${gcc10ArmNoneEabi}",
+            "compilerPath": "${gcc9ArmNoneEabi}",
             "compilerArgs": [
                 "-Wall",
                 "-Werror",
