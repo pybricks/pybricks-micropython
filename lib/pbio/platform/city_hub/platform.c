@@ -35,6 +35,8 @@ enum {
     UART_ID_1,
 };
 
+// button
+
 const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON] = {
     [0] = {
         .gpio = { .bank = GPIOC, .pin = 13 },
@@ -42,6 +44,32 @@ const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTO
         .button = PBIO_BUTTON_CENTER,
         .active_low = true,
     }
+};
+
+// I/O ports
+
+const pbdrv_ioport_lpf2_platform_data_t pbdrv_ioport_lpf2_platform_data = {
+    .port_vcc = { .bank = GPIOB, .pin = 2 },
+    .ports = {
+        // Port A
+        {
+            .id1 = { .bank = GPIOA, .pin = 1  },
+            .id2 = { .bank = GPIOA, .pin = 3  },
+            .uart_buf = { .bank = GPIOB, .pin = 5  },
+            .uart_tx = { .bank = GPIOC, .pin = 4  },
+            .uart_rx = { .bank = GPIOC, .pin = 5  },
+            .alt = 1, // USART3
+        },
+        // Port B
+        {
+            .id1 = { .bank = GPIOA, .pin = 0  },
+            .id2 = { .bank = GPIOA, .pin = 2  },
+            .uart_buf = { .bank = GPIOB, .pin = 4  },
+            .uart_tx = { .bank = GPIOC, .pin = 10  },
+            .uart_rx = { .bank = GPIOC, .pin = 11 },
+            .alt = 0, // USART4
+        },
+    },
 };
 
 // LED
@@ -141,26 +169,6 @@ void pbdrv_reset_stm32_power_off(void) {
     // prevent watchdog from resetting MCU
     IWDG->KR = 0xaaaa;
 }
-
-// Port A - USART3
-const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_0 = {
-    .id1 = { .bank = GPIOA, .pin = 1  },
-    .id2 = { .bank = GPIOA, .pin = 3  },
-    .uart_buf = { .bank = GPIOB, .pin = 5  },
-    .uart_tx = { .bank = GPIOC, .pin = 4  },
-    .uart_rx = { .bank = GPIOC, .pin = 5  },
-    .alt = 1,
-};
-
-// Port B - USART4
-const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_1 = {
-    .id1 = { .bank = GPIOA, .pin = 0  },
-    .id2 = { .bank = GPIOA, .pin = 2  },
-    .uart_buf = { .bank = GPIOB, .pin = 4  },
-    .uart_tx = { .bank = GPIOC, .pin = 10  },
-    .uart_rx = { .bank = GPIOC, .pin = 11 },
-    .alt = 0,
-};
 
 // UART
 

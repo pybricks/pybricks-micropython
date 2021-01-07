@@ -62,44 +62,48 @@ const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTO
     },
 };
 
-// Port A
-const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_0 = {
-    .id1 = { .bank = GPIOC, .pin = 5  },
-    .id2 = { .bank = GPIOB, .pin = 2  },
-    .uart_buf = { .bank = GPIOH, .pin = 0  },
-    .uart_tx = { .bank = GPIOB, .pin = 6  },
-    .uart_rx = { .bank = GPIOB, .pin = 7  },
-    .alt = GPIO_AF7_USART1,
-};
+// I/O ports
 
-// Port B
-const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_1 = {
-    .id1 = { .bank = GPIOC, .pin = 3  },
-    .id2 = { .bank = GPIOC, .pin = 0  },
-    .uart_buf = { .bank = GPIOH, .pin = 1  },
-    .uart_tx = { .bank = GPIOA, .pin = 2  },
-    .uart_rx = { .bank = GPIOA, .pin = 3  },
-    .alt = GPIO_AF7_USART2,
-};
-
-// Port C
-const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_2 = {
-    .id1 = { .bank = GPIOC, .pin = 4  },
-    .id2 = { .bank = GPIOA, .pin = 7  },
-    .uart_buf = { .bank = GPIOC, .pin = 8  },
-    .uart_tx = { .bank = GPIOC, .pin = 10 },
-    .uart_rx = { .bank = GPIOC, .pin = 11 },
-    .alt = GPIO_AF7_USART3,
-};
-
-// Port D
-const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_3 = {
-    .id1 = { .bank = GPIOA, .pin = 4  },
-    .id2 = { .bank = GPIOA, .pin = 5  },
-    .uart_buf = { .bank = GPIOC, .pin = 7  },
-    .uart_tx = { .bank = GPIOB, .pin = 11 },
-    .uart_rx = { .bank = GPIOB, .pin = 10  },
-    .alt = GPIO_AF8_LPUART1,
+const pbdrv_ioport_lpf2_platform_data_t pbdrv_ioport_lpf2_platform_data = {
+    .port_vcc = { .bank = GPIOB, .pin = 12 },
+    .ports = {
+        // Port A
+        {
+            .id1 = { .bank = GPIOC, .pin = 5  },
+            .id2 = { .bank = GPIOB, .pin = 2  },
+            .uart_buf = { .bank = GPIOH, .pin = 0  },
+            .uart_tx = { .bank = GPIOB, .pin = 6  },
+            .uart_rx = { .bank = GPIOB, .pin = 7  },
+            .alt = GPIO_AF7_USART1,
+        },
+        // Port B
+        {
+            .id1 = { .bank = GPIOC, .pin = 3  },
+            .id2 = { .bank = GPIOC, .pin = 0  },
+            .uart_buf = { .bank = GPIOH, .pin = 1  },
+            .uart_tx = { .bank = GPIOA, .pin = 2  },
+            .uart_rx = { .bank = GPIOA, .pin = 3  },
+            .alt = GPIO_AF7_USART2,
+        },
+        // Port C
+        {
+            .id1 = { .bank = GPIOC, .pin = 4  },
+            .id2 = { .bank = GPIOA, .pin = 7  },
+            .uart_buf = { .bank = GPIOC, .pin = 8  },
+            .uart_tx = { .bank = GPIOC, .pin = 10 },
+            .uart_rx = { .bank = GPIOC, .pin = 11 },
+            .alt = GPIO_AF7_USART3,
+        },
+        // Port D
+        {
+            .id1 = { .bank = GPIOA, .pin = 4  },
+            .id2 = { .bank = GPIOA, .pin = 5  },
+            .uart_buf = { .bank = GPIOC, .pin = 7  },
+            .uart_tx = { .bank = GPIOB, .pin = 11 },
+            .uart_rx = { .bank = GPIOB, .pin = 10  },
+            .alt = GPIO_AF8_LPUART1,
+        },
+    },
 };
 
 // LED
@@ -226,7 +230,7 @@ void TIM2_IRQHandler(void) {
     TIM2->SR = 0;
 }
 
-// RESET
+// Reset
 
 void pbdrv_reset_stm32_power_off(void) {
     // setting PC12 low cuts the power

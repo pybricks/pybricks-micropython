@@ -39,6 +39,8 @@ enum {
     UART_ID_1,
 };
 
+// button
+
 const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON] = {
     [0] = {
         .gpio = { .bank = GPIOC, .pin = 13 },
@@ -63,6 +65,32 @@ const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t
         .gpio_dir = { .bank = GPIOA, .pin = 1},
         .invert = false,
         .counter_id = COUNTER_PORT_B,
+    },
+};
+
+// I/O ports
+
+const pbdrv_ioport_lpf2_platform_data_t pbdrv_ioport_lpf2_platform_data = {
+    .port_vcc = { .bank = GPIOB, .pin = 2 },
+    .ports = {
+        // Port C
+        {
+            .id1 = { .bank = GPIOB, .pin = 7  },
+            .id2 = { .bank = GPIOC, .pin = 15 },
+            .uart_buf = { .bank = GPIOB, .pin = 4  },
+            .uart_tx = { .bank = GPIOC, .pin = 10 },
+            .uart_rx = { .bank = GPIOC, .pin = 11 },
+            .alt = 0, // USART4
+        },
+        // Port D
+        {
+            .id1 = { .bank = GPIOB, .pin = 10 },
+            .id2 = { .bank = GPIOA, .pin = 12 },
+            .uart_buf = { .bank = GPIOB, .pin = 0  },
+            .uart_tx = { .bank = GPIOC, .pin = 4  },
+            .uart_rx = { .bank = GPIOC, .pin = 5  },
+            .alt = 1, // USART3
+        },
     },
 };
 
@@ -191,26 +219,6 @@ void pbdrv_reset_stm32_power_off(void) {
     // setting PB11 low cuts the power
     GPIOB->BRR = GPIO_BRR_BR_11;
 }
-
-// Port C - USART4
-const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_0 = {
-    .id1 = { .bank = GPIOB, .pin = 7  },
-    .id2 = { .bank = GPIOC, .pin = 15 },
-    .uart_buf = { .bank = GPIOB, .pin = 4  },
-    .uart_tx = { .bank = GPIOC, .pin = 10 },
-    .uart_rx = { .bank = GPIOC, .pin = 11 },
-    .alt = 0,
-};
-
-// Port D - USART3
-const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_1 = {
-    .id1 = { .bank = GPIOB, .pin = 10 },
-    .id2 = { .bank = GPIOA, .pin = 12 },
-    .uart_buf = { .bank = GPIOB, .pin = 0  },
-    .uart_tx = { .bank = GPIOC, .pin = 4  },
-    .uart_rx = { .bank = GPIOC, .pin = 5  },
-    .alt = 1,
-};
 
 // UART
 

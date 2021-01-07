@@ -40,7 +40,7 @@ typedef struct _dcm_data_t {
 
 typedef struct {
     pbio_iodev_t *iodev;
-    const pbdrv_ioport_lpf2_platform_port_t *pins;
+    const pbdrv_ioport_lpf2_port_platform_data_t *pdata;
     dcm_data_t dcm;
     struct pt pt;
     pbio_iodev_type_id_t connected_type_id;
@@ -209,60 +209,32 @@ static const pbio_iodev_type_id_t ioport_type_id_lookup[3][3] = {
 
 PROCESS(pbdrv_ioport_lpf2_process, "I/O port");
 
-static ioport_dev_t ioport_devs[PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS] = {
-    #if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 0
-    [0] = {
-        .pins = &pbdrv_ioport_lpf2_platform_port_0,
-    },
-    #endif
-    #if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 1
-    [1] = {
-        .pins = &pbdrv_ioport_lpf2_platform_port_1,
-    },
-    #endif
-    #if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 2
-    [2] = {
-        .pins = &pbdrv_ioport_lpf2_platform_port_2,
-    },
-    #endif
-    #if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 3
-    [3] = {
-        .pins = &pbdrv_ioport_lpf2_platform_port_3,
-    },
-    #endif
-    #if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 4
-    [4] = {
-        .pins = &pbdrv_ioport_lpf2_platform_port_4,
-    },
-    #endif
-    #if PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS > 5
-    [5] = {
-        .pins = &pbdrv_ioport_lpf2_platform_port_5,
-    },
-    #endif
-};
+static ioport_dev_t ioport_devs[PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS];
 
 static void ioport_enable_uart(ioport_dev_t *ioport) {
-    const pbdrv_ioport_lpf2_platform_port_t *pins = ioport->pins;
+    const pbdrv_ioport_lpf2_port_platform_data_t *pdata = ioport->pdata;
 
-    pbdrv_gpio_alt(&pins->uart_rx, pins->alt);
-    pbdrv_gpio_alt(&pins->uart_tx, pins->alt);
-    pbdrv_gpio_out_low(&pins->uart_buf);
+    pbdrv_gpio_alt(&pdata->uart_rx, pdata->alt);
+    pbdrv_gpio_alt(&pdata->uart_tx, pdata->alt);
+    pbdrv_gpio_out_low(&pdata->uart_buf);
 }
 
 static const pbio_iodev_ops_t basic_dev_ops = {
 };
 
 static void init_one(uint8_t ioport) {
-    const pbdrv_ioport_lpf2_platform_port_t *pins = ioport_devs[ioport].pins;
+    const pbdrv_ioport_lpf2_port_platform_data_t *pdata =
+        &pbdrv_ioport_lpf2_platform_data.ports[ioport];
+
+    ioport_devs[ioport].pdata = pdata;
 
     PT_INIT(&ioport_devs[ioport].pt);
 
-    pbdrv_gpio_input(&pins->id1);
-    pbdrv_gpio_input(&pins->id2);
-    pbdrv_gpio_input(&pins->uart_buf);
-    pbdrv_gpio_input(&pins->uart_tx);
-    pbdrv_gpio_input(&pins->uart_rx);
+    pbdrv_gpio_input(&pdata->id1);
+    pbdrv_gpio_input(&pdata->id2);
+    pbdrv_gpio_input(&pdata->uart_buf);
+    pbdrv_gpio_input(&pdata->uart_tx);
+    pbdrv_gpio_input(&pdata->uart_rx);
 
     basic_devs[ioport].port = PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT + ioport;
     basic_devs[ioport].ops = &basic_dev_ops;
@@ -288,7 +260,7 @@ pbio_error_t pbdrv_ioport_get_iodev(pbio_port_t port, pbio_iodev_t **iodev) {
 static PT_THREAD(poll_dcm(ioport_dev_t * ioport)) {
     struct pt *pt = &ioport->pt;
     dcm_data_t *data = &ioport->dcm;
-    const pbdrv_ioport_lpf2_platform_port_t pins = *ioport->pins;
+    const pbdrv_ioport_lpf2_port_platform_data_t pdata = *ioport->pdata;
 
     PT_BEGIN(pt);
 
@@ -296,24 +268,24 @@ static PT_THREAD(poll_dcm(ioport_dev_t * ioport)) {
     data->dev_id1_group = DEV_ID1_GROUP_OPEN;
 
     // set ID1 high
-    pbdrv_gpio_out_high(&pins.uart_tx);
-    pbdrv_gpio_out_low(&pins.uart_buf);
+    pbdrv_gpio_out_high(&pdata.uart_tx);
+    pbdrv_gpio_out_low(&pdata.uart_buf);
 
     // set ID2 as input
-    pbdrv_gpio_input(&pins.id2);
+    pbdrv_gpio_input(&pdata.id2);
 
     PT_YIELD(pt);
 
     // save current ID2 value
-    data->prev_gpio_value = pbdrv_gpio_input(&pins.id2);
+    data->prev_gpio_value = pbdrv_gpio_input(&pdata.id2);
 
     // set ID1 low
-    pbdrv_gpio_out_low(&pins.uart_tx);
+    pbdrv_gpio_out_low(&pdata.uart_tx);
 
     PT_YIELD(pt);
 
     // read ID2
-    data->gpio_value = pbdrv_gpio_input(&pins.id2);
+    data->gpio_value = pbdrv_gpio_input(&pdata.id2);
 
     // if ID2 changed from high to low
     if (data->prev_gpio_value == 1 && data->gpio_value == 0) {
@@ -321,29 +293,29 @@ static PT_THREAD(poll_dcm(ioport_dev_t * ioport)) {
         data->type_id = PBIO_IODEV_TYPE_ID_LPF2_TOUCH;
 
         // set ID1 as input
-        pbdrv_gpio_out_high(&pins.uart_buf);
-        pbdrv_gpio_input(&pins.uart_tx);
+        pbdrv_gpio_out_high(&pdata.uart_buf);
+        pbdrv_gpio_input(&pdata.uart_tx);
 
         PT_YIELD(pt);
 
         // ID1 is inverse of touch sensor value
         // TODO: save this value to sensor data
-        // sensor_data = !pbdrv_gpio_input(&pins.id1);
+        // sensor_data = !pbdrv_gpio_input(&pdata.id1);
     }
     // if ID2 changed from low to high
     else if (data->prev_gpio_value == 0 && data->gpio_value == 1) {
         data->type_id = PBIO_IODEV_TYPE_ID_LPF2_TPOINT;
     } else {
         // read ID1
-        data->prev_gpio_value = pbdrv_gpio_input(&pins.id1);
+        data->prev_gpio_value = pbdrv_gpio_input(&pdata.id1);
 
         // set ID1 high
-        pbdrv_gpio_out_high(&pins.uart_tx);
+        pbdrv_gpio_out_high(&pdata.uart_tx);
 
         PT_YIELD(pt);
 
         // read ID1
-        data->gpio_value = pbdrv_gpio_input(&pins.id1);
+        data->gpio_value = pbdrv_gpio_input(&pdata.id1);
 
         // if ID1 did not change and is high
         if (data->prev_gpio_value == 1 && data->gpio_value == 1) {
@@ -356,13 +328,13 @@ static PT_THREAD(poll_dcm(ioport_dev_t * ioport)) {
             data->dev_id1_group = DEV_ID1_GROUP_GND;
         } else {
             // set ID1 as input
-            pbdrv_gpio_out_high(&pins.uart_buf);
-            pbdrv_gpio_input(&pins.uart_tx);
+            pbdrv_gpio_out_high(&pdata.uart_buf);
+            pbdrv_gpio_input(&pdata.uart_tx);
 
             PT_YIELD(pt);
 
             // read ID1
-            if (pbdrv_gpio_input(&pins.id1) == 1) {
+            if (pbdrv_gpio_input(&pdata.id1) == 1) {
                 // we have ID1 == open
                 data->dev_id1_group = DEV_ID1_GROUP_OPEN;
             } else {
@@ -374,24 +346,24 @@ static PT_THREAD(poll_dcm(ioport_dev_t * ioport)) {
         PT_YIELD(pt);
 
         // set ID1 as input
-        pbdrv_gpio_out_high(&pins.uart_buf);
-        pbdrv_gpio_input(&pins.uart_tx);
+        pbdrv_gpio_out_high(&pdata.uart_buf);
+        pbdrv_gpio_input(&pdata.uart_tx);
 
         // set ID2 high
-        pbdrv_gpio_out_high(&pins.id2);
+        pbdrv_gpio_out_high(&pdata.id2);
 
         PT_YIELD(pt);
 
         // read ID1
-        data->prev_gpio_value = pbdrv_gpio_input(&pins.id1);
+        data->prev_gpio_value = pbdrv_gpio_input(&pdata.id1);
 
         // set ID2 low
-        pbdrv_gpio_out_low(&pins.id2);
+        pbdrv_gpio_out_low(&pdata.id2);
 
         PT_YIELD(pt);
 
         // read ID1
-        data->gpio_value = pbdrv_gpio_input(&pins.id1);
+        data->gpio_value = pbdrv_gpio_input(&pdata.id1);
 
         // if ID1 changed from high to low
         if (data->prev_gpio_value == 1 && data->gpio_value == 0) {
@@ -407,23 +379,23 @@ static PT_THREAD(poll_dcm(ioport_dev_t * ioport)) {
             data->type_id = PBIO_IODEV_TYPE_ID_LPF2_EXPLOD;
         } else {
             // set ID1 high
-            pbdrv_gpio_out_high(&pins.uart_tx);
-            pbdrv_gpio_out_low(&pins.uart_buf);
+            pbdrv_gpio_out_high(&pdata.uart_tx);
+            pbdrv_gpio_out_low(&pdata.uart_buf);
 
             // set ID2 high
-            pbdrv_gpio_out_high(&pins.id2);
+            pbdrv_gpio_out_high(&pdata.id2);
 
             PT_YIELD(pt);
 
             // if ID2 is high
-            if (pbdrv_gpio_input(&pins.uart_rx) == 1) {
+            if (pbdrv_gpio_input(&pdata.uart_rx) == 1) {
                 // set ID2 low
-                pbdrv_gpio_out_low(&pins.id2);
+                pbdrv_gpio_out_low(&pdata.id2);
 
                 PT_YIELD(pt);
 
                 // if ID2 is low
-                if (pbdrv_gpio_input(&pins.uart_rx) == 0) {
+                if (pbdrv_gpio_input(&pdata.uart_rx) == 0) {
                     if (data->dev_id1_group < 3) {
                         data->type_id = ioport_type_id_lookup[data->dev_id1_group][2];
                     }
@@ -446,11 +418,11 @@ static PT_THREAD(poll_dcm(ioport_dev_t * ioport)) {
     PT_YIELD(pt);
 
     // set ID2 as input
-    pbdrv_gpio_input(&pins.id2);
+    pbdrv_gpio_input(&pdata.id2);
 
     // set ID1 high
-    pbdrv_gpio_out_high(&pins.uart_tx);
-    pbdrv_gpio_out_low(&pins.uart_buf);
+    pbdrv_gpio_out_high(&pdata.uart_tx);
+    pbdrv_gpio_out_low(&pdata.uart_buf);
 
     if (data->type_id == data->prev_type_id) {
         if (++data->dev_id_match_count >= 20) {

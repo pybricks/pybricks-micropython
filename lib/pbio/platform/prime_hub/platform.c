@@ -120,6 +120,59 @@ void USART2_IRQHandler(void) {
     pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_uart_irq();
 }
 
+// I/O ports
+
+const pbdrv_ioport_lpf2_platform_data_t pbdrv_ioport_lpf2_platform_data = {
+    .port_vcc = { .bank = GPIOA, .pin = 14 },
+    .ports = {
+        // Port A
+        {
+            .id1 = { .bank = GPIOD, .pin = 7  },
+            .id2 = { .bank = GPIOD, .pin = 8  },
+            .uart_buf = { .bank = GPIOA, .pin = 10 },
+            .uart_tx = { .bank = GPIOE, .pin = 8  },
+            .uart_rx = { .bank = GPIOE, .pin = 7  },
+            .alt = GPIO_AF8_UART7,
+        },
+        // Port B
+        {
+            .id1 = { .bank = GPIOD, .pin = 11 },
+            .id2 = { .bank = GPIOE, .pin = 4  },
+            .uart_buf = { .bank = GPIOE, .pin = 5  },
+            .uart_tx = { .bank = GPIOE, .pin = 1  },
+            .uart_rx = { .bank = GPIOE, .pin = 0  },
+            .alt = GPIO_AF8_UART4,
+        },
+        // Port D
+        {
+            .id1 = { .bank = GPIOC, .pin = 15 },
+            .id2 = { .bank = GPIOC, .pin = 14 },
+            .uart_buf = { .bank = GPIOB, .pin = 2  },
+            .uart_tx = { .bank = GPIOC, .pin = 12 },
+            .uart_rx = { .bank = GPIOD, .pin = 2  },
+            .alt = GPIO_AF8_UART5,
+        },
+        // Port E
+        {
+            .id1 = { .bank = GPIOC, .pin = 13 },
+            .id2 = { .bank = GPIOE, .pin = 12 },
+            .uart_buf = { .bank = GPIOB, .pin = 5  },
+            .uart_tx = { .bank = GPIOE, .pin = 3  },
+            .uart_rx = { .bank = GPIOE, .pin = 2  },
+            .alt = GPIO_AF11_UART10,
+        },
+        // Port F
+        {
+            .id1 = { .bank = GPIOC, .pin = 11 },
+            .id2 = { .bank = GPIOE, .pin = 6  },
+            .uart_buf = { .bank = GPIOC, .pin = 5  },
+            .uart_tx = { .bank = GPIOD, .pin = 15 },
+            .uart_rx = { .bank = GPIOD, .pin = 14 },
+            .alt = GPIO_AF11_UART9,
+        },
+    },
+};
+
 // LED
 
 const pbdrv_led_dual_platform_data_t pbdrv_led_dual_platform_data[PBDRV_CONFIG_LED_DUAL_NUM_DEV] = {
@@ -306,14 +359,14 @@ const pbdrv_pwm_tlc5955_stm32_platform_data_t
     },
 };
 
-// RESET
+// Reset
 
 void pbdrv_reset_stm32_power_off(void) {
     // setting PA13 low cuts the power
     GPIOA->BSRR = GPIO_BSRR_BR_13;
 }
 
-// SOUND
+// Sound
 
 const pbdrv_sound_stm32_hal_dac_platform_data_t pbdrv_sound_stm32_hal_dac_platform_data = {
     .enable_gpio_bank = GPIOC,
@@ -342,66 +395,6 @@ void DMA1_Stream5_IRQHandler(void) {
 }
 
 // UART
-
-// Port A - UART7
-const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_0 = {
-    .id1 = { .bank = GPIOD, .pin = 7  },
-    .id2 = { .bank = GPIOD, .pin = 8  },
-    .uart_buf = { .bank = GPIOA, .pin = 10 },
-    .uart_tx = { .bank = GPIOE, .pin = 8  },
-    .uart_rx = { .bank = GPIOE, .pin = 7  },
-    .alt = 8,
-};
-
-// Port B - UART4
-const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_1 = {
-    .id1 = { .bank = GPIOD, .pin = 9  },
-    .id2 = { .bank = GPIOD, .pin = 10 },
-    .uart_buf = { .bank = GPIOA, .pin = 8  },
-    .uart_tx = { .bank = GPIOD, .pin = 1  },
-    .uart_rx = { .bank = GPIOD, .pin = 0  },
-    .alt = 11,
-};
-
-// Port C - UART8
-const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_2 = {
-    .id1 = { .bank = GPIOD, .pin = 11 },
-    .id2 = { .bank = GPIOE, .pin = 4  },
-    .uart_buf = { .bank = GPIOE, .pin = 5  },
-    .uart_tx = { .bank = GPIOE, .pin = 1  },
-    .uart_rx = { .bank = GPIOE, .pin = 0  },
-    .alt = 8,
-};
-
-// Port D - UART5
-const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_3 = {
-    .id1 = { .bank = GPIOC, .pin = 15 },
-    .id2 = { .bank = GPIOC, .pin = 14 },
-    .uart_buf = { .bank = GPIOB, .pin = 2  },
-    .uart_tx = { .bank = GPIOC, .pin = 12 },
-    .uart_rx = { .bank = GPIOD, .pin = 2  },
-    .alt = 8,
-};
-
-// Port E - UART10
-const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_4 = {
-    .id1 = { .bank = GPIOC, .pin = 13 },
-    .id2 = { .bank = GPIOE, .pin = 12 },
-    .uart_buf = { .bank = GPIOB, .pin = 5  },
-    .uart_tx = { .bank = GPIOE, .pin = 3  },
-    .uart_rx = { .bank = GPIOE, .pin = 2  },
-    .alt = 11,
-};
-
-// Port F - UART9
-const pbdrv_ioport_lpf2_platform_port_t pbdrv_ioport_lpf2_platform_port_5 = {
-    .id1 = { .bank = GPIOC, .pin = 11 },
-    .id2 = { .bank = GPIOE, .pin = 6  },
-    .uart_buf = { .bank = GPIOC, .pin = 5  },
-    .uart_tx = { .bank = GPIOD, .pin = 15 },
-    .uart_rx = { .bank = GPIOD, .pin = 14 },
-    .alt = 11,
-};
 
 const pbdrv_uart_stm32f4_ll_irq_platform_data_t
     pbdrv_uart_stm32f4_ll_irq_platform_data[PBDRV_CONFIG_UART_STM32F4_LL_IRQ_NUM_UART] = {
