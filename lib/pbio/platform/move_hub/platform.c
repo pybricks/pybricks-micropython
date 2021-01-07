@@ -287,30 +287,4 @@ void SystemInit(void) {
     // Keep main power on (PB11)
     GPIOB->BSRR = GPIO_BSRR_BS_11;
     GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
-
-    // Unused pins
-
-    // PF0 output, high
-    GPIOF->BSRR = GPIO_BSRR_BS_0;
-    GPIOF->MODER = (GPIOF->MODER & ~GPIO_MODER_MODER0_Msk) | (1 << GPIO_MODER_MODER0_Pos);
-
-    // PA15 output, high
-    GPIOA->BSRR = GPIO_BSRR_BS_15;
-    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER15_Msk) | (1 << GPIO_MODER_MODER15_Pos);
-
-    // PB5 output, high
-    GPIOB->BSRR = GPIO_BSRR_BS_5;
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER5_Msk) | (1 << GPIO_MODER_MODER5_Pos);
-
-    // PC12 output, high
-    GPIOC->BSRR = GPIO_BSRR_BS_12;
-    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER12_Msk) | (1 << GPIO_MODER_MODER12_Pos);
-
-    // PD2 output, high
-    GPIOD->BSRR = GPIO_BSRR_BS_2;
-    GPIOD->MODER = (GPIOD->MODER & ~GPIO_MODER_MODER2_Msk) | (1 << GPIO_MODER_MODER2_Pos);
-
-    // PF1 output, high
-    GPIOF->BSRR = GPIO_BSRR_BS_1;
-    GPIOF->MODER = (GPIOF->MODER & ~GPIO_MODER_MODER1_Msk) | (1 << GPIO_MODER_MODER1_Pos);
 }
