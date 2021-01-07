@@ -200,14 +200,22 @@ extern uint32_t _fw_isr_vector_dst[48];
 // this function is a mash up of ports/stm32/system_stm32f0.c from MicroPython
 // and the official LEGO firmware
 void SystemInit(void) {
+    // since the firmware starts at 0x08005000, we need to relocate the
+    // interrupt vector table to a place where the CPU knows about it.
+    // The space at the start of SRAM is reserved in via the linker script.
+    memcpy(_fw_isr_vector_dst, _fw_isr_vector_src, sizeof(_fw_isr_vector_dst));
+
+    // this maps SRAM to 0x00000000
+    SYSCFG->CFGR1 = (SYSCFG->CFGR1 & ~SYSCFG_CFGR1_MEM_MODE_Msk) | (3 << SYSCFG_CFGR1_MEM_MODE_Pos);
+
+    // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
+    SCB->CCR |= SCB_CCR_STKALIGN_Msk;
+
     // normally, the system clock would be setup here, but it is already
     // configured by the bootloader, so no need to do it again.
 
     // SysTick set for 1ms ticks
     SysTick_Config(PBDRV_CONFIG_SYS_CLOCK_RATE / 1000);
-
-    // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
-    SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 
     // Enable all of the hardware modules we are using
     RCC->AHBENR |= RCC_AHBENR_DMAEN | RCC_AHBENR_GPIOAEN | RCC_AHBENR_GPIOBEN
@@ -224,7 +232,7 @@ void SystemInit(void) {
     GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER2_Msk) | (1 << GPIO_MODER_MODER2_Pos);
     GPIOB->BSRR = GPIO_BSRR_BS_2;
 
-    // not sure what the rest of these pins do
+    // Unused pins
 
     // PA5 output, low
     GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER5_Msk) | (1 << GPIO_MODER_MODER5_Pos);
@@ -265,12 +273,4 @@ void SystemInit(void) {
     // PF1 output, low
     GPIOF->MODER = (GPIOF->MODER & ~GPIO_MODER_MODER1_Msk) | (1 << GPIO_MODER_MODER1_Pos);
     GPIOF->BSRR = GPIO_BSRR_BR_1;
-
-    // since the firmware starts at 0x08005000, we need to relocate the
-    // interrupt vector table to a place where the CPU knows about it.
-    // The space at the start of SRAM is reserved in via the linker script.
-    memcpy(_fw_isr_vector_dst, _fw_isr_vector_src, sizeof(_fw_isr_vector_dst));
-
-    // this maps SRAM to 0x00000000
-    SYSCFG->CFGR1 = (SYSCFG->CFGR1 & ~SYSCFG_CFGR1_MEM_MODE_Msk) | (3 << SYSCFG_CFGR1_MEM_MODE_Pos);
 }

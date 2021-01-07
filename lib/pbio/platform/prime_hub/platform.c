@@ -696,14 +696,19 @@ extern uint32_t *_fw_isr_vector_src;
 
 // Called from assembly code in startup.s
 void SystemInit(void) {
+    // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
+    SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 
-    RCC_OscInitTypeDef osc_init;
-    RCC_ClkInitTypeDef clk_init;
+    // since the firmware starts at 0x08008000, we need to set the vector table offset
+    SCB->VTOR = (uint32_t)&_fw_isr_vector_src;
+
+    // bootloader disables interrupts
+    __enable_irq();
 
     // Using external 16Mhz oscillator
+    RCC_OscInitTypeDef osc_init = { 0 };
     osc_init.OscillatorType = RCC_OSCILLATORTYPE_HSE;
     osc_init.HSEState = RCC_HSE_ON;
-    osc_init.HSIState = RCC_HSI_OFF;
     osc_init.PLL.PLLState = RCC_PLL_ON;
     osc_init.PLL.PLLSource = RCC_PLLSOURCE_HSE;
     osc_init.PLL.PLLM = 8; // VCO_IN 2MHz (16MHz / 8)
@@ -713,6 +718,7 @@ void SystemInit(void) {
 
     HAL_RCC_OscConfig(&osc_init);
 
+    RCC_ClkInitTypeDef clk_init = { 0 };
     clk_init.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     clk_init.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
     clk_init.AHBCLKDivider = RCC_SYSCLK_DIV1;  // HCLK 96MHz
@@ -720,15 +726,6 @@ void SystemInit(void) {
     clk_init.APB2CLKDivider = RCC_HCLK_DIV1; // 96MHz
 
     HAL_RCC_ClockConfig(&clk_init, FLASH_LATENCY_5);
-
-    // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
-    SCB->CCR |= SCB_CCR_STKALIGN_Msk;
-
-    // since the firmware starts at 0x08008000, we need to set the vector table offset
-    SCB->VTOR = (uint32_t)&_fw_isr_vector_src;
-
-    // bootloader disables interrupts
-    __enable_irq();
 
     // If we are running dual boot, jump to other firmware if no buttons are pressed
     pbio_platform_dual_boot();

@@ -265,10 +265,16 @@ const uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 
 const uint8_t APBPrescTable[8] = {0, 0, 0, 0, 1, 2, 3, 4};
 
 void SystemInit(void) {
-    RCC_OscInitTypeDef osc_init;
-    RCC_ClkInitTypeDef clk_init;
+
+    #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
+    SCB->CPACR |= ((3UL << 10 * 2) | (3UL << 11 * 2));  /* set CP10 and CP11 Full Access */
+    #endif
+
+    // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
+    SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 
     // Using internal 16Mhz oscillator
+    RCC_OscInitTypeDef osc_init;
     osc_init.OscillatorType = RCC_OSCILLATORTYPE_HSE;
     osc_init.HSEState = RCC_HSE_ON;
     osc_init.HSIState = RCC_HSI_OFF;
@@ -281,6 +287,7 @@ void SystemInit(void) {
 
     HAL_RCC_OscConfig(&osc_init);
 
+    RCC_ClkInitTypeDef clk_init;
     clk_init.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     clk_init.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
     clk_init.AHBCLKDivider = RCC_SYSCLK_DIV1;  // HCLK 48MHz (max 180MHz)
@@ -288,13 +295,6 @@ void SystemInit(void) {
     clk_init.APB2CLKDivider = RCC_HCLK_DIV1; // 48MHz (max 90MHz)
 
     HAL_RCC_ClockConfig(&clk_init, FLASH_LATENCY_5);
-
-    #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
-    SCB->CPACR |= ((3UL << 10 * 2) | (3UL << 11 * 2));  /* set CP10 and CP11 Full Access */
-    #endif
-
-    // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
-    SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 
     // enable all of the hardware modules we are using
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN |

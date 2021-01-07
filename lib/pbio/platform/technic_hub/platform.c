@@ -449,15 +449,18 @@ extern uint32_t *_fw_isr_vector_src;
 
 // Called from assembly code in startup.s
 void SystemInit(void) {
-    RCC_OscInitTypeDef osc_init = { 0 };
-    RCC_ClkInitTypeDef clk_init = { 0 };
-    GPIO_InitTypeDef gpio_init = { 0 };
-
     #if (__FPU_PRESENT == 1) && (__FPU_USED == 1)
     SCB->CPACR |= ((3UL << 10 * 2) | (3UL << 11 * 2));  /* set CP10 and CP11 Full Access */
     #endif
 
+    // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
+    SCB->CCR |= SCB_CCR_STKALIGN_Msk;
+
+    // since the firmware starts at 0x08008000, we need to set the vector table offset
+    SCB->VTOR = (uint32_t)&_fw_isr_vector_src;
+
     // Using external 16Mhz oscillator
+    RCC_OscInitTypeDef osc_init = { 0 };
     osc_init.OscillatorType = RCC_OSCILLATORTYPE_MSI;
     osc_init.MSIState = RCC_MSI_ON;
     osc_init.MSICalibrationValue = RCC_MSICALIBRATION_DEFAULT;
@@ -472,6 +475,7 @@ void SystemInit(void) {
 
     HAL_RCC_OscConfig(&osc_init);
 
+    RCC_ClkInitTypeDef clk_init = { 0 };
     clk_init.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     clk_init.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
     clk_init.AHBCLKDivider = RCC_SYSCLK_DIV1;  // HCLK 80MHz
@@ -480,9 +484,6 @@ void SystemInit(void) {
     clk_init.APB2CLKDivider = RCC_HCLK_DIV1; // PCLK2 80Mhz
 
     HAL_RCC_ClockConfig(&clk_init, FLASH_LATENCY_4);
-
-    // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
-    SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 
     // enable clocks
     RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN | RCC_AHB1ENR_DMA2EN | RCC_AHB1ENR_FLASHEN |
@@ -495,8 +496,8 @@ void SystemInit(void) {
     RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN | RCC_APB2ENR_TIM1EN | RCC_APB2ENR_SPI1EN |
         RCC_APB2ENR_USART1EN | RCC_APB2ENR_TIM15EN | RCC_APB2ENR_TIM16EN;
 
-
     // Keep main power on (PC12)
+    GPIO_InitTypeDef gpio_init = { 0 };
     gpio_init.Pin = GPIO_PIN_12;
     gpio_init.Mode = GPIO_MODE_OUTPUT_PP;
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
@@ -505,7 +506,4 @@ void SystemInit(void) {
     // Turn VCC_PORT on (PB12)
     HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
     HAL_GPIO_Init(GPIOB, &gpio_init);
-
-    // since the firmware starts at 0x08008000, we need to set the vector table offset
-    SCB->VTOR = (uint32_t)&_fw_isr_vector_src;
 }
