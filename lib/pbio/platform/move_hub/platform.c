@@ -284,13 +284,9 @@ void SystemInit(void) {
     RCC->APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN | RCC_APB2ENR_TIM1EN
         | RCC_APB2ENR_TIM15EN | RCC_APB2ENR_TIM16EN;
 
-    // Keep BOOST alive
+    // Keep main power on (PB11)
     GPIOB->BSRR = GPIO_BSRR_BS_11;
     GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
-
-    // PB2 controls I/O port VCC
-    GPIOB->BSRR = GPIO_BSRR_BS_2;
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER2_Msk) | (1 << GPIO_MODER_MODER2_Pos);
 
     // Unused pins
 

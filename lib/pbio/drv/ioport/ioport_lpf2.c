@@ -444,6 +444,20 @@ static PT_THREAD(poll_dcm(ioport_dev_t * ioport)) {
 PROCESS_THREAD(pbdrv_ioport_lpf2_process, ev, data) {
     static struct etimer timer;
 
+    PROCESS_EXITHANDLER({
+        // make sure all pins are set to input so they aren't supplying power
+        // to the I/O device.
+        for (int i = 0; i < PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS; i++) {
+            init_one(i);
+        }
+
+        // TODO: we need to ensure H-bridge power is off here to avoid potentially
+        // damaging custom I/O devices.
+
+        // Turn off power on pin 4 on all ports
+        pbdrv_gpio_out_low(&pbdrv_ioport_lpf2_platform_data.port_vcc);
+    });
+
     PROCESS_BEGIN();
 
     etimer_set(&timer, clock_from_msec(2));
@@ -452,7 +466,10 @@ PROCESS_THREAD(pbdrv_ioport_lpf2_process, ev, data) {
         init_one(i);
     }
 
-    while (true) {
+    // Turn on power on pin 4 on all ports
+    pbdrv_gpio_out_high(&pbdrv_ioport_lpf2_platform_data.port_vcc);
+
+    for (;;) {
         PROCESS_WAIT_EVENT();
 
         // If pbio_uartdev_process tells us the uart device was removed, reset

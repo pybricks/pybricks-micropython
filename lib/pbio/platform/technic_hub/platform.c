@@ -506,8 +506,4 @@ void SystemInit(void) {
     gpio_init.Mode = GPIO_MODE_OUTPUT_PP;
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
     HAL_GPIO_Init(GPIOC, &gpio_init);
-
-    // Turn VCC_PORT on (PB12)
-    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
-    HAL_GPIO_Init(GPIOB, &gpio_init);
 }

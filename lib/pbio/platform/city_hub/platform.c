@@ -232,13 +232,9 @@ void SystemInit(void) {
         | RCC_APB1ENR_USART4EN;
     RCC->APB2ENR |= RCC_APB2ENR_SYSCFGCOMPEN | RCC_APB2ENR_TIM16EN | RCC_APB2ENR_TIM15EN;
 
-    // Keep main power on
+    // Keep main power on (PB11)
     GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
     GPIOB->BSRR = GPIO_BSRR_BS_11;
-
-    // Turn on port VCC
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER2_Msk) | (1 << GPIO_MODER_MODER2_Pos);
-    GPIOB->BSRR = GPIO_BSRR_BS_2;
 
     // Unused pins
 

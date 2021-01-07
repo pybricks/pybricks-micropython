@@ -51,7 +51,7 @@ static bool check_for_long_press(void) {
     __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_GPIOC_CLK_ENABLE();
 
-    // Keep main power on (PA13 == POWER_EN)
+    // Keep main power on (PA13)
     GPIOA->BSRR = GPIO_BSRR_BS_13;
     GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER13_Msk) | (1 << GPIO_MODER_MODER13_Pos);
 
