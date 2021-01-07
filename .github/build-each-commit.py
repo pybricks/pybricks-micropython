@@ -11,7 +11,7 @@ from azure.cosmosdb.table.tableservice import TableService
 
 STORAGE_ACCOUNT = os.environ["STORAGE_ACCOUNT"]
 STORAGE_KEY = os.environ["STORAGE_KEY"]
-TABLE_NAME = os.environ["TABLE_NAME"]
+FIRMWARE_SIZE_TABLE = os.environ["FIRMWARE_SIZE_TABLE"]
 
 PYBRICKS_PATH = os.environ.get("PYBRICKS_PATH", ".")
 
@@ -35,17 +35,17 @@ for commit in reversed(
     pybricks.git.checkout(commit.hexsha)
 
     # update only required submodules
-    pybricks.git.submodule("update", "micropython")
-    pybricks.git.submodule("update", "lib/libfixmath")
+    pybricks.git.submodule("update", "--init", "micropython")
+    pybricks.git.submodule("update", "--init", "lib/libfixmath")
     if args.hub in ["cityhub", "movehub", "technichub", "primehub"]:
         pybricks.submodule("micropython").module().git.submodule(
-            "update", "lib/stm32lib"
+            "update", "--init", "lib/stm32lib"
         )
     if args.hub == "primehub":
-        pybricks.git.submodule("update", "--checkout", "lib/btstack")
+        pybricks.git.submodule("update", "--init", "--checkout", "lib/btstack")
     if args.hub == "nxt":
         pybricks.git.submodule(
-            "update", "--checkout", "bricks/nxt/nxt-firmware-drivers"
+            "update", "--init", "--checkout", "bricks/nxt/nxt-firmware-drivers"
         )
 
     # build the firmware
@@ -64,7 +64,7 @@ for commit in reversed(
     bin_path = os.path.join(PYBRICKS_PATH, "bricks", args.hub, "build", "firmware.bin")
     size = os.path.getsize(bin_path)
     service.insert_or_merge_entity(
-        TABLE_NAME,
+        FIRMWARE_SIZE_TABLE,
         {
             "PartitionKey": "size",
             "RowKey": commit.hexsha,

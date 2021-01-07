@@ -9,13 +9,16 @@ license = "MIT"
 python = "^3.8"
 
 [tool.poetry.dev-dependencies]
+azure-cosmosdb-table = "^1.0.6"
 black = "^20.8b0"
-pyusb = "^1.0.2"
-PyGithub = "^1.51"
 flake8 = "^3.8.3"
 GitPython = "^3.1.11"
-azure-cosmosdb-table = "^1.0.6"
+gql = "^2.0.0"
+plotly = "^4.14.1"
 pycryptodomex = "^3.9.9"
+PyGithub = "^1.51"
+python-dotenv = "^0.15.0"
+pyusb = "^1.0.2"
 
 [build-system]
 requires = ["poetry>=0.12"]

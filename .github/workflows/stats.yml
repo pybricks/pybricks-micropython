@@ -1,0 +1,67 @@
+name: Stats
+
+on:
+  push:
+    branches:
+      - "master"
+env:
+  MAKEOPTS: -j2
+
+jobs:
+  stats:
+    name: Generate stats
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Check cache for cross-compiler
+        id: check-cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ runner.tool_cache }}/gcc-arm-10-2020-q4
+          key: gcc-arm-10-2020-q4
+      - name: Download cross-compiler
+        if: steps.check-cache.outputs.cache-hit != 'true'
+        uses: dlech/arm-none-eabi-gcc@master
+        with:
+          release: '10-2020-q4'
+          directory: ${{ runner.tool_cache }}/gcc-arm-10-2020-q4
+      - name: Add cross-compiler to path
+        run: echo ${{ runner.tool_cache }}/gcc-arm-10-2020-q4/bin >> $GITHUB_PATH
+      - name: Install python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      - name: Install Python packages
+        run:  python -m pip install azure-cosmosdb-table GitPython gql plotly
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          fetch-depth: 0
+      - name: Build missing commits
+        env:
+          STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
+          STORAGE_KEY: ${{ secrets.STORAGE_KEY }}
+          CI_STATUS_TABLE: ${{ secrets.CI_STATUS_TABLE }}
+          FIRMWARE_SIZE_TABLE: ${{ secrets.FIRMWARE_SIZE_TABLE }}
+        run: .github/build-missing-commits.py
+      - name: Download commit metadata
+        env:
+          STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
+          STORAGE_KEY: ${{ secrets.STORAGE_KEY }}
+          FIRMWARE_SIZE_TABLE: ${{ secrets.FIRMWARE_SIZE_TABLE }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: .github/download-commit-metadata.py
+      - name: Build web pages
+        run: .github/build-stats-web.py
+      - name: Install lftp
+        if: ${{ success() }}
+        run: sudo apt-get update && sudo apt-get install --yes lftp
+      - name: Publish
+        if: ${{ success() }}
+        shell: bash
+        env:
+          LFTP_USER: ${{ secrets.lftpUser }}
+          LFTP_PASSWORD: ${{ secrets.lftpPassword }}
+          LFTP_SITE: ${{ secrets.lftpSite }}
+        run: |
+          lftp -e "set ssl:check-hostname false; open --user $LFTP_USER --env-password $LFTP_SITE && mirror --verbose --reverse --delete --exclude=.htaccess build stats; exit"

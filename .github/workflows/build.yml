@@ -205,7 +205,7 @@ jobs:
       env:
         STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
         STORAGE_KEY: ${{ secrets.STORAGE_KEY }}
-        TABLE_NAME: ${{ secrets.TABLE_NAME }}
+        FIRMWARE_SIZE_TABLE: ${{ secrets.FIRMWARE_SIZE_TABLE }}
       run: .github/build-each-commit.py ${{ matrix.hub }} origin/master ${{ github.ref }}
     - name: Build firmware
       if: ${{ github.ref == 'refs/heads/master' }}
