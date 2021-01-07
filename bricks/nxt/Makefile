@@ -87,7 +87,15 @@ SRC_C = \
 	main.c \
 	systick.c \
 
-SRC_C += $(addprefix micropython/lib/,\
+# Extra core MicroPython files
+
+# NB: Since we are using MicroPython's build system, files in the micropython/
+# directory have the micropython/ prefix excluded. It is very important to do
+# it that way since there is special handling of certain files that will break
+# if we don't do it this way. So we need to be very careful about name clashes
+# between the top level directory and the micropython/ subdirectory.
+
+SRC_C += $(addprefix lib/,\
 	libc/string0.c \
 	mp-readline/readline.c \
 	utils/interrupt_char.c \
@@ -96,7 +104,7 @@ SRC_C += $(addprefix micropython/lib/,\
 	)
 
 SRC_S = \
-	micropython/lib/utils/gchelper_arm7tdmi.s \
+	lib/utils/gchelper_arm7tdmi.s \
 
 SRC_C_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
 	aic.c \

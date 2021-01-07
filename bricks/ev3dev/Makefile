@@ -190,8 +190,15 @@ CFLAGS_MOD += -DPB_HAVE_LIBI2C=1
 LDFLAGS_MOD += -li2c
 endif
 
-# source files
-SRC_C = $(addprefix micropython/ports/unix/,\
+# Extra core MicroPython files
+
+# NB: Since we are using MicroPython's build system, files in the micropython/
+# directory have the micropython/ prefix excluded. It is very important to do
+# it that way since there is special handling of certain files that will break
+# if we don't do it this way. So we need to be very careful about name clashes
+# between the top level directory and the micropython/ subdirectory.
+
+SRC_C = $(addprefix ports/unix/,\
 	alloc.c \
 	coverage.c \
 	gccollect.c \
@@ -209,6 +216,13 @@ SRC_C = $(addprefix micropython/ports/unix/,\
 
 SRC_C += $(SRC_MOD)
 
+LIB_SRC_C = $(addprefix lib/,\
+	$(LIB_SRC_C_EXTRA) \
+	timeutils/timeutils.c \
+	utils/gchelper_generic.c \
+	utils/pyexec.c \
+	)
+
 # Pybricks port core source files
 PYBRICKS_SRC_C += \
 	ev3dev_mphal.c \
@@ -220,13 +234,6 @@ PYBRICKS_SRC_C += \
 	pb_type_ev3dev_speaker.c \
 	pbinit.c \
 	pbsmbus.c \
-
-LIB_SRC_C = $(addprefix micropython/lib/,\
-	$(LIB_SRC_C_EXTRA) \
-	timeutils/timeutils.c \
-	utils/gchelper_generic.c \
-	utils/pyexec.c \
-	)
 
 # Pybricks drivers and modules
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\

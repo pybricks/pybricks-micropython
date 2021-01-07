@@ -160,7 +160,15 @@ SRC_C = $(addprefix bricks/stm32/,\
 	uart_core.c \
 	)
 
-SRC_C += $(addprefix micropython/lib/,\
+# Extra core MicroPython files
+
+# NB: Since we are using MicroPython's build system, files in the micropython/
+# directory have the micropython/ prefix excluded. It is very important to do
+# it that way since there is special handling of certain files that will break
+# if we don't do it this way. So we need to be very careful about name clashes
+# between the top level directory and the micropython/ subdirectory.
+
+SRC_C += $(addprefix lib/,\
 	libc/string0.c \
 	mp-readline/readline.c \
 	utils/interrupt_char.c \
@@ -172,9 +180,9 @@ SRC_S = \
 	lib/pbio/platform/$(PBIO_PLATFORM)/startup.s \
 
 ifeq ($(PB_MCU_SERIES),F0)
-	SRC_S += micropython/lib/utils/gchelper_m0.s
+	SRC_S += lib/utils/gchelper_m0.s
 else
-	SRC_S += micropython/lib/utils/gchelper_m0.s
+	SRC_S += lib/utils/gchelper_m0.s
 endif
 
 # Pybricks modules
@@ -318,7 +326,7 @@ CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
 
 COPT += -DUSE_FULL_LL_DRIVER
 
-HAL_SRC_C = $(addprefix micropython/lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
+HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_adc_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_adc.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_cortex.c \
@@ -453,7 +461,7 @@ LSM6DS3TR_C_SRC_C = lib/lsm6ds3tr_c_STdC/driver/lsm6ds3tr_c_reg.c
 
 # MicroPython math library
 
-SRC_LIBM = $(addprefix micropython/lib/libm/,\
+SRC_LIBM = $(addprefix lib/libm/,\
 	acoshf.c \
 	asinfacosf.c \
 	asinhf.c \
