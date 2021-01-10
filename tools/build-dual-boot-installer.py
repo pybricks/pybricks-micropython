@@ -357,10 +357,15 @@ def make_project_files(build_dir, project_name, script, slot):
 
     # Convert the Python script to the expected JSON format.
     blob = script.replace("\n", "\\n")
-    projectbody = '{{"program":"{0}"}}'.format(blob)
 
     # Combine all files in the project archive.
     for ext in (".llsp", ".lms"):
+
+        if ext == ".llsp":
+            projectbody = '{{"main":"{0}"}}'.format(blob)
+        else:
+            projectbody = '{{"program":"{0}"}}'.format(blob)
+
         archive = ZipFile(path.join(build_dir, project_name + ext), "w")
         archive.writestr("projectbody.json", projectbody)
         archive.writestr("manifest.json", dumps(manifest))
