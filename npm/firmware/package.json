@@ -13,7 +13,8 @@
         "directory": "npm/firmware"
     },
     "publishConfig": {
-        "registry": "https://npm.pkg.github.com"
+        "registry": "https://registry.npmjs.org",
+        "access": "public"
     },
     "author": "The Pybricks Authors",
     "license": "MIT",
