@@ -13,7 +13,8 @@
         "directory": "npm/mpy-cross"
     },
     "publishConfig": {
-        "registry": "https://npm.pkg.github.com"
+        "registry": "https://registry.npmjs.org",
+        "access": "public"
     },
     "author": "Pybricks Authors",
     "license": "MIT",
