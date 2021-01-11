@@ -1,3 +1,6 @@
+## 1.2.0 - 2021-01-11
+### Changed
+- Publish to NPM instead of GitHub.
 
 ## 1.1.0 - 2020-07-04
 ### Added
