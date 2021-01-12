@@ -152,13 +152,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_Lightmatrix_on_obj, 1, common_Lightmatr
 STATIC mp_obj_t common_Lightmatrix_off(mp_obj_t self_in) {
     common_Lightmatrix_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    uint8_t size = pbio_light_matrix_get_size(self->light_matrix);
-
-    for (uint8_t i = 0; i < size; i++) {
-        for (uint8_t j = 0; j < size; j++) {
-            pb_assert(pbio_light_matrix_set_pixel(self->light_matrix, i, j, 0));
-        }
-    }
+    pb_assert(pbio_light_matrix_clear(self->light_matrix));
 
     return mp_const_none;
 }
@@ -293,7 +287,7 @@ STATIC mp_obj_t common_Lightmatrix_text(size_t n_args, const mp_obj_t *pos_args,
 
         // Some off time so we can see multiple of the same characters
         if (off > 0 || i == text_len - 1) {
-            pb_assert(pbio_light_matrix_set_rows(self->light_matrix, pb_font_5x5[' ' - 32]));
+            pb_assert(pbio_light_matrix_clear(self->light_matrix));
             mp_hal_delay_ms(off);
         }
     }

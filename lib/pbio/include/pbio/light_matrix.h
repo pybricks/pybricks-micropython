@@ -31,6 +31,7 @@ typedef enum {
 
 uint8_t pbio_light_matrix_get_size(pbio_light_matrix_t *light_matrix);
 void pbio_light_matrix_set_orientation(pbio_light_matrix_t *light_matrix, pbio_side_t up_side);
+pbio_error_t pbio_light_matrix_clear(pbio_light_matrix_t *light_matrix);
 pbio_error_t pbio_light_matrix_set_rows(pbio_light_matrix_t *light_matrix, const uint8_t *rows);
 pbio_error_t pbio_light_matrix_set_pixel(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightness);
 pbio_error_t pbio_light_matrix_set_image(pbio_light_matrix_t *light_matrix, const uint8_t *image);
@@ -44,6 +45,10 @@ static inline uint8_t pbio_light_matrix_get_size(pbio_light_matrix_t *light_matr
 }
 
 static inline void pbio_light_matrix_set_orientation(pbio_light_matrix_t *light_matrix, pbio_side_t up_side) {
+}
+
+static inline pbio_error_t pbio_light_matrix_clear(pbio_light_matrix_t *light_matrix) {
+    return PBIO_ERROR_NOT_SUPPORTED;
 }
 
 static inline pbio_error_t pbio_light_matrix_set_rows(pbio_light_matrix_t *light_matrix, const uint8_t *rows) {

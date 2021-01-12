@@ -101,6 +101,28 @@ uint8_t pbio_light_matrix_get_size(pbio_light_matrix_t *light_matrix) {
 }
 
 /**
+ * Clears all pixels.
+ *
+ * If an animation is running in the background, it will be stopped.
+ *
+ * @param [in]  light_matrix  The light matrix instance
+ * @return                  ::PBIO_SUCCESS on success or implementation-specific
+ *                          error on failure.
+ */
+pbio_error_t pbio_light_matrix_clear(pbio_light_matrix_t *light_matrix) {
+    pbio_light_matrix_stop_animation(light_matrix);
+    for (uint8_t i = 0; i < light_matrix->size; i++) {
+        for (uint8_t j = 0; j < light_matrix->size; j++) {
+            pbio_error_t err = _pbio_light_matrix_set_pixel(light_matrix, i, j, 0);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
+        }
+    }
+    return PBIO_SUCCESS;
+}
+
+/**
  * Sets the pixels of all rows bitwise.
  *
  * Each bit in a byte sets a pixel in a row, where 1 means a pixel is on and 0
@@ -142,7 +164,8 @@ pbio_error_t pbio_light_matrix_set_rows(pbio_light_matrix_t *light_matrix, const
  * @p row 0 is the top row and @p col 0 is the left-most column of the matrix
  * according to the orientation set by pbio_light_matrix_set_orientation().
  *
- * If an animation is running in the background, it will be stopped.
+ * If an animation is running in the background, it will be stopped and the
+ * display is cleared.
  *
  * If @p row or @p col is out if range, nothing will happen (returns ::PBIO_SUCCESS).
  *
@@ -154,7 +177,10 @@ pbio_error_t pbio_light_matrix_set_rows(pbio_light_matrix_t *light_matrix, const
  *                          implementation-specific error on failure.
  */
 pbio_error_t pbio_light_matrix_set_pixel(pbio_light_matrix_t *light_matrix, uint8_t row, uint8_t col, uint8_t brightness) {
-    pbio_light_matrix_stop_animation(light_matrix);
+
+    if (pbio_light_animation_is_started(&light_matrix->animation)) {
+        pbio_light_matrix_clear(light_matrix);
+    }
     return _pbio_light_matrix_set_pixel(light_matrix, row, col, brightness);
 }
 
