@@ -12,7 +12,7 @@ This is the recommended development environment used by the Pybricks maintainers
 - [Python][python] v3.8.x
 - [Poetry][poetry] v1.x
 - [Uncrustify][uncrustify] v0.71.x
-- [GNU ARM Embedded Toolchain][arm-gcc] v10-2020-q4
+- [GNU ARM Embedded Toolchain][arm-gcc] v9-2020-q2
 - [GNU GCC][gcc] for host operating system
 - [GNU Make][make]
 
@@ -91,7 +91,7 @@ Cygwin and the [GNU ARM Embedded Toolchain][arm-gcc] need to be added to the
 rather than globally via *System Properties*. For example using PowerShell:
 
 ```powershell
-$env:PATH="C:\cygwin64\bin;C:\Program Files (x86)\GNU Arm Embedded Toolchain\10 2020-q4-major\bin;$env:PATH"
+$env:PATH="C:\cygwin64\bin;C:\Program Files (x86)\GNU Arm Embedded Toolchain\9 2020-q2-update\bin;$env:PATH"
 ```
 
 [cygwin]: https://www.cygwin.com/
