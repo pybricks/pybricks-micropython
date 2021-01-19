@@ -1,3 +1,9 @@
+## 2.0.0 - 2021-01-19
+### Added
+- `LICENSE` file.
+### Changed
+- Changed captured stdout and stderr from `string` to `string[]`.
+
 ## 1.2.0 - 2021-01-11
 ### Changed
 - Publish to NPM instead of GitHub.

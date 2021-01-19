@@ -26,7 +26,7 @@ Module['printErr'] = (err) => {
 
 Module['onExit'] = (status) => {
   const mpy = status === 0 ? FS.readFile(outputFileName, { encoding: 'binary' }) : undefined;
-  Module['callback'](status, collectedOut.join(), collectedErr.join(), mpy);
+  Module['callback'](status, mpy, collectedOut, collectedErr);
 }
 
 Module['quit'] = () => {

@@ -7,9 +7,9 @@ interface MpyCrossModule extends EmscriptenModule {
         inputFileContents: string;
         callback: (
             status: number,
-            out: string,
-            err: string,
-            mpy?: Uint8Array
+            mpy: Uint8Array | undefined,
+            out: string[],
+            err: string[],
         ) => void;
         locateFile(path: string, scriptDirectory: string): string;
     }): this;
@@ -30,11 +30,11 @@ export interface CompileResult {
     /**
      * The captured stdout.
      */
-    out: string;
+    out: string[];
     /**
      * The captured stderr.
      */
-    err: string;
+    err: string[];
 }
 
 /**
@@ -59,7 +59,7 @@ export function compile(
             MpyCross({
                 arguments: args,
                 inputFileContents: fileContents,
-                callback: (status, out, err, mpy) =>
+                callback: (status, mpy, out, err) =>
                     resolve({ status, mpy, out, err }),
                 locateFile: (path, scriptDirectory) => {
                     if (path === 'mpy-cross.wasm' && wasmPath !== undefined) {

@@ -1,6 +1,6 @@
 {
     "name": "@pybricks/mpy-cross-v5",
-    "version": "1.2.0",
+    "version": "2.0.0",
     "description": "MicroPython mpy-cross tool compiled to WebAssembly",
     "main": "./build/index.js",
     "types": "./build/index.d.ts",
@@ -16,7 +16,7 @@
         "registry": "https://registry.npmjs.org",
         "access": "public"
     },
-    "author": "Pybricks Authors",
+    "author": "The Pybricks Authors",
     "license": "MIT",
     "scripts": {
         "build": "make && tsc",
