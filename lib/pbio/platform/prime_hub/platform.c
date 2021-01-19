@@ -134,14 +134,14 @@ const pbdrv_ioport_lpf2_platform_data_t pbdrv_ioport_lpf2_platform_data = {
             .uart_rx = { .bank = GPIOE, .pin = 7  },
             .alt = GPIO_AF8_UART7,
         },
-        // Port B
+        // Port C
         {
             .id1 = { .bank = GPIOD, .pin = 11 },
             .id2 = { .bank = GPIOE, .pin = 4  },
             .uart_buf = { .bank = GPIOE, .pin = 5  },
             .uart_tx = { .bank = GPIOE, .pin = 1  },
             .uart_rx = { .bank = GPIOE, .pin = 0  },
-            .alt = GPIO_AF8_UART4,
+            .alt = GPIO_AF8_UART8,
         },
         // Port D
         {
