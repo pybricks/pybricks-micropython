@@ -92,7 +92,7 @@ STATIC mp_obj_t common_IMU_acceleration(size_t n_args, const mp_obj_t *pos_args,
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_acceleration_obj, 1, common_IMU_acceleration);
 
 // pybricks._common.IMU.gyro
-STATIC mp_obj_t common_IMU_gyro(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+STATIC mp_obj_t common_IMU_angular_velocity(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         common_IMU_obj_t, self,
         PB_ARG_DEFAULT_NONE(axis));
@@ -103,12 +103,12 @@ STATIC mp_obj_t common_IMU_gyro(size_t n_args, const mp_obj_t *pos_args, mp_map_
 
     return common_IMU_project_3d_axis(axis_in, values);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_gyro_obj, 1, common_IMU_gyro);
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_angular_velocity_obj, 1, common_IMU_angular_velocity);
 
 // dir(pybricks.common.IMU)
 STATIC const mp_rom_map_elem_t common_IMU_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_acceleration), MP_ROM_PTR(&common_IMU_acceleration_obj) },
-    { MP_ROM_QSTR(MP_QSTR_gyro),         MP_ROM_PTR(&common_IMU_gyro_obj)         },
+    { MP_ROM_QSTR(MP_QSTR_acceleration),     MP_ROM_PTR(&common_IMU_acceleration_obj)    },
+    { MP_ROM_QSTR(MP_QSTR_angular_velocity), MP_ROM_PTR(&common_IMU_angular_velocity_obj)},
 };
 STATIC MP_DEFINE_CONST_DICT(common_IMU_locals_dict, common_IMU_locals_dict_table);
 
