@@ -6,7 +6,7 @@ authors = ["The Pybricks Authors <dev@pybricks.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "~3.8"
 
 [tool.poetry.dev-dependencies]
 azure-cosmosdb-table = "^1.0.6"
@@ -15,6 +15,8 @@ flake8 = "^3.8.3"
 GitPython = "^3.1.11"
 gql = "^2.0.0"
 plotly = "^4.14.1"
+pybricks = { git = "https://github.com/pybricks/pybricks-api.git", branch = "master" }
+pybricksdev = { git = "https://github.com/pybricks/pybricksdev.git", branch = "master" }
 pycryptodomex = "^3.9.9"
 PyGithub = "^1.51"
 python-dotenv = "^0.15.0"
