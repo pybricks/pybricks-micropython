@@ -11,6 +11,7 @@
 
 #include <pybricks/common.h>
 #include <pybricks/geometry.h>
+#include <pybricks/parameters.h>
 
 #include <pybricks/util_pb/pb_imu.h>
 #include <pybricks/util_pb/pb_error.h>
@@ -76,6 +77,54 @@ STATIC void common_IMU_rotate_3d_axis(common_IMU_obj_t *self, float *values) {
     values[2] = self->hub_x[2] * v[0] + self->hub_y[2] * v[1] + self->hub_z[2] * v[2];
 }
 
+// pybricks._common.IMU.up
+STATIC mp_obj_t common_IMU_up(mp_obj_t self_in) {
+    common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    // Up is which side of a unit box intersects the +Z vector first.
+    // So read +Z vector of the inertial frame, in the body frame.
+    // For now, this is the gravity vector. In the future, we can make this
+    // slightly more accurate by using the full IMU orientation.
+    float_t values[3];
+    pb_imu_accel_read(self->imu_dev, values);
+
+    // Find index and sign of maximum component
+    float_t abs_max = 0;
+    uint8_t axis = 0;
+    bool positive = false;
+    for (uint8_t i = 0; i < 3; i++) {
+        if (values[i] > abs_max) {
+            abs_max = values[i];
+            positive = true;
+            axis = i;
+        } else if (-values[i] > abs_max) {
+            abs_max = -values[i];
+            positive = false;
+            axis = i;
+        }
+    }
+
+    // The maximum component dicates which side of a unix box gets intersected
+    // first. So, simply look at axis and sign to give the side.
+    if (axis == 0 && positive) {
+        return MP_OBJ_FROM_PTR(&pb_Side_FRONT_obj);
+    }
+    if (axis == 0 && !positive) {
+        return MP_OBJ_FROM_PTR(&pb_Side_BACK_obj);
+    }
+    if (axis == 1 && positive) {
+        return MP_OBJ_FROM_PTR(&pb_Side_LEFT_obj);
+    }
+    if (axis == 1 && !positive) {
+        return MP_OBJ_FROM_PTR(&pb_Side_RIGHT_obj);
+    }
+    if (axis == 2 && positive) {
+        return MP_OBJ_FROM_PTR(&pb_Side_TOP_obj);
+    } else {
+        return MP_OBJ_FROM_PTR(&pb_Side_BOTTOM_obj);
+    }
+}
+MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_up_obj, common_IMU_up);
 
 // pybricks._common.IMU.acceleration
 STATIC mp_obj_t common_IMU_acceleration(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
@@ -107,6 +156,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_angular_velocity_obj, 1, common_IMU
 
 // dir(pybricks.common.IMU)
 STATIC const mp_rom_map_elem_t common_IMU_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_up),               MP_ROM_PTR(&common_IMU_up_obj)              },
     { MP_ROM_QSTR(MP_QSTR_acceleration),     MP_ROM_PTR(&common_IMU_acceleration_obj)    },
     { MP_ROM_QSTR(MP_QSTR_angular_velocity), MP_ROM_PTR(&common_IMU_angular_velocity_obj)},
 };
