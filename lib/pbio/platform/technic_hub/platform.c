@@ -377,7 +377,7 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc) {
     ADC_ChannelConfTypeDef adc_ch_config = { 0 };
 
     // clocks are enabled in SystemInit
-    assert_param(__HAL_RCC_TIM2_IS_CLK_ENABLED());
+    assert_param(__HAL_RCC_TIM6_IS_CLK_ENABLED());
     assert_param(__HAL_RCC_DMA1_IS_CLK_ENABLED());
     assert_param(__HAL_RCC_ADC1_IS_CLK_ENABLED());
 
