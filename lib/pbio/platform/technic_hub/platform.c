@@ -205,12 +205,14 @@ const pbdrv_pwm_stm32_tim_platform_data_t
 // the GPIOs in the timer interrupt handler.
 void TIM2_IRQHandler(void) {
     uint32_t sr = TIM2->SR;
+    uint32_t handled = TIM_SR_UIF;
 
     // green LED
     if (TIM2->CCR1 == 0 || sr & TIM_SR_CC1IF) {
         // If channel 1 duty cycle is 0 or we have reached the CC1 count,
         // turn the GPIO off
         GPIOA->BRR = GPIO_BRR_BR11;
+        handled |= TIM_SR_CC1IF;
     } else if (sr & TIM_SR_UIF) {
         // otherwise if it is the start of the next PWM period turn the GPIO on
         GPIOA->BSRR = GPIO_BSRR_BS11;
@@ -221,13 +223,14 @@ void TIM2_IRQHandler(void) {
         // If channel 2 duty cycle is 0 or we have reached the CC2 count,
         // turn the GPIO off
         GPIOB->BRR = GPIO_BRR_BR15;
+        handled |= TIM_SR_CC2IF;
     } else if (sr & TIM_SR_UIF) {
         // otherwise if it is the start of the next PWM period turn the GPIO on
         GPIOB->BSRR = GPIO_BSRR_BS15;
     }
 
     // clear interrupts
-    TIM2->SR = 0;
+    TIM2->SR &= ~handled;
 }
 
 // Reset
