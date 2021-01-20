@@ -126,6 +126,28 @@ STATIC mp_obj_t common_IMU_up(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_up_obj, common_IMU_up);
 
+// pybricks._common.IMU.tilt
+STATIC mp_obj_t common_IMU_tilt(mp_obj_t self_in) {
+    common_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    // Read acceleration in the user frame. In the future, we can make this
+    // more accurate by using the full IMU orientation.
+    float_t accl[3];
+    pb_imu_accel_read(self->imu_dev, accl);
+    common_IMU_rotate_3d_axis(self, accl);
+
+    mp_obj_t tilt[2];
+    // Pitch
+    float pitch = atan2f(-accl[0], sqrtf(accl[2] * accl[2] + accl[1] * accl[1]));
+    tilt[0] = mp_obj_new_int_from_float(pitch * 57.296f);
+
+    // Roll
+    float roll = atan2f(accl[1], accl[2]);
+    tilt[1] = mp_obj_new_int_from_float(roll * 57.296f);
+    return mp_obj_new_tuple(2, tilt);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(common_IMU_tilt_obj, common_IMU_tilt);
+
 // pybricks._common.IMU.acceleration
 STATIC mp_obj_t common_IMU_acceleration(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -157,6 +179,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_IMU_angular_velocity_obj, 1, common_IMU
 // dir(pybricks.common.IMU)
 STATIC const mp_rom_map_elem_t common_IMU_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_up),               MP_ROM_PTR(&common_IMU_up_obj)              },
+    { MP_ROM_QSTR(MP_QSTR_tilt),             MP_ROM_PTR(&common_IMU_tilt_obj)            },
     { MP_ROM_QSTR(MP_QSTR_acceleration),     MP_ROM_PTR(&common_IMU_acceleration_obj)    },
     { MP_ROM_QSTR(MP_QSTR_angular_velocity), MP_ROM_PTR(&common_IMU_angular_velocity_obj)},
 };
