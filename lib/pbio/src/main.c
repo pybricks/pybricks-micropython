@@ -16,6 +16,7 @@
 #include <pbdrv/motor.h>
 #include <pbdrv/sound.h>
 #include <pbio/config.h>
+#include <pbdrv/ioport.h>
 #include <pbio/light_matrix.h>
 #include <pbio/light.h>
 #include "pbio/motor_process.h"
@@ -70,6 +71,9 @@ void pbio_init(void) {
 void pbio_stop_all(void) {
     #if PBIO_CONFIG_LIGHT
     pbio_light_animation_stop_all();
+    #endif
+    #if PBDRV_CONFIG_IOPORT_LPF2
+    pbio_ioport_reset_passive_devices();
     #endif
     pbio_motor_process_reset();
     pbdrv_sound_stop();

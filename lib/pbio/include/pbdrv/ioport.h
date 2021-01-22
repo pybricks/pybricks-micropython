@@ -20,11 +20,16 @@
 
 pbio_error_t pbdrv_ioport_get_iodev(pbio_port_t port, pbio_iodev_t **iodev);
 
+void pbio_ioport_reset_passive_devices(void);
+
 #else // PBDRV_CONFIG_IOPORT
 
 static inline pbio_error_t pbdrv_ioport_get_iodev(pbio_port_t port, pbio_iodev_t **iodev) {
     *iodev = NULL;
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbio_ioport_reset_passive_devices(void) {
 }
 
 #endif // PBDRV_CONFIG_IOPORT
