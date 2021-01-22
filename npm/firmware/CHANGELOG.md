@@ -1,3 +1,7 @@
+## 4.5.0 - 2021-01-22
+### Changed
+- Updated firmware to v3.0.0b1.
+
 ## 4.4.0 - 2021-01-11
 ### Changed
 - Publish to NPM instead of GitHub.
