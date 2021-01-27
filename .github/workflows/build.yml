@@ -231,7 +231,9 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.hub }}-firmware
-        path: bricks/${{ matrix.hub }}/build/*_pybricks.*
+        path: |
+          bricks/${{ matrix.hub }}/build/firmware-dual-boot-base.bin
+          bricks/${{ matrix.hub }}/build/*_pybricks.*
 
   debug:
     name: debug firmware
