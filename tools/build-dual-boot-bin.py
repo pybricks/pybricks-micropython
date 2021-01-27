@@ -20,9 +20,6 @@ FLASH_SIZE = 1024 * 1024  # 1MiB
 BIN1_BASE_OFFSET = 0x8000
 BIN2_BASE_OFFSET = 0xC0000
 
-# Size of data inserted into empty space just before second binary.
-EXTRA_SIZE = 4
-
 
 def build_blob(bin1: FileIO, bin2: FileIO, out: FileIO) -> None:
     """Combines two firmware binary blobs ``bin1`` and ``bin2`` into a single
@@ -34,7 +31,7 @@ def build_blob(bin1: FileIO, bin2: FileIO, out: FileIO) -> None:
     size = bin2_offset + bin2_size
     max_size = FLASH_SIZE - BIN1_BASE_OFFSET
 
-    if bin1_size + EXTRA_SIZE >= bin2_offset:
+    if bin1_size >= bin2_offset:
         raise ValueError(f"{bin1.name} is too big!")
     if size >= max_size:
         raise ValueError(f"{bin2.name} is too big!")
@@ -57,11 +54,6 @@ def build_blob(bin1: FileIO, bin2: FileIO, out: FileIO) -> None:
     blob[bin1_size - 4 : bin1_size] = crc32_checksum(
         BytesIO(blob[:bin1_size]), bin2_offset
     ).to_bytes(4, "little")
-
-    # Keep a copy of the original bin1_reset_handler at a known location,
-    # which is required for online firmware updates. It is placed just
-    # before the second firmware.
-    blob[bin2_offset - 4 : bin2_offset] = bin1_reset_handler
 
     # The final checksum is for the entire new blob
     # This overrides the checksum of the second firmware.
