@@ -50,11 +50,6 @@ def build_blob(bin1: FileIO, bin2: FileIO, out: FileIO) -> None:
     blob[4:8] = bin2_reset_handler
     blob[bin2_offset + 4 : bin2_offset + 8] = bin1_reset_handler
 
-    # Fix the bin1 checksum since we changed the reset vector.
-    blob[bin1_size - 4 : bin1_size] = crc32_checksum(
-        BytesIO(blob[:bin1_size]), bin2_offset
-    ).to_bytes(4, "little")
-
     # The final checksum is for the entire new blob
     # This overrides the checksum of the second firmware.
     blob[-4:] = crc32_checksum(BytesIO(blob), max_size).to_bytes(4, "little")
