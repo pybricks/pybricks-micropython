@@ -631,9 +631,15 @@ $(BUILD)/firmware.metadata.json: $(BUILD)/firmware-no-checksum.elf $(METADATA)
 	$(ECHO) "META creating firmware metadata"
 	$(Q)$(METADATA) $(FW_VERSION) $(PBIO_PLATFORM) $(MPY_CROSS_FLAGS) $<.map $@
 
+ifeq ($(PB_BUILD_DUAL_BOOT_INSTALLER),1)
 $(BUILD)/firmware.zip: $(BUILD)/firmware-base.bin $(BUILD)/firmware-dual-boot-base.bin $(BUILD)/firmware.metadata.json main.py ReadMe_OSS.txt
 	$(ECHO) "ZIP creating firmware package"
 	$(Q)$(ZIP) -j $@ $^
+else
+$(BUILD)/firmware.zip: $(BUILD)/firmware-base.bin $(BUILD)/firmware.metadata.json main.py ReadMe_OSS.txt
+	$(ECHO) "ZIP creating firmware package"
+	$(Q)$(ZIP) -j $@ $^
+endif
 
 $(BUILD)/%.dfu: $(BUILD)/%.bin
 	$(ECHO) "DFU Create $@"
