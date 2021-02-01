@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2013, 2014 Damien P. George
-# Copyright (c) 2019-2020 The Pybricks Authors
+# Copyright (c) 2019-2021 The Pybricks Authors
 
 # This file is shared by all STM32-based Pybricks ports
 # Other ports should not use this file
@@ -546,10 +546,10 @@ SRC_QSTR += $(SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
 SRC_QSTR_AUTO_DEPS +=
 
 # Main firmware build targets
-TARGETS = $(BUILD)/firmware.zip $(BUILD)/firmware.bin
+TARGETS := $(BUILD)/firmware.zip $(BUILD)/firmware.bin
 
 # Optionally build project file for use with official LEGO app
-ifeq ($(PB_BUILD_DUAL_BOOT_INSTALLER),1)
+ifeq ($(PB_DUAL_BOOT),1)
 TARGETS += $(BUILD)/install_pybricks.llsp
 endif
 
@@ -600,7 +600,7 @@ $(BUILD)/firmware-base.bin: $(BUILD)/firmware-no-checksum.elf
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
-# firmware blob with diffent starting flash memory address for dual booting
+# firmware blob with different starting flash memory address for dual booting
 $(BUILD)/firmware-dual-boot-base.elf: $(LD_FILES) $(OBJ) $(DUAL_BOOT_OBJ)
 	$(ECHO) "LINK $@"
 	$(Q)$(LD) --defsym=CHECKSUM=0 --defsym=DUAL_BOOT=1 $(LDFLAGS) -o $@ $(OBJ) $(DUAL_BOOT_OBJ) $(LIBS)
@@ -631,16 +631,22 @@ $(BUILD)/firmware.metadata.json: $(BUILD)/firmware-no-checksum.elf $(METADATA)
 	$(ECHO) "META creating firmware metadata"
 	$(Q)$(METADATA) $(FW_VERSION) $(PBIO_PLATFORM) $(MPY_CROSS_FLAGS) $<.map $@
 
-ifeq ($(PB_BUILD_DUAL_BOOT_INSTALLER),1)
-$(BUILD)/firmware.zip: $(BUILD)/firmware-base.bin $(BUILD)/firmware-dual-boot-base.bin $(BUILD)/firmware.metadata.json main.py ReadMe_OSS.txt
-	$(ECHO) "ZIP creating firmware package"
-	$(Q)$(ZIP) -j $@ $^
-else
-$(BUILD)/firmware.zip: $(BUILD)/firmware-base.bin $(BUILD)/firmware.metadata.json main.py ReadMe_OSS.txt
-	$(ECHO) "ZIP creating firmware package"
-	$(Q)$(ZIP) -j $@ $^
+# firmware.zip file
+ZIP_FILES := \
+	$(BUILD)/firmware-base.bin \
+	$(BUILD)/firmware.metadata.json \
+	main.py \
+	ReadMe_OSS.txt \
+
+ifeq ($(PB_DUAL_BOOT),1)
+ZIP_FILES += $(BUILD)/firmware-dual-boot-base.bin
 endif
 
+$(BUILD)/firmware.zip: $(ZIP_FILES)
+	$(ECHO) "ZIP creating firmware package"
+	$(Q)$(ZIP) -j $@ $^
+
+# firmware in DFU format
 $(BUILD)/%.dfu: $(BUILD)/%.bin
 	$(ECHO) "DFU Create $@"
 	$(Q)$(PYTHON) $(DFU) -b $(TEXT0_ADDR):$< $@
