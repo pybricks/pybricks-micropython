@@ -698,31 +698,6 @@ extern uint32_t *_fw_isr_vector_src;
 
 // Called from assembly code in startup.s
 void SystemInit(void) {
-
-    RCC_OscInitTypeDef osc_init;
-    RCC_ClkInitTypeDef clk_init;
-
-    // Using external 16Mhz oscillator
-    osc_init.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-    osc_init.HSEState = RCC_HSE_ON;
-    osc_init.HSIState = RCC_HSI_OFF;
-    osc_init.PLL.PLLState = RCC_PLL_ON;
-    osc_init.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-    osc_init.PLL.PLLM = 8; // VCO_IN 2MHz (16MHz / 8)
-    osc_init.PLL.PLLN = 96; // VCO_OUT 192MHz (2MHz * 96)
-    osc_init.PLL.PLLP = RCC_PLLP_DIV2; // PLLCLK 96MHz (not using max of 100 because of USB)
-    osc_init.PLL.PLLQ = 4; // 48MHz USB clock
-
-    HAL_RCC_OscConfig(&osc_init);
-
-    clk_init.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
-    clk_init.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-    clk_init.AHBCLKDivider = RCC_SYSCLK_DIV1;  // HCLK 96MHz
-    clk_init.APB1CLKDivider = RCC_HCLK_DIV2; // 48MHz
-    clk_init.APB2CLKDivider = RCC_HCLK_DIV1; // 96MHz
-
-    HAL_RCC_ClockConfig(&clk_init, FLASH_LATENCY_5);
-
     // enable 8-byte stack alignment for IRQ handlers, in accord with EABI
     SCB->CCR |= SCB_CCR_STKALIGN_Msk;
 
@@ -731,6 +706,32 @@ void SystemInit(void) {
 
     // bootloader disables interrupts
     __enable_irq();
+
+    // Using external 16Mhz oscillator
+    RCC_OscInitTypeDef osc_init;
+    osc_init.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+    osc_init.HSEState = RCC_HSE_ON;
+    osc_init.LSEState = RCC_LSE_OFF;
+    osc_init.HSIState = RCC_HSI_OFF;
+    osc_init.LSIState = RCC_LSI_OFF;
+    osc_init.PLL.PLLState = RCC_PLL_ON;
+    osc_init.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+    osc_init.PLL.PLLM = 8; // VCO_IN 2MHz (16MHz / 8)
+    osc_init.PLL.PLLN = 96; // VCO_OUT 192MHz (2MHz * 96)
+    osc_init.PLL.PLLP = RCC_PLLP_DIV2; // PLLCLK 96MHz (not using max of 100 because of USB)
+    osc_init.PLL.PLLQ = 4; // 48MHz USB clock
+    osc_init.PLL.PLLR = 2; // 96MHz system clock
+
+    HAL_RCC_OscConfig(&osc_init);
+
+    RCC_ClkInitTypeDef clk_init;
+    clk_init.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+    clk_init.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+    clk_init.AHBCLKDivider = RCC_SYSCLK_DIV1;  // HCLK 96MHz
+    clk_init.APB1CLKDivider = RCC_HCLK_DIV2; // 48MHz
+    clk_init.APB2CLKDivider = RCC_HCLK_DIV1; // 96MHz
+
+    HAL_RCC_ClockConfig(&clk_init, FLASH_LATENCY_5);
 
     // If we are running dual boot, jump to other firmware if no buttons are pressed
     pbio_platform_dual_boot();
