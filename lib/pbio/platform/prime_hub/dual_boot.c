@@ -17,29 +17,23 @@ extern uint32_t _fw_isr_vector_src[];
  * When this firmware is built as dual-boot, this will jump to the other
  * firmware in the flash memory.
  */
-static void jump_to_other_firmware(void) {
-    // Hint to compiler that variables should be saved in registers since
-    // we are moving the stack pointer.
-    register void (*reset)();
-
+__attribute__((noreturn)) static void jump_to_other_firmware(void) {
     __disable_irq();
     HAL_RCC_DeInit();
-
-    // Reset the stack pointer to the stack pointer of the other firmware.
-    // The official LEGO firmware doesn't do this by itself.
-    __set_MSP(*(uint32_t *)OTHER_FIRMWARE_BASE);
 
     // This probably not needed, but the bootloader does this when jumping
     // to firmware, so we will too just to be safe.
     SCB->VTOR = OTHER_FIRMWARE_BASE;
 
+    // Reset the stack pointer to the stack pointer of the other firmware.
+    // The official LEGO firmware doesn't do this by itself.
+    __set_MSP(*(uint32_t *)OTHER_FIRMWARE_BASE);
+
     // The compiler tools swap the Reset_Handler addresses in the vector
     // tables of this firmware and the other firmware. So the value in this
     // firmware's vector table will be Reset_Handler for the other firmware.
-    reset = (void *)_fw_isr_vector_src[1];
-
-    // jump to the other firmware
-    reset();
+    __asm("bx %0" : : "r" (_fw_isr_vector_src[1]));
+    __builtin_unreachable();
 }
 
 /**
