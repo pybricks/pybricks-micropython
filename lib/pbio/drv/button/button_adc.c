@@ -76,24 +76,24 @@ pbio_error_t pbdrv_button_is_pressed(pbio_button_flags_t *pressed) {
         return err;
     }
 
-    if (value > 3654) {
+    if (value > 3872) {
         // no buttons pressed
-    } else if (value > 3155) {
+    } else if (value > 3394) {
         *pressed |= PBIO_BUTTON_RIGHT_UP; // Bluetooth
-    } else if (value > 2885) {
+    } else if (value > 3009) {
         *pressed |= PBIO_BUTTON_RIGHT;
-    } else if (value > 2645) {
+    } else if (value > 2755) {
         *pressed |= PBIO_BUTTON_RIGHT_UP; // Bluetooth
         *pressed |= PBIO_BUTTON_RIGHT;
-    } else if (value > 2454) {
+    } else if (value > 2538) {
         *pressed |= PBIO_BUTTON_LEFT;
-    } else if (value > 2218) {
+    } else if (value > 2327) {
         *pressed |= PBIO_BUTTON_RIGHT_UP; // Bluetooth
         *pressed |= PBIO_BUTTON_LEFT;
-    } else if (value > 2084) {
+    } else if (value > 2141) {
         *pressed |= PBIO_BUTTON_RIGHT;
         *pressed |= PBIO_BUTTON_LEFT;
-    } else if (value > 1800) {
+    } else if (value > 1969) {
         *pressed |= PBIO_BUTTON_RIGHT_UP; // Bluetooth
         *pressed |= PBIO_BUTTON_RIGHT;
         *pressed |= PBIO_BUTTON_LEFT;
