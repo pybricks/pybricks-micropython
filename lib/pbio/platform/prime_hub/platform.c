@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2020 The Pybricks Authors
+// Copyright (c) 2019-2021 The Pybricks Authors
 
 #include <stdbool.h>
 
@@ -19,15 +19,6 @@
 #include "../../drv/pwm/pwm_tlc5955_stm32.h"
 #include "../../drv/sound/sound_stm32_hal_dac.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
-
-// bootloader magic
-
-typedef struct {
-    const char *fw_ver;
-    const uint32_t *checksum;
-    const uint8_t *magic;
-    const void *reserved;
-} boot_t;
 
 enum {
     COUNTER_PORT_A,
