@@ -482,7 +482,7 @@ void SystemInit(void) {
 
     HAL_RCC_OscConfig(&osc_init);
 
-    RCC_ClkInitTypeDef clk_init = { 0 };
+    RCC_ClkInitTypeDef clk_init;
     clk_init.ClockType = RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
     clk_init.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
     clk_init.AHBCLKDivider = RCC_SYSCLK_DIV1;  // HCLK 80MHz
