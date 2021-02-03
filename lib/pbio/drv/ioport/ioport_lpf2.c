@@ -237,6 +237,15 @@ static void init_one(uint8_t ioport) {
     pbdrv_gpio_input(&pdata->uart_tx);
     pbdrv_gpio_input(&pdata->uart_rx);
 
+    // These should be set by default already, but it seems that the bootloader
+    // on the Technic hub changes these and causes wrong detection if we don't
+    // make sure pull is disabled.
+    pbdrv_gpio_set_pull(&pdata->id1, PBDRV_GPIO_PULL_NONE);
+    pbdrv_gpio_set_pull(&pdata->id2, PBDRV_GPIO_PULL_NONE);
+    pbdrv_gpio_set_pull(&pdata->uart_buf, PBDRV_GPIO_PULL_NONE);
+    pbdrv_gpio_set_pull(&pdata->uart_tx, PBDRV_GPIO_PULL_NONE);
+    pbdrv_gpio_set_pull(&pdata->uart_rx, PBDRV_GPIO_PULL_NONE);
+
     basic_devs[ioport].port = PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT + ioport;
     basic_devs[ioport].ops = &basic_dev_ops;
 }
