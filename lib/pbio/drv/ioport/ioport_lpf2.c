@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
-// LEGO Power Functions 2 I/O port
+// LEGO Powered Up (Power Functions 2) I/O port
 
 #include <pbdrv/config.h>
 
@@ -22,16 +22,16 @@
 
 #include "ioport_lpf2.h"
 
-typedef enum _dev_id1_group_t {
-    DEV_ID1_GROUP_GND,
-    DEV_ID1_GROUP_VCC,
-    DEV_ID1_GROUP_PULL_DOWN,
-    DEV_ID1_GROUP_OPEN,
-} dev_id1_group_t;
+typedef enum {
+    DEV_ID_GROUP_GND,
+    DEV_ID_GROUP_VCC,
+    DEV_ID_GROUP_PULL_DOWN,
+    DEV_ID_GROUP_OPEN,
+} dev_id_group_t;
 
 // Device connection manager state for each port
-typedef struct _dcm_data_t {
-    dev_id1_group_t dev_id1_group;
+typedef struct {
+    dev_id_group_t dev_id1_group;
     pbio_iodev_type_id_t type_id;
     pbio_iodev_type_id_t prev_type_id;
     uint8_t gpio_value;
@@ -191,20 +191,20 @@ static const basic_info_t basic_infos[] = {
 static pbio_iodev_t basic_devs[PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS];
 
 static const pbio_iodev_type_id_t ioport_type_id_lookup[3][3] = {
-    [DEV_ID1_GROUP_GND] = {
-        [0] = PBIO_IODEV_TYPE_ID_LPF2_POWER,
-        [1] = PBIO_IODEV_TYPE_ID_LPF2_TURN,
-        [2] = PBIO_IODEV_TYPE_ID_LPF2_LIGHT2,
+    /* ID1 */ [DEV_ID_GROUP_GND] = {
+        /* ID2 */ [DEV_ID_GROUP_GND] = PBIO_IODEV_TYPE_ID_LPF2_POWER,
+        /* ID2 */ [DEV_ID_GROUP_VCC] = PBIO_IODEV_TYPE_ID_LPF2_TURN,
+        /* ID2 */ [DEV_ID_GROUP_PULL_DOWN] = PBIO_IODEV_TYPE_ID_LPF2_LIGHT2,
     },
-    [DEV_ID1_GROUP_VCC] = {
-        [0] = PBIO_IODEV_TYPE_ID_LPF2_TRAIN,
-        [1] = PBIO_IODEV_TYPE_ID_LPF2_LMOTOR,
-        [2] = PBIO_IODEV_TYPE_ID_LPF2_LIGHT1,
+    /* ID1 */ [DEV_ID_GROUP_VCC] = {
+        /* ID2 */ [DEV_ID_GROUP_GND] = PBIO_IODEV_TYPE_ID_LPF2_TRAIN,
+        /* ID2 */ [DEV_ID_GROUP_VCC] = PBIO_IODEV_TYPE_ID_LPF2_LMOTOR,
+        /* ID2 */ [DEV_ID_GROUP_PULL_DOWN] = PBIO_IODEV_TYPE_ID_LPF2_LIGHT1,
     },
-    [DEV_ID1_GROUP_PULL_DOWN] = {
-        [0] = PBIO_IODEV_TYPE_ID_LPF2_MMOTOR,
-        [1] = PBIO_IODEV_TYPE_ID_LPF2_XMOTOR,
-        [2] = PBIO_IODEV_TYPE_ID_LPF2_LIGHT,
+    /* ID1 */ [DEV_ID_GROUP_PULL_DOWN] = {
+        /* ID2 */ [DEV_ID_GROUP_GND] = PBIO_IODEV_TYPE_ID_LPF2_MMOTOR,
+        /* ID2 */ [DEV_ID_GROUP_VCC] = PBIO_IODEV_TYPE_ID_LPF2_XMOTOR,
+        /* ID2 */ [DEV_ID_GROUP_PULL_DOWN] = PBIO_IODEV_TYPE_ID_LPF2_LIGHT,
     },
 };
 
@@ -275,7 +275,7 @@ static PT_THREAD(poll_dcm(ioport_dev_t * ioport)) {
     PT_BEGIN(pt);
 
     data->type_id = PBIO_IODEV_TYPE_ID_NONE;
-    data->dev_id1_group = DEV_ID1_GROUP_OPEN;
+    data->dev_id1_group = DEV_ID_GROUP_OPEN;
 
     // set ID1 high
     pbdrv_gpio_out_high(&pdata.uart_tx);
@@ -330,12 +330,12 @@ static PT_THREAD(poll_dcm(ioport_dev_t * ioport)) {
         // if ID1 did not change and is high
         if (data->prev_gpio_value == 1 && data->gpio_value == 1) {
             // we have ID1 == VCC
-            data->dev_id1_group = DEV_ID1_GROUP_VCC;
+            data->dev_id1_group = DEV_ID_GROUP_VCC;
         }
         // if ID1 did not change and is low
         else if (data->prev_gpio_value == 0 && data->gpio_value == 0) {
             // we have ID1 == GND
-            data->dev_id1_group = DEV_ID1_GROUP_GND;
+            data->dev_id1_group = DEV_ID_GROUP_GND;
         } else {
             // set ID1 as input
             pbdrv_gpio_out_high(&pdata.uart_buf);
@@ -346,10 +346,10 @@ static PT_THREAD(poll_dcm(ioport_dev_t * ioport)) {
             // read ID1
             if (pbdrv_gpio_input(&pdata.id1) == 1) {
                 // we have ID1 == open
-                data->dev_id1_group = DEV_ID1_GROUP_OPEN;
+                data->dev_id1_group = DEV_ID_GROUP_OPEN;
             } else {
                 // we have ID1 == pull down
-                data->dev_id1_group = DEV_ID1_GROUP_PULL_DOWN;
+                data->dev_id1_group = DEV_ID_GROUP_PULL_DOWN;
             }
         }
 
@@ -378,7 +378,7 @@ static PT_THREAD(poll_dcm(ioport_dev_t * ioport)) {
         // if ID1 changed from high to low
         if (data->prev_gpio_value == 1 && data->gpio_value == 0) {
             // if we have ID1 = open
-            if (data->dev_id1_group == DEV_ID1_GROUP_OPEN) {
+            if (data->dev_id1_group == DEV_ID_GROUP_OPEN) {
                 // then we have this
                 data->type_id = PBIO_IODEV_TYPE_ID_LPF2_3_PART;
             }
@@ -407,17 +407,17 @@ static PT_THREAD(poll_dcm(ioport_dev_t * ioport)) {
                 // if ID2 is low
                 if (pbdrv_gpio_input(&pdata.uart_rx) == 0) {
                     if (data->dev_id1_group < 3) {
-                        data->type_id = ioport_type_id_lookup[data->dev_id1_group][2];
+                        data->type_id = ioport_type_id_lookup[data->dev_id1_group][DEV_ID_GROUP_PULL_DOWN];
                     }
                 } else {
                     if (data->dev_id1_group < 3) {
-                        data->type_id = ioport_type_id_lookup[data->dev_id1_group][1];
+                        data->type_id = ioport_type_id_lookup[data->dev_id1_group][DEV_ID_GROUP_VCC];
                     }
                 }
             } else {
                 // we know the device now
                 if (data->dev_id1_group < 3) {
-                    data->type_id = ioport_type_id_lookup[data->dev_id1_group][0];
+                    data->type_id = ioport_type_id_lookup[data->dev_id1_group][DEV_ID_GROUP_GND];
                 } else {
                     data->type_id = PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART;
                 }
