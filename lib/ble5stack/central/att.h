@@ -688,7 +688,7 @@ typedef struct
 {
   uint16_t handle; //!< Handle of the attribute that has been changed (must be first field)
   uint16_t len;    //!< Length of value
-  uint8_t *pValue; //!< Current value of the attribute (0 to ATT_MTU_SIZE-3)
+  const uint8_t *pValue; //!< Current value of the attribute (0 to ATT_MTU_SIZE-3)
 } attHandleValueNoti_t;
 
 /**

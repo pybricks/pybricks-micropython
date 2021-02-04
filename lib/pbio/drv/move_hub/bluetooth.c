@@ -1,29 +1,28 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
+
+// Bluetooth for STM32 MCU with STMicro BlueNRG-MS
 
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_BLUETOOTH_STM32_BLUENRG
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 
+#include <pbdrv/bluetooth.h>
+#include <pbio/error.h>
+#include <pbio/util.h>
+
 #include <contiki.h>
+#include <stm32f070xb.h>
 
-#include "pbio/config.h"
-#include "pbio/error.h"
-#include "pbio/event.h"
-#include "pbsys/status.h"
-#include "pbsys/sys.h"
-#include "../../src/processes.h"
-
-#include "bluenrg_aci.h"
-#include "bluenrg_gap.h"
-#include "hci_le.h"
-#include "hci_tl.h"
-#include "stm32f070xb.h"
+#include <bluenrg_aci.h>
+#include <bluenrg_gap.h>
+#include <hci_le.h>
+#include <hci_tl.h>
 
 // name used for standard GAP device name characteristic
 #define DEV_NAME "Pybricks Hub"
@@ -37,7 +36,7 @@
 #define BLUENRG_READY 2
 
 // max data size for nRF UART characteristics
-#define NRF_CHAR_SIZE 20
+#define NRF_CHAR_SIZE (ATT_MTU - 3)
 
 // BlueNRG header data for SPI write xfer
 static const uint8_t write_header_tx[BLUENRG_HEADER_SIZE] = { 0x0a };
@@ -45,6 +44,20 @@ static const uint8_t write_header_tx[BLUENRG_HEADER_SIZE] = { 0x0a };
 static const uint8_t read_header_tx[BLUENRG_HEADER_SIZE] = { 0x0b };
 // Rx buffer for BlueNRG header
 static uint8_t header_rx[BLUENRG_HEADER_SIZE];
+
+typedef PT_THREAD((*task_func_t)(struct pt *pt, void *context));
+
+typedef struct {
+    struct pt pt;
+    task_func_t func;
+    void *context;
+} task_t;
+
+typedef struct {
+    const uint8_t *data;
+    uint8_t size;
+    pbdrv_bluetooth_uart_tx_done_t done;
+} uart_tx_context_t;
 
 // Tx buffer for SPI writes
 static uint8_t write_buf[HCI_MAX_PAYLOAD_SIZE];
@@ -74,26 +87,69 @@ static uint16_t pybricks_service_handle, pybricks_char_handle;
 
 // nRF UART GATT service handles
 static uint16_t uart_service_handle, uart_rx_char_handle, uart_tx_char_handle;
-// nRF UART tx is in progress
-static bool uart_tx_busy;
-// buffer to queue UART tx data
-static uint8_t uart_tx_buf[NRF_CHAR_SIZE];
-// bytes used in uart_tx_buf
-static uint8_t uart_tx_buf_size;
 
-
-PROCESS(pbdrv_bluetooth_hci_process, "Bluetooth HCI");
 PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
 
-static void bluetooth_init(void) {
+// TODO: turn current task into a linked list of tasks
+static task_t current_task;
+static bool bluetooth_ready;
+static pbdrv_bluetooth_on_event_t bluetooth_on_event;
+static pbdrv_bluetooth_uart_on_rx_t uart_on_rx;
+
+/**
+ * Runs the current task until the next yield.
+ */
+static void run_current_task(void) {
+    if (!current_task.func) {
+        return;
+    }
+
+    if (!PT_SCHEDULE(current_task.func(&current_task.pt, current_task.context))) {
+        current_task.func = NULL;
+    }
+}
+
+/**
+ * Starts running a task.
+ *
+ * Currently, it is assumed that no other task can be in progress when this is
+ * called.
+ *
+ * @param [in]  func    The task PT_THREAD.
+ * @param [in]  context Optional context passed back to @p func.
+ */
+static void start_task(task_func_t func, void *context) {
+    assert(current_task.func == NULL);
+
+    PT_INIT(&current_task.pt);
+    current_task.func = func;
+    current_task.context = context;
+
+    run_current_task();
+    process_poll(&pbdrv_bluetooth_spi_process);
+}
+
+/**
+ * Sets the nRESET line on the Bluetooth chip.
+ */
+static void bluetooth_reset(bool reset) {
     // put Bluetooth chip into reset
 
     // nRESET
-    // set PB6 output low
     GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
-    GPIOB->BRR = GPIO_BRR_BR_6;
+
+    if (reset) {
+        // set PB6 output low
+        GPIOB->BRR = GPIO_BRR_BR_6;
+    } else {
+        // set PB6 output high
+        GPIOB->BSRR = GPIO_BSRR_BS_6;
+    }
 }
 
+/**
+ * Initializes the SPI connection to the Bluetooth chip.
+ */
 static void spi_init(void) {
     // SPI2 pin mux
 
@@ -124,10 +180,6 @@ static void spi_init(void) {
 
     // DMA
 
-    // enable DMA power domain
-    RCC->AHBENR |= RCC_AHBENR_DMAEN;
-
-    // TODO: most of this can be deleted except CPAR
     DMA1_Channel4->CPAR = (uint32_t)&SPI2->DR;
     DMA1_Channel5->CPAR = (uint32_t)&SPI2->DR;
 
@@ -135,9 +187,6 @@ static void spi_init(void) {
     NVIC_EnableIRQ(DMA1_Channel4_5_IRQn);
 
     // SPI2
-
-    // enable SPI2 power domain
-    RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
 
     // set as master and clock /8
     #define SPI_CR1_BR_DIV8 SPI_CR1_BR_1
@@ -154,6 +203,114 @@ static void spi_init(void) {
     EXTI->FTSR |= EXTI_FTSR_FT2;
     NVIC_SetPriority(EXTI2_3_IRQn, 3);
     NVIC_EnableIRQ(EXTI2_3_IRQn);
+}
+
+void pbdrv_bluetooth_init(void) {
+    bluetooth_reset(true);
+    spi_init();
+}
+
+void pbdrv_bluetooth_power_on(bool on) {
+    if (on) {
+        process_start(&pbdrv_bluetooth_spi_process, NULL);
+    } else {
+        // REVISIT: should probably gracefully shutdown in case we are in the
+        // middle of something
+        process_exit(&pbdrv_bluetooth_spi_process);
+    }
+}
+
+bool pbdrv_bluetooth_is_ready(void) {
+    return bluetooth_ready;
+}
+
+/**
+ * Sets advertising data and enables advertisements.
+ */
+static PT_THREAD(set_discoverable(struct pt *pt, void *context)) {
+    // 6e400001-b5a3-f393-e0a-9e50e24dcca9e
+    static const uint8_t service_uuids[] = {
+        AD_TYPE_128_BIT_SERV_UUID,
+        0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
+        0xda, 0x46, 0x80, 0x82, 0x01, 0x00, 0xf5, 0xc5 // Pybricks service UUID
+    };
+
+    PT_BEGIN(pt);
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    // TODO: LEGO firmware also includes Conn_Interval_Min, Conn_Interval_Max
+    // and Tx power level here. Do we need these?
+    uint8_t response_data[16];
+    response_data[0] = sizeof(DEV_NAME);
+    response_data[1] = AD_TYPE_COMPLETE_LOCAL_NAME;
+    memcpy(&response_data[2], DEV_NAME, sizeof(DEV_NAME));
+    hci_le_set_scan_response_data_begin(response_data[0] + 1, response_data);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    hci_le_set_scan_response_data_end();
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gap_set_discoverable_begin(ADV_IND, 0, 0, PUBLIC_ADDR, NO_WHITE_LIST_USE,
+        0, NULL, sizeof(service_uuids), service_uuids, 0, 0);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    aci_gap_set_discoverable_end();
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_start_advertising(void) {
+    start_task(set_discoverable, NULL);
+}
+
+bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
+    if ((connection & PBDRV_BLUETOOTH_CONNECTION_UART) && conn_handle) {
+        return true;
+    }
+    return false;
+}
+
+void pbdrv_bluetooth_set_on_event(pbdrv_bluetooth_on_event_t on_event) {
+    bluetooth_on_event = on_event;
+}
+
+/**
+ * Handles sending data via the nRF UART Tx characteristic.
+ */
+static PT_THREAD(uart_service_send_data(struct pt *pt, void *context))
+{
+    uart_tx_context_t *uart_tx = context;
+
+    PT_BEGIN(pt);
+
+retry:
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gatt_update_char_value_begin(uart_service_handle, uart_tx_char_handle,
+        0, uart_tx->size, uart_tx->data);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    tBleStatus ret = aci_gatt_update_char_value_end();
+
+    if (ret == BLE_STATUS_INSUFFICIENT_RESOURCES) {
+        // this will happen if notifications are enabled and the previous
+        // changes haven't been sent over the air yet
+        goto retry;
+    }
+
+    uart_tx->done();
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_uart_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_uart_tx_done_t done) {
+    static uart_tx_context_t uart_tx;
+
+    uart_tx.data = data;
+    uart_tx.size = size;
+    uart_tx.done = done;
+
+    start_task(uart_service_send_data, &uart_tx);
+}
+
+void pbdrv_bluetooth_uart_set_on_rx(pbdrv_bluetooth_uart_on_rx_t on_rx) {
+    uart_on_rx = on_rx;
 }
 
 // overrides weak function in start_*.S
@@ -233,17 +390,17 @@ static bool get_bluenrg_buf_size(uint8_t *wbuf, uint8_t *rbuf) {
 // assigned to one of RESET_* from bluenrg_hal_aci.h
 static uint8_t reset_reason;
 
-static void pybricks_char_modified(uint8_t *data, uint8_t size) {
-    if (size < 2) {
-        return;
-    }
+// static void pybricks_char_modified(uint8_t *data, uint8_t size) {
+//     if (size < 2) {
+//         return;
+//     }
 
-    switch (data[0]) {
-        case PBIO_COM_MSG_TYPE_CMD:
-            process_post(&pbsys_process, PBIO_EVENT_COM_CMD, (process_data_t)(uint32_t)data[1]);
-            break;
-    }
-}
+//     switch (data[0]) {
+//     case PBIO_COM_MSG_TYPE_CMD:
+//         process_post(&pbsys_process, PBIO_EVENT_COM_CMD, (process_data_t)(uint32_t)data[1]);
+//         break;
+//     }
+// }
 
 static PT_THREAD(init_pybricks_service(struct pt *pt)) {
     // c5f50001-8280-46da-89f4-6d8051e4aeef
@@ -274,8 +431,6 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
 
     PT_END(pt);
 }
-
-static void uart_rx_char_modified(uint8_t *data, uint8_t size);
 
 // processes an event received from the Bluetooth chip
 static void handle_event(hci_event_pckt *event) {
@@ -312,9 +467,11 @@ static void handle_event(hci_event_pckt *event) {
                 case EVT_BLUE_GATT_ATTRIBUTE_MODIFIED: {
                     evt_gatt_attr_modified *subevt = (evt_gatt_attr_modified *)evt->data;
                     if (subevt->attr_handle == pybricks_char_handle + 1) {
-                        pybricks_char_modified(subevt->att_data, subevt->data_length);
+                        // pybricks_char_modified(subevt->att_data, subevt->data_length);
                     } else if (subevt->attr_handle == uart_rx_char_handle + 1) {
-                        uart_rx_char_modified(subevt->att_data, subevt->data_length);
+                        if (uart_on_rx) {
+                            uart_on_rx(subevt->att_data, subevt->data_length);
+                        }
                     }
                 }
                 break;
@@ -323,7 +480,9 @@ static void handle_event(hci_event_pckt *event) {
         break;
     }
 
-    process_post_synch(&pbdrv_bluetooth_hci_process, PROCESS_EVENT_NONE, NULL);
+    if (bluetooth_on_event) {
+        bluetooth_on_event();
+    }
 }
 
 // read message from BlueNRG chip
@@ -397,31 +556,8 @@ retry:
 
     // set to 0 to indicate that xfer is complete
     write_xfer_size = 0;
-    process_post_synch(&pbdrv_bluetooth_hci_process, PROCESS_EVENT_NONE, NULL);
 
     PT_END(pt);
-}
-
-PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
-    static struct pt child_pt;
-
-    PROCESS_BEGIN();
-
-    spi_init();
-
-    while (true) {
-        PROCESS_WAIT_UNTIL(spi_irq || write_xfer_size);
-        // if there is a pending read message
-        if (spi_irq) {
-            PROCESS_PT_SPAWN(&child_pt, spi_read(&child_pt));
-        }
-        // if there is a pending write message
-        else if (write_xfer_size) {
-            PROCESS_PT_SPAWN(&child_pt, spi_write(&child_pt));
-        }
-    }
-
-    PROCESS_END();
 }
 
 // implements function for BlueNRG library
@@ -508,14 +644,6 @@ static PT_THREAD(hci_init(struct pt *pt)) {
     PT_END(pt);
 }
 
-static void uart_rx_char_modified(uint8_t *data, uint8_t size) {
-    for (int i = 0; i < size; i++) {
-        // TODO: set .port = bluetooth port
-        pbio_event_uart_rx_data_t rx = { .byte = data[i] };
-        process_post_synch(&pbsys_process, PBIO_EVENT_UART_RX, &rx);
-    }
-}
-
 static PT_THREAD(init_uart_service(struct pt *pt)) {
     // using well-known (but not standard) nRF UART UUIDs
 
@@ -563,141 +691,54 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
     PT_END(pt);
 }
 
-static PT_THREAD(set_discoverable(struct pt *pt)) {
-    // 6e400001-b5a3-f393-e0a-9e50e24dcca9e
-    static const uint8_t service_uuids[] = {
-        AD_TYPE_128_BIT_SERV_UUID,
-        0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
-        0xda, 0x46, 0x80, 0x82, 0x01, 0x00, 0xf5, 0xc5 // Pybricks service UUID
-    };
-    uint8_t response_data[16];
-
-    PT_BEGIN(pt);
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    // TODO: LEGO firmware also includes Conn_Interval_Min, Conn_Interval_Max
-    // and Tx power level here. Do we need these?
-    response_data[0] = sizeof(DEV_NAME);
-    response_data[1] = AD_TYPE_COMPLETE_LOCAL_NAME;
-    memcpy(&response_data[2], DEV_NAME, sizeof(DEV_NAME));
-    hci_le_set_scan_response_data_begin(response_data[0] + 1, response_data);
-    PT_WAIT_UNTIL(pt, hci_command_complete);
-    hci_le_set_scan_response_data_end();
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gap_set_discoverable_begin(ADV_IND, 0, 0, PUBLIC_ADDR, NO_WHITE_LIST_USE,
-        0, NULL, sizeof(service_uuids), service_uuids, 0, 0);
-    PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_gap_set_discoverable_end();
-
-    PT_END(pt);
-}
-
-pbio_error_t pbdrv_bluetooth_tx(uint8_t c) {
-    // make sure we have a Bluetooth connection
-    if (!conn_handle) {
-        return PBIO_ERROR_INVALID_OP;
-    }
-
-    // can't add the the buffer if tx is in progress or buffer is full
-    if (uart_tx_busy || uart_tx_buf_size == NRF_CHAR_SIZE) {
-        return PBIO_ERROR_AGAIN;
-    }
-
-    // append the char
-    uart_tx_buf[uart_tx_buf_size] = c;
-    uart_tx_buf_size++;
-
-    // poke the process to start tx soon-ish. This way, we can accumulate up to
-    // NRF_CHAR_SIZE bytes before actually transmitting
-    // TODO: it probably would be better to poll here instead of using events
-    // so that we don't fill up the event queue with 20 events
-    process_post(&pbdrv_bluetooth_hci_process, PROCESS_EVENT_MSG, NULL);
-
-    return PBIO_SUCCESS;
-}
-
-static PT_THREAD(uart_service_send_data(struct pt *pt))
-{
-    tBleStatus ret;
-
-    PT_BEGIN(pt);
-
-retry:
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gatt_update_char_value_begin(uart_service_handle, uart_tx_char_handle,
-        0, uart_tx_buf_size, uart_tx_buf);
-    PT_WAIT_UNTIL(pt, hci_command_complete);
-    ret = aci_gatt_update_char_value_end();
-
-    if (ret == BLE_STATUS_INSUFFICIENT_RESOURCES) {
-        // this will happen if notifications are enabled and the previous
-        // changes haven't been sent over the air yet
-        goto retry;
-    }
-
-    PT_END(pt);
-}
-
-// TODO: high-level Bluetooth management needs to be moved to pbsys/
-PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
-    static struct etimer timer;
+static PT_THREAD(init_task(struct pt *pt, void *context)) {
     static struct pt child_pt;
+
+    PT_BEGIN(pt);
+
+    // wait for the Bluetooth chip to send the reset reason event so we know
+    // that it is ready to receive commands
+    reset_reason = 0;
+    PT_WAIT_UNTIL(pt, reset_reason);
+
+    PT_SPAWN(pt, &child_pt, hci_init(&child_pt));
+    PT_SPAWN(pt, &child_pt, init_pybricks_service(&child_pt));
+    PT_SPAWN(pt, &child_pt, init_uart_service(&child_pt));
+    bluetooth_ready = true;
+
+    PT_END(pt);
+}
+
+PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
+    static struct pt child_pt;
+
+    PROCESS_EXITHANDLER({
+        bluetooth_reset(true);
+        bluetooth_ready = false;
+    });
 
     PROCESS_BEGIN();
 
-    bluetooth_init();
+    // take Bluetooth chip out of reset
+    bluetooth_reset(false);
+
+    start_task(init_task, NULL);
 
     while (true) {
-        // make sure the Bluetooth chip is in reset long enough to actually reset
-        etimer_set(&timer, clock_from_msec(10));
-        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
-
-        // take Bluetooth chip out of reset
-        GPIOB->BSRR = GPIO_BSRR_BS_6;
-
-        // wait for the Bluetooth chip to send the reset reason event so we know it is ready
-        PROCESS_WAIT_UNTIL(reset_reason);
-
-        PROCESS_PT_SPAWN(&child_pt, hci_init(&child_pt));
-        PROCESS_PT_SPAWN(&child_pt, init_pybricks_service(&child_pt));
-        PROCESS_PT_SPAWN(&child_pt, init_uart_service(&child_pt));
-        PROCESS_PT_SPAWN(&child_pt, set_discoverable(&child_pt));
-
-        // TODO: allow user programs to initiate BLE connections
-        pbsys_status_set(PBSYS_STATUS_BLE_ADVERTISING);
-        PROCESS_WAIT_UNTIL(conn_handle || pbsys_status_test(PBSYS_STATUS_USER_PROGRAM_RUNNING));
-        pbsys_status_clear(PBSYS_STATUS_BLE_ADVERTISING);
-
-        etimer_set(&timer, clock_from_msec(500));
-
-        // conn_handle is set to 0 upon disconnection
-        while (conn_handle) {
-            PROCESS_WAIT_EVENT();
-            if (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)) {
-                etimer_reset(&timer);
-                // just occasionally checking to see if we are still connected
-                continue;
-            }
-            if (ev == PROCESS_EVENT_MSG && uart_tx_buf_size) {
-                uart_tx_busy = true;
-                PROCESS_PT_SPAWN(&child_pt, uart_service_send_data(&child_pt));
-                uart_tx_busy = false;
-                uart_tx_buf_size = 0;
-            }
+        PROCESS_WAIT_UNTIL(spi_irq || write_xfer_size);
+        // if there is a pending read message
+        if (spi_irq) {
+            PROCESS_PT_SPAWN(&child_pt, spi_read(&child_pt));
+        }
+        // if there is a pending write message
+        else if (write_xfer_size) {
+            PROCESS_PT_SPAWN(&child_pt, spi_write(&child_pt));
         }
 
-        // reset Bluetooth chip
-        GPIOB->BRR = GPIO_BRR_BR_6;
-        PROCESS_WAIT_WHILE(pbsys_status_test(PBSYS_STATUS_USER_PROGRAM_RUNNING));
+        run_current_task();
     }
 
     PROCESS_END();
-}
-
-void pbdrv_bluetooth_init(void) {
-    process_start(&pbdrv_bluetooth_spi_process, NULL);
-    process_start(&pbdrv_bluetooth_hci_process, NULL);
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH_STM32_BLUENRG

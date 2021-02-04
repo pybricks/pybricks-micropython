@@ -444,6 +444,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/trajectory.c \
 	src/uartdev.c \
 	sys/battery.c \
+	sys/bluetooth.c \
 	sys/hmi.c \
 	sys/light_matrix.c \
 	sys/light.c \

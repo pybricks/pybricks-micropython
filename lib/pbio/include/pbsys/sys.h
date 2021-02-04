@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 /**
  * @addtogroup Sys System-level Functions
@@ -87,6 +87,9 @@ pbio_error_t pbsys_stdin_get_char(uint8_t *c);
  */
 pbio_error_t pbsys_stdout_put_char(uint8_t c);
 
+// TODO: replace with some sort of stream interface.
+void pbsys_stdin_put_char(uint8_t c);
+
 #else // PBIO_CONFIG_ENABLE_SYS
 
 static inline void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks) {
@@ -99,6 +102,9 @@ static inline pbio_error_t pbsys_stdin_get_char(uint8_t *c) {
 }
 static inline pbio_error_t pbsys_stdout_put_char(uint8_t c) {
     return PBIO_ERROR_NOT_SUPPORTED;
+}
+
+static inline void pbsys_stdin_put_char(uint8_t c) {
 }
 
 #endif // PBIO_CONFIG_ENABLE_SYS

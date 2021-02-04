@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2021 The Pybricks Authors
 
 // Bluetooth driver using BlueKitchen BTStack with TI CC256x chip and STM32F4 MCU.
 
@@ -10,31 +10,24 @@
 #include <ble/gatt-service/nordic_spp_service_server.h>
 #include <btstack_chipset_cc256x.h>
 #include <btstack.h>
-#include <contiki.h>
 
-#include <pbio/event.h>
-#include <pbsys/status.h>
+#include <pbdrv/bluetooth.h>
 
-#include "../src/processes.h"
 #include "bluetooth_btstack_control_gpio.h"
 #include "bluetooth_btstack_run_loop_contiki.h"
 #include "bluetooth_btstack_uart_block_stm32_hal.h"
 #include "genhdr/pybricks_service.h"
 
-// max data size for nRF UART characteristics
-#define NRF_CHAR_SIZE 20
+typedef struct {
+    const uint8_t *data;
+    uint8_t size;
+    pbdrv_bluetooth_uart_tx_done_t done;
+} uart_tx_context_t;
 
 static hci_con_handle_t con_handle = HCI_CON_HANDLE_INVALID;
-static btstack_context_callback_registration_t send_request;
 static btstack_packet_callback_registration_t hci_event_callback_registration;
-PROCESS(pbdrv_bluetooth_hci_process, "Bluetooth HCI");
-
-// nRF UART tx is in progress
-static bool uart_tx_busy;
-// buffer to queue UART tx data
-static uint8_t uart_tx_buf[NRF_CHAR_SIZE];
-// bytes used in uart_tx_buf
-static uint8_t uart_tx_buf_size;
+static pbdrv_bluetooth_on_event_t bluetooth_on_event;
+static pbdrv_bluetooth_uart_on_rx_t uart_on_rx;
 
 const uint8_t adv_data[] = {
     // Flags general discoverable, BR/EDR not supported
@@ -66,47 +59,20 @@ static const hci_transport_config_uart_t config = {
     .device_name = NULL,
 };
 
-pbio_error_t pbdrv_bluetooth_tx(uint8_t c) {
-    // make sure we have a Bluetooth connection
-    if (con_handle == HCI_CON_HANDLE_INVALID) {
-        return PBIO_ERROR_INVALID_OP;
-    }
-
-    // can't add the the buffer if tx is in progress or buffer is full
-    if (uart_tx_busy || uart_tx_buf_size == NRF_CHAR_SIZE) {
-        return PBIO_ERROR_AGAIN;
-    }
-
-    // append the char
-    uart_tx_buf[uart_tx_buf_size] = c;
-    uart_tx_buf_size++;
-
-    // poke the process to start tx soon-ish. This way, we can accumulate up to
-    // NRF_CHAR_SIZE bytes before actually transmitting
-    process_poll(&pbdrv_bluetooth_hci_process);
-
-    return PBIO_SUCCESS;
-}
-
 static void nordic_can_send(void *context) {
-    nordic_spp_service_server_send(con_handle, uart_tx_buf, uart_tx_buf_size);
-    uart_tx_busy = false;
-    uart_tx_buf_size = 0;
-}
+    uart_tx_context_t *uart_tx = context;
 
-static void uart_rx_char_modified(const uint8_t *data, uint8_t size) {
-    for (int i = 0; i < size; i++) {
-        // TODO: set .port = bluetooth port
-        pbio_event_uart_rx_data_t rx = { .byte = data[i] };
-        process_post_synch(&pbsys_process, PBIO_EVENT_UART_RX, &rx);
-    }
+    nordic_spp_service_server_send(con_handle, uart_tx->data, uart_tx->size);
+    uart_tx->done();
 }
 
 static void nordic_data_received(hci_con_handle_t tx_con_handle, const uint8_t *data, uint16_t size) {
     if (size == 0 && con_handle == HCI_CON_HANDLE_INVALID) {
         con_handle = tx_con_handle;
     } else {
-        uart_rx_char_modified(data, size);
+        if (uart_on_rx) {
+            uart_on_rx(data, size);
+        }
     }
 }
 
@@ -125,8 +91,9 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
         default:
             break;
     }
-
-    process_poll(&pbdrv_bluetooth_hci_process);
+    if (bluetooth_on_event) {
+        bluetooth_on_event();
+    }
 }
 
 void pbdrv_bluetooth_init(void) {
@@ -155,8 +122,14 @@ void pbdrv_bluetooth_init(void) {
 
     // setup Nordic SPP service
     nordic_spp_service_server_init(&nordic_data_received);
+}
 
-    process_start(&pbdrv_bluetooth_hci_process, NULL);
+void pbdrv_bluetooth_power_on(bool on) {
+    hci_power_control(on ? HCI_POWER_ON : HCI_POWER_OFF);
+}
+
+bool pbdrv_bluetooth_is_ready(void) {
+    return hci_get_state() != HCI_STATE_OFF;
 }
 
 static void init_advertising_data(void) {
@@ -169,51 +142,36 @@ static void init_advertising_data(void) {
     gap_scan_response_set_data(sizeof(scan_resp_data), (uint8_t *)scan_resp_data);
 }
 
-// TODO: high-level Bluetooth management needs to be moved to pbsys/
-PROCESS_THREAD(pbdrv_bluetooth_hci_process, ev, data) {
-    static struct etimer timer;
+void pbdrv_bluetooth_start_advertising(void) {
+    init_advertising_data();
+    gap_advertisements_enable(true);
+}
 
-    PROCESS_BEGIN();
-
-    for (;;) {
-        // make sure the Bluetooth chip is in reset long enough to actually reset
-        etimer_set(&timer, clock_from_msec(5));
-        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
-
-        // take Bluetooth chip out of reset
-        hci_power_control(HCI_POWER_ON);
-
-        // queue advertising data setup
-        init_advertising_data();
-        gap_advertisements_enable(true);
-
-        // TODO: allow user programs to initiate BLE connections
-        pbsys_status_set(PBSYS_STATUS_BLE_ADVERTISING);
-        PROCESS_WAIT_UNTIL(con_handle != HCI_CON_HANDLE_INVALID || pbsys_status_test(PBSYS_STATUS_USER_PROGRAM_RUNNING));
-        pbsys_status_clear(PBSYS_STATUS_BLE_ADVERTISING);
-
-        for (;;) {
-            PROCESS_WAIT_EVENT();
-
-            if (con_handle == HCI_CON_HANDLE_INVALID) {
-                // disconnected
-                break;
-            }
-
-            if (!uart_tx_busy && uart_tx_buf_size) {
-                uart_tx_busy = true;
-                send_request.callback = &nordic_can_send;
-                nordic_spp_service_server_request_can_send_now(&send_request, con_handle);
-            }
-        }
-
-        // reset Bluetooth chip
-        hci_power_control(HCI_POWER_OFF);
-        PROCESS_WAIT_UNTIL(hci_get_state() == HCI_STATE_OFF);
-        PROCESS_WAIT_WHILE(pbsys_status_test(PBSYS_STATUS_USER_PROGRAM_RUNNING));
+bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
+    if ((connection & PBDRV_BLUETOOTH_CONNECTION_UART) && con_handle != HCI_CON_HANDLE_INVALID) {
+        return true;
     }
+    return false;
+}
 
-    PROCESS_END();
+void pbdrv_bluetooth_set_on_event(pbdrv_bluetooth_on_event_t on_event) {
+    bluetooth_on_event = on_event;
+}
+
+void pbdrv_bluetooth_uart_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_uart_tx_done_t done) {
+    static btstack_context_callback_registration_t send_request;
+    static uart_tx_context_t uart_tx;
+
+    uart_tx.data = data;
+    uart_tx.size = size;
+    uart_tx.done = done;
+    send_request.callback = &nordic_can_send;
+    send_request.context = &uart_tx;
+    nordic_spp_service_server_request_can_send_now(&send_request, con_handle);
+}
+
+void pbdrv_bluetooth_uart_set_on_rx(pbdrv_bluetooth_uart_on_rx_t on_rx) {
+    uart_on_rx = on_rx;
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32_CC264X

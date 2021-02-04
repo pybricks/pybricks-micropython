@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include <contiki.h>
 
-#include "pbdrv/bluetooth.h"
 #include "pbdrv/config.h"
 
 #include "pbio/event.h"
@@ -60,10 +59,11 @@ pbio_error_t pbsys_stdin_get_char(uint8_t *c) {
 }
 
 pbio_error_t pbsys_stdout_put_char(uint8_t c) {
-    return pbdrv_bluetooth_tx(c);
+    // TODO: send via USB or Bluetooth
+    return PBIO_SUCCESS;
 }
 
-static void handle_stdin_char(uint8_t c) {
+void pbsys_stdin_put_char(uint8_t c) {
     uint8_t new_head = (stdin_buf_head + 1) & (STDIN_BUF_SIZE - 1);
 
     // optional hook function can steal the character
@@ -102,9 +102,6 @@ PROCESS_THREAD(pbsys_process, ev, data) {
             if ((pbsys_status_t)data == PBSYS_STATUS_POWER_BUTTON_PRESSED && user_stop_func) {
                 user_stop_func();
             }
-        } else if (ev == PBIO_EVENT_UART_RX) {
-            pbio_event_uart_rx_data_t *rx = data;
-            handle_stdin_char(rx->byte);
         } else if (ev == PBIO_EVENT_COM_CMD) {
             pbio_com_cmd_t cmd = (uint32_t)data;
 
