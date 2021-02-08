@@ -37,6 +37,7 @@ extern const pb_obj_enum_member_t pb_Button_BLUETOOTH_obj;
 #endif // PYBRICKS_PY_PARAMETERS_BUTTON
 
 extern const mp_obj_type_t pb_type_Color;
+extern const mp_obj_base_t pb_type_Color_obj;
 
 typedef struct _pb_type_Color_obj_t {
     mp_obj_base_t base;

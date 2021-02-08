@@ -140,22 +140,6 @@ static mp_obj_t pb_type_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t pb_type_Color_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
-
-    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(h),
-        PB_ARG_DEFAULT_INT(s, 100),
-        PB_ARG_DEFAULT_INT(v, 100),
-        PB_ARG_DEFAULT_NONE(name));
-
-    // Name must be None or a string
-    if (name_in != mp_const_none && !mp_obj_is_qstr(name_in)) {
-        pb_assert_type(name_in, &mp_type_str);
-    }
-
-    return pb_type_Color_make_new_helper(pb_obj_get_int(h_in), pb_obj_get_int(s_in), pb_obj_get_int(v_in), name_in);
-}
-
 void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     pb_type_Color_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, "Color(h=%u, s=%u, v=%u", self->hsv.h, self->hsv.s, self->hsv.v);
@@ -278,15 +262,38 @@ STATIC const mp_rom_map_elem_t pb_type_Color_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(pb_type_Color_locals_dict, pb_type_Color_table);
 
+// pybricks.parameters.Color
+STATIC mp_obj_t pb_type_Color_call(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+
+    PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
+        PB_ARG_REQUIRED(h),
+        PB_ARG_DEFAULT_INT(s, 100),
+        PB_ARG_DEFAULT_INT(v, 100),
+        PB_ARG_DEFAULT_NONE(name));
+
+    // Name must be None or a string
+    if (name_in != mp_const_none && !mp_obj_is_qstr(name_in)) {
+        pb_assert_type(name_in, &mp_type_str);
+    }
+
+    return pb_type_Color_make_new_helper(pb_obj_get_int(h_in), pb_obj_get_int(s_in), pb_obj_get_int(v_in), name_in);
+}
+
 const mp_obj_type_t pb_type_Color = {
     { &mp_type_type },
     .name = MP_QSTR_Color,
+    .call = pb_type_Color_call,
     .attr = pb_type_Color_attr,
     .print = pb_type_Color_print,
     .unary_op = mp_generic_unary_op,
-    .make_new = pb_type_Color_make_new,
     .binary_op = pb_type_Color_binary_op,
     .locals_dict = (mp_obj_dict_t *)&(pb_type_Color_locals_dict),
+};
+
+// We expose an instance instead of the type. This lets us provide class
+// attributes via the attribute handler for more flexibility.
+const mp_obj_base_t pb_type_Color_obj = {
+    &pb_type_Color
 };
 
 #endif // PYBRICKS_PY_PARAMETERS
