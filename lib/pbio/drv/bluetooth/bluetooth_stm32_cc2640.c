@@ -228,7 +228,7 @@ void pbdrv_bluetooth_init(void) {
     pbdrv_gpio_set_pull(&pdata->mrdy_gpio, PBDRV_GPIO_PULL_NONE);
     spi_set_mrdy(false);
 
-    pbdrv_bluetooth_stm32_cc2640_platform_data.spi_init();
+    pdata->spi_init();
 }
 
 // Public Bluetooth driver API implementation

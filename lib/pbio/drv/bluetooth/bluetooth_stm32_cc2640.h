@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2020 The Pybricks Authors
+// Copyright (c) 2021 The Pybricks Authors
 
 #ifndef _INTERNAL_PVDRV_BLUETOOTH_STM32_CC2640_H_
 #define _INTERNAL_PVDRV_BLUETOOTH_STM32_CC2640_H_
