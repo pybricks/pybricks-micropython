@@ -386,7 +386,6 @@ LIBFIXMATH_SRC_C = $(addprefix lib/libfixmath/libfixmath/,\
 # Pybricks I/O library
 
 PBIO_SRC_C = $(addprefix lib/pbio/,\
-	drv/$(PBIO_PLATFORM)/bluetooth.c \
 	drv/$(PBIO_PLATFORM)/motor.c \
 	drv/adc/adc_stm32_hal.c \
 	drv/adc/adc_stm32f0.c \
@@ -396,6 +395,8 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/bluetooth/bluetooth_btstack_uart_block_stm32_hal.c \
 	drv/bluetooth/bluetooth_btstack.c \
 	drv/bluetooth/bluetooth_init_cc2564C_1.4.c \
+	drv/bluetooth/bluetooth_stm32_bluenrg.c \
+	drv/bluetooth/bluetooth_stm32_cc2640.c \
 	drv/button/button_adc.c \
 	drv/button/button_gpio.c \
 	drv/clock/clock_stm32.c \

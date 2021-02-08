@@ -13,11 +13,11 @@
 #include <string.h>
 
 #include <pbdrv/bluetooth.h>
+#include <pbdrv/gpio.h>
 #include <pbio/error.h>
 #include <pbio/util.h>
 
 #include <contiki.h>
-#include <stm32l4xx_hal.h>
 
 #include <att.h>
 #include <gap.h>
@@ -28,9 +28,23 @@
 #include <hci.h>
 #include <util.h>
 
+#include "./bluetooth_stm32_cc2640.h"
+
 #define DEBUG 0
-#if DEBUG
+#if DEBUG == 1
 #include <stdio.h>
+#include <stm32f0xx.h>
+#define DBG(fmt, ...) { \
+        char dbg[64]; \
+        snprintf(dbg, 64, fmt "\r\n",##__VA_ARGS__); \
+        for (char *d = dbg; *d; d++) { \
+            while (!(USART3->ISR & USART_ISR_TXE)) { } \
+            USART3->TDR = *d; \
+        } \
+}
+#elif DEBUG == 2
+#include <stdio.h>
+#include <stm32l431xx.h>
 #define DBG(fmt, ...) { \
         char dbg[64]; \
         snprintf(dbg, 64, fmt "\r\n",##__VA_ARGS__); \
@@ -45,9 +59,6 @@
 
 // name used for standard GAP device name characteristic
 #define DEV_NAME "Pybricks Hub"
-
-// bluetooth address is set at factory at this address
-#define FLASH_BD_ADDR ((const uint8_t *)0x08007ff0)
 
 // TI Network Processor Interface (NPI)
 #define NPI_SPI_SOF             0xFE    // start of frame
@@ -143,13 +154,12 @@ static const uint8_t nrf_uart_tx_char_uuid[] = {
 
 PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
 
-static SPI_HandleTypeDef bt_spi;
-
 // TODO: turn current task into a linked list of tasks
 static task_t current_task;
 static bool bluetooth_ready;
 static pbdrv_bluetooth_on_event_t bluetooth_on_event;
 static pbdrv_bluetooth_uart_on_rx_t uart_on_rx;
+static const pbdrv_bluetooth_stm32_cc2640_platform_data_t *pdata = &pbdrv_bluetooth_stm32_cc2640_platform_data;
 
 /**
  * Runs the current task until the next yield.
@@ -188,60 +198,40 @@ static void start_task(task_func_t func, void *context) {
  * Sets the nRESET line on the Bluetooth chip.
  */
 static void bluetooth_reset(reset_state_t reset) {
-    GPIO_InitTypeDef gpio_init = { 0 };
-
-    // Implied defaults: no pull, low speed, alternate function 0
-
-    // nRESET
-    gpio_init.Pin = GPIO_PIN_2;
-    gpio_init.Mode = reset == RESET_STATE_INPUT ? GPIO_MODE_INPUT : GPIO_MODE_OUTPUT_PP;
-    HAL_GPIO_Init(GPIOD, &gpio_init);
-    if (reset != RESET_STATE_INPUT) {
-        HAL_GPIO_WritePin(GPIOD, GPIO_PIN_2, reset == RESET_STATE_OUT_HIGH ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    switch (reset) {
+        case RESET_STATE_OUT_HIGH:
+            pbdrv_gpio_out_high(&pdata->reset_gpio);
+        case RESET_STATE_OUT_LOW:
+            pbdrv_gpio_out_low(&pdata->reset_gpio);
+        case RESET_STATE_INPUT:
+            pbdrv_gpio_input(&pdata->reset_gpio);
     }
 }
 
 /**
- * Initializes the SPI connection to the Bluetooth chip.
+ * Sets the MRDY signal.
  */
-static void spi_init(void) {
-    GPIO_InitTypeDef gpio_init = { 0 };
-
-    // Implied defaults: no pull, low speed, alternate function 0
-
-    // nMRDY
-    gpio_init.Pin = GPIO_PIN_15;
-    gpio_init.Mode = GPIO_MODE_OUTPUT_PP;
-    HAL_GPIO_Init(GPIOA, &gpio_init);
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
-
-    // nSRDY
-    gpio_init.Pin = GPIO_PIN_13;
-    gpio_init.Mode = GPIO_MODE_IT_RISING_FALLING;
-    gpio_init.Pull = GPIO_PULLUP;
-    HAL_GPIO_Init(GPIOC, &gpio_init);
-    HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 2);
-    HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
-
-    bt_spi.Instance = SPI1;
-    bt_spi.Init.Mode = SPI_MODE_MASTER;
-    bt_spi.Init.Direction = SPI_DIRECTION_2LINES;
-    bt_spi.Init.DataSize = SPI_DATASIZE_8BIT;
-    bt_spi.Init.CLKPolarity = SPI_POLARITY_LOW;
-    bt_spi.Init.CLKPhase = SPI_PHASE_1EDGE;
-    bt_spi.Init.NSS = SPI_NSS_SOFT;
-    bt_spi.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
-    bt_spi.Init.FirstBit = SPI_FIRSTBIT_MSB;
-    bt_spi.Init.TIMode = SPI_TIMODE_DISABLE;
-    bt_spi.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-    bt_spi.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
-    HAL_SPI_Init(&bt_spi);
+static void spi_set_mrdy(bool mrdy) {
+    if (mrdy) {
+        pbdrv_gpio_out_low(&pdata->mrdy_gpio);
+    } else {
+        pbdrv_gpio_out_high(&pdata->mrdy_gpio);
+    }
 }
+
+// Internal Bluetooth driver API implementation
 
 void pbdrv_bluetooth_init(void) {
+    pbdrv_gpio_set_pull(&pdata->reset_gpio, PBDRV_GPIO_PULL_NONE);
     bluetooth_reset(RESET_STATE_OUT_LOW);
-    spi_init();
+
+    pbdrv_gpio_set_pull(&pdata->mrdy_gpio, PBDRV_GPIO_PULL_NONE);
+    spi_set_mrdy(false);
+
+    pbdrv_bluetooth_stm32_cc2640_platform_data.spi_init();
 }
+
+// Public Bluetooth driver API implementation
 
 void pbdrv_bluetooth_power_on(bool on) {
     if (on) {
@@ -367,87 +357,17 @@ void pbdrv_bluetooth_uart_set_on_rx(pbdrv_bluetooth_uart_on_rx_t on_rx) {
     uart_on_rx = on_rx;
 }
 
-// TODO: move this stuff to platform.c
+// Driver interrupt callbacks
 
-void HAL_SPI_MspInit(SPI_HandleTypeDef *hspi) {
-    GPIO_InitTypeDef gpio_init;
-    static DMA_HandleTypeDef rx_dma, tx_dma;
-
-    gpio_init.Pin = GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5;
-    gpio_init.Mode = GPIO_MODE_AF_PP;
-    gpio_init.Pull = GPIO_PULLUP;
-    gpio_init.Alternate = GPIO_AF5_SPI1;
-    gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;  // TODO: verify this against SPI clock speed
-    HAL_GPIO_Init(GPIOB, &gpio_init);
-
-    tx_dma.Instance = DMA2_Channel4;
-    tx_dma.Init.Request = DMA_REQUEST_4;
-    tx_dma.Init.Direction = DMA_MEMORY_TO_PERIPH;
-    tx_dma.Init.PeriphInc = DMA_PINC_DISABLE;
-    tx_dma.Init.MemInc = DMA_MINC_ENABLE;
-    tx_dma.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-    tx_dma.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-    tx_dma.Init.Mode = DMA_NORMAL;
-    tx_dma.Init.Priority = DMA_PRIORITY_LOW;
-    HAL_DMA_Init(&tx_dma);
-    __HAL_LINKDMA(hspi, hdmatx, tx_dma);
-
-    HAL_NVIC_SetPriority(DMA2_Channel4_IRQn, 5, 1);
-    HAL_NVIC_EnableIRQ(DMA2_Channel4_IRQn);
-
-    rx_dma.Instance = DMA2_Channel3;
-    rx_dma.Init.Request = DMA_REQUEST_4;
-    rx_dma.Init.Direction = DMA_PERIPH_TO_MEMORY;
-    rx_dma.Init.PeriphInc = DMA_PINC_DISABLE;
-    rx_dma.Init.MemInc = DMA_MINC_ENABLE;
-    rx_dma.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-    rx_dma.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
-    rx_dma.Init.Mode = DMA_NORMAL;
-    rx_dma.Init.Priority = DMA_PRIORITY_HIGH;
-    HAL_DMA_Init(&rx_dma);
-    __HAL_LINKDMA(hspi, hdmarx, rx_dma);
-
-    HAL_NVIC_SetPriority(DMA2_Channel3_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(DMA2_Channel3_IRQn);
-}
-
-void HAL_SPI_MspDeInit(SPI_HandleTypeDef *hspi) {
-    HAL_NVIC_DisableIRQ(DMA2_Channel3_IRQn);
-    HAL_NVIC_DisableIRQ(DMA2_Channel4_IRQn);
-    HAL_DMA_DeInit(hspi->hdmarx);
-    HAL_DMA_DeInit(hspi->hdmatx);
-}
-
-void DMA2_Channel3_IRQHandler(void) {
-    HAL_DMA_IRQHandler(bt_spi.hdmarx);
-}
-
-void DMA2_Channel4_IRQHandler(void) {
-    HAL_DMA_IRQHandler(bt_spi.hdmatx);
-}
-
-void EXTI15_10_IRQHandler(void) {
-    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
-}
-
-void HAL_GPIO_EXTI_Callback(uint16_t pin) {
-    spi_srdy = !HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13);
+void pbdrv_bluetooth_stm32_cc2640_srdy_irq(bool srdy) {
+    spi_srdy = srdy;
     process_poll(&pbdrv_bluetooth_spi_process);
 }
 
-void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
+void pbdrv_bluetooth_stm32_cc2640_spi_xfer_irq(void) {
     spi_xfer_complete = true;
     process_poll(&pbdrv_bluetooth_spi_process);
 }
-
-/**
- * Sets the MRDY signal.
- */
-static void spi_set_mrdy(bool mrdy) {
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, mrdy ? GPIO_PIN_RESET : GPIO_PIN_SET);
-}
-
-// end platform code
 
 // static void pybricks_char_modified(uint8_t *data, uint8_t size) {
 //     if (size < 2) {
@@ -502,7 +422,7 @@ static void handle_event(uint8_t *packet) {
     uint8_t size = packet[1];
     uint8_t *data = &packet[2];
 
-    UNUSED(size);
+    (void)size;
 
     switch (event) {
         case HCI_COMMAND_COMPLETE_EVENT:
@@ -515,8 +435,8 @@ static void handle_event(uint8_t *packet) {
             uint16_t connection_handle = (data[4] << 8) | data[3];
             uint8_t pdu_len = data[5];
 
-            UNUSED(status);
-            UNUSED(pdu_len);
+            (void)status;
+            (void)pdu_len;
 
             switch (event_code) {
                 case ATT_EVENT_EXCHANGE_MTU_REQ: {
@@ -533,10 +453,10 @@ static void handle_event(uint8_t *packet) {
                     uint16_t type = (data[11] << 8) | data[10];
                     uint8_t *value = &data[12];
 
-                    UNUSED(start_handle);
-                    UNUSED(end_handle);
-                    UNUSED(type);
-                    UNUSED(value);
+                    (void)start_handle;
+                    (void)end_handle;
+                    (void)type;
+                    (void)value;
 
                     DBG("s %04X t %04X", start_handle, type);
                     attErrorRsp_t rsp;
@@ -553,7 +473,7 @@ static void handle_event(uint8_t *packet) {
                     uint16_t end_handle = (data[9] << 8) | data[8];
                     uint16_t type = (data[11] << 8) | data[10];
 
-                    UNUSED(end_handle);
+                    (void)end_handle;
 
                     DBG("s %04X t %04X", start_handle, type);
                     switch (type) {
@@ -650,7 +570,7 @@ static void handle_event(uint8_t *packet) {
                     uint16_t end_handle = (data[9] << 8) | data[8];
                     uint16_t group_type = (data[11] << 8) | data[10];
 
-                    UNUSED(end_handle);
+                    (void)end_handle;
 
                     DBG("s %04X g %04X", start_handle, group_type);
                     switch (group_type) {
@@ -986,7 +906,7 @@ static PT_THREAD(hci_init(struct pt *pt)) {
     // // set the Bluetooth address
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    HCI_EXT_setBdaddr(FLASH_BD_ADDR);
+    HCI_EXT_setBdaddr(pdata->bd_addr);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     // ignoring response data
 
@@ -1207,7 +1127,7 @@ start:
 
         // send the write header
         spi_xfer_complete = false;
-        HAL_SPI_TransmitReceive_DMA(&bt_spi, write_buf, read_buf, NPI_SPI_HEADER_LEN);
+        pdata->spi_start_xfer(write_buf, read_buf, NPI_SPI_HEADER_LEN);
         PROCESS_WAIT_UNTIL(spi_xfer_complete);
 
         // Total transfer size is biggest of read and write sizes.
@@ -1220,7 +1140,7 @@ start:
 
         // read the remaining message
         spi_xfer_complete = false;
-        HAL_SPI_TransmitReceive_DMA(&bt_spi, &write_buf[NPI_SPI_HEADER_LEN],
+        pdata->spi_start_xfer(&write_buf[NPI_SPI_HEADER_LEN],
             &read_buf[NPI_SPI_HEADER_LEN], xfer_size);
         PROCESS_WAIT_UNTIL(spi_xfer_complete);
 

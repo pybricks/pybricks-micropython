@@ -3,6 +3,9 @@
 
 // Bluetooth for STM32 MCU with STMicro BlueNRG-MS
 
+// This file hard-codes hardware access to save code size instead of using
+// platform.c since this is only used on the BOOST Move hub.
+
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_BLUETOOTH_STM32_BLUENRG

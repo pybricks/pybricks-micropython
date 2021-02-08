@@ -8,6 +8,7 @@
 #include <pbio/uartdev.h>
 
 #include "../../drv/button/button_gpio.h"
+#include "../../drv/bluetooth/bluetooth_stm32_cc2640.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_pwm.h"
 #include "../../drv/pwm/pwm_stm32_tim.h"
@@ -45,6 +46,119 @@ const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTO
         .active_low = true,
     }
 };
+
+// Bluetooth
+
+// REVISIT: more of this could be in driver if we enabled HAL on City hub.
+
+// bluetooth address is set at factory at this address
+#define FLASH_BD_ADDR ((const uint8_t *)0x08004ffa)
+
+static void bt_spi_init(void) {
+    // SPI2 pin mux
+
+    //  nMRDY
+    // set PB12 as gpio output high
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER12_Msk) | (1 << GPIO_MODER_MODER12_Pos);
+    GPIOB->BSRR = GPIO_BSRR_BS_12;
+
+    // mSRDY
+    // set PD2 as gpio input
+    GPIOD->MODER = (GPIOD->MODER & ~GPIO_MODER_MODER2_Msk) | (0 << GPIO_MODER_MODER2_Pos);
+
+    // SPI_MOSI
+    // set PC3 as SPI2->MOSI
+    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER3_Msk) | (2 << GPIO_MODER_MODER3_Pos);
+    GPIOC->AFR[0] = (GPIOC->AFR[0] & ~GPIO_AFRL_AFSEL3_Msk) | (1 << GPIO_AFRL_AFSEL3_Pos);
+
+    // SPI_MISO
+    // set PC2 as SPI2->MISO
+    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER2_Msk) | (2 << GPIO_MODER_MODER2_Pos);
+    GPIOC->AFR[0] = (GPIOC->AFR[0] & ~GPIO_AFRL_AFSEL2_Msk) | (1 << GPIO_AFRL_AFSEL2_Pos);
+
+    // SPI_SCK
+    // set PB13 as SPI2->CLK
+    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER13_Msk) | (2 << GPIO_MODER_MODER13_Pos);
+    GPIOB->AFR[1] = (GPIOB->AFR[1] & ~GPIO_AFRH_AFSEL13_Msk) | (0 << GPIO_AFRH_AFSEL13_Pos);
+
+    // DMA
+
+    DMA1_Channel4->CPAR = (uint32_t)&SPI2->DR;
+    DMA1_Channel5->CPAR = (uint32_t)&SPI2->DR;
+    DMA1->CSELR = (DMA1->CSELR & ~(DMA_CSELR_C4S | DMA_CSELR_C5S)) | (DMA1_CSELR_CH4_SPI2_RX | DMA1_CSELR_CH5_SPI2_TX);
+
+    NVIC_SetPriority(DMA1_Channel4_5_IRQn, 3);
+    NVIC_EnableIRQ(DMA1_Channel4_5_IRQn);
+
+    // SPI2
+
+    // set as master and clock /256
+    #define SPI_CR1_BR_DIV256 (SPI_CR1_BR_0 | SPI_CR1_BR_1 | SPI_CR1_BR_2)
+    SPI2->CR1 = SPI_CR1_MSTR | SPI_CR1_BR_DIV256 | SPI_CR1_SSM;
+    // enable DMA rx/tx, chip select, rx not empty irq, 8-bit word size, trigger rx irq on 8-bit
+    #define SPI_CR2_DS_8BIT (SPI_CR2_DS_0 | SPI_CR2_DS_1 | SPI_CR2_DS_2)
+    SPI2->CR2 = SPI_CR2_RXDMAEN | SPI_CR2_TXDMAEN | SPI_CR2_SSOE | SPI_CR2_RXNEIE | SPI_CR2_DS_8BIT | SPI_CR2_FRXTH;
+
+    // LEGO Firmware doesn't do this, but we actually use IRQ for SPI_IRQ pin
+    // this is needed since we use __WFI() sometimes
+    SYSCFG->EXTICR[0] |= SYSCFG_EXTICR1_EXTI2_PD;
+    EXTI->IMR |= EXTI_EMR_MR2;
+    EXTI->RTSR |= EXTI_RTSR_RT2;
+    EXTI->FTSR |= EXTI_FTSR_FT2;
+    NVIC_SetPriority(EXTI2_3_IRQn, 3);
+    NVIC_EnableIRQ(EXTI2_3_IRQn);
+}
+
+static void bt_spi_start_xfer(const uint8_t *tx_buf, uint8_t *rx_buf, uint8_t xfer_size) {
+    // hopefully this shouldn't actually block, but we can't disable SPI while
+    // it is busy, so just in case...
+    while (SPI2->SR & SPI_SR_BSY) {
+    }
+
+    // disable the SPI so we can configure it
+    SPI2->CR1 &= ~SPI_CR1_SPE;
+
+    // configure DMA
+    DMA1_Channel5->CCR = 0;
+    DMA1_Channel4->CCR = 0;
+    DMA1_Channel5->CMAR = (uint32_t)tx_buf;
+    DMA1_Channel5->CNDTR = xfer_size;
+    DMA1_Channel4->CMAR = (uint32_t)rx_buf;
+    DMA1_Channel4->CNDTR = xfer_size;
+    DMA1_Channel4->CCR = DMA_CCR_MINC | DMA_CCR_TCIE | DMA_CCR_EN;
+    DMA1_Channel5->CCR = DMA_CCR_MINC | DMA_CCR_DIR | DMA_CCR_EN;
+
+    // enable SPI to start the xfer
+    SPI2->CR1 |= SPI_CR1_SPE;
+}
+
+const pbdrv_bluetooth_stm32_cc2640_platform_data_t pbdrv_bluetooth_stm32_cc2640_platform_data = {
+    .bd_addr = FLASH_BD_ADDR,
+    .reset_gpio = { .bank = GPIOB, .pin = 6 },
+    .mrdy_gpio = { .bank = GPIOB, .pin = 12 },
+    .spi_init = bt_spi_init,
+    .spi_start_xfer = bt_spi_start_xfer,
+};
+
+void DMA1_Channel4_5_IRQHandler(void) {
+    // if CH4 transfer complete
+    if (DMA1->ISR & DMA_ISR_TCIF4) {
+        // clear interrupt
+        DMA1->IFCR |= DMA_IFCR_CTCIF4;
+        // disable CH4
+        DMA1_Channel4->CCR &= ~DMA_CCR_EN;
+
+        // notify that SPI xfer is complete
+        pbdrv_bluetooth_stm32_cc2640_spi_xfer_irq();
+    }
+}
+
+void EXTI2_3_IRQHandler(void) {
+    pbdrv_bluetooth_stm32_cc2640_srdy_irq(!(GPIOD->IDR & GPIO_IDR_2));
+
+    // clear the interrupt
+    EXTI->PR = EXTI_PR_PR2;
+}
 
 // I/O ports
 

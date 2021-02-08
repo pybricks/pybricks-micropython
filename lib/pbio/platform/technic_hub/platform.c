@@ -7,6 +7,7 @@
 
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/battery/battery_adc.h"
+#include "../../drv/bluetooth/bluetooth_stm32_cc2640.h"
 #include "../../drv/button/button_gpio.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_pwm.h"
@@ -50,6 +51,125 @@ const pbdrv_battery_adc_platform_data_t pbdrv_battery_adc_platform_data = {
     .gpio = { .bank = GPIOA, .pin = 12 },
     .pull = PBDRV_GPIO_PULL_NONE,
 };
+
+// Bluetooth
+
+// REVISIT: more of this could be in driver if we enabled HAL on City hub.
+
+// bluetooth address is set at factory at this address
+#define FLASH_BD_ADDR ((const uint8_t *)0x08007ff0)
+
+static SPI_HandleTypeDef bt_spi;
+
+static void bt_spi_init(void) {
+    GPIO_InitTypeDef gpio_init;
+
+    // Implied defaults: no pull, low speed, alternate function 0
+
+    // nSRDY
+    gpio_init.Pin = GPIO_PIN_13;
+    gpio_init.Mode = GPIO_MODE_IT_RISING_FALLING;
+    gpio_init.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(GPIOC, &gpio_init);
+
+    HAL_NVIC_SetPriority(EXTI15_10_IRQn, 5, 2);
+    HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
+
+    bt_spi.Instance = SPI1;
+    bt_spi.Init.Mode = SPI_MODE_MASTER;
+    bt_spi.Init.Direction = SPI_DIRECTION_2LINES;
+    bt_spi.Init.DataSize = SPI_DATASIZE_8BIT;
+    bt_spi.Init.CLKPolarity = SPI_POLARITY_LOW;
+    bt_spi.Init.CLKPhase = SPI_PHASE_1EDGE;
+    bt_spi.Init.NSS = SPI_NSS_SOFT;
+    bt_spi.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+    bt_spi.Init.FirstBit = SPI_FIRSTBIT_MSB;
+    bt_spi.Init.TIMode = SPI_TIMODE_DISABLE;
+    bt_spi.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+    bt_spi.Init.NSSPMode = SPI_NSS_PULSE_DISABLE;
+    HAL_SPI_Init(&bt_spi);
+}
+
+static void bt_spi_start_xfer(const uint8_t *tx_buf, uint8_t *rx_buf, uint8_t xfer_size) {
+    HAL_SPI_TransmitReceive_DMA(&bt_spi, (uint8_t *)tx_buf, rx_buf, xfer_size);
+}
+
+const pbdrv_bluetooth_stm32_cc2640_platform_data_t pbdrv_bluetooth_stm32_cc2640_platform_data = {
+    .bd_addr = FLASH_BD_ADDR,
+    .reset_gpio = { .bank = GPIOD, .pin = 2 },
+    .mrdy_gpio = { .bank = GPIOA, .pin = 15 },
+    .spi_init = bt_spi_init,
+    .spi_start_xfer = bt_spi_start_xfer,
+};
+
+void HAL_SPI_MspInit(SPI_HandleTypeDef *hspi) {
+    GPIO_InitTypeDef gpio_init;
+    static DMA_HandleTypeDef rx_dma, tx_dma;
+
+    gpio_init.Pin = GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5;
+    gpio_init.Mode = GPIO_MODE_AF_PP;
+    gpio_init.Pull = GPIO_PULLUP;
+    gpio_init.Alternate = GPIO_AF5_SPI1;
+    gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+    HAL_GPIO_Init(GPIOB, &gpio_init);
+
+    tx_dma.Instance = DMA2_Channel4;
+    tx_dma.Init.Request = DMA_REQUEST_4;
+    tx_dma.Init.Direction = DMA_MEMORY_TO_PERIPH;
+    tx_dma.Init.PeriphInc = DMA_PINC_DISABLE;
+    tx_dma.Init.MemInc = DMA_MINC_ENABLE;
+    tx_dma.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    tx_dma.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    tx_dma.Init.Mode = DMA_NORMAL;
+    tx_dma.Init.Priority = DMA_PRIORITY_LOW;
+    HAL_DMA_Init(&tx_dma);
+    __HAL_LINKDMA(hspi, hdmatx, tx_dma);
+
+    HAL_NVIC_SetPriority(DMA2_Channel4_IRQn, 5, 1);
+    HAL_NVIC_EnableIRQ(DMA2_Channel4_IRQn);
+
+    rx_dma.Instance = DMA2_Channel3;
+    rx_dma.Init.Request = DMA_REQUEST_4;
+    rx_dma.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    rx_dma.Init.PeriphInc = DMA_PINC_DISABLE;
+    rx_dma.Init.MemInc = DMA_MINC_ENABLE;
+    rx_dma.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+    rx_dma.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+    rx_dma.Init.Mode = DMA_NORMAL;
+    rx_dma.Init.Priority = DMA_PRIORITY_HIGH;
+    HAL_DMA_Init(&rx_dma);
+    __HAL_LINKDMA(hspi, hdmarx, rx_dma);
+
+    HAL_NVIC_SetPriority(DMA2_Channel3_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(DMA2_Channel3_IRQn);
+}
+
+void HAL_SPI_MspDeInit(SPI_HandleTypeDef *hspi) {
+    HAL_NVIC_DisableIRQ(DMA2_Channel3_IRQn);
+    HAL_NVIC_DisableIRQ(DMA2_Channel4_IRQn);
+    HAL_DMA_DeInit(hspi->hdmarx);
+    HAL_DMA_DeInit(hspi->hdmatx);
+}
+
+void DMA2_Channel3_IRQHandler(void) {
+    HAL_DMA_IRQHandler(bt_spi.hdmarx);
+}
+
+void DMA2_Channel4_IRQHandler(void) {
+    HAL_DMA_IRQHandler(bt_spi.hdmatx);
+}
+
+void EXTI15_10_IRQHandler(void) {
+    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_13);
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t pin) {
+    pbdrv_bluetooth_stm32_cc2640_srdy_irq(!HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13));
+}
+
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi) {
+    pbdrv_bluetooth_stm32_cc2640_spi_xfer_irq();
+}
 
 // Button
 
