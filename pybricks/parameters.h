@@ -41,7 +41,6 @@ extern const mp_obj_base_t pb_type_Color_obj;
 
 typedef struct _pb_type_Color_obj_t {
     mp_obj_base_t base;
-    mp_obj_t name;
     pbio_color_hsv_t hsv;
 } pb_type_Color_obj_t;
 

@@ -16,79 +16,66 @@
 
 const pb_type_Color_obj_t pb_Color_RED_obj = {
     {&pb_type_Color},
-    .name = MP_OBJ_NEW_QSTR(MP_QSTR_RED),
     .hsv = {PBIO_COLOR_HUE_RED, 100, 100}
 };
 
 const pb_type_Color_obj_t pb_Color_BROWN_obj = {
     {&pb_type_Color},
-    .name = MP_OBJ_NEW_QSTR(MP_QSTR_BROWN),
     .hsv = {PBIO_COLOR_HUE_ORANGE, 100, 50}
 };
 
 const pb_type_Color_obj_t pb_Color_ORANGE_obj = {
     {&pb_type_Color},
-    .name = MP_OBJ_NEW_QSTR(MP_QSTR_ORANGE),
     .hsv = {PBIO_COLOR_HUE_ORANGE, 100, 100}
 };
 
 const pb_type_Color_obj_t pb_Color_YELLOW_obj = {
     {&pb_type_Color},
-    .name = MP_OBJ_NEW_QSTR(MP_QSTR_YELLOW),
     .hsv = {PBIO_COLOR_HUE_YELLOW, 100, 100}
 };
 
 const pb_type_Color_obj_t pb_Color_GREEN_obj = {
     {&pb_type_Color},
-    .name = MP_OBJ_NEW_QSTR(MP_QSTR_GREEN),
     .hsv = {PBIO_COLOR_HUE_GREEN, 100, 100}
 };
 
 const pb_type_Color_obj_t pb_Color_CYAN_obj = {
     {&pb_type_Color},
-    .name = MP_OBJ_NEW_QSTR(MP_QSTR_CYAN),
     .hsv = {PBIO_COLOR_HUE_CYAN, 100, 100}
 };
 
 const pb_type_Color_obj_t pb_Color_BLUE_obj = {
     {&pb_type_Color},
-    .name = MP_OBJ_NEW_QSTR(MP_QSTR_BLUE),
     .hsv = {PBIO_COLOR_HUE_BLUE, 100, 100}
 };
 
 const pb_type_Color_obj_t pb_Color_VIOLET_obj = {
     {&pb_type_Color},
-    .name = MP_OBJ_NEW_QSTR(MP_QSTR_VIOLET),
     .hsv = {PBIO_COLOR_HUE_VIOLET, 100, 100}
 };
 
 const pb_type_Color_obj_t pb_Color_MAGENTA_obj = {
     {&pb_type_Color},
-    .name = MP_OBJ_NEW_QSTR(MP_QSTR_MAGENTA),
     .hsv = {PBIO_COLOR_HUE_MAGENTA, 100, 100}
 };
 
 const pb_type_Color_obj_t pb_Color_NONE_obj = {
     {&pb_type_Color},
-    .name = mp_const_none,
     .hsv = {0, 0, 0}
 };
 
 const pb_type_Color_obj_t pb_Color_BLACK_obj = {
     {&pb_type_Color},
-    .name = MP_OBJ_NEW_QSTR(MP_QSTR_BLACK),
     .hsv = {0, 0, 10}
 };
 
 const pb_type_Color_obj_t pb_Color_GRAY_obj = {
     {&pb_type_Color},
-    .name = MP_OBJ_NEW_QSTR(MP_QSTR_GRAY),
     .hsv = {0, 0, 50}
 };
 
 const pb_type_Color_obj_t pb_Color_WHITE_obj = {
     {&pb_type_Color},
-    .name = MP_OBJ_NEW_QSTR(MP_QSTR_WHITE),
     .hsv = {0, 0, 100}
 };
 
@@ -116,11 +103,10 @@ const pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj) {
 pb_type_Color_obj_t *pb_type_Color_new_empty(void) {
     pb_type_Color_obj_t *color = m_new_obj(pb_type_Color_obj_t);
     color->base.type = &pb_type_Color;
-    color->name = mp_const_none;
     return color;
 }
 
-static mp_obj_t pb_type_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v, mp_obj_t name) {
+static mp_obj_t pb_type_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v) {
     pb_type_Color_obj_t *self = pb_type_Color_new_empty();
 
     // Bind h to 0--360
@@ -135,8 +121,6 @@ static mp_obj_t pb_type_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v
     v = v < 0 ? 0 : v;
     self->hsv.v = v > 100 ? 100 : v;
 
-    // Store name as is
-    self->name = name;
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -150,11 +134,7 @@ void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
 
     // Print hsv representation that can be evaluated
     pb_type_Color_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    mp_printf(print, "Color(h=%u, s=%u, v=%u", self->hsv.h, self->hsv.s, self->hsv.v);
-    if (self->name != mp_const_none) {
-        mp_printf(print, ", '%s'", mp_obj_str_get_str(self->name));
-    }
-    mp_printf(print, ")");
+    mp_printf(print, "Color(h=%u, s=%u, v=%u)", self->hsv.h, self->hsv.s, self->hsv.v);
 }
 
 // Create and reset dict to hold colors added by user
@@ -187,9 +167,6 @@ STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
                 return;
             case MP_QSTR_v:
                 dest[0] = MP_OBJ_NEW_SMALL_INT(self->hsv.v);
-                return;
-            case MP_QSTR_name:
-                dest[0] = self->name;
                 return;
             default:
                 break;
@@ -252,9 +229,7 @@ STATIC mp_obj_t pb_type_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_o
             return pb_type_Color_make_new_helper(
                 self->hsv.h + pb_obj_get_int(rhs_in),
                 self->hsv.s,
-                self->hsv.v,
-                mp_const_none
-                );
+                self->hsv.v);
         case MP_BINARY_OP_MULTIPLY:
         // For both A*c and c*A, MicroPython calls c the rhs_in,
         // so we can just fall through and treat both the same here.
@@ -268,9 +243,7 @@ STATIC mp_obj_t pb_type_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_o
             return pb_type_Color_make_new_helper(
                 self->hsv.h,
                 self->hsv.s,
-                value,
-                mp_const_none
-                );
+                value);
         }
         case MP_BINARY_OP_FLOOR_DIVIDE:
         // Fall through since both floor and true divide eventually
@@ -285,9 +258,7 @@ STATIC mp_obj_t pb_type_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_o
             return pb_type_Color_make_new_helper(
                 self->hsv.h,
                 self->hsv.s,
-                value,
-                mp_const_none
-                );
+                value);
         }
         default:
             // Other operations not supported
@@ -317,15 +288,9 @@ STATIC mp_obj_t pb_type_Color_call(mp_obj_t self_in, size_t n_args, size_t n_kw,
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(h),
         PB_ARG_DEFAULT_INT(s, 100),
-        PB_ARG_DEFAULT_INT(v, 100),
-        PB_ARG_DEFAULT_NONE(name));
+        PB_ARG_DEFAULT_INT(v, 100));
 
-    // Name must be None or a string
-    if (name_in != mp_const_none && !mp_obj_is_qstr(name_in)) {
-        pb_assert_type(name_in, &mp_type_str);
-    }
-
-    return pb_type_Color_make_new_helper(pb_obj_get_int(h_in), pb_obj_get_int(s_in), pb_obj_get_int(v_in), name_in);
+    return pb_type_Color_make_new_helper(pb_obj_get_int(h_in), pb_obj_get_int(s_in), pb_obj_get_int(v_in));
 }
 
 const mp_obj_type_t pb_type_Color = {
