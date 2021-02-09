@@ -141,6 +141,14 @@ static mp_obj_t pb_type_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v
 }
 
 void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+
+    // If we're the class itself, use default type printer
+    if (MP_OBJ_TO_PTR(self_in) == &pb_type_Color_obj) {
+        mp_type_type.print(print, self_in, kind);
+        return;
+    }
+
+    // Print hsv representation that can be evaluated
     pb_type_Color_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, "Color(h=%u, s=%u, v=%u", self->hsv.h, self->hsv.s, self->hsv.v);
     if (self->name != mp_const_none) {
