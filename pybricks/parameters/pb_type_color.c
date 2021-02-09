@@ -150,6 +150,17 @@ void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
 }
 
 STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+
+    // If we are the Color class, look only at class attributes, i.e. colors.
+    if (MP_OBJ_TO_PTR(self_in) == &pb_type_Color_obj) {
+        // TODO: look up user colors and return if found
+
+        // User color not found, tell MicroPython to look at local_dict instead
+        dest[1] = MP_OBJ_SENTINEL;
+        return;
+    }
+
+    // Otherwise, we're a color instance, so look for instance attrs: h, s, v
     pb_type_Color_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     // Return the requested object, read only
@@ -172,9 +183,6 @@ STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
                 break;
         }
     }
-
-    // Not found, tell MicroPython to look at local_dict instead
-    dest[1] = MP_OBJ_SENTINEL;
 }
 
 STATIC mp_obj_t pb_type_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_obj_t rhs_in) {
