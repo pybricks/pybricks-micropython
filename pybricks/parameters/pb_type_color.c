@@ -124,6 +124,26 @@ static mp_obj_t pb_type_Color_make_new_helper(mp_int_t h, mp_int_t s, mp_int_t v
     return MP_OBJ_FROM_PTR(self);
 }
 
+// Create and reset dict to hold default colors and those added by user
+STATIC mp_obj_dict_t *colors;
+
+void pb_type_Color_reset(void) {
+    // Set default contents of Color class
+    colors = mp_obj_new_dict(0);
+    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_RED),     MP_OBJ_FROM_PTR(&pb_Color_RED_obj));
+    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_BROWN),   MP_OBJ_FROM_PTR(&pb_Color_BROWN_obj));
+    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_ORANGE),  MP_OBJ_FROM_PTR(&pb_Color_ORANGE_obj));
+    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_YELLOW),  MP_OBJ_FROM_PTR(&pb_Color_YELLOW_obj));
+    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_GREEN),   MP_OBJ_FROM_PTR(&pb_Color_GREEN_obj));
+    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_CYAN),    MP_OBJ_FROM_PTR(&pb_Color_CYAN_obj));
+    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_BLUE),    MP_OBJ_FROM_PTR(&pb_Color_BLUE_obj));
+    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_MAGENTA), MP_OBJ_FROM_PTR(&pb_Color_MAGENTA_obj));
+    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_VIOLET),  MP_OBJ_FROM_PTR(&pb_Color_VIOLET_obj));
+    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_BLACK),   MP_OBJ_FROM_PTR(&pb_Color_BLACK_obj));
+    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_GRAY),    MP_OBJ_FROM_PTR(&pb_Color_GRAY_obj));
+    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_WHITE),   MP_OBJ_FROM_PTR(&pb_Color_WHITE_obj));
+}
+
 void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
 
     // If we're the class itself, use default type printer
@@ -135,13 +155,6 @@ void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
     // Print hsv representation that can be evaluated
     pb_type_Color_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, "Color(h=%u, s=%u, v=%u)", self->hsv.h, self->hsv.s, self->hsv.v);
-}
-
-// Create and reset dict to hold colors added by user
-STATIC mp_obj_dict_t *user_colors;
-
-void pb_type_Color_reset(void) {
-    user_colors = mp_obj_new_dict(0);
 }
 
 STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
@@ -177,26 +190,21 @@ STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     // If we're here, we are the Color class, so check class attributes: colors
     if (dest[0] == MP_OBJ_NULL) {
 
-        // Find and return user color
-        mp_map_elem_t *elem = mp_map_lookup(&user_colors->map, MP_OBJ_NEW_QSTR(attr), MP_MAP_LOOKUP);
+        // Find and return color
+        mp_map_elem_t *elem = mp_map_lookup(&colors->map, MP_OBJ_NEW_QSTR(attr), MP_MAP_LOOKUP);
         if (elem != NULL) {
             dest[0] = elem->value;
-            return;
         }
-
-        // If no user color not found, look at local_dict instead:
-        dest[1] = MP_OBJ_SENTINEL;
         return;
-
     } else {
-        // Now either store or delete user color
+        // Now either store or delete color
         if (dest[1] == MP_OBJ_NULL) {
             // Delete color
-            mp_obj_dict_delete(MP_OBJ_FROM_PTR(user_colors), MP_OBJ_NEW_QSTR(attr));
+            mp_obj_dict_delete(MP_OBJ_FROM_PTR(colors), MP_OBJ_NEW_QSTR(attr));
         } else {
             // Store color, but if it is a color
             pb_assert_type(dest[1], &pb_type_Color);
-            mp_obj_dict_store(MP_OBJ_FROM_PTR(user_colors), MP_OBJ_NEW_QSTR(attr), dest[1]);
+            mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_OBJ_NEW_QSTR(attr), dest[1]);
         }
         dest[0] = MP_OBJ_NULL; // indicate success
         return;
@@ -266,22 +274,6 @@ STATIC mp_obj_t pb_type_Color_binary_op(mp_binary_op_t op, mp_obj_t lhs_in, mp_o
     }
 }
 
-STATIC const mp_rom_map_elem_t pb_type_Color_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_RED),     MP_ROM_PTR(&pb_Color_RED_obj)    },
-    { MP_ROM_QSTR(MP_QSTR_BROWN),   MP_ROM_PTR(&pb_Color_BROWN_obj)  },
-    { MP_ROM_QSTR(MP_QSTR_ORANGE),  MP_ROM_PTR(&pb_Color_ORANGE_obj) },
-    { MP_ROM_QSTR(MP_QSTR_YELLOW),  MP_ROM_PTR(&pb_Color_YELLOW_obj) },
-    { MP_ROM_QSTR(MP_QSTR_GREEN),   MP_ROM_PTR(&pb_Color_GREEN_obj)  },
-    { MP_ROM_QSTR(MP_QSTR_CYAN),    MP_ROM_PTR(&pb_Color_CYAN_obj)   },
-    { MP_ROM_QSTR(MP_QSTR_BLUE),    MP_ROM_PTR(&pb_Color_BLUE_obj)   },
-    { MP_ROM_QSTR(MP_QSTR_MAGENTA), MP_ROM_PTR(&pb_Color_MAGENTA_obj)},
-    { MP_ROM_QSTR(MP_QSTR_VIOLET),  MP_ROM_PTR(&pb_Color_VIOLET_obj) },
-    { MP_ROM_QSTR(MP_QSTR_BLACK),   MP_ROM_PTR(&pb_Color_BLACK_obj)  },
-    { MP_ROM_QSTR(MP_QSTR_GRAY),    MP_ROM_PTR(&pb_Color_GRAY_obj)   },
-    { MP_ROM_QSTR(MP_QSTR_WHITE),   MP_ROM_PTR(&pb_Color_WHITE_obj)  },
-};
-STATIC MP_DEFINE_CONST_DICT(pb_type_Color_locals_dict, pb_type_Color_table);
-
 // pybricks.parameters.Color
 STATIC mp_obj_t pb_type_Color_call(mp_obj_t self_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
@@ -301,7 +293,6 @@ const mp_obj_type_t pb_type_Color = {
     .print = pb_type_Color_print,
     .unary_op = mp_generic_unary_op,
     .binary_op = pb_type_Color_binary_op,
-    .locals_dict = (mp_obj_dict_t *)&(pb_type_Color_locals_dict),
 };
 
 // We expose an instance instead of the type. This lets us provide class
