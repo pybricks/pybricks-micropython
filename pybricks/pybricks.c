@@ -34,8 +34,14 @@ STATIC const mp_rom_obj_tuple_t pybricks_info_obj = {
     }
 };
 
+STATIC mp_obj_t pb_package_pybricks_init() {
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_0(pb_package_pybricks_init_obj, pb_package_pybricks_init);
+
 STATIC const mp_rom_map_elem_t pybricks_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),            MP_ROM_QSTR(MP_QSTR_pybricks) },
+    { MP_ROM_QSTR(MP_QSTR___init__),            MP_ROM_PTR(&pb_package_pybricks_init_obj)},
     { MP_ROM_QSTR(MP_QSTR_version),             MP_ROM_PTR(&pybricks_info_obj)},
     #if PYBRICKS_PY_GEOMETRY
     { MP_ROM_QSTR(MP_QSTR_geometry),            MP_ROM_PTR(&pb_module_geometry)},
