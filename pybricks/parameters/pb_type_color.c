@@ -149,24 +149,28 @@ void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
     mp_printf(print, ")");
 }
 
+// Create and reset dict to hold colors added by user
+STATIC mp_obj_dict_t *user_colors;
+
+void pb_type_Color_reset(void) {
+    user_colors = mp_obj_new_dict(0);
+}
+
 STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
 
-    // If we are the Color class, look only at class attributes, i.e. colors.
-    if (MP_OBJ_TO_PTR(self_in) == &pb_type_Color_obj) {
-        // TODO: look up user colors and return if found
+    // If we're a Color instance, just check h, s, v attributes
+    if (MP_OBJ_TO_PTR(self_in) != &pb_type_Color_obj) {
 
-        // User color not found, tell MicroPython to look at local_dict instead
-        dest[1] = MP_OBJ_SENTINEL;
-        return;
-    }
+        // Colors are immutable, so return if they try to write or delete.
+        if (dest[0] != MP_OBJ_NULL) {
+            return;
+        }
 
-    // Otherwise, we're a color instance, so look for instance attrs: h, s, v
-    pb_type_Color_obj_t *self = MP_OBJ_TO_PTR(self_in);
+        // Get the color
+        pb_type_Color_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    // Return the requested object, read only
-    if (dest[0] == MP_OBJ_NULL) {
-        switch (attr)
-        {
+        // Return h, s, or v as requested
+        switch (attr) {
             case MP_QSTR_h:
                 dest[0] = MP_OBJ_NEW_SMALL_INT(self->hsv.h);
                 return;
@@ -182,6 +186,35 @@ STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
             default:
                 break;
         }
+        return;
+    }
+
+    // If we're here, we are the Color class, so check class attributes: colors
+    if (dest[0] == MP_OBJ_NULL) {
+
+        // Find and return user color
+        mp_map_elem_t *elem = mp_map_lookup(&user_colors->map, MP_OBJ_NEW_QSTR(attr), MP_MAP_LOOKUP);
+        if (elem != NULL) {
+            dest[0] = elem->value;
+            return;
+        }
+
+        // If no user color not found, look at local_dict instead:
+        dest[1] = MP_OBJ_SENTINEL;
+        return;
+
+    } else {
+        // Now either store or delete user color
+        if (dest[1] == MP_OBJ_NULL) {
+            // Delete color
+            mp_obj_dict_delete(MP_OBJ_FROM_PTR(user_colors), MP_OBJ_NEW_QSTR(attr));
+        } else {
+            // Store color, but if it is a color
+            pb_assert_type(dest[1], &pb_type_Color);
+            mp_obj_dict_store(MP_OBJ_FROM_PTR(user_colors), MP_OBJ_NEW_QSTR(attr), dest[1]);
+        }
+        dest[0] = MP_OBJ_NULL; // indicate success
+        return;
     }
 }
 

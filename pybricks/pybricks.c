@@ -35,6 +35,10 @@ STATIC const mp_rom_obj_tuple_t pybricks_info_obj = {
 };
 
 STATIC mp_obj_t pb_package_pybricks_init() {
+
+    // Reset additions to Color parameters
+    pb_type_Color_reset();
+
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_0(pb_package_pybricks_init_obj, pb_package_pybricks_init);
