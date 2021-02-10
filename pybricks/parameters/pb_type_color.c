@@ -176,7 +176,7 @@ STATIC mp_obj_t pb_type_Color_subscr(mp_obj_t self_in, mp_obj_t index, mp_obj_t 
 
     // If user wants to store, ensure they store color
     if (value != MP_OBJ_SENTINEL && value != MP_OBJ_NULL) {
-        pb_assert_type(index, &pb_type_Color);
+        pb_assert_type(value, &pb_type_Color);
     }
 
     // Treat it like a dictionary
@@ -224,33 +224,15 @@ STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
         return;
     }
 
-    // If we're here, we are the Color class, so check class attributes: colors
-    // First, check that if we write, we store a color type
-    if (dest[0] != MP_OBJ_NULL && dest[1] != MP_OBJ_NULL) {
-        pb_assert_type(dest[1], &pb_type_Color);
-    }
+    // If we're here, we are the Color class, so treat as dict, converting the
+    // attr and dest to the expected format for subscr().
+    mp_obj_t arg = (dest[0] == MP_OBJ_NULL) ? MP_OBJ_SENTINEL : // load else
+        ((dest[1] == MP_OBJ_NULL) ? MP_OBJ_NULL : dest[1]); // delete else write
 
-    // Otherwise, treat it like regular dictionary access
-    if (dest[0] == MP_OBJ_NULL) {
-
-        // Find and return color
-        mp_map_elem_t *elem = mp_map_lookup(&colors->map, MP_OBJ_NEW_QSTR(attr), MP_MAP_LOOKUP);
-        if (elem != NULL) {
-            dest[0] = elem->value;
-        }
-        return;
-    } else {
-        // Now either store or delete color
-        if (dest[1] == MP_OBJ_NULL) {
-            // Delete color
-            mp_obj_dict_delete(MP_OBJ_FROM_PTR(colors), MP_OBJ_NEW_QSTR(attr));
-        } else {
-            // Store color, but if it is a color
-            pb_assert_type(dest[1], &pb_type_Color);
-            mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_OBJ_NEW_QSTR(attr), dest[1]);
-        }
-        dest[0] = MP_OBJ_NULL; // indicate success
-        return;
+    // Read from dictionary. For subscr(), none means success. For attr, null is success.
+    dest[0] = pb_type_Color_subscr(self_in, MP_OBJ_NEW_QSTR(attr), arg);
+    if (dest[0] == mp_const_none) {
+        dest[0] = MP_OBJ_NULL;
     }
 }
 
