@@ -152,17 +152,17 @@ void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
         return;
     }
 
-    // Print name of color, if available
+    // Otherwise, print name of color, if available
     mp_map_elem_t *color_elems = colors->map.table;
     for (size_t i = 0; i < colors->map.used; i++) {
         mp_map_elem_t *element = &color_elems[i];
         if (self_in == element->value && MP_OBJ_IS_QSTR(element->key)) {
-            mp_printf(print, "Color.%q = ", MP_OBJ_QSTR_VALUE(element->key));
-            break;
+            mp_printf(print, "Color.%q", MP_OBJ_QSTR_VALUE(element->key));
+            return;
         }
     }
 
-    // Print hsv representation that can be evaluated
+    // Otherwise, print hsv representation that can be evaluated
     pb_type_Color_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, "Color(h=%u, s=%u, v=%u)", self->hsv.h, self->hsv.s, self->hsv.v);
 }
