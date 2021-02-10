@@ -90,6 +90,9 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
     // Check if we are on target
     ctl->on_target = ctl->on_target_func(&ctl->trajectory, &ctl->settings, time_ref, count_now, rate_now, ctl->stalled);
 
+    // Save (low-pass filtered) load for diagnostics
+    ctl->load = (ctl->load * (100 - PBIO_CONTROL_LOOP_TIME_MS) + torque * PBIO_CONTROL_LOOP_TIME_MS) / 100;
+
     // If we are done and the next action is passive then return zero actuation
     if (ctl->on_target && ctl->after_stop != PBIO_ACTUATION_HOLD) {
         *actuation = ctl->after_stop;
@@ -170,6 +173,9 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
 
         // Set the new control state
         ctl->type = PBIO_CONTROL_ANGLE;
+
+        // Reset load filter
+        ctl->load = 0;
     }
 
     return PBIO_SUCCESS;
@@ -219,6 +225,9 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
 
         // This is an angular control maneuver
         ctl->type = PBIO_CONTROL_ANGLE;
+
+        // Reset load filter
+        ctl->load = 0;
     }
 
     return PBIO_SUCCESS;
@@ -267,6 +276,9 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
 
         // Set the new control state
         ctl->type = PBIO_CONTROL_TIMED;
+
+        // Reset load filter
+        ctl->load = 0;
     }
 
     return PBIO_SUCCESS;
@@ -330,7 +342,7 @@ void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed
     *speed = pbio_control_counts_to_user(s, s->max_rate);
     *acceleration = pbio_control_counts_to_user(s, s->abs_acceleration);
     *duty = s->max_duty / 100;
-    *torque = s->max_torque;
+    *torque = s->max_torque / 1000;
 }
 
 pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t duty, int32_t torque) {
@@ -340,7 +352,7 @@ pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_
     s->max_rate = pbio_control_user_to_counts(s, speed);
     s->abs_acceleration = pbio_control_user_to_counts(s, acceleration);
     s->max_duty = duty * 100;
-    s->max_torque = torque;
+    s->max_torque = torque * 1000;
     return PBIO_SUCCESS;
 }
 
@@ -421,4 +433,8 @@ bool pbio_control_is_stalled(pbio_control_t *ctl) {
 
 bool pbio_control_is_done(pbio_control_t *ctl) {
     return ctl->type == PBIO_CONTROL_NONE || ctl->on_target;
+}
+
+int32_t pbio_control_get_load(pbio_control_t *ctl) {
+    return ctl->type == PBIO_CONTROL_NONE ? 0 : ctl->load;
 }

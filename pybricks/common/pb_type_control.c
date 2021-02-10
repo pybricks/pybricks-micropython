@@ -233,6 +233,14 @@ STATIC mp_obj_t common_Control_done(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Control_done_obj, common_Control_done);
 
+// pybricks._common.Control.load
+STATIC mp_obj_t common_Control_load(mp_obj_t self_in) {
+    common_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    // Read currently applied PID feedback torque and return as mNm.
+    return mp_obj_new_int(pbio_control_get_load(self->control) / 1000);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(common_Control_load_obj, common_Control_load);
+
 // pybricks._common.Control.stalled
 STATIC mp_obj_t common_Control_stalled(mp_obj_t self_in) {
     common_Control_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -248,6 +256,7 @@ STATIC const mp_rom_map_elem_t common_Control_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_stall_tolerances), MP_ROM_PTR(&common_Control_stall_tolerances_obj) },
     { MP_ROM_QSTR(MP_QSTR_trajectory), MP_ROM_PTR(&common_Control_trajectory_obj) },
     { MP_ROM_QSTR(MP_QSTR_done), MP_ROM_PTR(&common_Control_done_obj) },
+    { MP_ROM_QSTR(MP_QSTR_load), MP_ROM_PTR(&common_Control_load_obj) },
     { MP_ROM_QSTR(MP_QSTR_stalled), MP_ROM_PTR(&common_Control_stalled_obj) },
     { MP_ROM_QSTR(MP_QSTR_scale), MP_ROM_ATTRIBUTE_OFFSET(common_Control_obj_t, scale) },
     { MP_ROM_QSTR(MP_QSTR_log), MP_ROM_ATTRIBUTE_OFFSET(common_Control_obj_t, logger) },

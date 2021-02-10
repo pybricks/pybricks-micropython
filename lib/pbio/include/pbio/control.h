@@ -81,6 +81,7 @@ typedef struct _pbio_control_t {
     pbio_count_integrator_t count_integrator;
     pbio_control_on_target_t on_target_func;
     pbio_log_t log;
+    int32_t load;
     bool stalled;
     bool on_target;
 } pbio_control_t;
@@ -113,6 +114,7 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
 
 bool pbio_control_is_stalled(pbio_control_t *ctl);
 bool pbio_control_is_done(pbio_control_t *ctl);
+int32_t pbio_control_get_load(pbio_control_t *ctl);
 
 void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, int32_t count_est, int32_t rate_est, pbio_actuation_t *actuation, int32_t *control, int32_t *rate_ref, int32_t *acceleration_ref);
 
