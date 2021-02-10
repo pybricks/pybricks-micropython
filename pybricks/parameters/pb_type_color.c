@@ -146,9 +146,9 @@ void pb_type_Color_reset(void) {
 
 void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
 
-    // If we're the class itself, use default type printer
+    // If we're the class itself, use dict printer
     if (MP_OBJ_TO_PTR(self_in) == &pb_type_Color_obj) {
-        mp_type_type.print(print, self_in, kind);
+        mp_type_dict.print(print, colors, kind);
         return;
     }
 
@@ -165,6 +165,33 @@ void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
     // Print hsv representation that can be evaluated
     pb_type_Color_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_printf(print, "Color(h=%u, s=%u, v=%u)", self->hsv.h, self->hsv.s, self->hsv.v);
+}
+
+STATIC mp_obj_t pb_type_Color_subscr(mp_obj_t self_in, mp_obj_t index, mp_obj_t value) {
+
+    // If we're a Color instance, there is no subscr
+    if (MP_OBJ_TO_PTR(self_in) != &pb_type_Color_obj) {
+        return MP_OBJ_NULL;
+    }
+
+    // If user wants to store, ensure they store color
+    if (value != MP_OBJ_SENTINEL && value != MP_OBJ_NULL) {
+        pb_assert_type(index, &pb_type_Color);
+    }
+
+    // Treat it like a dictionary
+    return mp_type_dict.subscr(colors, index, value);
+}
+
+STATIC mp_obj_t pb_type_Color_getiter(mp_obj_t self_in, mp_obj_iter_buf_t *iter_buf) {
+
+    // If we're a Color instance, there is no getiter
+    if (MP_OBJ_TO_PTR(self_in) != &pb_type_Color_obj) {
+        return MP_OBJ_NULL;
+    }
+
+    // Treat it like a dictionary
+    return mp_type_dict.getiter(colors, iter_buf);
 }
 
 STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
@@ -198,6 +225,12 @@ STATIC void pb_type_Color_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     }
 
     // If we're here, we are the Color class, so check class attributes: colors
+    // First, check that if we write, we store a color type
+    if (dest[0] != MP_OBJ_NULL && dest[1] != MP_OBJ_NULL) {
+        pb_assert_type(dest[1], &pb_type_Color);
+    }
+
+    // Otherwise, treat it like regular dictionary access
     if (dest[0] == MP_OBJ_NULL) {
 
         // Find and return color
@@ -303,6 +336,8 @@ const mp_obj_type_t pb_type_Color = {
     .print = pb_type_Color_print,
     .unary_op = mp_generic_unary_op,
     .binary_op = pb_type_Color_binary_op,
+    .subscr = pb_type_Color_subscr,
+    .getiter = pb_type_Color_getiter,
 };
 
 // We expose an instance instead of the type. This lets us provide class
