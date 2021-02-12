@@ -397,6 +397,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/bluetooth/bluetooth_init_cc2564C_1.4.c \
 	drv/bluetooth/bluetooth_stm32_bluenrg.c \
 	drv/bluetooth/bluetooth_stm32_cc2640.c \
+	drv/bluetooth/pybricks_service_server.c \
 	drv/button/button_adc.c \
 	drv/button/button_gpio.c \
 	drv/clock/clock_stm32.c \

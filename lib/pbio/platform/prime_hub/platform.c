@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#include <btstack_chipset_cc256x.h>
+#undef UNUSED
 #include <stm32f4xx_hal.h>
 
 #include "pbio/uartdev.h"
@@ -11,6 +13,7 @@
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/bluetooth/bluetooth_btstack_control_gpio.h"
 #include "../../drv/bluetooth/bluetooth_btstack_uart_block_stm32_hal.h"
+#include "../../drv/bluetooth/bluetooth_btstack.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_array_pwm.h"
 #include "../../drv/led/led_dual.h"
@@ -110,6 +113,14 @@ void DMA1_Stream7_IRQHandler(void) {
 void USART2_IRQHandler(void) {
     pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_uart_irq();
 }
+
+const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_data = {
+    .uart_block_instance = pbdrv_bluetooth_btstack_uart_block_stm32_hal_instance,
+    .chipset_instance = btstack_chipset_cc256x_instance,
+    .control_instance = pbdrv_bluetooth_btstack_control_gpio_instance,
+    .er_key = (const uint8_t *)UID_BASE,
+    .ir_key = (const uint8_t *)UID_BASE,
+};
 
 // I/O ports
 

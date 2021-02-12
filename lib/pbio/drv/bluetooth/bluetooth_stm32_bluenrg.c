@@ -59,8 +59,8 @@ typedef struct {
 typedef struct {
     const uint8_t *data;
     uint8_t size;
-    pbdrv_bluetooth_uart_tx_done_t done;
-} uart_tx_context_t;
+    pbdrv_bluetooth_tx_done_t done;
+} tx_context_t;
 
 // Tx buffer for SPI writes
 static uint8_t write_buf[HCI_MAX_PAYLOAD_SIZE];
@@ -96,8 +96,11 @@ PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
 // TODO: turn current task into a linked list of tasks
 static task_t current_task;
 static bool bluetooth_ready;
+static bool pybricks_notify_en;
+static bool uart_tx_notify_en;
 static pbdrv_bluetooth_on_event_t bluetooth_on_event;
-static pbdrv_bluetooth_uart_on_rx_t uart_on_rx;
+static pbdrv_bluetooth_on_rx_t pybricks_on_rx;
+static pbdrv_bluetooth_on_rx_t uart_on_rx;
 
 /**
  * Runs the current task until the next yield.
@@ -265,9 +268,18 @@ void pbdrv_bluetooth_start_advertising(void) {
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
-    if ((connection & PBDRV_BLUETOOTH_CONNECTION_UART) && conn_handle) {
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_ANY && conn_handle) {
         return true;
     }
+
+    if ((connection & PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) && pybricks_notify_en) {
+        return true;
+    }
+
+    if ((connection & PBDRV_BLUETOOTH_CONNECTION_UART) && uart_tx_notify_en) {
+        return true;
+    }
+
     return false;
 }
 
@@ -275,12 +287,50 @@ void pbdrv_bluetooth_set_on_event(pbdrv_bluetooth_on_event_t on_event) {
     bluetooth_on_event = on_event;
 }
 
+static PT_THREAD(pybricks_service_send_data(struct pt *pt, void *context))
+{
+    tx_context_t *pybricks_tx = context;
+
+    PT_BEGIN(pt);
+
+retry:
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gatt_update_char_value_begin(pybricks_service_handle, pybricks_char_handle,
+        0, pybricks_tx->size, pybricks_tx->data);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    tBleStatus ret = aci_gatt_update_char_value_end();
+
+    if (ret == BLE_STATUS_INSUFFICIENT_RESOURCES) {
+        // this will happen if notifications are enabled and the previous
+        // changes haven't been sent over the air yet
+        goto retry;
+    }
+
+    pybricks_tx->done();
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_pybricks_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_tx_done_t done) {
+    static tx_context_t pybricks_tx;
+
+    pybricks_tx.data = data;
+    pybricks_tx.size = size;
+    pybricks_tx.done = done;
+
+    start_task(pybricks_service_send_data, &pybricks_tx);
+}
+
+void pbdrv_bluetooth_pybricks_set_on_rx(pbdrv_bluetooth_on_rx_t on_rx) {
+    pybricks_on_rx = on_rx;
+}
+
 /**
  * Handles sending data via the nRF UART Tx characteristic.
  */
 static PT_THREAD(uart_service_send_data(struct pt *pt, void *context))
 {
-    uart_tx_context_t *uart_tx = context;
+    tx_context_t *uart_tx = context;
 
     PT_BEGIN(pt);
 
@@ -302,8 +352,8 @@ retry:
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_uart_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_uart_tx_done_t done) {
-    static uart_tx_context_t uart_tx;
+void pbdrv_bluetooth_uart_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_tx_done_t done) {
+    static tx_context_t uart_tx;
 
     uart_tx.data = data;
     uart_tx.size = size;
@@ -312,7 +362,7 @@ void pbdrv_bluetooth_uart_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_
     start_task(uart_service_send_data, &uart_tx);
 }
 
-void pbdrv_bluetooth_uart_set_on_rx(pbdrv_bluetooth_uart_on_rx_t on_rx) {
+void pbdrv_bluetooth_uart_set_on_rx(pbdrv_bluetooth_on_rx_t on_rx) {
     uart_on_rx = on_rx;
 }
 
@@ -393,18 +443,6 @@ static bool get_bluenrg_buf_size(uint8_t *wbuf, uint8_t *rbuf) {
 // assigned to one of RESET_* from bluenrg_hal_aci.h
 static uint8_t reset_reason;
 
-// static void pybricks_char_modified(uint8_t *data, uint8_t size) {
-//     if (size < 2) {
-//         return;
-//     }
-
-//     switch (data[0]) {
-//     case PBIO_COM_MSG_TYPE_CMD:
-//         process_post(&pbsys_process, PBIO_EVENT_COM_CMD, (process_data_t)(uint32_t)data[1]);
-//         break;
-//     }
-// }
-
 static PT_THREAD(init_pybricks_service(struct pt *pt)) {
     // c5f50001-8280-46da-89f4-6d8051e4aeef
     static const uint8_t pybricks_service_uuid[] = {
@@ -442,6 +480,8 @@ static void handle_event(hci_event_pckt *event) {
             evt_disconn_complete *evt = (evt_disconn_complete *)event->data;
             if (conn_handle == evt->handle) {
                 conn_handle = 0;
+                pybricks_notify_en = false;
+                uart_tx_notify_en = false;
             }
         }
         break;
@@ -470,11 +510,17 @@ static void handle_event(hci_event_pckt *event) {
                 case EVT_BLUE_GATT_ATTRIBUTE_MODIFIED: {
                     evt_gatt_attr_modified *subevt = (evt_gatt_attr_modified *)evt->data;
                     if (subevt->attr_handle == pybricks_char_handle + 1) {
-                        // pybricks_char_modified(subevt->att_data, subevt->data_length);
+                        if (pybricks_on_rx) {
+                            pybricks_on_rx(subevt->att_data, subevt->data_length);
+                        }
+                    } else if (subevt->attr_handle == pybricks_char_handle + 2) {
+                        pybricks_notify_en = *(uint16_t *)subevt->att_data;
                     } else if (subevt->attr_handle == uart_rx_char_handle + 1) {
                         if (uart_on_rx) {
                             uart_on_rx(subevt->att_data, subevt->data_length);
                         }
+                    } else if (subevt->attr_handle == uart_tx_char_handle + 2) {
+                        uart_tx_notify_en = *(uint16_t *)subevt->att_data;
                     }
                 }
                 break;

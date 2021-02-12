@@ -81,6 +81,22 @@ static void uart_on_rx(const uint8_t *data, uint8_t size) {
     }
 }
 
+static void pybricks_tx_done(void) {
+    process_poll(&pbsys_bluetooth_process);
+}
+
+static void pybricks_on_rx(const uint8_t *data, uint8_t size) {
+    // TODO: this is a temporary echo service - needs to trigger events instead
+    static uint8_t copy[NRF_CHAR_SIZE];
+
+    for (int i = 0; i < MIN(size, NRF_CHAR_SIZE); i++) {
+        copy[i] = data[i] + 1;
+    }
+
+    pbdrv_bluetooth_pybricks_tx(copy, size, pybricks_tx_done);
+    process_poll(&pbsys_bluetooth_process);
+}
+
 PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
     static struct etimer timer;
 
@@ -88,6 +104,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
 
     pbdrv_bluetooth_set_on_event(on_event);
     pbdrv_bluetooth_uart_set_on_rx(uart_on_rx);
+    pbdrv_bluetooth_pybricks_set_on_rx(pybricks_on_rx);
 
     for (;;) {
         // make sure the Bluetooth chip is in reset long enough to actually reset

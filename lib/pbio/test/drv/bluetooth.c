@@ -1,19 +1,410 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2021 The Pybricks Authors
 
+#include <assert.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 
 #include <btstack.h>
+#include <btstack_chipset_cc256x.h>
+#include <contiki-lib.h>
 #include <contiki.h>
-#include <tinytest.h>
 #include <tinytest_macros.h>
+#include <tinytest.h>
+
+#include <test-pbio.h>
 
 #include "../../drv/bluetooth/bluetooth_btstack_run_loop_contiki.h"
+#include "../../drv/bluetooth/bluetooth_btstack.h"
 #include "../../drv/core.h"
 
-void pbdrv_bluetooth_init(void) {
-    btstack_run_loop_init(pbdrv_bluetooth_btstack_run_loop_contiki_get_instance());
+// UART HCI queue
+
+typedef struct {
+    LIST_STRUCT(queue);
+    const uint8_t *buffer;
+    uint16_t length;
+} queue_item_t;
+
+LIST(receive_queue);
+PROCESS(test_uart_receive_process, "UART receive");
+PROCESS(test_uart_send_process, "UART send");
+
+static queue_item_t *new_item(const void *buffer, uint16_t length) {
+    queue_item_t *item = malloc(sizeof(queue_item_t));
+    assert(item);
+
+    uint8_t *copy = malloc(length);
+    assert(copy);
+
+    LIST_STRUCT_INIT(item, queue);
+    memcpy(copy, buffer, length);
+    item->buffer = copy;
+    item->length = length;
+
+    return item;
 }
+
+static void free_item(queue_item_t *item) {
+    free((void *)item->buffer);
+    free(item);
+}
+
+static void queue_packet(const uint8_t *buffer, uint16_t length) {
+    list_add(receive_queue, new_item(buffer, length));
+    process_poll(&test_uart_receive_process);
+}
+
+#define queue_command_complete(opcode, ...) {                       \
+        static const uint8_t result[] = {                           \
+            __VA_ARGS__                                             \
+        };                                                          \
+        _queue_command_complete(opcode, result, sizeof(result));    \
+}
+
+static void _queue_command_complete(uint16_t opcode, const uint8_t *result, uint16_t length) {
+    uint8_t buffer[HCI_ACL_PAYLOAD_SIZE];
+
+    assert(length + 6 <= HCI_ACL_PAYLOAD_SIZE);
+
+    buffer[0] = 0x04; // packet type = Event
+    buffer[1] = 0x0e; // command complete
+    buffer[2] = length + 3;
+    buffer[3] = 1; // number of packets
+    little_endian_store_16(buffer, 4, opcode);
+    memcpy(&buffer[6], result, length);
+
+    queue_packet(buffer, length + 6);
+}
+
+// public API shared with other tests
+
+static bool advertising_enabled;
+
+bool pbio_test_bluetooth_is_advertising_enabled(void) {
+    return advertising_enabled;
+}
+
+void pbio_test_bluetooth_connect(void) {
+    // TODO: this should probably be doing more like enumerating service, etc.
+    // In other words it should trigger all of the commands that Windows/Linux/
+    // Mac do when they scan and connect.
+
+    // For now, it just sends the required command to make btstack enter the
+    // connected state.
+
+    const int length = 19;
+    uint8_t buffer[length + 3];
+
+    buffer[0] = 0x04; // packet type = Event
+    buffer[1] = 0x3e; // LE Meta event
+    buffer[2] = length;
+    buffer[3] = 0x01; // LE Connection Complete event
+    buffer[4] = 0x00; // status = successful
+    little_endian_store_16(buffer, 5, 0x0400); // connection handle
+    buffer[7] = 0x01; // role = slave
+    buffer[8] = 0x00; // peer address type = public
+    for (int i = 9; i < 15; i++) {
+        buffer[i] = 0x11; // peer address = 11:11:11:11:11:11
+    }
+    little_endian_store_16(buffer, 15, 0x0028); // connection interval
+    little_endian_store_16(buffer, 17, 0x0000); // connection latency
+    little_endian_store_16(buffer, 19, 0x002a); // supervision timeout
+    buffer[21] = 0x00; // master clock accuracy
+
+    queue_packet(buffer, length + 3);
+}
+
+static pbio_test_bluetooth_control_state_t control_state;
+
+pbio_test_bluetooth_control_state_t pbio_test_bluetooth_get_control_state(void) {
+    return control_state;
+}
+
+// HCI send/receive processes
+
+static uint8_t *test_uartreceive_buffer;
+static uint16_t test_uartreceive_buffer_length;
+static const uint8_t *test_uartsend_buffer;
+static uint16_t test_uartsend_buffer_length;
+
+static void (*test_uart_received_block_handler)(void);
+static void (*test_uart_sent_block_handler)(void);
+
+PROCESS_THREAD(test_uart_receive_process, ev, data) {
+    static queue_item_t *item;
+    static int i;
+
+    PROCESS_BEGIN();
+
+    for (;;) {
+        PROCESS_WAIT_UNTIL(*receive_queue);
+        item = list_pop(receive_queue);
+
+        for (i = 0; i < item->length;) {
+            PROCESS_WAIT_UNTIL(test_uartreceive_buffer_length > 0);
+            tt_want_uint_op(test_uartreceive_buffer_length, <=, item->length - i);
+            memcpy(test_uartreceive_buffer, &item->buffer[i],
+                test_uartreceive_buffer_length);
+
+            i += test_uartreceive_buffer_length;
+
+            test_uartreceive_buffer = NULL;
+            test_uartreceive_buffer_length = 0;
+            test_uart_received_block_handler();
+        }
+
+        free_item(item);
+    }
+
+    PROCESS_END();
+}
+
+// this simulates the replies from the Bluetooth chip
+static void handle_send(const uint8_t *buffer, uint16_t length) {
+    // this is based on simulator.py from btstack
+    switch (buffer[0]) {
+        case 0x01: { // Command
+            uint16_t opcode = little_endian_read_16(buffer, 1);
+            switch (opcode) {
+                case 0x0c03: // HCI_RESET
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0x1001: // HCI_READ_LOCAL_VERSION_INFO
+                    queue_command_complete(opcode, 0x00, 0x10, 0x00, 0x06, 0x86, 0x1d, 0x06, 0x0a, 0x00, 0x86, 0x1d);
+                    break;
+                case 0x0c14: // read local name
+                    queue_command_complete(opcode, 0x00, 't', 'e', 's', 't', 0x00);
+                    break;
+                case 0x1002: // HCI_READ_LOCAL_SUPPORTED_COMMANDS
+                    queue_command_complete(opcode, 0x00, 0xff, 0xff, 0xff, 0x03, 0xfe, 0xff, 0xff, 0xff,
+                        0xff, 0xff, 0xff, 0xff, 0xf3, 0x0f, 0xe8, 0xfe,
+                        0x3f, 0xf7, 0x83, 0xff, 0x1c, 0x00, 0x00, 0x00,
+                        0x61, 0xf7, 0xff, 0xff, 0x7f, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+                    break;
+                case 0x1009: // HCI_READ_BDADDR
+                    queue_command_complete(opcode, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+                    break;
+                case 0x1005: // read buffer size
+                    queue_command_complete(opcode, 0x00, 0x36, 0x01, 0x40, 0x0a, 0x00, 0x08, 0x00);
+                    break;
+                case 0x1003: // read local supported features
+                    queue_command_complete(opcode, 0x00, 0xff, 0xff, 0x8f, 0xfe, 0xf8, 0xff, 0x5b, 0x87);
+                    break;
+                case 0x0c01: // HCI_SET_EVENT_MASK
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0x2002: // LE Read Buffer Size
+                    queue_command_complete(opcode, 0x00, 0x00, 0x00, 0x00);
+                    break;
+                case 0x0c6d: // write le host supported
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0x2001: // LE Set Event Mask
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0x2017: // LE Encrypt - key 16, data 16
+                    queue_command_complete(opcode, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00);
+                    break;
+                case 0x2006: // LE Set Advertising Parameters
+                    log_debug("advertising parameters, min %d, max %d, type 0x%02x, own addr type 0x%02x, peer addr type 0x%02x, peer addr %02x:%02x:%02x:%02x:%02x:%02x, chan map 0x%02x",
+                        little_endian_read_16(buffer, 4), little_endian_read_16(buffer, 6), buffer[8], buffer[9], buffer[10], buffer[11], buffer[12], buffer[13], buffer[14], buffer[15], buffer[16], buffer[17]);
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0x2008: // LE Set Advertising Data
+                    log_debug("advertising data, len %d", buffer[4]);
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0x2009: // LE Set Scan Response Data
+                    log_debug("scan response data, len %d", buffer[4]);
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0x200a: // LE Set Advertise Enable
+                    advertising_enabled = buffer[4];
+                    log_debug("advertising_enabled %d", advertising_enabled);
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0xff36: // HCI_VS_Update_UART_HCI_Baudrate
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0xfe37: // HCI_VS_Start_VS_Lock
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0xff05: // HCI_VS_Read_Write_Memory_Block
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0xff83: // Goto_Address
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0xfd09: // HCI_VS_Read_Modify_Write_Hardware_Register
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0xfd0c: // HCI_VS_Sleep_Mode_Configurations
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0xfd1c: // HCI_VS_Fast_Clock_Configuration_btip
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0xfd76: // Send_HCI_VS_DRPb_Set_RF_Calibration_Info
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0xfd82: // HCI_VS_DRPb_Set_Power_Vector
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0xfd87: // HCI_VS_DRPb_Set_Class2_Single_Power
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0xfd80: // HCI_VS_DRPb_Enable_RF_Calibration
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0xfe38: // HCI_VS_Stop_VS_Lock
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0xfd2b: // HCI_VS_HCILL_Parameters
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0xfd5b: // HCI_VS_LE_Enable
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0xfddd: // HCI_VS_LE_Output_Power
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                default:
+                    tt_failprint_f(("unhandled opcode: 0x%04x", opcode));
+                    break;
+            }
+        }
+        break;
+
+        default:
+            tt_failprint_f(("unhandled packet type: 0x%02x", buffer[0]));
+            break;
+    }
+}
+
+PROCESS_THREAD(test_uart_send_process, ev, data) {
+    PROCESS_BEGIN();
+
+    for (;;) {
+        PROCESS_WAIT_UNTIL(test_uartsend_buffer_length > 0);
+
+        handle_send(test_uartsend_buffer,
+            test_uartsend_buffer_length);
+
+        test_uartsend_buffer = NULL;
+        test_uartsend_buffer_length = 0;
+        test_uart_sent_block_handler();
+    }
+
+    PROCESS_END();
+}
+
+// test bluetooth btstack driver uart block implementation
+
+static int test_uart_block_init(const btstack_uart_config_t *uart_config) {
+    log_debug("%s", __func__);
+    process_start(&test_uart_receive_process, NULL);
+    process_start(&test_uart_send_process, NULL);
+    return 0;
+}
+
+static int test_uart_block_open(void) {
+    log_debug("%s", __func__);
+    return 0;
+}
+
+static int test_uart_block_close(void) {
+    log_debug("%s", __func__);
+    return 0;
+}
+
+static void test_uart_block_set_block_received(void (*block_handler)(void)) {
+    log_debug("%s", __func__);
+    test_uart_received_block_handler = block_handler;
+}
+
+static void test_uart_block_set_block_sent(void (*block_handler)(void)) {
+    log_debug("%s", __func__);
+    test_uart_sent_block_handler = block_handler;
+}
+
+static int test_uart_block_set_baudrate(uint32_t baudrate) {
+    return 0;
+}
+
+static void test_uart_block_receive_block(uint8_t *buffer, uint16_t length) {
+    test_uartreceive_buffer = buffer;
+    test_uartreceive_buffer_length = length;
+    process_poll(&test_uart_receive_process);
+}
+
+static void test_uart_block_send_block(const uint8_t *buffer, uint16_t length) {
+    test_uartsend_buffer = buffer;
+    test_uartsend_buffer_length = length;
+    process_poll(&test_uart_send_process);
+}
+
+static const btstack_uart_block_t *test_uart_block_instance(void) {
+    static const btstack_uart_block_t uart_block = {
+        .init = test_uart_block_init,
+        .open = test_uart_block_open,
+        .open = test_uart_block_close,
+        .set_block_received = test_uart_block_set_block_received,
+        .set_block_sent = test_uart_block_set_block_sent,
+        .set_baudrate = test_uart_block_set_baudrate,
+        .receive_block = test_uart_block_receive_block,
+        .send_block = test_uart_block_send_block,
+    };
+
+    return &uart_block;
+}
+
+// test bluetooth btstack control driver implementation
+
+static void test_control_init(const void *config) {
+    log_debug("%s", __func__);
+    control_state = PBIO_TEST_BLUETOOTH_STATE_OFF;
+}
+
+static int test_control_on(void) {
+    log_debug("%s", __func__);
+    control_state = PBIO_TEST_BLUETOOTH_STATE_ON;
+    return 0;
+}
+
+static int test_control_off(void) {
+    log_debug("%s", __func__);
+    control_state = PBIO_TEST_BLUETOOTH_STATE_OFF;
+    return 0;
+}
+
+static const btstack_control_t *test_control_instance(void) {
+    static const btstack_control_t control = {
+        .init = test_control_init,
+        .on = test_control_on,
+        .off = test_control_off,
+    };
+
+    return &control;
+}
+
+static const sm_key_t test_key;
+
+const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_data = {
+    .uart_block_instance = test_uart_block_instance,
+    .chipset_instance = btstack_chipset_cc256x_instance,
+    .control_instance = test_control_instance,
+    .er_key = test_key,
+    .ir_key = test_key,
+};
+
+// local helpers for tests in this file
 
 static void handle_timer_timeout(btstack_timer_source_t *ts) {
     uint32_t *callback_count = ts->context;

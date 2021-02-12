@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2020 The Pybricks Authors
+// Copyright (c) 2019-2021 The Pybricks Authors
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 
+#include <btstack.h>
 #include <tinytest.h>
 #include <tinytest_macros.h>
 
@@ -38,6 +39,20 @@ static void pbio_test_run_thread(void *env) {
     if (pbio_test_timeout) {
         timeout = atoi(pbio_test_timeout);
     }
+
+    // REVISIT: we may also want to enable debug logging in non-thread tests
+    int debug = 0;
+    const char *pbio_test_debug = getenv("PBIO_TEST_DEBUG");
+    if (pbio_test_debug) {
+        debug = atoi(pbio_test_debug);
+    }
+
+    if (debug) {
+        hci_dump_open(NULL, HCI_DUMP_STDOUT);
+    }
+    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_DEBUG, debug);
+    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_INFO, debug);
+    hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_ERROR, 1);
 
     pbio_init();
 
@@ -163,6 +178,13 @@ static struct testcase_t pbio_uartdev_tests[] = {
 
 // PBSYS
 
+PBIO_PT_THREAD_TEST_FUNC(test_bluetooth);
+
+static struct testcase_t pbsys_bluetooth_tests[] = {
+    PBIO_PT_THREAD_TEST(test_bluetooth),
+    END_OF_TESTCASES
+};
+
 PBIO_PT_THREAD_TEST_FUNC(test_status);
 
 static struct testcase_t pbsys_status_tests[] = {
@@ -179,6 +201,7 @@ static struct testgroup_t test_groups[] = {
     { "src/math/", pbio_math_tests },
     { "src/motor/", pbio_motor_tests },
     { "src/uartdev/", pbio_uartdev_tests, },
+    { "sys/bluetooth/", pbsys_bluetooth_tests, },
     { "sys/status/", pbsys_status_tests, },
     END_OF_GROUPS
 };

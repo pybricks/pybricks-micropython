@@ -5,7 +5,7 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32_CC264X
+#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32_UART
 
 #include <btstack.h>
 #undef UNUSED // btstack and stm32 both define UNUSED
@@ -222,4 +222,4 @@ void pbdrv_bluetooth_btstack_uart_block_stm32_hal_handle_uart_irq(void) {
     HAL_UART_IRQHandler(&btstack_huart);
 }
 
-#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32_CC264X
+#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32_UART

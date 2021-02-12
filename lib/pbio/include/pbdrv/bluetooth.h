@@ -17,9 +17,9 @@
 
 /** Flags indicating which services are connected. */
 typedef enum {
-    /** The Pybricks service is connected. */
+    /** The Pybricks service is connected (notifications enabled). */
     PBDRV_BLUETOOTH_CONNECTION_PYBRICKS = 1 << 0,
-    /** The nRF UART service is connected. */
+    /** The nRF UART service is connected (notifications enabled). */
     PBDRV_BLUETOOTH_CONNECTION_UART = 1 << 1,
     /** At least one service is connected. */
     PBDRV_BLUETOOTH_CONNECTION_ANY = ~0,
@@ -31,17 +31,17 @@ typedef enum {
 typedef void (*pbdrv_bluetooth_on_event_t)(void);
 
 /**
- * Callback that is called when UART Tx is done.
+ * Callback that is called when Tx is done.
  */
-typedef void (*pbdrv_bluetooth_uart_tx_done_t)(void);
+typedef void (*pbdrv_bluetooth_tx_done_t)(void);
 
 /**
- * Callback that is called when UART Rx data is received.
+ * Callback that is called when Rx data is received.
  *
  * @param [in]  data        The data that was received.
  * @param [in]  size        The size of @p data in bytes.
  */
-typedef void (*pbdrv_bluetooth_uart_on_rx_t)(const uint8_t *data, uint8_t size);
+typedef void (*pbdrv_bluetooth_on_rx_t)(const uint8_t *data, uint8_t size);
 
 #if PBDRV_CONFIG_BLUETOOTH
 
@@ -87,6 +87,28 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection);
 void pbdrv_bluetooth_set_on_event(pbdrv_bluetooth_on_event_t on_event);
 
 /**
+ * Requests for @p data to be sent via the Pybricks characteristic.
+ *
+ * It is up to the caller to verify that the Pybricks service is connected and
+ * that any previous Tx request is done before calling this function.
+ *
+ * @param [in]  data        The data buffer to send. Must remain valid until
+ *                          @p done is called.
+ * @param [in]  size        The size of @p data in bytes.
+ * @param [in]  done        A function that will be called when the data has
+ *                          been sent.
+ */
+void pbdrv_bluetooth_pybricks_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_tx_done_t done);
+
+/**
+ * Registers a callback that will be called when data is received on the
+ * Pybricks characteristic.
+ *
+ * @param [in]  on_rx       The function that will be called.
+ */
+void pbdrv_bluetooth_pybricks_set_on_rx(pbdrv_bluetooth_on_rx_t on_rx);
+
+/**
  * Requests for @p data to be sent via the nRF UART Tx characteristic.
  *
  * It is up to the caller to verify that the nRF UART service is connected and
@@ -98,7 +120,7 @@ void pbdrv_bluetooth_set_on_event(pbdrv_bluetooth_on_event_t on_event);
  * @param [in]  done        A function that will be called when the data has
  *                          been sent.
  */
-void pbdrv_bluetooth_uart_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_uart_tx_done_t done);
+void pbdrv_bluetooth_uart_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_tx_done_t done);
 
 /**
  * Registers a callback that will be called when data is received on the nRF
@@ -106,7 +128,7 @@ void pbdrv_bluetooth_uart_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_
  *
  * @param [in]  on_rx       The function that will be called.
  */
-void pbdrv_bluetooth_uart_set_on_rx(pbdrv_bluetooth_uart_on_rx_t on_rx);
+void pbdrv_bluetooth_uart_set_on_rx(pbdrv_bluetooth_on_rx_t on_rx);
 
 #else // PBDRV_CONFIG_BLUETOOTH
 
@@ -126,10 +148,16 @@ static inline bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t con
     return false;
 }
 
-static inline void pbdrv_bluetooth_uart_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_uart_tx_done_t done) {
+static inline void pbdrv_bluetooth_pybricks_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_tx_done_t done) {
 }
 
-static inline void pbdrv_bluetooth_uart_set_on_rx(pbdrv_bluetooth_uart_on_rx_t on_rx) {
+static inline void pbdrv_bluetooth_pybricks_set_on_rx(pbdrv_bluetooth_on_rx_t on_rx) {
+}
+
+static inline void pbdrv_bluetooth_uart_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_tx_done_t done) {
+}
+
+static inline void pbdrv_bluetooth_uart_set_on_rx(pbdrv_bluetooth_on_rx_t on_rx) {
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH

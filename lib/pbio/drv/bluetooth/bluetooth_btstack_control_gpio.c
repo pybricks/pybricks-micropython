@@ -5,7 +5,7 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32_CC264X
+#if PBDRV_CONFIG_BLUETOOTH_BTSTACK
 
 #include <btstack.h>
 
@@ -49,4 +49,4 @@ const btstack_control_t *pbdrv_bluetooth_btstack_control_gpio_instance(void) {
     return &btstack_control_gpio;
 }
 
-#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32_CC264X
+#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK

@@ -8,6 +8,7 @@
 
 #define HAVE_ASSERT
 #define HAVE_MALLOC
+#define HAVE_POSIX_FILE_IO
 
 // BTstack features that can be enabled
 #define ENABLE_BLE
@@ -22,7 +23,7 @@
 #define HCI_ACL_PAYLOAD_SIZE (1691 + 4)
 #define MAX_NR_BTSTACK_LINK_KEY_DB_MEMORY_ENTRIES  0
 #define MAX_NR_GATT_CLIENTS 0
-#define MAX_NR_HCI_CONNECTIONS 0
+#define MAX_NR_HCI_CONNECTIONS 1
 #define MAX_NR_HFP_CONNECTIONS 0
 #define MAX_NR_L2CAP_CHANNELS  0
 #define MAX_NR_L2CAP_SERVICES  0

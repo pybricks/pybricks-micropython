@@ -1,7 +1,7 @@
 
 #include <pbdrv/config.h>
 
-#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32_CC264X
+#if PBDRV_CONFIG_BLUETOOTH_BTSTACK
 
 // init script created from
 // - initscripts-TIInit_6.12.26_v1.4.bts
@@ -602,4 +602,4 @@ const uint8_t cc256x_init_script[] = {
 
 const uint32_t cc256x_init_script_size = 6646;
 
-#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32_CC264X
+#endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK
