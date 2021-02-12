@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2021 The Pybricks Authors
 
 #include <stdio.h>
 
@@ -8,6 +8,7 @@
 
 #include <pbdrv/counter.h>
 #include <pbio/error.h>
+#include <test-pbio.h>
 
 #include "../drv/counter/counter.h"
 
@@ -66,7 +67,7 @@ void pbdrv_counter_test_init(pbdrv_counter_dev_t *devs) {
 
 // Tests
 
-void test_counter_get(void *env) {
+static void test_counter_get(void *env) {
     pbdrv_counter_dev_t *dev;
 
     // call before initialization
@@ -80,3 +81,8 @@ void test_counter_get(void *env) {
     tt_want(pbdrv_counter_get_dev(0, &dev) == PBIO_SUCCESS);
     tt_want(dev->priv == &test_private_data);
 }
+
+struct testcase_t pbdrv_counter_tests[] = {
+    PBIO_TEST(test_counter_get),
+    END_OF_TESTCASES
+};

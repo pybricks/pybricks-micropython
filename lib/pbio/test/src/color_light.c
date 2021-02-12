@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2021 The Pybricks Authors
 
 #include <stdint.h>
 #include <stdio.h>
@@ -11,6 +11,7 @@
 #include <pbio/color.h>
 #include <pbio/error.h>
 #include <pbio/light.h>
+#include <test-pbio.h>
 
 #include "../src/light/color_light.h"
 
@@ -43,7 +44,7 @@ static const pbio_color_light_funcs_t test_light_funcs = {
     .set_hsv = test_light_set_hsv,
 };
 
-PT_THREAD(test_color_light(struct pt *pt)) {
+static PT_THREAD(test_color_light(struct pt *pt)) {
     PT_BEGIN(pt);
 
     static pbio_color_light_t test_light;
@@ -110,3 +111,8 @@ PT_THREAD(test_color_light(struct pt *pt)) {
 
     PT_END(pt);
 }
+
+struct testcase_t pbio_color_light_tests[] = {
+    PBIO_PT_THREAD_TEST(test_color_light),
+    END_OF_TESTCASES
+};

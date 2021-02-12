@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2021 The Pybricks Authors
 
 #include <errno.h>
 #include <signal.h>
@@ -20,9 +20,9 @@
 #include <pbio/logger.h>
 #include <pbio/motor_process.h>
 #include <pbio/servo.h>
+#include <test-pbio.h>
 
 #include "../src/processes.h"
-#include "../test-pbio.h"
 
 // wait an additional 1 second before ending test
 #define TEST_END_COUNT 1000 // clock ticks
@@ -302,7 +302,7 @@ static pbio_error_t test_servo_run_angle_func(pbio_servo_t *servo) {
     return pbio_servo_run_angle(servo, 500, 180, PBIO_ACTUATION_HOLD);
 }
 
-PT_THREAD(test_servo_run_angle(struct pt *pt)) {
+static PT_THREAD(test_servo_run_angle(struct pt *pt)) {
     static struct pt child;
 
     PT_BEGIN(pt);
@@ -316,7 +316,7 @@ static pbio_error_t test_servo_run_time_func(pbio_servo_t *servo) {
     return pbio_servo_run_time(servo, 500, 1000, PBIO_ACTUATION_HOLD);
 }
 
-PT_THREAD(test_servo_run_time(struct pt *pt)) {
+static PT_THREAD(test_servo_run_time(struct pt *pt)) {
     static struct pt child;
 
     PT_BEGIN(pt);
@@ -325,3 +325,9 @@ PT_THREAD(test_servo_run_time(struct pt *pt)) {
 
     PT_END(pt);
 }
+
+struct testcase_t pbio_motor_tests[] = {
+    PBIO_PT_THREAD_TEST(test_servo_run_angle),
+    PBIO_PT_THREAD_TEST(test_servo_run_time),
+    END_OF_TESTCASES
+};

@@ -411,7 +411,7 @@ static void handle_timer_timeout(btstack_timer_source_t *ts) {
     (*callback_count)++;
 }
 
-PT_THREAD(test_btstack_run_loop_contiki_timer(struct pt *pt)) {
+static PT_THREAD(test_btstack_run_loop_contiki_timer(struct pt *pt)) {
     static btstack_timer_source_t timer_source, timer_source_2, timer_source_3;
     static uint32_t callback_count, callback_count_2, callback_count_3;
 
@@ -550,7 +550,7 @@ static void handle_data_source(btstack_data_source_t *ds,  btstack_data_source_c
     }
 }
 
-PT_THREAD(test_btstack_run_loop_contiki_poll(struct pt *pt)) {
+static PT_THREAD(test_btstack_run_loop_contiki_poll(struct pt *pt)) {
     static btstack_data_source_t data_source;
     static uint32_t callback_count;
 
@@ -581,3 +581,9 @@ PT_THREAD(test_btstack_run_loop_contiki_poll(struct pt *pt)) {
 
     PT_END(pt);
 }
+
+struct testcase_t pbdrv_bluetooth_tests[] = {
+    PBIO_PT_THREAD_TEST(test_btstack_run_loop_contiki_timer),
+    PBIO_PT_THREAD_TEST(test_btstack_run_loop_contiki_poll),
+    END_OF_TESTCASES
+};

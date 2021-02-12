@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2019-2021 The Pybricks Authors
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -15,6 +18,7 @@
 #include <pbio/main.h>
 #include <pbio/uartdev.h>
 #include <pbio/util.h>
+#include <test-pbio.h>
 
 #include "../src/processes.h"
 
@@ -110,7 +114,7 @@ end:
 static const uint8_t msg_speed_115200[] = { 0x52, 0x00, 0xC2, 0x01, 0x00, 0x6E }; // SPEED 115200
 static const uint8_t msg_ack[] = { 0x04 }; // ACK
 
-PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
+static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     // info messages captured from BOOST Color Distance Sensor with logic analyzer
     static const uint8_t msg0[] = { 0x40, 0x25, 0x9A };
     static const uint8_t msg1[] = { 0x51, 0x07, 0x07, 0x0A, 0x07, 0xA3 };
@@ -631,7 +635,7 @@ end:
     PT_END(pt);
 }
 
-PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
+static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     // info messages captured from BOOST Interactive Motor with logic analyzer
     static const uint8_t msg0[] = { 0x40, 0x26, 0x99 };
     static const uint8_t msg1[] = { 0x49, 0x03, 0x02, 0xB7 };
@@ -869,7 +873,7 @@ end:
     PT_END(pt);
 }
 
-PT_THREAD(test_technic_large_motor(struct pt *pt)) {
+static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     // info messages captured from Technic Large Linear Motor with logic analyzer
     static const uint8_t msg2[] = { 0x40, 0x2E, 0x91 };
     static const uint8_t msg3[] = { 0x49, 0x05, 0x03, 0xB0 };
@@ -1192,7 +1196,7 @@ end:
     PT_END(pt);
 }
 
-PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
+static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     // info messages captured from Technic XL Linear Motor with logic analyzer
     static const uint8_t msg2[] = { 0x40, 0x2F, 0x90 };
     static const uint8_t msg3[] = { 0x49, 0x05, 0x03, 0xB0 };
@@ -1514,6 +1518,14 @@ end:
 
     PT_END(pt);
 }
+
+struct testcase_t pbio_uartdev_tests[] = {
+    PBIO_PT_THREAD_TEST(test_boost_color_distance_sensor),
+    PBIO_PT_THREAD_TEST(test_boost_interactive_motor),
+    PBIO_PT_THREAD_TEST(test_technic_large_motor),
+    PBIO_PT_THREAD_TEST(test_technic_xl_motor),
+    END_OF_TESTCASES
+};
 
 const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[] = {
     [0] = {

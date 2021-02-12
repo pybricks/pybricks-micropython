@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2021 The Pybricks Authors
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -10,6 +10,7 @@
 
 #include <pbio/event.h>
 #include <pbsys/status.h>
+#include <test-pbio.h>
 
 PROCESS(status_test_process, "status test");
 
@@ -28,7 +29,7 @@ PROCESS_THREAD(status_test_process, ev, data) {
     PROCESS_END();
 }
 
-PT_THREAD(test_status(struct pt *pt)) {
+static PT_THREAD(test_status(struct pt *pt)) {
     PT_BEGIN(pt);
 
     process_start(&status_test_process, NULL);
@@ -104,3 +105,8 @@ PT_THREAD(test_status(struct pt *pt)) {
 
     PT_END(pt);
 }
+
+struct testcase_t pbsys_status_tests[] = {
+    PBIO_PT_THREAD_TEST(test_status),
+    END_OF_TESTCASES
+};

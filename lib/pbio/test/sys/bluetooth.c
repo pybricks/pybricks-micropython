@@ -12,7 +12,7 @@
 #include <pbsys/bluetooth.h>
 #include <test-pbio.h>
 
-PT_THREAD(test_bluetooth(struct pt *pt)) {
+static PT_THREAD(test_bluetooth(struct pt *pt)) {
     PT_BEGIN(pt);
 
     pbsys_bluetooth_init();
@@ -39,3 +39,8 @@ PT_THREAD(test_bluetooth(struct pt *pt)) {
 
     PT_END(pt);
 }
+
+struct testcase_t pbsys_bluetooth_tests[] = {
+    PBIO_PT_THREAD_TEST(test_bluetooth),
+    END_OF_TESTCASES
+};

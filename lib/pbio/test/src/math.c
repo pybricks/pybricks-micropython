@@ -1,12 +1,15 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2020-2021 The Pybricks Authors
 
 #include <stdio.h>
 
 #include <pbio/math.h>
+#include <test-pbio.h>
 
 #include <tinytest.h>
 #include <tinytest_macros.h>
 
-void test_sqrt(void *env) {
+static void test_sqrt(void *env) {
     tt_want(pbio_math_sqrt(0) == 0);
     tt_want(pbio_math_sqrt(1) == 1);
     tt_want(pbio_math_sqrt(4) == 2);
@@ -15,7 +18,7 @@ void test_sqrt(void *env) {
     tt_want(pbio_math_sqrt(400000000) == 20000);
 }
 
-void test_mul_i32_fix16(void *env) {
+static void test_mul_i32_fix16(void *env) {
     // fix16_maximum == 32767.99998474121
     // fix16_minimum == -32768.0
     tt_want_int_op(pbio_math_mul_i32_fix16(0, F16(0.0)), ==, 0);
@@ -42,7 +45,7 @@ void test_mul_i32_fix16(void *env) {
     tt_want_int_op(pbio_math_mul_i32_fix16(INT32_MIN, F16(-1.0)), ==, INT32_MIN); // overflow!
 }
 
-void test_div_i32_fix16(void *env) {
+static void test_div_i32_fix16(void *env) {
     tt_want_int_op(pbio_math_div_i32_fix16(1, F16(0.5)), ==, 2);
     tt_want_int_op(pbio_math_div_i32_fix16(-1, F16(0.5)), ==, -2);
     tt_want_int_op(pbio_math_div_i32_fix16(1, F16(-0.5)), ==, -2);
@@ -64,3 +67,10 @@ void test_div_i32_fix16(void *env) {
     tt_want_int_op(pbio_math_div_i32_fix16(-INT32_MAX, F16(-1.0)), ==, INT32_MAX);
     tt_want_int_op(pbio_math_div_i32_fix16(INT32_MIN, F16(-1.0)), ==, INT32_MIN); // overflow!
 }
+
+struct testcase_t pbio_math_tests[] = {
+    PBIO_TEST(test_sqrt),
+    PBIO_TEST(test_mul_i32_fix16),
+    PBIO_TEST(test_div_i32_fix16),
+    END_OF_TESTCASES
+};

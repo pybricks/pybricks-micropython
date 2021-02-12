@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2021 The Pybricks Authors
 
 #include <stdio.h>
 
 #include <pbio/color.h>
+#include <test-pbio.h>
 
 #include <tinytest.h>
 #include <tinytest_macros.h>
 
-void test_rgb_to_hsv(void *env) {
+static void test_rgb_to_hsv(void *env) {
     pbio_color_rgb_t rgb;
     pbio_color_hsv_t hsv;
 
@@ -103,7 +104,7 @@ void test_rgb_to_hsv(void *env) {
     tt_want_int_op(hsv.v, ==, 100);
 }
 
-void test_hsv_to_rgb(void *env) {
+static void test_hsv_to_rgb(void *env) {
     pbio_color_hsv_t hsv;
     pbio_color_rgb_t rgb;
 
@@ -197,7 +198,7 @@ void test_hsv_to_rgb(void *env) {
     tt_want_int_op(rgb.b, ==, 0);
 }
 
-void test_color_to_hsv(void *env) {
+static void test_color_to_hsv(void *env) {
     pbio_color_hsv_t hsv;
 
     pbio_color_to_hsv(PBIO_COLOR_NONE, &hsv);
@@ -266,7 +267,7 @@ void test_color_to_hsv(void *env) {
     tt_want_int_op(hsv.v, ==, 100);
 }
 
-void test_color_to_rgb(void *env) {
+static void test_color_to_rgb(void *env) {
     pbio_color_rgb_t rgb;
 
     pbio_color_to_rgb(PBIO_COLOR_NONE, &rgb);
@@ -328,7 +329,7 @@ void test_color_to_rgb(void *env) {
     tt_want_int_op(rgb.b, ==, 0);
 }
 
-void test_color_hsv_compression(void *env) {
+static void test_color_hsv_compression(void *env) {
     // if this isn't true, we aren't compressing anything
     tt_want_int_op(sizeof(pbio_color_compressed_hsv_t), <, sizeof(pbio_color_hsv_t));
 
@@ -346,3 +347,12 @@ void test_color_hsv_compression(void *env) {
     tt_want_int_op(hsv.s, ==, expanded.s);
     tt_want_int_op(hsv.v, ==, expanded.v);
 }
+
+struct testcase_t pbio_color_tests[] = {
+    PBIO_TEST(test_rgb_to_hsv),
+    PBIO_TEST(test_hsv_to_rgb),
+    PBIO_TEST(test_color_to_hsv),
+    PBIO_TEST(test_color_to_rgb),
+    PBIO_TEST(test_color_hsv_compression),
+    END_OF_TESTCASES
+};

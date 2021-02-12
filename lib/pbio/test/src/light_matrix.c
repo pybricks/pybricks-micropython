@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2021 The Pybricks Authors
 
 #include <stdint.h>
 #include <stdio.h>
@@ -8,6 +8,7 @@
 #include <contiki.h>
 #include <tinytest.h>
 #include <tinytest_macros.h>
+#include <test-pbio.h>
 
 #include <pbio/error.h>
 #include <pbio/light_matrix.h>
@@ -45,7 +46,7 @@ static const pbio_light_matrix_funcs_t test_light_matrix_funcs = {
     .set_pixel = test_light_matrix_set_pixel,
 };
 
-PT_THREAD(test_light_matrix(struct pt *pt)) {
+static PT_THREAD(test_light_matrix(struct pt *pt)) {
     PT_BEGIN(pt);
 
     static pbio_light_matrix_t test_light_matrix;
@@ -114,7 +115,7 @@ PT_THREAD(test_light_matrix(struct pt *pt)) {
     PT_END(pt);
 }
 
-void test_light_matrix_rotation(void) {
+static void test_light_matrix_rotation(void *env) {
     static pbio_light_matrix_t test_light_matrix;
     pbio_light_matrix_init(&test_light_matrix, MATRIX_SIZE, &test_light_matrix_funcs);
 
@@ -176,3 +177,9 @@ void test_light_matrix_rotation(void) {
         6, 5, 4,
         3, 2, 1);
 }
+
+struct testcase_t pbio_light_matrix_tests[] = {
+    PBIO_PT_THREAD_TEST(test_light_matrix),
+    PBIO_TEST(test_light_matrix_rotation),
+    END_OF_TESTCASES
+};

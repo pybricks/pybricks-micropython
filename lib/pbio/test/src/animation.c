@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2021 The Pybricks Authors
 
 #include <stdio.h>
 
 #include <contiki.h>
 #include <tinytest.h>
 #include <tinytest_macros.h>
+
+#include <test-pbio.h>
 
 #include "../src/light/animation.h"
 
@@ -20,7 +22,7 @@ static clock_time_t test_animation_next(pbio_light_animation_t *animation) {
     return TEST_ANIMATION_TIME;
 }
 
-PT_THREAD(test_light_animation(struct pt *pt)) {
+static PT_THREAD(test_light_animation(struct pt *pt)) {
     PT_BEGIN(pt);
 
     static pbio_light_animation_t test_animation;
@@ -78,3 +80,8 @@ PT_THREAD(test_light_animation(struct pt *pt)) {
 
     PT_END(pt);
 }
+
+struct testcase_t pbio_light_animation_tests[] = {
+    PBIO_PT_THREAD_TEST(test_light_animation),
+    END_OF_TESTCASES
+};

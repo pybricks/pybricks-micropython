@@ -8,6 +8,17 @@
 
 #include <pbio/button.h>
 
+// Use this macro to define tests that _don't_ require a Contiki event loop
+#define PBIO_TEST(name) \
+    { #name, name, TT_FORK, NULL, NULL }
+
+// Use this macro to define tests that _do_ require a Contiki event loop
+#define PBIO_PT_THREAD_TEST(name) \
+    { #name, pbio_test_run_thread, TT_FORK, &pbio_test_setup, name }
+
+void pbio_test_run_thread(void *env);
+extern struct testcase_setup_t pbio_test_setup;
+
 // this can be used by tests that consume the button driver
 void pbio_test_button_set_pressed(pbio_button_flags_t flags);
 

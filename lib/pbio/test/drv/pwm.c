@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2021 The Pybricks Authors
 
 #include <stdio.h>
 
@@ -8,6 +8,7 @@
 
 #include <pbdrv/pwm.h>
 #include <pbio/error.h>
+#include <test-pbio.h>
 
 #include "../drv/pwm/pwm.h"
 
@@ -38,7 +39,7 @@ void pbdrv_pwm_test_deinit(pbdrv_pwm_dev_t *devs) {
     devs[0].funcs = NULL;
 }
 
-void test_pwm_get(void *env) {
+static void test_pwm_get(void *env) {
     pbdrv_pwm_dev_t *dev;
 
     // call before initialization
@@ -53,7 +54,7 @@ void test_pwm_get(void *env) {
     tt_want(dev->priv == &test_private_data);
 }
 
-void test_pwm_set_duty(void *env) {
+static void test_pwm_set_duty(void *env) {
     pbdrv_pwm_dev_t *dev;
 
     pbdrv_pwm_init();
@@ -62,3 +63,9 @@ void test_pwm_set_duty(void *env) {
     tt_want_int_op(test_private_data.duty_channel, ==, 1);
     tt_want_int_op(test_private_data.duty_value, ==, 100);
 }
+
+struct testcase_t pbdrv_pwm_tests[] = {
+    PBIO_TEST(test_pwm_get),
+    PBIO_TEST(test_pwm_set_duty),
+    END_OF_TESTCASES
+};
