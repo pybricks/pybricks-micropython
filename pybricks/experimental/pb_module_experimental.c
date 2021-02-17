@@ -84,18 +84,21 @@ static void motion_spi_read(uint8_t reg, uint8_t *value) {
     // busy wait
     do {
         while (!(SPI1->SR & SPI_SR_RXNE)) {
+            MICROPY_EVENT_POLL_HOOK;
         }
     } while (SPI1->SR & SPI_SR_BSY);
 
     while (SPI1->SR & SPI_SR_RXNE) {
         dummy = BYTE_ACCESS(SPI1->DR);
         (void)dummy;
+        MICROPY_EVENT_POLL_HOOK;
     }
     BYTE_ACCESS(SPI1->DR) = 0;
 
     // busy wait
     do {
         while (!(SPI1->SR & SPI_SR_RXNE)) {
+            MICROPY_EVENT_POLL_HOOK
         }
     } while (SPI1->SR & SPI_SR_BSY);
 
@@ -114,6 +117,7 @@ static void motion_spi_write(uint8_t reg, uint8_t value) {
     // busy wait
     do {
         while (!(SPI1->SR & SPI_SR_RXNE)) {
+            MICROPY_EVENT_POLL_HOOK;
         }
     } while (SPI1->SR & SPI_SR_BSY);
 
@@ -122,6 +126,7 @@ static void motion_spi_write(uint8_t reg, uint8_t value) {
     // busy wait
     do {
         while (!(SPI1->SR & SPI_SR_RXNE)) {
+            MICROPY_EVENT_POLL_HOOK;
         }
     } while (SPI1->SR & SPI_SR_BSY);
 
