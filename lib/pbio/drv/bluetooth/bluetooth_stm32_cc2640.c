@@ -628,7 +628,7 @@ static void handle_event(uint8_t *packet) {
                     DBG("s %04X g %04X", start_handle, group_type);
                     switch (group_type) {
                         case GATT_PRIMARY_SERVICE_UUID:
-                            if (start_handle == gatt_service_handle) {
+                            if (start_handle <= gatt_service_handle) {
                                 attReadByGrpTypeRsp_t rsp;
                                 uint8_t buf[ATT_MTU_SIZE - 2];
 
@@ -642,7 +642,7 @@ static void handle_event(uint8_t *packet) {
                                 rsp.pDataList = buf;
                                 rsp.dataLen = 6;
                                 ATT_ReadByGrpTypeRsp(connection_handle, &rsp);
-                            } else if (start_handle == gap_service_handle) {
+                            } else if (start_handle <= gap_service_handle) {
                                 attReadByGrpTypeRsp_t rsp;
                                 uint8_t buf[ATT_MTU_SIZE - 2];
 
@@ -656,7 +656,7 @@ static void handle_event(uint8_t *packet) {
                                 rsp.pDataList = buf;
                                 rsp.dataLen = 6;
                                 ATT_ReadByGrpTypeRsp(connection_handle, &rsp);
-                            } else if (start_handle == pybricks_service_handle) {
+                            } else if (start_handle <= pybricks_service_handle) {
                                 attReadByGrpTypeRsp_t rsp;
                                 uint8_t buf[ATT_MTU_SIZE - 2];
 
@@ -669,7 +669,7 @@ static void handle_event(uint8_t *packet) {
                                 rsp.pDataList = buf;
                                 rsp.dataLen = 20;
                                 ATT_ReadByGrpTypeRsp(connection_handle, &rsp);
-                            } else if (start_handle == uart_service_handle) {
+                            } else if (start_handle <= uart_service_handle) {
                                 attReadByGrpTypeRsp_t rsp;
                                 uint8_t buf[ATT_MTU_SIZE - 2];
 
@@ -687,13 +687,21 @@ static void handle_event(uint8_t *packet) {
 
                                 rsp.reqOpcode = ATT_READ_BY_GRP_TYPE_REQ;
                                 rsp.handle = start_handle;
-                                rsp.errCode = ATT_ERR_INVALID_VALUE;
+                                rsp.errCode = ATT_ERR_ATTR_NOT_FOUND;
                                 ATT_ErrorRsp(connection_handle, &rsp);
                             }
                             break;
-                        default:
+                        default: {
+                            attErrorRsp_t rsp;
+
+                            rsp.reqOpcode = ATT_READ_BY_GRP_TYPE_REQ;
+                            rsp.handle = start_handle;
+                            rsp.errCode = ATT_ERR_INVALID_VALUE;
+                            ATT_ErrorRsp(connection_handle, &rsp);
+
                             DBG("unhandled read by grp type req: %05X", group_type);
-                            break;
+                        }
+                        break;
                     }
                 }
                 break;
