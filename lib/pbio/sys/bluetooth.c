@@ -113,7 +113,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
 
         pbdrv_bluetooth_power_on(true);
 
-        PROCESS_WAIT_WHILE(!pbdrv_bluetooth_is_ready());
+        PROCESS_WAIT_UNTIL(pbdrv_bluetooth_is_ready());
 
         pbdrv_bluetooth_start_advertising();
 
