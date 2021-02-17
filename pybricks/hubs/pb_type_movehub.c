@@ -131,9 +131,7 @@ static void motion_spi_write(uint8_t reg, uint8_t value) {
     GPIOA->BSRR = GPIO_BSRR_BS_4;
 }
 
-STATIC mp_obj_t hubs_MoveHub_IMU_accel(mp_obj_t self_in) {
-    hubs_MoveHub_IMU_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    (void)self;
+STATIC mp_obj_t hubs_MoveHub_IMU_acceleration(mp_obj_t self_in) {
 
     uint8_t data[3];
     motion_spi_read(OUT_X_H, &data[0]);
@@ -141,16 +139,15 @@ STATIC mp_obj_t hubs_MoveHub_IMU_accel(mp_obj_t self_in) {
     motion_spi_read(OUT_Z_H, &data[2]);
 
     mp_obj_t values[3];
-    values[0] = mp_obj_new_int((int8_t)data[0]);
-    values[1] = mp_obj_new_int((int8_t)data[1]);
-    values[2] = mp_obj_new_int((int8_t)data[2]);
-
+    for (uint8_t i = 0; i < 3; i++) {
+        values[i] = MP_OBJ_NEW_SMALL_INT((((int8_t)data[i]) * 10) >> 6);
+    }
     return mp_obj_new_tuple(3, values);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(hubs_MoveHub_IMU_accel_obj, hubs_MoveHub_IMU_accel);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(hubs_MoveHub_IMU_acceleration_obj, hubs_MoveHub_IMU_acceleration);
 
 STATIC const mp_rom_map_elem_t hubs_MoveHub_IMU_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_accel), MP_ROM_PTR(&hubs_MoveHub_IMU_accel_obj) },
+    { MP_ROM_QSTR(MP_QSTR_acceleration), MP_ROM_PTR(&hubs_MoveHub_IMU_acceleration_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_MoveHub_IMU_locals_dict, hubs_MoveHub_IMU_locals_dict_table);
 
