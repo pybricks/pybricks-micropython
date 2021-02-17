@@ -131,16 +131,23 @@ static void motion_spi_write(uint8_t reg, uint8_t value) {
     GPIOA->BSRR = GPIO_BSRR_BS_4;
 }
 
+static void motion_get_acceleration(int8_t *data) {
+    motion_spi_read(OUT_Y_H, (uint8_t *)&data[0]);
+    motion_spi_read(OUT_Z_H, (uint8_t *)&data[2]);
+    motion_spi_read(OUT_X_H, (uint8_t *)&data[1]);
+    data[1] = -data[1];
+}
+
 STATIC mp_obj_t hubs_MoveHub_IMU_acceleration(mp_obj_t self_in) {
 
-    uint8_t data[3];
-    motion_spi_read(OUT_X_H, &data[0]);
-    motion_spi_read(OUT_Y_H, &data[1]);
-    motion_spi_read(OUT_Z_H, &data[2]);
+    // Gets signed acceleration data
+    int8_t data[3];
+    motion_get_acceleration(data);
 
+    // Convert to appropriate units and return as tuple
     mp_obj_t values[3];
     for (uint8_t i = 0; i < 3; i++) {
-        values[i] = MP_OBJ_NEW_SMALL_INT((((int8_t)data[i]) * 10) >> 6);
+        values[i] = MP_OBJ_NEW_SMALL_INT((data[i] * 10) >> 6);
     }
     return mp_obj_new_tuple(3, values);
 }
