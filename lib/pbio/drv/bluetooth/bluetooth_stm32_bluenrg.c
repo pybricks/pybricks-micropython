@@ -514,13 +514,13 @@ static void handle_event(hci_event_pckt *event) {
                             pybricks_on_rx(subevt->att_data, subevt->data_length);
                         }
                     } else if (subevt->attr_handle == pybricks_char_handle + 2) {
-                        pybricks_notify_en = *(uint16_t *)subevt->att_data;
+                        pybricks_notify_en = subevt->att_data[0];
                     } else if (subevt->attr_handle == uart_rx_char_handle + 1) {
                         if (uart_on_rx) {
                             uart_on_rx(subevt->att_data, subevt->data_length);
                         }
                     } else if (subevt->attr_handle == uart_tx_char_handle + 2) {
-                        uart_tx_notify_en = *(uint16_t *)subevt->att_data;
+                        uart_tx_notify_en = subevt->att_data[0];
                     }
                 }
                 break;
