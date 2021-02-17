@@ -1138,6 +1138,7 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
     static uint8_t read_xfer_size, xfer_size;
 
     PROCESS_EXITHANDLER({
+        spi_set_mrdy(false);
         bluetooth_reset(RESET_STATE_OUT_LOW);
         bluetooth_ready = false;
     });
