@@ -138,6 +138,49 @@ static void motion_get_acceleration(int8_t *data) {
     data[1] = -data[1];
 }
 
+// This is an integer version of pybricks._common.IMU.up
+STATIC mp_obj_t hubs_MoveHub_IMU_up(mp_obj_t self_in) {
+
+    int8_t values[3];
+    motion_get_acceleration(values);
+
+    // Find index and sign of maximum component
+    int8_t abs_max = 0;
+    uint8_t axis = 0;
+    bool positive = false;
+    for (uint8_t i = 0; i < 3; i++) {
+        if (values[i] > abs_max) {
+            abs_max = values[i];
+            positive = true;
+            axis = i;
+        } else if (-values[i] > abs_max) {
+            abs_max = -values[i];
+            positive = false;
+            axis = i;
+        }
+    }
+
+    // Convert axis and sign to side
+    if (axis == 0 && positive) {
+        return MP_OBJ_FROM_PTR(&pb_Side_FRONT_obj);
+    }
+    if (axis == 0 && !positive) {
+        return MP_OBJ_FROM_PTR(&pb_Side_BACK_obj);
+    }
+    if (axis == 1 && positive) {
+        return MP_OBJ_FROM_PTR(&pb_Side_LEFT_obj);
+    }
+    if (axis == 1 && !positive) {
+        return MP_OBJ_FROM_PTR(&pb_Side_RIGHT_obj);
+    }
+    if (axis == 2 && positive) {
+        return MP_OBJ_FROM_PTR(&pb_Side_TOP_obj);
+    } else {
+        return MP_OBJ_FROM_PTR(&pb_Side_BOTTOM_obj);
+    }
+}
+MP_DEFINE_CONST_FUN_OBJ_1(hubs_MoveHub_IMU_up_obj, hubs_MoveHub_IMU_up);
+
 STATIC mp_obj_t hubs_MoveHub_IMU_acceleration(mp_obj_t self_in) {
 
     // Gets signed acceleration data
@@ -155,6 +198,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(hubs_MoveHub_IMU_acceleration_obj, hubs_MoveHub
 
 STATIC const mp_rom_map_elem_t hubs_MoveHub_IMU_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_acceleration), MP_ROM_PTR(&hubs_MoveHub_IMU_acceleration_obj) },
+    { MP_ROM_QSTR(MP_QSTR_up),           MP_ROM_PTR(&hubs_MoveHub_IMU_up_obj)           },
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_MoveHub_IMU_locals_dict, hubs_MoveHub_IMU_locals_dict_table);
 
