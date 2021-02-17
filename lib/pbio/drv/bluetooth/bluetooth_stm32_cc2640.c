@@ -203,10 +203,13 @@ static void bluetooth_reset(reset_state_t reset) {
     switch (reset) {
         case RESET_STATE_OUT_HIGH:
             pbdrv_gpio_out_high(&pdata->reset_gpio);
+            break;
         case RESET_STATE_OUT_LOW:
             pbdrv_gpio_out_low(&pdata->reset_gpio);
+            break;
         case RESET_STATE_INPUT:
             pbdrv_gpio_input(&pdata->reset_gpio);
+            break;
     }
 }
 
