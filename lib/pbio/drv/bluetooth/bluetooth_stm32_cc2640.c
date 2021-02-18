@@ -1184,18 +1184,29 @@ start:
     start_task(init_task, NULL);
 
     while (true) {
+        static uint8_t real_write_xfer_size;
+
         PROCESS_WAIT_UNTIL(spi_srdy || write_xfer_size);
 
         spi_set_mrdy(true);
 
+        // Need to make a copy of the write transfer size for the case where we
+        // are reading only. In this case we still have to set write_xfer_size
+        // to a non-zero value to indicate that write_buf is being used. But we
+        // still need the real size later to figure out the actual size of the
+        // SPI transfer.
+        real_write_xfer_size = write_xfer_size;
+
         // we can either read, write, or read and write at the same time
 
-        if (write_xfer_size) {
+        if (real_write_xfer_size) {
             // if we are writing only, we have to wait until SRDY is asserted
             PROCESS_WAIT_UNTIL(spi_srdy);
         } else {
             // if we are reading only, the write buffer has to be all 0s
             memset(write_buf, 0, PBIO_ARRAY_SIZE(write_buf));
+            // indicates that write_buf is in use
+            write_xfer_size = PBIO_ARRAY_SIZE(write_buf);
         }
 
         // send the write header
@@ -1205,10 +1216,10 @@ start:
 
         // Total transfer size is biggest of read and write sizes.
         read_xfer_size = 0;
-        if (get_npi_rx_size(&read_xfer_size) && read_xfer_size > write_xfer_size - 4) {
+        if (get_npi_rx_size(&read_xfer_size) && read_xfer_size > real_write_xfer_size - 4) {
             xfer_size = read_xfer_size + 4;
         } else {
-            xfer_size = write_xfer_size;
+            xfer_size = real_write_xfer_size;
         }
 
         // read the remaining message
@@ -1220,10 +1231,8 @@ start:
         spi_set_mrdy(false);
         PROCESS_WAIT_UNTIL(!spi_srdy);
 
-        if (write_xfer_size) {
-            // set to 0 to indicate that xfer is complete
-            write_xfer_size = 0;
-        }
+        // set to 0 to indicate that xfer is complete
+        write_xfer_size = 0;
 
         if (read_xfer_size) {
             // handle the received data

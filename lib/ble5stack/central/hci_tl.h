@@ -38,8 +38,8 @@
 #include <stdint.h>
 
 /* HCI Buffer size */
-#define TX_BUFFER_SIZE  256
-#define RX_BUFFER_SIZE  256
+#define TX_BUFFER_SIZE  255
+#define RX_BUFFER_SIZE  255
 
 #define HCI_FRAME_SIZE          0x04
 
