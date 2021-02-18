@@ -66,9 +66,15 @@
 
 #define BYTE_ACCESS(r) (*(volatile uint8_t *)&(r))
 
-typedef struct {
-    mp_obj_base_t base;
-} hubs_MoveHub_IMU_obj_t;
+// Wait for spi operation to complete
+static void motion_spi_wait() {
+    do {
+        while (!(SPI1->SR & SPI_SR_RXNE)) {
+            MICROPY_EVENT_POLL_HOOK;
+        }
+        MICROPY_EVENT_POLL_HOOK;
+    } while (SPI1->SR & SPI_SR_BSY);
+}
 
 static void motion_spi_read(uint8_t reg, uint8_t *value) {
     uint8_t dummy;
@@ -79,11 +85,7 @@ static void motion_spi_read(uint8_t reg, uint8_t *value) {
     BYTE_ACCESS(SPI1->DR) = READ_FLAG | reg;
 
     // busy wait
-    do {
-        while (!(SPI1->SR & SPI_SR_RXNE)) {
-            MICROPY_EVENT_POLL_HOOK;
-        }
-    } while (SPI1->SR & SPI_SR_BSY);
+    motion_spi_wait();
 
     while (SPI1->SR & SPI_SR_RXNE) {
         dummy = BYTE_ACCESS(SPI1->DR);
@@ -93,11 +95,7 @@ static void motion_spi_read(uint8_t reg, uint8_t *value) {
     BYTE_ACCESS(SPI1->DR) = 0;
 
     // busy wait
-    do {
-        while (!(SPI1->SR & SPI_SR_RXNE)) {
-            MICROPY_EVENT_POLL_HOOK
-        }
-    } while (SPI1->SR & SPI_SR_BSY);
+    motion_spi_wait();
 
     *value = BYTE_ACCESS(SPI1->DR);
 
@@ -112,20 +110,12 @@ static void motion_spi_write(uint8_t reg, uint8_t value) {
     BYTE_ACCESS(SPI1->DR) = reg;
 
     // busy wait
-    do {
-        while (!(SPI1->SR & SPI_SR_RXNE)) {
-            MICROPY_EVENT_POLL_HOOK;
-        }
-    } while (SPI1->SR & SPI_SR_BSY);
+    motion_spi_wait();
 
     BYTE_ACCESS(SPI1->DR) = value;
 
     // busy wait
-    do {
-        while (!(SPI1->SR & SPI_SR_RXNE)) {
-            MICROPY_EVENT_POLL_HOOK;
-        }
-    } while (SPI1->SR & SPI_SR_BSY);
+    motion_spi_wait();
 
     // clear chip select
     GPIOA->BSRR = GPIO_BSRR_BS_4;
@@ -137,6 +127,10 @@ static void motion_get_acceleration(int8_t *data) {
     motion_spi_read(OUT_X_H, (uint8_t *)&data[1]);
     data[1] = -data[1];
 }
+
+typedef struct {
+    mp_obj_base_t base;
+} hubs_MoveHub_IMU_obj_t;
 
 // This is an integer version of pybricks._common.IMU.up
 STATIC mp_obj_t hubs_MoveHub_IMU_up(mp_obj_t self_in) {
