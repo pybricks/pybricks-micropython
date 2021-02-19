@@ -133,6 +133,12 @@ mp_uint_t mp_hal_ticks_us(void) {
     return clock_usecs();
 }
 
+uint64_t mp_hal_time_ns(void) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (uint64_t)tv.tv_sec * 1000000000ULL + (uint64_t)tv.tv_usec * 1000ULL;
+}
+
 void mp_hal_delay_ms(mp_uint_t ms) {
     struct timespec ts = {
         .tv_sec = ms / 1000,
