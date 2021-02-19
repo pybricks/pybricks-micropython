@@ -182,7 +182,7 @@ SRC_S = \
 ifeq ($(PB_MCU_SERIES),F0)
 	SRC_S += lib/utils/gchelper_m0.s
 else
-	SRC_S += lib/utils/gchelper_m0.s
+	SRC_S += lib/utils/gchelper_m3.s
 endif
 
 # Pybricks modules
