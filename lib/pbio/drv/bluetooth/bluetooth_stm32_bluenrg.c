@@ -16,6 +16,7 @@
 #include <string.h>
 
 #include <pbdrv/bluetooth.h>
+#include <pbdrv/gpio.h>
 #include <pbio/error.h>
 #include <pbio/util.h>
 
@@ -102,6 +103,13 @@ static pbdrv_bluetooth_on_event_t bluetooth_on_event;
 static pbdrv_bluetooth_on_rx_t pybricks_on_rx;
 static pbdrv_bluetooth_on_rx_t uart_on_rx;
 
+static const pbdrv_gpio_t reset_gpio = { .bank = GPIOB, .pin = 6 };
+static const pbdrv_gpio_t cs_gpio = { .bank = GPIOB, .pin = 12 };
+static const pbdrv_gpio_t irq_gpio = { .bank = GPIOD, .pin = 2 };
+static const pbdrv_gpio_t mosi_gpio = { .bank = GPIOC, .pin = 3 };
+static const pbdrv_gpio_t miso_gpio = { .bank = GPIOC, .pin = 2 };
+static const pbdrv_gpio_t sck_gpio = { .bank = GPIOB, .pin = 13 };
+
 /**
  * Runs the current task until the next yield.
  */
@@ -139,17 +147,10 @@ static void start_task(task_func_t func, void *context) {
  * Sets the nRESET line on the Bluetooth chip.
  */
 static void bluetooth_reset(bool reset) {
-    // put Bluetooth chip into reset
-
-    // nRESET
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
-
     if (reset) {
-        // set PB6 output low
-        GPIOB->BRR = GPIO_BRR_BR_6;
+        pbdrv_gpio_out_low(&reset_gpio);
     } else {
-        // set PB6 output high
-        GPIOB->BSRR = GPIO_BSRR_BS_6;
+        pbdrv_gpio_out_high(&reset_gpio);
     }
 }
 
@@ -160,34 +161,20 @@ static void spi_init(void) {
     // SPI2 pin mux
 
     // SPI_CS
-    // set PB12 as gpio output high
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER12_Msk) | (1 << GPIO_MODER_MODER12_Pos);
-    GPIOB->BSRR = GPIO_BSRR_BS_12;
-
+    pbdrv_gpio_out_high(&cs_gpio);
     // SPI_IRQ
-    // set PD2 as gpio input with pull-down
-    GPIOD->MODER = (GPIOD->MODER & ~GPIO_MODER_MODER2_Msk) | (0 << GPIO_MODER_MODER2_Pos);
-    GPIOD->PUPDR = (GPIOD->PUPDR & ~GPIO_PUPDR_PUPDR2_Msk) | (2 << GPIO_PUPDR_PUPDR2_Pos);
-
+    pbdrv_gpio_input(&irq_gpio);
+    pbdrv_gpio_set_pull(&irq_gpio, PBDRV_GPIO_PULL_DOWN);
     // SPI_MOSI
-    // set PC3 as SPI2->MOSI
-    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER3_Msk) | (2 << GPIO_MODER_MODER3_Pos);
-    GPIOC->AFR[0] = (GPIOC->AFR[0] & ~GPIO_AFRL_AFSEL3_Msk) | (1 << GPIO_AFRL_AFSEL3_Pos);
-
+    pbdrv_gpio_alt(&mosi_gpio, 1);
     // SPI_MISO
-    // set PC2 as SPI2->MISO
-    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER2_Msk) | (2 << GPIO_MODER_MODER2_Pos);
-    GPIOC->AFR[0] = (GPIOC->AFR[0] & ~GPIO_AFRL_AFSEL2_Msk) | (1 << GPIO_AFRL_AFSEL2_Pos);
-
+    pbdrv_gpio_alt(&miso_gpio, 1);
     // SPI_SCK
-    // set PB13 as SPI2->CLK
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER13_Msk) | (2 << GPIO_MODER_MODER13_Pos);
-    GPIOB->AFR[1] = (GPIOB->AFR[1] & ~GPIO_AFRH_AFSEL13_Msk) | (0 << GPIO_AFRH_AFSEL13_Pos);
+    pbdrv_gpio_alt(&sck_gpio, 0);
 
     // DMA
 
-    DMA1_Channel4->CPAR = (uint32_t)&SPI2->DR;
-    DMA1_Channel5->CPAR = (uint32_t)&SPI2->DR;
+    DMA1_Channel4->CPAR = DMA1_Channel5->CPAR = (uint32_t)&SPI2->DR;
 
     NVIC_SetPriority(DMA1_Channel4_5_IRQn, 3);
     NVIC_EnableIRQ(DMA1_Channel4_5_IRQn);
@@ -392,11 +379,11 @@ void EXTI2_3_IRQHandler(void) {
 }
 
 static inline void spi_enable_cs(void) {
-    GPIOB->BRR = GPIO_BRR_BR_12;
+    pbdrv_gpio_out_low(&cs_gpio);
 }
 
 static inline void spi_disable_cs(void) {
-    GPIOB->BSRR = GPIO_BSRR_BS_12;
+    pbdrv_gpio_out_high(&cs_gpio);
 }
 
 // configures and starts an SPI xfer
@@ -622,7 +609,7 @@ void hci_send_req(struct hci_request *r) {
     write_xfer_size = HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE + r->clen;
 
     hci_command_complete = false;
-    process_post_synch(&pbdrv_bluetooth_spi_process, PROCESS_EVENT_NONE, NULL);
+    process_poll(&pbdrv_bluetooth_spi_process);
 }
 
 // implements function for BlueNRG library
