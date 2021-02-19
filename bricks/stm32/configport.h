@@ -64,7 +64,7 @@
 #define MICROPY_PY_SYS_MODULES      (0)
 #define MICROPY_PY_URANDOM                  (PYBRICKS_STM32_OPT_EXTRA_MOD)
 #define MICROPY_PY_URANDOM_EXTRA_FUNCS      (PYBRICKS_STM32_OPT_EXTRA_MOD)
-#define MICROPY_PY_URANDOM_SEED_INIT_FUNC   { extern unsigned long clock_usecs(void); clock_usecs(); }
+#define MICROPY_PY_URANDOM_SEED_INIT_FUNC   ({ extern unsigned long clock_usecs(void); clock_usecs(); })
 #define MICROPY_PY_UTIME_MP_HAL             (0)
 #define MICROPY_MODULE_BUILTIN_INIT         (1)
 #define MICROPY_MODULE_WEAK_LINKS   (0)

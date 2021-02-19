@@ -219,7 +219,7 @@ static const char pybricks_ev3dev_help_text[] =
 #define MICROPY_PY_UFCNTL_POSIX     (1)
 #define MICROPY_PY_URANDOM          (1)
 #define MICROPY_PY_URANDOM_EXTRA_FUNCS      (1)
-#define MICROPY_PY_URANDOM_SEED_INIT_FUNC   { extern mp_uint_t mp_hal_ticks_us(void); mp_hal_ticks_us(); }
+#define MICROPY_PY_URANDOM_SEED_INIT_FUNC   ({ extern mp_uint_t mp_hal_ticks_us(void); mp_hal_ticks_us(); })
 #ifndef MICROPY_PY_USELECT_POSIX
 #define MICROPY_PY_USELECT_POSIX    (1)
 #endif
