@@ -101,8 +101,6 @@ typedef unsigned mp_uint_t; // must be pointer size
 
 typedef long mp_off_t;
 
-#define MP_PLAT_PRINT_STRN(str, len) mp_hal_stdout_tx_strn(str, len)
-
 extern const struct _mp_obj_module_t pb_package_pybricks;
 #define _PYBRICKS_PACKAGE_PYBRICKS \
     { MP_OBJ_NEW_QSTR(MP_QSTR_pybricks), (mp_obj_t)&pb_package_pybricks },
