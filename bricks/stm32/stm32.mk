@@ -174,6 +174,7 @@ SRC_C += $(addprefix lib/,\
 	utils/interrupt_char.c \
 	utils/pyexec.c \
 	utils/stdout_helpers.c \
+	utils/sys_stdio_mphal.c \
 	)
 
 SRC_S = \

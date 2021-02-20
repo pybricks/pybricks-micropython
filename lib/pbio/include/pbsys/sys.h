@@ -68,6 +68,16 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
 void pbsys_unprepare_user_program(void);
 
 /**
+ * Read one character from stdin without removing it from the buffer.
+ * @param [out] c       The character read
+ * @return              ::PBIO_SUCCESS if a character was available,
+ *                      ::PBIO_ERROR_AGAIN if no character was available to be
+ *                      read at this time or ::PBIO_ERROR_NOT_SUPPORTED if the
+ *                      platform does not have a stdin.
+ */
+pbio_error_t pbsys_stdin_peek_char(uint8_t *c);
+
+/**
  * Read one character from stdin.
  * @param [out] c       The character read
  * @return              ::PBIO_SUCCESS if a character was available,

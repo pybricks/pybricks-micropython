@@ -47,12 +47,22 @@ void pbsys_unprepare_user_program(void) {
     user_stdin_event_func = NULL;
 }
 
-pbio_error_t pbsys_stdin_get_char(uint8_t *c) {
+pbio_error_t pbsys_stdin_peek_char(uint8_t *c) {
     if (stdin_buf_head == stdin_buf_tail) {
         return PBIO_ERROR_AGAIN;
     }
 
     *c = stdin_buf[stdin_buf_tail];
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbsys_stdin_get_char(uint8_t *c) {
+    pbio_error_t err = pbsys_stdin_peek_char(c);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     stdin_buf_tail = (stdin_buf_tail + 1) & (STDIN_BUF_SIZE - 1);
 
     return PBIO_SUCCESS;

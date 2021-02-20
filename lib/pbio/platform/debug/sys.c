@@ -40,6 +40,10 @@ void pbsys_unprepare_user_program(void) {
     user_stdin_event_func = NULL;
 }
 
+pbio_error_t pbsys_stdin_peek_char(uint8_t *c) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
+
 pbio_error_t pbsys_stdin_get_char(uint8_t *c) {
     if (!(USART6->SR & USART_SR_RXNE)) {
         return PBIO_ERROR_AGAIN;

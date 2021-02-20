@@ -4,10 +4,21 @@
 #include <pbsys/sys.h>
 
 #include "py/mpconfig.h"
+#include "py/stream.h"
 
 /*
  * Core UART functions to implement for a port
  */
+uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
+    uintptr_t ret = 0;
+    uint8_t c;
+
+    if ((poll_flags & MP_STREAM_POLL_RD) && pbsys_stdin_peek_char(&c) == PBIO_SUCCESS) {
+        ret |= MP_STREAM_POLL_RD;
+    }
+
+    return ret;
+}
 
 // Receive single character
 int mp_hal_stdin_rx_chr(void) {
