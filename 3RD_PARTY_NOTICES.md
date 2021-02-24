@@ -124,6 +124,20 @@ subdirectories.
 - Conditions: License and copyright notice
 - Restrictions: Commercial use, liability, warranty
 
+### Lightweight ring buffer manager
+
+**path**: `lib/lwrb/`
+
+**origin**: Git commit fc8044d99fcd3950c18172fec0edc850b8dfe565
+
+**url**: https://github.com/MaJerle/lwrb
+
+**terms**:
+- License: MIT
+- Permissions: Commercial use, distribution, modification, private use
+- Conditions: License and copyright notice
+- Restrictions: Liability, warranty
+
 ---
 
 Explanation of license terms can be found at <https://choosealicense.com/appendix/>.
