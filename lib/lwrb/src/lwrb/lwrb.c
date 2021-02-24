@@ -31,14 +31,19 @@
  * Author:          Tilen MAJERLE <tilen@majerle.eu>
  * Version:         v2.0.1
  */
+
+#include <assert.h>
+
 #include "lwrb/lwrb.h"
 
 /* Memory set and copy functions */
 #define BUF_MEMSET                      memset
 #define BUF_MEMCPY                      memcpy
 
+#if LWRB_USE_MAGIC
 #define BUF_MAGIC1                      (0xDEADBEEF)
 #define BUF_MAGIC2                      (~0xDEADBEEF)
+#endif
 
 #if LWRB_USE_MAGIC
 #define BUF_IS_VALID(b)                 ((b) != NULL && (b)->magic1 == BUF_MAGIC1 && (b)->magic2 == BUF_MAGIC2 && (b)->buff != NULL && (b)->size > 0)
@@ -47,7 +52,11 @@
 #endif /* LWRB_USE_MAGIC */
 #define BUF_MIN(x, y)                   ((x) < (y) ? (x) : (y))
 #define BUF_MAX(x, y)                   ((x) > (y) ? (x) : (y))
+#if LWRB_USE_EVT
 #define BUF_SEND_EVT(b, type, bp)       do { if ((b)->evt_fn != NULL) { (b)->evt_fn((b), (type), (bp)); } } while (0)
+#else
+#define BUF_SEND_EVT(b, type, bp)
+#endif /* LWRB_USE_EVT */
 
 /**
  * \brief           Initialize buffer handle to default values with size and buffer data array
@@ -55,13 +64,13 @@
  * \param[in]       buffdata: Pointer to memory to use as buffer data
  * \param[in]       size: Size of `buffdata` in units of bytes
  *                      Maximum number of bytes buffer can hold is `size - 1`
- * \return          `1` on success, `0` otherwise
  */
-uint8_t
+void
 lwrb_init(LWRB_VOLATILE lwrb_t* buff, void* buffdata, size_t size) {
-    if (buff == NULL || buffdata == NULL || size == 0) {
-        return 0;
-    }
+    assert(buff != NULL);
+    assert(buffdata != NULL);
+    assert(size != 0);
+
 
     BUF_MEMSET((void*)buff, 0x00, sizeof(*buff));
 
@@ -72,8 +81,6 @@ lwrb_init(LWRB_VOLATILE lwrb_t* buff, void* buffdata, size_t size) {
     buff->magic1 = BUF_MAGIC1;
     buff->magic2 = BUF_MAGIC2;
 #endif /* LWRB_USE_MAGIC */
-
-    return 1;
 }
 
 /**
@@ -94,10 +101,12 @@ lwrb_is_ready(LWRB_VOLATILE lwrb_t* buff) {
  */
 void
 lwrb_free(LWRB_VOLATILE lwrb_t* buff) {
-    if (BUF_IS_VALID(buff)) {
-        buff->buff = NULL;
-    }
+    assert(BUF_IS_VALID(buff));
+
+    buff->buff = NULL;
 }
+
+#if LWRB_USE_EVT
 
 /**
  * \brief           Set event function callback for different buffer operations
@@ -106,10 +115,12 @@ lwrb_free(LWRB_VOLATILE lwrb_t* buff) {
  */
 void
 lwrb_set_evt_fn(LWRB_VOLATILE lwrb_t* buff, lwrb_evt_fn evt_fn) {
-    if (BUF_IS_VALID(buff)) {
-        buff->evt_fn = evt_fn;
-    }
+    assert(BUF_IS_VALID(buff));
+
+    buff->evt_fn = evt_fn;
 }
+
+#endif /* LWRB_USE_EVT */
 
 /**
  * \brief           Write data to buffer.
@@ -127,9 +138,9 @@ lwrb_write(LWRB_VOLATILE lwrb_t* buff, const void* data, size_t btw) {
     size_t tocopy, free;
     const uint8_t* d = data;
 
-    if (!BUF_IS_VALID(buff) || data == NULL || btw == 0) {
-        return 0;
-    }
+    assert(BUF_IS_VALID(buff));
+    assert(data != NULL);
+    assert(btw != 0);
 
     /* Calculate maximum number of bytes available to write */
     free = lwrb_get_free(buff);
@@ -172,9 +183,9 @@ lwrb_read(LWRB_VOLATILE lwrb_t* buff, void* data, size_t btr) {
     size_t tocopy, full;
     uint8_t* d = data;
 
-    if (!BUF_IS_VALID(buff) || data == NULL || btr == 0) {
-        return 0;
-    }
+    assert(BUF_IS_VALID(buff));
+    assert(data != NULL);
+    assert(btr != 0);
 
     /* Calculate maximum number of bytes available to read */
     full = lwrb_get_full(buff);
@@ -216,9 +227,9 @@ lwrb_peek(LWRB_VOLATILE lwrb_t* buff, size_t skip_count, void* data, size_t btp)
     size_t full, tocopy, r;
     uint8_t* d = data;
 
-    if (!BUF_IS_VALID(buff) || data == NULL || btp == 0) {
-        return 0;
-    }
+    assert(BUF_IS_VALID(buff));
+    assert(data != NULL);
+    assert(btp != 0);
 
     r = buff->r;
 
@@ -262,9 +273,7 @@ size_t
 lwrb_get_free(LWRB_VOLATILE lwrb_t* buff) {
     size_t size, w, r;
 
-    if (!BUF_IS_VALID(buff)) {
-        return 0;
-    }
+    assert(BUF_IS_VALID(buff));
 
     /* Use temporary values in case they are changed during operations */
     w = buff->w;
@@ -290,9 +299,7 @@ size_t
 lwrb_get_full(LWRB_VOLATILE lwrb_t* buff) {
     size_t w, r, size;
 
-    if (!BUF_IS_VALID(buff)) {
-        return 0;
-    }
+    assert(BUF_IS_VALID(buff));
 
     /* Use temporary values in case they are changed during operations */
     w = buff->w;
@@ -313,11 +320,11 @@ lwrb_get_full(LWRB_VOLATILE lwrb_t* buff) {
  */
 void
 lwrb_reset(LWRB_VOLATILE lwrb_t* buff) {
-    if (BUF_IS_VALID(buff)) {
-        buff->w = 0;
-        buff->r = 0;
-        BUF_SEND_EVT(buff, LWRB_EVT_RESET, 0);
-    }
+    assert(BUF_IS_VALID(buff));
+
+    buff->w = 0;
+    buff->r = 0;
+    BUF_SEND_EVT(buff, LWRB_EVT_RESET, 0);
 }
 
 /**
@@ -327,9 +334,8 @@ lwrb_reset(LWRB_VOLATILE lwrb_t* buff) {
  */
 void*
 lwrb_get_linear_block_read_address(LWRB_VOLATILE lwrb_t* buff) {
-    if (!BUF_IS_VALID(buff)) {
-        return NULL;
-    }
+    assert(BUF_IS_VALID(buff));
+
     return &buff->buff[buff->r];
 }
 
@@ -342,9 +348,7 @@ size_t
 lwrb_get_linear_block_read_length(LWRB_VOLATILE lwrb_t* buff) {
     size_t w, r, len;
 
-    if (!BUF_IS_VALID(buff)) {
-        return 0;
-    }
+    assert(BUF_IS_VALID(buff));
 
     /* Use temporary values in case they are changed during operations */
     w = buff->w;
@@ -372,9 +376,8 @@ size_t
 lwrb_skip(LWRB_VOLATILE lwrb_t* buff, size_t len) {
     size_t full;
 
-    if (!BUF_IS_VALID(buff) || len == 0) {
-        return 0;
-    }
+    assert(BUF_IS_VALID(buff));
+    assert(len != 0);
 
     full = lwrb_get_full(buff);
     len = BUF_MIN(len, full);
@@ -393,9 +396,8 @@ lwrb_skip(LWRB_VOLATILE lwrb_t* buff, size_t len) {
  */
 void*
 lwrb_get_linear_block_write_address(LWRB_VOLATILE lwrb_t* buff) {
-    if (!BUF_IS_VALID(buff)) {
-        return NULL;
-    }
+    assert(BUF_IS_VALID(buff));
+
     return &buff->buff[buff->w];
 }
 
@@ -408,9 +410,7 @@ size_t
 lwrb_get_linear_block_write_length(LWRB_VOLATILE lwrb_t* buff) {
     size_t w, r, len;
 
-    if (!BUF_IS_VALID(buff)) {
-        return 0;
-    }
+    assert(BUF_IS_VALID(buff));
 
     /* Use temporary values in case they are changed during operations */
     w = buff->w;
@@ -450,9 +450,8 @@ size_t
 lwrb_advance(LWRB_VOLATILE lwrb_t* buff, size_t len) {
     size_t free;
 
-    if (!BUF_IS_VALID(buff) || len == 0) {
-        return 0;
-    }
+    assert(BUF_IS_VALID(buff));
+    assert(len != 0);
 
     free = lwrb_get_free(buff);
     len = BUF_MIN(len, free);

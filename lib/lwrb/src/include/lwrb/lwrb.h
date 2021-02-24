@@ -51,13 +51,20 @@ extern "C" {
  * \brief           Enable buffer structure pointer parameter as volatile
  * To use this feature, uncomment keyword below
  */
-#define LWRB_VOLATILE                           /* volatile */
+#define LWRB_VOLATILE                           volatile
 
 /**
  * \brief           Adds 2 magic words to make sure if memory is corrupted
  *                  application can detect wrong data pointer and maximum size
  */
-#define LWRB_USE_MAGIC                      1
+#define LWRB_USE_MAGIC                          0
+
+/**
+ * \brief           Enables event callback.
+ */
+#define LWRB_USE_EVT                            0
+
+#if LWRB_USE_EVT
 
 /**
  * \brief           Event type for buffer operations
@@ -81,6 +88,8 @@ struct lwrb;
  */
 typedef void (*lwrb_evt_fn)(LWRB_VOLATILE struct lwrb* buff, lwrb_evt_type_t evt, size_t bp);
 
+#endif /* LWRB_USE_EVT */
+
 /**
  * \brief           Buffer structure
  */
@@ -93,17 +102,21 @@ typedef struct lwrb {
     size_t size;                                /*!< Size of buffer data. Size of actual buffer is `1` byte less than value holds */
     size_t r;                                   /*!< Next read pointer. Buffer is considered empty when `r == w` and full when `w == r - 1` */
     size_t w;                                   /*!< Next write pointer. Buffer is considered empty when `r == w` and full when `w == r - 1` */
+#if LWRB_USE_EVT
     lwrb_evt_fn evt_fn;                         /*!< Pointer to event callback function */
+#endif
 #if LWRB_USE_MAGIC
     uint32_t magic2;                            /*!< Magic 2 word */
 #endif /* LWRB_USE_MAGIC */
 } lwrb_t;
 
-uint8_t     lwrb_init(LWRB_VOLATILE lwrb_t* buff, void* buffdata, size_t size);
+void        lwrb_init(LWRB_VOLATILE lwrb_t* buff, void* buffdata, size_t size);
 uint8_t     lwrb_is_ready(LWRB_VOLATILE lwrb_t* buff);
 void        lwrb_free(LWRB_VOLATILE lwrb_t* buff);
 void        lwrb_reset(LWRB_VOLATILE lwrb_t* buff);
+#if LWRB_USE_EVT
 void        lwrb_set_evt_fn(LWRB_VOLATILE lwrb_t* buff, lwrb_evt_fn fn);
+#endif
 
 /* Read/Write functions */
 size_t      lwrb_write(LWRB_VOLATILE lwrb_t* buff, const void* data, size_t btw);
