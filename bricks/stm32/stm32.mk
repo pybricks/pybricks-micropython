@@ -156,8 +156,7 @@ LIBS = "$(shell $(CC) $(CFLAGS) -print-libgcc-file-name)"
 
 SRC_C = $(addprefix bricks/stm32/,\
 	main.c \
-	systick.c \
-	uart_core.c \
+	mphalport.c \
 	)
 
 # Extra core MicroPython files
