@@ -238,9 +238,8 @@ limitations under the License.
 
 Copyright notices
 
-Copyright (c) 2020 The Pybricks Authors
-Copyright (c) 2019-2020 The Pybricks Authors
-Copyright (c) 2018-2020 The Pybricks Authors
+Copyright (c) 2020 Tilen MAJERLE
+Copyright (c) 2018-2021 The Pybricks Authors
 Copyright (c) 2018-2019 Damien P. George
 Copyright (c) 2017-2019 Arm Limited
 Copyright (c) 2017-2018 Paul Sokolovsky

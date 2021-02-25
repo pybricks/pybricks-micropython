@@ -9,10 +9,12 @@
 #include <stdint.h>
 
 #include <contiki.h>
+#include <lwrb/lwrb.h>
 
 #include <pbdrv/bluetooth.h>
 #include <pbio/error.h>
 #include <pbio/event.h>
+#include <pbio/util.h>
 #include <pbsys/status.h>
 #include <pbsys/sys.h>
 
@@ -20,17 +22,25 @@
 // max data size for nRF UART characteristics
 #define NRF_CHAR_SIZE 20
 
+// nRF UART Rx hook
+static pbsys_stdin_event_callback_t uart_rx_callback;
 // nRF UART tx is in progress
 static bool uart_tx_busy;
 // buffer to queue UART tx data
 static uint8_t uart_tx_buf[NRF_CHAR_SIZE];
-// bytes used in uart_tx_buf
-static uint8_t uart_tx_buf_size;
+// ring buffers for UART service
+static lwrb_t uart_tx_ring;
+static lwrb_t uart_rx_ring;
 
 PROCESS(pbsys_bluetooth_process, "Bluetooth");
 
 /** Initializes Bluetooth. */
 void pbsys_bluetooth_init(void) {
+    static uint8_t uart_tx_buf[NRF_CHAR_SIZE * 2 + 1];
+    static uint8_t uart_rx_buf[100 + 1]; // download chunk size
+
+    lwrb_init(&uart_tx_ring, uart_tx_buf, PBIO_ARRAY_SIZE(uart_tx_buf));
+    lwrb_init(&uart_rx_ring, uart_rx_buf, PBIO_ARRAY_SIZE(uart_rx_buf));
     process_start(&pbsys_bluetooth_process, NULL);
 }
 
@@ -39,28 +49,67 @@ static void on_event(void) {
 }
 
 /**
- * Queues a character to be transmitted via Bluetooth serial port.
- * @param c [in]    the character to be sent.
- * @return          ::PBIO_SUCCESS if *c* was queued, ::PBIO_ERROR_AGAIN if the
- *                  character could not be queued at this time (e.g. buffer is
- *                  full), ::PBIO_ERROR_INVALID_OP if there is not an active
- *                  Bluetooth connection or ::PBIO_ERROR_NOT_SUPPORTED if this
- *                  platform does not support Bluetooth.
+ * Sets the UART Rx callback function.
+ * @param callback  [in]    The callback or NULL.
  */
-pbio_error_t pbsys_bluetooth_tx(uint8_t c) {
+void pbsys_bluetooth_rx_set_callback(pbsys_stdin_event_callback_t callback) {
+    uart_rx_callback = callback;
+}
+
+/**
+ * Gets the number of bytes currently available to be read from the UART Rx
+ * characteristic.
+ * @return              The number of bytes.
+ */
+uint32_t pbsys_bluetooth_rx_get_available(void) {
+    return lwrb_get_full(&uart_rx_ring);
+}
+
+/**
+ * Reads data from the UART Rx characteristic.
+ * @param data  [in]        A buffer to receive a copy of the data.
+ * @param size  [in, out]   The number of bytes to read (@p data must be at least
+ *                          this big). After return @p size contains the number
+ *                          of bytes actually read.
+ * @return                  ::PBIO_SUCCESS if @p data was read, ::PBIO_ERROR_AGAIN
+ *                          if @p data could not be read at this time (i.e. buffer
+ *                          is empty), ::PBIO_ERROR_INVALID_OP if there is not an
+ *                          active Bluetooth connection or ::PBIO_ERROR_NOT_SUPPORTED
+ *                          if this platform does not support Bluetooth.
+ */
+pbio_error_t pbsys_bluetooth_rx(uint8_t *data, uint32_t *size) {
     // make sure we have a Bluetooth connection
     if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_UART)) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    // can't add the the buffer if tx is in progress or buffer is full
-    if (uart_tx_busy || uart_tx_buf_size == NRF_CHAR_SIZE) {
+    if ((*size = lwrb_read(&uart_rx_ring, data, *size)) == 0) {
         return PBIO_ERROR_AGAIN;
     }
 
-    // append the char
-    uart_tx_buf[uart_tx_buf_size] = c;
-    uart_tx_buf_size++;
+    return PBIO_SUCCESS;
+}
+
+/**
+ * Queues data to be transmitted via Bluetooth serial port.
+ * @param data  [in]        The data to be sent.
+ * @param size  [in, out]   The size of @p data in bytes. After return, @p size
+ *                          contains the number of bytes actually written.
+ * @return                  ::PBIO_SUCCESS if @p data was queued, ::PBIO_ERROR_AGAIN
+ *                          if @p data could not be queued at this time (e.g. buffer
+ *                          is full), ::PBIO_ERROR_INVALID_OP if there is not an
+ *                          active Bluetooth connection or ::PBIO_ERROR_NOT_SUPPORTED
+ *                          if this platform does not support Bluetooth.
+ */
+pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
+    // make sure we have a Bluetooth connection
+    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_UART)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    if ((*size = lwrb_write(&uart_tx_ring, data, *size)) == 0) {
+        return PBIO_ERROR_AGAIN;
+    }
 
     // poke the process to start tx soon-ish. This way, we can accumulate up to
     // NRF_CHAR_SIZE bytes before actually transmitting
@@ -71,13 +120,21 @@ pbio_error_t pbsys_bluetooth_tx(uint8_t c) {
 
 static void uart_tx_done(void) {
     uart_tx_busy = false;
-    uart_tx_buf_size = 0;
     process_poll(&pbsys_bluetooth_process);
 }
 
 static void uart_on_rx(const uint8_t *data, uint8_t size) {
-    for (int i = 0; i < size; i++) {
-        pbsys_stdin_put_char(data[i]);
+    // This will drop data if buffer is full
+    if (uart_rx_callback) {
+        // If there is a callback hook, we have to process things one byte at
+        // a time.
+        for (int i = 0; i < size; i++) {
+            if (!uart_rx_callback(data[i])) {
+                lwrb_write(&uart_rx_ring, &data[i], 1);
+            }
+        }
+    } else {
+        lwrb_write(&uart_rx_ring, data, size);
     }
 }
 
@@ -129,9 +186,12 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
                 break;
             }
 
-            if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_UART) && !uart_tx_busy && uart_tx_buf_size) {
-                uart_tx_busy = true;
-                pbdrv_bluetooth_uart_tx(uart_tx_buf, uart_tx_buf_size, uart_tx_done);
+            if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_UART) && !uart_tx_busy) {
+                size_t size = lwrb_read(&uart_tx_ring, uart_tx_buf, NRF_CHAR_SIZE);
+                if (size) {
+                    uart_tx_busy = true;
+                    pbdrv_bluetooth_uart_tx(uart_tx_buf, size, uart_tx_done);
+                }
             }
 
             PROCESS_WAIT_EVENT();

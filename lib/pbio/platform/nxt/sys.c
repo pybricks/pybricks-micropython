@@ -3,8 +3,6 @@
 
 #include <contiki.h>
 
-#include "pbdrv/config.h"
-
 #include "pbio/event.h"
 #include "pbio/main.h"
 
@@ -15,17 +13,10 @@
 
 #include "../sys/hmi.h"
 
-// ring buffer size for stdin data - must be power of 2!
-#define STDIN_BUF_SIZE 128
-
 // user program stop function
 static pbsys_stop_callback_t user_stop_func;
 // user program stdin event function
 static pbsys_stdin_event_callback_t user_stdin_event_func;
-
-// stdin ring buffer
-static uint8_t stdin_buf[STDIN_BUF_SIZE];
-static uint8_t stdin_buf_head, stdin_buf_tail;
 
 PROCESS(pbsys_process, "System");
 
@@ -45,50 +36,6 @@ void pbsys_unprepare_user_program(void) {
     pbio_stop_all();
     user_stop_func = NULL;
     user_stdin_event_func = NULL;
-}
-
-pbio_error_t pbsys_stdin_peek_char(uint8_t *c) {
-    if (stdin_buf_head == stdin_buf_tail) {
-        return PBIO_ERROR_AGAIN;
-    }
-
-    *c = stdin_buf[stdin_buf_tail];
-
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbsys_stdin_get_char(uint8_t *c) {
-    pbio_error_t err = pbsys_stdin_peek_char(c);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    stdin_buf_tail = (stdin_buf_tail + 1) & (STDIN_BUF_SIZE - 1);
-
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbsys_stdout_put_char(uint8_t c) {
-    // TODO: send via USB or Bluetooth
-    return PBIO_SUCCESS;
-}
-
-void pbsys_stdin_put_char(uint8_t c) {
-    uint8_t new_head = (stdin_buf_head + 1) & (STDIN_BUF_SIZE - 1);
-
-    // optional hook function can steal the character
-    if (user_stdin_event_func && user_stdin_event_func(c)) {
-        return;
-    }
-
-    // otherwise write character to ring buffer
-
-    if (new_head == stdin_buf_tail) {
-        // overflow. drop the data :-(
-        return;
-    }
-    stdin_buf[stdin_buf_head] = c;
-    stdin_buf_head = new_head;
 }
 
 PROCESS_THREAD(pbsys_process, ev, data) {

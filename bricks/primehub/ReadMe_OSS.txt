@@ -206,9 +206,8 @@ limitations under the License.
 
 Copyright notices
 
-Copyright (c) 2020 The Pybricks Authors
+Copyright (c) 2020 Tilen MAJERLE
 Copyright (c) 2020 Damien P. George
-Copyright (c) 2019-2020 The Pybricks Authors
 Copyright (c) 2019-2020 Jim Mussared
 Copyright (c) 2019-2020 Damien P. George
 Copyright (c) 2019 SatoshiLabs
@@ -217,7 +216,7 @@ Copyright (c) 2019 Paul Sokolovsky
 Copyright (c) 2019 Jim Mussared
 Copyright (c) 2019 Damien P. George
 Copyright (c) 2019 BlueKitchen GmbH
-Copyright (c) 2018-2020 The Pybricks Authors
+Copyright (c) 2018-2021 The Pybricks Authors
 Copyright (c) 2018 Paul Sokolovsky
 Copyright (c) 2018 BlueKitchen GmbH
 Copyright (c) 2018 Ayke van Laethem

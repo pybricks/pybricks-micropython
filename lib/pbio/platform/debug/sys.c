@@ -1,18 +1,12 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
-
-#include <string.h>
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include <contiki.h>
 
-#include "pbio/color.h"
 #include "pbio/event.h"
-#include "pbio/light.h"
 
 #include <pbsys/status.h>
 #include <pbsys/sys.h>
-
-#include "stm32f4xx.h"
 
 #include "../sys/hmi.h"
 
@@ -38,29 +32,6 @@ void pbsys_unprepare_user_program(void) {
     pbsys_status_clear(PBSYS_STATUS_USER_PROGRAM_RUNNING);
     user_stop_func = NULL;
     user_stdin_event_func = NULL;
-}
-
-pbio_error_t pbsys_stdin_peek_char(uint8_t *c) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-
-pbio_error_t pbsys_stdin_get_char(uint8_t *c) {
-    if (!(USART6->SR & USART_SR_RXNE)) {
-        return PBIO_ERROR_AGAIN;
-    }
-
-    *c = USART6->DR;
-
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbsys_stdout_put_char(uint8_t c) {
-    if (!(USART6->SR & USART_SR_TXE)) {
-        return PBIO_ERROR_AGAIN;
-    }
-    USART6->DR = c;
-
-    return PBIO_SUCCESS;
 }
 
 PROCESS_THREAD(pbsys_process, ev, data) {

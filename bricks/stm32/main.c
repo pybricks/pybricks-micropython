@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include <stdint.h>
 #include <stdio.h>
@@ -9,21 +9,20 @@
 
 #include <pbio/button.h>
 #include <pbio/main.h>
-#include <pbio/light.h>
 #include <pbsys/sys.h>
 
 #include <pybricks/util_mp/pb_obj_helper.h>
 
+#include "lib/utils/interrupt_char.h"
+#include "lib/utils/pyexec.h"
 #include "py/compile.h"
-#include "py/runtime.h"
-#include "py/repl.h"
 #include "py/gc.h"
 #include "py/mperrno.h"
-#include "py/persistentcode.h"
-#include "lib/utils/pyexec.h"
-#include "lib/utils/interrupt_char.h"
-
 #include "py/mphal.h"
+#include "py/persistentcode.h"
+#include "py/repl.h"
+#include "py/runtime.h"
+#include "py/stream.h"
 
 static char *stack_top;
 #if MICROPY_ENABLE_GC
@@ -105,9 +104,8 @@ static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, int32_t time_out)
         time_now = mp_hal_ticks_ms();
 
         // Try to get one byte
-        err = pbsys_stdin_get_char(&buf[rx_count]);
-
-        if (err == PBIO_SUCCESS) {
+        if (mp_hal_stdio_poll(MP_STREAM_POLL_RD)) {
+            buf[rx_count] = mp_hal_stdin_rx_chr();
             // On success, reset timeout
             time_start = time_now;
 
@@ -119,19 +117,18 @@ static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, int32_t time_out)
 
             // When done, acknowledge with the checksum
             if (rx_count == rx_len) {
-                return pbsys_stdout_put_char(checksum);
+                mp_hal_stdout_tx_strn((const char *)&checksum, 1);
+                return PBIO_SUCCESS;
             }
 
             // Acknowledge after receiving a chunk.
             if (rx_count % chunk_size == 0) {
-                err = pbsys_stdout_put_char(checksum);
-                if (err != PBIO_SUCCESS) {
-                    return err;
-                }
+                mp_hal_stdout_tx_strn((const char *)&checksum, 1);
                 // Reset the checksum
                 checksum = 0;
             }
         }
+
         // Check if we have timed out
         if (rx_count == 0) {
             // Use given timeout for first byte
@@ -142,6 +139,7 @@ static pbio_error_t get_message(uint8_t *buf, uint32_t rx_len, int32_t time_out)
             // After the first byte, apply much shorter interval timeout
             return PBIO_ERROR_TIMEDOUT;
         }
+
         // Keep polling
         pb_stm32_poll();
     }
@@ -163,8 +161,8 @@ static uint32_t get_user_program(uint8_t **buf, uint32_t *free_len) {
     *free_len = 0;
 
     // flush any buffered bytes from stdin
-    uint8_t c;
-    while (pbsys_stdin_get_char(&c) == PBIO_SUCCESS) {
+    while (mp_hal_stdio_poll(MP_STREAM_POLL_RD)) {
+        mp_hal_stdin_rx_chr();
     }
 
     // Get the program length

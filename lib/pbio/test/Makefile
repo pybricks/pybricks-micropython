@@ -61,6 +61,11 @@ FIXMATH_INC = -I$(FIXMATH_DIR)/libfixmath
 FIXMATH_SRC = $(shell find $(FIXMATH_DIR)/libfixmath -name "*.c")
 
 # pbio depedency
+LWRB_DIR = ../../lwrb/src
+LWRB_INC = -I$(LWRB_DIR)/include
+LWRB_SRC = $(shell find $(LWRB_DIR)/lwrb -name "*.c")
+
+# pbio depedency
 BTSTACK_DIR = ../../btstack
 BTSTACK_INC = -I$(BTSTACK_DIR)/src -I$(BTSTACK_DIR)/chipset/cc256x
 BTSTACK_SRC = $(addprefix $(BTSTACK_DIR)/src/,\
@@ -139,7 +144,7 @@ $(BUILD_DIR)/genhdr/%.h: $(PBIO_DIR)/drv/bluetooth/%.gatt
 
 CFLAGS += -std=gnu99 -g -O0 -Wall -Werror -fshort-enums
 CFLAGS += -fdata-sections -ffunction-sections -Wl,--gc-sections
-CFLAGS += $(TINY_TEST_INC) $(CONTIKI_INC) $(LEGO_INC) $(FIXMATH_INC) $(BTSTACK_INC) $(PBIO_INC) $(TEST_INC)
+CFLAGS += $(TINY_TEST_INC) $(CONTIKI_INC) $(LEGO_INC) $(FIXMATH_INC) $(LWRB_INC) $(BTSTACK_INC) $(PBIO_INC) $(TEST_INC)
 CFLAGS += -I$(BUILD_DIR)
 CFLAGS += -DPBIO_TEST_BUILD=1
 
@@ -147,7 +152,7 @@ ifeq ($(COVERAGE),1)
 CFLAGS += --coverage
 endif
 
-SRC = $(TINY_TEST_SRC) $(CONTIKI_SRC) $(LEGO_SRC) $(FIXMATH_SRC) $(BTSTACK_SRC) $(PBIO_SRC) $(TEST_SRC)
+SRC = $(TINY_TEST_SRC) $(CONTIKI_SRC) $(LEGO_SRC) $(FIXMATH_SRC) $(LWRB_SRC) $(BTSTACK_SRC) $(PBIO_SRC) $(TEST_SRC)
 DEP = $(addprefix $(BUILD_PREFIX)/,$(SRC:.c=.d))
 OBJ = $(addprefix $(BUILD_PREFIX)/,$(SRC:.c=.o))
 

@@ -82,6 +82,7 @@ endif
 INC += -I$(PBTOP)/lib/contiki-core
 INC += -I$(PBTOP)/lib/lego
 INC += -I$(PBTOP)/lib/libfixmath/libfixmath
+INC += -I$(PBTOP)/lib/lwrb/src/include
 INC += -I$(PBTOP)/lib/pbio/include
 INC += -I$(PBTOP)/lib/pbio/platform/$(PBIO_PLATFORM)
 INC += -I$(PBTOP)/lib/pbio
@@ -352,6 +353,10 @@ HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
 	stm32$(PB_MCU_SERIES_LCASE)xx_ll_usb.c \
 	)
 
+# Ring buffer
+
+LWRB_SRC_C = lib/lwrb/src/lwrb/lwrb.c
+
 ifeq ($(PB_MCU_SERIES),F4)
 HAL_SRC_C := $(filter-out %xx_hal_uart_ex.c, $(HAL_SRC_C))
 endif
@@ -526,6 +531,7 @@ OBJ += $(addprefix $(BUILD)/, $(LSM6DS3TR_C_SRC_C:.c=.o))
 endif
 OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(LWRB_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 DUAL_BOOT_OBJ += $(addprefix $(BUILD)/, $(PBIO_DUAL_BOOT_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
