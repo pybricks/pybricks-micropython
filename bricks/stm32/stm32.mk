@@ -171,6 +171,7 @@ SRC_C = $(addprefix bricks/stm32/,\
 SRC_C += $(addprefix lib/,\
 	libc/string0.c \
 	mp-readline/readline.c \
+	utils/gchelper_native.c \
 	utils/interrupt_char.c \
 	utils/pyexec.c \
 	utils/stdout_helpers.c \

@@ -13,6 +13,7 @@
 
 #include <pybricks/util_mp/pb_obj_helper.h>
 
+#include "lib/utils/gchelper.h"
 #include "lib/utils/interrupt_char.h"
 #include "lib/utils/pyexec.h"
 #include "py/compile.h"
@@ -335,21 +336,9 @@ soft_reset:
     return 0;
 }
 
-// defined in lib/utils/gchelper*.s
-uintptr_t gc_helper_get_regs_and_sp(uintptr_t *regs);
-
 void gc_collect(void) {
-    // start the GC
     gc_collect_start();
-
-    // get the registers and the sp
-    uintptr_t regs[10];
-    uintptr_t sp = gc_helper_get_regs_and_sp(regs);
-
-    // trace the stack, including the registers (since they live on the stack in this function)
-    gc_collect_root((void **)sp, ((uint32_t)&_estack - sp) / sizeof(uint32_t));
-
-    // end the GC
+    gc_helper_collect_regs_and_stack();
     gc_collect_end();
 }
 
