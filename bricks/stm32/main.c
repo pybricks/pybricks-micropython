@@ -22,9 +22,19 @@
 #include "py/persistentcode.h"
 #include "py/repl.h"
 #include "py/runtime.h"
+#include "py/stackctrl.h"
 #include "py/stream.h"
 
-static char *stack_top;
+// REVISIT: We could modify the linker script like upstream MicroPython so that
+// we can specify the stack size per hub in the linker scripts. Currently, since
+// the heap is statically allocated here, the stack size is whatever is left in
+// RAM after .data and .bss sections. But it would probably be better to specify
+// the stack size and let the heap be whatever is leftover.
+
+// defined in linker script
+extern uint32_t _estack;
+extern uint32_t _ebss;
+
 #if MICROPY_ENABLE_GC
 static char heap[PYBRICKS_HEAP_KB * 1024];
 #endif
@@ -277,12 +287,14 @@ static const pbsys_user_program_callbacks_t user_program_callbacks = {
 };
 
 int main(int argc, char **argv) {
-    int stack_dummy;
-    stack_top = (char *)&stack_dummy;
-
     pbio_init();
 
 soft_reset:
+    // Stack limit should be less than real stack size, so we have a chance
+    // to recover from limit hit.  (Limit is measured in bytes.)
+    // Note: stack control relies on main thread being initialised above
+    mp_stack_set_top(&_estack);
+    mp_stack_set_limit((char *)&_estack - (char *)&_ebss - 1024);
 
     #if MICROPY_ENABLE_GC
     gc_init(heap, heap + sizeof(heap));
@@ -323,9 +335,7 @@ soft_reset:
     return 0;
 }
 
-// defined in linker script
-extern uint32_t _estack;
-// defined in lib/utils/gchelper_m0.s
+// defined in lib/utils/gchelper*.s
 uintptr_t gc_helper_get_regs_and_sp(uintptr_t *regs);
 
 void gc_collect(void) {
