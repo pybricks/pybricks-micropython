@@ -317,6 +317,8 @@ BTSTACK_SRC_C += $(addprefix lib/btstack/chipset/cc256x/,\
 # Contiki
 
 CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
+	lib/list.c \
+	lib/memb.c \
 	lib/ringbuf.c \
 	sys/autostart.c \
 	sys/etimer.c \

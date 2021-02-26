@@ -64,7 +64,7 @@ static void pybricks_can_send(void *context) {
     tx_context_t *pybricks_tx = context;
 
     pybricks_service_server_send(pybricks_con_handle, pybricks_tx->data, pybricks_tx->size);
-    pybricks_tx->done();
+    pybricks_tx->done(pybricks_tx->data);
 }
 
 static void pybricks_data_received(hci_con_handle_t tx_con_handle, const uint8_t *data, uint16_t size) {
@@ -81,7 +81,7 @@ static void nordic_can_send(void *context) {
     tx_context_t *uart_tx = context;
 
     nordic_spp_service_server_send(uart_con_handle, uart_tx->data, uart_tx->size);
-    uart_tx->done();
+    uart_tx->done(uart_tx->data);
 }
 
 static void nordic_data_received(hci_con_handle_t tx_con_handle, const uint8_t *data, uint16_t size) {

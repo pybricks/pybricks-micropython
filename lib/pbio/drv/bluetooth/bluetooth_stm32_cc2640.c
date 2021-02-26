@@ -349,7 +349,7 @@ retry:
         goto retry;
     }
 
-    pybricks_tx->done();
+    pybricks_tx->done(pybricks_tx->data);
 
     PT_END(pt);
 }
@@ -399,7 +399,7 @@ retry:
         goto retry;
     }
 
-    uart_tx->done();
+    uart_tx->done(uart_tx->data);
 
     PT_END(pt);
 }

@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <contiki-lib.h>
 #include <contiki.h>
 #include <lwrb/lwrb.h>
 
@@ -31,6 +32,16 @@ static uint8_t uart_tx_buf[NRF_CHAR_SIZE];
 // ring buffers for UART service
 static lwrb_t uart_tx_ring;
 static lwrb_t uart_rx_ring;
+
+typedef struct {
+    list_t queue;
+    uint8_t payload[20];
+    uint8_t size;
+} pybricks_tx_msg_t;
+
+MEMB(pybricks_tx_msg_pool, pybricks_tx_msg_t, 3);
+LIST(pybricks_tx_queue);
+static bool pybricks_tx_busy;
 
 PROCESS(pbsys_bluetooth_process, "Bluetooth");
 
@@ -118,7 +129,7 @@ pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
     return PBIO_SUCCESS;
 }
 
-static void uart_tx_done(void) {
+static void uart_tx_done(const uint8_t *data) {
     uart_tx_busy = false;
     process_poll(&pbsys_bluetooth_process);
 }
@@ -138,19 +149,28 @@ static void uart_on_rx(const uint8_t *data, uint8_t size) {
     }
 }
 
-static void pybricks_tx_done(void) {
+static void pybricks_tx_done(const uint8_t *data) {
+    pybricks_tx_msg_t *msg = PBIO_CONTAINER_OF(data, pybricks_tx_msg_t, payload[0]);
+    memb_free(&pybricks_tx_msg_pool, msg);
+    pybricks_tx_busy = false;
     process_poll(&pbsys_bluetooth_process);
 }
 
 static void pybricks_on_rx(const uint8_t *data, uint8_t size) {
     // TODO: this is a temporary echo service - needs to trigger events instead
-    static uint8_t copy[NRF_CHAR_SIZE];
 
-    for (int i = 0; i < MIN(size, NRF_CHAR_SIZE); i++) {
-        copy[i] = data[i] + 1;
+    pybricks_tx_msg_t *msg = memb_alloc(&pybricks_tx_msg_pool);
+    if (!msg) {
+        return;
     }
 
-    pbdrv_bluetooth_pybricks_tx(copy, size, pybricks_tx_done);
+    msg->size = MIN(size, PBIO_ARRAY_SIZE(msg->payload));
+    for (int i = 0; i < msg->size; i++) {
+        msg->payload[i] = data[i] + 1;
+    }
+
+    list_add(pybricks_tx_queue, msg);
+
     process_poll(&pbsys_bluetooth_process);
 }
 
@@ -191,6 +211,14 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
                 if (size) {
                     uart_tx_busy = true;
                     pbdrv_bluetooth_uart_tx(uart_tx_buf, size, uart_tx_done);
+                }
+            }
+
+            if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) && !pybricks_tx_busy) {
+                pybricks_tx_msg_t *msg = list_pop(pybricks_tx_queue);
+                if (msg) {
+                    pybricks_tx_busy = true;
+                    pbdrv_bluetooth_pybricks_tx(&msg->payload[0], msg->size, pybricks_tx_done);
                 }
             }
 

@@ -44,6 +44,7 @@ CONTIKI_DIR = ../../contiki-core
 CONTIKI_INC = -I$(CONTIKI_DIR)
 CONTIKI_SRC = $(addprefix $(CONTIKI_DIR)/, \
 	lib/list.c \
+	lib/memb.c \
 	sys/autostart.c \
 	sys/etimer.c \
 	sys/process.c \

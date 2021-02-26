@@ -32,8 +32,9 @@ typedef void (*pbdrv_bluetooth_on_event_t)(void);
 
 /**
  * Callback that is called when Tx is done.
+ * @param data  [in]        The data that was transmitted.
  */
-typedef void (*pbdrv_bluetooth_tx_done_t)(void);
+typedef void (*pbdrv_bluetooth_tx_done_t)(const uint8_t *data);
 
 /**
  * Callback that is called when Rx data is received.
