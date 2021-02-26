@@ -31,7 +31,9 @@ jobs:
         with:
           python-version: '3.8'
       - name: Install Python packages
-        run:  python -m pip install azure-cosmosdb-table GitPython gql plotly
+        run:  |
+          python -m pip install azure-cosmosdb-table GitPython plotly
+          python -m pip install gql --pre
       - name: Checkout code
         uses: actions/checkout@v2
         with:
