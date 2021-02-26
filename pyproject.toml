@@ -13,7 +13,7 @@ azure-cosmosdb-table = "^1.0.6"
 black = "^20.8b0"
 flake8 = "^3.8.3"
 GitPython = "^3.1.11"
-gql = "^2.0.0"
+gql = "^3.0.0a5"
 plotly = "^4.14.1"
 pybricks = { git = "https://github.com/pybricks/pybricks-api.git", branch = "master" }
 pybricksdev = { git = "https://github.com/pybricks/pybricksdev.git", branch = "master" }
