@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2013, 2014 Damien P. George */
-/* Copyright (c) 2018-2020 The Pybricks Authors */
+/* Copyright (c) 2018-2021 The Pybricks Authors */
 
 /* top end of the stack */
 _estack = ORIGIN(RAM) + LENGTH(RAM);
@@ -64,6 +64,13 @@ SECTIONS
 
         . = ALIGN(4);
         _ebss = .;         /* define a global symbol at bss end; used by startup code */
+    } >RAM
+
+    .stack :
+    {
+        . = ALIGN(4);
+        . = . + _minimum_stack_size; /* will cause linker error if there is not enough space for stack. */
+        . = ALIGN(4);
     } >RAM
 
     .user :

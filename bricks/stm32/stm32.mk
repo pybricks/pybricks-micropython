@@ -590,7 +590,7 @@ FW_VERSION := $(shell $(GIT) describe --tags --dirty --always --exclude "@pybric
 $(BUILD)/firmware-no-checksum.elf: $(LD_FILES) $(OBJ)
 	$(ECHO) "LINK $@"
 	$(Q)$(LD) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
-	$(Q)$(SIZE) $@
+	$(Q)$(SIZE) -A $@
 
 # firmware blob used to calculate checksum
 $(BUILD)/firmware-no-checksum.bin: $(BUILD)/firmware-no-checksum.elf
@@ -616,7 +616,7 @@ $(BUILD)/firmware-base.bin: $(BUILD)/firmware-no-checksum.elf
 $(BUILD)/firmware-dual-boot-base.elf: $(LD_FILES) $(OBJ) $(DUAL_BOOT_OBJ)
 	$(ECHO) "LINK $@"
 	$(Q)$(LD) --defsym=CHECKSUM=0 --defsym=DUAL_BOOT=1 $(LDFLAGS) -o $@ $(OBJ) $(DUAL_BOOT_OBJ) $(LIBS)
-	$(Q)$(SIZE) $@
+	$(Q)$(SIZE) -A $@
 
 # firmware blob without main.mpy or checksum - use as base for appending other .mpy
 $(BUILD)/firmware-dual-boot-base.bin: $(BUILD)/firmware-dual-boot-base.elf

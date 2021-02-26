@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2013, 2014 Damien P. George */
-/* Copyright (c) 2018-2020 The Pybricks Authors */
+/* Copyright (c) 2018-2021 The Pybricks Authors */
 
 /*
     GNU linker script for LEGO SPIKE Prime hub
@@ -16,3 +16,5 @@ MEMORY
     /* SRAM1 (256K) and SRAM2 (64K) are treated as one continuous block */
     RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 320K
 }
+
+_minimum_stack_size = 8K;

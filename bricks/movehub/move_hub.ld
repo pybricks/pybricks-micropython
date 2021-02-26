@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 /* Copyright (c) 2013, 2014 Damien P. George */
-/* Copyright (c) 2018-2020 The Pybricks Authors */
+/* Copyright (c) 2018-2021 The Pybricks Authors */
 
 /*
     GNU linker script for LEGO BOOST Move Hub
@@ -16,3 +16,4 @@ MEMORY
 }
 
 "MAGIC_OFFSET" = 0x100;
+_minimum_stack_size = 2K;
