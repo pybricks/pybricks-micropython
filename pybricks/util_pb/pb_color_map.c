@@ -58,7 +58,7 @@ STATIC const mp_rom_obj_tuple_t pb_color_map_default = {
         MP_OBJ_FROM_PTR(&pb_Color_GREEN_obj),
         MP_OBJ_FROM_PTR(&pb_Color_BLUE_obj),
         MP_OBJ_FROM_PTR(&pb_Color_WHITE_obj),
-        mp_const_none,
+        MP_OBJ_FROM_PTR(&pb_Color_NONE_obj),
     }
 };
 
@@ -111,17 +111,8 @@ mp_obj_t pb_color_map_get_color(mp_obj_t *color_map, pbio_color_hsv_t *hsv) {
     // Compute cost for each candidate
     for (size_t i = 0; i < n; i++) {
 
-        // Get HSV of the candidate discrete color
-        const pbio_color_hsv_t *compare;
-        if (colors[i] == mp_const_none) {
-            compare = &pb_Color_NONE_obj.hsv;
-        } else {
-            pb_type_Color_obj_t *color = MP_OBJ_TO_PTR(colors[i]);
-            compare = &color->hsv;
-        }
-
         // Evaluate the cost function
-        cost_now = get_hsv_cost(hsv, compare);
+        cost_now = get_hsv_cost(hsv, pb_type_Color_get_hsv(colors[i]));
 
         // If cost is less than before, update the minimum and the match
         if (cost_now < cost_min) {
@@ -156,9 +147,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_detectable_colors(size_t n_args, 
     size_t n;
     mp_obj_get_array(colors_in, &n, &color_objs);
     for (size_t i = 0; i < n; i++) {
-        if (color_objs[i] != mp_const_none) {
-            pb_assert_type(color_objs[i], &pb_type_Color);
-        }
+        pb_assert_type(color_objs[i], &pb_type_Color);
     }
 
     // Save the given map

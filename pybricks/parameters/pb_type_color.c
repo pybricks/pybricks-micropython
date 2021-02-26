@@ -83,18 +83,11 @@ const pb_type_Color_obj_t pb_Color_WHITE_obj = {
  * Gets the pointer to the hsv type from a Color type.
  *
  * If @p obj is not a Color type, a TypeError is raised.
- * If @p obj is None, it is treated as Color.BLACK.
  *
  * @param obj [in]  A MicroPython object of pb_type_Color
  * @return          Pointer to hsv structure
  */
 const pbio_color_hsv_t *pb_type_Color_get_hsv(mp_obj_t obj) {
-
-    // For none, return HSV (0, 0, 0), corresponding to off
-    if (obj == mp_const_none) {
-        return &pb_Color_NONE_obj.hsv;
-    }
-
     // Assert type and extract hsv
     pb_assert_type(obj, &pb_type_Color);
     return &((pb_type_Color_obj_t *)obj)->hsv;
