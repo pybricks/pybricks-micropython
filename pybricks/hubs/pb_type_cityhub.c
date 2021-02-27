@@ -50,7 +50,7 @@ STATIC const mp_rom_map_elem_t hubs_CityHub_locals_dict_table[] = {
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_CityHub_locals_dict, hubs_CityHub_locals_dict_table);
 
-const mp_obj_type_t pb_type_CityHub = {
+const mp_obj_type_t pb_type_SystemHub = {
     { &mp_type_type },
     .name = MP_QSTR_CityHub,
     .make_new = hubs_CityHub_make_new,
