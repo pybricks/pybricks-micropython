@@ -18,6 +18,8 @@
 
 #include <pybricks/parameters.h>
 
+void pb_package_import_all(void);
+
 // pybricks._common.ColorLight()
 mp_obj_t common_ColorLight_external_obj_make_new(pb_device_t *pbdev);
 mp_obj_t common_ColorLight_internal_obj_new(pbio_color_light_t *light);

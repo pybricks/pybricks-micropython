@@ -11,6 +11,7 @@
 #include <pbio/main.h>
 #include <pbsys/sys.h>
 
+#include <pybricks/common.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 
 #include "lib/utils/gchelper.h"
@@ -238,6 +239,7 @@ static void run_user_program(uint32_t len, uint8_t *buf, uint32_t free_len) {
 
     if (len == REPL_LEN) {
         #if MICROPY_ENABLE_COMPILER
+        pb_package_import_all();
         pyexec_friendly_repl();
         #else
         mp_print_str(&mp_plat_print, "REPL not supported!\n");

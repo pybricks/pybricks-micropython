@@ -5,7 +5,9 @@
 #include "py/obj.h"
 #include "py/objstr.h"
 #include "py/objtuple.h"
+#include "py/runtime.h"
 
+#include <pybricks/common.h>
 #include <pybricks/ev3devices.h>
 #include <pybricks/experimental.h>
 #include <pybricks/geometry.h>
@@ -87,3 +89,26 @@ const mp_obj_module_t pb_package_pybricks = {
     .base = { &mp_type_module },
     .globals = (mp_obj_dict_t *)&pb_package_pybricks_globals,
 };
+
+STATIC void import_all() {
+    // Go through each module in the package.
+    for (size_t i = 0; i < MP_ARRAY_SIZE(pybricks_globals_table); i++) {
+        mp_rom_obj_t module = pybricks_globals_table[i].value;
+        if (mp_obj_is_obj(module) && mp_obj_is_type(module, &mp_type_module)) {
+            // Import everything from the module.
+            mp_import_all((mp_obj_t)module);
+        }
+    }
+}
+
+// Import everything and raise exception if it occurs.
+void pb_package_import_all(void) {
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        import_all();
+        nlr_pop();
+    } else {
+        mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
+        return;
+    }
+}
