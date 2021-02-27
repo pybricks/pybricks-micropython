@@ -97,7 +97,7 @@ STATIC void import_all() {
     // Go through each module in the package.
     for (size_t i = 0; i < MP_ARRAY_SIZE(pybricks_globals_table); i++) {
         mp_rom_obj_t module = pybricks_globals_table[i].value;
-        if (mp_obj_is_obj(module) && mp_obj_is_type(module, &mp_type_module)) {
+        if (mp_obj_is_type(module, &mp_type_module)) {
             // Import everything from the module.
             mp_import_all((mp_obj_t)module);
         }
