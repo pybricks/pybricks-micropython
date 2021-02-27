@@ -99,6 +99,11 @@ STATIC void import_all() {
             mp_import_all((mp_obj_t)module);
         }
     }
+    #if PYBRICKS_PY_HUBS
+    // Initialize hub instance
+    const mp_obj_t args;
+    mp_store_name(MP_QSTR_hub, pb_type_SystemHub.make_new(&pb_type_SystemHub, 0, 0, &args));
+    #endif
 }
 
 // Import everything and raise exception if it occurs.
