@@ -91,6 +91,9 @@ const mp_obj_module_t pb_package_pybricks = {
 };
 
 STATIC void import_all() {
+    // Initialize package
+    pb_package_pybricks_init();
+
     // Go through each module in the package.
     for (size_t i = 0; i < MP_ARRAY_SIZE(pybricks_globals_table); i++) {
         mp_rom_obj_t module = pybricks_globals_table[i].value;
