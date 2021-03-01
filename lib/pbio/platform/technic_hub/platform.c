@@ -586,7 +586,7 @@ void SystemInit(void) {
     // since the firmware starts at 0x08008000, we need to set the vector table offset
     SCB->VTOR = (uint32_t)&_fw_isr_vector_src;
 
-    // Using external 16Mhz oscillator
+    // Using internal RC oscillator (MSI)
     RCC_OscInitTypeDef osc_init = { 0 };
     osc_init.OscillatorType = RCC_OSCILLATORTYPE_MSI;
     osc_init.MSIState = RCC_MSI_ON;
