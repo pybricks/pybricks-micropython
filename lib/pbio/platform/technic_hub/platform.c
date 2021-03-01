@@ -310,7 +310,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
     {
         .platform_init = pwm_dev_3_platform_init,
         .TIMx = TIM2,
-        .prescalar = 8, // results in 10 MHz clock
+        .prescalar = 1, // results in 10 MHz clock (5 MHz APB1 clock x2 since prescaler != 1)
         .period = 10000, // 10 MHz divided by 10k makes 1 kHz PWM
         .id = PWM_DEV_3,
         // channel 1: Green LED; channel 2: Red LED
