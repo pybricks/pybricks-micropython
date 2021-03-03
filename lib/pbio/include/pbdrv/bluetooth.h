@@ -15,14 +15,16 @@
 #include <pbdrv/config.h>
 #include <pbio/error.h>
 
-/** Flags indicating which services are connected. */
+/**
+ * BLE characteristic connection identifiers.
+ */
 typedef enum {
-    /** The Pybricks service is connected (notifications enabled). */
-    PBDRV_BLUETOOTH_CONNECTION_PYBRICKS = 1 << 0,
-    /** The nRF UART service is connected (notifications enabled). */
-    PBDRV_BLUETOOTH_CONNECTION_UART = 1 << 1,
-    /** At least one service is connected. */
-    PBDRV_BLUETOOTH_CONNECTION_ANY = ~0,
+    /* An HCI device connection. */
+    PBDRV_BLUETOOTH_CONNECTION_HCI,
+    /** The Pybricks service. */
+    PBDRV_BLUETOOTH_CONNECTION_PYBRICKS,
+    /** The nRF UART service. */
+    PBDRV_BLUETOOTH_CONNECTION_UART,
 } pbdrv_bluetooth_connection_t;
 
 /**
@@ -72,9 +74,7 @@ void pbdrv_bluetooth_start_advertising(void);
 
 /**
  * Tests if a central is connected to the Bluetooth chip.
- * @param [in]  connection  The type of connection of interest or
- *                          ::PBDRV_BLUETOOTH_CONNECTION_ANY to test if there
- *                          is any connection all.
+ * @param [in]  connection  The type of connection of interest.
  * @return                  True if the requested connection type is present,
  *                          otherwise false.
  */

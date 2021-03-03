@@ -172,7 +172,7 @@ void pbdrv_bluetooth_start_advertising(void) {
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_ANY) {
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_HCI) {
         // TODO: should add something to packet_handler() to get connection handle
         // instead of looking it up this way
         btstack_linked_list_iterator_t it;
@@ -180,11 +180,11 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
         return btstack_linked_list_iterator_has_next(&it);
     }
 
-    if ((connection & PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) && pybricks_con_handle != HCI_CON_HANDLE_INVALID) {
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS && pybricks_con_handle != HCI_CON_HANDLE_INVALID) {
         return true;
     }
 
-    if ((connection & PBDRV_BLUETOOTH_CONNECTION_UART) && uart_con_handle != HCI_CON_HANDLE_INVALID) {
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_UART && uart_con_handle != HCI_CON_HANDLE_INVALID) {
         return true;
     }
 
