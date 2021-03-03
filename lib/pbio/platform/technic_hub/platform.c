@@ -324,13 +324,19 @@ const pbdrv_pwm_stm32_tim_platform_data_t
 // for the LEDs. The pin mux doesn't work out, so we have to manually write
 // the GPIOs in the timer interrupt handler.
 void TIM2_IRQHandler(void) {
+    uint32_t cnt = TIM2->CNT;
     uint32_t sr = TIM2->SR;
     uint32_t handled = TIM_SR_UIF;
 
+    // NB: there seems to be hardware bug where sometimes we don't get the CCxIF
+    // interrupt or only get it 1/2 of the time for certain bands of small duty
+    // cycle values. So we are comparing CNT to CCRx in addition to just looking
+    // at the interrupt. This works best when the red and green values are near
+    // each other since that minimizes the error.
+
     // green LED
-    if (TIM2->CCR1 == 0 || sr & TIM_SR_CC1IF) {
-        // If channel 1 duty cycle is 0 or we have reached the CC1 count,
-        // turn the GPIO off
+    if (cnt >= TIM2->CCR1 || sr & TIM_SR_CC1IF) {
+        // If we have reached the CC1 count, turn the GPIO off
         GPIOA->BRR = GPIO_BRR_BR11;
         handled |= TIM_SR_CC1IF;
     } else if (sr & TIM_SR_UIF) {
@@ -339,9 +345,8 @@ void TIM2_IRQHandler(void) {
     }
 
     // red LED
-    if (TIM2->CCR2 == 0 || sr & TIM_SR_CC2IF) {
-        // If channel 2 duty cycle is 0 or we have reached the CC2 count,
-        // turn the GPIO off
+    if (cnt >= TIM2->CCR2 || sr & TIM_SR_CC2IF) {
+        // If we have reached the CC2 count, turn the GPIO off
         GPIOB->BRR = GPIO_BRR_BR15;
         handled |= TIM_SR_CC2IF;
     } else if (sr & TIM_SR_UIF) {
