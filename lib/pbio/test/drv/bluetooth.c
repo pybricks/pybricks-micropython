@@ -22,7 +22,7 @@
 // UART HCI queue
 
 typedef struct {
-    LIST_STRUCT(queue);
+    list_t queue;
     const uint8_t *buffer;
     uint16_t length;
 } queue_item_t;
@@ -38,7 +38,6 @@ static queue_item_t *new_item(const void *buffer, uint16_t length) {
     uint8_t *copy = malloc(length);
     assert(copy);
 
-    LIST_STRUCT_INIT(item, queue);
     memcpy(copy, buffer, length);
     item->buffer = copy;
     item->length = length;
