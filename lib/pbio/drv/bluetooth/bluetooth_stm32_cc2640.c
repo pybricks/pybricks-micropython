@@ -80,12 +80,6 @@ typedef struct {
     void *context;
 } task_t;
 
-typedef struct {
-    const uint8_t *data;
-    uint8_t size;
-    pbdrv_bluetooth_tx_done_t done;
-} tx_context_t;
-
 // Tx buffer for SPI writes
 static uint8_t write_buf[TX_BUFFER_SIZE];
 // Rx buffer for SPI reads
@@ -160,8 +154,7 @@ PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
 static task_t current_task;
 static bool bluetooth_ready;
 static pbdrv_bluetooth_on_event_t bluetooth_on_event;
-static pbdrv_bluetooth_on_rx_t pybricks_on_rx;
-static pbdrv_bluetooth_on_rx_t uart_on_rx;
+static pbdrv_bluetooth_handle_rx_t handle_rx;
 static const pbdrv_bluetooth_stm32_cc2640_platform_data_t *pdata = &pbdrv_bluetooth_stm32_cc2640_platform_data;
 
 /**
@@ -321,75 +314,41 @@ void pbdrv_bluetooth_set_on_event(pbdrv_bluetooth_on_event_t on_event) {
     bluetooth_on_event = on_event;
 }
 
-static PT_THREAD(pybricks_service_send_data(struct pt *pt, void *context))
-{
-    tx_context_t *pybricks_tx = context;
-
-    PT_BEGIN(pt);
-
-retry:
-    PT_WAIT_WHILE(pt, write_xfer_size);
-
-    if (!pybricks_notify_en) {
-        PT_EXIT(pt);
-    }
-
-    {
-        attHandleValueNoti_t req;
-
-        req.handle = pybricks_char_handle;
-        req.len = pybricks_tx->size;
-        req.pValue = pybricks_tx->data;
-        ATT_HandleValueNoti(conn_handle, &req);
-    }
-    PT_WAIT_UNTIL(pt, hci_command_status);
-
-    HCI_StatusCodes_t status = read_buf[8];
-    if (status == blePending) {
-        goto retry;
-    }
-
-    pybricks_tx->done(pybricks_tx->data);
-
-    PT_END(pt);
-}
-
-void pbdrv_bluetooth_pybricks_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_tx_done_t done) {
-    static tx_context_t pybricks_tx;
-
-    pybricks_tx.data = data;
-    pybricks_tx.size = size;
-    pybricks_tx.done = done;
-
-    start_task(pybricks_service_send_data, &pybricks_tx);
-}
-
-void pbdrv_bluetooth_pybricks_set_on_rx(pbdrv_bluetooth_on_rx_t on_rx) {
-    pybricks_on_rx = on_rx;
-}
-
 /**
- * Handles sending data via the nRF UART Tx characteristic.
+ * Handles sending data via a characteristic value notification.
  */
-static PT_THREAD(uart_service_send_data(struct pt *pt, void *context))
+static PT_THREAD(send_value_notification(struct pt *pt, void *context))
 {
-    tx_context_t *uart_tx = context;
+    pbdrv_bluetooth_tx_context_t *tx = context;
 
     PT_BEGIN(pt);
 
 retry:
     PT_WAIT_WHILE(pt, write_xfer_size);
 
-    if (!uart_tx_notify_en) {
-        PT_EXIT(pt);
+    uint16_t attr_handle;
+    if (tx->connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) {
+        if (!pybricks_notify_en) {
+            goto done;
+        }
+        attr_handle = pybricks_char_handle;
+    } else if (tx->connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
+        if (!uart_tx_notify_en) {
+            goto done;
+        }
+        attr_handle = uart_tx_char_handle;
+    } else {
+        // called with invalid connection
+        assert(0);
+        goto done;
     }
 
     {
         attHandleValueNoti_t req;
 
-        req.handle = uart_tx_char_handle;
-        req.len = uart_tx->size;
-        req.pValue = uart_tx->data;
+        req.handle = attr_handle;
+        req.len = tx->size;
+        req.pValue = tx->data;
         ATT_HandleValueNoti(conn_handle, &req);
     }
     PT_WAIT_UNTIL(pt, hci_command_status);
@@ -399,23 +358,18 @@ retry:
         goto retry;
     }
 
-    uart_tx->done(uart_tx->data);
+done:
+    tx->done(tx);
 
     PT_END(pt);
 }
 
-void pbdrv_bluetooth_uart_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_tx_done_t done) {
-    static tx_context_t uart_tx;
-
-    uart_tx.data = data;
-    uart_tx.size = size;
-    uart_tx.done = done;
-
-    start_task(uart_service_send_data, &uart_tx);
+void pbdrv_bluetooth_tx(pbdrv_bluetooth_tx_context_t *context) {
+    start_task(send_value_notification, context);
 }
 
-void pbdrv_bluetooth_uart_set_on_rx(pbdrv_bluetooth_on_rx_t on_rx) {
-    uart_on_rx = on_rx;
+void pbdrv_bluetooth_set_handle_rx(pbdrv_bluetooth_handle_rx_t handle_rx_) {
+    handle_rx = handle_rx_;
 }
 
 // Driver interrupt callbacks
@@ -715,15 +669,15 @@ static void handle_event(uint8_t *packet) {
 
                     DBG("w: %04X %04X %d", char_handle, uart_tx_char_handle, pdu_len - 4);
                     if (char_handle == pybricks_char_handle) {
-                        if (pybricks_on_rx) {
-                            pybricks_on_rx(&data[10], pdu_len - 4);
+                        if (handle_rx) {
+                            handle_rx(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS, &data[10], pdu_len - 4);
                         }
                     } else if (char_handle == pybricks_char_handle + 1) {
                         pybricks_notify_en = data[10];
                         DBG("noti: %d", pybricks_notify_en);
                     } else if (char_handle == uart_rx_char_handle) {
-                        if (uart_on_rx) {
-                            uart_on_rx(&data[10], pdu_len - 4);
+                        if (handle_rx) {
+                            handle_rx(PBDRV_BLUETOOTH_CONNECTION_UART, &data[10], pdu_len - 4);
                         }
                     } else if (char_handle == uart_tx_char_handle + 1) {
                         uart_tx_notify_en = data[10];

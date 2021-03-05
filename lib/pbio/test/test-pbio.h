@@ -25,7 +25,10 @@ void pbio_test_button_set_pressed(pbio_button_flags_t flags);
 // these can be used by tests that use the bluetooth driver
 
 bool pbio_test_bluetooth_is_advertising_enabled(void);
+bool pbio_test_bluetooth_is_connected(void);
 void pbio_test_bluetooth_connect(void);
+void pbio_test_bluetooth_enable_uart_service_notifications(void);
+void pbio_test_bluetooth_send_uart_data(const uint8_t *data, uint32_t size);
 
 typedef enum {
     PBIO_TEST_BLUETOOTH_STATE_OFF,

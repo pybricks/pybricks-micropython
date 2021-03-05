@@ -27,6 +27,9 @@ typedef enum {
     PBDRV_BLUETOOTH_CONNECTION_UART,
 } pbdrv_bluetooth_connection_t;
 
+/** Data structure that holds context needed for BLE notifications. */
+typedef struct _pbdrv_bluetooth_tx_context_t pbdrv_bluetooth_tx_context_t;
+
 /**
  * Callback that is called when a Bluetooth event occurs.
  */
@@ -34,17 +37,29 @@ typedef void (*pbdrv_bluetooth_on_event_t)(void);
 
 /**
  * Callback that is called when Tx is done.
- * @param data  [in]        The data that was transmitted.
+ * @param context  [in]     The context that was given to pbdrv_bluetooth_tx().
  */
-typedef void (*pbdrv_bluetooth_tx_done_t)(const uint8_t *data);
+typedef void (*pbdrv_bluetooth_tx_done_t)(pbdrv_bluetooth_tx_context_t *context);
 
 /**
  * Callback that is called when Rx data is received.
  *
+ * @param [in]  connection  The characteristic that was written.
  * @param [in]  data        The data that was received.
  * @param [in]  size        The size of @p data in bytes.
  */
-typedef void (*pbdrv_bluetooth_on_rx_t)(const uint8_t *data, uint8_t size);
+typedef void (*pbdrv_bluetooth_handle_rx_t)(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint8_t size);
+
+struct _pbdrv_bluetooth_tx_context_t {
+    /** Callback that is called when the data has been sent. */
+    pbdrv_bluetooth_tx_done_t done;
+    /** The data to be sent. This data must remain valied until @p done is called. */
+    const uint8_t *data;
+    /** The size of @p data. */
+    uint8_t size;
+    /** The connection to use. Only characteristics with notify capability are allowed. */
+    pbdrv_bluetooth_connection_t connection;
+};
 
 #if PBDRV_CONFIG_BLUETOOTH
 
@@ -88,48 +103,22 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection);
 void pbdrv_bluetooth_set_on_event(pbdrv_bluetooth_on_event_t on_event);
 
 /**
- * Requests for @p data to be sent via the Pybricks characteristic.
+ * Requests for @p data to be sent via a characteristic notification.
  *
- * It is up to the caller to verify that the Pybricks service is connected and
+ * It is up to the caller to verify that notifications are enabled and
  * that any previous Tx request is done before calling this function.
  *
- * @param [in]  data        The data buffer to send. Must remain valid until
- *                          @p done is called.
- * @param [in]  size        The size of @p data in bytes.
- * @param [in]  done        A function that will be called when the data has
- *                          been sent.
+ * @param [in]  context     The data to be sent and where to send it.
  */
-void pbdrv_bluetooth_pybricks_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_tx_done_t done);
+void pbdrv_bluetooth_tx(pbdrv_bluetooth_tx_context_t *context);
 
 /**
- * Registers a callback that will be called when data is received on the
- * Pybricks characteristic.
+ * Registers a callback that will be called when data is received via a
+ * characteristic write.
  *
- * @param [in]  on_rx       The function that will be called.
+ * @param [in]  handle_rx   The function that will be called.
  */
-void pbdrv_bluetooth_pybricks_set_on_rx(pbdrv_bluetooth_on_rx_t on_rx);
-
-/**
- * Requests for @p data to be sent via the nRF UART Tx characteristic.
- *
- * It is up to the caller to verify that the nRF UART service is connected and
- * that any previous Tx request is done before calling this function.
- *
- * @param [in]  data        The data buffer to send. Must remain valid until
- *                          @p done is called.
- * @param [in]  size        The size of @p data in bytes.
- * @param [in]  done        A function that will be called when the data has
- *                          been sent.
- */
-void pbdrv_bluetooth_uart_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_tx_done_t done);
-
-/**
- * Registers a callback that will be called when data is received on the nRF
- * UART Rx characteristic.
- *
- * @param [in]  on_rx       The function that will be called.
- */
-void pbdrv_bluetooth_uart_set_on_rx(pbdrv_bluetooth_on_rx_t on_rx);
+void pbdrv_bluetooth_set_handle_rx(pbdrv_bluetooth_handle_rx_t handle_rx);
 
 #else // PBDRV_CONFIG_BLUETOOTH
 
@@ -149,16 +138,10 @@ static inline bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t con
     return false;
 }
 
-static inline void pbdrv_bluetooth_pybricks_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_tx_done_t done) {
+static inline void pbdrv_bluetooth_tx(pbdrv_bluetooth_tx_context_t *context) {
 }
 
-static inline void pbdrv_bluetooth_pybricks_set_on_rx(pbdrv_bluetooth_on_rx_t on_rx) {
-}
-
-static inline void pbdrv_bluetooth_uart_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_tx_done_t done) {
-}
-
-static inline void pbdrv_bluetooth_uart_set_on_rx(pbdrv_bluetooth_on_rx_t on_rx) {
+static inline void pbdrv_bluetooth_set_handle_rx(pbdrv_bluetooth_handle_rx_t handle_rx) {
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH

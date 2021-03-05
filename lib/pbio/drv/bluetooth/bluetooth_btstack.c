@@ -17,17 +17,10 @@
 #include "genhdr/pybricks_service.h"
 #include "pybricks_service_server.h"
 
-typedef struct {
-    const uint8_t *data;
-    uint8_t size;
-    pbdrv_bluetooth_tx_done_t done;
-} tx_context_t;
-
 static hci_con_handle_t pybricks_con_handle = HCI_CON_HANDLE_INVALID;
 static hci_con_handle_t uart_con_handle = HCI_CON_HANDLE_INVALID;
 static pbdrv_bluetooth_on_event_t bluetooth_on_event;
-static pbdrv_bluetooth_on_rx_t pybricks_on_rx;
-static pbdrv_bluetooth_on_rx_t uart_on_rx;
+static pbdrv_bluetooth_handle_rx_t handle_rx;
 static const pbdrv_bluetooth_btstack_platform_data_t *pdata = &pbdrv_bluetooth_btstack_platform_data;
 
 const uint8_t adv_data[] = {
@@ -61,35 +54,35 @@ static const hci_transport_config_uart_t config = {
 };
 
 static void pybricks_can_send(void *context) {
-    tx_context_t *pybricks_tx = context;
+    pbdrv_bluetooth_tx_context_t *tx = context;
 
-    pybricks_service_server_send(pybricks_con_handle, pybricks_tx->data, pybricks_tx->size);
-    pybricks_tx->done(pybricks_tx->data);
+    pybricks_service_server_send(pybricks_con_handle, tx->data, tx->size);
+    tx->done(tx);
 }
 
 static void pybricks_data_received(hci_con_handle_t tx_con_handle, const uint8_t *data, uint16_t size) {
     if (size == 0 && pybricks_con_handle == HCI_CON_HANDLE_INVALID) {
         pybricks_con_handle = tx_con_handle;
     } else {
-        if (pybricks_on_rx) {
-            pybricks_on_rx(data, size);
+        if (handle_rx) {
+            handle_rx(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS, data, size);
         }
     }
 }
 
 static void nordic_can_send(void *context) {
-    tx_context_t *uart_tx = context;
+    pbdrv_bluetooth_tx_context_t *tx = context;
 
-    nordic_spp_service_server_send(uart_con_handle, uart_tx->data, uart_tx->size);
-    uart_tx->done(uart_tx->data);
+    nordic_spp_service_server_send(uart_con_handle, tx->data, tx->size);
+    tx->done(tx);
 }
 
 static void nordic_data_received(hci_con_handle_t tx_con_handle, const uint8_t *data, uint16_t size) {
     if (size == 0 && uart_con_handle == HCI_CON_HANDLE_INVALID) {
         uart_con_handle = tx_con_handle;
     } else {
-        if (uart_on_rx) {
-            uart_on_rx(data, size);
+        if (handle_rx) {
+            handle_rx(PBDRV_BLUETOOTH_CONNECTION_UART, data, size);
         }
     }
 }
@@ -195,36 +188,22 @@ void pbdrv_bluetooth_set_on_event(pbdrv_bluetooth_on_event_t on_event) {
     bluetooth_on_event = on_event;
 }
 
-void pbdrv_bluetooth_pybricks_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_tx_done_t done) {
+void pbdrv_bluetooth_tx(pbdrv_bluetooth_tx_context_t *context) {
     static btstack_context_callback_registration_t send_request;
-    static tx_context_t pybricks_tx;
 
-    pybricks_tx.data = data;
-    pybricks_tx.size = size;
-    pybricks_tx.done = done;
-    send_request.callback = &pybricks_can_send;
-    send_request.context = &pybricks_tx;
-    pybricks_service_server_request_can_send_now(&send_request, pybricks_con_handle);
+    send_request.context = context;
+
+    if (context->connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) {
+        send_request.callback = &pybricks_can_send;
+        pybricks_service_server_request_can_send_now(&send_request, pybricks_con_handle);
+    } else if (context->connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
+        send_request.callback = &nordic_can_send;
+        nordic_spp_service_server_request_can_send_now(&send_request, uart_con_handle);
+    }
 }
 
-void pbdrv_bluetooth_pybricks_set_on_rx(pbdrv_bluetooth_on_rx_t on_rx) {
-    pybricks_on_rx = on_rx;
-}
-
-void pbdrv_bluetooth_uart_tx(const uint8_t *data, uint8_t size, pbdrv_bluetooth_tx_done_t done) {
-    static btstack_context_callback_registration_t send_request;
-    static tx_context_t uart_tx;
-
-    uart_tx.data = data;
-    uart_tx.size = size;
-    uart_tx.done = done;
-    send_request.callback = &nordic_can_send;
-    send_request.context = &uart_tx;
-    nordic_spp_service_server_request_can_send_now(&send_request, uart_con_handle);
-}
-
-void pbdrv_bluetooth_uart_set_on_rx(pbdrv_bluetooth_on_rx_t on_rx) {
-    uart_on_rx = on_rx;
+void pbdrv_bluetooth_set_handle_rx(pbdrv_bluetooth_handle_rx_t handle_rx_) {
+    handle_rx = handle_rx_;
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK
