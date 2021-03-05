@@ -33,8 +33,8 @@ static lwrb_t uart_rx_ring;
 typedef struct {
     list_t queue;
     pbdrv_bluetooth_tx_context_t context;
-    uint8_t payload[NRF_CHAR_SIZE];
     bool is_queued;
+    uint8_t payload[NRF_CHAR_SIZE];
 } tx_msg_t;
 
 static tx_msg_t pybricks_msg;
