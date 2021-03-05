@@ -246,17 +246,13 @@ pbio_error_t pbio_uartdev_get(uint8_t id, pbio_iodev_t **iodev) {
     return PBIO_SUCCESS;
 }
 
-static inline uint32_t uint32_le(uint8_t *bytes) {
-    return bytes[0] | (bytes[1] << 8) | (bytes[2] << 16) | (bytes[3] << 24);
-}
-
 static inline float float_le(uint8_t *bytes) {
     union {
         float f;
         uint32_t u;
     } result;
 
-    result.u = uint32_le(bytes);
+    result.u = pbio_get_uint32_le(bytes);
 
     return result.f;
 }
@@ -409,7 +405,7 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                         DBG_ERR(data->last_err = "Received duplicate speed INFO");
                         goto err;
                     }
-                    speed = uint32_le(data->rx_msg + 1);
+                    speed = pbio_get_uint32_le(data->rx_msg + 1);
                     if (speed < EV3_UART_SPEED_MIN || speed > EV3_UART_SPEED_MAX) {
                         DBG_ERR(data->last_err = "Speed is out of range");
                         goto err;
@@ -440,8 +436,8 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                         goto err;
                     }
                     // TODO: this might be useful someday
-                    debug_pr("fw version: %08" PRIx32 "\n", uint32_le(data->rx_msg + 1));
-                    debug_pr("hw version: %08" PRIx32 "\n", uint32_le(data->rx_msg + 5));
+                    debug_pr("fw version: %08" PRIx32 "\n", pbio_get_uint32_le(data->rx_msg + 1));
+                    debug_pr("hw version: %08" PRIx32 "\n", pbio_get_uint32_le(data->rx_msg + 5));
                     break;
                 default:
                     DBG_ERR(data->last_err = "Unknown command");
@@ -617,11 +613,11 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                     }
 
                     // first 3 parameters look like PID constants
-                    data->max_tacho_rate = uint32_le(data->rx_msg + 14);
+                    data->max_tacho_rate = pbio_get_uint32_le(data->rx_msg + 14);
 
                     debug_pr("motor parameters: %" PRIu32 " %" PRIu32 " %" PRIu32 " %" PRIu32 "\n",
-                        uint32_le(data->rx_msg + 2), uint32_le(data->rx_msg + 6),
-                        uint32_le(data->rx_msg + 10), data->max_tacho_rate);
+                        pbio_get_uint32_le(data->rx_msg + 2), pbio_get_uint32_le(data->rx_msg + 6),
+                        pbio_get_uint32_le(data->rx_msg + 10), data->max_tacho_rate);
 
                     break;
                 case LUMP_INFO_FORMAT:
@@ -671,7 +667,7 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 data->tacho_rate = data->rx_msg[1];
 
                 // Decode the tacho count data message
-                int32_t tacho_count_msg = uint32_le(data->rx_msg + 2);
+                int32_t tacho_count_msg = pbio_get_uint32_le(data->rx_msg + 2);
 
                 // Sometimes, the incremental tacho data unexpectedly jumps by multiples
                 // of -/+360, so add a correction if an impossibly high change is detected.
@@ -794,10 +790,7 @@ static PT_THREAD(pbio_uartdev_send_speed_msg(uartdev_port_data_t * data, uint32_
 
     PT_WAIT_WHILE(&data->speed_pt, data->tx_busy);
 
-    data->speed_payload[0] = speed & 0xFF;
-    data->speed_payload[1] = (speed >> 8) & 0xFF;
-    data->speed_payload[2] = (speed >> 16) & 0xFF;
-    data->speed_payload[3] = (speed >> 24) & 0xFF;
+    pbio_set_uint32_le(&data->speed_payload[0], speed);
     PBIO_PT_WAIT_READY(&data->speed_pt, err = ev3_uart_begin_tx_msg(data,
         LUMP_MSG_TYPE_CMD, LUMP_CMD_SPEED,
         data->speed_payload, PBIO_ARRAY_SIZE(data->speed_payload)));

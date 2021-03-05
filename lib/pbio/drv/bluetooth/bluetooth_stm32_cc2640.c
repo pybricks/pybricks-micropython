@@ -389,13 +389,10 @@ static void read_by_type_response_uuid16(uint16_t connection_handle,
     attReadByTypeRsp_t rsp;
     uint8_t buf[ATT_MTU_SIZE - 2];
 
-    buf[0] = attr_handle & 0xFF;
-    buf[1] = (attr_handle >> 8) & 0xFF;
+    pbio_set_uint16_le(&buf[0], attr_handle);
     buf[2] = property_flags;
-    buf[3] = ++attr_handle & 0xFF;
-    buf[4] = (attr_handle >> 8) & 0xFF;
-    buf[5] = uuid & 0xFF;
-    buf[6] = (uuid >> 8) & 0xFF;
+    pbio_set_uint16_le(&buf[3], attr_handle + 1);
+    pbio_set_uint16_le(&buf[5], uuid);
 
     rsp.pDataList = buf;
     rsp.dataLen = 7;
@@ -407,11 +404,9 @@ static void read_by_type_response_uuid128(uint16_t connection_handle,
     attReadByTypeRsp_t rsp;
     uint8_t buf[ATT_MTU_SIZE - 2];
 
-    buf[0] = attr_handle & 0xFF;
-    buf[1] = (attr_handle >> 8) & 0xFF;
+    pbio_set_uint16_le(&buf[0], attr_handle);
     buf[2] = property_flags;
-    buf[3] = ++attr_handle & 0xFF;
-    buf[4] = (attr_handle >> 8) & 0xFF;
+    pbio_set_uint16_le(&buf[3], attr_handle + 1);
     memcpy(&buf[5], uuid, 16);
 
     rsp.pDataList = buf;
@@ -530,8 +525,7 @@ static void handle_event(uint8_t *packet) {
                         attReadRsp_t rsp;
                         uint8_t buf[ATT_MTU_SIZE - 1];
 
-                        buf[0] = GAP_APPEARE_UNKNOWN & 0xFF;
-                        buf[1] = (GAP_APPEARE_UNKNOWN >> 8) & 0xFF;
+                        pbio_set_uint16_le(&buf[0], GAP_APPEARE_UNKNOWN);
                         rsp.len = 2;
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
@@ -540,14 +534,10 @@ static void handle_event(uint8_t *packet) {
                         uint8_t buf[ATT_MTU_SIZE - 1];
 
                         // FIXME: what should these values be?
-                        buf[0] = 0xFFFF & 0xFF; // intervalMin
-                        buf[1] = (0xFFFF >> 8) & 0xFF;
-                        buf[2] = 0xFFFF & 0xFF; // intervalMax
-                        buf[3] = (0xFFFF >> 8) & 0xFF;
-                        buf[4] = 0xFFFF & 0xFF; // latency
-                        buf[5] = (0xFFFF >> 8) & 0xFF;
-                        buf[6] = 0xFFFF & 0xFF; // timeout
-                        buf[7] = (0xFFFF >> 8) & 0xFF;
+                        pbio_set_uint16_le(&buf[0], 0xFFFF); // intervalMin
+                        pbio_set_uint16_le(&buf[2], 0xFFFF); // intervalMax
+                        pbio_set_uint16_le(&buf[4], 0xFFFF); // latency
+                        pbio_set_uint16_le(&buf[6], 0xFFFF); // timeout
                         rsp.len = 8;
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
@@ -589,12 +579,9 @@ static void handle_event(uint8_t *packet) {
                                 attReadByGrpTypeRsp_t rsp;
                                 uint8_t buf[ATT_MTU_SIZE - 2];
 
-                                buf[0] = gatt_service_handle & 0xFF;
-                                buf[1] = (gatt_service_handle >> 8) & 0xFF;
-                                buf[2] = gatt_service_end_handle & 0xFF;
-                                buf[3] = (gatt_service_end_handle >> 8) & 0xFF;
-                                buf[4] = GATT_SERVICE_UUID & 0xFF;
-                                buf[5] = (GATT_SERVICE_UUID >> 8) & 0xFF;
+                                pbio_set_uint16_le(&buf[0], gatt_service_handle);
+                                pbio_set_uint16_le(&buf[2], gatt_service_end_handle);
+                                pbio_set_uint16_le(&buf[4], GATT_SERVICE_UUID);
 
                                 rsp.pDataList = buf;
                                 rsp.dataLen = 6;
@@ -603,12 +590,9 @@ static void handle_event(uint8_t *packet) {
                                 attReadByGrpTypeRsp_t rsp;
                                 uint8_t buf[ATT_MTU_SIZE - 2];
 
-                                buf[0] = gap_service_handle & 0xFF;
-                                buf[1] = (gap_service_handle >> 8) & 0xFF;
-                                buf[2] = gap_service_end_handle & 0xFF;
-                                buf[3] = (gap_service_end_handle >> 8) & 0xFF;
-                                buf[4] = GAP_SERVICE_UUID & 0xFF;
-                                buf[5] = (GAP_SERVICE_UUID >> 8) & 0xFF;
+                                pbio_set_uint16_le(&buf[0], gap_service_handle);
+                                pbio_set_uint16_le(&buf[2], gap_service_end_handle);
+                                pbio_set_uint16_le(&buf[4], GAP_SERVICE_UUID);
 
                                 rsp.pDataList = buf;
                                 rsp.dataLen = 6;
@@ -617,10 +601,8 @@ static void handle_event(uint8_t *packet) {
                                 attReadByGrpTypeRsp_t rsp;
                                 uint8_t buf[ATT_MTU_SIZE - 2];
 
-                                buf[0] = pybricks_service_handle & 0xFF;
-                                buf[1] = (pybricks_service_handle >> 8) & 0xFF;
-                                buf[2] = pybricks_service_end_handle & 0xFF;
-                                buf[3] = (pybricks_service_end_handle >> 8) & 0xFF;
+                                pbio_set_uint16_le(&buf[0], pybricks_service_handle);
+                                pbio_set_uint16_le(&buf[2], pybricks_service_end_handle);
                                 memcpy(&buf[4], pybricks_service_uuid, 16);
 
                                 rsp.pDataList = buf;
@@ -630,10 +612,8 @@ static void handle_event(uint8_t *packet) {
                                 attReadByGrpTypeRsp_t rsp;
                                 uint8_t buf[ATT_MTU_SIZE - 2];
 
-                                buf[0] = uart_service_handle & 0xFF;
-                                buf[1] = (uart_service_handle >> 8) & 0xFF;
-                                buf[2] = uart_service_end_handle & 0xFF;
-                                buf[3] = (uart_service_end_handle >> 8) & 0xFF;
+                                pbio_set_uint16_le(&buf[0], uart_service_handle);
+                                pbio_set_uint16_le(&buf[2], uart_service_end_handle);
                                 memcpy(&buf[4], nrf_uart_service_uuid, 16);
 
                                 rsp.pDataList = buf;
@@ -1209,8 +1189,7 @@ HCI_StatusCodes_t HCI_sendHCICommand(uint16_t opcode, uint8_t *pData, uint8_t da
     write_buf[0] = NPI_SPI_SOF;
     write_buf[1] = dataLength + 4;
     write_buf[2] = HCI_CMD_PACKET;
-    write_buf[3] = opcode & 0xFF;
-    write_buf[4] = opcode >> 8;
+    pbio_set_uint16_le(&write_buf[3], opcode);
     write_buf[5] = dataLength;
     if (pData) {
         memcpy(&write_buf[6], pData, dataLength);
