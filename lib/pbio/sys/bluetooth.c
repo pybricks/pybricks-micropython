@@ -29,16 +29,16 @@ static pbsys_stdin_event_callback_t uart_rx_callback;
 // ring buffers for UART service
 static lwrb_t uart_tx_ring;
 static lwrb_t uart_rx_ring;
-static bool uart_tx_msg_is_queued;
 
 typedef struct {
     list_t queue;
+    pbdrv_bluetooth_tx_context_t context;
     uint8_t payload[NRF_CHAR_SIZE];
-    uint8_t size;
-    pbdrv_bluetooth_connection_t connection;
-} pybricks_tx_msg_t;
+    bool is_queued;
+} tx_msg_t;
 
-MEMB(tx_msg_pool, pybricks_tx_msg_t, 3);
+static tx_msg_t pybricks_msg;
+static tx_msg_t uart_msg;
 LIST(tx_queue);
 static bool tx_busy;
 
@@ -118,19 +118,14 @@ pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
     }
 
     // only allow one UART Tx message in the queue at a time
-    if (!uart_tx_msg_is_queued) {
-        pybricks_tx_msg_t *msg = memb_alloc(&tx_msg_pool);
-        if (!msg) {
-            return PBIO_ERROR_AGAIN;
-        }
-
+    if (!uart_msg.is_queued) {
         // Setting data and size are deferred until we actually send the message.
         // This way, if the caller is only writting one byte at a time, we can
         // still buffer data to send it more efficiently.
-        msg->connection = PBDRV_BLUETOOTH_CONNECTION_UART;
+        uart_msg.context.connection = PBDRV_BLUETOOTH_CONNECTION_UART;
 
-        list_add(tx_queue, msg);
-        uart_tx_msg_is_queued = true;
+        list_add(tx_queue, &uart_msg);
+        uart_msg.is_queued = true;
     }
 
     if ((*size = lwrb_write(&uart_tx_ring, data, *size)) == 0) {
@@ -148,18 +143,18 @@ static void handle_rx(pbdrv_bluetooth_connection_t connection, const uint8_t *da
     if (connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) {
         // TODO: this is a temporary echo service - needs to trigger events instead
 
-        pybricks_tx_msg_t *msg = memb_alloc(&tx_msg_pool);
-        if (!msg) {
+        if (pybricks_msg.is_queued) {
             return;
         }
 
-        msg->size = MIN(size, PBIO_ARRAY_SIZE(msg->payload));
-        for (int i = 0; i < msg->size; i++) {
-            msg->payload[i] = data[i] + 1;
+        pybricks_msg.context.size = MIN(size, PBIO_ARRAY_SIZE(pybricks_msg.payload));
+        for (int i = 0; i < pybricks_msg.context.size; i++) {
+            pybricks_msg.payload[i] = data[i] + 1;
         }
-        msg->connection = PBDRV_BLUETOOTH_CONNECTION_PYBRICKS;
+        pybricks_msg.context.connection = PBDRV_BLUETOOTH_CONNECTION_PYBRICKS;
 
-        list_add(tx_queue, msg);
+        list_add(tx_queue, &pybricks_msg);
+        pybricks_msg.is_queued = true;
 
         process_poll(&pbsys_bluetooth_process);
     } else if (connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
@@ -179,39 +174,34 @@ static void handle_rx(pbdrv_bluetooth_connection_t connection, const uint8_t *da
 }
 
 static void tx_done(pbdrv_bluetooth_tx_context_t *context) {
-    pybricks_tx_msg_t *msg = PBIO_CONTAINER_OF(context->data, pybricks_tx_msg_t, payload[0]);
-    bool is_uart_connection = msg->connection == PBDRV_BLUETOOTH_CONNECTION_UART;
+    tx_msg_t *msg = PBIO_CONTAINER_OF(context, tx_msg_t, context);
 
-    if (is_uart_connection && lwrb_get_full(&uart_tx_ring)) {
+    if (msg->context.connection == PBDRV_BLUETOOTH_CONNECTION_UART && lwrb_get_full(&uart_tx_ring)) {
         // If there is more buffered data to send, put the message back in the queue
         list_add(tx_queue, msg);
     } else {
-        memb_free(&tx_msg_pool, msg);
-        if (is_uart_connection) {
-            uart_tx_msg_is_queued = false;
-        }
+        msg->is_queued = false;
     }
+
     tx_busy = false;
     process_poll(&pbsys_bluetooth_process);
 }
 
 // drain all buffers and queues and reset global state
 static void reset_all(void) {
-    pybricks_tx_msg_t *msg;
+    tx_msg_t *msg;
 
     while ((msg = list_pop(tx_queue))) {
-        memb_free(&tx_msg_pool, msg);
+        msg->is_queued = false;
     }
 
     tx_busy = false;
-    uart_tx_msg_is_queued = false;
 
     lwrb_reset(&uart_rx_ring);
     lwrb_reset(&uart_tx_ring);
 }
 
 PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
-    static pbdrv_bluetooth_tx_context_t context;
     static struct etimer timer;
 
     PROCESS_BEGIN();
@@ -243,18 +233,17 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
             }
 
             if (!tx_busy) {
-                pybricks_tx_msg_t *msg = list_pop(tx_queue);
+                tx_msg_t *msg = list_pop(tx_queue);
+                // msg->is_queued is set to false in tx_done callback rather than here
                 if (msg) {
-                    context.done = tx_done;
-                    if (msg->connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
-                        msg->size = lwrb_read(&uart_tx_ring, &msg->payload[0], PBIO_ARRAY_SIZE(msg->payload));
-                        assert(msg->size);
+                    msg->context.done = tx_done;
+                    if (msg->context.connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
+                        msg->context.size = lwrb_read(&uart_tx_ring, &msg->payload[0], PBIO_ARRAY_SIZE(msg->payload));
+                        assert(msg->context.size);
                     }
-                    context.data = &msg->payload[0];
-                    context.size = msg->size;
-                    context.connection = msg->connection;
+                    msg->context.data = &msg->payload[0];
                     tx_busy = true;
-                    pbdrv_bluetooth_tx(&context);
+                    pbdrv_bluetooth_tx(&msg->context);
                 }
             }
 
