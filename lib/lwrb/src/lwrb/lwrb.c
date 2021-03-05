@@ -71,11 +71,13 @@ lwrb_init(LWRB_VOLATILE lwrb_t* buff, void* buffdata, size_t size) {
     assert(buffdata != NULL);
     assert(size != 0);
 
-
-    BUF_MEMSET((void*)buff, 0x00, sizeof(*buff));
-
     buff->size = size;
     buff->buff = buffdata;
+    buff->r = buff->w = 0;
+
+#if LWRB_USE_EVT
+    buff->evt_fn = NULL;
+#endif
 
 #if LWRB_USE_MAGIC
     buff->magic1 = BUF_MAGIC1;
@@ -271,19 +273,13 @@ lwrb_peek(LWRB_VOLATILE lwrb_t* buff, size_t skip_count, void* data, size_t btp)
  */
 size_t
 lwrb_get_free(LWRB_VOLATILE lwrb_t* buff) {
-    size_t size, w, r;
+    int size;
 
     assert(BUF_IS_VALID(buff));
 
-    /* Use temporary values in case they are changed during operations */
-    w = buff->w;
-    r = buff->r;
-    if (w == r) {
-        size = buff->size;
-    } else if (r > w) {
-        size = r - w;
-    } else {
-        size = buff->size - (w - r);
+    size = (int)buff->r - (int)buff->w;
+    if (size <= 0) {
+        size += buff->size;
     }
 
     /* Buffer free size is always 1 less than actual size */
@@ -297,20 +293,15 @@ lwrb_get_free(LWRB_VOLATILE lwrb_t* buff) {
  */
 size_t
 lwrb_get_full(LWRB_VOLATILE lwrb_t* buff) {
-    size_t w, r, size;
+    int size;
 
     assert(BUF_IS_VALID(buff));
 
-    /* Use temporary values in case they are changed during operations */
-    w = buff->w;
-    r = buff->r;
-    if (w == r) {
-        size = 0;
-    } else if (w > r) {
-        size = w - r;
-    } else {
-        size = buff->size - (r - w);
+    size = (int)buff->w - (int)buff->r;
+    if (size < 0) {
+        size += buff->size;
     }
+
     return size;
 }
 
