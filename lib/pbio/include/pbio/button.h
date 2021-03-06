@@ -97,7 +97,7 @@ typedef enum _pbio_button_flags_t {
 
 } pbio_button_flags_t;
 
-#ifdef __DOXYGEN__
+#ifdef DOXYGEN
 
 /**
  * Get bitmask indicating currently pressed buttons.
@@ -109,7 +109,7 @@ typedef enum _pbio_button_flags_t {
  */
 pbio_error_t pbio_button_is_pressed(pbio_button_flags_t *pressed);
 
-#else // __DOXYGEN__
+#else // DOXYGEN
 
 // calling pbdrv function directly for efficiency
 #define pbio_button_is_pressed pbdrv_button_is_pressed
@@ -117,7 +117,7 @@ pbio_error_t pbio_button_is_pressed(pbio_button_flags_t *pressed);
 // include for pbdrv_button_is_pressed needs to be called after pbio_button_flags_t is defined
 #include <pbdrv/button.h>
 
-#endif // __DOXYGEN__
+#endif // DOXYGEN
 
 #endif // _PBIO_BUTTON_H_
 
