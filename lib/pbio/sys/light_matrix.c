@@ -87,7 +87,7 @@ static clock_time_t pbsys_hub_light_matrix_user_program_animation_next(pbio_ligh
 }
 
 void pbsys_hub_light_matrix_handle_event(process_event_t event, process_data_t data) {
-    if (event == PBIO_EVENT_STATUS_SET && (pbsys_status_t)data == PBSYS_STATUS_USER_PROGRAM_RUNNING) {
+    if (event == PBIO_EVENT_STATUS_SET && (pbio_pybricks_status_t)data == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
         for (uint8_t r = 0; r < pbsys_hub_light_matrix->size; r++) {
             for (uint8_t c = 0; c < pbsys_hub_light_matrix->size; c++) {
                 pbsys_hub_light_matrix_set_pixel(pbsys_hub_light_matrix, r, c, 0);
@@ -96,7 +96,7 @@ void pbsys_hub_light_matrix_handle_event(process_event_t event, process_data_t d
         pbio_light_animation_init(&pbsys_hub_light_matrix->animation, pbsys_hub_light_matrix_user_program_animation_next);
         pbio_light_animation_start(&pbsys_hub_light_matrix->animation);
     }
-    if (event == PBIO_EVENT_STATUS_CLEARED && (pbsys_status_t)data == PBSYS_STATUS_USER_PROGRAM_RUNNING) {
+    if (event == PBIO_EVENT_STATUS_CLEARED && (pbio_pybricks_status_t)data == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
         pbsys_hub_light_matrix_show_stop_sign();
     }
 }

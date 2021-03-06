@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 // Keeps track of overall system status.
 
@@ -15,14 +15,11 @@ static struct {
     /** Status indications as bit flags */
     uint32_t flags;
     /** Timestamp of when status last changed */
-    clock_time_t changed_time[NUM_PBSYS_STATUS];
+    clock_time_t changed_time[NUM_PBIO_PYBRICKS_STATUS];
 } pbsys_status;
 
-_Static_assert(NUM_PBSYS_STATUS <= sizeof(pbsys_status.flags) * 8,
-    "need to increase size of pbsys_status.flags to fit all pbsys_status_t");
-
-static void pbsys_status_update_flag(pbsys_status_t status, bool set) {
-    uint32_t new_flags = set ? pbsys_status.flags | (1 << status) : pbsys_status.flags & ~(1 << status);
+static void pbsys_status_update_flag(pbio_pybricks_status_t status, bool set) {
+    uint32_t new_flags = set ? pbsys_status.flags | PBIO_PYBRICKS_STATUS_FLAG(status) : pbsys_status.flags & ~PBIO_PYBRICKS_STATUS_FLAG(status);
 
     if (pbsys_status.flags == new_flags) {
         // If flags have not changed, there is nothing to do.
@@ -40,8 +37,8 @@ static void pbsys_status_update_flag(pbsys_status_t status, bool set) {
  * Sets a system status status indication.
  * @param [in]  status   The status indication to set.
  */
-void pbsys_status_set(pbsys_status_t status) {
-    assert(status < NUM_PBSYS_STATUS);
+void pbsys_status_set(pbio_pybricks_status_t status) {
+    assert(status < NUM_PBIO_PYBRICKS_STATUS);
     pbsys_status_update_flag(status, true);
 }
 
@@ -49,8 +46,8 @@ void pbsys_status_set(pbsys_status_t status) {
  * Clears a system status status indication.
  * @param [in]  status   The status indication to clear.
  */
-void pbsys_status_clear(pbsys_status_t status) {
-    assert(status < NUM_PBSYS_STATUS);
+void pbsys_status_clear(pbio_pybricks_status_t status) {
+    assert(status < NUM_PBIO_PYBRICKS_STATUS);
     pbsys_status_update_flag(status, false);
 }
 
@@ -59,9 +56,9 @@ void pbsys_status_clear(pbsys_status_t status) {
  * @param [in]  status  The status indication  to to test.
  * @return              *true* if @p status is set, otherwise *false*.
  */
-bool pbsys_status_test(pbsys_status_t status) {
-    assert(status < NUM_PBSYS_STATUS);
-    return !!(pbsys_status.flags & (1 << status));
+bool pbsys_status_test(pbio_pybricks_status_t status) {
+    assert(status < NUM_PBIO_PYBRICKS_STATUS);
+    return !!(pbsys_status.flags & PBIO_PYBRICKS_STATUS_FLAG(status));
 }
 
 /**
@@ -76,10 +73,19 @@ bool pbsys_status_test(pbsys_status_t status) {
  * @return              *true* if @p status has been set to @p state for at
  *                      least @p ms, otherwise *false*.
  */
-bool pbsys_status_test_debounce(pbsys_status_t status, bool state, uint32_t ms) {
-    assert(status < NUM_PBSYS_STATUS);
+bool pbsys_status_test_debounce(pbio_pybricks_status_t status, bool state, uint32_t ms) {
+    assert(status < NUM_PBIO_PYBRICKS_STATUS);
     if (pbsys_status_test(status) != state) {
         return false;
     }
     return (clock_time() - pbsys_status.changed_time[status]) >= clock_from_msec(ms);
+}
+
+/**
+ * Gets current status as bit flags.
+ *
+ * @return              The flags.
+ */
+uint32_t pbsys_status_get_flags(void) {
+    return pbsys_status.flags;
 }

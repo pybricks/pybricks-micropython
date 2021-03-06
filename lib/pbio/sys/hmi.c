@@ -45,9 +45,9 @@ void pbsys_hmi_poll(void) {
     pbio_button_is_pressed(&btn);
 
     if (btn & PBIO_BUTTON_CENTER) {
-        pbsys_status_set(PBSYS_STATUS_POWER_BUTTON_PRESSED);
+        pbsys_status_set(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
         // power off when button is held down for 3 seconds
-        if (pbsys_status_test_debounce(PBSYS_STATUS_POWER_BUTTON_PRESSED, true, 3000)) {
+        if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED, true, 3000)) {
             // TODO: need to do shutdown sequence here - play animation, sound, etc.
             // then make sure all non-driver contiki processes are stopped so they
             // don't try to use any drivers during pbdrv_deinit().
@@ -55,7 +55,7 @@ void pbsys_hmi_poll(void) {
             pbdrv_reset(PBDRV_RESET_ACTION_POWER_OFF);
         }
     } else {
-        pbsys_status_clear(PBSYS_STATUS_POWER_BUTTON_PRESSED);
+        pbsys_status_clear(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
     }
 
     pbsys_status_light_poll();

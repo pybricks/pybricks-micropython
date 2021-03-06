@@ -29,11 +29,11 @@ void pbsys_prepare_user_program(const pbsys_user_program_callbacks_t *callbacks)
         user_stop_func = NULL;
         pbsys_bluetooth_rx_set_callback(NULL);
     }
-    pbsys_status_set(PBSYS_STATUS_USER_PROGRAM_RUNNING);
+    pbsys_status_set(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
 }
 
 void pbsys_unprepare_user_program(void) {
-    pbsys_status_clear(PBSYS_STATUS_USER_PROGRAM_RUNNING);
+    pbsys_status_clear(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
     pbio_stop_all();
     user_stop_func = NULL;
     pbsys_bluetooth_rx_set_callback(NULL);
@@ -67,7 +67,7 @@ PROCESS_THREAD(pbsys_process, ev, data) {
             pbsys_hmi_poll();
             pbsys_supervisor_poll();
         } else if (ev == PBIO_EVENT_STATUS_SET) {
-            if ((pbsys_status_t)data == PBSYS_STATUS_POWER_BUTTON_PRESSED && user_stop_func) {
+            if ((pbio_pybricks_status_t)data == PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED && user_stop_func) {
                 user_stop_func();
             }
         } else if (ev == PBIO_EVENT_COM_CMD) {

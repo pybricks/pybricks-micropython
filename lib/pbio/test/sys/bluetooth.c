@@ -11,6 +11,7 @@
 
 #include <pbio/util.h>
 #include <pbsys/bluetooth.h>
+#include <pbsys/status.h>
 #include <test-pbio.h>
 
 static PT_THREAD(test_bluetooth(struct pt *pt)) {
@@ -85,6 +86,19 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
 
     tt_want_uint_op(size, ==, strlen(test_data_3));
     tt_want_int_op(strncmp(test_data_3, (const char *)rx_data, size), ==, 0);
+
+    // enabling notifications on Pybricks command characteristic should send
+    // a notification right away if status is non-zero
+    pbsys_status_set(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
+    pbio_test_bluetooth_enable_pybricks_service_notifications();
+
+    static uint32_t count;
+    count = pbio_test_bluetooth_get_pybricks_service_notification_count();
+
+    PT_WAIT_UNTIL(pt, {
+        clock_tick(1);
+        pbio_test_bluetooth_get_pybricks_service_notification_count() != count;
+    });
 
     PT_END(pt);
 }

@@ -152,10 +152,10 @@ void pbsys_status_light_init(void) {
 static void pbsys_status_light_handle_status_change(void) {
     pbsys_status_light_t *instance = &pbsys_status_light_instance;
     pbsys_status_light_indication_t new_indication = PBSYS_STATUS_LIGHT_INDICATION_NONE;
-    bool ble_advertising = pbsys_status_test(PBSYS_STATUS_BLE_ADVERTISING);
-    bool ble_low_signal = pbsys_status_test(PBSYS_STATUS_BLE_LOW_SIGNAL);
-    bool low_voltage = pbsys_status_test(PBSYS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
-    bool high_current = pbsys_status_test(PBSYS_STATUS_BATTERY_HIGH_CURRENT);
+    bool ble_advertising = pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
+    bool ble_low_signal = pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_LOW_SIGNAL);
+    bool low_voltage = pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
+    bool high_current = pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_HIGH_CURRENT);
 
     // This determines which indication has the highest precedence.
     if (ble_advertising && low_voltage) {
@@ -203,7 +203,7 @@ void pbsys_status_light_handle_event(process_event_t event, process_data_t data)
     if (event == PBIO_EVENT_STATUS_SET || event == PBIO_EVENT_STATUS_CLEARED) {
         pbsys_status_light_handle_status_change();
     }
-    if (event == PBIO_EVENT_STATUS_SET && (pbsys_status_t)data == PBSYS_STATUS_USER_PROGRAM_RUNNING) {
+    if (event == PBIO_EVENT_STATUS_SET && (pbio_pybricks_status_t)data == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
         pbio_light_animation_init(&pbsys_status_light->animation, default_user_program_light_animation_next);
         pbio_light_animation_start(&pbsys_status_light->animation);
     }
@@ -236,7 +236,7 @@ void pbsys_status_light_poll(void) {
     // program is running, then we can allow the user program to directly change
     // the status light.
     instance->allow_user_update =
-        new_color == PBIO_COLOR_NONE && pbsys_status_test(PBSYS_STATUS_USER_PROGRAM_RUNNING);
+        new_color == PBIO_COLOR_NONE && pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING);
 
     // FIXME: currently system status light is hard-coded as LED at index 0 on
     // all platforms

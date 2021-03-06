@@ -12,10 +12,11 @@
  * Contiki process events.
  */
 typedef enum {
-    PBIO_EVENT_COM_CMD,         /**< Command received from Pybricks BLE service */
-    /** System status indicator was set. Data is pbsys_status_t. */
+    /** Command received from Pybricks BLE service. */
+    PBIO_EVENT_COM_CMD,
+    /** System status indicator was set. Data is ::pbio_pybricks_status_t. */
     PBIO_EVENT_STATUS_SET,
-    /** System status indicator was cleared. Data is pbsys_status_t. */
+    /** System status indicator was cleared. Data is ::pbio_pybricks_status_t. */
     PBIO_EVENT_STATUS_CLEARED,
 } pbio_event_t;
 

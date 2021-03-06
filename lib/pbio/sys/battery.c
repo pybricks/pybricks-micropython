@@ -89,14 +89,14 @@ void pbsys_battery_poll(void) {
         + battery_voltage * poll_interval) / BATTERY_PERIOD_MS;
 
     if (avg_battery_voltage <= battery_critical_mv) {
-        pbsys_status_set(PBSYS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN);
+        pbsys_status_set(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN);
     } else if (avg_battery_voltage >= battery_low_mv) {
-        pbsys_status_clear(PBSYS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN);
+        pbsys_status_clear(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN);
     }
 
     if (avg_battery_voltage <= battery_low_mv) {
-        pbsys_status_set(PBSYS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
+        pbsys_status_set(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
     } else if (avg_battery_voltage >= battery_ok_mv) {
-        pbsys_status_clear(PBSYS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
+        pbsys_status_clear(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
     }
 }

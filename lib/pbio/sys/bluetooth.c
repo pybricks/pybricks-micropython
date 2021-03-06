@@ -16,6 +16,7 @@
 #include <pbdrv/bluetooth.h>
 #include <pbio/error.h>
 #include <pbio/event.h>
+#include <pbio/protocol.h>
 #include <pbio/util.h>
 #include <pbsys/status.h>
 #include <pbsys/sys.h>
@@ -201,8 +202,37 @@ static void reset_all(void) {
     lwrb_reset(&uart_tx_ring);
 }
 
+static PT_THREAD(pbsys_bluetooth_monitor_status(struct pt *pt)) {
+    static uint32_t old_status_flags, new_status_flags;
+    static tx_msg_t msg;
+
+    PT_BEGIN(pt);
+
+    old_status_flags = 0;
+
+    for (;;) {
+        // wait for status to change
+        PT_WAIT_UNTIL(pt, (new_status_flags = pbsys_status_get_flags()) != old_status_flags);
+
+        // send the message
+        msg.context.size = pbio_pybricks_event_status_report(&msg.payload[0], new_status_flags);
+        msg.context.connection = PBDRV_BLUETOOTH_CONNECTION_PYBRICKS;
+        list_add(tx_queue, &msg);
+        msg.is_queued = true;
+        old_status_flags = new_status_flags;
+
+        // wait for message to be sent - note: it is possible to miss status changes
+        // if the status changes and then changes back to old_status_flags while we
+        // are waiting.
+        PT_WAIT_WHILE(pt, msg.is_queued);
+    }
+
+    PT_END(pt);
+}
+
 PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
     static struct etimer timer;
+    static struct pt status_monitor_pt;
 
     PROCESS_BEGIN();
 
@@ -221,15 +251,23 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
         pbdrv_bluetooth_start_advertising();
 
         // TODO: allow user programs to initiate BLE connections
-        pbsys_status_set(PBSYS_STATUS_BLE_ADVERTISING);
+        pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
         PROCESS_WAIT_UNTIL(pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI) ||
-            pbsys_status_test(PBSYS_STATUS_USER_PROGRAM_RUNNING));
-        pbsys_status_clear(PBSYS_STATUS_BLE_ADVERTISING);
+            pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING));
+        pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
+
+        PT_INIT(&status_monitor_pt);
 
         for (;;) {
             if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI)) {
                 // disconnected
                 break;
+            }
+
+            if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
+                // Since pbsys status events are broadcast to all processes, this
+                // will get triggered right away if there is a status change event.
+                pbsys_bluetooth_monitor_status(&status_monitor_pt);
             }
 
             if (!tx_busy) {
@@ -255,7 +293,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
         // reset Bluetooth chip
         pbdrv_bluetooth_power_on(false);
         PROCESS_WAIT_WHILE(pbdrv_bluetooth_is_ready());
-        PROCESS_WAIT_WHILE(pbsys_status_test(PBSYS_STATUS_USER_PROGRAM_RUNNING));
+        PROCESS_WAIT_WHILE(pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING));
     }
 
     PROCESS_END();
