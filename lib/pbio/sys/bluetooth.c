@@ -38,8 +38,6 @@ typedef struct {
     uint8_t payload[NRF_CHAR_SIZE];
 } tx_msg_t;
 
-static tx_msg_t pybricks_msg;
-static tx_msg_t uart_msg;
 LIST(tx_queue);
 static bool tx_busy;
 
@@ -113,6 +111,8 @@ pbio_error_t pbsys_bluetooth_rx(uint8_t *data, uint32_t *size) {
  *                          if this platform does not support Bluetooth.
  */
 pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
+    static tx_msg_t uart_msg;
+
     // make sure we have a Bluetooth connection
     if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_UART)) {
         return PBIO_ERROR_INVALID_OP;
@@ -141,6 +141,8 @@ pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
 }
 
 static void handle_rx(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint8_t size) {
+    static tx_msg_t pybricks_msg;
+
     if (connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) {
         // TODO: this is a temporary echo service - needs to trigger events instead
 
