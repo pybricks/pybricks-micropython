@@ -19,14 +19,14 @@
 #include <pbio/protocol.h>
 #include <pbio/util.h>
 #include <pbsys/status.h>
-#include <pbsys/sys.h>
+#include <pbsys/user_program.h>
 
 // REVISIT: this can be the negotiated MTU - 3 to allow for better throughput
 // max data size for nRF UART characteristics
 #define NRF_CHAR_SIZE 20
 
 // nRF UART Rx hook
-static pbsys_stdin_event_callback_t uart_rx_callback;
+static pbsys_user_program_stdin_event_callback_t uart_rx_callback;
 // ring buffers for UART service
 static lwrb_t uart_tx_ring;
 static lwrb_t uart_rx_ring;
@@ -61,7 +61,7 @@ static void on_event(void) {
  * Sets the UART Rx callback function.
  * @param callback  [in]    The callback or NULL.
  */
-void pbsys_bluetooth_rx_set_callback(pbsys_stdin_event_callback_t callback) {
+void pbsys_bluetooth_rx_set_callback(pbsys_user_program_stdin_event_callback_t callback) {
     uart_rx_callback = callback;
 }
 

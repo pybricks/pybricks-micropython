@@ -5,7 +5,6 @@
 
 #if PYBRICKS_PY_HUBS && PYBRICKS_HUB_NXTBRICK
 
-#include <pbsys/sys.h>
 #include <pbio/util.h>
 
 #include <pybricks/common.h>

@@ -10,7 +10,7 @@
 #include <pbio/button.h>
 #include <pbio/main.h>
 #include <pbio/light.h>
-#include <pbsys/sys.h>
+#include <pbsys/user_program.h>
 
 #include <pybricks/util_mp/pb_obj_helper.h>
 
@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
     mp_print_str(&mp_plat_print, "Pybricks\n");
 
     // Get system hardware ready
-    pbsys_prepare_user_program(&user_program_callbacks);
+    pbsys_user_program_prepare(&user_program_callbacks);
     // make sure any pending events are handled before starting MicroPython
     while (pbio_do_one_event()) {
     }
@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
 
     // Uninitialize MicroPython and the system hardware
     mp_deinit();
-    pbsys_unprepare_user_program();
+    pbsys_user_program_unprepare();
 
     nxt_deinit();
     return 0;

@@ -9,7 +9,7 @@
 
 #include <pbio/button.h>
 #include <pbio/main.h>
-#include <pbsys/sys.h>
+#include <pbsys/user_program.h>
 
 #include <pybricks/common.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
@@ -319,7 +319,7 @@ soft_reset:
     mp_hal_delay_ms(150);
 
     // Get system hardware ready
-    pbsys_prepare_user_program(&user_program_callbacks);
+    pbsys_user_program_prepare(&user_program_callbacks);
     // make sure any pending events are handled before starting MicroPython
     while (pbio_do_one_event()) {
     }
@@ -331,7 +331,7 @@ soft_reset:
 
     // Uninitialize MicroPython and the system hardware
     mp_deinit();
-    pbsys_unprepare_user_program();
+    pbsys_user_program_unprepare();
 
     goto soft_reset;
 

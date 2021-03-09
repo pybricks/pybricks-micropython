@@ -12,7 +12,6 @@
 #include <pbdrv/battery.h>
 
 #include <pbsys/status.h>
-#include <pbsys/sys.h>
 
 // period over which the battery voltage is averaged (in milliseconds)
 #define BATTERY_PERIOD_MS       2500

@@ -21,7 +21,6 @@
 #include <pbio/light.h>
 #include "pbio/motor_process.h"
 #include <pbio/uartdev.h>
-#include <pbsys/sys.h>
 
 #include "light/animation.h"
 #include "processes.h"

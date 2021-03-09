@@ -220,6 +220,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	sys/hmi.c \
 	sys/status.c \
 	sys/supervisor.c \
+	sys/user_program.c \
 	)
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o) $(SRC_S:.s=.o))

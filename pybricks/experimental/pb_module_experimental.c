@@ -9,8 +9,6 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 
-#include <pbsys/sys.h>
-
 #include <pybricks/experimental.h>
 #include <pybricks/robotics.h>
 

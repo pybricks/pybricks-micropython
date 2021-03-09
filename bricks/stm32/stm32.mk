@@ -461,6 +461,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	sys/light.c \
 	sys/status.c \
 	sys/supervisor.c \
+	sys/user_program.c \
 	)
 
 PBIO_DUAL_BOOT_SRC_C = $(addprefix lib/pbio/,\

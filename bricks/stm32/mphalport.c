@@ -6,7 +6,6 @@
 
 #include <pbdrv/config.h>
 #include <pbsys/bluetooth.h>
-#include <pbsys/sys.h>
 
 #include "py/runtime.h"
 #include "py/mphal.h"
