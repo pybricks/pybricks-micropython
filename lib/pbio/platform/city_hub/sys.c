@@ -70,18 +70,6 @@ PROCESS_THREAD(pbsys_process, ev, data) {
             if ((pbio_pybricks_status_t)data == PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED && user_stop_func) {
                 user_stop_func();
             }
-        } else if (ev == PBIO_EVENT_COM_CMD) {
-            pbio_com_cmd_t cmd = (uint32_t)data;
-
-            switch (cmd) {
-                case PBIO_COM_CMD_START_USER_PROGRAM:
-                    break;
-                case PBIO_COM_CMD_STOP_USER_PROGRAM:
-                    if (user_stop_func) {
-                        user_stop_func();
-                    }
-                    break;
-            }
         }
         IWDG->KR = 0xaaaa;
     }
