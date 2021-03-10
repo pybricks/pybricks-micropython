@@ -10,6 +10,15 @@
 #define _PBIO_PROTOCOL_H_
 
 /**
+ * Pybricks command types.
+ *
+ * Commands are sent from a remote device to the hub.
+ */
+typedef enum {
+    PBIO_PYBRICKS_COMMAND_STOP_USER_PROGRAM = 0,
+} pbio_pybricks_command_t;
+
+/**
  * Pybricks event types.
  *
  * Events are sent as notifications from the hub to a connected device.

@@ -217,6 +217,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/trajectory_ext.c \
 	src/trajectory.c \
 	sys/battery.c \
+	sys/command.c \
 	sys/hmi.c \
 	sys/status.c \
 	sys/supervisor.c \

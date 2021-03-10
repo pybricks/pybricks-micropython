@@ -18,6 +18,7 @@
 #include <pbio/event.h>
 #include <pbio/protocol.h>
 #include <pbio/util.h>
+#include <pbsys/command.h>
 #include <pbsys/status.h>
 #include <pbsys/user_program.h>
 
@@ -141,25 +142,8 @@ pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
 }
 
 static void handle_rx(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint8_t size) {
-    static tx_msg_t pybricks_msg;
-
     if (connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) {
-        // TODO: this is a temporary echo service - needs to trigger events instead
-
-        if (pybricks_msg.is_queued) {
-            return;
-        }
-
-        pybricks_msg.context.size = MIN(size, PBIO_ARRAY_SIZE(pybricks_msg.payload));
-        for (int i = 0; i < pybricks_msg.context.size; i++) {
-            pybricks_msg.payload[i] = data[i] + 1;
-        }
-        pybricks_msg.context.connection = PBDRV_BLUETOOTH_CONNECTION_PYBRICKS;
-
-        list_add(tx_queue, &pybricks_msg);
-        pybricks_msg.is_queued = true;
-
-        process_poll(&pbsys_bluetooth_process);
+        pbsys_command(data, size);
     } else if (connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
         // This will drop data if buffer is full
         if (uart_rx_callback) {
