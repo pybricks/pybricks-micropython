@@ -59,11 +59,14 @@
 #include "pybricks_service_server.h"
 
 static att_service_handler_t pybricks_service;
-static pybricks_service_callback_t client_callback;
+static pybricks_characteristic_write_callback_t client_callback;
+static pybricks_characteristic_configuration_callback_t client_configuration_callback;
 
 static uint16_t pybricks_value_handle;
 static uint16_t pybricks_client_configuration_handle;
 static uint16_t pybricks_client_configuration_value;
+
+// TODO: need a way to reset pybricks_client_configuration_value on disconnect
 
 static uint16_t pybricks_service_read_callback(hci_con_handle_t con_handle, uint16_t attribute_handle, uint16_t offset, uint8_t *buffer, uint16_t buffer_size) {
     UNUSED(con_handle);
@@ -89,19 +92,23 @@ static int pybricks_service_write_callback(hci_con_handle_t con_handle, uint16_t
     }
     if (attribute_handle == pybricks_client_configuration_handle) {
         pybricks_client_configuration_value = little_endian_read_16(buffer, 0);
-        if (pybricks_client_configuration_value) {
-            client_callback(con_handle, NULL, 0);
-        }
+        client_configuration_callback(con_handle, pybricks_client_configuration_value);
     }
 
     return 0;
 }
 
-void pybricks_service_server_init(pybricks_service_callback_t callback) {
+void pybricks_service_server_init(
+    pybricks_characteristic_write_callback_t write_callback,
+    pybricks_characteristic_configuration_callback_t configuration_callback) {
     static const uint8_t pybricks_service_uuid128[] = { 0xC5, 0xF5, 0x00, 0x01, 0x82, 0x80, 0x46, 0xDA, 0x89, 0xF4, 0x6D, 0x80, 0x51, 0xE4, 0xAE, 0xEF };
     static const uint8_t pybricks_characteristic_uuid128[] = { 0xC5, 0xF5, 0x00, 0x02, 0x82, 0x80, 0x46, 0xDA, 0x89, 0xF4, 0x6D, 0x80, 0x51, 0xE4, 0xAE, 0xEF };
 
-    client_callback = callback;
+    btstack_assert(write_callback);
+    btstack_assert(configuration_callback);
+
+    client_callback = write_callback;
+    client_configuration_callback = configuration_callback;
 
     // get service handle range
     uint16_t start_handle = 0;

@@ -194,7 +194,9 @@ static PT_THREAD(pbsys_bluetooth_monitor_status(struct pt *pt)) {
 
     PT_BEGIN(pt);
 
-    old_status_flags = 0;
+    // This ensures that we always send a notification with the current status
+    // right after notifications are enabled.
+    old_status_flags = ~0;
 
     for (;;) {
         // wait for status to change
@@ -254,6 +256,10 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
                 // Since pbsys status events are broadcast to all processes, this
                 // will get triggered right away if there is a status change event.
                 pbsys_bluetooth_monitor_status(&status_monitor_pt);
+            } else {
+                // REVISIT: this is probably a bit inefficient since it only
+                // needs to be called once each time notifications are enabled
+                PT_INIT(&status_monitor_pt);
             }
 
             if (!tx_busy) {

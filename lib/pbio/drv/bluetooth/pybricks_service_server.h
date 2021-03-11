@@ -47,13 +47,17 @@
 #include "bluetooth.h"
 #include "btstack_defines.h"
 
-typedef void (*pybricks_service_callback_t)(hci_con_handle_t con_handle, const uint8_t *data, uint16_t size);
+typedef void (*pybricks_characteristic_write_callback_t)(hci_con_handle_t con_handle, const uint8_t *data, uint16_t size);
+typedef void (*pybricks_characteristic_configuration_callback_t)(hci_con_handle_t con_handle, uint16_t value);
 
 /**
- * @brief Init Nordic SPP Service Server with ATT DB
- * @param callback for tx data from peer. Will be called with empty data after service gets activated
+ * @brief Init Pybricks Service Server with ATT DB
+ * @param write_callback called when a connected device writes to any Pybricks service characteristic
+ * @param configuration_callback called when a connected device writes to any Pybricks service control characteristic configuration attribute
  */
-void pybricks_service_server_init(pybricks_service_callback_t callback);
+void pybricks_service_server_init(
+    pybricks_characteristic_write_callback_t write_callback,
+    pybricks_characteristic_configuration_callback_t configuration_callback);
 
 /**
  * @brief Queue send request. When called, one packet can be send via pybricks_service_send below
