@@ -3,6 +3,9 @@
 
 // STM32 HAL UART driver for BlueKitchen BTStack.
 
+// IMPORTANT: This driver requires a patched STM32 HAL to fix some data loss
+// issues. See https://github.com/micropython/stm32lib/pull/12.
+
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32_UART
