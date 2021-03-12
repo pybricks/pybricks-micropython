@@ -135,6 +135,7 @@ void pb_type_Color_reset(void) {
     mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_BLACK),   MP_OBJ_FROM_PTR(&pb_Color_BLACK_obj));
     mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_GRAY),    MP_OBJ_FROM_PTR(&pb_Color_GRAY_obj));
     mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_WHITE),   MP_OBJ_FROM_PTR(&pb_Color_WHITE_obj));
+    mp_obj_dict_store(MP_OBJ_FROM_PTR(colors), MP_ROM_QSTR(MP_QSTR_NONE),    MP_OBJ_FROM_PTR(&pb_Color_NONE_obj));
 }
 
 void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
