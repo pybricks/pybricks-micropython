@@ -36,7 +36,7 @@ STATIC const mp_rom_obj_tuple_t pybricks_info_obj = {
     }
 };
 
-STATIC mp_obj_t pb_package_pybricks_init() {
+STATIC mp_obj_t pb_package_pybricks_init(void) {
 
     // Reset additions to Color parameters
     pb_type_Color_reset();
@@ -90,7 +90,12 @@ const mp_obj_module_t pb_package_pybricks = {
     .globals = (mp_obj_dict_t *)&pb_package_pybricks_globals,
 };
 
-STATIC void import_all() {
+/**
+ * Import all pybricks.* modules.
+ *
+ * This can raise an exception, so callers need to catch exceptions.
+ */
+void pb_package_import_all(void) {
     // Initialize package
     pb_package_pybricks_init();
 
@@ -107,16 +112,4 @@ STATIC void import_all() {
     const mp_obj_t args;
     mp_store_name(MP_QSTR_hub, pb_type_SystemHub.make_new(&pb_type_SystemHub, 0, 0, &args));
     #endif
-}
-
-// Import everything and raise exception if it occurs.
-void pb_package_import_all(void) {
-    nlr_buf_t nlr;
-    if (nlr_push(&nlr) == 0) {
-        import_all();
-        nlr_pop();
-    } else {
-        mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
-        return;
-    }
 }

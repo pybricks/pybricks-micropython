@@ -221,58 +221,30 @@ static uint32_t get_user_program(uint8_t **buf, uint32_t *free_len) {
     return len;
 }
 
-static void run_user_program(uint32_t len, uint8_t *buf, uint32_t free_len) {
-
-    if (len == 0) {
-        mp_print_str(&mp_plat_print, ">>>> ERROR\n");
-        return;
-    }
-
-    // Send a message to say we will run a program
-    mp_print_str(&mp_plat_print, "\n>>>> RUNNING\n");
-
-    // FIXME: Make sure to not gobble up first characters of user output
-    // in the web IDE. Instead for now, delineate subsequent program output.
-    // This is useful regardless, and in this case it's okay if a few dashes
-    // are gobbled up.
-    mp_print_str(&mp_plat_print, "--------------\n");
-
-    if (len == REPL_LEN) {
-        #if MICROPY_ENABLE_COMPILER
-        pb_package_import_all();
-        pyexec_friendly_repl();
-        #else
-        mp_print_str(&mp_plat_print, "REPL not supported!\n");
-        #endif // MICROPY_ENABLE_COMPILER
-        return;
-    }
-
-    // Allow script to be stopped with hub button
-    mp_hal_set_interrupt_char(3);
-
-    nlr_buf_t nlr;
-    if (nlr_push(&nlr) == 0) {
-        mp_reader_t reader;
-        mp_reader_new_mem(&reader, buf, len, free_len);
-        mp_raw_code_t *raw_code = mp_raw_code_load(&reader);
-        mp_obj_t module_fun = mp_make_function_from_raw_code(raw_code, MP_OBJ_NULL, MP_OBJ_NULL);
-        mp_call_function_0(module_fun);
-        nlr_pop();
-    } else {
-        mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
-    }
-
-    // Reset interrupt
-    mp_hal_set_interrupt_char(-1);
-}
-
-// callback for when stop button is pressed
+// callback for when stop button is pressed in IDE or on hub
 static void user_program_stop_func(void) {
-    // we can only raise an exception if the VM is running
-    // mp_interrupt_char will be either -1 or 0 when VM is not running
-    if (mp_interrupt_char > 0) {
-        mp_keyboard_interrupt();
+    static const mp_obj_tuple_t args = {
+        .base = { .type = &mp_type_tuple },
+        .len = 1,
+        .items = { MP_ROM_QSTR(MP_QSTR_stop_space_button_space_pressed) },
+    };
+    static mp_obj_exception_t system_exit;
+
+    // Trigger soft reboot.
+    pyexec_system_exit = PYEXEC_FORCED_EXIT;
+
+    // Schedule SystemExit exception.
+    system_exit.base.type = &mp_type_SystemExit;
+    system_exit.traceback_alloc = 0;
+    system_exit.traceback_len = 0;
+    system_exit.traceback_data = NULL;
+    system_exit.args = (mp_obj_tuple_t *)&args;
+    MP_STATE_MAIN_THREAD(mp_pending_exception) = MP_OBJ_FROM_PTR(&system_exit);
+    #if MICROPY_ENABLE_SCHEDULER
+    if (MP_STATE_VM(sched_state) == MP_SCHED_IDLE) {
+        MP_STATE_VM(sched_state) = MP_SCHED_PENDING;
     }
+    #endif
 }
 
 static bool user_program_stdin_event_func(uint8_t c) {
@@ -288,6 +260,71 @@ static const pbsys_user_program_callbacks_t user_program_callbacks = {
     .stop = user_program_stop_func,
     .stdin_event = user_program_stdin_event_func,
 };
+
+static void run_user_program(uint32_t len, uint8_t *buf, uint32_t free_len) {
+    bool run_repl = len == REPL_LEN;
+
+    #if MICROPY_ENABLE_COMPILER
+    bool import_all = run_repl;
+    #endif
+
+    // Allow script to be stopped with CTRL+C
+    mp_hal_set_interrupt_char(3);
+
+restart:
+    // Hook into pbsys
+    pbsys_user_program_prepare(&user_program_callbacks);
+    // make sure any pending events, e.g. starting status light pattern, are
+    // handled before starting MicroPython user program
+    while (pbio_do_one_event()) {
+    }
+
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        if (run_repl) {
+            #if MICROPY_ENABLE_COMPILER
+            // If the user requested the REPL without a user program, import all
+            // pybricks packages for convience.
+            if (import_all) {
+                pb_package_import_all();
+            }
+            pyexec_friendly_repl();
+            #else
+            mp_hal_stdout_tx_str("REPL not supported!\r\n");
+            #endif // MICROPY_ENABLE_COMPILER
+        } else {
+            // run user .mpy file
+
+            mp_reader_t reader;
+            mp_reader_new_mem(&reader, buf, len, free_len);
+            mp_raw_code_t *raw_code = mp_raw_code_load(&reader);
+            mp_obj_t module_fun = mp_make_function_from_raw_code(raw_code, MP_OBJ_NULL, MP_OBJ_NULL);
+
+            if (free_len) {
+                mp_hal_stdout_tx_str("\r\nRunning downloaded program...\r\n");
+            } else {
+                mp_hal_stdout_tx_str("\r\nRunning program from flash memory...\r\n");
+            }
+
+            mp_call_function_0(module_fun);
+            mp_hal_stdout_tx_str("\r\n...done.\r\n");
+        }
+        nlr_pop();
+    } else {
+        // Need to unprepare, otherwise SystemExit could be raised during print.
+        pbsys_user_program_unprepare();
+        mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
+        // If there was KeyboardInterrupt in the user program, drop to REPL
+        // for debugging. If the REPL was already running, exit.
+        if (!run_repl && mp_obj_exception_match((mp_obj_t)nlr.ret_val, &mp_type_KeyboardInterrupt)) {
+            run_repl = true;
+            goto restart;
+        }
+    }
+
+    pbsys_user_program_unprepare();
+    mp_hal_set_interrupt_char(-1);
+}
 
 int main(int argc, char **argv) {
     pbio_init();
@@ -305,24 +342,10 @@ soft_reset:
 
     wait_for_button_release();
 
-    // Send a message to say hub is idle
-    mp_print_str(&mp_plat_print, ">>>> IDLE\n");
-
     // Receive an mpy-cross compiled Python script
     uint8_t *program;
     uint32_t free_len;
     uint32_t len = get_user_program(&program, &free_len);
-
-    // FIXME: The WEB IDE currently confuses last checksum byte(s) with the
-    // status messaging sent when program begins. So for now, add a brief
-    // wait so WEB IDE can easily distinguish.
-    mp_hal_delay_ms(150);
-
-    // Get system hardware ready
-    pbsys_user_program_prepare(&user_program_callbacks);
-    // make sure any pending events are handled before starting MicroPython
-    while (pbio_do_one_event()) {
-    }
 
     mp_init();
 
@@ -331,9 +354,10 @@ soft_reset:
 
     // Uninitialize MicroPython and the system hardware
     mp_deinit();
-    pbsys_user_program_unprepare();
 
     goto soft_reset;
+
+    MP_UNREACHABLE;
 
     return 0;
 }
