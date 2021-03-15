@@ -148,7 +148,7 @@ void pb_type_Color_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kin
 
     // Otherwise, print name of color, if available
     mp_map_elem_t *color_elems = colors->map.table;
-    for (size_t i = 0; i < colors->map.used; i++) {
+    for (size_t i = 0; i < colors->map.alloc; i++) {
         mp_map_elem_t *element = &color_elems[i];
         if (self_in == element->value && MP_OBJ_IS_QSTR(element->key)) {
             mp_printf(print, "Color.%q", MP_OBJ_QSTR_VALUE(element->key));
