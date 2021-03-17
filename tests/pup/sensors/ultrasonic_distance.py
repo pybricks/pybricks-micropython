@@ -8,6 +8,7 @@ Hardware Module: 1
 from pybricks.pupdevices import Motor, ColorSensor, UltrasonicSensor
 from pybricks.parameters import Port
 
+
 # Initialize devices.
 color_sensor = ColorSensor(Port.A)
 motor = Motor(Port.C)
@@ -15,8 +16,33 @@ ultrasonic_sensor = UltrasonicSensor(Port.E)
 
 # Detect object.
 motor.run_target(500, 0)
-assert ultrasonic_sensor.distance() < 100, "Expected low distance."
+distance = ultrasonic_sensor.distance()
+assert distance < 100, "Expected < 100 mm, got {0}.".format(distance)
 
 # Move object away.
 motor.run_target(500, 180)
-assert ultrasonic_sensor.distance() > 100, "Expected high distance."
+distance = ultrasonic_sensor.distance()
+assert distance > 100, "Expected > 100 mm, got {0}.".format(distance)
+
+# Prepare fast detection.
+motor.reset_angle(0)
+motor.run(700)
+DETECTIONS = 5
+
+# Wait for given number of detections.
+for i in range(DETECTIONS):
+    # Wait for object to be detected.
+    while ultrasonic_sensor.distance() > 100:
+        pass
+
+    # Wait for object to move away.
+    angle_detected = motor.angle()
+    while motor.angle() < angle_detected + 180:
+        pass
+
+
+# Assert that we have made as many turns.
+rotations = round(motor.angle() / 360)
+assert rotations == DETECTIONS, "Expected {0} turns, got {1}.".format(
+    DETECTIONS, rotations
+)
