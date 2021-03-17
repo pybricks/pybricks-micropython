@@ -10,11 +10,11 @@
 #include <pbsys/bluetooth.h>
 #include <pbsys/status.h>
 #include <pbsys/supervisor.h>
-#include <pbsys/user_program.h>
 
 #include "stm32f030xc.h"
 
 #include "../sys/hmi.h"
+#include "../sys/user_program.h"
 
 PROCESS(pbsys_process, "System");
 
@@ -45,10 +45,7 @@ PROCESS_THREAD(pbsys_process, ev, data) {
             pbsys_battery_poll();
             pbsys_hmi_poll();
             pbsys_supervisor_poll();
-        } else if (ev == PBIO_EVENT_STATUS_SET) {
-            if ((pbio_pybricks_status_t)data == PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED) {
-                pbsys_user_program_stop();
-            }
+            pbsys_user_program_poll();
         }
         IWDG->KR = 0xaaaa;
     }

@@ -17,6 +17,7 @@
 #include <stdint.h>
 
 #include <pbio/config.h>
+#include <pbio/button.h>
 #include <pbio/error.h>
 
 /**
@@ -54,6 +55,7 @@ typedef struct {
 void pbsys_user_program_prepare(const pbsys_user_program_callbacks_t *callbacks);
 void pbsys_user_program_unprepare(void);
 void pbsys_user_program_stop(void);
+void pbsys_user_program_set_stop_buttons(pbio_button_flags_t buttons);
 
 #endif // _PBSYS_USER_PROGRAM_H_
 

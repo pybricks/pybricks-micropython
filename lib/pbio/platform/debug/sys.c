@@ -6,9 +6,9 @@
 #include "pbio/event.h"
 
 #include <pbsys/status.h>
-#include <pbsys/user_program.h>
 
 #include "../sys/hmi.h"
+#include "../sys/user_program.h"
 
 PROCESS(pbsys_process, "System");
 
@@ -26,10 +26,7 @@ PROCESS_THREAD(pbsys_process, ev, data) {
         if (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)) {
             etimer_reset(&timer);
             pbsys_hmi_poll();
-        } else if (ev == PBIO_EVENT_STATUS_SET) {
-            if ((pbio_pybricks_status_t)data == PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED) {
-                pbsys_user_program_stop();
-            }
+            pbsys_user_program_poll();
         }
     }
 
