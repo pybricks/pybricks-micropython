@@ -116,7 +116,7 @@ static uint16_t uart_service_handle, uart_service_end_handle, uart_rx_char_handl
 // nRF UART tx notifications enabled
 static bool uart_tx_notify_en;
 
-// 6e400001-b5a3-f393-e0a-9e50e24dcca9e
+// c5f50001-8280-46da-89f4-6d8051e4aeef
 static const uint8_t pybricks_service_uuid[] = {
     0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
     0xda, 0x46, 0x80, 0x82, 0x01, 0x00, 0xf5, 0xc5

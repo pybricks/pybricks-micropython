@@ -214,7 +214,7 @@ bool pbdrv_bluetooth_is_ready(void) {
  * Sets advertising data and enables advertisements.
  */
 static PT_THREAD(set_discoverable(struct pt *pt, void *context)) {
-    // 6e400001-b5a3-f393-e0a-9e50e24dcca9e
+    // c5f50001-8280-46da-89f4-6d8051e4aeef
     static const uint8_t service_uuids[] = {
         AD_TYPE_128_BIT_SERV_UUID,
         0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
