@@ -1,3 +1,4 @@
 *
 !.gitignore
 !c_cpp_properties.json
+!launch.json
