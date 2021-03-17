@@ -9,9 +9,9 @@
 #include <pbsys/battery.h>
 #include <pbsys/bluetooth.h>
 #include <pbsys/status.h>
-#include <pbsys/supervisor.h>
 
 #include "../sys/hmi.h"
+#include "../sys/supervisor.h"
 #include "../sys/user_program.h"
 
 PROCESS(pbsys_process, "System");
