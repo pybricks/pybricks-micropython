@@ -21,7 +21,7 @@ angles = {
     "YELLOW": 290,
     "BLACK": 250,
     "WHITE": 75,
-    "NONE": 162
+    "NONE": 162,
 }
 
 previous_reflection = 0

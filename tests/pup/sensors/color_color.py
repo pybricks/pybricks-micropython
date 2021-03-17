@@ -22,16 +22,14 @@ angles = {
     "YELLOW": 290,
     "BLACK": 250,
     "WHITE": 75,
-    "NONE": 162
+    "NONE": 162,
 }
 
 # Verify saturated colors without calibration.
 for name in ("GREEN", "BLUE", "RED", "YELLOW"):
     motor.run_target(SPEED, angles[name])
     detected = color_sensor.color()
-    assert detected == Color[name], "Expected {0} but got {1}".format(
-        Color[name], detected
-    )
+    assert detected == Color[name], "Expected {0} but got {1}".format(Color[name], detected)
 
 # Update all colors.
 for name in angles.keys():
@@ -45,6 +43,4 @@ color_sensor.detectable_colors([Color[key] for key in angles.keys()])
 for name in angles.keys():
     motor.run_target(SPEED, angles[name])
     detected = color_sensor.color()
-    assert detected == Color[name], "Expected {0} but got {1}".format(
-        Color[name], detected
-    )
+    assert detected == Color[name], "Expected {0} but got {1}".format(Color[name], detected)

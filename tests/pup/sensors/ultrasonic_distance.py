@@ -43,6 +43,4 @@ for i in range(DETECTIONS):
 
 # Assert that we have made as many turns.
 rotations = round(motor.angle() / 360)
-assert rotations == DETECTIONS, "Expected {0} turns, got {1}.".format(
-    DETECTIONS, rotations
-)
+assert rotations == DETECTIONS, "Expected {0} turns, got {1}.".format(DETECTIONS, rotations)
