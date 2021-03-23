@@ -14,3 +14,10 @@ tab_width = 4
 [{Makefile,*.mk}]
 indent_style = tab
 tab_width = 8
+
+[/lib/btstack/**]
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+indent_style = unset
+indent_size = unset

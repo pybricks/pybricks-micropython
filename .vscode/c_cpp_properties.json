@@ -296,6 +296,7 @@
             "includePath": [
                 "${workspaceFolder}/micropython/lib/tinytest",
                 "${workspaceFolder}/lib/btstack/chipset/cc256x",
+                "${workspaceFolder}/lib/btstack/platform/posix",
                 "${workspaceFolder}/lib/btstack/src",
                 "${workspaceFolder}/lib/contiki-core",
                 "${workspaceFolder}/lib/lego",

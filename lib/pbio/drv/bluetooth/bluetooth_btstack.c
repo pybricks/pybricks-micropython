@@ -77,14 +77,32 @@ static void nordic_can_send(void *context) {
     tx->done(tx);
 }
 
-static void nordic_data_received(hci_con_handle_t tx_con_handle, const uint8_t *data, uint16_t size) {
-    // TODO: need upstream change to be able to detect when notifications are disabled
-    if (size == 0 && uart_con_handle == HCI_CON_HANDLE_INVALID) {
-        uart_con_handle = tx_con_handle;
-    } else {
-        if (handle_rx) {
-            handle_rx(PBDRV_BLUETOOTH_CONNECTION_UART, data, size);
-        }
+static void nordic_spp_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
+    switch (packet_type) {
+        case HCI_EVENT_PACKET:
+            if (hci_event_packet_get_type(packet) != HCI_EVENT_GATTSERVICE_META) {
+                break;
+            }
+
+            switch (hci_event_gattservice_meta_get_subevent_code(packet)) {
+                case GATTSERVICE_SUBEVENT_SPP_SERVICE_CONNECTED:
+                    uart_con_handle = gattservice_subevent_spp_service_connected_get_con_handle(packet);
+                    break;
+                case GATTSERVICE_SUBEVENT_SPP_SERVICE_DISCONNECTED:
+                    uart_con_handle = HCI_CON_HANDLE_INVALID;
+                    break;
+                default:
+                    break;
+            }
+
+            break;
+        case RFCOMM_DATA_PACKET:
+            if (handle_rx) {
+                handle_rx(PBDRV_BLUETOOTH_CONNECTION_UART, packet, size);
+            }
+            break;
+        default:
+            break;
     }
 }
 
@@ -139,7 +157,7 @@ void pbdrv_bluetooth_init(void) {
     att_server_init(profile_data, NULL, NULL);
 
     pybricks_service_server_init(pybricks_data_received, pybricks_configured);
-    nordic_spp_service_server_init(nordic_data_received);
+    nordic_spp_service_server_init(nordic_spp_packet_handler);
 }
 
 void pbdrv_bluetooth_power_on(bool on) {

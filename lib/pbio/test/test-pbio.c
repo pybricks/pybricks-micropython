@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include <btstack.h>
+#include <hci_dump_posix_stdout.h>
 #include <tinytest.h>
 #include <tinytest_macros.h>
 
@@ -37,7 +38,7 @@ void pbio_test_run_thread(void *env) {
     }
 
     if (debug) {
-        hci_dump_open(NULL, HCI_DUMP_STDOUT);
+        hci_dump_init(hci_dump_posix_stdout_get_instance());
     }
     hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_DEBUG, debug);
     hci_dump_enable_log_level(HCI_DUMP_LOG_LEVEL_INFO, debug);

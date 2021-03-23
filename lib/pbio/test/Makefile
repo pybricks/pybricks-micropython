@@ -68,7 +68,7 @@ LWRB_SRC = $(shell find $(LWRB_DIR)/lwrb -name "*.c")
 
 # pbio depedency
 BTSTACK_DIR = ../../btstack
-BTSTACK_INC = -I$(BTSTACK_DIR)/src -I$(BTSTACK_DIR)/chipset/cc256x
+BTSTACK_INC = -I$(BTSTACK_DIR)/src -I$(BTSTACK_DIR)/chipset/cc256x -I$(BTSTACK_DIR)/platform/posix
 BTSTACK_SRC = $(addprefix $(BTSTACK_DIR)/src/,\
 	btstack_linked_list.c \
 	btstack_run_loop.c \
@@ -101,7 +101,6 @@ BTSTACK_SRC += $(addprefix $(BTSTACK_DIR)/src/,\
 
 BTSTACK_SRC += $(addprefix $(BTSTACK_DIR)/src/ble/,\
 	gatt-service/nordic_spp_service_server.c \
-	ancs_client.c \
 	att_db_util.c \
 	att_db.c \
 	att_dispatch.c \
@@ -113,6 +112,10 @@ BTSTACK_SRC += $(addprefix $(BTSTACK_DIR)/src/ble/,\
 
 BTSTACK_SRC += $(addprefix $(BTSTACK_DIR)/chipset/cc256x/,\
 	btstack_chipset_cc256x.c \
+	)
+
+BTSTACK_SRC += $(addprefix $(BTSTACK_DIR)/platform/posix/,\
+	hci_dump_posix_stdout.c \
 	)
 
 # pbio library
