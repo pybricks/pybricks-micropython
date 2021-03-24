@@ -24,7 +24,7 @@
 
 // REVISIT: this can be the negotiated MTU - 3 to allow for better throughput
 // max data size for Nordic UART characteristics
-#define NRF_CHAR_SIZE 20
+#define NUS_CHAR_SIZE 20
 
 // Nordic UART Rx hook
 static pbsys_user_program_stdin_event_callback_t uart_rx_callback;
@@ -36,7 +36,7 @@ typedef struct {
     list_t queue;
     pbdrv_bluetooth_send_context_t context;
     bool is_queued;
-    uint8_t payload[NRF_CHAR_SIZE];
+    uint8_t payload[NUS_CHAR_SIZE];
 } send_msg_t;
 
 LIST(send_queue);
@@ -46,7 +46,7 @@ PROCESS(pbsys_bluetooth_process, "Bluetooth");
 
 /** Initializes Bluetooth. */
 void pbsys_bluetooth_init(void) {
-    static uint8_t uart_tx_buf[NRF_CHAR_SIZE * 2 + 1];
+    static uint8_t uart_tx_buf[NUS_CHAR_SIZE * 2 + 1];
     static uint8_t uart_rx_buf[100 + 1]; // download chunk size
 
     lwrb_init(&uart_tx_ring, uart_tx_buf, PBIO_ARRAY_SIZE(uart_tx_buf));
@@ -135,7 +135,7 @@ pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
     }
 
     // poke the process to start tx soon-ish. This way, we can accumulate up to
-    // NRF_CHAR_SIZE bytes before actually transmitting
+    // NUS_CHAR_SIZE bytes before actually transmitting
     process_poll(&pbsys_bluetooth_process);
 
     return PBIO_SUCCESS;
