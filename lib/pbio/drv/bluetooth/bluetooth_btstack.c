@@ -21,7 +21,7 @@ static hci_con_handle_t le_con_handle = HCI_CON_HANDLE_INVALID;
 static hci_con_handle_t pybricks_con_handle = HCI_CON_HANDLE_INVALID;
 static hci_con_handle_t uart_con_handle = HCI_CON_HANDLE_INVALID;
 static pbdrv_bluetooth_on_event_t bluetooth_on_event;
-static pbdrv_bluetooth_handle_rx_t handle_rx;
+static pbdrv_bluetooth_receive_handler_t receive_handler;
 static const pbdrv_bluetooth_btstack_platform_data_t *pdata = &pbdrv_bluetooth_btstack_platform_data;
 
 const uint8_t adv_data[] = {
@@ -55,15 +55,15 @@ static const hci_transport_config_uart_t config = {
 };
 
 static void pybricks_can_send(void *context) {
-    pbdrv_bluetooth_tx_context_t *tx = context;
+    pbdrv_bluetooth_send_context_t *send = context;
 
-    pybricks_service_server_send(pybricks_con_handle, tx->data, tx->size);
-    tx->done(tx);
+    pybricks_service_server_send(pybricks_con_handle, send->data, send->size);
+    send->done(send);
 }
 
 static void pybricks_data_received(hci_con_handle_t tx_con_handle, const uint8_t *data, uint16_t size) {
-    if (handle_rx) {
-        handle_rx(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS, data, size);
+    if (receive_handler) {
+        receive_handler(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS, data, size);
     }
 }
 
@@ -72,10 +72,10 @@ static void pybricks_configured(hci_con_handle_t tx_con_handle, uint16_t value) 
 }
 
 static void nordic_can_send(void *context) {
-    pbdrv_bluetooth_tx_context_t *tx = context;
+    pbdrv_bluetooth_send_context_t *send = context;
 
-    nordic_spp_service_server_send(uart_con_handle, tx->data, tx->size);
-    tx->done(tx);
+    nordic_spp_service_server_send(uart_con_handle, send->data, send->size);
+    send->done(send);
 }
 
 static void nordic_spp_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {
@@ -98,8 +98,8 @@ static void nordic_spp_packet_handler(uint8_t packet_type, uint16_t channel, uin
 
             break;
         case RFCOMM_DATA_PACKET:
-            if (handle_rx) {
-                handle_rx(PBDRV_BLUETOOTH_CONNECTION_UART, packet, size);
+            if (receive_handler) {
+                receive_handler(PBDRV_BLUETOOTH_CONNECTION_UART, packet, size);
             }
             break;
         default:
@@ -212,7 +212,7 @@ void pbdrv_bluetooth_set_on_event(pbdrv_bluetooth_on_event_t on_event) {
     bluetooth_on_event = on_event;
 }
 
-void pbdrv_bluetooth_tx(pbdrv_bluetooth_tx_context_t *context) {
+void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context) {
     static btstack_context_callback_registration_t send_request;
 
     send_request.context = context;
@@ -226,8 +226,8 @@ void pbdrv_bluetooth_tx(pbdrv_bluetooth_tx_context_t *context) {
     }
 }
 
-void pbdrv_bluetooth_set_handle_rx(pbdrv_bluetooth_handle_rx_t handle_rx_) {
-    handle_rx = handle_rx_;
+void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
+    receive_handler = handler;
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH_BTSTACK

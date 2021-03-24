@@ -27,8 +27,8 @@ typedef enum {
     PBDRV_BLUETOOTH_CONNECTION_UART,
 } pbdrv_bluetooth_connection_t;
 
-/** Data structure that holds context needed for BLE notifications. */
-typedef struct _pbdrv_bluetooth_tx_context_t pbdrv_bluetooth_tx_context_t;
+/** Data structure that holds context needed for sending BLE notifications. */
+typedef struct _pbdrv_bluetooth_send_context_t pbdrv_bluetooth_send_context_t;
 
 /**
  * Callback that is called when a Bluetooth event occurs.
@@ -36,23 +36,23 @@ typedef struct _pbdrv_bluetooth_tx_context_t pbdrv_bluetooth_tx_context_t;
 typedef void (*pbdrv_bluetooth_on_event_t)(void);
 
 /**
- * Callback that is called when Tx is done.
- * @param context  [in]     The context that was given to pbdrv_bluetooth_tx().
+ * Callback that is called when sending a notification is done.
+ * @param context  [in]     The context that was given to pbdrv_bluetooth_send().
  */
-typedef void (*pbdrv_bluetooth_tx_done_t)(pbdrv_bluetooth_tx_context_t *context);
+typedef void (*pbdrv_bluetooth_send_done_t)(pbdrv_bluetooth_send_context_t *context);
 
 /**
- * Callback that is called when Rx data is received.
+ * Callback that is called when BLE characteristic is written to.
  *
  * @param [in]  connection  The characteristic that was written.
  * @param [in]  data        The data that was received.
  * @param [in]  size        The size of @p data in bytes.
  */
-typedef void (*pbdrv_bluetooth_handle_rx_t)(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint8_t size);
+typedef void (*pbdrv_bluetooth_receive_handler_t)(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint8_t size);
 
-struct _pbdrv_bluetooth_tx_context_t {
+struct _pbdrv_bluetooth_send_context_t {
     /** Callback that is called when the data has been sent. */
-    pbdrv_bluetooth_tx_done_t done;
+    pbdrv_bluetooth_send_done_t done;
     /** The data to be sent. This data must remain valied until @p done is called. */
     const uint8_t *data;
     /** The size of @p data. */
@@ -106,19 +106,19 @@ void pbdrv_bluetooth_set_on_event(pbdrv_bluetooth_on_event_t on_event);
  * Requests for @p data to be sent via a characteristic notification.
  *
  * It is up to the caller to verify that notifications are enabled and
- * that any previous Tx request is done before calling this function.
+ * that any previous notification request is done before calling this function.
  *
  * @param [in]  context     The data to be sent and where to send it.
  */
-void pbdrv_bluetooth_tx(pbdrv_bluetooth_tx_context_t *context);
+void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context);
 
 /**
  * Registers a callback that will be called when data is received via a
  * characteristic write.
  *
- * @param [in]  handle_rx   The function that will be called.
+ * @param [in]  handler     The function that will be called.
  */
-void pbdrv_bluetooth_set_handle_rx(pbdrv_bluetooth_handle_rx_t handle_rx);
+void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler);
 
 #else // PBDRV_CONFIG_BLUETOOTH
 
@@ -138,10 +138,10 @@ static inline bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t con
     return false;
 }
 
-static inline void pbdrv_bluetooth_tx(pbdrv_bluetooth_tx_context_t *context) {
+static inline void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context) {
 }
 
-static inline void pbdrv_bluetooth_set_handle_rx(pbdrv_bluetooth_handle_rx_t handle_rx) {
+static inline void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH

@@ -34,13 +34,13 @@ static lwrb_t uart_rx_ring;
 
 typedef struct {
     list_t queue;
-    pbdrv_bluetooth_tx_context_t context;
+    pbdrv_bluetooth_send_context_t context;
     bool is_queued;
     uint8_t payload[NRF_CHAR_SIZE];
-} tx_msg_t;
+} send_msg_t;
 
-LIST(tx_queue);
-static bool tx_busy;
+LIST(send_queue);
+static bool send_busy;
 
 PROCESS(pbsys_bluetooth_process, "Bluetooth");
 
@@ -112,7 +112,7 @@ pbio_error_t pbsys_bluetooth_rx(uint8_t *data, uint32_t *size) {
  *                          if this platform does not support Bluetooth.
  */
 pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
-    static tx_msg_t uart_msg;
+    static send_msg_t uart_msg;
 
     // make sure we have a Bluetooth connection
     if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_UART)) {
@@ -126,7 +126,7 @@ pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
         // still buffer data to send it more efficiently.
         uart_msg.context.connection = PBDRV_BLUETOOTH_CONNECTION_UART;
 
-        list_add(tx_queue, &uart_msg);
+        list_add(send_queue, &uart_msg);
         uart_msg.is_queued = true;
     }
 
@@ -141,7 +141,7 @@ pbio_error_t pbsys_bluetooth_tx(const uint8_t *data, uint32_t *size) {
     return PBIO_SUCCESS;
 }
 
-static void handle_rx(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint8_t size) {
+static void handle_receive(pbdrv_bluetooth_connection_t connection, const uint8_t *data, uint8_t size) {
     if (connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) {
         pbsys_command(data, size);
     } else if (connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
@@ -160,29 +160,29 @@ static void handle_rx(pbdrv_bluetooth_connection_t connection, const uint8_t *da
     }
 }
 
-static void tx_done(pbdrv_bluetooth_tx_context_t *context) {
-    tx_msg_t *msg = PBIO_CONTAINER_OF(context, tx_msg_t, context);
+static void send_done(pbdrv_bluetooth_send_context_t *context) {
+    send_msg_t *msg = PBIO_CONTAINER_OF(context, send_msg_t, context);
 
     if (msg->context.connection == PBDRV_BLUETOOTH_CONNECTION_UART && lwrb_get_full(&uart_tx_ring)) {
         // If there is more buffered data to send, put the message back in the queue
-        list_add(tx_queue, msg);
+        list_add(send_queue, msg);
     } else {
         msg->is_queued = false;
     }
 
-    tx_busy = false;
+    send_busy = false;
     process_poll(&pbsys_bluetooth_process);
 }
 
 // drain all buffers and queues and reset global state
 static void reset_all(void) {
-    tx_msg_t *msg;
+    send_msg_t *msg;
 
-    while ((msg = list_pop(tx_queue))) {
+    while ((msg = list_pop(send_queue))) {
         msg->is_queued = false;
     }
 
-    tx_busy = false;
+    send_busy = false;
 
     lwrb_reset(&uart_rx_ring);
     lwrb_reset(&uart_tx_ring);
@@ -190,7 +190,7 @@ static void reset_all(void) {
 
 static PT_THREAD(pbsys_bluetooth_monitor_status(struct pt *pt)) {
     static uint32_t old_status_flags, new_status_flags;
-    static tx_msg_t msg;
+    static send_msg_t msg;
 
     PT_BEGIN(pt);
 
@@ -205,7 +205,7 @@ static PT_THREAD(pbsys_bluetooth_monitor_status(struct pt *pt)) {
         // send the message
         msg.context.size = pbio_pybricks_event_status_report(&msg.payload[0], new_status_flags);
         msg.context.connection = PBDRV_BLUETOOTH_CONNECTION_PYBRICKS;
-        list_add(tx_queue, &msg);
+        list_add(send_queue, &msg);
         msg.is_queued = true;
         old_status_flags = new_status_flags;
 
@@ -225,7 +225,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
     PROCESS_BEGIN();
 
     pbdrv_bluetooth_set_on_event(on_event);
-    pbdrv_bluetooth_set_handle_rx(handle_rx);
+    pbdrv_bluetooth_set_receive_handler(handle_receive);
 
     for (;;) {
         // make sure the Bluetooth chip is in reset long enough to actually reset
@@ -262,18 +262,18 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
                 PT_INIT(&status_monitor_pt);
             }
 
-            if (!tx_busy) {
-                tx_msg_t *msg = list_pop(tx_queue);
-                // msg->is_queued is set to false in tx_done callback rather than here
+            if (!send_busy) {
+                send_msg_t *msg = list_pop(send_queue);
+                // msg->is_queued is set to false in send_done callback rather than here
                 if (msg) {
-                    msg->context.done = tx_done;
+                    msg->context.done = send_done;
                     if (msg->context.connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
                         msg->context.size = lwrb_read(&uart_tx_ring, &msg->payload[0], PBIO_ARRAY_SIZE(msg->payload));
                         assert(msg->context.size);
                     }
                     msg->context.data = &msg->payload[0];
-                    tx_busy = true;
-                    pbdrv_bluetooth_tx(&msg->context);
+                    send_busy = true;
+                    pbdrv_bluetooth_send(&msg->context);
                 }
             }
 
