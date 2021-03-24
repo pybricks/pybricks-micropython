@@ -84,7 +84,7 @@ static uint16_t conn_handle;
 static uint16_t pybricks_service_handle, pybricks_char_handle;
 
 // nRF UART GATT service handles
-static uint16_t uart_service_handle, uart_rx_char_handle, uart_tx_char_handle;
+static uint16_t uart_service_handle, uart_tx_char_handle, uart_rx_char_handle;
 
 PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
 
@@ -92,7 +92,7 @@ PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
 static task_t current_task;
 static bool bluetooth_ready;
 static bool pybricks_notify_en;
-static bool uart_tx_notify_en;
+static bool uart_rx_notify_en;
 static pbdrv_bluetooth_on_event_t bluetooth_on_event;
 static pbdrv_bluetooth_handle_rx_t handle_rx;
 
@@ -256,7 +256,7 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
         return true;
     }
 
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_UART && uart_tx_notify_en) {
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_UART && uart_rx_notify_en) {
         return true;
     }
 
@@ -284,11 +284,11 @@ retry:
         service_handle = pybricks_service_handle;
         attr_handle = pybricks_char_handle;
     } else if (tx->connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
-        if (!uart_tx_notify_en) {
+        if (!uart_rx_notify_en) {
             goto done;
         }
         service_handle = uart_service_handle;
-        attr_handle = uart_tx_char_handle;
+        attr_handle = uart_rx_char_handle;
     } else {
         // called with invalid connection type
         assert(0);
@@ -434,7 +434,7 @@ static void handle_event(hci_event_pckt *event) {
             if (conn_handle == evt->handle) {
                 conn_handle = 0;
                 pybricks_notify_en = false;
-                uart_tx_notify_en = false;
+                uart_rx_notify_en = false;
             }
         }
         break;
@@ -468,12 +468,12 @@ static void handle_event(hci_event_pckt *event) {
                         }
                     } else if (subevt->attr_handle == pybricks_char_handle + 2) {
                         pybricks_notify_en = subevt->att_data[0];
-                    } else if (subevt->attr_handle == uart_rx_char_handle + 1) {
+                    } else if (subevt->attr_handle == uart_tx_char_handle + 1) {
                         if (handle_rx) {
                             handle_rx(PBDRV_BLUETOOTH_CONNECTION_UART, subevt->att_data, subevt->data_length);
                         }
-                    } else if (subevt->attr_handle == uart_tx_char_handle + 2) {
-                        uart_tx_notify_en = subevt->att_data[0];
+                    } else if (subevt->attr_handle == uart_rx_char_handle + 2) {
+                        uart_rx_notify_en = subevt->att_data[0];
                     }
                 }
                 break;
@@ -655,12 +655,12 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
         0x93, 0xf3, 0xa3, 0xb5, 0x01, 0x00, 0x40, 0x6e
     };
     // 6e400002-b5a3-f393-e0a9-e50e24dcca9e
-    static const uint8_t nrf_uart_rx_char_uuid[] = {
+    static const uint8_t nrf_uart_tx_char_uuid[] = {
         0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
         0x93, 0xf3, 0xa3, 0xb5, 0x02, 0x00, 0x40, 0x6e
     };
     // 6e400003-b5a3-f393-e0a9-e50e24dcca9e
-    static const uint8_t nrf_uart_tx_char_uuid[] = {
+    static const uint8_t nrf_uart_rx_char_uuid[] = {
         0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
         0x93, 0xf3, 0xa3, 0xb5, 0x03, 0x00, 0x40, 0x6e
     };
@@ -677,18 +677,18 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
     aci_gatt_add_serv_end(&uart_service_handle);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gatt_add_char_begin(uart_service_handle, UUID_TYPE_128, nrf_uart_rx_char_uuid,
+    aci_gatt_add_char_begin(uart_service_handle, UUID_TYPE_128, nrf_uart_tx_char_uuid,
         NRF_CHAR_SIZE, CHAR_PROP_WRITE_WITHOUT_RESP, ATTR_PERMISSION_NONE,
         GATT_NOTIFY_ATTRIBUTE_WRITE, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_gatt_add_char_end(&uart_rx_char_handle);
+    aci_gatt_add_char_end(&uart_tx_char_handle);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gatt_add_char_begin(uart_service_handle, UUID_TYPE_128, nrf_uart_tx_char_uuid,
+    aci_gatt_add_char_begin(uart_service_handle, UUID_TYPE_128, nrf_uart_rx_char_uuid,
         NRF_CHAR_SIZE, CHAR_PROP_NOTIFY, ATTR_PERMISSION_NONE,
         GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_VARIABLE);
     PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_gatt_add_char_end(&uart_tx_char_handle);
+    aci_gatt_add_char_end(&uart_rx_char_handle);
 
     PT_END(pt);
 }

@@ -109,12 +109,12 @@ static uint16_t gatt_service_handle, gatt_service_end_handle;
 static uint16_t gap_service_handle, gap_service_end_handle;
 // Pybricks service handles
 static uint16_t pybricks_service_handle, pybricks_service_end_handle, pybricks_char_handle;
-// Pybricks tx notifications enabled
+// Pybricks notifications enabled
 static bool pybricks_notify_en;
 // nRF UART service handles
-static uint16_t uart_service_handle, uart_service_end_handle, uart_rx_char_handle, uart_tx_char_handle;
-// nRF UART tx notifications enabled
-static bool uart_tx_notify_en;
+static uint16_t uart_service_handle, uart_service_end_handle, uart_tx_char_handle, uart_rx_char_handle;
+// nRF UART rx notifications enabled
+static bool uart_rx_notify_en;
 
 // c5f50001-8280-46da-89f4-6d8051e4aeef
 static const uint8_t pybricks_service_uuid[] = {
@@ -137,13 +137,13 @@ static const uint8_t nrf_uart_service_uuid[] = {
 };
 
 // 6e400002-b5a3-f393-e0a9-e50e24dcca9e
-static const uint8_t nrf_uart_rx_char_uuid[] = {
+static const uint8_t nrf_uart_tx_char_uuid[] = {
     0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
     0x93, 0xf3, 0xa3, 0xb5, 0x02, 0x00, 0x40, 0x6e
 };
 
 // 6e400003-b5a3-f393-e0a9-e50e24dcca9e
-static const uint8_t nrf_uart_tx_char_uuid[] = {
+static const uint8_t nrf_uart_rx_char_uuid[] = {
     0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
     0x93, 0xf3, 0xa3, 0xb5, 0x03, 0x00, 0x40, 0x6e
 };
@@ -303,7 +303,7 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
         return true;
     }
 
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_UART && uart_tx_notify_en) {
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_UART && uart_rx_notify_en) {
         return true;
     }
 
@@ -333,10 +333,10 @@ retry:
         }
         attr_handle = pybricks_char_handle;
     } else if (tx->connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
-        if (!uart_tx_notify_en) {
+        if (!uart_rx_notify_en) {
             goto done;
         }
-        attr_handle = uart_tx_char_handle;
+        attr_handle = uart_rx_char_handle;
     } else {
         // called with invalid connection
         assert(0);
@@ -490,10 +490,10 @@ static void handle_event(uint8_t *packet) {
                                     GATT_PROP_WRITE_NO_RSP | GATT_PROP_WRITE | GATT_PROP_NOTIFY, pybricks_char_uuid);
                             } else if (start_handle <= uart_service_handle + 1) {
                                 read_by_type_response_uuid128(connection_handle, uart_service_handle + 1,
-                                    GATT_PROP_WRITE_NO_RSP, nrf_uart_rx_char_uuid);
+                                    GATT_PROP_WRITE_NO_RSP, nrf_uart_tx_char_uuid);
                             } else if (start_handle <= uart_service_handle + 3) {
                                 read_by_type_response_uuid128(connection_handle, uart_service_handle + 3,
-                                    GATT_PROP_NOTIFY, nrf_uart_tx_char_uuid);
+                                    GATT_PROP_NOTIFY, nrf_uart_rx_char_uuid);
                             } else {
                                 attErrorRsp_t rsp;
 
@@ -550,11 +550,11 @@ static void handle_event(uint8_t *packet) {
                         rsp.len = 2;
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
-                    } else if (handle == uart_tx_char_handle + 1) {
+                    } else if (handle == uart_rx_char_handle + 1) {
                         attReadRsp_t rsp;
                         uint8_t buf[ATT_MTU_SIZE - 1];
 
-                        buf[0] = uart_tx_notify_en;
+                        buf[0] = uart_rx_notify_en;
                         buf[1] = 0;
                         rsp.len = 2;
                         rsp.pValue = buf;
@@ -647,7 +647,7 @@ static void handle_event(uint8_t *packet) {
                     uint8_t command = data[7]; // command = write without response
                     uint16_t char_handle = (data[9] << 8) | data[8];
 
-                    DBG("w: %04X %04X %d", char_handle, uart_tx_char_handle, pdu_len - 4);
+                    DBG("w: %04X %04X %d", char_handle, uart_rx_char_handle, pdu_len - 4);
                     if (char_handle == pybricks_char_handle) {
                         if (handle_rx) {
                             handle_rx(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS, &data[10], pdu_len - 4);
@@ -655,13 +655,13 @@ static void handle_event(uint8_t *packet) {
                     } else if (char_handle == pybricks_char_handle + 1) {
                         pybricks_notify_en = data[10];
                         DBG("noti: %d", pybricks_notify_en);
-                    } else if (char_handle == uart_rx_char_handle) {
+                    } else if (char_handle == uart_tx_char_handle) {
                         if (handle_rx) {
                             handle_rx(PBDRV_BLUETOOTH_CONNECTION_UART, &data[10], pdu_len - 4);
                         }
-                    } else if (char_handle == uart_tx_char_handle + 1) {
-                        uart_tx_notify_en = data[10];
-                        DBG("noti: %d", uart_tx_notify_en);
+                    } else if (char_handle == uart_rx_char_handle + 1) {
+                        uart_rx_notify_en = data[10];
+                        DBG("noti: %d", uart_rx_notify_en);
                     } else {
                         DBG("unhandled write req: %04X", char_handle);
                     }
@@ -681,7 +681,7 @@ static void handle_event(uint8_t *packet) {
                     if (conn_handle == connection_handle) {
                         conn_handle = NO_CONNECTION;
                         pybricks_notify_en = false;
-                        uart_tx_notify_en = false;
+                        uart_rx_notify_en = false;
                     }
                 }
                 break;
@@ -1025,7 +1025,7 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
     // ignoring response data
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute2(nrf_uart_rx_char_uuid, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
+    GATT_AddAttribute2(nrf_uart_tx_char_uuid, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
@@ -1035,7 +1035,7 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
     // ignoring response data
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute2(nrf_uart_tx_char_uuid, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
+    GATT_AddAttribute2(nrf_uart_rx_char_uuid, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
@@ -1047,8 +1047,8 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
     // that were allocated.
     uart_service_handle = (read_buf[13] << 8) | read_buf[12];
     uart_service_end_handle = (read_buf[15] << 8) | read_buf[14];
-    uart_rx_char_handle = uart_service_handle + 2;
-    uart_tx_char_handle = uart_service_handle + 4;
+    uart_tx_char_handle = uart_service_handle + 2;
+    uart_rx_char_handle = uart_service_handle + 4;
     DBG("uart: %04X", uart_service_handle);
 
     PT_END(pt);
