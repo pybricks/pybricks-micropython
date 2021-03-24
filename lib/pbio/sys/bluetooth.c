@@ -23,10 +23,10 @@
 #include <pbsys/user_program.h>
 
 // REVISIT: this can be the negotiated MTU - 3 to allow for better throughput
-// max data size for nRF UART characteristics
+// max data size for Nordic UART characteristics
 #define NRF_CHAR_SIZE 20
 
-// nRF UART Rx hook
+// Nordic UART Rx hook
 static pbsys_user_program_stdin_event_callback_t uart_rx_callback;
 // ring buffers for UART service
 static lwrb_t uart_tx_ring;

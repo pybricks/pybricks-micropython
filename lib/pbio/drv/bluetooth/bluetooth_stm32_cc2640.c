@@ -111,9 +111,9 @@ static uint16_t gap_service_handle, gap_service_end_handle;
 static uint16_t pybricks_service_handle, pybricks_service_end_handle, pybricks_char_handle;
 // Pybricks notifications enabled
 static bool pybricks_notify_en;
-// nRF UART service handles
+// Nordic UART service handles
 static uint16_t uart_service_handle, uart_service_end_handle, uart_tx_char_handle, uart_rx_char_handle;
-// nRF UART rx notifications enabled
+// Nordic UART rx notifications enabled
 static bool uart_rx_notify_en;
 
 // c5f50001-8280-46da-89f4-6d8051e4aeef
@@ -128,7 +128,7 @@ static const uint8_t pybricks_char_uuid[] = {
     0xda, 0x46, 0x80, 0x82, 0x02, 0x00, 0xf5, 0xc5
 };
 
-// using well-known (but not standard) nRF UART UUIDs
+// using well-known (but not standard) Nordic UART UUIDs
 
 // 6e400001-b5a3-f393-e0a9-e50e24dcca9e
 static const uint8_t nrf_uart_service_uuid[] = {
@@ -1010,7 +1010,7 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
 static PT_THREAD(init_uart_service(struct pt *pt)) {
     PT_BEGIN(pt);
 
-    // add the nRF UART service (inspired by Add_Sample_Service() from
+    // add the Nordic UART service (inspired by Add_Sample_Service() from
     // sample_service.c in BlueNRG vendor sample code and Adafruit config file
     // https://github.com/adafruit/Adafruit_nRF8001/blob/master/utility/uart/UART_over_BLE.xml)
 

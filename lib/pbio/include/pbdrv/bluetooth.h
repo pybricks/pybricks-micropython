@@ -23,7 +23,7 @@ typedef enum {
     PBDRV_BLUETOOTH_CONNECTION_LE,
     /** The Pybricks service. */
     PBDRV_BLUETOOTH_CONNECTION_PYBRICKS,
-    /** The nRF UART service. */
+    /** The Nordic UART service. */
     PBDRV_BLUETOOTH_CONNECTION_UART,
 } pbdrv_bluetooth_connection_t;
 

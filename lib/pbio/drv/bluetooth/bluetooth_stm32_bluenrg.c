@@ -39,7 +39,7 @@
 // value returned in READY byte of BlueNRG SPI header when interface is ready
 #define BLUENRG_READY 2
 
-// max data size for nRF UART characteristics
+// max data size for Nordic UART characteristics
 #define NRF_CHAR_SIZE (ATT_MTU - 3)
 
 // BlueNRG header data for SPI write xfer
@@ -83,7 +83,7 @@ static uint16_t conn_handle;
 // Pybricks GATT service handles
 static uint16_t pybricks_service_handle, pybricks_char_handle;
 
-// nRF UART GATT service handles
+// Nordic UART GATT service handles
 static uint16_t uart_service_handle, uart_tx_char_handle, uart_rx_char_handle;
 
 PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
@@ -647,7 +647,7 @@ static PT_THREAD(hci_init(struct pt *pt)) {
 }
 
 static PT_THREAD(init_uart_service(struct pt *pt)) {
-    // using well-known (but not standard) nRF UART UUIDs
+    // using well-known (but not standard) Nordic UART UUIDs
 
     // 6e400001-b5a3-f393-e0a9-e50e24dcca9e
     static const uint8_t nrf_uart_service_uuid[] = {
@@ -667,7 +667,7 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
 
     PT_BEGIN(pt);
 
-    // add the nRF UART service (inspired by Add_Sample_Service() from
+    // add the Nordic UART service (inspired by Add_Sample_Service() from
     // sample_service.c in BlueNRG vendor sample code and Adafruit config file
     // https://github.com/adafruit/Adafruit_nRF8001/blob/master/utility/uart/UART_over_BLE.xml)
 
