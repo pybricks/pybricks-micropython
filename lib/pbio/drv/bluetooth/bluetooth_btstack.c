@@ -17,6 +17,7 @@
 #include "genhdr/pybricks_service.h"
 #include "pybricks_service_server.h"
 
+static hci_con_handle_t le_con_handle = HCI_CON_HANDLE_INVALID;
 static hci_con_handle_t pybricks_con_handle = HCI_CON_HANDLE_INVALID;
 static hci_con_handle_t uart_con_handle = HCI_CON_HANDLE_INVALID;
 static pbdrv_bluetooth_on_event_t bluetooth_on_event;
@@ -115,7 +116,15 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
     }
 
     switch (hci_event_packet_get_type(packet)) {
+        case HCI_EVENT_LE_META:
+            if (hci_event_le_meta_get_subevent_code(packet) != HCI_SUBEVENT_LE_CONNECTION_COMPLETE) {
+                break;
+            }
+
+            le_con_handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
+            break;
         case HCI_EVENT_DISCONNECTION_COMPLETE:
+            le_con_handle = HCI_CON_HANDLE_INVALID;
             pybricks_con_handle = HCI_CON_HANDLE_INVALID;
             uart_con_handle = HCI_CON_HANDLE_INVALID;
             break;
@@ -184,12 +193,8 @@ void pbdrv_bluetooth_start_advertising(void) {
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_HCI) {
-        // TODO: should add something to packet_handler() to get connection handle
-        // instead of looking it up this way
-        btstack_linked_list_iterator_t it;
-        hci_connections_get_iterator(&it);
-        return btstack_linked_list_iterator_has_next(&it);
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_LE && le_con_handle != HCI_CON_HANDLE_INVALID) {
+        return true;
     }
 
     if (connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS && pybricks_con_handle != HCI_CON_HANDLE_INVALID) {

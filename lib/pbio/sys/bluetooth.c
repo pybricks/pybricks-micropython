@@ -240,14 +240,14 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
 
         // TODO: allow user programs to initiate BLE connections
         pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
-        PROCESS_WAIT_UNTIL(pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI) ||
+        PROCESS_WAIT_UNTIL(pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE) ||
             pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING));
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
 
         PT_INIT(&status_monitor_pt);
 
         for (;;) {
-            if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_HCI)) {
+            if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)) {
                 // disconnected
                 break;
             }

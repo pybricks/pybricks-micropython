@@ -248,7 +248,7 @@ void pbdrv_bluetooth_start_advertising(void) {
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_HCI && conn_handle) {
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_LE && conn_handle) {
         return true;
     }
 
