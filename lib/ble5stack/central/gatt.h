@@ -46,6 +46,7 @@
  */
 #define GAP_SERVICE_UUID                           0x1800 // Generic Access Profile
 #define GATT_SERVICE_UUID                          0x1801 // Generic Attribute Profile
+#define DI_SERVICE_UUID                            0x180A // Device Information
 
 /**
  * GATT Declarations
@@ -77,6 +78,8 @@
 #define RECONNECT_ADDR_UUID                        0x2A03 // Reconnection Address
 #define PERI_CONN_PARAM_UUID                       0x2A04 // Peripheral Preferred Connection Parameters
 #define SERVICE_CHANGED_UUID                       0x2A05 // Service Changed
+#define FIRMWARE_REVISION_STRING_UUID              0x2A26 // Firmware Revision String
+#define SOFTWARE_REVISION_STRING_UUID              0x2A28 // Software Revision String
 
 /**
  * GATT Vendor Specific APIs - GATT Command Opcodes

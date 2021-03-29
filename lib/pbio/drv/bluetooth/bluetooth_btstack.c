@@ -7,10 +7,13 @@
 
 #if PBDRV_CONFIG_BLUETOOTH_BTSTACK
 
+#include <ble/gatt-service/device_information_service_server.h>
 #include <ble/gatt-service/nordic_spp_service_server.h>
 #include <btstack.h>
 
 #include <pbdrv/bluetooth.h>
+#include <pbio/protocol.h>
+#include <pbio/version.h>
 
 #include "bluetooth_btstack_run_loop_contiki.h"
 #include "bluetooth_btstack.h"
@@ -164,6 +167,10 @@ void pbdrv_bluetooth_init(void) {
 
     // setup ATT server
     att_server_init(profile_data, NULL, NULL);
+
+    device_information_service_server_init();
+    device_information_service_server_set_firmware_revision(PBIO_VERSION_STR);
+    device_information_service_server_set_software_revision(PBIO_PROTOCOL_VERSION_STR);
 
     pybricks_service_server_init(pybricks_data_received, pybricks_configured);
     nordic_spp_service_server_init(nordic_spp_packet_handler);

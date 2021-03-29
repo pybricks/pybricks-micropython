@@ -100,6 +100,7 @@ BTSTACK_SRC += $(addprefix $(BTSTACK_DIR)/src/,\
 )
 
 BTSTACK_SRC += $(addprefix $(BTSTACK_DIR)/src/ble/,\
+	gatt-service/device_information_service_server.c \
 	gatt-service/nordic_spp_service_server.c \
 	att_db_util.c \
 	att_db.c \

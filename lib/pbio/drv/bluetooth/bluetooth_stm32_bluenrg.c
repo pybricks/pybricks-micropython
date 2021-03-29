@@ -18,7 +18,9 @@
 #include <pbdrv/bluetooth.h>
 #include <pbdrv/gpio.h>
 #include <pbio/error.h>
+#include <pbio/protocol.h>
 #include <pbio/util.h>
+#include <pbio/version.h>
 
 #include <contiki.h>
 #include <stm32f070xb.h>
@@ -396,6 +398,47 @@ static bool get_bluenrg_buf_size(uint8_t *wbuf, uint8_t *rbuf) {
 // assigned to one of RESET_* from bluenrg_hal_aci.h
 static uint8_t reset_reason;
 
+static PT_THREAD(init_device_information_service(struct pt *pt)) {
+    static const uint8_t device_information_service_uuid[] = { 0x0A, 0x18 }; // 0x180A
+    static const uint8_t firmware_version_char_uuid[] = { 0x26, 0x2A }; // 0x2A26
+    static const uint8_t software_version_char_uuid[] = { 0x28, 0x2A }; // 0x2A28
+
+    uint16_t service_handle, fw_ver_char_handle, sw_ver_char_handle;
+
+    PT_BEGIN(pt);
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gatt_add_serv_begin(UUID_TYPE_16, device_information_service_uuid, PRIMARY_SERVICE, 5);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    aci_gatt_add_serv_end(&service_handle);
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gatt_add_char_begin(service_handle, UUID_TYPE_16, firmware_version_char_uuid,
+        sizeof(PBIO_VERSION_STR) - 1, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
+        GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_CONSTANT);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    aci_gatt_add_char_end(&fw_ver_char_handle);
+
+    aci_gatt_update_char_value_begin(service_handle, fw_ver_char_handle,
+        0, sizeof(PBIO_VERSION_STR) - 1, PBIO_VERSION_STR);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    aci_gatt_update_char_value_end();
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gatt_add_char_begin(service_handle, UUID_TYPE_16, software_version_char_uuid,
+        sizeof(PBIO_PROTOCOL_VERSION_STR) - 1, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
+        GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_CONSTANT);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    aci_gatt_add_char_end(&sw_ver_char_handle);
+
+    aci_gatt_update_char_value_begin(service_handle, sw_ver_char_handle,
+        0, sizeof(PBIO_PROTOCOL_VERSION_STR) - 1, PBIO_PROTOCOL_VERSION_STR);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    aci_gatt_update_char_value_end();
+
+    PT_END(pt);
+}
+
 static PT_THREAD(init_pybricks_service(struct pt *pt)) {
     // c5f50001-8280-46da-89f4-6d8051e4aeef
     static const uint8_t pybricks_service_uuid[] = {
@@ -704,6 +747,7 @@ static PT_THREAD(init_task(struct pt *pt, void *context)) {
     PT_WAIT_UNTIL(pt, reset_reason);
 
     PT_SPAWN(pt, &child_pt, hci_init(&child_pt));
+    PT_SPAWN(pt, &child_pt, init_device_information_service(&child_pt));
     PT_SPAWN(pt, &child_pt, init_pybricks_service(&child_pt));
     PT_SPAWN(pt, &child_pt, init_uart_service(&child_pt));
     bluetooth_ready = true;

@@ -299,6 +299,7 @@ BTSTACK_SRC_C = $(addprefix lib/btstack/src/,\
 	)
 
 BTSTACK_SRC_C += $(addprefix lib/btstack/src/ble/,\
+	gatt-service/device_information_service_server.c \
 	gatt-service/nordic_spp_service_server.c \
 	att_db_util.c \
 	att_db.c \
