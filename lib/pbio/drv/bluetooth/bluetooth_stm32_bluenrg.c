@@ -419,6 +419,7 @@ static PT_THREAD(init_device_information_service(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gatt_add_char_end(&fw_ver_char_handle);
 
+    PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gatt_update_char_value_begin(service_handle, fw_ver_char_handle,
         0, sizeof(PBIO_VERSION_STR) - 1, PBIO_VERSION_STR);
     PT_WAIT_UNTIL(pt, hci_command_complete);
@@ -431,6 +432,7 @@ static PT_THREAD(init_device_information_service(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gatt_add_char_end(&sw_ver_char_handle);
 
+    PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gatt_update_char_value_begin(service_handle, sw_ver_char_handle,
         0, sizeof(PBIO_PROTOCOL_VERSION_STR) - 1, PBIO_PROTOCOL_VERSION_STR);
     PT_WAIT_UNTIL(pt, hci_command_complete);
