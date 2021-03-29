@@ -15,6 +15,18 @@
 #include <sys/cdefs.h>
 
 /**
+ * Converts @p str to a quoted string.
+ * @param [in]  str     The text to be quoted.
+ */
+#define PBIO_STR(str) #str
+
+/**
+ * Converts @p str to a quoted string after expanding macros.
+ * @param [in]  str     The text to be quoted.
+ */
+#define PBIO_XSTR(str) PBIO_STR(str)
+
+/**
  * Get the length of a fixed-sized array.
  * @param a     The array
  */
