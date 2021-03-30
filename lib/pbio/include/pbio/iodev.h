@@ -398,7 +398,7 @@ struct _pbio_iodev_t {
      * *mode* of the device. For example, it could be an array of int32_t and/or
      * the values could be foreign-endian.
      */
-    uint8_t bin_data[PBIO_IODEV_MAX_DATA_SIZE]  __attribute__((aligned(32)));
+    uint8_t bin_data[PBIO_IODEV_MAX_DATA_SIZE]  __attribute__((aligned(4)));
 };
 
 /** @endcond */
