@@ -226,8 +226,8 @@ static PT_THREAD(set_discoverable(struct pt *pt, void *context)) {
     PT_BEGIN(pt);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    // TODO: LEGO firmware also includes Conn_Interval_Min, Conn_Interval_Max
-    // and Tx power level here. Do we need these?
+    // TODO: LEGO firmware also includes Conn_Interval_Min, Conn_Interval_Max.
+    // Do we need these?
     uint8_t response_data[16];
     response_data[0] = sizeof(DEV_NAME);
     response_data[1] = AD_TYPE_COMPLETE_LOCAL_NAME;
