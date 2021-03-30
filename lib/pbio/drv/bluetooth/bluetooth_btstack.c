@@ -33,6 +33,8 @@ const uint8_t adv_data[] = {
     // UUID ...
     17, BLUETOOTH_DATA_TYPE_INCOMPLETE_LIST_OF_128_BIT_SERVICE_CLASS_UUIDS,
     0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89, 0xda, 0x46, 0x80, 0x82, 0x01, 0x00, 0xf5, 0xc5,
+    // Tx Power
+    2, BLUETOOTH_DATA_TYPE_TX_POWER_LEVEL, 0,
 };
 
 _Static_assert(sizeof(adv_data) <= 31, "31 octect max");
