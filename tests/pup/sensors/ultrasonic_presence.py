@@ -11,7 +11,7 @@ from pybricks.pupdevices import UltrasonicSensor
 from pybricks.parameters import Port
 
 # Initialize devices.
-ultrasonic_sensor = UltrasonicSensor(Port.E)
+ultrasonic_sensor = UltrasonicSensor(Port.C)
 
 # Assert that there are no ultrasonic devices nearby.
 assert not ultrasonic_sensor.presence(), "Unexpected interference detected."

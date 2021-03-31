@@ -14,7 +14,7 @@ from pybricks.tools import wait
 from urandom import randint
 
 # Initialize devices.
-lights = UltrasonicSensor(Port.E).lights
+lights = UltrasonicSensor(Port.C).lights
 
 # Turn on all lights at full brightness.
 lights.on()

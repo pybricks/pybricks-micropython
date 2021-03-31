@@ -7,14 +7,13 @@ Hardware Module: 1
 Description: Verifies that sensors do not give stale data after a mode change.
 """
 
-from pybricks.pupdevices import Motor, ColorSensor, UltrasonicSensor
+from pybricks.pupdevices import Motor, ColorSensor
 from pybricks.parameters import Port, Color
 from pybricks.tools import wait
 
 # Initialize devices.
-color_sensor = ColorSensor(Port.A)
-motor = Motor(Port.C)
-ultrasonic_sensor = UltrasonicSensor(Port.E)
+motor = Motor(Port.A)
+color_sensor = ColorSensor(Port.B)
 SPEED = 500
 
 # Initialize sensor to make sure we're in the expected mode.

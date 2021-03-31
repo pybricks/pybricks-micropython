@@ -9,14 +9,13 @@ It rotates the motor to place an obstacle in front of the sensor to test
 distance values. Then it rotates quickly to verify faster readings.
 """
 
-from pybricks.pupdevices import Motor, ColorSensor, UltrasonicSensor
+from pybricks.pupdevices import Motor, UltrasonicSensor
 from pybricks.parameters import Port
 
 
 # Initialize devices.
-color_sensor = ColorSensor(Port.A)
-motor = Motor(Port.C)
-ultrasonic_sensor = UltrasonicSensor(Port.E)
+motor = Motor(Port.A)
+ultrasonic_sensor = UltrasonicSensor(Port.C)
 
 # Detect object.
 motor.run_target(500, 0)

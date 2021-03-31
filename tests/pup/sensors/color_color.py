@@ -11,9 +11,9 @@ from pybricks.pupdevices import Motor, ColorSensor, UltrasonicSensor
 from pybricks.parameters import Port, Color
 
 # Initialize devices.
-color_sensor = ColorSensor(Port.A)
-motor = Motor(Port.C)
-ultrasonic_sensor = UltrasonicSensor(Port.E)
+motor = Motor(Port.A)
+color_sensor = ColorSensor(Port.B)
+ultrasonic_sensor = UltrasonicSensor(Port.C)
 SPEED = 500
 
 # Color angle targets

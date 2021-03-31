@@ -8,12 +8,12 @@ Description: Verifies reflection sensing, by asserting that the colors None,
 Black, Red, and Yellow have ascending reflection values.
 """
 
-from pybricks.pupdevices import Motor, ColorSensor, UltrasonicSensor
-from pybricks.parameters import Port, Color
+from pybricks.pupdevices import Motor, ColorSensor
+from pybricks.parameters import Port
 
 # Initialize devices.
-color_sensor = ColorSensor(Port.A)
-motor = Motor(Port.C)
+motor = Motor(Port.A)
+color_sensor = ColorSensor(Port.B)
 SPEED = 500
 
 # Color angle targets
