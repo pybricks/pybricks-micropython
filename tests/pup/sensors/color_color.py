@@ -3,6 +3,8 @@
 
 """
 Hardware Module: 1
+
+Description: Verifies color sensing and calibration capability.
 """
 
 from pybricks.pupdevices import Motor, ColorSensor, UltrasonicSensor

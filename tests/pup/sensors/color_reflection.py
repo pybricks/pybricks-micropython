@@ -3,6 +3,9 @@
 
 """
 Hardware Module: 1
+
+Description: Verifies reflection sensing, by asserting that the colors None,
+Black, Red, and Yellow have ascending reflection values.
 """
 
 from pybricks.pupdevices import Motor, ColorSensor, UltrasonicSensor

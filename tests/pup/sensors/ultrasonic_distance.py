@@ -3,6 +3,10 @@
 
 """
 Hardware Module: 1
+
+Description: Verifies the distance values of the Ultrasonic Sensor.
+It rotates the motor to place an obstacle in front of the sensor to test
+distance values. Then it rotates quickly to verify faster readings.
 """
 
 from pybricks.pupdevices import Motor, ColorSensor, UltrasonicSensor

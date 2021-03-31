@@ -3,6 +3,9 @@
 
 """
 Hardware Module: 1
+
+Description: This tests the lights on the Ultrasonic Sensor. No external
+sensors are used to verify that it works.
 """
 
 from pybricks.pupdevices import UltrasonicSensor
