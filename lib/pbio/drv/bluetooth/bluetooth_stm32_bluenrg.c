@@ -403,7 +403,7 @@ static PT_THREAD(init_device_information_service(struct pt *pt)) {
     static const uint8_t firmware_version_char_uuid[] = { 0x26, 0x2A }; // 0x2A26
     static const uint8_t software_version_char_uuid[] = { 0x28, 0x2A }; // 0x2A28
 
-    uint16_t service_handle, fw_ver_char_handle, sw_ver_char_handle;
+    static uint16_t service_handle, fw_ver_char_handle, sw_ver_char_handle;
 
     PT_BEGIN(pt);
 
