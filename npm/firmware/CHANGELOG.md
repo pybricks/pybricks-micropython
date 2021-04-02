@@ -1,3 +1,7 @@
+## 4.7.1 - 2021-04-02
+### Changed
+- Rerelease firmware to v3.0.0b3 due to bug.
+
 ## 4.7.0 - 2021-03-30
 ### Changed
 - Updated firmware to v3.0.0b3.
