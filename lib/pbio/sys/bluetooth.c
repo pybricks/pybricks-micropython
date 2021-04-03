@@ -189,6 +189,7 @@ static void reset_all(void) {
 }
 
 static PT_THREAD(pbsys_bluetooth_monitor_status(struct pt *pt)) {
+    static struct etimer timer;
     static uint32_t old_status_flags, new_status_flags;
     static send_msg_t msg;
 
@@ -198,9 +199,15 @@ static PT_THREAD(pbsys_bluetooth_monitor_status(struct pt *pt)) {
     // right after notifications are enabled.
     old_status_flags = ~0;
 
+    // Send status periodically as well in case a notification was missed due
+    // to bad RF environment or bug like https://crbug.com/1195592
+    etimer_set(&timer, clock_from_msec(500));
+
     for (;;) {
-        // wait for status to change
-        PT_WAIT_UNTIL(pt, (new_status_flags = pbsys_status_get_flags()) != old_status_flags);
+        // wait for status to change or timeout
+        PT_WAIT_UNTIL(pt, (new_status_flags = pbsys_status_get_flags()) != old_status_flags || etimer_expired(&timer));
+
+        etimer_restart(&timer);
 
         // send the message
         msg.context.size = pbio_pybricks_event_status_report(&msg.payload[0], new_status_flags);
