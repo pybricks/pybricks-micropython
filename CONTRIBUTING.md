@@ -159,6 +159,15 @@ working in the virtual environment. You should run `poetry shell` any time you
 open a new terminal window while working on `pybricks-micropython`.
 
 
+### Set up VS Code
+
+When using the Microsoft C/C++ extension for VS Code, you will need to set the
+`GCC_10_ARM_NONE_EABI_BIN` environment variable to the directory where the Arm
+toolchain was installed so that it can find the compiler to assist with code
+analysis. See [.vscode/c_cpp_properties.json](.vscode/c_cpp_properties.json)
+for more info.
+
+
 Building the code
 -----------------
 
