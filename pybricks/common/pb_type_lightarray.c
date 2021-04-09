@@ -12,6 +12,7 @@
 #include <pybricks/util_pb/pb_error.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
+#include <pybricks/util_mp/pb_obj_helper.h>
 
 // pybricks._common.Light class object
 typedef struct _common_LightArray_obj_t {
@@ -23,31 +24,34 @@ typedef struct _common_LightArray_obj_t {
 
 // pybricks._common.LightArray.on
 STATIC mp_obj_t common_LightArray_on(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
-    // Parse arguments
-    common_LightArray_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        common_LightArray_obj_t, self,
+        PB_ARG_DEFAULT_INT(brightness, 100));
 
-    // We may either have one brightness or all brightness values
-    if (!(n_args == 2 || n_args == (size_t)self->number_of_lights + 1)) {
-        pb_assert(PBIO_ERROR_INVALID_ARG);
-    }
+    int32_t brightness_values[4];
 
-    // Get brightness values from arguments
-    int32_t brightness[4];
-    for (uint8_t i = 0; i < self->number_of_lights; i++) {
-
-        // If only one brightness was given, apply it to all
-        if (n_args == 2 && i > 0) {
-            brightness[i] = brightness[0];
-            continue;
+    // Given an integer, make all lights the same brightness.
+    if (mp_obj_is_int(brightness_in)) {
+        int32_t b = pb_obj_get_pct(brightness_in);
+        for (uint8_t i = 0; i < self->number_of_lights; i++) {
+            brightness_values[i] = b;
         }
-
-        // Get brightness from arguments
-        brightness[i] = pb_obj_get_int(pos_args[i + 1]);
-        brightness[i] = brightness[i] < 0 ? 0 : brightness[i] > 100 ? 100 : brightness[i];
+    }
+    // Otherwise, get each brightness value from list or tuple.
+    else {
+        mp_obj_t *brightness_objects;
+        size_t num_values;
+        mp_obj_get_array(brightness_in, &num_values, &brightness_objects);
+        if (num_values != self->number_of_lights) {
+            pb_assert(PBIO_ERROR_INVALID_ARG);
+        }
+        for (uint8_t i = 0; i < self->number_of_lights; i++) {
+            brightness_values[i] = pb_obj_get_pct(brightness_objects[i]);
+        }
     }
 
     // Set the brightness values
-    pb_device_set_values(self->pbdev, self->light_mode, brightness, self->number_of_lights);
+    pb_device_set_values(self->pbdev, self->light_mode, brightness_values, self->number_of_lights);
 
     return mp_const_none;
 }
