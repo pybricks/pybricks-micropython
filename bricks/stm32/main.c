@@ -294,20 +294,11 @@ restart:
             #endif // MICROPY_ENABLE_COMPILER
         } else {
             // run user .mpy file
-
             mp_reader_t reader;
             mp_reader_new_mem(&reader, buf, len, free_len);
             mp_raw_code_t *raw_code = mp_raw_code_load(&reader);
             mp_obj_t module_fun = mp_make_function_from_raw_code(raw_code, MP_OBJ_NULL, MP_OBJ_NULL);
-
-            if (free_len) {
-                mp_hal_stdout_tx_str("\r\nRunning downloaded program...\r\n");
-            } else {
-                mp_hal_stdout_tx_str("\r\nRunning program from flash memory...\r\n");
-            }
-
             mp_call_function_0(module_fun);
-            mp_hal_stdout_tx_str("\r\n...done.\r\n");
         }
         nlr_pop();
     } else {
