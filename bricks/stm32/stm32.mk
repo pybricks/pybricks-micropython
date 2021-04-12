@@ -110,6 +110,7 @@ GIT = git
 ZIP = zip
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
+PYBRICKSDEV = pybricksdev
 BUILD_DUAL_BOOT_BIN = $(PBTOP)/tools/build-dual-boot-bin.py
 BUILD_DUAL_BOOT_INSTALLER = $(PBTOP)/tools/build-dual-boot-installer.py
 CHECKSUM = $(PBTOP)/tools/checksum.py
@@ -657,6 +658,9 @@ $(BUILD)/firmware.zip: $(ZIP_FILES)
 $(BUILD)/%.dfu: $(BUILD)/%.bin
 	$(ECHO) "DFU Create $@"
 	$(Q)$(PYTHON) $(DFU) -b $(TEXT0_ADDR):$< $@
+
+deploy: $(BUILD)/firmware.zip
+	$(Q)$(PYBRICKSDEV) flash $<
 
 deploy-dfu-%: $(BUILD)/%.dfu
 	$(ECHO) "Writing $< to the board"
