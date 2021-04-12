@@ -17,5 +17,144 @@
                 "${file}"
             ]
         },
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": [],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "ev3dev-host",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/bricks/ev3dev/pybricks-micropython",
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/ports/pybricks",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "ignore SIGUSR1",
+                    "text": "handle SIGUSR1 noprint pass",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "ignore SIGUSR2",
+                    "text": "handle SIGUSR2 noprint pass",
+                    "ignoreFailures": false
+                }
+            ],
+            "preLaunchTask": "build ev3dev-host"
+        },
+        {
+            "name": "test-pbio",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/lib/pbio/test/build/test-pbio",
+            "args": [
+                "--no-fork",
+                "${input:pbioTestName}"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "PBIO_TEST_TIMEOUT",
+                    "value": "0"
+                },
+                {
+                    "name": "PBIO_TEST_RESULTS_DIR",
+                    "value": "${workspaceFolder}/lib/pbio/test/results"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Ignore timer signal",
+                    "text": "handle SIG34 noprint pass",
+                    "ignoreFailures": false
+                }
+            ],
+            "preLaunchTask": "build test-pbio"
+        },
+        {
+            "name": "debug",
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "openocd",
+            "executable": "${workspaceRoot}/bricks/debug/build/firmware.elf",
+            "preLaunchTask": "build debug",
+            "device": "STM32F446ZE",
+            "configFiles": [
+                "openocd_stm32f4.cfg"
+            ],
+            "searchDir": [
+                "${workspaceRoot}/bricks/debug"
+            ]
+        },
+        {
+            "name": "(gdb) Attach",
+            "type": "cppdbg",
+            "request": "attach",
+            "program": "${workspaceFolder}/bricks/ev3dev/pybricks-micropython",
+            "processId": "${command:pickProcess}",
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ],
+    "inputs": [
+        {
+            "id": "pbioTestName",
+            "description": "test name",
+            "type": "pickString",
+            // should match output of `./test-pbio.sh --list-tests`
+            "options": [
+                "drv/bluetooth/test_btstack_run_loop_contiki_timer",
+                "drv/bluetooth/test_btstack_run_loop_contiki_poll",
+                "drv/counter/test_counter_get",
+                "drv/pwm/test_pwm_get",
+                "drv/pwm/test_pwm_set_duty",
+                "src/color/test_rgb_to_hsv",
+                "src/color/test_hsv_to_rgb",
+                "src/color/test_color_to_hsv",
+                "src/color/test_color_to_rgb",
+                "src/color/test_color_hsv_compression",
+                "src/light/test_light_animation",
+                "src/light/test_color_light",
+                "src/light/test_light_matrix",
+                "src/light/test_light_matrix_rotation",
+                "src/math/test_sqrt",
+                "src/math/test_mul_i32_fix16",
+                "src/math/test_div_i32_fix16",
+                "src/motor/test_servo_run_angle",
+                "src/motor/test_servo_run_time",
+                "src/uartdev/test_boost_color_distance_sensor",
+                "src/uartdev/test_boost_interactive_motor",
+                "src/uartdev/test_technic_large_motor",
+                "src/uartdev/test_technic_xl_motor",
+                "sys/bluetooth/test_bluetooth",
+                "sys/status/test_status",
+            ]
+        }
     ]
 }
