@@ -22,12 +22,8 @@ hsvD = color_sensor.hsv()
 hsvT = color_sensor.hsv(surface=True)  # the default
 # do not use surface=False in this test as that causes a mode switch
 # and that would need more time
-assert hsvD == hsvT, "Expected default '{0}' == '{1}'".format(
-        hsvD, hsvT
-    )
+assert hsvD == hsvT, "Expected default '{0}' == '{1}'".format(hsvD, hsvT)
 
 colorD = color_sensor.color()
 colorT = color_sensor.color(surface=True)  # the default
-assert colorD == colorT, "Expected default '{0}' == '{1}'".format(
-        colorD, colorT
-    )
+assert colorD == colorT, "Expected default '{0}' == '{1}'".format(colorD, colorT)
