@@ -22,9 +22,7 @@ expected = "function doesn't take keyword arguments"
 try:
     ambientT = color_sensor.ambient(surface=True)
 except Exception as e:
-    assert str(e) == expected, "Expected '{0}' == '{1}'".format(
-        e, expected
-    )
+    assert str(e) == expected, "Expected '{0}' == '{1}'".format(e, expected)
 
 # Get the reflected light intensity.
 reflectionD = color_sensor.reflection()
@@ -34,6 +32,4 @@ expected = "function doesn't take keyword arguments"
 try:
     reflectionT = color_sensor.reflection(surface=True)
 except Exception as e:
-    assert str(e) == expected, "Expected '{0}' == '{1}'".format(
-        e, expected
-    )
+    assert str(e) == expected, "Expected '{0}' == '{1}'".format(e, expected)
