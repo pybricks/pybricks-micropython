@@ -1,29 +1,32 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2020 The Pybricks Authors
+# Copyright (c) 2021 The Pybricks Authors
 
 """
 Hardware Module: 1
 
-Description: Verifies color sensor arguments,
-    by asserting that the same colors are reported by
-		using the default argument, e.g. surface=True
-		and using NO argument
+Description: Verify color sensor arguments,
+    by asserting that the same color is reported by:
+    - using the default argument, e.g. surface=True
+    - and using NO argument.
 """
 
 from pybricks.pupdevices import ColorSensor
 from pybricks.parameters import Port
 
-# Initialize devices.
+# Initialize device.
 color_sensor = ColorSensor(Port.B)
 
-# verify that the default and NO-argument calls report the same color
-# assume that the lighting will not change a lot during measuring
-hsvD = color_sensor.hsv()
-hsvT = color_sensor.hsv(surface=True)  # the default
-# do not use surface=False in this test as that causes a mode switch
-# and that would need more time
-assert hsvD == hsvT, "Expected default '{0}' == '{1}'".format(hsvD, hsvT)
+# Verify that the default and NO-argument calls report the same color.
+# Assume that the lighting will not change a lot during measuring.
+hsv_default = color_sensor.hsv()
+hsv_surface_true = color_sensor.hsv(surface=True)  # the default is surface=True.
+# do not use surface=False in this test, that causes a mode switch and that would need more time.
+assert hsv_default == hsv_surface_true, "Expected default '{0}' == '{1}'".format(
+    hsv_default, hsv_surface_true
+)
 
-colorD = color_sensor.color()
-colorT = color_sensor.color(surface=True)  # the default
-assert colorD == colorT, "Expected default '{0}' == '{1}'".format(colorD, colorT)
+color_default = color_sensor.color()
+color_surface_true = color_sensor.color(surface=True)  # the default is surface=True.
+assert color_default == color_surface_true, "Expected default '{0}' == '{1}'".format(
+    color_default, color_surface_true
+)
