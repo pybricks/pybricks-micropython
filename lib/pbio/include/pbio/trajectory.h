@@ -5,7 +5,6 @@
 #define _PBIO_TRAJECTORY_H_
 
 #include <stdint.h>
-#include <stdio.h>
 
 #include <pbdrv/config.h>
 

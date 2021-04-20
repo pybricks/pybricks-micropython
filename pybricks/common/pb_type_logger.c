@@ -7,6 +7,7 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <pbio/config.h>

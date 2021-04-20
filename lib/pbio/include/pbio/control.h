@@ -5,7 +5,6 @@
 #define _PBIO_CONTROL_H_
 
 #include <stdint.h>
-#include <stdio.h>
 
 #include <fixmath.h>
 

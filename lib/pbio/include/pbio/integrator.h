@@ -5,7 +5,6 @@
 #define _PBIO_INTEGRATOR_H_
 
 #include <stdint.h>
-#include <stdio.h>
 
 typedef struct _pbio_rate_integrator_t {
     bool running; // Whether the integrator is running (1) or paused (0)

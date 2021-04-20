@@ -5,7 +5,6 @@
 #define _PBIO_SERVO_H_
 
 #include <stdint.h>
-#include <stdio.h>
 
 #include <fixmath.h>
 
