@@ -3,7 +3,7 @@
 
 # Press the stop button to advance to the next color
 
-from pybricks.hubs import *
+from pybricks.hubs import *  # noqa: F401, F403
 from pybricks.parameters import Color
 from pybricks.tools import wait
 

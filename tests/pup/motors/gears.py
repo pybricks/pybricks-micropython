@@ -8,7 +8,7 @@ Description: Verifies gears argument for motors.
 """
 
 from pybricks.pupdevices import Motor
-from pybricks.parameters import Port, Stop
+from pybricks.parameters import Port
 from pybricks.tools import wait
 
 
