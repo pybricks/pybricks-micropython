@@ -96,6 +96,7 @@
     { MP_ROM_QSTR(MP_QSTR_open), MP_ROM_PTR(&mp_builtin_open_obj) },*/
 
 #define MICROPY_PORT_ROOT_POINTERS \
+    mp_obj_dict_t *pb_type_Color_dict; \
 
 //////////////////////////////////////////
 // Do not change anything beyond this line

@@ -163,6 +163,7 @@ static inline mp_uint_t disable_irq(void) {
 #define MP_STATE_PORT MP_STATE_VM
 
 #define MICROPY_PORT_ROOT_POINTERS \
+    mp_obj_dict_t *pb_type_Color_dict; \
     const char *readline_hist[8];
 
 #include "../pybricks_config.h"

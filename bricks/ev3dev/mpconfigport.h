@@ -385,6 +385,7 @@ struct _mp_bluetooth_btstack_root_pointers_t;
 #endif
 
 #define MICROPY_PORT_ROOT_POINTERS \
+    mp_obj_dict_t *pb_type_Color_dict; \
     const char *readline_hist[50]; \
     void *mmap_region_head; \
     MICROPY_BLUETOOTH_ROOT_POINTERS \
