@@ -1237,8 +1237,22 @@ start:
             &read_buf[NPI_SPI_HEADER_LEN], xfer_size);
         PROCESS_WAIT_UNTIL(spi_xfer_complete);
 
+        // HACK: SRDY can transition from low and back to high in the time
+        // between we set MRDY and when we read SRDY again. So we use a timer
+        // prevent a lockup in case we miss detecting the transitions.
+
+        // See Δt6 + Δt7 in the timing diagram at:
+        // https://dev.ti.com/tirex/explore/content/simplelink_cc13x2_26x2_sdk_3_10_00_53/docs/ble5stack/ble_user_guide/html/ble-stack-common/npi-index.html#npi-handshake
+
+        // This document suggests that this timing varies from 0.181ms to 1.2 ms.
+        // http://e2e.ti.com/cfs-file/__key/communityserver-discussions-components-files/538/3583.BLE-SPI-Driver-Design-External.pdf
+
+        // REVISIT: maybe there is a way to get individual oneshots for the
+        // rising and falling edges of the interrupt instead of the timer hack?
+
+        etimer_set(&timer, clock_from_msec(2));
         spi_set_mrdy(false);
-        PROCESS_WAIT_UNTIL(!spi_srdy);
+        PROCESS_WAIT_UNTIL(!spi_srdy || (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)));
 
         // set to 0 to indicate that xfer is complete
         write_xfer_size = 0;
