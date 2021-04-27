@@ -4,7 +4,7 @@
 """
 Hardware Module: 1
 
-Description: Verifies data logging capability.
+Description: Verifies data logging capability for a single motor with encoders.
 """
 
 from pybricks.pupdevices import Motor
@@ -32,8 +32,8 @@ motor.stop()
 
 # Save the data by printing it. Pybricksdev will capture the printed
 # data and save it to the given path relative to this script.
-motor.log.save("build/servo_data.txt")
-motor.control.log.save("build/control_data.txt")
+motor.log.save("build/log_servo_servo.txt")
+motor.control.log.save("build/log_servo_control.txt")
 
 # The log can also be read from the user script. For fun, let's print the
 # position and the estimated speed in a rotated plot. We show only 1 in 3
