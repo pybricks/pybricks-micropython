@@ -71,10 +71,10 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     pbio_control_settings_get_limits(&self->db->control_distance.settings, &straight_speed_limit, &straight_acceleration_limit, &_, &_);
     pbio_control_settings_get_limits(&self->db->control_heading.settings, &turn_rate_limit, &turn_acceleration_limit, &_, &_);
 
-    self->straight_speed = straight_speed_limit / 3;
-    self->straight_acceleration = straight_acceleration_limit / 3;
-    self->turn_rate = turn_rate_limit / 3;
-    self->turn_acceleration = turn_acceleration_limit / 3;
+    self->straight_speed = straight_speed_limit / 2;
+    self->straight_acceleration = straight_acceleration_limit / 2;
+    self->turn_rate = turn_rate_limit / 4;
+    self->turn_acceleration = turn_acceleration_limit / 4;
 
     return MP_OBJ_FROM_PTR(self);
 }
