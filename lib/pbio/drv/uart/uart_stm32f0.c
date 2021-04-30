@@ -189,9 +189,10 @@ void pbdrv_uart_flush(pbdrv_uart_dev_t *uart_dev) {
 
 void pbdrv_uart_stm32f0_handle_irq(uint8_t id) {
     pbdrv_uart_t *uart = &pbdrv_uart[id];
+    uint32_t isr = uart->USART->ISR;
 
     // receive next byte
-    if (uart->USART->ISR & USART_ISR_RXNE) {
+    if (isr & USART_ISR_RXNE) {
         // REVISIT: Do we need to have an overrun error when the ring buffer gets full?
         uart->rx_ring_buf[uart->rx_ring_buf_head] = uart->USART->RDR;
         uart->rx_ring_buf_head = (uart->rx_ring_buf_head + 1) & (UART_RING_BUF_SIZE - 1);
@@ -199,7 +200,7 @@ void pbdrv_uart_stm32f0_handle_irq(uint8_t id) {
     }
 
     // transmit next byte
-    if (uart->USART->CR1 & USART_CR1_TXEIE && uart->USART->ISR & USART_ISR_TXE) {
+    if (uart->USART->CR1 & USART_CR1_TXEIE && isr & USART_ISR_TXE) {
         uart->USART->TDR = uart->tx_buf[uart->tx_buf_index++];
         if (uart->tx_buf_index == uart->tx_buf_size) {
             // all bytes have been sent, so enable transmit complete interrupt
@@ -209,7 +210,7 @@ void pbdrv_uart_stm32f0_handle_irq(uint8_t id) {
     }
 
     // transmission complete
-    if (uart->USART->CR1 & USART_CR1_TCIE && uart->USART->ISR & USART_ISR_TC) {
+    if (uart->USART->CR1 & USART_CR1_TCIE && isr & USART_ISR_TC) {
         uart->USART->CR1 &= ~USART_CR1_TCIE;
         uart->tx_result = PBIO_SUCCESS;
         process_poll(&pbdrv_uart_process);
