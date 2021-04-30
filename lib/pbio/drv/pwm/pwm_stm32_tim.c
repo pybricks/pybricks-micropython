@@ -135,6 +135,9 @@ void pbdrv_pwm_stm32_tim_deinit(pbdrv_pwm_dev_t *devs) {
         {
             TIMx->CR1 &= ~TIM_CR1_CEN;
             TIMx->EGR &= ~TIM_EGR_UG;
+            // Disable outputs (the value 0 assumes that all channels are PWMs
+            // or unused - which should be a safe assumption)
+            TIMx->CCER = 0;
         }
     }
 }
