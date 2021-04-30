@@ -10,6 +10,8 @@
 
 #include "py/obj.h"
 
+MP_DECLARE_CONST_FUN_OBJ_2(pb_hubs_Hub_reset_obj);
+
 extern const mp_obj_type_t pb_type_SystemHub;
 
 extern const mp_obj_module_t pb_module_hubs;
