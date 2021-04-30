@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -31,6 +31,12 @@ STATIC mp_obj_t pb_hubs_Hub_reset(mp_obj_t self_in, mp_obj_t action_in) {
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(pb_hubs_Hub_reset_obj, pb_hubs_Hub_reset);
+
+STATIC mp_obj_t pb_hubs_Hub_reset_reason(mp_obj_t self_in) {
+    pbdrv_reset_reason_t reason = pbdrv_reset_get_reason();
+    return MP_OBJ_NEW_SMALL_INT(reason);
+}
+MP_DEFINE_CONST_FUN_OBJ_1(pb_hubs_Hub_reset_reason_obj, pb_hubs_Hub_reset_reason);
 
 #endif // PBDRV_CONFIG_RESET
 
