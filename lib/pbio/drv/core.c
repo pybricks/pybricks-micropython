@@ -10,6 +10,7 @@
 #include "led/led_array.h"
 #include "led/led.h"
 #include "pwm/pwm.h"
+#include "reset/reset.h"
 #include "sound/sound.h"
 #include "watchdog/watchdog.h"
 
@@ -27,6 +28,7 @@ void pbdrv_init(void) {
     pbdrv_led_init();
     pbdrv_led_array_init();
     pbdrv_pwm_init();
+    pbdrv_reset_init();
     pbdrv_sound_init();
     pbdrv_watchdog_init();
     while (pbdrv_init_busy()) {

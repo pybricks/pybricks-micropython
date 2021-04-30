@@ -28,6 +28,23 @@ uint32_t pbdrv_reset_stm32_bootloader_selector __attribute__((section(".magic"))
 
 #endif // PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER
 
+static pbdrv_reset_reason_t reset_reason;
+
+void pbdrv_reset_init(void) {
+    uint32_t status = RCC->CSR;
+
+    if (status & RCC_CSR_SFTRSTF) {
+        reset_reason = PBDRV_RESET_REASON_SOFTWARE;
+    } else if (status & RCC_CSR_IWDGRSTF) {
+        reset_reason = PBDRV_RESET_REASON_WATCHDOG;
+    } else {
+        reset_reason = PBDRV_RESET_REASON_NONE;
+    }
+
+    // clear flags for next reset
+    RCC->CSR |= RCC_CSR_RMVF;
+}
+
 void pbdrv_reset(pbdrv_reset_action_t action) {
     switch (action) {
         // Some platforms can't reboot in update mode. In those cases it will
@@ -57,17 +74,7 @@ void pbdrv_reset(pbdrv_reset_action_t action) {
 }
 
 pbdrv_reset_reason_t pbdrv_reset_get_reason(void) {
-    uint32_t status = RCC->CSR;
-
-    if (status & RCC_CSR_SFTRSTF) {
-        return PBDRV_RESET_REASON_SOFTWARE;
-    }
-
-    if (status & RCC_CSR_IWDGRSTF) {
-        return PBDRV_RESET_REASON_WATCHDOG;
-    }
-
-    return PBDRV_RESET_REASON_NONE;
+    return reset_reason;
 }
 
 #endif // PBDRV_CONFIG_RESET_STM32

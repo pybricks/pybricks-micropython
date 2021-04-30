@@ -12,6 +12,9 @@
 
 #include <pbdrv/reset.h>
 
+void pbdrv_reset_init(void) {
+}
+
 void pbdrv_reset(pbdrv_reset_action_t action) {
     nxt_lcd_enable(0);
     for (;;) {
