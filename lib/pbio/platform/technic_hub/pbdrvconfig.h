@@ -66,8 +66,11 @@
 #define PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER (1)
 
 #define PBDRV_CONFIG_UART                           (1)
-#define PBDRV_CONFIG_UART_STM32L4_LL_DMA                (1)
-#define PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART       (4)
+#define PBDRV_CONFIG_UART_STM32L4_LL_DMA            (1)
+#define PBDRV_CONFIG_UART_STM32L4_LL_DMA_NUM_UART   (4)
+
+#define PBDRV_CONFIG_WATCHDOG                       (1)
+#define PBDRV_CONFIG_WATCHDOG_STM32                 (1)
 
 #define PBDRV_CONFIG_HAS_PORT_A (1)
 #define PBDRV_CONFIG_HAS_PORT_B (1)

@@ -11,6 +11,7 @@
 #include "led/led.h"
 #include "pwm/pwm.h"
 #include "sound/sound.h"
+#include "watchdog/watchdog.h"
 
 uint32_t pbdrv_init_busy_count;
 uint32_t pbdrv_deinit_busy_count;
@@ -27,6 +28,7 @@ void pbdrv_init(void) {
     pbdrv_led_array_init();
     pbdrv_pwm_init();
     pbdrv_sound_init();
+    pbdrv_watchdog_init();
     while (pbdrv_init_busy()) {
         process_run();
     }

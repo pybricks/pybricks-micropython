@@ -86,6 +86,9 @@
 #define PBDRV_CONFIG_USB                            (1)
 #define PBDRV_CONFIG_USB_STM32F4_CDC                (1)
 
+#define PBDRV_CONFIG_WATCHDOG                       (1)
+#define PBDRV_CONFIG_WATCHDOG_STM32                 (1)
+
 #define PBDRV_CONFIG_MOTOR          (1)
 
 #define PBDRV_CONFIG_HAS_PORT_A (1)

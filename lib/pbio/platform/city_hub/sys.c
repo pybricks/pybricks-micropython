@@ -10,28 +10,17 @@
 #include <pbsys/bluetooth.h>
 #include <pbsys/status.h>
 
-#include "stm32f030xc.h"
-
 #include "../sys/hmi.h"
 #include "../sys/supervisor.h"
 #include "../sys/user_program.h"
 
 PROCESS(pbsys_process, "System");
 
-static void init(void) {
-    IWDG->KR = 0x5555; // enable register access
-    IWDG->PR = IWDG_PR_PR_2; // divide by 64
-    IWDG->RLR = 1875; // 40kHz / 64 / 1875 = 0.33.. Hz => 3 second timeout
-    IWDG->KR = 0xaaaa; // refresh counter
-    IWDG->KR = 0xcccc; // start watchdog timer
-}
-
 PROCESS_THREAD(pbsys_process, ev, data) {
     static struct etimer timer;
 
     PROCESS_BEGIN();
 
-    init();
     pbsys_battery_init();
     pbsys_bluetooth_init();
     pbsys_hmi_init();
@@ -47,7 +36,6 @@ PROCESS_THREAD(pbsys_process, ev, data) {
             pbsys_supervisor_poll();
             pbsys_user_program_poll();
         }
-        IWDG->KR = 0xaaaa;
     }
 
     PROCESS_END();

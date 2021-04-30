@@ -14,6 +14,7 @@
 #include STM32_H
 
 #include <pbdrv/reset.h>
+#include <pbdrv/watchdog.h>
 
 #if PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER
 
@@ -51,6 +52,7 @@ void pbdrv_reset(pbdrv_reset_action_t action) {
         // defined in platform/*/platform.c
         extern void pbdrv_reset_stm32_platform_power_off(void);
         pbdrv_reset_stm32_platform_power_off();
+        pbdrv_watchdog_update();
     }
 }
 

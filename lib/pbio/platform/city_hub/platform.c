@@ -280,8 +280,6 @@ const pbdrv_pwm_stm32_tim_platform_data_t
 void pbdrv_reset_stm32_platform_power_off(void) {
     // setting PB11 low cuts the power
     GPIOB->BRR = GPIO_BRR_BR_11;
-    // prevent watchdog from resetting MCU
-    IWDG->KR = 0xaaaa;
 }
 
 // UART
