@@ -12,21 +12,21 @@
 /** Reset/power actions. */
 typedef enum {
     /** Resets the MCU without powering off. */
-    PBDRV_RESET_ACTION_RESET,
+    PBDRV_RESET_ACTION_RESET = 0,
     /** Turns off power to the hub/brick. */
-    PBDRV_RESET_ACTION_POWER_OFF,
+    PBDRV_RESET_ACTION_POWER_OFF = 1,
     /** Resets the MCU in firmware update mode. */
-    PBDRV_RESET_ACTION_RESET_IN_UPDATE_MODE,
+    PBDRV_RESET_ACTION_RESET_IN_UPDATE_MODE = 2,
 } pbdrv_reset_action_t;
 
 /** Reasons for reset. */
 typedef enum {
     /** No reset occurred. Normal power on. */
-    PBDRV_RESET_REASON_NONE,
+    PBDRV_RESET_REASON_NONE = 0,
     /** Reset was triggered by software. */
-    PBDRV_RESET_REASON_SOFTWARE,
+    PBDRV_RESET_REASON_SOFTWARE = 1,
     /** Reset was triggered by watchdog timer. */
-    PBDRV_RESET_REASON_WATCHDOG,
+    PBDRV_RESET_REASON_WATCHDOG = 2,
 } pbdrv_reset_reason_t;
 
 /**
