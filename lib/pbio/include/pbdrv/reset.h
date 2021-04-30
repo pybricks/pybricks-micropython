@@ -11,10 +11,10 @@
 
 /** Reset/power actions. */
 typedef enum {
-    /** Turns off power to the hub/brick. */
-    PBDRV_RESET_ACTION_POWER_OFF,
     /** Resets the MCU without powering off. */
     PBDRV_RESET_ACTION_RESET,
+    /** Turns off power to the hub/brick. */
+    PBDRV_RESET_ACTION_POWER_OFF,
     /** Resets the MCU in firmware update mode. */
     PBDRV_RESET_ACTION_RESET_IN_UPDATE_MODE,
 } pbdrv_reset_action_t;
