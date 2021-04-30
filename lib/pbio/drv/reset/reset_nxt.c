@@ -27,4 +27,9 @@ void pbdrv_reset(pbdrv_reset_action_t action) {
     }
 }
 
+pbdrv_reset_reason_t pbdrv_reset_get_reason(void) {
+    // TODO: see if MCU has this capability
+    return PBDRV_RESET_REASON_NONE;
+}
+
 #endif // PBDRV_CONFIG_RESET_NXT

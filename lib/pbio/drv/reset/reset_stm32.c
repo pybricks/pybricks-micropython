@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 // Manages power off and reset for STM32 MCUs.
 
@@ -52,6 +52,20 @@ void pbdrv_reset(pbdrv_reset_action_t action) {
         extern void pbdrv_reset_stm32_power_off(void);
         pbdrv_reset_stm32_power_off();
     }
+}
+
+pbdrv_reset_reason_t pbdrv_reset_get_reason(void) {
+    uint32_t status = RCC->CSR;
+
+    if (status & RCC_CSR_SFTRSTF) {
+        return PBDRV_RESET_REASON_SOFTWARE;
+    }
+
+    if (status & RCC_CSR_IWDGRSTF) {
+        return PBDRV_RESET_REASON_WATCHDOG;
+    }
+
+    return PBDRV_RESET_REASON_NONE;
 }
 
 #endif // PBDRV_CONFIG_RESET_STM32
