@@ -187,12 +187,12 @@ void pbdrv_uart_stm32f4_ll_irq_handle_irq(uint8_t id) {
     USART_TypeDef *USARTx = uart->pdata->uart;
     uint32_t sr = USARTx->SR;
 
-    if (LL_USART_IsEnabledIT_RXNE(USARTx) && sr & USART_SR_RXNE) {
+    if (sr & USART_SR_RXNE) {
         ringbuf_put(&uart->rx_buf, LL_USART_ReceiveData8(USARTx));
         process_poll(&pbdrv_uart_process);
     }
 
-    if (LL_USART_IsEnabledIT_TXE(USARTx) && sr & USART_SR_TXE) {
+    if (USARTx->CR1 & USART_CR1_TXEIE && sr & USART_SR_TXE) {
         LL_USART_TransmitData8(USARTx, uart->write_buf[uart->write_pos++]);
         // When all bytes have been written, wait for the Tx complete interrupt.
         if (uart->write_pos == uart->write_length) {
@@ -201,7 +201,7 @@ void pbdrv_uart_stm32f4_ll_irq_handle_irq(uint8_t id) {
         }
     }
 
-    if (LL_USART_IsEnabledIT_TC(USARTx) && sr & USART_SR_TC) {
+    if (USARTx->CR1 & USART_CR1_TCIE && sr & USART_SR_TC) {
         LL_USART_DisableIT_TC(USARTx);
         process_poll(&pbdrv_uart_process);
     }
