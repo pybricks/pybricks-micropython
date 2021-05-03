@@ -326,7 +326,7 @@ void DMA1_Channel4_5_IRQHandler(void) {
     // if CH4 transfer complete
     if (DMA1->ISR & DMA_ISR_TCIF4) {
         // clear interrupt
-        DMA1->IFCR |= DMA_IFCR_CTCIF4;
+        DMA1->IFCR = DMA_IFCR_CTCIF4;
         // disable CH4
         DMA1_Channel4->CCR &= ~DMA_CCR_EN;
 
