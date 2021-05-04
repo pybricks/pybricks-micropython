@@ -160,8 +160,8 @@ static void handle_receive(pbdrv_bluetooth_connection_t connection, const uint8_
     }
 }
 
-static void send_done(pbdrv_bluetooth_send_context_t *context) {
-    send_msg_t *msg = PBIO_CONTAINER_OF(context, send_msg_t, context);
+static void send_done(void) {
+    send_msg_t *msg = list_pop(send_queue);
 
     if (msg->context.connection == PBDRV_BLUETOOTH_CONNECTION_UART && lwrb_get_full(&uart_tx_ring)) {
         // If there is more buffered data to send, put the message back in the queue
@@ -270,8 +270,8 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
             }
 
             if (!send_busy) {
-                send_msg_t *msg = list_pop(send_queue);
-                // msg->is_queued is set to false in send_done callback rather than here
+                // msg is removed from queue in send_done callback rather than here
+                send_msg_t *msg = list_head(send_queue);
                 if (msg) {
                     msg->context.done = send_done;
                     if (msg->context.connection == PBDRV_BLUETOOTH_CONNECTION_UART) {

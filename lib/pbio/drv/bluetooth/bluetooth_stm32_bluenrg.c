@@ -308,7 +308,7 @@ retry:
     }
 
 done:
-    send->done(send);
+    send->done();
 
     PT_END(pt);
 }
@@ -761,8 +761,11 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
     static struct pt child_pt;
 
     PROCESS_EXITHANDLER({
+        spi_disable_cs();
         bluetooth_reset(true);
-        bluetooth_ready = false;
+        bluetooth_ready = pybricks_notify_en = uart_tx_notify_en = false;
+        conn_handle = 0;
+        PROCESS_EXIT();
     });
 
     PROCESS_BEGIN();

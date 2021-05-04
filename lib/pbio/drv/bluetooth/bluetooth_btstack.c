@@ -63,7 +63,7 @@ static void pybricks_can_send(void *context) {
     pbdrv_bluetooth_send_context_t *send = context;
 
     pybricks_service_server_send(pybricks_con_handle, send->data, send->size);
-    send->done(send);
+    send->done();
 }
 
 static void pybricks_data_received(hci_con_handle_t tx_con_handle, const uint8_t *data, uint16_t size) {
@@ -80,7 +80,7 @@ static void nordic_can_send(void *context) {
     pbdrv_bluetooth_send_context_t *send = context;
 
     nordic_spp_service_server_send(uart_con_handle, send->data, send->size);
-    send->done(send);
+    send->done();
 }
 
 static void nordic_spp_packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packet, uint16_t size) {

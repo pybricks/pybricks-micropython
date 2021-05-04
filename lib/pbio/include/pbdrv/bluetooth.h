@@ -37,9 +37,8 @@ typedef void (*pbdrv_bluetooth_on_event_t)(void);
 
 /**
  * Callback that is called when sending a notification is done.
- * @param context  [in]     The context that was given to pbdrv_bluetooth_send().
  */
-typedef void (*pbdrv_bluetooth_send_done_t)(pbdrv_bluetooth_send_context_t *context);
+typedef void (*pbdrv_bluetooth_send_done_t)(void);
 
 /**
  * Callback that is called when BLE characteristic is written to.
