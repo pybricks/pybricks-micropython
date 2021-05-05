@@ -16,7 +16,7 @@ GitPython = "^3.1.11"
 gql = "^3.0.0a5"
 plotly = "^4.14.1"
 pybricks = {version = "^3.0.0a5", allow-prereleases = true}
-pybricksdev = {version = "1.0.0a4", allow-prereleases = true}
+pybricksdev = {version = "1.0.0a5", allow-prereleases = true}
 pycryptodomex = "^3.9.9"
 PyGithub = "^1.51"
 python-dotenv = "^0.15.0"
