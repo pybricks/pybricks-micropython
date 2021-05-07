@@ -31,6 +31,9 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
     s_distance->pid_ki = (s_left->pid_ki + s_right->pid_ki) / 2;
     s_distance->pid_kd = (s_left->pid_kd + s_right->pid_kd) / 2;
 
+    // Not used
+    s_distance->max_duty = 10000;
+
     // Maxima are bound by the least capable motor
     s_distance->max_torque = min(s_left->max_torque, s_right->max_torque);
     s_distance->stall_time = min(s_left->stall_time, s_right->stall_time);
