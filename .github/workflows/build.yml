@@ -233,7 +233,8 @@ jobs:
         name: ${{ matrix.hub }}-firmware
         path: |
           bricks/${{ matrix.hub }}/build/firmware-dual-boot-base.bin
-          bricks/${{ matrix.hub }}/build/*_pybricks.*
+          bricks/${{ matrix.hub }}/build/install_pybricks.py
+          bricks/${{ matrix.hub }}/build/install_pybricks_hash.txt
 
   debug:
     name: debug firmware

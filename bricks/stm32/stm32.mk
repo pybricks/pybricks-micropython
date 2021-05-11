@@ -557,11 +557,6 @@ SRC_QSTR_AUTO_DEPS +=
 # Main firmware build targets
 TARGETS := $(BUILD)/firmware.zip $(BUILD)/firmware.bin
 
-# Optionally build project file for use with official LEGO app
-ifeq ($(PB_DUAL_BOOT),1)
-TARGETS += $(BUILD)/install_pybricks.llsp
-endif
-
 all: $(TARGETS)
 
 # handle BTStack .gatt files
@@ -632,7 +627,7 @@ $(BUILD)/firmware-dual-boot.bin: $(BUILD)/firmware-dual-boot-base.bin $(BUILD_DU
 	$(ECHO) "`wc -c < $@` bytes"
 
 # firmware wrapped in special format for install with official apps
-$(BUILD)/install_pybricks.llsp: $(BUILD)/firmware-dual-boot-base.bin
+$(BUILD)/install_pybricks_hash.txt $(BUILD)/install_pybricks.py: $(BUILD)/firmware-dual-boot-base.bin
 	$(ECHO) "Creating dual boot firmware installer"
 	$(Q)$(PYTHON) $(BUILD_DUAL_BOOT_INSTALLER) $(FW_VERSION)
 
@@ -649,6 +644,8 @@ ZIP_FILES := \
 
 ifeq ($(PB_DUAL_BOOT),1)
 ZIP_FILES += $(BUILD)/firmware-dual-boot-base.bin
+ZIP_FILES += $(BUILD)/install_pybricks_hash.txt
+ZIP_FILES += $(BUILD)/install_pybricks.py
 endif
 
 $(BUILD)/firmware.zip: $(ZIP_FILES)
