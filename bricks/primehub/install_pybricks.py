@@ -5,6 +5,8 @@
 
 
 import firmware
+import hub
+
 import ubinascii
 import umachine
 import utime
@@ -201,6 +203,11 @@ def install():
         print("Success! The firmware will be installed when it reboots.")
     else:
         print("Firmware image not accepted. It will not be installed.")
+
+    # Skip reboot if right button is held.
+    if hub.button.right.is_pressed():
+        print("Skipping reboot.")
+        return
 
     # Reboot soon, giving some time to softly disconnect.
     print("Rebooting soon! Please wait.")
