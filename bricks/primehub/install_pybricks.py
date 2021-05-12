@@ -27,6 +27,11 @@ BLOCK_WRITE_SIZE = BLOCK_READ_SIZE * 4
 FF = b"\xFF"
 
 
+KNOWN_LEGO_FIRMWARE_VERSIONS = {
+    b"v1.2.01.0103-d08b6fe": "MINDSTORMS Robot Inventor App v1.3.4 / 10.1.0",
+}
+
+
 def read_flash(address, length):
     """Read a given number of bytes from a given absolute address."""
     return firmware.flash_read(address - FLASH_LEGO_START)[0:length]
@@ -131,7 +136,7 @@ def get_file_hash(path):
     return (size, ubinascii.hexlify(hash_calc.digest()).decode())
 
 
-def install():
+def install(check_lego_firmware_version=True):
     """Main installation routine."""
 
     print("Starting installation script.")
@@ -160,7 +165,19 @@ def install():
 
     lego_version_position = read_flash_int(FLASH_LEGO_START + 0x200)
     lego_version = read_flash(lego_version_position, 20)
-    print("LEGO Firmware version:", lego_version)
+    print("Your hub runs LEGO Firmware version:", lego_version)
+
+    if check_lego_firmware_version and lego_version not in KNOWN_LEGO_FIRMWARE_VERSIONS:
+        print("Your LEGO firmware version is not (yet) supported.")
+        print("Please install one of the following versions and try again.\n")
+
+        for version, source in KNOWN_LEGO_FIRMWARE_VERSIONS.items():
+            print("    {0} from {1}.".format(version.decode(), source))
+
+        print(
+            "\nIf you have a newer version that is not listed, please ask for support in https://github.com/pybricks/support/issues/167"
+        )
+        return
 
     # Verify firmware sizes
     if FLASH_LEGO_START + lego_size >= FLASH_PYBRICKS_START:
@@ -175,7 +192,7 @@ def install():
 
     # Initialize flash
     print("Initializing flash for {0} bytes.".format(total_size))
-    if not firmware.appl_image_initialise(total_size):
+    if total_size < 512 or not firmware.appl_image_initialise(total_size):
         print("Failed to initialize external flash.")
         return
 
