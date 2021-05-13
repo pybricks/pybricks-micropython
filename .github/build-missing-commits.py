@@ -44,10 +44,15 @@ if start_hash == pybricks.commit(PYBRICKS_BRANCH).hexsha:
 # Process the commits in the tree and log the data
 for commit in pybricks.iter_commits(f"{start_hash}..{PYBRICKS_BRANCH}"):
     print(f"trying {commit.hexsha}...")
+
+    sizes = {}
+
     try:
         entity = service.get_entity(FIRMWARE_SIZE_TABLE, "size", commit.hexsha)
         # if entity is found but some hubs had null size, redo only those hubs
         hubs = [h for h in HUBS if entity.get(h) is None]
+        # save existing sizes since we replace then entity rather than update later
+        sizes = {h: entity.get(h) for h in HUBS if entity.get(h) is not None}
     except AzureMissingResourceHttpError:
         # if there is no entry at all, build all hubs
         hubs = HUBS
@@ -93,7 +98,6 @@ for commit in pybricks.iter_commits(f"{start_hash}..{PYBRICKS_BRANCH}"):
     }
 
     # Get target sizes
-    sizes = {}
     for target, proc in procs.items():
         # Wait for the target to complete building or fail
         proc.wait()
