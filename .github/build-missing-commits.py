@@ -52,7 +52,7 @@ for commit in pybricks.iter_commits(f"{start_hash}..{PYBRICKS_BRANCH}"):
         # if entity is found but some hubs had null size, redo only those hubs
         hubs = [h for h in HUBS if entity.get(h) is None]
         # save existing sizes since we replace then entity rather than update later
-        sizes = {h: entity.get(h) for h in HUBS if entity.get(h) is not None}
+        sizes = {h: int(entity.get(h)) for h in HUBS if entity.get(h) is not None}
     except AzureMissingResourceHttpError:
         # if there is no entry at all, build all hubs
         hubs = HUBS
