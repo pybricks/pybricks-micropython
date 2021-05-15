@@ -41,7 +41,7 @@ cryptography = ">=2.8"
 
 [package.extras]
 bcrypt = ["bcrypt (>=3.1.3)"]
-fido2 = ["fido2 (0.9.1)"]
+fido2 = ["fido2 (==0.9.1)"]
 gssapi = ["gssapi (>=1.2.0)"]
 libnacl = ["libnacl (>=1.4.2)"]
 pkcs11 = ["python-pkcs11 (>=0.7.0)"]
@@ -158,12 +158,12 @@ python-versions = ">=3.6"
 cffi = ">=1.12"
 
 [package.extras]
-docs = ["sphinx (>=1.6.5,<1.8.0 || >1.8.0,<3.1.0 || >3.1.0,<3.1.1 || >3.1.1)", "sphinx-rtd-theme"]
+docs = ["sphinx (>=1.6.5,!=1.8.0,!=3.1.0,!=3.1.1)", "sphinx-rtd-theme"]
 docstest = ["doc8", "pyenchant (>=1.6.11)", "twine (>=1.12.0)", "sphinxcontrib-spelling (>=4.0.1)"]
 pep8test = ["black", "flake8", "flake8-import-order", "pep8-naming"]
 sdist = ["setuptools-rust (>=0.11.4)"]
 ssh = ["bcrypt (>=3.1.5)"]
-test = ["pytest (>=6.0)", "pytest-cov", "pytest-subtests", "pytest-xdist", "pretend", "iso8601", "pytz", "hypothesis (>=1.11.4,<3.79.2 || >3.79.2)"]
+test = ["pytest (>=6.0)", "pytest-cov", "pytest-subtests", "pytest-xdist", "pretend", "iso8601", "pytz", "hypothesis (>=1.11.4,!=3.79.2)"]
 
 [[package]]
 name = "dbus-next"
@@ -246,10 +246,10 @@ yarl = ">=1.6,<2.0"
 [package.extras]
 aiohttp = ["aiohttp (>=3.7.1,<3.8.0)"]
 all = ["aiohttp (>=3.7.1,<3.8.0)", "requests (>=2.23,<3)", "websockets (>=8.1,<9)"]
-dev = ["aiohttp (>=3.7.1,<3.8.0)", "requests (>=2.23,<3)", "websockets (>=8.1,<9)", "black (19.10b0)", "check-manifest (>=0.42,<1)", "flake8 (3.8.1)", "isort (4.3.21)", "mypy (0.770)", "sphinx (>=3.0.0,<4)", "sphinx_rtd_theme (>=0.4,<1)", "sphinx-argparse (0.2.5)", "parse (1.15.0)", "pytest (5.4.2)", "pytest-asyncio (0.11.0)", "pytest-cov (2.8.1)", "mock (4.0.2)", "vcrpy (4.0.2)"]
+dev = ["aiohttp (>=3.7.1,<3.8.0)", "requests (>=2.23,<3)", "websockets (>=8.1,<9)", "black (==19.10b0)", "check-manifest (>=0.42,<1)", "flake8 (==3.8.1)", "isort (==4.3.21)", "mypy (==0.770)", "sphinx (>=3.0.0,<4)", "sphinx_rtd_theme (>=0.4,<1)", "sphinx-argparse (==0.2.5)", "parse (==1.15.0)", "pytest (==5.4.2)", "pytest-asyncio (==0.11.0)", "pytest-cov (==2.8.1)", "mock (==4.0.2)", "vcrpy (==4.0.2)"]
 requests = ["requests (>=2.23,<3)"]
-test = ["aiohttp (>=3.7.1,<3.8.0)", "requests (>=2.23,<3)", "websockets (>=8.1,<9)", "parse (1.15.0)", "pytest (5.4.2)", "pytest-asyncio (0.11.0)", "pytest-cov (2.8.1)", "mock (4.0.2)", "vcrpy (4.0.2)"]
-test_no_transport = ["parse (1.15.0)", "pytest (5.4.2)", "pytest-asyncio (0.11.0)", "pytest-cov (2.8.1)", "mock (4.0.2)", "vcrpy (4.0.2)"]
+test = ["aiohttp (>=3.7.1,<3.8.0)", "requests (>=2.23,<3)", "websockets (>=8.1,<9)", "parse (==1.15.0)", "pytest (==5.4.2)", "pytest-asyncio (==0.11.0)", "pytest-cov (==2.8.1)", "mock (==4.0.2)", "vcrpy (==4.0.2)"]
+test_no_transport = ["parse (==1.15.0)", "pytest (==5.4.2)", "pytest-asyncio (==0.11.0)", "pytest-cov (==2.8.1)", "mock (==4.0.2)", "vcrpy (==4.0.2)"]
 websockets = ["websockets (>=8.1,<9)"]
 
 [[package]]
@@ -330,11 +330,11 @@ python-versions = ">=3.8,<4.0"
 
 [[package]]
 name = "pybricksdev"
-version = "1.0.0-alpha.4"
+version = "1.0.0a5"
 description = "Pybricks developer tools"
 category = "dev"
 optional = false
-python-versions = "~3.8"
+python-versions = ">=3.8,<3.9"
 
 [package.dependencies]
 aioserial = ">=1.3.0,<2.0.0"
@@ -346,12 +346,6 @@ pyusb = ">=1.0.2,<2.0.0"
 semver = ">=2.13.0,<3.0.0"
 tqdm = ">=4.46.1,<5.0.0"
 validators = ">=0.18.2,<0.19.0"
-
-[package.source]
-type = "git"
-url = "https://github.com/pybricks/pybricksdev.git"
-reference = "master"
-resolved_reference = "8f3acafbf0a6a34f2975fe882a39db12844b52a2"
 
 [[package]]
 name = "pycodestyle"
@@ -412,9 +406,9 @@ python-versions = ">=3.6"
 
 [package.extras]
 crypto = ["cryptography (>=3.3.1,<4.0.0)"]
-dev = ["sphinx", "sphinx-rtd-theme", "zope.interface", "cryptography (>=3.3.1,<4.0.0)", "pytest (>=6.0.0,<7.0.0)", "coverage[toml] (5.0.4)", "mypy", "pre-commit"]
+dev = ["sphinx", "sphinx-rtd-theme", "zope.interface", "cryptography (>=3.3.1,<4.0.0)", "pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)", "mypy", "pre-commit"]
 docs = ["sphinx", "sphinx-rtd-theme", "zope.interface"]
-tests = ["pytest (>=6.0.0,<7.0.0)", "coverage[toml] (5.0.4)"]
+tests = ["pytest (>=6.0.0,<7.0.0)", "coverage[toml] (==5.0.4)"]
 
 [[package]]
 name = "pynacl"
@@ -430,7 +424,7 @@ six = "*"
 
 [package.extras]
 docs = ["sphinx (>=1.6.5)", "sphinx-rtd-theme"]
-tests = ["pytest (>=3.2.1,<3.3.0 || >3.3.0)", "hypothesis (>=3.27.0)"]
+tests = ["pytest (>=3.2.1,!=3.3.0)", "hypothesis (>=3.27.0)"]
 
 [[package]]
 name = "pyobjc-core"
@@ -544,7 +538,7 @@ python-versions = "*"
 
 [package.extras]
 security = ["cryptography (>=1.3.4)", "idna (>=2.0.0)", "pyOpenSSL (>=0.14)"]
-socks = ["PySocks (>=1.5.6,<1.5.7 || >1.5.7)", "win-inet-pton"]
+socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
 
 [[package]]
 name = "retrying"
@@ -656,7 +650,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.8"
-content-hash = "abd87909dab343114f4c4c5ab9af554740d10671c78d26a8e3c5048bb480b616"
+content-hash = "19cddc0acf366fdffe97657f340a48c1facc5d9665e11aacfe6c60f119a8af3f"
 
 [metadata.files]
 aioserial = [
@@ -857,7 +851,10 @@ pybricks = [
     {file = "pybricks-3.0.0a5-py3-none-any.whl", hash = "sha256:0916804da5078f8bd51fa1ae01109d4e10e9a722cfcce9c25050e32cb9c5c590"},
     {file = "pybricks-3.0.0a5.tar.gz", hash = "sha256:6dec902686ac17029d910cdf35c0b282a3f14f41aae0ed3844123a4b58d9973d"},
 ]
-pybricksdev = []
+pybricksdev = [
+    {file = "pybricksdev-1.0.0a5-py3-none-any.whl", hash = "sha256:9cb1b486f73d93169be7c1542303bab098264f25a52a71ea0bbcc3682d0f98fa"},
+    {file = "pybricksdev-1.0.0a5.tar.gz", hash = "sha256:46800747a7796a04f9a1d6d2331de522faf787317b412027174b537e63bdfd2e"},
+]
 pycodestyle = [
     {file = "pycodestyle-2.7.0-py2.py3-none-any.whl", hash = "sha256:514f76d918fcc0b55c6680472f0a37970994e07bbb80725808c17089be302068"},
     {file = "pycodestyle-2.7.0.tar.gz", hash = "sha256:c389c1d06bf7904078ca03399a4816f974a1d590090fecea0c63ec26ebaf1cef"},
@@ -918,6 +915,8 @@ pynacl = [
     {file = "PyNaCl-1.4.0-cp27-cp27mu-manylinux1_x86_64.whl", hash = "sha256:7757ae33dae81c300487591c68790dfb5145c7d03324000433d9a2c141f82af7"},
     {file = "PyNaCl-1.4.0-cp35-abi3-macosx_10_10_x86_64.whl", hash = "sha256:757250ddb3bff1eecd7e41e65f7f833a8405fede0194319f87899690624f2122"},
     {file = "PyNaCl-1.4.0-cp35-abi3-manylinux1_x86_64.whl", hash = "sha256:30f9b96db44e09b3304f9ea95079b1b7316b2b4f3744fe3aaecccd95d547063d"},
+    {file = "PyNaCl-1.4.0-cp35-abi3-win32.whl", hash = "sha256:4e10569f8cbed81cb7526ae137049759d2a8d57726d52c1a000a3ce366779634"},
+    {file = "PyNaCl-1.4.0-cp35-abi3-win_amd64.whl", hash = "sha256:c914f78da4953b33d4685e3cdc7ce63401247a21425c16a39760e282075ac4a6"},
     {file = "PyNaCl-1.4.0-cp35-cp35m-win32.whl", hash = "sha256:06cbb4d9b2c4bd3c8dc0d267416aaed79906e7b33f114ddbf0911969794b1cc4"},
     {file = "PyNaCl-1.4.0-cp35-cp35m-win_amd64.whl", hash = "sha256:511d269ee845037b95c9781aa702f90ccc36036f95d0f31373a6a79bd8242e25"},
     {file = "PyNaCl-1.4.0-cp36-cp36m-win32.whl", hash = "sha256:11335f09060af52c97137d4ac54285bcb7df0cef29014a1a4efe64ac065434c4"},
