@@ -8,7 +8,30 @@
 
 #include <pbio/control.h>
 
+#if PBIO_CONFIG_CONTROL_MINIMAL
+#define PBIO_OBSERVER_SCALE_DEG (10000)
+#define PBIO_OBSERVER_SCALE_TRQ (1000000)
+#define PBIO_OBSERVER_SCALE_LOW (1000)
+#define PBIO_OBSERVER_SCALE_HIGH (1000000)
+#else
+#define PBIO_OBSERVER_SCALE_DEG (1.0f)
+#define PBIO_OBSERVER_SCALE_TRQ (1.0f)
+#define PBIO_OBSERVER_SCALE_LOW (1.0f)
+#define PBIO_OBSERVER_SCALE_HIGH (1.0f)
+#endif
+
 typedef struct _pbio_observer_settings_t {
+    #if PBIO_CONFIG_CONTROL_MINIMAL
+    int32_t phi_01;
+    int32_t phi_11;
+    int32_t gam_0;
+    int32_t gam_1;
+    int32_t k_0;
+    int32_t k_1;
+    int32_t k_2;
+    int32_t f_low;
+    int32_t obs_gain;
+    #else
     float phi_01;
     float phi_11;
     float gam_0;
@@ -18,11 +41,17 @@ typedef struct _pbio_observer_settings_t {
     float k_2;
     float f_low;
     float obs_gain;
+    #endif
 } pbio_observer_settings_t;
 
 typedef struct _pbio_observer_t {
+    #if PBIO_CONFIG_CONTROL_MINIMAL
+    int64_t est_count;
+    int64_t est_rate;
+    #else
     float est_count;
     float est_rate;
+    #endif
     const pbio_observer_settings_t *settings;
 } pbio_observer_t;
 

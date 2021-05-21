@@ -7,6 +7,9 @@
 ### Added
 - Added special location in firmware for storing hub name ([support#52]). Note:
   Support will need to be added to tools separately to make use of this.
+- Added configuration option to run a simplified version of motor PID control.
+  It is activated on the Move Hub to reduce build size. Motor performance on
+  the other hubs is unaffected.
 
 ## [3.0.0] - 2021-06-08
 

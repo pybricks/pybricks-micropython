@@ -8,18 +8,24 @@
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
+#if PBIO_CONFIG_CONTROL_MINIMAL
+#define SCALE(value, scalar) ((int32_t)((value) * (scalar)))
+#else
+#define SCALE(value, scalar) ((value) * (scalar))
+#endif
+
 #if PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO || PBDRV_CONFIG_COUNTER_NXT
 
 static const pbio_observer_settings_t settings_observer_ev3_m = {
-    .phi_01 = 0.0f,
-    .phi_11 = 0.0f,
-    .gam_0 = 0.0f,
-    .gam_1 = 0.0f,
-    .k_0 = 0.02222706190764267f,
-    .k_1 = 0.000204397590361446f,
-    .k_2 = 0.00262048192771084f,
-    .f_low = 0.009158620689655174f,
-    .obs_gain = 0.0f,
+    .phi_01 = SCALE(0.0f, PBIO_OBSERVER_SCALE_HIGH),
+    .phi_11 = SCALE(0.0f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_0 = SCALE(0.0f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_1 = SCALE(0.0f, PBIO_OBSERVER_SCALE_LOW),
+    .k_0 = SCALE(0.02222706190764267f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_1 = SCALE(0.000204397590361446f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_2 = SCALE(0.00262048192771084f, PBIO_OBSERVER_SCALE_HIGH),
+    .f_low = SCALE(0.009158620689655174f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gain = SCALE(0.0f, PBIO_OBSERVER_SCALE_TRQ),
 };
 
 static const pbio_control_settings_t settings_servo_ev3_m = {
@@ -41,15 +47,15 @@ static const pbio_control_settings_t settings_servo_ev3_m = {
 };
 
 static const pbio_observer_settings_t settings_observer_ev3_l = {
-    .phi_01 = 0.0f,
-    .phi_11 = 0.0f,
-    .gam_0 = 0.0f,
-    .gam_1 = 0.0f,
-    .k_0 = 0.049886243386243395f,
-    .k_1 = 0.000433486238532110f,
-    .k_2 = 0.00412844036697248f,
-    .f_low = 0.00823809523809524f,
-    .obs_gain = 0.0f,
+    .phi_01 = SCALE(0.0f, PBIO_OBSERVER_SCALE_HIGH),
+    .phi_11 = SCALE(0.0f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_0 = SCALE(0.0f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_1 = SCALE(0.0f, PBIO_OBSERVER_SCALE_LOW),
+    .k_0 = SCALE(0.049886243386243395f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_1 = SCALE(0.000433486238532110f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_2 = SCALE(0.00412844036697248f, PBIO_OBSERVER_SCALE_HIGH),
+    .f_low = SCALE(0.00823809523809524f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gain = SCALE(0.0f, PBIO_OBSERVER_SCALE_TRQ),
 };
 
 static const pbio_control_settings_t settings_servo_ev3_l = {
@@ -75,15 +81,15 @@ static const pbio_control_settings_t settings_servo_ev3_l = {
 #if PBDRV_CONFIG_IOPORT_LPF2 || PBDRV_CONFIG_COUNTER_TEST
 
 static const pbio_observer_settings_t settings_observer_technic_m_angular = {
-    .phi_01 = 0.00471127825986593f,
-    .phi_11 = 0.886778220155195f,
-    .gam_0 = 1.98652315497896f,
-    .gam_1 = 779.011955265974f,
-    .k_0 = 0.02258435646747968f,
-    .k_1 = 0.000267785410941794f,
-    .k_2 = 0.00643543836108826f,
-    .f_low = 0.01218641268292683f,
-    .obs_gain = 0.002f,
+    .phi_01 = SCALE(0.00471127825986593f, PBIO_OBSERVER_SCALE_HIGH),
+    .phi_11 = SCALE(0.886778220155195f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_0 = SCALE(1.98652315497896f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_1 = SCALE(779.011955265974f, PBIO_OBSERVER_SCALE_LOW),
+    .k_0 = SCALE(0.02258435646747968f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_1 = SCALE(0.000267785410941794f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_2 = SCALE(0.00643543836108826f, PBIO_OBSERVER_SCALE_HIGH),
+    .f_low = SCALE(0.01218641268292683f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gain = SCALE(0.002f, PBIO_OBSERVER_SCALE_TRQ),
 };
 
 static const pbio_control_settings_t settings_servo_technic_m_angular = {
@@ -105,15 +111,15 @@ static const pbio_control_settings_t settings_servo_technic_m_angular = {
 };
 
 static const pbio_observer_settings_t settings_observer_technic_l_angular = {
-    .phi_01 = 0.00476139134919619f,
-    .phi_11 = 0.906099484723787f,
-    .gam_0 = 0.684051954862549f,
-    .gam_1 = 269.197410994572f,
-    .k_0 = 0.052359221241860474f,
-    .k_1 = 0.000337807915176920f,
-    .k_2 = 0.00666198910636721f,
-    .f_low = 0.011619602790697674f,
-    .obs_gain = 0.004f,
+    .phi_01 = SCALE(0.00476139134919619f, PBIO_OBSERVER_SCALE_HIGH),
+    .phi_11 = SCALE(0.906099484723787f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_0 = SCALE(0.684051954862549f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_1 = SCALE(269.197410994572f, PBIO_OBSERVER_SCALE_LOW),
+    .k_0 = SCALE(0.052359221241860474f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_1 = SCALE(0.000337807915176920f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_2 = SCALE(0.00666198910636721f, PBIO_OBSERVER_SCALE_HIGH),
+    .f_low = SCALE(0.011619602790697674f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gain = SCALE(0.004f, PBIO_OBSERVER_SCALE_TRQ),
 };
 
 static const pbio_control_settings_t settings_servo_technic_l_angular = {
@@ -135,15 +141,15 @@ static const pbio_control_settings_t settings_servo_technic_l_angular = {
 };
 
 static const pbio_observer_settings_t settings_observer_interactive = {
-    .phi_01 = 0.00476271917080314f,
-    .phi_11 = 0.906613349592095f,
-    .gam_0 = 2.93111612537300f,
-    .gam_1 = 1153.59979915647f,
-    .k_0 = 0.01500933205496964f,
-    .k_1 = 0.000275066965901687f,
-    .k_2 = 0.00539346991964092f,
-    .f_low = 0.005613422818791947f,
-    .obs_gain = 0.002f,
+    .phi_01 = SCALE(0.00476271917080314f, PBIO_OBSERVER_SCALE_HIGH),
+    .phi_11 = SCALE(0.906613349592095f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_0 = SCALE(2.93111612537300f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_1 = SCALE(1153.59979915647f, PBIO_OBSERVER_SCALE_LOW),
+    .k_0 = SCALE(0.01500933205496964f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_1 = SCALE(0.000275066965901687f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_2 = SCALE(0.00539346991964092f, PBIO_OBSERVER_SCALE_HIGH),
+    .f_low = SCALE(0.005613422818791947f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gain = SCALE(0.002f, PBIO_OBSERVER_SCALE_TRQ),
 };
 
 static const pbio_control_settings_t settings_servo_interactive = {
@@ -167,15 +173,15 @@ static const pbio_control_settings_t settings_servo_interactive = {
 #if PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
 
 static const pbio_observer_settings_t settings_observer_movehub = {
-    .phi_01 = 0.00482560542071840f,
-    .phi_11 = 0.931062779704023f,
-    .gam_0 = 2.20557850267909f,
-    .gam_1 = 871.853080213830f,
-    .k_0 = 0.02120903269295585f,
-    .k_1 = 0.000260968229954614f,
-    .k_2 = 0.00372811757078020f,
-    .f_low = 0.012417391304347828f,
-    .obs_gain = 0.002f,
+    .phi_01 = SCALE(0.00482560542071840f, PBIO_OBSERVER_SCALE_HIGH),
+    .phi_11 = SCALE(0.931062779704023f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_0 = SCALE(2.20557850267909f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_1 = SCALE(871.853080213830f, PBIO_OBSERVER_SCALE_LOW),
+    .k_0 = SCALE(0.02120903269295585f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_1 = SCALE(0.000260968229954614f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_2 = SCALE(0.00372811757078020f, PBIO_OBSERVER_SCALE_HIGH),
+    .f_low = SCALE(0.012417391304347828f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gain = SCALE(0.002f, PBIO_OBSERVER_SCALE_TRQ),
 };
 
 static const pbio_control_settings_t settings_servo_movehub = {
@@ -199,15 +205,15 @@ static const pbio_control_settings_t settings_servo_movehub = {
 #endif // PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
 
 static const pbio_observer_settings_t settings_observer_technic_l = {
-    .phi_01 = 0.00480673379919289f,
-    .phi_11 = 0.923702638108050f,
-    .gam_0 = 1.53998720733930f,
-    .gam_1 = 607.954007356971f,
-    .k_0 = 0.029291367521367528f,
-    .k_1 = 0.000269922879177378f,
-    .k_2 = 0.00428449014567267f,
-    .f_low = 0.013215000000000001f,
-    .obs_gain = 0.002f,
+    .phi_01 = SCALE(0.00480673379919289f, PBIO_OBSERVER_SCALE_HIGH),
+    .phi_11 = SCALE(0.923702638108050f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_0 = SCALE(1.53998720733930f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_1 = SCALE(607.954007356971f, PBIO_OBSERVER_SCALE_LOW),
+    .k_0 = SCALE(0.029291367521367528f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_1 = SCALE(0.000269922879177378f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_2 = SCALE(0.00428449014567267f, PBIO_OBSERVER_SCALE_HIGH),
+    .f_low = SCALE(0.013215000000000001f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gain = SCALE(0.002f, PBIO_OBSERVER_SCALE_TRQ),
 };
 
 static const pbio_control_settings_t settings_servo_technic_l = {
@@ -229,15 +235,15 @@ static const pbio_control_settings_t settings_servo_technic_l = {
 };
 
 static const pbio_observer_settings_t settings_observer_technic_xl = {
-    .phi_01 = 0.00481529951016882f,
-    .phi_11 = 0.927040916512593f,
-    .gam_0 = 1.66041757033247f,
-    .gam_1 = 655.886425902678f,
-    .k_0 = 0.025904742547425474f,
-    .k_1 = 0.000283410138248848f,
-    .k_2 = 0.00429409300377042f,
-    .f_low = 0.006446341463414635f,
-    .obs_gain = 0.002f,
+    .phi_01 = SCALE(0.00481529951016882f, PBIO_OBSERVER_SCALE_HIGH),
+    .phi_11 = SCALE(0.927040916512593f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_0 = SCALE(1.66041757033247f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_1 = SCALE(655.886425902678f, PBIO_OBSERVER_SCALE_LOW),
+    .k_0 = SCALE(0.025904742547425474f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_1 = SCALE(0.000283410138248848f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_2 = SCALE(0.00429409300377042f, PBIO_OBSERVER_SCALE_HIGH),
+    .f_low = SCALE(0.006446341463414635f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gain = SCALE(0.002f, PBIO_OBSERVER_SCALE_TRQ),
 };
 
 static const pbio_control_settings_t settings_servo_technic_xl = {
