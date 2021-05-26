@@ -266,8 +266,6 @@ STATIC const mp_rom_map_elem_t hubs_MoveHub_locals_dict_table[] = {
     #if PYBRICKS_PY_COMMON_SYSTEM
     { MP_ROM_QSTR(MP_QSTR_system),      MP_ROM_PTR(&pb_type_System_obj)                    },
     #endif
-    { MP_ROM_QSTR(MP_QSTR_reset),       MP_ROM_PTR(&pb_hubs_Hub_reset_obj) },
-    { MP_ROM_QSTR(MP_QSTR_reset_reason),MP_ROM_PTR(&pb_hubs_Hub_reset_reason_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_MoveHub_locals_dict, hubs_MoveHub_locals_dict_table);
 
