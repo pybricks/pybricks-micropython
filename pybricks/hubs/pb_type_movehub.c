@@ -261,8 +261,11 @@ STATIC mp_obj_t hubs_MoveHub_make_new(const mp_obj_type_t *type, size_t n_args, 
 
 STATIC const mp_rom_map_elem_t hubs_MoveHub_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)    },
-    { MP_ROM_QSTR(MP_QSTR_imu),         MP_ROM_ATTRIBUTE_OFFSET(hubs_MoveHub_obj_t, imu) },
+    { MP_ROM_QSTR(MP_QSTR_imu),         MP_ROM_ATTRIBUTE_OFFSET(hubs_MoveHub_obj_t, imu)   },
     { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_ATTRIBUTE_OFFSET(hubs_MoveHub_obj_t, light) },
+    #if PYBRICKS_PY_COMMON_SYSTEM
+    { MP_ROM_QSTR(MP_QSTR_system),      MP_ROM_PTR(&pb_type_System_obj)                    },
+    #endif
     { MP_ROM_QSTR(MP_QSTR_reset),       MP_ROM_PTR(&pb_hubs_Hub_reset_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_reason),MP_ROM_PTR(&pb_hubs_Hub_reset_reason_obj) },
 };

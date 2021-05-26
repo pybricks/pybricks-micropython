@@ -247,6 +247,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	common/pb_type_lightarray.c \
 	common/pb_type_logger.c \
 	common/pb_type_motor.c \
+	common/pb_type_system.c \
 	experimental/pb_module_experimental.c \
 	ev3devices/pb_module_ev3devices.c \
 	ev3devices/pb_type_ev3devices_colorsensor.c \

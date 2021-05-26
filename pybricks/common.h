@@ -94,6 +94,13 @@ mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis, mp_obj_t front_side_axis);
 
 #endif // PYBRICKS_PY_COMMON_IMU
 
+
+#if PYBRICKS_PY_COMMON_SYSTEM
+
+extern const mp_obj_base_t pb_type_System_obj;
+
+#endif // PYBRICKS_PY_COMMON_SYSTEM
+
 #endif // PYBRICKS_PY_COMMON
 
 #endif // PYBRICKS_INCLUDED_PYBRICKS_COMMON_H

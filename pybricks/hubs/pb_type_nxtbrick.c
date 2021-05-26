@@ -32,6 +32,7 @@ STATIC const mp_rom_map_elem_t hubs_NXTBrick_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_buttons),     MP_ROM_ATTRIBUTE_OFFSET(hubs_NXTBrick_obj_t, buttons) },
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)                        },
     { MP_ROM_QSTR(MP_QSTR_reset),       MP_ROM_PTR(&pb_hubs_Hub_reset_obj) },
+    { MP_ROM_QSTR(MP_QSTR_system),      MP_ROM_PTR(&pb_type_System_obj)                       },
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_NXTBrick_locals_dict, hubs_NXTBrick_locals_dict_table);
 
