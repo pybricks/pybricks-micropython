@@ -234,6 +234,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	pupdevices/pb_type_pupdevices_infraredsensor.c \
 	pupdevices/pb_type_pupdevices_light.c \
 	pupdevices/pb_type_pupdevices_pfmotor.c \
+	pupdevices/pb_type_pupdevices_remote.c \
 	pupdevices/pb_type_pupdevices_tiltsensor.c \
 	pupdevices/pb_type_pupdevices_ultrasonicsensor.c \
 	pybricks.c \

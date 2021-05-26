@@ -20,6 +20,7 @@ extern const mp_obj_type_t pb_type_pupdevices_ForceSensor;
 extern const mp_obj_type_t pb_type_pupdevices_InfraredSensor;
 extern const mp_obj_type_t pb_type_pupdevices_Light;
 extern const mp_obj_type_t pb_type_pupdevices_PFMotor;
+extern const mp_obj_type_t pb_type_pupdevices_Remote;
 extern const mp_obj_type_t pb_type_pupdevices_TiltSensor;
 extern const mp_obj_type_t pb_type_pupdevices_UltrasonicSensor;
 

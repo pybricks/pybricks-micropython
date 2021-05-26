@@ -20,6 +20,7 @@ STATIC const mp_rom_map_elem_t pupdevices_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_InfraredSensor),      MP_ROM_PTR(&pb_type_pupdevices_InfraredSensor)     },
     { MP_ROM_QSTR(MP_QSTR_Light),               MP_ROM_PTR(&pb_type_pupdevices_Light)              },
     { MP_ROM_QSTR(MP_QSTR_PFMotor),             MP_ROM_PTR(&pb_type_pupdevices_PFMotor)            },
+    { MP_ROM_QSTR(MP_QSTR_Remote),              MP_ROM_PTR(&pb_type_pupdevices_Remote)             },
     { MP_ROM_QSTR(MP_QSTR_TiltSensor),          MP_ROM_PTR(&pb_type_pupdevices_TiltSensor)         },
     { MP_ROM_QSTR(MP_QSTR_UltrasonicSensor),    MP_ROM_PTR(&pb_type_pupdevices_UltrasonicSensor)   },
 };
