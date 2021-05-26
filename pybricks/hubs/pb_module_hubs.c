@@ -41,10 +41,10 @@ MP_DEFINE_CONST_FUN_OBJ_1(pb_hubs_Hub_reset_reason_obj, pb_hubs_Hub_reset_reason
 #endif // PBDRV_CONFIG_RESET
 
 STATIC const mp_rom_map_elem_t hubs_globals_table[] = {
-    { MP_ROM_QSTR(MP_QSTR___name__),              MP_ROM_QSTR(MP_QSTR_hubs)      },
-    { MP_ROM_QSTR(PYBRICKS_HUB_CLASS_NAME),       MP_ROM_PTR(&pb_type_SystemHub) },
+    { MP_ROM_QSTR(MP_QSTR___name__),              MP_ROM_QSTR(MP_QSTR_hubs)    },
+    { MP_ROM_QSTR(PYBRICKS_HUB_CLASS_NAME),       MP_ROM_PTR(&pb_type_ThisHub) },
     #ifdef PYBRICKS_HUB_CLASS_NAME_ALIAS
-    { MP_ROM_QSTR(PYBRICKS_HUB_CLASS_NAME_ALIAS), MP_ROM_PTR(&pb_type_SystemHub) },
+    { MP_ROM_QSTR(PYBRICKS_HUB_CLASS_NAME_ALIAS), MP_ROM_PTR(&pb_type_ThisHub) },
     #endif
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_hubs_globals, hubs_globals_table);

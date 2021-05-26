@@ -112,6 +112,6 @@ void pb_package_import_all(void) {
     #if PYBRICKS_PY_HUBS
     // Initialize hub instance
     const mp_obj_t args;
-    mp_store_name(MP_QSTR_hub, pb_type_SystemHub.make_new(&pb_type_SystemHub, 0, 0, &args));
+    mp_store_name(MP_QSTR_hub, pb_type_ThisHub.make_new(&pb_type_ThisHub, 0, 0, &args));
     #endif
 }

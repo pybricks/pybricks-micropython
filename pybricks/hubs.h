@@ -13,7 +13,7 @@
 MP_DECLARE_CONST_FUN_OBJ_2(pb_hubs_Hub_reset_obj);
 MP_DECLARE_CONST_FUN_OBJ_1(pb_hubs_Hub_reset_reason_obj);
 
-extern const mp_obj_type_t pb_type_SystemHub;
+extern const mp_obj_type_t pb_type_ThisHub;
 
 extern const mp_obj_module_t pb_module_hubs;
 
