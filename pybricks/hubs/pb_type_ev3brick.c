@@ -41,7 +41,7 @@ STATIC mp_obj_t hubs_EV3Brick_make_new(const mp_obj_type_t *type, size_t n_args,
 
     self->light = common_ColorLight_internal_obj_new(ev3dev_status_light);
 
-    self->buttons = pb_type_Keypad_obj_new(PBIO_ARRAY_SIZE(ev3brick_buttons), ev3brick_buttons);
+    self->buttons = pb_type_Keypad_obj_new(PBIO_ARRAY_SIZE(ev3brick_buttons), ev3brick_buttons, pbio_button_is_pressed);
 
     return MP_OBJ_FROM_PTR(self);
 }

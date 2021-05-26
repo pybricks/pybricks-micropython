@@ -24,7 +24,7 @@ static const pb_obj_enum_member_t *nxtbrick_buttons[] = {
 STATIC mp_obj_t hubs_NXTBrick_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     hubs_NXTBrick_obj_t *self = m_new_obj(hubs_NXTBrick_obj_t);
     self->base.type = (mp_obj_type_t *)type;
-    self->buttons = pb_type_Keypad_obj_new(PBIO_ARRAY_SIZE(nxtbrick_buttons), nxtbrick_buttons);
+    self->buttons = pb_type_Keypad_obj_new(PBIO_ARRAY_SIZE(nxtbrick_buttons), nxtbrick_buttons, pbio_button_is_pressed);
     return MP_OBJ_FROM_PTR(self);
 }
 

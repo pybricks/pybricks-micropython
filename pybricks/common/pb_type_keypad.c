@@ -19,6 +19,7 @@ typedef struct _common_Keypad_obj_t {
     mp_obj_base_t base;
     uint8_t number_of_buttons;
     const pb_obj_enum_member_t **buttons;
+    pbio_button_is_pressed_func_t is_pressed;
 } common_Keypad_obj_t;
 
 // pybricks._common.Keypad.pressed
@@ -27,7 +28,7 @@ STATIC mp_obj_t common_Keypad_pressed(mp_obj_t self_in) {
 
     // Read button combination code.
     pbio_button_flags_t pressed;
-    pb_assert(pbio_button_is_pressed(&pressed));
+    pb_assert(self->is_pressed(&pressed));
 
     mp_obj_t button_list[PBIO_BUTTON_NUM_BUTTONS];
     uint8_t size = 0;
@@ -56,7 +57,7 @@ STATIC const mp_obj_type_t pb_type_Keypad = {
 };
 
 // pybricks._common.Keypad.__init__
-mp_obj_t pb_type_Keypad_obj_new(uint8_t number_of_buttons, const pb_obj_enum_member_t **buttons) {
+mp_obj_t pb_type_Keypad_obj_new(uint8_t number_of_buttons, const pb_obj_enum_member_t **buttons, pbio_button_is_pressed_func_t is_pressed) {
     // Create new light instance
     common_Keypad_obj_t *self = m_new_obj(common_Keypad_obj_t);
     self->base.type = &pb_type_Keypad;
@@ -64,6 +65,7 @@ mp_obj_t pb_type_Keypad_obj_new(uint8_t number_of_buttons, const pb_obj_enum_mem
     // Store hub specific button info
     self->number_of_buttons = number_of_buttons;
     self->buttons = buttons;
+    self->is_pressed = is_pressed;
 
     return self;
 }

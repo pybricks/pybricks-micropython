@@ -100,6 +100,9 @@ typedef enum _pbio_button_flags_t {
 
 } pbio_button_flags_t;
 
+// Generic button state getter
+typedef pbio_error_t (*pbio_button_is_pressed_func_t)(pbio_button_flags_t *pressed);
+
 #ifdef DOXYGEN
 
 /**

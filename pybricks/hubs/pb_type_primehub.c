@@ -15,6 +15,8 @@
 #include "py/runtime.h"
 #include "py/obj.h"
 
+#include <pbio/button.h>
+
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
 #include <pybricks/common.h>
@@ -44,7 +46,7 @@ STATIC mp_obj_t hubs_PrimeHub_make_new(const mp_obj_type_t *type, size_t n_args,
 
     hubs_PrimeHub_obj_t *self = m_new_obj(hubs_PrimeHub_obj_t);
     self->base.type = (mp_obj_type_t *)type;
-    self->buttons = pb_type_Keypad_obj_new(PBIO_ARRAY_SIZE(primehub_buttons), primehub_buttons);
+    self->buttons = pb_type_Keypad_obj_new(PBIO_ARRAY_SIZE(primehub_buttons), primehub_buttons, pbio_button_is_pressed);
     self->display = pb_type_Lightmatrix_obj_new(pbsys_hub_light_matrix);
     self->imu = pb_type_IMU_obj_new(top_side_in, front_side_in);
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light);

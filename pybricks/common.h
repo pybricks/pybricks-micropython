@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 
+#include <pbio/button.h>
 #include <pbio/light.h>
 
 #include "py/obj.h"
@@ -37,7 +38,7 @@ mp_obj_t pb_type_Lightmatrix_obj_new(pbio_light_matrix_t *light_matrix);
 
 #if PYBRICKS_PY_COMMON_KEYPAD
 // pybricks._common.KeyPad()
-mp_obj_t pb_type_Keypad_obj_new(uint8_t number_of_buttons, const pb_obj_enum_member_t **buttons);
+mp_obj_t pb_type_Keypad_obj_new(uint8_t number_of_buttons, const pb_obj_enum_member_t **buttons, pbio_button_is_pressed_func_t is_pressed);
 #endif
 
 // pybricks._common.Battery()
