@@ -21,19 +21,23 @@ struct _pbio_tacho_t {
 static pbio_tacho_t tachos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 static pbio_error_t pbio_tacho_reset_count(pbio_tacho_t *tacho, int32_t reset_count) {
-    int32_t count_no_offset;
+    int32_t count;
     pbio_error_t err;
 
-    // First get the counter value without any offsets, but with the appropriate polarity/sign.
-    err = pbio_tacho_get_count(tacho, &count_no_offset);
+    // See pbio_tacho_get_count for a definition of count. Here we want to set
+    // the offset such that afterwards, count will equal reset_count. So:
+    // new_offset = raw_count * direction - reset_count
+    // which, given the definition of pbio_tacho_get_count, can be written as:
+    // new_offset = pbio_tacho_get_count + old_offset - reset_count
+
+    // First get the counter value with the existing offset subtracted.
+    err = pbio_tacho_get_count(tacho, &count);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    count_no_offset += tacho->offset;
-
     // Calculate the new offset
-    tacho->offset = count_no_offset - reset_count;
+    tacho->offset = count + tacho->offset - reset_count;
 
     return PBIO_SUCCESS;
 }
@@ -96,16 +100,24 @@ pbio_error_t pbio_tacho_get(pbio_port_t port, pbio_tacho_t **tacho, pbio_directi
 }
 
 pbio_error_t pbio_tacho_get_count(pbio_tacho_t *tacho, int32_t *count) {
+
+    // In the tacho module, count is determined as:
+    // count = raw_count * direction - offset
+    // This is done in three steps below.
     pbio_error_t err;
 
+    // Get raw counter value.
     err = pbdrv_counter_get_count(tacho->counter, count);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
+    // Set sign.
     if (tacho->direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
         *count = -*count;
     }
+
+    // Subtract offset.
     *count -= tacho->offset;
 
     return PBIO_SUCCESS;
