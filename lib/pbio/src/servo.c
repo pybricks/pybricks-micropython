@@ -16,6 +16,20 @@
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
+static pbio_error_t pbio_servo_observer_reset(pbio_servo_t *srv) {
+
+    // Get current count.
+    int32_t count_now;
+    pbio_error_t err = pbio_tacho_get_count(srv->tacho, &count_now);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Use count to initialize observer.
+    pbio_observer_reset(&srv->observer, count_now, 0);
+    return PBIO_SUCCESS;
+}
+
 pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio) {
     pbio_error_t err;
 
@@ -45,15 +59,8 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     // For a servo, counts per output unit is counts per degree at the gear train output
     srv->control.settings.counts_per_unit = fix16_mul(F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0), gear_ratio);
 
-    // Get current position and use it to reset the state observer
-    int32_t count_now;
-    err = pbio_tacho_get_count(srv->tacho, &count_now);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    pbio_observer_reset(&srv->observer, count_now, 0);
-
-    return PBIO_SUCCESS;
+    // Initialize observer.
+    return pbio_servo_observer_reset(srv);
 }
 
 bool pbio_servo_is_connected(pbio_servo_t *srv) {
@@ -73,13 +80,14 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
         return PBIO_ERROR_INVALID_OP;
     }
 
-    // Reset the state observer
-    pbio_observer_reset(&srv->observer, reset_angle, 0);
-
     // If the motor was in a passive mode (coast, brake, user duty),
-    // just reset angle and leave motor state unchanged.
+    // just reset angle and observer and leave physical motor state unchanged.
     if (srv->control.type == PBIO_CONTROL_NONE) {
-        return pbio_tacho_reset_angle(srv->tacho, &reset_angle, reset_to_abs);
+        err = pbio_tacho_reset_angle(srv->tacho, &reset_angle, reset_to_abs);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+        return pbio_servo_observer_reset(srv);
     }
 
     // If are were busy moving, that means the reset was called while a motor
@@ -101,6 +109,12 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
 
     // Reset the angle
     err = pbio_tacho_reset_angle(srv->tacho, &reset_angle, reset_to_abs);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Reset observer to new angle
+    err = pbio_servo_observer_reset(srv);
     if (err != PBIO_SUCCESS) {
         return err;
     }
