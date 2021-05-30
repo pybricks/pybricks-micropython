@@ -139,12 +139,13 @@ pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, int32_t *angle) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t reset_angle, bool reset_to_abs) {
+pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t *reset_angle, bool reset_to_abs) {
     if (reset_to_abs) {
-        int32_t abs_count;
-        return pbio_tacho_reset_count_to_abs(tacho, &abs_count);
+        pbio_error_t err = pbio_tacho_reset_count_to_abs(tacho, reset_angle);
+        *reset_angle = pbio_math_div_i32_fix16(*reset_angle, tacho->counts_per_degree);
+        return err;
     } else {
-        return pbio_tacho_reset_count(tacho, pbio_math_mul_i32_fix16(reset_angle, tacho->counts_per_degree));
+        return pbio_tacho_reset_count(tacho, pbio_math_mul_i32_fix16(*reset_angle, tacho->counts_per_degree));
     }
 }
 

@@ -20,7 +20,7 @@ pbio_error_t pbio_tacho_get(pbio_port_t port, pbio_tacho_t **tacho, pbio_directi
 
 pbio_error_t pbio_tacho_get_count(pbio_tacho_t *tacho, int32_t *count);
 pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, int32_t *angle);
-pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t reset_angle, bool reset_to_abs);
+pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t *reset_angle, bool reset_to_abs);
 pbio_error_t pbio_tacho_get_rate(pbio_tacho_t *tacho, int32_t *encoder_rate);
 pbio_error_t pbio_tacho_get_angular_rate(pbio_tacho_t *tacho, int32_t *angular_rate);
 
@@ -36,7 +36,7 @@ static inline pbio_error_t pbio_tacho_get_count(pbio_tacho_t *tacho, int32_t *co
 static inline pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, int32_t *angle) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t reset_angle, bool reset_to_abs) {
+static inline pbio_error_t pbio_tacho_reset_angle(pbio_tacho_t *tacho, int32_t *reset_angle, bool reset_to_abs) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline pbio_error_t pbio_tacho_get_rate(pbio_tacho_t *tacho, int32_t *encoder_rate) {

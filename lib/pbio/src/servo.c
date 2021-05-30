@@ -79,7 +79,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     // If the motor was in a passive mode (coast, brake, user duty),
     // just reset angle and leave motor state unchanged.
     if (srv->control.type == PBIO_CONTROL_NONE) {
-        return pbio_tacho_reset_angle(srv->tacho, reset_angle, reset_to_abs);
+        return pbio_tacho_reset_angle(srv->tacho, &reset_angle, reset_to_abs);
     }
 
     // If are were busy moving, that means the reset was called while a motor
@@ -100,7 +100,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     int32_t target_old = pbio_control_counts_to_user(&srv->control.settings, count_ref);
 
     // Reset the angle
-    err = pbio_tacho_reset_angle(srv->tacho, reset_angle, reset_to_abs);
+    err = pbio_tacho_reset_angle(srv->tacho, &reset_angle, reset_to_abs);
     if (err != PBIO_SUCCESS) {
         return err;
     }
