@@ -46,6 +46,16 @@ assert 85 <= motor.angle() <= 95, "Unable to put motor in +90 position."
 motor = Motor(Port.A, Direction.COUNTERCLOCKWISE)
 assert -85 >= motor.angle() >= -95, "Unexpected angle after CCW init."
 
+# Test angle reset during hold.
+motor.reset_angle()
+motor.run_target(500, 180)
+wait(500)
+for reset_target in (0, 360, 90, None):
+    motor.reset_angle(reset_target)
+    for i in range(50):
+        assert motor.speed() < 10, "Motor moved during reset"
+        wait(10)
+
 # Test DC positive direction signs.
 for direction in (Direction.CLOCKWISE, Direction.COUNTERCLOCKWISE, "default"):
 
