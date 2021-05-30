@@ -16,7 +16,6 @@ from pybricks.robotics import DriveBase
 left_motor = Motor(Port.C, Direction.COUNTERCLOCKWISE)
 right_motor = Motor(Port.D)
 drive_base = DriveBase(left_motor, right_motor, wheel_diameter=44, axle_track=14 * 8)
-drive_base.reset()
 
 # Allocate logs for motors and controller signals.
 DURATION = 6000

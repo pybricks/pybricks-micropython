@@ -76,6 +76,9 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     self->turn_rate = turn_rate_limit / 4;
     self->turn_acceleration = turn_acceleration_limit / 4;
 
+    // Reset drivebase state
+    pb_assert(pbio_drivebase_reset_state(self->db));
+
     return MP_OBJ_FROM_PTR(self);
 }
 
