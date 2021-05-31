@@ -17,11 +17,81 @@
 #include <pybricks/common.h>
 #include <pybricks/parameters.h>
 #include <pybricks/pupdevices.h>
+#include <pybricks/tools.h>
 
 #include <pybricks/util_pb/pb_error.h>
 #include <pybricks/util_pb/pb_device.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
+
+/**
+ * A generator-like type for waiting on a motor operation to complete.
+ */
+typedef struct {
+    mp_obj_base_t base;
+    /**
+     * Servo object that this object is awaiting on.
+     */
+    pbio_servo_t *srv;
+} pb_type_MotorWait_obj_t;
+
+// The __next__() method should raise a StopIteration if the operation is
+// complete.
+STATIC mp_obj_t pb_type_MotorWait_iternext(mp_obj_t self_in) {
+    pb_type_MotorWait_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    if (0 /*cancelled*/) {
+        // TODO: Handle cancelled.
+        return MP_OBJ_STOP_ITERATION;
+    }
+
+    // Handle I/O exceptions.
+    if (!pbio_servo_update_loop_is_running(self->srv)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+
+    // If not done yet, keep going.
+    if (!pbio_control_is_done(&self->srv->control)) {
+        return mp_const_none;
+    }
+
+    // Otherwise we are completing a normal operation.
+    return MP_OBJ_STOP_ITERATION;
+}
+
+// The close() method is used to cancel an operation before it completes. If
+// the operation is already complete, it should do nothing. It can be called
+// more than once.
+STATIC mp_obj_t pb_type_MotorWait_close(mp_obj_t self_in) {
+    pb_type_MotorWait_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    // REVISIT: We only need to call an explicit stop if a task is cancelled
+    // by something other than a motor.
+    pb_assert(pbio_dcmotor_user_command(self->srv->dcmotor, true, 0));
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_MotorWait_close_obj, pb_type_MotorWait_close);
+
+STATIC const mp_rom_map_elem_t pb_type_MotorWait_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_close), MP_ROM_PTR(&pb_type_MotorWait_close_obj) },
+};
+MP_DEFINE_CONST_DICT(pb_type_MotorWait_locals_dict, pb_type_MotorWait_locals_dict_table);
+
+// This is a partial implementation of the Python generator type. It is missing
+// send(value) and throw(type[, value[, traceback]])
+MP_DEFINE_CONST_OBJ_TYPE(pb_type_MotorWait,
+    MP_QSTR_MotorWait,
+    MP_TYPE_FLAG_ITER_IS_ITERNEXT,
+    iter, pb_type_MotorWait_iternext,
+    locals_dict, &pb_type_MotorWait_locals_dict);
+
+STATIC mp_obj_t pb_type_MotorWait_new(pbio_servo_t *srv) {
+    pb_type_MotorWait_obj_t *self = m_new_obj(pb_type_MotorWait_obj_t);
+    self->base.type = &pb_type_MotorWait;
+    self->srv = srv;
+    return MP_OBJ_FROM_PTR(self);
+}
 
 /* Wait for servo maneuver to complete */
 
@@ -215,6 +285,12 @@ STATIC mp_obj_t common_Motor_run_time(size_t n_args, const mp_obj_t *pos_args, m
     // Call pbio with parsed user/default arguments
     pb_assert(pbio_servo_run_time(self->srv, speed, time, then));
 
+    // Handle async case, return a generator.
+    if (pb_module_tools_run_loop_is_active()) {
+        return pb_type_MotorWait_new(self->srv);
+    }
+
+    // Otherwise, handle default blocking wait.
     if (mp_obj_is_true(wait_in)) {
         wait_for_completion(self->srv);
     }
@@ -311,6 +387,12 @@ STATIC mp_obj_t common_Motor_run_angle(size_t n_args, const mp_obj_t *pos_args, 
     // Call pbio with parsed user/default arguments
     pb_assert(pbio_servo_run_angle(self->srv, speed, angle, then));
 
+    // Handle async case, return a generator.
+    if (pb_module_tools_run_loop_is_active()) {
+        return pb_type_MotorWait_new(self->srv);
+    }
+
+    // Otherwise, handle default blocking wait.
     if (mp_obj_is_true(wait_in)) {
         wait_for_completion(self->srv);
     }
@@ -335,6 +417,12 @@ STATIC mp_obj_t common_Motor_run_target(size_t n_args, const mp_obj_t *pos_args,
     // Call pbio with parsed user/default arguments
     pb_assert(pbio_servo_run_target(self->srv, speed, target_angle, then));
 
+    // Handle async case, return a generator.
+    if (pb_module_tools_run_loop_is_active()) {
+        return pb_type_MotorWait_new(self->srv);
+    }
+
+    // Otherwise, handle default blocking wait.
     if (mp_obj_is_true(wait_in)) {
         wait_for_completion(self->srv);
     }
