@@ -318,6 +318,10 @@ restart:
         }
     }
 
+    #if PYBRICKS_PY_EXPERIMENTAL && PYBRICKS_HUB_PRIMEHUB
+    extern void pb_type_Remote_cleanup(void);
+    pb_type_Remote_cleanup();
+    #endif
     pbsys_user_program_unprepare();
 }
 

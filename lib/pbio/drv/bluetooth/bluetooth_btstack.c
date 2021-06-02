@@ -121,9 +121,18 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                 break;
             }
 
+            // HCI_ROLE_SLAVE means the connecting device is the central and the hub is the peripheral
+            if (hci_subevent_le_connection_complete_get_role(packet) != HCI_ROLE_SLAVE) {
+                break;
+            }
+
             le_con_handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
             break;
         case HCI_EVENT_DISCONNECTION_COMPLETE:
+            if (hci_event_disconnection_complete_get_connection_handle(packet) != le_con_handle) {
+                break;
+            }
+
             le_con_handle = HCI_CON_HANDLE_INVALID;
             pybricks_con_handle = HCI_CON_HANDLE_INVALID;
             uart_con_handle = HCI_CON_HANDLE_INVALID;
@@ -181,6 +190,9 @@ void pbdrv_bluetooth_init(void) {
     sm_set_io_capabilities(IO_CAPABILITY_NO_INPUT_NO_OUTPUT);
     sm_set_er((uint8_t *)pdata->er_key);
     sm_set_ir((uint8_t *)pdata->ir_key);
+
+    // GATT Client setup
+    gatt_client_init();
 
     // setup ATT server
     att_server_init(profile_data, att_read_callback, NULL);
