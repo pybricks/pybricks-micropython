@@ -14,6 +14,7 @@
 #include <pybricks/common.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 
+#include "lib/mp-readline/readline.h"
 #include "lib/utils/gchelper.h"
 #include "lib/utils/interrupt_char.h"
 #include "lib/utils/pyexec.h"
@@ -268,9 +269,6 @@ static void run_user_program(uint32_t len, uint8_t *buf, uint32_t free_len) {
     bool import_all = run_repl;
     #endif
 
-    // Allow script to be stopped with CTRL+C
-    mp_hal_set_interrupt_char(3);
-
 restart:
     // Hook into pbsys
     pbsys_user_program_prepare(&user_program_callbacks);
@@ -298,10 +296,17 @@ restart:
             mp_reader_new_mem(&reader, buf, len, free_len);
             mp_raw_code_t *raw_code = mp_raw_code_load(&reader);
             mp_obj_t module_fun = mp_make_function_from_raw_code(raw_code, MP_OBJ_NULL, MP_OBJ_NULL);
+            mp_hal_set_interrupt_char(CHAR_CTRL_C); // allow ctrl-C to interrupt us
             mp_call_function_0(module_fun);
+            mp_hal_set_interrupt_char(-1); // disable interrupt
+            mp_handle_pending(true); // handle any pending exceptions (and any callbacks)
         }
         nlr_pop();
     } else {
+        // uncaught exception
+        mp_hal_set_interrupt_char(-1); // disable interrupt
+        mp_handle_pending(false); // clear any pending exceptions (and run any callbacks)
+
         // Need to unprepare, otherwise SystemExit could be raised during print.
         pbsys_user_program_unprepare();
         mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
@@ -314,7 +319,6 @@ restart:
     }
 
     pbsys_user_program_unprepare();
-    mp_hal_set_interrupt_char(-1);
 }
 
 int main(int argc, char **argv) {
