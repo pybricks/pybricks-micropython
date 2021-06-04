@@ -1,11 +1,11 @@
 # Should be able to smoothly transition between all colors.
 
-from pybricks.hubs import *  # noqa: F401, F403
+from pybricks.hubs import ThisHub
 from pybricks.parameters import Color
 from pybricks.tools import wait
 
-# sneaky way to get XyzHub class without knowning which hub
-hub = next(v for k, v in globals().items() if k.endswith("Hub"))()
+# Initialize this hub, whichever it is.
+hub = ThisHub()
 
 # Every possible hue with 100% saturation, 100% brightness.
 # Note: In real programs, use every 2 or 3 degrees to save memory.

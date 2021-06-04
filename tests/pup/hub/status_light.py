@@ -3,12 +3,12 @@
 
 # Press the stop button to advance to the next color
 
-from pybricks.hubs import *  # noqa: F401, F403
+from pybricks.hubs import ThisHub
 from pybricks.parameters import Color
 from pybricks.tools import wait
 
-# sneaky way to get XyzHub class without knowning which hub
-hub = next(v for k, v in globals().items() if k.endswith("Hub"))()
+# Initialize this hub, whichever it is.
+hub = ThisHub()
 
 for c in Color:
     print("Color:", c)
