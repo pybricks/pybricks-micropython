@@ -261,6 +261,11 @@ pbio_error_t pbdrv_ioport_get_iodev(pbio_port_t port, pbio_iodev_t **iodev) {
         return PBIO_ERROR_NO_DEV;
     }
 
+    // If there is an iodev but we don't know which one yet, it is syncing
+    if ((*iodev)->info->type_id == PBIO_IODEV_TYPE_ID_NONE) {
+        return PBIO_ERROR_AGAIN;
+    }
+
     return PBIO_SUCCESS;
 }
 
