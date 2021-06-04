@@ -694,6 +694,9 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 }
             }
 
+            // setting type_id in info struct lets external modules know a device is connected and receiving good data
+            data->info->type_id = data->type_id;
+
             data->data_rec = true;
             if (data->num_data_err) {
                 data->num_data_err--;
@@ -985,8 +988,6 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
     PBIO_PT_WAIT_READY(&data->pt, pbdrv_uart_set_baud_rate(data->uart, data->new_baud_rate));
     debug_pr("set baud: %" PRIu32 "\n", data->new_baud_rate);
 
-    // setting type_id in info struct lets external modules know a device is connected
-    data->info->type_id = data->type_id;
     data->status = PBIO_UARTDEV_STATUS_DATA;
     // reset data rx thread
     PT_INIT(&data->data_pt);
