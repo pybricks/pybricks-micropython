@@ -59,6 +59,11 @@ STATIC mp_obj_t common_Lightmatrix_char(size_t n_args, const mp_obj_t *pos_args,
         common_Lightmatrix_obj_t, self,
         PB_ARG_REQUIRED(char));
 
+    // Argument must be a qstring or string
+    if (!mp_obj_is_qstr(char_in)) {
+        pb_assert_type(char_in, &mp_type_str);
+    }
+
     // Assert that the input is a single character
     GET_STR_DATA_LEN(char_in, text, text_len);
     if (text_len != 1 || text[0] < 32 || text[0] > 126) {
