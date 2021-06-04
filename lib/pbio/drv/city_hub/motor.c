@@ -17,22 +17,6 @@
 #include <pbio/iodev.h>
 #include <pbio/port.h>
 
-static pbio_iodev_t *get_iodev(pbio_port_t port) {
-    pbio_iodev_t *iodev;
-    pbio_error_t err;
-
-    err = pbdrv_ioport_get_iodev(port, &iodev);
-    if (err != PBIO_SUCCESS) {
-        return NULL;
-    }
-
-    if (!PBIO_IODEV_IS_MOTOR(iodev)) {
-        return NULL;
-    }
-
-    return iodev;
-}
-
 pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
 
     // set both port pins 1 and 2 to output low
@@ -149,11 +133,16 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
 }
 
 pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
+
     pbio_iodev_t *iodev;
+    pbio_error_t err;
 
-    iodev = get_iodev(port);
+    err = pbdrv_ioport_get_iodev(port, &iodev);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
-    if (!iodev) {
+    if (!PBIO_IODEV_IS_MOTOR(iodev)) {
         return PBIO_ERROR_NO_DEV;
     }
 
