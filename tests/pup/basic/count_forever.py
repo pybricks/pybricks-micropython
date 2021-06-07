@@ -1,10 +1,11 @@
-# Should be able to print forever in a tight loop.
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2020 The Pybricks Authors
 
-# Used to reproduce bug on https://github.com/pybricks/support/issues/163
-# and https://github.com/pybricks/support/issues/36
+"""
+Hardware Module: Any hub.
 
-# If it gets to at least 100000, things are looking good.
-
+Description: Print a long time in a tight loop.
+"""
 
 def count():
     n = 0
@@ -15,3 +16,5 @@ def count():
 
 for n in count():
     print("count:", n)
+    if n >= 10000:
+        break

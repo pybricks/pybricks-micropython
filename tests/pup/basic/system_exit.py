@@ -1,4 +1,11 @@
-# Should be able to catch SystemExit from the stop button.
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2020 The Pybricks Authors
+
+"""
+Hardware Module: Any hub.
+
+Description: Catch SystemExit from the stop button.
+"""
 
 from pybricks.tools import wait
 
