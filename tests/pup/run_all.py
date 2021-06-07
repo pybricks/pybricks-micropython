@@ -17,6 +17,10 @@ async def main():
         if dirpath != ".":
             scripts += [os.path.join(dirpath, name) for name in filenames if ".py" == name[-3:]]
 
+    # Sort tests to re-run previously failed tests first.
+    test_passed = lambda name: (not os.path.exists(name[:-3] + ".out"), name)
+    scripts.sort(key=test_passed)
+
     # Establish connection.
     device = await find_device("Pybricks Hub")
     hub = PybricksHub()
