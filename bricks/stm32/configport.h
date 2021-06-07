@@ -92,6 +92,7 @@
 #define MICROPY_PY_UERRNO_LIST \
     X(EPERM) \
     X(EIO) \
+    X(EBUSY) \
     X(ENODEV) \
     X(EINVAL) \
     X(EOPNOTSUPP) \

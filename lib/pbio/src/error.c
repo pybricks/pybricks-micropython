@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include <stddef.h>
 
@@ -22,6 +22,8 @@ const char *pbio_error_str(pbio_error_t err) {
             return "Invalid port";
         case PBIO_ERROR_IO:
             return "I/O error";
+        case PBIO_ERROR_BUSY:
+            return "Device or resource busy";
         case PBIO_ERROR_NO_DEV:
             return "Device not connected";
         case PBIO_ERROR_NOT_IMPLEMENTED:

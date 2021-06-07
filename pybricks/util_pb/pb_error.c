@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include "py/mpconfig.h"
 #include "py/mperrno.h"
@@ -36,6 +36,9 @@ void pb_assert(pbio_error_t error) {
             return;
         case PBIO_ERROR_IO:
             os_err = MP_EIO;
+            break;
+        case PBIO_ERROR_BUSY:
+            os_err = MP_EBUSY;
             break;
         case PBIO_ERROR_NO_DEV:
             os_err = MP_ENODEV;
@@ -105,6 +108,10 @@ void pb_assert(pbio_error_t error) {
         case PBIO_ERROR_IO:
             args[0] = MP_OBJ_NEW_SMALL_INT(MP_EIO);
             args[1] = MP_OBJ_FROM_PTR(&msg_io_obj);
+            break;
+        case PBIO_ERROR_BUSY:
+            args[0] = MP_OBJ_NEW_SMALL_INT(MP_EBUSY);
+            args[1] = MP_OBJ_NEW_QSTR(qstr_from_str(pbio_error_str(error)));
             break;
         case PBIO_ERROR_NO_DEV:
             args[0] = MP_OBJ_NEW_SMALL_INT(MP_ENODEV);
