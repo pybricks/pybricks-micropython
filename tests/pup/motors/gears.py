@@ -47,7 +47,7 @@ test_args = [
 # Initialize device to known position.
 motor = Motor(Port.A, gears=None)
 motor.run_target(500, 170)
-wait(500)
+wait(1000)
 motor.dc(0)
 real_angle = motor.angle()
 
@@ -57,10 +57,12 @@ for gears in test_args:
     motor = Motor(Port.A, gears=gears)
 
     # Get expected and measured value.
-    expected = real_angle / get_gear_ratio(gears)
+    ratio = get_gear_ratio(gears)
+    expected = real_angle / ratio
     measured = motor.angle()
 
-    # Allow at most one degree of error. We could be a bit more precise
-    # here and also test the expected rounding direction, by investigating
-    # how this is currently defined. For now, 1 degree both ways will do.
-    assert abs(motor.angle() - expected) <= 1, "{0} != {1}".format(expected, measured)
+    # Allow at most one degree of error, or up to 1/ratio when speeding up.
+    tolerance = 1 if ratio >= 1 else 1 / ratio
+    assert abs(motor.angle() - expected) <= tolerance, "{0} != {1} for ratio: {2}".format(
+        expected, measured, gears
+    )

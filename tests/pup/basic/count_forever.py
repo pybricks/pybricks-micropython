@@ -7,6 +7,7 @@ Hardware Module: Any hub.
 Description: Print a long time in a tight loop.
 """
 
+
 def count():
     n = 0
     while True:
