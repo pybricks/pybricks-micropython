@@ -18,6 +18,15 @@
             ]
         },
         {
+            "name": "Powered Up Tests",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/tests/pup/run_all.py",
+            "cwd": "${workspaceFolder}/tests/pup",
+            "args": [],
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
