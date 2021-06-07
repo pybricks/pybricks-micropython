@@ -45,7 +45,7 @@ mp_obj_t common_Control_obj_make_new(pbio_control_t *control) {
 
 STATIC void raise_if_control_busy(pbio_control_t *ctl) {
     if (ctl->type != PBIO_CONTROL_NONE) {
-        pb_assert(PBIO_ERROR_INVALID_OP);
+        pb_assert(PBIO_ERROR_BUSY);
     }
 }
 

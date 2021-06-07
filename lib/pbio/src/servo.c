@@ -35,7 +35,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
 
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
-        return PBIO_ERROR_INVALID_OP;
+        return PBIO_ERROR_BUSY;
     }
 
     // Get, coast, and configure dc motor
@@ -77,7 +77,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
 
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
-        return PBIO_ERROR_INVALID_OP;
+        return PBIO_ERROR_BUSY;
     }
 
     // If the motor was in a passive mode (coast, brake, user duty),
@@ -232,7 +232,7 @@ pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps) {
 
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
-        return PBIO_ERROR_INVALID_OP;
+        return PBIO_ERROR_BUSY;
     }
 
     // Limit to maximum configured value
@@ -246,7 +246,7 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
 
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
-        return PBIO_ERROR_INVALID_OP;
+        return PBIO_ERROR_BUSY;
     }
 
     // Get control payload
@@ -287,7 +287,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
 
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
-        return PBIO_ERROR_INVALID_OP;
+        return PBIO_ERROR_BUSY;
     }
 
     // Get target rate in unit of counts
@@ -320,7 +320,7 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
 
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
-        return PBIO_ERROR_INVALID_OP;
+        return PBIO_ERROR_BUSY;
     }
 
     // Get target rate in unit of counts
@@ -343,7 +343,7 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
 
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
-        return PBIO_ERROR_INVALID_OP;
+        return PBIO_ERROR_BUSY;
     }
 
     // Get target rate in unit of counts
@@ -366,7 +366,7 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
 
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
-        return PBIO_ERROR_INVALID_OP;
+        return PBIO_ERROR_BUSY;
     }
 
     // Get targets in unit of counts
@@ -389,7 +389,7 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
 
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
-        return PBIO_ERROR_INVALID_OP;
+        return PBIO_ERROR_BUSY;
     }
 
     // Get targets in unit of counts
@@ -411,7 +411,7 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
 
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
-        return PBIO_ERROR_INVALID_OP;
+        return PBIO_ERROR_BUSY;
     }
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver

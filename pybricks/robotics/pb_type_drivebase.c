@@ -218,7 +218,7 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
     }
 
     if (self->db->control_distance.type != PBIO_CONTROL_NONE || self->db->control_heading.type != PBIO_CONTROL_NONE) {
-        pb_assert(PBIO_ERROR_INVALID_OP);
+        pb_assert(PBIO_ERROR_BUSY);
     }
 
     // If some values are given, set them, bound by the control limits
