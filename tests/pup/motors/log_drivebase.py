@@ -37,26 +37,3 @@ left_motor.log.save("build/log_drive_base_left_motor.txt")
 right_motor.log.save("build/log_drive_base_right_motor.txt")
 drive_base.distance_control.log.save("build/log_drive_base_distance_control.txt")
 drive_base.heading_control.log.save("build/log_drive_base_heading_control.txt")
-
-
-# The logs can also be read from the user script. As a check, let's print the
-# distance and the estimated speed in a rotated plot. We show only 1 in 5
-# samples here and scale the speed and angle values for better visibility.
-
-start_distance = drive_base.distance_control.log.get(0)[2]
-
-for i in range(len(drive_base.distance_control.log) / 5):
-
-    # Read the (i * 3)th row in the data log.
-    values = drive_base.distance_control.log.get(i * 5)
-    speed = values[9]
-    angle = values[2] - start_distance
-
-    # Turn it into a line of spaces with * for speed and + for angle.
-    line = [ord(" ")] * 100
-    line[min(speed // 10, 99)] = ord("*")
-    line[min(angle // 36, 99)] = ord("+")
-
-    # Print it. Looked at it sideways, you should see a trapezoidal graph
-    # for speed and a gradual ramp for the angle as it drives forward.
-    print(bytes(line))
