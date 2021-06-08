@@ -1,5 +1,11 @@
-# this file creates a ~1k .mpy file and will have to allocate a ~1k chunk of
-# memory
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2020 The Pybricks Authors
+
+# """
+# Hardware Module: Any hub.
+#
+# Description: Creates a ~1k .mpy file and allocates a ~1k chunk of memory
+# """
 
 _ = """
 0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF
