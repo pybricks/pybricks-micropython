@@ -47,10 +47,8 @@ async def main():
         valid_output = True
         try:
             with open(exp_path) as exp_file:
-                for exp, out in itertools.zip_longest(
-                    exp_file.readlines(), hub.output, fillvalue=""
-                ):
-                    if exp.strip() != out.decode():
+                for exp, out in itertools.zip_longest(exp_file.readlines(), hub.output):
+                    if exp is None or out is None or exp.strip() != out.decode():
                         valid_output = False
                         break
         except FileNotFoundError:
