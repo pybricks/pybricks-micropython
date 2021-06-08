@@ -1,7 +1,12 @@
-# Should be able to display each color (note: colors without 100% saturation
-# will not appear correctly due to physics).
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2020 The Pybricks Authors
 
-# Press the stop button to advance to the next color
+"""
+Hardware Module: Any hub.
+
+Description: Display each color. Colors without 100% saturation
+will not appear correctly due to physics.
+"""
 
 from pybricks.hubs import ThisHub
 from pybricks.parameters import Color
@@ -13,11 +18,7 @@ hub = ThisHub()
 for c in Color:
     print("Color:", c)
     hub.light.on(Color[c])
-    try:
-        while True:
-            wait(10)
-    except SystemExit:
-        continue
+    wait(1000)
 
 hub.light.off()
 print("...done")
