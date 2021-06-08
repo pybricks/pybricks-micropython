@@ -38,14 +38,14 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
         return PBIO_ERROR_BUSY;
     }
 
-    // Get, coast, and configure dc motor
-    err = pbio_dcmotor_get(srv->port, &srv->dcmotor, direction, true);
+    // Get and reset tacho
+    err = pbio_tacho_get(srv->port, &srv->tacho, direction, gear_ratio);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // Get and reset tacho
-    err = pbio_tacho_get(srv->port, &srv->tacho, direction, gear_ratio);
+    // Get, coast, and configure dc motor
+    err = pbio_dcmotor_get(srv->port, &srv->dcmotor, direction, true);
     if (err != PBIO_SUCCESS) {
         return err;
     }
