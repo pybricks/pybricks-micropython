@@ -62,9 +62,6 @@ async def main():
             with open(out_path, "w") as out_file:
                 out_file.writelines(l.decode() + "\r\n" for l in hub.output)
 
-            # Stop all tests. May need to make this a configurable option.
-            break
-
     # Disconnect.
     await hub.disconnect()
 

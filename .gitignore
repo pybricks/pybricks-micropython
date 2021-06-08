@@ -31,7 +31,6 @@ _build/
 # Test failure outputs
 ######################
 tests/*.exp
-tests/**/*.out
 
 # Python virtual environment
 ############################
