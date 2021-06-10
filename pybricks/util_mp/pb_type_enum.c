@@ -12,7 +12,7 @@ void pb_type_enum_print(const mp_print_t *print,  mp_obj_t self_in, mp_print_kin
     mp_printf(print, "%q.%q", self->base.type->name, self->name);
 }
 
-mp_int_t pb_type_enum_get_value(mp_obj_t obj, const mp_obj_type_t *type) {
+int16_t pb_type_enum_get_value(mp_obj_t obj, const mp_obj_type_t *type) {
     pb_assert_type(obj, type);
     pb_obj_enum_member_t *member = MP_OBJ_TO_PTR(obj);
     return member->value;
