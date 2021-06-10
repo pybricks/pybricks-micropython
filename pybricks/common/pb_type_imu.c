@@ -5,9 +5,10 @@
 
 #if PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_IMU
 
-#include "py/obj.h"
+#include <math.h>
+#include <stdbool.h>
 
-#include <lsm6ds3tr_c_reg.h>
+#include "py/obj.h"
 
 #include <pybricks/common.h>
 #include <pybricks/geometry.h>
