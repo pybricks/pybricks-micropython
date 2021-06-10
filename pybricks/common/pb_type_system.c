@@ -92,10 +92,10 @@ STATIC const mp_rom_map_elem_t common_System_locals_dict_table[] = {
     #if PBDRV_CONFIG_RESET
     { MP_ROM_QSTR(MP_QSTR_reset), MP_ROM_PTR(&pb_type_System_reset_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_reason), MP_ROM_PTR(&pb_type_System_reset_reason_obj) },
+    #endif // PBDRV_CONFIG_RESET
     #if PBIO_CONFIG_ENABLE_SYS
     { MP_ROM_QSTR(MP_QSTR_set_stop_button), MP_ROM_PTR(&pb_type_System_set_stop_button_obj) },
     #endif
-    #endif // PBDRV_CONFIG_RESET
 };
 STATIC MP_DEFINE_CONST_DICT(common_System_locals_dict, common_System_locals_dict_table);
 
