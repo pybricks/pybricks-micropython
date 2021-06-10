@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -33,6 +33,8 @@ STATIC mp_obj_t battery_current(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_current_obj, battery_current);
 
+#if !PYBRICKS_HUB_MOVEHUB
+
 STATIC mp_obj_t battery_type(void) {
     pbdrv_battery_type_t type;
     pb_assert(pbdrv_battery_get_type(&type));
@@ -54,14 +56,18 @@ STATIC mp_obj_t battery_temperature(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(battery_temperature_obj, battery_temperature);
 
+#endif // !PYBRICKS_HUB_MOVEHUB
+
 /* battery module tables */
 
 STATIC const mp_rom_map_elem_t battery_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__),    MP_ROM_QSTR(MP_QSTR_battery)        },
     { MP_ROM_QSTR(MP_QSTR_voltage),     MP_ROM_PTR(&battery_voltage_obj)    },
     { MP_ROM_QSTR(MP_QSTR_current),     MP_ROM_PTR(&battery_current_obj)    },
+    #if !PYBRICKS_HUB_MOVEHUB
     { MP_ROM_QSTR(MP_QSTR_type),        MP_ROM_PTR(&battery_type_obj)       },
     { MP_ROM_QSTR(MP_QSTR_temperature), MP_ROM_PTR(&battery_temperature_obj) },
+    #endif // !PYBRICKS_HUB_MOVEHUB
 };
 STATIC MP_DEFINE_CONST_DICT(pb_module_battery_globals, battery_globals_table);
 
