@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 /**
  * @addtogroup Button Brick and Remote Control Buttons
@@ -13,6 +13,9 @@
 
 #include <pbio/error.h>
 #include <pbio/port.h>
+
+/** The number of buttons. */
+#define PBIO_BUTTON_NUM_BUTTONS 9
 
 /**
  * Button flags.
