@@ -97,7 +97,7 @@ mp_obj_t pb_type_IMU_obj_new(mp_obj_t top_side_axis, mp_obj_t front_side_axis);
 
 #if PYBRICKS_PY_COMMON_SYSTEM
 
-extern const mp_obj_base_t pb_type_System_obj;
+extern const mp_obj_type_t pb_type_System;
 
 #endif // PYBRICKS_PY_COMMON_SYSTEM
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -12,11 +12,6 @@
 
 #include <pybricks/util_pb/pb_error.h>
 
-// pybricks.common.System class object
-typedef struct _pb_type_System_obj_t {
-    mp_obj_base_t base;
-} pb_type_System_obj_t;
-
 #if PBDRV_CONFIG_RESET
 
 // REVISIT: there should be a pbio_reset() instead of pbdrv_reset() to gracefully
@@ -25,7 +20,7 @@ typedef struct _pb_type_System_obj_t {
 
 #include <pbdrv/reset.h>
 
-STATIC mp_obj_t pb_type_System_reset(mp_obj_t self_in, mp_obj_t action_in) {
+STATIC mp_obj_t pb_type_System_reset(mp_obj_t action_in) {
     pbdrv_reset_action_t action = mp_obj_get_int(action_in);
 
     if (action < PBDRV_RESET_ACTION_RESET || action > PBDRV_RESET_ACTION_RESET_IN_UPDATE_MODE) {
@@ -36,13 +31,13 @@ STATIC mp_obj_t pb_type_System_reset(mp_obj_t self_in, mp_obj_t action_in) {
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pb_type_System_reset_obj, pb_type_System_reset);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_System_reset_obj, pb_type_System_reset);
 
-STATIC mp_obj_t pb_type_System_reset_reason(mp_obj_t self_in) {
+STATIC mp_obj_t pb_type_System_reset_reason(void) {
     pbdrv_reset_reason_t reason = pbdrv_reset_get_reason();
     return MP_OBJ_NEW_SMALL_INT(reason);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_System_reset_reason_obj, pb_type_System_reset_reason);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_reset_reason_obj, pb_type_System_reset_reason);
 
 #endif // PBDRV_CONFIG_RESET
 
@@ -51,7 +46,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_System_reset_reason_obj, pb_type_System
 #include <pybricks/parameters.h>
 #include <pbsys/user_program.h>
 
-STATIC mp_obj_t pb_type_System_set_stop_button(mp_obj_t self_in, mp_obj_t buttons_in) {
+STATIC mp_obj_t pb_type_System_set_stop_button(mp_obj_t buttons_in) {
     pbio_button_flags_t buttons = 0;
 
     if (mp_obj_is_true(buttons_in)) {
@@ -83,7 +78,7 @@ STATIC mp_obj_t pb_type_System_set_stop_button(mp_obj_t self_in, mp_obj_t button
 
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(pb_type_System_set_stop_button_obj, pb_type_System_set_stop_button);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_System_set_stop_button_obj, pb_type_System_set_stop_button);
 
 #endif // PBIO_CONFIG_ENABLE_SYS
 
@@ -100,16 +95,10 @@ STATIC const mp_rom_map_elem_t common_System_locals_dict_table[] = {
 STATIC MP_DEFINE_CONST_DICT(common_System_locals_dict, common_System_locals_dict_table);
 
 // type(pybricks.common.System)
-STATIC const mp_obj_type_t pb_type_System = {
+const mp_obj_type_t pb_type_System = {
     { &mp_type_type },
     .name = MP_QSTR_System,
     .locals_dict = (mp_obj_dict_t *)&common_System_locals_dict,
 };
-
-// Preinstantiated constant singleton
-const mp_obj_base_t pb_type_System_obj = {
-    &pb_type_System
-};
-
 
 #endif // PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_SYSTEM
