@@ -36,10 +36,7 @@ STATIC mp_obj_t iodevices_LUMPDevice_make_new(const mp_obj_type_t *type, size_t 
 
     self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_LUMP_UART);
 
-    pbio_iodev_type_id_t id;
-    uint8_t curr_mode;
-    uint8_t num_values;
-    pb_device_get_info(self->pbdev, &port, &id, &curr_mode, &num_values);
+    pbio_iodev_type_id_t id = pb_device_get_id(self->pbdev);
     self->id = mp_obj_new_int(id);
 
     return MP_OBJ_FROM_PTR(self);
@@ -57,11 +54,7 @@ STATIC mp_obj_t iodevices_LUMPDevice_read(size_t n_args, const mp_obj_t *pos_arg
     pb_device_get_values(self->pbdev, mp_obj_get_int(mode_in), data);
 
     // Get info about the sensor and its mode
-    pbio_port_t port;
-    pbio_iodev_type_id_t id;
-    uint8_t curr_mode;
-    uint8_t num_values;
-    pb_device_get_info(self->pbdev, &port, &id, &curr_mode, &num_values);
+    uint8_t num_values = pb_device_get_num_values(self->pbdev);
 
     // Return as MicroPython objects
     for (uint8_t i = 0; i < num_values; i++) {

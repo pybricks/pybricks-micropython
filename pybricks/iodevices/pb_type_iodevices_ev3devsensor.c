@@ -62,12 +62,7 @@ STATIC mp_obj_t iodevices_Ev3devSensor_read(size_t n_args, const mp_obj_t *pos_a
     mp_obj_t objs[PBIO_IODEV_MAX_DATA_SIZE];
     pb_device_get_values(self->pbdev, mode_idx, data);
 
-    // Get info about the sensor and its mode
-    pbio_port_t port;
-    pbio_iodev_type_id_t id;
-    uint8_t curr_mode;
-    uint8_t num_values;
-    pb_device_get_info(self->pbdev, &port, &id, &curr_mode, &num_values);
+    uint8_t num_values = pb_device_get_num_values(self->pbdev);
 
     // Return as MicroPython objects
     for (uint8_t i = 0; i < num_values; i++) {

@@ -197,11 +197,16 @@ void pb_device_set_power_supply(pb_device_t *pbdev, int32_t duty) {
     pb_assert(pbdrv_motor_set_duty_cycle(pbdev->iodev.port, -100 * duty));
 }
 
-void pb_device_get_info(pb_device_t *pbdev, pbio_port_t *port, pbio_iodev_type_id_t *id, uint8_t *mode, uint8_t *num_values) {
-    *port = pbdev->iodev.port;
-    *id = pbdev->iodev.info->type_id;
-    *mode = pbdev->iodev.mode;
-    *num_values = pbdev->iodev.info->mode_info[*mode].num_values;
+pbio_iodev_type_id_t pb_device_get_id(pb_device_t *pbdev) {
+    return pbdev->iodev.info->type_id;
+}
+
+uint8_t pb_device_get_mode(pb_device_t *pbdev) {
+    return pbdev->iodev.mode;
+}
+
+uint8_t pb_device_get_num_values(pb_device_t *pbdev) {
+    return pbdev->iodev.info->mode_info[pbdev->iodev.mode].num_values;
 }
 
 int8_t pb_device_get_mode_id_from_str(pb_device_t *pbdev, const char *mode_str) {

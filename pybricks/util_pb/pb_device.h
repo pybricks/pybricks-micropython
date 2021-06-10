@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #ifndef _PBDEVICE_H_
 #define _PBDEVICE_H_
@@ -20,7 +20,11 @@ void pb_device_set_values(pb_device_t *pbdev, uint8_t mode, int32_t *values, uin
 
 void pb_device_set_power_supply(pb_device_t *pbdev, int32_t duty);
 
-void pb_device_get_info(pb_device_t *pbdev, pbio_port_t *port, pbio_iodev_type_id_t *id, uint8_t *mode, uint8_t *num_values);
+pbio_iodev_type_id_t pb_device_get_id(pb_device_t *pbdev);
+
+uint8_t pb_device_get_mode(pb_device_t *pbdev);
+
+uint8_t pb_device_get_num_values(pb_device_t *pbdev);
 
 int8_t pb_device_get_mode_id_from_str(pb_device_t *pbdev, const char *mode_str);
 
