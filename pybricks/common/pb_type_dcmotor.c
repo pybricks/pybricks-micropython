@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -48,13 +48,10 @@ void common_DCMotor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
         ((common_Motor_obj_t *)MP_OBJ_TO_PTR(self_in))->srv->dcmotor :
         ((common_DCMotor_obj_t *)MP_OBJ_TO_PTR(self_in))->dcmotor;
 
-    mp_printf(print,
-        "Motor properties:\n"
-        "------------------------\n"
-        "Port\t\t %c\n"
-        "Positive dir.\t %s",
-        dcmotor->port,
-        dcmotor->direction == PBIO_DIRECTION_CLOCKWISE ? "clockwise" : "counterclockwise");
+    mp_printf(print, "%q(Port.%c, %q.%q)",
+        ((mp_obj_base_t *)MP_OBJ_TO_PTR(self_in))->type->name,
+        dcmotor->port, MP_QSTR_Direction,
+        dcmotor->direction == PBIO_DIRECTION_CLOCKWISE ? MP_QSTR_CLOCKWISE : MP_QSTR_COUNTERCLOCKWISE);
 }
 
 // pybricks._common.DCMotor.dc

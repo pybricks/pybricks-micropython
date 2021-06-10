@@ -13,7 +13,4 @@ run-direct
 -100
 run-direct
 -100
-Motor properties:
-------------------------
-Port		 A
-Positive dir.	 clockwise
+Motor(Port.A, Direction.CLOCKWISE)
