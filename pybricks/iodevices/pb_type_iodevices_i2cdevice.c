@@ -36,7 +36,7 @@ STATIC mp_obj_t iodevices_I2CDevice_make_new(const mp_obj_type_t *otype, size_t 
     self->base.type = (mp_obj_type_t *)otype;
 
     // Get port number
-    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pbio_port_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     // Get selected I2C Address
     mp_int_t address = mp_obj_get_int(address_in);

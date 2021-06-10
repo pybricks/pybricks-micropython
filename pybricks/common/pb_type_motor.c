@@ -37,7 +37,7 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
         PB_ARG_DEFAULT_NONE(gears));
 
     // Configure the motor with the selected arguments at pbio level
-    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pbio_port_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pbio_direction_t positive_direction = pb_type_enum_get_value(positive_direction_in, &pb_enum_type_Direction);
     pbio_error_t err;
     pbio_servo_t *srv;

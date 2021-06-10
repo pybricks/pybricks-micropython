@@ -28,7 +28,7 @@ STATIC mp_obj_t ev3devices_UltrasonicSensor_make_new(const mp_obj_type_t *type, 
     ev3devices_UltrasonicSensor_obj_t *self = m_new_obj(ev3devices_UltrasonicSensor_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pbio_port_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_EV3_ULTRASONIC_SENSOR);
 

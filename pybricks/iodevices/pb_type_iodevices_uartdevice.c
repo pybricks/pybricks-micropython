@@ -39,7 +39,7 @@ STATIC mp_obj_t iodevices_UARTDevice_make_new(const mp_obj_type_t *otype, size_t
     self->base.type = (mp_obj_type_t *)otype;
 
     // Get port number
-    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pbio_port_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     // Init UART port
     pb_device_get_device(port, PBIO_IODEV_TYPE_ID_CUSTOM_UART);

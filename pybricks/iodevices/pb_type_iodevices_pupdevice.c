@@ -31,7 +31,7 @@ STATIC mp_obj_t iodevices_PUPDevice_make_new(const mp_obj_type_t *type, size_t n
     iodevices_PUPDevice_obj_t *self = m_new_obj(iodevices_PUPDevice_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    mp_int_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pbio_port_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_LUMP_UART);
 
@@ -42,13 +42,13 @@ STATIC mp_obj_t iodevices_PUPDevice_make_new(const mp_obj_type_t *type, size_t n
 STATIC mp_obj_t iodevices_PUPDevice_info(mp_obj_t self_in) {
     iodevices_PUPDevice_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    pbio_port_t _port;
+    pbio_port_t port;
     pbio_iodev_type_id_t id;
     uint8_t curr_mode;
     uint8_t num_values;
-    pb_device_get_info(self->pbdev, &_port, &id, &curr_mode, &num_values);
+    pb_device_get_info(self->pbdev, &port, &id, &curr_mode, &num_values);
 
-    mp_obj_t info_dict = mp_obj_new_dict(0);
+    mp_obj_t info_dict = mp_obj_new_dict(1);
     mp_obj_dict_store(info_dict, MP_ROM_QSTR(MP_QSTR_id), MP_OBJ_NEW_SMALL_INT(id));
 
     return info_dict;
