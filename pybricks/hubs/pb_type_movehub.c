@@ -231,7 +231,7 @@ STATIC mp_obj_t hubs_MoveHub_IMU_make_new() {
     motion_spi_read(WHO_AM_I, &id);
 
     if (id != LIS3DH_ID) {
-        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("incorrect device id"));
+        mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("bad id"));
     }
 
     // Init
