@@ -112,59 +112,33 @@ const pbdrv_led_pwm_platform_data_t pbdrv_led_pwm_platform_data[PBDRV_CONFIG_LED
 // PWM
 
 static void pwm_dev_0_platform_init(void) {
-    // port A
-    // init PWM pins as gpio out low (coasting) and prepare alternate function
-    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
-    GPIOA->BRR = GPIO_BRR_BR_8;
-    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER10_Msk) | (1 << GPIO_MODER_MODER10_Pos);
-    GPIOA->BRR = GPIO_BRR_BR_10;
-    GPIOA->AFR[1] = (GPIOA->AFR[1] & ~GPIO_AFRH_AFSEL8_Msk) | (2 << GPIO_AFRH_AFSEL8_Pos);
-    GPIOA->AFR[1] = (GPIOA->AFR[1] & ~GPIO_AFRH_AFSEL10_Msk) | (2 << GPIO_AFRH_AFSEL10_Pos);
-
-    // port B
-    // init PWM pins as gpio out low (coasting) and prepare alternate function
-    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
-    GPIOA->BRR = GPIO_BRR_BR_9;
-    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
-    GPIOA->BRR = GPIO_BRR_BR_11;
-    GPIOA->AFR[1] = (GPIOA->AFR[1] & ~GPIO_AFRH_AFSEL9_Msk) | (2 << GPIO_AFRH_AFSEL9_Pos);
-    GPIOA->AFR[1] = (GPIOA->AFR[1] & ~GPIO_AFRH_AFSEL11_Msk) | (2 << GPIO_AFRH_AFSEL11_Pos);
+    // port A: PA8, PA10 - port B: PA9, PA11
+    for (pbdrv_gpio_t gpio = { .bank = GPIOA, .pin = 8 }; gpio.pin <= 11; gpio.pin++) {
+        pbdrv_gpio_alt(&gpio, 2);
+    }
 }
 
 static void pwm_dev_1_platform_init(void) {
-    // port C
-    // init PWM pins as gpio out low (coasting) and prepare alternate function
-    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER6_Msk) | (1 << GPIO_MODER_MODER6_Pos);
-    GPIOC->BRR = GPIO_BRR_BR_6;
-    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER8_Msk) | (1 << GPIO_MODER_MODER8_Pos);
-    GPIOC->BRR = GPIO_BRR_BR_8;
-    GPIOC->AFR[0] = (GPIOC->AFR[0] & ~GPIO_AFRL_AFSEL6_Msk) | (0 << GPIO_AFRL_AFSEL6_Pos);
-    GPIOC->AFR[1] = (GPIOC->AFR[1] & ~GPIO_AFRH_AFSEL8_Msk) | (0 << GPIO_AFRH_AFSEL8_Pos);
-
-    // port D
-    // init PWM pins as gpio out low (coasting) and prepare alternate function
-    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER7_Msk) | (1 << GPIO_MODER_MODER7_Pos);
-    GPIOC->BRR = GPIO_BRR_BR_7;
-    GPIOC->MODER = (GPIOC->MODER & ~GPIO_MODER_MODER9_Msk) | (1 << GPIO_MODER_MODER9_Pos);
-    GPIOC->BRR = GPIO_BRR_BR_9;
-    GPIOC->AFR[0] = (GPIOC->AFR[0] & ~GPIO_AFRL_AFSEL7_Msk) | (0 << GPIO_AFRL_AFSEL7_Pos);
-    GPIOC->AFR[1] = (GPIOC->AFR[1] & ~GPIO_AFRH_AFSEL9_Msk) | (0 << GPIO_AFRH_AFSEL9_Pos);
+    // port C: PC6, PC8 - port D: PC7, PC9
+    for (pbdrv_gpio_t gpio = { .bank = GPIOC, .pin = 6 }; gpio.pin <= 9; gpio.pin++) {
+        pbdrv_gpio_alt(&gpio, 0);
+    }
 }
 
 static void pwm_dev_2_platform_init(void) {
     // green LED on PB14 using TIM15 CH1
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER14_Msk) | (2 << GPIO_MODER_MODER14_Pos);
-    GPIOB->AFR[1] = (GPIOB->AFR[1] & ~GPIO_AFRH_AFSEL14_Msk) | (1 << GPIO_AFRH_AFSEL14_Pos);
+    pbdrv_gpio_t gpio = { .bank = GPIOB, .pin = 14 };
+    pbdrv_gpio_alt(&gpio, 1);
 
     // blue LED on PB15 using TIM15 CH2
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER15_Msk) | (2 << GPIO_MODER_MODER15_Pos);
-    GPIOB->AFR[1] = (GPIOB->AFR[1] & ~GPIO_AFRH_AFSEL15_Msk) | (1 << GPIO_AFRH_AFSEL15_Pos);
+    gpio.pin = 15;
+    pbdrv_gpio_alt(&gpio, 1);
 }
 
 static void pwm_dev_3_platform_init(void) {
     // red LED on PB8 using TIM16 CH1
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER8_Msk) | (2 << GPIO_MODER_MODER8_Pos);
-    GPIOB->AFR[1] = (GPIOB->AFR[1] & ~GPIO_AFRH_AFSEL8_Msk) | (2 << GPIO_AFRH_AFSEL8_Pos);
+    pbdrv_gpio_t gpio = { .bank = GPIOB, .pin = 8 };
+    pbdrv_gpio_alt(&gpio, 2);
 }
 
 // NOTE: Official LEGO firmware uses 1.2 kHz PWM for motors. We have changed to
@@ -286,6 +260,6 @@ void SystemInit(void) {
         | RCC_APB2ENR_TIM15EN | RCC_APB2ENR_TIM16EN | RCC_APB2ENR_SPI1EN;
 
     // Keep main power on (PB11)
-    GPIOB->BSRR = GPIO_BSRR_BS_11;
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODER11_Msk) | (1 << GPIO_MODER_MODER11_Pos);
+    pbdrv_gpio_t power_gpio = { .bank = GPIOB, .pin = 11 };
+    pbdrv_gpio_out_high(&power_gpio);
 }
