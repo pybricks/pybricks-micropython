@@ -102,14 +102,14 @@ static void pbdrv_motor_run_fwd(pbio_port_t port, int16_t duty_cycle) {
             if (pbdrv_pwm_get_dev(1, &dev) == PBIO_SUCCESS) {
                 pbdrv_pwm_set_duty(dev, 3, 1000 - duty_cycle / 10);
             }
-            pbdrv_gpio_alt(&port_c_pin_1, 2);
+            pbdrv_gpio_alt(&port_c_pin_1, 0);
             break;
         case PBIO_PORT_D:
             pbdrv_gpio_out_high(&port_d_pin_2);
             if (pbdrv_pwm_get_dev(1, &dev) == PBIO_SUCCESS) {
                 pbdrv_pwm_set_duty(dev, 2, 1000 - duty_cycle / 10);
             }
-            pbdrv_gpio_alt(&port_d_pin_1, 2);
+            pbdrv_gpio_alt(&port_d_pin_1, 0);
             break;
         default:
             break;
@@ -140,14 +140,14 @@ static void pbdrv_motor_run_rev(pbio_port_t port, int16_t duty_cycle) {
             if (pbdrv_pwm_get_dev(1, &dev) == PBIO_SUCCESS) {
                 pbdrv_pwm_set_duty(dev, 1, 1000 + duty_cycle / 10);
             }
-            pbdrv_gpio_alt(&port_c_pin_2, 2);
+            pbdrv_gpio_alt(&port_c_pin_2, 0);
             break;
         case PBIO_PORT_D:
             pbdrv_gpio_out_high(&port_d_pin_1);
             if (pbdrv_pwm_get_dev(1, &dev) == PBIO_SUCCESS) {
                 pbdrv_pwm_set_duty(dev, 4, 1000 + duty_cycle / 10);
             }
-            pbdrv_gpio_alt(&port_d_pin_2, 2);
+            pbdrv_gpio_alt(&port_d_pin_2, 0);
             break;
         default:
             break;
