@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2020 The Pybricks Authors
+// Copyright (c) 2019-2021 The Pybricks Authors
 
 // GPIO Quadrature Encoder Counter driver
 //
 // This driver uses GPIOs and a timer to create a quadrature encoder.
 //
+// This driver is currently hard-coded for the LEGO BOOST Move hub internal motors.
 // Ideally, this could be made into a generic driver if the following are done:
 // - add IRQ support to the gpio driver
 // - create a generic timer driver
@@ -36,16 +37,14 @@ typedef struct {
 static private_data_t private_data[PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC_NUM_DEV];
 
 static pbio_error_t pbdrv_counter_stm32f0_gpio_quad_enc_get_count(pbdrv_counter_dev_t *dev, int32_t *count) {
-    const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t *pdata = dev->pdata;
     private_data_t *priv = dev->priv;
 
-    *count = pdata->invert ? -priv->count : priv->count;
+    *count = priv->count;
 
     return PBIO_SUCCESS;
 }
 
 static pbio_error_t pbdrv_counter_stm32f0_gpio_quad_enc_get_rate(pbdrv_counter_dev_t *dev, int32_t *rate) {
-    const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t *pdata = dev->pdata;
     private_data_t *priv = dev->priv;
     int32_t head_count, tail_count = 0;
     uint16_t now, head_time, tail_time = 0;
@@ -93,9 +92,7 @@ static pbio_error_t pbdrv_counter_stm32f0_gpio_quad_enc_get_rate(pbdrv_counter_d
 
     /* timer is 100000kHz */
     *rate = (head_count - tail_count) * 100000 / (uint16_t)(head_time - tail_time);
-    if (pdata->invert) {
-        *rate = -*rate;
-    }
+
     return PBIO_SUCCESS;
 }
 
@@ -127,12 +124,14 @@ void EXTI0_1_IRQHandler(void) {
 
     timestamp = TIM7->CNT;
 
+    // Port A - inverted.
     if (exti_pr & EXTI_PR_PR1) {
         private_data_t *priv = &private_data[0];
         const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t *pdata = priv->dev->pdata;
-        pbdrv_motor_tacho_update_count(priv, pbdrv_gpio_input(&pdata->gpio_int), pbdrv_gpio_input(&pdata->gpio_dir), timestamp);
+        pbdrv_motor_tacho_update_count(priv, pbdrv_gpio_input(&pdata->gpio_int), !pbdrv_gpio_input(&pdata->gpio_dir), timestamp);
     }
 
+    // Port B
     if (exti_pr & EXTI_PR_PR0) {
         private_data_t *priv = &private_data[1];
         const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t *pdata = priv->dev->pdata;
