@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -7,6 +7,7 @@
 
 #include "py/runtime.h"
 
+#include <pbdrv/gpio.h>
 #include <pbdrv/reset.h>
 #include <pbsys/light.h>
 
@@ -77,9 +78,7 @@ static void motion_spi_wait() {
 }
 
 static void motion_spi_read(uint8_t reg, uint8_t *value) {
-    uint8_t dummy;
-
-    // set chip select low
+    // enable chip select
     GPIOA->BRR = GPIO_BRR_BR_4;
 
     BYTE_ACCESS(SPI1->DR) = READ_FLAG | reg;
@@ -88,7 +87,7 @@ static void motion_spi_read(uint8_t reg, uint8_t *value) {
     motion_spi_wait();
 
     while (SPI1->SR & SPI_SR_RXNE) {
-        dummy = BYTE_ACCESS(SPI1->DR);
+        uint8_t dummy = BYTE_ACCESS(SPI1->DR);
         (void)dummy;
         MICROPY_EVENT_POLL_HOOK;
     }
@@ -104,7 +103,7 @@ static void motion_spi_read(uint8_t reg, uint8_t *value) {
 }
 
 static void motion_spi_write(uint8_t reg, uint8_t value) {
-    // set chip select low
+    // enable chip select
     GPIOA->BRR = GPIO_BRR_BR_4;
 
     BYTE_ACCESS(SPI1->DR) = reg;
@@ -202,25 +201,21 @@ STATIC const mp_obj_type_t hubs_MoveHub_IMU_type = {
     .locals_dict = (mp_obj_dict_t *)&hubs_MoveHub_IMU_locals_dict,
 };
 
-STATIC mp_obj_t hubs_MoveHub_IMU_make_new() {
+STATIC mp_obj_t hubs_MoveHub_IMU_make_new(void) {
     hubs_MoveHub_IMU_obj_t *self = m_new_obj(hubs_MoveHub_IMU_obj_t);
 
     self->base.type = &hubs_MoveHub_IMU_type;
 
     // PA4 gpio output - used for CS
-    GPIOA->BSRR = GPIO_BSRR_BS_4;
-    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER4_Msk) | (1 << GPIO_MODER_MODER4_Pos);
+    pbdrv_gpio_t gpio = { .bank = GPIOA, .pin = 4 };
+    pbdrv_gpio_out_high(&gpio);
 
-    // PA5, PA5, PA7 muxed as SPI1 pins
-    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER5_Msk) | (2 << GPIO_MODER_MODER5_Pos);
-    GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL5;
-    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER6_Msk) | (2 << GPIO_MODER_MODER6_Pos);
-    GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL6;
-    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER7_Msk) | (2 << GPIO_MODER_MODER7_Pos);
-    GPIOA->AFR[0] &= ~GPIO_AFRL_AFSEL7;
+    // PA5, PA6, PA7 muxed as SPI1 pins
+    for (gpio.pin = 5; gpio.pin <= 7; gpio.pin++) {
+        pbdrv_gpio_alt(&gpio, 0);
+    }
 
     // configure SPI1
-    RCC->APB2ENR |= RCC_APB2ENR_SPI1EN;
     #define SPI_CR1_BR_DIV8 (SPI_CR1_BR_1)
     SPI1->CR1 = SPI_CR1_CPHA | SPI_CR1_CPOL | SPI_CR1_MSTR | SPI_CR1_BR_DIV8;
     #define SPI_CR2_DS_8BIT (SPI_CR2_DS_0 | SPI_CR2_DS_1 | SPI_CR2_DS_2)

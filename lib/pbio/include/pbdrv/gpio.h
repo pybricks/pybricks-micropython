@@ -23,7 +23,7 @@ typedef enum {
 
 typedef struct {
     void *bank;
-    const uint8_t pin;
+    uint8_t pin;
 } pbdrv_gpio_t;
 
 #if PBDRV_CONFIG_GPIO
