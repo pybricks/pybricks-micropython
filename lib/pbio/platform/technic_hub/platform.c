@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2020 The Pybricks Authors
+// Copyright (c) 2019-2021 The Pybricks Authors
 
 #include <stdbool.h>
 
@@ -251,15 +251,24 @@ static void pwm_dev_1_platform_init(void) {
 
 static void pwm_dev_2_platform_init(void) {
     // blue LED on PA6 using TIM16 CH1
-    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODE6_Msk) | (2 << GPIO_MODER_MODE6_Pos);
-    GPIOA->AFR[0] = (GPIOA->AFR[0] & ~GPIO_AFRL_AFSEL6_Msk) | (14 << GPIO_AFRL_AFSEL6_Pos);
+    GPIO_InitTypeDef gpio_init = {
+        .Pin = GPIO_PIN_6,
+        .Mode = GPIO_MODE_AF_PP,
+        .Alternate = GPIO_AF14_TIM16,
+    };
+    HAL_GPIO_Init(GPIOA, &gpio_init);
 }
 
 static void pwm_dev_3_platform_init(void) {
+    GPIO_InitTypeDef gpio_init = { .Mode = GPIO_MODE_OUTPUT_PP };
+
     // green LED on PA11
-    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODE11_Msk) | (1 << GPIO_MODER_MODE11_Pos);
+    gpio_init.Pin = GPIO_PIN_11;
+    HAL_GPIO_Init(GPIOA, &gpio_init);
+
     // red LED on PB15
-    GPIOB->MODER = (GPIOB->MODER & ~GPIO_MODER_MODE15_Msk) | (1 << GPIO_MODER_MODE15_Pos);
+    gpio_init.Pin = GPIO_PIN_15;
+    HAL_GPIO_Init(GPIOB, &gpio_init);
 
     // channel 1: green LED; channel 2: red LED
     TIM2->DIER |= TIM_DIER_CC1IE | TIM_DIER_CC2IE | TIM_DIER_UIE;
