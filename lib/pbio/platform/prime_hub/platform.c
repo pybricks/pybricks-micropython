@@ -750,6 +750,10 @@ void SystemInit(void) {
     RCC->AHB2ENR |= RCC_AHB2ENR_OTGFSEN;
 
     // Keep main power on (PA13)
-    GPIOA->BSRR = GPIO_BSRR_BS_13;
-    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER13_Msk) | (1 << GPIO_MODER_MODER13_Pos);
+    GPIO_InitTypeDef gpio_init = {
+        .Pin = GPIO_PIN_13,
+        .Mode = GPIO_MODE_OUTPUT_PP,
+    };
+    HAL_GPIO_Init(GPIOA, &gpio_init);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_13, GPIO_PIN_SET);
 }

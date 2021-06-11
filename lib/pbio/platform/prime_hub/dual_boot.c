@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2021 The Pybricks Authors
 
 // Provides special handling when the dual-boot version of the firmware is used.
 
@@ -46,8 +46,12 @@ static bool check_for_long_press(void) {
     __HAL_RCC_GPIOC_CLK_ENABLE();
 
     // Keep main power on (PA13)
-    GPIOA->BSRR = GPIO_BSRR_BS_13;
-    GPIOA->MODER = (GPIOA->MODER & ~GPIO_MODER_MODER13_Msk) | (1 << GPIO_MODER_MODER13_Pos);
+    GPIO_InitTypeDef gpio_init = {
+        .Pin = GPIO_PIN_13,
+        .Mode = GPIO_MODE_OUTPUT_PP,
+    };
+    HAL_GPIO_Init(GPIOA, &gpio_init);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_13, GPIO_PIN_SET);
 
     // NB: HAL_ADC_MspInit() is shared with the PBIO ADC driver, so the ADC is
     // configured for all 6 channels. We need channel 5 to get the center
