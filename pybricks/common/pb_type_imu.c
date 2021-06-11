@@ -105,7 +105,7 @@ STATIC mp_obj_t common_IMU_up(mp_obj_t self_in) {
         }
     }
 
-    // The maximum component dicates which side of a unix box gets intersected
+    // The maximum component dictates which side of a unit box gets intersected
     // first. So, simply look at axis and sign to give the side.
     if (axis == 0 && positive) {
         return MP_OBJ_FROM_PTR(&pb_Side_FRONT_obj);
