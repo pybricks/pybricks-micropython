@@ -15,4 +15,9 @@
 #define PBIO_CONFIG_UARTDEV (0)
 #endif
 
+// whether to use a minimized (motor) control algorithm to reduce build size
+#ifndef PBIO_CONFIG_CONTROL_MINIMAL
+#define PBIO_CONFIG_CONTROL_MINIMAL (0)
+#endif
+
 #endif // _PBIO_CONFIG_H_
