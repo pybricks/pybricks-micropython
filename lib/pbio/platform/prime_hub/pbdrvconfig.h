@@ -31,6 +31,7 @@
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK              (1)
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_STM32_UART   (1)
+#define PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_VARIANT_ADDR 0x08007d80
 
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_ADC                     (1)

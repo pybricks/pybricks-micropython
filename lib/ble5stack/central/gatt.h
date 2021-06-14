@@ -80,6 +80,7 @@
 #define SERVICE_CHANGED_UUID                       0x2A05 // Service Changed
 #define FIRMWARE_REVISION_STRING_UUID              0x2A26 // Firmware Revision String
 #define SOFTWARE_REVISION_STRING_UUID              0x2A28 // Software Revision String
+#define PNP_ID_UUID                                0x2A50 // PnP ID
 
 /**
  * GATT Vendor Specific APIs - GATT Command Opcodes

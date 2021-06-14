@@ -10,6 +10,7 @@
 #include <ble/gatt-service/device_information_service_server.h>
 #include <ble/gatt-service/nordic_spp_service_server.h>
 #include <btstack.h>
+#include <lego_lwp3.h>
 
 #include <pbdrv/bluetooth.h>
 #include <pbio/protocol.h>
@@ -19,6 +20,13 @@
 #include "bluetooth_btstack.h"
 #include "genhdr/pybricks_service.h"
 #include "pybricks_service_server.h"
+
+// location of product variant in bootloader flash memory of Technic Large hubs
+#if PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_VARIANT_ADDR
+#define HUB_VARIANT (*(const uint16_t *)PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_VARIANT_ADDR)
+#else
+#define HUB_VARIANT 0x0000
+#endif
 
 static hci_con_handle_t le_con_handle = HCI_CON_HANDLE_INVALID;
 static hci_con_handle_t pybricks_con_handle = HCI_CON_HANDLE_INVALID;
@@ -180,6 +188,7 @@ void pbdrv_bluetooth_init(void) {
     device_information_service_server_init();
     device_information_service_server_set_firmware_revision(PBIO_VERSION_STR);
     device_information_service_server_set_software_revision(PBIO_PROTOCOL_VERSION_STR);
+    device_information_service_server_set_pnp_id(0x01, LWP3_LEGO_COMPANY_ID, LWP3_HUB_KIND_TECHNIC_LARGE, HUB_VARIANT);
 
     pybricks_service_server_init(pybricks_data_received, pybricks_configured);
     nordic_spp_service_server_init(nordic_spp_packet_handler);

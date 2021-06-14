@@ -20,6 +20,7 @@
 #include <pbio/version.h>
 
 #include <contiki.h>
+#include <lego_lwp3.h>
 
 #include <att.h>
 #include <gap.h>
@@ -510,6 +511,9 @@ static void handle_event(uint8_t *packet) {
                             } else if (start_handle <= dev_info_service_handle + 3) {
                                 read_by_type_response_uuid16(connection_handle, dev_info_service_handle + 3,
                                     GATT_PROP_READ, SOFTWARE_REVISION_STRING_UUID);
+                            } else if (start_handle <= dev_info_service_handle + 5) {
+                                read_by_type_response_uuid16(connection_handle, dev_info_service_handle + 5,
+                                    GATT_PROP_READ, PNP_ID_UUID);
                             } else if (start_handle <= pybricks_service_handle + 1) {
                                 read_by_type_response_uuid128(connection_handle, pybricks_service_handle + 1,
                                     GATT_PROP_WRITE_NO_RSP | GATT_PROP_WRITE | GATT_PROP_NOTIFY, pybricks_char_uuid);
@@ -580,6 +584,17 @@ static void handle_event(uint8_t *packet) {
 
                         memcpy(&buf[0], PBIO_PROTOCOL_VERSION_STR, sizeof(PBIO_PROTOCOL_VERSION_STR) - 1);
                         rsp.len = sizeof(PBIO_PROTOCOL_VERSION_STR) - 1;
+                        rsp.pValue = buf;
+                        ATT_ReadRsp(connection_handle, &rsp);
+                    } else if (handle == dev_info_service_handle + 6) {
+                        attReadRsp_t rsp;
+                        uint8_t buf[ATT_MTU_SIZE - 1];
+
+                        buf[0] = 0x01; // Vendor ID Source Field - Bluetooth SIG-assigned ID
+                        pbio_set_uint16_le(&buf[1], LWP3_LEGO_COMPANY_ID); // Vendor ID Field
+                        pbio_set_uint16_le(&buf[3], PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID[0]); // Product ID Field
+                        pbio_set_uint16_le(&buf[5], 0); // Product Version Field
+                        rsp.len = 7;
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
                     } else if (handle == pybricks_char_handle + 1) {
@@ -1031,7 +1046,7 @@ static PT_THREAD(init_device_information_service(struct pt *pt)) {
     PT_BEGIN(pt);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddService(GATT_PRIMARY_SERVICE_UUID, 5, GATT_MIN_ENCRYPT_KEY_SIZE);
+    GATT_AddService(GATT_PRIMARY_SERVICE_UUID, 7, GATT_MIN_ENCRYPT_KEY_SIZE);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
@@ -1055,11 +1070,21 @@ static PT_THREAD(init_device_information_service(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GATT_AddAttribute(GATT_CHARACTER_UUID, GATT_PERMIT_READ);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+    // ignoring response data
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GATT_AddAttribute(PNP_ID_UUID, GATT_PERMIT_READ);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+    // ignoring response data
+
     // the response to the last GATT_AddAttribute contains the first and last handles
     // that were allocated.
     dev_info_service_handle = (read_buf[13] << 8) | read_buf[12];
     dev_info_service_end_handle = (read_buf[15] << 8) | read_buf[14];
-    DBG("device information: %04X", pybricks_service_handle);
+    DBG("device information: %04X", dev_info_service_handle);
 
     PT_END(pt);
 }

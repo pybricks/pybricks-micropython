@@ -414,12 +414,12 @@ static PT_THREAD(init_device_information_service(struct pt *pt)) {
     static const uint8_t firmware_version_char_uuid[] = { 0x26, 0x2A }; // 0x2A26
     static const uint8_t software_version_char_uuid[] = { 0x28, 0x2A }; // 0x2A28
 
-    static uint16_t service_handle, fw_ver_char_handle, sw_ver_char_handle;
+    static uint16_t service_handle, fw_ver_char_handle, sw_ver_char_handle, pnp_id_char_handle;
 
     PT_BEGIN(pt);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gatt_add_serv_begin(UUID_TYPE_16, device_information_service_uuid, PRIMARY_SERVICE, 5);
+    aci_gatt_add_serv_begin(UUID_TYPE_16, device_information_service_uuid, PRIMARY_SERVICE, 7);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gatt_add_serv_end(&service_handle);
 
@@ -446,6 +446,19 @@ static PT_THREAD(init_device_information_service(struct pt *pt)) {
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gatt_update_char_value_begin(service_handle, sw_ver_char_handle,
         0, sizeof(PBIO_PROTOCOL_VERSION_STR) - 1, PBIO_PROTOCOL_VERSION_STR);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    aci_gatt_update_char_value_end();
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gatt_add_char_begin(service_handle, UUID_TYPE_16, (const uint8_t *)PNP_ID,
+        sizeof(PNP_ID) - 3, CHAR_PROP_READ, ATTR_PERMISSION_NONE,
+        GATT_DONT_NOTIFY_EVENTS, MIN_ENCRY_KEY_SIZE, CHAR_VALUE_LEN_CONSTANT);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    aci_gatt_add_char_end(&pnp_id_char_handle);
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gatt_update_char_value_begin(service_handle, pnp_id_char_handle,
+        0, sizeof(PNP_ID) - 3, &PNP_ID[2]);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gatt_update_char_value_end();
 
