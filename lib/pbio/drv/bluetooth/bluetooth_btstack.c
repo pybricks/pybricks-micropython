@@ -27,7 +27,7 @@ static pbdrv_bluetooth_on_event_t bluetooth_on_event;
 static pbdrv_bluetooth_receive_handler_t receive_handler;
 static const pbdrv_bluetooth_btstack_platform_data_t *pdata = &pbdrv_bluetooth_btstack_platform_data;
 
-const uint8_t adv_data[] = {
+static const uint8_t adv_data[] = {
     // Flags general discoverable, BR/EDR not supported
     2, BLUETOOTH_DATA_TYPE_FLAGS, 0x06,
     // UUID ...
@@ -39,8 +39,15 @@ const uint8_t adv_data[] = {
 
 _Static_assert(sizeof(adv_data) <= 31, "31 octect max");
 
-const uint8_t scan_resp_data[] = {
-    // Name
+static const uint8_t scan_resp_data[] = {
+    10, BLUETOOTH_DATA_TYPE_SERVICE_DATA,
+    // used to identify which hub - Device Information Service (DIS).
+    // 0x2A50 - service UUID - PnP ID characteristic UUID
+    // 0x01 - Vendor ID Source Field - Bluetooth SIG-assigned ID
+    // 0x0397 - Vendor ID Field - LEGO company identifier
+    // 0x0081 - Product ID Field - Move hub device ID
+    // 0x0000 - Product Version Field - TODO: read variant number from flash memory
+    0x50, 0x2a, 0x01, 0x97, 0x03, 0x81, 0x00, 0x00, 0x00,
     13, BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME,
     'P', 'y', 'b', 'r', 'i', 'c', 'k', 's', ' ', 'H', 'u', 'b',
 };

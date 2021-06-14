@@ -33,6 +33,14 @@
 // name used for standard GAP device name characteristic
 #define DEV_NAME "Pybricks Hub"
 
+// used to identify which hub - Device Information Service (DIS).
+// 0x2A50 - service UUID - PnP ID characteristic UUID
+// 0x01 - Vendor ID Source Field - Bluetooth SIG-assigned ID
+// 0x0397 - Vendor ID Field - LEGO company identifier
+// 0x0040 - Product ID Field - Move hub device ID
+// 0x0000 - Product Version Field - not applicable to Move hub
+#define PNP_ID "\x50\x2a\x01\x97\x03\x40\x00\x00\x00"
+
 // bluetooth address is set at factory at this address
 #define FLASH_BD_ADDR ((const uint8_t *)0x08004ffa)
 
@@ -228,11 +236,14 @@ static PT_THREAD(set_discoverable(struct pt *pt, void *context)) {
     PT_WAIT_WHILE(pt, write_xfer_size);
     // TODO: LEGO firmware also includes Conn_Interval_Min, Conn_Interval_Max.
     // Do we need these?
-    uint8_t response_data[16];
-    response_data[0] = sizeof(DEV_NAME);
-    response_data[1] = AD_TYPE_COMPLETE_LOCAL_NAME;
-    memcpy(&response_data[2], DEV_NAME, sizeof(DEV_NAME));
-    hci_le_set_scan_response_data_begin(response_data[0] + 1, response_data);
+    uint8_t response_data[25];
+    response_data[0] = sizeof(PNP_ID);
+    response_data[1] = AD_TYPE_SERVICE_DATA;
+    memcpy(&response_data[2], PNP_ID, sizeof(PNP_ID) - 1);
+    response_data[11] = sizeof(DEV_NAME);
+    response_data[12] = AD_TYPE_COMPLETE_LOCAL_NAME;
+    memcpy(&response_data[13], DEV_NAME, sizeof(DEV_NAME) - 1);
+    hci_le_set_scan_response_data_begin(sizeof(response_data), response_data);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     hci_le_set_scan_response_data_end();
 

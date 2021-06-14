@@ -62,6 +62,18 @@
 // name used for standard GAP device name characteristic
 #define DEV_NAME "Pybricks Hub"
 
+// used to identify which hub - Device Information Service (DIS).
+// 0x2A50 - service UUID - PnP ID characteristic UUID
+// 0x01 - Vendor ID Source Field - Bluetooth SIG-assigned ID
+// 0x0397 - Vendor ID Field - LEGO company identifier
+// 0x00XX - Product ID Field - hub device ID
+// 0x0000 - Product Version Field - not applicable to most hubs
+#define PNP_ID "\x50\x2a\x01\x97\x03" PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID "\x00\x00\x00"
+
+#ifndef PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID
+#error "Must define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID"
+#endif
+
 // TI Network Processor Interface (NPI)
 #define NPI_SPI_SOF             0xFE    // start of frame
 #define NPI_SPI_HEADER_LEN      3       // zero pad, SOF, length
@@ -276,10 +288,13 @@ static PT_THREAD(set_discoverable(struct pt *pt, void *context)) {
     // Set scan response data
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    data[0] = sizeof(DEV_NAME);  // same as 1 + strlen(DEV_NAME)
-    data[1] = GAP_ADTYPE_LOCAL_NAME_COMPLETE;
-    memcpy(&data[2], DEV_NAME, sizeof(DEV_NAME));
-    GAP_updateAdvertistigData(GAP_AD_TYPE_SCAN_RSP_DATA, sizeof(DEV_NAME) + 1, data);
+    data[0] = sizeof(PNP_ID);  // same as 1 + strlen(PNP_ID)
+    data[1] = GAP_ADTYPE_SERVICE_DATA;
+    memcpy(&data[2], PNP_ID, sizeof(PNP_ID));
+    data[11] = sizeof(DEV_NAME);  // same as 1 + strlen(DEV_NAME)
+    data[12] = GAP_ADTYPE_LOCAL_NAME_COMPLETE;
+    memcpy(&data[13], DEV_NAME, sizeof(DEV_NAME));
+    GAP_updateAdvertistigData(GAP_AD_TYPE_SCAN_RSP_DATA, sizeof(PNP_ID) + sizeof(DEV_NAME) + 2, data);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     // ignoring response data
 

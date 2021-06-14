@@ -28,6 +28,7 @@
 
 #define PBDRV_CONFIG_BLUETOOTH                      (1)
 #define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640         (1)
+#define PBDRV_CONFIG_BLUETOOTH_STM32_CC2640_HUB_ID  "\x80"
 
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)
