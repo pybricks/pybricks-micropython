@@ -73,6 +73,11 @@ SECTIONS
         . = ALIGN(4);
     } >RAM
 
+    .name :
+    {
+        *(.name) /* customizable hub name */
+    } >FLASH
+
     .user :
     {
         . = ALIGN(4);

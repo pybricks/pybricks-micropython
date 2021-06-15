@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2019-2020 The Pybricks Authors
+# Copyright (c) 2019-2021 The Pybricks Authors
 
 """
 Pybricks firmware metadata file generation tool.
 
 Generates a .json file with information about a Pybricks firmware binary blob.
 
-v1.0.0:
+v1.1.0:
 
-    metadata-version    "1.0.0"
+    metadata-version    "1.1.0"
     firmware-version    output of `git describe --tags --dirty`
     device-id           one of 0x40, 0x41, 0x80, 0x81
     checksum-type       one of "sum", "crc32"
@@ -17,6 +17,8 @@ v1.0.0:
     mpy-cross-options   array of string
     user-mpy-offset     number
     max-firmware-size   number
+    hub-name-offset     number [v1.1.0]
+    max-hub-name-size   number [v1.1.0]
 """
 
 import argparse
@@ -36,7 +38,7 @@ mpy_tool = importlib.import_module("mpy-tool")
 
 
 # metadata file format version
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 # hub-specific info
 HUB_INFO = {
@@ -69,6 +71,8 @@ def generate(
 
     flash_origin = None  # Starting address of firmware area in flash memory
     flash_length = None  # Size of firmware area of flash memory
+    name_start = None  # Starting address of custom hub name
+    name_size = None  # Size reserved for custom hub name
     user_start = None  # Starting address of user .mpy file
 
     for line in map_file.readlines():
@@ -76,6 +80,12 @@ def generate(
         if match:
             flash_origin = int(match[1], base=0)
             flash_length = int(match[2], base=0)
+            continue
+
+        match = re.match(r"^\.name\s+(0x[0-9A-Fa-f]{8,16})\s+(0x[0-9A-Fa-f]+)", line)
+        if match:
+            name_start = int(match[1], base=0)
+            name_size = int(match[2], base=0)
             continue
 
         match = re.match(r"^\.user\s+(0x[0-9A-Fa-f]{8,16})", line)
@@ -91,12 +101,18 @@ def generate(
         print("Failed to find 'FLASH' length", file=sys.stderr)
         exit(1)
 
+    if name_start is None:
+        print("Failed to find '.name' start address", file=sys.stderr)
+        exit(1)
+
     if user_start is None:
         print("Failed to find '.user' start address", file=sys.stderr)
         exit(1)
 
     metadata["user-mpy-offset"] = user_start - flash_origin
     metadata["max-firmware-size"] = flash_length
+    metadata["hub-name-offset"] = name_start - flash_origin
+    metadata["max-hub-name-size"] = name_size
 
     json.dump(metadata, out_file, indent=4, sort_keys=True)
 

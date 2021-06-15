@@ -587,7 +587,7 @@ $(BUILD)/firmware-no-checksum.elf: $(LD_FILES) $(OBJ)
 
 # firmware blob used to calculate checksum
 $(BUILD)/firmware-no-checksum.bin: $(BUILD)/firmware-no-checksum.elf
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .user -j .checksum $^ $@
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .name -j .user -j .checksum $^ $@
 
 $(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 	$(ECHO) "RELINK $@"
@@ -596,13 +596,13 @@ $(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 # firmware blob with main.mpy and checksum appended - can be flashed to hub
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(ECHO) "BIN creating firmware file"
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .user -j .checksum $^ $@
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .name -j .user -j .checksum $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
 # firmware blob without main.mpy or checksum - use as base for appending other .mpy
 $(BUILD)/firmware-base.bin: $(BUILD)/firmware-no-checksum.elf
 	$(ECHO) "BIN creating firmware base file"
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $@
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .name $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
 # firmware blob with different starting flash memory address for dual booting
@@ -614,7 +614,7 @@ $(BUILD)/firmware-dual-boot-base.elf: $(LD_FILES) $(OBJ) $(DUAL_BOOT_OBJ)
 # firmware blob without main.mpy or checksum - use as base for appending other .mpy
 $(BUILD)/firmware-dual-boot-base.bin: $(BUILD)/firmware-dual-boot-base.elf
 	$(ECHO) "BIN creating dual-boot firmware base file"
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data $^ $@
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .name $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
 # firmware blob without main.mpy or checksum - use as base for appending other .mpy

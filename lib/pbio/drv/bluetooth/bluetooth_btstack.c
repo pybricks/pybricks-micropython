@@ -31,7 +31,9 @@
 #define HUB_VARIANT 0x0000
 #endif
 
-#define HUB_NAME "Pybricks Hub"
+// hub name goes in special section so that it can be modified when flashing firmware
+__attribute__((section(".name")))
+char pbdrv_bluetooth_hub_name[16] = "Pybricks Hub";
 
 static hci_con_handle_t le_con_handle = HCI_CON_HANDLE_INVALID;
 static hci_con_handle_t pybricks_con_handle = HCI_CON_HANDLE_INVALID;
@@ -134,6 +136,26 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
     }
 }
 
+// ATT Client Read Callback for Dynamic Data
+// - if buffer == NULL, don't copy data, just return size of value
+// - if buffer != NULL, copy data and return number bytes copied
+// @param offset defines start of attribute value
+static uint16_t att_read_callback(hci_con_handle_t con_handle, uint16_t attribute_handle, uint16_t offset, uint8_t *buffer, uint16_t buffer_size) {
+    uint16_t att_value_len;
+
+    switch (attribute_handle) {
+        case ATT_CHARACTERISTIC_GAP_DEVICE_NAME_01_VALUE_HANDLE:
+            att_value_len = strlen(pbdrv_bluetooth_hub_name);
+            if (buffer) {
+                memcpy(buffer, pbdrv_bluetooth_hub_name, att_value_len);
+            }
+            return att_value_len;
+
+        default:
+            return 0;
+    }
+}
+
 void pbdrv_bluetooth_init(void) {
     static btstack_packet_callback_registration_t hci_event_callback_registration;
 
@@ -161,7 +183,7 @@ void pbdrv_bluetooth_init(void) {
     sm_set_ir((uint8_t *)pdata->ir_key);
 
     // setup ATT server
-    att_server_init(profile_data, NULL, NULL);
+    att_server_init(profile_data, att_read_callback, NULL);
 
     device_information_service_server_init();
     device_information_service_server_set_firmware_revision(PBIO_VERSION_STR);
@@ -207,12 +229,17 @@ static void init_advertising_data(void) {
         // 0x00XX - Product ID Field - hub kind
         // 0x00XX - Product Version Field - product variant
         0x50, 0x2a, 0x01, 0x97, 0x03, HUB_KIND, 0x00, 0x00, 0x00,
-        sizeof(HUB_NAME), BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME,
+        0, BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME,
     };
 
     scan_resp_data[9] = HUB_VARIANT;
-    memcpy(&scan_resp_data[13], HUB_NAME, sizeof(HUB_NAME) - 1);
-    gap_scan_response_set_data(13 + sizeof(HUB_NAME) - 1, scan_resp_data);
+
+    uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
+    scan_resp_data[11] = hub_name_len + 1;
+    memcpy(&scan_resp_data[13], pbdrv_bluetooth_hub_name, hub_name_len);
+    _Static_assert(13 + sizeof(pbdrv_bluetooth_hub_name) - 1 <= 31, "scan response is 31 octet max");
+
+    gap_scan_response_set_data(13 + hub_name_len, scan_resp_data);
 }
 
 void pbdrv_bluetooth_start_advertising(void) {

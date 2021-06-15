@@ -30,8 +30,9 @@
 #include <hci_le.h>
 #include <hci_tl.h>
 
-// name used for standard GAP device name characteristic
-#define DEV_NAME "Pybricks Hub"
+// hub name goes in special section so that it can be modified when flashing firmware
+__attribute__((section(".name")))
+char pbdrv_bluetooth_hub_name[16] = "Pybricks Hub";
 
 // used to identify which hub - Device Information Service (DIS).
 // 0x2A50 - service UUID - PnP ID characteristic UUID
@@ -240,10 +241,13 @@ static PT_THREAD(set_discoverable(struct pt *pt, void *context)) {
     response_data[0] = sizeof(PNP_ID);
     response_data[1] = AD_TYPE_SERVICE_DATA;
     memcpy(&response_data[2], PNP_ID, sizeof(PNP_ID) - 1);
-    response_data[11] = sizeof(DEV_NAME);
+    uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
+    response_data[11] = hub_name_len + 1;
     response_data[12] = AD_TYPE_COMPLETE_LOCAL_NAME;
-    memcpy(&response_data[13], DEV_NAME, sizeof(DEV_NAME) - 1);
-    hci_le_set_scan_response_data_begin(sizeof(response_data), response_data);
+    memcpy(&response_data[13], pbdrv_bluetooth_hub_name, hub_name_len);
+    _Static_assert(13 + sizeof(pbdrv_bluetooth_hub_name) - 1 <= 31, "scan response is 31 octet max");
+
+    hci_le_set_scan_response_data_begin(13 + hub_name_len, response_data);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     hci_le_set_scan_response_data_end();
 
@@ -708,7 +712,7 @@ static PT_THREAD(hci_init(struct pt *pt)) {
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     aci_gatt_update_char_value_begin(gap_service_handle, gap_dev_name_char_handle,
-        0, strlen(DEV_NAME), DEV_NAME);
+        0, strlen(pbdrv_bluetooth_hub_name), pbdrv_bluetooth_hub_name);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gatt_update_char_value_end();
 

@@ -1,5 +1,5 @@
 PRIMARY_SERVICE, GAP_SERVICE
-CHARACTERISTIC, GAP_DEVICE_NAME, READ, "Pybricks Hub"
+CHARACTERISTIC, GAP_DEVICE_NAME, DYNAMIC | READ,
 
 // not importing device_information_service.gatt since we are not using all optional characteristics
 PRIMARY_SERVICE, ORG_BLUETOOTH_SERVICE_DEVICE_INFORMATION

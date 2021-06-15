@@ -2,6 +2,12 @@
 
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Added special location in firmware for storing hub name ([support#52]). Note:
+  Support will need to be added to tools separately to make use of this.
+
 ## [3.0.0] - 2021-06-08
 
 ### Added
@@ -26,6 +32,7 @@ Prerelease changes are documented at [support#48].
 <!-- let's try to keep this list sorted -->
 [issue#21]: https://github.com/pybricks/pybricks-micropython/issues/21
 [support#48]: https://github.com/pybricks/support/issues/48
+[support#52]: https://github.com/pybricks/support/issues/52
 [support#321]: https://github.com/pybricks/support/issues/321
 [support#347]: https://github.com/pybricks/support/issues/347
 [support#352]: https://github.com/pybricks/support/issues/352

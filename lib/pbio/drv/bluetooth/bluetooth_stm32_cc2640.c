@@ -60,8 +60,9 @@
 #define DBG(...)
 #endif
 
-// name used for standard GAP device name characteristic
-#define DEV_NAME "Pybricks Hub"
+// hub name goes in special section so that it can be modified when flashing firmware
+__attribute__((section(".name")))
+char pbdrv_bluetooth_hub_name[16] = "Pybricks Hub";
 
 // used to identify which hub - Device Information Service (DIS).
 // 0x2A50 - service UUID - PnP ID characteristic UUID
@@ -292,10 +293,13 @@ static PT_THREAD(set_discoverable(struct pt *pt, void *context)) {
     data[0] = sizeof(PNP_ID);  // same as 1 + strlen(PNP_ID)
     data[1] = GAP_ADTYPE_SERVICE_DATA;
     memcpy(&data[2], PNP_ID, sizeof(PNP_ID));
-    data[11] = sizeof(DEV_NAME);  // same as 1 + strlen(DEV_NAME)
+    uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
+    data[11] = hub_name_len + 1;
     data[12] = GAP_ADTYPE_LOCAL_NAME_COMPLETE;
-    memcpy(&data[13], DEV_NAME, sizeof(DEV_NAME));
-    GAP_updateAdvertistigData(GAP_AD_TYPE_SCAN_RSP_DATA, sizeof(PNP_ID) + sizeof(DEV_NAME) + 2, data);
+    memcpy(&data[13], pbdrv_bluetooth_hub_name, hub_name_len);
+    _Static_assert(13 + sizeof(pbdrv_bluetooth_hub_name) - 1 <= 31, "scan response is 31 octet max");
+
+    GAP_updateAdvertistigData(GAP_AD_TYPE_SCAN_RSP_DATA, 13 + hub_name_len, data);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     // ignoring response data
 
@@ -546,8 +550,9 @@ static void handle_event(uint8_t *packet) {
                         attReadRsp_t rsp;
                         uint8_t buf[ATT_MTU_SIZE - 1];
 
-                        memcpy(&buf[0], DEV_NAME, sizeof(DEV_NAME));
-                        rsp.len = sizeof(DEV_NAME) - 1;
+                        uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
+                        memcpy(&buf[0], pbdrv_bluetooth_hub_name, hub_name_len);
+                        rsp.len = hub_name_len;
                         rsp.pValue = buf;
                         ATT_ReadRsp(connection_handle, &rsp);
                     } else if (handle == gap_service_handle + 4) {
