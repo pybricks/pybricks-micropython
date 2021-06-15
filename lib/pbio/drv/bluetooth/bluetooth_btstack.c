@@ -21,6 +21,9 @@
 #include "genhdr/pybricks_service.h"
 #include "pybricks_service_server.h"
 
+// for now, there is only one hub kind that uses this driver
+#define HUB_KIND LWP3_HUB_KIND_TECHNIC_LARGE
+
 // location of product variant in bootloader flash memory of Technic Large hubs
 #if PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_VARIANT_ADDR
 #define HUB_VARIANT (*(const uint16_t *)PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_VARIANT_ADDR)
@@ -28,39 +31,14 @@
 #define HUB_VARIANT 0x0000
 #endif
 
+#define HUB_NAME "Pybricks Hub"
+
 static hci_con_handle_t le_con_handle = HCI_CON_HANDLE_INVALID;
 static hci_con_handle_t pybricks_con_handle = HCI_CON_HANDLE_INVALID;
 static hci_con_handle_t uart_con_handle = HCI_CON_HANDLE_INVALID;
 static pbdrv_bluetooth_on_event_t bluetooth_on_event;
 static pbdrv_bluetooth_receive_handler_t receive_handler;
 static const pbdrv_bluetooth_btstack_platform_data_t *pdata = &pbdrv_bluetooth_btstack_platform_data;
-
-static const uint8_t adv_data[] = {
-    // Flags general discoverable, BR/EDR not supported
-    2, BLUETOOTH_DATA_TYPE_FLAGS, 0x06,
-    // UUID ...
-    17, BLUETOOTH_DATA_TYPE_INCOMPLETE_LIST_OF_128_BIT_SERVICE_CLASS_UUIDS,
-    0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89, 0xda, 0x46, 0x80, 0x82, 0x01, 0x00, 0xf5, 0xc5,
-    // Tx Power
-    2, BLUETOOTH_DATA_TYPE_TX_POWER_LEVEL, 0,
-};
-
-_Static_assert(sizeof(adv_data) <= 31, "31 octect max");
-
-static const uint8_t scan_resp_data[] = {
-    10, BLUETOOTH_DATA_TYPE_SERVICE_DATA,
-    // used to identify which hub - Device Information Service (DIS).
-    // 0x2A50 - service UUID - PnP ID characteristic UUID
-    // 0x01 - Vendor ID Source Field - Bluetooth SIG-assigned ID
-    // 0x0397 - Vendor ID Field - LEGO company identifier
-    // 0x0081 - Product ID Field - Move hub device ID
-    // 0x0000 - Product Version Field - TODO: read variant number from flash memory
-    0x50, 0x2a, 0x01, 0x97, 0x03, 0x81, 0x00, 0x00, 0x00,
-    13, BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME,
-    'P', 'y', 'b', 'r', 'i', 'c', 'k', 's', ' ', 'H', 'u', 'b',
-};
-
-_Static_assert(sizeof(scan_resp_data) <= 31, "31 octect max");
 
 // note on baud rate: with a 48MHz clock, 3000000 baud is the highest we can
 // go with LL_USART_OVERSAMPLING_16. With LL_USART_OVERSAMPLING_8 we could go
@@ -188,7 +166,7 @@ void pbdrv_bluetooth_init(void) {
     device_information_service_server_init();
     device_information_service_server_set_firmware_revision(PBIO_VERSION_STR);
     device_information_service_server_set_software_revision(PBIO_PROTOCOL_VERSION_STR);
-    device_information_service_server_set_pnp_id(0x01, LWP3_LEGO_COMPANY_ID, LWP3_HUB_KIND_TECHNIC_LARGE, HUB_VARIANT);
+    device_information_service_server_set_pnp_id(0x01, LWP3_LEGO_COMPANY_ID, HUB_KIND, HUB_VARIANT);
 
     pybricks_service_server_init(pybricks_data_received, pybricks_configured);
     nordic_spp_service_server_init(nordic_spp_packet_handler);
@@ -203,13 +181,38 @@ bool pbdrv_bluetooth_is_ready(void) {
 }
 
 static void init_advertising_data(void) {
-    uint16_t adv_int_min = 0x0030;
-    uint16_t adv_int_max = 0x0030;
-    uint8_t adv_type = 0;
-    bd_addr_t null_addr = { 0 };
-    gap_advertisements_set_params(adv_int_min, adv_int_max, adv_type, 0, null_addr, 0x07, 0x00);
+    bd_addr_t null_addr = { };
+    gap_advertisements_set_params(0x0030, 0x0030, 0x00, 0x00, null_addr, 0x07, 0x00);
+
+    static const uint8_t adv_data[] = {
+        // Flags general discoverable, BR/EDR not supported
+        2, BLUETOOTH_DATA_TYPE_FLAGS, 0x06,
+        // Pybricks service
+        17, BLUETOOTH_DATA_TYPE_INCOMPLETE_LIST_OF_128_BIT_SERVICE_CLASS_UUIDS,
+        0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89, 0xda, 0x46, 0x80, 0x82, 0x01, 0x00, 0xf5, 0xc5,
+        // Tx Power
+        2, BLUETOOTH_DATA_TYPE_TX_POWER_LEVEL, 0,
+    };
+
+    _Static_assert(sizeof(adv_data) <= 31, "31 octect max");
+
     gap_advertisements_set_data(sizeof(adv_data), (uint8_t *)adv_data);
-    gap_scan_response_set_data(sizeof(scan_resp_data), (uint8_t *)scan_resp_data);
+
+    static uint8_t scan_resp_data[31] = {
+        10, BLUETOOTH_DATA_TYPE_SERVICE_DATA,
+        // used to identify which hub - Device Information Service (DIS).
+        // 0x2A50 - service UUID - PnP ID characteristic UUID
+        // 0x01 - Vendor ID Source Field - Bluetooth SIG-assigned ID
+        // 0x0397 - Vendor ID Field - LEGO company identifier
+        // 0x00XX - Product ID Field - hub kind
+        // 0x00XX - Product Version Field - product variant
+        0x50, 0x2a, 0x01, 0x97, 0x03, HUB_KIND, 0x00, 0x00, 0x00,
+        sizeof(HUB_NAME), BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME,
+    };
+
+    scan_resp_data[9] = HUB_VARIANT;
+    memcpy(&scan_resp_data[13], HUB_NAME, sizeof(HUB_NAME) - 1);
+    gap_scan_response_set_data(13 + sizeof(HUB_NAME) - 1, scan_resp_data);
 }
 
 void pbdrv_bluetooth_start_advertising(void) {
