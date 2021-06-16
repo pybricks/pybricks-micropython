@@ -16,6 +16,7 @@
 #include <pbdrv/gpio.h>
 #include <pbio/error.h>
 #include <pbio/protocol.h>
+#include <pbio/task.h>
 #include <pbio/util.h>
 #include <pbio/version.h>
 
@@ -87,14 +88,6 @@ typedef enum {
     RESET_STATE_OUT_LOW,    // out of reset
     RESET_STATE_INPUT,      // ?
 } reset_state_t;
-
-typedef PT_THREAD((*task_func_t)(struct pt *pt, void *context));
-
-typedef struct {
-    struct pt pt;
-    task_func_t func;
-    void *context;
-} task_t;
 
 // Tx buffer for SPI writes
 static uint8_t write_buf[TX_BUFFER_SIZE];
@@ -168,44 +161,11 @@ static const uint8_t nrf_uart_tx_char_uuid[] = {
 
 PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
 
-// TODO: turn current task into a linked list of tasks
-static task_t current_task;
+LIST(task_queue);
 static bool bluetooth_ready;
 static pbdrv_bluetooth_on_event_t bluetooth_on_event;
 static pbdrv_bluetooth_receive_handler_t receive_handler;
 static const pbdrv_bluetooth_stm32_cc2640_platform_data_t *pdata = &pbdrv_bluetooth_stm32_cc2640_platform_data;
-
-/**
- * Runs the current task until the next yield.
- */
-static void run_current_task(void) {
-    if (!current_task.func) {
-        return;
-    }
-
-    if (!PT_SCHEDULE(current_task.func(&current_task.pt, current_task.context))) {
-        current_task.func = current_task.context = NULL;
-    }
-}
-
-/**
- * Starts running a task.
- *
- * Currently, it is assumed that no other task can be in progress when this is
- * called.
- *
- * @param [in]  func    The task PT_THREAD.
- * @param [in]  context Optional context passed back to @p func.
- */
-static void start_task(task_func_t func, void *context) {
-    assert(current_task.func == NULL);
-
-    PT_INIT(&current_task.pt);
-    current_task.func = func;
-    current_task.context = context;
-
-    run_current_task();
-}
 
 /**
  * Sets the nRESET line on the Bluetooth chip.
@@ -266,7 +226,7 @@ bool pbdrv_bluetooth_is_ready(void) {
 /**
  * Sets advertising data and enables advertisements.
  */
-static PT_THREAD(set_discoverable(struct pt *pt, void *context)) {
+static PT_THREAD(set_discoverable(struct pt *pt, pbio_task_t *task)) {
     uint8_t data[31];
 
     PT_BEGIN(pt);
@@ -311,11 +271,15 @@ static PT_THREAD(set_discoverable(struct pt *pt, void *context)) {
     PT_WAIT_UNTIL(pt, hci_command_complete);
     // ignoring response data
 
+    task->status = PBIO_SUCCESS;
+
     PT_END(pt);
 }
 
 void pbdrv_bluetooth_start_advertising(void) {
-    start_task(set_discoverable, NULL);
+    static pbio_task_t task;
+    pbio_task_init(&task, set_discoverable, NULL);
+    pbio_task_start(task_queue, &task);
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
@@ -341,9 +305,9 @@ void pbdrv_bluetooth_set_on_event(pbdrv_bluetooth_on_event_t on_event) {
 /**
  * Handles sending data via a characteristic value notification.
  */
-static PT_THREAD(send_value_notification(struct pt *pt, void *context))
+static PT_THREAD(send_value_notification(struct pt *pt, pbio_task_t *task))
 {
-    pbdrv_bluetooth_send_context_t *send = context;
+    pbdrv_bluetooth_send_context_t *send = task->context;
 
     PT_BEGIN(pt);
 
@@ -353,17 +317,20 @@ retry:
     uint16_t attr_handle;
     if (send->connection == PBDRV_BLUETOOTH_CONNECTION_PYBRICKS) {
         if (!pybricks_notify_en) {
+            task->status = PBIO_ERROR_INVALID_OP;
             goto done;
         }
         attr_handle = pybricks_char_handle;
     } else if (send->connection == PBDRV_BLUETOOTH_CONNECTION_UART) {
         if (!uart_tx_notify_en) {
+            task->status = PBIO_ERROR_INVALID_OP;
             goto done;
         }
         attr_handle = uart_tx_char_handle;
     } else {
         // called with invalid connection
         assert(0);
+        task->status = PBIO_ERROR_INVALID_ARG;
         goto done;
     }
 
@@ -382,6 +349,8 @@ retry:
         goto retry;
     }
 
+    task->status = PBIO_SUCCESS;
+
 done:
     send->done();
 
@@ -389,7 +358,9 @@ done:
 }
 
 void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context) {
-    start_task(send_value_notification, context);
+    static pbio_task_t task;
+    pbio_task_init(&task, send_value_notification, context);
+    pbio_task_start(task_queue, &task);
 }
 
 void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
@@ -1173,7 +1144,7 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
     PT_END(pt);
 }
 
-static PT_THREAD(init_task(struct pt *pt, void *context)) {
+static PT_THREAD(init_task(struct pt *pt, pbio_task_t *task)) {
     static struct pt child_pt;
 
     PT_BEGIN(pt);
@@ -1183,6 +1154,7 @@ static PT_THREAD(init_task(struct pt *pt, void *context)) {
     PT_SPAWN(pt, &child_pt, init_pybricks_service(&child_pt));
     PT_SPAWN(pt, &child_pt, init_uart_service(&child_pt));
     bluetooth_ready = true;
+    task->status = PBIO_SUCCESS;
 
     PT_END(pt);
 }
@@ -1237,7 +1209,9 @@ start:
     etimer_set(&timer, clock_from_msec(100));
     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
 
-    start_task(init_task, NULL);
+    static pbio_task_t task;
+    pbio_task_init(&task, init_task, NULL);
+    pbio_task_start(task_queue, &task);
 
     while (true) {
         static uint8_t real_write_xfer_size;
@@ -1312,7 +1286,7 @@ start:
             // TODO: do we need to handle ACL packets (HCI_ACLDATA_PKT)?
         }
 
-        run_current_task();
+        pbio_task_queue_run_once(task_queue);
     }
 
     PROCESS_END();
