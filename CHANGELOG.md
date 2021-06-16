@@ -5,6 +5,8 @@
 ## [Unreleased]
 
 ### Added
+- Added PnP ID characteristic to Device Information Service and to advertising
+  data ([issue#49]).
 - Added special location in firmware for storing hub name ([support#52]). Note:
   Support will need to be added to tools separately to make use of this.
 - Added configuration option to run a simplified version of motor PID control.
@@ -34,6 +36,7 @@ Prerelease changes are documented at [support#48].
 
 <!-- let's try to keep this list sorted -->
 [issue#21]: https://github.com/pybricks/pybricks-micropython/issues/21
+[issue#49]: https://github.com/pybricks/pybricks-micropython/issues/49
 [support#48]: https://github.com/pybricks/support/issues/48
 [support#52]: https://github.com/pybricks/support/issues/52
 [support#321]: https://github.com/pybricks/support/issues/321
