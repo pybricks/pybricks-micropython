@@ -458,10 +458,12 @@ void pb_type_Remote_cleanup(void) {
 #endif // PYBRICKS_HUB_PRIMEHUB
 
 STATIC const mp_rom_map_elem_t experimental_globals_table[] = {
-    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental_c) },
     #if PYBRICKS_HUB_EV3BRICK
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental_c) },
     { MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&mod_experimental___init___obj) },
     { MP_ROM_QSTR(MP_QSTR_pthread_raise), MP_ROM_PTR(&mod_experimental_pthread_raise_obj) },
+    #else
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental) },
     #endif // PYBRICKS_HUB_EV3BRICK
     #if PYBRICKS_HUB_PRIMEHUB
     { MP_ROM_QSTR(MP_QSTR_Remote), MP_ROM_PTR(&pb_type_Remote) },
