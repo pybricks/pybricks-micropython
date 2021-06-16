@@ -19,6 +19,7 @@
 #include <pbdrv/gpio.h>
 #include <pbio/error.h>
 #include <pbio/protocol.h>
+#include <pbio/task.h>
 #include <pbio/util.h>
 #include <pbio/version.h>
 
@@ -60,14 +61,6 @@ static const uint8_t read_header_tx[BLUENRG_HEADER_SIZE] = { 0x0b };
 // Rx buffer for BlueNRG header
 static uint8_t header_rx[BLUENRG_HEADER_SIZE];
 
-typedef PT_THREAD((*task_func_t)(struct pt *pt, void *context));
-
-typedef struct {
-    struct pt pt;
-    task_func_t func;
-    void *context;
-} task_t;
-
 // Tx buffer for SPI writes
 static uint8_t write_buf[HCI_MAX_PAYLOAD_SIZE];
 // Rx buffer for SPI reads
@@ -99,8 +92,8 @@ static uint16_t uart_service_handle, uart_rx_char_handle, uart_tx_char_handle;
 
 PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
 
-// TODO: turn current task into a linked list of tasks
-static task_t current_task;
+LIST(task_queue);
+
 static bool bluetooth_ready;
 static bool pybricks_notify_en;
 static bool uart_tx_notify_en;
@@ -113,39 +106,6 @@ static const pbdrv_gpio_t irq_gpio = { .bank = GPIOD, .pin = 2 };
 static const pbdrv_gpio_t mosi_gpio = { .bank = GPIOC, .pin = 3 };
 static const pbdrv_gpio_t miso_gpio = { .bank = GPIOC, .pin = 2 };
 static const pbdrv_gpio_t sck_gpio = { .bank = GPIOB, .pin = 13 };
-
-/**
- * Runs the current task until the next yield.
- */
-static void run_current_task(void) {
-    if (!current_task.func) {
-        return;
-    }
-
-    if (!PT_SCHEDULE(current_task.func(&current_task.pt, current_task.context))) {
-        current_task.func = NULL;
-    }
-}
-
-/**
- * Starts running a task.
- *
- * Currently, it is assumed that no other task can be in progress when this is
- * called.
- *
- * @param [in]  func    The task PT_THREAD.
- * @param [in]  context Optional context passed back to @p func.
- */
-static void start_task(task_func_t func, void *context) {
-    assert(current_task.func == NULL);
-
-    PT_INIT(&current_task.pt);
-    current_task.func = func;
-    current_task.context = context;
-
-    run_current_task();
-    process_poll(&pbdrv_bluetooth_spi_process);
-}
 
 /**
  * Sets the nRESET line on the Bluetooth chip.
@@ -224,7 +184,7 @@ bool pbdrv_bluetooth_is_ready(void) {
 /**
  * Sets advertising data and enables advertisements.
  */
-static PT_THREAD(set_discoverable(struct pt *pt, void *context)) {
+static PT_THREAD(set_discoverable(struct pt *pt, pbio_task_t *task)) {
     // c5f50001-8280-46da-89f4-6d8051e4aeef
     static const uint8_t service_uuids[] = {
         AD_TYPE_128_BIT_SERV_UUID,
@@ -257,11 +217,15 @@ static PT_THREAD(set_discoverable(struct pt *pt, void *context)) {
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gap_set_discoverable_end();
 
+    task->status = PBIO_SUCCESS;
+
     PT_END(pt);
 }
 
 void pbdrv_bluetooth_start_advertising(void) {
-    start_task(set_discoverable, NULL);
+    static pbio_task_t task;
+    pbio_task_init(&task, set_discoverable, NULL);
+    pbio_task_start(task_queue, &task);
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
@@ -284,9 +248,9 @@ void pbdrv_bluetooth_set_on_event(pbdrv_bluetooth_on_event_t on_event) {
     bluetooth_on_event = on_event;
 }
 
-static PT_THREAD(send_value_notification(struct pt *pt, void *context))
+static PT_THREAD(send_value_notification(struct pt *pt, pbio_task_t *task))
 {
-    pbdrv_bluetooth_send_context_t *send = context;
+    pbdrv_bluetooth_send_context_t *send = task->context;
 
     PT_BEGIN(pt);
 
@@ -309,6 +273,7 @@ retry:
     } else {
         // called with invalid connection type
         assert(0);
+        task->status = PBIO_ERROR_INVALID_ARG;
         goto done;
     }
 
@@ -325,11 +290,15 @@ retry:
 done:
     send->done();
 
+    task->status = PBIO_SUCCESS;
+
     PT_END(pt);
 }
 
 void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context) {
-    start_task(send_value_notification, context);
+    static pbio_task_t task;
+    pbio_task_init(&task, send_value_notification, context);
+    pbio_task_start(task_queue, &task);
 }
 
 void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
@@ -766,7 +735,7 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
     PT_END(pt);
 }
 
-static PT_THREAD(init_task(struct pt *pt, void *context)) {
+static PT_THREAD(init_task(struct pt *pt, pbio_task_t *task)) {
     static struct pt child_pt;
 
     PT_BEGIN(pt);
@@ -781,6 +750,7 @@ static PT_THREAD(init_task(struct pt *pt, void *context)) {
     PT_SPAWN(pt, &child_pt, init_pybricks_service(&child_pt));
     PT_SPAWN(pt, &child_pt, init_uart_service(&child_pt));
     bluetooth_ready = true;
+    task->status = PBIO_SUCCESS;
 
     PT_END(pt);
 }
@@ -801,7 +771,9 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
     // take Bluetooth chip out of reset
     bluetooth_reset(false);
 
-    start_task(init_task, NULL);
+    static pbio_task_t task;
+    pbio_task_init(&task, init_task, NULL);
+    pbio_task_start(task_queue, &task);
 
     while (true) {
         PROCESS_WAIT_UNTIL(spi_irq || write_xfer_size);
@@ -814,7 +786,7 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
             PROCESS_PT_SPAWN(&child_pt, spi_write(&child_pt));
         }
 
-        run_current_task();
+        pbio_task_queue_run_once(task_queue);
     }
 
     PROCESS_END();
