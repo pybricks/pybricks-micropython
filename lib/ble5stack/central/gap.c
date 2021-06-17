@@ -172,6 +172,34 @@ HCI_StatusCodes_t GapInit_cancelConnect(void)
     return status;
 }
 
+HCI_StatusCodes_t GAP_DeviceDiscoveryRequest(Gap_deviceDiscoveryMode_t mode, uint8_t activeScan, Gap_filterPolicy_t filterPolicy)
+{
+    uint8_t pData[3];
+
+    pData[0] = mode;
+    pData[1] = activeScan;
+    pData[2] = filterPolicy;
+
+    return HCI_sendHCICommand(GAP_DEVICE_DISCOVERY_REQUEST, pData, 3);
+}
+
+HCI_StatusCodes_t GAP_DeviceDiscoveryCancel(void)
+{
+    return HCI_sendHCICommand(GAP_DEVICE_DISCOVERY_CANCEL, NULL, 0);
+}
+
+HCI_StatusCodes_t GAP_EstablishLinkReq(uint8_t highDutyCycle, uint8_t whiteList, GAP_Addr_Types_t addrTypePeer, uint8_t *peerAddr)
+{
+    uint8_t pData[9];
+
+    pData[0] = highDutyCycle;
+    pData[1] = whiteList;
+    pData[2] = addrTypePeer;
+    memcpy(&pData[3], peerAddr, 6);
+
+    return HCI_sendHCICommand(GAP_ESTABLISH_LINK_REQUEST, pData, 9);
+}
+
 HCI_StatusCodes_t GAP_TerminateLinkReq(uint16_t connectionHandle, uint8_t reason)
 {
     HCI_StatusCodes_t status;
@@ -182,7 +210,7 @@ HCI_StatusCodes_t GAP_TerminateLinkReq(uint16_t connectionHandle, uint8_t reason
 
     pData[2] = reason;
 
-    status = HCI_sendHCICommand(GAP_TERMINATELINKREQUEST, pData, 3);
+    status = HCI_sendHCICommand(GAP_TERMINATE_LINK_REQUEST, pData, 3);
 
     return status;
 }

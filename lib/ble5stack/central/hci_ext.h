@@ -177,17 +177,17 @@ extern "C"
 #define HCI_EXT_GAP_INIT_CANCEL_CONNECT         0x64
 
 // GATT Sub-Procedure Commands
-#define GATT_FIND_INCLUDED_SERVICES             0x30
-#define GATT_DISC_ALL_CHARS                     0x32
-#define GATT_READ_USING_CHAR_UUID               0x34
-#define GATT_WRITE_NO_RSP                       0x36
-#define GATT_SIGNED_WRITE_NO_RSP                0x38
-#define GATT_RELIABLE_WRITES                    0x3a
-#define GATT_READ_CHAR_DESC                     0x3c
-#define GATT_READ_LONG_CHAR_DESC                0x3e
-#define GATT_WRITE_CHAR_DESC                    0x40
-#define GATT_WRITE_LONG_CHAR_DESC               0x42
-#define GATT_CCC_UPDATE                         0x43
+// #define GATT_FIND_INCLUDED_SERVICES             0x30
+// #define GATT_DISC_ALL_CHARS                     0x32
+// #define GATT_READ_USING_CHAR_UUID               0x34
+// #define GATT_WRITE_NO_RSP                       0x36
+// #define GATT_SIGNED_WRITE_NO_RSP                0x38
+// #define GATT_RELIABLE_WRITES                    0x3a
+// #define GATT_READ_CHAR_DESC                     0x3c
+// #define GATT_READ_LONG_CHAR_DESC                0x3e
+// #define GATT_WRITE_CHAR_DESC                    0x40
+// #define GATT_WRITE_LONG_CHAR_DESC               0x42
+// #define GATT_CCC_UPDATE                         0x43
 
 // GATT HCI Extension messages (0x7C - 0x7F)
 #define HCI_EXT_GATT_ADD_SERVICE                ( GATT_BASE_METHOD | 0x3C ) // 0x7C

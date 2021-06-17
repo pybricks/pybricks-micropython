@@ -109,8 +109,14 @@ static uint16_t hci_command_opcode;
 static bool hci_command_status;
 // set to false when hci command is started and true when command is completed
 static bool hci_command_complete;
+// used to synchronize advertising data handler
+static bool advertising_data_received;
 // handle to connected Bluetooth device
 static uint16_t conn_handle = NO_CONNECTION;
+// handle to connected remote control
+static uint16_t remote_handle = NO_CONNECTION;
+// handle to LWP3 characteristic on remote
+static uint16_t remote_lwp3_char_handle = NO_CONNECTION;
 
 // GATT service handles
 static uint16_t gatt_service_handle, gatt_service_end_handle;
@@ -165,6 +171,7 @@ LIST(task_queue);
 static bool bluetooth_ready;
 static pbdrv_bluetooth_on_event_t bluetooth_on_event;
 static pbdrv_bluetooth_receive_handler_t receive_handler;
+static pbdrv_bluetooth_receive_handler_t notification_handler;
 static const pbdrv_bluetooth_stm32_cc2640_platform_data_t *pdata = &pbdrv_bluetooth_stm32_cc2640_platform_data;
 
 /**
@@ -295,6 +302,10 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
         return true;
     }
 
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_HANDSET && remote_handle != NO_CONNECTION) {
+        return true;
+    }
+
     return false;
 }
 
@@ -365,6 +376,227 @@ void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context) {
 
 void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
     receive_handler = handler;
+}
+
+void pbdrv_bluetooth_set_notification_handler(pbdrv_bluetooth_receive_handler_t handler) {
+    notification_handler = handler;
+}
+
+static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
+    pbdrv_bluetooth_scan_and_connect_context_t *context = task->context;
+
+    PT_BEGIN(pt);
+
+    // start scanning
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_DeviceDiscoveryRequest(GAP_DEVICE_DISCOVERY_MODE_ALL, 1, GAP_FILTER_POLICY_SCAN_ANY_CONNECT_ANY);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    context->status = read_buf[8]; // debug
+
+    for (;;) {
+        advertising_data_received = false;
+        PT_WAIT_UNTIL(pt, {
+            if (task->cancel) {
+                goto cancel_discovery;
+            }
+            advertising_data_received;
+        });
+
+        /** 00001623-1212-EFDE-1623-785FEABCD123 */
+        static const uint8_t lwp3_hub_service_uuid[] = {
+            0x23, 0xD1, 0xBC, 0xEA, 0x5F, 0x78, 0x23, 0x16, 0xDE, 0xEF, 0x12, 0x12, 0x23, 0x16, 0x00, 0x00,
+        };
+
+        // TODO: Properly parse advertising data. For now, we are assuming that
+        // the service UUID is at a fixed position and we are getting only
+        // GAP_ADTYPE_128BIT_COMPLETE and not GAP_ADTYPE_128BIT_MORE
+        if (
+            read_buf[9] != ADV_IND /* connectable undirected advertisement */ ||
+            read_buf[22] != 17 /* length */ || read_buf[23] != GAP_ADTYPE_128BIT_COMPLETE ||
+            memcmp(&read_buf[24], lwp3_hub_service_uuid, sizeof(lwp3_hub_service_uuid)) != 0 ||
+            read_buf[45] != LWP3_HUB_KIND_HANDSET) {
+
+            // if this is not LEGO Powered Up remote, keep scanning
+            continue;
+        }
+
+        // save the Bluetooth address for later
+        // addr_type = read_buf[10];
+        memcpy(context->bdaddr, &read_buf[11], 6);
+
+        // TODO: wait for scan response that matches Bluetooth address for
+        // for checking local name
+        // read_buf[9] == 4 /* Scan Response */
+
+        break;
+    }
+
+    // stop scanning
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_DeviceDiscoveryCancel();
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    // connect
+
+    assert(remote_handle == NO_CONNECTION);
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    // REVISIT: might want to store address type from advertising data and pass
+    // it in here instead of assuming public address type
+    GAP_EstablishLinkReq(0, 0, ADDRTYPE_PUBLIC, context->bdaddr);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    context->status = read_buf[8]; // debug
+
+    PT_WAIT_UNTIL(pt, {
+        if (task->cancel) {
+            goto cancel_connect;
+        }
+        remote_handle != NO_CONNECTION;
+    });
+
+    // discover LWP3 characteristic to get attribute handle
+
+    assert(remote_lwp3_char_handle == NO_CONNECTION);
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    {
+        static const attReadByTypeReq_t req = {
+            .startHandle = 0x0001,
+            .endHandle = 0xFFFF,
+            .type.len = 16,
+            .type.uuid = {
+                0x23, 0xD1, 0xBC, 0xEA, 0x5F, 0x78, 0x23, 0x16, 0xDE, 0xEF, 0x12, 0x12, 0x24, 0x16, 0x00, 0x00,
+            }
+        };
+        GATT_DiscCharsByUUID(remote_handle, &req);
+    }
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    context->status = read_buf[8]; // debug
+
+    // Assuming that we only ever get successful ATT_ReadByTypeRsp and failed
+    // ATT_ReadByTypeRsp or ATT_ErrorRsp.
+    PT_WAIT_UNTIL(pt, {
+        if (task->cancel) {
+            goto cancel_disconnect;
+        }
+        remote_lwp3_char_handle != NO_CONNECTION;
+    });
+
+    // enable notifications
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    {
+        static const uint16_t enable = 0x0001;
+        attWriteReq_t req = {
+            .handle = remote_lwp3_char_handle + 2,
+            .len = sizeof(enable),
+            .pValue = (uint8_t *)&enable,
+        };
+        GATT_WriteNoRsp(remote_handle, &req);
+    }
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    context->status = read_buf[8]; // debug
+
+    // set mode for left buttons
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    {
+        // 0x0a == length
+        // 0x00 == local hub
+        // 0x41 == Port Input Format Setup (Single)
+        // 0x00 == Port ID - left buttons
+        // 0x04 == mode - KEYSD
+        // 0x00000001 == delta interval
+        // 0x01 == enable notifications
+        static const uint8_t command[] = { 0x0a, 0x00, 0x41, 0x00, 0x04, 0x01, 0x00, 0x00, 0x00, 0x01 };
+        attWriteReq_t req = {
+            .handle = remote_lwp3_char_handle + 1,
+            .len = sizeof(command),
+            .pValue = (uint8_t *)command,
+        };
+        GATT_WriteNoRsp(remote_handle, &req);
+    }
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    context->status = read_buf[8]; // debug
+
+    // set mode for right buttons
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    {
+        // 0x0a == length
+        // 0x00 == local hub
+        // 0x41 == Port Input Format Setup (Single)
+        // 0x01 == Port ID - right buttons
+        // 0x04 == mode - KEYSD
+        // 0x00000001 == delta interval
+        // 0x01 == enable notifications
+        static const uint8_t command[] = { 0x0a, 0x00, 0x41, 0x01, 0x04, 0x01, 0x00, 0x00, 0x00, 0x01 };
+        attWriteReq_t req = {
+            .handle = remote_lwp3_char_handle + 1,
+            .len = sizeof(command),
+            .pValue = (uint8_t *)command,
+        };
+        GATT_WriteNoRsp(remote_handle, &req);
+    }
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    context->status = read_buf[8]; // debug
+
+    task->status = PBIO_SUCCESS;
+    PT_EXIT(pt);
+
+cancel_disconnect:
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_TerminateLinkReq(remote_handle, 0x13);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    goto end_cancel;
+
+cancel_connect:
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_TerminateLinkReq(0xFFFE, 0x13);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    goto end_cancel;
+
+cancel_discovery:
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_DeviceDiscoveryCancel();
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+end_cancel:
+    task->status = PBIO_ERROR_CANCELED;
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_and_connect_context_t *context) {
+    pbio_task_init(task, scan_and_connect_task, context);
+    pbio_task_start(task_queue, task);
+}
+
+static PT_THREAD(disconnect_remote_task(struct pt *pt, pbio_task_t *task)) {
+    PT_BEGIN(pt);
+
+    if (remote_handle != NO_CONNECTION) {
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        GAP_TerminateLinkReq(remote_handle, 0x13);
+        PT_WAIT_UNTIL(pt, hci_command_status);
+    }
+
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_disconnect_remote(void) {
+    static pbio_task_t task;
+    pbio_task_init(&task, disconnect_remote_task, NULL);
+    pbio_task_start(task_queue, &task);
 }
 
 // Driver interrupt callbacks
@@ -511,6 +743,14 @@ static void handle_event(uint8_t *packet) {
                             DBG("unhandled read by type req: %04X", type);
                             break;
                     }
+                }
+                break;
+
+                case ATT_EVENT_READ_BY_TYPE_RSP: {
+                    // Assuming that LEGO Powered Up remote is the only thing
+                    // that provides this event type
+                    remote_lwp3_char_handle = (data[8] << 8) | data[7];
+                    // REVISIT: could also be bleTimeout
                 }
                 break;
 
@@ -714,9 +954,28 @@ static void handle_event(uint8_t *packet) {
                 }
                 break;
 
+                case ATT_EVENT_HANDLE_VALUE_NOTI: {
+                    // TODO: match callback to handle
+                    // uint8_t attr_handle = (data[7] << 8) | data[6];
+                    if (notification_handler) {
+                        notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_HANDSET, &data[8], pdu_len - 2);
+                    }
+                }
+                break;
+
+                case GAP_DEVICE_DISCOVERY_DONE:
+                    // TODO: do something with this - occurs when scanning is complete
+                    break;
+
                 case GAP_LINK_ESTABLISHED:
-                    conn_handle = (data[11] << 8) | data[10];
-                    DBG("link: %04x", conn_handle);
+                    if (data[12] == GAP_PROFILE_PERIPHERAL) {
+                        // we currently only allow connection from one central
+                        conn_handle = (data[11] << 8) | data[10];
+                        DBG("link: %04x", conn_handle);
+                    } else if (data[12] == GAP_PROFILE_CENTRAL) {
+                        // we currently only allow connection to one LEGO Powered Up remote peripheral
+                        remote_handle = (data[11] << 8) | data[10];
+                    }
                     break;
 
                 case GAP_LINK_TERMINATED: {
@@ -725,12 +984,19 @@ static void handle_event(uint8_t *packet) {
                         conn_handle = NO_CONNECTION;
                         pybricks_notify_en = false;
                         uart_tx_notify_en = false;
+                    } else if (remote_handle == connection_handle) {
+                        remote_handle = NO_CONNECTION;
+                        remote_lwp3_char_handle = NO_CONNECTION;
                     }
                 }
                 break;
 
                 case GAP_LINK_PARAM_UPDATE:
                     // we get this event, but don't need to do anything about it
+                    break;
+
+                case GAP_DEVICE_INFORMATION:
+                    advertising_data_received = true;
                     break;
 
                 case HCI_EXT_SET_TX_POWER_EVENT:
@@ -972,7 +1238,7 @@ static PT_THREAD(hci_init(struct pt *pt)) {
     // init GATT layer
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_deviceInit(GAP_PROFILE_PERIPHERAL, 8, NULL, NULL, 0);
+    GAP_deviceInit(GAP_PROFILE_PERIPHERAL | GAP_PROFILE_CENTRAL, 8, NULL, NULL, 0);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     // ignoring response data
 
@@ -1167,7 +1433,7 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
         spi_set_mrdy(false);
         bluetooth_reset(RESET_STATE_OUT_LOW);
         bluetooth_ready = pybricks_notify_en = uart_tx_notify_en = false;
-        conn_handle = NO_CONNECTION;
+        conn_handle = remote_handle = remote_lwp3_char_handle = NO_CONNECTION;
         PROCESS_EXIT();
     });
 

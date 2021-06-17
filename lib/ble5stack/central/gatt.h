@@ -90,13 +90,13 @@
 #define GATT_DISCPRIMARYSERVICEBYUUID   0xFD86
 #define GATT_FINDINCLUDEDSERVICES       0xFDB0
 #define GATT_DISCALLCHARS               0xFDB2
-#define GATT_DISCCHARSBYUUID            0xFD88
+#define GATT_DISC_CHARS_BY_UUID         0xFD88
 #define GATT_DISCALLCHARDESCS           0xFD84
 #define GATT_READCHARVALUE              0xFD8A
 #define GATT_READUSINGCHARUUID          0xFDB4
 #define GATT_READLONGCHARVALUE          0xFD8C
 #define GATT_READMULTILCHARVALUES       0xFD8E
-#define GATT_WRITENORSP                 0xFDB6
+#define GATT_WRITE_NO_RSP               0xFDB6
 #define GATT_SIGNEDWRITENORSP           0xFDB8
 #define GATT_WRITECHARVALUE             0xFD92
 #define GATT_WRITELONGCHARVALUE         0xFD96
@@ -609,7 +609,7 @@ extern HCI_StatusCodes_t GATT_DiscAllChars( uint16_t connHandle, uint16_t startH
  * @return @ref bleSUCCESS : command sent successfully over HCI transport layer
  * @return @ref bleFAILURE : command failed to send over HCI transport layer
  */
-extern HCI_StatusCodes_t GATT_DiscCharsByUUID( uint16_t connHandle, attReadByTypeReq_t *pReq);
+extern HCI_StatusCodes_t GATT_DiscCharsByUUID( uint16_t connHandle, const attReadByTypeReq_t *pReq);
 
 /**
  * @brief   Discovery All Characteristic Descriptors

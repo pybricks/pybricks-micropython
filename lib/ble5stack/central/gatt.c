@@ -184,42 +184,22 @@ HCI_StatusCodes_t GATT_DiscAllChars(uint16_t connHandle, uint16_t startHandle,
 }
 
 HCI_StatusCodes_t GATT_DiscCharsByUUID(uint16_t connHandle,
-                                      attReadByTypeReq_t *pReq)
+                                       const attReadByTypeReq_t *pReq)
 {
-    uint8_t dataLength, index;
-    uint8_t *pData;
-    HCI_StatusCodes_t status;
+    uint8_t pData[22];
 
-    dataLength = sizeof(connHandle) + sizeof(pReq->startHandle)
-            + sizeof(pReq->endHandle) + pReq->type.len;
-    pData = (uint8_t *) malloc(dataLength);
-    if (pData == NULL)
-    {
-        free(pData);
-        return bleMemAllocError;
-    }
-    else
-    {
-        pData[0] = LO_UINT16(connHandle);
-        pData[1] = HI_UINT16(connHandle);
+    pData[0] = LO_UINT16(connHandle);
+    pData[1] = HI_UINT16(connHandle);
 
-        pData[2] = LO_UINT16(pReq->startHandle);
-        pData[3] = HI_UINT16(pReq->startHandle);
+    pData[2] = LO_UINT16(pReq->startHandle);
+    pData[3] = HI_UINT16(pReq->startHandle);
 
-        pData[4] = LO_UINT16(pReq->endHandle);
-        pData[5] = HI_UINT16(pReq->endHandle);
+    pData[4] = LO_UINT16(pReq->endHandle);
+    pData[5] = HI_UINT16(pReq->endHandle);
 
-        for(index = 0; index < pReq->type.len; index++)
-        {
-            pData[6 + index] = pReq->type.uuid[(pReq->type.len - 1 - index)];
-        }
-    }
+    memcpy(&pData[6], pReq->type.uuid, pReq->type.len);
 
-    status = HCI_sendHCICommand(GATT_DISCCHARSBYUUID, pData, dataLength);
-
-    free(pData);
-
-    return status;
+    return HCI_sendHCICommand(GATT_DISC_CHARS_BY_UUID, pData, 6 + pReq->type.len);
 }
 
 HCI_StatusCodes_t GATT_DiscAllCharDescs(uint16_t connHandle,
@@ -327,35 +307,19 @@ HCI_StatusCodes_t GATT_ReadMultiCharValues( uint16_t connHandle, attReadMultiReq
     return status;
 }
 
-HCI_StatusCodes_t GATT_WriteNoRsp( uint16_t connHandle, attWriteReq_t *pReq )
+HCI_StatusCodes_t GATT_WriteNoRsp(uint16_t connHandle, attWriteReq_t *pReq)
 {
-    uint8_t dataLength;
-    HCI_StatusCodes_t status;
-    uint8_t *pData;
+    uint8_t pData[ATT_MTU_SIZE - 1];
 
-    dataLength = sizeof(connHandle) + sizeof(pReq->handle) + pReq->len;
-    pData = (uint8_t *) malloc(dataLength);
-    if (pData == NULL)
-    {
-        free(pData);
-        return bleMemAllocError;
-    }
-    else
-    {
-        pData[0] = LO_UINT16(connHandle);
-        pData[1] = HI_UINT16(connHandle);
+    pData[0] = LO_UINT16(connHandle);
+    pData[1] = HI_UINT16(connHandle);
 
-        pData[2] = LO_UINT16(pReq->handle);
-        pData[3] = HI_UINT16(pReq->handle);
+    pData[2] = LO_UINT16(pReq->handle);
+    pData[3] = HI_UINT16(pReq->handle);
 
-        memcpy(&pData[4], pReq->pValue, pReq->len);
-    }
+    memcpy(&pData[4], pReq->pValue, pReq->len);
 
-    status = HCI_sendHCICommand(GATT_WRITENORSP, pData, dataLength);
-
-    free(pData);
-
-    return status;
+    return HCI_sendHCICommand(GATT_WRITE_NO_RSP, pData, 4 + pReq->len);
 }
 
 HCI_StatusCodes_t GATT_SignedWriteNoRsp( uint16_t connHandle, attWriteReq_t *pReq )

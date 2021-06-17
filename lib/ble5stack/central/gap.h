@@ -54,15 +54,16 @@
  * GAP Vendor Specific APIs - GAP Command Opcodes
  */
 #define GAP_DEVICE_INIT                 0xFE00
-#define GAP_TERMINATELINKREQUEST        0xFE0A
 #define GAP_AUTHENTICATE                0xFE0B
 #define GAP_TERMINATEAUTH               0xFE10
 #define GAP_UPDATELINKPARAMREQ          0xFE11
-#define GAP_DEVICEDISCOVERYREQUEST      0xFE04
+#define GAP_DEVICE_DISCOVERY_REQUEST    0xFE04
+#define GAP_DEVICE_DISCOVERY_CANCEL     0xFE05
 #define GAP_MAKE_DISCOVERABLE           0xFE06
 #define GAP_UPDATE_ADVERTISING_DATA     0xFE07
 #define GAP_END_DISCOVERABLE            0xFE08
-#define GAP_ESTABLISHLINKREQUEST        0xFE09
+#define GAP_ESTABLISH_LINK_REQUEST      0xFE09
+#define GAP_TERMINATE_LINK_REQUEST      0xFE0A
 #define GAP_UPDATELINKPARAMREQREPLY     0xFFFE
 #define GAP_REGISTERCONNEVENT           0xFE13
 #define GAP_BOND                        0xFE0F
@@ -110,6 +111,7 @@
 #define SM_GETECCKEYS                   0x0609
 #define SM_GETDHKEY                     0x0609
 #define GAP_LINKPARAMUPDATEREQEST       0x0609
+#define GAP_DEVICE_INFORMATION          0x060D
 #define GAP_ADVERTISERSCANNEREVENT      0x0613
 
 /**
@@ -834,6 +836,7 @@ typedef enum
     ADV_DIRECT_IND,
     ADV_SCAN_IND,
     ADV_NONCONN_IND,
+    SCAN_RSP,
 } Gap_eventType_t;
 
 typedef enum
@@ -851,6 +854,13 @@ typedef enum
     GAP_CHANNEL_MAP_CH_39 = 1 << 2,
     GAP_CHANNEL_MAP_ALL = GAP_CHANNEL_MAP_CH_37 | GAP_CHANNEL_MAP_CH_38 | GAP_CHANNEL_MAP_CH_39
 } Gap_channelMap_t;
+
+typedef enum {
+    GAP_DEVICE_DISCOVERY_MODE_NONDISCOVERABLE   = 0x00,    //!< No discoverable setting
+    GAP_DEVICE_DISCOVERY_MODE_GENERAL           = 0x01,    //!< General Discoverable devices
+    GAP_DEVICE_DISCOVERY_MODE_LIMITED           = 0x02,    //!< Limited Discoverable devices
+    GAP_DEVICE_DISCOVERY_MODE_ALL               = 0x03,    //!< Not filtered
+} Gap_deviceDiscoveryMode_t;
 
 typedef enum
 {
@@ -1691,9 +1701,60 @@ extern HCI_StatusCodes_t GAP_SetParamValue(uint8_t paramID, uint16_t paramValue)
  */
 extern HCI_StatusCodes_t GAP_GetParamValue(uint8_t paramID);
 
+
+/*-------------------------------------------------------------------
+ * FUNCTIONS - Device Discovery
+ */
+
+/**
+ * Send this command to start a scan for advertisement packets.
+ *
+ * This command is valid for a central or a peripheral device.
+ *
+ * When this command is received, the host will send the HCI Ext Command Status
+ * Event with the Status parameter. During the scan, the device will generate
+ * GAP Device Information Events for advertising devices, then issue a GAP
+ * Device Discovery Event when the scan is completed.
+ *
+ * @param mode          0 = Non-Discoverable Scan
+ *                      1 = General Mode Scan
+ *                      2 = Limited Mode Scan
+ *                      3 = Scan for all devices
+ * @param activeScan    0 = Turn off active scanning (SCAN_REQ)
+ *                      1 = Turn on active scanning (SCAN_REQ)
+ * @param filterPolicy  Filter policy.
+ */
+HCI_StatusCodes_t GAP_DeviceDiscoveryRequest(Gap_deviceDiscoveryMode_t mode, uint8_t activeScan, Gap_filterPolicy_t filterPolicy);
+
+/**
+ * Send this command to end a scan for advertisement packets.
+ *
+ * This command is valid for a central or a peripheral device.
+ *
+ * When this command is received, the host will send the HCI Ext Command Status
+ * Event with the Status parameter, then issue a GAP Device Discovery Event to
+ * display the scan progress since the start of the scan.
+ */
+HCI_StatusCodes_t GAP_DeviceDiscoveryCancel(void);
+
+
 /*-------------------------------------------------------------------
  * FUNCTIONS - Link Establishment
  */
+
+/**
+ * Send this command to initiate a connection with a peripheral device.
+ *
+ * Only central devices can issue this command.
+ *
+ * @param highDutyCycle A central device may use high duty cycle scan parameters
+ *      in order to achieve low latency connection time with a peripheral device
+ *      using directed link establishment. 0 = disabled, 1 = enabled.
+ * @param whiteList 0 = Don’t use the white list, 1 = Only connect to a device in the white list.
+ * @param addrPeerType Address type of @p peerAddr.
+ * @param peerAddr Bluetooth address.
+ */
+HCI_StatusCodes_t GAP_EstablishLinkReq(uint8_t highDutyCycle, uint8_t whiteList, GAP_Addr_Types_t addrTypePeer, uint8_t *peerAddr);
 
 /**
  * Terminate a link connection.

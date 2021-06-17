@@ -46,11 +46,9 @@ STATIC mp_obj_t mod_experimental_pthread_raise(mp_obj_t thread_id_in, mp_obj_t e
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_experimental_pthread_raise_obj, mod_experimental_pthread_raise);
 #endif // PYBRICKS_HUB_EV3BRICK
 
-#if PYBRICKS_HUB_PRIMEHUB
+#if PYBRICKS_HUB_CITYHUB | PYBRICKS_HUB_TECHNICHUB | PYBRICKS_HUB_PRIMEHUB
 
 #include <stdint.h>
-
-#include <btstack.h>
 
 #include <pbio/button.h>
 
@@ -59,6 +57,93 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_experimental_pthread_raise_obj, mod_experim
 #include "pybricks/parameters.h"
 
 #define LEGO_HUB_ID_POWERED_UP_REMOTE 0x42
+
+STATIC const mp_obj_type_t pb_type_Remote;
+
+#if PYBRICKS_HUB_CITYHUB | PYBRICKS_HUB_TECHNICHUB
+
+#include <pbdrv/bluetooth.h>
+#include <pbio/error.h>
+#include <pbio/task.h>
+
+#include <pybricks/util_pb/pb_error.h>
+
+typedef struct {
+    mp_obj_base_t base;
+    pbio_task_t task;
+    uint8_t left[3];
+    uint8_t right[3];
+    uint8_t center;
+    pbdrv_bluetooth_scan_and_connect_context_t context;
+} pb_obj_Remote_t;
+
+STATIC pb_obj_Remote_t pb_obj_Remote_singleton;
+
+static void handle_notification(pbdrv_bluetooth_connection_t connection, const uint8_t *value, uint8_t size) {
+    pb_obj_Remote_t *self = &pb_obj_Remote_singleton;
+
+    // 0x08 == H/W NetWork Commands, 0x02 == Connection Request
+    // This message is meant for something else, but contains the center button state
+    if (value[0] == 5 && value[2] == 0x08 && value[3] == 0x02) {
+        self->center = value[4];
+    }
+    // 0x45 == port value command
+    else if (value[0] == 7 && value[2] == 0x45) {
+        if (value[3] == 0) {
+            memcpy(self->left, &value[4], 3);
+        } else if (value[3] == 1) {
+            memcpy(self->right, &value[4], 3);
+        }
+    }
+}
+
+STATIC mp_obj_t pb_type_Remote_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+    pb_obj_Remote_t *self = &pb_obj_Remote_singleton;
+    mp_arg_check_num(n_args, n_kw, 0, 0, false);
+
+    memset(self, 0, sizeof(*self));
+    self->base.type = &pb_type_Remote;
+
+    // TODO: check for busy
+
+    pbdrv_bluetooth_set_notification_handler(handle_notification);
+    pbdrv_bluetooth_scan_and_connect(&self->task, &self->context);
+
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        for (mp_int_t start = mp_hal_ticks_ms(); mp_hal_ticks_ms() - start < 10000;) {
+            MICROPY_EVENT_POLL_HOOK
+            if (self->task.status == PBIO_SUCCESS) {
+                nlr_pop();
+                return MP_OBJ_FROM_PTR(self);
+            }
+            if (self->task.status != PBIO_ERROR_AGAIN) {
+                nlr_pop();
+                pb_assert(self->task.status);
+            }
+        }
+        mp_raise_OSError(MP_ETIMEDOUT);
+        nlr_pop();
+    } else {
+        mp_printf(&mp_plat_print, "status: 0x%02x\n", self->context.status); // debug
+        self->task.cancel = true;
+        while (self->task.status == PBIO_ERROR_AGAIN) {
+            MICROPY_VM_HOOK_LOOP
+        }
+        nlr_jump(nlr.ret_val);
+    }
+
+    // unreachable
+    return mp_const_none;
+}
+
+void pb_type_Remote_cleanup(void) {
+    pbdrv_bluetooth_disconnect_remote();
+}
+
+#elif PYBRICKS_HUB_PRIMEHUB
+
+#include <btstack.h>
 
 static btstack_packet_callback_registration_t hci_event_callback_registration;
 
@@ -341,17 +426,16 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
     }
 }
 
-STATIC const mp_obj_type_t pb_type_Remote;
-
 STATIC mp_obj_t pb_type_Remote_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     pb_obj_Remote_t *self = &pb_obj_Remote_singleton;
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
 
-    self->base.type = &pb_type_Remote;
-
     if (self->con_state != CON_STATE_NONE) {
         mp_raise_OSError(MP_EBUSY);
     }
+
+    memset(self, 0, sizeof(*self));
+    self->base.type = &pb_type_Remote;
 
     if (hci_event_callback_registration.callback == NULL) {
         hci_event_callback_registration.callback = &packet_handler;
@@ -364,7 +448,6 @@ STATIC mp_obj_t pb_type_Remote_make_new(const mp_obj_type_t *type, size_t n_args
     gap_start_scan();
     self->con_handle = HCI_CON_HANDLE_INVALID;
     self->con_state = CON_STATE_WAIT_ADV_IND;
-    self->disconnect_reason = DISCONNECT_REASON_NONE;
 
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
@@ -401,10 +484,23 @@ STATIC mp_obj_t pb_type_Remote_make_new(const mp_obj_type_t *type, size_t n_args
     return mp_const_none;
 }
 
+void pb_type_Remote_cleanup(void) {
+    if (pb_obj_Remote_singleton.con_handle != HCI_CON_HANDLE_INVALID) {
+        gap_disconnect(pb_obj_Remote_singleton.con_handle);
+    }
+}
+
+#endif // PYBRICKS_HUB_PRIMEHUB
+
 STATIC mp_obj_t pb_type_Remote_pressed(mp_obj_t self_in) {
     pb_obj_Remote_t *self = MP_OBJ_TO_PTR(self_in);
 
-    if (self->con_state != CON_STATE_CONNECTED) {
+    #if PYBRICKS_HUB_PRIMEHUB
+    if (self->con_state != CON_STATE_CONNECTED)
+    #else
+    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_HANDSET))
+    #endif
+    {
         mp_raise_OSError(MP_ENODEV);
     }
 
@@ -449,13 +545,7 @@ STATIC const mp_obj_type_t pb_type_Remote = {
     .locals_dict = (mp_obj_dict_t *)&pb_type_Remote_locals_dict,
 };
 
-void pb_type_Remote_cleanup(void) {
-    if (pb_obj_Remote_singleton.con_handle != HCI_CON_HANDLE_INVALID) {
-        gap_disconnect(pb_obj_Remote_singleton.con_handle);
-    }
-}
-
-#endif // PYBRICKS_HUB_PRIMEHUB
+#endif // PYBRICKS_HUB_CITYHUB | PYBRICKS_HUB_TECHNICHUB | PYBRICKS_HUB_PRIMEHUB
 
 STATIC const mp_rom_map_elem_t experimental_globals_table[] = {
     #if PYBRICKS_HUB_EV3BRICK
@@ -465,7 +555,7 @@ STATIC const mp_rom_map_elem_t experimental_globals_table[] = {
     #else
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental) },
     #endif // PYBRICKS_HUB_EV3BRICK
-    #if PYBRICKS_HUB_PRIMEHUB
+    #if PYBRICKS_HUB_CITYHUB | PYBRICKS_HUB_TECHNICHUB | PYBRICKS_HUB_PRIMEHUB
     { MP_ROM_QSTR(MP_QSTR_Remote), MP_ROM_PTR(&pb_type_Remote) },
     #endif // PYBRICKS_HUB_PRIMEHUB
 };

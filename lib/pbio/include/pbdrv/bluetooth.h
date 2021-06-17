@@ -14,6 +14,7 @@
 
 #include <pbdrv/config.h>
 #include <pbio/error.h>
+#include <pbio/task.h>
 
 /**
  * BLE characteristic connection identifiers.
@@ -120,6 +121,20 @@ void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context);
  * @param [in]  handler     The function that will be called.
  */
 void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler);
+
+// TODO: combine this with pbdrv_bluetooth_set_receive_handler()
+void pbdrv_bluetooth_set_notification_handler(pbdrv_bluetooth_receive_handler_t handler);
+
+typedef struct {
+    uint8_t status;
+    uint8_t bdaddr[6];
+} pbdrv_bluetooth_scan_and_connect_context_t;
+
+// REVISIT: separate scan and connect?
+void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_and_connect_context_t *context);
+
+// TODO: make this a geneic disconnect
+void pbdrv_bluetooth_disconnect_remote(void);
 
 #else // PBDRV_CONFIG_BLUETOOTH
 
