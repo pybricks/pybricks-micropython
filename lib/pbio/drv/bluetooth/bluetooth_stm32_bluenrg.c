@@ -24,6 +24,7 @@
 #include <pbio/version.h>
 
 #include <contiki.h>
+#include <lego_lwp3.h>
 #include <stm32f070xb.h>
 
 #include <bluenrg_aci.h>
@@ -75,14 +76,22 @@ static uint8_t dummy_read_buf[1];
 static uint8_t write_xfer_size;
 
 // reflects state of SPI_IRQ pin
-volatile bool spi_irq = false;
+volatile bool spi_irq;
 // set to false when xfer is started and true when xfer is complete
-volatile bool spi_xfer_complete = false;
+volatile bool spi_xfer_complete;
 
 // set to false when hci command is started and true when command is completed
-static bool hci_command_complete = false;
+static bool hci_command_complete;
+// set to false when hci command is started and true when command status is received
+static bool hci_command_status;
+// used to synchronize advertising data handler
+static bool advertising_data_received;
 // handle to connected Bluetooth device
 static uint16_t conn_handle;
+// handle to connected remote control
+static uint16_t remote_handle;
+// handle to LWP3 characteristic on remote
+static uint16_t remote_lwp3_char_handle;
 
 // Pybricks GATT service handles
 static uint16_t pybricks_service_handle, pybricks_char_handle;
@@ -99,6 +108,7 @@ static bool pybricks_notify_en;
 static bool uart_tx_notify_en;
 static pbdrv_bluetooth_on_event_t bluetooth_on_event;
 static pbdrv_bluetooth_receive_handler_t receive_handler;
+static pbdrv_bluetooth_receive_handler_t notification_handler;
 
 static const pbdrv_gpio_t reset_gpio = { .bank = GPIOB, .pin = 6 };
 static const pbdrv_gpio_t cs_gpio = { .bank = GPIOB, .pin = 12 };
@@ -241,6 +251,10 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
         return true;
     }
 
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_HANDSET && remote_handle) {
+        return true;
+    }
+
     return false;
 }
 
@@ -303,6 +317,205 @@ void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context) {
 
 void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
     receive_handler = handler;
+}
+
+void pbdrv_bluetooth_set_notification_handler(pbdrv_bluetooth_receive_handler_t handler) {
+    notification_handler = handler;
+}
+
+static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
+    pbdrv_bluetooth_scan_and_connect_context_t *context = task->context;
+
+    PT_BEGIN(pt);
+
+    // start scanning
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gap_start_general_conn_establish_proc_begin(ACTIVE_SCAN, 0x0030, 0x0030, PUBLIC_ADDR, 0);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+    context->status = aci_gap_start_general_conn_establish_proc_end();
+
+    for (;;) {
+        advertising_data_received = false;
+        PT_WAIT_UNTIL(pt, {
+            if (task->cancel) {
+                goto cancel_discovery;
+            }
+            advertising_data_received;
+        });
+
+        /** 00001623-1212-EFDE-1623-785FEABCD123 */
+        static const uint8_t lwp3_hub_service_uuid[] = {
+            0x23, 0xD1, 0xBC, 0xEA, 0x5F, 0x78, 0x23, 0x16, 0xDE, 0xEF, 0x12, 0x12, 0x23, 0x16, 0x00, 0x00,
+        };
+
+        le_advertising_info *subevt = (void *)&read_buf[5];
+
+        // TODO: Properly parse advertising data. For now, we are assuming that
+        // the service UUID is at a fixed position and we are getting only
+        // AD_TYPE_128_BIT_SERV_UUID_CMPLT_LIST and not AD_TYPE_128_BIT_SERV_UUID
+        if (
+            subevt->evt_type != ADV_IND /* connectable undirected advertisement */ ||
+            subevt->data_RSSI[3] != 17 /* length */ || subevt->data_RSSI[4] != AD_TYPE_128_BIT_SERV_UUID_CMPLT_LIST ||
+            memcmp(&subevt->data_RSSI[5], lwp3_hub_service_uuid, sizeof(lwp3_hub_service_uuid)) != 0 ||
+            subevt->data_RSSI[26] != LWP3_HUB_KIND_HANDSET) {
+
+            // if this is not LEGO Powered Up remote, keep scanning
+            continue;
+        }
+
+        // save the Bluetooth address for later
+        // addr_type = subevt->bdaddr_type;
+        memcpy(context->bdaddr, subevt->bdaddr, 6);
+
+        // TODO: wait for scan response that matches Bluetooth address for
+        // for checking local name
+        // subevt->evt_type == SCAN_RSP
+
+        break;
+    }
+
+    // stop scanning
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gap_terminate_gap_procedure_begin(GAP_GENERAL_CONNECTION_ESTABLISHMENT_PROC);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    context->status = aci_gap_terminate_gap_procedure_end();
+
+    // REVISIT: might need to wait for procedure complete event here
+
+    // connect
+
+    assert(!remote_handle);
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    // REVISIT: might want to store address type from advertising data and pass
+    // it in here instead of assuming public address type
+    aci_gap_create_connection_begin(0x0060, 0x0030, PUBLIC_ADDR, context->bdaddr,
+        PUBLIC_ADDR, 0x0010 >> 1, 0x0030 >> 1, 4, 720 / 10, 0x0010, 0x0030);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+    context->status = aci_gap_create_connection_end();
+
+    PT_WAIT_UNTIL(pt, {
+        if (task->cancel) {
+            goto cancel_connect;
+        }
+        remote_handle;
+    });
+
+    // discover LWP3 characteristic to get attribute handle
+
+    assert(!remote_lwp3_char_handle);
+
+    static const uint8_t lwp3_char_uuid[] = {
+        0x23, 0xD1, 0xBC, 0xEA, 0x5F, 0x78, 0x23, 0x16, 0xDE, 0xEF, 0x12, 0x12, 0x24, 0x16, 0x00, 0x00,
+    };
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gatt_disc_charac_by_uuid_begin(remote_handle, 0x0001, 0xFFFF, UUID_TYPE_128, lwp3_char_uuid);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+    context->status = aci_gatt_disc_charac_by_uuid_end();
+
+    PT_WAIT_UNTIL(pt, {
+        if (task->cancel) {
+            goto cancel_disconnect;
+        }
+        remote_lwp3_char_handle;
+    });
+
+    // enable notifications
+
+    static const uint16_t enable = 0x0001;
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gatt_write_without_response_begin(remote_handle, remote_lwp3_char_handle + 2, sizeof(enable), (const uint8_t *)&enable);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    context->status = aci_gatt_write_without_response_end();
+
+    // set mode for left buttons
+
+    // 0x0a == length
+    // 0x00 == local hub
+    // 0x41 == Port Input Format Setup (Single)
+    // 0x00 == Port ID - left buttons
+    // 0x04 == mode - KEYSD
+    // 0x00000001 == delta interval
+    // 0x01 == enable notifications
+    static const uint8_t command0[] = { 0x0a, 0x00, 0x41, 0x00, 0x04, 0x01, 0x00, 0x00, 0x00, 0x01 };
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gatt_write_without_response_begin(remote_handle, remote_lwp3_char_handle + 1, sizeof(command0), command0);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    context->status = aci_gatt_write_without_response_end();
+
+    // set mode for right buttons
+
+    // 0x0a == length
+    // 0x00 == local hub
+    // 0x41 == Port Input Format Setup (Single)
+    // 0x01 == Port ID - right buttons
+    // 0x04 == mode - KEYSD
+    // 0x00000001 == delta interval
+    // 0x01 == enable notifications
+    static const uint8_t command1[] = { 0x0a, 0x00, 0x41, 0x01, 0x04, 0x01, 0x00, 0x00, 0x00, 0x01 };
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gatt_write_without_response_begin(remote_handle, remote_lwp3_char_handle + 1, sizeof(command1), command1);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    context->status = aci_gatt_write_without_response_end();
+
+    task->status = PBIO_SUCCESS;
+    PT_EXIT(pt);
+
+cancel_disconnect:
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gap_terminate_begin(remote_handle, HCI_OE_USER_ENDED_CONNECTION);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+    aci_gap_terminate_end();
+
+    goto end_cancel;
+
+cancel_connect:
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gap_terminate_gap_procedure_begin(GAP_DIRECT_CONNECTION_ESTABLISHMENT_PROC);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    aci_gap_terminate_gap_procedure_end();
+
+    goto end_cancel;
+
+cancel_discovery:
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gap_terminate_gap_procedure_begin(GAP_GENERAL_CONNECTION_ESTABLISHMENT_PROC);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    aci_gap_terminate_gap_procedure_end();
+
+end_cancel:
+    task->status = PBIO_ERROR_CANCELED;
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_and_connect_context_t *context) {
+    pbio_task_init(task, scan_and_connect_task, context);
+    pbio_task_start(task_queue, task);
+}
+
+static PT_THREAD(disconnect_remote_task(struct pt *pt, pbio_task_t *task)) {
+    PT_BEGIN(pt);
+
+    if (remote_handle) {
+        PT_WAIT_WHILE(pt, write_xfer_size);
+        aci_gap_terminate_begin(remote_handle, HCI_OE_USER_ENDED_CONNECTION);
+        PT_WAIT_UNTIL(pt, hci_command_complete);
+        aci_gap_terminate_end();
+    }
+
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_disconnect_remote(void) {
+    static pbio_task_t task;
+    pbio_task_init(&task, disconnect_remote_task, NULL);
+    pbio_task_start(task_queue, &task);
 }
 
 // overrides weak function in start_*.S
@@ -473,27 +686,47 @@ static void handle_event(hci_event_pckt *event) {
     switch (event->evt) {
         case EVT_DISCONN_COMPLETE: {
             evt_disconn_complete *evt = (evt_disconn_complete *)event->data;
-            if (conn_handle == evt->handle) {
+            if (evt->handle == conn_handle) {
                 conn_handle = 0;
                 pybricks_notify_en = false;
                 uart_tx_notify_en = false;
+            } else if (evt->handle == remote_handle) {
+                remote_handle = 0;
+                remote_lwp3_char_handle = 0;
             }
         }
         break;
+
         case EVT_CMD_COMPLETE:
             hci_command_complete = true;
             break;
+
+        case EVT_CMD_STATUS:
+            hci_command_status = true;
+            break;
+
         case EVT_LE_META_EVENT: {
             evt_le_meta_event *evt = (evt_le_meta_event *)event->data;
             switch (evt->subevent) {
                 case EVT_LE_CONN_COMPLETE: {
                     evt_le_connection_complete *subevt = (evt_le_connection_complete *)evt->data;
-                    conn_handle = subevt->handle;
+                    if (subevt->role == GAP_PERIPHERAL_ROLE) {
+                        conn_handle = subevt->handle;
+                    } else {
+                        remote_handle = subevt->handle;
+                    }
+                }
+                break;
+
+                case EVT_LE_ADVERTISING_REPORT: {
+                    // le_advertising_info *subevt = (void *)evt->data;
+                    advertising_data_received = true;
                 }
                 break;
             }
         }
         break;
+
         case EVT_VENDOR: {
             evt_blue_aci *evt = (evt_blue_aci *)event->data;
             switch (evt->ecode) {
@@ -502,6 +735,7 @@ static void handle_event(hci_event_pckt *event) {
                     reset_reason = subevt->reason_code;
                 }
                 break;
+
                 case EVT_BLUE_GATT_ATTRIBUTE_MODIFIED: {
                     evt_gatt_attr_modified *subevt = (evt_gatt_attr_modified *)evt->data;
                     if (subevt->attr_handle == pybricks_char_handle + 1) {
@@ -517,6 +751,24 @@ static void handle_event(hci_event_pckt *event) {
                     } else if (subevt->attr_handle == uart_tx_char_handle + 2) {
                         uart_tx_notify_en = subevt->att_data[0];
                     }
+                }
+                break;
+
+                case EVT_BLUE_GATT_NOTIFICATION: {
+                    evt_gatt_attr_notification *subevt = (void *)evt->data;
+                    // REVISIT: this assumes that the Powered Up remote is the
+                    // only thing receiving notifications
+                    if (notification_handler) {
+                        notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_HANDSET, subevt->attr_value, subevt->event_data_length - 2);
+                    }
+                }
+                break;
+
+                case EVT_BLUE_GATT_DISC_READ_CHAR_BY_UUID_RESP: {
+                    evt_gatt_disc_read_char_by_uuid_resp *subevt = (void *)evt->data;
+                    // REVISIT: for now, assuming the Powered Up remote is the
+                    // only thing that generates this event
+                    remote_lwp3_char_handle = subevt->attr_handle;
                 }
                 break;
             }
@@ -616,7 +868,7 @@ void hci_send_req(struct hci_request *r) {
     memcpy(cmd, r->cparam, r->clen);
     write_xfer_size = HCI_HDR_SIZE + HCI_COMMAND_HDR_SIZE + r->clen;
 
-    hci_command_complete = false;
+    hci_command_complete = hci_command_status = false;
     process_poll(&pbdrv_bluetooth_spi_process);
 }
 
@@ -629,30 +881,36 @@ void hci_recv_resp(struct hci_response *r) {
 // Initializes the Bluetooth chip
 // this function is largely inspired by the LEGO bootloader
 static PT_THREAD(hci_init(struct pt *pt)) {
-    static const uint8_t mode = 2; // Slave and master; Only one connection; 12 KB of RAM retention
     static uint16_t gap_service_handle, gap_dev_name_char_handle, gap_appearance_char_handle;
-    uint8_t bd_addr[6];
 
     PT_BEGIN(pt);
 
     // set the mode
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_hal_write_config_data_begin(CONFIG_DATA_MODE_OFFSET, CONFIG_DATA_MODE_LEN, &mode);
+    {
+        // NB: if we use mode 3, then there is not enough RAM for all of the
+        // curent services/characteristics
+        uint8_t mode = 4;
+        aci_hal_write_config_data_begin(CONFIG_DATA_MODE_OFFSET, CONFIG_DATA_MODE_LEN, &mode);
+    }
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_hal_write_config_data_end();
 
     // set the Bluetooth address
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    // has to be in little-endian format, but stored in big-endian in flash
-    bd_addr[0] = FLASH_BD_ADDR[5];
-    bd_addr[1] = FLASH_BD_ADDR[4];
-    bd_addr[2] = FLASH_BD_ADDR[3];
-    bd_addr[3] = FLASH_BD_ADDR[2];
-    bd_addr[4] = FLASH_BD_ADDR[1];
-    bd_addr[5] = FLASH_BD_ADDR[0];
-    aci_hal_write_config_data_begin(CONFIG_DATA_PUBADDR_OFFSET, CONFIG_DATA_PUBADDR_LEN, bd_addr);
+    {
+        // has to be in little-endian format, but stored in big-endian in flash
+        uint8_t bd_addr[6];
+        bd_addr[0] = FLASH_BD_ADDR[5];
+        bd_addr[1] = FLASH_BD_ADDR[4];
+        bd_addr[2] = FLASH_BD_ADDR[3];
+        bd_addr[3] = FLASH_BD_ADDR[2];
+        bd_addr[4] = FLASH_BD_ADDR[1];
+        bd_addr[5] = FLASH_BD_ADDR[0];
+        aci_hal_write_config_data_begin(CONFIG_DATA_PUBADDR_OFFSET, CONFIG_DATA_PUBADDR_LEN, bd_addr);
+    }
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_hal_write_config_data_end();
 
@@ -673,7 +931,7 @@ static PT_THREAD(hci_init(struct pt *pt)) {
     // init GAP layer
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gap_init_begin(GAP_PERIPHERAL_ROLE, PRIVACY_DISABLED, 16); // 16 comes from LEGO bootloader
+    aci_gap_init_begin(GAP_PERIPHERAL_ROLE | GAP_CENTRAL_ROLE, PRIVACY_DISABLED, 16); // 16 comes from LEGO bootloader
     PT_WAIT_UNTIL(pt, hci_command_complete);
     aci_gap_init_end(&gap_service_handle, &gap_dev_name_char_handle, &gap_appearance_char_handle);
 
@@ -762,7 +1020,7 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
         spi_disable_cs();
         bluetooth_reset(true);
         bluetooth_ready = pybricks_notify_en = uart_tx_notify_en = false;
-        conn_handle = 0;
+        conn_handle = remote_handle = remote_lwp3_char_handle = 0;
         PROCESS_EXIT();
     });
 

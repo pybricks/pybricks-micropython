@@ -516,7 +516,9 @@ tBleStatus aci_gap_configure_whitelist(void);
  * 				  for the disconnected command in the HCI specification (See @ref HCI_Error_codes).
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gap_terminate(uint16_t conn_handle, uint8_t reason);
+tBleStatus aci_gap_terminate_begin(uint16_t conn_handle, uint8_t reason);
+
+tBleStatus aci_gap_terminate_end(void);
 
 /**
  * @brief Clear the security database.
@@ -586,8 +588,11 @@ tBleStatus aci_gap_start_limited_discovery_proc(uint16_t scanInterval, uint16_t 
  *
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gap_start_general_discovery_proc(uint16_t scanInterval, uint16_t scanWindow,
-						uint8_t own_address_type, uint8_t filterDuplicates);
+tBleStatus aci_gap_start_general_discovery_proc_begin(
+  uint16_t scanInterval, uint16_t scanWindow,
+  uint8_t own_address_type, uint8_t filterDuplicates);
+
+tBleStatus aci_gap_start_general_discovery_proc_end(void);
 
 /**
  * @brief Start the name discovery procedure.
@@ -738,8 +743,11 @@ tBleStatus aci_gap_start_auto_conn_establish_proc(uint16_t scanInterval, uint16_
  *
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gap_start_general_conn_establish_proc(uint8_t scan_type, uint16_t scan_interval, uint16_t scan_window,
-						 uint8_t own_address_type, uint8_t filter_duplicates);
+tBleStatus aci_gap_start_general_conn_establish_proc_begin(
+    uint8_t scan_type, uint16_t scan_interval, uint16_t scan_window,
+    uint8_t own_address_type, uint8_t filter_duplicates);
+
+tBleStatus aci_gap_start_general_conn_establish_proc_end(void);
 
 /**
  * @brief Start a selective connection establishment procedure.
@@ -827,12 +835,15 @@ tBleStatus aci_gap_start_selective_conn_establish_proc(uint8_t scan_type, uint16
  * 						  Time = N x 0.625 msec.
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gap_create_connection(uint16_t scanInterval, uint16_t scanWindow,
-				     uint8_t peer_bdaddr_type, tBDAddr peer_bdaddr,
-				     uint8_t own_bdaddr_type, uint16_t conn_min_interval,
-				     uint16_t conn_max_interval, uint16_t conn_latency,
-				     uint16_t supervision_timeout, uint16_t min_conn_length,
-				     uint16_t max_conn_length);
+tBleStatus aci_gap_create_connection_begin(
+    uint16_t scanInterval, uint16_t scanWindow,
+    uint8_t peer_bdaddr_type, tBDAddr peer_bdaddr,
+    uint8_t own_bdaddr_type, uint16_t conn_min_interval,
+    uint16_t conn_max_interval, uint16_t conn_latency,
+    uint16_t supervision_timeout, uint16_t min_conn_length,
+    uint16_t max_conn_length);
+
+tBleStatus aci_gap_create_connection_end(void);
 
 /**
  * @brief Terminate the specified GAP procedure. @ref EVT_BLUE_GAP_PROCEDURE_COMPLETE event is
@@ -840,7 +851,9 @@ tBleStatus aci_gap_create_connection(uint16_t scanInterval, uint16_t scanWindow,
  * @param procedure_code One of the procedure codes (@ref gap_procedure_codes "GAP procedure codes").
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gap_terminate_gap_procedure(uint8_t procedure_code);
+tBleStatus aci_gap_terminate_gap_procedure_begin(uint8_t procedure_code);
+
+tBleStatus aci_gap_terminate_gap_procedure_end(void);
 
 /**
  * @brief Start the connection parameter update procedure.

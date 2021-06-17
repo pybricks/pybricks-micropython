@@ -755,12 +755,12 @@ tBleStatus aci_gatt_disc_all_charac_of_serv(uint16_t conn_handle, uint16_t start
   return status;
 }
 
-tBleStatus aci_gatt_disc_charac_by_uuid(uint16_t conn_handle, uint16_t start_handle,
-                                                     uint16_t end_handle, uint8_t charUuidType,
-                                                     const uint8_t* charUuid)
+tBleStatus aci_gatt_disc_charac_by_uuid_begin(
+    uint16_t conn_handle, uint16_t start_handle,
+    uint16_t end_handle, uint8_t charUuidType,
+    const uint8_t* charUuid)
 {
   struct hci_request rq;
-  uint8_t status;
 
   uint8_t buffer[23];
   uint8_t uuid_len;
@@ -795,10 +795,22 @@ tBleStatus aci_gatt_disc_charac_by_uuid(uint16_t conn_handle, uint16_t start_han
   rq.cparam = (void *)buffer;
   rq.clen = indx;
   rq.event = EVT_CMD_STATUS;
+
+  hci_send_req(&rq);
+
+  return 0;
+}
+
+tBleStatus aci_gatt_disc_charac_by_uuid_end(void)
+{
+  struct hci_response rq;
+  uint8_t status;
+
+  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_recv_resp(&rq);
 
   return status;
 }
@@ -1155,11 +1167,11 @@ tBleStatus aci_gatt_read_charac_desc(uint16_t conn_handle, uint16_t attr_handle)
   return status;
 }
 
-tBleStatus aci_gatt_write_without_response(uint16_t conn_handle, uint16_t attr_handle,
-                                              uint8_t val_len, const uint8_t* attr_val)
+tBleStatus aci_gatt_write_without_response_begin(
+    uint16_t conn_handle, uint16_t attr_handle,
+    uint8_t val_len, const uint8_t* attr_val)
 {
   struct hci_request rq;
-  uint8_t status;
   gatt_write_without_resp_cp cp;
 
   if(val_len > sizeof(cp.attr_val))
@@ -1174,10 +1186,22 @@ tBleStatus aci_gatt_write_without_response(uint16_t conn_handle, uint16_t attr_h
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_WRITE_WITHOUT_RESPONSE);
   rq.cparam = &cp;
   rq.clen = GATT_WRITE_WITHOUT_RESPONSE_CP_SIZE + val_len;
+
+  hci_send_req(&rq);
+
+  return 0;
+}
+
+tBleStatus aci_gatt_write_without_response_end(void)
+{
+  struct hci_response rq;
+  uint8_t status;
+
+  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_recv_resp(&rq);
 
   return status;
 }

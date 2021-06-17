@@ -423,8 +423,11 @@ tBleStatus aci_gatt_disc_all_charac_of_serv(uint16_t conn_handle, uint16_t start
  * @param uuid 2 or 16 octet UUID
  * @return Value indicating success or error code.
  */
-tBleStatus aci_gatt_disc_charac_by_uuid(uint16_t conn_handle, uint16_t start_handle,
-				                     uint16_t end_handle, uint8_t uuid_type, const uint8_t* uuid);
+tBleStatus aci_gatt_disc_charac_by_uuid_begin(
+    uint16_t conn_handle, uint16_t start_handle,
+    uint16_t end_handle, uint8_t uuid_type, const uint8_t* uuid);
+
+tBleStatus aci_gatt_disc_charac_by_uuid_end(void);
 
 /**
  * @brief Start the procedure to discover all characteristic descriptors on the server.
@@ -625,8 +628,11 @@ tBleStatus aci_gatt_read_charac_desc(uint16_t conn_handle, uint16_t attr_handle)
  *		- Channel not open\n
  *		- Already one GATT procedure is started
  */
-tBleStatus aci_gatt_write_without_response(uint16_t conn_handle, uint16_t attr_handle,
-                                              uint8_t val_len, const uint8_t* attr_val);
+tBleStatus aci_gatt_write_without_response_begin(
+    uint16_t conn_handle, uint16_t attr_handle,
+    uint8_t val_len, const uint8_t* attr_val);
+
+tBleStatus aci_gatt_write_without_response_end(void);
 
 /**
  * @brief Start a signed write without response from the server.

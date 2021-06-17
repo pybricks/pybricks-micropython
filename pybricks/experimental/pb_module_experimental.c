@@ -46,7 +46,7 @@ STATIC mp_obj_t mod_experimental_pthread_raise(mp_obj_t thread_id_in, mp_obj_t e
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_experimental_pthread_raise_obj, mod_experimental_pthread_raise);
 #endif // PYBRICKS_HUB_EV3BRICK
 
-#if PYBRICKS_HUB_CITYHUB | PYBRICKS_HUB_TECHNICHUB | PYBRICKS_HUB_PRIMEHUB
+#if PYBRICKS_HUB_MOVEHUB | PYBRICKS_HUB_CITYHUB | PYBRICKS_HUB_TECHNICHUB | PYBRICKS_HUB_PRIMEHUB
 
 #include <stdint.h>
 
@@ -60,7 +60,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_2(mod_experimental_pthread_raise_obj, mod_experim
 
 STATIC const mp_obj_type_t pb_type_Remote;
 
-#if PYBRICKS_HUB_CITYHUB | PYBRICKS_HUB_TECHNICHUB
+#if PYBRICKS_HUB_MOVEHUB | PYBRICKS_HUB_CITYHUB | PYBRICKS_HUB_TECHNICHUB
 
 #include <pbdrv/bluetooth.h>
 #include <pbio/error.h>
@@ -545,7 +545,7 @@ STATIC const mp_obj_type_t pb_type_Remote = {
     .locals_dict = (mp_obj_dict_t *)&pb_type_Remote_locals_dict,
 };
 
-#endif // PYBRICKS_HUB_CITYHUB | PYBRICKS_HUB_TECHNICHUB | PYBRICKS_HUB_PRIMEHUB
+#endif // PYBRICKS_HUB_MOVEHUB | PYBRICKS_HUB_CITYHUB | PYBRICKS_HUB_TECHNICHUB | PYBRICKS_HUB_PRIMEHUB
 
 STATIC const mp_rom_map_elem_t experimental_globals_table[] = {
     #if PYBRICKS_HUB_EV3BRICK
@@ -555,7 +555,7 @@ STATIC const mp_rom_map_elem_t experimental_globals_table[] = {
     #else
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_experimental) },
     #endif // PYBRICKS_HUB_EV3BRICK
-    #if PYBRICKS_HUB_CITYHUB | PYBRICKS_HUB_TECHNICHUB | PYBRICKS_HUB_PRIMEHUB
+    #if PYBRICKS_HUB_MOVEHUB | PYBRICKS_HUB_CITYHUB | PYBRICKS_HUB_TECHNICHUB | PYBRICKS_HUB_PRIMEHUB
     { MP_ROM_QSTR(MP_QSTR_Remote), MP_ROM_PTR(&pb_type_Remote) },
     #endif // PYBRICKS_HUB_PRIMEHUB
 };
