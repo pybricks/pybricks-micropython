@@ -49,8 +49,6 @@ include ../../micropython/py/mkenv.mk
 QSTR_DEFS = ../pybricks_qstrdefs.h
 QSTR_GLOBAL_DEPENDENCIES = $(PBTOP)/bricks/stm32/configport.h
 
-FROZEN_MPY_TOOL_ARGS = -mlongint-impl=none
-
 # MicroPython feature configurations
 MICROPY_ROM_TEXT_COMPRESSION ?= 1
 
