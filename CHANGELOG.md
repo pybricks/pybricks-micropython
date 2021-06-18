@@ -13,6 +13,10 @@
   It is activated on the Move Hub to reduce build size. Motor performance on
   the other hubs is unaffected.
 
+### Changed
+- Updated MicroPython to v1.16.
+
+
 ## [3.0.0] - 2021-06-08
 
 ### Added

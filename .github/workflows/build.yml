@@ -61,7 +61,7 @@ jobs:
         (cd tests && MICROPY_CPYTHON3=python3 MICROPY_MICROPYTHON=../ports/unix/micropython-coverage ./run-multitests.py multi_net/*.py)
     - name: List failed tests
       if: failure()
-      run: micropython/tests/run-tests --print-failures
+      run: micropython/tests/run-tests.py --print-failures
 
   ev3dev_stretch:
     name: ev3dev-stretch
@@ -95,7 +95,7 @@ jobs:
         docker exec --tty pybricks-ev3dev_armel make test-ev3dev
     - name: List failed tests
       if: failure()
-      run: micropython/tests/run-tests --print-failures
+      run: micropython/tests/run-tests.py --print-failures
     - name: Upload pybricks-micropython
       if: ${{ success() }}
       uses: actions/upload-artifact@v2
@@ -147,7 +147,7 @@ jobs:
         make $MAKEOPTS -C bricks/ev3dev test-ev3dev
     - name: List failed tests
       if: failure()
-      run: micropython/tests/run-tests --print-failures
+      run: micropython/tests/run-tests.py --print-failures
 
   cross_compiler:
     name: download cross-compiler

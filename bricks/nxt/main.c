@@ -51,13 +51,13 @@ static void user_program_stop_func(void) {
     // we can only raise an exception if the VM is running
     // mp_interrupt_char will be either -1 or 0 when VM is not running
     if (mp_interrupt_char > 0) {
-        mp_keyboard_interrupt();
+        mp_sched_keyboard_interrupt();
     }
 }
 
 static bool user_program_stdin_event_func(uint8_t c) {
     if (c == mp_interrupt_char) {
-        mp_keyboard_interrupt();
+        mp_sched_keyboard_interrupt();
         return true;
     }
 

@@ -21,4 +21,4 @@ export GRX_PLUGIN_PATH="$BUILD_DIR"
 export GRX_DRIVER=test
 
 cd "$MP_TEST_DIR"
-./run-tests --test-dirs $(find "$PB_TEST_DIR/ev3dev" -type d) "$@" || ./run-tests --print-failures
+./run-tests.py --test-dirs $(find "$PB_TEST_DIR/ev3dev" -type d) "$@" || ./run-tests.py --print-failures

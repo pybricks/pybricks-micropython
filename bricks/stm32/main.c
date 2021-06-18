@@ -250,7 +250,7 @@ static void user_program_stop_func(void) {
 
 static bool user_program_stdin_event_func(uint8_t c) {
     if (c == mp_interrupt_char) {
-        mp_keyboard_interrupt();
+        mp_sched_keyboard_interrupt();
         return true;
     }
 

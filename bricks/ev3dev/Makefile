@@ -389,16 +389,16 @@ $(GRX_TEST_PLUGIN_OBJ): ../../tests/ev3dev/grx-plugin.c
 $(GRX_TEST_PLUGIN_LIB): $(GRX_TEST_PLUGIN_OBJ)
 	$(Q)$(CC) -shared -o $@ $^ $(LDFLAGS)
 
-test-ev3dev: $(PROG) $(TOP)/tests/run-tests $(GRX_TEST_PLUGIN_LIB)
+test-ev3dev: $(PROG) $(TOP)/tests/run-tests.py $(GRX_TEST_PLUGIN_LIB)
 	cd $(TOP)/tests && MICROPY_MICROPYTHON="../../tests/ev3dev/test-wrapper.sh" \
 		GRX_PLUGIN_PATH=$(realpath $(BUILD)) GRX_DRIVER=test \
-		./run-tests --test-dirs $(EV3DEV_TEST_DIRS)
+		./run-tests.py --test-dirs $(EV3DEV_TEST_DIRS)
 
-test: $(PROG) $(TOP)/tests/run-tests $(GRX_TEST_PLUGIN_LIB)
+test: $(PROG) $(TOP)/tests/run-tests.py $(GRX_TEST_PLUGIN_LIB)
 	$(eval DIRNAME=../bricks/$(notdir $(CURDIR)))
 	cd $(TOP)/tests && MICROPY_MICROPYTHON=../$(DIRNAME)/$(PROG) \
 		GRX_PLUGIN_PATH=$(realpath $(BUILD)) GRX_DRIVER=test \
-		./run-tests
+		./run-tests.py
 
 PREFIX = /usr/local
 BINDIR = $(DESTDIR)$(PREFIX)/bin
