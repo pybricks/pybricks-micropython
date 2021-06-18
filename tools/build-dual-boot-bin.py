@@ -19,16 +19,17 @@ except ImportError:
 FLASH_SIZE = 1024 * 1024  # 1MiB
 BIN1_BASE_OFFSET = 0x8000
 BIN2_BASE_OFFSET = 0xC0000
+CHECKSUM_SIZE = 4
 
 
 def build_blob(bin1: FileIO, bin2: FileIO, out: FileIO) -> None:
     """Combines two firmware binary blobs ``bin1`` and ``bin2`` into a single
-    firmware blob and saves them in ``out``.
+    firmware blob, appends a checksum and saves them in ``out``.
     """
     bin1_size = os.fstat(bin1.fileno()).st_size
     bin2_size = os.fstat(bin2.fileno()).st_size
     bin2_offset = BIN2_BASE_OFFSET - BIN1_BASE_OFFSET
-    size = bin2_offset + bin2_size
+    size = bin2_offset + bin2_size + CHECKSUM_SIZE
     max_size = FLASH_SIZE - BIN1_BASE_OFFSET
 
     if bin1_size >= bin2_offset:
