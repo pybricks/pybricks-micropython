@@ -267,46 +267,6 @@ typedef struct {
      */
     pbio_iodev_data_type_t data_type;
     /**
-     * The number of digits for display, including the decimal point.
-     */
-    uint8_t digits;
-    /**
-     * The number of digits after the decimal point.
-     */
-    uint8_t decimals;
-    /**
-     * The minimum raw data value. This is just used for scaling an may not
-     * actually be the minimum possible value.
-     */
-    float raw_min;
-    /**
-     * The maximum raw data value. This is just used for scaling an may not
-     * actually be the maximum possible value.
-     */
-    float raw_max;
-    /**
-     * The minimum percent data value. This will be either 0.0 or -100.0.
-     */
-    float pct_min;
-    /**
-     * The maximum percent data value. This will always be 100.0.
-     */
-    float pct_max;
-    /**
-     * The minimum scaled data value. This is just used for scaling an may not
-     * actually be the minimum possible value.
-     */
-    float si_min;
-    /**
-     * The maximum scaled data value. This is just used for scaling an may not
-     * actually be the maximum possible value.
-     */
-    float si_max;
-    /**
-     * The units of measurement.
-     */
-    char uom[PBIO_IODEV_UOM_SIZE + 1];
-    /**
      * Input value mapping flags.
      */
     pbio_iodev_mapping_flag_t input_flags;

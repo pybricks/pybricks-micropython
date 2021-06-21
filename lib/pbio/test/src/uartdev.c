@@ -364,201 +364,102 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
-    tt_want_float_op(iodev->info->mode_info[0].raw_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[0].raw_max, ==, 10.0);
-    tt_want_float_op(iodev->info->mode_info[0].pct_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[0].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[0].si_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[0].si_max, ==, 10.0);
-    tt_want_str_op(iodev->info->mode_info[0].uom, ==, "IDX");
     tt_want_uint_op(iodev->info->mode_info[0].input_flags, ==,
         LPF2_MAPPING_FLAG_NULL | LPF2_MAPPING_FLAG_2_0 | LPF2_MAPPING_FLAG_DISCRETE);
     tt_want_uint_op(iodev->info->mode_info[0].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[0].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
-    tt_want_uint_op(iodev->info->mode_info[0].digits, ==, 3);
-    tt_want_uint_op(iodev->info->mode_info[0].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
-    tt_want_float_op(iodev->info->mode_info[1].raw_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[1].raw_max, ==, 10.0);
-    tt_want_float_op(iodev->info->mode_info[1].pct_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[1].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[1].si_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[1].si_max, ==, 10.0);
-    tt_want_str_op(iodev->info->mode_info[1].uom, ==, "DIS");
     tt_want_uint_op(iodev->info->mode_info[1].input_flags, ==,
         LPF2_MAPPING_FLAG_2_0 | LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[1].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[1].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
-    tt_want_uint_op(iodev->info->mode_info[1].digits, ==, 3);
-    tt_want_uint_op(iodev->info->mode_info[1].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
-    tt_want_float_op(iodev->info->mode_info[2].raw_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[2].raw_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[2].pct_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[2].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[2].si_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[2].si_max, ==, 100.0);
-    tt_want_str_op(iodev->info->mode_info[2].uom, ==, "CNT");
     tt_want_uint_op(iodev->info->mode_info[2].input_flags, ==, LPF2_MAPPING_FLAG_RELATIVE);
     tt_want_uint_op(iodev->info->mode_info[2].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[2].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[2].data_type, ==, PBIO_IODEV_DATA_TYPE_INT32);
-    tt_want_uint_op(iodev->info->mode_info[2].digits, ==, 4);
-    tt_want_uint_op(iodev->info->mode_info[2].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
-    tt_want_float_op(iodev->info->mode_info[3].raw_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[3].raw_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[3].pct_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[3].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[3].si_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[3].si_max, ==, 100.0);
-    tt_want_str_op(iodev->info->mode_info[3].uom, ==, "PCT");
     tt_want_uint_op(iodev->info->mode_info[3].input_flags, ==, LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[3].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[3].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[3].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
-    tt_want_uint_op(iodev->info->mode_info[3].digits, ==, 3);
-    tt_want_uint_op(iodev->info->mode_info[3].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[4].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[4].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[4].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
     tt_want_uint_op(iodev->info->mode_info[4].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
-    tt_want_float_op(iodev->info->mode_info[4].raw_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[4].raw_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[4].pct_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[4].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[4].si_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[4].si_max, ==, 100.0);
-    tt_want_str_op(iodev->info->mode_info[4].uom, ==, "PCT");
     tt_want_uint_op(iodev->info->mode_info[4].input_flags, ==, LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[4].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[4].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[4].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
-    tt_want_uint_op(iodev->info->mode_info[4].digits, ==, 3);
-    tt_want_uint_op(iodev->info->mode_info[4].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
-    tt_want_float_op(iodev->info->mode_info[5].raw_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[5].raw_max, ==, 10.0);
-    tt_want_float_op(iodev->info->mode_info[5].pct_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[5].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[5].si_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[5].si_max, ==, 10.0);
-    tt_want_str_op(iodev->info->mode_info[5].uom, ==, "IDX");
     tt_want_uint_op(iodev->info->mode_info[5].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[5].output_flags, ==, LPF2_MAPPING_FLAG_DISCRETE);
     tt_want_uint_op(iodev->info->mode_info[5].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[5].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
-    tt_want_uint_op(iodev->info->mode_info[5].digits, ==, 3);
-    tt_want_uint_op(iodev->info->mode_info[5].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[6].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[6].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[6].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
     tt_want_uint_op(iodev->info->mode_info[6].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
-    tt_want_float_op(iodev->info->mode_info[6].raw_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[6].raw_max, ==, 1023.0);
-    tt_want_float_op(iodev->info->mode_info[6].pct_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[6].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[6].si_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[6].si_max, ==, 1023.0);
-    tt_want_str_op(iodev->info->mode_info[6].uom, ==, "RAW");
     tt_want_uint_op(iodev->info->mode_info[6].input_flags, ==, LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[6].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[6].num_values, ==, 3);
     tt_want_uint_op(iodev->info->mode_info[6].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
-    tt_want_uint_op(iodev->info->mode_info[6].digits, ==, 5);
-    tt_want_uint_op(iodev->info->mode_info[6].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[7].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[7].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[7].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
     tt_want_uint_op(iodev->info->mode_info[7].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
-    tt_want_float_op(iodev->info->mode_info[7].raw_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[7].raw_max, ==, 65535.0);
-    tt_want_float_op(iodev->info->mode_info[7].pct_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[7].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[7].si_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[7].si_max, ==, 65535.0);
-    tt_want_str_op(iodev->info->mode_info[7].uom, ==, "N/A");
     tt_want_uint_op(iodev->info->mode_info[7].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[7].output_flags, ==, LPF2_MAPPING_FLAG_DISCRETE);
     tt_want_uint_op(iodev->info->mode_info[7].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[7].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
-    tt_want_uint_op(iodev->info->mode_info[7].digits, ==, 5);
-    tt_want_uint_op(iodev->info->mode_info[7].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[8].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[8].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[8].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
     tt_want_uint_op(iodev->info->mode_info[8].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
-    tt_want_float_op(iodev->info->mode_info[8].raw_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[8].raw_max, ==, 255.0);
-    tt_want_float_op(iodev->info->mode_info[8].pct_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[8].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[8].si_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[8].si_max, ==, 255.0);
-    tt_want_str_op(iodev->info->mode_info[8].uom, ==, "N/A");
     tt_want_uint_op(iodev->info->mode_info[8].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[8].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[8].num_values, ==, 4);
     tt_want_uint_op(iodev->info->mode_info[8].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
-    tt_want_uint_op(iodev->info->mode_info[8].digits, ==, 3);
-    tt_want_uint_op(iodev->info->mode_info[8].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[9].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[9].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[9].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
     tt_want_uint_op(iodev->info->mode_info[9].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
-    tt_want_float_op(iodev->info->mode_info[9].raw_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[9].raw_max, ==, 1023.0);
-    tt_want_float_op(iodev->info->mode_info[9].pct_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[9].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[9].si_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[9].si_max, ==, 10.0);
-    tt_want_str_op(iodev->info->mode_info[9].uom, ==, "N/A");
     tt_want_uint_op(iodev->info->mode_info[9].input_flags, ==, LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[9].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[9].num_values, ==, 2);
     tt_want_uint_op(iodev->info->mode_info[9].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
-    tt_want_uint_op(iodev->info->mode_info[9].digits, ==, 5);
-    tt_want_uint_op(iodev->info->mode_info[9].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[10].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[10].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[10].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
     tt_want_uint_op(iodev->info->mode_info[10].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
-    tt_want_float_op(iodev->info->mode_info[10].raw_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[10].raw_max, ==, 65535.0);
-    tt_want_float_op(iodev->info->mode_info[10].pct_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[10].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[10].si_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[10].si_max, ==, 65535.0);
-    tt_want_str_op(iodev->info->mode_info[10].uom, ==, "N/A");
     tt_want_uint_op(iodev->info->mode_info[10].input_flags, ==, LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[10].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[10].num_values, ==, 8);
     tt_want_uint_op(iodev->info->mode_info[10].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
-    tt_want_uint_op(iodev->info->mode_info[10].digits, ==, 5);
-    tt_want_uint_op(iodev->info->mode_info[10].decimals, ==, 0);
 
 
     // test changing the mode
@@ -779,76 +680,40 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags4, ==, LUMP_MODE_FLAGS4_USES_HBRIDGE);
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT1);
-    tt_want_float_op(iodev->info->mode_info[0].raw_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[0].raw_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[0].pct_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[0].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[0].si_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[0].si_max, ==, 100.0);
-    tt_want_str_op(iodev->info->mode_info[0].uom, ==, "PCT");
     tt_want_uint_op(iodev->info->mode_info[0].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[0].output_flags, ==,
         LPF2_MAPPING_FLAG_2_0 | LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[0].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
-    tt_want_uint_op(iodev->info->mode_info[0].digits, ==, 4);
-    tt_want_uint_op(iodev->info->mode_info[0].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_SPEED);
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags4, ==, LUMP_MODE_FLAGS4_USES_HBRIDGE);
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT1);
-    tt_want_float_op(iodev->info->mode_info[1].raw_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[1].raw_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[1].pct_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[1].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[1].si_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[1].si_max, ==, 100.0);
-    tt_want_str_op(iodev->info->mode_info[1].uom, ==, "PCT");
     tt_want_uint_op(iodev->info->mode_info[1].input_flags, ==, LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[1].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[1].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
-    tt_want_uint_op(iodev->info->mode_info[1].digits, ==, 4);
-    tt_want_uint_op(iodev->info->mode_info[1].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_REL_POS);
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags4, ==, LUMP_MODE_FLAGS4_USES_HBRIDGE);
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT1);
-    tt_want_float_op(iodev->info->mode_info[2].raw_min, ==, -360.0);
-    tt_want_float_op(iodev->info->mode_info[2].raw_max, ==, 360.0);
-    tt_want_float_op(iodev->info->mode_info[2].pct_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[2].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[2].si_min, ==, -360.0);
-    tt_want_float_op(iodev->info->mode_info[2].si_max, ==, 360.0);
-    tt_want_str_op(iodev->info->mode_info[2].uom, ==, "DEG");
     tt_want_uint_op(iodev->info->mode_info[2].input_flags, ==, LPF2_MAPPING_FLAG_RELATIVE);
     tt_want_uint_op(iodev->info->mode_info[2].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[2].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[2].data_type, ==, PBIO_IODEV_DATA_TYPE_INT32);
-    tt_want_uint_op(iodev->info->mode_info[2].digits, ==, 6);
-    tt_want_uint_op(iodev->info->mode_info[2].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags4, ==, LUMP_MODE_FLAGS4_USES_HBRIDGE);
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT1);
-    tt_want_float_op(iodev->info->mode_info[3].raw_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[3].raw_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[3].pct_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[3].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[3].si_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[3].si_max, ==, 100.0);
-    tt_want_str_op(iodev->info->mode_info[3].uom, ==, "TST");
     tt_want_uint_op(iodev->info->mode_info[3].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[3].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[3].num_values, ==, 5);
     tt_want_uint_op(iodev->info->mode_info[3].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
-    tt_want_uint_op(iodev->info->mode_info[3].digits, ==, 6);
-    tt_want_uint_op(iodev->info->mode_info[3].decimals, ==, 0);
 
     PT_YIELD(pt);
 
@@ -1047,20 +912,11 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags4, ==,
         LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
-    tt_want_float_op(iodev->info->mode_info[0].raw_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[0].raw_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[0].pct_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[0].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[0].si_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[0].si_max, ==, 100.0);
-    tt_want_str_op(iodev->info->mode_info[0].uom, ==, "PCT");
     tt_want_uint_op(iodev->info->mode_info[0].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[0].output_flags, ==,
         LPF2_MAPPING_FLAG_2_0 | LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[0].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
-    tt_want_uint_op(iodev->info->mode_info[0].digits, ==, 4);
-    tt_want_uint_op(iodev->info->mode_info[0].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_SPEED);
@@ -1068,21 +924,12 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags4, ==,
         LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
-    tt_want_float_op(iodev->info->mode_info[1].raw_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[1].raw_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[1].pct_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[1].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[1].si_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[1].si_max, ==, 100.0);
-    tt_want_str_op(iodev->info->mode_info[1].uom, ==, "PCT");
     tt_want_uint_op(iodev->info->mode_info[1].input_flags, ==,
         LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[1].output_flags, ==,
         LPF2_MAPPING_FLAG_2_0 | LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[1].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
-    tt_want_uint_op(iodev->info->mode_info[1].digits, ==, 4);
-    tt_want_uint_op(iodev->info->mode_info[1].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_REL_POS);
@@ -1090,21 +937,12 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags4, ==,
         LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
-    tt_want_float_op(iodev->info->mode_info[2].raw_min, ==, -360.0);
-    tt_want_float_op(iodev->info->mode_info[2].raw_max, ==, 360.0);
-    tt_want_float_op(iodev->info->mode_info[2].pct_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[2].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[2].si_min, ==, -360.0);
-    tt_want_float_op(iodev->info->mode_info[2].si_max, ==, 360.0);
-    tt_want_str_op(iodev->info->mode_info[2].uom, ==, "DEG");
     tt_want_uint_op(iodev->info->mode_info[2].input_flags, ==,
         LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_RELATIVE);
     tt_want_uint_op(iodev->info->mode_info[2].output_flags, ==,
         LPF2_MAPPING_FLAG_2_0 | LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_RELATIVE);
     tt_want_uint_op(iodev->info->mode_info[2].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[2].data_type, ==, PBIO_IODEV_DATA_TYPE_INT32);
-    tt_want_uint_op(iodev->info->mode_info[2].digits, ==, 11);
-    tt_want_uint_op(iodev->info->mode_info[2].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_ABS_POS);
@@ -1112,21 +950,12 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags4, ==,
         LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
-    tt_want_float_op(iodev->info->mode_info[3].raw_min, ==, -180.0);
-    tt_want_float_op(iodev->info->mode_info[3].raw_max, ==, 179.0);
-    tt_want_float_op(iodev->info->mode_info[3].pct_min, ==, -200.0);
-    tt_want_float_op(iodev->info->mode_info[3].pct_max, ==, 200.0);
-    tt_want_float_op(iodev->info->mode_info[3].si_min, ==, -180.0);
-    tt_want_float_op(iodev->info->mode_info[3].si_max, ==, 179.0);
-    tt_want_str_op(iodev->info->mode_info[3].uom, ==, "DEG");
     tt_want_uint_op(iodev->info->mode_info[3].input_flags, ==,
         LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_ABSOLUTE | LPF2_MAPPING_FLAG_UNKNOWN_BIT1);
     tt_want_uint_op(iodev->info->mode_info[3].output_flags, ==,
         LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_ABSOLUTE | LPF2_MAPPING_FLAG_UNKNOWN_BIT1);
     tt_want_uint_op(iodev->info->mode_info[3].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[3].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
-    tt_want_uint_op(iodev->info->mode_info[3].digits, ==, 3);
-    tt_want_uint_op(iodev->info->mode_info[3].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[4].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_ABS_POS);
@@ -1134,38 +963,20 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[4].flags.flags4, ==,
         LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
     tt_want_uint_op(iodev->info->mode_info[4].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
-    tt_want_float_op(iodev->info->mode_info[4].raw_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[4].raw_max, ==, 3600.0);
-    tt_want_float_op(iodev->info->mode_info[4].pct_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[4].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[4].si_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[4].si_max, ==, 3600.0);
-    tt_want_str_op(iodev->info->mode_info[4].uom, ==, "CAL");
     tt_want_uint_op(iodev->info->mode_info[4].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[4].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[4].num_values, ==, 2);
     tt_want_uint_op(iodev->info->mode_info[4].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
-    tt_want_uint_op(iodev->info->mode_info[4].digits, ==, 5);
-    tt_want_uint_op(iodev->info->mode_info[4].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags4, ==,
         LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
-    tt_want_float_op(iodev->info->mode_info[5].raw_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[5].raw_max, ==, 65535.0);
-    tt_want_float_op(iodev->info->mode_info[5].pct_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[5].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[5].si_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[5].si_max, ==, 65535.0);
-    tt_want_str_op(iodev->info->mode_info[5].uom, ==, "MIN");
     tt_want_uint_op(iodev->info->mode_info[5].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[5].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[5].num_values, ==, 14);
     tt_want_uint_op(iodev->info->mode_info[5].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
-    tt_want_uint_op(iodev->info->mode_info[5].digits, ==, 5);
-    tt_want_uint_op(iodev->info->mode_info[5].decimals, ==, 0);
 
     PT_YIELD(pt);
 
@@ -1364,20 +1175,11 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags4, ==,
         LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
-    tt_want_float_op(iodev->info->mode_info[0].raw_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[0].raw_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[0].pct_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[0].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[0].si_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[0].si_max, ==, 100.0);
-    tt_want_str_op(iodev->info->mode_info[0].uom, ==, "PCT");
     tt_want_uint_op(iodev->info->mode_info[0].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[0].output_flags, ==,
         LPF2_MAPPING_FLAG_2_0 | LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[0].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
-    tt_want_uint_op(iodev->info->mode_info[0].digits, ==, 4);
-    tt_want_uint_op(iodev->info->mode_info[0].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_SPEED);
@@ -1385,21 +1187,12 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags4, ==,
         LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
-    tt_want_float_op(iodev->info->mode_info[1].raw_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[1].raw_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[1].pct_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[1].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[1].si_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[1].si_max, ==, 100.0);
-    tt_want_str_op(iodev->info->mode_info[1].uom, ==, "PCT");
     tt_want_uint_op(iodev->info->mode_info[1].input_flags, ==,
         LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[1].output_flags, ==,
         LPF2_MAPPING_FLAG_2_0 | LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[1].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
-    tt_want_uint_op(iodev->info->mode_info[1].digits, ==, 4);
-    tt_want_uint_op(iodev->info->mode_info[1].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_REL_POS);
@@ -1407,21 +1200,12 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags4, ==,
         LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
-    tt_want_float_op(iodev->info->mode_info[2].raw_min, ==, -360.0);
-    tt_want_float_op(iodev->info->mode_info[2].raw_max, ==, 360.0);
-    tt_want_float_op(iodev->info->mode_info[2].pct_min, ==, -100.0);
-    tt_want_float_op(iodev->info->mode_info[2].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[2].si_min, ==, -360.0);
-    tt_want_float_op(iodev->info->mode_info[2].si_max, ==, 360.0);
-    tt_want_str_op(iodev->info->mode_info[2].uom, ==, "DEG");
     tt_want_uint_op(iodev->info->mode_info[2].input_flags, ==,
         LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_RELATIVE);
     tt_want_uint_op(iodev->info->mode_info[2].output_flags, ==,
         LPF2_MAPPING_FLAG_2_0 | LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_RELATIVE);
     tt_want_uint_op(iodev->info->mode_info[2].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[2].data_type, ==, PBIO_IODEV_DATA_TYPE_INT32);
-    tt_want_uint_op(iodev->info->mode_info[2].digits, ==, 11);
-    tt_want_uint_op(iodev->info->mode_info[2].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_ABS_POS);
@@ -1429,21 +1213,12 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags4, ==,
         LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
-    tt_want_float_op(iodev->info->mode_info[3].raw_min, ==, -180.0);
-    tt_want_float_op(iodev->info->mode_info[3].raw_max, ==, 179.0);
-    tt_want_float_op(iodev->info->mode_info[3].pct_min, ==, -200.0);
-    tt_want_float_op(iodev->info->mode_info[3].pct_max, ==, 200.0);
-    tt_want_float_op(iodev->info->mode_info[3].si_min, ==, -180.0);
-    tt_want_float_op(iodev->info->mode_info[3].si_max, ==, 179.0);
-    tt_want_str_op(iodev->info->mode_info[3].uom, ==, "DEG");
     tt_want_uint_op(iodev->info->mode_info[3].input_flags, ==,
         LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_ABSOLUTE | LPF2_MAPPING_FLAG_UNKNOWN_BIT1);
     tt_want_uint_op(iodev->info->mode_info[3].output_flags, ==,
         LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_ABSOLUTE | LPF2_MAPPING_FLAG_UNKNOWN_BIT1);
     tt_want_uint_op(iodev->info->mode_info[3].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[3].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
-    tt_want_uint_op(iodev->info->mode_info[3].digits, ==, 3);
-    tt_want_uint_op(iodev->info->mode_info[3].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[4].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_ABS_POS);
@@ -1451,38 +1226,20 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[4].flags.flags4, ==,
         LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
     tt_want_uint_op(iodev->info->mode_info[4].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
-    tt_want_float_op(iodev->info->mode_info[4].raw_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[4].raw_max, ==, 3600.0);
-    tt_want_float_op(iodev->info->mode_info[4].pct_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[4].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[4].si_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[4].si_max, ==, 3600.0);
-    tt_want_str_op(iodev->info->mode_info[4].uom, ==, "CAL");
     tt_want_uint_op(iodev->info->mode_info[4].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[4].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[4].num_values, ==, 2);
     tt_want_uint_op(iodev->info->mode_info[4].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
-    tt_want_uint_op(iodev->info->mode_info[4].digits, ==, 5);
-    tt_want_uint_op(iodev->info->mode_info[4].decimals, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags4, ==,
         LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
-    tt_want_float_op(iodev->info->mode_info[5].raw_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[5].raw_max, ==, 65535.0);
-    tt_want_float_op(iodev->info->mode_info[5].pct_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[5].pct_max, ==, 100.0);
-    tt_want_float_op(iodev->info->mode_info[5].si_min, ==, 0.0);
-    tt_want_float_op(iodev->info->mode_info[5].si_max, ==, 65535.0);
-    tt_want_str_op(iodev->info->mode_info[5].uom, ==, "MIN");
     tt_want_uint_op(iodev->info->mode_info[5].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[5].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[5].num_values, ==, 14);
     tt_want_uint_op(iodev->info->mode_info[5].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
-    tt_want_uint_op(iodev->info->mode_info[5].digits, ==, 5);
-    tt_want_uint_op(iodev->info->mode_info[5].decimals, ==, 0);
 
     PT_YIELD(pt);
 

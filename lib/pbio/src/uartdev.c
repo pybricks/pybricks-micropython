@@ -222,13 +222,6 @@ static uartdev_port_data_t dev_data[PBIO_CONFIG_UARTDEV_NUM_DEV];
 
 static pbdrv_counter_dev_t *counter_devs;
 
-static const pbio_iodev_mode_t ev3_uart_default_mode_info = {
-    .raw_max = 1023,
-    .pct_max = 100,
-    .si_max = 1,
-    .digits = 4,
-};
-
 #define PBIO_PT_WAIT_READY(pt, expr) PT_WAIT_UNTIL((pt), (expr) != PBIO_ERROR_AGAIN)
 
 pbio_error_t pbio_uartdev_get(uint8_t id, pbio_iodev_t **iodev) {
@@ -499,73 +492,12 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                         flags->flags3, flags->flags4, flags->flags5);
                 }
                 break;
+                // Ignore RAW, PCT, SI, UNITS info. This is never used and can
+                // be looked up by device type if necessary.
                 case LUMP_INFO_RAW:
-                    if (data->new_mode != mode) {
-                        DBG_ERR(data->last_err = "Received INFO for incorrect mode");
-                        goto err;
-                    }
-                    if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_RAW, &data->info_flags)) {
-                        DBG_ERR(data->last_err = "Received duplicate raw scaling INFO");
-                        goto err;
-                    }
-                    data->info->mode_info[mode].raw_min = float_le(data->rx_msg + 2);
-                    data->info->mode_info[mode].raw_max = float_le(data->rx_msg + 6);
-
-                    debug_pr("raw: %f %f\n", (double)data->info->mode_info[mode].raw_min,
-                        (double)data->info->mode_info[mode].raw_max);
-
-                    break;
                 case LUMP_INFO_PCT:
-                    if (data->new_mode != mode) {
-                        DBG_ERR(data->last_err = "Received INFO for incorrect mode");
-                        goto err;
-                    }
-                    if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_PCT, &data->info_flags)) {
-                        DBG_ERR(data->last_err = "Received duplicate percent scaling INFO");
-                        goto err;
-                    }
-                    data->info->mode_info[mode].pct_min = float_le(data->rx_msg + 2);
-                    data->info->mode_info[mode].pct_max = float_le(data->rx_msg + 6);
-
-                    debug_pr("pct: %f %f\n", (double)data->info->mode_info[mode].pct_min,
-                        (double)data->info->mode_info[mode].pct_max);
-
-                    break;
                 case LUMP_INFO_SI:
-                    if (data->new_mode != mode) {
-                        DBG_ERR(data->last_err = "Received INFO for incorrect mode");
-                        goto err;
-                    }
-                    if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_SI,
-                        &data->info_flags)) {
-                        DBG_ERR(data->last_err = "Received duplicate SI scaling INFO");
-                        goto err;
-                    }
-                    data->info->mode_info[mode].si_min = float_le(data->rx_msg + 2);
-                    data->info->mode_info[mode].si_max = float_le(data->rx_msg + 6);
-
-                    debug_pr("si: %f %f\n", (double)data->info->mode_info[mode].si_min,
-                        (double)data->info->mode_info[mode].si_max);
-
-                    break;
                 case LUMP_INFO_UNITS:
-                    if (data->new_mode != mode) {
-                        DBG_ERR(data->last_err = "Received INFO for incorrect mode");
-                        goto err;
-                    }
-                    if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_UNITS, &data->info_flags)) {
-                        DBG_ERR(data->last_err = "Received duplicate SI units INFO");
-                        goto err;
-                    }
-                    // Units may not have null terminator and we are done with the
-                    // checksum at this point so we are writing 0 over the checksum to
-                    // ensure a null terminator for the string functions.
-                    data->rx_msg[msg_size - 1] = 0;
-                    snprintf(data->info->mode_info[mode].uom, PBIO_IODEV_UOM_SIZE + 1,
-                        "%s", data->rx_msg + 2);
-
-                    debug_pr("uom: %s\n", data->info->mode_info[mode].uom);
-
                     break;
                 case LUMP_INFO_MAPPING:
                     if (data->new_mode != mode) {
@@ -640,16 +572,12 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                         goto err;
                     }
                     data->info->mode_info[mode].data_type = data->rx_msg[3];
-                    data->info->mode_info[mode].digits = data->rx_msg[4];
-                    data->info->mode_info[mode].decimals = data->rx_msg[5];
                     if (data->new_mode) {
                         data->new_mode--;
                     }
 
                     debug_pr("num_values: %d\n", data->info->mode_info[mode].num_values);
                     debug_pr("data_type: %d\n", data->info->mode_info[mode].data_type);
-                    debug_pr("digits: %d\n", data->info->mode_info[mode].digits);
-                    debug_pr("decimals: %d\n", data->info->mode_info[mode].decimals);
 
                     break;
             }
@@ -904,10 +832,6 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
 
     data->info->num_modes = 1;
     data->info->num_view_modes = 1;
-
-    for (int i = 0; i < PBIO_IODEV_MAX_NUM_MODES; i++) {
-        data->info->mode_info[i] = ev3_uart_default_mode_info;
-    }
 
     data->type_id = data->rx_msg[1];
     data->info_flags = EV3_UART_INFO_FLAG_CMD_TYPE;
