@@ -262,14 +262,6 @@ typedef struct {
      * The binary format of the data for this mode.
      */
     pbio_iodev_data_type_t data_type;
-    /**
-     * Input value mapping flags.
-     */
-    pbio_iodev_mapping_flag_t input_flags;
-    /**
-     * Output value mapping flags.
-     */
-    pbio_iodev_mapping_flag_t output_flags;
 } pbio_iodev_mode_t;
 
 /**
