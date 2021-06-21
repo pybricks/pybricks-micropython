@@ -115,7 +115,7 @@ void pb_device_get_values(pb_device_t *pbdev, uint8_t mode, int32_t *values) {
     }
 
     for (uint8_t i = 0; i < len; i++) {
-        switch (type) {
+        switch (type & PBIO_IODEV_DATA_TYPE_MASK) {
             case PBIO_IODEV_DATA_TYPE_INT8:
                 values[i] = *((int8_t *)(data + i * 1));
                 break;
@@ -153,7 +153,7 @@ void pb_device_set_values(pb_device_t *pbdev, uint8_t mode, int32_t *values, uin
     }
 
     for (uint8_t i = 0; i < len; i++) {
-        switch (type) {
+        switch (type & PBIO_IODEV_DATA_TYPE_MASK) {
             case PBIO_IODEV_DATA_TYPE_INT8:
                 *(int8_t *)(data + i) = values[i];
                 break;

@@ -491,12 +491,12 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                         goto err;
                     }
 
-                    // Check that mode supports writing.
-                    if (data->rx_msg[3]) {
-                        // TODO: Store write capability
-                    }
+                    // Mode supports writing if rx_msg[3] is nonzero. Store in 3rd bit of data type.
+                    data->info->mode_info[mode].data_type = (data->rx_msg[3] != 0) << 2;
 
                     debug_pr("mapping: in %02x out %02x\n", data->rx_msg[2], data->rx_msg[3]);
+                    debug_pr("mapping: in %02x out %02x\n", data->rx_msg[2], data->rx_msg[3]);
+                    debug_pr("Writable: %d\n", data->info->mode_info[mode].data_type & PBIO_IODEV_DATA_TYPE_WRITABLE);
 
                     break;
                 case LUMP_INFO_MODE_COMBOS:
@@ -555,13 +555,14 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                         DBG_ERR(data->last_err = "Did not receive all required INFO");
                         goto err;
                     }
-                    data->info->mode_info[mode].data_type = data->rx_msg[3];
+                    // Mode writability has been set previously. Now OR with mode type.
+                    data->info->mode_info[mode].data_type |= data->rx_msg[3];
                     if (data->new_mode) {
                         data->new_mode--;
                     }
 
                     debug_pr("num_values: %d\n", data->info->mode_info[mode].num_values);
-                    debug_pr("data_type: %d\n", data->info->mode_info[mode].data_type);
+                    debug_pr("data_type: %d\n", data->info->mode_info[mode].data_type & PBIO_IODEV_DATA_TYPE_MASK);
 
                     break;
             }
@@ -1093,8 +1094,7 @@ static pbio_error_t ev3_uart_set_data_begin(pbio_iodev_t *iodev, const uint8_t *
     uint8_t size;
 
     // not all modes support setting data
-    bool writable = 0; // TODO: Check write capability
-    if (!writable) {
+    if (!(mode->data_type & PBIO_IODEV_DATA_TYPE_WRITABLE)) {
         return PBIO_ERROR_INVALID_OP;
     }
 

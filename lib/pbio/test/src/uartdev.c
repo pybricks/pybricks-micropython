@@ -376,13 +376,13 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[4].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
 
     tt_want_uint_op(iodev->info->mode_info[5].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[5].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(iodev->info->mode_info[5].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8 | PBIO_IODEV_DATA_TYPE_WRITABLE);
 
     tt_want_uint_op(iodev->info->mode_info[6].num_values, ==, 3);
     tt_want_uint_op(iodev->info->mode_info[6].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
 
     tt_want_uint_op(iodev->info->mode_info[7].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[7].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(iodev->info->mode_info[7].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16 | PBIO_IODEV_DATA_TYPE_WRITABLE);
 
     tt_want_uint_op(iodev->info->mode_info[8].num_values, ==, 4);
     tt_want_uint_op(iodev->info->mode_info[8].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
@@ -608,7 +608,7 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->mode, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[0].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8 | PBIO_IODEV_DATA_TYPE_WRITABLE);
 
     tt_want_uint_op(iodev->info->mode_info[1].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
@@ -811,16 +811,16 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->mode, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[0].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8 | PBIO_IODEV_DATA_TYPE_WRITABLE);
 
     tt_want_uint_op(iodev->info->mode_info[1].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8 | PBIO_IODEV_DATA_TYPE_WRITABLE);
 
     tt_want_uint_op(iodev->info->mode_info[2].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[2].data_type, ==, PBIO_IODEV_DATA_TYPE_INT32);
+    tt_want_uint_op(iodev->info->mode_info[2].data_type, ==, PBIO_IODEV_DATA_TYPE_INT32 | PBIO_IODEV_DATA_TYPE_WRITABLE);
 
     tt_want_uint_op(iodev->info->mode_info[3].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[3].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(iodev->info->mode_info[3].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16 | PBIO_IODEV_DATA_TYPE_WRITABLE);
 
     tt_want_uint_op(iodev->info->mode_info[4].num_values, ==, 2);
     tt_want_uint_op(iodev->info->mode_info[4].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
@@ -1020,16 +1020,16 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->mode, ==, 0);
 
     tt_want_uint_op(iodev->info->mode_info[0].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8 | PBIO_IODEV_DATA_TYPE_WRITABLE);
 
     tt_want_uint_op(iodev->info->mode_info[1].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
+    tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8 | PBIO_IODEV_DATA_TYPE_WRITABLE);
 
     tt_want_uint_op(iodev->info->mode_info[2].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[2].data_type, ==, PBIO_IODEV_DATA_TYPE_INT32);
+    tt_want_uint_op(iodev->info->mode_info[2].data_type, ==, PBIO_IODEV_DATA_TYPE_INT32 | PBIO_IODEV_DATA_TYPE_WRITABLE);
 
     tt_want_uint_op(iodev->info->mode_info[3].num_values, ==, 1);
-    tt_want_uint_op(iodev->info->mode_info[3].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
+    tt_want_uint_op(iodev->info->mode_info[3].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16 | PBIO_IODEV_DATA_TYPE_WRITABLE);
 
     tt_want_uint_op(iodev->info->mode_info[4].num_values, ==, 2);
     tt_want_uint_op(iodev->info->mode_info[4].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
