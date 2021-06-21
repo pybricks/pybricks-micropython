@@ -239,17 +239,6 @@ pbio_error_t pbio_uartdev_get(uint8_t id, pbio_iodev_t **iodev) {
     return PBIO_SUCCESS;
 }
 
-static inline float float_le(uint8_t *bytes) {
-    union {
-        float f;
-        uint32_t u;
-    } result;
-
-    result.u = pbio_get_uint32_le(bytes);
-
-    return result.f;
-}
-
 static inline bool test_and_set_bit(uint8_t bit, uint32_t *flags) {
     bool result = *flags & (1 << bit);
     *flags |= (1 << bit);
