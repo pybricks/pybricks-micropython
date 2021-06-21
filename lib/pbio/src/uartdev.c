@@ -359,15 +359,9 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                         // Powered Up devices can have an extended mode message that
                         // includes modes > LUMP_MAX_MODE
                         data->info->num_modes = data->rx_msg[3] + 1;
-                        data->info->num_view_modes = data->rx_msg[4] + 1;
-                    } else if (msg_size > 3) {
-                        data->info->num_view_modes = data->rx_msg[2] + 1;
-                    } else {
-                        data->info->num_view_modes = data->info->num_modes;
                     }
 
                     debug_pr("num_modes: %d\n", data->info->num_modes);
-                    debug_pr("num_view_modes: %d\n", data->info->num_view_modes);
 
                     break;
                 case LUMP_CMD_SPEED:
@@ -816,7 +810,6 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
     // if all was good, we are ready to start receiving the mode info
 
     data->info->num_modes = 1;
-    data->info->num_view_modes = 1;
 
     data->type_id = data->rx_msg[1];
     data->info_flags = EV3_UART_INFO_FLAG_CMD_TYPE;

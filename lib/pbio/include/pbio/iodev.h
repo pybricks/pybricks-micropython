@@ -287,12 +287,6 @@ typedef struct {
      */
     uint8_t num_modes;
     /**
-     * The number of "view" modes the device has. This modes are show in the
-     * port monitor. Other modes may or may not be useable depending on the
-     * device (e.g. some are for factory calibration).
-     */
-    uint8_t num_view_modes;
-    /**
      * Bit flags indicating which combination of modes can be used at the same
      * time. Each bit cooresponds to the mode of the same number (0 to 15).
      */
