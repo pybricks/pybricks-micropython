@@ -360,7 +360,6 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_want_uint_op(iodev->capability_flags, ==, PBIO_IODEV_CAPABILITY_FLAG_NONE);
     tt_want_uint_op(iodev->mode, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[0].name, ==, "COLOR");
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
@@ -380,7 +379,6 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[0].digits, ==, 3);
     tt_want_uint_op(iodev->info->mode_info[0].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[1].name, ==, "PROX");
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
@@ -400,7 +398,6 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[1].digits, ==, 3);
     tt_want_uint_op(iodev->info->mode_info[1].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[2].name, ==, "COUNT");
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
@@ -419,7 +416,6 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[2].digits, ==, 4);
     tt_want_uint_op(iodev->info->mode_info[2].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[3].name, ==, "REFLT");
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
@@ -438,7 +434,6 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[3].digits, ==, 3);
     tt_want_uint_op(iodev->info->mode_info[3].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[4].name, ==, "AMBI");
     tt_want_uint_op(iodev->info->mode_info[4].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[4].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[4].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
@@ -457,7 +452,6 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[4].digits, ==, 3);
     tt_want_uint_op(iodev->info->mode_info[4].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[5].name, ==, "COL O");
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
@@ -476,7 +470,6 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[5].digits, ==, 3);
     tt_want_uint_op(iodev->info->mode_info[5].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[6].name, ==, "RGB I");
     tt_want_uint_op(iodev->info->mode_info[6].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[6].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[6].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
@@ -495,7 +488,6 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[6].digits, ==, 5);
     tt_want_uint_op(iodev->info->mode_info[6].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[7].name, ==, "IR Tx");
     tt_want_uint_op(iodev->info->mode_info[7].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[7].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[7].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
@@ -514,7 +506,6 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[7].digits, ==, 5);
     tt_want_uint_op(iodev->info->mode_info[7].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[8].name, ==, "SPEC 1");
     tt_want_uint_op(iodev->info->mode_info[8].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[8].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[8].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
@@ -533,7 +524,6 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[8].digits, ==, 3);
     tt_want_uint_op(iodev->info->mode_info[8].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[9].name, ==, "DEBUG");
     tt_want_uint_op(iodev->info->mode_info[9].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[9].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[9].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
@@ -552,7 +542,6 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[9].digits, ==, 5);
     tt_want_uint_op(iodev->info->mode_info[9].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[10].name, ==, "CALIB");
     tt_want_uint_op(iodev->info->mode_info[10].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[10].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[10].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
@@ -785,7 +774,6 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
         PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS);
     tt_want_uint_op(iodev->mode, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[0].name, ==, "POWER");
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_POWER);
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
@@ -806,7 +794,6 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[0].digits, ==, 4);
     tt_want_uint_op(iodev->info->mode_info[0].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[1].name, ==, "SPEED");
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_SPEED);
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
@@ -826,7 +813,6 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[1].digits, ==, 4);
     tt_want_uint_op(iodev->info->mode_info[1].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[2].name, ==, "POS");
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_REL_POS);
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
@@ -846,7 +832,6 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[2].digits, ==, 6);
     tt_want_uint_op(iodev->info->mode_info[2].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[3].name, ==, "TEST");
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags4, ==, LUMP_MODE_FLAGS4_USES_HBRIDGE);
@@ -1056,7 +1041,6 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
         | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS);
     tt_want_uint_op(iodev->mode, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[0].name, ==, "POWER");
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_POWER);
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
@@ -1078,7 +1062,6 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[0].digits, ==, 4);
     tt_want_uint_op(iodev->info->mode_info[0].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[1].name, ==, "SPEED");
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_SPEED);
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
@@ -1101,7 +1084,6 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[1].digits, ==, 4);
     tt_want_uint_op(iodev->info->mode_info[1].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[2].name, ==, "POS");
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_REL_POS);
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
@@ -1124,7 +1106,6 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[2].digits, ==, 11);
     tt_want_uint_op(iodev->info->mode_info[2].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[3].name, ==, "APOS");
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_ABS_POS);
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
@@ -1147,7 +1128,6 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[3].digits, ==, 3);
     tt_want_uint_op(iodev->info->mode_info[3].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[4].name, ==, "CALIB");
     tt_want_uint_op(iodev->info->mode_info[4].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_ABS_POS);
     tt_want_uint_op(iodev->info->mode_info[4].flags.flags1, ==, LUMP_MODE_FLAGS1_CALIB);
@@ -1168,7 +1148,6 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[4].digits, ==, 5);
     tt_want_uint_op(iodev->info->mode_info[4].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[5].name, ==, "STATS");
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags4, ==,
@@ -1379,7 +1358,6 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
         | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS);
     tt_want_uint_op(iodev->mode, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[0].name, ==, "POWER");
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_POWER);
     tt_want_uint_op(iodev->info->mode_info[0].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
@@ -1401,7 +1379,6 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[0].digits, ==, 4);
     tt_want_uint_op(iodev->info->mode_info[0].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[1].name, ==, "SPEED");
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_SPEED);
     tt_want_uint_op(iodev->info->mode_info[1].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
@@ -1424,7 +1401,6 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[1].digits, ==, 4);
     tt_want_uint_op(iodev->info->mode_info[1].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[2].name, ==, "POS");
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_REL_POS);
     tt_want_uint_op(iodev->info->mode_info[2].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
@@ -1447,7 +1423,6 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[2].digits, ==, 11);
     tt_want_uint_op(iodev->info->mode_info[2].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[3].name, ==, "APOS");
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_ABS_POS);
     tt_want_uint_op(iodev->info->mode_info[3].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
@@ -1470,7 +1445,6 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[3].digits, ==, 3);
     tt_want_uint_op(iodev->info->mode_info[3].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[4].name, ==, "CALIB");
     tt_want_uint_op(iodev->info->mode_info[4].flags.flags0, ==,
         LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_ABS_POS);
     tt_want_uint_op(iodev->info->mode_info[4].flags.flags1, ==, LUMP_MODE_FLAGS1_CALIB);
@@ -1491,7 +1465,6 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[4].digits, ==, 5);
     tt_want_uint_op(iodev->info->mode_info[4].decimals, ==, 0);
 
-    tt_want_str_op(iodev->info->mode_info[5].name, ==, "STATS");
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
     tt_want_uint_op(iodev->info->mode_info[5].flags.flags4, ==,

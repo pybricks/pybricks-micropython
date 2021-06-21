@@ -60,8 +60,6 @@ static const basic_info_t basic_infos[] = {
             .num_modes = 1,
         },
         .mode = {
-            .name = "LPF2-MMOTOR",
-            .num_values = 1,
             .flags = {
                 .flags0 = LUMP_MODE_FLAGS0_MOTOR_POWER,
                 .flags4 = LUMP_MODE_FLAGS4_USES_HBRIDGE,
@@ -87,8 +85,6 @@ static const basic_info_t basic_infos[] = {
             .num_modes = 1,
         },
         .mode = {
-            .name = "LPF2-TRAIN",
-            .num_values = 1,
             .flags = {
                 .flags0 = LUMP_MODE_FLAGS0_MOTOR_POWER,
                 .flags4 = LUMP_MODE_FLAGS4_USES_HBRIDGE,
@@ -114,8 +110,6 @@ static const basic_info_t basic_infos[] = {
             .num_modes = 1,
         },
         .mode = {
-            .name = "LPF2-LIGHT",
-            .num_values = 1,
             .flags = {
                 .flags4 = LUMP_MODE_FLAGS4_USES_HBRIDGE,
             },
@@ -140,8 +134,6 @@ static const basic_info_t basic_infos[] = {
             .num_modes = 1,
         },
         .mode = {
-            .name = "LPF2-LIGHT1",
-            .num_values = 1,
             .flags = {
                 .flags4 = LUMP_MODE_FLAGS4_USES_HBRIDGE,
             },
@@ -166,8 +158,6 @@ static const basic_info_t basic_infos[] = {
             .num_modes = 1,
         },
         .mode = {
-            .name = "LPF2-LIGHT2",
-            .num_values = 1,
             .flags = {
                 .flags4 = LUMP_MODE_FLAGS4_USES_HBRIDGE,
             },
