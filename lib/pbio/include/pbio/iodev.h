@@ -255,10 +255,6 @@ typedef enum {
  */
 typedef struct {
     /**
-     * Mode flags.
-     */
-    lump_mode_flags_t flags;
-    /**
      * The number of data values for this mode.
      */
     uint8_t num_values;

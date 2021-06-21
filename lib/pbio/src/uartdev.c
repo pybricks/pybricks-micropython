@@ -272,29 +272,6 @@ static uint8_t ev3_uart_get_msg_size(uint8_t header) {
     return size;
 }
 
-static void pbio_uartdev_set_mode_flags(pbio_iodev_type_id_t type_id, uint8_t mode, lump_mode_flags_t *flags) {
-    memset(flags, 0, sizeof(*flags));
-
-    switch (type_id) {
-        case PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR:
-            switch (mode) {
-                case 0: // POWER
-                    flags->flags0 = LUMP_MODE_FLAGS0_MOTOR_POWER | LUMP_MODE_FLAGS0_MOTOR;
-                    break;
-                case 1: // SPEED
-                    flags->flags0 = LUMP_MODE_FLAGS0_MOTOR_SPEED | LUMP_MODE_FLAGS0_MOTOR;
-                    break;
-                case 2: // POS
-                    flags->flags0 = LUMP_MODE_FLAGS0_MOTOR_REL_POS | LUMP_MODE_FLAGS0_MOTOR;
-                    break;
-            }
-            flags->flags4 = LUMP_MODE_FLAGS4_USES_HBRIDGE;
-            flags->flags5 = LUMP_MODE_FLAGS5_UNKNOWN_BIT1; // TODO: figure out what this flag means
-            break;
-        default:
-            break;
-    }
-}
 
 static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
     uint32_t speed;
@@ -461,35 +438,40 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                     data->new_mode = mode;
                     data->info_flags |= EV3_UART_INFO_FLAG_INFO_NAME;
 
-                    lump_mode_flags_t *flags = &data->info->mode_info[mode].flags;
+                    // newer LEGO UART devices send additional 6 mode capability flags
+                    uint8_t flags = 0;
                     if (name_len <= LUMP_MAX_SHORT_NAME_SIZE && msg_size > LUMP_MAX_NAME_SIZE) {
-                        // newer LPF2 devices send additional mode flags along with the name
-                        memcpy(flags, data->rx_msg + 8, 6);
+                        // Only the first is used in practice.
+                        flags = data->rx_msg[8];
                     } else {
-                        // otherwise look up flags
-                        pbio_uartdev_set_mode_flags(data->type_id, mode, flags);
+                        // for newer devices that don't send it, set flags by device ID
+                        // TODO: Look up from static info like we do for basic devices
+                        if (data->type_id == PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR) {
+                            flags = LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_POWER | LUMP_MODE_FLAGS0_MOTOR_SPEED | LUMP_MODE_FLAGS0_MOTOR_REL_POS;
+                        }
                     }
 
-                    if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_POWER) {
+                    // Although capabilities are sent per mode, we apply them to the whole device
+                    if (flags & LUMP_MODE_FLAGS0_MOTOR_POWER) {
                         data->info->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR;
                     }
-                    if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_SPEED) {
+                    if (flags & LUMP_MODE_FLAGS0_MOTOR_SPEED) {
                         data->info->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED;
                     }
-                    if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_REL_POS) {
+                    if (flags & LUMP_MODE_FLAGS0_MOTOR_REL_POS) {
                         data->info->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS;
                     }
-                    if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_ABS_POS) {
+                    if (flags & LUMP_MODE_FLAGS0_MOTOR_ABS_POS) {
                         data->info->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS;
                     }
-                    if (flags->flags0 & LUMP_MODE_FLAGS0_REQUIRES_POWER) {
+                    if (flags & LUMP_MODE_FLAGS0_REQUIRES_POWER) {
                         data->info->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_REQUIRES_POWER;
                     }
 
                     debug_pr("new_mode: %d\n", data->new_mode);
                     debug_pr("flags: %02X %02X %02X %02X %02X %02X\n",
-                        flags->flags0, flags->flags1, flags->flags2,
-                        flags->flags3, flags->flags4, flags->flags5);
+                        data->rx_msg[8 + 0], data->rx_msg[8 + 1], data->rx_msg[8 + 2],
+                        data->rx_msg[8 + 3], data->rx_msg[8 + 4], data->rx_msg[8 + 5]);
                 }
                 break;
                 // Ignore RAW, PCT, SI, UNITS info. This is never used and can

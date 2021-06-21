@@ -360,102 +360,58 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->capability_flags, ==, PBIO_IODEV_CAPABILITY_FLAG_NONE);
     tt_want_uint_op(iodev->mode, ==, 0);
 
-    tt_want_uint_op(iodev->info->mode_info[0].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
-    tt_want_uint_op(iodev->info->mode_info[0].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[0].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
-    tt_want_uint_op(iodev->info->mode_info[0].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
     tt_want_uint_op(iodev->info->mode_info[0].input_flags, ==,
         LPF2_MAPPING_FLAG_NULL | LPF2_MAPPING_FLAG_2_0 | LPF2_MAPPING_FLAG_DISCRETE);
     tt_want_uint_op(iodev->info->mode_info[0].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[0].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
 
-    tt_want_uint_op(iodev->info->mode_info[1].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
-    tt_want_uint_op(iodev->info->mode_info[1].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[1].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
-    tt_want_uint_op(iodev->info->mode_info[1].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
     tt_want_uint_op(iodev->info->mode_info[1].input_flags, ==,
         LPF2_MAPPING_FLAG_2_0 | LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[1].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[1].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
 
-    tt_want_uint_op(iodev->info->mode_info[2].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
-    tt_want_uint_op(iodev->info->mode_info[2].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[2].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
-    tt_want_uint_op(iodev->info->mode_info[2].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
     tt_want_uint_op(iodev->info->mode_info[2].input_flags, ==, LPF2_MAPPING_FLAG_RELATIVE);
     tt_want_uint_op(iodev->info->mode_info[2].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[2].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[2].data_type, ==, PBIO_IODEV_DATA_TYPE_INT32);
 
-    tt_want_uint_op(iodev->info->mode_info[3].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
-    tt_want_uint_op(iodev->info->mode_info[3].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[3].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
-    tt_want_uint_op(iodev->info->mode_info[3].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
     tt_want_uint_op(iodev->info->mode_info[3].input_flags, ==, LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[3].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[3].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[3].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
 
-    tt_want_uint_op(iodev->info->mode_info[4].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
-    tt_want_uint_op(iodev->info->mode_info[4].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[4].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
-    tt_want_uint_op(iodev->info->mode_info[4].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
     tt_want_uint_op(iodev->info->mode_info[4].input_flags, ==, LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[4].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[4].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[4].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
 
-    tt_want_uint_op(iodev->info->mode_info[5].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
-    tt_want_uint_op(iodev->info->mode_info[5].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[5].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
-    tt_want_uint_op(iodev->info->mode_info[5].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
     tt_want_uint_op(iodev->info->mode_info[5].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[5].output_flags, ==, LPF2_MAPPING_FLAG_DISCRETE);
     tt_want_uint_op(iodev->info->mode_info[5].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[5].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
 
-    tt_want_uint_op(iodev->info->mode_info[6].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
-    tt_want_uint_op(iodev->info->mode_info[6].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[6].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
-    tt_want_uint_op(iodev->info->mode_info[6].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
     tt_want_uint_op(iodev->info->mode_info[6].input_flags, ==, LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[6].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[6].num_values, ==, 3);
     tt_want_uint_op(iodev->info->mode_info[6].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
 
-    tt_want_uint_op(iodev->info->mode_info[7].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
-    tt_want_uint_op(iodev->info->mode_info[7].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[7].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
-    tt_want_uint_op(iodev->info->mode_info[7].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
     tt_want_uint_op(iodev->info->mode_info[7].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[7].output_flags, ==, LPF2_MAPPING_FLAG_DISCRETE);
     tt_want_uint_op(iodev->info->mode_info[7].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[7].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
 
-    tt_want_uint_op(iodev->info->mode_info[8].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
-    tt_want_uint_op(iodev->info->mode_info[8].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[8].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
-    tt_want_uint_op(iodev->info->mode_info[8].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
     tt_want_uint_op(iodev->info->mode_info[8].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[8].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[8].num_values, ==, 4);
     tt_want_uint_op(iodev->info->mode_info[8].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
 
-    tt_want_uint_op(iodev->info->mode_info[9].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
-    tt_want_uint_op(iodev->info->mode_info[9].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[9].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
-    tt_want_uint_op(iodev->info->mode_info[9].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
     tt_want_uint_op(iodev->info->mode_info[9].input_flags, ==, LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[9].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[9].num_values, ==, 2);
     tt_want_uint_op(iodev->info->mode_info[9].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
 
-    tt_want_uint_op(iodev->info->mode_info[10].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
-    tt_want_uint_op(iodev->info->mode_info[10].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[10].flags.flags4, ==, LUMP_MODE_FLAGS4_NONE);
-    tt_want_uint_op(iodev->info->mode_info[10].flags.flags5, ==, LUMP_MODE_FLAGS5_NONE);
     tt_want_uint_op(iodev->info->mode_info[10].input_flags, ==, LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[10].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[10].num_values, ==, 8);
@@ -675,41 +631,22 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
         PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS);
     tt_want_uint_op(iodev->mode, ==, 0);
 
-    tt_want_uint_op(iodev->info->mode_info[0].flags.flags0, ==,
-        LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_POWER);
-    tt_want_uint_op(iodev->info->mode_info[0].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[0].flags.flags4, ==, LUMP_MODE_FLAGS4_USES_HBRIDGE);
-    tt_want_uint_op(iodev->info->mode_info[0].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT1);
     tt_want_uint_op(iodev->info->mode_info[0].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[0].output_flags, ==,
         LPF2_MAPPING_FLAG_2_0 | LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[0].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
 
-    tt_want_uint_op(iodev->info->mode_info[1].flags.flags0, ==,
-        LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_SPEED);
-    tt_want_uint_op(iodev->info->mode_info[1].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[1].flags.flags4, ==, LUMP_MODE_FLAGS4_USES_HBRIDGE);
-    tt_want_uint_op(iodev->info->mode_info[1].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT1);
     tt_want_uint_op(iodev->info->mode_info[1].input_flags, ==, LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[1].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[1].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
 
-    tt_want_uint_op(iodev->info->mode_info[2].flags.flags0, ==,
-        LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_REL_POS);
-    tt_want_uint_op(iodev->info->mode_info[2].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[2].flags.flags4, ==, LUMP_MODE_FLAGS4_USES_HBRIDGE);
-    tt_want_uint_op(iodev->info->mode_info[2].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT1);
     tt_want_uint_op(iodev->info->mode_info[2].input_flags, ==, LPF2_MAPPING_FLAG_RELATIVE);
     tt_want_uint_op(iodev->info->mode_info[2].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[2].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[2].data_type, ==, PBIO_IODEV_DATA_TYPE_INT32);
 
-    tt_want_uint_op(iodev->info->mode_info[3].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
-    tt_want_uint_op(iodev->info->mode_info[3].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[3].flags.flags4, ==, LUMP_MODE_FLAGS4_USES_HBRIDGE);
-    tt_want_uint_op(iodev->info->mode_info[3].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT1);
     tt_want_uint_op(iodev->info->mode_info[3].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[3].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[3].num_values, ==, 5);
@@ -906,24 +843,12 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
         | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS);
     tt_want_uint_op(iodev->mode, ==, 0);
 
-    tt_want_uint_op(iodev->info->mode_info[0].flags.flags0, ==,
-        LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_POWER);
-    tt_want_uint_op(iodev->info->mode_info[0].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[0].flags.flags4, ==,
-        LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
-    tt_want_uint_op(iodev->info->mode_info[0].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
     tt_want_uint_op(iodev->info->mode_info[0].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[0].output_flags, ==,
         LPF2_MAPPING_FLAG_2_0 | LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[0].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
 
-    tt_want_uint_op(iodev->info->mode_info[1].flags.flags0, ==,
-        LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_SPEED);
-    tt_want_uint_op(iodev->info->mode_info[1].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[1].flags.flags4, ==,
-        LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
-    tt_want_uint_op(iodev->info->mode_info[1].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
     tt_want_uint_op(iodev->info->mode_info[1].input_flags, ==,
         LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[1].output_flags, ==,
@@ -931,12 +856,6 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[1].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
 
-    tt_want_uint_op(iodev->info->mode_info[2].flags.flags0, ==,
-        LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_REL_POS);
-    tt_want_uint_op(iodev->info->mode_info[2].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[2].flags.flags4, ==,
-        LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
-    tt_want_uint_op(iodev->info->mode_info[2].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
     tt_want_uint_op(iodev->info->mode_info[2].input_flags, ==,
         LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_RELATIVE);
     tt_want_uint_op(iodev->info->mode_info[2].output_flags, ==,
@@ -944,12 +863,6 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[2].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[2].data_type, ==, PBIO_IODEV_DATA_TYPE_INT32);
 
-    tt_want_uint_op(iodev->info->mode_info[3].flags.flags0, ==,
-        LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_ABS_POS);
-    tt_want_uint_op(iodev->info->mode_info[3].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[3].flags.flags4, ==,
-        LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
-    tt_want_uint_op(iodev->info->mode_info[3].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
     tt_want_uint_op(iodev->info->mode_info[3].input_flags, ==,
         LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_ABSOLUTE | LPF2_MAPPING_FLAG_UNKNOWN_BIT1);
     tt_want_uint_op(iodev->info->mode_info[3].output_flags, ==,
@@ -957,22 +870,11 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[3].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[3].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
 
-    tt_want_uint_op(iodev->info->mode_info[4].flags.flags0, ==,
-        LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_ABS_POS);
-    tt_want_uint_op(iodev->info->mode_info[4].flags.flags1, ==, LUMP_MODE_FLAGS1_CALIB);
-    tt_want_uint_op(iodev->info->mode_info[4].flags.flags4, ==,
-        LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
-    tt_want_uint_op(iodev->info->mode_info[4].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
     tt_want_uint_op(iodev->info->mode_info[4].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[4].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[4].num_values, ==, 2);
     tt_want_uint_op(iodev->info->mode_info[4].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
 
-    tt_want_uint_op(iodev->info->mode_info[5].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
-    tt_want_uint_op(iodev->info->mode_info[5].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[5].flags.flags4, ==,
-        LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
-    tt_want_uint_op(iodev->info->mode_info[5].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
     tt_want_uint_op(iodev->info->mode_info[5].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[5].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[5].num_values, ==, 14);
@@ -1169,24 +1071,12 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
         | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS);
     tt_want_uint_op(iodev->mode, ==, 0);
 
-    tt_want_uint_op(iodev->info->mode_info[0].flags.flags0, ==,
-        LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_POWER);
-    tt_want_uint_op(iodev->info->mode_info[0].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[0].flags.flags4, ==,
-        LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
-    tt_want_uint_op(iodev->info->mode_info[0].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
     tt_want_uint_op(iodev->info->mode_info[0].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[0].output_flags, ==,
         LPF2_MAPPING_FLAG_2_0 | LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[0].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[0].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
 
-    tt_want_uint_op(iodev->info->mode_info[1].flags.flags0, ==,
-        LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_SPEED);
-    tt_want_uint_op(iodev->info->mode_info[1].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[1].flags.flags4, ==,
-        LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
-    tt_want_uint_op(iodev->info->mode_info[1].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
     tt_want_uint_op(iodev->info->mode_info[1].input_flags, ==,
         LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_ABSOLUTE);
     tt_want_uint_op(iodev->info->mode_info[1].output_flags, ==,
@@ -1194,12 +1084,6 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[1].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[1].data_type, ==, PBIO_IODEV_DATA_TYPE_INT8);
 
-    tt_want_uint_op(iodev->info->mode_info[2].flags.flags0, ==,
-        LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_REL_POS);
-    tt_want_uint_op(iodev->info->mode_info[2].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[2].flags.flags4, ==,
-        LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
-    tt_want_uint_op(iodev->info->mode_info[2].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
     tt_want_uint_op(iodev->info->mode_info[2].input_flags, ==,
         LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_RELATIVE);
     tt_want_uint_op(iodev->info->mode_info[2].output_flags, ==,
@@ -1207,12 +1091,6 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[2].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[2].data_type, ==, PBIO_IODEV_DATA_TYPE_INT32);
 
-    tt_want_uint_op(iodev->info->mode_info[3].flags.flags0, ==,
-        LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_ABS_POS);
-    tt_want_uint_op(iodev->info->mode_info[3].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[3].flags.flags4, ==,
-        LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
-    tt_want_uint_op(iodev->info->mode_info[3].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
     tt_want_uint_op(iodev->info->mode_info[3].input_flags, ==,
         LPF2_MAPPING_FLAG_UNKNOWN_BIT5 | LPF2_MAPPING_FLAG_ABSOLUTE | LPF2_MAPPING_FLAG_UNKNOWN_BIT1);
     tt_want_uint_op(iodev->info->mode_info[3].output_flags, ==,
@@ -1220,22 +1098,11 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->mode_info[3].num_values, ==, 1);
     tt_want_uint_op(iodev->info->mode_info[3].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
 
-    tt_want_uint_op(iodev->info->mode_info[4].flags.flags0, ==,
-        LUMP_MODE_FLAGS0_MOTOR | LUMP_MODE_FLAGS0_MOTOR_ABS_POS);
-    tt_want_uint_op(iodev->info->mode_info[4].flags.flags1, ==, LUMP_MODE_FLAGS1_CALIB);
-    tt_want_uint_op(iodev->info->mode_info[4].flags.flags4, ==,
-        LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
-    tt_want_uint_op(iodev->info->mode_info[4].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
     tt_want_uint_op(iodev->info->mode_info[4].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[4].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[4].num_values, ==, 2);
     tt_want_uint_op(iodev->info->mode_info[4].data_type, ==, PBIO_IODEV_DATA_TYPE_INT16);
 
-    tt_want_uint_op(iodev->info->mode_info[5].flags.flags0, ==, LUMP_MODE_FLAGS0_NONE);
-    tt_want_uint_op(iodev->info->mode_info[5].flags.flags1, ==, LUMP_MODE_FLAGS1_NONE);
-    tt_want_uint_op(iodev->info->mode_info[5].flags.flags4, ==,
-        LUMP_MODE_FLAGS4_UNKNOWN_BIT2 | LUMP_MODE_FLAGS4_USES_HBRIDGE);
-    tt_want_uint_op(iodev->info->mode_info[5].flags.flags5, ==, LUMP_MODE_FLAGS5_UNKNOWN_BIT2);
     tt_want_uint_op(iodev->info->mode_info[5].input_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[5].output_flags, ==, 0);
     tt_want_uint_op(iodev->info->mode_info[5].num_values, ==, 14);
