@@ -354,7 +354,6 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     tt_uint_op(pbio_uartdev_get(0, &iodev), ==, PBIO_SUCCESS);
     tt_want_uint_op(iodev->info->type_id, ==, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
     tt_want_uint_op(iodev->info->num_modes, ==, 11);
-    tt_want_uint_op(iodev->info->num_view_modes, ==, 8);
     // TODO: verify fw/hw versions
     tt_want_uint_op(iodev->info->mode_combos, ==, 1 << 6 | 1 << 3 | 1 << 2 | 1 << 1 | 1 << 0);
     tt_want_uint_op(iodev->info->capability_flags, ==, PBIO_IODEV_CAPABILITY_FLAG_NONE);
@@ -600,7 +599,6 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     tt_uint_op(pbio_uartdev_get(0, &iodev), ==, PBIO_SUCCESS);
     tt_want_uint_op(iodev->info->type_id, ==, PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR);
     tt_want_uint_op(iodev->info->num_modes, ==, 4);
-    tt_want_uint_op(iodev->info->num_view_modes, ==, 3);
     // TODO: verify fw/hw versions
     tt_want_uint_op(iodev->info->mode_combos, ==, 1 << 2 | 1 << 1);
     tt_want_uint_op(iodev->info->capability_flags, ==, PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR |
@@ -803,7 +801,6 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_uint_op(pbio_uartdev_get(0, &iodev), ==, PBIO_SUCCESS);
     tt_want_uint_op(iodev->info->type_id, ==, PBIO_IODEV_TYPE_ID_TECHNIC_L_MOTOR);
     tt_want_uint_op(iodev->info->num_modes, ==, 6);
-    tt_want_uint_op(iodev->info->num_view_modes, ==, 4);
     // TODO: verify fw/hw versions
     tt_want_uint_op(iodev->info->mode_combos, ==, 1 << 3 | 1 << 2 | 1 << 1);
     tt_want_uint_op(iodev->info->capability_flags, ==, PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED
@@ -1012,7 +1009,6 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_uint_op(pbio_uartdev_get(0, &iodev), ==, PBIO_SUCCESS);
     tt_want_uint_op(iodev->info->type_id, ==, PBIO_IODEV_TYPE_ID_TECHNIC_XL_MOTOR);
     tt_want_uint_op(iodev->info->num_modes, ==, 6);
-    tt_want_uint_op(iodev->info->num_view_modes, ==, 4);
     // TODO: verify fw/hw versions
     tt_want_uint_op(iodev->info->mode_combos, ==, 1 << 3 | 1 << 2 | 1 << 1);
     tt_want_uint_op(iodev->info->capability_flags, ==, PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED
