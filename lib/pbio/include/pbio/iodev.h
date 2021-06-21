@@ -255,10 +255,6 @@ typedef enum {
  */
 typedef struct {
     /**
-     * The name of the mode.
-     */
-    char name[PBIO_IODEV_MODE_NAME_SIZE + 1];
-    /**
      * Mode flags.
      */
     lump_mode_flags_t flags;

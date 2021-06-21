@@ -465,8 +465,6 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                         DBG_ERR(data->last_err = "Name is too long");
                         goto err;
                     }
-                    snprintf(data->info->mode_info[mode].name,
-                        PBIO_IODEV_MODE_NAME_SIZE + 1, "%s", data->rx_msg + 2);
                     data->new_mode = mode;
                     data->info_flags |= EV3_UART_INFO_FLAG_INFO_NAME;
 
@@ -496,7 +494,6 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                     }
 
                     debug_pr("new_mode: %d\n", data->new_mode);
-                    debug_pr("name: %s\n", data->info->mode_info[mode].name);
                     debug_pr("flags: %02X %02X %02X %02X %02X %02X\n",
                         flags->flags0, flags->flags1, flags->flags2,
                         flags->flags3, flags->flags4, flags->flags5);
