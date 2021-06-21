@@ -471,19 +471,19 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                     }
 
                     if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_POWER) {
-                        data->iodev.capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR;
+                        data->info->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR;
                     }
                     if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_SPEED) {
-                        data->iodev.capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED;
+                        data->info->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED;
                     }
                     if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_REL_POS) {
-                        data->iodev.capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS;
+                        data->info->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS;
                     }
                     if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_ABS_POS) {
-                        data->iodev.capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS;
+                        data->info->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS;
                     }
                     if (flags->flags0 & LUMP_MODE_FLAGS0_REQUIRES_POWER) {
-                        data->iodev.capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_REQUIRES_POWER;
+                        data->info->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_REQUIRES_POWER;
                     }
 
                     debug_pr("new_mode: %d\n", data->new_mode);
@@ -605,7 +605,7 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                 // The counter driver must return the corrected count
                 data->tacho_count = tacho_count_msg - data->tacho_offset;
 
-                if (data->iodev.capability_flags & PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS) {
+                if (data->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS) {
                     data->abs_pos = data->rx_msg[7] << 8 | data->rx_msg[6];
                 }
             } else {
@@ -752,7 +752,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
 
     // reset state for new device
     data->info->type_id = PBIO_IODEV_TYPE_ID_NONE;
-    data->iodev.capability_flags = PBIO_IODEV_CAPABILITY_FLAG_NONE;
+    data->info->capability_flags = PBIO_IODEV_CAPABILITY_FLAG_NONE;
     data->ext_mode = 0;
     data->status = PBIO_UARTDEV_STATUS_SYNCING;
     // default max tacho rate for BOOST external motor since it is the only
@@ -1173,7 +1173,7 @@ static pbio_error_t pbio_uartdev_get_abs_count(pbdrv_counter_dev_t *dev, int32_t
         return PBIO_ERROR_NO_DEV;
     }
 
-    if (!(port_data->iodev.capability_flags & PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS)) {
+    if (!(port_data->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS)) {
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 

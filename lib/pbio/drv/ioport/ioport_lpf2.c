@@ -57,13 +57,10 @@ static const basic_info_t basic_infos[] = {
     [PBIO_IODEV_TYPE_ID_LPF2_MMOTOR] = {
         .info = {
             .type_id = PBIO_IODEV_TYPE_ID_LPF2_MMOTOR,
+            .capability_flags = PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR,
             .num_modes = 1,
         },
         .mode = {
-            .flags = {
-                .flags0 = LUMP_MODE_FLAGS0_MOTOR_POWER,
-                .flags4 = LUMP_MODE_FLAGS4_USES_HBRIDGE,
-            },
             .num_values = 1,
             .data_type = PBIO_IODEV_DATA_TYPE_INT8,
             .input_flags = 0,
@@ -73,13 +70,10 @@ static const basic_info_t basic_infos[] = {
     [PBIO_IODEV_TYPE_ID_LPF2_TRAIN] = {
         .info = {
             .type_id = PBIO_IODEV_TYPE_ID_LPF2_TRAIN,
+            .capability_flags = PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR,
             .num_modes = 1,
         },
         .mode = {
-            .flags = {
-                .flags0 = LUMP_MODE_FLAGS0_MOTOR_POWER,
-                .flags4 = LUMP_MODE_FLAGS4_USES_HBRIDGE,
-            },
             .num_values = 1,
             .data_type = PBIO_IODEV_DATA_TYPE_INT8,
             .input_flags = 0,
@@ -89,12 +83,10 @@ static const basic_info_t basic_infos[] = {
     [PBIO_IODEV_TYPE_ID_LPF2_LIGHT] = {
         .info = {
             .type_id = PBIO_IODEV_TYPE_ID_LPF2_LIGHT,
+            .capability_flags = PBIO_IODEV_CAPABILITY_FLAG_NONE,
             .num_modes = 1,
         },
         .mode = {
-            .flags = {
-                .flags4 = LUMP_MODE_FLAGS4_USES_HBRIDGE,
-            },
             .num_values = 1,
             .data_type = PBIO_IODEV_DATA_TYPE_INT8,
             .input_flags = 0,
@@ -104,12 +96,10 @@ static const basic_info_t basic_infos[] = {
     [PBIO_IODEV_TYPE_ID_LPF2_LIGHT1] = {
         .info = {
             .type_id = PBIO_IODEV_TYPE_ID_LPF2_LIGHT1,
+            .capability_flags = PBIO_IODEV_CAPABILITY_FLAG_NONE,
             .num_modes = 1,
         },
         .mode = {
-            .flags = {
-                .flags4 = LUMP_MODE_FLAGS4_USES_HBRIDGE,
-            },
             .num_values = 1,
             .data_type = PBIO_IODEV_DATA_TYPE_INT8,
             .input_flags = 0,
@@ -119,12 +109,10 @@ static const basic_info_t basic_infos[] = {
     [PBIO_IODEV_TYPE_ID_LPF2_LIGHT2] = {
         .info = {
             .type_id = PBIO_IODEV_TYPE_ID_LPF2_LIGHT2,
+            .capability_flags = PBIO_IODEV_CAPABILITY_FLAG_NONE,
             .num_modes = 1,
         },
         .mode = {
-            .flags = {
-                .flags4 = LUMP_MODE_FLAGS4_USES_HBRIDGE,
-            },
             .num_values = 1,
             .data_type = PBIO_IODEV_DATA_TYPE_INT8,
             .input_flags = 0,
@@ -471,16 +459,8 @@ PROCESS_THREAD(pbdrv_ioport_lpf2_process, ev, data) {
                         ioport->iodev = NULL;
                     } else {
                         assert(ioport->connected_type_id < PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART);
-                        pbio_iodev_t *iodev = &basic_devs[i];
-                        const pbio_iodev_info_t *info = &basic_infos[ioport->connected_type_id].info;
-                        iodev->info = info;
-
-                        const lump_mode_flags_t *flags = &basic_infos[ioport->connected_type_id].mode.flags;
-                        iodev->capability_flags = PBIO_IODEV_CAPABILITY_FLAG_NONE;
-                        if (flags->flags0 & LUMP_MODE_FLAGS0_MOTOR_POWER) {
-                            iodev->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR;
-                        }
-                        ioport->iodev = iodev;
+                        ioport->iodev = &basic_devs[i];
+                        ioport->iodev->info = &basic_infos[ioport->connected_type_id].info;
                     }
                 }
             }
