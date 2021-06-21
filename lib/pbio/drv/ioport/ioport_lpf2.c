@@ -62,7 +62,7 @@ static const basic_info_t basic_infos[] = {
         },
         .mode = {
             .num_values = 1,
-            .data_type = PBIO_IODEV_DATA_TYPE_INT8,
+            .data_type = PBIO_IODEV_DATA_TYPE_INT8 | PBIO_IODEV_DATA_TYPE_WRITABLE,
         },
     },
     [PBIO_IODEV_TYPE_ID_LPF2_TRAIN] = {
@@ -73,7 +73,7 @@ static const basic_info_t basic_infos[] = {
         },
         .mode = {
             .num_values = 1,
-            .data_type = PBIO_IODEV_DATA_TYPE_INT8,
+            .data_type = PBIO_IODEV_DATA_TYPE_INT8 | PBIO_IODEV_DATA_TYPE_WRITABLE,
         },
     },
     [PBIO_IODEV_TYPE_ID_LPF2_LIGHT] = {
@@ -84,7 +84,7 @@ static const basic_info_t basic_infos[] = {
         },
         .mode = {
             .num_values = 1,
-            .data_type = PBIO_IODEV_DATA_TYPE_INT8,
+            .data_type = PBIO_IODEV_DATA_TYPE_INT8 | PBIO_IODEV_DATA_TYPE_WRITABLE,
         },
     },
     [PBIO_IODEV_TYPE_ID_LPF2_LIGHT1] = {
@@ -95,7 +95,7 @@ static const basic_info_t basic_infos[] = {
         },
         .mode = {
             .num_values = 1,
-            .data_type = PBIO_IODEV_DATA_TYPE_INT8,
+            .data_type = PBIO_IODEV_DATA_TYPE_INT8 | PBIO_IODEV_DATA_TYPE_WRITABLE,
         },
     },
     [PBIO_IODEV_TYPE_ID_LPF2_LIGHT2] = {
@@ -106,7 +106,7 @@ static const basic_info_t basic_infos[] = {
         },
         .mode = {
             .num_values = 1,
-            .data_type = PBIO_IODEV_DATA_TYPE_INT8,
+            .data_type = PBIO_IODEV_DATA_TYPE_INT8 | PBIO_IODEV_DATA_TYPE_WRITABLE,
         },
     },
 };

@@ -159,6 +159,12 @@ typedef enum {
     PBIO_IODEV_DATA_TYPE_FLOAT = LUMP_DATA_TYPE_DATAF,
 } pbio_iodev_data_type_t;
 
+// Bit mask for pbio_iodev_data_type_t
+#define PBIO_IODEV_DATA_TYPE_MASK (0x03)
+
+// Third bit indicates whether the mode supports writing
+#define PBIO_IODEV_DATA_TYPE_WRITABLE (0x04)
+
 /**
  * The maximum number of modes a I/O device can have.
  */
@@ -259,7 +265,7 @@ typedef struct {
      */
     uint8_t num_values;
     /**
-     * The binary format of the data for this mode.
+     * The binary format of the data for this mode and writability flag.
      */
     pbio_iodev_data_type_t data_type;
 } pbio_iodev_mode_t;
