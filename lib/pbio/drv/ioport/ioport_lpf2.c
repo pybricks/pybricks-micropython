@@ -63,8 +63,6 @@ static const basic_info_t basic_infos[] = {
         .mode = {
             .num_values = 1,
             .data_type = PBIO_IODEV_DATA_TYPE_INT8,
-            .input_flags = 0,
-            .output_flags = LPF2_MAPPING_FLAG_ABSOLUTE,
         },
     },
     [PBIO_IODEV_TYPE_ID_LPF2_TRAIN] = {
@@ -76,8 +74,6 @@ static const basic_info_t basic_infos[] = {
         .mode = {
             .num_values = 1,
             .data_type = PBIO_IODEV_DATA_TYPE_INT8,
-            .input_flags = 0,
-            .output_flags = LPF2_MAPPING_FLAG_RELATIVE | LPF2_MAPPING_FLAG_ABSOLUTE,
         },
     },
     [PBIO_IODEV_TYPE_ID_LPF2_LIGHT] = {
@@ -89,8 +85,6 @@ static const basic_info_t basic_infos[] = {
         .mode = {
             .num_values = 1,
             .data_type = PBIO_IODEV_DATA_TYPE_INT8,
-            .input_flags = 0,
-            .output_flags = LPF2_MAPPING_FLAG_DISCRETE | LPF2_MAPPING_FLAG_ABSOLUTE,
         },
     },
     [PBIO_IODEV_TYPE_ID_LPF2_LIGHT1] = {
@@ -102,8 +96,6 @@ static const basic_info_t basic_infos[] = {
         .mode = {
             .num_values = 1,
             .data_type = PBIO_IODEV_DATA_TYPE_INT8,
-            .input_flags = 0,
-            .output_flags = LPF2_MAPPING_FLAG_DISCRETE | LPF2_MAPPING_FLAG_ABSOLUTE,
         },
     },
     [PBIO_IODEV_TYPE_ID_LPF2_LIGHT2] = {
@@ -115,8 +107,6 @@ static const basic_info_t basic_infos[] = {
         .mode = {
             .num_values = 1,
             .data_type = PBIO_IODEV_DATA_TYPE_INT8,
-            .input_flags = 0,
-            .output_flags = LPF2_MAPPING_FLAG_DISCRETE | LPF2_MAPPING_FLAG_ABSOLUTE,
         },
     },
 };

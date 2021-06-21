@@ -491,8 +491,10 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                         goto err;
                     }
 
-                    data->info->mode_info[mode].input_flags = data->rx_msg[2];
-                    data->info->mode_info[mode].output_flags = data->rx_msg[3];
+                    // Check that mode supports writing.
+                    if (data->rx_msg[3]) {
+                        // TODO: Store write capability
+                    }
 
                     debug_pr("mapping: in %02x out %02x\n", data->rx_msg[2], data->rx_msg[3]);
 
@@ -1091,7 +1093,8 @@ static pbio_error_t ev3_uart_set_data_begin(pbio_iodev_t *iodev, const uint8_t *
     uint8_t size;
 
     // not all modes support setting data
-    if (!mode->output_flags) {
+    bool writable = 0; // TODO: Check write capability
+    if (!writable) {
         return PBIO_ERROR_INVALID_OP;
     }
 
