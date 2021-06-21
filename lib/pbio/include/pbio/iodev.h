@@ -215,21 +215,21 @@ typedef enum {
  *
  * @param [in] d    Pointer to pbio_iodev_t.
  */
-#define PBIO_IODEV_IS_MOTOR(d) ((d)->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR)
+#define PBIO_IODEV_IS_MOTOR(d) ((d)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR)
 
 /**
  * Macro for testing if I/O device is a motor with speed/position feedback.
  *
  * @param [in] d    Pointer to pbio_iodev_t.
  */
-#define PBIO_IODEV_IS_FEEDBACK_MOTOR(d) ((d)->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS)
+#define PBIO_IODEV_IS_FEEDBACK_MOTOR(d) ((d)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS)
 
 /**
  * Macro for testing if I/O device requires battery power.
  *
  * @param [in] d    Pointer to pbio_iodev_t.
  */
-#define PBIO_IODEV_REQUIRES_POWER(d) ((d)->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_REQUIRES_POWER)
+#define PBIO_IODEV_REQUIRES_POWER(d) ((d)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_REQUIRES_POWER)
 
 
 /**
@@ -284,6 +284,10 @@ typedef struct {
      * The type identifier for the device.
      */
     pbio_iodev_type_id_t type_id;
+    /**
+     * Device capability flags.
+     */
+    pbio_iodev_capability_flags_t capability_flags;
     /**
      * The number of modes the device has. (Indicates size of *mode_info*).
      */
@@ -344,10 +348,6 @@ struct _pbio_iodev_t {
      * The current active mode.
      */
     uint8_t mode;
-    /**
-     * Device capability flags.
-     */
-    pbio_iodev_capability_flags_t capability_flags;
     /**
      * Most recent binary data read from the device. How to interpret this data
      * is determined by the ::pbio_iodev_mode_t info associated with the current
