@@ -51,11 +51,23 @@ SECTIONS {
   __bss_start__ = ADDR(.bss);
   __bss_end__   = ADDR(.bss) + SIZEOF(.bss);
 
-  .stack (NOLOAD) : {
-    *(.stack .stack.*)
+  .stack :
+  {
+      . = ALIGN(4);
+      . = . + 4K; /* will cause linker error if there is not enough space for stack. */
+      . = ALIGN(4);
   } >RAM
 
   _estack = ADDR(.stack) + SIZEOF(.stack);
+
+  .user :
+  {
+      . = ALIGN(4);
+      _pb_user_mpy_size = .;
+      LONG(SIZEOF(.user) - (. + 4 - LOADADDR(.user))); /* Size of compiled main.mpy file in bytes */
+      _pb_user_mpy_data = .;
+      KEEP(*(.mpy));       /* Compiled main.mpy file */
+  } >ROM
 
   __free_ram_start__ = ALIGN(ADDR(.stack) + SIZEOF(.stack), 16);
   __free_ram_end__   = ORIGIN(RAM) + LENGTH(RAM);

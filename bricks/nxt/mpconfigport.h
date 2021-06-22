@@ -19,7 +19,7 @@
 #define PYBRICKS_PY_COMMON_SYSTEM       (1)
 #define PYBRICKS_PY_EXPERIMENTAL        (0)
 #define PYBRICKS_PY_GEOMETRY            (0)
-#define PYBRICKS_PY_HUBS                (1)
+#define PYBRICKS_PY_HUBS                (0)
 #define PYBRICKS_PY_MEDIA               (0)
 #define PYBRICKS_PY_NXTDEVICES          (1)
 #define PYBRICKS_PY_PARAMETERS          (1)
@@ -49,6 +49,7 @@
 #define MICROPY_DEBUG_PRINTERS      (0)
 #define MICROPY_ENABLE_GC           (1)
 #define MICROPY_GC_ALLOC_THRESHOLD  (0)
+#define MICROPY_STACK_CHECK         (1)
 #define MICROPY_REPL_EVENT_DRIVEN   (0)
 #define MICROPY_HELPER_REPL         (1)
 #define MICROPY_HELPER_LEXER_UNIX   (0)
@@ -88,6 +89,9 @@
 #define MICROPY_KBD_EXCEPTION       (1)
 #define MICROPY_ENABLE_SCHEDULER    (0)
 #define MICROPY_PY_INSTANCE_ATTRS   (1)
+
+#define MICROPY_PERSISTENT_CODE_LOAD    (1)
+#define MICROPY_ENABLE_EXTERNAL_IMPORT  (0)
 
 // type definitions for the specific machine
 

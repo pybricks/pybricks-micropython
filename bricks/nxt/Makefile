@@ -39,6 +39,8 @@ QSTR_GLOBAL_DEPENDENCIES =
 # MicroPython feature configurations
 MICROPY_ROM_TEXT_COMPRESSION ?= 1
 
+MPY_CROSS_FLAGS += -mno-unicode
+
 # include py core make definitions
 include $(TOP)/py/py.mk
 
@@ -230,6 +232,16 @@ OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PYBRICKS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))
+OBJ += $(BUILD)/main.mpy.o
+
+$(BUILD)/main.mpy: main.py
+	$(ECHO) "MPY $<"
+	$(Q)$(MPY_CROSS) -o $@ $(MPY_CROSS_FLAGS) $<
+	$(ECHO) "`wc -c < $@` bytes"
+
+$(BUILD)/main.mpy.o: $(BUILD)/main.mpy
+	$(Q)$(OBJCOPY) -I binary -O elf32-littlearm -B arm \
+		--rename-section .data=.mpy,alloc,load,readonly,data,contents $^ $@
 
 # List of sources for qstr extraction
 SRC_QSTR += $(SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
@@ -242,9 +254,10 @@ $(BUILD)/firmware.elf: $(LDSCRIPT) $(OBJ)
 	$(ECHO) "LINK $@"
 	$(Q)$(LD) $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
 
+# firmware blob with main.mpy - can be flashed to hub
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(ECHO) "BIN creating firmware file"
-	$(Q)$(OBJCOPY) -O binary $< $@
+	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .name -j .user $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
 include $(TOP)/py/mkrules.mk

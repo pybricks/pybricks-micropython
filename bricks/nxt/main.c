@@ -20,6 +20,7 @@
 #include "py/gc.h"
 #include "py/mperrno.h"
 #include "py/persistentcode.h"
+#include "py/stackctrl.h"
 #include "lib/utils/pyexec.h"
 #include "lib/utils/interrupt_char.h"
 
@@ -80,7 +81,7 @@ void nxt_init() {
     udp_init();
     systick_wait_ms(100);
     sound_freq(500, 100, 30);
-    systick_wait_ms(1000);
+    systick_wait_ms(100);
     display_init();
     sp_init();
     display_set_auto_update_period(DEFAULT_UPDATE_PERIOD);
@@ -102,7 +103,10 @@ void nxt_deinit() {
     shutdown(1);
 }
 
-static char *stack_top;
+// defined in linker script
+extern uint32_t _estack;
+extern uint32_t __bss_end__;
+
 #if MICROPY_ENABLE_GC
 static char heap[PYBRICKS_HEAP_KB * 1024];
 #endif
@@ -143,20 +147,21 @@ static const pbsys_user_program_callbacks_t user_program_callbacks = {
     .stdin_event = user_program_stdin_event_func,
 };
 
+// Defined in linker script
+extern uint32_t _pb_user_mpy_size;
+extern uint8_t _pb_user_mpy_data;
+
 int main(int argc, char **argv) {
-    int stack_dummy;
-    stack_top = (char *)&stack_dummy;
 
     pbio_init();
     nxt_init();
 
+    mp_stack_set_top(&_estack);
+    mp_stack_set_limit((char *)&_estack - (char *)&__bss_end__ - 1024);
+
     #if MICROPY_ENABLE_GC
     gc_init(heap, heap + sizeof(heap));
     #endif
-
-    // (re)boot message
-    mp_print_str(&mp_plat_print, "Pybricks\n");
-
     // Get system hardware ready
     pbsys_user_program_prepare(&user_program_callbacks);
     // make sure any pending events are handled before starting MicroPython
@@ -167,11 +172,29 @@ int main(int argc, char **argv) {
     mp_init();
 
     // Run a program
-    // TODO
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        // run user .mpy file
+        mp_reader_t reader;
+        mp_reader_new_mem(&reader, &_pb_user_mpy_data, _pb_user_mpy_size, 0);
+        mp_raw_code_t *raw_code = mp_raw_code_load(&reader);
+        mp_obj_t module_fun = mp_make_function_from_raw_code(raw_code, MP_OBJ_NULL, MP_OBJ_NULL);
+        mp_hal_set_interrupt_char(3);
+        mp_call_function_0(module_fun);
+        mp_hal_set_interrupt_char(-1);
+        mp_handle_pending(true);
+        nlr_pop();
+    } else {
+        // uncaught exception
+        mp_hal_set_interrupt_char(-1); // disable interrupt
+        mp_handle_pending(false); // clear any pending exceptions (and run any callbacks)
+
+        pbsys_user_program_unprepare();
+        mp_obj_print_exception(&mp_plat_print, (mp_obj_t)nlr.ret_val);
+    }
 
     // Uninitialize MicroPython and the system hardware
     mp_deinit();
-    pbsys_user_program_unprepare();
 
     nxt_deinit();
     return 0;
