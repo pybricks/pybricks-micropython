@@ -55,6 +55,7 @@ INC += -I../../lib/contiki-core
 INC += -I../../lib/lego
 INC += -I../../lib/libfixmath/libfixmath
 INC += -Inxt-firmware-drivers
+INC += -Inxt-firmware-drivers/nxt
 INC += -I../../lib/pbio/include
 INC += -I../../lib/pbio/platform/$(PBIO_PLATFORM)
 INC += -I../../lib/pbio
@@ -113,7 +114,6 @@ SRC_C_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
 	flashwrite.c \
 	hs.c \
 	i2c.c \
-	maininit.c \
 	nxt_avr.c \
 	nxt_lcd.c \
 	nxt_motors.c \

@@ -26,7 +26,81 @@
 #include "py/mphal.h"
 
 #include <nxt/display.h>
-#include <nxt/maininit.h>
+
+#define _INIT_H_
+#include "interrupts.h"
+#include "aic.h"
+#include "at91sam7.h"
+#include "uart.h"
+#include "systick.h"
+#include "stdio.h"
+#include "flashprog.h"
+#include "nxt_avr.h"
+#include "twi.h"
+#include "sensors.h"
+
+#include "nxt_avr.h"
+#include "nxt_lcd.h"
+#include "i2c.h"
+#include "nxt_motors.h"
+
+#include "lejos_nxt.h"
+
+#include "display.h"
+#include "sound.h"
+#include "bt.h"
+#include "udp.h"
+#include "flashprog.h"
+#include "hs.h"
+
+#include <string.h>
+
+void shutdown(int update_mode) {
+    nxt_lcd_enable(0);
+    for (;;) {
+        if (update_mode) {
+            nxt_avr_firmware_update_mode();
+        } else {
+            nxt_avr_power_down();
+        }
+    }
+}
+
+void nxt_init() {
+    aic_initialise();
+    sp_init();
+    interrupts_enable();
+    systick_init();
+    sound_init();
+    nxt_avr_init();
+    nxt_motor_init();
+    i2c_init();
+    bt_init();
+    hs_init();
+    udp_init();
+    systick_wait_ms(100);
+    sound_freq(500, 100, 30);
+    systick_wait_ms(1000);
+    display_init();
+    sp_init();
+    display_set_auto_update_period(DEFAULT_UPDATE_PERIOD);
+}
+
+void nxt_deinit() {
+
+    sound_freq(1000, 100, 30);
+    display_reset();
+    nxt_motor_reset_all();
+    udp_reset();
+    bt_reset();
+    bt_disable();
+    hs_disable();
+    i2c_disable_all();
+    sound_reset();
+
+    // Erase firmware on shutdown, for easy development
+    shutdown(1);
+}
 
 static char *stack_top;
 #if MICROPY_ENABLE_GC
