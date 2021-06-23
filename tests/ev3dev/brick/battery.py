@@ -8,4 +8,4 @@ print(ev3.battery.type())  # Alkaline
 try:
     ev3.battery.temperature()
 except OSError as ex:
-    print(ex.args[0])  # 95: EOPNOTSUPP
+    print(ex.errno)  # 95: EOPNOTSUPP

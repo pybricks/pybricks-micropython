@@ -147,7 +147,7 @@ class MailboxHandler(StreamRequestHandler):
                 buf = self.rfile.read(2)
             except OSError as ex:
                 # The client disconnected the connection
-                if ex.args[0] == ECONNRESET:
+                if ex.errno == ECONNRESET:
                     break
                 raise
             (size,) = unpack("<H", buf)
