@@ -1,4 +1,8 @@
-## 4.12.0 - 2021-06-108
+## 4.13.0-alpha.1 - 2021-06-23
+### Changed
+- Updated firmware to v3.1.0a1.
+
+## 4.12.0 - 2021-06-08
 ### Changed
 - Updated firmware to v3.0.0.
 
