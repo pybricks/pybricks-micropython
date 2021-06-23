@@ -66,17 +66,28 @@ tBleStatus aci_gap_init_end(uint16_t* service_handle, uint16_t* dev_name_char_ha
   return 0;
 }
 
-tBleStatus aci_gap_set_non_discoverable(void)
+tBleStatus aci_gap_set_non_discoverable_begin(void)
 {
   struct hci_request rq;
-  uint8_t status;
 
   memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_SET_NON_DISCOVERABLE);
+
+  hci_send_req(&rq);
+
+  return 0;
+}
+
+tBleStatus aci_gap_set_non_discoverable_end(void)
+{
+  struct hci_response rq;
+  uint8_t status;
+
+  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_recv_resp(&rq);
 
   return status;
 }

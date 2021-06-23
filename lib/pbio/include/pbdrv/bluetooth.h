@@ -90,6 +90,13 @@ bool pbdrv_bluetooth_is_ready(void);
 void pbdrv_bluetooth_start_advertising(void);
 
 /**
+ * Stops the advertising process.
+ *
+ * This only needs to be called when no central connects to the hub.
+ */
+void pbdrv_bluetooth_stop_advertising(void);
+
+/**
  * Tests if a central is connected to the Bluetooth chip.
  * @param [in]  connection  The type of connection of interest.
  * @return                  True if the requested connection type is present,

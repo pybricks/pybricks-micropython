@@ -238,6 +238,25 @@ void pbdrv_bluetooth_start_advertising(void) {
     pbio_task_start(task_queue, &task);
 }
 
+static PT_THREAD(set_non_discoverable(struct pt *pt, pbio_task_t *task)) {
+    PT_BEGIN(pt);
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    aci_gap_set_non_discoverable_begin();
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    aci_gap_set_non_discoverable_end();
+
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_stop_advertising(void) {
+    static pbio_task_t task;
+    pbio_task_init(&task, set_non_discoverable, NULL);
+    pbio_task_start(task_queue, &task);
+}
+
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
     if (connection == PBDRV_BLUETOOTH_CONNECTION_LE && conn_handle) {
         return true;

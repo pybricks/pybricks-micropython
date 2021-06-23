@@ -249,6 +249,12 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
         pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
         PROCESS_WAIT_UNTIL(pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE) ||
             pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING));
+
+        if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)) {
+            // if a connection wasn't made, we need to manually stop advertising
+            pbdrv_bluetooth_stop_advertising();
+        }
+
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
 
         PT_INIT(&status_monitor_pt);
@@ -288,11 +294,11 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
         }
 
         reset_all();
+        PROCESS_WAIT_WHILE(pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING));
 
         // reset Bluetooth chip
         pbdrv_bluetooth_power_on(false);
         PROCESS_WAIT_WHILE(pbdrv_bluetooth_is_ready());
-        PROCESS_WAIT_WHILE(pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING));
     }
 
     PROCESS_END();

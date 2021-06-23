@@ -12,6 +12,7 @@
 - Added configuration option to run a simplified version of motor PID control.
   It is activated on the Move Hub to reduce build size. Motor performance on
   the other hubs is unaffected.
+- Experimental support for the Powered Up remote control ([support#186]).
 
 ### Changed
 - Updated MicroPython to v1.16.
@@ -43,6 +44,7 @@ Prerelease changes are documented at [support#48].
 [issue#49]: https://github.com/pybricks/pybricks-micropython/issues/49
 [support#48]: https://github.com/pybricks/support/issues/48
 [support#52]: https://github.com/pybricks/support/issues/52
+[support#186]: https://github.com/pybricks/support/issues/186
 [support#321]: https://github.com/pybricks/support/issues/321
 [support#347]: https://github.com/pybricks/support/issues/347
 [support#352]: https://github.com/pybricks/support/issues/352

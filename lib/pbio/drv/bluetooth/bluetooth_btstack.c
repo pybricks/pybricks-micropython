@@ -259,6 +259,10 @@ void pbdrv_bluetooth_start_advertising(void) {
     gap_advertisements_enable(true);
 }
 
+void pbdrv_bluetooth_stop_advertising(void) {
+    gap_advertisements_enable(false);
+}
+
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
     if (connection == PBDRV_BLUETOOTH_CONNECTION_LE && le_con_handle != HCI_CON_HANDLE_INVALID) {
         return true;

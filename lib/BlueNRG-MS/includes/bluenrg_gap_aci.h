@@ -76,7 +76,9 @@ tBleStatus aci_gap_init_end(uint16_t* service_handle,
   * @note    This command will disable the LL advertising.
   * @retval  tBleStatus Value indicating success or error code.
   */
-tBleStatus aci_gap_set_non_discoverable(void);
+tBleStatus aci_gap_set_non_discoverable_begin(void);
+
+tBleStatus aci_gap_set_non_discoverable_end(void);
 
 /**
  * @brief  Put the device in limited discoverable mode
