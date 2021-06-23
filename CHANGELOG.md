@@ -2,7 +2,7 @@
 
 # Changelog
 
-## [Unreleased]
+## [3.1.0a1] - 2021-06-23
 
 ### Added
 - Added PnP ID characteristic to Device Information Service and to advertising
@@ -50,5 +50,6 @@ Prerelease changes are documented at [support#48].
 [support#352]: https://github.com/pybricks/support/issues/352
 [support#361]: https://github.com/pybricks/support/issues/361
 
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0a1...HEAD
+[3.1.0a1]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0...v3.1.0a1
 [3.0.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0c1...v3.0.0
