@@ -1,10 +1,16 @@
+- :arrow_right: [Try the latest **stable** release][Pybricks Code].
+- :arrow_right: [Try the latest **beta** release][Pybricks Code Beta].
+- :arrow_right: You can now [**sponsor**][sponsors] this project!
+
+
+
 # Pybricks
 
 Pybricks brings Python-like coding to programmable LEGO bricks, and transforms
 remote-controlled smart hubs into truly autonomous robots.
 
-Pybricks builds on [MicroPython][micropython/micropython], which is an efficient
-Python implementation that runs on microcontrollers. Pybricks expands
+Pybricks builds on [MicroPython][micropython/micropython], which is an
+efficient Python implementation that runs on microcontrollers. Pybricks expands
 MicroPython with new powerful drivers for LEGO devices
 including motors and sensors. It also adds the `pybricks` package, which makes
 it easy for end-users to access those devices and all the features of the smart
@@ -21,47 +27,46 @@ Read on!
 
 # Questions and Support
 
-We have a single [issue tracker][issue tracker] for all your questions and bug reports. If you try Pybricks, please let us know what you think.
+We have a single [issue tracker][issue tracker] for all  questions and bug
+reports. If you try Pybricks, please let us know what you think!
 
 # Supported Programmable Bricks & Hubs
 
-## Released
+## Out now
 
-- *LEGO MINDSTORMS EV3*: The community-supported version comes preinstalled
-with the latest [ev3dev][ev3dev-snapshot] image. LEGO Education has also
-  tested and approved the 2.0 release, which is available through
-  [their website][lego-education-ev3-micropython].
+All modern Powered Up hubs can be used with [Pybricks Code][Pybricks Code],
+our online IDE:
+
+- LEGO Technic Hub
+- LEGO BOOST Move Hub
+- LEGO City Hub
+
+We also support MINDSTORMS EV3. The community-supported version comes preinstalled
+with the latest [ev3dev][ev3dev-snapshot] image. It is also available via
+the [LEGO Education website][lego-education-ev3-micropython].
 
 ## In beta
 
-You can try these hubs using [Pybricks Code][Pybricks Code], our online IDE. Just follow the instructions shown on the right hand side.
+Support for the following hubs is under [development][alpha version]:
 
-- LEGO Technic Hub (`TechnicHub`)
-- LEGO BOOST Move Hub (`MoveHub`)
-- LEGO City Hub (`CityHub`)
-
-## In alpha
-
-This is still in progress. An early [alpha version][alpha version] is ready for advanced users:
-
-- LEGO SPIKE Prime Hub (`PrimeHub`)
-- LEGO MINDSTORMS Robot Inventor Hub (`InventorHub`)
-
-## What's next?
-
-Check out our [roadmap][roadmap]!
+- LEGO SPIKE Prime Hub
+- LEGO MINDSTORMS Robot Inventor Hub
 
 # Development
 
-Most Pybricks users will not need to do anything with this source code. [Pybricks Code][Pybricks Code] always gives you the latest stable firmware.
+Most Pybricks users will not need to do anything with this source
+code. [Pybricks Code][Pybricks Code] always gives you the latest stable
+firmware. You can even try the [beta release][Pybricks Code Beta] to check out the latest and greatest features.
 
 But since you're reading this, you might be interested to build the code
-yourself, or start tweaking and hacking. Check out the [contributor's guide](./CONTRIBUTING.md) to get started.
+yourself, or start tweaking and hacking. Check out
+the [contributor's guide](./CONTRIBUTING.md) to get started.
 
 ## Pybricks and Upstream MicroPython
 
-The Pybricks authors are actively contributing to upstream MicroPython instead of forking it into
-a whole new project. In essence, Pybricks just adds a family of `ports`.
+The Pybricks authors are actively contributing to upstream MicroPython instead
+of forking it into a whole new project. In essence, Pybricks just adds a family
+of `ports`.
 
 To streamline development and releases, we do maintain a fork of `micropython`
 [here][pybricks/micropython]. This adds a few minor patches that haven't made
@@ -75,7 +80,8 @@ Summing up:
   Pybricks firmware. This has a continuous master branch.
 - [`pybricks/micropython`][pybricks/micropython]: fork of
   [upstream MicroPython][micropython/micropython] that is included as a
-  submodule in the main `pybricks-micropython` repository. This gets occasionally rebased.
+  submodule in the main `pybricks-micropython` repository.
+  This gets occasionally rebased when a new MicroPython release comes out.
 
 
 ## Cloning
@@ -105,7 +111,8 @@ documentation, and fun projects. Here's an overview of the other repositories:
 
 Like MicroPython, Pybricks can run on just about every device that lets
 you update the firmware. And we could not resist doing just that, so there's
-more than just the bricks above. But getting to a point where it is easy to
+more than just the bricks/hubs mentioned above. But getting to a point where it
+is easy to
 use for everyday users takes quite a bit more work,
 so not all bricks in `/bricks` will be supported officially for now.
 Be sure to join the discussion on our [issue tracker][issue tracker] to
@@ -113,13 +120,14 @@ share your thoughts on these new ports.
 
 ## Differences with other LEGO MicroPython Implementations
 
-We recommend that beginning users start with the official LEGO Python
+Since Pybricks support for MINDSTORMS and SPIKE Prime is still in beta, we
+recommend that beginning users start with the official LEGO Python
 apps. Read more about the differences on the Pybricks [about page][about page].
 
 # How can I help?
 If you've got any of the hubs listed above, the best way to help right now is
-to try out the beta release of [Pybricks Code][Pybricks Code]. You may run into
-issues or bugs. Please let us know by opening an [issue][issue tracker].
+to try out the beta release of [Pybricks Code][Pybricks Code Beta]. You may run
+into issues or bugs. Please let us know by opening an [issue][issue tracker].
 Thanks!
 
 If you enjoy using Pybricks, please
@@ -144,6 +152,7 @@ consider [sponsoring the project][sponsors].
 [lego-education-ev3-micropython]: https://education.lego.com/en-us/support/mindstorms-ev3/python-for-ev3
 
 [Pybricks Code]: https://code.pybricks.com
+[Pybricks Code Beta]: https://beta.pybricks.com
 [about page]: https://pybricks.com/about/
 
 [alpha version]: https://github.com/pybricks/support/issues/167
