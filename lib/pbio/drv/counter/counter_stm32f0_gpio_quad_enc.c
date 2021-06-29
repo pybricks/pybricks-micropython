@@ -96,7 +96,7 @@ static pbio_error_t pbdrv_counter_stm32f0_gpio_quad_enc_get_rate(pbdrv_counter_d
     return PBIO_SUCCESS;
 }
 
-static void pbdrv_motor_tacho_update_count(private_data_t *priv,
+static void pbdrv_counter_stm32f0_gpio_quad_enc_update_count(private_data_t *priv,
     bool int_pin_state, bool dir_pin_state, uint16_t timestamp) {
     if (int_pin_state ^ dir_pin_state) {
         priv->count--;
@@ -128,14 +128,16 @@ void EXTI0_1_IRQHandler(void) {
     if (exti_pr & EXTI_PR_PR1) {
         private_data_t *priv = &private_data[0];
         const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t *pdata = priv->dev->pdata;
-        pbdrv_motor_tacho_update_count(priv, pbdrv_gpio_input(&pdata->gpio_int), !pbdrv_gpio_input(&pdata->gpio_dir), timestamp);
+        pbdrv_counter_stm32f0_gpio_quad_enc_update_count(priv,
+            pbdrv_gpio_input(&pdata->gpio_int), !pbdrv_gpio_input(&pdata->gpio_dir), timestamp);
     }
 
     // Port B
     if (exti_pr & EXTI_PR_PR0) {
         private_data_t *priv = &private_data[1];
         const pbdrv_counter_stm32f0_gpio_quad_enc_platform_data_t *pdata = priv->dev->pdata;
-        pbdrv_motor_tacho_update_count(priv, pbdrv_gpio_input(&pdata->gpio_int), pbdrv_gpio_input(&pdata->gpio_dir), timestamp);
+        pbdrv_counter_stm32f0_gpio_quad_enc_update_count(priv,
+            pbdrv_gpio_input(&pdata->gpio_int), pbdrv_gpio_input(&pdata->gpio_dir), timestamp);
     }
 }
 
