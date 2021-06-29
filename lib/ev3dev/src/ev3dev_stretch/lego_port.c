@@ -52,7 +52,7 @@ static const char* const port_modes[] = {
 };
 
 // Get the port mode
-static pbio_error_t ev3dev_lego_port_get_mode(pbio_port_t port, const char *attribute, ev3dev_lego_port_t *port_mode) {
+static pbio_error_t ev3dev_lego_port_get_mode(pbio_port_id_t port, const char *attribute, ev3dev_lego_port_t *port_mode) {
     // Read lego-port number
     int n_lport;
     pbio_error_t err;
@@ -91,7 +91,7 @@ static pbio_error_t ev3dev_lego_port_get_mode(pbio_port_t port, const char *attr
 }
 
 // Write the port mode without questions
-static pbio_error_t ev3dev_lego_port_set_mode(pbio_port_t port, ev3dev_lego_port_t mode) {
+static pbio_error_t ev3dev_lego_port_set_mode(pbio_port_id_t port, ev3dev_lego_port_t mode) {
 
     // Read lego-port number
     int n_lport;
@@ -121,7 +121,7 @@ static pbio_error_t ev3dev_lego_port_set_mode(pbio_port_t port, ev3dev_lego_port
 }
 
 // Set compatible port configuration for given device
-pbio_error_t ev3dev_lego_port_configure(pbio_port_t port, pbio_iodev_type_id_t id) {
+pbio_error_t ev3dev_lego_port_configure(pbio_port_id_t port, pbio_iodev_type_id_t id) {
     pbio_error_t err;
 
     // Get the current port mode and status

@@ -30,7 +30,7 @@ struct _lego_sensor_t {
     uint8_t bin_data[PBIO_IODEV_MAX_DATA_SIZE]  __attribute__((aligned(32)));
 };
 // Initialize an ev3dev sensor by opening the relevant sysfs attributes
-static pbio_error_t ev3_sensor_init(lego_sensor_t *sensor, pbio_port_t port) {
+static pbio_error_t ev3_sensor_init(lego_sensor_t *sensor, pbio_port_id_t port) {
     pbio_error_t err;
 
     err = sysfs_get_number(port, "/sys/class/lego-sensor", &sensor->n_sensor);
@@ -161,12 +161,12 @@ static pbio_error_t ev3_sensor_assert_id(lego_sensor_t *sensor, pbio_iodev_type_
 struct _lego_sensor_t sensors[4];
 
 // Get an ev3dev sensor
-pbio_error_t lego_sensor_get(lego_sensor_t **sensor, pbio_port_t port, pbio_iodev_type_id_t valid_id) {
-    if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
+pbio_error_t lego_sensor_get(lego_sensor_t **sensor, pbio_port_id_t port, pbio_iodev_type_id_t valid_id) {
+    if (port < PBIO_PORT_ID_1 || port > PBIO_PORT_ID_4) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    *sensor = &sensors[port - PBIO_PORT_1];
+    *sensor = &sensors[port - PBIO_PORT_ID_1];
 
     pbio_error_t err;
 

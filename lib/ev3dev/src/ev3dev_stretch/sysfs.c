@@ -15,7 +15,7 @@
 #define MAX_READ_LENGTH "60"
 
 // Get the ev3dev sensor number for a given port
-pbio_error_t sysfs_get_number(pbio_port_t port, const char *rdir, int *sysfs_number) {
+pbio_error_t sysfs_get_number(pbio_port_id_t port, const char *rdir, int *sysfs_number) {
     // Open lego-sensor directory in sysfs
     DIR *d_sensor;
     struct dirent *entry;
@@ -44,7 +44,7 @@ pbio_error_t sysfs_get_number(pbio_port_t port, const char *rdir, int *sysfs_num
             if (fscanf(f_address, "ev3-ports:%*[a-z]%c", &port_char) < 1) {
                 return PBIO_ERROR_IO;
             }
-            pbio_port_t port_found = port_char;
+            pbio_port_id_t port_found = port_char;
 
             if (fclose(f_address) != 0) {
                 return PBIO_ERROR_IO;

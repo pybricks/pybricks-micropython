@@ -16,7 +16,7 @@ typedef struct _pbio_tacho_t pbio_tacho_t;
 
 #if PBIO_CONFIG_TACHO
 
-pbio_error_t pbio_tacho_get(pbio_port_t port, pbio_tacho_t **tacho, pbio_direction_t direction, fix16_t gear_ratio);
+pbio_error_t pbio_tacho_get(pbio_port_id_t port, pbio_tacho_t **tacho, pbio_direction_t direction, fix16_t gear_ratio);
 
 pbio_error_t pbio_tacho_get_count(pbio_tacho_t *tacho, int32_t *count);
 pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, int32_t *angle);
@@ -26,7 +26,7 @@ pbio_error_t pbio_tacho_get_angular_rate(pbio_tacho_t *tacho, int32_t *angular_r
 
 #else
 
-static inline pbio_error_t pbio_tacho_get(pbio_port_t port, pbio_tacho_t **tacho, pbio_direction_t direction, fix16_t gear_ratio) {
+static inline pbio_error_t pbio_tacho_get(pbio_port_id_t port, pbio_tacho_t **tacho, pbio_direction_t direction, fix16_t gear_ratio) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

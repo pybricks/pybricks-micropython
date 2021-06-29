@@ -36,7 +36,7 @@ STATIC mp_obj_t iodevices_I2CDevice_make_new(const mp_obj_type_t *otype, size_t 
     self->base.type = (mp_obj_type_t *)otype;
 
     // Get port number
-    pbio_port_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
 
     // Get selected I2C Address
     mp_int_t address = mp_obj_get_int(address_in);
@@ -49,7 +49,7 @@ STATIC mp_obj_t iodevices_I2CDevice_make_new(const mp_obj_type_t *otype, size_t 
     self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_CUSTOM_I2C);
 
     // Get the smbus, which on ev3dev is zero based sensor port number + 3.
-    pb_assert(pb_smbus_get(&self->bus, port - PBIO_PORT_1 + 3));
+    pb_assert(pb_smbus_get(&self->bus, port - PBIO_PORT_ID_1 + 3));
 
     return MP_OBJ_FROM_PTR(self);
 }

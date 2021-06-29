@@ -109,7 +109,7 @@ static const pbdrv_motor_data_t
     },
 };
 
-pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
+pbio_error_t pbdrv_motor_coast(pbio_port_id_t port) {
     const pbdrv_motor_data_t *data;
 
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
@@ -147,7 +147,7 @@ static void pbdrv_motor_run_rev(const pbdrv_motor_data_t *data, int16_t duty_cyc
     pbdrv_gpio_alt(&data->pin2_gpio, data->pin2_alt);
 }
 
-pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
+pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle) {
     const pbdrv_motor_data_t *data;
 
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
@@ -171,7 +171,7 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
+pbio_error_t pbdrv_motor_get_id(pbio_port_id_t port, pbio_iodev_type_id_t *id) {
 
     pbio_iodev_t *iodev;
     pbio_error_t err;
@@ -190,7 +190,7 @@ pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_motor_setup(pbio_port_t port, bool is_servo) {
+pbio_error_t pbdrv_motor_setup(pbio_port_id_t port, bool is_servo) {
     return PBIO_SUCCESS;
 }
 

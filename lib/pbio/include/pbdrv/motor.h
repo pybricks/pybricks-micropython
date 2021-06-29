@@ -32,7 +32,7 @@
  *                      ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                      ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbdrv_motor_coast(pbio_port_t port);
+pbio_error_t pbdrv_motor_coast(pbio_port_id_t port);
 
 /**
  * Sets the PWM duty cycle for the motor. Setting a duty cycle of 0 will "brake" the motor.
@@ -44,7 +44,7 @@ pbio_error_t pbdrv_motor_coast(pbio_port_t port);
  *                          ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                          ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle);
+pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle);
 
 /**
  * Gets the device id of the motor
@@ -55,7 +55,7 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle);
  *                      ::PBIO_ERROR_NO_DEV if port is valid but motor is not connected
  *                      ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id);
+pbio_error_t pbdrv_motor_get_id(pbio_port_id_t port, pbio_iodev_type_id_t *id);
 
 /**
  * Sets up the motor port
@@ -67,21 +67,21 @@ pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id);
  *                       ::PBIO_ERROR_EAGAIN if this should be called again later
  *                       ::PBIO_ERROR_IO if there was an I/O error
  */
-pbio_error_t pbdrv_motor_setup(pbio_port_t port, bool is_servo);
+pbio_error_t pbdrv_motor_setup(pbio_port_id_t port, bool is_servo);
 
 #else
 
-static inline pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
+static inline pbio_error_t pbdrv_motor_coast(pbio_port_id_t port) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
+static inline pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
+static inline pbio_error_t pbdrv_motor_get_id(pbio_port_id_t port, pbio_iodev_type_id_t *id) {
     *id = 0;
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline pbio_error_t pbdrv_motor_setup(pbio_port_t port, bool is_servo) {
+static inline pbio_error_t pbdrv_motor_setup(pbio_port_id_t port, bool is_servo) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 

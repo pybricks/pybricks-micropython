@@ -12,7 +12,7 @@
 
 typedef struct _pb_device_t pb_device_t;
 
-pb_device_t *pb_device_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id);
+pb_device_t *pb_device_get_device(pbio_port_id_t port, pbio_iodev_type_id_t valid_id);
 
 void pb_device_get_values(pb_device_t *pbdev, uint8_t mode, int32_t *values);
 

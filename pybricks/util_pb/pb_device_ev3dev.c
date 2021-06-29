@@ -27,7 +27,7 @@ struct _pb_device_t {
     /**
      * The port the device is attached to.
      */
-    pbio_port_t port;
+    pbio_port_id_t port;
     /**
      * The current active mode.
      */
@@ -49,12 +49,12 @@ struct _pb_device_t {
 pb_device_t iodevices[4];
 
 // Get an ev3dev sensor
-static pbio_error_t get_device(pb_device_t **pbdev, pbio_iodev_type_id_t valid_id, pbio_port_t port) {
-    if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
+static pbio_error_t get_device(pb_device_t **pbdev, pbio_iodev_type_id_t valid_id, pbio_port_id_t port) {
+    if (port < PBIO_PORT_ID_1 || port > PBIO_PORT_ID_4) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    pb_device_t *_pbdev = &iodevices[port - PBIO_PORT_1];
+    pb_device_t *_pbdev = &iodevices[port - PBIO_PORT_ID_1];
 
     _pbdev->port = port;
 
@@ -184,7 +184,7 @@ static pbio_error_t get_values(pb_device_t *pbdev, uint8_t mode, int32_t *values
     return PBIO_SUCCESS;
 }
 
-pb_device_t *pb_device_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id) {
+pb_device_t *pb_device_get_device(pbio_port_id_t port, pbio_iodev_type_id_t valid_id) {
     pb_device_t *pbdev = NULL;
     pbio_error_t err;
 

@@ -9,7 +9,7 @@
 
 typedef struct _pb_serial_t pb_serial_t;
 
-pbio_error_t pb_serial_get(pb_serial_t **_ser, pbio_port_t port, int baudrate);
+pbio_error_t pb_serial_get(pb_serial_t **_ser, pbio_port_id_t port, int baudrate);
 
 pbio_error_t pb_serial_write(pb_serial_t *ser, const void *buf, size_t count);
 

@@ -28,7 +28,7 @@
 #define PBIO_SERVO_LOG_COLS (9)
 
 typedef struct _pbio_servo_t {
-    pbio_port_t port;
+    pbio_port_id_t port;
     bool connected;
     bool claimed;
     pbio_dcmotor_t *dcmotor;

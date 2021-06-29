@@ -67,12 +67,12 @@
 #define PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE (1)
 #endif
 
-// the pbio_port_t enum value of the first motor port
+// the pbio_port_id_t enum value of the first motor port
 #ifndef PBDRV_CONFIG_FIRST_MOTOR_PORT
 #error PBDRV_CONFIG_NUM_MOTOR_CONTROLLER requires that PBDRV_CONFIG_FIRST_MOTOR_PORT is defined
 #endif
 
-// the pbio_port_t enum value of the last motor port
+// the pbio_port_id_t enum value of the last motor port
 #ifndef PBDRV_CONFIG_LAST_MOTOR_PORT
 #error PBDRV_CONFIG_NUM_MOTOR_CONTROLLER requires that PBDRV_CONFIG_LAST_MOTOR_PORT is defined
 #endif

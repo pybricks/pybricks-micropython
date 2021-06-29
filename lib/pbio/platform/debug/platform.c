@@ -244,8 +244,8 @@ void USART2_IRQHandler(void) {
 
 // HACK: we don't have a generic ioport interface yet so defining this function
 // in platform.c
-pbio_error_t pbdrv_ioport_get_iodev(pbio_port_t port, pbio_iodev_t **iodev) {
-    if (port != PBIO_PORT_1) {
+pbio_error_t pbdrv_ioport_get_iodev(pbio_port_id_t port, pbio_iodev_t **iodev) {
+    if (port != PBIO_PORT_ID_1) {
         return PBIO_ERROR_INVALID_PORT;
     }
 

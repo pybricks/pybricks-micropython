@@ -138,18 +138,18 @@ static pbio_error_t pb_serial_config(pb_serial_t *ser, int baudrate) {
 }
 
 
-pbio_error_t pb_serial_get(pb_serial_t **_ser, pbio_port_t port, int baudrate) {
+pbio_error_t pb_serial_get(pb_serial_t **_ser, pbio_port_id_t port, int baudrate) {
 
-    if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
+    if (port < PBIO_PORT_ID_1 || port > PBIO_PORT_ID_4) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
     // Get device pointer
     pbio_error_t err;
-    pb_serial_t *ser = &pb_serials[port - PBIO_PORT_1];
+    pb_serial_t *ser = &pb_serials[port - PBIO_PORT_ID_1];
 
     // Open pb_serial port
-    err = pb_serial_open(ser, TTY_PATH[port - PBIO_PORT_1]);
+    err = pb_serial_open(ser, TTY_PATH[port - PBIO_PORT_ID_1]);
     if (err != PBIO_SUCCESS) {
         return err;
     }

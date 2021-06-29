@@ -16,7 +16,7 @@
 // pybricks.ev3devices.GyroSensor class object
 typedef struct _ev3devices_GyroSensor_obj_t {
     mp_obj_base_t base;
-    pbio_port_t port; // FIXME: Shouldn't be here
+    pbio_port_id_t port; // FIXME: Shouldn't be here
     pb_device_t *pbdev;
     pbio_direction_t direction;
     mp_int_t offset;

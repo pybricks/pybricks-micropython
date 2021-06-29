@@ -17,7 +17,7 @@
 
 typedef struct {
     pbdrv_counter_dev_t *dev;
-    pbio_port_t port;
+    pbio_port_id_t port;
 } private_data_t;
 
 static private_data_t private_data[PBDRV_CONFIG_COUNTER_NXT_NUM_DEV];

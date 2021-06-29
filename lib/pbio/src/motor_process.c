@@ -20,7 +20,7 @@ pbio_error_t pbio_motor_process_get_drivebase(pbio_drivebase_t **db) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_motor_process_get_servo(pbio_port_t port, pbio_servo_t **srv) {
+pbio_error_t pbio_motor_process_get_servo(pbio_port_id_t port, pbio_servo_t **srv) {
 
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
         return PBIO_ERROR_INVALID_PORT;

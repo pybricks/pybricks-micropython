@@ -21,7 +21,7 @@ STATIC mp_obj_t common_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args
         PB_ARG_DEFAULT_OBJ(positive_direction, pb_Direction_CLOCKWISE_obj));
 
     // Configure the motor with the selected arguments at pbio level
-    pbio_port_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
+    pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pbio_direction_t direction = pb_type_enum_get_value(positive_direction_in, &pb_enum_type_Direction);
 
     // Get and initialize DC Motor

@@ -49,7 +49,7 @@ typedef enum {
 
 typedef struct _lego_sensor_t lego_sensor_t;
 
-pbio_error_t lego_sensor_get(lego_sensor_t **sensor, pbio_port_t port, pbio_iodev_type_id_t valid_id);
+pbio_error_t lego_sensor_get(lego_sensor_t **sensor, pbio_port_id_t port, pbio_iodev_type_id_t valid_id);
 
 pbio_error_t lego_sensor_get_info(lego_sensor_t *sensor, uint8_t *data_len, lego_sensor_data_type_t *data_type);
 

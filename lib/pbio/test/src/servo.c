@@ -41,13 +41,13 @@ static struct {
     h_bridge_output_t output;
 } test_motor_driver;
 
-pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
+pbio_error_t pbdrv_motor_coast(pbio_port_id_t port) {
     test_motor_driver.output = H_BRIDGE_OUTPUT_LL;
     test_motor_driver.duty_cycle = 0;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
+pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle) {
     if (duty_cycle > 0) {
         test_motor_driver.output = H_BRIDGE_OUTPUT_LH;
     } else if (duty_cycle < 0) {
@@ -59,13 +59,13 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
+pbio_error_t pbdrv_motor_get_id(pbio_port_id_t port, pbio_iodev_type_id_t *id) {
     const char *motor_id = getenv("PBIO_TEST_MOTOR_TYPE");
     *id = motor_id == NULL ? PBIO_IODEV_TYPE_ID_INTERACTIVE_MOTOR : atoi(motor_id);
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_motor_setup(pbio_port_t port, bool is_servo) {
+pbio_error_t pbdrv_motor_setup(pbio_port_id_t port, bool is_servo) {
     return PBIO_SUCCESS;
 }
 
@@ -88,7 +88,7 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
     process_start(&pbio_motor_process, NULL);
     tt_want(process_is_running(&pbio_motor_process));
 
-    tt_uint_op(pbio_motor_process_get_servo(PBIO_PORT_A, &servo), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_motor_process_get_servo(PBIO_PORT_ID_A, &servo), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_servo_setup(servo, PBIO_DIRECTION_CLOCKWISE, F16C(1, 0)), ==, PBIO_SUCCESS);
     pbio_servo_set_connected(servo, true);
 

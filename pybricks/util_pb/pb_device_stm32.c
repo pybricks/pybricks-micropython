@@ -75,7 +75,7 @@ static void set_mode(pbio_iodev_t *iodev, uint8_t new_mode) {
     }
 }
 
-pb_device_t *pb_device_get_device(pbio_port_t port, pbio_iodev_type_id_t valid_id) {
+pb_device_t *pb_device_get_device(pbio_port_id_t port, pbio_iodev_type_id_t valid_id) {
 
     // Get the iodevice
     pbio_iodev_t *iodev;

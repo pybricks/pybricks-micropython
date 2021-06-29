@@ -32,7 +32,7 @@ typedef struct _motor_t {
 
 static motor_t motors[4];
 
-static pbio_error_t ev3dev_motor_init(motor_t *mtr, pbio_port_t port) {
+static pbio_error_t ev3dev_motor_init(motor_t *mtr, pbio_port_id_t port) {
 
     pbio_error_t err;
 
@@ -107,7 +107,7 @@ static pbio_error_t ev3dev_motor_init(motor_t *mtr, pbio_port_t port) {
     return sysfs_write_str(mtr->f_command, "stop");
 }
 
-static pbio_error_t ev3dev_motor_get(motor_t **motor, pbio_port_t port) {
+static pbio_error_t ev3dev_motor_get(motor_t **motor, pbio_port_id_t port) {
 
     // Verify port
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
@@ -132,7 +132,7 @@ static pbio_error_t ev3dev_motor_connect_status(motor_t *mtr, pbio_error_t err) 
     return err;
 }
 
-pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
+pbio_error_t pbdrv_motor_coast(pbio_port_id_t port) {
     // Get the motor and initialize if needed
     pbio_error_t err;
     motor_t *mtr;
@@ -150,7 +150,7 @@ pbio_error_t pbdrv_motor_coast(pbio_port_t port) {
     return ev3dev_motor_connect_status(mtr, err);
 }
 
-pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
+pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_id_t port, int16_t duty_cycle) {
     // Get the motor and initialize if needed
     pbio_error_t err;
     motor_t *mtr;
@@ -171,7 +171,7 @@ pbio_error_t pbdrv_motor_set_duty_cycle(pbio_port_t port, int16_t duty_cycle) {
     return ev3dev_motor_connect_status(mtr, err);
 }
 
-pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
+pbio_error_t pbdrv_motor_get_id(pbio_port_id_t port, pbio_iodev_type_id_t *id) {
     pbio_error_t err;
     motor_t *mtr;
     err = ev3dev_motor_get(&mtr, port);
@@ -182,7 +182,7 @@ pbio_error_t pbdrv_motor_get_id(pbio_port_t port, pbio_iodev_type_id_t *id) {
     return ev3dev_motor_connect_status(mtr, PBIO_SUCCESS);
 }
 
-pbio_error_t pbdrv_motor_setup(pbio_port_t port, bool is_servo) {
+pbio_error_t pbdrv_motor_setup(pbio_port_id_t port, bool is_servo) {
 
     // Verify port
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {

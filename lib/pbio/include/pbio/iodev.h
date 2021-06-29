@@ -331,7 +331,7 @@ struct _pbio_iodev_t {
     /**
      * The port the device is attached to.
      */
-    pbio_port_t port;
+    pbio_port_id_t port;
     /**
      * The current active mode.
      */

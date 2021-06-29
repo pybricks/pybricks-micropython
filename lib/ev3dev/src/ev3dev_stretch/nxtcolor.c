@@ -29,25 +29,25 @@ typedef struct {
 } nxtcolor_pininfo_t;
 
 static const nxtcolor_pininfo_t pininfo[4] = {
-    [PBIO_PORT_1 - PBIO_PORT_1] = {
+    [PBIO_PORT_ID_1 - PBIO_PORT_ID_1] = {
         .digi0 = 2,
         .digi1 = 15,
         .adc_val = 5,
         .adc_con = 6,
     },
-    [PBIO_PORT_2 - PBIO_PORT_1] = {
+    [PBIO_PORT_ID_2 - PBIO_PORT_ID_1] = {
         .digi0 = 14,
         .digi1 = 13,
         .adc_val = 7,
         .adc_con = 8,
     },
-    [PBIO_PORT_3 - PBIO_PORT_1] = {
+    [PBIO_PORT_ID_3 - PBIO_PORT_ID_1] = {
         .digi0 = 12,
         .digi1 = 30,
         .adc_val = 9,
         .adc_con = 10,
     },
-    [PBIO_PORT_4 - PBIO_PORT_1] = {
+    [PBIO_PORT_ID_4 - PBIO_PORT_ID_1] = {
         .digi0 = 1,
         .digi1 = 31,
         .adc_val = 11,
@@ -275,12 +275,12 @@ static pbio_error_t nxtcolor_send_byte(nxtcolor_t *nxtcolor, uint8_t msg)
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t nxtcolor_init_fs(nxtcolor_t *nxtcolor, pbio_port_t port) {
+static pbio_error_t nxtcolor_init_fs(nxtcolor_t *nxtcolor, pbio_port_id_t port) {
 
     pbio_error_t err;
 
     // Get the pin info for this port
-    nxtcolor->pins = &pininfo[port-PBIO_PORT_1];
+    nxtcolor->pins = &pininfo[port-PBIO_PORT_ID_1];
 
     // Open the sysfs files for this sensor
     err = sysfs_open(&nxtcolor->f_digi0_val, "/sys/class/gpio/gpio%d/%s", nxtcolor->pins->digi0, "value", "w");
@@ -333,7 +333,7 @@ static pbio_error_t nxtcolor_init_fs(nxtcolor_t *nxtcolor, pbio_port_t port) {
     return PBIO_SUCCESS;
 }
 
-static pbio_error_t nxtcolor_init(nxtcolor_t *nxtcolor, pbio_port_t port) {
+static pbio_error_t nxtcolor_init(nxtcolor_t *nxtcolor, pbio_port_id_t port) {
     pbio_error_t err;
 
     // Init the file system
@@ -441,15 +441,15 @@ pbio_error_t nxtcolor_set_light(nxtcolor_t *nxtcolor, nxtcolor_color_state color
     return PBIO_SUCCESS;
 }
 
-pbio_error_t nxtcolor_get_values_at_mode(pbio_port_t port, uint8_t mode, int32_t *values) {
+pbio_error_t nxtcolor_get_values_at_mode(pbio_port_id_t port, uint8_t mode, int32_t *values) {
 
     pbio_error_t err;
 
-    if (port < PBIO_PORT_1 || port > PBIO_PORT_4) {
+    if (port < PBIO_PORT_ID_1 || port > PBIO_PORT_ID_4) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    nxtcolor_t *nxtcolor = &nxtcolorsensors[port-PBIO_PORT_1];
+    nxtcolor_t *nxtcolor = &nxtcolorsensors[port-PBIO_PORT_ID_1];
 
     // We don't have a formal "get" function since the higher level code
     // does not know about the color sensor being a special case. So instead

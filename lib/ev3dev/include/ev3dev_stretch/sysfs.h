@@ -9,7 +9,7 @@
 #include <pbio/error.h>
 #include <pbio/iodev.h>
 
-pbio_error_t sysfs_get_number(pbio_port_t port, const char *rdir, int *sysfs_number);
+pbio_error_t sysfs_get_number(pbio_port_id_t port, const char *rdir, int *sysfs_number);
 
 pbio_error_t sysfs_open(FILE **file, const char *pathpat, int n, const char *attribute, const char *rw);
 

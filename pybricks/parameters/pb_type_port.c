@@ -17,7 +17,7 @@
 const pb_obj_enum_member_t pb_Port_A_obj = {
     {&pb_enum_type_Port},
     .name = MP_QSTR_A,
-    .value = PBIO_PORT_A
+    .value = PBIO_PORT_ID_A
 };
 #endif
 
@@ -25,7 +25,7 @@ const pb_obj_enum_member_t pb_Port_A_obj = {
 const pb_obj_enum_member_t pb_Port_B_obj = {
     {&pb_enum_type_Port},
     .name = MP_QSTR_B,
-    .value = PBIO_PORT_B
+    .value = PBIO_PORT_ID_B
 };
 #endif
 
@@ -33,7 +33,7 @@ const pb_obj_enum_member_t pb_Port_B_obj = {
 const pb_obj_enum_member_t pb_Port_C_obj = {
     {&pb_enum_type_Port},
     .name = MP_QSTR_C,
-    .value = PBIO_PORT_C
+    .value = PBIO_PORT_ID_C
 };
 #endif
 
@@ -41,7 +41,7 @@ const pb_obj_enum_member_t pb_Port_C_obj = {
 const pb_obj_enum_member_t pb_Port_D_obj = {
     {&pb_enum_type_Port},
     .name = MP_QSTR_D,
-    .value = PBIO_PORT_D
+    .value = PBIO_PORT_ID_D
 };
 #endif
 
@@ -49,7 +49,7 @@ const pb_obj_enum_member_t pb_Port_D_obj = {
 const pb_obj_enum_member_t pb_Port_E_obj = {
     {&pb_enum_type_Port},
     .name = MP_QSTR_E,
-    .value = PBIO_PORT_E
+    .value = PBIO_PORT_ID_E
 };
 #endif
 
@@ -57,7 +57,7 @@ const pb_obj_enum_member_t pb_Port_E_obj = {
 const pb_obj_enum_member_t pb_Port_F_obj = {
     {&pb_enum_type_Port},
     .name = MP_QSTR_F,
-    .value = PBIO_PORT_F
+    .value = PBIO_PORT_ID_F
 };
 #endif
 
@@ -65,7 +65,7 @@ const pb_obj_enum_member_t pb_Port_F_obj = {
 const pb_obj_enum_member_t pb_Port_1_obj = {
     {&pb_enum_type_Port},
     .name = MP_QSTR_S1,
-    .value = PBIO_PORT_1
+    .value = PBIO_PORT_ID_1
 };
 #endif
 
@@ -73,7 +73,7 @@ const pb_obj_enum_member_t pb_Port_1_obj = {
 const pb_obj_enum_member_t pb_Port_2_obj = {
     {&pb_enum_type_Port},
     .name = MP_QSTR_S2,
-    .value = PBIO_PORT_2
+    .value = PBIO_PORT_ID_2
 };
 #endif
 
@@ -81,7 +81,7 @@ const pb_obj_enum_member_t pb_Port_2_obj = {
 const pb_obj_enum_member_t pb_Port_3_obj = {
     {&pb_enum_type_Port},
     .name = MP_QSTR_S3,
-    .value = PBIO_PORT_3
+    .value = PBIO_PORT_ID_3
 };
 #endif
 
@@ -89,7 +89,7 @@ const pb_obj_enum_member_t pb_Port_3_obj = {
 const pb_obj_enum_member_t pb_Port_4_obj = {
     {&pb_enum_type_Port},
     .name = MP_QSTR_S4,
-    .value = PBIO_PORT_4
+    .value = PBIO_PORT_ID_4
 };
 #endif
 
