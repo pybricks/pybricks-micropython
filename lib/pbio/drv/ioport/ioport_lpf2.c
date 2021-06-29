@@ -135,6 +135,10 @@ PROCESS(pbdrv_ioport_lpf2_process, "I/O port");
 
 static ioport_dev_t ioport_devs[PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS];
 
+void pbdrv_ioport_lpf2_init(void) {
+    process_start(&pbdrv_ioport_lpf2_process, NULL);
+}
+
 static void ioport_enable_uart(ioport_dev_t *ioport) {
     const pbdrv_ioport_lpf2_port_platform_data_t *pdata = ioport->pdata;
 

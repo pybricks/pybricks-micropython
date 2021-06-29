@@ -15,11 +15,6 @@
 PROCESS_NAME(pbdrv_adc_process);
 #endif
 
-
-#if PBDRV_CONFIG_IOPORT_LPF2
-PROCESS_NAME(pbdrv_ioport_lpf2_process);
-#endif
-
 #if PBDRV_CONFIG_UART
 PROCESS_NAME(pbdrv_uart_process);
 #endif

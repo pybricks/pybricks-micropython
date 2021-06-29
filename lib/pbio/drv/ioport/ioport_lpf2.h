@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #ifndef _INTERNAL_PBDRV_IOPORT_LPF2_H_
 #define _INTERNAL_PBDRV_IOPORT_LPF2_H_
 
-#include <stdint.h>
-
 #include <pbdrv/config.h>
+
+#if PBDRV_CONFIG_IOPORT_LPF2
+
+#include <stdint.h>
 #include <pbdrv/gpio.h>
 
 // GPIOs associated with ID1 and ID2 pins
@@ -39,5 +41,10 @@ typedef struct {
 
 // This is defined in platform/*/platform.c
 extern const pbdrv_ioport_lpf2_platform_data_t pbdrv_ioport_lpf2_platform_data;
+
+void pbdrv_ioport_lpf2_init(void);
+#else // PBDRV_CONFIG_IOPORT_LPF2
+#define pbdrv_ioport_lpf2_init()
+#endif // PBDRV_CONFIG_IOPORT_LPF2
 
 #endif // _INTERNAL_PBDRV_IOPORT_LPF2_H_

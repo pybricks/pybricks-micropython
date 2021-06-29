@@ -7,6 +7,7 @@
 #include "battery/battery.h"
 #include "bluetooth/bluetooth.h"
 #include "counter/counter.h"
+#include "ioport/ioport.h"
 #include "led/led_array.h"
 #include "led/led.h"
 #include "pwm/pwm.h"
@@ -24,8 +25,9 @@ void pbdrv_init(void) {
     pbdrv_battery_init();
     pbdrv_bluetooth_init();
     pbdrv_counter_init();
-    pbdrv_led_init();
+    pbdrv_ioport_init();
     pbdrv_led_array_init();
+    pbdrv_led_init();
     pbdrv_pwm_init();
     pbdrv_reset_init();
     pbdrv_sound_init();
