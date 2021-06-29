@@ -3,9 +3,6 @@
 
 // Manages power off and reset for STM32 MCUs.
 
-// Individual platforms must define pbdrv_reset_stm32_platform_power_off() to
-// physically turn off power.
-
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_RESET_STM32
@@ -67,10 +64,14 @@ void pbdrv_reset(pbdrv_reset_action_t action) {
     // need to loop because power will stay on as long as button is pressed
     for (;;) {
         // defined in platform/*/platform.c
-        extern void pbdrv_reset_stm32_platform_power_off(void);
-        pbdrv_reset_stm32_platform_power_off();
+        pbdrv_reset_power_off();
         pbdrv_watchdog_update();
     }
+}
+
+// NB: Individual platforms must override pbdrv_reset_power_off() function in
+// platform.c to physically turn off power.
+__WEAK void pbdrv_reset_power_off(void) {
 }
 
 pbdrv_reset_reason_t pbdrv_reset_get_reason(void) {

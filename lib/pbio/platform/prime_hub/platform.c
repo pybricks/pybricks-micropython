@@ -372,7 +372,7 @@ const pbdrv_pwm_tlc5955_stm32_platform_data_t
 
 // Reset
 
-void pbdrv_reset_stm32_platform_power_off(void) {
+void pbdrv_reset_power_off(void) {
     // setting PA13 low cuts the power
     GPIOA->BSRR = GPIO_BSRR_BR_13;
 }

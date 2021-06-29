@@ -187,7 +187,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
 
 // RESET
 
-void pbdrv_reset_stm32_platform_power_off(void) {
+void pbdrv_reset_power_off(void) {
     // setting PB11 low cuts the power
     GPIOB->BRR = GPIO_BRR_BR_11;
 }

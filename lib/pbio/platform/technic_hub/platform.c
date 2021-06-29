@@ -369,7 +369,7 @@ void TIM2_IRQHandler(void) {
 
 // Reset
 
-void pbdrv_reset_stm32_platform_power_off(void) {
+void pbdrv_reset_power_off(void) {
     // setting PC12 low cuts the power
     HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
 }

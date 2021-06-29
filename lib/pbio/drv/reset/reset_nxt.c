@@ -30,6 +30,10 @@ void pbdrv_reset(pbdrv_reset_action_t action) {
     }
 }
 
+void pbdrv_reset_power_off(void) {
+    nxt_avr_power_down();
+}
+
 pbdrv_reset_reason_t pbdrv_reset_get_reason(void) {
     // TODO: see if MCU has this capability
     return PBDRV_RESET_REASON_NONE;

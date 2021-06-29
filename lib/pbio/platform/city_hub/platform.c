@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2019-2020 The Pybricks Authors
+// Copyright (c) 2019-2021 The Pybricks Authors
 
 #include <string.h>
 
@@ -277,7 +277,7 @@ const pbdrv_pwm_stm32_tim_platform_data_t
 
 // RESET
 
-void pbdrv_reset_stm32_platform_power_off(void) {
+void pbdrv_reset_power_off(void) {
     // setting PB11 low cuts the power
     GPIOB->BRR = GPIO_BRR_BR_11;
 }

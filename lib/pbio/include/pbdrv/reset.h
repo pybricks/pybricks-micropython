@@ -36,6 +36,16 @@ typedef enum {
 void pbdrv_reset(pbdrv_reset_action_t action) __attribute__((noreturn));
 
 /**
+ * Switches the power off.
+ *
+ * The device may not actually power down if the button is pressed or USB is
+ * plugged in.
+ *
+ * Unlike pbdrv_reset(PBDRV_RESET_ACTION_POWER_OFF), this function will return.
+ */
+void pbdrv_reset_power_off(void);
+
+/**
  * Gets the reason for the most recent reset.
  * @return The reason.
  */
