@@ -139,6 +139,10 @@ void pbdrv_ioport_lpf2_init(void) {
     process_start(&pbdrv_ioport_lpf2_process, NULL);
 }
 
+void pbdrv_ioport_lpf2_shutdown(void) {
+    process_exit(&pbdrv_ioport_lpf2_process);
+}
+
 static void ioport_enable_uart(ioport_dev_t *ioport) {
     const pbdrv_ioport_lpf2_port_platform_data_t *pdata = ioport->pdata;
 

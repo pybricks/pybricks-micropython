@@ -43,8 +43,11 @@ typedef struct {
 extern const pbdrv_ioport_lpf2_platform_data_t pbdrv_ioport_lpf2_platform_data;
 
 void pbdrv_ioport_lpf2_init(void);
+void pbdrv_ioport_lpf2_shutdown(void);
+
 #else // PBDRV_CONFIG_IOPORT_LPF2
 #define pbdrv_ioport_lpf2_init()
+#define pbdrv_ioport_lpf2_shutdown()
 #endif // PBDRV_CONFIG_IOPORT_LPF2
 
 #endif // _INTERNAL_PBDRV_IOPORT_LPF2_H_

@@ -452,6 +452,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	sys/bluetooth.c \
 	sys/command.c \
 	sys/hmi.c \
+	sys/io_ports.c \
 	sys/light_matrix.c \
 	sys/light.c \
 	sys/main.c \
