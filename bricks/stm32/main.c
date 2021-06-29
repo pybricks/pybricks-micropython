@@ -9,6 +9,7 @@
 
 #include <pbio/button.h>
 #include <pbio/main.h>
+#include <pbsys/main.h>
 #include <pbsys/user_program.h>
 
 #include <pybricks/common.h>
@@ -325,9 +326,7 @@ restart:
     pbsys_user_program_unprepare();
 }
 
-int main(int argc, char **argv) {
-    pbio_init();
-
+static void stm32_main(void) {
 soft_reset:
     // Stack limit should be less than real stack size, so we have a chance
     // to recover from limit hit.  (Limit is measured in bytes.)
@@ -357,7 +356,10 @@ soft_reset:
     goto soft_reset;
 
     MP_UNREACHABLE;
+}
 
+int main(int argc, char **argv) {
+    pbsys_main(stm32_main);
     return 0;
 }
 

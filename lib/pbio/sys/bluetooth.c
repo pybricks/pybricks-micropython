@@ -234,7 +234,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
     pbdrv_bluetooth_set_on_event(on_event);
     pbdrv_bluetooth_set_receive_handler(handle_receive);
 
-    for (;;) {
+    while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
         // make sure the Bluetooth chip is in reset long enough to actually reset
         etimer_set(&timer, clock_from_msec(150));
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
@@ -247,8 +247,10 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
 
         // TODO: allow user programs to initiate BLE connections
         pbsys_status_set(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING);
-        PROCESS_WAIT_UNTIL(pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE) ||
-            pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING));
+        PROCESS_WAIT_UNTIL(
+            pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)
+            || pbsys_status_test(PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING)
+            || pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN));
 
         if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)) {
             // if a connection wasn't made, we need to manually stop advertising
@@ -259,11 +261,8 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
 
         PT_INIT(&status_monitor_pt);
 
-        for (;;) {
-            if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)) {
-                // disconnected
-                break;
-            }
+        while (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_LE)
+               && !pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
 
             if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PYBRICKS)) {
                 // Since pbsys status events are broadcast to all processes, this

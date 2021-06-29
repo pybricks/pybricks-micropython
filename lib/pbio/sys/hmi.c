@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 // Provides Human Machine Interface (HMI) between hub and user.
 
@@ -18,6 +18,7 @@
 #include <pbdrv/led.h>
 #include <pbio/button.h>
 #include <pbio/color.h>
+#include <pbio/event.h>
 #include <pbio/light.h>
 #include <pbsys/config.h>
 #include <pbsys/status.h>
@@ -33,6 +34,18 @@ void pbsys_hmi_init(void) {
 void pbsys_hmi_handle_event(process_event_t event, process_data_t data) {
     pbsys_status_light_handle_event(event, data);
     pbsys_hub_light_matrix_handle_event(event, data);
+
+    #if PBSYS_CONFIG_BATTERY_CHARGER
+    // On the Technic Large hub, USB can keep the power on even though we are
+    // "shutdown", so if the button is pressed again, we reset to turn back on
+    if (
+        pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)
+        && event == PBIO_EVENT_STATUS_SET
+        && (pbio_pybricks_status_t)data == PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED
+        ) {
+        pbdrv_reset(PBDRV_RESET_ACTION_RESET);
+    }
+    #endif // PBSYS_CONFIG_BATTERY_CHARGER
 }
 
 /**
@@ -48,11 +61,7 @@ void pbsys_hmi_poll(void) {
         pbsys_status_set(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);
         // power off when button is held down for 3 seconds
         if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED, true, 3000)) {
-            // TODO: need to do shutdown sequence here - play animation, sound, etc.
-            // then make sure all non-driver contiki processes are stopped so they
-            // don't try to use any drivers during pbdrv_deinit().
-            pbdrv_deinit();
-            pbdrv_reset(PBDRV_RESET_ACTION_POWER_OFF);
+            pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN);
         }
     } else {
         pbsys_status_clear(PBIO_PYBRICKS_STATUS_POWER_BUTTON_PRESSED);

@@ -18,7 +18,7 @@
 #define PBIO_PROTOCOL_VERSION_MAJOR 1
 
 /** The minor version number for the protocol. */
-#define PBIO_PROTOCOL_VERSION_MINOR 0
+#define PBIO_PROTOCOL_VERSION_MINOR 1
 
 /** The patch version number for the protocol. */
 #define PBIO_PROTOCOL_VERSION_PATCH 0
@@ -112,6 +112,12 @@ typedef enum {
      * @since Protocol v1.0.0
      */
     PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING = 6,
+    /**
+     * Hub shutdown has been requested.
+     *
+     * @since Protocol v1.1.0
+     */
+    PBIO_PYBRICKS_STATUS_SHUTDOWN = 7,
     /** Total number of indications. */
     NUM_PBIO_PYBRICKS_STATUS,
 } pbio_pybricks_status_t;

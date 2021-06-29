@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 // System Supervisor
 
@@ -8,7 +8,6 @@
 
 #include <stdbool.h>
 
-#include <pbdrv/reset.h>
 #include <pbdrv/watchdog.h>
 #include <pbsys/status.h>
 
@@ -18,13 +17,13 @@
  * This is called periodically to handle any changes in the system state.
  */
 void pbsys_supervisor_poll(void) {
+    // keep the hub from resetting itself
     pbdrv_watchdog_update();
+
     // Shut down on low voltage so we don't damage rechargeable batteries
-    // or if there is no BLE connection made whithin 30 seconds
+    // or if there is no BLE connection made whithin 3 minutes
     if (pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_SHUTDOWN, true, 3000)
         || pbsys_status_test_debounce(PBIO_PYBRICKS_STATUS_BLE_ADVERTISING, true, 3 * 60000)) {
-        // REVISIT: this assumes that the power button is not pressed and USB is
-        // not plugged in so that the power will actually turn off here
-        pbdrv_reset(PBDRV_RESET_ACTION_POWER_OFF);
+        pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN);
     }
 }

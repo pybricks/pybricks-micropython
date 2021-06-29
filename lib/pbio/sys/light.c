@@ -28,6 +28,7 @@ typedef enum {
     PBSYS_STATUS_LIGHT_INDICATION_BLE_ADVERTISING_AND_LOW_VOLTAGE,
     PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL,
     PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL_AND_LOW_VOLTAGE,
+    PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN,
 } pbsys_status_light_indication_t;
 
 /** A single element of a status light indication pattern. */
@@ -104,6 +105,13 @@ pbsys_status_light_indication_pattern[] = {
         { .color = PBIO_COLOR_WHITE, .duration = 1 },
         PBSYS_STATUS_LIGHT_INDICATION_PATTERN_END
     },
+    [PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN] =
+        (const pbsys_status_light_indication_pattern_element_t[]) {
+        { .color = PBIO_COLOR_BLACK, .duration = 255 },
+        // REVISIT: we could make a new END type that prevents the pattern from
+        // repeating, this would allow us to make a shutdown animation
+        PBSYS_STATUS_LIGHT_INDICATION_PATTERN_END
+    },
 };
 
 typedef struct {
@@ -156,6 +164,7 @@ static void pbsys_status_light_handle_status_change(void) {
     bool ble_low_signal = pbsys_status_test(PBIO_PYBRICKS_STATUS_BLE_LOW_SIGNAL);
     bool low_voltage = pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_LOW_VOLTAGE_WARNING);
     bool high_current = pbsys_status_test(PBIO_PYBRICKS_STATUS_BATTERY_HIGH_CURRENT);
+    bool shutdown = pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN);
 
     // This determines which indication has the highest precedence.
     if (ble_advertising && low_voltage) {
@@ -170,6 +179,8 @@ static void pbsys_status_light_handle_status_change(void) {
         new_indication = PBSYS_STATUS_LIGHT_INDICATION_BLE_LOW_SIGNAL;
     } else if (low_voltage) {
         new_indication = PBSYS_STATUS_LIGHT_INDICATION_LOW_VOLTAGE;
+    } else if (shutdown) {
+        new_indication = PBSYS_STATUS_LIGHT_INDICATION_SHUTDOWN;
     }
 
     // if the indication changed, then reset the indication pattern to the beginning
