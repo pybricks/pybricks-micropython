@@ -22,9 +22,6 @@
 
 #define PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE              (2)
 
-#define PBDRV_CONFIG_IOPORT                                 (1)
-#define PBDRV_CONFIG_IOPORT_EV3DEV_STRETCH                  (1)
-
 #define PBDRV_CONFIG_HAS_PORT_A (1)
 #define PBDRV_CONFIG_HAS_PORT_B (1)
 #define PBDRV_CONFIG_HAS_PORT_C (1)

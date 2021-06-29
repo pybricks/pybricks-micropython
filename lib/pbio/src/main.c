@@ -30,9 +30,6 @@ AUTOSTART_PROCESSES(
 #if PBDRV_CONFIG_ADC
     &pbdrv_adc_process,
 #endif
-#if PBDRV_CONFIG_IOPORT_EV3DEV_STRETCH
-    &pbdrv_ioport_ev3dev_stretch_process,
-#endif
 #if PBDRV_CONFIG_IOPORT_LPF2
     &pbdrv_ioport_lpf2_process,
 #endif
