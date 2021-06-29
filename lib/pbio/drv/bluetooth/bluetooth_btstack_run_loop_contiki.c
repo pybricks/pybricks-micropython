@@ -37,7 +37,7 @@ static void schedule_timer(void) {
 }
 
 static void btstack_run_loop_contiki_init(void) {
-    process_start(&btstack_run_loop_contiki_process, NULL);
+    process_start(&btstack_run_loop_contiki_process);
 }
 
 static void btstack_run_loop_contiki_add_data_source(btstack_data_source_t *ds) {

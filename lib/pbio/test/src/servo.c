@@ -85,7 +85,7 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
 
     PT_BEGIN(pt);
 
-    process_start(&pbio_motor_process, NULL);
+    process_start(&pbio_motor_process);
     tt_want(process_is_running(&pbio_motor_process));
 
     tt_uint_op(pbio_motor_process_get_servo(PBIO_PORT_ID_A, &servo), ==, PBIO_SUCCESS);

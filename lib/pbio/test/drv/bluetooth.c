@@ -452,8 +452,8 @@ PROCESS_THREAD(test_uart_send_process, ev, data) {
 
 static int test_uart_block_init(const btstack_uart_config_t *uart_config) {
     log_debug("%s", __func__);
-    process_start(&test_uart_receive_process, NULL);
-    process_start(&test_uart_send_process, NULL);
+    process_start(&test_uart_receive_process);
+    process_start(&test_uart_send_process);
     return 0;
 }
 

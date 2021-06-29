@@ -57,7 +57,7 @@ autostart_start(struct process * const processes[])
   int i;
 
   for(i = 0; processes[i] != NULL; ++i) {
-    process_start(processes[i], NULL);
+    process_start(processes[i]);
     PRINTF("autostart_start: starting process '%s'\n", processes[i]->name);
   }
 }

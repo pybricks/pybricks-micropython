@@ -21,7 +21,7 @@ uint32_t pbdrv_init_busy_count;
 void pbdrv_init(void) {
     clock_init();
     process_init();
-    process_start(&etimer_process, NULL);
+    process_start(&etimer_process);
     pbdrv_battery_init();
     pbdrv_bluetooth_init();
     pbdrv_counter_init();

@@ -32,7 +32,7 @@ PROCESS_THREAD(status_test_process, ev, data) {
 static PT_THREAD(test_status(struct pt *pt)) {
     PT_BEGIN(pt);
 
-    process_start(&status_test_process, NULL);
+    process_start(&status_test_process);
 
     // use the last valid flag for edge case
     static const pbio_pybricks_status_t test_flag = NUM_PBIO_PYBRICKS_STATUS - 1;

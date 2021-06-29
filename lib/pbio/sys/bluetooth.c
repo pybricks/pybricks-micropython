@@ -51,7 +51,7 @@ void pbsys_bluetooth_init(void) {
 
     lwrb_init(&uart_tx_ring, uart_tx_buf, PBIO_ARRAY_SIZE(uart_tx_buf));
     lwrb_init(&uart_rx_ring, uart_rx_buf, PBIO_ARRAY_SIZE(uart_rx_buf));
-    process_start(&pbsys_bluetooth_process, NULL);
+    process_start(&pbsys_bluetooth_process);
 }
 
 static void on_event(void) {

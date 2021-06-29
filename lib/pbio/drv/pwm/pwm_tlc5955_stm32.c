@@ -243,7 +243,7 @@ void pbdrv_pwm_tlc5955_stm32_init(pbdrv_pwm_dev_t *devs) {
         pbdrv_init_busy_up();
     }
 
-    process_start(&pwm_tlc5955_stm32, NULL);
+    process_start(&pwm_tlc5955_stm32);
 }
 
 // toggles LAT signal on and off to latch data in shift register

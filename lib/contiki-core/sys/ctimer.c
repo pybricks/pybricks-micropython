@@ -93,7 +93,7 @@ ctimer_init(void)
 {
   initialized = 0;
   list_init(ctimer_list);
-  process_start(&ctimer_process, NULL);
+  process_start(&ctimer_process);
 }
 /*---------------------------------------------------------------------------*/
 void

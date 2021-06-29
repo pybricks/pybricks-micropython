@@ -218,7 +218,7 @@ void pbdrv_bluetooth_init(void) {
 
 void pbdrv_bluetooth_power_on(bool on) {
     if (on) {
-        process_start(&pbdrv_bluetooth_spi_process, NULL);
+        process_start(&pbdrv_bluetooth_spi_process);
     } else {
         // REVISIT: should probably gracefully shutdown in case we are in the
         // middle of something

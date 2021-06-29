@@ -57,7 +57,7 @@
 {									\
   static struct process subprocess_subprocess = {NULL, strname};	\
   subprocess_subprocess.thread = PROCESS_CURRENT()->thread;		\
-  process_start(&subprocess_subprocess, NULL);				\
+  process_start(&subprocess_subprocess);				\
   PT_INIT(&subprocess_subprocess.pt);					\
   LC_SET(subprocess_subprocess.pt.lc);					\
   if(PROCESS_CURRENT() == &subprocess_subprocess) {

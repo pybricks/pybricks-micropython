@@ -97,7 +97,7 @@ process_alloc_event(void)
 }
 /*---------------------------------------------------------------------------*/
 void
-process_start(struct process *p, process_data_t data)
+process_start(struct process *p)
 {
   struct process *q;
 
@@ -118,7 +118,7 @@ process_start(struct process *p, process_data_t data)
   PRINTF("process: starting '%s'\n", PROCESS_NAME_STRING(p));
 
   /* Post a synchronous initialization event to the process. */
-  process_post_synch(p, PROCESS_EVENT_INIT, data);
+  process_post_synch(p, PROCESS_EVENT_INIT, NULL);
 }
 /*---------------------------------------------------------------------------*/
 static void
