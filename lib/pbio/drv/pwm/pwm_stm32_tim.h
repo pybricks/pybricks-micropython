@@ -55,12 +55,10 @@ extern const pbdrv_pwm_stm32_tim_platform_data_t
     pbdrv_pwm_stm32_tim_platform_data[PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV];
 
 void pbdrv_pwm_stm32_tim_init(pbdrv_pwm_dev_t *dev);
-void pbdrv_pwm_stm32_tim_deinit(pbdrv_pwm_dev_t *dev);
 
 #else // PBDRV_CONFIG_PWM_STM32_TIM
 
 #define pbdrv_pwm_stm32_tim_init(dev)
-#define pbdrv_pwm_stm32_tim_deinit(dev)
 
 #endif // PBDRV_CONFIG_PWM_STM32_TIM
 

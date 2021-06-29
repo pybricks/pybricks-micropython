@@ -35,10 +35,6 @@ void pbdrv_pwm_test_init(pbdrv_pwm_dev_t *devs) {
     devs[0].priv = &test_private_data;
 }
 
-void pbdrv_pwm_test_deinit(pbdrv_pwm_dev_t *devs) {
-    devs[0].funcs = NULL;
-}
-
 static void test_pwm_get(void *env) {
     pbdrv_pwm_dev_t *dev;
 

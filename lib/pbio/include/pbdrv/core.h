@@ -13,7 +13,6 @@
 #define _PBDRV_CORE_H_
 
 void pbdrv_init(void);
-void pbdrv_deinit(void);
 
 #endif // _PBDRV_CORE_H_
 

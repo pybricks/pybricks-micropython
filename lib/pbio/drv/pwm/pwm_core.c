@@ -29,17 +29,6 @@ void pbdrv_pwm_init(void) {
 }
 
 /**
- * Deinitializes all PWM drivers.
- *
- * This should turn off the output of each PWM.
- */
-void pbdrv_pwm_deinit(void) {
-    pbdrv_pwm_stm32_tim_deinit(pbdrv_pwm_dev);
-    pbdrv_pwm_test_deinit(pbdrv_pwm_dev);
-    pbdrv_pwm_tlc5955_stm32_deinit(pbdrv_pwm_dev);
-}
-
-/**
  * Gets the PWM device with the given ID.
  * @param [in]  id      The ID of the PWM device.
  * @param [out] dev     Pointer to hold the returned PWM device.

@@ -120,26 +120,4 @@ void pbdrv_pwm_stm32_tim_init(pbdrv_pwm_dev_t *devs) {
     }
 }
 
-void pbdrv_pwm_stm32_tim_deinit(pbdrv_pwm_dev_t *devs) {
-    for (int i = 0; i < PBDRV_CONFIG_PWM_STM32_TIM_NUM_DEV; i++) {
-        const pbdrv_pwm_stm32_tim_platform_data_t *pdata = &pbdrv_pwm_stm32_tim_platform_data[i];
-        TIM_TypeDef *TIMx = pdata->TIMx;
-
-        #ifdef STM32F413xx
-        // HACK: Prevent LED driver GSCLK from stopping on Prime hub.
-        // Otherwise LEDs may get stuck on. Ideally, we could implement some
-        // sort of reference counting on drivers so that they shut down when
-        // they are no longer used instead.
-        if (TIMx != TIM12)
-        #endif
-        {
-            TIMx->CR1 &= ~TIM_CR1_CEN;
-            TIMx->EGR &= ~TIM_EGR_UG;
-            // Disable outputs (the value 0 assumes that all channels are PWMs
-            // or unused - which should be a safe assumption)
-            TIMx->CCER = 0;
-        }
-    }
-}
-
 #endif // PBDRV_CONFIG_PWM_STM32_TIM
