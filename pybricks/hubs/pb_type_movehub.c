@@ -242,13 +242,19 @@ STATIC mp_obj_t hubs_MoveHub_IMU_make_new(void) {
 
 typedef struct _hubs_MoveHub_obj_t {
     mp_obj_base_t base;
+    mp_obj_t button;
     mp_obj_t light;
     mp_obj_t imu;
 } hubs_MoveHub_obj_t;
 
+static const pb_obj_enum_member_t *movehub_buttons[] = {
+    &pb_Button_CENTER_obj,
+};
+
 STATIC mp_obj_t hubs_MoveHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     hubs_MoveHub_obj_t *self = m_new_obj(hubs_MoveHub_obj_t);
     self->base.type = (mp_obj_type_t *)type;
+    self->button = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(movehub_buttons), movehub_buttons, pbio_button_is_pressed);
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light);
     self->imu = hubs_MoveHub_IMU_make_new();
     return MP_OBJ_FROM_PTR(self);
@@ -256,11 +262,10 @@ STATIC mp_obj_t hubs_MoveHub_make_new(const mp_obj_type_t *type, size_t n_args, 
 
 STATIC const mp_rom_map_elem_t hubs_MoveHub_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)    },
+    { MP_ROM_QSTR(MP_QSTR_button),      MP_ROM_ATTRIBUTE_OFFSET(hubs_MoveHub_obj_t, button)},
     { MP_ROM_QSTR(MP_QSTR_imu),         MP_ROM_ATTRIBUTE_OFFSET(hubs_MoveHub_obj_t, imu)   },
     { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_ATTRIBUTE_OFFSET(hubs_MoveHub_obj_t, light) },
-    #if PYBRICKS_PY_COMMON_SYSTEM
     { MP_ROM_QSTR(MP_QSTR_system),      MP_ROM_PTR(&pb_type_System)                        },
-    #endif
 };
 STATIC MP_DEFINE_CONST_DICT(hubs_MoveHub_locals_dict, hubs_MoveHub_locals_dict_table);
 
