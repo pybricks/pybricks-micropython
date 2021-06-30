@@ -15,6 +15,7 @@
 
 #include <pbio/button.h>
 
+#include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
 #include <pybricks/common.h>
@@ -60,7 +61,7 @@ static void handle_notification(pbdrv_bluetooth_connection_t connection, const u
     }
 }
 
-STATIC void pb_remote_init(void) {
+STATIC void pb_remote_connect(mp_int_t timeout) {
     pb_remote_t *remote = &pb_remote_singleton;
 
     memset(remote, 0, sizeof(*remote));
@@ -72,7 +73,8 @@ STATIC void pb_remote_init(void) {
 
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
-        for (mp_int_t start = mp_hal_ticks_ms(); mp_hal_ticks_ms() - start < 10000;) {
+        mp_int_t start = mp_hal_ticks_ms();
+        while (timeout == -1 || mp_hal_ticks_ms() - start < timeout) {
             MICROPY_EVENT_POLL_HOOK
             if (remote->task.status == PBIO_SUCCESS) {
                 nlr_pop();
@@ -383,7 +385,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
     }
 }
 
-STATIC void pb_remote_init(void) {
+STATIC void pb_remote_connect(mp_int_t timeout) {
     pb_remote_t *remote = &pb_remote_singleton;
 
     if (remote->con_state != CON_STATE_NONE) {
@@ -406,7 +408,8 @@ STATIC void pb_remote_init(void) {
 
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
-        for (mp_int_t start = mp_hal_ticks_ms(); mp_hal_ticks_ms() - start < 10000;) {
+        mp_int_t start = mp_hal_ticks_ms();
+        while (timeout == -1 || mp_hal_ticks_ms() - start < timeout) {
             MICROPY_EVENT_POLL_HOOK
             if (remote->con_state == CON_STATE_CONNECTED) {
                 nlr_pop();
@@ -507,10 +510,11 @@ STATIC mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
     pb_type_pupdevices_Remote_obj_t *self = m_new_obj(pb_type_pupdevices_Remote_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
+    // TODO
     (void)address_in;
-    (void)timeout_in;
 
-    pb_remote_init();
+    mp_int_t timeout = timeout_in == mp_const_none? -1 : pb_obj_get_positive_int(timeout_in);
+    pb_remote_connect(timeout);
 
     self->buttons = pb_type_Keypad_obj_new(PBIO_ARRAY_SIZE(remote_buttons), remote_buttons, remote_button_is_pressed);
     return MP_OBJ_FROM_PTR(self);
