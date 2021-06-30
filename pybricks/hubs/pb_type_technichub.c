@@ -16,9 +16,14 @@
 
 typedef struct _hubs_TechnicHub_obj_t {
     mp_obj_base_t base;
+    mp_obj_t button;
     mp_obj_t imu;
     mp_obj_t light;
 } hubs_TechnicHub_obj_t;
+
+static const pb_obj_enum_member_t *technichub_buttons[] = {
+    &pb_Button_CENTER_obj,
+};
 
 STATIC mp_obj_t hubs_TechnicHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
@@ -27,6 +32,7 @@ STATIC mp_obj_t hubs_TechnicHub_make_new(const mp_obj_type_t *type, size_t n_arg
 
     hubs_TechnicHub_obj_t *self = m_new_obj(hubs_TechnicHub_obj_t);
     self->base.type = (mp_obj_type_t *)type;
+    self->button = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(technichub_buttons), technichub_buttons, pbio_button_is_pressed);
     self->imu = pb_type_IMU_obj_new(top_side_in, front_side_in);
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light);
     return MP_OBJ_FROM_PTR(self);
@@ -34,6 +40,7 @@ STATIC mp_obj_t hubs_TechnicHub_make_new(const mp_obj_type_t *type, size_t n_arg
 
 STATIC const mp_rom_map_elem_t hubs_TechnicHub_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)    },
+    { MP_ROM_QSTR(MP_QSTR_button),      MP_ROM_ATTRIBUTE_OFFSET(hubs_TechnicHub_obj_t, button)},
     { MP_ROM_QSTR(MP_QSTR_imu),         MP_ROM_ATTRIBUTE_OFFSET(hubs_TechnicHub_obj_t, imu)   },
     { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_ATTRIBUTE_OFFSET(hubs_TechnicHub_obj_t, light) },
     { MP_ROM_QSTR(MP_QSTR_system),      MP_ROM_PTR(&pb_type_System)                           },

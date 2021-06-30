@@ -13,6 +13,7 @@
   It is activated on the Move Hub to reduce build size. Motor performance on
   the other hubs is unaffected.
 - Experimental support for the Powered Up remote control ([support#186]).
+- Support for reading button state on Technic Hub, City Hub, and Move Hub.
 
 ### Changed
 - Updated MicroPython to v1.16.
