@@ -2,6 +2,19 @@
 
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Support for reading button state on Technic Hub, City Hub, and Move Hub.
+
+### Changed
+- Move `Remote` class from `experimental` to `pupdevices`.
+- Move `Remote.pressed()` to `Remote.buttons.pressed()`.
+
+### Fixed
+- Fix Bluetooth not disconnecting when shutting down and button is still pressed.
+- Fix I/O ports not powering off when shutting down and button is still pressed.
+
 ## [3.1.0a1] - 2021-06-23
 
 ### Added
@@ -13,7 +26,6 @@
   It is activated on the Move Hub to reduce build size. Motor performance on
   the other hubs is unaffected.
 - Experimental support for the Powered Up remote control ([support#186]).
-- Support for reading button state on Technic Hub, City Hub, and Move Hub.
 
 ### Changed
 - Updated MicroPython to v1.16.
