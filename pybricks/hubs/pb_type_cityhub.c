@@ -13,18 +13,25 @@
 
 typedef struct _hubs_CityHub_obj_t {
     mp_obj_base_t base;
+    mp_obj_t button;
     mp_obj_t light;
 } hubs_CityHub_obj_t;
+
+static const pb_obj_enum_member_t *cityhub_buttons[] = {
+    &pb_Button_CENTER_obj,
+};
 
 STATIC mp_obj_t hubs_CityHub_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     hubs_CityHub_obj_t *self = m_new_obj(hubs_CityHub_obj_t);
     self->base.type = (mp_obj_type_t *)type;
+    self->button = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(cityhub_buttons), cityhub_buttons, pbio_button_is_pressed);
     self->light = common_ColorLight_internal_obj_new(pbsys_status_light);
     return MP_OBJ_FROM_PTR(self);
 }
 
 STATIC const mp_rom_map_elem_t hubs_CityHub_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)    },
+    { MP_ROM_QSTR(MP_QSTR_button),      MP_ROM_ATTRIBUTE_OFFSET(hubs_CityHub_obj_t, button)},
     { MP_ROM_QSTR(MP_QSTR_light),       MP_ROM_ATTRIBUTE_OFFSET(hubs_CityHub_obj_t, light) },
     { MP_ROM_QSTR(MP_QSTR_system),      MP_ROM_PTR(&pb_type_System) },
 };
