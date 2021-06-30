@@ -88,7 +88,6 @@ STATIC void pb_remote_connect(mp_int_t timeout) {
         mp_raise_OSError(MP_ETIMEDOUT);
         nlr_pop();
     } else {
-        mp_printf(&mp_plat_print, "status: 0x%02x\n", remote->context.status); // debug
         remote->task.cancel = true;
         while (remote->task.status == PBIO_ERROR_AGAIN) {
             MICROPY_VM_HOOK_LOOP
@@ -426,7 +425,6 @@ STATIC void pb_remote_connect(mp_int_t timeout) {
         mp_raise_OSError(MP_ETIMEDOUT);
         nlr_pop();
     } else {
-        mp_obj_print(MP_OBJ_NEW_SMALL_INT(remote->con_state), PRINT_STR);
         if (remote->con_state == CON_STATE_WAIT_ADV_IND || remote->con_state == CON_STATE_WAIT_SCAN_RSP) {
             gap_stop_scan();
         } else if (remote->con_state == CON_STATE_WAIT_CONNECT) {
