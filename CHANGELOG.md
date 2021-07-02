@@ -6,6 +6,7 @@
 
 ### Added
 - Support for reading button state on Technic Hub, City Hub, and Move Hub.
+- Support for reading hub name on all Powered Up hubs.
 
 ### Changed
 - Move `Remote` class from `experimental` to `pupdevices`.
