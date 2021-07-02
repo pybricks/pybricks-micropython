@@ -50,8 +50,8 @@ FALSE = 0
 
 def main(loops=LOOPS):
     benchtime, stones = pystones(loops)
-    print("Pystone(%s) time for %d passes = %gms" % (__version__, loops, benchtime))
-    print("This machine benchmarks at %g pystones/second" % stones)
+    print("Pystone(%s) time for %d passes = %dms" % (__version__, loops, benchtime))
+    print("This machine benchmarks at %d pystones/second" % stones)
 
 
 def pystones(loops=LOOPS):
@@ -63,7 +63,7 @@ BoolGlob = FALSE
 Char1Glob = "\0"
 Char2Glob = "\0"
 Array1Glob = [0] * (51 // 2)
-Array2Glob = [x[:] for x in [Array1Glob] * (51 // 2)]
+Array2Glob = [x for x in [Array1Glob] * (51 // 2)]
 PtrGlb = None
 PtrGlbNext = None
 
