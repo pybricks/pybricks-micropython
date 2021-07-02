@@ -214,6 +214,10 @@ bool pbdrv_bluetooth_is_ready(void) {
     return hci_get_state() != HCI_STATE_OFF;
 }
 
+const char *pbdrv_bluetooth_get_hub_name(void) {
+    return pbdrv_bluetooth_hub_name;
+}
+
 static void init_advertising_data(void) {
     bd_addr_t null_addr = { };
     gap_advertisements_set_params(0x0030, 0x0030, 0x00, 0x00, null_addr, 0x07, 0x00);

@@ -191,6 +191,10 @@ bool pbdrv_bluetooth_is_ready(void) {
     return bluetooth_ready;
 }
 
+const char *pbdrv_bluetooth_get_hub_name(void) {
+    return pbdrv_bluetooth_hub_name;
+}
+
 /**
  * Sets advertising data and enables advertisements.
  */

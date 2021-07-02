@@ -83,6 +83,11 @@ void pbdrv_bluetooth_power_on(bool on);
 bool pbdrv_bluetooth_is_ready(void);
 
 /**
+ * Gets the bluetooth hub name.
+ */
+const char *pbdrv_bluetooth_get_hub_name(void);
+
+/**
  * Starts the advertising process, including configuring advertisements and
  * telling the Bluetooth chip to start advertising. Advertising should
  * automatically stop when a connection is made.
@@ -152,6 +157,10 @@ static inline void pbdrv_bluetooth_power_on(bool on) {
 
 static inline bool pbdrv_bluetooth_is_ready(void) {
     return false;
+}
+
+static const char *pbdrv_bluetooth_get_hub_name(void) {
+    return "";
 }
 
 static inline void pbdrv_bluetooth_start_advertising(void) {
