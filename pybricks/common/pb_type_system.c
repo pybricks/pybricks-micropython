@@ -28,7 +28,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_name_obj, pb_type_System_name);
 STATIC mp_obj_t pb_type_System_reset(mp_obj_t action_in) {
     pbdrv_reset_action_t action = mp_obj_get_int(action_in);
 
-    if (action < PBDRV_RESET_ACTION_RESET || action > PBDRV_RESET_ACTION_RESET_IN_UPDATE_MODE) {
+    if (action != PBDRV_RESET_ACTION_RESET_IN_UPDATE_MODE) {
         mp_raise_ValueError(NULL);
     }
 
