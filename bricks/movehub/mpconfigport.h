@@ -8,7 +8,7 @@
 
 #define PYBRICKS_HUB_CLASS_NAME         (MP_QSTR_MoveHub)
 
-#define PYBRICKS_HEAP_KB                (6)
+#define PYBRICKS_HEAP_KB                (7)
 
 #define PYBRICKS_HUB_MOVEHUB            (1)
 
