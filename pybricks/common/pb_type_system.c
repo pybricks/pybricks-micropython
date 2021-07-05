@@ -23,10 +23,6 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_name_obj, pb_type_System_name);
 
 #if PBDRV_CONFIG_RESET
 
-// REVISIT: there should be a pbio_reset() instead of pbdrv_reset() to gracefully
-// shut down the hub (e.g. if the power button is pressed or USB is plugged in,
-// some hubs will not actually shut down).
-
 #include <pbdrv/reset.h>
 
 STATIC mp_obj_t pb_type_System_reset(mp_obj_t action_in) {
@@ -47,6 +43,17 @@ STATIC mp_obj_t pb_type_System_reset_reason(void) {
     return MP_OBJ_NEW_SMALL_INT(reason);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_reset_reason_obj, pb_type_System_reset_reason);
+
+STATIC mp_obj_t pb_type_System_shutdown(void) {
+
+    // TODO: there should be a pbio function instead of pbdrv function to gracefully
+    // shut down the hub (e.g. if the power button is pressed or USB is plugged in,
+    // some hubs will not actually power off).
+
+    mp_raise_NotImplementedError(NULL);
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_shutdown_obj, pb_type_System_shutdown);
 
 #endif // PBDRV_CONFIG_RESET
 
@@ -97,6 +104,7 @@ STATIC const mp_rom_map_elem_t common_System_locals_dict_table[] = {
     #if PBDRV_CONFIG_RESET
     { MP_ROM_QSTR(MP_QSTR_reset), MP_ROM_PTR(&pb_type_System_reset_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_reason), MP_ROM_PTR(&pb_type_System_reset_reason_obj) },
+    { MP_ROM_QSTR(MP_QSTR_shutdown), MP_ROM_PTR(&pb_type_System_shutdown_obj) },
     #endif // PBDRV_CONFIG_RESET
     #if PBIO_CONFIG_ENABLE_SYS
     { MP_ROM_QSTR(MP_QSTR_set_stop_button), MP_ROM_PTR(&pb_type_System_set_stop_button_obj) },
