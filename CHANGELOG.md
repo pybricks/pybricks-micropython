@@ -25,6 +25,7 @@
 ### Fixed
 - Fix Bluetooth not disconnecting when shutting down and button is still pressed.
 - Fix I/O ports not powering off when shutting down and button is still pressed.
+- Fix version number only showing git hash and not v3.x.
 
 ## [3.1.0a1] - 2021-06-23
 
