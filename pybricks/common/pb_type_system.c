@@ -5,24 +5,21 @@
 
 #if PYBRICKS_PY_COMMON && PYBRICKS_PY_COMMON_SYSTEM
 
+#include <string.h>
+
+#include <pbdrv/bluetooth.h>
+
 #include "py/obj.h"
 #include "py/runtime.h"
 
 #include <pybricks/common.h>
-
 #include <pybricks/util_pb/pb_error.h>
-
-#if PBDRV_CONFIG_BLUETOOTH
-
-#include <pbdrv/bluetooth.h>
 
 STATIC mp_obj_t pb_type_System_name(void) {
     const char *hub_name = pbdrv_bluetooth_get_hub_name();
     return mp_obj_new_str(hub_name, strlen(hub_name));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_name_obj, pb_type_System_name);
-
-#endif // PBDRV_CONFIG_BLUETOOTH
 
 #if PBDRV_CONFIG_RESET
 
@@ -96,9 +93,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_System_set_stop_button_obj, pb_type_Sys
 
 // dir(pybricks.common.System)
 STATIC const mp_rom_map_elem_t common_System_locals_dict_table[] = {
-    #if PBDRV_CONFIG_BLUETOOTH
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&pb_type_System_name_obj) },
-    #endif
     #if PBDRV_CONFIG_RESET
     { MP_ROM_QSTR(MP_QSTR_reset), MP_ROM_PTR(&pb_type_System_reset_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_reason), MP_ROM_PTR(&pb_type_System_reset_reason_obj) },
