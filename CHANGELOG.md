@@ -7,10 +7,21 @@
 ### Added
 - Support for reading button state on Technic Hub, City Hub, and Move Hub.
 - Support for reading hub name on all Powered Up hubs.
+- Enable MicroPython slicing feature on Technic Hub, City Hub, Prime Hub.
+- Added pystone benchmark tests for all hubs.
+- Added `hub.system.shutdown()` placeholder method, which will provide a
+  graceful shutdown when this is implemented in `pbio` ([support#379]).
 
 ### Changed
 - Move `Remote` class from `experimental` to `pupdevices`.
 - Move `Remote.pressed()` to `Remote.buttons.pressed()`.
+- Remove `pybricks.experimental` module on Move Hub.
+- Increased Move Hub heap from 6K to 7K due to recently freed RAM ([pull#57]).
+- Changed `hub.system.reset(action)` to accept `2` only ([support#379]). This
+  is technically a breaking change, although this method was never officially
+  released or documented. With this change, entering firmware update mode
+  remains possible for backwards-compatibility, but unsafe power off methods
+  are removed.
 
 ### Fixed
 - Fix Bluetooth not disconnecting when shutting down and button is still pressed.
@@ -66,6 +77,7 @@ Prerelease changes are documented at [support#48].
 [support#347]: https://github.com/pybricks/support/issues/347
 [support#352]: https://github.com/pybricks/support/issues/352
 [support#361]: https://github.com/pybricks/support/issues/361
+[support#379]: https://github.com/pybricks/support/issues/379
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0a1...HEAD
 [3.1.0a1]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0...v3.1.0a1
