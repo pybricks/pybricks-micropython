@@ -2,7 +2,7 @@
 
 # Changelog
 
-## [Unreleased]
+## [3.1.0a2] - 2021-07-06
 
 ### Added
 - Support for reading button state on Technic Hub, City Hub, and Move Hub.
@@ -69,8 +69,8 @@ Prerelease changes are documented at [support#48].
 <!-- let's try to keep this list sorted -->
 [issue#21]: https://github.com/pybricks/pybricks-micropython/issues/21
 [issue#49]: https://github.com/pybricks/pybricks-micropython/issues/49
-[pull#57]: https://github.com/pybricks/pybricks-micropython/pull/57
 [issue#58]: https://github.com/pybricks/pybricks-micropython/issues/58
+[pull#57]: https://github.com/pybricks/pybricks-micropython/pull/57
 [support#48]: https://github.com/pybricks/support/issues/48
 [support#52]: https://github.com/pybricks/support/issues/52
 [support#186]: https://github.com/pybricks/support/issues/186
@@ -80,6 +80,7 @@ Prerelease changes are documented at [support#48].
 [support#361]: https://github.com/pybricks/support/issues/361
 [support#379]: https://github.com/pybricks/support/issues/379
 
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0a1...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0a2...HEAD
+[3.1.0a2]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a1...v3.1.0a2
 [3.1.0a1]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0...v3.1.0a1
 [3.0.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0c1...v3.0.0
