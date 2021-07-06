@@ -107,8 +107,12 @@ void pbsys_hub_light_matrix_handle_event(process_event_t event, process_data_t d
             // REVISIT: could do a shutdown animation
             pbsys_hub_light_matrix_clear();
         }
-    } else if (event == PBIO_EVENT_STATUS_CLEARED && (pbio_pybricks_status_t)data == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING) {
-        pbsys_hub_light_matrix_show_stop_sign();
+    } else if (event == PBIO_EVENT_STATUS_CLEARED) {
+        pbio_pybricks_status_t status = (intptr_t)data;
+
+        if (status == PBIO_PYBRICKS_STATUS_USER_PROGRAM_RUNNING && !pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
+            pbsys_hub_light_matrix_show_stop_sign();
+        }
     }
 }
 
