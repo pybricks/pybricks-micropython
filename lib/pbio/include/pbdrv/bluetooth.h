@@ -160,7 +160,7 @@ static inline bool pbdrv_bluetooth_is_ready(void) {
 }
 
 static const char *pbdrv_bluetooth_get_hub_name(void) {
-    return "";
+    return "Pybricks Hub";
 }
 
 static inline void pbdrv_bluetooth_start_advertising(void) {
