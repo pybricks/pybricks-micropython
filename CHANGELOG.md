@@ -2,6 +2,12 @@
 
 # Changelog
 
+
+## [Unreleased]
+
+### Fixed
+- Fixed City hub not always powering off on shutdown ([support#385]).
+
 ## [3.1.0a2] - 2021-07-06
 
 ### Added
@@ -79,6 +85,7 @@ Prerelease changes are documented at [support#48].
 [support#352]: https://github.com/pybricks/support/issues/352
 [support#361]: https://github.com/pybricks/support/issues/361
 [support#379]: https://github.com/pybricks/support/issues/379
+[support#385]: https://github.com/pybricks/support/issues/385
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0a2...HEAD
 [3.1.0a2]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a1...v3.1.0a2

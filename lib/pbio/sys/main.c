@@ -42,8 +42,14 @@ void pbsys_main(pbsys_main_t main) {
         pbsys_user_program_unprepare();
     }
 
+    // The power could be held on due to someone pressing the center button
+    // or USB being plugged in, so we have this loop to keep pumping events
+    // to turn off most of the peripherals and keep the battery charger running.
     for (;;) {
+        // We must handle all pending events before turning the power off the
+        // first time, otherwise the city hub turns itself back on sometimes.
+        while (pbio_do_one_event()) {
+        }
         pbdrv_reset_power_off();
-        pbio_do_one_event();
     }
 }
