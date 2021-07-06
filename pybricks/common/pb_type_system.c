@@ -44,23 +44,14 @@ STATIC mp_obj_t pb_type_System_reset_reason(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_reset_reason_obj, pb_type_System_reset_reason);
 
-STATIC mp_obj_t pb_type_System_shutdown(void) {
-
-    // TODO: there should be a pbio function instead of pbdrv function to gracefully
-    // shut down the hub (e.g. if the power button is pressed or USB is plugged in,
-    // some hubs will not actually power off).
-
-    mp_raise_NotImplementedError(NULL);
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_shutdown_obj, pb_type_System_shutdown);
-
 #endif // PBDRV_CONFIG_RESET
 
 #if PBIO_CONFIG_ENABLE_SYS
 
-#include <pybricks/parameters.h>
+#include <pbsys/status.h>
 #include <pbsys/user_program.h>
+
+#include <pybricks/parameters.h>
 
 STATIC mp_obj_t pb_type_System_set_stop_button(mp_obj_t buttons_in) {
     pbio_button_flags_t buttons = 0;
@@ -96,6 +87,20 @@ STATIC mp_obj_t pb_type_System_set_stop_button(mp_obj_t buttons_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(pb_type_System_set_stop_button_obj, pb_type_System_set_stop_button);
 
+STATIC mp_obj_t pb_type_System_shutdown(void) {
+
+    // Start shutdown.
+    pbsys_status_set(PBIO_PYBRICKS_STATUS_SHUTDOWN);
+
+    // Keep running until shutdown completes.
+    for (;;) {
+        MICROPY_VM_HOOK_LOOP
+    }
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(pb_type_System_shutdown_obj, pb_type_System_shutdown);
+
 #endif // PBIO_CONFIG_ENABLE_SYS
 
 // dir(pybricks.common.System)
@@ -104,10 +109,10 @@ STATIC const mp_rom_map_elem_t common_System_locals_dict_table[] = {
     #if PBDRV_CONFIG_RESET
     { MP_ROM_QSTR(MP_QSTR_reset), MP_ROM_PTR(&pb_type_System_reset_obj) },
     { MP_ROM_QSTR(MP_QSTR_reset_reason), MP_ROM_PTR(&pb_type_System_reset_reason_obj) },
-    { MP_ROM_QSTR(MP_QSTR_shutdown), MP_ROM_PTR(&pb_type_System_shutdown_obj) },
     #endif // PBDRV_CONFIG_RESET
     #if PBIO_CONFIG_ENABLE_SYS
     { MP_ROM_QSTR(MP_QSTR_set_stop_button), MP_ROM_PTR(&pb_type_System_set_stop_button_obj) },
+    { MP_ROM_QSTR(MP_QSTR_shutdown), MP_ROM_PTR(&pb_type_System_shutdown_obj) },
     #endif
 };
 STATIC MP_DEFINE_CONST_DICT(common_System_locals_dict, common_System_locals_dict_table);

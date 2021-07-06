@@ -9,8 +9,7 @@
 - Support for reading hub name on all Powered Up hubs.
 - Enable MicroPython slicing feature on Technic Hub, City Hub, Prime Hub.
 - Added pystone benchmark tests for all hubs.
-- Added `hub.system.shutdown()` placeholder method, which will provide a
-  graceful shutdown when this is implemented in `pbio` ([support#379]).
+- Added `hub.system.shutdown()` for graceful shutdown ([support#58]).
 
 ### Changed
 - Move `Remote` class from `experimental` to `pupdevices`.
@@ -70,6 +69,7 @@ Prerelease changes are documented at [support#48].
 [issue#21]: https://github.com/pybricks/pybricks-micropython/issues/21
 [issue#49]: https://github.com/pybricks/pybricks-micropython/issues/49
 [pull#57]: https://github.com/pybricks/pybricks-micropython/pull/57
+[issue#58]: https://github.com/pybricks/pybricks-micropython/issues/58
 [support#48]: https://github.com/pybricks/support/issues/48
 [support#52]: https://github.com/pybricks/support/issues/52
 [support#186]: https://github.com/pybricks/support/issues/186
