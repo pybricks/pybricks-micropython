@@ -121,7 +121,17 @@ extern const struct _mp_obj_module_t pb_package_pybricks;
 #define _PYBRICKS_PACKAGE_PYBRICKS \
     { MP_OBJ_NEW_QSTR(MP_QSTR_pybricks), (mp_obj_t)&pb_package_pybricks },
 
+// HACK: math is one of the few MicroPython modules that doesn't start with "u"
+// so we add an alias for it until it is fixed upstream
+#if MICROPY_PY_MATH
+#define _UMATH_MODULE \
+    { MP_ROM_QSTR(MP_QSTR_umath), MP_ROM_PTR(&mp_module_math) },
+#else
+#define _UMATH_MODULE
+#endif
+
 #define MICROPY_PORT_BUILTIN_MODULES \
+    _UMATH_MODULE                   \
     _PYBRICKS_PACKAGE_PYBRICKS      \
 
 

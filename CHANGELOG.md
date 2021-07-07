@@ -10,6 +10,10 @@
   This makes resetting the angle optional, allowing to maintain absolute
   positioning for robots with gears ([support#389]).
 
+### Changed
+- Moved MicroPython `math` module to `umath` to be consistent with other
+  MicroPython modules.
+
 ### Fixed
 - Fixed City hub not always powering off on shutdown ([support#385]).
 
