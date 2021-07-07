@@ -28,6 +28,7 @@ FF = b"\xFF"
 
 
 KNOWN_LEGO_FIRMWARE_VERSIONS = {
+    b"v1.2.01.0000-849e6c3": "MINDSTORMS Robot Inventor App v1.3.4 / 10.1.0",
     b"v1.2.01.0103-d08b6fe": "MINDSTORMS Robot Inventor App v1.3.4 / 10.1.0",
 }
 
