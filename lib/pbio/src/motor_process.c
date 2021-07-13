@@ -47,7 +47,7 @@ void pbio_motor_process_reset(void) {
         pbio_servo_stop_force(srv);
 
         // Run setup and set connected flag on success
-        pbio_servo_set_connected(srv, pbio_servo_setup(srv, PBIO_DIRECTION_CLOCKWISE, fix16_one) == PBIO_SUCCESS);
+        pbio_servo_set_connected(srv, pbio_servo_setup(srv, PBIO_DIRECTION_CLOCKWISE, fix16_one, false) == PBIO_SUCCESS);
     }
 }
 

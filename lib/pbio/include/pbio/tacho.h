@@ -16,7 +16,7 @@ typedef struct _pbio_tacho_t pbio_tacho_t;
 
 #if PBIO_CONFIG_TACHO
 
-pbio_error_t pbio_tacho_get(pbio_port_id_t port, pbio_tacho_t **tacho, pbio_direction_t direction, fix16_t gear_ratio);
+pbio_error_t pbio_tacho_get(pbio_port_id_t port, pbio_tacho_t **tacho, pbio_direction_t direction, fix16_t gear_ratio, bool reset_angle);
 
 pbio_error_t pbio_tacho_get_count(pbio_tacho_t *tacho, int32_t *count);
 pbio_error_t pbio_tacho_get_angle(pbio_tacho_t *tacho, int32_t *angle);

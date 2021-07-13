@@ -89,7 +89,7 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
     tt_want(process_is_running(&pbio_motor_process));
 
     tt_uint_op(pbio_motor_process_get_servo(PBIO_PORT_ID_A, &servo), ==, PBIO_SUCCESS);
-    tt_uint_op(pbio_servo_setup(servo, PBIO_DIRECTION_CLOCKWISE, F16C(1, 0)), ==, PBIO_SUCCESS);
+    tt_uint_op(pbio_servo_setup(servo, PBIO_DIRECTION_CLOCKWISE, F16C(1, 0), true), ==, PBIO_SUCCESS);
     pbio_servo_set_connected(servo, true);
 
     // only logging one row since we read it after every iteration

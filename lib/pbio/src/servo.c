@@ -30,7 +30,7 @@ static pbio_error_t pbio_servo_observer_reset(pbio_servo_t *srv) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio) {
+pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio, bool reset_angle) {
     pbio_error_t err;
 
     // Return if this servo is already in use by higher level entity
@@ -39,7 +39,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     }
 
     // Get and reset tacho
-    err = pbio_tacho_get(srv->port, &srv->tacho, direction, gear_ratio);
+    err = pbio_tacho_get(srv->port, &srv->tacho, direction, gear_ratio, reset_angle);
     if (err != PBIO_SUCCESS) {
         return err;
     }

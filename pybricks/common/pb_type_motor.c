@@ -34,11 +34,13 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
         PB_ARG_REQUIRED(port),
         PB_ARG_DEFAULT_OBJ(positive_direction, pb_Direction_CLOCKWISE_obj),
-        PB_ARG_DEFAULT_NONE(gears));
+        PB_ARG_DEFAULT_NONE(gears),
+        PB_ARG_DEFAULT_TRUE(reset_angle));
 
     // Configure the motor with the selected arguments at pbio level
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pbio_direction_t positive_direction = pb_type_enum_get_value(positive_direction_in, &pb_enum_type_Direction);
+    bool reset_angle = mp_obj_is_true(reset_angle_in);
     pbio_error_t err;
     pbio_servo_t *srv;
 
@@ -82,7 +84,7 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     pb_assert(pbio_motor_process_get_servo(port, &srv));
 
     // Set up servo
-    while ((err = pbio_servo_setup(srv, positive_direction, gear_ratio)) == PBIO_ERROR_AGAIN) {
+    while ((err = pbio_servo_setup(srv, positive_direction, gear_ratio, reset_angle)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);

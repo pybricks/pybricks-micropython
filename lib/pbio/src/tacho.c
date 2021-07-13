@@ -56,7 +56,7 @@ static pbio_error_t pbio_tacho_reset_count_to_abs(pbio_tacho_t *tacho, int32_t *
     return pbio_tacho_reset_count(tacho, *abs_count);
 }
 
-static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pbio_direction_t direction, fix16_t gear_ratio) {
+static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pbio_direction_t direction, fix16_t gear_ratio, bool reset_angle) {
     // Assert that scaling factors are positive
     if (gear_ratio < 0) {
         return PBIO_ERROR_INVALID_ARG;
@@ -73,6 +73,11 @@ static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pb
         return err;
     }
 
+    // If there's no need to reset the angle, we are done here.
+    if (!reset_angle) {
+        return PBIO_SUCCESS;
+    }
+
     // Reset count to absolute value if supported
     int32_t abs_count;
     err = pbio_tacho_reset_count_to_abs(tacho, &abs_count);
@@ -83,7 +88,7 @@ static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pb
     return err;
 }
 
-pbio_error_t pbio_tacho_get(pbio_port_id_t port, pbio_tacho_t **tacho, pbio_direction_t direction, fix16_t gear_ratio) {
+pbio_error_t pbio_tacho_get(pbio_port_id_t port, pbio_tacho_t **tacho, pbio_direction_t direction, fix16_t gear_ratio, bool reset_angle) {
     // Validate port
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
         return PBIO_ERROR_INVALID_PORT;
@@ -96,7 +101,7 @@ pbio_error_t pbio_tacho_get(pbio_port_id_t port, pbio_tacho_t **tacho, pbio_dire
     uint8_t counter_id = port - PBDRV_CONFIG_FIRST_MOTOR_PORT;
 
     // Initialize and set up tacho properties
-    return pbio_tacho_setup(*tacho, counter_id, direction, gear_ratio);
+    return pbio_tacho_setup(*tacho, counter_id, direction, gear_ratio, reset_angle);
 }
 
 pbio_error_t pbio_tacho_get_count(pbio_tacho_t *tacho, int32_t *count) {
