@@ -3,7 +3,7 @@
 # Changelog
 
 
-## [Unreleased]
+## [3.1.0a3] - 2021-07-19
 
 ### Added
 - Added `reset_angle=False` keyword argument to `Motor()` class.
@@ -99,7 +99,8 @@ Prerelease changes are documented at [support#48].
 [support#386]: https://github.com/pybricks/support/issues/386
 [support#389]: https://github.com/pybricks/support/issues/389
 
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0a2...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0a3...HEAD
+[3.1.0a3]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a2...v3.1.0a3
 [3.1.0a2]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a1...v3.1.0a2
 [3.1.0a1]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0...v3.1.0a1
 [3.0.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0c1...v3.0.0
