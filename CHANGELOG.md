@@ -6,7 +6,7 @@
 ## [Unreleased]
 
 ### Added
-- Added `reset_angle=False` keyword argument to `Motor()` class. 
+- Added `reset_angle=False` keyword argument to `Motor()` class.
   This makes resetting the angle optional, allowing to maintain absolute
   positioning for robots with gears ([support#389]).
 
@@ -16,6 +16,7 @@
 
 ### Fixed
 - Fixed City hub not always powering off on shutdown ([support#385]).
+- Fixed Move hub turning back on after shutdown ([support#386]).
 
 ## [3.1.0a2] - 2021-07-06
 
@@ -95,6 +96,7 @@ Prerelease changes are documented at [support#48].
 [support#361]: https://github.com/pybricks/support/issues/361
 [support#379]: https://github.com/pybricks/support/issues/379
 [support#385]: https://github.com/pybricks/support/issues/385
+[support#386]: https://github.com/pybricks/support/issues/386
 [support#389]: https://github.com/pybricks/support/issues/389
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0a2...HEAD

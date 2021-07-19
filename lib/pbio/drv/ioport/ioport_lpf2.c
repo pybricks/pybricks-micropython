@@ -409,8 +409,16 @@ PROCESS_THREAD(pbdrv_ioport_lpf2_process, ev, data) {
         // TODO: we need to ensure H-bridge power is off here to avoid potentially
         // damaging custom I/O devices.
 
+        #if PBDRV_CONFIG_IOPORT_LPF2_BOOST_SHUTDOWN_QUIRK
+        // The LEGO BOOST Move hub will turn right back on when the power button
+        // is released if we turn off VCC at shutdown for some reason (hardware bug?).
+        pbdrv_gpio_out_high(&pbdrv_ioport_lpf2_platform_data.port_vcc);
+        #else
         // Turn off power on pin 4 on all ports
         pbdrv_gpio_out_low(&pbdrv_ioport_lpf2_platform_data.port_vcc);
+        #endif
+
+        PROCESS_EXIT();
     });
 
     PROCESS_BEGIN();
