@@ -542,7 +542,6 @@ void aci_gap_terminate_begin(uint16_t conn_handle, uint8_t reason)
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_TERMINATE);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
-  rq.event = EVT_CMD_STATUS;
 
   hci_send_req(&rq);
 }
@@ -636,7 +635,6 @@ void aci_gap_start_general_discovery_proc_begin(
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_START_GENERAL_DISCOVERY_PROC);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
-  rq.event = EVT_CMD_STATUS;
 
   hci_send_req(&rq);
 }
@@ -777,7 +775,6 @@ void aci_gap_start_general_conn_establish_proc_begin(
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_START_GENERAL_CONN_ESTABLISH_PROC);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
-  rq.event = EVT_CMD_STATUS;
 
   hci_send_req(&rq);
 }
@@ -855,7 +852,6 @@ void aci_gap_create_connection_begin(
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_CREATE_CONNECTION);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
-  rq.event = EVT_CMD_STATUS;
 
   hci_send_req(&rq);
 }

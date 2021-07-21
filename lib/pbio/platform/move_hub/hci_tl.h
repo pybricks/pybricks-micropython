@@ -31,7 +31,6 @@ struct hci_request_and_response {
 };
 
 struct hci_request {
-    uint32_t event;   /**< HCI Event */
     void *cparam;     /**< HCI Command from MCU to Host */
     uint16_t opcode;  /**< Opcode */
     uint8_t clen;     /**< Command Length */

@@ -778,7 +778,6 @@ void aci_gatt_disc_charac_by_uuid_begin(
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_DISC_CHARAC_BY_UUID);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
-  rq.event = EVT_CMD_STATUS;
 
   hci_send_req(&rq);
 }
@@ -955,7 +954,6 @@ void aci_gatt_write_charac_value_begin(uint16_t conn_handle,
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_WRITE_CHAR_VALUE);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
-  rq.event = EVT_CMD_STATUS;
 
   hci_send_req(&rq);
 }
