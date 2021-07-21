@@ -93,7 +93,7 @@ tBleStatus aci_gap_set_limited_discoverable(uint8_t AdvType, uint16_t AdvIntervM
                                                  const char *LocalName, uint8_t ServiceUUIDLen, uint8_t* ServiceUUIDList,
                                                  uint16_t SlaveConnIntervMin, uint16_t SlaveConnIntervMax)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   uint8_t buffer[40];
   uint8_t indx = 0;
@@ -144,7 +144,7 @@ tBleStatus aci_gap_set_limited_discoverable(uint8_t AdvType, uint16_t AdvIntervM
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -229,7 +229,7 @@ tBleStatus aci_gap_set_direct_connectable(uint8_t own_addr_type, uint8_t directe
                                                   const uint8_t *initiator_addr, uint16_t adv_interv_min, uint16_t adv_interv_max)
 
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_set_direct_conectable_cp cp;
   uint8_t status;
 
@@ -247,14 +247,14 @@ tBleStatus aci_gap_set_direct_connectable(uint8_t own_addr_type, uint8_t directe
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gap_set_io_capability(uint8_t io_capability)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gap_set_io_capability_cp cp;
 
@@ -267,7 +267,7 @@ tBleStatus aci_gap_set_io_capability(uint8_t io_capability)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -281,7 +281,7 @@ tBleStatus aci_gap_set_auth_requirement(uint8_t mitm_mode,
                                         uint32_t fixed_pin,
                                         uint8_t bonding_mode)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_set_auth_requirement_cp cp;
   uint8_t status;
 
@@ -301,7 +301,7 @@ tBleStatus aci_gap_set_auth_requirement(uint8_t mitm_mode,
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (status) {
     return status;
@@ -312,7 +312,7 @@ tBleStatus aci_gap_set_auth_requirement(uint8_t mitm_mode,
 
 tBleStatus aci_gap_set_author_requirement(uint16_t conn_handle, uint8_t authorization_enable)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_set_author_requirement_cp cp;
   uint8_t status;
 
@@ -326,14 +326,14 @@ tBleStatus aci_gap_set_author_requirement(uint16_t conn_handle, uint8_t authoriz
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gap_pass_key_response(uint16_t conn_handle, uint32_t passkey)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_passkey_response_cp cp;
   uint8_t status;
 
@@ -348,14 +348,14 @@ tBleStatus aci_gap_pass_key_response(uint16_t conn_handle, uint32_t passkey)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gap_authorization_response(uint16_t conn_handle, uint8_t authorize)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_authorization_response_cp cp;
   uint8_t status;
 
@@ -369,14 +369,14 @@ tBleStatus aci_gap_authorization_response(uint16_t conn_handle, uint8_t authoriz
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gap_set_non_connectable(uint8_t adv_type, uint8_t own_address_type)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_set_non_connectable_cp cp;
   uint8_t status;
 
@@ -390,14 +390,14 @@ tBleStatus aci_gap_set_non_connectable(uint8_t adv_type, uint8_t own_address_typ
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gap_set_undirected_connectable(uint8_t own_addr_type, uint8_t adv_filter_policy)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_set_undirected_connectable_cp cp;
   uint8_t status;
 
@@ -411,14 +411,14 @@ tBleStatus aci_gap_set_undirected_connectable(uint8_t own_addr_type, uint8_t adv
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gap_slave_security_request(uint16_t conn_handle, uint8_t bonding, uint8_t mitm_protection)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_slave_security_request_cp cp;
   uint8_t status;
 
@@ -434,7 +434,7 @@ tBleStatus aci_gap_slave_security_request(uint16_t conn_handle, uint8_t bonding,
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 
@@ -442,7 +442,7 @@ tBleStatus aci_gap_slave_security_request(uint16_t conn_handle, uint8_t bonding,
 
 tBleStatus aci_gap_update_adv_data(uint8_t AdvLen, const uint8_t *AdvData)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   uint8_t buffer[32];
   uint8_t indx = 0;
@@ -463,14 +463,14 @@ tBleStatus aci_gap_update_adv_data(uint8_t AdvLen, const uint8_t *AdvData)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gap_delete_ad_type(uint8_t ad_type)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_delete_ad_type_cp cp;
   uint8_t status;
 
@@ -483,7 +483,7 @@ tBleStatus aci_gap_delete_ad_type(uint8_t ad_type)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -491,7 +491,7 @@ tBleStatus aci_gap_delete_ad_type(uint8_t ad_type)
 tBleStatus aci_gap_get_security_level(uint8_t* mitm_protection, uint8_t* bonding,
                                       uint8_t* oob_data, uint8_t* passkey_required)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_get_security_level_rp resp;
 
   memset(&resp, 0, sizeof(resp));
@@ -501,7 +501,7 @@ tBleStatus aci_gap_get_security_level(uint8_t* mitm_protection, uint8_t* bonding
   rq.rparam = &resp;
   rq.rlen = GAP_GET_SECURITY_LEVEL_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -517,7 +517,7 @@ tBleStatus aci_gap_get_security_level(uint8_t* mitm_protection, uint8_t* bonding
 
 tBleStatus aci_gap_configure_whitelist(void)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
 
   memset(&rq, 0, sizeof(rq));
@@ -525,7 +525,7 @@ tBleStatus aci_gap_configure_whitelist(void)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -562,7 +562,7 @@ tBleStatus aci_gap_terminate_end(void)
 
 tBleStatus aci_gap_clear_security_database(void)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
 
   memset(&rq, 0, sizeof(rq));
@@ -570,14 +570,14 @@ tBleStatus aci_gap_clear_security_database(void)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gap_allow_rebond(uint16_t conn_handle)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_allow_rebond_cp cp;
   uint8_t status;
 
@@ -590,7 +590,7 @@ tBleStatus aci_gap_allow_rebond(uint16_t conn_handle)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -598,7 +598,7 @@ tBleStatus aci_gap_allow_rebond(uint16_t conn_handle)
 tBleStatus aci_gap_start_limited_discovery_proc(uint16_t scanInterval, uint16_t scanWindow,
                                                       uint8_t own_address_type, uint8_t filterDuplicates)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_start_limited_discovery_proc_cp cp;
   uint8_t status;
 
@@ -615,7 +615,7 @@ tBleStatus aci_gap_start_limited_discovery_proc(uint16_t scanInterval, uint16_t 
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -661,7 +661,7 @@ tBleStatus aci_gap_start_name_discovery_proc(uint16_t scanInterval, uint16_t sca
                                          uint16_t supervision_timeout, uint16_t min_conn_length,
                                          uint16_t max_conn_length)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_start_name_discovery_proc_cp cp;
   uint8_t status;
 
@@ -685,7 +685,7 @@ tBleStatus aci_gap_start_name_discovery_proc(uint16_t scanInterval, uint16_t sca
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -698,7 +698,7 @@ tBleStatus aci_gap_start_auto_conn_establish_proc(uint16_t scanInterval, uint16_
                          uint8_t num_whitelist_entries,
                          const uint8_t *addr_array)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   uint8_t buffer[HCI_MAX_PAYLOAD_SIZE];
   uint8_t indx = 0;
@@ -755,7 +755,7 @@ tBleStatus aci_gap_start_auto_conn_establish_proc(uint16_t scanInterval, uint16_
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -799,7 +799,7 @@ tBleStatus aci_gap_start_selective_conn_establish_proc(uint8_t scan_type, uint16
                                                        uint8_t own_address_type, uint8_t filter_duplicates, uint8_t num_whitelist_entries,
                          const uint8_t *addr_array)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_start_selective_conn_establish_proc_cp cp;
   uint8_t status;
 
@@ -823,7 +823,7 @@ tBleStatus aci_gap_start_selective_conn_establish_proc(uint8_t scan_type, uint16
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -903,7 +903,7 @@ tBleStatus aci_gap_start_connection_update(uint16_t conn_handle, uint16_t conn_m
                                            uint16_t supervision_timeout, uint16_t min_conn_length,
                                            uint16_t max_conn_length)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_start_connection_update_cp cp;
   uint8_t status;
 
@@ -923,14 +923,14 @@ tBleStatus aci_gap_start_connection_update(uint16_t conn_handle, uint16_t conn_m
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gap_send_pairing_request(uint16_t conn_handle, uint8_t force_rebond)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_send_pairing_request_cp cp;
   uint8_t status;
 
@@ -945,14 +945,14 @@ tBleStatus aci_gap_send_pairing_request(uint16_t conn_handle, uint8_t force_rebo
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gap_resolve_private_address(const tBDAddr private_address, tBDAddr actual_address)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_resolve_private_address_cp cp;
   gap_resolve_private_address_rp rp;
 
@@ -965,7 +965,7 @@ tBleStatus aci_gap_resolve_private_address(const tBDAddr private_address, tBDAdd
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if(rp.status)
     return rp.status;
@@ -979,7 +979,7 @@ tBleStatus aci_gap_set_broadcast_mode(uint16_t adv_interv_min, uint16_t adv_inte
                                       uint8_t own_addr_type, uint8_t adv_data_length, const uint8_t *adv_data,  uint8_t num_whitelist_entries,
                                   const uint8_t *addr_array)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_set_broadcast_mode_cp cp;
   uint8_t status;
   uint8_t indx = 0;
@@ -1008,7 +1008,7 @@ tBleStatus aci_gap_set_broadcast_mode(uint16_t adv_interv_min, uint16_t adv_inte
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -1016,7 +1016,7 @@ tBleStatus aci_gap_set_broadcast_mode(uint16_t adv_interv_min, uint16_t adv_inte
 tBleStatus aci_gap_start_observation_procedure(uint16_t scan_interval, uint16_t scan_window, uint8_t scan_type,
                                                        uint8_t own_address_type, uint8_t filter_duplicates)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_start_observation_proc_cp cp;
   uint8_t status;
 
@@ -1034,14 +1034,14 @@ tBleStatus aci_gap_start_observation_procedure(uint16_t scan_interval, uint16_t 
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gap_is_device_bonded(uint8_t peer_address_type, const tBDAddr peer_address)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_is_device_bonded_cp cp;
   uint8_t status;
 
@@ -1055,14 +1055,14 @@ tBleStatus aci_gap_is_device_bonded(uint8_t peer_address_type, const tBDAddr pee
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gap_get_bonded_devices(uint8_t *num_devices, uint8_t *device_list, uint8_t device_list_size)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gap_get_bonded_devices_rp rp;
 
   memset(&rq, 0, sizeof(rq));
@@ -1070,7 +1070,7 @@ tBleStatus aci_gap_get_bonded_devices(uint8_t *num_devices, uint8_t *device_list
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (rp.status) {
     return rp.status;

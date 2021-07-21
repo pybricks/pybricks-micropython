@@ -29,7 +29,7 @@
 
 int hci_reset(void)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
 
   memset(&rq, 0, sizeof(rq));
@@ -37,14 +37,14 @@ int hci_reset(void)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 int hci_disconnect(uint16_t handle, uint8_t reason)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   disconnect_cp cp;
   uint8_t status;
 
@@ -59,7 +59,7 @@ int hci_disconnect(uint16_t handle, uint8_t reason)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -67,7 +67,7 @@ int hci_disconnect(uint16_t handle, uint8_t reason)
 int hci_le_read_local_version(uint8_t *hci_version, uint16_t *hci_revision, uint8_t *lmp_pal_version,
                               uint16_t *manufacturer_name, uint16_t *lmp_pal_subversion)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   read_local_version_rp resp;
 
   memset(&resp, 0, sizeof(resp));
@@ -79,7 +79,7 @@ int hci_le_read_local_version(uint8_t *hci_version, uint16_t *hci_revision, uint
   rq.rparam = &resp;
   rq.rlen = READ_LOCAL_VERSION_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -97,7 +97,7 @@ int hci_le_read_local_version(uint8_t *hci_version, uint16_t *hci_revision, uint
 
 int hci_le_read_buffer_size(uint16_t *pkt_len, uint8_t *max_pkt)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_read_buffer_size_rp resp;
 
   memset(&resp, 0, sizeof(resp));
@@ -109,7 +109,7 @@ int hci_le_read_buffer_size(uint16_t *pkt_len, uint8_t *max_pkt)
   rq.rparam = &resp;
   rq.rlen = LE_READ_BUFFER_SIZE_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -125,7 +125,7 @@ int hci_le_set_advertising_parameters(uint16_t min_interval, uint16_t max_interv
                                       uint8_t own_bdaddr_type, uint8_t direct_bdaddr_type, const tBDAddr direct_bdaddr, uint8_t chan_map,
                                       uint8_t filter)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_set_adv_parameters_cp adv_cp;
   uint8_t status;
 
@@ -147,7 +147,7 @@ int hci_le_set_advertising_parameters(uint16_t min_interval, uint16_t max_interv
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -184,7 +184,7 @@ tBleStatus hci_le_set_advertising_data_end(void)
 
 int hci_le_set_advertise_enable(uint8_t enable)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_set_advertise_enable_cp adv_cp;
   uint8_t status;
 
@@ -198,7 +198,7 @@ int hci_le_set_advertise_enable(uint8_t enable)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -207,7 +207,7 @@ int hci_le_set_scan_parameters(uint8_t type, uint16_t interval,
                                uint16_t window, uint8_t own_bdaddr_type,
                                uint8_t filter)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_set_scan_parameters_cp scan_cp;
   uint8_t status;
 
@@ -225,14 +225,14 @@ int hci_le_set_scan_parameters(uint8_t type, uint16_t interval,
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 int hci_le_set_scan_enable(uint8_t enable, uint8_t filter_dup)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_set_scan_enable_cp scan_cp;
   uint8_t status;
 
@@ -247,14 +247,14 @@ int hci_le_set_scan_enable(uint8_t enable, uint8_t filter_dup)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 int hci_le_rand(uint8_t random_number[8])
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_rand_rp resp;
 
   memset(&resp, 0, sizeof(resp));
@@ -266,7 +266,7 @@ int hci_le_rand(uint8_t random_number[8])
   rq.rparam = &resp;
   rq.rlen = LE_RAND_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -309,7 +309,7 @@ tBleStatus hci_le_set_scan_response_data_end(void)
 
 int hci_le_read_advertising_channel_tx_power(int8_t *tx_power_level)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_read_adv_channel_tx_power_rp resp;
 
   memset(&resp, 0, sizeof(resp));
@@ -321,7 +321,7 @@ int hci_le_read_advertising_channel_tx_power(int8_t *tx_power_level)
   rq.rparam = &resp;
   rq.rlen = LE_RAND_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -334,7 +334,7 @@ int hci_le_read_advertising_channel_tx_power(int8_t *tx_power_level)
 
 int hci_le_set_random_address(tBDAddr bdaddr)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_set_random_address_cp set_rand_addr_cp;
   uint8_t status;
 
@@ -348,14 +348,14 @@ int hci_le_set_random_address(tBDAddr bdaddr)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 int hci_read_bd_addr(tBDAddr bdaddr)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   read_bd_addr_rp resp;
 
   memset(&resp, 0, sizeof(resp));
@@ -367,7 +367,7 @@ int hci_read_bd_addr(tBDAddr bdaddr)
   rq.rparam = &resp;
   rq.rlen = READ_BD_ADDR_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -381,7 +381,7 @@ int hci_le_create_connection(uint16_t interval, uint16_t window, uint8_t initiat
                              const tBDAddr peer_bdaddr, uint8_t own_bdaddr_type, uint16_t min_interval, uint16_t max_interval,
                              uint16_t latency, uint16_t supervision_timeout, uint16_t min_ce_length, uint16_t max_ce_length)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_create_connection_cp create_cp;
   uint8_t status;
 
@@ -407,14 +407,14 @@ int hci_le_create_connection(uint16_t interval, uint16_t window, uint8_t initiat
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 int hci_le_create_connection_cancel(void)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
 
   memset(&rq, 0, sizeof(rq));
@@ -422,14 +422,14 @@ int hci_le_create_connection_cancel(void)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 int hci_le_encrypt(uint8_t key[16], uint8_t plaintextData[16], uint8_t encryptedData[16])
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_encrypt_cp params;
   le_encrypt_rp resp;
 
@@ -445,7 +445,7 @@ int hci_le_encrypt(uint8_t key[16], uint8_t plaintextData[16], uint8_t encrypted
   rq.rparam = &resp;
   rq.rlen = LE_ENCRYPT_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -458,7 +458,7 @@ int hci_le_encrypt(uint8_t key[16], uint8_t plaintextData[16], uint8_t encrypted
 
 int hci_le_ltk_request_reply(uint8_t key[16])
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_ltk_reply_cp params;
   le_ltk_reply_rp resp;
 
@@ -474,14 +474,14 @@ int hci_le_ltk_request_reply(uint8_t key[16])
   rq.rparam = &resp;
   rq.rlen = LE_LTK_REPLY_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return resp.status;
 }
 
 int hci_le_ltk_request_neg_reply(void)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_ltk_neg_reply_cp params;
   le_ltk_neg_reply_rp resp;
 
@@ -496,14 +496,14 @@ int hci_le_ltk_request_neg_reply(void)
   rq.rparam = &resp;
   rq.rlen = LE_LTK_NEG_REPLY_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return resp.status;
 }
 
 int hci_le_read_white_list_size(uint8_t *size)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_read_white_list_size_rp resp;
 
   memset(&resp, 0, sizeof(resp));
@@ -513,7 +513,7 @@ int hci_le_read_white_list_size(uint8_t *size)
   rq.rparam = &resp;
   rq.rlen = LE_READ_WHITE_LIST_SIZE_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -526,7 +526,7 @@ int hci_le_read_white_list_size(uint8_t *size)
 
 int hci_le_clear_white_list(void)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
 
   memset(&rq, 0, sizeof(rq));
@@ -534,14 +534,14 @@ int hci_le_clear_white_list(void)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 int hci_le_add_device_to_white_list(uint8_t bdaddr_type, tBDAddr bdaddr)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_add_device_to_white_list_cp params;
   uint8_t status;
 
@@ -555,14 +555,14 @@ int hci_le_add_device_to_white_list(uint8_t bdaddr_type, tBDAddr bdaddr)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 int hci_le_remove_device_from_white_list(uint8_t bdaddr_type, tBDAddr bdaddr)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_remove_device_from_white_list_cp params;
   uint8_t status;
 
@@ -576,14 +576,14 @@ int hci_le_remove_device_from_white_list(uint8_t bdaddr_type, tBDAddr bdaddr)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 int hci_read_transmit_power_level(uint16_t *conn_handle, uint8_t type, int8_t * tx_level)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   read_transmit_power_level_cp params;
   read_transmit_power_level_rp resp;
 
@@ -599,7 +599,7 @@ int hci_read_transmit_power_level(uint16_t *conn_handle, uint8_t type, int8_t * 
   rq.rparam = &resp;
   rq.rlen = READ_TRANSMIT_POWER_LEVEL_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -613,7 +613,7 @@ int hci_read_transmit_power_level(uint16_t *conn_handle, uint8_t type, int8_t * 
 
 int hci_read_rssi(uint16_t *conn_handle, int8_t * rssi)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   read_rssi_cp params;
   read_rssi_rp resp;
 
@@ -628,7 +628,7 @@ int hci_read_rssi(uint16_t *conn_handle, int8_t * rssi)
   rq.rparam = &resp;
   rq.rlen = READ_RSSI_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -642,7 +642,7 @@ int hci_read_rssi(uint16_t *conn_handle, int8_t * rssi)
 
 int hci_le_read_local_supported_features(uint8_t *features)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_read_local_supported_features_rp resp;
 
   memset(&resp, 0, sizeof(resp));
@@ -652,7 +652,7 @@ int hci_le_read_local_supported_features(uint8_t *features)
   rq.rparam = &resp;
   rq.rlen = LE_READ_LOCAL_SUPPORTED_FEATURES_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -665,7 +665,7 @@ int hci_le_read_local_supported_features(uint8_t *features)
 
 int hci_le_read_channel_map(uint16_t conn_handle, uint8_t ch_map[5])
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_read_channel_map_cp params;
   le_read_channel_map_rp resp;
 
@@ -680,7 +680,7 @@ int hci_le_read_channel_map(uint16_t conn_handle, uint8_t ch_map[5])
   rq.rparam = &resp;
   rq.rlen = LE_READ_CHANNEL_MAP_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -693,7 +693,7 @@ int hci_le_read_channel_map(uint16_t conn_handle, uint8_t ch_map[5])
 
 int hci_le_read_supported_states(uint8_t states[8])
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_read_supported_states_rp resp;
 
   memset(&resp, 0, sizeof(resp));
@@ -703,7 +703,7 @@ int hci_le_read_supported_states(uint8_t states[8])
   rq.rparam = &resp;
   rq.rlen = LE_READ_SUPPORTED_STATES_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -716,7 +716,7 @@ int hci_le_read_supported_states(uint8_t states[8])
 
 int hci_le_receiver_test(uint8_t frequency)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_receiver_test_cp params;
   uint8_t status;
 
@@ -729,14 +729,14 @@ int hci_le_receiver_test(uint8_t frequency)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 int hci_le_transmitter_test(uint8_t frequency, uint8_t length, uint8_t payload)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_transmitter_test_cp params;
   uint8_t status;
 
@@ -751,14 +751,14 @@ int hci_le_transmitter_test(uint8_t frequency, uint8_t length, uint8_t payload)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 int hci_le_test_end(uint16_t *num_pkts)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   le_test_end_rp resp;
 
   memset(&resp, 0, sizeof(resp));
@@ -768,7 +768,7 @@ int hci_le_test_end(uint16_t *num_pkts)
   rq.rparam = &resp;
   rq.rlen = LE_TEST_END_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (resp.status) {
     return resp.status;

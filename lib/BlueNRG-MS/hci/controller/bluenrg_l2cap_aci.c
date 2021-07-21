@@ -30,7 +30,7 @@ tBleStatus aci_l2cap_connection_parameter_update_request(uint16_t conn_handle, u
                                                          uint16_t interval_max, uint16_t slave_latency,
                                                          uint16_t timeout_multiplier)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   l2cap_conn_param_update_req_cp cp;
 
@@ -48,7 +48,7 @@ tBleStatus aci_l2cap_connection_parameter_update_request(uint16_t conn_handle, u
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -58,7 +58,7 @@ tBleStatus aci_l2cap_connection_parameter_update_response(uint16_t conn_handle, 
                                                          uint16_t timeout_multiplier, uint16_t min_ce_length, uint16_t max_ce_length,
                              uint8_t id, uint8_t accept)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   l2cap_conn_param_update_resp_cp cp;
 
@@ -79,7 +79,7 @@ tBleStatus aci_l2cap_connection_parameter_update_response(uint16_t conn_handle, 
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }

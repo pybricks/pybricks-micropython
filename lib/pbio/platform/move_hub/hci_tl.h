@@ -21,8 +21,7 @@
 #include "bluenrg_types.h"
 #include "bluenrg_conf.h"
 
-// TODO: response will eventually be removed from this struct
-struct hci_request {
+struct hci_request_and_response {
     uint32_t event;   /**< HCI Event */
     void *cparam;     /**< HCI Command from MCU to Host */
     void *rparam;     /**< Response from Host to MCU */
@@ -31,18 +30,20 @@ struct hci_request {
     uint8_t rlen;     /**< Response Length */
 };
 
+struct hci_request {
+    uint32_t event;   /**< HCI Event */
+    void *cparam;     /**< HCI Command from MCU to Host */
+    uint16_t opcode;  /**< Opcode */
+    uint8_t clen;     /**< Command Length */
+};
+
 struct hci_response {
     void *rparam;     /**< Response from Host to MCU */
     uint8_t rlen;     /**< Response Length */
 };
 
-/**
- * @brief  Send an HCI request either in synchronous or in asynchronous mode.
- *
- * @param  r: The HCI request
- * @param  async: TRUE if asynchronous mode, FALSE if synchronous mode
- * @retval int: 0 when success, -1 when failure
- */
+void hci_send_req_recv_rsp(struct hci_request_and_response *r);
+
 void hci_send_req(struct hci_request *r);
 void hci_recv_resp(struct hci_response *r);
 

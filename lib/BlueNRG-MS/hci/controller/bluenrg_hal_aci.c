@@ -29,7 +29,7 @@
 
 tBleStatus aci_hal_get_fw_build_number(uint16_t *build_number)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   hal_get_fw_build_number_rp rp;
 
   memset(&rq, 0, sizeof(rq));
@@ -37,7 +37,7 @@ tBleStatus aci_hal_get_fw_build_number(uint16_t *build_number)
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if(rp.status)
     return rp.status;
@@ -89,7 +89,7 @@ tBleStatus aci_hal_write_config_data_end(void)
 
 tBleStatus aci_hal_read_config_data(uint8_t offset, uint16_t data_len, uint8_t *data_len_out_p, uint8_t *data)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   hal_read_config_data_cp cp;
   hal_read_config_data_rp rp;
 
@@ -102,7 +102,7 @@ tBleStatus aci_hal_read_config_data(uint8_t offset, uint16_t data_len, uint8_t *
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if(rp.status)
     return rp.status;
@@ -144,7 +144,7 @@ tBleStatus aci_hal_set_tx_power_level_end(void)
 
 tBleStatus aci_hal_le_tx_test_packet_number(uint32_t *number_of_packets)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   hal_le_tx_test_packet_number_rp resp;
 
   memset(&rq, 0, sizeof(rq));
@@ -152,7 +152,7 @@ tBleStatus aci_hal_le_tx_test_packet_number(uint32_t *number_of_packets)
   rq.rparam = &resp;
   rq.rlen = sizeof(resp);
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -165,7 +165,7 @@ tBleStatus aci_hal_le_tx_test_packet_number(uint32_t *number_of_packets)
 
 tBleStatus aci_hal_device_standby(void)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
 
   memset(&rq, 0, sizeof(rq));
@@ -173,14 +173,14 @@ tBleStatus aci_hal_device_standby(void)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_hal_tone_start(uint8_t rf_channel)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   hal_tone_start_cp cp;
   uint8_t status;
 
@@ -193,14 +193,14 @@ tBleStatus aci_hal_tone_start(uint8_t rf_channel)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_hal_tone_stop(void)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
 
   memset(&rq, 0, sizeof(rq));
@@ -208,14 +208,14 @@ tBleStatus aci_hal_tone_stop(void)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_hal_get_link_status(uint8_t link_status[8], uint16_t conn_handle[8])
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   hal_get_link_status_rp rp;
 
   memset(&rq, 0, sizeof(rq));
@@ -223,7 +223,7 @@ tBleStatus aci_hal_get_link_status(uint8_t link_status[8], uint16_t conn_handle[
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if(rp.status)
     return rp.status;
@@ -237,7 +237,7 @@ tBleStatus aci_hal_get_link_status(uint8_t link_status[8], uint16_t conn_handle[
 
 tBleStatus aci_hal_get_anchor_period(uint32_t *anchor_period, uint32_t *max_free_slot)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   hal_get_anchor_period_rp rp;
 
   memset(&rq, 0, sizeof(rq));
@@ -245,7 +245,7 @@ tBleStatus aci_hal_get_anchor_period(uint32_t *anchor_period, uint32_t *max_free
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if(rp.status)
     return rp.status;

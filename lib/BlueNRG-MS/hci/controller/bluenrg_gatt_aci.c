@@ -107,7 +107,7 @@ tBleStatus aci_gatt_include_service(uint16_t service_handle, uint16_t included_s
                                     uint16_t included_end_handle, uint8_t included_uuid_type,
                                     const uint8_t* included_uuid, uint16_t *included_handle)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gatt_include_serv_rp resp;
   uint8_t buffer[23];
   uint8_t uuid_len;
@@ -146,7 +146,7 @@ tBleStatus aci_gatt_include_service(uint16_t service_handle, uint16_t included_s
   rq.rparam = &resp;
   rq.rlen = GATT_INCLUDE_SERV_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -247,7 +247,7 @@ tBleStatus aci_gatt_add_char_desc(uint16_t serviceHandle,
                                   uint8_t isVariable,
                                   uint16_t* descHandle)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gatt_add_char_desc_rp resp;
   uint8_t buffer[HCI_MAX_PAYLOAD_SIZE];
   uint8_t uuid_len;
@@ -309,7 +309,7 @@ tBleStatus aci_gatt_add_char_desc(uint16_t serviceHandle,
   rq.rparam = &resp;
   rq.rlen = GATT_ADD_CHAR_DESC_RP_SIZE;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (resp.status) {
     return resp.status;
@@ -372,7 +372,7 @@ tBleStatus aci_gatt_update_char_value_end(void)
 
 tBleStatus aci_gatt_del_char(uint16_t servHandle, uint16_t charHandle)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_del_char_cp cp;
 
@@ -386,14 +386,14 @@ tBleStatus aci_gatt_del_char(uint16_t servHandle, uint16_t charHandle)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gatt_del_service(uint16_t servHandle)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_del_serv_cp cp;
 
@@ -406,14 +406,14 @@ tBleStatus aci_gatt_del_service(uint16_t servHandle)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gatt_del_include_service(uint16_t servHandle, uint16_t includeServHandle)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_del_inc_serv_cp cp;
 
@@ -427,14 +427,14 @@ tBleStatus aci_gatt_del_include_service(uint16_t servHandle, uint16_t includeSer
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gatt_set_event_mask(uint32_t event_mask)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_set_evt_mask_cp cp;
 
@@ -447,14 +447,14 @@ tBleStatus aci_gatt_set_event_mask(uint32_t event_mask)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gatt_exchange_configuration(uint16_t conn_handle)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_exchange_config_cp cp;
 
@@ -468,14 +468,14 @@ tBleStatus aci_gatt_exchange_configuration(uint16_t conn_handle)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_att_find_information_req(uint16_t conn_handle, uint16_t start_handle, uint16_t end_handle)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   att_find_info_req_cp cp;
 
@@ -490,7 +490,7 @@ tBleStatus aci_att_find_information_req(uint16_t conn_handle, uint16_t start_han
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -498,7 +498,7 @@ tBleStatus aci_att_find_information_req(uint16_t conn_handle, uint16_t start_han
 tBleStatus aci_att_find_by_type_value_req(uint16_t conn_handle, uint16_t start_handle, uint16_t end_handle,
                                           uint8_t* uuid, uint8_t attr_val_len, uint8_t* attr_val)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   att_find_by_type_value_req_cp cp;
 
@@ -519,7 +519,7 @@ tBleStatus aci_att_find_by_type_value_req(uint16_t conn_handle, uint16_t start_h
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -527,7 +527,7 @@ tBleStatus aci_att_find_by_type_value_req(uint16_t conn_handle, uint16_t start_h
 tBleStatus aci_att_read_by_type_req(uint16_t conn_handle, uint16_t start_handle, uint16_t end_handle,
                                     uint8_t  uuid_type, uint8_t* uuid)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   att_read_by_type_req_cp cp;
   uint8_t uuid_len;
@@ -552,7 +552,7 @@ tBleStatus aci_att_read_by_type_req(uint16_t conn_handle, uint16_t start_handle,
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -560,7 +560,7 @@ tBleStatus aci_att_read_by_type_req(uint16_t conn_handle, uint16_t start_handle,
 tBleStatus aci_att_read_by_group_type_req(uint16_t conn_handle, uint16_t start_handle, uint16_t end_handle,
                                     uint8_t  uuid_type, uint8_t* uuid)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   att_read_by_group_type_req_cp cp;
   uint8_t uuid_len;
@@ -585,7 +585,7 @@ tBleStatus aci_att_read_by_group_type_req(uint16_t conn_handle, uint16_t start_h
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -593,7 +593,7 @@ tBleStatus aci_att_read_by_group_type_req(uint16_t conn_handle, uint16_t start_h
 tBleStatus aci_att_prepare_write_req(uint16_t conn_handle, uint16_t attr_handle, uint16_t value_offset,
                                     uint8_t  attr_val_len, uint8_t* attr_val)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   att_prepare_write_req_cp cp;
 
@@ -613,14 +613,14 @@ tBleStatus aci_att_prepare_write_req(uint16_t conn_handle, uint16_t attr_handle,
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_att_execute_write_req(uint16_t conn_handle, uint8_t execute)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   att_execute_write_req_cp cp;
 
@@ -634,14 +634,14 @@ tBleStatus aci_att_execute_write_req(uint16_t conn_handle, uint8_t execute)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gatt_disc_all_prim_services(uint16_t conn_handle)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_disc_all_prim_services_cp cp;
 
@@ -655,14 +655,14 @@ tBleStatus aci_gatt_disc_all_prim_services(uint16_t conn_handle)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gatt_disc_prim_service_by_uuid(uint16_t conn_handle, uint8_t uuid_type, uint8_t* uuid)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_disc_prim_service_by_uuid_cp cp;
   uint8_t uuid_len;
@@ -686,7 +686,7 @@ tBleStatus aci_gatt_disc_prim_service_by_uuid(uint16_t conn_handle, uint8_t uuid
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -694,7 +694,7 @@ tBleStatus aci_gatt_disc_prim_service_by_uuid(uint16_t conn_handle, uint8_t uuid
 tBleStatus aci_gatt_find_included_services(uint16_t conn_handle, uint16_t start_service_handle,
                                            uint16_t end_service_handle)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_find_included_services_cp cp;
 
@@ -710,7 +710,7 @@ tBleStatus aci_gatt_find_included_services(uint16_t conn_handle, uint16_t start_
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -718,7 +718,7 @@ tBleStatus aci_gatt_find_included_services(uint16_t conn_handle, uint16_t start_
 tBleStatus aci_gatt_disc_all_charac_of_serv(uint16_t conn_handle, uint16_t start_attr_handle,
                                             uint16_t end_attr_handle)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_disc_all_charac_of_serv_cp cp;
 
@@ -734,7 +734,7 @@ tBleStatus aci_gatt_disc_all_charac_of_serv(uint16_t conn_handle, uint16_t start
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -799,7 +799,7 @@ tBleStatus aci_gatt_disc_charac_by_uuid_end(void)
 tBleStatus aci_gatt_disc_all_charac_descriptors(uint16_t conn_handle, uint16_t char_val_handle,
                                                 uint16_t char_end_handle)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_disc_all_charac_descriptors_cp cp;
 
@@ -815,14 +815,14 @@ tBleStatus aci_gatt_disc_all_charac_descriptors(uint16_t conn_handle, uint16_t c
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gatt_read_charac_val(uint16_t conn_handle, uint16_t attr_handle)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_read_charac_val_cp cp;
 
@@ -837,7 +837,7 @@ tBleStatus aci_gatt_read_charac_val(uint16_t conn_handle, uint16_t attr_handle)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -845,7 +845,7 @@ tBleStatus aci_gatt_read_charac_val(uint16_t conn_handle, uint16_t attr_handle)
 tBleStatus aci_gatt_read_using_charac_uuid(uint16_t conn_handle, uint16_t start_handle, uint16_t end_handle,
                                     uint8_t  uuid_type, uint8_t* uuid)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_read_using_charac_uuid_cp cp;
   uint8_t uuid_len;
@@ -870,7 +870,7 @@ tBleStatus aci_gatt_read_using_charac_uuid(uint16_t conn_handle, uint16_t start_
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -878,7 +878,7 @@ tBleStatus aci_gatt_read_using_charac_uuid(uint16_t conn_handle, uint16_t start_
 tBleStatus aci_gatt_read_long_charac_val(uint16_t conn_handle, uint16_t attr_handle,
                                          uint16_t val_offset)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_read_long_charac_val_cp cp;
 
@@ -894,7 +894,7 @@ tBleStatus aci_gatt_read_long_charac_val(uint16_t conn_handle, uint16_t attr_han
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -902,7 +902,7 @@ tBleStatus aci_gatt_read_long_charac_val(uint16_t conn_handle, uint16_t attr_han
 tBleStatus aci_gatt_read_multiple_charac_val(uint16_t conn_handle, uint8_t num_handles,
                                              uint8_t* set_of_handles)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_read_multiple_charac_val_cp cp;
 
@@ -921,7 +921,7 @@ tBleStatus aci_gatt_read_multiple_charac_val(uint16_t conn_handle, uint8_t num_h
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -976,7 +976,7 @@ tBleStatus aci_gatt_write_charac_value_end(void)
 tBleStatus aci_gatt_write_long_charac_val(uint16_t conn_handle, uint16_t attr_handle,
                                           uint16_t val_offset, uint8_t val_len, const uint8_t* attr_val)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_write_long_charac_val_cp cp;
 
@@ -997,7 +997,7 @@ tBleStatus aci_gatt_write_long_charac_val(uint16_t conn_handle, uint16_t attr_ha
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -1005,7 +1005,7 @@ tBleStatus aci_gatt_write_long_charac_val(uint16_t conn_handle, uint16_t attr_ha
 tBleStatus aci_gatt_write_charac_reliable(uint16_t conn_handle, uint16_t attr_handle,
                                           uint16_t val_offset, uint8_t val_len, uint8_t* attr_val)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_write_charac_reliable_cp cp;
 
@@ -1026,7 +1026,7 @@ tBleStatus aci_gatt_write_charac_reliable(uint16_t conn_handle, uint16_t attr_ha
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -1034,7 +1034,7 @@ tBleStatus aci_gatt_write_charac_reliable(uint16_t conn_handle, uint16_t attr_ha
 tBleStatus aci_gatt_write_long_charac_desc(uint16_t conn_handle, uint16_t attr_handle,
                                           uint16_t val_offset, uint8_t val_len, uint8_t* attr_val)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_write_charac_reliable_cp cp;
 
@@ -1055,7 +1055,7 @@ tBleStatus aci_gatt_write_long_charac_desc(uint16_t conn_handle, uint16_t attr_h
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -1063,7 +1063,7 @@ tBleStatus aci_gatt_write_long_charac_desc(uint16_t conn_handle, uint16_t attr_h
 tBleStatus aci_gatt_read_long_charac_desc(uint16_t conn_handle, uint16_t attr_handle,
                                           uint16_t val_offset)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_read_long_charac_desc_cp cp;
 
@@ -1079,7 +1079,7 @@ tBleStatus aci_gatt_read_long_charac_desc(uint16_t conn_handle, uint16_t attr_ha
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -1087,7 +1087,7 @@ tBleStatus aci_gatt_read_long_charac_desc(uint16_t conn_handle, uint16_t attr_ha
 tBleStatus aci_gatt_write_charac_descriptor(uint16_t conn_handle, uint16_t attr_handle,
                                            uint8_t value_len, uint8_t *attr_value)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   uint8_t buffer[HCI_MAX_PAYLOAD_SIZE];
   uint8_t indx = 0;
@@ -1117,14 +1117,14 @@ tBleStatus aci_gatt_write_charac_descriptor(uint16_t conn_handle, uint16_t attr_
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gatt_read_charac_desc(uint16_t conn_handle, uint16_t attr_handle)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_read_long_charac_desc_cp cp;
 
@@ -1139,7 +1139,7 @@ tBleStatus aci_gatt_read_charac_desc(uint16_t conn_handle, uint16_t attr_handle)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -1182,7 +1182,7 @@ tBleStatus aci_gatt_write_without_response_end(void)
 tBleStatus aci_gatt_signed_write_without_resp(uint16_t conn_handle, uint16_t attr_handle,
                                               uint8_t val_len, uint8_t* attr_val)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_signed_write_without_resp_cp cp;
 
@@ -1201,14 +1201,14 @@ tBleStatus aci_gatt_signed_write_without_resp(uint16_t conn_handle, uint16_t att
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gatt_confirm_indication(uint16_t conn_handle)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_confirm_indication_cp cp;
 
@@ -1221,7 +1221,7 @@ tBleStatus aci_gatt_confirm_indication(uint16_t conn_handle)
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
@@ -1233,7 +1233,7 @@ tBleStatus aci_gatt_write_response(uint16_t conn_handle,
                                    uint8_t att_val_len,
                                    uint8_t *att_val)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   uint8_t buffer[HCI_MAX_PAYLOAD_SIZE];
   uint8_t indx = 0;
@@ -1268,7 +1268,7 @@ tBleStatus aci_gatt_write_response(uint16_t conn_handle,
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if (status) {
     return status;
@@ -1279,7 +1279,7 @@ tBleStatus aci_gatt_write_response(uint16_t conn_handle,
 
 tBleStatus aci_gatt_allow_read(uint16_t conn_handle)
 {
-    struct hci_request rq;
+    struct hci_request_and_response rq;
     gatt_allow_read_cp cp;
     uint8_t status;
 
@@ -1292,7 +1292,7 @@ tBleStatus aci_gatt_allow_read(uint16_t conn_handle)
     rq.rparam = &status;
     rq.rlen = 1;
 
-    hci_send_req(&rq);
+    hci_send_req_recv_rsp(&rq);
 
     return status;
 }
@@ -1300,7 +1300,7 @@ tBleStatus aci_gatt_allow_read(uint16_t conn_handle)
 tBleStatus aci_gatt_set_security_permission(uint16_t service_handle, uint16_t attr_handle,
                                             uint8_t security_permission)
 {
-    struct hci_request rq;
+    struct hci_request_and_response rq;
     gatt_set_security_permission_cp cp;
     uint8_t status;
 
@@ -1315,7 +1315,7 @@ tBleStatus aci_gatt_set_security_permission(uint16_t service_handle, uint16_t at
     rq.rparam = &status;
     rq.rlen = 1;
 
-    hci_send_req(&rq);
+    hci_send_req_recv_rsp(&rq);
 
     return status;
 }
@@ -1327,7 +1327,7 @@ tBleStatus aci_gatt_set_desc_value(uint16_t servHandle,
                                    uint8_t charDescValueLen,
                                    const void *charDescValue)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   uint8_t buffer[HCI_MAX_PAYLOAD_SIZE];
   uint8_t indx = 0;
@@ -1363,14 +1363,14 @@ tBleStatus aci_gatt_set_desc_value(uint16_t servHandle,
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
 
 tBleStatus aci_gatt_read_handle_value(uint16_t attr_handle, uint16_t data_len, uint16_t *data_len_out_p, uint8_t *data)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gatt_read_handle_val_cp cp;
   gatt_read_handle_val_rp rp;
 
@@ -1386,7 +1386,7 @@ tBleStatus aci_gatt_read_handle_value(uint16_t attr_handle, uint16_t data_len, u
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if(rp.status)
     return rp.status;
@@ -1400,7 +1400,7 @@ tBleStatus aci_gatt_read_handle_value(uint16_t attr_handle, uint16_t data_len, u
 
 tBleStatus aci_gatt_read_handle_value_offset(uint16_t attr_handle, uint8_t offset, uint16_t data_len, uint16_t *data_len_out_p, uint8_t *data)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   gatt_read_handle_val_offset_cp cp;
   gatt_read_handle_val_offset_rp rp;
 
@@ -1417,7 +1417,7 @@ tBleStatus aci_gatt_read_handle_value_offset(uint16_t attr_handle, uint8_t offse
   rq.rparam = &rp;
   rq.rlen = sizeof(rp);
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   if(rp.status)
     return rp.status;
@@ -1434,7 +1434,7 @@ tBleStatus aci_gatt_update_char_value_ext(uint16_t service_handle, uint16_t char
                                                   uint16_t value_offset, uint8_t value_length,
                                                   const uint8_t* value)
 {
-  struct hci_request rq;
+  struct hci_request_and_response rq;
   uint8_t status;
   gatt_upd_char_val_ext_cp cp;
 
@@ -1456,7 +1456,7 @@ tBleStatus aci_gatt_update_char_value_ext(uint16_t service_handle, uint16_t char
   rq.rparam = &status;
   rq.rlen = 1;
 
-  hci_send_req(&rq);
+  hci_send_req_recv_rsp(&rq);
 
   return status;
 }
