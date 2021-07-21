@@ -171,7 +171,7 @@ int hci_le_set_advertising_data_begin(uint8_t length, const uint8_t *data)
   return 0;
 }
 
-int hci_le_set_advertising_data_end(void)
+tBleStatus hci_le_set_advertising_data_end(void)
 {
   struct hci_response rq;
   uint8_t status;
@@ -298,7 +298,7 @@ int hci_le_set_scan_response_data_begin(uint8_t length, const uint8_t *data)
   return 0;
 }
 
-int hci_le_set_scan_response_data_end(void)
+tBleStatus hci_le_set_scan_response_data_end(void)
 {
   struct hci_response rq;
   uint8_t status;
