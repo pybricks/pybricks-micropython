@@ -11,6 +11,7 @@
 #ifndef _PBIO_UTIL_H_
 #define _PBIO_UTIL_H_
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <sys/cdefs.h>
 
@@ -100,6 +101,9 @@ void pbio_set_uint32_le(uint8_t *buf, uint32_t value) {
     buf[2] = value >> 16;
     buf[3] = value >> 24;
 }
+
+bool pbio_uuid128_reverse_compare(const uint8_t *uuid1, const uint8_t *uuid2);
+void pbio_uuid128_reverse_copy(uint8_t *dst, const uint8_t *src);
 
 #endif // _PBIO_UTIL_H_
 

@@ -87,6 +87,7 @@ extern struct testcase_t pbio_math_tests[];
 extern struct testcase_t pbio_motor_tests[];
 extern struct testcase_t pbio_task_tests[];
 extern struct testcase_t pbio_uartdev_tests[];
+extern struct testcase_t pbio_util_tests[];
 extern struct testcase_t pbsys_bluetooth_tests[];
 extern struct testcase_t pbsys_status_tests[];
 static struct testgroup_t test_groups[] = {
@@ -101,6 +102,7 @@ static struct testgroup_t test_groups[] = {
     { "src/motor/", pbio_motor_tests },
     { "src/task/", pbio_task_tests, },
     { "src/uartdev/", pbio_uartdev_tests, },
+    { "src/util/", pbio_util_tests, },
     { "sys/bluetooth/", pbsys_bluetooth_tests, },
     { "sys/status/", pbsys_status_tests, },
     END_OF_GROUPS
