@@ -76,7 +76,7 @@ tBleStatus aci_gap_init_end(uint16_t* service_handle,
   */
 void aci_gap_set_non_discoverable_begin(void);
 
-tBleStatus aci_gap_set_non_discoverable_end(void);
+#define aci_gap_set_non_discoverable_end hci_le_command_end
 
 /**
  * @brief  Put the device in limited discoverable mode
@@ -274,7 +274,8 @@ void aci_gap_set_discoverable_begin(uint8_t AdvType,
                                           const uint8_t* ServiceUUIDList,
                                           uint16_t SlaveConnIntervMin,
                                           uint16_t SlaveConnIntervMax);
-tBleStatus aci_gap_set_discoverable_end(void);
+
+#define aci_gap_set_discoverable_end hci_le_command_end
 
 /**
  * @brief Set the Device in direct connectable mode (as defined in GAP specification Volume 3, Section 9.3.3).
@@ -515,7 +516,7 @@ tBleStatus aci_gap_configure_whitelist(void);
  */
 void aci_gap_terminate_begin(uint16_t conn_handle, uint8_t reason);
 
-tBleStatus aci_gap_terminate_end(void);
+#define aci_gap_terminate_end hci_le_command_end
 
 /**
  * @brief Clear the security database.
@@ -587,7 +588,7 @@ void aci_gap_start_general_discovery_proc_begin(
   uint16_t scanInterval, uint16_t scanWindow,
   uint8_t own_address_type, uint8_t filterDuplicates);
 
-tBleStatus aci_gap_start_general_discovery_proc_end(void);
+#define aci_gap_start_general_discovery_proc_end hci_le_command_end
 
 /**
  * @brief Start the name discovery procedure.
@@ -740,7 +741,7 @@ void aci_gap_start_general_conn_establish_proc_begin(
     uint8_t scan_type, uint16_t scan_interval, uint16_t scan_window,
     uint8_t own_address_type, uint8_t filter_duplicates);
 
-tBleStatus aci_gap_start_general_conn_establish_proc_end(void);
+#define aci_gap_start_general_conn_establish_proc_end hci_le_command_end
 
 /**
  * @brief Start a selective connection establishment procedure.
@@ -835,7 +836,7 @@ void aci_gap_create_connection_begin(
     uint16_t supervision_timeout, uint16_t min_conn_length,
     uint16_t max_conn_length);
 
-tBleStatus aci_gap_create_connection_end(void);
+#define aci_gap_create_connection_end hci_le_command_end
 
 /**
  * @brief Terminate the specified GAP procedure. @ref EVT_BLUE_GAP_PROCEDURE_COMPLETE event is
@@ -844,7 +845,7 @@ tBleStatus aci_gap_create_connection_end(void);
  */
 void aci_gap_terminate_gap_procedure_begin(uint8_t procedure_code);
 
-tBleStatus aci_gap_terminate_gap_procedure_end(void);
+#define aci_gap_terminate_gap_procedure_end hci_le_command_end
 
 /**
  * @brief Start the connection parameter update procedure.

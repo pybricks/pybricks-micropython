@@ -74,19 +74,6 @@ void aci_gap_set_non_discoverable_begin(void)
   hci_send_req(&rq);
 }
 
-tBleStatus aci_gap_set_non_discoverable_end(void)
-{
-  struct hci_response rq;
-  uint8_t status;
-
-  rq.rparam = &status;
-  rq.rlen = 1;
-
-  hci_recv_resp(&rq);
-
-  return status;
-}
-
 tBleStatus aci_gap_set_limited_discoverable(uint8_t AdvType, uint16_t AdvIntervMin, uint16_t AdvIntervMax,
                                                  uint8_t OwnAddrType, uint8_t AdvFilterPolicy, uint8_t LocalNameLen,
                                                  const char *LocalName, uint8_t ServiceUUIDLen, uint8_t* ServiceUUIDList,
@@ -208,19 +195,6 @@ void aci_gap_set_discoverable_begin(uint8_t AdvType,
   rq.clen = indx;
 
   hci_send_req(&rq);
-}
-
-tBleStatus aci_gap_set_discoverable_end(void)
-{
-  struct hci_response rq;
-  uint8_t status;
-
-  rq.rparam = &status;
-  rq.rlen = 1;
-
-  hci_recv_resp(&rq);
-
-  return status;
 }
 
 tBleStatus aci_gap_set_direct_connectable(uint8_t own_addr_type, uint8_t directed_adv_type, uint8_t initiator_addr_type,
@@ -543,19 +517,6 @@ void aci_gap_terminate_begin(uint16_t conn_handle, uint8_t reason)
   hci_send_req(&rq);
 }
 
-tBleStatus aci_gap_terminate_end(void)
-{
-  struct hci_response rq;
-  uint8_t status;
-
-  rq.rparam = &status;
-  rq.rlen = 1;
-
-  hci_recv_resp(&rq);
-
-  return status;
-}
-
 tBleStatus aci_gap_clear_security_database(void)
 {
   struct hci_request_and_response rq;
@@ -633,19 +594,6 @@ void aci_gap_start_general_discovery_proc_begin(
   rq.clen = sizeof(cp);
 
   hci_send_req(&rq);
-}
-
-tBleStatus aci_gap_start_general_discovery_proc_end(void)
-{
-  struct hci_response rq;
-  uint8_t status;
-
-  rq.rparam = &status;
-  rq.rlen = 1;
-
-  hci_recv_resp(&rq);
-
-  return status;
 }
 
 tBleStatus aci_gap_start_name_discovery_proc(uint16_t scanInterval, uint16_t scanWindow,
@@ -774,19 +722,6 @@ void aci_gap_start_general_conn_establish_proc_begin(
   hci_send_req(&rq);
 }
 
-tBleStatus aci_gap_start_general_conn_establish_proc_end(void)
-{
-  struct hci_response rq;
-  uint8_t status;
-
-  rq.rparam = &status;
-  rq.rlen = 1;
-
-  hci_recv_resp(&rq);
-
-  return status;
-}
-
 tBleStatus aci_gap_start_selective_conn_establish_proc(uint8_t scan_type, uint16_t scan_interval, uint16_t scan_window,
                                                        uint8_t own_address_type, uint8_t filter_duplicates, uint8_t num_whitelist_entries,
                          const uint8_t *addr_array)
@@ -850,19 +785,6 @@ void aci_gap_create_connection_begin(
   hci_send_req(&rq);
 }
 
-tBleStatus aci_gap_create_connection_end(void)
-{
-  struct hci_response rq;
-  uint8_t status;
-
-  rq.rparam = &status;
-  rq.rlen = 1;
-
-  hci_recv_resp(&rq);
-
-  return status;
-}
-
 void aci_gap_terminate_gap_procedure_begin(uint8_t procedure_code)
 {
   struct hci_request rq;
@@ -872,19 +794,6 @@ void aci_gap_terminate_gap_procedure_begin(uint8_t procedure_code)
   rq.clen = 1;
 
   hci_send_req(&rq);
-}
-
-tBleStatus aci_gap_terminate_gap_procedure_end(void)
-{
-  struct hci_response rq;
-  uint8_t status;
-
-  rq.rparam = &status;
-  rq.rlen = 1;
-
-  hci_recv_resp(&rq);
-
-  return status;
 }
 
 tBleStatus aci_gap_start_connection_update(uint16_t conn_handle, uint16_t conn_min_interval,

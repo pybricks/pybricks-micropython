@@ -38,19 +38,6 @@ void aci_gatt_init_begin(void)
   hci_send_req(&rq);
 }
 
-tBleStatus aci_gatt_init_end(void)
-{
-  struct hci_response rq;
-  uint8_t status;
-
-  rq.rparam = &status;
-  rq.rlen = 1;
-
-  hci_recv_resp(&rq);
-
-  return status;
-}
-
 void aci_gatt_add_serv_begin(uint8_t service_uuid_type, const uint8_t* service_uuid, uint8_t service_type, uint8_t max_attr_records)
 {
   struct hci_request rq;
@@ -352,19 +339,6 @@ void aci_gatt_update_char_value_begin(uint16_t servHandle,
   rq.clen = indx;
 
   hci_send_req(&rq);
-}
-
-tBleStatus aci_gatt_update_char_value_end(void)
-{
-  struct hci_response rq;
-  uint8_t status;
-
-  rq.rparam = &status;
-  rq.rlen = 1;
-
-  hci_recv_resp(&rq);
-
-  return status;
 }
 
 tBleStatus aci_gatt_del_char(uint16_t servHandle, uint16_t charHandle)
@@ -778,19 +752,6 @@ void aci_gatt_disc_charac_by_uuid_begin(
   hci_send_req(&rq);
 }
 
-tBleStatus aci_gatt_disc_charac_by_uuid_end(void)
-{
-  struct hci_response rq;
-  uint8_t status;
-
-  rq.rparam = &status;
-  rq.rlen = 1;
-
-  hci_recv_resp(&rq);
-
-  return status;
-}
-
 tBleStatus aci_gatt_disc_all_charac_descriptors(uint16_t conn_handle, uint16_t char_val_handle,
                                                 uint16_t char_end_handle)
 {
@@ -951,19 +912,6 @@ void aci_gatt_write_charac_value_begin(uint16_t conn_handle,
   rq.clen = indx;
 
   hci_send_req(&rq);
-}
-
-tBleStatus aci_gatt_write_charac_value_end(void)
-{
-  struct hci_response rq;
-  uint8_t status;
-
-  rq.rparam = &status;
-  rq.rlen = 1;
-
-  hci_recv_resp(&rq);
-
-  return status;
 }
 
 tBleStatus aci_gatt_write_long_charac_val(uint16_t conn_handle, uint16_t attr_handle,
@@ -1156,19 +1104,6 @@ void aci_gatt_write_without_response_begin(
   rq.clen = GATT_WRITE_WITHOUT_RESPONSE_CP_SIZE + val_len;
 
   hci_send_req(&rq);
-}
-
-tBleStatus aci_gatt_write_without_response_end(void)
-{
-  struct hci_response rq;
-  uint8_t status;
-
-  rq.rparam = &status;
-  rq.rlen = 1;
-
-  hci_recv_resp(&rq);
-
-  return status;
 }
 
 tBleStatus aci_gatt_signed_write_without_resp(uint16_t conn_handle, uint16_t attr_handle,

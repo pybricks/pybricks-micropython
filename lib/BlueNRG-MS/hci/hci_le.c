@@ -25,8 +25,18 @@
 #include "hci_const.h"
 #include "bluenrg_conf.h"
 
-#define MIN(a,b)            ((a) < (b) )? (a) : (b)
-#define MAX(a,b)            ((a) > (b) )? (a) : (b)
+tBleStatus hci_le_command_end(void)
+{
+  struct hci_response rq;
+  uint8_t status;
+
+  rq.rparam = &status;
+  rq.rlen = 1;
+
+  hci_recv_resp(&rq);
+
+  return status;
+}
 
 int hci_reset(void)
 {
@@ -170,19 +180,6 @@ void hci_le_set_advertising_data_begin(uint8_t length, const uint8_t *data)
   hci_send_req(&rq);
 }
 
-tBleStatus hci_le_set_advertising_data_end(void)
-{
-  struct hci_response rq;
-  uint8_t status;
-
-  rq.rparam = &status;
-  rq.rlen = 1;
-
-  hci_recv_resp(&rq);
-
-  return status;
-}
-
 int hci_le_set_advertise_enable(uint8_t enable)
 {
   struct hci_request_and_response rq;
@@ -293,19 +290,6 @@ void hci_le_set_scan_response_data_begin(uint8_t length, const uint8_t *data)
   rq.clen = LE_SET_SCAN_RESPONSE_DATA_CP_SIZE;
 
   hci_send_req(&rq);
-}
-
-tBleStatus hci_le_set_scan_response_data_end(void)
-{
-  struct hci_response rq;
-  uint8_t status;
-
-  rq.rparam = &status;
-  rq.rlen = 1;
-
-  hci_recv_resp(&rq);
-
-  return status;
 }
 
 int hci_le_read_advertising_channel_tx_power(int8_t *tx_power_level)

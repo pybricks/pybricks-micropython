@@ -73,19 +73,6 @@ void aci_hal_write_config_data_begin(uint8_t offset,
   hci_send_req(&rq);
 }
 
-tBleStatus aci_hal_write_config_data_end(void)
-{
-  struct hci_response rq;
-  uint8_t status;
-
-  rq.rparam = &status;
-  rq.rlen = 1;
-
-  hci_recv_resp(&rq);
-
-  return status;
-}
-
 tBleStatus aci_hal_read_config_data(uint8_t offset, uint16_t data_len, uint8_t *data_len_out_p, uint8_t *data)
 {
   struct hci_request_and_response rq;
@@ -126,19 +113,6 @@ void aci_hal_set_tx_power_level_begin(uint8_t en_high_power, uint8_t pa_level)
   rq.clen = HAL_SET_TX_POWER_LEVEL_CP_SIZE;
 
   hci_send_req(&rq);
-}
-
-tBleStatus aci_hal_set_tx_power_level_end(void)
-{
-  struct hci_response rq;
-  uint8_t status;
-
-  rq.rparam = &status;
-  rq.rlen = 1;
-
-  hci_recv_resp(&rq);
-
-  return status;
 }
 
 tBleStatus aci_hal_le_tx_test_packet_number(uint32_t *number_of_packets)

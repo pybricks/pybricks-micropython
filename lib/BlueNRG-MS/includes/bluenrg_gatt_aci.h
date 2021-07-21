@@ -43,7 +43,8 @@
   *         before using any of the GAP features.
   */
 void aci_gatt_init_begin(void);
-tBleStatus aci_gatt_init_end(void);
+
+#define aci_gatt_init_end hci_le_command_end
 
 /**
  * @brief Add a service to the GATT Server. When a service is created in the server, the Host needs
@@ -233,7 +234,8 @@ void aci_gatt_update_char_value_begin(uint16_t servHandle,
                                             uint8_t charValOffset,
                                             uint8_t charValueLen,
                                             const void *charValue);
-tBleStatus aci_gatt_update_char_value_end(void);
+
+#define aci_gatt_update_char_value_end hci_le_command_end
 
 /**
  * @brief Delete the specified characteristic from the service.
@@ -422,7 +424,7 @@ void aci_gatt_disc_charac_by_uuid_begin(
     uint16_t conn_handle, uint16_t start_handle,
     uint16_t end_handle, uint8_t uuid_type, const uint8_t* uuid);
 
-tBleStatus aci_gatt_disc_charac_by_uuid_end(void);
+#define aci_gatt_disc_charac_by_uuid_end hci_le_command_end
 
 /**
  * @brief Start the procedure to discover all characteristic descriptors on the server.
@@ -531,7 +533,7 @@ void aci_gatt_write_charac_value_begin(uint16_t conn_handle,
  *		- Channel not open\n
  *		- Already one GATT procedure is started
  */
-tBleStatus aci_gatt_write_charac_value_end(void);
+#define aci_gatt_write_charac_value_end hci_le_command_end
 
 /**
  * @brief Start the procedure to write a long characteristic value.
@@ -641,7 +643,7 @@ void aci_gatt_write_without_response_begin(
  *		- Channel not open\n
  *		- Already one GATT procedure is started
  */
-tBleStatus aci_gatt_write_without_response_end(void);
+#define aci_gatt_write_without_response_end hci_le_command_end
 
 /**
  * @brief Start a signed write without response from the server.

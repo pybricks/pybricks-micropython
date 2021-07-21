@@ -105,6 +105,13 @@
  * Each function returns 0 in case of success, otherwise one of the error codes.
  */
 
+/**
+ * Generic "end" function for commands that just return a status flag.
+ * @return Value indicating success or error code.
+ */
+tBleStatus hci_le_command_end(void);
+
+
 int hci_reset(void);
 
 int hci_disconnect(uint16_t handle, uint8_t reason);
@@ -122,10 +129,10 @@ int hci_le_set_scan_parameters(uint8_t	type, uint16_t interval,
 int hci_le_set_scan_enable(uint8_t enable, uint8_t filter_dup);
 
 void hci_le_set_advertising_data_begin(uint8_t length, const uint8_t *data);
-tBleStatus hci_le_set_advertising_data_end(void);
+#define hci_le_set_advertising_data_end hci_le_command_end
 
 void hci_le_set_scan_response_data_begin(uint8_t length, const uint8_t *data);
-tBleStatus hci_le_set_scan_response_data_end(void);
+#define hci_le_set_scan_response_data_end hci_le_command_end
 
 int hci_le_rand(uint8_t random_number[8]);
 
