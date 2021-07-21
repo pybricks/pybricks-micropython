@@ -176,7 +176,6 @@ int hci_le_set_advertising_data_end(void)
   struct hci_response rq;
   uint8_t status;
 
-  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -304,7 +303,6 @@ int hci_le_set_scan_response_data_end(void)
   struct hci_response rq;
   uint8_t status;
 
-  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 

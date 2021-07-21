@@ -44,7 +44,6 @@ tBleStatus aci_gatt_init_end(void)
   struct hci_response rq;
   uint8_t status;
 
-  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -93,9 +92,6 @@ tBleStatus aci_gatt_add_serv_end(uint16_t *serviceHandle)
   struct hci_response rq;
   gatt_add_serv_rp resp;
 
-  memset(&resp, 0, sizeof(resp));
-
-  memset(&rq, 0, sizeof(rq));
   rq.rparam = &resp;
   rq.rlen = GATT_ADD_SERV_RP_SIZE;
 
@@ -228,9 +224,6 @@ tBleStatus aci_gatt_add_char_end(uint16_t* charHandle)
   struct hci_response rq;
   gatt_add_serv_rp resp;
 
-  memset(&resp, 0, sizeof(resp));
-
-  memset(&rq, 0, sizeof(rq));
   rq.rparam = &resp;
   rq.rlen = GATT_ADD_CHAR_RP_SIZE;
 
@@ -377,7 +370,6 @@ tBleStatus aci_gatt_update_char_value_end(void)
   struct hci_response rq;
   uint8_t status;
 
-  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -806,7 +798,6 @@ tBleStatus aci_gatt_disc_charac_by_uuid_end(void)
   struct hci_response rq;
   uint8_t status;
 
-  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -987,7 +978,6 @@ tBleStatus aci_gatt_write_charac_value_end(void)
   struct hci_response rq;
   uint8_t status;
 
-  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -1197,7 +1187,6 @@ tBleStatus aci_gatt_write_without_response_end(void)
   struct hci_response rq;
   uint8_t status;
 
-  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 

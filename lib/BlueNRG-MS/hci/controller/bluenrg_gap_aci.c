@@ -83,7 +83,6 @@ tBleStatus aci_gap_set_non_discoverable_end(void)
   struct hci_response rq;
   uint8_t status;
 
-  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -224,7 +223,6 @@ tBleStatus aci_gap_set_discoverable_end(void)
   struct hci_response rq;
   uint8_t status;
 
-  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -562,7 +560,6 @@ tBleStatus aci_gap_terminate_end(void)
   struct hci_response rq;
   uint8_t status;
 
-  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -659,7 +656,6 @@ tBleStatus aci_gap_start_general_discovery_proc_end(void)
   struct hci_response rq;
   uint8_t status;
 
-  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -803,7 +799,6 @@ tBleStatus aci_gap_start_general_conn_establish_proc_end(void)
   struct hci_response rq;
   uint8_t status;
 
-  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -884,7 +879,6 @@ tBleStatus aci_gap_create_connection_end(void)
   struct hci_response rq;
   uint8_t status;
 
-  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
@@ -912,7 +906,6 @@ tBleStatus aci_gap_terminate_gap_procedure_end(void)
   struct hci_response rq;
   uint8_t status;
 
-  memset(&rq, 0, sizeof(rq));
   rq.rparam = &status;
   rq.rlen = 1;
 
