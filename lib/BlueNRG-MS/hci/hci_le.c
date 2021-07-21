@@ -152,7 +152,7 @@ int hci_le_set_advertising_parameters(uint16_t min_interval, uint16_t max_interv
   return status;
 }
 
-int hci_le_set_advertising_data_begin(uint8_t length, const uint8_t *data)
+void hci_le_set_advertising_data_begin(uint8_t length, const uint8_t *data)
 {
   struct hci_request rq;
   le_set_adv_data_cp adv_cp;
@@ -167,8 +167,6 @@ int hci_le_set_advertising_data_begin(uint8_t length, const uint8_t *data)
   rq.clen = LE_SET_ADV_DATA_CP_SIZE;
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus hci_le_set_advertising_data_end(void)
@@ -279,7 +277,7 @@ int hci_le_rand(uint8_t random_number[8])
   return 0;
 }
 
-int hci_le_set_scan_response_data_begin(uint8_t length, const uint8_t *data)
+void hci_le_set_scan_response_data_begin(uint8_t length, const uint8_t *data)
 {
   struct hci_request rq;
   le_set_scan_response_data_cp scan_resp_cp;
@@ -294,8 +292,6 @@ int hci_le_set_scan_response_data_begin(uint8_t length, const uint8_t *data)
   rq.clen = LE_SET_SCAN_RESPONSE_DATA_CP_SIZE;
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus hci_le_set_scan_response_data_end(void)

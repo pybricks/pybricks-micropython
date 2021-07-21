@@ -62,9 +62,8 @@
   * @param[out]  service_handle  Handle of the GAP service.
   * @param[out]  dev_name_char_handle  Device Name Characteristic handle
   * @param[out]  appearance_char_handle Appearance Characteristic handle
-  * @retval tBleStatus Value indicating success or error code.
   */
-tBleStatus aci_gap_init_begin(uint8_t role, uint8_t privacy_enabled,
+void aci_gap_init_begin(uint8_t role, uint8_t privacy_enabled,
                                       uint8_t device_name_char_len);
 
 tBleStatus aci_gap_init_end(uint16_t* service_handle,
@@ -74,9 +73,8 @@ tBleStatus aci_gap_init_end(uint16_t* service_handle,
 /**
   * @brief   Set the Device in non-discoverable mode.
   * @note    This command will disable the LL advertising.
-  * @retval  tBleStatus Value indicating success or error code.
   */
-tBleStatus aci_gap_set_non_discoverable_begin(void);
+void aci_gap_set_non_discoverable_begin(void);
 
 tBleStatus aci_gap_set_non_discoverable_end(void);
 
@@ -264,10 +262,8 @@ tBleStatus aci_gap_set_limited_discoverable(uint8_t AdvType, uint16_t AdvIntervM
  * 							 Slave_Conn_Interval_Max range: 0x0006 to 0x0C80
  * 							 Slave_ Conn_Interval_Max shall be equal to or greater than the Slave_Conn_Interval_Min.
  * 							 Value of 0xFFFF indicates no specific maximum.
- *
- * @retval tBleStatus Value indicating success or error code.
  */
-tBleStatus aci_gap_set_discoverable_begin(uint8_t AdvType,
+void aci_gap_set_discoverable_begin(uint8_t AdvType,
                                           uint16_t AdvIntervMin,
                                           uint16_t AdvIntervMax,
                                           uint8_t OwnAddrType,
@@ -516,9 +512,8 @@ tBleStatus aci_gap_configure_whitelist(void);
  * @param conn_handle Connection handle
  * @param reason  Reason for requesting disconnection. The error code can be any of ones as specified
  * 				  for the disconnected command in the HCI specification (See @ref HCI_Error_codes).
- * @return Value indicating success or error code.
  */
-tBleStatus aci_gap_terminate_begin(uint16_t conn_handle, uint8_t reason);
+void aci_gap_terminate_begin(uint16_t conn_handle, uint8_t reason);
 
 tBleStatus aci_gap_terminate_end(void);
 
@@ -587,10 +582,8 @@ tBleStatus aci_gap_start_limited_discovery_proc(uint16_t scanInterval, uint16_t 
  * @param filterDuplicates Duplicate filtering enabled or not.
  * 						   @arg 0x00: Do not filter the duplicates
  * 						   @arg 0x01: Filter duplicates
- *
- * @return Value indicating success or error code.
  */
-tBleStatus aci_gap_start_general_discovery_proc_begin(
+void aci_gap_start_general_discovery_proc_begin(
   uint16_t scanInterval, uint16_t scanWindow,
   uint8_t own_address_type, uint8_t filterDuplicates);
 
@@ -742,10 +735,8 @@ tBleStatus aci_gap_start_auto_conn_establish_proc(uint16_t scanInterval, uint16_
  * 						  has been previously notified to the application through @ref EVT_BLUE_GAP_RECONNECTION_ADDRESS event).\n
  * @param reconn_addr	Reconnection address used if use_reconn_addr is 1.
  * @endcond
- *
- * @return Value indicating success or error code.
  */
-tBleStatus aci_gap_start_general_conn_establish_proc_begin(
+void aci_gap_start_general_conn_establish_proc_begin(
     uint8_t scan_type, uint16_t scan_interval, uint16_t scan_window,
     uint8_t own_address_type, uint8_t filter_duplicates);
 
@@ -835,9 +826,8 @@ tBleStatus aci_gap_start_selective_conn_establish_proc(uint8_t scan_type, uint16
  * @param max_conn_length Maximum length of connection needed for the LE connection.\n
  * 						  Range: 0x0000 - 0xFFFF\n
  * 						  Time = N x 0.625 msec.
- * @return Value indicating success or error code.
  */
-tBleStatus aci_gap_create_connection_begin(
+void aci_gap_create_connection_begin(
     uint16_t scanInterval, uint16_t scanWindow,
     uint8_t peer_bdaddr_type, tBDAddr peer_bdaddr,
     uint8_t own_bdaddr_type, uint16_t conn_min_interval,
@@ -851,9 +841,8 @@ tBleStatus aci_gap_create_connection_end(void);
  * @brief Terminate the specified GAP procedure. @ref EVT_BLUE_GAP_PROCEDURE_COMPLETE event is
  *  	  returned with the procedure code set to the corresponding procedure.
  * @param procedure_code One of the procedure codes (@ref gap_procedure_codes "GAP procedure codes").
- * @return Value indicating success or error code.
  */
-tBleStatus aci_gap_terminate_gap_procedure_begin(uint8_t procedure_code);
+void aci_gap_terminate_gap_procedure_begin(uint8_t procedure_code);
 
 tBleStatus aci_gap_terminate_gap_procedure_end(void);
 

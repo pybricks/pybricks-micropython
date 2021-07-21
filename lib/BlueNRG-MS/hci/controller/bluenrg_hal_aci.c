@@ -13,6 +13,7 @@
 * INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
 *******************************************************************************/
 
+#include <assert.h>
 #include <string.h>
 
 #include "bluenrg_types.h"
@@ -46,7 +47,7 @@ tBleStatus aci_hal_get_fw_build_number(uint16_t *build_number)
   return 0;
 }
 
-tBleStatus aci_hal_write_config_data_begin(uint8_t offset,
+void aci_hal_write_config_data_begin(uint8_t offset,
                                            uint8_t len,
                                            const uint8_t *val)
 {
@@ -54,8 +55,7 @@ tBleStatus aci_hal_write_config_data_begin(uint8_t offset,
   uint8_t buffer[HCI_MAX_PAYLOAD_SIZE];
   uint8_t indx = 0;
 
-  if ((len+2) > HCI_MAX_PAYLOAD_SIZE)
-    return BLE_STATUS_INVALID_PARAMS;
+  assert(len + 2 <= HCI_MAX_PAYLOAD_SIZE);
 
   buffer[indx] = offset;
   indx++;
@@ -72,8 +72,6 @@ tBleStatus aci_hal_write_config_data_begin(uint8_t offset,
   rq.clen = indx;
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus aci_hal_write_config_data_end(void)
@@ -116,7 +114,7 @@ tBleStatus aci_hal_read_config_data(uint8_t offset, uint16_t data_len, uint8_t *
   return 0;
 }
 
-tBleStatus aci_hal_set_tx_power_level_begin(uint8_t en_high_power, uint8_t pa_level)
+void aci_hal_set_tx_power_level_begin(uint8_t en_high_power, uint8_t pa_level)
 {
   struct hci_request rq;
   hal_set_tx_power_level_cp cp;
@@ -129,8 +127,6 @@ tBleStatus aci_hal_set_tx_power_level_begin(uint8_t en_high_power, uint8_t pa_le
   rq.clen = HAL_SET_TX_POWER_LEVEL_CP_SIZE;
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus aci_hal_set_tx_power_level_end(void)

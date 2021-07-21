@@ -121,10 +121,10 @@ int hci_le_set_scan_parameters(uint8_t	type, uint16_t interval,
 
 int hci_le_set_scan_enable(uint8_t enable, uint8_t filter_dup);
 
-int hci_le_set_advertising_data_begin(uint8_t length, const uint8_t *data);
+void hci_le_set_advertising_data_begin(uint8_t length, const uint8_t *data);
 tBleStatus hci_le_set_advertising_data_end(void);
 
-int hci_le_set_scan_response_data_begin(uint8_t length, const uint8_t *data);
+void hci_le_set_scan_response_data_begin(uint8_t length, const uint8_t *data);
 tBleStatus hci_le_set_scan_response_data_end(void);
 
 int hci_le_rand(uint8_t random_number[8]);

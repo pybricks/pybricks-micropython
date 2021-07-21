@@ -48,9 +48,8 @@ tBleStatus aci_hal_get_fw_build_number(uint16_t *build_number);
  *
  * @param len Length of data to be written
  * @param val Data to be written
- * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_write_config_data_begin(uint8_t offset,
+void aci_hal_write_config_data_begin(uint8_t offset,
                                            uint8_t len,
                                            const uint8_t *val);
 
@@ -84,9 +83,8 @@ tBleStatus aci_hal_read_config_data(uint8_t offset, uint16_t data_len, uint8_t *
  * 						right value, depending on the selected hardware configuration for the RF network:
  * 						normal mode or high power mode.
  * @param pa_level Can be from 0 to 7. Set the PA level value.
- * @return Value indicating success or error code.
  */
-tBleStatus aci_hal_set_tx_power_level_begin(uint8_t en_high_power, uint8_t pa_level);
+void aci_hal_set_tx_power_level_begin(uint8_t en_high_power, uint8_t pa_level);
 tBleStatus aci_hal_set_tx_power_level_end(void);
 
 /**

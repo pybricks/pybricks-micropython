@@ -13,6 +13,7 @@
 * INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
 *******************************************************************************/
 
+#include <assert.h>
 #include <string.h>
 
 #include "bluenrg_types.h"
@@ -27,7 +28,7 @@
 #define MAX(a,b)            ((a) > (b) )? (a) : (b)
 
 
-tBleStatus aci_gatt_init_begin(void)
+void aci_gatt_init_begin(void)
 {
   struct hci_request rq;
 
@@ -35,8 +36,6 @@ tBleStatus aci_gatt_init_begin(void)
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_INIT);
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus aci_gatt_init_end(void)
@@ -52,7 +51,7 @@ tBleStatus aci_gatt_init_end(void)
   return status;
 }
 
-tBleStatus aci_gatt_add_serv_begin(uint8_t service_uuid_type, const uint8_t* service_uuid, uint8_t service_type, uint8_t max_attr_records)
+void aci_gatt_add_serv_begin(uint8_t service_uuid_type, const uint8_t* service_uuid, uint8_t service_type, uint8_t max_attr_records)
 {
   struct hci_request rq;
   uint8_t buffer[19];
@@ -83,8 +82,6 @@ tBleStatus aci_gatt_add_serv_begin(uint8_t service_uuid_type, const uint8_t* ser
   rq.clen = indx;
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus aci_gatt_add_serv_end(uint16_t *serviceHandle)
@@ -160,7 +157,7 @@ tBleStatus aci_gatt_include_service(uint16_t service_handle, uint16_t included_s
   return 0;
 }
 
-tBleStatus aci_gatt_add_char_begin(uint16_t serviceHandle,
+void aci_gatt_add_char_begin(uint16_t serviceHandle,
                                    uint8_t charUuidType,
                                    const uint8_t* charUuid,
                                    uint8_t charValueLen,
@@ -215,8 +212,6 @@ tBleStatus aci_gatt_add_char_begin(uint16_t serviceHandle,
   rq.clen = indx;
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus aci_gatt_add_char_end(uint16_t* charHandle)
@@ -325,7 +320,7 @@ tBleStatus aci_gatt_add_char_desc(uint16_t serviceHandle,
   return 0;
 }
 
-tBleStatus aci_gatt_update_char_value_begin(uint16_t servHandle,
+void aci_gatt_update_char_value_begin(uint16_t servHandle,
                                             uint16_t charHandle,
                                             uint8_t charValOffset,
                                             uint8_t charValueLen,
@@ -335,8 +330,7 @@ tBleStatus aci_gatt_update_char_value_begin(uint16_t servHandle,
   uint8_t buffer[HCI_MAX_PAYLOAD_SIZE];
   uint8_t indx = 0;
 
-  if ((charValueLen+6) > HCI_MAX_PAYLOAD_SIZE)
-    return BLE_STATUS_INVALID_PARAMS;
+  assert(charValueLen + 6 <= HCI_MAX_PAYLOAD_SIZE);
 
   servHandle = htobs(servHandle);
   memcpy(buffer + indx, &servHandle, 2);
@@ -361,8 +355,6 @@ tBleStatus aci_gatt_update_char_value_begin(uint16_t servHandle,
   rq.clen = indx;
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus aci_gatt_update_char_value_end(void)
@@ -747,7 +739,7 @@ tBleStatus aci_gatt_disc_all_charac_of_serv(uint16_t conn_handle, uint16_t start
   return status;
 }
 
-tBleStatus aci_gatt_disc_charac_by_uuid_begin(
+void aci_gatt_disc_charac_by_uuid_begin(
     uint16_t conn_handle, uint16_t start_handle,
     uint16_t end_handle, uint8_t charUuidType,
     const uint8_t* charUuid)
@@ -789,8 +781,6 @@ tBleStatus aci_gatt_disc_charac_by_uuid_begin(
   rq.event = EVT_CMD_STATUS;
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus aci_gatt_disc_charac_by_uuid_end(void)
@@ -936,7 +926,7 @@ tBleStatus aci_gatt_read_multiple_charac_val(uint16_t conn_handle, uint8_t num_h
   return status;
 }
 
-tBleStatus aci_gatt_write_charac_value_begin(uint16_t conn_handle,
+void aci_gatt_write_charac_value_begin(uint16_t conn_handle,
                                              uint16_t attr_handle,
                                              uint8_t value_len,
                                              uint8_t *attr_value)
@@ -945,8 +935,7 @@ tBleStatus aci_gatt_write_charac_value_begin(uint16_t conn_handle,
   uint8_t buffer[HCI_MAX_PAYLOAD_SIZE];
   uint8_t indx = 0;
 
-  if ((value_len+5) > HCI_MAX_PAYLOAD_SIZE)
-    return BLE_STATUS_INVALID_PARAMS;
+  assert(value_len + 5 <= HCI_MAX_PAYLOAD_SIZE);
 
   conn_handle = htobs(conn_handle);
   memcpy(buffer + indx, &conn_handle, 2);
@@ -969,8 +958,6 @@ tBleStatus aci_gatt_write_charac_value_begin(uint16_t conn_handle,
   rq.event = EVT_CMD_STATUS;
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus aci_gatt_write_charac_value_end(void)
@@ -1157,15 +1144,14 @@ tBleStatus aci_gatt_read_charac_desc(uint16_t conn_handle, uint16_t attr_handle)
   return status;
 }
 
-tBleStatus aci_gatt_write_without_response_begin(
+void aci_gatt_write_without_response_begin(
     uint16_t conn_handle, uint16_t attr_handle,
     uint8_t val_len, const uint8_t* attr_val)
 {
   struct hci_request rq;
   gatt_write_without_resp_cp cp;
 
-  if(val_len > sizeof(cp.attr_val))
-    return BLE_STATUS_INVALID_PARAMS;
+  assert(val_len <= sizeof(cp.attr_val));
 
   cp.conn_handle = htobs(conn_handle);
   cp.attr_handle = htobs(attr_handle);
@@ -1178,8 +1164,6 @@ tBleStatus aci_gatt_write_without_response_begin(
   rq.clen = GATT_WRITE_WITHOUT_RESPONSE_CP_SIZE + val_len;
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus aci_gatt_write_without_response_end(void)

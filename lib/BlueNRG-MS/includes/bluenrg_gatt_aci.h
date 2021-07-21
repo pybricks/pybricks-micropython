@@ -41,9 +41,8 @@
   *         Until this command is issued the GATT channel will not process any commands
   *         even if the connection is opened. This command has to be given
   *         before using any of the GAP features.
-  * @return Value indicating success or error code.
   */
-tBleStatus aci_gatt_init_begin(void);
+void aci_gatt_init_begin(void);
 tBleStatus aci_gatt_init_end(void);
 
 /**
@@ -64,9 +63,8 @@ tBleStatus aci_gatt_init_end(void);
  * 							 a handle is allocated by the server to this service. Server also
  * 							 allocates a range of handles for this service from serviceHandle to
  * 							 <serviceHandle + max_attr_records>.
- * @return Value indicating success or error code.
  */
-tBleStatus aci_gatt_add_serv_begin(uint8_t service_uuid_type,
+void aci_gatt_add_serv_begin(uint8_t service_uuid_type,
                                    const uint8_t* service_uuid,
                                    uint8_t service_type,
                                    uint8_t max_attr_records);
@@ -118,9 +116,8 @@ tBleStatus aci_gatt_include_service(uint16_t service_handle, uint16_t included_s
  * 		  The attribute that holds the characteristic value is allocated at the next handle, followed by the Client
  * 		  Characteristic Configuration descriptor if the characteristic has @ref CHAR_PROP_NOTIFY or @ref CHAR_PROP_INDICATE
  * 		  properties.
- * @return Value indicating success or error code.
  */
-tBleStatus aci_gatt_add_char_begin(uint16_t serviceHandle,
+void aci_gatt_add_char_begin(uint16_t serviceHandle,
                                    uint8_t charUuidType,
                                    const uint8_t* charUuid,
                                    uint8_t charValueLen,
@@ -230,9 +227,8 @@ tBleStatus aci_gatt_add_char_desc(uint16_t serviceHandle,
  * 						the attribute while adding the characteristic.
  * @param charValueLen Length of the characteristic value in octets
  * @param[in] charValue Characteristic value
- * @return Value indicating success or error code.
  */
-tBleStatus aci_gatt_update_char_value_begin(uint16_t servHandle,
+void aci_gatt_update_char_value_begin(uint16_t servHandle,
                                             uint16_t charHandle,
                                             uint8_t charValOffset,
                                             uint8_t charValueLen,
@@ -421,9 +417,8 @@ tBleStatus aci_gatt_disc_all_charac_of_serv(uint16_t conn_handle, uint16_t start
  * @param uuid_type @arg @ref UUID_TYPE_16
  *         			@arg @ref UUID_TYPE_128
  * @param uuid 2 or 16 octet UUID
- * @return Value indicating success or error code.
  */
-tBleStatus aci_gatt_disc_charac_by_uuid_begin(
+void aci_gatt_disc_charac_by_uuid_begin(
     uint16_t conn_handle, uint16_t start_handle,
     uint16_t end_handle, uint8_t uuid_type, const uint8_t* uuid);
 
@@ -521,10 +516,21 @@ tBleStatus aci_gatt_read_multiple_charac_val(uint16_t conn_handle, uint8_t num_h
  *		- Channel not open\n
  *		- Already one GATT procedure is started
  */
-tBleStatus aci_gatt_write_charac_value_begin(uint16_t conn_handle,
+void aci_gatt_write_charac_value_begin(uint16_t conn_handle,
                                              uint16_t attr_handle,
                                              uint8_t value_len,
                                              uint8_t *attr_value);
+
+/**
+ * @brief Finish the procedure to write a characteristic value.
+ * @return Value indicating success or error code.\n
+ * 		 It can be @ref BLE_STATUS_NOT_ALLOWED in the following cases:\n
+ *		- If the exchange has already taken place\n
+ *		- If GATT is expecting response for previous request\n
+ *		- Already a request is in the queue to be sent\n
+ *		- Channel not open\n
+ *		- Already one GATT procedure is started
+ */
 tBleStatus aci_gatt_write_charac_value_end(void);
 
 /**
@@ -620,6 +626,13 @@ tBleStatus aci_gatt_read_charac_desc(uint16_t conn_handle, uint16_t attr_handle)
  * @param attr_handle Handle of the attribute to be written
  * @param val_len Length of the value to be written (up to ATT_MTU - 3)
  * @param[in] attr_val Value to be written
+ */
+void aci_gatt_write_without_response_begin(
+    uint16_t conn_handle, uint16_t attr_handle,
+    uint8_t val_len, const uint8_t* attr_val);
+
+/**
+ * @brief Finish the procedure to write a characteristic value without waiting for any response from the server.
  * @return Value indicating success or error code.\n
  * 		 It can be @ref BLE_STATUS_NOT_ALLOWED in the following cases:\n
  *		- If the exchange has already taken place\n
@@ -628,10 +641,6 @@ tBleStatus aci_gatt_read_charac_desc(uint16_t conn_handle, uint16_t attr_handle)
  *		- Channel not open\n
  *		- Already one GATT procedure is started
  */
-tBleStatus aci_gatt_write_without_response_begin(
-    uint16_t conn_handle, uint16_t attr_handle,
-    uint8_t val_len, const uint8_t* attr_val);
-
 tBleStatus aci_gatt_write_without_response_end(void);
 
 /**

@@ -13,6 +13,7 @@
 * INFORMATION CONTAINED HEREIN IN CONNECTION WITH THEIR PRODUCTS.
 *******************************************************************************/
 
+#include <assert.h>
 #include <string.h>
 
 #include "bluenrg_types.h"
@@ -26,7 +27,7 @@
 #define MIN(a,b)            ((a) < (b) )? (a) : (b)
 #define MAX(a,b)            ((a) > (b) )? (a) : (b)
 
-tBleStatus aci_gap_init_begin(uint8_t role, uint8_t privacy_enabled, uint8_t device_name_char_len)
+void aci_gap_init_begin(uint8_t role, uint8_t privacy_enabled, uint8_t device_name_char_len)
 {
   struct hci_request rq;
   gap_init_cp cp;
@@ -41,8 +42,6 @@ tBleStatus aci_gap_init_begin(uint8_t role, uint8_t privacy_enabled, uint8_t dev
   rq.clen = sizeof(cp);
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus aci_gap_init_end(uint16_t* service_handle, uint16_t* dev_name_char_handle, uint16_t* appearance_char_handle)
@@ -66,7 +65,7 @@ tBleStatus aci_gap_init_end(uint16_t* service_handle, uint16_t* dev_name_char_ha
   return 0;
 }
 
-tBleStatus aci_gap_set_non_discoverable_begin(void)
+void aci_gap_set_non_discoverable_begin(void)
 {
   struct hci_request rq;
 
@@ -74,8 +73,6 @@ tBleStatus aci_gap_set_non_discoverable_begin(void)
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_SET_NON_DISCOVERABLE);
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus aci_gap_set_non_discoverable_end(void)
@@ -152,7 +149,7 @@ tBleStatus aci_gap_set_limited_discoverable(uint8_t AdvType, uint16_t AdvIntervM
   return status;
 }
 
-tBleStatus aci_gap_set_discoverable_begin(uint8_t AdvType,
+void aci_gap_set_discoverable_begin(uint8_t AdvType,
                                           uint16_t AdvIntervMin,
                                           uint16_t AdvIntervMax,
                                           uint8_t OwnAddrType,
@@ -168,8 +165,7 @@ tBleStatus aci_gap_set_discoverable_begin(uint8_t AdvType,
   uint8_t buffer[40];
   uint8_t indx = 0;
 
-  if ((LocalNameLen+ServiceUUIDLen+14) > sizeof(buffer))
-    return BLE_STATUS_INVALID_PARAMS;
+  assert(LocalNameLen + ServiceUUIDLen + 14 <= sizeof(buffer));
 
   buffer[indx] = AdvType;
   indx++;
@@ -214,8 +210,6 @@ tBleStatus aci_gap_set_discoverable_begin(uint8_t AdvType,
   rq.clen = indx;
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus aci_gap_set_discoverable_end(void)
@@ -536,7 +530,7 @@ tBleStatus aci_gap_configure_whitelist(void)
   return status;
 }
 
-tBleStatus aci_gap_terminate_begin(uint16_t conn_handle, uint8_t reason)
+void aci_gap_terminate_begin(uint16_t conn_handle, uint8_t reason)
 {
   struct hci_request rq;
   gap_terminate_cp cp;
@@ -551,8 +545,6 @@ tBleStatus aci_gap_terminate_begin(uint16_t conn_handle, uint8_t reason)
   rq.event = EVT_CMD_STATUS;
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus aci_gap_terminate_end(void)
@@ -628,7 +620,7 @@ tBleStatus aci_gap_start_limited_discovery_proc(uint16_t scanInterval, uint16_t 
   return status;
 }
 
-tBleStatus aci_gap_start_general_discovery_proc_begin(
+void aci_gap_start_general_discovery_proc_begin(
   uint16_t scanInterval, uint16_t scanWindow,
   uint8_t own_address_type, uint8_t filterDuplicates)
 {
@@ -647,8 +639,6 @@ tBleStatus aci_gap_start_general_discovery_proc_begin(
   rq.event = EVT_CMD_STATUS;
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus aci_gap_start_general_discovery_proc_end(void)
@@ -770,7 +760,7 @@ tBleStatus aci_gap_start_auto_conn_establish_proc(uint16_t scanInterval, uint16_
   return status;
 }
 
-tBleStatus aci_gap_start_general_conn_establish_proc_begin(
+void aci_gap_start_general_conn_establish_proc_begin(
     uint8_t scan_type, uint16_t scan_interval, uint16_t scan_window,
     uint8_t own_address_type, uint8_t filter_duplicates)
 {
@@ -790,8 +780,6 @@ tBleStatus aci_gap_start_general_conn_establish_proc_begin(
   rq.event = EVT_CMD_STATUS;
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus aci_gap_start_general_conn_establish_proc_end(void)
@@ -840,7 +828,7 @@ tBleStatus aci_gap_start_selective_conn_establish_proc(uint8_t scan_type, uint16
   return status;
 }
 
-tBleStatus aci_gap_create_connection_begin(
+void aci_gap_create_connection_begin(
     uint16_t scanInterval, uint16_t scanWindow,
     uint8_t peer_bdaddr_type, tBDAddr peer_bdaddr,
     uint8_t own_bdaddr_type, uint16_t conn_min_interval,
@@ -870,8 +858,6 @@ tBleStatus aci_gap_create_connection_begin(
   rq.event = EVT_CMD_STATUS;
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus aci_gap_create_connection_end(void)
@@ -887,7 +873,7 @@ tBleStatus aci_gap_create_connection_end(void)
   return status;
 }
 
-tBleStatus aci_gap_terminate_gap_procedure_begin(uint8_t procedure_code)
+void aci_gap_terminate_gap_procedure_begin(uint8_t procedure_code)
 {
   struct hci_request rq;
 
@@ -897,8 +883,6 @@ tBleStatus aci_gap_terminate_gap_procedure_begin(uint8_t procedure_code)
   rq.clen = 1;
 
   hci_send_req(&rq);
-
-  return 0;
 }
 
 tBleStatus aci_gap_terminate_gap_procedure_end(void)
