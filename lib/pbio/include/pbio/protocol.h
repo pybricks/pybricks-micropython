@@ -9,6 +9,8 @@
 #ifndef _PBIO_PROTOCOL_H_
 #define _PBIO_PROTOCOL_H_
 
+#include <stdint.h>
+
 #include <pbio/util.h>
 
 // DEVELOPERS: bump the version as appropriate when adding/changing the protocol
@@ -131,6 +133,21 @@ typedef enum {
 #define PBIO_PYBRICKS_STATUS_FLAG(status) (1 << status)
 
 uint32_t pbio_pybricks_event_status_report(uint8_t *buf, uint32_t flags);
+
+extern const uint8_t pbio_pybricks_service_uuid[];
+extern const uint8_t pbio_pybricks_control_char_uuid[];
+
+extern const uint16_t pbio_gatt_device_info_service_uuid;
+extern const uint16_t pbio_gatt_firmware_version_char_uuid;
+extern const uint16_t pbio_gatt_software_version_char_uuid;
+extern const uint16_t pbio_gatt_pnp_id_char_uuid;
+
+extern const uint8_t pbio_lwp3_hub_service_uuid[];
+extern const uint8_t pbio_lwp3_hub_char_uuid[];
+
+extern const uint8_t pbio_nus_service_uuid[];
+extern const uint8_t pbio_nus_rx_char_uuid[];
+extern const uint8_t pbio_nus_tx_char_uuid[];
 
 #endif // _PBIO_PROTOCOL_H_
 

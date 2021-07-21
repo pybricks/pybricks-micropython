@@ -442,6 +442,8 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/math.c \
 	src/motor_process.c \
 	src/observer.c \
+	src/protocol/lwp3.c \
+	src/protocol/nus.c \
 	src/protocol/pybricks.c \
 	src/servo.c \
 	src/tacho.c \
@@ -449,6 +451,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/trajectory_ext.c \
 	src/trajectory.c \
 	src/uartdev.c \
+	src/util.c \
 	sys/battery.c \
 	sys/bluetooth.c \
 	sys/command.c \

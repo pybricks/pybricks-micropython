@@ -133,38 +133,6 @@ static uint16_t uart_service_handle, uart_service_end_handle, uart_rx_char_handl
 // Nordic UART tx notifications enabled
 static bool uart_tx_notify_en;
 
-// c5f50001-8280-46da-89f4-6d8051e4aeef
-static const uint8_t pybricks_service_uuid[] = {
-    0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
-    0xda, 0x46, 0x80, 0x82, 0x01, 0x00, 0xf5, 0xc5
-};
-
-// c5f50002-8280-46da-89f4-6d8051e4aeef
-static const uint8_t pybricks_char_uuid[] = {
-    0xef, 0xae, 0xe4, 0x51, 0x80, 0x6d, 0xf4, 0x89,
-    0xda, 0x46, 0x80, 0x82, 0x02, 0x00, 0xf5, 0xc5
-};
-
-// using well-known (but not standard) Nordic UART UUIDs
-
-// 6e400001-b5a3-f393-e0a9-e50e24dcca9e
-static const uint8_t nrf_uart_service_uuid[] = {
-    0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-    0x93, 0xf3, 0xa3, 0xb5, 0x01, 0x00, 0x40, 0x6e
-};
-
-// 6e400002-b5a3-f393-e0a9-e50e24dcca9e
-static const uint8_t nrf_uart_rx_char_uuid[] = {
-    0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-    0x93, 0xf3, 0xa3, 0xb5, 0x02, 0x00, 0x40, 0x6e
-};
-
-// 6e400003-b5a3-f393-e0a9-e50e24dcca9e
-static const uint8_t nrf_uart_tx_char_uuid[] = {
-    0x9e, 0xca, 0xdc, 0x24, 0x0e, 0xe5, 0xa9, 0xe0,
-    0x93, 0xf3, 0xa3, 0xb5, 0x03, 0x00, 0x40, 0x6e
-};
-
 PROCESS(pbdrv_bluetooth_spi_process, "Bluetooth SPI");
 
 LIST(task_queue);
@@ -250,7 +218,7 @@ static PT_THREAD(set_discoverable(struct pt *pt, pbio_task_t *task)) {
     data[2] = GAP_ADTYPE_FLAGS_GENERAL | GAP_ADTYPE_FLAGS_BREDR_NOT_SUPPORTED;
     data[3] = 17; // length
     data[4] = GAP_ADTYPE_128BIT_MORE;
-    memcpy(&data[5], pybricks_service_uuid, 16);
+    pbio_uuid128_reverse_copy(&data[5], pbio_pybricks_service_uuid);
     data[21] = 2; // length
     data[22] = GAP_ADTYPE_POWER_LEVEL;
     data[23] = 0;
@@ -429,18 +397,13 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
             advertising_data_received;
         });
 
-        /** 00001623-1212-EFDE-1623-785FEABCD123 */
-        static const uint8_t lwp3_hub_service_uuid[] = {
-            0x23, 0xD1, 0xBC, 0xEA, 0x5F, 0x78, 0x23, 0x16, 0xDE, 0xEF, 0x12, 0x12, 0x23, 0x16, 0x00, 0x00,
-        };
-
         // TODO: Properly parse advertising data. For now, we are assuming that
         // the service UUID is at a fixed position and we are getting only
         // GAP_ADTYPE_128BIT_COMPLETE and not GAP_ADTYPE_128BIT_MORE
         if (
             read_buf[9] != ADV_IND /* connectable undirected advertisement */ ||
             read_buf[22] != 17 /* length */ || read_buf[23] != GAP_ADTYPE_128BIT_COMPLETE ||
-            memcmp(&read_buf[24], lwp3_hub_service_uuid, sizeof(lwp3_hub_service_uuid)) != 0 ||
+            !pbio_uuid128_reverse_compare(&read_buf[24], pbio_lwp3_hub_service_uuid) ||
             read_buf[45] != LWP3_HUB_KIND_HANDSET) {
 
             // if this is not LEGO Powered Up remote, keep scanning
@@ -488,14 +451,12 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     {
-        static const attReadByTypeReq_t req = {
+        attReadByTypeReq_t req = {
             .startHandle = 0x0001,
             .endHandle = 0xFFFF,
             .type.len = 16,
-            .type.uuid = {
-                0x23, 0xD1, 0xBC, 0xEA, 0x5F, 0x78, 0x23, 0x16, 0xDE, 0xEF, 0x12, 0x12, 0x24, 0x16, 0x00, 0x00,
-            }
         };
+        pbio_uuid128_reverse_copy(req.type.uuid, pbio_lwp3_hub_char_uuid);
         GATT_DiscCharsByUUID(remote_handle, &req);
     }
     PT_WAIT_UNTIL(pt, hci_command_status);
@@ -660,7 +621,7 @@ static void read_by_type_response_uuid128(uint16_t connection_handle,
     pbio_set_uint16_le(&buf[0], attr_handle);
     buf[2] = property_flags;
     pbio_set_uint16_le(&buf[3], attr_handle + 1);
-    memcpy(&buf[5], uuid, 16);
+    pbio_uuid128_reverse_copy(&buf[5], uuid);
 
     rsp.pDataList = buf;
     rsp.dataLen = 21;
@@ -749,13 +710,14 @@ static void handle_event(uint8_t *packet) {
                                     GATT_PROP_READ, PNP_ID_UUID);
                             } else if (start_handle <= pybricks_service_handle + 1) {
                                 read_by_type_response_uuid128(connection_handle, pybricks_service_handle + 1,
-                                    GATT_PROP_WRITE_NO_RSP | GATT_PROP_WRITE | GATT_PROP_NOTIFY, pybricks_char_uuid);
+                                    GATT_PROP_WRITE_NO_RSP | GATT_PROP_WRITE | GATT_PROP_NOTIFY,
+                                    pbio_pybricks_control_char_uuid);
                             } else if (start_handle <= uart_service_handle + 1) {
                                 read_by_type_response_uuid128(connection_handle, uart_service_handle + 1,
-                                    GATT_PROP_WRITE_NO_RSP, nrf_uart_rx_char_uuid);
+                                    GATT_PROP_WRITE_NO_RSP, pbio_nus_rx_char_uuid);
                             } else if (start_handle <= uart_service_handle + 3) {
                                 read_by_type_response_uuid128(connection_handle, uart_service_handle + 3,
-                                    GATT_PROP_NOTIFY, nrf_uart_tx_char_uuid);
+                                    GATT_PROP_NOTIFY, pbio_nus_tx_char_uuid);
                             } else {
                                 attErrorRsp_t rsp;
 
@@ -912,7 +874,7 @@ static void handle_event(uint8_t *packet) {
 
                                 pbio_set_uint16_le(&buf[0], pybricks_service_handle);
                                 pbio_set_uint16_le(&buf[2], pybricks_service_end_handle);
-                                memcpy(&buf[4], pybricks_service_uuid, 16);
+                                pbio_uuid128_reverse_copy(&buf[4], pbio_pybricks_service_uuid);
 
                                 rsp.pDataList = buf;
                                 rsp.dataLen = 20;
@@ -923,7 +885,7 @@ static void handle_event(uint8_t *packet) {
 
                                 pbio_set_uint16_le(&buf[0], uart_service_handle);
                                 pbio_set_uint16_le(&buf[2], uart_service_end_handle);
-                                memcpy(&buf[4], nrf_uart_service_uuid, 16);
+                                pbio_uuid128_reverse_copy(&buf[4], pbio_nus_service_uuid);
 
                                 rsp.pDataList = buf;
                                 rsp.dataLen = 20;
@@ -1371,7 +1333,7 @@ static PT_THREAD(init_pybricks_service(struct pt *pt)) {
     // ignoring response data
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute2(pybricks_char_uuid, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
+    GATT_AddAttribute2(pbio_pybricks_control_char_uuid, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
@@ -1407,7 +1369,7 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
     // ignoring response data
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute2(nrf_uart_rx_char_uuid, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
+    GATT_AddAttribute2(pbio_nus_rx_char_uuid, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
@@ -1417,7 +1379,7 @@ static PT_THREAD(init_uart_service(struct pt *pt)) {
     // ignoring response data
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GATT_AddAttribute2(nrf_uart_tx_char_uuid, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
+    GATT_AddAttribute2(pbio_nus_tx_char_uuid, GATT_PERMIT_READ | GATT_PERMIT_WRITE);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 

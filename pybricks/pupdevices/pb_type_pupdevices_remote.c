@@ -6,6 +6,7 @@
 #if PYBRICKS_PY_PUPDEVICES
 
 #include <pbsys/light.h>
+#include <pbio/protocol.h>
 #include <pbio/util.h>
 
 #include "py/mphal.h"
@@ -154,16 +155,6 @@ typedef struct {
 
 STATIC pb_remote_t pb_remote_singleton;
 
-/** 00001623-1212-EFDE-1623-785FEABCD123 */
-static const uint8_t lwp3_service_uuid[] = {
-    0x00, 0x00, 0x16, 0x23, 0x12, 0x12, 0xEF, 0xDE, 0x16, 0x23, 0x78, 0x5F, 0xEA, 0xBC, 0xD1, 0x23,
-};
-
-/** 00001624-1212-EFDE-1623-785FEABCD123 */
-static const uint8_t lwp3_characteristic_uuid[] = {
-    0x00, 0x00, 0x16, 0x24, 0x12, 0x12, 0xEF, 0xDE, 0x16, 0x23, 0x78, 0x5F, 0xEA, 0xBC, 0xD1, 0x23,
-};
-
 static gatt_client_service_t lwp3_service;
 static gatt_client_characteristic_t lwp3_characteristic;
 
@@ -184,7 +175,7 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel, uint
                 // TODO: remove cast on lwp3_characteristic_uuid after
                 // https://github.com/bluekitchen/btstack/pull/359
                 remote->btstack_error = gatt_client_discover_characteristics_for_service_by_uuid128(
-                    handle_gatt_client_event, remote->con_handle, &lwp3_service, (uint8_t *)lwp3_characteristic_uuid);
+                    handle_gatt_client_event, remote->con_handle, &lwp3_service, (uint8_t *)pbio_lwp3_hub_char_uuid);
                 if (remote->btstack_error == ERROR_CODE_SUCCESS) {
                     remote->con_state = CON_STATE_WAIT_DISCOVER_CHARACTERISTICS;
                 } else {
@@ -306,10 +297,8 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                 // - Complete List of 128-bit Service Class UUIDs (0x07)
                 // - Manufacturer Specific Data (0xFF)
                 //   - LEGO System A/S (0x0397) + 6 bytes
-                uint8_t reverse_service_uuid[16];
-                reverse_128(lwp3_service_uuid, reverse_service_uuid);
                 if (event_type == ADV_IND && data_length == 31
-                    && memcmp(&data[5], reverse_service_uuid, sizeof(reverse_service_uuid)) == 0
+                    && pbio_uuid128_reverse_compare(&data[5], pbio_lwp3_hub_service_uuid)
                     && data[26] == LEGO_HUB_ID_POWERED_UP_REMOTE) {
                     gap_event_advertising_report_get_address(packet, remote->address);
                     remote->address_type = gap_event_advertising_report_get_address_type(packet);
@@ -356,7 +345,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             remote->con_handle = hci_subevent_le_connection_complete_get_connection_handle(packet);
 
             remote->btstack_error = gatt_client_discover_primary_services_by_uuid128(
-                handle_gatt_client_event, remote->con_handle, lwp3_service_uuid);
+                handle_gatt_client_event, remote->con_handle, pbio_lwp3_hub_service_uuid);
             if (remote->btstack_error == ERROR_CODE_SUCCESS) {
                 remote->con_state = CON_STATE_WAIT_DISCOVER_SERVICES;
             } else {
