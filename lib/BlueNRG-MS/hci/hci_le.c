@@ -16,6 +16,7 @@
   * <h2><center>&copy; COPYRIGHT 2013 STMicroelectronics</center></h2>
   */
 
+#include <assert.h>
 #include <string.h>
 
 #include "hci_le.h"
@@ -157,11 +158,11 @@ void hci_le_set_advertising_data_begin(uint8_t length, const uint8_t *data)
   struct hci_request rq;
   le_set_adv_data_cp adv_cp;
 
-  memset(&adv_cp, 0, sizeof(adv_cp));
-  adv_cp.length = length;
-  memcpy(adv_cp.data, data, MIN(31,length));
+  assert(length <= sizeof(adv_cp.data));
 
-  memset(&rq, 0, sizeof(rq));
+  adv_cp.length = length;
+  memcpy(adv_cp.data, data, length);
+
   rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_ADV_DATA);
   rq.cparam = &adv_cp;
   rq.clen = LE_SET_ADV_DATA_CP_SIZE;
@@ -282,11 +283,11 @@ void hci_le_set_scan_response_data_begin(uint8_t length, const uint8_t *data)
   struct hci_request rq;
   le_set_scan_response_data_cp scan_resp_cp;
 
-  memset(&scan_resp_cp, 0, sizeof(scan_resp_cp));
-  scan_resp_cp.length = length;
-  memcpy(scan_resp_cp.data, data, MIN(31,length));
+  assert(length <= sizeof(scan_resp_cp.data));
 
-  memset(&rq, 0, sizeof(rq));
+  scan_resp_cp.length = length;
+  memcpy(scan_resp_cp.data, data, length);
+
   rq.opcode = cmd_opcode_pack(OGF_LE_CTL, OCF_LE_SET_SCAN_RESPONSE_DATA);
   rq.cparam = &scan_resp_cp;
   rq.clen = LE_SET_SCAN_RESPONSE_DATA_CP_SIZE;

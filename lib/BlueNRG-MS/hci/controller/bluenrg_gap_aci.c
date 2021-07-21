@@ -36,7 +36,6 @@ void aci_gap_init_begin(uint8_t role, uint8_t privacy_enabled, uint8_t device_na
   cp.privacy_enabled = privacy_enabled;
   cp.device_name_char_len = device_name_char_len;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_INIT);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
@@ -69,8 +68,8 @@ void aci_gap_set_non_discoverable_begin(void)
 {
   struct hci_request rq;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_SET_NON_DISCOVERABLE);
+  rq.clen = 0;
 
   hci_send_req(&rq);
 }
@@ -204,7 +203,6 @@ void aci_gap_set_discoverable_begin(uint8_t AdvType,
   memcpy(buffer + indx, &SlaveConnIntervMax, 2);
   indx +=  2;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_SET_DISCOVERABLE);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
@@ -538,7 +536,6 @@ void aci_gap_terminate_begin(uint16_t conn_handle, uint8_t reason)
   cp.handle = htobs(conn_handle);
   cp.reason = reason;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_TERMINATE);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
@@ -631,7 +628,6 @@ void aci_gap_start_general_discovery_proc_begin(
   cp.own_address_type = own_address_type;
   cp.filterDuplicates = filterDuplicates;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_START_GENERAL_DISCOVERY_PROC);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
@@ -771,7 +767,6 @@ void aci_gap_start_general_conn_establish_proc_begin(
   cp.own_address_type = own_address_type;
   cp.filter_duplicates = filter_duplicates;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_START_GENERAL_CONN_ESTABLISH_PROC);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
@@ -848,7 +843,6 @@ void aci_gap_create_connection_begin(
   cp.min_conn_length = htobs(min_conn_length);
   cp.max_conn_length = htobs(max_conn_length);
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_CREATE_CONNECTION);
   rq.cparam = &cp;
   rq.clen = sizeof(cp);
@@ -873,7 +867,6 @@ void aci_gap_terminate_gap_procedure_begin(uint8_t procedure_code)
 {
   struct hci_request rq;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GAP_TERMINATE_GAP_PROCEDURE);
   rq.cparam = &procedure_code;
   rq.clen = 1;

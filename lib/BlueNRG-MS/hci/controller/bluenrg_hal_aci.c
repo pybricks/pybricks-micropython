@@ -66,7 +66,6 @@ void aci_hal_write_config_data_begin(uint8_t offset,
   memcpy(buffer + indx, val, len);
   indx +=  len;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_HAL_WRITE_CONFIG_DATA);
   rq.cparam = (void *)buffer;
   rq.clen = indx;

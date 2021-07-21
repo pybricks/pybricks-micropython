@@ -32,8 +32,8 @@ void aci_gatt_init_begin(void)
 {
   struct hci_request rq;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_INIT);
+  rq.clen = 0;
 
   hci_send_req(&rq);
 }
@@ -76,7 +76,6 @@ void aci_gatt_add_serv_begin(uint8_t service_uuid_type, const uint8_t* service_u
   buffer[indx] = max_attr_records;
   indx++;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_ADD_SERV);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
@@ -206,7 +205,6 @@ void aci_gatt_add_char_begin(uint16_t serviceHandle,
   buffer[indx] = isVariable;
   indx++;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_ADD_CHAR);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
@@ -349,7 +347,6 @@ void aci_gatt_update_char_value_begin(uint16_t servHandle,
   memcpy(buffer + indx, charValue, charValueLen);
   indx +=  charValueLen;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_UPD_CHAR_VAL);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
@@ -774,7 +771,6 @@ void aci_gatt_disc_charac_by_uuid_begin(
   memcpy(buffer + indx, charUuid, uuid_len);
   indx +=  uuid_len;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_DISC_CHARAC_BY_UUID);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
@@ -950,7 +946,6 @@ void aci_gatt_write_charac_value_begin(uint16_t conn_handle,
   memcpy(buffer + indx, attr_value, value_len);
   indx +=  value_len;
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_WRITE_CHAR_VALUE);
   rq.cparam = (void *)buffer;
   rq.clen = indx;
@@ -1156,7 +1151,6 @@ void aci_gatt_write_without_response_begin(
   cp.val_len = val_len;
   memcpy(cp.attr_val, attr_val, val_len);
 
-  memset(&rq, 0, sizeof(rq));
   rq.opcode = cmd_opcode_pack(OGF_VENDOR_CMD, OCF_GATT_WRITE_WITHOUT_RESPONSE);
   rq.cparam = &cp;
   rq.clen = GATT_WRITE_WITHOUT_RESPONSE_CP_SIZE + val_len;
