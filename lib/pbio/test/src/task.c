@@ -29,7 +29,7 @@ static void test_no_yield_task(void *env) {
     pbio_task_t task;
 
     pbio_task_init(&task, no_yield_task_thread, NULL);
-    pbio_task_start(queue, &task);
+    pbio_task_queue_add(queue, &task);
 
     tt_want_uint_op(list_length(queue), ==, 0);
     tt_want_uint_op(task.status, ==, PBIO_SUCCESS);
@@ -52,7 +52,7 @@ static void test_task_removed_when_complete(void *env) {
     pbio_task_t task;
 
     pbio_task_init(&task, one_yield_task_thread, NULL);
-    pbio_task_start(queue, &task);
+    pbio_task_queue_add(queue, &task);
 
     tt_want_uint_op(list_length(queue), ==, 1);
     tt_want_uint_op(task.status, ==, PBIO_ERROR_AGAIN);
@@ -83,7 +83,7 @@ static void test_task_cancelation(void *env) {
     uint32_t call_count = 0;
 
     pbio_task_init(&task, cancel_task_thread, &call_count);
-    pbio_task_start(queue, &task);
+    pbio_task_queue_add(queue, &task);
 
     tt_want_uint_op(call_count, ==, 1);
     tt_want_uint_op(list_length(queue), ==, 1);
@@ -128,13 +128,13 @@ static void test_task_removal(void *env) {
     pbio_task_t task1, task2, task3;
 
     pbio_task_init(&task1, counting_task_thread, (void *)0);
-    pbio_task_start(queue, &task1);
+    pbio_task_queue_add(queue, &task1);
 
     pbio_task_init(&task2, one_yield_task_thread, NULL);
-    pbio_task_start(queue, &task2);
+    pbio_task_queue_add(queue, &task2);
 
     pbio_task_init(&task3, counting_task_thread, (void *)0);
-    pbio_task_start(queue, &task3);
+    pbio_task_queue_add(queue, &task3);
 
     // at this point, all 3 tasks should be queued
     tt_want_uint_op(list_length(queue), ==, 3);

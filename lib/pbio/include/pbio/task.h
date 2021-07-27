@@ -46,7 +46,7 @@ struct _pbio_task_t {
 
 void pbio_task_init(pbio_task_t *task, pbio_task_thread_t thread, void *context);
 void pbio_task_cancel(pbio_task_t *task);
-void pbio_task_start(list_t queue, pbio_task_t *task);
+void pbio_task_queue_add(list_t queue, pbio_task_t *task);
 void pbio_task_queue_run_once(list_t queue);
 
 #endif // _PBIO_TASK_H_

@@ -239,7 +239,7 @@ static PT_THREAD(set_discoverable(struct pt *pt, pbio_task_t *task)) {
 void pbdrv_bluetooth_start_advertising(void) {
     static pbio_task_t task;
     pbio_task_init(&task, set_discoverable, NULL);
-    pbio_task_start(task_queue, &task);
+    pbio_task_queue_add(task_queue, &task);
 }
 
 static PT_THREAD(set_non_discoverable(struct pt *pt, pbio_task_t *task)) {
@@ -258,7 +258,7 @@ static PT_THREAD(set_non_discoverable(struct pt *pt, pbio_task_t *task)) {
 void pbdrv_bluetooth_stop_advertising(void) {
     static pbio_task_t task;
     pbio_task_init(&task, set_non_discoverable, NULL);
-    pbio_task_start(task_queue, &task);
+    pbio_task_queue_add(task_queue, &task);
 }
 
 bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
@@ -335,7 +335,7 @@ done:
 void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context) {
     static pbio_task_t task;
     pbio_task_init(&task, send_value_notification, context);
-    pbio_task_start(task_queue, &task);
+    pbio_task_queue_add(task_queue, &task);
 }
 
 void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
@@ -517,7 +517,7 @@ end_cancel:
 
 void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_and_connect_context_t *context) {
     pbio_task_init(task, scan_and_connect_task, context);
-    pbio_task_start(task_queue, task);
+    pbio_task_queue_add(task_queue, task);
 }
 
 static PT_THREAD(disconnect_remote_task(struct pt *pt, pbio_task_t *task)) {
@@ -538,7 +538,7 @@ static PT_THREAD(disconnect_remote_task(struct pt *pt, pbio_task_t *task)) {
 void pbdrv_bluetooth_disconnect_remote(void) {
     static pbio_task_t task;
     pbio_task_init(&task, disconnect_remote_task, NULL);
-    pbio_task_start(task_queue, &task);
+    pbio_task_queue_add(task_queue, &task);
 }
 
 // overrides weak function in start_*.S
@@ -1054,7 +1054,7 @@ PROCESS_THREAD(pbdrv_bluetooth_spi_process, ev, data) {
 
     static pbio_task_t task;
     pbio_task_init(&task, init_task, NULL);
-    pbio_task_start(task_queue, &task);
+    pbio_task_queue_add(task_queue, &task);
 
     while (true) {
         PROCESS_WAIT_UNTIL(spi_irq || write_xfer_size);

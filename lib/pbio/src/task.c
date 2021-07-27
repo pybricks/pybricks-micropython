@@ -52,11 +52,11 @@ void pbio_task_cancel(pbio_task_t *task) {
 }
 
 /**
- * Adds @p task to @p queue and starts the task.
+ * Adds @p task to @p queue and runs one iteration.
  * @param [in]  queue   The task queue.
  * @param [in]  task    The task.
  */
-void pbio_task_start(list_t queue, pbio_task_t *task) {
+void pbio_task_queue_add(list_t queue, pbio_task_t *task) {
     if (!pbio_task_run_once(task)) {
         // only queue the task if it has not completed
         list_add(queue, task);
