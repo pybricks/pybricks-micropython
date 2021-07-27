@@ -43,6 +43,15 @@ static bool pbio_task_run_once(pbio_task_t *task) {
 }
 
 /**
+ * Cancels @p task and runs one iteration.
+ * @param [in]  task The task.
+ */
+void pbio_task_cancel(pbio_task_t *task) {
+    task->cancel = true;
+    pbio_task_run_once(task);
+}
+
+/**
  * Adds @p task to @p queue and starts the task.
  * @param [in]  queue   The task queue.
  * @param [in]  task    The task.
@@ -65,7 +74,7 @@ void pbio_task_queue_run_once(list_t queue) {
         // have to save next now in case task is removed from queue
         next = list_item_next(task);
 
-        if (pbio_task_run_once(task)) {
+        if (task->status != PBIO_ERROR_AGAIN || pbio_task_run_once(task)) {
             // remove the task from the queue only if the task is complete
             list_remove(queue, task);
         }

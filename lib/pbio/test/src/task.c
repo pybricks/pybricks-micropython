@@ -64,6 +64,10 @@ static void test_task_removed_when_complete(void *env) {
 }
 
 static PT_THREAD(cancel_task_thread(struct pt *pt, pbio_task_t *task)) {
+    uint32_t *call_count = task->context;
+
+    (*call_count)++;
+
     PT_BEGIN(pt);
 
     PT_WAIT_UNTIL(pt, task->cancel);
@@ -75,24 +79,29 @@ static PT_THREAD(cancel_task_thread(struct pt *pt, pbio_task_t *task)) {
 // This demonstrates how to implement task cancelation.
 static void test_task_cancelation(void *env) {
     LIST(queue);
-
     pbio_task_t task;
+    uint32_t call_count = 0;
 
-    pbio_task_init(&task, cancel_task_thread, NULL);
+    pbio_task_init(&task, cancel_task_thread, &call_count);
     pbio_task_start(queue, &task);
 
+    tt_want_uint_op(call_count, ==, 1);
     tt_want_uint_op(list_length(queue), ==, 1);
     tt_want_uint_op(task.status, ==, PBIO_ERROR_AGAIN);
 
     pbio_task_queue_run_once(queue);
 
     // stays in queue when not canceled yet
+    tt_want_uint_op(call_count, ==, 2);
     tt_want_uint_op(list_length(queue), ==, 1);
     tt_want_uint_op(task.status, ==, PBIO_ERROR_AGAIN);
 
-    task.cancel = true;
+    pbio_task_cancel(&task);
     pbio_task_queue_run_once(queue);
 
+    // since there is no yield after cancelation, call count is only 3 even
+    // though both functions above could potentially iterate the task
+    tt_want_uint_op(call_count, ==, 3);
     tt_want_uint_op(list_length(queue), ==, 0);
     tt_want_uint_op(task.status, ==, PBIO_ERROR_CANCELED);
 }
