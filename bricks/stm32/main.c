@@ -319,7 +319,8 @@ restart:
         }
     }
 
-    #if PYBRICKS_PY_PUPDEVICES && (PYBRICKS_HUB_MOVEHUB | PYBRICKS_HUB_CITYHUB | PYBRICKS_HUB_TECHNICHUB | PYBRICKS_HUB_PRIMEHUB)
+    // TODO: need a generic way to register cleanups like this
+    #if PYBRICKS_PY_PUPDEVICES
     extern void pb_type_Remote_cleanup(void);
     pb_type_Remote_cleanup();
     #endif

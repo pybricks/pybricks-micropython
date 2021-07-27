@@ -12,6 +12,7 @@
 
 // BTstack features that can be enabled
 #define ENABLE_BLE
+#define ENABLE_LE_CENTRAL
 #define ENABLE_LE_PERIPHERAL
 #define ENABLE_PRINTF_HEXDUMP
 
@@ -22,7 +23,7 @@
 // BTstack configuration. buffers, sizes, ...
 #define HCI_ACL_PAYLOAD_SIZE (1691 + 4)
 #define MAX_NR_BTSTACK_LINK_KEY_DB_MEMORY_ENTRIES  0
-#define MAX_NR_GATT_CLIENTS 0
+#define MAX_NR_GATT_CLIENTS 1
 #define MAX_NR_HCI_CONNECTIONS 1
 #define MAX_NR_HFP_CONNECTIONS 0
 #define MAX_NR_L2CAP_CHANNELS  0

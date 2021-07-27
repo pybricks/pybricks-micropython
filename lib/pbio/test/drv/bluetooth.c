@@ -309,6 +309,12 @@ static void handle_send(const uint8_t *buffer, uint16_t length) {
                     log_debug("advertising_enabled %d", advertising_enabled);
                     queue_command_complete(opcode, 0x00);
                     break;
+                case 0x200b: // LE Set Scan Parameters
+                    queue_command_complete(opcode, 0x00);
+                    break;
+                case 0x200f: // LE Read White List Size
+                    queue_command_complete(opcode, 0x00, 0x01);
+                    break;
                 case 0xff36: // HCI_VS_Update_UART_HCI_Baudrate
                     queue_command_complete(opcode, 0x00);
                     break;
