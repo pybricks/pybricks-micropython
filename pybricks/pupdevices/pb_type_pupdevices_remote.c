@@ -55,9 +55,14 @@ STATIC void handle_notification(pbdrv_bluetooth_connection_t connection, const u
 STATIC void pb_remote_connect(mp_int_t timeout) {
     pb_remote_t *remote = &pb_remote_singleton;
 
-    memset(remote, 0, sizeof(*remote));
+    // REVISIT: for now, we only allow a single connection to a remote.
+    if (pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_HANDSET)) {
+        pb_assert(PBIO_ERROR_BUSY);
+    }
 
-    // TODO: check for busy
+    // needed to ensure that no buttons are "pressed" after reconnecting since
+    // we are using static memory
+    memset(remote, 0, sizeof(*remote));
 
     pbdrv_bluetooth_set_notification_handler(handle_notification);
     pbdrv_bluetooth_scan_and_connect(&remote->task, &remote->context);
