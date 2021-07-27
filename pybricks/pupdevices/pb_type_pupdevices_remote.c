@@ -491,14 +491,15 @@ STATIC const pb_obj_enum_member_t *remote_buttons[] = {
 
 STATIC mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_DEFAULT_NONE(address),
+        PB_ARG_DEFAULT_NONE(name),
         PB_ARG_DEFAULT_INT(timeout, 10000));
 
     pb_type_pupdevices_Remote_obj_t *self = m_new_obj(pb_type_pupdevices_Remote_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    // TODO
-    (void)address_in;
+    if (name_in != mp_const_none) {
+        mp_raise_NotImplementedError(MP_ERROR_TEXT("filter by name is not implemented"));
+    }
 
     mp_int_t timeout = timeout_in == mp_const_none? -1 : pb_obj_get_positive_int(timeout_in);
     pb_remote_connect(timeout);
