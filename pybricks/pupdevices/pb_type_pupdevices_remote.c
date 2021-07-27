@@ -7,6 +7,8 @@
 
 #include <stdint.h>
 
+#include <lego_lwp3.h>
+
 #include <pbdrv/bluetooth.h>
 #include <pbio/button.h>
 #include <pbio/error.h>
@@ -33,16 +35,15 @@ typedef struct {
 
 STATIC pb_remote_t pb_remote_singleton;
 
+// Handles LEGO Wireless protocol messages from the handset
 STATIC void handle_notification(pbdrv_bluetooth_connection_t connection, const uint8_t *value, uint8_t size) {
     pb_remote_t *remote = &pb_remote_singleton;
 
-    // 0x08 == H/W NetWork Commands, 0x02 == Connection Request
-    // This message is meant for something else, but contains the center button state
-    if (value[0] == 5 && value[2] == 0x08 && value[3] == 0x02) {
+    if (value[0] == 5 && value[2] == LWP3_MSG_TYPE_HW_NET_CMDS && value[3] == LWP3_HW_NET_CMD_CONNECTION_REQ) {
+        // This message is meant for something else, but contains the center button state
         remote->center = value[4];
-    }
-    // 0x45 == port value command
-    else if (value[0] == 7 && value[2] == 0x45) {
+    } else if (value[0] == 7 && value[2] == LWP3_MSG_TYPE_PORT_VALUE) {
+        // This assumes that the handset button ports have already been set to mode KEYSD
         if (value[3] == 0) {
             memcpy(remote->left, &value[4], 3);
         } else if (value[3] == 1) {
