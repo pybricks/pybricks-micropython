@@ -504,7 +504,7 @@ STATIC mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
     mp_int_t timeout = timeout_in == mp_const_none? -1 : pb_obj_get_positive_int(timeout_in);
     pb_remote_connect(timeout);
 
-    self->buttons = pb_type_Keypad_obj_new(PBIO_ARRAY_SIZE(remote_buttons), remote_buttons, remote_button_is_pressed);
+    self->buttons = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(remote_buttons), remote_buttons, remote_button_is_pressed);
     return MP_OBJ_FROM_PTR(self);
 }
 
