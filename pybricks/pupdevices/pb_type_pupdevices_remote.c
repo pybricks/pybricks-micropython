@@ -77,13 +77,10 @@ STATIC void pb_remote_connect(mp_int_t timeout) {
         mp_int_t start = mp_hal_ticks_ms();
         while (timeout == -1 || mp_hal_ticks_ms() - start < timeout) {
             MICROPY_EVENT_POLL_HOOK
-            if (remote->task.status == PBIO_SUCCESS) {
-                nlr_pop();
-                return;
-            }
             if (remote->task.status != PBIO_ERROR_AGAIN) {
                 nlr_pop();
                 pb_assert(remote->task.status);
+                return;
             }
         }
         mp_raise_OSError(MP_ETIMEDOUT);
