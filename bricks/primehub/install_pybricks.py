@@ -27,7 +27,9 @@ BLOCK_WRITE_SIZE = BLOCK_READ_SIZE * 4
 FF = b"\xFF"
 
 
+# LEGO firmware versions on which dual boot was successfully tested.
 KNOWN_LEGO_FIRMWARE_VERSIONS = {
+    b"v1.1.01.0002-3e5a121": "SPIKE Prime App v1.3.5",
     b"v1.2.01.0000-849e6c3": "MINDSTORMS Robot Inventor App v1.3.4 / 10.1.0",
     b"v1.2.01.0103-d08b6fe": "MINDSTORMS Robot Inventor App v1.3.4 / 10.1.0",
 }
