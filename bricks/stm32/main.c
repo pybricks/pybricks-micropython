@@ -375,10 +375,18 @@ mp_lexer_t *mp_lexer_new_from_file(const char *filename) {
 }
 
 void mp_reader_new_file(mp_reader_t *reader, const char *filename) {
-    mp_raise_OSError(MP_ENOENT);
+    if (strcmp(filename, "main.mpy") != 0) {
+        mp_raise_OSError(MP_ENOENT);
+    }
+
+    mp_reader_new_mem(reader, &_pb_user_mpy_data, _pb_user_mpy_size, 0);
 }
 
 mp_import_stat_t mp_import_stat(const char *path) {
+    if (strcmp(path, "main.mpy") == 0) {
+        return MP_IMPORT_STAT_FILE;
+    }
+
     return MP_IMPORT_STAT_NO_EXIST;
 }
 
