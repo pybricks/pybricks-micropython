@@ -2,8 +2,7 @@
 
 # Changelog
 
-
-## Unreleased
+## [Unreleased]
 
 ### Added
 - Enabled builtin `bytearray` ([pull#60]).
@@ -11,6 +10,8 @@
 - Added alpha support for dual boot installation on the SPIKE Prime Hub.
 - Added `pybricks.experimental.hello_world` function to make it easier for
   new contributors to experiment with Pybricks using C code.
+- Added ability to import the `main.mpy` that is embedded in the firmware from
+  a download and run program ([support#408]).
 
 ### Changed
 - Move Hub Bluetooth optimizations to reduce firmware size  ([issue#49]).
@@ -100,13 +101,13 @@
 Prerelease changes are documented at [support#48].
 
 
-<!-- let's try to keep this list sorted -->
+<!-- let's try to keep this list sorted alphabetically -->
 [issue#21]: https://github.com/pybricks/pybricks-micropython/issues/21
 [issue#49]: https://github.com/pybricks/pybricks-micropython/issues/49
 [issue#58]: https://github.com/pybricks/pybricks-micropython/issues/58
+[issue#59]: https://github.com/pybricks/pybricks-micropython/issues/59
 [pull#57]: https://github.com/pybricks/pybricks-micropython/pull/57
 [pull#60]: https://github.com/pybricks/pybricks-micropython/pull/60
-[issue#59]: https://github.com/pybricks/pybricks-micropython/issues/59
 [support#48]: https://github.com/pybricks/support/issues/48
 [support#52]: https://github.com/pybricks/support/issues/52
 [support#186]: https://github.com/pybricks/support/issues/186
@@ -118,6 +119,7 @@ Prerelease changes are documented at [support#48].
 [support#385]: https://github.com/pybricks/support/issues/385
 [support#386]: https://github.com/pybricks/support/issues/386
 [support#389]: https://github.com/pybricks/support/issues/389
+[support#408]: https://github.com/pybricks/support/issues/408
 
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0a3...HEAD
 [3.1.0a3]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a2...v3.1.0a3
