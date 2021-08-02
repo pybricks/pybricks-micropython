@@ -3,6 +3,22 @@
 # Changelog
 
 
+## Unreleased
+
+### Added
+- Enabled builtin `bytearray` ([pull#60]).
+- Enabled `ustruct` module ([pull#60]).
+- Added alpha support for dual boot installation on the SPIKE Prime Hub.
+
+### Changed
+- Move Hub Bluetooth optimizations to reduce firmware size  ([issue#49]).
+- Disabled `pybricks.iodevices` module on Move Hub to reduce firmware size.
+
+### Fixed
+- Improvements to `pybricks.pupdevices.Remote`. Check if a remote is already
+  connected before attempting to create a new connection. Also rename first
+  argument from `address` to `name` to match documentation.
+
 ## [3.1.0a3] - 2021-07-19
 
 ### Added
@@ -87,6 +103,8 @@ Prerelease changes are documented at [support#48].
 [issue#49]: https://github.com/pybricks/pybricks-micropython/issues/49
 [issue#58]: https://github.com/pybricks/pybricks-micropython/issues/58
 [pull#57]: https://github.com/pybricks/pybricks-micropython/pull/57
+[pull#60]: https://github.com/pybricks/pybricks-micropython/pull/60
+[issue#59]: https://github.com/pybricks/pybricks-micropython/issues/59
 [support#48]: https://github.com/pybricks/support/issues/48
 [support#52]: https://github.com/pybricks/support/issues/52
 [support#186]: https://github.com/pybricks/support/issues/186
