@@ -19,6 +19,7 @@
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 #include <pybricks/util_pb/pb_error.h>
+#include <pybricks/util_pb/pb_task.h>
 
 #include "py/mphal.h"
 #include "py/runtime.h"
@@ -70,27 +71,7 @@ STATIC void remote_connect(const char *name, mp_int_t timeout) {
 
     pbdrv_bluetooth_set_notification_handler(handle_notification);
     pbdrv_bluetooth_scan_and_connect(&remote->task, &remote->context);
-
-    nlr_buf_t nlr;
-    if (nlr_push(&nlr) == 0) {
-        mp_int_t start = mp_hal_ticks_ms();
-        while (timeout == -1 || mp_hal_ticks_ms() - start < timeout) {
-            MICROPY_EVENT_POLL_HOOK
-            if (remote->task.status != PBIO_ERROR_AGAIN) {
-                nlr_pop();
-                pb_assert(remote->task.status);
-                return;
-            }
-        }
-        mp_raise_OSError(MP_ETIMEDOUT);
-        nlr_pop();
-    } else {
-        pbio_task_cancel(&remote->task);
-        while (remote->task.status == PBIO_ERROR_AGAIN) {
-            MICROPY_VM_HOOK_LOOP
-        }
-        nlr_jump(nlr.ret_val);
-    }
+    pb_wait_task(&remote->task, timeout);
 }
 
 void pb_type_Remote_cleanup(void) {
