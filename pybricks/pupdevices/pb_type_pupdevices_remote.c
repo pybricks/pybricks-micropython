@@ -93,12 +93,16 @@ void pb_type_Remote_cleanup(void) {
     pbdrv_bluetooth_disconnect_remote();
 }
 
-STATIC pbio_error_t remote_button_is_pressed(pbio_button_flags_t *pressed) {
-    pb_remote_t *remote = &pb_remote_singleton;
-
+STATIC void remote_assert_connected(void) {
     if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_HANDSET)) {
         mp_raise_OSError(MP_ENODEV);
     }
+}
+
+STATIC pbio_error_t remote_button_is_pressed(pbio_button_flags_t *pressed) {
+    pb_remote_t *remote = &pb_remote_singleton;
+
+    remote_assert_connected();
 
     *pressed = 0;
 
@@ -160,8 +164,22 @@ STATIC mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
     return MP_OBJ_FROM_PTR(self);
 }
 
+STATIC mp_obj_t remote_name(size_t n_args, const mp_obj_t *args) {
+    pb_remote_t *remote = &pb_remote_singleton;
+
+    remote_assert_connected();
+
+    if (n_args == 2) {
+        mp_raise_NotImplementedError(MP_ERROR_TEXT("setting name is not implemented"));
+    }
+
+    return mp_obj_new_str(remote->context.name, strlen(remote->context.name));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(remote_name_obj, 1, 2, remote_name);
+
 STATIC const mp_rom_map_elem_t pb_type_pupdevices_Remote_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_buttons),     MP_ROM_ATTRIBUTE_OFFSET(pb_type_pupdevices_Remote_obj_t, buttons) },
+    { MP_ROM_QSTR(MP_QSTR_buttons), MP_ROM_ATTRIBUTE_OFFSET(pb_type_pupdevices_Remote_obj_t, buttons) },
+    { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&remote_name_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_type_pupdevices_Remote_locals_dict, pb_type_pupdevices_Remote_locals_dict_table);
 

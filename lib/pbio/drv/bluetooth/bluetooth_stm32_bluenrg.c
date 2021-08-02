@@ -390,9 +390,31 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
         // addr_type = subevt->bdaddr_type;
         memcpy(context->bdaddr, subevt->bdaddr, 6);
 
-        // TODO: wait for scan response that matches Bluetooth address for
-        // for checking local name
-        // subevt->evt_type == SCAN_RSP
+        break;
+    }
+
+    for (;;) {
+        advertising_data_received = false;
+        PT_WAIT_UNTIL(pt, {
+            if (task->cancel) {
+                goto cancel_discovery;
+            }
+            advertising_data_received;
+        });
+
+        le_advertising_info *subevt = (void *)&read_buf[5];
+
+        // TODO: Properly parse scan response data. For now, we are assuming
+        // that this is a Powered Up Handset where the local name is the first
+        // field
+        if (subevt->evt_type != SCAN_RSP || memcmp(subevt->bdaddr, context->bdaddr, 6) != 0 ||
+            subevt->data_RSSI[0] != 20 /* length */ || subevt->data_RSSI[1] != AD_TYPE_COMPLETE_LOCAL_NAME) {
+
+            // TODO: filter on name if needed
+            continue;
+        }
+
+        memcpy(context->name, &subevt->data_RSSI[2], sizeof(context->name));
 
         break;
     }

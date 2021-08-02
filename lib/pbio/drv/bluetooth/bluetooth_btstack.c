@@ -346,7 +346,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                 if (event_type == SCAN_RSP && data_length == 30 && bd_addr_cmp(address, handset.address) == 0) {
                     // TODO: verify name
                     if (data[1] == BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME) {
-                        strncpy(handset.name, (const char *)&data[2], sizeof(handset.name));
+                        memcpy(handset.name, &data[2], sizeof(handset.name));
                     }
                     gap_stop_scan();
                     handset.btstack_error = gap_connect(handset.address, handset.address_type);
@@ -544,6 +544,8 @@ void pbdrv_bluetooth_set_notification_handler(pbdrv_bluetooth_receive_handler_t 
 }
 
 static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
+    pbdrv_bluetooth_scan_and_connect_context_t *context = task->context;
+
     PT_BEGIN(pt);
 
     memset(&handset, 0, sizeof(handset));
@@ -564,6 +566,10 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
     });
 
     // TODO: set task->status to error on CON_STATE_CONNECT_FAILED
+
+    // REVISIT: probably want to make a generic connection handle data structure
+    // that includes handle, name, address, etc.
+    memcpy(context->name, handset.name, sizeof(context->name));
 
     task->status = PBIO_SUCCESS;
     PT_EXIT(pt);
