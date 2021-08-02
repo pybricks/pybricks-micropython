@@ -16,11 +16,12 @@
 ### Changed
 - Move Hub Bluetooth optimizations to reduce firmware size  ([issue#49]).
 - Disabled `pybricks.iodevices` module on Move Hub to reduce firmware size.
-
-### Fixed
-- Improvements to `pybricks.pupdevices.Remote`. Check if a remote is already
-  connected before attempting to create a new connection. Also rename first
-  argument from `address` to `name` to match documentation.
+- Improvements to `pybricks.pupdevices.Remote`:
+  - Check if a remote is already connected before attempting to create a new
+    connection.
+  - Rename first argument from `address` to `name` to match documentation.
+  - Implement connecting by name.
+  - Add `name()` method.
 
 ## [3.1.0a3] - 2021-07-19
 

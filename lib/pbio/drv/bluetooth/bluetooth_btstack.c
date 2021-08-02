@@ -321,6 +321,9 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             uint8_t event_type = gap_event_advertising_report_get_advertising_event_type(packet);
             uint8_t data_length = gap_event_advertising_report_get_data_length(packet);
             const uint8_t *data = gap_event_advertising_report_get_data(packet);
+            bd_addr_t address;
+
+            gap_event_advertising_report_get_address(packet, address);
 
             if (handset.con_state == CON_STATE_WAIT_ADV_IND) {
                 // HACK: this is making major assumptions about how the advertising data
@@ -334,22 +337,33 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                 if (event_type == ADV_IND && data_length == 31
                     && pbio_uuid128_reverse_compare(&data[5], pbio_lwp3_hub_service_uuid)
                     && data[26] == LWP3_HUB_KIND_HANDSET) {
-                    gap_event_advertising_report_get_address(packet, handset.address);
+
+                    if (memcmp(address, handset.address, 6) == 0) {
+                        // This was the same device as last time. If the scan response
+                        // didn't match before, it probably won't match now and we
+                        // should try a different device.
+                        break;
+                    }
+
+                    memcpy(handset.address, address, sizeof(bd_addr_t));
                     handset.address_type = gap_event_advertising_report_get_address_type(packet);
                     handset.con_state = CON_STATE_WAIT_SCAN_RSP;
                 }
             } else if (handset.con_state == CON_STATE_WAIT_SCAN_RSP) {
-                bd_addr_t address;
-
-                gap_event_advertising_report_get_address(packet, address);
-
                 if (event_type == SCAN_RSP && data_length == 30 && bd_addr_cmp(address, handset.address) == 0) {
-                    // TODO: verify name
                     if (data[1] == BLUETOOTH_DATA_TYPE_COMPLETE_LOCAL_NAME) {
+                        // if the name was passed in from the caller, then filter on name
+                        if (handset.name[0] != '\0' && strncmp(handset.name, (char *)&data[2], sizeof(handset.name)) != 0) {
+                            handset.con_state = CON_STATE_WAIT_ADV_IND;
+                            break;
+                        }
+
                         memcpy(handset.name, &data[2], sizeof(handset.name));
                     }
+
                     gap_stop_scan();
                     handset.btstack_error = gap_connect(handset.address, handset.address_type);
+
                     if (handset.btstack_error == ERROR_CODE_SUCCESS) {
                         handset.con_state = CON_STATE_WAIT_CONNECT;
                     } else {
@@ -550,6 +564,7 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
 
     memset(&handset, 0, sizeof(handset));
     handset.con_handle = HCI_CON_HANDLE_INVALID;
+    memcpy(handset.name, context->name, sizeof(handset.name));
 
     // active scanning to get scan response data.
     // scan interval: 48 * 0.625ms = 30ms

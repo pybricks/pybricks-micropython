@@ -388,6 +388,8 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
 
     context->status = read_buf[8]; // debug
 
+try_again:
+
     for (;;) {
         advertising_data_received = false;
         PT_WAIT_UNTIL(pt, {
@@ -408,6 +410,13 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
 
             // if this is not LEGO Powered Up remote, keep scanning
             continue;
+        }
+
+        if (memcmp(context->bdaddr, &read_buf[11], 6) == 0) {
+            // This was the same device as last time. If the scan response
+            // didn't match before, it probably won't match now and we
+            // should try a different device.
+            goto try_again;
         }
 
         // save the Bluetooth address for later
@@ -432,8 +441,12 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
         if (read_buf[9] != SCAN_RSP || memcmp(&read_buf[11], context->bdaddr, 6) != 0 ||
             read_buf[19] != 20 /* length */ || read_buf[20] != GAP_ADTYPE_LOCAL_NAME_COMPLETE) {
 
-            // TODO: filter on name if needed
             continue;
+        }
+
+        // if the name was passed in from the caller, then filter on name
+        if (context->name[0] != '\0' && strncmp(context->name, (char *)&read_buf[21], sizeof(context->name)) != 0) {
+            goto try_again;
         }
 
         memcpy(context->name, &read_buf[21], sizeof(context->name));

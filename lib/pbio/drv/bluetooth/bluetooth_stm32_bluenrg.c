@@ -357,6 +357,8 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
     PT_WAIT_UNTIL(pt, hci_command_status);
     context->status = aci_gap_start_general_conn_establish_proc_end();
 
+try_again:
+
     for (;;) {
         advertising_data_received = false;
         PT_WAIT_UNTIL(pt, {
@@ -386,6 +388,13 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
             continue;
         }
 
+        if (memcmp(context->bdaddr, subevt->bdaddr, 6) == 0) {
+            // This was the same device as last time. If the scan response
+            // didn't match before, it probably won't match now and we
+            // should try a different device.
+            goto try_again;
+        }
+
         // save the Bluetooth address for later
         // addr_type = subevt->bdaddr_type;
         memcpy(context->bdaddr, subevt->bdaddr, 6);
@@ -410,8 +419,12 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
         if (subevt->evt_type != SCAN_RSP || memcmp(subevt->bdaddr, context->bdaddr, 6) != 0 ||
             subevt->data_RSSI[0] != 20 /* length */ || subevt->data_RSSI[1] != AD_TYPE_COMPLETE_LOCAL_NAME) {
 
-            // TODO: filter on name if needed
             continue;
+        }
+
+        // if the name was passed in from the caller, then filter on name
+        if (context->name[0] != '\0' && strncmp(context->name, (char *)&subevt->data_RSSI[2], sizeof(context->name)) != 0) {
+            goto try_again;
         }
 
         memcpy(context->name, &subevt->data_RSSI[2], sizeof(context->name));

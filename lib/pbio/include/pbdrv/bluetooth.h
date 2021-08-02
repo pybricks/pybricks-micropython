@@ -143,7 +143,19 @@ typedef struct {
     char name[20];
 } pbdrv_bluetooth_scan_and_connect_context_t;
 
-// REVISIT: separate scan and connect?
+/**
+ * Starts scanning for a BLE device and connects to it.
+ *
+ * @param [in]  task    The task that is used to wait for completion.
+ * @param [in]  context The context data for the call.
+ *
+ * When calling, @p context->bdaddr must be zeroed and @p context->name must
+ * be zeroed or set to a name to filter advertising data based on the local
+ * name.
+ *
+ * Currently, this function is hard-coded to only match LEGO Powered Up Handset
+ * devices.
+ */
 void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_and_connect_context_t *context);
 
 // TODO: make this a geneic disconnect

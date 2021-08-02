@@ -52,7 +52,7 @@ STATIC void handle_notification(pbdrv_bluetooth_connection_t connection, const u
     }
 }
 
-STATIC void pb_remote_connect(mp_int_t timeout) {
+STATIC void remote_connect(const char *name, mp_int_t timeout) {
     pb_remote_t *remote = &pb_remote_singleton;
 
     // REVISIT: for now, we only allow a single connection to a remote.
@@ -63,6 +63,10 @@ STATIC void pb_remote_connect(mp_int_t timeout) {
     // needed to ensure that no buttons are "pressed" after reconnecting since
     // we are using static memory
     memset(remote, 0, sizeof(*remote));
+
+    if (name) {
+        strncpy(remote->context.name, name, sizeof(remote->context.name));
+    }
 
     pbdrv_bluetooth_set_notification_handler(handle_notification);
     pbdrv_bluetooth_scan_and_connect(&remote->task, &remote->context);
@@ -153,12 +157,9 @@ STATIC mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
     pb_type_pupdevices_Remote_obj_t *self = m_new_obj(pb_type_pupdevices_Remote_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    if (name_in != mp_const_none) {
-        mp_raise_NotImplementedError(MP_ERROR_TEXT("filter by name is not implemented"));
-    }
-
-    mp_int_t timeout = timeout_in == mp_const_none? -1 : pb_obj_get_positive_int(timeout_in);
-    pb_remote_connect(timeout);
+    const char *name = name_in == mp_const_none ? NULL : mp_obj_str_get_str(name_in);
+    mp_int_t timeout = timeout_in == mp_const_none ? -1 : pb_obj_get_positive_int(timeout_in);
+    remote_connect(name, timeout);
 
     self->buttons = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(remote_buttons), remote_buttons, remote_button_is_pressed);
     return MP_OBJ_FROM_PTR(self);
