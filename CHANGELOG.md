@@ -9,6 +9,8 @@
 - Enabled builtin `bytearray` ([pull#60]).
 - Enabled `ustruct` module ([pull#60]).
 - Added alpha support for dual boot installation on the SPIKE Prime Hub.
+- Added `pybricks.experimental.hello_world` function to make it easier for
+  new contributors to experiment with Pybricks using C code.
 
 ### Changed
 - Move Hub Bluetooth optimizations to reduce firmware size  ([issue#49]).
