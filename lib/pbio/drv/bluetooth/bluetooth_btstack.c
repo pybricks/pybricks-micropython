@@ -395,6 +395,9 @@ static uint16_t att_read_callback(hci_con_handle_t con_handle, uint16_t attribut
 void pbdrv_bluetooth_init(void) {
     static btstack_packet_callback_registration_t hci_event_callback_registration;
 
+    // don't need to init the whole struct, so doing this here
+    handset.con_handle = HCI_CON_HANDLE_INVALID;
+
     btstack_memory_init();
     btstack_run_loop_init(pbdrv_bluetooth_btstack_run_loop_contiki_get_instance());
 
