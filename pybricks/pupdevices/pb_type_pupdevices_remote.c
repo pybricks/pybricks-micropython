@@ -179,6 +179,8 @@ STATIC pbio_error_t remote_button_is_pressed(pbio_button_flags_t *pressed) {
 }
 
 STATIC void pb_type_pupdevices_Remote_light_on(void *context, const pbio_color_hsv_t *hsv) {
+    pb_remote_t *remote = &pb_remote_singleton;
+
     remote_assert_connected();
 
     struct {
@@ -205,9 +207,8 @@ STATIC void pb_type_pupdevices_Remote_light_on(void *context, const pbio_color_h
 
     pbio_color_hsv_to_rgb(hsv, (pbio_color_rgb_t *)msg.payload);
 
-    pbio_task_t task;
-    pbdrv_bluetooth_write_remote(&task, &msg.value);
-    pb_wait_task(&task, -1);
+    pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
+    pb_wait_task(&remote->task, -1);
 }
 
 typedef struct _pb_type_pupdevices_Remote_obj_t {
@@ -274,9 +275,8 @@ STATIC mp_obj_t remote_name(size_t n_args, const mp_obj_t *args) {
         memcpy(msg.payload, name, len);
 
         // NB: operation is not cancelable, so timeout is not used
-        pbio_task_t task;
-        pbdrv_bluetooth_write_remote(&task, &msg.value);
-        pb_wait_task(&task, -1);
+        pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
+        pb_wait_task(&remote->task, -1);
 
         // assuming write was successful instead of reading back from the handset
         memcpy(remote->context.name, name, len);
