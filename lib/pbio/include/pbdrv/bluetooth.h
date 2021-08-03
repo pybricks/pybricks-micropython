@@ -63,6 +63,16 @@ struct _pbdrv_bluetooth_send_context_t {
     pbdrv_bluetooth_connection_t connection;
 };
 
+/**
+ * A GATT value.
+ */
+typedef struct {
+    /** The size of @p data in bytes. */
+    uint8_t size;
+    /** The value data. */
+    uint8_t data[0];
+} pbdrv_bluetooth_value_t;
+
 #if PBDRV_CONFIG_BLUETOOTH
 
 /**
@@ -158,6 +168,8 @@ typedef struct {
  */
 void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_and_connect_context_t *context);
 
+// TODO: make this a generic write without response function
+void pbdrv_bluetooth_write_remote(pbio_task_t *task, pbdrv_bluetooth_value_t *value);
 // TODO: make this a geneic disconnect
 void pbdrv_bluetooth_disconnect_remote(void);
 

@@ -152,7 +152,40 @@ STATIC mp_obj_t remote_name(size_t n_args, const mp_obj_t *args) {
     remote_assert_connected();
 
     if (n_args == 2) {
-        mp_raise_NotImplementedError(MP_ERROR_TEXT("setting name is not implemented"));
+        size_t len;
+        const char *name = mp_obj_str_get_data(args[1], &len);
+
+        if (len == 0 || len > LWP3_MAX_HUB_PROPERTY_NAME_SIZE) {
+            mp_raise_ValueError(MP_ERROR_TEXT("bad name length"));
+        }
+
+        struct {
+            pbdrv_bluetooth_value_t value;
+            uint8_t length;
+            uint8_t hub;
+            uint8_t type;
+            uint8_t property;
+            uint8_t operation;
+            char payload[LWP3_MAX_HUB_PROPERTY_NAME_SIZE];
+        } __attribute__((packed)) msg;
+
+        msg.value.size = msg.length = len + 5;
+        msg.hub = 0;
+        msg.type = LWP3_MSG_TYPE_HUB_PROPERTIES;
+        msg.property = LWP3_HUB_PROPERTY_NAME;
+        msg.operation = LWP3_HUB_PROPERTY_OP_SET;
+        memcpy(msg.payload, name, len);
+
+        // NB: operation is not cancelable, so timeout is not used
+        pbio_task_t task;
+        pbdrv_bluetooth_write_remote(&task, &msg.value);
+        pb_wait_task(&task, -1);
+
+        // assuming write was successful instead of reading back from the handset
+        memcpy(remote->context.name, name, len);
+        remote->context.name[len] = 0;
+
+        return mp_const_none;
     }
 
     return mp_obj_new_str(remote->context.name, strlen(remote->context.name));

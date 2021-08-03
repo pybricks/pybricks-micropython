@@ -63,6 +63,35 @@ typedef enum {
 } lwp3_msg_type_t;
 
 typedef enum {
+    LWP3_HUB_PROPERTY_NAME                  = 0x01,
+    LWP3_HUB_PROPERTY_BUTTON                = 0x02,
+    LWP3_HUB_PROPERTY_FW_VERSION            = 0x03,
+    LWP3_HUB_PROPERTY_HW_VERSION            = 0x04,
+    LWP3_HUB_PROPERTY_RSSI                  = 0x05,
+    LWP3_HUB_PROPERTY_BATTERY_VOLTAGE       = 0x06,
+    LWP3_HUB_PROPERTY_BATTERY_TYPE          = 0x07,
+    LWP3_HUB_PROPERTY_MFG_NAME              = 0x08,
+    LWP3_HUB_PROPERTY_RADIO_FW_VERSION      = 0x09,
+    LWP3_HUB_PROPERTY_PROTOCOL_VERSION      = 0x0A,
+    LWP3_HUB_PROPERTY_SYSTEM_TYPE_ID        = 0x0B,
+    LWP3_HUB_PROPERTY_HW_NET_ID             = 0x0C,
+    LWP3_HUB_PROPERTY_PRIMARY_ADDR          = 0x0D,
+    LWP3_HUB_PROPERTY_SECONDARY_ADDR        = 0x0E,
+    LWP3_HUB_PROPERTY_HW_NET_FAMILY         = 0x0F,
+} lwp3_hub_property_t;
+
+/** max size for ::LWP3_HUB_PROPERTY_NAME payload */
+#define LWP3_MAX_HUB_PROPERTY_NAME_SIZE 14
+typedef enum {
+    LWP3_HUB_PROPERTY_OP_SET                = 0x01,
+    LWP3_HUB_PROPERTY_OP_ENABLE             = 0x02,
+    LWP3_HUB_PROPERTY_OP_DISABLE            = 0x03,
+    LWP3_HUB_PROPERTY_OP_RESET              = 0x04,
+    LWP3_HUB_PROPERTY_OP_REQUEST            = 0x05,
+    LWP3_HUB_PROPERTY_OP_VALUE              = 0x06,
+} lwp3_hub_property_op_t;
+
+typedef enum {
     LWP3_HW_NET_CMD_CONNECTION_REQ          = 0x02,
     LWP3_HW_NET_CMD_FAMILY_REQ              = 0x03,
     LWP3_HW_NET_CMD_SET_FAMILY              = 0x04,

@@ -599,6 +599,34 @@ void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_an
     pbio_task_queue_add(task_queue, task);
 }
 
+static PT_THREAD(write_remote_task(struct pt *pt, pbio_task_t *task)) {
+    pbdrv_bluetooth_value_t *value = task->context;
+
+    PT_BEGIN(pt);
+
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    {
+        attWriteReq_t req = {
+            .handle = remote_lwp3_char_handle + 1,
+            .len = value->size,
+            .pValue = value->data,
+        };
+        GATT_WriteNoRsp(remote_handle, &req);
+    }
+    PT_WAIT_UNTIL(pt, hci_command_status);
+
+    // TODO: set error if write failed
+
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_write_remote(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
+    pbio_task_init(task, write_remote_task, value);
+    pbio_task_queue_add(task_queue, task);
+}
+
 static PT_THREAD(disconnect_remote_task(struct pt *pt, pbio_task_t *task)) {
     PT_BEGIN(pt);
 

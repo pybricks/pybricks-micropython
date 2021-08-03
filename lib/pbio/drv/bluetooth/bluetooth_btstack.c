@@ -56,6 +56,12 @@ typedef enum {
 } con_state_t;
 
 typedef enum {
+    CHAR_STATE_IDLE,
+    CHAR_STATE_QUERY_PENDING,
+    CHAR_STATE_QUERY_COMPLETE,
+} char_state_t;
+
+typedef enum {
     DISCONNECT_REASON_NONE,
     DISCONNECT_REASON_TIMEOUT,
     DISCONNECT_REASON_CONNECT_FAILED,
@@ -73,6 +79,7 @@ typedef struct {
     disconnect_reason_t disconnect_reason;
     gatt_client_service_t lwp3_service;
     gatt_client_characteristic_t lwp3_char;
+    char_state_t lwp3_char_state;
     uint8_t btstack_error;
     uint8_t address_type;
     bd_addr_t address;
@@ -243,6 +250,12 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel, uint
                 }
             } else if (handset.con_state == CON_STATE_WAIT_WRITE_PORT_1_SETUP) {
                 handset.con_state = CON_STATE_CONNECTED;
+            } else if (handset.con_state == CON_STATE_CONNECTED) {
+                // REVISIT: need to verify handle when there are more than one
+                // possible connected devices
+                if (handset.lwp3_char_state == CHAR_STATE_QUERY_PENDING) {
+                    handset.lwp3_char_state = CHAR_STATE_QUERY_COMPLETE;
+                }
             }
             break;
 
@@ -604,6 +617,41 @@ cancel:
 
 void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_and_connect_context_t *context) {
     pbio_task_init(task, scan_and_connect_task, context);
+    pbio_task_queue_add(task_queue, task);
+}
+
+static PT_THREAD(write_remote_task(struct pt *pt, pbio_task_t *task)) {
+    pbdrv_bluetooth_value_t *value = task->context;
+
+    PT_BEGIN(pt);
+
+    if (handset.lwp3_char_state != CHAR_STATE_IDLE) {
+        task->status = PBIO_ERROR_BUSY;
+        PT_EXIT(pt);
+    }
+
+    // TODO: change this to write without response
+    uint8_t err = gatt_client_write_value_of_characteristic(handle_gatt_client_event,
+        handset.con_handle, handset.lwp3_char.value_handle, value->size, value->data);
+
+    if (err != ERROR_CODE_SUCCESS) {
+        task->status = PBIO_ERROR_IO;
+        PT_EXIT(pt);
+    }
+
+    handset.lwp3_char_state = CHAR_STATE_QUERY_PENDING;
+    PT_WAIT_UNTIL(pt, handset.lwp3_char_state == CHAR_STATE_QUERY_COMPLETE || handset.con_state != CON_STATE_CONNECTED);
+    handset.lwp3_char_state = CHAR_STATE_IDLE;
+
+    // TODO: set error if write failed
+
+    task->status = PBIO_SUCCESS;
+
+    PT_END(pt);
+}
+
+void pbdrv_bluetooth_write_remote(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
+    pbio_task_init(task, write_remote_task, value);
     pbio_task_queue_add(task_queue, task);
 }
 
