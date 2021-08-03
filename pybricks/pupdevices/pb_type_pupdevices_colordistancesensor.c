@@ -55,20 +55,23 @@ STATIC void pupdevices_ColorDistanceSensor__hsv(pupdevices_ColorDistanceSensor_o
 
 STATIC void pupdevices_ColorDistanceSensor_light_on(void *context, const pbio_color_hsv_t *hsv) {
     pb_device_t *pbdev = context;
-    uint8_t mode;
+    int32_t color;
 
-    if (hsv->h == PBIO_COLOR_HUE_RED) {
-        mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__REFLT;
-    } else if (hsv->h == PBIO_COLOR_HUE_GREEN) {
-        mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX;
-    } else if (hsv->h == PBIO_COLOR_HUE_BLUE) {
-        mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI;
+    // Even though the mode takes a 0-10 value for color, only red, green and blue
+    // actually turn on the light. So we just pick the closest of these 3 to the
+    // requested color.
+
+    if (hsv->s < 50 || hsv->v < 50) {
+        color = 0; // off
+    } else if (hsv->h >= PBIO_COLOR_HUE_YELLOW && hsv->h < PBIO_COLOR_HUE_CYAN) {
+        color = 5; // green
+    } else if (hsv->h >= PBIO_COLOR_HUE_CYAN && hsv->h < PBIO_COLOR_HUE_MAGENTA) {
+        color = 3; // blue
     } else {
-        mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX;
+        color = 9; // red
     }
 
-    int32_t unused[4];
-    pb_device_get_values(pbdev, mode, unused);
+    pb_device_set_values(pbdev, PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__COL_O, &color, 1);
 }
 
 // pybricks.pupdevices.ColorDistanceSensor.__init__
