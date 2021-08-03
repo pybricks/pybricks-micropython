@@ -11,6 +11,7 @@
 
 #include <pbdrv/bluetooth.h>
 #include <pbio/button.h>
+#include <pbio/color.h>
 #include <pbio/error.h>
 #include <pbio/task.h>
 
@@ -25,6 +26,29 @@
 #include "py/runtime.h"
 #include "py/obj.h"
 #include "py/mperrno.h"
+
+enum {
+    REMOTE_PORT_LEFT_BUTTONS    = 0,
+    REMOTE_PORT_RIGHT_BUTTONS   = 1,
+    REMOTE_PORT_STATUS_LIGHT    = 52,
+    // NB: items below included for completeness - don't seem to work
+    // use hub properties instead
+    REMOTE_PORT_BATTERY_VOLTAGE = 59,
+    REMOTE_PORT_RSSI            = 60,
+};
+
+enum {
+    REMOTE_BUTTONS_MODE_RCKEY   = 0,
+    REMOTE_BUTTONS_MODE_KEYA    = 1,
+    REMOTE_BUTTONS_MODE_KEYR    = 2,
+    REMOTE_BUTTONS_MODE_KEYD    = 3,
+    REMOTE_BUTTONS_MODE_KEYSD   = 4,
+};
+
+enum {
+    STATUS_LIGHT_MODE_COL_0     = 0,
+    STATUS_LIGHT_MODE_RGB_0     = 1,
+};
 
 typedef struct {
     pbio_task_t task;
@@ -45,9 +69,9 @@ STATIC void handle_notification(pbdrv_bluetooth_connection_t connection, const u
         remote->center = value[4];
     } else if (value[0] == 7 && value[2] == LWP3_MSG_TYPE_PORT_VALUE) {
         // This assumes that the handset button ports have already been set to mode KEYSD
-        if (value[3] == 0) {
+        if (value[3] == REMOTE_PORT_LEFT_BUTTONS) {
             memcpy(remote->left, &value[4], 3);
-        } else if (value[3] == 1) {
+        } else if (value[3] == REMOTE_PORT_RIGHT_BUTTONS) {
             memcpy(remote->right, &value[4], 3);
         }
     }
@@ -87,8 +111,8 @@ STATIC void remote_connect(const char *name, mp_int_t timeout) {
         .length = 10,
         .hub = 0,
         .type = LWP3_MSG_TYPE_PORT_MODE_SETUP,
-        .port = 0, // left buttons
-        .mode = 4, // KEYSD
+        .port = REMOTE_PORT_LEFT_BUTTONS,
+        .mode = REMOTE_BUTTONS_MODE_KEYSD,
         .delta_interval = 1,
         .enable_notifications = 1,
     };
@@ -100,7 +124,15 @@ STATIC void remote_connect(const char *name, mp_int_t timeout) {
 
     // set mode for right buttons
 
-    msg.port = 1; // right buttons
+    msg.port = REMOTE_PORT_RIGHT_BUTTONS;
+    pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
+    pb_wait_task(&remote->task, -1);
+
+    // set status light to RGB mode
+
+    msg.port = REMOTE_PORT_STATUS_LIGHT;
+    msg.mode = STATUS_LIGHT_MODE_RGB_0;
+    msg.enable_notifications = 0;
     pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
     pb_wait_task(&remote->task, -1);
 }
@@ -146,9 +178,42 @@ STATIC pbio_error_t remote_button_is_pressed(pbio_button_flags_t *pressed) {
     return PBIO_SUCCESS;
 }
 
+STATIC void pb_type_pupdevices_Remote_light_on(void *context, const pbio_color_hsv_t *hsv) {
+    remote_assert_connected();
+
+    struct {
+        pbdrv_bluetooth_value_t value;
+        uint8_t length;
+        uint8_t hub;
+        uint8_t type;
+        uint8_t port;
+        uint8_t startup : 4;
+        uint8_t completion : 4;
+        uint8_t cmd;
+        uint8_t mode;
+        uint8_t payload[3];
+    } __attribute__((packed)) msg = {
+        .value.size = 10,
+        .length = 10,
+        .type = LWP3_MSG_TYPE_OUT_PORT_CMD,
+        .port = REMOTE_PORT_STATUS_LIGHT,
+        .startup = LWP3_STARTUP_BUFFER,
+        .completion = LWP3_COMPLETION_NO_ACTION,
+        .cmd = LWP3_OUTPUT_CMD_WRITE_DIRECT_MODE_DATA,
+        .mode = STATUS_LIGHT_MODE_RGB_0,
+    };
+
+    pbio_color_hsv_to_rgb(hsv, (pbio_color_rgb_t *)msg.payload);
+
+    pbio_task_t task;
+    pbdrv_bluetooth_write_remote(&task, &msg.value);
+    pb_wait_task(&task, -1);
+}
+
 typedef struct _pb_type_pupdevices_Remote_obj_t {
     mp_obj_base_t base;
     mp_obj_t buttons;
+    mp_obj_t light;
 } pb_type_pupdevices_Remote_obj_t;
 
 STATIC const pb_obj_enum_member_t *remote_buttons[] = {
@@ -174,6 +239,7 @@ STATIC mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
     remote_connect(name, timeout);
 
     self->buttons = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(remote_buttons), remote_buttons, remote_button_is_pressed);
+    self->light = pb_type_ColorLight_external_obj_new(NULL, pb_type_pupdevices_Remote_light_on);
     return MP_OBJ_FROM_PTR(self);
 }
 
@@ -225,6 +291,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(remote_name_obj, 1, 2, remote_name);
 
 STATIC const mp_rom_map_elem_t pb_type_pupdevices_Remote_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_buttons), MP_ROM_ATTRIBUTE_OFFSET(pb_type_pupdevices_Remote_obj_t, buttons) },
+    { MP_ROM_QSTR(MP_QSTR_light), MP_ROM_ATTRIBUTE_OFFSET(pb_type_pupdevices_Remote_obj_t, light) },
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&remote_name_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_type_pupdevices_Remote_locals_dict, pb_type_pupdevices_Remote_locals_dict_table);

@@ -22,6 +22,7 @@
   - Rename first argument from `address` to `name` to match documentation.
   - Implement connecting by name.
   - Add `name()` method.
+  - Add `light` attribute.
 
 ## [3.1.0a3] - 2021-07-19
 

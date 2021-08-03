@@ -107,4 +107,33 @@ typedef enum {
     LWP3_HW_NET_CMD_RESET_LONG_PRESS        = 0x0E,
 } lwp3_hw_net_cmd_t;
 
+typedef enum {
+    LWP3_STARTUP_BUFFER                     = 0x0,
+    LWP3_STARTUP_IMMEDIATE                  = 0x1,
+} lwp3_startup_t;
+
+typedef enum {
+    LWP3_COMPLETION_NO_ACTION               = 0x0,
+    LWP3_COMPLETION_FEEDBACK                = 0x1,
+} lwp3_completion_t;
+
+typedef enum {
+    LWP3_OUTPUT_CMD_START_POWER                 = 0x01,
+    LWP3_OUTPUT_CMD_START_POWER_2               = 0x02,
+    LWP3_OUTPUT_CMD_SET_ACC_TIME                = 0x05,
+    LWP3_OUTPUT_CMD_SET_DEC_TIME                = 0x06,
+    LWP3_OUTPUT_CMD_START_SPEED                 = 0x07,
+    LWP3_OUTPUT_CMD_START_SPEED_2               = 0x08,
+    LWP3_OUTPUT_CMD_START_SPEED_FOR_TIME        = 0x09,
+    LWP3_OUTPUT_CMD_START_SPEED_FOR_TIME_2      = 0x0A,
+    LWP3_OUTPUT_CMD_START_SPEED_FOR_DEGREES     = 0x0B,
+    LWP3_OUTPUT_CMD_START_SPEED_FOR_DEGREES_2   = 0x0C,
+    LWP3_OUTPUT_CMD_GOTO_ABS_POS                = 0x0D,
+    LWP3_OUTPUT_CMD_GOTO_ABS_POS_2              = 0x0E,
+    LWP3_OUTPUT_CMD_PRESET_ENCODER              = 0x13,
+    LWP3_OUTPUT_CMD_PRESET_ENCODER_2            = 0x14,
+    LWP3_OUTPUT_CMD_WRITE_DIRECT                = 0x50,
+    LWP3_OUTPUT_CMD_WRITE_DIRECT_MODE_DATA      = 0x51,
+} lwp3_output_cmd_t;
+
 #endif // _LEGO_LWP3_H_
