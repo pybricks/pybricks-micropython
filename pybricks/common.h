@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #ifndef PYBRICKS_INCLUDED_PYBRICKS_COMMON_H
 #define PYBRICKS_INCLUDED_PYBRICKS_COMMON_H
@@ -11,6 +11,7 @@
 #include <stdint.h>
 
 #include <pbio/button.h>
+#include <pbio/color.h>
 #include <pbio/light.h>
 
 #include "py/obj.h"
@@ -21,8 +22,16 @@
 
 void pb_package_import_all(void);
 
+
+/**
+ * Device-specific callback for controlling a color light.
+ * @param [in]  context     The instance-specific context.
+ * @param [in]  hsv         The HSV color for the light.
+ */
+typedef void (*pb_type_ColorLight_on_t)(void *context, const pbio_color_hsv_t *hsv);
+
 // pybricks._common.ColorLight()
-mp_obj_t common_ColorLight_external_obj_make_new(pb_device_t *pbdev);
+mp_obj_t pb_type_ColorLight_external_obj_new(void *context, pb_type_ColorLight_on_t on);
 mp_obj_t common_ColorLight_internal_obj_new(pbio_color_light_t *light);
 
 // pybricks._common.LightArray()

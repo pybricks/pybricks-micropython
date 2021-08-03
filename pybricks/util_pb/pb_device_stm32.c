@@ -213,25 +213,3 @@ int8_t pb_device_get_mode_id_from_str(pb_device_t *pbdev, const char *mode_str) 
     pb_assert(PBIO_ERROR_NOT_IMPLEMENTED);
     return 0;
 }
-
-void pb_device_color_light_on(pb_device_t *pbdev, const pbio_color_hsv_t *hsv) {
-    // Turn on the light through device specific mode
-    uint8_t mode;
-    switch (pbdev->iodev.info->type_id) {
-        case PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR:
-            if (hsv->h == PBIO_COLOR_HUE_RED) {
-                mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__REFLT;
-            } else if (hsv->h == PBIO_COLOR_HUE_GREEN) {
-                mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX;
-            } else if (hsv->h == PBIO_COLOR_HUE_BLUE) {
-                mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI;
-            } else {
-                mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX;
-            }
-            int32_t data[4];
-            pb_device_get_values(pbdev, mode, data);
-            break;
-        default:
-            pb_assert(PBIO_ERROR_NOT_SUPPORTED);
-    }
-}

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -18,9 +18,11 @@
 #include <pybricks/util_mp/pb_kwarg_helper.h>
 
 // pybricks._common.ColorLight class object
-typedef struct _common_ColorLight_external_obj_t {
+typedef struct {
     mp_obj_base_t base;
-    pb_device_t *pbdev;
+    void *context;
+    pb_type_ColorLight_on_t on;
+
 } common_ColorLight_external_obj_t;
 
 // pybricks._common.ColorLight.on
@@ -30,7 +32,7 @@ STATIC mp_obj_t common_ColorLight_external_on(size_t n_args, const mp_obj_t *pos
         common_ColorLight_external_obj_t, self,
         PB_ARG_REQUIRED(color));
 
-    pb_device_color_light_on(self->pbdev, pb_type_Color_get_hsv(color_in));
+    self->on(self->context, pb_type_Color_get_hsv(color_in));
 
     return mp_const_none;
 }
@@ -40,7 +42,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(common_ColorLight_external_on_obj, 1, common_C
 STATIC mp_obj_t common_ColorLight_external_off(mp_obj_t self_in) {
     common_ColorLight_external_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    pb_device_color_light_on(self->pbdev, &pb_Color_NONE_obj.hsv);
+    self->on(self->context, &pb_Color_NONE_obj.hsv);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(common_ColorLight_external_off_obj, common_ColorLight_external_off);
@@ -60,12 +62,13 @@ STATIC const mp_obj_type_t pb_type_ColorLight_external = {
 };
 
 // pybricks._common.ColorLight.__init__
-mp_obj_t common_ColorLight_external_obj_make_new(pb_device_t *pbdev) {
+mp_obj_t pb_type_ColorLight_external_obj_new(void *context, pb_type_ColorLight_on_t on) {
     // Create new light instance
     common_ColorLight_external_obj_t *light = m_new_obj(common_ColorLight_external_obj_t);
     // Set type and iodev
     light->base.type = &pb_type_ColorLight_external;
-    light->pbdev = pbdev;
+    light->context = context;
+    light->on = on;
     return light;
 }
 

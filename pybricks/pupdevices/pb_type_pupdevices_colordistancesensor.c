@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -53,6 +53,24 @@ STATIC void pupdevices_ColorDistanceSensor__hsv(pupdevices_ColorDistanceSensor_o
     color_map_rgb_to_hsv(&rgb, hsv);
 }
 
+STATIC void pupdevices_ColorDistanceSensor_light_on(void *context, const pbio_color_hsv_t *hsv) {
+    pb_device_t *pbdev = context;
+    uint8_t mode;
+
+    if (hsv->h == PBIO_COLOR_HUE_RED) {
+        mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__REFLT;
+    } else if (hsv->h == PBIO_COLOR_HUE_GREEN) {
+        mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__PROX;
+    } else if (hsv->h == PBIO_COLOR_HUE_BLUE) {
+        mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__AMBI;
+    } else {
+        mode = PBIO_IODEV_MODE_PUP_COLOR_DISTANCE_SENSOR__IR_TX;
+    }
+
+    int32_t unused[4];
+    pb_device_get_values(pbdev, mode, unused);
+}
+
 // pybricks.pupdevices.ColorDistanceSensor.__init__
 STATIC mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
@@ -66,7 +84,7 @@ STATIC mp_obj_t pupdevices_ColorDistanceSensor_make_new(const mp_obj_type_t *typ
     self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_COLOR_DIST_SENSOR);
 
     // Create an instance of the Light class
-    self->light = common_ColorLight_external_obj_make_new(self->pbdev);
+    self->light = pb_type_ColorLight_external_obj_new(self->pbdev, pupdevices_ColorDistanceSensor_light_on);
 
     // Save default color settings
     pb_color_map_save_default(&self->color_map);

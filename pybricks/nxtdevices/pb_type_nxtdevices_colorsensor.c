@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include "py/mpconfig.h"
 
@@ -22,6 +22,23 @@ typedef struct _nxtdevices_ColorSensor_obj_t {
     pb_device_t *pbdev;
 } nxtdevices_ColorSensor_obj_t;
 
+STATIC void nxtdevices_ColorSensor_light_on(void *context, const pbio_color_hsv_t *hsv) {
+    pb_device_t *pbdev = context;
+    uint8_t mode;
+
+    if (hsv->h == PBIO_COLOR_HUE_RED) {
+        mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_R;
+    } else if (hsv->h == PBIO_COLOR_HUE_GREEN) {
+        mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_G;
+    } else if (hsv->h == PBIO_COLOR_HUE_BLUE) {
+        mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_B;
+    } else {
+        mode = PBIO_IODEV_MODE_NXT_COLOR_SENSOR__LAMP_OFF;
+    }
+    int32_t unused;
+    pb_device_get_values(pbdev, mode, &unused);
+}
+
 // pybricks.nxtdevices.ColorSensor.__init__
 STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
@@ -35,10 +52,10 @@ STATIC mp_obj_t nxtdevices_ColorSensor_make_new(const mp_obj_type_t *type, size_
     self->pbdev = pb_device_get_device(port, PBIO_IODEV_TYPE_ID_NXT_COLOR_SENSOR);
 
     // Create an instance of the Light class
-    self->light = common_ColorLight_external_obj_make_new(self->pbdev);
+    self->light = pb_type_ColorLight_external_obj_new(self->pbdev, nxtdevices_ColorSensor_light_on);
 
     // Set the light color to red
-    pb_device_color_light_on(self->pbdev, &pb_Color_RED_obj.hsv);
+    nxtdevices_ColorSensor_light_on(self->pbdev, &pb_Color_RED_obj.hsv);
 
     // Save default color settings
     pb_color_map_save_default(&self->color_map);
