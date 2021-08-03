@@ -406,7 +406,7 @@ try_again:
             read_buf[9] != ADV_IND /* connectable undirected advertisement */ ||
             read_buf[22] != 17 /* length */ || read_buf[23] != GAP_ADTYPE_128BIT_COMPLETE ||
             !pbio_uuid128_reverse_compare(&read_buf[24], pbio_lwp3_hub_service_uuid) ||
-            read_buf[45] != LWP3_HUB_KIND_HANDSET) {
+            read_buf[45] != LWP3_HUB_KIND_MARIO) {
 
             // if this is not LEGO Powered Up remote, keep scanning
             continue;
@@ -496,6 +496,7 @@ try_again:
 
     context->status = read_buf[8]; // debug
 
+    /*
     // Assuming that we only ever get successful ATT_ReadByTypeRsp and failed
     // ATT_ReadByTypeRsp or ATT_ErrorRsp.
     PT_WAIT_UNTIL(pt, {
@@ -504,6 +505,7 @@ try_again:
         }
         remote_lwp3_char_handle != NO_CONNECTION;
     });
+    */
 
     // enable notifications
 
