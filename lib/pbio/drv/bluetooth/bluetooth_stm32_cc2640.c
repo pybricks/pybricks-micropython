@@ -521,53 +521,8 @@ try_again:
 
     context->status = read_buf[8]; // debug
 
-    // set mode for left buttons
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    {
-        // 0x0a == length
-        // 0x00 == local hub
-        // 0x41 == Port Input Format Setup (Single)
-        // 0x00 == Port ID - left buttons
-        // 0x04 == mode - KEYSD
-        // 0x00000001 == delta interval
-        // 0x01 == enable notifications
-        static const uint8_t command[] = { 0x0a, 0x00, 0x41, 0x00, 0x04, 0x01, 0x00, 0x00, 0x00, 0x01 };
-        attWriteReq_t req = {
-            .handle = remote_lwp3_char_handle + 1,
-            .len = sizeof(command),
-            .pValue = (uint8_t *)command,
-        };
-        GATT_WriteNoRsp(remote_handle, &req);
-    }
-    PT_WAIT_UNTIL(pt, hci_command_status);
-
-    context->status = read_buf[8]; // debug
-
-    // set mode for right buttons
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    {
-        // 0x0a == length
-        // 0x00 == local hub
-        // 0x41 == Port Input Format Setup (Single)
-        // 0x01 == Port ID - right buttons
-        // 0x04 == mode - KEYSD
-        // 0x00000001 == delta interval
-        // 0x01 == enable notifications
-        static const uint8_t command[] = { 0x0a, 0x00, 0x41, 0x01, 0x04, 0x01, 0x00, 0x00, 0x00, 0x01 };
-        attWriteReq_t req = {
-            .handle = remote_lwp3_char_handle + 1,
-            .len = sizeof(command),
-            .pValue = (uint8_t *)command,
-        };
-        GATT_WriteNoRsp(remote_handle, &req);
-    }
-    PT_WAIT_UNTIL(pt, hci_command_status);
-
-    context->status = read_buf[8]; // debug
-
     task->status = PBIO_SUCCESS;
+
     PT_EXIT(pt);
 
 cancel_disconnect:

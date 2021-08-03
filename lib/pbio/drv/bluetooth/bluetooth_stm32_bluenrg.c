@@ -488,39 +488,8 @@ try_again:
     PT_WAIT_UNTIL(pt, hci_command_complete);
     context->status = aci_gatt_write_without_response_end();
 
-    // set mode for left buttons
-
-    // 0x0a == length
-    // 0x00 == local hub
-    // 0x41 == Port Input Format Setup (Single)
-    // 0x00 == Port ID - left buttons
-    // 0x04 == mode - KEYSD
-    // 0x00000001 == delta interval
-    // 0x01 == enable notifications
-    static const uint8_t command0[] = { 0x0a, 0x00, 0x41, 0x00, 0x04, 0x01, 0x00, 0x00, 0x00, 0x01 };
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gatt_write_without_response_begin(remote_handle, remote_lwp3_char_handle + 1, sizeof(command0), command0);
-    PT_WAIT_UNTIL(pt, hci_command_complete);
-    context->status = aci_gatt_write_without_response_end();
-
-    // set mode for right buttons
-
-    // 0x0a == length
-    // 0x00 == local hub
-    // 0x41 == Port Input Format Setup (Single)
-    // 0x01 == Port ID - right buttons
-    // 0x04 == mode - KEYSD
-    // 0x00000001 == delta interval
-    // 0x01 == enable notifications
-    static const uint8_t command1[] = { 0x0a, 0x00, 0x41, 0x01, 0x04, 0x01, 0x00, 0x00, 0x00, 0x01 };
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gatt_write_without_response_begin(remote_handle, remote_lwp3_char_handle + 1, sizeof(command1), command1);
-    PT_WAIT_UNTIL(pt, hci_command_complete);
-    context->status = aci_gatt_write_without_response_end();
-
     task->status = PBIO_SUCCESS;
+
     PT_EXIT(pt);
 
 cancel_disconnect:

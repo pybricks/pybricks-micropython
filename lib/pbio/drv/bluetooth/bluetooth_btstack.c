@@ -49,8 +49,6 @@ typedef enum {
     CON_STATE_WAIT_DISCOVER_SERVICES,
     CON_STATE_WAIT_DISCOVER_CHARACTERISTICS,
     CON_STATE_WAIT_ENABLE_NOTIFICATIONS,
-    CON_STATE_WAIT_WRITE_PORT_0_SETUP,
-    CON_STATE_WAIT_WRITE_PORT_1_SETUP,
     CON_STATE_CONNECTED,
     CON_STATE_WAIT_DISCONNECT,
 } con_state_t;
@@ -207,48 +205,6 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel, uint
                     handset.disconnect_reason = DISCONNECT_REASON_CONFIGURE_CHARACTERISTIC_FAILED;
                 }
             } else if (handset.con_state == CON_STATE_WAIT_ENABLE_NOTIFICATIONS) {
-                // 0x0a == length
-                // 0x00 == local hub
-                // 0x41 == Port Input Format Setup (Single)
-                // 0x00 == Port ID - left buttons
-                // 0x04 == mode - KEYSD
-                // 0x00000001 == delta interval
-                // 0x01 == enable notifications
-                static const uint8_t subscribe_port_0[] = { 0x0a, 0x00, 0x41, 0x00, 0x04, 0x01, 0x00, 0x00, 0x00, 0x01 };
-
-                handset.btstack_error = gatt_client_write_value_of_characteristic(
-                    handle_gatt_client_event, handset.con_handle, handset.lwp3_char.value_handle,
-                    sizeof(subscribe_port_0), (uint8_t *)subscribe_port_0);
-                if (handset.btstack_error == ERROR_CODE_SUCCESS) {
-                    handset.con_state = CON_STATE_WAIT_WRITE_PORT_0_SETUP;
-                } else {
-                    // configuration failed for some reason, so disconnect
-                    gap_disconnect(handset.con_handle);
-                    handset.con_state = CON_STATE_WAIT_DISCONNECT;
-                    handset.disconnect_reason = DISCONNECT_REASON_SEND_SUBSCRIBE_PORT_0_FAILED;
-                }
-            } else if (handset.con_state == CON_STATE_WAIT_WRITE_PORT_0_SETUP) {
-                // 0x0a == length
-                // 0x00 == local hub
-                // 0x41 == Port Input Format Setup (Single)
-                // 0x01 == Port ID - right buttons
-                // 0x04 == mode - KEYSD
-                // 0x00000001 == delta interval
-                // 0x01 == enable notifications
-                static const uint8_t subscribe_port_1[] = { 0x0a, 0x00, 0x41, 0x01, 0x04, 0x01, 0x00, 0x00, 0x00, 0x01 };
-
-                handset.btstack_error = gatt_client_write_value_of_characteristic(
-                    handle_gatt_client_event, handset.con_handle, handset.lwp3_char.value_handle,
-                    sizeof(subscribe_port_1), (uint8_t *)subscribe_port_1);
-                if (handset.btstack_error == ERROR_CODE_SUCCESS) {
-                    handset.con_state = CON_STATE_WAIT_WRITE_PORT_1_SETUP;
-                } else {
-                    // configuration failed for some reason, so disconnect
-                    gap_disconnect(handset.con_handle);
-                    handset.con_state = CON_STATE_WAIT_DISCONNECT;
-                    handset.disconnect_reason = DISCONNECT_REASON_SEND_SUBSCRIBE_PORT_1_FAILED;
-                }
-            } else if (handset.con_state == CON_STATE_WAIT_WRITE_PORT_1_SETUP) {
                 handset.con_state = CON_STATE_CONNECTED;
             } else if (handset.con_state == CON_STATE_CONNECTED) {
                 // REVISIT: need to verify handle when there are more than one
