@@ -81,6 +81,7 @@ typedef struct {
     uint8_t btstack_error;
     uint8_t address_type;
     bd_addr_t address;
+    lwp3_hub_kind_t hub_kind;
     char name[20];
 } pup_handset_t;
 
@@ -223,7 +224,7 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel, uint
             if (notification_handler != NULL) {
                 uint16_t length = gatt_event_notification_get_value_length(packet);
                 const uint8_t *value = gatt_event_notification_get_value(packet);
-                notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_HANDSET, value, length);
+                notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3, value, length);
             }
             break;
         }
@@ -305,7 +306,7 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
                 //   - LEGO System A/S (0x0397) + 6 bytes
                 if (event_type == ADV_IND && data_length == 31
                     && pbio_uuid128_reverse_compare(&data[5], pbio_lwp3_hub_service_uuid)
-                    && data[26] == LWP3_HUB_KIND_HANDSET) {
+                    && data[26] == handset.hub_kind) {
 
                     if (memcmp(address, handset.address, 6) == 0) {
                         // This was the same device as last time. If the scan response
@@ -493,7 +494,7 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
         return true;
     }
 
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_HANDSET && handset.con_handle != HCI_CON_HANDLE_INVALID) {
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3 && handset.con_handle != HCI_CON_HANDLE_INVALID) {
         return true;
     }
 
@@ -534,6 +535,7 @@ static PT_THREAD(scan_and_connect_task(struct pt *pt, pbio_task_t *task)) {
     memset(&handset, 0, sizeof(handset));
     handset.con_handle = HCI_CON_HANDLE_INVALID;
     memcpy(handset.name, context->name, sizeof(handset.name));
+    handset.hub_kind = context->hub_kind;
 
     // active scanning to get scan response data.
     // scan interval: 48 * 0.625ms = 30ms

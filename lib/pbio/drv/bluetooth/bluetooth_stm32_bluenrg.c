@@ -274,7 +274,7 @@ bool pbdrv_bluetooth_is_connected(pbdrv_bluetooth_connection_t connection) {
         return true;
     }
 
-    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_HANDSET && remote_handle) {
+    if (connection == PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3 && remote_handle) {
         return true;
     }
 
@@ -382,7 +382,7 @@ try_again:
             subevt->evt_type != ADV_IND /* connectable undirected advertisement */ ||
             subevt->data_RSSI[3] != 17 /* length */ || subevt->data_RSSI[4] != AD_TYPE_128_BIT_SERV_UUID_CMPLT_LIST ||
             memcmp(&subevt->data_RSSI[5], lwp3_hub_service_uuid, sizeof(lwp3_hub_service_uuid)) != 0 ||
-            subevt->data_RSSI[26] != LWP3_HUB_KIND_HANDSET) {
+            subevt->data_RSSI[26] != context->hub_kind) {
 
             // if this is not LEGO Powered Up remote, keep scanning
             continue;
@@ -808,7 +808,7 @@ static void handle_event(hci_event_pckt *event) {
                     // REVISIT: this assumes that the Powered Up remote is the
                     // only thing receiving notifications
                     if (notification_handler) {
-                        notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_HANDSET, subevt->attr_value, subevt->event_data_length - 2);
+                        notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3, subevt->attr_value, subevt->event_data_length - 2);
                     }
                 }
                 break;
