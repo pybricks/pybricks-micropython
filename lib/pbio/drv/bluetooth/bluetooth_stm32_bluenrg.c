@@ -384,7 +384,7 @@ try_again:
             memcmp(&subevt->data_RSSI[5], lwp3_hub_service_uuid, sizeof(lwp3_hub_service_uuid)) != 0 ||
             subevt->data_RSSI[26] != context->hub_kind) {
 
-            // if this is not LEGO Powered Up remote, keep scanning
+            // if this is not the desired LEGO LWP3 device, keep scanning
             continue;
         }
 
@@ -414,10 +414,8 @@ try_again:
         le_advertising_info *subevt = (void *)&read_buf[5];
 
         // TODO: Properly parse scan response data. For now, we are assuming
-        // that this is a Powered Up Handset where the local name is the first
-        // field
-        if (subevt->evt_type != SCAN_RSP || memcmp(subevt->bdaddr, context->bdaddr, 6) != 0 ||
-            subevt->data_RSSI[0] != 20 /* length */ || subevt->data_RSSI[1] != AD_TYPE_COMPLETE_LOCAL_NAME) {
+        // that the saved Bluetooth address is sufficient to recognize correct device
+        if (subevt->evt_type != SCAN_RSP || memcmp(subevt->bdaddr, context->bdaddr, 6) != 0) {
 
             continue;
         }

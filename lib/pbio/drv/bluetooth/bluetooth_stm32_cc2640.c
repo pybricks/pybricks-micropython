@@ -408,7 +408,7 @@ try_again:
             !pbio_uuid128_reverse_compare(&read_buf[24], pbio_lwp3_hub_service_uuid) ||
             read_buf[45] != context->hub_kind) {
 
-            // if this is not LEGO Powered Up remote, keep scanning
+            // if this is not the desired LEGO LWP3 device, keep scanning
             continue;
         }
 
@@ -436,10 +436,8 @@ try_again:
         });
 
         // TODO: Properly parse scan response data. For now, we are assuming
-        // that this is a Powered Up Handset where the local name is the first
-        // field
-        if (read_buf[9] != SCAN_RSP || memcmp(&read_buf[11], context->bdaddr, 6) != 0 ||
-            read_buf[19] != 20 /* length */ || read_buf[20] != GAP_ADTYPE_LOCAL_NAME_COMPLETE) {
+        // that the saved Bluetooth address is sufficient to recognize correct device
+        if (read_buf[9] != SCAN_RSP || memcmp(&read_buf[11], context->bdaddr, 6) != 0) {
 
             continue;
         }
