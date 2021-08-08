@@ -494,14 +494,20 @@ try_again:
 
     context->status = read_buf[8]; // debug
 
-    // Assuming that we only ever get successful ATT_ReadByTypeRsp and failed
-    // ATT_ReadByTypeRsp or ATT_ErrorRsp.
-    PT_WAIT_UNTIL(pt, {
-        if (task->cancel) {
-            goto cancel_disconnect;
-        }
-        remote_lwp3_char_handle != NO_CONNECTION;
-    });
+    // HACK: Characteristics of LEGO Mario are not properly found by GATT_DiscCharsByUUID().
+    // remote_lwp3_char_handle for mario is hard coded for now
+    if (context->hub_kind == LWP3_HUB_KIND_MARIO) {
+        remote_lwp3_char_handle = 0x0011;
+    } else {
+        // Assuming that we only ever get successful ATT_ReadByTypeRsp and failed
+        // ATT_ReadByTypeRsp or ATT_ErrorRsp.
+        PT_WAIT_UNTIL(pt, {
+            if (task->cancel) {
+                goto cancel_disconnect;
+            }
+            remote_lwp3_char_handle != NO_CONNECTION;
+        });
+    }
 
     // enable notifications
 

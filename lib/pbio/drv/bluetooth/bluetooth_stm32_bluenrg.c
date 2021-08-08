@@ -470,12 +470,18 @@ try_again:
     PT_WAIT_UNTIL(pt, hci_command_status);
     context->status = aci_gatt_disc_charac_by_uuid_end();
 
-    PT_WAIT_UNTIL(pt, {
-        if (task->cancel) {
-            goto cancel_disconnect;
-        }
-        remote_lwp3_char_handle;
-    });
+    // HACK: Characteristics of LEGO Mario are not properly found by aci_gatt_disc_charac_by_uuid_begin().
+    // remote_lwp3_char_handle for mario is hard coded for now
+    if (context->hub_kind == LWP3_HUB_KIND_MARIO) {
+        remote_lwp3_char_handle = 0x0011;
+    } else {
+        PT_WAIT_UNTIL(pt, {
+            if (task->cancel) {
+                goto cancel_disconnect;
+            }
+            remote_lwp3_char_handle;
+        });
+    }
 
     // enable notifications
 
