@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2021 The Pybricks Authors
 
 import JSZip, { JSZipObject } from 'jszip';
+import {PACKAGE_VERSION} from './version';
+
+/**
+ * String containing the firmware version.
+ */
+export const firmwareVersion = PACKAGE_VERSION.substring(PACKAGE_VERSION.lastIndexOf('v') + 1);
 
 /**
  * LEGO Powered Up Hub IDs

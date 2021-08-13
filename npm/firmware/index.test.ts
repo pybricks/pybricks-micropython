@@ -4,9 +4,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as util from 'util';
-import { FirmwareReader, FirmwareReaderErrorCode } from '.';
+import { firmwareVersion, FirmwareReader, FirmwareReaderErrorCode } from '.';
 
 const readFile = util.promisify(fs.readFile);
+
+test('firmware version', () => {
+    expect(firmwareVersion).toMatch(/^\d+\.\d+\.\d+/);
+});
 
 test('bad zip data', async () => {
     try {

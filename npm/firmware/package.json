@@ -19,6 +19,7 @@
     "author": "The Pybricks Authors",
     "license": "MIT",
     "scripts": {
+        "prebuild": "node -p \"'export const PACKAGE_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > version.ts",
         "build": "./download-firmware.py && tsc",
         "test": "tsc && jest"
     },
