@@ -54,12 +54,6 @@ typedef enum {
 } con_state_t;
 
 typedef enum {
-    CHAR_STATE_IDLE,
-    CHAR_STATE_QUERY_PENDING,
-    CHAR_STATE_QUERY_COMPLETE,
-} char_state_t;
-
-typedef enum {
     DISCONNECT_REASON_NONE,
     DISCONNECT_REASON_TIMEOUT,
     DISCONNECT_REASON_CONNECT_FAILED,
@@ -77,7 +71,6 @@ typedef struct {
     disconnect_reason_t disconnect_reason;
     gatt_client_service_t lwp3_service;
     gatt_client_characteristic_t lwp3_char;
-    char_state_t lwp3_char_state;
     uint8_t btstack_error;
     uint8_t address_type;
     bd_addr_t address;
@@ -97,6 +90,7 @@ static pbdrv_bluetooth_on_event_t bluetooth_on_event;
 static pbdrv_bluetooth_receive_handler_t receive_handler;
 static pbdrv_bluetooth_receive_handler_t notification_handler;
 static pup_handset_t handset;
+static uint8_t *event_packet;
 static const pbdrv_bluetooth_btstack_platform_data_t *pdata = &pbdrv_bluetooth_btstack_platform_data;
 
 // note on baud rate: with a 48MHz clock, 3000000 baud is the highest we can
@@ -110,6 +104,24 @@ static const hci_transport_config_uart_t config = {
     .flowcontrol = 1,
     .device_name = NULL,
 };
+
+/**
+ * Converts BTStack error to most appropriate PBIO error.
+ * @param [in]  status      The BTStack error
+ * @return                  The PBIO error.
+ */
+static pbio_error_t att_error_to_pbio_error(uint8_t status) {
+    switch (status) {
+        case ATT_ERROR_SUCCESS:
+            return PBIO_SUCCESS;
+        case ATT_ERROR_HCI_DISCONNECT_RECEIVED:
+            return PBIO_ERROR_NO_DEV;
+        case ATT_ERROR_TIMEOUT:
+            return PBIO_ERROR_TIMEDOUT;
+        default:
+            return PBIO_ERROR_FAILED;
+    }
+}
 
 static void pybricks_can_send(void *context) {
     pbdrv_bluetooth_send_context_t *send = context;
@@ -207,12 +219,6 @@ static void handle_gatt_client_event(uint8_t packet_type, uint16_t channel, uint
                 }
             } else if (handset.con_state == CON_STATE_WAIT_ENABLE_NOTIFICATIONS) {
                 handset.con_state = CON_STATE_CONNECTED;
-            } else if (handset.con_state == CON_STATE_CONNECTED) {
-                // REVISIT: need to verify handle when there are more than one
-                // possible connected devices
-                if (handset.lwp3_char_state == CHAR_STATE_QUERY_PENDING) {
-                    handset.lwp3_char_state = CHAR_STATE_QUERY_COMPLETE;
-                }
             }
             break;
 
@@ -354,7 +360,9 @@ static void packet_handler(uint8_t packet_type, uint16_t channel, uint8_t *packe
             break;
     }
 
+    event_packet = packet;
     pbio_task_queue_run_once(task_queue);
+    event_packet = NULL;
 
     if (bluetooth_on_event) {
         bluetooth_on_event();
@@ -588,27 +596,32 @@ static PT_THREAD(write_remote_task(struct pt *pt, pbio_task_t *task)) {
 
     PT_BEGIN(pt);
 
-    if (handset.lwp3_char_state != CHAR_STATE_IDLE) {
-        task->status = PBIO_ERROR_BUSY;
-        PT_EXIT(pt);
-    }
+    // TODO: Make connection handle and value handle part of pbdrv_bluetooth_value_t
+    // to allow for simultaneous connections.
 
-    // TODO: change this to write without response
-    uint8_t err = gatt_client_write_value_of_characteristic(handle_gatt_client_event,
+    uint8_t err = gatt_client_write_value_of_characteristic(packet_handler,
         handset.con_handle, handset.lwp3_char.value_handle, value->size, value->data);
 
     if (err != ERROR_CODE_SUCCESS) {
-        task->status = PBIO_ERROR_IO;
+        task->status = PBIO_ERROR_FAILED;
         PT_EXIT(pt);
     }
 
-    handset.lwp3_char_state = CHAR_STATE_QUERY_PENDING;
-    PT_WAIT_UNTIL(pt, handset.lwp3_char_state == CHAR_STATE_QUERY_COMPLETE || handset.con_state != CON_STATE_CONNECTED);
-    handset.lwp3_char_state = CHAR_STATE_IDLE;
+    // NB: Value buffer must remain valid until GATT_EVENT_QUERY_COMPLETE, so
+    // this wait is not cancelable.
+    PT_WAIT_UNTIL(pt, {
+        if (handset.con_handle == HCI_CON_HANDLE_INVALID) {
+            // disconnected
+            task->status = PBIO_ERROR_NO_DEV;
+            PT_EXIT(pt);
+        }
+        event_packet &&
+        hci_event_packet_get_type(event_packet) == GATT_EVENT_QUERY_COMPLETE &&
+        gatt_event_query_complete_get_handle(event_packet) == handset.con_handle;
+    });
 
-    // TODO: set error if write failed
-
-    task->status = PBIO_SUCCESS;
+    uint8_t status = gatt_event_query_complete_get_att_status(event_packet);
+    task->status = att_error_to_pbio_error(status);
 
     PT_END(pt);
 }
