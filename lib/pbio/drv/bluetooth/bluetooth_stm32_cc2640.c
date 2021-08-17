@@ -657,11 +657,11 @@ static void handle_event(uint8_t *packet) {
     (void)size;
 
     switch (event) {
-        case HCI_COMMAND_COMPLETE_EVENT:
+        case HCI_EVENT_COMMAND_COMPLETE:
             hci_command_complete = true;
             break;
 
-        case HCI_LE_EXT_EVENT: {
+        case HCI_EVENT_VENDOR_SPECIFIC: {
             uint16_t event_code = (data[1] << 8) | data[0];
             HCI_StatusCodes_t status = data[2];
             uint16_t connection_handle = (data[4] << 8) | data[3];

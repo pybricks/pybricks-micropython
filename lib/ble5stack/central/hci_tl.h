@@ -50,8 +50,8 @@
 #define HCI_EVENT_PACKET               0x04
 
 /* HCI Event Codes */
-#define HCI_COMMAND_COMPLETE_EVENT      0x0E
-#define HCI_LE_EXT_EVENT                0xFF
+#define HCI_EVENT_COMMAND_COMPLETE      0x0E
+#define HCI_EVENT_VENDOR_SPECIFIC       0xFF
 
 /* HCI Vendor Specific API Opcodes */
 #define HCI_EXT_RESETSYSTEMDONE         0x041D
