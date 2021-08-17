@@ -871,7 +871,6 @@ retry:
     if (pckt->type == HCI_EVENT_PKT) {
         handle_event((hci_event_pckt *)pckt->data);
     }
-    // TODO: do we need to handle ACL packets (HCI_ACLDATA_PKT)?
 
 end:;
     PT_END(pt);

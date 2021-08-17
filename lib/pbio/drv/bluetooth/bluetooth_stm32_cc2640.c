@@ -1557,7 +1557,6 @@ start:
             if (read_buf[NPI_SPI_HEADER_LEN] == HCI_EVENT_PACKET) {
                 handle_event(&read_buf[NPI_SPI_HEADER_LEN + 1]);
             }
-            // TODO: do we need to handle ACL packets (HCI_ACLDATA_PKT)?
         }
 
         pbio_task_queue_run_once(task_queue);
