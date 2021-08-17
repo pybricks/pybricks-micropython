@@ -153,6 +153,8 @@ static pbio_error_t ble_error_to_pbio_error(HCI_StatusCodes_t status) {
             return PBIO_SUCCESS;
         case bleInvalidParameter:
             return PBIO_ERROR_INVALID_ARG;
+        case bleNotConnected:
+            return PBIO_ERROR_NO_DEV;
         case bleTimeout:
             return PBIO_ERROR_TIMEDOUT;
         default:
