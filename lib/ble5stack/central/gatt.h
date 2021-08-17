@@ -98,7 +98,7 @@
 #define GATT_READMULTILCHARVALUES       0xFD8E
 #define GATT_WRITE_NO_RSP               0xFDB6
 #define GATT_SIGNEDWRITENORSP           0xFDB8
-#define GATT_WRITECHARVALUE             0xFD92
+#define GATT_WRITE_CHAR_VALUE           0xFD92
 #define GATT_WRITELONGCHARVALUE         0xFD96
 #define GATT_READCHARDESC               0xFDBC
 #define GATT_READLONGCHARDESC           0xFDBE

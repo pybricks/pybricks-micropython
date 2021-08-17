@@ -143,6 +143,52 @@ static pbdrv_bluetooth_receive_handler_t notification_handler;
 static const pbdrv_bluetooth_stm32_cc2640_platform_data_t *pdata = &pbdrv_bluetooth_stm32_cc2640_platform_data;
 
 /**
+ * Converts a ble error code to the most appropriate pbio error code.
+ * @param [in]  status      The ble error code.
+ * @return                  The pbio error code.
+ */
+static pbio_error_t ble_error_to_pbio_error(HCI_StatusCodes_t status) {
+    switch (status) {
+        case bleSUCCESS:
+            return PBIO_SUCCESS;
+        case bleInvalidParameter:
+            return PBIO_ERROR_INVALID_ARG;
+        case bleTimeout:
+            return PBIO_ERROR_TIMEDOUT;
+        default:
+            return PBIO_ERROR_FAILED;
+    }
+}
+
+/**
+ * Gets a vendor-specific event payload for @p handle.
+ * @param [in]  handle      The connection handle.
+ * @param [out] event       The vendor-specific event.
+ * @param [out] status      The event status.
+ * @return                  The event payload or NULL if there is no pending
+ *                          vendor-specific event or the event is for a different
+ *                          connection handle.
+ */
+static uint8_t *get_vendor_event(uint16_t handle, uint16_t *event, HCI_StatusCodes_t *status) {
+    if (read_buf[NPI_SPI_HEADER_LEN] != HCI_EVENT_PACKET) {
+        return NULL;
+    }
+
+    if (read_buf[NPI_SPI_HEADER_LEN + 1] != HCI_EVENT_VENDOR_SPECIFIC) {
+        return NULL;
+    }
+
+    *event = pbio_get_uint16_le(&read_buf[NPI_SPI_HEADER_LEN + 3]);
+    *status = read_buf[NPI_SPI_HEADER_LEN + 5];
+
+    if (pbio_get_uint16_le(&read_buf[NPI_SPI_HEADER_LEN + 6]) != handle) {
+        return NULL;
+    }
+
+    return &read_buf[NPI_SPI_HEADER_LEN + 9];
+}
+
+/**
  * Sets the nRESET line on the Bluetooth chip.
  */
 static void bluetooth_reset(reset_state_t reset) {
@@ -572,20 +618,66 @@ static PT_THREAD(write_remote_task(struct pt *pt, pbio_task_t *task)) {
 
     PT_BEGIN(pt);
 
+retry:
     PT_WAIT_WHILE(pt, write_xfer_size);
     {
-        attWriteReq_t req = {
+        GattWriteCharValue_t req = {
+            .connHandle = remote_handle,
             .handle = remote_lwp3_char_handle + 1,
-            .len = value->size,
-            .pValue = value->data,
+            .value = value->data,
+            .dataSize = value->size,
         };
-        GATT_WriteNoRsp(remote_handle, &req);
+        GATT_WriteCharValue(&req);
     }
+
     PT_WAIT_UNTIL(pt, hci_command_status);
 
-    // TODO: set error if write failed
+    HCI_StatusCodes_t status = read_buf[8];
 
-    task->status = PBIO_SUCCESS;
+    if (status != bleSUCCESS) {
+        if (task->cancel) {
+            goto cancel;
+        }
+
+        if (status == blePending) {
+            goto retry;
+        }
+
+        goto exit;
+    }
+
+    // This gets a bit tricky. Once the request has been sent, we can't cancel
+    // the task, so we have to wait for the response (otherwise the response
+    // could be confused with the next request). The device could also become
+    // disconnected, in which case we never receive a response.
+
+    PT_WAIT_UNTIL(pt, {
+        if (remote_handle == NO_CONNECTION) {
+            task->status = PBIO_ERROR_NO_DEV;
+            PT_EXIT(pt);
+        }
+
+        uint8_t *payload;
+        uint16_t event;
+        (payload = get_vendor_event(remote_handle, &event, &status)) && ({
+            if (event == ATT_EVENT_ERROR_RSP && payload[0] == ATT_WRITE_REQ
+                && pbio_get_uint16_le(&payload[1]) == remote_lwp3_char_handle + 1) {
+
+                task->status = PBIO_ERROR_FAILED;
+                PT_EXIT(pt);
+            }
+
+            event == ATT_EVENT_WRITE_RSP;
+        });
+    });
+
+exit:
+    task->status = ble_error_to_pbio_error(status);
+
+    PT_EXIT(pt);
+
+cancel:
+    task->status = PBIO_ERROR_CANCELED;
 
     PT_END(pt);
 }
@@ -1569,6 +1661,9 @@ start:
         }
 
         pbio_task_queue_run_once(task_queue);
+
+        // clear the event packet type in case tasks are run outside of this loop
+        read_buf[NPI_SPI_HEADER_LEN] = 0;
     }
 
     PROCESS_END();

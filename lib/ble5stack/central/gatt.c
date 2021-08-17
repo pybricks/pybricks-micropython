@@ -30,6 +30,7 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * --/COPYRIGHT--*/
 /* Standard Includes */
+#include <assert.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
@@ -42,31 +43,20 @@
 
 HCI_StatusCodes_t GATT_WriteCharValue(GattWriteCharValue_t *para)
 {
-    uint8_t dataLength;
-    uint8_t *pData;
+    uint8_t pData[ATT_MTU_SIZE - 1];
     HCI_StatusCodes_t status;
 
-    dataLength = sizeof(para->connHandle) + sizeof(para->handle) + para->dataSize;
-    pData = (uint8_t *) malloc(dataLength);
-    if (pData == NULL)
-    {
-        free(pData);
-        return bleMemAllocError;
-    }
-    else
-    {
-        pData[0] = LO_UINT16(para->connHandle);
-        pData[1] = HI_UINT16(para->connHandle);
+    assert(ATT_MTU_SIZE - 1 >= 4 + para->dataSize);
 
-        pData[2] = LO_UINT16(para->handle);
-        pData[3] = HI_UINT16(para->handle);
+    pData[0] = LO_UINT16(para->connHandle);
+    pData[1] = HI_UINT16(para->connHandle);
 
-        memcpy(&pData[4], para->value, para->dataSize);
-    }
+    pData[2] = LO_UINT16(para->handle);
+    pData[3] = HI_UINT16(para->handle);
 
-    status = HCI_sendHCICommand(GATT_WRITECHARVALUE, pData, dataLength);
+    memcpy(&pData[4], para->value, para->dataSize);
 
-    free(pData);
+    status = HCI_sendHCICommand(GATT_WRITE_CHAR_VALUE, pData, 4 + para->dataSize);
 
     return status;
 }
@@ -313,6 +303,8 @@ HCI_StatusCodes_t GATT_ReadMultiCharValues( uint16_t connHandle, attReadMultiReq
 HCI_StatusCodes_t GATT_WriteNoRsp(uint16_t connHandle, attWriteReq_t *pReq)
 {
     uint8_t pData[ATT_MTU_SIZE - 1];
+
+    assert(ATT_MTU_SIZE - 1 >= 4 + pReq->len);
 
     pData[0] = LO_UINT16(connHandle);
     pData[1] = HI_UINT16(connHandle);

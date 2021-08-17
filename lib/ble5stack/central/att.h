@@ -106,7 +106,7 @@ extern "C"
 /**
  * ATT Vendor Specific APIs - ATT Event Opcodes
  */
-#define ATT_EVENT_ERRORRSP                0x0501
+#define ATT_EVENT_ERROR_RSP               0x0501
 #define ATT_EVENT_EXCHANGE_MTU_REQ        0x0502
 #define ATT_EVENT_EXCHANGEMTURSP          0x0503
 #define ATT_EVENT_FINDINFOREQ             0x0504
@@ -124,7 +124,7 @@ extern "C"
 #define ATT_EVENT_READ_BY_GRP_TYPE_REQ    0x0510
 #define ATT_EVENT_READ_BY_GRP_TYPE_RSP    0x0511
 #define ATT_EVENT_WRITE_REQ               0x0512
-#define ATT_EVENT_WRITERSP                0x0513
+#define ATT_EVENT_WRITE_RSP               0x0513
 #define ATT_EVENT_PREPAREWRITEREQ         0x0516
 #define ATT_EVENT_PREPAREWRITERSP         0x0517
 #define ATT_EVENT_EXECUTEWRITEREQ         0x0518
