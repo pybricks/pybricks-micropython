@@ -542,19 +542,45 @@ try_again:
 
     context->status = read_buf[8]; // debug
 
+    // GATT_DiscCharsByUUID() sends a "read by type request" so we have to
+    // wait until we get an error response to the request or we get a "read
+    // by type response" with status of bleProcedureComplete. There can be
+    // multiple responses received before the procedure is complete.
+    // REVISIT: what happens when remote is disconnected while waiting here?
+
+    PT_WAIT_UNTIL(pt, {
+        uint8_t *payload;
+        uint16_t event;
+        HCI_StatusCodes_t status;
+        (payload = get_vendor_event(remote_handle, &event, &status)) && ({
+            if (event == ATT_EVENT_ERROR_RSP && payload[0] == ATT_READ_BY_TYPE_REQ) {
+                task->status = PBIO_ERROR_FAILED;
+                goto disconnect;
+            }
+
+            event == ATT_EVENT_READ_BY_TYPE_RSP;
+        }) && ({
+            // hopefully the docs are correct and this is the only possible error
+            if (status == bleTimeout) {
+                task->status = PBIO_ERROR_TIMEDOUT;
+                goto disconnect;
+            }
+
+            // this assumes that there is only one matching characteristic
+            // (if there is more than one, we will end up with the last)
+            // it also assumes that it is the only characteristic in the response
+            if (status == bleSUCCESS) {
+                remote_lwp3_char_handle = pbio_get_uint16_le(&payload[4]);
+            }
+
+            status == bleProcedureComplete;
+        });
+    });
+
     // HACK: Characteristics of LEGO Mario are not properly found by GATT_DiscCharsByUUID().
     // remote_lwp3_char_handle for mario is hard coded for now
     if (context->hub_kind == LWP3_HUB_KIND_MARIO) {
-        remote_lwp3_char_handle = 0x0011;
-    } else {
-        // Assuming that we only ever get successful ATT_ReadByTypeRsp and failed
-        // ATT_ReadByTypeRsp or ATT_ErrorRsp.
-        PT_WAIT_UNTIL(pt, {
-            if (task->cancel) {
-                goto cancel_disconnect;
-            }
-            remote_lwp3_char_handle != NO_CONNECTION;
-        });
+        remote_lwp3_char_handle = 0x0012;
     }
 
     // enable notifications
@@ -564,7 +590,9 @@ retry:
     {
         static const uint16_t enable = 0x0001;
         attWriteReq_t req = {
-            .handle = remote_lwp3_char_handle + 2,
+            // assuming that client characteristic configuration descriptor
+            // is next attribute after the characteristic value attribute
+            .handle = remote_lwp3_char_handle + 1,
             .len = sizeof(enable),
             .pValue = (uint8_t *)&enable,
         };
@@ -586,12 +614,14 @@ retry:
 
     PT_EXIT(pt);
 
-cancel_disconnect:
+disconnect:
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_TerminateLinkReq(remote_handle, 0x13);
     PT_WAIT_UNTIL(pt, hci_command_status);
 
-    goto end_cancel;
+    // task->status must be set before goto disconnect!
+
+    PT_EXIT(pt);
 
 cancel_connect:
     PT_WAIT_WHILE(pt, write_xfer_size);
@@ -625,7 +655,7 @@ retry:
     {
         GattWriteCharValue_t req = {
             .connHandle = remote_handle,
-            .handle = remote_lwp3_char_handle + 1,
+            .handle = remote_lwp3_char_handle,
             .value = value->data,
             .dataSize = value->size,
         };
@@ -663,7 +693,7 @@ retry:
         uint16_t event;
         (payload = get_vendor_event(remote_handle, &event, &status)) && ({
             if (event == ATT_EVENT_ERROR_RSP && payload[0] == ATT_WRITE_REQ
-                && pbio_get_uint16_le(&payload[1]) == remote_lwp3_char_handle + 1) {
+                && pbio_get_uint16_le(&payload[1]) == remote_lwp3_char_handle) {
 
                 task->status = PBIO_ERROR_FAILED;
                 PT_EXIT(pt);
@@ -854,14 +884,6 @@ static void handle_event(uint8_t *packet) {
                             DBG("unhandled read by type req: %04X", type);
                             break;
                     }
-                }
-                break;
-
-                case ATT_EVENT_READ_BY_TYPE_RSP: {
-                    // Assuming that LEGO Powered Up remote is the only thing
-                    // that provides this event type
-                    remote_lwp3_char_handle = (data[8] << 8) | data[7];
-                    // REVISIT: could also be bleTimeout
                 }
                 break;
 
