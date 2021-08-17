@@ -511,6 +511,7 @@ try_again:
 
     // enable notifications
 
+retry:
     PT_WAIT_WHILE(pt, write_xfer_size);
     {
         static const uint16_t enable = 0x0001;
@@ -519,9 +520,17 @@ try_again:
             .len = sizeof(enable),
             .pValue = (uint8_t *)&enable,
         };
+        // REVISIT: we may want to change this to write with response to ensure
+        // that the remote device received the message.
         GATT_WriteNoRsp(remote_handle, &req);
     }
     PT_WAIT_UNTIL(pt, hci_command_status);
+
+    HCI_StatusCodes_t status = read_buf[8];
+
+    if (status == blePending) {
+        goto retry;
+    }
 
     context->status = read_buf[8]; // debug
 
