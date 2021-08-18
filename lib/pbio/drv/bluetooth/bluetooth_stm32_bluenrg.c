@@ -509,17 +509,31 @@ try_again:
     PT_WAIT_UNTIL(pt, hci_command_status);
     context->status = aci_gatt_disc_charac_by_uuid_end();
 
+    PT_WAIT_UNTIL(pt, {
+        uint8_t *payload;
+        uint16_t event;
+        (payload = get_vendor_event(&event))
+        && ({
+            if (event == EVT_BLUE_GATT_DISC_READ_CHAR_BY_UUID_RESP) {
+                evt_gatt_disc_read_char_by_uuid_resp *subevt = (void *)payload;
+
+                if (subevt->conn_handle == remote_handle) {
+                    remote_lwp3_char_handle = subevt->attr_handle;
+                }
+
+            }
+
+            event == EVT_BLUE_GATT_PROCEDURE_COMPLETE;
+        }) && ({
+            evt_gatt_procedure_complete *subevt = (void *)payload;
+            subevt->conn_handle == remote_handle;
+        });
+    });
+
     // HACK: Characteristics of LEGO Mario are not properly found by aci_gatt_disc_charac_by_uuid_begin().
     // remote_lwp3_char_handle for mario is hard coded for now
     if (context->hub_kind == LWP3_HUB_KIND_MARIO) {
         remote_lwp3_char_handle = 0x0011;
-    } else {
-        PT_WAIT_UNTIL(pt, {
-            if (task->cancel) {
-                goto cancel_disconnect;
-            }
-            remote_lwp3_char_handle;
-        });
     }
 
     // enable notifications
@@ -903,14 +917,6 @@ static void handle_event(hci_event_pckt *event) {
                     if (notification_handler) {
                         notification_handler(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3, subevt->attr_value, subevt->event_data_length - 2);
                     }
-                }
-                break;
-
-                case EVT_BLUE_GATT_DISC_READ_CHAR_BY_UUID_RESP: {
-                    evt_gatt_disc_read_char_by_uuid_resp *subevt = (void *)evt->data;
-                    // REVISIT: for now, assuming the Powered Up remote is the
-                    // only thing that generates this event
-                    remote_lwp3_char_handle = subevt->attr_handle;
                 }
                 break;
             }
