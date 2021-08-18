@@ -99,44 +99,53 @@ STATIC void remote_connect(const char *name, mp_int_t timeout) {
     pbdrv_bluetooth_scan_and_connect(&remote->task, &remote->context);
     pb_wait_task(&remote->task, timeout);
 
-    struct {
-        pbdrv_bluetooth_value_t value;
-        uint8_t length;
-        uint8_t hub;
-        uint8_t type;
-        uint8_t port;
-        uint8_t mode;
-        uint32_t delta_interval;
-        uint8_t enable_notifications;
-    } __attribute__((packed)) msg = {
-        .value.size = 10,
-        .length = 10,
-        .hub = 0,
-        .type = LWP3_MSG_TYPE_PORT_MODE_SETUP,
-        .port = REMOTE_PORT_LEFT_BUTTONS,
-        .mode = REMOTE_BUTTONS_MODE_KEYSD,
-        .delta_interval = 1,
-        .enable_notifications = 1,
-    };
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        struct {
+            pbdrv_bluetooth_value_t value;
+            uint8_t length;
+            uint8_t hub;
+            uint8_t type;
+            uint8_t port;
+            uint8_t mode;
+            uint32_t delta_interval;
+            uint8_t enable_notifications;
+        } __attribute__((packed)) msg = {
+            .value.size = 10,
+            .length = 10,
+            .hub = 0,
+            .type = LWP3_MSG_TYPE_PORT_MODE_SETUP,
+            .port = REMOTE_PORT_LEFT_BUTTONS,
+            .mode = REMOTE_BUTTONS_MODE_KEYSD,
+            .delta_interval = 1,
+            .enable_notifications = 1,
+        };
 
-    // set mode for left buttons
+        // set mode for left buttons
 
-    pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
-    pb_wait_task(&remote->task, -1);
+        pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
+        pb_wait_task(&remote->task, -1);
 
-    // set mode for right buttons
+        // set mode for right buttons
 
-    msg.port = REMOTE_PORT_RIGHT_BUTTONS;
-    pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
-    pb_wait_task(&remote->task, -1);
+        msg.port = REMOTE_PORT_RIGHT_BUTTONS;
+        pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
+        pb_wait_task(&remote->task, -1);
 
-    // set status light to RGB mode
+        // set status light to RGB mode
 
-    msg.port = REMOTE_PORT_STATUS_LIGHT;
-    msg.mode = STATUS_LIGHT_MODE_RGB_0;
-    msg.enable_notifications = 0;
-    pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
-    pb_wait_task(&remote->task, -1);
+        msg.port = REMOTE_PORT_STATUS_LIGHT;
+        msg.mode = STATUS_LIGHT_MODE_RGB_0;
+        msg.enable_notifications = 0;
+        pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
+        pb_wait_task(&remote->task, -1);
+
+        nlr_pop();
+    } else {
+        // disconnect if any setup task failed
+        pbdrv_bluetooth_disconnect_remote();
+        nlr_jump(nlr.ret_val);
+    }
 }
 
 void pb_type_Remote_cleanup(void) {
