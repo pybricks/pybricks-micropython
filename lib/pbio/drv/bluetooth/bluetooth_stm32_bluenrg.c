@@ -926,8 +926,17 @@ void hci_send_req(struct hci_request *r) {
 
 // implements function for BlueNRG library
 void hci_recv_resp(struct hci_response *r) {
-    // TODO: might be a good idea to make sure opcodes match
-    memcpy(r->rparam, &read_buf[HCI_HDR_SIZE + HCI_EVENT_HDR_SIZE + EVT_CMD_COMPLETE_SIZE], r->rlen);
+    int offset = HCI_HDR_SIZE + HCI_EVENT_HDR_SIZE;
+
+    assert(read_buf[0] == HCI_EVENT_PKT);
+
+    // *_end() functions for command complete skip the evt_cmd_complete struct
+    // when unpacking the event data
+    if (read_buf[1] == EVT_CMD_COMPLETE) {
+        offset += EVT_CMD_COMPLETE_SIZE;
+    }
+
+    memcpy(r->rparam, &read_buf[offset], r->rlen);
 }
 
 // Initializes the Bluetooth chip
