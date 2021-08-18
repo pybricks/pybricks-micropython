@@ -306,10 +306,18 @@ STATIC mp_obj_t remote_name(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(remote_name_obj, 1, 2, remote_name);
 
+STATIC mp_obj_t remote_close(mp_obj_t self_in) {
+    // REVISIT: should we wait for disconnection to complete?
+    pbdrv_bluetooth_disconnect_remote();
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(remote_close_obj, remote_close);
+
 STATIC const mp_rom_map_elem_t pb_type_pupdevices_Remote_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_buttons), MP_ROM_ATTRIBUTE_OFFSET(pb_type_pupdevices_Remote_obj_t, buttons) },
     { MP_ROM_QSTR(MP_QSTR_light), MP_ROM_ATTRIBUTE_OFFSET(pb_type_pupdevices_Remote_obj_t, light) },
     { MP_ROM_QSTR(MP_QSTR_name), MP_ROM_PTR(&remote_name_obj) },
+    { MP_ROM_QSTR(MP_QSTR_close), MP_ROM_PTR(&remote_close_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(pb_type_pupdevices_Remote_locals_dict, pb_type_pupdevices_Remote_locals_dict_table);
 
