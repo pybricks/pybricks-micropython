@@ -239,7 +239,14 @@ STATIC mp_obj_t pb_type_pupdevices_Remote_make_new(const mp_obj_type_t *type, si
 
     const char *name = name_in == mp_const_none ? NULL : mp_obj_str_get_str(name_in);
     mp_int_t timeout = timeout_in == mp_const_none ? -1 : pb_obj_get_positive_int(timeout_in);
-    remote_connect(name, timeout);
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        remote_connect(name, timeout);
+        nlr_pop();
+    } else {
+        mp_printf(&mp_plat_print, "status: %d\n", pb_remote_singleton.context.status);
+        nlr_jump(nlr.ret_val);
+    }
 
     self->buttons = pb_type_Keypad_obj_new(MP_ARRAY_SIZE(remote_buttons), remote_buttons, remote_button_is_pressed);
     self->light = pb_type_ColorLight_external_obj_new(NULL, pb_type_pupdevices_Remote_light_on);

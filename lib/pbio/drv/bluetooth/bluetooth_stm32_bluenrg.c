@@ -118,6 +118,45 @@ static const pbdrv_gpio_t miso_gpio = { .bank = GPIOC, .pin = 2 };
 static const pbdrv_gpio_t sck_gpio = { .bank = GPIOB, .pin = 13 };
 
 /**
+ * Converts a BlueNRG-MS error code to a PBIO error code.
+ * @param [in]  status  The BlueNRG-MS error code.
+ * @return              The PBIO error code.
+ */
+static pbio_error_t ble_error_to_pbio_error(tBleStatus status) {
+    if (status == BLE_STATUS_SUCCESS) {
+        return PBIO_SUCCESS;
+    }
+    if (status == BLE_STATUS_TIMEOUT) {
+        return PBIO_ERROR_TIMEDOUT;
+    }
+    return PBIO_ERROR_FAILED;
+}
+
+/**
+ * Gets a vendor-specific event for a specific connection.
+ * @param [out] event       The vendor-specific event.
+ * @return                  The event payload or NULL if there is no pending
+ *                          vendor-specific event.
+ */
+static uint8_t *get_vendor_event(uint16_t *event) {
+    hci_uart_pckt *packet = (void *)read_buf;
+
+    if (packet->type != HCI_EVENT_PKT) {
+        return NULL;
+    }
+
+    hci_event_pckt *event_packet = (void *)packet->data;
+
+    if (event_packet->evt != EVT_VENDOR) {
+        return NULL;
+    }
+
+    *event = pbio_get_uint16_le(event_packet->data);
+
+    return &event_packet->data[2];
+}
+
+/**
  * Sets the nRESET line on the Bluetooth chip.
  */
 static void bluetooth_reset(bool reset) {
@@ -487,12 +526,36 @@ try_again:
 
     static const uint16_t enable = 0x0001;
 
+retry:
     PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gatt_write_without_response_begin(remote_handle, remote_lwp3_char_handle + 2, sizeof(enable), (const uint8_t *)&enable);
-    PT_WAIT_UNTIL(pt, hci_command_complete);
-    context->status = aci_gatt_write_without_response_end();
+    aci_gatt_write_charac_value_begin(remote_handle, remote_lwp3_char_handle + 2, sizeof(enable), (const uint8_t *)&enable);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+    context->status = aci_gatt_write_charac_value_end();
 
-    task->status = PBIO_SUCCESS;
+    if (context->status != BLE_STATUS_SUCCESS) {
+        if (task->cancel) {
+            goto cancel_disconnect;
+        }
+
+        if (context->status == BLE_STATUS_NOT_ALLOWED) {
+            goto retry;
+        }
+
+        task->status = ble_error_to_pbio_error(context->status);
+
+        PT_EXIT(pt);
+    }
+
+    uint8_t *payload;
+    PT_WAIT_UNTIL(pt, {
+        uint16_t event;
+        (payload = get_vendor_event(&event))
+        && event == EVT_BLUE_GATT_PROCEDURE_COMPLETE
+        && pbio_get_uint16_le(&payload[0]) == remote_handle;
+    });
+
+    context->status = payload[3];
+    task->status = ble_error_to_pbio_error(context->status);
 
     PT_EXIT(pt);
 
@@ -533,14 +596,40 @@ static PT_THREAD(write_remote_task(struct pt *pt, pbio_task_t *task)) {
 
     PT_BEGIN(pt);
 
+retry:
     PT_WAIT_WHILE(pt, write_xfer_size);
-    aci_gatt_write_without_response_begin(remote_handle, remote_lwp3_char_handle + 1, value->size, value->data);
-    PT_WAIT_UNTIL(pt, hci_command_complete);
-    aci_gatt_write_without_response_end();
+    aci_gatt_write_charac_value_begin(remote_handle, remote_lwp3_char_handle + 1, value->size, value->data);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+    tBleStatus status = aci_gatt_write_charac_value_end();
 
-    // TODO: set error if write failed
+    if (status != BLE_STATUS_SUCCESS) {
+        if (task->cancel) {
+            task->status = PBIO_ERROR_CANCELED;
+            PT_EXIT(pt);
+        }
 
-    task->status = PBIO_SUCCESS;
+        if (status == BLE_STATUS_NOT_ALLOWED) {
+            goto retry;
+        }
+
+        task->status = ble_error_to_pbio_error(status);
+        PT_EXIT(pt);
+    }
+
+    uint8_t *payload;
+    PT_WAIT_UNTIL(pt, {
+        if (remote_handle == 0) {
+            task->status = PBIO_ERROR_NO_DEV;
+            PT_EXIT(pt);
+        }
+
+        uint16_t event;
+        (payload = get_vendor_event(&event))
+        && event == EVT_BLUE_GATT_PROCEDURE_COMPLETE
+        && pbio_get_uint16_le(&payload[0]) == remote_handle;
+    });
+
+    task->status = ble_error_to_pbio_error(payload[3]);
 
     PT_END(pt);
 }
