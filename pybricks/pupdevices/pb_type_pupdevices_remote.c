@@ -77,6 +77,45 @@ STATIC void handle_notification(pbdrv_bluetooth_connection_t connection, const u
     }
 }
 
+STATIC void remote_assert_connected(void) {
+    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3)) {
+        mp_raise_OSError(MP_ENODEV);
+    }
+}
+
+STATIC void pb_type_pupdevices_Remote_light_on(void *context, const pbio_color_hsv_t *hsv) {
+    pb_remote_t *remote = &pb_remote_singleton;
+
+    remote_assert_connected();
+
+    struct {
+        pbdrv_bluetooth_value_t value;
+        uint8_t length;
+        uint8_t hub;
+        uint8_t type;
+        uint8_t port;
+        uint8_t startup : 4;
+        uint8_t completion : 4;
+        uint8_t cmd;
+        uint8_t mode;
+        uint8_t payload[3];
+    } __attribute__((packed)) msg = {
+        .value.size = 10,
+        .length = 10,
+        .type = LWP3_MSG_TYPE_OUT_PORT_CMD,
+        .port = REMOTE_PORT_STATUS_LIGHT,
+        .startup = LWP3_STARTUP_BUFFER,
+        .completion = LWP3_COMPLETION_NO_ACTION,
+        .cmd = LWP3_OUTPUT_CMD_WRITE_DIRECT_MODE_DATA,
+        .mode = STATUS_LIGHT_MODE_RGB_0,
+    };
+
+    pbio_color_hsv_to_rgb(hsv, (pbio_color_rgb_t *)msg.payload);
+
+    pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
+    pb_wait_task(&remote->task, -1);
+}
+
 STATIC void remote_connect(const char *name, mp_int_t timeout) {
     pb_remote_t *remote = &pb_remote_singleton;
 
@@ -140,6 +179,12 @@ STATIC void remote_connect(const char *name, mp_int_t timeout) {
         pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
         pb_wait_task(&remote->task, -1);
 
+        // REVISIT: Could possibly use system color here to make remote match
+        // hub status light. For now, the system color is hard-coded to blue.
+        pbio_color_hsv_t hsv;
+        pbio_color_to_hsv(PBIO_COLOR_BLUE, &hsv);
+        pb_type_pupdevices_Remote_light_on(NULL, &hsv);
+
         nlr_pop();
     } else {
         // disconnect if any setup task failed
@@ -150,12 +195,6 @@ STATIC void remote_connect(const char *name, mp_int_t timeout) {
 
 void pb_type_Remote_cleanup(void) {
     pbdrv_bluetooth_disconnect_remote();
-}
-
-STATIC void remote_assert_connected(void) {
-    if (!pbdrv_bluetooth_is_connected(PBDRV_BLUETOOTH_CONNECTION_PERIPHERAL_LWP3)) {
-        mp_raise_OSError(MP_ENODEV);
-    }
 }
 
 STATIC pbio_error_t remote_button_is_pressed(pbio_button_flags_t *pressed) {
@@ -187,39 +226,6 @@ STATIC pbio_error_t remote_button_is_pressed(pbio_button_flags_t *pressed) {
         *pressed |= PBIO_BUTTON_CENTER;
     }
     return PBIO_SUCCESS;
-}
-
-STATIC void pb_type_pupdevices_Remote_light_on(void *context, const pbio_color_hsv_t *hsv) {
-    pb_remote_t *remote = &pb_remote_singleton;
-
-    remote_assert_connected();
-
-    struct {
-        pbdrv_bluetooth_value_t value;
-        uint8_t length;
-        uint8_t hub;
-        uint8_t type;
-        uint8_t port;
-        uint8_t startup : 4;
-        uint8_t completion : 4;
-        uint8_t cmd;
-        uint8_t mode;
-        uint8_t payload[3];
-    } __attribute__((packed)) msg = {
-        .value.size = 10,
-        .length = 10,
-        .type = LWP3_MSG_TYPE_OUT_PORT_CMD,
-        .port = REMOTE_PORT_STATUS_LIGHT,
-        .startup = LWP3_STARTUP_BUFFER,
-        .completion = LWP3_COMPLETION_NO_ACTION,
-        .cmd = LWP3_OUTPUT_CMD_WRITE_DIRECT_MODE_DATA,
-        .mode = STATUS_LIGHT_MODE_RGB_0,
-    };
-
-    pbio_color_hsv_to_rgb(hsv, (pbio_color_rgb_t *)msg.payload);
-
-    pbdrv_bluetooth_write_remote(&remote->task, &msg.value);
-    pb_wait_task(&remote->task, -1);
 }
 
 typedef struct _pb_type_pupdevices_Remote_obj_t {
