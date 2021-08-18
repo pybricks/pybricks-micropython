@@ -138,7 +138,7 @@ static pbio_error_t ble_error_to_pbio_error(tBleStatus status) {
  * @return                  The event payload or NULL if there is no pending
  *                          vendor-specific event.
  */
-static uint8_t *get_vendor_event(uint16_t *event) {
+static void *get_vendor_event(uint16_t *event) {
     hci_uart_pckt *packet = (void *)read_buf;
 
     if (packet->type != HCI_EVENT_PKT) {
@@ -510,12 +510,12 @@ try_again:
     context->status = aci_gatt_disc_charac_by_uuid_end();
 
     PT_WAIT_UNTIL(pt, {
-        uint8_t *payload;
+        void *payload;
         uint16_t event;
         (payload = get_vendor_event(&event))
         && ({
             if (event == EVT_BLUE_GATT_DISC_READ_CHAR_BY_UUID_RESP) {
-                evt_gatt_disc_read_char_by_uuid_resp *subevt = (void *)payload;
+                evt_gatt_disc_read_char_by_uuid_resp *subevt = payload;
 
                 if (subevt->conn_handle == remote_handle) {
                     remote_lwp3_char_handle = subevt->attr_handle;
@@ -525,7 +525,7 @@ try_again:
 
             event == EVT_BLUE_GATT_PROCEDURE_COMPLETE;
         }) && ({
-            evt_gatt_procedure_complete *subevt = (void *)payload;
+            evt_gatt_procedure_complete *subevt = payload;
             subevt->conn_handle == remote_handle;
         });
     });
@@ -560,15 +560,15 @@ retry:
         PT_EXIT(pt);
     }
 
-    uint8_t *payload;
+    evt_gatt_procedure_complete *payload;
     PT_WAIT_UNTIL(pt, {
         uint16_t event;
         (payload = get_vendor_event(&event))
         && event == EVT_BLUE_GATT_PROCEDURE_COMPLETE
-        && pbio_get_uint16_le(&payload[0]) == remote_handle;
+        && payload->conn_handle == remote_handle;
     });
 
-    context->status = payload[3];
+    context->status = payload->error_code;
     task->status = ble_error_to_pbio_error(context->status);
 
     PT_EXIT(pt);
@@ -630,7 +630,7 @@ retry:
         PT_EXIT(pt);
     }
 
-    uint8_t *payload;
+    evt_gatt_procedure_complete *payload;
     PT_WAIT_UNTIL(pt, {
         if (remote_handle == 0) {
             task->status = PBIO_ERROR_NO_DEV;
@@ -640,10 +640,10 @@ retry:
         uint16_t event;
         (payload = get_vendor_event(&event))
         && event == EVT_BLUE_GATT_PROCEDURE_COMPLETE
-        && pbio_get_uint16_le(&payload[0]) == remote_handle;
+        && payload->conn_handle == remote_handle;
     });
 
-    task->status = ble_error_to_pbio_error(payload[3]);
+    task->status = ble_error_to_pbio_error(payload->error_code);
 
     PT_END(pt);
 }
