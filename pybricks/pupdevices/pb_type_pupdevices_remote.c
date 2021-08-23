@@ -315,7 +315,7 @@ STATIC MP_DEFINE_CONST_DICT(pb_type_pupdevices_Remote_locals_dict, pb_type_pupde
 
 const mp_obj_type_t pb_type_pupdevices_Remote = {
     { &mp_type_type },
-    .name = PYBRICKS_HUB_CLASS_NAME,
+    .name = MP_QSTR_Remote,
     .make_new = pb_type_pupdevices_Remote_make_new,
     .locals_dict = (mp_obj_dict_t *)&pb_type_pupdevices_Remote_locals_dict,
 };
