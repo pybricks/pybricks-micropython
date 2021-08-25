@@ -36,6 +36,7 @@ def select(commits, hub):
     for i, commit in enumerate(reversed(commits)):
         sha = commit["oid"][:HASH_SIZE]
         message = commit["messageHeadline"]
+        date = commit["committedDate"]
         size = commit["firmwareSize"][hub]
         diff = 0
         if size is None:
@@ -43,7 +44,7 @@ def select(commits, hub):
         else:
             if prev_size != 0:
                 diff = size - prev_size
-                message = f"{diff:+}<br />{message}"
+                message = f"{diff:+}<br />{message}<br />{date}"
             prev_size = size
 
         yield i, sha, message, size, diff

@@ -32,8 +32,9 @@ QUERY = """query {
                         }
                         edges {
                             node {
-                                oid
+                                committedDate
                                 messageHeadline
+                                oid
                             }
                         }
                     }
