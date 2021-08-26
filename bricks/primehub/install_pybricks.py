@@ -33,6 +33,7 @@ KNOWN_LEGO_FIRMWARE_VERSIONS = {
     b"v1.2.01.0000-849e6c3": "MINDSTORMS Robot Inventor App v1.3.4 / 10.1.0",
     b"v1.2.01.0101-edc1be7": "SPIKE App v2.0.0",
     b"v1.2.01.0103-d08b6fe": "MINDSTORMS Robot Inventor App v1.3.4 / 10.1.0",
+    b"v1.3.00.0203-71f6a41": "MINDSTORMS Robot Inventor App v2.0.0 / 10.2.0",
 }
 
 
