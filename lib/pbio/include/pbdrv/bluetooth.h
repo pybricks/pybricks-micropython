@@ -152,6 +152,7 @@ void pbdrv_bluetooth_set_notification_handler(pbdrv_bluetooth_receive_handler_t 
 typedef struct {
     lwp3_hub_kind_t hub_kind;
     uint8_t status;
+    uint8_t bdaddr_type;
     uint8_t bdaddr[6];
     char name[20];
 } pbdrv_bluetooth_scan_and_connect_context_t;

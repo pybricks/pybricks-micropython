@@ -468,7 +468,7 @@ try_again:
         }
 
         // save the Bluetooth address for later
-        // addr_type = read_buf[10];
+        context->bdaddr_type = read_buf[10];
         memcpy(context->bdaddr, &read_buf[11], 6);
 
         break;
@@ -510,9 +510,7 @@ try_again:
     assert(remote_handle == NO_CONNECTION);
 
     PT_WAIT_WHILE(pt, write_xfer_size);
-    // REVISIT: might want to store address type from advertising data and pass
-    // it in here instead of assuming public address type
-    GAP_EstablishLinkReq(0, 0, ADDRTYPE_PUBLIC, context->bdaddr);
+    GAP_EstablishLinkReq(0, 0, context->bdaddr_type, context->bdaddr);
     PT_WAIT_UNTIL(pt, hci_command_status);
 
     context->status = read_buf[8]; // debug
@@ -576,12 +574,6 @@ try_again:
             status == bleProcedureComplete;
         });
     });
-
-    // HACK: Characteristics of LEGO Mario are not properly found by GATT_DiscCharsByUUID().
-    // remote_lwp3_char_handle for mario is hard coded for now
-    if (context->hub_kind == LWP3_HUB_KIND_MARIO) {
-        remote_lwp3_char_handle = 0x0012;
-    }
 
     // enable notifications
 
