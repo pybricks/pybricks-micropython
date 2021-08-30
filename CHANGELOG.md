@@ -2,7 +2,7 @@
 
 # Changelog
 
-## [Unreleased]
+## [3.1.0a4] - 2021-08-30
 
 ### Added
 - Enabled builtin `bytearray` ([pull#60]).
@@ -12,10 +12,11 @@
   new contributors to experiment with Pybricks using C code.
 - Added ability to import the `main.mpy` that is embedded in the firmware from
   a download and run program ([support#408]).
-- Add `pybricks.iodevices.LWP3Device` to communicate with a device that supports the LEGO Wireless Protocol 3.0.00 ([support#262])
+- Added `pybricks.iodevices.LWP3Device` to communicate with a device that supports
+  the LEGO Wireless Protocol 3.0.00 ([pull#68])
 
 ### Changed
-- Move Hub Bluetooth optimizations to reduce firmware size  ([issue#49]).
+- Move Hub Bluetooth optimizations to reduce firmware size ([issue#49]).
 - Disabled `pybricks.iodevices` module on Move Hub to reduce firmware size.
 - Improvements to `pybricks.pupdevices.Remote`:
   - Check if a remote is already connected before attempting to create a new
@@ -111,6 +112,7 @@ Prerelease changes are documented at [support#48].
 [issue#59]: https://github.com/pybricks/pybricks-micropython/issues/59
 [pull#57]: https://github.com/pybricks/pybricks-micropython/pull/57
 [pull#60]: https://github.com/pybricks/pybricks-micropython/pull/60
+[pull#68]: https://github.com/pybricks/pybricks-micropython/pull/68
 [support#48]: https://github.com/pybricks/support/issues/48
 [support#52]: https://github.com/pybricks/support/issues/52
 [support#186]: https://github.com/pybricks/support/issues/186
@@ -124,7 +126,8 @@ Prerelease changes are documented at [support#48].
 [support#389]: https://github.com/pybricks/support/issues/389
 [support#408]: https://github.com/pybricks/support/issues/408
 
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0a3...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0a4...HEAD
+[3.1.0a4]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a3...v3.1.0a4
 [3.1.0a3]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a2...v3.1.0a3
 [3.1.0a2]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a1...v3.1.0a2
 [3.1.0a1]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0...v3.1.0a1
