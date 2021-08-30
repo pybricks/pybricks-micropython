@@ -8,3 +8,6 @@
 **Maintainers:**
 - Laurens Valk (@laurensvalk)
 - David Lechner (@dlech)
+
+**Contributors:**
+- Nard Strijbosch (@NStrijbosch)

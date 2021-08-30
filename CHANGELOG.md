@@ -12,6 +12,7 @@
   new contributors to experiment with Pybricks using C code.
 - Added ability to import the `main.mpy` that is embedded in the firmware from
   a download and run program ([support#408]).
+- Add `pybricks.iodevices.LWP3Device` to communicate with a device that supports the LEGO Wireless Protocol 3.0.00 ([support#262])
 
 ### Changed
 - Move Hub Bluetooth optimizations to reduce firmware size  ([issue#49]).
