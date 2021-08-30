@@ -176,7 +176,7 @@ STATIC mp_obj_t lwp3device_write(mp_obj_t self_in, mp_obj_t buf_in) {
     pbdrv_bluetooth_write_remote(&lwp3device->task, &msg.value);
     pb_wait_task(&lwp3device->task, -1);
 
-    return mp_const_none;
+    return MP_OBJ_NEW_SMALL_INT(bufinfo.len);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(lwp3device_write_obj, lwp3device_write);
 
