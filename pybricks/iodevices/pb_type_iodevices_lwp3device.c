@@ -201,7 +201,7 @@ STATIC mp_obj_t lwp3device_read(mp_obj_t self_in) {
         mp_raise_msg(&mp_type_RuntimeError, MP_ERROR_TEXT("bad data"));
     }
 
-    return mp_obj_new_bytes(lwp3device->buffer,lwp3device->buffer[0]);
+    return mp_obj_new_bytes(lwp3device->buffer, len);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(lwp3device_read_obj, lwp3device_read);
 
