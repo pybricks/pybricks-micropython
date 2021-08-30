@@ -2,6 +2,8 @@
 
 # Changelog
 
+## [Unreleased]
+
 ## [3.1.0a4] - 2021-08-30
 
 ### Added
@@ -26,6 +28,11 @@
   - Add `name()` method.
   - Add `light` attribute.
 
+[issue#49]: https://github.com/pybricks/pybricks-micropython/issues/49
+[pull#60]: https://github.com/pybricks/pybricks-micropython/pull/60
+[pull#68]: https://github.com/pybricks/pybricks-micropython/pull/68
+[support#408]: https://github.com/pybricks/support/issues/408
+
 ## [3.1.0a3] - 2021-07-19
 
 ### Added
@@ -40,6 +47,10 @@
 ### Fixed
 - Fixed City hub not always powering off on shutdown ([support#385]).
 - Fixed Move hub turning back on after shutdown ([support#386]).
+
+[support#385]: https://github.com/pybricks/support/issues/385
+[support#386]: https://github.com/pybricks/support/issues/386
+[support#389]: https://github.com/pybricks/support/issues/389
 
 ## [3.1.0a2] - 2021-07-06
 
@@ -66,6 +77,10 @@
 - Fix I/O ports not powering off when shutting down and button is still pressed.
 - Fix version number only showing git hash and not v3.x.
 
+[pull#57]: https://github.com/pybricks/pybricks-micropython/pull/57
+[support#58]: https://github.com/pybricks/pybricks-micropython/issues/58
+[support#379]: https://github.com/pybricks/support/issues/379
+
 ## [3.1.0a1] - 2021-06-23
 
 ### Added
@@ -84,6 +99,10 @@
   properties are no longer stored in order to reduce flash and RAM
   usage ([pull#57]).
 
+[issue#49]: https://github.com/pybricks/pybricks-micropython/issues/49
+[support#52]: https://github.com/pybricks/support/issues/52
+[support#186]: https://github.com/pybricks/support/issues/186
+
 ## [3.0.0] - 2021-06-08
 
 ### Added
@@ -100,32 +119,20 @@
 - Fixed <kbd>Ctrl</kbd>+<kbd>C</kbd> stopping REPL when first started ([support#347]).
 - Fixed UART I/O devices retuning uninitialized data ([support#361]).
 
-## Prerelease
-
-Prerelease changes are documented at [support#48].
-
-
-<!-- let's try to keep this list sorted alphabetically -->
 [issue#21]: https://github.com/pybricks/pybricks-micropython/issues/21
-[issue#49]: https://github.com/pybricks/pybricks-micropython/issues/49
-[issue#58]: https://github.com/pybricks/pybricks-micropython/issues/58
-[issue#59]: https://github.com/pybricks/pybricks-micropython/issues/59
-[pull#57]: https://github.com/pybricks/pybricks-micropython/pull/57
-[pull#60]: https://github.com/pybricks/pybricks-micropython/pull/60
-[pull#68]: https://github.com/pybricks/pybricks-micropython/pull/68
-[support#48]: https://github.com/pybricks/support/issues/48
-[support#52]: https://github.com/pybricks/support/issues/52
-[support#186]: https://github.com/pybricks/support/issues/186
 [support#321]: https://github.com/pybricks/support/issues/321
 [support#347]: https://github.com/pybricks/support/issues/347
 [support#352]: https://github.com/pybricks/support/issues/352
 [support#361]: https://github.com/pybricks/support/issues/361
-[support#379]: https://github.com/pybricks/support/issues/379
-[support#385]: https://github.com/pybricks/support/issues/385
-[support#386]: https://github.com/pybricks/support/issues/386
-[support#389]: https://github.com/pybricks/support/issues/389
-[support#408]: https://github.com/pybricks/support/issues/408
 
+## Prerelease
+
+Prerelease changes are documented at [support#48].
+
+[support#48]: https://github.com/pybricks/support/issues/48
+
+
+<!-- diff links for headers -->
 [Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0a4...HEAD
 [3.1.0a4]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a3...v3.1.0a4
 [3.1.0a3]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a2...v3.1.0a3
