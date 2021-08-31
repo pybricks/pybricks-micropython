@@ -75,7 +75,9 @@ static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pb
 
     // If there's no need to reset the angle, we are done here.
     if (!reset_angle) {
-        return PBIO_SUCCESS;
+        // We still do one test read to ensure a tacho exists.
+        int32_t test_count;
+        return pbio_tacho_get_count(tacho, &test_count);
     }
 
     // Reset count to absolute value if supported

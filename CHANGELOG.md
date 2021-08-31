@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fixed Ultrasonic Sensor and Color Sensor turning off when a
+  user script ends ([support#456]).
+
+[support#456]: https://github.com/pybricks/support/issues/456
+
 ## [3.1.0a4] - 2021-08-30
 
 ### Added
