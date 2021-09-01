@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 /**
  * @addtogroup IOPortDriver Driver: I/O Port
@@ -20,7 +20,7 @@
 
 pbio_error_t pbdrv_ioport_get_iodev(pbio_port_id_t port, pbio_iodev_t **iodev);
 
-void pbio_ioport_reset_passive_devices(void);
+void pbdrv_ioport_reset_passive_devices(void);
 
 #else // PBDRV_CONFIG_IOPORT
 
@@ -29,7 +29,7 @@ static inline pbio_error_t pbdrv_ioport_get_iodev(pbio_port_id_t port, pbio_iode
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline void pbio_ioport_reset_passive_devices(void) {
+static inline void pbdrv_ioport_reset_passive_devices(void) {
 }
 
 #endif // PBDRV_CONFIG_IOPORT
