@@ -122,7 +122,7 @@ SRC = $(addprefix $(MICROPYTHON_DIR)/, \
 	py/frozenmod.c \
 	mpy-cross/main.c \
 	mpy-cross/gccollect.c \
-	lib/utils/gchelper_generic.c \
+	shared/runtime/gchelper_generic.c \
 	)
 
 MPY_CROSS_BUILD := $(MICROPYTHON_DIR)/mpy-cross/build

@@ -38,7 +38,7 @@
 #include "py/repl.h"
 #include "py/gc.h"
 #include "py/mperrno.h"
-#include "lib/utils/pyexec.h"
+#include "shared/runtime/pyexec.h"
 
 mp_import_stat_t mp_import_stat(const char *path) {
     return MP_IMPORT_STAT_NO_EXIST;

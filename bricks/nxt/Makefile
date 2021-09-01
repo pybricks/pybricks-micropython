@@ -39,6 +39,7 @@ QSTR_GLOBAL_DEPENDENCIES =
 # MicroPython feature configurations
 MICROPY_ROM_TEXT_COMPRESSION ?= 1
 
+MPY_CROSS = ../../micropython/mpy-cross/mpy-cross
 MPY_CROSS_FLAGS += -mno-unicode
 
 # include py core make definitions
@@ -96,16 +97,16 @@ SRC_C = \
 # if we don't do it this way. So we need to be very careful about name clashes
 # between the top level directory and the micropython/ subdirectory.
 
-SRC_C += $(addprefix lib/,\
+SRC_C += $(addprefix shared/,\
 	libc/string0.c \
-	mp-readline/readline.c \
-	utils/interrupt_char.c \
-	utils/pyexec.c \
-	utils/stdout_helpers.c \
+	readline/readline.c \
+	runtime/interrupt_char.c \
+	runtime/pyexec.c \
+	runtime/stdout_helpers.c \
 	)
 
 SRC_S = \
-	lib/utils/gchelper_arm7tdmi.s \
+	shared/runtime/gchelper_arm7tdmi.s \
 
 SRC_C_NXT := $(addprefix nxt-firmware-drivers/nxt/,\
 	aic.c \

@@ -21,8 +21,8 @@
 #include "py/mperrno.h"
 #include "py/persistentcode.h"
 #include "py/stackctrl.h"
-#include "lib/utils/pyexec.h"
-#include "lib/utils/interrupt_char.h"
+#include "shared/runtime/pyexec.h"
+#include "shared/runtime/interrupt_char.h"
 
 #include "py/mphal.h"
 
@@ -202,7 +202,7 @@ int main(int argc, char **argv) {
 
 // defined in linker script
 extern uint32_t _estack;
-// defined in lib/utils/gchelper_arm7tdmi.s
+// defined in shared/runtime/gchelper_arm7tdmi.s
 extern uintptr_t gc_helper_get_regs_and_sp(uintptr_t *regs);
 
 void gc_collect(void) {

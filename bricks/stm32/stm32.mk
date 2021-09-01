@@ -148,6 +148,7 @@ CFLAGS += -D$(PB_CMSIS_MCU)
 CFLAGS += -DSTM32_H='<stm32$(PB_MCU_SERIES_LCASE)xx.h>'
 CFLAGS += -DSTM32_HAL_H='<stm32$(PB_MCU_SERIES_LCASE)xx_hal.h>'
 
+MPY_CROSS = ../../micropython/mpy-cross/mpy-cross
 # TODO: probably only need no-unicode on movehub
 MPY_CROSS_FLAGS += -mno-unicode
 
@@ -167,23 +168,23 @@ SRC_C = $(addprefix bricks/stm32/,\
 # if we don't do it this way. So we need to be very careful about name clashes
 # between the top level directory and the micropython/ subdirectory.
 
-SRC_C += $(addprefix lib/,\
+SRC_C += $(addprefix shared/,\
 	libc/string0.c \
-	mp-readline/readline.c \
-	utils/gchelper_native.c \
-	utils/interrupt_char.c \
-	utils/pyexec.c \
-	utils/stdout_helpers.c \
-	utils/sys_stdio_mphal.c \
+	readline/readline.c \
+	runtime/gchelper_native.c \
+	runtime/interrupt_char.c \
+	runtime/pyexec.c \
+	runtime/stdout_helpers.c \
+	runtime/sys_stdio_mphal.c \
 	)
 
 SRC_S = \
 	lib/pbio/platform/$(PBIO_PLATFORM)/startup.s \
 
 ifeq ($(PB_MCU_SERIES),F0)
-	SRC_S += lib/utils/gchelper_m0.s
+	SRC_S += shared/runtime/gchelper_m0.s
 else
-	SRC_S += lib/utils/gchelper_m3.s
+	SRC_S += shared/runtime/gchelper_m3.s
 endif
 
 # Pybricks modules

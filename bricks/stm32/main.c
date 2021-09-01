@@ -15,10 +15,10 @@
 #include <pybricks/common.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
 
-#include "lib/mp-readline/readline.h"
-#include "lib/utils/gchelper.h"
-#include "lib/utils/interrupt_char.h"
-#include "lib/utils/pyexec.h"
+#include "shared/readline/readline.h"
+#include "shared/runtime/gchelper.h"
+#include "shared/runtime/interrupt_char.h"
+#include "shared/runtime/pyexec.h"
 #include "py/compile.h"
 #include "py/gc.h"
 #include "py/mperrno.h"

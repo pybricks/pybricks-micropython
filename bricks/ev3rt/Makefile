@@ -98,9 +98,9 @@ endif
 endif
 
 ifeq ($(MICROPY_USE_READLINE),1)
-INC +=  -I$(MPTOP)/lib/mp-readline
+INC +=  -I$(MPTOP)/shared/readline
 CFLAGS_MOD += -DMICROPY_USE_READLINE=1
-LIB_SRC_C_EXTRA += mp-readline/readline.c
+SHARED_SRC_C_EXTRA += readline/readline.c
 endif
 ifeq ($(MICROPY_USE_READLINE),2)
 CFLAGS_MOD += -DMICROPY_USE_READLINE=2
@@ -159,11 +159,11 @@ SRC_C = $(addprefix ports/unix/,\
 	mphal.c \
 	)
 
-LIB_SRC_C = $(addprefix lib/,\
-	$(LIB_SRC_C_EXTRA) \
-	utils/printf.c \
-	utils/interrupt_char.c \
+SHARED_SRC_C = $(addprefix shared/,\
+	runtime/printf.c \
+	runtime/interrupt_char.c \
 	timeutils/timeutils.c \
+	$(SHARED_SRC_C_EXTRA) \
 	)
 
 ifeq ($(MICROPY_FATFS),1)
@@ -175,10 +175,11 @@ endif
 
 OBJ = $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SHARED_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(LIB_SRC_C)
+SRC_QSTR += $(SRC_C) $(SHARED_SRC_C) $(LIB_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in
 # SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=

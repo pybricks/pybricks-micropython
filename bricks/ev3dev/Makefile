@@ -139,9 +139,9 @@ LDFLAGS += $(LDFLAGS_MOD) $(LDFLAGS_ARCH) -lm $(LDFLAGS_EXTRA)
 LDFLAGS += -lpthread
 
 ifeq ($(MICROPY_USE_READLINE),1)
-INC +=  -I$(TOP)/lib/mp-readline
+INC +=  -I$(TOP)/shared/readline
 CFLAGS_MOD += -DMICROPY_USE_READLINE=1
-LIB_SRC_C_EXTRA += mp-readline/readline.c
+SHARED_SRC_C_EXTRA += readline/readline.c
 endif
 ifeq ($(MICROPY_PY_TERMIOS),1)
 CFLAGS_MOD += -DMICROPY_PY_TERMIOS=1
@@ -216,11 +216,11 @@ SRC_C = $(addprefix ports/unix/,\
 
 SRC_C += $(SRC_MOD)
 
-LIB_SRC_C = $(addprefix lib/,\
-	$(LIB_SRC_C_EXTRA) \
+SHARED_SRC_C = $(addprefix shared/,\
+	runtime/gchelper_generic.c \
+	runtime/pyexec.c \
 	timeutils/timeutils.c \
-	utils/gchelper_generic.c \
-	utils/pyexec.c \
+	$(SHARED_SRC_C_EXTRA) \
 	)
 
 # Pybricks port core source files
@@ -338,14 +338,14 @@ PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 
 OBJ = $(PY_O)
 OBJ += $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
-OBJ += $(addprefix $(BUILD)/, $(LIB_SRC_C:.c=.o))
+OBJ += $(addprefix $(BUILD)/, $(SHARED_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(EXTMOD_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_PYBRICKS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PYBRICKS_LIB_SRC_C:.c=.o))
 
 # List of sources for qstr extraction
-SRC_QSTR += $(SRC_C) $(LIB_SRC_C) $(EXTMOD_SRC_C) $(PYBRICKS_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
+SRC_QSTR += $(SRC_C) $(SHARED_SRC_C) $(EXTMOD_SRC_C) $(PYBRICKS_SRC_C) $(PYBRICKS_PYBRICKS_SRC_C)
 # Append any auto-generated sources that are needed by sources listed in
 # SRC_QSTR
 SRC_QSTR_AUTO_DEPS +=

@@ -75,4 +75,3 @@ void pybricks_service_server_request_can_send_now(btstack_context_callback_regis
 int pybricks_service_server_send(hci_con_handle_t con_handle, const uint8_t *data, uint16_t size);
 
 #endif // PYBRICKS_SERVICE_SERVER_H
-
