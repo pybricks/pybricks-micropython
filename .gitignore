@@ -67,3 +67,7 @@ Pipfile.lock
 # Local environment
 ######################
 .env
+
+# Jupyter Notebook
+######################
+.ipynb_checkpoints
