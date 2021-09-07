@@ -5,21 +5,23 @@ from pybricks import version
 
 print(version)
 
+# Initialize the motor.
 motor = Motor(Port.A)
 
+# Allocate the data logs.
 DURATION = 2000
-UNDERSAMPLE = 1
+motor.log.start(DURATION)
+motor.control.log.start(DURATION)
 
-motor.log.start(DURATION, UNDERSAMPLE)
-motor.control.log.start(DURATION, UNDERSAMPLE)
-
-
+# Run the motor.
 motor.run_target(500, 360)
 
+# Wait so we can also log the stopped behavior.
 wait(500)
 motor.stop()
 
+# Transfer data logs.
 print("Transferring data...")
-motor.log.save("log_single_motor_servo.txt")
-motor.control.log.save("log_single_motor_control.txt")
+motor.log.save("servo.txt")
+motor.control.log.save("control.txt")
 print("Done")

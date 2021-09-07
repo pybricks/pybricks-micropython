@@ -51,7 +51,7 @@ def gradient(data, time, smooth=8):
     return numpy.array(speed)
 
 
-def plot_servo_data(time, data, build_dir):
+def plot_servo_data(time, data, build_dir, subtitle=None):
     """Plots data for a servo motor."""
     battery = data[:, 1]
     count = data[:, 2]
@@ -62,7 +62,7 @@ def plot_servo_data(time, data, build_dir):
     torque_feedback = data[:, 8]
     torque_feedforward = data[:, 9]
 
-    title = "Servo"
+    title = "servo" if subtitle is None else "servo_" + subtitle
 
     figure, axes = matplotlib.pyplot.subplots(nrows=4, ncols=1, figsize=(15, 12))
     figure.suptitle(title, fontsize=20)
@@ -71,21 +71,21 @@ def plot_servo_data(time, data, build_dir):
 
     position_axis.plot(time, count, drawstyle="steps-post", label="Reported count")
     position_axis.plot(time, count_est, drawstyle="steps-post", label="Observer")
-    position_axis.set_ylabel(title + " angle (deg)")
+    position_axis.set_ylabel("angle (deg)")
 
     speed_axis.plot(time, rate, drawstyle="steps-post", label="Reported rate")
     speed_axis.plot(time, rate_est, drawstyle="steps-post", label="Observer")
     speed_axis.plot(
         time, gradient(count, time / 1000), drawstyle="steps-post", label="Future count derivative"
     )
-    speed_axis.set_ylabel(title + " speed (deg/s)")
+    speed_axis.set_ylabel("speed (deg/s)")
 
     torque_axis.plot(time, torque_feedback, label="Feedback", drawstyle="steps-post")
     torque_axis.plot(time, torque_feedforward, label="Feedforward", drawstyle="steps-post")
-    torque_axis.set_ylabel(title + " Torque")
+    torque_axis.set_ylabel("Torque")
 
     duty_axis.plot(time, duty, label="Duty", drawstyle="steps-post")
-    duty_axis.set_ylabel(title + " duty cycle")
+    duty_axis.set_ylabel("duty cycle")
     duty_axis.set_ylim([-20000, 20000])
     duty_axis.set_xlabel("time (s)")
 
@@ -94,10 +94,10 @@ def plot_servo_data(time, data, build_dir):
         axis.set_xlim([time[0], time[-1]])
         axis.legend()
 
-    figure.savefig(build_dir / "control.png")
+    figure.savefig(build_dir / (title + ".png"))
 
 
-def plot_control_data(time, data, build_dir):
+def plot_control_data(time, data, build_dir, subtitle=None):
     """Plots data for the controller."""
     maneuver_time = data[:, 1]
     count = data[:, 2]
@@ -112,7 +112,7 @@ def plot_control_data(time, data, build_dir):
     torque_i = data[:, 11]
     torque_d = data[:, 12]
 
-    title = "Control"
+    title = "control" if subtitle is None else "control_" + subtitle
 
     figure, axes = matplotlib.pyplot.subplots(nrows=4, ncols=1, figsize=(15, 12))
     figure.suptitle(title, fontsize=20)
@@ -122,24 +122,24 @@ def plot_control_data(time, data, build_dir):
     position_axis.plot(time, count, drawstyle="steps-post", label="Reported count")
     position_axis.plot(time, count_est, drawstyle="steps-post", label="Observer")
     position_axis.plot(time, count_ref, drawstyle="steps-post", label="Reference")
-    position_axis.set_ylabel(title + " angle (deg)")
+    position_axis.set_ylabel("angle (deg)")
 
     error_axis.plot(time, count_ref - count, drawstyle="steps-post", label="Reported error")
     error_axis.plot(time, count_ref - count_est, drawstyle="steps-post", label="Estimated error")
-    error_axis.set_ylabel(title + " angle error (deg)")
+    error_axis.set_ylabel("angle error (deg)")
 
     speed_axis.plot(time, rate, drawstyle="steps-post", label="Reported rate")
     speed_axis.plot(time, rate_est, drawstyle="steps-post", label="Observer")
     speed_axis.plot(
         time, gradient(count, time / 1000), drawstyle="steps-post", label="Future count derivative"
     )
-    speed_axis.set_ylabel(title + " speed (deg/s)")
+    speed_axis.set_ylabel("speed (deg/s)")
 
     torque_axis.plot(time, torque_p, label="P", drawstyle="steps-post")
     torque_axis.plot(time, torque_i, label="I", drawstyle="steps-post")
     torque_axis.plot(time, torque_d, label="D", drawstyle="steps-post")
     torque_axis.plot(time, torque_total, label="Total", drawstyle="steps-post")
-    torque_axis.set_ylabel(title + " torque")
+    torque_axis.set_ylabel("torque")
     torque_axis.set_xlabel("time (s)")
 
     for axis in axes:
@@ -147,7 +147,7 @@ def plot_control_data(time, data, build_dir):
         axis.set_xlim([time[0], time[-1]])
         axis.legend()
 
-    figure.savefig(build_dir / "servo.png")
+    figure.savefig(build_dir / (title + ".png"))
 
 
 # Parse user argument.
@@ -178,11 +178,27 @@ with open(build_dir / "hub_output.txt", "wb") as f:
     for line in hub_output:
         f.write(line + b"\n")
 
-# Create data plots.
-servo_time, servo_data = get_data(build_dir / "log_single_motor_servo.txt")
-control_time, control_data = get_data(build_dir / "log_single_motor_control.txt")
-plot_servo_data(servo_time, servo_data, build_dir)
-plot_control_data(control_time, control_data, build_dir)
+# Plot data.
+try:
+    # Single motor case
+    servo_time, servo_data = get_data(build_dir / "servo.txt")
+    plot_servo_data(servo_time, servo_data, build_dir)
+
+    control_time, control_data = get_data(build_dir / "control.txt")
+    plot_control_data(control_time, control_data, build_dir)
+except FileNotFoundError:
+    # Drive base case
+    servo_time, servo_data = get_data(build_dir / "servo_left.txt")
+    plot_servo_data(servo_time, servo_data, build_dir, "left")
+
+    servo_time, servo_data = get_data(build_dir / "servo_right.txt")
+    plot_servo_data(servo_time, servo_data, build_dir, "right")
+
+    control_time, control_data = get_data(build_dir / "control_distance.txt")
+    plot_control_data(control_time, control_data, build_dir, "distance")
+
+    control_time, control_data = get_data(build_dir / "control_heading.txt")
+    plot_control_data(control_time, control_data, build_dir, "heading")
 
 # If requested, show blocking windows with plots.
 if args.show:
