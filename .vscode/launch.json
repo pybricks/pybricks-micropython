@@ -27,6 +27,15 @@
             "console": "integratedTerminal"
         },
         {
+            "name": "Motor Test",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/tests/motors/run_test.py",
+            "cwd": "${workspaceFolder}/tests/pup",
+            "args": ["${file}", "--show"],
+            "console": "integratedTerminal"
+        },
+        {
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
