@@ -3,10 +3,13 @@
 import argparse
 import asyncio
 import csv
+import datetime
 import matplotlib
 import matplotlib.pyplot
 import numpy
+import os
 import pathlib
+import shutil
 
 from pybricksdev.connections import PybricksHub
 from pybricksdev.ble import find_device
@@ -25,6 +28,8 @@ async def run_pybricks_script(script_name):
     # Run the script and disconnect.
     await hub.run(script_name)
     await hub.disconnect()
+
+    return hub.output
 
 
 def get_data(path):
@@ -151,20 +156,31 @@ parser.add_argument("file", help="Script to run")
 parser.add_argument("--show", dest="show", default=False, action="store_true")
 args = parser.parse_args()
 
-# Local paths and data directory
-build_dir = pathlib.Path(__file__).parent.resolve() / "build"
-pathlib.Path(build_dir).mkdir(exist_ok=True)
+# Local paths and data directories.
+time_string = datetime.datetime.now().strftime("-%Y-%m-%d-%H%M-%S")
+script_base_name, _ = os.path.splitext(os.path.split(args.file)[-1])
+build_dir = pathlib.Path(__file__).parent / "build" / (script_base_name + time_string)
+pathlib.Path(build_dir).mkdir(parents=True, exist_ok=True)
+
+# Copy script to data directory to archive experiment.
+script_archive = build_dir / (script_base_name + ".py")
+shutil.copyfile(args.file, script_archive)
 
 # Configure matplotlib.
 matplotlib.use("TkAgg")
 matplotlib.interactive(True)
 
 # Run the script.
-asyncio.run(run_pybricks_script(args.file))
-servo_time, servo_data = get_data(build_dir / "log_single_motor_servo.txt")
-control_time, control_data = get_data(build_dir / "log_single_motor_control.txt")
+hub_output = asyncio.run(run_pybricks_script(script_archive))
+
+# Save its standard output.
+with open(build_dir / "hub_output.txt", "wb") as f:
+    for line in hub_output:
+        f.write(line + b"\n")
 
 # Create data plots.
+servo_time, servo_data = get_data(build_dir / "log_single_motor_servo.txt")
+control_time, control_data = get_data(build_dir / "log_single_motor_control.txt")
 plot_servo_data(servo_time, servo_data, build_dir)
 plot_control_data(control_time, control_data, build_dir)
 

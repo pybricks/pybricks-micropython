@@ -20,6 +20,6 @@ wait(500)
 motor.stop()
 
 print("Transferring data...")
-motor.log.save("build/log_single_motor_servo.txt")
-motor.control.log.save("build/log_single_motor_control.txt")
+motor.log.save("log_single_motor_servo.txt")
+motor.control.log.save("log_single_motor_control.txt")
 print("Done")
