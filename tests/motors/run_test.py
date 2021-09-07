@@ -6,6 +6,7 @@ import csv
 import matplotlib
 import matplotlib.pyplot
 import numpy
+import pathlib
 
 from pybricksdev.connections import PybricksHub
 from pybricksdev.ble import find_device
@@ -45,7 +46,7 @@ def gradient(data, time, smooth=8):
     return numpy.array(speed)
 
 
-def plot_servo_data(time, data, title):
+def plot_servo_data(time, data, build_dir):
     """Plots data for a servo motor."""
     battery = data[:, 1]
     count = data[:, 2]
@@ -56,8 +57,10 @@ def plot_servo_data(time, data, title):
     torque_feedback = data[:, 8]
     torque_feedforward = data[:, 9]
 
+    title = "Servo"
+
     figure, axes = matplotlib.pyplot.subplots(nrows=4, ncols=1, figsize=(15, 12))
-    figure.suptitle(title + " servo", fontsize=20)
+    figure.suptitle(title, fontsize=20)
 
     position_axis, speed_axis, torque_axis, duty_axis = axes
 
@@ -86,10 +89,10 @@ def plot_servo_data(time, data, title):
         axis.set_xlim([time[0], time[-1]])
         axis.legend()
 
-    figure.savefig('build/' + title + '.png')
+    figure.savefig(build_dir / "control.png")
 
 
-def plot_control_data(time, data, title):
+def plot_control_data(time, data, build_dir):
     """Plots data for the controller."""
     maneuver_time = data[:, 1]
     count = data[:, 2]
@@ -104,8 +107,10 @@ def plot_control_data(time, data, title):
     torque_i = data[:, 11]
     torque_d = data[:, 12]
 
+    title = "Control"
+
     figure, axes = matplotlib.pyplot.subplots(nrows=4, ncols=1, figsize=(15, 12))
-    figure.suptitle(title + " control", fontsize=20)
+    figure.suptitle(title, fontsize=20)
 
     position_axis, error_axis, speed_axis, torque_axis = axes
 
@@ -137,7 +142,7 @@ def plot_control_data(time, data, title):
         axis.set_xlim([time[0], time[-1]])
         axis.legend()
 
-    figure.savefig('build/' + title + '.png')
+    figure.savefig(build_dir / "servo.png")
 
 
 # Parse user argument.
@@ -146,18 +151,22 @@ parser.add_argument("file", help="Script to run")
 parser.add_argument("--show", dest="show", default=False, action="store_true")
 args = parser.parse_args()
 
+# Local paths and data directory
+build_dir = pathlib.Path(__file__).parent.resolve() / "build"
+pathlib.Path(build_dir).mkdir(exist_ok=True)
+
 # Configure matplotlib.
 matplotlib.use("TkAgg")
 matplotlib.interactive(True)
 
 # Run the script.
 asyncio.run(run_pybricks_script(args.file))
-servo_time, servo_data = get_data("build/log_single_motor_servo.txt")
-control_time, control_data = get_data("build/log_single_motor_control.txt")
+servo_time, servo_data = get_data(build_dir / "log_single_motor_servo.txt")
+control_time, control_data = get_data(build_dir / "log_single_motor_control.txt")
 
 # Create data plots.
-plot_servo_data(servo_time, servo_data, "servo")
-plot_control_data(control_time, control_data, "control")
+plot_servo_data(servo_time, servo_data, build_dir)
+plot_control_data(control_time, control_data, build_dir)
 
 # If requested, show blocking windows with plots.
 if args.show:
