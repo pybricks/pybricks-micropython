@@ -183,9 +183,14 @@ try:
     # Single motor case
     servo_time, servo_data = get_data(build_dir / "servo.txt")
     plot_servo_data(servo_time, servo_data, build_dir)
+    try:
+        # Controlled case.
+        control_time, control_data = get_data(build_dir / "control.txt")
+        plot_control_data(control_time, control_data, build_dir)
+    except IndexError:
+        # Open loop case, no control data to parse.
+        pass
 
-    control_time, control_data = get_data(build_dir / "control.txt")
-    plot_control_data(control_time, control_data, build_dir)
 except FileNotFoundError:
     # Drive base case
     servo_time, servo_data = get_data(build_dir / "servo_left.txt")
