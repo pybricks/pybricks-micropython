@@ -13,7 +13,6 @@
             "args": [
                 "run",
                 "ble",
-                "Pybricks Hub",
                 "${file}"
             ]
         },
