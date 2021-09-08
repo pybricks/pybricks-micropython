@@ -81,6 +81,7 @@ enum ev3_uart_info_bit {
     EV3_UART_INFO_BIT_INFO_UNK8,
     EV3_UART_INFO_BIT_INFO_UNK9,
     EV3_UART_INFO_BIT_INFO_FORMAT,
+    EV3_UART_INFO_BIT_INFO_UNK11,
 };
 
 enum ev3_uart_info_flags {
@@ -447,8 +448,11 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                     if (flags & LUMP_MODE_FLAGS0_MOTOR_ABS_POS) {
                         data->info->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS;
                     }
-                    if (flags & LUMP_MODE_FLAGS0_REQUIRES_POWER) {
-                        data->info->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_REQUIRES_POWER;
+                    if (flags & LUMP_MODE_FLAGS0_NEEDS_SUPPLY_PIN1) {
+                        data->info->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN1;
+                    }
+                    if (flags & LUMP_MODE_FLAGS0_NEEDS_SUPPLY_PIN2) {
+                        data->info->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN2;
                     }
 
                     debug_pr("new_mode: %d\n", data->new_mode);
@@ -515,6 +519,16 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
                         pbio_get_uint32_le(data->rx_msg + 2), pbio_get_uint32_le(data->rx_msg + 6),
                         pbio_get_uint32_le(data->rx_msg + 10), data->max_tacho_rate);
 
+                    break;
+                case LUMP_INFO_UNK11:
+                    if (data->new_mode != mode) {
+                        DBG_ERR(data->last_err = "Received INFO for incorrect mode");
+                        goto err;
+                    }
+                    if (test_and_set_bit(EV3_UART_INFO_BIT_INFO_UNK11, &data->info_flags)) {
+                        DBG_ERR(data->last_err = "Received duplicate UNK11 INFO");
+                        goto err;
+                    }
                     break;
                 case LUMP_INFO_FORMAT:
                     if (data->new_mode != mode) {
@@ -911,9 +925,13 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
         data->tacho_offset = 0;
     }
 
-    // Turn on power for sensors that need it
-    if (PBIO_IODEV_REQUIRES_POWER(&data->iodev)) {
+    // Turn on power for devices that need it
+    if ((&data->iodev)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN1) {
         pbdrv_motor_set_duty_cycle(data->iodev.port, -10000);
+    } else if ((&data->iodev)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN2) {
+        pbdrv_motor_set_duty_cycle(data->iodev.port, 10000);
+    } else {
+        pbdrv_motor_coast(data->iodev.port);
     }
 
     while (data->status == PBIO_UARTDEV_STATUS_DATA) {
@@ -958,10 +976,8 @@ err:
     debug_pr("%s\n", data->last_err);
     data->err_count++;
 
-    // Turn off power for sensors that used power
-    if (PBIO_IODEV_REQUIRES_POWER(&data->iodev)) {
-        pbdrv_motor_coast(data->iodev.port);
-    }
+    // Turn off battery supply to this port
+    pbdrv_motor_coast(data->iodev.port);
 
     process_post(PROCESS_BROADCAST, PROCESS_EVENT_SERVICE_REMOVED, &data->iodev);
 

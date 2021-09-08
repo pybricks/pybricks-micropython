@@ -211,9 +211,13 @@ typedef enum {
      */
     PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS = 1 << 3,
     /**
-     * Indicates that a sensor requires permanent battery voltage, not just logic voltage.
+     * Indicates that the device requires power supply across pin 1 (+) and pin 2 (-).
      */
-    PBIO_IODEV_CAPABILITY_FLAG_REQUIRES_POWER = 1 << 4,
+    PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN1 = 1 << 4,
+    /**
+     * Indicates that the device requires power supply across pin 1 (-) and pin 2 (+).
+     */
+    PBIO_IODEV_CAPABILITY_FLAG_NEEDS_SUPPLY_PIN2 = 1 << 5,
 } pbio_iodev_capability_flags_t;
 
 /**
@@ -229,13 +233,6 @@ typedef enum {
  * @param [in] d    Pointer to pbio_iodev_t.
  */
 #define PBIO_IODEV_IS_FEEDBACK_MOTOR(d) ((d)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS)
-
-/**
- * Macro for testing if I/O device requires battery power.
- *
- * @param [in] d    Pointer to pbio_iodev_t.
- */
-#define PBIO_IODEV_REQUIRES_POWER(d) ((d)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_REQUIRES_POWER)
 
 
 /**

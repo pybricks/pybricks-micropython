@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added
+- Support for LEGO UART devices with a new battery power flag. This is
+  required to support the new LEGO SPIKE Color Light Matrix ([support#440]).
+
 ### Fixed
 - Fixed Ultrasonic Sensor and Color Sensor turning off when a
   user script ends ([support#456]).
@@ -12,6 +16,7 @@
 - Updated to MicroPython v1.17.
 
 [support#456]: https://github.com/pybricks/support/issues/456
+[support#440]: https://github.com/pybricks/support/issues/440
 
 ## [3.1.0a4] - 2021-08-30
 

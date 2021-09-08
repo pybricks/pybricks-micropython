@@ -542,8 +542,17 @@ typedef enum {
     /** This mode is a motor mode. */
     LUMP_MODE_FLAGS0_MOTOR = 1 << 5,
 
-    /** This sensor mode requires battery voltage, not just logic voltage. */
-    LUMP_MODE_FLAGS0_REQUIRES_POWER = 1 << 6,
+    /** 
+     * This mode requires power supply across pin 1 (+) and pin 2 (-),
+     * which is the same as turning a motor counterclockwise.
+     */
+    LUMP_MODE_FLAGS0_NEEDS_SUPPLY_PIN1 = 1 << 6,
+
+    /**
+     *  This mode requires power supply across pin 1 (-) and pin 2 (+),
+     *  which is the same as turning a motor clockwise.
+     */
+    LUMP_MODE_FLAGS0_NEEDS_SUPPLY_PIN2 = 1 << 7,
 } lump_mode_flags0_t;
 
 /**
