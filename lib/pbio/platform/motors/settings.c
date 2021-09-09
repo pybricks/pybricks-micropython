@@ -89,7 +89,7 @@ static const pbio_observer_settings_t settings_observer_technic_m_angular = {
     .k_1 = SCALE(0.000267785410941794f, PBIO_OBSERVER_SCALE_HIGH),
     .k_2 = SCALE(0.00643543836108826f, PBIO_OBSERVER_SCALE_HIGH),
     .f_low = SCALE(0.01218641268292683f, PBIO_OBSERVER_SCALE_TRQ),
-    .obs_gain = SCALE(0.002f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gain = SCALE(0.001f, PBIO_OBSERVER_SCALE_TRQ),
 };
 
 static const pbio_control_settings_t settings_servo_technic_m_angular = {
@@ -99,11 +99,11 @@ static const pbio_control_settings_t settings_servo_technic_m_angular = {
     .count_tolerance = 10,
     .stall_rate_limit = 20,
     .stall_time = 200 * US_PER_MS,
-    .pid_kp = 20000,
+    .pid_kp = 10000,
     .pid_ki = 2000,
     .pid_kd = 1200,
     .integral_range = 45,
-    .integral_rate = 5,
+    .integral_rate = 25,
     .max_duty = 10000,
     .max_torque = 160000,
     .use_estimated_rate = true,
