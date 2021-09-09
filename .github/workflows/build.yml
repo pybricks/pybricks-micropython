@@ -171,7 +171,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        hub: [cityhub, movehub, nxt, primehub, technichub]
+        hub: [cityhub, essentialhub, movehub, nxt, primehub, technichub]
     needs: [cross_compiler, mpy_cross]
     runs-on: ubuntu-20.04
     steps:
@@ -227,7 +227,7 @@ jobs:
           bricks/${{ matrix.hub }}/main.py
           bricks/${{ matrix.hub }}/ReadMe_OSS.txt
     - name: Upload install_pybricks.*
-      if: ${{ success() && matrix.hub == 'primehub' }}
+      if: ${{ success() && (matrix.hub == 'essentialhub' || matrix.hub == 'primehub') }}
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.hub }}-firmware

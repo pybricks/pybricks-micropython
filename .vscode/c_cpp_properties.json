@@ -202,6 +202,55 @@
             "intelliSenseMode": "gcc-arm"
         },
         {
+            "name": "essentialhub",
+            "includePath": [
+                "${workspaceFolder}/micropython/lib/cmsis/inc",
+                "${workspaceFolder}/micropython/lib/stm32lib/CMSIS/STM32F4xx/Include",
+                "${workspaceFolder}/micropython/lib/stm32lib/STM32F4xx_HAL_Driver/Inc",
+                "${workspaceFolder}/lib/STM32_USB_Device_Library/Core/Inc",
+                "${workspaceFolder}/lib/STM32_USB_Device_Library/Class/CDC/Inc",
+                "${workspaceFolder}/lib/btstack/chipset/cc256x",
+                "${workspaceFolder}/lib/btstack/src",
+                "${workspaceFolder}/lib/contiki-core",
+                "${workspaceFolder}/lib/lego",
+                "${workspaceFolder}/lib/libfixmath/libfixmath",
+                "${workspaceFolder}/lib/lwrb/src/include",
+                "${workspaceFolder}/lib/lsm6ds3tr_c_STdC/driver",
+                "${workspaceFolder}/lib/pbio/include",
+                "${workspaceFolder}/lib/pbio/platform/essential_hub",
+                "${workspaceFolder}",
+                "${workspaceFolder}/bricks/stm32",
+                "${workspaceFolder}/bricks/essentialhub",
+                "${workspaceFolder}/bricks/essentialhub/build",
+                "${workspaceFolder}/micropython"
+            ],
+            "defines": [
+                "MICROPY_ROM_TEXT_COMPRESSION",
+                "HSE_VALUE=16000000",
+                "STM32F413xx",
+                "STM32_H=<stm32f4xx.h>",
+                "STM32_HAL_H=<stm32f4xx_hal.h>",
+                "USE_FULL_LL_DRIVER",
+                "FIXMATH_NO_CTYPE"
+            ],
+            "compilerPath": "${gcc10ArmNoneEabi}",
+            "compilerArgs": [
+                "-Wall",
+                "-Werror",
+                "-nostdlib",
+                "-fshort-enums",
+                "-mthumb",
+                "-mtune=cortex-m4",
+                "-mcpu=cortex-m4",
+                "-mfpu=fpv4-sp-d16",
+                "-mfloat-abi=hard",
+                "-fsingle-precision-constant",
+                "-Wdouble-promotion"
+            ],
+            "cStandard": "c11",
+            "intelliSenseMode": "gcc-arm"
+        },
+        {
             "name": "nxt",
             "includePath": [
                 "${workspaceFolder}/bricks/nxt",

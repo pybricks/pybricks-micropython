@@ -18,6 +18,8 @@
 #define PYBRICKS_HUB_NAME "nxt"
 #elif PYBRICKS_HUB_PRIMEHUB
 #define PYBRICKS_HUB_NAME "primehub"
+#elif PYBRICKS_HUB_ESSENTIALHUB
+#define PYBRICKS_HUB_NAME "essentialhub"
 #elif !NO_QSTR // qstr generator runs preprocessor on this file directly
 #error "Unknown hub type"
 #endif

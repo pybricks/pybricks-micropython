@@ -135,11 +135,17 @@ void pb_imu_init(pb_imu_dev_t *imu_dev) {
         // Clock is 5MHz, so these timing come out to 1 usec. When combined with
         // internal delays, this is slightly slower than 400kHz
         hi2c.Init.Timing = __LL_I2C_CONVERT_TIMINGS(0, 0, 0, 4, 4);
-        #else
+        #elif PYBRICKS_HUB_PRIMEHUB
         // On PrimeHub (STM32F4), we set clock speed directly
         hi2c.Instance = I2C2;
         hi2c.Init.ClockSpeed = 400000;
-        #endif // PYBRICKS_HUB_TECHNICHUB
+        #elif PYBRICKS_HUB_ESSENTIALHUB
+        // On EssentialHub (STM32F4), we set clock speed directly
+        hi2c.Instance = I2C3;
+        hi2c.Init.ClockSpeed = 400000;
+        #else
+        #error "Unsupported hub"
+        #endif
         hi2c.Init.OwnAddress1 = 0;
         hi2c.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
         hi2c.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;

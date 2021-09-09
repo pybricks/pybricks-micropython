@@ -46,6 +46,7 @@ HUB_INFO = {
     "city_hub": {"device-id": 0x41, "checksum-type": "sum"},
     "technic_hub": {"device-id": 0x80, "checksum-type": "sum"},
     "prime_hub": {"device-id": 0x81, "checksum-type": "crc32"},
+    "essential_hub": {"device-id": 0x83, "checksum-type": "crc32"},
 }
 
 

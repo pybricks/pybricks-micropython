@@ -37,11 +37,11 @@ for commit in reversed(
     # update only required submodules
     pybricks.git.submodule("update", "--init", "micropython")
     pybricks.git.submodule("update", "--init", "lib/libfixmath")
-    if args.hub in ["cityhub", "movehub", "technichub", "primehub"]:
+    if args.hub in ["cityhub", "movehub", "technichub", "primehub", "essentialhub"]:
         pybricks.submodule("micropython").module().git.submodule(
             "update", "--init", "lib/stm32lib"
         )
-    if args.hub == "primehub":
+    if args.hub == "primehub" or args.hub == "essentialhub":
         pybricks.git.submodule("update", "--init", "--checkout", "lib/btstack")
     if args.hub == "nxt":
         pybricks.git.submodule(

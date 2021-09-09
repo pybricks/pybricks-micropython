@@ -17,7 +17,7 @@ FIRMWARE_SIZE_TABLE = os.environ["FIRMWARE_SIZE_TABLE"]
 BUILD_DIR = os.environ.get("BUILD_DIR", "build")
 
 # all past and present hub names
-HUBS = ["cityhub", "cplushub", "technichub", "movehub", "primehub", "nxt"]
+HUBS = ["cityhub", "cplushub", "technichub", "movehub", "primehub", "essentialhub,", "nxt"]
 
 QUERY = """query {
     repository(owner:"pybricks", name:"pybricks-micropython") {

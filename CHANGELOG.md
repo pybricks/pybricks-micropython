@@ -8,6 +8,7 @@
 - Support for LEGO Technic Color Light Matrix ([support#440]).
 - Support for LEGO UART devices with a new battery power flag. This is
   required to support the new LEGO Technic Color Light Matrix ([support#440]).
+- Support for the SPIKE Essential hub/Technic Small hub ([support#439]).
 
 ### Fixed
 - Fixed Ultrasonic Sensor and Color Sensor turning off when a
@@ -16,8 +17,9 @@
 ### Changed:
 - Updated to MicroPython v1.17.
 
-[support#456]: https://github.com/pybricks/support/issues/456
+[support#439]: https://github.com/pybricks/support/issues/439
 [support#440]: https://github.com/pybricks/support/issues/440
+[support#456]: https://github.com/pybricks/support/issues/456
 
 ## [3.1.0a4] - 2021-08-30
 

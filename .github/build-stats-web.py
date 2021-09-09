@@ -15,7 +15,7 @@ BUILD_DIR = os.environ.get("BUILD_DIR", "build")
 # Number of digits of hash to display
 HASH_SIZE = 7
 
-HUBS = ["cityhub", "technichub", "movehub", "primehub", "nxt"]
+HUBS = ["cityhub", "technichub", "movehub", "primehub", "essentialhub", "nxt"]
 
 GITHUB_REPO_URL = "https://github.com/pybricks/pybricks-micropython"
 

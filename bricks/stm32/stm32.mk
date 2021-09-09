@@ -209,6 +209,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	geometry/pb_type_matrix.c \
 	hubs/pb_module_hubs.c \
 	hubs/pb_type_cityhub.c \
+	hubs/pb_type_essentialhub.c \
 	hubs/pb_type_technichub.c \
 	hubs/pb_type_movehub.c \
 	hubs/pb_type_primehub.c \

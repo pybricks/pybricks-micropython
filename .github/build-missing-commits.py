@@ -19,7 +19,7 @@ PYBRICKS_PATH = os.environ.get("PYBRICKS_PATH", ".")
 
 PYBRICKS_BRANCH = "origin/master"
 
-HUBS = ["movehub", "cityhub", "technichub", "primehub", "nxt"]
+HUBS = ["movehub", "cityhub", "technichub", "primehub", "essentialhub", "nxt"]
 
 print("Building commits...")
 

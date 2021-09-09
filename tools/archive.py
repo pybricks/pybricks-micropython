@@ -49,7 +49,7 @@ def archive(hub: str) -> None:
         archives.append(micropython_tar)
 
         # only STM32 hubs have stm32lib
-        if hub in ["cityhub", "movehub", "primehub", "technichub"]:
+        if hub in ["cityhub", "essentialhub", "movehub", "primehub", "technichub"]:
             stm32lib_tar = pathlib.Path(d, "stm32lib.tar")
             git_archive("micropython/lib/stm32lib", stm32lib_tar)
             archives.append(stm32lib_tar)
@@ -59,8 +59,8 @@ def archive(hub: str) -> None:
         git_archive("lib/libfixmath", libfixmath_tar)
         archives.append(libfixmath_tar)
 
-        # extra library for SPIKE Prime
-        if hub == "primehub":
+        # extra library for SPIKE hubs
+        if hub == "primehub" or hub == "essentialhub":
             btstack_tar = pathlib.Path(d, "btstack.tar")
             git_archive("lib/btstack", btstack_tar)
             archives.append(btstack_tar)
