@@ -343,6 +343,7 @@ HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dac_ex.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dac.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_dma.c \
+	stm32$(PB_MCU_SERIES_LCASE)xx_hal_fmpi2c.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_gpio.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_i2c.c \
 	stm32$(PB_MCU_SERIES_LCASE)xx_hal_pcd_ex.c \
@@ -362,12 +363,12 @@ HAL_SRC_C = $(addprefix lib/stm32lib/STM32$(PB_MCU_SERIES)xx_HAL_Driver/Src/,\
 	stm32$(PB_MCU_SERIES_LCASE)xx_ll_usb.c \
 	)
 
-# Ring buffer
-
-LWRB_SRC_C = lib/lwrb/src/lwrb/lwrb.c
-
+# some HAL drivers are not available on all MCUs
 ifeq ($(PB_MCU_SERIES),F4)
 HAL_SRC_C := $(filter-out %xx_hal_uart_ex.c, $(HAL_SRC_C))
+endif
+ifneq ($(PB_MCU_SERIES),F4)
+HAL_SRC_C := $(filter-out %xx_hal_fmpi2c.c, $(HAL_SRC_C))
 endif
 ifneq ($(PB_MCU_SERIES),L4)
 HAL_SRC_C := $(filter-out %xx_ll_lpuart.c, $(HAL_SRC_C))
@@ -377,6 +378,10 @@ HAL_SRC_C := $(filter-out %xx_hal_pcd_ex.c, $(HAL_SRC_C))
 HAL_SRC_C := $(filter-out %xx_hal_pcd.c, $(HAL_SRC_C))
 HAL_SRC_C := $(filter-out %xx_ll_usb.c, $(HAL_SRC_C))
 endif
+
+# Ring buffer
+
+LWRB_SRC_C = lib/lwrb/src/lwrb/lwrb.c
 
 # libfixmath
 
@@ -420,6 +425,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/led/led_dual.c \
 	drv/led/led_pwm.c \
 	drv/pwm/pwm_core.c \
+	drv/pwm/pwm_lp50xx_stm32.c \
 	drv/pwm/pwm_stm32_tim.c \
 	drv/pwm/pwm_tlc5955_stm32.c \
 	drv/reset/reset_stm32.c \
