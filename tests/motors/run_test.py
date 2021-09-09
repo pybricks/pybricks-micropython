@@ -126,6 +126,7 @@ def plot_control_data(time, data, build_dir, subtitle=None):
 
     error_axis.plot(time, count_ref - count, drawstyle="steps-post", label="Reported error")
     error_axis.plot(time, count_ref - count_est, drawstyle="steps-post", label="Estimated error")
+    error_axis.plot(time, count_est - count, drawstyle="steps-post", label="Estimation error")
     error_axis.set_ylabel("angle error (deg)")
 
     speed_axis.plot(time, rate, drawstyle="steps-post", label="Reported rate")
@@ -133,6 +134,7 @@ def plot_control_data(time, data, build_dir, subtitle=None):
     speed_axis.plot(
         time, gradient(count, time / 1000), drawstyle="steps-post", label="Future count derivative"
     )
+    speed_axis.plot(time, rate_ref, drawstyle="steps-post", label="Reference")
     speed_axis.set_ylabel("speed (deg/s)")
 
     torque_axis.plot(time, torque_p, label="P", drawstyle="steps-post")
