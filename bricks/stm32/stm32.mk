@@ -231,6 +231,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	parameters/pb_type_stop.c \
 	pupdevices/pb_module_pupdevices.c \
 	pupdevices/pb_type_pupdevices_colordistancesensor.c \
+	pupdevices/pb_type_pupdevices_colorlightmatrix.c \
 	pupdevices/pb_type_pupdevices_colorsensor.c \
 	pupdevices/pb_type_pupdevices_forcesensor.c \
 	pupdevices/pb_type_pupdevices_infraredsensor.c \

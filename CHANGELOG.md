@@ -5,8 +5,9 @@
 ## [Unreleased]
 
 ### Added
+- Support for LEGO Technic Color Light Matrix ([support#440]).
 - Support for LEGO UART devices with a new battery power flag. This is
-  required to support the new LEGO SPIKE Color Light Matrix ([support#440]).
+  required to support the new LEGO Technic Color Light Matrix ([support#440]).
 
 ### Fixed
 - Fixed Ultrasonic Sensor and Color Sensor turning off when a
