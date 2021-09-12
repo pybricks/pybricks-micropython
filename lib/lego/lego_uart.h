@@ -471,6 +471,9 @@ typedef enum {
     /** SPIKE Prime Force Sensor */
     LUMP_TYPE_ID_SPIKE_FORCE_SENSOR       = 63,
 
+    /** Technic Color Light Matrix */
+    LUMP_TYPE_ID_TECHNIC_COLOR_LIGHT_MATRIX = 64,
+
     /** Technic Medium Angular Motor */
     LUMP_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR  = 75,
 
