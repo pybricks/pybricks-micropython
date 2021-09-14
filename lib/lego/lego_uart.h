@@ -474,6 +474,9 @@ typedef enum {
     /** Technic Color Light Matrix */
     LUMP_TYPE_ID_TECHNIC_COLOR_LIGHT_MATRIX = 64,
 
+    /** SPIKE Small Motor */
+    LUMP_TYPE_ID_SPIKE_S_MOTOR            = 65,
+
     /** Technic Medium Angular Motor */
     LUMP_TYPE_ID_TECHNIC_M_ANGULAR_MOTOR  = 75,
 

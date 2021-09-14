@@ -80,6 +80,36 @@ static const pbio_control_settings_t settings_servo_ev3_l = {
 
 #if PBDRV_CONFIG_IOPORT_LPF2 || PBDRV_CONFIG_COUNTER_TEST
 
+static const pbio_observer_settings_t settings_observer_technic_s_angular = {
+    .phi_01 = SCALE(0.00468582248829651f, PBIO_OBSERVER_SCALE_HIGH),
+    .phi_11 = SCALE(0.877017999120650f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_0 = SCALE(4.49747292641861f, PBIO_OBSERVER_SCALE_LOW),
+    .gam_1 = SCALE(1760.49589416085f, PBIO_OBSERVER_SCALE_LOW),
+    .k_0 = SCALE(0.010402524000000002f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_1 = SCALE(0.000255865711052433f, PBIO_OBSERVER_SCALE_HIGH),
+    .k_2 = SCALE(0.00671533699371639f, PBIO_OBSERVER_SCALE_HIGH),
+    .f_low = SCALE(0.004591080000000001f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gain = SCALE(0.0005f, PBIO_OBSERVER_SCALE_TRQ),
+};
+
+static const pbio_control_settings_t settings_servo_technic_s_angular = {
+    .max_rate = 1000,
+    .abs_acceleration = 2000,
+    .rate_tolerance = 50,
+    .count_tolerance = 10,
+    .stall_rate_limit = 20,
+    .stall_time = 200 * US_PER_MS,
+    .pid_kp = 5000,
+    .pid_ki = 1200,
+    .pid_kd = 800,
+    .integral_range = 45,
+    .integral_rate = 25,
+    .max_duty = 7500,
+    .max_torque = 60000,
+    .use_estimated_rate = true,
+    .use_estimated_count = false,
+};
+
 static const pbio_observer_settings_t settings_observer_technic_m_angular = {
     .phi_01 = SCALE(0.00471127825986593f, PBIO_OBSERVER_SCALE_HIGH),
     .phi_11 = SCALE(0.886778220155195f, PBIO_OBSERVER_SCALE_LOW),
@@ -297,6 +327,10 @@ void pbio_servo_load_settings(pbio_control_settings_t *control_settings, const p
         case PBIO_IODEV_TYPE_ID_TECHNIC_XL_MOTOR:
             *observer_settings = &settings_observer_technic_xl;
             *control_settings = settings_servo_technic_xl;
+            break;
+        case PBIO_IODEV_TYPE_ID_SPIKE_S_MOTOR:
+            *observer_settings = &settings_observer_technic_s_angular;
+            *control_settings = settings_servo_technic_s_angular;
             break;
         case PBIO_IODEV_TYPE_ID_TECHNIC_L_ANGULAR_MOTOR:
         case PBIO_IODEV_TYPE_ID_SPIKE_L_MOTOR:
