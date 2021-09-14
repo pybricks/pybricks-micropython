@@ -189,8 +189,8 @@ try:
         # Controlled case.
         control_time, control_data = get_data(build_dir / "control.txt")
         plot_control_data(control_time, control_data, build_dir)
-    except IndexError:
-        # Open loop case, no control data to parse.
+    except (IndexError, FileNotFoundError):
+        # Open loop case or servo only, no control data to parse.
         pass
 
 except FileNotFoundError:
