@@ -441,11 +441,18 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
         gpio_init.Mode = GPIO_MODE_AF_OD;
         gpio_init.Pull = GPIO_NOPULL;
         gpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-
-        // SCL/SDA
-        gpio_init.Pin = GPIO_PIN_9 | GPIO_PIN_10;
         gpio_init.Alternate = GPIO_AF4_I2C3;
+
+        // SCL
+        gpio_init.Pin = GPIO_PIN_8;
+        HAL_GPIO_Init(GPIOA, &gpio_init);
+
+        // SDA
+        gpio_init.Pin = GPIO_PIN_9;
         HAL_GPIO_Init(GPIOC, &gpio_init);
+
+        // REVISIT: PC13 is also used in the official LEGO firmware - probably
+        // an interrupt back from the IMU chip
 
         HAL_NVIC_SetPriority(I2C3_ER_IRQn, 3, 1);
         HAL_NVIC_EnableIRQ(I2C3_ER_IRQn);
