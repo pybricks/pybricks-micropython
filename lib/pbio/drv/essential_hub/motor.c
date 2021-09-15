@@ -32,19 +32,6 @@ static const pbdrv_motor_data_t
     // Port A
     {
         .pin1_gpio.bank = GPIOB,
-        .pin1_gpio.pin = 4,
-        .pin1_alt = GPIO_AF2_TIM3,
-        .pin1_pwm_id = 1,
-        .pin1_pwm_ch = 1,
-        .pin2_gpio.bank = GPIOB,
-        .pin2_gpio.pin = 5,
-        .pin2_alt = GPIO_AF2_TIM3,
-        .pin2_pwm_id = 1,
-        .pin2_pwm_ch = 2,
-    },
-    // Port B
-    {
-        .pin1_gpio.bank = GPIOB,
         .pin1_gpio.pin = 6,
         .pin1_alt = GPIO_AF2_TIM4,
         .pin1_pwm_id = 2,
@@ -53,6 +40,19 @@ static const pbdrv_motor_data_t
         .pin2_gpio.pin = 7,
         .pin2_alt = GPIO_AF2_TIM4,
         .pin2_pwm_id = 2,
+        .pin2_pwm_ch = 2,
+    },
+    // Port B
+    {
+        .pin1_gpio.bank = GPIOB,
+        .pin1_gpio.pin = 4,
+        .pin1_alt = GPIO_AF2_TIM3,
+        .pin1_pwm_id = 1,
+        .pin1_pwm_ch = 1,
+        .pin2_gpio.bank = GPIOB,
+        .pin2_gpio.pin = 5,
+        .pin2_alt = GPIO_AF2_TIM3,
+        .pin2_pwm_id = 1,
         .pin2_pwm_ch = 2,
     },
 };
