@@ -6,6 +6,7 @@
 #if PYBRICKS_PY_PUPDEVICES
 
 #include <pbio/button.h>
+#include <pbio/dcmotor.h>
 
 #include "py/mphal.h"
 
