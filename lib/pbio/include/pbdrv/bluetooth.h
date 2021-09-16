@@ -75,6 +75,14 @@ typedef struct {
     uint8_t data[0];
 } pbdrv_bluetooth_value_t;
 
+typedef struct {
+    lwp3_hub_kind_t hub_kind;
+    uint8_t status;
+    uint8_t bdaddr_type;
+    uint8_t bdaddr[6];
+    char name[20];
+} pbdrv_bluetooth_scan_and_connect_context_t;
+
 #if PBDRV_CONFIG_BLUETOOTH
 
 /**
@@ -149,14 +157,6 @@ void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handl
 // TODO: combine this with pbdrv_bluetooth_set_receive_handler()
 void pbdrv_bluetooth_set_notification_handler(pbdrv_bluetooth_receive_handler_t handler);
 
-typedef struct {
-    lwp3_hub_kind_t hub_kind;
-    uint8_t status;
-    uint8_t bdaddr_type;
-    uint8_t bdaddr[6];
-    char name[20];
-} pbdrv_bluetooth_scan_and_connect_context_t;
-
 /**
  * Starts scanning for a BLE device and connects to it.
  *
@@ -188,7 +188,7 @@ static inline bool pbdrv_bluetooth_is_ready(void) {
     return false;
 }
 
-static const char *pbdrv_bluetooth_get_hub_name(void) {
+static inline const char *pbdrv_bluetooth_get_hub_name(void) {
     return "Pybricks Hub";
 }
 
@@ -203,6 +203,18 @@ static inline void pbdrv_bluetooth_send(pbdrv_bluetooth_send_context_t *context)
 }
 
 static inline void pbdrv_bluetooth_set_receive_handler(pbdrv_bluetooth_receive_handler_t handler) {
+}
+
+static inline void pbdrv_bluetooth_set_notification_handler(pbdrv_bluetooth_receive_handler_t handler) {
+}
+
+static inline void pbdrv_bluetooth_scan_and_connect(pbio_task_t *task, pbdrv_bluetooth_scan_and_connect_context_t *context) {
+}
+
+static inline void pbdrv_bluetooth_write_remote(pbio_task_t *task, pbdrv_bluetooth_value_t *value) {
+}
+
+static inline void pbdrv_bluetooth_disconnect_remote(void) {
 }
 
 #endif // PBDRV_CONFIG_BLUETOOTH
