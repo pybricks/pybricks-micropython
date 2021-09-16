@@ -209,12 +209,16 @@ static PT_THREAD(pbdrv_pwm_lp50xx_stm32_handle_event(pbdrv_pwm_lp50xx_stm32_priv
             [DEVICE_CONFIG0] = DEVICE_CONFIG0_CHIP_EN,
             [DEVICE_CONFIG1] = DEVICE_CONFIG1_POWER_SAVE_EN | DEVICE_CONFIG1_PWM_DITHERING_EN | DEVICE_CONFIG1_AUTO_INCR_EN,
             [LED_CONFIG0] = 0,
-            [BANK_BRIGHTNESS] = 255,
+            [BANK_BRIGHTNESS] = 0,
             [BANK_A_COLOR] = 0,
             [BANK_B_COLOR] = 0,
             [BANK_C_COLOR] = 0,
-            [LED0_BRIGHTNESS] = 255,
-            [LED1_BRIGHTNESS] = 255,
+            // Official LEGO firmware has LED0_BRIGHTNESS set to 255 and LED1_BRIGHTNESS
+            // set to 190 but then divides the incoming PWM duty cycle by 5. By doing
+            // the divide by 5 here, we end up with the same max brightness while
+            // allowing full dynamic range of the PWM duty cycle.
+            [LED0_BRIGHTNESS] = 51,
+            [LED1_BRIGHTNESS] = 38,
             [LED2_BRIGHTNESS] = 0,
             [LED3_BRIGHTNESS] = 0,
         }
