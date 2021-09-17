@@ -13,10 +13,13 @@
 ### Fixed
 - Fixed Ultrasonic Sensor and Color Sensor turning off when a
   user script ends ([support#456]).
+- Hub reset due to watchdog timer when writing data to UART I/O device
+  ([support#304]).
 
 ### Changed:
 - Updated to MicroPython v1.17.
 
+[support#304]: https://github.com/pybricks/support/issues/304
 [support#439]: https://github.com/pybricks/support/issues/439
 [support#440]: https://github.com/pybricks/support/issues/440
 [support#456]: https://github.com/pybricks/support/issues/456

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include <string.h>
 
@@ -63,7 +63,7 @@ static void set_mode(pbio_iodev_t *iodev, uint8_t new_mode) {
     }
 
     while ((err = pbio_iodev_set_mode_begin(iodev, new_mode)) == PBIO_ERROR_AGAIN) {
-        ;
+        MICROPY_EVENT_POLL_HOOK
     }
     pb_assert(err);
     wait(pbio_iodev_set_mode_end, pbio_iodev_set_mode_cancel, iodev);
@@ -174,7 +174,7 @@ void pb_device_set_values(pb_device_t *pbdev, uint8_t mode, int32_t *values, uin
     }
     pbio_error_t err;
     while ((err = pbio_iodev_set_data_begin(iodev, iodev->mode, data)) == PBIO_ERROR_AGAIN) {
-        ;
+        MICROPY_EVENT_POLL_HOOK
     }
     pb_assert(err);
     wait(pbio_iodev_set_data_end, pbio_iodev_set_data_cancel, iodev);
