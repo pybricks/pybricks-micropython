@@ -11,16 +11,16 @@
 #define PYBRICKS_HUB_DEBUG              (1)
 
 // Pybricks modules
-#define PYBRICKS_PY_COMMON              (0)
-#define PYBRICKS_PY_COMMON_KEYPAD       (0)
+#define PYBRICKS_PY_COMMON              (1)
+#define PYBRICKS_PY_COMMON_KEYPAD       (1)
 #define PYBRICKS_PY_COMMON_MOTORS       (0)
 #define PYBRICKS_PY_HUBS                (0)
-#define PYBRICKS_PY_IODEVICES           (1)
+#define PYBRICKS_PY_IODEVICES           (0)
 #define PYBRICKS_PY_MEDIA               (0)
 #define PYBRICKS_PY_PARAMETERS          (1)
-#define PYBRICKS_PY_PARAMETERS_BUTTON   (0)
+#define PYBRICKS_PY_PARAMETERS_BUTTON   (1)
 #define PYBRICKS_PY_PARAMETERS_ICON     (0)
-#define PYBRICKS_PY_PUPDEVICES          (0)
-#define PYBRICKS_PY_TOOLS               (0)
+#define PYBRICKS_PY_PUPDEVICES          (1)
+#define PYBRICKS_PY_TOOLS               (1)
 
 #include "../stm32/configport.h"

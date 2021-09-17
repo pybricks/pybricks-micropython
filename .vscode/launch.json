@@ -113,7 +113,7 @@
             "type": "cortex-debug",
             "request": "launch",
             "servertype": "openocd",
-            "executable": "${workspaceRoot}/bricks/debug/build/firmware.elf",
+            "executable": "${workspaceRoot}/bricks/debug/build/firmware-no-checksum.elf",
             "preLaunchTask": "build debug",
             "device": "STM32F446ZE",
             "configFiles": [

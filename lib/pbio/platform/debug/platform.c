@@ -17,6 +17,9 @@
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
 
+enum {
+    COUNTER_DEV_0,
+};
 
 enum {
     LED_DEV_0,
@@ -216,6 +219,7 @@ const pbdrv_uart_stm32f4_ll_irq_platform_data_t
 const pbio_uartdev_platform_data_t pbio_uartdev_platform_data[PBIO_CONFIG_UARTDEV_NUM_DEV] = {
     [0] = {
         .uart_id = UART_ID_0,
+        .counter_id = COUNTER_DEV_0,
     },
 };
 
@@ -305,6 +309,14 @@ void SystemInit(void) {
     GPIOG->AFR[1] = (GPIOG->AFR[1] & ~GPIO_AFRH_AFSEL14_Msk) | (8 << GPIO_AFRH_AFSEL14_Pos);
     USART6->BRR = (26 << 4) | 1; // 48MHz/(16*26.0625) = 115107 baud
     USART6->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
+
+    // UART pin mux for uartdev
+    GPIO_InitTypeDef gpio_init = {
+        .Pin = GPIO_PIN_5 | GPIO_PIN_6,
+        .Mode = GPIO_MODE_AF_PP,
+        .Alternate = GPIO_AF7_USART2,
+    };
+    HAL_GPIO_Init(GPIOD, &gpio_init);
 }
 
 void assert_failed(uint8_t *file, uint32_t line) {

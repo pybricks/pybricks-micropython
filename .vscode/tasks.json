@@ -16,7 +16,7 @@
         {
             "label": "build debug",
             "type": "shell",
-            "command": "make -C bricks/debug DEBUG=1 -j8"
+            "command": "make -C bricks/debug DEBUG=1 build/firmware-no-checksum.bin -j8"
         }
     ]
 }
