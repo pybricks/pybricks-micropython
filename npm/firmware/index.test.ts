@@ -16,7 +16,7 @@ test('bad zip data', async () => {
     try {
         await FirmwareReader.load(new Uint8Array(100));
         fail('FirmwareReader.load() should have failed');
-    } catch (err) {
+    } catch (err: any) {
         expect(err.name).toMatch('FirmwareReaderError');
         expect(err.code).toBe(FirmwareReaderErrorCode.ZipError);
     }
@@ -29,7 +29,7 @@ test('missing firmware-base.bin', async () => {
     try {
         await FirmwareReader.load(file);
         fail('FirmwareReader.load() should have failed');
-    } catch (err) {
+    } catch (err: any) {
         expect(err.name).toMatch('FirmwareReaderError');
         expect(err.code).toBe(FirmwareReaderErrorCode.MissingFirmwareBaseBin);
     }
@@ -42,7 +42,7 @@ test('missing firmware.metadata.json', async () => {
     try {
         await FirmwareReader.load(file);
         fail('FirmwareReader.load() should have failed');
-    } catch (err) {
+    } catch (err: any) {
         expect(err.name).toMatch('FirmwareReaderError');
         expect(err.code).toBe(FirmwareReaderErrorCode.MissingMetadataJson);
     }
@@ -55,7 +55,7 @@ test('missing main.py', async () => {
     try {
         await FirmwareReader.load(file);
         fail('FirmwareReader.load() should have failed');
-    } catch (err) {
+    } catch (err: any) {
         expect(err.name).toMatch('FirmwareReaderError');
         expect(err.code).toBe(FirmwareReaderErrorCode.MissingMainPy);
     }
@@ -68,7 +68,7 @@ test('missing ReadMe_OSS.txt', async () => {
     try {
         await FirmwareReader.load(file);
         fail('FirmwareReader.load() should have failed');
-    } catch (err) {
+    } catch (err: any) {
         expect(err.name).toMatch('FirmwareReaderError');
         expect(err.code).toBe(FirmwareReaderErrorCode.MissingReadmeOssTxt);
     }

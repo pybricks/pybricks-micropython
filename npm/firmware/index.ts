@@ -108,6 +108,28 @@ export class FirmwareReaderError extends Error {
     }
 }
 
+function isError(err: unknown): err is Error {
+    const maybeError = err as Error;
+
+    return (
+        maybeError !== undefined &&
+        typeof maybeError.name === 'string' &&
+        typeof maybeError.message === 'string'
+    );
+}
+
+function ensureError(err: unknown): Error {
+    if (isError(err)) {
+        return err;
+    }
+
+    if (typeof err === 'string') {
+        return new Error(err);
+    }
+
+    return Error(String(err));
+}
+
 async function wrapError<T>(
     callback: () => Promise<T>,
     code: FirmwareReaderErrorCode
@@ -115,7 +137,7 @@ async function wrapError<T>(
     try {
         return await callback();
     } catch (err) {
-        throw new FirmwareReaderError(code, err);
+        throw new FirmwareReaderError(code, ensureError(err));
     }
 }
 
