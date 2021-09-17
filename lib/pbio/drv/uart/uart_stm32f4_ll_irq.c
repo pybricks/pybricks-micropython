@@ -192,6 +192,11 @@ void pbdrv_uart_stm32f4_ll_irq_handle_irq(uint8_t id) {
         process_poll(&pbdrv_uart_process);
     }
 
+    if (sr & USART_SR_ORE) {
+        // clears interrupt
+        LL_USART_ReceiveData8(USARTx);
+    }
+
     if (USARTx->CR1 & USART_CR1_TXEIE && sr & USART_SR_TXE) {
         LL_USART_TransmitData8(USARTx, uart->write_buf[uart->write_pos++]);
         // When all bytes have been written, wait for the Tx complete interrupt.
