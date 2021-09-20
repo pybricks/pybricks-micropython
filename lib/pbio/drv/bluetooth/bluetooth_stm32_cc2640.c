@@ -872,9 +872,31 @@ static void handle_event(uint8_t *packet) {
                                 ATT_ErrorRsp(connection_handle, &rsp);
                             }
                             break;
-                        default:
+
+                        case DEVICE_NAME_UUID: {
+                            attReadByTypeRsp_t rsp;
+                            uint8_t buf[ATT_MTU_SIZE - 2];
+                            uint8_t hub_name_len = strlen(pbdrv_bluetooth_hub_name);
+
+                            pbio_set_uint16_le(&buf[0], gap_service_handle + 2);
+                            memcpy(&buf[2], pbdrv_bluetooth_hub_name, hub_name_len);
+                            rsp.pDataList = buf;
+                            rsp.dataLen = hub_name_len + 2;
+                            ATT_ReadByTypeRsp(connection_handle, &rsp);
+                        }
+                        break;
+
+                        default: {
+                            attErrorRsp_t rsp;
+
+                            rsp.reqOpcode = ATT_READ_BY_TYPE_REQ;
+                            rsp.handle = start_handle;
+                            rsp.errCode = ATT_ERR_ATTR_NOT_FOUND;
+                            ATT_ErrorRsp(connection_handle, &rsp);
+
                             DBG("unhandled read by type req: %04X", type);
-                            break;
+                        }
+                        break;
                     }
                 }
                 break;
