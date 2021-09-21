@@ -1,4 +1,9 @@
 
+## 4.13.0-beta.1 - 2021-09-21
+### Changed
+- Updated dependencies.
+- Updated firmware to v3.1.0b1.
+
 ## 4.13.0-alpha.5 - 2021-08-30
 ### Changed
 - Updated firmware to v3.1.0a4.
