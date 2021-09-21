@@ -31,18 +31,18 @@
 ## [3.1.0a4] - 2021-08-30
 
 ### Added
-- Enabled builtin `bytearray` ([pull#60]).
-- Enabled `ustruct` module ([pull#60]).
+- Enabled builtin `bytearray` ([pybricks-micropython#60]).
+- Enabled `ustruct` module ([pybricks-micropython#60]).
 - Added alpha support for dual boot installation on the SPIKE Prime Hub.
 - Added `pybricks.experimental.hello_world` function to make it easier for
   new contributors to experiment with Pybricks using C code.
 - Added ability to import the `main.mpy` that is embedded in the firmware from
   a download and run program ([support#408]).
 - Added `pybricks.iodevices.LWP3Device` to communicate with a device that supports
-  the LEGO Wireless Protocol 3.0.00 ([pull#68])
+  the LEGO Wireless Protocol 3.0.00 ([pybricks-micropython#68])
 
 ### Changed
-- Move Hub Bluetooth optimizations to reduce firmware size ([issue#49]).
+- Move Hub Bluetooth optimizations to reduce firmware size ([pybricks-micropython#49]).
 - Disabled `pybricks.iodevices` module on Move Hub to reduce firmware size.
 - Improvements to `pybricks.pupdevices.Remote`:
   - Check if a remote is already connected before attempting to create a new
@@ -52,9 +52,9 @@
   - Add `name()` method.
   - Add `light` attribute.
 
-[issue#49]: https://github.com/pybricks/pybricks-micropython/issues/49
-[pull#60]: https://github.com/pybricks/pybricks-micropython/pull/60
-[pull#68]: https://github.com/pybricks/pybricks-micropython/pull/68
+[pybricks-micropython#49]: https://github.com/pybricks/pybricks-micropython/issues/49
+[pybricks-micropython#60]: https://github.com/pybricks/pybricks-micropython/pull/60
+[pybricks-micropython#68]: https://github.com/pybricks/pybricks-micropython/pull/68
 [support#408]: https://github.com/pybricks/support/issues/408
 
 ## [3.1.0a3] - 2021-07-19
@@ -89,7 +89,7 @@
 - Move `Remote` class from `experimental` to `pupdevices`.
 - Move `Remote.pressed()` to `Remote.buttons.pressed()`.
 - Remove `pybricks.experimental` module on Move Hub.
-- Increased Move Hub heap from 6K to 7K due to recently freed RAM ([pull#57]).
+- Increased Move Hub heap from 6K to 7K due to recently freed RAM ([pybricks-micropython#57]).
 - Changed `hub.system.reset(action)` to accept `2` only ([support#379]). This
   is technically a breaking change, although this method was never officially
   released or documented. With this change, entering firmware update mode
@@ -101,7 +101,7 @@
 - Fix I/O ports not powering off when shutting down and button is still pressed.
 - Fix version number only showing git hash and not v3.x.
 
-[pull#57]: https://github.com/pybricks/pybricks-micropython/pull/57
+[pybricks-micropython#57]: https://github.com/pybricks/pybricks-micropython/pull/57
 [support#58]: https://github.com/pybricks/pybricks-micropython/issues/58
 [support#379]: https://github.com/pybricks/support/issues/379
 
@@ -109,7 +109,7 @@
 
 ### Added
 - Added PnP ID characteristic to Device Information Service and to advertising
-  data ([issue#49]).
+  data ([pybricks-micropython#49]).
 - Added special location in firmware for storing hub name ([support#52]). Note:
   Support will need to be added to tools separately to make use of this.
 - Added configuration option to run a simplified version of motor PID control.
@@ -121,9 +121,9 @@
 - Updated MicroPython to v1.16.
 - Simplified the Powered Up UART Protocol host implementation. Unused device
   properties are no longer stored in order to reduce flash and RAM
-  usage ([pull#57]).
+  usage ([pybricks-micropython#57]).
 
-[issue#49]: https://github.com/pybricks/pybricks-micropython/issues/49
+[pybricks-micropython#49]: https://github.com/pybricks/pybricks-micropython/issues/49
 [support#52]: https://github.com/pybricks/support/issues/52
 [support#186]: https://github.com/pybricks/support/issues/186
 
@@ -139,11 +139,11 @@
 
 ### Fixed
 - Fixed resetting motor angle while holding position causes movement ([support#352]).
-- Fixed `DriveBase` not resetting during initialization ([issue#21]).
+- Fixed `DriveBase` not resetting during initialization ([pybricks-micropython#21]).
 - Fixed <kbd>Ctrl</kbd>+<kbd>C</kbd> stopping REPL when first started ([support#347]).
 - Fixed UART I/O devices retuning uninitialized data ([support#361]).
 
-[issue#21]: https://github.com/pybricks/pybricks-micropython/issues/21
+[pybricks-micropython#21]: https://github.com/pybricks/pybricks-micropython/issues/21
 [support#321]: https://github.com/pybricks/support/issues/321
 [support#347]: https://github.com/pybricks/support/issues/347
 [support#352]: https://github.com/pybricks/support/issues/352
