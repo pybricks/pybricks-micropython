@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.1.0b1] - 2021-08-21
+
 ### Added
 - Support for LEGO Technic Color Light Matrix ([support#440]).
 - Support for LEGO UART devices with a new battery power flag. This is
@@ -155,7 +157,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0a4...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0b1...HEAD
+[3.1.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a4...v3.1.0b1
 [3.1.0a4]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a3...v3.1.0a4
 [3.1.0a3]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a2...v3.1.0a3
 [3.1.0a2]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a1...v3.1.0a2
