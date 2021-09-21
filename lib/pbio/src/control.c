@@ -30,8 +30,14 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
 
     // Calculate control errors, depending on whether we do angle control or speed control
     if (ctl->type == PBIO_CONTROL_ANGLE) {
+
+        // Specify in which region integral control should be active. This is
+        // at least the error that would still lead to maximum  proportional
+        // control, with a factor of 2 so we begin integrating a bit sooner.
+        int32_t integral_range = (ctl->settings.max_torque / ctl->settings.pid_kp) * 2;
+
         // Update count integral error and get current error state
-        pbio_count_integrator_update(&ctl->count_integrator, time_now, count_now, count_ref, ctl->trajectory.th3, ctl->settings.integral_range, ctl->settings.integral_rate);
+        pbio_count_integrator_update(&ctl->count_integrator, time_now, count_now, count_ref, ctl->trajectory.th3, integral_range, ctl->settings.integral_rate);
         pbio_count_integrator_get_errors(&ctl->count_integrator, count_feedback, count_ref, &count_err, &count_err_integral);
         rate_err = *rate_ref - rate_feedback;
     } else {
@@ -356,23 +362,21 @@ pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_
     return PBIO_SUCCESS;
 }
 
-void pbio_control_settings_get_pid(pbio_control_settings_t *s, int32_t *pid_kp, int32_t *pid_ki, int32_t *pid_kd, int32_t *integral_range, int32_t *integral_rate) {
+void pbio_control_settings_get_pid(pbio_control_settings_t *s, int32_t *pid_kp, int32_t *pid_ki, int32_t *pid_kd, int32_t *integral_rate) {
     *pid_kp = s->pid_kp;
     *pid_ki = s->pid_ki;
     *pid_kd = s->pid_kd;
-    *integral_range = pbio_control_counts_to_user(s, s->integral_range);
     *integral_rate = pbio_control_counts_to_user(s, s->integral_rate);
 }
 
-pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int32_t pid_kp, int32_t pid_ki, int32_t pid_kd, int32_t integral_range, int32_t integral_rate) {
-    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || integral_range < 0 || integral_rate < 0) {
+pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int32_t pid_kp, int32_t pid_ki, int32_t pid_kd, int32_t integral_rate) {
+    if (pid_kp < 0 || pid_ki < 0 || pid_kd < 0 || integral_rate < 0) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
     s->pid_kp = pid_kp;
     s->pid_ki = pid_ki;
     s->pid_kd = pid_kd;
-    s->integral_range = pbio_control_user_to_counts(s, integral_range);
     s->integral_rate = pbio_control_user_to_counts(s, integral_rate);
     return PBIO_SUCCESS;
 }

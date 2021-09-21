@@ -19,7 +19,6 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
     s_distance->rate_tolerance = s_left->rate_tolerance + s_right->rate_tolerance;
     s_distance->count_tolerance = s_left->count_tolerance + s_right->count_tolerance;
     s_distance->stall_rate_limit = s_left->stall_rate_limit + s_right->stall_rate_limit;
-    s_distance->integral_range = s_left->integral_range + s_right->integral_range;
     s_distance->integral_rate = s_left->integral_rate + s_right->integral_rate;
 
     // As acceleration, we take double the single motor amount, because drivebases are

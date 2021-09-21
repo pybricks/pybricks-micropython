@@ -37,7 +37,6 @@ typedef struct _pbio_control_settings_t {
     int32_t pid_kd;                 /**< Derivative position control constant (and proportional speed control constant) */
     int32_t max_torque;             /**< Upper limit on control torque */
     int32_t max_duty;               /**< Upper limit on duty cycle */
-    int32_t integral_range;         /**< Region around the target count in which integral errors are accumulated */
     int32_t integral_rate;          /**< Maximum rate at which the integrator is allowed to increase */
     bool use_estimated_rate;        /**< Whether to use the estimated speed (true) or the reported/measured speed (false) for feedback control */
     bool use_estimated_count;       /**< Whether to use the estimated count (true) or the reported/measured count (false) for feedback control */
@@ -92,8 +91,8 @@ int32_t pbio_control_user_to_counts(pbio_control_settings_t *s, int32_t user);
 void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *duty, int32_t *torque);
 pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *ctl, int32_t speed, int32_t acceleration, int32_t duty, int32_t torque);
 
-void pbio_control_settings_get_pid(pbio_control_settings_t *s, int32_t *pid_kp, int32_t *pid_ki, int32_t *pid_kd, int32_t *integral_range, int32_t *integral_rate);
-pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int32_t pid_kp, int32_t pid_ki, int32_t pid_kd, int32_t integral_range, int32_t integral_rate);
+void pbio_control_settings_get_pid(pbio_control_settings_t *s, int32_t *pid_kp, int32_t *pid_ki, int32_t *pid_kd, int32_t *integral_rate);
+pbio_error_t pbio_control_settings_set_pid(pbio_control_settings_t *s, int32_t pid_kp, int32_t pid_ki, int32_t pid_kd, int32_t integral_rate);
 
 void pbio_control_settings_get_target_tolerances(pbio_control_settings_t *s, int32_t *speed, int32_t *position);
 pbio_error_t pbio_control_settings_set_target_tolerances(pbio_control_settings_t *s, int32_t speed, int32_t position);
