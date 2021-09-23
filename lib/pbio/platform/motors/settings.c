@@ -25,7 +25,7 @@ static const pbio_observer_settings_t settings_observer_ev3_m = {
     .k_1 = SCALE(0.000204397590361446f, PBIO_OBSERVER_SCALE_HIGH),
     .k_2 = SCALE(0.00262048192771084f, PBIO_OBSERVER_SCALE_HIGH),
     .f_low = SCALE(0.009158620689655174f, PBIO_OBSERVER_SCALE_TRQ),
-    .obs_gain = SCALE(0.0f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gains = 0,
 };
 
 static const pbio_control_settings_t settings_servo_ev3_m = {
@@ -54,7 +54,7 @@ static const pbio_observer_settings_t settings_observer_ev3_l = {
     .k_1 = SCALE(0.000433486238532110f, PBIO_OBSERVER_SCALE_HIGH),
     .k_2 = SCALE(0.00412844036697248f, PBIO_OBSERVER_SCALE_HIGH),
     .f_low = SCALE(0.00823809523809524f, PBIO_OBSERVER_SCALE_TRQ),
-    .obs_gain = SCALE(0.0f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gains = 0,
 };
 
 static const pbio_control_settings_t settings_servo_ev3_l = {
@@ -87,7 +87,7 @@ static const pbio_observer_settings_t settings_observer_technic_s_angular = {
     .k_1 = SCALE(0.000255865711052433f, PBIO_OBSERVER_SCALE_HIGH),
     .k_2 = SCALE(0.00671533699371639f, PBIO_OBSERVER_SCALE_HIGH),
     .f_low = SCALE(0.004591080000000001f, PBIO_OBSERVER_SCALE_TRQ),
-    .obs_gain = SCALE(0.0005f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gains = PBIO_OBSERVER_GAINS(500, 500, 500),
 };
 
 static const pbio_control_settings_t settings_servo_technic_s_angular = {
@@ -116,7 +116,7 @@ static const pbio_observer_settings_t settings_observer_technic_m_angular = {
     .k_1 = SCALE(0.000223154509118161f, PBIO_OBSERVER_SCALE_HIGH),
     .k_2 = SCALE(0.00643543836108826f, PBIO_OBSERVER_SCALE_HIGH),
     .f_low = SCALE(0.01218641268292683f, PBIO_OBSERVER_SCALE_TRQ),
-    .obs_gain = SCALE(0.0008f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gains = PBIO_OBSERVER_GAINS(800, 800, 800),
 };
 
 static const pbio_control_settings_t settings_servo_technic_m_angular = {
@@ -145,7 +145,7 @@ static const pbio_observer_settings_t settings_observer_technic_l_angular = {
     .k_1 = SCALE(0.000337807915176920f, PBIO_OBSERVER_SCALE_HIGH),
     .k_2 = SCALE(0.00666198910636721f, PBIO_OBSERVER_SCALE_HIGH),
     .f_low = SCALE(0.011619602790697674f, PBIO_OBSERVER_SCALE_TRQ),
-    .obs_gain = SCALE(0.004f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gains = PBIO_OBSERVER_GAINS(4000, 4000, 4000),
 };
 
 static const pbio_control_settings_t settings_servo_technic_l_angular = {
@@ -174,7 +174,7 @@ static const pbio_observer_settings_t settings_observer_interactive = {
     .k_1 = SCALE(0.000275066965901687f, PBIO_OBSERVER_SCALE_HIGH),
     .k_2 = SCALE(0.00539346991964092f, PBIO_OBSERVER_SCALE_HIGH),
     .f_low = SCALE(0.005613422818791947f, PBIO_OBSERVER_SCALE_TRQ),
-    .obs_gain = SCALE(0.002f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gains = PBIO_OBSERVER_GAINS(2000, 2000, 2000),
 };
 
 static const pbio_control_settings_t settings_servo_interactive = {
@@ -205,7 +205,7 @@ static const pbio_observer_settings_t settings_observer_movehub = {
     .k_1 = SCALE(0.000260968229954614f, PBIO_OBSERVER_SCALE_HIGH),
     .k_2 = SCALE(0.00372811757078020f, PBIO_OBSERVER_SCALE_HIGH),
     .f_low = SCALE(0.012417391304347828f, PBIO_OBSERVER_SCALE_TRQ),
-    .obs_gain = SCALE(0.002f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gains = PBIO_OBSERVER_GAINS(2000, 2000, 2000),
 };
 
 static const pbio_control_settings_t settings_servo_movehub = {
@@ -236,7 +236,7 @@ static const pbio_observer_settings_t settings_observer_technic_l = {
     .k_1 = SCALE(0.000269922879177378f, PBIO_OBSERVER_SCALE_HIGH),
     .k_2 = SCALE(0.00428449014567267f, PBIO_OBSERVER_SCALE_HIGH),
     .f_low = SCALE(0.013215000000000001f, PBIO_OBSERVER_SCALE_TRQ),
-    .obs_gain = SCALE(0.002f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gains = PBIO_OBSERVER_GAINS(2000, 2000, 2000),
 };
 
 static const pbio_control_settings_t settings_servo_technic_l = {
@@ -265,7 +265,7 @@ static const pbio_observer_settings_t settings_observer_technic_xl = {
     .k_1 = SCALE(0.000283410138248848f, PBIO_OBSERVER_SCALE_HIGH),
     .k_2 = SCALE(0.00429409300377042f, PBIO_OBSERVER_SCALE_HIGH),
     .f_low = SCALE(0.006446341463414635f, PBIO_OBSERVER_SCALE_TRQ),
-    .obs_gain = SCALE(0.002f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gains = PBIO_OBSERVER_GAINS(2000, 2000, 2000),
 };
 
 static const pbio_control_settings_t settings_servo_technic_xl = {

@@ -28,9 +28,35 @@ void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t 
 
     const pbio_observer_settings_t *s = obs->settings;
 
+    // Torque due to duty cycle
     int64_t tau_e = ((int64_t)control * battery_voltage) * s->k_0 / (10000000 / PBIO_OBSERVER_SCALE_TRQ) / PBIO_OBSERVER_SCALE_HIGH;
-    int64_t tau_o = s->obs_gain * ((int64_t)count * PBIO_OBSERVER_SCALE_DEG - obs->est_count) / PBIO_OBSERVER_SCALE_DEG;
+
+    // Friction torque
     int64_t tau_f = obs->est_rate > 0 ? s->f_low: -s->f_low;
+
+    // Unpack observer gain constants.
+    int64_t k_low = s->obs_gains >> 16;
+    int64_t k_med = k_low * ((s->obs_gains & 0x0000FF00) >> 8);
+    int64_t k_high = k_low * (s->obs_gains & 0x000000FF);
+
+    // Below this error, the virtual spring stiffness is low.
+    int64_t r1 = 5 * PBIO_OBSERVER_SCALE_DEG;
+
+    // Below this error, the virtual spring stiffness is medium, above is high.
+    int64_t r2 = 25 * PBIO_OBSERVER_SCALE_DEG;
+
+    // Get estimation error
+    int64_t est_err = (int64_t)count * PBIO_OBSERVER_SCALE_DEG - obs->est_count;
+
+    // Compute torque for estimation error correction as a piecewise affine spring
+    int64_t tau_o = 0;
+    if (abs(est_err) < r1) {
+        tau_o = k_low * est_err / PBIO_OBSERVER_SCALE_DEG;
+    } else if (abs(est_err) < r2) {
+        tau_o = (k_low * r1 + (abs(est_err) - r1) * k_med) * pbio_math_sign(est_err) / PBIO_OBSERVER_SCALE_DEG;
+    } else {
+        tau_o = (k_low * r1 + k_med * (r2 - r1) + (abs(est_err) - r2) * k_high) * pbio_math_sign(est_err) / PBIO_OBSERVER_SCALE_DEG;
+    }
 
     int64_t next_count = obs->est_count + (s->phi_01 * obs->est_rate) / PBIO_OBSERVER_SCALE_HIGH + s->gam_0 * (tau_e + tau_o) * (PBIO_OBSERVER_SCALE_DEG / PBIO_OBSERVER_SCALE_LOW) / PBIO_OBSERVER_SCALE_TRQ;
     int64_t next_rate = (s->phi_11 * obs->est_rate) / PBIO_OBSERVER_SCALE_LOW + s->gam_1 * (tau_e + tau_o - tau_f) * (PBIO_OBSERVER_SCALE_DEG / PBIO_OBSERVER_SCALE_LOW) / PBIO_OBSERVER_SCALE_TRQ;
@@ -78,10 +104,37 @@ void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t 
 
     const pbio_observer_settings_t *s = obs->settings;
 
+    // Torque due to duty cycle
     float tau_e = (control * battery_voltage) / 10000000 * s->k_0;
-    float tau_o = s->obs_gain * (count - obs->est_count);
+
+    // Friction torque
     float tau_f = obs->est_rate > 0 ? s->f_low: -s->f_low;
 
+    // Unpack observer gain constants.
+    float k_low = ((float)(s->obs_gains >> 16)) / 1000000;
+    float k_med = k_low * ((s->obs_gains & 0x0000FF00) >> 8);
+    float k_high = k_low * (s->obs_gains & 0x000000FF);
+
+    // Below this error, the virtual spring stiffness is low.
+    float r1 = 5;
+
+    // Below this error, the virtual spring stiffness is medium, above is high.
+    float r2 = 25;
+
+    // Get estimation error
+    float est_err = count - obs->est_count;
+
+    // Compute torque for estimation error correction as a piecewise affine spring
+    float tau_o = 0;
+    if (abs(est_err) < r1) {
+        tau_o = k_low * est_err;
+    } else if (abs(est_err) < r2) {
+        tau_o = (k_low * r1 + (abs(est_err) - r1) * k_med) * pbio_math_sign(est_err);
+    } else {
+        tau_o = (k_low * r1 + k_med * (r2 - r1) + (abs(est_err) - r2) * k_high) * pbio_math_sign(est_err);
+    }
+
+    // Get next state given total torque
     float next_count = obs->est_count + s->phi_01 * obs->est_rate + s->gam_0 * (tau_e + tau_o);
     float next_rate = s->phi_11 * obs->est_rate + s->gam_1 * (tau_e + tau_o - tau_f);
 
@@ -101,7 +154,7 @@ int32_t pbio_observer_get_feedforward_torque(pbio_observer_t *obs, int32_t rate_
     int32_t back_emf_compensation_torque = (int32_t)(s->k_0 * s->k_2 * rate_ref * 1000000);
     int32_t acceleration_torque = (int32_t)(s->k_0 * s->k_1 * acceleration_ref * 1000000);
 
-    // Scale micronewtons by battery voltage to duty (0--10000)
+    // Total feedforward torque
     return (int32_t)(friction_compensation_torque + back_emf_compensation_torque + acceleration_torque);
 }
 

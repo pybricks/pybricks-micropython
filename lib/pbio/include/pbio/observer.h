@@ -20,6 +20,12 @@
 #define PBIO_OBSERVER_SCALE_HIGH (1.0f)
 #endif
 
+// Observer gains in micronewtonmeters per degree of error.
+// Medium and high gains must be integer multiples of the
+// lowest gain value.
+#define PBIO_OBSERVER_GAINS(LOW, MEDIUM, HIGH) \
+    (((LOW) << 16 | (MEDIUM / LOW) << 8 | (HIGH / LOW)))
+
 typedef struct _pbio_observer_settings_t {
     #if PBIO_CONFIG_CONTROL_MINIMAL
     int32_t phi_01;
@@ -40,8 +46,8 @@ typedef struct _pbio_observer_settings_t {
     float k_1;
     float k_2;
     float f_low;
-    float obs_gain;
     #endif
+    uint32_t obs_gains;
 } pbio_observer_settings_t;
 
 typedef struct _pbio_observer_t {
