@@ -86,8 +86,8 @@ static const pbio_observer_settings_t settings_observer_technic_s_angular = {
     .k_0 = SCALE(0.010402524000000002f, PBIO_OBSERVER_SCALE_HIGH),
     .k_1 = SCALE(0.000255865711052433f, PBIO_OBSERVER_SCALE_HIGH),
     .k_2 = SCALE(0.00671533699371639f, PBIO_OBSERVER_SCALE_HIGH),
-    .f_low = SCALE(0.004591080000000001f, PBIO_OBSERVER_SCALE_TRQ),
-    .obs_gains = PBIO_OBSERVER_GAINS(500, 500, 500),
+    .f_low = SCALE(0.0005f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gains = PBIO_OBSERVER_GAINS(100, 500, 500),
 };
 
 static const pbio_control_settings_t settings_servo_technic_s_angular = {
@@ -116,7 +116,7 @@ static const pbio_observer_settings_t settings_observer_technic_m_angular = {
     .k_1 = SCALE(0.000223154509118161f, PBIO_OBSERVER_SCALE_HIGH),
     .k_2 = SCALE(0.00643543836108826f, PBIO_OBSERVER_SCALE_HIGH),
     .f_low = SCALE(0.01218641268292683f, PBIO_OBSERVER_SCALE_TRQ),
-    .obs_gains = PBIO_OBSERVER_GAINS(800, 800, 800),
+    .obs_gains = PBIO_OBSERVER_GAINS(100, 800, 2000),
 };
 
 static const pbio_control_settings_t settings_servo_technic_m_angular = {
@@ -145,7 +145,7 @@ static const pbio_observer_settings_t settings_observer_technic_l_angular = {
     .k_1 = SCALE(0.000337807915176920f, PBIO_OBSERVER_SCALE_HIGH),
     .k_2 = SCALE(0.00666198910636721f, PBIO_OBSERVER_SCALE_HIGH),
     .f_low = SCALE(0.011619602790697674f, PBIO_OBSERVER_SCALE_TRQ),
-    .obs_gains = PBIO_OBSERVER_GAINS(4000, 4000, 4000),
+    .obs_gains = PBIO_OBSERVER_GAINS(1000, 2000, 4000),
 };
 
 static const pbio_control_settings_t settings_servo_technic_l_angular = {
@@ -236,7 +236,7 @@ static const pbio_observer_settings_t settings_observer_technic_l = {
     .k_1 = SCALE(0.000269922879177378f, PBIO_OBSERVER_SCALE_HIGH),
     .k_2 = SCALE(0.00428449014567267f, PBIO_OBSERVER_SCALE_HIGH),
     .f_low = SCALE(0.013215000000000001f, PBIO_OBSERVER_SCALE_TRQ),
-    .obs_gains = PBIO_OBSERVER_GAINS(2000, 2000, 2000),
+    .obs_gains = PBIO_OBSERVER_GAINS(1000, 2000, 2000),
 };
 
 static const pbio_control_settings_t settings_servo_technic_l = {
@@ -264,19 +264,19 @@ static const pbio_observer_settings_t settings_observer_technic_xl = {
     .k_0 = SCALE(0.025904742547425474f, PBIO_OBSERVER_SCALE_HIGH),
     .k_1 = SCALE(0.000283410138248848f, PBIO_OBSERVER_SCALE_HIGH),
     .k_2 = SCALE(0.00429409300377042f, PBIO_OBSERVER_SCALE_HIGH),
-    .f_low = SCALE(0.006446341463414635f, PBIO_OBSERVER_SCALE_TRQ),
-    .obs_gains = PBIO_OBSERVER_GAINS(2000, 2000, 2000),
+    .f_low = SCALE(0.002f, PBIO_OBSERVER_SCALE_TRQ),
+    .obs_gains = PBIO_OBSERVER_GAINS(500, 1500, 2000),
 };
 
 static const pbio_control_settings_t settings_servo_technic_xl = {
     .max_rate = 1000,
-    .abs_acceleration = 1500,
+    .abs_acceleration = 2500,
     .rate_tolerance = 50,
     .count_tolerance = 10,
     .stall_rate_limit = 20,
     .stall_time = 200 * US_PER_MS,
-    .pid_kp = 2500,
-    .pid_ki = 400,
+    .pid_kp = 4000,
+    .pid_ki = 600,
     .pid_kd = 2000,
     .integral_rate = 5,
     .max_duty = 10000,
