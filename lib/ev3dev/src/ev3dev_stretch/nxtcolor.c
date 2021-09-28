@@ -90,11 +90,11 @@ nxtcolor_t nxtcolorsensors[4];
 // Simplistic nonbusy wait. May be called only once per blocking operation.
 pbio_error_t nxtcolor_wait(nxtcolor_t *nxtcolor, uint32_t ms) {
 
-    uint32_t now = pbdrv_clock_get_us();
+    uint32_t now = pbdrv_clock_get_ms();
 
     // Wait for existing wait to complete
     if (nxtcolor->waiting) {
-        if (now - nxtcolor->wait_start > 1000*ms) {
+        if (now - nxtcolor->wait_start > ms) {
             nxtcolor->waiting = false;
             return PBIO_SUCCESS;
         }
