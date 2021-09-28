@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Changed:
+- Dropped `integral_range` argument from `Control.pid()`. This setting was
+  ineffective and never used. When set incorrectly, the motor could get stuck
+  for certain combinations of `kp` and `ki`.
+- Improved motor behavior for cases with low-speed, low-load, but high
+  inertia. ([support#366])
+
+[support#366]: https://github.com/pybricks/support/issues/366
+
 ## [3.1.0b1] - 2021-08-21
 
 ### Added

@@ -96,6 +96,7 @@ STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_m
         PB_ARG_DEFAULT_NONE(kp),
         PB_ARG_DEFAULT_NONE(ki),
         PB_ARG_DEFAULT_NONE(kd),
+        PB_ARG_DEFAULT_NONE(reserved),
         PB_ARG_DEFAULT_NONE(integral_rate));
 
     // Read current values
@@ -104,14 +105,16 @@ STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_m
     pbio_control_settings_get_pid(&self->control->settings, &kp, &ki, &kd, &integral_rate);
 
     // If all given values are none, return current values
+    (void)reserved_in;
     if (kp_in == mp_const_none && ki_in == mp_const_none && kd_in == mp_const_none &&
         integral_rate_in == mp_const_none) {
-        mp_obj_t ret[4];
+        mp_obj_t ret[5];
         ret[0] = mp_obj_new_int(kp);
         ret[1] = mp_obj_new_int(ki);
         ret[2] = mp_obj_new_int(kd);
-        ret[3] = mp_obj_new_int(integral_rate);
-        return mp_obj_new_tuple(4, ret);
+        ret[3] = mp_const_none;
+        ret[4] = mp_obj_new_int(integral_rate);
+        return mp_obj_new_tuple(5, ret);
     }
 
     // Assert control is not active
