@@ -20,7 +20,7 @@ typedef struct _pbio_log_t {
     uint32_t skipped;
     uint32_t sampled;
     uint32_t len;
-    int32_t start;
+    uint32_t start;
     uint8_t num_values;
     int32_t *data;
     uint32_t sample_div;
