@@ -5,8 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <contiki.h>
-
+#include <pbdrv/clock.h>
 #include <pbdrv/counter.h>
 #include <pbdrv/motor.h>
 #include <pbdrv/battery.h>
@@ -102,7 +101,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     }
 
     // Get the old target angle that we were tracking until now
-    int32_t time_ref = pbio_control_get_ref_time(&srv->control, clock_usecs());
+    int32_t time_ref = pbio_control_get_ref_time(&srv->control, pbdrv_clock_get_us());
     int32_t count_ref, unused;
     pbio_trajectory_get_reference(&srv->control.trajectory, time_ref, &count_ref, &unused, &unused, &unused);
     int32_t target_old = pbio_control_counts_to_user(&srv->control.settings, count_ref);
@@ -130,7 +129,7 @@ static pbio_error_t servo_get_state(pbio_servo_t *srv, int32_t *time_now, int32_
     pbio_error_t err;
 
     // Read current state of this motor: current time, speed, and position
-    *time_now = clock_usecs();
+    *time_now = pbdrv_clock_get_us();
     err = pbio_tacho_get_count(srv->tacho, count_now);
     if (err != PBIO_SUCCESS) {
         return err;
@@ -153,7 +152,7 @@ static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actua
         case PBIO_ACTUATION_BRAKE:
             return pbio_dcmotor_brake(srv->dcmotor);
         case PBIO_ACTUATION_HOLD:
-            return pbio_control_start_hold_control(&srv->control, clock_usecs(), control);
+            return pbio_control_start_hold_control(&srv->control, pbdrv_clock_get_us(), control);
         case PBIO_ACTUATION_DUTY:
             return pbio_dcmotor_set_duty_cycle_sys(srv->dcmotor, control);
     }
@@ -307,7 +306,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
             return err;
         }
     } else {
-        time_now = clock_usecs();
+        time_now = pbdrv_clock_get_us();
     }
 
     // Start a timed maneuver, duration forever
@@ -415,7 +414,7 @@ pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
     }
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver
-    int32_t time_start = clock_usecs();
+    int32_t time_start = pbdrv_clock_get_us();
     int32_t target_count = pbio_control_user_to_counts(&srv->control.settings, target);
 
     return pbio_control_start_hold_control(&srv->control, time_start, target_count);

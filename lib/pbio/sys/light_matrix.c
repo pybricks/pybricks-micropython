@@ -70,7 +70,7 @@ void pbsys_hub_light_matrix_init(void) {
     pbsys_hub_light_matrix_show_stop_sign();
 }
 
-static clock_time_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_animation_t *animation) {
+static uint32_t pbsys_hub_light_matrix_user_program_animation_next(pbio_light_animation_t *animation) {
     // The indexes of pixels to light up
     static const uint8_t indexes[] = { 1, 2, 3, 8, 13, 12, 11, 6 };
 
@@ -92,7 +92,7 @@ static clock_time_t pbsys_hub_light_matrix_user_program_animation_next(pbio_ligh
         cycle += 9;
     }
 
-    return clock_from_msec(40);
+    return 40;
 }
 
 void pbsys_hub_light_matrix_handle_event(process_event_t event, process_data_t data) {

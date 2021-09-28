@@ -246,7 +246,7 @@ PROCESS_THREAD(pbdrv_usb_process, ev, data) {
     PROCESS_BEGIN();
 
     pbdrv_stm32_usb_serial_init();
-    etimer_set(&timer, clock_from_msec(5));
+    etimer_set(&timer, 5);
 
     for (;;) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_POLL || (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)));

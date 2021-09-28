@@ -1591,7 +1591,7 @@ start:
     bluetooth_reset(RESET_STATE_OUT_HIGH);
 
     // not sure why we need this
-    etimer_set(&timer, clock_from_msec(150));
+    etimer_set(&timer, 150);
     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
     bluetooth_reset(RESET_STATE_INPUT);
 
@@ -1600,7 +1600,7 @@ start:
     if (spi_srdy) {
         static bool timed_out = false;
 
-        etimer_set(&timer, clock_from_msec(500));
+        etimer_set(&timer, 500);
 
         while (spi_srdy) {
             PROCESS_WAIT_EVENT();
@@ -1610,16 +1610,16 @@ start:
         }
 
         if (timed_out) {
-            etimer_set(&timer, clock_from_msec(3000));
+            etimer_set(&timer, 3000);
             PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
             bluetooth_reset(RESET_STATE_OUT_LOW);
-            etimer_set(&timer, clock_from_msec(150));
+            etimer_set(&timer, 150);
             PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
             goto start;
         }
     }
 
-    etimer_set(&timer, clock_from_msec(100));
+    etimer_set(&timer, 100);
     PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
 
     static pbio_task_t task;
@@ -1684,7 +1684,7 @@ start:
         // REVISIT: maybe there is a way to get individual oneshots for the
         // rising and falling edges of the interrupt instead of the timer hack?
 
-        etimer_set(&timer, clock_from_msec(2));
+        etimer_set(&timer, 2);
         spi_set_mrdy(false);
         PROCESS_WAIT_UNTIL(!spi_srdy || (ev == PROCESS_EVENT_TIMER && etimer_expired(&timer)));
 

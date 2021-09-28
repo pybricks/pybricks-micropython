@@ -98,7 +98,7 @@ pbio_error_t pbio_color_light_off(pbio_color_light_t *light) {
     return pbio_color_light_on_hsv(light, &hsv);
 }
 
-static clock_time_t pbio_color_light_blink_next(pbio_light_animation_t *animation) {
+static uint32_t pbio_color_light_blink_next(pbio_light_animation_t *animation) {
     pbio_color_light_t *light = PBIO_CONTAINER_OF(animation, pbio_color_light_t, animation);
 
     const uint16_t *cells = light->interval_cells;
@@ -112,7 +112,7 @@ static clock_time_t pbio_color_light_blink_next(pbio_light_animation_t *animatio
 
     pbio_color_hsv_t off = { 0 };
     light->funcs->set_hsv(light, light->current_cell % 2 ? &light->hsv : &off);
-    return clock_from_msec(*interval);
+    return *interval;
 }
 
 /**
@@ -141,7 +141,7 @@ void pbio_color_light_start_blink_animation(pbio_color_light_t *light, const pbi
     pbio_light_animation_start(&light->animation);
 }
 
-static clock_time_t pbio_color_light_animate_next(pbio_light_animation_t *animation) {
+static uint32_t pbio_color_light_animate_next(pbio_light_animation_t *animation) {
     pbio_color_light_t *light = PBIO_CONTAINER_OF(animation, pbio_color_light_t, animation);
 
     const pbio_color_compressed_hsv_t *cells = light->hsv_cells;
@@ -156,7 +156,7 @@ static clock_time_t pbio_color_light_animate_next(pbio_light_animation_t *animat
     pbio_color_hsv_t hsv;
     pbio_color_hsv_expand(cell, &hsv);
     light->funcs->set_hsv(light, &hsv);
-    return clock_from_msec(light->interval);
+    return light->interval;
 }
 
 /**

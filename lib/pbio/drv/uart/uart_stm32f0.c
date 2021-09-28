@@ -82,7 +82,7 @@ pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uin
     uart->rx_buf_index = 0;
     uart->rx_result = PBIO_ERROR_AGAIN;
 
-    etimer_set(&uart->rx_timer, clock_from_msec(timeout));
+    etimer_set(&uart->rx_timer, timeout);
 
     process_poll(&pbdrv_uart_process);
 
@@ -131,7 +131,7 @@ pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, ui
     uart->tx_buf_index = 0;
     uart->tx_result = PBIO_ERROR_AGAIN;
 
-    etimer_set(&uart->tx_timer, clock_from_msec(timeout));
+    etimer_set(&uart->tx_timer, timeout);
 
     uart->USART->CR1 |= USART_CR1_TXEIE;
 

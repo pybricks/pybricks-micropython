@@ -191,7 +191,7 @@ static void pbsys_status_light_handle_status_change(void) {
     }
 }
 
-static clock_time_t default_user_program_light_animation_next(pbio_light_animation_t *animation) {
+static uint32_t default_user_program_light_animation_next(pbio_light_animation_t *animation) {
     // The brightness pattern has the form /\ through which we cycle in N steps.
     static uint8_t cycle = 0;
     const uint8_t cycle_max = 200;
@@ -207,7 +207,7 @@ static clock_time_t default_user_program_light_animation_next(pbio_light_animati
     // This increment controls the speed of the pattern and wraps on completion
     cycle = (cycle + 4) % cycle_max;
 
-    return clock_from_msec(40);
+    return 40;
 }
 
 void pbsys_status_light_handle_event(process_event_t event, process_data_t data) {

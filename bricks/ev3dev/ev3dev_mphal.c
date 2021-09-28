@@ -33,7 +33,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#include <contiki.h>
+#include <pbdrv/clock.h>
 
 #include "py/mphal.h"
 #include "py/runtime.h"
@@ -125,11 +125,11 @@ void mp_hal_stdout_tx_str(const char *str) {
 }
 
 mp_uint_t mp_hal_ticks_ms(void) {
-    return clock_to_msec(clock_time());
+    return pbdrv_clock_get_ms();
 }
 
 mp_uint_t mp_hal_ticks_us(void) {
-    return clock_usecs();
+    return pbdrv_clock_get_us();
 }
 
 uint64_t mp_hal_time_ns(void) {

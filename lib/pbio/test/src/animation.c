@@ -17,7 +17,7 @@ PROCESS_NAME(pbio_light_animation_process);
 
 static uint8_t test_animation_set_hsv_call_count;
 
-static clock_time_t test_animation_next(pbio_light_animation_t *animation) {
+static uint32_t test_animation_next(pbio_light_animation_t *animation) {
     test_animation_set_hsv_call_count++;
     return TEST_ANIMATION_TIME;
 }
@@ -39,10 +39,10 @@ static PT_THREAD(test_light_animation(struct pt *pt)) {
     tt_want_uint_op(test_animation_set_hsv_call_count, ==, 1);
 
     // next() should not be called again until after a delay
-    clock_tick(TEST_ANIMATION_TIME - 1);
+    pbio_test_clock_tick(TEST_ANIMATION_TIME - 1);
     PT_YIELD(pt);
     tt_want_uint_op(test_animation_set_hsv_call_count, ==, 1);
-    clock_tick(1);
+    pbio_test_clock_tick(1);
     PT_YIELD(pt);
     tt_want_uint_op(test_animation_set_hsv_call_count, ==, 2);
 

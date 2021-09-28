@@ -25,7 +25,7 @@ PROCESS_THREAD(pbsys_process, ev, data) {
     pbsys_battery_init();
     pbsys_bluetooth_init();
     pbsys_hmi_init();
-    etimer_set(&timer, clock_from_msec(50));
+    etimer_set(&timer, 50);
 
     while (true) {
         PROCESS_WAIT_EVENT();

@@ -24,19 +24,19 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
 
     // wait for the power on delay
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         pbio_test_bluetooth_get_control_state() == PBIO_TEST_BLUETOOTH_STATE_ON;
     });
 
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         pbio_test_bluetooth_is_advertising_enabled();
     });
 
     pbio_test_bluetooth_connect();
 
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         pbio_test_bluetooth_is_connected();
     });
 
@@ -49,7 +49,7 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
     uint32_t size;
 
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         size = strlen(test_data_1);
         pbsys_bluetooth_tx((const uint8_t *)test_data_1, &size) == PBIO_SUCCESS;
     });
@@ -63,7 +63,7 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
     // this next data should get pushed in the UART buffer but wait until the
     // previous request is finished before sending
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         size = strlen(test_data_2);
         pbsys_bluetooth_tx((const uint8_t *)test_data_2, &size) == PBIO_SUCCESS;
     });
@@ -79,7 +79,7 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
     static uint8_t rx_data[20];
 
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         size = PBIO_ARRAY_SIZE(rx_data);
         pbsys_bluetooth_rx(rx_data, &size) == PBIO_SUCCESS;
     });
@@ -96,7 +96,7 @@ static PT_THREAD(test_bluetooth(struct pt *pt)) {
     count = pbio_test_bluetooth_get_pybricks_service_notification_count();
 
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         pbio_test_bluetooth_get_pybricks_service_notification_count() != count;
     });
 

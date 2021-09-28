@@ -18,7 +18,7 @@ for the various platform-specific hardware.
 
 The `include/pbdrv` directory contains the public header files for the drivers
 (`drv` directory). Generally, these header files should not be used outside of
-this library.
+this library. One common exception is clocks.
 
 The `include/pbio` directory contains the public header files for the main
 library (`src` directory). This is the API for user programs.

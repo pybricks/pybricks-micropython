@@ -582,12 +582,12 @@ static PT_THREAD(test_btstack_run_loop_contiki_timer(struct pt *pt)) {
     btstack_run_loop_add_timer(&timer_source);
 
     // should not expire early
-    clock_tick(9);
+    pbio_test_clock_tick(9);
     PT_YIELD(pt);
     tt_want_uint_op(callback_count, ==, 0);
 
     // now it should be done
-    clock_tick(1);
+    pbio_test_clock_tick(1);
     PT_YIELD(pt);
     tt_want_uint_op(callback_count, ==, 1);
 
@@ -603,28 +603,28 @@ static PT_THREAD(test_btstack_run_loop_contiki_timer(struct pt *pt)) {
     btstack_run_loop_add_timer(&timer_source_3);
 
     // should not expire early
-    clock_tick(4);
+    pbio_test_clock_tick(4);
     PT_YIELD(pt);
     tt_want_uint_op(callback_count, ==, 0);
     tt_want_uint_op(callback_count_2, ==, 0);
     tt_want_uint_op(callback_count_3, ==, 0);
 
     // only timer 2 should be called back after 5 ms
-    clock_tick(1);
+    pbio_test_clock_tick(1);
     PT_YIELD(pt);
     tt_want_uint_op(callback_count, ==, 0);
     tt_want_uint_op(callback_count_2, ==, 1);
     tt_want_uint_op(callback_count_3, ==, 0);
 
     // then timer 1 after 10 ms
-    clock_tick(5);
+    pbio_test_clock_tick(5);
     PT_YIELD(pt);
     tt_want_uint_op(callback_count, ==, 1);
     tt_want_uint_op(callback_count_2, ==, 1);
     tt_want_uint_op(callback_count_3, ==, 0);
 
     // and finally timer 3
-    clock_tick(5);
+    pbio_test_clock_tick(5);
     PT_YIELD(pt);
     tt_want_uint_op(callback_count, ==, 1);
     tt_want_uint_op(callback_count_2, ==, 1);
@@ -637,27 +637,27 @@ static PT_THREAD(test_btstack_run_loop_contiki_timer(struct pt *pt)) {
     btstack_run_loop_set_timer(&timer_source, 15);
     btstack_run_loop_add_timer(&timer_source);
 
-    clock_tick(5);
+    pbio_test_clock_tick(5);
     PT_YIELD(pt);
 
     btstack_run_loop_set_timer(&timer_source_2, 10);
     btstack_run_loop_add_timer(&timer_source_2);
 
-    clock_tick(5);
+    pbio_test_clock_tick(5);
     PT_YIELD(pt);
 
     btstack_run_loop_set_timer(&timer_source_3, 5);
     btstack_run_loop_add_timer(&timer_source_3);
 
     // none should have timeout out yet
-    clock_tick(4);
+    pbio_test_clock_tick(4);
     PT_YIELD(pt);
     tt_want_uint_op(callback_count, ==, 0);
     tt_want_uint_op(callback_count_2, ==, 0);
     tt_want_uint_op(callback_count_3, ==, 0);
 
     // then all at the same time
-    clock_tick(1);
+    pbio_test_clock_tick(1);
     PT_YIELD(pt);
     tt_want_uint_op(callback_count, ==, 1);
     tt_want_uint_op(callback_count_2, ==, 1);
@@ -674,13 +674,13 @@ static PT_THREAD(test_btstack_run_loop_contiki_timer(struct pt *pt)) {
     btstack_run_loop_add_timer(&timer_source);
 
     // should not expire early
-    clock_tick(9);
+    pbio_test_clock_tick(9);
     PT_YIELD(pt);
     tt_want_uint_op(callback_count, ==, 0);
     btstack_run_loop_remove_timer(&timer_source);
 
     // it should have been canceled
-    clock_tick(1);
+    pbio_test_clock_tick(1);
     PT_YIELD(pt);
     tt_want_uint_op(callback_count, ==, 0);
 

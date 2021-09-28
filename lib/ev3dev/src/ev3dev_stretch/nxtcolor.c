@@ -11,6 +11,7 @@
 #include <ev3dev_stretch/lego_sensor.h>
 #include <ev3dev_stretch/sysfs.h>
 
+#include <pbdrv/clock.h>
 #include <pbio/color.h>
 #include <pbio/port.h>
 #include <pbio/iodev.h>
@@ -89,7 +90,7 @@ nxtcolor_t nxtcolorsensors[4];
 // Simplistic nonbusy wait. May be called only once per blocking operation.
 pbio_error_t nxtcolor_wait(nxtcolor_t *nxtcolor, uint32_t ms) {
 
-    uint32_t now = clock_usecs();
+    uint32_t now = pbdrv_clock_get_us();
 
     // Wait for existing wait to complete
     if (nxtcolor->waiting) {

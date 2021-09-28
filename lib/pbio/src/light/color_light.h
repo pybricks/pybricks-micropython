@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 
-#include <contiki.h>
-
 #include <pbio/color.h>
 #include <pbio/error.h>
 #include <pbio/light.h>

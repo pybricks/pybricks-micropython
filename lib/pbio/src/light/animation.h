@@ -20,7 +20,7 @@ typedef struct _pbio_light_animation_t pbio_light_animation_t;
  * @param [in]  animation       The animation instance
  * @return                      The time to wait before calling next() again
  */
-typedef clock_time_t (*pbio_light_animation_next_t)(pbio_light_animation_t *animation);
+typedef uint32_t (*pbio_light_animation_next_t)(pbio_light_animation_t *animation);
 
 struct _pbio_light_animation_t {
     /** Animation update timer. */

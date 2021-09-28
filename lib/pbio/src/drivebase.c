@@ -1,10 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
-#include <contiki.h>
-
 #include <pbdrv/battery.h>
-
+#include <pbdrv/clock.h>
 #include <pbio/error.h>
 #include <pbio/drivebase.h>
 #include <pbio/math.h>
@@ -68,7 +66,7 @@ static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
     pbio_error_t err;
 
     // Read current state of this motor: current time, speed, and position
-    *time_now = clock_usecs();
+    *time_now = pbdrv_clock_get_us();
 
     int32_t count_left;
     err = pbio_tacho_get_count(db->left->tacho, &count_left);
@@ -448,7 +446,7 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t t
             return err;
         }
     } else {
-        time_now = clock_usecs();
+        time_now = pbdrv_clock_get_us();
     }
 
     // Initialize both controllers

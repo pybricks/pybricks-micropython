@@ -257,7 +257,7 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
 
             // write current state to log file
             if (pbio_logger_rows(&servo->control.log)) {
-                fprintf(log_file, "%d,", clock_to_msec(clock_time()));
+                fprintf(log_file, "%d,", pbdrv_clock_get_ms());
                 fprintf(log_file, "%d,", test_motor_driver.output);
                 fprintf(log_file, "%d,", test_motor_driver.duty_cycle);
 
@@ -269,7 +269,7 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
                 servo->control.log.sampled = 0;
             }
 
-            clock_tick(1);
+            pbio_test_clock_tick(1);
             PT_YIELD(pt);
             continue;
         }

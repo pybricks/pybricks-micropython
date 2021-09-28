@@ -83,7 +83,7 @@ pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uin
     uart->read_length = length;
     uart->read_pos = 0;
 
-    etimer_set(&uart->read_timer, clock_from_msec(timeout));
+    etimer_set(&uart->read_timer, timeout);
 
     return PBIO_SUCCESS;
 }
@@ -121,7 +121,7 @@ pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, ui
     uart->write_length = length;
     uart->write_pos = 0;
 
-    etimer_set(&uart->write_timer, clock_from_msec(timeout));
+    etimer_set(&uart->write_timer, timeout);
 
     LL_USART_EnableIT_TXE(uart->pdata->uart);
 

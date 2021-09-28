@@ -5,8 +5,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include <contiki.h>
-
 #include <pbio/math.h>
 #include <pbio/trajectory.h>
 #include <pbio/integrator.h>

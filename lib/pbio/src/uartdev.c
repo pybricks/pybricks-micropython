@@ -883,7 +883,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
     data->tx_busy = false;
 
     // schedule baud rate change
-    etimer_set(&data->timer, clock_from_msec(10));
+    etimer_set(&data->timer, 10);
     PT_WAIT_UNTIL(&data->pt, etimer_expired(&data->timer));
 
     // change the baud rate
@@ -936,7 +936,7 @@ static PT_THREAD(pbio_uartdev_update(uartdev_port_data_t * data)) {
 
     while (data->status == PBIO_UARTDEV_STATUS_DATA) {
         // setup keepalive timer
-        etimer_reset_with_new_interval(&data->timer, clock_from_msec(EV3_UART_DATA_KEEP_ALIVE_TIMEOUT));
+        etimer_reset_with_new_interval(&data->timer, EV3_UART_DATA_KEEP_ALIVE_TIMEOUT);
         PT_WAIT_UNTIL(&data->pt, etimer_expired(&data->timer));
 
         // make sure we are receiving data

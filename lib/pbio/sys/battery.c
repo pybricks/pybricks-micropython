@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 // Provides battery status indication and shutdown on low battery.
 
@@ -7,10 +7,8 @@
 // TOOD: need to handle Li-ion batteries and charger for SPIKE Prime
 // TODO: need to handle battery pack switch and Li-ion batteries for Technic Hub and NXT
 
-#include <contiki.h>
-
 #include <pbdrv/battery.h>
-
+#include <pbdrv/clock.h>
 #include <pbsys/status.h>
 
 // period over which the battery voltage is averaged (in milliseconds)
@@ -26,7 +24,7 @@
 #define LIION_LOW_MV            6800    // 3.4V per cell
 #define LIION_CRITICAL_MV       6000    // 3.0V per cell
 
-static clock_time_t prev_poll_time;
+static uint32_t prev_poll_time;
 static uint16_t avg_battery_voltage;
 
 #if PBDRV_CONFIG_BATTERY_ADC_TYPE == 1
@@ -65,7 +63,7 @@ void pbsys_battery_init(void) {
         avg_battery_voltage = battery_ok_mv;
     }
 
-    prev_poll_time = clock_time();
+    prev_poll_time = pbdrv_clock_get_ms();
 }
 
 /**
@@ -74,12 +72,12 @@ void pbsys_battery_init(void) {
  * This is called periodically to update the current battery state.
  */
 void pbsys_battery_poll(void) {
-    clock_time_t now;
+    uint32_t now;
     uint32_t poll_interval;
     uint16_t battery_voltage;
 
-    now = clock_time();
-    poll_interval = clock_to_msec(now - prev_poll_time);
+    now = pbdrv_clock_get_ms();
+    poll_interval = now - prev_poll_time;
     prev_poll_time = now;
 
     pbdrv_battery_get_voltage_now(&battery_voltage);

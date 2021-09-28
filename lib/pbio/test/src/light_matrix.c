@@ -88,19 +88,19 @@ static PT_THREAD(test_light_matrix(struct pt *pt)) {
 
     // set_pixel() should not be called again until after a delay and it should
     // receive the next hue in the list
-    clock_tick(INTERVAL - 1);
+    pbio_test_clock_tick(INTERVAL - 1);
     PT_YIELD(pt);
     tt_want_int_op(test_light_matrix_set_pixel_last_brightness[0][0], ==, 1);
-    clock_tick(1);
+    pbio_test_clock_tick(1);
     PT_YIELD(pt);
     tt_want_int_op(test_light_matrix_set_pixel_last_brightness[0][0], !=, 1);
     tt_want_light_matrix_data(11, 12, 13, 14, 15, 16, 17, 18, 19);
 
     // then the next animation update should wrap back to the start of the list
-    clock_tick(INTERVAL - 1);
+    pbio_test_clock_tick(INTERVAL - 1);
     PT_YIELD(pt);
     tt_want_int_op(test_light_matrix_set_pixel_last_brightness[0][0], ==, 11);
-    clock_tick(1);
+    pbio_test_clock_tick(1);
     PT_YIELD(pt);
     tt_want_int_op(test_light_matrix_set_pixel_last_brightness[0][0], !=, 11);
     tt_want_light_matrix_data(1, 2, 3, 4, 5, 6, 7, 8, 9);
@@ -108,7 +108,7 @@ static PT_THREAD(test_light_matrix(struct pt *pt)) {
     // stopping the animation should not change any pixels
     test_light_matrix_reset();
     pbio_light_matrix_stop_animation(&test_light_matrix);
-    clock_tick(INTERVAL * 2);
+    pbio_test_clock_tick(INTERVAL * 2);
     PT_YIELD(pt);
     tt_want_light_matrix_data(0);
 

@@ -46,7 +46,7 @@ PT_THREAD(simulate_rx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, boo
 
     // First uartdev reads one byte header
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         test_uart_dev.rx_msg_result == PBIO_ERROR_AGAIN;
     });
     tt_uint_op(test_uart_dev.rx_msg_length, ==, 1);
@@ -61,7 +61,7 @@ PT_THREAD(simulate_rx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, boo
 
     // then read rest of message
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         test_uart_dev.rx_msg_result == PBIO_ERROR_AGAIN;
     });
     tt_uint_op(test_uart_dev.rx_msg_length, ==, length - 1);
@@ -81,7 +81,7 @@ PT_THREAD(simulate_tx_msg(struct pt *pt, const uint8_t *msg, uint8_t length, boo
     PT_BEGIN(pt);
 
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         test_uart_dev.tx_msg_result == PBIO_ERROR_AGAIN;
     });
     tt_uint_op(test_uart_dev.tx_msg_length, ==, length);
@@ -225,14 +225,14 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
 
     // starting baud rate of hub
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         test_uart_dev.baud == 115200;
     });
 
     // this device does not support syncing at 115200
     SIMULATE_TX_MSG(msg_speed_115200);
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         test_uart_dev.baud == 2400;
     });
 
@@ -326,7 +326,7 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
 
     // wait for baud rate change
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         test_uart_dev.baud == 115200;
     });
 
@@ -399,7 +399,7 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     int err;
 
     PT_WAIT_WHILE(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         (err = pbio_iodev_set_mode_begin(iodev, 1)) == PBIO_ERROR_AGAIN;
     });
     tt_uint_op(err, ==, PBIO_SUCCESS);
@@ -415,7 +415,7 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     SIMULATE_RX_MSG(msg88);
 
     PT_WAIT_WHILE(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         (err = pbio_iodev_set_mode_end(iodev)) == PBIO_ERROR_AGAIN;
     });
     tt_uint_op(err, ==, PBIO_SUCCESS);
@@ -425,7 +425,7 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     // also do mode 8 since it requires the extended mode flag
 
     PT_WAIT_WHILE(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         (err = pbio_iodev_set_mode_begin(iodev, 8)) == PBIO_ERROR_AGAIN;
     });
     tt_uint_op(err, ==, PBIO_SUCCESS);
@@ -442,7 +442,7 @@ static PT_THREAD(test_boost_color_distance_sensor(struct pt *pt)) {
     SIMULATE_RX_MSG(msg91);
 
     PT_WAIT_WHILE(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         (err = pbio_iodev_set_mode_end(iodev)) == PBIO_ERROR_AGAIN;
     });
     tt_uint_op(err, ==, PBIO_SUCCESS);
@@ -511,14 +511,14 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
 
     // starting baud rate of hub
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         test_uart_dev.baud == 115200;
     });
 
     // this device does not support syncing at 115200
     SIMULATE_TX_MSG(msg_speed_115200);
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         test_uart_dev.baud == 2400;
     });
 
@@ -563,7 +563,7 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
 
     // wait for baud rate change
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         test_uart_dev.baud == 115200;
     });
 
@@ -699,7 +699,7 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
 
     // baud rate for sync messages
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         test_uart_dev.baud == 115200;
     });
 
@@ -907,7 +907,7 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
 
     // baud rate for sync messages
     PT_WAIT_UNTIL(pt, {
-        clock_tick(1);
+        pbio_test_clock_tick(1);
         test_uart_dev.baud == 115200;
     });
 
@@ -1077,7 +1077,7 @@ pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_t
     test_uart_dev.rx_msg = msg;
     test_uart_dev.rx_msg_length = length;
     test_uart_dev.rx_msg_result = PBIO_ERROR_AGAIN;
-    etimer_set(&test_uart_dev.rx_timer, clock_from_msec(timeout));
+    etimer_set(&test_uart_dev.rx_timer, timeout);
 
     return PBIO_SUCCESS;
 }
@@ -1108,7 +1108,7 @@ pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart, uint8_t *msg, uint8_
     test_uart_dev.tx_msg = msg;
     test_uart_dev.tx_msg_length = length;
     test_uart_dev.tx_msg_result = PBIO_ERROR_AGAIN;
-    etimer_set(&test_uart_dev.tx_timer, clock_from_msec(timeout));
+    etimer_set(&test_uart_dev.tx_timer, timeout);
 
     return PBIO_SUCCESS;
 }

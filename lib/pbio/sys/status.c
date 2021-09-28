@@ -5,9 +5,11 @@
 
 #include <assert.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <contiki.h>
 
+#include <pbdrv/clock.h>
 #include <pbio/event.h>
 #include <pbsys/status.h>
 
@@ -15,7 +17,7 @@ static struct {
     /** Status indications as bit flags */
     uint32_t flags;
     /** Timestamp of when status last changed */
-    clock_time_t changed_time[NUM_PBIO_PYBRICKS_STATUS];
+    uint32_t changed_time[NUM_PBIO_PYBRICKS_STATUS];
 } pbsys_status;
 
 static void pbsys_status_update_flag(pbio_pybricks_status_t status, bool set) {
@@ -27,7 +29,7 @@ static void pbsys_status_update_flag(pbio_pybricks_status_t status, bool set) {
     }
 
     pbsys_status.flags = new_flags;
-    pbsys_status.changed_time[status] = clock_time();
+    pbsys_status.changed_time[status] = pbdrv_clock_get_ms();
     // REVISIT: this can drop events if event queue is full
     process_post(PROCESS_BROADCAST, set ? PBIO_EVENT_STATUS_SET : PBIO_EVENT_STATUS_CLEARED,
         (process_data_t)status);
@@ -78,7 +80,7 @@ bool pbsys_status_test_debounce(pbio_pybricks_status_t status, bool state, uint3
     if (pbsys_status_test(status) != state) {
         return false;
     }
-    return (clock_time() - pbsys_status.changed_time[status]) >= clock_from_msec(ms);
+    return pbdrv_clock_get_ms() - pbsys_status.changed_time[status] >= ms;
 }
 
 /**

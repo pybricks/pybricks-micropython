@@ -201,7 +201,7 @@ static PT_THREAD(pbsys_bluetooth_monitor_status(struct pt *pt)) {
 
     // Send status periodically as well in case a notification was missed due
     // to bad RF environment or bug like https://crbug.com/1195592
-    etimer_set(&timer, clock_from_msec(500));
+    etimer_set(&timer, 500);
 
     for (;;) {
         // wait for status to change or timeout
@@ -236,7 +236,7 @@ PROCESS_THREAD(pbsys_bluetooth_process, ev, data) {
 
     while (!pbsys_status_test(PBIO_PYBRICKS_STATUS_SHUTDOWN)) {
         // make sure the Bluetooth chip is in reset long enough to actually reset
-        etimer_set(&timer, clock_from_msec(150));
+        etimer_set(&timer, 150);
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
 
         pbdrv_bluetooth_power_on(true);

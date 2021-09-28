@@ -5,8 +5,7 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
-#include <contiki.h>
-
+#include <pbdrv/clock.h>
 #include <pbio/config.h>
 #include <pbio/error.h>
 #include <pbio/logger.h>
@@ -25,7 +24,7 @@ void pbio_logger_start(pbio_log_t *log, int32_t *buf, uint32_t len, int32_t div)
     log->data = buf;
     log->len = len;
     log->sample_div = div;
-    log->start = clock_usecs();
+    log->start = pbdrv_clock_get_us();
     log->active = true;
 }
 
@@ -68,7 +67,7 @@ pbio_error_t pbio_logger_update(pbio_log_t *log, int32_t *buf) {
     }
 
     // Write time of logging
-    log->data[log->sampled * log->num_values] = (clock_usecs() - log->start) / 1000;
+    log->data[log->sampled * log->num_values] = (pbdrv_clock_get_us() - log->start) / 1000;
 
     // Write the data
     for (uint8_t i = NUM_DEFAULT_LOG_VALUES; i < log->num_values; i++) {

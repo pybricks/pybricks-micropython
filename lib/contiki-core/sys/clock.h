@@ -82,48 +82,6 @@
 #else
 #define CLOCK_SECOND (clock_time_t)32
 #endif
-
-/**
- * Converts milliseconds to clock ticks, rounding up so that the actual time
- * span will be >= *msec*.
- *
- * \param msec the time in milliseconds
- *
- * \return a ::clock_time_t value
- */
-static inline clock_time_t clock_from_msec(unsigned int msec) {
-#if CLOCK_SECOND == 1000
-  return msec;
-#else
-  return (msec * CLOCK_SECOND + 999) / 1000;
-#endif
-}
-
-/**
- * Converts clock ticks to milliseconds, rounding down so that the actual time
- * span will be <= *ticks*.
- *
- * \param ticks a ::clock_time_t value
- *
- * \return the time in milliseconds
- */
-static inline unsigned int clock_to_msec(clock_time_t ticks) {
-#if CLOCK_SECOND == 1000
-  return ticks;
-#else
-  return ticks * 1000 / CLOCK_SECOND;
-#endif
-}
-
-/**
- * Initialize the clock library.
- *
- * This function initializes the clock library and should be called
- * from the main() function of the system.
- *
- */
-void clock_init(void);
-
 /**
  * Get the current clock time.
  *
@@ -131,7 +89,7 @@ void clock_init(void);
  *
  * \return The current clock time, measured in system ticks.
  */
-CCIF clock_time_t clock_time(void);
+clock_time_t clock_time(void);
 
 /**
  * Get the current value of the platform seconds.
@@ -141,36 +99,14 @@ CCIF clock_time_t clock_time(void);
  *
  * \return The value.
  */
-CCIF unsigned long clock_seconds(void);
+uint32_t clock_seconds(void);
 
 /**
  * Get the current value of the platform microseconds.
  *
  * \return The value.
  */
-CCIF unsigned long clock_usecs(void);
-
-/**
- * Set the value of the platform seconds.
- * \param sec   The value to set.
- *
- */
-void clock_set_seconds(unsigned long sec);
-
-/**
- * Wait for a given number of ticks.
- * \param t   How many ticks.
- *
- */
-void clock_wait(clock_time_t t);
-
-/**
- * Delay a given number of microseconds.
- * \param dt   How many microseconds to delay.
- *
- * \note Interrupts could increase the delay by a variable amount.
- */
-void clock_delay_usec(uint16_t dt);
+uint32_t clock_usecs(void);
 
 #endif /* CLOCK_H_ */
 

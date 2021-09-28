@@ -423,7 +423,7 @@ PROCESS_THREAD(pbdrv_ioport_lpf2_process, ev, data) {
 
     PROCESS_BEGIN();
 
-    etimer_set(&timer, clock_from_msec(2));
+    etimer_set(&timer, 2);
 
     for (int i = 0; i < PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS; i++) {
         init_one(i);

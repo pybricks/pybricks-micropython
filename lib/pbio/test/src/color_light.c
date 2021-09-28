@@ -72,17 +72,17 @@ static PT_THREAD(test_color_light(struct pt *pt)) {
 
     // set_hsv() should not be called again until after a delay and it should
     // receive the next hue in the list
-    clock_tick(TEST_ANIMATION_TIME - 1);
+    pbio_test_clock_tick(TEST_ANIMATION_TIME - 1);
     PT_YIELD(pt);
     tt_want_uint_op(test_light_set_hsv_call_count, ==, 1);
-    clock_tick(1);
+    pbio_test_clock_tick(1);
     PT_YIELD(pt);
     tt_want_uint_op(test_light_set_hsv_call_count, ==, 2);
     // odd blink cells turns the light off (so hue doesn't matter here)
     tt_want_uint_op(test_light_set_hsv_last_brightness, ==, 0);
 
     // then the next animation update should wrap back to the start of the list
-    clock_tick(TEST_ANIMATION_TIME);
+    pbio_test_clock_tick(TEST_ANIMATION_TIME);
     PT_YIELD(pt);
     tt_want_uint_op(test_light_set_hsv_call_count, ==, 3);
     tt_want_uint_op(test_light_set_hsv_last_hue, ==, PBIO_COLOR_HUE_BLUE);
@@ -98,13 +98,13 @@ static PT_THREAD(test_color_light(struct pt *pt)) {
 
     // set_hsv() should not be called again until after a delay and it should
     // receive the next hue in the list
-    clock_tick(TEST_ANIMATION_TIME);
+    pbio_test_clock_tick(TEST_ANIMATION_TIME);
     PT_YIELD(pt);
     tt_want_uint_op(test_light_set_hsv_call_count, ==, 2);
     tt_want_uint_op(test_light_set_hsv_last_hue, ==, PBIO_COLOR_HUE_MAGENTA);
 
     // then the next animation update should wrap back to the start of the list
-    clock_tick(TEST_ANIMATION_TIME);
+    pbio_test_clock_tick(TEST_ANIMATION_TIME);
     PT_YIELD(pt);
     tt_want_uint_op(test_light_set_hsv_call_count, ==, 3);
     tt_want_uint_op(test_light_set_hsv_last_hue, ==, PBIO_COLOR_HUE_CYAN);

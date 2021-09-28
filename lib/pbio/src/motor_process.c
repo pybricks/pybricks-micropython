@@ -58,7 +58,7 @@ PROCESS_THREAD(pbio_motor_process, ev, data) {
 
     pbio_motor_process_reset();
 
-    etimer_set(&timer, clock_from_msec(PBIO_CONTROL_LOOP_TIME_MS));
+    etimer_set(&timer, PBIO_CONTROL_LOOP_TIME_MS);
 
     for (;;) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));

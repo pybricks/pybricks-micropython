@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2021 The Pybricks Authors
 
 // Contiki run loop integration for BlueKitchen BTStack.
 
@@ -13,6 +13,8 @@
 
 #include <btstack.h>
 #include <contiki.h>
+
+_Static_assert(CLOCK_CONF_SECOND == 1000, "contiki clock must be configured for 1ms ticks");
 
 PROCESS(btstack_run_loop_contiki_process, "btstack");
 static struct etimer timer;
@@ -30,7 +32,7 @@ static void schedule_timer(void) {
     if (first_timer == NULL) {
         etimer_stop(&timer);
     } else {
-        etimer_set(&timer, clock_from_msec(first_timer->timeout - clock_to_msec(clock_time())));
+        etimer_set(&timer, first_timer->timeout - pbdrv_clock_get_ms());
     }
 
     PROCESS_CONTEXT_END();
@@ -57,7 +59,7 @@ static void btstack_run_loop_contiki_disable_data_source_callbacks(btstack_data_
 }
 
 static void btstack_run_loop_contiki_set_timer(btstack_timer_source_t *ts, uint32_t timeout_in_ms) {
-    ts->timeout = clock_to_msec(clock_time()) + timeout_in_ms;
+    ts->timeout = pbdrv_clock_get_ms() + timeout_in_ms;
 }
 
 static void btstack_run_loop_contiki_add_timer(btstack_timer_source_t *ts) {
@@ -100,7 +102,7 @@ static void btstack_run_loop_contiki_dump_timer(void) {
 }
 
 static uint32_t btstack_run_loop_contiki_get_time_ms(void) {
-    return clock_to_msec(clock_time());
+    return pbdrv_clock_get_ms();
 }
 
 static const btstack_run_loop_t btstack_run_loop_contiki = {
@@ -153,7 +155,7 @@ PROCESS_THREAD(btstack_run_loop_contiki_process, ev, data) {
         // process all BTStack timers in list that have expired
         while (timers) {
             btstack_timer_source_t *ts = (void *)timers;
-            int32_t delta = btstack_time_delta(ts->timeout, clock_to_msec(clock_time()));
+            int32_t delta = btstack_time_delta(ts->timeout, pbdrv_clock_get_ms());
             if (delta > 0) {
                 // we have reached unexpired timers
                 break;

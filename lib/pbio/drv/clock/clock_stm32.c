@@ -1,38 +1,36 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2013, 2014 Damien P. George
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
+
+#include <contiki.h>
 
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_CLOCK_STM32
 
-#include <contiki.h>
-
 #include STM32_H
 
-#if CLOCK_CONF_SECOND != 1000
-#error Clock must be set to 1 msec ticks
-#endif
+// NB: pbdrv_clock_ticks is intended to be private, but making it static
+// breaks things.
+volatile uint32_t pbdrv_clock_ticks;
 
-volatile clock_time_t clock_time_ticks;
-
-void clock_init(void) {
+void pbdrv_clock_init(void) {
     // STM32 does platform-specific clock init early in SystemInit()
 }
 
-clock_time_t clock_time(void) {
-    return clock_time_ticks;
+uint32_t pbdrv_clock_get_ms(void) {
+    return pbdrv_clock_ticks;
 }
 
 // The SysTick timer counts down at 168 MHz, so we can use that knowledge
 // to grab a microsecond counter.
-uint32_t clock_usecs(void) {
+uint32_t pbdrv_clock_get_us(void) {
     uint32_t irq_state, counter, msec, status;
 
     irq_state = __get_PRIMASK();
     __disable_irq();
     counter = SysTick->VAL;
-    msec = clock_time_ticks;
+    msec = pbdrv_clock_ticks;
     status = SysTick->CTRL;
     __set_PRIMASK(irq_state);
 
@@ -57,27 +55,11 @@ uint32_t clock_usecs(void) {
     return msec * 1000 + (counter * 1000) / (load + 1);
 }
 
-// delay for given number of microseconds
-void clock_delay_usec(uint16_t usec) {
-    if (__get_PRIMASK() == 1) {
-        // IRQs enabled, so can use systick counter to do the delay
-        uint32_t start = clock_usecs();
-        while (clock_usecs() - start < usec) {
-        }
-    } else {
-        // IRQs disabled, so need to use a busy loop for the delay
-        // sys freq is always a multiple of 2MHz, so division here won't lose precision
-        const uint32_t ucount = PBDRV_CONFIG_SYS_CLOCK_RATE / 2000000 * usec / 2;
-        for (uint32_t count = 0; ++count <= ucount;) {
-        }
-    }
-}
-
 void SysTick_Handler(void) {
-    clock_time_ticks++;
+    pbdrv_clock_ticks++;
 
     // Read the systick control regster. This has the side effect of clearing
-    // the COUNTFLAG bit, which makes the logic in clock_usecs
+    // the COUNTFLAG bit, which makes the logic in pbdrv_clock_get_us
     // work properly.
     SysTick->CTRL;
 
@@ -85,7 +67,7 @@ void SysTick_Handler(void) {
 }
 
 uint32_t HAL_GetTick(void) {
-    return clock_time_ticks;
+    return pbdrv_clock_ticks;
 }
 
 // We provide our own version of HAL_Delay that calls __WFI while waiting,
@@ -94,9 +76,9 @@ uint32_t HAL_GetTick(void) {
 void HAL_Delay(uint32_t Delay) {
     if (__get_PRIMASK() == 0) {
         // IRQs enabled, so can use systick counter to do the delay
-        uint32_t start = clock_time_ticks;
+        uint32_t start = pbdrv_clock_ticks;
         // Wraparound of tick is taken care of by 2's complement arithmetic.
-        while (clock_time_ticks - start < Delay) {
+        while (pbdrv_clock_ticks - start < Delay) {
             // Enter sleep mode, waiting for (at least) the SysTick interrupt.
             __WFI();
         }

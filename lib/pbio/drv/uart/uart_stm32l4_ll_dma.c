@@ -70,7 +70,7 @@ pbio_error_t pbdrv_uart_read_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, uin
     uart->read_buf = msg;
     uart->read_length = length;
 
-    etimer_set(&uart->rx_timer, clock_from_msec(timeout));
+    etimer_set(&uart->rx_timer, timeout);
 
     return PBIO_SUCCESS;
 }
@@ -258,7 +258,7 @@ pbio_error_t pbdrv_uart_write_begin(pbdrv_uart_dev_t *uart_dev, uint8_t *msg, ui
     LL_USART_ClearFlag_TC(pdata->uart);
     LL_USART_EnableDMAReq_TX(pdata->uart);
 
-    etimer_set(&uart->tx_timer, clock_from_msec(timeout));
+    etimer_set(&uart->tx_timer, timeout);
 
     return PBIO_SUCCESS;
 }
