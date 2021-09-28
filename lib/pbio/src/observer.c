@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include <pbio/control.h>
 #include <pbio/math.h>
@@ -126,12 +127,12 @@ void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t 
 
     // Compute torque for estimation error correction as a piecewise affine spring
     float tau_o = 0;
-    if (abs(est_err) < r1) {
+    if (fabsf(est_err) < r1) {
         tau_o = k_low * est_err;
-    } else if (abs(est_err) < r2) {
-        tau_o = (k_low * r1 + (abs(est_err) - r1) * k_med) * pbio_math_sign(est_err);
+    } else if (fabsf(est_err) < r2) {
+        tau_o = copysignf(k_low * r1 + (fabsf(est_err) - r1) * k_med, est_err);
     } else {
-        tau_o = (k_low * r1 + k_med * (r2 - r1) + (abs(est_err) - r2) * k_high) * pbio_math_sign(est_err);
+        tau_o = copysignf(k_low * r1 + k_med * (r2 - r1) + (fabsf(est_err) - r2) * k_high, est_err);
     }
 
     // Get next state given total torque
