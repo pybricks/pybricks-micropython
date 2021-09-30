@@ -53,7 +53,10 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     pbio_control_stop(&srv->control);
 
     // Load default settings for this device type
-    pbio_servo_load_settings(&srv->control.settings, &srv->observer.settings, srv->dcmotor->id);
+    err = pbio_servo_load_settings(&srv->control.settings, &srv->observer.settings, srv->dcmotor->id);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // For a servo, counts per output unit is counts per degree at the gear train output
     srv->control.settings.counts_per_unit = fix16_mul(F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0), gear_ratio);
