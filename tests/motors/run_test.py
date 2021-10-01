@@ -11,12 +11,12 @@ import os
 import pathlib
 import shutil
 
-from pybricksdev.connections import PybricksHub
+from pybricksdev.connections import PybricksHub, REPLHub
 from pybricksdev.ble import find_device
 
 
 async def run_pybricks_script(script_name):
-    """Runs a script on the hub and awaits result."""
+    """Runs a script on a hub with Pybricks firmware and awaits result."""
 
     # Connect to the hub.
     print("Searching for a hub.")
@@ -29,6 +29,22 @@ async def run_pybricks_script(script_name):
     await hub.run(script_name)
     await hub.disconnect()
 
+    return hub.output
+
+
+async def run_usb_repl_script(script_name):
+    """Runs a script on a generic MicroPython REPL and awaits result."""
+
+    # Connect to the hub.
+    print("Searching for a hub via USB.")
+    hub = REPLHub()
+    await hub.connect()
+    await hub.reset_hub()
+    print("Entered REPL Mode.")
+
+    # Run the script and disconnect.
+    await hub.run(script_name, print_output=False)
+    await hub.disconnect()
     return hub.output
 
 
@@ -156,6 +172,7 @@ def plot_control_data(time, data, build_dir, subtitle=None):
 parser = argparse.ArgumentParser(description="Run motor script and show log.")
 parser.add_argument("file", help="Script to run")
 parser.add_argument("--show", dest="show", default=False, action="store_true")
+parser.add_argument("--usb", dest="usb", default=False, action="store_true")
 args = parser.parse_args()
 
 # Local paths and data directories.
@@ -173,7 +190,10 @@ matplotlib.use("TkAgg")
 matplotlib.interactive(True)
 
 # Run the script.
-hub_output = asyncio.run(run_pybricks_script(script_archive))
+if args.usb:
+    hub_output = asyncio.run(run_usb_repl_script(script_archive))
+else:
+    hub_output = asyncio.run(run_pybricks_script(script_archive))
 
 # Save its standard output.
 with open(build_dir / "hub_output.txt", "wb") as f:
