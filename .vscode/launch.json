@@ -30,7 +30,6 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/tests/motors/run_test.py",
-            "cwd": "${workspaceFolder}/tests/pup",
             "args": ["${file}", "--show"],
             "console": "integratedTerminal"
         },
