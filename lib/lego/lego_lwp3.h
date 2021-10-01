@@ -93,6 +93,16 @@ typedef enum {
 } lwp3_hub_property_op_t;
 
 typedef enum {
+    LWP3_HUB_ACTION_SWITCH_OFF              = 0x01,
+    LWP3_HUB_ACTION_DISCONNECT              = 0x02,
+    LWP3_HUB_ACTION_PORT_VCC_ON             = 0x03,
+    LWP3_HUB_ACTION_PORT_VCC_OFF            = 0x04,
+    LWP3_HUB_ACTION_ACTIVATE_BUSY_LIGHT     = 0x05,
+    LWP3_HUB_ACTION_RESET_BUSY_LIGHT        = 0x06,
+    LWP3_HUB_ACTION_FAST_SHUTDOWN           = 0x2F,
+} lwp3_hub_action_t;
+
+typedef enum {
     LWP3_HW_NET_CMD_CONNECTION_REQ          = 0x02,
     LWP3_HW_NET_CMD_FAMILY_REQ              = 0x03,
     LWP3_HW_NET_CMD_SET_FAMILY              = 0x04,
