@@ -94,7 +94,6 @@ STATIC mp_obj_t experimental_flash_init_spi(void) {
     // Command parameters
     uint32_t timeout = 100;
     uint8_t CMD_GET_ID = 0x9F;
-    uint8_t CMD_EXIT_4_BYTE_ADDRESS_MODE = 0xE9;
     uint8_t id_data[3];
     HAL_StatusTypeDef err;
 
@@ -116,19 +115,51 @@ STATIC mp_obj_t experimental_flash_init_spi(void) {
         pb_assert(PBIO_ERROR_NO_DEV);
     }
 
-    // Exit 4-byte address mode
-    flash_enable(true);
-    err = HAL_SPI_Transmit(&hspi2, &CMD_EXIT_4_BYTE_ADDRESS_MODE, sizeof(CMD_EXIT_4_BYTE_ADDRESS_MODE), timeout);
-    if (err != 0) {
-        pb_assert(PBIO_ERROR_IO);
-    }
-
-    // Disable flash
-    flash_enable(false);
-
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_0(experimental_flash_init_spi_obj, experimental_flash_init_spi);
+
+STATIC HAL_StatusTypeDef flash_status_read(uint8_t *status) {
+
+    uint32_t timeout = 100;
+
+    // Read status command
+    uint8_t command = 0x05;
+
+    // Write the read status command
+    flash_enable(true);
+    HAL_StatusTypeDef err = HAL_SPI_Transmit(&hspi2, &command, sizeof(command), 100);
+    if (err != HAL_OK) {
+        return err;
+    }
+
+    // Receive data
+    err = HAL_SPI_Receive(&hspi2, status, 1, timeout);
+    flash_enable(false);
+    return err;
+}
+
+#define FLASH_BUSY (0x01)
+#define FLASH_WRITE_ENABLED (0x02)
+
+STATIC HAL_StatusTypeDef flash_wait_ready() {
+    uint8_t status = FLASH_BUSY;
+    HAL_StatusTypeDef err;
+    uint32_t start_time = mp_hal_ticks_ms();
+
+    while (status & (FLASH_BUSY | FLASH_WRITE_ENABLED)) {
+        err = flash_status_read(&status);
+        if (err != HAL_OK) {
+            return err;
+        }
+        if (mp_hal_ticks_ms() - start_time > 100) {
+            return HAL_TIMEOUT;
+        }
+        MICROPY_EVENT_POLL_HOOK;
+    }
+    return HAL_OK;
+}
+
 
 STATIC HAL_StatusTypeDef flash_read(uint32_t address, uint8_t *buffer, uint32_t size) {
 
@@ -137,19 +168,20 @@ STATIC HAL_StatusTypeDef flash_read(uint32_t address, uint8_t *buffer, uint32_t 
     // First 1MiB is reserved for firmware updates with official firmware.
     address += 1024 * 1024;
 
-    uint8_t address_bytes[4];
+    uint8_t address_bytes[5];
 
     // Read command
-    address_bytes[0] = 0x03;
+    address_bytes[0] = 0x13;
 
     // Address as big endian
-    address_bytes[1] = (address & 0x00ff0000) >> 16;
-    address_bytes[2] = (address & 0x0000ff00) >> 8;
-    address_bytes[3] = address & 0x000000ff;
+    address_bytes[1] = (address & 0xff000000) >> 24;
+    address_bytes[2] = (address & 0x00ff0000) >> 16;
+    address_bytes[3] = (address & 0x0000ff00) >> 8;
+    address_bytes[4] = address & 0x000000ff;
 
     // Write the read command with address
     flash_enable(true);
-    HAL_StatusTypeDef err = HAL_SPI_Transmit(&hspi2, address_bytes, 4, 100);
+    HAL_StatusTypeDef err = HAL_SPI_Transmit(&hspi2, address_bytes, sizeof(address_bytes), 100);
     if (err != HAL_OK) {
         return err;
     }
@@ -157,6 +189,79 @@ STATIC HAL_StatusTypeDef flash_read(uint32_t address, uint8_t *buffer, uint32_t 
     // Receive data
     err = HAL_SPI_Receive(&hspi2, buffer, size, timeout);
     flash_enable(false);
+    return err;
+}
+
+STATIC HAL_StatusTypeDef write_enable() {
+    uint8_t command = 0x06;
+    flash_enable(true);
+    HAL_StatusTypeDef err = HAL_SPI_Transmit(&hspi2, &command, sizeof(command), 100);
+    flash_enable(false);
+    return err;
+}
+
+STATIC HAL_StatusTypeDef flash_write(uint32_t address, const uint8_t *buffer, uint32_t size) {
+
+    uint32_t timeout = 100;
+
+    // First 1MiB is reserved for firmware updates with official firmware.
+    address += 1024 * 1024;
+
+    uint8_t address_bytes[5];
+
+    // Write command
+    address_bytes[0] = 0x12;
+
+    // Address as big endian
+    address_bytes[1] = (address & 0xff000000) >> 24;
+    address_bytes[2] = (address & 0x00ff0000) >> 16;
+    address_bytes[3] = (address & 0x0000ff00) >> 8;
+    address_bytes[4] = address & 0x000000ff;
+
+    // Enable write mode
+    HAL_StatusTypeDef err = write_enable();
+    if (err != HAL_OK) {
+        return err;
+    }
+
+    // Write the write command with address
+    flash_enable(true);
+    err = HAL_SPI_Transmit(&hspi2, address_bytes, sizeof(address_bytes), timeout);
+    if (err != HAL_OK) {
+        flash_enable(false);
+        return err;
+    }
+
+    // Write the data
+    err = HAL_SPI_Transmit(&hspi2, (uint8_t *)buffer, size, timeout);
+    flash_enable(false);
+    return flash_wait_ready();
+}
+
+STATIC HAL_StatusTypeDef flash_block_erase(uint32_t address) {
+
+    address += 1024 * 1024;
+
+    // Enable write mode
+    HAL_StatusTypeDef err = write_enable();
+    if (err != HAL_OK) {
+        return err;
+    }
+
+    uint8_t address_bytes[5];
+    address_bytes[0] = 0x21;
+    address_bytes[1] = (address & 0xff000000) >> 24;
+    address_bytes[2] = (address & 0x00ff0000) >> 16;
+    address_bytes[3] = (address & 0x0000ff00) >> 8;
+    address_bytes[4] = address & 0x000000ff;
+
+    // Send erase command
+    flash_enable(true);
+    err = HAL_SPI_Transmit(&hspi2, address_bytes, sizeof(address_bytes), 100);
+    flash_enable(false);
+
+    err = flash_wait_ready();
+
     return err;
 }
 
@@ -181,16 +286,48 @@ int block_device_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t o
         // Give MicroPython and PBIO some time.
         MICROPY_EVENT_POLL_HOOK;
     }
-
     return 0;
 }
 
 int block_device_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size) {
-    return -1;
+    lfs_size_t done = 0;
+
+    while (done < size) {
+
+        // How many bytes to write in one go.
+        lfs_size_t write_now = size - done;
+
+        // Must not be larger than write size
+        if (write_now > c->prog_size) {
+            write_now = c->prog_size;
+        }
+
+        // Must not wrap around the page
+        lfs_size_t write_max = 256 - ((off + done) & 0xFF);
+        if (write_now > write_max) {
+            write_now = write_max;
+        }
+
+        // Write chunk of flash.
+        if (flash_write(block * c->block_size + off + done, buffer + done, write_now) != HAL_OK) {
+            return LFS_ERR_IO;
+        }
+        done += write_now;
+
+        // Give MicroPython and PBIO some time.
+        MICROPY_EVENT_POLL_HOOK;
+    }
+
+    return 0;
 }
 
 int block_device_erase(const struct lfs_config *c, lfs_block_t block) {
-    return -1;
+    // Erase block of flash. Block size assumed to match erase size.
+
+    if (flash_block_erase(block * c->block_size) != HAL_OK) {
+        return LFS_ERR_IO;
+    }
+    return LFS_ERR_OK;
 }
 
 int block_device_sync(const struct lfs_config *c) {
@@ -236,7 +373,6 @@ STATIC mp_obj_t experimental_flash_init_littlefs(void) {
     // Verify magic string for littlefs V1. Anything else is not supported.
     const char *magic = "littlefs";
     if (memcmp(&lfs_data[40], magic, sizeof(magic) - 1) != 0) {
-        mp_print_str(&mp_plat_print, "check magic");
         pb_assert(PBIO_ERROR_NOT_SUPPORTED);
     }
 
@@ -320,6 +456,51 @@ STATIC mp_obj_t experimental_flash_read_file(size_t n_args, const mp_obj_t *pos_
 // See also experimental_globals_table below. This function object is added there to make it importable.
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(experimental_flash_read_file_obj, 0, experimental_flash_read_file);
 
+
+STATIC mp_obj_t experimental_flash_write_file(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_FUNCTION(n_args, pos_args, kw_args,
+        PB_ARG_REQUIRED(path),
+        PB_ARG_REQUIRED(data));
+
+    // Get file path
+    GET_STR_DATA_LEN(path_in, path, path_len);
+    GET_STR_DATA_LEN(data_in, data, data_len);
+
+    // Mount file system
+    int lfs_err = lfs_mount(&lfs, &cfg);
+    if (lfs_err) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
+
+    // Open file
+    lfs_err = lfs_file_open(&lfs, &file, (const char *)path, LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC);
+
+    switch (lfs_err)
+    {
+        case LFS_ERR_OK:
+            break;
+        case LFS_ERR_ISDIR:
+            mp_raise_OSError(EISDIR);
+        default:
+            pb_assert(PBIO_ERROR_IO);
+            break;
+    }
+
+    // write file contents
+    lfs_size_t ret = lfs_file_write(&lfs, &file, data, data_len);
+    if (((int)ret) == LFS_ERR_IO) {
+        pb_assert(PBIO_ERROR_IO);
+    }
+
+    // Clean up
+    lfs_file_close(&lfs, &file);
+    lfs_unmount(&lfs);
+
+    return mp_const_none;
+}
+// See also experimental_globals_table below. This function object is added there to make it importable.
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(experimental_flash_write_file_obj, 0, experimental_flash_write_file);
+
 #endif // PYBRICKS_HUB_PRIMEHUB
 
 // pybricks.experimental.hello_world
@@ -374,6 +555,7 @@ STATIC const mp_rom_map_elem_t experimental_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_flash_init_littlefs), MP_ROM_PTR(&experimental_flash_init_littlefs_obj) },
     { MP_ROM_QSTR(MP_QSTR_flash_read_raw), MP_ROM_PTR(&experimental_flash_read_raw_obj) },
     { MP_ROM_QSTR(MP_QSTR_flash_read_file), MP_ROM_PTR(&experimental_flash_read_file_obj) },
+    { MP_ROM_QSTR(MP_QSTR_flash_write_file), MP_ROM_PTR(&experimental_flash_write_file_obj) },
     #endif // PYBRICKS_HUB_PRIMEHUB
     { MP_ROM_QSTR(MP_QSTR_hello_world), MP_ROM_PTR(&experimental_hello_world_obj) },
 };
