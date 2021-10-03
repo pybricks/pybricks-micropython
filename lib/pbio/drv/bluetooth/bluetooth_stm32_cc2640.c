@@ -1280,6 +1280,20 @@ static PT_THREAD(gap_init(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
+    // Set scan timeout on btchip to infinite. Seperate timout
+    // is implemented to stop program and thus scan
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_SetParamValue(TGAP_GEN_DISC_SCAN, 0);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+    // ignoring response data
+
+    // Set scan timeout on btchip to infinite. Seperate timout
+    // is implemented to stop program and thus scan
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_SetParamValue(TGAP_LIM_DISC_SCAN, 0);
+    PT_WAIT_UNTIL(pt, hci_command_status);
+    // ignoring response data
+
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_SetParamValue(TGAP_GEN_DISC_ADV_INT_MIN, 40);
     PT_WAIT_UNTIL(pt, hci_command_status);
@@ -1300,13 +1314,15 @@ static PT_THREAD(gap_init(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
+    // scan interval general discovery: 48 * 0.625ms = 30ms
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_GEN_DISC_SCAN_INT, 450);
+    GAP_SetParamValue(TGAP_GEN_DISC_SCAN_INT, 48);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
+    // scan window general discovery: 48 * 0.625ms = 30ms
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_GEN_DISC_SCAN_WIND, 450);
+    GAP_SetParamValue(TGAP_GEN_DISC_SCAN_WIND, 48);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
@@ -1320,13 +1336,15 @@ static PT_THREAD(gap_init(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
+    // scan interval connection established: 48 * 0.625ms = 30ms
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_CONN_EST_SCAN_INT, 450);
+    GAP_SetParamValue(TGAP_CONN_EST_SCAN_INT, 48);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
+    // scan window connection established: 48 * 0.625ms = 30ms
     PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_SetParamValue(TGAP_CONN_EST_SCAN_WIND, 450);
+    GAP_SetParamValue(TGAP_CONN_EST_SCAN_WIND, 48);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
