@@ -14,6 +14,7 @@
 
 #include <pybricks/common.h>
 #include <pybricks/util_mp/pb_obj_helper.h>
+#include <pybricks/util_pb/pb_flash.h>
 
 #include "shared/readline/readline.h"
 #include "shared/runtime/gchelper.h"
@@ -185,8 +186,32 @@ static uint32_t get_user_program(uint8_t **buf, uint32_t *free_len) {
 
     // If button was pressed, return code to run script in flash
     if (err == PBIO_ERROR_CANCELED) {
+        #if PYBRICKS_HUB_PRIMEHUB
+        // Open existing main.mpy file from flash
+        uint32_t size = 0;
+        if (pb_flash_file_open_get_size("/_pybricks/main.mpy", &size) != PBIO_SUCCESS) {
+            return 0;
+        }
+        // Check size and allocate buffer
+        if (size > MPY_MAX_BYTES) {
+            return 0;
+        }
+        *buf = m_malloc(size);
+        if (*buf == NULL) {
+            return 0;
+        }
+        // Read the file contents
+        if (pb_flash_file_read(*buf, size) != PBIO_SUCCESS) {
+            m_free(*buf);
+            return 0;
+        }
+        *free_len = size;
+        return size;
+        #else
+        // Load main program embedded in firmware
         *buf = &_pb_user_mpy_data;
         return _pb_user_mpy_size;
+        #endif
     }
 
     // Handle other errors
@@ -220,6 +245,12 @@ static uint32_t get_user_program(uint8_t **buf, uint32_t *free_len) {
     }
 
     *free_len = len;
+
+    #if PYBRICKS_HUB_PRIMEHUB
+    // Save program as file
+    pb_flash_file_write("/_pybricks/main.mpy", *buf, len);
+    #endif // PYBRICKS_HUB_PRIMEHUB
+
     return len;
 }
 
