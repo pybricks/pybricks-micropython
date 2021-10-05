@@ -8,7 +8,7 @@ print(version)
 
 # Initialize default "Driving Base" with medium motors and wheels.
 left_motor = Motor(Port.C, Direction.COUNTERCLOCKWISE)
-right_motor = Motor(Port.A)
+right_motor = Motor(Port.D)
 drive_base = DriveBase(left_motor, right_motor, wheel_diameter=56, axle_track=112)
 
 # Allocate logs for motors and controller signals.
