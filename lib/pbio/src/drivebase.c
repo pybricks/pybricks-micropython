@@ -41,8 +41,8 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
     }
     s_distance->use_estimated_rate = s_left->use_estimated_rate;
 
-    // Use estimated count if we use estimated rate
-    s_distance->use_estimated_count = s_distance->use_estimated_rate;
+    // Use the reported count for drive bases.
+    s_distance->use_estimated_count = false;
 
     // By default, heading control is the same as distance control
     *s_heading = *s_distance;
