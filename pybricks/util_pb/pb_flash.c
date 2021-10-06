@@ -46,7 +46,7 @@ static pbio_error_t pb_flash_spi_init(void) {
     hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
     hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
     hspi2.Init.NSS = SPI_NSS_SOFT;
-    hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_256;
+    hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
     hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
 
     // Save settings
@@ -304,7 +304,7 @@ lfs_file_t file;
 
 uint8_t lfs_read_buf[256];
 uint8_t lfs_prog_buf[256];
-uint8_t lfs_lookahead_buf[32];
+uint8_t lfs_lookahead_buf[256];
 uint8_t lfs_file_buf[256];
 
 struct lfs_config cfg = {
@@ -317,7 +317,7 @@ struct lfs_config cfg = {
     .prog_size = 256,
     .block_size = 4096,
     .block_count = 7936,
-    .lookahead = 32,
+    .lookahead = sizeof(lfs_lookahead_buf) * 8,
 
     .read_buffer = lfs_read_buf,
     .prog_buffer = lfs_prog_buf,
