@@ -10,6 +10,9 @@
 
 #include <pbio/error.h>
 
+// Initialize and mount the file system
+pbio_error_t pb_flash_init(void);
+
 // Read raw bytes from flash, ignoring file system
 pbio_error_t pb_flash_raw_read(uint32_t address, uint8_t *buf, uint32_t size);
 
