@@ -81,9 +81,6 @@ static pbio_error_t pb_flash_spi_init(void) {
         return PBIO_ERROR_NO_DEV;
     }
 
-    // Set flag to indicate flash is ready
-    flash_initialized = true;
-
     return PBIO_SUCCESS;
 }
 
@@ -325,7 +322,12 @@ struct lfs_config cfg = {
     .file_buffer = lfs_file_buf,
 };
 
-static pbio_error_t pb_flash_init(void) {
+pbio_error_t pb_flash_init(void) {
+
+    // Initialize only once
+    if (flash_initialized) {
+        return PBIO_SUCCESS;
+    }
 
     // Init SPI
     pbio_error_t err = pb_flash_spi_init();
@@ -346,26 +348,35 @@ static pbio_error_t pb_flash_init(void) {
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
-    // Verify block parameters
+    // Verify block parameters and on-flash version of littlefs
     uint32_t block_size = pbio_get_uint32_le(&lfs_data[28]);
     uint32_t block_count = pbio_get_uint32_le(&lfs_data[32]);
+    uint32_t version = pbio_get_uint32_le(&lfs_data[36]);
 
-    if (cfg.block_size != block_size || cfg.block_count != block_count) {
+    if (cfg.block_size != block_size || cfg.block_count != block_count || version != 0x00010001) {
         return PBIO_ERROR_NOT_SUPPORTED;
     }
 
+    // Mount file system
+    if (lfs_mount(&lfs, &cfg) != LFS_ERR_OK) {
+        return PBIO_ERROR_FAILED;
+    }
+
+    // Ensure there is a _pybricks system folder
+    int lfs_err = lfs_mkdir(&lfs, "_pybricks");
+    if (!(lfs_err == LFS_ERR_OK || lfs_err == LFS_ERR_EXIST)) {
+        return PBIO_ERROR_FAILED;
+    }
+
+    // We're ready to read and write now.
     flash_initialized = true;
-    return PBIO_SUCCESS;
+
+    // The first write takes a bit longer, so do it now.
+    const uint8_t *pybricks_magic = (const uint8_t *)"pybricks";
+    return pb_flash_file_write("_pybricks/boot.txt", pybricks_magic, sizeof(pybricks_magic) - 1);
 }
 
 pbio_error_t pb_flash_raw_read(uint32_t address, uint8_t *buf, uint32_t size) {
-
-    if (!flash_initialized) {
-        pbio_error_t err = pb_flash_spi_init();
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-    }
 
     if (flash_read(address, buf, size) != HAL_OK) {
         return PBIO_ERROR_FAILED;
@@ -377,15 +388,7 @@ pbio_error_t pb_flash_file_open_get_size(const char *path, uint32_t *size) {
 
     // Check that flash was initialized
     if (!flash_initialized) {
-        pbio_error_t err = pb_flash_spi_init();
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-    }
-
-    // Mount file system
-    if (lfs_mount(&lfs, &cfg) != LFS_ERR_OK) {
-        return PBIO_ERROR_FAILED;
+        return PBIO_ERROR_INVALID_OP;
     }
 
     // Open file
@@ -400,10 +403,7 @@ pbio_error_t pb_flash_file_read(uint8_t *buf, uint32_t size) {
 
     // Check that flash was initialized
     if (!flash_initialized) {
-        pbio_error_t err = pb_flash_spi_init();
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
+        return PBIO_ERROR_INVALID_OP;
     }
 
     // Allow only read in one go for now
@@ -416,11 +416,8 @@ pbio_error_t pb_flash_file_read(uint8_t *buf, uint32_t size) {
         return PBIO_ERROR_FAILED;
     }
 
-    // Close the file and unmount
+    // Close the file
     if (lfs_file_close(&lfs, &file) != LFS_ERR_OK) {
-        return PBIO_ERROR_FAILED;
-    }
-    if (lfs_unmount(&lfs) != LFS_ERR_OK) {
         return PBIO_ERROR_FAILED;
     }
     return PBIO_SUCCESS;
@@ -430,21 +427,7 @@ pbio_error_t pb_flash_file_write(const char *path, const uint8_t *buf, uint32_t 
 
     // Check that flash was initialized
     if (!flash_initialized) {
-        pbio_error_t err = pb_flash_init();
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-    }
-
-    // Mount file system
-    if (lfs_mount(&lfs, &cfg) != LFS_ERR_OK) {
-        return PBIO_ERROR_FAILED;
-    }
-
-    // Ensure there is a _pybricks system folder
-    int lfs_err = lfs_mkdir(&lfs, "_pybricks");
-    if (!(lfs_err == LFS_ERR_OK || lfs_err == LFS_ERR_EXIST)) {
-        return PBIO_ERROR_FAILED;
+        return PBIO_ERROR_INVALID_OP;
     }
 
     // Open file
@@ -457,11 +440,8 @@ pbio_error_t pb_flash_file_write(const char *path, const uint8_t *buf, uint32_t 
         return PBIO_ERROR_FAILED;
     }
 
-    // Close the file and unmount
+    // Close the file
     if (lfs_file_close(&lfs, &file) != LFS_ERR_OK) {
-        return PBIO_ERROR_FAILED;
-    }
-    if (lfs_unmount(&lfs) != LFS_ERR_OK) {
         return PBIO_ERROR_FAILED;
     }
     return PBIO_SUCCESS;

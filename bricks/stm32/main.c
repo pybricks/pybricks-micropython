@@ -359,6 +359,12 @@ restart:
 }
 
 static void stm32_main(void) {
+
+    #if PYBRICKS_HUB_PRIMEHUB
+    mp_hal_delay_ms(500);
+    pb_flash_init();
+    #endif
+
 soft_reset:
     // Stack limit should be less than real stack size, so we have a chance
     // to recover from limit hit.  (Limit is measured in bytes.)
