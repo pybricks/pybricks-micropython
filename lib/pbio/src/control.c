@@ -344,20 +344,18 @@ int32_t pbio_control_user_to_counts(pbio_control_settings_t *s, int32_t user) {
     return pbio_math_mul_i32_fix16(user, s->counts_per_unit);
 }
 
-void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *duty, int32_t *torque) {
+void pbio_control_settings_get_limits(pbio_control_settings_t *s, int32_t *speed, int32_t *acceleration, int32_t *torque) {
     *speed = pbio_control_counts_to_user(s, s->max_rate);
     *acceleration = pbio_control_counts_to_user(s, s->abs_acceleration);
-    *duty = s->max_duty / 100;
     *torque = s->max_torque / 1000;
 }
 
-pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t duty, int32_t torque) {
-    if (speed < 1 || acceleration < 1 || duty < 1 || torque < 1 || duty > 100) {
+pbio_error_t pbio_control_settings_set_limits(pbio_control_settings_t *s, int32_t speed, int32_t acceleration, int32_t torque) {
+    if (speed < 1 || acceleration < 1 || torque < 1) {
         return PBIO_ERROR_INVALID_ARG;
     }
     s->max_rate = pbio_control_user_to_counts(s, speed);
     s->abs_acceleration = pbio_control_user_to_counts(s, acceleration);
-    s->max_duty = duty * 100;
     s->max_torque = torque * 1000;
     return PBIO_SUCCESS;
 }

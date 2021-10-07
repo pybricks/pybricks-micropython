@@ -203,7 +203,6 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
 
         // Convert torques to duty cycle based on model
         duty_cycle = pbio_observer_torque_to_duty(&srv->observer, feedback_torque + feedforward_torque, battery_voltage);
-        duty_cycle = max(-srv->control.settings.max_duty, min(duty_cycle, srv->control.settings.max_duty));
 
         // Actutate the servo
         err = pbio_servo_actuate(srv, actuation, duty_cycle);
@@ -236,9 +235,6 @@ pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps) {
     if (srv->claimed) {
         return PBIO_ERROR_BUSY;
     }
-
-    // Limit to maximum configured value
-    duty_steps = max(-srv->control.settings.max_duty, min(duty_steps, srv->control.settings.max_duty));
 
     pbio_control_stop(&srv->control);
     return pbio_dcmotor_set_duty_cycle_usr(srv->dcmotor, duty_steps);

@@ -6,6 +6,10 @@
 #if PYBRICKS_PY_COMMON_MOTORS
 
 #include <pbio/motor_process.h>
+
+#include <pbdrv/battery.h>
+
+#include <pbio/dcmotor.h>
 #include <pbio/servo.h>
 
 #include "py/mphal.h"
@@ -209,21 +213,23 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
     pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     // If duty_limit argument, given, limit duty during this maneuver
-    bool override_duty_limit = duty_limit_in != mp_const_none;
+    bool override_max_voltage = duty_limit_in != mp_const_none;
+    int32_t max_voltage_old;
 
-    int32_t orig_speed, acceleration, duty, torque;
+    if (override_max_voltage) {
+        // Read original value so we can restore it when we're done
+        pbio_dcmotor_get_settings(self->srv->dcmotor, &max_voltage_old);
 
-    if (override_duty_limit) {
-        // Read original values so we can restore them when we're done
-        pbio_control_settings_get_limits(&self->srv->control.settings, &orig_speed, &acceleration, &duty, &torque);
-
-        // Get user given limit
-        mp_int_t duty_limit = pb_obj_get_int(duty_limit_in);
-        duty_limit = duty_limit < 0 ? -duty_limit : duty_limit;
-        duty_limit = duty_limit > 100 ? 100 : duty_limit;
+        // Internally, the use of a duty cycle limit has been deprecated and
+        // replaced by a voltage limit. Since we can't break the user API, we
+        // convert the user duty limit (0--100) to a voltage by scaling it with
+        // the battery voltage level, giving the same behavior as before.
+        uint16_t battery_voltage;
+        pb_assert(pbdrv_battery_get_voltage_now(&battery_voltage));
+        uint32_t max_voltage = battery_voltage * pb_obj_get_pct(duty_limit_in) / 100;
 
         // Apply the user limit
-        pb_assert(pbio_control_settings_set_limits(&self->srv->control.settings, orig_speed, acceleration, duty_limit, torque));
+        pb_assert(pbio_dcmotor_set_settings(self->srv->dcmotor, max_voltage));
     }
 
     mp_obj_t ex = MP_OBJ_NULL;
@@ -242,8 +248,8 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
     }
 
     // Restore original settings
-    if (override_duty_limit) {
-        pb_assert(pbio_control_settings_set_limits(&self->srv->control.settings, orig_speed, acceleration, duty, torque));
+    if (override_max_voltage) {
+        pb_assert(pbio_dcmotor_set_settings(self->srv->dcmotor, max_voltage_old));
     }
 
     if (ex != MP_OBJ_NULL) {
