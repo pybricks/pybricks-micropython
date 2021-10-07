@@ -37,6 +37,12 @@ static pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t
         return err;
     }
 
+    // Load settings for this motor
+    err = pbio_dcmotor_load_settings(dcmotor, dcmotor->id);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     // Set direction and state
     dcmotor->direction = direction;
     dcmotor->state = PBIO_DCMOTOR_COAST;
@@ -106,6 +112,15 @@ pbio_error_t pbio_dcmotor_set_duty_cycle_usr(pbio_dcmotor_t *dcmotor, int32_t du
         return err;
     }
     dcmotor->state = PBIO_DCMOTOR_DUTY_PASSIVE;
+    return PBIO_SUCCESS;
+}
+
+void pbio_dcmotor_get_settings(pbio_dcmotor_t *dcmotor, int32_t *max_voltage) {
+    *max_voltage = dcmotor->max_voltage;
+}
+
+pbio_error_t pbio_dcmotor_set_settings(pbio_dcmotor_t *dcmotor, int32_t max_voltage) {
+    dcmotor->max_voltage = max_voltage;
     return PBIO_SUCCESS;
 }
 

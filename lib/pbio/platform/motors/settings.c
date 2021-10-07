@@ -340,4 +340,17 @@ pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *control_settings,
     }
 }
 
+pbio_error_t pbio_dcmotor_load_settings(pbio_dcmotor_t *dcmotor, pbio_iodev_type_id_t id) {
+    switch (id) {
+        case PBIO_IODEV_TYPE_ID_NONE:
+            return PBIO_ERROR_NOT_SUPPORTED;
+        case PBIO_IODEV_TYPE_ID_SPIKE_S_MOTOR:
+            dcmotor->max_voltage = 6000;
+            return PBIO_SUCCESS;
+        default:
+            dcmotor->max_voltage = 9000;
+            return PBIO_SUCCESS;
+    }
+}
+
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
