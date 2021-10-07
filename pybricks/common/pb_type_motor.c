@@ -328,6 +328,7 @@ STATIC const mp_rom_map_elem_t common_Motor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_dc), MP_ROM_PTR(&common_DCMotor_duty_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&common_DCMotor_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_brake), MP_ROM_PTR(&common_DCMotor_brake_obj) },
+    { MP_ROM_QSTR(MP_QSTR_dc_settings), MP_ROM_PTR(&common_DCMotor_dc_settings_obj) },
     //
     // Methods specific to encoded motors
     //

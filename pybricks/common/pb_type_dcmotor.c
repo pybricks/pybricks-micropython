@@ -119,11 +119,43 @@ STATIC mp_obj_t common_DCMotor_brake(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_DCMotor_brake_obj, common_DCMotor_brake);
 
+// pybricks._common.DCMotor.dc
+// pybricks._common.Motor.dc
+STATIC mp_obj_t common_DCMotor_dc_settings(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    // Parse all arguments except the first one (self)
+    PB_PARSE_ARGS_METHOD_SKIP_SELF(n_args, pos_args, kw_args,
+        PB_ARG_DEFAULT_NONE(max_voltage));
+
+    // Get dcmotor from object
+    pbio_dcmotor_t *dcmotor;
+    if (mp_obj_is_type(pos_args[0], &pb_type_Motor)) {
+        dcmotor = ((common_Motor_obj_t *)MP_OBJ_TO_PTR(pos_args[0]))->srv->dcmotor;
+    } else {
+        dcmotor = ((common_DCMotor_obj_t *)MP_OBJ_TO_PTR(pos_args[0]))->dcmotor;
+    }
+
+    // If no arguments given, return existing values
+    if (max_voltage_in == mp_const_none) {
+        int32_t max_voltage_now;
+        pbio_dcmotor_get_settings(dcmotor, &max_voltage_now);
+        mp_obj_t retval[1];
+        retval[0] = mp_obj_new_int(max_voltage_now);
+        return mp_obj_new_tuple(1, retval);
+    }
+
+    // Set the new limit
+    pb_assert(pbio_dcmotor_set_settings(dcmotor, pb_obj_get_int(max_voltage_in)));
+
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_KW(common_DCMotor_dc_settings_obj, 1, common_DCMotor_dc_settings);
+
 // dir(pybricks.builtins.DCMotor)
 STATIC const mp_rom_map_elem_t common_DCMotor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_dc), MP_ROM_PTR(&common_DCMotor_duty_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&common_DCMotor_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_brake), MP_ROM_PTR(&common_DCMotor_brake_obj) },
+    { MP_ROM_QSTR(MP_QSTR_dc_settings), MP_ROM_PTR(&common_DCMotor_dc_settings_obj) },
 };
 MP_DEFINE_CONST_DICT(common_DCMotor_locals_dict, common_DCMotor_locals_dict_table);
 

@@ -89,6 +89,7 @@ void common_DCMotor_print(const mp_print_t *print, mp_obj_t self_in, mp_print_ki
 MP_DECLARE_CONST_FUN_OBJ_KW(common_DCMotor_duty_obj);
 MP_DECLARE_CONST_FUN_OBJ_1(common_DCMotor_stop_obj);
 MP_DECLARE_CONST_FUN_OBJ_1(common_DCMotor_brake_obj);
+MP_DECLARE_CONST_FUN_OBJ_KW(common_DCMotor_dc_settings_obj);
 
 #endif // PYBRICKS_PY_COMMON_MOTORS
 
