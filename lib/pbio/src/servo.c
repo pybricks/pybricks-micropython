@@ -290,18 +290,9 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     // Get the initial physical motor state.
     int32_t time_now, count_now, rate_now;
 
-    // FIXME: Make state getter function a control property. That way, it can
-    // decide whether reading the state is needed, instead of checking control
-    // status here. We do it here for now anyway to reduce I/O if the initial
-    // state value is not actually used, like when control is already active.
-    if (!pbio_control_is_active(&srv->control)) {
-        // Get the current physical state.
-        err = servo_get_state(srv, &time_now, &count_now, &rate_now);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-    } else {
-        time_now = pbdrv_clock_get_us();
+    err = servo_get_state(srv, &time_now, &count_now, &rate_now);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     // Start a timed maneuver, duration forever
