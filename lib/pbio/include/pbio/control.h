@@ -110,6 +110,7 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
 pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_now, int32_t target_count);
 
 
+bool pbio_control_is_active(pbio_control_t *ctl);
 bool pbio_control_is_stalled(pbio_control_t *ctl);
 bool pbio_control_is_done(pbio_control_t *ctl);
 int32_t pbio_control_get_load(pbio_control_t *ctl);

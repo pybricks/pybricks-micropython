@@ -84,7 +84,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
 
     // If the motor was in a passive mode (coast, brake, user duty),
     // just reset angle and observer and leave physical motor state unchanged.
-    if (srv->control.type == PBIO_CONTROL_NONE) {
+    if (!pbio_control_is_active(&srv->control)) {
         err = pbio_tacho_reset_angle(srv->tacho, &reset_angle, reset_to_abs);
         if (err != PBIO_SUCCESS) {
             return err;
@@ -188,7 +188,7 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     int32_t voltage;
 
     // Check if a control update is needed
-    if (srv->control.type != PBIO_CONTROL_NONE) {
+    if (pbio_control_is_active(&srv->control)) {
 
         // Calculate feedback control signal
         pbio_control_update(&srv->control, time_now, count_now, rate_now, count_est, rate_est, &actuation, &feedback_torque, &rate_ref, &acceleration_ref);
@@ -294,7 +294,7 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     // decide whether reading the state is needed, instead of checking control
     // status here. We do it here for now anyway to reduce I/O if the initial
     // state value is not actually used, like when control is already active.
-    if (srv->control.type == PBIO_CONTROL_NONE) {
+    if (!pbio_control_is_active(&srv->control)) {
         // Get the current physical state.
         err = servo_get_state(srv, &time_now, &count_now, &rate_now);
         if (err != PBIO_SUCCESS) {
