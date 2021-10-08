@@ -21,7 +21,7 @@ void pbio_observer_get_estimated_state(pbio_observer_t *obs, int32_t *count, int
     *rate = (int32_t)(obs->est_rate / PBIO_OBSERVER_SCALE_DEG);
 }
 
-void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t actuation_type, int32_t control, int32_t battery_voltage) {
+void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t actuation_type, int32_t voltage) {
 
     if (actuation_type != PBIO_ACTUATION_VOLTAGE) {
         // TODO
@@ -30,7 +30,7 @@ void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t 
     const pbio_observer_settings_t *s = obs->settings;
 
     // Torque due to duty cycle
-    int64_t tau_e = ((int64_t)control * battery_voltage) * s->k_0 / (10000000 / PBIO_OBSERVER_SCALE_TRQ) / PBIO_OBSERVER_SCALE_HIGH;
+    int64_t tau_e = (int64_t)voltage * s->k_0 / 1000 * (PBIO_OBSERVER_SCALE_TRQ / PBIO_OBSERVER_SCALE_HIGH);
 
     // Friction torque
     int64_t tau_f = obs->est_rate > 0 ? s->f_low: -s->f_low;
@@ -97,7 +97,7 @@ void pbio_observer_get_estimated_state(pbio_observer_t *obs, int32_t *count, int
     *rate = (int32_t)obs->est_rate;
 }
 
-void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t actuation_type, int32_t control, int32_t battery_voltage) {
+void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t actuation_type, int32_t voltage) {
 
     if (actuation_type != PBIO_ACTUATION_VOLTAGE) {
         // TODO
@@ -105,8 +105,8 @@ void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t 
 
     const pbio_observer_settings_t *s = obs->settings;
 
-    // Torque due to duty cycle
-    float tau_e = (control * battery_voltage) / 10000000 * s->k_0;
+    // Torque due to voltage
+    float tau_e = voltage / 1000 * s->k_0;
 
     // Friction torque
     float tau_f = obs->est_rate > 0 ? s->f_low: -s->f_low;

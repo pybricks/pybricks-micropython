@@ -181,13 +181,6 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     // Get estimated motor state
     pbio_observer_get_estimated_state(&srv->observer, &count_est, &rate_est);
 
-    // Get the battery voltage
-    uint16_t battery_voltage;
-    err = pbdrv_battery_get_voltage_now(&battery_voltage);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
     // Control action to be calculated
     pbio_actuation_t actuation;
     int32_t feedback_torque = 0;
@@ -214,19 +207,18 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
             return err;
         }
     }
-    // Whether or not there is control, get the ongoing actuation state so we can log it.
-    int32_t duty_cycle;
-    err = pbio_dcmotor_get_state(srv->dcmotor, (pbio_passivity_t *)&actuation, &duty_cycle);
+    // Whether or not there is control, get the ongoing actuation state so we can log it and update observer.
+    err = pbio_dcmotor_get_state(srv->dcmotor, (pbio_passivity_t *)&actuation, &voltage);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Log servo state
-    int32_t log_data[] = {battery_voltage, count_now, rate_now, actuation, duty_cycle, count_est, rate_est, feedback_torque, feedforward_torque};
+    int32_t log_data[] = {0, count_now, rate_now, actuation, voltage, count_est, rate_est, feedback_torque, feedforward_torque};
     pbio_logger_update(&srv->log, log_data);
 
     // Update the state observer
-    pbio_observer_update(&srv->observer, count_now, actuation, duty_cycle, battery_voltage);
+    pbio_observer_update(&srv->observer, count_now, actuation, voltage);
 
     return PBIO_SUCCESS;
 }

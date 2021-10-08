@@ -66,9 +66,9 @@ pbio_error_t pbio_dcmotor_get(pbio_port_id_t port, pbio_dcmotor_t **dcmotor, pbi
     return pbio_dcmotor_setup(*dcmotor, direction, is_servo);
 }
 
-pbio_error_t pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_passivity_t *state, int32_t *duty_now) {
+pbio_error_t pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_passivity_t *state, int32_t *voltage_now) {
     *state = dcmotor->state;
-    *duty_now = dcmotor->state < PBIO_DCMOTOR_DUTY_PASSIVE ? 0 : dcmotor->duty_now;
+    *voltage_now = dcmotor->state < PBIO_DCMOTOR_DUTY_PASSIVE ? 0 : dcmotor->voltage_now;
     return PBIO_SUCCESS;
 }
 
@@ -92,9 +92,6 @@ static pbio_error_t pbio_dcmotor_set_duty_cycle_sys(pbio_dcmotor_t *dcmotor, int
     if (duty_steps < -limit) {
         duty_steps = -limit;
     }
-
-    // Signed duty cycle applied to bridge
-    dcmotor->duty_now = duty_steps;
 
     // Flip sign if motor is inverted
     if (dcmotor->direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
@@ -122,6 +119,9 @@ pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) 
     } else if (voltage < -dcmotor->max_voltage) {
         voltage = -dcmotor->max_voltage;
     }
+
+    // Cache value so we can read it back without touching hardware again
+    dcmotor->voltage_now = voltage;
 
     // Scale requested voltage by battery voltage to get duty cycle.
     err = pbio_dcmotor_set_duty_cycle_sys(dcmotor, voltage * PBDRV_MAX_DUTY / battery_voltage);
