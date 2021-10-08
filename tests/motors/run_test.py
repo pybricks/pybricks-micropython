@@ -69,10 +69,10 @@ def gradient(data, time, smooth=8):
 
 def plot_servo_data(time, data, build_dir, subtitle=None):
     """Plots data for a servo motor."""
-    battery = data[:, 1]
+    # First column not currently used
     count = data[:, 2]
     rate = data[:, 3]
-    duty = data[:, 5]
+    voltage = data[:, 5]
     count_est = data[:, 6]
     rate_est = data[:, 7]
     torque_feedback = data[:, 8]
@@ -100,9 +100,9 @@ def plot_servo_data(time, data, build_dir, subtitle=None):
     torque_axis.plot(time, torque_feedforward, label="Feedforward", drawstyle="steps-post")
     torque_axis.set_ylabel("Torque")
 
-    duty_axis.plot(time, duty, label="Duty", drawstyle="steps-post")
-    duty_axis.set_ylabel("duty cycle")
-    duty_axis.set_ylim([-20000, 20000])
+    duty_axis.plot(time, voltage, label="Voltage", drawstyle="steps-post")
+    duty_axis.set_ylabel("Motor voltage (mV)")
+    duty_axis.set_ylim([-10000, 10000])
     duty_axis.set_xlabel("time (s)")
 
     for axis in axes:
