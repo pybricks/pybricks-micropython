@@ -11,6 +11,9 @@
 - Improved motor behavior for cases with low-speed, low-load, but high
   inertia. ([support#366])
 
+### Fixed
+- Fixed `then=Stop.COAST` being ignored in most motor commands.
+
 [support#366]: https://github.com/pybricks/support/issues/366
 
 ## [3.1.0b1] - 2021-08-21

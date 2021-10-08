@@ -145,7 +145,7 @@ static pbio_error_t servo_get_state(pbio_servo_t *srv, int32_t *time_now, int32_
 }
 
 // Actuate a single motor
-static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_type, int32_t control) {
+static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_type, int32_t payload) {
 
     // Apply the calculated actuation, by type
     switch (actuation_type)
@@ -155,11 +155,13 @@ static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actua
         case PBIO_ACTUATION_BRAKE:
             return pbio_dcmotor_brake(srv->dcmotor);
         case PBIO_ACTUATION_HOLD:
-            return pbio_control_start_hold_control(&srv->control, pbdrv_clock_get_us(), control);
+            return pbio_control_start_hold_control(&srv->control, pbdrv_clock_get_us(), payload);
         case PBIO_ACTUATION_VOLTAGE:
-            return pbio_dcmotor_set_voltage(srv->dcmotor, control);
-        case PBIO_ACTUATION_TORQUE:
-            return PBIO_ERROR_NOT_IMPLEMENTED;
+            return pbio_dcmotor_set_voltage(srv->dcmotor, payload);
+        case PBIO_ACTUATION_TORQUE: {
+            int32_t voltage = pbio_observer_torque_to_voltage(&srv->observer, payload);
+            return pbio_dcmotor_set_voltage(srv->dcmotor, voltage);
+        }
     }
 
     return PBIO_SUCCESS;
@@ -193,16 +195,11 @@ pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
         // Calculate feedback control signal
         pbio_control_update(&srv->control, time_now, count_now, rate_now, count_est, rate_est, &actuation, &feedback_torque, &rate_ref, &acceleration_ref);
 
-        // Get required feedforward torque
+        // Get required feedforward torque for current reference
         feedforward_torque = pbio_observer_get_feedforward_torque(&srv->observer, rate_ref, acceleration_ref);
 
-        // FIXME: There is a possible change of actuation at this point; so should pass through servo_actuate instead of actuating here
-
-        // Convert torques to duty cycle based on model
-        voltage = pbio_observer_torque_to_voltage(&srv->observer, feedback_torque + feedforward_torque);
-
-        // Actutate the servo
-        err = pbio_servo_actuate(srv, PBIO_ACTUATION_VOLTAGE, voltage);
+        // Actuate the servo. For torque control, the torque payload is passed along. Otherwise payload is ignored.
+        err = pbio_servo_actuate(srv, actuation, feedback_torque + feedforward_torque);
         if (err != PBIO_SUCCESS) {
             return err;
         }
