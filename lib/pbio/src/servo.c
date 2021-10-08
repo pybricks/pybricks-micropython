@@ -165,7 +165,7 @@ static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actua
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
+pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
 
     int32_t time_now;
     int32_t count_now, count_est;

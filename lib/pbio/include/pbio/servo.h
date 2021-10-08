@@ -60,7 +60,7 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop);
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target);
 
-pbio_error_t pbio_servo_control_update(pbio_servo_t *srv);
+pbio_error_t pbio_servo_update(pbio_servo_t *srv);
 
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
 

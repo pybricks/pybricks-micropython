@@ -71,7 +71,7 @@ PROCESS_THREAD(pbio_motor_process, ev, data) {
 
             // Update control and reset connected status on failure
             if (pbio_servo_is_connected(&servos[i])) {
-                pbio_servo_set_connected(&servos[i], pbio_servo_control_update(&servos[i]) == PBIO_SUCCESS);
+                pbio_servo_set_connected(&servos[i], pbio_servo_update(&servos[i]) == PBIO_SUCCESS);
             }
         }
 
