@@ -9,8 +9,10 @@
 
 #include <fixmath.h>
 
+#include <pbdrv/battery.h>
 #include <pbdrv/config.h>
 #include <pbdrv/motor.h>
+
 #include <pbio/dcmotor.h>
 
 static pbio_dcmotor_t dcmotors[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
@@ -80,7 +82,7 @@ pbio_error_t pbio_dcmotor_brake(pbio_dcmotor_t *dcmotor) {
     return pbdrv_motor_set_duty_cycle(dcmotor->port, 0);
 }
 
-pbio_error_t pbio_dcmotor_set_duty_cycle_sys(pbio_dcmotor_t *dcmotor, int32_t duty_steps) {
+static pbio_error_t pbio_dcmotor_set_duty_cycle_sys(pbio_dcmotor_t *dcmotor, int32_t duty_steps) {
 
     // Limit the duty cycle value
     int32_t limit = PBDRV_MAX_DUTY;
@@ -103,6 +105,29 @@ pbio_error_t pbio_dcmotor_set_duty_cycle_sys(pbio_dcmotor_t *dcmotor, int32_t du
         return err;
     }
     dcmotor->state = PBIO_DCMOTOR_CLAIMED;
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) {
+
+    // Get battery voltage.
+    uint16_t battery_voltage;
+    pbio_error_t err = pbdrv_battery_get_voltage_now(&battery_voltage);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    if (voltage > dcmotor->max_voltage) {
+        voltage = dcmotor->max_voltage;
+    } else if (voltage < -dcmotor->max_voltage) {
+        voltage = -dcmotor->max_voltage;
+    }
+
+    // Scale requested voltage by battery voltage to get duty cycle.
+    err = pbio_dcmotor_set_duty_cycle_sys(dcmotor, voltage * PBDRV_MAX_DUTY / battery_voltage);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
     return PBIO_SUCCESS;
 }
 

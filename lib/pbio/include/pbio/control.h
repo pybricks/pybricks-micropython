@@ -42,10 +42,11 @@ typedef struct _pbio_control_settings_t {
 } pbio_control_settings_t;
 
 typedef enum {
-    PBIO_ACTUATION_COAST = PBIO_DCMOTOR_COAST,       /**< Coast the motor */
-    PBIO_ACTUATION_BRAKE = PBIO_DCMOTOR_BRAKE,       /**< Brake the motor */
-    PBIO_ACTUATION_DUTY = PBIO_DCMOTOR_DUTY_PASSIVE, /**< Apply a given duty cycle value */
-    PBIO_ACTUATION_HOLD,                             /**< Actively hold the motor in place */
+    PBIO_ACTUATION_COAST = PBIO_DCMOTOR_COAST,          /**< Coast the motor */
+    PBIO_ACTUATION_BRAKE = PBIO_DCMOTOR_BRAKE,          /**< Brake the motor */
+    PBIO_ACTUATION_VOLTAGE = PBIO_DCMOTOR_DUTY_PASSIVE, /**< Apply a given voltage */
+    PBIO_ACTUATION_TORQUE,                              /**< Apply a given torque */
+    PBIO_ACTUATION_HOLD,                                /**< Actively hold the motor in place */
 } pbio_actuation_t;
 
 // Maneuver-specific function that returns true if maneuver is done, based on current state

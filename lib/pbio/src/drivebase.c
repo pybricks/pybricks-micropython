@@ -148,16 +148,10 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
         case PBIO_ACTUATION_HOLD:
             err = pbio_drivebase_straight(db, 0, db->control_distance.settings.max_rate, db->control_distance.settings.max_rate);
             break;
-        case PBIO_ACTUATION_DUTY:
-            err = pbio_dcmotor_set_duty_cycle_sys(db->left->dcmotor, sum_control + dif_control);
-            if (err != PBIO_SUCCESS) {
-                return err;
-            }
-            err = pbio_dcmotor_set_duty_cycle_sys(db->right->dcmotor, sum_control - dif_control);
-            if (err != PBIO_SUCCESS) {
-                return err;
-            }
-            break;
+        case PBIO_ACTUATION_VOLTAGE:
+            return PBIO_ERROR_NOT_IMPLEMENTED;
+        case PBIO_ACTUATION_TORQUE:
+            return PBIO_ERROR_NOT_IMPLEMENTED;
         default:
             err = PBIO_ERROR_INVALID_ARG;
             break;
@@ -320,32 +314,26 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    // Get the battery voltage
-    uint16_t voltage;
-    err = pbdrv_battery_get_voltage_now(&voltage);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    int32_t battery_voltage = voltage;
-
     // TODO: Use generic actuator with torque type.
+    // FIXME: There is a possible change of actuation at this point; so should pass through servo_actuate instead of actuating here
+    // It only works now because the assumed stop type is always hold for drive bases, but that won't be the case in future versions
 
     // Left carries sum/2 + dif/2
     int32_t torque_left = sum_torque / 2 + dif_torque / 2;
     torque_left += pbio_observer_get_feedforward_torque(&db->left->observer, sum_rate_ref / 2 + dif_rate_ref / 2, sum_acceleration_ref / 2 + dif_acceleration_ref / 2);
-    int32_t duty_left = pbio_observer_torque_to_duty(&db->left->observer, torque_left, battery_voltage);
+    int32_t voltage_left = pbio_observer_torque_to_voltage(&db->left->observer, torque_left);
 
     // Right carries sum/2 - dif/2
     int32_t torque_right = sum_torque / 2 - dif_torque / 2;
     torque_right += pbio_observer_get_feedforward_torque(&db->right->observer, sum_rate_ref / 2 - dif_rate_ref / 2, sum_acceleration_ref / 2 - dif_acceleration_ref / 2);
-    int32_t duty_right = pbio_observer_torque_to_duty(&db->right->observer, torque_right, battery_voltage);
+    int32_t voltage_right = pbio_observer_torque_to_voltage(&db->left->observer, torque_right);
 
-    // Apply the duty cycle values
-    err = pbio_dcmotor_set_duty_cycle_sys(db->left->dcmotor, duty_left);
+    // Apply the voltages
+    err = pbio_dcmotor_set_voltage(db->left->dcmotor, voltage_left);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    return pbio_dcmotor_set_duty_cycle_sys(db->right->dcmotor, duty_right);
+    return pbio_dcmotor_set_voltage(db->right->dcmotor, voltage_right);
 }
 
 pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int32_t drive_speed, int32_t drive_acceleration) {

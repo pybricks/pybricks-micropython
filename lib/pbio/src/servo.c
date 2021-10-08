@@ -156,8 +156,10 @@ static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actua
             return pbio_dcmotor_brake(srv->dcmotor);
         case PBIO_ACTUATION_HOLD:
             return pbio_control_start_hold_control(&srv->control, pbdrv_clock_get_us(), control);
-        case PBIO_ACTUATION_DUTY:
-            return pbio_dcmotor_set_duty_cycle_sys(srv->dcmotor, control);
+        case PBIO_ACTUATION_VOLTAGE:
+            return pbio_dcmotor_set_voltage(srv->dcmotor, control);
+        case PBIO_ACTUATION_TORQUE:
+            return PBIO_ERROR_NOT_IMPLEMENTED;
     }
 
     return PBIO_SUCCESS;
@@ -190,7 +192,7 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
     pbio_actuation_t actuation;
     int32_t feedback_torque = 0;
     int32_t feedforward_torque = 0;
-    int32_t duty_cycle;
+    int32_t voltage;
 
     // Check if a control update is needed
     if (srv->control.type != PBIO_CONTROL_NONE) {
@@ -201,20 +203,22 @@ pbio_error_t pbio_servo_control_update(pbio_servo_t *srv) {
         // Get required feedforward torque
         feedforward_torque = pbio_observer_get_feedforward_torque(&srv->observer, rate_ref, acceleration_ref);
 
+        // FIXME: There is a possible change of actuation at this point; so should pass through servo_actuate instead of actuating here
+
         // Convert torques to duty cycle based on model
-        duty_cycle = pbio_observer_torque_to_duty(&srv->observer, feedback_torque + feedforward_torque, battery_voltage);
+        voltage = pbio_observer_torque_to_voltage(&srv->observer, feedback_torque + feedforward_torque);
 
         // Actutate the servo
-        err = pbio_servo_actuate(srv, actuation, duty_cycle);
+        err = pbio_servo_actuate(srv, PBIO_ACTUATION_VOLTAGE, voltage);
         if (err != PBIO_SUCCESS) {
             return err;
         }
-    } else {
-        // When there is no control, get the previous (ongoing) actuation state so we can log it.
-        err = pbio_dcmotor_get_state(srv->dcmotor, (pbio_passivity_t *)&actuation, &duty_cycle);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
+    }
+    // Whether or not there is control, get the ongoing actuation state so we can log it.
+    int32_t duty_cycle;
+    err = pbio_dcmotor_get_state(srv->dcmotor, (pbio_passivity_t *)&actuation, &duty_cycle);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     // Log servo state

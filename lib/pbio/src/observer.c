@@ -23,7 +23,7 @@ void pbio_observer_get_estimated_state(pbio_observer_t *obs, int32_t *count, int
 
 void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t actuation_type, int32_t control, int32_t battery_voltage) {
 
-    if (actuation_type != PBIO_ACTUATION_DUTY) {
+    if (actuation_type != PBIO_ACTUATION_VOLTAGE) {
         // TODO
     }
 
@@ -82,10 +82,10 @@ int32_t pbio_observer_get_feedforward_torque(pbio_observer_t *obs, int32_t rate_
     return (int32_t)(friction_compensation_torque + back_emf_compensation_torque + acceleration_torque);
 }
 
-
-int32_t pbio_observer_torque_to_duty(pbio_observer_t *obs, int32_t desired_torque, int32_t battery_voltage) {
-    return (int32_t)((int64_t)desired_torque * PBIO_OBSERVER_SCALE_HIGH * 10 / obs->settings->k_0 / battery_voltage);
+int32_t pbio_observer_torque_to_voltage(pbio_observer_t *obs, int32_t desired_torque) {
+    return (int32_t)((int64_t)desired_torque * (PBIO_OBSERVER_SCALE_HIGH / 1000) / obs->settings->k_0);
 }
+
 #else
 void pbio_observer_reset(pbio_observer_t *obs, int32_t count_now, int32_t rate_now) {
     obs->est_count = count_now;
@@ -99,7 +99,7 @@ void pbio_observer_get_estimated_state(pbio_observer_t *obs, int32_t *count, int
 
 void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t actuation_type, int32_t control, int32_t battery_voltage) {
 
-    if (actuation_type != PBIO_ACTUATION_DUTY) {
+    if (actuation_type != PBIO_ACTUATION_VOLTAGE) {
         // TODO
     }
 
@@ -159,8 +159,7 @@ int32_t pbio_observer_get_feedforward_torque(pbio_observer_t *obs, int32_t rate_
     return (int32_t)(friction_compensation_torque + back_emf_compensation_torque + acceleration_torque);
 }
 
-
-int32_t pbio_observer_torque_to_duty(pbio_observer_t *obs, int32_t desired_torque, int32_t battery_voltage) {
-    return (int32_t)(desired_torque / obs->settings->k_0 * 10 / battery_voltage);
+int32_t pbio_observer_torque_to_voltage(pbio_observer_t *obs, int32_t desired_torque) {
+    return (int32_t)(desired_torque / obs->settings->k_0 / 1000);
 }
 #endif // PBIO_CONFIG_CONTROL_MINIMAL

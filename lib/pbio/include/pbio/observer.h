@@ -69,6 +69,6 @@ void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t 
 
 int32_t pbio_observer_get_feedforward_torque(pbio_observer_t *obs, int32_t rate_ref, int32_t acceleration_ref);
 
-int32_t pbio_observer_torque_to_duty(pbio_observer_t *obs, int32_t desired_torque, int32_t battery_voltage);
+int32_t pbio_observer_torque_to_voltage(pbio_observer_t *obs, int32_t desired_torque);
 
 #endif // _PBIO_OBSERVER_H_
