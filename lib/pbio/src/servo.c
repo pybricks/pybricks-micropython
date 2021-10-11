@@ -145,7 +145,7 @@ static pbio_error_t servo_get_state(pbio_servo_t *srv, int32_t *time_now, int32_
 }
 
 // Actuate a single motor
-static pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_type, int32_t payload) {
+pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_type, int32_t payload) {
 
     // Apply the calculated actuation, by type
     switch (actuation_type)
