@@ -150,16 +150,6 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio
         return err;
     }
 
-    // Reset both motors to a passive state
-    err = pbio_servo_stop(left, PBIO_ACTUATION_COAST);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    err = pbio_servo_stop(right, PBIO_ACTUATION_COAST);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
     // Drivebase geometry
     if (wheel_diameter <= 0 || axle_track <= 0) {
         return PBIO_ERROR_INVALID_ARG;
@@ -170,10 +160,15 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    // Individual servos
+    // Attach servos
     db->left = left;
     db->right = right;
-    pbio_drivebase_claim_servos(db, false);
+
+    // Reset both motors to a passive state
+    err = pbio_drivebase_actuate(db, PBIO_ACTUATION_COAST, 0, 0);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
     // Adopt settings as the average or sum of both servos, except scaling
     err = drivebase_adopt_settings(&db->control_distance.settings, &db->control_heading.settings, &db->left->control.settings, &db->right->control.settings);
