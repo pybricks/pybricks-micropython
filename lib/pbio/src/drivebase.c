@@ -313,26 +313,16 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    // TODO: Use generic actuator with torque type.
-    // FIXME: There is a possible change of actuation at this point; so should pass through servo_actuate instead of actuating here
-    // It only works now because the assumed stop type is always hold for drive bases, but that won't be the case in future versions
-
-    // Left carries sum/2 + dif/2
-    int32_t torque_left = sum_torque / 2 + dif_torque / 2;
-    torque_left += pbio_observer_get_feedforward_torque(&db->left->observer, sum_rate_ref / 2 + dif_rate_ref / 2, sum_acceleration_ref / 2 + dif_acceleration_ref / 2);
-    int32_t voltage_left = pbio_observer_torque_to_voltage(&db->left->observer, torque_left);
-
-    // Right carries sum/2 - dif/2
-    int32_t torque_right = sum_torque / 2 - dif_torque / 2;
-    torque_right += pbio_observer_get_feedforward_torque(&db->right->observer, sum_rate_ref / 2 - dif_rate_ref / 2, sum_acceleration_ref / 2 - dif_acceleration_ref / 2);
-    int32_t voltage_right = pbio_observer_torque_to_voltage(&db->left->observer, torque_right);
-
-    // Apply the voltages
-    err = pbio_dcmotor_set_voltage(db->left->dcmotor, voltage_left);
+    // The left servo drives at a torque and speed of sum / 2 + dif / 2
+    int32_t feed_forward_left = pbio_observer_get_feedforward_torque(&db->left->observer, sum_rate_ref / 2 + dif_rate_ref / 2, sum_acceleration_ref / 2 + dif_acceleration_ref / 2);
+    err = pbio_servo_actuate(db->left, sum_actuation, sum_torque / 2 + dif_torque / 2 + feed_forward_left);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    return pbio_dcmotor_set_voltage(db->right->dcmotor, voltage_right);
+
+    // The right servo drives at a torque and speed of sum / 2 - dif / 2
+    int32_t feed_forward_right = pbio_observer_get_feedforward_torque(&db->right->observer, sum_rate_ref / 2 - dif_rate_ref / 2, sum_acceleration_ref / 2 - dif_acceleration_ref / 2);
+    return pbio_servo_actuate(db->right, dif_actuation, sum_torque / 2 - dif_torque / 2 + feed_forward_right);
 }
 
 pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int32_t drive_speed, int32_t drive_acceleration) {
