@@ -117,45 +117,28 @@ static void drivebase_get_estimated_state(pbio_drivebase_t *db,
 
 // Actuate a drivebase
 static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_t actuation, int32_t sum_control, int32_t dif_control) {
-    pbio_error_t err;
 
     switch (actuation) {
+        // Coast and brake are both passed on to servo_actuate as-is.
         case PBIO_ACTUATION_COAST:
-            err = pbio_dcmotor_coast(db->left->dcmotor);
-            if (err != PBIO_SUCCESS) {
-                return err;
-            }
-            err = pbio_dcmotor_coast(db->right->dcmotor);
-            if (err != PBIO_SUCCESS) {
-                return err;
-            }
-            // Release claim on servos
+        case PBIO_ACTUATION_BRAKE: {
             pbio_drivebase_claim_servos(db, false);
-            break;
-        case PBIO_ACTUATION_BRAKE:
-            err = pbio_dcmotor_brake(db->left->dcmotor);
+            pbio_error_t err = pbio_servo_actuate(db->left, actuation, 0);
             if (err != PBIO_SUCCESS) {
                 return err;
             }
-            err = pbio_dcmotor_brake(db->right->dcmotor);
-            if (err != PBIO_SUCCESS) {
-                return err;
-            }
-            // Release claim on servos
-            pbio_drivebase_claim_servos(db, false);
-            break;
+            return pbio_servo_actuate(db->right, actuation, 0);
+        }
+        // Hold is achieved by driving 0 distance.
         case PBIO_ACTUATION_HOLD:
-            err = pbio_drivebase_straight(db, 0, db->control_distance.settings.max_rate, db->control_distance.settings.max_rate);
-            break;
+            return pbio_drivebase_straight(db, 0, db->control_distance.settings.max_rate, db->control_distance.settings.max_rate);
         case PBIO_ACTUATION_VOLTAGE:
             return PBIO_ERROR_NOT_IMPLEMENTED;
         case PBIO_ACTUATION_TORQUE:
             return PBIO_ERROR_NOT_IMPLEMENTED;
         default:
-            err = PBIO_ERROR_INVALID_ARG;
-            break;
+            return PBIO_ERROR_INVALID_ARG;
     }
-    return err;
 }
 
 pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio_servo_t *right, fix16_t wheel_diameter, fix16_t axle_track) {
