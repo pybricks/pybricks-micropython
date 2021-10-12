@@ -43,7 +43,7 @@ async def run_usb_repl_script(script_name):
     print("Entered REPL Mode.")
 
     # Run the script and disconnect.
-    await hub.run(script_name, print_output=False)
+    await hub.run(script_name)
     await hub.disconnect()
     return hub.output
 
@@ -200,20 +200,22 @@ with open(build_dir / "hub_output.txt", "wb") as f:
     for line in hub_output:
         f.write(line + b"\n")
 
-# Plot data.
+# Plot single motor data if available.
 try:
-    # Single motor case
     servo_time, servo_data = get_data(build_dir / "servo.txt")
     plot_servo_data(servo_time, servo_data, build_dir)
-    try:
-        # Controlled case.
-        control_time, control_data = get_data(build_dir / "control.txt")
-        plot_control_data(control_time, control_data, build_dir)
-    except (IndexError, FileNotFoundError):
-        # Open loop case or servo only, no control data to parse.
-        pass
-
 except FileNotFoundError:
+    pass
+
+# Plot control data if available.
+try:
+    control_time, control_data = get_data(build_dir / "control.txt")
+    plot_control_data(control_time, control_data, build_dir)
+except (IndexError, FileNotFoundError):
+    pass
+
+# Plot drive base data if available.
+try:
     # Drive base case
     servo_time, servo_data = get_data(build_dir / "servo_left.txt")
     plot_servo_data(servo_time, servo_data, build_dir, "left")
@@ -226,6 +228,8 @@ except FileNotFoundError:
 
     control_time, control_data = get_data(build_dir / "control_heading.txt")
     plot_control_data(control_time, control_data, build_dir, "heading")
+except FileNotFoundError:
+    pass
 
 # If requested, show blocking windows with plots.
 if args.show:
