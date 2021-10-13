@@ -28,7 +28,7 @@ pbio_error_t pbio_battery_init(void) {
     }
 
     // Initialize average voltage.
-    battery_voltage_avg_scaled = (int32_t) battery_voltage_now_mv * SCALE;
+    battery_voltage_avg_scaled = (int32_t)battery_voltage_now_mv * SCALE;
 
     return PBIO_SUCCESS;
 }
@@ -44,7 +44,7 @@ pbio_error_t pbio_battery_update(void) {
     }
 
     // Update moving average.
-    battery_voltage_avg_scaled = (battery_voltage_avg_scaled * 127 + ((int32_t) battery_voltage_now_mv) * SCALE) / 128;
+    battery_voltage_avg_scaled = (battery_voltage_avg_scaled * 127 + ((int32_t)battery_voltage_now_mv) * SCALE) / 128;
 
     return PBIO_SUCCESS;
 }

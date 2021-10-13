@@ -9,10 +9,10 @@
 
 #include <fixmath.h>
 
-#include <pbdrv/battery.h>
 #include <pbdrv/config.h>
 #include <pbdrv/motor.h>
 
+#include <pbio/battery.h>
 #include <pbio/dcmotor.h>
 
 static pbio_dcmotor_t dcmotors[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
@@ -82,60 +82,45 @@ pbio_error_t pbio_dcmotor_brake(pbio_dcmotor_t *dcmotor) {
     return pbdrv_motor_set_duty_cycle(dcmotor->port, 0);
 }
 
-static pbio_error_t pbio_dcmotor_set_duty_cycle_sys(pbio_dcmotor_t *dcmotor, int32_t duty_steps) {
-
-    // Limit the duty cycle value
-    int32_t limit = PBDRV_MAX_DUTY;
-    if (duty_steps > limit) {
-        duty_steps = limit;
-    }
-    if (duty_steps < -limit) {
-        duty_steps = -limit;
-    }
-
-    // Flip sign if motor is inverted
-    if (dcmotor->direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
-        duty_steps = -duty_steps;
-    }
-    pbio_error_t err = pbdrv_motor_set_duty_cycle(dcmotor->port, duty_steps);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    dcmotor->state = PBIO_DCMOTOR_CLAIMED;
-    return PBIO_SUCCESS;
-}
-
 pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) {
 
-    // Get battery voltage.
-    uint16_t battery_voltage;
-    pbio_error_t err = pbdrv_battery_get_voltage_now(&battery_voltage);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
+    // Cap voltage at the configured limit.
     if (voltage > dcmotor->max_voltage) {
         voltage = dcmotor->max_voltage;
     } else if (voltage < -dcmotor->max_voltage) {
         voltage = -dcmotor->max_voltage;
     }
 
-    // Cache value so we can read it back without touching hardware again
+    // Cache value so we can read it back without touching hardware again.
     dcmotor->voltage_now = voltage;
 
-    // Scale requested voltage by battery voltage to get duty cycle.
-    err = pbio_dcmotor_set_duty_cycle_sys(dcmotor, voltage * PBDRV_MAX_DUTY / battery_voltage);
+    // Convert voltage to duty cycle.
+    int32_t duty_cycle = pbio_battery_get_duty_from_voltage(voltage);
+
+    // Flip sign if motor is inverted.
+    if (dcmotor->direction == PBIO_DIRECTION_COUNTERCLOCKWISE) {
+        duty_cycle = -duty_cycle;
+    }
+
+    // Apply the duty cycle.
+    pbio_error_t err = pbdrv_motor_set_duty_cycle(dcmotor->port, duty_cycle);
     if (err != PBIO_SUCCESS) {
         return err;
     }
+
+    // Set status for this motor.
+    dcmotor->state = PBIO_DCMOTOR_CLAIMED;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_dcmotor_set_duty_cycle_usr(pbio_dcmotor_t *dcmotor, int32_t duty_steps) {
-    pbio_error_t err = pbio_dcmotor_set_duty_cycle_sys(dcmotor, duty_steps);
+pbio_error_t pbio_dcmotor_set_voltage_passive(pbio_dcmotor_t *dcmotor, int32_t voltage) {
+    // Call voltage setter that is also used for system purposes.
+    pbio_error_t err = pbio_dcmotor_set_voltage(dcmotor, voltage);
     if (err != PBIO_SUCCESS) {
         return err;
     }
+
+    // Set state to passive since the user controls it now.
     dcmotor->state = PBIO_DCMOTOR_DUTY_PASSIVE;
     return PBIO_SUCCESS;
 }

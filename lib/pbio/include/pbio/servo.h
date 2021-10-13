@@ -52,7 +52,7 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop);
 pbio_error_t pbio_servo_stop_force(pbio_servo_t *srv);
 
 pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_type, int32_t payload);
-pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps);
+pbio_error_t pbio_servo_set_voltage_passive(pbio_servo_t *srv, int32_t voltage);
 
 pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed);
 pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop);

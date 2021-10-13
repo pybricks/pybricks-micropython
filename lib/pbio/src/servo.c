@@ -8,7 +8,7 @@
 #include <pbdrv/clock.h>
 #include <pbdrv/counter.h>
 #include <pbdrv/motor.h>
-#include <pbdrv/battery.h>
+
 #include <pbio/math.h>
 #include <pbio/observer.h>
 #include <pbio/servo.h>
@@ -222,7 +222,7 @@ pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
 
 /* pbio user functions */
 
-pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps) {
+pbio_error_t pbio_servo_set_voltage_passive(pbio_servo_t *srv, int32_t voltage) {
 
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
@@ -230,7 +230,7 @@ pbio_error_t pbio_servo_set_duty_cycle(pbio_servo_t *srv, int32_t duty_steps) {
     }
 
     pbio_control_stop(&srv->control);
-    return pbio_dcmotor_set_duty_cycle_usr(srv->dcmotor, duty_steps);
+    return pbio_dcmotor_set_voltage_passive(srv->dcmotor, voltage);
 }
 
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {

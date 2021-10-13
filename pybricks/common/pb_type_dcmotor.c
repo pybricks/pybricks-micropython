@@ -5,6 +5,8 @@
 
 #if PYBRICKS_PY_COMMON_MOTORS
 
+#include <pbio/battery.h>
+
 #include "py/mphal.h"
 
 #include <pybricks/common.h>
@@ -61,17 +63,19 @@ STATIC mp_obj_t common_DCMotor_duty(size_t n_args, const mp_obj_t *pos_args, mp_
     PB_PARSE_ARGS_METHOD_SKIP_SELF(n_args, pos_args, kw_args,
         PB_ARG_REQUIRED(duty));
 
-    mp_int_t duty = pb_obj_get_int(duty_in);
+    // pbio has only voltage setters now, but the .dc() method will continue to
+    // exist for backwards compatibility. So, we convert duty cycle to voltages.
+    int32_t voltage = pbio_battery_get_voltage_from_duty(pb_obj_get_int(duty_in) * 100);
 
     // Object type is either Motor or DCMotor
     bool is_servo = mp_obj_is_type(pos_args[0], &pb_type_Motor);
 
     if (is_servo) {
         common_Motor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-        pb_assert(pbio_servo_set_duty_cycle(self->srv, duty * 100));
+        pb_assert(pbio_servo_set_voltage_passive(self->srv, voltage));
     } else {
         common_DCMotor_obj_t *self = MP_OBJ_TO_PTR(pos_args[0]);
-        pb_assert(pbio_dcmotor_set_duty_cycle_usr(self->dcmotor, duty * 100));
+        pb_assert(pbio_dcmotor_set_voltage_passive(self->dcmotor, voltage));
     }
 
     return mp_const_none;
@@ -110,7 +114,7 @@ STATIC mp_obj_t common_DCMotor_brake(mp_obj_t self_in) {
         common_DCMotor_obj_t *self = MP_OBJ_TO_PTR(self_in);
         #if PYBRICKS_PY_EV3DEVICES
         // Workaround for ev3dev dc-motor not coasting on first try
-        pb_assert(pbio_dcmotor_set_duty_cycle_usr(self->dcmotor, 1));
+        pb_assert(pbio_dcmotor_set_voltage_passive(self->dcmotor, 100));
         mp_hal_delay_ms(1);
         #endif
         pb_assert(pbio_dcmotor_brake(self->dcmotor));

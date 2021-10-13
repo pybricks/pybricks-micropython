@@ -41,7 +41,7 @@ pbio_error_t pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_passivity_t *s
 pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor);
 pbio_error_t pbio_dcmotor_brake(pbio_dcmotor_t *dcmotor);
 pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage);
-pbio_error_t pbio_dcmotor_set_duty_cycle_usr(pbio_dcmotor_t *dcmotor, int32_t duty_steps);
+pbio_error_t pbio_dcmotor_set_voltage_passive(pbio_dcmotor_t *dcmotor, int32_t voltage);
 
 pbio_error_t pbio_dcmotor_load_settings(pbio_dcmotor_t *dcmotor, pbio_iodev_type_id_t id);
 
@@ -67,7 +67,7 @@ static inline pbio_error_t pbio_dcmotor_brake(pbio_dcmotor_t *dcmotor) {
 static inline pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline pbio_error_t pbio_dcmotor_set_duty_cycle_usr(pbio_dcmotor_t *dcmotor, int32_t duty_steps) {
+static inline pbio_error_t pbio_dcmotor_set_voltage_passive(pbio_dcmotor_t *dcmotor, int32_t voltage) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline void pbio_dcmotor_get_settings(pbio_dcmotor_t *dcmotor, int32_t *max_voltage) {
