@@ -56,7 +56,17 @@ int32_t pbio_battery_get_average_voltage(void) {
 
 // Gets the duty cycle required to output the desired voltage.
 int32_t pbio_battery_get_duty_from_voltage(int32_t voltage) {
-    return voltage * PBDRV_MAX_DUTY / (battery_voltage_avg_scaled / SCALE);
+    // Calculate unbounded duty cycle value.
+    int32_t duty_cycle = voltage * PBDRV_MAX_DUTY / (battery_voltage_avg_scaled / SCALE);
+
+    // Return bounded duty cycle value.
+    if (duty_cycle > PBDRV_MAX_DUTY) {
+        return PBDRV_MAX_DUTY;
+    }
+    if (duty_cycle < -PBDRV_MAX_DUTY) {
+        return -PBDRV_MAX_DUTY;
+    }
+    return duty_cycle;
 }
 
 // Gets the voltage resulting from the given duty cycle.
