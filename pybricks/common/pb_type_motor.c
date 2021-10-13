@@ -7,7 +7,7 @@
 
 #include <pbio/motor_process.h>
 
-#include <pbdrv/battery.h>
+#include <pbio/battery.h>
 
 #include <pbio/dcmotor.h>
 #include <pbio/servo.h>
@@ -224,9 +224,7 @@ STATIC mp_obj_t common_Motor_run_until_stalled(size_t n_args, const mp_obj_t *po
         // replaced by a voltage limit. Since we can't break the user API, we
         // convert the user duty limit (0--100) to a voltage by scaling it with
         // the battery voltage level, giving the same behavior as before.
-        uint16_t battery_voltage;
-        pb_assert(pbdrv_battery_get_voltage_now(&battery_voltage));
-        uint32_t max_voltage = battery_voltage * pb_obj_get_pct(duty_limit_in) / 100;
+        uint32_t max_voltage = pbio_battery_get_voltage_from_duty(pb_obj_get_pct(duty_limit_in) * 100);
 
         // Apply the user limit
         pb_assert(pbio_dcmotor_set_settings(self->srv->dcmotor, max_voltage));
