@@ -203,6 +203,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	platform/motors/settings.c \
 	platform/$(PBIO_PLATFORM)/platform.c \
 	platform/$(PBIO_PLATFORM)/sys.c \
+	src/battery.c \
 	src/color/conversion.c \
 	src/control.c \
 	src/dcmotor.c \
