@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
+#include <pbio/battery.h>
 #include <pbio/control.h>
 #include <pbio/drivebase.h>
 #include <pbio/motor_process.h>
@@ -33,6 +34,9 @@ pbio_error_t pbio_motor_process_get_servo(pbio_port_id_t port, pbio_servo_t **sr
 
 void pbio_motor_process_reset(void) {
 
+    // Initialize battery voltage.
+    pbio_battery_init();
+
     // Force stop the drivebase
     pbio_drivebase_stop_force(&drivebase);
 
@@ -62,6 +66,9 @@ PROCESS_THREAD(pbio_motor_process, ev, data) {
 
     for (;;) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+
+        // Update battery voltage.
+        pbio_battery_update();
 
         // Update drivebase
         pbio_drivebase_update(&drivebase);
