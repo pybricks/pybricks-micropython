@@ -109,8 +109,6 @@ ZIP = zip
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
 PYBRICKSDEV = pybricksdev
-BUILD_DUAL_BOOT_BIN = $(PBTOP)/tools/build-dual-boot-bin.py
-BUILD_DUAL_BOOT_INSTALLER = $(PBTOP)/tools/build-dual-boot-installer.py
 CHECKSUM = $(PBTOP)/tools/checksum.py
 CHECKSUM_TYPE ?= xor
 METADATA = $(PBTOP)/tools/metadata.py
@@ -478,10 +476,6 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	sys/user_program.c \
 	)
 
-PBIO_DUAL_BOOT_SRC_C = $(addprefix lib/pbio/,\
-	platform/$(PBIO_PLATFORM)/dual_boot.c \
-	)
-
 # STM32 IMU Library
 
 LSM6DS3TR_C_SRC_C = lib/lsm6ds3tr_c_STdC/driver/lsm6ds3tr_c_reg.c
@@ -552,7 +546,6 @@ OBJ += $(addprefix $(BUILD)/, $(CONTIKI_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LIBFIXMATH_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(LWRB_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(PBIO_SRC_C:.c=.o))
-DUAL_BOOT_OBJ += $(addprefix $(BUILD)/, $(PBIO_DUAL_BOOT_SRC_C:.c=.o))
 OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 ifeq ($(PB_LIB_STM32_USB_DEVICE),1)
 OBJ += $(addprefix $(BUILD)/, $(SRC_STM32_USB_DEV:.c=.o))
@@ -623,33 +616,6 @@ $(BUILD)/firmware-base.bin: $(BUILD)/firmware-no-checksum.elf
 	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .name $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
-# firmware blob with different starting flash memory address for dual booting
-$(BUILD)/firmware-dual-boot-base.elf: $(LD_FILES) $(OBJ) $(DUAL_BOOT_OBJ)
-	$(ECHO) "LINK $@"
-	$(Q)$(LD) --defsym=CHECKSUM=0 --defsym=DUAL_BOOT=1 $(LDFLAGS) -o $@ $(OBJ) $(DUAL_BOOT_OBJ) $(LIBS)
-	$(Q)$(SIZE) -A $@
-
-# firmware blob without main.mpy or checksum - use as base for appending other .mpy
-$(BUILD)/firmware-dual-boot-base.bin: $(BUILD)/firmware-dual-boot-base.elf
-	$(ECHO) "BIN creating dual-boot firmware base file"
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .name $^ $@
-	$(ECHO) "`wc -c < $@` bytes"
-
-# firmware blob without main.mpy or checksum - use as base for appending other .mpy
-$(BUILD)/firmware-dual-boot.bin: $(BUILD)/firmware-dual-boot-base.bin $(BUILD_DUAL_BOOT_BIN) $(BASE_FW)
-	$(Q)if [ -z "$(BASE_FW)" ]; then \
-		echo "ERROR missing BASE_FW=... argument in make command"; \
-		exit 1; \
-	fi
-	$(ECHO) "BIN creating dual-boot firmware file"
-	$(Q)$(PYTHON) $(BUILD_DUAL_BOOT_BIN) $(BASE_FW) $< $@
-	$(ECHO) "`wc -c < $@` bytes"
-
-# firmware wrapped in special format for install with official apps
-$(BUILD)/install_pybricks_hash.txt $(BUILD)/install_pybricks.py: $(BUILD)/firmware-dual-boot-base.bin
-	$(ECHO) "Creating dual boot firmware installer"
-	$(Q)$(PYTHON) $(BUILD_DUAL_BOOT_INSTALLER) $(FW_VERSION)
-
 $(BUILD)/firmware.metadata.json: $(BUILD)/firmware-no-checksum.elf $(METADATA)
 	$(ECHO) "META creating firmware metadata"
 	$(Q)$(METADATA) $(FW_VERSION) $(PBIO_PLATFORM) $(MPY_CROSS_FLAGS) $<.map $@
@@ -660,12 +626,6 @@ ZIP_FILES := \
 	$(BUILD)/firmware.metadata.json \
 	main.py \
 	ReadMe_OSS.txt \
-
-ifeq ($(PB_DUAL_BOOT),1)
-ZIP_FILES += $(BUILD)/firmware-dual-boot-base.bin
-ZIP_FILES += $(BUILD)/install_pybricks_hash.txt
-ZIP_FILES += $(BUILD)/install_pybricks.py
-endif
 
 $(BUILD)/firmware.zip: $(ZIP_FILES)
 	$(ECHO) "ZIP creating firmware package"
@@ -684,8 +644,6 @@ deploy-dfu-%: $(BUILD)/%.dfu
 	$(Q)$(PYTHON) $(PYDFU) -u $< $(if $(DFU_VID),--vid $(DFU_VID)) $(if $(DFU_PID),--pid $(DFU_PID))
 
 deploy-dfu: deploy-dfu-firmware
-
-deploy-dfu-dual-boot: deploy-dfu-firmware-dual-boot
 
 deploy-openocd: $(BUILD)/firmware-no-checksum.bin
 	$(ECHO) "Writing $< to the board via ST-LINK using OpenOCD"

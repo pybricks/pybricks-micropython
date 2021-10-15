@@ -226,15 +226,6 @@ jobs:
         path: |
           bricks/${{ matrix.hub }}/main.py
           bricks/${{ matrix.hub }}/ReadMe_OSS.txt
-    - name: Upload install_pybricks.*
-      if: ${{ success() && (matrix.hub == 'essentialhub' || matrix.hub == 'primehub') }}
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{ matrix.hub }}-firmware
-        path: |
-          bricks/${{ matrix.hub }}/build/firmware-dual-boot-base.bin
-          bricks/${{ matrix.hub }}/build/install_pybricks.py
-          bricks/${{ matrix.hub }}/build/install_pybricks_hash.txt
 
   debug:
     name: debug firmware

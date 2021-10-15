@@ -473,10 +473,6 @@ void I2C3_EV_IRQHandler(void) {
 
 // Early initialization
 
-// optional handling for dual-boot firmware
-__WEAK void pbio_platform_dual_boot(void) {
-}
-
 // special memory addresses defined in linker script
 extern uint32_t *_fw_isr_vector_src;
 
@@ -516,9 +512,6 @@ void SystemInit(void) {
     clk_init.APB2CLKDivider = RCC_HCLK_DIV1; // 96MHz
 
     HAL_RCC_ClockConfig(&clk_init, FLASH_LATENCY_5);
-
-    // If we are running dual boot, jump to other firmware if no buttons are pressed
-    pbio_platform_dual_boot();
 
     // enable clocks
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN |
