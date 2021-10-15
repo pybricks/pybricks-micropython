@@ -550,7 +550,9 @@ OBJ += $(addprefix $(BUILD)/, $(SRC_LIBM:.c=.o))
 ifeq ($(PB_LIB_STM32_USB_DEVICE),1)
 OBJ += $(addprefix $(BUILD)/, $(SRC_STM32_USB_DEV:.c=.o))
 endif
+ifeq ($(PB_INCLUDE_MAIN_MPY),1)
 OBJ += $(BUILD)/main.mpy.o
+endif
 
 $(BUILD)/main.mpy: main.py
 	$(ECHO) "MPY $<"
@@ -591,6 +593,13 @@ endif
 FW_CHECKSUM := $$($(CHECKSUM) $(CHECKSUM_TYPE) $(BUILD)/firmware-no-checksum.bin $(PB_FIRMWARE_MAX_SIZE))
 FW_VERSION := $(shell $(GIT) describe --tags --dirty --always --exclude "@pybricks/*")
 
+# Sections to include in the binary
+ifeq ($(PB_INCLUDE_MAIN_MPY),1)
+SECTIONS := -j .isr_vector -j .text -j .data -j .name -j .user -j .checksum
+else
+SECTIONS := -j .isr_vector -j .text -j .data -j .name -j .checksum
+endif
+
 $(BUILD)/firmware-no-checksum.elf: $(LD_FILES) $(OBJ)
 	$(ECHO) "LINK $@"
 	$(Q)$(LD) --defsym=CHECKSUM=0 $(LDFLAGS) -o $@ $(OBJ) $(LIBS)
@@ -598,7 +607,7 @@ $(BUILD)/firmware-no-checksum.elf: $(LD_FILES) $(OBJ)
 
 # firmware blob used to calculate checksum
 $(BUILD)/firmware-no-checksum.bin: $(BUILD)/firmware-no-checksum.elf
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .name -j .user -j .checksum $^ $@
+	$(Q)$(OBJCOPY) -O binary $(SECTIONS) $^ $@
 
 $(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 	$(ECHO) "RELINK $@"
@@ -607,7 +616,7 @@ $(BUILD)/firmware.elf: $(BUILD)/firmware-no-checksum.bin $(OBJ)
 # firmware blob with main.mpy and checksum appended - can be flashed to hub
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(ECHO) "BIN creating firmware file"
-	$(Q)$(OBJCOPY) -O binary -j .isr_vector -j .text -j .data -j .name -j .user -j .checksum $^ $@
+	$(Q)$(OBJCOPY) -O binary $(SECTIONS) $^ $@
 	$(ECHO) "`wc -c < $@` bytes"
 
 # firmware blob without main.mpy or checksum - use as base for appending other .mpy
@@ -622,10 +631,14 @@ $(BUILD)/firmware.metadata.json: $(BUILD)/firmware-no-checksum.elf $(METADATA)
 
 # firmware.zip file
 ZIP_FILES := \
-	$(BUILD)/firmware-base.bin \
 	$(BUILD)/firmware.metadata.json \
-	main.py \
 	ReadMe_OSS.txt \
+
+ifeq ($(PB_INCLUDE_MAIN_MPY),1)
+ZIP_FILES += main.py $(BUILD)/firmware-base.bin
+else
+ZIP_FILES += $(BUILD)/firmware.bin
+endif
 
 $(BUILD)/firmware.zip: $(ZIP_FILES)
 	$(ECHO) "ZIP creating firmware package"
