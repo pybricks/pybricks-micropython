@@ -638,6 +638,7 @@ ifeq ($(PB_INCLUDE_MAIN_MPY),1)
 ZIP_FILES += main.py $(BUILD)/firmware-base.bin
 else
 ZIP_FILES += $(BUILD)/firmware.bin
+ZIP_FILES += $(PBTOP)/bricks/stm32/install_pybricks.py
 endif
 
 $(BUILD)/firmware.zip: $(ZIP_FILES)
