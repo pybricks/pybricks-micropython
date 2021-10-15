@@ -4,17 +4,19 @@
 
 ## [Unreleased]
 
-### Changed:
+### Changed
 - Dropped `integral_range` argument from `Control.pid()`. This setting was
   ineffective and never used. When set incorrectly, the motor could get stuck
   for certain combinations of `kp` and `ki`.
 - Improved motor behavior for cases with low-speed, low-load, but high
-  inertia. ([support#366])
+  inertia ([support#366]).
 
 ### Fixed
 - Fixed `then=Stop.COAST` being ignored in most motor commands.
+- Fixed `brake()`/`light.off()` not working on Move hub I/O port C ([support#501]).
 
 [support#366]: https://github.com/pybricks/support/issues/366
+[support#501]: https://github.com/pybricks/support/issues/501
 
 ## [3.1.0b1] - 2021-08-21
 
@@ -31,7 +33,7 @@
   ([support#304]).
 - City/Technic hubs not connecting via Bluetooth on macOS 12 ([support#489]).
 
-### Changed:
+### Changed
 - Updated to MicroPython v1.17.
 
 [support#304]: https://github.com/pybricks/support/issues/304

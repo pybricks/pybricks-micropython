@@ -66,6 +66,7 @@ static void pbdrv_motor_brake(pbio_port_id_t port) {
             pbdrv_gpio_out_high(&port_b_pin_1);
             pbdrv_gpio_out_high(&port_b_pin_2);
             break;
+        case PBIO_PORT_ID_C:
             pbdrv_gpio_out_high(&port_c_pin_1);
             pbdrv_gpio_out_high(&port_c_pin_2);
             break;
