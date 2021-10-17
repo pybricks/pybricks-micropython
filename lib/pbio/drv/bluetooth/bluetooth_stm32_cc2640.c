@@ -1280,14 +1280,14 @@ static PT_THREAD(gap_init(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
-    // Set scan timeout on btchip to infinite. Seperate timout
+    // Set scan timeout on btchip to infinite. Seperate timeout
     // is implemented to stop program and thus scan
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_SetParamValue(TGAP_GEN_DISC_SCAN, 0);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
-    // Set scan timeout on btchip to infinite. Seperate timout
+    // Set scan timeout on btchip to infinite. Seperate timeout
     // is implemented to stop program and thus scan
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_SetParamValue(TGAP_LIM_DISC_SCAN, 0);
