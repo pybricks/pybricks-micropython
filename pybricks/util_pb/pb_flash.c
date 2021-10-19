@@ -148,9 +148,10 @@ static HAL_StatusTypeDef flash_send_address_command(uint8_t command, uint32_t ad
         return HAL_ERROR;
     }
 
-    // Pack command and address as big endian
+    // Pack command and address as big endian. This is the absolute address,
+    // starting in the boot partition.
     uint8_t data[5] = {command};
-    pbio_set_uint32_be(&data[1], address + FLASH_SIZE_BOOT);
+    pbio_set_uint32_be(&data[1], address);
 
     // Enable flash
     flash_enable(true);
@@ -166,8 +167,12 @@ static HAL_StatusTypeDef flash_send_address_command(uint8_t command, uint32_t ad
 
 static HAL_StatusTypeDef flash_read(uint32_t address, uint8_t *buffer, uint32_t size) {
 
-    // Enable flash and send the read command with address
-    HAL_StatusTypeDef err = flash_send_address_command(FLASH_CMD_READ_DATA, address);
+    if (address + size > FLASH_SIZE_USER) {
+        return HAL_ERROR;
+    }
+
+    // Enable flash and send the read command with address, offset by boot partition
+    HAL_StatusTypeDef err = flash_send_address_command(FLASH_CMD_READ_DATA, address + FLASH_SIZE_BOOT);
 
     // Receive data
     err = HAL_SPI_Receive(&hspi2, buffer, size, FLASH_TIMEOUT);
@@ -185,14 +190,18 @@ static HAL_StatusTypeDef write_enable() {
 
 static HAL_StatusTypeDef flash_write(uint32_t address, const uint8_t *buffer, uint32_t size) {
 
+    if (address + size > FLASH_SIZE_USER) {
+        return HAL_ERROR;
+    }
+
     // Enable write mode
     HAL_StatusTypeDef err = write_enable();
     if (err != HAL_OK) {
         return err;
     }
 
-    // Enable flash and send the write command with address
-    err = flash_send_address_command(FLASH_CMD_WRITE_DATA, address);
+    // Enable flash and send the write command with address, offset by boot partition
+    err = flash_send_address_command(FLASH_CMD_WRITE_DATA, address + FLASH_SIZE_BOOT);
 
     // Write the data
     err = HAL_SPI_Transmit(&hspi2, (uint8_t *)buffer, size, FLASH_TIMEOUT);
@@ -205,14 +214,18 @@ static HAL_StatusTypeDef flash_write(uint32_t address, const uint8_t *buffer, ui
 
 static HAL_StatusTypeDef flash_block_erase(uint32_t address) {
 
+    if (address > FLASH_SIZE_USER) {
+        return HAL_ERROR;
+    }
+
     // Enable write mode
     HAL_StatusTypeDef err = write_enable();
     if (err != HAL_OK) {
         return err;
     }
 
-    // Enable flash and send the erase block command with address
-    err = flash_send_address_command(FLASH_CMD_ERASE_BLOCK, address);
+    // Enable flash and send the erase block command with address, offset by boot partition
+    err = flash_send_address_command(FLASH_CMD_ERASE_BLOCK, address + FLASH_SIZE_BOOT);
     flash_enable(false);
     if (err != HAL_OK) {
         return err;
