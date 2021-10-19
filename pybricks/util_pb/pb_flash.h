@@ -22,8 +22,11 @@ pbio_error_t pb_flash_file_open_get_size(const char *path, uint32_t *size);
 // Read the file that has been opened, all at once, then close.
 pbio_error_t pb_flash_file_read(uint8_t *buf, uint32_t size);
 
-// Open a file for writing, write data, anc close.
+// Open a file for writing, write data, and close.
 pbio_error_t pb_flash_file_write(const char *path, const uint8_t *buf, uint32_t size);
+
+// Restore a previously backed up firmware file.
+pbio_error_t pb_flash_restore_firmware(void);
 
 #endif
 

@@ -25,6 +25,9 @@
 #define FLASH_SIZE_TOTAL (0x2000000)
 #define FLASH_SIZE_BOOT  (0x100000)
 #define FLASH_SIZE_USER  (FLASH_SIZE_TOTAL - FLASH_SIZE_BOOT)
+#define FLASH_SIZE_ERASE  (0x1000)
+#define FLASH_SIZE_SIZE (4)
+#define FLASH_SIZE_WRITE (256)
 
 #define FLASH_TIMEOUT (100)
 
@@ -113,6 +116,7 @@ static HAL_StatusTypeDef flash_status_read(uint8_t *status) {
     flash_enable(true);
     HAL_StatusTypeDef err = HAL_SPI_Transmit(&hspi2, &command, sizeof(command), FLASH_TIMEOUT);
     if (err != HAL_OK) {
+        flash_enable(false);
         return err;
     }
 
@@ -122,7 +126,7 @@ static HAL_StatusTypeDef flash_status_read(uint8_t *status) {
     return err;
 }
 
-static HAL_StatusTypeDef flash_wait_ready() {
+static HAL_StatusTypeDef flash_wait_ready(void) {
     uint8_t status = FLASH_STATUS_BUSY | FLASH_STATUS_WRITE_ENABLED;
     HAL_StatusTypeDef err;
     uint32_t start_time = mp_hal_ticks_ms();
@@ -136,12 +140,19 @@ static HAL_StatusTypeDef flash_wait_ready() {
         if (mp_hal_ticks_ms() - start_time > FLASH_TIMEOUT) {
             return HAL_TIMEOUT;
         }
-        MICROPY_EVENT_POLL_HOOK;
     }
     return HAL_OK;
 }
 
-static HAL_StatusTypeDef flash_send_address_command(uint8_t command, uint32_t address) {
+static HAL_StatusTypeDef flash_write_enable(void) {
+    uint8_t command = FLASH_CMD_WRITE_ENABLE;
+    flash_enable(true);
+    HAL_StatusTypeDef err = HAL_SPI_Transmit(&hspi2, &command, sizeof(command), FLASH_TIMEOUT);
+    flash_enable(false);
+    return err;
+}
+
+static HAL_StatusTypeDef flash_send_address_command(uint8_t command, uint32_t address, bool keep_flash_enabled) {
 
     // Can only read/write user partition
     if (address > FLASH_SIZE_USER) {
@@ -162,17 +173,23 @@ static HAL_StatusTypeDef flash_send_address_command(uint8_t command, uint32_t ad
         flash_enable(false);
         return err;
     }
-    return err;
-}
 
-static HAL_StatusTypeDef flash_read(uint32_t address, uint8_t *buffer, uint32_t size) {
-
-    if (address + size > FLASH_SIZE_USER) {
-        return HAL_ERROR;
+    // On success, keep flash enabled if we are asked to
+    if (!keep_flash_enabled) {
+        flash_enable(false);
     }
 
+    return HAL_OK;
+}
+
+static HAL_StatusTypeDef flash_raw_read(uint32_t address, uint8_t *buffer, uint32_t size) {
+
     // Enable flash and send the read command with address, offset by boot partition
-    HAL_StatusTypeDef err = flash_send_address_command(FLASH_CMD_READ_DATA, address + FLASH_SIZE_BOOT);
+    HAL_StatusTypeDef err = flash_send_address_command(FLASH_CMD_READ_DATA, address, true);
+    if (err != HAL_OK) {
+        flash_enable(false);
+        return err;
+    }
 
     // Receive data
     err = HAL_SPI_Receive(&hspi2, buffer, size, FLASH_TIMEOUT);
@@ -180,28 +197,21 @@ static HAL_StatusTypeDef flash_read(uint32_t address, uint8_t *buffer, uint32_t 
     return err;
 }
 
-static HAL_StatusTypeDef write_enable() {
-    uint8_t command = FLASH_CMD_WRITE_ENABLE;
-    flash_enable(true);
-    HAL_StatusTypeDef err = HAL_SPI_Transmit(&hspi2, &command, sizeof(command), FLASH_TIMEOUT);
-    flash_enable(false);
-    return err;
-}
 
-static HAL_StatusTypeDef flash_write(uint32_t address, const uint8_t *buffer, uint32_t size) {
-
-    if (address + size > FLASH_SIZE_USER) {
-        return HAL_ERROR;
-    }
+static HAL_StatusTypeDef flash_raw_write(uint32_t address, const uint8_t *buffer, uint32_t size) {
 
     // Enable write mode
-    HAL_StatusTypeDef err = write_enable();
+    HAL_StatusTypeDef err = flash_write_enable();
     if (err != HAL_OK) {
         return err;
     }
 
     // Enable flash and send the write command with address, offset by boot partition
-    err = flash_send_address_command(FLASH_CMD_WRITE_DATA, address + FLASH_SIZE_BOOT);
+    err = flash_send_address_command(FLASH_CMD_WRITE_DATA, address, true);
+    if (err != HAL_OK) {
+        flash_enable(false);
+        return err;
+    }
 
     // Write the data
     err = HAL_SPI_Transmit(&hspi2, (uint8_t *)buffer, size, FLASH_TIMEOUT);
@@ -212,25 +222,42 @@ static HAL_StatusTypeDef flash_write(uint32_t address, const uint8_t *buffer, ui
     return flash_wait_ready();
 }
 
-static HAL_StatusTypeDef flash_block_erase(uint32_t address) {
-
-    if (address > FLASH_SIZE_USER) {
-        return HAL_ERROR;
-    }
+static HAL_StatusTypeDef flash_raw_block_erase(uint32_t address) {
 
     // Enable write mode
-    HAL_StatusTypeDef err = write_enable();
+    HAL_StatusTypeDef err = flash_write_enable();
     if (err != HAL_OK) {
         return err;
     }
 
     // Enable flash and send the erase block command with address, offset by boot partition
-    err = flash_send_address_command(FLASH_CMD_ERASE_BLOCK, address + FLASH_SIZE_BOOT);
-    flash_enable(false);
+    err = flash_send_address_command(FLASH_CMD_ERASE_BLOCK, address, false);
     if (err != HAL_OK) {
         return err;
     }
     return flash_wait_ready();
+}
+
+
+static HAL_StatusTypeDef flash_user_read(uint32_t address, uint8_t *buffer, uint32_t size) {
+    if (address + size > FLASH_SIZE_USER) {
+        return HAL_ERROR;
+    }
+    return flash_raw_read(address + FLASH_SIZE_BOOT, buffer, size);
+}
+
+static HAL_StatusTypeDef flash_user_write(uint32_t address, const uint8_t *buffer, uint32_t size) {
+    if (address + size > FLASH_SIZE_USER) {
+        return HAL_ERROR;
+    }
+    return flash_raw_write(address + FLASH_SIZE_BOOT, buffer, size);
+}
+
+static HAL_StatusTypeDef flash_user_block_erase(uint32_t address) {
+    if (address > FLASH_SIZE_USER) {
+        return HAL_ERROR;
+    }
+    return flash_raw_block_erase(address + FLASH_SIZE_BOOT);
 }
 
 static int block_device_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size) {
@@ -246,7 +273,7 @@ static int block_device_read(const struct lfs_config *c, lfs_block_t block, lfs_
         }
 
         // Read chunk of flash.
-        if (flash_read(block * c->block_size + off + done, buffer + done, read_now) != HAL_OK) {
+        if (flash_user_read(block * c->block_size + off + done, buffer + done, read_now) != HAL_OK) {
             return LFS_ERR_IO;
         }
         done += read_now;
@@ -254,7 +281,7 @@ static int block_device_read(const struct lfs_config *c, lfs_block_t block, lfs_
         // Give MicroPython and PBIO some time.
         MICROPY_EVENT_POLL_HOOK;
     }
-    return 0;
+    return LFS_ERR_OK;
 }
 
 static int block_device_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size) {
@@ -277,7 +304,7 @@ static int block_device_prog(const struct lfs_config *c, lfs_block_t block, lfs_
         }
 
         // Write chunk of flash.
-        if (flash_write(block * c->block_size + off + done, buffer + done, write_now) != HAL_OK) {
+        if (flash_user_write(block * c->block_size + off + done, buffer + done, write_now) != HAL_OK) {
             return LFS_ERR_IO;
         }
         done += write_now;
@@ -286,15 +313,19 @@ static int block_device_prog(const struct lfs_config *c, lfs_block_t block, lfs_
         MICROPY_EVENT_POLL_HOOK;
     }
 
-    return 0;
+    return LFS_ERR_OK;
 }
 
 static int block_device_erase(const struct lfs_config *c, lfs_block_t block) {
     // Erase block of flash. Block size assumed to match erase size.
 
-    if (flash_block_erase(block * c->block_size) != HAL_OK) {
+    if (flash_user_block_erase(block * c->block_size) != HAL_OK) {
         return LFS_ERR_IO;
     }
+
+    // Give MicroPython and PBIO some time.
+    MICROPY_EVENT_POLL_HOOK;
+
     return LFS_ERR_OK;
 }
 
@@ -344,7 +375,7 @@ pbio_error_t pb_flash_init(void) {
     uint8_t lfs_data[58];
 
     // Read littlefs data
-    if (flash_read(0, lfs_data, sizeof(lfs_data)) != HAL_OK) {
+    if (flash_user_read(0, lfs_data, sizeof(lfs_data)) != HAL_OK) {
         return PBIO_ERROR_IO;
     }
 
@@ -384,10 +415,26 @@ pbio_error_t pb_flash_init(void) {
 
 pbio_error_t pb_flash_raw_read(uint32_t address, uint8_t *buf, uint32_t size) {
 
-    if (flash_read(address, buf, size) != HAL_OK) {
+    if (flash_raw_read(address, buf, size) != HAL_OK) {
         return PBIO_ERROR_FAILED;
     }
     return PBIO_SUCCESS;
+}
+
+int lfs_file_open_retry(const char *path, int flags) {
+    // Try to open the file
+    int err = lfs_file_open(&lfs, &file, path, flags);
+
+    // If file is already open, close it and retry
+    if (err == LFS_ERR_NOMEM) {
+        err = lfs_file_close(&lfs, &file);
+        if (err != LFS_ERR_OK) {
+            return err;
+        }
+
+        err = lfs_file_open(&lfs, &file, path, flags);
+    }
+    return err;
 }
 
 pbio_error_t pb_flash_file_open_get_size(const char *path, uint32_t *size) {
@@ -398,7 +445,7 @@ pbio_error_t pb_flash_file_open_get_size(const char *path, uint32_t *size) {
     }
 
     // Open file
-    if (lfs_file_open(&lfs, &file, path, LFS_O_RDONLY) != LFS_ERR_OK) {
+    if (lfs_file_open_retry(path, LFS_O_RDONLY) != LFS_ERR_OK) {
         return PBIO_ERROR_FAILED;
     }
     *size = file.size;
@@ -437,7 +484,7 @@ pbio_error_t pb_flash_file_write(const char *path, const uint8_t *buf, uint32_t 
     }
 
     // Open file
-    if (lfs_file_open(&lfs, &file, path, LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC) != LFS_ERR_OK) {
+    if (lfs_file_open_retry(path, LFS_O_WRONLY | LFS_O_CREAT | LFS_O_TRUNC) != LFS_ERR_OK) {
         return PBIO_ERROR_FAILED;
     }
 
@@ -450,6 +497,121 @@ pbio_error_t pb_flash_file_write(const char *path, const uint8_t *buf, uint32_t 
     if (lfs_file_close(&lfs, &file) != LFS_ERR_OK) {
         return PBIO_ERROR_FAILED;
     }
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pb_flash_restore_firmware(void) {
+    // Check that flash was initialized
+    if (!flash_initialized) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    mp_printf(&mp_plat_print, "Checking firmware files.\n");
+
+    // Open meta file
+    if (lfs_file_open_retry("_firmware/lego-firmware.metadata.json", LFS_O_RDONLY) != LFS_ERR_OK) {
+        return PBIO_ERROR_FAILED;
+    }
+    // Read meta file
+    char *meta_data = m_new(char, file.size);
+    if (lfs_file_read(&lfs, &file, meta_data, file.size) != file.size) {
+        return PBIO_ERROR_FAILED;
+    }
+    // Close meta file
+    if (lfs_file_close(&lfs, &file) != LFS_ERR_OK) {
+        return PBIO_ERROR_FAILED;
+    }
+
+    // Check for device ID in meta data. Todo: Generalize.
+    const char hub_id_key[] = "\"device-id\":";
+    char *hub_id_data = strstr(meta_data, hub_id_key) + sizeof(hub_id_key);
+    if (strncmp(hub_id_data, "129", 3)) {
+        return PBIO_ERROR_FAILED;
+    }
+
+    mp_printf(&mp_plat_print, "Preparing to restore firmware.\n");
+
+    HAL_StatusTypeDef err;
+
+    // Erase boot partition
+    for (uint32_t address = 0; address < FLASH_SIZE_BOOT; address += FLASH_SIZE_ERASE) {
+        err = flash_raw_block_erase(address);
+        if (err != HAL_OK) {
+            return PBIO_ERROR_IO;
+        }
+        MICROPY_EVENT_POLL_HOOK;
+    }
+
+    mp_printf(&mp_plat_print, "Restoring firmware.\n");
+
+    // Todo: verify the other meta data details, like size.
+
+    // Open firmware file
+    if (lfs_file_open_retry("_firmware/lego-firmware.bin", LFS_O_RDONLY) != LFS_ERR_OK) {
+        return PBIO_ERROR_FAILED;
+    }
+
+    // All known back up firmwares are much larger than this.
+    if (file.size < 128 * 1024) {
+        // TODO: Check that sha256 matches metadata
+        return PBIO_ERROR_FAILED;
+    }
+
+    // Initialize buffers
+    lfs_size_t done = 0;
+    lfs_size_t read_size, write_size;
+    uint8_t buf[FLASH_SIZE_WRITE];
+    uint8_t *buf_start;
+
+    // Read/write the firmware page by page
+    while (done < file.size) {
+
+        // The first page is a special case
+        if (done == 0) {
+            // It starts of with the firmware size
+            pbio_set_uint32_le(buf, file.size);
+
+            // We read just enough to fill up the page
+            buf_start = buf + FLASH_SIZE_SIZE;
+            read_size = FLASH_SIZE_WRITE - FLASH_SIZE_SIZE;
+
+            // We still write a full page
+            write_size = FLASH_SIZE_WRITE;
+        }
+        // Otherwise, we just look at how much is remaining
+        else {
+            // Take the remaining size, or at most one page
+            read_size = file.size - done;
+            if (read_size > sizeof(buf)) {
+                read_size = sizeof(buf);
+            }
+            // We write as much as we read
+            write_size = read_size;
+            buf_start = buf;
+        }
+
+        // Read data from the firmware backup file
+        if (lfs_file_read(&lfs, &file, buf_start, read_size) != read_size) {
+            return PBIO_ERROR_FAILED;
+        }
+
+        // Write the data
+        err = flash_raw_write(done == 0 ? 0 : done + 4, buf, write_size);
+        if (err != HAL_OK) {
+            return PBIO_ERROR_IO;
+        }
+
+        done += read_size;
+    }
+
+    // Close firmware file
+    if (lfs_file_close(&lfs, &file) != LFS_ERR_OK) {
+        return PBIO_ERROR_FAILED;
+    }
+
+    mp_printf(&mp_plat_print, "Done. You may now reboot. Please keep USB attached.\n");
+
+
     return PBIO_SUCCESS;
 }
 
