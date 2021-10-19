@@ -102,6 +102,22 @@ void pbio_set_uint32_le(uint8_t *buf, uint32_t value) {
     buf[3] = value >> 24;
 }
 
+#ifndef DOXYGEN
+static inline
+#endif
+/**
+ * Packs 32-bit big endian value into buffer.
+ *
+ * @param [in]  buf     The buffer.
+ * @param [in]  value   The value.
+ */
+void pbio_set_uint32_be(uint8_t *buf, uint32_t value) {
+    buf[0] = value >> 24;
+    buf[1] = value >> 16;
+    buf[2] = value >> 8;
+    buf[3] = value;
+}
+
 bool pbio_uuid128_reverse_compare(const uint8_t *uuid1, const uint8_t *uuid2);
 void pbio_uuid128_reverse_copy(uint8_t *dst, const uint8_t *src);
 

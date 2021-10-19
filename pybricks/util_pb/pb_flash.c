@@ -21,6 +21,27 @@
 
 #include <pybricks/util_pb/pb_flash.h>
 
+
+#define FLASH_SIZE_TOTAL (0x2000000)
+#define FLASH_SIZE_BOOT  (0x100000)
+#define FLASH_SIZE_USER  (FLASH_SIZE_TOTAL - FLASH_SIZE_BOOT)
+
+#define FLASH_TIMEOUT (100)
+
+enum {
+    FLASH_CMD_GET_STATUS = 0x05,
+    FLASH_CMD_WRITE_ENABLE = 0x06,
+    FLASH_CMD_WRITE_DATA = 0x12,
+    FLASH_CMD_READ_DATA = 0x13,
+    FLASH_CMD_ERASE_BLOCK = 0x21,
+    FLASH_CMD_GET_ID = 0x9F,
+};
+
+enum {
+    FLASH_STATUS_BUSY = 0x01,
+    FLASH_STATUS_WRITE_ENABLED = 0x02,
+};
+
 SPI_HandleTypeDef hspi2;
 
 // Whether the SPI and filesystem have been initialized once after boot.
@@ -58,19 +79,18 @@ static pbio_error_t pb_flash_spi_init(void) {
     flash_enable(true);
 
     // Command parameters
-    uint32_t timeout = 100;
-    uint8_t CMD_GET_ID = 0x9F;
+    uint8_t command = FLASH_CMD_GET_ID;
     uint8_t id_data[3];
     HAL_StatusTypeDef err;
 
     // Send ID command
-    err = HAL_SPI_Transmit(&hspi2, &CMD_GET_ID, sizeof(CMD_GET_ID), timeout);
+    err = HAL_SPI_Transmit(&hspi2, &command, sizeof(command), FLASH_TIMEOUT);
     if (err != 0) {
         return PBIO_ERROR_IO;
     }
 
     // Get ID command reply
-    err = HAL_SPI_Receive(&hspi2, id_data, sizeof(id_data), timeout);
+    err = HAL_SPI_Receive(&hspi2, id_data, sizeof(id_data), FLASH_TIMEOUT);
     if (err != 0) {
         return PBIO_ERROR_IO;
     }
@@ -86,36 +106,34 @@ static pbio_error_t pb_flash_spi_init(void) {
 
 static HAL_StatusTypeDef flash_status_read(uint8_t *status) {
 
-    uint32_t timeout = 100;
-
     // Read status command
-    uint8_t command = 0x05;
+    uint8_t command = FLASH_CMD_GET_STATUS;
 
     // Write the read status command
     flash_enable(true);
-    HAL_StatusTypeDef err = HAL_SPI_Transmit(&hspi2, &command, sizeof(command), 100);
+    HAL_StatusTypeDef err = HAL_SPI_Transmit(&hspi2, &command, sizeof(command), FLASH_TIMEOUT);
     if (err != HAL_OK) {
         return err;
     }
 
     // Receive data
-    err = HAL_SPI_Receive(&hspi2, status, 1, timeout);
+    err = HAL_SPI_Receive(&hspi2, status, 1, FLASH_TIMEOUT);
     flash_enable(false);
     return err;
 }
 
 static HAL_StatusTypeDef flash_wait_ready() {
-    uint8_t status = 0x03;
+    uint8_t status = FLASH_STATUS_BUSY | FLASH_STATUS_WRITE_ENABLED;
     HAL_StatusTypeDef err;
     uint32_t start_time = mp_hal_ticks_ms();
 
     // While write enabled and / or busy, wait
-    while (status & 0x03) {
+    while (status & (FLASH_STATUS_BUSY | FLASH_STATUS_WRITE_ENABLED)) {
         err = flash_status_read(&status);
         if (err != HAL_OK) {
             return err;
         }
-        if (mp_hal_ticks_ms() - start_time > 100) {
+        if (mp_hal_ticks_ms() - start_time > FLASH_TIMEOUT) {
             return HAL_TIMEOUT;
         }
         MICROPY_EVENT_POLL_HOOK;
@@ -123,111 +141,86 @@ static HAL_StatusTypeDef flash_wait_ready() {
     return HAL_OK;
 }
 
-static HAL_StatusTypeDef flash_read(uint32_t address, uint8_t *buffer, uint32_t size) {
+static HAL_StatusTypeDef flash_send_address_command(uint8_t command, uint32_t address) {
 
-    uint32_t timeout = 100;
-
-    // First 1MiB is reserved for firmware updates with official firmware.
-    address += 1024 * 1024;
-
-    uint8_t address_bytes[5];
-
-    // Read command
-    address_bytes[0] = 0x13;
-
-    // Address as big endian
-    address_bytes[1] = (address & 0xff000000) >> 24;
-    address_bytes[2] = (address & 0x00ff0000) >> 16;
-    address_bytes[3] = (address & 0x0000ff00) >> 8;
-    address_bytes[4] = address & 0x000000ff;
-
-    // Write the read command with address
-    flash_enable(true);
-    HAL_StatusTypeDef err = HAL_SPI_Transmit(&hspi2, address_bytes, sizeof(address_bytes), 100);
-    if (err != HAL_OK) {
-        return err;
+    // Can only read/write user partition
+    if (address > FLASH_SIZE_USER) {
+        return HAL_ERROR;
     }
 
+    // Pack command and address as big endian
+    uint8_t data[5] = {command};
+    pbio_set_uint32_be(&data[1], address + FLASH_SIZE_BOOT);
+
+    // Enable flash
+    flash_enable(true);
+
+    // Send address command
+    HAL_StatusTypeDef err = HAL_SPI_Transmit(&hspi2, data, sizeof(data), FLASH_TIMEOUT);
+    if (err != HAL_OK) {
+        flash_enable(false);
+        return err;
+    }
+    return err;
+}
+
+static HAL_StatusTypeDef flash_read(uint32_t address, uint8_t *buffer, uint32_t size) {
+
+    // Enable flash and send the read command with address
+    HAL_StatusTypeDef err = flash_send_address_command(FLASH_CMD_READ_DATA, address);
+
     // Receive data
-    err = HAL_SPI_Receive(&hspi2, buffer, size, timeout);
+    err = HAL_SPI_Receive(&hspi2, buffer, size, FLASH_TIMEOUT);
     flash_enable(false);
     return err;
 }
 
 static HAL_StatusTypeDef write_enable() {
-    uint8_t command = 0x06;
+    uint8_t command = FLASH_CMD_WRITE_ENABLE;
     flash_enable(true);
-    HAL_StatusTypeDef err = HAL_SPI_Transmit(&hspi2, &command, sizeof(command), 100);
+    HAL_StatusTypeDef err = HAL_SPI_Transmit(&hspi2, &command, sizeof(command), FLASH_TIMEOUT);
     flash_enable(false);
     return err;
 }
 
 static HAL_StatusTypeDef flash_write(uint32_t address, const uint8_t *buffer, uint32_t size) {
 
-    uint32_t timeout = 100;
-
-    // First 1MiB is reserved for firmware updates with official firmware.
-    address += 1024 * 1024;
-
-    uint8_t address_bytes[5];
-
-    // Write command
-    address_bytes[0] = 0x12;
-
-    // Address as big endian
-    address_bytes[1] = (address & 0xff000000) >> 24;
-    address_bytes[2] = (address & 0x00ff0000) >> 16;
-    address_bytes[3] = (address & 0x0000ff00) >> 8;
-    address_bytes[4] = address & 0x000000ff;
-
     // Enable write mode
     HAL_StatusTypeDef err = write_enable();
     if (err != HAL_OK) {
         return err;
     }
 
-    // Write the write command with address
-    flash_enable(true);
-    err = HAL_SPI_Transmit(&hspi2, address_bytes, sizeof(address_bytes), timeout);
-    if (err != HAL_OK) {
-        flash_enable(false);
-        return err;
-    }
+    // Enable flash and send the write command with address
+    err = flash_send_address_command(FLASH_CMD_WRITE_DATA, address);
 
     // Write the data
-    err = HAL_SPI_Transmit(&hspi2, (uint8_t *)buffer, size, timeout);
+    err = HAL_SPI_Transmit(&hspi2, (uint8_t *)buffer, size, FLASH_TIMEOUT);
     flash_enable(false);
+    if (err != HAL_OK) {
+        return err;
+    }
     return flash_wait_ready();
 }
 
 static HAL_StatusTypeDef flash_block_erase(uint32_t address) {
 
-    address += 1024 * 1024;
-
     // Enable write mode
     HAL_StatusTypeDef err = write_enable();
     if (err != HAL_OK) {
         return err;
     }
 
-    uint8_t address_bytes[5];
-    address_bytes[0] = 0x21;
-    address_bytes[1] = (address & 0xff000000) >> 24;
-    address_bytes[2] = (address & 0x00ff0000) >> 16;
-    address_bytes[3] = (address & 0x0000ff00) >> 8;
-    address_bytes[4] = address & 0x000000ff;
-
-    // Send erase command
-    flash_enable(true);
-    err = HAL_SPI_Transmit(&hspi2, address_bytes, sizeof(address_bytes), 100);
+    // Enable flash and send the erase block command with address
+    err = flash_send_address_command(FLASH_CMD_ERASE_BLOCK, address);
     flash_enable(false);
-
-    err = flash_wait_ready();
-
-    return err;
+    if (err != HAL_OK) {
+        return err;
+    }
+    return flash_wait_ready();
 }
 
-int block_device_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size) {
+static int block_device_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, void *buffer, lfs_size_t size) {
 
     lfs_size_t done = 0;
 
@@ -251,7 +244,7 @@ int block_device_read(const struct lfs_config *c, lfs_block_t block, lfs_off_t o
     return 0;
 }
 
-int block_device_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size) {
+static int block_device_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t off, const void *buffer, lfs_size_t size) {
     lfs_size_t done = 0;
 
     while (done < size) {
@@ -283,7 +276,7 @@ int block_device_prog(const struct lfs_config *c, lfs_block_t block, lfs_off_t o
     return 0;
 }
 
-int block_device_erase(const struct lfs_config *c, lfs_block_t block) {
+static int block_device_erase(const struct lfs_config *c, lfs_block_t block) {
     // Erase block of flash. Block size assumed to match erase size.
 
     if (flash_block_erase(block * c->block_size) != HAL_OK) {
@@ -292,19 +285,19 @@ int block_device_erase(const struct lfs_config *c, lfs_block_t block) {
     return LFS_ERR_OK;
 }
 
-int block_device_sync(const struct lfs_config *c) {
+static int block_device_sync(const struct lfs_config *c) {
     return 0;
 }
 
-lfs_t lfs;
-lfs_file_t file;
+static lfs_t lfs;
+static lfs_file_t file;
 
-uint8_t lfs_read_buf[256];
-uint8_t lfs_prog_buf[256];
-uint8_t lfs_lookahead_buf[256];
-uint8_t lfs_file_buf[256];
+static uint8_t lfs_read_buf[256];
+static uint8_t lfs_prog_buf[256];
+static uint8_t lfs_lookahead_buf[256];
+static uint8_t lfs_file_buf[256];
 
-struct lfs_config cfg = {
+static const struct lfs_config cfg = {
     .read = block_device_read,
     .prog = block_device_prog,
     .erase = block_device_erase,
