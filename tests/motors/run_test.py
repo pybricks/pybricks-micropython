@@ -108,11 +108,10 @@ def plot_servo_data(time, data, build_dir, subtitle=None):
     duty_axis.plot(time, voltage, label="Voltage", drawstyle="steps-post")
     duty_axis.set_ylabel("Motor voltage (mV)")
     duty_axis.set_ylim([-10000, 10000])
-    duty_axis.set_xlabel("time (s)")
 
     time_axis.plot(time, loop_time, label="Loop time", drawstyle="steps-post")
     time_axis.set_ylabel("Time (us)")
-    time_axis.set_xlabel("time (s)")
+    time_axis.set_xlabel("time (ms)")
 
     for axis in axes:
         axis.grid(True)
@@ -167,7 +166,7 @@ def plot_control_data(time, data, build_dir, subtitle=None):
     torque_axis.plot(time, torque_d, label="D", drawstyle="steps-post")
     torque_axis.plot(time, torque_total, label="Total", drawstyle="steps-post")
     torque_axis.set_ylabel("torque")
-    torque_axis.set_xlabel("time (s)")
+    torque_axis.set_xlabel("time (ms)")
 
     for axis in axes:
         axis.grid(True)
