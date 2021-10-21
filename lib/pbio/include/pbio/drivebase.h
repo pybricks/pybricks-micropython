@@ -23,9 +23,9 @@ void pbio_drivebase_claim_servos(pbio_drivebase_t *db, bool claim);
 
 // Finite point to point control
 
-pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int32_t straight_speed, int32_t straight_acceleration);
+pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int32_t straight_speed);
 
-pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle, int32_t turn_rate, int32_t turn_acceleration);
+pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle, int32_t turn_rate);
 
 // Infinite driving
 
