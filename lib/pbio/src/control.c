@@ -120,7 +120,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_no
 
     // Log control data
     int32_t log_data[] = {
-        (time_ref - ctl->trajectory.t0) / 1000,
+        time_ref - ctl->trajectory.t0,
         count_now,
         rate_now,
         *actuation,
