@@ -211,7 +211,7 @@ pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
     }
 
     // Log servo state
-    int32_t log_data[] = {0, count_now, rate_now, actuation, voltage, count_est, rate_est, feedback_torque, feedforward_torque};
+    int32_t log_data[] = {time_now, count_now, rate_now, actuation, voltage, count_est, rate_est, feedback_torque, feedforward_torque};
     pbio_logger_update(&srv->log, log_data);
 
     // Update the state observer
