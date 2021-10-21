@@ -69,7 +69,12 @@ def gradient(data, time, smooth=8):
 
 def plot_servo_data(time, data, build_dir, subtitle=None):
     """Plots data for a servo motor."""
-    # First column not currently used
+    # Get loop time.
+    wall_time = data[:, 1]
+    wall_time_shifted = numpy.append(2 * wall_time[0] - wall_time[1], wall_time[0:-1])
+    loop_time = wall_time - wall_time_shifted
+
+    # Read state columns.
     count = data[:, 2]
     rate = data[:, 3]
     voltage = data[:, 5]
@@ -80,10 +85,10 @@ def plot_servo_data(time, data, build_dir, subtitle=None):
 
     title = "servo" if subtitle is None else "servo_" + subtitle
 
-    figure, axes = matplotlib.pyplot.subplots(nrows=4, ncols=1, figsize=(15, 12))
+    figure, axes = matplotlib.pyplot.subplots(nrows=5, ncols=1, figsize=(15, 15))
     figure.suptitle(title, fontsize=20)
 
-    position_axis, speed_axis, torque_axis, duty_axis = axes
+    position_axis, speed_axis, torque_axis, duty_axis, time_axis = axes
 
     position_axis.plot(time, count, drawstyle="steps-post", label="Reported count")
     position_axis.plot(time, count_est, drawstyle="steps-post", label="Observer")
@@ -104,6 +109,10 @@ def plot_servo_data(time, data, build_dir, subtitle=None):
     duty_axis.set_ylabel("Motor voltage (mV)")
     duty_axis.set_ylim([-10000, 10000])
     duty_axis.set_xlabel("time (s)")
+
+    time_axis.plot(time, loop_time, label="Loop time", drawstyle="steps-post")
+    time_axis.set_ylabel("Time (us)")
+    time_axis.set_xlabel("time (s)")
 
     for axis in axes:
         axis.grid(True)
