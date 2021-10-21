@@ -17,10 +17,7 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
     s_distance->count_tolerance = s_left->count_tolerance + s_right->count_tolerance;
     s_distance->stall_rate_limit = s_left->stall_rate_limit + s_right->stall_rate_limit;
     s_distance->integral_rate = s_left->integral_rate + s_right->integral_rate;
-
-    // As acceleration, we take double the single motor amount, because drivebases are
-    // usually expected to respond quickly to speed setpoint changes
-    s_distance->abs_acceleration = (s_left->abs_acceleration + s_right->abs_acceleration) * 2;
+    s_distance->abs_acceleration = s_left->abs_acceleration + s_right->abs_acceleration;
 
     // Use the average PID of both motors
     s_distance->pid_kp = (s_left->pid_kp + s_right->pid_kp) / 2;
@@ -394,13 +391,13 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t t
 
     // Initialize both controllers
     int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, speed);
-    err = pbio_control_start_timed_control(&db->control_distance, time_now, DURATION_FOREVER, sum, sum_rate, target_sum_rate, db->control_distance.settings.abs_acceleration, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
+    err = pbio_control_start_timed_control(&db->control_distance, time_now, DURATION_FOREVER, sum, sum_rate, target_sum_rate, db->control_distance.settings.abs_acceleration * 2, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     int32_t target_turn_rate = pbio_control_user_to_counts(&db->control_heading.settings, turn_rate);
-    err = pbio_control_start_timed_control(&db->control_heading, time_now, DURATION_FOREVER, dif, dif_rate, target_turn_rate, db->control_heading.settings.abs_acceleration, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
+    err = pbio_control_start_timed_control(&db->control_heading, time_now, DURATION_FOREVER, dif, dif_rate, target_turn_rate, db->control_heading.settings.abs_acceleration * 2, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }

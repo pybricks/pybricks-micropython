@@ -72,9 +72,9 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     pbio_control_settings_get_limits(&self->db->control_heading.settings, &turn_rate_limit, &turn_acceleration_limit, &_);
 
     self->straight_speed = straight_speed_limit / 2;
-    self->straight_acceleration = straight_acceleration_limit / 2;
-    self->turn_rate = turn_rate_limit / 4;
-    self->turn_acceleration = turn_acceleration_limit / 4;
+    self->straight_acceleration = straight_acceleration_limit;
+    self->turn_rate = turn_rate_limit / 2;
+    self->turn_acceleration = turn_acceleration_limit;
 
     // Reset drivebase state
     pb_assert(pbio_drivebase_reset_state(self->db));
