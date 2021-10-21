@@ -11,7 +11,6 @@ print(version)
 motor = Motor(Port.A)
 DURATION = 4000
 motor.log.start(DURATION)
-motor.control.log.start(DURATION)
 
 # Move the motor with a speed in a sine pattern.
 watch = StopWatch()
@@ -30,5 +29,4 @@ motor.stop()
 # Transfer data logs.
 print("Transferring data...")
 motor.log.save("servo.txt")
-motor.control.log.save("control.txt")
 print("Done")
