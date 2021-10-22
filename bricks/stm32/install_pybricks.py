@@ -25,7 +25,8 @@ import ubinascii
 import uhashlib
 import ujson
 import umachine
-import usys
+
+import sys
 
 
 # File paths
@@ -67,7 +68,7 @@ def stop_installation(reason):
     """Stops the installation and explains why."""
     print(reason)
     print("Pybricks will not be installed.")
-    usys.exit(1)
+    sys.exit(1)
 
 
 def get_lego_firmware_info():
@@ -192,7 +193,10 @@ def install(auto_reboot=True):
     # Copy the Pybricks firmware to external flash.
     print("Installing Pybricks firmware.")
     with open(PYBRICKS_FIRMWARE_PATH, "rb") as pybricks_firmware_file:
-        while block := pybricks_firmware_file.read(FLASH_WRITE_SIZE):
+        while True:
+            block = pybricks_firmware_file.read(FLASH_WRITE_SIZE)
+            if len(block) == 0:
+                break
             _ = firmware.appl_image_store(block)
 
     # Check the firmware file on external flash.
