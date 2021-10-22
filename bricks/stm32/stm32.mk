@@ -521,7 +521,11 @@ SRC_STM32_USB_DEV = $(addprefix lib/STM32_USB_Device_Library/,\
 	Core/Src/usbd_ioreq.c \
 	)
 
-SRC_STM32_USB_DEV += $(addprefix lib/pbio/platform/$(PBIO_PLATFORM)/,\
+ifeq ($(PB_LIB_STM32_USB_DEVICE),1)
+	INC += -I$(PBTOP)/lib/pbio/drv/usb/stm32_usbd
+endif
+
+SRC_STM32_USB_DEV += $(addprefix lib/pbio/drv/usb/stm32_usbd/,\
 	usbd_conf.c \
 	usbd_desc.c \
 	)
