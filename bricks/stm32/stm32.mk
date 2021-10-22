@@ -106,6 +106,7 @@ INC += -I$(BUILD)
 
 GIT = git
 ZIP = zip
+UNZIP = unzip
 DFU = $(TOP)/tools/dfu.py
 PYDFU = $(TOP)/tools/pydfu.py
 PYBRICKSDEV = pybricksdev
@@ -644,6 +645,7 @@ endif
 $(BUILD)/firmware.zip: $(ZIP_FILES)
 	$(ECHO) "ZIP creating firmware package"
 	$(Q)$(ZIP) -j $@ $^
+	$(Q)$(UNZIP) $@ -d $(BUILD)/upload
 
 # firmware in DFU format
 $(BUILD)/%.dfu: $(BUILD)/%.bin

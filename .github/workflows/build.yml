@@ -215,17 +215,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: ${{ matrix.hub }}-firmware
-        path: |
-          bricks/${{ matrix.hub }}/build/firmware-base.bin
-          bricks/${{ matrix.hub }}/build/firmware.metadata.json
-    - name: Upload firmware extra
-      if: ${{ success() && matrix.hub != 'nxt' }}
-      uses: actions/upload-artifact@v2
-      with:
-        name: ${{ matrix.hub }}-firmware
-        path: |
-          bricks/${{ matrix.hub }}/main.py
-          bricks/${{ matrix.hub }}/ReadMe_OSS.txt
+        path: bricks/${{ matrix.hub }}/build/upload/*
 
   debug:
     name: debug firmware
