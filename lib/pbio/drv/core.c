@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2021 The Pybricks Authors
 
 #include <contiki.h>
 
 #include "core.h"
 #include "battery/battery.h"
 #include "bluetooth/bluetooth.h"
+#include "charger/charger.h"
 #include "clock/clock.h"
 #include "counter/counter.h"
 #include "ioport/ioport.h"
@@ -28,6 +29,7 @@ void pbdrv_init(void) {
     // the rest of the drivers should be implemented so that init order doesn't matter
     pbdrv_battery_init();
     pbdrv_bluetooth_init();
+    pbdrv_charger_init();
     pbdrv_counter_init();
     pbdrv_ioport_init();
     pbdrv_led_array_init();

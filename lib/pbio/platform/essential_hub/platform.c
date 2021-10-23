@@ -15,6 +15,7 @@
 #include "../../drv/bluetooth/bluetooth_btstack_uart_block_stm32_hal.h"
 #include "../../drv/bluetooth/bluetooth_btstack.h"
 #include "../../drv/button/button_gpio.h"
+#include "../../drv/charger/charger_mp2639a.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_pwm.h"
 #include "../../drv/pwm/pwm_lp50xx_stm32.h"
@@ -113,6 +114,14 @@ const pbdrv_button_gpio_platform_t pbdrv_button_gpio_platform[PBDRV_CONFIG_BUTTO
         .button = PBIO_BUTTON_CENTER,
         .active_low = true,
     },
+};
+
+// charger
+
+const pbdrv_charger_mp2639a_platform_data_t pbdrv_charger_mp2639a_platform_data = {
+    .mode_gpio = { .bank = GPIOA, .pin = 10 },
+    .chg_gpio = { .bank = GPIOC, .pin = 6 },
+    .ib_adc_ch = 3,
 };
 
 // I/O ports

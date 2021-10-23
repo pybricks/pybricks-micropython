@@ -14,6 +14,7 @@
 #include "../../drv/bluetooth/bluetooth_btstack_control_gpio.h"
 #include "../../drv/bluetooth/bluetooth_btstack_uart_block_stm32_hal.h"
 #include "../../drv/bluetooth/bluetooth_btstack.h"
+#include "../../drv/charger/charger_mp2639a.h"
 #include "../../drv/ioport/ioport_lpf2.h"
 #include "../../drv/led/led_array_pwm.h"
 #include "../../drv/led/led_dual.h"
@@ -120,6 +121,15 @@ const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_d
     .control_instance = pbdrv_bluetooth_btstack_control_gpio_instance,
     .er_key = (const uint8_t *)UID_BASE,
     .ir_key = (const uint8_t *)UID_BASE,
+};
+
+// charger
+
+const pbdrv_charger_mp2639a_platform_data_t pbdrv_charger_mp2639a_platform_data = {
+    .mode_pwm_id = PWM_DEV_5_TLC5955,
+    .mode_pwm_ch = 33,
+    .chg_adc_ch = 4,
+    .ib_adc_ch = 3,
 };
 
 // I/O ports

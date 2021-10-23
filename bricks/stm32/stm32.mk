@@ -189,6 +189,7 @@ endif
 
 PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	common/pb_type_battery.c \
+	common/pb_type_charger.c \
 	common/pb_type_colorlight_external.c \
 	common/pb_type_colorlight_internal.c \
 	common/pb_type_control.c \
@@ -410,6 +411,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/bluetooth/pybricks_service_server.c \
 	drv/button/button_adc.c \
 	drv/button/button_gpio.c \
+	drv/charger/charger_mp2639a.c \
 	drv/clock/clock_stm32.c \
 	drv/core.c \
 	drv/counter/counter_core.c \

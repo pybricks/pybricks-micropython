@@ -37,6 +37,9 @@
 #define PBDRV_CONFIG_BUTTON_GPIO                    (1)
 #define PBDRV_CONFIG_BUTTON_GPIO_NUM_BUTTON         (1)
 
+#define PBDRV_CONFIG_CHARGER                        (1)
+#define PBDRV_CONFIG_CHARGER_MP2639A                (1)
+
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_STM32                    (1)
 

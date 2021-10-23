@@ -36,6 +36,11 @@
 #define PBDRV_CONFIG_BUTTON                         (1)
 #define PBDRV_CONFIG_BUTTON_ADC                     (1)
 
+#define PBDRV_CONFIG_CHARGER                        (1)
+#define PBDRV_CONFIG_CHARGER_MP2639A                (1)
+#define PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM       (1)
+#define PBDRV_CONFIG_CHARGER_MP2639A_CHG_ADC        (1)
+
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_STM32                    (1)
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2018-2020 The Pybricks Authors
+// Copyright (c) 2018-2021 The Pybricks Authors
 
 #include <pbdrv/config.h>
 #include "pbinit.h"
@@ -13,6 +13,7 @@
 
 // Pybricks modules
 #define PYBRICKS_PY_COMMON              (1)
+#define PYBRICKS_PY_COMMON_CHARGER      (0)
 #define PYBRICKS_PY_COMMON_IMU          (0)
 #define PYBRICKS_PY_COMMON_KEYPAD       (1)
 #define PYBRICKS_PY_COMMON_LIGHT_MATRIX (0)

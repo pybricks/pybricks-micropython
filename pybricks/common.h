@@ -22,6 +22,12 @@
 
 void pb_package_import_all(void);
 
+#if PYBRICKS_PY_COMMON_CHARGER
+
+extern const mp_obj_type_t pb_type_Charger;
+mp_obj_t pb_type_Charger_obj_new(void);
+
+#endif // PYBRICKS_PY_COMMON_CHARGER
 
 /**
  * Device-specific callback for controlling a color light.
