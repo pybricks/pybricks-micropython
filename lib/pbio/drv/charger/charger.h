@@ -4,8 +4,6 @@
 #ifndef _INTERNAL_PBDRV_CHARGER_H_
 #define _INTERNAL_PBDRV_CHARGER_H_
 
-#include <stdint.h>
-
 #include <pbdrv/config.h>
 
 #if PBDRV_CONFIG_CHARGER

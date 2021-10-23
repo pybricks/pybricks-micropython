@@ -6,7 +6,6 @@
 #ifndef _INTERNAL_CHARGER_MP2639A_H_
 #define _INTERNAL_CHARGER_MP2639A_H_
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include <pbdrv/config.h>
