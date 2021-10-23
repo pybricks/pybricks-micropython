@@ -22,6 +22,7 @@
 #include <pbdrv/resistor_ladder.h>
 #endif
 #include <pbio/error.h>
+#include <pbio/util.h>
 
 #include "../core.h"
 #include "charger_mp2639a.h"
@@ -33,6 +34,8 @@ PROCESS(pbdrv_charger_mp2639a_process, "MP2639A");
 #if PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM
 static pbdrv_pwm_dev_t *mode_pwm;
 #endif
+
+static pbdrv_charger_status_t pbdrv_charger_status;
 
 void pbdrv_charger_init(void) {
     pbdrv_init_busy_up();
@@ -50,25 +53,8 @@ pbio_error_t pbdrv_charger_get_current_now(uint16_t *current) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_charger_get_status(pbdrv_charger_status_t *status) {
-
-    // TODO: implement PBDRV_CHARGER_STATUS_FAULT
-
-    #if PBDRV_CONFIG_CHARGER_MP2639A_CHG_RESISTOR_LADDER
-    pbdrv_resistor_ladder_ch_flags_t flags;
-    pbio_error_t err = pbdrv_resistor_ladder_get(platform.chg_resistor_ladder_id, &flags);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    // CHG pin is active low
-    *status = (flags & platform.chg_resistor_ladder_ch) ? PBDRV_CHARGER_STATUS_DISCHARGE : PBDRV_CHARGER_STATUS_CHARGE;
-
-    #else
-    // CHG pin is active low
-    *status = pbdrv_gpio_input(&platform.chg_gpio) ? PBDRV_CHARGER_STATUS_DISCHARGE : PBDRV_CHARGER_STATUS_CHARGE;
-    #endif
-
-    return PBIO_SUCCESS;
+pbdrv_charger_status_t pbdrv_charger_get_status(void) {
+    return pbdrv_charger_status;
 }
 
 void pbdrv_charger_enable(bool enable) {
@@ -81,6 +67,24 @@ void pbdrv_charger_enable(bool enable) {
     } else {
         pbdrv_gpio_out_high(&platform.mode_gpio);
     }
+    #endif
+}
+
+/**
+ * Gets the current CHG signal status (not inverted)
+ */
+static bool read_chg(void) {
+    #if PBDRV_CONFIG_CHARGER_MP2639A_CHG_RESISTOR_LADDER
+    pbdrv_resistor_ladder_ch_flags_t flags;
+    pbio_error_t err = pbdrv_resistor_ladder_get(platform.chg_resistor_ladder_id, &flags);
+    if (err != PBIO_SUCCESS) {
+        return false;
+    }
+    // CHG pin is active low
+    return !(flags & platform.chg_resistor_ladder_ch);
+    #else
+    // CHG pin is active low
+    return !pbdrv_gpio_input(&platform.chg_gpio);
     #endif
 }
 
@@ -103,7 +107,40 @@ PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
 
     pbdrv_init_busy_down();
 
-    // TODO: monitor CHG pin to detect fault (1 Hz flashing)
+    // When there is a fault the CHG pin will toggle on and off at 1Hz, so we
+    // have to try to detect that to get 3 possible states out of a digital input.
+
+    static bool chg_samples[5];
+    static uint8_t chg_index = 0;
+    static struct etimer timer;
+
+    // sample at 5Hz
+    etimer_set(&timer, 200);
+
+    for (;;) {
+        PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
+
+        chg_samples[chg_index++] = read_chg();
+        if (chg_index >= PBIO_ARRAY_SIZE(chg_samples)) {
+            chg_index = 0;
+        }
+
+        int sum = 0;
+        for (int i = 0; i < PBIO_ARRAY_SIZE(chg_samples); i++) {
+            sum += chg_samples[i];
+        }
+
+        // If there was a fault, the CHG signal should be high/low for 2/3
+        // samples or vice versa.
+
+        if (sum < 2) {
+            pbdrv_charger_status = PBDRV_CHARGER_STATUS_DISCHARGE;
+        } else if (sum > 3) {
+            pbdrv_charger_status = PBDRV_CHARGER_STATUS_CHARGE;
+        } else {
+            pbdrv_charger_status = PBDRV_CHARGER_STATUS_FAULT;
+        }
+    }
 
     PROCESS_END();
 }

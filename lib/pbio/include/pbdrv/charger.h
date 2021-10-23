@@ -33,11 +33,9 @@ pbio_error_t pbdrv_charger_get_current_now(uint16_t *current);
 
 /**
  * Gets the status of the charger.
- * @param [out] status     The status.
- * @return                  ::PBIO_SUCCESS or ::PBIO_ERROR_NOT_SUPPORTED if
- *                          the charger driver is not enabled.
+ * @return                 The status.
  */
-pbio_error_t pbdrv_charger_get_status(pbdrv_charger_status_t *status);
+pbdrv_charger_status_t pbdrv_charger_get_status(void);
 
 /**
  * Enables or disables charging.
@@ -52,9 +50,8 @@ static inline pbio_error_t pbdrv_charger_get_current_now(uint16_t *current) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 
-static inline pbio_error_t pbdrv_charger_get_status(pbdrv_charger_status_t *status) {
-    *status = -1;
-    return PBIO_ERROR_NOT_SUPPORTED;
+static inline pbdrv_charger_status_t pbdrv_charger_get_status(void) {
+    return PBDRV_CHARGER_STATUS_FAULT;
 }
 
 static inline void pbdrv_charger_enable(bool enable) {

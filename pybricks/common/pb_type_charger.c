@@ -27,8 +27,7 @@ STATIC mp_obj_t Charger_current(mp_obj_t self_in) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(Charger_current_obj, Charger_current);
 
 STATIC mp_obj_t Charger_status(mp_obj_t self_in) {
-    pbdrv_charger_status_t status;
-    pb_assert(pbdrv_charger_get_status(&status));
+    pbdrv_charger_status_t status = pbdrv_charger_get_status();
 
     switch (status) {
         case PBDRV_CHARGER_STATUS_DISCHARGE:
