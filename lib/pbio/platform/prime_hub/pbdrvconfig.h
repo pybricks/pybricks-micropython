@@ -34,12 +34,12 @@
 #define PBDRV_CONFIG_BLUETOOTH_BTSTACK_HUB_VARIANT_ADDR 0x08007d80
 
 #define PBDRV_CONFIG_BUTTON                         (1)
-#define PBDRV_CONFIG_BUTTON_ADC                     (1)
+#define PBDRV_CONFIG_BUTTON_RESISTOR_LADDER         (1)
 
 #define PBDRV_CONFIG_CHARGER                        (1)
 #define PBDRV_CONFIG_CHARGER_MP2639A                (1)
 #define PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM       (1)
-#define PBDRV_CONFIG_CHARGER_MP2639A_CHG_ADC        (1)
+#define PBDRV_CONFIG_CHARGER_MP2639A_CHG_RESISTOR_LADDER (1)
 
 #define PBDRV_CONFIG_CLOCK                          (1)
 #define PBDRV_CONFIG_CLOCK_STM32                    (1)
@@ -79,6 +79,9 @@
 #define PBDRV_CONFIG_RESET                          (1)
 #define PBDRV_CONFIG_RESET_STM32                    (1)
 #define PBDRV_CONFIG_RESET_STM32_HAS_BLE_BOOTLOADER (0)
+
+#define PBDRV_CONFIG_RESISTOR_LADDER                (1)
+#define PBDRV_CONFIG_RESISTOR_LADDER_NUM_DEV        (2)
 
 #define PBDRV_CONFIG_SOUND                          (1)
 #define PBDRV_CONFIG_SOUND_STM32_HAL_DAC            (1)

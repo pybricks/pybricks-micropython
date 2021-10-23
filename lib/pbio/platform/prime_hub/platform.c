@@ -22,6 +22,7 @@
 #include "../../drv/pwm/pwm_stm32_tim.h"
 #include "../../drv/pwm/pwm_tlc5955_stm32.h"
 #include "../../drv/sound/sound_stm32_hal_dac.h"
+#include "../../drv/resistor_ladder/resistor_ladder.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
 
 enum {
@@ -52,6 +53,11 @@ enum {
     PWM_DEV_3_TIM12,
     PWM_DEV_4_TIM8,
     PWM_DEV_5_TLC5955,
+};
+
+enum {
+    RESISTOR_LADDER_DEV_0,
+    RESISTOR_LADDER_DEV_1,
 };
 
 enum {
@@ -128,7 +134,8 @@ const pbdrv_bluetooth_btstack_platform_data_t pbdrv_bluetooth_btstack_platform_d
 const pbdrv_charger_mp2639a_platform_data_t pbdrv_charger_mp2639a_platform_data = {
     .mode_pwm_id = PWM_DEV_5_TLC5955,
     .mode_pwm_ch = 33,
-    .chg_adc_ch = 4,
+    .chg_resistor_ladder_id = RESISTOR_LADDER_DEV_0,
+    .chg_resistor_ladder_ch = PBDRV_RESISTOR_LADDER_CH_2,
     .ib_adc_ch = 3,
 };
 
@@ -386,6 +393,21 @@ void pbdrv_reset_power_off(void) {
     // setting PA13 low cuts the power
     GPIOA->BSRR = GPIO_BSRR_BR_13;
 }
+
+// resistor ladder
+
+// note: even though the resistors of each ladder have the same values, there
+// must be some variations in the loads, so different levels are required
+const pbdrv_resistor_ladder_platform_data_t pbdrv_resistor_ladder_platform_data[] = {
+    [RESISTOR_LADDER_DEV_0] = {
+        .level = { 3642, 3142, 2879, 2634, 2449, 2209, 2072, 1800 },
+        .adc_ch = 4,
+    },
+    [RESISTOR_LADDER_DEV_1] = {
+        .level = { 3872, 3394, 3009, 2755, 2538, 2327, 2141, 1969 },
+        .adc_ch = 5,
+    },
+};
 
 // Sound
 

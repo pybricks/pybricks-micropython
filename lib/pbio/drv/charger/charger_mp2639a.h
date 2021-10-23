@@ -11,6 +11,9 @@
 
 #include <pbdrv/config.h>
 #include <pbdrv/gpio.h>
+#if PBDRV_CONFIG_CHARGER_MP2639A_CHG_RESISTOR_LADDER
+#include <pbdrv/resistor_ladder.h>
+#endif
 
 typedef struct {
     // SPIKE Prime quirk: The MODE pin is connected to the LED controller
@@ -26,9 +29,11 @@ typedef struct {
     #endif
     // SPIKE Prime quirk: the CHG pin is connected to an analog input shared
     // with the buttons.
-    #if PBDRV_CONFIG_CHARGER_MP2639A_CHG_ADC
-    /** The ADC channel the CHG pin is connected to. */
-    uint8_t chg_adc_ch;
+    #if PBDRV_CONFIG_CHARGER_MP2639A_CHG_RESISTOR_LADDER
+    /** The ID of the resistor ladder the CHG pin is connected to. */
+    uint8_t chg_resistor_ladder_id;
+    /** The resistor ladder channel the CHG pin is connected to. */
+    pbdrv_resistor_ladder_ch_flags_t chg_resistor_ladder_ch;
     #else
     /** GPIO connected to the CHG pin. */
     pbdrv_gpio_t chg_gpio;

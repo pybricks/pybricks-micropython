@@ -409,8 +409,8 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/bluetooth/bluetooth_stm32_bluenrg.c \
 	drv/bluetooth/bluetooth_stm32_cc2640.c \
 	drv/bluetooth/pybricks_service_server.c \
-	drv/button/button_adc.c \
 	drv/button/button_gpio.c \
+	drv/button/button_resistor_ladder.c \
 	drv/charger/charger_mp2639a.c \
 	drv/clock/clock_stm32.c \
 	drv/core.c \
@@ -430,6 +430,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	drv/pwm/pwm_stm32_tim.c \
 	drv/pwm/pwm_tlc5955_stm32.c \
 	drv/reset/reset_stm32.c \
+	drv/resistor_ladder/resistor_ladder.c \
 	drv/sound/sound_stm32_hal_dac.c \
 	drv/uart/uart_stm32f0.c \
 	drv/uart/uart_stm32f4_ll_irq.c \

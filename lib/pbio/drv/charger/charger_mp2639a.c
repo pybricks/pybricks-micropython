@@ -18,6 +18,9 @@
 #if PBDRV_CONFIG_CHARGER_MP2639A_MODE_PWM
 #include <pbdrv/pwm.h>
 #endif
+#if PBDRV_CONFIG_CHARGER_MP2639A_CHG_RESISTOR_LADDER
+#include <pbdrv/resistor_ladder.h>
+#endif
 #include <pbio/error.h>
 
 #include "../core.h"
@@ -51,41 +54,14 @@ pbio_error_t pbdrv_charger_get_status(pbdrv_charger_status_t *status) {
 
     // TODO: implement PBDRV_CHARGER_STATUS_FAULT
 
-    #if PBDRV_CONFIG_CHARGER_MP2639A_CHG_ADC
-    uint16_t value;
-    pbio_error_t err = pbdrv_adc_get_ch(platform.chg_adc_ch, &value);
+    #if PBDRV_CONFIG_CHARGER_MP2639A_CHG_RESISTOR_LADDER
+    pbdrv_resistor_ladder_ch_flags_t flags;
+    pbio_error_t err = pbdrv_resistor_ladder_get(platform.chg_resistor_ladder_id, &flags);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-
-    // TODO: this code should be shared with button_adc since it is tuned
-    // specifically for SPIKE Prime
-
-    bool chg = false;
-
-    if (value > 3642) {
-        // chg = false;
-    } else if (value > 3142) {
-        chg = true;
-    } else if (value > 2879) {
-        // chg = false;
-    } else if (value > 2634) {
-        chg = true;
-    } else if (value > 2449) {
-        // chg = false;
-    } else if (value > 2209) {
-        chg = true;
-    } else if (value > 2072) {
-        // chg = false;
-    } else if (value > 1800) {
-        chg = true;
-    } else {
-        // hardware failure?
-        return PBIO_ERROR_IO;
-    }
-
     // CHG pin is active low
-    *status = chg ? PBDRV_CHARGER_STATUS_DISCHARGE : PBDRV_CHARGER_STATUS_CHARGE;
+    *status = (flags & platform.chg_resistor_ladder_ch) ? PBDRV_CHARGER_STATUS_DISCHARGE : PBDRV_CHARGER_STATUS_CHARGE;
 
     #else
     // CHG pin is active low
@@ -119,7 +95,7 @@ PROCESS_THREAD(pbdrv_charger_mp2639a_process, ev, data) {
 
     pbdrv_charger_enable(false);
 
-    #if !PBDRV_CONFIG_CHARGER_MP2639A_CHG_ADC
+    #if !PBDRV_CONFIG_CHARGER_MP2639A_CHG_RESISTOR_LADDER
     // CHG pin is pulled low or open drain
     pbdrv_gpio_set_pull(&platform.chg_gpio, PBDRV_GPIO_PULL_UP);
     pbdrv_gpio_input(&platform.chg_gpio);
