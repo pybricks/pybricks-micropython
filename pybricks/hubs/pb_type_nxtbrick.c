@@ -10,6 +10,8 @@
 #include <pybricks/common.h>
 #include <pybricks/hubs.h>
 
+#include <pybricks/util_mp/pb_obj_helper.h>
+
 typedef struct _hubs_NXTBrick_obj_t {
     mp_obj_base_t base;
     mp_obj_t buttons;
@@ -28,8 +30,13 @@ STATIC mp_obj_t hubs_NXTBrick_make_new(const mp_obj_type_t *type, size_t n_args,
     return MP_OBJ_FROM_PTR(self);
 }
 
+STATIC const mp_rom_map_elem_t attribute_table[] = {
+    PB_DEFINE_CONST_ATTR_RO(hubs_NXTBrick_obj_t, MP_QSTR_buttons, buttons),
+};
+STATIC MP_DEFINE_CONST_DICT(attribute_dict, attribute_table);
+
 STATIC const mp_rom_map_elem_t hubs_NXTBrick_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_buttons),     MP_ROM_ATTRIBUTE_OFFSET(hubs_NXTBrick_obj_t, buttons) },
+    PB_ATTRIBUTE_TABLE(attribute_dict),
     { MP_ROM_QSTR(MP_QSTR_battery),     MP_ROM_PTR(&pb_module_battery)                        },
     { MP_ROM_QSTR(MP_QSTR_system),      MP_ROM_PTR(&pb_type_System)                           },
 };
@@ -39,6 +46,7 @@ const mp_obj_type_t pb_type_ThisHub = {
     { &mp_type_type },
     .name = PYBRICKS_HUB_CLASS_NAME,
     .make_new = hubs_NXTBrick_make_new,
+    .attr = pb_attribute_handler,
     .locals_dict = (mp_obj_dict_t *)&hubs_NXTBrick_locals_dict,
 };
 

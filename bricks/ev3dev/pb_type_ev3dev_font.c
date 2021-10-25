@@ -16,6 +16,8 @@
 
 #include "pb_ev3dev_types.h"
 
+#include <pybricks/util_mp/pb_obj_helper.h>
+
 typedef struct _ev3dev_Font_obj_t {
     mp_obj_base_t base;
     GrxFont *font;
@@ -133,13 +135,18 @@ STATIC mp_obj_t ev3dev_Font_text_height(mp_obj_t self_in, mp_obj_t text_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Font_text_height_obj, ev3dev_Font_text_height);
 
+STATIC const mp_rom_map_elem_t attribute_table[] = {
+    PB_DEFINE_CONST_ATTR_RO(ev3dev_Font_obj_t, MP_QSTR_family, family),
+    PB_DEFINE_CONST_ATTR_RO(ev3dev_Font_obj_t, MP_QSTR_style, style),
+    PB_DEFINE_CONST_ATTR_RO(ev3dev_Font_obj_t, MP_QSTR_width, width),
+    PB_DEFINE_CONST_ATTR_RO(ev3dev_Font_obj_t, MP_QSTR_height, height),
+};
+STATIC MP_DEFINE_CONST_DICT(attribute_dict, attribute_table);
+
 STATIC const mp_rom_map_elem_t ev3dev_Font_locals_dict_table[] = {
+    PB_ATTRIBUTE_TABLE(attribute_dict),
     { MP_ROM_QSTR(MP_QSTR_DEFAULT), MP_ROM_PTR(&pb_const_ev3dev_Font_DEFAULT_obj) },
     { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&ev3dev_Font___del___obj) },
-    { MP_ROM_QSTR(MP_QSTR_family), MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Font_obj_t, family) },
-    { MP_ROM_QSTR(MP_QSTR_style), MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Font_obj_t, style) },
-    { MP_ROM_QSTR(MP_QSTR_width), MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Font_obj_t, width) },
-    { MP_ROM_QSTR(MP_QSTR_height), MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Font_obj_t, height) },
     { MP_ROM_QSTR(MP_QSTR_text_width), MP_ROM_PTR(&ev3dev_Font_text_width_obj) },
     { MP_ROM_QSTR(MP_QSTR_text_height), MP_ROM_PTR(&ev3dev_Font_text_height_obj) },
 };
@@ -149,6 +156,7 @@ const mp_obj_type_t pb_type_ev3dev_Font = {
     { &mp_type_type },
     .name = MP_QSTR_Font,
     .make_new = ev3dev_Font_make_new,
+    .attr = pb_attribute_handler,
     .locals_dict = (mp_obj_dict_t *)&ev3dev_Font_locals_dict,
 };
 

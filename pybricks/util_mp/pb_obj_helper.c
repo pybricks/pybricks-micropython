@@ -137,3 +137,61 @@ void pb_assert_type(mp_obj_t obj, const mp_obj_type_t *type) {
         #endif
     }
 }
+
+void pb_attribute_handler(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+
+    // MP_QSTR__attr is the locals_dict entry for the attribute table. Users
+    // cannot do anything with it, so return in order to suppress autocomplete.
+    if (attr == MP_QSTR__attr) {
+        return;
+    }
+
+    // Get the attribute table, assumed to be first key/value in locals_dict.
+    mp_obj_dict_t *locals_dict = ((mp_obj_base_t *)MP_OBJ_TO_PTR(self_in))->type->locals_dict;
+    mp_obj_dict_t *attribute_dict = locals_dict->map.table[0].value;
+
+    // Assert that the attribute table is indeed the first entry of locals_dict.
+    assert(MP_OBJ_QSTR_VALUE(locals_dict->map.table[0].key) == MP_QSTR__attr);
+
+    // Look up the attribute offset.
+    mp_map_elem_t *elem = mp_map_lookup(&attribute_dict->map, MP_OBJ_NEW_QSTR(attr), MP_MAP_LOOKUP);
+    if (elem == NULL) {
+        // Attribute not found, continue lookup in locals dict.
+        dest[1] = MP_OBJ_SENTINEL;
+        return;
+    }
+
+    // Get numeric offset, including flags.
+    size_t offset_with_flags = *((mp_uint_t *)elem->value);
+
+    // Object is located at the base address plus the offset.
+    mp_obj_t *obj_addr = (mp_obj_t *)((char *)MP_OBJ_TO_PTR(self_in) + (offset_with_flags & PB_ATTR_OFFSET_MASK));
+
+    // Check if this is a read operation.
+    if (dest[0] == MP_OBJ_NULL) {
+        // It's read. But do it only if allowed and object was not deleted.
+        if ((offset_with_flags & PB_ATTR_READABLE) && *obj_addr != MP_OBJ_NULL) {
+            dest[0] = *obj_addr;
+        }
+        return;
+    }
+    // Check if this is a delete/write operation.
+    else if (dest[0] == MP_OBJ_SENTINEL) {
+        // It's delete/write. Now check which one.
+        if (dest[1] == MP_OBJ_NULL) {
+            // It's delete. But do it only if allowed and object exists.
+            if ((offset_with_flags & PB_ATTR_DELETABLE) && *obj_addr != MP_OBJ_NULL) {
+                *obj_addr = MP_OBJ_NULL;
+                dest[0] = MP_OBJ_NULL;
+            }
+            return;
+        } else {
+            // It's write. But do it only if if allowed.
+            if (offset_with_flags & PB_ATTR_WRITABLE) {
+                *obj_addr = dest[1];
+                dest[0] = MP_OBJ_NULL;
+            }
+            return;
+        }
+    }
+}

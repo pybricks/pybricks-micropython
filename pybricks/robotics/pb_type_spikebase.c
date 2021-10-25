@@ -173,17 +173,24 @@ STATIC mp_obj_t robotics_SpikeBase_stop(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(robotics_SpikeBase_stop_obj, robotics_SpikeBase_stop);
 
+STATIC const mp_rom_map_elem_t attribute_table[] = {
+    PB_DEFINE_CONST_ATTR_RO(robotics_SpikeBase_obj_t, MP_QSTR_left, left),
+    PB_DEFINE_CONST_ATTR_RO(robotics_SpikeBase_obj_t, MP_QSTR_right, right),
+    #if PYBRICKS_PY_COMMON_CONTROL
+    PB_DEFINE_CONST_ATTR_RO(robotics_SpikeBase_obj_t, MP_QSTR_heading_control, heading_control),
+    PB_DEFINE_CONST_ATTR_RO(robotics_SpikeBase_obj_t, MP_QSTR_distance_control, distance_control),
+    #endif
+};
+STATIC MP_DEFINE_CONST_DICT(attribute_dict, attribute_table);
+
 // dir(pybricks.robotics.SpikeBase)
 STATIC const mp_rom_map_elem_t robotics_SpikeBase_locals_dict_table[] = {
+    PB_ATTRIBUTE_TABLE(attribute_dict),
     { MP_ROM_QSTR(MP_QSTR_tank_move_for_degrees),     MP_ROM_PTR(&robotics_SpikeBase_tank_move_for_degrees_obj)     },
     { MP_ROM_QSTR(MP_QSTR_tank_move_for_time),        MP_ROM_PTR(&robotics_SpikeBase_tank_move_for_time_obj)        },
     { MP_ROM_QSTR(MP_QSTR_tank_move_forever),         MP_ROM_PTR(&robotics_SpikeBase_drive_forever_obj)             },
     { MP_ROM_QSTR(MP_QSTR_steering_move_for_degrees), MP_ROM_PTR(&robotics_SpikeBase_steering_move_for_degrees_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop),                      MP_ROM_PTR(&robotics_SpikeBase_stop_obj)                      },
-    { MP_ROM_QSTR(MP_QSTR_left),                      MP_ROM_ATTRIBUTE_OFFSET(robotics_SpikeBase_obj_t, left)            },
-    { MP_ROM_QSTR(MP_QSTR_right),                     MP_ROM_ATTRIBUTE_OFFSET(robotics_SpikeBase_obj_t, right)           },
-    { MP_ROM_QSTR(MP_QSTR_heading_control),           MP_ROM_ATTRIBUTE_OFFSET(robotics_SpikeBase_obj_t, heading_control) },
-    { MP_ROM_QSTR(MP_QSTR_distance_control),          MP_ROM_ATTRIBUTE_OFFSET(robotics_SpikeBase_obj_t, distance_control)},
 };
 STATIC MP_DEFINE_CONST_DICT(robotics_SpikeBase_locals_dict, robotics_SpikeBase_locals_dict_table);
 

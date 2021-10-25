@@ -547,7 +547,14 @@ STATIC mp_obj_t ev3dev_Image_save(mp_obj_t self_in, mp_obj_t filename_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_2(ev3dev_Image_save_obj, ev3dev_Image_save);
 
+STATIC const mp_rom_map_elem_t attribute_table[] = {
+    PB_DEFINE_CONST_ATTR_RO(ev3dev_Image_obj_t, MP_QSTR_width, width),
+    PB_DEFINE_CONST_ATTR_RO(ev3dev_Image_obj_t, MP_QSTR_height, height),
+};
+STATIC MP_DEFINE_CONST_DICT(attribute_dict, attribute_table);
+
 STATIC const mp_rom_map_elem_t ev3dev_Image_locals_dict_table[] = {
+    PB_ATTRIBUTE_TABLE(attribute_dict),
     { MP_ROM_QSTR(MP_QSTR_empty),       MP_ROM_PTR(&ev3dev_Image_empty_obj)                    },
     { MP_ROM_QSTR(MP_QSTR___del__),     MP_ROM_PTR(&ev3dev_Image___del___obj)                  },
     { MP_ROM_QSTR(MP_QSTR_clear),       MP_ROM_PTR(&ev3dev_Image_clear_obj)                    },
@@ -561,8 +568,6 @@ STATIC const mp_rom_map_elem_t ev3dev_Image_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_set_font),    MP_ROM_PTR(&ev3dev_Image_set_font_obj)                 },
     { MP_ROM_QSTR(MP_QSTR_print),       MP_ROM_PTR(&ev3dev_Image_print_obj)                    },
     { MP_ROM_QSTR(MP_QSTR_save),        MP_ROM_PTR(&ev3dev_Image_save_obj)                     },
-    { MP_ROM_QSTR(MP_QSTR_width),       MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Image_obj_t, width)     },
-    { MP_ROM_QSTR(MP_QSTR_height),      MP_ROM_ATTRIBUTE_OFFSET(ev3dev_Image_obj_t, height)    },
 };
 STATIC MP_DEFINE_CONST_DICT(ev3dev_Image_locals_dict, ev3dev_Image_locals_dict_table);
 
@@ -570,5 +575,6 @@ const mp_obj_type_t pb_type_ev3dev_Image = {
     { &mp_type_type },
     .name = MP_QSTR_Image,
     .make_new = ev3dev_Image_make_new,
+    .attr = pb_attribute_handler,
     .locals_dict = (mp_obj_dict_t *)&ev3dev_Image_locals_dict,
 };

@@ -345,8 +345,19 @@ STATIC mp_obj_t common_Motor_stalled(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Motor_stalled_obj, common_Motor_stalled);
 
+STATIC const mp_rom_map_elem_t attribute_table[] = {
+    #if PYBRICKS_PY_COMMON_CONTROL
+    PB_DEFINE_CONST_ATTR_RO(common_Motor_obj_t, MP_QSTR_control, control),
+    #endif
+    #if PYBRICKS_PY_COMMON_LOGGER
+    PB_DEFINE_CONST_ATTR_RO(common_Motor_obj_t, MP_QSTR_log, logger),
+    #endif
+};
+STATIC MP_DEFINE_CONST_DICT(attribute_dict, attribute_table);
+
 // dir(pybricks.builtins.Motor)
 STATIC const mp_rom_map_elem_t common_Motor_locals_dict_table[] = {
+    PB_ATTRIBUTE_TABLE(attribute_dict),
     //
     // Methods common to DC motors and encoded motors
     //
@@ -369,12 +380,6 @@ STATIC const mp_rom_map_elem_t common_Motor_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_track_target), MP_ROM_PTR(&common_Motor_track_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_busy), MP_ROM_PTR(&common_Motor_busy_obj) },
     { MP_ROM_QSTR(MP_QSTR_stalled), MP_ROM_PTR(&common_Motor_stalled_obj) },
-    #if PYBRICKS_PY_COMMON_CONTROL
-    { MP_ROM_QSTR(MP_QSTR_control), MP_ROM_ATTRIBUTE_OFFSET(common_Motor_obj_t, control) },
-    #endif
-    #if PYBRICKS_PY_COMMON_LOGGER
-    { MP_ROM_QSTR(MP_QSTR_log), MP_ROM_ATTRIBUTE_OFFSET(common_Motor_obj_t, logger) },
-    #endif
 };
 MP_DEFINE_CONST_DICT(common_Motor_locals_dict, common_Motor_locals_dict_table);
 
@@ -384,6 +389,7 @@ const mp_obj_type_t pb_type_Motor = {
     .name = MP_QSTR_Motor,
     .print = common_DCMotor_print,
     .make_new = common_Motor_make_new,
+    .attr = pb_attribute_handler,
     .locals_dict = (mp_obj_dict_t *)&common_Motor_locals_dict,
 };
 
