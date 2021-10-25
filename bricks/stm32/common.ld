@@ -15,6 +15,9 @@ SECTIONS
         _fw_isr_vector_src = .;   /* The isr vector table must be copied to SRAM since the
                                      firmware doesn't start at the beginning of the flash memory */
         KEEP(*(.isr_vector)) /* isr vector table */
+        . = 0x200;
+        *(.boot)           /* .boot section for info read during firmware update */
+        KEEP(*(.boot))
         *(.text)           /* .text sections (code) */
         *(.text*)          /* .text* sections (code) */
         *(.rodata)         /* .rodata sections (constants, strings, etc.) */

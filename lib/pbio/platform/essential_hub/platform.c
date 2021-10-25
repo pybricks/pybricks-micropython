@@ -23,6 +23,21 @@
 #include "../../drv/sound/sound_stm32_hal_dac.h"
 #include "../../drv/uart/uart_stm32f4_ll_irq.h"
 
+// Special symbols for firmware compatibility with official apps
+typedef struct {
+    const char *fw_ver;
+    const uint32_t *reserved1;
+    const uint8_t *reserved2;
+    const char *hub_type_id;
+} boot_t;
+
+const boot_t __attribute__((section(".boot"))) boot = {
+    .fw_ver = "pybricks-micropython",
+    .reserved1 = NULL,
+    .reserved2 = (const uint8_t[16]) {0},
+    .hub_type_id = "LEGO Technic Small Hub(0x000D)",
+};
+
 enum {
     COUNTER_PORT_A,
     COUNTER_PORT_B,
