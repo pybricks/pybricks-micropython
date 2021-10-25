@@ -36,4 +36,26 @@ mp_obj_t pb_obj_get_base_class_obj(mp_obj_t obj, const mp_obj_type_t *type);
 // Raise error on unexpected type
 void pb_assert_type(mp_obj_t obj, const mp_obj_type_t *type);
 
+// Read/write/delete flags for constant attributes in custom types
+enum {
+    PB_ATTR_READABLE = (1 << 16),  /**< Attribute can be read */
+    PB_ATTR_WRITABLE = (1 << 17),  /**< Attribute can be assigned a new object */
+    PB_ATTR_DELETABLE = (1 << 18), /**< Attribute can be deleted with del */
+    PB_ATTR_OFFSET_MASK = 0xFFFF,  /**< Internal use. Mask for the offset value stored in the LSB bytes */
+};
+
+// Generic entry of the attributes dictionary.
+#define PB_DEFINE_CONST_ATTR(type, name, field, flags) \
+    { MP_ROM_QSTR(name), MP_ROM_PTR(&(mp_uint_t) {offsetof(type, field) | (flags)}) }
+
+// Read-only entry of the attributes dictionary. Dedicated macro because we use it so often.
+#define PB_DEFINE_CONST_ATTR_RO(type, name, field) \
+    PB_DEFINE_CONST_ATTR(type, name, field, PB_ATTR_READABLE)
+
+// Points to attributes dictionary. MUST be first entry of locals_dict.
+#define PB_ATTRIBUTE_TABLE(offset_dict) { MP_ROM_QSTR(MP_QSTR__attr), MP_ROM_PTR(&offset_dict)}
+
+// Attribute handler for any object that has an attribute dictionary.
+void pb_attribute_handler(mp_obj_t self_in, qstr attr, mp_obj_t *dest);
+
 #endif // PYBRICKS_INCLUDED_PBOBJ_H

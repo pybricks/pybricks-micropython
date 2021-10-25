@@ -231,8 +231,17 @@ STATIC mp_obj_t common_Control_stalled(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_Control_stalled_obj, common_Control_stalled);
 
+STATIC const mp_rom_map_elem_t attribute_table[] = {
+    PB_DEFINE_CONST_ATTR_RO(common_Control_obj_t, MP_QSTR_scale, scale),
+    #if PYBRICKS_PY_COMMON_LOGGER
+    PB_DEFINE_CONST_ATTR_RO(common_Control_obj_t, MP_QSTR_log, logger),
+    #endif // PYBRICKS_PY_COMMON_LOGGER
+};
+STATIC MP_DEFINE_CONST_DICT(attribute_dict, attribute_table);
+
 // dir(pybricks.common.Control)
 STATIC const mp_rom_map_elem_t common_Control_locals_dict_table[] = {
+    PB_ATTRIBUTE_TABLE(attribute_dict),
     { MP_ROM_QSTR(MP_QSTR_limits), MP_ROM_PTR(&common_Control_limits_obj) },
     { MP_ROM_QSTR(MP_QSTR_pid), MP_ROM_PTR(&common_Control_pid_obj) },
     { MP_ROM_QSTR(MP_QSTR_target_tolerances), MP_ROM_PTR(&common_Control_target_tolerances_obj) },
@@ -241,10 +250,6 @@ STATIC const mp_rom_map_elem_t common_Control_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_done), MP_ROM_PTR(&common_Control_done_obj) },
     { MP_ROM_QSTR(MP_QSTR_load), MP_ROM_PTR(&common_Control_load_obj) },
     { MP_ROM_QSTR(MP_QSTR_stalled), MP_ROM_PTR(&common_Control_stalled_obj) },
-    { MP_ROM_QSTR(MP_QSTR_scale), MP_ROM_ATTRIBUTE_OFFSET(common_Control_obj_t, scale) },
-    #if PYBRICKS_PY_COMMON_LOGGER
-    { MP_ROM_QSTR(MP_QSTR_log), MP_ROM_ATTRIBUTE_OFFSET(common_Control_obj_t, logger) },
-    #endif // PYBRICKS_PY_COMMON_LOGGER
 };
 STATIC MP_DEFINE_CONST_DICT(common_Control_locals_dict, common_Control_locals_dict_table);
 
@@ -252,6 +257,7 @@ STATIC MP_DEFINE_CONST_DICT(common_Control_locals_dict, common_Control_locals_di
 const mp_obj_type_t pb_type_Control = {
     { &mp_type_type },
     .name = MP_QSTR_Control,
+    .attr = pb_attribute_handler,
     .locals_dict = (mp_obj_dict_t *)&common_Control_locals_dict,
 };
 
