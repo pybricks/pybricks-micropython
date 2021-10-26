@@ -92,12 +92,18 @@ STATIC void wait_for_completion_drivebase(pbio_drivebase_t *db) {
 STATIC mp_obj_t robotics_DriveBase_straight(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         robotics_DriveBase_obj_t, self,
-        PB_ARG_REQUIRED(distance));
+        PB_ARG_REQUIRED(distance),
+        PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
+        PB_ARG_DEFAULT_TRUE(wait));
 
     mp_int_t distance = pb_obj_get_int(distance_in);
-    pb_assert(pbio_drivebase_straight(self->db, distance, self->straight_speed));
+    pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
-    wait_for_completion_drivebase(self->db);
+    pb_assert(pbio_drivebase_straight(self->db, distance, self->straight_speed, then));
+
+    if (mp_obj_is_true(wait_in)) {
+        wait_for_completion_drivebase(self->db);
+    }
 
     return mp_const_none;
 }
@@ -107,12 +113,18 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_straight_obj, 1, robotics_D
 STATIC mp_obj_t robotics_DriveBase_turn(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
         robotics_DriveBase_obj_t, self,
-        PB_ARG_REQUIRED(angle));
+        PB_ARG_REQUIRED(angle),
+        PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
+        PB_ARG_DEFAULT_TRUE(wait));
 
-    mp_int_t angle_val = pb_obj_get_int(angle_in);
-    pb_assert(pbio_drivebase_turn(self->db, angle_val, self->turn_rate));
+    mp_int_t angle = pb_obj_get_int(angle_in);
+    pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
-    wait_for_completion_drivebase(self->db);
+    pb_assert(pbio_drivebase_turn(self->db, angle, self->turn_rate, then));
+
+    if (mp_obj_is_true(wait_in)) {
+        wait_for_completion_drivebase(self->db);
+    }
 
     return mp_const_none;
 }

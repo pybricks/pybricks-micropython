@@ -128,7 +128,7 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
         }
         // Hold is achieved by driving 0 distance.
         case PBIO_ACTUATION_HOLD:
-            return pbio_drivebase_straight(db, 0, db->control_distance.settings.max_rate);
+            return pbio_drivebase_straight(db, 0, db->control_distance.settings.max_rate, PBIO_ACTUATION_HOLD);
         case PBIO_ACTUATION_VOLTAGE:
             return PBIO_ERROR_NOT_IMPLEMENTED;
         case PBIO_ACTUATION_TORQUE:
@@ -300,7 +300,12 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     return pbio_servo_actuate(db->right, dif_actuation, sum_torque / 2 - dif_torque / 2 + feed_forward_right);
 }
 
-pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int32_t drive_speed) {
+pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int32_t drive_speed, pbio_actuation_t after_stop) {
+
+    // TODO
+    if (after_stop != PBIO_ACTUATION_HOLD) {
+        return PBIO_ERROR_NOT_IMPLEMENTED;
+    }
 
     pbio_error_t err;
 
@@ -335,7 +340,12 @@ pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle, int32_t turn_rate) {
+pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle, int32_t turn_rate, pbio_actuation_t after_stop) {
+
+    // TODO
+    if (after_stop != PBIO_ACTUATION_HOLD) {
+        return PBIO_ERROR_NOT_IMPLEMENTED;
+    }
 
     pbio_error_t err;
 
