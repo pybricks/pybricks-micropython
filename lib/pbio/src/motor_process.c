@@ -13,8 +13,13 @@
 
 PROCESS(pbio_motor_process, "servo");
 
+static pbio_error_t status = PBIO_SUCCESS;
 static pbio_servo_t servos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 static pbio_drivebase_t drivebase;
+
+pbio_error_t pbio_motor_process_get_status(void) {
+    return status;
+}
 
 pbio_error_t pbio_motor_process_get_drivebase(pbio_drivebase_t **db) {
     *db = &drivebase;
@@ -34,29 +39,39 @@ pbio_error_t pbio_motor_process_get_servo(pbio_port_id_t port, pbio_servo_t **sr
 
 void pbio_motor_process_reset(void) {
 
+    // Motors start in success state.
+    status = PBIO_SUCCESS;
+
+    pbio_error_t err;
+
     // Initialize battery voltage.
-    pbio_battery_init();
+    err = pbio_battery_init();
+    if (err != PBIO_SUCCESS) {
+        status = err;
+    }
 
     // Force stop the drivebase
-    pbio_drivebase_stop_force(&drivebase);
+    pbio_drivebase_stop_control(&drivebase);
 
     // Force stop the servos
     for (uint8_t i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
 
         // Run the motor getter at least once
         pbio_servo_t *srv;
-        pbio_motor_process_get_servo(i + PBDRV_CONFIG_FIRST_MOTOR_PORT, &srv);
+        err = pbio_motor_process_get_servo(i + PBDRV_CONFIG_FIRST_MOTOR_PORT, &srv);
+        if (err != PBIO_SUCCESS) {
+            status = err;
+        }
 
         // Force stop the servo
         pbio_servo_stop_force(srv);
-
-        // Run setup and set connected flag on success
-        pbio_servo_set_connected(srv, pbio_servo_setup(srv, PBIO_DIRECTION_CLOCKWISE, fix16_one, false) == PBIO_SUCCESS);
     }
 }
 
 PROCESS_THREAD(pbio_motor_process, ev, data) {
     static struct etimer timer;
+
+    static pbio_error_t err;
 
     PROCESS_BEGIN();
 
@@ -68,17 +83,22 @@ PROCESS_THREAD(pbio_motor_process, ev, data) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
 
         // Update battery voltage.
-        pbio_battery_update();
+        err = pbio_battery_update();
+        if (err != PBIO_SUCCESS) {
+            status = err;
+        }
 
         // Update drivebase
-        pbio_drivebase_update(&drivebase);
+        err = pbio_drivebase_update(&drivebase);
+        if (err != PBIO_SUCCESS) {
+            status = err;
+        }
 
         // Update servos
         for (uint8_t i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-
-            // Update control and reset connected status on failure
-            if (pbio_servo_is_connected(&servos[i])) {
-                pbio_servo_set_connected(&servos[i], pbio_servo_update(&servos[i]) == PBIO_SUCCESS);
+            err = pbio_servo_update(&servos[i]);
+            if (err != PBIO_SUCCESS) {
+                status = err;
             }
         }
 

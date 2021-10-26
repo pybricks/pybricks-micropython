@@ -33,7 +33,7 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t t
 
 pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_stop);
 
-pbio_error_t pbio_drivebase_stop_force(pbio_drivebase_t *db);
+void pbio_drivebase_stop_control(pbio_drivebase_t *db);
 
 // Measuring
 

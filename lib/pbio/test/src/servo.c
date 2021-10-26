@@ -90,7 +90,6 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
 
     tt_uint_op(pbio_motor_process_get_servo(PBIO_PORT_ID_A, &servo), ==, PBIO_SUCCESS);
     tt_uint_op(pbio_servo_setup(servo, PBIO_DIRECTION_CLOCKWISE, F16C(1, 0), true), ==, PBIO_SUCCESS);
-    pbio_servo_set_connected(servo, true);
 
     // only logging one row since we read it after every iteration
     log_buf = malloc(sizeof(*log_buf) * pbio_logger_cols(&servo->control.log));
@@ -190,7 +189,7 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
     }
 
     for (;;) {
-        if (pbio_servo_is_connected(servo)) {
+        if (pbio_motor_process_get_status() == PBIO_SUCCESS) {
             // This is the expected exit point for a successful test. The manuever
             // has completed. We wait some extra time to log the motor state after
             // the completion before ending the test.

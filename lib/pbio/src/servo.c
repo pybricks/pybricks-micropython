@@ -32,6 +32,9 @@ static pbio_error_t pbio_servo_observer_reset(pbio_servo_t *srv) {
 pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio, bool reset_angle) {
     pbio_error_t err;
 
+    // We are not initialized until setup is done.
+    srv->connected = false;
+
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
         return PBIO_ERROR_BUSY;
@@ -62,15 +65,14 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     srv->control.settings.counts_per_unit = fix16_mul(F16C(PBDRV_CONFIG_COUNTER_COUNTS_PER_DEGREE, 0), gear_ratio);
 
     // Initialize observer.
-    return pbio_servo_observer_reset(srv);
-}
+    err = pbio_servo_observer_reset(srv);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
 
-bool pbio_servo_is_connected(pbio_servo_t *srv) {
-    return srv->connected;
-}
-
-void pbio_servo_set_connected(pbio_servo_t *srv, bool connected) {
-    srv->connected = connected;
+    // Now that all checks have succeeded, we know that this motor is ready.
+    srv->connected = true;
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool reset_to_abs) {
@@ -169,6 +171,11 @@ pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_ty
 
 pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
 
+    // If the servo is not initialized (or connected), there is nothing to do.
+    if (!srv->connected) {
+        return PBIO_SUCCESS;
+    }
+
     int32_t time_now;
     int32_t count_now, count_est;
     int32_t rate_now, rate_est, rate_ref;
@@ -258,18 +265,18 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
     return pbio_servo_actuate(srv, after_stop, control);
 }
 
-pbio_error_t pbio_servo_stop_force(pbio_servo_t *srv) {
+void pbio_servo_stop_force(pbio_servo_t *srv) {
     // Set control status passive so poll won't call it again
     pbio_control_stop(&srv->control);
 
-    // Release claim from drivebases or other classes
+    // Release claim from drivebases or other classes and reset connected state.
     srv->claimed = false;
+    srv->connected = false;
 
     // Try to stop / coast motor
     if (srv->dcmotor) {
-        return pbio_dcmotor_coast(srv->dcmotor);
+        pbio_dcmotor_coast(srv->dcmotor);
     }
-    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {

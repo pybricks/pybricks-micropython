@@ -25,11 +25,8 @@
 /* Wait for servo maneuver to complete */
 
 STATIC void wait_for_completion(pbio_servo_t *srv) {
-    while (pbio_servo_is_connected(srv) && !pbio_control_is_done(&srv->control)) {
+    while (!pbio_control_is_done(&srv->control)) {
         mp_hal_delay_ms(5);
-    }
-    if (!pbio_servo_is_connected(srv)) {
-        pb_assert(PBIO_ERROR_IO);
     }
 }
 
@@ -92,9 +89,6 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);
-
-    // Set connected state. This tells contiki process to update this motor.
-    pbio_servo_set_connected(srv, true);
 
     // On success, proceed to create and return the MicroPython object
     common_Motor_obj_t *self = m_new_obj(common_Motor_obj_t);

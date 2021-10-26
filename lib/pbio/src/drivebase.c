@@ -141,11 +141,12 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
 pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio_servo_t *right, fix16_t wheel_diameter, fix16_t axle_track) {
     pbio_error_t err;
 
-    // Stop any existing drivebase motion
-    err = pbio_drivebase_stop_force(db);
-    if (!(err == PBIO_SUCCESS || err == PBIO_ERROR_NO_DEV)) {
-        return err;
-    }
+    // Attach servos
+    db->left = left;
+    db->right = right;
+
+    // Stop any existing drivebase controls
+    pbio_drivebase_stop_control(db);
 
     // Drivebase geometry
     if (wheel_diameter <= 0 || axle_track <= 0) {
@@ -156,10 +157,6 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio
     if (left->control.settings.counts_per_unit != right->control.settings.counts_per_unit) {
         return PBIO_ERROR_INVALID_ARG;
     }
-
-    // Attach servos
-    db->left = left;
-    db->right = right;
 
     // Reset both motors to a passive state
     err = pbio_drivebase_actuate(db, PBIO_ACTUATION_COAST, 0, 0);
@@ -237,31 +234,15 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
     return pbio_drivebase_actuate(db, after_stop, sum_control, dif_control);
 }
 
-pbio_error_t pbio_drivebase_stop_force(pbio_drivebase_t *db) {
-
+void pbio_drivebase_stop_control(pbio_drivebase_t *db) {
     // Stop control so polling will stop
     pbio_control_stop(&db->control_distance);
     pbio_control_stop(&db->control_heading);
-
-    pbio_error_t err;
-
-    if (!db->left || !db->right) {
-        return PBIO_ERROR_NO_DEV;
-    }
-
-    // Try to stop left servo
-    err = pbio_servo_stop_force(db->left);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Try to stop right servo
-    return pbio_servo_stop_force(db->right);
 }
 
 pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 
-    // If passive, log and exit
+    // If passive, then exit
     if (db->control_heading.type == PBIO_CONTROL_NONE || db->control_distance.type == PBIO_CONTROL_NONE) {
         return PBIO_SUCCESS;
     }
