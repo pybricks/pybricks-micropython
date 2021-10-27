@@ -9,6 +9,9 @@
 
 #include <string.h>
 
+#include <pbdrv/charger.h>
+#include <pbdrv/reset.h>
+
 #include <pbio/error.h>
 #include <pbio/util.h>
 
@@ -16,6 +19,7 @@
 #include <stm32f4xx_hal.h>
 
 #include "py/mphal.h"
+#include "py/runtime.h"
 
 #include "lfs.h"
 
@@ -500,36 +504,69 @@ pbio_error_t pb_flash_file_write(const char *path, const uint8_t *buf, uint32_t 
     return PBIO_SUCCESS;
 }
 
+extern const mp_obj_module_t mp_module_ujson;
+
 pbio_error_t pb_flash_restore_firmware(void) {
     // Check that flash was initialized
     if (!flash_initialized) {
         return PBIO_ERROR_INVALID_OP;
     }
 
-    mp_printf(&mp_plat_print, "Checking firmware files.\n");
+    // Check that the hub is plugged in and charging.
+    if (pbdrv_charger_get_status() != PBDRV_CHARGER_STATUS_CHARGE) {
+        mp_printf(&mp_plat_print, "Please connect the hub via USB.\n");
+        // TODO: Stop here once charging is fully implemented.
+        // return PBIO_ERROR_FAILED;
+    }
+
+    mp_printf(&mp_plat_print, "Checking firmware backup files.\n");
 
     // Open meta file
     if (lfs_file_open_retry("_firmware/lego-firmware.metadata.json", LFS_O_RDONLY) != LFS_ERR_OK) {
+        mp_printf(&mp_plat_print, "Unable to open backup meta data file.\n");
         return PBIO_ERROR_FAILED;
     }
     // Read meta file
-    char *meta_data = m_new(char, file.size);
+    size_t meta_size = file.size;
+    char *meta_data = m_new(char, meta_size);
     if (lfs_file_read(&lfs, &file, meta_data, file.size) != file.size) {
+        mp_printf(&mp_plat_print, "Unable to read backup meta data file.\n");
         return PBIO_ERROR_FAILED;
     }
+
     // Close meta file
     if (lfs_file_close(&lfs, &file) != LFS_ERR_OK) {
+        mp_printf(&mp_plat_print, "Unable to close backup meta data file.\n");
         return PBIO_ERROR_FAILED;
     }
 
-    // Check for device ID in meta data. Todo: Generalize.
-    const char hub_id_key[] = "\"device-id\":";
-    char *hub_id_data = strstr(meta_data, hub_id_key) + sizeof(hub_id_key);
-    if (strncmp(hub_id_data, "129", 3)) {
+    // Read meta data into MicroPython dictionary.
+    mp_obj_t loads_func = mp_obj_dict_get(mp_module_ujson.globals, MP_ROM_QSTR(MP_QSTR_loads));
+    mp_obj_t meta_dict = mp_call_function_1(loads_func, mp_obj_new_str(meta_data, meta_size));
+
+    // Get relevant meta data
+    mp_int_t meta_firmware_size = mp_obj_get_int(mp_obj_dict_get(meta_dict, MP_OBJ_NEW_QSTR(qstr_from_str("firmware-size"))));
+    mp_int_t meta_device_id = mp_obj_get_int(mp_obj_dict_get(meta_dict, MP_OBJ_NEW_QSTR(qstr_from_str("device-id"))));
+    mp_obj_t meta_firmware_version = mp_obj_dict_get(meta_dict, MP_OBJ_NEW_QSTR(qstr_from_str("firmware-version")));
+
+    mp_printf(&mp_plat_print, "Detected firmware backup: ");
+    mp_obj_print(meta_firmware_version, PRINT_STR);
+    mp_printf(&mp_plat_print, " (%d) bytes.\n", meta_firmware_size);
+
+    // TODO: Get from platform data or hub type
+    #if PYBRICKS_HUB_PRIMEHUB
+    mp_int_t valid_device_id = 0x81;
+    #elif PYBRICKS_HUB_ESSENTIALHUB
+    mp_int_t valid_device_id = 0x83;
+    #endif
+
+    // Verify meta data
+    if (meta_device_id != valid_device_id) {
+        mp_printf(&mp_plat_print, "The firmware backup is not valid for this hub.\n");
         return PBIO_ERROR_FAILED;
     }
 
-    mp_printf(&mp_plat_print, "Preparing to restore firmware.\n");
+    mp_printf(&mp_plat_print, "Preparing storage for firmware installation...\n");
 
     HAL_StatusTypeDef err;
 
@@ -537,23 +574,24 @@ pbio_error_t pb_flash_restore_firmware(void) {
     for (uint32_t address = 0; address < FLASH_SIZE_BOOT; address += FLASH_SIZE_ERASE) {
         err = flash_raw_block_erase(address);
         if (err != HAL_OK) {
+            mp_printf(&mp_plat_print, "Unable to erase storage.\n");
             return PBIO_ERROR_IO;
         }
         MICROPY_EVENT_POLL_HOOK;
     }
 
-    mp_printf(&mp_plat_print, "Restoring firmware.\n");
-
-    // Todo: verify the other meta data details, like size.
+    mp_printf(&mp_plat_print, "Restoring firmware...\n");
 
     // Open firmware file
     if (lfs_file_open_retry("_firmware/lego-firmware.bin", LFS_O_RDONLY) != LFS_ERR_OK) {
+        mp_printf(&mp_plat_print, "Unable to open backup firmware file.\n");
         return PBIO_ERROR_FAILED;
     }
 
     // All known back up firmwares are much larger than this.
-    if (file.size < 128 * 1024) {
+    if (file.size < 128 * 1024 || file.size != meta_firmware_size) {
         // TODO: Check that sha256 matches metadata
+        mp_printf(&mp_plat_print, "Invalid backup firmware file.\n");
         return PBIO_ERROR_FAILED;
     }
 
@@ -592,12 +630,14 @@ pbio_error_t pb_flash_restore_firmware(void) {
 
         // Read data from the firmware backup file
         if (lfs_file_read(&lfs, &file, buf_start, read_size) != read_size) {
+            mp_printf(&mp_plat_print, "Unable to read backup firmware file.\n");
             return PBIO_ERROR_FAILED;
         }
 
         // Write the data
         err = flash_raw_write(done == 0 ? 0 : done + 4, buf, write_size);
         if (err != HAL_OK) {
+            mp_printf(&mp_plat_print, "Unable to copy the backup firmware file.\n");
             return PBIO_ERROR_IO;
         }
 
@@ -606,11 +646,13 @@ pbio_error_t pb_flash_restore_firmware(void) {
 
     // Close firmware file
     if (lfs_file_close(&lfs, &file) != LFS_ERR_OK) {
+        mp_printf(&mp_plat_print, "Unable to close the backup firmware file.\n");
         return PBIO_ERROR_FAILED;
     }
 
-    mp_printf(&mp_plat_print, "Done. You may now reboot. Please keep USB attached.\n");
-
+    mp_printf(&mp_plat_print, "Done. The hub will now reboot. Please keep USB attached.\n");
+    mp_hal_delay_ms(500);
+    pbdrv_reset(PBDRV_RESET_ACTION_RESET);
 
     return PBIO_SUCCESS;
 }
