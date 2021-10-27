@@ -28,9 +28,9 @@ doc:
 clean-doc:
 	@$(MAKE) -C lib/pbio/doc clean
 
-all: movehub cityhub technichub primehub essentialhub nxt ev3dev-armel doc
+all: movehub cityhub technichub primehub essentialhub nxt debug ev3dev-armel doc
 
-clean-all: clean-movehub clean-cityhub clean-technichub clean-primehub clean-essentialhub clean-nxt clean-ev3dev-armel clean-doc
+clean-all: clean-movehub clean-cityhub clean-technichub clean-primehub clean-essentialhub clean-nxt clean-debug clean-ev3dev-armel clean-doc
 
 ifeq ($(HOST_OS),Linux)
 
@@ -111,6 +111,12 @@ essentialhub: mpy-cross
 
 clean-essentialhub: clean-mpy-cross
 	@$(MAKE) -C bricks/essentialhub clean
+
+debug: mpy-cross
+	@$(MAKE) -C bricks/debug build/firmware.dfu
+
+clean-debug: clean-mpy-cross
+	@$(MAKE) -C bricks/debug clean
 
 mpy-cross:
 	@$(MAKE) -C micropython/mpy-cross CROSS_COMPILE=$(HOST_CROSS_COMPILE)
