@@ -39,6 +39,15 @@ $(error failed)
 endif
 endif
 endif
+ifeq ($(PB_LIB_LITTLEFS),1)
+ifeq ("$(wildcard ../../lib/littlefs/README.md)","")
+$(info GIT cloning littlefs submodule)
+$(info $(shell cd ../.. && git submodule update --checkout --init lib/littlefs))
+ifeq ("$(wildcard ../../lib/littlefs/README.md)","")
+$(error failed)
+endif
+endif
+endif
 
 # lets micropython make files work with external files
 USER_C_MODULES = $(PBTOP)
@@ -93,6 +102,9 @@ endif
 ifeq ($(PB_LIB_BTSTACK),1)
 INC += -I$(PBTOP)/lib/btstack/chipset/cc256x
 INC += -I$(PBTOP)/lib/btstack/src
+endif
+ifeq ($(PB_LIB_LITTLEFS),1)
+INC += -I$(PBTOP)/lib/littlefs
 endif
 ifeq ($(PB_USE_LSM6DS3TR_C),1)
 INC += -I$(PBTOP)/lib/lsm6ds3tr_c_STdC/driver
@@ -321,6 +333,13 @@ BTSTACK_SRC_C += $(addprefix lib/btstack/chipset/cc256x/,\
 	btstack_chipset_cc256x.c \
 	)
 
+# Littlefs
+
+LITTLEFS_SRC_C = $(addprefix lib/littlefs/,\
+	lfs_util.c \
+	lfs.c \
+	)
+
 # Contiki
 
 CONTIKI_SRC_C = $(addprefix lib/contiki-core/,\
@@ -544,6 +563,10 @@ OBJ += $(addprefix $(BUILD)/, $(BLE5STACK_SRC_C:.c=.o))
 endif
 ifeq ($(PB_LIB_BTSTACK),1)
 OBJ += $(addprefix $(BUILD)/, $(BTSTACK_SRC_C:.c=.o))
+endif
+ifeq ($(PB_LIB_LITTLEFS),1)
+CFLAGS+= -DLFS_NO_ASSERT -DLFS_NO_MALLOC -DLFS_NO_DEBUG -DLFS_NO_WARN -DLFS_NO_ERROR -DLFS_READONLY
+OBJ += $(addprefix $(BUILD)/, $(LITTLEFS_SRC_C:.c=.o))
 endif
 ifeq ($(PB_USE_HAL),1)
 OBJ += $(addprefix $(BUILD)/, $(HAL_SRC_C:.c=.o))
