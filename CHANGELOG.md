@@ -5,6 +5,7 @@
 ## [Unreleased]
 
 ### Added
+- Enabled `ujson` module.
 - Added ability to use more than one `DriveBase` in the same script.
 - Added `Motor.busy()` and `Motor.stalled()` methods, which
   (in case of `Motor`) are shorthand for `not Motor.control.done()` and
