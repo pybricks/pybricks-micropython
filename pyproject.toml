@@ -13,7 +13,7 @@ azure-cosmosdb-table = "^1.0.6"
 black = "^20.8b0"
 flake8 = "^3.8.3"
 GitPython = "^3.1.11"
-gql = "^3.0.0a5"
+gql = {version = "3.0.0b0", extras = ["requests"], allow-prereleases = true}
 matplotlib = "^3.4.3"
 plotly = "^4.14.1"
 pybricks = {version = "^3.0.0a5", allow-prereleases = true}
