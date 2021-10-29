@@ -37,7 +37,7 @@ void pbio_drivebase_stop_control(pbio_drivebase_t *db);
 
 // Measuring
 
-pbio_error_t pbio_drivebase_get_state(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate);
+pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate);
 
 pbio_error_t pbio_drivebase_reset_state(pbio_drivebase_t *db);
 

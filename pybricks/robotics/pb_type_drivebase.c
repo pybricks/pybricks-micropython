@@ -160,7 +160,7 @@ STATIC mp_obj_t robotics_DriveBase_distance(mp_obj_t self_in) {
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     int32_t distance, drive_speed, angle, turn_rate;
-    pb_assert(pbio_drivebase_get_state(self->db, &distance, &drive_speed, &angle, &turn_rate));
+    pb_assert(pbio_drivebase_get_state_user(self->db, &distance, &drive_speed, &angle, &turn_rate));
 
     return mp_obj_new_int(distance);
 }
@@ -171,7 +171,7 @@ STATIC mp_obj_t robotics_DriveBase_angle(mp_obj_t self_in) {
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     int32_t distance, drive_speed, angle, turn_rate;
-    pb_assert(pbio_drivebase_get_state(self->db, &distance, &drive_speed, &angle, &turn_rate));
+    pb_assert(pbio_drivebase_get_state_user(self->db, &distance, &drive_speed, &angle, &turn_rate));
 
     return mp_obj_new_int(angle);
 }
@@ -182,7 +182,7 @@ STATIC mp_obj_t robotics_DriveBase_state(mp_obj_t self_in) {
     robotics_DriveBase_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
     int32_t distance, drive_speed, angle, turn_rate;
-    pb_assert(pbio_drivebase_get_state(self->db, &distance, &drive_speed, &angle, &turn_rate));
+    pb_assert(pbio_drivebase_get_state_user(self->db, &distance, &drive_speed, &angle, &turn_rate));
 
     mp_obj_t ret[4];
     ret[0] = mp_obj_new_int(distance);

@@ -48,68 +48,38 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
     return PBIO_SUCCESS;
 }
 
-// Get the physical state of a drivebase
-static pbio_error_t drivebase_get_state(pbio_drivebase_t *db,
-    int32_t *time_now,
-    int32_t *sum,
-    int32_t *sum_rate,
-    int32_t *dif,
-    int32_t *dif_rate) {
+// Get the physical and estimated state of a drivebase
+static pbio_error_t pbio_drivebase_get_state(pbio_drivebase_t *db, pbio_control_state_t *state_distance, pbio_control_state_t *state_heading) {
 
-    pbio_error_t err;
-
-    // Read current state of this motor: current time, speed, and position
-    *time_now = pbdrv_clock_get_us();
-
-    int32_t count_left;
-    err = pbio_tacho_get_count(db->left->tacho, &count_left);
+    // Get left servo state
+    pbio_control_state_t state_left;
+    pbio_error_t err = pbio_servo_get_state(db->left, &state_left);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    int32_t count_right;
-    err = pbio_tacho_get_count(db->right->tacho, &count_right);
+    // Get right servo state
+    pbio_control_state_t state_right;
+    err = pbio_servo_get_state(db->right, &state_right);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    int32_t rate_left;
-    err = pbio_tacho_get_rate(db->left->tacho, &rate_left);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
+    // Take sum to get distance state
+    state_distance->count = state_left.count + state_right.count;
+    state_distance->rate = state_left.rate + state_right.rate;
 
-    int32_t rate_right;
-    err = pbio_tacho_get_rate(db->right->tacho, &rate_right);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
+    state_distance->count_est = state_left.count_est + state_right.count_est;
+    state_distance->rate_est = state_left.rate_est + state_right.rate_est;
 
-    *sum = count_left + count_right;
-    *sum_rate = rate_left + rate_right;
-    *dif = count_left - count_right;
-    *dif_rate = rate_left - rate_right;
+    // Take difference to get heading state
+    state_heading->count = state_left.count - state_right.count;
+    state_heading->rate = state_left.rate - state_right.rate;
+
+    state_heading->count_est = state_left.count_est - state_right.count_est;
+    state_heading->rate_est = state_left.rate_est - state_right.rate_est;
 
     return PBIO_SUCCESS;
-}
-
-// Get the estimated state of a drivebase
-static void drivebase_get_estimated_state(pbio_drivebase_t *db,
-    int32_t *sum,
-    int32_t *sum_rate,
-    int32_t *dif,
-    int32_t *dif_rate) {
-
-    int32_t count_left, rate_left;
-    pbio_observer_get_estimated_state(&db->left->observer, &count_left, &rate_left);
-
-    int32_t count_right, rate_right;
-    pbio_observer_get_estimated_state(&db->right->observer, &count_right, &rate_right);
-
-    *sum = count_left + count_right;
-    *sum_rate = rate_left + rate_right;
-    *dif = count_left - count_right;
-    *dif_rate = rate_left - rate_right;
 }
 
 // Actuate a drivebase
@@ -211,27 +181,25 @@ void pbio_drivebase_claim_servos(pbio_drivebase_t *db, bool claim) {
 
 pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_stop) {
 
-    pbio_error_t err;
-
-    int32_t sum_control;
-    int32_t dif_control;
-
     if (after_stop == PBIO_ACTUATION_HOLD) {
-        // When holding, the control payload is the count to hold
-        int32_t unused;
-        err = drivebase_get_state(db, &unused, &sum_control, &unused, &dif_control, &unused);
+
+        // Get drive base state
+        pbio_control_state_t state_distance;
+        pbio_control_state_t state_heading;
+        pbio_error_t err = pbio_drivebase_get_state(db, &state_distance, &state_heading);
         if (err != PBIO_SUCCESS) {
             return err;
         }
+
+        // When holding, the control payload is the count to hold
+        return pbio_drivebase_actuate(db, after_stop, state_distance.count, state_heading.count);
+
     } else {
         // Otherwise the payload is zero and control stops
         pbio_control_stop(&db->control_distance);
         pbio_control_stop(&db->control_heading);
-        sum_control = 0;
-        dif_control = 0;
+        return pbio_drivebase_actuate(db, after_stop, 0, 0);
     }
-
-    return pbio_drivebase_actuate(db, after_stop, sum_control, dif_control);
 }
 
 void pbio_drivebase_stop_control(pbio_drivebase_t *db) {
@@ -247,22 +215,24 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
         return PBIO_SUCCESS;
     }
 
-    // Get the physical state
-    int32_t time_now, sum, sum_rate, dif, dif_rate;
-    pbio_error_t err = drivebase_get_state(db, &time_now, &sum, &sum_rate, &dif, &dif_rate);
+    // Get current time
+    int32_t time_now = pbdrv_clock_get_us();
+
+    // Get drive base state
+    pbio_control_state_t state_distance;
+    pbio_control_state_t state_heading;
+    pbio_error_t err = pbio_drivebase_get_state(db, &state_distance, &state_heading);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    int32_t sum_est, sum_rate_est, dif_est, dif_rate_est;
-    drivebase_get_estimated_state(db, &sum_est, &sum_rate_est, &dif_est, &dif_rate_est);
 
     // Get torque signals
     int32_t sum_torque, dif_torque;
     int32_t sum_rate_ref, dif_rate_ref;
     int32_t sum_acceleration_ref, dif_acceleration_ref;
     pbio_actuation_t sum_actuation, dif_actuation;
-    pbio_control_update(&db->control_distance, time_now, sum, sum_rate, sum_est, sum_rate_est, &sum_actuation, &sum_torque, &sum_rate_ref, &sum_acceleration_ref);
-    pbio_control_update(&db->control_heading, time_now, dif, dif_rate, dif_est, dif_rate_est, &dif_actuation, &dif_torque, &dif_rate_ref, &dif_acceleration_ref);
+    pbio_control_update(&db->control_distance, time_now, &state_distance, &sum_actuation, &sum_torque, &sum_rate_ref, &sum_acceleration_ref);
+    pbio_control_update(&db->control_heading, time_now, &state_heading, &dif_actuation, &dif_torque, &dif_rate_ref, &dif_acceleration_ref);
 
     // Separate actuation types are not possible for now
     if (sum_actuation != dif_actuation) {
@@ -288,14 +258,16 @@ pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int
         return PBIO_ERROR_NOT_IMPLEMENTED;
     }
 
-    pbio_error_t err;
-
     // Claim both servos for use by drivebase
     pbio_drivebase_claim_servos(db, true);
 
-    // Get the physical initial state
-    int32_t time_now, sum, sum_rate, dif, dif_rate;
-    err = drivebase_get_state(db, &time_now, &sum, &sum_rate, &dif, &dif_rate);
+    // Get current time
+    int32_t time_now = pbdrv_clock_get_us();
+
+    // Get drive base state
+    pbio_control_state_t state_distance;
+    pbio_control_state_t state_heading;
+    pbio_error_t err = pbio_drivebase_get_state(db, &state_distance, &state_heading);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -304,7 +276,7 @@ pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int
     int32_t relative_sum_target = pbio_control_user_to_counts(&db->control_distance.settings, distance);
     int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, drive_speed);
 
-    err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, sum, relative_sum_target, sum_rate, target_sum_rate, PBIO_ACTUATION_HOLD);
+    err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, &state_distance, relative_sum_target, target_sum_rate, PBIO_ACTUATION_HOLD);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -313,7 +285,7 @@ pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int
     int32_t relative_dif_target = 0;
     int32_t target_dif_rate = db->control_heading.settings.max_rate;
 
-    err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, dif, relative_dif_target, dif_rate, target_dif_rate, PBIO_ACTUATION_HOLD);
+    err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, &state_heading, relative_dif_target, target_dif_rate, PBIO_ACTUATION_HOLD);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -328,24 +300,25 @@ pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle, int32_t tu
         return PBIO_ERROR_NOT_IMPLEMENTED;
     }
 
-    pbio_error_t err;
-
     // Claim both servos for use by drivebase
     pbio_drivebase_claim_servos(db, true);
 
-    // Get the physical initial state
-    int32_t time_now, sum, sum_rate, dif, dif_rate;
-    err = drivebase_get_state(db, &time_now, &sum, &sum_rate, &dif, &dif_rate);
+    // Get current time
+    int32_t time_now = pbdrv_clock_get_us();
+
+    // Get drive base state
+    pbio_control_state_t state_distance;
+    pbio_control_state_t state_heading;
+    pbio_error_t err = pbio_drivebase_get_state(db, &state_distance, &state_heading);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-
 
     // Sum controller just holds still
     int32_t relative_sum_target = 0;
     int32_t target_sum_rate = db->control_distance.settings.max_rate;
 
-    err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, sum, relative_sum_target, sum_rate, target_sum_rate, PBIO_ACTUATION_HOLD);
+    err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, &state_distance, relative_sum_target, target_sum_rate, PBIO_ACTUATION_HOLD);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -354,7 +327,7 @@ pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle, int32_t tu
     int32_t relative_dif_target = pbio_control_user_to_counts(&db->control_heading.settings, angle);
     int32_t target_dif_rate = pbio_control_user_to_counts(&db->control_heading.settings, turn_rate);
 
-    err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, dif, relative_dif_target, dif_rate, target_dif_rate, PBIO_ACTUATION_HOLD);
+    err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, &state_heading, relative_dif_target, target_dif_rate, PBIO_ACTUATION_HOLD);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -363,28 +336,29 @@ pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle, int32_t tu
 }
 pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate) {
 
-    pbio_error_t err;
-
     // Claim both servos for use by drivebase
     pbio_drivebase_claim_servos(db, true);
 
-    // Get the physical initial state
-    int32_t time_now, sum, sum_rate, dif, dif_rate;
+    // Get current time
+    int32_t time_now = pbdrv_clock_get_us();
 
-    err = drivebase_get_state(db, &time_now, &sum, &sum_rate, &dif, &dif_rate);
+    // Get drive base state
+    pbio_control_state_t state_distance;
+    pbio_control_state_t state_heading;
+    pbio_error_t err = pbio_drivebase_get_state(db, &state_distance, &state_heading);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Initialize both controllers
     int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, speed);
-    err = pbio_control_start_timed_control(&db->control_distance, time_now, DURATION_FOREVER, sum, sum_rate, target_sum_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
+    err = pbio_control_start_timed_control(&db->control_distance, time_now, &state_distance, DURATION_FOREVER, target_sum_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     int32_t target_turn_rate = pbio_control_user_to_counts(&db->control_heading.settings, turn_rate);
-    err = pbio_control_start_timed_control(&db->control_heading, time_now, DURATION_FOREVER, dif, dif_rate, target_turn_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
+    err = pbio_control_start_timed_control(&db->control_heading, time_now, &state_heading, DURATION_FOREVER, target_turn_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -392,22 +366,34 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t t
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_drivebase_get_state(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate) {
-    int32_t time_now, sum, sum_rate, dif, dif_rate;
-    pbio_error_t err = drivebase_get_state(db, &time_now, &sum, &sum_rate, &dif, &dif_rate);
+pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate) {
+
+    // Get drive base state
+    pbio_control_state_t state_distance;
+    pbio_control_state_t state_heading;
+    pbio_error_t err = pbio_drivebase_get_state(db, &state_distance, &state_heading);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    *distance = pbio_control_counts_to_user(&db->control_distance.settings, sum - db->sum_offset);
-    *drive_speed = pbio_control_counts_to_user(&db->control_distance.settings, sum_rate);
-    *angle = pbio_control_counts_to_user(&db->control_heading.settings,  dif - db->dif_offset);
-    *turn_rate = pbio_control_counts_to_user(&db->control_heading.settings,  dif_rate);
+    *distance = pbio_control_counts_to_user(&db->control_distance.settings, state_distance.count - db->sum_offset);
+    *drive_speed = pbio_control_counts_to_user(&db->control_distance.settings, state_distance.rate);
+    *angle = pbio_control_counts_to_user(&db->control_heading.settings, state_heading.count - db->dif_offset);
+    *turn_rate = pbio_control_counts_to_user(&db->control_heading.settings, state_heading.rate);
     return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_drivebase_reset_state(pbio_drivebase_t *db) {
-    int32_t time_now, sum_rate, dif_rate;
-    return drivebase_get_state(db, &time_now, &db->sum_offset, &sum_rate, &db->dif_offset, &dif_rate);
+
+    // Get drive base state
+    pbio_control_state_t state_distance;
+    pbio_control_state_t state_heading;
+    pbio_error_t err = pbio_drivebase_get_state(db, &state_distance, &state_heading);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    db->sum_offset = state_distance.count;
+    db->dif_offset = state_heading.count;
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_drivebase_get_drive_settings(pbio_drivebase_t *db, int32_t *drive_speed, int32_t *drive_acceleration, int32_t *turn_rate, int32_t *turn_acceleration) {

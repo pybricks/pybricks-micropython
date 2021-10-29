@@ -49,6 +49,14 @@ typedef enum {
     PBIO_ACTUATION_HOLD,                                /**< Actively hold the motor in place */
 } pbio_actuation_t;
 
+// State of a system being controlled.
+typedef struct _pbio_control_state_t {
+    int32_t count;
+    int32_t count_est;
+    int32_t rate;
+    int32_t rate_est;
+} pbio_control_state_t;
+
 // Maneuver-specific function that returns true if maneuver is done, based on current state
 typedef bool (*pbio_control_on_target_t)(pbio_trajectory_t *trajectory,
     pbio_control_settings_t *settings,
@@ -104,17 +112,16 @@ int32_t pbio_control_settings_get_max_integrator(pbio_control_settings_t *s);
 int32_t pbio_control_get_ref_time(pbio_control_t *ctl, int32_t time_now);
 
 void pbio_control_stop(pbio_control_t *ctl);
-pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t target_count, int32_t rate_now, int32_t target_rate, pbio_actuation_t after_stop);
-pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t relative_target_count, int32_t rate_now, int32_t target_rate, pbio_actuation_t after_stop);
-pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, int32_t duration, int32_t count_now, int32_t rate_now, int32_t target_rate, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop);
+pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t target_count, int32_t target_rate, pbio_actuation_t after_stop);
+pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t relative_target_count, int32_t target_rate, pbio_actuation_t after_stop);
+pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, int32_t duration, int32_t target_rate, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop);
 pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_now, int32_t target_count);
-
 
 bool pbio_control_is_active(pbio_control_t *ctl);
 bool pbio_control_is_stalled(pbio_control_t *ctl);
 bool pbio_control_is_done(pbio_control_t *ctl);
 int32_t pbio_control_get_load(pbio_control_t *ctl);
 
-void pbio_control_update(pbio_control_t *ctl, int32_t time_now, int32_t count_now, int32_t rate_now, int32_t count_est, int32_t rate_est, pbio_actuation_t *actuation, int32_t *control, int32_t *rate_ref, int32_t *acceleration_ref);
+void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, pbio_actuation_t *actuation, int32_t *control, int32_t *rate_ref, int32_t *acceleration_ref);
 
 #endif // _PBIO_CONTROL_H_

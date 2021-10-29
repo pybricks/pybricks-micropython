@@ -128,21 +128,26 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     return pbio_servo_track_target(srv, new_target);
 }
 
-// Get the physical state of a single motor
-static pbio_error_t servo_get_state(pbio_servo_t *srv, int32_t *time_now, int32_t *count_now, int32_t *rate_now) {
+// Get the physical and estimated state of a single motor
+pbio_error_t pbio_servo_get_state(pbio_servo_t *srv, pbio_control_state_t *state) {
 
     pbio_error_t err;
 
-    // Read current state of this motor: current time, speed, and position
-    *time_now = pbdrv_clock_get_us();
-    err = pbio_tacho_get_count(srv->tacho, count_now);
+    // Read physical angle/counts
+    err = pbio_tacho_get_count(srv->tacho, &state->count);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    err = pbio_tacho_get_rate(srv->tacho, rate_now);
+
+    // Read physical anglular rate
+    err = pbio_tacho_get_rate(srv->tacho, &state->rate);
     if (err != PBIO_SUCCESS) {
         return err;
     }
+
+    // Get estimated state
+    pbio_observer_get_estimated_state(&srv->observer, &state->count_est, &state->rate_est);
+
     return PBIO_SUCCESS;
 }
 
@@ -176,19 +181,18 @@ pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
         return PBIO_SUCCESS;
     }
 
-    int32_t time_now;
-    int32_t count_now, count_est;
-    int32_t rate_now, rate_est, rate_ref;
+    int32_t rate_ref;
     int32_t acceleration_ref;
 
-    // Read the physical state
-    pbio_error_t err = servo_get_state(srv, &time_now, &count_now, &rate_now);
+    // Get current time
+    int32_t time_now = pbdrv_clock_get_us();
+
+    // Read the physical and estimated state
+    pbio_control_state_t state;
+    pbio_error_t err = pbio_servo_get_state(srv, &state);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-
-    // Get estimated motor state
-    pbio_observer_get_estimated_state(&srv->observer, &count_est, &rate_est);
 
     // Control action to be calculated
     pbio_actuation_t actuation;
@@ -200,7 +204,7 @@ pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
     if (pbio_control_is_active(&srv->control)) {
 
         // Calculate feedback control signal
-        pbio_control_update(&srv->control, time_now, count_now, rate_now, count_est, rate_est, &actuation, &feedback_torque, &rate_ref, &acceleration_ref);
+        pbio_control_update(&srv->control, time_now, &state, &actuation, &feedback_torque, &rate_ref, &acceleration_ref);
 
         // Get required feedforward torque for current reference
         feedforward_torque = pbio_observer_get_feedforward_torque(&srv->observer, rate_ref, acceleration_ref);
@@ -218,11 +222,11 @@ pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
     }
 
     // Log servo state
-    int32_t log_data[] = {time_now, count_now, rate_now, actuation, voltage, count_est, rate_est, feedback_torque, feedforward_torque};
+    int32_t log_data[] = {time_now, state.count, state.rate, actuation, voltage, state.count_est, state.rate_est, feedback_torque, feedforward_torque};
     pbio_logger_update(&srv->log, log_data);
 
     // Update the state observer
-    pbio_observer_update(&srv->observer, count_now, actuation, voltage);
+    pbio_observer_update(&srv->observer, state.count, actuation, voltage);
 
     return PBIO_SUCCESS;
 }
@@ -281,8 +285,6 @@ void pbio_servo_stop_force(pbio_servo_t *srv) {
 
 pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
 
-    pbio_error_t err;
-
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
         return PBIO_ERROR_BUSY;
@@ -291,21 +293,21 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
     // Get target rate in unit of counts
     int32_t target_rate = pbio_control_user_to_counts(&srv->control.settings, speed);
 
-    // Get the initial physical motor state.
-    int32_t time_now, count_now, rate_now;
+    // Get current time
+    int32_t time_now = pbdrv_clock_get_us();
 
-    err = servo_get_state(srv, &time_now, &count_now, &rate_now);
+    // Read the physical and estimated state
+    pbio_control_state_t state;
+    pbio_error_t err = pbio_servo_get_state(srv, &state);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Start a timed maneuver, duration forever
-    return pbio_control_start_timed_control(&srv->control, time_now, DURATION_FOREVER, count_now, rate_now, target_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
+    return pbio_control_start_timed_control(&srv->control, time_now, &state, DURATION_FOREVER, target_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
 }
 
 pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop) {
-
-    pbio_error_t err;
 
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
@@ -315,20 +317,21 @@ pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t durat
     // Get target rate in unit of counts
     int32_t target_rate = pbio_control_user_to_counts(&srv->control.settings, speed);
 
-    // Get the initial physical motor state.
-    int32_t time_now, count_now, rate_now;
-    err = servo_get_state(srv, &time_now, &count_now, &rate_now);
+    // Get current time
+    int32_t time_now = pbdrv_clock_get_us();
+
+    // Read the physical and estimated state
+    pbio_control_state_t state;
+    pbio_error_t err = pbio_servo_get_state(srv, &state);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Start a timed maneuver, duration finite
-    return pbio_control_start_timed_control(&srv->control, time_now, duration * US_PER_MS, count_now, rate_now, target_rate, pbio_control_on_target_time, after_stop);
+    return pbio_control_start_timed_control(&srv->control, time_now, &state, duration * US_PER_MS, target_rate, pbio_control_on_target_time, after_stop);
 }
 
 pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio_actuation_t after_stop) {
-
-    pbio_error_t err;
 
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
@@ -338,20 +341,21 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
     // Get target rate in unit of counts
     int32_t target_rate = pbio_control_user_to_counts(&srv->control.settings, speed);
 
-    // Get the initial physical motor state.
-    int32_t time_now, count_now, rate_now;
-    err = servo_get_state(srv, &time_now, &count_now, &rate_now);
+    // Get current time
+    int32_t time_now = pbdrv_clock_get_us();
+
+    // Read the physical and estimated state
+    pbio_control_state_t state;
+    pbio_error_t err = pbio_servo_get_state(srv, &state);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Start a timed maneuver, duration forever and ending on stall
-    return pbio_control_start_timed_control(&srv->control, time_now, DURATION_FOREVER, count_now, rate_now, target_rate, pbio_control_on_target_stalled, after_stop);
+    return pbio_control_start_timed_control(&srv->control, time_now, &state, DURATION_FOREVER, target_rate, pbio_control_on_target_stalled, after_stop);
 }
 
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop) {
-
-    pbio_error_t err;
 
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
@@ -362,19 +366,20 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
     int32_t target_rate = pbio_control_user_to_counts(&srv->control.settings, speed);
     int32_t target_count = pbio_control_user_to_counts(&srv->control.settings, target);
 
-    // Get the initial physical motor state.
-    int32_t time_now, count_now, rate_now;
-    err = servo_get_state(srv, &time_now, &count_now, &rate_now);
+    // Get current time
+    int32_t time_now = pbdrv_clock_get_us();
+
+    // Read the physical and estimated state
+    pbio_control_state_t state;
+    pbio_error_t err = pbio_servo_get_state(srv, &state);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    return pbio_control_start_angle_control(&srv->control, time_now, count_now, target_count, rate_now, target_rate, after_stop);
+    return pbio_control_start_angle_control(&srv->control, time_now, &state, target_count, target_rate, after_stop);
 }
 
 pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_actuation_t after_stop) {
-
-    pbio_error_t err;
 
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
@@ -385,15 +390,18 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
     int32_t target_rate = pbio_control_user_to_counts(&srv->control.settings, speed);
     int32_t relative_target_count = pbio_control_user_to_counts(&srv->control.settings, angle);
 
-    // Get the initial physical motor state.
-    int32_t time_now, count_now, rate_now;
-    err = servo_get_state(srv, &time_now, &count_now, &rate_now);
+    // Get current time
+    int32_t time_now = pbdrv_clock_get_us();
+
+    // Read the physical and estimated state
+    pbio_control_state_t state;
+    pbio_error_t err = pbio_servo_get_state(srv, &state);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Start the relative angle control
-    return pbio_control_start_relative_angle_control(&srv->control, time_now, count_now, relative_target_count, rate_now, target_rate, after_stop);
+    return pbio_control_start_relative_angle_control(&srv->control, time_now, &state, relative_target_count, target_rate, after_stop);
 }
 
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {

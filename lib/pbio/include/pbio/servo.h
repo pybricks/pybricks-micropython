@@ -42,6 +42,8 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
 
 pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *control_settings, const pbio_observer_settings_t **observer_settings, pbio_iodev_type_id_t id);
 
+pbio_error_t pbio_servo_get_state(pbio_servo_t *srv, pbio_control_state_t *state);
+
 pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool reset_to_abs);
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled);
 
