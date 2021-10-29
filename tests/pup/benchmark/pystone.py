@@ -29,7 +29,11 @@ try:
 
 
 except ImportError:
-    from utime import time as clock
+    from utime import ticks_ms
+
+    def clock():
+        return ticks_ms() / 1000
+
 
 __version__ = "1.2"
 
