@@ -11,11 +11,14 @@
 static pbio_error_t pbio_trajectory_patch(pbio_trajectory_t *trj, bool time_based, int32_t t0, int32_t duration, int32_t th3, int32_t wt, int32_t wmax, int32_t a, int32_t amax) {
 
     // Get current reference point and acceleration, which will be the 0-point for the new trajectory
-    int32_t th0;
-    int32_t th0_ext;
-    int32_t w0;
-    int32_t acceleration_ref;
-    pbio_trajectory_get_reference(trj, t0, &th0, &th0_ext, &w0, &acceleration_ref);
+
+    pbio_trajectory_reference_t ref;
+    pbio_trajectory_get_reference(trj, t0, &ref);
+
+    int32_t th0 = ref.count;
+    int32_t th0_ext = ref.count_ext;
+    int32_t w0 = ref.rate;
+    int32_t acceleration_ref = ref.acceleration;
 
     // First get the nominal commanded trajectory. This will be our default if we can't patch onto the existing one.
     pbio_error_t err;

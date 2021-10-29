@@ -107,9 +107,9 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
 
     // Get the old target angle that we were tracking until now
     int32_t time_ref = pbio_control_get_ref_time(&srv->control, pbdrv_clock_get_us());
-    int32_t count_ref, unused;
-    pbio_trajectory_get_reference(&srv->control.trajectory, time_ref, &count_ref, &unused, &unused, &unused);
-    int32_t target_old = pbio_control_counts_to_user(&srv->control.settings, count_ref);
+    pbio_trajectory_reference_t ref;
+    pbio_trajectory_get_reference(&srv->control.trajectory, time_ref, &ref);
+    int32_t target_old = pbio_control_counts_to_user(&srv->control.settings, ref.count);
 
     // Reset the angle
     err = pbio_tacho_reset_angle(srv->tacho, &reset_angle, reset_to_abs);
@@ -181,9 +181,6 @@ pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
         return PBIO_SUCCESS;
     }
 
-    int32_t rate_ref;
-    int32_t acceleration_ref;
-
     // Get current time
     int32_t time_now = pbdrv_clock_get_us();
 
@@ -193,6 +190,9 @@ pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
     if (err != PBIO_SUCCESS) {
         return err;
     }
+
+    // Trajectory reference point
+    pbio_trajectory_reference_t ref;
 
     // Control action to be calculated
     pbio_actuation_t actuation;
@@ -204,10 +204,10 @@ pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
     if (pbio_control_is_active(&srv->control)) {
 
         // Calculate feedback control signal
-        pbio_control_update(&srv->control, time_now, &state, &actuation, &feedback_torque, &rate_ref, &acceleration_ref);
+        pbio_control_update(&srv->control, time_now, &state, &ref, &actuation, &feedback_torque);
 
         // Get required feedforward torque for current reference
-        feedforward_torque = pbio_observer_get_feedforward_torque(&srv->observer, rate_ref, acceleration_ref);
+        feedforward_torque = pbio_observer_get_feedforward_torque(&srv->observer, ref.rate, ref.acceleration);
 
         // Actuate the servo. For torque control, the torque payload is passed along. Otherwise payload is ignored.
         err = pbio_servo_actuate(srv, actuation, feedback_torque + feedforward_torque);

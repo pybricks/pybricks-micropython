@@ -297,46 +297,46 @@ pbio_error_t pbio_trajectory_make_angle_based(pbio_trajectory_t *trj, int32_t t0
 }
 
 // Evaluate the reference speed and velocity at the (shifted) time
-void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, int32_t *count_ref, int32_t *count_ref_ext, int32_t *rate_ref, int32_t *acceleration_ref) {
+void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, pbio_trajectory_reference_t *ref) {
 
     int64_t mcount_ref;
 
     if (time_ref - trj->t1 < 0) {
         // If we are here, then we are still in the acceleration phase. Includes conversion from microseconds to seconds, in two steps to avoid overflows and round off errors
-        *rate_ref = trj->w0 + timest(trj->a0, time_ref - trj->t0);
+        ref->rate = trj->w0 + timest(trj->a0, time_ref - trj->t0);
         mcount_ref = as_mcount(trj->th0, trj->th0_ext) + x_time(trj->w0, time_ref - trj->t0) + x_time2(trj->a0, time_ref - trj->t0);
-        *acceleration_ref = trj->a0;
+        ref->acceleration = trj->a0;
     } else if (trj->forever || time_ref - trj->t2 <= 0) {
         // If we are here, then we are in the constant speed phase
-        *rate_ref = trj->w1;
+        ref->rate = trj->w1;
         mcount_ref = as_mcount(trj->th1, trj->th1_ext) + x_time(trj->w1, time_ref - trj->t1);
-        *acceleration_ref = 0;
+        ref->acceleration = 0;
     } else if (time_ref - trj->t3 <= 0) {
         // If we are here, then we are in the deceleration phase
-        *rate_ref = trj->w1 + timest(trj->a2,    time_ref - trj->t2);
+        ref->rate = trj->w1 + timest(trj->a2, time_ref - trj->t2);
         mcount_ref = as_mcount(trj->th2, trj->th2_ext) + x_time(trj->w1, time_ref - trj->t2) + x_time2(trj->a2, time_ref - trj->t2);
-        *acceleration_ref = trj->a2;
+        ref->acceleration = trj->a2;
     } else {
         // If we are here, we are in the zero speed phase (relevant when holding position)
-        *rate_ref = 0;
+        ref->rate = 0;
         mcount_ref = as_mcount(trj->th3, trj->th3_ext);
-        *acceleration_ref = 0;
+        ref->acceleration = 0;
     }
 
     // Split high res angle into counts and millicounts
-    as_count(mcount_ref, count_ref, count_ref_ext);
+    as_count(mcount_ref, &ref->count, &ref->count_ext);
 
     // Rebase the reference before it overflows after 35 minutes
     if (time_ref - trj->t0 > (DURATION_MAX_S + 120) * MS_PER_SECOND * US_PER_MS) {
         // Infinite maneuvers just maintain the same reference speed, continuing again from current time
         if (trj->forever) {
-            pbio_trajectory_make_time_based(trj, time_ref, DURATION_FOREVER, *count_ref, *count_ref_ext, trj->w1, trj->w1, trj->w1, abs(trj->a2), abs(trj->a2));
+            pbio_trajectory_make_time_based(trj, time_ref, DURATION_FOREVER, ref->count, ref->count_ext, trj->w1, trj->w1, trj->w1, abs(trj->a2), abs(trj->a2));
         }
         // All other maneuvers are considered complete and just stop. In practice, other maneuvers are not
         // allowed to be this long. This just ensures that if a motor stops and holds, it will continue to
         // do so forever, by rebasing the stationary trajectory before it overflows.
         else {
-            pbio_trajectory_make_stationary(trj, time_ref, *count_ref);
+            pbio_trajectory_make_stationary(trj, time_ref, ref->count);
         }
 
     }

@@ -9,11 +9,11 @@
 #include <pbio/trajectory.h>
 #include <pbio/integrator.h>
 
-void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, pbio_actuation_t *actuation, int32_t *control, int32_t *rate_ref, int32_t *acceleration_ref) {
+void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, pbio_trajectory_reference_t *ref, pbio_actuation_t *actuation, int32_t *control) {
 
     // Declare current time, positions, rates, and their reference value and error
     int32_t time_ref;
-    int32_t count_ref, count_ref_ext, count_err, count_feedback, count_err_integral, rate_err_integral;
+    int32_t count_err, count_feedback, count_err_integral, rate_err_integral;
     int32_t rate_err, rate_feedback;
     int32_t torque, torque_due_to_proportional, torque_due_to_integral, torque_due_to_derivative;
 
@@ -22,7 +22,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
     time_ref = pbio_control_get_ref_time(ctl, time_now);
 
     // Get reference signals
-    pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &count_ref, &count_ref_ext, rate_ref, acceleration_ref);
+    pbio_trajectory_get_reference(&ctl->trajectory, time_ref, ref);
 
     // Select either the estimated speed or the reported/measured speed for use in feedback.
     rate_feedback = ctl->settings.use_estimated_rate ? state->rate_est : state->rate;
@@ -37,13 +37,13 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
         int32_t integral_range = (ctl->settings.max_torque / ctl->settings.pid_kp) * 2;
 
         // Update count integral error and get current error state
-        pbio_count_integrator_update(&ctl->count_integrator, time_now, state->count, count_ref, ctl->trajectory.th3, integral_range, ctl->settings.integral_rate);
-        pbio_count_integrator_get_errors(&ctl->count_integrator, count_feedback, count_ref, &count_err, &count_err_integral);
-        rate_err = *rate_ref - rate_feedback;
+        pbio_count_integrator_update(&ctl->count_integrator, time_now, state->count, ref->count, ctl->trajectory.th3, integral_range, ctl->settings.integral_rate);
+        pbio_count_integrator_get_errors(&ctl->count_integrator, count_feedback, ref->count, &count_err, &count_err_integral);
+        rate_err = ref->rate - rate_feedback;
     } else {
         // For time/speed based commands, the main error is speed. It integrates into a quantity with unit of position.
         // There is no count integral control, because we do not need a second order integrator for speed control.
-        pbio_rate_integrator_get_errors(&ctl->rate_integrator, rate_feedback, *rate_ref, state->count, count_ref, &rate_err, &rate_err_integral);
+        pbio_rate_integrator_get_errors(&ctl->rate_integrator, rate_feedback, ref->rate, state->count, ref->count, &rate_err, &rate_err_integral);
         count_err = rate_err_integral;
         count_err_integral = 0;
     }
@@ -71,20 +71,20 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
     if (ctl->type == PBIO_CONTROL_ANGLE) {
         if (abs(torque_due_to_proportional) >= max_windup_torque && pbio_math_sign(torque_due_to_proportional) == pbio_math_sign(rate_err)) {
             // We are at the torque limit and we should prevent further position error integration.
-            pbio_count_integrator_pause(&ctl->count_integrator, time_now, state->count, count_ref);
+            pbio_count_integrator_pause(&ctl->count_integrator, time_now, state->count, ref->count);
         } else {
             // Not at the limit so continue integrating errors
-            pbio_count_integrator_resume(&ctl->count_integrator, time_now, state->count, count_ref);
+            pbio_count_integrator_resume(&ctl->count_integrator, time_now, state->count, ref->count);
         }
     }
     // Position anti-windup in case of timed speed control (speed integral may not get too high)
     else {
         if (abs(torque_due_to_proportional) >= max_windup_torque && pbio_math_sign(torque_due_to_proportional) == pbio_math_sign(rate_err)) {
             // We are at the torque limit and we should prevent further speed error integration.
-            pbio_rate_integrator_pause(&ctl->rate_integrator, time_now, state->count, count_ref);
+            pbio_rate_integrator_pause(&ctl->rate_integrator, time_now, state->count, ref->count);
         } else {
             // Not at the limit so continue integrating errors
-            pbio_rate_integrator_resume(&ctl->rate_integrator, time_now, state->count, count_ref);
+            pbio_rate_integrator_resume(&ctl->rate_integrator, time_now, state->count, ref->count);
         }
     }
 
@@ -125,8 +125,8 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
         state->rate,
         *actuation,
         *control,
-        count_ref,
-        *rate_ref,
+        ref->count,
+        ref->rate,
         state->count_est,
         state->rate_est,
         torque_due_to_proportional,
@@ -199,8 +199,9 @@ pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int3
     // Otherwise count from the current reference
     else {
         int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
-        int32_t unused;
-        pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &count_start, &unused, &unused, &unused);
+        pbio_trajectory_reference_t ref;
+        pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &ref);
+        count_start = ref.count;
     }
 
     // The target count is the start count plus the count to be traveled.  If speed is negative, traveled count also flips.
@@ -259,11 +260,11 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
     } else if (ctl->type == PBIO_CONTROL_ANGLE) {
         // If position based control is ongoing, start from its current reference. First get current reference signal.
         int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
-        int32_t count_start, rate_start, unused;
-        pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &count_start, &unused, &rate_start, &unused);
+        pbio_trajectory_reference_t ref;
+        pbio_trajectory_get_reference(&ctl->trajectory, time_ref, &ref);
 
         // Now start the timed trajectory from there
-        err = pbio_trajectory_make_time_based(&ctl->trajectory, time_now, duration, count_start, 0, rate_start, target_rate, ctl->settings.max_rate, ctl->settings.abs_acceleration, ctl->settings.abs_acceleration);
+        err = pbio_trajectory_make_time_based(&ctl->trajectory, time_now, duration, ref.count, 0, ref.rate, target_rate, ctl->settings.max_rate, ctl->settings.abs_acceleration, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }

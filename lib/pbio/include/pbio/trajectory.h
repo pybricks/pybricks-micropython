@@ -51,6 +51,16 @@ typedef struct _pbio_trajectory_t {
     int32_t a2;                          /**<  Encoder acceleration during out-phase */
 } pbio_trajectory_t;
 
+/**
+ * Trajectory evaluated at a given point in time
+ */
+typedef struct _pbio_trajectory_reference_t {
+    int32_t count;        /**<  Reference count */
+    int32_t count_ext;    /**<  Reference count extra (sub-degree) */
+    int32_t rate;         /**<  Reference rate */
+    int32_t acceleration; /**<  Reference acceleration */
+} pbio_trajectory_reference_t;
+
 // Core trajectory generators
 
 void pbio_trajectory_make_stationary(pbio_trajectory_t *trj, int32_t t0, int32_t th0);
@@ -59,7 +69,7 @@ pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *trj, int32_t t0,
 
 pbio_error_t pbio_trajectory_make_angle_based(pbio_trajectory_t *trj, int32_t t0, int32_t th0, int32_t th3, int32_t w0, int32_t wt, int32_t wmax, int32_t a, int32_t amax);
 
-void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, int32_t *count_ref, int32_t *count_ref_ext, int32_t *rate_ref, int32_t *acceleration_ref);
+void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, pbio_trajectory_reference_t *ref);
 
 // Extended and patched trajectories
 

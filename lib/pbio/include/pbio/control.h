@@ -122,6 +122,6 @@ bool pbio_control_is_stalled(pbio_control_t *ctl);
 bool pbio_control_is_done(pbio_control_t *ctl);
 int32_t pbio_control_get_load(pbio_control_t *ctl);
 
-void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, pbio_actuation_t *actuation, int32_t *control, int32_t *rate_ref, int32_t *acceleration_ref);
+void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_state_t *state, pbio_trajectory_reference_t *ref, pbio_actuation_t *actuation, int32_t *control);
 
 #endif // _PBIO_CONTROL_H_

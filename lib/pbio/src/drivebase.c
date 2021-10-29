@@ -226,13 +226,13 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
         return err;
     }
 
-    // Get torque signals
+    // Get reference and torque signals
+    pbio_trajectory_reference_t ref_distance;
+    pbio_trajectory_reference_t ref_heading;
     int32_t sum_torque, dif_torque;
-    int32_t sum_rate_ref, dif_rate_ref;
-    int32_t sum_acceleration_ref, dif_acceleration_ref;
     pbio_actuation_t sum_actuation, dif_actuation;
-    pbio_control_update(&db->control_distance, time_now, &state_distance, &sum_actuation, &sum_torque, &sum_rate_ref, &sum_acceleration_ref);
-    pbio_control_update(&db->control_heading, time_now, &state_heading, &dif_actuation, &dif_torque, &dif_rate_ref, &dif_acceleration_ref);
+    pbio_control_update(&db->control_distance, time_now, &state_distance, &ref_distance, &sum_actuation, &sum_torque);
+    pbio_control_update(&db->control_heading, time_now, &state_heading, &ref_heading, &dif_actuation, &dif_torque);
 
     // Separate actuation types are not possible for now
     if (sum_actuation != dif_actuation) {
@@ -240,14 +240,14 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     }
 
     // The left servo drives at a torque and speed of sum / 2 + dif / 2
-    int32_t feed_forward_left = pbio_observer_get_feedforward_torque(&db->left->observer, sum_rate_ref / 2 + dif_rate_ref / 2, sum_acceleration_ref / 2 + dif_acceleration_ref / 2);
+    int32_t feed_forward_left = pbio_observer_get_feedforward_torque(&db->left->observer, ref_distance.rate / 2 + ref_heading.rate / 2, ref_distance.acceleration / 2 + ref_heading.acceleration / 2);
     err = pbio_servo_actuate(db->left, sum_actuation, sum_torque / 2 + dif_torque / 2 + feed_forward_left);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // The right servo drives at a torque and speed of sum / 2 - dif / 2
-    int32_t feed_forward_right = pbio_observer_get_feedforward_torque(&db->right->observer, sum_rate_ref / 2 - dif_rate_ref / 2, sum_acceleration_ref / 2 - dif_acceleration_ref / 2);
+    int32_t feed_forward_right = pbio_observer_get_feedforward_torque(&db->right->observer, ref_distance.rate / 2 - ref_heading.rate / 2, ref_distance.acceleration / 2 - ref_heading.acceleration / 2);
     return pbio_servo_actuate(db->right, dif_actuation, sum_torque / 2 - dif_torque / 2 + feed_forward_right);
 }
 
