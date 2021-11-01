@@ -8,7 +8,7 @@
 #include <pbio/math.h>
 #include <pbio/trajectory.h>
 
-static pbio_error_t pbio_trajectory_patch(pbio_trajectory_t *trj, bool time_based, int32_t t0, int32_t duration, int32_t th3, int32_t wt, int32_t wmax, int32_t a, int32_t amax) {
+static pbio_error_t pbio_trajectory_patch(pbio_trajectory_t *trj, bool time_based, int32_t t0, int32_t duration, int32_t th3, int32_t wt, int32_t wmax, int32_t a) {
 
     // Get current reference point and acceleration, which will be the 0-point for the new trajectory
 
@@ -24,9 +24,9 @@ static pbio_error_t pbio_trajectory_patch(pbio_trajectory_t *trj, bool time_base
     pbio_error_t err;
     pbio_trajectory_t nominal;
     if (time_based) {
-        err = pbio_trajectory_make_time_based(&nominal, t0, duration, th0, th0_ext, w0, wt, wmax, a, amax);
+        err = pbio_trajectory_make_time_based(&nominal, t0, duration, th0, th0_ext, w0, wt, wmax, a);
     } else {
-        err = pbio_trajectory_make_angle_based(&nominal, t0, th0, th3, w0, wt, wmax, a, amax);
+        err = pbio_trajectory_make_angle_based(&nominal, t0, th0, th3, w0, wt, wmax, a);
     }
     if (err != PBIO_SUCCESS) {
         return err;
@@ -72,9 +72,9 @@ static pbio_error_t pbio_trajectory_patch(pbio_trajectory_t *trj, bool time_base
         // Now we can make the new trajectory with a starting point coincident
         // with a point on the existing trajectory
         if (time_based) {
-            return pbio_trajectory_make_time_based(trj, t0, duration, th0, th0_ext, w0, wt, wmax, a, amax);
+            return pbio_trajectory_make_time_based(trj, t0, duration, th0, th0_ext, w0, wt, wmax, a);
         } else {
-            return pbio_trajectory_make_angle_based(trj, t0, th0, th3, w0, wt, wmax, a, amax);
+            return pbio_trajectory_make_angle_based(trj, t0, th0, th3, w0, wt, wmax, a);
         }
 
     } else {
@@ -84,10 +84,10 @@ static pbio_error_t pbio_trajectory_patch(pbio_trajectory_t *trj, bool time_base
     }
 }
 
-pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *trj, int32_t t0, int32_t duration, int32_t wt, int32_t wmax, int32_t a, int32_t amax) {
-    return pbio_trajectory_patch(trj, true, t0, duration, 0, wt, wmax, a, amax);
+pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *trj, int32_t t0, int32_t duration, int32_t wt, int32_t wmax, int32_t a) {
+    return pbio_trajectory_patch(trj, true, t0, duration, 0, wt, wmax, a);
 }
 
-pbio_error_t pbio_trajectory_make_angle_based_patched(pbio_trajectory_t *trj, int32_t t0, int32_t th3, int32_t wt, int32_t wmax, int32_t a, int32_t amax) {
-    return pbio_trajectory_patch(trj, false, t0, 0, th3, wt, wmax, a, amax);
+pbio_error_t pbio_trajectory_make_angle_based_patched(pbio_trajectory_t *trj, int32_t t0, int32_t th3, int32_t wt, int32_t wmax, int32_t a) {
+    return pbio_trajectory_patch(trj, false, t0, 0, th3, wt, wmax, a);
 }

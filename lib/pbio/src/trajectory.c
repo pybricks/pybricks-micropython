@@ -80,7 +80,7 @@ static int64_t x_time2(int32_t b, int32_t t) {
     return x_time(x_time(b, t), t) / (2 * US_PER_MS);
 }
 
-pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *trj, int32_t t0, int32_t duration, int32_t th0, int32_t th0_ext, int32_t w0, int32_t wt, int32_t wmax, int32_t a, int32_t amax) {
+pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *trj, int32_t t0, int32_t duration, int32_t th0, int32_t th0_ext, int32_t w0, int32_t wt, int32_t wmax, int32_t a) {
 
     // Work with time intervals instead of absolute time. Read 'm' as '-'.
     int32_t t3mt0;
@@ -115,9 +115,6 @@ pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *trj, int32_t t0,
         wt *= -1;
         w0 *= -1;
     }
-
-    // Limit absolute acceleration
-    a = min(a, amax);
 
     // Limit initial speed
     int32_t max_init = timest(a, t3mt0);
@@ -194,7 +191,7 @@ pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *trj, int32_t t0,
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_trajectory_make_angle_based(pbio_trajectory_t *trj, int32_t t0, int32_t th0, int32_t th3, int32_t w0, int32_t wt, int32_t wmax, int32_t a, int32_t amax) {
+pbio_error_t pbio_trajectory_make_angle_based(pbio_trajectory_t *trj, int32_t t0, int32_t th0, int32_t th3, int32_t w0, int32_t wt, int32_t wmax, int32_t a) {
 
     // Return error for zero speed
     if (wt == 0) {
@@ -218,9 +215,6 @@ pbio_error_t pbio_trajectory_make_angle_based(pbio_trajectory_t *trj, int32_t t0
         th3 = 2 * th0 - th3;
         w0 *= -1;
     }
-
-    // Limit absolute acceleration
-    a = min(a, amax);
 
     // In a forward maneuver, the target speed is always positive.
     wt = abs(wt);
@@ -330,7 +324,7 @@ void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, pbi
     if (time_ref - trj->t0 > (DURATION_MAX_S + 120) * MS_PER_SECOND * US_PER_MS) {
         // Infinite maneuvers just maintain the same reference speed, continuing again from current time
         if (trj->forever) {
-            pbio_trajectory_make_time_based(trj, time_ref, DURATION_FOREVER, ref->count, ref->count_ext, trj->w1, trj->w1, trj->w1, abs(trj->a2), abs(trj->a2));
+            pbio_trajectory_make_time_based(trj, time_ref, DURATION_FOREVER, ref->count, ref->count_ext, trj->w1, trj->w1, trj->w1, abs(trj->a2));
         }
         // All other maneuvers are considered complete and just stop. In practice, other maneuvers are not
         // allowed to be this long. This just ensures that if a motor stops and holds, it will continue to
