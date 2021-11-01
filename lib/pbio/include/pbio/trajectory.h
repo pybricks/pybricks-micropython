@@ -65,17 +65,19 @@ typedef struct _pbio_trajectory_reference_t {
 
 void pbio_trajectory_make_stationary(pbio_trajectory_t *trj, int32_t t0, int32_t th0);
 
-pbio_error_t pbio_trajectory_make_time_based(pbio_trajectory_t *trj, int32_t t0, int32_t duration, int32_t th0, int32_t th0_ext, int32_t w0, int32_t wt, int32_t wmax, int32_t a);
+// Make a trajectory with a fixed speed and final time, with arbitrary final angle.
+pbio_error_t pbio_trajectory_calc_angle_new(pbio_trajectory_t *trj, int32_t t0, int32_t duration, int32_t th0, int32_t th0_ext, int32_t w0, int32_t wt, int32_t wmax, int32_t a);
 
-pbio_error_t pbio_trajectory_make_angle_based(pbio_trajectory_t *trj, int32_t t0, int32_t th0, int32_t th3, int32_t w0, int32_t wt, int32_t wmax, int32_t a);
+// Make a trajectory with a fixed speed and final angle, with arbitrary final time
+pbio_error_t pbio_trajectory_calc_time_new(pbio_trajectory_t *trj, int32_t t0, int32_t th0, int32_t th3, int32_t w0, int32_t wt, int32_t wmax, int32_t a);
 
 void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, pbio_trajectory_reference_t *ref);
 
 // Extended and patched trajectories
 
-pbio_error_t pbio_trajectory_make_time_based_patched(pbio_trajectory_t *trj, int32_t t0, int32_t t3, int32_t wt, int32_t wmax, int32_t a);
+pbio_error_t pbio_trajectory_calc_angle_extend(pbio_trajectory_t *trj, int32_t t0, int32_t t3, int32_t wt, int32_t wmax, int32_t a);
 
-pbio_error_t pbio_trajectory_make_angle_based_patched(pbio_trajectory_t *trj, int32_t t0, int32_t th3, int32_t wt, int32_t wmax, int32_t a);
+pbio_error_t pbio_trajectory_calc_time_extend(pbio_trajectory_t *trj, int32_t t0, int32_t th3, int32_t wt, int32_t wmax, int32_t a);
 
 
 #endif // _PBIO_TRAJECTORY_H_
