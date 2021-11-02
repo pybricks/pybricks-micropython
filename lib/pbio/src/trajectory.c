@@ -226,6 +226,12 @@ pbio_error_t pbio_trajectory_calc_time_new(pbio_trajectory_t *trj, int32_t t0, i
     // Limit initial speed, but evaluate square root only if necessary (usually not)
     if (w0 > 0 && (w0 * w0) / (2 * a) > th3 - th0) {
         w0 = pbio_math_sqrt(2 * a * (th3 - th0));
+
+        // In this situation, speed is just a linearly descending line
+        // from the (capped) starting speed towards zero. Hence, t2=t1 which is
+        // anywhere between t3 and t0. We have to pick something, so set it to
+        // the way point.
+        wt = w0 / 2;
     }
 
     // Initial speed is less than the target speed
