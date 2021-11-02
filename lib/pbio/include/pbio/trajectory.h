@@ -71,6 +71,9 @@ pbio_error_t pbio_trajectory_calc_angle_new(pbio_trajectory_t *trj, int32_t t0, 
 // Make a trajectory with a fixed speed and final angle, with arbitrary final time
 pbio_error_t pbio_trajectory_calc_time_new(pbio_trajectory_t *trj, int32_t t0, int32_t th0, int32_t th3, int32_t w0, int32_t wt, int32_t wmax, int32_t a);
 
+// Make a trajectory with a fixed final angle and final time, with arbitrary speed.
+pbio_error_t pbio_trajectory_calc_speed_new(pbio_trajectory_t *trj, int32_t t0, int32_t t3, int32_t th0, int32_t th3, int32_t w0, int32_t wmax, int32_t a);
+
 void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, pbio_trajectory_reference_t *ref);
 
 // Extended and patched trajectories

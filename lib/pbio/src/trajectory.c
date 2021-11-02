@@ -296,6 +296,114 @@ pbio_error_t pbio_trajectory_calc_time_new(pbio_trajectory_t *trj, int32_t t0, i
     return PBIO_SUCCESS;
 }
 
+pbio_error_t pbio_trajectory_calc_speed_new(pbio_trajectory_t *trj, int32_t t0, int32_t t3, int32_t th0, int32_t th3, int32_t w0, int32_t wmax, int32_t a) {
+
+    // Return empty maneuver for zero angle or time
+    if (th3 == th0 || t3 <= t0) {
+        pbio_trajectory_make_stationary(trj, t0, th0);
+        return PBIO_SUCCESS;
+    }
+
+    // Remember if the original user-specified maneuver was backward
+    bool backward = th3 < th0;
+
+    // Convert user parameters into a forward maneuver to simplify computations (we negate results at the end)
+    if (backward) {
+        th3 = 2 * th0 - th3;
+        w0 *= -1;
+    }
+
+    // Limit initial speed
+    w0 = max(-wmax, min(w0, wmax));
+
+    // Limit initial speed, but evaluate square root only if necessary (usually not)
+    if (w0 > 0 && (w0 * w0) / (2 * a) > th3 - th0) {
+        w0 = pbio_math_sqrt(2 * a * (th3 - th0));
+    }
+
+    // At this point, we do not know yet if the target speed is higher or lower
+    // than the initial speed. We calculate the result for both cases, then
+    // pick the one that matches all possible constraints.
+    //
+    // To do so, we evaluating the trajectory from t0 to t3 with the constraint
+    // that the angle travels from th0 to th3. This leads to a quadratic
+    // equation that can be solved for target speed wt.
+    //
+    // First, try the case where w0 >= wt, which means that we must decelerate,
+    // so that a0 is negative. a2 is always negative. The position constraint
+    // equation reduces to a linear equation for this case.
+    trj->a0 = -a;
+    trj->w1 = (-w0 * w0 / 2 + a * (th3 - th0)) / (timest(a, t3 - t0) - w0);
+
+    // The aforementioned assumption is invalid if w0 < wt.
+    if (w0 < trj->w1) {
+        // It's invalid, so we must accelerate instead.
+        trj->a0 = a;
+
+        // We are initially below the target speed. In this case
+        // we must solve the full quadratic constraint.
+        int32_t b = -timest(a, t3 - t0) - w0;
+        int32_t c = w0 * w0 / 2 + a * (th3 - th0);
+        int32_t det = pbio_math_sqrt(b * b - 4 * c);
+
+        // Get both solutions.
+        int32_t sol[2] = {(-b + det) / 2, (-b - det) / 2};
+
+        // Find out which of the two solutions is valid.
+        for (uint8_t i = 0; i < 2; i++) {
+            // Top speed must be positive, match positive time constraint,
+            // and be higher than starting speed
+            if (sol[i] < 0 || 2 * sol[i] > timest(a, t3 - t0) + w0 || sol[i] < w0) {
+                // Set invalid solutions to -1.
+                sol[i] = -1;
+            }
+        }
+
+        // At this point we must have one and only one valid solution
+        if ((sol[0] == -1) == (sol[1] == -1)) {
+            // Shouldn't have two valid or two invalid solutions
+            return PBIO_ERROR_FAILED;
+        }
+
+        // Pick the valid one
+        trj->w1 = sol[0] != -1 ? sol[0] : sol[1];
+    }
+
+    // Get corresponding time intervals
+    int32_t t1mt0 = wdiva(trj->w1 - w0, trj->a0);
+    int32_t t3mt2 = wdiva(trj->w1, a);
+
+    // Store other results/arguments
+    trj->w0 = w0;
+    trj->t0 = t0;
+    trj->t1 = t0 + t1mt0;
+    trj->t2 = t3 - t3mt2;
+    trj->t3 = t3;
+    trj->a2 = -a;
+
+    // Corresponding angle values with millicount/millideg precision
+    int64_t mth0 = as_mcount(th0, 0);
+    int64_t mth3 = as_mcount(th3, 0);
+    int64_t mth1 = mth0 + x_time(trj->w0, t1mt0) + x_time2(trj->a0, t1mt0);
+    int64_t mth2 = mth3 - x_time(trj->w1, t3mt2) - x_time2(trj->a2, t3mt2);
+
+    // Store as counts and millicount
+    as_count(mth0, &trj->th0, &trj->th0_ext);
+    as_count(mth1, &trj->th1, &trj->th1_ext);
+    as_count(mth2, &trj->th2, &trj->th2_ext);
+    as_count(mth3, &trj->th3, &trj->th3_ext);
+
+    // Reverse the maneuver if the original arguments imposed backward motion
+    if (backward) {
+        reverse_trajectory(trj);
+    }
+
+    // This is a finite maneuver
+    trj->forever = false;
+
+    return PBIO_SUCCESS;
+}
+
 // Evaluate the reference speed and velocity at the (shifted) time
 void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, pbio_trajectory_reference_t *ref) {
 
