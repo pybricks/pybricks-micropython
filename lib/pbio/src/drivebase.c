@@ -89,6 +89,7 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
         // Coast and brake are both passed on to servo_actuate as-is.
         case PBIO_ACTUATION_COAST:
         case PBIO_ACTUATION_BRAKE: {
+            pbio_drivebase_stop_control(db);
             pbio_drivebase_claim_servos(db, false);
             pbio_error_t err = pbio_servo_actuate(db->left, actuation, 0);
             if (err != PBIO_SUCCESS) {
@@ -196,8 +197,6 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
 
     } else {
         // Otherwise the payload is zero and control stops
-        pbio_control_stop(&db->control_distance);
-        pbio_control_stop(&db->control_heading);
         return pbio_drivebase_actuate(db, after_stop, 0, 0);
     }
 }
@@ -234,9 +233,13 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     pbio_control_update(&db->control_distance, time_now, &state_distance, &ref_distance, &sum_actuation, &sum_torque);
     pbio_control_update(&db->control_heading, time_now, &state_heading, &ref_heading, &dif_actuation, &dif_torque);
 
-    // Separate actuation types are not possible for now
-    if (sum_actuation != dif_actuation) {
-        return PBIO_ERROR_INVALID_OP;
+    // If either controller coasts, coast both
+    if (sum_actuation == PBIO_ACTUATION_COAST || dif_actuation == PBIO_ACTUATION_COAST) {
+        return pbio_drivebase_actuate(db, PBIO_ACTUATION_COAST, 0, 0);
+    }
+    // If either controller brakes, brake both
+    if (sum_actuation == PBIO_ACTUATION_BRAKE || dif_actuation == PBIO_ACTUATION_BRAKE) {
+        return pbio_drivebase_actuate(db, PBIO_ACTUATION_BRAKE, 0, 0);
     }
 
     // The left servo drives at a torque and speed of sum / 2 + dif / 2
@@ -253,11 +256,6 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 
 pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int32_t drive_speed, pbio_actuation_t after_stop) {
 
-    // TODO
-    if (after_stop != PBIO_ACTUATION_HOLD) {
-        return PBIO_ERROR_NOT_IMPLEMENTED;
-    }
-
     // Claim both servos for use by drivebase
     pbio_drivebase_claim_servos(db, true);
 
@@ -272,16 +270,17 @@ pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int
         return err;
     }
 
-    // Sum controller performs a maneuver to drive a distance
+    // Sum controller performs a maneuver to drive a distance, with these targets
     int32_t relative_sum_target = pbio_control_user_to_counts(&db->control_distance.settings, distance);
     int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, drive_speed);
 
-    err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, &state_distance, relative_sum_target, target_sum_rate, PBIO_ACTUATION_HOLD);
+    // Start moving, and configure stop type for this maneuver
+    err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, &state_distance, relative_sum_target, target_sum_rate, after_stop);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // Dif controller just holds still
+    // Dif controller just holds still until the other controller is stopped
     int32_t relative_dif_target = 0;
     int32_t target_dif_rate = db->control_heading.settings.max_rate;
 
@@ -294,11 +293,6 @@ pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int
 }
 
 pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle, int32_t turn_rate, pbio_actuation_t after_stop) {
-
-    // TODO
-    if (after_stop != PBIO_ACTUATION_HOLD) {
-        return PBIO_ERROR_NOT_IMPLEMENTED;
-    }
 
     // Claim both servos for use by drivebase
     pbio_drivebase_claim_servos(db, true);
@@ -323,11 +317,11 @@ pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle, int32_t tu
         return err;
     }
 
-    // Dif controller performs a maneuver to make a turn
+    // Dif controller performs a maneuver to make a turn with given stop type
     int32_t relative_dif_target = pbio_control_user_to_counts(&db->control_heading.settings, angle);
     int32_t target_dif_rate = pbio_control_user_to_counts(&db->control_heading.settings, turn_rate);
 
-    err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, &state_heading, relative_dif_target, target_dif_rate, PBIO_ACTUATION_HOLD);
+    err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, &state_heading, relative_dif_target, target_dif_rate, after_stop);
     if (err != PBIO_SUCCESS) {
         return err;
     }
