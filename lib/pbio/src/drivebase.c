@@ -254,6 +254,77 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     return pbio_servo_actuate(db->right, dif_actuation, sum_torque / 2 - dif_torque / 2 + feed_forward_right);
 }
 
+pbio_error_t pbio_drivebase_curve(pbio_drivebase_t *db, int32_t radius, int32_t angle, int32_t drive_speed, int32_t turn_rate, pbio_actuation_t after_stop) {
+
+    // Claim both servos for use by drivebase
+    pbio_drivebase_claim_servos(db, true);
+
+    // Get current time
+    int32_t time_now = pbdrv_clock_get_us();
+
+    // Get drive base state
+    pbio_control_state_t state_distance;
+    pbio_control_state_t state_heading;
+    pbio_error_t err = pbio_drivebase_get_state(db, &state_distance, &state_heading);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Sum controller drives by the given arc length
+    int32_t relative_sum_target = pbio_control_user_to_counts(&db->control_distance.settings, (10 * angle * radius) / 573);
+    int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, drive_speed);
+
+    err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, &state_distance, relative_sum_target, target_sum_rate, after_stop);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Dif controller drives by given angle
+    int32_t relative_dif_target = pbio_control_user_to_counts(&db->control_heading.settings, angle);
+    int32_t target_dif_rate = pbio_control_user_to_counts(&db->control_heading.settings, turn_rate);
+
+    err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, &state_heading, relative_dif_target, target_dif_rate, after_stop);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // At this point, the two trajectories may have different durations, so they won't complete at the same time
+    // To account for this, we re-compute the shortest trajectory to have the same duration as the longest.
+    if (db->control_distance.trajectory.t3 == db->control_heading.trajectory.t3) {
+        // We're done if they're already the same.
+        return PBIO_SUCCESS;
+    }
+
+    // Find out which controller takes the lead
+    pbio_control_t *control_leader;
+    pbio_control_t *control_follower;
+
+    if (db->control_distance.trajectory.t3 > db->control_heading.trajectory.t3) {
+        // Distance control takes the longest, so it will take the lead
+        control_leader = &db->control_distance;
+        control_follower = &db->control_heading;
+    } else {
+        // Heading control takes the longest, so it will take the lead
+        control_leader = &db->control_heading;
+        control_follower = &db->control_distance;
+    }
+
+    // Revise follower trajectory so it's just as slow as the leader, achieved
+    // by picking a lower speed that makes the end times match.
+    int32_t end_time = control_leader->trajectory.t3;
+    pbio_trajectory_t *trj = &control_follower->trajectory;
+    err = pbio_trajectory_calc_speed_new(trj, trj->t0, end_time, trj->th0, trj->th3, trj->w0, control_follower->settings.max_rate, control_follower->settings.abs_acceleration);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // The follower trajector holds until the leader trajectory says otherwise
+    control_follower->after_stop = PBIO_ACTUATION_HOLD;
+
+    return PBIO_SUCCESS;
+}
+
+
 pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int32_t drive_speed, pbio_actuation_t after_stop) {
 
     // Claim both servos for use by drivebase
@@ -328,6 +399,7 @@ pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle, int32_t tu
 
     return PBIO_SUCCESS;
 }
+
 pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate) {
 
     // Claim both servos for use by drivebase

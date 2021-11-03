@@ -130,6 +130,29 @@ STATIC mp_obj_t robotics_DriveBase_turn(size_t n_args, const mp_obj_t *pos_args,
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_turn_obj, 1, robotics_DriveBase_turn);
 
+// pybricks.robotics.DriveBase.curve
+STATIC mp_obj_t robotics_DriveBase_curve(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
+    PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
+        robotics_DriveBase_obj_t, self,
+        PB_ARG_REQUIRED(radius),
+        PB_ARG_REQUIRED(angle),
+        PB_ARG_DEFAULT_OBJ(then, pb_Stop_HOLD_obj),
+        PB_ARG_DEFAULT_TRUE(wait));
+
+    mp_int_t radius = pb_obj_get_int(radius_in);
+    mp_int_t angle = pb_obj_get_int(angle_in);
+    pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
+
+    pb_assert(pbio_drivebase_curve(self->db, radius, angle, self->straight_speed, self->turn_rate, then));
+
+    if (mp_obj_is_true(wait_in)) {
+        wait_for_completion_drivebase(self->db);
+    }
+
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_curve_obj, 1, robotics_DriveBase_curve);
+
 // pybricks.robotics.DriveBase.drive
 STATIC mp_obj_t robotics_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
     PB_PARSE_ARGS_METHOD(n_args, pos_args, kw_args,
@@ -249,6 +272,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_KW(robotics_DriveBase_settings_obj, 1, robotics_D
 
 // dir(pybricks.robotics.DriveBase)
 STATIC const mp_rom_map_elem_t robotics_DriveBase_locals_dict_table[] = {
+    { MP_ROM_QSTR(MP_QSTR_curve),            MP_ROM_PTR(&robotics_DriveBase_curve_obj)    },
     { MP_ROM_QSTR(MP_QSTR_straight),         MP_ROM_PTR(&robotics_DriveBase_straight_obj) },
     { MP_ROM_QSTR(MP_QSTR_turn),             MP_ROM_PTR(&robotics_DriveBase_turn_obj)     },
     { MP_ROM_QSTR(MP_QSTR_drive),            MP_ROM_PTR(&robotics_DriveBase_drive_obj)    },
