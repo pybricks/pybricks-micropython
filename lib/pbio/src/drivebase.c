@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2018-2020 The Pybricks Authors
 
+#include <stdlib.h>
+
 #include <pbdrv/clock.h>
 #include <pbio/error.h>
 #include <pbio/drivebase.h>
@@ -309,14 +311,9 @@ pbio_error_t pbio_drivebase_curve(pbio_drivebase_t *db, int32_t radius, int32_t 
         control_follower = &db->control_distance;
     }
 
-    // Revise follower trajectory so it's just as slow as the leader, achieved
-    // by picking a lower speed that makes the end times match.
-    int32_t end_time = control_leader->trajectory.t3;
-    pbio_trajectory_t *trj = &control_follower->trajectory;
-    err = pbio_trajectory_calc_speed_new(trj, trj->t0, end_time, trj->th0, trj->th3, trj->w0, control_follower->settings.max_rate, control_follower->settings.abs_acceleration);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
+    // Revise follower trajectory so it takes as long as the leader, achieved
+    // by picking a lower speed and accelerations that makes the times match.
+    pbio_trajectory_stretch(&control_follower->trajectory, control_leader->trajectory.t1, control_leader->trajectory.t2, control_leader->trajectory.t3);
 
     // The follower trajector holds until the leader trajectory says otherwise
     control_follower->after_stop = PBIO_ACTUATION_HOLD;
