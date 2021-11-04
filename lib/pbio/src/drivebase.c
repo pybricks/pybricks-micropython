@@ -317,6 +317,7 @@ pbio_error_t pbio_drivebase_curve(pbio_drivebase_t *db, int32_t radius, int32_t 
 
     // The follower trajector holds until the leader trajectory says otherwise
     control_follower->after_stop = PBIO_ACTUATION_HOLD;
+    control_follower->type = PBIO_CONTROL_ANGLE_FOLLOW;
 
     return PBIO_SUCCESS;
 }
