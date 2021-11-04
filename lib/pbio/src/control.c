@@ -29,7 +29,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
     count_feedback = ctl->settings.use_estimated_count ? state->count_est : state->count;
 
     // Calculate control errors, depending on whether we do angle control or speed control
-    if (ctl->type == PBIO_CONTROL_ANGLE) {
+    if (pbio_control_type_is_angle(ctl)) {
 
         // Specify in which region integral control should be active. This is
         // at least the error that would still lead to maximum  proportional
@@ -68,7 +68,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
     // Position anti-windup: pause trajectory or integration if falling behind despite using maximum torque
 
     // Position anti-windup in case of angle control (accumulated position error may not get too high)
-    if (ctl->type == PBIO_CONTROL_ANGLE) {
+    if (pbio_control_type_is_angle(ctl)) {
         if (abs(torque_due_to_proportional) >= max_windup_torque && pbio_math_sign(torque_due_to_proportional) == pbio_math_sign(rate_err)) {
             // We are at the torque limit and we should prevent further position error integration.
             pbio_count_integrator_pause(&ctl->count_integrator, time_now, state->count, ref->count);
@@ -89,7 +89,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
     }
 
     // Check if controller is stalled
-    ctl->stalled = ctl->type == PBIO_CONTROL_ANGLE ?
+    ctl->stalled = pbio_control_type_is_angle(ctl) ?
         pbio_count_integrator_stalled(&ctl->count_integrator, time_now, state->rate, ctl->settings.stall_time, ctl->settings.stall_rate_limit) :
         pbio_rate_integrator_stalled(&ctl->rate_integrator, time_now, state->rate, ctl->settings.stall_time, ctl->settings.stall_rate_limit);
 
@@ -104,7 +104,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
         *actuation = ctl->after_stop;
         *control = 0;
         pbio_control_stop(ctl);
-    } else if (ctl->on_target && ctl->after_stop == PBIO_ACTUATION_HOLD && ctl->type == PBIO_CONTROL_TIMED) {
+    } else if (ctl->on_target && ctl->after_stop == PBIO_ACTUATION_HOLD && pbio_control_type_is_time(ctl)) {
         // If we are going to hold and we are already doing angle control, there is nothing we need to do.
         // But if we are going to hold when we are doing speed control right now, we must trigger a hold first.
         pbio_control_start_hold_control(ctl, time_now, state->count);
@@ -154,7 +154,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
     ctl->on_target_func = pbio_control_on_target_angle;
 
     // Compute the trajectory
-    if (ctl->type == PBIO_CONTROL_NONE) {
+    if (!pbio_control_is_active(ctl)) {
         // If no control is ongoing, start from physical state
         err = pbio_trajectory_calc_time_new(&ctl->trajectory, time_now, state->count, target_count, state->rate, target_rate, ctl->settings.max_rate, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
@@ -172,7 +172,7 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
     }
 
     // Reset PID control if needed
-    if (ctl->type != PBIO_CONTROL_ANGLE) {
+    if (!pbio_control_type_is_angle(ctl)) {
         // New angle maneuver, so reset the rate integrator
         int32_t integrator_max = pbio_control_settings_get_max_integrator(&ctl->settings);
         pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max);
@@ -193,7 +193,7 @@ pbio_error_t pbio_control_start_relative_angle_control(pbio_control_t *ctl, int3
     int32_t count_start;
 
     // If no control is active, count from the physical count
-    if (ctl->type == PBIO_CONTROL_NONE) {
+    if (!pbio_control_is_active(ctl)) {
         count_start = state->count;
     }
     // Otherwise count from the current reference
@@ -225,7 +225,7 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
     // Compute new maneuver based on user argument, starting from the initial state
     pbio_trajectory_make_stationary(&ctl->trajectory, time_now, target_count);
     // If called for the first time, set state and reset PID
-    if (ctl->type != PBIO_CONTROL_ANGLE) {
+    if (!pbio_control_type_is_angle(ctl)) {
         // Initialize or reset the PID control status for the given maneuver
         int32_t integrator_max = pbio_control_settings_get_max_integrator(&ctl->settings);
         pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max);
@@ -251,13 +251,13 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
     ctl->on_target_func = stop_func;
 
     // Compute the trajectory
-    if (ctl->type == PBIO_CONTROL_TIMED) {
+    if (pbio_control_type_is_time(ctl)) {
         // If timed control is already ongoing make the new trajectory and try to patch to existing one
         err = pbio_trajectory_calc_angle_extend(&ctl->trajectory, time_now, duration, target_rate, ctl->settings.max_rate, ctl->settings.abs_acceleration);
         if (err != PBIO_SUCCESS) {
             return err;
         }
-    } else if (ctl->type == PBIO_CONTROL_ANGLE) {
+    } else if (pbio_control_type_is_angle(ctl)) {
         // If position based control is ongoing, start from its current reference. First get current reference signal.
         int32_t time_ref = pbio_control_get_ref_time(ctl, time_now);
         pbio_trajectory_reference_t ref;
@@ -277,7 +277,7 @@ pbio_error_t pbio_control_start_timed_control(pbio_control_t *ctl, int32_t time_
     }
 
     // Reset PD control if needed
-    if (ctl->type != PBIO_CONTROL_TIMED) {
+    if (!pbio_control_type_is_time(ctl)) {
         // New maneuver, so reset the rate integrator
         pbio_rate_integrator_reset(&ctl->rate_integrator, time_now, state->count, state->count);
 
@@ -421,10 +421,10 @@ int32_t pbio_control_settings_get_max_integrator(pbio_control_settings_t *s) {
 
 int32_t pbio_control_get_ref_time(pbio_control_t *ctl, int32_t time_now) {
 
-    if (ctl->type == PBIO_CONTROL_ANGLE) {
+    if (pbio_control_type_is_angle(ctl)) {
         return pbio_count_integrator_get_ref_time(&ctl->count_integrator, time_now);
     }
-    if (ctl->type == PBIO_CONTROL_TIMED) {
+    if (pbio_control_type_is_time(ctl)) {
         return time_now;
     }
     return 0;
@@ -432,6 +432,14 @@ int32_t pbio_control_get_ref_time(pbio_control_t *ctl, int32_t time_now) {
 
 bool pbio_control_is_active(pbio_control_t *ctl) {
     return ctl->type != PBIO_CONTROL_NONE;
+}
+
+bool pbio_control_type_is_angle(pbio_control_t *ctl) {
+    return ctl->type == PBIO_CONTROL_ANGLE;
+}
+
+bool pbio_control_type_is_time(pbio_control_t *ctl) {
+    return ctl->type == PBIO_CONTROL_TIMED;
 }
 
 bool pbio_control_is_stalled(pbio_control_t *ctl) {

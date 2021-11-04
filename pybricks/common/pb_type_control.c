@@ -44,7 +44,7 @@ mp_obj_t common_Control_obj_make_new(pbio_control_t *control) {
 }
 
 STATIC void raise_if_control_busy(pbio_control_t *ctl) {
-    if (ctl->type != PBIO_CONTROL_NONE) {
+    if (pbio_control_is_active(ctl)) {
         pb_assert(PBIO_ERROR_BUSY);
     }
 }
@@ -204,7 +204,7 @@ STATIC mp_obj_t common_Control_trajectory(mp_obj_t self_in) {
 
     trajectory = self->control->trajectory;
 
-    if (self->control->type != PBIO_CONTROL_NONE) {
+    if (pbio_control_is_active(self->control)) {
         parms[0] = mp_obj_new_int((trajectory.t0 - trajectory.t0) / 1000);
         parms[1] = mp_obj_new_int((trajectory.t1 - trajectory.t0) / 1000);
         parms[2] = mp_obj_new_int((trajectory.t2 - trajectory.t0) / 1000);
