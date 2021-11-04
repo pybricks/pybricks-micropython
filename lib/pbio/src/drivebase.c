@@ -273,7 +273,7 @@ pbio_error_t pbio_drivebase_curve(pbio_drivebase_t *db, int32_t radius, int32_t 
     }
 
     // Sum controller drives by the given arc length
-    int32_t relative_sum_target = pbio_control_user_to_counts(&db->control_distance.settings, (10 * angle * radius) / 573);
+    int32_t relative_sum_target = pbio_control_user_to_counts(&db->control_distance.settings, (10 * abs(angle) * radius) / 573);
     int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, drive_speed);
 
     err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, &state_distance, relative_sum_target, target_sum_rate, after_stop);
@@ -282,7 +282,7 @@ pbio_error_t pbio_drivebase_curve(pbio_drivebase_t *db, int32_t radius, int32_t 
     }
 
     // Dif controller drives by given angle
-    int32_t relative_dif_target = pbio_control_user_to_counts(&db->control_heading.settings, angle);
+    int32_t relative_dif_target = pbio_control_user_to_counts(&db->control_heading.settings, angle * pbio_math_sign(radius));
     int32_t target_dif_rate = pbio_control_user_to_counts(&db->control_heading.settings, turn_rate);
 
     err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, &state_heading, relative_dif_target, target_dif_rate, after_stop);
