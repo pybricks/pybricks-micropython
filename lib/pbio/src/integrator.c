@@ -151,14 +151,15 @@ void pbio_count_integrator_reset(pbio_count_integrator_t *itg, int32_t time_now,
 }
 
 void pbio_count_integrator_update(pbio_count_integrator_t *itg, int32_t time_now, int32_t count, int32_t count_ref, int32_t count_target, int32_t integral_range, int32_t integral_rate) {
+
+    // Previous error will be multiplied by time delta and then added to integral (unless we limit growth)
+    int32_t cerr = itg->count_err_prev;
+
+    // Check if integrator magnitude would decrease due to this error
+    bool decrease = abs(itg->count_err_integral + cerr * (time_now - itg->time_prev)) < abs(itg->count_err_integral);
+
     // Integrate and update position error
-    if (itg->trajectory_running) {
-
-        // Previous error will be multiplied by time delta and then added to integral (unless we limit growth)
-        int32_t cerr = itg->count_err_prev;
-
-        // Check if integrator magnitude would decrease due to this error
-        bool decrease = abs(itg->count_err_integral + cerr * (time_now - itg->time_prev)) < abs(itg->count_err_integral);
+    if (itg->trajectory_running || decrease) {
 
         // If not deceasing, so growing, limit error growth by maximum integral rate
         if (!decrease) {
