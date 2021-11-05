@@ -35,6 +35,8 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
 
 void pbio_drivebase_stop_control(pbio_drivebase_t *db);
 
+bool pbio_drivebase_is_busy(pbio_drivebase_t *db);
+
 // Measuring and settings
 
 pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate);

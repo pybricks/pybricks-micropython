@@ -209,6 +209,10 @@ void pbio_drivebase_stop_control(pbio_drivebase_t *db) {
     pbio_control_stop(&db->control_heading);
 }
 
+bool pbio_drivebase_is_busy(pbio_drivebase_t *db) {
+    return !pbio_control_is_done(&db->control_distance) || !pbio_control_is_done(&db->control_heading);
+}
+
 pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 
     // If passive, then exit
