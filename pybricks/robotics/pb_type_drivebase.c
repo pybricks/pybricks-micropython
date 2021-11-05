@@ -29,9 +29,7 @@ typedef struct _robotics_DriveBase_obj_t {
     mp_obj_t heading_control;
     mp_obj_t distance_control;
     int32_t straight_speed;
-    int32_t straight_acceleration;
     int32_t turn_rate;
-    int32_t turn_acceleration;
 } robotics_DriveBase_obj_t;
 
 // pybricks.robotics.DriveBase.__init__
@@ -67,14 +65,13 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     self->distance_control = common_Control_obj_make_new(&self->db->control_distance);
 
     // Get defaults for drivebase as 1/3 of maximum for the underlying motors
-    int32_t straight_speed_limit, straight_acceleration_limit, turn_rate_limit, turn_acceleration_limit, _;
-    pbio_control_settings_get_limits(&self->db->control_distance.settings, &straight_speed_limit, &straight_acceleration_limit, &_);
-    pbio_control_settings_get_limits(&self->db->control_heading.settings, &turn_rate_limit, &turn_acceleration_limit, &_);
+    int32_t straight_speed_limit, turn_rate_limit, _;
+    pbio_control_settings_get_limits(&self->db->control_distance.settings, &straight_speed_limit, &_, &_);
+    pbio_control_settings_get_limits(&self->db->control_heading.settings, &turn_rate_limit, &_, &_);
 
+    // By default, the straight(), turn() and curve() methods use 50% of rated speed.
     self->straight_speed = straight_speed_limit / 2;
-    self->straight_acceleration = straight_acceleration_limit;
     self->turn_rate = turn_rate_limit / 2;
-    self->turn_acceleration = turn_acceleration_limit;
 
     // Reset drivebase state
     pb_assert(pbio_drivebase_reset_state(self->db));
@@ -238,17 +235,25 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
         PB_ARG_DEFAULT_NONE(turn_rate),
         PB_ARG_DEFAULT_NONE(turn_acceleration));
 
+    // Read acceleration and speed limit settings from control
+    int32_t straight_speed_limit, turn_rate_limit;
+    int32_t straight_acceleration, turn_acceleration;
+    int32_t straight_torque, turn_torque;
+    pbio_control_settings_get_limits(&self->db->control_distance.settings, &straight_speed_limit, &straight_acceleration, &straight_torque);
+    pbio_control_settings_get_limits(&self->db->control_heading.settings, &turn_rate_limit, &turn_acceleration, &turn_torque);
+
     // If all given values are none, return current values
     if (straight_speed_in == mp_const_none &&
         straight_acceleration_in == mp_const_none &&
         turn_rate_in == mp_const_none &&
         turn_acceleration_in == mp_const_none
         ) {
+
         mp_obj_t ret[4];
         ret[0] = mp_obj_new_int(self->straight_speed);
-        ret[1] = mp_obj_new_int(self->straight_acceleration);
+        ret[1] = mp_obj_new_int(straight_acceleration);
         ret[2] = mp_obj_new_int(self->turn_rate);
-        ret[3] = mp_obj_new_int(self->turn_acceleration);
+        ret[3] = mp_obj_new_int(turn_acceleration);
         return mp_obj_new_tuple(4, ret);
     }
 
@@ -257,14 +262,12 @@ STATIC mp_obj_t robotics_DriveBase_settings(size_t n_args, const mp_obj_t *pos_a
     }
 
     // If some values are given, set them, bound by the control limits
-    int32_t straight_speed_limit, straight_acceleration_limit, turn_rate_limit, turn_acceleration_limit, _;
-    pbio_control_settings_get_limits(&self->db->control_distance.settings, &straight_speed_limit, &straight_acceleration_limit, &_);
-    pbio_control_settings_get_limits(&self->db->control_heading.settings, &turn_rate_limit, &turn_acceleration_limit, &_);
-
     self->straight_speed = min(straight_speed_limit, abs(pb_obj_get_default_int(straight_speed_in, self->straight_speed)));
-    self->straight_acceleration = min(straight_acceleration_limit, abs(pb_obj_get_default_int(straight_acceleration_in, self->straight_acceleration)));
     self->turn_rate = min(turn_rate_limit, abs(pb_obj_get_default_int(turn_rate_in, self->turn_rate)));
-    self->turn_acceleration = min(turn_acceleration_limit, abs(pb_obj_get_default_int(turn_acceleration_in, self->turn_acceleration)));
+    straight_acceleration = abs(pb_obj_get_default_int(straight_acceleration_in, straight_acceleration));
+    turn_acceleration = abs(pb_obj_get_default_int(turn_acceleration_in, turn_acceleration));
+    pbio_control_settings_set_limits(&self->db->control_distance.settings, self->straight_speed, straight_acceleration, straight_torque);
+    pbio_control_settings_set_limits(&self->db->control_heading.settings, self->turn_rate, turn_acceleration, turn_torque);
 
     return mp_const_none;
 }
