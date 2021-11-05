@@ -454,24 +454,10 @@ pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distan
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    *distance = pbio_control_counts_to_user(&db->control_distance.settings, state_distance.count - db->sum_offset);
+    *distance = pbio_control_counts_to_user(&db->control_distance.settings, state_distance.count);
     *drive_speed = pbio_control_counts_to_user(&db->control_distance.settings, state_distance.rate);
-    *angle = pbio_control_counts_to_user(&db->control_heading.settings, state_heading.count - db->dif_offset);
+    *angle = pbio_control_counts_to_user(&db->control_heading.settings, state_heading.count);
     *turn_rate = pbio_control_counts_to_user(&db->control_heading.settings, state_heading.rate);
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_drivebase_reset_state(pbio_drivebase_t *db) {
-
-    // Get drive base state
-    pbio_control_state_t state_distance;
-    pbio_control_state_t state_heading;
-    pbio_error_t err = pbio_drivebase_get_state(db, &state_distance, &state_heading);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    db->sum_offset = state_distance.count;
-    db->dif_offset = state_heading.count;
     return PBIO_SUCCESS;
 }
 

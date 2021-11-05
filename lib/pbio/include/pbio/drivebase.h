@@ -11,8 +11,6 @@
 typedef struct _pbio_drivebase_t {
     pbio_servo_t *left;
     pbio_servo_t *right;
-    int32_t sum_offset;
-    int32_t dif_offset;
     pbio_control_t control_heading;
     pbio_control_t control_distance;
 } pbio_drivebase_t;
@@ -37,13 +35,9 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
 
 void pbio_drivebase_stop_control(pbio_drivebase_t *db);
 
-// Measuring
+// Measuring and settings
 
 pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate);
-
-pbio_error_t pbio_drivebase_reset_state(pbio_drivebase_t *db);
-
-// Settings
 
 pbio_error_t pbio_drivebase_get_drive_settings(pbio_drivebase_t *db, int32_t *drive_speed, int32_t *drive_acceleration, int32_t *turn_rate, int32_t *turn_acceleration);
 
