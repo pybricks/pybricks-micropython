@@ -177,12 +177,12 @@ pbio_error_t pbio_control_start_angle_control(pbio_control_t *ctl, int32_t time_
         int32_t integrator_max = pbio_control_settings_get_max_integrator(&ctl->settings);
         pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max);
 
-        // Set the new control state
-        ctl->type = PBIO_CONTROL_ANGLE;
-
         // Reset load filter
         ctl->load = 0;
     }
+
+    // Set the new control state
+    ctl->type = PBIO_CONTROL_ANGLE;
 
     return PBIO_SUCCESS;
 }
@@ -230,12 +230,12 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
         int32_t integrator_max = pbio_control_settings_get_max_integrator(&ctl->settings);
         pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max);
 
-        // This is an angular control maneuver
-        ctl->type = PBIO_CONTROL_ANGLE;
-
         // Reset load filter
         ctl->load = 0;
     }
+
+    // This is an angular control maneuver
+    ctl->type = PBIO_CONTROL_ANGLE;
 
     return PBIO_SUCCESS;
 }
