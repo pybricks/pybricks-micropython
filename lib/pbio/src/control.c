@@ -430,6 +430,21 @@ int32_t pbio_control_get_ref_time(pbio_control_t *ctl, int32_t time_now) {
     return 0;
 }
 
+pbio_error_t pbio_control_copy_integrator_pause_state(pbio_control_t *leader, pbio_control_t *follower, int32_t time, int32_t follower_count, int32_t follower_count_ref) {
+    // Copying integrator state should be used with angle controllers only.
+    if (!pbio_control_type_is_angle(leader) || !pbio_control_type_is_angle(follower)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
+    // Resume follower if leader is running, and vice versa.
+    if (leader->count_integrator.trajectory_running) {
+        pbio_count_integrator_resume(&follower->count_integrator, time, follower_count, follower_count_ref);
+    } else {
+        pbio_count_integrator_pause(&follower->count_integrator, time, follower_count, follower_count_ref);
+    }
+    return PBIO_SUCCESS;
+}
+
 bool pbio_control_is_active(pbio_control_t *ctl) {
     return ctl->type != PBIO_CONTROL_NONE;
 }

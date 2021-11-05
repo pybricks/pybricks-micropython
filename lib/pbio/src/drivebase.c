@@ -235,6 +235,21 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     pbio_control_update(&db->control_distance, time_now, &state_distance, &ref_distance, &sum_actuation, &sum_torque);
     pbio_control_update(&db->control_heading, time_now, &state_heading, &ref_heading, &dif_actuation, &dif_torque);
 
+    // The leading controller is able to pause when it stalls. The following controller does not do its own stall,
+    // but follows the leader. This ensures they complete at exactly the same time.
+
+    // Check which controller is the follower, if any.
+    if (pbio_control_type_is_follower(&db->control_distance)) {
+        // Distance control follows, so make it copy heading control pause state
+        err = pbio_control_copy_integrator_pause_state(&db->control_heading, &db->control_distance, time_now, state_distance.count, ref_distance.count);
+    } else if (pbio_control_type_is_follower(&db->control_heading)) {
+        // Heading control follows, so make it copy distance control pause state
+        err = pbio_control_copy_integrator_pause_state(&db->control_distance, &db->control_heading, time_now, state_heading.count, ref_heading.count);
+    }
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
     // If either controller coasts, coast both
     if (sum_actuation == PBIO_ACTUATION_COAST || dif_actuation == PBIO_ACTUATION_COAST) {
         return pbio_drivebase_actuate(db, PBIO_ACTUATION_COAST, 0, 0);
