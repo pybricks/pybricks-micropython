@@ -15,4 +15,5 @@ MEMORY
     RAM (xrw)       : ORIGIN = 0x20000000, LENGTH = 320K
 }
 
+"FW_INFO_OFFSET" = 0x200;
 _minimum_stack_size = 8K;

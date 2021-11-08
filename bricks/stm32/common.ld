@@ -15,9 +15,9 @@ SECTIONS
         _fw_isr_vector_src = .;   /* The isr vector table must be copied to SRAM since the
                                      firmware doesn't start at the beginning of the flash memory */
         KEEP(*(.isr_vector)) /* isr vector table */
-        . = 0x200;
-        *(.boot)           /* .boot section for info read during firmware update */
-        KEEP(*(.boot))
+        . = DEFINED(FW_INFO_OFFSET) ? FW_INFO_OFFSET : .;
+        *(.fw_info) /* .fw_info section for info read during SPIKE firmware update */
+        KEEP(*(.fw_info))
         *(.text)           /* .text sections (code) */
         *(.text*)          /* .text* sections (code) */
         *(.rodata)         /* .rodata sections (constants, strings, etc.) */
@@ -93,6 +93,7 @@ SECTIONS
     .checksum :
     {
         . = ALIGN(4);
+        _checksum = .;
         LONG(CHECKSUM)
     } >FLASH
 

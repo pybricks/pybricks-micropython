@@ -9,6 +9,7 @@
 
 #include "pbio/uartdev.h"
 #include "pbio/light_matrix.h"
+#include "pbio/version.h"
 
 #include "../../drv/adc/adc_stm32_hal.h"
 #include "../../drv/bluetooth/bluetooth_btstack_control_gpio.h"
@@ -27,18 +28,23 @@
 typedef struct {
     const char *fw_ver;
     const uint32_t *checksum;
-    const uint8_t *reserved;
+    const void *reserved;
     const char *id_string;
-} boot_t;
+    const void *reserved2;
+} lego_fw_info_t;
 
-const boot_t __attribute__((section(".boot"))) boot = {
+// defined in linker script
+extern const uint32_t _checksum;
+
+const lego_fw_info_t __attribute__((section(".fw_info"))) fw_info = {
     // These values are not used.
-    .fw_ver = NULL,
-    .checksum = NULL,
+    .fw_ver = PBIO_VERSION_STR,
+    .checksum = &_checksum,
     .reserved = NULL,
     // This value is checked when installing the firmware
     // via the 'firmware' MicroPython module on the hub.
     .id_string = "LEGO Technic Small Hub(0x000D)",
+    .reserved2 = NULL,
 };
 
 enum {
