@@ -7,6 +7,16 @@
 
 #if PBDRV_CONFIG_IOPORT_LPF2
 
+#define DEBUG 0
+#if DEBUG
+#include <inttypes.h>
+#define debug_pr(fmt, ...)   printf((fmt), __VA_ARGS__)
+#define DBG_ERR(expr) expr
+#else
+#define debug_pr(...)
+#define DBG_ERR(expr)
+#endif
+
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -442,6 +452,7 @@ PROCESS_THREAD(pbdrv_ioport_lpf2_process, ev, data) {
                 ioport_dev_t *ioport = &ioport_devs[i];
 
                 if (ioport->iodev == (pbio_iodev_t *)data) {
+                    debug_pr("uartdev (%c): Received stop.\n", i + PBDRV_CONFIG_FIRST_MOTOR_PORT);
                     ioport->connected_type_id = PBIO_IODEV_TYPE_ID_NONE;
                 }
             }
@@ -456,14 +467,18 @@ PROCESS_THREAD(pbdrv_ioport_lpf2_process, ev, data) {
                 }
 
                 if (ioport->connected_type_id != ioport->prev_type_id) {
+                    debug_pr("ioport(%c): Type changed from %d to %d.\n", i + PBDRV_CONFIG_FIRST_MOTOR_PORT, ioport->prev_type_id, ioport->connected_type_id);
                     ioport->prev_type_id = ioport->connected_type_id;
                     if (ioport->connected_type_id == PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
+                        debug_pr("ioport(%c): UART device detected.\n", i + PBDRV_CONFIG_FIRST_MOTOR_PORT);
                         ioport_enable_uart(ioport);
                         pbio_uartdev_get(i, &ioport->iodev);
                         ioport->iodev->port = i + PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT;
                     } else if (ioport->connected_type_id == PBIO_IODEV_TYPE_ID_NONE) {
+                        debug_pr("ioport(%c): Device unplugged.\n", i + PBDRV_CONFIG_FIRST_MOTOR_PORT);
                         ioport->iodev = NULL;
                     } else {
+                        debug_pr("ioport(%c): Passive device detected.\n", i + PBDRV_CONFIG_FIRST_MOTOR_PORT);
                         assert(ioport->connected_type_id < PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART);
                         ioport->iodev = &basic_devs[i];
                         ioport->iodev->info = &basic_infos[ioport->connected_type_id].info;
