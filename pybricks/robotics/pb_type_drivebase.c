@@ -179,7 +179,7 @@ STATIC mp_obj_t robotics_DriveBase_drive(size_t n_args, const mp_obj_t *pos_args
     mp_int_t speed = pb_obj_get_int(speed_in);
     mp_int_t turn_rate = pb_obj_get_int(turn_rate_in);
 
-    pb_assert(pbio_drivebase_drive(self->db, speed, turn_rate));
+    pb_assert(pbio_drivebase_drive_forever(self->db, speed, turn_rate));
 
     return mp_const_none;
 }

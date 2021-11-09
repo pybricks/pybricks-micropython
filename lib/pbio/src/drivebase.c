@@ -276,7 +276,7 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 }
 
 static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, int32_t sum, int32_t sum_rate, int32_t dif, int32_t dif_rate, pbio_actuation_t after_stop) {
-    
+
     // Claim both servos for use by drivebase
     pbio_drivebase_claim_servos(db, true);
 
@@ -356,7 +356,7 @@ pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, in
     return pbio_drivebase_drive_counts_relative(db, relative_sum, sum_rate, relative_dif, dif_rate, after_stop);
 }
 
-pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate) {
+static pbio_error_t pbio_drivebase_drive_counts_forever(pbio_drivebase_t *db, int32_t sum_rate, int32_t dif_rate) {
 
     // Claim both servos for use by drivebase
     pbio_drivebase_claim_servos(db, true);
@@ -373,19 +373,24 @@ pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t t
     }
 
     // Initialize both controllers
-    int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, speed);
-    err = pbio_control_start_timed_control(&db->control_distance, time_now, &state_distance, DURATION_FOREVER, target_sum_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
+    err = pbio_control_start_timed_control(&db->control_distance, time_now, &state_distance, DURATION_FOREVER, sum_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    int32_t target_turn_rate = pbio_control_user_to_counts(&db->control_heading.settings, turn_rate);
-    err = pbio_control_start_timed_control(&db->control_heading, time_now, &state_heading, DURATION_FOREVER, target_turn_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
+    err = pbio_control_start_timed_control(&db->control_heading, time_now, &state_heading, DURATION_FOREVER, dif_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_drivebase_drive_forever(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate) {
+    return pbio_drivebase_drive_counts_forever(db,
+        pbio_control_user_to_counts(&db->control_distance.settings, speed),
+        pbio_control_user_to_counts(&db->control_heading.settings, turn_rate)
+        );
 }
 
 pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate) {
