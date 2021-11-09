@@ -325,15 +325,10 @@ pbio_error_t pbio_drivebase_curve(pbio_drivebase_t *db, int32_t radius, int32_t 
 
     // At this point, the two trajectories may have different durations, so they won't complete at the same time
     // To account for this, we re-compute the shortest trajectory to have the same duration as the longest.
-    if (db->control_distance.trajectory.t3 == db->control_heading.trajectory.t3) {
-        // We're done if they're already the same.
-        return PBIO_SUCCESS;
-    }
 
-    // Find out which controller takes the lead
+    // First, find out which controller takes the lead
     pbio_control_t *control_leader;
     pbio_control_t *control_follower;
-
     if (db->control_distance.trajectory.t3 > db->control_heading.trajectory.t3) {
         // Distance control takes the longest, so it will take the lead
         control_leader = &db->control_distance;
