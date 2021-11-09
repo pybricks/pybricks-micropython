@@ -8,6 +8,8 @@
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
+#define PBIO_RADIUS_INF (INT32_MAX)
+
 typedef struct _pbio_drivebase_t {
     pbio_servo_t *left;
     pbio_servo_t *right;
@@ -21,11 +23,7 @@ void pbio_drivebase_claim_servos(pbio_drivebase_t *db, bool claim);
 
 // Finite point to point control
 
-pbio_error_t pbio_drivebase_curve(pbio_drivebase_t *db, int32_t radius, int32_t angle, int32_t drive_speed, int32_t turn_rate, pbio_actuation_t after_stop);
-
-pbio_error_t pbio_drivebase_straight(pbio_drivebase_t *db, int32_t distance, int32_t straight_speed, pbio_actuation_t after_stop);
-
-pbio_error_t pbio_drivebase_turn(pbio_drivebase_t *db, int32_t angle, int32_t turn_rate, pbio_actuation_t after_stop);
+pbio_error_t pbio_drivebase_curve(pbio_drivebase_t *db, int32_t radius, int32_t angle_or_distance, int32_t drive_speed, int32_t turn_rate, pbio_actuation_t after_stop);
 
 // Infinite driving
 
