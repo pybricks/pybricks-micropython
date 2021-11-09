@@ -316,17 +316,11 @@ void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1, int32_t t2, int
     trj->t2 = t2;
     trj->t3 = t3;
 
-    // Corresponding angle values with millicount/millideg precision
-    int64_t mth0 = as_mcount(trj->th0, trj->th0_ext);
-    int64_t mth3 = as_mcount(trj->th3, trj->th3_ext);
-    int64_t mth1 = mth0 + x_time(trj->w0, t1 - trj->t0) + x_time2(trj->a0, t1 - trj->t0);
-    int64_t mth2 = mth3 - x_time(trj->w1, t3 - t2) - x_time2(trj->a2, t3 - t2);
-
-    // Store as counts and millicount
-    as_count(mth0, &trj->th0, &trj->th0_ext);
-    as_count(mth1, &trj->th1, &trj->th1_ext);
-    as_count(mth2, &trj->th2, &trj->th2_ext);
-    as_count(mth3, &trj->th3, &trj->th3_ext);
+    // With all constraints already satisfied, we can just compute the
+    // intermediate positions relative to the endpoints, given the now-known
+    // accelerations and speeds.
+    trj->th1 = trj->th0 + (trj->w1 * trj->w1 - trj->w0 * trj->w0) / (2 * trj->a0);
+    trj->th2 = trj->th3 + (trj->w1 * trj->w1) / (2 * trj->a2);
 }
 
 // Evaluate the reference speed and velocity at the (shifted) time
