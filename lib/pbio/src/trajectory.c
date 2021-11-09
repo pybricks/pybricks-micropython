@@ -298,6 +298,11 @@ pbio_error_t pbio_trajectory_calc_time_new(pbio_trajectory_t *trj, int32_t t0, i
 
 void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1, int32_t t2, int32_t t3) {
 
+    if (trj->t3 == trj->t0) {
+        // This is a stationary maneuver, so there's nothing to recompute.
+        return;
+    }
+
     // This recomputes several components of a trajectory such that it travels
     // the same distance as before, but with new time stamps t1, t2, and t3.
     // Setting the speed integral equal to (th3 - th0) gives three constraint
