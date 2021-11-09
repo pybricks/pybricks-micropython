@@ -301,7 +301,7 @@ pbio_error_t pbio_drivebase_curve(pbio_drivebase_t *db, int32_t radius, int32_t 
     }
 
     // Dif controller drives by given angle
-    int32_t relative_dif_target = pbio_control_user_to_counts(&db->control_heading.settings, angle * pbio_math_sign(radius));
+    int32_t relative_dif_target = pbio_control_user_to_counts(&db->control_heading.settings, radius > 0 ? angle : -angle);
     int32_t target_dif_rate = pbio_control_user_to_counts(&db->control_heading.settings, turn_rate);
 
     err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, &state_heading, relative_dif_target, target_dif_rate, after_stop);
