@@ -101,7 +101,7 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
         }
         // Hold is achieved by driving 0 distance.
         case PBIO_ACTUATION_HOLD:
-            return pbio_drivebase_curve(db, 0, 0, db->control_distance.settings.max_rate, db->control_heading.settings.max_rate, PBIO_ACTUATION_HOLD);
+            return pbio_drivebase_drive_curve(db, 0, 0, db->control_distance.settings.max_rate, db->control_heading.settings.max_rate, PBIO_ACTUATION_HOLD);
         case PBIO_ACTUATION_VOLTAGE:
             return PBIO_ERROR_NOT_IMPLEMENTED;
         case PBIO_ACTUATION_TORQUE:
@@ -275,24 +275,10 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     return pbio_servo_actuate(db->right, dif_actuation, sum_torque / 2 - dif_torque / 2 + feed_forward_right);
 }
 
-pbio_error_t pbio_drivebase_curve(pbio_drivebase_t *db, int32_t radius, int32_t angle_or_distance, int32_t drive_speed, int32_t turn_rate, pbio_actuation_t after_stop) {
-
+static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, int32_t sum, int32_t sum_rate, int32_t dif, int32_t dif_rate, pbio_actuation_t after_stop) {
+    
     // Claim both servos for use by drivebase
     pbio_drivebase_claim_servos(db, true);
-
-    // Parse input cases.
-    int32_t arc_angle, arc_length;
-    if (radius == PBIO_RADIUS_INF) {
-        // For infinite radius, we want to drive straight, and
-        // the angle_or_distance input is interpreted as distance.
-        arc_angle = 0;
-        arc_length = angle_or_distance;
-    } else {
-        // In the normal case, angle_or_distance is interpreted as the angle,
-        // signed by the radius. Arc length is computed accordingly.
-        arc_angle = radius > 0 ? angle_or_distance : -angle_or_distance;
-        arc_length = (10 * abs(angle_or_distance) * radius) / 573;
-    }
 
     // Get current time
     int32_t time_now = pbdrv_clock_get_us();
@@ -305,20 +291,14 @@ pbio_error_t pbio_drivebase_curve(pbio_drivebase_t *db, int32_t radius, int32_t 
         return err;
     }
 
-    // Sum controller drives by the given arc length
-    int32_t relative_sum_target = pbio_control_user_to_counts(&db->control_distance.settings, arc_length);
-    int32_t target_sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, drive_speed);
-
-    err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, &state_distance, relative_sum_target, target_sum_rate, after_stop);
+    // Start controller that controls the sum of both motor counts
+    err = pbio_control_start_relative_angle_control(&db->control_distance, time_now, &state_distance, sum, sum_rate, after_stop);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // Dif controller drives by given angle
-    int32_t relative_dif_target = pbio_control_user_to_counts(&db->control_heading.settings, arc_angle);
-    int32_t target_dif_rate = pbio_control_user_to_counts(&db->control_heading.settings, turn_rate);
-
-    err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, &state_heading, relative_dif_target, target_dif_rate, after_stop);
+    // Start controller that controls the difference between both motor counts
+    err = pbio_control_start_relative_angle_control(&db->control_heading, time_now, &state_heading, dif, dif_rate, after_stop);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -348,6 +328,32 @@ pbio_error_t pbio_drivebase_curve(pbio_drivebase_t *db, int32_t radius, int32_t 
     control_follower->type = PBIO_CONTROL_ANGLE_FOLLOW;
 
     return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, int32_t angle_or_distance, int32_t drive_speed, int32_t turn_rate, pbio_actuation_t after_stop) {
+
+    int32_t arc_angle, arc_length;
+    if (radius == PBIO_RADIUS_INF) {
+        // For infinite radius, we want to drive straight, and
+        // the angle_or_distance input is interpreted as distance.
+        arc_angle = 0;
+        arc_length = angle_or_distance;
+    } else {
+        // In the normal case, angle_or_distance is interpreted as the angle,
+        // signed by the radius. Arc length is computed accordingly.
+        arc_angle = radius > 0 ? angle_or_distance : -angle_or_distance;
+        arc_length = (10 * abs(angle_or_distance) * radius) / 573;
+    }
+
+    // Convert arc length and speed to motor counts based on drivebase geometry
+    int32_t relative_sum = pbio_control_user_to_counts(&db->control_distance.settings, arc_length);
+    int32_t sum_rate = pbio_control_user_to_counts(&db->control_distance.settings, drive_speed);
+
+    // Convert arc angle and speed to motor counts based on drivebase geometry
+    int32_t relative_dif = pbio_control_user_to_counts(&db->control_heading.settings, arc_angle);
+    int32_t dif_rate = pbio_control_user_to_counts(&db->control_heading.settings, turn_rate);
+
+    return pbio_drivebase_drive_counts_relative(db, relative_sum, sum_rate, relative_dif, dif_rate, after_stop);
 }
 
 pbio_error_t pbio_drivebase_drive(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate) {

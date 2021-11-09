@@ -113,7 +113,7 @@ STATIC mp_obj_t robotics_DriveBase_straight(size_t n_args, const mp_obj_t *pos_a
     pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     // Driving straight is done as a curve with infinite radius and a given distance.
-    pb_assert(pbio_drivebase_curve(self->db, PBIO_RADIUS_INF, distance, self->straight_speed, self->turn_rate, then));
+    pb_assert(pbio_drivebase_drive_curve(self->db, PBIO_RADIUS_INF, distance, self->straight_speed, self->turn_rate, then));
 
     if (mp_obj_is_true(wait_in)) {
         wait_for_completion_drivebase(self->db);
@@ -135,7 +135,7 @@ STATIC mp_obj_t robotics_DriveBase_turn(size_t n_args, const mp_obj_t *pos_args,
     pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
     // Turning in place is done as a curve with zero radius and a given angle.
-    pb_assert(pbio_drivebase_curve(self->db, 0, angle, self->straight_speed, self->turn_rate, then));
+    pb_assert(pbio_drivebase_drive_curve(self->db, 0, angle, self->straight_speed, self->turn_rate, then));
 
     if (mp_obj_is_true(wait_in)) {
         wait_for_completion_drivebase(self->db);
@@ -158,7 +158,7 @@ STATIC mp_obj_t robotics_DriveBase_curve(size_t n_args, const mp_obj_t *pos_args
     mp_int_t angle = pb_obj_get_int(angle_in);
     pbio_actuation_t then = pb_type_enum_get_value(then_in, &pb_enum_type_Stop);
 
-    pb_assert(pbio_drivebase_curve(self->db, radius, angle, self->straight_speed, self->turn_rate, then));
+    pb_assert(pbio_drivebase_drive_curve(self->db, radius, angle, self->straight_speed, self->turn_rate, then));
 
     if (mp_obj_is_true(wait_in)) {
         wait_for_completion_drivebase(self->db);
