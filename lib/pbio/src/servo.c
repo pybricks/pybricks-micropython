@@ -269,13 +269,9 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
     return pbio_servo_actuate(srv, after_stop, control);
 }
 
-void pbio_servo_stop_force(pbio_servo_t *srv) {
+void pbio_servo_stop_control(pbio_servo_t *srv) {
     // Set control status passive so poll won't call it again
     pbio_control_stop(&srv->control);
-
-    // Release claim from drivebases or other classes and reset connected state.
-    srv->claimed = false;
-    srv->connected = false;
 
     // Try to stop / coast motor
     if (srv->dcmotor) {

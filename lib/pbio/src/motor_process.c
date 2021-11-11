@@ -64,7 +64,7 @@ void pbio_motor_process_reset(void) {
         }
 
         // Force stop the servo
-        pbio_servo_stop_force(srv);
+        pbio_servo_stop_control(srv);
     }
 }
 

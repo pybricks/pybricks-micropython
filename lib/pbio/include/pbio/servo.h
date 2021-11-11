@@ -48,7 +48,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
 pbio_error_t pbio_servo_is_stalled(pbio_servo_t *srv, bool *stalled);
 
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop);
-void pbio_servo_stop_force(pbio_servo_t *srv);
+void pbio_servo_stop_control(pbio_servo_t *srv);
 
 pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_type, int32_t payload);
 pbio_error_t pbio_servo_set_voltage_passive(pbio_servo_t *srv, int32_t voltage);
