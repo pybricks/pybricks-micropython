@@ -171,9 +171,8 @@ static rcmd_err_t nx_rcmd_print(char *line) {
 
 static rcmd_err_t nx_rcmd_clear(char *line) {
   /* No-op. */
-  char c;
-  c = line[0];
-
+  (void)line;
+  
   nx_display_clear();
   return RCMD_ERR_NO_ERROR;
 }
@@ -242,8 +241,7 @@ static rcmd_err_t nx_rcmd_wait(char *line) {
 
 static rcmd_err_t nx_rcmd_nop(char *line) {
   /* No-op. */
-  char c;
-  c = line[0];
+  (void)line;
 
   return RCMD_ERR_NO_ERROR;
 }
