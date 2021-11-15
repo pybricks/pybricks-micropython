@@ -417,6 +417,7 @@ static void i2c_isr(void) {
    * interrupt handler to be called again.
    */
   dummy = *AT91C_TC0_SR;
+  (void)dummy;
 
   for (sensor=0; sensor<NXT_N_SENSORS; sensor++) {
     const nx__sensors_pins *pins = nx__sensors_get_pins(sensor);
