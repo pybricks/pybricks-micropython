@@ -639,7 +639,7 @@ fs_perm_t nx_fs_get_perms(fs_fd_t fd) {
 
   file = nx_fs_get_file(fd);
   if (!file) {
-    return FS_ERR_INVALID_FD;
+    return (fs_perm_t) FS_ERR_INVALID_FD;
   }
 
   return file->perms;
