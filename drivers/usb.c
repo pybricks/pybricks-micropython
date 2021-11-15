@@ -778,7 +778,7 @@ void nx_usb_write(U8 *data, U32 length) {
 }
 
 bool nx_usb_data_written(void) {
-  return (usb_state.tx_len[2] == 0);
+  return (usb_state.tx_len[1] == 0);
 }
 
 
