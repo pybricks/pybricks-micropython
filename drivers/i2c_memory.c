@@ -58,7 +58,8 @@ i2c_txn_err nx_i2c_memory_read(U32 sensor, U8 internal_address,
   while (nx_i2c_busy(sensor))
     nx_systick_wait_ms(NX_I2C_TXN_WAIT);
 
-  return nx_i2c_get_txn_status(sensor);
+  // FIXME: Map return types correctly because cast may be wrong.
+  return (i2c_txn_err) nx_i2c_get_txn_status(sensor);
 }
 
 /** Writes the given data of the given size at 'internal_address' on the
@@ -83,5 +84,6 @@ i2c_txn_err nx_i2c_memory_write(U32 sensor, U8 internal_address,
   while (nx_i2c_busy(sensor))
     nx_systick_wait_ms(NX_I2C_TXN_WAIT);
 
-  return nx_i2c_get_txn_status(sensor);
+  // FIXME: Map return types correctly because cast may be wrong.
+  return (i2c_txn_err) nx_i2c_get_txn_status(sensor);
 }
