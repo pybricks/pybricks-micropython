@@ -111,7 +111,7 @@ typedef enum {
 /*** Predefined messages ***/
 
 
-static const U8 bt_msg_start_heart[] = {
+const U8 bt_msg_start_heart[] = {
   0x03, /* length */
   BT_MSG_START_HEART,
   0xFF, /* checksum (high) */
