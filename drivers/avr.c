@@ -308,6 +308,7 @@ void nx__avr_fast_update(void) {
       nx__twi_read_async(AVR_ADDRESS, raw_from_avr,
                      sizeof(raw_from_avr));
     }
+    __attribute__((fallthrough));
 
   case AVR_RECV:
     /* If the transmission is complete, unpack the read data into the
