@@ -595,7 +595,7 @@ bt_return_value_t nx_bt_add_known_device(bt_device_t *dev)
   for (i = 0 ; i < BT_ADDR_SIZE ; i++)
     packet[2+i] = dev->addr[i];
 
-  for (i = 0 ; i < BT_NAME_MAX_LNG && dev->name != '\0' ; i++)
+  for (i = 0 ; i < BT_NAME_MAX_LNG && dev->name[i] != '\0' ; i++)
     packet[2+BT_ADDR_SIZE+i] = dev->name[i];
 
   for ( ; i < BT_NAME_MAX_LNG ; i++)
