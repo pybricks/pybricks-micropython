@@ -13,6 +13,8 @@
 #ifndef __NXOS_BASE_TYPES_H__
 #define __NXOS_BASE_TYPES_H__
 
+#include <stddef.h>
+
 /** @addtogroup typesAndUtils */
 /*@{*/
 
@@ -22,8 +24,6 @@ typedef unsigned short U16; /**< Unsigned 16-bit integer. */
 typedef signed short S16; /**< Signed 16-bit integer. */
 typedef unsigned long U32; /**< Unsigned 32-bit integer. */
 typedef signed long S32; /**< Signed 32-bit integer. */
-
-typedef U32 size_t; /**< Abstract size type, needed by the memory allocator. */
 
 typedef U8 bool; /**< Boolean data type. */
 #define FALSE (0) /**< False boolean value. */
