@@ -76,6 +76,7 @@ static void systick_isr(void) {
    * interrupt.
    */
   status = *AT91C_PITC_PIVR;
+  (void)status;
 
   /* Do the system timekeeping. */
   systick_time++;
