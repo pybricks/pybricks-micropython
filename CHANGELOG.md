@@ -21,7 +21,7 @@
 [support#397]: https://github.com/pybricks/support/issues/397
 [support#501]: https://github.com/pybricks/support/issues/501
 
-## [3.1.0b1] - 2021-08-21
+## [3.1.0b1] - 2021-09-21
 
 ### Added
 - Support for LEGO Technic Color Light Matrix ([support#440]).
