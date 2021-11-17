@@ -1119,6 +1119,26 @@ static void handle_event(uint8_t *packet) {
                         // we currently only allow connection from one central
                         conn_handle = (data[11] << 8) | data[10];
                         DBG("link: %04x", conn_handle);
+
+                        // On 2019 and newer MacBooks, the default interval was
+                        // measured to be 15 ms. This caused advertisement to
+                        // not be received by the local Bluetooth chip when
+                        // scanning for devices. Calling the command below
+                        // effectively sends the L2CAP Connection Parameter
+                        // Update Request suggested by Apple[1] to reduce the
+                        // interval to presumably make more room for receiving
+                        // advertising data. There are a number of requirements
+                        // in the Apple spec, such as the interval must be a
+                        // multiple of 15 ms.
+                        // [1]: https://developer.apple.com/accessories/Accessory-Design-Guidelines.pdf
+                        gapUpdateLinkParamReq_t req = {
+                            .connectionHandle = conn_handle,
+                            .intervalMin = 24, // 24 * 1.25 ms = 30 ms
+                            .intervalMax = 48, // 48 * 1.25 ms = 60 ms
+                            .connLatency = 0,
+                            .connTimeout = 500, // 500 * 10 ms = 5 s
+                        };
+                        GAP_UpdateLinkParamReq(&req);
                     } else if (data[12] == GAP_PROFILE_CENTRAL) {
                         // we currently only allow connection to one LEGO Powered Up remote peripheral
                         remote_handle = (data[11] << 8) | data[10];
