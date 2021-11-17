@@ -1280,14 +1280,14 @@ static PT_THREAD(gap_init(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
-    // Set scan timeout on btchip to infinite. Seperate timeout
+    // Set scan timeout on btchip to infinite. Separate timeout
     // is implemented to stop program and thus scan
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_SetParamValue(TGAP_GEN_DISC_SCAN, 0);
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
-    // Set scan timeout on btchip to infinite. Seperate timeout
+    // Set scan timeout on btchip to infinite. Separate timeout
     // is implemented to stop program and thus scan
     PT_WAIT_WHILE(pt, write_xfer_size);
     GAP_SetParamValue(TGAP_LIM_DISC_SCAN, 0);
@@ -1373,6 +1373,11 @@ static PT_THREAD(gap_init(struct pt *pt)) {
     PT_WAIT_UNTIL(pt, hci_command_status);
     // ignoring response data
 
+    PT_WAIT_WHILE(pt, write_xfer_size);
+    GAP_deviceInit(GAP_PROFILE_PERIPHERAL | GAP_PROFILE_CENTRAL, 8, NULL, NULL, 0);
+    PT_WAIT_UNTIL(pt, hci_command_complete);
+    // ignoring response data
+
     PT_END(pt);
 }
 
@@ -1397,13 +1402,6 @@ static PT_THREAD(hci_init(struct pt *pt)) {
 
     PT_WAIT_WHILE(pt, write_xfer_size);
     HCI_readBdaddr();
-    PT_WAIT_UNTIL(pt, hci_command_complete);
-    // ignoring response data
-
-    // init GATT layer
-
-    PT_WAIT_WHILE(pt, write_xfer_size);
-    GAP_deviceInit(GAP_PROFILE_PERIPHERAL | GAP_PROFILE_CENTRAL, 8, NULL, NULL, 0);
     PT_WAIT_UNTIL(pt, hci_command_complete);
     // ignoring response data
 
