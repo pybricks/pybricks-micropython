@@ -67,11 +67,6 @@ STATIC mp_obj_t robotics_DriveBase_make_new(const mp_obj_type_t *type, size_t n_
     pbio_servo_t *srv_left = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->left, &pb_type_Motor))->srv;
     pbio_servo_t *srv_right = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->right, &pb_type_Motor))->srv;
 
-    // A DriveBase must have two distinct motors
-    if (srv_left == srv_right) {
-        pb_assert(PBIO_ERROR_INVALID_ARG);
-    }
-
     // Create drivebase
     pb_assert(pbio_motor_process_get_drivebase(&self->db));
     pb_assert(pbio_drivebase_setup(self->db, srv_left, srv_right, pb_obj_get_fix16(wheel_diameter_in), pb_obj_get_fix16(axle_track_in)));

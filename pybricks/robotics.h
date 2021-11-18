@@ -12,6 +12,7 @@
 
 #include "py/obj.h"
 
+extern const mp_obj_type_t pb_type_spikebase;
 
 extern const mp_obj_type_t pb_type_drivebase;
 

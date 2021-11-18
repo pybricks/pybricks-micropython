@@ -243,6 +243,7 @@ PYBRICKS_PYBRICKS_SRC_C = $(addprefix pybricks/,\
 	pybricks.c \
 	robotics/pb_module_robotics.c \
 	robotics/pb_type_drivebase.c \
+	robotics/pb_type_spikebase.c \
 	tools/pb_module_tools.c \
 	tools/pb_type_stopwatch.c \
 	util_mp/pb_obj_helper.c \

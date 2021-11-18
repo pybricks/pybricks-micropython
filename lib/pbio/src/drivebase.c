@@ -114,6 +114,11 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
 pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio_servo_t *right, fix16_t wheel_diameter, fix16_t axle_track) {
     pbio_error_t err;
 
+    // Can't build a drive base with just one motor.
+    if (left == right) {
+        return PBIO_ERROR_INVALID_PORT;
+    }
+
     // Attach servos
     db->left = left;
     db->right = right;
@@ -356,7 +361,7 @@ pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, in
     return pbio_drivebase_drive_counts_relative(db, relative_sum, sum_rate, relative_dif, dif_rate, after_stop);
 }
 
-static pbio_error_t pbio_drivebase_drive_counts_forever(pbio_drivebase_t *db, int32_t sum_rate, int32_t dif_rate) {
+static pbio_error_t pbio_drivebase_drive_counts_timed(pbio_drivebase_t *db, int32_t sum_rate, int32_t dif_rate, int32_t duration, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
 
     // Claim both servos for use by drivebase
     pbio_drivebase_claim_servos(db, true);
@@ -372,13 +377,18 @@ static pbio_error_t pbio_drivebase_drive_counts_forever(pbio_drivebase_t *db, in
         return err;
     }
 
+    // Scale duration to microseconds unless it's forever.
+    if (duration != DURATION_FOREVER) {
+        duration *= US_PER_MS;
+    }
+
     // Initialize both controllers
-    err = pbio_control_start_timed_control(&db->control_distance, time_now, &state_distance, DURATION_FOREVER, sum_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
+    err = pbio_control_start_timed_control(&db->control_distance, time_now, &state_distance, duration, sum_rate, stop_func, after_stop);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    err = pbio_control_start_timed_control(&db->control_heading, time_now, &state_heading, DURATION_FOREVER, dif_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
+    err = pbio_control_start_timed_control(&db->control_heading, time_now, &state_heading, duration, dif_rate, stop_func, after_stop);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -387,10 +397,10 @@ static pbio_error_t pbio_drivebase_drive_counts_forever(pbio_drivebase_t *db, in
 }
 
 pbio_error_t pbio_drivebase_drive_forever(pbio_drivebase_t *db, int32_t speed, int32_t turn_rate) {
-    return pbio_drivebase_drive_counts_forever(db,
+    return pbio_drivebase_drive_counts_timed(db,
         pbio_control_user_to_counts(&db->control_distance.settings, speed),
-        pbio_control_user_to_counts(&db->control_heading.settings, turn_rate)
-        );
+        pbio_control_user_to_counts(&db->control_heading.settings, turn_rate),
+        DURATION_FOREVER, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
 }
 
 pbio_error_t pbio_drivebase_get_state_user(pbio_drivebase_t *db, int32_t *distance, int32_t *drive_speed, int32_t *angle, int32_t *turn_rate) {
@@ -434,5 +444,112 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
 
     return PBIO_SUCCESS;
 }
+
+#if !PBIO_CONFIG_CONTROL_MINIMAL
+
+// The following functions provide spike-like "tank-drive" controls. These will
+// not use the pbio functionality for gearing or reversed orientation. Any
+// scaling and flipping happens within the functions below.
+
+// Set up a drive base without drivebase geometry.
+pbio_error_t pbio_spikebase_setup(pbio_drivebase_t *db, pbio_servo_t *servo_left, pbio_servo_t *servo_right) {
+    // Allow only the same type of motor. To find out, just check that the model parameters are the same.
+    if (servo_left->observer.settings != servo_right->observer.settings) {
+        return PBIO_ERROR_INVALID_PORT;
+    }
+
+    return pbio_drivebase_setup(db, servo_left, servo_right, fix16_one, fix16_one);
+}
+
+// Drive forever given two motor speeds.
+pbio_error_t pbio_spikebase_drive_forever(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right) {
+    // Flip left tank motor orientation.
+    speed_left = -speed_left;
+
+    // Start driving forever with the given sum and dif rates.
+    return pbio_drivebase_drive_counts_timed(db, speed_left + speed_right, speed_left - speed_right, DURATION_FOREVER, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
+}
+
+// Drive for a given duration, given two motor speeds.
+pbio_error_t pbio_spikebase_drive_time(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t duration, pbio_actuation_t after_stop) {
+    // Flip left tank motor orientation.
+    speed_left = -speed_left;
+
+    // Start driving forever with the given sum and dif rates.
+    return pbio_drivebase_drive_counts_timed(db, speed_left + speed_right, speed_left - speed_right, duration, pbio_control_on_target_time, after_stop);
+}
+
+// Drive given two speeds and one angle.
+pbio_error_t pbio_spikebase_drive_angle(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t angle, pbio_actuation_t after_stop) {
+
+    // Ignore two zero speeds or zero angle by making drivebase stop.
+    if (angle == 0 || (speed_left == 0 && speed_right == 0)) {
+        return pbio_drivebase_stop(db, after_stop);
+    }
+
+    // In the classic tank drive, we flip the left motor here instead of at the low level.
+    speed_left *= -1;
+
+    // Get relative angle, signed by the direction in which we want to go.
+    int32_t angle_left = (abs(angle) * 2 * speed_left) / (abs(speed_left) + abs(speed_right));
+    int32_t angle_right = (abs(angle) * 2 * speed_right) / (abs(speed_left) + abs(speed_right));
+
+    // Work out the required total and difference angles to achieve this.
+    int32_t sum = angle_left + angle_right;
+    int32_t dif = angle_left - angle_right;
+    int32_t sum_rate = abs(speed_left + speed_right);
+    int32_t dif_rate = abs(speed_left - speed_right);
+
+    // If the angle was negative, we need to reverse the result.
+    if (angle < 0) {
+        sum_rate *= -1;
+        dif_rate *= -1;
+    }
+
+    // Execute the maneuver.
+    return pbio_drivebase_drive_counts_relative(db, sum, sum_rate, dif, dif_rate, after_stop);
+}
+
+pbio_error_t pbio_spikebase_steering_to_tank(int32_t speed, int32_t steering, int32_t *speed_left, int32_t *speed_right) {
+
+    // Steering must be bounded
+    if (steering < -100 || steering > 100) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Hard coded special cases
+    if (steering == 100) {
+        // In-place turn to the right.
+        *speed_left = speed;
+        *speed_right = -speed;
+        return PBIO_SUCCESS;
+    }
+    if (steering == -100) {
+        // In-place turn to the left.
+        *speed_left = -speed;
+        *speed_right = speed;
+        return PBIO_SUCCESS;
+    }
+
+    // 99 will be what 100 would have been if 100 wasn't a special case.
+    if (steering == 99) {
+        // 99 is treated as 100, thus turning the left wheel only.
+        steering = 100;
+    }
+    if (steering == -99) {
+        // -99 is treated as -100, thus turning the right wheel only.
+        steering = -100;
+    }
+
+    // Generic case, where one wheel drives slower, given by steering ratio.
+    *speed_left = speed;
+    *speed_right = speed;
+
+    // Depending on steering direction, one wheel moves slower.
+    *(steering > 0 ? speed_right : speed_left) = speed * (100 - abs(steering)) / 100;
+    return PBIO_SUCCESS;
+}
+
+#endif // !PBIO_CONFIG_CONTROL_MINIMAL
 
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER

@@ -43,6 +43,22 @@ pbio_error_t pbio_drivebase_get_drive_settings(pbio_drivebase_t *db, int32_t *dr
 
 pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t drive_speed, int32_t drive_acceleration, int32_t turn_rate, int32_t turn_acceleration);
 
+#if !PBIO_CONFIG_CONTROL_MINIMAL
+
+// SPIKE drive base wrappers
+
+pbio_error_t pbio_spikebase_setup(pbio_drivebase_t *db, pbio_servo_t *servo_left, pbio_servo_t *servo_right);
+
+pbio_error_t pbio_spikebase_drive_forever(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right);
+
+pbio_error_t pbio_spikebase_drive_time(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t duration, pbio_actuation_t after_stop);
+
+pbio_error_t pbio_spikebase_drive_angle(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right, int32_t angle, pbio_actuation_t after_stop);
+
+pbio_error_t pbio_spikebase_steering_to_tank(int32_t speed, int32_t steering, int32_t *speed_left, int32_t *speed_right);
+
+#endif // !PBIO_CONFIG_CONTROL_MINIMAL
+
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
 
 #endif // _PBIO_DRIVEBASE_H_
