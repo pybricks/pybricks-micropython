@@ -354,6 +354,13 @@ static PT_THREAD(poll_dcm(ioport_dev_t * ioport)) {
                 // set ID2 low
                 pbdrv_gpio_out_low(&pdata.id2);
 
+                // There must be some capacitance in the circuit because the
+                // uart_rx pin seems to need some extra help being driven low.
+                // Otherwise, pbdrv_gpio_input(&pdata.uart_rx) below can
+                // sometimes read the wrong value, resulting in improper
+                // detection.
+                pbdrv_gpio_out_low(&pdata.uart_rx);
+
                 PT_YIELD(pt);
 
                 // if ID2 is low

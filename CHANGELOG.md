@@ -16,9 +16,11 @@
 - Fixed `brake()`/`light.off()` not working on Move hub I/O port C ([support#501]).
 - Fixed `Remote()` failing to connect when hub is connected to 2019 or newer
   MacBooks ([support#397]).
+- Fixed intermittent improper detection of hot-plugged I/O devices ([support#500]).
 
 [support#366]: https://github.com/pybricks/support/issues/366
 [support#397]: https://github.com/pybricks/support/issues/397
+[support#500]: https://github.com/pybricks/support/issues/500
 [support#501]: https://github.com/pybricks/support/issues/501
 
 ## [3.1.0b1] - 2021-09-21
