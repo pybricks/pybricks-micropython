@@ -19,7 +19,7 @@ motor.run_target(500, 0)
 
 # Try to change a setting. This should raise an error because the motor is busy.
 try:
-    motor.control.limits(duty=50)
+    motor.control.limits(torque=500)
 except Exception as e:
     exception = e
     pass
