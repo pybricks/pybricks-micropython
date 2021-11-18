@@ -4,12 +4,18 @@
 
 ## [Unreleased]
 
+### Added
+- Added `DriveBase.curve()` method to drive an arc segment.
+- Added `then` and `wait` arguments to `DriveBase` methods ([support#57]).
+
 ### Changed
 - Dropped `integral_range` argument from `Control.pid()`. This setting was
   ineffective and never used. When set incorrectly, the motor could get stuck
   for certain combinations of `kp` and `ki`.
 - Improved motor behavior for cases with low-speed, low-load, but high
   inertia ([support#366]).
+- Changed how the duty cycle limit is set for `Motor` and `DCMotor`. It is now
+  set as a voltage limit via a dedicated method, instead of `Motor.control`.
 
 ### Fixed
 - Fixed `then=Stop.COAST` being ignored in most motor commands.
@@ -17,7 +23,10 @@
 - Fixed `Remote()` failing to connect when hub is connected to 2019 or newer
   MacBooks ([support#397]).
 - Fixed intermittent improper detection of hot-plugged I/O devices ([support#500]).
+- A program now stops when a `Motor` is unplugged while it is running, instead
+  of getting in a bad state.
 
+[support#57]: https://github.com/pybricks/support/issues/57
 [support#366]: https://github.com/pybricks/support/issues/366
 [support#397]: https://github.com/pybricks/support/issues/397
 [support#500]: https://github.com/pybricks/support/issues/500
