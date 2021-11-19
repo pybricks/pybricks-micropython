@@ -23,7 +23,7 @@
 #define PBIO_VERSION_MICRO 0
 
 /** The current prerelease level as a hex digit. */
-#define PBIO_VERSION_LEVEL_HEX 0xB
+#define PBIO_VERSION_LEVEL_HEX 0xC
 
 /** The current prerelease serial. */
 #define PBIO_VERSION_SERIAL 1

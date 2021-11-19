@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [3.1.0c1] - 2021-11-19
+
 ### Added
 - Added `DriveBase.curve()` method to drive an arc segment.
 - Added `then` and `wait` arguments to `DriveBase` methods ([support#57]).
@@ -185,7 +187,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0b1...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0c1...HEAD
+[3.1.0c1]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a4...v3.1.0c1
 [3.1.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a4...v3.1.0b1
 [3.1.0a4]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a3...v3.1.0a4
 [3.1.0a3]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a2...v3.1.0a3
