@@ -2,6 +2,7 @@
 ## Unreleased
 ### Changed
 - Dropped fallback to default name in `encodeHubName()` on empty string.
+- Use Typescript optional syntax in `FirmwareMetadata` instead of `| undefined`.
 
 ## 4.13.0-rc.1 - 2021-11-19
 ### Added

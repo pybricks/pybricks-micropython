@@ -63,11 +63,11 @@ export interface FirmwareMetadata {
     /** The maximum firmware size allowed on the hub. */
     'max-firmware-size': number;
     /** The offset to where the hub name is stored in the firmware. (since  v1.1.0) */
-    'hub-name-offset': number | undefined;
+    'hub-name-offset'?: number;
     /** The maximum size of the firmware name in bytes, including the zero-termination. (since  v1.1.0) */
-    'max-hub-name-size': number | undefined;
+    'max-hub-name-size'?: number;
     /** The SHA256 hash of the firmware. (since  v1.1.0) */
-    'firmware-sha256': string | undefined;
+    'firmware-sha256'?: string;
 }
 
 /** Types of errors that can be raised by FirmwareReader. */
