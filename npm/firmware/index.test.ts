@@ -12,12 +12,6 @@ import {
     FirmwareMetadata,
 } from './index';
 
-let TextEncoder;
-
-beforeAll(() => {
-    TextEncoder = util.TextEncoder;
-});
-
 const readFile = util.promisify(fs.readFile);
 
 test('firmware version', () => {
