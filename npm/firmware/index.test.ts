@@ -1,10 +1,22 @@
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2020 The Pybricks Authors
+// Copyright (c) 2020-2021 The Pybricks Authors
 
 import * as fs from 'fs';
 import * as path from 'path';
 import * as util from 'util';
-import { firmwareVersion, FirmwareReader, FirmwareReaderErrorCode } from '.';
+import {
+    firmwareVersion,
+    FirmwareReader,
+    FirmwareReaderErrorCode,
+    encodeHubName,
+    FirmwareMetadata,
+} from './index';
+
+let TextEncoder;
+
+beforeAll(() => {
+    TextEncoder = util.TextEncoder;
+});
 
 const readFile = util.promisify(fs.readFile);
 
@@ -83,4 +95,46 @@ test('reading data works', async () => {
     expect(await reader.readMetadata()).toMatchSnapshot();
     expect(await reader.readMainPy()).toMatchSnapshot();
     expect(await reader.readReadMeOss()).toMatchSnapshot();
+});
+
+describe('firmware name encoder', () => {
+    const metadata = { 'max-hub-name-size': 16 } as FirmwareMetadata;
+
+    test('default works', () => {
+        expect(encodeHubName('', metadata)).toEqual(
+            new Uint8Array([
+                80, 121, 98, 114, 105, 99, 107, 115, 32, 72, 117, 98, 0, 0, 0,
+                0,
+            ])
+        );
+    });
+
+    test('max length works', () => {
+        expect(encodeHubName('123456789012345', metadata)).toEqual(
+            new Uint8Array([
+                49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 0,
+            ])
+        );
+    });
+
+    test('exceeding max length truncates and preserves zero termination', () => {
+        expect(encodeHubName('1234567890123456', metadata)).toEqual(
+            new Uint8Array([
+                49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 49, 50, 51, 52, 53, 0,
+            ])
+        );
+    });
+
+    test('truncating on multi-byte characters results in valid UTF-8', () => {
+        expect(encodeHubName('Pybricks Hub 😀', metadata)).toEqual(
+            new Uint8Array([
+                80, 121, 98, 114, 105, 99, 107, 115, 32, 72, 117, 98, 32, 0, 0,
+                0,
+            ])
+        );
+    });
+
+    test('old firmware throws', () => {
+        expect(() => encodeHubName('', {} as FirmwareMetadata)).toThrowError();
+    });
 });

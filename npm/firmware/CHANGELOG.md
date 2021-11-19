@@ -1,4 +1,8 @@
 
+### Added
+- Added support for v1.1.0 metadata.
+- Added `encodeHubName()` function.
+
 ## 4.13.0-beta.1 - 2021-09-21
 ### Changed
 - Updated dependencies.

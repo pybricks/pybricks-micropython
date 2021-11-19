@@ -2,12 +2,16 @@
 // Copyright (c) 2020-2021 The Pybricks Authors
 
 import JSZip, { JSZipObject } from 'jszip';
-import {PACKAGE_VERSION} from './version';
+import { PACKAGE_VERSION } from './version';
+
+const encoder = new TextEncoder();
 
 /**
  * String containing the firmware version.
  */
-export const firmwareVersion = PACKAGE_VERSION.substring(PACKAGE_VERSION.lastIndexOf('v') + 1);
+export const firmwareVersion = PACKAGE_VERSION.substring(
+    PACKAGE_VERSION.lastIndexOf('v') + 1
+);
 
 /**
  * LEGO Powered Up Hub IDs
@@ -58,6 +62,12 @@ export interface FirmwareMetadata {
     'user-mpy-offset': number;
     /** The maximum firmware size allowed on the hub. */
     'max-firmware-size': number;
+    /** The offset to where the hub name is stored in the firmware. (since  v1.1.0) */
+    'hub-name-offset': number | undefined;
+    /** The maximum size of the firmware name in bytes, including the zero-termination. (since  v1.1.0) */
+    'max-hub-name-size': number | undefined;
+    /** The SHA256 hash of the firmware. (since  v1.1.0) */
+    'firmware-sha256': string | undefined;
 }
 
 /** Types of errors that can be raised by FirmwareReader. */
@@ -75,22 +85,20 @@ export enum FirmwareReaderErrorCode {
 }
 
 /** Maps error codes to error messages. */
-const firmwareReaderErrorMessage: ReadonlyMap<
-    FirmwareReaderErrorCode,
-    string
-> = new Map([
-    [FirmwareReaderErrorCode.ZipError, 'bad zip data'],
-    [
-        FirmwareReaderErrorCode.MissingFirmwareBaseBin,
-        'missing firmware-base.bin',
-    ],
-    [
-        FirmwareReaderErrorCode.MissingMetadataJson,
-        'missing firmware.metadata.json',
-    ],
-    [FirmwareReaderErrorCode.MissingMainPy, 'missing main.py'],
-    [FirmwareReaderErrorCode.MissingReadmeOssTxt, 'ReadMe_OSS.txt'],
-]);
+const firmwareReaderErrorMessage: ReadonlyMap<FirmwareReaderErrorCode, string> =
+    new Map([
+        [FirmwareReaderErrorCode.ZipError, 'bad zip data'],
+        [
+            FirmwareReaderErrorCode.MissingFirmwareBaseBin,
+            'missing firmware-base.bin',
+        ],
+        [
+            FirmwareReaderErrorCode.MissingMetadataJson,
+            'missing firmware.metadata.json',
+        ],
+        [FirmwareReaderErrorCode.MissingMainPy, 'missing main.py'],
+        [FirmwareReaderErrorCode.MissingReadmeOssTxt, 'ReadMe_OSS.txt'],
+    ]);
 
 /** Errors throw by FirmwareReader */
 export class FirmwareReaderError extends Error {
@@ -159,7 +167,9 @@ export class FirmwareReader {
      * Loads data from a firmware.zip file and does a few sanity checks.
      * @param zipData The firmware.zip file binary data.
      */
-    public static async load(zipData: Uint8Array | ArrayBuffer | Blob): Promise<FirmwareReader> {
+    public static async load(
+        zipData: Uint8Array | ArrayBuffer | Blob
+    ): Promise<FirmwareReader> {
         const reader = new FirmwareReader();
         const zip = await wrapError(
             () => JSZip.loadAsync(zipData),
@@ -216,4 +226,35 @@ export class FirmwareReader {
     public readReadMeOss(): Promise<string> {
         return this.readMeOss!.async('text');
     }
+}
+
+/**
+ * Encodes a firmware name as UTF-8 bytes with zero-termination.
+ *
+ * If the name is too long to fit in the size specified by the metadata, the
+ * name will be truncated. The resulting value can be written to the firmware
+ * image at 'hub-name-offset'.
+ *
+ * @param name The hub name.
+ * @param metadata The firmware metadata.
+ */
+export function encodeHubName(
+    name: string,
+    metadata: FirmwareMetadata
+): Uint8Array {
+    if (metadata['max-hub-name-size'] === undefined) {
+        throw new Error('firmware image does not support firmware name');
+    }
+
+    // fall back to default on empty name
+    if (!name) {
+        name = 'Pybricks Hub';
+    }
+
+    const bytes = new Uint8Array(metadata['max-hub-name-size']);
+
+    // subarray ensures zero termination if encoded length is >= 'max-hub-name-size'.
+    encoder.encodeInto(name, bytes.subarray(0, bytes.length - 1));
+
+    return bytes;
 }
