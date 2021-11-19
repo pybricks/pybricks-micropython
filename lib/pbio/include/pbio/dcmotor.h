@@ -43,7 +43,7 @@ pbio_error_t pbio_dcmotor_brake(pbio_dcmotor_t *dcmotor);
 pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage);
 pbio_error_t pbio_dcmotor_set_voltage_passive(pbio_dcmotor_t *dcmotor, int32_t voltage);
 
-pbio_error_t pbio_dcmotor_load_settings(pbio_dcmotor_t *dcmotor, pbio_iodev_type_id_t id);
+int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id);
 
 void pbio_dcmotor_get_settings(pbio_dcmotor_t *dcmotor, int32_t *max_voltage);
 pbio_error_t pbio_dcmotor_set_settings(pbio_dcmotor_t *dcmotor, int32_t max_voltage);
