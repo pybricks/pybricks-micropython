@@ -94,12 +94,9 @@ test('reading data works', async () => {
 describe('firmware name encoder', () => {
     const metadata = { 'max-hub-name-size': 16 } as FirmwareMetadata;
 
-    test('default works', () => {
+    test('empty name works', () => {
         expect(encodeHubName('', metadata)).toEqual(
-            new Uint8Array([
-                80, 121, 98, 114, 105, 99, 107, 115, 32, 72, 117, 98, 0, 0, 0,
-                0,
-            ])
+            new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         );
     });
 

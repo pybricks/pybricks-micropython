@@ -246,11 +246,6 @@ export function encodeHubName(
         throw new Error('firmware image does not support firmware name');
     }
 
-    // fall back to default on empty name
-    if (!name) {
-        name = 'Pybricks Hub';
-    }
-
     const bytes = new Uint8Array(metadata['max-hub-name-size']);
 
     // subarray ensures zero termination if encoded length is >= 'max-hub-name-size'.

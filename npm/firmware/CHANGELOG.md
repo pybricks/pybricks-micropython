@@ -1,4 +1,8 @@
 
+## Unreleased
+### Changed
+- Dropped fallback to default name in `encodeHubName()` on empty string.
+
 ## 4.13.0-rc.1 - 2021-11-19
 ### Added
 - Added support for v1.1.0 metadata.
