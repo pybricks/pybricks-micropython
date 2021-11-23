@@ -11,6 +11,7 @@
 
 #include <pbio/math.h>
 #include <pbio/observer.h>
+#include <pbio/parent.h>
 #include <pbio/servo.h>
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
@@ -29,16 +30,32 @@ static pbio_error_t pbio_servo_observer_reset(pbio_servo_t *srv) {
     return PBIO_SUCCESS;
 }
 
+// This function is attached to a dcmotor object, so it is able to
+// stop the servo if the dcmotor needs to execute a new command.
+static pbio_error_t pbio_servo_stop_from_dcmotor(void *servo) {
+
+    // Specify pointer type.
+    pbio_servo_t *srv = servo;
+
+    // This external stop is triggered by a lower level peripheral,
+    // i.e. the dc motor. So it has already has been stopped or changed state
+    // electrically. All we have to do here is stop the control loop,
+    // so it won't override the dcmotor to do something else.
+    if (pbio_control_is_active(&srv->control)) {
+        pbio_control_stop(&srv->control);
+        return PBIO_SUCCESS;
+    }
+
+    // If servo control wasn't active, it's still possible that a higher
+    // level abstraction is using this device. So call its stop as well.
+    return pbio_parent_stop(&srv->parent);
+}
+
 pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio, bool reset_angle) {
     pbio_error_t err;
 
     // We are not initialized until setup is done.
     srv->connected = false;
-
-    // Return if this servo is already in use by higher level entity
-    if (srv->claimed) {
-        return PBIO_ERROR_BUSY;
-    }
 
     // Get and reset tacho
     err = pbio_tacho_get(srv->port, &srv->tacho, direction, gear_ratio, reset_angle);
@@ -46,11 +63,13 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
         return err;
     }
 
-    // Get, coast, and configure dc motor
+    // Get, coast (including parents), and configure dc motor
     err = pbio_dcmotor_get(srv->port, &srv->dcmotor, direction, true);
     if (err != PBIO_SUCCESS) {
         return err;
     }
+    // This servo will be the parent of this dcmotor
+    pbio_parent_set(&srv->dcmotor->parent, srv, pbio_servo_stop_from_dcmotor);
 
     // Reset state
     pbio_control_stop(&srv->control);
@@ -70,6 +89,9 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
         return err;
     }
 
+    // Clear parent for this device
+    pbio_parent_clear(&srv->parent);
+
     // Now that all checks have succeeded, we know that this motor is ready.
     srv->connected = true;
     return PBIO_SUCCESS;
@@ -79,9 +101,10 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
 
     pbio_error_t err;
 
-    // Return if this servo is already in use by higher level entity
-    if (srv->claimed) {
-        return PBIO_ERROR_BUSY;
+    // Stop parent object that uses this motor, if any.
+    err = pbio_parent_stop(&srv->parent);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     // If the motor was in a passive mode (coast, brake, user duty),
@@ -231,24 +254,12 @@ pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
     return PBIO_SUCCESS;
 }
 
-/* pbio user functions */
-
-pbio_error_t pbio_servo_set_voltage_passive(pbio_servo_t *srv, int32_t voltage) {
-
-    // Return if this servo is already in use by higher level entity
-    if (srv->claimed) {
-        return PBIO_ERROR_BUSY;
-    }
-
-    pbio_control_stop(&srv->control);
-    return pbio_dcmotor_set_voltage_passive(srv->dcmotor, voltage);
-}
-
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
 
-    // Return if this servo is already in use by higher level entity
-    if (srv->claimed) {
-        return PBIO_ERROR_BUSY;
+    // Stop parent object that uses this motor, if any.
+    pbio_error_t err = pbio_parent_stop(&srv->parent);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     // Get control payload
@@ -270,20 +281,22 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
 }
 
 void pbio_servo_stop_control(pbio_servo_t *srv) {
+
     // Set control status passive so poll won't call it again
     pbio_control_stop(&srv->control);
 
-    // Try to stop / coast motor
+    // DELETEME, and drop stop too?
     if (srv->dcmotor) {
-        pbio_dcmotor_coast(srv->dcmotor);
+        pbio_dcmotor_stop(srv->dcmotor);
     }
 }
 
 static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
 
-    // Return if this servo is already in use by higher level entity
-    if (srv->claimed) {
-        return PBIO_ERROR_BUSY;
+    // Stop parent object that uses this motor, if any.
+    pbio_error_t err = pbio_parent_stop(&srv->parent);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     // Get target rate in unit of counts
@@ -294,7 +307,7 @@ static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, int32
 
     // Read the physical and estimated state
     pbio_control_state_t state;
-    pbio_error_t err = pbio_servo_get_state(srv, &state);
+    err = pbio_servo_get_state(srv, &state);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -325,9 +338,10 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
 
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop) {
 
-    // Return if this servo is already in use by higher level entity
-    if (srv->claimed) {
-        return PBIO_ERROR_BUSY;
+    // Stop parent object that uses this motor, if any.
+    pbio_error_t err = pbio_parent_stop(&srv->parent);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     // Get targets in unit of counts
@@ -339,7 +353,7 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
 
     // Read the physical and estimated state
     pbio_control_state_t state;
-    pbio_error_t err = pbio_servo_get_state(srv, &state);
+    err = pbio_servo_get_state(srv, &state);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -349,9 +363,10 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
 
 pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_actuation_t after_stop) {
 
-    // Return if this servo is already in use by higher level entity
-    if (srv->claimed) {
-        return PBIO_ERROR_BUSY;
+    // Stop parent object that uses this motor, if any.
+    pbio_error_t err = pbio_parent_stop(&srv->parent);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     // Get targets in unit of counts
@@ -363,7 +378,7 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
 
     // Read the physical and estimated state
     pbio_control_state_t state;
-    pbio_error_t err = pbio_servo_get_state(srv, &state);
+    err = pbio_servo_get_state(srv, &state);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -374,9 +389,10 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
 
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
 
-    // Return if this servo is already in use by higher level entity
-    if (srv->claimed) {
-        return PBIO_ERROR_BUSY;
+    // Stop parent object that uses this motor, if any.
+    pbio_error_t err = pbio_parent_stop(&srv->parent);
+    if (err != PBIO_SUCCESS) {
+        return err;
     }
 
     // Get the intitial state, either based on physical motor state or ongoing maneuver

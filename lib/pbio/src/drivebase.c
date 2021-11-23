@@ -89,7 +89,6 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
         case PBIO_ACTUATION_COAST:
         case PBIO_ACTUATION_BRAKE: {
             pbio_drivebase_stop_control(db);
-            pbio_drivebase_claim_servos(db, false);
             pbio_error_t err = pbio_servo_actuate(db->left, actuation, 0);
             if (err != PBIO_SUCCESS) {
                 return err;
@@ -108,6 +107,32 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
     }
 }
 
+// This function is attached to a servo object, so it is able to
+// stop the drivebase if the servo needs to execute a new command.
+static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase) {
+
+    // Specify pointer type.
+    pbio_drivebase_t *db = drivebase;
+
+    // If drive base control is not active, there is nothing we need to do.
+    if (!pbio_control_is_active(&db->control_distance) && !pbio_control_is_active(&db->control_heading)) {
+        return PBIO_SUCCESS;
+    }
+
+    // Stop the drive base controller so the motors don't start moving again.
+    pbio_drivebase_stop_control(db);
+
+    // Since we don't know which child called the parent to stop, we stop both
+    // motors. We use the system command pbio_dcmotor_stop() instead of the user
+    // command pbio_dcmotor_coast(), to avoid escalating the stop calls up the
+    // chain (and back here) once again.
+    pbio_error_t err = pbio_dcmotor_stop(db->left->dcmotor);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    return pbio_dcmotor_stop(db->right->dcmotor);
+}
+
 pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio_servo_t *right, fix16_t wheel_diameter, fix16_t axle_track) {
     pbio_error_t err;
 
@@ -119,6 +144,10 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio
     // Attach servos
     db->left = left;
     db->right = right;
+
+    // Set parents of both servos, so they can stop this drivebase.
+    pbio_parent_set(&left->parent, db, pbio_drivebase_stop_from_servo);
+    pbio_parent_set(&right->parent, db, pbio_drivebase_stop_from_servo);
 
     // Stop any existing drivebase controls
     pbio_drivebase_stop_control(db);
@@ -172,16 +201,6 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio
             );
 
     return PBIO_SUCCESS;
-}
-
-// Claim servos so that they cannot be used independently
-void pbio_drivebase_claim_servos(pbio_drivebase_t *db, bool claim) {
-    // Stop control
-    pbio_control_stop(&db->left->control);
-    pbio_control_stop(&db->right->control);
-    // Set claim status
-    db->left->claimed = claim;
-    db->right->claimed = claim;
 }
 
 pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_stop) {
@@ -279,9 +298,6 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 
 static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, int32_t sum, int32_t sum_rate, int32_t dif, int32_t dif_rate, pbio_actuation_t after_stop) {
 
-    // Claim both servos for use by drivebase
-    pbio_drivebase_claim_servos(db, true);
-
     // Get current time
     int32_t time_now = pbdrv_clock_get_us();
 
@@ -359,9 +375,6 @@ pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, in
 }
 
 static pbio_error_t pbio_drivebase_drive_counts_timed(pbio_drivebase_t *db, int32_t sum_rate, int32_t dif_rate, int32_t duration, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
-
-    // Claim both servos for use by drivebase
-    pbio_drivebase_claim_servos(db, true);
 
     // Get current time
     int32_t time_now = pbdrv_clock_get_us();

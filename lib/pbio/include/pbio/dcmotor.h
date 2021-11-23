@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <pbio/config.h>
 #include <pbio/iodev.h>
+#include <pbio/parent.h>
 #include <pbio/port.h>
 
 typedef enum {
@@ -17,10 +18,9 @@ typedef enum {
 #define PBIO_DUTY_USER_STEPS (100)
 
 typedef enum {
-    PBIO_DCMOTOR_COAST,               /**< dcmotor set to coast */
-    PBIO_DCMOTOR_BRAKE,               /**< dcmotor set to brake */
-    PBIO_DCMOTOR_DUTY_PASSIVE,        /**< dcmotor set to constant duty. */
-    PBIO_DCMOTOR_CLAIMED,             /**< dcmotor set to varying duty by active controller. */
+    PBIO_DCMOTOR_COAST,       /**< dcmotor set to coast */
+    PBIO_DCMOTOR_BRAKE,       /**< dcmotor set to brake */
+    PBIO_DCMOTOR_DUTY,        /**< dcmotor set to constant duty. */
 } pbio_passivity_t;
 
 typedef struct _pbio_dcmotor_t {
@@ -30,34 +30,40 @@ typedef struct _pbio_dcmotor_t {
     pbio_passivity_t state;
     int32_t voltage_now;
     int32_t max_voltage;
+    pbio_parent_t parent;
 } pbio_dcmotor_t;
 
 #if PBIO_CONFIG_DCMOTOR
 
+// Setup and status
 pbio_error_t pbio_dcmotor_get(pbio_port_id_t port, pbio_dcmotor_t **dcmotor, pbio_direction_t direction, bool is_servo);
-
 pbio_error_t pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_passivity_t *state, int32_t *voltage_now);
 
+// Settings
+int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id);
+pbio_error_t pbio_dcmotor_set_settings(pbio_dcmotor_t *dcmotor, int32_t max_voltage);
+void pbio_dcmotor_get_settings(pbio_dcmotor_t *dcmotor, int32_t *max_voltage);
+
+// System motor controls: Actuation only.
+pbio_error_t pbio_dcmotor_stop(pbio_dcmotor_t *dcmotor);
+pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage);
+
+// User motor controls: Actuates and handles stopping of parent objects that use this motor
 pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor);
 pbio_error_t pbio_dcmotor_brake(pbio_dcmotor_t *dcmotor);
-pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage);
 pbio_error_t pbio_dcmotor_set_voltage_passive(pbio_dcmotor_t *dcmotor, int32_t voltage);
-
-int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id);
-
-void pbio_dcmotor_get_settings(pbio_dcmotor_t *dcmotor, int32_t *max_voltage);
-pbio_error_t pbio_dcmotor_set_settings(pbio_dcmotor_t *dcmotor, int32_t max_voltage);
 
 #else
 
 static inline pbio_error_t pbio_dcmotor_get(pbio_port_id_t port, pbio_dcmotor_t **dcmotor, pbio_direction_t direction, bool is_servo) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-
 static inline pbio_error_t pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_passivity_t *state, int32_t *voltage_now) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-
+static inline pbio_error_t pbio_dcmotor_stop(pbio_dcmotor_t *dcmotor) {
+    return PBIO_ERROR_NOT_SUPPORTED;
+}
 static inline pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
@@ -70,12 +76,14 @@ static inline pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int
 static inline pbio_error_t pbio_dcmotor_set_voltage_passive(pbio_dcmotor_t *dcmotor, int32_t voltage) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
+static inline int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id) {
+    return 9000;
+}
 static inline void pbio_dcmotor_get_settings(pbio_dcmotor_t *dcmotor, int32_t *max_voltage) {
 }
 static inline pbio_error_t pbio_dcmotor_set_settings(pbio_dcmotor_t *dcmotor, int32_t max_voltage) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-
 
 #endif // PBIO_CONFIG_DCMOTOR
 

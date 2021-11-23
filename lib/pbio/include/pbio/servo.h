@@ -30,12 +30,12 @@
 typedef struct _pbio_servo_t {
     pbio_port_id_t port;
     bool connected;
-    bool claimed;
     pbio_dcmotor_t *dcmotor;
     pbio_tacho_t *tacho;
     pbio_control_t control;
     pbio_observer_t observer;
     pbio_log_t log;
+    pbio_parent_t parent;
 } pbio_servo_t;
 
 pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio, bool reset_angle);

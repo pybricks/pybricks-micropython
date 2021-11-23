@@ -27,7 +27,7 @@ static pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t
         return err;
     }
 
-    // Coast the device
+    // Coast the device and stop any parent device using the dcmotor.
     err = pbio_dcmotor_coast(dcmotor);
     if (err != PBIO_SUCCESS) {
         return err;
@@ -45,6 +45,9 @@ static pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t
     // Set direction and state
     dcmotor->direction = direction;
     dcmotor->state = PBIO_DCMOTOR_COAST;
+
+    // Clear parent for this device
+    pbio_parent_clear(&dcmotor->parent);
 
     return PBIO_SUCCESS;
 }
@@ -65,17 +68,33 @@ pbio_error_t pbio_dcmotor_get(pbio_port_id_t port, pbio_dcmotor_t **dcmotor, pbi
 
 pbio_error_t pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_passivity_t *state, int32_t *voltage_now) {
     *state = dcmotor->state;
-    *voltage_now = dcmotor->state < PBIO_DCMOTOR_DUTY_PASSIVE ? 0 : dcmotor->voltage_now;
+    *voltage_now = dcmotor->state < PBIO_DCMOTOR_DUTY ? 0 : dcmotor->voltage_now;
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor) {
+pbio_error_t pbio_dcmotor_stop(pbio_dcmotor_t *dcmotor) {
     dcmotor->state = PBIO_DCMOTOR_COAST;
     return pbdrv_motor_coast(dcmotor->port);
 }
 
+pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor) {
+    // Stop parent object that uses this motor, if any.
+    pbio_error_t err = pbio_parent_stop(&dcmotor->parent);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    // Stop the motor.
+    return pbio_dcmotor_stop(dcmotor);
+}
+
 pbio_error_t pbio_dcmotor_brake(pbio_dcmotor_t *dcmotor) {
     dcmotor->state = PBIO_DCMOTOR_BRAKE;
+
+    // Stop parent object that uses this motor, if any.
+    pbio_error_t err = pbio_parent_stop(&dcmotor->parent);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
     return pbdrv_motor_set_duty_cycle(dcmotor->port, 0);
 }
 
@@ -105,21 +124,22 @@ pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) 
         return err;
     }
 
-    // Set status for this motor.
-    dcmotor->state = PBIO_DCMOTOR_CLAIMED;
+    // Set state to duty
+    dcmotor->state = PBIO_DCMOTOR_DUTY;
+
     return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_dcmotor_set_voltage_passive(pbio_dcmotor_t *dcmotor, int32_t voltage) {
-    // Call voltage setter that is also used for system purposes.
-    pbio_error_t err = pbio_dcmotor_set_voltage(dcmotor, voltage);
+
+    // Stop parent object that uses this motor, if any.
+    pbio_error_t err = pbio_parent_stop(&dcmotor->parent);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // Set state to passive since the user controls it now.
-    dcmotor->state = PBIO_DCMOTOR_DUTY_PASSIVE;
-    return PBIO_SUCCESS;
+    // Call voltage setter that is also used for system purposes.
+    return pbio_dcmotor_set_voltage(dcmotor, voltage);
 }
 
 void pbio_dcmotor_get_settings(pbio_dcmotor_t *dcmotor, int32_t *max_voltage) {

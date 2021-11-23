@@ -331,6 +331,7 @@ PYBRICKS_LIB_SRC_C = $(addprefix lib/,\
 	pbio/src/math.c \
 	pbio/src/motor_process.c \
 	pbio/src/observer.c \
+	pbio/src/parent.c \
 	pbio/src/servo.c \
 	pbio/src/tacho.c \
 	pbio/src/trajectory_ext.c \

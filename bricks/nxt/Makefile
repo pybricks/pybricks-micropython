@@ -215,6 +215,7 @@ PBIO_SRC_C = $(addprefix lib/pbio/,\
 	src/math.c \
 	src/motor_process.c \
 	src/observer.c \
+	src/parent.c \
 	src/servo.c \
 	src/tacho.c \
 	src/trajectory_ext.c \

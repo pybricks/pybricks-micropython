@@ -50,9 +50,6 @@ void pbio_motor_process_reset(void) {
         status = err;
     }
 
-    // Force stop the drivebase
-    pbio_drivebase_stop_control(&drivebase);
-
     // Force stop the servos
     for (uint8_t i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
 
