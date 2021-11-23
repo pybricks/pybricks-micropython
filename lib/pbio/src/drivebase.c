@@ -31,13 +31,10 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
     s_distance->stall_time = min(s_left->stall_time, s_right->stall_time);
 
     // Copy rate estimator usage, required to be the same on both motors
-    if (s_left->use_estimated_rate != s_right->use_estimated_rate || s_left->use_estimated_count != s_right->use_estimated_count) {
+    if (s_left->use_estimated_rate != s_right->use_estimated_rate) {
         return PBIO_ERROR_INVALID_ARG;
     }
     s_distance->use_estimated_rate = s_left->use_estimated_rate;
-
-    // Use the reported count for drive bases.
-    s_distance->use_estimated_count = false;
 
     // By default, heading control is the same as distance control
     *s_heading = *s_distance;

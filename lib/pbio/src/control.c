@@ -13,7 +13,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
 
     // Declare current time, positions, rates, and their reference value and error
     int32_t time_ref;
-    int32_t count_err, count_feedback, count_err_integral, rate_err_integral;
+    int32_t count_err, count_err_integral, rate_err_integral;
     int32_t rate_err, rate_feedback;
     int32_t torque, torque_due_to_proportional, torque_due_to_integral, torque_due_to_derivative;
 
@@ -26,7 +26,6 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
 
     // Select either the estimated speed or the reported/measured speed for use in feedback.
     rate_feedback = ctl->settings.use_estimated_rate ? state->rate_est : state->rate;
-    count_feedback = ctl->settings.use_estimated_count ? state->count_est : state->count;
 
     // Calculate control errors, depending on whether we do angle control or speed control
     if (pbio_control_type_is_angle(ctl)) {
@@ -38,7 +37,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
 
         // Update count integral error and get current error state
         pbio_count_integrator_update(&ctl->count_integrator, time_now, state->count, ref->count, ctl->trajectory.th3, integral_range, ctl->settings.integral_rate);
-        pbio_count_integrator_get_errors(&ctl->count_integrator, count_feedback, ref->count, &count_err, &count_err_integral);
+        pbio_count_integrator_get_errors(&ctl->count_integrator, state->count, ref->count, &count_err, &count_err_integral);
         rate_err = ref->rate - rate_feedback;
     } else {
         // For time/speed based commands, the main error is speed. It integrates into a quantity with unit of position.

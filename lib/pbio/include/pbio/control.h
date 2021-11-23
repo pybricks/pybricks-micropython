@@ -38,7 +38,6 @@ typedef struct _pbio_control_settings_t {
     int32_t max_torque;             /**< Upper limit on control torque */
     int32_t integral_rate;          /**< Maximum rate at which the integrator is allowed to increase */
     bool use_estimated_rate;        /**< Whether to use the estimated speed (true) or the reported/measured speed (false) for feedback control */
-    bool use_estimated_count;       /**< Whether to use the estimated count (true) or the reported/measured count (false) for feedback control */
 } pbio_control_settings_t;
 
 typedef enum {

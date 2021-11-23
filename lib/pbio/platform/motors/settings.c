@@ -41,7 +41,6 @@ static const pbio_control_settings_t settings_servo_ev3_m = {
     .integral_rate = 10,
     .max_torque = 150000,
     .use_estimated_rate = false,
-    .use_estimated_count = false,
 };
 
 static const pbio_observer_settings_t settings_observer_ev3_l = {
@@ -69,7 +68,6 @@ static const pbio_control_settings_t settings_servo_ev3_l = {
     .integral_rate = 10,
     .max_torque = 430000,
     .use_estimated_rate = false,
-    .use_estimated_count = false,
 };
 
 #endif // PBDRV_CONFIG_COUNTER_EV3DEV_STRETCH_IIO || PBDRV_CONFIG_COUNTER_NXT
@@ -101,7 +99,6 @@ static const pbio_control_settings_t settings_servo_technic_s_angular = {
     .integral_rate = 25,
     .max_torque = 60000,
     .use_estimated_rate = true,
-    .use_estimated_count = false,
 };
 
 static const pbio_observer_settings_t settings_observer_technic_m_angular = {
@@ -129,7 +126,6 @@ static const pbio_control_settings_t settings_servo_technic_m_angular = {
     .integral_rate = 25,
     .max_torque = 160000,
     .use_estimated_rate = true,
-    .use_estimated_count = false,
 };
 
 static const pbio_observer_settings_t settings_observer_technic_l_angular = {
@@ -157,7 +153,6 @@ static const pbio_control_settings_t settings_servo_technic_l_angular = {
     .integral_rate = 5,
     .max_torque = 330000,
     .use_estimated_rate = true,
-    .use_estimated_count = false,
 };
 
 static const pbio_observer_settings_t settings_observer_interactive = {
@@ -185,7 +180,6 @@ static const pbio_control_settings_t settings_servo_interactive = {
     .integral_rate = 3,
     .max_torque = 100000,
     .use_estimated_rate = true,
-    .use_estimated_count = false,
 };
 
 #if PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
@@ -215,7 +209,6 @@ static const pbio_control_settings_t settings_servo_movehub = {
     .integral_rate = 5,
     .max_torque = 150000,
     .use_estimated_rate = true,
-    .use_estimated_count = false,
 };
 
 #endif // PBDRV_CONFIG_COUNTER_STM32F0_GPIO_QUAD_ENC
@@ -245,7 +238,6 @@ static const pbio_control_settings_t settings_servo_technic_l = {
     .integral_rate = 5,
     .max_torque = 260000,
     .use_estimated_rate = true,
-    .use_estimated_count = false,
 };
 
 static const pbio_observer_settings_t settings_observer_technic_xl = {
@@ -273,7 +265,6 @@ static const pbio_control_settings_t settings_servo_technic_xl = {
     .integral_rate = 5,
     .max_torque = 260000,
     .use_estimated_rate = true,
-    .use_estimated_count = false,
 };
 
 #endif // PBDRV_CONFIG_IOPORT_LPF2 || PBDRV_CONFIG_COUNTER_TEST
