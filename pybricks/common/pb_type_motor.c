@@ -152,7 +152,7 @@ STATIC mp_obj_t common_Motor_run(size_t n_args, const mp_obj_t *pos_args, mp_map
         PB_ARG_REQUIRED(speed));
 
     mp_int_t speed = pb_obj_get_int(speed_in);
-    pb_assert(pbio_servo_run(self->srv, speed));
+    pb_assert(pbio_servo_run_forever(self->srv, speed));
 
     return mp_const_none;
 }

@@ -283,7 +283,7 @@ void pbio_servo_stop_force(pbio_servo_t *srv) {
     }
 }
 
-pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
+static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
 
     // Return if this servo is already in use by higher level entity
     if (srv->claimed) {
@@ -303,56 +303,28 @@ pbio_error_t pbio_servo_run(pbio_servo_t *srv, int32_t speed) {
         return err;
     }
 
-    // Start a timed maneuver, duration forever
-    return pbio_control_start_timed_control(&srv->control, time_now, &state, DURATION_FOREVER, target_rate, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
-}
-
-pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop) {
-
-    // Return if this servo is already in use by higher level entity
-    if (srv->claimed) {
-        return PBIO_ERROR_BUSY;
-    }
-
-    // Get target rate in unit of counts
-    int32_t target_rate = pbio_control_user_to_counts(&srv->control.settings, speed);
-
-    // Get current time
-    int32_t time_now = pbdrv_clock_get_us();
-
-    // Read the physical and estimated state
-    pbio_control_state_t state;
-    pbio_error_t err = pbio_servo_get_state(srv, &state);
-    if (err != PBIO_SUCCESS) {
-        return err;
+    // Scale duration to microseconds unless it's forever.
+    if (duration != DURATION_FOREVER) {
+        duration *= US_PER_MS;
     }
 
     // Start a timed maneuver, duration finite
-    return pbio_control_start_timed_control(&srv->control, time_now, &state, duration * US_PER_MS, target_rate, pbio_control_on_target_time, after_stop);
+    return pbio_control_start_timed_control(&srv->control, time_now, &state, duration, target_rate, stop_func, after_stop);
+}
+
+pbio_error_t pbio_servo_run_forever(pbio_servo_t *srv, int32_t speed) {
+    // Start a timed maneuver, duration forever
+    return pbio_servo_run_timed(srv, speed, DURATION_FOREVER, pbio_control_on_target_never, PBIO_ACTUATION_COAST);
+}
+
+pbio_error_t pbio_servo_run_time(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_actuation_t after_stop) {
+    // Start a timed maneuver, duration finite
+    return pbio_servo_run_timed(srv, speed, duration, pbio_control_on_target_time, after_stop);
 }
 
 pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio_actuation_t after_stop) {
-
-    // Return if this servo is already in use by higher level entity
-    if (srv->claimed) {
-        return PBIO_ERROR_BUSY;
-    }
-
-    // Get target rate in unit of counts
-    int32_t target_rate = pbio_control_user_to_counts(&srv->control.settings, speed);
-
-    // Get current time
-    int32_t time_now = pbdrv_clock_get_us();
-
-    // Read the physical and estimated state
-    pbio_control_state_t state;
-    pbio_error_t err = pbio_servo_get_state(srv, &state);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
     // Start a timed maneuver, duration forever and ending on stall
-    return pbio_control_start_timed_control(&srv->control, time_now, &state, DURATION_FOREVER, target_rate, pbio_control_on_target_stalled, after_stop);
+    return pbio_servo_run_timed(srv, speed, DURATION_FOREVER, pbio_control_on_target_stalled, after_stop);
 }
 
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop) {
