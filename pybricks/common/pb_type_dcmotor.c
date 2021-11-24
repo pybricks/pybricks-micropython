@@ -32,11 +32,20 @@ STATIC mp_obj_t common_DCMotor_make_new(const mp_obj_type_t *type, size_t n_args
     // Configure the motor with the selected arguments at pbio level
     pbio_port_id_t port = pb_type_enum_get_value(port_in, &pb_enum_type_Port);
     pbio_direction_t direction = pb_type_enum_get_value(positive_direction_in, &pb_enum_type_Direction);
+    pbio_error_t err;
+
+    #if PYBRICKS_PY_EV3DEVICES
+    #include <pbdrv/motor.h>
+    while ((err = pbdrv_motor_setup(port, false)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(2000);
+    }
+    pb_assert(err);
+    #endif
+
 
     // Get and initialize DC Motor
     pbio_dcmotor_t *dc;
-    pbio_error_t err;
-    while ((err = pbio_dcmotor_get(port, &dc, direction, false)) == PBIO_ERROR_AGAIN) {
+    while ((err = pbio_dcmotor_get(port, &dc, direction)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);

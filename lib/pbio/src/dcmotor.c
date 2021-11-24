@@ -17,15 +17,9 @@
 
 static pbio_dcmotor_t dcmotors[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-static pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction, bool is_servo) {
+static pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction) {
 
     pbio_error_t err;
-
-    // Configure up motor ports if needed
-    err = pbdrv_motor_setup(dcmotor->port, is_servo);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
 
     // Coast the device and stop any parent device using the dcmotor.
     err = pbio_dcmotor_coast(dcmotor);
@@ -52,7 +46,7 @@ static pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_dcmotor_get(pbio_port_id_t port, pbio_dcmotor_t **dcmotor, pbio_direction_t direction, bool is_servo) {
+pbio_error_t pbio_dcmotor_get(pbio_port_id_t port, pbio_dcmotor_t **dcmotor, pbio_direction_t direction) {
     // Validate port
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
         return PBIO_ERROR_INVALID_PORT;
@@ -63,7 +57,7 @@ pbio_error_t pbio_dcmotor_get(pbio_port_id_t port, pbio_dcmotor_t **dcmotor, pbi
     (*dcmotor)->port = port;
 
     // Initialize and set up pwm properties
-    return pbio_dcmotor_setup(*dcmotor, direction, is_servo);
+    return pbio_dcmotor_setup(*dcmotor, direction);
 }
 
 pbio_error_t pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_passivity_t *state, int32_t *voltage_now) {

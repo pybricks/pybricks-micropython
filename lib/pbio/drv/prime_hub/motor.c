@@ -190,8 +190,4 @@ pbio_error_t pbdrv_motor_get_id(pbio_port_id_t port, pbio_iodev_type_id_t *id) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbdrv_motor_setup(pbio_port_id_t port, bool is_servo) {
-    return PBIO_SUCCESS;
-}
-
 #endif // PBDRV_CONFIG_MOTOR

@@ -36,7 +36,7 @@ typedef struct _pbio_dcmotor_t {
 #if PBIO_CONFIG_DCMOTOR
 
 // Setup and status
-pbio_error_t pbio_dcmotor_get(pbio_port_id_t port, pbio_dcmotor_t **dcmotor, pbio_direction_t direction, bool is_servo);
+pbio_error_t pbio_dcmotor_get(pbio_port_id_t port, pbio_dcmotor_t **dcmotor, pbio_direction_t direction);
 pbio_error_t pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_passivity_t *state, int32_t *voltage_now);
 
 // Settings
@@ -55,7 +55,7 @@ pbio_error_t pbio_dcmotor_set_voltage_passive(pbio_dcmotor_t *dcmotor, int32_t v
 
 #else
 
-static inline pbio_error_t pbio_dcmotor_get(pbio_port_id_t port, pbio_dcmotor_t **dcmotor, pbio_direction_t direction, bool is_servo) {
+static inline pbio_error_t pbio_dcmotor_get(pbio_port_id_t port, pbio_dcmotor_t **dcmotor, pbio_direction_t direction) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline pbio_error_t pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_passivity_t *state, int32_t *voltage_now) {

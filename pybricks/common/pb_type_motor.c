@@ -45,6 +45,14 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     pbio_error_t err;
     pbio_servo_t *srv;
 
+    #if PYBRICKS_PY_EV3DEVICES
+    #include <pbdrv/motor.h>
+    while ((err = pbdrv_motor_setup(port, true)) == PBIO_ERROR_AGAIN) {
+        mp_hal_delay_ms(2000);
+    }
+    pb_assert(err);
+    #endif
+
     // Default gear ratio
     fix16_t gear_ratio = F16C(1, 0);
 
