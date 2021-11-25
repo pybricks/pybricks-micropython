@@ -17,15 +17,36 @@
 
 static pbio_dcmotor_t dcmotors[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction) {
+pbio_error_t pbio_dcmotor_reset(pbio_port_id_t port) {
 
-    pbio_error_t err;
-
-    // Get device ID to ensure we are dealing with a supported device.
-    err = pbdrv_motor_get_id(dcmotor->port, &dcmotor->id);
+    // Look up device by port
+    pbio_dcmotor_t *dcmotor;
+    pbio_error_t err = pbio_dcmotor_get_dcmotor(port, &dcmotor);
+    if (err == PBIO_ERROR_NO_DEV) {
+        // This is no motor, so we are done.
+        return PBIO_SUCCESS;
+    }
+    // Return any other errors.
     if (err != PBIO_SUCCESS) {
         return err;
     }
+    // Coast the motor and stop its parents if it has any.
+    return pbio_dcmotor_coast(dcmotor, true);
+}
+
+pbio_error_t pbio_dcmotor_reset_all(void) {
+    for (pbio_port_id_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port < PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
+        pbio_error_t err = pbio_dcmotor_reset(port);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction) {
+
+    pbio_error_t err;
 
     // Coast the device and stop any parent device using the dcmotor.
     err = pbio_dcmotor_coast(dcmotor, true);
@@ -55,7 +76,8 @@ pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmo
     *dcmotor = &dcmotors[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
     (*dcmotor)->port = port;
 
-    return PBIO_SUCCESS;
+    // Get device ID to ensure we are dealing with a supported device.
+    return pbdrv_motor_get_id(port, &((*dcmotor)->id));
 }
 
 void pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, bool *is_coasting, int32_t *voltage_now) {
