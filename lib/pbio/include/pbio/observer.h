@@ -65,7 +65,7 @@ void pbio_observer_reset(pbio_observer_t *obs, int32_t count_now, int32_t rate_n
 
 void pbio_observer_get_estimated_state(pbio_observer_t *obs, int32_t *count, int32_t *rate);
 
-void pbio_observer_update(pbio_observer_t *obs, int32_t count, pbio_actuation_t actuation_type, int32_t voltage);
+void pbio_observer_update(pbio_observer_t *obs, int32_t count, bool is_coasting, int32_t voltage);
 
 int32_t pbio_observer_get_feedforward_torque(pbio_observer_t *obs, int32_t rate_ref, int32_t acceleration_ref);
 

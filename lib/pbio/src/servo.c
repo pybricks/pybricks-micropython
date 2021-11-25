@@ -97,17 +97,15 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
         }
     }
     // Whether or not there is control, get the ongoing actuation state so we can log it and update observer.
-    err = pbio_dcmotor_get_state(srv->dcmotor, (pbio_passivity_t *)&actuation, &voltage);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
+    bool is_coasting;
+    pbio_dcmotor_get_state(srv->dcmotor, &is_coasting, &voltage);
 
     // Log servo state
     int32_t log_data[] = {time_now, state.count, state.rate, actuation, voltage, state.count_est, state.rate_est, feedback_torque, feedforward_torque};
     pbio_logger_update(&srv->log, log_data);
 
     // Update the state observer
-    pbio_observer_update(&srv->observer, state.count, actuation, voltage);
+    pbio_observer_update(&srv->observer, state.count, is_coasting, voltage);
 
     return PBIO_SUCCESS;
 }

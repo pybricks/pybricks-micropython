@@ -38,7 +38,6 @@ pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direct
 
     // Set direction and state
     dcmotor->direction = direction;
-    dcmotor->state = PBIO_DCMOTOR_COAST;
 
     // Clear parent for this device
     pbio_parent_clear(&dcmotor->parent);
@@ -59,14 +58,13 @@ pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmo
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_passivity_t *state, int32_t *voltage_now) {
-    *state = dcmotor->state;
-    *voltage_now = dcmotor->state < PBIO_DCMOTOR_DUTY ? 0 : dcmotor->voltage_now;
-    return PBIO_SUCCESS;
+void pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, bool *is_coasting, int32_t *voltage_now) {
+    *is_coasting = dcmotor->is_coasting;
+    *voltage_now = dcmotor->voltage_now;
 }
 
 pbio_error_t pbio_dcmotor_stop(pbio_dcmotor_t *dcmotor) {
-    dcmotor->state = PBIO_DCMOTOR_COAST;
+    dcmotor->is_coasting = true;
     return pbdrv_motor_coast(dcmotor->port);
 }
 
@@ -91,6 +89,7 @@ pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) 
 
     // Cache value so we can read it back without touching hardware again.
     dcmotor->voltage_now = voltage;
+    dcmotor->is_coasting = false;
 
     // Convert voltage to duty cycle.
     int32_t duty_cycle = pbio_battery_get_duty_from_voltage(voltage);
@@ -105,9 +104,6 @@ pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) 
     if (err != PBIO_SUCCESS) {
         return err;
     }
-
-    // Set state to duty
-    dcmotor->state = PBIO_DCMOTOR_DUTY;
 
     return PBIO_SUCCESS;
 }

@@ -17,17 +17,11 @@ typedef enum {
 
 #define PBIO_DUTY_USER_STEPS (100)
 
-typedef enum {
-    PBIO_DCMOTOR_COAST,       /**< dcmotor set to coast */
-    PBIO_DCMOTOR_BRAKE,       /**< dcmotor set to brake */
-    PBIO_DCMOTOR_DUTY,        /**< dcmotor set to constant duty. */
-} pbio_passivity_t;
-
 typedef struct _pbio_dcmotor_t {
     pbio_port_id_t port;
     pbio_iodev_type_id_t id;
     pbio_direction_t direction;
-    pbio_passivity_t state;
+    bool is_coasting;
     int32_t voltage_now;
     int32_t max_voltage;
     pbio_parent_t parent;
@@ -38,7 +32,7 @@ typedef struct _pbio_dcmotor_t {
 // Setup and status
 pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmotor);
 pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction);
-pbio_error_t pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_passivity_t *state, int32_t *voltage_now);
+void pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, bool *is_coasting, int32_t *voltage_now);
 
 // Settings
 int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id);
@@ -58,8 +52,7 @@ pbio_error_t pbio_dcmotor_set_voltage_passive(pbio_dcmotor_t *dcmotor, int32_t v
 static inline pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmotor) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline pbio_error_t pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_passivity_t *state, int32_t *voltage_now) {
-    return PBIO_ERROR_NOT_SUPPORTED;
+static inline void pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, bool *is_coasting, int32_t *voltage_now) {
 }
 static inline pbio_error_t pbio_dcmotor_stop(pbio_dcmotor_t *dcmotor) {
     return PBIO_ERROR_NOT_SUPPORTED;
