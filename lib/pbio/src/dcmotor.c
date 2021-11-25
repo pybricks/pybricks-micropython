@@ -21,14 +21,14 @@ pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direct
 
     pbio_error_t err;
 
-    // Coast the device and stop any parent device using the dcmotor.
-    err = pbio_dcmotor_coast(dcmotor);
+    // Get device ID to ensure we are dealing with a supported device.
+    err = pbdrv_motor_get_id(dcmotor->port, &dcmotor->id);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
-    // Get device ID to ensure we are dealing with a supported device
-    err = pbdrv_motor_get_id(dcmotor->port, &dcmotor->id);
+    // Coast the device and stop any parent device using the dcmotor.
+    err = pbio_dcmotor_coast(dcmotor);
     if (err != PBIO_SUCCESS) {
         return err;
     }
