@@ -77,7 +77,7 @@ STATIC mp_obj_t common_DCMotor_duty(size_t n_args, const mp_obj_t *pos_args, mp_
     // pbio has only voltage setters now, but the .dc() method will continue to
     // exist for backwards compatibility. So, we convert duty cycle to voltages.
     int32_t voltage = pbio_battery_get_voltage_from_duty(pb_obj_get_int(duty_in) * 100);
-    pb_assert(pbio_dcmotor_set_voltage_passive(get_dcmotor_from_object(pos_args[0]), voltage));
+    pb_assert(pbio_dcmotor_set_voltage(get_dcmotor_from_object(pos_args[0]), voltage, true));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(common_DCMotor_duty_obj, 1, common_DCMotor_duty);
@@ -85,7 +85,7 @@ MP_DEFINE_CONST_FUN_OBJ_KW(common_DCMotor_duty_obj, 1, common_DCMotor_duty);
 // pybricks._common.DCMotor.stop
 // pybricks._common.Motor.stop
 STATIC mp_obj_t common_DCMotor_stop(mp_obj_t self_in) {
-    pb_assert(pbio_dcmotor_coast(get_dcmotor_from_object(self_in)));
+    pb_assert(pbio_dcmotor_coast(get_dcmotor_from_object(self_in), true));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_DCMotor_stop_obj, common_DCMotor_stop);
@@ -93,7 +93,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(common_DCMotor_stop_obj, common_DCMotor_stop);
 // pybricks._common.DCMotor.brake
 // pybricks._common.Motor.brake
 STATIC mp_obj_t common_DCMotor_brake(mp_obj_t self_in) {
-    pb_assert(pbio_dcmotor_set_voltage_passive(get_dcmotor_from_object(self_in), 0));
+    pb_assert(pbio_dcmotor_set_voltage(get_dcmotor_from_object(self_in), 0, true));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_DCMotor_brake_obj, common_DCMotor_brake);

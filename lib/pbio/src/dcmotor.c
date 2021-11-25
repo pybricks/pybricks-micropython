@@ -28,7 +28,7 @@ pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direct
     }
 
     // Coast the device and stop any parent device using the dcmotor.
-    err = pbio_dcmotor_coast(dcmotor);
+    err = pbio_dcmotor_coast(dcmotor, true);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -63,22 +63,28 @@ void pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, bool *is_coasting, int32_t 
     *voltage_now = dcmotor->voltage_now;
 }
 
-pbio_error_t pbio_dcmotor_stop(pbio_dcmotor_t *dcmotor) {
+pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor, bool stop_parent) {
+    if (stop_parent) {
+        // Stop parent object that uses this motor, if any.
+        pbio_error_t err = pbio_parent_stop(&dcmotor->parent);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
+    // Stop the motor.
     dcmotor->is_coasting = true;
     return pbdrv_motor_coast(dcmotor->port);
 }
 
-pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor) {
-    // Stop parent object that uses this motor, if any.
-    pbio_error_t err = pbio_parent_stop(&dcmotor->parent);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    // Stop the motor.
-    return pbio_dcmotor_stop(dcmotor);
-}
+pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage, bool stop_parent) {
 
-pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) {
+    if (stop_parent) {
+        // Stop parent object that uses this motor, if any.
+        pbio_error_t err = pbio_parent_stop(&dcmotor->parent);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
 
     // Cap voltage at the configured limit.
     if (voltage > dcmotor->max_voltage) {
@@ -106,18 +112,6 @@ pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) 
     }
 
     return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_dcmotor_set_voltage_passive(pbio_dcmotor_t *dcmotor, int32_t voltage) {
-
-    // Stop parent object that uses this motor, if any.
-    pbio_error_t err = pbio_parent_stop(&dcmotor->parent);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Call voltage setter that is also used for system purposes.
-    return pbio_dcmotor_set_voltage(dcmotor, voltage);
 }
 
 void pbio_dcmotor_get_settings(pbio_dcmotor_t *dcmotor, int32_t *max_voltage) {

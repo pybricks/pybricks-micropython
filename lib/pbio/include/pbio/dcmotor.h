@@ -39,13 +39,9 @@ int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id);
 pbio_error_t pbio_dcmotor_set_settings(pbio_dcmotor_t *dcmotor, int32_t max_voltage);
 void pbio_dcmotor_get_settings(pbio_dcmotor_t *dcmotor, int32_t *max_voltage);
 
-// System motor controls: Actuation only.
-pbio_error_t pbio_dcmotor_stop(pbio_dcmotor_t *dcmotor);
-pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage);
-
-// User motor controls: Actuates and handles stopping of parent objects that use this motor
-pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor);
-pbio_error_t pbio_dcmotor_set_voltage_passive(pbio_dcmotor_t *dcmotor, int32_t voltage);
+// Actuation
+pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor, bool stop_parent);
+pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage, bool stop_parent);
 
 #else
 
@@ -54,16 +50,10 @@ static inline pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dc
 }
 static inline void pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, bool *is_coasting, int32_t *voltage_now) {
 }
-static inline pbio_error_t pbio_dcmotor_stop(pbio_dcmotor_t *dcmotor) {
+static inline pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor, bool stop_parent) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
-static inline pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-static inline pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-static inline pbio_error_t pbio_dcmotor_set_voltage_passive(pbio_dcmotor_t *dcmotor, int32_t voltage) {
+static inline pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage, bool stop_parent) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline int32_t pbio_dcmotor_get_max_voltage(pbio_iodev_type_id_t id) {
