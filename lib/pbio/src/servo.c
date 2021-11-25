@@ -63,8 +63,13 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
         return err;
     }
 
-    // Get, coast (including parents), and configure dc motor
-    err = pbio_dcmotor_get(srv->port, &srv->dcmotor, direction);
+    // Get dcmotor
+    err = pbio_dcmotor_get_dcmotor(srv->port, &srv->dcmotor);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    // Coast and configure dcmotors, and stop its parents, if any.
+    err = pbio_dcmotor_setup(srv->dcmotor, direction);
     if (err != PBIO_SUCCESS) {
         return err;
     }

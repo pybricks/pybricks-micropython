@@ -17,7 +17,7 @@
 
 static pbio_dcmotor_t dcmotors[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-static pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction) {
+pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction) {
 
     pbio_error_t err;
 
@@ -46,7 +46,7 @@ static pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_dcmotor_get(pbio_port_id_t port, pbio_dcmotor_t **dcmotor, pbio_direction_t direction) {
+pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmotor) {
     // Validate port
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
         return PBIO_ERROR_INVALID_PORT;
@@ -56,8 +56,7 @@ pbio_error_t pbio_dcmotor_get(pbio_port_id_t port, pbio_dcmotor_t **dcmotor, pbi
     *dcmotor = &dcmotors[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
     (*dcmotor)->port = port;
 
-    // Initialize and set up pwm properties
-    return pbio_dcmotor_setup(*dcmotor, direction);
+    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, pbio_passivity_t *state, int32_t *voltage_now) {
