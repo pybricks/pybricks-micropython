@@ -80,17 +80,6 @@ pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor) {
     return pbio_dcmotor_stop(dcmotor);
 }
 
-pbio_error_t pbio_dcmotor_brake(pbio_dcmotor_t *dcmotor) {
-    dcmotor->state = PBIO_DCMOTOR_BRAKE;
-
-    // Stop parent object that uses this motor, if any.
-    pbio_error_t err = pbio_parent_stop(&dcmotor->parent);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    return pbdrv_motor_set_duty_cycle(dcmotor->port, 0);
-}
-
 pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) {
 
     // Cap voltage at the configured limit.

@@ -293,7 +293,7 @@ pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_ty
         case PBIO_ACTUATION_COAST:
             return pbio_dcmotor_coast(srv->dcmotor);
         case PBIO_ACTUATION_BRAKE:
-            return pbio_dcmotor_brake(srv->dcmotor);
+            return pbio_dcmotor_set_voltage_passive(srv->dcmotor, 0);
         case PBIO_ACTUATION_HOLD:
             return pbio_control_start_hold_control(&srv->control, pbdrv_clock_get_us(), payload);
         case PBIO_ACTUATION_VOLTAGE:

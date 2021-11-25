@@ -93,7 +93,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(common_DCMotor_stop_obj, common_DCMotor_stop);
 // pybricks._common.DCMotor.brake
 // pybricks._common.Motor.brake
 STATIC mp_obj_t common_DCMotor_brake(mp_obj_t self_in) {
-    pb_assert(pbio_dcmotor_brake(get_dcmotor_from_object(self_in)));
+    pb_assert(pbio_dcmotor_set_voltage_passive(get_dcmotor_from_object(self_in), 0));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(common_DCMotor_brake_obj, common_DCMotor_brake);

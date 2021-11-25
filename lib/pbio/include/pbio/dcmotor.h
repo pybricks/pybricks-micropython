@@ -51,7 +51,6 @@ pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage);
 
 // User motor controls: Actuates and handles stopping of parent objects that use this motor
 pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor);
-pbio_error_t pbio_dcmotor_brake(pbio_dcmotor_t *dcmotor);
 pbio_error_t pbio_dcmotor_set_voltage_passive(pbio_dcmotor_t *dcmotor, int32_t voltage);
 
 #else
@@ -66,9 +65,6 @@ static inline pbio_error_t pbio_dcmotor_stop(pbio_dcmotor_t *dcmotor) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor) {
-    return PBIO_ERROR_NOT_SUPPORTED;
-}
-static inline pbio_error_t pbio_dcmotor_brake(pbio_dcmotor_t *dcmotor) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }
 static inline pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage) {
