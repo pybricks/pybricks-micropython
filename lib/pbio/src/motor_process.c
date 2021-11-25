@@ -14,7 +14,7 @@
 PROCESS(pbio_motor_process, "servo");
 
 static pbio_error_t status = PBIO_SUCCESS;
-static pbio_servo_t servos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+static pbio_servo_t *servos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 static pbio_drivebase_t drivebase;
 
 pbio_error_t pbio_motor_process_get_status(void) {
@@ -23,17 +23,6 @@ pbio_error_t pbio_motor_process_get_status(void) {
 
 pbio_error_t pbio_motor_process_get_drivebase(pbio_drivebase_t **db) {
     *db = &drivebase;
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_motor_process_get_servo(pbio_port_id_t port, pbio_servo_t **srv) {
-
-    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
-
-    *srv = &servos[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
-    (*srv)->port = port;
     return PBIO_SUCCESS;
 }
 
@@ -54,14 +43,13 @@ void pbio_motor_process_reset(void) {
     for (uint8_t i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
 
         // Run the motor getter at least once
-        pbio_servo_t *srv;
-        err = pbio_motor_process_get_servo(i + PBDRV_CONFIG_FIRST_MOTOR_PORT, &srv);
+        err = pbio_servo_get_servo(i + PBDRV_CONFIG_FIRST_MOTOR_PORT, &servos[i]);
         if (err != PBIO_SUCCESS) {
             status = err;
         }
 
         // Force stop the servo
-        pbio_servo_stop_control(srv);
+        pbio_servo_stop_control(servos[i]);
     }
 }
 
@@ -93,7 +81,7 @@ PROCESS_THREAD(pbio_motor_process, ev, data) {
 
         // Update servos
         for (uint8_t i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-            err = pbio_servo_update(&servos[i]);
+            err = pbio_servo_update(servos[i]);
             if (err != PBIO_SUCCESS) {
                 status = err;
             }

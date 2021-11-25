@@ -12,7 +12,6 @@
 
 pbio_error_t pbio_motor_process_get_status(void);
 pbio_error_t pbio_motor_process_get_drivebase(pbio_drivebase_t **db);
-pbio_error_t pbio_motor_process_get_servo(pbio_port_id_t port, pbio_servo_t **srv);
 
 void pbio_motor_process_reset(void);
 

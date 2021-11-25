@@ -16,6 +16,26 @@
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
+static pbio_servo_t servos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
+
+pbio_error_t pbio_servo_get_servo(pbio_port_id_t port, pbio_servo_t **srv) {
+
+    if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
+        return PBIO_ERROR_INVALID_PORT;
+    }
+
+    // Get address of static servo object.
+    *srv = &servos[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
+
+    // Get dcmotor object, without additional setup.
+    pbio_error_t err = pbio_tacho_get_tacho(port, &((*srv)->tacho));
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+    // Get tacho object, without additional setup.
+    return pbio_dcmotor_get_dcmotor(port, &((*srv)->dcmotor));
+}
+
 static pbio_error_t pbio_servo_observer_reset(pbio_servo_t *srv) {
 
     // Get current count.
@@ -57,19 +77,8 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     // We are not initialized until setup is done.
     srv->connected = false;
 
-    // Get and reset tacho
-    err = pbio_tacho_get_tacho(srv->port, &srv->tacho);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
     // Configure tacho.
     err = pbio_tacho_setup(srv->tacho, direction, gear_ratio, reset_angle);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }   
-
-    // Get dcmotor
-    err = pbio_dcmotor_get_dcmotor(srv->port, &srv->dcmotor);
     if (err != PBIO_SUCCESS) {
         return err;
     }

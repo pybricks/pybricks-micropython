@@ -90,7 +90,7 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
     }
 
     // Get pointer to servo
-    pb_assert(pbio_motor_process_get_servo(port, &srv));
+    pb_assert(pbio_servo_get_servo(port, &srv));
 
     // Set up servo
     while ((err = pbio_servo_setup(srv, positive_direction, gear_ratio, reset_angle)) == PBIO_ERROR_AGAIN) {

@@ -28,7 +28,6 @@
 #define PBIO_SERVO_LOG_COLS (9)
 
 typedef struct _pbio_servo_t {
-    pbio_port_id_t port;
     bool connected;
     pbio_dcmotor_t *dcmotor;
     pbio_tacho_t *tacho;
@@ -38,6 +37,7 @@ typedef struct _pbio_servo_t {
     pbio_parent_t parent;
 } pbio_servo_t;
 
+pbio_error_t pbio_servo_get_servo(pbio_port_id_t port, pbio_servo_t **srv);
 pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio, bool reset_angle);
 
 pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *control_settings, const pbio_observer_settings_t **observer_settings, pbio_iodev_type_id_t id);

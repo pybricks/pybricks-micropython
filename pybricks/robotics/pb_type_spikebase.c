@@ -40,7 +40,7 @@ STATIC mp_obj_t robotics_SpikeBase_make_new(const mp_obj_type_t *type, size_t n_
 
     // Get left servo
     pbio_servo_t *srv_left;
-    pb_assert(pbio_motor_process_get_servo(pb_type_enum_get_value(port_left_in, &pb_enum_type_Port), &srv_left));
+    pb_assert(pbio_servo_get_servo(pb_type_enum_get_value(port_left_in, &pb_enum_type_Port), &srv_left));
     while ((err = pbio_servo_setup(srv_left, PBIO_DIRECTION_CLOCKWISE, fix16_one, false)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
@@ -48,7 +48,7 @@ STATIC mp_obj_t robotics_SpikeBase_make_new(const mp_obj_type_t *type, size_t n_
 
     // Get right servo
     pbio_servo_t *srv_right;
-    pb_assert(pbio_motor_process_get_servo(pb_type_enum_get_value(port_right_in, &pb_enum_type_Port), &srv_right));
+    pb_assert(pbio_servo_get_servo(pb_type_enum_get_value(port_right_in, &pb_enum_type_Port), &srv_right));
     while ((err = pbio_servo_setup(srv_right, PBIO_DIRECTION_CLOCKWISE, fix16_one, false)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
