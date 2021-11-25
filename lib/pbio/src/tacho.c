@@ -56,7 +56,7 @@ static pbio_error_t pbio_tacho_reset_count_to_abs(pbio_tacho_t *tacho, int32_t *
     return pbio_tacho_reset_count(tacho, *abs_count);
 }
 
-static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pbio_direction_t direction, fix16_t gear_ratio, bool reset_angle) {
+pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, pbio_direction_t direction, fix16_t gear_ratio, bool reset_angle) {
     // Assert that scaling factors are positive
     if (gear_ratio < 0) {
         return PBIO_ERROR_INVALID_ARG;
@@ -67,12 +67,6 @@ static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pb
     // Configure direction
     tacho->direction = direction;
 
-    // Get counter device
-    pbio_error_t err = pbdrv_counter_get_dev(counter_id, &tacho->counter);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
     // If there's no need to reset the angle, we are done here.
     if (!reset_angle) {
         // We still do one test read to ensure a tacho exists.
@@ -82,7 +76,7 @@ static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pb
 
     // Reset count to absolute value if supported
     int32_t abs_count;
-    err = pbio_tacho_reset_count_to_abs(tacho, &abs_count);
+    pbio_error_t err = pbio_tacho_reset_count_to_abs(tacho, &abs_count);
     if (err == PBIO_ERROR_NOT_SUPPORTED) {
         // If not available, set it to 0
         err = pbio_tacho_reset_count(tacho, 0);
@@ -90,20 +84,17 @@ static pbio_error_t pbio_tacho_setup(pbio_tacho_t *tacho, uint8_t counter_id, pb
     return err;
 }
 
-pbio_error_t pbio_tacho_get(pbio_port_id_t port, pbio_tacho_t **tacho, pbio_direction_t direction, fix16_t gear_ratio, bool reset_angle) {
+pbio_error_t pbio_tacho_get_tacho(pbio_port_id_t port, pbio_tacho_t **tacho) {
     // Validate port
     if (port < PBDRV_CONFIG_FIRST_MOTOR_PORT || port > PBDRV_CONFIG_LAST_MOTOR_PORT) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    // Get pointer to tacho
+    // Get pointer to tacho.
     *tacho = &tachos[port - PBDRV_CONFIG_FIRST_MOTOR_PORT];
 
-    // FIXME: Make proper way to get counter id
-    uint8_t counter_id = port - PBDRV_CONFIG_FIRST_MOTOR_PORT;
-
-    // Initialize and set up tacho properties
-    return pbio_tacho_setup(*tacho, counter_id, direction, gear_ratio, reset_angle);
+    // Get counter device
+    return pbdrv_counter_get_dev(port - PBDRV_CONFIG_FIRST_MOTOR_PORT, &((*tacho)->counter));
 }
 
 pbio_error_t pbio_tacho_get_count(pbio_tacho_t *tacho, int32_t *count) {

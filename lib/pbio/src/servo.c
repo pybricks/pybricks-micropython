@@ -58,10 +58,15 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     srv->connected = false;
 
     // Get and reset tacho
-    err = pbio_tacho_get(srv->port, &srv->tacho, direction, gear_ratio, reset_angle);
+    err = pbio_tacho_get_tacho(srv->port, &srv->tacho);
     if (err != PBIO_SUCCESS) {
         return err;
     }
+    // Configure tacho.
+    err = pbio_tacho_setup(srv->tacho, direction, gear_ratio, reset_angle);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }   
 
     // Get dcmotor
     err = pbio_dcmotor_get_dcmotor(srv->port, &srv->dcmotor);
