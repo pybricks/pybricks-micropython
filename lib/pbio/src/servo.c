@@ -16,6 +16,7 @@
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
+// Servo motor objects
 static pbio_servo_t servos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
 pbio_error_t pbio_servo_get_servo(pbio_port_id_t port, pbio_servo_t **srv) {
@@ -34,6 +35,94 @@ pbio_error_t pbio_servo_get_servo(pbio_port_id_t port, pbio_servo_t **srv) {
     }
     // Get tacho object, without additional setup.
     return pbio_dcmotor_get_dcmotor(port, &((*srv)->dcmotor));
+}
+
+// Bit flags to keep track which servos get control updates.
+static uint8_t servo_register;
+
+// Register servo to get updates.
+static void pbio_servo_register(pbio_servo_t *srv) {
+    for (uint8_t i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
+        if (&servos[i] == srv) {
+            servo_register |= (1 << i);
+            break;
+        }
+    }
+}
+
+// Unregister servo from getting updates.
+static void pbio_servo_unregister(pbio_servo_t *srv) {
+    for (uint8_t i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
+        if (&servos[i] == srv) {
+            servo_register &= ~(1 << i);
+            break;
+        }
+    }
+}
+
+static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
+
+    // Get current time
+    int32_t time_now = pbdrv_clock_get_us();
+
+    // Read the physical and estimated state
+    pbio_control_state_t state;
+    pbio_error_t err = pbio_servo_get_state(srv, &state);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Trajectory reference point
+    pbio_trajectory_reference_t ref;
+
+    // Control action to be calculated
+    pbio_actuation_t actuation;
+    int32_t feedback_torque = 0;
+    int32_t feedforward_torque = 0;
+    int32_t voltage;
+
+    // Check if a control update is needed
+    if (pbio_control_is_active(&srv->control)) {
+
+        // Calculate feedback control signal
+        pbio_control_update(&srv->control, time_now, &state, &ref, &actuation, &feedback_torque);
+
+        // Get required feedforward torque for current reference
+        feedforward_torque = pbio_observer_get_feedforward_torque(&srv->observer, ref.rate, ref.acceleration);
+
+        // Actuate the servo. For torque control, the torque payload is passed along. Otherwise payload is ignored.
+        err = pbio_servo_actuate(srv, actuation, feedback_torque + feedforward_torque);
+        if (err != PBIO_SUCCESS) {
+            return err;
+        }
+    }
+    // Whether or not there is control, get the ongoing actuation state so we can log it and update observer.
+    err = pbio_dcmotor_get_state(srv->dcmotor, (pbio_passivity_t *)&actuation, &voltage);
+    if (err != PBIO_SUCCESS) {
+        return err;
+    }
+
+    // Log servo state
+    int32_t log_data[] = {time_now, state.count, state.rate, actuation, voltage, state.count_est, state.rate_est, feedback_torque, feedforward_torque};
+    pbio_logger_update(&srv->log, log_data);
+
+    // Update the state observer
+    pbio_observer_update(&srv->observer, state.count, actuation, voltage);
+
+    return PBIO_SUCCESS;
+}
+
+pbio_error_t pbio_servo_update_all(void) {
+    pbio_error_t err;
+    for (uint8_t i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
+        if (servo_register & (1 << i)) {
+            err = pbio_servo_update(&servos[i]);
+            if (err != PBIO_SUCCESS) {
+                return err;
+            }
+        }
+    }
+    return PBIO_SUCCESS;
 }
 
 static pbio_error_t pbio_servo_observer_reset(pbio_servo_t *srv) {
@@ -74,8 +163,8 @@ static pbio_error_t pbio_servo_stop_from_dcmotor(void *servo) {
 pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio, bool reset_angle) {
     pbio_error_t err;
 
-    // We are not initialized until setup is done.
-    srv->connected = false;
+    // Unregister this servo from control loop updates.
+    pbio_servo_unregister(srv);
 
     // Configure tacho.
     err = pbio_tacho_setup(srv->tacho, direction, gear_ratio, reset_angle);
@@ -112,7 +201,9 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     pbio_parent_clear(&srv->parent);
 
     // Now that all checks have succeeded, we know that this motor is ready.
-    srv->connected = true;
+    // So we register this servo from control loop updates.
+    pbio_servo_register(srv);
+
     return PBIO_SUCCESS;
 }
 
@@ -212,63 +303,6 @@ pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_ty
             return pbio_dcmotor_set_voltage(srv->dcmotor, voltage);
         }
     }
-
-    return PBIO_SUCCESS;
-}
-
-pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
-
-    // If the servo is not initialized (or connected), there is nothing to do.
-    if (!srv->connected) {
-        return PBIO_SUCCESS;
-    }
-
-    // Get current time
-    int32_t time_now = pbdrv_clock_get_us();
-
-    // Read the physical and estimated state
-    pbio_control_state_t state;
-    pbio_error_t err = pbio_servo_get_state(srv, &state);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Trajectory reference point
-    pbio_trajectory_reference_t ref;
-
-    // Control action to be calculated
-    pbio_actuation_t actuation;
-    int32_t feedback_torque = 0;
-    int32_t feedforward_torque = 0;
-    int32_t voltage;
-
-    // Check if a control update is needed
-    if (pbio_control_is_active(&srv->control)) {
-
-        // Calculate feedback control signal
-        pbio_control_update(&srv->control, time_now, &state, &ref, &actuation, &feedback_torque);
-
-        // Get required feedforward torque for current reference
-        feedforward_torque = pbio_observer_get_feedforward_torque(&srv->observer, ref.rate, ref.acceleration);
-
-        // Actuate the servo. For torque control, the torque payload is passed along. Otherwise payload is ignored.
-        err = pbio_servo_actuate(srv, actuation, feedback_torque + feedforward_torque);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-    }
-    // Whether or not there is control, get the ongoing actuation state so we can log it and update observer.
-    err = pbio_dcmotor_get_state(srv->dcmotor, (pbio_passivity_t *)&actuation, &voltage);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-
-    // Log servo state
-    int32_t log_data[] = {time_now, state.count, state.rate, actuation, voltage, state.count_est, state.rate_est, feedback_torque, feedforward_torque};
-    pbio_logger_update(&srv->log, log_data);
-
-    // Update the state observer
-    pbio_observer_update(&srv->observer, state.count, actuation, voltage);
 
     return PBIO_SUCCESS;
 }

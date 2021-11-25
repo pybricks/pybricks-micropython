@@ -14,7 +14,6 @@
 PROCESS(pbio_motor_process, "servo");
 
 static pbio_error_t status = PBIO_SUCCESS;
-static pbio_servo_t *servos[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 static pbio_drivebase_t drivebase;
 
 pbio_error_t pbio_motor_process_get_status(void) {
@@ -37,19 +36,6 @@ void pbio_motor_process_reset(void) {
     err = pbio_battery_init();
     if (err != PBIO_SUCCESS) {
         status = err;
-    }
-
-    // Force stop the servos
-    for (uint8_t i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-
-        // Run the motor getter at least once
-        err = pbio_servo_get_servo(i + PBDRV_CONFIG_FIRST_MOTOR_PORT, &servos[i]);
-        if (err != PBIO_SUCCESS) {
-            status = err;
-        }
-
-        // Force stop the servo
-        pbio_servo_stop_control(servos[i]);
     }
 }
 
@@ -80,11 +66,9 @@ PROCESS_THREAD(pbio_motor_process, ev, data) {
         }
 
         // Update servos
-        for (uint8_t i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-            err = pbio_servo_update(servos[i]);
-            if (err != PBIO_SUCCESS) {
-                status = err;
-            }
+        err = pbio_servo_update_all();
+        if (err != PBIO_SUCCESS) {
+            status = err;
         }
 
         // Reset timer to wait for next update

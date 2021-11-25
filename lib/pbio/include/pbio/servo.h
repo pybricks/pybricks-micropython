@@ -28,7 +28,6 @@
 #define PBIO_SERVO_LOG_COLS (9)
 
 typedef struct _pbio_servo_t {
-    bool connected;
     pbio_dcmotor_t *dcmotor;
     pbio_tacho_t *tacho;
     pbio_control_t control;
@@ -60,7 +59,7 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop);
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target);
 
-pbio_error_t pbio_servo_update(pbio_servo_t *srv);
+pbio_error_t pbio_servo_update_all(void);
 
 #endif // PBDRV_CONFIG_NUM_MOTOR_CONTROLLER
 
