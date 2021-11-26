@@ -601,7 +601,7 @@ static PT_THREAD(test_boost_interactive_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->num_modes, ==, 4);
     // TODO: verify fw/hw versions
     tt_want_uint_op(iodev->info->mode_combos, ==, 1 << 2 | 1 << 1);
-    tt_want_uint_op(iodev->info->capability_flags, ==, PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR |
+    tt_want_uint_op(iodev->info->capability_flags, ==, PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT |
         PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS);
     tt_want_uint_op(iodev->mode, ==, 0);
 
@@ -803,7 +803,7 @@ static PT_THREAD(test_technic_large_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->num_modes, ==, 6);
     // TODO: verify fw/hw versions
     tt_want_uint_op(iodev->info->mode_combos, ==, 1 << 3 | 1 << 2 | 1 << 1);
-    tt_want_uint_op(iodev->info->capability_flags, ==, PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED
+    tt_want_uint_op(iodev->info->capability_flags, ==, PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED
         | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS);
     tt_want_uint_op(iodev->mode, ==, 0);
 
@@ -1011,7 +1011,7 @@ static PT_THREAD(test_technic_xl_motor(struct pt *pt)) {
     tt_want_uint_op(iodev->info->num_modes, ==, 6);
     // TODO: verify fw/hw versions
     tt_want_uint_op(iodev->info->mode_combos, ==, 1 << 3 | 1 << 2 | 1 << 1);
-    tt_want_uint_op(iodev->info->capability_flags, ==, PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED
+    tt_want_uint_op(iodev->info->capability_flags, ==, PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED
         | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_REL_POS | PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_ABS_POS);
     tt_want_uint_op(iodev->mode, ==, 0);
 

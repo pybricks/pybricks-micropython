@@ -437,7 +437,7 @@ static void pbio_uartdev_parse_msg(uartdev_port_data_t *data) {
 
                     // Although capabilities are sent per mode, we apply them to the whole device
                     if (flags & LUMP_MODE_FLAGS0_MOTOR_POWER) {
-                        data->info->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR;
+                        data->info->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT;
                     }
                     if (flags & LUMP_MODE_FLAGS0_MOTOR_SPEED) {
                         data->info->capability_flags |= PBIO_IODEV_CAPABILITY_FLAG_HAS_MOTOR_SPEED;

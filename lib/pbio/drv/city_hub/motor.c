@@ -142,7 +142,7 @@ pbio_error_t pbdrv_motor_get_id(pbio_port_id_t port, pbio_iodev_type_id_t *id) {
         return err;
     }
 
-    if (!PBIO_IODEV_IS_MOTOR(iodev)) {
+    if (!PBIO_IODEV_IS_DC_OUTPUT(iodev)) {
         return PBIO_ERROR_NO_DEV;
     }
 

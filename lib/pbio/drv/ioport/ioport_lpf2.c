@@ -64,7 +64,7 @@ static const basic_info_t basic_infos[] = {
     [PBIO_IODEV_TYPE_ID_LPF2_MMOTOR] = {
         .info = {
             .type_id = PBIO_IODEV_TYPE_ID_LPF2_MMOTOR,
-            .capability_flags = PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR,
+            .capability_flags = PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT,
             .num_modes = 1,
         },
         .mode = {
@@ -75,7 +75,7 @@ static const basic_info_t basic_infos[] = {
     [PBIO_IODEV_TYPE_ID_LPF2_TRAIN] = {
         .info = {
             .type_id = PBIO_IODEV_TYPE_ID_LPF2_TRAIN,
-            .capability_flags = PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR,
+            .capability_flags = PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT,
             .num_modes = 1,
         },
         .mode = {
@@ -86,7 +86,7 @@ static const basic_info_t basic_infos[] = {
     [PBIO_IODEV_TYPE_ID_LPF2_LIGHT] = {
         .info = {
             .type_id = PBIO_IODEV_TYPE_ID_LPF2_LIGHT,
-            .capability_flags = PBIO_IODEV_CAPABILITY_FLAG_NONE,
+            .capability_flags = PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT,
             .num_modes = 1,
         },
         .mode = {
@@ -97,7 +97,7 @@ static const basic_info_t basic_infos[] = {
     [PBIO_IODEV_TYPE_ID_LPF2_LIGHT1] = {
         .info = {
             .type_id = PBIO_IODEV_TYPE_ID_LPF2_LIGHT1,
-            .capability_flags = PBIO_IODEV_CAPABILITY_FLAG_NONE,
+            .capability_flags = PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT,
             .num_modes = 1,
         },
         .mode = {

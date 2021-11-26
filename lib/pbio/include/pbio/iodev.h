@@ -201,9 +201,9 @@ typedef enum {
      */
     PBIO_IODEV_CAPABILITY_FLAG_NONE = 0,
     /**
-     * Indicates that this device is a motor.
+     * Indicates that this device is a DC output such as a motor or a light.
      */
-    PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR = 1 << 0,
+    PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT = 1 << 0,
     /**
      * Indicates that the motor provides speed feedback.
      */
@@ -227,11 +227,11 @@ typedef enum {
 } pbio_iodev_capability_flags_t;
 
 /**
- * Macro for testing if I/O device is a motor.
+ * Macro for testing if I/O device is a dc output such as a motor or light.
  *
  * @param [in] d    Pointer to pbio_iodev_t.
  */
-#define PBIO_IODEV_IS_MOTOR(d) ((d)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_IS_MOTOR)
+#define PBIO_IODEV_IS_DC_OUTPUT(d) ((d)->info->capability_flags & PBIO_IODEV_CAPABILITY_FLAG_IS_DC_OUTPUT)
 
 /**
  * Macro for testing if I/O device is a motor with speed/position feedback.
