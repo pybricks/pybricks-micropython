@@ -30,6 +30,7 @@ typedef struct _pbio_dcmotor_t {
 #if PBIO_CONFIG_DCMOTOR
 
 // Global reset
+pbio_error_t pbio_dcmotor_stop_all(void);
 pbio_error_t pbio_dcmotor_reset_all(void);
 
 // Setup and status
