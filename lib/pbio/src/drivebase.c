@@ -81,6 +81,12 @@ static pbio_error_t pbio_drivebase_get_state(pbio_drivebase_t *db, pbio_control_
     return PBIO_SUCCESS;
 }
 
+static void pbio_drivebase_stop_control(pbio_drivebase_t *db) {
+    // Stop control so polling will stop
+    pbio_control_stop(&db->control_distance);
+    pbio_control_stop(&db->control_heading);
+}
+
 // Actuate a drivebase
 static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_t actuation, int32_t sum_control, int32_t dif_control) {
 
@@ -221,12 +227,6 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
         // Otherwise the payload is zero and control stops
         return pbio_drivebase_actuate(db, after_stop, 0, 0);
     }
-}
-
-void pbio_drivebase_stop_control(pbio_drivebase_t *db) {
-    // Stop control so polling will stop
-    pbio_control_stop(&db->control_distance);
-    pbio_control_stop(&db->control_heading);
 }
 
 bool pbio_drivebase_is_busy(pbio_drivebase_t *db) {

@@ -328,17 +328,6 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
     return pbio_servo_actuate(srv, after_stop, control);
 }
 
-void pbio_servo_stop_control(pbio_servo_t *srv) {
-
-    // Set control status passive so poll won't call it again
-    pbio_control_stop(&srv->control);
-
-    // DELETEME, and drop stop too?
-    if (srv->dcmotor) {
-        pbio_dcmotor_coast(srv->dcmotor, false);
-    }
-}
-
 static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
 
     // Stop parent object that uses this motor, if any.
