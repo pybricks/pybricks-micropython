@@ -286,16 +286,16 @@ pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_ty
     switch (actuation_type)
     {
         case PBIO_ACTUATION_COAST:
-            return pbio_dcmotor_coast(srv->dcmotor, false);
+            return pbio_dcmotor_coast(srv->dcmotor);
         case PBIO_ACTUATION_BRAKE:
-            return pbio_dcmotor_set_voltage(srv->dcmotor, 0, false);
+            return pbio_dcmotor_set_voltage(srv->dcmotor, 0);
         case PBIO_ACTUATION_HOLD:
             return pbio_control_start_hold_control(&srv->control, pbdrv_clock_get_us(), payload);
         case PBIO_ACTUATION_VOLTAGE:
-            return pbio_dcmotor_set_voltage(srv->dcmotor, payload, false);
+            return pbio_dcmotor_set_voltage(srv->dcmotor, payload);
         case PBIO_ACTUATION_TORQUE: {
             int32_t voltage = pbio_observer_torque_to_voltage(&srv->observer, payload);
-            return pbio_dcmotor_set_voltage(srv->dcmotor, voltage, false);
+            return pbio_dcmotor_set_voltage(srv->dcmotor, voltage);
         }
     }
 

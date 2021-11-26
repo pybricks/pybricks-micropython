@@ -131,11 +131,11 @@ static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_p
     // Since we don't know which child called the parent to stop, we stop both
     // motors. We don't stop their parents to avoid escalating the stop calls
     // up the chain (and back here) once again.
-    pbio_error_t err = pbio_dcmotor_coast(db->left->dcmotor, false);
+    pbio_error_t err = pbio_dcmotor_coast(db->left->dcmotor);
     if (err != PBIO_SUCCESS) {
         return err;
     }
-    return pbio_dcmotor_coast(db->right->dcmotor, false);
+    return pbio_dcmotor_coast(db->right->dcmotor);
 }
 
 pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio_servo_t *right, fix16_t wheel_diameter, fix16_t axle_track) {
