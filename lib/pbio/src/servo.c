@@ -139,7 +139,7 @@ static pbio_error_t pbio_servo_observer_reset(pbio_servo_t *srv) {
 
 // This function is attached to a dcmotor object, so it is able to
 // stop the servo if the dcmotor needs to execute a new command.
-static pbio_error_t pbio_servo_stop_from_dcmotor(void *servo) {
+static pbio_error_t pbio_servo_stop_from_dcmotor(void *servo, bool clear_parent) {
 
     // Specify pointer type.
     pbio_servo_t *srv = servo;
@@ -155,7 +155,7 @@ static pbio_error_t pbio_servo_stop_from_dcmotor(void *servo) {
 
     // If servo control wasn't active, it's still possible that a higher
     // level abstraction is using this device. So call its stop as well.
-    return pbio_parent_stop(&srv->parent);
+    return pbio_parent_stop(&srv->parent, clear_parent);
 }
 
 pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio, bool reset_angle) {
@@ -195,9 +195,6 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
         return err;
     }
 
-    // Clear parent for this device
-    pbio_parent_clear(&srv->parent);
-
     // Now that all checks have succeeded, we know that this motor is ready.
     // So we register this servo from control loop updates.
     pbio_servo_register(srv);
@@ -210,7 +207,7 @@ pbio_error_t pbio_servo_reset_angle(pbio_servo_t *srv, int32_t reset_angle, bool
     pbio_error_t err;
 
     // Stop parent object that uses this motor, if any.
-    err = pbio_parent_stop(&srv->parent);
+    err = pbio_parent_stop(&srv->parent, false);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -308,7 +305,7 @@ pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_ty
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
 
     // Stop parent object that uses this motor, if any.
-    pbio_error_t err = pbio_parent_stop(&srv->parent);
+    pbio_error_t err = pbio_parent_stop(&srv->parent, false);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -345,7 +342,7 @@ void pbio_servo_stop_control(pbio_servo_t *srv) {
 static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
 
     // Stop parent object that uses this motor, if any.
-    pbio_error_t err = pbio_parent_stop(&srv->parent);
+    pbio_error_t err = pbio_parent_stop(&srv->parent, false);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -390,7 +387,7 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop) {
 
     // Stop parent object that uses this motor, if any.
-    pbio_error_t err = pbio_parent_stop(&srv->parent);
+    pbio_error_t err = pbio_parent_stop(&srv->parent, false);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -415,7 +412,7 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
 pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_actuation_t after_stop) {
 
     // Stop parent object that uses this motor, if any.
-    pbio_error_t err = pbio_parent_stop(&srv->parent);
+    pbio_error_t err = pbio_parent_stop(&srv->parent, false);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -441,7 +438,7 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
 
     // Stop parent object that uses this motor, if any.
-    pbio_error_t err = pbio_parent_stop(&srv->parent);
+    pbio_error_t err = pbio_parent_stop(&srv->parent, false);
     if (err != PBIO_SUCCESS) {
         return err;
     }

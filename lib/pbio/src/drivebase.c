@@ -109,7 +109,7 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
 
 // This function is attached to a servo object, so it is able to
 // stop the drivebase if the servo needs to execute a new command.
-static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase) {
+static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_parent) {
 
     // Specify pointer type.
     pbio_drivebase_t *db = drivebase;

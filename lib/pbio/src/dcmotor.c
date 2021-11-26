@@ -48,7 +48,7 @@ pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direct
 
     pbio_error_t err;
 
-    // Coast the device and stop any parent device using the dcmotor.
+    // Coast the device and stop and clear any parent device using the dcmotor.
     err = pbio_dcmotor_coast(dcmotor, true);
     if (err != PBIO_SUCCESS) {
         return err;
@@ -59,9 +59,6 @@ pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direct
 
     // Set direction and state
     dcmotor->direction = direction;
-
-    // Clear parent for this device
-    pbio_parent_clear(&dcmotor->parent);
 
     return PBIO_SUCCESS;
 }
@@ -88,7 +85,7 @@ void pbio_dcmotor_get_state(pbio_dcmotor_t *dcmotor, bool *is_coasting, int32_t 
 pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor, bool stop_parent) {
     if (stop_parent) {
         // Stop parent object that uses this motor, if any.
-        pbio_error_t err = pbio_parent_stop(&dcmotor->parent);
+        pbio_error_t err = pbio_parent_stop(&dcmotor->parent, false);
         if (err != PBIO_SUCCESS) {
             return err;
         }
@@ -99,15 +96,13 @@ pbio_error_t pbio_dcmotor_coast(pbio_dcmotor_t *dcmotor, bool stop_parent) {
 }
 
 pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage, bool stop_parent) {
-
     if (stop_parent) {
         // Stop parent object that uses this motor, if any.
-        pbio_error_t err = pbio_parent_stop(&dcmotor->parent);
+        pbio_error_t err = pbio_parent_stop(&dcmotor->parent, false);
         if (err != PBIO_SUCCESS) {
             return err;
         }
     }
-
     // Cap voltage at the configured limit.
     if (voltage > dcmotor->max_voltage) {
         voltage = dcmotor->max_voltage;
