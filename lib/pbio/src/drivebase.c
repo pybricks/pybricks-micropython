@@ -29,6 +29,23 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_servo_t *left, pbio_servo_t *righ
     return PBIO_SUCCESS;
 }
 
+// The drivebase update can run if both servos are successfully updating
+bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db) {
+
+    // Drivebase must have servos.
+    if (!db->left || !db->right) {
+        return false;
+    }
+
+    // Drivebase must be the parent of its two servos.
+    if (db->left->parent.parent_object != db || !db->right->parent.parent_object) {
+        return false;
+    }
+
+    // Both servo update loops must be running.
+    return pbio_servo_update_loop_is_running(db->left) && pbio_servo_update_loop_is_running(db->right);
+}
+
 static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_control_settings_t *s_heading, pbio_control_settings_t *s_left, pbio_control_settings_t *s_right) {
 
     // All rate/count acceleration limits add up, because distance state is two motors counts added
@@ -219,6 +236,11 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, fix16_t wheel_diameter, 
 
 pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_stop) {
 
+    // Don't allow new user command if update loop not registered.
+    if (!pbio_drivebase_update_loop_is_running(db)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
     if (after_stop == PBIO_ACTUATION_HOLD) {
 
         // Get drive base state
@@ -306,10 +328,17 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 
 void pbio_drivebase_update_all(void) {
     // TODO: Allow more than one drivebase.
-    pbio_drivebase_update(&drivebases[0]);
+    if (pbio_drivebase_update_loop_is_running(&drivebases[0])) {
+        pbio_drivebase_update(&drivebases[0]);
+    }
 }
 
 static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, int32_t sum, int32_t sum_rate, int32_t dif, int32_t dif_rate, pbio_actuation_t after_stop) {
+
+    // Don't allow new user command if update loop not registered.
+    if (!pbio_drivebase_update_loop_is_running(db)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
 
     // Get current time
     int32_t time_now = pbdrv_clock_get_us();
@@ -388,6 +417,11 @@ pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, in
 }
 
 static pbio_error_t pbio_drivebase_drive_counts_timed(pbio_drivebase_t *db, int32_t sum_rate, int32_t dif_rate, int32_t duration, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
+
+    // Don't allow new user command if update loop not registered.
+    if (!pbio_drivebase_update_loop_is_running(db)) {
+        return PBIO_ERROR_INVALID_OP;
+    }
 
     // Get current time
     int32_t time_now = pbdrv_clock_get_us();

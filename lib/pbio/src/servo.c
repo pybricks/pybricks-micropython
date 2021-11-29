@@ -114,6 +114,9 @@ void pbio_servo_update_all(void) {
 
                 // Stop the control state.
                 pbio_control_stop(&srv->control);
+
+                // Stop higher level controls, such as drive bases.
+                pbio_parent_stop(&srv->parent, false);
             }
         }
     }
@@ -300,8 +303,8 @@ pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_ty
 
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
 
-    // Don't allow new user command if control loop not registered.
-    if (!srv->run_update_loop) {
+    // Don't allow new user command if update loop not registered.
+    if (!pbio_servo_update_loop_is_running(srv)) {
         return PBIO_ERROR_INVALID_OP;
     }
 
@@ -331,8 +334,8 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
 
 static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
 
-    // Don't allow new user command if control loop not registered.
-    if (!srv->run_update_loop) {
+    // Don't allow new user command if update loop not registered.
+    if (!pbio_servo_update_loop_is_running(srv)) {
         return PBIO_ERROR_INVALID_OP;
     }
 
@@ -381,8 +384,8 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
 
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop) {
 
-    // Don't allow new user command if control loop not registered.
-    if (!srv->run_update_loop) {
+    // Don't allow new user command if update loop not registered.
+    if (!pbio_servo_update_loop_is_running(srv)) {
         return PBIO_ERROR_INVALID_OP;
     }
 
@@ -411,8 +414,8 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
 
 pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_actuation_t after_stop) {
 
-    // Don't allow new user command if control loop not registered.
-    if (!srv->run_update_loop) {
+    // Don't allow new user command if update loop not registered.
+    if (!pbio_servo_update_loop_is_running(srv)) {
         return PBIO_ERROR_INVALID_OP;
     }
 
@@ -442,8 +445,8 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
 
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
 
-    // Don't allow new user command if control loop not registered.
-    if (!srv->run_update_loop) {
+    // Don't allow new user command if update loop not registered.
+    if (!pbio_servo_update_loop_is_running(srv)) {
         return PBIO_ERROR_INVALID_OP;
     }
 

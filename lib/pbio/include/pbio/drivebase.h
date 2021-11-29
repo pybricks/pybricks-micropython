@@ -20,6 +20,7 @@ typedef struct _pbio_drivebase_t {
 pbio_error_t pbio_drivebase_get_drivebase(pbio_servo_t *left, pbio_servo_t *right, pbio_drivebase_t **db);
 pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, fix16_t wheel_diameter, fix16_t axle_track);
 void pbio_drivebase_update_all(void);
+bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db);
 
 // Finite point to point control
 
