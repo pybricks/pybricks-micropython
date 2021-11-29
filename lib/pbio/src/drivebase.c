@@ -11,6 +11,24 @@
 
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
+// Drivebase objects
+static pbio_drivebase_t drivebases[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER / 2];
+
+pbio_error_t pbio_drivebase_get_drivebase(pbio_servo_t *left, pbio_servo_t *right, pbio_drivebase_t **db) {
+    // TODO: Allow more than one drivebase.
+    *db = &drivebases[0];
+
+    // Can't build a drive base with just one motor.
+    if (left == right) {
+        return PBIO_ERROR_INVALID_PORT;
+    }
+
+    // Attach servos
+    (*db)->left = left;
+    (*db)->right = right;
+    return PBIO_SUCCESS;
+}
+
 static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance, pbio_control_settings_t *s_heading, pbio_control_settings_t *s_left, pbio_control_settings_t *s_right) {
 
     // All rate/count acceleration limits add up, because distance state is two motors counts added
@@ -138,21 +156,12 @@ static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_p
     return pbio_dcmotor_coast(db->right->dcmotor);
 }
 
-pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio_servo_t *right, fix16_t wheel_diameter, fix16_t axle_track) {
+pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, fix16_t wheel_diameter, fix16_t axle_track) {
     pbio_error_t err;
 
-    // Can't build a drive base with just one motor.
-    if (left == right) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
-
-    // Attach servos
-    db->left = left;
-    db->right = right;
-
     // Set parents of both servos, so they can stop this drivebase.
-    pbio_parent_set(&left->parent, db, pbio_drivebase_stop_from_servo);
-    pbio_parent_set(&right->parent, db, pbio_drivebase_stop_from_servo);
+    pbio_parent_set(&db->left->parent, db, pbio_drivebase_stop_from_servo);
+    pbio_parent_set(&db->right->parent, db, pbio_drivebase_stop_from_servo);
 
     // Stop any existing drivebase controls
     pbio_drivebase_stop_control(db);
@@ -163,7 +172,7 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio
     }
 
     // Assert that both motors have the same gearing
-    if (left->control.settings.counts_per_unit != right->control.settings.counts_per_unit) {
+    if (db->left->control.settings.counts_per_unit != db->right->control.settings.counts_per_unit) {
         return PBIO_ERROR_INVALID_ARG;
     }
 
@@ -182,7 +191,7 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio
     // Count difference between the motors for every 1 degree drivebase rotation
     db->control_heading.settings.counts_per_unit =
         fix16_mul(
-            left->control.settings.counts_per_unit,
+            db->left->control.settings.counts_per_unit,
             fix16_div(
                 fix16_mul(
                     axle_track,
@@ -195,7 +204,7 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio
     // Sum of motor counts for every 1 mm forward
     db->control_distance.settings.counts_per_unit =
         fix16_mul(
-            left->control.settings.counts_per_unit,
+            db->left->control.settings.counts_per_unit,
             fix16_div(
                 fix16_mul(
                     fix16_from_int(180),
@@ -233,7 +242,7 @@ bool pbio_drivebase_is_busy(pbio_drivebase_t *db) {
     return !pbio_control_is_done(&db->control_distance) || !pbio_control_is_done(&db->control_heading);
 }
 
-pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
+static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 
     // If passive, then exit
     if (db->control_heading.type == PBIO_CONTROL_NONE || db->control_distance.type == PBIO_CONTROL_NONE) {
@@ -293,6 +302,11 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     // The right servo drives at a torque and speed of sum / 2 - dif / 2
     int32_t feed_forward_right = pbio_observer_get_feedforward_torque(&db->right->observer, ref_distance.rate / 2 - ref_heading.rate / 2, ref_distance.acceleration / 2 - ref_heading.acceleration / 2);
     return pbio_servo_actuate(db->right, dif_actuation, sum_torque / 2 - dif_torque / 2 + feed_forward_right);
+}
+
+void pbio_drivebase_update_all(void) {
+    // TODO: Allow more than one drivebase.
+    pbio_drivebase_update(&drivebases[0]);
 }
 
 static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, int32_t sum, int32_t sum_rate, int32_t dif, int32_t dif_rate, pbio_actuation_t after_stop) {
@@ -461,13 +475,13 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
 // scaling and flipping happens within the functions below.
 
 // Set up a drive base without drivebase geometry.
-pbio_error_t pbio_spikebase_setup(pbio_drivebase_t *db, pbio_servo_t *servo_left, pbio_servo_t *servo_right) {
+pbio_error_t pbio_spikebase_setup(pbio_drivebase_t *db) {
     // Allow only the same type of motor. To find out, just check that the model parameters are the same.
-    if (servo_left->observer.settings != servo_right->observer.settings) {
+    if (db->left->observer.settings != db->right->observer.settings) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    return pbio_drivebase_setup(db, servo_left, servo_right, fix16_one, fix16_one);
+    return pbio_drivebase_setup(db, fix16_one, fix16_one);
 }
 
 // Drive forever given two motor speeds.

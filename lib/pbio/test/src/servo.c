@@ -18,7 +18,6 @@
 #include <pbio/control.h>
 #include <pbio/error.h>
 #include <pbio/logger.h>
-#include <pbio/motor_process.h>
 #include <pbio/servo.h>
 #include <test-pbio.h>
 

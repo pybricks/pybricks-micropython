@@ -17,8 +17,9 @@ typedef struct _pbio_drivebase_t {
     pbio_control_t control_distance;
 } pbio_drivebase_t;
 
-pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, pbio_servo_t *left, pbio_servo_t *right, fix16_t wheel_diameter, fix16_t axle_track);
-pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db);
+pbio_error_t pbio_drivebase_get_drivebase(pbio_servo_t *left, pbio_servo_t *right, pbio_drivebase_t **db);
+pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, fix16_t wheel_diameter, fix16_t axle_track);
+void pbio_drivebase_update_all(void);
 
 // Finite point to point control
 
@@ -44,7 +45,7 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
 
 // SPIKE drive base wrappers
 
-pbio_error_t pbio_spikebase_setup(pbio_drivebase_t *db, pbio_servo_t *servo_left, pbio_servo_t *servo_right);
+pbio_error_t pbio_spikebase_setup(pbio_drivebase_t *db);
 
 pbio_error_t pbio_spikebase_drive_forever(pbio_drivebase_t *db, int32_t speed_left, int32_t speed_right);
 

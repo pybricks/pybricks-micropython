@@ -4,7 +4,6 @@
 #include <pbio/battery.h>
 #include <pbio/control.h>
 #include <pbio/drivebase.h>
-#include <pbio/motor_process.h>
 #include <pbio/servo.h>
 
 #include <contiki.h>
@@ -12,13 +11,6 @@
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
 PROCESS(pbio_motor_process, "servo");
-
-static pbio_drivebase_t drivebase;
-
-pbio_error_t pbio_motor_process_get_drivebase(pbio_drivebase_t **db) {
-    *db = &drivebase;
-    return PBIO_SUCCESS;
-}
 
 PROCESS_THREAD(pbio_motor_process, ev, data) {
     static struct etimer timer;
@@ -40,7 +32,7 @@ PROCESS_THREAD(pbio_motor_process, ev, data) {
         pbio_battery_update();
 
         // Update drivebase
-        pbio_drivebase_update(&drivebase);
+        pbio_drivebase_update_all();
 
         // Update servos
         pbio_servo_update_all();

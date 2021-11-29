@@ -5,8 +5,6 @@
 
 #if PYBRICKS_PY_COMMON_MOTORS
 
-#include <pbio/motor_process.h>
-
 #include <pbio/battery.h>
 
 #include <pbio/dcmotor.h>

@@ -9,7 +9,6 @@
 #include <stdlib.h>
 
 #include <pbio/drivebase.h>
-#include <pbio/motor_process.h>
 
 #include "py/mphal.h"
 
@@ -55,8 +54,8 @@ STATIC mp_obj_t robotics_SpikeBase_make_new(const mp_obj_type_t *type, size_t n_
     pb_assert(err);
 
     // Create drivebase
-    pb_assert(pbio_motor_process_get_drivebase(&self->db));
-    pb_assert(pbio_spikebase_setup(self->db, srv_left, srv_right));
+    pb_assert(pbio_drivebase_get_drivebase(srv_left, srv_right, &self->db));
+    pb_assert(pbio_spikebase_setup(self->db));
 
 
     return MP_OBJ_FROM_PTR(self);

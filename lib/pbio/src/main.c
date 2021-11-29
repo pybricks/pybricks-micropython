@@ -17,10 +17,10 @@
 #include <pbdrv/motor.h>
 #include <pbdrv/sound.h>
 #include <pbio/config.h>
+#include <pbio/dcmotor.h>
 #include <pbio/light_matrix.h>
 #include <pbio/light.h>
 #include <pbio/main.h>
-#include <pbio/motor_process.h>
 #include <pbio/uartdev.h>
 
 #include "light/animation.h"
