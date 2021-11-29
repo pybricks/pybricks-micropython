@@ -37,6 +37,14 @@ pbio_error_t pbio_servo_get_servo(pbio_port_id_t port, pbio_servo_t **srv) {
     return pbio_dcmotor_get_dcmotor(port, &((*srv)->dcmotor));
 }
 
+static void pbio_servo_update_loop_set_state(pbio_servo_t *srv, bool update) {
+    srv->run_update_loop = update;
+}
+
+bool pbio_servo_update_loop_is_running(pbio_servo_t *srv) {
+    return srv->run_update_loop;
+}
+
 static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
 
     // Get current time
@@ -99,7 +107,7 @@ pbio_error_t pbio_servo_update_all(void) {
             err = pbio_servo_update(srv);
             if (err != PBIO_SUCCESS) {
                 // If the update failed, don't update it anymore.
-                srv->run_update_loop = false;
+                pbio_servo_update_loop_set_state(srv, false);
 
                 // Coast the motor, letting errors pass.
                 pbio_dcmotor_coast(srv->dcmotor);
@@ -151,7 +159,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     pbio_error_t err;
 
     // Unregister this servo from control loop updates.
-    srv->run_update_loop = false;
+    pbio_servo_update_loop_set_state(srv, false);
 
     // Configure tacho.
     err = pbio_tacho_setup(srv->tacho, direction, gear_ratio, reset_angle);
@@ -186,7 +194,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
 
     // Now that all checks have succeeded, we know that this motor is ready.
     // So we register this servo from control loop updates.
-    srv->run_update_loop = true;
+    pbio_servo_update_loop_set_state(srv, true);
 
     return PBIO_SUCCESS;
 }

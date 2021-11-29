@@ -39,6 +39,7 @@ typedef struct _pbio_servo_t {
 
 pbio_error_t pbio_servo_get_servo(pbio_port_id_t port, pbio_servo_t **srv);
 pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix16_t gear_ratio, bool reset_angle);
+bool pbio_servo_update_loop_is_running(pbio_servo_t *srv);
 
 pbio_error_t pbio_servo_load_settings(pbio_control_settings_t *control_settings, const pbio_observer_settings_t **observer_settings, pbio_iodev_type_id_t id);
 
