@@ -6,7 +6,6 @@
 
 #include <pbio/button.h>
 #include <pbio/main.h>
-#include <pbio/motor_process.h>
 
 #include <pbsys/bluetooth.h>
 #include <pbsys/status.h>
@@ -69,14 +68,6 @@ void pbsys_user_program_set_stop_buttons(pbio_button_flags_t buttons) {
  * This is called periodically to monitor the user program.
  */
 void pbsys_user_program_poll(void) {
-
-    pbio_error_t err = pbio_motor_process_get_status();
-    if (err != PBIO_SUCCESS) {
-        // TODO: Propagate this error as appropriate exception,
-        // not necessarily SystemExit or button press like it is now.
-        pbsys_user_program_stop();
-    }
-
     pbio_button_flags_t btn;
     pbio_button_is_pressed(&btn);
 
