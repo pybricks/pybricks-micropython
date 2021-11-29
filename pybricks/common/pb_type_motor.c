@@ -28,6 +28,9 @@ STATIC void wait_for_completion(pbio_servo_t *srv) {
     while (!pbio_control_is_done(&srv->control)) {
         mp_hal_delay_ms(5);
     }
+    if (!pbio_servo_update_loop_is_running(srv)) {
+        pb_assert(PBIO_ERROR_NO_DEV);
+    }
 }
 
 // pybricks._common.Motor.__init__
