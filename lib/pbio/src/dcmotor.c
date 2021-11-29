@@ -17,7 +17,7 @@
 
 static pbio_dcmotor_t dcmotors[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-static pbio_error_t pbio_dcmotor_reset(pbio_port_id_t port, bool clear_parent) {
+pbio_error_t pbio_dcmotor_reset(pbio_port_id_t port, bool clear_parent) {
 
     // Look up device by port
     pbio_dcmotor_t *dcmotor;

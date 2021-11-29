@@ -116,7 +116,8 @@ pbio_error_t pbio_servo_update_all(void) {
         if (servo_register & (1 << i)) {
             err = pbio_servo_update(&servos[i]);
             if (err != PBIO_SUCCESS) {
-                return err;
+                // If the update failed, stop this motor and its parents.
+                pbio_dcmotor_reset(i + PBDRV_CONFIG_FIRST_MOTOR_PORT, false);
             }
         }
     }
