@@ -13,41 +13,23 @@
 
 PROCESS(pbio_motor_process, "servo");
 
-static pbio_error_t status = PBIO_SUCCESS;
 static pbio_drivebase_t drivebase;
-
-pbio_error_t pbio_motor_process_get_status(void) {
-    return status;
-}
 
 pbio_error_t pbio_motor_process_get_drivebase(pbio_drivebase_t **db) {
     *db = &drivebase;
     return PBIO_SUCCESS;
 }
 
-void pbio_motor_process_reset(void) {
-
-    // Motors start in success state.
-    status = PBIO_SUCCESS;
-
-    pbio_error_t err;
-
-    // Initialize battery voltage.
-    err = pbio_battery_init();
-    if (err != PBIO_SUCCESS) {
-        status = err;
-    }
-    pbio_dcmotor_stop_all(true);
-}
-
 PROCESS_THREAD(pbio_motor_process, ev, data) {
     static struct etimer timer;
 
-    static pbio_error_t err;
-
     PROCESS_BEGIN();
 
-    pbio_motor_process_reset();
+    // Initialize battery voltage.
+    pbio_battery_init();
+
+    // Initialize motors in stopped state.
+    pbio_dcmotor_stop_all(true);
 
     etimer_set(&timer, PBIO_CONTROL_LOOP_TIME_MS);
 
@@ -55,22 +37,13 @@ PROCESS_THREAD(pbio_motor_process, ev, data) {
         PROCESS_WAIT_EVENT_UNTIL(ev == PROCESS_EVENT_TIMER && etimer_expired(&timer));
 
         // Update battery voltage.
-        err = pbio_battery_update();
-        if (err != PBIO_SUCCESS) {
-            status = err;
-        }
+        pbio_battery_update();
 
         // Update drivebase
-        err = pbio_drivebase_update(&drivebase);
-        if (err != PBIO_SUCCESS) {
-            status = err;
-        }
+        pbio_drivebase_update(&drivebase);
 
         // Update servos
-        err = pbio_servo_update_all();
-        if (err != PBIO_SUCCESS) {
-            status = err;
-        }
+        pbio_servo_update_all();
 
         // Reset timer to wait for next update
         etimer_restart(&timer);

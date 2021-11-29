@@ -207,15 +207,6 @@ pbio_error_t pbdrv_ioport_get_iodev(pbio_port_id_t port, pbio_iodev_t **iodev) {
     return PBIO_SUCCESS;
 }
 
-// Turns off power to passive (non-uart) devices
-void pbdrv_ioport_reset_passive_devices(void) {
-    for (int i = 0; i < PBDRV_CONFIG_IOPORT_LPF2_NUM_PORTS; i++) {
-        if (ioport_devs[i].connected_type_id != PBIO_IODEV_TYPE_ID_LPF2_UNKNOWN_UART) {
-            pbdrv_motor_coast(i + PBDRV_CONFIG_IOPORT_LPF2_FIRST_PORT);
-        }
-    }
-}
-
 // This is the device connection manager (dcm). It monitors the ID1 and ID2 pins
 // on the port to see when devices are connected or disconnected.
 // It is expected for there to be a 2ms delay between calls to this function.

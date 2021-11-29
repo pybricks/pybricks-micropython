@@ -185,7 +185,7 @@ static PT_THREAD(test_servo_run_func(struct pt *pt, const char *name, pbio_error
     }
 
     for (;;) {
-        if (pbio_motor_process_get_status() == PBIO_SUCCESS) {
+        if (pbio_servo_update_loop_is_running(servo)) {
             // This is the expected exit point for a successful test. The manuever
             // has completed. We wait some extra time to log the motor state after
             // the completion before ending the test.

@@ -95,7 +95,7 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
     return PBIO_SUCCESS;
 }
 
-pbio_error_t pbio_servo_update_all(void) {
+void pbio_servo_update_all(void) {
     pbio_error_t err;
 
     // Go through all motors.
@@ -117,7 +117,6 @@ pbio_error_t pbio_servo_update_all(void) {
             }
         }
     }
-    return PBIO_SUCCESS;
 }
 
 static pbio_error_t pbio_servo_observer_reset(pbio_servo_t *srv) {

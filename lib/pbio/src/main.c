@@ -68,10 +68,7 @@ void pbio_stop_all(void) {
     #if PBIO_CONFIG_LIGHT
     pbio_light_animation_stop_all();
     #endif
-    #if PBDRV_CONFIG_IOPORT_LPF2
-    pbdrv_ioport_reset_passive_devices();
-    #endif
-    pbio_motor_process_reset();
+    pbio_dcmotor_stop_all(true);
     pbdrv_sound_stop();
 }
 
