@@ -17,50 +17,28 @@
 
 static pbio_dcmotor_t dcmotors[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 
-pbio_error_t pbio_dcmotor_reset(pbio_port_id_t port, bool clear_parent) {
+// Stop all motors and their parent objects.
+void pbio_dcmotor_stop_all(bool clear_parents) {
 
-    // Look up device by port
-    pbio_dcmotor_t *dcmotor;
-    pbio_error_t err = pbio_dcmotor_get_dcmotor(port, &dcmotor);
-    if (err == PBIO_ERROR_NO_DEV) {
-        // There is a device but not a motor, so we are done.
-        return PBIO_SUCCESS;
-    }
-    // Return any other errors.
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    // Coast the motor.
-    err = pbio_dcmotor_coast(dcmotor);
-    if (err != PBIO_SUCCESS) {
-        return err;
-    }
-    // Stop its parents, if any.
-    return pbio_parent_stop(&dcmotor->parent, clear_parent);
-}
-
-// Stop all motors, but don't reset anything. This is useful when the user
-// wants to debug an active script.
-pbio_error_t pbio_dcmotor_stop_all(void) {
+    // Go through all ports.
     for (pbio_port_id_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port < PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
-        pbio_error_t err = pbio_dcmotor_reset(port, false);
-        if (err != PBIO_SUCCESS) {
-            return err;
-        }
-    }
-    return PBIO_SUCCESS;
-}
 
-// Stop all motors, and reset all parents. This is called after the user code
-// ends. It clears all parent relations, so objects can be freely created again.
-pbio_error_t pbio_dcmotor_reset_all(void) {
-    for (pbio_port_id_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port < PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
-        pbio_error_t err = pbio_dcmotor_reset(port, true);
-        if (err != PBIO_SUCCESS) {
-            return err;
+        // Get the motor.
+        pbio_dcmotor_t *dcmotor;
+        pbio_error_t err = pbio_dcmotor_get_dcmotor(port, &dcmotor);
+        if (err == PBIO_ERROR_NO_DEV) {
+            // There is a device but it is not a motor, so we are done.
+            // We let other errors pass in this reset-like function.
+            continue;
         }
+
+        // Coast the motor and let errors pass.
+        pbio_dcmotor_coast(dcmotor);
+
+        // Stop its parents and let errors pass. Optionally resets parent
+        // objects to free up this motor for use in new objects.
+        pbio_parent_stop(&dcmotor->parent, clear_parents);
     }
-    return PBIO_SUCCESS;
 }
 
 pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direction) {

@@ -98,11 +98,14 @@ pbio_error_t pbio_servo_update_all(void) {
         if (srv->run_update_loop) {
             err = pbio_servo_update(srv);
             if (err != PBIO_SUCCESS) {
-                // If the update failed, stop this motor and its parents.
-                pbio_dcmotor_reset(i + PBDRV_CONFIG_FIRST_MOTOR_PORT, false);
-
-                // Unregister this motor from getting control updates
+                // If the update failed, don't update it anymore.
                 srv->run_update_loop = false;
+
+                // Coast the motor, letting errors pass.
+                pbio_dcmotor_coast(srv->dcmotor);
+
+                // Stop the control state.
+                pbio_control_stop(&srv->control);
             }
         }
     }

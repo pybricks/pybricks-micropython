@@ -30,9 +30,7 @@ typedef struct _pbio_dcmotor_t {
 #if PBIO_CONFIG_DCMOTOR
 
 // Global reset
-pbio_error_t pbio_dcmotor_reset(pbio_port_id_t port, bool clear_parent);
-pbio_error_t pbio_dcmotor_reset_all(void);
-pbio_error_t pbio_dcmotor_stop_all(void);
+void pbio_dcmotor_stop_all(bool clear_parents);
 
 // Setup and status
 pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmotor);
@@ -52,7 +50,8 @@ pbio_error_t pbio_dcmotor_set_voltage(pbio_dcmotor_t *dcmotor, int32_t voltage);
 pbio_error_t pbio_dcmotor_user_command(pbio_dcmotor_t *dcmotor, bool coast, int32_t voltage);
 
 #else
-
+static inline void pbio_dcmotor_stop_all(bool clear_parents) {
+}
 static inline pbio_error_t pbio_dcmotor_get_dcmotor(pbio_port_id_t port, pbio_dcmotor_t **dcmotor) {
     return PBIO_ERROR_NOT_SUPPORTED;
 }

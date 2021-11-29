@@ -37,10 +37,7 @@ void pbio_motor_process_reset(void) {
     if (err != PBIO_SUCCESS) {
         status = err;
     }
-    err = pbio_dcmotor_reset_all();
-    if (err != PBIO_SUCCESS) {
-        status = err;
-    }
+    pbio_dcmotor_stop_all(true);
 }
 
 PROCESS_THREAD(pbio_motor_process, ev, data) {
