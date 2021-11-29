@@ -34,6 +34,7 @@ typedef struct _pbio_servo_t {
     pbio_observer_t observer;
     pbio_log_t log;
     pbio_parent_t parent;
+    bool run_update_loop;
 } pbio_servo_t;
 
 pbio_error_t pbio_servo_get_servo(pbio_port_id_t port, pbio_servo_t **srv);

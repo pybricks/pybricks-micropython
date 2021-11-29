@@ -37,29 +37,6 @@ pbio_error_t pbio_servo_get_servo(pbio_port_id_t port, pbio_servo_t **srv) {
     return pbio_dcmotor_get_dcmotor(port, &((*srv)->dcmotor));
 }
 
-// Bit flags to keep track which servos get control updates.
-static uint8_t servo_register;
-
-// Register servo to get updates.
-static void pbio_servo_register(pbio_servo_t *srv) {
-    for (uint8_t i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        if (&servos[i] == srv) {
-            servo_register |= (1 << i);
-            break;
-        }
-    }
-}
-
-// Unregister servo from getting updates.
-static void pbio_servo_unregister(pbio_servo_t *srv) {
-    for (uint8_t i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        if (&servos[i] == srv) {
-            servo_register &= ~(1 << i);
-            break;
-        }
-    }
-}
-
 static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
 
     // Get current time
@@ -112,12 +89,20 @@ static pbio_error_t pbio_servo_update(pbio_servo_t *srv) {
 
 pbio_error_t pbio_servo_update_all(void) {
     pbio_error_t err;
+
+    // Go through all motors.
     for (uint8_t i = 0; i < PBDRV_CONFIG_NUM_MOTOR_CONTROLLER; i++) {
-        if (servo_register & (1 << i)) {
-            err = pbio_servo_update(&servos[i]);
+        pbio_servo_t *srv = &servos[i];
+
+        // Run update loop only if registered.
+        if (srv->run_update_loop) {
+            err = pbio_servo_update(srv);
             if (err != PBIO_SUCCESS) {
                 // If the update failed, stop this motor and its parents.
                 pbio_dcmotor_reset(i + PBDRV_CONFIG_FIRST_MOTOR_PORT, false);
+
+                // Unregister this motor from getting control updates
+                srv->run_update_loop = false;
             }
         }
     }
@@ -163,7 +148,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
     pbio_error_t err;
 
     // Unregister this servo from control loop updates.
-    pbio_servo_unregister(srv);
+    srv->run_update_loop = false;
 
     // Configure tacho.
     err = pbio_tacho_setup(srv->tacho, direction, gear_ratio, reset_angle);
@@ -198,7 +183,7 @@ pbio_error_t pbio_servo_setup(pbio_servo_t *srv, pbio_direction_t direction, fix
 
     // Now that all checks have succeeded, we know that this motor is ready.
     // So we register this servo from control loop updates.
-    pbio_servo_register(srv);
+    srv->run_update_loop = true;
 
     return PBIO_SUCCESS;
 }
@@ -305,6 +290,11 @@ pbio_error_t pbio_servo_actuate(pbio_servo_t *srv, pbio_actuation_t actuation_ty
 
 pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
 
+    // Don't allow new user command if control loop not registered.
+    if (!srv->run_update_loop) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
     // Stop parent object that uses this motor, if any.
     pbio_error_t err = pbio_parent_stop(&srv->parent, false);
     if (err != PBIO_SUCCESS) {
@@ -330,6 +320,11 @@ pbio_error_t pbio_servo_stop(pbio_servo_t *srv, pbio_actuation_t after_stop) {
 }
 
 static pbio_error_t pbio_servo_run_timed(pbio_servo_t *srv, int32_t speed, int32_t duration, pbio_control_on_target_t stop_func, pbio_actuation_t after_stop) {
+
+    // Don't allow new user command if control loop not registered.
+    if (!srv->run_update_loop) {
+        return PBIO_ERROR_INVALID_OP;
+    }
 
     // Stop parent object that uses this motor, if any.
     pbio_error_t err = pbio_parent_stop(&srv->parent, false);
@@ -376,6 +371,11 @@ pbio_error_t pbio_servo_run_until_stalled(pbio_servo_t *srv, int32_t speed, pbio
 
 pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t target, pbio_actuation_t after_stop) {
 
+    // Don't allow new user command if control loop not registered.
+    if (!srv->run_update_loop) {
+        return PBIO_ERROR_INVALID_OP;
+    }
+
     // Stop parent object that uses this motor, if any.
     pbio_error_t err = pbio_parent_stop(&srv->parent, false);
     if (err != PBIO_SUCCESS) {
@@ -400,6 +400,11 @@ pbio_error_t pbio_servo_run_target(pbio_servo_t *srv, int32_t speed, int32_t tar
 }
 
 pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angle, pbio_actuation_t after_stop) {
+
+    // Don't allow new user command if control loop not registered.
+    if (!srv->run_update_loop) {
+        return PBIO_ERROR_INVALID_OP;
+    }
 
     // Stop parent object that uses this motor, if any.
     pbio_error_t err = pbio_parent_stop(&srv->parent, false);
@@ -426,6 +431,11 @@ pbio_error_t pbio_servo_run_angle(pbio_servo_t *srv, int32_t speed, int32_t angl
 }
 
 pbio_error_t pbio_servo_track_target(pbio_servo_t *srv, int32_t target) {
+
+    // Don't allow new user command if control loop not registered.
+    if (!srv->run_update_loop) {
+        return PBIO_ERROR_INVALID_OP;
+    }
 
     // Stop parent object that uses this motor, if any.
     pbio_error_t err = pbio_parent_stop(&srv->parent, false);
