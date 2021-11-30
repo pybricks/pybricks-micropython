@@ -11,8 +11,12 @@ void pbio_parent_set(pbio_parent_t *self, void *parent_object, pbio_parent_stop_
     self->parent_stop_func = stop_func;
 }
 
+bool pbio_parent_exists(pbio_parent_t *self) {
+    return self->parent_object != NULL;
+}
+
 pbio_error_t pbio_parent_stop(pbio_parent_t *self, bool clear_parent) {
-    if (!self->parent_object) {
+    if (!pbio_parent_exists(self)) {
         // Nothing to do if there is no parent.
         return PBIO_SUCCESS;
     }

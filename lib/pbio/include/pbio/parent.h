@@ -18,6 +18,8 @@ typedef struct _pbio_parent_t {
 
 void pbio_parent_set(pbio_parent_t *parent, void *parent_object, pbio_parent_stop_func_t stop_func);
 
+bool pbio_parent_exists(pbio_parent_t *parent);
+
 pbio_error_t pbio_parent_stop(pbio_parent_t *self, bool clear_parent);
 
 #endif // _PBIO_PARENT_H_

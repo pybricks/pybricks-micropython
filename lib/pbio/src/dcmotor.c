@@ -51,7 +51,13 @@ pbio_error_t pbio_dcmotor_setup(pbio_dcmotor_t *dcmotor, pbio_direction_t direct
         return PBIO_ERROR_NO_DEV;
     }
 
-    // Coast the device and stop and clear any parent device using the dcmotor.
+    // If the device already has a parent, we shouldn't allow this device
+    // to be used as a new object.
+    if (pbio_parent_exists(&dcmotor->parent)) {
+        return PBIO_ERROR_BUSY;
+    }
+
+    // Coast the device.
     err = pbio_dcmotor_coast(dcmotor);
     if (err != PBIO_SUCCESS) {
         return err;
