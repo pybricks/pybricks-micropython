@@ -5,7 +5,15 @@
 ## [Unreleased]
 
 ### Changed
-- Renamed new `DCMotor.dc_settings()` method to `DCMotor.settings()`.
+- Renamed new `DCMotor.dc_settings()` method
+  to `DCMotor.settings()` ([support#536]).
+
+### Fixed
+- Fixed direction for `DriveBase.turn()` and `Drivebase.curve()` for some
+  arguments ([support#535]).
+
+[support#535]: https://github.com/pybricks/support/issues/535
+[support#536]: https://github.com/pybricks/support/issues/536
 
 ## [3.1.0c1] - 2021-11-19
 

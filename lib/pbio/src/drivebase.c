@@ -341,7 +341,7 @@ pbio_error_t pbio_drivebase_drive_curve(pbio_drivebase_t *db, int32_t radius, in
     } else {
         // In the normal case, angle_or_distance is interpreted as the angle,
         // signed by the radius. Arc length is computed accordingly.
-        arc_angle = radius > 0 ? angle_or_distance : -angle_or_distance;
+        arc_angle = radius < 0 ? -angle_or_distance : angle_or_distance;
         arc_length = (10 * abs(angle_or_distance) * radius) / 573;
     }
 
