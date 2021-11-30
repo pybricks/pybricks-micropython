@@ -239,6 +239,15 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     pbio_control_update(&db->control_distance, time_now, &state_distance, &ref_distance, &sum_actuation, &sum_torque);
     pbio_control_update(&db->control_heading, time_now, &state_heading, &ref_heading, &dif_actuation, &dif_torque);
 
+    // If either controller coasts, coast both, thereby also stopping control.
+    if (sum_actuation == PBIO_ACTUATION_COAST || dif_actuation == PBIO_ACTUATION_COAST) {
+        return pbio_drivebase_actuate(db, PBIO_ACTUATION_COAST, 0, 0);
+    }
+    // If either controller brakes, brake both, thereby also stopping control.
+    if (sum_actuation == PBIO_ACTUATION_BRAKE || dif_actuation == PBIO_ACTUATION_BRAKE) {
+        return pbio_drivebase_actuate(db, PBIO_ACTUATION_BRAKE, 0, 0);
+    }
+
     // The leading controller is able to pause when it stalls. The following controller does not do its own stall,
     // but follows the leader. This ensures they complete at exactly the same time.
 
@@ -252,15 +261,6 @@ pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
     }
     if (err != PBIO_SUCCESS) {
         return err;
-    }
-
-    // If either controller coasts, coast both
-    if (sum_actuation == PBIO_ACTUATION_COAST || dif_actuation == PBIO_ACTUATION_COAST) {
-        return pbio_drivebase_actuate(db, PBIO_ACTUATION_COAST, 0, 0);
-    }
-    // If either controller brakes, brake both
-    if (sum_actuation == PBIO_ACTUATION_BRAKE || dif_actuation == PBIO_ACTUATION_BRAKE) {
-        return pbio_drivebase_actuate(db, PBIO_ACTUATION_BRAKE, 0, 0);
     }
 
     // The left servo drives at a torque and speed of sum / 2 + dif / 2

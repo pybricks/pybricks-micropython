@@ -11,6 +11,7 @@
 ### Fixed
 - Fixed direction for `DriveBase.turn()` and `Drivebase.curve()` for some
   arguments ([support#535]).
+- Fixed `then=Stop.COAST` not working in `DriveBase` methods ([support#535]).
 
 [support#535]: https://github.com/pybricks/support/issues/535
 [support#536]: https://github.com/pybricks/support/issues/536
