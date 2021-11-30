@@ -23,38 +23,35 @@
 typedef struct _robotics_SpikeBase_obj_t {
     mp_obj_base_t base;
     pbio_drivebase_t *db;
+    mp_obj_t left;
+    mp_obj_t right;
+    mp_obj_t heading_control;
+    mp_obj_t distance_control;
 } robotics_SpikeBase_obj_t;
 
 // pybricks.robotics.SpikeBase.__init__
 STATIC mp_obj_t robotics_SpikeBase_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
 
     PB_PARSE_ARGS_CLASS(n_args, n_kw, args,
-        PB_ARG_REQUIRED(port_left),
-        PB_ARG_REQUIRED(port_right));
+        PB_ARG_REQUIRED(left_motor),
+        PB_ARG_REQUIRED(right_motor));
 
     robotics_SpikeBase_obj_t *self = m_new_obj(robotics_SpikeBase_obj_t);
     self->base.type = (mp_obj_type_t *)type;
 
-    pbio_error_t err;
+    self->left = left_motor_in;
+    self->right = right_motor_in;
 
-    // Get left servo
-    pbio_servo_t *srv_left;
-    pb_assert(pbio_servo_get_servo(pb_type_enum_get_value(port_left_in, &pb_enum_type_Port), &srv_left));
-    while ((err = pbio_servo_setup(srv_left, PBIO_DIRECTION_CLOCKWISE, fix16_one, false)) == PBIO_ERROR_AGAIN) {
-        mp_hal_delay_ms(1000);
-    }
-    pb_assert(err);
-
-    // Get right servo
-    pbio_servo_t *srv_right;
-    pb_assert(pbio_servo_get_servo(pb_type_enum_get_value(port_right_in, &pb_enum_type_Port), &srv_right));
-    while ((err = pbio_servo_setup(srv_right, PBIO_DIRECTION_CLOCKWISE, fix16_one, false)) == PBIO_ERROR_AGAIN) {
-        mp_hal_delay_ms(1000);
-    }
-    pb_assert(err);
+    // Pointers to servos
+    pbio_servo_t *srv_left = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->left, &pb_type_Motor))->srv;
+    pbio_servo_t *srv_right = ((common_Motor_obj_t *)pb_obj_get_base_class_obj(self->right, &pb_type_Motor))->srv;
 
     // Create drivebase
     pb_assert(pbio_drivebase_get_spikebase(&self->db, srv_left, srv_right));
+
+    // Create instances of the Control class
+    self->heading_control = common_Control_obj_make_new(&self->db->control_heading);
+    self->distance_control = common_Control_obj_make_new(&self->db->control_distance);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -183,6 +180,10 @@ STATIC const mp_rom_map_elem_t robotics_SpikeBase_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_tank_move_forever),         MP_ROM_PTR(&robotics_SpikeBase_drive_forever_obj)             },
     { MP_ROM_QSTR(MP_QSTR_steering_move_for_degrees), MP_ROM_PTR(&robotics_SpikeBase_steering_move_for_degrees_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop),                      MP_ROM_PTR(&robotics_SpikeBase_stop_obj)                      },
+    { MP_ROM_QSTR(MP_QSTR_left),                      MP_ROM_ATTRIBUTE_OFFSET(robotics_SpikeBase_obj_t, left)            },
+    { MP_ROM_QSTR(MP_QSTR_right),                     MP_ROM_ATTRIBUTE_OFFSET(robotics_SpikeBase_obj_t, right)           },
+    { MP_ROM_QSTR(MP_QSTR_heading_control),           MP_ROM_ATTRIBUTE_OFFSET(robotics_SpikeBase_obj_t, heading_control) },
+    { MP_ROM_QSTR(MP_QSTR_distance_control),          MP_ROM_ATTRIBUTE_OFFSET(robotics_SpikeBase_obj_t, distance_control)},
 };
 STATIC MP_DEFINE_CONST_DICT(robotics_SpikeBase_locals_dict, robotics_SpikeBase_locals_dict_table);
 
