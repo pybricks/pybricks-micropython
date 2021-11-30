@@ -15,6 +15,10 @@ bool pbio_parent_exists(pbio_parent_t *self) {
     return self->parent_object != NULL;
 }
 
+bool pbio_parent_equals(pbio_parent_t *self, void *candidate_object) {
+    return self->parent_object == candidate_object;
+}
+
 pbio_error_t pbio_parent_stop(pbio_parent_t *self, bool clear_parent) {
     if (!pbio_parent_exists(self)) {
         // Nothing to do if there is no parent.

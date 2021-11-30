@@ -12,22 +12,10 @@
 #if PBDRV_CONFIG_NUM_MOTOR_CONTROLLER != 0
 
 // Drivebase objects
-static pbio_drivebase_t drivebases[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER / 2];
 
-pbio_error_t pbio_drivebase_get_drivebase(pbio_servo_t *left, pbio_servo_t *right, pbio_drivebase_t **db) {
-    // TODO: Allow more than one drivebase.
-    *db = &drivebases[0];
+#define NUM_DRIVEBASES (PBDRV_CONFIG_NUM_MOTOR_CONTROLLER / 2)
 
-    // Can't build a drive base with just one motor.
-    if (left == right) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
-
-    // Attach servos
-    (*db)->left = left;
-    (*db)->right = right;
-    return PBIO_SUCCESS;
-}
+static pbio_drivebase_t drivebases[NUM_DRIVEBASES];
 
 // The drivebase update can run if both servos are successfully updating
 bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db) {
@@ -38,11 +26,11 @@ bool pbio_drivebase_update_loop_is_running(pbio_drivebase_t *db) {
     }
 
     // Drivebase must be the parent of its two servos.
-    if (db->left->parent.parent_object != db || !db->right->parent.parent_object) {
+    if (!pbio_parent_equals(&db->left->parent, db) || !pbio_parent_equals(&db->right->parent, db)) {
         return false;
     }
 
-    // Both servo update loops must be running.
+    // Both servo update loops must be running, since we want to read the servo observer state.
     return pbio_servo_update_loop_is_running(db->left) && pbio_servo_update_loop_is_running(db->right);
 }
 
@@ -173,12 +161,51 @@ static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_p
     return pbio_dcmotor_coast(db->right->dcmotor);
 }
 
-pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, fix16_t wheel_diameter, fix16_t axle_track) {
-    pbio_error_t err;
+pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right, fix16_t wheel_diameter, fix16_t axle_track) {
+
+    // Can't build a drive base with just one motor.
+    if (left == right) {
+        return PBIO_ERROR_INVALID_PORT;
+    }
+
+    // Assert that both motors have the same gearing
+    if (left->control.settings.counts_per_unit != right->control.settings.counts_per_unit) {
+        return PBIO_ERROR_INVALID_ARG;
+    }
+
+    // Check if the servos already have parents.
+    if (pbio_parent_exists(&left->parent) || pbio_parent_exists(&right->parent)) {
+        // If a servo is already in use by a higher level
+        // abstraction like a drivebase, we can't re-use it.
+        return PBIO_ERROR_BUSY;
+    }
+
+    // Now we know that the servos are free, there must be an available
+    // drivebase. We can just use the first one that isn't running.
+    uint8_t index;
+    for (index = 0; index < NUM_DRIVEBASES; index++) {
+        if (!pbio_drivebase_update_loop_is_running(&drivebases[index])) {
+            break;
+        }
+    }
+    // Verify result is in range.
+    if (index == NUM_DRIVEBASES) {
+        return PBIO_ERROR_FAILED;
+    }
+
+    // So, this is the drivebase we'll use.
+    pbio_drivebase_t *db = &drivebases[index];
+
+    // Set return value.
+    *db_address = db;
+
+    // Attach servos
+    db->left = left;
+    db->right = right;
 
     // Set parents of both servos, so they can stop this drivebase.
-    pbio_parent_set(&db->left->parent, db, pbio_drivebase_stop_from_servo);
-    pbio_parent_set(&db->right->parent, db, pbio_drivebase_stop_from_servo);
+    pbio_parent_set(&left->parent, db, pbio_drivebase_stop_from_servo);
+    pbio_parent_set(&right->parent, db, pbio_drivebase_stop_from_servo);
 
     // Stop any existing drivebase controls
     pbio_drivebase_stop_control(db);
@@ -188,19 +215,14 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, fix16_t wheel_diameter, 
         return PBIO_ERROR_INVALID_ARG;
     }
 
-    // Assert that both motors have the same gearing
-    if (db->left->control.settings.counts_per_unit != db->right->control.settings.counts_per_unit) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
-
     // Reset both motors to a passive state
-    err = pbio_drivebase_actuate(db, PBIO_ACTUATION_COAST, 0, 0);
+    pbio_error_t err = pbio_drivebase_actuate(db, PBIO_ACTUATION_COAST, 0, 0);
     if (err != PBIO_SUCCESS) {
         return err;
     }
 
     // Adopt settings as the average or sum of both servos, except scaling
-    err = drivebase_adopt_settings(&db->control_distance.settings, &db->control_heading.settings, &db->left->control.settings, &db->right->control.settings);
+    err = drivebase_adopt_settings(&db->control_distance.settings, &db->control_heading.settings, &left->control.settings, &right->control.settings);
     if (err != PBIO_SUCCESS) {
         return err;
     }
@@ -208,7 +230,7 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, fix16_t wheel_diameter, 
     // Count difference between the motors for every 1 degree drivebase rotation
     db->control_heading.settings.counts_per_unit =
         fix16_mul(
-            db->left->control.settings.counts_per_unit,
+            left->control.settings.counts_per_unit,
             fix16_div(
                 fix16_mul(
                     axle_track,
@@ -221,7 +243,7 @@ pbio_error_t pbio_drivebase_setup(pbio_drivebase_t *db, fix16_t wheel_diameter, 
     // Sum of motor counts for every 1 mm forward
     db->control_distance.settings.counts_per_unit =
         fix16_mul(
-            db->left->control.settings.counts_per_unit,
+            left->control.settings.counts_per_unit,
             fix16_div(
                 fix16_mul(
                     fix16_from_int(180),
@@ -327,9 +349,15 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
 }
 
 void pbio_drivebase_update_all(void) {
-    // TODO: Allow more than one drivebase.
-    if (pbio_drivebase_update_loop_is_running(&drivebases[0])) {
-        pbio_drivebase_update(&drivebases[0]);
+    // Go through all drive base candidates
+    for (uint8_t i = 0; i < NUM_DRIVEBASES; i++) {
+
+        pbio_drivebase_t *db = &drivebases[i];
+
+        // If it's registered for updates, run its update loop
+        if (pbio_drivebase_update_loop_is_running(db)) {
+            pbio_drivebase_update(db);
+        }
     }
 }
 
@@ -509,13 +537,13 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
 // scaling and flipping happens within the functions below.
 
 // Set up a drive base without drivebase geometry.
-pbio_error_t pbio_spikebase_setup(pbio_drivebase_t *db) {
+pbio_error_t pbio_drivebase_get_spikebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right) {
     // Allow only the same type of motor. To find out, just check that the model parameters are the same.
-    if (db->left->observer.settings != db->right->observer.settings) {
+    if (left->observer.settings != right->observer.settings) {
         return PBIO_ERROR_INVALID_PORT;
     }
 
-    return pbio_drivebase_setup(db, fix16_one, fix16_one);
+    return pbio_drivebase_get_drivebase(db_address, left, right, fix16_one, fix16_one);
 }
 
 // Drive forever given two motor speeds.

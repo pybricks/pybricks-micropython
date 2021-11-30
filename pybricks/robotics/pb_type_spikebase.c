@@ -54,9 +54,7 @@ STATIC mp_obj_t robotics_SpikeBase_make_new(const mp_obj_type_t *type, size_t n_
     pb_assert(err);
 
     // Create drivebase
-    pb_assert(pbio_drivebase_get_drivebase(srv_left, srv_right, &self->db));
-    pb_assert(pbio_spikebase_setup(self->db));
-
+    pb_assert(pbio_drivebase_get_spikebase(&self->db, srv_left, srv_right));
 
     return MP_OBJ_FROM_PTR(self);
 }
