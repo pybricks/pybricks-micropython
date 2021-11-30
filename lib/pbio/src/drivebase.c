@@ -582,17 +582,15 @@ pbio_error_t pbio_spikebase_drive_angle(pbio_drivebase_t *db, int32_t speed_left
     // Work out the required total and difference angles to achieve this.
     int32_t sum = angle_left + angle_right;
     int32_t dif = angle_left - angle_right;
-    int32_t sum_rate = abs(speed_left + speed_right);
-    int32_t dif_rate = abs(speed_left - speed_right);
+    int32_t rate = abs(speed_left) + abs(speed_right);
 
     // If the angle was negative, we need to reverse the result.
     if (angle < 0) {
-        sum_rate *= -1;
-        dif_rate *= -1;
+        rate *= -1;
     }
 
     // Execute the maneuver.
-    return pbio_drivebase_drive_counts_relative(db, sum, sum_rate, dif, dif_rate, after_stop);
+    return pbio_drivebase_drive_counts_relative(db, sum, rate, dif, rate, after_stop);
 }
 
 pbio_error_t pbio_spikebase_steering_to_tank(int32_t speed, int32_t steering, int32_t *speed_left, int32_t *speed_right) {
