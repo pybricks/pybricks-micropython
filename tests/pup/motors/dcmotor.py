@@ -28,3 +28,10 @@ motor = DCMotor(Port.D, positive_direction=Direction.COUNTERCLOCKWISE)
 motor.dc(100)
 wait(1000)
 motor.stop()
+wait(1000)
+
+# Run with voltage limit.
+motor.settings(max_voltage=5000)
+motor.dc(100)
+wait(1000)
+motor.stop()

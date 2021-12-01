@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed
+- Renamed new `DCMotor.dc_settings()` method to `DCMotor.settings()`.
+
 ## [3.1.0c1] - 2021-11-19
 
 ### Added
