@@ -658,7 +658,7 @@ $(BUILD)/%.dfu: $(BUILD)/%.bin
 	$(Q)$(PYTHON) $(DFU) -b $(TEXT0_ADDR):$< $@
 
 deploy: $(BUILD)/firmware.zip
-	$(Q)$(PYBRICKSDEV) flash $<
+	$(Q)$(PYBRICKSDEV) flash $< --name $(PBIO_PLATFORM)
 
 deploy-dfu-%: $(BUILD)/%.dfu
 	$(ECHO) "Writing $< to the board"
