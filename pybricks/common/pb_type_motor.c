@@ -90,14 +90,14 @@ STATIC mp_obj_t common_Motor_make_new(const mp_obj_type_t *type, size_t n_args, 
         }
     }
 
-    // Get pointer to servo
-    pb_assert(pbio_servo_get_servo(port, &srv));
-
-    // Set up servo
-    while ((err = pbio_servo_setup(srv, positive_direction, gear_ratio, reset_angle)) == PBIO_ERROR_AGAIN) {
+    // Get pointer to servo and allow tacho to finish syncing
+    while ((err = pbio_servo_get_servo(port, &srv)) == PBIO_ERROR_AGAIN) {
         mp_hal_delay_ms(1000);
     }
     pb_assert(err);
+
+    // Set up servo
+    pb_assert(pbio_servo_setup(srv, positive_direction, gear_ratio, reset_angle));
 
     // On success, proceed to create and return the MicroPython object
     common_Motor_obj_t *self = m_new_obj(common_Motor_obj_t);
