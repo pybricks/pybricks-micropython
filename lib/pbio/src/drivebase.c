@@ -44,10 +44,11 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
     s_distance->integral_rate = s_left->integral_rate + s_right->integral_rate;
     s_distance->abs_acceleration = s_left->abs_acceleration + s_right->abs_acceleration;
 
-    // Use the average PID of both motors
-    s_distance->pid_kp = (s_left->pid_kp + s_right->pid_kp) / 2;
-    s_distance->pid_ki = (s_left->pid_ki + s_right->pid_ki) / 2;
-    s_distance->pid_kd = (s_left->pid_kd + s_right->pid_kd) / 2;
+    // Use minimum PID of both motors, to avoid overly aggressive control if
+    // one of the two motors has much higher PID values.
+    s_distance->pid_kp = min(s_left->pid_kp, s_right->pid_kp);
+    s_distance->pid_ki = min(s_left->pid_ki, s_right->pid_ki);
+    s_distance->pid_kd = min(s_left->pid_kd, s_right->pid_kd);
 
     // Maxima are bound by the least capable motor
     s_distance->max_torque = min(s_left->max_torque, s_right->max_torque);
@@ -554,11 +555,6 @@ pbio_error_t pbio_drivebase_set_drive_settings(pbio_drivebase_t *db, int32_t dri
 
 // Set up a drive base without drivebase geometry.
 pbio_error_t pbio_drivebase_get_spikebase(pbio_drivebase_t **db_address, pbio_servo_t *left, pbio_servo_t *right) {
-    // Allow only the same type of motor. To find out, just check that the model parameters are the same.
-    if (left->observer.settings != right->observer.settings) {
-        return PBIO_ERROR_INVALID_PORT;
-    }
-
     return pbio_drivebase_get_drivebase(db_address, left, right, fix16_one, fix16_one);
 }
 
