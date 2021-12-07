@@ -27,7 +27,6 @@ try:
     def clock():
         return watch.time() / 1000
 
-
 except ImportError:
     from utime import ticks_ms
 
