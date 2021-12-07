@@ -149,7 +149,12 @@ static pbio_error_t pbio_servo_stop_from_dcmotor(void *servo, bool clear_parent)
     // so it won't override the dcmotor to do something else.
     if (pbio_control_is_active(&srv->control)) {
         pbio_control_stop(&srv->control);
-        return PBIO_SUCCESS;
+
+        // If we're not clearing the parent, we are done here. We don't want
+        // to keep calling the drive base stop over and over.
+        if (!clear_parent) {
+            return PBIO_SUCCESS;
+        }
     }
 
     // If servo control wasn't active, it's still possible that a higher
