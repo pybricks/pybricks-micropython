@@ -193,16 +193,13 @@ pbio_error_t pbio_trajectory_calc_angle_new(pbio_trajectory_t *trj, int32_t t0, 
 
 pbio_error_t pbio_trajectory_calc_time_new(pbio_trajectory_t *trj, int32_t t0, int32_t th0, int32_t th3, int32_t w0, int32_t wt, int32_t wmax, int32_t a) {
 
-    // Return error for zero speed
-    if (wt == 0) {
-        return PBIO_ERROR_INVALID_ARG;
-    }
     // Return error for maneuver that is too long
     if (abs((th3 - th0) / wt) + 1 > DURATION_MAX_S) {
         return PBIO_ERROR_INVALID_ARG;
     }
-    // Return empty maneuver for zero angle
-    if (th3 == th0) {
+
+    // Return empty maneuver for zero angle or zero speed
+    if (th3 == th0 || wt == 0) {
         pbio_trajectory_make_stationary(trj, t0, th0);
         return PBIO_SUCCESS;
     }
