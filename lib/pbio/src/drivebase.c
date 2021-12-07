@@ -104,10 +104,16 @@ static pbio_error_t pbio_drivebase_get_state(pbio_drivebase_t *db, pbio_control_
     return PBIO_SUCCESS;
 }
 
-static void pbio_drivebase_stop_control(pbio_drivebase_t *db) {
-    // Stop control so polling will stop
+static void pbio_drivebase_stop_drivebase_control(pbio_drivebase_t *db) {
+    // Stop drivebase control so polling will stop
     pbio_control_stop(&db->control_distance);
     pbio_control_stop(&db->control_heading);
+}
+
+static void pbio_drivebase_stop_servo_control(pbio_drivebase_t *db) {
+    // Stop servo control so polling will stop
+    pbio_control_stop(&db->left->control);
+    pbio_control_stop(&db->right->control);
 }
 
 // Actuate a drivebase
@@ -117,7 +123,7 @@ static pbio_error_t pbio_drivebase_actuate(pbio_drivebase_t *db, pbio_actuation_
         // Coast and brake are both passed on to servo_actuate as-is.
         case PBIO_ACTUATION_COAST:
         case PBIO_ACTUATION_BRAKE: {
-            pbio_drivebase_stop_control(db);
+            pbio_drivebase_stop_drivebase_control(db);
             pbio_error_t err = pbio_servo_actuate(db->left, actuation, 0);
             if (err != PBIO_SUCCESS) {
                 return err;
@@ -149,7 +155,7 @@ static pbio_error_t pbio_drivebase_stop_from_servo(void *drivebase, bool clear_p
     }
 
     // Stop the drive base controller so the motors don't start moving again.
-    pbio_drivebase_stop_control(db);
+    pbio_drivebase_stop_drivebase_control(db);
 
     // Since we don't know which child called the parent to stop, we stop both
     // motors. We don't stop their parents to avoid escalating the stop calls
@@ -208,7 +214,7 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     pbio_parent_set(&right->parent, db, pbio_drivebase_stop_from_servo);
 
     // Stop any existing drivebase controls
-    pbio_drivebase_stop_control(db);
+    pbio_drivebase_stop_drivebase_control(db);
 
     // Drivebase geometry
     if (wheel_diameter <= 0 || axle_track <= 0) {
@@ -216,6 +222,7 @@ pbio_error_t pbio_drivebase_get_drivebase(pbio_drivebase_t **db_address, pbio_se
     }
 
     // Reset both motors to a passive state
+    pbio_drivebase_stop_servo_control(db);
     pbio_error_t err = pbio_drivebase_actuate(db, PBIO_ACTUATION_COAST, 0, 0);
     if (err != PBIO_SUCCESS) {
         return err;
@@ -262,6 +269,9 @@ pbio_error_t pbio_drivebase_stop(pbio_drivebase_t *db, pbio_actuation_t after_st
     if (!pbio_drivebase_update_loop_is_running(db)) {
         return PBIO_ERROR_INVALID_OP;
     }
+
+    // Stop servo control in case it was running.
+    pbio_drivebase_stop_servo_control(db);
 
     if (after_stop == PBIO_ACTUATION_HOLD) {
 
@@ -368,6 +378,9 @@ static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, i
         return PBIO_ERROR_INVALID_OP;
     }
 
+    // Stop servo control in case it was running.
+    pbio_drivebase_stop_servo_control(db);
+
     // Get current time
     int32_t time_now = pbdrv_clock_get_us();
 
@@ -450,6 +463,9 @@ static pbio_error_t pbio_drivebase_drive_counts_timed(pbio_drivebase_t *db, int3
     if (!pbio_drivebase_update_loop_is_running(db)) {
         return PBIO_ERROR_INVALID_OP;
     }
+
+    // Stop servo control in case it was running.
+    pbio_drivebase_stop_servo_control(db);
 
     // Get current time
     int32_t time_now = pbdrv_clock_get_us();
