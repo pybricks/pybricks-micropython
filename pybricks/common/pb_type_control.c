@@ -43,12 +43,6 @@ mp_obj_t common_Control_obj_make_new(pbio_control_t *control) {
     return self;
 }
 
-STATIC void raise_if_control_busy(pbio_control_t *ctl) {
-    if (pbio_control_is_active(ctl)) {
-        pb_assert(PBIO_ERROR_BUSY);
-    }
-}
-
 // pybricks._common.Control.limits
 STATIC mp_obj_t common_Control_limits(size_t n_args, const mp_obj_t *pos_args, mp_map_t *kw_args) {
 
@@ -70,9 +64,6 @@ STATIC mp_obj_t common_Control_limits(size_t n_args, const mp_obj_t *pos_args, m
         ret[2] = mp_obj_new_int(torque);
         return mp_obj_new_tuple(3, ret);
     }
-
-    // Assert control is not active
-    raise_if_control_busy(self->control);
 
     // Set user settings
     speed = pb_obj_get_default_int(speed_in, speed);
@@ -114,9 +105,6 @@ STATIC mp_obj_t common_Control_pid(size_t n_args, const mp_obj_t *pos_args, mp_m
         return mp_obj_new_tuple(5, ret);
     }
 
-    // Assert control is not active
-    raise_if_control_busy(self->control);
-
     // Set user settings
     kp = pb_obj_get_default_int(kp_in, kp);
     ki = pb_obj_get_default_int(ki_in, ki);
@@ -149,9 +137,6 @@ STATIC mp_obj_t common_Control_target_tolerances(size_t n_args, const mp_obj_t *
         return mp_obj_new_tuple(2, ret);
     }
 
-    // Assert control is not active
-    raise_if_control_busy(self->control);
-
     // Set user settings
     speed = pb_obj_get_default_int(speed_in, speed);
     position = pb_obj_get_default_int(position_in, position);
@@ -181,9 +166,6 @@ STATIC mp_obj_t common_Control_stall_tolerances(size_t n_args, const mp_obj_t *p
         ret[1] = mp_obj_new_int(time);
         return mp_obj_new_tuple(2, ret);
     }
-
-    // Assert control is not active
-    raise_if_control_busy(self->control);
 
     // Set user settings
     speed = pb_obj_get_default_int(speed_in, speed);
