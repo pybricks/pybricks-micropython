@@ -87,7 +87,7 @@ static const pbio_observer_settings_t settings_observer_technic_s_angular = {
 };
 
 static const pbio_control_settings_t settings_servo_technic_s_angular = {
-    .max_rate = 750,
+    .max_rate = 620,
     .abs_acceleration = 2000,
     .rate_tolerance = 50,
     .count_tolerance = 10,
