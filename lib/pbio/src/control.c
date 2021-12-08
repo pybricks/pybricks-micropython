@@ -66,8 +66,8 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
 
     // Position anti-windup: pause trajectory or integration if falling behind despite using maximum torque
 
-    // Position anti-windup in case of (non-follow) angle control (accumulated position error may not get too high)
-    if (ctl->type == PBIO_CONTROL_ANGLE) {
+    // Position anti-windup in case of angle control (accumulated position error may not get too high)
+    if (pbio_control_type_is_angle(ctl)) {
         if (abs(torque_due_to_proportional) >= max_windup_torque && pbio_math_sign(torque_due_to_proportional) == pbio_math_sign(rate_err)) {
             // We are at the torque limit and we should prevent further position error integration.
             pbio_count_integrator_pause(&ctl->count_integrator, time_now, state->count, ref->count);
@@ -77,7 +77,7 @@ void pbio_control_update(pbio_control_t *ctl, int32_t time_now, pbio_control_sta
         }
     }
     // Position anti-windup in case of timed speed control (speed integral may not get too high)
-    else if (ctl->type == PBIO_CONTROL_TIMED) {
+    else {
         if (abs(torque_due_to_proportional) >= max_windup_torque && pbio_math_sign(torque_due_to_proportional) == pbio_math_sign(rate_err)) {
             // We are at the torque limit and we should prevent further speed error integration.
             pbio_rate_integrator_pause(&ctl->rate_integrator, time_now, state->count, ref->count);
@@ -429,35 +429,16 @@ int32_t pbio_control_get_ref_time(pbio_control_t *ctl, int32_t time_now) {
     return 0;
 }
 
-pbio_error_t pbio_control_copy_integrator_pause_state(pbio_control_t *leader, pbio_control_t *follower, int32_t time, int32_t follower_count, int32_t follower_count_ref) {
-    // Copying integrator state should be used with angle controllers only.
-    if (!pbio_control_type_is_angle(leader) || !pbio_control_type_is_angle(follower)) {
-        return PBIO_ERROR_INVALID_OP;
-    }
-
-    // Resume follower if leader is running, and vice versa.
-    if (leader->count_integrator.trajectory_running) {
-        pbio_count_integrator_resume(&follower->count_integrator, time, follower_count, follower_count_ref);
-    } else {
-        pbio_count_integrator_pause(&follower->count_integrator, time, follower_count, follower_count_ref);
-    }
-    return PBIO_SUCCESS;
-}
-
 bool pbio_control_is_active(pbio_control_t *ctl) {
     return ctl->type != PBIO_CONTROL_NONE;
 }
 
 bool pbio_control_type_is_angle(pbio_control_t *ctl) {
-    return ctl->type == PBIO_CONTROL_ANGLE || ctl->type == PBIO_CONTROL_ANGLE_FOLLOW;
+    return ctl->type == PBIO_CONTROL_ANGLE;
 }
 
 bool pbio_control_type_is_time(pbio_control_t *ctl) {
     return ctl->type == PBIO_CONTROL_TIMED;
-}
-
-bool pbio_control_type_is_follower(pbio_control_t *ctl) {
-    return ctl->type == PBIO_CONTROL_ANGLE_FOLLOW;
 }
 
 bool pbio_control_is_stalled(pbio_control_t *ctl) {

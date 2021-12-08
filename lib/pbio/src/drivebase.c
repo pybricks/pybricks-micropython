@@ -327,19 +327,13 @@ static pbio_error_t pbio_drivebase_update(pbio_drivebase_t *db) {
         return pbio_drivebase_actuate(db, PBIO_ACTUATION_BRAKE, 0, 0);
     }
 
-    // The leading controller is able to pause when it stalls. The following controller does not do its own stall,
-    // but follows the leader. This ensures they complete at exactly the same time.
-
-    // Check which controller is the follower, if any.
-    if (pbio_control_type_is_follower(&db->control_distance)) {
-        // Distance control follows, so make it copy heading control pause state
-        err = pbio_control_copy_integrator_pause_state(&db->control_heading, &db->control_distance, time_now, state_distance.count, ref_distance.count);
-    } else if (pbio_control_type_is_follower(&db->control_heading)) {
-        // Heading control follows, so make it copy distance control pause state
-        err = pbio_control_copy_integrator_pause_state(&db->control_distance, &db->control_heading, time_now, state_heading.count, ref_heading.count);
+    // Both controllers are able to stop the other when it stalls. This ensures
+    // they complete at exactly the same time.
+    if (pbio_control_type_is_angle(&db->control_distance) && !db->control_distance.count_integrator.trajectory_running) {
+        pbio_count_integrator_pause(&db->control_heading.count_integrator, time_now, state_heading.count, ref_heading.count);
     }
-    if (err != PBIO_SUCCESS) {
-        return err;
+    if (pbio_control_type_is_angle(&db->control_heading) && !db->control_heading.count_integrator.trajectory_running) {
+        pbio_count_integrator_pause(&db->control_distance.count_integrator, time_now, state_distance.count, ref_distance.count);
     }
 
     // The left servo drives at a torque and speed of sum / 2 + dif / 2
@@ -424,10 +418,6 @@ static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, i
         control_leader->trajectory.t1 - control_leader->trajectory.t0,
         control_leader->trajectory.t2 - control_leader->trajectory.t0,
         control_leader->trajectory.t3 - control_leader->trajectory.t0);
-
-    // The follower trajector holds until the leader trajectory says otherwise
-    control_follower->after_stop = PBIO_ACTUATION_HOLD;
-    control_follower->type = PBIO_CONTROL_ANGLE_FOLLOW;
 
     return PBIO_SUCCESS;
 }
