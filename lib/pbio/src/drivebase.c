@@ -411,7 +411,9 @@ static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, i
     // First, find out which controller takes the lead
     pbio_control_t *control_leader;
     pbio_control_t *control_follower;
-    if (db->control_distance.trajectory.t3 > db->control_heading.trajectory.t3) {
+
+    if (db->control_distance.trajectory.t3 - db->control_distance.trajectory.t0 >
+        db->control_heading.trajectory.t3 - db->control_heading.trajectory.t0) {
         // Distance control takes the longest, so it will take the lead
         control_leader = &db->control_distance;
         control_follower = &db->control_heading;
@@ -423,7 +425,10 @@ static pbio_error_t pbio_drivebase_drive_counts_relative(pbio_drivebase_t *db, i
 
     // Revise follower trajectory so it takes as long as the leader, achieved
     // by picking a lower speed and accelerations that makes the times match.
-    pbio_trajectory_stretch(&control_follower->trajectory, control_leader->trajectory.t1, control_leader->trajectory.t2, control_leader->trajectory.t3);
+    pbio_trajectory_stretch(&control_follower->trajectory,
+        control_follower->trajectory.t0 + control_leader->trajectory.t1 - control_leader->trajectory.t0,
+        control_follower->trajectory.t0 + control_leader->trajectory.t2 - control_leader->trajectory.t0,
+        control_follower->trajectory.t0 + control_leader->trajectory.t3 - control_leader->trajectory.t0);
 
     // The follower trajector holds until the leader trajectory says otherwise
     control_follower->after_stop = PBIO_ACTUATION_HOLD;
