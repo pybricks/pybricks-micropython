@@ -63,11 +63,6 @@ static pbio_error_t drivebase_adopt_settings(pbio_control_settings_t *s_distance
     // By default, heading control is the same as distance control
     *s_heading = *s_distance;
 
-    // Allow just slightly more torque for heading. While not technically
-    // necessary under nominal circumstances, it gives the expected perceived
-    // result of one wheel nearly stopping when you block the other.
-    s_heading->max_torque *= 2;
-
     return PBIO_SUCCESS;
 }
 
