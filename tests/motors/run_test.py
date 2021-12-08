@@ -138,10 +138,10 @@ def plot_control_data(time, data, build_dir, subtitle=None):
 
     title = "control" if subtitle is None else "control_" + subtitle
 
-    figure, axes = matplotlib.pyplot.subplots(nrows=4, ncols=1, figsize=(15, 12))
+    figure, axes = matplotlib.pyplot.subplots(nrows=5, ncols=1, figsize=(15, 15))
     figure.suptitle(title, fontsize=20)
 
-    position_axis, error_axis, speed_axis, torque_axis = axes
+    position_axis, error_axis, speed_axis, torque_axis, time_axis = axes
 
     position_axis.plot(time, count, drawstyle="steps-post", label="Reported count")
     position_axis.plot(time, count_est, drawstyle="steps-post", label="Observer")
@@ -166,7 +166,10 @@ def plot_control_data(time, data, build_dir, subtitle=None):
     torque_axis.plot(time, torque_d, label="D", drawstyle="steps-post")
     torque_axis.plot(time, torque_total, label="Total", drawstyle="steps-post")
     torque_axis.set_ylabel("torque")
-    torque_axis.set_xlabel("time (ms)")
+
+    time_axis.plot(time, maneuver_time / 1000, label="t - t_0", drawstyle="steps-post")
+    time_axis.set_ylabel("Maneuver time (ms)")
+    time_axis.set_xlabel("time (ms)")
 
     for axis in axes:
         axis.grid(True)
