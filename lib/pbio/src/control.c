@@ -222,12 +222,12 @@ pbio_error_t pbio_control_start_hold_control(pbio_control_t *ctl, int32_t time_n
     ctl->on_target_func = pbio_control_on_target_always;
 
     // Compute new maneuver based on user argument, starting from the initial state
-    pbio_trajectory_make_stationary(&ctl->trajectory, time_now, target_count);
+    pbio_trajectory_make_stationary(&ctl->trajectory, pbio_control_get_ref_time(ctl, time_now), target_count);
     // If called for the first time, set state and reset PID
     if (!pbio_control_type_is_angle(ctl)) {
         // Initialize or reset the PID control status for the given maneuver
         int32_t integrator_max = pbio_control_settings_get_max_integrator(&ctl->settings);
-        pbio_count_integrator_reset(&ctl->count_integrator, ctl->trajectory.t0, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max);
+        pbio_count_integrator_reset(&ctl->count_integrator, time_now, ctl->trajectory.th0, ctl->trajectory.th0, integrator_max);
 
         // Reset load filter
         ctl->load = 0;
