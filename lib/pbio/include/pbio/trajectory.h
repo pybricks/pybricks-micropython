@@ -72,7 +72,7 @@ pbio_error_t pbio_trajectory_calc_angle_new(pbio_trajectory_t *trj, int32_t t0, 
 pbio_error_t pbio_trajectory_calc_time_new(pbio_trajectory_t *trj, int32_t t0, int32_t th0, int32_t th3, int32_t w0, int32_t wt, int32_t wmax, int32_t a);
 
 // Stretches out a given trajectory time-wise to make it match time frames of other trajectory
-void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1, int32_t t2, int32_t t3);
+void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1mt0, int32_t t2mt0, int32_t t3mt0);
 
 void pbio_trajectory_get_reference(pbio_trajectory_t *trj, int32_t time_ref, pbio_trajectory_reference_t *ref);
 

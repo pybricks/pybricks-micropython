@@ -293,9 +293,9 @@ pbio_error_t pbio_trajectory_calc_time_new(pbio_trajectory_t *trj, int32_t t0, i
     return PBIO_SUCCESS;
 }
 
-void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1, int32_t t2, int32_t t3) {
+void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1mt0, int32_t t2mt0, int32_t t3mt0) {
 
-    if (trj->t3 == trj->t0) {
+    if (t3mt0 == 0) {
         // This is a stationary maneuver, so there's nothing to recompute.
         return;
     }
@@ -306,17 +306,17 @@ void pbio_trajectory_stretch(pbio_trajectory_t *trj, int32_t t1, int32_t t2, int
     // equations with three unknowns (a0, a2, wt), for which we can solve.
 
     // Solve constraint to find initial acceleration
-    trj->a0 = 2 * ((int64_t)(trj->th3 - trj->th0) * US_PER_SECOND - (int64_t)trj->w0 * (t3 / 2 - trj->t0 + t2 / 2)) /
-        (t1 - trj->t0) * US_PER_SECOND / (t3 - trj->t0 + t2 - t1);
+    trj->a0 = ((int64_t)(trj->th3 - trj->th0) * US_PER_SECOND * 2 - (int64_t)trj->w0 * (t3mt0 + t2mt0)) /
+        t1mt0 * US_PER_SECOND / (t3mt0 + t2mt0 - t1mt0);
 
     // Get corresponding target speed and final deceleration
-    trj->w1 = timest(trj->a0, t1 - trj->t0) + trj->w0;
-    trj->a2 = (int64_t)trj->w1 * US_PER_SECOND / (t2 - t3);
+    trj->w1 = timest(trj->a0, t1mt0) + trj->w0;
+    trj->a2 = (int64_t)trj->w1 * US_PER_SECOND / (t2mt0 - t3mt0);
 
-    // Store other results/arguments
-    trj->t1 = t1;
-    trj->t2 = t2;
-    trj->t3 = t3;
+    // Stretch time arguments
+    trj->t1 = trj->t0 + t1mt0;
+    trj->t2 = trj->t0 + t2mt0;
+    trj->t3 = trj->t0 + t3mt0;
 
     // With all constraints already satisfied, we can just compute the
     // intermediate positions relative to the endpoints, given the now-known
