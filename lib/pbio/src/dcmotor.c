@@ -21,7 +21,7 @@ static pbio_dcmotor_t dcmotors[PBDRV_CONFIG_NUM_MOTOR_CONTROLLER];
 void pbio_dcmotor_stop_all(bool clear_parents) {
 
     // Go through all ports.
-    for (pbio_port_id_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port < PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
+    for (pbio_port_id_t port = PBDRV_CONFIG_FIRST_MOTOR_PORT; port <= PBDRV_CONFIG_LAST_MOTOR_PORT; port++) {
 
         // Get the motor.
         pbio_dcmotor_t *dcmotor;
