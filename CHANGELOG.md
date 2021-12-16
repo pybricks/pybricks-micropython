@@ -4,9 +4,10 @@
 
 ## [Unreleased]
 
+## [3.1.0] - 2021-12-16
+
 ### Changed
-- Renamed new `DCMotor.dc_settings()` method
-  to `DCMotor.settings()` ([support#536]).
+- Renamed new `DCMotor.dc_settings()` method to `DCMotor.settings()` ([support#536]).
 
 ### Fixed
 - Fixed direction for `DriveBase.turn()` and `Drivebase.curve()` for some
@@ -199,7 +200,8 @@ Prerelease changes are documented at [support#48].
 
 
 <!-- diff links for headers -->
-[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0c1...HEAD
+[Unreleased]: https://github.com/pybricks/pybricks-micropython/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0c1...v3.1.0
 [3.1.0c1]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a4...v3.1.0c1
 [3.1.0b1]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a4...v3.1.0b1
 [3.1.0a4]: https://github.com/pybricks/pybricks-micropython/compare/v3.0.0a3...v3.1.0a4
